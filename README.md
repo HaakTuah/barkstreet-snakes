@@ -35,7 +35,7 @@ The AIs plan a few moves ahead. They check that they'll still have room to move,
 
 Everything is saved in your browser only.
 
-- **High scores:** the top 10 rounds, ranked by finishing place first (a win beats any 2nd place), then by food eaten. When a round makes the list, you can type your name on the end screen.
+- **High scores:** the top 10 rounds, ranked by finishing place first (a win beats any 2nd place), then by food eaten. The AI snakes get entries too, so you're competing against them on the list. Switch to **Only you** to see your own top 10. When a round makes the list, you can type your name on the end screen.
 - **Stats:** rounds played, wins, average place and food, how often you finished in each place, and what killed you (including your nemesis, the AI that gets you most often).
 
 ## Run locally

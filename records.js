@@ -23,9 +23,42 @@ window.SnakeRecords = (() => {
   const stats = () => ({ ...emptyStats(), ...load(STATS_KEY, {}) });
   const getName = () => load(NAME_KEY, 'You');
 
-  // result = { place, won, draw, eaten, killer }. Returns the new entry's id and
-  // its rank in the top 10 (0 if it didn't make it).
-  function record(result) {
+  // The stored list is the overall top 10 plus the player's own top 10, so the
+  // AIs can't push all of your rounds out.
+  const topOverall = list => list.slice(0, MAX_SCORES);
+  const topPlayer = list => list.filter(e => !e.ai).slice(0, MAX_SCORES);
+
+  // score = { name, color, ai, place, won, draw, eaten }. Returns the entry id.
+  function addScore(score) {
+    const entry = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name: score.name,
+      color: score.color,
+      ai: !!score.ai,
+      place: score.place,
+      won: !!score.won,
+      draw: !!score.draw,
+      eaten: score.eaten,
+      date: Date.now(),
+    };
+    const sorted = [...scores(), entry].sort(compare);
+    const keep = new Set([...topOverall(sorted), ...topPlayer(sorted)]);
+    save(SCORES_KEY, sorted.filter(e => keep.has(e)));
+    return entry.id;
+  }
+
+  // Where an entry sits: { overall, personal }, each 1-based or 0 if not in that top 10.
+  function rankOf(id) {
+    const list = scores();
+    return {
+      overall: topOverall(list).findIndex(e => e.id === id) + 1,
+      personal: topPlayer(list).findIndex(e => e.id === id) + 1,
+    };
+  }
+
+  // result = { place, won, draw, eaten, killer, color }. Updates your stats and
+  // adds a high-score entry under your saved name. Returns the entry id.
+  function recordPlayer(result) {
     const st = stats();
     st.played++;
     if (result.won) st.wins++;
@@ -34,19 +67,7 @@ window.SnakeRecords = (() => {
     if (result.killer) st.killers[result.killer] = (st.killers[result.killer] || 0) + 1;
     st.totalEaten += result.eaten;
     save(STATS_KEY, st);
-
-    const entry = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      name: getName(),
-      place: result.place,
-      won: !!result.won,
-      draw: !!result.draw,
-      eaten: result.eaten,
-      date: Date.now(),
-    };
-    const list = [...scores(), entry].sort(compare).slice(0, MAX_SCORES);
-    save(SCORES_KEY, list);
-    return { id: entry.id, rank: list.findIndex(e => e.id === entry.id) + 1 };
+    return addScore({ ...result, name: getName(), ai: false });
   }
 
   function rename(id, name) {
@@ -72,16 +93,21 @@ window.SnakeRecords = (() => {
     return node;
   }
 
-  function renderScores(container, highlightId) {
-    const list = scores();
+  // filter: 'all' (everyone, overall top 10) or 'me' (your top 10).
+  // playerColor colors your rows' dots; AI rows use the color saved with them.
+  function renderScores(container, highlightId, filter, playerColor) {
+    const all = scores();
+    const list = filter === 'me' ? topPlayer(all) : topOverall(all);
     if (!list.length) {
       container.append(el('p', { className: 'empty', textContent: 'No scores yet. Finish a round to get on the board.' }));
       return;
     }
     const fmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
-    const rows = list.map((e, i) => el('tr', { className: e.id === highlightId ? 'highlight' : '' },
+    const rows = list.map((e, i) => el('tr', { className: [e.id === highlightId && 'highlight', e.ai && 'ai'].filter(Boolean).join(' ') },
       el('td', { className: 'num', textContent: i + 1 }),
-      el('td', { className: 'name', textContent: e.name }),
+      el('td', { className: 'name' },
+        el('span', { className: 'dot', style: `background:${e.ai ? e.color : playerColor}` }),
+        e.name),
       el('td', { className: e.won ? 'won' : '', textContent: placeLabel(e) }),
       el('td', { className: 'num', textContent: e.eaten }),
       el('td', { className: 'muted', textContent: fmt.format(e.date) }),
@@ -147,5 +173,5 @@ window.SnakeRecords = (() => {
     }
   }
 
-  return { scores, stats, record, rename, reset, getName, renderScores, renderStats, ordinal };
+  return { scores, stats, addScore, recordPlayer, rankOf, rename, reset, getName, renderScores, renderStats, ordinal };
 })();

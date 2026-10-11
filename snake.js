@@ -185,7 +185,9 @@
   const nameInput = document.getElementById('name-input');
   const recordsEl = document.getElementById('records');
   const recordsBody = document.getElementById('records-body');
-  const recordsTabs = [...document.querySelectorAll('#records .tab')];
+  const recordsTabs = [...document.querySelectorAll('#records .tab[data-tab]')];
+  const filterEl = document.getElementById('scores-filter');
+  const filterTabs = [...filterEl.querySelectorAll('.tab')];
 
   const Records = window.SnakeRecords;
 
@@ -233,17 +235,16 @@
     if (state !== 'running') return;
     const wasAlive = player().alive;
 
-    step(game);
+    const dying = step(game);
     updateHud();
     draw();
 
+    // Everyone still alive finished ahead of the snakes that just died; if
+    // nobody is, they share first place (a draw).
     const alive = game.snakes.filter(s => s.alive);
-    if (wasAlive && !player().alive) {
-      // Everyone still alive finished ahead of you; if nobody is, it's a shared-first draw.
-      finishPlayer({ place: alive.length + 1, draw: alive.length === 0 });
-    }
+    for (const s of dying) finishSnake(s, { place: alive.length + 1, draw: alive.length === 0 });
     if (alive.length <= 1) {
-      if (player().alive) finishPlayer({ place: 1, won: true });
+      if (alive.length) finishSnake(alive[0], { place: 1, won: true });
       return endRound();
     }
     if (wasAlive && !player().alive) {
@@ -252,13 +253,17 @@
     schedule();
   }
 
-  // Record the player's round once, as soon as their placement is known.
-  function finishPlayer({ place, won = false, draw = false }) {
-    if (game.result) return;
-    const p = player();
-    game.result = { place, won, draw, eaten: p.eaten, killer: p.alive ? null : p.killer };
-    game.entry = Records.record(game.result);
-    recordBest();
+  // Record a snake's round on the high scores once, as soon as its placement is known.
+  function finishSnake(s, { place, won = false, draw = false }) {
+    if (s.result) return;
+    s.result = { place, won, draw, eaten: s.eaten };
+    if (s.isPlayer) {
+      game.result = s.result;
+      game.entryId = Records.recordPlayer({ ...s.result, killer: s.alive ? null : s.killer });
+      recordBest();
+    } else {
+      Records.addScore({ ...s.result, name: s.name, color: s.color, ai: true });
+    }
   }
 
   function turn(name) {
@@ -310,10 +315,11 @@
     watchBtn.hidden = !secondary;
     if (secondary) watchBtn.textContent = secondary;
     // Offer to name a high score from this round, on the death and round-over screens.
-    const rank = state !== 'paused' && game.entry ? game.entry.rank : 0;
-    nameRow.hidden = !rank;
-    if (rank) {
-      nameRank.textContent = `New high score: #${rank}!`;
+    // Re-checked every time: AIs finishing later in the round can push you down.
+    const rank = state !== 'paused' && game.entryId ? Records.rankOf(game.entryId) : { overall: 0, personal: 0 };
+    nameRow.hidden = !rank.overall && !rank.personal;
+    if (!nameRow.hidden) {
+      nameRank.textContent = rank.overall ? `New high score: #${rank.overall}!` : `Personal best: #${rank.personal}`;
       nameInput.value = Records.getName();
     }
     overlay.classList.remove('hidden');
@@ -400,6 +406,7 @@
 
   // High scores / stats panel
   let recordsTab = 'scores';
+  let scoresFilter = 'all';
 
   function openRecords() {
     if (state === 'running' && player().alive) togglePause();
@@ -414,9 +421,11 @@
 
   function renderRecords() {
     recordsTabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === recordsTab)));
+    filterTabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.filter === scoresFilter)));
+    filterEl.hidden = recordsTab !== 'scores';
     recordsBody.innerHTML = '';
     if (recordsTab === 'scores') {
-      Records.renderScores(recordsBody, game.entry && game.entry.id);
+      Records.renderScores(recordsBody, game.entryId, scoresFilter, PLAYER_COLOR);
     } else {
       const colors = { self: PLAYER_COLOR };
       for (const s of game.snakes) colors[s.name] = s.color;
@@ -425,20 +434,20 @@
   }
 
   recordsTabs.forEach(t => t.addEventListener('click', () => { recordsTab = t.dataset.tab; renderRecords(); }));
+  filterTabs.forEach(t => t.addEventListener('click', () => { scoresFilter = t.dataset.filter; renderRecords(); }));
   document.getElementById('records-open').addEventListener('click', openRecords);
   document.getElementById('records-close').addEventListener('click', closeRecords);
   recordsEl.addEventListener('click', e => { if (e.target === recordsEl) closeRecords(); });
   document.getElementById('records-reset').addEventListener('click', () => {
     if (!confirm('Delete all your high scores and stats?')) return;
     Records.reset();
-    if (game.entry) game.entry.rank = 0;
     nameRow.hidden = true;
     renderRecords();
   });
 
   // Renaming a high score from the death / round-over screen.
   nameInput.addEventListener('input', () => {
-    if (game.entry) Records.rename(game.entry.id, nameInput.value);
+    if (game.entryId) Records.rename(game.entryId, nameInput.value);
   });
 
   // Keyboard
