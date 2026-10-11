@@ -16,17 +16,23 @@
       </div>
     </header>
 
+    <ul id="scoreboard" class="scoreboard" aria-label="Snakes"></ul>
+
     <div class="board">
-      <canvas id="game" width="400" height="400" aria-label="Snake game board"></canvas>
+      <canvas id="game" width="600" height="600" aria-label="Snake game board"></canvas>
       <div id="overlay" class="overlay">
         <h2 id="overlay-title">Snake</h2>
-        <p id="overlay-text">Arrow keys / WASD to move · Swipe on touch screens</p>
-        <button id="start">Play</button>
+        <p id="overlay-text">Outlast three rival snakes. Arrow keys / WASD to move · Swipe on touch screens</p>
+        <div class="buttons">
+          <button id="start">Play</button>
+          <button id="watch" class="secondary" hidden>Watch</button>
+        </div>
       </div>
     </div>
 
     <p class="help">Space / P to pause · Enter / R to restart</p>
   </main>
+  <script src="ai.js"></script>
   <script src="snake.js"></script>
 </body>
 </html>
