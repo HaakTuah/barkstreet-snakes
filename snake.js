@@ -2,6 +2,7 @@
   const GRID = 24;
   const APPLES = 3;          // green apples on the board at all times
   const MUSHROOMS = 2;       // red mushrooms on the board at all times
+  const MUSHROOM_TICKS = 180; // a mushroom withers (and regrows elsewhere) after this many ticks
   const GOLDEN_CHANCE = 0.004; // per tick, while there is no golden apple
   const GOLDEN_TICKS = 120;  // a golden apple rots after this many ticks
   const GOLDEN_GROWTH = 3;
@@ -11,7 +12,7 @@
   const MIN_TICK = 90;
   const RAMP_MS = 120000; // reach MIN_TICK after this much game time
   const SUDDEN_DEATH_MS = 180000; // the woodpecker arrives after three minutes
-  const PECK_EVERY = 3;   // ticks between holes once it's here
+  const PECK_EVERY = 2;   // ticks between holes once it's here
   const HISTORY = 8;      // board snapshots kept for the AIs' reaction delay
   const REACTION_MS = 240; // how stale the AIs' view of other snakes is (same for all)
   const OPPONENTS = 3;
@@ -91,8 +92,8 @@
   const suddenDeath = game => game.time >= SUDDEN_DEATH_MS;
 
   function fillFood(game) {
-    // Golden apples rot.
-    game.food = game.food.filter(f => f.kind !== 'golden' || f.expires > game.tick);
+    // Golden apples rot and mushrooms wither.
+    game.food = game.food.filter(f => f.expires == null || f.expires > game.tick);
     // Once the woodpecker is here, nothing new grows.
     if (suddenDeath(game)) return;
 
@@ -110,7 +111,7 @@
     };
     const count = kind => game.food.filter(f => f.kind === kind).length;
     for (let n = count('food'); n < APPLES; n++) place({ kind: 'food' });
-    for (let n = count('mushroom'); n < MUSHROOMS; n++) place({ kind: 'mushroom' });
+    for (let n = count('mushroom'); n < MUSHROOMS; n++) place({ kind: 'mushroom', expires: game.tick + MUSHROOM_TICKS });
     if (!count('golden') && Math.random() < GOLDEN_CHANCE) place({ kind: 'golden', expires: game.tick + GOLDEN_TICKS });
   }
 
@@ -777,16 +778,12 @@
       ctx.moveTo(fx, fy + cell * 0.6);
       ctx.lineTo(fx, fy - cell * 0.9);
       ctx.stroke();
-      ctx.fillStyle = s.color;
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(fx, fy - cell * 0.9);
-      ctx.lineTo(fx + cell * 0.9, fy - cell * 0.62);
-      ctx.lineTo(fx, fy - cell * 0.32);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+      const w = cell * 0.9, h = cell * 0.6, top = fy - cell * 0.9;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(fx, top, w, h);
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(fx + w * 0.4, top, w * 0.2, h);
+      ctx.fillRect(fx, top + h * 0.38, w, h * 0.24);
     }
     ctx.restore();
   }
@@ -862,6 +859,14 @@
         ctx.moveTo(x + 3, y + cell / 2); ctx.lineTo(x + cell - 3, y + cell / 2);
         ctx.moveTo(x + off, y + 3); ctx.lineTo(x + off, y + cell / 2);
         ctx.moveTo(x + cell - off, y + cell / 2); ctx.lineTo(x + cell - off, y + cell - 3);
+        ctx.stroke();
+      }
+      if (look === 'colonist' && i > 0) { // white cross-belts
+        ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x + 5, y + 5); ctx.lineTo(x + cell - 5, y + cell - 5);
+        ctx.moveTo(x + cell - 5, y + 5); ctx.lineTo(x + 5, y + cell - 5);
         ctx.stroke();
       }
       if (look === 'vulture' && i > 1) { // pale edge so the black shows on the bark
@@ -963,15 +968,14 @@
         circle(-c * 0.06, 0, c * 0.07);
         eyes(0.08);
         break;
-      case 'colonist': // explorer's pith helmet
-        ctx.fillStyle = '#e7d7b1';
+      case 'colonist': // redcoat's black tricorn hat with gold trim
+        tri([0.05, 0, -0.45, -0.45, -0.45, 0.45], '#111827');
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = c * 0.04;
         ctx.beginPath();
-        ctx.ellipse(-c * 0.08, 0, c * 0.3, c * 0.42, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#c9b48a';
-        ctx.beginPath();
-        ctx.ellipse(-c * 0.1, 0, c * 0.18, c * 0.28, 0, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.moveTo(c * 0.05, 0); ctx.lineTo(-c * 0.45, -c * 0.45);
+        ctx.lineTo(-c * 0.45, c * 0.45); ctx.closePath();
+        ctx.stroke();
         eyes(0.08);
         break;
       case 'drab': // bored, half-closed eyes
@@ -1022,6 +1026,8 @@
         ctx.beginPath();
         ctx.moveTo(c * 0.15, -c * 0.06); ctx.lineTo(c * 0.15, c * 0.06);
         ctx.stroke();
+        ctx.fillStyle = '#ffffff'; // taped-up bridge
+        ctx.fillRect(c * 0.09, -c * 0.07, c * 0.12, c * 0.14);
         break;
       case 'wildcard': { // a big swept-over golden hairdo and mismatched eyes
         ctx.fillStyle = '#fbbf24';
@@ -1067,6 +1073,20 @@
           }
         }
         ctx.stroke();
+        // Party member: a little hammer and sickle on the back of the head.
+        ctx.save();
+        ctx.translate(-c * 0.2, 0);
+        ctx.rotate(Math.PI / 2);
+        ctx.strokeStyle = '#fde047';
+        ctx.fillStyle = '#fde047';
+        ctx.lineWidth = c * 0.05;
+        ctx.beginPath();
+        ctx.arc(0, 0, c * 0.15, -Math.PI * 0.25, Math.PI * 0.95);
+        ctx.stroke();
+        ctx.rotate(-Math.PI / 4);
+        ctx.fillRect(-c * 0.02, -c * 0.16, c * 0.04, c * 0.3); // handle
+        ctx.fillRect(-c * 0.09, -c * 0.18, c * 0.18, c * 0.06); // head
+        ctx.restore();
         break;
       }
       case 'joker': // jester hat with bells, red nose

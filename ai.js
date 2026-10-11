@@ -33,16 +33,16 @@ window.SnakeAI = (() => {
   //   margin, headRisk, zoneRisk    spare room wanted / fear of a rival's next move / of where it might be (required)
   //   distance                      reward per step of distance from the nearest rival head
   //   hunt                          { squeeze, chase, lead }: shrink the victim's room, get in front of it
-  //   home                          { radius, leave }: stay in a home circle, hunt intruders
+  //   home                          { radius, leave }: stay near a home circle, hunt intruders
   //   lure                          { weight, dist }: hover about `dist` from a chosen snake's head
   //   turn                          penalty for every change of direction
   //   tail                          reward for riding just behind a rival's tail
   //   mimic                         bonus for moving the way the model snake moves
   //   colony, goal                  { radius, max, every }: plant and defend flags; pull per step toward the next site
   const DRAB = {
-    space: 1, territory: 1.2, aggression: 0.3,
+    space: 1.2, territory: 1.5, aggression: 0.3,
     food: 5, eat: 80, pellet: 1.2, foodRange: 60,
-    margin: 3, headRisk: 600, zoneRisk: 150,
+    margin: 8, headRisk: 700, zoneRisk: 150,
   };
   const HUNT = { squeeze: 2.5, chase: 6, lead: 4 };
 
@@ -51,7 +51,7 @@ window.SnakeAI = (() => {
   // screen, a line for when it kills you, and one for when it wins.
   const PERSONAS = {
     hunter: {
-      name: 'Hunter', color: '#ef4444', look: 'hunter', driver: 'hunter',
+      name: 'Hunter', color: '#b91c1c', look: 'hunter', driver: 'hunter',
       blurb: 'Picks whichever snake it has the best shot at and cuts it off.',
       kill: 'Hunter saw you coming three moves ago.',
       win: 'Hunter wins. Nobody was safe.',
@@ -68,8 +68,8 @@ window.SnakeAI = (() => {
       win: 'Gobbler wins, and is still hungry.',
       w: {
         space: 1, territory: 0.2,
-        food: 14, eat: 300, pellet: 3, foodRange: 60, contested: 0.3, mushroom: -3,
-        margin: 6, headRisk: 800, zoneRisk: 200,
+        food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 0.3, mushroom: -3,
+        margin: 6, headRisk: 900, zoneRisk: 300,
       },
     },
     ghost: {
@@ -79,8 +79,8 @@ window.SnakeAI = (() => {
       win: 'Ghost wins. Was it ever really here?',
       w: {
         space: 2, territory: 0.6,
-        food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 8, fedFactor: 0, mushroomLover: 6,
-        margin: 10, headRisk: 1200, zoneRisk: 400, distance: 25,
+        food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 10, fedFactor: 0, mushroomLover: 12,
+        margin: 6, headRisk: 900, zoneRisk: 150, distance: 7,
       },
     },
     sovereign: {
@@ -91,13 +91,13 @@ window.SnakeAI = (() => {
       w: {
         space: 1.5, territory: 1, aggression: 0.2,
         food: 5, eat: 70, pellet: 1.2, foodRange: 30,
-        margin: 6, headRisk: 700, zoneRisk: 100,
-        home: { radius: 5, leave: 30 }, hunt: { squeeze: 2.5, chase: 6, lead: 3 },
+        margin: 3, headRisk: 500, zoneRisk: 80,
+        home: { radius: 4, leave: 30 }, hunt: { squeeze: 2.5, chase: 6, lead: 3 },
       },
     },
     colonist: {
-      name: 'Colonist', color: '#14b8a6', look: 'colonist', driver: 'colonist',
-      blurb: 'Plants flags all over the board and defends every one of them.',
+      name: 'Colonist', color: '#f43f5e', look: 'colonist', driver: 'colonist',
+      blurb: 'A redcoat who plants flags all over the board and defends every one of them.',
       kill: 'The Colonist claimed the spot you were standing on.',
       win: 'The Colonist plants its final flag.',
       w: {
@@ -171,7 +171,7 @@ window.SnakeAI = (() => {
     },
     copycat: {
       name: 'Copycat', color: '#e5e7eb', look: 'copycat', driver: 'copycat',
-      blurb: 'Copies whoever looks like they are winning, right alongside them.',
+      blurb: 'Copies whoever looks like they are winning, right alongside them. Party member.',
       kill: 'Copycat got you. It learned that from someone.',
       win: 'Copycat wins. Imitation pays.',
       w: { ...DRAB, mimic: 120, lure: { weight: 4, dist: 5 } },
@@ -352,8 +352,6 @@ window.SnakeAI = (() => {
           y: Math.min(N - R - 2, Math.max(R + 1, myHead.y)),
           radius: R,
         };
-        // After two minutes the home grows a cell every 15 s, up to most of the board.
-        memory.home.radius = Math.min(Math.floor(N / 2), R + Math.max(0, Math.floor((view.timeMs - 120000) / 15000)));
         ctx.home = memory.home;
         const intruders = all.filter(k => Math.hypot(heads[k].x - ctx.home.x, heads[k].y - ctx.home.y) <= ctx.home.radius + 1);
         if (intruders.length) pickVictim(intruders, ctx.w.hunt);
@@ -532,8 +530,7 @@ window.SnakeAI = (() => {
     const foodW = shrinking ? Math.max(3, w.food) : fed ? w.food * w.fedFactor : w.food;
     const eatW = shrinking ? Math.max(40, w.eat) : fed ? w.eat * w.fedFactor : w.eat;
 
-    // Food worth by kind. Negative means "avoid eating". A home-keeper ignores
-    // food outside its home.
+    // Food worth by kind. Negative means "avoid eating".
     const apple = w.normalFood ?? 1;
     const worth = {
       food: shrinking ? 0 : apple,
@@ -545,7 +542,6 @@ window.SnakeAI = (() => {
     const foodKind = new Map(); // what eating a cell does to my length
     for (const f of food) foodKind.set(f.y * N + f.x, f.kind);
     for (const f of food) {
-      if (ctx.home && Math.hypot(f.x - ctx.home.x, f.y - ctx.home.y) > ctx.home.radius) continue;
       const v = worth[f.kind] ?? 0;
       if (!v) continue;
       const i = f.y * N + f.x;
