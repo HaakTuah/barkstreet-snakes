@@ -8,6 +8,10 @@
 // Cleverness: for every move sequence up to `depth` steps it scores the result
 // with a timed flood fill (do I still have room?), a Voronoi split of the board
 // (whose territory is this?) and the food it can reach before anyone else.
+//
+// Personality: on top of that shared sense, each persona chases its own goal.
+// Viper hunts a victim, Gobbler eats almost regardless of risk, and Ghost keeps
+// its distance and stays small.
 window.SnakeAI = (() => {
   const DIRS = {
     up: { x: 0, y: -1 },
@@ -17,24 +21,57 @@ window.SnakeAI = (() => {
   };
   const DIR_LIST = Object.values(DIRS);
 
+  // Weights (w):
+  //   space, territory, aggression  room / board share / shrinking everyone else
+  //   food, eat, pellet, foodRange  pull per step toward food, bonus for eating, pellet worth
+  //   contested                     chase food even when a rival gets there first
+  //   hungryBelow, fedFactor        at this length or more, food matters only fedFactor as much
+  //   margin                        spare room wanted beyond its own length
+  //   headRisk, zoneRisk            fear of a rival's next move / of where it might be
+  //   distance                      reward per step of distance from the nearest rival head
+  //   hunt                          { squeeze, chase, lead, playerBias }: shrink the victim's
+  //                                 room and get to the cell `lead` steps in front of its head
   const PERSONAS = {
     viper: {
       name: 'Viper', color: '#c084fc', reactionMs: 220, depth: 3,
-      w: { space: 1, territory: 1.2, aggression: 0.5, playerAggression: 0.6, food: 5, eat: 80, pellet: 1.2, margin: 1, headRisk: 500, zoneRisk: 120 },
+      w: {
+        space: 1, territory: 0.8, aggression: 0.3,
+        food: 4, eat: 60, pellet: 1, foodRange: 40, hungryBelow: 12, fedFactor: 0.2,
+        margin: 10, headRisk: 600, zoneRisk: 40,
+        hunt: { squeeze: 2.5, chase: 6, lead: 4, playerBias: 0.6 },
+      },
     },
     gobbler: {
       name: 'Gobbler', color: '#fb923c', reactionMs: 250, depth: 3,
-      w: { space: 1, territory: 0.4, aggression: 0.1, playerAggression: 0, food: 9, eat: 180, pellet: 1.8, margin: 3, headRisk: 600, zoneRisk: 200 },
+      w: {
+        space: 1, territory: 0.2,
+        food: 12, eat: 300, pellet: 2, foodRange: 60, contested: true,
+        margin: 2, headRisk: 500, zoneRisk: 30,
+      },
     },
-    warden: {
-      name: 'Warden', color: '#60a5fa', reactionMs: 240, depth: 3,
-      w: { space: 1.5, territory: 1.6, aggression: 0.3, playerAggression: 0, food: 3, eat: 45, pellet: 1, margin: 8, headRisk: 900, zoneRisk: 300 },
+    ghost: {
+      name: 'Ghost', color: '#e2e8f0', reactionMs: 240, depth: 3,
+      w: {
+        space: 2, territory: 0.6,
+        food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 8, fedFactor: 0,
+        margin: 10, headRisk: 1200, zoneRisk: 400, distance: 25,
+      },
+    },
+    // Not in the game: the old all-rounder, used by the simulator as a neutral fourth snake.
+    baseline: {
+      name: 'Baseline', color: '#94a3b8', reactionMs: 240, depth: 3,
+      w: {
+        space: 1, territory: 1.2, aggression: 0.3,
+        food: 5, eat: 80, pellet: 1.2, foodRange: 60,
+        margin: 3, headRisk: 600, zoneRisk: 150,
+      },
     },
   };
 
   const TRAPPED = 5000;
-  const FOOD_RANGE = 60; // food further than this many steps doesn't attract
   const DEAD = -1e6;
+  const SQUEEZE_CAP = 120; // stop counting a victim's room past this
+  const DISTANCE_CAP = 14; // Ghost is happy once this far from everyone
 
   // Scratch buffers, reused between calls (grid size is fixed per page).
   let bufN = 0, mineFree, otherFree, ownFree, risk, seen, owner, claimT, ownerStamp;
@@ -79,6 +116,7 @@ window.SnakeAI = (() => {
     // and treat that path as occupied (for me only). Around it, mark cells it
     // could step into next tick as a head-on risk, and its wider reach as a
     // soft risk zone.
+    const heads = []; // predicted current head of each opponent
     for (const o of others) {
       const L = o.body.length;
       let hx = o.body[0].x, hy = o.body[0].y;
@@ -88,6 +126,7 @@ window.SnakeAI = (() => {
         hx = nx; hy = ny;
         mineFree[hy * N + hx] = Math.max(mineFree[hy * N + hx], L);
       }
+      heads.push({ x: hx, y: hy });
       for (const d of DIR_LIST) {
         const nx = hx + d.x, ny = hy + d.y;
         if (inside(nx, ny)) risk[ny * N + nx] += w.headRisk;
@@ -121,6 +160,30 @@ window.SnakeAI = (() => {
       foodValue.set(i, (foodValue.get(i) || 0) + v);
     }
 
+    // How much food matters right now, given how long I already am.
+    const myLen = me.body.length + me.grow;
+    const foodW = myLen >= (w.hungryBelow ?? Infinity) ? w.food * w.fedFactor : w.food;
+    const eatW = myLen >= (w.hungryBelow ?? Infinity) ? w.eat * w.fedFactor : w.eat;
+
+    // Viper's victim: the nearest rival head, with the player counting as closer.
+    let victim = -1;
+    if (w.hunt && others.length) {
+      let bestD = Infinity;
+      others.forEach((o, k) => {
+        const d = (Math.abs(heads[k].x - me.body[0].x) + Math.abs(heads[k].y - me.body[0].y))
+          * (o.isPlayer ? w.hunt.playerBias : 1);
+        if (d < bestD) { bestD = d; victim = k; }
+      });
+    }
+    let target = null; // the cell just in front of the victim's head
+    if (victim >= 0) {
+      const d = others[victim].dir, h = heads[victim];
+      target = {
+        x: Math.min(N - 1, Math.max(0, h.x + d.x * w.hunt.lead)),
+        y: Math.min(N - 1, Math.max(0, h.y + d.y * w.hunt.lead)),
+      };
+    }
+
     // Can my head step into cell (x, y) as move number `step` from now?
     function canEnter(body, grow, x, y, step) {
       if (!inside(x, y) || mineFree[y * N + x] > step) return false;
@@ -139,11 +202,13 @@ window.SnakeAI = (() => {
       const passOther = (i, T) => otherFree[i] <= T && ownFree[i] <= T - t;
 
       // 1. Room: timed flood fill from my head (tail cells open up as I move).
+      //    It also finds the best food by distance alone, ignoring rivals.
       const cap = L * 2 + 20;
       const stampF = ++stamp;
       seen[headI] = stampF;
-      let frontier = [headI], space = 0, nearestFood = Infinity;
-      for (let d = 1; frontier.length && space < cap; d++) {
+      let frontier = [headI], space = 0, anyFood = 0;
+      // A contested-food eater keeps searching past the room cap until it sees food.
+      for (let d = 1; frontier.length && (space < cap || (w.contested && !anyFood && d <= w.foodRange)); d++) {
         const next = [];
         for (const i of frontier) {
           const x = i % N, y = (i - x) / N;
@@ -154,12 +219,14 @@ window.SnakeAI = (() => {
             if (seen[ni] === stampF || !passMine(ni, t + d)) continue;
             seen[ni] = stampF;
             space++;
-            if (nearestFood === Infinity && foodValue.has(ni)) nearestFood = d;
+            const v = foodValue.get(ni);
+            if (v) anyFood = Math.max(anyFood, v * Math.max(0, w.foodRange - d));
             next.push(ni);
           }
         }
         frontier = next;
       }
+      space = Math.min(space, cap);
 
       // 2. Territory: multi-source BFS, opponents start at their last seen
       //    head `age` ticks in the past, I start at my head at time t.
@@ -205,32 +272,71 @@ window.SnakeAI = (() => {
         T = level.length || si >= sources.length ? T + 1 : sources[si].T;
       }
 
-      // 3. Food I'll reach first: a steady pull of w.food per step closer.
+      // 3. Food: a steady pull of foodW per step closer. Normally only food I
+      //    reach before any rival counts; a contested eater counts all of it.
       let foodScore = 0;
       for (const [i, v] of foodValue) {
         if (ownerStamp[i] === stampV && owner[i] === 0) {
-          foodScore = Math.max(foodScore, v * Math.max(0, FOOD_RANGE - (claimT[i] - t)));
+          foodScore = Math.max(foodScore, v * Math.max(0, w.foodRange - (claimT[i] - t)));
         }
       }
+      if (w.contested) foodScore = Math.max(foodScore, anyFood);
       // Nothing uncontested: drift toward the nearest food anyway, more weakly.
-      if (foodScore === 0 && nearestFood !== Infinity) foodScore = 0.3 * Math.max(0, FOOD_RANGE - nearestFood);
+      else if (foodScore === 0) foodScore = 0.3 * anyFood;
 
-      let othersTerritory = 0, playerTerritory = 0;
-      others.forEach((o, k) => {
-        othersTerritory += counts[k + 1];
-        if (o.isPlayer) playerTerritory += counts[k + 1];
-      });
-
-      body.forEach(c => { ownFree[c.y * N + c.x] = 0; });
+      let othersTerritory = 0;
+      others.forEach((o, k) => { othersTerritory += counts[k + 1]; });
 
       let score = w.space * space
         + w.territory * counts[0]
-        - w.aggression * othersTerritory
-        - w.playerAggression * playerTerritory
-        + w.food * foodScore;
+        - (w.aggression || 0) * othersTerritory
+        + foodW * foodScore;
+
+      // 4. Viper: shrink the victim's room and get in front of it.
+      if (victim >= 0) {
+        score -= w.hunt.squeeze * victimRoom(t);
+        score -= w.hunt.chase * (Math.abs(head.x - target.x) + Math.abs(head.y - target.y));
+      }
+
+      // 5. Ghost: stay away from every rival head.
+      if (w.distance) {
+        let nearest = DISTANCE_CAP;
+        for (const h of heads) nearest = Math.min(nearest, Math.abs(head.x - h.x) + Math.abs(head.y - h.y));
+        score += w.distance * nearest;
+      }
+
+      body.forEach(c => { ownFree[c.y * N + c.x] = 0; });
+
       const need = L + w.margin;
       if (space < need) score -= TRAPPED + 100 * (need - space);
       return score;
+    }
+
+    // How much room the victim has from its predicted head, with my body
+    // (as placed in the current evaluation, via ownFree) in the way.
+    function victimRoom(t) {
+      const h = heads[victim];
+      const start = h.y * N + h.x;
+      const stampS = ++stamp;
+      seen[start] = stampS;
+      let frontier = [start], room = 0;
+      for (let d = 1; frontier.length && room < SQUEEZE_CAP; d++) {
+        const next = [];
+        for (const i of frontier) {
+          const x = i % N, y = (i - x) / N;
+          for (const dd of DIR_LIST) {
+            const nx = x + dd.x, ny = y + dd.y;
+            if (!inside(nx, ny)) continue;
+            const ni = ny * N + nx;
+            if (seen[ni] === stampS || otherFree[ni] > d || ownFree[ni] > d - t) continue;
+            seen[ni] = stampS;
+            room++;
+            next.push(ni);
+          }
+        }
+        frontier = next;
+      }
+      return Math.min(room, SQUEEZE_CAP);
     }
 
     // Score of moving `d` as step t + 1, then playing on for `depth - 1` more steps.
@@ -244,7 +350,7 @@ window.SnakeAI = (() => {
       // Eating must beat the pull that food had on us, plus a bonus for eating sooner.
       const v = foodValue.get(i) || 0;
       if (v) { g++; foodValue.delete(i); }
-      const gain = v * (w.food * FOOD_RANGE + w.eat * Math.pow(0.85, t)) - risk[i] * Math.pow(0.6, t);
+      const gain = v * (foodW * w.foodRange + eatW * Math.pow(0.85, t)) - risk[i] * Math.pow(0.6, t);
       const score = depth <= 1
         ? evaluate(nb, g, t + 1) + bonus + gain
         : search(nb, g, depth - 1, t + 1, bonus + gain);

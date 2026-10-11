@@ -24,10 +24,15 @@
     return { id, body, dir: d, alive: true, grow: 0, eaten: 0, queue: [], cause: null, diedAt: null, ...props };
   }
 
-  function createGame({ withPlayer = true } = {}) {
+  // fourth: for the simulator, a persona key to put in the player's slot instead of you.
+  function createGame({ withPlayer = true, fourth = null } = {}) {
     const snakes = [];
     if (withPlayer) snakes.push(makeSnake(0, SPAWNS[0], { name: 'You', color: PLAYER_COLOR, isPlayer: true }));
-    ['viper', 'gobbler', 'warden'].forEach((key, k) => {
+    else if (fourth) {
+      const p = PERSONAS[fourth];
+      snakes.push(makeSnake(0, SPAWNS[0], { name: p.name, color: p.color, persona: p }));
+    }
+    ['viper', 'gobbler', 'ghost'].forEach((key, k) => {
       const p = PERSONAS[key];
       snakes.push(makeSnake(k + 1, SPAWNS[k + 1], { name: p.name, color: p.color, persona: p }));
     });
@@ -508,23 +513,70 @@
       game: () => game,
       createGame,
       step,
-      simulate(rounds = 10, maxTicks = 3000) {
-        const out = { rounds, wins: {}, draws: 0, timeouts: 0, avgTicks: 0, causes: {}, msPerTick: 0 };
+      // await SnakeDebug.simulate({ rounds, fourth: 'baseline' }) adds a neutral AI in your slot.
+      // Spawn corners rotate between rounds so nobody keeps a lucky start.
+      async simulate(opts = {}) {
+        const { rounds = 20, fourth = null, maxTicks = 3000 } = typeof opts === 'number' ? { rounds: opts } : opts;
+        const per = {};
+        const out = { rounds, draws: 0, timeouts: 0, avgTicks: 0, msPerTick: 0, snakes: per };
         let ticks = 0;
         const t0 = performance.now();
         for (let r = 0; r < rounds; r++) {
-          const g = createGame({ withPlayer: false });
-          while (g.snakes.filter(s => s.alive).length > 1 && g.tick < maxTicks) step(g);
+          await new Promise(res => setTimeout(res, 0)); // keep the page responsive
+          out.progress = r;
+          const g = createGame({ withPlayer: false, fourth });
+          // Rotate spawns: shift every snake r corners around the board.
+          g.snakes.forEach((s, k) => {
+            const sp = SPAWNS[(k + (fourth ? 0 : 1) + r) % SPAWNS.length];
+            Object.assign(s, makeSnake(s.id, sp, { name: s.name, color: s.color, persona: s.persona }));
+          });
+          g.food = []; fillFood(g); g.history = []; snapshot(g);
+          for (const s of g.snakes) {
+            per[s.name] ||= { wins: 0, placeSum: 0, lengthSum: 0, eatenSum: 0, kills: 0, aliveTicks: 0, distSum: 0, distSamples: 0, deaths: {} };
+            s.place = null;
+          }
+          while (g.snakes.filter(s => s.alive).length > 1 && g.tick < maxTicks) {
+            // Distance from each live head to the nearest other live head.
+            const live = g.snakes.filter(s => s.alive);
+            for (const s of live) {
+              let d = Infinity;
+              for (const o of live) if (o !== s) d = Math.min(d, Math.abs(s.body[0].x - o.body[0].x) + Math.abs(s.body[0].y - o.body[0].y));
+              if (d < Infinity) { per[s.name].distSum += d; per[s.name].distSamples++; }
+            }
+            const dying = step(g);
+            const left = g.snakes.filter(s => s.alive).length;
+            for (const s of dying) {
+              s.place = left + 1;
+              const k = s.killer === 'self' ? 'itself' : s.killer;
+              per[s.name].deaths[k] = (per[s.name].deaths[k] || 0) + 1;
+              const killer = g.snakes.find(o => o.name === s.killer && o !== s);
+              if (killer) per[killer.name].kills++;
+            }
+          }
           ticks += g.tick;
           const alive = g.snakes.filter(s => s.alive);
           if (g.tick >= maxTicks) out.timeouts++;
-          else if (alive.length === 1) out.wins[alive[0].name] = (out.wins[alive[0].name] || 0) + 1;
+          else if (alive.length === 1) { per[alive[0].name].wins++; alive[0].place = 1; }
           else out.draws++;
           for (const s of g.snakes) {
-            if (s.alive) continue;
-            const c = (out.causes[s.name] ||= {});
-            c[s.cause] = (c[s.cause] || 0) + 1;
+            const p = per[s.name];
+            p.placeSum += s.place || 1;
+            p.lengthSum += s.body.length;
+            p.eatenSum += s.eaten;
+            p.aliveTicks += s.alive ? g.tick : s.diedAt;
           }
+        }
+        for (const [name, p] of Object.entries(per)) {
+          per[name] = {
+            winRate: `${Math.round(100 * p.wins / rounds)}%`,
+            avgPlace: +(p.placeSum / rounds).toFixed(2),
+            avgFinalLength: Math.round(p.lengthSum / rounds),
+            avgEaten: Math.round(p.eatenSum / rounds),
+            killsPerRound: +(p.kills / rounds).toFixed(2),
+            avgSurvivalTicks: Math.round(p.aliveTicks / rounds),
+            avgDistToNearestRival: +(p.distSum / Math.max(1, p.distSamples)).toFixed(1),
+            killedBy: p.deaths,
+          };
         }
         out.avgTicks = Math.round(ticks / rounds);
         out.msPerTick = +((performance.now() - t0) / ticks).toFixed(2);

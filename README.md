@@ -16,11 +16,11 @@ Snake against three AI rivals, playable in the browser. Plain HTML, CSS and Java
 
 | Snake | Style |
 |-------|-------|
-| **Viper** (purple) | Aggressive. Cuts into other snakes' space and especially likes to get between you and your food. |
-| **Gobbler** (orange) | Greedy. Chases food hard and rushes the pellets left by dead snakes. |
-| **Warden** (blue) | Patient. Keeps plenty of room, claims territory and boxes others in late in the round. |
+| **Viper** (purple) | Hunter. Picks a victim (preferably you), races to the spot in front of its head and tries to shrink its space. Eats only until it's long enough to wall someone in. |
+| **Gobbler** (orange) | Glutton. Goes for food even when a rival is closer, dives into crowds for it and grows fast. |
+| **Ghost** (white) | Avoider. Keeps as far from everyone as it can, stays short, and wins by letting the others kill each other. |
 
-The AIs plan a few moves ahead. They check that they'll still have room to move, split the board into "who gets where first", and only chase food they can reach before anyone else. To keep things fair, they see the other snakes as they were about a quarter of a second ago, like a human's reaction time. So they can't dodge your sudden turns any faster than you could dodge theirs.
+All three share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move, and avoid the space around other snakes' heads. On top of that, each one chases its own goal. To keep things fair, they see the other snakes as they were about a quarter of a second ago, like a human's reaction time. So they can't dodge your sudden turns any faster than you could dodge theirs.
 
 ## Controls
 
