@@ -1,6 +1,6 @@
 # Snake
 
-Snake against three AI rivals, playable in the browser. Plain HTML, CSS and JavaScript, with no build step and no dependencies.
+Snake against three AI rivals, drawn at random each round from a cast of twelve. Playable in the browser. Plain HTML, CSS and JavaScript, with no build step and no dependencies.
 
 **Play:** https://haaktuah.github.io/snake-game/
 
@@ -14,13 +14,26 @@ Snake against three AI rivals, playable in the browser. Plain HTML, CSS and Java
 
 ## The rivals
 
-| Snake | Style |
-|-------|-------|
-| **Viper** (purple) | Hunter. Picks a victim (preferably you), races to the spot in front of its head and tries to shrink its space. Eats only until it's long enough to wall someone in. |
-| **Gobbler** (orange) | Glutton. Goes for food even when a rival is closer, dives into crowds for it and grows fast. |
-| **Ghost** (white) | Avoider. Keeps as far from everyone as it can, stays short, and wins by letting the others kill each other. |
+Each round, three of these twelve are picked at random. The start screen tells you who you're up against, and you can hover over a name on the scoreboard to see what it does.
 
-All three share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move, and avoid the space around other snakes' heads. On top of that, each one chases its own goal. To keep things fair, they see the other snakes as they were about a quarter of a second ago, like a human's reaction time. So they can't dodge your sudden turns any faster than you could dodge theirs.
+| Snake | Look | Style |
+|-------|------|-------|
+| **Hunter** | crimson, fangs, stripes | Picks whichever snake it has the best shot at, gets in front of it and squeezes its space. |
+| **Gobbler** | orange, puffy cheeks | Eats everything, even food a rival is closer to. Grows fast, dies young. |
+| **Ghost** | pale, fading body | Keeps as far from everyone as it can, stays short, and waits for the others to kill each other. |
+| **Warden** | blue, visor | Claims a home area (shown on the board) and attacks anyone who comes in. |
+| **Drab** | grey, sleepy eyes | Plays it safe and sensible. Nothing special. |
+| **Vulture** | grey, pink bald head | Hovers near snakes in trouble and feeds on the pellets they leave. |
+| **Mason** | sandstone bricks | Builds long straight walls to fence off a big piece of the board. |
+| **Wildcard** | rainbow, odd eyes | A random mix of habits, different every round. |
+| **Creeper** | violet, slit eyes | Sneaks up and rides right behind other snakes' tails. |
+| **Metagamer** | gold, glasses | Watches how each rival plays, then avoids the aggressive ones, shadows the greedy ones and hunts the timid ones. |
+| **Capricious** | changes with its mood | Switches between hunter, glutton, hermit and builder every few seconds. |
+| **Copycat** | pale copy of its model | Copies whoever looks like they're winning, right alongside them. |
+
+All of them share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move, and avoid the space around other snakes' heads. On top of that, each one chases its own goal.
+
+They're also fair. They see the other snakes as they were about a quarter of a second ago, like a human's reaction time, so they can't dodge your sudden turns any faster than you could dodge theirs. And they aren't told which snake is you: you're judged only by how you move, like everyone else.
 
 ## Controls
 
@@ -40,4 +53,4 @@ Everything is saved in your browser only.
 
 ## Run locally
 
-Open `index.html` in any browser. Add `?debug` to the URL to get `SnakeDebug.simulate(n)` in the console, which runs n fast AI-only rounds and reports who won and how the snakes died.
+Open `index.html` in any browser. Add `?debug` to the URL for tuning tools in the console: `await SnakeDebug.simulate({ rounds: 50 })` runs fast AI-only rounds with four random personalities and reports each one's win rate, food, kills and so on, and `SnakeDebug.setup(['hunter', 'warden', 'ghost'])` sets up a round against chosen opponents.

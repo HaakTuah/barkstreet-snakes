@@ -406,3 +406,32 @@ button.link {
   color: var(--muted);
   text-decoration: underline;
 }
+
+/* This round's opponents, on the start screen and countdown */
+.opponents {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  max-width: 340px;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.opponents[hidden] { display: none; }
+
+.opponents li {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.opponents .dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  transform: translateY(-1px);
+}
+
+.opponents .blurb { color: var(--muted); }
