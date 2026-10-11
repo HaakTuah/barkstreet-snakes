@@ -29,8 +29,14 @@ The AIs plan a few moves ahead. They check that they'll still have room to move,
 | Move    | Arrow keys or WASD (swipe on touch screens) |
 | Pause   | Space or P                   |
 | Restart | Enter or R                   |
+| Scores  | H, or the Scores button      |
 
-Your best score (food eaten) is saved in the browser.
+## Scores and stats
+
+Everything is saved in your browser only.
+
+- **High scores:** the top 10 rounds, ranked by finishing place first (a win beats any 2nd place), then by food eaten. When a round makes the list, you can type your name on the end screen.
+- **Stats:** rounds played, wins, average place and food, how often you finished in each place, and what killed you (including your nemesis, the AI that gets you most often).
 
 ## Run locally
 

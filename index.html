@@ -13,6 +13,7 @@
       <div class="scores">
         <span>Score <strong id="score">0</strong></span>
         <span>Best <strong id="best">0</strong></span>
+        <button id="records-open" class="small">Scores</button>
       </div>
     </header>
 
@@ -23,6 +24,10 @@
       <div id="overlay" class="overlay">
         <h2 id="overlay-title">Snake</h2>
         <p id="overlay-text">Outlast three rival snakes. Arrow keys / WASD to move · Swipe on touch screens</p>
+        <label id="name-row" class="name-row" hidden>
+          <span id="name-rank"></span>
+          <input id="name-input" type="text" maxlength="16" autocomplete="off" spellcheck="false" aria-label="Your name">
+        </label>
         <div class="buttons">
           <button id="start">Play</button>
           <button id="watch" class="secondary" hidden>Watch</button>
@@ -30,9 +35,25 @@
       </div>
     </div>
 
-    <p class="help">Space / P to pause · Enter / R to restart</p>
+    <p class="help">Space / P to pause · Enter / R to restart · H for scores</p>
   </main>
+
+  <div id="records" class="records" role="dialog" aria-modal="true" aria-label="Scores and stats" hidden>
+    <div class="records-card">
+      <div class="records-head">
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" data-tab="scores">High scores</button>
+          <button class="tab" role="tab" data-tab="stats">Stats</button>
+        </div>
+        <button id="records-close" class="close" aria-label="Close">&times;</button>
+      </div>
+      <div id="records-body" class="records-body"></div>
+      <button id="records-reset" class="link">Reset scores &amp; stats</button>
+    </div>
+  </div>
+
   <script src="ai.js"></script>
+  <script src="records.js"></script>
   <script src="snake.js"></script>
 </body>
 </html>

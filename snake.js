@@ -106,20 +106,25 @@
     const heads = new Map();
     for (const s of alive) {
       const k = key(s.next.x, s.next.y);
-      heads.set(k, (heads.get(k) || 0) + 1);
+      heads.set(k, [...(heads.get(k) || []), s]);
     }
 
+    // killer: 'wall', 'self', or the name of the snake that was hit.
     const dying = [];
     for (const s of alive) {
       const { x, y } = s.next;
       const k = key(x, y);
-      let cause = null;
-      if (x < 0 || y < 0 || x >= GRID || y >= GRID) cause = 'hit the wall';
-      else if (occupied.has(k)) {
+      if (x < 0 || y < 0 || x >= GRID || y >= GRID) {
+        s.cause = 'hit the wall'; s.killer = 'wall';
+      } else if (occupied.has(k)) {
         const other = occupied.get(k);
-        cause = other === s ? 'bit itself' : `ran into ${other.isPlayer ? 'you' : other.name}`;
-      } else if (heads.get(k) > 1) cause = 'crashed head-on';
-      if (cause) { s.cause = cause; dying.push(s); }
+        s.killer = other === s ? 'self' : other.name;
+        s.cause = other === s ? 'bit itself' : `ran into ${other.isPlayer ? 'you' : other.name}`;
+      } else if (heads.get(k).length > 1) {
+        const other = heads.get(k).find(o => o !== s);
+        s.cause = `crashed head-on into ${other.isPlayer ? 'you' : other.name}`; s.killer = other.name;
+      } else continue;
+      dying.push(s);
     }
 
     for (const s of alive) {
@@ -175,6 +180,14 @@
   const overlayText = document.getElementById('overlay-text');
   const startBtn = document.getElementById('start');
   const watchBtn = document.getElementById('watch');
+  const nameRow = document.getElementById('name-row');
+  const nameRank = document.getElementById('name-rank');
+  const nameInput = document.getElementById('name-input');
+  const recordsEl = document.getElementById('records');
+  const recordsBody = document.getElementById('records-body');
+  const recordsTabs = [...document.querySelectorAll('#records .tab')];
+
+  const Records = window.SnakeRecords;
 
   const KEYS = {
     ArrowUp: 'up', w: 'up', W: 'up',
@@ -224,12 +237,28 @@
     updateHud();
     draw();
 
-    if (game.snakes.filter(s => s.alive).length <= 1) return endRound();
+    const alive = game.snakes.filter(s => s.alive);
     if (wasAlive && !player().alive) {
-      recordBest();
-      showOverlay('You died', `You ${player().cause} · score ${player().eaten}`, 'Play again', 'Watch');
+      // Everyone still alive finished ahead of you; if nobody is, it's a shared-first draw.
+      finishPlayer({ place: alive.length + 1, draw: alive.length === 0 });
+    }
+    if (alive.length <= 1) {
+      if (player().alive) finishPlayer({ place: 1, won: true });
+      return endRound();
+    }
+    if (wasAlive && !player().alive) {
+      showOverlay('You died', `You ${player().cause} · ${Records.ordinal(game.result.place)} place · score ${player().eaten}`, 'Play again', 'Watch');
     }
     schedule();
+  }
+
+  // Record the player's round once, as soon as their placement is known.
+  function finishPlayer({ place, won = false, draw = false }) {
+    if (game.result) return;
+    const p = player();
+    game.result = { place, won, draw, eaten: p.eaten, killer: p.alive ? null : p.killer };
+    game.entry = Records.record(game.result);
+    recordBest();
   }
 
   function turn(name) {
@@ -270,7 +299,8 @@
     const title = survivors.length === 0 ? 'Draw'
       : survivors[0].isPlayer ? 'You win!'
       : `${survivors[0].name} wins`;
-    showOverlay(title, `Your score: ${player().eaten}`, 'Play again');
+    const { place, won } = game.result;
+    showOverlay(title, `You finished ${won ? '1st' : Records.ordinal(place)} · score ${player().eaten}`, 'Play again');
   }
 
   function showOverlay(title, text, button, secondary) {
@@ -279,6 +309,13 @@
     startBtn.textContent = button;
     watchBtn.hidden = !secondary;
     if (secondary) watchBtn.textContent = secondary;
+    // Offer to name a high score from this round, on the death and round-over screens.
+    const rank = state !== 'paused' && game.entry ? game.entry.rank : 0;
+    nameRow.hidden = !rank;
+    if (rank) {
+      nameRank.textContent = `New high score: #${rank}!`;
+      nameInput.value = Records.getName();
+    }
     overlay.classList.remove('hidden');
     startBtn.focus();
   }
@@ -361,9 +398,63 @@
     ctx.fill();
   }
 
+  // High scores / stats panel
+  let recordsTab = 'scores';
+
+  function openRecords() {
+    if (state === 'running' && player().alive) togglePause();
+    renderRecords();
+    recordsEl.hidden = false;
+    document.getElementById('records-close').focus();
+  }
+
+  function closeRecords() {
+    recordsEl.hidden = true;
+  }
+
+  function renderRecords() {
+    recordsTabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === recordsTab)));
+    recordsBody.innerHTML = '';
+    if (recordsTab === 'scores') {
+      Records.renderScores(recordsBody, game.entry && game.entry.id);
+    } else {
+      const colors = { self: PLAYER_COLOR };
+      for (const s of game.snakes) colors[s.name] = s.color;
+      Records.renderStats(recordsBody, colors);
+    }
+  }
+
+  recordsTabs.forEach(t => t.addEventListener('click', () => { recordsTab = t.dataset.tab; renderRecords(); }));
+  document.getElementById('records-open').addEventListener('click', openRecords);
+  document.getElementById('records-close').addEventListener('click', closeRecords);
+  recordsEl.addEventListener('click', e => { if (e.target === recordsEl) closeRecords(); });
+  document.getElementById('records-reset').addEventListener('click', () => {
+    if (!confirm('Delete all your high scores and stats?')) return;
+    Records.reset();
+    if (game.entry) game.entry.rank = 0;
+    nameRow.hidden = true;
+    renderRecords();
+  });
+
+  // Renaming a high score from the death / round-over screen.
+  nameInput.addEventListener('input', () => {
+    if (game.entry) Records.rename(game.entry.id, nameInput.value);
+  });
+
   // Keyboard
   document.addEventListener('keydown', e => {
-    if (KEYS[e.key]) {
+    if (e.target === nameInput) {
+      if (e.key === 'Enter') { e.preventDefault(); nameInput.blur(); startBtn.focus(); }
+      return;
+    }
+    if (!recordsEl.hidden) {
+      if (e.key === 'Escape' || e.key === 'h' || e.key === 'H') { e.preventDefault(); closeRecords(); }
+      return;
+    }
+    if (e.key === 'h' || e.key === 'H') {
+      e.preventDefault();
+      openRecords();
+    } else if (KEYS[e.key]) {
       e.preventDefault();
       if (state === 'running' && player().alive) turn(KEYS[e.key]);
     } else if (e.key === ' ' || e.key === 'p' || e.key === 'P') {
