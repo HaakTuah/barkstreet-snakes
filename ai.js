@@ -25,7 +25,9 @@ window.SnakeAI = (() => {
   // Weights (w), all optional unless noted:
   //   space, territory, aggression  room / board share / shrinking everyone else
   //   food, eat, pellet, foodRange  pull per step toward food, eating bonus, pellet worth, reach (required)
-  //   normalFood                    worth of ordinary food (default 1)
+  //   normalFood                    worth of a green apple (default 1); a golden apple is worth 3x
+  //   mushroom                      worth of a mushroom, which shrinks you (default -1: avoid)
+  //   mushroomLover                 from this length on, seek mushrooms and ignore apples
   //   contested                     how much food a rival reaches first still counts (0-1, true = 1)
   //   hungryBelow, fedFactor        at this length or more, food matters only fedFactor as much
   //   margin, headRisk, zoneRisk    spare room wanted / fear of a rival's next move / of where it might be (required)
@@ -36,6 +38,7 @@ window.SnakeAI = (() => {
   //   turn                          penalty for every change of direction
   //   tail                          reward for riding just behind a rival's tail
   //   mimic                         bonus for moving the way the model snake moves
+  //   colony, goal                  { radius, max, every }: plant and defend flags; pull per step toward the next site
   const DRAB = {
     space: 1, territory: 1.2, aggression: 0.3,
     food: 5, eat: 80, pellet: 1.2, foodRange: 60,
@@ -43,10 +46,15 @@ window.SnakeAI = (() => {
   };
   const HUNT = { squeeze: 2.5, chase: 6, lead: 4 };
 
+  // Each persona: name, color, look (how it's drawn), driver (stateful
+  // behaviour, optional), weights, and flavor text: a blurb for the start
+  // screen, a line for when it kills you, and one for when it wins.
   const PERSONAS = {
     hunter: {
-      name: 'Hunter', color: '#dc2626', look: 'hunter', driver: 'hunter',
+      name: 'Hunter', color: '#ef4444', look: 'hunter', driver: 'hunter',
       blurb: 'Picks whichever snake it has the best shot at and cuts it off.',
+      kill: 'Hunter saw you coming three moves ago.',
+      win: 'Hunter wins. Nobody was safe.',
       w: {
         space: 1, territory: 0.8, aggression: 0.3,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, hungryBelow: 16, fedFactor: 0.3,
@@ -55,40 +63,63 @@ window.SnakeAI = (() => {
     },
     gobbler: {
       name: 'Gobbler', color: '#fb923c', look: 'gobbler',
-      blurb: 'Eats everything, even food a rival is closer to.',
+      blurb: 'Eats everything, even food a rival is closer to. Hates mushrooms.',
+      kill: 'Gobbler bumped into you on its way to lunch.',
+      win: 'Gobbler wins, and is still hungry.',
       w: {
         space: 1, territory: 0.2,
-        food: 14, eat: 300, pellet: 3, foodRange: 60, contested: 0.3,
+        food: 14, eat: 300, pellet: 3, foodRange: 60, contested: 0.3, mushroom: -3,
         margin: 6, headRisk: 800, zoneRisk: 200,
       },
     },
     ghost: {
-      name: 'Ghost', color: '#e2e8f0', look: 'ghost',
-      blurb: 'Keeps away from everyone, stays small and waits you out.',
+      name: 'Ghost', color: '#f1f5f9', look: 'ghost',
+      blurb: 'Keeps away from everyone and eats mushrooms to stay small.',
+      kill: 'Ghost? You never even saw it.',
+      win: 'Ghost wins. Was it ever really here?',
       w: {
         space: 2, territory: 0.6,
-        food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 8, fedFactor: 0,
+        food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 8, fedFactor: 0, mushroomLover: 6,
         margin: 10, headRisk: 1200, zoneRisk: 400, distance: 25,
       },
     },
-    warden: {
-      name: 'Warden', color: '#3b82f6', look: 'warden', driver: 'warden',
-      blurb: 'Guards its home turf and attacks anyone who comes in.',
+    sovereign: {
+      name: 'Sovereign', color: '#2563eb', look: 'sovereign', driver: 'sovereign',
+      blurb: 'Rules its own patch of bark and attacks anyone who trespasses.',
+      kill: 'You trespassed on the Sovereign\'s land.',
+      win: 'Long live the Sovereign.',
       w: {
         space: 1.5, territory: 1, aggression: 0.2,
         food: 5, eat: 70, pellet: 1.2, foodRange: 30,
         margin: 6, headRisk: 700, zoneRisk: 100,
-        home: { radius: 6, leave: 30 }, hunt: { squeeze: 2.5, chase: 6, lead: 3 },
+        home: { radius: 5, leave: 30 }, hunt: { squeeze: 2.5, chase: 6, lead: 3 },
+      },
+    },
+    colonist: {
+      name: 'Colonist', color: '#14b8a6', look: 'colonist', driver: 'colonist',
+      blurb: 'Plants flags all over the board and defends every one of them.',
+      kill: 'The Colonist claimed the spot you were standing on.',
+      win: 'The Colonist plants its final flag.',
+      w: {
+        space: 1.2, territory: 1.4, aggression: 0.2,
+        food: 5, eat: 70, pellet: 1.2, foodRange: 30,
+        margin: 5, headRisk: 700, zoneRisk: 120,
+        colony: { radius: 4, max: 3, every: 12000 }, goal: 4,
+        hunt: { squeeze: 2, chase: 5, lead: 3 },
       },
     },
     drab: {
-      name: 'Drab', color: '#a8a29e', look: 'drab',
+      name: 'Drab', color: '#a8a37a', look: 'drab',
       blurb: 'Plays it safe and sensible. Nothing special.',
+      kill: 'You lost to Drab. Drab!',
+      win: 'Drab wins. Somehow.',
       w: DRAB,
     },
     vulture: {
-      name: 'Vulture', color: '#78716c', look: 'vulture', driver: 'vulture',
-      blurb: 'Circles snakes in trouble and feeds on what they leave behind.',
+      name: 'Vulture', color: '#27272a', ink: '#f9a8d4', look: 'vulture', driver: 'vulture',
+      blurb: 'Circles snakes in trouble and feasts on what they leave behind.',
+      kill: 'Vulture was waiting for this.',
+      win: 'Vulture wins, picking over the leftovers.',
       w: {
         space: 1.5, territory: 0.4,
         food: 4, eat: 60, normalFood: 0.15, pellet: 3, foodRange: 40, contested: true,
@@ -96,8 +127,10 @@ window.SnakeAI = (() => {
       },
     },
     mason: {
-      name: 'Mason', color: '#d6a76c', look: 'mason',
-      blurb: 'Builds long straight walls to fence off a big piece of the board.',
+      name: 'Mason', color: '#94a3b8', look: 'mason',
+      blurb: 'Builds long straight walls to divide the board, then rules the biggest piece.',
+      kill: 'You ran into one of Mason\'s walls. Divide and conquer.',
+      win: 'Veni, vidi, Mason.',
       w: {
         space: 1.5, territory: 2.2,
         food: 3, eat: 40, pellet: 1, foodRange: 30,
@@ -106,12 +139,16 @@ window.SnakeAI = (() => {
     },
     wildcard: {
       name: 'Wildcard', color: '#f472b6', look: 'wildcard', driver: 'wildcard',
-      blurb: 'A random mix of habits, different every round.',
+      blurb: 'A random mix of habits, different every round. Great hair.',
+      kill: 'Wildcard got you. Nobody knows how, least of all Wildcard.',
+      win: 'Wildcard wins. Tremendous.',
       w: DRAB, // replaced by a random set on its first move
     },
     creeper: {
       name: 'Creeper', color: '#8b5cf6', look: 'creeper',
-      blurb: 'Sneaks up behind other snakes and rides their tail.',
+      blurb: 'Sneaks up and rides right behind other snakes\' tails.',
+      kill: 'Creeper was right behind you the whole time.',
+      win: 'Creeper wins, quietly.',
       w: {
         space: 1, territory: 0.5,
         food: 3, eat: 50, pellet: 1, foodRange: 30,
@@ -121,23 +158,42 @@ window.SnakeAI = (() => {
     metagamer: {
       name: 'Metagamer', color: '#facc15', look: 'metagamer', driver: 'metagamer',
       blurb: 'Studies how each rival plays, then counters it.',
+      kill: 'Metagamer had you figured out.',
+      win: 'Metagamer wins. As calculated.',
       w: { ...DRAB, hunt: HUNT, lure: { weight: 5, dist: 6 } },
     },
     capricious: {
       name: 'Capricious', color: '#ec4899', look: 'capricious', driver: 'capricious',
       blurb: 'Changes its mind every few seconds: hunter, glutton, hermit, builder.',
+      kill: 'Capricious felt like killing you. Just then.',
+      win: 'Capricious wins, and already wants something else.',
       w: DRAB, // replaced by the current mood's weights
     },
     copycat: {
-      name: 'Copycat', color: '#cbd5e1', look: 'copycat', driver: 'copycat',
+      name: 'Copycat', color: '#e5e7eb', look: 'copycat', driver: 'copycat',
       blurb: 'Copies whoever looks like they are winning, right alongside them.',
+      kill: 'Copycat got you. It learned that from someone.',
+      win: 'Copycat wins. Imitation pays.',
       w: { ...DRAB, mimic: 120, lure: { weight: 4, dist: 5 } },
+    },
+    joker: {
+      name: 'Joker', color: '#a21caf', look: 'joker', driver: 'joker',
+      blurb: 'Lures chasers into dead ends and swerves away at the last moment.',
+      kill: 'The Joker led you on. Gotcha!',
+      win: 'The Joker wins. Who\'s laughing now?',
+      w: {
+        space: 1, territory: 0.6,
+        food: 5, eat: 70, pellet: 1.2, foodRange: 40, mushroom: 0.5,
+        margin: 4, headRisk: 600, zoneRisk: 40, turn: -12,
+        lure: { weight: 6, dist: 3 }, hunt: { squeeze: 3, chase: 0, lead: 2 },
+      },
     },
   };
   const POOL = Object.keys(PERSONAS);
   const MOODS = ['hunter', 'gobbler', 'ghost', 'mason'];
 
   const TRAPPED = 5000;
+  const HOLE = 1 << 30;    // "frees up" never
   const DEAD = -1e6;
   const ROOM_CAP = 120;    // stop counting a rival's room past this
   const DISTANCE_CAP = 14; // distance-keepers are happy once this far away
@@ -180,16 +236,20 @@ window.SnakeAI = (() => {
   }
 
   // view = { grid, me: { id, body, dir, grow }, others: [{ id, body, dir }],
-  //          food: [{ x, y, kind }], age, tick, timeMs }
+  //          food: [{ x, y, kind }], holes: Set of cell indexes, age, tick, timeMs }
   // memory: an object kept for this snake for the whole round.
   function decide(view, persona, memory = {}) {
     const N = view.grid;
     const { me, others, food, age } = view;
+    const holes = view.holes || new Set();
     ensureBuffers(N);
     mineFree.fill(0); otherFree.fill(0); risk.fill(0);
 
     const inside = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
     const myHead = me.body[0];
+
+    // Woodpecker holes never close: treat them like walls.
+    for (const i of holes) otherFree[i] = HOLE;
 
     // Opponent bodies as last seen. A segment j from the head leaves its cell
     // after (len - j) ticks; we ignore the time that has passed since the
@@ -285,7 +345,7 @@ window.SnakeAI = (() => {
     const drivers = {
       hunter() { pickVictim(all, ctx.w.hunt); },
 
-      warden() {
+      sovereign() {
         const R = ctx.w.home.radius;
         memory.home ||= {
           x: Math.min(N - R - 2, Math.max(R + 1, myHead.x)),
@@ -293,11 +353,68 @@ window.SnakeAI = (() => {
           radius: R,
         };
         // After two minutes the home grows a cell every 15 s, up to most of the board.
-        memory.home.radius = Math.min(14, R + Math.max(0, Math.floor((view.timeMs - 120000) / 15000)));
+        memory.home.radius = Math.min(Math.floor(N / 2), R + Math.max(0, Math.floor((view.timeMs - 120000) / 15000)));
         ctx.home = memory.home;
         const intruders = all.filter(k => Math.hypot(heads[k].x - ctx.home.x, heads[k].y - ctx.home.y) <= ctx.home.radius + 1);
         if (intruders.length) pickVictim(intruders, ctx.w.hunt);
         else memory.victimId = null;
+      },
+
+      // Plant a flag where it starts, then every so often travel to the open
+      // spot furthest from rivals and plant another (oldest flag goes when it
+      // has too many). Anyone near any flag gets hunted.
+      colonist() {
+        const col = ctx.w.colony;
+        const clamp = v => Math.min(N - 2, Math.max(1, v));
+        memory.colonies ||= [{ x: clamp(myHead.x), y: clamp(myHead.y), radius: col.radius }];
+        if (memory.site && manhattan(myHead, memory.site) <= 1) {
+          memory.colonies.push({ ...memory.site, radius: col.radius });
+          if (memory.colonies.length > col.max) memory.colonies.shift();
+          memory.site = null;
+          memory.nextSiteAt = view.timeMs + col.every;
+        }
+        memory.nextSiteAt ??= view.timeMs + col.every;
+        if (!memory.site && view.timeMs >= memory.nextSiteAt) {
+          let best = null, bestScore = -Infinity;
+          for (let y = 2; y < N - 2; y += 2) {
+            for (let x = 2; x < N - 2; x += 2) {
+              if (holes.has(y * N + x) || otherFree[y * N + x]) continue;
+              if (memory.colonies.some(c => Math.hypot(c.x - x, c.y - y) < c.radius * 2)) continue;
+              const p = { x, y };
+              const away = Math.min(DISTANCE_CAP, ...heads.map(h => manhattan(h, p)));
+              const s = away - 0.4 * manhattan(myHead, p);
+              if (s > bestScore) { bestScore = s; best = p; }
+            }
+          }
+          memory.site = best;
+          if (!best) memory.nextSiteAt = view.timeMs + col.every;
+        }
+        const intruders = all.filter(k => memory.colonies.some(c => Math.hypot(heads[k].x - c.x, heads[k].y - c.y) <= c.radius + 1));
+        if (intruders.length) pickVictim(intruders, ctx.w.hunt);
+        else {
+          memory.victimId = null;
+          ctx.goal = memory.site;
+        }
+      },
+
+      // Get the attention of the nearest rival heading my way, stay just in
+      // front of it, and steer so its room shrinks behind me: bait it into a
+      // dead end it can't see coming.
+      joker() {
+        let best = -1, bestD = Infinity;
+        for (const k of all) {
+          const o = others[k], h = heads[k];
+          const toMe = { x: myHead.x - h.x, y: myHead.y - h.y };
+          const d = manhattan(h, myHead);
+          const chasing = o.dir.x * toMe.x + o.dir.y * toMe.y > 0;
+          const score = d - (chasing ? 4 : 0);
+          if (score < bestD) { bestD = score; best = k; }
+        }
+        if (best < 0) return;
+        ctx.lure = best;
+        ctx.victim = best;
+        ctx.target = heads[best];
+        memory.victimId = others[best].id;
       },
 
       // Hover near the snake most likely to die soon (least room for its length).
@@ -407,20 +524,33 @@ window.SnakeAI = (() => {
       }
     });
 
-    // Food worth. A home-keeper ignores food outside its home.
+    // How much food matters right now, given how long I already am. A
+    // mushroom lover past its length limit wants mushrooms instead.
+    const myLen = me.body.length + me.grow;
+    const shrinking = w.mushroomLover != null && myLen >= w.mushroomLover;
+    const fed = myLen >= (w.hungryBelow ?? Infinity);
+    const foodW = shrinking ? Math.max(3, w.food) : fed ? w.food * w.fedFactor : w.food;
+    const eatW = shrinking ? Math.max(40, w.eat) : fed ? w.eat * w.fedFactor : w.eat;
+
+    // Food worth by kind. Negative means "avoid eating". A home-keeper ignores
+    // food outside its home.
+    const apple = w.normalFood ?? 1;
+    const worth = {
+      food: shrinking ? 0 : apple,
+      golden: shrinking ? 0 : 3 * apple,
+      pellet: shrinking ? 0 : (w.pellet ?? 1),
+      mushroom: shrinking ? 2 : (w.mushroom ?? -1),
+    };
     const foodValue = new Map();
+    const foodKind = new Map(); // what eating a cell does to my length
+    for (const f of food) foodKind.set(f.y * N + f.x, f.kind);
     for (const f of food) {
       if (ctx.home && Math.hypot(f.x - ctx.home.x, f.y - ctx.home.y) > ctx.home.radius) continue;
-      const v = f.kind === 'pellet' ? (w.pellet ?? 1) : (w.normalFood ?? 1);
+      const v = worth[f.kind] ?? 0;
+      if (!v) continue;
       const i = f.y * N + f.x;
       foodValue.set(i, (foodValue.get(i) || 0) + v);
     }
-
-    // How much food matters right now, given how long I already am.
-    const myLen = me.body.length + me.grow;
-    const fed = myLen >= (w.hungryBelow ?? Infinity);
-    const foodW = fed ? w.food * w.fedFactor : w.food;
-    const eatW = fed ? w.eat * w.fedFactor : w.eat;
 
     // Can my head step into cell (x, y) as move number `step` from now?
     function canEnter(body, grow, x, y, step) {
@@ -458,7 +588,7 @@ window.SnakeAI = (() => {
             seen[ni] = stampF;
             space++;
             const v = foodValue.get(ni);
-            if (v) anyFood = Math.max(anyFood, v * Math.max(0, w.foodRange - d));
+            if (v > 0) anyFood = Math.max(anyFood, v * Math.max(0, w.foodRange - d));
             next.push(ni);
           }
         }
@@ -514,7 +644,7 @@ window.SnakeAI = (() => {
       //    reach before any rival counts; a contested eater counts all of it.
       let foodScore = 0;
       for (const [i, v] of foodValue) {
-        if (ownerStamp[i] === stampV && owner[i] === 0) {
+        if (v > 0 && ownerStamp[i] === stampV && owner[i] === 0) {
           foodScore = Math.max(foodScore, v * Math.max(0, w.foodRange - (claimT[i] - t)));
         }
       }
@@ -548,6 +678,9 @@ window.SnakeAI = (() => {
 
       // 6. Hovering about `dist` from a chosen snake's head.
       if (ctx.lure >= 0) score -= w.lure.weight * Math.abs(manhattan(head, heads[ctx.lure]) - w.lure.dist);
+
+      // Heading for a spot (Colonist's next flag).
+      if (ctx.goal) score -= w.goal * manhattan(head, ctx.goal);
 
       // 7. Staying home.
       if (ctx.home) {
@@ -583,7 +716,11 @@ window.SnakeAI = (() => {
       if (g > 0) g--; else nb.pop();
       // Eating must beat the pull that food had on us, plus a bonus for eating sooner.
       const v = foodValue.get(i) || 0;
-      if (v) { g++; foodValue.delete(i); }
+      const kind = foodKind.get(i);
+      if (kind === 'mushroom') {
+        for (let n = 0; n < 3 && nb.length > 3; n++) nb.pop();
+      } else if (kind) g += kind === 'golden' ? 3 : 1;
+      if (v) foodValue.delete(i);
       let gain = v * (foodW * w.foodRange + eatW * Math.pow(0.85, t)) - risk[i] * Math.pow(0.6, t);
       if (turning && w.turn) gain -= w.turn * Math.pow(0.9, t);
       const score = depth <= 1

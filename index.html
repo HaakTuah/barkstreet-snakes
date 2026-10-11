@@ -20,10 +20,11 @@
     <ul id="scoreboard" class="scoreboard" aria-label="Snakes"></ul>
 
     <div class="board">
-      <canvas id="game" width="600" height="600" aria-label="Snake game board"></canvas>
+      <canvas id="game" width="768" height="768" aria-label="Snake game board"></canvas>
       <div id="overlay" class="overlay">
         <h2 id="overlay-title">Snake</h2>
         <p id="overlay-text">Outlast your rivals. Arrow keys / WASD to move · Swipe on touch screens</p>
+        <p id="overlay-flavor" class="flavor" hidden></p>
         <ul id="opponents" class="opponents" hidden></ul>
         <label id="name-row" class="name-row" hidden>
           <span id="name-rank"></span>
@@ -34,9 +35,17 @@
           <button id="watch" class="secondary" hidden>Watch</button>
         </div>
       </div>
+      <div id="toast" class="toast" role="status" hidden></div>
     </div>
 
-    <p class="help">Space / P to pause · Enter / R to restart · H for scores</p>
+    <div id="speed" class="speed" role="group" aria-label="Speed" hidden>
+      <span>Speed</span>
+      <button data-speed="1">1×</button>
+      <button data-speed="2">2×</button>
+      <button data-speed="4">4×</button>
+    </div>
+
+    <p class="help">Space / P to pause · Enter / R to restart · H for scores · 1–3 to change speed while watching</p>
   </main>
 
   <div id="records" class="records" role="dialog" aria-modal="true" aria-label="Scores and stats" hidden>

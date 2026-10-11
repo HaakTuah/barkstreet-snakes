@@ -28,7 +28,6 @@ body {
 
 main {
   width: 100%;
-  max-width: 520px;
 }
 
 header {
@@ -435,3 +434,63 @@ button.link {
 }
 
 .opponents .blurb { color: var(--muted); }
+
+/* Bigger board on big screens, still fitting the window height. */
+main {
+  max-width: min(760px, max(320px, calc(100vh - 210px)));
+}
+
+.board {
+  background: #5a3b22;
+}
+
+.flavor {
+  margin: -2px 0 10px;
+  font-style: italic;
+  color: #fde68a;
+}
+
+.flavor[hidden], .overlay p[hidden] { display: none; }
+
+.toast {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(15, 20, 25, 0.88);
+  color: #fde68a;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}
+
+.toast[hidden] { display: none; }
+
+.speed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.speed[hidden] { display: none; }
+
+.speed button {
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--grid);
+}
+
+.speed button[aria-pressed="true"] {
+  background: var(--accent);
+  color: #062b14;
+}
