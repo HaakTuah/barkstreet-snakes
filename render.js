@@ -1069,9 +1069,14 @@ window.SnakeRender = (() => {
 
   // Size the backing store to the board's real size × devicePixelRatio.
   // cssPx comes from a ResizeObserver, so no layout is read here.
-  function resize(cssPx) {
-    const dpr = Math.min(3, window.devicePixelRatio || 1);
-    const target = Math.max(GRID, Math.round(cssPx * dpr / GRID) * GRID);
+  // The backing store matches the device pixels the canvas covers exactly, so
+  // the browser never resamples it (devicePx comes from the ResizeObserver
+  // where supported). Very dense screens are capped at 3x for speed.
+  function resize(cssPx, devicePx) {
+    const dpr = window.devicePixelRatio || 1;
+    const estimate = Math.round(cssPx * dpr);
+    const exact = devicePx && Math.abs(devicePx - estimate) <= 2 ? devicePx : estimate;
+    const target = Math.max(GRID, dpr > 3 ? Math.round(cssPx * 3) : exact);
     if (target === canvas.width) return false;
     canvas.width = canvas.height = target;
     k = target / SIZE;
