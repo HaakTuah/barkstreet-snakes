@@ -105,7 +105,7 @@ One treatment, used everywhere:
 | Target | Concrete check |
 |---|---|
 | Smooth motion at 60/120/144 Hz | Fixed timestep driven from one rAF loop with interpolation; a snake moves exactly one cell per tick, never stalls at cell boundaries |
-| Frame budget | script + render per frame: **p95 ≤ 3 ms, worst ≤ 6.9 ms** (one 144 Hz frame) in the long-snake scene and at death and particle moments. *Measured in Chrome at 2× density: p95 0.9 ms, p99 2.1-2.5 ms, worst 6.7-7.5 ms; 0-2 frames in 8,300 over 6.94 ms, none over 16.7 ms. The p95 target is met; the worst-case target is met on most runs, and missed by under a millisecond on the rest.* |
+| Frame budget | script + render per frame: **p95 ≤ 3 ms, worst ≤ 6.9 ms** (one 144 Hz frame) in the long-snake scene and at death and particle moments. *Measured in Chrome at 2× density, watching at normal speed, over five runs: p95 0.9-1.9 ms, p99 2.1-5.3 ms, worst 6.7-13.1 ms (0-0.3% of frames over 6.94 ms), and no frame over 16.7 ms in any run. The p95 target is met. The worst-case target is not reliably met: now and then one AI decision on a crowded board lands in the same frame as a draw. At 4× watching speed (four times the ticks), a few frames a minute go over 16.7 ms.* |
 | Honest speed | Spectator 4× runs at 4.0× (±2%); ticks don't drift by their own cost |
 | Input never lost | Two turns pressed within one tick both apply, on consecutive ticks; no input combo ever reverses into the neck |
 | Eating feels good | Pop, particles, sound and score bump appear in the same frame as the bite tick; the gulp travels the body |
