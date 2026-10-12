@@ -249,7 +249,9 @@ window.SnakeRender = (() => {
     g.fillStyle = 'rgba(0,0,0,0.28)';
     g.beginPath(); g.ellipse(c * 0.03, c * 0.36, c * 0.3, c * 0.08, 0, 0, TAU); g.fill();
     g.fillStyle = '#fef3c7';
-    g.fillRect(-c * 0.1, -c * 0.02, c * 0.2, c * 0.36);
+    g.beginPath(); // a rounded stem, like every other shape on the board
+    if (g.roundRect) g.roundRect(-c * 0.1, -c * 0.02, c * 0.2, c * 0.36, c * 0.07); else g.rect(-c * 0.1, -c * 0.02, c * 0.2, c * 0.36);
+    g.fill();
     g.fillStyle = '#dc2626';
     g.beginPath(); g.ellipse(0, 0, c * 0.4, c * 0.3, 0, Math.PI, 0); g.closePath(); g.fill();
     g.strokeStyle = 'rgba(30,20,8,0.45)';
@@ -260,7 +262,8 @@ window.SnakeRender = (() => {
     g.beginPath(); g.arc(c * 0.06, -c * 0.2, c * 0.06, 0, TAU); g.fill();
     g.beginPath(); g.arc(c * 0.22, -c * 0.06, c * 0.05, 0, TAU); g.fill();
   };
-  // A drumstick tinted by the snake it came from, with a light rim so it reads on bark.
+  // A roast drumstick, ringed in the colour of the snake it came from (a tinted
+  // drumstick looked spoiled), with a light edge so it reads on the bark.
   const meatSprite = color => sprite('meat', color || '', drawMeat);
   const drawMeat = (g, col) => {
     const c = CELL;
@@ -269,11 +272,17 @@ window.SnakeRender = (() => {
     g.fillRect(c * 0.05, -c * 0.05, c * 0.28, c * 0.1);
     g.beginPath(); g.arc(c * 0.34, -c * 0.06, c * 0.07, 0, TAU); g.fill();
     g.beginPath(); g.arc(c * 0.34, c * 0.06, c * 0.07, 0, TAU); g.fill();
-    g.fillStyle = mix(col && col[0] === '#' ? col : '#b45309', '#c2410c', 0.3);
-    g.beginPath(); g.ellipse(-c * 0.08, 0, c * 0.24, c * 0.18, 0, 0, TAU); g.fill();
-    g.strokeStyle = 'rgba(255,240,220,0.6)';
-    g.lineWidth = c * 0.05;
+    g.beginPath(); g.ellipse(-c * 0.08, 0, c * 0.24, c * 0.18, 0, 0, TAU);
+    g.strokeStyle = 'rgba(255,240,220,0.6)'; // the light edge...
+    g.lineWidth = c * 0.13;
     g.stroke();
+    g.strokeStyle = col && col[0] === '#' ? col : '#a16207'; // ...the snake's colour inside it...
+    g.lineWidth = c * 0.07;
+    g.stroke();
+    g.fillStyle = '#b4532a'; // ...and the roast
+    g.fill();
+    g.fillStyle = 'rgba(120,45,15,0.55)';
+    g.beginPath(); g.ellipse(-c * 0.02, c * 0.05, c * 0.14, c * 0.09, 0, 0, TAU); g.fill();
     g.fillStyle = 'rgba(255,255,255,0.3)';
     g.beginPath(); g.arc(-c * 0.14, -c * 0.06, c * 0.06, 0, TAU); g.fill();
   };
@@ -438,7 +447,7 @@ window.SnakeRender = (() => {
   };
   let fNext = 0;
   function floater(x, y, text) {
-    fx[fNext] = x; fy[fNext] = y; flife[fNext] = 700; ftext[fNext] = text;
+    fx[fNext] = x; fy[fNext] = y; flife[fNext] = T.FLOAT_MS; ftext[fNext] = text;
     fNext = (fNext + 1) % MAX_F;
   }
   function drawFloaters(dt) {
@@ -448,7 +457,7 @@ window.SnakeRender = (() => {
     for (let i = 0; i < MAX_F; i++) {
       if (flife[i] <= 0) continue;
       flife[i] -= dt;
-      const t = Math.max(0, flife[i] / 700);
+      const t = Math.max(0, flife[i] / T.FLOAT_MS);
       const y = fy[i] - (reduced ? 0 : (1 - t) * CELL * 0.8); // rises, unless motion is reduced
       blitCrisp(sprite('float', ftext[i], drawFloat), fx[i], y, Math.min(1, t * 1.6));
     }
@@ -645,7 +654,7 @@ window.SnakeRender = (() => {
 
   // Once a frame per snake: where each segment is (between its last two
   // cells), the cell each band bends through, radii and fills.
-  function prepare(s, alpha, now, dead) {
+  function prepare(s, alpha, now, dead, impact = 0) {
     const a = animOf(s, now);
     const n = s.body.length;
     if (a.rad.length < n) {
@@ -672,6 +681,8 @@ window.SnakeRender = (() => {
         cor[2 * i + 1] = q.y * CELL + CELL / 2;
       }
     }
+    // A held corpse presses its head a little into whatever it hit.
+    if (impact) { pts[0] += s.dir.x * CELL * impact; pts[1] += s.dir.y * CELL * impact; }
     // Gulps: a bulge that travels one segment per tick after each bite, and
     // the head's squash at the bite itself.
     a.tickPos = game ? game.tick - 1 + alpha : 0;
@@ -708,11 +719,14 @@ window.SnakeRender = (() => {
     }
   }
 
-  // The band from segment i to i + 1: through its corner cell, in two pieces.
+  // The band from segment i to i + 1: through its corner cell. Straight, it's
+  // one piece (two pieces meeting mid-band leave a hairline seam when a cell
+  // isn't a whole number of pixels); at a bend the corner's circle covers the join.
   function band(a, i, h) {
     const p = a.pts, c = a.cor;
-    piece(p[2 * i], p[2 * i + 1], c[2 * i], c[2 * i + 1], h);
-    piece(c[2 * i], c[2 * i + 1], p[2 * i + 2], p[2 * i + 3], h);
+    const x1 = p[2 * i], y1 = p[2 * i + 1], cx = c[2 * i], cy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+    if ((near(x1, cx) && near(cx, x2)) || (near(y1, cy) && near(cy, y2))) piece(x1, y1, x2, y2, h);
+    else { piece(x1, y1, cx, cy, h); piece(cx, cy, x2, y2, h); }
   }
 
   // Does the band from i to i + 1 turn a corner (and need its outside rounded)?
@@ -875,12 +889,12 @@ window.SnakeRender = (() => {
     // Capricious: a ring that flashes out when its mood changes.
     if (!reduced && s.personaKey === 'capricious' && s.memory.moodChangedAt != null && game) {
       const age = game.time - s.memory.moodChangedAt;
-      if (age < 900) {
+      if (age < T.MOOD_RING_MS) {
         ctx.strokeStyle = color;
-        ctx.globalAlpha *= 1 - age / 900;
+        ctx.globalAlpha *= 1 - age / T.MOOD_RING_MS;
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(pts[0], pts[1], CELL * (0.6 + 1.6 * age / 900), 0, TAU);
+        ctx.arc(pts[0], pts[1], CELL * (0.6 + 1.6 * age / T.MOOD_RING_MS), 0, TAU);
         ctx.stroke();
         ctx.globalAlpha = 1;
       }
@@ -913,6 +927,12 @@ window.SnakeRender = (() => {
     ctx.lineCap = 'round';
     ctx.beginPath();
     for (let y = -0.2; y < 0.3; y += 0.4) {
+      if (deadNow) { // knocked out, not asleep: crosses
+        const d = Math.max(r, 0.08) * 0.85;
+        ctx.moveTo(c * (0.14 - d), c * (y - d)); ctx.lineTo(c * (0.14 + d), c * (y + d));
+        ctx.moveTo(c * (0.14 + d), c * (y - d)); ctx.lineTo(c * (0.14 - d), c * (y + d));
+        continue;
+      }
       ctx.moveTo(c * 0.14, c * (y - r));
       ctx.quadraticCurveTo(c * (0.14 + r * 0.9), c * y, c * 0.14, c * (y + r));
     }
@@ -1051,7 +1071,7 @@ window.SnakeRender = (() => {
       }
       case 'gobbler': { // stuffed hamster cheeks either side of the mouth, a mouth that opens near food
         // After a bite the cheeks puff up fast and go down slowly (still with reduced motion: no movement, just size).
-        const t = (lastNow - a.ateAt) / 900;
+        const t = (lastNow - a.ateAt) / T.CHEEKS_MS;
         const puff = t < 0 || t >= 1 ? 0 : t < 0.12 ? t / 0.12 : 1 - (t - 0.12) / 0.88;
         const cr = c * (0.25 + 0.1 * puff), cy = c * (0.27 + 0.06 * puff);
         ctx.fillStyle = color; // the cheeks swell the head's own outline toward the front...
@@ -1407,7 +1427,7 @@ window.SnakeRender = (() => {
     // on), facing into the board, under anything it shares a cell with.
     const wp = game.woodpecker;
     if (wp) {
-      const peck = reduced ? 0 : Math.max(0, 1 - (game.time - wp.at) / 250) * 3;
+      const peck = reduced ? 0 : Math.max(0, 1 - (game.time - wp.at) / T.PECK_MS) * 3;
       const right = wp.x < GRID / 2;
       blitCrisp(birdSprite(right ? 'r' : 'l'), wp.x * CELL + CELL / 2 + (right ? peck : -peck), wp.y * CELL + CELL * 0.4);
     }
@@ -1428,7 +1448,7 @@ window.SnakeRender = (() => {
       } else if (f.kind === 'golden') {
         // A calm dim instead of a blink when it's about to rot.
         const left = f.expires - game.tick;
-        const fade = left > 30 ? 1 : 0.45 + 0.55 * (left / 30);
+        const fade = left > T.GOLDEN_DIM_TICKS ? 1 : 0.45 + 0.55 * (left / T.GOLDEN_DIM_TICKS);
         blitCrisp(glowSprite(), x, y, fade);
         blitCrisp(goldenSprite(), x, y + bob * Math.sin(now / 380 + phase) * 1.8, fade);
         ctx.save();
@@ -1439,7 +1459,7 @@ window.SnakeRender = (() => {
       }
     }
 
-    if (corpses.length) drawCorpses(now);
+    if (corpses.length) drawCorpses(alpha, now);
     drawSnakes(alpha, now);
     drawParticles(dt);
     drawFloaters(dt);
@@ -1486,7 +1506,7 @@ window.SnakeRender = (() => {
   // tick keep their pose, eyes screwed shut and covering their meat, until the
   // hold ends. corpses: { s, until (burst/fade time), fade (true once fading) }.
   const deaths = [], corpses = [];
-  const FADE_MS = 250;
+  const FADE_MS = T.CORPSE_FADE_MS;
   const heldCells = new Uint8Array(GRID * GRID);
 
   function hold(until) {
@@ -1521,15 +1541,19 @@ window.SnakeRender = (() => {
     }
   }
 
-  function drawCorpses(now) {
+  // Held corpses are drawn at the frame's own point in the tick (a snake that
+  // starved moved before it died), the head pressed into what it hit, with a spark.
+  function drawCorpses(alpha, now) {
     for (const c of corpses) {
       const opacity = c.fade ? Math.max(0, 1 - (now - c.until) / FADE_MS) : 1;
+      const hit = !c.fade && c.s.killer !== 'hunger';
       ctx.globalAlpha = opacity;
-      const a = prepare(c.s, 1, now, true);
+      const a = prepare(c.s, c.s.prev ? alpha : 1, now, true, hit ? 0.2 : 0);
       drawShadow(a);
       drawOutline(c.s, a);
       drawBody(c.s, a, now, true);
-      ctx.globalAlpha = opacity; // (a face may have reset it)
+      ctx.globalAlpha = 1;
+      if (hit) blitCrisp(starSprite(), (a.pts[0] + c.s.dir.x * CELL * 0.55) | 0, (a.pts[1] + c.s.dir.y * CELL * 0.55) | 0);
     }
     ctx.globalAlpha = 1;
   }

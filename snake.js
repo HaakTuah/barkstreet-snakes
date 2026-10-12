@@ -39,7 +39,7 @@
   const pick = list => list[Math.floor(Math.random() * list.length)];
   const FLAVOR = {
     intro: 'Three rivals. One tree. Last snake wriggling wins.',
-    hintStart: 'Arrows or WASD steer · Space naps · Enter plays · H opens the Hall of Fame',
+    hintStart: 'Arrows or WASD steer · Space naps · Enter starts · H opens the Hall of Fame',
     hintKeys: 'Arrows or WASD steer · Space naps · Enter starts over · H opens the Hall of Fame · M mutes · N toggles the music',
     hintOnline: 'Arrows or WASD steer · M mutes · N toggles the music',
     hintTouch: 'Swipe to steer · Tap ⏸ to nap',
@@ -49,9 +49,9 @@
     goWatch: ['And they’re off.', 'Off they slither.', 'Let the wriggling begin.'],
     pause: ['Snakes need rest too.', 'Curled up in a warm patch of bark.', 'The tree will wait.'],
     wake: touchFirst ? 'Tap Wake up when you’re ready.' : 'Space or P to wake up.',
-    deathTitle: { wall: ['Bonk!', 'Splat!', 'Oof.'], self: ['Tangled!', 'Knotted!', 'Oops.'], rival: ['Squashed!', 'Splat!', 'Oof.'], headOn: ['Bonk!', 'Head-on!'] },
+    deathTitle: { wall: ['Bonk!', 'Thwack!'], self: ['Tangled!', 'Knotted!'], rival: ['Squashed!', 'Splat!'], headOn: ['Head-on!', 'Clonk!'] },
     wall: ['The tree goes on. You don’t.', 'That edge came out of nowhere.', 'Even trees have edges.'],
-    self: ['Of all the snakes to bite.', 'You were in your own way.', 'Tail first, apparently.'],
+    self: ['Of all the snakes to bite.', 'You were in your own way.', 'You can’t outrun yourself.'],
     hole: ['The woodpecker sends its regards.', 'Mind the gap.', 'The woodpecker missed you. The hole didn’t.'],
     starved: ['Should have eaten something.', 'Hunger always wins in the end.', 'All slither, no snacks.'],
     win: ['King of the tree.', 'Last snake wriggling.', 'You outlasted them all.', 'The whole tree is yours. For now.'],
@@ -158,7 +158,7 @@
 
     if (state === 'running' && guesting()) {
       // A friend's screen doesn't simulate: it glides between the host's ticks.
-      if (pendingCard && now >= freezeUntil) { const c = pendingCard; pendingCard = null; showCard(c); }
+      showPending(now >= freezeUntil);
       drawAlpha = Math.min(1, (performance.now() - online.lastTickAt) / tickLen);
       dirty = true;
     } else if (state === 'running') {
@@ -166,7 +166,7 @@
       // the round is everyone's, and only your card waits.
       const frozen = () => !online && now < freezeUntil;
       let busy = false; // a frame that ticks or shows a card has done enough: thinking waits a frame
-      if (pendingCard && now >= freezeUntil) { const c = pendingCard; pendingCard = null; showCard(c); busy = true; }
+      if (showPending(now >= freezeUntil)) busy = true;
       if (!frozen()) {
         acc += dt;
         let steps = 0;
@@ -185,7 +185,7 @@
       drawAlpha = Math.min(1, acc / tickLen);
       dirty = true;
     } else if (state === 'over') {
-      if (pendingCard && now >= cardAt) { const c = pendingCard; pendingCard = null; showCard(c); }
+      showPending(now >= cardAt);
       // The last move glides like any other, then the board rests.
       if (drawAlpha < 1) {
         drawAlpha = guesting() ? Math.min(1, (performance.now() - online.lastTickAt) / tickLen) : Math.min(1, (acc += dt) / tickLen);
@@ -198,11 +198,21 @@
 
     if (dirty && !document.hidden) {
       R.frame(drawAlpha, now);
-      Chatter.layout(drawAlpha, boardPx);
+      Chatter.layout(drawAlpha, boardPx, player());
       toastFade();
       dirty = state === 'running' || state === 'countdown' || R.particles > 0 || R.holding();
     }
     perf.record(performance.now() - t0, tickCost);
+  }
+
+  // A card waiting for its moment (after the death freeze, or the round's last
+  // breath) comes up once `due`. Returns whether it did.
+  function showPending(due) {
+    if (!pendingCard || !due) return false;
+    const c = pendingCard;
+    pendingCard = null;
+    showCard(c);
+    return true;
   }
 
   // A host's hidden tab still has to run the round for everyone, but browsers
@@ -361,7 +371,7 @@
   // Online the countdown can't be skipped (everyone starts together).
   function showBeat(n) {
     Audio.play('beat');
-    showCard({ title: String(n), text: game.rivalsLine, primary: online ? null : 'Go!', opponents: true, quiet: true });
+    showCard({ title: String(n), text: game.rivalsLine, primary: online ? null : 'Go!', opponents: true, quiet: true, beat: true });
   }
 
   function go() {
@@ -381,7 +391,7 @@
   function pause() {
     if (state !== 'running' || online) return; // no napping online: the round goes on for everyone
     state = 'paused';
-    napOver = overlay.classList.contains('hidden') ? null : shownCard; // your death card, say: back on waking
+    napOver = !overlay.classList.contains('hidden') && shownCard?.reward ? shownCard : null; // your death card: back on waking
     Chatter.clearBubbles();
     showCard({
       title: 'Napping', text: `${pick(FLAVOR.pause)} ${FLAVOR.wake}`,
@@ -427,8 +437,8 @@
     const r = game.result;
     const yours = !me || !r ? ''
       : r.won ? `Won in ${Records.clock(r.survived)} · score ${me.eaten}`
-      : r.draw ? `You shared 1st · ${Records.clock(r.survived)} · score ${me.eaten}`
-      : `You finished ${Records.ordinal(r.place)} · ${Records.clock(r.survived)} · score ${me.eaten}`;
+      : r.draw ? `You shared 1st · lasted ${Records.clock(r.survived)} · score ${me.eaten}`
+      : `You finished ${Records.ordinal(r.place)} · lasted ${Records.clock(r.survived)} · score ${me.eaten}`;
     if (online) {
       pendingCard = hosting()
         ? { title, flavor, text: yours, reward: !!me, primary: 'Play again', secondary: 'Close room', lobby: { players: true },
@@ -502,7 +512,7 @@
       game.firstBlood = true;
       const v = dying[0];
       const killer = game.snakes.find(o => o.name === v.killer && o !== v);
-      return toast(killer ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : `First blood: ${who(v, true)} ${isMe(v) ? yourCause(v) : causeFor(v)}.`);
+      return toast(killer ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : `First out: ${who(v, true)} ${isMe(v) ? yourCause(v) : causeFor(v)}.`);
     }
     for (const e of game.events) if (e.type === 'woodpecker') return toast(pick(FLAVOR.woodpecker));
     if (dying.length && alive.length === 2) {
@@ -526,21 +536,30 @@
 
   // A banner fades while a head passes under it, so it never hides the board
   // (its size is estimated from the text, so this reads no layout).
-  let toastTimer, toastChars = 0, toastUnder = false;
+  let toastTimer, toastChars = 0, toastUnder = '';
   function toastFade() {
-    let under = false;
-    if (!toastEl.hidden && boardPx && game) {
+    let top = false, bottom = false;
+    if (!toastEl.hidden && boardPx && game && !toastEl.classList.contains('over')) {
       const cell = boardPx / GRID;
       const rows = Math.ceil(52 / cell), half = Math.min(boardPx - 32, toastChars * 7.6 + 32) / 2 / cell;
       for (const s of game.snakes) {
         const h = s.body[0];
-        if (s.alive && h.y < rows && Math.abs(h.x + 0.5 - GRID / 2) < half + 0.5) { under = true; break; }
+        if (!s.alive || Math.abs(h.x + 0.5 - GRID / 2) >= half + 0.5) continue;
+        if (h.y < rows) top = true;
+        if (h.y >= GRID - rows) bottom = true;
       }
     }
-    if (under !== toastUnder) { toastUnder = under; toastEl.classList.toggle('under', under); }
+    const place = !top ? '' : bottom ? 'under' : 'low'; // moved down, or (if a head's there too) faded
+    if (place !== toastUnder) {
+      toastEl.classList.toggle('low', place === 'low');
+      toastEl.classList.toggle('under', place === 'under');
+      toastUnder = place;
+    }
   }
-  function toast(text, ms = 2800) {
+  // over: shown over a card (a rival's blurb on the start card), at the board's foot.
+  function toast(text, ms = 2800, over = false) {
     toastChars = text.length;
+    toastEl.classList.toggle('over', over);
     toastEl.textContent = text;
     toastEl.hidden = false;
     say(text);
@@ -607,6 +626,7 @@
       if (!nameRow.hidden) namingEntry = game.entryId;
     }
 
+    overlay.querySelector('.card').classList.toggle('beat', !!card.beat); // the countdown: a big number
     overlay.classList.remove('hidden');
     overlay.querySelector('.card').scrollTop = 0;
     if (!card.quiet) say(announcement(card));
@@ -688,7 +708,7 @@
 
   tagsEl.addEventListener('click', e => {
     const blurb = e.target.closest?.('li')?.dataset.blurb;
-    if (blurb && state !== 'running') toast(blurb, 3200);
+    if (blurb && state !== 'running') toast(blurb, 3200, !overlay.classList.contains('hidden'));
   });
 
   function updateHud(force = false) {
@@ -731,7 +751,8 @@
     pauseBtn.disabled = !canPause;
     pauseBtn.setAttribute('aria-label', state === 'paused' ? 'Wake up' : 'Nap (pause)');
     pauseBtn.dataset.paused = String(state === 'paused');
-    speedEl.hidden = !(canPause && spectating());
+    // (Watching, the speed can be set during the countdown too.)
+    speedEl.hidden = !(spectating() && !online && (canPause || state === 'countdown'));
     for (const b of speedEl.querySelectorAll('button')) b.setAttribute('aria-pressed', String(Number(b.dataset.speed) === speed));
     // Pressed means off (the icon gets its slash); the names stay put.
     muteBtn.setAttribute('aria-pressed', String(Audio.isMuted()));
@@ -919,8 +940,7 @@
   document.addEventListener('visibilitychange', () => {
     if (online) return awayOnline();
     if (!document.hidden) return;
-    if (state === 'countdown') { state = 'running'; pause(); }
-    else if (state === 'running') pause();
+    napNow();
   });
 
   // Online the round goes on while your tab is hidden, so an AI steers your
@@ -939,9 +959,14 @@
   }
   window.addEventListener('blur', () => {
     if (online || !playerAlive() || pendingCard) return;
-    if (state === 'countdown') { state = 'running'; pause(); }
-    else if (state === 'running') pause();
+    napNow();
   });
+
+  // Nap right away; from the countdown, the round starts napping.
+  function napNow() {
+    if (state === 'countdown') state = 'running';
+    if (state === 'running') pause();
+  }
 
   // ------------------------------------------------------ Hall of Fame
 
@@ -953,8 +978,7 @@
       return;
     }
     if (online) { /* the round goes on behind the dialog */ }
-    else if (state === 'countdown') { state = 'running'; pause(); }
-    else if (state === 'running' && !pendingCard) pause();
+    else if (state === 'countdown' || (state === 'running' && !pendingCard)) napNow();
     recordsOpener = document.activeElement;
     recordsEl.hidden = false;
     mainEl.inert = true;
@@ -1315,7 +1339,7 @@
         break;
       case 'tick': hostTick(msg); break;
       case 'say': // (the host's last line can arrive after the round ended here)
-        if ((state === 'countdown' || state === 'running') && game.snakes[msg.id] && typeof msg.text === 'string') Chatter.replay(game.snakes[msg.id], msg.text.slice(0, 200));
+        if ((state === 'countdown' || state === 'running') && game.snakes[msg.id] && typeof msg.text === 'string') Chatter.replay(game.snakes[msg.id], msg.text.slice(0, 200), msg.reply === true);
         break;
       case 'closed': hostLost('closed'); break;
     }
@@ -1333,7 +1357,7 @@
     game.rivalsLine = online.seat < 0 ? pick(FLAVOR.spectators) : msg.rivals;
     state = 'countdown';
     updateControls();
-    showCard({ title: '…', text: game.rivalsLine, opponents: true, quiet: true });
+    showCard({ title: '…', text: game.rivalsLine, opponents: true, quiet: true, beat: true });
   }
 
   function hostLost(reason) {
@@ -1386,8 +1410,8 @@
   });
   lobbyName.addEventListener('change', saveLobbyName);
   // The host passes the chatter on, so every screen has the same lines.
-  Chatter.onSpeak((s, text) => {
-    if (hosting() && (state === 'countdown' || state === 'running')) online.room.broadcast({ t: 'say', id: s.id, text });
+  Chatter.onSpeak((s, text, reply) => {
+    if (hosting() && (state === 'countdown' || state === 'running')) online.room.broadcast({ t: 'say', id: s.id, text, reply });
   });
   // Back from the back/forward cache, a room that was closed on the way out is gone.
   window.addEventListener('pageshow', e => {

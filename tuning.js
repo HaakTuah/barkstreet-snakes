@@ -81,4 +81,10 @@ window.TUNING = Object.freeze({
   GOBBLE_LENGTH: 2,
   BITE_MS: 240,             // the head's little squash at the moment of a bite
   CHEW_MS: 420,             // and the mouth's chewing after it
+  CHEEKS_MS: 900,           // Gobbler's cheeks puff up at a bite and go down over this long
+  FLOAT_MS: 700,            // a "+1" rises and fades over this long
+  PECK_MS: 250,             // the woodpecker's head bob at each peck
+  MOOD_RING_MS: 900,        // Capricious's ring flashing out when its mood changes
+  GOLDEN_DIM_TICKS: 30,     // a golden apple dims (calmly) over its last this-many ticks
+  CORPSE_FADE_MS: 250,      // with reduced motion, a dead snake fades over this long instead of bursting
 });

@@ -364,9 +364,13 @@ window.SnakeChatter = (() => {
 
   let boardEl, logEl, game;
   let enabled = true, compact = false, listener = null;
-  let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null, pendingReply = null;
+  let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null, pendingReply = null, saidAt = {};
+  const LINE_REST = 45000; // a snake doesn't say the same line again within this much game time
+  // Mason's Life of Brian moments are told once per visit (a joke told every round isn't one).
+  const SET_PIECES = new Set(['Romanes eunt domus.', 'Amicus meus est Biggus Dickus.']);
+  const toldPieces = new Set();
   const bubbles = new Map(); // snake id -> { el, snake, until, w, x, y, below }
-  const headAt = { x: 0, y: 0 };
+  const headAt = { x: 0, y: 0 }, headMine = { x: 0, y: 0 };
 
   try { enabled = localStorage.getItem('snake-chatter') !== 'off'; } catch { /* storage unavailable */ }
 
@@ -391,7 +395,7 @@ window.SnakeChatter = (() => {
 
   function reset(g) {
     game = g;
-    lastAny = -Infinity; lastSaid = {}; seen = {}; lastLine = null; pendingReply = null;
+    lastAny = -Infinity; lastSaid = {}; seen = {}; lastLine = null; pendingReply = null; saidAt = {};
     clearBubbles();
     logEl.textContent = '';
   }
@@ -408,16 +412,16 @@ window.SnakeChatter = (() => {
   }
 
   const isEnabled = () => enabled;
-  const setCompact = v => { compact = v; };
+  const setCompact = v => { compact = v; boardEl?.classList.toggle('compact-chat', v); };
   // Online, the host passes every line on (onSpeak), and friends' screens
   // replay it, so everyone sees the same chatter.
   const onSpeak = fn => { listener = fn; };
-  function replay(s, text) {
+  function replay(s, text, reply = false) {
     if (!enabled || !s) return;
     lastSaid[s.id] = game.time;
     lastAny = game.time;
     // (On small boards long lines go to the log only, but a reply always gets its bubble: it's the joke.)
-    if (s.alive && !(compact && text.length > COMPACT_CHARS && !source?.reply)) showBubble(s, text);
+    if (s.alive && !(compact && text.length > COMPACT_CHARS && !reply)) showBubble(s, text);
     addLog(s, text);
   }
 
@@ -436,7 +440,12 @@ window.SnakeChatter = (() => {
     const now = game.time;
     if (now - (lastSaid[s.id] ?? -Infinity) < SNAKE_GAP) return;
     if (!urgent && now - lastAny < ANY_GAP) return;
-    const template = pick(pool);
+    const said = saidAt[s.id] ||= new Map();
+    const fresh = pool.filter(l => !SET_PIECES.has(l) ? !(game.time - (said.get(l) ?? -Infinity) < LINE_REST) : !toldPieces.has(l));
+    if (!fresh.length) return; // (nothing new to say: quiet beats a repeat)
+    const template = pick(fresh);
+    said.set(template, game.time);
+    if (SET_PIECES.has(template)) toldPieces.add(template);
     const label = (who && s.memory.labels?.[who.id]) || 'unclear';
     speak(s, fill(template, who ? nameOf(who) : '', label), { template, who, label });
   }
@@ -451,7 +460,7 @@ window.SnakeChatter = (() => {
     // (On small boards long lines go to the log only, but a reply always gets its bubble: it's the joke.)
     if (s.alive && !(compact && text.length > COMPACT_CHARS && !source?.reply)) showBubble(s, text);
     addLog(s, text);
-    listener?.(s, text);
+    listener?.(s, text, !!source?.reply);
     const reply = source?.template && REPLIES[source.template];
     if (reply) pendingReply = { at: game.time + reply.after, by: reply.by, text: pick(reply.lines), then: reply.then };
   }
@@ -478,14 +487,15 @@ window.SnakeChatter = (() => {
 
   // Called every frame: bubbles follow the gliding heads, stay inside the
   // board, and expire on time even when the round is over or paused.
-  function layout(alpha, boardPx) {
+  // keepClear: your snake, if you're playing: a bubble near your head fades.
+  function layout(alpha, boardPx, keepClear = null) {
     if (!bubbles.size || !boardPx) return;
     const now = performance.now();
-    const cellPx = boardPx / 24;
+    const cellPx = boardPx / window.TUNING.GRID;
     for (const [id, b] of bubbles) {
       if (now > b.until || !b.snake.alive) { b.el.remove(); bubbles.delete(id); continue; }
       window.SnakeRender.headPx(b.snake, alpha, boardPx, headAt);
-      const w = Math.min(boardPx * 0.38, b.chars * 6.4 + 22);
+      const w = Math.min(boardPx * (compact ? 0.62 : 0.38), b.chars * 6.4 + 22);
       // Never in the way of the snake's path or its body: above the head (below
       // near the top) for a snake going sideways, and beside it, on the roomier
       // side, for one going up or down.
@@ -501,6 +511,14 @@ window.SnakeChatter = (() => {
       }
       x = Math.round(Math.min(boardPx - w / 2 - 4, Math.max(w / 2 + 4, x)));
       y = Math.round(Math.min(boardPx - cellPx, Math.max(cellPx, y)));
+      let near = false;
+      if (keepClear?.alive) {
+        const mine = window.SnakeRender.headPx(keepClear, alpha, boardPx, headMine);
+        const h = b.chars * 6.4 + 22 > w ? 38 : 22; // one line or two (estimated)
+        const cy = side === 'above' ? y - h / 2 : side === 'below' ? y + h / 2 : y;
+        near = Math.abs(mine.x - x) < w / 2 + cellPx * 1.5 && Math.abs(mine.y - cy) < h / 2 + cellPx * 1.5;
+      }
+      if (near !== b.near) { b.el.classList.toggle('near', near); b.near = near; }
       if (x === b.x && y === b.y && side === b.side) continue;
       if (side !== b.side) b.el.dataset.side = side;
       if (side === 'above' || side === 'below') { // the tail points at the head even when the bubble is pushed off-centre at an edge
@@ -597,7 +615,7 @@ window.SnakeChatter = (() => {
     const cat = alive.find(s => s.personaKey === 'copycat');
     if (cat && lastLine?.template && lastLine.speaker !== cat && game.time - lastAny > 500 && Math.random() < 0.35) {
       if (game.time - (lastSaid[cat.id] ?? -Infinity) > SNAKE_GAP) {
-        const who = lastLine.who ? nameOf(lastLine.who) : '';
+        const who = lastLine.who ? (lastLine.who === cat ? '我' : nameOf(lastLine.who)) : ''; // ("That's a colony, me.")
         speak(cat, fill(ZH[lastLine.template] ?? lastLine.template, who, ZH_LABELS[lastLine.label] ?? lastLine.label));
       }
       lastLine = null;

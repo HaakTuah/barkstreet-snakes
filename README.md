@@ -103,6 +103,7 @@ Serve the folder with any static server (for example `npx serve` or `python -m h
 - `node tools/online-test.js` plays rounds through the online protocol and checks that a friend's screen matches the host's every tick.
 - `node tools/simulate.js 200` plays 200 AI-only rounds headlessly with the game's own rules and AI, and prints each personality's win rate, food, kills, how snakes die and so on. Add `--seed 1` to repeat a run exactly (on any machine), `--check` to fail on a stalled round, and `--root <dir>` to play another copy of the game, to compare versions.
 - `node tools/rules-test.js` checks the rules on hand-built boards: tails, head-ons, starving, the woodpecker's manners, what the AIs can see.
+- `node tools/shots.js [dir]` takes the screenshot tour in headless Chrome (title, play, a bite, a nap, a death, the cards, the Hall of Fame, a laptop, a phone both ways), with an autopilot at the wheel. `node tools/bench.js` measures frame times the same way. Both need Chrome (or set `CHROME`); nothing to install.
 
 ### How it's put together
 

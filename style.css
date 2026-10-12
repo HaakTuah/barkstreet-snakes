@@ -51,8 +51,8 @@ body {
 main {
   width: 100%;
   /* The board grows with the screen but always fits its height. */
-  max-width: min(760px, max(280px, calc(100vh - 260px)));
-  max-width: min(760px, max(280px, calc(100dvh - 260px)));
+  max-width: min(900px, max(280px, calc(100vh - 260px)));
+  max-width: min(900px, max(280px, calc(100dvh - 260px)));
 }
 
 .sr-only {
@@ -317,6 +317,7 @@ canvas {
 
 .card h2 { margin: 0 0 6px; font-size: 2rem; font-weight: 700; color: var(--heartwood); }
 .card p { margin: 0 0 10px; color: var(--ink-soft); text-wrap: pretty; }
+.card.beat h2 { font-size: 3.4rem; line-height: 1; margin-bottom: 8px; }
 .card p[hidden] { display: none; }
 .flavor { font-style: italic; color: var(--ink) !important; }
 .hint { margin: 12px 0 0 !important; font-size: 0.8rem; }
@@ -335,6 +336,7 @@ canvas {
 @keyframes pop { from { transform: scale(0.4); opacity: 0; } }
 
 /* The buttons stay in view when a card is taller than the board (they stick to its bottom edge). */
+.buttons .text-button { flex-basis: 100%; margin: 2px auto 0; }
 .buttons {
   position: sticky;
   bottom: calc(3px - var(--pad-y)); /* (inside the card's 3px ring, which stays unbroken) */
@@ -408,7 +410,7 @@ canvas {
 }
 .lobby input:disabled { opacity: 0.7; }
 .lobby-share input { font-size: 0.85rem; color: var(--ink-soft); }
-#lobby-code { flex: 0 1 9ch; min-width: 7.5ch; text-transform: uppercase; letter-spacing: 0.12em; text-align: center; }
+#lobby-code { flex: none; width: calc(5ch + 0.75em + 30px); text-transform: uppercase; letter-spacing: 0.12em; text-align: center; }
 .lobby-players { list-style: none; margin: 0; padding: 8px 12px; border-radius: var(--r-tag); box-shadow: var(--ring); }
 .lobby-players li { display: flex; align-items: center; gap: 8px; margin: 4px 0; color: var(--ink); }
 .lobby-players .tag { margin-left: auto; font-size: 0.8rem; color: var(--ink-soft); }
@@ -437,7 +439,7 @@ canvas {
 /* A banner over the board for the big moments (under the cards). */
 .toast {
   position: absolute;
-  z-index: 4; /* above the cards: a tapped rival's blurb shows on the start screen too */
+  z-index: 2; /* under the cards (except a tapped rival's blurb: .over) */
   left: 50%;
   top: 12px;
   width: max-content;
@@ -456,7 +458,11 @@ canvas {
   transition: opacity 0.2s;
 }
 .toast[hidden] { display: none; }
-/* A head passing under the banner: it fades so the board shows through. */
+/* A head passing under the banner: it moves to the board's foot (or, if a
+   head is there too, fades), so it never hides the board. A tapped rival's
+   blurb shows over a card, at the foot too. */
+.toast.low, .toast.over { top: auto; bottom: 12px; animation: none; }
+.toast.over { z-index: 4; }
 .toast.under { opacity: 0.3; }
 @keyframes drop { from { transform: translate(-50%, -10px); opacity: 0; } }
 
@@ -490,6 +496,9 @@ canvas {
   border-top-color: var(--edge, var(--ink-soft));
   transform: translateX(-50%);
 }
+.bubble { transition: opacity 0.2s; }
+.bubble.near { opacity: 0.3; } /* your head is close: the bubble gets out of your way */
+.compact-chat .bubble { max-width: 62%; }
 .bubble[data-side="below"]::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--edge, var(--ink-soft)); }
 .bubble[data-side="left"]::after, .bubble[data-side="right"]::after { top: 50%; border-top-color: transparent; transform: translateY(-50%); }
 .bubble[data-side="left"]::after { left: 100%; border-left-color: var(--edge, var(--ink-soft)); }
@@ -639,19 +648,20 @@ button.link:active { transform: none; }
 @container (max-height: 380px) {
   .card { --pad-x: 14px; --pad-y: 12px; }
   .card h2 { font-size: 1.45rem; margin-bottom: 4px; }
+  .card.beat h2 { font-size: 2.4rem; }
   .card p { margin-bottom: 8px; font-size: 0.92rem; }
-  .hint { display: none; }
   .opponents { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; margin-bottom: 8px; }
   .opponents li { margin: 2px 0; }
   .opponents .blurb { display: none; }
-  .text-button { margin-top: 6px; }
+  .buttons .text-button { margin-top: 0; }
   .name-row { margin-bottom: 8px; }
   .lobby { gap: 8px; }
   .buttons button { padding-inline: 18px; }
+  .hint { margin-top: 6px !important; font-size: 0.74rem; } /* (the steering hint stays: phones need it most) */
 }
 @container (max-height: 300px) {
   .card h2 { font-size: 1.25rem; }
-  .flavor { display: none; }
+  .flavor, .hint { display: none !important; }
   button { padding-block: 8px; }
 }
 
@@ -700,8 +710,8 @@ button.link:active { transform: none; }
    header and tags sit beside the board, which takes the full height. */
 @media (min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px) {
   main {
-    --board: min(780px, calc(100vh - 32px), calc(100vw - 260px));
-    --board: min(780px, calc(100dvh - 32px), calc(100vw - 260px));
+    --board: min(900px, calc(100vh - 32px), calc(100vw - 260px));
+    --board: min(900px, calc(100dvh - 32px), calc(100vw - 260px));
     width: auto;
     max-width: none;
     display: grid;
@@ -712,7 +722,15 @@ button.link:active { transform: none; }
   header, .scoreboard, .speed, .chatter, .help { grid-column: 1; }
   .frame { grid-column: 2; grid-row: 1 / span 6; }
   .scoreboard { grid-template-columns: 1fr; }
-  header { flex-direction: column; align-items: flex-start; }
+  header { flex-wrap: wrap; align-items: center; justify-content: flex-start; }
+  .brand { flex-basis: 100%; }
+  .hud { display: contents; }
+  .hud .stat { order: 0; }
+  header::after { content: ''; order: 1; flex-basis: 100%; }
+  .hud button { order: 2; }
+  .trophy { min-width: 34px; padding: 0 8px; justify-content: center; }
+  .trophy svg { display: block; }
+  .trophy .trophy-text { display: none; }
 }
 
 /* Touch: comfortable targets. */

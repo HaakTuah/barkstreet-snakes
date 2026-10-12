@@ -206,7 +206,7 @@ window.SnakeRecords = (() => {
   // ---------------------------------------------------------------- rendering
 
   const ordinal = n => n + (['th', 'st', 'nd', 'rd'][n] || 'th');
-  const placeLabel = e => e.won ? 'Won' : e.draw ? 'Draw' : ordinal(e.place);
+  const placeLabel = e => e.won ? 'Won' : e.draw ? 'Shared 1st' : ordinal(e.place);
   const clock = ms => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
 
   function el(tag, props = {}, ...children) {
@@ -284,9 +284,11 @@ window.SnakeRecords = (() => {
       );
     };
 
-    container.append(bars('How you finished', st.places.map((count, i) => ({
-      label: ordinal(i + 1), count, fill: 'var(--leaf)',
-    }))));
+    // (1st place counts wins and shared firsts: shown apart, so it agrees with Wins.)
+    const finishes = [{ label: 'Won', count: st.wins, fill: 'var(--leaf)' }];
+    if (st.draws) finishes.push({ label: 'Shared 1st', count: st.draws, fill: 'var(--leaf)' });
+    for (let i = 1; i < 4; i++) finishes.push({ label: ordinal(i + 1), count: st.places[i], fill: 'var(--leaf)' });
+    container.append(bars('How you finished', finishes));
 
     // Bar labels, and how each reads in "Your nemesis: …".
     const killerLabel = k => k === 'wall' ? 'Walls & holes' : k === 'self' ? 'Yourself' : k === 'hunger' ? 'Hunger' : k;
@@ -296,7 +298,7 @@ window.SnakeRecords = (() => {
       .sort((a, b) => b.count - a.count);
     if (killers.length) {
       const top = killers[0];
-      const tied = killers.filter(k => k.count === top.count).map(k => k.label);
+      const tied = killers.filter(k => k.count === top.count).map(k => nemesisOf(k.key));
       container.append(el('p', { className: 'nemesis' }, tied.length > 1
         ? `No nemesis yet: ${tied.slice(0, -1).join(', ')} and ${tied[tied.length - 1]} are tied.`
         : el('span', {}, 'Your nemesis: ', dot(top.color), el('strong', { textContent: nemesisOf(top.key) }), '.')));
