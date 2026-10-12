@@ -25,7 +25,7 @@ Everything in the UI uses only these.
 
 There are also two functional tints that aren't separate colors. **Parchment-2** is a darker parchment used for rings and tracks. **Berry** `#dc2626` is used only for danger: hunger, mushrooms and the "starving" state.
 
-**The cast palette is a deliberate exception.** The 15 personalities plus you need 16 separable identities, which 8 colors can't give. Each character keeps its own color, but it's never the only identifier: every character also has a face or body pattern (crown, tricorn and cross-belts, fangs and stripes, bricks and laurel, jester two-tone, rainbow and hair, cat ears, and so on). You get a cream outline.
+**The cast palette is a deliberate exception.** The 15 personalities plus you need 16 separable identities, which 8 colors can't give. Each character keeps its own color, but it's never the only identifier: every character also has a face or body pattern (crown, tricorn and cross-belts, a scope and a squint, bricks and laurel, jester two-tone, rainbow and hair, cat ears, and so on). You get a cream outline.
 
 ### Shape, line, texture, corners
 
@@ -35,7 +35,7 @@ There are also two functional tints that aren't separate colors. **Parchment-2**
   - 16 px for cards and the dialog
   - 20 px for the frame
   - pills only for buttons
-- **Lines:** parchment surfaces get a 2–3 px inset ring of Parchment-2, and color dots get a 1.5 px ink ring. On the board, lines are drawn at whole device pixels.
+- **Lines:** parchment surfaces get a 2–3 px inset ring of Parchment-2, and color dots get a 1.5 px ink ring. On the board, the canvas maps 1:1 onto device pixels (nothing is resampled), and the carved grid lines land on whole pixels.
 - **Texture:** only the bark has texture. It's prerendered once from a fixed seed, so it's the same tree every round. Parchment stays flat, and its paper feel comes from the ring and a soft shadow.
 - **Depth:** buttons have a 3 px "lip" and press down 2 px. Cards float on a soft 0 10 30 shadow. Snakes cast a small offset shadow on the bark. There's no blur anywhere on the canvas.
 
@@ -86,40 +86,70 @@ One treatment, used everywhere:
 | Start prompt | "Three rivals. One tree. Last snake wriggling wins." The control hint below adapts to keyboard or touch. |
 | Countdown | Rotating roll-calls ("Up the tree with you:", "Sharing your bark:") above the rival list |
 | Pause | Title **Napping**, then a rotating line ("Snakes need rest too."), then "Space or P to wake up" on keyboard or "Tap Wake up" on touch |
-| Death titles | Rotating ("Splat!", "Bonk!", "Tangled!", "Oof."), then **Starved!** for hunger and **Down the hole!** for the woodpecker |
+| Death titles | Matched to the cause: "Bonk!" for the edge, "Tangled!" for biting yourself, "Squashed!" for a rival's body, "Head-on!" for a head-on crash, **Starved!** for hunger and **Down the hole!** for the woodpecker |
 | Death flavor | Cause-specific lines, or the killer's own line, rewritten to be cause-neutral |
 | New best | **"New best: 14!"** with a short fanfare and a gold burst. Hall of Fame: "Hall of Fame #2. Carve your name:" |
 | Round over | "You win!" / "{Name} wins" with the winner's punchline, without repeating the title |
-| Control hints | Keyboard: "Arrows / WASD steer · Space naps · Enter restarts · H Hall of Fame"; touch: "Swipe to steer · tap ⏸ to nap" |
+| Control hints | Keyboard: "Arrows or WASD steer · Space naps · Enter starts over · H for the Hall of Fame" (plus "M sound · N music" under the board); touch: "Swipe on the bark to steer · tap ⏸ to nap" |
 
 **Rules for every string:**
 - One noun for the measure: **Score** (food eaten) and **Best**.
 - "you" in the middle of a sentence, never "You".
 - The snakes call you by your Hall of Fame name, or **Green** if you haven't set one.
-- Mason speaks only phony Latin.
+- Mason speaks only phony Latin. His *Life of Brian* moments get answers: the Metagamer corrects "Romanes eunt domus", and "Biggus Dickus" (then "Incontinentia Buttocks") sets the others off giggling, as it does Pilate's guards.
+- A rival's name says how it plays. Hunter became **Sniper**: it picks the snake it has the best shot at and cuts in front of its head, and "Hunter" could describe half the cast. Old Hall of Fame rows and kill counts carry over to the new name.
+- Kill lines fit any way of dying to that rival (you ran into it, it ran into you, head-on), and win lines follow the "{Name} wins" title instead of repeating it.
 
 ## Feel targets (checked in Phase 7)
 
 | Target | Concrete check |
 |---|---|
 | Smooth motion at 60/120/144 Hz | Fixed timestep driven from one rAF loop with interpolation; a snake moves exactly one cell per tick, never stalls at cell boundaries |
-| Frame budget | script + render per frame: **p95 ≤ 3 ms, worst ≤ 6.9 ms** (one 144 Hz frame) in the long-snake scene and at death and particle moments |
+| Frame budget | script + render per frame: **p95 ≤ 3 ms, worst ≤ 6.9 ms** (one 144 Hz frame) in the long-snake scene and at death and particle moments. *Measured in Chrome at 2× density: p95 0.9 ms, p99 2.1-2.5 ms, worst 6.7-7.5 ms; 0-2 frames in 8,300 over 6.94 ms, none over 16.7 ms. The p95 target is met; the worst-case target is met on most runs, and missed by under a millisecond on the rest.* |
 | Honest speed | Spectator 4× runs at 4.0× (±2%); ticks don't drift by their own cost |
 | Input never lost | Two turns pressed within one tick both apply, on consecutive ticks; no input combo ever reverses into the neck |
 | Eating feels good | Pop, particles, sound and score bump appear in the same frame as the bite tick; the gulp travels the body |
 | Death lands softly | A 350 ms freeze-frame with a puff (plus a 4 px shake, only for your death and only without reduced motion), then the card rises in over about 250 ms |
 | Restart is instant | Enter/R/Play: a short 3-beat countdown (3 × 350 ms) that **any direction key or swipe skips** (and steers) |
 | Gentle difficulty | Tick 120 ms → 90 ms over 2 minutes; the first 3 ticks of a round are eased (170 → 120 ms) so the opening is forgiving |
-| Touch precision | A swipe registers once the finger has travelled 0.5 of a cell, without lifting; one touch can chain several turns; the page never scrolls or refreshes |
+| Touch precision | A swipe registers once the finger has travelled half a cell (at least 12 px, about 3 mm, against finger jitter), without lifting; one touch can chain several turns; the page never scrolls or refreshes |
 | Never a dead moment | Every key in every state does something visible, or is documented as ignored (e.g. arrows while paused) |
+
+## The round's arc
+
+A round has a shape, and the music follows it:
+
+| Moment | Rules | Music |
+|---|---|---|
+| Start card, countdown, round over | - | A calm marimba loop (84 bpm) |
+| Opening | The first 3 ticks are eased (170 → 120 ms) | The loop plus a soft bass |
+| 0:45 | The speed-up (120 → 90 ms over 2 minutes) is well under way | A shaker joins; the tempo creeps up with the game's speed |
+| 2:00 | **Sudden death:** no new food; the woodpecker pecks holes ring by ring | Minor key, wood-block knocks |
+| Last two snakes | - | Faster and tense, with a heartbeat kick |
+| Watching | - | Quieter, no percussion |
+| Napping | - | Ducked to about a third |
+
+**The woodpecker comes at 2:00, not 3:00** (your call, and the numbers agree). With hunger, food is what keeps a round going, and late rounds were dragging. Over 600 simulated AI rounds the median round now lasts 72 s, the middle half 45-108 s, and 20% of rounds reach the woodpecker, so it's a real event rather than a rarity. Every personality still wins 13-40% of the rounds it plays.
+
+**The Hall of Fame ranks by place, then time alive, then food** (your call). Food stops appearing at 2:00, so food eaten mostly measures how early you died; time alive measures how well you played.
+
+## Sound
+
+Every sound is synthesised live with the Web Audio API, through one AudioContext, created on the first key or tap (browsers require a gesture). There are no audio files, so it works offline with nothing to download.
+
+- **Cues** are short and round: a marimba pluck for an apple (nudged in pitch each time, so a run of apples doesn't grate), a rising sparkle for gold, a low "nom" for meat, a wobbling "boing" for a mushroom, a far-off thud when a rival dies, a two-note sigh for your death, a fanfare for a new best and a bouncier phrase for a win, wood-block countdown beats and a "go", the woodpecker's knock-knock and pecks, and a tummy gurgle when you start starving.
+- **Mixing:** everything goes through a compressor so four snakes eating at once can't clip. At most 6 cues sound at once (death, best and win always get through), and each cue has a minimum gap so it can't machine-gun.
+- **Music** is scheduled note by note on the audio clock, a quarter second ahead, from the game loop, and switches arrangement at bar lines so changes land on the beat. It has its own bus and its own switch (N), separate from all sound (M). Both are remembered.
 
 ## Architecture change (and why)
 
 `snake.js` was 1,500 lines mixing the rules engine, the renderer, the UI, input and debug tools. It is split into:
-- **`engine.js`:** the pure rules. It's used unchanged by the game and the headless simulator. It has no DOM, and its tuning block sits at the top.
-- **`render.js`:** the canvas renderer: layers, sprite caches, particles, character animation, and the dev frame-time overlay.
-- **`audio.js`:** a tiny Web Audio synthesiser.
-- **`snake.js`:** the game controller: the loop, input, overlays, HUD and records glue.
+- **`tuning.js`:** every number that shapes how the game plays and feels, in one frozen object.
+- **`engine.js`:** the pure rules. It's used unchanged by the game and by `tools/simulate.js`. It has no DOM.
+- **`render.js`:** the canvas renderer: layers, sprite caches, particles and character animation.
+- **`audio.js`:** a tiny Web Audio synthesiser for the cues and the adaptive music.
+- **`snake.js`:** the game controller: the loop, input, overlays, HUD, records glue and the dev frame-time overlay (`?perf`).
+- **`tools/simulate.js`:** the balance simulator, moved out of the page into Node. It runs on all cores, and with `--seed` it repeats a run exactly, which is how the engine split, the AI's think-ahead and the AI optimisation were proven to change no decision.
 
 `ai.js`, `chatter.js` and `records.js` keep their roles. Plain `<script>` tags still work from `file://`, with no build step.
 
@@ -130,13 +160,13 @@ Each line gives the guideline, what was done, and why.
 - **"A perfect classic snake beats a cluttered one; no new modes":** *adapted.* The game is deliberately a four-snake rivalry with 15 personalities, items, chatter and a Watch AIs mode that you designed. Nothing is removed. The polish goes into readability and feel. No new modes were added.
 - **"Board-full win state":** *adapted.* With four snakes sharing 576 cells (plus hunger and holes), a full board can't realistically happen. Food spawning stops gracefully if there's no free cell, and the round ends as usual.
 - **"Store the body in a ring buffer instead of unshift":** *adapted.* Bodies stay arrays: measured, `unshift`+`pop` costs under 1 µs per tick, and the whole engine is about 1.3% of tick time. The real hot path was the AI search's per-node array spreads and closures, which were rewritten allocation-free instead.
-- **"Zero allocation in the hot path":** *applied to the render loop and the AI search.* The engine still allocates a little per tick (one snapshot for the AIs' reaction delay). That's about 120 ms apart and far from the frame path.
+- **"Zero allocation in the hot path":** *applied to the render loop and the AI search.* The search, which scores up to 27 positions per decision, allocates nothing; it went 3× faster, and garbage collections fell from one every 3 decisions to one every ~145. What's left is small and deliberate: each decision builds its helper closures once (about 10 KB), and the engine takes one snapshot per tick for the AIs' reaction delay. Moving those to module state would cost readability for little gain.
 - **"A soft sound for turning":** *skipped.* Turning happens many times a second and any sound became noise in testing. Your hands already feel the turn.
 - **"Tune difficulty by playing":** *adapted.* I can't play at human speed with a real keyboard. The ramp was tuned conservatively (≤33% faster over 2 minutes, an eased opening) and checked with scripted and AI play. It's flagged for you to try.
 - **"Colorblind-safe palette":** *adapted.* 16 characters can't all be hue-distinct. Instead, nothing is identified by hue alone: faces and patterns for rivals, a cream outline for you, distinct shapes for food (apple, golden apple with a star, mushroom, drumstick).
 - **"No external assets":** *adapted.* Fredoka from Google Fonts was already used. It's kept but loaded non-blocking, so the game works offline with the fallback font.
 - **"Prerender static layers or stack canvases":** *prerendered.* One visible canvas, with offscreen layers for bark + grid + holes and cached sprites. That's simpler than syncing stacked canvases.
-- **"Move the simulation off the main thread" (implied by the frame budget):** *adapted.* A Web Worker wouldn't run from `file://`. Instead the AI thinking for the next tick is spread over the frames between ticks, with the same information and the same decisions.
+- **"Move the simulation off the main thread" (implied by the frame budget):** *adapted.* A Web Worker wouldn't run from `file://`. Instead the AI thinking for the next tick is spread evenly over the frames before it (usually one AI per frame), with the same information and the same decisions. In an A/B test, pacing beat a per-frame time budget on every run (p99 2.1-2.5 ms vs 3.2-3.9 ms).
 - **"Particles in the palette's colors":** *adapted.* Particles use the palette plus the color of what was eaten (golden for golden apples, the snake's tint for meat), so the burst says what happened.
 - **"High score in localStorage":** *kept and extended.* There's Best plus the existing Hall of Fame and stats, every access in try/catch. Watched AI-only rounds now count in the Hall of Fame (your request), but never in your personal stats.
 - **"Pause automatically on blur/visibility":** *applied to hidden tabs, and to window blur only while you're playing.* A watched AI round keeps running when you click elsewhere on the same screen, but pauses when hidden.
