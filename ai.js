@@ -51,11 +51,11 @@ window.SnakeAI = (() => {
   // behaviour, optional), weights, and flavor text: a blurb for the start
   // screen, a line for when it kills you, and one for when it wins.
   const PERSONAS = {
-    hunter: {
-      name: 'Hunter', color: '#b91c1c', look: 'hunter', driver: 'hunter',
+    sniper: {
+      name: 'Sniper', color: '#b91c1c', look: 'sniper', driver: 'sniper',
       blurb: 'Picks whichever snake it has the best shot at and cuts it off.',
-      kill: 'Hunter saw you coming three moves ago.',
-      win: 'Hunter wins. Nobody was safe.',
+      kill: 'Headshot. It had you lined up three moves ago.',
+      win: 'Nobody was safe.',
       w: {
         space: 1, territory: 0.8, aggression: 0.3,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, hungryBelow: 16, fedFactor: 0.3,
@@ -64,9 +64,9 @@ window.SnakeAI = (() => {
     },
     gobbler: {
       name: 'Gobbler', color: '#fb923c', look: 'gobbler',
-      blurb: 'Eats everything, even food a rival is closer to. Hates mushrooms.',
-      kill: 'Gobbler bumped into you on its way to lunch.',
-      win: 'Gobbler wins, and is still hungry.',
+      blurb: 'Eats everything, even a rival\'s apple. Hates mushrooms.',
+      kill: 'Gobbler didn\'t even look up from lunch.',
+      win: 'And it\'s still hungry.',
       w: {
         space: 1, territory: 0.2,
         food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 0.3, mushroom: -3,
@@ -77,7 +77,7 @@ window.SnakeAI = (() => {
       name: 'Ghost', color: '#f1f5f9', look: 'ghost',
       blurb: 'Keeps away from everyone and eats mushrooms to stay small.',
       kill: 'Ghost? You never even saw it.',
-      win: 'Ghost wins. Was it ever really here?',
+      win: 'Was it ever really here?',
       w: {
         space: 2, territory: 0.6,
         food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 10, fedFactor: 0, mushroomLover: 12,
@@ -87,7 +87,7 @@ window.SnakeAI = (() => {
     sovereign: {
       name: 'Sovereign', color: '#2563eb', look: 'sovereign', driver: 'sovereign',
       blurb: 'Rules its own patch of bark and attacks anyone who trespasses.',
-      kill: 'You trespassed on the Sovereign\'s land.',
+      kill: 'The Sovereign does not share.',
       win: 'Long live the Sovereign.',
       w: {
         space: 1.5, territory: 1, aggression: 0.2,
@@ -98,9 +98,9 @@ window.SnakeAI = (() => {
     },
     colonist: {
       name: 'Colonist', color: '#e11d48', look: 'colonist', driver: 'colonist',
-      blurb: 'A redcoat who plants flags all over the board and defends every one of them.',
-      kill: 'The Colonist claimed the spot you were standing on.',
-      win: 'The Colonist plants its final flag.',
+      blurb: 'A redcoat who plants flags all over and defends every one.',
+      kill: 'Another patch of bark for the Crown.',
+      win: 'The final flag is planted.',
       w: {
         space: 1.2, territory: 1.4, aggression: 0.2,
         food: 5, eat: 70, pellet: 1.2, foodRange: 30,
@@ -113,14 +113,14 @@ window.SnakeAI = (() => {
       name: 'Drab', color: '#c8bf94', look: 'drab',
       blurb: 'Plays it safe and sensible. Nothing special.',
       kill: 'You lost to Drab. Drab!',
-      win: 'Drab wins. Somehow.',
+      win: 'Somehow.',
       w: DRAB,
     },
     vulture: {
       name: 'Vulture', color: '#27272a', ink: '#f9a8d4', look: 'vulture', driver: 'vulture',
       blurb: 'Circles snakes in trouble and feasts on what they leave behind.',
       kill: 'Vulture was waiting for this.',
-      win: 'Vulture wins, picking over the leftovers.',
+      win: 'Picking over the leftovers.',
       w: {
         space: 1.5, territory: 0.4,
         food: 4, eat: 60, normalFood: 0.15, pellet: 3, foodRange: 40, contested: true,
@@ -129,8 +129,8 @@ window.SnakeAI = (() => {
     },
     mason: {
       name: 'Mason', color: '#94a3b8', look: 'mason',
-      blurb: 'Builds long straight walls to divide the board, then rules the biggest piece.',
-      kill: 'You ran into one of Mason\'s walls. Divide and conquer.',
+      blurb: 'Walls off the board, then keeps the biggest piece.',
+      kill: 'Mason built that bit just for you.',
       win: 'Veni, vidi, Mason.',
       w: {
         space: 1.5, territory: 2.2,
@@ -140,16 +140,16 @@ window.SnakeAI = (() => {
     },
     wildcard: {
       name: 'Wildcard', color: '#f472b6', look: 'wildcard', driver: 'wildcard',
-      blurb: 'A random mix of habits, different every round. Great hair.',
-      kill: 'Wildcard got you. Nobody knows how, least of all Wildcard.',
-      win: 'Wildcard wins. Tremendous.',
+      blurb: 'A random mix of habits, new every round. Great hair.',
+      kill: 'Nobody knows how, least of all Wildcard.',
+      win: 'Tremendous. Nobody wins like this.',
       w: DRAB, // replaced by a random set on its first move
     },
     creeper: {
       name: 'Creeper', color: '#0d9488', look: 'creeper',
       blurb: 'Sneaks up and rides right behind other snakes\' tails.',
-      kill: 'Creeper was right behind you the whole time.',
-      win: 'Creeper wins, quietly.',
+      kill: 'Creeper was never far away.',
+      win: 'Quietly.',
       w: {
         space: 1, territory: 0.5,
         food: 3, eat: 50, pellet: 1, foodRange: 30,
@@ -160,28 +160,28 @@ window.SnakeAI = (() => {
       name: 'Metagamer', color: '#22d3ee', look: 'metagamer', driver: 'metagamer',
       blurb: 'Studies how each rival plays, then counters it.',
       kill: 'Metagamer had you figured out.',
-      win: 'Metagamer wins. As calculated.',
+      win: 'As calculated.',
       w: { ...DRAB, hunt: HUNT, lure: { weight: 5, dist: 6 } },
     },
     capricious: {
       name: 'Capricious', color: '#ec4899', look: 'capricious', driver: 'capricious',
-      blurb: 'Changes its mind every few seconds: hunter, glutton, hermit, builder.',
-      kill: 'Capricious felt like killing you. Just then.',
-      win: 'Capricious wins, and already wants something else.',
+      blurb: 'Changes its mind every few seconds: sniper, glutton, hermit, builder.',
+      kill: 'Capricious felt like it. Just then.',
+      win: 'And already wants something else.',
       w: DRAB, // replaced by the current mood's weights
     },
     copycat: {
       name: 'Copycat', color: '#fca5a5', look: 'copycat', driver: 'copycat',
-      blurb: 'Copies whoever looks like they are winning, right alongside them. Party member.',
-      kill: 'Copycat got you. It learned that from someone.',
-      win: 'Copycat wins. Imitation pays.',
+      blurb: 'Copies whoever seems to be winning. Party member.',
+      kill: 'It learned that from someone.',
+      win: 'Imitation pays.',
       w: { ...DRAB, mimic: 120, lure: { weight: 4, dist: 5 } },
     },
     desperado: {
       name: 'Desperado', color: '#ea580c', look: 'desperado',
-      blurb: 'An adrenaline junkie who skims walls and heads for the thrill of it. Yeehaw.',
+      blurb: 'Skims walls and heads for the thrill of it. Yeehaw.',
       kill: 'Draw, partner. Too slow.',
-      win: 'Desperado rides off into the sunset.',
+      win: 'Rides off into the sunset.',
       w: {
         space: 1, territory: 0.6,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, mushroom: 0.5,
@@ -191,8 +191,8 @@ window.SnakeAI = (() => {
     joker: {
       name: 'Joker', color: '#a21caf', look: 'joker', driver: 'joker',
       blurb: 'Lures chasers into dead ends and swerves away at the last moment.',
-      kill: 'The Joker led you on. Gotcha!',
-      win: 'The Joker wins. Who\'s laughing now?',
+      kill: 'Joker led you on. Gotcha!',
+      win: 'Who\'s laughing now?',
       w: {
         space: 1, territory: 0.6,
         food: 5, eat: 70, pellet: 1.2, foodRange: 40, mushroom: 0.5,
@@ -202,7 +202,7 @@ window.SnakeAI = (() => {
     },
   };
   const POOL = Object.keys(PERSONAS);
-  const MOODS = ['hunter', 'gobbler', 'ghost', 'mason'];
+  const MOODS = ['sniper', 'gobbler', 'ghost', 'mason'];
 
   const TRAPPED = 5000;
   const HOLE = 1 << 30;    // "frees up" never
@@ -355,7 +355,7 @@ window.SnakeAI = (() => {
     const all = others.map((_, k) => k);
 
     const drivers = {
-      hunter() { pickVictim(all, ctx.w.hunt); },
+      sniper() { pickVictim(all, ctx.w.hunt); },
 
       sovereign() {
         const R = ctx.w.home.radius;
