@@ -46,11 +46,11 @@ function loadGame(random) {
 function play({ rounds, seed, ahead }) {
   const { E, T } = loadGame(seed == null ? Math.random : seeded(seed));
   const per = {};
-  const total = { rounds, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: 0 };
+  const total = { rounds, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: 0, beetles: 0, caught: 0, flown: 0 };
   for (let r = 0; r < rounds; r++) {
     const g = E.createGame({ withPlayer: false });
     for (const s of g.snakes) {
-      per[s.name] ||= { rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, kills: 0, aliveMs: 0, deaths: {} };
+      per[s.name] ||= { rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, beetles: 0, kills: 0, aliveMs: 0, deaths: {} };
       per[s.name].rounds++;
     }
     const place = new Map();
@@ -59,6 +59,11 @@ function play({ rounds, seed, ahead }) {
       // the random numbers are drawn in the same order as without --ahead.
       if (ahead) for (const s of g.snakes) { if (!s.alive) continue; if (!E.canThinkAhead(g, s)) break; E.thinkAhead(g, s); }
       const dying = E.step(g);
+      for (const e of g.events) {
+        if (e.type === 'spawn' && e.kind === 'beetle') total.beetles++;
+        else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
+        else if (e.type === 'flown') total.flown++;
+      }
       const left = g.snakes.filter(s => s.alive).length;
       for (const s of dying) {
         place.set(s, left + 1);
@@ -90,9 +95,9 @@ function play({ rounds, seed, ahead }) {
 }
 
 function merge(results) {
-  const per = {}, total = { rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [] };
+  const per = {}, total = { rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0 };
   for (const r of results) {
-    for (const k of ['rounds', 'timeSum', 'sudden', 'draws', 'stalled']) total[k] += r.total[k];
+    for (const k of ['rounds', 'timeSum', 'sudden', 'draws', 'stalled', 'beetles', 'caught', 'flown']) total[k] += r.total[k];
     total.times.push(...r.total.times);
     total.trace.push(r.total.trace);
     for (const [name, p] of Object.entries(r.per)) {
@@ -112,6 +117,7 @@ function report({ per, total, suddenAt }) {
   const sec = ms => `${Math.round(ms / 1000)}s`;
   console.log(`${total.rounds} rounds · length median ${sec(times[times.length >> 1])}, middle half ${sec(times[times.length >> 2])}-${sec(times[(times.length * 3) >> 2])}`
     + ` · ${pct(total.sudden, total.rounds)}% reached the woodpecker (${sec(suddenAt)}) · draws ${total.draws} · stalled ${total.stalled}`);
+  if (total.beetles) console.log(`beetles: ${(total.beetles / total.rounds).toFixed(1)} a round, ${pct(total.caught, total.beetles)}% caught, ${pct(total.flown, total.beetles)}% flew off`);
   console.log(`fingerprint ${total.trace.join('-')}`);
   console.table(Object.entries(per).map(([name, p]) => ({
     name,
@@ -120,6 +126,7 @@ function report({ per, total, suddenAt }) {
     place: +(p.placeSum / p.rounds).toFixed(2),
     food: +(p.eaten / p.rounds).toFixed(1),
     'meat%': pct(p.pellets, p.eaten),
+    beetles: +(p.beetles / p.rounds).toFixed(2),
     kills: +(p.kills / p.rounds).toFixed(2),
     alive: sec(p.aliveMs / p.rounds),
     'self/wall%': pct((p.deaths.self || 0) + (p.deaths.wall || 0), p.rounds),

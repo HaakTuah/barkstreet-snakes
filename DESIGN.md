@@ -60,6 +60,7 @@ The rivals keep their faces and patterns, and share the blink, the bite and the 
 - **Apples:** green apples bob gently.
 - **The golden apple** shimmers with a small rotating sparkle star (a non-hue cue). Instead of blinking before it rots, it dims calmly.
 - **Mushrooms** sway slightly.
+- **Beetles** (your Flåklypa idea): a jewel beetle, emerald with a gold rim, that walks the bark cell by cell with scuttling legs and bolts from heads. It's the one food that moves, so it adds a chase to the core loop: you catch one by cutting it off, not by reaching it. Tuned in the simulator: it bolts at snake speed once a head is within 2 cells; with that, a little over half get caught, after about 9 s (median), and the rest fly off or outlast the round. The AIs value it at what it's worth (two apples) and see it through their usual reaction delay; rounds run a few seconds shorter and busier (median 64 s vs 71 s over 150 seeded rounds), and every personality still wins 10-41% of its rounds. A skitter when one appears, a crunch when you catch it, and Gobbler, Desperado, Sniper and Mason have something to say about it (Mason: "Scarabaeus captus!").
 - **Meat:** a drumstick tinted by the snake it came from, with a light rim so it reads against the bark.
 - **Holes** are baked into the static layer the moment they're pecked. The woodpecker perches on its newest hole, which can never be played on again, never on a playable cell.
 - **The corner leaves move onto the frame** and never cover playable cells.

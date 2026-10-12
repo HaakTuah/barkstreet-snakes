@@ -25,7 +25,7 @@ window.SnakeOnline = (() => {
   const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   const CODE_LENGTH = 5;
   const DIR_NAMES = ['up', 'down', 'left', 'right'];
-  const KINDS = ['food', 'golden', 'mushroom', 'pellet'];
+  const KINDS = ['food', 'golden', 'mushroom', 'pellet', 'beetle'];
 
   const newCode = () => Array.from({ length: CODE_LENGTH }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
   const cleanCode = text => String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CODE_LENGTH);
@@ -63,7 +63,10 @@ window.SnakeOnline = (() => {
         s.alive ? 1 : 0, DIR_NAMES.indexOf(dirName(s.dir)), s.eaten, s.lastAte, s.nextStarve, cells(s),
         memoryOf(s), s.autopilot ? 1 : 0,
       ]),
-      f: game.food.map(f => [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, f.color || 0]),
+      // A beetle also says which way it faces and where it came from, so it walks on every screen.
+      f: game.food.map(f => f.kind === 'beetle'
+        ? [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, 0, DIR_NAMES.indexOf(dirName(f.dir)), f.px ?? -1, f.py ?? -1, f.movedAt, f.scared ? 1 : 0]
+        : [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, f.color || 0]),
       h: holes,
       w: game.woodpecker ? [game.woodpecker.x, game.woodpecker.y, game.woodpecker.at] : 0,
       e: game.events.map(encodeEvent).filter(Boolean),
@@ -88,6 +91,7 @@ window.SnakeOnline = (() => {
       case 'spawn': return ['spawn', e.kind];
       case 'woodpecker': return ['woodpecker'];
       case 'peck': return ['peck', e.x, e.y];
+      case 'flown': return ['flown', e.x, e.y];
       default: return null;
     }
   }
@@ -117,10 +121,14 @@ window.SnakeOnline = (() => {
         else delete s.memory[k];
       }
     });
-    game.food = msg.f.map(([x, y, kind, expires, color]) => {
+    game.food = msg.f.map(([x, y, kind, expires, color, dir, px, py, movedAt, scared]) => {
       const f = { x, y, kind: KINDS[kind] };
       if (expires >= 0) f.expires = expires;
       if (color) f.color = color;
+      if (f.kind === 'beetle') {
+        Object.assign(f, { dir: DIRS[DIR_NAMES[dir]] || DIRS.right, movedAt, scared: !!scared });
+        if (px >= 0) { f.px = px; f.py = py; }
+      }
       return f;
     });
     for (const k of msg.h) game.holes.add(k);
@@ -139,6 +147,7 @@ window.SnakeOnline = (() => {
         case 'spawn': return { type: 'spawn', kind: e[1] };
         case 'woodpecker': return { type: 'woodpecker' };
         case 'peck': return { type: 'peck', x: e[1], y: e[2] };
+        case 'flown': return { type: 'flown', x: e[1], y: e[2] };
         default: return null;
       }
     }).filter(Boolean);

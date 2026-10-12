@@ -592,6 +592,7 @@ window.SnakeAI = (() => {
     const worth = {
       food: shrinking ? 0 : Math.max(apple, hunger),
       golden: shrinking ? 0 : 3 * Math.max(apple, hunger),
+      beetle: shrinking ? 0 : 2 * Math.max(apple, hunger), // it moves, but it's worth two apples
       pellet: shrinking ? 0 : (w.pellet ?? 1),
       mushroom: shrinking ? 2 : (w.mushroom ?? -1),
     };
@@ -600,7 +601,7 @@ window.SnakeAI = (() => {
     // lists the cells worth something.
     foodValue.fill(0); foodGrow.fill(0);
     let foodCount = 0;
-    for (const f of food) foodGrow[f.y * N + f.x] = f.kind === 'mushroom' ? -3 : f.kind === 'golden' ? 3 : 1;
+    for (const f of food) foodGrow[f.y * N + f.x] = f.kind === 'mushroom' ? -3 : f.kind === 'golden' ? 3 : f.kind === 'beetle' ? 2 : 1;
     for (const f of food) {
       const v = worth[f.kind] ?? 0;
       if (!v) continue;

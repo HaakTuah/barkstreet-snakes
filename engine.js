@@ -114,18 +114,20 @@ window.SnakeEngine = (() => {
   }
 
   function fillFood(game) {
-    // Golden apples rot and mushrooms wither.
+    // Golden apples rot, mushrooms wither, and beetles nobody caught fly off.
     if (game.food.some(f => f.expires != null && f.expires <= game.tick)) {
+      for (const f of game.food) if (f.kind === 'beetle' && f.expires <= game.tick) game.events.push({ type: 'flown', x: f.x, y: f.y });
       game.food = game.food.filter(f => f.expires == null || f.expires > game.tick);
     }
     // Once the woodpecker is here, nothing new grows.
     if (suddenDeath(game)) return;
 
-    let apples = 0, mushrooms = 0, golden = 0;
+    let apples = 0, mushrooms = 0, golden = 0, beetles = 0;
     for (const f of game.food) {
       if (f.kind === 'food') apples++;
       else if (f.kind === 'mushroom') mushrooms++;
       else if (f.kind === 'golden') golden++;
+      else if (f.kind === 'beetle') beetles++;
     }
 
     // Pick from the truly free cells (no bodies, holes or food), worked out
@@ -148,6 +150,53 @@ window.SnakeEngine = (() => {
     for (; mushrooms < T.MUSHROOMS; mushrooms++) place({ kind: 'mushroom', expires: game.tick + T.MUSHROOM_TICKS });
     if (!golden && Math.random() < T.GOLDEN_CHANCE && place({ kind: 'golden', expires: game.tick + T.GOLDEN_TICKS })) {
       game.events.push({ type: 'spawn', kind: 'golden' });
+    }
+    // Now and then a beetle comes out for a crawl (one at a time).
+    if (!beetles && game.time >= T.BEETLE_FIRST_MS && Math.random() < T.BEETLE_CHANCE) {
+      const dir = CRAWL[Math.floor(Math.random() * 4)];
+      if (place({ kind: 'beetle', expires: game.tick + T.BEETLE_TICKS, dir, movedAt: game.tick })) game.events.push({ type: 'spawn', kind: 'beetle' });
+    }
+  }
+
+  // Beetles crawl a cell every few ticks: mostly straight on, now and then
+  // turning. With a head close by they scurry away, faster. Never into a body,
+  // a hole, other food or off the board; boxed in, they wait.
+  const CRAWL = [DIRS.up, DIRS.right, DIRS.down, DIRS.left];
+  function crawl(game) {
+    let marked = false;
+    for (const b of game.food) {
+      if (b.kind !== 'beetle') continue;
+      let fear = 99, hx = 0, hy = 0;
+      for (const s of game.snakes) {
+        if (!s.alive) continue;
+        const h = s.body[0], d = Math.abs(h.x - b.x) + Math.abs(h.y - b.y);
+        if (d < fear) { fear = d; hx = h.x; hy = h.y; }
+      }
+      const scared = fear <= T.BEETLE_FEAR;
+      if (game.tick - b.movedAt < (scared ? T.BEETLE_SCARED_EVERY : T.BEETLE_EVERY)) continue;
+      if (!marked) {
+        markBodies(game);
+        for (const f of game.food) bodyStamp[key(f.x, f.y)] = stamp;
+        for (const k of game.holes) bodyStamp[k] = stamp;
+        marked = true;
+      }
+      let best = null, bestScore = -Infinity;
+      for (const d of CRAWL) {
+        const nx = b.x + d.x, ny = b.y + d.y;
+        if (!inside(nx, ny) || bodyStamp[key(nx, ny)] === stamp) continue;
+        let score = Math.random(); // a little wandering
+        if (d === b.dir) score += 1.5; // it likes to keep going
+        else if (d.x === -b.dir.x && d.y === -b.dir.y) score -= 1;
+        if (scared) score += 3 * (Math.abs(nx - hx) + Math.abs(ny - hy) - fear); // away from the nearest head
+        if (score > bestScore) { bestScore = score; best = d; }
+      }
+      if (!best) continue;
+      b.px = b.x; b.py = b.y;
+      b.x += best.x; b.y += best.y;
+      b.dir = best;
+      b.movedAt = game.tick;
+      b.scared = scared;
+      bodyStamp[key(b.x, b.y)] = stamp;
     }
   }
 
@@ -216,7 +265,7 @@ window.SnakeEngine = (() => {
   // Advance one tick. All snakes move at the same time. Returns the snakes that died.
   // game.events lists what happened this tick, for the chatter, sounds and banners:
   // { type: 'eat', snake, kind } | { type: 'death', snake } | { type: 'spawn', kind }
-  // | { type: 'starving', snake } | { type: 'woodpecker' } | { type: 'peck', x, y }
+  // | { type: 'starving', snake } | { type: 'woodpecker' } | { type: 'peck', x, y } | { type: 'flown', x, y } (a beetle got away)
   function step(game) {
     game.events = [];
 
@@ -322,7 +371,7 @@ window.SnakeEngine = (() => {
         n -= fromGrow;
         while (n-- > 0 && s.body.length > T.MIN_LENGTH) s.body.pop();
       } else {
-        const growth = f.kind === 'golden' ? T.GOLDEN_GROWTH : 1;
+        const growth = f.kind === 'golden' ? T.GOLDEN_GROWTH : f.kind === 'beetle' ? T.BEETLE_GROWTH : 1;
         s.lastAte = game.time;
         s.nextStarve = game.time + T.HUNGER_MS;
         s.grow += growth;
@@ -331,6 +380,7 @@ window.SnakeEngine = (() => {
       }
     }
 
+    crawl(game);
     peck(game);
     fillFood(game);
     game.time += tickMs(game);
