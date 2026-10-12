@@ -5,13 +5,13 @@ window.SnakeChatter = (() => {
   // {who} is the other snake in the moment (victim, intruder, ...). The human
   // is "you". Lines are picked at random.
   const VOICES = {
-    hunter: {
+    sniper: {
       hungry: ["Hungry. Someone will do."],
-      start: ['Let the hunt begin.', 'I can smell fear.', 'Run. It helps.'],
-      idle: ['I see you, {who}.', 'Nowhere to hide.', 'Closer…', 'Tick tock, {who}.'],
-      kill: ['Next.', 'Too slow, {who}.', 'That one was easy.'],
+      start: ['Taking position.', 'Scoping the lobby.', 'Run. It helps.'],
+      idle: ['I see you, {who}.', 'In my sights, {who}.', 'Steady…', 'Nowhere to hide.', 'Big fan of your stream, {who}.'],
+      kill: ['Headshot.', 'Next.', 'Too slow, {who}.', 'One shot.'],
       golden: ['Gold makes you slow.'],
-      dies: ['Hunted… by the hunted?', 'Impossible.'],
+      dies: ['Counter-sniped by {who}?', 'Should have relocated.', 'Impossible.'],
     },
     gobbler: {
       hungry: ["So… hungry… can't… go on…","FOOD. NOW."],
@@ -67,12 +67,14 @@ window.SnakeChatter = (() => {
       dies: ['Who\'s… eating… whom…'],
     },
     mason: {
-      hungry: ["Panem et circenses. Mostly panem."],
-      start: ['Alea iacta est.', 'Let us build.'],
-      idle: ['Divide et impera.', 'Veni, vidi, aedificavi.', 'A wall a day…', 'Building a wall. Wildcard isn\'t paying.',
-        'Veni, vidi… veni again.', 'Carpe diem. Carpe apple.', 'In vino veritas. In bark… splinters.', 'Alea iacta est. Oops, that was my lunch.'],
-      kill: ['Veni, vidi, vici.', 'Should have gone around, {who}.'],
-      dies: ['Et tu, {who}?'],
+      start: ['Alea iacta est!', 'Aedificamus!'],
+      idle: ['Vidi, vici, veni.', 'Veni, vidi, aedificavi.', 'Divide et imperium-ium.', 'Carpe applum!',
+        'Murus maximus. Very bigus.', 'In barko veritas.', 'Wallus erectus.', 'Semper wallus.', 'Biggus wallus.',
+        'Romanes eunt domus.', 'Amicus meus est Biggus Dickus.'],
+      kill: ['Veni, vidi, vici.', 'Murum non vidisti, {who}?', 'Requiescat in barko, {who}.'],
+      hungry: ['Panem! Panem et… panem!'],
+      woodpecker: ['Picus horribilis!'],
+      dies: ['Et tu, {who}?', 'Alea iacta… estus.', 'Murus… meus… finis.'],
     },
     wildcard: {
       hungry: ["Very hungry. The hungriest. Nobody has ever been this hungry."],
@@ -103,7 +105,7 @@ window.SnakeChatter = (() => {
       hungry: ["Now I'm hungry! Out of nowhere!"],
       start: ['Ooh, what shall I be today?'],
       mood: {
-        hunter: ['I\'m a hunter now! Grr!'],
+        sniper: ['I\'m a sniper now! Pew pew!'],
         gobbler: ['Ooh! I\'m hungry now!'],
         ghost: ['Leave me alone. I mean it.'],
         mason: ['Let\'s build something!'],
@@ -138,6 +140,41 @@ window.SnakeChatter = (() => {
 
   // Chinese for every line above: Copycat repeats what it hears, in Chinese.
   const ZH = {
+    "Alea iacta est!": "骰子已经掷下！",
+    "Aedificamus!": "我们来建造！",
+    "Vidi, vici, veni.": "我见，我征服，我来。",
+    "Divide et imperium-ium.": "分而治之之。",
+    "Carpe applum!": "抓住苹果！",
+    "Murus maximus. Very bigus.": "最大的墙。非常大。",
+    "In barko veritas.": "树皮里有真理。",
+    "Wallus erectus.": "墙，立起来了。",
+    "Semper wallus.": "永远是墙。",
+    "Biggus wallus.": "大大的墙。",
+    "Romanes eunt domus.": "罗马人回家去。",
+    "Amicus meus est Biggus Dickus.": "我的朋友叫Biggus Dickus。",
+    "Uxorem habet: Incontinentia Buttocks.": "他有个老婆：Incontinentia Buttocks。",
+    "BWAHAHA—": "哇哈哈哈——",
+    "I can't. I CAN'T.": "我不行了。真不行了。",
+    "*wheeze*": "*笑到喘不过气*",
+    "Pfft…": "噗……",
+    "*snort*": "*噗嗤*",
+    "Snrk. Sorry. Go on.": "噗。抱歉。你继续。",
+    "Taking position.": "就位。",
+    "Scoping the lobby.": "正在观察全场。",
+    "In my sights, {who}.": "{who}，你在我的瞄准镜里。",
+    "Steady…": "稳住……",
+    "Big fan of your stream, {who}.": "{who}，我是你直播的忠实粉丝。",
+    "Headshot.": "爆头。",
+    "One shot.": "一枪。",
+    "Counter-sniped by {who}?": "被{who}反狙了？",
+    "Should have relocated.": "早该换位置的。",
+    "Murum non vidisti, {who}?": "你没看见墙吗，{who}？",
+    "Requiescat in barko, {who}.": "在树皮上安息吧，{who}。",
+    "Panem! Panem et… panem!": "面包！面包和……面包！",
+    "Picus horribilis!": "可怕的啄木鸟！",
+    "Alea iacta… estus.": "骰子……掷下了。",
+    "Murus… meus… finis.": "我的……墙……完了。",
+    "It's \"Romani ite domum\", actually.": "其实应该是“Romani ite domum”。",
     "Hungry. Someone will do.": "饿了。随便谁都行。",
     "So… hungry… can't… go on…": "好……饿……撑……不住了……",
     "FOOD. NOW.": "食物。马上。",
@@ -146,17 +183,12 @@ window.SnakeChatter = (() => {
     "I say, is there nothing to eat out here?": "我说，这里就没有吃的吗？",
     "I should eat something.": "我该吃点东西了。",
     "Someone die already. I'm starving.": "快死一个吧。我饿坏了。",
-    "Panem et circenses. Mostly panem.": "面包和马戏。主要是面包。",
     "Very hungry. The hungriest. Nobody has ever been this hungry.": "非常饿。最饿的。从来没有人这么饿过。",
     "so… hungry…": "好……饿……",
     "Caloric deficit detected.": "检测到热量不足。",
     "Now I'm hungry! Out of nowhere!": "我现在饿了！突然就饿了！",
     "Running on empty. Love it.": "油箱空了。我喜欢。",
     "Why did the snake cross the bark? It was starving.": "蛇为什么要爬过树皮？因为它饿坏了。",
-    "Veni, vidi… veni again.": "我来，我见……我又来了。",
-    "Carpe diem. Carpe apple.": "及时行乐。及时吃苹果。",
-    "In vino veritas. In bark… splinters.": "酒后吐真言。树皮里……全是刺。",
-    "Alea iacta est. Oops, that was my lunch.": "骰子已经掷下。哎呀，那是我的午饭。",
     "Yeehaw!": "咿哈！",
     "Saddle up, partner.": "上马吧，伙计。",
     "Living on the edge, partner.": "刀尖上过日子，伙计。",
@@ -169,18 +201,12 @@ window.SnakeChatter = (() => {
     "Now we're talking! Holes!": "这才带劲！洞！",
     "What a ride…": "真是一趟好旅程……",
     "Worth it.": "值了。",
-    "Let the hunt begin.": "狩猎开始。",
-    "I can smell fear.": "我闻到了恐惧。",
     "Run. It helps.": "跑吧。有点用。",
     "I see you, {who}.": "我看见你了，{who}。",
     "Nowhere to hide.": "无处可藏。",
-    "Closer…": "再近一点……",
-    "Tick tock, {who}.": "滴答滴答，{who}。",
     "Next.": "下一个。",
     "Too slow, {who}.": "太慢了，{who}。",
-    "That one was easy.": "这个太简单了。",
     "Gold makes you slow.": "金子会让你变慢。",
-    "Hunted… by the hunted?": "猎人……被猎物猎杀？",
     "Impossible.": "不可能。",
     "Is it lunchtime? It feels like lunchtime.": "午饭时间到了吗？感觉像午饭时间。",
     "I could eat.": "我还能吃。",
@@ -254,14 +280,8 @@ window.SnakeChatter = (() => {
     "Rest in pieces, {who}.": "碎碎平安，{who}。",
     "I didn't even have to try.": "我都没怎么出力。",
     "Who's… eating… whom…": "谁……吃……谁……",
-    "Alea iacta est.": "骰子已经掷下。",
-    "Let us build.": "我们来建造吧。",
-    "Divide et impera.": "分而治之。",
     "Veni, vidi, aedificavi.": "我来，我见，我建。",
-    "A wall a day…": "一天一堵墙……",
-    "Building a wall. Wildcard isn't paying.": "在建墙。Wildcard不付钱。",
     "Veni, vidi, vici.": "我来，我见，我征服。",
-    "Should have gone around, {who}.": "你该绕过去的，{who}。",
     "Et tu, {who}?": "还有你吗，{who}？",
     "Hello, everybody. Tremendous crowd today.": "大家好。今天人山人海，了不起。",
     "I'm going to win. Bigly.": "我会赢的。大赢特赢。",
@@ -294,7 +314,7 @@ window.SnakeChatter = (() => {
     "Exactly as the model predicted.": "和模型预测的一模一样。",
     "That… wasn't in the data.": "这……不在数据里。",
     "Ooh, what shall I be today?": "哦，今天我当什么好呢？",
-    "I'm a hunter now! Grr!": "我现在是猎人了！嗷！",
+    "I'm a sniper now! Pew pew!": "我现在是狙击手了！砰砰！",
     "Ooh! I'm hungry now!": "哦！我现在饿了！",
     "Leave me alone. I mean it.": "别管我。我是认真的。",
     "Let's build something!": "我们来盖点东西吧！",
@@ -314,17 +334,27 @@ window.SnakeChatter = (() => {
 
   const SNAKE_GAP = 4500;  // ms of game time between lines from the same snake
   const ANY_GAP = 1200;    // ms between any two lines
-  const BUBBLE_MS = 2600;  // how long a bubble stays up
+  const BUBBLE_MS = 2600;  // how long a bubble stays up (real time)
   const LOG_SIZE = 5;
+  const COMPACT_CHARS = 32; // on small boards, longer lines go to the log only
+  // Mason's Life of Brian moments get an answer: [line, who answers, what they say].
+  const REPLIES = {
+    'Romanes eunt domus.': { by: s => s.personaKey === 'metagamer', lines: ['It\'s "Romani ite domum", actually.'], after: 1300 },
+    'Amicus meus est Biggus Dickus.': { by: s => s.personaKey !== 'mason', lines: ['Pfft…', '*snort*', 'Snrk. Sorry. Go on.'], after: 900,
+      then: 'Uxorem habet: Incontinentia Buttocks.' }, // ...and Mason, straight-faced, carries on
+    'Uxorem habet: Incontinentia Buttocks.': { by: s => s.personaKey !== 'mason', lines: ['BWAHAHA—', 'I can\'t. I CAN\'T.', '*wheeze*'], after: 800 },
+  };
 
-  let boardEl, logEl, grid, game;
-  let enabled = true;
-  let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null;
-  const bubbles = new Map(); // snake id -> { el, snake, until }
+  let boardEl, logEl, game;
+  let enabled = true, compact = false, playerName = 'Green';
+  let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null, pendingReply = null;
+  const bubbles = new Map(); // snake id -> { el, snake, until, w, x, y, below }
+  const headAt = { x: 0, y: 0 };
 
   try { enabled = localStorage.getItem('snake-chatter') !== 'off'; } catch { /* storage unavailable */ }
 
   const pick = list => list[Math.floor(Math.random() * list.length)];
+  const hasChinese = text => /[一-鿿]/.test(text);
 
   // The log sits on dark wood: lighten dark colors so names stay readable.
   function readable(hex) {
@@ -334,43 +364,54 @@ window.SnakeChatter = (() => {
     const up = v => Math.round(v + (255 - v) * 0.5);
     return `rgb(${up(r)},${up(g)},${up(b)})`;
   }
-  const nameOf = s => s.isPlayer ? 'you' : s.name;
+
+  // The rivals call you by your Hall of Fame name, or "Green" until you pick one.
+  const nameOf = s => s.isPlayer ? playerName : s.name;
 
   function init(opts) {
-    ({ boardEl, logEl, grid } = opts);
+    ({ boardEl, logEl } = opts);
   }
 
   function reset(g) {
     game = g;
-    lastAny = -Infinity; lastSaid = {}; seen = {}; lastLine = null;
+    lastAny = -Infinity; lastSaid = {}; seen = {}; lastLine = null; pendingReply = null;
+    clearBubbles();
+    logEl.textContent = '';
+  }
+
+  function clearBubbles() {
     for (const b of bubbles.values()) b.el.remove();
     bubbles.clear();
-    logEl.innerHTML = '';
   }
 
   function setEnabled(on) {
     enabled = on;
     try { localStorage.setItem('snake-chatter', on ? 'on' : 'off'); } catch { /* storage unavailable */ }
-    if (!on) { for (const b of bubbles.values()) b.el.remove(); bubbles.clear(); }
-    logEl.hidden = !on;
+    if (!on) clearBubbles();
   }
 
   const isEnabled = () => enabled;
+  const setCompact = v => { compact = v; };
+  const setPlayerName = n => { playerName = n || 'Green'; };
 
   // Have snake s say a line from one of its lists. urgent lines skip the global gap.
+  // Lines naming someone ({who}) are only used when there is someone to name;
+  // last words prefer them ("Et tu, Sniper?").
   function say(s, key, who, urgent = false) {
     if (!enabled || !s.persona) return;
     const voice = VOICES[s.personaKey];
     const lines = key.includes('.') ? key.split('.').reduce((o, k) => o?.[k], voice) : voice?.[key];
     if (!lines?.length) return;
+    const naming = lines.filter(l => l.includes('{who}'));
+    const plain = lines.filter(l => !l.includes('{who}'));
+    const pool = !who ? plain : key === 'dies' && naming.length ? naming : lines;
+    if (!pool.length) return;
     const now = game.time;
     if (now - (lastSaid[s.id] ?? -Infinity) < SNAKE_GAP) return;
     if (!urgent && now - lastAny < ANY_GAP) return;
-    const template = pick(lines);
+    const template = pick(pool);
     const label = (who && s.memory.labels?.[who.id]) || 'unclear';
-    let text = fill(template, who ? nameOf(who) : 'you', label);
-    if (text.startsWith('you')) text = 'Y' + text.slice(1);
-    speak(s, text, { template, who, label });
+    speak(s, fill(template, who ? nameOf(who) : '', label), { template, who, label });
   }
 
   const fill = (template, who, label) => template.replaceAll('{who}', who).replaceAll('{label}', label);
@@ -379,8 +420,10 @@ window.SnakeChatter = (() => {
     lastSaid[s.id] = game.time;
     lastAny = game.time;
     lastLine = { speaker: s, text, ...source };
-    if (s.alive) showBubble(s, text);
+    if (s.alive && !(compact && text.length > COMPACT_CHARS)) showBubble(s, text);
     addLog(s, text);
+    const reply = source?.template && REPLIES[source.template];
+    if (reply) pendingReply = { at: game.time + reply.after, by: reply.by, text: pick(reply.lines), then: reply.then };
   }
 
   function showBubble(s, text) {
@@ -388,19 +431,32 @@ window.SnakeChatter = (() => {
     const el = document.createElement('div');
     el.className = 'bubble';
     el.textContent = text;
+    if (hasChinese(text)) el.lang = 'zh-Hans';
     el.style.setProperty('--edge', s.persona.ink || s.color);
     boardEl.appendChild(el);
-    bubbles.set(s.id, { el, snake: s, until: performance.now() + BUBBLE_MS });
-    place(bubbles.get(s.id));
+    // Width is estimated from the text, so placing a bubble never reads layout.
+    bubbles.set(s.id, { el, snake: s, until: performance.now() + BUBBLE_MS, w: 0, chars: text.length, x: NaN, y: NaN, below: null });
   }
 
-  // Bubbles sit above the speaker's head, flipped below near the top edge.
-  function place(b) {
-    const h = b.snake.body[0];
-    b.el.style.left = `${Math.min(76, Math.max(24, (h.x + 0.5) / grid * 100))}%`;
-    b.el.style.top = `${h.y / grid * 100}%`;
-    b.el.classList.toggle('below', h.y < 3);
-    if (b.el.classList.contains('below')) b.el.style.top = `${(h.y + 1) / grid * 100}%`;
+  // Called every frame: bubbles follow the gliding heads, stay inside the
+  // board, and expire on time even when the round is over or paused.
+  function layout(alpha, boardPx) {
+    if (!bubbles.size || !boardPx) return;
+    const now = performance.now();
+    const cellPx = boardPx / 24;
+    for (const [id, b] of bubbles) {
+      if (now > b.until || !b.snake.alive) { b.el.remove(); bubbles.delete(id); continue; }
+      window.SnakeRender.headPx(b.snake, alpha, boardPx, headAt);
+      const w = Math.min(boardPx * 0.38, b.chars * 6.4 + 22);
+      const x = Math.round(Math.min(boardPx - w / 2 - 4, Math.max(w / 2 + 4, headAt.x)));
+      const below = headAt.y < cellPx * 3;
+      const y = Math.round(below ? headAt.y + cellPx * 0.75 : headAt.y - cellPx * 0.75);
+      if (x === b.x && y === b.y && below === b.below) continue;
+      if (below !== b.below) b.el.classList.toggle('below', below);
+      b.el.style.setProperty('--tail', `${Math.round(50 + ((headAt.x - x) / w) * 100)}%`);
+      b.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, ${below ? '0' : '-100%'})`;
+      b.x = x; b.y = y; b.below = below;
+    }
   }
 
   function addLog(s, text) {
@@ -408,19 +464,17 @@ window.SnakeChatter = (() => {
     const who = document.createElement('strong');
     who.textContent = s.name;
     who.style.color = readable(s.persona.ink || s.color);
-    li.append(who, ' ', text);
+    const said = document.createElement('span');
+    said.textContent = text;
+    if (hasChinese(text)) said.lang = 'zh-Hans';
+    li.append(who, ' ', said);
     logEl.prepend(li);
     while (logEl.children.length > LOG_SIZE) logEl.lastChild.remove();
   }
 
   // Called once per tick, after the engine moved everyone.
   function update() {
-    if (!game) return;
-    const now = performance.now();
-    for (const [id, b] of bubbles) {
-      if (now > b.until) { b.el.remove(); bubbles.delete(id); } else if (b.snake.alive) place(b);
-    }
-    if (!enabled) return;
+    if (!game || !enabled) return;
 
     const ais = game.snakes.filter(s => s.persona);
     const alive = ais.filter(s => s.alive);
@@ -470,11 +524,23 @@ window.SnakeChatter = (() => {
       was.mood = m.moodChangedAt;
     }
 
+    // Someone answers Mason (see REPLIES).
+    if (pendingReply && game.time >= pendingReply.at) {
+      const { by, text, then } = pendingReply;
+      pendingReply = null;
+      const who = pick(alive.filter(by));
+      if (who) {
+        lastSaid[who.id] = -Infinity;
+        speak(who, text, { template: text, who: null, label: '' });
+        if (then) pendingReply = { at: game.time + 1400, by: s => s.personaKey === 'mason', text: then };
+      }
+    }
+
     // Copycat repeats exactly what it just heard, in Chinese.
     const cat = alive.find(s => s.personaKey === 'copycat');
     if (cat && lastLine?.template && lastLine.speaker !== cat && game.time - lastAny > 500 && Math.random() < 0.35) {
       if (game.time - (lastSaid[cat.id] ?? -Infinity) > SNAKE_GAP) {
-        const who = lastLine.who ? (lastLine.who.isPlayer ? '你' : lastLine.who.name) : '你';
+        const who = lastLine.who ? nameOf(lastLine.who) : '';
         speak(cat, fill(ZH[lastLine.template] ?? lastLine.template, who, lastLine.label));
       }
       lastLine = null;
@@ -488,5 +554,5 @@ window.SnakeChatter = (() => {
     }
   }
 
-  return { init, reset, update, setEnabled, isEnabled };
+  return { init, reset, update, layout, clearBubbles, setEnabled, isEnabled, setCompact, setPlayerName };
 })();

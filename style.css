@@ -1,20 +1,30 @@
-/* A forest at dusk: dark green surroundings, a wooden frame around the bark,
-   parchment for anything you read, leaf green for anything you press. */
+/* Bark & Bite: "storybook bark".
+   Eight interface colors (see DESIGN.md), one rounded type family, one frame
+   treatment: parchment with an inset ring, wood for anything structural, leaf
+   for anything you press. */
 :root {
-  --bg: #15201a;
-  --bg-2: #1f2e22;
-  --cream: #f6ecd2;
-  --muted: #bfb391;
+  --night-moss: #15201a;
+  --night-moss-2: #1f2e22;
+  --bark: #5a3b22;
+  --heartwood: #7a4a24;
+  --heartwood-dark: #3f2510;
   --parchment: #f6ecd2;
   --parchment-2: #e8d9b0;
   --ink: #3a2614;
-  --ink-soft: #7a6244;
-  --leaf: #6aa531;
-  --leaf-dark: #3f6d16;
-  --wood: #7a4a24;
-  --wood-dark: #3f2510;
-  --gold: #fde68a;
-  --accent: #6aa531;
+  --ink-soft: #6b5439;
+  --leaf: #4d7c0f;
+  --leaf-dark: #2f4f0c;
+  --sprout: #a3e635;
+  --honey: #fde68a;
+  --berry: #dc2626;
+  --cream: #f6ecd2;
+  --muted: #c4b896;
+
+  --r-tag: 10px;
+  --r-card: 16px;
+  --r-frame: 20px;
+  --ring: inset 0 0 0 3px var(--parchment-2);
+  --font: 'Fredoka', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -23,22 +33,38 @@ html, body {
   margin: 0;
   min-height: 100%;
   color: var(--cream);
-  font-family: 'Fredoka', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  background: radial-gradient(ellipse at top, var(--bg-2), var(--bg) 70%) fixed, var(--bg);
+  font-family: var(--font);
+  background: radial-gradient(ellipse at top, var(--night-moss-2), var(--night-moss) 70%) fixed, var(--night-moss);
+  overscroll-behavior: none; /* no pull-to-refresh mid-round */
 }
 
 body {
   display: flex;
   justify-content: center;
-  padding: 16px;
-  touch-action: manipulation;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left));
+  -webkit-tap-highlight-color: transparent;
 }
 
 main {
   width: 100%;
-  /* Bigger board on big screens, still fitting the window height. */
-  max-width: min(760px, max(320px, calc(100vh - 250px)));
+  /* The board grows with the screen but always fits its height. */
+  max-width: min(760px, max(280px, calc(100vh - 260px)));
+  max-width: min(760px, max(280px, calc(100dvh - 260px)));
 }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ------------------------------------------------------------- buttons */
 
 button {
   font: inherit;
@@ -50,34 +76,59 @@ button {
   color: #fffbea;
   box-shadow: 0 3px 0 var(--leaf-dark);
   cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s, filter 0.12s;
 }
 
-button:hover { filter: brightness(1.08); }
+button:hover { filter: brightness(1.1); }
 button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--leaf-dark); }
 button[hidden] { display: none; }
+button:disabled { opacity: 0.4; cursor: default; filter: none; transform: none; }
+
+:focus-visible { outline: 3px solid var(--honey); outline-offset: 2px; }
+.card :focus-visible, .records-card :focus-visible { outline-color: var(--ink); }
 
 button.secondary {
   background: transparent;
   color: var(--ink);
   box-shadow: inset 0 0 0 2px var(--ink-soft);
 }
+button.secondary:active { box-shadow: inset 0 0 0 2px var(--ink-soft); }
 
-button.small {
-  padding: 4px 12px;
+button.small, .speed button {
+  padding: 5px 12px;
   font-size: 0.85rem;
-  background: var(--wood);
+  background: var(--heartwood);
   color: var(--cream);
-  box-shadow: 0 2px 0 var(--wood-dark);
+  box-shadow: 0 2px 0 var(--heartwood-dark);
 }
 
-/* Header */
+button.icon {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: var(--heartwood);
+  box-shadow: 0 2px 0 var(--heartwood-dark);
+}
+button.icon svg { width: 18px; height: 18px; fill: var(--cream); stroke: var(--cream); stroke-width: 0; }
+button.icon .wave, button.icon .slash { fill: none; stroke-width: 1.8; stroke-linecap: round; }
+button.icon .slash { display: none; }
+button.icon[aria-pressed="true"] .slash { display: inline; }
+button.icon[aria-pressed="true"] .wave { display: none; }
+#pause .play { display: none; }
+#pause[data-paused="true"] .play { display: inline; }
+#pause[data-paused="true"] .bar { display: none; }
+
+/* -------------------------------------------------------------- header */
+
 header {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 8px 12px;
+  margin-bottom: 10px;
 }
 
 h1 {
@@ -85,31 +136,20 @@ h1 {
   font-size: 2rem;
   font-weight: 700;
   line-height: 1;
-  color: #a3e635;
+  color: var(--sprout);
   text-shadow: 0 2px 0 var(--leaf-dark), 0 4px 10px rgba(0, 0, 0, 0.5);
 }
+h1 .amp { color: var(--honey); }
 
-h1 .amp { color: var(--gold); }
+.tagline { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); }
 
-.tagline {
-  margin: 4px 0 0;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
+.hud { display: flex; align-items: center; gap: 8px 10px; color: var(--muted); }
+.hud .stat strong { display: inline-block; color: var(--cream); font-variant-numeric: tabular-nums; }
+.bump { animation: bump 0.28s ease-out; }
+@keyframes bump { 40% { transform: scale(1.35); color: var(--honey); } }
 
-.scores {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  color: var(--muted);
-}
+/* -------------------------------------------- the snakes' name tags */
 
-.scores strong {
-  color: var(--cream);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Scoreboard: little parchment name tags */
 .scoreboard {
   list-style: none;
   margin: 0 0 12px;
@@ -119,101 +159,104 @@ h1 .amp { color: var(--gold); }
   gap: 6px;
 }
 
-@media (max-width: 440px) {
-  .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
 .scoreboard li {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
   min-width: 0;
-  padding: 5px 9px;
-  border-radius: 10px;
+  padding: 5px 9px 7px;
+  border-radius: var(--r-tag);
   background: var(--parchment);
   color: var(--ink);
   font-size: 0.9rem;
   font-weight: 500;
   box-shadow: 0 2px 0 var(--parchment-2);
+  overflow: hidden;
 }
 
-.scoreboard .dot, .opponents .dot {
+.dot {
   flex: none;
+  display: inline-block;
   width: 11px;
   height: 11px;
   border-radius: 50%;
-  box-shadow: 0 0 0 1.5px rgba(58, 38, 20, 0.35);
+  box-shadow: 0 0 0 1.5px rgba(58, 38, 20, 0.45);
 }
 
-.scoreboard .name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.scoreboard .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scoreboard .len { font-weight: 700; font-variant-numeric: tabular-nums; }
 
-.scoreboard .len {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.scoreboard li { position: relative; overflow: hidden; }
-
-/* Hunger: a thin bar along the bottom of each name tag. */
+/* Hunger: a thin bar along the bottom of each tag (scaled, never resized). */
 .scoreboard .hunger {
   position: absolute;
-  left: 8px;
-  right: 8px;
+  left: 9px;
+  right: 9px;
   bottom: 3px;
   height: 3px;
   border-radius: 999px;
-  background: rgba(58, 38, 20, 0.12);
+  background: rgba(58, 38, 20, 0.14);
+  overflow: hidden;
 }
-
 .scoreboard .hunger i {
   display: block;
   height: 100%;
   border-radius: 999px;
   background: var(--leaf);
-  transition: width 0.3s linear;
+  transform-origin: left;
+  transition: transform 0.3s linear;
 }
-
-.scoreboard li.starving .hunger i { background: #dc2626; }
+.scoreboard li.starving .hunger i { background: var(--berry); }
 .scoreboard li.starving { animation: rumble 0.6s ease-in-out infinite alternate; }
+@keyframes rumble { to { box-shadow: 0 2px 0 var(--parchment-2), 0 0 0 2px rgba(220, 38, 38, 0.5); } }
 
-@keyframes rumble {
-  to { box-shadow: 0 2px 0 var(--parchment-2), 0 0 0 2px rgba(220, 38, 38, 0.45); }
-}
-
-.scoreboard li.dead { opacity: 0.45; animation: none; }
+/* Out of the round: the tag fades, the words stay readable. */
+.scoreboard li.dead { background: rgba(246, 236, 210, 0.55); animation: none; }
 .scoreboard li.dead .name { text-decoration: line-through; }
+.scoreboard li.dead .dot { opacity: 0.5; }
 
-/* The board in its wooden frame */
+/* ------------------------------------------------- the board and frame */
+
 .frame {
-  padding: 9px;
-  border-radius: 20px;
-  background: linear-gradient(145deg, #94602f, var(--wood) 40%, #5c3519);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.15);
+  position: relative;
+  padding: 10px;
+  border-radius: var(--r-frame);
+  background: linear-gradient(145deg, #94602f, var(--heartwood) 40%, #5c3519);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.25);
 }
+
+/* Leaves rest on the frame's corners and never reach the bark's cells. */
+.leaves {
+  position: absolute;
+  z-index: 5;
+  width: clamp(30px, 8%, 56px);
+  height: clamp(30px, 8%, 56px);
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+.leaves.tl { left: -8px; top: -8px; }
+.leaves.tr { right: -8px; top: -8px; transform: scaleX(-1); }
+.leaves.bl { left: -8px; bottom: -8px; transform: scaleY(-1); }
+.leaves.br { right: -8px; bottom: -8px; transform: scale(-1, -1); }
 
 .board {
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  border-radius: 12px;
+  border-radius: clamp(4px, 1.2%, 10px);
   overflow: hidden;
-  background: #5a3b22;
-  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.6);
+  background: var(--bark);
 }
 
 canvas {
   display: block;
   width: 100%;
   height: 100%;
+  touch-action: none; /* swipes steer; they never scroll or zoom the page */
 }
 
-/* Overlay: a parchment card on the darkened bark */
+/* -------------------------------------------------------------- cards */
+
 .overlay {
   position: absolute;
   inset: 0;
@@ -221,48 +264,50 @@ canvas {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px;
+  padding: 12px;
   background: rgba(20, 12, 4, 0.5);
+  animation: fade-in 0.25s ease-out;
 }
-
 .overlay.hidden { display: none; }
+@keyframes fade-in { from { opacity: 0; } }
 
 .card {
   max-width: 400px;
   max-height: 100%;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-soft) transparent;
   padding: 18px 20px;
-  border-radius: 16px;
+  border-radius: var(--r-card);
   background: var(--parchment);
   color: var(--ink);
   text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 0 0 3px var(--parchment-2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), var(--ring);
+  animation: rise 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
+@keyframes rise { from { transform: translateY(14px) scale(0.97); opacity: 0; } }
 
-.card h2 {
-  margin: 0 0 6px;
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--wood);
-}
-
+.card h2 { margin: 0 0 6px; font-size: 2rem; font-weight: 700; color: var(--heartwood); }
 .card p { margin: 0 0 10px; color: var(--ink-soft); }
 .card p[hidden] { display: none; }
+.flavor { font-style: italic; color: var(--ink) !important; }
+.hint { margin: 12px 0 0 !important; font-size: 0.8rem; }
 
-.flavor {
-  font-style: italic;
+/* The new-best moment: a honey seal on the card. */
+.badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: var(--honey);
   color: var(--ink) !important;
+  font-weight: 700;
+  box-shadow: 0 2px 0 #d4a72c;
+  animation: pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.4);
 }
+@keyframes pop { from { transform: scale(0.4); opacity: 0; } }
 
-.buttons {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 4px;
-}
+.buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
 
-/* This round's opponents, on the start screen and countdown */
 .opponents {
   list-style: none;
   margin: 0 auto 12px;
@@ -271,115 +316,92 @@ canvas {
   text-align: left;
   font-size: 0.85rem;
 }
-
 .opponents[hidden] { display: none; }
-
-.opponents li {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-  margin: 7px 0;
-}
-
+.opponents li { display: flex; align-items: baseline; gap: 7px; margin: 7px 0; }
 .opponents .dot { transform: translateY(1px); }
-.opponents strong { text-shadow: 0 0 1px rgba(58, 38, 20, 0.6); }
 .opponents .blurb { color: var(--ink-soft); }
 
-/* High score name entry */
 .name-row {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   color: var(--leaf-dark);
   font-weight: 600;
 }
-
 .name-row[hidden] { display: none; }
-
 .name-row input {
-  width: 180px;
+  width: 190px;
   padding: 8px 12px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--r-tag);
   background: #fffbea;
   color: var(--ink);
   font: inherit;
   text-align: center;
   box-shadow: inset 0 0 0 2px var(--parchment-2);
 }
+.name-row input::placeholder { color: var(--ink-soft); opacity: 0.8; }
+.name-row input:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--leaf-dark); }
 
-.name-row input:focus {
-  outline: none;
-  box-shadow: inset 0 0 0 2px var(--leaf);
-}
-
-/* Banners over the board */
+/* A banner over the board for the big moments (under the cards). */
 .toast {
   position: absolute;
-  z-index: 4;
+  z-index: 2;
   left: 50%;
   top: 12px;
-  transform: translateX(-50%);
+  width: max-content;
   max-width: calc(100% - 32px);
+  transform: translateX(-50%);
   padding: 7px 14px;
-  border-radius: 999px;
+  border-radius: 14px;
   background: var(--parchment);
   color: var(--ink);
   font-size: 0.9rem;
   font-weight: 600;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 0 0 2px var(--parchment-2);
   pointer-events: none;
+  animation: drop 0.22s ease-out;
 }
-
 .toast[hidden] { display: none; }
+@keyframes drop { from { transform: translate(-50%, -10px); opacity: 0; } }
 
-/* Speech bubbles above snakes' heads */
+/* Speech bubbles above snakes' heads, positioned by transform each frame. */
 .bubble {
   position: absolute;
-  z-index: 2;
+  z-index: 1;
+  left: 0;
+  top: 0;
   width: max-content;
-  max-width: 46%;
-  padding: 4px 9px;
-  border-radius: 10px;
-  background: #fffbea;
+  max-width: 38%;
+  padding: 3px 8px;
+  border-radius: var(--r-tag);
+  background: rgba(255, 251, 234, 0.93);
   color: var(--ink);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 500;
   line-height: 1.25;
   text-align: center;
   border: 2px solid var(--edge, var(--ink-soft));
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
-  transform: translate(-50%, calc(-100% - 8px));
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
   pointer-events: none;
-  animation: pop 0.18s ease-out;
+  will-change: transform;
 }
-
 .bubble::after {
   content: '';
   position: absolute;
-  left: 50%;
+  left: var(--tail, 50%);
   top: 100%;
   border: 6px solid transparent;
   border-top-color: var(--edge, var(--ink-soft));
   transform: translateX(-50%);
 }
+.bubble.below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--edge, var(--ink-soft)); }
 
-.bubble.below { transform: translate(-50%, 8px); }
-.bubble.below::after {
-  top: auto;
-  bottom: 100%;
-  border-top-color: transparent;
-  border-bottom-color: var(--edge, var(--ink-soft));
-}
+/* -------------------------------------------------- below the board */
 
-@keyframes pop {
-  from { opacity: 0; scale: 0.8; }
-}
-
-/* Speed buttons while watching */
 .speed {
   display: flex;
   align-items: center;
@@ -389,23 +411,9 @@ canvas {
   color: var(--muted);
   font-size: 0.85rem;
 }
-
 .speed[hidden] { display: none; }
+.speed button[aria-pressed="true"] { background: var(--leaf); box-shadow: 0 2px 0 var(--leaf-dark); }
 
-.speed button {
-  padding: 4px 12px;
-  font-size: 0.85rem;
-  background: var(--wood);
-  color: var(--cream);
-  box-shadow: 0 2px 0 var(--wood-dark);
-}
-
-.speed button[aria-pressed="true"] {
-  background: var(--leaf);
-  box-shadow: 0 2px 0 var(--leaf-dark);
-}
-
-/* Chatter log */
 .chatter {
   margin-top: 12px;
   padding: 8px 12px;
@@ -413,49 +421,22 @@ canvas {
   background: rgba(63, 37, 16, 0.55);
   box-shadow: inset 0 0 0 1px rgba(246, 236, 210, 0.08);
 }
+.chatter-head { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 0.85rem; }
+.chatter-head button[aria-checked="false"] { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--muted); }
 
-.chatter-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.chatter-head button[aria-pressed="false"] {
-  background: transparent;
-  color: var(--muted);
-  box-shadow: inset 0 0 0 1px var(--muted);
-}
-
-.chatlog {
-  list-style: none;
-  margin: 6px 0 0;
-  padding: 0;
-  min-height: 1.4em;
-  font-size: 0.88rem;
-}
-
+.chatlog { list-style: none; margin: 6px 0 0; padding: 0; min-height: 1.4em; font-size: 0.88rem; }
 .chatlog[hidden] { display: none; }
 .chatlog:empty::before { content: 'Quiet on the bark… for now.'; color: var(--muted); font-style: italic; }
-
-.chatlog li {
-  padding: 2px 0;
-  opacity: 0.55;
-}
-
+.chatlog li { padding: 2px 0; opacity: 0.6; }
 .chatlog li:first-child { opacity: 1; }
 .chatlog li:nth-child(2) { opacity: 0.8; }
 .chatlog strong { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
 
-.help {
-  margin: 12px 0 0;
-  text-align: center;
-  font-size: 0.8rem;
-  color: var(--muted);
-}
+.help { margin: 12px 0 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
+.hint span, .help span { white-space: nowrap; }
 
-/* Hall of Fame dialog */
+/* ------------------------------------------------- Hall of Fame dialog */
+
 .records {
   position: fixed;
   inset: 0;
@@ -466,176 +447,63 @@ canvas {
   padding: 16px;
   background: rgba(0, 0, 0, 0.6);
 }
-
 .records[hidden] { display: none; }
 
 .records-card {
   width: 100%;
-  max-width: 480px;
+  max-width: 520px;
   max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   overflow-y: auto;
   padding: 16px;
-  border-radius: 16px;
+  border-radius: var(--r-card);
   background: var(--parchment);
   color: var(--ink);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 0 3px var(--parchment-2);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), var(--ring);
+  animation: rise 0.25s ease-out;
 }
 
-.records-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
+.records-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 
-.tabs {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 999px;
-  background: var(--parchment-2);
-}
-
-.tab {
-  padding: 6px 14px;
-  font-size: 0.9rem;
-  background: transparent;
-  color: var(--ink-soft);
-  box-shadow: none;
-}
-
-.tab[aria-selected="true"] {
-  background: var(--wood);
-  color: var(--cream);
-}
-
-.tabs-small {
-  display: inline-flex;
-  margin-bottom: 8px;
-}
-
+.tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--parchment-2); }
+.tab { padding: 6px 14px; font-size: 0.9rem; background: transparent; color: var(--ink); box-shadow: none; }
+.tab:active { transform: none; box-shadow: none; }
+.tab[aria-pressed="true"] { background: var(--heartwood); color: var(--cream); }
+.tabs-small { display: inline-flex; margin-bottom: 8px; }
 .tabs-small[hidden] { display: none; }
 .tabs-small .tab { padding: 4px 12px; font-size: 0.8rem; }
 
-.close {
-  padding: 0 10px;
-  font-size: 1.6rem;
-  line-height: 1.3;
-  background: transparent;
-  color: var(--ink-soft);
-  box-shadow: none;
-}
+.close { padding: 0 10px; font-size: 1.6rem; line-height: 1.3; background: transparent; color: var(--ink-soft); box-shadow: none; }
+.close:active { transform: none; box-shadow: none; }
 
 .records-body { min-height: 120px; }
+.empty { margin: 32px 0; text-align: center; color: var(--ink-soft); font-style: italic; }
 
-.empty {
-  margin: 32px 0;
-  text-align: center;
-  color: var(--ink-soft);
-  font-style: italic;
-}
-
-.scores-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.scores-table th {
-  padding: 6px 8px;
-  text-align: left;
-  font-weight: 500;
-  font-size: 0.8rem;
-  color: var(--ink-soft);
-}
-
-.scores-table td {
-  padding: 7px 8px;
-  border-top: 1px solid var(--parchment-2);
-}
-
+.scores-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.scores-table th { padding: 6px 7px; text-align: left; font-weight: 500; font-size: 0.8rem; color: var(--ink-soft); }
+.scores-table td { padding: 7px; border-top: 1px solid var(--parchment-2); }
 .scores-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .scores-table .name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.scores-table .name .dot {
-  display: inline-block;
-  width: 9px;
-  height: 9px;
-  margin-right: 8px;
-  border-radius: 50%;
-  vertical-align: middle;
-  box-shadow: 0 0 0 1.5px rgba(58, 38, 20, 0.35);
-}
+.scores-table .name .dot { margin-right: 8px; vertical-align: middle; }
 .scores-table tr.ai .name { color: var(--ink-soft); }
 .scores-table .won { color: var(--leaf-dark); font-weight: 700; }
 .scores-table .muted { color: var(--ink-soft); }
-.scores-table tr.highlight td { background: rgba(106, 165, 49, 0.18); }
+.scores-table tr.highlight td { background: rgba(77, 124, 15, 0.16); }
 
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-@media (max-width: 440px) {
-  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-.tile {
-  padding: 10px;
-  border-radius: 10px;
-  background: var(--parchment-2);
-  text-align: center;
-}
-
-.tile-value {
-  font-size: 1.4rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.tile-label {
-  font-size: 0.75rem;
-  color: var(--ink-soft);
-}
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+.tile { padding: 10px; border-radius: var(--r-tag); background: var(--parchment-2); text-align: center; }
+.tile-value { font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tile-label { font-size: 0.75rem; color: var(--ink); }
 
 .nemesis { margin: 0 0 12px; }
-
+.nemesis .dot { margin: 0 6px 0 2px; vertical-align: -1px; }
 .bars { margin-bottom: 16px; }
-
-.bars h3 {
-  margin: 0 0 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--ink-soft);
-}
-
-.bar-row {
-  display: grid;
-  grid-template-columns: 90px 1fr 32px;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  font-size: 0.85rem;
-}
-
-.bar-track {
-  height: 10px;
-  border-radius: 999px;
-  background: var(--parchment-2);
-  overflow: hidden;
-}
-
-.bar-fill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-}
-
-.bar-count {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
+.bars h3 { margin: 0 0 8px; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+.bar-row { display: grid; grid-template-columns: 110px 1fr 32px; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.85rem; }
+.bar-label { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bar-track { height: 10px; border-radius: 999px; background: var(--parchment-2); overflow: hidden; }
+.bar-fill { display: block; height: 100%; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(58, 38, 20, 0.35); }
+.bar-count { text-align: right; font-variant-numeric: tabular-nums; }
 
 button.link {
   display: block;
@@ -647,4 +515,73 @@ button.link {
   color: var(--ink-soft);
   text-decoration: underline;
   box-shadow: none;
+}
+button.link:active { transform: none; }
+
+/* The dev-only frame-time overlay (?perf, or ` with ?debug). */
+.perf {
+  position: fixed;
+  right: 8px;
+  bottom: 8px;
+  z-index: 20;
+  margin: 0;
+  padding: 6px 9px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--sprout);
+  font: 12px/1.4 ui-monospace, Consolas, monospace;
+  white-space: pre;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------ small screens */
+
+@media (max-width: 440px) {
+  h1 { font-size: 1.7rem; }
+  .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card { padding: 12px 14px; }
+  .card h2 { font-size: 1.5rem; }
+  /* Rivals as a row of names; the blurbs live in the tags' tooltips. */
+  .opponents { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; }
+  .opponents li { margin: 2px 0; }
+  .opponents .blurb { display: none; }
+  .scores-table .date { display: none; }
+  .scores-table td, .scores-table th { padding-inline: 5px; }
+  .bar-row { grid-template-columns: 96px 1fr 28px; }
+}
+
+/* Landscape phones: the header and tags sit beside the board. */
+@media (orientation: landscape) and (max-height: 500px) {
+  main {
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) min(calc(100dvh - 32px), 70vw);
+    gap: 0 16px;
+    align-items: start;
+  }
+  header, .scoreboard, .speed, .chatter, .help { grid-column: 1; }
+  .frame { grid-column: 2; grid-row: 1 / span 6; }
+  .scoreboard { grid-template-columns: 1fr; }
+}
+
+/* Touch: comfortable targets. */
+@media (pointer: coarse) {
+  button.small, .speed button, .tab, .close, button.icon { min-height: 44px; min-width: 44px; }
+  .speed { gap: 10px; }
+}
+
+/* Reduced motion: no pops, rises or rumbles; the information stays. */
+@media (prefers-reduced-motion: reduce) {
+  .card, .overlay, .badge, .toast, .bump, .records-card, .scoreboard li.starving { animation: none !important; }
+  .scoreboard li.starving { box-shadow: 0 2px 0 var(--parchment-2), 0 0 0 2px rgba(220, 38, 38, 0.5); }
+  button, button:active { transition: none; transform: none; }
+  .scoreboard .hunger i { transition: none; }
+}
+
+/* Windows High Contrast: keep outlines and the colored dots. */
+@media (forced-colors: active) {
+  button { border: 1px solid ButtonText; }
+  .tab[aria-pressed="true"], .speed button[aria-pressed="true"] { outline: 2px solid Highlight; }
+  .dot, .hunger i, .bar-fill { forced-color-adjust: none; }
 }
