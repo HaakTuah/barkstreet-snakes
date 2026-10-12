@@ -133,7 +133,8 @@ window.SnakeEngine = (() => {
     // Pick from the truly free cells (no bodies, holes or food), worked out
     // only when something actually needs placing.
     let free = null;
-    const place = props => {
+    // quiet: pick the spot farthest from any head, of a few tries (where a beetle comes out).
+    const place = (props, quiet = false) => {
       if (!free) {
         markBodies(game);
         for (const f of game.food) bodyStamp[key(f.x, f.y)] = stamp;
@@ -142,7 +143,17 @@ window.SnakeEngine = (() => {
         for (let k = 0; k < CELLS; k++) if (bodyStamp[k] !== stamp) free.push(k);
       }
       if (!free.length) return false; // a full board: nothing grows, and that's fine
-      const [k] = free.splice(Math.floor(Math.random() * free.length), 1);
+      let at = Math.floor(Math.random() * free.length);
+      if (quiet) {
+        let best = -1;
+        for (let t = 0; t < 8; t++) {
+          const i = Math.floor(Math.random() * free.length), c = free[i];
+          let gap = 99;
+          for (const s of game.snakes) if (s.alive) gap = Math.min(gap, Math.abs(s.body[0].x - c % GRID) + Math.abs(s.body[0].y - Math.floor(c / GRID)));
+          if (gap > best) { best = gap; at = i; }
+        }
+      }
+      const [k] = free.splice(at, 1);
       game.food.push({ x: k % GRID, y: Math.floor(k / GRID), ...props });
       return true;
     };
@@ -151,10 +162,10 @@ window.SnakeEngine = (() => {
     if (!golden && Math.random() < T.GOLDEN_CHANCE && place({ kind: 'golden', expires: game.tick + T.GOLDEN_TICKS })) {
       game.events.push({ type: 'spawn', kind: 'golden' });
     }
-    // Now and then a beetle comes out for a crawl (one at a time).
+    // Now and then a beetle comes out for a crawl (one at a time), where it's quiet.
     if (!beetles && game.time >= T.BEETLE_FIRST_MS && Math.random() < T.BEETLE_CHANCE) {
       const dir = CRAWL[Math.floor(Math.random() * 4)];
-      if (place({ kind: 'beetle', expires: game.tick + T.BEETLE_TICKS, dir, movedAt: game.tick })) game.events.push({ type: 'spawn', kind: 'beetle' });
+      if (place({ kind: 'beetle', expires: game.tick + T.BEETLE_TICKS, dir, movedAt: game.tick }, true)) game.events.push({ type: 'spawn', kind: 'beetle' });
     }
   }
 
