@@ -10,12 +10,12 @@ window.SnakeChatter = (() => {
       start: ['Taking position.', 'Scoping the lobby.', 'Run. It helps.'],
       idle: ['I see you, {who}.', 'In my sights, {who}.', 'Steady…', 'Nowhere to hide.', 'Big fan of your stream, {who}.'],
       kill: ['Headshot.', 'Next.', 'Too slow, {who}.', 'One shot.'],
-      golden: ['Gold makes you slow.'],
+      golden: ['Bonus collected.'],
       caught: ['Moving target. Still a headshot.'],
       dies: ['Counter-sniped by {who}?', 'Should have relocated.', 'Impossible.'],
     },
     gobbler: {
-      hungry: ["So… hungry… can't… go on…","FOOD. NOW."],
+      hungry: ["So… hungry… can’t… go on…","FOOD. NOW."],
       start: ['Is it lunchtime? It feels like lunchtime.', 'I could eat.'],
       idle: ['Nom.', 'Anyone gonna finish that apple?', 'I smell apples.', 'Snack time!', 'Is that… food?'],
       eat: ['Nom nom nom.', 'Delicious!', 'More!', 'Crunchy!'],
@@ -24,7 +24,7 @@ window.SnakeChatter = (() => {
       beetle: ['A BEETLE! Crunchy legs, come to Gobbler!', 'Bug! Bug bug bug!'],
       caught: ['Crunchy! Legs and all.'],
       mushroom: ['Ugh, mushrooms. Gross.', 'I feel… smaller. I hate it.'],
-      kill: ['Sorry {who}, you were between me and lunch.', 'Oops. Is that meat?'],
+      kill: ['Sorry, {who}. You were between me and lunch.', 'Oops. Is that meat?'],
       dies: ['Tell my apples… I loved them.'],
     },
     ghost: {
@@ -48,26 +48,26 @@ window.SnakeChatter = (() => {
       start: ['Splendid day for an expedition!', 'Tally ho!'],
       idle: ['I say!', 'Jolly good.', 'Anyone for tea?', 'Rule, Britannia!'],
       flag: ['I claim this bark for the Crown!', 'Another colony! Splendid.', 'Mine now. Terribly sorry.'],
-      intruder: ['Oi! That\'s a colony, {who}!', 'I say, that patch is spoken for.'],
+      intruder: ['Ahem. That’s a colony, {who}.', 'I say, that patch is spoken for.'],
       kill: ['Frightfully sorry, old chap.', 'Should have read the flag, {who}.'],
       dies: ['Stiff upper lip…'],
     },
     drab: {
       hungry: ["I should eat something."],
-      start: ['Hello.', 'Hi. I\'m Drab.'],
+      start: ['Hello.', 'Hi. I’m Drab.'],
       idle: ['Nice weather.', 'Apples are fine.', 'I like beige.', 'This is a tree.', 'Hm.'],
-      eat: ['Apple.'],
+      eat: ['Food.'],
       woodpecker: ['Oh. A bird.'],
       kill: ['Oh. Sorry, {who}.'],
       dies: ['Well. That happened.'],
     },
     vulture: {
-      hungry: ["Someone die already. I'm starving."],
+      hungry: ["Someone die already. I’m starving."],
       start: ['Ahh, fresh snakes.'],
-      idle: ['Not long now…', 'You look tired, {who}.', 'I\'ll wait.', 'Patience…'],
+      idle: ['Not long now…', 'You look tired, {who}.', 'I’ll wait.', 'Patience…'],
       death: ['Dinner!', 'Ooh, leftovers.', 'Rest in pieces, {who}.'],
-      kill: ['I didn\'t even have to try.'],
-      dies: ['Who\'s… eating… whom…'],
+      kill: ['I didn’t even have to try.'],
+      dies: ['Who’s… eating… whom…'],
     },
     mason: {
       start: ['Alea iacta est!', 'Aedificamus!'],
@@ -82,39 +82,39 @@ window.SnakeChatter = (() => {
     },
     wildcard: {
       hungry: ["Very hungry. The hungriest. Nobody has ever been this hungry."],
-      start: ['Hello, everybody. Tremendous crowd today.', 'I\'m going to win. Bigly.'],
+      start: ['Hello, everybody. Tremendous crowd today.', 'I’m going to win. Bigly.'],
       idle: ['Nobody slithers better than me, believe me.', 'I have the best scales. Everybody says so.',
         'Many snakes are saying it.', 'Sad!', 'Fake apples!', '{who}? Total loser. Sad!'],
-      eat: ['Tremendous apple. The best apple.'],
+      eat: ['Tremendous snack. The best snack.'],
       golden: ['A golden apple. Very classy. Like me.'],
       mushroom: ['Fake food! Very unfair!'],
-      kill: ['You\'re fired, {who}!', 'Winning! So much winning.'],
+      kill: ['You’re fired, {who}!', 'Winning! So much winning.'],
       dies: ['Rigged! Totally rigged!'],
     },
     creeper: {
       hungry: ["so… hungry…"],
       start: ['psst.'],
-      idle: ['behind you.', 'don\'t turn around, {who}.', 'hehehe.', 'nice tail, {who}.'],
+      idle: ['behind you.', 'don’t turn around, {who}.', 'hehehe.', 'nice tail, {who}.'],
       kill: ['hehe. gotcha.'],
       dies: ['…aww.'],
     },
     metagamer: {
       hungry: ["Caloric deficit detected."],
-      start: ['Analysing opponents…', 'I\'ve watched the replays.'],
+      start: ['Analysing opponents…', 'I’ve watched the replays.'],
       idle: ['{who}: {label}. Noted.', 'Predictable.', 'Your eat rate is suboptimal, {who}.', 'Running the numbers…'],
       kill: ['As calculated.', 'Exactly as the model predicted.'],
-      dies: ['That… wasn\'t in the data.'],
+      dies: ['That… wasn’t in the data.'],
     },
     capricious: {
-      hungry: ["Now I'm hungry! Out of nowhere!"],
+      hungry: ["Now I’m hungry! Out of nowhere!"],
       start: ['Ooh, what shall I be today?'],
       mood: {
-        sniper: ['I\'m a sniper now! Pew pew!'],
-        gobbler: ['Ooh! I\'m hungry now!'],
+        sniper: ['I’m a sniper now! Pew pew!'],
+        gobbler: ['Ooh! I’m hungry now!'],
         ghost: ['Leave me alone. I mean it.'],
-        mason: ['Let\'s build something!'],
+        mason: ['Let’s build something!'],
       },
-      kill: ['Didn\'t plan that. Love it.'],
+      kill: ['Didn’t plan that. Love it.'],
       dies: ['Changed my mind about living.'],
     },
     copycat: {
@@ -124,12 +124,12 @@ window.SnakeChatter = (() => {
       dies: ['同志们，再见……'],
     },
     desperado: {
-      hungry: ["Running on empty. Love it."],
+      hungry: ["Running on fumes, partner."],
       start: ['Yeehaw!', 'Saddle up, partner.'],
-      idle: ['Living on the edge, partner.', 'Too close? Never heard of it.', 'Is that a wall? Let\'s go see.', 'Feel that? That\'s being alive.'],
-      kill: ['Draw, {who}. Too slow.', 'This bark ain\'t big enough for the both of us.'],
-      mushroom: ['Never tried one of those. Down the hatch!'],
-      woodpecker: ['Now we\'re talking! Holes!'],
+      idle: ['Living on the edge, partner.', 'Too close? Never heard of it.', 'Is that a wall? Let’s go see.', 'Feel that? That’s being alive.'],
+      kill: ['Draw, {who}. Too slow.', 'This bark ain’t big enough for the both of us.'],
+      mushroom: ['Mushroom roulette. Down the hatch!'],
+      woodpecker: ['Now we’re talking! Holes!'],
       beetle: ['Yeehaw, a critter hunt!'],
       caught: ['Lassoed it.'],
       dies: ['What a ride…', 'Worth it.'],
@@ -137,14 +137,16 @@ window.SnakeChatter = (() => {
     joker: {
       hungry: ["Why did the snake cross the bark? It was starving."],
       start: ['Knock knock!', 'Who wants to play a game?'],
-      idle: ['Catch me if you can!', 'Why so slithery, {who}?', 'Follow me, it\'s a shortcut!', 'Honk honk!'],
-      kill: ['Gotcha! Ha!', 'The joke\'s on you, {who}!'],
+      idle: ['Catch me if you can!', 'Why so slithery, {who}?', 'Follow me, it’s a shortcut!', 'Honk honk!'],
+      kill: ['And for my next trick…', 'The joke’s on you, {who}!'],
       mushroom: ['Ooh, a funny mushroom!'],
       dies: ['Tough crowd…'],
     },
   };
 
   // Chinese for every line above: Copycat repeats what it hears, in Chinese.
+  // The Metagamer's labels for how a snake plays, for Copycat's Chinese.
+  const ZH_LABELS = { aggressive: '好斗', greedy: '贪吃', evasive: '爱躲', unclear: '看不透' };
   const ZH = {
     "Moving target. Still a headshot.": "移动靶。照样爆头。",
     "A BEETLE! Crunchy legs, come to Gobbler!": "甲虫！脆脆的腿，快到Gobbler这儿来！",
@@ -165,9 +167,9 @@ window.SnakeChatter = (() => {
     "Biggus wallus.": "大大的墙。",
     "Romanes eunt domus.": "罗马人回家去。",
     "Amicus meus est Biggus Dickus.": "我的朋友叫Biggus Dickus。",
-    "Uxorem habet: Incontinentia Buttocks.": "他有个老婆：Incontinentia Buttocks。",
+    "Et uxor: Incontinentia Buttocks.": "还有他老婆：Incontinentia Buttocks。",
     "BWAHAHA—": "哇哈哈哈——",
-    "I can't. I CAN'T.": "我不行了。真不行了。",
+    "I can’t. I CAN’T.": "我不行了。真不行了。",
     "*wheeze*": "*笑到喘不过气*",
     "Pfft…": "噗……",
     "*snort*": "*噗嗤*",
@@ -187,31 +189,31 @@ window.SnakeChatter = (() => {
     "Picus horribilis!": "可怕的啄木鸟！",
     "Alea iacta… estus.": "骰子……掷下了。",
     "Murus… meus… finis.": "我的……墙……完了。",
-    "It's \"Romani ite domum\", actually.": "其实应该是“Romani ite domum”。",
+    "“Romani ite domum”, actually.": "其实应该是“Romani ite domum”。",
     "Hungry. Someone will do.": "饿了。随便谁都行。",
-    "So… hungry… can't… go on…": "好……饿……撑……不住了……",
+    "So… hungry… can’t… go on…": "好……饿……撑……不住了……",
     "FOOD. NOW.": "食物。马上。",
     "…hungry…": "……饿……",
     "We require a banquet. Immediately.": "朕要设宴。立刻。",
     "I say, is there nothing to eat out here?": "我说，这里就没有吃的吗？",
     "I should eat something.": "我该吃点东西了。",
-    "Someone die already. I'm starving.": "快死一个吧。我饿坏了。",
+    "Someone die already. I’m starving.": "快死一个吧。我饿坏了。",
     "Very hungry. The hungriest. Nobody has ever been this hungry.": "非常饿。最饿的。从来没有人这么饿过。",
     "so… hungry…": "好……饿……",
     "Caloric deficit detected.": "检测到热量不足。",
-    "Now I'm hungry! Out of nowhere!": "我现在饿了！突然就饿了！",
-    "Running on empty. Love it.": "油箱空了。我喜欢。",
+    "Now I’m hungry! Out of nowhere!": "我现在饿了！突然就饿了！",
+    "Running on fumes, partner.": "快没油了，伙计。",
     "Why did the snake cross the bark? It was starving.": "蛇为什么要爬过树皮？因为它饿坏了。",
     "Yeehaw!": "咿哈！",
     "Saddle up, partner.": "上马吧，伙计。",
     "Living on the edge, partner.": "刀尖上过日子，伙计。",
     "Too close? Never heard of it.": "太近了？没听说过。",
-    "Is that a wall? Let's go see.": "那是墙吗？去看看。",
-    "Feel that? That's being alive.": "感觉到了吗？这才叫活着。",
+    "Is that a wall? Let’s go see.": "那是墙吗？去看看。",
+    "Feel that? That’s being alive.": "感觉到了吗？这才叫活着。",
     "Draw, {who}. Too slow.": "拔枪吧，{who}。太慢了。",
-    "This bark ain't big enough for the both of us.": "这块树皮容不下我们两个。",
-    "Never tried one of those. Down the hatch!": "从没吃过这个。干了！",
-    "Now we're talking! Holes!": "这才带劲！洞！",
+    "This bark ain’t big enough for the both of us.": "这块树皮容不下我们两个。",
+    "Mushroom roulette. Down the hatch!": "蘑菇轮盘赌。干了！",
+    "Now we’re talking! Holes!": "这才带劲！洞！",
     "What a ride…": "真是一趟好旅程……",
     "Worth it.": "值了。",
     "Run. It helps.": "跑吧。有点用。",
@@ -219,7 +221,7 @@ window.SnakeChatter = (() => {
     "Nowhere to hide.": "无处可藏。",
     "Next.": "下一个。",
     "Too slow, {who}.": "太慢了，{who}。",
-    "Gold makes you slow.": "金子会让你变慢。",
+    "Bonus collected.": "奖励到手。",
     "Impossible.": "不可能。",
     "Is it lunchtime? It feels like lunchtime.": "午饭时间到了吗？感觉像午饭时间。",
     "I could eat.": "我还能吃。",
@@ -237,7 +239,7 @@ window.SnakeChatter = (() => {
     "A GOLDEN APPLE! Out of my way!": "金苹果！让开！",
     "Ugh, mushrooms. Gross.": "呃，蘑菇。恶心。",
     "I feel… smaller. I hate it.": "我觉得……变小了。我讨厌这样。",
-    "Sorry {who}, you were between me and lunch.": "抱歉，{who}，你挡住我的午饭了。",
+    "Sorry, {who}. You were between me and lunch.": "抱歉，{who}。你挡住我的午饭了。",
     "Oops. Is that meat?": "哎呀。那是肉吗？",
     "Tell my apples… I loved them.": "告诉我的苹果……我爱过它们。",
     "…": "……",
@@ -267,80 +269,80 @@ window.SnakeChatter = (() => {
     "I claim this bark for the Crown!": "我以王室之名占领这块树皮！",
     "Another colony! Splendid.": "又一块殖民地！妙极了。",
     "Mine now. Terribly sorry.": "现在归我了。非常抱歉。",
-    "Oi! That's a colony, {who}!": "喂！那是殖民地，{who}！",
+    "Ahem. That’s a colony, {who}.": "咳咳。那是殖民地，{who}。",
     "I say, that patch is spoken for.": "我说，那块地已经有主了。",
     "Frightfully sorry, old chap.": "万分抱歉，老伙计。",
     "Should have read the flag, {who}.": "你该看看旗子的，{who}。",
     "Stiff upper lip…": "保持镇定……",
     "Hello.": "你好。",
-    "Hi. I'm Drab.": "嗨。我是Drab。",
+    "Hi. I’m Drab.": "嗨。我是Drab。",
     "Nice weather.": "天气不错。",
     "Apples are fine.": "苹果还行。",
     "I like beige.": "我喜欢米色。",
     "This is a tree.": "这是一棵树。",
     "Hm.": "嗯。",
-    "Apple.": "苹果。",
+    "Food.": "食物。",
     "Oh. A bird.": "哦。一只鸟。",
     "Oh. Sorry, {who}.": "哦。对不起，{who}。",
     "Well. That happened.": "好吧。就这样了。",
     "Ahh, fresh snakes.": "啊，新鲜的蛇。",
     "Not long now…": "快了……",
     "You look tired, {who}.": "你看起来很累，{who}。",
-    "I'll wait.": "我会等。",
+    "I’ll wait.": "我会等。",
     "Patience…": "耐心……",
     "Dinner!": "开饭了！",
     "Ooh, leftovers.": "哦，剩菜。",
     "Rest in pieces, {who}.": "碎碎平安，{who}。",
-    "I didn't even have to try.": "我都没怎么出力。",
-    "Who's… eating… whom…": "谁……吃……谁……",
+    "I didn’t even have to try.": "我都没怎么出力。",
+    "Who’s… eating… whom…": "谁……吃……谁……",
     "Veni, vidi, aedificavi.": "我来，我见，我建。",
     "Veni, vidi, vici.": "我来，我见，我征服。",
     "Et tu, {who}?": "还有你吗，{who}？",
     "Hello, everybody. Tremendous crowd today.": "大家好。今天人山人海，了不起。",
-    "I'm going to win. Bigly.": "我会赢的。大赢特赢。",
+    "I’m going to win. Bigly.": "我会赢的。大赢特赢。",
     "Nobody slithers better than me, believe me.": "没人比我爬得更好，相信我。",
     "I have the best scales. Everybody says so.": "我的鳞片是最好的。大家都这么说。",
     "Many snakes are saying it.": "很多蛇都这么说。",
     "Sad!": "可悲！",
     "Fake apples!": "假苹果！",
     "{who}? Total loser. Sad!": "{who}？彻底的失败者。可悲！",
-    "Tremendous apple. The best apple.": "了不起的苹果。最好的苹果。",
+    "Tremendous snack. The best snack.": "了不起的零食。最好的零食。",
     "A golden apple. Very classy. Like me.": "金苹果。很高级。像我一样。",
     "Fake food! Very unfair!": "假食物！非常不公平！",
-    "You're fired, {who}!": "你被解雇了，{who}！",
+    "You’re fired, {who}!": "你被解雇了，{who}！",
     "Winning! So much winning.": "赢！赢太多了。",
     "Rigged! Totally rigged!": "作弊！完全是作弊！",
     "psst.": "嘘。",
     "behind you.": "在你后面。",
-    "don't turn around, {who}.": "别回头，{who}。",
+    "don’t turn around, {who}.": "别回头，{who}。",
     "hehehe.": "嘿嘿嘿。",
     "nice tail, {who}.": "尾巴不错，{who}。",
     "hehe. gotcha.": "嘿嘿。抓到你了。",
     "…aww.": "……哎。",
     "Analysing opponents…": "正在分析对手……",
-    "I've watched the replays.": "我看过录像了。",
+    "I’ve watched the replays.": "我看过录像了。",
     "{who}: {label}. Noted.": "{who}：{label}。已记录。",
     "Predictable.": "可预测。",
     "Your eat rate is suboptimal, {who}.": "你的进食效率不是最优的，{who}。",
     "Running the numbers…": "正在计算……",
     "As calculated.": "一切尽在计算之中。",
     "Exactly as the model predicted.": "和模型预测的一模一样。",
-    "That… wasn't in the data.": "这……不在数据里。",
+    "That… wasn’t in the data.": "这……不在数据里。",
     "Ooh, what shall I be today?": "哦，今天我当什么好呢？",
-    "I'm a sniper now! Pew pew!": "我现在是狙击手了！砰砰！",
-    "Ooh! I'm hungry now!": "哦！我现在饿了！",
+    "I’m a sniper now! Pew pew!": "我现在是狙击手了！砰砰！",
+    "Ooh! I’m hungry now!": "哦！我现在饿了！",
     "Leave me alone. I mean it.": "别管我。我是认真的。",
-    "Let's build something!": "我们来盖点东西吧！",
-    "Didn't plan that. Love it.": "没计划过。但我喜欢。",
+    "Let’s build something!": "我们来盖点东西吧！",
+    "Didn’t plan that. Love it.": "没计划过。但我喜欢。",
     "Changed my mind about living.": "我改变主意了……关于活着。",
     "Knock knock!": "咚咚！",
     "Who wants to play a game?": "谁想玩个游戏？",
     "Catch me if you can!": "有本事来抓我！",
     "Why so slithery, {who}?": "为什么这么滑溜，{who}？",
-    "Follow me, it's a shortcut!": "跟我来，这是捷径！",
+    "Follow me, it’s a shortcut!": "跟我来，这是捷径！",
     "Honk honk!": "叭叭！",
-    "Gotcha! Ha!": "抓到你了！哈！",
-    "The joke's on you, {who}!": "你才是笑话，{who}！",
+    "And for my next trick…": "下一个戏法……",
+    "The joke’s on you, {who}!": "你才是笑话，{who}！",
     "Ooh, a funny mushroom!": "哦，好玩的蘑菇！",
     "Tough crowd…": "观众真难搞……"
   };
@@ -351,11 +353,13 @@ window.SnakeChatter = (() => {
   const LOG_SIZE = 5;
   const COMPACT_CHARS = 32; // on small boards, longer lines go to the log only
   // Mason's Life of Brian moments get an answer: [line, who answers, what they say].
+  // (Mason keeps a straight face; Ghost and Creeper aren't the giggling kind.)
+  const GIGGLE_PROOF = ['mason', 'ghost', 'creeper'];
   const REPLIES = {
-    'Romanes eunt domus.': { by: s => s.personaKey === 'metagamer', lines: ['It\'s "Romani ite domum", actually.'], after: 1300 },
-    'Amicus meus est Biggus Dickus.': { by: s => s.personaKey !== 'mason', lines: ['Pfft…', '*snort*', 'Snrk. Sorry. Go on.'], after: 900,
-      then: 'Uxorem habet: Incontinentia Buttocks.' }, // ...and Mason, straight-faced, carries on
-    'Uxorem habet: Incontinentia Buttocks.': { by: s => s.personaKey !== 'mason', lines: ['BWAHAHA—', 'I can\'t. I CAN\'T.', '*wheeze*'], after: 800 },
+    'Romanes eunt domus.': { by: s => s.personaKey === 'metagamer', lines: ['“Romani ite domum”, actually.'], after: 1300 },
+    'Amicus meus est Biggus Dickus.': { by: s => !GIGGLE_PROOF.includes(s.personaKey), lines: ['Pfft…', '*snort*', 'Snrk. Sorry. Go on.'], after: 900,
+      then: 'Et uxor: Incontinentia Buttocks.' }, // ...and Mason, straight-faced, carries on
+    'Et uxor: Incontinentia Buttocks.': { by: s => !GIGGLE_PROOF.includes(s.personaKey), lines: ['BWAHAHA—', 'I can’t. I CAN’T.', '*wheeze*'], after: 800 },
   };
 
   let boardEl, logEl, game;
@@ -412,7 +416,8 @@ window.SnakeChatter = (() => {
     if (!enabled || !s) return;
     lastSaid[s.id] = game.time;
     lastAny = game.time;
-    if (s.alive && !(compact && text.length > COMPACT_CHARS)) showBubble(s, text);
+    // (On small boards long lines go to the log only, but a reply always gets its bubble: it's the joke.)
+    if (s.alive && !(compact && text.length > COMPACT_CHARS && !source?.reply)) showBubble(s, text);
     addLog(s, text);
   }
 
@@ -442,7 +447,8 @@ window.SnakeChatter = (() => {
     lastSaid[s.id] = game.time;
     lastAny = game.time;
     lastLine = { speaker: s, text, ...source };
-    if (s.alive && !(compact && text.length > COMPACT_CHARS)) showBubble(s, text);
+    // (On small boards long lines go to the log only, but a reply always gets its bubble: it's the joke.)
+    if (s.alive && !(compact && text.length > COMPACT_CHARS && !source?.reply)) showBubble(s, text);
     addLog(s, text);
     listener?.(s, text);
     const reply = source?.template && REPLIES[source.template];
@@ -580,7 +586,7 @@ window.SnakeChatter = (() => {
       const who = pick(alive.filter(by));
       if (who) {
         lastSaid[who.id] = -Infinity;
-        speak(who, text, { template: text, who: null, label: '' });
+        speak(who, text, { template: text, who: null, label: '', reply: true });
         if (then) pendingReply = { at: game.time + 1400, by: s => s.personaKey === 'mason', text: then };
       }
     }
@@ -590,7 +596,7 @@ window.SnakeChatter = (() => {
     if (cat && lastLine?.template && lastLine.speaker !== cat && game.time - lastAny > 500 && Math.random() < 0.35) {
       if (game.time - (lastSaid[cat.id] ?? -Infinity) > SNAKE_GAP) {
         const who = lastLine.who ? nameOf(lastLine.who) : '';
-        speak(cat, fill(ZH[lastLine.template] ?? lastLine.template, who, lastLine.label));
+        speak(cat, fill(ZH[lastLine.template] ?? lastLine.template, who, ZH_LABELS[lastLine.label] ?? lastLine.label));
       }
       lastLine = null;
     }

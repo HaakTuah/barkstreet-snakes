@@ -64,9 +64,9 @@ window.SnakeAI = (() => {
     },
     gobbler: {
       name: 'Gobbler', color: '#fb923c', look: 'gobbler',
-      blurb: 'Eats everything, even a rival\'s apple. Hates mushrooms.',
-      kill: 'Gobbler didn\'t even look up from lunch.',
-      win: 'And it\'s still hungry.',
+      blurb: 'Eats everything, even a rival’s apple. Hates mushrooms.',
+      kill: 'Gobbler didn’t even look up from lunch.',
+      win: 'And it’s still hungry.',
       w: {
         space: 1, territory: 0.2,
         food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 0.3, mushroom: -3,
@@ -130,7 +130,7 @@ window.SnakeAI = (() => {
     mason: {
       name: 'Mason', color: '#94a3b8', look: 'mason',
       blurb: 'Walls off the board, then keeps the biggest piece.',
-      kill: 'Mason built that bit just for you.',
+      kill: 'Mason had a spot picked out for you.',
       win: 'Veni, vidi, Mason.',
       w: {
         space: 1.5, territory: 2.2,
@@ -147,7 +147,7 @@ window.SnakeAI = (() => {
     },
     creeper: {
       name: 'Creeper', color: '#0d9488', look: 'creeper',
-      blurb: 'Sneaks up and rides right behind other snakes\' tails.',
+      blurb: 'Sneaks up and rides right behind other snakes’ tails.',
       kill: 'Creeper was never far away.',
       win: 'Quietly.',
       w: {
@@ -160,7 +160,7 @@ window.SnakeAI = (() => {
       name: 'Metagamer', color: '#22d3ee', look: 'metagamer', driver: 'metagamer',
       blurb: 'Studies how each rival plays, then counters it.',
       kill: 'Metagamer had you figured out.',
-      win: 'As calculated.',
+      win: 'The spreadsheet called it.',
       w: { ...DRAB, hunt: HUNT, lure: { weight: 5, dist: 6 } },
     },
     capricious: {
@@ -179,8 +179,8 @@ window.SnakeAI = (() => {
     },
     desperado: {
       name: 'Desperado', color: '#ea580c', look: 'desperado',
-      blurb: 'Skims walls and heads for the thrill of it. Yeehaw.',
-      kill: 'Draw, partner. Too slow.',
+      blurb: 'Skims walls, bodies and heads for the thrill of it. Yeehaw.',
+      kill: 'Desperado drew first.',
       win: 'Rides off into the sunset.',
       w: {
         space: 1, territory: 0.6,
@@ -191,8 +191,8 @@ window.SnakeAI = (() => {
     joker: {
       name: 'Joker', color: '#a21caf', look: 'joker', driver: 'joker',
       blurb: 'Lures chasers into dead ends and swerves away at the last moment.',
-      kill: 'Joker led you on. Gotcha!',
-      win: 'Who\'s laughing now?',
+      kill: 'Joker led you on. You followed.',
+      win: 'Who’s laughing now?',
       w: {
         space: 1, territory: 0.6,
         food: 5, eat: 70, pellet: 1.2, foodRange: 40, mushroom: 0.5,

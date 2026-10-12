@@ -39,43 +39,47 @@
   const pick = list => list[Math.floor(Math.random() * list.length)];
   const FLAVOR = {
     intro: 'Three rivals. One tree. Last snake wriggling wins.',
-    hintKeys: 'Arrows or WASD steer · Space naps · Enter starts over · H for the Hall of Fame',
-    hintTouch: 'Swipe on the bark to steer · tap ⏸ to nap',
+    hintStart: 'Arrows or WASD steer · Space naps · Enter plays · H opens the Hall of Fame',
+    hintKeys: 'Arrows or WASD steer · Space naps · Enter starts over · H opens the Hall of Fame · M mutes · N toggles the music',
+    hintOnline: 'Arrows or WASD steer · M mutes · N toggles the music',
+    hintTouch: 'Swipe to steer · Tap ⏸ to nap',
     rivals: ['Your rivals today:', 'Up the tree with you:', 'Sharing your bark:'],
     spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
-    go: ['Slither!', 'Off you go!', 'Go, go, go!'],
-    pause: ['Snakes need rest too.', 'Having a little nap on the bark.', 'The tree will wait.'],
+    go: ['Slither!', 'Off you go.', 'Mind the edges.'],
+    goWatch: ['And they’re off.', 'Off they slither.', 'Let the wriggling begin.'],
+    pause: ['Snakes need rest too.', 'Curled up in a warm patch of bark.', 'The tree will wait.'],
     wake: touchFirst ? 'Tap Wake up when you’re ready.' : 'Space or P to wake up.',
     deathTitle: { wall: ['Bonk!', 'Splat!', 'Oof.'], self: ['Tangled!', 'Knotted!', 'Oops.'], rival: ['Squashed!', 'Splat!', 'Oof.'], headOn: ['Bonk!', 'Head-on!'] },
-    wall: ['The tree goes on. You don’t.', 'That edge came out of nowhere.'],
-    self: ['You tied yourself in a knot.', 'Ouch. That was your own tail.'],
-    hole: ['The woodpecker sends its regards.', 'Mind the gap.'],
-    starved: ['Should have eaten something.', 'Hunger always wins in the end.'],
-    win: ['King of the tree!', 'Last snake wriggling.', 'You outlasted them all.'],
-    draw: ['Nobody made it out.', 'Everyone loses. How fair.'],
+    wall: ['The tree goes on. You don’t.', 'That edge came out of nowhere.', 'Even trees have edges.'],
+    self: ['Of all the snakes to bite.', 'You were in your own way.', 'Tail first, apparently.'],
+    hole: ['The woodpecker sends its regards.', 'Mind the gap.', 'The woodpecker missed you. The hole didn’t.'],
+    starved: ['Should have eaten something.', 'Hunger always wins in the end.', 'All slither, no snacks.'],
+    win: ['King of the tree.', 'Last snake wriggling.', 'You outlasted them all.', 'The whole tree is yours. For now.'],
+    draw: ['Nobody made it out.', 'Everyone loses. How fair.', 'A dead heat. Emphasis on dead.'],
     golden: ['A golden apple! Everyone pretends not to have seen it.', 'Something shiny just grew on the bark.'],
-    woodpecker: ['The woodpecker is here. Holes are closing in from the edges.', 'Knock knock. The woodpecker has arrived.'],
+    woodpecker: ['The woodpecker is here, pecking in from the edges.', 'Rat-a-tat. The woodpecker has arrived.'],
     youGolden: ['Golden! +3.', 'Shiny and delicious. +3.'],
-    beetle: ['A beetle is out for a walk. Catch it if you can!', 'Something crunchy is crawling about.'],
+    beetle: ['A beetle is out for a walk. It won’t get far.', 'Something crunchy is crawling about.'],
     youBeetle: ['Crunchy! +2.', 'Caught it! +2.'],
     youMushroom: ['You feel smaller. And somehow wiser.', 'A little less of you. Sneaky.'],
-    youHungry: ['Your tummy is rumbling. Eat something!', 'Getting peckish… find food soon!'],
+    youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
     newBest: n => `New best: ${n}!`,
     friendWin: ['Bragging rights, for now.', 'Rematch?', 'Fair and square. Probably.'],
-    friendKill: ['No hard feelings. Probably.', 'Friendship is complicated.', 'That calls for a rematch.'],
+    friendKill: ['No hard feelings. Well, a few.', 'Friendship is complicated.', 'That calls for a rematch.'],
     friendsIntro: 'Host a game and send your friends the link, or join theirs. Empty seats get AI rivals.',
-    hostIntro: 'Send this link to up to three friends. Empty seats get AI rivals.',
+    hostIntro: location.protocol === 'file:' ? 'Send this code to up to three friends. Empty seats get AI rivals.' : 'Send this link to up to three friends. Empty seats get AI rivals.',
     joining: code => `Knocking on room ${code}…`,
     waiting: (name, next) => `Waiting for ${name} to start the ${next ? 'next ' : ''}round.`,
     roomGone: name => `${name} closed the room.`,
     roomLost: 'Lost the connection to the room.',
     friendLeft: name => `${name} left. An AI takes over their snake.`,
-    friendJoined: name => `${name} joined, with their best rounds for your Hall of Fame.`,
+    friendJoined: name => `${name} is up the tree. Their best rounds are in your Hall of Fame.`,
     friendAway: name => `${name} went quiet. An AI steers until they’re back.`,
     friendBack: name => `${name} is back.`,
     youAway: 'You went quiet for a moment, so an AI steered for you.',
     takeBack: 'An AI kept your snake going. Steer to take it back.',
-    watchingFirst: 'You’re watching this round. You’re in from the next one.',
+    watchingFirst: 'This round’s already going. You’re in from the next one.',
+    rivals0: 'Just friends today. No mercy:',
   };
 
   // "you" for your own snake, the name for everyone else.
@@ -366,11 +370,11 @@
     hideCard();
     Audio.play('go');
     if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
-    else toast(pick(FLAVOR.go), 1100);
+    else toast(pick(game.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1100);
     acc = 0;
     lastFrame = 0;
     updateControls();
-    say(game.withPlayer ? 'Go.' : 'The AIs are off.');
+    say(game.withPlayer ? 'Go.' : 'And they’re off.');
   }
 
   function pause() {
@@ -403,7 +407,7 @@
     pendingCard = {
       title,
       text: `You ${yourCause(p)} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
-      flavor: killLine(p), primary: 'Play again', secondary: 'Watch', reward: true,
+      flavor: killLine(p), primary: 'Play again', secondary: 'Keep watching', reward: true,
       ...(online && { primary: 'Keep watching', secondary: hosting() ? 'Close room' : 'Leave room', actions: { primary: hideCard, secondary: leaveRoom } }),
     };
     updateControls();
@@ -419,9 +423,11 @@
     const flavor = !winner ? pick(FLAVOR.draw) : isMe(winner) ? pick(FLAVOR.win) : winner.persona ? winner.persona.win : pick(FLAVOR.friendWin);
     if (isMe(winner)) Audio.play('win');
     const me = player();
-    const yours = me && game.result
-      ? `You finished ${game.result.won ? '1st' : Records.ordinal(game.result.place)} · ${Records.clock(game.result.survived)} · score ${me.eaten}`
-      : '';
+    const r = game.result;
+    const yours = !me || !r ? ''
+      : r.won ? `Won in ${Records.clock(r.survived)} · score ${me.eaten}`
+      : r.draw ? `You shared 1st · ${Records.clock(r.survived)} · score ${me.eaten}`
+      : `You finished ${Records.ordinal(r.place)} · ${Records.clock(r.survived)} · score ${me.eaten}`;
     if (online) {
       pendingCard = hosting()
         ? { title, flavor, text: yours, reward: !!me, primary: 'Play again', secondary: 'Close room', lobby: { players: true },
@@ -495,12 +501,12 @@
       game.firstBlood = true;
       const v = dying[0];
       const killer = game.snakes.find(o => o.name === v.killer && o !== v);
-      return toast(killer ? `First blood! ${who(killer)} got ${who(v, true)}.` : `First blood: ${who(v)} ${isMe(v) ? yourCause(v) : causeFor(v)}.`);
+      return toast(killer ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : `First blood: ${who(v, true)} ${isMe(v) ? yourCause(v) : causeFor(v)}.`);
     }
     for (const e of game.events) if (e.type === 'woodpecker') return toast(pick(FLAVOR.woodpecker));
     if (dying.length && alive.length === 2) {
       const [a, b] = isMe(alive[0]) ? [alive[1], alive[0]] : alive;
-      return toast(`It's down to ${who(a)} and ${who(b, true)}.`);
+      return toast(`It’s down to ${who(a)} and ${who(b, true)}.`);
     }
     const me = player();
     if (me?.alive) {
@@ -593,7 +599,7 @@
         nameRank.textContent = `Hall of Fame #${rank.overall}. Carve your name:`;
         nameRow.hidden = false;
       } else if (rank.personal === 1 && game.newBest) {
-        nameRank.textContent = 'Your best round yet. Carve your name:';
+        nameRank.textContent = 'Top of your own list. Carve your name:';
         nameRow.hidden = false;
       }
       if (!nameRow.hidden && document.activeElement !== nameInput) nameInput.value = Records.hasName() ? Records.getName() : '';
@@ -601,7 +607,7 @@
 
     overlay.classList.remove('hidden');
     overlay.querySelector('.card').scrollTop = 0;
-    if (!card.quiet) say(`${card.title}. ${card.text || ''} ${card.flavor || ''}`);
+    if (!card.quiet) say(announcement(card));
     // The name field only takes focus the first time, on a keyboard: once you
     // have a name, Enter and R restart straight away, and phones never get
     // their keyboard popped up over the card.
@@ -623,15 +629,26 @@
     return { overall: overall <= Records.MAX_SCORES ? overall : 0, personal: rank.personal };
   }
 
+  // A card as a screen reader hears it: whole sentences (" · " would be read
+  // as "dot"), plus the new-best badge and the name prompt.
+  function announcement(card) {
+    const sentence = t => (/[.!?…:]$/.test(t) ? t : `${t}.`);
+    const parts = [card.title, card.text && card.text.replaceAll(' · ', ', '), card.flavor,
+      !badgeEl.hidden && badgeEl.textContent, !nameRow.hidden && nameRank.textContent];
+    return parts.filter(Boolean).map(sentence).join(' ');
+  }
+
   function hideCard() {
     overlay.classList.add('hidden');
     shownCard = null;
   }
 
+  // The roll-call on the start and countdown cards: every rival, AIs with a
+  // word on how they play, friends tagged as friends.
   function buildOpponents() {
     opponentsEl.textContent = '';
     for (const s of game.snakes) {
-      if (!s.persona) continue;
+      if (isMe(s) || (!s.persona && !online)) continue;
       const li = document.createElement('li');
       const dot = document.createElement('span');
       dot.className = 'dot';
@@ -640,7 +657,7 @@
       name.textContent = s.name;
       const blurb = document.createElement('span');
       blurb.className = 'blurb';
-      blurb.textContent = s.persona.blurb;
+      blurb.textContent = s.persona ? s.persona.blurb : 'Your friend. For now.';
       li.append(dot, name, ' ', blurb);
       opponentsEl.append(li);
     }
@@ -923,7 +940,7 @@
     recordsOpener = document.activeElement;
     recordsEl.hidden = false;
     mainEl.inert = true;
-    try { renderRecords(); } catch { recordsBody.textContent = 'The records are unreadable. Reset them below.'; }
+    try { renderRecords(); } catch { recordsBody.textContent = 'The Hall of Fame got scrambled. Clear it below to start afresh.'; }
     $('records-close').focus();
   }
 
@@ -955,7 +972,7 @@
   click($('records-close'), closeRecords);
   recordsEl.addEventListener('click', e => { if (e.target === recordsEl) closeRecords(); });
   click($('records-reset'), () => {
-    if (!confirm('Delete all your scores, stats and your best?')) return;
+    if (!confirm('Clear every Hall of Fame row, your story and your Best? There’s no undo.')) return;
     Records.reset();
     best = 0;
     bestEl.textContent = 0;
@@ -1186,7 +1203,7 @@
     game.humans = humans;
     game.roundId = Online.newCode() + Date.now().toString(36);
     game.snakes.forEach((s, i) => { if (humans[i]) { s.peer = humans[i].peer; s.owner = humans[i].owner; } });
-    game.rivalsLine = pick(FLAVOR.rivals);
+    game.rivalsLine = game.snakes.some(s => s.persona) ? pick(FLAVOR.rivals) : FLAVOR.rivals0;
     online.holesSent = game.holes.size;
     online.room.broadcast(Online.round(game, humans, game.rivalsLine, game.roundId));
     state = 'countdown';
@@ -1200,7 +1217,10 @@
 
   async function joinRoom(text) {
     const code = Online.cleanCode(text);
-    if (!Online.isCode(code)) return setStatus('Room codes are five letters and numbers.', true);
+    if (!Online.isCode(code)) {
+      if (state !== 'lobby') openFriends(); // (a bad ?join= link: show where the problem is)
+      return setStatus('Room codes are five characters, like K7QXM.', true);
+    }
     saveLobbyName();
     const attempt = ++joinAttempt;
     state = 'lobby';
@@ -1229,7 +1249,7 @@
 
   function showGuestLobby() {
     showCard({
-      title: `${online.hostName}’s room`, text: FLAVOR.waiting(online.hostName), secondary: 'Leave room',
+      title: `Room ${online.code}`, text: FLAVOR.waiting(online.hostName), secondary: 'Leave room',
       lobby: { players: true }, actions: { secondary: leaveRoom },
     });
   }
@@ -1292,8 +1312,8 @@
     state = 'lobby';
     updateControls();
     showCard({
-      title: 'Room closed', text: reason === 'closed' ? FLAVOR.roomGone(name) : FLAVOR.roomLost,
-      primary: 'Back to the start', actions: { primary: backToStart },
+      title: reason === 'closed' ? 'Room closed' : 'Connection lost', text: reason === 'closed' ? FLAVOR.roomGone(name) : FLAVOR.roomLost,
+      primary: 'Back', actions: { primary: backToStart },
     });
   }
 
@@ -1414,14 +1434,14 @@
   function ready(personas) {
     newGame({ personas });
     state = 'ready';
-    showCard({ title: 'Bark & Bite', text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true });
+    showCard({ title: `Ready, ${localName()}?`, text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true });
     setTimeout(warmUp, 400);
   }
 
   // The controls under the board (online there's no napping or starting over).
   function updateHelp() {
-    if (online) setHint(helpEl, touchFirst ? 'Swipe on the bark to steer' : 'Arrows or WASD steer · H for the Hall of Fame · M sound · N music');
-    else setHint(helpEl, touchFirst ? FLAVOR.hintTouch : `${FLAVOR.hintKeys} · M sound · N music`);
+    if (online) setHint(helpEl, touchFirst ? 'Swipe to steer' : FLAVOR.hintOnline);
+    else setHint(helpEl, touchFirst ? FLAVOR.hintTouch : FLAVOR.hintKeys);
   }
 
   // Hints wrap only between items ("Space naps" never splits across lines).
@@ -1434,7 +1454,7 @@
       el.append(span);
     });
   }
-  setHint(hintEl, touchFirst ? FLAVOR.hintTouch : FLAVOR.hintKeys);
+  setHint(hintEl, touchFirst ? FLAVOR.hintTouch : FLAVOR.hintStart);
   updateHelp();
   showChatterState();
   ready();

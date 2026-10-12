@@ -11,8 +11,8 @@ A snake game up a tree: you against three AI rivals on the bark of a tree, drawn
 - When a snake dies, its body turns into meat that anyone can eat.
 - The last snake alive wins. If you die first, you can watch the rest of the round or start over.
 - The first moves are a little slower, then the game speeds up gently (about 25%) over two minutes.
-- **Hunger:** go 20 seconds without eating (mushrooms don't count) and you start shrinking, one segment every 1.5 seconds. Starve at length 3 and you're out. The bar under each name shows how hungry everyone is.
-- **Sudden death:** after two minutes no new food appears, and a woodpecker starts pecking holes in the bark, ring by ring from the edges inwards.
+- **Hunger:** go 20 seconds without eating (mushrooms don't count) and you start shrinking, one segment every 1.5 seconds. Starve at length 3 and you're out, unless your head reaches food that very moment. The bar under each name shows how hungry everyone is.
+- **Sudden death:** after two minutes no new food appears, and a woodpecker starts pecking holes in the bark, ring by ring from the edges inwards. It plays fair: it never pecks within 3 cells of a head or under food, so you always have time to see a hole coming.
 
 ### Food
 
@@ -20,7 +20,7 @@ A snake game up a tree: you against three AI rivals on the bark of a tree, drawn
 |------|--------|
 | Green apple | +1 length. There are always three on the board. |
 | Golden apple | +3 length. Rare, sparkles, and fades before it rots after about 12 seconds. |
-| Red mushroom | Shrinks you by 3 (never below 3). Withers after about 20 seconds and regrows elsewhere. Being short isn't always bad... |
+| Red mushroom | Shrinks you by 3 (never below 3). Withers after about 20 seconds and regrows elsewhere. Being short isn't always bad… |
 | Meat | +1 length. What's left of a dead snake. |
 | Beetle | +2 length. Now and then one crawls out (from 15 s in, not once the woodpecker comes). It wanders slowly, and scurries away (at half a snake's speed) when a head gets within 4 cells, so catching one is a short chase. Uncaught, it flies off after about 30 s. |
 
@@ -39,9 +39,9 @@ Press **Play with friends** on the start screen, then **Host a game** and send t
 
 | Action | Keyboard | Touch |
 |--------|----------|-------|
-| Steer | Arrow keys or WASD (turns are queued, so quick double turns work) | Swipe on the bark |
+| Steer | Arrow keys or WASD (turns are queued, so quick double turns work) | Swipe (anywhere on the screen during a round) |
 | Nap (pause) | Space or P | ⏸ button |
-| Start / start over | Enter or R | Play button |
+| Start / start over | Enter or R (or any arrow on the start screen) | Play button |
 | Hall of Fame | H | Hall of Fame button |
 | Sound / music | M / N | 🔈 / ♪ buttons |
 | Watching speed | 1, 2, 3 | 1× 2× 4× buttons |
@@ -62,7 +62,7 @@ Press **Watch AIs** on the start screen for a round between four AI snakes, with
 
 ## The rivals
 
-Each round, three of these fifteen are picked at random. The start screen tells you who you're up against, and you can hover over a name on the scoreboard to see what it does.
+Each round, three of these fifteen are picked at random. The start screen tells you who you're up against and how each one plays.
 
 | Snake | Look | Style |
 |-------|------|-------|
@@ -76,7 +76,7 @@ Each round, three of these fifteen are picked at random. The start screen tells 
 | **Mason** | stone bricks, laurel wreath | Walls off the board, then keeps the biggest piece. |
 | **Wildcard** | rainbow, great hair | A random mix of habits, new every round. |
 | **Creeper** | teal, slit eyes | Sneaks up and rides right behind other snakes' tails. |
-| **Metagamer** | cyan, taped glasses | Watches how each rival plays, then avoids the aggressive ones, shadows the greedy ones and hunts the timid ones. |
+| **Metagamer** | cyan, taped glasses | Watches how each rival plays, then avoids the aggressive ones, shadows the greedy ones and hunts the evasive ones. |
 | **Capricious** | changes with its mood | Switches between sniper, glutton, hermit and builder every few seconds. |
 | **Copycat** | pale copy of its model, cat ears | Copies whoever seems to be winning, right alongside them. Party member. |
 | **Joker** | jester hat, red nose | Lures chasers into dead ends and swerves away at the last moment. |
@@ -90,8 +90,8 @@ They're also fair. They see the other snakes as they were about a quarter of a s
 
 Everything is saved in your browser only.
 
-- **Hall of Fame:** the top 10 rounds, ranked by finishing place (a win beats any 2nd place), then by how long the snake stayed alive, then by food eaten. The AI snakes get entries too, so you're competing against them on the list. Switch to **Only you** to see your own top 10. When a round makes the list, you can carve your name on the end screen.
-- **Your story:** rounds played, wins, average place and food, how often you finished in each place, and what killed you (including your nemesis, the rival that gets you most often).
+- **Hall of Fame:** the top 10 rounds, ranked by finishing place (a win beats any 2nd place), then by how long the snake stayed alive, then by food eaten. The AI snakes get entries too, so you're competing against them on the list. Switch to **Only you** to see your own top 10. When a round makes the top three, or beats your best, you can carve your name on the end screen.
+- **Your story:** rounds played, wins, average place and score, how often you finished in each place, and what killed you (including your nemesis, the rival that gets you most often).
 
 ## Run locally
 
@@ -101,7 +101,8 @@ Serve the folder with any static server (for example `npx serve` or `python -m h
 - `?debug` adds `SnakeDebug` to the console, for example `SnakeDebug.setup(['sniper', 'mason', 'ghost'])` to start a round against chosen rivals.
 - `node tools/records-test.js` checks that shared and played-together rounds land in each friend's Hall of Fame exactly once.
 - `node tools/online-test.js` plays rounds through the online protocol and checks that a friend's screen matches the host's every tick.
-- `node tools/simulate.js 200` plays 200 AI-only rounds headlessly with the game's own rules and AI, and prints each personality's win rate, food, kills and so on. Add `--seed 1` to repeat a run exactly.
+- `node tools/simulate.js 200` plays 200 AI-only rounds headlessly with the game's own rules and AI, and prints each personality's win rate, food, kills, how snakes die and so on. Add `--seed 1` to repeat a run exactly (on any machine), `--check` to fail on a stalled round, and `--root <dir>` to play another copy of the game, to compare versions.
+- `node tools/rules-test.js` checks the rules on hand-built boards: tails, head-ons, starving, the woodpecker's manners, what the AIs can see.
 
 ### How it's put together
 

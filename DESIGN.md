@@ -86,17 +86,21 @@ One treatment, used everywhere:
 | Moment | Copy |
 |---|---|
 | Title / subtitle | **Bark & Bite** / *A snake game up a tree* |
-| Start prompt | "Three rivals. One tree. Last snake wriggling wins." The control hint below adapts to keyboard or touch. |
+| Start prompt | **"Ready, Green?"** (your Hall of Fame name, once you have one: the header already says *Bark & Bite*), then "Three rivals. One tree. Last snake wriggling wins." The control hint below adapts to keyboard or touch. |
 | Countdown | Rotating roll-calls ("Up the tree with you:", "Sharing your bark:") above the rival list |
+| Go | "Slither!" when you're playing; "And they're off." when you're watching (the narrator never talks to "you" in a round you're not in) |
 | Pause | Title **Napping**, then a rotating line ("Snakes need rest too."), then "Space or P to wake up" on keyboard or "Tap Wake up" on touch |
 | Death titles | Matched to the cause: "Bonk!" for the edge, "Tangled!" for biting yourself, "Squashed!" for a rival's body, "Head-on!" for a head-on crash, **Starved!** for hunger and **Down the hole!** for the woodpecker |
 | Death flavor | Cause-specific lines, or the killer's own line, rewritten to be cause-neutral |
 | New best | **"New best: 14!"** with a short fanfare and a gold burst. Hall of Fame: "Hall of Fame #2. Carve your name:" |
-| Round over | "You win!" / "{Name} wins" with the winner's punchline, without repeating the title |
-| Control hints | Keyboard: "Arrows or WASD steer · Space naps · Enter starts over · H for the Hall of Fame" (plus "M sound · N music" under the board); touch: "Swipe on the bark to steer · tap ⏸ to nap" |
+| Round over | "You win!" / "{Name} wins" with the winner's punchline, without repeating the title. A win says "Won in 2:10 · score 14"; a draw says "You shared 1st" |
+| Control hints | Every item is a key and a verb. Start card: "Arrows or WASD steer · Space naps · Enter plays · H opens the Hall of Fame"; under the board, "Enter starts over" instead, plus "M mutes · N toggles the music"; touch: "Swipe to steer · Tap ⏸ to nap" |
+| Screen readers | A card is announced as sentences ("Bonk! You hit the wall, 4th place, score 2. The tree goes on. You don't. New best: 14!"), never "dot" |
 
 **Rules for every string:**
 - One noun for the measure: **Score** (food eaten) and **Best**.
+- Typographer's apostrophes and quotes (’ “ ”) and a real ellipsis (…) everywhere a player can see. The Chinese lines are keyed by the English, so the two change together.
+- A kill or win line never repeats the chatter the player has just seen (Desperado's "Draw, partner" belongs to his chatter; his kill line is "Desperado drew first.").
 - "you" in the middle of a sentence, never "You".
 - The snakes call you by your Hall of Fame name, or **Green** if you haven't set one.
 - Mason speaks only phony Latin. His *Life of Brian* moments get answers: the Metagamer corrects "Romanes eunt domus", and "Biggus Dickus" (then "Incontinentia Buttocks") sets the others off giggling, as it does Pilate's guards.

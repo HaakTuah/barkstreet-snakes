@@ -39,10 +39,10 @@ window.SnakeNet = (() => {
   // Why a connection failed, in words for the card.
   function explain(err) {
     const type = err?.type || err?.message;
-    if (type === 'library') return 'Couldn’t load the connection library. Are you online?';
+    if (type === 'library') return 'Couldn’t load what online play needs. Are you online?';
     if (type === 'peer-unavailable') return 'There’s no room with that code. Check it, or ask for a fresh link.';
-    if (type === 'browser-incompatible') return 'This browser can’t do peer-to-peer games. Try a recent Chrome, Firefox or Safari.';
-    if (type === 'timeout') return 'Couldn’t reach the room. Some networks block direct connections; try another one (say, mobile data instead of Wi-Fi).';
+    if (type === 'browser-incompatible') return 'This browser can’t play with friends. Try a recent Chrome, Firefox or Safari.';
+    if (type === 'timeout') return 'Couldn’t reach the room. Try another network, say mobile data instead of Wi-Fi.';
     return 'Couldn’t reach the matchmaking service. Check your connection and try again.';
   }
 

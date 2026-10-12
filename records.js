@@ -238,7 +238,7 @@ window.SnakeRecords = (() => {
   function renderStats(container, colors) {
     const st = stats();
     if (!st.played) {
-      container.append(el('p', { className: 'empty', textContent: "You haven't played yet. The tree is waiting." }));
+      container.append(el('p', { className: 'empty', textContent: "You haven’t played yet. The tree is waiting." }));
       return;
     }
     const avgPlace = st.places.reduce((sum, n, i) => sum + n * (i + 1), 0) / st.played;
@@ -270,16 +270,18 @@ window.SnakeRecords = (() => {
       label: ordinal(i + 1), count, fill: 'var(--leaf)',
     }))));
 
-    const killerLabel = k => k === 'wall' ? 'Walls & holes' : k === 'self' ? 'Yourself' : k === 'hunger' ? 'Starvation' : k;
+    // Bar labels, and how each reads in "Your nemesis: …".
+    const killerLabel = k => k === 'wall' ? 'Walls & holes' : k === 'self' ? 'Yourself' : k === 'hunger' ? 'Hunger' : k;
+    const nemesisOf = k => k === 'wall' ? 'the edge of the bark' : k === 'self' ? 'you' : k === 'hunger' ? 'your own tummy' : k;
     const killers = Object.entries(st.killers)
-      .map(([k, count]) => ({ label: killerLabel(k), count, color: colors[k] || '#a8a29e' }))
+      .map(([k, count]) => ({ key: k, label: killerLabel(k), count, color: colors[k] || '#a8a29e' }))
       .sort((a, b) => b.count - a.count);
     if (killers.length) {
       const top = killers[0];
-      const tied = killers.filter(k => k.count === top.count);
+      const tied = killers.filter(k => k.count === top.count).map(k => k.label);
       container.append(el('p', { className: 'nemesis' }, tied.length > 1
-        ? `No nemesis yet: ${tied.map(k => k.label).join(' and ')} are tied.`
-        : el('span', {}, 'Your nemesis: ', dot(top.color), el('strong', { textContent: top.label }))));
+        ? `No nemesis yet: ${tied.slice(0, -1).join(', ')} and ${tied[tied.length - 1]} are tied.`
+        : el('span', {}, 'Your nemesis: ', dot(top.color), el('strong', { textContent: nemesisOf(top.key) }), '.')));
       container.append(bars('What got you', killers));
     }
   }
