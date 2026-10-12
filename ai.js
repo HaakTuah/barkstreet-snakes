@@ -96,7 +96,7 @@ window.SnakeAI = (() => {
       },
     },
     colonist: {
-      name: 'Colonist', color: '#f43f5e', look: 'colonist', driver: 'colonist',
+      name: 'Colonist', color: '#e11d48', look: 'colonist', driver: 'colonist',
       blurb: 'A redcoat who plants flags all over the board and defends every one of them.',
       kill: 'The Colonist claimed the spot you were standing on.',
       win: 'The Colonist plants its final flag.',
@@ -109,7 +109,7 @@ window.SnakeAI = (() => {
       },
     },
     drab: {
-      name: 'Drab', color: '#a8a37a', look: 'drab',
+      name: 'Drab', color: '#c8bf94', look: 'drab',
       blurb: 'Plays it safe and sensible. Nothing special.',
       kill: 'You lost to Drab. Drab!',
       win: 'Drab wins. Somehow.',
@@ -145,7 +145,7 @@ window.SnakeAI = (() => {
       w: DRAB, // replaced by a random set on its first move
     },
     creeper: {
-      name: 'Creeper', color: '#8b5cf6', look: 'creeper',
+      name: 'Creeper', color: '#0d9488', look: 'creeper',
       blurb: 'Sneaks up and rides right behind other snakes\' tails.',
       kill: 'Creeper was right behind you the whole time.',
       win: 'Creeper wins, quietly.',
@@ -156,7 +156,7 @@ window.SnakeAI = (() => {
       },
     },
     metagamer: {
-      name: 'Metagamer', color: '#facc15', look: 'metagamer', driver: 'metagamer',
+      name: 'Metagamer', color: '#22d3ee', look: 'metagamer', driver: 'metagamer',
       blurb: 'Studies how each rival plays, then counters it.',
       kill: 'Metagamer had you figured out.',
       win: 'Metagamer wins. As calculated.',
@@ -170,7 +170,7 @@ window.SnakeAI = (() => {
       w: DRAB, // replaced by the current mood's weights
     },
     copycat: {
-      name: 'Copycat', color: '#e5e7eb', look: 'copycat', driver: 'copycat',
+      name: 'Copycat', color: '#fca5a5', look: 'copycat', driver: 'copycat',
       blurb: 'Copies whoever looks like they are winning, right alongside them. Party member.',
       kill: 'Copycat got you. It learned that from someone.',
       win: 'Copycat wins. Imitation pays.',
@@ -367,6 +367,7 @@ window.SnakeAI = (() => {
         memory.colonies ||= [{ x: clamp(myHead.x), y: clamp(myHead.y), radius: col.radius }];
         if (memory.site && manhattan(myHead, memory.site) <= 1) {
           memory.colonies.push({ ...memory.site, radius: col.radius });
+          memory.planted = (memory.planted || 0) + 1;
           if (memory.colonies.length > col.max) memory.colonies.shift();
           memory.site = null;
           memory.nextSiteAt = view.timeMs + col.every;

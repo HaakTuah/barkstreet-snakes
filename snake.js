@@ -112,7 +112,10 @@
     const count = kind => game.food.filter(f => f.kind === kind).length;
     for (let n = count('food'); n < APPLES; n++) place({ kind: 'food' });
     for (let n = count('mushroom'); n < MUSHROOMS; n++) place({ kind: 'mushroom', expires: game.tick + MUSHROOM_TICKS });
-    if (!count('golden') && Math.random() < GOLDEN_CHANCE) place({ kind: 'golden', expires: game.tick + GOLDEN_TICKS });
+    if (!count('golden') && Math.random() < GOLDEN_CHANCE) {
+      place({ kind: 'golden', expires: game.tick + GOLDEN_TICKS });
+      game.events?.push({ type: 'spawn', kind: 'golden' });
+    }
   }
 
   // Sudden death: peck the next free cell, outermost ring first.
@@ -126,6 +129,7 @@
       if (game.holes.has(k) || busy.has(k)) continue;
       game.holes.add(k);
       game.food = game.food.filter(f => f.x !== c.x || f.y !== c.y);
+      if (!game.woodpecker) game.events.push({ type: 'woodpecker' });
       game.woodpecker = { x: c.x, y: c.y, at: game.time };
       break;
     }
@@ -163,7 +167,10 @@
   }
 
   // Advance one tick. All snakes move at the same time. Returns the snakes that died.
+  // game.events lists what happened this tick, for the chatter and banners:
+  // { type: 'eat', snake, kind } | { type: 'death', snake } | { type: 'spawn', kind } | { type: 'woodpecker' }
   function step(game) {
+    game.events = [];
     const alive = game.snakes.filter(s => s.alive);
 
     for (const s of alive) {
@@ -221,6 +228,7 @@
     for (const s of dying) {
       s.alive = false;
       s.diedAt = game.tick;
+      game.events.push({ type: 'death', snake: s });
       for (const c of s.body) {
         const k = key(c.x, c.y);
         if (foodAt.has(k) || bodyAt.has(k) || game.holes.has(k)) continue;
@@ -235,6 +243,7 @@
       const i = game.food.findIndex(f => f.x === h.x && f.y === h.y);
       if (i < 0) continue;
       const [f] = game.food.splice(i, 1);
+      game.events.push({ type: 'eat', snake: s, kind: f.kind });
       if (f.kind === 'mushroom') {
         // Shrink: cancel pending growth first, then drop tail segments.
         let n = SHRINK;
@@ -307,6 +316,26 @@
     try { localStorage.setItem('snake-best', String(value)); } catch { /* storage unavailable */ }
   }
 
+  // Words. Picked at random where there's a list.
+  const pick = list => list[Math.floor(Math.random() * list.length)];
+  const FLAVOR = {
+    intro: 'Three rivals. One tree. Arrow keys or WASD to slither, or swipe on a phone.',
+    rivals: ['Your rivals today:', 'Up the tree with you:', 'Sharing your bark:'],
+    spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
+    go: ['Slither!', 'Go go go!', 'Off you go!'],
+    pause: ['Having a little nap on the bark.', 'Snakes need rest too.'],
+    deathTitle: ['Splat!', 'Bonk!', 'Squashed!', 'Oof.', 'Tangled!'],
+    wall: ['The tree goes on. You don\'t.', 'That edge came out of nowhere.'],
+    self: ['You tied yourself in a knot.', 'Ouch. That was your own tail.'],
+    hole: ['The woodpecker sends its regards.', 'Mind the gap.'],
+    win: ['King of the tree!', 'Last snake slithering.', 'You outlasted them all.'],
+    draw: ['Nobody made it out.', 'Everyone loses. How fair.'],
+    golden: ['A golden apple! Everyone pretends not to have seen it.', 'Something shiny just grew on the bark.'],
+    woodpecker: ['The woodpecker is here! Holes are closing in from the edges.'],
+    youGolden: ['Golden! +3.', 'Shiny and delicious. +3.'],
+    youMushroom: ['You feel smaller. And somehow wiser.', 'Shrunk by 3. Sneaky.'],
+  };
+
   // The human's snake, or null in an AI-only round.
   const player = () => game.snakes.find(s => s.isPlayer) || null;
   const playerAlive = () => !!player()?.alive;
@@ -316,6 +345,7 @@
 
   function newGame({ personas, aiOnly = false } = {}) {
     game = createGame({ personas, withPlayer: !aiOnly });
+    Chatter.reset(game);
     buildScoreboard();
     buildOpponents();
     updateHud();
@@ -333,7 +363,8 @@
   function countdown(n) {
     if (state !== 'countdown') return;
     if (n === 0) return go();
-    showOverlay(String(n), game.withPlayer ? 'Your opponents this round:' : 'Tonight on the bark:', 'Go!');
+    if (n === 3) game.rivalsLine = pick(game.withPlayer ? FLAVOR.rivals : FLAVOR.spectators);
+    showOverlay(String(n), game.rivalsLine, 'Go!');
     clearTimeout(timer);
     timer = setTimeout(() => countdown(n - 1), 700);
   }
@@ -341,6 +372,7 @@
   function go() {
     state = 'running';
     hideOverlay();
+    toast(pick(FLAVOR.go), 1200);
     updateSpeedControl();
     schedule();
   }
@@ -353,7 +385,7 @@
       li.innerHTML = '<span class="dot"></span><strong></strong> <span class="blurb"></span>';
       li.querySelector('.dot').style.background = dotColor(s);
       li.querySelector('strong').textContent = s.name;
-      li.querySelector('strong').style.color = s.persona.ink || s.color;
+      li.querySelector('strong').style.color = 'var(--ink)';
       li.querySelector('.blurb').textContent = s.persona.blurb;
       opponentsEl.appendChild(li);
     }
@@ -372,8 +404,8 @@
     const dying = step(game);
     updateHud();
     draw();
-
-    if (!peckingBefore && game.woodpecker) toast('The woodpecker is here! Holes are closing in from the edges.');
+    Chatter.update();
+    announce(dying, peckingBefore);
 
     // Everyone still alive finished ahead of the snakes that just died; if
     // nobody is, they share first place (a draw).
@@ -385,20 +417,41 @@
     }
     if (wasAlive && !playerAlive()) {
       const p = player();
-      showOverlay('You died', `You ${p.cause} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
+      showOverlay(pick(FLAVOR.deathTitle), `You ${p.cause} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
         'Play again', 'Watch', killLine(p));
       updateSpeedControl();
     }
     schedule();
   }
 
+  // Banners for the big moments of a round.
+  function announce(dying, peckingBefore) {
+    const alive = game.snakes.filter(s => s.alive);
+    if (!peckingBefore && game.woodpecker) return toast(pick(FLAVOR.woodpecker));
+    if (dying.length && !game.firstBlood) {
+      game.firstBlood = true;
+      const v = dying[0];
+      const killer = game.snakes.find(o => o.name === v.killer && o !== v);
+      return toast(killer ? `First blood! ${who(killer)} got ${who(v, true)}.` : `First blood: ${who(v)} ${v.cause}.`);
+    }
+    if (dying.length && alive.length === 2) return toast(`It's down to ${who(alive[0])} and ${who(alive[1], true)}.`);
+    for (const e of game.events) {
+      if (e.type === 'spawn' && e.kind === 'golden') return toast(pick(FLAVOR.golden));
+      if (e.type === 'eat' && e.snake.isPlayer && e.kind === 'golden') return toast(pick(FLAVOR.youGolden), 1500);
+      if (e.type === 'eat' && e.snake.isPlayer && e.kind === 'mushroom') return toast(pick(FLAVOR.youMushroom), 1800);
+    }
+  }
+
+  // "you" for the human, the name for everyone else.
+  const who = (s, object = false) => s.isPlayer ? (object ? 'you' : 'You') : s.name;
+
   // Flavor for the death screen: the killer's own line, if an AI got you.
   function killLine(p) {
     const killer = game.snakes.find(s => s.persona && s.name === p.killer);
     if (killer) return killer.persona.kill;
-    if (p.cause === 'fell into a woodpecker hole') return 'The woodpecker sends its regards.';
-    if (p.killer === 'self') return 'Ouch.';
-    return '';
+    if (p.cause === 'fell into a woodpecker hole') return pick(FLAVOR.hole);
+    if (p.killer === 'self') return pick(FLAVOR.self);
+    return pick(FLAVOR.wall);
   }
 
   // Record a snake's round on the high scores once, as soon as its placement
@@ -428,7 +481,7 @@
     if (state === 'running') {
       state = 'paused';
       clearTimeout(timer);
-      showOverlay('Paused', 'Press Space or P to continue', 'Resume');
+      showOverlay('Paused', `${pick(FLAVOR.pause)} Space or P to wake up.`, 'Resume');
     } else if (state === 'paused') {
       state = 'running';
       hideOverlay();
@@ -452,7 +505,7 @@
     const survivors = game.snakes.filter(s => s.alive);
     const winner = survivors[0];
     const title = !winner ? 'Draw' : winner.isPlayer ? 'You win!' : `${winner.name} wins`;
-    const flavor = !winner ? 'Nobody made it out.' : winner.isPlayer ? 'You outlasted them all.' : winner.persona.win;
+    const flavor = !winner ? pick(FLAVOR.draw) : winner.isPlayer ? pick(FLAVOR.win) : winner.persona.win;
     if (!game.withPlayer) return showOverlay(title, '', 'Play', 'Watch again', flavor);
     recordBest();
     const { place, won } = game.result;
@@ -487,11 +540,11 @@
 
   // A short message over the board.
   let toastTimer;
-  function toast(text) {
+  function toast(text, ms = 3000) {
     toastEl.textContent = text;
     toastEl.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { toastEl.hidden = true; }, 3000);
+    toastTimer = setTimeout(() => { toastEl.hidden = true; }, ms);
   }
 
   // Speed buttons, while you're watching.
@@ -825,70 +878,110 @@
     : s.personaKey === 'joker' ? 'linear-gradient(90deg, #a21caf 50%, #22c55e 50%)'
     : s.persona?.ink || colorOf(s);
 
+  // Snakes are drawn like caterpillars: round segments joined by a thick
+  // band, a body that tapers toward the tail, and a slightly bigger head.
+  // Fades blend toward the bark color rather than using transparency, so
+  // overlapping segments don't leave dark seams.
+  const BARK = '#5a3b22';
+
+  function segmentFill(s, look, color, i, n, now) {
+    const t = i / Math.max(1, n - 1); // 0 at the head, 1 at the tail
+    if (s.personaKey === 'wildcard') return `hsl(${(now / 15 + i * 28) % 360}, 85%, 62%)`;
+    if (look === 'joker') return i === 0 ? '#f8fafc' : i % 2 ? '#22c55e' : '#a21caf';
+    if (look === 'vulture' && i === 0) return '#f9a8d4'; // bald pink head
+    if (look === 'vulture' && i === 1) return '#f5f5f4'; // white neck ruff
+    let fill = color.startsWith('#') ? color : null;
+    if (!fill) return color; // already an rgb() mix (Copycat)
+    if (look === 'hunter' && i % 3 === 2) fill = mix(fill, '#000000', 0.45);
+    const fade = look === 'ghost' ? 0.75 * t : look === 'creeper' ? 0.15 + 0.45 * t : look === 'drab' ? 0.15 : 0.3 * t;
+    return fade ? mix(fill.startsWith('#') ? fill : color, BARK, fade) : fill;
+  }
+
   function drawSnake(s) {
     const look = lookOf(s);
     const color = colorOf(s);
     const n = s.body.length;
     const now = performance.now();
+    const radius = i => i === 0 ? cell * 0.54 : cell * (0.44 - 0.1 * (i / Math.max(1, n - 1)));
+    const center = c => ({ x: c.x * cell + cell / 2, y: c.y * cell + cell / 2 });
 
-    s.body.forEach((c, i) => {
-      const x = c.x * cell, y = c.y * cell;
-      let alpha = i === 0 ? 1 : Math.max(0.55, 1 - i / (n * 1.5));
-      let fill = color;
-      if (look === 'ghost') alpha = 0.9 - 0.65 * (i / Math.max(1, n - 1));
-      if (look === 'creeper') alpha = i === 0 ? 0.95 : Math.max(0.45, 0.8 - i / (n * 1.6));
-      if (look === 'drab') alpha = i === 0 ? 1 : 0.8;
-      if (look === 'hunter' && i % 3 === 1) fill = mix(color, '#000000', 0.4);
-      if (look === 'joker') fill = i === 0 ? '#f8fafc' : i % 2 ? '#22c55e' : '#a21caf';
-      if (s.personaKey === 'wildcard') fill = `hsl(${(now / 15 + i * 28) % 360}, 85%, 62%)`;
-      if (look === 'vulture' && i === 0) fill = '#f9a8d4'; // bald pink head
-      if (look === 'vulture' && i === 1) fill = '#f5f5f4'; // white neck ruff
-      // A soft shadow lifts the snakes off the bark.
-      ctx.globalAlpha = 0.35 * alpha;
-      ctx.fillStyle = '#000000';
-      roundRect(x + 3, y + 4, cell - 4, cell - 4, 7);
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = fill;
-      roundRect(x + 2, y + 2, cell - 4, cell - 4, 7);
+    // Shadow first, the whole snake at once.
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    for (let i = n - 1; i >= 0; i--) {
+      const p = center(s.body[i]);
+      circle(p.x + 2, p.y + 4, radius(i));
+    }
 
-      if (look === 'mason') { // stone bricks
-        ctx.strokeStyle = 'rgba(30,41,59,0.55)';
-        ctx.lineWidth = 1.5;
-        const off = (c.x + c.y) % 2 ? cell * 0.3 : cell * 0.7;
+    // Tail to head, so the head ends up on top.
+    for (let i = n - 1; i >= 0; i--) {
+      const p = center(s.body[i]);
+      const r = radius(i);
+      const fill = segmentFill(s, look, color, i, n, now);
+      if (i < n - 1) { // band joining this segment to the one behind it
+        const q = center(s.body[i + 1]);
+        ctx.strokeStyle = segmentFill(s, look, color, i + 1, n, now);
+        ctx.lineWidth = radius(i + 1) * 1.6;
+        ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(x + 3, y + cell / 2); ctx.lineTo(x + cell - 3, y + cell / 2);
-        ctx.moveTo(x + off, y + 3); ctx.lineTo(x + off, y + cell / 2);
-        ctx.moveTo(x + cell - off, y + cell / 2); ctx.lineTo(x + cell - off, y + cell - 3);
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(q.x, q.y);
         ctx.stroke();
       }
-      if (look === 'colonist' && i > 0) { // white cross-belts
-        ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-        ctx.lineWidth = 2;
+      ctx.fillStyle = fill;
+      circle(p.x, p.y, r);
+      // A little highlight gives each segment some roundness.
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      circle(p.x - r * 0.3, p.y - r * 0.35, r * 0.35);
+
+      if (i === 0) continue;
+      if (look === 'mason') { // stone bricks
+        ctx.save();
         ctx.beginPath();
-        ctx.moveTo(x + 5, y + 5); ctx.lineTo(x + cell - 5, y + cell - 5);
-        ctx.moveTo(x + cell - 5, y + 5); ctx.lineTo(x + 5, y + cell - 5);
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.strokeStyle = 'rgba(30,41,59,0.6)';
+        ctx.lineWidth = 1.6;
+        const off = (s.body[i].x + s.body[i].y) % 2 ? -r * 0.35 : r * 0.35;
+        ctx.beginPath();
+        ctx.moveTo(p.x - r, p.y); ctx.lineTo(p.x + r, p.y);
+        ctx.moveTo(p.x + off, p.y - r); ctx.lineTo(p.x + off, p.y);
+        ctx.moveTo(p.x - off, p.y); ctx.lineTo(p.x - off, p.y + r);
+        ctx.stroke();
+        ctx.restore();
+      }
+      if (look === 'colonist') { // white cross-belts
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 2.2;
+        const d = r * 0.62;
+        ctx.beginPath();
+        ctx.moveTo(p.x - d, p.y - d); ctx.lineTo(p.x + d, p.y + d);
+        ctx.moveTo(p.x + d, p.y - d); ctx.lineTo(p.x - d, p.y + d);
         ctx.stroke();
       }
       if (look === 'vulture' && i > 1) { // pale edge so the black shows on the bark
-        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
         ctx.lineWidth = 1.5;
-        ctx.strokeRect(x + 3, y + 3, cell - 6, cell - 6);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r - 1, 0, Math.PI * 2);
+        ctx.stroke();
       }
-      if (s.personaKey === 'copycat') { // dashed outline: a copy of someone
-        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      if (s.personaKey === 'copycat') { // dashed ring: a copy of someone
+        ctx.strokeStyle = 'rgba(255,255,255,0.75)';
         ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 4]);
-        ctx.strokeRect(x + 4, y + 4, cell - 8, cell - 8);
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r - 2, 0, Math.PI * 2);
+        ctx.stroke();
         ctx.setLineDash([]);
       }
-    });
-    ctx.globalAlpha = 1;
+    }
 
     // Head features, drawn in a frame where +x points the way the snake faces.
     const h = s.body[0];
     ctx.save();
     ctx.translate(h.x * cell + cell / 2, h.y * cell + cell / 2);
     ctx.rotate(Math.atan2(s.dir.y, s.dir.x));
+    ctx.scale(1.1, 1.1);
     drawFace(s, look, color);
     ctx.restore();
 
@@ -1211,6 +1304,17 @@
     else if (state === 'countdown') go();
     else start();
   });
+  const Chatter = window.SnakeChatter;
+  Chatter.init({ boardEl: document.querySelector('.board'), logEl: document.getElementById('chatlog'), grid: GRID });
+  const chatterBtn = document.getElementById('chatter-toggle');
+  const showChatter = () => {
+    chatterBtn.textContent = Chatter.isEnabled() ? 'On' : 'Off';
+    chatterBtn.setAttribute('aria-pressed', String(Chatter.isEnabled()));
+    document.getElementById('chatlog').hidden = !Chatter.isEnabled();
+  };
+  chatterBtn.addEventListener('click', () => { Chatter.setEnabled(!Chatter.isEnabled()); showChatter(); });
+  showChatter();
+
   // Secondary button: keep watching after you die, or start an AI-only round.
   watchBtn.addEventListener('click', () => {
     if (state === 'running') hideOverlay();
@@ -1226,7 +1330,7 @@
     clearTimeout(timer);
     newGame({ personas });
     state = 'ready';
-    showOverlay('Snake', 'Outlast your rivals. Arrow keys / WASD to move · Swipe on touch screens', 'Play', 'Watch AIs');
+    showOverlay('Bark & Bite', FLAVOR.intro, 'Play', 'Watch AIs');
     draw();
   }
   ready();

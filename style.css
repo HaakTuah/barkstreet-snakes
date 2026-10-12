@@ -1,61 +1,115 @@
+/* A forest at dusk: dark green surroundings, a wooden frame around the bark,
+   parchment for anything you read, leaf green for anything you press. */
 :root {
-  --bg: #0f1419;
-  --panel: #1a222c;
-  --grid: #202a35;
-  --text: #e6edf3;
-  --muted: #8b98a5;
-  --accent: #4ade80;
-  --food: #f87171;
+  --bg: #15201a;
+  --bg-2: #1f2e22;
+  --cream: #f6ecd2;
+  --muted: #bfb391;
+  --parchment: #f6ecd2;
+  --parchment-2: #e8d9b0;
+  --ink: #3a2614;
+  --ink-soft: #7a6244;
+  --leaf: #6aa531;
+  --leaf-dark: #3f6d16;
+  --wood: #7a4a24;
+  --wood-dark: #3f2510;
+  --gold: #fde68a;
+  --accent: #6aa531;
 }
 
 * { box-sizing: border-box; }
 
 html, body {
   margin: 0;
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  min-height: 100%;
+  color: var(--cream);
+  font-family: 'Fredoka', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: radial-gradient(ellipse at top, var(--bg-2), var(--bg) 70%) fixed, var(--bg);
 }
 
 body {
   display: flex;
-  align-items: center;
   justify-content: center;
   padding: 16px;
-  touch-action: none;
+  touch-action: manipulation;
 }
 
 main {
   width: 100%;
+  /* Bigger board on big screens, still fitting the window height. */
+  max-width: min(760px, max(320px, calc(100vh - 250px)));
 }
 
+button {
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 28px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--leaf);
+  color: #fffbea;
+  box-shadow: 0 3px 0 var(--leaf-dark);
+  cursor: pointer;
+}
+
+button:hover { filter: brightness(1.08); }
+button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--leaf-dark); }
+button[hidden] { display: none; }
+
+button.secondary {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 2px var(--ink-soft);
+}
+
+button.small {
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  background: var(--wood);
+  color: var(--cream);
+  box-shadow: 0 2px 0 var(--wood-dark);
+}
+
+/* Header */
 header {
   display: flex;
-  align-items: baseline;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
 h1 {
   margin: 0;
-  font-size: 1.75rem;
-  color: var(--accent);
-  letter-spacing: 0.05em;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #a3e635;
+  text-shadow: 0 2px 0 var(--leaf-dark), 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+h1 .amp { color: var(--gold); }
+
+.tagline {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 .scores {
   display: flex;
-  align-items: baseline;
-  gap: 16px;
+  align-items: center;
+  gap: 14px;
   color: var(--muted);
 }
 
 .scores strong {
-  color: var(--text);
+  color: var(--cream);
   font-variant-numeric: tabular-nums;
 }
 
+/* Scoreboard: little parchment name tags */
 .scoreboard {
   list-style: none;
   margin: 0 0 12px;
@@ -74,17 +128,21 @@ h1 {
   align-items: center;
   gap: 6px;
   min-width: 0;
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: var(--panel);
-  font-size: 0.85rem;
+  padding: 5px 9px;
+  border-radius: 10px;
+  background: var(--parchment);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 2px 0 var(--parchment-2);
 }
 
-.scoreboard .dot {
+.scoreboard .dot, .opponents .dot {
   flex: none;
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
+  box-shadow: 0 0 0 1.5px rgba(58, 38, 20, 0.35);
 }
 
 .scoreboard .name {
@@ -96,16 +154,19 @@ h1 {
 }
 
 .scoreboard .len {
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-.scoreboard li.dead {
-  opacity: 0.4;
-}
+.scoreboard li.dead { opacity: 0.45; }
+.scoreboard li.dead .name { text-decoration: line-through; }
 
-.scoreboard li.dead .name {
-  text-decoration: line-through;
+/* The board in its wooden frame */
+.frame {
+  padding: 9px;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #94602f, var(--wood) 40%, #5c3519);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.15);
 }
 
 .board {
@@ -114,8 +175,8 @@ h1 {
   aspect-ratio: 1;
   border-radius: 12px;
   overflow: hidden;
-  background: var(--panel);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  background: #5a3b22;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.6);
 }
 
 canvas {
@@ -124,73 +185,86 @@ canvas {
   height: 100%;
 }
 
+/* Overlay: a parchment card on the darkened bark */
 .overlay {
   position: absolute;
   inset: 0;
+  z-index: 3;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 24px;
-  text-align: center;
-  background: rgba(15, 20, 25, 0.82);
+  padding: 14px;
+  background: rgba(20, 12, 4, 0.5);
 }
 
 .overlay.hidden { display: none; }
 
-.overlay h2 { margin: 0; font-size: 2rem; }
-.overlay p { margin: 0 0 8px; color: var(--muted); }
-
-button {
-  font: inherit;
-  font-weight: 600;
-  padding: 10px 28px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #062b14;
-  cursor: pointer;
+.card {
+  max-width: 400px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: var(--parchment);
+  color: var(--ink);
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 0 0 3px var(--parchment-2);
 }
 
-button:hover { filter: brightness(1.1); }
+.card h2 {
+  margin: 0 0 6px;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--wood);
+}
 
-button.secondary {
-  background: transparent;
-  color: var(--text);
-  box-shadow: inset 0 0 0 2px var(--muted);
+.card p { margin: 0 0 10px; color: var(--ink-soft); }
+.card p[hidden] { display: none; }
+
+.flavor {
+  font-style: italic;
+  color: var(--ink) !important;
 }
 
 .buttons {
   display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 10px;
+  margin-top: 4px;
 }
 
-button[hidden] { display: none; }
-
-.help {
-  margin: 12px 0 0;
-  text-align: center;
+/* This round's opponents, on the start screen and countdown */
+.opponents {
+  list-style: none;
+  margin: 0 auto 12px;
+  padding: 0;
+  max-width: 340px;
+  text-align: left;
   font-size: 0.85rem;
-  color: var(--muted);
 }
 
-button.small {
-  padding: 4px 12px;
-  font-size: 0.85rem;
-  background: var(--panel);
-  color: var(--text);
-  box-shadow: inset 0 0 0 1px var(--grid);
+.opponents[hidden] { display: none; }
+
+.opponents li {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin: 7px 0;
 }
 
-/* High score name entry on the overlay */
+.opponents .dot { transform: translateY(1px); }
+.opponents strong { text-shadow: 0 0 1px rgba(58, 38, 20, 0.6); }
+.opponents .blurb { color: var(--ink-soft); }
+
+/* High score name entry */
 .name-row {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   margin-bottom: 10px;
-  color: var(--accent);
+  color: var(--leaf-dark);
   font-weight: 600;
 }
 
@@ -200,21 +274,160 @@ button.small {
   width: 180px;
   padding: 8px 12px;
   border: 0;
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text);
+  border-radius: 10px;
+  background: #fffbea;
+  color: var(--ink);
   font: inherit;
-  font-weight: 400;
   text-align: center;
-  box-shadow: inset 0 0 0 2px var(--grid);
+  box-shadow: inset 0 0 0 2px var(--parchment-2);
 }
 
 .name-row input:focus {
   outline: none;
-  box-shadow: inset 0 0 0 2px var(--accent);
+  box-shadow: inset 0 0 0 2px var(--leaf);
 }
 
-/* Scores & stats dialog */
+/* Banners over the board */
+.toast {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--parchment);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.toast[hidden] { display: none; }
+
+/* Speech bubbles above snakes' heads */
+.bubble {
+  position: absolute;
+  z-index: 2;
+  width: max-content;
+  max-width: 46%;
+  padding: 4px 9px;
+  border-radius: 10px;
+  background: #fffbea;
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+  border: 2px solid var(--edge, var(--ink-soft));
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  transform: translate(-50%, calc(-100% - 8px));
+  pointer-events: none;
+  animation: pop 0.18s ease-out;
+}
+
+.bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  border: 6px solid transparent;
+  border-top-color: var(--edge, var(--ink-soft));
+  transform: translateX(-50%);
+}
+
+.bubble.below { transform: translate(-50%, 8px); }
+.bubble.below::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--edge, var(--ink-soft));
+}
+
+@keyframes pop {
+  from { opacity: 0; scale: 0.8; }
+}
+
+/* Speed buttons while watching */
+.speed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.speed[hidden] { display: none; }
+
+.speed button {
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  background: var(--wood);
+  color: var(--cream);
+  box-shadow: 0 2px 0 var(--wood-dark);
+}
+
+.speed button[aria-pressed="true"] {
+  background: var(--leaf);
+  box-shadow: 0 2px 0 var(--leaf-dark);
+}
+
+/* Chatter log */
+.chatter {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(63, 37, 16, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(246, 236, 210, 0.08);
+}
+
+.chatter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.chatter-head button[aria-pressed="false"] {
+  background: transparent;
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--muted);
+}
+
+.chatlog {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  min-height: 1.4em;
+  font-size: 0.88rem;
+}
+
+.chatlog[hidden] { display: none; }
+.chatlog:empty::before { content: 'Quiet on the bark… for now.'; color: var(--muted); font-style: italic; }
+
+.chatlog li {
+  padding: 2px 0;
+  opacity: 0.55;
+}
+
+.chatlog li:first-child { opacity: 1; }
+.chatlog li:nth-child(2) { opacity: 0.8; }
+.chatlog strong { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
+
+.help {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* Hall of Fame dialog */
 .records {
   position: fixed;
   inset: 0;
@@ -234,9 +447,10 @@ button.small {
   max-height: calc(100vh - 32px);
   overflow-y: auto;
   padding: 16px;
-  border-radius: 12px;
-  background: var(--panel);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  border-radius: 16px;
+  background: var(--parchment);
+  color: var(--ink);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 0 3px var(--parchment-2);
 }
 
 .records-head {
@@ -251,27 +465,37 @@ button.small {
   gap: 4px;
   padding: 4px;
   border-radius: 999px;
-  background: var(--bg);
+  background: var(--parchment-2);
 }
 
 .tab {
   padding: 6px 14px;
   font-size: 0.9rem;
   background: transparent;
-  color: var(--muted);
+  color: var(--ink-soft);
+  box-shadow: none;
 }
 
 .tab[aria-selected="true"] {
-  background: var(--accent);
-  color: #062b14;
+  background: var(--wood);
+  color: var(--cream);
 }
+
+.tabs-small {
+  display: inline-flex;
+  margin-bottom: 8px;
+}
+
+.tabs-small[hidden] { display: none; }
+.tabs-small .tab { padding: 4px 12px; font-size: 0.8rem; }
 
 .close {
   padding: 0 10px;
-  font-size: 1.5rem;
-  line-height: 1.4;
+  font-size: 1.6rem;
+  line-height: 1.3;
   background: transparent;
-  color: var(--muted);
+  color: var(--ink-soft);
+  box-shadow: none;
 }
 
 .records-body { min-height: 120px; }
@@ -279,7 +503,8 @@ button.small {
 .empty {
   margin: 32px 0;
   text-align: center;
-  color: var(--muted);
+  color: var(--ink-soft);
+  font-style: italic;
 }
 
 .scores-table {
@@ -293,40 +518,29 @@ button.small {
   text-align: left;
   font-weight: 500;
   font-size: 0.8rem;
-  color: var(--muted);
+  color: var(--ink-soft);
 }
 
 .scores-table td {
   padding: 7px 8px;
-  border-top: 1px solid var(--grid);
+  border-top: 1px solid var(--parchment-2);
 }
 
 .scores-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .scores-table .name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .scores-table .name .dot {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   margin-right: 8px;
   border-radius: 50%;
   vertical-align: middle;
+  box-shadow: 0 0 0 1.5px rgba(58, 38, 20, 0.35);
 }
-.scores-table tr.ai .name { color: var(--muted); }
-
-.tabs-small {
-  display: inline-flex;
-  margin-bottom: 8px;
-}
-
-.tabs-small[hidden] { display: none; }
-
-.tabs-small .tab {
-  padding: 4px 12px;
-  font-size: 0.8rem;
-}
-.scores-table .won { color: var(--accent); font-weight: 600; }
-.scores-table .muted { color: var(--muted); }
-.scores-table tr.highlight td { background: rgba(74, 222, 128, 0.12); }
+.scores-table tr.ai .name { color: var(--ink-soft); }
+.scores-table .won { color: var(--leaf-dark); font-weight: 700; }
+.scores-table .muted { color: var(--ink-soft); }
+.scores-table tr.highlight td { background: rgba(106, 165, 49, 0.18); }
 
 .tiles {
   display: grid;
@@ -341,8 +555,8 @@ button.small {
 
 .tile {
   padding: 10px;
-  border-radius: 8px;
-  background: var(--bg);
+  border-radius: 10px;
+  background: var(--parchment-2);
   text-align: center;
 }
 
@@ -354,7 +568,7 @@ button.small {
 
 .tile-label {
   font-size: 0.75rem;
-  color: var(--muted);
+  color: var(--ink-soft);
 }
 
 .nemesis { margin: 0 0 12px; }
@@ -363,14 +577,14 @@ button.small {
 
 .bars h3 {
   margin: 0 0 8px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-soft);
 }
 
 .bar-row {
   display: grid;
-  grid-template-columns: 80px 1fr 32px;
+  grid-template-columns: 90px 1fr 32px;
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
@@ -380,7 +594,7 @@ button.small {
 .bar-track {
   height: 10px;
   border-radius: 999px;
-  background: var(--bg);
+  background: var(--parchment-2);
   overflow: hidden;
 }
 
@@ -402,95 +616,7 @@ button.link {
   font-size: 0.8rem;
   font-weight: 400;
   background: transparent;
-  color: var(--muted);
+  color: var(--ink-soft);
   text-decoration: underline;
-}
-
-/* This round's opponents, on the start screen and countdown */
-.opponents {
-  list-style: none;
-  margin: 0 0 12px;
-  padding: 0;
-  max-width: 340px;
-  text-align: left;
-  font-size: 0.85rem;
-}
-
-.opponents[hidden] { display: none; }
-
-.opponents li {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin: 6px 0;
-}
-
-.opponents .dot {
-  flex: none;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  transform: translateY(-1px);
-}
-
-.opponents .blurb { color: var(--muted); }
-
-/* Bigger board on big screens, still fitting the window height. */
-main {
-  max-width: min(760px, max(320px, calc(100vh - 210px)));
-}
-
-.board {
-  background: #5a3b22;
-}
-
-.flavor {
-  margin: -2px 0 10px;
-  font-style: italic;
-  color: #fde68a;
-}
-
-.flavor[hidden], .overlay p[hidden] { display: none; }
-
-.toast {
-  position: absolute;
-  left: 50%;
-  top: 14px;
-  transform: translateX(-50%);
-  max-width: calc(100% - 32px);
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(15, 20, 25, 0.88);
-  color: #fde68a;
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-align: center;
-  pointer-events: none;
-}
-
-.toast[hidden] { display: none; }
-
-.speed {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 10px;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.speed[hidden] { display: none; }
-
-.speed button {
-  padding: 4px 12px;
-  font-size: 0.85rem;
-  background: var(--panel);
-  color: var(--text);
-  box-shadow: inset 0 0 0 1px var(--grid);
-}
-
-.speed button[aria-pressed="true"] {
-  background: var(--accent);
-  color: #062b14;
+  box-shadow: none;
 }

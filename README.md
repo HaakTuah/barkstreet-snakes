@@ -1,6 +1,6 @@
-# Snake
+# Bark & Bite
 
-Snake against three AI rivals, drawn at random each round from a cast of fourteen, on the bark of a tree. Playable in the browser. Plain HTML, CSS and JavaScript, with no build step and no dependencies.
+A snake game up a tree: you against three AI rivals, drawn at random each round from a cast of fourteen, on the bark of a tree. Playable in the browser. Plain HTML, CSS and JavaScript, with no build step and no dependencies.
 
 **Play:** https://haaktuah.github.io/snake-game/
 
@@ -21,6 +21,10 @@ Snake against three AI rivals, drawn at random each round from a cast of fourtee
 | Golden apple | +3 length. Rare, and rots after about 12 seconds. |
 | Red mushroom | Shrinks you by 3 (never below 3). Withers after about 20 seconds and regrows elsewhere. Being short isn't always bad... |
 | Meat | +1 length. What's left of a dead snake. |
+
+## Bark chatter
+
+The AI snakes talk. Each one has its own voice: Sovereign uses the royal "we", Colonist is a pompous redcoat, Mason quotes Latin, Ghost mostly says "…", and Copycat repeats whatever it just heard, in Chinese. Lines pop up in speech bubbles and in a log under the board, which you can switch off.
 
 ## Watching the AIs
 

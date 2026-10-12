@@ -99,7 +99,7 @@ window.SnakeRecords = (() => {
     const all = scores();
     const list = filter === 'me' ? topPlayer(all) : topOverall(all);
     if (!list.length) {
-      container.append(el('p', { className: 'empty', textContent: 'No scores yet. Finish a round to get on the board.' }));
+      container.append(el('p', { className: 'empty', textContent: 'No legends yet. Go make one.' }));
       return;
     }
     const fmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
@@ -128,7 +128,7 @@ window.SnakeRecords = (() => {
   function renderStats(container, colors) {
     const st = stats();
     if (!st.played) {
-      container.append(el('p', { className: 'empty', textContent: 'No rounds played yet.' }));
+      container.append(el('p', { className: 'empty', textContent: "You haven't played yet. The tree is waiting." }));
       return;
     }
     const avgPlace = st.places.reduce((sum, n, i) => sum + n * (i + 1), 0) / st.played;
@@ -156,7 +156,7 @@ window.SnakeRecords = (() => {
       );
     };
 
-    container.append(bars('Finishing place', st.places.map((count, i) => ({
+    container.append(bars('How you finished', st.places.map((count, i) => ({
       label: i === 0 ? '1st' : ordinal(i + 1), count, color: 'var(--accent)',
     }))));
 
@@ -168,8 +168,8 @@ window.SnakeRecords = (() => {
       const top = killers[0];
       const tied = killers.filter(k => k.count === top.count).length > 1;
       container.append(el('p', { className: 'nemesis' },
-        tied ? 'No single nemesis yet' : el('span', {}, 'Your nemesis: ', el('strong', { textContent: top.label, style: `color:${top.color}` }))));
-      container.append(bars('What killed you', killers));
+        tied ? 'No nemesis yet. Everyone gets you equally.' : el('span', {}, 'Your nemesis: ', el('strong', { textContent: top.label, style: `color:${top.color}` }))));
+      container.append(bars('What got you', killers));
     }
   }
 
