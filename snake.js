@@ -8,7 +8,6 @@
   const Records = window.SnakeRecords;
   const Chatter = window.SnakeChatter;
   const Audio = window.SnakeAudio;
-  const THINK_BUDGET = 3; // ms of AI thinking allowed per frame (at least one AI always thinks)
 
   // --------------------------------------------------------------- the DOM
 
@@ -120,7 +119,7 @@
           steps++;
         }
         if (steps === 4) acc = Math.min(acc, tickLen); // after a long stall, don't race to catch up
-        think(t0);
+        think(dt);
         drawAlpha = state === 'running' && now >= freezeUntil ? Math.min(1, acc / tickLen) : 1;
       }
       dirty = true;
@@ -141,12 +140,15 @@
   }
 
   // Let the AIs think about the next tick in the frames before it (same
-  // information, same decisions), so no single frame carries all of them.
-  function think(frameStart) {
-    let thought = 0;
-    while (thinkQueue.length && (thought === 0 || performance.now() - frameStart < THINK_BUDGET)) {
+  // information, same decisions), spread evenly over the frames that are left:
+  // usually one AI per frame, more only when the tick is close (fast speeds).
+  function think(dt) {
+    if (!thinkQueue.length) return;
+    const framesLeft = Math.max(1, Math.floor((tickLen - acc) / Math.max(4, dt)));
+    let quota = Math.ceil(thinkQueue.length / framesLeft);
+    while (thinkQueue.length && quota > 0) {
       const s = thinkQueue.shift();
-      if (E.canThinkAhead(game, s)) { E.thinkAhead(game, s); thought++; }
+      if (E.canThinkAhead(game, s)) { E.thinkAhead(game, s); quota--; }
     }
   }
 

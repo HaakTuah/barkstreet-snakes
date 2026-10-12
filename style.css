@@ -127,7 +127,7 @@ header {
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 8px 12px;
+  gap: 8px 10px;
   margin-bottom: 10px;
 }
 
@@ -143,8 +143,8 @@ h1 .amp { color: var(--honey); }
 
 .tagline { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); }
 
-.hud { display: flex; align-items: center; gap: 8px 10px; color: var(--muted); }
-.hud .stat strong { display: inline-block; color: var(--cream); font-variant-numeric: tabular-nums; }
+.hud { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.hud .stat strong { display: inline-block; min-width: 2ch; color: var(--cream); font-variant-numeric: tabular-nums; } /* room for two digits, so a growing score never reflows the header */
 .bump { animation: bump 0.28s ease-out; }
 @keyframes bump { 40% { transform: scale(1.35); color: var(--honey); } }
 
