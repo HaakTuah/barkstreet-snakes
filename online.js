@@ -1,0 +1,149 @@
+// Online play between friends: the messages. One browser (the host) runs the
+// game exactly as it does alone; every tick it sends the others a compact
+// picture of the board, and they send back nothing but their turns. This file
+// is the protocol only (no networking: that's net.js), so it runs in Node too.
+//
+// Host -> guest
+//   { t: 'welcome' }                        you're in the room
+//   { t: 'reject', why }                    'full' | 'version'
+//   { t: 'lobby', players: [{ name, color, host }], playing }
+//   { t: 'round', id, humans, personas, rivals, first }  a new round's line-up, plus its first tick
+//   { t: 'scores', from: [{ color, entries }] }  everyone's best rounds, for each other's Halls of Fame
+//   { t: 'phase', s: 'countdown', beat } | { t: 'phase', s: 'go' }
+//   { t: 'tick', ... }                      see tick() below
+//   { t: 'say', id, text }                  a line of chatter
+//   { t: 'closed' }                         the host closed the room
+// Guest -> host
+//   { t: 'hello', v, name, owner, scores }  v: VERSION; owner: a player id; scores: your best rounds
+//   { t: 'turn', d }                        'up' | 'down' | 'left' | 'right'
+window.SnakeOnline = (() => {
+  const VERSION = 1;
+  const MAX_PEOPLE = 4;
+  // Seat colors for people: the host is green; friends get colors no rival wears.
+  const HUMAN_COLORS = ['#4ade80', '#fde047', '#c4b5fd', '#7dd3fc'];
+  // Room codes avoid look-alikes (no 0/O, 1/I/L).
+  const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const CODE_LENGTH = 5;
+  const DIR_NAMES = ['up', 'down', 'left', 'right'];
+  const KINDS = ['food', 'golden', 'mushroom', 'pellet'];
+
+  const newCode = () => Array.from({ length: CODE_LENGTH }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
+  const cleanCode = text => String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CODE_LENGTH);
+  const isCode = text => cleanCode(text).length === CODE_LENGTH && [...cleanCode(text)].every(c => CODE_CHARS.includes(c));
+  const cleanName = text => String(text || '').replace(/\s+/g, ' ').trim().slice(0, 16);
+
+  // A new round's line-up: everything a guest needs to lay out the same board.
+  // humans: [{ name, color, peer, owner }] in seat order; peer tells each guest which seat is
+  // theirs. id names the round, so everyone's Hall of Fame records it once.
+  function round(game, humans, rivals, id) {
+    return {
+      t: 'round', v: VERSION, id, humans, rivals,
+      personas: game.snakes.filter(s => s.persona).map(s => s.personaKey),
+      first: tick(game, { holesFrom: 0, tickLen: 0 }),
+    };
+  }
+
+  // What a guest's renderer needs from a snake's memory.
+  const MEMORY = ['home', 'colonies', 'mood', 'moodChangedAt', 'modelId'];
+
+  // One tick as the host saw it. holesFrom: how many holes the guest already has
+  // (holes only ever get added, in order).
+  function tick(game, { holesFrom, tickLen }) {
+    const cells = s => {
+      const out = new Array(s.body.length);
+      for (let i = 0; i < s.body.length; i++) out[i] = s.body[i].y * 1000 + s.body[i].x;
+      return out;
+    };
+    const holes = [];
+    let i = 0;
+    for (const k of game.holes) if (i++ >= holesFrom) holes.push(k);
+    return {
+      t: 'tick', k: game.tick, ms: game.time, len: tickLen,
+      s: game.snakes.map(s => [
+        s.alive ? 1 : 0, DIR_NAMES.indexOf(dirName(s.dir)), s.eaten, s.lastAte, s.nextStarve, cells(s),
+        memoryOf(s), s.autopilot ? 1 : 0,
+      ]),
+      f: game.food.map(f => [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, f.color || 0]),
+      h: holes,
+      w: game.woodpecker ? [game.woodpecker.x, game.woodpecker.y, game.woodpecker.at] : 0,
+      e: game.events.map(encodeEvent).filter(Boolean),
+    };
+  }
+
+  function memoryOf(s) {
+    let m = 0;
+    for (const k of MEMORY) if (s.memory[k] != null) (m ||= {})[k] = s.memory[k];
+    return m;
+  }
+
+  function dirName(d) {
+    return d.y < 0 ? 'up' : d.y > 0 ? 'down' : d.x < 0 ? 'left' : 'right';
+  }
+
+  function encodeEvent(e) {
+    switch (e.type) {
+      case 'eat': return ['eat', e.snake.id, KINDS.indexOf(e.kind), e.x, e.y, e.color || 0];
+      case 'death': return ['death', e.snake.id, e.snake.cause, e.snake.killer, e.snake.killerId, e.snake.diedAt];
+      case 'starving': return ['starving', e.snake.id];
+      case 'spawn': return ['spawn', e.kind];
+      case 'woodpecker': return ['woodpecker'];
+      case 'peck': return ['peck', e.x, e.y];
+      default: return null;
+    }
+  }
+
+  // Bring a guest's game up to the host's tick. Returns the snakes that died in it.
+  // DIRS: the engine's direction objects (shared, so `s.dir === DIRS.up` holds).
+  function apply(game, msg, DIRS) {
+    game.tick = msg.k;
+    game.time = msg.ms;
+    msg.s.forEach(([alive, dir, eaten, lastAte, nextStarve, cells, memory, autopilot], id) => {
+      const s = game.snakes[id];
+      if (!s) return;
+      s.alive = !!alive;
+      s.dir = DIRS[DIR_NAMES[dir]] || s.dir;
+      s.eaten = eaten;
+      s.lastAte = lastAte;
+      s.nextStarve = nextStarve;
+      s.autopilot = !!autopilot;
+      const body = s.body;
+      body.length = cells.length;
+      for (let i = 0; i < cells.length; i++) {
+        const x = cells[i] % 1000, y = (cells[i] - x) / 1000;
+        if (body[i]) { body[i].x = x; body[i].y = y; } else body[i] = { x, y };
+      }
+      for (const k of MEMORY) {
+        if (memory && memory[k] != null) s.memory[k] = memory[k];
+        else delete s.memory[k];
+      }
+    });
+    game.food = msg.f.map(([x, y, kind, expires, color]) => {
+      const f = { x, y, kind: KINDS[kind] };
+      if (expires >= 0) f.expires = expires;
+      if (color) f.color = color;
+      return f;
+    });
+    for (const k of msg.h) game.holes.add(k);
+    game.woodpecker = msg.w ? { x: msg.w[0], y: msg.w[1], at: msg.w[2] } : null;
+
+    const dying = [];
+    game.events = msg.e.map(e => {
+      const snake = typeof e[1] === 'number' ? game.snakes[e[1]] : null;
+      switch (e[0]) {
+        case 'eat': return { type: 'eat', snake, kind: KINDS[e[2]], x: e[3], y: e[4], color: e[5] || undefined };
+        case 'death':
+          Object.assign(snake, { alive: false, cause: e[2], killer: e[3], killerId: e[4], diedAt: e[5] });
+          dying.push(snake);
+          return { type: 'death', snake };
+        case 'starving': return { type: 'starving', snake };
+        case 'spawn': return { type: 'spawn', kind: e[1] };
+        case 'woodpecker': return { type: 'woodpecker' };
+        case 'peck': return { type: 'peck', x: e[1], y: e[2] };
+        default: return null;
+      }
+    }).filter(Boolean);
+    return dying;
+  }
+
+  return { VERSION, MAX_PEOPLE, HUMAN_COLORS, DIR_NAMES, newCode, cleanCode, isCode, cleanName, round, tick, apply };
+})();
