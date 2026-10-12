@@ -292,6 +292,7 @@
     freezeUntil = 0;
     pendingCard = null;
     R.setGame(game);
+    R.setViewer(player()?.id ?? -1); // your snake gets the bright outline
     Chatter.reset(game);
     hideToast();
     buildTags();

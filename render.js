@@ -19,6 +19,7 @@ window.SnakeRender = (() => {
   const TAU = Math.PI * 2;
 
   let canvas, ctx, PERSONAS, PLAYER_COLOR;
+  let viewerId = -1; // your snake on this screen (it gets the bright outline), -1 if none
   let k = 1;                 // device pixels per logical unit
   let reduced = false;       // prefers-reduced-motion
   let game = null;
@@ -373,8 +374,10 @@ window.SnakeRender = (() => {
       a = {
         nextBlink: now + T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN), blinkUntil: 0,
         nextTongue: now + T.TONGUE_EVERY * (0.5 + Math.random()), tongueUntil: 0,
-        gx: 1, gy: 0, gulps: [-99, -99, -99, -99], gulpAt: 0,
-        gulpR: 0.12, gulpW: 1, ateAt: -1e9, // gulp size and length (Gobbler's are bigger), last bite
+        gx: 1, gy: 0, near: 99,             // where the eyes point (head's frame, eased), and how far that is
+        wx: 0, wy: 0, wanderAt: 0,          // Wildcard's eyes wander about on their own
+        gulps: [-99, -99, -99, -99], gulpAt: 0,
+        gulpR: T.GULP, gulpW: T.GULP_LENGTH, ateAt: -1e9, // gulp size and length (Gobbler's are bigger), last bite
       };
       anim.set(s, a);
     }
@@ -405,6 +408,91 @@ window.SnakeRender = (() => {
     if (id == null || !game) return null;
     for (const o of game.snakes) if (o.id === id) return o;
     return null;
+  }
+
+  // ------------------------------------------------------------ the gaze
+
+  // What a snake is looking at: a cell, or null for straight ahead. Each rival
+  // looks at what it cares about, read from its memory (purely for show: what
+  // it draws never changes how anyone plays), so you can read who's hunting whom.
+  const spot = { x: 0, y: 0 };
+  function focusOf(s, look, a, now) {
+    const m = s.memory;
+    switch (look) {
+      case 'player': case 'gobbler': return nearest(s, 'food');
+      case 'sniper': case 'sovereign': return headOf(m.victimId);
+      case 'colonist': return headOf(m.victimId) || m.site || null;
+      case 'vulture': return headOf(m.lureId);
+      case 'copycat': return headOf(m.modelId);
+      case 'creeper': return nearest(s, 'tail');
+      case 'ghost': case 'metagamer': case 'desperado': case 'joker': return nearest(s, 'head');
+      case 'wildcard': // looks wherever, changing its mind every second or two
+        if (now > a.wanderAt) {
+          a.wanderAt = now + 900 + Math.random() * 1600;
+          a.wx = Math.floor(Math.random() * GRID);
+          a.wy = Math.floor(Math.random() * GRID);
+        }
+        spot.x = a.wx; spot.y = a.wy;
+        return spot;
+      default: return null; // Drab and Mason: eyes front
+    }
+  }
+
+  function headOf(id) {
+    const o = findById(id);
+    return o && o.alive ? o.body[0] : null;
+  }
+
+  // The nearest food (not mushrooms), rival head, or long rival's tail.
+  function nearest(s, what) {
+    const h = s.body[0];
+    let best = 1e9, out = null;
+    const consider = c => {
+      const d = (c.x - h.x) * (c.x - h.x) + (c.y - h.y) * (c.y - h.y);
+      if (d > 0 && d < best) { best = d; out = c; }
+    };
+    if (what === 'food') {
+      for (const f of game.food) if (f.kind !== 'mushroom') consider(f);
+    } else {
+      for (const o of game.snakes) {
+        if (o === s || !o.alive) continue;
+        if (what === 'head') consider(o.body[0]);
+        else if (o.body.length >= 8) consider(o.body[o.body.length - 1]);
+      }
+    }
+    return out;
+  }
+
+  // Turn the eyes toward the focus (in the head's frame, eased).
+  function updateGaze(s, look, a, now) {
+    const f = game ? focusOf(s, look, a, now) : null;
+    let lx = 1, ly = 0;
+    if (f) {
+      const h = s.body[0], tx = f.x - h.x, ty = f.y - h.y;
+      const ang = -Math.atan2(s.dir.y, s.dir.x);
+      lx = tx * Math.cos(ang) - ty * Math.sin(ang);
+      ly = tx * Math.sin(ang) + ty * Math.cos(ang);
+      const len = Math.hypot(lx, ly) || 1;
+      a.near = len;
+      lx /= len; ly /= len;
+    } else a.near = 99;
+    a.gx += (lx - a.gx) * T.GLANCE_EASE;
+    a.gy += (ly - a.gy) * T.GLANCE_EASE;
+  }
+
+  // The mouth: open when food is right in front, then a couple of chews after a bite.
+  function mouthOpen(s, a) {
+    const t = (lastNow - a.ateAt) / T.CHEW_MS;
+    if (t >= 0 && t < 1) return 0.55 * Math.abs(Math.sin(t * Math.PI * 2));
+    if (!game) return 0;
+    const h = s.body[0];
+    for (const f of game.food) {
+      if (f.kind === 'mushroom' && s.personaKey !== 'ghost') continue;
+      const ahead = (f.x - h.x) * s.dir.x + (f.y - h.y) * s.dir.y;
+      const side = (f.x - h.x) * s.dir.y - (f.y - h.y) * s.dir.x;
+      if (side === 0 && ahead >= 1 && ahead <= 2) return ahead === 1 ? 1 : 0.5;
+    }
+    return 0;
   }
 
   function segmentFill(look, color, i, n, now, wild) {
@@ -444,8 +532,11 @@ window.SnakeRender = (() => {
     const isPlayer = !s.persona;
     const darkBody = color[0] === '#' && luma(color) < 0.4;
 
-    // Gulps: a bulge that travels one segment per tick after each bite.
+    // Gulps: a bulge that travels one segment per tick after each bite, and
+    // the head's squash at the bite itself.
     const tickPos = game ? game.tick - 1 + alpha : 0;
+    const bite = (lastNow - a.ateAt) / T.BITE_MS;
+    a.bump = bite >= 0 && bite < 1 ? (a.gulpR > T.GULP ? 0.2 : 0.12) * Math.sin(bite * Math.PI) : 0;
 
     // Shadow, in one path.
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
@@ -457,16 +548,26 @@ window.SnakeRender = (() => {
     }
     ctx.fill();
 
-    // Your cream outline: a slightly wider spine behind the body.
+    // People get a cream outline: a wider spine behind the body. Yours is bright,
+    // with a soft halo, so you find yourself at a glance; friends' is plainer.
     if (isPlayer) {
-      ctx.strokeStyle = '#fffbea';
+      const mine = s.id === viewerId;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.lineWidth = CELL * 0.98;
+      if (mine) {
+        ctx.strokeStyle = 'rgba(255,251,234,0.3)';
+        ctx.lineWidth = CELL * 1.34;
+        spine(n);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,251,234,0.3)';
+        circle(pts[0], pts[1], CELL * 0.78);
+      }
+      ctx.strokeStyle = mine ? '#fffef8' : 'rgba(246,236,210,0.72)';
+      ctx.lineWidth = CELL * (mine ? 1.06 : 0.94);
       spine(n);
       ctx.stroke();
-      ctx.fillStyle = '#fffbea';
-      circle(pts[0], pts[1], CELL * 0.6);
+      ctx.fillStyle = ctx.strokeStyle;
+      circle(pts[0], pts[1], CELL * (mine ? 0.65 : 0.59) * (1 + a.bump));
     }
 
     // Tail to head, so the head ends up on top.
@@ -561,12 +662,14 @@ window.SnakeRender = (() => {
       a.blinkUntil = now + T.BLINK_MS;
       a.nextBlink = now + T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN);
     }
+    updateGaze(s, look, a, now);
+    gazeX = a.gx; gazeY = a.gy;
     ctx.save();
     ctx.translate(pts[0], pts[1]);
     ctx.rotate(Math.atan2(s.dir.y, s.dir.x));
-    ctx.scale(1.1, 1.1);
+    ctx.scale(1.1 * (1 + a.bump), 1.1 * (1 + a.bump));
     if (isPlayer) drawPlayerFace(s, a, now, blinking);
-    else drawFace(s, look, color, blinking);
+    else drawFace(s, look, color, blinking, a);
     ctx.restore();
 
     // Capricious: a ring that flashes out when its mood changes.
@@ -587,7 +690,7 @@ window.SnakeRender = (() => {
 
   // Segment radius: a big head, a body that tapers to the tail, plus any gulp passing through.
   function radius(i, n, a, tickPos) {
-    let r = i === 0 ? CELL * 0.54 : CELL * (0.44 - 0.1 * (i / (n > 1 ? n - 1 : 1)));
+    let r = i === 0 ? CELL * 0.54 * (1 + a.bump) : CELL * (0.44 - 0.1 * (i / (n > 1 ? n - 1 : 1)));
     if (i > 0) {
       for (let g = 0; g < 4; g++) {
         const d = i - (tickPos - a.gulps[g]);
@@ -607,22 +710,51 @@ window.SnakeRender = (() => {
   // ---------------------------------------------------------------- faces
 
   // Shared helpers draw in the head's local frame (+x forward, one cell = CELL).
-  let blinkNow = false;
+  // gazeX/gazeY: where this snake's eyes point (a unit vector in that frame).
+  let blinkNow = false, gazeX = 1, gazeY = 0;
 
-  function eyes(r, fill) {
+  // Closed eyes: two short lids.
+  function lids(r) {
     const c = CELL;
-    if (blinkNow) { // closed: two short lids
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = c * 0.05;
-      ctx.beginPath();
-      ctx.moveTo(c * 0.15, -c * 0.2 - c * r); ctx.lineTo(c * 0.15, -c * 0.2 + c * r);
-      ctx.moveTo(c * 0.15, c * 0.2 - c * r); ctx.lineTo(c * 0.15, c * 0.2 + c * r);
-      ctx.stroke();
-      return;
-    }
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = c * 0.05;
+    ctx.beginPath();
+    ctx.moveTo(c * 0.15, -c * 0.2 - c * r); ctx.lineTo(c * 0.15, -c * 0.2 + c * r);
+    ctx.moveTo(c * 0.15, c * 0.2 - c * r); ctx.lineTo(c * 0.15, c * 0.2 + c * r);
+    ctx.stroke();
+  }
+
+  // Plain dark eyes, shifted a touch toward what the snake is looking at.
+  function eyes(r, fill) {
+    if (blinkNow) return lids(r);
+    const c = CELL, ox = gazeX * c * 0.03, oy = gazeY * c * 0.03;
     ctx.fillStyle = fill;
-    circle(c * 0.15, -c * 0.2, c * r);
-    circle(c * 0.15, c * 0.2, c * r);
+    circle(c * 0.15 + ox, -c * 0.2 + oy, c * r);
+    circle(c * 0.15 + ox, c * 0.2 + oy, c * r);
+  }
+
+  // Small white eyes whose pupils turn toward what the snake is looking at.
+  // r: the pupil's radius (the white is a size up).
+  function lookingEyes(r, x = 0.15, y = 0.2) {
+    if (blinkNow) return lids(r * 1.3);
+    const c = CELL, w = r * 1.55, reach = (w - r) * 0.85;
+    ctx.fillStyle = '#fffbea';
+    circle(c * x, -c * y, c * w);
+    circle(c * x, c * y, c * w);
+    ctx.fillStyle = INK;
+    const ox = gazeX * c * reach, oy = gazeY * c * reach;
+    circle(c * x + ox, -c * y + oy, c * r);
+    circle(c * x + ox, c * y + oy, c * r);
+  }
+
+  // A small mouth at the front of the head, open by `open` (0..1).
+  function mouth(open, x = 0.42) {
+    if (open < 0.08) return;
+    const c = CELL;
+    ctx.fillStyle = '#3b0d0d';
+    ctx.beginPath();
+    ctx.ellipse(c * x, 0, c * (0.03 + 0.04 * open), c * (0.05 + 0.1 * open), 0, 0, TAU);
+    ctx.fill();
   }
 
   function poly(pts, sign, fill) {
@@ -643,31 +775,16 @@ window.SnakeRender = (() => {
   const WHISKERS = [0.3, 0.45, 0.6];
 
   // Your face: white eyes whose pupils glance toward the nearest food, a
-  // blink now and then, and a forked tongue flick.
+  // mouth that opens for a bite, a blink now and then, and a forked tongue flick.
   function drawPlayerFace(s, a, now, blinking) {
     const c = CELL;
-    // Where's the food? Turn the gaze toward it (in the head's local frame), eased.
-    let tx = 1, ty = 0, best = 1e9;
-    const h = s.body[0];
-    if (game) {
-      for (const f of game.food) {
-        if (f.kind === 'mushroom') continue;
-        const dx = f.x - h.x, dy = f.y - h.y, d = dx * dx + dy * dy;
-        if (d < best && d > 0) { best = d; tx = dx; ty = dy; }
-      }
-    }
-    const ang = -Math.atan2(s.dir.y, s.dir.x);
-    const lx = tx * Math.cos(ang) - ty * Math.sin(ang), ly = tx * Math.sin(ang) + ty * Math.cos(ang);
-    const len = Math.hypot(lx, ly) || 1;
-    a.gx += (lx / len - a.gx) * T.GLANCE_EASE;
-    a.gy += (ly / len - a.gy) * T.GLANCE_EASE;
-
+    const open = mouthOpen(s, a);
     // Tongue: every few seconds, more often when food is within 3 cells.
     if (now > a.nextTongue) {
       a.tongueUntil = now + T.TONGUE_MS;
-      a.nextTongue = now + T.TONGUE_EVERY * (best <= 9 ? 0.4 : 0.7 + Math.random() * 0.8);
+      a.nextTongue = now + T.TONGUE_EVERY * (a.near <= 3 ? 0.4 : 0.7 + Math.random() * 0.8);
     }
-    if (now < a.tongueUntil) {
+    if (now < a.tongueUntil && open < 0.08) {
       const t = 1 - Math.abs((a.tongueUntil - now) / T.TONGUE_MS * 2 - 1); // out and back
       const reach = c * (0.42 + 0.3 * t);
       ctx.strokeStyle = '#e11d48';
@@ -679,6 +796,7 @@ window.SnakeRender = (() => {
       ctx.moveTo(reach, 0); ctx.lineTo(reach + c * 0.1, c * 0.07);
       ctx.stroke();
     }
+    mouth(open, 0.44);
 
     if (blinking) {
       ctx.strokeStyle = INK;
@@ -693,36 +811,42 @@ window.SnakeRender = (() => {
     circle(c * 0.16, -c * 0.2, c * 0.13);
     circle(c * 0.16, c * 0.2, c * 0.13);
     ctx.fillStyle = INK;
-    const ox = a.gx * c * 0.05, oy = a.gy * c * 0.05;
+    const ox = gazeX * c * 0.05, oy = gazeY * c * 0.05;
     circle(c * 0.16 + ox, -c * 0.2 + oy, c * 0.07);
     circle(c * 0.16 + ox, c * 0.2 + oy, c * 0.07);
   }
 
-  function drawFace(s, look, color, blinking) {
+  function drawFace(s, look, color, blinking, a) {
     const c = CELL;
     blinkNow = blinking;
+    const open = mouthOpen(s, a);
     switch (look) {
-      case 'sniper': { // one eye squeezed shut, the other behind a scope
+      case 'sniper': { // one eye squeezed shut, the other behind a scope that swings onto its target
         ctx.strokeStyle = INK;
         ctx.lineWidth = c * 0.06;
         ctx.beginPath();
         ctx.moveTo(c * 0.08, c * 0.11); ctx.lineTo(c * 0.2, c * 0.2); ctx.lineTo(c * 0.08, c * 0.29);
         ctx.stroke();
+        mouth(open, 0.4);
+        ctx.save();
+        ctx.translate(c * 0.1, -c * 0.2);
+        ctx.rotate(Math.max(-0.45, Math.min(0.45, Math.atan2(gazeY, gazeX)))); // aim, within reason
         ctx.fillStyle = '#1c1917'; // the scope: eyepiece, tube and a wider front bell
-        circle(c * 0.1, -c * 0.2, c * 0.14);
-        ctx.fillRect(c * 0.1, -c * 0.29, c * 0.34, c * 0.18);
-        circle(c * 0.46, -c * 0.2, c * 0.15);
+        circle(0, 0, c * 0.14);
+        ctx.fillRect(0, -c * 0.09, c * 0.34, c * 0.18);
+        circle(c * 0.36, 0, c * 0.15);
         ctx.fillStyle = '#57534e'; // a sheen along the top of the tube
-        ctx.fillRect(c * 0.1, -c * 0.29, c * 0.34, c * 0.045);
+        ctx.fillRect(0, -c * 0.09, c * 0.34, c * 0.045);
         ctx.fillStyle = '#7dd3fc'; // the lens, with a glint
-        circle(c * 0.5, -c * 0.2, c * 0.09);
+        circle(c * 0.4, 0, c * 0.09);
         ctx.fillStyle = '#ffffff';
-        circle(c * 0.53, -c * 0.24, c * 0.03);
+        circle(c * 0.43, -c * 0.04, c * 0.03);
+        ctx.restore();
         break;
       }
       case 'gobbler': { // stuffed hamster cheeks either side of the mouth, a mouth that opens near food
         // After a bite the cheeks puff up fast and go down slowly (still with reduced motion: no movement, just size).
-        const t = (lastNow - (anim.get(s)?.ateAt ?? -1e9)) / 900;
+        const t = (lastNow - a.ateAt) / 900;
         const puff = t < 0 || t >= 1 ? 0 : t < 0.12 ? t / 0.12 : 1 - (t - 0.12) / 0.88;
         const cr = c * (0.25 + 0.1 * puff), cy = c * (0.27 + 0.06 * puff);
         ctx.fillStyle = color; // the cheeks swell the head's own outline toward the front...
@@ -737,30 +861,36 @@ window.SnakeRender = (() => {
         ctx.moveTo(c * 0.41, cy + c * 0.03); // a separate shape, not joined to the first
         ctx.ellipse(c * 0.3, cy + c * 0.03, c * 0.11, c * 0.07, 0, 0, TAU);
         ctx.fill();
-        let hungry = false;
-        const h = s.body[0];
-        if (game) for (const f of game.food) if (f.kind !== 'mushroom' && Math.abs(f.x - h.x) + Math.abs(f.y - h.y) <= 3) { hungry = true; break; }
-        ctx.fillStyle = INK;
+        // A big mouth: open wide within 3 cells of food, and chomping after a bite.
+        const hungry = a.near <= 3 ? 1 : 0;
+        const gape = Math.max(open, hungry);
+        ctx.fillStyle = '#3b0d0d';
         ctx.beginPath();
-        if (hungry) ctx.arc(c * 0.38, 0, c * 0.2, -Math.PI / 2, Math.PI / 2);
-        else ctx.ellipse(c * 0.38, 0, c * 0.04, c * 0.12, 0, 0, TAU);
+        if (gape > 0.5) ctx.arc(c * 0.38, 0, c * (0.12 + 0.08 * gape), -Math.PI / 2, Math.PI / 2);
+        else ctx.ellipse(c * 0.38, 0, c * 0.04, c * (0.12 + 0.08 * gape), 0, 0, TAU);
         ctx.fill();
-        eyes(0.08, INK);
+        // Eyes that grow as food gets closer.
+        const greed = Math.max(0, 1 - a.near / 6);
+        lookingEyes(0.055 * (1 + 0.8 * greed), 0.12, 0.2);
         break;
       }
-      case 'ghost': // hollow, tall eyes
-        if (blinking) { eyes(0.12, INK); break; }
+      case 'ghost': { // hollow, tall eyes that drift toward the nearest threat
+        mouth(open * 0.6, 0.4);
+        if (blinking) { lids(0.12); break; }
+        const ox = gazeX * c * 0.04, oy = gazeY * c * 0.04;
         ctx.fillStyle = '#334155';
         ctx.beginPath();
-        ctx.ellipse(c * 0.12, -c * 0.2, c * 0.1, c * 0.14, 0, 0, TAU);
-        ctx.ellipse(c * 0.12, c * 0.2, c * 0.1, c * 0.14, 0, 0, TAU);
+        ctx.ellipse(c * 0.12 + ox, -c * 0.2 + oy, c * 0.1, c * 0.14, 0, 0, TAU);
+        ctx.ellipse(c * 0.12 + ox, c * 0.2 + oy, c * 0.1, c * 0.14, 0, 0, TAU);
         ctx.fill();
         break;
+      }
       case 'sovereign': // a golden crown, spikes pointing back
         poly(CROWN, 1, '#facc15');
         ctx.fillStyle = '#dc2626';
         circle(-c * 0.06, 0, c * 0.07);
-        eyes(0.08, INK);
+        mouth(open);
+        lookingEyes(0.055);
         break;
       case 'colonist': // redcoat's black tricorn hat with gold trim
         poly(TRICORN, 1, '#111827');
@@ -770,9 +900,12 @@ window.SnakeRender = (() => {
         ctx.moveTo(c * 0.05, 0); ctx.lineTo(-c * 0.45, -c * 0.45);
         ctx.lineTo(-c * 0.45, c * 0.45); ctx.closePath();
         ctx.stroke();
-        eyes(0.08, INK);
+        mouth(open);
+        lookingEyes(0.055);
         break;
-      case 'drab': // bored, half-closed eyes
+      case 'drab': // bored, half-closed eyes, staring straight ahead
+        mouth(open * 0.5);
+        if (blinking) { lids(0.09); break; }
         ctx.fillStyle = INK;
         ctx.beginPath();
         ctx.arc(c * 0.13, -c * 0.2, c * 0.09, Math.PI / 2, Math.PI * 1.5);
@@ -785,11 +918,17 @@ window.SnakeRender = (() => {
         ctx.moveTo(c * 0.13, c * 0.08); ctx.lineTo(c * 0.13, c * 0.32);
         ctx.stroke();
         break;
-      case 'vulture': // beady eyes and a hooked beak
-        poly(BEAK, 1, '#52525b');
-        eyes(0.05, INK);
+      case 'vulture': // beady eyes and a hooked beak that gapes at a meal
+        if (open > 0.08) { // the beak parts
+          poly(BEAK, 1, '#52525b');
+          ctx.fillStyle = '#3b0d0d';
+          ctx.beginPath();
+          ctx.ellipse(c * 0.42, 0, c * 0.1 * open, c * 0.045, 0, 0, TAU);
+          ctx.fill();
+        } else poly(BEAK, 1, '#52525b');
+        lookingEyes(0.04);
         break;
-      case 'mason': { // laurel wreath around the back of the head
+      case 'mason': { // laurel wreath around the back of the head; eyes on the job
         ctx.fillStyle = '#65a30d';
         ctx.beginPath();
         for (let ang = Math.PI * 0.55; ang <= Math.PI * 1.45; ang += Math.PI * 0.15) {
@@ -798,19 +937,24 @@ window.SnakeRender = (() => {
           ctx.ellipse(ex, ey, c * 0.11, c * 0.06, ang + Math.PI / 2, 0, TAU);
         }
         ctx.fill();
-        eyes(0.08, INK);
+        mouth(open);
+        lookingEyes(0.055);
         break;
       }
-      case 'creeper': // narrow glinting eyes
-        if (blinking) { eyes(0.12, INK); break; }
+      case 'creeper': { // narrow glinting eyes on whoever's tail it rides
+        mouth(open * 0.6, 0.4);
+        if (blinking) { lids(0.12); break; }
+        const ox = gazeX * c * 0.05, oy = gazeY * c * 0.05;
         ctx.fillStyle = '#fde047';
         ctx.beginPath();
-        ctx.ellipse(c * 0.15, -c * 0.2, c * 0.035, c * 0.12, 0, 0, TAU);
-        ctx.ellipse(c * 0.15, c * 0.2, c * 0.035, c * 0.12, 0, 0, TAU);
+        ctx.ellipse(c * 0.15 + ox, -c * 0.2 + oy, c * 0.035, c * 0.12, 0, 0, TAU);
+        ctx.ellipse(c * 0.15 + ox, c * 0.2 + oy, c * 0.035, c * 0.12, 0, 0, TAU);
         ctx.fill();
         break;
-      case 'metagamer': // round glasses, taped at the bridge
-        eyes(0.06, INK);
+      }
+      case 'metagamer': // round glasses, taped at the bridge, eyes on whoever it's studying
+        mouth(open);
+        lookingEyes(0.05);
         ctx.strokeStyle = '#1f2937';
         ctx.lineWidth = c * 0.06;
         ctx.beginPath();
@@ -822,7 +966,7 @@ window.SnakeRender = (() => {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(c * 0.09, -c * 0.07, c * 0.12, c * 0.14);
         break;
-      case 'wildcard': { // a big swept-over golden hairdo and mismatched eyes
+      case 'wildcard': { // a big swept-over golden hairdo and mismatched eyes, looking every which way
         ctx.fillStyle = '#fbbf24';
         ctx.beginPath();
         ctx.moveTo(-c * 0.45, c * 0.3);
@@ -832,12 +976,13 @@ window.SnakeRender = (() => {
         ctx.fill();
         ctx.fillStyle = 'rgba(180,83,9,0.5)';
         ctx.fillRect(-c * 0.32, -c * 0.35, c * 0.3, c * 0.05);
-        if (blinking) { eyes(0.1, INK); break; }
+        mouth(open, 0.43);
+        if (blinking) { lids(0.1); break; }
         ctx.fillStyle = '#ffffff';
         circle(c * 0.22, -c * 0.14, c * 0.12);
         ctx.fillStyle = INK;
-        circle(c * 0.25, -c * 0.14, c * 0.06);
-        circle(c * 0.2, c * 0.2, c * 0.05);
+        circle(c * 0.22 + gazeX * c * 0.05, -c * 0.14 + gazeY * c * 0.05, c * 0.06); // the big eye follows...
+        circle(c * 0.2 - gazeX * c * 0.02, c * 0.2 - gazeY * c * 0.02, c * 0.05); // ...the small one has other ideas
         break;
       }
       case 'copycat': { // cat ears, cat eyes, whiskers, and a party pin
@@ -845,17 +990,19 @@ window.SnakeRender = (() => {
         poly(EAR, 1, color);
         poly(EAR_IN, -1, '#f9a8d4');
         poly(EAR_IN, 1, '#f9a8d4');
-        if (blinking) eyes(0.1, INK);
+        mouth(open * 0.7, 0.4);
+        if (blinking) lids(0.1);
         else {
           ctx.fillStyle = '#16a34a';
           ctx.beginPath();
           ctx.ellipse(c * 0.15, -c * 0.2, c * 0.08, c * 0.1, 0, 0, TAU);
           ctx.ellipse(c * 0.15, c * 0.2, c * 0.08, c * 0.1, 0, 0, TAU);
           ctx.fill();
+          const ox = gazeX * c * 0.03, oy = gazeY * c * 0.05; // slit pupils on its model
           ctx.fillStyle = INK;
           ctx.beginPath();
-          ctx.ellipse(c * 0.15, -c * 0.2, c * 0.08, c * 0.025, 0, 0, TAU);
-          ctx.ellipse(c * 0.15, c * 0.2, c * 0.08, c * 0.025, 0, 0, TAU);
+          ctx.ellipse(c * 0.15 + ox, -c * 0.2 + oy, c * 0.025, c * 0.08, 0, 0, TAU);
+          ctx.ellipse(c * 0.15 + ox, c * 0.2 + oy, c * 0.025, c * 0.08, 0, 0, TAU);
           ctx.fill();
         }
         ctx.strokeStyle = 'rgba(15,23,42,0.75)';
@@ -893,16 +1040,11 @@ window.SnakeRender = (() => {
         ctx.fill();
         ctx.fillStyle = '#3f1d0a';
         ctx.fillRect(-c * 0.13, -c * 0.27, c * 0.05, c * 0.54); // hat band
-        if (blinking) { eyes(0.1, INK); break; }
-        ctx.fillStyle = '#ffffff';
-        circle(c * 0.2, -c * 0.2, c * 0.1);
-        circle(c * 0.2, c * 0.2, c * 0.1);
-        ctx.fillStyle = INK;
-        circle(c * 0.15, -c * 0.2, c * 0.06);
-        circle(c * 0.15, c * 0.2, c * 0.06);
+        mouth(open, 0.43);
+        lookingEyes(0.06, 0.2, 0.2);
         break;
       }
-      case 'joker': // jester hat with bells, red nose
+      case 'joker': // jester hat with bells, red nose, eyes on its mark
         poly(JESTER, -1, '#a21caf');
         poly(JESTER, 1, '#f59e0b');
         ctx.fillStyle = '#facc15';
@@ -910,10 +1052,11 @@ window.SnakeRender = (() => {
         circle(-c * 0.55, c * 0.62, c * 0.08);
         ctx.fillStyle = '#ef4444';
         circle(c * 0.36, 0, c * 0.1);
-        eyes(0.07, INK);
+        lookingEyes(0.05);
         break;
       default:
-        eyes(0.09, INK);
+        mouth(open);
+        lookingEyes(0.06);
     }
     blinkNow = false;
   }
@@ -1048,15 +1191,15 @@ window.SnakeRender = (() => {
           a.gulps[a.gulpAt] = game.tick - 1; a.gulpAt = (a.gulpAt + 1) % 4;
           // Gobbler (and Capricious in a Gobbler mood) wolfs it down: a big gulp, cheeks puffed.
           const big = lookOf(e.snake) === 'gobbler';
-          a.gulpR = big ? 0.24 : 0.12;
-          a.gulpW = big ? 1.6 : 1;
-          if (big) a.ateAt = now;
+          a.gulpR = big ? T.GOBBLE : T.GULP;
+          a.gulpW = big ? T.GOBBLE_LENGTH : T.GULP_LENGTH;
         }
+        a.ateAt = now; // every bite: the head squashes and the mouth chews
         if (e.kind === 'golden') spawn(x, y, T.PARTICLES_EAT + 6, 220, T.PARTICLE_LIFE, 3.2, '#fde68a', '#fbbf24');
         else if (e.kind === 'pellet') spawn(x, y, T.PARTICLES_EAT - 4, 150, T.PARTICLE_LIFE * 0.8, 2.6, e.color && e.color[0] === '#' ? e.color : '#c2410c', '#f6ecd2');
         else if (e.kind === 'mushroom') spawn(x, y, T.PARTICLES_EAT - 2, 160, T.PARTICLE_LIFE, 2.6, '#dc2626', '#fffbea');
         else spawn(x, y, T.PARTICLES_EAT, 180, T.PARTICLE_LIFE, 2.8, '#a3e635', '#fde68a'); // sprout and honey: visible on bark and on green snakes alike
-        if (!e.snake.persona && e.kind !== 'mushroom') floater(x, y - CELL * 0.6, e.kind === 'golden' ? '+3' : '+1');
+        if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(x, y - CELL * 0.6, e.kind === 'golden' ? '+3' : '+1');
       } else if (e.type === 'death') {
         const s = e.snake;
         const col = colorOf(s);
@@ -1124,6 +1267,7 @@ window.SnakeRender = (() => {
 
   return {
     init, setGame, resize, frame, onTick, shake, headPx, colorOf, lookOf,
+    setViewer(id) { viewerId = id; },
     setReducedMotion(v) { reduced = v; },
     get particles() { return pLive; },
   };

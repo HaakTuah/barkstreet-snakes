@@ -43,8 +43,8 @@ window.SnakeOnline = (() => {
     };
   }
 
-  // What a guest's renderer needs from a snake's memory.
-  const MEMORY = ['home', 'colonies', 'mood', 'moodChangedAt', 'modelId'];
+  // What a guest's renderer needs from a snake's memory (including who it's looking at).
+  const MEMORY = ['home', 'colonies', 'mood', 'moodChangedAt', 'modelId', 'victimId', 'lureId', 'site'];
 
   // One tick as the host saw it. holesFrom: how many holes the guest already has
   // (holes only ever get added, in order).
