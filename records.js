@@ -51,7 +51,7 @@ window.SnakeRecords = (() => {
 
   function cleanEntry(e) {
     return {
-      id: cleanId(e.id ?? e.date) || cleanId(e.date), name: (e.ai && Object.hasOwn(RENAMED, e.name) && RENAMED[e.name]) || cleanName(e.name) || DEFAULT_NAME,
+      id: cleanId(e.id ?? e.date) || cleanId(e.date), name: (e.ai && typeof e.name === 'string' && RENAMED[e.name]) || cleanName(e.name) || DEFAULT_NAME,
       color: cleanColor(e.color), ai: !!e.ai,
       place: Math.round(clamp(e.place, 1, 4)), won: !!e.won, draw: !!e.draw,
       eaten: Math.round(clamp(e.eaten, 0, 9999)), survived: Math.round(clamp(e.survived, 0, 36e5)), date: e.date,
@@ -82,7 +82,7 @@ window.SnakeRecords = (() => {
     const places = Array.isArray(s.places) && s.places.length === 4 ? s.places.map(count) : [0, 0, 0, 0];
     const killers = Object.create(null); // (so a rival named "constructor" is just a name)
     if (s.killers && typeof s.killers === 'object' && !Array.isArray(s.killers)) for (const [k, v] of Object.entries(s.killers)) {
-      const name = Object.hasOwn(RENAMED, k) ? RENAMED[k] : cleanName(k);
+      const name = RENAMED[k] || cleanName(k); // (RENAMED has no prototype, so "constructor" isn't in it)
       if (name) killers[name] = (killers[name] || 0) + count(v);
     }
     return { played: count(s.played), wins: count(s.wins), draws: count(s.draws), places, killers, totalEaten: count(s.totalEaten) };

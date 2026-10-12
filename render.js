@@ -1553,7 +1553,11 @@ window.SnakeRender = (() => {
       drawOutline(c.s, a);
       drawBody(c.s, a, now, true);
       ctx.globalAlpha = 1;
-      if (hit) blitCrisp(starSprite(), (a.pts[0] + c.s.dir.x * CELL * 0.55) | 0, (a.pts[1] + c.s.dir.y * CELL * 0.55) | 0);
+      if (hit) { // at the point of contact, kept on the board
+        const sx = Math.min(SIZE - CELL * 0.3, Math.max(CELL * 0.3, a.pts[0] + c.s.dir.x * CELL * 0.55));
+        const sy = Math.min(SIZE - CELL * 0.3, Math.max(CELL * 0.3, a.pts[1] + c.s.dir.y * CELL * 0.55));
+        blitCrisp(starSprite(), sx, sy);
+      }
     }
     ctx.globalAlpha = 1;
   }

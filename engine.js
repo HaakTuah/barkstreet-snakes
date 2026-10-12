@@ -53,7 +53,7 @@ window.SnakeEngine = (() => {
   function createGame({ humans = null, withPlayer = true, personas = null } = {}) {
     const people = (humans || (withPlayer ? [{ name: 'You', color: PLAYER_COLOR }] : [])).slice(0, SPAWNS.length);
     const wanted = T.OPPONENTS + 1 - people.length;
-    const keys = (personas || pickOpponents(wanted)).filter(k => Object.hasOwn(PERSONAS, k)).slice(0, wanted);
+    const keys = (personas || pickOpponents(wanted)).filter(k => Object.prototype.hasOwnProperty.call(PERSONAS, k)).slice(0, wanted);
     const snakes = [];
     // (The killer of a snake that hit a wall, itself or hunger is that word, so no one may be called it.)
     const taken = new Set([...keys.map(k => PERSONAS[k].name), 'wall', 'self', 'hunger']);

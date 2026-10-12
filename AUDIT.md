@@ -187,3 +187,94 @@ The first pass measured script time only. This time the reviewers also traced Ch
 - **Accessibility:** focus rings everywhere at about 13:1, a proper modal Hall of Fame, one polite status region, `zh-Hans` on Chinese lines, reduced motion covered in CSS and canvas.
 - **Robustness:** every storage access wrapped; the game plays with storage blocked, full or corrupt and with Web Audio missing; nothing from storage or the network reaches the DOM as HTML; the loop survives exceptions; all three tools pass.
 - **Copy:** the voice holds; many lines are genuinely funny ("The tree goes on. You don't.", "Veni, vidi, Mason.", the whole Biggus Dickus chain).
+
+---
+
+## After
+
+### Performance, before and after
+
+Both builds measured in the same session on the same machine (headless Chrome, 800×800 at 2× density, watching AI rounds), alternating runs so machine noise hits both. `tools/bench.js` reproduces the script-time numbers; the GPU and main-thread figures come from Chrome traces.
+
+| Measurement | Before | After |
+|---|---|---|
+| **GPU raster, long-snake scene** (4 × 70 segments) | 6.53-6.56 ms a frame | **2.07-2.16 ms** (−67%) |
+| GPU process busy, watching at 1× | 653 ms a second | **299** (−54%) |
+| GPU process busy, watching at 4× | 786 ms a second | **331** (−58%) |
+| Main thread per frame, all work, 1× (median / p99) | 1.02 / 2.33 ms | **0.76 / 2.08** |
+| Main thread per frame, all work, 4× (median / p99) | 1.28 / 2.77 ms | **1.15 / 2.31** |
+| Style recalculation, 1× | 35.6 ms a second | **17.9** |
+| Frames the browser could draw, unthrottled, 1× / 4× | 196-205 / 160-179 a second | **238 / 237** |
+| Script per frame, 1× (p95 / p99 / worst) | 0.7-0.8 / 1.1 / 4.1-5.2 ms | 0.9 / 1.6-1.8 / 6.9-8.0 |
+| Script per frame, 4× (p95 / p99 / worst) | 1.2-2.0 / 2.2-3.6 / 10.6-24.2 ms | 1.3 / 3.2-3.6 / **7.3-8.4** |
+| Frames over 16.7 ms in a minute at 4× | 0-1 | **0** |
+| One AI decision, on identical positions (median) | 0.283 ms | 0.278 ms |
+
+Script time per frame is a little higher at 1× (more, cheaper draw calls: every band and circle is its own fill), and the GPU does under half the work for it; the worst frames at 4× are about half as long. Each AI decision costs the same; rounds now have more snakes alive for longer (Gobbler's retune, sensible last moves), so there's simply more game to think about. Against DESIGN.md's budget: script p95 ≤ 2 ms is met at both speeds; GPU raster for the long-snake scene ≤ 3.5 ms is met; the worst-frame target (≤ 6.9 ms) is *almost* met: the slowest frame in a minute at normal speed was 6.9-8.0 ms (usually an AI decision sharing a frame with a draw), and at 4× it stays well inside one 60 Hz frame.
+
+### What happened to the plan
+
+Everything marked **fix** above was fixed, except where noted here.
+
+- **Adapted:**
+  - **B8** (someone claiming your player id): a friend's result that claims to be yours is never recorded, so no one can pass for you. Refusing the same id twice was tried and dropped: it stopped two tabs on one machine from playing together, which is how most people try "Play with friends" first.
+  - **P10:** the bark is built once at startup; resizes still rebuild it at once, so the board is never blurry mid-resize.
+  - **V20:** radii and bubble colours are back on the scale; pupils stay near-black.
+  - **T25 / A18** (blurbs on phones): tapping a rival's tag above the board shows its line.
+  - **V21:** the code field fits a code, and an empty status line takes no room; the name tags stay invisible in the lobby rather than collapsing, so the board doesn't jump.
+  - **T29:** the start card's title is "Ready, Green?" (your name, once you've carved it).
+- **Skipped, as planned:** L13 (no jitter buffer), L17 (Colemak command letters), P9 (one clock for the music), B17 (storage keys), B18 (splitting snake.js). Reasons are in the tables above and in DESIGN.md.
+- **Audio:** no reviewer found a problem; the one leftover, a no-op `setReducedMotion`, was removed.
+
+### Verification
+
+- **Play tests** in headless Chrome, with real key and touch events:
+  - two turns inside one tick apply on consecutive ticks, and a reversal is ignored;
+  - a turn pressed just before a nap applies on waking;
+  - a hidden tab naps, and so does a blur during the countdown;
+  - after a resize the canvas matches the device pixels;
+  - a swipe over the countdown card skips it, steers, and the page stays put;
+  - a nearly full board never throws;
+  - with storage blocked the game plays and the Hall of Fame opens;
+  - three minutes at 4× ran ten rounds without an error.
+- **Online:**
+  - two and three tabs on a stand-in network: friends' turns, a hidden friend, the host's death, late joiners and late chatter;
+  - `tools/online-test.js` checks every tick and every message's size, plus a malformed tick.
+- **Rules:** `tools/rules-test.js` and 600 seeded simulated rounds.
+- **Layout:** 11 screen sizes from 320×460 to 1920×1080. At each the board is fully visible, Play is visible and reachable on the start and death cards, and nothing scrolls sideways.
+- **Accessibility:** contrast measured on every text element, High Contrast in both themes, keyboard order and focus rings.
+
+### Critique rounds
+
+- **Round one:**
+  - **From a fresh critic,** C1-C14:
+    - **The worst:** napping during the countdown brought the countdown card back over a running round, and friends' phones silently dropped long chatter lines.
+    - **Others:**
+      - hairline seams across bodies at 125%/150% scaling;
+      - a death moment that read as asleep;
+      - repetitive chatter;
+      - banners over the cards;
+      - the phone hint;
+      - the side layout's header;
+      - stats that disagreed about draws;
+      - copy;
+      - bigger boards for big screens.
+  - **From my own pass over the screenshots:**
+    - meat that looked spoiled;
+    - an unclear self-bite line;
+    - the clipped code field;
+    - a square mushroom stem;
+    - a small countdown number;
+    - the speed control unusable during a watched round's countdown, which my own benchmark had also tripped over.
+  - All fixed in "Critique round one".
+- **Round two** (a second fresh critic, D1-D9): nine findings, three of them introduced by round one's own fixes, all fixed in "Critique round two":
+  - **Stray keys became your name.** A keyboard player still steering (WASD) or pressing R typed into the auto-focused "Carve your name" field, and that became their name for good; this was also on `main`. The field is now offered only once no key is held, and it ignores keys for a moment after.
+  - **`Object.hasOwn` was newer than the old-browser check.** It slipped past that check, so Play was dead again in Chrome 85-92.
+  - **The page was scroll-locked while you were only watching.**
+  - **The name prompt hid under the pinned buttons on small phones.** On the smallest boards the buttons now share a row and the badge gives way.
+  - **Smaller items:**
+    - the impact spark landed off the board on wall hits;
+    - a watching speed carried into a played round (also on `main`);
+    - a tapped rival's line covered "Play with friends" (it now shows inside the card);
+    - Capricious's tag dot borrowed its mood's colour (it keeps its pink ring);
+    - the room code field turned a pasted invite link into "https" (a pasted link now works, and placeholders look like examples).

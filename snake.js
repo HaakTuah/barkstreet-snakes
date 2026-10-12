@@ -95,7 +95,7 @@
   // ---------------------------------------------------------- game state
 
   // state: 'ready' (start card) | 'lobby' (play with friends) | 'countdown' | 'running' | 'paused' | 'over'
-  let game, state = 'ready', speed = 1;
+  let game, state = 'ready', speed = 1, watchSpeed = 1;
   // Online play, or null when playing alone:
   // { role: 'host' | 'guest', room, code, seat (yours in this round, -1 if watching),
   //   players: [{ id, name, color }] (host: everyone in the room, seat order),
@@ -108,6 +108,20 @@
   let freezeUntil = 0, pendingCard = null, cardAt = 0; // times on the frame clock (rAF timestamps)
   let shownCard = null, napOver = null; // the card on screen, and the one a nap covered
   let firstCard = true; // (focus on page load goes to the card, not silently to Play)
+  let nameInvite = false, nameFocusAt = 0; // the name field is waiting to be offered; when it took focus
+  const keysHeld = new Set();
+  function inviteName() {
+    nameInvite = false;
+    if (nameRow.hidden || overlay.classList.contains('hidden')) return;
+    nameFocusAt = performance.now();
+    nameInput.focus({ preventScroll: true });
+  }
+  document.addEventListener('keydown', e => keysHeld.add(e.code || e.key), true);
+  document.addEventListener('keyup', e => {
+    keysHeld.delete(e.code || e.key);
+    if (nameInvite && !keysHeld.size) setTimeout(() => { if (nameInvite && !keysHeld.size) inviteName(); }, 250);
+  }, true);
+  window.addEventListener('blur', () => keysHeld.clear());
   let thinkQueue = [];
   let best = Records.getBest();
   let boardPx = 0; // the board's CSS width, kept by a ResizeObserver (no layout reads in the loop)
@@ -352,6 +366,7 @@
       return;
     }
     if (state !== 'ready' || aiOnly !== !game.withPlayer) newGame({ aiOnly });
+    speed = aiOnly ? watchSpeed : 1; // (after you die you can still speed up, from 1x)
     state = 'countdown';
     beatsLeft = 3;
     beatTimer = 0;
@@ -539,7 +554,7 @@
   let toastTimer, toastChars = 0, toastUnder = '';
   function toastFade() {
     let top = false, bottom = false;
-    if (!toastEl.hidden && boardPx && game && !toastEl.classList.contains('over')) {
+    if (!toastEl.hidden && boardPx && game) {
       const cell = boardPx / GRID;
       const rows = Math.ceil(52 / cell), half = Math.min(boardPx - 32, toastChars * 7.6 + 32) / 2 / cell;
       for (const s of game.snakes) {
@@ -556,10 +571,8 @@
       toastUnder = place;
     }
   }
-  // over: shown over a card (a rival's blurb on the start card), at the board's foot.
-  function toast(text, ms = 2800, over = false) {
+  function toast(text, ms = 2800) {
     toastChars = text.length;
-    toastEl.classList.toggle('over', over);
     toastEl.textContent = text;
     toastEl.hidden = false;
     say(text);
@@ -592,7 +605,7 @@
     flavorEl.textContent = card.flavor || '';
     flavorEl.hidden = !card.flavor;
     opponentsEl.hidden = !card.opponents;
-    hintEl.hidden = state !== 'ready';
+    restoreHint(); // (a rival's line may have been showing in its place)
     helpEl.hidden = state === 'ready'; // the start card already shows the controls
     startBtn.hidden = !card.primary;
     if (card.primary) startBtn.textContent = card.primary;
@@ -636,8 +649,13 @@
     if (document.activeElement !== nameInput) {
       const invite = !nameRow.hidden && !touchFirst && !Records.hasName();
       const cardEl = overlay.querySelector('.card');
-      (firstCard ? cardEl : invite ? nameInput : card.primary ? startBtn : card.secondary ? watchBtn : cardEl).focus({ preventScroll: true });
+      (firstCard ? cardEl : card.primary ? startBtn : card.secondary ? watchBtn : cardEl).focus({ preventScroll: true });
       firstCard = false;
+      // The name field is offered once your hands are off the keys (someone
+      // still steering would otherwise type "dd" into it), and ignores keys
+      // for a moment after it takes focus.
+      nameInvite = invite;
+      if (invite && !keysHeld.size) inviteName();
     }
     updateControls();
   }
@@ -699,6 +717,7 @@
       li.querySelector('.name').textContent = isMe(s) ? 'You' : s.name;
       li.title = s.persona ? `${s.name}: ${s.persona.blurb}` : isMe(s) ? 'You' : `${s.name}, a friend`;
       if (s.persona) li.dataset.blurb = `${s.name}: ${s.persona.blurb}`; // tapped (phones have no tooltips), it says how it plays
+      if (s.personaKey === 'capricious') li.querySelector('.dot').dataset.ring = ''; // its pink ring, as on the board
       const mark = R.markOf(s.color);
       if (s.isPlayer && mark) li.querySelector('.dot').dataset.mark = mark;
       tagsEl.append(li);
@@ -706,10 +725,24 @@
     }
   }
 
+  let blurbTimer = 0;
   tagsEl.addEventListener('click', e => {
     const blurb = e.target.closest?.('li')?.dataset.blurb;
-    if (blurb && state !== 'running') toast(blurb, 3200, !overlay.classList.contains('hidden'));
+    if (!blurb || state === 'running') return;
+    if (overlay.classList.contains('hidden')) return toast(blurb, 3200);
+    clearTimeout(blurbTimer);
+    hintEl.textContent = blurb;
+    hintEl.hidden = false;
+    hintEl.classList.add('said');
+    say(blurb);
+    blurbTimer = setTimeout(restoreHint, 3200);
   });
+  function restoreHint() {
+    clearTimeout(blurbTimer);
+    hintEl.classList.remove('said');
+    setHint(hintEl, touchFirst ? FLAVOR.hintTouch : FLAVOR.hintStart);
+    hintEl.hidden = state !== 'ready';
+  }
 
   function updateHud(force = false) {
     const score = player()?.eaten ?? 0;
@@ -759,11 +792,12 @@
     musicBtn.setAttribute('aria-pressed', String(!Audio.isMusicOn()));
     musicBtn.disabled = Audio.isMuted();
     // During a round the page holds still under your fingers (see the swipes).
-    document.documentElement.classList.toggle('playing', state === 'running' || state === 'countdown');
+    document.documentElement.classList.toggle('playing', (state === 'running' || state === 'countdown') && playerAlive());
   }
 
   function setSpeed(n) {
     speed = n;
+    if (!game.withPlayer) watchSpeed = n;
     tickLen = E.tickMs(game) / (spectating() ? speed : 1);
     updateControls();
   }
@@ -824,6 +858,8 @@
     Audio.unlock();
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.target === nameInput) {
+      // (just offered, or a key held down: not typing yet)
+      if (e.repeat || performance.now() - nameFocusAt < 400) { e.preventDefault(); return; }
       if (e.key === 'Enter') { e.preventDefault(); nameInput.blur(); startBtn.focus({ preventScroll: true }); }
       return;
     }
@@ -856,7 +892,7 @@
   // always steer; during a round they steer anywhere on the screen (over the
   // countdown card too), and the page never scrolls. Buttons stay buttons.
   let swipe = null;
-  const swiping = () => state === 'running' || state === 'countdown';
+  const swiping = () => (state === 'running' || state === 'countdown') && playerAlive();
   document.addEventListener('touchstart', e => {
     Audio.unlock();
     if (e.target.closest?.('button, input, a, [role="switch"], #records')) return;
@@ -1266,8 +1302,10 @@
 
   // ------------- joining
 
+  // (A pasted invite link works too: its ?join= code is used.)
+  const codeIn = text => Online.cleanCode(/join=([a-z0-9]{5})/i.exec(String(text))?.[1] ?? text);
   async function joinRoom(text) {
-    const code = Online.cleanCode(text);
+    const code = codeIn(text);
     if (!Online.isCode(code)) {
       if (state !== 'lobby') openFriends(); // (a bad ?join= link: show where the problem is)
       return setStatus('Room codes are five characters, like K7QXM.', true);
@@ -1403,6 +1441,9 @@
   });
   lobbyCopy.textContent = navigator.share && touchFirst ? 'Share link' : 'Copy link';
   lobbyLink.addEventListener('focus', () => lobbyLink.select());
+  lobbyCode.addEventListener('input', () => {
+    if (/join=/i.test(lobbyCode.value)) lobbyCode.value = codeIn(lobbyCode.value);
+  });
   lobbyJoin.addEventListener('submit', e => {
     e.preventDefault();
     Audio.unlock();

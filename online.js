@@ -98,7 +98,7 @@ window.SnakeOnline = (() => {
 
   // The renderer reads these every frame, so a malformed one could break every frame.
   function saneMemory(k, v) {
-    if (k === 'mood') return typeof v === 'string' && Object.hasOwn(window.SnakeAI.PERSONAS, v);
+    if (k === 'mood') return typeof v === 'string' && Object.prototype.hasOwnProperty.call(window.SnakeAI.PERSONAS, v);
     if (k === 'colonies') return Array.isArray(v) && v.length <= 64 && v.every(c => c && Number.isFinite(c.x) && Number.isFinite(c.y));
     if (k === 'home' || k === 'site') return typeof v === 'object' && Number.isFinite(v.x) && Number.isFinite(v.y);
     return Number.isFinite(v);

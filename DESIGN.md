@@ -94,7 +94,7 @@ One treatment, used everywhere:
 | Death flavor | Cause-specific lines, or the killer's own line, rewritten to be cause-neutral |
 | New best | **"New best: 14!"** with a short fanfare and a gold burst. Hall of Fame: "Hall of Fame #2. Carve your name:" |
 | Round over | "You win!" / "{Name} wins" with the winner's punchline, without repeating the title. A win says "Won in 2:10 · score 14"; a draw says "You shared 1st" |
-| Control hints | Every item is a key and a verb. Start card: "Arrows or WASD steer · Space naps · Enter plays · H opens the Hall of Fame"; under the board, "Enter starts over" instead, plus "M mutes · N toggles the music"; touch: "Swipe to steer · Tap ⏸ to nap" |
+| Control hints | Every item is a key and a verb. Start card: "Arrows or WASD steer · Space naps · Enter starts · H opens the Hall of Fame"; under the board, "Enter starts over" instead, plus "M mutes · N toggles the music"; touch: "Swipe to steer · Tap ⏸ to nap" |
 | Screen readers | A card is announced as sentences ("Bonk! You hit the wall, 4th place, score 2. The tree goes on. You don't. New best: 14!"), never "dot" |
 
 **Rules for every string:**
@@ -116,7 +116,7 @@ One treatment, used everywhere:
 | Honest speed | Spectator 4× runs at 4.0× (±2%); ticks don't drift by their own cost |
 | Input never lost | Two turns pressed within one tick both apply, on consecutive ticks; no input combo ever reverses into the neck |
 | Eating feels good | Pop, particles, sound and score bump appear in the same frame as the bite tick; the gulp travels the body |
-| Death lands softly | A 350 ms freeze-frame **of the moment of impact**: every snake stays exactly where it was drawn, and yours holds its pose, eyes crossed out, its head pressed into whatever it hit, with a spark at the point of contact. Then it bursts into meat with a puff (plus a 4 px shake, only for your death and only without reduced motion; with reduced motion it fades instead), and the card rises in over about 250 ms. Online the round never stops for anyone: your snake still holds its pose for the moment, and only your card waits |
+| Death lands softly | A 350 ms freeze-frame **of the moment of impact**: every snake stays exactly where it was drawn, and yours holds its pose, eyes crossed out, its head pressed into whatever it hit, with a spark at the point of contact and a 4 px shake of the board at the impact (only for your death, and only without reduced motion). Then it bursts into meat with a puff (with reduced motion it fades instead), and the card rises in over about 250 ms. Online the round never stops for anyone: your snake still holds its pose for the moment, and only your card waits |
 | The round's last frame | The final move glides like any other, then the board rests |
 | Restart is instant | Enter/R/Play: a short 3-beat countdown (3 × 350 ms) that **any direction key or swipe skips** (and steers). An arrow on the start card starts the round already turning |
 | Gentle difficulty | Tick 120 ms → 90 ms over 2 minutes; the first 3 ticks of a round are eased (170 → 120 ms) so the opening is forgiving |

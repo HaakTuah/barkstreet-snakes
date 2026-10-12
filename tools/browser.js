@@ -30,7 +30,8 @@ function serve() {
     let u = decodeURIComponent(req.url.split('?')[0]);
     if (u === '/') u = '/index.html';
     const file = path.join(ROOT, path.normalize(u));
-    if (!file.startsWith(ROOT)) { res.writeHead(403); return res.end(); }
+    const rel = path.relative(ROOT, file);
+    if (rel.startsWith('..') || path.isAbsolute(rel)) { res.writeHead(403); return res.end(); }
     fs.readFile(file, (err, data) => {
       if (err) { res.writeHead(404); return res.end(); }
       res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
