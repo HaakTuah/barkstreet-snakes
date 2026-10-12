@@ -22,6 +22,7 @@ A snake game up a tree: you against three AI rivals on the bark of a tree, drawn
 | Golden apple | +3 length. Rare, sparkles, and fades before it rots after about 12 seconds. |
 | Red mushroom | Shrinks you by 3 (never below 3). Withers after about 20 seconds and regrows elsewhere. Being short isn't always bad... |
 | Meat | +1 length. What's left of a dead snake. |
+| Beetle | +2 length. Now and then one crawls out (from 15 s in, not once the woodpecker comes). It wanders slowly, and scurries away (at half a snake's speed) when a head gets within 4 cells, so catching one is a short chase. Uncaught, it flies off after about 30 s. |
 
 ## Play with friends
 

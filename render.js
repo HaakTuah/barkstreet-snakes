@@ -273,6 +273,61 @@ window.SnakeRender = (() => {
     g.beginPath(); g.moveTo(c * 0.24, -c * 0.44); g.lineTo(c * 0.62, -c * 0.36); g.lineTo(c * 0.24, -c * 0.32); g.fill();
   });
 
+  // ------------------------------------------------------------ beetles
+
+  // A jewel beetle, drawn live (it turns and walks): an emerald shell with a
+  // gold rim, six legs that scuttle while it moves, and feelers. It glides to
+  // its new cell during the tick it moved, then pauses: a beetle's walk.
+  function drawBeetle(f, alpha, now) {
+    const moved = game && f.movedAt === game.tick - 1 && f.px != null;
+    const t = moved ? alpha : 1;
+    const gx = moved ? f.px + (f.x - f.px) * t : f.x, gy = moved ? f.py + (f.y - f.py) * t : f.y;
+    const x = gx * CELL + CELL / 2, y = gy * CELL + CELL / 2;
+    const c = CELL;
+    const walking = moved && !reduced;
+    const step = walking ? Math.sin(now / (f.scared ? 28 : 45)) : 0;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; // shadow
+    ctx.beginPath();
+    ctx.ellipse(x + 2, y + 3, c * 0.38, c * 0.3, 0, 0, TAU);
+    ctx.fill();
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.atan2(f.dir.y, f.dir.x));
+    ctx.scale(1.35, 1.35); // about an apple's size, so it's easy to spot
+    // Legs: three a side, alternate pairs swinging.
+    ctx.strokeStyle = '#1c1917';
+    ctx.lineWidth = c * 0.05;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let k = -1; k <= 1; k++) {
+      const sw = (k === 0 ? -step : step) * c * 0.06;
+      const bx = k * c * 0.12;
+      ctx.moveTo(bx, -c * 0.12); ctx.lineTo(bx + c * 0.06 * k + sw, -c * 0.32);
+      ctx.moveTo(bx, c * 0.12); ctx.lineTo(bx + c * 0.06 * k - sw, c * 0.32);
+    }
+    // Feelers.
+    ctx.moveTo(c * 0.26, -c * 0.04); ctx.quadraticCurveTo(c * 0.38, -c * 0.06, c * 0.42, -c * 0.18);
+    ctx.moveTo(c * 0.26, c * 0.04); ctx.quadraticCurveTo(c * 0.38, c * 0.06, c * 0.42, c * 0.18);
+    ctx.stroke();
+    // Head, then the shell with its gold rim, the split down the middle and a shine.
+    ctx.fillStyle = '#14532d';
+    circle(c * 0.22, 0, c * 0.08);
+    ctx.fillStyle = '#059669';
+    ctx.beginPath();
+    ctx.ellipse(-c * 0.02, 0, c * 0.22, c * 0.17, 0, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = c * 0.03;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(6,47,35,0.8)';
+    ctx.beginPath();
+    ctx.moveTo(c * 0.18, 0); ctx.lineTo(-c * 0.23, 0);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(209,250,229,0.55)';
+    circle(c * 0.04, -c * 0.08, c * 0.045);
+    ctx.restore();
+  }
+
   // --------------------------------------------------------- particles
 
   // A fixed pool: positions, velocities and life in typed arrays, colors as
@@ -1137,7 +1192,8 @@ window.SnakeRender = (() => {
     for (const f of game.food) {
       const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
       const phase = (f.x * 7 + f.y * 13) % 10; // each item bobs on its own beat
-      if (f.kind === 'food') blit(appleSprite(), x, y + bob * Math.sin(now / 420 + phase) * 1.6);
+      if (f.kind === 'beetle') drawBeetle(f, alpha, now);
+      else if (f.kind === 'food') blit(appleSprite(), x, y + bob * Math.sin(now / 420 + phase) * 1.6);
       else if (f.kind === 'pellet') blit(meatSprite(f.color), x, y);
       else if (f.kind === 'mushroom') {
         ctx.save();
@@ -1196,10 +1252,11 @@ window.SnakeRender = (() => {
         }
         a.ateAt = now; // every bite: the head squashes and the mouth chews
         if (e.kind === 'golden') spawn(x, y, T.PARTICLES_EAT + 6, 220, T.PARTICLE_LIFE, 3.2, '#fde68a', '#fbbf24');
+        else if (e.kind === 'beetle') spawn(x, y, T.PARTICLES_EAT + 4, 200, T.PARTICLE_LIFE, 3, '#059669', '#fbbf24'); // emerald and gold, a crunchy catch
         else if (e.kind === 'pellet') spawn(x, y, T.PARTICLES_EAT - 4, 150, T.PARTICLE_LIFE * 0.8, 2.6, e.color && e.color[0] === '#' ? e.color : '#c2410c', '#f6ecd2');
         else if (e.kind === 'mushroom') spawn(x, y, T.PARTICLES_EAT - 2, 160, T.PARTICLE_LIFE, 2.6, '#dc2626', '#fffbea');
         else spawn(x, y, T.PARTICLES_EAT, 180, T.PARTICLE_LIFE, 2.8, '#a3e635', '#fde68a'); // sprout and honey: visible on bark and on green snakes alike
-        if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(x, y - CELL * 0.6, e.kind === 'golden' ? '+3' : '+1');
+        if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(x, y - CELL * 0.6, e.kind === 'golden' ? '+3' : e.kind === 'beetle' ? '+2' : '+1');
       } else if (e.type === 'death') {
         const s = e.snake;
         const col = colorOf(s);
@@ -1209,6 +1266,8 @@ window.SnakeRender = (() => {
         }
       } else if (e.type === 'peck') {
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 5, 120, 380, 2, '#a16207', '#f6ecd2');
+      } else if (e.type === 'flown') { // a beetle nobody caught takes off
+        spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 8, 260, T.PARTICLE_LIFE * 1.2, 2.2, '#d1fae5', '#059669');
       }
     }
   }

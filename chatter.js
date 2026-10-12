@@ -11,6 +11,7 @@ window.SnakeChatter = (() => {
       idle: ['I see you, {who}.', 'In my sights, {who}.', 'Steady…', 'Nowhere to hide.', 'Big fan of your stream, {who}.'],
       kill: ['Headshot.', 'Next.', 'Too slow, {who}.', 'One shot.'],
       golden: ['Gold makes you slow.'],
+      caught: ['Moving target. Still a headshot.'],
       dies: ['Counter-sniped by {who}?', 'Should have relocated.', 'Impossible.'],
     },
     gobbler: {
@@ -20,6 +21,8 @@ window.SnakeChatter = (() => {
       eat: ['Nom nom nom.', 'Delicious!', 'More!', 'Crunchy!'],
       golden: ['GOLDEN APPLE. MINE.', 'Shiny AND tasty!'],
       spawn: ['A GOLDEN APPLE! Out of my way!'],
+      beetle: ['A BEETLE! Crunchy legs, come to Gobbler!', 'Bug! Bug bug bug!'],
+      caught: ['Crunchy! Legs and all.'],
       mushroom: ['Ugh, mushrooms. Gross.', 'I feel… smaller. I hate it.'],
       kill: ['Sorry {who}, you were between me and lunch.', 'Oops. Is that meat?'],
       dies: ['Tell my apples… I loved them.'],
@@ -74,6 +77,7 @@ window.SnakeChatter = (() => {
       kill: ['Veni, vidi, vici.', 'Murum non vidisti, {who}?', 'Requiescat in barko, {who}.'],
       hungry: ['Panem! Panem et… panem!'],
       woodpecker: ['Picus horribilis!'],
+      caught: ['Scarabaeus captus!'],
       dies: ['Et tu, {who}?', 'Alea iacta… estus.', 'Murus… meus… finis.'],
     },
     wildcard: {
@@ -126,6 +130,8 @@ window.SnakeChatter = (() => {
       kill: ['Draw, {who}. Too slow.', 'This bark ain\'t big enough for the both of us.'],
       mushroom: ['Never tried one of those. Down the hatch!'],
       woodpecker: ['Now we\'re talking! Holes!'],
+      beetle: ['Yeehaw, a critter hunt!'],
+      caught: ['Lassoed it.'],
       dies: ['What a ride…', 'Worth it.'],
     },
     joker: {
@@ -140,6 +146,13 @@ window.SnakeChatter = (() => {
 
   // Chinese for every line above: Copycat repeats what it hears, in Chinese.
   const ZH = {
+    "Moving target. Still a headshot.": "移动靶。照样爆头。",
+    "A BEETLE! Crunchy legs, come to Gobbler!": "甲虫！脆脆的腿，快到Gobbler这儿来！",
+    "Bug! Bug bug bug!": "虫子！虫子虫子虫子！",
+    "Crunchy! Legs and all.": "脆的！连腿一起。",
+    "Scarabaeus captus!": "甲虫，抓到了！",
+    "Yeehaw, a critter hunt!": "咿哈，抓小虫子喽！",
+    "Lassoed it.": "套住它了。",
     "Alea iacta est!": "骰子已经掷下！",
     "Aedificamus!": "我们来建造！",
     "Vidi, vici, veni.": "我见，我征服，我来。",
@@ -509,12 +522,15 @@ window.SnakeChatter = (() => {
         for (const v of alive) if (v.personaKey === 'vulture' && Math.random() < 0.6) say(v, 'death', victim);
       } else if (e.type === 'eat' && e.snake.persona) {
         if (e.kind === 'golden') say(e.snake, 'golden', null, true);
+        else if (e.kind === 'beetle') say(e.snake, 'caught', null, true);
         else if (e.kind === 'mushroom') say(e.snake, 'mushroom');
         else if (Math.random() < 0.15) say(e.snake, 'eat');
       } else if (e.type === 'starving' && e.snake.persona) {
         say(e.snake, 'hungry', null, true);
       } else if (e.type === 'spawn') {
-        for (const s of alive) if (s.personaKey === 'gobbler') say(s, 'spawn', null, true);
+        for (const s of alive) {
+          if (s.personaKey === 'gobbler' || (e.kind === 'beetle' && s.personaKey === 'desperado')) say(s, e.kind === 'beetle' ? 'beetle' : 'spawn', null, true);
+        }
       } else if (e.type === 'woodpecker') {
         const s = pick(alive);
         if (s) { lastSaid[s.id] = -Infinity; say(s, VOICES[s.personaKey].woodpecker ? 'woodpecker' : 'idle', anyone(s), true); }

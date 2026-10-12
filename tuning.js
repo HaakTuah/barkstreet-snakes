@@ -13,6 +13,13 @@ window.TUNING = Object.freeze({
   GOLDEN_CHANCE: 0.004,     // chance per tick of a golden apple, while there is none
   GOLDEN_TICKS: 120,        // a golden apple rots after this many ticks
   GOLDEN_GROWTH: 3,         // a golden apple is worth this much
+  BEETLE_FIRST_MS: 15000,   // beetles start coming out after this long...
+  BEETLE_CHANCE: 0.006,     // ...with this chance per tick, while there is none (and no woodpecker)
+  BEETLE_TICKS: 260,        // a beetle nobody catches flies off after this many ticks
+  BEETLE_EVERY: 3,          // it crawls one cell every this many ticks...
+  BEETLE_SCARED_EVERY: 2,   // ...or every 2, scurrying away (half a snake's speed: a chase you can win)...
+  BEETLE_FEAR: 4,           // ...from any head within this many cells
+  BEETLE_GROWTH: 2,         // a beetle is worth this much
   SHRINK: 3,                // a mushroom takes this many segments off...
   MIN_LENGTH: 3,            // ...but never below this
 

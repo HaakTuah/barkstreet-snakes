@@ -56,6 +56,8 @@
     golden: ['A golden apple! Everyone pretends not to have seen it.', 'Something shiny just grew on the bark.'],
     woodpecker: ['The woodpecker is here. Holes are closing in from the edges.', 'Knock knock. The woodpecker has arrived.'],
     youGolden: ['Golden! +3.', 'Shiny and delicious. +3.'],
+    beetle: ['A beetle is out for a walk. Catch it if you can!', 'Something crunchy is crawling about.'],
+    youBeetle: ['Crunchy! +2.', 'Caught it! +2.'],
     youMushroom: ['You feel smaller. And somehow wiser.', 'A little less of you. Sneaky.'],
     youHungry: ['Your tummy is rumbling. Eat something!', 'Getting peckish… find food soon!'],
     newBest: n => `New best: ${n}!`,
@@ -450,9 +452,10 @@
   function sounds(dying, wasAlive) {
     for (const e of game.events) {
       if (e.type === 'eat' && isMe(e.snake)) {
-        Audio.play(e.kind === 'golden' ? 'golden' : e.kind === 'pellet' ? 'meat' : e.kind === 'mushroom' ? 'mushroom' : 'eat');
+        Audio.play(e.kind === 'golden' ? 'golden' : e.kind === 'pellet' ? 'meat' : e.kind === 'mushroom' ? 'mushroom' : e.kind === 'beetle' ? 'crunch' : 'eat');
         bump(scoreEl);
       } else if (e.type === 'woodpecker') Audio.play('woodpecker');
+      else if (e.type === 'spawn' && e.kind === 'beetle') Audio.play('beetle');
       else if (e.type === 'peck') Audio.play('peck');
       else if (e.type === 'starving' && isMe(e.snake)) Audio.play('hungry');
     }
@@ -482,6 +485,8 @@
     }
     for (const e of game.events) {
       if (e.type === 'spawn' && e.kind === 'golden') return toast(pick(FLAVOR.golden));
+      if (e.type === 'spawn' && e.kind === 'beetle') return toast(pick(FLAVOR.beetle), 2200);
+      if (e.type === 'eat' && isMe(e.snake) && e.kind === 'beetle') return toast(pick(FLAVOR.youBeetle), 1500);
       if (e.type === 'eat' && isMe(e.snake) && e.kind === 'golden') return toast(pick(FLAVOR.youGolden), 1500);
       if (e.type === 'eat' && isMe(e.snake) && e.kind === 'mushroom') return toast(pick(FLAVOR.youMushroom), 1800);
     }

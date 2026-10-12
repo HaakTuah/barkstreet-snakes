@@ -15,7 +15,7 @@ window.SnakeAudio = (() => {
   const PRIORITY = { death: true, best: true, win: true }; // ...except these, which always play
   // Shortest gap in ms between two plays of the same cue, so bursts don't stack up.
   const MIN_INTERVAL = {
-    eat: 40, golden: 60, meat: 60, mushroom: 80,
+    eat: 40, golden: 60, meat: 60, mushroom: 80, crunch: 80, beetle: 3000,
     rivalDeath: 120, death: 250, best: 400, win: 600,
     beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, ui: 30, // peck: never more than 3 in any second
   };
@@ -246,6 +246,19 @@ window.SnakeAudio = (() => {
       tone(t, 'triangle', 196, 0.16, 0.42, 0.006, 130, 900);
       tone(t, 'sine', 98, 0.14, 0.22, 0.006, 70);
       noise(t, 0.05, 0.1, 'lowpass', 900, 0.7);
+    },
+
+    // A beetle caught: a dry double crunch, a shell giving way, then a happy pluck.
+    crunch(t) {
+      noise(t, 0.035, 0.32, 'bandpass', 2600, 1.4);
+      noise(t + 0.055, 0.04, 0.26, 'bandpass', 1900, 1.4);
+      knock(t + 0.01, 1350, 0.12);
+      mallet(t + 0.1, mtof(81), 0.14, 0.16);
+    },
+
+    // A beetle comes out: a tiny skittering of feet across the bark.
+    beetle(t) {
+      for (let i = 0; i < 5; i++) noise(t + i * 0.035, 0.012, 0.07 - i * 0.008, 'highpass', 5200, 0.8);
     },
 
     // Mushroom (shrink): a soft "boing" that wobbles downward like a spring settling.
