@@ -536,18 +536,21 @@ window.SnakeAI = (() => {
     });
 
     // How much food matters right now, given how long I already am. A
-    // mushroom lover past its length limit wants mushrooms instead.
+    // mushroom lover past its length limit wants mushrooms instead. Hunger
+    // trumps all of that: with under 10 s before I start starving, everyone
+    // goes looking for food, harder the closer it gets.
     const myLen = me.body.length + me.grow;
-    const shrinking = w.mushroomLover != null && myLen >= w.mushroomLover;
-    const fed = myLen >= (w.hungryBelow ?? Infinity);
-    const foodW = shrinking ? Math.max(3, w.food) : fed ? w.food * w.fedFactor : w.food;
-    const eatW = shrinking ? Math.max(40, w.eat) : fed ? w.eat * w.fedFactor : w.eat;
+    const hunger = me.hungerLeft == null ? 0 : Math.min(1, Math.max(0, (10000 - me.hungerLeft) / 10000));
+    const shrinking = !hunger && w.mushroomLover != null && myLen >= w.mushroomLover;
+    const fed = !hunger && myLen >= (w.hungryBelow ?? Infinity);
+    const foodW = shrinking ? Math.max(3, w.food) : fed ? w.food * w.fedFactor : Math.max(w.food, 8 * hunger) * (1 + 2 * hunger);
+    const eatW = shrinking ? Math.max(40, w.eat) : fed ? w.eat * w.fedFactor : Math.max(w.eat, 150 * hunger) * (1 + 2 * hunger);
 
     // Food worth by kind. Negative means "avoid eating".
     const apple = w.normalFood ?? 1;
     const worth = {
-      food: shrinking ? 0 : apple,
-      golden: shrinking ? 0 : 3 * apple,
+      food: shrinking ? 0 : Math.max(apple, hunger),
+      golden: shrinking ? 0 : 3 * Math.max(apple, hunger),
       pellet: shrinking ? 0 : (w.pellet ?? 1),
       mushroom: shrinking ? 2 : (w.mushroom ?? -1),
     };

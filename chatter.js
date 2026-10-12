@@ -6,6 +6,7 @@ window.SnakeChatter = (() => {
   // is "you". Lines are picked at random.
   const VOICES = {
     hunter: {
+      hungry: ["Hungry. Someone will do."],
       start: ['Let the hunt begin.', 'I can smell fear.', 'Run. It helps.'],
       idle: ['I see you, {who}.', 'Nowhere to hide.', 'Closer…', 'Tick tock, {who}.'],
       kill: ['Next.', 'Too slow, {who}.', 'That one was easy.'],
@@ -13,6 +14,7 @@ window.SnakeChatter = (() => {
       dies: ['Hunted… by the hunted?', 'Impossible.'],
     },
     gobbler: {
+      hungry: ["So… hungry… can't… go on…","FOOD. NOW."],
       start: ['Is it lunchtime? It feels like lunchtime.', 'I could eat.'],
       idle: ['Nom.', 'Anyone gonna finish that apple?', 'I smell apples.', 'Snack time!', 'Is that… food?'],
       eat: ['Nom nom nom.', 'Delicious!', 'More!', 'Crunchy!'],
@@ -23,6 +25,7 @@ window.SnakeChatter = (() => {
       dies: ['Tell my apples… I loved them.'],
     },
     ghost: {
+      hungry: ["…hungry…"],
       start: ['…'],
       idle: ['…', '……', '(silence)', 'boo.'],
       mushroom: ['smaller… better…'],
@@ -30,6 +33,7 @@ window.SnakeChatter = (() => {
       dies: ['…'],
     },
     sovereign: {
+      hungry: ["We require a banquet. Immediately."],
       start: ['Kneel.', 'We are pleased to receive you. Do not touch anything.'],
       idle: ['Our lands are vast.', 'We are not amused.', 'This bark is royal bark.'],
       intruder: ['Trespasser! Guards! …We are the guards.', '{who}, you stand on royal bark!', 'Off our land, {who}!'],
@@ -37,6 +41,7 @@ window.SnakeChatter = (() => {
       dies: ['The king is dead…', 'Long live… someone else.'],
     },
     colonist: {
+      hungry: ["I say, is there nothing to eat out here?"],
       start: ['Splendid day for an expedition!', 'Tally ho!'],
       idle: ['I say!', 'Jolly good.', 'Anyone for tea?', 'Rule, Britannia!'],
       flag: ['I claim this bark for the Crown!', 'Another colony! Splendid.', 'Mine now. Terribly sorry.'],
@@ -45,6 +50,7 @@ window.SnakeChatter = (() => {
       dies: ['Stiff upper lip…'],
     },
     drab: {
+      hungry: ["I should eat something."],
       start: ['Hello.', 'Hi. I\'m Drab.'],
       idle: ['Nice weather.', 'Apples are fine.', 'I like beige.', 'This is a tree.', 'Hm.'],
       eat: ['Apple.'],
@@ -53,6 +59,7 @@ window.SnakeChatter = (() => {
       dies: ['Well. That happened.'],
     },
     vulture: {
+      hungry: ["Someone die already. I'm starving."],
       start: ['Ahh, fresh snakes.'],
       idle: ['Not long now…', 'You look tired, {who}.', 'I\'ll wait.', 'Patience…'],
       death: ['Dinner!', 'Ooh, leftovers.', 'Rest in pieces, {who}.'],
@@ -60,6 +67,7 @@ window.SnakeChatter = (() => {
       dies: ['Who\'s… eating… whom…'],
     },
     mason: {
+      hungry: ["Panem et circenses. Mostly panem."],
       start: ['Alea iacta est.', 'Let us build.'],
       idle: ['Divide et impera.', 'Veni, vidi, aedificavi.', 'A wall a day…', 'Building a wall. Wildcard isn\'t paying.',
         'Veni, vidi… veni again.', 'Carpe diem. Carpe apple.', 'In vino veritas. In bark… splinters.', 'Alea iacta est. Oops, that was my lunch.'],
@@ -67,6 +75,7 @@ window.SnakeChatter = (() => {
       dies: ['Et tu, {who}?'],
     },
     wildcard: {
+      hungry: ["Very hungry. The hungriest. Nobody has ever been this hungry."],
       start: ['Hello, everybody. Tremendous crowd today.', 'I\'m going to win. Bigly.'],
       idle: ['Nobody slithers better than me, believe me.', 'I have the best scales. Everybody says so.',
         'Many snakes are saying it.', 'Sad!', 'Fake apples!', '{who}? Total loser. Sad!'],
@@ -77,18 +86,21 @@ window.SnakeChatter = (() => {
       dies: ['Rigged! Totally rigged!'],
     },
     creeper: {
+      hungry: ["so… hungry…"],
       start: ['psst.'],
       idle: ['behind you.', 'don\'t turn around, {who}.', 'hehehe.', 'nice tail, {who}.'],
       kill: ['hehe. gotcha.'],
       dies: ['…aww.'],
     },
     metagamer: {
+      hungry: ["Caloric deficit detected."],
       start: ['Analysing opponents…', 'I\'ve watched the replays.'],
       idle: ['{who}: {label}. Noted.', 'Predictable.', 'Your eat rate is suboptimal, {who}.', 'Running the numbers…'],
       kill: ['As calculated.', 'Exactly as the model predicted.'],
       dies: ['That… wasn\'t in the data.'],
     },
     capricious: {
+      hungry: ["Now I'm hungry! Out of nowhere!"],
       start: ['Ooh, what shall I be today?'],
       mood: {
         hunter: ['I\'m a hunter now! Grr!'],
@@ -106,6 +118,7 @@ window.SnakeChatter = (() => {
       dies: ['同志们，再见……'],
     },
     desperado: {
+      hungry: ["Running on empty. Love it."],
       start: ['Yeehaw!', 'Saddle up, partner.'],
       idle: ['Living on the edge, partner.', 'Too close? Never heard of it.', 'Is that a wall? Let\'s go see.', 'Feel that? That\'s being alive.'],
       kill: ['Draw, {who}. Too slow.', 'This bark ain\'t big enough for the both of us.'],
@@ -114,6 +127,7 @@ window.SnakeChatter = (() => {
       dies: ['What a ride…', 'Worth it.'],
     },
     joker: {
+      hungry: ["Why did the snake cross the bark? It was starving."],
       start: ['Knock knock!', 'Who wants to play a game?'],
       idle: ['Catch me if you can!', 'Why so slithery, {who}?', 'Follow me, it\'s a shortcut!', 'Honk honk!'],
       kill: ['Gotcha! Ha!', 'The joke\'s on you, {who}!'],
@@ -124,6 +138,21 @@ window.SnakeChatter = (() => {
 
   // Chinese for every line above: Copycat repeats what it hears, in Chinese.
   const ZH = {
+    "Hungry. Someone will do.": "饿了。随便谁都行。",
+    "So… hungry… can't… go on…": "好……饿……撑……不住了……",
+    "FOOD. NOW.": "食物。马上。",
+    "…hungry…": "……饿……",
+    "We require a banquet. Immediately.": "朕要设宴。立刻。",
+    "I say, is there nothing to eat out here?": "我说，这里就没有吃的吗？",
+    "I should eat something.": "我该吃点东西了。",
+    "Someone die already. I'm starving.": "快死一个吧。我饿坏了。",
+    "Panem et circenses. Mostly panem.": "面包和马戏。主要是面包。",
+    "Very hungry. The hungriest. Nobody has ever been this hungry.": "非常饿。最饿的。从来没有人这么饿过。",
+    "so… hungry…": "好……饿……",
+    "Caloric deficit detected.": "检测到热量不足。",
+    "Now I'm hungry! Out of nowhere!": "我现在饿了！突然就饿了！",
+    "Running on empty. Love it.": "油箱空了。我喜欢。",
+    "Why did the snake cross the bark? It was starving.": "蛇为什么要爬过树皮？因为它饿坏了。",
     "Veni, vidi… veni again.": "我来，我见……我又来了。",
     "Carpe diem. Carpe apple.": "及时行乐。及时吃苹果。",
     "In vino veritas. In bark… splinters.": "酒后吐真言。树皮里……全是刺。",
@@ -418,6 +447,8 @@ window.SnakeChatter = (() => {
         if (e.kind === 'golden') say(e.snake, 'golden', null, true);
         else if (e.kind === 'mushroom') say(e.snake, 'mushroom');
         else if (Math.random() < 0.15) say(e.snake, 'eat');
+      } else if (e.type === 'starving' && e.snake.persona) {
+        say(e.snake, 'hungry', null, true);
       } else if (e.type === 'spawn') {
         for (const s of alive) if (s.personaKey === 'gobbler') say(s, 'spawn', null, true);
       } else if (e.type === 'woodpecker') {

@@ -11,6 +11,7 @@ A snake game up a tree: you against three AI rivals, drawn at random each round 
 - When a snake dies, its body turns into meat that anyone can eat.
 - The last snake alive wins. If you die first, you can watch the rest of the round or restart.
 - The game speeds up slowly over the course of a round.
+- **Hunger:** go 20 seconds without eating (mushrooms don't count) and you start shrinking, one segment every 1.5 seconds. Starve at length 3 and you're out. The bar under each name shows how hungry everyone is.
 - **Sudden death:** after three minutes no new food appears, and a woodpecker starts pecking holes in the bark, ring by ring from the edges inwards.
 
 ### Food

@@ -8,6 +8,8 @@
   const GOLDEN_GROWTH = 3;
   const SHRINK = 3;          // a mushroom takes this many segments off
   const MIN_LENGTH = 3;
+  const HUNGER_MS = 20000;   // after this long without food (mushrooms don't count) you start shrinking
+  const STARVE_EVERY_MS = 1500; // ...by one segment this often, and starve at the minimum length
   const START_TICK = 120; // ms per tick at the start of a round
   const MIN_TICK = 90;
   const RAMP_MS = 120000; // reach MIN_TICK after this much game time
@@ -33,7 +35,7 @@
     const d = spawn.dir;
     const body = [0, 1, 2].map(k => ({ x: spawn.x - d.x * k, y: spawn.y - d.y * k }));
     return {
-      id, body, dir: d, alive: true, grow: 0, eaten: 0, pellets: 0, mushrooms: 0,
+      id, body, dir: d, alive: true, grow: 0, eaten: 0, pellets: 0, mushrooms: 0, lastAte: 0, nextStarve: HUNGER_MS,
       queue: [], cause: null, diedAt: null, memory: {}, ...props,
     };
   }
@@ -156,7 +158,7 @@
     const snap = game.history[idx];
     return {
       grid: GRID,
-      me: { id: snake.id, body: snake.body, dir: snake.dir, grow: snake.grow },
+      me: { id: snake.id, body: snake.body, dir: snake.dir, grow: snake.grow, hungerLeft: hungerLeft(game, snake) },
       others: snap.snakes.filter(o => o.id !== snake.id),
       food: snap.food,
       holes: game.holes,
@@ -166,12 +168,26 @@
     };
   }
 
+  // Milliseconds until a snake starts starving (negative once it has).
+  const hungerLeft = (game, s) => s.lastAte + HUNGER_MS - game.time;
+
   // Advance one tick. All snakes move at the same time. Returns the snakes that died.
   // game.events lists what happened this tick, for the chatter and banners:
   // { type: 'eat', snake, kind } | { type: 'death', snake } | { type: 'spawn', kind } | { type: 'woodpecker' }
   function step(game) {
     game.events = [];
-    const alive = game.snakes.filter(s => s.alive);
+
+    const dying = [];
+    for (const s of game.snakes) {
+      if (!s.alive || game.time < s.nextStarve) continue;
+      s.nextStarve = game.time + STARVE_EVERY_MS;
+      if (s.grow > 0) s.grow--;
+      else if (s.body.length > MIN_LENGTH) s.body.pop();
+      else { s.cause = 'starved'; s.killer = 'hunger'; dying.push(s); continue; }
+      if (hungerLeft(game, s) > -STARVE_EVERY_MS) game.events.push({ type: 'starving', snake: s });
+    }
+
+    const alive = game.snakes.filter(s => s.alive && !dying.includes(s));
 
     for (const s of alive) {
       if (s.isPlayer) {
@@ -195,8 +211,7 @@
       heads.set(k, [...(heads.get(k) || []), s]);
     }
 
-    // killer: 'wall' (walls and holes), 'self', or the name of the snake that was hit.
-    const dying = [];
+    // killer: 'wall' (walls and holes), 'self', 'hunger', or the name of the snake that was hit.
     for (const s of alive) {
       const { x, y } = s.next;
       const k = key(x, y);
@@ -254,6 +269,8 @@
         s.mushrooms++;
       } else {
         const growth = f.kind === 'golden' ? GOLDEN_GROWTH : 1;
+        s.lastAte = game.time;
+        s.nextStarve = game.time + HUNGER_MS;
         s.grow += growth;
         s.eaten += growth;
         if (f.kind === 'pellet') s.pellets++;
@@ -334,6 +351,8 @@
     woodpecker: ['The woodpecker is here! Holes are closing in from the edges.'],
     youGolden: ['Golden! +3.', 'Shiny and delicious. +3.'],
     youMushroom: ['You feel smaller. And somehow wiser.', 'Shrunk by 3. Sneaky.'],
+    youHungry: ['Your tummy is rumbling. Eat something!', 'Getting peckish… find food soon!'],
+    starved: ['Should have eaten something.', 'Hunger always wins in the end.'],
   };
 
   // The human's snake, or null in an AI-only round.
@@ -420,7 +439,7 @@
     }
     if (wasAlive && !playerAlive()) {
       const p = player();
-      showOverlay(pick(FLAVOR.deathTitle), `You ${p.cause} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
+      showOverlay(p.killer === 'hunger' ? 'Starved!' : pick(FLAVOR.deathTitle), `You ${p.cause} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
         'Play again', 'Watch', killLine(p));
       updateSpeedControl();
     }
@@ -438,6 +457,12 @@
       return toast(killer ? `First blood! ${who(killer)} got ${who(v, true)}.` : `First blood: ${who(v)} ${v.cause}.`);
     }
     if (dying.length && alive.length === 2) return toast(`It's down to ${who(alive[0])} and ${who(alive[1], true)}.`);
+    const me = player();
+    if (me?.alive) {
+      const left = hungerLeft(game, me);
+      if (left < 6000 && !game.warnedHunger) { game.warnedHunger = true; return toast(pick(FLAVOR.youHungry)); }
+      if (left > 6000) game.warnedHunger = false;
+    }
     for (const e of game.events) {
       if (e.type === 'spawn' && e.kind === 'golden') return toast(pick(FLAVOR.golden));
       if (e.type === 'eat' && e.snake.isPlayer && e.kind === 'golden') return toast(pick(FLAVOR.youGolden), 1500);
@@ -454,6 +479,7 @@
     if (killer) return killer.persona.kill;
     if (p.cause === 'fell into a woodpecker hole') return pick(FLAVOR.hole);
     if (p.killer === 'self') return pick(FLAVOR.self);
+    if (p.killer === 'hunger') return pick(FLAVOR.starved);
     return pick(FLAVOR.wall);
   }
 
@@ -565,7 +591,7 @@
     boardEl.innerHTML = '';
     for (const s of game.snakes) {
       const li = document.createElement('li');
-      li.innerHTML = '<span class="dot"></span><span class="name"></span><span class="len"></span>';
+      li.innerHTML = '<span class="dot"></span><span class="name"></span><span class="len"></span><span class="hunger"><i></i></span>';
       li.querySelector('.dot').style.background = dotColor(s);
       li.querySelector('.name').textContent = s.name;
       li.title = s.persona ? `${s.name}: ${s.persona.blurb}` : 'You';
@@ -580,6 +606,11 @@
       s.row.querySelector('.dot').style.background = dotColor(s);
       s.row.classList.toggle('dead', !s.alive);
       s.row.querySelector('.len').textContent = s.alive ? s.body.length : 'out';
+      // Hunger bar: full right after eating, empty when starving.
+      const full = s.alive ? Math.max(0, Math.min(1, hungerLeft(game, s) / HUNGER_MS)) : 0;
+      const bar = s.row.querySelector('.hunger i');
+      bar.style.width = `${full * 100}%`;
+      s.row.classList.toggle('starving', s.alive && full < 0.3);
     }
   }
 

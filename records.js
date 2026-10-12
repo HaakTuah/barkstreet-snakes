@@ -160,7 +160,7 @@ window.SnakeRecords = (() => {
       label: i === 0 ? '1st' : ordinal(i + 1), count, color: 'var(--accent)',
     }))));
 
-    const killerLabel = k => k === 'wall' ? 'Walls & holes' : k === 'self' ? 'Yourself' : k;
+    const killerLabel = k => k === 'wall' ? 'Walls & holes' : k === 'self' ? 'Yourself' : k === 'hunger' ? 'Starvation' : k;
     const killers = Object.entries(st.killers)
       .map(([k, count]) => ({ label: killerLabel(k), count, color: colors[k] || 'var(--muted)' }))
       .sort((a, b) => b.count - a.count);
