@@ -194,23 +194,27 @@ The first pass measured script time only. This time the reviewers also traced Ch
 
 ### Performance, before and after
 
-Both builds measured in the same session on the same machine (headless Chrome, 800×800 at 2× density, watching AI rounds), alternating runs so machine noise hits both. `tools/bench.js` reproduces the script-time numbers; the GPU and main-thread figures come from Chrome traces.
+Both builds measured in the same session on the same machine (headless Chrome, 800×800 at 2× density, watching AI rounds), alternating runs so machine noise hits both. `tools/bench.js` reproduces the script-time numbers; the GPU and main-thread figures come from Chrome traces. The final build is measured in every row except the three trace rows (GPU busy, main thread, style), which were taken just before the critique rounds; those rounds only removed drawing work.
 
 | Measurement | Before | After |
 |---|---|---|
-| **GPU raster, long-snake scene** (4 × 70 segments) | 6.53-6.56 ms a frame | **2.07-2.16 ms** (−67%) |
-| GPU process busy, watching at 1× | 653 ms a second | **299** (−54%) |
-| GPU process busy, watching at 4× | 786 ms a second | **331** (−58%) |
+| **GPU raster, long-snake scene** (4 × 70 segments) | 6.53-6.56 ms a frame | **2.00-2.02 ms** (−69%) |
+| Frames the browser keeps up with, unthrottled, 1× / 4× | 229-231 / 195-203 a second | **240 / 239-240** |
+| GPU process busy, watching at 1× / 4× | 653 / 786 ms a second | **299 / 331** (−54%, −58%) |
 | Main thread per frame, all work, 1× (median / p99) | 1.02 / 2.33 ms | **0.76 / 2.08** |
 | Main thread per frame, all work, 4× (median / p99) | 1.28 / 2.77 ms | **1.15 / 2.31** |
 | Style recalculation, 1× | 35.6 ms a second | **17.9** |
-| Frames the browser could draw, unthrottled, 1× / 4× | 196-205 / 160-179 a second | **238 / 237** |
-| Script per frame, 1× (p95 / p99 / worst) | 0.7-0.8 / 1.1 / 4.1-5.2 ms | 0.9 / 1.6-1.8 / 6.9-8.0 |
-| Script per frame, 4× (p95 / p99 / worst) | 1.2-2.0 / 2.2-3.6 / 10.6-24.2 ms | 1.3 / 3.2-3.6 / **7.3-8.4** |
-| Frames over 16.7 ms in a minute at 4× | 0-1 | **0** |
+| Script per frame, 1× (p95 / p99 / worst) | 0.7-0.8 / 1.1-1.2 / 4.3-5.8 ms | 0.7 / 1.2 / 5.0-7.0 |
+| Script per frame, 4× (p95 / p99 / worst) | 1.1 / 1.7-1.8 / 5.8-7.2 ms | 0.9-1.2 / 1.6-2.3 / 6.3-11.9 |
+| Frames over 16.7 ms in a minute, 1× / 4× | 0 / 0 | 0 / 0 |
 | One AI decision, on identical positions (median) | 0.283 ms | 0.278 ms |
 
-Script time per frame is a little higher at 1× (more, cheaper draw calls: every band and circle is its own fill), and the GPU does under half the work for it; the worst frames at 4× are about half as long. Each AI decision costs the same; rounds now have more snakes alive for longer (Gobbler's retune, sensible last moves), so there's simply more game to think about. Against DESIGN.md's budget: script p95 ≤ 2 ms is met at both speeds; GPU raster for the long-snake scene ≤ 3.5 ms is met; the worst-frame target (≤ 6.9 ms) is *almost* met: the slowest frame in a minute at normal speed was 6.9-8.0 ms (usually an AI decision sharing a frame with a draw), and at 4× it stays well inside one 60 Hz frame.
+Script time per frame is about the same as before. Bodies are now more, cheaper fills, offset by the cached colour ramps. The GPU does a third of the work it did for long snakes, so the browser keeps up at a higher frame rate. Each AI decision costs the same. Rounds now have more snakes alive for longer (Gobbler's retune, sensible last moves), so there's simply more game to think about.
+
+Against DESIGN.md's budget:
+- **Script p95 ≤ 2 ms:** met at both speeds.
+- **GPU raster ≤ 3.5 ms for the long-snake scene:** met.
+- **Worst frame ≤ 6.9 ms:** still not reliably met, in either build. The slowest frame in a minute is 5-7 ms at normal speed and up to 12 ms at 4×, usually an AI decision sharing a frame with a draw. No frame came near 16.7 ms.
 
 ### What happened to the plan
 

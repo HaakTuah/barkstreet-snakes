@@ -112,7 +112,7 @@ One treatment, used everywhere:
 | Target | Concrete check |
 |---|---|
 | Smooth motion at 60/120/144 Hz | Fixed timestep driven from one rAF loop with interpolation; a snake moves exactly one cell per tick, never stalls at cell boundaries |
-| Frame budget | Script per frame **p95 ≤ 2 ms, worst ≤ 6.9 ms** (one 144 Hz frame). **GPU raster for the long-snake scene (4 × 70 segments) ≤ 3.5 ms**, half a 144 Hz frame, so the browser's own work fits beside ours. The first pass measured script time only; the second pass traced the GPU process and found that long snakes cost it 6.5 ms a frame (see AUDIT.md). *Second-pass numbers are in the "After" section of AUDIT.md.* |
+| Frame budget | Script per frame **p95 ≤ 2 ms, worst ≤ 6.9 ms** (one 144 Hz frame). **GPU raster for the long-snake scene (4 × 70 segments) ≤ 3.5 ms**, half a 144 Hz frame, so the browser's own work fits beside ours. The first pass measured script time only; the second pass traced the GPU process and found that long snakes cost it 6.5 ms a frame (see AUDIT.md). *Measured after the second pass: script p95 0.7-1.2 ms (met); GPU raster 2.0 ms, down from 6.5 (met); the worst frame in a minute is 5-7 ms at normal speed and up to 12 ms at 4x, so the worst-case target is still not reliably met (an AI decision sharing a frame with a draw). Details in the "After" section of AUDIT.md.* |
 | Honest speed | Spectator 4× runs at 4.0× (±2%); ticks don't drift by their own cost |
 | Input never lost | Two turns pressed within one tick both apply, on consecutive ticks; no input combo ever reverses into the neck |
 | Eating feels good | Pop, particles, sound and score bump appear in the same frame as the bite tick; the gulp travels the body |
