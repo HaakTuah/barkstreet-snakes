@@ -1,6 +1,6 @@
 # Bark & Bite
 
-A snake game up a tree: you against three AI rivals, drawn at random each round from a cast of fourteen, on the bark of a tree. Playable in the browser. Plain HTML, CSS and JavaScript, with no build step and no dependencies.
+A snake game up a tree: you against three AI rivals, drawn at random each round from a cast of fifteen, on the bark of a tree. Playable in the browser. Plain HTML, CSS and JavaScript, with no build step and no dependencies.
 
 **Play:** https://haaktuah.github.io/snake-game/
 
@@ -11,6 +11,7 @@ A snake game up a tree: you against three AI rivals, drawn at random each round 
 - When a snake dies, its body turns into meat that anyone can eat.
 - The last snake alive wins. If you die first, you can watch the rest of the round or restart.
 - The game speeds up slowly over the course of a round.
+- **Hunger:** go 20 seconds without eating (mushrooms don't count) and you start shrinking, one segment every 1.5 seconds. Starve at length 3 and you're out. The bar under each name shows how hungry everyone is.
 - **Sudden death:** after three minutes no new food appears, and a woodpecker starts pecking holes in the bark, ring by ring from the edges inwards.
 
 ### Food
@@ -32,7 +33,7 @@ Press **Watch AIs** on the start screen for a round between four AI snakes, with
 
 ## The rivals
 
-Each round, three of these fourteen are picked at random. The start screen tells you who you're up against, and you can hover over a name on the scoreboard to see what it does.
+Each round, three of these fifteen are picked at random. The start screen tells you who you're up against, and you can hover over a name on the scoreboard to see what it does.
 
 | Snake | Look | Style |
 |-------|------|-------|
@@ -50,6 +51,7 @@ Each round, three of these fourteen are picked at random. The start screen tells
 | **Capricious** | changes with its mood | Switches between hunter, glutton, hermit and builder every few seconds. |
 | **Copycat** | pale copy of its model, cat ears | Copies whoever looks like they're winning, right alongside them. Party member. |
 | **Joker** | jester hat, red nose | Lures chasers into dead ends and swerves away at the last moment. |
+| **Desperado** | rust poncho, cowboy hat, bandana | An adrenaline junkie: skims walls, bodies and other heads for the thrill of it. |
 
 All of them share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move, and avoid the space around other snakes' heads. On top of that, each one chases its own goal.
 

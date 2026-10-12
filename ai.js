@@ -39,6 +39,7 @@ window.SnakeAI = (() => {
   //   tail                          reward for riding just behind a rival's tail
   //   mimic                         bonus for moving the way the model snake moves
   //   colony, goal                  { radius, max, every }: plant and defend flags; pull per step toward the next site
+  //   thrill                        reward for every wall, body or rival head right next to me
   const DRAB = {
     space: 1.2, territory: 1.5, aggression: 0.3,
     food: 5, eat: 80, pellet: 1.2, foodRange: 60,
@@ -175,6 +176,17 @@ window.SnakeAI = (() => {
       kill: 'Copycat got you. It learned that from someone.',
       win: 'Copycat wins. Imitation pays.',
       w: { ...DRAB, mimic: 120, lure: { weight: 4, dist: 5 } },
+    },
+    desperado: {
+      name: 'Desperado', color: '#ea580c', look: 'desperado',
+      blurb: 'An adrenaline junkie who skims walls and heads for the thrill of it. Yeehaw.',
+      kill: 'Draw, partner. Too slow.',
+      win: 'Desperado rides off into the sunset.',
+      w: {
+        space: 1, territory: 0.6,
+        food: 6, eat: 80, pellet: 1.5, foodRange: 40, mushroom: 0.5,
+        margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25,
+      },
     },
     joker: {
       name: 'Joker', color: '#a21caf', look: 'joker', driver: 'joker',
@@ -524,18 +536,21 @@ window.SnakeAI = (() => {
     });
 
     // How much food matters right now, given how long I already am. A
-    // mushroom lover past its length limit wants mushrooms instead.
+    // mushroom lover past its length limit wants mushrooms instead. Hunger
+    // trumps all of that: with under 10 s before I start starving, everyone
+    // goes looking for food, harder the closer it gets.
     const myLen = me.body.length + me.grow;
-    const shrinking = w.mushroomLover != null && myLen >= w.mushroomLover;
-    const fed = myLen >= (w.hungryBelow ?? Infinity);
-    const foodW = shrinking ? Math.max(3, w.food) : fed ? w.food * w.fedFactor : w.food;
-    const eatW = shrinking ? Math.max(40, w.eat) : fed ? w.eat * w.fedFactor : w.eat;
+    const hunger = me.hungerLeft == null ? 0 : Math.min(1, Math.max(0, (10000 - me.hungerLeft) / 10000));
+    const shrinking = !hunger && w.mushroomLover != null && myLen >= w.mushroomLover;
+    const fed = !hunger && myLen >= (w.hungryBelow ?? Infinity);
+    const foodW = shrinking ? Math.max(3, w.food) : fed ? w.food * w.fedFactor : Math.max(w.food, 8 * hunger) * (1 + 2 * hunger);
+    const eatW = shrinking ? Math.max(40, w.eat) : fed ? w.eat * w.fedFactor : Math.max(w.eat, 150 * hunger) * (1 + 2 * hunger);
 
     // Food worth by kind. Negative means "avoid eating".
     const apple = w.normalFood ?? 1;
     const worth = {
-      food: shrinking ? 0 : apple,
-      golden: shrinking ? 0 : 3 * apple,
+      food: shrinking ? 0 : Math.max(apple, hunger),
+      golden: shrinking ? 0 : 3 * Math.max(apple, hunger),
       pellet: shrinking ? 0 : (w.pellet ?? 1),
       mushroom: shrinking ? 2 : (w.mushroom ?? -1),
     };
@@ -678,6 +693,17 @@ window.SnakeAI = (() => {
 
       // Heading for a spot (Colonist's next flag).
       if (ctx.goal) score -= w.goal * manhattan(head, ctx.goal);
+
+      // Desperado: the closer to danger, the better.
+      if (w.thrill) {
+        let edge = 0;
+        for (const dd of DIR_LIST) {
+          const nx = head.x + dd.x, ny = head.y + dd.y;
+          if (!inside(nx, ny) || !passMine(ny * N + nx, t + 1)) edge++;
+        }
+        for (const h of heads) if (manhattan(head, h) <= 3) edge++;
+        score += w.thrill * edge;
+      }
 
       // 7. Staying home.
       if (ctx.home) {

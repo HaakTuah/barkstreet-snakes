@@ -8,6 +8,8 @@
   const GOLDEN_GROWTH = 3;
   const SHRINK = 3;          // a mushroom takes this many segments off
   const MIN_LENGTH = 3;
+  const HUNGER_MS = 20000;   // after this long without food (mushrooms don't count) you start shrinking
+  const STARVE_EVERY_MS = 1500; // ...by one segment this often, and starve at the minimum length
   const START_TICK = 120; // ms per tick at the start of a round
   const MIN_TICK = 90;
   const RAMP_MS = 120000; // reach MIN_TICK after this much game time
@@ -33,7 +35,7 @@
     const d = spawn.dir;
     const body = [0, 1, 2].map(k => ({ x: spawn.x - d.x * k, y: spawn.y - d.y * k }));
     return {
-      id, body, dir: d, alive: true, grow: 0, eaten: 0, pellets: 0, mushrooms: 0,
+      id, body, dir: d, alive: true, grow: 0, eaten: 0, pellets: 0, mushrooms: 0, lastAte: 0, nextStarve: HUNGER_MS,
       queue: [], cause: null, diedAt: null, memory: {}, ...props,
     };
   }
@@ -156,7 +158,7 @@
     const snap = game.history[idx];
     return {
       grid: GRID,
-      me: { id: snake.id, body: snake.body, dir: snake.dir, grow: snake.grow },
+      me: { id: snake.id, body: snake.body, dir: snake.dir, grow: snake.grow, hungerLeft: hungerLeft(game, snake) },
       others: snap.snakes.filter(o => o.id !== snake.id),
       food: snap.food,
       holes: game.holes,
@@ -166,12 +168,26 @@
     };
   }
 
+  // Milliseconds until a snake starts starving (negative once it has).
+  const hungerLeft = (game, s) => s.lastAte + HUNGER_MS - game.time;
+
   // Advance one tick. All snakes move at the same time. Returns the snakes that died.
   // game.events lists what happened this tick, for the chatter and banners:
   // { type: 'eat', snake, kind } | { type: 'death', snake } | { type: 'spawn', kind } | { type: 'woodpecker' }
   function step(game) {
     game.events = [];
-    const alive = game.snakes.filter(s => s.alive);
+
+    const dying = [];
+    for (const s of game.snakes) {
+      if (!s.alive || game.time < s.nextStarve) continue;
+      s.nextStarve = game.time + STARVE_EVERY_MS;
+      if (s.grow > 0) s.grow--;
+      else if (s.body.length > MIN_LENGTH) s.body.pop();
+      else { s.cause = 'starved'; s.killer = 'hunger'; dying.push(s); continue; }
+      if (hungerLeft(game, s) > -STARVE_EVERY_MS) game.events.push({ type: 'starving', snake: s });
+    }
+
+    const alive = game.snakes.filter(s => s.alive && !dying.includes(s));
 
     for (const s of alive) {
       if (s.isPlayer) {
@@ -195,8 +211,7 @@
       heads.set(k, [...(heads.get(k) || []), s]);
     }
 
-    // killer: 'wall' (walls and holes), 'self', or the name of the snake that was hit.
-    const dying = [];
+    // killer: 'wall' (walls and holes), 'self', 'hunger', or the name of the snake that was hit.
     for (const s of alive) {
       const { x, y } = s.next;
       const k = key(x, y);
@@ -254,6 +269,8 @@
         s.mushrooms++;
       } else {
         const growth = f.kind === 'golden' ? GOLDEN_GROWTH : 1;
+        s.lastAte = game.time;
+        s.nextStarve = game.time + HUNGER_MS;
         s.grow += growth;
         s.eaten += growth;
         if (f.kind === 'pellet') s.pellets++;
@@ -334,6 +351,8 @@
     woodpecker: ['The woodpecker is here! Holes are closing in from the edges.'],
     youGolden: ['Golden! +3.', 'Shiny and delicious. +3.'],
     youMushroom: ['You feel smaller. And somehow wiser.', 'Shrunk by 3. Sneaky.'],
+    youHungry: ['Your tummy is rumbling. Eat something!', 'Getting peckish… find food soon!'],
+    starved: ['Should have eaten something.', 'Hunger always wins in the end.'],
   };
 
   // The human's snake, or null in an AI-only round.
@@ -393,7 +412,8 @@
 
   function schedule() {
     clearTimeout(timer);
-    timer = setTimeout(tick, tickMs(game) / (spectating() ? speed : 1));
+    game.tickLen = tickMs(game) / (spectating() ? speed : 1);
+    timer = setTimeout(tick, game.tickLen);
   }
 
   function tick() {
@@ -401,7 +421,9 @@
     const wasAlive = playerAlive();
     const peckingBefore = !!game.woodpecker;
 
+    for (const s of game.snakes) s.prev = s.alive ? s.body.map(c => ({ ...c })) : null;
     const dying = step(game);
+    game.tickAt = performance.now();
     updateHud();
     draw();
     Chatter.update();
@@ -417,7 +439,7 @@
     }
     if (wasAlive && !playerAlive()) {
       const p = player();
-      showOverlay(pick(FLAVOR.deathTitle), `You ${p.cause} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
+      showOverlay(p.killer === 'hunger' ? 'Starved!' : pick(FLAVOR.deathTitle), `You ${p.cause} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
         'Play again', 'Watch', killLine(p));
       updateSpeedControl();
     }
@@ -435,6 +457,12 @@
       return toast(killer ? `First blood! ${who(killer)} got ${who(v, true)}.` : `First blood: ${who(v)} ${v.cause}.`);
     }
     if (dying.length && alive.length === 2) return toast(`It's down to ${who(alive[0])} and ${who(alive[1], true)}.`);
+    const me = player();
+    if (me?.alive) {
+      const left = hungerLeft(game, me);
+      if (left < 6000 && !game.warnedHunger) { game.warnedHunger = true; return toast(pick(FLAVOR.youHungry)); }
+      if (left > 6000) game.warnedHunger = false;
+    }
     for (const e of game.events) {
       if (e.type === 'spawn' && e.kind === 'golden') return toast(pick(FLAVOR.golden));
       if (e.type === 'eat' && e.snake.isPlayer && e.kind === 'golden') return toast(pick(FLAVOR.youGolden), 1500);
@@ -451,6 +479,7 @@
     if (killer) return killer.persona.kill;
     if (p.cause === 'fell into a woodpecker hole') return pick(FLAVOR.hole);
     if (p.killer === 'self') return pick(FLAVOR.self);
+    if (p.killer === 'hunger') return pick(FLAVOR.starved);
     return pick(FLAVOR.wall);
   }
 
@@ -562,7 +591,7 @@
     boardEl.innerHTML = '';
     for (const s of game.snakes) {
       const li = document.createElement('li');
-      li.innerHTML = '<span class="dot"></span><span class="name"></span><span class="len"></span>';
+      li.innerHTML = '<span class="dot"></span><span class="name"></span><span class="len"></span><span class="hunger"><i></i></span>';
       li.querySelector('.dot').style.background = dotColor(s);
       li.querySelector('.name').textContent = s.name;
       li.title = s.persona ? `${s.name}: ${s.persona.blurb}` : 'You';
@@ -577,7 +606,27 @@
       s.row.querySelector('.dot').style.background = dotColor(s);
       s.row.classList.toggle('dead', !s.alive);
       s.row.querySelector('.len').textContent = s.alive ? s.body.length : 'out';
+      // Hunger bar: full right after eating, empty when starving.
+      const full = s.alive ? Math.max(0, Math.min(1, hungerLeft(game, s) / HUNGER_MS)) : 0;
+      const bar = s.row.querySelector('.hunger i');
+      bar.style.width = `${full * 100}%`;
+      s.row.classList.toggle('starving', s.alive && full < 0.3);
     }
+  }
+
+  // Redraw every frame while the round runs, so movement glides instead of
+  // jumping a whole cell per tick.
+  function frame() {
+    if (state === 'running' && game.tickAt != null) draw();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // How far the current tick has played out: 0 just after a step, 1 at the next.
+  // Snakes are drawn one step behind, sliding from where they were to where they are.
+  function progress() {
+    if (state !== 'running' || game.tickAt == null || !game.tickLen) return 1;
+    return Math.min(1, (performance.now() - game.tickAt) / game.tickLen);
   }
 
   function draw() {
@@ -888,6 +937,8 @@
     const t = i / Math.max(1, n - 1); // 0 at the head, 1 at the tail
     if (s.personaKey === 'wildcard') return `hsl(${(now / 15 + i * 28) % 360}, 85%, 62%)`;
     if (look === 'joker') return i === 0 ? '#f8fafc' : i % 2 ? '#22c55e' : '#a21caf';
+    if (look === 'desperado' && i === 1) return '#dc2626'; // bandana
+    if (look === 'desperado' && i > 1 && i % 4 === 0) return '#fde68a'; // poncho stripe
     if (look === 'vulture' && i === 0) return '#f9a8d4'; // bald pink head
     if (look === 'vulture' && i === 1) return '#f5f5f4'; // white neck ruff
     let fill = color.startsWith('#') ? color : null;
@@ -903,22 +954,28 @@
     const n = s.body.length;
     const now = performance.now();
     const radius = i => i === 0 ? cell * 0.54 : cell * (0.44 - 0.1 * (i / Math.max(1, n - 1)));
-    const center = c => ({ x: c.x * cell + cell / 2, y: c.y * cell + cell / 2 });
+    const t = progress();
+    // Pixel center of segment i, between its previous cell and its current one.
+    const pts = s.body.map((c, i) => {
+      const from = s.prev?.[i] ?? c;
+      const x = from.x + (c.x - from.x) * t, y = from.y + (c.y - from.y) * t;
+      return { x: x * cell + cell / 2, y: y * cell + cell / 2 };
+    });
 
     // Shadow first, the whole snake at once.
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
     for (let i = n - 1; i >= 0; i--) {
-      const p = center(s.body[i]);
+      const p = pts[i];
       circle(p.x + 2, p.y + 4, radius(i));
     }
 
     // Tail to head, so the head ends up on top.
     for (let i = n - 1; i >= 0; i--) {
-      const p = center(s.body[i]);
+      const p = pts[i];
       const r = radius(i);
       const fill = segmentFill(s, look, color, i, n, now);
       if (i < n - 1) { // band joining this segment to the one behind it
-        const q = center(s.body[i + 1]);
+        const q = pts[i + 1];
         ctx.strokeStyle = segmentFill(s, look, color, i + 1, n, now);
         ctx.lineWidth = radius(i + 1) * 1.6;
         ctx.lineCap = 'round';
@@ -977,9 +1034,9 @@
     }
 
     // Head features, drawn in a frame where +x points the way the snake faces.
-    const h = s.body[0];
+    const hp = pts[0];
     ctx.save();
-    ctx.translate(h.x * cell + cell / 2, h.y * cell + cell / 2);
+    ctx.translate(hp.x, hp.y);
     ctx.rotate(Math.atan2(s.dir.y, s.dir.x));
     ctx.scale(1.1, 1.1);
     drawFace(s, look, color);
@@ -993,7 +1050,7 @@
         ctx.globalAlpha = 1 - age / 900;
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(h.x * cell + cell / 2, h.y * cell + cell / 2, cell * (0.6 + 1.6 * age / 900), 0, Math.PI * 2);
+        ctx.arc(hp.x, hp.y, cell * (0.6 + 1.6 * age / 900), 0, Math.PI * 2);
         ctx.stroke();
         ctx.globalAlpha = 1;
       }
@@ -1180,6 +1237,23 @@
         ctx.fillRect(-c * 0.02, -c * 0.16, c * 0.04, c * 0.3); // handle
         ctx.fillRect(-c * 0.09, -c * 0.18, c * 0.18, c * 0.06); // head
         ctx.restore();
+        break;
+      }
+      case 'desperado': { // cowboy hat tipped back, eyes peeking out in front
+        ctx.fillStyle = '#78350f';
+        ctx.beginPath();
+        ctx.ellipse(-c * 0.24, 0, c * 0.3, c * 0.56, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#a16207';
+        ctx.beginPath();
+        ctx.ellipse(-c * 0.26, 0, c * 0.16, c * 0.26, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#3f1d0a';
+        ctx.fillRect(-c * 0.13, -c * 0.27, c * 0.05, c * 0.54); // hat band
+        ctx.fillStyle = '#ffffff';
+        circle(c * 0.2, -c * 0.2, c * 0.1);
+        circle(c * 0.2, c * 0.2, c * 0.1);
+        eyes(0.06);
         break;
       }
       case 'joker': // jester hat with bells, red nose
