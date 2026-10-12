@@ -61,7 +61,8 @@ window.SnakeChatter = (() => {
     },
     mason: {
       start: ['Alea iacta est.', 'Let us build.'],
-      idle: ['Divide et impera.', 'Veni, vidi, aedificavi.', 'A wall a day…', 'Building a wall. Wildcard isn\'t paying.'],
+      idle: ['Divide et impera.', 'Veni, vidi, aedificavi.', 'A wall a day…', 'Building a wall. Wildcard isn\'t paying.',
+        'Veni, vidi… veni again.', 'Carpe diem. Carpe apple.', 'In vino veritas. In bark… splinters.', 'Alea iacta est. Oops, that was my lunch.'],
       kill: ['Veni, vidi, vici.', 'Should have gone around, {who}.'],
       dies: ['Et tu, {who}?'],
     },
@@ -104,6 +105,14 @@ window.SnakeChatter = (() => {
       kill: ['向前进！'],
       dies: ['同志们，再见……'],
     },
+    desperado: {
+      start: ['Yeehaw!', 'Saddle up, partner.'],
+      idle: ['Living on the edge, partner.', 'Too close? Never heard of it.', 'Is that a wall? Let\'s go see.', 'Feel that? That\'s being alive.'],
+      kill: ['Draw, {who}. Too slow.', 'This bark ain\'t big enough for the both of us.'],
+      mushroom: ['Never tried one of those. Down the hatch!'],
+      woodpecker: ['Now we\'re talking! Holes!'],
+      dies: ['What a ride…', 'Worth it.'],
+    },
     joker: {
       start: ['Knock knock!', 'Who wants to play a game?'],
       idle: ['Catch me if you can!', 'Why so slithery, {who}?', 'Follow me, it\'s a shortcut!', 'Honk honk!'],
@@ -115,6 +124,22 @@ window.SnakeChatter = (() => {
 
   // Chinese for every line above: Copycat repeats what it hears, in Chinese.
   const ZH = {
+    "Veni, vidi… veni again.": "我来，我见……我又来了。",
+    "Carpe diem. Carpe apple.": "及时行乐。及时吃苹果。",
+    "In vino veritas. In bark… splinters.": "酒后吐真言。树皮里……全是刺。",
+    "Alea iacta est. Oops, that was my lunch.": "骰子已经掷下。哎呀，那是我的午饭。",
+    "Yeehaw!": "咿哈！",
+    "Saddle up, partner.": "上马吧，伙计。",
+    "Living on the edge, partner.": "刀尖上过日子，伙计。",
+    "Too close? Never heard of it.": "太近了？没听说过。",
+    "Is that a wall? Let's go see.": "那是墙吗？去看看。",
+    "Feel that? That's being alive.": "感觉到了吗？这才叫活着。",
+    "Draw, {who}. Too slow.": "拔枪吧，{who}。太慢了。",
+    "This bark ain't big enough for the both of us.": "这块树皮容不下我们两个。",
+    "Never tried one of those. Down the hatch!": "从没吃过这个。干了！",
+    "Now we're talking! Holes!": "这才带劲！洞！",
+    "What a ride…": "真是一趟好旅程……",
+    "Worth it.": "值了。",
     "Let the hunt begin.": "狩猎开始。",
     "I can smell fear.": "我闻到了恐惧。",
     "Run. It helps.": "跑吧。有点用。",

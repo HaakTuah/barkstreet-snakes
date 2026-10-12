@@ -39,6 +39,7 @@ window.SnakeAI = (() => {
   //   tail                          reward for riding just behind a rival's tail
   //   mimic                         bonus for moving the way the model snake moves
   //   colony, goal                  { radius, max, every }: plant and defend flags; pull per step toward the next site
+  //   thrill                        reward for every wall, body or rival head right next to me
   const DRAB = {
     space: 1.2, territory: 1.5, aggression: 0.3,
     food: 5, eat: 80, pellet: 1.2, foodRange: 60,
@@ -175,6 +176,17 @@ window.SnakeAI = (() => {
       kill: 'Copycat got you. It learned that from someone.',
       win: 'Copycat wins. Imitation pays.',
       w: { ...DRAB, mimic: 120, lure: { weight: 4, dist: 5 } },
+    },
+    desperado: {
+      name: 'Desperado', color: '#ea580c', look: 'desperado',
+      blurb: 'An adrenaline junkie who skims walls and heads for the thrill of it. Yeehaw.',
+      kill: 'Draw, partner. Too slow.',
+      win: 'Desperado rides off into the sunset.',
+      w: {
+        space: 1, territory: 0.6,
+        food: 6, eat: 80, pellet: 1.5, foodRange: 40, mushroom: 0.5,
+        margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25,
+      },
     },
     joker: {
       name: 'Joker', color: '#a21caf', look: 'joker', driver: 'joker',
@@ -678,6 +690,17 @@ window.SnakeAI = (() => {
 
       // Heading for a spot (Colonist's next flag).
       if (ctx.goal) score -= w.goal * manhattan(head, ctx.goal);
+
+      // Desperado: the closer to danger, the better.
+      if (w.thrill) {
+        let edge = 0;
+        for (const dd of DIR_LIST) {
+          const nx = head.x + dd.x, ny = head.y + dd.y;
+          if (!inside(nx, ny) || !passMine(ny * N + nx, t + 1)) edge++;
+        }
+        for (const h of heads) if (manhattan(head, h) <= 3) edge++;
+        score += w.thrill * edge;
+      }
 
       // 7. Staying home.
       if (ctx.home) {
