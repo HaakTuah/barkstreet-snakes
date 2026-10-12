@@ -458,7 +458,7 @@ window.SnakeChatter = (() => {
     el.style.setProperty('--edge', s.persona?.ink || s.color);
     boardEl.appendChild(el);
     // Width is estimated from the text, so placing a bubble never reads layout.
-    bubbles.set(s.id, { el, snake: s, until: performance.now() + BUBBLE_MS, w: 0, chars: text.length, x: NaN, y: NaN, below: null });
+    bubbles.set(s.id, { el, snake: s, until: performance.now() + BUBBLE_MS, w: 0, chars: text.length, x: NaN, y: NaN, below: null, tail: NaN });
   }
 
   // Called every frame: bubbles follow the gliding heads, stay inside the
@@ -476,7 +476,8 @@ window.SnakeChatter = (() => {
       const y = Math.round(below ? headAt.y + cellPx * 0.75 : headAt.y - cellPx * 0.75);
       if (x === b.x && y === b.y && below === b.below) continue;
       if (below !== b.below) b.el.classList.toggle('below', below);
-      b.el.style.setProperty('--tail', `${Math.round(50 + ((headAt.x - x) / w) * 100)}%`);
+      const tail = Math.round(50 + ((headAt.x - x) / w) * 100); // (50% unless the bubble is pushed off-centre at an edge)
+      if (tail !== b.tail) { b.el.style.setProperty('--tail', `${tail}%`); b.tail = tail; }
       b.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, ${below ? '0' : '-100%'})`;
       b.x = x; b.y = y; b.below = below;
     }

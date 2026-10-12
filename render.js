@@ -5,10 +5,13 @@
 // devicePixelRatio, so everything stays crisp, and one transform maps logical
 // units to device pixels.
 //
-// Cost control: the bark, grid lines and woodpecker holes live on a
-// prerendered static layer; food, meat and the woodpecker are cached sprites;
-// particles come from a fixed pool; nothing in the per-frame path allocates
-// (no closures, array literals, spreads or string building).
+// Cost control, measured in Chrome's GPU process as well as in script: the
+// bark, grid lines and holes live on a prerendered static layer; food, meat,
+// the woodpecker and the "+1"s are cached sprites; particles come from a fixed
+// pool; colours come from cached ramps. Bodies are drawn as rectangles, then
+// circles: separate fills batch into one GPU operation, while one path of many
+// circles is triangulated every frame and strokes between circles break the
+// batch. The per-frame path builds no strings and no closures.
 window.SnakeRender = (() => {
   const T = window.TUNING;
   const GRID = T.GRID;
@@ -18,7 +21,7 @@ window.SnakeRender = (() => {
   const INK = '#0b1210';
   const TAU = Math.PI * 2;
 
-  let canvas, ctx, PERSONAS, PLAYER_COLOR;
+  let canvas, ctx, PERSONAS;
   let viewerId = -1; // your snake on this screen (it gets the bright outline), -1 if none
   let k = 1;                 // device pixels per logical unit
   let reduced = false;       // prefers-reduced-motion
@@ -68,7 +71,7 @@ window.SnakeRender = (() => {
   // The bark, drawn once at the current resolution from a fixed seed: the
   // same tree every round. Faint carved grid lines are baked in so they land
   // on whole device pixels.
-  let barkLayer = null, staticLayer = null, holesDrawn = 0;
+  let barkLayer = null, staticLayer = null, holesDrawn = 0, sized = false;
 
   function buildBark() {
     const px = SIZE * k;
@@ -122,6 +125,7 @@ window.SnakeRender = (() => {
 
   // The static layer is the bark plus every hole pecked so far.
   function resetStatic() {
+    if (!sized) { staticLayer = null; holesDrawn = 0; return; } // (built once the board has its real size)
     if (!barkLayer) barkLayer = buildBark();
     if (!staticLayer || staticLayer.width !== barkLayer.width) staticLayer = makeLayer(barkLayer.width, barkLayer.height);
     const g = staticLayer.getContext('2d');
@@ -161,17 +165,18 @@ window.SnakeRender = (() => {
   // Sprites are drawn once per resolution into small canvases centered on
   // their cell, SPRITE cells across, and blitted with one drawImage.
   const SPRITE = 2;
-  const sprites = new Map();
+  const sprites = new Map(); // name -> variant (a colour, a label, or '') -> canvas
 
-  function sprite(name, color, draw) {
-    const key = color ? name + color : name;
-    let s = sprites.get(key);
+  function sprite(name, variant, draw) {
+    let byVariant = sprites.get(name);
+    if (!byVariant) sprites.set(name, byVariant = new Map());
+    let s = byVariant.get(variant);
     if (s) return s;
     s = makeLayer(SPRITE * CELL * k, SPRITE * CELL * k);
     const g = s.getContext('2d');
     g.setTransform(k, 0, 0, k, SPRITE * CELL * k / 2, SPRITE * CELL * k / 2);
-    draw(g, color);
-    sprites.set(key, s);
+    draw(g, variant);
+    byVariant.set(variant, s);
     return s;
   }
 
@@ -200,17 +205,20 @@ window.SnakeRender = (() => {
     g.beginPath(); g.ellipse(c * 0.17, -c * 0.36, c * 0.14, c * 0.07, -0.5, 0, TAU); g.fill();
   }
 
-  const appleSprite = () => sprite('apple', null, g => drawAppleShape(g, '#84cc16'));
-  const goldenSprite = () => sprite('golden', null, g => drawAppleShape(g, '#fbbf24'));
-  const glowSprite = () => sprite('glow', null, g => {
+  const drawApple = g => drawAppleShape(g, '#84cc16'), drawGolden = g => drawAppleShape(g, '#fbbf24');
+  const appleSprite = () => sprite('apple', '', drawApple);
+  const goldenSprite = () => sprite('golden', '', drawGolden);
+  const glowSprite = () => sprite('glow', '', drawGlow);
+  const drawGlow = g => {
     const grad = g.createRadialGradient(0, 0, CELL * 0.2, 0, 0, CELL * 0.8);
     grad.addColorStop(0, 'rgba(253,224,71,0.55)');
     grad.addColorStop(1, 'rgba(253,224,71,0)');
     g.fillStyle = grad;
     g.beginPath(); g.arc(0, 0, CELL * 0.8, 0, TAU); g.fill();
-  });
+  };
   // A four-point sparkle: the golden apple's non-color cue.
-  const starSprite = () => sprite('star', null, g => {
+  const starSprite = () => sprite('star', '', drawStar);
+  const drawStar = g => {
     g.fillStyle = '#fffbea';
     g.beginPath();
     const r1 = CELL * 0.2, r2 = CELL * 0.05;
@@ -219,8 +227,9 @@ window.SnakeRender = (() => {
       if (i) g.lineTo(Math.cos(a) * r, Math.sin(a) * r); else g.moveTo(r, 0);
     }
     g.fill();
-  });
-  const mushroomSprite = () => sprite('mushroom', null, g => {
+  };
+  const mushroomSprite = () => sprite('mushroom', '', drawMushroom);
+  const drawMushroom = g => {
     const c = CELL;
     g.fillStyle = 'rgba(0,0,0,0.28)';
     g.beginPath(); g.ellipse(c * 0.03, c * 0.36, c * 0.3, c * 0.08, 0, 0, TAU); g.fill();
@@ -235,9 +244,10 @@ window.SnakeRender = (() => {
     g.beginPath(); g.arc(-c * 0.18, -c * 0.1, c * 0.06, 0, TAU); g.fill();
     g.beginPath(); g.arc(c * 0.06, -c * 0.2, c * 0.06, 0, TAU); g.fill();
     g.beginPath(); g.arc(c * 0.22, -c * 0.06, c * 0.05, 0, TAU); g.fill();
-  });
+  };
   // A drumstick tinted by the snake it came from, with a light rim so it reads on bark.
-  const meatSprite = color => sprite('meat', color, (g, col) => {
+  const meatSprite = color => sprite('meat', color || '', drawMeat);
+  const drawMeat = (g, col) => {
     const c = CELL;
     g.rotate(-0.7);
     g.fillStyle = '#f5f5f4';
@@ -251,9 +261,10 @@ window.SnakeRender = (() => {
     g.stroke();
     g.fillStyle = 'rgba(255,255,255,0.3)';
     g.beginPath(); g.arc(-c * 0.14, -c * 0.06, c * 0.06, 0, TAU); g.fill();
-  });
+  };
   // The woodpecker, beak pointing right (flip for left). Drawn about 1.6 cells tall.
-  const birdSprite = () => sprite('bird', null, g => {
+  const birdSprite = () => sprite('bird', '', drawBird);
+  const drawBird = g => {
     const c = CELL * 0.85;
     g.fillStyle = 'rgba(0,0,0,0.3)';
     g.beginPath(); g.arc(-c * 0.05, c * 0.12, c * 0.48, 0, TAU); g.fill();
@@ -271,7 +282,7 @@ window.SnakeRender = (() => {
     g.beginPath(); g.arc(c * 0.16, -c * 0.4, c * 0.04, 0, TAU); g.fill();
     g.fillStyle = '#71717a';
     g.beginPath(); g.moveTo(c * 0.24, -c * 0.44); g.lineTo(c * 0.62, -c * 0.36); g.lineTo(c * 0.24, -c * 0.32); g.fill();
-  });
+  };
 
   // ------------------------------------------------------------ beetles
 
@@ -392,6 +403,17 @@ window.SnakeRender = (() => {
   const fx = new Float32Array(MAX_F), fy = new Float32Array(MAX_F), flife = new Float32Array(MAX_F);
   const ftext = new Array(MAX_F).fill('');
   const FLOAT_FONT = `700 ${Math.round(CELL * 0.72)}px Fredoka, system-ui, sans-serif`;
+  const drawFloat = (g, text) => {
+    g.font = FLOAT_FONT;
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.lineJoin = 'round';
+    g.lineWidth = CELL * 0.14;
+    g.strokeStyle = 'rgba(58,38,20,0.85)';
+    g.strokeText(text, 0, 0);
+    g.fillStyle = '#fde68a';
+    g.fillText(text, 0, 0);
+  };
   let fNext = 0;
   function floater(x, y, text) {
     fx[fNext] = x; fy[fNext] = y; flife[fNext] = 700; ftext[fNext] = text;
@@ -401,22 +423,13 @@ window.SnakeRender = (() => {
     let any = false;
     for (let i = 0; i < MAX_F; i++) if (flife[i] > 0) { any = true; break; }
     if (!any) return;
-    ctx.font = FLOAT_FONT;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.lineWidth = CELL * 0.14;
-    ctx.strokeStyle = 'rgba(58,38,20,0.85)';
     for (let i = 0; i < MAX_F; i++) {
       if (flife[i] <= 0) continue;
       flife[i] -= dt;
       const t = Math.max(0, flife[i] / 700);
       const y = fy[i] - (reduced ? 0 : (1 - t) * CELL * 0.8); // rises, unless motion is reduced
-      ctx.globalAlpha = Math.min(1, t * 1.6);
-      ctx.strokeText(ftext[i], fx[i], y);
-      ctx.fillStyle = '#fde68a';
-      ctx.fillText(ftext[i], fx[i], y);
+      blit(sprite('float', ftext[i], drawFloat), fx[i], y, Math.min(1, t * 1.6));
     }
-    ctx.globalAlpha = 1;
   }
 
   // ----------------------------------------------- per-snake animation state
@@ -433,6 +446,10 @@ window.SnakeRender = (() => {
         wx: 0, wy: 0, wanderAt: 0,          // Wildcard's eyes wander about on their own
         gulps: [-99, -99, -99, -99], gulpAt: 0,
         gulpR: T.GULP, gulpW: T.GULP_LENGTH, ateAt: -1e9, // gulp size and length (Gobbler's are bigger), last bite
+        // This frame's layout (see prepare): segment centres, the corner each
+        // band bends through, radii and fills, sized for the body as it grows.
+        n: 0, pts: new Float32Array(64), cor: new Float32Array(64), rad: new Float32Array(32), fills: new Array(32),
+        look: '', color: '', isPlayer: false, rim: false, bump: 0, tickPos: 0,
       };
       anim.set(s, a);
     }
@@ -502,17 +519,19 @@ window.SnakeRender = (() => {
   function nearest(s, what) {
     const h = s.body[0];
     let best = 1e9, out = null;
-    const consider = c => {
-      const d = (c.x - h.x) * (c.x - h.x) + (c.y - h.y) * (c.y - h.y);
-      if (d > 0 && d < best) { best = d; out = c; }
-    };
     if (what === 'food') {
-      for (const f of game.food) if (f.kind !== 'mushroom') consider(f);
+      for (const f of game.food) {
+        if (f.kind === 'mushroom') continue;
+        const d = (f.x - h.x) * (f.x - h.x) + (f.y - h.y) * (f.y - h.y);
+        if (d > 0 && d < best) { best = d; out = f; }
+      }
     } else {
       for (const o of game.snakes) {
         if (o === s || !o.alive) continue;
-        if (what === 'head') consider(o.body[0]);
-        else if (o.body.length >= 8) consider(o.body[o.body.length - 1]);
+        const c = what === 'head' ? o.body[0] : o.body.length >= 8 ? o.body[o.body.length - 1] : null;
+        if (!c) continue;
+        const d = (c.x - h.x) * (c.x - h.x) + (c.y - h.y) * (c.y - h.y);
+        if (d > 0 && d < best) { best = d; out = c; }
       }
     }
     return out;
@@ -552,143 +571,220 @@ window.SnakeRender = (() => {
     return 0;
   }
 
-  function segmentFill(look, color, i, n, now, wild) {
-    if (wild) return HUES[Math.floor((reduced ? 0 : now / 15) + i * 28) % 360];
-    if (look === 'joker') return i === 0 ? '#f8fafc' : i % 2 ? '#f59e0b' : '#a21caf';
-    if (look === 'vulture' && i === 0) return '#f9a8d4'; // bald pink head
-    if (look === 'vulture' && i === 1) return '#f5f5f4'; // white neck ruff
-    if (look === 'desperado' && i === 1) return '#dc2626'; // bandana
-    if (look === 'desperado' && i > 1 && i % 4 === 0) return '#fde68a'; // poncho stripe
-    let fill = color;
-    if (look === 'sniper' && i % 3 === 2) fill = mix(color, '#fca5a5', 0.35);
-    const t = i / (n > 1 ? n - 1 : 1); // 0 at the head, 1 at the tail
-    const fade = look === 'ghost' ? Math.round(75 * t) / 100
-      : look === 'creeper' ? Math.round(15 + 45 * t) / 100
-      : look === 'drab' ? 0.15
-      : Math.round(30 * t) / 100;
-    return fade ? mix(fill, BARK, fade) : fill;
+  // Fades toward the bark as colour ramps: rampOf(c)[p] is c faded p% of the
+  // way to the bark. Built once per colour, so no frame builds a colour string.
+  const ramps = new Map(), stripes = new Map();
+  function rampOf(c) {
+    let ramp = ramps.get(c);
+    if (!ramp) {
+      ramp = new Array(101);
+      for (let p = 0; p <= 100; p++) ramp[p] = p ? mix(c, BARK, p / 100) : c;
+      ramps.set(c, ramp);
+    }
+    return ramp;
+  }
+  const lumas = new Map();
+  function lumaOf(c) {
+    let l = lumas.get(c);
+    if (l === undefined) { l = c[0] === '#' ? luma(c) : 1; lumas.set(c, l); }
+    return l;
   }
 
-  // Scratch buffer for interpolated segment centers (x, y pairs).
-  let pts = new Float32Array(2 * 256);
+  // Every segment's fill: the look's pattern, fading toward the bark at the tail.
+  function fillsOf(s, a, now) {
+    const { look, color, n, fills } = a;
+    if (s.personaKey === 'wildcard') {
+      const t0 = reduced ? 0 : Math.floor(now / 15);
+      for (let i = 0; i < n; i++) fills[i] = HUES[(t0 + i * 28) % 360];
+      return;
+    }
+    if (look === 'joker') {
+      for (let i = 0; i < n; i++) fills[i] = i === 0 ? '#f8fafc' : i % 2 ? '#f59e0b' : '#a21caf';
+      return;
+    }
+    const ramp = rampOf(color);
+    let stripe = null;
+    if (look === 'sniper') {
+      stripe = stripes.get(color);
+      if (!stripe) { stripe = rampOf(mix(color, '#fca5a5', 0.35)); stripes.set(color, stripe); }
+    }
+    for (let i = 0; i < n; i++) {
+      const t = i / (n > 1 ? n - 1 : 1); // 0 at the head, 1 at the tail
+      const fade = look === 'ghost' ? Math.round(75 * t)
+        : look === 'creeper' ? Math.round(15 + 45 * t)
+        : look === 'drab' ? 15
+        : Math.round(30 * t);
+      fills[i] = (stripe && i % 3 === 2 ? stripe : ramp)[fade];
+    }
+    if (look === 'vulture') { fills[0] = '#f9a8d4'; if (n > 1) fills[1] = '#f5f5f4'; } // bald pink head, white neck ruff
+    if (look === 'desperado') { if (n > 1) fills[1] = '#dc2626'; for (let i = 4; i < n; i += 4) fills[i] = '#fde68a'; } // bandana, poncho stripes
+  }
 
-  function drawSnake(s, alpha, now, dead) {
-    const look = lookOf(s);
-    const color = colorOf(s);
+  // Once a frame per snake: where each segment is (between its last two
+  // cells), the cell each band bends through, radii and fills.
+  function prepare(s, alpha, now, dead) {
+    const a = animOf(s, now);
     const n = s.body.length;
-    if (pts.length < n * 2) pts = new Float32Array(n * 4);
-    const prev = s.prev;
+    if (a.rad.length < n) {
+      a.pts = new Float32Array(4 * n); a.cor = new Float32Array(4 * n);
+      a.rad = new Float32Array(2 * n); a.fills = new Array(2 * n);
+    }
+    a.n = n;
+    a.look = lookOf(s);
+    a.color = colorOf(s);
+    a.isPlayer = !s.persona;
+    // A pale rim so dark bodies read on the bark (Joker's amber and white do already).
+    a.rim = !a.isPlayer && a.look !== 'joker' && (a.look === 'vulture' || lumaOf(a.color) < 0.4);
+    const prev = s.prev, { pts, cor } = a;
     for (let i = 0; i < n; i++) {
       const c = s.body[i];
       const p = prev && i < prev.length ? prev[i] : c;
       pts[2 * i] = (p.x + (c.x - p.x) * alpha) * CELL + CELL / 2;
       pts[2 * i + 1] = (p.y + (c.y - p.y) * alpha) * CELL + CELL / 2;
+      // The band to the next segment runs through the cell this one left
+      // (where the next one is headed), so a bend never cuts its corner.
+      if (i < n - 1) {
+        const q = prev && i < prev.length ? prev[i] : s.body[i + 1];
+        cor[2 * i] = q.x * CELL + CELL / 2;
+        cor[2 * i + 1] = q.y * CELL + CELL / 2;
+      }
     }
-    const a = animOf(s, now);
-    const wild = s.personaKey === 'wildcard';
-    const isPlayer = !s.persona;
-    const darkBody = color[0] === '#' && luma(color) < 0.4;
-
     // Gulps: a bulge that travels one segment per tick after each bite, and
     // the head's squash at the bite itself.
-    const tickPos = game ? game.tick - 1 + alpha : 0;
+    a.tickPos = game ? game.tick - 1 + alpha : 0;
     const bite = (lastNow - a.ateAt) / T.BITE_MS;
     a.bump = !dead && bite >= 0 && bite < 1 ? (a.gulpR > T.GULP ? 0.2 : 0.12) * Math.sin(bite * Math.PI) : 0;
+    for (let i = 0; i < n; i++) a.rad[i] = radius(i, n, a, a.tickPos);
+    fillsOf(s, a, now);
+    return a;
+  }
 
-    // Shadow, in one path.
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath();
-    for (let i = n - 1; i >= 0; i--) {
-      const r = radius(i, n, a, tickPos);
-      ctx.moveTo(pts[2 * i] + 2 + r, pts[2 * i + 1] + 4);
-      ctx.arc(pts[2 * i] + 2, pts[2 * i + 1] + 4, r, 0, TAU);
+  // Segment radius: a big head, a body that tapers to the tail, plus any gulp passing through.
+  function radius(i, n, a, tickPos) {
+    let r = i === 0 ? CELL * 0.54 * (1 + a.bump) : CELL * (0.44 - 0.1 * (i / (n > 1 ? n - 1 : 1)));
+    if (i > 0) {
+      for (let g = 0; g < 4; g++) {
+        const d = i - (tickPos - a.gulps[g]);
+        if (d > -a.gulpW && d < a.gulpW) r += CELL * a.gulpR * (1 - Math.abs(d) / a.gulpW);
+      }
     }
-    ctx.fill();
+    return r;
+  }
 
-    // People get a cream outline: a wider spine behind the body. Yours is bright,
-    // with a soft halo, so you find yourself at a glance; friends' is plainer.
-    if (isPlayer) {
+  const near = (u, v) => Math.abs(u - v) < 0.01;
+
+  // One straight piece of a band, half-width h, as a rectangle (pieces always
+  // run along the grid; anything else would be a bug, drawn as a line).
+  function piece(x1, y1, x2, y2, h) {
+    if (near(y1, y2)) { if (!near(x1, x2)) ctx.fillRect(Math.min(x1, x2), y1 - h, Math.abs(x2 - x1), 2 * h); }
+    else if (near(x1, x2)) ctx.fillRect(x1 - h, Math.min(y1, y2), 2 * h, Math.abs(y2 - y1));
+    else {
+      ctx.strokeStyle = ctx.fillStyle;
+      ctx.lineWidth = 2 * h;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    }
+  }
+
+  // The band from segment i to i + 1: through its corner cell, in two pieces.
+  function band(a, i, h) {
+    const p = a.pts, c = a.cor;
+    piece(p[2 * i], p[2 * i + 1], c[2 * i], c[2 * i + 1], h);
+    piece(c[2 * i], c[2 * i + 1], p[2 * i + 2], p[2 * i + 3], h);
+  }
+
+  // Does the band from i to i + 1 turn a corner (and need its outside rounded)?
+  function bends(a, i) {
+    const p = a.pts, c = a.cor;
+    const x1 = p[2 * i], y1 = p[2 * i + 1], cx = c[2 * i], cy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+    if ((near(x1, cx) && near(y1, cy)) || (near(x2, cx) && near(y2, cy))) return false;
+    return !(near(x1, cx) && near(cx, x2)) && !(near(y1, cy) && near(cy, y2));
+  }
+
+  // The body's outline shape, `grow` units bigger all round, in the current fill.
+  function silhouette(a, grow) {
+    for (let i = a.n - 2; i >= 0; i--) band(a, i, a.rad[i + 1] * 0.8 + grow);
+    for (let i = a.n - 1; i >= 0; i--) {
+      if (i < a.n - 1 && bends(a, i)) circle(a.cor[2 * i], a.cor[2 * i + 1], a.rad[i + 1] * 0.8 + grow);
+      circle(a.pts[2 * i], a.pts[2 * i + 1], a.rad[i] + grow);
+    }
+  }
+
+  // The path through every segment centre and corner, head to tail.
+  function spine(a) {
+    ctx.beginPath();
+    ctx.moveTo(a.pts[0], a.pts[1]);
+    for (let i = 1; i < a.n; i++) {
+      ctx.lineTo(a.cor[2 * i - 2], a.cor[2 * i - 1]);
+      ctx.lineTo(a.pts[2 * i], a.pts[2 * i + 1]);
+    }
+  }
+
+  // Pass 1, for every snake before any body: the shadow on the bark.
+  function drawShadow(a) {
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    for (let i = a.n - 1; i >= 0; i--) circle(a.pts[2 * i] + 2, a.pts[2 * i + 1] + 4, a.rad[i]);
+  }
+
+  // Pass 2: people's cream outline (yours bright with a soft halo, so you find
+  // yourself at a glance; friends' plainer), or a dark body's pale rim. Each is
+  // a slightly bigger copy of the body, so it follows the taper and every corner.
+  const FRIEND_OUTLINE = '#cdbd9f', RIM = '#9a8069';
+  function drawOutline(s, a) {
+    if (a.isPlayer) {
       const mine = s.id === viewerId;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
       if (mine) {
         ctx.strokeStyle = 'rgba(255,251,234,0.3)';
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         ctx.lineWidth = CELL * 1.34;
-        spine(n);
+        spine(a);
         ctx.stroke();
         ctx.fillStyle = 'rgba(255,251,234,0.3)';
-        circle(pts[0], pts[1], CELL * 0.78);
+        circle(a.pts[0], a.pts[1], CELL * 0.78);
       }
-      ctx.strokeStyle = mine ? '#fffef8' : 'rgba(246,236,210,0.72)';
-      ctx.lineWidth = CELL * (mine ? 1.06 : 0.94);
-      spine(n);
-      ctx.stroke();
-      ctx.fillStyle = ctx.strokeStyle;
-      circle(pts[0], pts[1], CELL * (mine ? 0.65 : 0.59) * (1 + a.bump));
+      ctx.fillStyle = mine ? '#fffef8' : FRIEND_OUTLINE;
+      silhouette(a, mine ? 3.5 : 2.5);
+    } else if (a.rim) {
+      ctx.fillStyle = RIM;
+      silhouette(a, 1.5);
     }
+  }
 
-    // Tail to head, so the head ends up on top.
-    ctx.lineCap = 'round';
+  // Pass 3: the body (bands, then circles tail to head, so the head ends up on
+  // top), its pattern and its face.
+  function drawBody(s, a, now, dead) {
+    const { n, pts, rad, fills, look, color } = a;
+    for (let i = n - 2; i >= 0; i--) { ctx.fillStyle = fills[i + 1]; band(a, i, rad[i + 1] * 0.8); }
     for (let i = n - 1; i >= 0; i--) {
-      const x = pts[2 * i], y = pts[2 * i + 1];
-      const r = radius(i, n, a, tickPos);
-      const fill = segmentFill(look, color, i, n, now, wild);
-      if (i < n - 1) { // band joining this segment to the one behind it
-        ctx.strokeStyle = segmentFill(look, color, i + 1, n, now, wild);
-        ctx.lineWidth = radius(i + 1, n, a, tickPos) * 1.6;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(pts[2 * i + 2], pts[2 * i + 3]);
-        ctx.stroke();
-      }
-      ctx.fillStyle = fill;
-      circle(x, y, r);
+      if (i < n - 1 && bends(a, i)) { ctx.fillStyle = fills[i + 1]; circle(a.cor[2 * i], a.cor[2 * i + 1], rad[i + 1] * 0.8); }
+      ctx.fillStyle = fills[i];
+      circle(pts[2 * i], pts[2 * i + 1], rad[i]);
     }
 
-    // Highlights in one path: a little roundness on every segment.
+    // A little roundness on every segment.
     ctx.fillStyle = 'rgba(255,255,255,0.18)';
-    ctx.beginPath();
-    for (let i = 0; i < n; i++) {
-      const r = radius(i, n, a, tickPos);
-      const hx = pts[2 * i] - r * 0.3, hy = pts[2 * i + 1] - r * 0.35;
-      ctx.moveTo(hx + r * 0.35, hy);
-      ctx.arc(hx, hy, r * 0.35, 0, TAU);
-    }
-    ctx.fill();
+    for (let i = 0; i < n; i++) circle(pts[2 * i] - rad[i] * 0.3, pts[2 * i + 1] - rad[i] * 0.35, rad[i] * 0.35);
 
-    // Body details, each in one batched stroke.
-    if (look === 'mason') {
-      ctx.strokeStyle = 'rgba(30,41,59,0.6)';
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
+    // Patterns. Each follows the skin (by segment), not the board.
+    if (look === 'mason') { // bricks: a mortar line across, the joints staggered
+      ctx.fillStyle = 'rgba(30,41,59,0.6)';
       for (let i = 1; i < n; i++) {
-        const x = pts[2 * i], y = pts[2 * i + 1], r = radius(i, n, a, tickPos);
-        const off = (s.body[i].x + s.body[i].y) % 2 ? -r * 0.35 : r * 0.35;
-        const ch = 0.937 * r; // half-chord of the circle at ±0.35r, so lines end on the edge
-        ctx.moveTo(x - r, y); ctx.lineTo(x + r, y);
-        ctx.moveTo(x + off, y - ch); ctx.lineTo(x + off, y);
-        ctx.moveTo(x - off, y); ctx.lineTo(x - off, y + ch);
+        const x = pts[2 * i], y = pts[2 * i + 1], r = rad[i];
+        const off = i % 2 ? -r * 0.35 : r * 0.35;
+        const ch = 0.937 * r; // half-chord of the circle at ±0.35r, so joints end on the edge
+        ctx.fillRect(x - r, y - 0.8, 2 * r, 1.6);
+        ctx.fillRect(x + off - 0.8, y - ch, 1.6, ch - 0.8);
+        ctx.fillRect(x - off - 0.8, y + 0.8, 1.6, ch - 0.8);
       }
-      ctx.stroke();
     } else if (look === 'colonist') {
       ctx.strokeStyle = 'rgba(255,255,255,0.9)';
       ctx.lineWidth = 2.2;
+      ctx.lineCap = 'butt';
       ctx.beginPath();
       for (let i = 1; i < n; i++) {
-        const x = pts[2 * i], y = pts[2 * i + 1], d = radius(i, n, a, tickPos) * 0.62;
+        const x = pts[2 * i], y = pts[2 * i + 1], d = rad[i] * 0.62;
         ctx.moveTo(x - d, y - d); ctx.lineTo(x + d, y + d);
         ctx.moveTo(x + d, y - d); ctx.lineTo(x - d, y + d);
-      }
-      ctx.stroke();
-    }
-    if (darkBody || look === 'vulture') { // a pale rim so dark bodies read on the bark
-      ctx.strokeStyle = 'rgba(255,240,220,0.38)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      for (let i = look === 'vulture' ? 2 : 0; i < n; i++) {
-        const r = radius(i, n, a, tickPos) - 1;
-        ctx.moveTo(pts[2 * i] + r, pts[2 * i + 1]);
-        ctx.arc(pts[2 * i], pts[2 * i + 1], r, 0, TAU);
       }
       ctx.stroke();
     }
@@ -698,7 +794,7 @@ window.SnakeRender = (() => {
       ctx.setLineDash(DASH);
       ctx.beginPath();
       for (let i = 1; i < n; i++) {
-        const r = radius(i, n, a, tickPos) - 2;
+        const r = rad[i] - 2;
         ctx.moveTo(pts[2 * i] + r, pts[2 * i + 1]);
         ctx.arc(pts[2 * i], pts[2 * i + 1], r, 0, TAU);
       }
@@ -709,7 +805,7 @@ window.SnakeRender = (() => {
       ctx.strokeStyle = '#ec4899';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(pts[0], pts[1], radius(0, n, a, tickPos) + 2, 0, TAU);
+      ctx.arc(pts[0], pts[1], rad[0] + 2, 0, TAU);
       ctx.stroke();
     }
 
@@ -726,7 +822,7 @@ window.SnakeRender = (() => {
     ctx.translate(pts[0], pts[1]);
     ctx.rotate(Math.atan2(s.dir.y, s.dir.x));
     ctx.scale(1.1 * (1 + a.bump), 1.1 * (1 + a.bump));
-    if (isPlayer) drawPlayerFace(s, a, now, blinking);
+    if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
     else drawFace(s, look, color, blinking, a);
     ctx.restore();
 
@@ -735,7 +831,7 @@ window.SnakeRender = (() => {
       const age = game.time - s.memory.moodChangedAt;
       if (age < 900) {
         ctx.strokeStyle = color;
-        ctx.globalAlpha = 1 - age / 900;
+        ctx.globalAlpha *= 1 - age / 900;
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(pts[0], pts[1], CELL * (0.6 + 1.6 * age / 900), 0, TAU);
@@ -746,23 +842,14 @@ window.SnakeRender = (() => {
   }
   const DASH = [3, 3], NO_DASH = [];
 
-  // Segment radius: a big head, a body that tapers to the tail, plus any gulp passing through.
-  function radius(i, n, a, tickPos) {
-    let r = i === 0 ? CELL * 0.54 * (1 + a.bump) : CELL * (0.44 - 0.1 * (i / (n > 1 ? n - 1 : 1)));
-    if (i > 0) {
-      for (let g = 0; g < 4; g++) {
-        const d = i - (tickPos - a.gulps[g]);
-        if (d > -a.gulpW && d < a.gulpW) r += CELL * a.gulpR * (1 - Math.abs(d) / a.gulpW);
-      }
-    }
-    return r;
-  }
-
-  // The path through all segment centers, head to tail.
-  function spine(n) {
-    ctx.beginPath();
-    ctx.moveTo(pts[0], pts[1]);
-    for (let i = 1; i < n; i++) ctx.lineTo(pts[2 * i], pts[2 * i + 1]);
+  // The living snakes, in passes, so no snake's shadow falls on another's body.
+  const live = [];
+  function drawSnakes(alpha, now) {
+    live.length = 0;
+    for (const s of game.snakes) if (s.alive) live.push(s);
+    for (const s of live) drawShadow(prepare(s, alpha, now, false));
+    for (const s of live) drawOutline(s, animOf(s, now));
+    for (const s of live) drawBody(s, animOf(s, now), now, false);
   }
 
   // ---------------------------------------------------------------- faces
@@ -778,7 +865,7 @@ window.SnakeRender = (() => {
     ctx.lineWidth = c * 0.05;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    for (const y of [-0.2, 0.2]) {
+    for (let y = -0.2; y < 0.3; y += 0.4) {
       ctx.moveTo(c * 0.14, c * (y - r));
       ctx.quadraticCurveTo(c * (0.14 + r * 0.9), c * y, c * 0.14, c * (y + r));
     }
@@ -835,6 +922,12 @@ window.SnakeRender = (() => {
   const EAR_IN = [-0.28, 0.18, -0.12, 0.38, -0.38, 0.42];
   const JESTER = [-0.1, 0.3, -0.55, 0.62, -0.32, 0.05];
   const WHISKERS = [0.3, 0.45, 0.6];
+  // Colonist's tricorn: three corners (one forward), the brim wider than the head.
+  const TRI_F = [0.1, 0], TRI_L = [-0.5, -0.6], TRI_R = [-0.5, 0.6], TRI_BOW = 0.1;
+  function tricornSide(c, a, b) { // each side's middle pulled in toward the crown
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    ctx.quadraticCurveTo(c * (mx + (-0.28 - mx) * TRI_BOW * 2.4), c * (my * (1 - TRI_BOW * 2.4)), c * b[0], c * b[1]);
+  }
 
   // Your face: white eyes whose pupils glance toward the nearest food, a
   // mouth that opens for a bite, a blink now and then, and a forked tongue flick.
@@ -956,14 +1049,9 @@ window.SnakeRender = (() => {
         break;
       case 'colonist': { // a redcoat's tricorn from above: three corners (one forward), brims bowing in, thin gold lace, a raised crown
         // The brim: three rounded corners joined by sides that curve inward.
-        const F = [0.1, 0], L = [-0.5, -0.6], R = [-0.5, 0.6], bow = 0.1; // the brim is wider than the head
-        const side = (a, b) => {
-          const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2; // pull each side's middle in toward the crown
-          ctx.quadraticCurveTo(c * (mx + (-0.28 - mx) * bow * 2.4), c * (my * (1 - bow * 2.4)), c * b[0], c * b[1]);
-        };
         ctx.beginPath();
-        ctx.moveTo(c * F[0], c * F[1]);
-        side(F, L); side(L, R); side(R, F);
+        ctx.moveTo(c * TRI_F[0], c * TRI_F[1]);
+        tricornSide(c, TRI_F, TRI_L); tricornSide(c, TRI_L, TRI_R); tricornSide(c, TRI_R, TRI_F);
         ctx.closePath();
         ctx.lineJoin = 'round';
         ctx.fillStyle = '#1c1917';
@@ -1029,12 +1117,12 @@ window.SnakeRender = (() => {
         ctx.beginPath();
         ctx.arc(0, 0, c * 0.36, Math.PI * 0.52, Math.PI * 1.48);
         ctx.stroke();
-        for (const side of [-1, 1]) {
+        for (let side = -1; side <= 1; side += 2) {
           for (let k = 0; k < 4; k++) {
             const ang = Math.PI + side * (0.12 + k * 0.12) * Math.PI;
             const ex = Math.cos(ang) * c * 0.36, ey = Math.sin(ang) * c * 0.36;
             const along = ang + side * Math.PI / 2; // the way the branch grows (toward the front)
-            for (const tilt of [-0.6, 0.6]) { // a pair of leaves either side of the stem
+            for (let tilt = -0.6; tilt < 1; tilt += 1.2) { // a pair of leaves either side of the stem
               const dir = along + tilt;
               ctx.fillStyle = tilt < 0 ? '#65a30d' : '#4d7c0f';
               ctx.beginPath();
@@ -1237,7 +1325,8 @@ window.SnakeRender = (() => {
 
   // alpha: how far the current tick has played out (0..1).
   function frame(alpha, now) {
-    if (!game) return;
+    if (!game || !sized) return;
+    if (!staticLayer) resetStatic();
     const dt = lastNow ? Math.min(64, now - lastNow) : 16;
     lastNow = now;
     syncHoles();
@@ -1303,7 +1392,7 @@ window.SnakeRender = (() => {
     }
 
     if (corpses.length) drawCorpses(now);
-    for (const s of game.snakes) if (s.alive) drawSnake(s, alpha, now, false);
+    drawSnakes(alpha, now);
     drawParticles(dt);
     drawFloaters(dt);
   }
@@ -1384,8 +1473,13 @@ window.SnakeRender = (() => {
 
   function drawCorpses(now) {
     for (const c of corpses) {
-      ctx.globalAlpha = c.fade ? Math.max(0, 1 - (now - c.until) / FADE_MS) : 1;
-      drawSnake(c.s, 1, now, true);
+      const opacity = c.fade ? Math.max(0, 1 - (now - c.until) / FADE_MS) : 1;
+      ctx.globalAlpha = opacity;
+      const a = prepare(c.s, 1, now, true);
+      drawShadow(a);
+      drawOutline(c.s, a);
+      drawBody(c.s, a, now, true);
+      ctx.globalAlpha = opacity; // (a face may have reset it)
     }
     ctx.globalAlpha = 1;
   }
@@ -1415,7 +1509,8 @@ window.SnakeRender = (() => {
     const estimate = Math.round(cssPx * dpr);
     const exact = devicePx && Math.abs(devicePx - estimate) <= 2 ? devicePx : estimate;
     const target = Math.max(GRID, dpr > 3 ? Math.round(cssPx * 3) : exact);
-    if (target === canvas.width) return false;
+    if (target === canvas.width && sized) return false;
+    sized = true;
     canvas.width = canvas.height = target;
     k = target / SIZE;
     barkLayer = null;
@@ -1429,9 +1524,9 @@ window.SnakeRender = (() => {
     canvas = opts.canvas;
     ctx = canvas.getContext('2d', { alpha: false });
     PERSONAS = opts.personas;
-    PLAYER_COLOR = opts.playerColor;
     k = canvas.width / SIZE;
-    resetStatic();
+    // Text sprites drawn before the font arrived get redrawn with it.
+    document.fonts?.ready.then(() => sprites.delete('float'));
   }
 
   function setGame(g) {

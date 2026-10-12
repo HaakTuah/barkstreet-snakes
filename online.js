@@ -118,7 +118,7 @@ window.SnakeOnline = (() => {
       }
       for (const k of MEMORY) {
         if (memory && memory[k] != null) s.memory[k] = memory[k];
-        else delete s.memory[k];
+        else if (s.memory[k] != null) s.memory[k] = null; // (null, not delete: the renderer reads these every frame)
       }
     });
     game.food = msg.f.map(([x, y, kind, expires, color, dir, px, py, movedAt, scared]) => {

@@ -160,7 +160,8 @@
       // Alone, your death stops the round for a moment. Online it never stops:
       // the round is everyone's, and only your card waits.
       const frozen = () => !online && now < freezeUntil;
-      if (pendingCard && now >= freezeUntil) { const c = pendingCard; pendingCard = null; showCard(c); }
+      let busy = false; // a frame that ticks or shows a card has done enough: thinking waits a frame
+      if (pendingCard && now >= freezeUntil) { const c = pendingCard; pendingCard = null; showCard(c); busy = true; }
       if (!frozen()) {
         acc += dt;
         let steps = 0;
@@ -172,7 +173,7 @@
           steps++;
         }
         if (steps === T.MAX_CATCHUP) acc = Math.min(acc, tickLen); // after a long stall, don't race to catch up
-        think(dt);
+        if (!steps && !busy) think(dt);
       }
       // Between the last two cells. While frozen, `acc` stands still, so the
       // board holds the very moment of the crash, with nothing jumping ahead.
@@ -528,10 +529,10 @@
   // Screen reader announcements (a permanently rendered, visually hidden region).
   function say(text) { announcer.textContent = text; }
 
+  const BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.35)', color: '#fde68a', offset: 0.4 }, { transform: 'scale(1)' }];
+  const BUMP_TIMING = { duration: 280, easing: 'ease-out' };
   function bump(el) {
-    el.classList.remove('bump');
-    void el.offsetWidth; // restart the CSS animation (a rare, deliberate reflow on a bite)
-    el.classList.add('bump');
+    if (!reducedMQ.matches) el.animate?.(BUMP, BUMP_TIMING);
   }
 
   // ----------------------------------------------------------- the cards
@@ -1331,7 +1332,7 @@
 
   // ------------------------------------------------- size and motion
 
-  R.init({ canvas, personas: PERSONAS, playerColor: PLAYER_COLOR });
+  R.init({ canvas, personas: PERSONAS });
   Chatter.init({ boardEl, logEl: chatlogEl });
 
   const sizer = new ResizeObserver(entries => {
@@ -1385,11 +1386,20 @@
 
   // ---------------------------------------------------------- start
 
+  // The first decision a brain makes runs cold (the JIT hasn't seen its
+  // paths yet), so each rival makes one practice decision, on a scratch
+  // memory, while the start card is up.
+  function warmUp() {
+    if (state !== 'ready' || !game) return;
+    for (const s of game.snakes) if (s.persona) SnakeAI.decide(E.aiView(game, s), s.persona, {});
+  }
+
   // The start card shows this round's rivals.
   function ready(personas) {
     newGame({ personas });
     state = 'ready';
     showCard({ title: 'Bark & Bite', text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true });
+    setTimeout(warmUp, 400);
   }
 
   // The controls under the board (online there's no napping or starting over).

@@ -147,8 +147,7 @@ h1 .amp { color: var(--honey); }
 
 .hud { display: flex; align-items: center; gap: 8px; color: var(--muted); }
 .hud .stat strong { display: inline-block; min-width: 2ch; color: var(--cream); font-variant-numeric: tabular-nums; } /* room for two digits, so a growing score never reflows the header */
-.bump { animation: bump 0.28s ease-out; }
-@keyframes bump { 40% { transform: scale(1.35); color: var(--honey); } }
+.hud .stat strong { transform-origin: left center; } /* its pop (snake.js bump) grows away from the label */
 
 /* -------------------------------------------- the snakes' name tags */
 
@@ -205,15 +204,25 @@ h1 .amp { color: var(--honey); }
   height: 100%;
   border-radius: 999px;
   background: var(--leaf);
-  transform-origin: left;
-  transition: transform 0.3s linear;
+  transform-origin: left; /* (1% steps look smooth; a transition would restyle the page every frame) */
 }
 .scoreboard li.starving .hunger i { background: var(--berry); }
-.scoreboard li.starving { animation: rumble 0.6s ease-in-out infinite alternate; }
-@keyframes rumble { to { box-shadow: 0 2px 0 var(--parchment-2), 0 0 0 2px rgba(220, 38, 38, 0.5); } }
+/* Starving: a berry ring pulses around the tag (opacity only, so nothing repaints). */
+.scoreboard li::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.6);
+  opacity: 0;
+  pointer-events: none;
+}
+.scoreboard li.starving::after { animation: rumble 0.6s ease-in-out infinite alternate; }
+@keyframes rumble { to { opacity: 1; } }
 
 /* Out of the round: the tag fades, the words stay readable. */
-.scoreboard li.dead { background: rgba(246, 236, 210, 0.55); animation: none; }
+.scoreboard li.dead { background: rgba(246, 236, 210, 0.55); }
+.scoreboard li.dead::after { animation: none; opacity: 0; }
 .scoreboard li.dead .name { text-decoration: line-through; }
 .scoreboard li.dead .dot { opacity: 0.5; }
 
@@ -622,7 +631,8 @@ button.link:active { transform: none; }
 
 /* Reduced motion: no pops, rises or rumbles; the information stays. */
 @media (prefers-reduced-motion: reduce) {
-  .card, .overlay, .badge, .toast, .bump, .records-card, .scoreboard li.starving { animation: none !important; }
+  .card, .overlay, .badge, .toast, .records-card, .scoreboard li.starving::after { animation: none !important; }
+  .scoreboard li.starving::after { opacity: 1; }
   .scoreboard li.starving { box-shadow: 0 2px 0 var(--parchment-2), 0 0 0 2px rgba(220, 38, 38, 0.5); }
   button, button:active { transition: none; transform: none; }
   .scoreboard .hunger i { transition: none; }
