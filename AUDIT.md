@@ -278,3 +278,12 @@ Everything marked **fix** above was fixed, except where noted here.
     - a tapped rival's line covered "Play with friends" (it now shows inside the card);
     - Capricious's tag dot borrowed its mood's colour (it keeps its pink ring);
     - the room code field turned a pasted invite link into "https" (a pasted link now works, and placeholders look like examples).
+- **Round three:** a regression-focused check of the two rounds' changes. All fixed in "Critique round three"; checking those fixes directly turned up nothing further, so the loop stopped there.
+  - **Regressions from round two:**
+    - a tapped rival's line went into a hint line that the smallest boards hide (it now stands in for the card's main text, visible everywhere);
+    - the name field ignored held keys like Backspace (now only a key whose first press it swallowed).
+  - **Smaller items:**
+    - the 320×460 start card hid its third rival behind the buttons;
+    - the wall-hit spark sat on the face (it now straddles the wall);
+    - a banner re-ran its drop-in whenever it moved back;
+    - the Hall of Fame could scroll sideways at 320 px with a long name.

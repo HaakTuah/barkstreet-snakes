@@ -322,7 +322,7 @@ canvas {
 .card p[hidden] { display: none; }
 .flavor { font-style: italic; color: var(--ink) !important; }
 .hint { margin: 12px 0 0 !important; font-size: 0.8rem; }
-.hint.said { color: var(--ink) !important; font-style: italic; } /* a tapped rival's line, in the hint's place */
+.card p.said { color: var(--ink); font-style: italic; } /* a tapped rival's line, standing in for the card's words */
 
 /* The new-best moment: a honey seal on the card. */
 .badge {
@@ -473,7 +473,8 @@ canvas {
 /* A head passing under the banner: it moves to the board's foot (or, if a
    head is there too, fades), so it never hides the board. A tapped rival's
    blurb shows over a card, at the foot too. */
-.toast.low { top: auto; bottom: 12px; animation: none; }
+.toast.low { top: auto; bottom: 12px; }
+.toast.settled { animation: none; } /* (dropped in once; moving it doesn't replay that) */
 .toast.under { opacity: 0.3; }
 @keyframes drop { from { transform: translate(-50%, -10px); opacity: 0; } }
 
@@ -682,6 +683,8 @@ button.link:active { transform: none; }
   .buttons { gap: 8px; }
   .buttons button:not(.text-button) { flex: 1 1 0; min-width: 0; padding: 7px 8px; font-size: 0.85rem; line-height: 1.15; }
   .name-row { font-size: 0.82rem; }
+  .buttons .text-button { min-height: 30px; padding-block: 2px; }
+  .card p { font-size: 0.85rem; margin-bottom: 6px; }
 }
 
 @media (max-width: 440px) {
@@ -708,6 +711,10 @@ button.link:active { transform: none; }
   .opponents li { margin: 2px 0; }
   .opponents .blurb { display: none; }
   .scores-table .date { display: none; }
+  .scores-table { table-layout: fixed; } /* long names get an ellipsis instead of pushing the table wide */
+  .scores-table th:nth-child(1) { width: 24px; }
+  .scores-table th:nth-child(3) { width: 74px; }
+  .scores-table th:nth-child(4), .scores-table th:nth-child(5) { width: 46px; }
   .hud { gap: 6px; }
   .scores-table td, .scores-table th { padding-inline: 5px; }
   .bar-row { grid-template-columns: 96px 1fr 28px; }

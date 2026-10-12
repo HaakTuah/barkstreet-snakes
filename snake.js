@@ -109,7 +109,7 @@
   let shownCard = null, napOver = null; // the card on screen, and the one a nap covered
   let firstCard = true; // (focus on page load goes to the card, not silently to Play)
   let nameInvite = false, nameFocusAt = 0; // the name field is waiting to be offered; when it took focus
-  const keysHeld = new Set();
+  const keysHeld = new Set(), swallowed = new Set(); // keys down now; keys the name field is ignoring until released
   function inviteName() {
     nameInvite = false;
     if (nameRow.hidden || overlay.classList.contains('hidden')) return;
@@ -119,6 +119,7 @@
   document.addEventListener('keydown', e => keysHeld.add(e.code || e.key), true);
   document.addEventListener('keyup', e => {
     keysHeld.delete(e.code || e.key);
+    swallowed.delete(e.code);
     if (nameInvite && !keysHeld.size) setTimeout(() => { if (nameInvite && !keysHeld.size) inviteName(); }, 250);
   }, true);
   window.addEventListener('blur', () => keysHeld.clear());
@@ -573,6 +574,7 @@
   }
   function toast(text, ms = 2800) {
     toastChars = text.length;
+    toastEl.classList.remove('settled'); // (a new banner drops in)
     toastEl.textContent = text;
     toastEl.hidden = false;
     say(text);
@@ -580,6 +582,7 @@
     toastTimer = setTimeout(hideToast, ms);
   }
   function hideToast() { clearTimeout(toastTimer); toastEl.hidden = true; }
+  toastEl.addEventListener('animationend', () => toastEl.classList.add('settled'));
 
   // Screen reader announcements (a permanently rendered, visually hidden region).
   function say(text) { announcer.textContent = text; }
@@ -605,7 +608,9 @@
     flavorEl.textContent = card.flavor || '';
     flavorEl.hidden = !card.flavor;
     opponentsEl.hidden = !card.opponents;
-    restoreHint(); // (a rival's line may have been showing in its place)
+    hintEl.hidden = state !== 'ready';
+    clearTimeout(blurbTimer);
+    cardText.classList.remove('said');
     helpEl.hidden = state === 'ready'; // the start card already shows the controls
     startBtn.hidden = !card.primary;
     if (card.primary) startBtn.textContent = card.primary;
@@ -731,17 +736,18 @@
     if (!blurb || state === 'running') return;
     if (overlay.classList.contains('hidden')) return toast(blurb, 3200);
     clearTimeout(blurbTimer);
-    hintEl.textContent = blurb;
-    hintEl.hidden = false;
-    hintEl.classList.add('said');
+    cardText.textContent = blurb;
+    cardText.hidden = false;
+    cardText.classList.add('said');
     say(blurb);
-    blurbTimer = setTimeout(restoreHint, 3200);
+    blurbTimer = setTimeout(restoreText, 3200);
   });
-  function restoreHint() {
+  // The card's own words again, after a rival's line stood in for them.
+  function restoreText() {
     clearTimeout(blurbTimer);
-    hintEl.classList.remove('said');
-    setHint(hintEl, touchFirst ? FLAVOR.hintTouch : FLAVOR.hintStart);
-    hintEl.hidden = state !== 'ready';
+    cardText.classList.remove('said');
+    cardText.textContent = shownCard?.text || '';
+    cardText.hidden = !shownCard?.text;
   }
 
   function updateHud(force = false) {
@@ -859,7 +865,7 @@
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.target === nameInput) {
       // (just offered, or a key held down: not typing yet)
-      if (e.repeat || performance.now() - nameFocusAt < 400) { e.preventDefault(); return; }
+      if (performance.now() - nameFocusAt < 400 || (e.repeat && swallowed.has(e.code))) { swallowed.add(e.code); e.preventDefault(); return; }
       if (e.key === 'Enter') { e.preventDefault(); nameInput.blur(); startBtn.focus({ preventScroll: true }); }
       return;
     }

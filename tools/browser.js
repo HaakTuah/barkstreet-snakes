@@ -118,7 +118,7 @@ async function launch() {
 // real key events (one decision a tick, with a rival's brain), and a waiter.
 const HELPERS = `
 window.pilot = { on: false, persona: 'gobbler', crash: false, tick: -1 };
-window.press = key => document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+window.press = key => { document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true })); document.dispatchEvent(new KeyboardEvent('keyup', { key, bubbles: true })); };
 setInterval(() => {
   if (!pilot.on || SnakeDebug.state() !== 'running') return;
   const g = SnakeDebug.game(), me = g.snakes[0];
