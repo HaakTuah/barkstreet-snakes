@@ -212,10 +212,11 @@ window.SnakeRecords = (() => {
       return;
     }
     const fmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
-    const rows = list.map((e, i) => el('tr', { className: [e.id === highlightId && 'highlight', e.ai && 'ai', e.friend && 'friend'].filter(Boolean).join(' ') },
+    const rows = list.map((e, i) => el('tr', { ...(e.id === highlightId && { ariaCurrent: 'true' }), className: [e.id === highlightId && 'highlight', e.ai && 'ai', e.friend && 'friend'].filter(Boolean).join(' ') },
       el('td', { className: 'num', textContent: i + 1 }),
       el('td', { className: 'name', title: e.watched ? `${e.name} (a watched round)` : e.friend ? `${e.name} (a friend)` : e.name },
-        dot(e.ai || e.friend ? e.color : playerColor), e.name, ...(e.friend ? [el('span', { className: 'who', textContent: 'friend' })] : [])),
+        dot(e.ai || e.friend ? e.color : playerColor), e.name, ...(e.friend ? [el('span', { className: 'who', textContent: 'friend' })] : []),
+        ...(e.id === highlightId ? [el('span', { className: 'who', textContent: 'this round' })] : [])),
       el('td', { className: e.won ? 'won' : '', textContent: placeLabel(e) }),
       el('td', { className: 'num', textContent: e.survived ? clock(e.survived) : '–' }),
       el('td', { className: 'num', textContent: e.eaten }),

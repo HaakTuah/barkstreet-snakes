@@ -107,6 +107,7 @@
   let beatsLeft = 0, beatTimer = 0;
   let freezeUntil = 0, pendingCard = null, cardAt = 0; // times on the frame clock (rAF timestamps)
   let shownCard = null, napOver = null; // the card on screen, and the one a nap covered
+  let firstCard = true; // (focus on page load goes to the card, not silently to Play)
   let thinkQueue = [];
   let best = Records.getBest();
   let boardPx = 0; // the board's CSS width, kept by a ResizeObserver (no layout reads in the loop)
@@ -613,7 +614,9 @@
     // their keyboard popped up over the card.
     if (document.activeElement !== nameInput) {
       const invite = !nameRow.hidden && !touchFirst && !Records.hasName();
-      (invite ? nameInput : card.primary ? startBtn : card.secondary ? watchBtn : overlay.querySelector('.card')).focus({ preventScroll: true });
+      const cardEl = overlay.querySelector('.card');
+      (firstCard ? cardEl : invite ? nameInput : card.primary ? startBtn : card.secondary ? watchBtn : cardEl).focus({ preventScroll: true });
+      firstCard = false;
     }
     updateControls();
   }
@@ -671,13 +674,21 @@
     tagsEl.textContent = '';
     for (const s of game.snakes) {
       const li = document.createElement('li');
-      li.innerHTML = '<span class="dot"></span><span class="name"></span><span class="len"></span><span class="hunger"><i></i></span>';
+      li.innerHTML = '<span class="dot"></span><span class="name"></span><span class="sr-only"></span><span class="len"></span><span class="hunger"><i></i></span>';
       li.querySelector('.name').textContent = isMe(s) ? 'You' : s.name;
       li.title = s.persona ? `${s.name}: ${s.persona.blurb}` : isMe(s) ? 'You' : `${s.name}, a friend`;
+      if (s.persona) li.dataset.blurb = `${s.name}: ${s.persona.blurb}`; // tapped (phones have no tooltips), it says how it plays
+      const mark = R.markOf(s.color);
+      if (s.isPlayer && mark) li.querySelector('.dot').dataset.mark = mark;
       tagsEl.append(li);
-      s.tag = { li, dot: li.querySelector('.dot'), len: li.querySelector('.len'), bar: li.querySelector('.hunger i'), last: {} };
+      s.tag = { li, dot: li.querySelector('.dot'), state: li.querySelector('.sr-only'), len: li.querySelector('.len'), bar: li.querySelector('.hunger i'), last: {} };
     }
   }
+
+  tagsEl.addEventListener('click', e => {
+    const blurb = e.target.closest?.('li')?.dataset.blurb;
+    if (blurb && state !== 'running') toast(blurb, 3200);
+  });
 
   function updateHud(force = false) {
     const score = player()?.eaten ?? 0;
@@ -697,6 +708,8 @@
       const starving = s.alive && full < 0.3;
       if (force || last.dot !== dot) { t.dot.style.background = dot; last.dot = dot; }
       if (force || last.len !== len) { t.len.textContent = len; last.len = len; }
+      const said = !s.alive ? ', ' : starving ? ', starving, length ' : ', length '; // (for screen readers)
+      if (force || last.said !== said) { t.state.textContent = said; last.said = said; }
       if (force || last.bar !== bar) { t.bar.style.transform = `scaleX(${bar / 100})`; last.bar = bar; }
       if (force || last.alive !== s.alive) { t.li.classList.toggle('dead', !s.alive); last.alive = s.alive; }
       if (force || last.starving !== starving) { t.li.classList.toggle('starving', starving); last.starving = starving; }
@@ -792,6 +805,7 @@
       if (e.key === 'Enter') { e.preventDefault(); nameInput.blur(); startBtn.focus({ preventScroll: true }); }
       return;
     }
+    if (e.key === 'Escape' && state === 'lobby' && !online) { backToStart(); return; } // (even from the name or code field)
     if (e.target.closest?.('input, textarea')) return; // typing a name or a room code
     if (!recordsEl.hidden) {
       if (e.key === 'Escape' || e.key === 'h' || e.key === 'H') { e.preventDefault(); closeRecords(); }
@@ -807,6 +821,8 @@
     if (e.key === ' ' || e.key === 'p' || e.key === 'P') { e.preventDefault(); napKey(); }
     else if (e.key === 'Enter' || e.key === 'r' || e.key === 'R') { e.preventDefault(); start(); }
     else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); openRecords(); }
+    else if (e.key === 'Escape' && state === 'paused') resume();
+    else if (e.key === 'Escape' && state === 'lobby' && !online) backToStart();
     else if (e.key === 'm' || e.key === 'M') toggleMute();
     else if (e.key === 'n' || e.key === 'N') toggleMusic();
     else if ((e.key === '1' || e.key === '2' || e.key === '3') && !speedEl.hidden) setSpeed([1, 2, 4][Number(e.key) - 1]);
@@ -1015,6 +1031,7 @@
       const label = document.createElement('span');
       if (p) {
         dot.style.background = p.color;
+        if (R.markOf(p.color)) dot.dataset.mark = R.markOf(p.color);
         label.textContent = p.name;
         const tag = document.createElement('span');
         tag.className = 'tag';
@@ -1382,6 +1399,12 @@
   });
   // The device-pixel box also reports browser zoom; older browsers get the CSS box.
   try { sizer.observe(canvas, { box: 'device-pixel-content-box' }); } catch { sizer.observe(canvas); }
+  // (Browsers without the device-pixel box don't report a density change on
+  // its own, say moving to another monitor, so listen for that too.)
+  (function watchDensity() {
+    const mq = matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`);
+    mq.addEventListener?.('change', () => { if (boardPx) { R.resize(boardPx); dirty = true; } watchDensity(); }, { once: true });
+  })();
 
   const applyMotion = () => R.setReducedMotion(reducedMQ.matches);
   reducedMQ.addEventListener?.('change', applyMotion);

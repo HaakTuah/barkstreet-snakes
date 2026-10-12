@@ -752,6 +752,10 @@ window.SnakeRender = (() => {
   // yourself at a glance; friends' plainer), or a dark body's pale rim. Each is
   // a slightly bigger copy of the body, so it follows the taper and every corner.
   const FRIEND_OUTLINE = '#cdbd9f', RIM = '#9a8069';
+  // People share one face, so online seats differ by a marking as well as a
+  // colour (lavender and sky look alike to many colour-blind players).
+  const MARKS = { '#fde047': 'spots', '#c4b5fd': 'rings', '#7dd3fc': 'dots' };
+  const markOf = color => MARKS[color] || '';
   function drawOutline(s, a) {
     if (a.isPlayer) {
       const mine = s.id === viewerId;
@@ -789,6 +793,23 @@ window.SnakeRender = (() => {
     for (let i = 0; i < n; i++) circle(pts[2 * i] - rad[i] * 0.3, pts[2 * i + 1] - rad[i] * 0.35, rad[i] * 0.35);
 
     // Patterns. Each follows the skin (by segment), not the board.
+    if (a.isPlayer) {
+      const mark = MARKS[color];
+      if (mark === 'rings') {
+        ctx.strokeStyle = 'rgba(58,38,20,0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 1; i < n; i++) { const r = rad[i] * 0.55; ctx.moveTo(pts[2 * i] + r, pts[2 * i + 1]); ctx.arc(pts[2 * i], pts[2 * i + 1], r, 0, TAU); }
+        ctx.stroke();
+      } else if (mark) {
+        ctx.fillStyle = 'rgba(58,38,20,0.45)';
+        for (let i = 1; i < n; i++) {
+          const x = pts[2 * i], y = pts[2 * i + 1], r = rad[i];
+          if (mark === 'dots') circle(x, y, r * 0.3);
+          else { circle(x - r * 0.38, y + r * 0.12, r * 0.17); circle(x + r * 0.38, y - r * 0.12, r * 0.17); }
+        }
+      }
+    }
     if (look === 'mason') { // bricks: a mortar line across, the joints staggered
       ctx.fillStyle = 'rgba(30,41,59,0.6)';
       for (let i = 1; i < n; i++) {
@@ -1532,12 +1553,14 @@ window.SnakeRender = (() => {
   // cssPx comes from a ResizeObserver, so no layout is read here.
   // The backing store matches the device pixels the canvas covers exactly, so
   // the browser never resamples it (devicePx comes from the ResizeObserver
-  // where supported). Very dense screens are capped at 3x for speed.
+  // where supported). It's capped at MAX_BACKING pixels across (a large board
+  // on a dense screen), not at a density, so small dense phones stay crisp.
+  const MAX_BACKING = 2048;
   function resize(cssPx, devicePx) {
     const dpr = window.devicePixelRatio || 1;
     const estimate = Math.round(cssPx * dpr);
     const exact = devicePx && Math.abs(devicePx - estimate) <= 2 ? devicePx : estimate;
-    const target = Math.max(GRID, dpr > 3 ? Math.round(cssPx * 3) : exact);
+    const target = Math.max(GRID, Math.min(MAX_BACKING, exact));
     if (target === canvas.width && sized) return false;
     sized = true;
     devPerCss = target / cssPx;
@@ -1570,7 +1593,7 @@ window.SnakeRender = (() => {
   }
 
   return {
-    init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, lookOf,
+    init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, markOf,
     holding: () => deaths.length > 0 || corpses.length > 0,
     setViewer(id) { viewerId = id; },
     setReducedMotion(v) { reduced = v; },

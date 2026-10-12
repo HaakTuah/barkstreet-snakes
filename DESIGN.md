@@ -122,6 +122,7 @@ One treatment, used everywhere:
 | Gentle difficulty | Tick 120 ms → 90 ms over 2 minutes; the first 3 ticks of a round are eased (170 → 120 ms) so the opening is forgiving |
 | Touch precision | A swipe registers once the finger has travelled half a cell (at least 12 px, about 3 mm, against finger jitter), without lifting; one touch can chain several turns. **During a round a swipe works anywhere on the screen**, including over the countdown, and the page never scrolls or refreshes |
 | Never a dead moment | Every key in every state does something visible, or is documented as ignored (arrows while napping or on a round-over card). Space and Enter always mean nap and start over, unless a card or dialog button has keyboard focus |
+| Rivals explained everywhere | Desktop cards list each rival with a line on how it plays; on small boards the card lists names only, and tapping a rival's tag above the board shows its line (phones have no tooltips) |
 | The board fits | On every screen from a 320×460 phone to a 1280×720 laptop, the whole board and the card's buttons are visible without scrolling; wide, short screens put the board beside the scores |
 
 ## The round's arc
@@ -168,7 +169,7 @@ Friends-only rooms, peer to peer, so it stays a static site with nothing to depl
 - **What changes online:** no napping, no countdown skipping, no watching speeds; your Hall of Fame and stats keep only your own result; chatter is the host's, passed on, so everyone sees the same lines.
 - **Connecting:** PeerJS (from cdnjs with an integrity hash, loaded only when someone opens Play with friends) and its free public broker introduce the browsers; STUN finds a route for most networks. Strict ones need a relay (TURN), which needs a signup, so it's left as a marked spot in `net.js`.
 - **A shared Hall of Fame** (your idea): on joining, each browser sends its own best rounds (up to 10, never AI rows), and the host passes everyone's on, so friends' rows appear in each other's tables in their seat colors, tagged "friend". Each browser also records every person's result in rounds played together. Every browser has a private random player id and every round an id, so a round is stored once, whoever recorded or shared it first (`tools/records-test.js`). **Only you**, your best and your stats count only your own rounds. AI results aren't kept for online rounds, or every table would fill with the host's rivals.
-- **People get seat colors** (green, lemon, lavender, sky) and the same cream outline, and names are made unique (a friend called "Sniper" becomes "Sniper 2" in a round with the rival).
+- **People get seat colors** (green, lemon, lavender, sky), each with its own marking on the body and in its dot (plain, spots, rings, dots: lavender and sky look alike to many colour-blind players), and the same cream outline, and names are made unique (a friend called "Sniper" becomes "Sniper 2" in a round with the rival).
 
 ## Architecture change (and why)
 

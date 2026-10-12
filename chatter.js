@@ -459,6 +459,7 @@ window.SnakeChatter = (() => {
     bubbles.get(s.id)?.el.remove();
     const el = document.createElement('div');
     el.className = 'bubble';
+    el.setAttribute('aria-hidden', 'true'); // (screen readers get the log instead)
     el.textContent = text;
     if (hasChinese(text)) el.lang = 'zh-Hans';
     el.style.setProperty('--edge', s.persona?.ink || s.color);
