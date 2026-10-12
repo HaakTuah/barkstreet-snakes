@@ -57,5 +57,11 @@ window.TUNING = Object.freeze({
   BLINK_MS: 130,            // ...for this long
   TONGUE_EVERY: 2800,       // your snake flicks its tongue about this often (more near food)
   TONGUE_MS: 260,
-  GLANCE_EASE: 0.18,        // how quickly eyes turn toward the food (per frame, 0..1)
+  GLANCE_EASE: 0.18,        // how quickly eyes turn toward what a snake is looking at (per frame, 0..1)
+  GULP: 0.2,                // a bite's bulge travelling down the body (cells added to the radius)...
+  GULP_LENGTH: 1.3,         // ...and how many segments it spans
+  GOBBLE: 0.34,             // Gobbler wolfs it down: a bigger, longer gulp
+  GOBBLE_LENGTH: 2,
+  BITE_MS: 240,             // the head's little squash at the moment of a bite
+  CHEW_MS: 420,             // and the mouth's chewing after it
 });

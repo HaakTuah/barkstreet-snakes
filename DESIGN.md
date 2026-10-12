@@ -50,10 +50,10 @@ Your snake is the protagonist, so it gets the most life:
 - **A blink** every 3–6 s, at random.
 - **A forked tongue flick** every few seconds, more often when food is close.
 - **A body that tapers to the tail**, with **smooth rounded curves at corners**. The spine follows the real cells, so the body never cuts a corner.
-- **A gulp bulge** that travels down the body, one segment per tick, after every bite.
-- **A thin cream outline**, so "you" is identifiable without relying on green.
+- **A bite:** the mouth opens when food is right ahead, the head squashes at the bite and chews twice, and a gulp bulge travels down the body, one segment per tick.
+- **A bright cream outline with a soft halo**, so you find yourself at a glance without relying on green. Friends online get a thinner, plainer outline: people still read as people, but only you glow.
 
-The rivals keep their faces and patterns, and they share the blink and the gulp. Gobbler wolfs its food down: a gulp twice the size, and hamster cheeks either side of its mouth that puff up with every bite and slowly go down. Capricious gets a permanent pink head ring, so you can always find it whatever mood it's in.
+The rivals keep their faces and patterns, and share the blink, the bite and the gulp. **Every snake looks at something**, and what it looks at says who it is (drawing only: it never changes how anyone plays). Gobbler eyes the nearest food, its eyes growing as it gets close. Sniper swings its scope onto its target, Sovereign and Colonist watch intruders (Colonist otherwise eyes its next flag), Vulture watches the snake it expects to die, Copycat its model, Creeper the tail it rides, and Ghost, Metagamer, Desperado and Joker the nearest head. Wildcard's mismatched eyes wander, one of them the wrong way. Drab and Mason keep their eyes front. Most have small white eyes and a little mouth; Ghost, Creeper and Copycat keep their special eyes, which still turn, and Vulture's beak gapes instead. Gobbler wolfs its food down: a gulp twice the size, and hamster cheeks either side of its mouth that puff up with every bite and slowly go down. Capricious gets a permanent pink head ring, so you can always find it whatever mood it's in.
 
 ## Food and the world
 

@@ -6,7 +6,7 @@ A snake game up a tree: you against three AI rivals on the bark of a tree, drawn
 
 ## Rules
 
-- Four snakes share a 24×24 patch of bark: you (green, with a cream outline) and three AI rivals.
+- Four snakes share a 24×24 patch of bark: you (green, with a glowing cream outline) and three AI rivals. Watch their eyes: each one looks at whatever it's after.
 - Hitting the edge, a hole, any snake's body, or another snake's head kills you.
 - When a snake dies, its body turns into meat that anyone can eat.
 - The last snake alive wins. If you die first, you can watch the rest of the round or start over.
