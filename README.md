@@ -1,35 +1,52 @@
 # Bark & Bite
 
-A snake game up a tree: you against three AI rivals, drawn at random each round from a cast of fifteen, on the bark of a tree. Playable in the browser. Plain HTML, CSS and JavaScript, with no build step and no dependencies.
+A snake game up a tree: you against three AI rivals on the bark of a tree, drawn at random each round from a cast of fifteen. Plays in the browser, on desktop and phone. Plain HTML, CSS and JavaScript, with no build step, no dependencies and no asset files: every picture is drawn and every sound is synthesised in the page.
 
 **Play:** https://haaktuah.github.io/snake-game/
 
 ## Rules
 
-- Four snakes share a 24×24 patch of bark: you (green) and three AI rivals.
+- Four snakes share a 24×24 patch of bark: you (green, with a cream outline) and three AI rivals.
 - Hitting the edge, a hole, any snake's body, or another snake's head kills you.
 - When a snake dies, its body turns into meat that anyone can eat.
-- The last snake alive wins. If you die first, you can watch the rest of the round or restart.
-- The game speeds up slowly over the course of a round.
+- The last snake alive wins. If you die first, you can watch the rest of the round or start over.
+- The first moves are a little slower, then the game speeds up gently (about 25%) over two minutes.
 - **Hunger:** go 20 seconds without eating (mushrooms don't count) and you start shrinking, one segment every 1.5 seconds. Starve at length 3 and you're out. The bar under each name shows how hungry everyone is.
-- **Sudden death:** after three minutes no new food appears, and a woodpecker starts pecking holes in the bark, ring by ring from the edges inwards.
+- **Sudden death:** after two minutes no new food appears, and a woodpecker starts pecking holes in the bark, ring by ring from the edges inwards.
 
 ### Food
 
 | Item | Effect |
 |------|--------|
 | Green apple | +1 length. There are always three on the board. |
-| Golden apple | +3 length. Rare, and rots after about 12 seconds. |
+| Golden apple | +3 length. Rare, sparkles, and fades before it rots after about 12 seconds. |
 | Red mushroom | Shrinks you by 3 (never below 3). Withers after about 20 seconds and regrows elsewhere. Being short isn't always bad... |
 | Meat | +1 length. What's left of a dead snake. |
 
+## Controls
+
+| Action | Keyboard | Touch |
+|--------|----------|-------|
+| Steer | Arrow keys or WASD (turns are queued, so quick double turns work) | Swipe on the bark |
+| Nap (pause) | Space or P | ⏸ button |
+| Start / start over | Enter or R | Play button |
+| Hall of Fame | H | Hall of Fame button |
+| Sound / music | M / N | 🔈 / ♪ buttons |
+| Watching speed | 1, 2, 3 | 1× 2× 4× buttons |
+
+The game naps by itself when you switch tabs or windows, so you never come back to a dead snake.
+
+## Sound and music
+
+Everything you hear is made live with the Web Audio API: a marimba pluck when you eat, a sparkle for gold, a sigh when you die, the woodpecker's knocking. The music is a marimba loop that follows the round: calm on the start screen, a bass line once the round starts, a shaker as it picks up speed, a minor key with wood-block knocks when the woodpecker arrives, and a tense, faster figure when only two snakes are left. Sound and music each have their own switch, and both are remembered.
+
 ## Bark chatter
 
-The AI snakes talk. Each one has its own voice: Sovereign uses the royal "we", Colonist is a pompous redcoat, Mason quotes Latin, Ghost mostly says "…", and Copycat repeats whatever it just heard, in Chinese. Lines pop up in speech bubbles and in a log under the board, which you can switch off.
+The AI snakes talk. Each one has its own voice: Sovereign uses the royal "we", Colonist is a pompous redcoat, Mason speaks only (dubious) Latin, Ghost mostly says "…", and Copycat repeats whatever it just heard, in Chinese. Some of them talk to each other. Lines pop up in speech bubbles and in a log under the board, which you can switch off.
 
 ## Watching the AIs
 
-Press **Watch AIs** on the start screen for a round between four AI snakes, with a 1×/2×/4× speed control (or keys 1–3). The same control appears when you're watching after dying. AI-only rounds don't count towards your scores or stats.
+Press **Watch AIs** on the start screen for a round between four AI snakes, with a 1×/2×/4× speed control. The same control appears when you're watching after dying. Starting over keeps you watching. Watched rounds put the AI snakes in the Hall of Fame, but don't count towards your own stats.
 
 ## The rivals
 
@@ -37,19 +54,19 @@ Each round, three of these fifteen are picked at random. The start screen tells 
 
 | Snake | Look | Style |
 |-------|------|-------|
-| **Hunter** | blood red, fangs, stripes | Picks whichever snake it has the best shot at, gets in front of it and squeezes its space. |
-| **Gobbler** | orange, puffy cheeks | Eats everything, even food a rival is closer to. Hates mushrooms. |
+| **Sniper** | blood red, one eye behind a scope | Picks whichever snake it has the best shot at, gets in front of it and squeezes its space. |
+| **Gobbler** | orange, puffy cheeks | Eats everything, even a rival's apple. Hates mushrooms. |
 | **Ghost** | pale, fading body | Keeps away from everyone and eats mushrooms to stay small. |
 | **Sovereign** | royal blue, golden crown | Rules its own patch of bark (shown on the board) and attacks anyone who trespasses. |
 | **Colonist** | redcoat, tricorn hat | Plants flags all over the board and defends every one of them. |
 | **Drab** | khaki, sleepy eyes | Plays it safe and sensible. Nothing special. |
 | **Vulture** | black, pink bald head | Hovers near snakes in trouble and feeds on what they leave behind. |
-| **Mason** | stone bricks, laurel wreath | Builds long straight walls to divide the board, then rules the biggest piece. |
-| **Wildcard** | rainbow, great hair | A random mix of habits, different every round. |
-| **Creeper** | violet, slit eyes | Sneaks up and rides right behind other snakes' tails. |
-| **Metagamer** | gold, taped glasses | Watches how each rival plays, then avoids the aggressive ones, shadows the greedy ones and hunts the timid ones. |
-| **Capricious** | changes with its mood | Switches between hunter, glutton, hermit and builder every few seconds. |
-| **Copycat** | pale copy of its model, cat ears | Copies whoever looks like they're winning, right alongside them. Party member. |
+| **Mason** | stone bricks, laurel wreath | Walls off the board, then keeps the biggest piece. |
+| **Wildcard** | rainbow, great hair | A random mix of habits, new every round. |
+| **Creeper** | teal, slit eyes | Sneaks up and rides right behind other snakes' tails. |
+| **Metagamer** | cyan, taped glasses | Watches how each rival plays, then avoids the aggressive ones, shadows the greedy ones and hunts the timid ones. |
+| **Capricious** | changes with its mood | Switches between sniper, glutton, hermit and builder every few seconds. |
+| **Copycat** | pale copy of its model, cat ears | Copies whoever seems to be winning, right alongside them. Party member. |
 | **Joker** | jester hat, red nose | Lures chasers into dead ends and swerves away at the last moment. |
 | **Desperado** | rust poncho, cowboy hat, bandana | An adrenaline junkie: skims walls, bodies and other heads for the thrill of it. |
 
@@ -57,22 +74,30 @@ All of them share the same sense of danger. They plan a few moves ahead, check t
 
 They're also fair. They see the other snakes as they were about a quarter of a second ago, like a human's reaction time, so they can't dodge your sudden turns any faster than you could dodge theirs. And they aren't told which snake is you: you're judged only by how you move, like everyone else.
 
-## Controls
-
-| Action  | Keys                         |
-|---------|------------------------------|
-| Move    | Arrow keys or WASD (swipe on touch screens) |
-| Pause   | Space or P                   |
-| Restart | Enter or R                   |
-| Scores  | H, or the Scores button      |
-
-## Scores and stats
+## Hall of Fame and stats
 
 Everything is saved in your browser only.
 
-- **High scores:** the top 10 rounds, ranked by finishing place first (a win beats any 2nd place), then by food eaten. The AI snakes get entries too, so you're competing against them on the list. Switch to **Only you** to see your own top 10. When a round makes the list, you can type your name on the end screen.
-- **Stats:** rounds played, wins, average place and food, how often you finished in each place, and what killed you (including your nemesis, the AI that gets you most often).
+- **Hall of Fame:** the top 10 rounds, ranked by finishing place (a win beats any 2nd place), then by how long the snake stayed alive, then by food eaten. The AI snakes get entries too, so you're competing against them on the list. Switch to **Only you** to see your own top 10. When a round makes the list, you can carve your name on the end screen.
+- **Your story:** rounds played, wins, average place and food, how often you finished in each place, and what killed you (including your nemesis, the rival that gets you most often).
 
 ## Run locally
 
-Open `index.html` in any browser. Add `?debug` to the URL for tuning tools in the console: `await SnakeDebug.simulate({ rounds: 50 })` runs fast AI-only rounds with four random personalities and reports each one's win rate, food, kills and so on, and `SnakeDebug.setup(['hunter', 'warden', 'ghost'])` sets up a round against chosen opponents.
+Serve the folder with any static server (for example `npx serve` or `python -m http.server`) and open it in a browser. Opening `index.html` directly works too.
+
+- `?perf` shows a frame-time overlay (toggle it with the ` key).
+- `?debug` adds `SnakeDebug` to the console, for example `SnakeDebug.setup(['sniper', 'mason', 'ghost'])` to start a round against chosen rivals.
+- `node tools/simulate.js 200` plays 200 AI-only rounds headlessly with the game's own rules and AI, and prints each personality's win rate, food, kills and so on. Add `--seed 1` to repeat a run exactly.
+
+### How it's put together
+
+| File | What it does |
+|------|--------------|
+| `tuning.js` | Every number that shapes how the game plays and feels, in one place. |
+| `engine.js` | The rules: moving, eating, dying, hunger, the woodpecker. No drawing, so it also runs in Node. |
+| `ai.js` | The rivals' brains and personalities. |
+| `render.js` | Draws the board on a canvas, with smooth movement between ticks. |
+| `audio.js` | Sound effects and the adaptive music, synthesised live. |
+| `chatter.js` | The rivals' speech bubbles and chat log. |
+| `records.js` | The Hall of Fame and your stats. |
+| `snake.js` | Ties it together: the game loop, input, the cards and the controls. |

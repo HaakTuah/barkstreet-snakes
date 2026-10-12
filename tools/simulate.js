@@ -1,0 +1,154 @@
+#!/usr/bin/env node
+// Headless balance check. Plays AI-only rounds with the game's own rules and
+// AI (tuning.js, ai.js and engine.js, loaded unchanged) and prints how each
+// personality did. Runs on all cores; needs only Node.
+//
+//   node tools/simulate.js [rounds] [--seed N] [--ahead] [--json]
+//
+//   rounds    how many rounds (default 200)
+//   --seed N  a fixed random seed, so a run can be repeated exactly
+//   --ahead   let every AI decide during the frames before its tick, the way
+//             the browser does; with the same seed the rounds must come out
+//             identical to a run without it
+//   --json    print the raw totals instead of the table
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const vm = require('vm');
+const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
+
+const ROOT = path.join(__dirname, '..');
+const MAX_TIME = 600000; // a round still going after 10 minutes counts as stalled
+
+// mulberry32: a small, fast seeded random number generator.
+function seeded(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// The game's files in a fresh context, with our own Math.random.
+function loadGame(random) {
+  const M = Object.create(Math);
+  M.random = random;
+  const ctx = vm.createContext({ window: {}, console, Math: M });
+  for (const f of ['tuning.js', 'ai.js', 'engine.js']) {
+    vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+  }
+  return { E: ctx.window.SnakeEngine, T: ctx.window.TUNING };
+}
+
+function play({ rounds, seed, ahead }) {
+  const { E, T } = loadGame(seed == null ? Math.random : seeded(seed));
+  const per = {};
+  const total = { rounds, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: 0 };
+  for (let r = 0; r < rounds; r++) {
+    const g = E.createGame({ withPlayer: false });
+    for (const s of g.snakes) {
+      per[s.name] ||= { rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, kills: 0, aliveMs: 0, deaths: {} };
+      per[s.name].rounds++;
+    }
+    const place = new Map();
+    while (g.snakes.some(s => s.alive) && g.snakes.filter(s => s.alive).length > 1 && g.time < MAX_TIME) {
+      // In order, stopping at the first snake that must decide in the tick, so
+      // the random numbers are drawn in the same order as without --ahead.
+      if (ahead) for (const s of g.snakes) { if (!s.alive) continue; if (!E.canThinkAhead(g, s)) break; E.thinkAhead(g, s); }
+      const dying = E.step(g);
+      const left = g.snakes.filter(s => s.alive).length;
+      for (const s of dying) {
+        place.set(s, left + 1);
+        per[s.name].aliveMs += g.time;
+        const cause = s.killer === 'self' ? 'self' : s.killer === 'wall' ? 'wall' : s.killer === 'hunger' ? 'starved' : 'rival';
+        per[s.name].deaths[cause] = (per[s.name].deaths[cause] || 0) + 1;
+        const killer = g.snakes.find(o => o.name === s.killer && o !== s);
+        if (killer) per[killer.name].kills++;
+      }
+      // A cheap fingerprint of every move, to compare runs exactly.
+      for (const s of g.snakes) if (s.alive) total.trace = (total.trace * 31 + s.body[0].x * 24 + s.body[0].y + g.tick) % 1000000007;
+    }
+    const alive = g.snakes.filter(s => s.alive);
+    if (g.time >= MAX_TIME) total.stalled++;
+    else if (alive.length === 1) { per[alive[0].name].wins++; place.set(alive[0], 1); }
+    else total.draws++;
+    for (const s of g.snakes) {
+      const p = per[s.name];
+      p.placeSum += place.get(s) || 1;
+      p.eaten += s.eaten;
+      p.pellets += s.pellets;
+      if (s.alive) p.aliveMs += g.time;
+    }
+    total.timeSum += g.time;
+    total.times.push(g.time);
+    if (E.suddenDeath(g)) total.sudden++;
+  }
+  return { per, total, suddenAt: T.SUDDEN_DEATH_MS };
+}
+
+function merge(results) {
+  const per = {}, total = { rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [] };
+  for (const r of results) {
+    for (const k of ['rounds', 'timeSum', 'sudden', 'draws', 'stalled']) total[k] += r.total[k];
+    total.times.push(...r.total.times);
+    total.trace.push(r.total.trace);
+    for (const [name, p] of Object.entries(r.per)) {
+      const t = (per[name] ||= { deaths: {} });
+      for (const [k, v] of Object.entries(p)) {
+        if (k === 'deaths') for (const [d, n] of Object.entries(v)) t.deaths[d] = (t.deaths[d] || 0) + n;
+        else t[k] = (t[k] || 0) + v;
+      }
+    }
+  }
+  return { per, total, suddenAt: results[0].suddenAt };
+}
+
+function report({ per, total, suddenAt }) {
+  const pct = (a, b) => Math.round(100 * a / Math.max(1, b));
+  const times = total.times.sort((a, b) => a - b);
+  const sec = ms => `${Math.round(ms / 1000)}s`;
+  console.log(`${total.rounds} rounds · length median ${sec(times[times.length >> 1])}, middle half ${sec(times[times.length >> 2])}-${sec(times[(times.length * 3) >> 2])}`
+    + ` · ${pct(total.sudden, total.rounds)}% reached the woodpecker (${sec(suddenAt)}) · draws ${total.draws} · stalled ${total.stalled}`);
+  console.log(`fingerprint ${total.trace.join('-')}`);
+  console.table(Object.entries(per).map(([name, p]) => ({
+    name,
+    rounds: p.rounds,
+    'win%': pct(p.wins, p.rounds),
+    place: +(p.placeSum / p.rounds).toFixed(2),
+    food: +(p.eaten / p.rounds).toFixed(1),
+    'meat%': pct(p.pellets, p.eaten),
+    kills: +(p.kills / p.rounds).toFixed(2),
+    alive: sec(p.aliveMs / p.rounds),
+    'self/wall%': pct((p.deaths.self || 0) + (p.deaths.wall || 0), p.rounds),
+    'starved%': pct(p.deaths.starved || 0, p.rounds),
+  })).sort((a, b) => b['win%'] - a['win%'] || a.place - b.place));
+}
+
+if (isMainThread) {
+  const args = process.argv.slice(2);
+  const flag = name => args.includes(name);
+  const value = name => { const i = args.indexOf(name); return i >= 0 ? Number(args[i + 1]) : null; };
+  const rounds = Number(args.find((a, i) => /^\d+$/.test(a) && args[i - 1] !== '--seed')) || 200;
+  const seed = value('--seed');
+  const ahead = flag('--ahead');
+  const workers = Math.max(1, Math.min(rounds, os.cpus().length - 1));
+  const jobs = Array.from({ length: workers }, (_, i) => ({
+    rounds: Math.floor(rounds / workers) + (i < rounds % workers ? 1 : 0),
+    seed: seed == null ? null : seed + i * 7919,
+    ahead,
+  }));
+  Promise.all(jobs.map(job => new Promise((resolve, reject) => {
+    const w = new Worker(__filename, { workerData: job });
+    w.once('message', resolve);
+    w.once('error', reject);
+  }))).then(results => {
+    const merged = merge(results);
+    if (flag('--json')) console.log(JSON.stringify(merged));
+    else report(merged);
+  }, err => { console.error(err); process.exit(1); });
+} else {
+  parentPort.postMessage(play(workerData));
+}

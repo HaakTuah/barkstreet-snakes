@@ -1,10 +1,14 @@
-// Local high scores and win/loss stats, saved in this browser only.
+// The Hall of Fame, your stats and your best score, saved in this browser
+// only. Every storage access is wrapped, and whatever comes back from storage
+// is checked before use, so blocked or corrupt storage never breaks the game.
 window.SnakeRecords = (() => {
   const SCORES_KEY = 'snake-highscores';
   const STATS_KEY = 'snake-stats';
   const NAME_KEY = 'snake-name';
+  const BEST_KEY = 'snake-best';
   const MAX_SCORES = 10;
   const MAX_NAME = 16;
+  const DEFAULT_NAME = 'You';
 
   function load(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
@@ -14,32 +18,67 @@ window.SnakeRecords = (() => {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage unavailable */ }
   }
 
-  const emptyStats = () => ({ played: 0, wins: 0, draws: 0, places: [0, 0, 0, 0], killers: {}, totalEaten: 0 });
+  const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
-  // Better placement first, a win beats a shared-first draw, then more food, then older.
-  const compare = (a, b) => a.place - b.place || b.won - a.won || b.eaten - a.eaten || a.date - b.date;
+  // Rank: better place first (a win beats a shared-first draw), then the
+  // longer survival, then more food, then the older entry.
+  const compare = (a, b) => a.place - b.place || b.won - a.won || b.survived - a.survived || b.eaten - a.eaten || a.date - b.date;
 
-  const scores = () => load(SCORES_KEY, []);
-  const stats = () => ({ ...emptyStats(), ...load(STATS_KEY, {}) });
-  const getName = () => load(NAME_KEY, 'You');
+  // Rivals that were renamed: their old rows and kills carry over.
+  const RENAMED = { Hunter: 'Sniper' };
 
-  // The stored list is the overall top 10 plus the player's own top 10, so the
-  // AIs can't push all of your rounds out.
+  // Stored entries, cleaned up: anything malformed is dropped.
+  function scores() {
+    const raw = load(SCORES_KEY, []);
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(e => e && typeof e === 'object' && Number.isFinite(e.place) && Number.isFinite(e.date)).map(e => ({
+      id: String(e.id ?? e.date), name: (e.ai && RENAMED[e.name]) || String(e.name ?? DEFAULT_NAME).slice(0, MAX_NAME),
+      color: typeof e.color === 'string' ? e.color : '#a8a29e', ai: !!e.ai,
+      place: num(e.place), won: !!e.won, draw: !!e.draw, eaten: num(e.eaten), survived: num(e.survived), date: num(e.date),
+      watched: !!e.watched,
+    })).sort(compare);
+  }
+
+  function stats() {
+    const raw = load(STATS_KEY, {});
+    const s = raw && typeof raw === 'object' ? raw : {};
+    const places = Array.isArray(s.places) && s.places.length === 4 ? s.places.map(num) : [0, 0, 0, 0];
+    const killers = {};
+    if (s.killers && typeof s.killers === 'object') for (const [k, v] of Object.entries(s.killers)) {
+      const name = RENAMED[k] || k;
+      killers[name] = (killers[name] || 0) + num(v);
+    }
+    return { played: num(s.played), wins: num(s.wins), draws: num(s.draws), places, killers, totalEaten: num(s.totalEaten) };
+  }
+
+  function getName() {
+    const n = load(NAME_KEY, DEFAULT_NAME);
+    return typeof n === 'string' && n.trim() ? n.slice(0, MAX_NAME) : DEFAULT_NAME;
+  }
+  const hasName = () => getName() !== DEFAULT_NAME;
+
+  const getBest = () => num(load(BEST_KEY, 0));
+  const setBest = v => save(BEST_KEY, v);
+
+  // The stored list is the overall top 10 plus your own top 10, so the AIs
+  // can't push all of your rounds out.
   const topOverall = list => list.slice(0, MAX_SCORES);
   const topPlayer = list => list.filter(e => !e.ai).slice(0, MAX_SCORES);
 
-  // score = { name, color, ai, place, won, draw, eaten }. Returns the entry id.
+  // score = { name, color, ai, place, won, draw, eaten, survived, watched }. Returns the entry id.
   function addScore(score) {
     const entry = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      name: score.name,
+      name: String(score.name).slice(0, MAX_NAME),
       color: score.color,
       ai: !!score.ai,
       place: score.place,
       won: !!score.won,
       draw: !!score.draw,
-      eaten: score.eaten,
+      eaten: num(score.eaten),
+      survived: Math.round(num(score.survived)),
       date: Date.now(),
+      watched: !!score.watched,
     };
     const sorted = [...scores(), entry].sort(compare);
     const keep = new Set([...topOverall(sorted), ...topPlayer(sorted)]);
@@ -56,22 +95,22 @@ window.SnakeRecords = (() => {
     };
   }
 
-  // result = { place, won, draw, eaten, killer, color }. Updates your stats and
-  // adds a high-score entry under your saved name. Returns the entry id.
+  // result = { place, won, draw, eaten, survived, killer }. Updates your stats
+  // and adds a Hall of Fame entry under your saved name. Returns the entry id.
   function recordPlayer(result) {
     const st = stats();
     st.played++;
     if (result.won) st.wins++;
     if (result.draw) st.draws++;
-    st.places[result.place - 1]++;
+    if (result.place >= 1 && result.place <= 4) st.places[result.place - 1]++;
     if (result.killer) st.killers[result.killer] = (st.killers[result.killer] || 0) + 1;
-    st.totalEaten += result.eaten;
+    st.totalEaten += num(result.eaten);
     save(STATS_KEY, st);
     return addScore({ ...result, name: getName(), ai: false });
   }
 
   function rename(id, name) {
-    name = name.trim().slice(0, MAX_NAME) || 'You';
+    name = String(name).trim().slice(0, MAX_NAME) || DEFAULT_NAME;
     save(NAME_KEY, name);
     const list = scores();
     const entry = list.find(e => e.id === id);
@@ -79,19 +118,26 @@ window.SnakeRecords = (() => {
   }
 
   function reset() {
-    try { localStorage.removeItem(SCORES_KEY); localStorage.removeItem(STATS_KEY); } catch { /* storage unavailable */ }
+    try {
+      localStorage.removeItem(SCORES_KEY);
+      localStorage.removeItem(STATS_KEY);
+      localStorage.removeItem(BEST_KEY);
+    } catch { /* storage unavailable */ }
   }
 
   // ---------------------------------------------------------------- rendering
 
   const ordinal = n => n + (['th', 'st', 'nd', 'rd'][n] || 'th');
   const placeLabel = e => e.won ? 'Won' : e.draw ? 'Draw' : ordinal(e.place);
+  const clock = ms => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
 
   function el(tag, props = {}, ...children) {
     const node = Object.assign(document.createElement(tag), props);
     node.append(...children);
     return node;
   }
+
+  const dot = color => el('span', { className: 'dot', style: `background:${color}` });
 
   // filter: 'all' (everyone, overall top 10) or 'me' (your top 10).
   // playerColor colors your rows' dots; AI rows use the color saved with them.
@@ -105,26 +151,27 @@ window.SnakeRecords = (() => {
     const fmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
     const rows = list.map((e, i) => el('tr', { className: [e.id === highlightId && 'highlight', e.ai && 'ai'].filter(Boolean).join(' ') },
       el('td', { className: 'num', textContent: i + 1 }),
-      el('td', { className: 'name' },
-        el('span', { className: 'dot', style: `background:${e.ai ? e.color : playerColor}` }),
-        e.name),
+      el('td', { className: 'name', title: e.watched ? `${e.name} (a watched round)` : e.name },
+        dot(e.ai ? e.color : playerColor), e.name),
       el('td', { className: e.won ? 'won' : '', textContent: placeLabel(e) }),
+      el('td', { className: 'num', textContent: e.survived ? clock(e.survived) : '–' }),
       el('td', { className: 'num', textContent: e.eaten }),
-      el('td', { className: 'muted', textContent: fmt.format(e.date) }),
+      el('td', { className: 'muted date', textContent: fmt.format(e.date) }),
     ));
     container.append(el('table', { className: 'scores-table' },
       el('thead', {}, el('tr', {},
         el('th', { className: 'num', textContent: '#' }),
         el('th', { textContent: 'Name' }),
         el('th', { textContent: 'Result' }),
-        el('th', { className: 'num', textContent: 'Food' }),
-        el('th', { textContent: 'Date' }),
+        el('th', { className: 'num', textContent: 'Time' }),
+        el('th', { className: 'num', textContent: 'Score' }),
+        el('th', { className: 'date', textContent: 'Date' }),
       )),
       el('tbody', {}, ...rows),
     ));
   }
 
-  // colors: { name -> color } for the snakes, used in the "what killed you" bars.
+  // colors: { name -> color } for the snakes, used in the "what got you" bars.
   function renderStats(container, colors) {
     const st = stats();
     if (!st.played) {
@@ -140,7 +187,7 @@ window.SnakeRecords = (() => {
       tile('Rounds', st.played),
       tile('Wins', st.wins, `${Math.round(100 * st.wins / st.played)}%`),
       tile('Avg place', avgPlace.toFixed(1)),
-      tile('Avg food', (st.totalEaten / st.played).toFixed(1)),
+      tile('Avg score', (st.totalEaten / st.played).toFixed(1)),
     ));
 
     const bars = (title, items) => {
@@ -148,30 +195,34 @@ window.SnakeRecords = (() => {
       return el('section', { className: 'bars' },
         el('h3', { textContent: title }),
         ...items.map(i => el('div', { className: 'bar-row' },
-          el('span', { className: 'bar-label', textContent: i.label }),
+          el('span', { className: 'bar-label' }, ...(i.color ? [dot(i.color)] : []), i.label),
           el('span', { className: 'bar-track' },
-            el('span', { className: 'bar-fill', style: `width:${100 * i.count / max}%;background:${i.color}` })),
+            el('span', { className: 'bar-fill', style: `width:${100 * i.count / max}%;background:${i.fill || i.color}` })),
           el('span', { className: 'bar-count', textContent: i.count }),
         )),
       );
     };
 
     container.append(bars('How you finished', st.places.map((count, i) => ({
-      label: i === 0 ? '1st' : ordinal(i + 1), count, color: 'var(--accent)',
+      label: ordinal(i + 1), count, fill: 'var(--leaf)',
     }))));
 
     const killerLabel = k => k === 'wall' ? 'Walls & holes' : k === 'self' ? 'Yourself' : k === 'hunger' ? 'Starvation' : k;
     const killers = Object.entries(st.killers)
-      .map(([k, count]) => ({ label: killerLabel(k), count, color: colors[k] || 'var(--muted)' }))
+      .map(([k, count]) => ({ label: killerLabel(k), count, color: colors[k] || '#a8a29e' }))
       .sort((a, b) => b.count - a.count);
     if (killers.length) {
       const top = killers[0];
-      const tied = killers.filter(k => k.count === top.count).length > 1;
-      container.append(el('p', { className: 'nemesis' },
-        tied ? 'No nemesis yet. Everyone gets you equally.' : el('span', {}, 'Your nemesis: ', el('strong', { textContent: top.label, style: `color:${top.color}` }))));
+      const tied = killers.filter(k => k.count === top.count);
+      container.append(el('p', { className: 'nemesis' }, tied.length > 1
+        ? `No nemesis yet: ${tied.map(k => k.label).join(' and ')} are tied.`
+        : el('span', {}, 'Your nemesis: ', dot(top.color), el('strong', { textContent: top.label }))));
       container.append(bars('What got you', killers));
     }
   }
 
-  return { scores, stats, addScore, recordPlayer, rankOf, rename, reset, getName, renderScores, renderStats, ordinal };
+  return {
+    scores, stats, addScore, recordPlayer, rankOf, rename, reset, getName, hasName, getBest, setBest,
+    renderScores, renderStats, ordinal, clock,
+  };
 })();

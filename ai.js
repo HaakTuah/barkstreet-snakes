@@ -51,11 +51,11 @@ window.SnakeAI = (() => {
   // behaviour, optional), weights, and flavor text: a blurb for the start
   // screen, a line for when it kills you, and one for when it wins.
   const PERSONAS = {
-    hunter: {
-      name: 'Hunter', color: '#b91c1c', look: 'hunter', driver: 'hunter',
+    sniper: {
+      name: 'Sniper', color: '#b91c1c', look: 'sniper', driver: 'sniper',
       blurb: 'Picks whichever snake it has the best shot at and cuts it off.',
-      kill: 'Hunter saw you coming three moves ago.',
-      win: 'Hunter wins. Nobody was safe.',
+      kill: 'Headshot. It had you lined up three moves ago.',
+      win: 'Nobody was safe.',
       w: {
         space: 1, territory: 0.8, aggression: 0.3,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, hungryBelow: 16, fedFactor: 0.3,
@@ -64,9 +64,9 @@ window.SnakeAI = (() => {
     },
     gobbler: {
       name: 'Gobbler', color: '#fb923c', look: 'gobbler',
-      blurb: 'Eats everything, even food a rival is closer to. Hates mushrooms.',
-      kill: 'Gobbler bumped into you on its way to lunch.',
-      win: 'Gobbler wins, and is still hungry.',
+      blurb: 'Eats everything, even a rival\'s apple. Hates mushrooms.',
+      kill: 'Gobbler didn\'t even look up from lunch.',
+      win: 'And it\'s still hungry.',
       w: {
         space: 1, territory: 0.2,
         food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 0.3, mushroom: -3,
@@ -77,7 +77,7 @@ window.SnakeAI = (() => {
       name: 'Ghost', color: '#f1f5f9', look: 'ghost',
       blurb: 'Keeps away from everyone and eats mushrooms to stay small.',
       kill: 'Ghost? You never even saw it.',
-      win: 'Ghost wins. Was it ever really here?',
+      win: 'Was it ever really here?',
       w: {
         space: 2, territory: 0.6,
         food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 10, fedFactor: 0, mushroomLover: 12,
@@ -87,7 +87,7 @@ window.SnakeAI = (() => {
     sovereign: {
       name: 'Sovereign', color: '#2563eb', look: 'sovereign', driver: 'sovereign',
       blurb: 'Rules its own patch of bark and attacks anyone who trespasses.',
-      kill: 'You trespassed on the Sovereign\'s land.',
+      kill: 'The Sovereign does not share.',
       win: 'Long live the Sovereign.',
       w: {
         space: 1.5, territory: 1, aggression: 0.2,
@@ -98,9 +98,9 @@ window.SnakeAI = (() => {
     },
     colonist: {
       name: 'Colonist', color: '#e11d48', look: 'colonist', driver: 'colonist',
-      blurb: 'A redcoat who plants flags all over the board and defends every one of them.',
-      kill: 'The Colonist claimed the spot you were standing on.',
-      win: 'The Colonist plants its final flag.',
+      blurb: 'A redcoat who plants flags all over and defends every one.',
+      kill: 'Another patch of bark for the Crown.',
+      win: 'The final flag is planted.',
       w: {
         space: 1.2, territory: 1.4, aggression: 0.2,
         food: 5, eat: 70, pellet: 1.2, foodRange: 30,
@@ -113,14 +113,14 @@ window.SnakeAI = (() => {
       name: 'Drab', color: '#c8bf94', look: 'drab',
       blurb: 'Plays it safe and sensible. Nothing special.',
       kill: 'You lost to Drab. Drab!',
-      win: 'Drab wins. Somehow.',
+      win: 'Somehow.',
       w: DRAB,
     },
     vulture: {
       name: 'Vulture', color: '#27272a', ink: '#f9a8d4', look: 'vulture', driver: 'vulture',
       blurb: 'Circles snakes in trouble and feasts on what they leave behind.',
       kill: 'Vulture was waiting for this.',
-      win: 'Vulture wins, picking over the leftovers.',
+      win: 'Picking over the leftovers.',
       w: {
         space: 1.5, territory: 0.4,
         food: 4, eat: 60, normalFood: 0.15, pellet: 3, foodRange: 40, contested: true,
@@ -129,8 +129,8 @@ window.SnakeAI = (() => {
     },
     mason: {
       name: 'Mason', color: '#94a3b8', look: 'mason',
-      blurb: 'Builds long straight walls to divide the board, then rules the biggest piece.',
-      kill: 'You ran into one of Mason\'s walls. Divide and conquer.',
+      blurb: 'Walls off the board, then keeps the biggest piece.',
+      kill: 'Mason built that bit just for you.',
       win: 'Veni, vidi, Mason.',
       w: {
         space: 1.5, territory: 2.2,
@@ -140,16 +140,16 @@ window.SnakeAI = (() => {
     },
     wildcard: {
       name: 'Wildcard', color: '#f472b6', look: 'wildcard', driver: 'wildcard',
-      blurb: 'A random mix of habits, different every round. Great hair.',
-      kill: 'Wildcard got you. Nobody knows how, least of all Wildcard.',
-      win: 'Wildcard wins. Tremendous.',
+      blurb: 'A random mix of habits, new every round. Great hair.',
+      kill: 'Nobody knows how, least of all Wildcard.',
+      win: 'Tremendous. Nobody wins like this.',
       w: DRAB, // replaced by a random set on its first move
     },
     creeper: {
       name: 'Creeper', color: '#0d9488', look: 'creeper',
       blurb: 'Sneaks up and rides right behind other snakes\' tails.',
-      kill: 'Creeper was right behind you the whole time.',
-      win: 'Creeper wins, quietly.',
+      kill: 'Creeper was never far away.',
+      win: 'Quietly.',
       w: {
         space: 1, territory: 0.5,
         food: 3, eat: 50, pellet: 1, foodRange: 30,
@@ -160,28 +160,28 @@ window.SnakeAI = (() => {
       name: 'Metagamer', color: '#22d3ee', look: 'metagamer', driver: 'metagamer',
       blurb: 'Studies how each rival plays, then counters it.',
       kill: 'Metagamer had you figured out.',
-      win: 'Metagamer wins. As calculated.',
+      win: 'As calculated.',
       w: { ...DRAB, hunt: HUNT, lure: { weight: 5, dist: 6 } },
     },
     capricious: {
       name: 'Capricious', color: '#ec4899', look: 'capricious', driver: 'capricious',
-      blurb: 'Changes its mind every few seconds: hunter, glutton, hermit, builder.',
-      kill: 'Capricious felt like killing you. Just then.',
-      win: 'Capricious wins, and already wants something else.',
+      blurb: 'Changes its mind every few seconds: sniper, glutton, hermit, builder.',
+      kill: 'Capricious felt like it. Just then.',
+      win: 'And already wants something else.',
       w: DRAB, // replaced by the current mood's weights
     },
     copycat: {
       name: 'Copycat', color: '#fca5a5', look: 'copycat', driver: 'copycat',
-      blurb: 'Copies whoever looks like they are winning, right alongside them. Party member.',
-      kill: 'Copycat got you. It learned that from someone.',
-      win: 'Copycat wins. Imitation pays.',
+      blurb: 'Copies whoever seems to be winning. Party member.',
+      kill: 'It learned that from someone.',
+      win: 'Imitation pays.',
       w: { ...DRAB, mimic: 120, lure: { weight: 4, dist: 5 } },
     },
     desperado: {
       name: 'Desperado', color: '#ea580c', look: 'desperado',
-      blurb: 'An adrenaline junkie who skims walls and heads for the thrill of it. Yeehaw.',
+      blurb: 'Skims walls and heads for the thrill of it. Yeehaw.',
       kill: 'Draw, partner. Too slow.',
-      win: 'Desperado rides off into the sunset.',
+      win: 'Rides off into the sunset.',
       w: {
         space: 1, territory: 0.6,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, mushroom: 0.5,
@@ -191,8 +191,8 @@ window.SnakeAI = (() => {
     joker: {
       name: 'Joker', color: '#a21caf', look: 'joker', driver: 'joker',
       blurb: 'Lures chasers into dead ends and swerves away at the last moment.',
-      kill: 'The Joker led you on. Gotcha!',
-      win: 'The Joker wins. Who\'s laughing now?',
+      kill: 'Joker led you on. Gotcha!',
+      win: 'Who\'s laughing now?',
       w: {
         space: 1, territory: 0.6,
         food: 5, eat: 70, pellet: 1.2, foodRange: 40, mushroom: 0.5,
@@ -202,7 +202,7 @@ window.SnakeAI = (() => {
     },
   };
   const POOL = Object.keys(PERSONAS);
-  const MOODS = ['hunter', 'gobbler', 'ghost', 'mason'];
+  const MOODS = ['sniper', 'gobbler', 'ghost', 'mason'];
 
   const TRAPPED = 5000;
   const HOLE = 1 << 30;    // "frees up" never
@@ -210,8 +210,13 @@ window.SnakeAI = (() => {
   const ROOM_CAP = 120;    // stop counting a rival's room past this
   const DISTANCE_CAP = 14; // distance-keepers are happy once this far away
 
-  // Scratch buffers, reused between calls (grid size is fixed per page).
+  // Scratch buffers, reused between calls (grid size is fixed per page), so the
+  // search allocates next to nothing however many positions it scores. Besides
+  // the per-cell grids: `nbr` lists each cell's neighbours in DIR_LIST order
+  // (-1 off the board), and `queue` holds a breadth-first search, one distance
+  // after another. No search visits a cell twice, so N * N is always enough.
   let bufN = 0, mineFree, otherFree, ownFree, risk, seen, owner, claimT, ownerStamp;
+  let foodValue, foodGrow, foodCells, queue, nbr;
   let stamp = 0;
   function ensureBuffers(N) {
     if (bufN === N) return;
@@ -225,6 +230,40 @@ window.SnakeAI = (() => {
     owner = new Int8Array(size);
     claimT = new Int32Array(size);
     ownerStamp = new Int32Array(size);
+    foodValue = new Float64Array(size); // what eating a cell is worth
+    foodGrow = new Int8Array(size);     // what eating a cell does to my length
+    foodCells = new Int32Array(size);   // food never shares a cell
+    queue = new Int32Array(size);
+    nbr = new Int32Array(size * 4);
+    for (let i = 0; i < size; i++) {
+      const x = i % N, y = (i - x) / N;
+      DIR_LIST.forEach((d, k) => {
+        const nx = x + d.x, ny = y + d.y;
+        nbr[4 * i + k] = nx >= 0 && ny >= 0 && nx < N && ny < N ? ny * N + nx : -1;
+      });
+    }
+  }
+
+  // Territory per snake and where its search starts, for up to `n` snakes.
+  let ownersCap = 0, counts, srcI, srcT, srcOwn;
+  function ensureOwners(n) {
+    if (n <= ownersCap) return;
+    ownersCap = n;
+    counts = new Int32Array(n);
+    srcI = new Int32Array(n);
+    srcT = new Int32Array(n);
+    srcOwn = new Int8Array(n);
+  }
+
+  // Bodies for the search, one buffer per step: a move at step s writes the
+  // new body into bodies[s] and reads only bodies[s - 1]. A buffer holds at
+  // least `cells` cells, and the length in use is passed alongside it.
+  const bodies = [];
+  function ensureBodies(steps, cells) {
+    for (let s = 1; s <= steps; s++) {
+      const b = (bodies[s] ||= []);
+      while (b.length < cells) b.push({ x: 0, y: 0 });
+    }
   }
 
   const manhattan = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
@@ -254,7 +293,11 @@ window.SnakeAI = (() => {
     const N = view.grid;
     const { me, others, food, age } = view;
     const holes = view.holes || new Set();
+    const depth = persona.depth ?? 3;
     ensureBuffers(N);
+    ensureOwners(others.length + 1);
+    const steps = Math.max(1, depth); // even a depth-0 search makes one move
+    ensureBodies(steps, me.body.length + steps); // a body grows at most one cell a step
     mineFree.fill(0); otherFree.fill(0); risk.fill(0);
 
     const inside = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
@@ -297,22 +340,21 @@ window.SnakeAI = (() => {
       const start = h.y * N + h.x;
       const stampS = ++stamp;
       seen[start] = stampS;
-      let frontier = [start], room = 0;
-      for (let d = 1; frontier.length && room < ROOM_CAP; d++) {
-        const next = [];
-        for (const i of frontier) {
-          const x = i % N, y = (i - x) / N;
-          for (const dd of DIR_LIST) {
-            const nx = x + dd.x, ny = y + dd.y;
-            if (!inside(nx, ny)) continue;
-            const ni = ny * N + nx;
-            if (seen[ni] === stampS || otherFree[ni] > d || ownFree[ni] > d - blockT) continue;
+      queue[0] = start;
+      // queue[read, write) is still to expand; it holds one distance at a time.
+      let read = 0, write = 1, room = 0;
+      for (let d = 1; read < write && room < ROOM_CAP; d++) {
+        const levelEnd = write;
+        while (read < levelEnd) {
+          const i = queue[read++];
+          for (let n = 4 * i; n < 4 * i + 4; n++) {
+            const ni = nbr[n];
+            if (ni < 0 || seen[ni] === stampS || otherFree[ni] > d || ownFree[ni] > d - blockT) continue;
             seen[ni] = stampS;
             room++;
-            next.push(ni);
+            queue[write++] = ni;
           }
         }
-        frontier = next;
       }
       return Math.min(room, ROOM_CAP);
     }
@@ -328,7 +370,7 @@ window.SnakeAI = (() => {
     // victim unless another is clearly better.
     function pickVictim(candidates, hunt) {
       if (!candidates.length) { memory.victimId = null; return; }
-      body0ToOwnFree(me.body, 0);
+      body0ToOwnFree(me.body, me.body.length, 0);
       let best = -1, bestScore = Infinity, currentScore = Infinity;
       for (const k of candidates) {
         const tgt = targetOf(k, hunt.lead);
@@ -336,7 +378,7 @@ window.SnakeAI = (() => {
         if (s < bestScore) { bestScore = s; best = k; }
         if (others[k].id === memory.victimId) currentScore = s;
       }
-      clearOwnFree(me.body);
+      clearOwnFree(me.body, me.body.length);
       const current = indexOf(memory.victimId);
       const k = current >= 0 && candidates.includes(current) && currentScore <= bestScore + 5 ? current : best;
       memory.victimId = others[k].id;
@@ -355,7 +397,7 @@ window.SnakeAI = (() => {
     const all = others.map((_, k) => k);
 
     const drivers = {
-      hunter() { pickVictim(all, ctx.w.hunt); },
+      sniper() { pickVictim(all, ctx.w.hunt); },
 
       sovereign() {
         const R = ctx.w.home.radius;
@@ -430,14 +472,14 @@ window.SnakeAI = (() => {
 
       // Hover near the snake most likely to die soon (least room for its length).
       vulture() {
-        body0ToOwnFree(me.body, 0);
+        body0ToOwnFree(me.body, me.body.length, 0);
         let best = -1, bestScore = Infinity, currentScore = Infinity;
         for (const k of all) {
           const s = roomOf(k) / Math.max(4, others[k].body.length);
           if (s < bestScore) { bestScore = s; best = k; }
           if (others[k].id === memory.lureId) currentScore = s;
         }
-        clearOwnFree(me.body);
+        clearOwnFree(me.body, me.body.length);
         const current = indexOf(memory.lureId);
         ctx.lure = current >= 0 && currentScore <= bestScore * 1.5 ? current : best;
         memory.lureId = ctx.lure >= 0 ? others[ctx.lure].id : null;
@@ -497,11 +539,12 @@ window.SnakeAI = (() => {
       },
     };
 
-    function body0ToOwnFree(body, grow) {
-      body.forEach((c, j) => { ownFree[c.y * N + c.x] = body.length - j + grow; });
+    // A body is its first `len` cells (search bodies live in longer buffers).
+    function body0ToOwnFree(body, len, grow) {
+      for (let j = 0; j < len; j++) ownFree[body[j].y * N + body[j].x] = len - j + grow;
     }
-    function clearOwnFree(body) {
-      body.forEach(c => { ownFree[c.y * N + c.x] = 0; });
+    function clearOwnFree(body, len) {
+      for (let j = 0; j < len; j++) ownFree[body[j].y * N + body[j].x] = 0;
     }
 
     if (persona.driver && others.length) drivers[persona.driver]();
@@ -515,23 +558,21 @@ window.SnakeAI = (() => {
         if (inside(nx, ny)) risk[ny * N + nx] += w.headRisk;
       }
       const stampZ = ++stamp;
-      let frontier = [o.body[0].y * N + o.body[0].x];
-      seen[frontier[0]] = stampZ;
+      queue[0] = o.body[0].y * N + o.body[0].x;
+      seen[queue[0]] = stampZ;
+      let read = 0, write = 1;
       for (let s = 1; s <= age + 1; s++) {
-        const next = [];
-        for (const i of frontier) {
-          const x = i % N, y = (i - x) / N;
-          for (const d of DIR_LIST) {
-            const nx = x + d.x, ny = y + d.y;
-            if (!inside(nx, ny)) continue;
-            const ni = ny * N + nx;
-            if (seen[ni] === stampZ || otherFree[ni] > s) continue;
+        const levelEnd = write;
+        while (read < levelEnd) {
+          const i = queue[read++];
+          for (let n = 4 * i; n < 4 * i + 4; n++) {
+            const ni = nbr[n];
+            if (ni < 0 || seen[ni] === stampZ || otherFree[ni] > s) continue;
             seen[ni] = stampZ;
             risk[ni] += w.zoneRisk;
-            next.push(ni);
+            queue[write++] = ni;
           }
         }
-        frontier = next;
       }
     });
 
@@ -554,88 +595,98 @@ window.SnakeAI = (() => {
       pellet: shrinking ? 0 : (w.pellet ?? 1),
       mushroom: shrinking ? 2 : (w.mushroom ?? -1),
     };
-    const foodValue = new Map();
-    const foodKind = new Map(); // what eating a cell does to my length
-    for (const f of food) foodKind.set(f.y * N + f.x, f.kind);
+    // Per cell: foodValue is what eating it is worth (0 if nothing), foodGrow
+    // what it does to my length (a mushroom takes off up to 3). foodCells
+    // lists the cells worth something.
+    foodValue.fill(0); foodGrow.fill(0);
+    let foodCount = 0;
+    for (const f of food) foodGrow[f.y * N + f.x] = f.kind === 'mushroom' ? -3 : f.kind === 'golden' ? 3 : 1;
     for (const f of food) {
       const v = worth[f.kind] ?? 0;
       if (!v) continue;
       const i = f.y * N + f.x;
-      foodValue.set(i, (foodValue.get(i) || 0) + v);
+      foodValue[i] += v;
+      foodCells[foodCount++] = i;
     }
 
     // Can my head step into cell (x, y) as move number `step` from now?
-    function canEnter(body, grow, x, y, step) {
+    function canEnter(body, len, grow, x, y, step) {
       if (!inside(x, y) || mineFree[y * N + x] > step) return false;
-      const keep = grow > 0 ? body.length : body.length - 1;
+      const keep = grow > 0 ? len : len - 1;
       for (let j = 0; j < keep; j++) if (body[j].x === x && body[j].y === y) return false;
       return true;
     }
 
-    function evaluate(body, grow, t) {
-      const L = body.length + grow;
+    function evaluate(body, len, grow, t) {
+      const L = len + grow;
       const head = body[0];
       const headI = head.y * N + head.x;
-      body0ToOwnFree(body, grow);
-      // Absolute time T (ticks from now) at which a cell can be entered.
-      const passMine = (i, T) => mineFree[i] <= T && ownFree[i] <= T - t;
-      const passOther = (i, T) => otherFree[i] <= T && ownFree[i] <= T - t;
+      body0ToOwnFree(body, len, grow);
+      // A cell can be entered at absolute time T (ticks from now) once its
+      // occupant has left: mineFree (or otherFree, for a rival) <= T, and my
+      // own body, placed at time t, needs ownFree <= T - t.
 
       // 1. Room: timed flood fill from my head (tail cells open up as I move).
       //    It also finds the best food by distance alone, ignoring rivals.
+      //    queue[read, write) is still to expand; it holds one distance at a time.
       const cap = L * 2 + 20;
       const stampF = ++stamp;
       seen[headI] = stampF;
-      let frontier = [headI], space = 0, anyFood = 0;
+      queue[0] = headI;
+      let read = 0, write = 1, space = 0, anyFood = 0;
       // A contested-food eater keeps searching past the room cap until it sees food.
-      for (let d = 1; frontier.length && (space < cap || (w.contested && !anyFood && d <= w.foodRange)); d++) {
-        const next = [];
-        for (const i of frontier) {
-          const x = i % N, y = (i - x) / N;
-          for (const dd of DIR_LIST) {
-            const nx = x + dd.x, ny = y + dd.y;
-            if (!inside(nx, ny)) continue;
-            const ni = ny * N + nx;
-            if (seen[ni] === stampF || !passMine(ni, t + d)) continue;
+      for (let d = 1; read < write && (space < cap || (w.contested && !anyFood && d <= w.foodRange)); d++) {
+        const levelEnd = write;
+        while (read < levelEnd) {
+          const i = queue[read++];
+          for (let n = 4 * i; n < 4 * i + 4; n++) {
+            const ni = nbr[n];
+            if (ni < 0 || seen[ni] === stampF || mineFree[ni] > t + d || ownFree[ni] > d) continue;
             seen[ni] = stampF;
             space++;
-            const v = foodValue.get(ni);
+            const v = foodValue[ni];
             if (v > 0) anyFood = Math.max(anyFood, v * Math.max(0, w.foodRange - d));
-            next.push(ni);
+            queue[write++] = ni;
           }
         }
-        frontier = next;
       }
       space = Math.min(space, cap);
 
       // 2. Territory: multi-source BFS, opponents start at their last seen
       //    head `age` ticks in the past, I start at my head at time t.
+      //    Sources go in time order: the rivals all start at -age, and on a
+      //    tie I go first.
       const stampV = ++stamp;
-      const counts = new Array(others.length + 1).fill(0);
-      const sources = [{ i: headI, T: t, own: 0 }];
-      others.forEach((o, k) => sources.push({ i: o.body[0].y * N + o.body[0].x, T: -age, own: k + 1 }));
-      sources.sort((a, b) => a.T - b.T);
+      const owners = others.length + 1;
+      counts.fill(0, 0, owners);
+      let ns = 0;
+      const meFirst = t <= -age;
+      if (meFirst) { srcI[ns] = headI; srcT[ns] = t; srcOwn[ns++] = 0; }
+      for (let k = 0; k < others.length; k++) {
+        const h = others[k].body[0];
+        srcI[ns] = h.y * N + h.x; srcT[ns] = -age; srcOwn[ns++] = k + 1;
+      }
+      if (!meFirst) { srcI[ns] = headI; srcT[ns] = t; srcOwn[ns++] = 0; }
       let si = 0;
-      let T = sources[0].T;
-      let level = [];
-      const claim = (i, own, at) => {
-        ownerStamp[i] = stampV; owner[i] = own; claimT[i] = at; counts[own]++;
-      };
-      while (level.length || si < sources.length) {
-        while (si < sources.length && sources[si].T === T) {
-          const s = sources[si++];
-          if (ownerStamp[s.i] !== stampV) { claim(s.i, s.own, T); level.push(s.i); }
+      let T = srcT[0];
+      read = write = 0; // queue[read, write) now holds the cells claimed at time T
+      while (read < write || si < ns) {
+        while (si < ns && srcT[si] === T) {
+          const i = srcI[si], own = srcOwn[si++];
+          if (ownerStamp[i] !== stampV) {
+            ownerStamp[i] = stampV; owner[i] = own; claimT[i] = T; counts[own]++;
+            queue[write++] = i;
+          }
         }
-        const next = [];
-        for (const i of level) {
+        const levelEnd = write;
+        while (read < levelEnd) {
+          const i = queue[read++];
           const own = owner[i];
           if (own < 0) continue; // became contested
-          const x = i % N, y = (i - x) / N;
-          const pass = own === 0 ? passMine : passOther;
-          for (const dd of DIR_LIST) {
-            const nx = x + dd.x, ny = y + dd.y;
-            if (!inside(nx, ny)) continue;
-            const ni = ny * N + nx;
+          const free = own === 0 ? mineFree : otherFree;
+          for (let n = 4 * i; n < 4 * i + 4; n++) {
+            const ni = nbr[n];
+            if (ni < 0) continue;
             if (ownerStamp[ni] === stampV) {
               if (claimT[ni] === T + 1 && owner[ni] >= 0 && owner[ni] !== own) {
                 counts[owner[ni]]--;
@@ -643,19 +694,19 @@ window.SnakeAI = (() => {
               }
               continue;
             }
-            if (!pass(ni, T + 1)) continue;
-            claim(ni, own, T + 1);
-            next.push(ni);
+            if (free[ni] > T + 1 || ownFree[ni] > T + 1 - t) continue;
+            ownerStamp[ni] = stampV; owner[ni] = own; claimT[ni] = T + 1; counts[own]++;
+            queue[write++] = ni;
           }
         }
-        level = next;
-        T = level.length || si >= sources.length ? T + 1 : sources[si].T;
+        T = read < write || si >= ns ? T + 1 : srcT[si];
       }
 
       // 3. Food: a steady pull of foodW per step closer. Normally only food I
       //    reach before any rival counts; a contested eater counts all of it.
       let foodScore = 0;
-      for (const [i, v] of foodValue) {
+      for (let k = 0; k < foodCount; k++) {
+        const i = foodCells[k], v = foodValue[i];
         if (v > 0 && ownerStamp[i] === stampV && owner[i] === 0) {
           foodScore = Math.max(foodScore, v * Math.max(0, w.foodRange - (claimT[i] - t)));
         }
@@ -665,7 +716,7 @@ window.SnakeAI = (() => {
       else if (foodScore === 0) foodScore = 0.3 * anyFood;
 
       let othersTerritory = 0;
-      others.forEach((o, k) => { othersTerritory += counts[k + 1]; });
+      for (let k = 1; k < owners; k++) othersTerritory += counts[k];
 
       let score = w.space * space
         + w.territory * counts[0]
@@ -685,7 +736,7 @@ window.SnakeAI = (() => {
         score += w.distance * nearest;
       }
       if (ctx.avoid) {
-        heads.forEach((h, k) => { score += ctx.avoid[k] * Math.min(DISTANCE_CAP, manhattan(head, h)); });
+        for (let k = 0; k < heads.length; k++) score += ctx.avoid[k] * Math.min(DISTANCE_CAP, manhattan(head, heads[k]));
       }
 
       // 6. Hovering about `dist` from a chosen snake's head.
@@ -697,9 +748,9 @@ window.SnakeAI = (() => {
       // Desperado: the closer to danger, the better.
       if (w.thrill) {
         let edge = 0;
-        for (const dd of DIR_LIST) {
-          const nx = head.x + dd.x, ny = head.y + dd.y;
-          if (!inside(nx, ny) || !passMine(ny * N + nx, t + 1)) edge++;
+        for (let n = 4 * headI; n < 4 * headI + 4; n++) {
+          const ni = nbr[n];
+          if (ni < 0 || mineFree[ni] > t + 1 || ownFree[ni] > 1) edge++;
         }
         for (const h of heads) if (manhattan(head, h) <= 3) edge++;
         score += w.thrill * edge;
@@ -721,7 +772,7 @@ window.SnakeAI = (() => {
         score += w.tail * best;
       }
 
-      clearOwnFree(body);
+      clearOwnFree(body, len);
 
       const need = L + w.margin;
       if (space < need) score -= TRAPPED + 100 * (need - space);
@@ -729,36 +780,40 @@ window.SnakeAI = (() => {
     }
 
     // Score of moving `d` as step t + 1, then playing on for `depth - 1` more steps.
-    function move(body, grow, d, depth, t, bonus) {
+    // `body` is the first `len` cells; the moved body goes into bodies[t + 1].
+    function move(body, len, grow, d, depth, t, bonus) {
       const nx = body[0].x + d.x, ny = body[0].y + d.y;
-      if (!canEnter(body, grow, nx, ny, t + 1)) return null;
+      if (!canEnter(body, len, grow, nx, ny, t + 1)) return null;
       const i = ny * N + nx;
-      const turning = !sameDir(d, { x: body[0].x - body[1].x, y: body[0].y - body[1].y });
-      const nb = [{ x: nx, y: ny }, ...body];
-      let g = grow;
-      if (g > 0) g--; else nb.pop();
+      const turning = d.x !== body[0].x - body[1].x || d.y !== body[0].y - body[1].y;
+      // New head in front; the tail moves up unless I'm still growing.
+      let g = grow, nlen = len + 1;
+      if (g > 0) g--; else nlen--;
       // Eating must beat the pull that food had on us, plus a bonus for eating sooner.
-      const v = foodValue.get(i) || 0;
-      const kind = foodKind.get(i);
-      if (kind === 'mushroom') {
-        for (let n = 0; n < 3 && nb.length > 3; n++) nb.pop();
-      } else if (kind) g += kind === 'golden' ? 3 : 1;
-      if (v) foodValue.delete(i);
+      const v = foodValue[i];
+      const change = foodGrow[i];
+      if (change < 0) {
+        for (let n = 0; n < -change && nlen > 3; n++) nlen--;
+      } else g += change;
+      const nb = bodies[t + 1];
+      nb[0].x = nx; nb[0].y = ny;
+      for (let j = 1; j < nlen; j++) { nb[j].x = body[j - 1].x; nb[j].y = body[j - 1].y; }
+      if (v) foodValue[i] = 0;
       let gain = v * (foodW * w.foodRange + eatW * Math.pow(0.85, t)) - risk[i] * Math.pow(0.6, t);
       if (turning && w.turn) gain -= w.turn * Math.pow(0.9, t);
       const score = depth <= 1
-        ? evaluate(nb, g, t + 1) + bonus + gain
-        : search(nb, g, depth - 1, t + 1, bonus + gain);
-      if (v) foodValue.set(i, v);
+        ? evaluate(nb, nlen, g, t + 1) + bonus + gain
+        : search(nb, nlen, g, depth - 1, t + 1, bonus + gain);
+      if (v) foodValue[i] = v;
       return score;
     }
 
-    function search(body, grow, depth, t, bonus) {
-      const back = { x: body[1].x - body[0].x, y: body[1].y - body[0].y };
+    function search(body, len, grow, depth, t, bonus) {
+      const backX = body[1].x - body[0].x, backY = body[1].y - body[0].y;
       let best = -Infinity;
       for (const d of DIR_LIST) {
-        if (sameDir(d, back)) continue;
-        const s = move(body, grow, d, depth, t, bonus);
+        if (d.x === backX && d.y === backY) continue;
+        const s = move(body, len, grow, d, depth, t, bonus);
         if (s !== null) best = Math.max(best, s);
       }
       // Dead end: dying later beats dying sooner.
@@ -768,7 +823,7 @@ window.SnakeAI = (() => {
     let bestDir = me.dir, bestScore = -Infinity;
     for (const d of DIR_LIST) {
       if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
-      let s = move(me.body, me.grow, d, persona.depth ?? 3, 0, 0);
+      let s = move(me.body, me.body.length, me.grow, d, depth, 0, 0);
       if (s === null) s = 2 * DEAD;
       else if (ctx.mimicDir && sameDir(d, ctx.mimicDir)) s += w.mimic;
       s += Math.random() * 1e-3; // tie-break
