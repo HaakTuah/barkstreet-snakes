@@ -285,7 +285,7 @@ window.SnakeRecords = (() => {
   }
 
   return {
-    scores, stats, addScore, recordPlayer, recordFriend, shareable, importShared, playerId, rankOf, rename, setName, reset, getName, hasName, getBest, setBest,
+    MAX_SCORES, scores, stats, addScore, recordPlayer, recordFriend, shareable, importShared, playerId, rankOf, rename, setName, reset, getName, hasName, getBest, setBest,
     renderScores, renderStats, ordinal, clock,
   };
 })();

@@ -48,10 +48,18 @@ window.TUNING = Object.freeze({
   COUNTDOWN_BEAT: 350,      // 3, 2, 1: each beat this long (any direction skips it)
   DEATH_FREEZE: 350,        // freeze-frame when you die, before the card rises
   ROUND_END_PAUSE: 600,     // let the last moment breathe before the round-over card
+  MAX_FRAME_MS: 250,        // after a stall (a busy machine, a debugger), the round moves on at most this much...
+  MAX_CATCHUP: 4,           // ...and catches up at most this many ticks in one frame
 
   // ----------------------------------------------------------------- input
   QUEUE: 3,                 // turns you can queue ahead
-  SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells
+  SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells...
+  SWIPE_MIN_PX: 12,         // ...and at least this far (about 3 mm), so a jittery finger doesn't turn
+
+  // ---------------------------------------------------------------- online
+  HOST_DELAY_MAX: 150,      // the host's turns wait a friend's round trip, but never longer than this
+  AWAY_MS: 750,             // a friend silent this long gets an AI at the wheel...
+  AWAY_TOAST_MS: 2000,      // ...and a banner if it lasts this long
 
   // ------------------------------------------------------------------ juice
   PARTICLES_EAT: 10,        // particles in an eating pop

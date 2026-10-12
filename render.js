@@ -536,7 +536,9 @@ window.SnakeRender = (() => {
   }
 
   // The mouth: open when food is right in front, then a couple of chews after a bite.
+  let deadNow = false; // the snake being drawn has just died: mouth shut
   function mouthOpen(s, a) {
+    if (deadNow) return 0;
     const t = (lastNow - a.ateAt) / T.CHEW_MS;
     if (t >= 0 && t < 1) return 0.55 * Math.abs(Math.sin(t * Math.PI * 2));
     if (!game) return 0;
@@ -570,7 +572,7 @@ window.SnakeRender = (() => {
   // Scratch buffer for interpolated segment centers (x, y pairs).
   let pts = new Float32Array(2 * 256);
 
-  function drawSnake(s, alpha, now) {
+  function drawSnake(s, alpha, now, dead) {
     const look = lookOf(s);
     const color = colorOf(s);
     const n = s.body.length;
@@ -591,7 +593,7 @@ window.SnakeRender = (() => {
     // the head's squash at the bite itself.
     const tickPos = game ? game.tick - 1 + alpha : 0;
     const bite = (lastNow - a.ateAt) / T.BITE_MS;
-    a.bump = bite >= 0 && bite < 1 ? (a.gulpR > T.GULP ? 0.2 : 0.12) * Math.sin(bite * Math.PI) : 0;
+    a.bump = !dead && bite >= 0 && bite < 1 ? (a.gulpR > T.GULP ? 0.2 : 0.12) * Math.sin(bite * Math.PI) : 0;
 
     // Shadow, in one path.
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
@@ -712,13 +714,14 @@ window.SnakeRender = (() => {
     }
 
     // Head features, drawn in a frame where +x points the way the snake faces.
-    const blinking = now < a.blinkUntil;
-    if (now > a.nextBlink) {
+    const blinking = dead || now < a.blinkUntil;
+    if (!dead && now > a.nextBlink) {
       a.blinkUntil = now + T.BLINK_MS;
       a.nextBlink = now + T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN);
     }
-    updateGaze(s, look, a, now);
+    if (!dead) updateGaze(s, look, a, now);
     gazeX = a.gx; gazeY = a.gy;
+    deadNow = dead;
     ctx.save();
     ctx.translate(pts[0], pts[1]);
     ctx.rotate(Math.atan2(s.dir.y, s.dir.x));
@@ -839,11 +842,11 @@ window.SnakeRender = (() => {
     const c = CELL;
     const open = mouthOpen(s, a);
     // Tongue: every few seconds, more often when food is within 3 cells.
-    if (now > a.nextTongue) {
+    if (!deadNow && now > a.nextTongue) {
       a.tongueUntil = now + T.TONGUE_MS;
       a.nextTongue = now + T.TONGUE_EVERY * (a.near <= 3 ? 0.4 : 0.7 + Math.random() * 0.8);
     }
-    if (now < a.tongueUntil && open < 0.08) {
+    if (!deadNow && now < a.tongueUntil && open < 0.08) {
       const t = 1 - Math.abs((a.tongueUntil - now) / T.TONGUE_MS * 2 - 1); // out and back
       const reach = c * (0.42 + 0.3 * t);
       ctx.strokeStyle = '#e11d48';
@@ -1238,6 +1241,7 @@ window.SnakeRender = (() => {
     const dt = lastNow ? Math.min(64, now - lastNow) : 16;
     lastNow = now;
     syncHoles();
+    if (deaths.length || corpses.length) updateCorpses(now);
 
     let sx = 0, sy = 0;
     if (!reduced && now < shakeUntil) {
@@ -1264,7 +1268,7 @@ window.SnakeRender = (() => {
       const phase = (f.x * 7 + f.y * 13) % 10; // each item bobs on its own beat
       if (f.kind === 'beetle') drawBeetle(f, alpha, now);
       else if (f.kind === 'food') blit(appleSprite(), x, y + bob * Math.sin(now / 420 + phase) * 1.6);
-      else if (f.kind === 'pellet') blit(meatSprite(f.color), x, y);
+      else if (f.kind === 'pellet') { if (!heldCells[f.y * GRID + f.x]) blit(meatSprite(f.color), x, y); }
       else if (f.kind === 'mushroom') {
         ctx.save();
         ctx.translate(x, y + CELL * 0.3);
@@ -1298,7 +1302,8 @@ window.SnakeRender = (() => {
       ctx.restore();
     }
 
-    for (const s of game.snakes) if (s.alive) drawSnake(s, alpha, now);
+    if (corpses.length) drawCorpses(now);
+    for (const s of game.snakes) if (s.alive) drawSnake(s, alpha, now, false);
     drawParticles(dt);
     drawFloaters(dt);
   }
@@ -1328,18 +1333,61 @@ window.SnakeRender = (() => {
         else spawn(x, y, T.PARTICLES_EAT, 180, T.PARTICLE_LIFE, 2.8, '#a3e635', '#fde68a'); // sprout and honey: visible on bark and on green snakes alike
         if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(x, y - CELL * 0.6, e.kind === 'golden' ? '+3' : e.kind === 'beetle' ? '+2' : '+1');
       } else if (e.type === 'death') {
-        const s = e.snake;
-        const col = colorOf(s);
-        for (let i = 0; i < s.body.length; i += 3) {
-          const c = s.body[i];
-          spawn(c.x * CELL + CELL / 2, c.y * CELL + CELL / 2, Math.max(2, Math.round(T.PARTICLES_DEATH / Math.ceil(s.body.length / 3))), 200, T.PARTICLE_LIFE * 1.2, 3, col[0] === '#' ? col : '#f6ecd2', '#a16207');
-        }
+        deaths.push(e.snake); // bursts on the next frame, unless the moment is held
       } else if (e.type === 'peck') {
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 5, 120, 380, 2, '#a16207', '#f6ecd2');
       } else if (e.type === 'flown') { // a beetle nobody caught takes off
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 8, 260, T.PARTICLE_LIFE * 1.2, 2.2, '#d1fae5', '#059669');
       }
     }
+  }
+
+  // A dead snake bursts into meat, or with reduced motion fades over its meat.
+  // When the game holds the moment (your death), the snakes that died on that
+  // tick keep their pose, eyes screwed shut and covering their meat, until the
+  // hold ends. corpses: { s, until (burst/fade time), fade (true once fading) }.
+  const deaths = [], corpses = [];
+  const FADE_MS = 250;
+  const heldCells = new Uint8Array(GRID * GRID);
+
+  function hold(until) {
+    for (const s of deaths) corpses.push({ s, until, fade: false });
+    deaths.length = 0;
+  }
+
+  function burst(s) {
+    const col = colorOf(s);
+    for (let i = 0; i < s.body.length; i += 3) {
+      const c = s.body[i];
+      spawn(c.x * CELL + CELL / 2, c.y * CELL + CELL / 2, Math.max(2, Math.round(T.PARTICLES_DEATH / Math.ceil(s.body.length / 3))), 200, T.PARTICLE_LIFE * 1.2, 3, col[0] === '#' ? col : '#f6ecd2', '#a16207');
+    }
+  }
+
+  // Before drawing: unheld deaths burst; held ones whose time is up burst or start fading.
+  function updateCorpses(now) {
+    for (const s of deaths) {
+      if (reduced) corpses.push({ s, until: now, fade: true });
+      else burst(s);
+    }
+    deaths.length = 0;
+    heldCells.fill(0);
+    for (let i = corpses.length - 1; i >= 0; i--) {
+      const c = corpses[i];
+      if (!c.fade && now >= c.until) {
+        if (reduced) c.fade = true;
+        else { burst(c.s); corpses.splice(i, 1); continue; }
+      }
+      if (c.fade && now >= c.until + FADE_MS) { corpses.splice(i, 1); continue; }
+      if (!c.fade) for (const b of c.s.body) heldCells[b.y * GRID + b.x] = 1;
+    }
+  }
+
+  function drawCorpses(now) {
+    for (const c of corpses) {
+      ctx.globalAlpha = c.fade ? Math.max(0, 1 - (now - c.until) / FADE_MS) : 1;
+      drawSnake(c.s, 1, now, true);
+    }
+    ctx.globalAlpha = 1;
   }
 
   function shake(px) {
@@ -1388,6 +1436,8 @@ window.SnakeRender = (() => {
 
   function setGame(g) {
     game = g;
+    deaths.length = 0;
+    corpses.length = 0;
     pLive = 0;
     plife.fill(0);
     flife.fill(0);
@@ -1395,7 +1445,8 @@ window.SnakeRender = (() => {
   }
 
   return {
-    init, setGame, resize, frame, onTick, shake, headPx, colorOf, lookOf,
+    init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, lookOf,
+    holding: () => deaths.length > 0 || corpses.length > 0,
     setViewer(id) { viewerId = id; },
     setReducedMotion(v) { reduced = v; },
     get particles() { return pLive; },

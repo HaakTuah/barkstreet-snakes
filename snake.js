@@ -74,6 +74,7 @@
     friendAway: name => `${name} went quiet. An AI steers until they’re back.`,
     friendBack: name => `${name} is back.`,
     youAway: 'You went quiet for a moment, so an AI steered for you.',
+    takeBack: 'An AI kept your snake going. Steer to take it back.',
     watchingFirst: 'You’re watching this round. You’re in from the next one.',
   };
 
@@ -101,6 +102,7 @@
   let acc = 0, tickLen = T.OPENING_TICK, lastFrame = 0, drawAlpha = 1, dirty = true;
   let beatsLeft = 0, beatTimer = 0;
   let freezeUntil = 0, pendingCard = null, cardAt = 0; // times on the frame clock (rAF timestamps)
+  let shownCard = null, napOver = null; // the card on screen, and the one a nap covered
   let thinkQueue = [];
   let best = Records.getBest();
   let boardPx = 0; // the board's CSS width, kept by a ResizeObserver (no layout reads in the loop)
@@ -138,7 +140,7 @@
   }
 
   function frame(now) {
-    const dt = lastFrame ? Math.max(0, Math.min(250, now - lastFrame)) : 16;
+    const dt = lastFrame ? Math.max(0, Math.min(T.MAX_FRAME_MS, now - lastFrame)) : 16;
     lastFrame = now;
     const t0 = performance.now();
     let tickCost = 0;
@@ -155,26 +157,35 @@
       drawAlpha = Math.min(1, (performance.now() - online.lastTickAt) / tickLen);
       dirty = true;
     } else if (state === 'running') {
-      if (now >= freezeUntil) {
-        if (pendingCard) { const c = pendingCard; pendingCard = null; showCard(c); }
+      // Alone, your death stops the round for a moment. Online it never stops:
+      // the round is everyone's, and only your card waits.
+      const frozen = () => !online && now < freezeUntil;
+      if (pendingCard && now >= freezeUntil) { const c = pendingCard; pendingCard = null; showCard(c); }
+      if (!frozen()) {
         acc += dt;
         let steps = 0;
-        while (acc >= tickLen && steps < 4 && state === 'running' && now >= freezeUntil) {
+        while (acc >= tickLen && steps < T.MAX_CATCHUP && state === 'running' && !frozen()) {
           acc -= tickLen;
           const ts = performance.now();
           tick();
           tickCost += performance.now() - ts;
           steps++;
         }
-        if (steps === 4) acc = Math.min(acc, tickLen); // after a long stall, don't race to catch up
+        if (steps === T.MAX_CATCHUP) acc = Math.min(acc, tickLen); // after a long stall, don't race to catch up
         think(dt);
-        drawAlpha = state === 'running' && now >= freezeUntil ? Math.min(1, acc / tickLen) : 1;
       }
+      // Between the last two cells. While frozen, `acc` stands still, so the
+      // board holds the very moment of the crash, with nothing jumping ahead.
+      drawAlpha = Math.min(1, acc / tickLen);
       dirty = true;
     } else if (state === 'over') {
       if (pendingCard && now >= cardAt) { const c = pendingCard; pendingCard = null; showCard(c); }
-      drawAlpha = 1;
-      if (R.particles > 0 || pendingCard) dirty = true;
+      // The last move glides like any other, then the board rests.
+      if (drawAlpha < 1) {
+        drawAlpha = guesting() ? Math.min(1, (performance.now() - online.lastTickAt) / tickLen) : Math.min(1, (acc += dt) / tickLen);
+        dirty = true;
+      }
+      if (R.particles > 0 || R.holding() || pendingCard) dirty = true;
     }
 
     Audio.music(musicStage(), mood);
@@ -182,7 +193,7 @@
     if (dirty && !document.hidden) {
       R.frame(drawAlpha, now);
       Chatter.layout(drawAlpha, boardPx);
-      dirty = state === 'running' || state === 'countdown' || R.particles > 0;
+      dirty = state === 'running' || state === 'countdown' || R.particles > 0 || R.holding();
     }
     perf.record(performance.now() - t0, tickCost);
   }
@@ -245,7 +256,8 @@
     // hiccupped), say so once you're back.
     const piloted = !!player()?.autopilot;
     if (piloted && !wasPiloted) online.pilotedAt = performance.now();
-    if (wasPiloted && !piloted && player() && performance.now() - online.pilotedAt > 2000) toast(FLAVOR.youAway, 2200);
+    if (wasPiloted && !piloted && player() && performance.now() - online.pilotedAt > 2000 && !online.toldAway) toast(FLAVOR.youAway, 2200);
+    if (!piloted) online.toldAway = false;
     tickLen = msg.len || E.tickMs(game);
     online.lastTickAt = performance.now();
     afterTick(dying, wasAlive);
@@ -263,11 +275,21 @@
     const alive = game.snakes.filter(s => s.alive);
     for (const s of dying) finishSnake(s, { place: alive.length + 1, draw: alive.length === 0 });
     thinkQueue = guesting() ? [] : alive.filter(s => !s.isPlayer || s.autopilot);
+    const youJustDied = wasAlive && !playerAlive();
+    if (youJustDied) deathMoment();
     if (alive.length <= 1) {
       if (alive.length) finishSnake(alive[0], { place: 1, won: true });
       return endRound();
     }
-    if (wasAlive && !playerAlive()) youDied();
+    if (youJustDied) youDied();
+  }
+
+  // The moment you die: the board holds still (alone), your snake holds its
+  // pose with its eyes screwed shut, then bursts. Also when it ends the round.
+  function deathMoment() {
+    freezeUntil = lastFrame + (reducedMQ.matches ? T.DEATH_FREEZE / 2 : T.DEATH_FREEZE);
+    R.hold(freezeUntil);
+    R.shake(T.SHAKE_PX);
   }
 
   // Each segment's previous cell, for interpolation. Reuses the same objects.
@@ -352,6 +374,7 @@
   function pause() {
     if (state !== 'running' || online) return; // no napping online: the round goes on for everyone
     state = 'paused';
+    napOver = overlay.classList.contains('hidden') ? null : shownCard; // your death card, say: back on waking
     Chatter.clearBubbles();
     showCard({
       title: 'Napping', text: `${pick(FLAVOR.pause)} ${FLAVOR.wake}`,
@@ -363,15 +386,15 @@
   function resume() {
     if (state !== 'paused') return;
     state = 'running';
-    hideCard();
+    if (napOver) showCard({ ...napOver, quiet: true });
+    else hideCard();
+    napOver = null;
     lastFrame = 0;
     updateControls();
   }
 
   function youDied() {
     const p = player();
-    freezeUntil = lastFrame + (reducedMQ.matches ? T.DEATH_FREEZE / 2 : T.DEATH_FREEZE);
-    R.shake(T.SHAKE_PX);
     const titles = FLAVOR.deathTitle;
     const title = p.killer === 'hunger' ? 'Starved!' : p.cause === 'fell into a woodpecker hole' ? 'Down the hole!'
       : pick(p.killer === 'wall' ? titles.wall : p.killer === 'self' ? titles.self : p.cause.startsWith('crashed') ? titles.headOn : titles.rival);
@@ -519,6 +542,7 @@
   let cardActions = null;
   function showCard(card) {
     hideToast();
+    shownCard = card;
     cardTitle.textContent = card.title;
     cardText.textContent = card.text || '';
     cardText.hidden = !card.text;
@@ -547,7 +571,7 @@
         Audio.play('best');
       }
       if (game.newBest) { badgeEl.textContent = FLAVOR.newBest(best); badgeEl.hidden = false; }
-      const rank = Records.rankOf(game.entryId);
+      const rank = yourRank();
       if (rank.overall && (rank.overall <= 3 || game.newBest)) {
         nameRank.textContent = `Hall of Fame #${rank.overall}. Carve your name:`;
         nameRow.hidden = false;
@@ -571,8 +595,20 @@
     updateControls();
   }
 
+  // Your Hall of Fame rank. Before the round is over, the snakes still alive
+  // haven't been saved, but they'll all finish ahead of you, so they count.
+  function yourRank() {
+    const rank = Records.rankOf(game.entryId);
+    if (state === 'over' || !rank.overall) return rank;
+    let ahead = 0;
+    for (const s of game.snakes) if (s.alive && (!online || (s.isPlayer && s.owner))) ahead++;
+    const overall = rank.overall + ahead;
+    return { overall: overall <= Records.MAX_SCORES ? overall : 0, personal: rank.personal };
+  }
+
   function hideCard() {
     overlay.classList.add('hidden');
+    shownCard = null;
   }
 
   function buildOpponents() {
@@ -653,6 +689,8 @@
     muteBtn.setAttribute('aria-pressed', String(Audio.isMuted()));
     musicBtn.setAttribute('aria-pressed', String(!Audio.isMusicOn()));
     musicBtn.disabled = Audio.isMuted();
+    // During a round the page holds still under your fingers (see the swipes).
+    document.documentElement.classList.toggle('playing', state === 'running' || state === 'countdown');
   }
 
   function setSpeed(n) {
@@ -675,7 +713,8 @@
     if (p.queue.length < T.QUEUE) p.queue.push(next);
   }
 
-  // A direction: steers, and during the countdown also skips it.
+  // A direction: steers, and on the start card or during the countdown also
+  // gets the round going (already turning).
   function steer(name) {
     if (!playerAlive()) return;
     if (online) {
@@ -683,17 +722,25 @@
       if (state !== 'countdown' && state !== 'running') return;
       if (guesting()) online.room.send({ t: 'turn', d: name });
       else hostTurn(name);
-    } else if (state === 'countdown') { turn(name); go(); }
+      return;
+    }
+    if (state === 'ready') start();
+    if (state === 'countdown') { turn(name); go(); }
     else if (state === 'running') turn(name);
   }
 
-  // The host plays with no lag, while friends' turns take half a round trip to
-  // arrive. So the host's own turns wait that long too: no one gets a head start.
+  // A friend sees each tick half a round trip late, and their turn takes the
+  // other half to arrive. So the host's own turns wait a whole round trip (in
+  // the order they were pressed): no one gets a head start.
+  let hostTurnAt = 0;
   function hostTurn(name) {
     const me = player();
-    const delay = Math.min(150, online.room.rtt() / 2);
-    if (delay < 4) return turn(name, me);
-    setTimeout(() => { if (me.alive && game.snakes[me.id] === me) turn(name, me); }, delay);
+    if (me.autopilot) me.autopilot = null; // back from a hidden tab: your hands again
+    const now = performance.now();
+    const at = Math.max(now + Math.min(T.HOST_DELAY_MAX, online.room.rtt()), hostTurnAt);
+    hostTurnAt = at;
+    if (at - now < 4) return turn(name, me);
+    setTimeout(() => { if (me.alive && game.snakes[me.id] === me) turn(name, me); }, at - now);
   }
 
   function napKey() {
@@ -718,7 +765,9 @@
     }
     const dir = KEYS[e.key] || CODES[e.code];
     if (dir) { e.preventDefault(); steer(dir); return; }
-    if (e.repeat) { if (e.key === ' ') e.preventDefault(); return; }
+    // A held key repeats nothing, not even a focused button (holding Enter on
+    // Play would otherwise start the round and then skip its countdown).
+    if (e.repeat) { if (e.key === ' ' || e.key === 'Enter') e.preventDefault(); return; }
     // Enter and Space on a focused button belong to the button.
     if ((e.key === 'Enter' || e.key === ' ') && e.target.closest?.('button')) return;
     if (e.key === ' ' || e.key === 'p' || e.key === 'P') { e.preventDefault(); napKey(); }
@@ -731,34 +780,45 @@
   });
 
   // Swipes: a turn registers as soon as the finger has travelled half a cell,
-  // without lifting, and one touch can chain several turns. The board never
-  // scrolls the page (touch-action: none in the CSS, preventDefault here).
+  // without lifting, and one touch can chain several turns. On the board they
+  // always steer; during a round they steer anywhere on the screen (over the
+  // countdown card too), and the page never scrolls. Buttons stay buttons.
   let swipe = null;
-  canvas.addEventListener('touchstart', e => {
+  const swiping = () => state === 'running' || state === 'countdown';
+  document.addEventListener('touchstart', e => {
     Audio.unlock();
+    if (e.target.closest?.('button, input, a, [role="switch"], #records')) return;
+    if (!swiping() && !canvas.contains(e.target)) return;
     const t = e.changedTouches[0];
     if (!swipe) swipe = { id: t.identifier, x: t.clientX, y: t.clientY };
-    if (state === 'running' || state === 'countdown') e.preventDefault();
+    if (swiping()) e.preventDefault();
   }, { passive: false });
-  canvas.addEventListener('touchmove', e => {
+  document.addEventListener('touchmove', e => {
     if (!swipe) return;
     let t = null;
     for (const c of e.changedTouches) if (c.identifier === swipe.id) t = c;
     if (!t) return;
     e.preventDefault();
     const dx = t.clientX - swipe.x, dy = t.clientY - swipe.y;
-    const threshold = Math.max(12, (boardPx || 320) / GRID * T.SWIPE_CELLS);
+    const threshold = Math.max(T.SWIPE_MIN_PX, (boardPx || 320) / GRID * T.SWIPE_CELLS);
     if (Math.max(Math.abs(dx), Math.abs(dy)) < threshold) return;
     steer(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
     swipe.x = t.clientX;
     swipe.y = t.clientY;
   }, { passive: false });
   const endSwipe = e => { for (const c of e.changedTouches) if (swipe && c.identifier === swipe.id) swipe = null; };
-  canvas.addEventListener('touchend', endSwipe);
-  canvas.addEventListener('touchcancel', endSwipe);
+  document.addEventListener('touchend', endSwipe);
+  document.addEventListener('touchcancel', endSwipe);
 
   // Buttons.
   const click = (el, fn) => el.addEventListener('click', e => { Audio.unlock(); Audio.play('ui'); fn(e); });
+  // A button clicked with a mouse or a finger doesn't keep the keyboard, so
+  // Space and Enter go back to napping and starting over. Card and Hall of
+  // Fame buttons keep focus: there, Enter on a focused button is expected.
+  document.addEventListener('click', e => {
+    const b = e.target.closest?.('button');
+    if (b && e.detail > 0 && !b.closest('#overlay, #records')) b.blur();
+  });
   click(startBtn, () => {
     if (cardActions?.primary) cardActions.primary();
     else if (state === 'paused') resume();
@@ -805,12 +865,30 @@
   // while you're playing (a watched round can keep going on screen). Online the
   // round goes on regardless.
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden || online) return;
+    if (online) return awayOnline();
+    if (!document.hidden) return;
     if (state === 'countdown') { state = 'running'; pause(); }
     else if (state === 'running') pause();
   });
+
+  // Online the round goes on while your tab is hidden, so an AI steers your
+  // snake until you're back and turn again. A friend's tab says so itself: a
+  // hidden tab's "still here" slows to once a second, which looks like a
+  // flickering connection.
+  function awayOnline() {
+    if (guesting()) online.room.send({ t: document.hidden ? 'away' : 'back' });
+    const me = player();
+    if (!me?.alive || (state !== 'countdown' && state !== 'running')) return;
+    if (hosting() && document.hidden) { me.autopilot = PERSONAS.drab; me.queue.length = 0; }
+    if (!document.hidden && (hosting() ? me.autopilot : true)) {
+      toast(FLAVOR.takeBack, 2400);
+      if (guesting()) online.toldAway = true; // (then no "you went quiet" when you do)
+    }
+  }
   window.addEventListener('blur', () => {
-    if (state === 'running' && playerAlive() && !pendingCard && !online) pause();
+    if (online || !playerAlive() || pendingCard) return;
+    if (state === 'countdown') { state = 'running'; pause(); }
+    else if (state === 'running') pause();
   });
 
   // ------------------------------------------------------ Hall of Fame
@@ -818,6 +896,10 @@
   let recordsTab = 'scores', scoresFilter = 'all', recordsOpener = null;
 
   function openRecords() {
+    if (online && playerAlive() && (state === 'countdown' || state === 'running')) {
+      toast('The Hall of Fame can wait. Eyes on the bark.', 1800); // the round wouldn't
+      return;
+    }
     if (online) { /* the round goes on behind the dialog */ }
     else if (state === 'countdown') { state = 'running'; pause(); }
     else if (state === 'running' && !pendingCard) pause();
@@ -1023,6 +1105,9 @@
         online.room.send(id, Online.round(game, game.humans, game.rivalsLine, game.roundId));
         if (state === 'running') online.room.send(id, { t: 'phase', s: 'go' });
       }
+    } else if (msg.t === 'away' || msg.t === 'back') {
+      const p = online.players.find(o => o.id === id);
+      if (p) p.away = msg.t === 'away';
     } else if (msg.t === 'turn') {
       const s = game.snakes.find(o => o.peer === id);
       if (!s?.alive || s.left || (state !== 'countdown' && state !== 'running') || !Online.DIR_NAMES.includes(msg.d)) return;
@@ -1035,16 +1120,18 @@
   // back, so a hiccup never drives them into a wall. Their browser says "still
   // here" four times a second, so a quiet spell shows within a moment; any turn
   // they send hands the wheel straight back. Short blips pass without a banner.
-  const AWAY_MS = 750, AWAY_TOAST_MS = 2000;
+  // A friend who switched tabs said so: the AI stays at the wheel until they turn.
   function checkAway() {
     for (const s of game.snakes) {
       if (!s.peer || s.peer === 'host' || !s.alive || s.left) continue;
-      const quiet = online.room.quietFor(s.peer);
-      if (quiet > AWAY_MS && !s.autopilot) {
+      const away = online.players.find(p => p.id === s.peer)?.away;
+      const quiet = away ? Infinity : online.room.quietFor(s.peer);
+      if (quiet > T.AWAY_MS && !s.autopilot) {
         s.autopilot = PERSONAS.drab;
         s.queue.length = 0;
-      } else if (quiet <= AWAY_MS && s.autopilot) handBack(s);
-      if (s.autopilot && quiet > AWAY_TOAST_MS && !s.awayToast) {
+        s.awayPilot = !!away;
+      } else if (quiet <= T.AWAY_MS && s.autopilot && !s.awayPilot) handBack(s);
+      if (s.autopilot && quiet > T.AWAY_TOAST_MS && !s.awayToast) {
         s.awayToast = true;
         toast(FLAVOR.friendAway(s.name), 2200);
       }
@@ -1053,6 +1140,7 @@
 
   function handBack(s) {
     s.autopilot = null;
+    s.awayPilot = false;
     if (s.awayToast) toast(FLAVOR.friendBack(s.name), 1500);
     s.awayToast = false;
   }
@@ -1158,7 +1246,9 @@
         else if (msg.s === 'go' && state === 'countdown') go();
         break;
       case 'tick': hostTick(msg); break;
-      case 'say': if (game.snakes[msg.id]) Chatter.replay(game.snakes[msg.id], msg.text); break;
+      case 'say': // (the host's last line can arrive after the round ended here)
+        if ((state === 'countdown' || state === 'running') && game.snakes[msg.id] && typeof msg.text === 'string') Chatter.replay(game.snakes[msg.id], msg.text.slice(0, 200));
+        break;
       case 'closed': hostLost('closed'); break;
     }
   }

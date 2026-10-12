@@ -112,7 +112,7 @@ One treatment, used everywhere:
 | Honest speed | Spectator 4× runs at 4.0× (±2%); ticks don't drift by their own cost |
 | Input never lost | Two turns pressed within one tick both apply, on consecutive ticks; no input combo ever reverses into the neck |
 | Eating feels good | Pop, particles, sound and score bump appear in the same frame as the bite tick; the gulp travels the body |
-| Death lands softly | A 350 ms freeze-frame **of the moment of impact**: every snake stays exactly where it was drawn, and yours holds its pose with its eyes screwed shut. Then it bursts into meat with a puff (plus a 4 px shake, only for your death and only without reduced motion; with reduced motion it fades instead), and the card rises in over about 250 ms. Online, the host's simulation never freezes; only the host's own screen does |
+| Death lands softly | A 350 ms freeze-frame **of the moment of impact**: every snake stays exactly where it was drawn, and yours holds its pose with its eyes screwed shut. Then it bursts into meat with a puff (plus a 4 px shake, only for your death and only without reduced motion; with reduced motion it fades instead), and the card rises in over about 250 ms. Online the round never stops for anyone: your snake still holds its pose for the moment, and only your card waits |
 | The round's last frame | The final move glides like any other, then the board rests |
 | Restart is instant | Enter/R/Play: a short 3-beat countdown (3 × 350 ms) that **any direction key or swipe skips** (and steers). An arrow on the start card starts the round already turning |
 | Gentle difficulty | Tick 120 ms → 90 ms over 2 minutes; the first 3 ticks of a round are eased (170 → 120 ms) so the opening is forgiving |

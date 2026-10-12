@@ -37,6 +37,8 @@ html, body {
   background: radial-gradient(ellipse at top, var(--night-moss-2), var(--night-moss) 70%) fixed, var(--night-moss);
   overscroll-behavior: none; /* no pull-to-refresh mid-round */
 }
+/* During a round, swipes steer anywhere on the page, so nothing scrolls or zooms. */
+html.playing, html.playing body { touch-action: none; }
 
 body {
   display: flex;
