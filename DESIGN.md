@@ -53,7 +53,7 @@ Your snake is the protagonist, so it gets the most life:
 - **A gulp bulge** that travels down the body, one segment per tick, after every bite.
 - **A thin cream outline**, so "you" is identifiable without relying on green.
 
-The rivals keep their faces and patterns, and they share the blink and the gulp. Capricious gets a permanent pink head ring, so you can always find it whatever mood it's in.
+The rivals keep their faces and patterns, and they share the blink and the gulp. Gobbler wolfs its food down: a gulp twice the size, and hamster cheeks either side of its mouth that puff up with every bite and slowly go down. Capricious gets a permanent pink head ring, so you can always find it whatever mood it's in.
 
 ## Food and the world
 
@@ -141,6 +141,19 @@ Every sound is synthesised live with the Web Audio API, through one AudioContext
 - **Mixing:** everything goes through a compressor so four snakes eating at once can't clip. At most 6 cues sound at once (death, best and win always get through), and each cue has a minimum gap so it can't machine-gun.
 - **Music** is scheduled note by note on the audio clock, a quarter second ahead, from the game loop, and switches arrangement at bar lines so changes land on the beat. It has its own bus and its own switch (N), separate from all sound (M). Both are remembered.
 
+## Play with friends (online)
+
+Friends-only rooms, peer to peer, so it stays a static site with nothing to deploy and no accounts.
+
+- **The host's browser runs the game**, exactly the code that runs alone (`engine.js`, the AIs, the chatter). Every tick it sends friends a compact picture of the board (about 0.9 KB, so about 8 KB/s per friend); friends send back only their turns. Their screens glide between ticks with the same renderer. `tools/online-test.js` checks that a friend's board matches the host's on every tick, and two real browsers matched on every tick of whole rounds.
+- **Fair, in keeping with the AI rule:** the rivals never know who's a person. Lag would favour the host, who has none, so the host's own turns are delayed by half the friends' average round trip.
+- **Never stalls:** a friend's browser says "still here" four times a second. After 0.75 s of silence an AI steers their snake (so a hiccup doesn't drive them into a wall), and any turn they send hands it straight back; a banner appears only if the silence lasts 2 s. If they leave, the AI finishes their round. If the host leaves, friends get a card saying so.
+- **The host's tab may be hidden:** browsers stop animation frames there, so a tiny worker clock keeps the round going.
+- **What changes online:** no napping, no countdown skipping, no watching speeds; your Hall of Fame and stats keep only your own result; chatter is the host's, passed on, so everyone sees the same lines.
+- **Connecting:** PeerJS (from cdnjs with an integrity hash, loaded only when someone opens Play with friends) and its free public broker introduce the browsers; STUN finds a route for most networks. Strict ones need a relay (TURN), which needs a signup, so it's left as a marked spot in `net.js`.
+- **A shared Hall of Fame** (your idea): on joining, each browser sends its own best rounds (up to 10, never AI rows), and the host passes everyone's on, so friends' rows appear in each other's tables in their seat colors, tagged "friend". Each browser also records every person's result in rounds played together. Every browser has a private random player id and every round an id, so a round is stored once, whoever recorded or shared it first (`tools/records-test.js`). **Only you**, your best and your stats count only your own rounds. AI results aren't kept for online rounds, or every table would fill with the host's rivals.
+- **People get seat colors** (green, lemon, lavender, sky) and the same cream outline, and names are made unique (a friend called "Sniper" becomes "Sniper 2" in a round with the rival).
+
 ## Architecture change (and why)
 
 `snake.js` was 1,500 lines mixing the rules engine, the renderer, the UI, input and debug tools. It is split into:
@@ -148,7 +161,8 @@ Every sound is synthesised live with the Web Audio API, through one AudioContext
 - **`engine.js`:** the pure rules. It's used unchanged by the game and by `tools/simulate.js`. It has no DOM.
 - **`render.js`:** the canvas renderer: layers, sprite caches, particles and character animation.
 - **`audio.js`:** a tiny Web Audio synthesiser for the cues and the adaptive music.
-- **`snake.js`:** the game controller: the loop, input, overlays, HUD, records glue and the dev frame-time overlay (`?perf`).
+- **`snake.js`:** the game controller: the loop, input, overlays, HUD, records glue, the friends lobby and the dev frame-time overlay (`?perf`).
+- **`online.js` and `net.js`:** play with friends: the protocol (testable in Node) and the connections.
 - **`tools/simulate.js`:** the balance simulator, moved out of the page into Node. It runs on all cores, and with `--seed` it repeats a run exactly, which is how the engine split, the AI's think-ahead and the AI optimisation were proven to change no decision.
 
 `ai.js`, `chatter.js` and `records.js` keep their roles. Plain `<script>` tags still work from `file://`, with no build step.

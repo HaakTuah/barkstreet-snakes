@@ -6,6 +6,7 @@ window.SnakeRecords = (() => {
   const STATS_KEY = 'snake-stats';
   const NAME_KEY = 'snake-name';
   const BEST_KEY = 'snake-best';
+  const PLAYER_KEY = 'snake-player';
   const MAX_SCORES = 10;
   const MAX_NAME = 16;
   const DEFAULT_NAME = 'You';
@@ -36,8 +37,25 @@ window.SnakeRecords = (() => {
       color: typeof e.color === 'string' ? e.color : '#a8a29e', ai: !!e.ai,
       place: num(e.place), won: !!e.won, draw: !!e.draw, eaten: num(e.eaten), survived: num(e.survived), date: num(e.date),
       watched: !!e.watched,
+      friend: !!e.friend && !e.ai,
+      owner: typeof e.owner === 'string' ? e.owner.slice(0, 40) : (e.ai || e.friend ? '' : playerId()),
+      round: typeof e.round === 'string' ? e.round.slice(0, 40) : '',
     })).sort(compare);
   }
+
+  // A random id for whoever plays in this browser, so a round shared between
+  // friends' Halls of Fame is never counted twice.
+  let me = null;
+  function playerId() {
+    if (me) return me;
+    const stored = load(PLAYER_KEY, null);
+    me = typeof stored === 'string' && /^[a-z0-9]{8,40}$/.test(stored) ? stored : Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+    if (me !== stored) save(PLAYER_KEY, me);
+    return me;
+  }
+
+  // The same round of the same person, wherever it was recorded.
+  const sameAs = e => (e.owner && e.round ? `r:${e.round}:${e.owner}` : e.owner ? `o:${e.owner}:${e.id}` : null);
 
   function stats() {
     const raw = load(STATS_KEY, {});
@@ -63,12 +81,15 @@ window.SnakeRecords = (() => {
   // The stored list is the overall top 10 plus your own top 10, so the AIs
   // can't push all of your rounds out.
   const topOverall = list => list.slice(0, MAX_SCORES);
-  const topPlayer = list => list.filter(e => !e.ai).slice(0, MAX_SCORES);
+  const topPlayer = list => list.filter(e => !e.ai && !e.friend).slice(0, MAX_SCORES);
 
-  // score = { name, color, ai, place, won, draw, eaten, survived, watched }. Returns the entry id.
+  // score = { name, color, ai, place, won, draw, eaten, survived, watched,
+  //   friend, owner, round, id, date }. The last five are for rounds that came
+  //   from friends or were played with them; a round already here isn't added
+  //   twice. Returns the entry id.
   function addScore(score) {
     const entry = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      id: typeof score.id === 'string' && score.id ? score.id.slice(0, 40) : Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       name: String(score.name).slice(0, MAX_NAME),
       color: score.color,
       ai: !!score.ai,
@@ -77,10 +98,17 @@ window.SnakeRecords = (() => {
       draw: !!score.draw,
       eaten: num(score.eaten),
       survived: Math.round(num(score.survived)),
-      date: Date.now(),
+      date: Number.isFinite(score.date) && score.date > 0 ? score.date : Date.now(),
       watched: !!score.watched,
+      friend: !!score.friend,
+      owner: score.ai ? '' : typeof score.owner === 'string' ? score.owner : playerId(),
+      round: typeof score.round === 'string' ? score.round : '',
     };
-    const sorted = [...scores(), entry].sort(compare);
+    const list = scores();
+    const key = sameAs(entry);
+    const already = key && list.find(e => sameAs(e) === key);
+    if (already) return already.id;
+    const sorted = [...list, entry].sort(compare);
     const keep = new Set([...topOverall(sorted), ...topPlayer(sorted)]);
     save(SCORES_KEY, sorted.filter(e => keep.has(e)));
     return entry.id;
@@ -109,9 +137,44 @@ window.SnakeRecords = (() => {
     return addScore({ ...result, name: getName(), ai: false });
   }
 
-  function rename(id, name) {
+  // Your best rounds, to share with friends when you play together. Unnamed
+  // ones go under the name you're playing as.
+  function shareable(playingAs) {
+    return topPlayer(scores()).map(e => ({
+      id: e.id, name: e.name === DEFAULT_NAME ? playingAs : e.name, place: e.place, won: e.won, draw: e.draw,
+      eaten: e.eaten, survived: e.survived, date: e.date, round: e.round, owner: e.owner,
+    }));
+  }
+
+  // A friend's shared rounds, in their seat color. Checked like anything else
+  // from outside, and your own rounds coming back are skipped.
+  function importShared(entries, color) {
+    if (!Array.isArray(entries)) return;
+    for (const e of entries.slice(0, 40)) {
+      if (!e || typeof e !== 'object' || typeof e.owner !== 'string' || !e.owner || e.owner === playerId()) continue;
+      if (!Number.isFinite(e.place) || e.place < 1 || e.place > 4 || !Number.isFinite(e.date)) continue;
+      addScore({
+        id: String(e.id || ''), name: String(e.name || 'Friend'), color: typeof color === 'string' ? color : '#a8a29e',
+        place: e.place, won: !!e.won, draw: !!e.draw, eaten: num(e.eaten), survived: num(e.survived), date: e.date,
+        round: typeof e.round === 'string' ? e.round : '', owner: e.owner, friend: true,
+      });
+    }
+  }
+
+  // A friend's result in a round you played together.
+  function recordFriend(result, { name, color, owner, round }) {
+    return addScore({ ...result, name, color, owner, round, friend: true });
+  }
+
+  // Your name, as the Hall of Fame and your friends online see it.
+  function setName(name) {
     name = String(name).trim().slice(0, MAX_NAME) || DEFAULT_NAME;
     save(NAME_KEY, name);
+    return name;
+  }
+
+  function rename(id, name) {
+    name = setName(name);
     const list = scores();
     const entry = list.find(e => e.id === id);
     if (entry) { entry.name = name; save(SCORES_KEY, list); }
@@ -149,10 +212,10 @@ window.SnakeRecords = (() => {
       return;
     }
     const fmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
-    const rows = list.map((e, i) => el('tr', { className: [e.id === highlightId && 'highlight', e.ai && 'ai'].filter(Boolean).join(' ') },
+    const rows = list.map((e, i) => el('tr', { className: [e.id === highlightId && 'highlight', e.ai && 'ai', e.friend && 'friend'].filter(Boolean).join(' ') },
       el('td', { className: 'num', textContent: i + 1 }),
-      el('td', { className: 'name', title: e.watched ? `${e.name} (a watched round)` : e.name },
-        dot(e.ai ? e.color : playerColor), e.name),
+      el('td', { className: 'name', title: e.watched ? `${e.name} (a watched round)` : e.friend ? `${e.name} (a friend)` : e.name },
+        dot(e.ai || e.friend ? e.color : playerColor), e.name, ...(e.friend ? [el('span', { className: 'who', textContent: 'friend' })] : [])),
       el('td', { className: e.won ? 'won' : '', textContent: placeLabel(e) }),
       el('td', { className: 'num', textContent: e.survived ? clock(e.survived) : '–' }),
       el('td', { className: 'num', textContent: e.eaten }),
@@ -222,7 +285,7 @@ window.SnakeRecords = (() => {
   }
 
   return {
-    scores, stats, addScore, recordPlayer, rankOf, rename, reset, getName, hasName, getBest, setBest,
+    scores, stats, addScore, recordPlayer, recordFriend, shareable, importShared, playerId, rankOf, rename, setName, reset, getName, hasName, getBest, setBest,
     renderScores, renderStats, ordinal, clock,
   };
 })();

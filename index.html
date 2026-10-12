@@ -45,7 +45,7 @@
       <div class="board">
         <canvas id="game" width="768" height="768" aria-label="The board: four snakes on a tree trunk"></canvas>
         <div id="overlay" class="overlay">
-          <div class="card" role="dialog" aria-labelledby="overlay-title" aria-describedby="overlay-text overlay-flavor">
+          <div class="card" role="dialog" tabindex="-1" aria-labelledby="overlay-title" aria-describedby="overlay-text overlay-flavor">
             <h2 id="overlay-title">Bark &amp; Bite</h2>
             <p id="overlay-text"></p>
             <p id="overlay-flavor" class="flavor" hidden></p>
@@ -55,10 +55,29 @@
               <span id="name-rank"></span>
               <input id="name-input" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Your name" aria-label="Your name for the Hall of Fame">
             </label>
+            <!-- Play with friends: your name, the room link, who's in, and joining by code. -->
+            <div id="lobby" class="lobby" hidden>
+              <label class="lobby-row">
+                <span>Your name</span>
+                <input id="lobby-name" type="text" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="Green">
+              </label>
+              <div id="lobby-share" class="lobby-row lobby-share" hidden>
+                <input id="lobby-link" type="text" readonly aria-label="Link for your friends">
+                <button id="lobby-copy" class="small" type="button">Copy link</button>
+              </div>
+              <ul id="lobby-players" class="lobby-players" aria-label="In the room" hidden></ul>
+              <form id="lobby-join" class="lobby-row lobby-join">
+                <label for="lobby-code">Have a code?</label>
+                <input id="lobby-code" type="text" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="K7QXM" aria-label="Room code">
+                <button class="small" type="submit">Join</button>
+              </form>
+              <p id="lobby-status" class="lobby-status" role="status"></p>
+            </div>
             <div class="buttons">
               <button id="start">Play</button>
               <button id="watch" class="secondary" hidden>Watch</button>
             </div>
+            <button id="friends" class="text-button" type="button" hidden>Play with friends</button>
             <p id="hint" class="hint" hidden></p>
           </div>
         </div>
@@ -120,6 +139,8 @@
   <script src="chatter.js"></script>
   <script src="audio.js"></script>
   <script src="render.js"></script>
+  <script src="online.js"></script>
+  <script src="net.js"></script>
   <script src="snake.js"></script>
 </body>
 </html>

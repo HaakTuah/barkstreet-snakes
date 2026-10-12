@@ -23,6 +23,17 @@ A snake game up a tree: you against three AI rivals on the bark of a tree, drawn
 | Red mushroom | Shrinks you by 3 (never below 3). Withers after about 20 seconds and regrows elsewhere. Being short isn't always bad... |
 | Meat | +1 length. What's left of a dead snake. |
 
+## Play with friends
+
+Press **Play with friends** on the start screen, then **Host a game** and send the link (or the five-letter code) to up to three friends. When they're in, press **Start**. Empty seats get AI rivals, and you can play round after round in the same room.
+
+- One browser hosts: it runs the game, and friends' browsers connect straight to it (peer to peer). There's no game server and nothing to sign up for. A free public service, PeerJS, only introduces the browsers to each other.
+- It's fair: the rivals treat everyone alike, and the host's own turns are held back by the friends' lag, so the host gets no head start.
+- **Shared Hall of Fame:** when you connect, your best rounds and your friends' are copied into each other's Hall of Fame (marked "friend"), and every round you play together is recorded for everyone. Your stats and **Only you** stay yours.
+- If a friend's connection goes quiet, an AI steers their snake until they're back; if they leave, it finishes the round for them.
+- There's no napping online, and the host's tab should stay open (it keeps the round going even in the background).
+- On some strict networks (certain mobile carriers and offices) browsers can't connect directly. If a friend can't get in, try another network; for good, a relay (TURN server) can be added in `net.js`.
+
 ## Controls
 
 | Action | Keyboard | Touch |
@@ -87,6 +98,8 @@ Serve the folder with any static server (for example `npx serve` or `python -m h
 
 - `?perf` shows a frame-time overlay (toggle it with the ` key).
 - `?debug` adds `SnakeDebug` to the console, for example `SnakeDebug.setup(['sniper', 'mason', 'ghost'])` to start a round against chosen rivals.
+- `node tools/records-test.js` checks that shared and played-together rounds land in each friend's Hall of Fame exactly once.
+- `node tools/online-test.js` plays rounds through the online protocol and checks that a friend's screen matches the host's every tick.
 - `node tools/simulate.js 200` plays 200 AI-only rounds headlessly with the game's own rules and AI, and prints each personality's win rate, food, kills and so on. Add `--seed 1` to repeat a run exactly.
 
 ### How it's put together
@@ -100,4 +113,6 @@ Serve the folder with any static server (for example `npx serve` or `python -m h
 | `audio.js` | Sound effects and the adaptive music, synthesised live. |
 | `chatter.js` | The rivals' speech bubbles and chat log. |
 | `records.js` | The Hall of Fame and your stats. |
-| `snake.js` | Ties it together: the game loop, input, the cards and the controls. |
+| `online.js` | Play with friends: the messages between host and friends. |
+| `net.js` | Play with friends: the connections (PeerJS, loaded only when used). |
+| `snake.js` | Ties it together: the game loop, input, the cards, the controls and the lobby. |
