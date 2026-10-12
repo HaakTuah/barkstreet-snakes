@@ -374,6 +374,7 @@ window.SnakeRender = (() => {
         nextBlink: now + T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN), blinkUntil: 0,
         nextTongue: now + T.TONGUE_EVERY * (0.5 + Math.random()), tongueUntil: 0,
         gx: 1, gy: 0, gulps: [-99, -99, -99, -99], gulpAt: 0,
+        gulpR: 0.12, gulpW: 1, ateAt: -1e9, // gulp size and length (Gobbler's are bigger), last bite
       };
       anim.set(s, a);
     }
@@ -590,7 +591,7 @@ window.SnakeRender = (() => {
     if (i > 0) {
       for (let g = 0; g < 4; g++) {
         const d = i - (tickPos - a.gulps[g]);
-        if (d > -1 && d < 1) r += CELL * 0.12 * (1 - Math.abs(d));
+        if (d > -a.gulpW && d < a.gulpW) r += CELL * a.gulpR * (1 - Math.abs(d) / a.gulpW);
       }
     }
     return r;
@@ -719,13 +720,23 @@ window.SnakeRender = (() => {
         circle(c * 0.53, -c * 0.24, c * 0.03);
         break;
       }
-      case 'gobbler': { // puffy cheeks, a mouth that opens near food
-        ctx.fillStyle = mix(color, '#ffffff', 0.25);
-        circle(-c * 0.02, -c * 0.42, c * 0.2);
-        circle(-c * 0.02, c * 0.42, c * 0.2);
-        ctx.fillStyle = 'rgba(244,114,182,0.6)';
-        circle(-c * 0.02, -c * 0.42, c * 0.08);
-        circle(-c * 0.02, c * 0.42, c * 0.08);
+      case 'gobbler': { // stuffed hamster cheeks either side of the mouth, a mouth that opens near food
+        // After a bite the cheeks puff up fast and go down slowly (still with reduced motion: no movement, just size).
+        const t = (lastNow - (anim.get(s)?.ateAt ?? -1e9)) / 900;
+        const puff = t < 0 || t >= 1 ? 0 : t < 0.12 ? t / 0.12 : 1 - (t - 0.12) / 0.88;
+        const cr = c * (0.25 + 0.1 * puff), cy = c * (0.27 + 0.06 * puff);
+        ctx.fillStyle = color; // the cheeks swell the head's own outline toward the front...
+        circle(c * 0.24, -cy, cr);
+        circle(c * 0.24, cy, cr);
+        ctx.fillStyle = mix(color, '#ffffff', 0.22); // ...catch the light on top...
+        circle(c * 0.2, -cy - c * 0.03, cr * 0.6);
+        circle(c * 0.2, cy + c * 0.03, cr * 0.6);
+        ctx.fillStyle = puff > 0.3 ? 'rgba(244,114,182,0.65)' : 'rgba(244,114,182,0.45)'; // ...and blush toward the mouth
+        ctx.beginPath();
+        ctx.ellipse(c * 0.3, -cy - c * 0.03, c * 0.11, c * 0.07, 0, 0, TAU);
+        ctx.moveTo(c * 0.41, cy + c * 0.03); // a separate shape, not joined to the first
+        ctx.ellipse(c * 0.3, cy + c * 0.03, c * 0.11, c * 0.07, 0, 0, TAU);
+        ctx.fill();
         let hungry = false;
         const h = s.body[0];
         if (game) for (const f of game.food) if (f.kind !== 'mushroom' && Math.abs(f.x - h.x) + Math.abs(f.y - h.y) <= 3) { hungry = true; break; }
@@ -1028,12 +1039,19 @@ window.SnakeRender = (() => {
   // Call after every tick, with that tick's events: sets off pops, gulps and puffs.
   function onTick(events) {
     if (!game) return;
-    const now = performance.now();
+    const now = lastNow || performance.now(); // the frame clock, like everything else drawn
     for (const e of events) {
       if (e.type === 'eat') {
         const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
         const a = animOf(e.snake, now);
-        if (e.kind !== 'mushroom') { a.gulps[a.gulpAt] = game.tick - 1; a.gulpAt = (a.gulpAt + 1) % 4; }
+        if (e.kind !== 'mushroom') {
+          a.gulps[a.gulpAt] = game.tick - 1; a.gulpAt = (a.gulpAt + 1) % 4;
+          // Gobbler (and Capricious in a Gobbler mood) wolfs it down: a big gulp, cheeks puffed.
+          const big = lookOf(e.snake) === 'gobbler';
+          a.gulpR = big ? 0.24 : 0.12;
+          a.gulpW = big ? 1.6 : 1;
+          if (big) a.ateAt = now;
+        }
         if (e.kind === 'golden') spawn(x, y, T.PARTICLES_EAT + 6, 220, T.PARTICLE_LIFE, 3.2, '#fde68a', '#fbbf24');
         else if (e.kind === 'pellet') spawn(x, y, T.PARTICLES_EAT - 4, 150, T.PARTICLE_LIFE * 0.8, 2.6, e.color && e.color[0] === '#' ? e.color : '#c2410c', '#f6ecd2');
         else if (e.kind === 'mushroom') spawn(x, y, T.PARTICLES_EAT - 2, 160, T.PARTICLE_LIFE, 2.6, '#dc2626', '#fffbea');

@@ -53,7 +53,7 @@ Your snake is the protagonist, so it gets the most life:
 - **A gulp bulge** that travels down the body, one segment per tick, after every bite.
 - **A thin cream outline**, so "you" is identifiable without relying on green.
 
-The rivals keep their faces and patterns, and they share the blink and the gulp. Capricious gets a permanent pink head ring, so you can always find it whatever mood it's in.
+The rivals keep their faces and patterns, and they share the blink and the gulp. Gobbler wolfs its food down: a gulp twice the size, and hamster cheeks either side of its mouth that puff up with every bite and slowly go down. Capricious gets a permanent pink head ring, so you can always find it whatever mood it's in.
 
 ## Food and the world
 
