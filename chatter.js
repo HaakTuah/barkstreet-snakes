@@ -346,7 +346,7 @@ window.SnakeChatter = (() => {
   };
 
   let boardEl, logEl, game;
-  let enabled = true, compact = false, playerName = 'Green';
+  let enabled = true, compact = false, listener = null;
   let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null, pendingReply = null;
   const bubbles = new Map(); // snake id -> { el, snake, until, w, x, y, below }
   const headAt = { x: 0, y: 0 };
@@ -365,8 +365,8 @@ window.SnakeChatter = (() => {
     return `rgb(${up(r)},${up(g)},${up(b)})`;
   }
 
-  // The rivals call you by your Hall of Fame name, or "Green" until you pick one.
-  const nameOf = s => s.isPlayer ? playerName : s.name;
+  // Everyone by name: you're your Hall of Fame name (or "Green"), friends theirs.
+  const nameOf = s => s.name;
 
   function init(opts) {
     ({ boardEl, logEl } = opts);
@@ -392,7 +392,16 @@ window.SnakeChatter = (() => {
 
   const isEnabled = () => enabled;
   const setCompact = v => { compact = v; };
-  const setPlayerName = n => { playerName = n || 'Green'; };
+  // Online, the host passes every line on (onSpeak), and friends' screens
+  // replay it, so everyone sees the same chatter.
+  const onSpeak = fn => { listener = fn; };
+  function replay(s, text) {
+    if (!enabled || !s) return;
+    lastSaid[s.id] = game.time;
+    lastAny = game.time;
+    if (s.alive && !(compact && text.length > COMPACT_CHARS)) showBubble(s, text);
+    addLog(s, text);
+  }
 
   // Have snake s say a line from one of its lists. urgent lines skip the global gap.
   // Lines naming someone ({who}) are only used when there is someone to name;
@@ -422,6 +431,7 @@ window.SnakeChatter = (() => {
     lastLine = { speaker: s, text, ...source };
     if (s.alive && !(compact && text.length > COMPACT_CHARS)) showBubble(s, text);
     addLog(s, text);
+    listener?.(s, text);
     const reply = source?.template && REPLIES[source.template];
     if (reply) pendingReply = { at: game.time + reply.after, by: reply.by, text: pick(reply.lines), then: reply.then };
   }
@@ -432,7 +442,7 @@ window.SnakeChatter = (() => {
     el.className = 'bubble';
     el.textContent = text;
     if (hasChinese(text)) el.lang = 'zh-Hans';
-    el.style.setProperty('--edge', s.persona.ink || s.color);
+    el.style.setProperty('--edge', s.persona?.ink || s.color);
     boardEl.appendChild(el);
     // Width is estimated from the text, so placing a bubble never reads layout.
     bubbles.set(s.id, { el, snake: s, until: performance.now() + BUBBLE_MS, w: 0, chars: text.length, x: NaN, y: NaN, below: null });
@@ -463,7 +473,7 @@ window.SnakeChatter = (() => {
     const li = document.createElement('li');
     const who = document.createElement('strong');
     who.textContent = s.name;
-    who.style.color = readable(s.persona.ink || s.color);
+    who.style.color = readable(s.persona?.ink || s.color);
     const said = document.createElement('span');
     said.textContent = text;
     if (hasChinese(text)) said.lang = 'zh-Hans';
@@ -554,5 +564,5 @@ window.SnakeChatter = (() => {
     }
   }
 
-  return { init, reset, update, layout, clearBubbles, setEnabled, isEnabled, setCompact, setPlayerName };
+  return { init, reset, update, layout, clearBubbles, setEnabled, isEnabled, setCompact, onSpeak, replay };
 })();

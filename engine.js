@@ -29,7 +29,7 @@ window.SnakeEngine = (() => {
     const body = [0, 1, 2].map(k => ({ x: spawn.x - d.x * k, y: spawn.y - d.y * k }));
     return {
       id, body, dir: d, alive: true, grow: 0, eaten: 0, pellets: 0, lastAte: 0, nextStarve: T.HUNGER_MS,
-      queue: [], cause: null, killer: null, diedAt: null, memory: {}, planned: null, plannedTick: -1, ...props,
+      queue: [], cause: null, killer: null, killerId: null, diedAt: null, memory: {}, planned: null, plannedTick: -1, ...props,
     };
   }
 
@@ -45,19 +45,30 @@ window.SnakeEngine = (() => {
     return picks;
   }
 
-  // personas: persona keys for the AI snakes (random by default). Without a
-  // player (AI-only rounds), the first AI takes the player's spawn.
-  function createGame({ withPlayer = true, personas = null } = {}) {
-    const wanted = withPlayer ? T.OPPONENTS : T.OPPONENTS + 1;
+  // humans: [{ name, color }] for the snakes people steer (isPlayer: driven by
+  // an input queue): one by default, none for an AI-only round, up to four
+  // online. AI snakes fill the other seats, from persona keys (random by
+  // default). Names are made unique, so a person called "Sniper" can't be
+  // mistaken for the rival of that name.
+  function createGame({ humans = null, withPlayer = true, personas = null } = {}) {
+    const people = (humans || (withPlayer ? [{ name: 'You', color: PLAYER_COLOR }] : [])).slice(0, SPAWNS.length);
+    const wanted = T.OPPONENTS + 1 - people.length;
     const keys = (personas || pickOpponents(wanted)).filter(k => PERSONAS[k]).slice(0, wanted);
     const snakes = [];
-    if (withPlayer) snakes.push(makeSnake(0, SPAWNS[0], { name: 'You', color: PLAYER_COLOR, isPlayer: true }));
+    const taken = new Set(keys.map(k => PERSONAS[k].name));
+    for (const h of people) {
+      const base = String(h.name || 'Green');
+      let name = base;
+      for (let n = 2; taken.has(name); n++) name = `${base} ${n}`;
+      taken.add(name);
+      snakes.push(makeSnake(snakes.length, SPAWNS[snakes.length], { name, color: h.color || PLAYER_COLOR, isPlayer: true }));
+    }
     keys.forEach(k => {
       const id = snakes.length;
       snakes.push(aiSnake(id, SPAWNS[id % SPAWNS.length], k));
     });
     const game = {
-      snakes, food: [], tick: 0, time: 0, history: [], withPlayer, events: [],
+      snakes, food: [], tick: 0, time: 0, history: [], withPlayer: people.length > 0, events: [],
       holes: new Set(), peckOrder: ringOrder(), peckAt: 0, woodpecker: null,
     };
     fillFood(game);
@@ -192,10 +203,13 @@ window.SnakeEngine = (() => {
   // between), as long as nothing it looks at can change before the tick:
   // everything in aiView() is fixed between ticks, except a snake about to
   // starve, which shrinks at the start of the tick and must decide after that.
-  const canThinkAhead = (game, s) => s.alive && !s.isPlayer && game.time < s.nextStarve && s.plannedTick !== game.tick;
+  const canThinkAhead = (game, s) => s.alive && (!s.isPlayer || !!s.autopilot) && game.time < s.nextStarve && s.plannedTick !== game.tick;
+
+  // A person's snake is handed to an AI (autopilot: a persona) when they leave.
+  const brainOf = s => s.autopilot || s.persona;
 
   function thinkAhead(game, s) {
-    s.planned = decide(aiView(game, s), s.persona, s.memory);
+    s.planned = decide(aiView(game, s), brainOf(s), s.memory);
     s.plannedTick = game.tick;
   }
 
@@ -219,10 +233,10 @@ window.SnakeEngine = (() => {
     const alive = game.snakes.filter(s => s.alive && !dying.includes(s));
 
     for (const s of alive) {
-      if (s.isPlayer) {
+      if (s.isPlayer && !s.autopilot) {
         if (s.queue.length) s.dir = s.queue.shift();
       } else {
-        s.dir = s.plannedTick === game.tick ? s.planned : decide(aiView(game, s), s.persona, s.memory);
+        s.dir = s.plannedTick === game.tick ? s.planned : decide(aiView(game, s), brainOf(s), s.memory);
       }
       s.planned = null;
       s.plannedTick = -1;
@@ -248,7 +262,9 @@ window.SnakeEngine = (() => {
       headCount[k]++;
     }
 
-    // killer: 'wall' (walls and holes), 'self', 'hunger', or the name of the snake that was hit.
+    // killer: 'wall' (walls and holes), 'self', 'hunger', or the name of the
+    // snake that was hit (killerId: its id). Causes use names; the game turns
+    // the name of whoever is watching into "you".
     for (const s of alive) {
       const { x, y } = s.next;
       const k = key(x, y);
@@ -259,10 +275,11 @@ window.SnakeEngine = (() => {
       } else if (bodyStamp[k] === stamp) {
         const other = game.snakes[bodyOwner[k]];
         s.killer = other === s ? 'self' : other.name;
-        s.cause = other === s ? 'bit itself' : `ran into ${other.isPlayer ? 'you' : other.name}`;
+        s.killerId = other.id;
+        s.cause = other === s ? 'bit itself' : `ran into ${other.name}`;
       } else if (headStamp[k] === stamp && headCount[k] > 1) {
         const other = alive.find(o => o !== s && o.next.x === x && o.next.y === y);
-        s.cause = `crashed head-on into ${other.isPlayer ? 'you' : other.name}`; s.killer = other.name;
+        s.cause = `crashed head-on into ${other.name}`; s.killer = other.name; s.killerId = other.id;
       } else continue;
       dying.push(s);
     }
