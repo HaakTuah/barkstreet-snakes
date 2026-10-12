@@ -4,6 +4,8 @@
 
 A storybook diorama of a tree trunk seen from above. Four caterpillar-snakes wind across warm bark under a carved wooden frame, while notes on parchment tell you what's going on. Everything should look cut from the same few materials: **bark, heartwood, parchment, ink and leaf**. Nothing should look like a generic app widget. The game isn't classic snake: it's a small rivalry between you and three characters with their own minds and voices. Polish means making every part of that rivalry readable, fair, smooth and charming, not adding more of it.
 
+**The second pass** (see AUDIT.md) adds nothing new to play. It goes after the moments that still felt off when looked at frame by frame: the death freeze-frame that jumped, bends that pulsed, a woodpecker that could peck the cell right in front of you, a Hall of Fame rank that changed its mind, phones and laptops that hid the board or the Play button, and online rooms that broke after a few rejoins. It also moves the frame budget to where the time really goes: the GPU drawing long snakes.
+
 ## Art direction: "storybook bark"
 
 **Why it suits snake.** Snakes and caterpillars belong on bark. The texture gives the grid a sense of place, and the grid stays readable through faint carved lines baked into the wood. Warm, mid-dark bark lets bright characters and food pop by brightness, not only by hue. It's also the direction you chose, inspired by the caterpillar game in *Flåklypa Grand Prix*. It's kept and refined rather than replaced.
@@ -106,15 +108,17 @@ One treatment, used everywhere:
 | Target | Concrete check |
 |---|---|
 | Smooth motion at 60/120/144 Hz | Fixed timestep driven from one rAF loop with interpolation; a snake moves exactly one cell per tick, never stalls at cell boundaries |
-| Frame budget | script + render per frame: **p95 ≤ 3 ms, worst ≤ 6.9 ms** (one 144 Hz frame) in the long-snake scene and at death and particle moments. *Measured in Chrome at 2× density, watching at normal speed, over five runs: p95 0.9-1.9 ms, p99 2.1-5.3 ms, worst 6.7-13.1 ms (0-0.3% of frames over 6.94 ms), and no frame over 16.7 ms in any run. The p95 target is met. The worst-case target is not reliably met: now and then one AI decision on a crowded board lands in the same frame as a draw. At 4× watching speed (four times the ticks), a few frames a minute go over 16.7 ms.* |
+| Frame budget | Script per frame **p95 ≤ 2 ms, worst ≤ 6.9 ms** (one 144 Hz frame). **GPU raster for the long-snake scene (4 × 70 segments) ≤ 3.5 ms**, half a 144 Hz frame, so the browser's own work fits beside ours. The first pass measured script time only; the second pass traced the GPU process and found that long snakes cost it 6.5 ms a frame (see AUDIT.md). *Second-pass numbers are in the "After" section of AUDIT.md.* |
 | Honest speed | Spectator 4× runs at 4.0× (±2%); ticks don't drift by their own cost |
 | Input never lost | Two turns pressed within one tick both apply, on consecutive ticks; no input combo ever reverses into the neck |
 | Eating feels good | Pop, particles, sound and score bump appear in the same frame as the bite tick; the gulp travels the body |
-| Death lands softly | A 350 ms freeze-frame with a puff (plus a 4 px shake, only for your death and only without reduced motion), then the card rises in over about 250 ms |
-| Restart is instant | Enter/R/Play: a short 3-beat countdown (3 × 350 ms) that **any direction key or swipe skips** (and steers) |
+| Death lands softly | A 350 ms freeze-frame **of the moment of impact**: every snake stays exactly where it was drawn, and yours holds its pose with its eyes screwed shut. Then it bursts into meat with a puff (plus a 4 px shake, only for your death and only without reduced motion; with reduced motion it fades instead), and the card rises in over about 250 ms. Online, the host's simulation never freezes; only the host's own screen does |
+| The round's last frame | The final move glides like any other, then the board rests |
+| Restart is instant | Enter/R/Play: a short 3-beat countdown (3 × 350 ms) that **any direction key or swipe skips** (and steers). An arrow on the start card starts the round already turning |
 | Gentle difficulty | Tick 120 ms → 90 ms over 2 minutes; the first 3 ticks of a round are eased (170 → 120 ms) so the opening is forgiving |
-| Touch precision | A swipe registers once the finger has travelled half a cell (at least 12 px, about 3 mm, against finger jitter), without lifting; one touch can chain several turns; the page never scrolls or refreshes |
-| Never a dead moment | Every key in every state does something visible, or is documented as ignored (e.g. arrows while paused) |
+| Touch precision | A swipe registers once the finger has travelled half a cell (at least 12 px, about 3 mm, against finger jitter), without lifting; one touch can chain several turns. **During a round a swipe works anywhere on the screen**, including over the countdown, and the page never scrolls or refreshes |
+| Never a dead moment | Every key in every state does something visible, or is documented as ignored (arrows while napping or on a round-over card). Space and Enter always mean nap and start over, unless a card or dialog button has keyboard focus |
+| The board fits | On every screen from a 320×460 phone to a 1280×720 laptop, the whole board and the card's buttons are visible without scrolling; wide, short screens put the board beside the scores |
 
 ## The round's arc
 
@@ -132,7 +136,11 @@ A round has a shape, and the music follows it:
 
 **The woodpecker comes at 2:00, not 3:00** (your call, and the numbers agree). With hunger, food is what keeps a round going, and late rounds were dragging. Over 600 simulated AI rounds the median round now lasts 72 s, the middle half 45-108 s, and 20% of rounds reach the woodpecker, so it's a real event rather than a rarity. Every personality still wins 13-40% of the rounds it plays.
 
-**The Hall of Fame ranks by place, then time alive, then food** (your call). Food stops appearing at 2:00, so food eaten mostly measures how early you died; time alive measures how well you played.
+**The woodpecker plays fair.** It pecks the next free cell of the ring, but never one within 3 cells of a head, and never under food; it comes back for skipped cells later. Before, it could peck the cell right in front of you, leaving one tick (90 ms) to react, while the AIs, who saw holes instantly, always dodged. Now the AIs see holes with the same reaction delay as everything else. Measured over 300 simulated rounds, the AIs fall into holes no more often than before, because there's always time to see one coming.
+
+**Starving is decided after eating.** A snake whose head reaches food on the tick it would starve eats instead.
+
+**The Hall of Fame ranks by place, then time alive, then food** (your call). Food stops appearing at 2:00, so food eaten mostly measures how early you died; time alive measures how well you played. The rank on your death card already counts the snakes still alive (they'll all finish ahead of you), so it's the rank the round-over card will show.
 
 ## Sound
 
@@ -147,8 +155,9 @@ Every sound is synthesised live with the Web Audio API, through one AudioContext
 Friends-only rooms, peer to peer, so it stays a static site with nothing to deploy and no accounts.
 
 - **The host's browser runs the game**, exactly the code that runs alone (`engine.js`, the AIs, the chatter). Every tick it sends friends a compact picture of the board (about 0.9 KB, so about 8 KB/s per friend); friends send back only their turns. Their screens glide between ticks with the same renderer. `tools/online-test.js` checks that a friend's board matches the host's on every tick, and two real browsers matched on every tick of whole rounds.
-- **Fair, in keeping with the AI rule:** the rivals never know who's a person. Lag would favour the host, who has none, so the host's own turns are delayed by half the friends' average round trip.
-- **Never stalls:** a friend's browser says "still here" four times a second. After 0.75 s of silence an AI steers their snake (so a hiccup doesn't drive them into a wall), and any turn they send hands it straight back; a banner appears only if the silence lasts 2 s. If they leave, the AI finishes their round. If the host leaves, friends get a card saying so.
+- **Fair, in keeping with the AI rule:** the rivals never know who's a person. Lag would favour the host, who has none. A friend sees each tick half a round trip late, and their turn takes another half to arrive, so the host's own turns wait **a full average round trip** (at most 150 ms), in the order they were pressed.
+- **Never stalls:** a friend's browser says "still here" four times a second. After 0.75 s of silence an AI steers their snake (so a hiccup doesn't drive them into a wall), and any turn they send hands it straight back; a banner appears only if the silence lasts 2 s. **A friend who switches tabs says so at once**, and the AI steers until they turn again (a hidden tab's "still here" slows to once a second, which used to make the AI flicker on and off). The host's own snake gets the same stand-in while the host's tab is hidden. If a friend leaves, the AI finishes their round. If the host leaves, friends get a card saying so; if the connection drops, the card says that instead and offers to rejoin.
+- **Rooms stay healthy:** each person's shared Hall of Fame rows are kept once, replaced when they rejoin and dropped when they leave, so messages stay far under PeerJS's 16 KB limit however often people come and go. Everything from the network is checked and clamped (names, colours, dates, numbers) before it's stored or drawn.
 - **The host's tab may be hidden:** browsers stop animation frames there, so a tiny worker clock keeps the round going.
 - **What changes online:** no napping, no countdown skipping, no watching speeds; your Hall of Fame and stats keep only your own result; chatter is the host's, passed on, so everyone sees the same lines.
 - **Connecting:** PeerJS (from cdnjs with an integrity hash, loaded only when someone opens Play with friends) and its free public broker introduce the browsers; STUN finds a route for most networks. Strict ones need a relay (TURN), which needs a signup, so it's left as a marked spot in `net.js`.
@@ -186,3 +195,14 @@ Each line gives the guideline, what was done, and why.
 - **"High score in localStorage":** *kept and extended.* There's Best plus the existing Hall of Fame and stats, every access in try/catch. Watched AI-only rounds now count in the Hall of Fame (your request), but never in your personal stats.
 - **"Pause automatically on blur/visibility":** *applied to hidden tabs, and to window blur only while you're playing.* A watched AI round keeps running when you click elsewhere on the same screen, but pauses when hidden.
 - **"Speech bubbles"** *(not in the brief, but they affect readability):* kept and toned down. They're smaller, slightly translucent, follow the gliding head, never outlive their round, and long lines go to the log only on small boards.
+
+### Second pass
+
+- **"Move the simulation off the main thread":** *still adapted, with a corrected reason.* A Web Worker built from a blob does run from `file://` (the host's hidden-tab clock already is one), so that wasn't the obstacle. The real cost is that the renderer and the chatter read ten fields of each AI's memory every frame, which a worker would have to mirror back each tick. The measured tail came from the first decision of a round (the JIT warming up) and from decisions sharing a frame with a tick, so instead every rival's brain is warmed on the start card and no thinking happens in a frame that has just ticked.
+- **"Throttle rendering when paused or hidden":** *already true, one part skipped.* Nothing is drawn while napping, on a card or in a hidden tab (GPU idle). The animation loop itself keeps running on those screens to schedule the music, at 0.1 ms a frame; a second clock for the idle case isn't worth the complexity.
+- **"Zero allocation in the hot path":** *now applied to the renderer too.* The per-segment colour lookup built strings every frame (half of the render script time in the long-snake scene); colours now come from a cached ramp per snake, and the remaining closures and array literals are hoisted. The engine's one snapshot per tick for the AIs' reaction delay stays, as before.
+- **"Batch draw calls into one path":** *reversed, on measurement.* With Chrome's GPU canvas, one path of 70 circles is triangulated every frame, and bands stroked between circles break batching; separate circle fills batch into one GPU operation even across colours. So bodies are drawn as all bands (rectangles), then all circles.
+- **A jitter buffer for friends' screens:** *skipped.* Tick spacing measured steady (118-122 ms, even with the host's tab hidden), and a buffer would add latency for everyone.
+- **Command letters on Colemak and Workman:** *skipped.* WASD is read by physical key so it works on any layout; on Colemak, the physical S key types "r", so giving letters priority would restart your round when you steer down.
+- **Renaming the storage keys and `pellet`:** *skipped.* Renaming keys would orphan everyone's saved Hall of Fame; the rest is cosmetic.
+- **Splitting snake.js (the friends' lobby into its own file) and the long `drawFace` and `decide()`:** *skipped for now.* Big moves with no change a player can see; noted in AUDIT.md for later.
