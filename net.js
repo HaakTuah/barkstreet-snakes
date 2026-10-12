@@ -22,15 +22,21 @@ window.SnakeNet = (() => {
     { urls: 'stun:stun1.l.google.com:19302' },
   ];
 
+  // A step that might hang (a script, the broker), given up on after CONNECT_MS.
+  const inTime = (promise, onLate) => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => { onLate?.(); reject({ type: 'timeout' }); }, CONNECT_MS);
+    promise.then(v => { clearTimeout(timer); resolve(v); }, e => { clearTimeout(timer); reject(e); });
+  });
+
   let loading = null;
   function load() {
     if (window.Peer) return Promise.resolve(window.Peer);
-    return (loading ||= new Promise((resolve, reject) => {
+    return inTime(loading ||= new Promise((resolve, reject) => {
       const s = document.createElement('script');
       s.src = PEERJS;
       s.integrity = PEERJS_SRI;
       s.crossOrigin = 'anonymous';
-      s.onload = () => (window.Peer ? resolve(window.Peer) : reject(new Error('library')));
+      s.onload = () => { if (window.Peer) resolve(window.Peer); else { loading = null; reject(new Error('library')); } };
       s.onerror = () => { loading = null; s.remove(); reject(new Error('library')); };
       document.head.append(s);
     }));
@@ -50,17 +56,20 @@ window.SnakeNet = (() => {
 
   // Open a Peer, optionally under a chosen id. Resolves once the broker knows us.
   function openPeer(Peer, id) {
-    return new Promise((resolve, reject) => {
-      const peer = id ? new Peer(id, peerOptions()) : new Peer(peerOptions());
+    let opened = null;
+    return inTime(new Promise((resolve, reject) => {
+      const peer = opened = id ? new Peer(id, peerOptions()) : new Peer(peerOptions());
       const fail = err => { peer.off('open', ok); peer.destroy(); reject(err); };
       const ok = () => { peer.off('error', fail); resolve(peer); };
       peer.once('open', ok);
       peer.once('error', fail);
-    });
+    }), () => opened?.destroy());
   }
 
   // Host a room. newCode() makes room codes; a taken one is replaced (up to 4 tries).
-  // Callbacks: onJoin(id), onLeave(id), onMessage(id, msg), onLost(err).
+  // Callbacks: onLeave(id), onMessage(id, msg), and optionally onJoin(id) (a
+  // connection opened; it's admitted once its hello is accepted) and onLost(err)
+  // (the room itself failed; friends already connected may well stay connected).
   async function host({ newCode, onJoin, onLeave, onMessage, onLost }) {
     const Peer = await load();
     let peer, code;
@@ -70,24 +79,30 @@ window.SnakeNet = (() => {
         if (err?.type !== 'unavailable-id' || tries >= 3) throw err;
       }
     }
-    const friends = new Map(); // id -> { conn, rtt, heard }
+    const friends = new Map(); // id -> { conn, rtt, heard, admitted, since }
+    const ADMIT_MS = 5000, MAX_CONNECTIONS = 8;
 
     peer.on('connection', conn => {
       conn.on('open', () => {
-        friends.set(conn.peer, { conn, rtt: 0, heard: performance.now() });
-        onJoin(conn.peer);
+        if (friends.size >= MAX_CONNECTIONS) { conn.close(); return; }
+        friends.set(conn.peer, { conn, rtt: 0, heard: performance.now(), admitted: false, since: performance.now() });
+        onJoin?.(conn.peer);
       });
       conn.on('data', msg => {
         const f = friends.get(conn.peer);
         if (!f || !msg || typeof msg !== 'object') return;
         f.heard = performance.now();
         if (msg.t === 'k') return; // still here
-        if (msg.t === 'pong') { const rtt = performance.now() - msg.at; f.rtt = f.rtt ? f.rtt * 0.7 + rtt * 0.3 : rtt; return; }
+        if (msg.t === 'pong') {
+          const rtt = performance.now() - msg.at;
+          if (Number.isFinite(rtt) && rtt >= 0 && rtt <= 5000) f.rtt = f.rtt ? f.rtt * 0.7 + rtt * 0.3 : rtt;
+          return;
+        }
         onMessage(conn.peer, msg);
       });
       const gone = () => { if (friends.delete(conn.peer)) onLeave(conn.peer); };
       conn.on('close', gone);
-      conn.on('error', gone);
+      conn.on('error', err => { if (err?.type !== 'message-too-big') gone(); });
     });
     // Losing the broker doesn't affect friends already connected; reconnect so
     // new ones can still find the room.
@@ -97,7 +112,7 @@ window.SnakeNet = (() => {
     const pinger = setInterval(() => {
       const now = performance.now();
       for (const [id, f] of friends) {
-        if (now - f.heard > GONE_MS) { friends.delete(id); f.conn.close(); onLeave(id); continue; }
+        if (now - f.heard > GONE_MS || (!f.admitted && now - f.since > ADMIT_MS)) { friends.delete(id); f.conn.close(); onLeave(id); continue; }
         if (f.conn.open) f.conn.send({ t: 'ping', at: now });
       }
     }, PING_MS);
@@ -106,7 +121,9 @@ window.SnakeNet = (() => {
     return {
       code,
       send,
-      broadcast(msg) { for (const f of friends.values()) if (f.conn.open) f.conn.send(msg); },
+      broadcast(msg) { for (const f of friends.values()) if (f.admitted && f.conn.open) f.conn.send(msg); },
+      // A friend who said hello: from now on they get the broadcasts.
+      admit(id) { const f = friends.get(id); if (f) f.admitted = true; },
       // How long since we last heard from a friend (ms): a quiet one may have lost their connection.
       quietFor(id) { const f = friends.get(id); return f ? performance.now() - f.heard : Infinity; },
       // The average round-trip time to friends (ms), for evening out the host's head start.
@@ -123,7 +140,7 @@ window.SnakeNet = (() => {
     try { Peer = await load(); } catch (err) { throw new Error(explain(err)); }
     let peer;
     try { peer = await openPeer(Peer); } catch (err) { throw new Error(explain(err)); }
-    const conn = await new Promise((resolve, reject) => {
+    const conn = await new Promise((resolve, reject) => { // (it has its own time limit)
       const c = peer.connect(PREFIX + code.toLowerCase(), { serialization: 'json', reliable: true });
       const timer = setTimeout(() => fail({ type: 'timeout' }), CONNECT_MS);
       function fail(err) { clearTimeout(timer); peer.destroy(); reject(new Error(explain(err))); }

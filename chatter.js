@@ -441,7 +441,8 @@ window.SnakeChatter = (() => {
     speak(s, fill(template, who ? nameOf(who) : '', label), { template, who, label });
   }
 
-  const fill = (template, who, label) => template.replaceAll('{who}', who).replaceAll('{label}', label);
+  // (Replacers are functions, so a name like "$'" is just a name.)
+  const fill = (template, who, label) => template.replaceAll('{who}', () => who).replaceAll('{label}', () => label);
 
   function speak(s, text, source = null) {
     lastSaid[s.id] = game.time;

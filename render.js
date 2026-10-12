@@ -492,7 +492,7 @@ window.SnakeRender = (() => {
     if (!s.persona) return s.color;
     if (s.personaKey === 'capricious' && s.memory.mood) return PERSONAS[s.memory.mood].color;
     if (s.personaKey === 'copycat' && game) {
-      const model = game.snakes[0] && findById(s.memory.modelId);
+      const model = findById(s.memory.modelId);
       if (model && model.alive) return mix(model.personaKey === 'capricious' ? colorOf(model) : model.color, '#ffffff', 0.45);
     }
     return s.color;

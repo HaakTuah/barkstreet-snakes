@@ -604,6 +604,7 @@
         nameRow.hidden = false;
       }
       if (!nameRow.hidden && document.activeElement !== nameInput) nameInput.value = Records.hasName() ? Records.getName() : '';
+      if (!nameRow.hidden) namingEntry = game.entryId;
     }
 
     overlay.classList.remove('hidden');
@@ -907,8 +908,9 @@
 
   // Renaming your Hall of Fame entry from the card. Saved when you're done
   // (rivals use the new name from the next round).
+  let namingEntry = null; // the round the name field is for (the next may start while you type)
   nameInput.addEventListener('change', () => {
-    if (game.entryId) Records.rename(game.entryId, nameInput.value);
+    if (namingEntry) Records.rename(namingEntry, nameInput.value);
   });
 
   // Nap automatically when the tab is hidden, or when the window loses focus
@@ -956,7 +958,7 @@
     recordsOpener = document.activeElement;
     recordsEl.hidden = false;
     mainEl.inert = true;
-    try { renderRecords(); } catch { recordsBody.textContent = 'The Hall of Fame got scrambled. Clear it below to start afresh.'; }
+    renderRecordsSafely();
     $('records-close').focus();
   }
 
@@ -965,6 +967,11 @@
     mainEl.inert = false;
     const back = !overlay.classList.contains('hidden') ? (startBtn.hidden ? watchBtn : startBtn) : recordsOpener;
     back?.focus?.({ preventScroll: true });
+  }
+
+  function renderRecordsSafely() {
+    recordsBody.textContent = '';
+    try { renderRecords(); } catch { recordsBody.textContent = 'The Hall of Fame got scrambled. Clear it below to start afresh.'; }
   }
 
   function renderRecords() {
@@ -982,8 +989,8 @@
     }
   }
 
-  recordsTabs.forEach(t => click(t, () => { recordsTab = t.dataset.tab; renderRecords(); }));
-  filterTabs.forEach(t => click(t, () => { scoresFilter = t.dataset.filter; renderRecords(); }));
+  recordsTabs.forEach(t => click(t, () => { recordsTab = t.dataset.tab; renderRecordsSafely(); }));
+  filterTabs.forEach(t => click(t, () => { scoresFilter = t.dataset.filter; renderRecordsSafely(); }));
   click($('records-open'), openRecords);
   click($('records-close'), closeRecords);
   recordsEl.addEventListener('click', e => { if (e.target === recordsEl) closeRecords(); });
@@ -1092,12 +1099,12 @@
     startBtn.disabled = true;
     setStatus('Opening a room…');
     try {
-      const room = await Net.host({ newCode: Online.newCode, onJoin: () => {}, onLeave: friendLeft, onMessage: fromFriend });
+      const room = await Net.host({ newCode: Online.newCode, onLeave: friendLeft, onMessage: fromFriend });
       if (attempt !== joinAttempt) { room.close(); return; }
       online = {
         role: 'host', room, code: room.code, seat: 0, hostName: localName(), holesSent: 0,
         players: [{ id: 'host', name: localName(), color: Online.HUMAN_COLORS[0], host: true, owner: Records.playerId() }],
-        shared: [{ color: Online.HUMAN_COLORS[0], entries: Records.shareable(localName()) }],
+        shared: new Map([[Records.playerId(), { color: Online.HUMAN_COLORS[0], entries: Records.shareable(localName()) }]]), // owner -> their best rounds
       };
       keepTimeWhileHidden(true);
       setUrlCode(null);
@@ -1133,22 +1140,24 @@
         return;
       }
       if (online.players.some(p => p.id === id)) return;
+      const owner = typeof msg.owner === 'string' ? msg.owner.replace(/[^a-z0-9]/g, '').slice(0, 40) : '';
+      online.room.admit(id);
       const taken = new Set(online.players.map(p => p.name));
       const base = Online.cleanName(msg.name) || 'Friend';
       let name = base;
       for (let n = 2; taken.has(name); n++) name = `${base} ${n}`;
       const color = Online.HUMAN_COLORS.find(c => !online.players.some(p => p.color === c));
-      const owner = typeof msg.owner === 'string' ? msg.owner.slice(0, 40) : '';
       online.players.push({ id, name, color, owner });
       online.room.send(id, { t: 'welcome', name });
       sendLobby();
-      // Everyone's best rounds go into everyone's Hall of Fame.
-      if (Array.isArray(msg.scores)) {
-        const entries = msg.scores.slice(0, 10);
-        online.shared.push({ color, entries });
-        Records.importShared(entries, color);
-      }
-      online.room.broadcast({ t: 'scores', from: online.shared });
+      // Everyone's best rounds go into everyone's Hall of Fame: kept once per
+      // person (a rejoin replaces them), the newcomer gets everyone's, and
+      // everyone else just the newcomer's, so messages stay small.
+      const entries = owner ? Records.cleanShared(msg.scores, owner) : [];
+      if (owner) online.shared.set(owner, { color, entries });
+      Records.importShared(entries, color);
+      online.room.send(id, { t: 'scores', from: [...online.shared.values()] });
+      for (const p of online.players) if (p.id !== 'host' && p.id !== id) online.room.send(p.id, { t: 'scores', from: [{ color, entries }] });
       if (state === 'lobby') setStatus(FLAVOR.friendJoined(name));
       else toast(FLAVOR.friendJoined(name), 1800);
       // A round under way: they watch this one and play from the next.
@@ -1202,6 +1211,7 @@
     const i = online.players.findIndex(p => p.id === id);
     if (i < 0) return;
     const [p] = online.players.splice(i, 1);
+    if (p.owner) online.shared.delete(p.owner);
     const s = game.snakes.find(o => o.peer === id);
     if (s) s.left = true;
     if (s?.alive && (state === 'countdown' || state === 'running')) {
@@ -1273,6 +1283,9 @@
 
   function fromHost(msg) {
     if (!guesting()) return;
+    try { handleHost(msg); } catch { /* a message we can't use (a newer or modified host): ignore it */ }
+  }
+  function handleHost(msg) {
     switch (msg.t) {
       case 'welcome':
         if (state === 'lobby') showGuestLobby();
@@ -1286,7 +1299,8 @@
         });
         break;
       case 'lobby':
-        online.players = msg.players;
+        if (!Array.isArray(msg.players)) break;
+        online.players = msg.players.slice(0, Online.MAX_PEOPLE).filter(p => p && typeof p.name === 'string');
         online.hostName = msg.players.find(p => p.host)?.name || 'the host';
         if (state === 'lobby') showGuestLobby();
         else if (!lobbyPlayers.hidden) renderPlayers();
@@ -1324,14 +1338,12 @@
 
   function hostLost(reason) {
     if (!guesting()) return;
-    const name = online.hostName;
+    const { hostName: name, code } = online;
     endOnline();
     state = 'lobby';
     updateControls();
-    showCard({
-      title: reason === 'closed' ? 'Room closed' : 'Connection lost', text: reason === 'closed' ? FLAVOR.roomGone(name) : FLAVOR.roomLost,
-      primary: 'Back', actions: { primary: backToStart },
-    });
+    if (reason === 'closed') showCard({ title: 'Room closed', text: FLAVOR.roomGone(name), primary: 'Back', actions: { primary: backToStart } });
+    else showCard({ title: 'Connection lost', text: FLAVOR.roomLost, primary: 'Rejoin', secondary: 'Back', actions: { primary: () => joinRoom(code), secondary: backToStart } });
   }
 
   // ------------- leaving
@@ -1376,6 +1388,12 @@
   // The host passes the chatter on, so every screen has the same lines.
   Chatter.onSpeak((s, text) => {
     if (hosting() && (state === 'countdown' || state === 'running')) online.room.broadcast({ t: 'say', id: s.id, text });
+  });
+  // Back from the back/forward cache, a room that was closed on the way out is gone.
+  window.addEventListener('pageshow', e => {
+    if (!e.persisted || !online) return;
+    if (guesting()) hostLost('silent');
+    else { endOnline(); ready(); }
   });
   // Closing the tab says goodbye, so friends aren't left waiting.
   window.addEventListener('pagehide', () => {
@@ -1455,6 +1473,7 @@
 
   // The start card shows this round's rivals.
   function ready(personas) {
+    startBtn.disabled = false; // (a room that never opened left it disabled)
     newGame({ personas });
     state = 'ready';
     showCard({ title: `Ready, ${localName()}?`, text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true });

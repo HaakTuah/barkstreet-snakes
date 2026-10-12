@@ -135,6 +135,14 @@
     </symbol>
   </svg>
 
+  <script>
+    // Browsers too old for the game's code (before 2020) get a word instead of a Play button that does nothing.
+    try { new Function('let a = {}; a.b ??= a?.c ?? 1;'); } catch {
+      document.getElementById('overlay-title').textContent = 'This tree needs a newer browser';
+      document.getElementById('overlay-text').textContent = 'Bark & Bite runs in any recent Chrome, Edge, Firefox or Safari.';
+      document.querySelector('.buttons').style.display = 'none';
+    }
+  </script>
   <script src="tuning.js"></script>
   <script src="ai.js"></script>
   <script src="engine.js"></script>

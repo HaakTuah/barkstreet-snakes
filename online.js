@@ -30,7 +30,7 @@ window.SnakeOnline = (() => {
   const newCode = () => Array.from({ length: CODE_LENGTH }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
   const cleanCode = text => String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CODE_LENGTH);
   const isCode = text => cleanCode(text).length === CODE_LENGTH && [...cleanCode(text)].every(c => CODE_CHARS.includes(c));
-  const cleanName = text => String(text || '').replace(/\s+/g, ' ').trim().slice(0, 16);
+  const cleanName = text => window.SnakeRecords.cleanName(text); // (one cleaner for every name)
 
   // A new round's line-up: everything a guest needs to lay out the same board.
   // humans: [{ name, color, peer, owner }] in seat order; peer tells each guest which seat is
@@ -96,6 +96,14 @@ window.SnakeOnline = (() => {
     }
   }
 
+  // The renderer reads these every frame, so a malformed one could break every frame.
+  function saneMemory(k, v) {
+    if (k === 'mood') return typeof v === 'string' && Object.hasOwn(window.SnakeAI.PERSONAS, v);
+    if (k === 'colonies') return Array.isArray(v) && v.length <= 64 && v.every(c => c && Number.isFinite(c.x) && Number.isFinite(c.y));
+    if (k === 'home' || k === 'site') return typeof v === 'object' && Number.isFinite(v.x) && Number.isFinite(v.y);
+    return Number.isFinite(v);
+  }
+
   // Bring a guest's game up to the host's tick. Returns the snakes that died in it.
   // DIRS: the engine's direction objects (shared, so `s.dir === DIRS.up` holds).
   function apply(game, msg, DIRS) {
@@ -117,7 +125,7 @@ window.SnakeOnline = (() => {
         if (body[i]) { body[i].x = x; body[i].y = y; } else body[i] = { x, y };
       }
       for (const k of MEMORY) {
-        if (memory && memory[k] != null) s.memory[k] = memory[k];
+        if (memory && memory[k] != null && saneMemory(k, memory[k])) s.memory[k] = memory[k];
         else if (s.memory[k] != null) s.memory[k] = null; // (null, not delete: the renderer reads these every frame)
       }
     });
