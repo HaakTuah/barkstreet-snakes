@@ -70,7 +70,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1, territory: 0.2,
         food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 0.3, mushroom: -3,
-        margin: 6, headRisk: 900, zoneRisk: 300,
+        margin: 6, headRisk: 1500, zoneRisk: 500, // greedy, but it flinches from heads (it used to win only 8%)
       },
     },
     ghost: {
@@ -204,6 +204,7 @@ window.SnakeAI = (() => {
   const POOL = Object.keys(PERSONAS);
   const MOODS = ['sniper', 'gobbler', 'ghost', 'mason'];
 
+  const TUNE = window.TUNING; // (the rules' numbers, so the AI's picture of them stays true)
   const TRAPPED = 5000;
   const HOLE = 1 << 30;    // "frees up" never
   const DEAD = -1e6;
@@ -581,7 +582,7 @@ window.SnakeAI = (() => {
     // trumps all of that: with under 10 s before I start starving, everyone
     // goes looking for food, harder the closer it gets.
     const myLen = me.body.length + me.grow;
-    const hunger = me.hungerLeft == null ? 0 : Math.min(1, Math.max(0, (10000 - me.hungerLeft) / 10000));
+    const hunger = me.hungerLeft == null ? 0 : Math.min(1, Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft) / TUNE.AI_HUNGRY_MS));
     const shrinking = !hunger && w.mushroomLover != null && myLen >= w.mushroomLover;
     const fed = !hunger && myLen >= (w.hungryBelow ?? Infinity);
     const foodW = shrinking ? Math.max(3, w.food) : fed ? w.food * w.fedFactor : Math.max(w.food, 8 * hunger) * (1 + 2 * hunger);
@@ -591,17 +592,17 @@ window.SnakeAI = (() => {
     const apple = w.normalFood ?? 1;
     const worth = {
       food: shrinking ? 0 : Math.max(apple, hunger),
-      golden: shrinking ? 0 : 3 * Math.max(apple, hunger),
-      beetle: shrinking ? 0 : 2 * Math.max(apple, hunger), // it moves, but it's worth two apples
+      golden: shrinking ? 0 : TUNE.GOLDEN_GROWTH * Math.max(apple, hunger),
+      beetle: shrinking ? 0 : TUNE.BEETLE_GROWTH * Math.max(apple, hunger), // it moves, but it's worth what it's worth
       pellet: shrinking ? 0 : (w.pellet ?? 1),
       mushroom: shrinking ? 2 : (w.mushroom ?? -1),
     };
     // Per cell: foodValue is what eating it is worth (0 if nothing), foodGrow
-    // what it does to my length (a mushroom takes off up to 3). foodCells
+    // what it does to my length (a mushroom takes off up to SHRINK). foodCells
     // lists the cells worth something.
     foodValue.fill(0); foodGrow.fill(0);
     let foodCount = 0;
-    for (const f of food) foodGrow[f.y * N + f.x] = f.kind === 'mushroom' ? -3 : f.kind === 'golden' ? 3 : f.kind === 'beetle' ? 2 : 1;
+    for (const f of food) foodGrow[f.y * N + f.x] = f.kind === 'mushroom' ? -TUNE.SHRINK : f.kind === 'golden' ? TUNE.GOLDEN_GROWTH : f.kind === 'beetle' ? TUNE.BEETLE_GROWTH : 1;
     for (const f of food) {
       const v = worth[f.kind] ?? 0;
       if (!v) continue;
@@ -793,8 +794,12 @@ window.SnakeAI = (() => {
       // Eating must beat the pull that food had on us, plus a bonus for eating sooner.
       const v = foodValue[i];
       const change = foodGrow[i];
-      if (change < 0) {
-        for (let n = 0; n < -change && nlen > 3; n++) nlen--;
+      if (change < 0) { // a mushroom: pending growth goes first, then the tail
+        let n = -change;
+        const fromGrow = Math.min(g, n);
+        g -= fromGrow;
+        n -= fromGrow;
+        for (; n > 0 && nlen > TUNE.MIN_LENGTH; n--) nlen--;
       } else g += change;
       const nb = bodies[t + 1];
       nb[0].x = nx; nb[0].y = ny;
@@ -821,11 +826,21 @@ window.SnakeAI = (() => {
       return best === -Infinity ? DEAD + t * 1000 : best;
     }
 
+    // A move that looks fatal: a wall, a hole or my own body certainly is, but
+    // a rival's cell may already be free (I see rivals as they were a moment
+    // ago), so if it comes to that, the one that frees up soonest is the best bet.
+    function maybeFree(x, y) {
+      if (!inside(x, y) || holes.has(y * N + x)) return 0;
+      const keep = me.grow > 0 ? me.body.length : me.body.length - 1;
+      for (let j = 0; j < keep; j++) if (me.body[j].x === x && me.body[j].y === y) return 0;
+      return 1000 - Math.min(999, mineFree[y * N + x]);
+    }
+
     let bestDir = me.dir, bestScore = -Infinity;
     for (const d of DIR_LIST) {
       if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
       let s = move(me.body, me.body.length, me.grow, d, depth, 0, 0);
-      if (s === null) s = 2 * DEAD;
+      if (s === null) s = 2 * DEAD + maybeFree(myHead.x + d.x, myHead.y + d.y);
       else if (ctx.mimicDir && sameDir(d, ctx.mimicDir)) s += w.mimic;
       s += Math.random() * 1e-3; // tie-break
       if (s > bestScore) { bestScore = s; bestDir = d; }

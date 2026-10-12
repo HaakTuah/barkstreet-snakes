@@ -134,9 +134,11 @@ A round has a shape, and the music follows it:
 | Watching | - | Quieter, no percussion |
 | Napping | - | Ducked to about a third |
 
-**The woodpecker comes at 2:00, not 3:00** (your call, and the numbers agree). With hunger, food is what keeps a round going, and late rounds were dragging. Over 600 simulated AI rounds the median round now lasts 72 s, the middle half 45-108 s, and 20% of rounds reach the woodpecker, so it's a real event rather than a rarity. Every personality still wins 13-40% of the rounds it plays.
+**The woodpecker comes at 2:00, not 3:00** (your call, and the numbers agree). With hunger, food is what keeps a round going, and late rounds were dragging. Over 600 simulated AI rounds the median round lasts 71 s, the middle half 46-112 s, and 21% of rounds reach the woodpecker, so it's a real event rather than a rarity. Every personality wins 15-31% of the rounds it plays. (Gobbler had slipped to 8%: it chased food straight into other snakes. It now flinches from heads a little more, so it lives longer and, true to form, eats a third more.)
 
-**The woodpecker plays fair.** It pecks the next free cell of the ring, but never one within 3 cells of a head, and never under food; it comes back for skipped cells later. Before, it could peck the cell right in front of you, leaving one tick (90 ms) to react, while the AIs, who saw holes instantly, always dodged. Now the AIs see holes with the same reaction delay as everything else. Measured over 300 simulated rounds, the AIs fall into holes no more often than before, because there's always time to see one coming.
+**The woodpecker plays fair.** It pecks the next free cell of the ring, but never one within 3 cells of a head, and never under food; it comes back for skipped cells later. Before, it could peck the cell right in front of you, leaving one tick (90 ms) to react, while the AIs, who saw holes instantly, always dodged. Now the AIs see holes with the same reaction delay as everything else. Over 600 simulated rounds the AIs fall into holes *less* often than before (0.23 times per woodpecker round, down from 0.31), because there's always time to see one coming.
+
+**A cornered AI makes the sensible last move.** When every move looks fatal, a wall, a hole or its own body is certain death, but a rival's cell may already be free (it sees rivals as they were a moment ago), so it bets on the cell that frees up soonest. It used to pick at random, and those were the deaths that looked dumbest: self-bites fell from 15% to 8% of AI deaths and wall crashes from 7% to 2%. Two heads that swap cells now count as a head-on, as they look.
 
 **Starving is decided after eating.** A snake whose head reaches food on the tick it would starve eats instead.
 

@@ -39,10 +39,12 @@ window.TUNING = Object.freeze({
   // ---------------------------------------------------------- sudden death
   SUDDEN_DEATH_MS: 120000,  // the woodpecker arrives after two minutes; no new food after that
   PECK_EVERY: 2,            // ticks between holes once it's here
+  PECK_CLEARANCE: 3,        // it never pecks this close to a head (in cells), so a hole can't open right in front of you
 
   // --------------------------------------------------------------------- AI
   REACTION_MS: 240,         // how stale every AI's view of the other snakes is
   HISTORY: 8,               // board snapshots kept for that delay
+  AI_HUNGRY_MS: 10000,      // with this long left before starving, an AI starts looking for food, harder as it gets closer
 
   // ------------------------------------------------------------- the round
   COUNTDOWN_BEAT: 350,      // 3, 2, 1: each beat this long (any direction skips it)
