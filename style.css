@@ -412,7 +412,7 @@ canvas {
   max-width: calc(100% - 32px);
   transform: translateX(-50%);
   padding: 7px 14px;
-  border-radius: 14px;
+  border-radius: var(--r-tag);
   background: var(--parchment);
   color: var(--ink);
   font-size: 0.9rem;
@@ -421,8 +421,11 @@ canvas {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 0 0 2px var(--parchment-2);
   pointer-events: none;
   animation: drop 0.22s ease-out;
+  transition: opacity 0.2s;
 }
 .toast[hidden] { display: none; }
+/* A head passing under the banner: it fades so the board shows through. */
+.toast.under { opacity: 0.3; }
 @keyframes drop { from { transform: translate(-50%, -10px); opacity: 0; } }
 
 /* Speech bubbles above snakes' heads, positioned by transform each frame. */
@@ -435,7 +438,7 @@ canvas {
   max-width: 38%;
   padding: 3px 8px;
   border-radius: var(--r-tag);
-  background: rgba(255, 251, 234, 0.93);
+  background: rgba(246, 236, 210, 0.94); /* parchment */
   color: var(--ink);
   font-size: 0.76rem;
   font-weight: 500;
@@ -455,7 +458,10 @@ canvas {
   border-top-color: var(--edge, var(--ink-soft));
   transform: translateX(-50%);
 }
-.bubble.below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--edge, var(--ink-soft)); }
+.bubble[data-side="below"]::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--edge, var(--ink-soft)); }
+.bubble[data-side="left"]::after, .bubble[data-side="right"]::after { top: 50%; border-top-color: transparent; transform: translateY(-50%); }
+.bubble[data-side="left"]::after { left: 100%; border-left-color: var(--edge, var(--ink-soft)); }
+.bubble[data-side="right"]::after { left: auto; right: 100%; border-right-color: var(--edge, var(--ink-soft)); }
 
 /* -------------------------------------------------- below the board */
 
@@ -474,7 +480,7 @@ canvas {
 .chatter {
   margin-top: 12px;
   padding: 8px 12px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: rgba(63, 37, 16, 0.55);
   box-shadow: inset 0 0 0 1px rgba(246, 236, 210, 0.08);
 }

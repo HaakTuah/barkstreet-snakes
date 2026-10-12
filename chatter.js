@@ -458,7 +458,14 @@ window.SnakeChatter = (() => {
     el.style.setProperty('--edge', s.persona?.ink || s.color);
     boardEl.appendChild(el);
     // Width is estimated from the text, so placing a bubble never reads layout.
-    bubbles.set(s.id, { el, snake: s, until: performance.now() + BUBBLE_MS, w: 0, chars: text.length, x: NaN, y: NaN, below: null, tail: NaN });
+    bubbles.set(s.id, { el, snake: s, until: performance.now() + BUBBLE_MS, w: 0, chars: widthOf(text), x: NaN, y: NaN, side: null, tail: NaN });
+  }
+
+  // A line's width in Latin characters (a Chinese character is about two).
+  function widthOf(text) {
+    let n = 0;
+    for (const ch of text) n += /[\u2e80-\u9fff\uff00-\uffef]/.test(ch) ? 1.9 : 1;
+    return n;
   }
 
   // Called every frame: bubbles follow the gliding heads, stay inside the
@@ -471,15 +478,30 @@ window.SnakeChatter = (() => {
       if (now > b.until || !b.snake.alive) { b.el.remove(); bubbles.delete(id); continue; }
       window.SnakeRender.headPx(b.snake, alpha, boardPx, headAt);
       const w = Math.min(boardPx * 0.38, b.chars * 6.4 + 22);
-      const x = Math.round(Math.min(boardPx - w / 2 - 4, Math.max(w / 2 + 4, headAt.x)));
-      const below = headAt.y < cellPx * 3;
-      const y = Math.round(below ? headAt.y + cellPx * 0.75 : headAt.y - cellPx * 0.75);
-      if (x === b.x && y === b.y && below === b.below) continue;
-      if (below !== b.below) b.el.classList.toggle('below', below);
-      const tail = Math.round(50 + ((headAt.x - x) / w) * 100); // (50% unless the bubble is pushed off-centre at an edge)
-      if (tail !== b.tail) { b.el.style.setProperty('--tail', `${tail}%`); b.tail = tail; }
-      b.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, ${below ? '0' : '-100%'})`;
-      b.x = x; b.y = y; b.below = below;
+      // Never in the way of the snake's path or its body: above the head (below
+      // near the top) for a snake going sideways, and beside it, on the roomier
+      // side, for one going up or down.
+      let side = 'above', x, y;
+      if (b.snake.dir.y !== 0) {
+        side = headAt.x > boardPx / 2 ? 'left' : 'right';
+        x = side === 'left' ? headAt.x - cellPx * 0.75 - w / 2 : headAt.x + cellPx * 0.75 + w / 2;
+        y = headAt.y;
+      } else {
+        if (headAt.y < cellPx * 3) side = 'below';
+        x = headAt.x;
+        y = side === 'below' ? headAt.y + cellPx * 0.75 : headAt.y - cellPx * 0.75;
+      }
+      x = Math.round(Math.min(boardPx - w / 2 - 4, Math.max(w / 2 + 4, x)));
+      y = Math.round(Math.min(boardPx - cellPx, Math.max(cellPx, y)));
+      if (x === b.x && y === b.y && side === b.side) continue;
+      if (side !== b.side) b.el.dataset.side = side;
+      if (side === 'above' || side === 'below') { // the tail points at the head even when the bubble is pushed off-centre at an edge
+        const tail = Math.round(50 + ((headAt.x - x) / w) * 100);
+        if (tail !== b.tail) { b.el.style.setProperty('--tail', `${tail}%`); b.tail = tail; }
+      }
+      const ty = side === 'above' ? '-100%' : side === 'below' ? '0' : '-50%';
+      b.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, ${ty})`;
+      b.x = x; b.y = y; b.side = side;
     }
   }
 

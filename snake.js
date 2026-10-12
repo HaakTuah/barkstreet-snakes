@@ -194,6 +194,7 @@
     if (dirty && !document.hidden) {
       R.frame(drawAlpha, now);
       Chatter.layout(drawAlpha, boardPx);
+      toastFade();
       dirty = state === 'running' || state === 'countdown' || R.particles > 0 || R.holding();
     }
     perf.record(performance.now() - t0, tickCost);
@@ -516,8 +517,23 @@
     }
   }
 
-  let toastTimer;
+  // A banner fades while a head passes under it, so it never hides the board
+  // (its size is estimated from the text, so this reads no layout).
+  let toastTimer, toastChars = 0, toastUnder = false;
+  function toastFade() {
+    let under = false;
+    if (!toastEl.hidden && boardPx && game) {
+      const cell = boardPx / GRID;
+      const rows = Math.ceil(52 / cell), half = Math.min(boardPx - 32, toastChars * 7.6 + 32) / 2 / cell;
+      for (const s of game.snakes) {
+        const h = s.body[0];
+        if (s.alive && h.y < rows && Math.abs(h.x + 0.5 - GRID / 2) < half + 0.5) { under = true; break; }
+      }
+    }
+    if (under !== toastUnder) { toastUnder = under; toastEl.classList.toggle('under', under); }
+  }
   function toast(text, ms = 2800) {
+    toastChars = text.length;
     toastEl.textContent = text;
     toastEl.hidden = false;
     say(text);

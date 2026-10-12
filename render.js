@@ -22,6 +22,8 @@ window.SnakeRender = (() => {
   const TAU = Math.PI * 2;
 
   let canvas, ctx, PERSONAS;
+  let devPerCss = 1;         // device pixels per CSS pixel on the board
+  let shakeX = 0, shakeY = 0; // this frame's shake, in device pixels
   let viewerId = -1; // your snake on this screen (it gets the bright outline), -1 if none
   let k = 1;                 // device pixels per logical unit
   let reduced = false;       // prefers-reduced-motion
@@ -109,13 +111,15 @@ window.SnakeRender = (() => {
     v.addColorStop(1, 'rgba(0,0,0,0.28)');
     g.fillStyle = v;
     g.fillRect(0, 0, SIZE, SIZE);
-    // Carved grid lines, one device pixel wide, on whole pixels.
+    // Carved grid lines, about half a CSS pixel wide (at least one device
+    // pixel), on whole pixels.
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.strokeStyle = 'rgba(0,0,0,0.17)';
-    g.lineWidth = 1;
+    const lw = Math.max(1, Math.round(devPerCss * 0.6));
+    g.lineWidth = lw;
     g.beginPath();
     for (let i = 1; i < GRID; i++) {
-      const p = Math.round(i * CELL * k) + 0.5;
+      const p = Math.round(i * CELL * k) + (lw % 2 ? 0.5 : 0);
       g.moveTo(p, 0); g.lineTo(p, px);
       g.moveTo(0, p); g.lineTo(px, p);
     }
@@ -172,12 +176,23 @@ window.SnakeRender = (() => {
     if (!byVariant) sprites.set(name, byVariant = new Map());
     let s = byVariant.get(variant);
     if (s) return s;
-    s = makeLayer(SPRITE * CELL * k, SPRITE * CELL * k);
+    const size = Math.max(2, Math.round(SPRITE * CELL * k));
+    s = makeLayer(size, size);
     const g = s.getContext('2d');
-    g.setTransform(k, 0, 0, k, SPRITE * CELL * k / 2, SPRITE * CELL * k / 2);
+    const scale = size / (SPRITE * CELL);
+    g.setTransform(scale, 0, 0, scale, size / 2, size / 2);
     draw(g, variant);
     byVariant.set(variant, s);
     return s;
+  }
+
+  // A sprite that isn't rotated, on whole device pixels: never resampled.
+  function blitCrisp(s, x, y, alpha) {
+    if (alpha !== undefined) ctx.globalAlpha = alpha;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(s, Math.round(x * k + shakeX - s.width / 2), Math.round(y * k + shakeY - s.height / 2));
+    ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
+    if (alpha !== undefined) ctx.globalAlpha = 1;
   }
 
   function blit(s, x, y, alpha) {
@@ -262,26 +277,33 @@ window.SnakeRender = (() => {
     g.fillStyle = 'rgba(255,255,255,0.3)';
     g.beginPath(); g.arc(-c * 0.14, -c * 0.06, c * 0.06, 0, TAU); g.fill();
   };
-  // The woodpecker, beak pointing right (flip for left). Drawn about 1.6 cells tall.
-  const birdSprite = () => sprite('bird', '', drawBird);
-  const drawBird = g => {
-    const c = CELL * 0.85;
-    g.fillStyle = 'rgba(0,0,0,0.3)';
-    g.beginPath(); g.arc(-c * 0.05, c * 0.12, c * 0.48, 0, TAU); g.fill();
+  // The woodpecker: a great spotted woodpecker clinging to the trunk, beak to
+  // the right ('r') or mirrored ('l'). Drawn at its real size, about 1.7 cells
+  // tall, so it's as crisp as everything else.
+  const birdSprite = side => sprite('bird', side, drawBird);
+  const drawBird = (g, side) => {
+    const c = CELL * 1.2;
+    if (side === 'l') g.scale(-1, 1);
+    g.fillStyle = 'rgba(0,0,0,0.3)'; // shadow on the bark
+    g.beginPath(); g.ellipse(c * 0.02, c * 0.12, c * 0.3, c * 0.48, 0, 0, TAU); g.fill();
+    g.fillStyle = '#18181b'; // the stiff tail it props itself on
+    g.beginPath(); g.moveTo(-c * 0.16, c * 0.3); g.lineTo(-c * 0.08, c * 0.66); g.lineTo(c * 0.02, c * 0.3); g.fill();
+    g.beginPath(); g.ellipse(-c * 0.07, c * 0.04, c * 0.22, c * 0.36, 0, 0, TAU); g.fill(); // body
+    g.fillStyle = '#f5f5f4'; // a white shoulder patch and barred wing
+    g.beginPath(); g.ellipse(-c * 0.12, -c * 0.06, c * 0.08, c * 0.14, 0.15, 0, TAU); g.fill();
+    for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(-c * (0.2 - i * 0.05), c * (0.12 + i * 0.08), c * 0.028, 0, TAU); g.fill(); }
+    g.fillStyle = '#dc2626'; // red under the tail
+    g.beginPath(); g.ellipse(-c * 0.02, c * 0.32, c * 0.08, c * 0.06, 0, 0, TAU); g.fill();
+    g.fillStyle = '#18181b'; // head
+    g.beginPath(); g.arc(c * 0.04, -c * 0.36, c * 0.16, 0, TAU); g.fill();
+    g.fillStyle = '#dc2626'; // red nape
+    g.beginPath(); g.arc(-c * 0.08, -c * 0.42, c * 0.07, 0, TAU); g.fill();
+    g.fillStyle = '#f5f5f4'; // white cheek, with the eye in it
+    g.beginPath(); g.ellipse(c * 0.08, -c * 0.33, c * 0.09, c * 0.07, 0, 0, TAU); g.fill();
     g.fillStyle = '#18181b';
-    g.beginPath(); g.ellipse(-c * 0.1, 0, c * 0.32, c * 0.5, 0, 0, TAU); g.fill();
-    g.fillStyle = '#f5f5f4';
-    g.fillRect(-c * 0.24, -c * 0.25, c * 0.18, c * 0.07);
-    g.fillRect(-c * 0.24, c * 0.05, c * 0.18, c * 0.07);
-    g.beginPath(); g.arc(c * 0.12, -c * 0.32, c * 0.12, 0, TAU); g.fill();
-    g.fillStyle = '#18181b';
-    g.beginPath(); g.arc(c * 0.1, -c * 0.38, c * 0.16, 0, TAU); g.fill();
-    g.fillStyle = '#dc2626';
-    g.beginPath(); g.arc(c * 0.02, -c * 0.5, c * 0.12, 0, TAU); g.fill();
-    g.fillStyle = '#f5f5f4';
-    g.beginPath(); g.arc(c * 0.16, -c * 0.4, c * 0.04, 0, TAU); g.fill();
-    g.fillStyle = '#71717a';
-    g.beginPath(); g.moveTo(c * 0.24, -c * 0.44); g.lineTo(c * 0.62, -c * 0.36); g.lineTo(c * 0.24, -c * 0.32); g.fill();
+    g.beginPath(); g.arc(c * 0.1, -c * 0.35, c * 0.032, 0, TAU); g.fill();
+    g.fillStyle = '#52525b'; // a chisel beak, into the bark
+    g.beginPath(); g.moveTo(c * 0.17, -c * 0.4); g.lineTo(c * 0.44, -c * 0.37); g.lineTo(c * 0.17, -c * 0.31); g.fill();
   };
 
   // ------------------------------------------------------------ beetles
@@ -310,11 +332,11 @@ window.SnakeRender = (() => {
     ctx.lineWidth = c * 0.05;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    for (let k = -1; k <= 1; k++) {
-      const sw = (k === 0 ? -step : step) * c * 0.06;
-      const bx = k * c * 0.12;
-      ctx.moveTo(bx, -c * 0.12); ctx.lineTo(bx + c * 0.06 * k + sw, -c * 0.32);
-      ctx.moveTo(bx, c * 0.12); ctx.lineTo(bx + c * 0.06 * k - sw, c * 0.32);
+    for (let leg = -1; leg <= 1; leg++) {
+      const sw = (leg === 0 ? -step : step) * c * 0.06;
+      const bx = leg * c * 0.12;
+      ctx.moveTo(bx, -c * 0.12); ctx.lineTo(bx + c * 0.06 * leg + sw, -c * 0.32);
+      ctx.moveTo(bx, c * 0.12); ctx.lineTo(bx + c * 0.06 * leg - sw, c * 0.32);
     }
     // Feelers.
     ctx.moveTo(c * 0.26, -c * 0.04); ctx.quadraticCurveTo(c * 0.38, -c * 0.06, c * 0.42, -c * 0.18);
@@ -428,7 +450,7 @@ window.SnakeRender = (() => {
       flife[i] -= dt;
       const t = Math.max(0, flife[i] / 700);
       const y = fy[i] - (reduced ? 0 : (1 - t) * CELL * 0.8); // rises, unless motion is reduced
-      blit(sprite('float', ftext[i], drawFloat), fx[i], y, Math.min(1, t * 1.6));
+      blitCrisp(sprite('float', ftext[i], drawFloat), fx[i], y, Math.min(1, t * 1.6));
     }
   }
 
@@ -442,7 +464,7 @@ window.SnakeRender = (() => {
       a = {
         nextBlink: now + T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN), blinkUntil: 0,
         nextTongue: now + T.TONGUE_EVERY * (0.5 + Math.random()), tongueUntil: 0,
-        gx: 1, gy: 0, near: 99,             // where the eyes point (head's frame, eased), and how far that is
+        gx: s.dir.x, gy: s.dir.y, near: 99, // where the eyes point (on the screen, eased), and how far that is
         wx: 0, wy: 0, wanderAt: 0,          // Wildcard's eyes wander about on their own
         gulps: [-99, -99, -99, -99], gulpAt: 0,
         gulpR: T.GULP, gulpW: T.GULP_LENGTH, ateAt: -1e9, // gulp size and length (Gobbler's are bigger), last bite
@@ -537,25 +559,25 @@ window.SnakeRender = (() => {
     return out;
   }
 
-  // Turn the eyes toward the focus (in the head's frame, eased).
+  // Turn the eyes toward the focus (eased on the screen, so a turn of the
+  // head doesn't swing them, and at the same speed at any frame rate).
   function updateGaze(s, look, a, now) {
     const f = game ? focusOf(s, look, a, now) : null;
-    let lx = 1, ly = 0;
+    let tx = s.dir.x, ty = s.dir.y; // nothing to look at: straight ahead
     if (f) {
-      const h = s.body[0], tx = f.x - h.x, ty = f.y - h.y;
-      const ang = -Math.atan2(s.dir.y, s.dir.x);
-      lx = tx * Math.cos(ang) - ty * Math.sin(ang);
-      ly = tx * Math.sin(ang) + ty * Math.cos(ang);
-      const len = Math.hypot(lx, ly) || 1;
+      const h = s.body[0], dx = f.x - h.x, dy = f.y - h.y;
+      const len = Math.hypot(dx, dy) || 1;
       a.near = len;
-      lx /= len; ly /= len;
+      tx = dx / len; ty = dy / len;
     } else a.near = 99;
-    a.gx += (lx - a.gx) * T.GLANCE_EASE;
-    a.gy += (ly - a.gy) * T.GLANCE_EASE;
+    const ease = 1 - Math.pow(1 - T.GLANCE_EASE, frameDt / 16.7);
+    a.gx += (tx - a.gx) * ease;
+    a.gy += (ty - a.gy) * ease;
   }
 
   // The mouth: open when food is right in front, then a couple of chews after a bite.
   let deadNow = false; // the snake being drawn has just died: mouth shut
+  let frameDt = 16;     // this frame's length, for easing
   function mouthOpen(s, a) {
     if (deadNow) return 0;
     const t = (lastNow - a.ateAt) / T.CHEW_MS;
@@ -610,8 +632,9 @@ window.SnakeRender = (() => {
     }
     for (let i = 0; i < n; i++) {
       const t = i / (n > 1 ? n - 1 : 1); // 0 at the head, 1 at the tail
-      const fade = look === 'ghost' ? Math.round(75 * t)
-        : look === 'creeper' ? Math.round(15 + 45 * t)
+      // (Ghost and Creeper fade the most, but never so far that you can't see a tail that kills.)
+      const fade = look === 'ghost' ? Math.round(55 * t)
+        : look === 'creeper' ? Math.round(15 + 30 * t)
         : look === 'drab' ? 15
         : Math.round(30 * t);
       fills[i] = (stripe && i % 3 === 2 ? stripe : ramp)[fade];
@@ -776,15 +799,15 @@ window.SnakeRender = (() => {
         ctx.fillRect(x + off - 0.8, y - ch, 1.6, ch - 0.8);
         ctx.fillRect(x - off - 0.8, y + 0.8, 1.6, ch - 0.8);
       }
-    } else if (look === 'colonist') {
-      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-      ctx.lineWidth = 2.2;
+    } else if (look === 'colonist') { // a redcoat's cross-belts: a cream strap zig-zagging down the body
+      ctx.strokeStyle = '#fef3c7';
+      ctx.lineWidth = 3;
       ctx.lineCap = 'butt';
       ctx.beginPath();
       for (let i = 1; i < n; i++) {
-        const x = pts[2 * i], y = pts[2 * i + 1], d = rad[i] * 0.62;
-        ctx.moveTo(x - d, y - d); ctx.lineTo(x + d, y + d);
-        ctx.moveTo(x + d, y - d); ctx.lineTo(x - d, y + d);
+        const x = pts[2 * i], y = pts[2 * i + 1], d = rad[i] * 0.66;
+        if (i % 2) { ctx.moveTo(x - d, y - d); ctx.lineTo(x + d, y + d); }
+        else { ctx.moveTo(x + d, y - d); ctx.lineTo(x - d, y + d); }
       }
       ctx.stroke();
     }
@@ -816,7 +839,9 @@ window.SnakeRender = (() => {
       a.nextBlink = now + T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN);
     }
     if (!dead) updateGaze(s, look, a, now);
-    gazeX = a.gx; gazeY = a.gy;
+    headCos = s.dir.x; headSin = s.dir.y;
+    gazeX = a.gx * headCos + a.gy * headSin; // the gaze, turned into the face's frame
+    gazeY = -a.gx * headSin + a.gy * headCos;
     deadNow = dead;
     ctx.save();
     ctx.translate(pts[0], pts[1]);
@@ -857,6 +882,7 @@ window.SnakeRender = (() => {
   // Shared helpers draw in the head's local frame (+x forward, one cell = CELL).
   // gazeX/gazeY: where this snake's eyes point (a unit vector in that frame).
   let blinkNow = false, gazeX = 1, gazeY = 0;
+  let headCos = 1, headSin = 0; // the heading the face is drawn turned to
 
   // Closed eyes: two short lids.
   function lids(r) {
@@ -965,10 +991,13 @@ window.SnakeRender = (() => {
   }
 
   // A speck of light in each pupil (at x, ±y + oy, pupils of radius pr), so eyes look alive.
+  // (The face is drawn turned to the heading, so the light's offset is turned back.)
   function catchlights(x, y, oy, pr) {
+    const dx = -pr * 0.35, dy = -pr * 0.35;
+    const lx = headCos * dx + headSin * dy, ly = -headSin * dx + headCos * dy;
     ctx.fillStyle = '#ffffff';
-    circle(x - pr * 0.35, -y + oy - pr * 0.35, pr * 0.38);
-    circle(x - pr * 0.35, y + oy - pr * 0.35, pr * 0.38);
+    circle(x + lx, -y + oy + ly, pr * 0.38);
+    circle(x + lx, y + oy + ly, pr * 0.38);
   }
 
   function drawFace(s, look, color, blinking, a) {
@@ -1329,6 +1358,7 @@ window.SnakeRender = (() => {
     if (!staticLayer) resetStatic();
     const dt = lastNow ? Math.min(64, now - lastNow) : 16;
     lastNow = now;
+    frameDt = Math.max(1, dt);
     syncHoles();
     if (deaths.length || corpses.length) updateCorpses(now);
 
@@ -1341,6 +1371,7 @@ window.SnakeRender = (() => {
       ctx.fillStyle = BARK; // the bark shifts, so fill the sliver it uncovers
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
+    shakeX = sx; shakeY = sy;
     ctx.setTransform(1, 0, 0, 1, sx, sy);
     ctx.drawImage(staticLayer, 0, 0);
     ctx.setTransform(k, 0, 0, k, sx, sy);
@@ -1351,13 +1382,22 @@ window.SnakeRender = (() => {
       if (s.memory.colonies) drawColonies(s);
     }
 
+    // The woodpecker perches on its newest hole (which can never be played
+    // on), facing into the board, under anything it shares a cell with.
+    const wp = game.woodpecker;
+    if (wp) {
+      const peck = reduced ? 0 : Math.max(0, 1 - (game.time - wp.at) / 250) * 3;
+      const right = wp.x < GRID / 2;
+      blitCrisp(birdSprite(right ? 'r' : 'l'), wp.x * CELL + CELL / 2 + (right ? peck : -peck), wp.y * CELL + CELL * 0.4);
+    }
+
     const bob = reduced ? 0 : 1;
     for (const f of game.food) {
       const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
       const phase = (f.x * 7 + f.y * 13) % 10; // each item bobs on its own beat
       if (f.kind === 'beetle') drawBeetle(f, alpha, now);
-      else if (f.kind === 'food') blit(appleSprite(), x, y + bob * Math.sin(now / 420 + phase) * 1.6);
-      else if (f.kind === 'pellet') { if (!heldCells[f.y * GRID + f.x]) blit(meatSprite(f.color), x, y); }
+      else if (f.kind === 'food') blitCrisp(appleSprite(), x, y + bob * Math.sin(now / 420 + phase) * 1.6);
+      else if (f.kind === 'pellet') { if (!heldCells[f.y * GRID + f.x]) blitCrisp(meatSprite(f.color), x, y); }
       else if (f.kind === 'mushroom') {
         ctx.save();
         ctx.translate(x, y + CELL * 0.3);
@@ -1368,27 +1408,14 @@ window.SnakeRender = (() => {
         // A calm dim instead of a blink when it's about to rot.
         const left = f.expires - game.tick;
         const fade = left > 30 ? 1 : 0.45 + 0.55 * (left / 30);
-        blit(glowSprite(), x, y, fade);
-        blit(goldenSprite(), x, y + bob * Math.sin(now / 380 + phase) * 1.8, fade);
+        blitCrisp(glowSprite(), x, y, fade);
+        blitCrisp(goldenSprite(), x, y + bob * Math.sin(now / 380 + phase) * 1.8, fade);
         ctx.save();
         ctx.translate(x + CELL * 0.2, y - CELL * 0.22);
         ctx.rotate(reduced ? 0 : now / 900);
         blit(starSprite(), 0, 0, fade);
         ctx.restore();
       }
-    }
-
-    // The woodpecker perches on its newest hole, which can never be played on.
-    const wp = game.woodpecker;
-    if (wp) {
-      const x = wp.x * CELL + CELL / 2, y = wp.y * CELL + CELL / 2;
-      const peck = reduced ? 0 : Math.max(0, 1 - (game.time - wp.at) / 250) * 3;
-      const flip = wp.x < GRID / 2 ? 1 : -1;
-      ctx.save();
-      ctx.translate(x + flip * peck, y - CELL * 0.1);
-      ctx.scale(flip * 1.4, 1.4);
-      blit(birdSprite(), 0, 0);
-      ctx.restore();
     }
 
     if (corpses.length) drawCorpses(now);
@@ -1405,7 +1432,7 @@ window.SnakeRender = (() => {
     const now = lastNow || performance.now(); // the frame clock, like everything else drawn
     for (const e of events) {
       if (e.type === 'eat') {
-        const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
+        let x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
         const a = animOf(e.snake, now);
         if (e.kind !== 'mushroom') {
           a.gulps[a.gulpAt] = game.tick - 1; a.gulpAt = (a.gulpAt + 1) % 4;
@@ -1415,12 +1442,14 @@ window.SnakeRender = (() => {
           a.gulpW = big ? T.GOBBLE_LENGTH : T.GULP_LENGTH;
         }
         a.ateAt = now; // every bite: the head squashes and the mouth chews
+        x += e.snake.dir.x * CELL * 0.5; // the crumbs fly from the mouth, not over the face
+        y += e.snake.dir.y * CELL * 0.5;
         if (e.kind === 'golden') spawn(x, y, T.PARTICLES_EAT + 6, 220, T.PARTICLE_LIFE, 3.2, '#fde68a', '#fbbf24');
         else if (e.kind === 'beetle') spawn(x, y, T.PARTICLES_EAT + 4, 200, T.PARTICLE_LIFE, 3, '#059669', '#fbbf24'); // emerald and gold, a crunchy catch
         else if (e.kind === 'pellet') spawn(x, y, T.PARTICLES_EAT - 4, 150, T.PARTICLE_LIFE * 0.8, 2.6, e.color && e.color[0] === '#' ? e.color : '#c2410c', '#f6ecd2');
         else if (e.kind === 'mushroom') spawn(x, y, T.PARTICLES_EAT - 2, 160, T.PARTICLE_LIFE, 2.6, '#dc2626', '#fffbea');
         else spawn(x, y, T.PARTICLES_EAT, 180, T.PARTICLE_LIFE, 2.8, '#a3e635', '#fde68a'); // sprout and honey: visible on bark and on green snakes alike
-        if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(x, y - CELL * 0.6, e.kind === 'golden' ? '+3' : e.kind === 'beetle' ? '+2' : '+1');
+        if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.6), e.kind === 'golden' ? '+3' : e.kind === 'beetle' ? '+2' : '+1');
       } else if (e.type === 'death') {
         deaths.push(e.snake); // bursts on the next frame, unless the moment is held
       } else if (e.type === 'peck') {
@@ -1511,6 +1540,7 @@ window.SnakeRender = (() => {
     const target = Math.max(GRID, dpr > 3 ? Math.round(cssPx * 3) : exact);
     if (target === canvas.width && sized) return false;
     sized = true;
+    devPerCss = target / cssPx;
     canvas.width = canvas.height = target;
     k = target / SIZE;
     barkLayer = null;
