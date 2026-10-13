@@ -497,7 +497,7 @@ window.SnakeRender = (() => {
     ctx.drawImage(shadowSprite(), x - w / 2, y - w / 2, w, w);
   }
 
-  function drawAppleShape(g, body) {
+  function drawAppleShape(g, body, leaf = '#15803d') {
     const c = CELL;
     g.fillStyle = body;
     g.beginPath(); g.arc(0, c * 0.04, c * 0.34, 0, TAU); g.fill();
@@ -509,12 +509,42 @@ window.SnakeRender = (() => {
     g.strokeStyle = '#78350f';
     g.lineWidth = c * 0.07;
     g.beginPath(); g.moveTo(0, -c * 0.22); g.lineTo(c * 0.04, -c * 0.42); g.stroke();
-    g.fillStyle = '#15803d';
+    g.fillStyle = leaf;
     g.beginPath(); g.ellipse(c * 0.17, -c * 0.36, c * 0.14, c * 0.07, -0.5, 0, TAU); g.fill();
   }
 
-  const drawApple = g => drawAppleShape(g, '#84cc16'), drawGolden = g => drawAppleShape(g, '#fbbf24');
-  const appleSprite = () => sprite('apple', '', drawApple);
+  // An apple as it ages (it rots away in the end): fresh; bruised, with brown
+  // spots; rotten, brown and wrinkled, its leaf dead. Or baked in a fire:
+  // deep red, glazed and split, a little caramel oozing.
+  const APPLE_LOOKS = { fresh: ['#84cc16', '#15803d'], bruised: ['#9fb53a', '#4d7c0f'], rotten: ['#8a6a2a', '#78716c'], baked: ['#9a3412', '#57534e'] };
+  const drawApple = (g, v) => {
+    const [body, leaf] = APPLE_LOOKS[v] || APPLE_LOOKS.fresh, c = CELL;
+    drawAppleShape(g, body, leaf);
+    if (v === 'bruised' || v === 'rotten') {
+      g.fillStyle = v === 'rotten' ? 'rgba(66,38,12,0.6)' : 'rgba(110,66,20,0.5)';
+      for (const [x, y, rr] of [[0.1, 0.12, 0.07], [-0.1, 0.18, 0.05], [0.17, -0.02, 0.045]]) { g.beginPath(); g.arc(c * x, c * y, c * rr, 0, TAU); g.fill(); }
+    }
+    if (v === 'rotten') { // wrinkles
+      g.strokeStyle = 'rgba(52,30,10,0.6)';
+      g.lineWidth = c * 0.03;
+      g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(-c * 0.2, -c * 0.02); g.quadraticCurveTo(-c * 0.12, c * 0.06, -c * 0.2, c * 0.14);
+      g.moveTo(c * 0.02, c * 0.24); g.quadraticCurveTo(c * 0.1, c * 0.16, c * 0.2, c * 0.22);
+      g.stroke();
+    }
+    if (v === 'baked') { // glazed and split, caramel in the split
+      g.strokeStyle = '#fbbf24';
+      g.lineWidth = c * 0.05;
+      g.lineCap = 'round';
+      g.beginPath(); g.moveTo(-c * 0.06, c * 0.02); g.lineTo(c * 0.02, c * 0.12); g.lineTo(-c * 0.02, c * 0.22); g.stroke();
+      g.strokeStyle = 'rgba(254,215,170,0.8)';
+      g.lineWidth = c * 0.04;
+      g.beginPath(); g.arc(0, c * 0.04, c * 0.26, Math.PI * 1.1, Math.PI * 1.45); g.stroke();
+    }
+  };
+  const drawGolden = g => drawAppleShape(g, '#fbbf24');
+  const appleSprite = (v = 'fresh') => sprite('apple', v, drawApple);
   const goldenSprite = () => sprite('golden', '', drawGolden);
   const glowSprite = () => sprite('glow', '', drawGlow);
   const drawGlow = g => {
@@ -764,7 +794,7 @@ window.SnakeRender = (() => {
   const fx = new Float32Array(MAX_F), fy = new Float32Array(MAX_F), flife = new Float32Array(MAX_F);
   const ftext = new Array(MAX_F).fill('');
   const FLOAT_FONT = `700 ${Math.round(CELL * 0.72)}px Fredoka, system-ui, sans-serif`;
-  const FLOAT_FILL = { 'KO!': '#f87171', 'Bonk!': '#fdba74' }; // (the rest in honey)
+  const FLOAT_FILL = { 'KO!': '#f87171', 'Bonk!': '#fdba74', 'Ouch!': '#fdba74', '-1': '#fca5a5', '-2': '#fca5a5', '-3': '#fca5a5' }; // (the rest in honey)
   const drawFloat = (g, text) => {
     g.font = FLOAT_FONT;
     g.textAlign = 'center';
@@ -1032,6 +1062,9 @@ window.SnakeRender = (() => {
     }
     // A held corpse presses its head a little into whatever it hit.
     if (impact) { pts[0] += s.dir.x * CELL * impact; pts[1] += s.dir.y * CELL * impact; }
+    // Just crashed: the head lunges into what it hit, and bounces back.
+    const hit = a.crashAt ? (now - a.crashAt) / 260 : 1;
+    if (hit < 1 && hit >= 0 && !dead && !reduced) { const l = Math.sin(hit * Math.PI) * 0.34; pts[0] += a.crashDx * CELL * l; pts[1] += a.crashDy * CELL * l; }
     // Gulps: a bulge that travels one segment per tick after each bite, and
     // the head's squash at the bite itself.
     a.tickPos = game ? game.tick - 1 + alpha : 0;
@@ -1271,11 +1304,27 @@ window.SnakeRender = (() => {
     deadNow = dead;
     ctx.save();
     ctx.translate(pts[0], pts[1]);
-    ctx.rotate(Math.atan2(a.hs, a.hc));
+    const dizzy = !dead && s.stunUntil > game.tick; // (stunned: its head wobbles, and stars go round it)
+    ctx.rotate(Math.atan2(a.hs, a.hc) + (dizzy && !reduced ? Math.sin(now / 45) * 0.16 : 0));
     ctx.scale(1.1 * (1 + a.bump), 1.1 * (1 + a.bump));
     if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
     else drawFace(s, look, color, blinking, a);
     ctx.restore();
+
+    if (dizzy) { // a faint halo, and three stars going round on it
+      const t = reduced ? 0 : now / 240, cy = Math.max(CELL * 0.3, pts[1] - CELL * 0.72);
+      ctx.strokeStyle = 'rgba(253,224,71,0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.ellipse(pts[0], cy, CELL * 0.55, CELL * 0.18, 0, 0, TAU); ctx.stroke();
+      ctx.fillStyle = '#fde047';
+      ctx.strokeStyle = 'rgba(58,38,20,0.75)';
+      ctx.lineWidth = 1.3;
+      for (let i = 0; i < 3; i++) {
+        const a2 = t + i * TAU / 3;
+        star(pts[0] + Math.cos(a2) * CELL * 0.55, cy + Math.sin(a2) * CELL * 0.18, CELL * 0.22);
+        ctx.stroke();
+      }
+    }
 
     // Capricious: a ring that flashes out when its mood changes.
     if (!reduced && s.personaKey === 'capricious' && s.memory.moodChangedAt != null && game) {
@@ -1360,6 +1409,24 @@ window.SnakeRender = (() => {
     for (const s of live) drawShadow(prepare(s, alpha, now, false));
     for (const s of live) drawOutline(s, animOf(s, now));
     for (const s of live) drawBody(s, animOf(s, now), now, false);
+    for (const s of live) if (s.burnUntil > game.tick) drawBurning(s, animOf(s, now), now);
+  }
+
+  // A snake on fire: flames along its back (the fire's own flicker, smaller,
+  // dying down as it goes out), a glow under them, embers and smoke going up.
+  function drawBurning(s, a, now) {
+    const lively = !reduced, t = now / 1000, left = Math.min(1, (s.burnUntil - game.tick) / (T.BURN_TICKS / 2));
+    const size = SPRITE * CELL * (0.45 + 0.25 * left);
+    for (let i = 1; i < a.n && i < 12; i += 2) {
+      const x = a.pts[2 * i], y = a.pts[2 * i + 1];
+      ctx.globalAlpha = 0.45;
+      ctx.drawImage(fireGlowSprite(), x - size * 0.6, y - size * 0.6, size * 1.2, size * 1.2);
+      ctx.globalAlpha = 1;
+      const fr = lively ? Math.floor(t * 14 + i * 3) % FLAME_FRAMES : 0;
+      ctx.drawImage(bodyFlameSprite(fr), x - size / 2, y - size * 0.62, size, size);
+      if (lively && Math.random() < 0.05) mote(x, y - CELL * 0.3, (Math.random() - 0.5) * 12, -40 - Math.random() * 20, 650, 1.3 + Math.random(), 3);
+      if (lively && Math.random() < 0.03) mote(x, y - CELL * 0.3, (Math.random() - 0.5) * 6, -18, 1100, 2.5 + Math.random() * 2, 2);
+    }
   }
 
   // ---------------------------------------------------------------- faces
@@ -2697,7 +2764,7 @@ window.SnakeRender = (() => {
       const key = f.y * GRID + f.x;
       let b = born.get(key);
       if (!b || b.kind !== f.kind) {
-        b = { kind: f.kind, at: now + (fresh ? 200 + 90 * n : 0), i: 0, next: 0, gen: 0, v: (f.color || '#a16207') + '|' };
+        b = { kind: f.kind, at: now + (fresh ? 200 + 90 * n : 0), i: 0, next: 0, gen: 0, v: (f.color || '#a16207') + '|', fell: !fresh && f.kind === 'food' };
         born.set(key, b);
       }
       b.gen = bornGen;
@@ -2800,7 +2867,8 @@ window.SnakeRender = (() => {
   }
 
   // Ambient motes from a small pool: spores drifting up off the mushrooms
-  // (kind 0), glints twinkling round a golden apple (1), smoke (2) and embers (3).
+  // (kind 0), glints twinkling round a golden apple (1), smoke (2), embers (3)
+  // and steam off baked food (4).
   const MAX_M = 96;
   const mx = new Float32Array(MAX_M), my = new Float32Array(MAX_M), mvx = new Float32Array(MAX_M), mvy = new Float32Array(MAX_M);
   const mlife = new Float32Array(MAX_M), mmax = new Float32Array(MAX_M), msize = new Float32Array(MAX_M);
@@ -2815,7 +2883,7 @@ window.SnakeRender = (() => {
   }
   // Drawn in batches: every mote of a kind at the same fade (four steps of
   // it) goes in one shape, so a busy fire is a handful of fills, not hundreds.
-  const MOTE_LOOK = [['#fdf2f8', 0.75], null, ['#78716c', 0.32], ['#fdba74', 1]]; // spores, (glints), smoke, embers
+  const MOTE_LOOK = [['#fdf2f8', 0.75], null, ['#78716c', 0.32], ['#fdba74', 1], ['#f8fafc', 0.4]]; // spores, (glints), smoke, embers, steam
   const mBucket = new Uint8Array(MAX_M), mRad = new Float32Array(MAX_M);
   function drawMotes(dt) {
     if (!mLive) return;
@@ -2837,7 +2905,7 @@ window.SnakeRender = (() => {
         continue;
       }
       if (mkind[i] === 0) mx[i] += Math.sin(mlife[i] / 160) * 0.15; // spores waft
-      mRad[i] = mkind[i] === 2 ? msize[i] * (1.6 - t * 0.6) : msize[i]; // (smoke grows as it rises)
+      mRad[i] = mkind[i] === 2 || mkind[i] === 4 ? msize[i] * (1.6 - t * 0.6) : msize[i]; // (smoke and steam grow as they rise)
       mBucket[i] = 1 + Math.min(3, Math.floor(fade * 4)); // 1..4
     }
     for (let kind = 0; kind < MOTE_LOOK.length; kind++) {
@@ -2878,6 +2946,15 @@ window.SnakeRender = (() => {
     ctx.restore();
   }
 
+  // A roast: a piece of snake that fell off in the flames, browned all over.
+  const ROAST = '#92400e|';
+  // Baked food steams now and then.
+  function steam(b, x, y, now) {
+    if (reduced || !b || now < b.next) return;
+    b.next = now + 450 + Math.random() * 500;
+    mote(x + (Math.random() - 0.5) * CELL * 0.3, y - CELL * 0.3, (Math.random() - 0.5) * 6, -16 - Math.random() * 8, 1200, 2 + Math.random(), 4);
+  }
+
   // Every piece of food on the board, under the snakes.
   function drawFood(alpha, now) {
     trackFood(now);
@@ -2891,14 +2968,27 @@ window.SnakeRender = (() => {
       const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
       const t = now / 1000 + ((f.x * 7 + f.y * 13) % 10) * 0.63; // each piece on its own beat
       if (f.kind === 'food') {
-        const drop = b?.fell && !reduced ? Math.max(0, 1 - (now - b.at) / 380) : 0; // (a windfall drops from above)
-        drawAppleAt(appleSprite(), x, y - drop * drop * CELL * 3, t, b?.fell ? 1 : pop, 1);
+        const drop = b?.fell && !reduced ? Math.max(0, 1 - (now - b.at) / 380) : 0; // (a new apple drops from the tree above)
+        const left = f.expires != null ? f.expires - game.tick : 999;
+        const look = f.cooked ? 'baked' : left > 110 ? 'fresh' : left > 45 ? 'bruised' : 'rotten';
+        const shrivel = look === 'rotten' && left < 20 ? 0.78 + 0.22 * Math.max(0, left) / 20 : 1;
+        drawAppleAt(appleSprite(look), x, y - drop * drop * CELL * 3, t, (b?.fell ? 1 : pop) * shrivel, 1);
+        if (look === 'rotten' && lively) { // a fly has found it
+          const fa = now / 150 + f.x * 1.7, fx = x + Math.cos(fa) * CELL * 0.4, fy = y - CELL * 0.32 + Math.sin(fa * 1.6) * CELL * 0.14;
+          ctx.fillStyle = 'rgba(241,245,249,0.7)';
+          const flap = 0.6 + 0.6 * Math.abs(Math.sin(now / 18));
+          ctx.beginPath(); ctx.ellipse(fx - 1.4, fy - 1.6, 1.6 * flap, 1, -0.5, 0, TAU); ctx.ellipse(fx + 1.4, fy - 1.6, 1.6 * flap, 1, 0.5, 0, TAU); ctx.fill();
+          ctx.fillStyle = '#1c1917';
+          circle(fx, fy, 1.7);
+        }
+        if (look === 'baked') steam(b, x, y, now);
       }
       else if (f.kind === 'pellet') {
         const h = lively ? 0.5 - 0.5 * Math.cos(t * 3) : 0;
         shadowAt(x + 1, y + CELL * 0.3, pop * 0.85 * (1 - 0.2 * h));
         const sz = pop * (1 + (lively ? Math.sin(t * 6) * 0.03 : 0));
-        blitAbout(beadSprite(b ? b.v : (f.color || '#a16207') + '|'), x, y - h * 1.8, 0, 0, sz, sz, 0);
+        blitAbout(beadSprite(f.cooked ? ROAST : b ? b.v : (f.color || '#a16207') + '|'), x, y - h * 1.8, 0, 0, sz, sz, 0);
+        if (f.cooked) steam(b, x, y, now);
       } else if (f.kind === 'mushroom') {
         drawMushroomAt(f, x, y, t, pop);
         if (lively && b && pop >= 1 && now > b.next) {
@@ -3089,10 +3179,13 @@ window.SnakeRender = (() => {
   // once each, as sprites: a fire is many curves, and many fires a lot of them).
   const FLAME_FRAMES = 8;
   const flameSprite = f => sprite('flame', String(f), drawFlames);
+  const bodyFlameSprite = f => sprite('flame', 'b' + f, drawFlames); // (on a snake: no burnt bark under it)
   const drawFlames = (g, v) => {
-    const c = CELL, p = Number(v) / FLAME_FRAMES * TAU;
-    g.fillStyle = 'rgba(20,8,2,0.55)'; // the burning bark under it
-    g.beginPath(); g.arc(0, c * 0.12, c * 0.4, 0, TAU); g.fill();
+    const c = CELL, bare = v[0] === 'b', p = Number(bare ? v.slice(1) : v) / FLAME_FRAMES * TAU;
+    if (!bare) {
+      g.fillStyle = 'rgba(20,8,2,0.55)'; // the burning bark under it
+      g.beginPath(); g.arc(0, c * 0.12, c * 0.4, 0, TAU); g.fill();
+    }
     const base = c * 0.42;
     for (const [col, sc] of [['#dc2626', 1.12], ['#f97316', 0.9], ['#fbbf24', 0.64], ['#fff7ed', 0.34]]) {
       g.fillStyle = col;
@@ -3566,6 +3659,45 @@ window.SnakeRender = (() => {
         // A comic-book word where it went down: KO! if a snake did it, Bonk! for a wall or a hole.
         const k = e.snake.killer, h = e.snake.body[0];
         if (k !== 'hunger') floater(h.x * CELL + CELL / 2, Math.max(CELL * 1.3, h.y * CELL - CELL * 0.2), k === 'wall' || k === 'self' || !game.snakes.some(o => o.name === k) ? 'Bonk!' : 'KO!');
+      } else if (e.type === 'crash') { // a bonk where it hit, the head's lunge, and its tail breaking off as beads
+        const s = e.snake, a = animOf(s, now), h = s.body[0];
+        a.crashAt = now; a.crashDx = s.dir.x; a.crashDy = s.dir.y;
+        // (its tail breaks off as beads in its own markings, last segment last)
+        const prev = s.prev || [];
+        for (let i = s.body.length; i < s.body.length + e.lost && i < prev.length; i++) {
+          const key = prev[i].y * GRID + prev[i].x;
+          if (!born.has(key)) born.set(key, { kind: 'pellet', at: now + (i - s.body.length) * RIPPLE_MS, i, next: 0, gen: bornGen, v: beadOf(s, i) });
+        }
+        const px = (h.x + 0.5 + s.dir.x * 0.5) * CELL, py = (h.y + 0.5 + s.dir.y * 0.5) * CELL;
+        const other = e.killerId != null ? game.snakes[e.killerId] : null, col = other ? colorOf(other) : '';
+        if (other && col[0] === '#') spawn(px, py, 12, 220, 480, 2.6, col, '#fffbea');
+        else spawn(px, py, 12, 220, 480, 2.6, '#c08a4a', '#3b2412'); // (chips of bark)
+        // (at the point of impact, clear of the stars over its head)
+        floater(px + s.dir.x * CELL * 0.4 + (s.dir.y < 0 ? CELL * 1.2 : 0), Math.max(CELL * 1.3, py + s.dir.y * CELL * 0.4), 'Bonk!');
+        if (s.id === viewerId) {
+          if (e.lost >= 1 && e.lost <= 3) floater(h.x * CELL + CELL / 2 - s.dir.x * CELL * 1.2, Math.max(CELL * 1.3, h.y * CELL - CELL * 1.4), '-' + e.lost);
+          if (!reduced) shake(4);
+        }
+      } else if (e.type === 'cut') { // the woodpecker took its tail
+        floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.2), 'Ouch!');
+      } else if (e.type === 'alight') { // crawled into the fire: a burst of flame
+        const h = e.snake.body[0];
+        spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 14, 200, 520, 2.6, '#f97316', '#fde047');
+      } else if (e.type === 'singe') { // a piece falls off in the flames
+        const tl = e.snake.body[e.snake.body.length - 1];
+        spawn(tl.x * CELL + CELL / 2, tl.y * CELL + CELL / 2, 6, 120, 420, 2.2, '#f97316', '#78716c');
+        if (e.snake.id === viewerId) floater(e.snake.body[0].x * CELL + CELL / 2, Math.max(CELL * 1.3, e.snake.body[0].y * CELL - CELL * 1.1), '-1');
+      } else if (e.type === 'baked') { // done: a puff of steam and a glint
+        const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
+        for (let i = 0; i < 4; i++) mote(x + (Math.random() - 0.5) * CELL * 0.4, y - CELL * 0.2, (Math.random() - 0.5) * 10, -20 - Math.random() * 10, 1200, 2.5, 4);
+        spawn(x, y, 6, 120, 420, 2, '#fdba74', '#fffbea');
+      } else if (e.type === 'ash') { // burnt to nothing: grey ash and smoke
+        const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
+        eatenNow.add(e.y * GRID + e.x);
+        spawn(x, y, 10, 140, 600, 2.4, '#a8a29e', '#57534e');
+        for (let i = 0; i < 3; i++) mote(x, y - CELL * 0.2, (Math.random() - 0.5) * 8, -16, 1400, 3, 2);
+      } else if (e.type === 'rot') { // rotted away: a brown puff
+        spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 8, 110, 460, 2.2, '#8a6a2a', '#57534e');
       } else if (e.type === 'woodpecker') {
         bird.arrivedAt = now;
       } else if (e.type === 'peck') { // a chunk comes out: chips flying from every cell, and a thump
@@ -3735,7 +3867,7 @@ window.SnakeRender = (() => {
     document.fonts?.ready.then(() => sprites.delete('float'));
   }
 
-  const FLOAT_WORDS = ['+1', '+2', '+3', 'KO!', 'Bonk!'];
+  const FLOAT_WORDS = ['+1', '+2', '+3', 'KO!', 'Bonk!', 'Ouch!', '-1', '-2', '-3'];
   function setGame(g) {
     game = g;
     if (sized) for (const w of FLOAT_WORDS) sprite('float', w, drawFloat); // (drawn now, not on the first bite)

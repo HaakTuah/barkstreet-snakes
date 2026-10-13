@@ -63,7 +63,8 @@ for (let r = 0; r < rounds; r++) {
     same(r, k, 'alive', host.snakes.map(s => s.alive), guest.snakes.map(s => s.alive));
     same(r, k, 'dirs', host.snakes.map(s => s.dir), guest.snakes.map(s => s.dir));
     same(r, k, 'hunger', host.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve]), guest.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve]));
-    const food = g => g.food.map(f => [f.x, f.y, f.kind, f.expires, f.color, f.dir && f.kind === 'beetle' ? f.dir : null, f.px ?? null, f.py ?? null, f.movedAt ?? null, !!f.scared]);
+    same(r, k, 'stuns and burns', host.snakes.map(s => [s.stunUntil, s.burnUntil, s.burnFrom]), guest.snakes.map(s => [s.stunUntil, s.burnUntil, s.burnFrom]));
+    const food = g => g.food.map(f => [f.x, f.y, f.kind, f.expires, f.color, f.dir && f.kind === 'beetle' ? f.dir : null, f.px ?? null, f.py ?? null, f.movedAt ?? null, !!f.scared, f.heat || 0, !!f.cooked]);
     same(r, k, 'food', food(host), food(guest));
     same(r, k, 'holes', [...host.holes], [...guest.holes]);
     same(r, k, 'woodpecker', host.woodpecker, guest.woodpecker);

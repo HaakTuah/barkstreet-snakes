@@ -15,6 +15,10 @@ window.SnakeChatter = (() => {
       weather: { wind: ['Adjusting for wind.'], storm: ['Thunder masks the shot.'], snow: ['Cold barrel. Steady hands.'] },
       woodpecker: ['Air support. Not mine.'],
       rainbow: ['Target marked: the end of the rainbow.'],
+      bonk: ['Recalibrating.', 'Minor setback.'],
+      burning: ['Taking fire. Literally.'],
+      cut: ['Lost my rear guard.'],
+      gloat: ['Bounced off me, {who}? Cute.'],
       dies: ['Counter-sniped by {who}?', 'Should have relocated.', 'Impossible.'],
     },
     gobbler: {
@@ -31,6 +35,10 @@ window.SnakeChatter = (() => {
       weather: { wind: ['It’s raining apples! Best day ever!'], rain: ['Mushroom weather. Yuck.'], sun: ['Golden hour? Golden SNACKS!'], snow: ['Winter? But what will I EAT?'] },
       woodpecker: ['Is it eating the log? Save me some!'],
       rainbow: ['A rainbow! Does the gold taste good?'],
+      bonk: ['Ow! My snacks!', 'Oof. Dropped my lunch.'],
+      burning: ['Am I… cooking? Smells good, actually.'],
+      cut: ['My tail! That was full of food!'],
+      baked: ['BAKED APPLES! Hot hot hot, worth it!'],
       dies: ['Tell my apples… I loved them.'],
     },
     ghost: {
@@ -42,6 +50,9 @@ window.SnakeChatter = (() => {
       weather: { storm: ['…boom.'], rain: ['…drip.'], snow: ['…brr.'] },
       woodpecker: ['…tap… tap…'],
       rainbow: ['…pretty.'],
+      bonk: ['…ow.'],
+      burning: ['…warm.'],
+      cut: ['…lighter.'],
       dies: ['…'],
     },
     sovereign: {
@@ -54,6 +65,10 @@ window.SnakeChatter = (() => {
       woodpecker: ['Who invited that bird?', 'We did not authorise this pecking.'],
       rainbow: ['The heavens salute us.'],
       realm: { grow: ['Our realm expands!', 'A greater sovereign needs a greater realm.', 'Behold: more kingdom.'], shrink: ['Our realm… contracts. Temporarily.', 'A strategic retreat. A royal one.'], move: ['The court relocates.', 'We have moved to better lands.'] },
+      bonk: ['We meant to do that.', 'Who put that there?'],
+      burning: ['Fetch the royal bucket!'],
+      cut: ['That bird has committed treason.'],
+      gloat: ['Bow, {who}. Do not bump.'],
       dies: ['The king is dead…', 'Long live… someone else.'],
     },
     colonist: {
@@ -66,6 +81,11 @@ window.SnakeChatter = (() => {
       weather: { rain: ['Ah, proper weather at last.', 'Rain? Just like home.'], storm: ['Batten down the hatches!'], sun: ['The sun never sets on us, you know.'], snow: ['Bracing! Simply bracing.'] },
       woodpecker: ['A woodpecker! Someone fetch my musket. Politely.'],
       rainbow: ['A rainbow! Plant a flag at the end of it!'],
+      bonk: ['I say! Steady on!', 'Blast!'],
+      burning: ['I appear to be on fire. How awkward.'],
+      cut: ['Dash it, my tail!'],
+      gloat: ['Mind the Empire, {who}.'],
+      baked: ['Roast dinner! Splendid.'],
       dies: ['Stiff upper lip…'],
     },
     drab: {
@@ -77,6 +97,9 @@ window.SnakeChatter = (() => {
       kill: ['Oh. Sorry, {who}.'],
       weather: { rain: ['Rain. Great.'], sun: ['It’s sunny.'], wind: ['Windy.'], storm: ['Loud.'], snow: ['Cold.'] },
       rainbow: ['A rainbow. Colourful.'],
+      bonk: ['Ow.'],
+      burning: ['Hot.'],
+      cut: ['Hm. Shorter.'],
       dies: ['Well. That happened.'],
     },
     vulture: {
@@ -88,6 +111,10 @@ window.SnakeChatter = (() => {
       weather: { storm: ['Lightning. Something’s bound to cook.'], rain: ['Grim weather. Lovely.'], snow: ['Winter. The lean season. My season.'] },
       woodpecker: ['Ah. A colleague.'],
       rainbow: ['Pretty. Someone will die chasing it.'],
+      bonk: ['Not the plan.'],
+      burning: ['I’m the one who eats the roast!'],
+      cut: ['Leftovers… of me?'],
+      gloat: ['Keep bumping, {who}. I’ll wait.'],
       dies: ['Who’s… eating… whom…'],
     },
     mason: {
@@ -101,6 +128,10 @@ window.SnakeChatter = (() => {
       caught: ['Scarabaeus captus!'],
       weather: { storm: ['Iuppiter iratus est!'], rain: ['Pluvia! Aquaeductus, ubi es?'], sun: ['Sol invictus!'], wind: ['Ventus maximus!'], snow: ['Hiems venit!'] },
       rainbow: ['Arcus caelestis!'],
+      bonk: ['Murus! Unde venit?', 'Ouchus maximus.'],
+      burning: ['Roma ardet!'],
+      cut: ['Caudam meam!'],
+      gloat: ['Murum vidisti, {who}?'],
       dies: ['Et tu, {who}?', 'Alea iacta… estus.', 'Murus… meus… finis.'],
     },
     wildcard: {
@@ -115,6 +146,10 @@ window.SnakeChatter = (() => {
       weather: { sun: ['Beautiful weather. The best weather. Everyone says so.'], storm: ['Nobody knows more about lightning than me.'], wind: ['Tremendous wind. So many apples.'], rain: ['Fake rain!'], snow: ['Global warming? Total hoax. Look at all this snow!'] },
       woodpecker: ['That bird is a disaster. Total disaster.'],
       rainbow: ['Rainbows. Overrated. Great gold, though.'],
+      bonk: ['Who moved that? Fake wall!'],
+      burning: ['Hot. Very hot. The hottest. Tremendous.'],
+      cut: ['That bird stole my tail. Total theft.'],
+      gloat: ['{who}? Bounced right off me. Sad!'],
       dies: ['Rigged! Totally rigged!'],
     },
     creeper: {
@@ -125,6 +160,10 @@ window.SnakeChatter = (() => {
       weather: { storm: ['hehe. flickery.'], rain: ['drip drip.'], snow: ['cold tail. still following.'] },
       woodpecker: ['pecky pecky. hehe.'],
       rainbow: ['shiny…'],
+      bonk: ['oof.'],
+      burning: ['ow ow ow.'],
+      cut: ['…my tail.'],
+      gloat: ['hehe. bonk, {who}.'],
       dies: ['…aww.'],
     },
     metagamer: {
@@ -135,6 +174,10 @@ window.SnakeChatter = (() => {
       weather: { storm: ['Strike probability: rising.'], rain: ['Mushroom density: up.'], sun: ['Golden apple odds: favourable.'], wind: ['Apple supply: increasing.'], snow: ['Food supply: down. Hunger rate: up.'] },
       woodpecker: ['Map shrink phase: started.'],
       rainbow: ['Golden apple confirmed at the rainbow’s end.'],
+      bonk: ['Collision logged.', 'Variance.'],
+      burning: ['Thermal damage: ongoing.'],
+      cut: ['Length reduced. Recomputing.'],
+      gloat: ['Predicted that, {who}.'],
       dies: ['That… wasn’t in the data.'],
     },
     capricious: {
@@ -151,6 +194,9 @@ window.SnakeChatter = (() => {
       weather: { sun: ['Sunshine! I love sunshine! Today.'], rain: ['Rain! I love rain! For now.'], storm: ['Storms are exciting! Or scary? Both!'], wind: ['Whee!'], snow: ['Snow! I love snow! For a bit.'] },
       woodpecker: ['A bird! I love birds! Not this one.'],
       rainbow: ['A rainbow! Every colour! I can’t choose!'],
+      bonk: ['Ouch! I hate walls! Today.'],
+      burning: ['Fire! I love fire! Ow, no I don’t!'],
+      cut: ['My tail! I liked that tail!'],
       dies: ['Changed my mind about living.'],
     },
     copycat: {
@@ -160,6 +206,9 @@ window.SnakeChatter = (() => {
       weather: { storm: ['雷电交加，同志们小心！'], rain: ['下雨了，同志们！'], snow: ['下雪了，同志们，节约粮食！'] },
       woodpecker: ['啄木鸟来了，同志们！'],
       rainbow: ['彩虹！同志们，金苹果！'],
+      bonk: ['哎哟！'],
+      burning: ['着火了，同志们！'],
+      cut: ['尾巴没了，同志们！'],
       dies: ['同志们，再见……'],
     },
     desperado: {
@@ -173,6 +222,11 @@ window.SnakeChatter = (() => {
       caught: ['Lassoed it.'],
       weather: { storm: ['Lightning? Now we’re talking!', 'Fire on the bark! Yeehaw!'], wind: ['Hold onto your hat!'], rain: ['Rain on the range.'], snow: ['Cold enough to freeze a cactus.'] },
       rainbow: ['Race you to the gold, partner!'],
+      bonk: ['Woo! Again!', 'Felt that one.'],
+      burning: ['Yeehaw, I’m on fire!'],
+      cut: ['Shot my tail clean off!'],
+      gloat: ['Too close, {who}? Never heard of it.'],
+      baked: ['Campfire grub!'],
       dies: ['What a ride…', 'Worth it.'],
     },
     mute: {
@@ -183,6 +237,10 @@ window.SnakeChatter = (() => {
       weather: { rain: ['*opens an invisible umbrella*'], storm: ['*hides under an invisible table*'], wind: ['*leans into the wind*'], sun: ['*puts on invisible sunglasses*'], snow: ['*shivers, silently*'] },
       woodpecker: ['*covers its ears*'],
       rainbow: ['*hugs the rainbow*', '*paints the rainbow a little brighter*'],
+      bonk: ['*rubs its head, silently*', '*walks into a wall. A real one, this time*'],
+      burning: ['*fans itself, frantically*'],
+      cut: ['*looks for its tail*'],
+      gloat: ['*mimes {who} bouncing off*'],
       dies: ['*mimes being squashed*', '*…*'],
     },
     joker: {
@@ -194,6 +252,10 @@ window.SnakeChatter = (() => {
       weather: { rain: ['Singin’ in the rain!'], storm: ['Shocking!'], wind: ['Blow, wind, blow!'], sun: ['Sun’s out, puns out!'], snow: ['Snow joke!'] },
       woodpecker: ['Knock knock! Oh. It’s the woodpecker.'],
       rainbow: ['Somewhere over the… oh, there it is.'],
+      bonk: ['Ow! That one’s on me.', 'Slapstick!'],
+      burning: ['Hot stuff, coming through!'],
+      cut: ['Ha! The bird’s got jokes.'],
+      gloat: ['Knock knock, {who}! …Bonk!'],
       dies: ['Tough crowd…'],
     },
   };
@@ -523,6 +585,74 @@ window.SnakeChatter = (() => {
     "*paints the rainbow a little brighter*": "*把彩虹涂得更亮一点*",
     "Knock knock! Oh. It’s the woodpecker.": "咚咚！哦。是啄木鸟。",
     "Somewhere over the… oh, there it is.": "在彩虹之上的某处……哦，就在这儿。",
+    "Recalibrating.": "重新校准。",
+    "Minor setback.": "小挫折。",
+    "Taking fire. Literally.": "遭到火力攻击。字面意义上的。",
+    "Lost my rear guard.": "后卫没了。",
+    "Bounced off me, {who}? Cute.": "从我身上弹开了，{who}？真可爱。",
+    "Ow! My snacks!": "哎哟！我的零食！",
+    "Oof. Dropped my lunch.": "哎。午饭掉了。",
+    "Am I… cooking? Smells good, actually.": "我……在被烤吗？其实闻起来挺香。",
+    "My tail! That was full of food!": "我的尾巴！里面全是吃的！",
+    "BAKED APPLES! Hot hot hot, worth it!": "烤苹果！好烫好烫，值了！",
+    "…ow.": "……疼。",
+    "…warm.": "……暖和。",
+    "…lighter.": "……轻了。",
+    "We meant to do that.": "朕是故意的。",
+    "Who put that there?": "谁把那个放在那儿的？",
+    "Fetch the royal bucket!": "拿御用水桶来！",
+    "That bird has committed treason.": "那只鸟犯了叛国罪。",
+    "Bow, {who}. Do not bump.": "鞠躬，{who}。不要撞。",
+    "I say! Steady on!": "我说！稳着点！",
+    "Blast!": "该死！",
+    "I appear to be on fire. How awkward.": "我好像着火了。真尴尬。",
+    "Dash it, my tail!": "可恶，我的尾巴！",
+    "Mind the Empire, {who}.": "小心帝国，{who}。",
+    "Roast dinner! Splendid.": "烤肉晚餐！妙极了。",
+    "Ow.": "疼。",
+    "Hot.": "烫。",
+    "Hm. Shorter.": "嗯。短了。",
+    "Not the plan.": "不在计划内。",
+    "I’m the one who eats the roast!": "烤肉应该是我吃的！",
+    "Leftovers… of me?": "剩菜……是我？",
+    "Keep bumping, {who}. I’ll wait.": "继续撞吧，{who}。我等着。",
+    "Murus! Unde venit?": "墙！从哪儿来的？",
+    "Ouchus maximus.": "超级疼。",
+    "Roma ardet!": "罗马着火了！",
+    "Caudam meam!": "我的尾巴！",
+    "Murum vidisti, {who}?": "你看见墙了吗，{who}？",
+    "Who moved that? Fake wall!": "谁动的？假墙！",
+    "Hot. Very hot. The hottest. Tremendous.": "热。非常热。最热的。了不起。",
+    "That bird stole my tail. Total theft.": "那只鸟偷了我的尾巴。彻头彻尾的盗窃。",
+    "{who}? Bounced right off me. Sad!": "{who}？直接从我身上弹开了。可悲！",
+    "oof.": "哎。",
+    "ow ow ow.": "疼疼疼。",
+    "…my tail.": "……我的尾巴。",
+    "hehe. bonk, {who}.": "嘿嘿。咚，{who}。",
+    "Collision logged.": "碰撞已记录。",
+    "Variance.": "方差。",
+    "Thermal damage: ongoing.": "热伤害：持续中。",
+    "Length reduced. Recomputing.": "长度减少。重新计算。",
+    "Predicted that, {who}.": "早就预测到了，{who}。",
+    "Ouch! I hate walls! Today.": "哎哟！我讨厌墙！今天讨厌。",
+    "Fire! I love fire! Ow, no I don’t!": "火！我爱火！哎哟，不爱了！",
+    "My tail! I liked that tail!": "我的尾巴！我喜欢那条尾巴！",
+    "Woo! Again!": "呜呼！再来！",
+    "Felt that one.": "这下有感觉。",
+    "Yeehaw, I’m on fire!": "咿哈，我着火了！",
+    "Shot my tail clean off!": "尾巴被打掉了！",
+    "Too close, {who}? Never heard of it.": "太近了，{who}？没听说过。",
+    "Campfire grub!": "篝火大餐！",
+    "*rubs its head, silently*": "*默默揉头*",
+    "*walks into a wall. A real one, this time*": "*撞上一堵墙。这次是真的*",
+    "*fans itself, frantically*": "*拼命给自己扇风*",
+    "*looks for its tail*": "*找自己的尾巴*",
+    "*mimes {who} bouncing off*": "*比划{who}被弹开*",
+    "Ow! That one’s on me.": "哎哟！这下算我的。",
+    "Slapstick!": "闹剧！",
+    "Hot stuff, coming through!": "烫手货，借过！",
+    "Ha! The bird’s got jokes.": "哈！这鸟也会讲笑话。",
+    "Knock knock, {who}! …Bonk!": "咚咚，{who}！……咚！"
   };
 
   const SNAKE_GAP = 4500;  // ms of game time between lines from the same snake
@@ -778,6 +908,18 @@ window.SnakeChatter = (() => {
         if (e.type === 'strike') struck = true; else struck = false;
         const s = pick(alive.filter(a => VOICES[a.personaKey]?.weather?.[kind]));
         if (s) say(s, `weather.${kind}`, null, true);
+      } else if (e.type === 'crash' && e.snake.alive) {
+        // Whoever crashed says ouch; now and then, whoever they bounced off gloats.
+        const other = e.killerId != null && e.killerId !== e.snake.id ? game.snakes[e.killerId] : null;
+        if (e.snake.persona) say(e.snake, 'bonk');
+        if (other?.persona && other.alive && Math.random() < 0.5) say(other, 'gloat', e.snake);
+      } else if (e.type === 'alight' && e.snake.persona) {
+        say(e.snake, 'burning', null, true);
+      } else if (e.type === 'cut' && e.snake.persona) {
+        say(e.snake, 'cut', null, true);
+      } else if (e.type === 'baked') {
+        const s = pick(alive.filter(a => VOICES[a.personaKey]?.baked));
+        if (s) say(s, 'baked');
       } else if (e.type === 'rainbow') {
         const s = pick(alive.filter(a => VOICES[a.personaKey]?.rainbow));
         if (s) say(s, 'rainbow', null, true);

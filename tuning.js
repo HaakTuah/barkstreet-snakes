@@ -8,6 +8,7 @@ window.TUNING = Object.freeze({
 
   // ------------------------------------------------------------------ food
   APPLES: 3,                // green apples on the board at all times (+1)
+  APPLE_TICKS: 360,         // an apple rots away after about this many ticks (give or take a quarter), and another drops somewhere
   MUSHROOMS: 2,             // red mushrooms on the board at all times
   MUSHROOM_TICKS: 180,      // a mushroom withers (and regrows elsewhere) after this many ticks
   GOLDEN_CHANCE: 0.004,     // chance per tick of a golden apple, while there is none
@@ -22,6 +23,21 @@ window.TUNING = Object.freeze({
   BEETLE_GROWTH: 2,         // a beetle is worth this much
   SHRINK: 3,                // a mushroom takes this many segments off...
   MIN_LENGTH: 3,            // ...but never below this
+
+  // --------------------------------------------------------------- crashes
+  // A crash (into the edge, a hole, a body, or head-on) isn't the end: your
+  // head bounces back, the tail breaks off as food, and you're stunned a
+  // moment. You're out if you crash at MIN_LENGTH, or with nowhere to turn.
+  CRASH_LOSS: 3,            // segments a crash knocks off your tail (never below MIN_LENGTH)...
+  STUN_TICKS: 4,            // ...and how long it stuns you (you can steer meanwhile)
+
+  // ---------------------------------------------------------- fire and food
+  BURN_TICKS: 30,           // crawl into fire and you burn this long...
+  BURN_EVERY: 6,            // ...losing a segment this often (out, at MIN_LENGTH)...
+  BURN_RAIN_TICKS: 6,       // ...though rain or snow puts you out within this many ticks
+  COOK_TICKS: 18,           // food in the fire bakes after burning this long (a baked apple, a roast)...
+  ASH_TICKS: 45,            // ...and goes to ash after this long
+  COOKED_GROWTH: 2,         // baked food is worth this much
 
   // ---------------------------------------------------------------- hunger
   HUNGER_MS: 20000,         // this long without food (mushrooms don't count) and you start shrinking
@@ -39,10 +55,10 @@ window.TUNING = Object.freeze({
   // ---------------------------------------------------------- sudden death
   SUDDEN_DEATH_MS: 120000,  // the woodpecker arrives after two minutes; no new food after that
   PECK_ARRIVE_TICKS: 12,    // it lands, has a look round...
-  PECK_CHUNK: 8,            // ...then takes out this many cells at a time (a run along the outermost ring left)...
-  PECK_AIM_TICKS: 13,       // ...eyeing them this long first (everyone sees where: about a second and a half)...
-  PECK_REST_TICKS: 6,       // ...and resting this long after each strike
-  PECK_CLEARANCE: 3,        // it never aims this close to a head (in cells), and never at a body or food
+  PECK_CHUNK: 7,            // ...then takes out a patch of this many cells somewhere on the log...
+  PECK_AIM_TICKS: 17,       // ...eyeing it this long first (everyone sees where: about a second and a half)...
+  PECK_REST_TICKS: 36,      // ...and resting this long after each strike (about 3.5 s)
+  PECK_CLEARANCE: 2,        // it aims clear of every body and food, this far from every head, while there's such a spot
 
   // --------------------------------------------------------------- burrows
   BURROW_MAX: 3,            // beetle burrows that crack open in the bark over a round (harmless to cross)
@@ -70,7 +86,7 @@ window.TUNING = Object.freeze({
   STRIKE_MAX_MS: 6000,
   STRIKE_WARN_TICKS: 10,    // ...crackling where it will strike for this many ticks first (about a second)...
   STRIKE_CLEARANCE: 4,      // ...never within this many cells of a head
-  FIRE_TICKS: 50,           // a burning cell burns this long (about 5 s) and kills a head that enters it...
+  FIRE_TICKS: 50,           // a burning cell burns this long (about 5 s) and sets alight a head that enters it...
   FIRE_SMOLDER_TICKS: 4,    // ...after smouldering (harmless) this long when fire spreads to it
   FIRE_SPREAD: 0.1,         // each tick, each burning cell catches a neighbour with this chance...
   FIRE_MAX: 6,              // ...but one strike's fire covers at most this many cells...
