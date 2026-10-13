@@ -28,7 +28,7 @@ window.SnakeEngine = (() => {
 
   function makeSnake(id, spawn, props) {
     const d = spawn.dir;
-    const body = [0, 1, 2].map(k => ({ x: spawn.x - d.x * k, y: spawn.y - d.y * k }));
+    const body = Array.from({ length: T.START_LENGTH }, (_, k) => ({ x: spawn.x - d.x * k, y: spawn.y - d.y * k }));
     return {
       id, body, dir: d, alive: true, grow: 0, eaten: 0, pellets: 0, lastAte: 0, ateTick: -1, nextStarve: T.HUNGER_MS,
       // stunUntil: the tick it moves again after a crash; burnUntil, burnFrom: on fire (from, until)
@@ -538,8 +538,9 @@ window.SnakeEngine = (() => {
       })),
       food: game.food.map(f => ({ ...f })),
       holes: game.holes.size,
-      // (Fire, crackling, smouldering or burning, and the woodpecker's next chunk: keep out.)
-      fires: game.fires.size || game.woodpecker?.target.length ? [...game.fires.keys(), ...(game.woodpecker?.target || NO_FIRES)] : NO_FIRES,
+      // (Fire, crackling, smouldering or burning, and the woodpecker's next patch: keep out.)
+      fires: game.fires.size ? [...game.fires.keys()] : NO_FIRES,
+      pecks: game.woodpecker?.target.length ? [...game.woodpecker.target] : NO_FIRES,
     });
     if (game.history.length > T.HISTORY) game.history.shift();
   }
@@ -550,14 +551,17 @@ window.SnakeEngine = (() => {
   // walls). Worked out once per snapshot, shared by every AI.
   function blockedSeen(game, snap) {
     const holes = holesSeen(game, snap.holes);
-    if (!snap.fires.length) return holes;
+    if (!snap.fires.length && !snap.pecks.length) return holes;
     if (snap.blocked?.n !== holes.size) {
       const set = new Set(holes);
       for (const k of snap.fires) set.add(k);
+      for (const k of snap.pecks) set.add(k);
       snap.blocked = { n: holes.size, set };
     }
     return snap.blocked.set;
   }
+  const NO_CELLS = new Set();
+  const fireSeen = snap => snap.fires.length ? (snap.fireSet ||= new Set(snap.fires)) : NO_CELLS;
 
   // The holes as they were in a snapshot (the first `n` pecked; a Set keeps
   // insertion order). Shared by every AI deciding on the same tick.
@@ -584,6 +588,7 @@ window.SnakeEngine = (() => {
       others: snap.snakes.filter(o => o.id !== snake.id),
       food: snap.food,
       holes: blockedSeen(game, snap),
+      fire: fireSeen(snap), // (among the holes: the cells that are only fire, which it can go through, at a price)
       age: game.history.length - 1 - idx,
       tick: game.tick,
       timeMs: game.time,

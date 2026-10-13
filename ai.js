@@ -222,6 +222,7 @@ window.SnakeAI = (() => {
   const TRAPPED = 5000;
   const HOLE = 1 << 30;    // "frees up" never
   const DEAD = -1e6;
+  const EMPTY = new Set();
   const ROOM_CAP = 120;    // stop counting a rival's room past this
   const DISTANCE_CAP = 14; // distance-keepers are happy once this far away
 
@@ -879,6 +880,17 @@ window.SnakeAI = (() => {
     // A move that looks fatal: a wall, a hole or my own body certainly is, but
     // a rival's cell may already be free (I see rivals as they were a moment
     // ago), so if it comes to that, the one that frees up soonest is the best bet.
+    // Better than any crash, though, is going through fire: it costs as much
+    // as a crash, but I keep moving (never just as a shortcut: only when
+    // every other way is a crash or worse).
+    const fire = view.fire || EMPTY;
+    function throughFire(x, y) {
+      if (!inside(x, y) || !fire.has(y * N + x)) return false;
+      const keep = me.grow > 0 ? me.body.length : me.body.length - 1;
+      for (let j = 0; j < keep; j++) if (me.body[j].x === x && me.body[j].y === y) return false;
+      for (const o of others) for (const c of o.body) if (c.x === x && c.y === y) return false;
+      return true;
+    }
     function maybeFree(x, y) {
       if (!inside(x, y) || holes.has(y * N + x)) return 0;
       const keep = me.grow > 0 ? me.body.length : me.body.length - 1;
@@ -890,7 +902,10 @@ window.SnakeAI = (() => {
     for (const d of DIR_LIST) {
       if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
       let s = move(me.body, me.body.length, me.grow, d, depth, 0, 0);
-      if (s === null) s = 2 * DEAD + maybeFree(myHead.x + d.x, myHead.y + d.y);
+      if (s === null) {
+        const nx = myHead.x + d.x, ny = myHead.y + d.y;
+        s = throughFire(nx, ny) ? 1.5 * DEAD : 2 * DEAD + maybeFree(nx, ny);
+      }
       else if (ctx.mimicDir && sameDir(d, ctx.mimicDir)) s += w.mimic;
       s += Math.random() * 1e-3; // tie-break
       if (s > bestScore) { bestScore = s; bestDir = d; }

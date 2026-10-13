@@ -1410,6 +1410,10 @@ window.SnakeRender = (() => {
     for (const s of live) drawOutline(s, animOf(s, now));
     for (const s of live) drawBody(s, animOf(s, now), now, false);
     for (const s of live) if (s.burnUntil > game.tick) drawBurning(s, animOf(s, now), now);
+    for (const s of live) { // queasy after a mushroom: a sickly green wash, fading
+      const a = animOf(s, now), q = a.queasyAt ? 1 - (now - a.queasyAt) / 1400 : 0;
+      if (q > 0 && q <= 1) { ctx.fillStyle = rgba('#65a30d', 0.38 * q); silhouette(a, 0.5); }
+    }
   }
 
   // A snake on fire: flames along its back (the fire's own flicker, smaller,
@@ -1541,7 +1545,7 @@ window.SnakeRender = (() => {
     creeper: [0.8, 1.5, slither], drab: [1.8, 1.6, limp], gobbler: [0.6, 1.4, lick], ghost: [1.8, 1.8, wisp],
     sniper: [1.2, 1.5, laser], sovereign: [1.6, 2.4, carpet], colonist: [1.4, 2.2, telescope], vulture: [1.6, 3, bone],
     mason: [1.4, 2.4, papyrus], metagamer: [1.4, 2, keyboard], wildcard: [1.2, 2, bill], desperado: [1.1, 2, revolver],
-    joker: [1, 2.2, blower], copycat: [1.2, 1.4, blep], mute: [1.1, 2.2, glove],
+    joker: [1, 2.4, blower], copycat: [1.2, 1.4, blep], mute: [1.1, 2, innerJaw],
   };
   let flickP = -1, flickT = 0; // the flick being drawn: how far through it is (or -1), and how far out (0..1..0)
 
@@ -1844,47 +1848,112 @@ window.SnakeRender = (() => {
     }
   }
 
-  // Joker: a party blower that unrolls with a toot, then curls back up.
-  function blower(t) {
+  // Joker: a party horn (a blowout). A mouthpiece, then a flat paper tube,
+  // striped, that unrolls from its curl with a toot: at full stretch its
+  // fringed tip flutters and a puff of confetti flies off it; then it rolls
+  // back up. Outlined, so it reads at phone size.
+  const HORN = ['#ec4899', '#facc15', '#8b5cf6', '#facc15'];
+  function blower(t, p) {
     const c = CELL, e = stayOut(t, 1.4), k = Math.min(1, t * 5);
     ctx.translate(c * 0.4, 0); // (pops out of the mouth)
     ctx.scale(k, k);
     ctx.translate(-c * 0.4, 0);
-    const x = 0.46 + 0.5 * e, rr = 0.03 + 0.07 * (1 - e), sweep = 0.4 + 5 * (1 - e);
-    ctx.lineWidth = c * 0.1;
-    ctx.beginPath();
-    ctx.moveTo(c * 0.44, 0); ctx.lineTo(c * x, 0);
-    ctx.arc(c * x, -c * rr, c * rr, Math.PI / 2, Math.PI / 2 - sweep, true);
-    ctx.strokeStyle = '#a21caf';
-    ctx.stroke();
-    ctx.setLineDash([c * 0.05, c * 0.05]); // striped
-    ctx.strokeStyle = '#f59e0b';
-    ctx.stroke();
-    ctx.setLineDash(NO_DASH);
-    ctx.fillStyle = '#facc15'; // the mouthpiece
-    ctx.fillRect(c * 0.36, -c * 0.05, c * 0.1, c * 0.1);
+    ctx.lineJoin = 'round';
+    ctx.fillStyle = '#f8fafc'; // the mouthpiece
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = c * 0.025;
+    ctx.beginPath(); ctx.rect(c * 0.36, -c * 0.05, c * 0.15, c * 0.1); ctx.fill(); ctx.stroke();
+    // The tube, as far as it's unrolled...
+    const w = c * 0.17, x0 = c * 0.5, len = c * 0.95 * e, n = Math.max(1, Math.round(len / (c * 0.1)));
+    if (len > 0.5) {
+      ctx.fillStyle = INK;
+      ctx.fillRect(x0, -w / 2 - c * 0.02, len, w + c * 0.04);
+      for (let i = 0; i < n; i++) { ctx.fillStyle = HORN[i % 4]; ctx.fillRect(x0 + len * i / n, -w / 2, len / n + 0.4, w); }
+    }
+    const x1 = x0 + len, curl = 1 - e;
+    if (curl > 0.04) { // ...and the rest still rolled up at its end: a spiral, curling up and back
+      const R = c * (0.05 + 0.12 * curl), turns = 0.8 + 1.6 * curl, steps = Math.ceil(turns * 10);
+      const pts = [[x1, 0]];
+      for (let i = 1; i <= steps; i++) {
+        const a = i / steps * turns * TAU, rr = R * (1 - 0.6 * i / steps);
+        pts.push([x1 + Math.sin(a) * rr, -R + Math.cos(a) * rr]);
+      }
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = w * 0.8 + c * 0.04;
+      ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke();
+      ctx.lineWidth = w * 0.8;
+      for (let i = 1; i < pts.length; i++) {
+        ctx.strokeStyle = HORN[(n + i) % 4];
+        ctx.beginPath(); ctx.moveTo(pts[i - 1][0], pts[i - 1][1]); ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke();
+      }
+    } else { // full stretch: a fringe fluttering at the tip, and a toot of confetti
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = c * 0.03;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (let j = 0; j < 4; j++) {
+        const a = -0.5 + j * 0.33 + Math.sin(p * 40 + j * 1.7) * 0.18, y0 = (j - 1.5) * w / 4;
+        ctx.moveTo(x1, y0); ctx.lineTo(x1 + Math.cos(a) * c * 0.17, y0 + Math.sin(a) * c * 0.17);
+      }
+      ctx.stroke();
+      const q = Math.max(0, Math.min(1, (p - 0.3) / 0.4));
+      if (q > 0 && q < 1) {
+        ctx.globalAlpha *= 1 - q;
+        for (let j = 0; j < 5; j++) {
+          ctx.fillStyle = HORN[j % 4];
+          ctx.fillRect(x1 + c * (0.12 + 0.35 * q + 0.04 * j), Math.sin(j * 2.3) * c * 0.22 * q - c * 0.025, c * 0.05, c * 0.05);
+        }
+      }
+    }
   }
 
-  // Mute: a white mime's glove, popping out to wave hello.
-  function glove(t, p) {
-    const c = CELL, e = stayOut(t, 2);
-    ctx.translate(c * (0.42 + 0.22 * e), 0);
-    ctx.rotate(Math.sin(p * TAU * 2) * 0.5); // waving
-    ctx.scale(e, e);
-    ctx.fillStyle = '#f8fafc';
-    ctx.strokeStyle = '#334155';
-    ctx.lineWidth = c * 0.025;
-    ctx.beginPath(); // the palm and cuff...
-    ctx.ellipse(c * 0.06, 0, c * 0.11, c * 0.12, 0, 0, TAU);
-    ctx.fill(); ctx.stroke();
-    for (let i = 0; i < 4; i++) { // ...four fingers, spread...
-      const a = -0.75 + i * 0.5;
-      ctx.beginPath(); ctx.ellipse(c * (0.06 + Math.cos(a) * 0.17), c * Math.sin(a) * 0.17, c * 0.08, c * 0.035, a, 0, TAU);
-      ctx.fill(); ctx.stroke();
+  // Mute: its painted lips part, and a second, inner jaw shoots out on its
+  // stalk (glossy, dark, with little silver teeth, snapping), then back in.
+  // A mime with a secret. It still never says a word.
+  function innerJaw(t, p) {
+    const c = CELL, e = stayOut(t, 2.2), x = c * (0.44 + 0.34 * e);
+    ctx.translate(c * 0.4, 0); // (drawn big, from the mouth, so it reads at play size)
+    ctx.scale(1.6, 1.6);
+    ctx.translate(-c * 0.4, 0);
+    ctx.fillStyle = '#1c1917'; // the lips parted wide...
+    ctx.beginPath(); ctx.ellipse(c * 0.4, 0, c * 0.06, c * 0.11, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#f1f5f9'; // ...teeth showing
+    for (const sg of [-1, 1]) for (let i = -1; i <= 1; i++) {
+      ctx.beginPath(); ctx.moveTo(c * (0.4 + i * 0.03), sg * c * 0.1); ctx.lineTo(c * (0.415 + i * 0.03), sg * c * 0.05); ctx.lineTo(c * (0.43 + i * 0.03), sg * c * 0.1); ctx.fill();
     }
-    ctx.beginPath(); ctx.ellipse(c * 0.02, -c * 0.14, c * 0.07, c * 0.03, -1.4, 0, TAU); ctx.fill(); ctx.stroke(); // ...and a thumb
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillRect(-c * 0.1, -c * 0.07, c * 0.05, c * 0.14);
+    if (e < 0.05) return;
+    const mid = (c * 0.42 + x) / 2;
+    ctx.fillStyle = '#334155'; // the stalk: tapering, ribbed, glossy
+    ctx.beginPath();
+    ctx.moveTo(c * 0.42, -c * 0.065); ctx.quadraticCurveTo(mid, -c * 0.035, x - c * 0.08, -c * 0.045);
+    ctx.lineTo(x - c * 0.08, c * 0.045); ctx.quadraticCurveTo(mid, c * 0.035, c * 0.42, c * 0.065);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let rx = c * 0.47; rx < x - c * 0.1; rx += c * 0.05) { ctx.moveTo(rx, -c * 0.04); ctx.lineTo(rx, c * 0.04); }
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = c * 0.015;
+    ctx.beginPath(); ctx.moveTo(c * 0.44, -c * 0.035); ctx.lineTo(x - c * 0.1, -c * 0.028); ctx.stroke();
+    const bite = 0.5 + 0.5 * Math.sin(p * TAU * 4); // (snapping)
+    ctx.fillStyle = '#1e293b'; // the inner head: a glossy dome...
+    ctx.beginPath(); ctx.ellipse(x, 0, c * 0.13, c * 0.09, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath(); ctx.ellipse(x - c * 0.03, -c * 0.045, c * 0.06, c * 0.02, -0.15, 0, TAU); ctx.fill();
+    const mx = x + c * 0.1, gap = c * (0.015 + 0.035 * bite); // ...its jaws open at the front...
+    ctx.fillStyle = '#0b0f19';
+    ctx.beginPath(); ctx.ellipse(mx, 0, c * 0.05, gap + c * 0.012, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#e2e8f0'; // ...two rows of little silver teeth
+    for (const sg of [-1, 1]) {
+      ctx.beginPath();
+      for (let i = 0; i < 4; i++) {
+        const tx = mx - c * 0.045 + i * c * 0.026, ty = sg * (gap + c * 0.01);
+        ctx.moveTo(tx, ty); ctx.lineTo(tx + c * 0.013, ty - sg * c * 0.032); ctx.lineTo(tx + c * 0.026, ty);
+      }
+      ctx.fill();
+    }
   }
 
   // Copycat with no one to copy: a cat's blep, the tip of a pink tongue.
@@ -2854,8 +2923,21 @@ window.SnakeRender = (() => {
 
   // A mushroom sways on its stem and breathes; near the end it wilts, leaning
   // over, shrinking and fading; and it lets go of a spore now and then.
+  // A mushroom: poisonous-looking, a faint violet haze round it that breathes.
+  const hazeSprite = () => sprite('haze', '', g => {
+    const grad = g.createRadialGradient(0, 0, CELL * 0.1, 0, 0, CELL * 0.75);
+    grad.addColorStop(0, 'rgba(192,132,252,0.5)');
+    grad.addColorStop(0.6, 'rgba(167,139,250,0.14)');
+    grad.addColorStop(1, 'rgba(132,204,22,0)');
+    g.fillStyle = grad;
+    g.beginPath(); g.arc(0, 0, CELL * 0.75, 0, TAU); g.fill();
+  });
   function drawMushroomAt(f, x, y, t, pop) {
     const lively = !reduced;
+    const hz = SPRITE * CELL * pop * (1 + (lively ? 0.12 * Math.sin(t * 2.3) : 0));
+    ctx.globalAlpha = lively ? 0.75 + 0.25 * Math.sin(t * 2.3) : 0.85;
+    ctx.drawImage(hazeSprite(), x - hz / 2, y - hz / 2 - CELL * 0.05, hz, hz);
+    ctx.globalAlpha = 1;
     const left = f.expires != null ? f.expires - game.tick : 99;
     const wilt = left < 30 ? Math.min(1, 1 - left / 30) : 0;
     const breathe = lively ? Math.sin(t * 5.1) * 0.04 : 0;
@@ -2863,11 +2945,26 @@ window.SnakeRender = (() => {
     ctx.globalAlpha = 1 - 0.4 * wilt;
     shadowAt(x + 1, y + CELL * 0.36, pop * (1 - 0.25 * wilt));
     blitAbout(mushroomSprite(), x, y, 0, CELL * 0.34, pop * (1 - 0.2 * wilt) * (1 - breathe * 0.5), pop * (1 - 0.3 * wilt) * (1 + breathe), lean);
+    if (lively && pop >= 1) { // stink lines: two wavy violet wisps rising off it (the cartoon for "don't eat me")
+      ctx.strokeStyle = '#c4b5fd';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      for (let k = 0; k < 2; k++) {
+        const ph = (t * 0.55 + k * 0.5) % 1, x0 = x + (k ? 0.16 : -0.14) * CELL, y0 = y - CELL * (0.4 + 0.55 * ph);
+        ctx.globalAlpha = Math.sin(ph * Math.PI) * 0.85 * (1 - 0.4 * wilt);
+        ctx.beginPath();
+        for (let i = 0; i <= 8; i++) {
+          const yy = y0 - i * CELL * 0.04, xx = x0 + Math.sin(i * 0.9 + t * 4 + k * 2) * CELL * 0.06;
+          if (i) ctx.lineTo(xx, yy); else ctx.moveTo(xx, yy);
+        }
+        ctx.stroke();
+      }
+    }
     ctx.globalAlpha = 1;
   }
 
-  // Ambient motes from a small pool: spores drifting up off the mushrooms
-  // (kind 0), glints twinkling round a golden apple (1), smoke (2), embers (3)
+  // Ambient motes from a small pool: poison spores drifting up off the mushrooms
+  // (kind 0, violet), glints twinkling round a golden apple (1), smoke (2), embers (3)
   // and steam off baked food (4).
   const MAX_M = 96;
   const mx = new Float32Array(MAX_M), my = new Float32Array(MAX_M), mvx = new Float32Array(MAX_M), mvy = new Float32Array(MAX_M);
@@ -2883,7 +2980,7 @@ window.SnakeRender = (() => {
   }
   // Drawn in batches: every mote of a kind at the same fade (four steps of
   // it) goes in one shape, so a busy fire is a handful of fills, not hundreds.
-  const MOTE_LOOK = [['#fdf2f8', 0.75], null, ['#78716c', 0.32], ['#fdba74', 1], ['#f8fafc', 0.4]]; // spores, (glints), smoke, embers, steam
+  const MOTE_LOOK = [['#d8b4fe', 0.7], null, ['#78716c', 0.32], ['#fdba74', 1], ['#f8fafc', 0.4]]; // spores, (glints), smoke, embers, steam
   const mBucket = new Uint8Array(MAX_M), mRad = new Float32Array(MAX_M);
   function drawMotes(dt) {
     if (!mLive) return;
@@ -2970,8 +3067,8 @@ window.SnakeRender = (() => {
       if (f.kind === 'food') {
         const drop = b?.fell && !reduced ? Math.max(0, 1 - (now - b.at) / 380) : 0; // (a new apple drops from the tree above)
         const left = f.expires != null ? f.expires - game.tick : 999;
-        const look = f.cooked ? 'baked' : left > 110 ? 'fresh' : left > 45 ? 'bruised' : 'rotten';
-        const shrivel = look === 'rotten' && left < 20 ? 0.78 + 0.22 * Math.max(0, left) / 20 : 1;
+        const look = f.cooked ? 'baked' : left > 70 ? 'fresh' : left > 30 ? 'bruised' : 'rotten';
+        const shrivel = look === 'rotten' && left < 12 ? 0.78 + 0.22 * Math.max(0, left) / 12 : 1;
         drawAppleAt(appleSprite(look), x, y - drop * drop * CELL * 3, t, (b?.fell ? 1 : pop) * shrivel, 1);
         if (look === 'rotten' && lively) { // a fly has found it
           const fa = now / 150 + f.x * 1.7, fx = x + Math.cos(fa) * CELL * 0.4, fy = y - CELL * 0.32 + Math.sin(fa * 1.6) * CELL * 0.14;
@@ -2992,8 +3089,8 @@ window.SnakeRender = (() => {
       } else if (f.kind === 'mushroom') {
         drawMushroomAt(f, x, y, t, pop);
         if (lively && b && pop >= 1 && now > b.next) {
-          b.next = now + 800 + Math.random() * 1000;
-          mote(x + (Math.random() - 0.5) * CELL * 0.5, y - CELL * 0.12, (Math.random() - 0.5) * 8, -12 - Math.random() * 8, 1700, 1.3 + Math.random() * 0.9, 0);
+          b.next = now + 250 + Math.random() * 300; // (poison spores, puffing off it)
+          mote(x + (Math.random() - 0.5) * CELL * 0.5, y - CELL * 0.12, (Math.random() - 0.5) * 8, -12 - Math.random() * 8, 1700, 1.8 + Math.random() * 1.2, 0);
         }
       } else if (f.kind === 'golden') {
         // A calm dim instead of a blink when it's about to rot.
@@ -3621,12 +3718,90 @@ window.SnakeRender = (() => {
     drawBolt(now);
     drawMotes(dt);
     drawParticles(dt);
+    drawYou(now);
     drawFloaters(dt);
     drawFlash(now);
     drawWoodpecker(alpha, now, dt);
   }
 
   // ------------------------------------------------------------ the world
+
+  // The first seconds of a round: which snake is yours. A bouncing arrow and
+  // YOU over your head (below it, near the top edge), a ring pulsing round
+  // it, chevrons marching the way you're heading; friends online get their
+  // names. Each screen marks its own snake. It fades once you steer (or a few
+  // seconds in): the game says when (showYou).
+  let youOn = false, youA = 0;
+  function showYou(on) { youOn = !!on; }
+  function drawYou(now) {
+    youA += ((youOn ? 1 : 0) - youA) * Math.min(1, frameDt / 180);
+    if (youA < 0.02 || !game) return;
+    const c = CELL, t = reduced ? 0 : now / 1000;
+    for (const s of game.snakes) {
+      if (!s.alive || s.persona) continue; // (people only)
+      const a = anim.get(s);
+      if (!a || !a.n) continue;
+      const hx = a.pts[0], hy = a.pts[1], mine = s.id === viewerId, col = colorOf(s);
+      ctx.globalAlpha = youA;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round';
+      const below = hy < c * 2.6, sgn = below ? 1 : -1; // (near the top edge: under the head, pointing up)
+      if (!mine) { // a friend: its name
+        ctx.font = `700 ${Math.round(c * 0.5)}px Fredoka, system-ui, sans-serif`;
+        const ty = hy + sgn * c * 0.95;
+        ctx.lineWidth = c * 0.12; ctx.strokeStyle = 'rgba(58,38,20,0.85)'; ctx.strokeText(s.name, hx, ty);
+        ctx.fillStyle = col; ctx.fillText(s.name, hx, ty);
+        continue;
+      }
+      // A ring pulsing round your head...
+      const pulse = 0.5 + 0.5 * Math.sin(t * 6);
+      ctx.strokeStyle = '#fffbea';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(hx, hy, c * (0.75 + 0.15 * pulse), 0, TAU); ctx.stroke();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // ...chevrons marching the way you're heading...
+      ctx.strokeStyle = col;
+      ctx.lineWidth = c * 0.09;
+      ctx.lineCap = 'round';
+      const dx = s.dir.x, dy = s.dir.y;
+      for (let i = 1; i <= 3; i++) {
+        const along = i + ((t * 2) % 1) - 0.3, f = 1 - (along - 0.7) / 3;
+        if (f <= 0) continue;
+        const cx = hx + dx * c * along, cy = hy + dy * c * along, w = c * 0.22;
+        if (cx < 0 || cy < 0 || cx > SIZE || cy > SIZE) continue;
+        ctx.globalAlpha = youA * Math.min(1, f);
+        ctx.beginPath();
+        ctx.moveTo(cx - dx * w + dy * w, cy - dy * w + dx * w);
+        ctx.lineTo(cx, cy);
+        ctx.lineTo(cx - dx * w - dy * w, cy - dy * w - dx * w);
+        ctx.stroke();
+      }
+      // ...and a bouncing arrow with YOU on it.
+      ctx.globalAlpha = youA;
+      const bob = Math.sin(t * 5) * c * 0.18, tip = hy + sgn * (c * 0.9 + Math.abs(bob)), aw = c * 0.55, ah = c * 0.6;
+      ctx.fillStyle = '#fffbea';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = c * 0.07;
+      ctx.beginPath();
+      ctx.moveTo(hx, tip);
+      ctx.lineTo(hx - aw, tip + sgn * ah);
+      ctx.lineTo(hx - aw * 0.42, tip + sgn * ah);
+      ctx.lineTo(hx - aw * 0.42, tip + sgn * ah * 1.7);
+      ctx.lineTo(hx + aw * 0.42, tip + sgn * ah * 1.7);
+      ctx.lineTo(hx + aw * 0.42, tip + sgn * ah);
+      ctx.lineTo(hx + aw, tip + sgn * ah);
+      ctx.closePath();
+      ctx.stroke(); ctx.fill();
+      ctx.font = `700 ${Math.round(c * 0.85)}px Fredoka, system-ui, sans-serif`;
+      const ly = tip + sgn * (ah * 1.7 + c * 0.6), lx = Math.min(SIZE - c * 1.2, Math.max(c * 1.2, hx));
+      ctx.lineWidth = c * 0.16; ctx.strokeStyle = 'rgba(58,38,20,0.9)'; ctx.strokeText('YOU', lx, ly);
+      ctx.fillStyle = col; ctx.fillText('YOU', lx, ly);
+    }
+    ctx.globalAlpha = 1;
+  }
 
   // Call after every tick, with that tick's events: sets off pops, gulps and puffs.
   function onTick(events) {
@@ -3649,7 +3824,10 @@ window.SnakeRender = (() => {
         if (e.kind === 'golden') spawn(x, y, T.PARTICLES_EAT + 6, 220, T.PARTICLE_LIFE, 3.2, '#fde68a', '#fbbf24');
         else if (e.kind === 'beetle') spawn(x, y, T.PARTICLES_EAT + 4, 200, T.PARTICLE_LIFE, 3, '#059669', '#fbbf24'); // emerald and gold, a crunchy catch
         else if (e.kind === 'pellet') spawn(x, y, T.PARTICLES_EAT - 4, 150, T.PARTICLE_LIFE * 0.8, 2.6, e.color && e.color[0] === '#' ? e.color : '#c2410c', '#f6ecd2');
-        else if (e.kind === 'mushroom') spawn(x, y, T.PARTICLES_EAT - 2, 160, T.PARTICLE_LIFE, 2.6, '#dc2626', '#fffbea');
+        else if (e.kind === 'mushroom') { // poison: a puff of spores, and it goes queasy green for a moment
+          spawn(x, y, T.PARTICLES_EAT - 2, 160, T.PARTICLE_LIFE, 2.6, '#c084fc', '#84cc16');
+          a.queasyAt = now;
+        }
         else spawn(x, y, T.PARTICLES_EAT, 180, T.PARTICLE_LIFE, 2.8, '#a3e635', '#fde68a'); // sprout and honey: visible on bark and on green snakes alike
         eatenNow.add(e.y * GRID + e.x);
         if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.6), e.kind === 'golden' ? '+3' : e.kind === 'beetle' ? '+2' : '+1');
@@ -3911,6 +4089,7 @@ window.SnakeRender = (() => {
   }
 
   return {
+    showYou,
     init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, markOf, celebrate, setQuality, setBoardRect,
     get quality() { return quality; },
     holding: () => deaths.length > 0 || corpses.length > 0,

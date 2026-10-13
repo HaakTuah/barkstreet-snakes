@@ -8,7 +8,7 @@ window.TUNING = Object.freeze({
 
   // ------------------------------------------------------------------ food
   APPLES: 3,                // green apples on the board at all times (+1)
-  APPLE_TICKS: 360,         // an apple rots away after about this many ticks (give or take a quarter), and another drops somewhere
+  APPLE_TICKS: 160,         // an apple rots away after about this many ticks (give or take a quarter: 15-20 s), and another drops somewhere
   MUSHROOMS: 2,             // red mushrooms on the board at all times
   MUSHROOM_TICKS: 180,      // a mushroom withers (and regrows elsewhere) after this many ticks
   GOLDEN_CHANCE: 0.004,     // chance per tick of a golden apple, while there is none
@@ -23,6 +23,7 @@ window.TUNING = Object.freeze({
   BEETLE_GROWTH: 2,         // a beetle is worth this much
   SHRINK: 3,                // a mushroom takes this many segments off...
   MIN_LENGTH: 3,            // ...but never below this
+  START_LENGTH: 4,          // every snake starts this long: one more than the least, so a first crash costs a segment, not the round
 
   // --------------------------------------------------------------- crashes
   // A crash (into the edge, a hole, a body, or head-on) isn't the end: your
@@ -32,7 +33,7 @@ window.TUNING = Object.freeze({
   STUN_TICKS: 4,            // ...and how long it stuns you (you can steer meanwhile)
 
   // ---------------------------------------------------------- fire and food
-  BURN_TICKS: 30,           // crawl into fire and you burn this long...
+  BURN_TICKS: 18,           // crawl into fire and you burn this long (3 segments: like a crash, but you keep moving)...
   BURN_EVERY: 6,            // ...losing a segment this often (out, at MIN_LENGTH)...
   BURN_RAIN_TICKS: 6,       // ...though rain or snow puts you out within this many ticks
   COOK_TICKS: 18,           // food in the fire bakes after burning this long (a baked apple, a roast)...
