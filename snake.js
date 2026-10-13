@@ -118,6 +118,9 @@
 
   // state: 'ready' (start card) | 'lobby' (play with friends) | 'countdown' | 'running' | 'paused' | 'over'
   let game, state = 'ready', speed = 1, watchSpeed = 1;
+  // Which snake is yours: an arrow and YOU over its head from the countdown
+  // until a few seconds into the round (or just after you first steer).
+  let youHideAt = 0;
   // Online play, or null when playing alone:
   // { role: 'host' | 'guest', room, code, seat (yours in this round, -1 if watching),
   //   players: [{ id, name, color }] (host: everyone in the room, seat order),
@@ -240,6 +243,7 @@
 
     Audio.music(musicStage(), mood);
 
+    if (youHideAt && (performance.now() > youHideAt || !playerAlive())) { youHideAt = 0; R.showYou(false); }
     if (dirty && !document.hidden) {
       R.frame(drawAlpha, boardClock);
       Chatter.layout(drawAlpha, boardPx, player());
@@ -394,6 +398,8 @@
   // or nobody when watching the AIs.
   function newGame({ personas, aiOnly = false, humans = null } = {}) {
     game = E.createGame({ personas, humans: humans || (aiOnly ? [] : [{ name: localName(), color: PLAYER_COLOR }]) });
+    R.showYou(false);
+    youHideAt = 0;
     acc = 0;
     tickLen = E.tickMs(game);
     drawAlpha = 1;
@@ -447,6 +453,7 @@
     { transform: 'scale(1) rotate(0)' },
   ];
   function showBeat(n) {
+    R.showYou(playerAlive());
     Audio.play('beat');
     if (n === 1) Audio.play('riser'); // (rising into Go!)
     showCard({ title: String(n), text: game.rivalsLine, primary: online ? null : 'Go!', opponents: true, quiet: true, beat: true });
@@ -458,6 +465,8 @@
     if (guesting()) online.lastTickAt = performance.now();
     state = 'running';
     hideCard();
+    R.showYou(playerAlive());
+    youHideAt = performance.now() + 3500;
     Audio.play('go');
     if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
     else toast(pick(game.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1300, 'go');
@@ -1042,6 +1051,7 @@
   // gets the round going (already turning).
   function steer(name) {
     if (!playerAlive()) return;
+    if (state === 'running' && youHideAt) youHideAt = Math.min(youHideAt, performance.now() + 600); // (you've found yourself)
     if (online) {
       // Online the countdown runs its course; turns go to the host's game.
       if (state !== 'countdown' && state !== 'running') return;
@@ -1619,6 +1629,7 @@
     state = 'countdown';
     updateControls();
     showCard({ title: '…', text: game.rivalsLine, opponents: true, quiet: true, beat: true });
+    R.showYou(playerAlive());
   }
 
   function hostLost(reason) {

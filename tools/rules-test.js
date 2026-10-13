@@ -65,6 +65,35 @@ const feed = g => { for (const o of g.snakes) { o.lastAte = g.time; o.nextStarve
   check("...then turns to where there's room and goes on", s.alive && (s.body[0].x !== head.x || s.body[0].y !== head.y) && s.dir !== D.right, JSON.stringify(s.body[0]));
 }
 
+{ // Every snake starts one longer than the least, so its first crash costs a segment, not the round.
+  const g = E.createGame({ withPlayer: true });
+  check('snakes start at START_LENGTH', g.snakes.every(o => o.body.length === T.START_LENGTH), g.snakes.map(o => o.body.length).join());
+  const me = g.snakes[0];
+  me.body = line(23, 12, T.START_LENGTH).map(([x, y]) => ({ x, y })); me.dir = D.right; me.queue = [];
+  g.snakes.slice(1).forEach((o, i) => { o.body = line(3, 2 + i * 4, T.START_LENGTH).map(([x, y]) => ({ x, y })); o.dir = D.right; o.isPlayer = true; o.persona = null; o.queue = []; });
+  const dying = E.step(g);
+  check('...and survives its first crash, one segment down', me.alive && !dying.includes(me) && me.body.length === T.MIN_LENGTH, me.body.length);
+}
+
+{ // Boxed in, an AI goes through fire rather than crash (it costs the same, and it keeps moving).
+  // Me heading up at the top edge: up is the edge, right a rival's body, left is burning.
+  const fireCell = K(4, 0);
+  const view = {
+    grid: T.GRID,
+    me: { id: 0, body: [{ x: 5, y: 0 }, { x: 5, y: 1 }, { x: 5, y: 2 }, { x: 5, y: 3 }, { x: 5, y: 4 }], dir: D.up, grow: 0, hungerLeft: 99999 },
+    others: [{ id: 1, body: [{ x: 6, y: 0 }, { x: 7, y: 0 }, { x: 8, y: 0 }, { x: 9, y: 0 }, { x: 10, y: 0 }, { x: 11, y: 0 }, { x: 12, y: 0 }, { x: 13, y: 0 }, { x: 14, y: 0 }, { x: 15, y: 0 }], dir: D.left }],
+    food: [], holes: new Set([fireCell]), fire: new Set([fireCell]), age: 2, tick: 10, timeMs: 1000,
+  };
+  const picks = {};
+  for (let i = 0; i < 100; i++) { const d = AI.decide(view, AI.PERSONAS.drab, {}); const n = Object.keys(D).find(k => D[k] === d); picks[n] = (picks[n] || 0) + 1; }
+  check('a boxed-in AI goes through fire rather than crash', picks.left === 100, JSON.stringify(picks));
+  // ...but with an open way, it keeps out of fire.
+  const open = { ...view, others: [] };
+  const picks2 = {};
+  for (let i = 0; i < 100; i++) { const d = AI.decide(open, AI.PERSONAS.drab, {}); const n = Object.keys(D).find(k => D[k] === d); picks2[n] = (picks2[n] || 0) + 1; }
+  check('...but never as a shortcut', !picks2.left, JSON.stringify(picks2));
+}
+
 { // Steering while stunned: it goes your way when the stun's over.
   const g = board([[line(23, 5, 8), 'right'], [line(5, 20, 3), 'right']]);
   const s = g.snakes[0];
@@ -166,16 +195,14 @@ const feed = g => { for (const o of g.snakes) { o.lastAte = g.time; o.nextStarve
 
 { // An AI sees a new hole only after its reaction time, like a person.
   const g = E.createGame({ withPlayer: false });
-  g.time = T.SUDDEN_DEATH_MS;
-  let seenEarly = 0;
-  for (let t = 0; t < 60 && g.snakes.some(s => s.alive); t++) {
-    E.step(g);
-    const someone = g.snakes.find(s => s.alive);
-    if (!someone) break;
-    const view = E.aiView(g, someone);
-    for (const e of g.events) if (e.type === 'peck' && view.holes.has(e.y * T.GRID + e.x)) seenEarly++;
-  }
-  check('holes reach the AI with its reaction delay', seenEarly === 0, `${seenEarly} seen at once`);
+  for (let t = 0; t < 10; t++) E.step(g);
+  const k = 12 * T.GRID + 12;
+  g.holes.add(k);
+  E.step(g);
+  const seen = () => { const o = g.snakes.find(s => s.alive); return o ? E.aiView(g, o).holes.has(k) : true; };
+  const early = seen();
+  for (let t = 0; t < 8; t++) E.step(g);
+  check('holes reach the AI with its reaction delay', !early && seen(), `at once: ${early}`);
 }
 
 { // Boxed in, an AI prefers a cell a rival may have left over a wall or its own body.
