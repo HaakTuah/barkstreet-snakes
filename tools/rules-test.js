@@ -60,22 +60,36 @@ function board(bodies, { food = [], time = 0 } = {}) {
   check('unknown and inherited persona keys are ignored', E.createGame({ personas: ['constructor', 'toString', 'drab'], withPlayer: false }).snakes.every(s => s.color));
 }
 
-{ // The woodpecker never pecks near a head, or under food.
-  const g = E.createGame({ withPlayer: false });
-  g.time = T.SUDDEN_DEATH_MS;
-  let near = 0, underFood = 0;
-  for (let t = 0; t < 400 && g.snakes.filter(s => s.alive).length > 1; t++) {
-    const foodCells = new Set(g.food.map(f => f.y * T.GRID + f.x));
-    const heads = g.snakes.filter(s => s.alive).map(s => ({ ...s.body[0] }));
-    E.step(g);
-    for (const e of g.events) {
-      if (e.type !== 'peck') continue;
-      if (heads.some(h => Math.abs(h.x - e.x) + Math.abs(h.y - e.y) <= T.PECK_CLEARANCE + 1)) near++; // +1: heads moved this tick
-      if (foodCells.has(e.y * T.GRID + e.x)) underFood++;
+{ // The woodpecker aims well away from heads, warns before it strikes, and never strikes a body or food.
+  let near = 0, early = 0, underBody = 0, underFood = 0, strikes = 0, cells = 0;
+  for (let r = 0; r < 12; r++) {
+    const g = E.createGame({ withPlayer: false });
+    g.time = T.SUDDEN_DEATH_MS;
+    for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; } // (fed, so they last)
+    let aimedAt = -1;
+    for (let t = 0; t < 500 && g.snakes.filter(s => s.alive).length > 1; t++) {
+      const foodCells = new Set(g.food.map(f => f.y * T.GRID + f.x));
+      E.step(g);
+      const heads = g.snakes.filter(s => s.alive).map(s => s.body[0]); // (as they were when it took aim)
+      const bodies = new Set(g.snakes.filter(s => s.alive).flatMap(s => s.body.map(c => c.y * T.GRID + c.x)));
+      for (const e of g.events) {
+        if (e.type === 'aim') {
+          aimedAt = g.tick;
+          for (const k of g.woodpecker.target) if (heads.some(h => Math.abs(h.x - k % T.GRID) + Math.abs(h.y - Math.floor(k / T.GRID)) <= T.PECK_CLEARANCE)) near++;
+        }
+        if (e.type === 'peck') {
+          strikes++;
+          cells += e.cells.length;
+          if (g.tick - aimedAt < T.PECK_AIM_TICKS) early++;
+          for (const k of e.cells) { if (foodCells.has(k)) underFood++; if (bodies.has(k)) underBody++; }
+        }
+      }
     }
   }
-  check('the woodpecker keeps its distance from heads', near === 0, `${near} pecks too close`);
-  check('the woodpecker pecks around food', underFood === 0, `${underFood} pecks under food`);
+  check('the woodpecker strikes in chunks', strikes > 20 && cells / strikes > T.PECK_CHUNK / 2, `${strikes} strikes, ${(cells / Math.max(1, strikes)).toFixed(1)} cells each`);
+  check('the woodpecker aims well away from heads', near === 0, `${near} cells too close`);
+  check('the woodpecker gives warning', early === 0, `${early} without`);
+  check('the woodpecker never strikes a body or food', underBody + underFood === 0, `${underBody} bodies, ${underFood} food`);
 }
 
 { // An AI sees a new hole only after its reaction time, like a person.

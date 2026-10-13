@@ -87,6 +87,8 @@ async function launch() {
   let closed = false;
   return {
     send, errors, sleep,
+    // Listen for a DevTools event (e.g. 'Tracing.dataCollected'); returns a function that stops listening.
+    on(method, fn) { const l = msg => { if (msg.method === method) fn(msg.params); }; listeners.push(l); return () => listeners.splice(listeners.indexOf(l), 1); },
     async viewport(width, height, { scale = 1, mobile = false } = {}) {
       await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile });
       await send('Emulation.setTouchEmulationEnabled', { enabled: mobile, maxTouchPoints: mobile ? 5 : 1 });

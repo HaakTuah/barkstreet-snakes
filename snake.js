@@ -115,6 +115,9 @@
   const hosting = () => online?.role === 'host';
   const guesting = () => online?.role === 'guest';
   let acc = 0, tickLen = T.OPENING_TICK, lastFrame = 0, drawAlpha = 1, dirty = true;
+  // The clock the board's own effects run on (tongues, beetles, particles,
+  // weather): the frame clock, but at 2x or 4x when you're watching that fast.
+  let boardClock = performance.now();
   let beatsLeft = 0, beatTimer = 0;
   let freezeUntil = 0, pendingCard = null, cardAt = 0; // times on the frame clock (rAF timestamps)
   let shownCard = null, napOver = null; // the card on screen, and the one a nap covered
@@ -173,6 +176,8 @@
   function frame(now) {
     const dt = lastFrame ? Math.max(0, Math.min(T.MAX_FRAME_MS, now - lastFrame)) : 16;
     lastFrame = now;
+    boardClock += dt * (state === 'running' && spectating() && !online ? speed : 1);
+    govern(dt);
     const t0 = performance.now();
     let tickCost = 0;
 
@@ -223,12 +228,33 @@
     Audio.music(musicStage(), mood);
 
     if (dirty && !document.hidden) {
-      R.frame(drawAlpha, now);
+      R.frame(drawAlpha, boardClock);
       Chatter.layout(drawAlpha, boardPx, player());
       toastFade();
       dirty = state === 'running' || state === 'countdown' || R.particles > 0 || R.holding();
     }
     perf.record(performance.now() - t0, tickCost);
+  }
+
+  // Keep it playable everywhere: if this device keeps dropping frames during
+  // a round (over 12% of frames late, two windows of about three seconds in a
+  // row), the board draws less, for good: first no canopy shadows and a lower
+  // resolution, then the lowest. (Late means half again the shortest frame
+  // seen in the window, so 60, 120 and 144 Hz screens are judged alike.)
+  const governor = { frames: 0, late: 0, best: Infinity, dts: [], strikes: 0 };
+  function govern(dt) {
+    if (state !== 'running' || document.hidden || R.quality === 0 || !game || game.time < 1500 || dt <= 0) return;
+    governor.dts.push(dt);
+    governor.best = Math.min(governor.best, dt);
+    if (governor.dts.length < 180) return;
+    const late = governor.dts.filter(d => d > Math.max(governor.best * 1.6, 12)).length / governor.dts.length;
+    governor.dts.length = 0;
+    governor.best = Infinity;
+    governor.strikes = late > 0.12 ? governor.strikes + 1 : 0;
+    if (governor.strikes < 2) return;
+    governor.strikes = 0;
+    R.setQuality(R.quality - 1);
+    dirty = true;
   }
 
   // A card waiting for its moment (after the death freeze, or the round's last
@@ -308,6 +334,7 @@
 
   // What follows a tick on every screen: effects, sounds, the HUD, banners, placements.
   function afterTick(dying, wasAlive) {
+    if (game.woodpecker) placeBoard(); // (once a tick while it's here: the page may have moved)
     R.onTick(game.events);
     sounds(dying, wasAlive);
     updateHud();
@@ -331,7 +358,7 @@
   // pose with its eyes screwed shut, then bursts. Also when it ends the round.
   function deathMoment() {
     freezeUntil = lastFrame + (reducedMQ.matches ? T.DEATH_FREEZE / 2 : T.DEATH_FREEZE);
-    R.hold(freezeUntil);
+    R.hold(boardClock + (freezeUntil - lastFrame)); // (on the board's clock)
     R.shake(T.SHAKE_PX);
     flashFrame('kill', true);
   }
@@ -379,7 +406,7 @@
       return;
     }
     if (state !== 'ready' || aiOnly !== !game.withPlayer) newGame({ aiOnly });
-    speed = aiOnly ? watchSpeed : 1; // (after you die you can still speed up, from 1x)
+    speed = watchSpeed = 1; // every round starts at normal speed (watching, you can speed it up again)
     state = 'countdown';
     beatsLeft = 3;
     beatTimer = 0;
@@ -634,14 +661,15 @@
   // Screen reader announcements (a permanently rendered, visually hidden region).
   function say(text) { announcer.textContent = text; }
 
-  const BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.35)', color: '#fde68a', offset: 0.4 }, { transform: 'scale(1)' }];
+  // (Pops only scale, so the compositor runs them: no repaint, even on a bite.)
+  const BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.35)', offset: 0.4 }, { transform: 'scale(1)' }];
   const BUMP_TIMING = { duration: 280, easing: 'ease-out' };
   function bump(el, frames = BUMP) {
     if (!reducedMQ.matches) el.animate?.(frames, BUMP_TIMING);
   }
-  // A tag's length when it changes (leaf green on parchment, not honey), a tag
+  // A tag's length when it changes, a tag
   // knocked out of the round, and a tag taking the lead.
-  const TAG_BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.45)', color: '#4d7c0f', offset: 0.35 }, { transform: 'scale(1)' }];
+  const TAG_BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.45)', offset: 0.35 }, { transform: 'scale(1)' }];
   const KNOCK = [
     { transform: 'translateX(0) rotate(0)', backgroundColor: '#fca5a5' },
     { transform: 'translateX(-6px) rotate(-2deg)', offset: 0.18 },
@@ -1568,7 +1596,11 @@
 
   // ------------------------------------------------- size and motion
 
-  R.init({ canvas, personas: PERSONAS });
+  R.init({ canvas, personas: PERSONAS, birdLayer: $('bird-layer') });
+  // Where the board is on the page (the woodpecker perches beside it, on its own layer).
+  const placeBoard = () => { const b = canvas.getBoundingClientRect(); R.setBoardRect(b.left, b.top, b.width); };
+  window.addEventListener('resize', placeBoard, { passive: true });
+  window.addEventListener('scroll', placeBoard, { passive: true });
   Chatter.init({ boardEl, logEl: chatlogEl });
 
   const sizer = new ResizeObserver(entries => {
@@ -1577,6 +1609,7 @@
     if (!w) return;
     boardPx = w;
     R.resize(w, e.devicePixelContentBoxSize?.[0]?.inlineSize);
+    placeBoard();
     Chatter.setCompact(w < 420);
     dirty = true;
   });
@@ -1687,7 +1720,7 @@
         for (let j = 0; j < count; j++) { fake += ms; frame(fake); }
         return state;
       },
-      draw: () => R.frame(drawAlpha, performance.now()),
+      draw: () => R.frame(drawAlpha, boardClock),
     };
   }
 })();

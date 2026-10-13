@@ -38,8 +38,11 @@ window.TUNING = Object.freeze({
 
   // ---------------------------------------------------------- sudden death
   SUDDEN_DEATH_MS: 120000,  // the woodpecker arrives after two minutes; no new food after that
-  PECK_EVERY: 2,            // ticks between holes once it's here
-  PECK_CLEARANCE: 3,        // it never pecks this close to a head (in cells), so a hole can't open right in front of you
+  PECK_ARRIVE_TICKS: 12,    // it lands, has a look round...
+  PECK_CHUNK: 8,            // ...then takes out this many cells at a time (a run along the outermost ring left)...
+  PECK_AIM_TICKS: 13,       // ...eyeing them this long first (everyone sees where: about a second and a half)...
+  PECK_REST_TICKS: 6,       // ...and resting this long after each strike
+  PECK_CLEARANCE: 3,        // it never aims this close to a head (in cells), and never at a body or food
 
   // --------------------------------------------------------------- burrows
   BURROW_MAX: 3,            // beetle burrows that crack open in the bark over a round (harmless to cross)
@@ -114,7 +117,6 @@ window.TUNING = Object.freeze({
   CHEW_MS: 420,             // and the mouth's chewing after it
   CHEEKS_MS: 900,           // Gobbler's cheeks puff up at a bite and go down over this long
   FLOAT_MS: 700,            // a "+1" rises and fades over this long
-  PECK_MS: 250,             // the woodpecker's head bob at each peck
   MOOD_RING_MS: 900,        // Capricious's ring flashing out when its mood changes
   GOLDEN_DIM_TICKS: 30,     // a golden apple dims (calmly) over its last this-many ticks
   CORPSE_FADE_MS: 250,      // with reduced motion, a dead snake fades over this long instead of bursting

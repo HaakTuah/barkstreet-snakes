@@ -17,7 +17,7 @@
 //   { t: 'hello', v, name, owner, scores }  v: VERSION; owner: a player id; scores: your best rounds
 //   { t: 'turn', d }                        'up' | 'down' | 'left' | 'right'
 window.SnakeOnline = (() => {
-  const VERSION = 2; // 2: burrows, fire and weather
+  const VERSION = 3; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter
   const MAX_PEOPLE = 4;
   // Seat colors for people: the host is green; friends get colors no rival wears.
   const HUMAN_COLORS = ['#4ade80', '#fde047', '#c4b5fd', '#7dd3fc'];
@@ -28,7 +28,7 @@ window.SnakeOnline = (() => {
   const KINDS = ['food', 'golden', 'mushroom', 'pellet', 'beetle'];
   const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm']; // (the engine's order)
   // Events that only say where something happened.
-  const AT = ['burrow', 'dive', 'emerge', 'gust', 'charge', 'strike', 'rainbow'];
+  const AT = ['burrow', 'dive', 'emerge', 'gust', 'charge', 'strike', 'rainbow', 'aim'];
 
   const newCode = () => Array.from({ length: CODE_LENGTH }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
   const cleanCode = text => String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CODE_LENGTH);
@@ -71,7 +71,7 @@ window.SnakeOnline = (() => {
         ? [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, 0, DIR_NAMES.indexOf(dirName(f.dir)), f.px ?? -1, f.py ?? -1, f.movedAt, f.scared ? 1 : 0]
         : [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, f.color || 0]),
       h: holes,
-      w: game.woodpecker ? [game.woodpecker.x, game.woodpecker.y, game.woodpecker.at] : 0,
+      w: game.woodpecker ? [game.woodpecker.x, game.woodpecker.y, game.woodpecker.at, game.woodpecker.target, game.woodpecker.strikeAt, game.woodpecker.last, game.woodpecker.struckAt, game.woodpecker.restUntil] : 0,
       // Burrows, fire (cell, burning from, until, struck by lightning, which fire), the weather.
       bu: game.burrows.map(b => [b.x, b.y, b.at]),
       fi: [...game.fires].map(([k, f]) => [k, f.from, f.until, f.strike ? 1 : 0, f.group]),
@@ -98,7 +98,7 @@ window.SnakeOnline = (() => {
       case 'spawn': return ['spawn', e.kind, e.x ?? -1, e.y ?? -1];
       case 'weather': return ['weather', WEATHER.indexOf(e.kind)];
       case 'woodpecker': return ['woodpecker'];
-      case 'peck': return ['peck', e.x, e.y];
+      case 'peck': return ['peck', e.x, e.y, e.cells || []];
       case 'flown': return ['flown', e.x, e.y];
       default: return AT.includes(e.type) ? [e.type, e.x, e.y] : null;
     }
@@ -148,7 +148,8 @@ window.SnakeOnline = (() => {
       return f;
     });
     for (const k of msg.h) game.holes.add(k);
-    game.woodpecker = msg.w ? { x: msg.w[0], y: msg.w[1], at: msg.w[2] } : null;
+    const cellsOf = v => (Array.isArray(v) ? v : []).filter(k => Number.isInteger(k) && k >= 0 && k < 10000);
+    game.woodpecker = msg.w ? { x: msg.w[0], y: msg.w[1], at: msg.w[2], target: cellsOf(msg.w[3]), strikeAt: msg.w[4], last: cellsOf(msg.w[5]), struckAt: msg.w[6], restUntil: msg.w[7] } : null;
     const num = v => Number.isFinite(v);
     game.burrows = (Array.isArray(msg.bu) ? msg.bu : []).filter(b => Array.isArray(b) && b.every(num)).map(([x, y, at]) => ({ x, y, at }));
     game.fires = new Map((Array.isArray(msg.fi) ? msg.fi : []).filter(f => Array.isArray(f) && f.every(num))
@@ -168,7 +169,7 @@ window.SnakeOnline = (() => {
         case 'spawn': return { type: 'spawn', kind: e[1], x: e[2], y: e[3] };
         case 'weather': return { type: 'weather', kind: WEATHER[e[1]] || 'clear' };
         case 'woodpecker': return { type: 'woodpecker' };
-        case 'peck': return { type: 'peck', x: e[1], y: e[2] };
+        case 'peck': return { type: 'peck', x: e[1], y: e[2], cells: Array.isArray(e[3]) ? e[3].filter(Number.isInteger) : [] };
         case 'flown': return { type: 'flown', x: e[1], y: e[2] };
         default: return AT.includes(e[0]) ? { type: e[0], x: e[1], y: e[2] } : null;
       }

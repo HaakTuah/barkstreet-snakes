@@ -319,12 +319,14 @@ header { min-width: 0; }
 .leaves.tr { right: -8px; top: -8px; transform: scaleX(-1); }
 .leaves.bl { left: -8px; bottom: -8px; transform: scaleY(-1); }
 .leaves.br { right: -8px; bottom: -8px; transform: scale(-1, -1); }
-/* ...and sway in the breeze, each from its stalk, each on its own beat. */
-.leaves use { transform-box: view-box; transform-origin: 4px 4px; animation: leaf-sway 4.6s ease-in-out infinite alternate; }
-.leaves.tr use { animation-delay: -1.3s; animation-duration: 5.2s; }
-.leaves.bl use { animation-delay: -2.7s; animation-duration: 5.8s; }
-.leaves.br use { animation-delay: -3.9s; animation-duration: 4.9s; }
-@keyframes leaf-sway { from { transform: rotate(-6deg); } to { transform: rotate(7deg); } }
+/* ...and sway in the breeze, each on its own beat. (The whole leaf turns,
+   with the rotate property, so the compositor runs it: animating the SVG's
+   insides made the page lay out and repaint every frame.) */
+.leaves { will-change: transform; animation: leaf-sway 4.6s ease-in-out infinite alternate; }
+.leaves.tr { animation-delay: -1.3s; animation-duration: 5.2s; }
+.leaves.bl { animation-delay: -2.7s; animation-duration: 5.8s; }
+.leaves.br { animation-delay: -3.9s; animation-duration: 4.9s; }
+@keyframes leaf-sway { from { rotate: -6deg; } to { rotate: 7deg; } }
 
 .board {
   position: relative;
@@ -668,6 +670,17 @@ canvas {
 .help { margin: 12px 0 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
 .hint span, .help span { white-space: nowrap; }
 
+/* The woodpecker's layer: the whole window, under the dialogs, never in the way of a tap. */
+.bird-layer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9;
+  display: none;
+  pointer-events: none;
+}
+
 /* ------------------------------------------------- Hall of Fame dialog */
 
 .records {
@@ -886,7 +899,7 @@ button.link:active { transform: none; }
 /* Reduced motion: no pops, rises or rumbles; the information stays. */
 @media (prefers-reduced-motion: reduce) {
   .card, .overlay, .badge, .toast, .records-card, .scoreboard li.starving::after { animation: none !important; }
-  h1 .amp, .leaves use, .frame-sheen::before, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
+  h1 .amp, .leaves, .frame-sheen::before, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
   .scoreboard li.starving::after { opacity: 1; }
   button, button:active { transition: none; transform: none; }
   .toast { transition: none; }

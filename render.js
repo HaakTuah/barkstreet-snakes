@@ -73,8 +73,7 @@ window.SnakeRender = (() => {
   // The bark, drawn once per round at the current resolution: a different
   // stretch of the same tree each round (a new seed). Light through the canopy,
   // furrows, raised plates with lit edges, cracks, knots with growth rings,
-  // moss and lichen. Faint carved grid lines are baked in so they land on
-  // whole device pixels.
+  // moss and lichen.
   let barkLayer = null, staticLayer = null, holesDrawn = 0, sized = false;
   let barkSeed = 7;
 
@@ -164,19 +163,8 @@ window.SnakeRender = (() => {
     v.addColorStop(1, 'rgba(0,0,0,0.28)');
     g.fillStyle = v;
     g.fillRect(0, 0, SIZE, SIZE);
-    // Carved grid lines, about half a CSS pixel wide (at least one device
-    // pixel), on whole pixels.
-    g.setTransform(1, 0, 0, 1, 0, 0);
-    g.strokeStyle = 'rgba(0,0,0,0.17)';
-    const lw = Math.max(1, Math.round(devPerCss * 0.6));
-    g.lineWidth = lw;
-    g.beginPath();
-    for (let i = 1; i < GRID; i++) {
-      const p = Math.round(i * CELL * k) + (lw % 2 ? 0.5 : 0);
-      g.moveTo(p, 0); g.lineTo(p, px);
-      g.moveTo(0, p); g.lineTo(px, p);
-    }
-    g.stroke();
+    // (No grid lines: the bark is just bark. Everything on it still sits on
+    // the cells, so the cells are still easy to read.)
     return b;
   }
 
@@ -202,6 +190,7 @@ window.SnakeRender = (() => {
     return s;
   }
   function drawCanopy(now) {
+    if (quality < 2) return;
     if (!shadeLayer) shadeLayer = buildShade();
     const t = reduced ? 0 : now / 1000, over = SIZE * 0.06, gusty = 1 + 2.2 * (sky.wind + sky.storm);
     const dx = Math.sin(t * 0.43) * 8 + Math.sin(t * 1.7) * 1.6 * gusty * gusty, dy = Math.cos(t * 0.37) * 6 + Math.sin(t * 1.3) * 1.2 * gusty;
@@ -230,7 +219,7 @@ window.SnakeRender = (() => {
     g.stroke();
   };
   function drawLeaves(now, dt) {
-    if (reduced) { fallen.length = 0; return; }
+    if (reduced || quality === 0) { fallen.length = 0; return; }
     if (!nextLeaf) nextLeaf = now + 1500 + Math.random() * 3000;
     const blow = Math.max(sky.wind, sky.storm * 0.7); // (wind: leaves stream across from the left)
     if (blow > 0.3 && nextLeaf - now > 700) nextLeaf = now + 200; // (the wind gets up: leaves at once)
@@ -279,21 +268,28 @@ window.SnakeRender = (() => {
     if (game.holes.size < holesDrawn) resetStatic();
     const g = staticLayer.getContext('2d');
     g.setTransform(k, 0, 0, k, 0, 0);
+    // The new holes (a whole chunk at a time) are gouges that run together:
+    // first a ragged lighter rim round all of them, then the dark hollows.
+    const fresh = [];
     let i = 0;
-    for (const key of game.holes) {
-      if (i++ < holesDrawn) continue;
-      const x = (key % GRID) * CELL + CELL / 2, y = Math.floor(key / GRID) * CELL + CELL / 2;
-      const grad = g.createRadialGradient(x, y, 1, x, y, CELL * 0.5);
-      grad.addColorStop(0, '#0b0603');
-      grad.addColorStop(0.7, '#1c1007');
-      grad.addColorStop(1, '#3b2412');
-      g.fillStyle = grad;
-      g.beginPath();
-      g.ellipse(x, y, CELL * 0.46, CELL * 0.42, 0, 0, TAU);
-      g.fill();
-      g.strokeStyle = 'rgba(160,110,60,0.35)'; // a splintered rim
-      g.lineWidth = 1.5;
-      g.stroke();
+    for (const key of game.holes) if (i++ >= holesDrawn) fresh.push(key);
+    for (let pass = 0; pass < 2; pass++) {
+      for (const key of fresh) {
+        const x = (key % GRID) * CELL + CELL / 2, y = Math.floor(key / GRID) * CELL + CELL / 2, j = (key * 37) % 7 / 7;
+        if (!pass) {
+          g.fillStyle = 'rgba(176,124,70,0.5)'; // torn wood round the edge
+          g.beginPath(); g.ellipse(x, y, CELL * (0.66 + j * 0.08), CELL * (0.62 + (1 - j) * 0.08), j * 2, 0, TAU); g.fill();
+          continue;
+        }
+        const grad = g.createRadialGradient(x, y, 1, x, y, CELL * 0.62);
+        grad.addColorStop(0, '#070402');
+        grad.addColorStop(0.75, '#1c1007');
+        grad.addColorStop(1, '#3b2412');
+        g.fillStyle = grad;
+        g.beginPath();
+        g.ellipse(x, y, CELL * (0.58 + j * 0.06), CELL * (0.55 + (1 - j) * 0.06), j * 2, 0, TAU);
+        g.fill();
+      }
     }
     holesDrawn = game.holes.size;
   }
@@ -451,35 +447,6 @@ window.SnakeRender = (() => {
     g.fillStyle = 'rgba(255,255,255,0.55)'; // the gloss
     g.beginPath(); g.ellipse(-r * 0.32, -r * 0.38, r * 0.3, r * 0.2, -0.6, 0, TAU); g.fill();
   };
-  // The woodpecker: a great spotted woodpecker clinging to the trunk, beak to
-  // the right ('r') or mirrored ('l'). Drawn at its real size, about 1.7 cells
-  // tall, so it's as crisp as everything else.
-  const birdSprite = side => sprite('bird', side, drawBird);
-  const drawBird = (g, side) => {
-    const c = CELL * 1.2;
-    if (side === 'l') g.scale(-1, 1);
-    g.fillStyle = 'rgba(0,0,0,0.3)'; // shadow on the bark
-    g.beginPath(); g.ellipse(c * 0.02, c * 0.12, c * 0.3, c * 0.48, 0, 0, TAU); g.fill();
-    g.fillStyle = '#18181b'; // the stiff tail it props itself on
-    g.beginPath(); g.moveTo(-c * 0.16, c * 0.3); g.lineTo(-c * 0.08, c * 0.66); g.lineTo(c * 0.02, c * 0.3); g.fill();
-    g.beginPath(); g.ellipse(-c * 0.07, c * 0.04, c * 0.22, c * 0.36, 0, 0, TAU); g.fill(); // body
-    g.fillStyle = '#f5f5f4'; // a white shoulder patch and barred wing
-    g.beginPath(); g.ellipse(-c * 0.12, -c * 0.06, c * 0.08, c * 0.14, 0.15, 0, TAU); g.fill();
-    for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(-c * (0.2 - i * 0.05), c * (0.12 + i * 0.08), c * 0.028, 0, TAU); g.fill(); }
-    g.fillStyle = '#dc2626'; // red under the tail
-    g.beginPath(); g.ellipse(-c * 0.02, c * 0.32, c * 0.08, c * 0.06, 0, 0, TAU); g.fill();
-    g.fillStyle = '#18181b'; // head
-    g.beginPath(); g.arc(c * 0.04, -c * 0.36, c * 0.16, 0, TAU); g.fill();
-    g.fillStyle = '#dc2626'; // red nape
-    g.beginPath(); g.arc(-c * 0.08, -c * 0.42, c * 0.07, 0, TAU); g.fill();
-    g.fillStyle = '#f5f5f4'; // white cheek, with the eye in it
-    g.beginPath(); g.ellipse(c * 0.08, -c * 0.33, c * 0.09, c * 0.07, 0, 0, TAU); g.fill();
-    g.fillStyle = '#18181b';
-    g.beginPath(); g.arc(c * 0.1, -c * 0.35, c * 0.032, 0, TAU); g.fill();
-    g.fillStyle = '#52525b'; // a chisel beak, into the bark
-    g.beginPath(); g.moveTo(c * 0.17, -c * 0.4); g.lineTo(c * 0.44, -c * 0.37); g.lineTo(c * 0.17, -c * 0.31); g.fill();
-  };
-
   // ------------------------------------------------------------ beetles
 
   // A jewel beetle, drawn live: an emerald shell with a gold rim, six legs and
@@ -952,13 +919,30 @@ window.SnakeRender = (() => {
     return !(near(x1, cx) && near(cx, x2)) && !(near(y1, cy) && near(cy, y2));
   }
 
-  // The body's outline shape, `grow` units bigger all round, in the current fill.
+  // The body's outline shape, `grow` units bigger all round, as one path
+  // (bands as rectangles, joints as circles), filled once in the current
+  // fill: one draw, and an even shade even where pieces overlap.
   function silhouette(a, grow) {
-    for (let i = a.n - 2; i >= 0; i--) band(a, i, a.rad[i + 1] * 0.8 + grow);
-    for (let i = a.n - 1; i >= 0; i--) {
-      if (i < a.n - 1 && bends(a, i)) circle(a.cor[2 * i], a.cor[2 * i + 1], a.rad[i + 1] * 0.8 + grow);
-      circle(a.pts[2 * i], a.pts[2 * i + 1], a.rad[i] + grow);
+    ctx.beginPath();
+    const p = a.pts, c = a.cor;
+    for (let i = a.n - 2; i >= 0; i--) {
+      const h = a.rad[i + 1] + grow, x1 = p[2 * i], y1 = p[2 * i + 1], cx = c[2 * i], cy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+      pieceRect(x1, y1, cx, cy, h);
+      pieceRect(cx, cy, x2, y2, h);
     }
+    for (let i = a.n - 1; i >= 0; i--) {
+      if (i < a.n - 1 && bends(a, i)) { const r = a.rad[i + 1] + grow; ctx.moveTo(a.cor[2 * i] + r, a.cor[2 * i + 1]); ctx.arc(a.cor[2 * i], a.cor[2 * i + 1], r, 0, TAU); }
+      const r = a.rad[i] + grow;
+      ctx.moveTo(p[2 * i] + r, p[2 * i + 1]);
+      ctx.arc(p[2 * i], p[2 * i + 1], r, 0, TAU);
+    }
+    ctx.fill();
+  }
+  // One straight piece of a band, added to the current path (pieces always
+  // run along the grid; a zero-length one adds nothing).
+  function pieceRect(x1, y1, x2, y2, h) {
+    if (near(y1, y2)) { if (!near(x1, x2)) ctx.rect(Math.min(x1, x2), y1 - h, Math.abs(x2 - x1), 2 * h); }
+    else if (near(x1, x2)) ctx.rect(x1 - h, Math.min(y1, y2), 2 * h, Math.abs(y2 - y1));
   }
 
   // The path through every segment centre and corner, head to tail.
@@ -974,7 +958,9 @@ window.SnakeRender = (() => {
   // Pass 1, for every snake before any body: the shadow on the bark.
   function drawShadow(a) {
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    for (let i = a.n - 1; i >= 0; i--) circle(a.pts[2 * i] + 2, a.pts[2 * i + 1] + 4, a.rad[i]);
+    ctx.translate(2, 4);
+    silhouette(a, 0);
+    ctx.translate(-2, -4);
   }
 
   // Pass 2: people's cream outline (yours bright with a soft halo, so you find
@@ -1010,16 +996,23 @@ window.SnakeRender = (() => {
   // top), its pattern and its face.
   function drawBody(s, a, now, dead) {
     const { n, pts, rad, fills, look, color } = a;
-    for (let i = n - 2; i >= 0; i--) { ctx.fillStyle = fills[i + 1]; band(a, i, rad[i + 1] * 0.8); }
+    // A smooth tube: bands as wide as the joints, so it never reads as a
+    // string of beads, one per cell.
+    for (let i = n - 2; i >= 0; i--) { ctx.fillStyle = fills[i + 1]; band(a, i, rad[i + 1]); }
     for (let i = n - 1; i >= 0; i--) {
-      if (i < n - 1 && bends(a, i)) { ctx.fillStyle = fills[i + 1]; circle(a.cor[2 * i], a.cor[2 * i + 1], rad[i + 1] * 0.8); }
+      if (i < n - 1 && bends(a, i)) { ctx.fillStyle = fills[i + 1]; circle(a.cor[2 * i], a.cor[2 * i + 1], rad[i + 1]); }
       ctx.fillStyle = fills[i];
       circle(pts[2 * i], pts[2 * i + 1], rad[i]);
     }
 
-    // A little roundness on every segment.
-    ctx.fillStyle = 'rgba(255,255,255,0.18)';
-    for (let i = 0; i < n; i++) circle(pts[2 * i] - rad[i] * 0.3, pts[2 * i + 1] - rad[i] * 0.35, rad[i] * 0.35);
+    // One soft highlight running the length of the body (light from the top left).
+    ctx.strokeStyle = 'rgba(255,255,255,0.17)';
+    ctx.lineCap = ctx.lineJoin = 'round';
+    ctx.lineWidth = CELL * 0.2;
+    ctx.translate(-CELL * 0.1, -CELL * 0.12);
+    spine(a);
+    ctx.stroke();
+    ctx.translate(CELL * 0.1, CELL * 0.12);
 
     // Patterns. Each follows the skin (by segment), not the board.
     if (a.isPlayer) {
@@ -2655,7 +2648,7 @@ window.SnakeRender = (() => {
   });
   // Rain: a seamless sheet of streaks, drawn once (at the board's resolution)
   // and scrolled down and across, in two layers at different speeds for depth.
-  const RAIN_TILE = 384;
+  const RAIN_TILE = 384, RAIN_LAYERS = [[0.85, 1], [1.2, 0.55]], RAIN_LAYER = [[0.85, 1]];
   let rainTile = null;
   function buildRainTile() {
     const n = RAIN_TILE, t = makeLayer(n * k, n * k), g = t.getContext('2d');
@@ -2678,7 +2671,7 @@ window.SnakeRender = (() => {
     if (wet < 0.02 || reduced) return;
     if (!rainTile) rainTile = buildRainTile();
     const n = RAIN_TILE;
-    for (const [speed, alpha] of [[0.85, 1], [1.2, 0.55]]) {
+    for (const [speed, alpha] of quality === 2 ? RAIN_LAYERS : RAIN_LAYER) {
       const oy = (now * speed) % n, ox = -(now * speed * 0.28) % n;
       ctx.globalAlpha = wet * alpha;
       for (let y = oy - n; y < SIZE; y += n) for (let x = ox - n; x < SIZE; x += n) ctx.drawImage(rainTile, x, y, n, n);
@@ -2732,6 +2725,200 @@ window.SnakeRender = (() => {
     ctx.globalAlpha = 1;
   }
 
+  // ------------------------------------------------------------ the woodpecker
+
+  // A great spotted woodpecker, big (about six cells tall), clinging to the
+  // trunk just outside the board: on whichever side of the board has room on
+  // this screen, as near as it can to where it's working. It flies in when
+  // sudden death starts; eyes its next chunk (which glows and cracks, faster
+  // and faster as the strike nears); flies at it, drums it out in a shower of
+  // chips; flies back; rests. It's drawn on its own layer over the whole page,
+  // so it can sit outside the board.
+  let birdLayer = null, birdG = null, birdShown = false;
+  const boardRect = { x: 0, y: 0, w: 0 }; // the board on the page, in CSS px (the game keeps it current)
+  function setBoardRect(x, y, w) { boardRect.x = x; boardRect.y = y; boardRect.w = w; }
+  const BU = CELL * 0.85; // the bird's unit
+  const BILL = [2.55, -1.72]; // its beak tip, in units, before its head moves
+  const bird = { x: 0, y: 0, rot: 0, flip: 1, placed: false, arrivedAt: -1e9, chipAt: 0 };
+  // Where it perches to work on a spot (board px): beside the board on the
+  // nearest side with room for it on this screen, else the roomiest. It
+  // always stands upright, facing the spot.
+  function perchFor(tx, ty) {
+    const sc = boardRect.w / SIZE;
+    const room = sc ? {
+      left: boardRect.x / sc, right: (innerWidth - boardRect.x - boardRect.w) / sc,
+      top: boardRect.y / sc, bottom: (innerHeight - boardRect.y - boardRect.w) / sc,
+    } : { left: 999, right: 0, top: 0, bottom: 0 };
+    const need = { left: BU * 3.4, right: BU * 3.4, top: BU * 5, bottom: BU * 5 };
+    const dist = { left: tx, right: SIZE - tx, top: ty, bottom: SIZE - ty };
+    const fits = Object.keys(dist).filter(k => room[k] >= need[k]).sort((p, q) => dist[p] - dist[q]);
+    const side = fits[0] || Object.keys(room).sort((p, q) => room[q] / need[q] - room[p] / need[p])[0];
+    const along = v => Math.max(BU * 2, Math.min(SIZE - BU * 2, v));
+    const face = tx < SIZE / 2 ? 1 : -1; // (above or below the board, it stands off to one side of the spot)
+    switch (side) {
+      case 'left': return { x: -Math.min(BU * 2.7, Math.max(BU, room.left - BU * 0.8)), y: along(ty) + BU * 1.75, flip: 1 };
+      case 'right': return { x: SIZE + Math.min(BU * 2.7, Math.max(BU, room.right - BU * 0.8)), y: along(ty) + BU * 1.75, flip: -1 };
+      case 'top': return { x: along(tx) - face * BU * 1.6, y: -Math.min(BU * 3.3, Math.max(BU * 1.5, room.top - BU * 2.6)), flip: face };
+      default: return { x: along(tx) - face * BU * 1.6, y: SIZE + Math.min(BU * 2.6, Math.max(BU * 2.45, room.bottom - BU * 3.2)), flip: face };
+    }
+  }
+  // Where it has to hover for its beak to reach a spot, facing `flip`.
+  const strikeAt = (tx, ty, flip) => ({ x: tx - flip * BILL[0] * BU, y: ty - BILL[1] * BU });
+
+  const ease = t => t * t * (3 - 2 * t);
+  function drawWoodpecker(alpha, now, dt) {
+    const w = game.woodpecker;
+    if (!w || !birdLayer) {
+      if (birdShown) { birdLayer.style.display = 'none'; birdShown = false; bird.placed = false; }
+      return;
+    }
+    if (!birdShown) { birdLayer.style.display = 'block'; birdShown = true; }
+    const dpr = Math.min(window.devicePixelRatio || 1, quality === 2 ? 2 : quality === 1 ? 1.5 : 1);
+    const W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
+    if (birdLayer.width !== W || birdLayer.height !== H) { birdLayer.width = W; birdLayer.height = H; }
+    birdG.setTransform(1, 0, 0, 1, 0, 0);
+    birdG.clearRect(0, 0, W, H);
+    if (!boardRect.w) return;
+    const sc = boardRect.w / SIZE * dpr;
+    birdG.setTransform(sc, 0, 0, sc, boardRect.x * dpr, boardRect.y * dpr);
+
+    const tp = game.tick - 1 + alpha, lively = !reduced;
+    const tx = w.x * CELL + CELL / 2, ty = w.y * CELL + CELL / 2;
+    const perch = perchFor(tx, ty), hit = strikeAt(tx, ty, perch.flip);
+    // The pose this moment calls for: perched, flying in or out, drumming.
+    let gx = perch.x, gy = perch.y, fly = 0, drum = false;
+    const aiming = w.target.length > 0;
+    const out = aiming ? Math.max(0, Math.min(1, (tp - (w.strikeAt - 3.5)) / 2.5)) : 0; // flying at it...
+    const back = !aiming && w.struckAt >= 0 ? Math.max(0, Math.min(1, (tp - (w.struckAt + 1.5)) / 2.5)) : 1; // ...and home again
+    if (aiming && out > 0) {
+      const e = ease(out);
+      gx = perch.x + (hit.x - perch.x) * e; gy = perch.y + (hit.y - perch.y) * e;
+      fly = out < 1 ? 1 : 0; drum = out >= 1;
+    } else if (!aiming && back < 1) {
+      const e = ease(back);
+      gx = hit.x + (perch.x - hit.x) * e; gy = hit.y + (perch.y - hit.y) * e;
+      fly = back > 0 ? 1 : 0; drum = back === 0;
+    }
+    // Arriving: swooping down from high above.
+    const arrive = Math.min(1, (now - bird.arrivedAt) / 1100);
+    if (arrive < 1) { const e = ease(arrive); gy -= (1 - e) * SIZE * 0.9; gx -= (1 - e) * SIZE * 0.25 * perch.flip; fly = 1; }
+    // Moving between perches (its next chunk is elsewhere): a quick hop.
+    if (!bird.placed || !lively) { bird.x = gx; bird.y = gy; bird.placed = true; }
+    else if (fly || drum) { bird.x = gx; bird.y = gy; }
+    else {
+      const k2 = Math.min(1, dt / 160), dx = gx - bird.x, dy = gy - bird.y;
+      bird.x += dx * k2; bird.y += dy * k2;
+      if (Math.hypot(dx, dy) > BU * 0.8) fly = 1;
+    }
+    bird.flip = perch.flip;
+    // Eyeing its chunk: the head turns to it, and it crouches as the strike nears.
+    const crouch = aiming && out === 0 ? Math.max(0, 1 - (w.strikeAt - 3.5 - tp) / T.PECK_AIM_TICKS) : 0;
+    let look = 0;
+    if (aiming && out === 0) {
+      const hx = bird.x + bird.flip * BU * 0.45, hy = bird.y - BU * 1.75;
+      look = Math.max(-1.2, Math.min(1.2, Math.atan2(ty - hy, (tx - hx) * bird.flip)));
+    }
+    // Chips fly while it drums.
+    if (drum && lively && now - bird.chipAt > 70) {
+      bird.chipAt = now;
+      spawn(tx + (Math.random() - 0.5) * CELL, ty + (Math.random() - 0.5) * CELL, 3, 260, 420, 2.6, '#c08a4a', '#f6ecd2');
+    }
+    paintWoodpecker(birdG, bird.x, bird.y, 0, bird.flip, { fly, drum, look, crouch, now: lively ? now : 0 });
+  }
+
+  // The bird, in its own frame: beak towards +x, head up (-y), clinging by
+  // its feet at the origin, its stiff tail propped below. u = BU.
+  function paintWoodpecker(g, x, y, rot, flip, { fly, drum, look, crouch, now }) {
+    const u = BU, flap = fly ? Math.sin(now / 55) : 0;
+    g.save();
+    g.translate(x, y);
+    g.rotate(rot);
+    g.scale(flip * (1 + fly * 0.08), 1 + fly * 0.08); // (a touch bigger in the air: nearer to you)
+    g.translate(0, crouch * u * 0.25);
+    const ell = (cx, cy, rx, ry, a, col) => { g.fillStyle = col; g.beginPath(); g.ellipse(cx * u, cy * u, rx * u, ry * u, a, 0, TAU); g.fill(); };
+    // Its shadow on the bark.
+    g.globalAlpha = fly ? 0.18 : 0.28;
+    ell(0.35 + fly * 0.6, 0.6 + fly * 0.9, 1.1, 2, 0, '#000');
+    g.globalAlpha = 1;
+    // Wings out when it flies: big, black, barred white, beating.
+    if (fly) {
+      for (const sg of [1, -1]) {
+        g.save();
+        g.translate(-0.1 * u, -0.4 * u);
+        g.rotate(sg * (0.9 + 0.7 * flap) + Math.PI);
+        ell(1.5, 0, 1.6, 0.55, 0, '#18181b');
+        g.fillStyle = '#f5f5f4';
+        for (let i = 0; i < 4; i++) { g.beginPath(); g.arc((0.8 + i * 0.42) * u, (i % 2 ? 0.12 : -0.12) * u, 0.1 * u, 0, TAU); g.fill(); }
+        g.restore();
+      }
+    }
+    // The stiff tail it props itself on, the body, its buff belly, the red under its tail.
+    g.fillStyle = '#18181b';
+    g.beginPath(); g.moveTo(-0.55 * u, 1.1 * u); g.lineTo(-0.15 * u, 3.1 * u); g.lineTo(0.3 * u, 1.2 * u); g.fill();
+    ell(-0.1, 0.3, 0.95, 1.55, 0.08, '#18181b');
+    ell(0.38, 0.45, 0.52, 1.15, 0.12, '#efe9dc');
+    ell(0.22, 1.42, 0.36, 0.3, 0, '#dc2626');
+    // The folded wing: a white shoulder patch and white bars.
+    if (!fly) {
+      ell(-0.3, -0.5, 0.32, 0.52, 0.2, '#f5f5f4');
+      g.fillStyle = '#f5f5f4';
+      for (let row = 0; row < 3; row++) for (let i = 0; i < 3; i++) { g.beginPath(); g.arc((-0.62 + i * 0.22) * u, (0.15 + row * 0.38) * u, 0.075 * u, 0, TAU); g.fill(); }
+    }
+    // Feet, gripping the bark.
+    g.strokeStyle = '#57534e';
+    g.lineWidth = 0.12 * u;
+    g.lineCap = 'round';
+    g.beginPath(); g.moveTo(0.5 * u, 0.7 * u); g.lineTo(0.95 * u, 0.55 * u); g.moveTo(0.5 * u, 0.95 * u); g.lineTo(0.95 * u, 1.05 * u); g.stroke();
+    // The head, which turns, and drives forward when it drums.
+    const thrust = drum ? (0.5 - 0.5 * Math.cos(now / 26)) * 0.42 : 0;
+    g.translate(0.25 * u, -1.15 * u);
+    g.rotate(look + (drum ? 0.05 : 0));
+    g.translate(thrust * u - 0.25 * u, 1.15 * u);
+    ell(0.45, -1.75, 0.72, 0.7, 0, '#18181b');
+    ell(-0.12, -1.95, 0.3, 0.28, 0, '#dc2626'); // red nape
+    ell(0.62, -1.58, 0.44, 0.33, 0, '#f5f5f4'); // white cheek...
+    g.strokeStyle = '#18181b'; // ...under a black moustache stripe
+    g.lineWidth = 0.15 * u;
+    g.beginPath(); g.moveTo(0.2 * u, -1.25 * u); g.quadraticCurveTo(0.6 * u, -1.38 * u, 1.0 * u, -1.3 * u); g.stroke();
+    ell(0.75, -1.9, 0.14, 0.14, 0, '#0a0a0a'); // the eye, with a glint
+    ell(0.79, -1.94, 0.05, 0.05, 0, '#ffffff');
+    g.fillStyle = '#71717a'; // the chisel beak
+    g.beginPath(); g.moveTo(1.05 * u, -2.0 * u); g.lineTo(BILL[0] * u, BILL[1] * u); g.lineTo(1.05 * u, -1.5 * u); g.closePath(); g.fill();
+    g.fillStyle = '#3f3f46';
+    g.beginPath(); g.moveTo(1.05 * u, -2.0 * u); g.lineTo(BILL[0] * u, BILL[1] * u); g.lineTo(1.05 * u, -1.78 * u); g.closePath(); g.fill();
+    g.restore();
+  }
+
+  // On the board: the chunk it's eyeing glows and cracks, the pulse quickening
+  // as the strike nears.
+  function drawTarget(alpha, now) {
+    const w = game.woodpecker;
+    if (!w || !w.target.length) return;
+    const tp = game.tick - 1 + alpha, prog = Math.max(0, Math.min(1, 1 - (w.strikeAt - tp) / T.PECK_AIM_TICKS));
+    const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now * (0.008 + 0.03 * prog));
+    ctx.fillStyle = `rgba(220,38,38,${0.16 + 0.26 * pulse * (0.5 + prog * 0.5)})`;
+    for (const k of w.target) ctx.fillRect((k % GRID) * CELL + 1, Math.floor(k / GRID) * CELL + 1, CELL - 2, CELL - 2);
+    ctx.strokeStyle = `rgba(254,202,202,${0.5 + 0.4 * pulse})`;
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash(DASH);
+    ctx.lineDashOffset = reduced ? 0 : -now / 40;
+    ctx.beginPath();
+    for (const k of w.target) ctx.rect((k % GRID) * CELL + 3, Math.floor(k / GRID) * CELL + 3, CELL - 6, CELL - 6);
+    ctx.stroke();
+    ctx.setLineDash(NO_DASH);
+    ctx.lineDashOffset = 0;
+    // Cracks spreading across it.
+    ctx.strokeStyle = 'rgba(20,8,2,0.7)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    for (const k of w.target) {
+      const x = (k % GRID) * CELL + CELL / 2, y = Math.floor(k / GRID) * CELL + CELL / 2, a = k * 1.7, len = CELL * 0.45 * prog;
+      ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
+      ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a + 2.4) * len * 0.8, y + Math.sin(a + 2.4) * len * 0.8);
+    }
+    ctx.stroke();
+  }
+
   // ------------------------------------------------------------ the frame
 
   let shakeUntil = 0, shakePx = 0, lastNow = 0;
@@ -2770,14 +2957,6 @@ window.SnakeRender = (() => {
       if (s.memory.colonies) drawColonies(s, now);
     }
 
-    // The woodpecker perches on its newest hole (which can never be played
-    // on), facing into the board, under anything it shares a cell with.
-    const wp = game.woodpecker;
-    if (wp) {
-      const peck = reduced ? 0 : Math.max(0, 1 - (game.time - wp.at) / T.PECK_MS) * 3;
-      const right = wp.x < GRID / 2;
-      blitCrisp(birdSprite(right ? 'r' : 'l'), wp.x * CELL + CELL / 2 + (right ? peck : -peck), wp.y * CELL + CELL * 0.4);
-    }
 
     drawBurrows(now);
     drawLeaves(now, dt);
@@ -2789,12 +2968,14 @@ window.SnakeRender = (() => {
 
     if (corpses.length) drawCorpses(alpha, now);
     drawSnakes(alpha, now);
+    drawTarget(alpha, now);
     drawRain(now);
     drawBolt(now);
     drawMotes(dt);
     drawParticles(dt);
     drawFloaters(dt);
     drawFlash(now);
+    drawWoodpecker(alpha, now, dt);
   }
 
   // ------------------------------------------------------------ the world
@@ -2830,8 +3011,11 @@ window.SnakeRender = (() => {
         // A comic-book word where it went down: KO! if a snake did it, Bonk! for a wall or a hole.
         const k = e.snake.killer, h = e.snake.body[0];
         if (k !== 'hunger') floater(h.x * CELL + CELL / 2, Math.max(CELL * 1.3, h.y * CELL - CELL * 0.2), k === 'wall' || k === 'self' || !game.snakes.some(o => o.name === k) ? 'Bonk!' : 'KO!');
-      } else if (e.type === 'peck') {
-        spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 5, 120, 380, 2, '#a16207', '#f6ecd2');
+      } else if (e.type === 'woodpecker') {
+        bird.arrivedAt = now;
+      } else if (e.type === 'peck') { // a chunk comes out: chips flying from every cell, and a thump
+        for (const k of e.cells || []) spawn((k % GRID) * CELL + CELL / 2, Math.floor(k / GRID) * CELL + CELL / 2, 4, 240, 520, 2.8, '#c08a4a', '#3b2412');
+        if (e.cells?.length && !reduced) shake(5);
       } else if ((e.type === 'spawn' && e.kind === 'beetle') || e.type === 'emerge') {
         beetleAt = now; // (it pops out of its burrow, kicking up a little sawdust)
         if (e.x >= 0) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 110, 420, 2, '#d6b480', '#a16207');
@@ -2933,7 +3117,7 @@ window.SnakeRender = (() => {
 
   function shake(px) {
     shakePx = px;
-    shakeUntil = performance.now() + T.SHAKE_MS;
+    shakeUntil = (lastNow || performance.now()) + T.SHAKE_MS; // (the board's clock, which runs faster when watching faster)
   }
 
   // Where a snake's head is drawn right now, in CSS pixels from the board's
@@ -2953,12 +3137,22 @@ window.SnakeRender = (() => {
   // where supported). It's capped at MAX_BACKING pixels across (a large board
   // on a dense screen), not at a density, so small dense phones stay crisp.
   const MAX_BACKING = 2048;
-  function resize(cssPx, devicePx) {
-    const dpr = window.devicePixelRatio || 1;
+  // Quality: 2 everything; 1 no canopy shadows or second rain sheet, and at
+  // most 1.5 device pixels per CSS pixel; 0 also no falling leaves, at 1.
+  // (The game lowers it, for good, if this device keeps dropping frames.)
+  let quality = 2, lastCss = 0, lastDevice = 0;
+  function setQuality(q) {
+    if (q === quality) return;
+    quality = q;
+    if (lastCss) resize(lastCss, lastDevice, true);
+  }
+  function resize(cssPx, devicePx, force = false) {
+    lastCss = cssPx; lastDevice = devicePx;
+    const dpr = Math.min(window.devicePixelRatio || 1, quality === 2 ? 99 : quality === 1 ? 1.5 : 1);
     const estimate = Math.round(cssPx * dpr);
-    const exact = devicePx && Math.abs(devicePx - estimate) <= 2 ? devicePx : estimate;
+    const exact = devicePx && quality === 2 && Math.abs(devicePx - estimate) <= 2 ? devicePx : estimate;
     const target = Math.max(GRID, Math.min(MAX_BACKING, exact));
-    if (target === canvas.width && sized) return false;
+    if (target === canvas.width && sized && !force) return false;
     sized = true;
     devPerCss = target / cssPx;
     canvas.width = canvas.height = target;
@@ -2973,6 +3167,8 @@ window.SnakeRender = (() => {
 
   function init(opts) {
     canvas = opts.canvas;
+    birdLayer = opts.birdLayer || null;
+    birdG = birdLayer ? birdLayer.getContext('2d') : null;
     ctx = canvas.getContext('2d', { alpha: false });
     PERSONAS = opts.personas;
     k = canvas.width / SIZE;
@@ -2980,8 +3176,10 @@ window.SnakeRender = (() => {
     document.fonts?.ready.then(() => sprites.delete('float'));
   }
 
+  const FLOAT_WORDS = ['+1', '+2', '+3', 'KO!', 'Bonk!'];
   function setGame(g) {
     game = g;
+    if (sized) for (const w of FLOAT_WORDS) sprite('float', w, drawFloat); // (drawn now, not on the first bite)
     deaths.length = 0;
     corpses.length = 0;
     pLive = 0;
@@ -3004,6 +3202,7 @@ window.SnakeRender = (() => {
     scorchDrawn = 0;
     fireTick = -1;
     bolt = null; rainbow = null; dive = null; flashAt = -1e9;
+    bird.placed = false; bird.arrivedAt = -1e9;
     for (const k in sky) sky[k] = 0;
     // A different stretch of the tree each round.
     barkSeed = 1 + Math.floor(Math.random() * 2147483645);
@@ -3013,7 +3212,8 @@ window.SnakeRender = (() => {
   }
 
   return {
-    init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, markOf, celebrate,
+    init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, markOf, celebrate, setQuality, setBoardRect,
+    get quality() { return quality; },
     holding: () => deaths.length > 0 || corpses.length > 0,
     setViewer(id) { viewerId = id; },
     setReducedMotion(v) { reduced = v; },
