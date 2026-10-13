@@ -62,7 +62,7 @@ Press **Watch AIs** on the start screen for a round between four AI snakes, with
 
 ## The rivals
 
-Each round, three of these fifteen are picked at random. The start screen tells you who you're up against and how each one plays.
+Each round, three of these fifteen are picked at random. The start screen tells you who you're up against and how each one plays. Only you have a real forked tongue: every few seconds each rival flicks out something of its own instead, such as Wildcard's dollar bill, Joker's party blower or Desperado's six-shooter.
 
 | Snake | Look | Style |
 |-------|------|-------|

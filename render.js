@@ -472,7 +472,7 @@ window.SnakeRender = (() => {
     if (!a) {
       a = {
         nextBlink: now + T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN), blinkUntil: 0,
-        nextTongue: now + T.TONGUE_EVERY * (0.5 + Math.random()), tongueUntil: 0,
+        nextTongue: now + T.TONGUE_EVERY * (0.5 + Math.random()), tongueUntil: 0, tongueMs: T.TONGUE_MS,
         gx: s.dir.x, gy: s.dir.y, near: 99, // where the eyes point (on the screen, eased), and how far that is
         wx: 0, wy: 0, wanderAt: 0,          // Wildcard's eyes wander about on their own
         gulps: [-99, -99, -99, -99], gulpAt: 0,
@@ -1038,20 +1038,60 @@ window.SnakeRender = (() => {
     ctx.quadraticCurveTo(c * (mx + (-0.28 - mx) * TRI_BOW * 2.4), c * (my * (1 - TRI_BOW * 2.4)), c * b[0], c * b[1]);
   }
 
-  // Your face: white eyes whose pupils glance toward the nearest food, a
-  // mouth that opens for a bite, a blink now and then, and a forked tongue flick.
-  // A forked tongue flicked out and back every few seconds (more often when
-  // food is near, if `keen`). `rate` stretches the wait: each snake its own rhythm.
-  function tongue(a, now, open, rate, keen = false) {
+  // ------------------------------------------------------- tongues
+  // Every few seconds each snake flicks its tongue out and back. You and your
+  // friends have the real, forked thing; each rival flicks out something that
+  // fits it instead, drawn in the head's frame from the mouth (x = 0.42).
+  // Per look: [how often (1 = like you), how long it stays out (1 = like
+  // yours), what comes out]. Capricious flicks its mood's; Copycat its model's.
+  const FLICKS = {
+    player: [1, 1, forked], capricious: [1.2, 1, forked],
+    creeper: [0.8, 1.5, slither], drab: [1.8, 1.6, limp], gobbler: [0.6, 1.4, lick], ghost: [1.8, 1.8, wisp],
+    sniper: [1.2, 1.5, laser], sovereign: [1.6, 2.4, carpet], colonist: [1.4, 2.2, telescope], vulture: [1.6, 3, bone],
+    mason: [1.4, 1.8, trowel], metagamer: [1.4, 1.8, magnifier], wildcard: [1.2, 2, bill], desperado: [1.1, 2, revolver],
+    joker: [1, 2.2, blower], copycat: [1.2, 1.4, blep],
+  };
+  let flickP = -1, flickT = 0; // the flick being drawn: how far through it is (or -1), and how far out (0..1..0)
+
+  // Time this snake's flick (more often near food, if `keen`) and draw it,
+  // unless `draw` is false (Sniper's comes out of its scope instead).
+  function tongue(a, now, open, look, keen = false, draw = true) {
+    const [rate, len, fn] = FLICKS[look] || FLICKS.player;
+    flickP = -1; flickT = 0;
     if (deadNow) return;
     if (now > a.nextTongue) {
-      a.tongueUntil = now + T.TONGUE_MS;
+      a.tongueMs = T.TONGUE_MS * len;
+      a.tongueUntil = now + a.tongueMs;
       a.nextTongue = now + T.TONGUE_EVERY * rate * (keen && a.near <= 3 ? 0.4 : 0.7 + Math.random() * 0.8);
     }
     if (now >= a.tongueUntil || open >= 0.08) return;
-    const c = CELL;
-    const t = 1 - Math.abs((a.tongueUntil - now) / T.TONGUE_MS * 2 - 1); // out and back
-    const reach = c * (0.42 + 0.3 * t);
+    flickP = 1 - (a.tongueUntil - now) / a.tongueMs;
+    flickT = 1 - Math.abs(flickP * 2 - 1); // out and back
+    if (!draw) return;
+    ctx.save();
+    fn(flickT, flickP);
+    ctx.restore();
+  }
+
+  // Out all the way for the middle of the flick, not just at its peak.
+  const stayOut = (t, k = 1.6) => Math.min(1, t * k);
+  // Only what's past the lips shows (for things that slide out of the mouth).
+  function fromMouth() {
+    ctx.beginPath();
+    ctx.rect(CELL * 0.38, -CELL, CELL * 2, CELL * 2);
+    ctx.clip();
+  }
+
+  // The look Copycat's tongue copies: its model's, or a cat's own blep.
+  function copiedLook(s) {
+    const m = findById(s.memory.modelId);
+    const look = m && m.alive ? lookOf(m) : 'copycat';
+    return FLICKS[look] ? look : 'copycat';
+  }
+
+  // A snake's own: thin, red and forked.
+  function forked(t) {
+    const c = CELL, reach = c * (0.42 + 0.3 * t);
     ctx.strokeStyle = '#e11d48';
     ctx.lineWidth = c * 0.06;
     ctx.lineCap = 'round';
@@ -1061,13 +1101,291 @@ window.SnakeRender = (() => {
     ctx.moveTo(reach, 0); ctx.lineTo(reach + c * 0.1, c * 0.07);
     ctx.stroke();
   }
-  // How often each rival flicks its tongue (1 = like you; Vulture has a beak).
-  const TONGUE_RATE = { gobbler: 0.6, creeper: 0.8, desperado: 0.8, joker: 0.9, drab: 1.8, ghost: 1.8, vulture: 0 };
+
+  // Creeper: the snakiest tongue of all, long and wriggling.
+  function slither(t, p) {
+    const c = CELL, len = 0.55 * t;
+    ctx.strokeStyle = '#e11d48';
+    ctx.lineWidth = c * 0.05;
+    ctx.lineCap = ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(c * 0.42, 0);
+    let x = 0.42, y = 0;
+    for (let i = 1; i <= 10; i++) {
+      x = 0.42 + len * i / 10;
+      y = Math.sin(i * 0.9 - p * 30) * 0.06 * i / 10;
+      ctx.lineTo(c * x, c * y);
+    }
+    ctx.lineTo(c * (x + 0.1), c * (y - 0.07));
+    ctx.moveTo(c * x, c * y); ctx.lineTo(c * (x + 0.1), c * (y + 0.07));
+    ctx.stroke();
+  }
+
+  // Drab: can't be bothered. A short, limp tongue, no fork, flopping to one side.
+  function limp(t) {
+    const c = CELL, r = 0.2 * t;
+    ctx.strokeStyle = '#d9a3a8';
+    ctx.lineWidth = c * 0.075;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(c * 0.42, 0);
+    ctx.quadraticCurveTo(c * (0.42 + r), 0, c * (0.42 + r * 1.1), c * r * 0.7);
+    ctx.stroke();
+  }
+
+  // Gobbler: a fat pink tongue that licks its lips, side to side.
+  function lick(t, p) {
+    const c = CELL, len = 0.2 * stayOut(t, 2);
+    ctx.translate(c * 0.38, 0);
+    ctx.rotate(Math.sin(p * TAU) * 0.7);
+    ctx.fillStyle = '#fb7185';
+    ctx.beginPath();
+    ctx.ellipse(c * len * 0.6, 0, c * (0.06 + len * 0.6), c * 0.11, 0, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = '#e11d48'; // the groove down the middle
+    ctx.lineWidth = c * 0.025;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(c * 0.05, 0); ctx.lineTo(c * len, 0);
+    ctx.stroke();
+  }
+
+  // Ghost: a breath of ectoplasm that wafts out and fades back in.
+  function wisp(t, p) {
+    const c = CELL;
+    ctx.globalAlpha *= 0.85 * stayOut(t, 2);
+    ctx.fillStyle = '#f0f9ff';
+    for (let k = 0; k < 3; k++) {
+      const x = 0.48 + (0.15 + 0.16 * k) * t, y = Math.sin(p * 9 + k * 1.7) * 0.07;
+      circle(c * x, c * y, c * (0.1 - 0.022 * k));
+    }
+  }
+
+  // Sniper: the laser sight, a beam and a dot (from the scope, x0 = its lens).
+  function laser(t, p, x0 = 0.42) {
+    const c = CELL, end = c * (x0 + 1.3 * stayOut(t, 4));
+    ctx.strokeStyle = 'rgba(239,68,68,0.75)';
+    ctx.lineWidth = c * 0.025;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(c * x0, 0); ctx.lineTo(end, 0);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(239,68,68,0.35)';
+    circle(end, 0, c * 0.09);
+    ctx.fillStyle = '#ef4444';
+    circle(end, 0, c * 0.045);
+    ctx.fillStyle = '#fee2e2';
+    circle(end, 0, c * 0.018);
+  }
+
+  // Sovereign rolls out the red carpet (for itself): gold-edged, with the roll
+  // still to unroll at the far end.
+  function carpet(t) {
+    const c = CELL, e = stayOut(t), x0 = 0.4, len = 0.6 * e, x1 = x0 + len, rr = 0.045 + 0.04 * (1 - e);
+    ctx.fillStyle = '#b91c1c';
+    ctx.fillRect(c * x0, -c * 0.12, c * len, c * 0.24);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(c * x0, -c * 0.12, c * len, c * 0.03);
+    ctx.fillRect(c * x0, c * 0.09, c * len, c * 0.03);
+    ctx.fillStyle = '#dc2626'; // the roll
+    ctx.fillRect(c * (x1 - rr), -c * 0.13, c * rr * 2, c * 0.26);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(c * (x1 - rr), -c * 0.13, c * rr * 2, c * 0.03);
+    ctx.fillRect(c * (x1 - rr), c * 0.1, c * rr * 2, c * 0.03);
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(c * (x1 + rr * 0.2), -c * 0.13, c * rr * 0.8, c * 0.26);
+  }
+
+  // Colonist: a brass spyglass that draws out, section by section, to look
+  // for land to claim.
+  function telescope(t) {
+    const c = CELL, e = stayOut(t), x = 0.38 - 0.24 * (1 - e);
+    fromMouth();
+    const tube = (x0, len, w) => {
+      ctx.fillStyle = '#d4a017';
+      ctx.fillRect(c * x0, -c * w, c * len, c * w * 2);
+      ctx.fillStyle = '#fde68a'; // a shine along the top
+      ctx.fillRect(c * x0, -c * w, c * len, c * w * 0.6);
+      ctx.fillStyle = '#78350f'; // a ring at the front
+      ctx.fillRect(c * (x0 + len - 0.03), -c * w, c * 0.03, c * w * 2);
+    };
+    ctx.fillStyle = '#bae6fd'; // the lens
+    ctx.fillRect(c * (x + 0.38 * e + 0.17), -c * 0.06, c * 0.035, c * 0.12);
+    tube(x + 0.38 * e, 0.19, 0.075); // the thinnest slides furthest...
+    tube(x + 0.2 * e, 0.2, 0.095);
+    tube(x, 0.22, 0.12); // ...out of the widest
+  }
+
+  // Vulture: a bone, held crosswise and chewed on a moment.
+  function bone(t, p) {
+    const c = CELL, k = stayOut(t, 3);
+    ctx.translate(c * 0.64, 0);
+    ctx.rotate(0.3 + Math.sin(p * 14) * 0.08);
+    ctx.scale(k, k);
+    const shape = () => {
+      ctx.beginPath();
+      ctx.rect(-c * 0.045, -c * 0.25, c * 0.09, c * 0.5);
+      for (const y of [-0.26, 0.26]) for (const x of [-0.05, 0.05]) {
+        ctx.moveTo(c * (x + 0.06), c * y);
+        ctx.arc(c * x, c * y, c * 0.06, 0, TAU);
+      }
+    };
+    ctx.strokeStyle = '#57534e'; // an outline round the whole bone...
+    ctx.lineWidth = c * 0.05;
+    shape();
+    ctx.stroke();
+    ctx.fillStyle = '#f5f5f4'; // ...then the bone over it
+    shape();
+    ctx.fill();
+  }
+
+  // Mason: a brick trowel with a dab of mortar on it.
+  function trowel(t) {
+    const c = CELL;
+    fromMouth();
+    ctx.translate(-c * 0.52 * (1 - stayOut(t)), 0);
+    ctx.fillStyle = '#92400e'; // the handle
+    ctx.fillRect(c * 0.36, -c * 0.045, c * 0.14, c * 0.09);
+    ctx.fillStyle = '#475569'; // the neck
+    ctx.fillRect(c * 0.5, -c * 0.02, c * 0.06, c * 0.04);
+    ctx.fillStyle = '#cbd5e1'; // the blade
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = c * 0.025;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(c * 0.54, -c * 0.17); ctx.lineTo(c * 0.98, 0); ctx.lineTo(c * 0.54, c * 0.17);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#f1f5f9'; // a shine...
+    ctx.beginPath();
+    ctx.moveTo(c * 0.58, -c * 0.12); ctx.lineTo(c * 0.86, -c * 0.03); ctx.lineTo(c * 0.58, -c * 0.06);
+    ctx.fill();
+    ctx.fillStyle = '#a8a29e'; // ...and a dab of mortar
+    circle(c * 0.66, c * 0.05, c * 0.055);
+  }
+
+  // Metagamer: a magnifying glass, to study you more closely.
+  function magnifier(t) {
+    const c = CELL;
+    fromMouth();
+    ctx.translate(-c * 0.55 * (1 - stayOut(t)), 0);
+    ctx.fillStyle = '#7c2d12'; // the handle
+    ctx.fillRect(c * 0.36, -c * 0.045, c * 0.22, c * 0.09);
+    ctx.fillStyle = '#bae6fd'; // the glass in its rim
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = c * 0.055;
+    ctx.beginPath();
+    ctx.arc(c * 0.76, 0, c * 0.16, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = '#ffffff'; // a glint
+    ctx.lineWidth = c * 0.035;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(c * 0.76, 0, c * 0.09, Math.PI * 1.05, Math.PI * 1.5);
+    ctx.stroke();
+  }
+
+  // Wildcard: a dollar bill, slid out like a tip.
+  function bill(t, p) {
+    const c = CELL;
+    fromMouth();
+    ctx.translate(-c * 0.52 * (1 - stayOut(t)), 0);
+    ctx.rotate(Math.sin(p * 18) * 0.04); // a little flutter
+    ctx.fillStyle = '#c7e3b8';
+    ctx.strokeStyle = '#3f6212';
+    ctx.lineWidth = c * 0.025;
+    ctx.fillRect(c * 0.36, -c * 0.12, c * 0.52, c * 0.24);
+    ctx.strokeRect(c * 0.36, -c * 0.12, c * 0.52, c * 0.24);
+    ctx.strokeStyle = '#65a30d'; // the inner border...
+    ctx.lineWidth = c * 0.012;
+    ctx.strokeRect(c * 0.4, -c * 0.085, c * 0.44, c * 0.17);
+    ctx.fillStyle = '#3f6212'; // ...and the dollar sign in the middle
+    ctx.font = `800 ${c * 0.2}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('$', c * 0.62, c * 0.01);
+  }
+
+  // Desperado: the six-shooter. Out, bang (a flash and a puff of smoke), back.
+  function revolver(t, p) {
+    const c = CELL;
+    ctx.save();
+    fromMouth();
+    ctx.translate(-c * 0.55 * (1 - stayOut(t)), 0);
+    ctx.fillStyle = '#d6d3d1'; // the barrel, silver and outlined...
+    ctx.strokeStyle = '#292524';
+    ctx.lineWidth = c * 0.025;
+    ctx.fillRect(c * 0.5, -c * 0.055, c * 0.4, c * 0.11);
+    ctx.strokeRect(c * 0.5, -c * 0.055, c * 0.4, c * 0.11);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(c * 0.52, -c * 0.035, c * 0.36, c * 0.025);
+    ctx.fillStyle = '#292524'; // ...its front sight...
+    ctx.fillRect(c * 0.84, -c * 0.02, c * 0.04, c * 0.04);
+    ctx.fillStyle = '#a8a29e'; // ...and the cylinder, six chambers
+    circle(c * 0.47, 0, c * 0.13);
+    ctx.stroke();
+    ctx.fillStyle = '#292524';
+    for (let i = 0; i < 6; i++) circle(c * (0.47 + Math.cos(i * TAU / 6) * 0.075), c * Math.sin(i * TAU / 6) * 0.075, c * 0.025);
+    ctx.restore();
+    if (p > 0.4 && p < 0.52) { // bang
+      ctx.fillStyle = '#fde047';
+      circle(c * 0.98, 0, c * 0.1);
+      ctx.fillStyle = '#ffffff';
+      circle(c * 0.98, 0, c * 0.05);
+    }
+    const sp = (p - 0.45) / 0.55;
+    if (sp > 0) { // the smoke drifting off
+      ctx.globalAlpha *= 0.85 * (1 - sp);
+      ctx.fillStyle = '#f5f5f4';
+      for (let k = 0; k < 3; k++) circle(c * (0.98 + 0.14 * sp + 0.08 * k), c * (k - 1) * 0.06 * (1 + sp), c * (0.06 + 0.05 * sp) * (1 - k * 0.15));
+    }
+  }
+
+  // Joker: a party blower that unrolls with a toot, then curls back up.
+  function blower(t) {
+    const c = CELL, e = stayOut(t, 1.4), k = Math.min(1, t * 5);
+    ctx.translate(c * 0.4, 0); // (pops out of the mouth)
+    ctx.scale(k, k);
+    ctx.translate(-c * 0.4, 0);
+    const x = 0.46 + 0.5 * e, rr = 0.03 + 0.07 * (1 - e), sweep = 0.4 + 5 * (1 - e);
+    ctx.lineWidth = c * 0.1;
+    ctx.beginPath();
+    ctx.moveTo(c * 0.44, 0); ctx.lineTo(c * x, 0);
+    ctx.arc(c * x, -c * rr, c * rr, Math.PI / 2, Math.PI / 2 - sweep, true);
+    ctx.strokeStyle = '#a21caf';
+    ctx.stroke();
+    ctx.setLineDash([c * 0.05, c * 0.05]); // striped
+    ctx.strokeStyle = '#f59e0b';
+    ctx.stroke();
+    ctx.setLineDash(NO_DASH);
+    ctx.fillStyle = '#facc15'; // the mouthpiece
+    ctx.fillRect(c * 0.36, -c * 0.05, c * 0.1, c * 0.1);
+  }
+
+  // Copycat with no one to copy: a cat's blep, the tip of a pink tongue.
+  function blep(t) {
+    const c = CELL, e = stayOut(t, 2);
+    ctx.fillStyle = '#f472b6'; // (deeper than its pale head)
+    ctx.beginPath();
+    ctx.ellipse(c * (0.44 + 0.06 * e), 0, c * (0.03 + 0.05 * e), c * 0.075, 0, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = '#be185d';
+    ctx.lineWidth = c * 0.02;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(c * 0.44, 0); ctx.lineTo(c * (0.45 + 0.07 * e), 0);
+    ctx.stroke();
+  }
+
+  // Your face: white eyes whose pupils glance toward the nearest food, a
+  // mouth that opens for a bite, a blink now and then, and a forked tongue flick.
 
   function drawPlayerFace(s, a, now, blinking) {
     const c = CELL;
     const open = mouthOpen(s, a);
-    tongue(a, now, open, 1, true);
+    tongue(a, now, open, 'player', true);
     mouth(open, 0.44);
 
     if (blinking) return lids(0.11);
@@ -1097,8 +1415,8 @@ window.SnakeRender = (() => {
     const c = CELL;
     blinkNow = blinking;
     const open = mouthOpen(s, a);
-    const rate = TONGUE_RATE[look] ?? 1.2;
-    if (rate) tongue(a, lastNow, open, rate, look === 'gobbler');
+    const flicks = look === 'copycat' ? copiedLook(s) : look;
+    tongue(a, lastNow, open, flicks, flicks === 'gobbler', look !== 'sniper');
     switch (look) {
       case 'sniper': { // one eye squeezed shut (it never blinks on the job), the other behind a scope that swings onto its target
         ctx.strokeStyle = INK;
@@ -1131,6 +1449,7 @@ window.SnakeRender = (() => {
           ctx.fillStyle = '#ffffff';
           circle(c * 0.43, -c * 0.04, c * 0.03);
         }
+        if (flickP >= 0) laser(flickT, flickP, 0.49); // its tongue: the laser sight
         ctx.restore();
         break;
       }
