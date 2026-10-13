@@ -576,6 +576,7 @@ canvas {
 .toast[data-kind="wind"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #16a34a; }
 .toast[data-kind="rain"] { background: #e0ecff; color: #1e3a8a; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #3b82f6; }
 .toast[data-kind="storm"] { background: #2e1065; color: #ede9fe; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), inset 0 0 0 2px #a78bfa; }
+.toast[data-kind="snow"] { background: #f0f9ff; color: #0c4a6e; box-shadow: 0 0 18px rgba(186, 230, 253, 0.6), inset 0 0 0 2px #7dd3fc; }
 .toast[data-kind="fire"] { background: linear-gradient(180deg, #ffedd5, #fdba74); color: #7c2d12; box-shadow: 0 0 18px rgba(249, 115, 22, 0.55), inset 0 0 0 2px #ea580c; }
 .toast[data-kind="go"] { padding: 8px 24px; font-size: 1.3rem; background: var(--leaf); color: #fffbea; box-shadow: 0 4px 0 var(--leaf-dark), 0 8px 20px rgba(0, 0, 0, 0.45); }
 /* A head passing under the banner: it moves to the board's foot (or, if a

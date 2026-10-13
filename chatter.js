@@ -12,7 +12,7 @@ window.SnakeChatter = (() => {
       kill: ['Headshot.', 'Next.', 'Too slow, {who}.', 'One shot.'],
       golden: ['Bonus collected.'],
       caught: ['Moving target. Still a headshot.'],
-      weather: { wind: ['Adjusting for wind.'], storm: ['Thunder masks the shot.'] },
+      weather: { wind: ['Adjusting for wind.'], storm: ['Thunder masks the shot.'], snow: ['Cold barrel. Steady hands.'] },
       dies: ['Counter-sniped by {who}?', 'Should have relocated.', 'Impossible.'],
     },
     gobbler: {
@@ -26,7 +26,7 @@ window.SnakeChatter = (() => {
       caught: ['Crunchy! Legs and all.'],
       mushroom: ['Ugh, mushrooms. Gross.', 'I feel… smaller. I hate it.'],
       kill: ['Sorry, {who}. You were between me and lunch.', 'Oops. Is that meat?'],
-      weather: { wind: ['It’s raining apples! Best day ever!'], rain: ['Mushroom weather. Yuck.'], sun: ['Golden hour? Golden SNACKS!'] },
+      weather: { wind: ['It’s raining apples! Best day ever!'], rain: ['Mushroom weather. Yuck.'], sun: ['Golden hour? Golden SNACKS!'], snow: ['Winter? But what will I EAT?'] },
       dies: ['Tell my apples… I loved them.'],
     },
     ghost: {
@@ -35,7 +35,7 @@ window.SnakeChatter = (() => {
       idle: ['…', '……', '(silence)', 'boo.'],
       mushroom: ['smaller… better…'],
       kill: ['…sorry.'],
-      weather: { storm: ['…boom.'], rain: ['…drip.'] },
+      weather: { storm: ['…boom.'], rain: ['…drip.'], snow: ['…brr.'] },
       dies: ['…'],
     },
     sovereign: {
@@ -44,7 +44,7 @@ window.SnakeChatter = (() => {
       idle: ['Our lands are vast.', 'We are not amused.', 'This bark is royal bark.'],
       intruder: ['Trespasser! Guards! …We are the guards.', '{who}, you stand on royal bark!', 'Off our land, {who}!'],
       kill: ['Justice is served.', 'The Crown is merciful. Usually.'],
-      weather: { sun: ['The sun shines on our realm.'], storm: ['We do not approve of this weather.'], rain: ['Fetch the royal umbrella.'] },
+      weather: { sun: ['The sun shines on our realm.'], storm: ['We do not approve of this weather.'], rain: ['Fetch the royal umbrella.'], snow: ['Fetch the royal furs.'] },
       dies: ['The king is dead…', 'Long live… someone else.'],
     },
     colonist: {
@@ -54,7 +54,7 @@ window.SnakeChatter = (() => {
       flag: ['I claim this bark for the Crown!', 'Another colony! Splendid.', 'Mine now. Terribly sorry.'],
       intruder: ['Ahem. That’s a colony, {who}.', 'I say, that patch is spoken for.'],
       kill: ['Frightfully sorry, old chap.', 'Should have read the flag, {who}.'],
-      weather: { rain: ['Ah, proper weather at last.', 'Rain? Just like home.'], storm: ['Batten down the hatches!'], sun: ['The sun never sets on us, you know.'] },
+      weather: { rain: ['Ah, proper weather at last.', 'Rain? Just like home.'], storm: ['Batten down the hatches!'], sun: ['The sun never sets on us, you know.'], snow: ['Bracing! Simply bracing.'] },
       dies: ['Stiff upper lip…'],
     },
     drab: {
@@ -64,7 +64,7 @@ window.SnakeChatter = (() => {
       eat: ['Food.'],
       woodpecker: ['Oh. A bird.'],
       kill: ['Oh. Sorry, {who}.'],
-      weather: { rain: ['Rain. Great.'], sun: ['It’s sunny.'], wind: ['Windy.'], storm: ['Loud.'] },
+      weather: { rain: ['Rain. Great.'], sun: ['It’s sunny.'], wind: ['Windy.'], storm: ['Loud.'], snow: ['Cold.'] },
       dies: ['Well. That happened.'],
     },
     vulture: {
@@ -73,7 +73,7 @@ window.SnakeChatter = (() => {
       idle: ['Not long now…', 'You look tired, {who}.', 'I’ll wait.', 'Patience…'],
       death: ['Dinner!', 'Ooh, leftovers.', 'Rest in pieces, {who}.'],
       kill: ['I didn’t even have to try.'],
-      weather: { storm: ['Lightning. Something’s bound to cook.'], rain: ['Grim weather. Lovely.'] },
+      weather: { storm: ['Lightning. Something’s bound to cook.'], rain: ['Grim weather. Lovely.'], snow: ['Winter. The lean season. My season.'] },
       dies: ['Who’s… eating… whom…'],
     },
     mason: {
@@ -85,7 +85,7 @@ window.SnakeChatter = (() => {
       hungry: ['Panem! Panem et… panem!'],
       woodpecker: ['Picus horribilis!'],
       caught: ['Scarabaeus captus!'],
-      weather: { storm: ['Iuppiter iratus est!'], rain: ['Pluvia! Aquaeductus, ubi es?'], sun: ['Sol invictus!'], wind: ['Ventus maximus!'] },
+      weather: { storm: ['Iuppiter iratus est!'], rain: ['Pluvia! Aquaeductus, ubi es?'], sun: ['Sol invictus!'], wind: ['Ventus maximus!'], snow: ['Hiems venit!'] },
       dies: ['Et tu, {who}?', 'Alea iacta… estus.', 'Murus… meus… finis.'],
     },
     wildcard: {
@@ -97,7 +97,7 @@ window.SnakeChatter = (() => {
       golden: ['A golden apple. Very classy. Like me.'],
       mushroom: ['Fake food! Very unfair!'],
       kill: ['You’re fired, {who}!', 'Winning! So much winning.'],
-      weather: { sun: ['Beautiful weather. The best weather. Everyone says so.'], storm: ['Nobody knows more about lightning than me.'], wind: ['Tremendous wind. So many apples.'], rain: ['Fake rain!'] },
+      weather: { sun: ['Beautiful weather. The best weather. Everyone says so.'], storm: ['Nobody knows more about lightning than me.'], wind: ['Tremendous wind. So many apples.'], rain: ['Fake rain!'], snow: ['Global warming? Total hoax. Look at all this snow!'] },
       dies: ['Rigged! Totally rigged!'],
     },
     creeper: {
@@ -105,7 +105,7 @@ window.SnakeChatter = (() => {
       start: ['psst.'],
       idle: ['behind you.', 'don’t turn around, {who}.', 'hehehe.', 'nice tail, {who}.'],
       kill: ['hehe. gotcha.'],
-      weather: { storm: ['hehe. flickery.'], rain: ['drip drip.'] },
+      weather: { storm: ['hehe. flickery.'], rain: ['drip drip.'], snow: ['cold tail. still following.'] },
       dies: ['…aww.'],
     },
     metagamer: {
@@ -113,27 +113,28 @@ window.SnakeChatter = (() => {
       start: ['Analysing opponents…', 'I’ve watched the replays.'],
       idle: ['{who}: {label}. Noted.', 'Predictable.', 'Your eat rate is suboptimal, {who}.', 'Running the numbers…'],
       kill: ['As calculated.', 'Exactly as the model predicted.'],
-      weather: { storm: ['Strike probability: rising.'], rain: ['Mushroom density: up.'], sun: ['Golden apple odds: favourable.'], wind: ['Apple supply: increasing.'] },
+      weather: { storm: ['Strike probability: rising.'], rain: ['Mushroom density: up.'], sun: ['Golden apple odds: favourable.'], wind: ['Apple supply: increasing.'], snow: ['Food supply: down. Hunger rate: up.'] },
       dies: ['That… wasn’t in the data.'],
     },
     capricious: {
       hungry: ["Now I’m hungry! Out of nowhere!"],
       start: ['Ooh, what shall I be today?'],
+      // Taking up a mood, it does an impression (and can't help asking how it went).
       mood: {
-        sniper: ['I’m a sniper now! Pew pew!'],
-        gobbler: ['Ooh! I’m hungry now!'],
-        ghost: ['Leave me alone. I mean it.'],
-        mason: ['Let’s build something!'],
+        sniper: ['Taking position. …Ooh, I like being Sniper.', 'Headshot! …Is that how Sniper says it?'],
+        gobbler: ['FOOD. NOW. …Is Gobbler always this hungry?', 'Nom nom nom! I’m Gobbler now!'],
+        ghost: ['…', '…boo. …Am I doing Ghost right?'],
+        mason: ['Aedificamus! …Ooh, I speak Latin now!', 'Veni, vidi, aedificavi! …Did I say that right?'],
       },
       kill: ['Didn’t plan that. Love it.'],
-      weather: { sun: ['Sunshine! I love sunshine! Today.'], rain: ['Rain! I love rain! For now.'], storm: ['Storms are exciting! Or scary? Both!'], wind: ['Whee!'] },
+      weather: { sun: ['Sunshine! I love sunshine! Today.'], rain: ['Rain! I love rain! For now.'], storm: ['Storms are exciting! Or scary? Both!'], wind: ['Whee!'], snow: ['Snow! I love snow! For a bit.'] },
       dies: ['Changed my mind about living.'],
     },
     copycat: {
       start: ['同志们好！'],
       idle: ['为人民服务！', '团结就是力量！', '同志们，冲啊！', '五年计划，提前完成！'],
       kill: ['向前进！'],
-      weather: { storm: ['雷电交加，同志们小心！'], rain: ['下雨了，同志们！'] },
+      weather: { storm: ['雷电交加，同志们小心！'], rain: ['下雨了，同志们！'], snow: ['下雪了，同志们，节约粮食！'] },
       dies: ['同志们，再见……'],
     },
     desperado: {
@@ -145,8 +146,16 @@ window.SnakeChatter = (() => {
       woodpecker: ['Now we’re talking! Holes!'],
       beetle: ['Yeehaw, a critter hunt!'],
       caught: ['Lassoed it.'],
-      weather: { storm: ['Lightning? Now we’re talking!', 'Fire on the bark! Yeehaw!'], wind: ['Hold onto your hat!'], rain: ['Rain on the range.'] },
+      weather: { storm: ['Lightning? Now we’re talking!', 'Fire on the bark! Yeehaw!'], wind: ['Hold onto your hat!'], rain: ['Rain on the range.'], snow: ['Cold enough to freeze a cactus.'] },
       dies: ['What a ride…', 'Worth it.'],
+    },
+    mute: {
+      start: ['*waves silently*', '*takes a deep, silent bow*'],
+      idle: ['*pulls an invisible rope*', '*trapped in an invisible box*', '*leans on nothing*', '*walks against an invisible wind*', '*tips an invisible hat at {who}*', '*draws a box in the air around {who}*'],
+      kill: ['*mimes closing a lid on {who}*', '*plays a tiny invisible violin*'],
+      caught: ['*mimes a very big beetle*'],
+      weather: { rain: ['*opens an invisible umbrella*'], storm: ['*hides under an invisible table*'], wind: ['*leans into the wind*'], sun: ['*puts on invisible sunglasses*'], snow: ['*shivers, silently*'] },
+      dies: ['*mimes being squashed*', '*…*'],
     },
     joker: {
       hungry: ["Why did the snake cross the bark? It was starving."],
@@ -154,7 +163,7 @@ window.SnakeChatter = (() => {
       idle: ['Catch me if you can!', 'Why so slithery, {who}?', 'Follow me, it’s a shortcut!', 'Honk honk!'],
       kill: ['And for my next trick…', 'The joke’s on you, {who}!'],
       mushroom: ['Ooh, a funny mushroom!'],
-      weather: { rain: ['Singin’ in the rain!'], storm: ['Shocking!'], wind: ['Blow, wind, blow!'], sun: ['Sun’s out, puns out!'] },
+      weather: { rain: ['Singin’ in the rain!'], storm: ['Shocking!'], wind: ['Blow, wind, blow!'], sun: ['Sun’s out, puns out!'], snow: ['Snow joke!'] },
       dies: ['Tough crowd…'],
     },
   };
@@ -163,6 +172,46 @@ window.SnakeChatter = (() => {
   // The Metagamer's labels for how a snake plays, for Copycat's Chinese.
   const ZH_LABELS = { aggressive: '好斗', greedy: '贪吃', evasive: '爱躲', unclear: '看不透' };
   const ZH = {
+    "*waves silently*": "*默默挥手*",
+    "*takes a deep, silent bow*": "*深深地、无声地鞠躬*",
+    "*pulls an invisible rope*": "*拉一根看不见的绳子*",
+    "*trapped in an invisible box*": "*被困在看不见的盒子里*",
+    "*leans on nothing*": "*靠在空气上*",
+    "*walks against an invisible wind*": "*顶着看不见的风走*",
+    "*tips an invisible hat at {who}*": "*向{who}脱下看不见的帽子*",
+    "*draws a box in the air around {who}*": "*在{who}周围画一个看不见的盒子*",
+    "*mimes closing a lid on {who}*": "*比划着把{who}盖起来*",
+    "*plays a tiny invisible violin*": "*拉一把看不见的小提琴*",
+    "*mimes a very big beetle*": "*比划一只很大的甲虫*",
+    "*opens an invisible umbrella*": "*撑开一把看不见的伞*",
+    "*hides under an invisible table*": "*躲到看不见的桌子下*",
+    "*leans into the wind*": "*迎风倾身*",
+    "*puts on invisible sunglasses*": "*戴上看不见的墨镜*",
+    "*shivers, silently*": "*无声地发抖*",
+    "*mimes being squashed*": "*比划被压扁*",
+    "*…*": "*……*",
+    "Taking position. …Ooh, I like being Sniper.": "就位。……哦，我喜欢当狙击手。",
+    "Headshot! …Is that how Sniper says it?": "爆头！……狙击手是这么说的吗？",
+    "FOOD. NOW. …Is Gobbler always this hungry?": "食物。现在。……贪吃蛇一直这么饿吗？",
+    "Nom nom nom! I’m Gobbler now!": "吧唧吧唧！我现在是贪吃蛇！",
+    "…boo. …Am I doing Ghost right?": "……嘘。……我演鬼魂演得对吗？",
+    "…": "……",
+    "Aedificamus! …Ooh, I speak Latin now!": "我们建造！……哦，我现在会说拉丁语了！",
+    "Veni, vidi, aedificavi! …Did I say that right?": "我来，我见，我建！……我说对了吗？",
+    "Cold barrel. Steady hands.": "枪管冰冷。手要稳。",
+    "Winter? But what will I EAT?": "冬天？那我吃什么？",
+    "…brr.": "……好冷。",
+    "Fetch the royal furs.": "拿御用皮草来。",
+    "Bracing! Simply bracing.": "提神！真是提神！",
+    "Cold.": "冷。",
+    "Winter. The lean season. My season.": "冬天。饥荒的季节。我的季节。",
+    "Hiems venit!": "冬天来了！",
+    "Global warming? Total hoax. Look at all this snow!": "全球变暖？纯属骗局。看看这么多雪！",
+    "cold tail. still following.": "尾巴好冷。还在跟着。",
+    "Food supply: down. Hunger rate: up.": "食物供应：下降。饥饿速度：上升。",
+    "Snow! I love snow! For a bit.": "下雪！我爱下雪！爱一会儿。",
+    "Cold enough to freeze a cactus.": "冷得能冻住仙人掌。",
+    "Snow joke!": "这可不是开玩笑！",
     "Adjusting for wind.": "修正风偏。",
     "Thunder masks the shot.": "雷声掩护枪声。",
     "It’s raining apples! Best day ever!": "天上掉苹果啦！最棒的一天！",
@@ -492,8 +541,11 @@ window.SnakeChatter = (() => {
   // last words prefer them ("Et tu, Sniper?").
   function say(s, key, who, urgent = false) {
     if (!enabled || !s.persona) return;
-    const voice = VOICES[s.personaKey];
-    const lines = key.includes('.') ? key.split('.').reduce((o, k) => o?.[k], voice) : voice?.[key];
+    const find = v => key.includes('.') ? key.split('.').reduce((o, k) => o?.[k], v) : v?.[key];
+    // (Capricious in a mood plays the part: the mood's own lines, where it has some.)
+    const acting = s.personaKey === 'capricious' && s.memory.mood && !key.startsWith('mood') && find(VOICES[s.memory.mood])?.length;
+    const voice = VOICES[acting ? s.memory.mood : s.personaKey];
+    const lines = find(voice);
     if (!lines?.length) return;
     const naming = lines.filter(l => l.includes('{who}'));
     const plain = lines.filter(l => !l.includes('{who}'));

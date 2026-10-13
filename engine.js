@@ -24,7 +24,7 @@ window.SnakeEngine = (() => {
   const key = (x, y) => y * GRID + x;
   const inside = (x, y) => x >= 0 && y >= 0 && x < GRID && y < GRID;
   const between = (a, b) => a + Math.random() * (b - a);
-  const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm'];
+  const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm', 'snow'];
 
   function makeSnake(id, spawn, props) {
     const d = spawn.dir;
@@ -141,12 +141,13 @@ window.SnakeEngine = (() => {
     }
 
     const place = placer(game);
-    const raining = game.weather.kind === 'rain';
-    for (; apples < T.APPLES; apples++) place({ kind: 'food' });
+    const raining = game.weather.kind === 'rain', winter = game.weather.kind === 'snow';
+    // (Winter: fewer apples, no new mushrooms.)
+    for (; apples < (winter ? T.SNOW_APPLES : T.APPLES); apples++) place({ kind: 'food' });
     // (Rain: more mushrooms sprout.)
-    for (; mushrooms < T.MUSHROOMS + (raining ? T.RAIN_MUSHROOMS : 0); mushrooms++) place({ kind: 'mushroom', expires: game.tick + T.MUSHROOM_TICKS });
-    // (Sun: golden hour.)
-    const goldenChance = T.GOLDEN_CHANCE * (game.weather.kind === 'sun' ? T.SUN_GOLDEN : 1);
+    for (; !winter && mushrooms < T.MUSHROOMS + (raining ? T.RAIN_MUSHROOMS : 0); mushrooms++) place({ kind: 'mushroom', expires: game.tick + T.MUSHROOM_TICKS });
+    // (Sun: golden hour. Winter: hardly any.)
+    const goldenChance = T.GOLDEN_CHANCE * (game.weather.kind === 'sun' ? T.SUN_GOLDEN : winter ? 0.2 : 1);
     if (!golden && Math.random() < goldenChance && place({ kind: 'golden', expires: game.tick + T.GOLDEN_TICKS })) {
       const g = game.food[game.food.length - 1];
       game.events.push({ type: 'spawn', kind: 'golden', x: g.x, y: g.y });
@@ -302,10 +303,12 @@ window.SnakeEngine = (() => {
   // ------------------------------------------------------------- weather
 
   // Spells of weather, one after another with clear spells between: sun
-  // (golden hour), wind (gusts knock apples loose), rain (mushrooms sprout,
-  // fires go out; a rainbow when it stops, with a golden apple at its end)
-  // and storms (lightning, which crackles where it'll strike first, never
-  // near a head, and sets the bark alight). Everyone sees all of it.
+  // (golden hour), wind (gusts knock apples loose; fire flings burning
+  // leaves downwind), rain (mushrooms sprout, fires go out; a rainbow when it
+  // stops, with a golden apple at its end), storms (lightning, which crackles
+  // where it'll strike first, never near a head, and sets the bark alight)
+  // and snow (winter: less food, hunger runs faster, fires go out).
+  // Everyone sees all of it.
   function weather(game) {
     const w = game.weather;
     // (Once the woodpecker is here, the sky clears and stays clear.)
@@ -330,6 +333,11 @@ window.SnakeEngine = (() => {
     if (now.kind === 'storm' && game.time >= now.nextStrike) {
       now.nextStrike = game.time + between(T.STRIKE_MIN_MS, T.STRIKE_MAX_MS);
       strike(game);
+    }
+    // Winter: hunger runs faster (the clock to everyone's next meal runs down quicker).
+    if (now.kind === 'snow') {
+      const extra = tickMs(game) * (T.SNOW_HUNGER - 1);
+      for (const s of game.snakes) if (s.alive) { s.lastAte -= extra; s.nextStarve -= extra; }
     }
     burn(game);
   }
@@ -374,7 +382,8 @@ window.SnakeEngine = (() => {
   // game.tick + 1, when anything that's burning by then can kill.)
   function burn(game) {
     if (!game.fires.size) return;
-    const next = game.tick + 1, raining = game.weather.kind === 'rain';
+    const next = game.tick + 1, raining = game.weather.kind === 'rain' || game.weather.kind === 'snow'; // (rain or snow: it goes out)
+    const windy = game.weather.kind === 'wind' || game.weather.kind === 'storm';
     let marked = false;
     for (const [k, f] of game.fires) {
       if (raining) f.until = Math.min(f.until, Math.max(f.from, next) + T.RAIN_DOUSE_TICKS);
@@ -385,7 +394,9 @@ window.SnakeEngine = (() => {
         continue;
       }
       if (f.strike && f.from === next) game.events.push({ type: 'strike', x: k % GRID, y: Math.floor(k / GRID) });
-      if (raining || game.tick < f.from || Math.random() >= T.FIRE_SPREAD || (game.fireGroups.get(f.group) || 0) >= T.FIRE_MAX || game.fires.size >= T.FIRE_BOARD_MAX) continue;
+      // Wind: a burning leaf blown downwind (to the right), to start a small fire where it lands.
+      if (windy && !raining && !f.ember && game.tick >= f.from && game.fires.size < T.FIRE_BOARD_MAX && Math.random() < T.EMBER_CHANCE) ember(game, k);
+      if (f.ember || raining || game.tick < f.from || Math.random() >= T.FIRE_SPREAD || (game.fireGroups.get(f.group) || 0) >= T.FIRE_MAX || game.fires.size >= T.FIRE_BOARD_MAX) continue;
       if (!marked) {
         markBodies(game);
         for (const fo of game.food) bodyStamp[key(fo.x, fo.y)] = stamp;
@@ -399,6 +410,21 @@ window.SnakeEngine = (() => {
       game.fireGroups.set(f.group, (game.fireGroups.get(f.group) || 0) + 1);
     }
   }
+  // A burning leaf flung from cell k, landing 2 to EMBER_REACH cells downwind
+  // (a cell either side, perhaps) on a free cell, never by a head: it smoulders
+  // there first, longer than spreading fire does, then burns briefly, small.
+  function ember(game, k) {
+    markBodies(game);
+    for (const fo of game.food) bodyStamp[key(fo.x, fo.y)] = stamp;
+    const x = k % GRID, y = Math.floor(k / GRID);
+    const nx = x + 2 + Math.floor(Math.random() * (T.EMBER_REACH - 1)), ny = y + Math.floor(Math.random() * 3) - 1, nk = key(nx, ny);
+    if (!inside(nx, ny) || bodyStamp[nk] === stamp || game.holes.has(nk) || game.fires.has(nk) || burrowAt(game, nx, ny) || headGap(game, nx, ny) <= 1) return;
+    const from = game.tick + 1 + T.EMBER_SMOLDER_TICKS, group = ++game.fireGroup;
+    game.fires.set(nk, { from, until: from + T.EMBER_FIRE_TICKS, group, strike: false, ember: true });
+    game.fireGroups.set(group, 1);
+    game.events.push({ type: 'ember', x: nx, y: ny, fx: x, fy: y });
+  }
+
   // Is cell k burning on this tick (and so deadly)?
   const burning = (game, k) => { const f = game.fires.get(k); return !!f && game.tick >= f.from && game.tick < f.until; };
 
@@ -544,7 +570,7 @@ window.SnakeEngine = (() => {
   // | { type: 'flown', x, y } (a beetle got away)
   // | { type: 'burrow', x, y } (one cracked open) | { type: 'dive', x, y } | { type: 'emerge', x, y } (a beetle went down one, came out of one)
   // | { type: 'weather', kind } | { type: 'gust', x, y } (x -1 if no apple fell) | { type: 'charge', x, y } (lightning on its way)
-  // | { type: 'strike', x, y } | { type: 'rainbow', x, y } (and a golden apple there)
+  // | { type: 'strike', x, y } | { type: 'rainbow', x, y } (and a golden apple there) | { type: 'ember', x, y, fx, fy } (a burning leaf blown)
   function step(game) {
     game.events = [];
 

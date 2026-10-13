@@ -177,6 +177,48 @@ const K = (x, y) => y * T.GRID + x;
   check('the sky clears for the woodpecker', g.weather.kind === 'clear', g.weather.kind);
 }
 
+{ // Winter: snow puts fire out, there's less food, and hunger runs faster.
+  const g = E.createGame({ withPlayer: false });
+  g.fires.set(K(1, 1), { from: 0, until: 500, group: 1, strike: true });
+  g.weather = { kind: 'snow', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 };
+  g.food = g.food.filter(f => f.kind !== 'food');
+  const before = g.snakes.map(s => E.hungerLeft(g, s));
+  for (let t = 0; t < 10; t++) E.step(g);
+  // (Measured on a snake that ate nothing meanwhile: a bite resets the clock.)
+  const s = g.snakes.find(o => o.ateTick < 0) || g.snakes[0];
+  const ran = before[g.snakes.indexOf(s)] - E.hungerLeft(g, s);
+  check('snow puts fire out', !g.fires.has(K(1, 1)));
+  check('winter brings fewer apples', g.food.filter(f => f.kind === 'food').length <= T.SNOW_APPLES, g.food.filter(f => f.kind === 'food').length + ' apples');
+  check('hunger runs faster in winter', !s.alive || ran > g.time * 1.3 * (10 / 11), `${Math.round(ran)} ms of hunger in ${Math.round(g.time)} ms`);
+}
+
+{ // Wind blows burning leaves downwind; they smoulder first, then burn small, and don't spread.
+  let embers = 0, upwind = 0, early = 0, spread = 0;
+  for (let r = 0; r < 40; r++) {
+    const g = board([[[[2, 2], [1, 2], [0, 2]], 'right'], [[[2, 20], [1, 20], [0, 20]], 'right']]);
+    g.weather = { kind: 'wind', since: 0, until: 1e9, nextGust: 1e9, nextStrike: 0 };
+    g.fires.set(K(8, 10), { from: 0, until: 400, group: 1, strike: false });
+    g.fireGroups.set(1, 1);
+    g.fireGroup = 1; // (its own group: leaves start their own)
+    for (let t = 0; t < 120; t++) {
+      for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; s.body = s.body.slice(0, 3); }
+      E.step(g);
+      for (const e of g.events) {
+        if (e.type !== 'ember') continue;
+        embers++;
+        if (e.x <= e.fx + 1) upwind++;
+        const f = g.fires.get(K(e.x, e.y));
+        if (!f || f.from - g.tick < T.EMBER_SMOLDER_TICKS) early++;
+      }
+      for (const f of g.fires.values()) if (f.ember && (g.fireGroups.get(f.group) || 0) > 1) spread++;
+    }
+  }
+  check('wind blows burning leaves', embers > 5, `${embers} leaves`);
+  check('...downwind', upwind === 0, `${upwind} upwind`);
+  check('...that smoulder first', early === 0, `${early} without warning`);
+  check('...and burn small, without spreading', spread === 0, `${spread} spread`);
+}
+
 { // A scared beetle on a burrow dives in and comes out of a burrow a while later; food never sits on a burrow.
   const g = board([[[[10, 5], [9, 5], [8, 5]], 'right'], [[[20, 20], [19, 20], [18, 20]], 'left']]);
   g.burrows = [{ x: 12, y: 6, at: 0 }, { x: 2, y: 20, at: 0 }];

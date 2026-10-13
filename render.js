@@ -189,6 +189,91 @@ window.SnakeRender = (() => {
     }
     return s;
   }
+  // Snow settling on the bark: soft white drifts (a small soft layer, stretched
+  // over the board, like the canopy's shadows), whiter the longer it snows.
+  let drifts = null;
+  function buildDrifts() {
+    const n = 256, d = makeLayer(n, n), g = d.getContext('2d');
+    let seed = barkSeed * 13 + 5;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    g.fillStyle = 'rgba(240,248,255,0.35)';
+    g.fillRect(0, 0, n, n);
+    for (let i = 0; i < 70; i++) {
+      const x = rnd() * n, y = rnd() * n, r = 6 + rnd() * 18;
+      const grad = g.createRadialGradient(x, y, 0, x, y, r);
+      grad.addColorStop(0, 'rgba(255,255,255,0.75)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = grad;
+      g.beginPath(); g.ellipse(x, y, r * 1.6, r, rnd() * 0.6 - 0.3, 0, TAU); g.fill();
+    }
+    return d;
+  }
+  function drawSnowCover() {
+    if (snowCover < 0.02) return;
+    if (!drifts) drifts = buildDrifts();
+    ctx.globalAlpha = 0.62 * snowCover;
+    ctx.drawImage(drifts, 0, 0, SIZE, SIZE);
+    ctx.globalAlpha = 1;
+  }
+
+  // Falling snow: a seamless sheet of flakes, drifting down and swaying, in two layers.
+  let snowTile = null;
+  function buildSnowTile() {
+    const n = RAIN_TILE, t = makeLayer(n * k, n * k), g = t.getContext('2d');
+    g.scale(k, k);
+    let seed = 77;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 70; i++) {
+      const x = rnd() * n, y = rnd() * n, r = 1.4 + rnd() * 2.6;
+      g.fillStyle = `rgba(255,255,255,${0.55 + rnd() * 0.4})`;
+      for (const dx of [0, -n, n]) for (const dy of [0, -n, n]) { g.beginPath(); g.arc(x + dx, y + dy, r, 0, TAU); g.fill(); }
+    }
+    return t;
+  }
+  function drawSnow(now) {
+    if (sky.snow < 0.02 || reduced) return;
+    if (!snowTile) snowTile = buildSnowTile();
+    const n = RAIN_TILE;
+    for (const [speed, alpha, sway] of quality === 2 ? SNOW_LAYERS : SNOW_LAYER) {
+      const oy = (now * speed) % n, ox = (Math.sin(now / 1700 * speed * 4) * 30 + now * speed * 0.15) % n;
+      ctx.globalAlpha = sky.snow * alpha;
+      for (let y = oy - n; y < SIZE; y += n) for (let x = ox - n; x < SIZE; x += n) ctx.drawImage(snowTile, x, y, n * sway, n * sway);
+    }
+    ctx.globalAlpha = 1;
+  }
+  const SNOW_LAYERS = [[0.06, 1, 1], [0.1, 0.7, 1]], SNOW_LAYER = [[0.06, 1, 1]];
+
+  // In the cold, every snake's breath shows: a little puff now and then.
+  const breathAt = new WeakMap();
+  function breathe(now) {
+    if (reduced) return;
+    for (const s of game.snakes) {
+      if (!s.alive || now < (breathAt.get(s) || 0)) continue;
+      breathAt.set(s, now + 1100 + Math.random() * 900);
+      const h = s.body[0], x = h.x * CELL + CELL / 2 + s.dir.x * CELL * 0.55, y = h.y * CELL + CELL / 2 + s.dir.y * CELL * 0.55;
+      for (let i = 0; i < 2; i++) mote(x, y, s.dir.x * 14 + (Math.random() - 0.5) * 6, s.dir.y * 14 - 6, 900, 3 + Math.random() * 2, 0);
+    }
+  }
+
+  // Burning leaves blown downwind: each arcs from its fire to where it lands,
+  // spinning, trailing sparks.
+  function drawEmbers(now) {
+    for (let i = embers.length - 1; i >= 0; i--) {
+      const e = embers[i], t = (now - e.at) / 650;
+      if (t >= 1) { embers.splice(i, 1); continue; }
+      const x0 = e.fx * CELL + CELL / 2, y0 = e.fy * CELL + CELL / 2, x1 = e.x * CELL + CELL / 2, y1 = e.y * CELL + CELL / 2;
+      const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t - Math.sin(t * Math.PI) * CELL * 1.6;
+      const w = SPRITE * CELL * 0.9;
+      ctx.drawImage(fireGlowSprite(), x - w / 2, y - w / 2, w, w);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(t * 9);
+      ctx.drawImage(leafSprite('#ea580c'), -SPRITE * CELL / 2, -SPRITE * CELL / 2, SPRITE * CELL, SPRITE * CELL);
+      ctx.restore();
+      if (!reduced && Math.random() < 0.5) mote(x, y, (Math.random() - 0.5) * 20, -10 - Math.random() * 20, 450, 1.4, 3);
+    }
+  }
+
   function drawCanopy(now) {
     if (quality < 2) return;
     if (!shadeLayer) shadeLayer = buildShade();
@@ -701,7 +786,7 @@ window.SnakeRender = (() => {
     switch (look) {
       case 'player': case 'gobbler': return nearest(s, 'food');
       case 'drab': return nearest(s, 'food'); // a lazy look at lunch
-      case 'sniper': case 'sovereign': return headOf(m.victimId) || nearest(s, 'head');
+      case 'sniper': case 'sovereign': case 'mute': return headOf(m.victimId) || nearest(s, 'head');
       case 'colonist': return headOf(m.victimId) || m.site || nearest(s, 'head');
       case 'vulture': return headOf(m.lureId) || nearest(s, 'head');
       case 'copycat': return headOf(m.modelId) || nearest(s, 'head');
@@ -801,14 +886,21 @@ window.SnakeRender = (() => {
     return l;
   }
 
+  // Wildcard's segments: a tan face, a white collar, then a blue field of
+  // stars (two segments) and red and white stripes from there on.
+  const WILD = i => i === 0 ? '#f59a52' : i === 1 ? '#f8fafc' : i < 4 ? '#3c3b6e' : i % 2 ? '#b22234' : '#f8fafc';
+
   // Every segment's fill: the look's pattern, fading toward the bark at the tail.
   function fillsOf(s, a, now) {
     const { look, color, n, fills } = a;
-    if (s.personaKey === 'wildcard') { // a rainbow body, but an orange tan and a white collar up front
+    if (s.personaKey === 'wildcard') { // the Stars and Stripes, behind an orange tan and a white collar
+      for (let i = 0; i < n; i++) fills[i] = WILD(i);
+      return;
+    }
+    if (look === 'mute') { // a rainbow that runs down the body, behind a white greasepaint face
       const t0 = reduced ? 0 : Math.floor(now / 15);
       for (let i = 0; i < n; i++) fills[i] = HUES[(t0 + i * 28) % 360];
-      fills[0] = '#f59a52';
-      if (n > 1) fills[1] = '#f8fafc';
+      fills[0] = '#f8fafc';
       return;
     }
     if (look === 'joker') {
@@ -1032,7 +1124,11 @@ window.SnakeRender = (() => {
         }
       }
     }
-    if (s.personaKey === 'wildcard' && n > 2) drawTie(a);
+    if (s.personaKey === 'wildcard' && n > 2) {
+      ctx.fillStyle = '#ffffff'; // stars on the blue
+      for (let i = 2; i < Math.min(4, n); i++) for (const [dx, dy] of STARS) star(pts[2 * i] + dx * rad[i], pts[2 * i + 1] + dy * rad[i], rad[i] * 0.2);
+      drawTie(a);
+    }
     if (look === 'mason') { // Caesar in marble: grey veins wandering across every segment, now and then a gold one
       ctx.lineCap = 'round';
       for (let gold = 0; gold < 2; gold++) {
@@ -1133,6 +1229,16 @@ window.SnakeRender = (() => {
     };
     arc(a, a + 2.6, 0.35 * f, 0.85);
     arc(a + 3.6, a + 4.7, -0.5 * f, 0.7);
+  }
+
+  const STARS = [[-0.45, -0.45], [0.45, -0.45], [0, 0], [-0.45, 0.45], [0.45, 0.45]];
+  function star(x, y, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r;
+      if (i) ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); else ctx.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    ctx.fill();
   }
 
   // Wildcard's long red tie: knotted under the chin, down over the collar and
@@ -1276,7 +1382,7 @@ window.SnakeRender = (() => {
     creeper: [0.8, 1.5, slither], drab: [1.8, 1.6, limp], gobbler: [0.6, 1.4, lick], ghost: [1.8, 1.8, wisp],
     sniper: [1.2, 1.5, laser], sovereign: [1.6, 2.4, carpet], colonist: [1.4, 2.2, telescope], vulture: [1.6, 3, bone],
     mason: [1.4, 2.4, papyrus], metagamer: [1.4, 2, keyboard], wildcard: [1.2, 2, bill], desperado: [1.1, 2, revolver],
-    joker: [1, 2.2, blower], copycat: [1.2, 1.4, blep],
+    joker: [1, 2.2, blower], copycat: [1.2, 1.4, blep], mute: [1.1, 2.2, glove],
   };
   let flickP = -1, flickT = 0; // the flick being drawn: how far through it is (or -1), and how far out (0..1..0)
 
@@ -1598,6 +1704,28 @@ window.SnakeRender = (() => {
     ctx.setLineDash(NO_DASH);
     ctx.fillStyle = '#facc15'; // the mouthpiece
     ctx.fillRect(c * 0.36, -c * 0.05, c * 0.1, c * 0.1);
+  }
+
+  // Mute: a white mime's glove, popping out to wave hello.
+  function glove(t, p) {
+    const c = CELL, e = stayOut(t, 2);
+    ctx.translate(c * (0.42 + 0.22 * e), 0);
+    ctx.rotate(Math.sin(p * TAU * 2) * 0.5); // waving
+    ctx.scale(e, e);
+    ctx.fillStyle = '#f8fafc';
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = c * 0.025;
+    ctx.beginPath(); // the palm and cuff...
+    ctx.ellipse(c * 0.06, 0, c * 0.11, c * 0.12, 0, 0, TAU);
+    ctx.fill(); ctx.stroke();
+    for (let i = 0; i < 4; i++) { // ...four fingers, spread...
+      const a = -0.75 + i * 0.5;
+      ctx.beginPath(); ctx.ellipse(c * (0.06 + Math.cos(a) * 0.17), c * Math.sin(a) * 0.17, c * 0.08, c * 0.035, a, 0, TAU);
+      ctx.fill(); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.ellipse(c * 0.02, -c * 0.14, c * 0.07, c * 0.03, -1.4, 0, TAU); ctx.fill(); ctx.stroke(); // ...and a thumb
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(-c * 0.1, -c * 0.07, c * 0.05, c * 0.14);
   }
 
   // Copycat with no one to copy: a cat's blep, the tip of a pink tongue.
@@ -2026,6 +2154,29 @@ window.SnakeRender = (() => {
         lookingEyes(0.06, 0.2, 0.2);
         break;
       }
+      case 'mute': { // a mime: white greasepaint, a black beret, high arched brows, a painted tear, small dark lips
+        ctx.fillStyle = '#18181b'; // the beret, on the back of the head, with its little stalk
+        ctx.beginPath(); ctx.ellipse(-c * 0.27, 0, c * 0.19, c * 0.3, 0, 0, TAU); ctx.fill();
+        ctx.strokeStyle = '#18181b';
+        ctx.lineWidth = c * 0.05;
+        ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(-c * 0.44, 0); ctx.lineTo(-c * 0.52, -c * 0.06); ctx.stroke();
+        if (!open || open < 0.08) { // the lips: a small dark bow
+          ctx.fillStyle = '#7f1d1d';
+          ctx.beginPath(); ctx.ellipse(c * 0.4, 0, c * 0.035, c * 0.08, 0, 0, TAU); ctx.fill();
+        } else mouth(open);
+        lookingEyes(0.055);
+        if (!blinking) { // brows arched high (always surprised), and a tear under one eye
+          ctx.strokeStyle = INK;
+          ctx.lineWidth = c * 0.035;
+          ctx.beginPath();
+          for (const sg of [-1, 1]) { ctx.moveTo(c * 0.05, sg * c * 0.3); ctx.quadraticCurveTo(-c * 0.04, sg * c * 0.2, c * 0.04, sg * c * 0.1); }
+          ctx.stroke();
+        }
+        ctx.fillStyle = INK;
+        ctx.beginPath(); ctx.moveTo(c * 0.27, c * 0.2); ctx.quadraticCurveTo(c * 0.33, c * 0.24, c * 0.3, c * 0.27); ctx.quadraticCurveTo(c * 0.27, c * 0.24, c * 0.27, c * 0.2); ctx.fill();
+        break;
+      }
       case 'joker': // jester hat with bells, harlequin diamonds round its eyes, a clown's red grin and nose, eyes on its mark
         poly(JESTER, -1, '#a21caf');
         poly(JESTER, 1, '#f59e0b');
@@ -2216,7 +2367,8 @@ window.SnakeRender = (() => {
   function beadOf(s, i) {
     const look = lookOf(s), col = colorOf(s);
     let fill = col[0] === '#' ? col : '#a16207', mark = '';
-    if (s.personaKey === 'wildcard') fill = i === 0 ? '#f59a52' : i === 1 ? '#f8fafc' : HUES[(i * 28) % 360];
+    if (s.personaKey === 'wildcard') fill = WILD(i);
+    else if (look === 'mute') fill = i === 0 ? '#f8fafc' : HUES[(i * 28) % 360];
     else if (look === 'joker') fill = i === 0 ? '#f8fafc' : i % 2 ? '#f59e0b' : '#a21caf';
     else if (look === 'sniper' && i % 3 === 2) fill = mix(fill, '#fca5a5', 0.35);
     else if (look === 'vulture' && i < 2) fill = i ? '#f5f5f4' : '#f9a8d4';
@@ -2498,7 +2650,9 @@ window.SnakeRender = (() => {
   // How much of each kind of weather is showing (eased, so spells come and go
   // gradually), the fire as last seen (to know when a cell burns out and
   // leaves a scorch mark), a lightning bolt, a rainbow.
-  const sky = { sun: 0, wind: 0, rain: 0, storm: 0 };
+  const sky = { sun: 0, wind: 0, rain: 0, storm: 0, snow: 0 };
+  let snowCover = 0; // how white the bark has gone (it settles slowly, and melts slowly)
+  const embers = []; // burning leaves in the air: { fx, fy, x, y, at }
   const fireSeen = new Map(); // cell -> it was burning
   const scorched = [];        // cells that burned (baked into the static layer)
   let scorchDrawn = 0, fireTick = -1;
@@ -2508,6 +2662,7 @@ window.SnakeRender = (() => {
     const kind = game.weather?.kind || 'clear';
     const step = Math.min(1, dt / 1400);
     for (const k in sky) sky[k] += ((k === kind ? 1 : 0) - sky[k]) * step;
+    snowCover += ((kind === 'snow' ? 1 : 0) - snowCover) * Math.min(1, dt / (kind === 'snow' ? 7000 : 9000));
   }
 
   // Where the fire was and is: cells that burned out leave a scorch (and a puff of smoke).
@@ -2627,6 +2782,12 @@ window.SnakeRender = (() => {
   // everything; a lightning bolt and its flash; a rainbow after the rain.
   function drawSkyTint() {
     const sun = sky.sun, rain = sky.rain, storm = sky.storm;
+    if (sky.snow > 0.01) { // winter's cold blue light
+      ctx.globalAlpha = 0.14 * sky.snow;
+      ctx.fillStyle = '#bfdbfe';
+      ctx.fillRect(0, 0, SIZE, SIZE);
+      ctx.globalAlpha = 1;
+    }
     if (sun > 0.01) {
       ctx.globalAlpha = 0.16 * sun;
       ctx.drawImage(sunSprite(), -SIZE * 0.2, -SIZE * 0.2, SIZE * 1.2, SIZE * 1.2);
@@ -2959,6 +3120,7 @@ window.SnakeRender = (() => {
 
 
     drawBurrows(now);
+    drawSnowCover();
     drawLeaves(now, dt);
     drawFood(alpha, now);
     drawDive(now);
@@ -2970,6 +3132,9 @@ window.SnakeRender = (() => {
     drawSnakes(alpha, now);
     drawTarget(alpha, now);
     drawRain(now);
+    drawSnow(now);
+    drawEmbers(now);
+    if (sky.snow > 0.5) breathe(now);
     drawBolt(now);
     drawMotes(dt);
     drawParticles(dt);
@@ -3033,6 +3198,8 @@ window.SnakeRender = (() => {
         bolt = { pts, at: now };
         flashAt = now;
         if (!reduced) { shake(3); spawn(x, y, 14, 260, 520, 2.6, '#fde047', '#f5f3ff'); }
+      } else if (e.type === 'ember') {
+        embers.push({ fx: e.fx, fy: e.fy, x: e.x, y: e.y, at: now });
       } else if (e.type === 'rainbow') {
         rainbow = { x: e.x, y: e.y, at: now };
       } else if (e.type === 'flown') { // a beetle nobody caught takes off
@@ -3159,6 +3326,7 @@ window.SnakeRender = (() => {
     k = target / SIZE;
     barkLayer = null;
     rainTile = null;
+    snowTile = null;
     sprites.clear();
     resetStatic();
     syncHoles();
@@ -3204,6 +3372,9 @@ window.SnakeRender = (() => {
     bolt = null; rainbow = null; dive = null; flashAt = -1e9;
     bird.placed = false; bird.arrivedAt = -1e9;
     for (const k in sky) sky[k] = 0;
+    snowCover = 0;
+    embers.length = 0;
+    drifts = null;
     // A different stretch of the tree each round.
     barkSeed = 1 + Math.floor(Math.random() * 2147483645);
     barkLayer = null;

@@ -139,7 +139,7 @@ window.SnakeAI = (() => {
       },
     },
     wildcard: {
-      name: 'Wildcard', color: '#f472b6', look: 'wildcard', driver: 'wildcard',
+      name: 'Wildcard', color: '#b22234', look: 'wildcard', driver: 'wildcard', // (red, white and blue)
       blurb: 'A random mix of habits, new every round. Great hair.',
       kill: 'Nobody knows how, least of all Wildcard.',
       win: 'Tremendous. Nobody wins like this.',
@@ -186,6 +186,18 @@ window.SnakeAI = (() => {
         space: 1, territory: 0.6,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, mushroom: 0.5,
         margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25,
+      },
+    },
+    mute: {
+      name: 'Mute', color: '#a855f7', look: 'mute', driver: 'sniper', // (a rainbow; violet stands in for it in text)
+      blurb: 'A mime. Picks someone and closes an invisible box around them. Never says a word.',
+      kill: 'Mute boxed you in. Without a word.',
+      win: '*takes a silent bow*',
+      w: {
+        space: 1.2, territory: 2, aggression: 0.8,
+        food: 4, eat: 70, pellet: 1.2, foodRange: 40,
+        margin: 6, headRisk: 700, zoneRisk: 120,
+        hunt: { squeeze: 4, chase: 2, lead: 1 },
       },
     },
     joker: {

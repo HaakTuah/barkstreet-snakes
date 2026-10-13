@@ -26,7 +26,7 @@ window.SnakeOnline = (() => {
   const CODE_LENGTH = 5;
   const DIR_NAMES = ['up', 'down', 'left', 'right'];
   const KINDS = ['food', 'golden', 'mushroom', 'pellet', 'beetle'];
-  const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm']; // (the engine's order)
+  const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm', 'snow']; // (the engine's order)
   // Events that only say where something happened.
   const AT = ['burrow', 'dive', 'emerge', 'gust', 'charge', 'strike', 'rainbow', 'aim'];
 
@@ -74,7 +74,7 @@ window.SnakeOnline = (() => {
       w: game.woodpecker ? [game.woodpecker.x, game.woodpecker.y, game.woodpecker.at, game.woodpecker.target, game.woodpecker.strikeAt, game.woodpecker.last, game.woodpecker.struckAt, game.woodpecker.restUntil] : 0,
       // Burrows, fire (cell, burning from, until, struck by lightning, which fire), the weather.
       bu: game.burrows.map(b => [b.x, b.y, b.at]),
-      fi: [...game.fires].map(([k, f]) => [k, f.from, f.until, f.strike ? 1 : 0, f.group]),
+      fi: [...game.fires].map(([k, f]) => [k, f.from, f.until, f.strike ? 1 : f.ember ? 2 : 0, f.group]),
       sky: [WEATHER.indexOf(game.weather.kind), game.weather.since, game.weather.until],
       e: game.events.map(encodeEvent).filter(Boolean),
     };
@@ -97,6 +97,7 @@ window.SnakeOnline = (() => {
       case 'starving': return ['starving', e.snake.id];
       case 'spawn': return ['spawn', e.kind, e.x ?? -1, e.y ?? -1];
       case 'weather': return ['weather', WEATHER.indexOf(e.kind)];
+      case 'ember': return ['ember', e.x, e.y, e.fx, e.fy];
       case 'woodpecker': return ['woodpecker'];
       case 'peck': return ['peck', e.x, e.y, e.cells || []];
       case 'flown': return ['flown', e.x, e.y];
@@ -153,7 +154,7 @@ window.SnakeOnline = (() => {
     const num = v => Number.isFinite(v);
     game.burrows = (Array.isArray(msg.bu) ? msg.bu : []).filter(b => Array.isArray(b) && b.every(num)).map(([x, y, at]) => ({ x, y, at }));
     game.fires = new Map((Array.isArray(msg.fi) ? msg.fi : []).filter(f => Array.isArray(f) && f.every(num))
-      .map(([k, from, until, strike, group]) => [k, { from, until, strike: !!strike, group }]));
+      .map(([k, from, until, strike, group]) => [k, strike === 2 ? { from, until, group, strike: false, ember: true } : { from, until, strike: !!strike, group }]));
     if (Array.isArray(msg.sky) && msg.sky.every(num)) game.weather = { kind: WEATHER[msg.sky[0]] || 'clear', since: msg.sky[1], until: msg.sky[2] };
 
     const dying = [];
@@ -168,6 +169,7 @@ window.SnakeOnline = (() => {
         case 'starving': return { type: 'starving', snake };
         case 'spawn': return { type: 'spawn', kind: e[1], x: e[2], y: e[3] };
         case 'weather': return { type: 'weather', kind: WEATHER[e[1]] || 'clear' };
+        case 'ember': return { type: 'ember', x: e[1], y: e[2], fx: e[3], fy: e[4] };
         case 'woodpecker': return { type: 'woodpecker' };
         case 'peck': return { type: 'peck', x: e[1], y: e[2], cells: Array.isArray(e[3]) ? e[3].filter(Number.isInteger) : [] };
         case 'flown': return { type: 'flown', x: e[1], y: e[2] };
