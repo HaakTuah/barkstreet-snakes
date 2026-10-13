@@ -38,8 +38,11 @@ window.TUNING = Object.freeze({
 
   // ---------------------------------------------------------- sudden death
   SUDDEN_DEATH_MS: 120000,  // the woodpecker arrives after two minutes; no new food after that
-  PECK_EVERY: 2,            // ticks between holes once it's here
-  PECK_CLEARANCE: 3,        // it never pecks this close to a head (in cells), so a hole can't open right in front of you
+  PECK_ARRIVE_TICKS: 12,    // it lands, has a look round...
+  PECK_CHUNK: 8,            // ...then takes out this many cells at a time (a run along the outermost ring left)...
+  PECK_AIM_TICKS: 13,       // ...eyeing them this long first (everyone sees where: about a second and a half)...
+  PECK_REST_TICKS: 6,       // ...and resting this long after each strike
+  PECK_CLEARANCE: 3,        // it never aims this close to a head (in cells), and never at a body or food
 
   // --------------------------------------------------------------- burrows
   BURROW_MAX: 3,            // beetle burrows that crack open in the bark over a round (harmless to cross)
@@ -53,13 +56,15 @@ window.TUNING = Object.freeze({
   CLEAR_MAX_MS: 26000,
   SPELL_MIN_MS: 12000,      // ...a spell of weather this long
   SPELL_MAX_MS: 18000,
-  WEATHER_ODDS: Object.freeze({ sun: 2, wind: 3, rain: 3, storm: 3 }), // how likely each spell is...
+  WEATHER_ODDS: Object.freeze({ sun: 2, wind: 3, rain: 3, storm: 3, snow: 2 }), // how likely each spell is...
   STORM_FROM_MS: 30000,     // ...(no storms before this)
   SUN_GOLDEN: 5,            // sun: golden hour, golden apples this many times as likely
   GUST_EVERY_MS: 3500,      // wind: a gust this often, knocking an apple loose...
   WINDFALL_MAX: 3,          // ...up to this many apples more than usual
   RAIN_MUSHROOMS: 2,        // rain: this many more mushrooms sprout
   RAINBOW_CHANCE: 0.5,      // when rain stops: a rainbow, with a golden apple at its end
+  SNOW_APPLES: 2,           // winter: fewer apples (and no new mushrooms, and golden apples a fifth as likely)...
+  SNOW_HUNGER: 1.5,         // ...and everyone gets hungry this many times as fast (it's cold)
   AFTER_STORM_RAIN: 0.6,    // a storm is often followed by rain
   STRIKE_MIN_MS: 3000,      // storm: lightning this often...
   STRIKE_MAX_MS: 6000,
@@ -70,7 +75,11 @@ window.TUNING = Object.freeze({
   FIRE_SPREAD: 0.1,         // each tick, each burning cell catches a neighbour with this chance...
   FIRE_MAX: 6,              // ...but one strike's fire covers at most this many cells...
   FIRE_BOARD_MAX: 30,       // ...and the whole board at most this many
-  RAIN_DOUSE_TICKS: 6,      // rain puts a fire out within this many ticks
+  RAIN_DOUSE_TICKS: 6,      // rain (or snow) puts a fire out within this many ticks
+  EMBER_CHANCE: 0.025,      // wind (and storms): each tick, a burning cell flings a burning leaf with this chance...
+  EMBER_REACH: 4,           // ...up to this many cells downwind (2 at least)...
+  EMBER_SMOLDER_TICKS: 8,   // ...where it smoulders this long (a jump is a surprise, so more warning)...
+  EMBER_FIRE_TICKS: 22,     // ...then burns this long, a small fire that doesn't spread
 
   // --------------------------------------------------------------------- AI
   REACTION_MS: 240,         // how stale every AI's view of the other snakes is
@@ -114,7 +123,6 @@ window.TUNING = Object.freeze({
   CHEW_MS: 420,             // and the mouth's chewing after it
   CHEEKS_MS: 900,           // Gobbler's cheeks puff up at a bite and go down over this long
   FLOAT_MS: 700,            // a "+1" rises and fades over this long
-  PECK_MS: 250,             // the woodpecker's head bob at each peck
   MOOD_RING_MS: 900,        // Capricious's ring flashing out when its mood changes
   GOLDEN_DIM_TICKS: 30,     // a golden apple dims (calmly) over its last this-many ticks
   CORPSE_FADE_MS: 250,      // with reduced motion, a dead snake fades over this long instead of bursting

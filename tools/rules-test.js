@@ -60,22 +60,36 @@ function board(bodies, { food = [], time = 0 } = {}) {
   check('unknown and inherited persona keys are ignored', E.createGame({ personas: ['constructor', 'toString', 'drab'], withPlayer: false }).snakes.every(s => s.color));
 }
 
-{ // The woodpecker never pecks near a head, or under food.
-  const g = E.createGame({ withPlayer: false });
-  g.time = T.SUDDEN_DEATH_MS;
-  let near = 0, underFood = 0;
-  for (let t = 0; t < 400 && g.snakes.filter(s => s.alive).length > 1; t++) {
-    const foodCells = new Set(g.food.map(f => f.y * T.GRID + f.x));
-    const heads = g.snakes.filter(s => s.alive).map(s => ({ ...s.body[0] }));
-    E.step(g);
-    for (const e of g.events) {
-      if (e.type !== 'peck') continue;
-      if (heads.some(h => Math.abs(h.x - e.x) + Math.abs(h.y - e.y) <= T.PECK_CLEARANCE + 1)) near++; // +1: heads moved this tick
-      if (foodCells.has(e.y * T.GRID + e.x)) underFood++;
+{ // The woodpecker aims well away from heads, warns before it strikes, and never strikes a body or food.
+  let near = 0, early = 0, underBody = 0, underFood = 0, strikes = 0, cells = 0;
+  for (let r = 0; r < 12; r++) {
+    const g = E.createGame({ withPlayer: false });
+    g.time = T.SUDDEN_DEATH_MS;
+    for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; } // (fed, so they last)
+    let aimedAt = -1;
+    for (let t = 0; t < 500 && g.snakes.filter(s => s.alive).length > 1; t++) {
+      const foodCells = new Set(g.food.map(f => f.y * T.GRID + f.x));
+      E.step(g);
+      const heads = g.snakes.filter(s => s.alive).map(s => s.body[0]); // (as they were when it took aim)
+      const bodies = new Set(g.snakes.filter(s => s.alive).flatMap(s => s.body.map(c => c.y * T.GRID + c.x)));
+      for (const e of g.events) {
+        if (e.type === 'aim') {
+          aimedAt = g.tick;
+          for (const k of g.woodpecker.target) if (heads.some(h => Math.abs(h.x - k % T.GRID) + Math.abs(h.y - Math.floor(k / T.GRID)) <= T.PECK_CLEARANCE)) near++;
+        }
+        if (e.type === 'peck') {
+          strikes++;
+          cells += e.cells.length;
+          if (g.tick - aimedAt < T.PECK_AIM_TICKS) early++;
+          for (const k of e.cells) { if (foodCells.has(k)) underFood++; if (bodies.has(k)) underBody++; }
+        }
+      }
     }
   }
-  check('the woodpecker keeps its distance from heads', near === 0, `${near} pecks too close`);
-  check('the woodpecker pecks around food', underFood === 0, `${underFood} pecks under food`);
+  check('the woodpecker strikes in chunks', strikes > 20 && cells / strikes > T.PECK_CHUNK / 2, `${strikes} strikes, ${(cells / Math.max(1, strikes)).toFixed(1)} cells each`);
+  check('the woodpecker aims well away from heads', near === 0, `${near} cells too close`);
+  check('the woodpecker gives warning', early === 0, `${early} without`);
+  check('the woodpecker never strikes a body or food', underBody + underFood === 0, `${underBody} bodies, ${underFood} food`);
 }
 
 { // An AI sees a new hole only after its reaction time, like a person.
@@ -161,6 +175,48 @@ const K = (x, y) => y * T.GRID + x;
   g.time = T.SUDDEN_DEATH_MS;
   E.step(g);
   check('the sky clears for the woodpecker', g.weather.kind === 'clear', g.weather.kind);
+}
+
+{ // Winter: snow puts fire out, there's less food, and hunger runs faster.
+  const g = E.createGame({ withPlayer: false });
+  g.fires.set(K(1, 1), { from: 0, until: 500, group: 1, strike: true });
+  g.weather = { kind: 'snow', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 };
+  g.food = g.food.filter(f => f.kind !== 'food');
+  const before = g.snakes.map(s => E.hungerLeft(g, s));
+  for (let t = 0; t < 10; t++) E.step(g);
+  // (Measured on a snake that ate nothing meanwhile: a bite resets the clock.)
+  const s = g.snakes.find(o => o.ateTick < 0) || g.snakes[0];
+  const ran = before[g.snakes.indexOf(s)] - E.hungerLeft(g, s);
+  check('snow puts fire out', !g.fires.has(K(1, 1)));
+  check('winter brings fewer apples', g.food.filter(f => f.kind === 'food').length <= T.SNOW_APPLES, g.food.filter(f => f.kind === 'food').length + ' apples');
+  check('hunger runs faster in winter', !s.alive || ran > g.time * 1.3 * (10 / 11), `${Math.round(ran)} ms of hunger in ${Math.round(g.time)} ms`);
+}
+
+{ // Wind blows burning leaves downwind; they smoulder first, then burn small, and don't spread.
+  let embers = 0, upwind = 0, early = 0, spread = 0;
+  for (let r = 0; r < 40; r++) {
+    const g = board([[[[2, 2], [1, 2], [0, 2]], 'right'], [[[2, 20], [1, 20], [0, 20]], 'right']]);
+    g.weather = { kind: 'wind', since: 0, until: 1e9, nextGust: 1e9, nextStrike: 0 };
+    g.fires.set(K(8, 10), { from: 0, until: 400, group: 1, strike: false });
+    g.fireGroups.set(1, 1);
+    g.fireGroup = 1; // (its own group: leaves start their own)
+    for (let t = 0; t < 120; t++) {
+      for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; s.body = s.body.slice(0, 3); }
+      E.step(g);
+      for (const e of g.events) {
+        if (e.type !== 'ember') continue;
+        embers++;
+        if (e.x <= e.fx + 1) upwind++;
+        const f = g.fires.get(K(e.x, e.y));
+        if (!f || f.from - g.tick < T.EMBER_SMOLDER_TICKS) early++;
+      }
+      for (const f of g.fires.values()) if (f.ember && (g.fireGroups.get(f.group) || 0) > 1) spread++;
+    }
+  }
+  check('wind blows burning leaves', embers > 5, `${embers} leaves`);
+  check('...downwind', upwind === 0, `${upwind} upwind`);
+  check('...that smoulder first', early === 0, `${early} without warning`);
+  check('...and burn small, without spreading', spread === 0, `${spread} spread`);
 }
 
 { // A scared beetle on a burrow dives in and comes out of a burrow a while later; food never sits on a burrow.

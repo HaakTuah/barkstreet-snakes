@@ -319,12 +319,14 @@ header { min-width: 0; }
 .leaves.tr { right: -8px; top: -8px; transform: scaleX(-1); }
 .leaves.bl { left: -8px; bottom: -8px; transform: scaleY(-1); }
 .leaves.br { right: -8px; bottom: -8px; transform: scale(-1, -1); }
-/* ...and sway in the breeze, each from its stalk, each on its own beat. */
-.leaves use { transform-box: view-box; transform-origin: 4px 4px; animation: leaf-sway 4.6s ease-in-out infinite alternate; }
-.leaves.tr use { animation-delay: -1.3s; animation-duration: 5.2s; }
-.leaves.bl use { animation-delay: -2.7s; animation-duration: 5.8s; }
-.leaves.br use { animation-delay: -3.9s; animation-duration: 4.9s; }
-@keyframes leaf-sway { from { transform: rotate(-6deg); } to { transform: rotate(7deg); } }
+/* ...and sway in the breeze, each on its own beat. (The whole leaf turns,
+   with the rotate property, so the compositor runs it: animating the SVG's
+   insides made the page lay out and repaint every frame.) */
+.leaves { will-change: transform; animation: leaf-sway 4.6s ease-in-out infinite alternate; }
+.leaves.tr { animation-delay: -1.3s; animation-duration: 5.2s; }
+.leaves.bl { animation-delay: -2.7s; animation-duration: 5.8s; }
+.leaves.br { animation-delay: -3.9s; animation-duration: 4.9s; }
+@keyframes leaf-sway { from { rotate: -6deg; } to { rotate: 7deg; } }
 
 .board {
   position: relative;
@@ -574,6 +576,7 @@ canvas {
 .toast[data-kind="wind"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #16a34a; }
 .toast[data-kind="rain"] { background: #e0ecff; color: #1e3a8a; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #3b82f6; }
 .toast[data-kind="storm"] { background: #2e1065; color: #ede9fe; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), inset 0 0 0 2px #a78bfa; }
+.toast[data-kind="snow"] { background: #f0f9ff; color: #0c4a6e; box-shadow: 0 0 18px rgba(186, 230, 253, 0.6), inset 0 0 0 2px #7dd3fc; }
 .toast[data-kind="fire"] { background: linear-gradient(180deg, #ffedd5, #fdba74); color: #7c2d12; box-shadow: 0 0 18px rgba(249, 115, 22, 0.55), inset 0 0 0 2px #ea580c; }
 .toast[data-kind="go"] { padding: 8px 24px; font-size: 1.3rem; background: var(--leaf); color: #fffbea; box-shadow: 0 4px 0 var(--leaf-dark), 0 8px 20px rgba(0, 0, 0, 0.45); }
 /* A head passing under the banner: it moves to the board's foot (or, if a
@@ -667,6 +670,17 @@ canvas {
 
 .help { margin: 12px 0 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
 .hint span, .help span { white-space: nowrap; }
+
+/* The woodpecker's layer: the whole window, under the dialogs, never in the way of a tap. */
+.bird-layer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9;
+  display: none;
+  pointer-events: none;
+}
 
 /* ------------------------------------------------- Hall of Fame dialog */
 
@@ -886,7 +900,7 @@ button.link:active { transform: none; }
 /* Reduced motion: no pops, rises or rumbles; the information stays. */
 @media (prefers-reduced-motion: reduce) {
   .card, .overlay, .badge, .toast, .records-card, .scoreboard li.starving::after { animation: none !important; }
-  h1 .amp, .leaves use, .frame-sheen::before, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
+  h1 .amp, .leaves, .frame-sheen::before, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
   .scoreboard li.starving::after { opacity: 1; }
   button, button:active { transition: none; transform: none; }
   .toast { transition: none; }

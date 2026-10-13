@@ -4,21 +4,23 @@
 // and everything runs through one gentle compressor so nothing ever gets harsh.
 //
 //   SnakeAudio.unlock()           call from a key press or tap (browsers keep sound locked until then)
-//   SnakeAudio.play(name, opts)   opts = { pitch: semitones, volume: 0..1 }; never throws
+//   SnakeAudio.play(name, opts)   opts = { pitch: semitones, volume: 0..1, pan: -1..1 (left..right) }; never throws
 //   SnakeAudio.setMuted(b) / isMuted() / toggleMuted()   remembered in this browser
 //   SnakeAudio.music(stage, mood)  the adaptive track (see the music section below)
+//   SnakeAudio.weather(kind)       the weather you can hear: 'rain', 'wind', 'storm', 'snow' or anything else for none
 //   SnakeAudio.setMusicOn(b) / isMusicOn() / toggleMusic()  remembered in this browser
 window.SnakeAudio = (() => {
   // ---- Tuning ---------------------------------------------------------------
   const MASTER_VOLUME = 0.5;   // overall loudness, before the compressor
   const MAX_VOICES = 6;        // cues sounding at once; a new cue past this is dropped...
-  const PRIORITY = { death: true, best: true, win: true }; // ...except these, which always play
+  const PRIORITY = { death: true, best: true, win: true, ko: true, stinger: true }; // ...except these, which always play
   // Shortest gap in ms between two plays of the same cue, so bursts don't stack up.
   const MIN_INTERVAL = {
     eat: 40, golden: 60, meat: 60, mushroom: 80, crunch: 80, beetle: 3000,
     rivalDeath: 120, death: 250, best: 400, win: 600,
     beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, ui: 30, // peck: never more than 3 in any second
     crackle: 300, thunder: 900, gust: 1500, burrow: 1000, dig: 250, rainbow: 1500, rain: 1500,
+    ko: 200, close: 1400, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
   };
   const RESUME_GRACE = 300;    // ms after unlock() in which cues may queue on a context still waking up
   const NOISE_SECONDS = 0.5;   // length of the one shared noise buffer
@@ -31,7 +33,7 @@ window.SnakeAudio = (() => {
   let master = null;           // master gain -> compressor -> speakers
   let musicBus = null;         // the track's own gain, into master
   let musicOn = readFlag(MUSIC_KEY, true);
-  let noiseBuf = null;
+  let noiseBuf = null, airBuf = null;
   let unsupported = false;
   let primed = false;
   let resumeAskedAt = -Infinity;
@@ -48,6 +50,7 @@ window.SnakeAudio = (() => {
   // The pitch and volume of the cue being built; tone() and noise() apply them.
   let pitchMul = 1;
   let volMul = 1;
+  let out = null; // where the cue being built goes: the master, or a panner placing it left or right
 
   const now = () => (window.performance && window.performance.now ? window.performance.now() : Date.now());
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
@@ -98,7 +101,13 @@ window.SnakeAudio = (() => {
         const data = nb.getChannelData(0);
         for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
 
-        ctx = c; master = m; musicBus = mb; noiseBuf = nb;
+        // A longer noise loop for the weather beds (long enough not to sound like a loop).
+        const alen = Math.floor(c.sampleRate * 2.5);
+        const ab = c.createBuffer(1, alen, c.sampleRate);
+        const ad = ab.getChannelData(0);
+        for (let i = 0; i < alen; i++) ad[i] = Math.random() * 2 - 1;
+
+        ctx = c; master = m; musicBus = mb; noiseBuf = nb; airBuf = ab; out = m;
         ctx.onstatechange = () => { if (ctx.state === 'running') graceArmed = false; };
       }
 
@@ -171,7 +180,7 @@ window.SnakeAudio = (() => {
     } else {
       osc.connect(g);
     }
-    g.connect(master);
+    g.connect(out || master);
     osc.start(t);
     finish(osc, t + dur + 0.03, g, f);
     return osc;
@@ -189,7 +198,7 @@ window.SnakeAudio = (() => {
     envelope(g, t, peak * volMul, 0.003, dur);
     src.connect(f);
     f.connect(g);
-    g.connect(master);
+    g.connect(out || master);
     src.start(t, Math.random() * Math.max(0, NOISE_SECONDS - dur - 0.05));
     finish(src, t + dur + 0.03, f, g);
   }
@@ -275,9 +284,11 @@ window.SnakeAudio = (() => {
       noise(t, 0.08, 0.05, 'lowpass', 350, 0.7);
     },
 
-    // Your snake dies: two soft falling notes, a sigh from G3 down to D3, over a sub and a
-    // low puff of noise. It thuds and lands; it never cracks. About 400 ms.
+    // Your snake dies: a soft impact, then two falling notes, a sigh from G3 down to D3,
+    // over a sub and a low puff of noise. It thuds and lands; it never cracks. About 400 ms.
     death(t) {
+      noise(t, 0.09, 0.2, 'lowpass', 900, 0.8); // the impact first...
+      tone(t, 'sine', 90, 0.3, 0.32, 0.003, 38);
       tone(t, 'triangle', mtof(55), 0.2, 0.4, 0.006, mtof(53), 1100);
       tone(t + 0.15, 'triangle', mtof(50), 0.27, 0.44, 0.008, mtof(46), 800);
       tone(t + 0.15, 'sine', mtof(38), 0.26, 0.28, 0.01, mtof(34));
@@ -379,6 +390,77 @@ window.SnakeAudio = (() => {
       for (let i = 0; i < 14; i++) noise(t + Math.random() * 0.42, 0.01, 0.03 + Math.random() * 0.03, 'highpass', 3000 + Math.random() * 3000, 0.7);
     },
 
+    // You took a rival out: a low punch, a crack, and two bright notes, up.
+    ko(t) {
+      tone(t, 'sine', 140, 0.22, 0.45, 0.003, 46);
+      noise(t, 0.05, 0.22, 'bandpass', 1800, 1.1);
+      mallet(t + 0.06, mtof(79), 0.14, 0.26);
+      mallet(t + 0.14, mtof(84), 0.26, 0.3);
+    },
+
+    // A near miss (your head right by a rival's): air tearing past, and a gasp of a tick.
+    close(t) {
+      noise(t, 0.16, 0.13, 'bandpass', 2600, 1.6);
+      noise(t + 0.07, 0.2, 0.1, 'bandpass', 1100, 1.4);
+      tone(t, 'triangle', 1900, 0.05, 0.05, 0.001, 1500);
+    },
+
+    // The woodpecker drumming a chunk out: a burst of knocks, fast then slowing, like the real thing.
+    drum(t) {
+      let at = t;
+      for (let i = 0; i < 14; i++) { knock(at, 1250 + (i % 3) * 60, 0.2 - i * 0.008); at += 0.034 + i * 0.003; }
+    },
+
+    // The chunk giving way: a woody crunch over a low thud.
+    crash(t) {
+      noise(t, 0.16, 0.26, 'bandpass', 850, 0.9);
+      noise(t + 0.03, 0.22, 0.14, 'lowpass', 400, 0.7);
+      tone(t, 'triangle', 110, 0.3, 0.3, 0.004, 55, 500);
+    },
+
+    // It takes aim: two rising ticks over a low pulse (and the music tightens).
+    aim(t) {
+      knock(t, 900, 0.14);
+      knock(t + 0.12, 1180, 0.16);
+      tone(t, 'sine', 70, 0.35, 0.16, 0.02, 62);
+    },
+
+    // It arrives: a woodpecker's sharp "kik! kik! kik!" and a beat of wings.
+    call(t) {
+      for (let i = 0; i < 3; i++) {
+        tone(t + i * 0.13, 'triangle', 2350, 0.07, 0.16, 0.002, 1900, 5000);
+        tone(t + i * 0.13, 'sine', 4700, 0.04, 0.04, 0.002);
+      }
+      for (let i = 0; i < 3; i++) noise(t + 0.45 + i * 0.09, 0.07, 0.07, 'lowpass', 700, 0.8);
+    },
+
+    // Winter arrives: glassy bells, high and slow, over a breath of cold air.
+    snow(t) {
+      [88, 91, 93, 96, 98].forEach((m, i) => mallet(t + i * 0.11 + (i % 2) * 0.03, mtof(m), 0.6, 0.06));
+      noise(t, 0.45, 0.03, 'highpass', 5000, 0.7);
+    },
+
+    // A burning leaf blown off: a whoosh and a crackle.
+    ember(t) {
+      noise(t, 0.18, 0.06, 'bandpass', 900, 1);
+      for (let i = 0; i < 4; i++) noise(t + 0.05 + i * 0.03, 0.01, 0.05, 'bandpass', 3600, 2);
+    },
+
+    // Tension building: rising air and a rising tone (the countdown's last beat, the last two snakes).
+    riser(t) {
+      tone(t, 'sine', 220, 0.9, 0.08, 0.6, 660);
+      tone(t, 'triangle', 330, 0.9, 0.04, 0.6, 990, 2000);
+      noise(t, 0.45, 0.04, 'bandpass', 1500, 0.8);
+      noise(t + 0.4, 0.45, 0.06, 'bandpass', 3200, 0.8);
+    },
+
+    // First blood: a dark stab (a low minor chord struck together) with a hit of noise.
+    stinger(t) {
+      for (const m of [45, 48, 52, 57]) mallet(t, mtof(m), 0.6, 0.12);
+      tone(t, 'sine', 55, 0.5, 0.25, 0.005, 40);
+      noise(t, 0.08, 0.14, 'lowpass', 1200, 0.8);
+    },
+
     // Buttons and toggles: a barely-there wood tap.
     ui(t) {
       knock(t, 1250, 0.06);
@@ -405,6 +487,10 @@ window.SnakeAudio = (() => {
     lastPlayed[name] = ms;
     pitchMul = Math.pow(2, pitch / 12);
     volMul = volume;
+    out = master;
+    if (opts && Number.isFinite(opts.pan) && ctx.createStereoPanner) {
+      try { out = ctx.createStereoPanner(); out.pan.value = Math.max(-1, Math.min(1, opts.pan)); out.connect(master); } catch { out = master; }
+    }
     building = { pending: 0, gen: generation };
     voices++;
     if (ctx.state !== 'running') graceCues++;
@@ -431,7 +517,10 @@ window.SnakeAudio = (() => {
   //          'sudden'  the woodpecker is here: a minor key, wood-block knocks
   //          'duel'    the last two snakes: faster, tense, a heartbeat kick
   //          'off'     silence
-  //   mood:  { intensity: 0..1, watching: bool, paused: bool }
+  //   mood:  { intensity: 0..1, watching: bool, paused: bool, danger: 0..1 }
+  //
+  // Danger (your head close to a rival's, or boxed in) brings in a heartbeat,
+  // drives the bass, and lets a dissonant high note creep into the tune.
   //
   // Everything is quiet and round: sine and triangle tones, short envelopes,
   // through its own bus so the music can be switched off on its own.
@@ -439,11 +528,11 @@ window.SnakeAudio = (() => {
   const ARRANGEMENTS = {
     // bpm, the chord roots for the 4-bar loop (MIDI), the scale degrees of each
     // chord, and which layers play.
-    title: { bpm: 84, roots: [48, 45, 41, 43], minor: false, arp: 'quarter', bass: false, shaker: false, knocks: false, kick: false },
-    early: { bpm: 94, roots: [48, 45, 41, 43], minor: false, arp: 'eighth', bass: true, shaker: false, knocks: false, kick: false },
-    mid: { bpm: 102, roots: [48, 45, 41, 43], minor: false, arp: 'eighth', bass: true, shaker: true, knocks: false, kick: false },
-    sudden: { bpm: 108, roots: [45, 41, 48, 40], minor: true, arp: 'eighth', bass: true, shaker: true, knocks: true, kick: false },
-    duel: { bpm: 120, roots: [45, 41, 43, 40], minor: true, arp: 'sixteenth', bass: true, shaker: true, knocks: true, kick: true },
+    title: { bpm: 84, roots: [48, 45, 41, 43], minor: false, arp: 'quarter', bass: false, shaker: false, knocks: false, kick: false, pad: true },
+    early: { bpm: 94, roots: [48, 45, 41, 43], minor: false, arp: 'eighth', bass: true, shaker: false, knocks: false, kick: false, pad: true },
+    mid: { bpm: 102, roots: [48, 45, 41, 43], minor: false, arp: 'eighth', bass: true, shaker: true, knocks: false, kick: false, pad: true, bells: true },
+    sudden: { bpm: 108, roots: [45, 41, 48, 40], minor: true, arp: 'eighth', bass: true, shaker: true, knocks: true, kick: false, pad: true, toms: true },
+    duel: { bpm: 124, roots: [45, 41, 43, 40], minor: true, arp: 'sixteenth', bass: true, shaker: true, knocks: true, kick: true, hats: true },
   };
   // Chord shapes over each root: major-ish for the calm loops, minor for the tense ones.
   const SHAPE_MAJOR = [[0, 4, 7, 12], [0, 3, 7, 12], [0, 4, 7, 12], [0, 4, 7, 11]]; // C  Am  F  G(maj7-ish)
@@ -521,6 +610,8 @@ window.SnakeAudio = (() => {
     const shape = (a.minor ? SHAPE_MINOR : SHAPE_MAJOR)[bar];
     const quiet = watching ? 0.6 : 1;
 
+    // Bells, high and sparse, answering the tune in the middle of the round.
+    if (a.bells && bar % 2 === 1 && (inBar === 6 || inBar === 14)) mmallet(t, root + 24 + shape[inBar === 6 ? 2 : 3], 0.5, 0.035 * quiet);
     // The marimba line: chord tones an octave and a half up, in a rocking order.
     const every = a.arp === 'quarter' ? 4 : a.arp === 'eighth' ? 2 : 1;
     if (inBar % every === 0) {
@@ -548,6 +639,34 @@ window.SnakeAudio = (() => {
     if (a.kick && (inBar === 0 || inBar === 3 || inBar === 8 || inBar === 11)) {
       mtone(t, 'sine', 110, 0.16, 0.16, 0.004, 48);
     }
+    // Sudden death: low toms rolling round the bar.
+    if (a.toms && (inBar === 6 || inBar === 7 || inBar === 14)) mtone(t, 'sine', inBar === 7 ? 150 : 120, 0.2, 0.1, 0.004, 70);
+    // The duel: closed hats on every sixteenth, accented on the beat.
+    if (a.hats) mnoise(t, 0.025, inBar % 4 === 0 ? 0.03 : 0.015, 'highpass', 8000, 0.7);
+  }
+
+  // A soft pad under the calm loops: the bar's chord, held, swelling in.
+  function schedulePad(a, s, t, watching) {
+    if (s % 16 !== 0 || !a.pad) return;
+    const bar = Math.floor(s / 16) % 4, root = a.roots[bar], shape = (a.minor ? SHAPE_MINOR : SHAPE_MAJOR)[bar];
+    const len = 16 * 60 / tempo / 4;
+    for (const i of [0, 1, 2]) {
+      mtone(t, 'triangle', mtof(root + 12 + shape[i]), len, (watching ? 0.016 : 0.022), len * 0.35, null, 900);
+      mtone(t, 'sine', mtof(root + 12 + shape[i]) * 1.004, len, 0.016, len * 0.35); // (a hair detuned: it breathes)
+    }
+  }
+
+  // The danger layer: a heartbeat (lub-dub on the beat), a driven bass, a
+  // dissonance creeping in on top. danger: 0..1.
+  function scheduleDanger(a, s, t, danger) {
+    if (danger < 0.25) return;
+    const inBar = s % 16, bar = Math.floor(s / 16) % 4, root = a.roots[bar];
+    if (inBar % 4 === 0) {
+      mtone(t, 'sine', 62, 0.14, 0.22 * danger, 0.004, 42);
+      mtone(t + 0.13, 'sine', 56, 0.12, 0.15 * danger, 0.004, 40);
+    }
+    if (inBar % 2 === 1) mtone(t, 'triangle', mtof(root - 12), 0.1, 0.07 * danger, 0.004, null, 500);
+    if (danger > 0.6 && (inBar === 2 || inBar === 10)) mmallet(t, root + 25, 0.18, 0.05 * danger); // a minor second, uneasy
   }
 
   // Called every frame by the game. Cheap when nothing is due.
@@ -556,6 +675,7 @@ window.SnakeAudio = (() => {
     stageWanted = stage;
     const intensity = mood && Number.isFinite(mood.intensity) ? Math.max(0, Math.min(1, mood.intensity)) : 0;
     const watching = !!(mood && mood.watching);
+    const danger = mood && Number.isFinite(mood.danger) ? Math.max(0, Math.min(1, mood.danger)) : 0;
     const level = mood && mood.paused ? 0.35 : watching ? 0.7 : 1;
     if (Math.abs(level - musicLevel) > 0.01) {
       musicLevel = level;
@@ -574,9 +694,59 @@ window.SnakeAudio = (() => {
       }
       const a = ARRANGEMENTS[stageNow] || ARRANGEMENTS.title;
       tempo = a.bpm * (stageNow === 'early' || stageNow === 'mid' ? 1 + 0.15 * intensity : 1);
-      try { scheduleStep(a, step, nextAt, watching); } catch { /* a dropped note is fine */ }
+      try {
+        scheduleStep(a, step, nextAt, watching);
+        schedulePad(a, step, nextAt, watching);
+        if (!watching) scheduleDanger(a, step, nextAt, danger);
+      } catch { /* a dropped note is fine */ }
       nextAt += 60 / tempo / 4;
       step = (step + 1) % 64;
+    }
+  }
+
+  // ---- The weather ----------------------------------------------------------
+  //
+  // Beds of filtered noise that loop under the music (on the music bus, so the
+  // music switch silences them too): rain hisses, wind gusts (its loudness
+  // swells and falls), a storm rumbles low under a little rain, snow is a
+  // high, airy hush. A new kind fades in as the old one fades out.
+  const BEDS = {
+    rain: [['bandpass', 1800, 0.6, 0.05], ['highpass', 5000, 0.7, 0.02]],
+    wind: [['lowpass', 520, 0.9, 0.08, true]],
+    storm: [['lowpass', 140, 0.8, 0.14], ['bandpass', 1500, 0.6, 0.02]],
+    snow: [['highpass', 6000, 0.7, 0.012], ['lowpass', 300, 0.7, 0.02, true]],
+  };
+  let bedKind = 'none', bedNodes = [];
+  function weather(kind) {
+    kind = BEDS[kind] ? kind : 'none';
+    if (kind === bedKind || !ctx || unsupported) return;
+    bedKind = kind;
+    const t = ctx.currentTime;
+    for (const n of bedNodes) { // the old bed fades
+      try { n.g.gain.setTargetAtTime(0, t, 0.6); n.src.stop(t + 3); } catch { /* gone */ }
+    }
+    bedNodes = [];
+    if (kind === 'none' || !airBuf || !musicBus) return;
+    for (const [type, freq, q, level, gusty] of BEDS[kind]) {
+      try {
+        const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+        src.buffer = airBuf; src.loop = true;
+        f.type = type; f.frequency.value = freq; f.Q.value = q;
+        g.gain.value = 0;
+        g.gain.setTargetAtTime(level, t, 0.8);
+        src.connect(f); f.connect(g); g.connect(musicBus);
+        if (gusty) { // the wind swells and falls
+          const lfo = ctx.createOscillator(), depth = ctx.createGain();
+          lfo.frequency.value = 0.13; depth.gain.value = level * 0.8;
+          lfo.connect(depth); depth.connect(g.gain);
+          lfo.start(t);
+          src.onended = () => { try { lfo.stop(); lfo.disconnect(); depth.disconnect(); } catch { /* gone */ } };
+        }
+        src.start(t, Math.random() * 2);
+        const prev = src.onended;
+        src.onended = () => { try { prev?.(); src.disconnect(); f.disconnect(); g.disconnect(); } catch { /* gone */ } };
+        bedNodes.push({ src, g });
+      } catch { /* the weather stays quiet */ }
     }
   }
 
@@ -595,5 +765,5 @@ window.SnakeAudio = (() => {
   const isMuted = () => muted;
   const toggleMuted = () => setMuted(!muted);
 
-  return { unlock, play, setMuted, isMuted, toggleMuted, music, setMusicOn, isMusicOn, toggleMusic };
+  return { unlock, play, setMuted, isMuted, toggleMuted, music, weather, setMusicOn, isMusicOn, toggleMusic };
 })();

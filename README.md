@@ -1,6 +1,6 @@
 # Bark & Bite
 
-A snake game up a tree: you against three AI rivals on the bark of a tree, drawn at random each round from a cast of fifteen. Plays in the browser, on desktop and phone. Plain HTML, CSS and JavaScript, with no build step, no dependencies and no asset files: every picture is drawn and every sound is synthesised in the page.
+A snake game up a tree: you against three AI rivals on the bark of a tree, drawn at random each round from a cast of sixteen. Plays in the browser, on desktop and phone. Plain HTML, CSS and JavaScript, with no build step, no dependencies and no asset files: every picture is drawn and every sound is synthesised in the page.
 
 **Play:** https://haaktuah.github.io/snake-game/
 
@@ -18,7 +18,8 @@ A snake game up a tree: you against three AI rivals on the bark of a tree, drawn
   - **Rain:** two more mushrooms sprout, and any fire goes out. Half the time, when the rain stops, a rainbow comes down on a golden apple.
   - **Storm** (not before 30 s): lightning. Where it's going to strike crackles for about a second first, and it never strikes within 4 cells of a head. It sets the bark alight: fire burns for about 5 seconds and creeps to the odd neighbouring cell (smouldering first, harmlessly, so you see it coming). Burning bark kills a head that crawls into it. Storms are often followed by rain.
 - **Burrows:** the first beetle cracks a burrow open in the bark, and later ones open more (up to three). Burrows are safe to cross; cracks spread from them as the round goes on. A scared beetle that reaches one dives in and pops out of a burrow a moment later.
-- **Sudden death:** after two minutes no new food appears, the sky clears, and a woodpecker starts pecking holes in the bark, ring by ring from the edges inwards. It plays fair: it never pecks within 3 cells of a head or under food, so you always have time to see a hole coming.
+- **Sudden death:** after two minutes no new food appears, the sky clears, and a big woodpecker lands beside the board. It takes the bark away a chunk at a time, from the edges inwards: it picks a run of cells, eyes it (the chunk glows and cracks, faster and faster) for about a second and a half, drums it out, and rests. It plays fair: it never aims within 3 cells of a head, at a body or at food, so you always see it coming.
+- **Winter** (snow, now and then a spell of weather): only two apples, no new mushrooms, golden apples rare, and everyone gets hungry half as fast again. Snow puts fire out. In **wind**, a fire flings burning leaves downwind: they smoulder first, then burn small.
 
 ### Food
 
@@ -56,7 +57,7 @@ The game naps by itself when you switch tabs or windows, so you never come back 
 
 ## Sound and music
 
-Everything you hear is made live with the Web Audio API: a marimba pluck when you eat, a sparkle for gold, a sigh when you die, the woodpecker's knocking. The music is a marimba loop that follows the round: calm on the start screen, a bass line once the round starts, a shaker as it picks up speed, a minor key with wood-block knocks when the woodpecker arrives, and a tense, faster figure when only two snakes are left. Sound and music each have their own switch, and both are remembered.
+Everything you hear is made live with the Web Audio API, and placed left or right where it happens on the board. Apples climb in pitch as you eat a streak; taking a rival out lands a punch; a near miss with another head whooshes past; first blood gets a dark stab and the last two a riser; the woodpecker calls, ticks as it takes aim, and drums. The weather has its own sound (rain hissing, wind gusting, a storm rumbling, winter's hush). The music follows the round, from a calm loop on the start screen through bass, shaker and bells as it speeds up, a minor key with toms when the woodpecker comes, to a racing duel for the last two, and it feels the danger: when a rival's head is close to yours, or you're boxed in, a heartbeat comes in and the bass drives. Sound and music each have their own switch, and both are remembered.
 
 ## Bark chatter
 
@@ -64,11 +65,11 @@ The AI snakes talk. Each one has its own voice: Sovereign uses the royal "we", C
 
 ## Watching the AIs
 
-Press **Watch AIs** on the start screen for a round between four AI snakes, with a 1×/2×/4× speed control. The same control appears when you're watching after dying. Starting over keeps you watching. Watched rounds put the AI snakes in the Hall of Fame, but don't count towards your own stats.
+Press **Watch AIs** on the start screen for a round between four AI snakes, with a 1×/2×/4× speed control. The same control appears when you're watching after dying. Every round starts at 1×, and at 2× or 4× the board's own effects speed up too. Starting over keeps you watching. Watched rounds put the AI snakes in the Hall of Fame, but don't count towards your own stats.
 
 ## The rivals
 
-Each round, three of these fifteen are picked at random. The start screen tells you who you're up against and how each one plays. Only you have a real forked tongue: every few seconds each rival flicks out something of its own instead, such as Wildcard's dollar bill, Joker's party blower or Desperado's six-shooter.
+Each round, three of these sixteen are picked at random. The start screen tells you who you're up against and how each one plays. Only you have a real forked tongue: every few seconds each rival flicks out something of its own instead, such as Wildcard's dollar bill, Joker's party blower or Desperado's six-shooter.
 
 | Snake | Look | Style |
 |-------|------|-------|
@@ -80,7 +81,8 @@ Each round, three of these fifteen are picked at random. The start screen tells 
 | **Drab** | khaki, sleepy eyes | Plays it safe and sensible. Nothing special. |
 | **Vulture** | black, pink bald head, hooked beak, scowl | Hovers near snakes in trouble and feeds on what they leave behind. |
 | **Mason** | Caesar in marble, laurel wreath | Walls off the board, then keeps the biggest piece. |
-| **Wildcard** | rainbow, orange tan, golden combover, long red tie | A random mix of habits, new every round. |
+| **Wildcard** | the Stars and Stripes, orange tan, golden combover, long red tie | A random mix of habits, new every round. |
+| **Mute** | a rainbow mime: white greasepaint, beret, a painted tear | Picks someone and closes an invisible box around them. Never says a word (it mimes). |
 | **Creeper** | teal, slit eyes | Sneaks up and rides right behind other snakes' tails. |
 | **Metagamer** | cyan, 3D glasses | Watches how each rival plays, then avoids the aggressive ones, shadows the greedy ones and hunts the evasive ones. |
 | **Capricious** | changes with its mood | Starts undecided, then switches between sniper, glutton, hermit and builder every few seconds. |

@@ -61,6 +61,7 @@
       wind: ['The wind’s up. Apples are falling!', 'A blustery spell: windfall apples!'],
       rain: ['Rain! The mushrooms are sprouting.', 'Here comes the rain. Mushrooms love it.'],
       storm: ['A storm’s brewing. Watch for the crackle.', 'Thunder on the bark. Lightning strikes where it crackles.'],
+      snow: ['Winter! Less food, and you’ll get hungry faster.', 'Snow on the bark. Lean times: eat while you can.'],
     },
     strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
     rainbow: ['A rainbow! Something golden at its end…', 'After the rain, a rainbow. And gold.'],
@@ -115,6 +116,9 @@
   const hosting = () => online?.role === 'host';
   const guesting = () => online?.role === 'guest';
   let acc = 0, tickLen = T.OPENING_TICK, lastFrame = 0, drawAlpha = 1, dirty = true;
+  // The clock the board's own effects run on (tongues, beetles, particles,
+  // weather): the frame clock, but at 2x or 4x when you're watching that fast.
+  let boardClock = performance.now();
   let beatsLeft = 0, beatTimer = 0;
   let freezeUntil = 0, pendingCard = null, cardAt = 0; // times on the frame clock (rAF timestamps)
   let shownCard = null, napOver = null; // the card on screen, and the one a nap covered
@@ -149,12 +153,14 @@
   const spectating = () => !playerAlive();
 
   // Which part of the soundtrack fits this moment (see SnakeAudio.music).
-  const mood = { intensity: 0, watching: false, paused: false };
+  const mood = { intensity: 0, watching: false, paused: false, danger: 0 };
+  let dangerNow = 0; // (worked out once a tick)
   function musicStage() {
     if (state !== 'running' && state !== 'paused') return 'title';
     let alive = 0;
     for (const s of game.snakes) if (s.alive) alive++;
     mood.intensity = Math.min(1, game.time / T.RAMP_MS);
+    mood.danger = state === 'running' ? dangerNow : 0;
     mood.watching = spectating();
     mood.paused = state === 'paused';
     return alive <= 2 ? 'duel' : E.suddenDeath(game) ? 'sudden' : game.time > T.MUSIC_MID_MS ? 'mid' : 'early';
@@ -173,6 +179,8 @@
   function frame(now) {
     const dt = lastFrame ? Math.max(0, Math.min(T.MAX_FRAME_MS, now - lastFrame)) : 16;
     lastFrame = now;
+    boardClock += dt * (state === 'running' && spectating() && !online ? speed : 1);
+    govern(dt);
     const t0 = performance.now();
     let tickCost = 0;
 
@@ -223,12 +231,33 @@
     Audio.music(musicStage(), mood);
 
     if (dirty && !document.hidden) {
-      R.frame(drawAlpha, now);
+      R.frame(drawAlpha, boardClock);
       Chatter.layout(drawAlpha, boardPx, player());
       toastFade();
       dirty = state === 'running' || state === 'countdown' || R.particles > 0 || R.holding();
     }
     perf.record(performance.now() - t0, tickCost);
+  }
+
+  // Keep it playable everywhere: if this device keeps dropping frames during
+  // a round (over 12% of frames late, two windows of about three seconds in a
+  // row), the board draws less, for good: first no canopy shadows and a lower
+  // resolution, then the lowest. (Late means half again the shortest frame
+  // seen in the window, so 60, 120 and 144 Hz screens are judged alike.)
+  const governor = { frames: 0, late: 0, best: Infinity, dts: [], strikes: 0 };
+  function govern(dt) {
+    if (state !== 'running' || document.hidden || R.quality === 0 || !game || game.time < 1500 || dt <= 0) return;
+    governor.dts.push(dt);
+    governor.best = Math.min(governor.best, dt);
+    if (governor.dts.length < 180) return;
+    const late = governor.dts.filter(d => d > Math.max(governor.best * 1.6, 12)).length / governor.dts.length;
+    governor.dts.length = 0;
+    governor.best = Infinity;
+    governor.strikes = late > 0.12 ? governor.strikes + 1 : 0;
+    if (governor.strikes < 2) return;
+    governor.strikes = 0;
+    R.setQuality(R.quality - 1);
+    dirty = true;
   }
 
   // A card waiting for its moment (after the death freeze, or the round's last
@@ -308,6 +337,8 @@
 
   // What follows a tick on every screen: effects, sounds, the HUD, banners, placements.
   function afterTick(dying, wasAlive) {
+    dangerNow = dangerOf();
+    if (game.woodpecker) placeBoard(); // (once a tick while it's here: the page may have moved)
     R.onTick(game.events);
     sounds(dying, wasAlive);
     updateHud();
@@ -331,7 +362,7 @@
   // pose with its eyes screwed shut, then bursts. Also when it ends the round.
   function deathMoment() {
     freezeUntil = lastFrame + (reducedMQ.matches ? T.DEATH_FREEZE / 2 : T.DEATH_FREEZE);
-    R.hold(freezeUntil);
+    R.hold(boardClock + (freezeUntil - lastFrame)); // (on the board's clock)
     R.shake(T.SHAKE_PX);
     flashFrame('kill', true);
   }
@@ -361,6 +392,8 @@
     pendingCard = null;
     R.setGame(game);
     R.setViewer(player()?.id ?? -1); // your snake gets the bright outline
+    Audio.weather('none');
+    streak = 0;
     Chatter.reset(game);
     hideToast();
     buildTags();
@@ -379,7 +412,7 @@
       return;
     }
     if (state !== 'ready' || aiOnly !== !game.withPlayer) newGame({ aiOnly });
-    speed = aiOnly ? watchSpeed : 1; // (after you die you can still speed up, from 1x)
+    speed = watchSpeed = 1; // every round starts at normal speed (watching, you can speed it up again)
     state = 'countdown';
     beatsLeft = 3;
     beatTimer = 0;
@@ -405,6 +438,7 @@
   ];
   function showBeat(n) {
     Audio.play('beat');
+    if (n === 1) Audio.play('riser'); // (rising into Go!)
     showCard({ title: String(n), text: game.rivalsLine, primary: online ? null : 'Go!', opponents: true, quiet: true, beat: true });
     if (!reducedMQ.matches) cardTitle.animate?.(BEAT, { duration: 480, easing: 'ease-out' }); // each number slams down
   }
@@ -529,25 +563,66 @@
 
   // ------------------------------------------------------- sounds, banners
 
+  // Sounds come from where they happen on the board, a little left or right.
+  const at = x => ({ pan: ((x + 0.5) / GRID * 2 - 1) * 0.8 });
+  // Apples eaten in quick succession climb in pitch: a streak you can hear.
+  let streak = 0, streakAt = -1e9;
   function sounds(dying, wasAlive) {
+    const me = player();
     for (const e of game.events) {
       if (e.type === 'eat' && isMe(e.snake)) {
-        Audio.play(e.kind === 'golden' ? 'golden' : e.kind === 'pellet' ? 'meat' : e.kind === 'mushroom' ? 'mushroom' : e.kind === 'beetle' ? 'crunch' : 'eat');
+        if (e.kind !== 'mushroom') { streak = game.time - streakAt < 2600 ? Math.min(streak + 1, 7) : 0; streakAt = game.time; }
+        Audio.play(e.kind === 'golden' ? 'golden' : e.kind === 'pellet' ? 'meat' : e.kind === 'mushroom' ? 'mushroom' : e.kind === 'beetle' ? 'crunch' : 'eat', { pitch: e.kind === 'mushroom' ? 0 : streak, ...at(e.x) });
         bump(scoreEl);
-      } else if (e.type === 'woodpecker') Audio.play('woodpecker');
-      else if (e.type === 'spawn' && e.kind === 'beetle') Audio.play('beetle');
-      else if (e.type === 'peck') Audio.play('peck');
+      } else if (e.type === 'woodpecker') { Audio.play('call'); Audio.play('riser'); }
+      else if (e.type === 'aim') Audio.play('aim', at(e.x));
+      else if (e.type === 'peck' && e.cells?.length) { Audio.play('drum', at(e.x)); Audio.play('crash', at(e.x)); }
+      else if (e.type === 'spawn' && e.kind === 'beetle') Audio.play('beetle', at(e.x));
       else if (e.type === 'starving' && isMe(e.snake)) Audio.play('hungry');
-      else if (e.type === 'charge') Audio.play('crackle');
-      else if (e.type === 'strike') Audio.play('thunder');
+      else if (e.type === 'charge') Audio.play('crackle', at(e.x));
+      else if (e.type === 'strike') Audio.play('thunder', at(e.x));
       else if (e.type === 'gust') Audio.play('gust');
-      else if (e.type === 'burrow') Audio.play('burrow');
-      else if (e.type === 'dive' || e.type === 'emerge') Audio.play('dig');
-      else if (e.type === 'rainbow') Audio.play('rainbow');
+      else if (e.type === 'burrow') Audio.play('burrow', at(e.x));
+      else if (e.type === 'dive' || e.type === 'emerge') Audio.play('dig', at(e.x));
+      else if (e.type === 'rainbow') Audio.play('rainbow', at(e.x));
       else if (e.type === 'weather' && e.kind === 'rain') Audio.play('rain');
+      else if (e.type === 'weather' && e.kind === 'snow') Audio.play('snow');
+      else if (e.type === 'ember') Audio.play('ember', at(e.x));
     }
-    for (const s of dying) if (!isMe(s)) { Audio.play('rivalDeath'); flashFrame('kill'); }
+    for (const s of dying) {
+      if (isMe(s)) continue;
+      // You took them out: a knockout punch. Anyone else: a far-off thud.
+      Audio.play(me && s.killerId === me.id && s.killer !== 'self' ? 'ko' : 'rivalDeath', at(s.body[0].x));
+      flashFrame('kill');
+    }
     if (wasAlive && !playerAlive()) Audio.play('death');
+    // A near miss: your head right next to a rival's.
+    if (me?.alive) {
+      const h = me.body[0];
+      for (const o of game.snakes) if (o !== me && o.alive && Math.abs(o.body[0].x - h.x) <= 1 && Math.abs(o.body[0].y - h.y) <= 1) { Audio.play('close', at(o.body[0].x)); break; }
+    }
+    Audio.weather(state === 'running' ? game.weather?.kind : 'none');
+  }
+
+  // How much danger you're in, for the music: a rival's head close to yours,
+  // or little room ahead. 0..1.
+  function dangerOf() {
+    const me = player();
+    if (!me?.alive || !game) return 0;
+    const h = me.body[0];
+    let near = 99;
+    for (const o of game.snakes) if (o !== me && o.alive) near = Math.min(near, Math.abs(o.body[0].x - h.x) + Math.abs(o.body[0].y - h.y));
+    let danger = near <= 1 ? 1 : near <= 4 ? (5 - near) / 4 : 0;
+    // Room ahead: how many of the next three cells straight on are open.
+    let open = 0;
+    for (let i = 1; i <= 3; i++) {
+      const x = h.x + me.dir.x * i, y = h.y + me.dir.y * i;
+      if (x < 0 || y < 0 || x >= GRID || y >= GRID || game.holes.has(y * GRID + x)) break;
+      if (game.snakes.some(o => o.alive && o.body.some(c => c.x === x && c.y === y))) break;
+      open++;
+    }
+    if (open === 0) danger = Math.max(danger, 0.85); else if (open === 1) danger = Math.max(danger, 0.5);
+    return danger;
   }
 
   // Banners for the big moments of a round (one per tick, most important first).
@@ -557,11 +632,13 @@
       game.firstBlood = true;
       const v = dying[0];
       const killer = game.snakes.find(o => o.name === v.killer && o !== v);
+      Audio.play('stinger');
       return toast(killer ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : `First out: ${who(v, true)} ${isMe(v) ? yourCause(v) : causeFor(v)}.`, 2800, 'kill');
     }
     for (const e of game.events) if (e.type === 'woodpecker') { flashFrame('bird', true); return toast(pick(FLAVOR.woodpecker), 2800, 'bird'); }
     if (dying.length && alive.length === 2) {
       const [a, b] = isMe(alive[0]) ? [alive[1], alive[0]] : alive;
+      Audio.play('riser');
       return toast(`It’s down to ${who(a)} and ${who(b, true)}.`, 2800, 'kill');
     }
     const me = player();
@@ -634,14 +711,15 @@
   // Screen reader announcements (a permanently rendered, visually hidden region).
   function say(text) { announcer.textContent = text; }
 
-  const BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.35)', color: '#fde68a', offset: 0.4 }, { transform: 'scale(1)' }];
+  // (Pops only scale, so the compositor runs them: no repaint, even on a bite.)
+  const BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.35)', offset: 0.4 }, { transform: 'scale(1)' }];
   const BUMP_TIMING = { duration: 280, easing: 'ease-out' };
   function bump(el, frames = BUMP) {
     if (!reducedMQ.matches) el.animate?.(frames, BUMP_TIMING);
   }
-  // A tag's length when it changes (leaf green on parchment, not honey), a tag
+  // A tag's length when it changes, a tag
   // knocked out of the round, and a tag taking the lead.
-  const TAG_BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.45)', color: '#4d7c0f', offset: 0.35 }, { transform: 'scale(1)' }];
+  const TAG_BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.45)', offset: 0.35 }, { transform: 'scale(1)' }];
   const KNOCK = [
     { transform: 'translateX(0) rotate(0)', backgroundColor: '#fca5a5' },
     { transform: 'translateX(-6px) rotate(-2deg)', offset: 0.18 },
@@ -656,7 +734,7 @@
 
   // The frame lights up round its edge for the big moments, in the moment's
   // colour (only its opacity animates, so it's cheap).
-  const GLOW = { gold: '#fde047', beetle: '#34d399', kill: '#ef4444', bird: '#f97316', go: '#a3e635', win: '#fde68a', sun: '#fbbf24', wind: '#86efac', rain: '#60a5fa', storm: '#c4b5fd' };
+  const GLOW = { gold: '#fde047', beetle: '#34d399', kill: '#ef4444', bird: '#f97316', go: '#a3e635', win: '#fde68a', sun: '#fbbf24', wind: '#86efac', rain: '#60a5fa', storm: '#c4b5fd', snow: '#e0f2fe' };
   function flashFrame(kind, strong = false) {
     if (reducedMQ.matches || !glowEl?.animate) return;
     glowEl.style.setProperty('--glow', GLOW[kind]);
@@ -868,10 +946,12 @@
     }
   }
 
-  // The scoreboard dot: the snake's current color, a rainbow for Wildcard,
-  // two-tone for Joker, veined marble for Mason, and Vulture's pink head (black would vanish).
+  // The scoreboard dot: the snake's current color,
+  // the flag for Wildcard, two-tone for Joker, veined marble for Mason, a rainbow
+  // for Mute, and Vulture's pink head (black would vanish).
   function dotColor(s) {
-    if (s.personaKey === 'wildcard') return 'conic-gradient(#f87171, #facc15, #4ade80, #22d3ee, #818cf8, #f472b6, #f87171)';
+    if (s.personaKey === 'wildcard') return 'linear-gradient(135deg, #3c3b6e 0 42%, #b22234 42% 56%, #fff 56% 70%, #b22234 70% 84%, #fff 84%)';
+    if (s.personaKey === 'mute') return 'conic-gradient(#f87171, #facc15, #4ade80, #22d3ee, #818cf8, #f472b6, #f87171)';
     if (s.personaKey === 'joker') return 'linear-gradient(90deg, #a21caf 50%, #f59e0b 50%)';
     if (s.personaKey === 'mason') return 'linear-gradient(135deg, #f5f1e8 0 38%, #8a94a6 40% 45%, #ebe5d9 47% 68%, #c9a227 70% 74%, #ebe5d9 76%)';
     return s.persona?.ink || R.colorOf(s);
@@ -1568,7 +1648,11 @@
 
   // ------------------------------------------------- size and motion
 
-  R.init({ canvas, personas: PERSONAS });
+  R.init({ canvas, personas: PERSONAS, birdLayer: $('bird-layer') });
+  // Where the board is on the page (the woodpecker perches beside it, on its own layer).
+  const placeBoard = () => { const b = canvas.getBoundingClientRect(); R.setBoardRect(b.left, b.top, b.width); };
+  window.addEventListener('resize', placeBoard, { passive: true });
+  window.addEventListener('scroll', placeBoard, { passive: true });
   Chatter.init({ boardEl, logEl: chatlogEl });
 
   const sizer = new ResizeObserver(entries => {
@@ -1577,6 +1661,7 @@
     if (!w) return;
     boardPx = w;
     R.resize(w, e.devicePixelContentBoxSize?.[0]?.inlineSize);
+    placeBoard();
     Chatter.setCompact(w < 420);
     dirty = true;
   });
@@ -1687,7 +1772,7 @@
         for (let j = 0; j < count; j++) { fake += ms; frame(fake); }
         return state;
       },
-      draw: () => R.frame(drawAlpha, performance.now()),
+      draw: () => R.frame(drawAlpha, boardClock),
     };
   }
 })();
