@@ -56,4 +56,27 @@ ok(A.stats().played === 3 && B.stats().played === 2, 'stats count only your own 
 const before = A.scores().length;
 A.importShared([{ owner: 'x', place: 9, date: 1 }, { place: 1, date: 1 }, null, 'nope'], '#000');
 ok(A.scores().length === before, 'malformed shared rounds are dropped');
+
+// Hostile rows from a modified friend.
+const C = player();
+C.importShared([{ owner: 'evil1', place: 1, date: 1e300, eaten: 5 }], '#123456');
+ok(C.scores().length === 0, 'a row with an impossible date is dropped');
+C.importShared([{ owner: 'evil1', place: 1.5, date: Date.now(), eaten: 1e15, survived: -5, name: 'Bad\u202eguy', id: '<img>' }], 'red;position:fixed;inset:0');
+const row = C.scores()[0];
+ok(row && row.color === '#a8a29e', 'a colour that isn\'t a colour is replaced');
+ok(row && row.place === 2 && row.eaten === 9999 && row.survived === 0, 'numbers are clamped to sense');
+ok(row && !row.name.includes('\u202e') && row.id === 'img', 'names and ids are cleaned');
+ok(C.recordFriend({ place: 1, eaten: 1, survived: 1 }, { name: 'Me?', color: '#4ade80', owner: C.playerId(), round: 'R1' }) === null, 'a friend can\'t record a round as yours');
+
+// Names that are also built-in object keys, or replacement patterns.
+C.recordPlayer({ place: 4, eaten: 0, survived: 1000, killer: 'constructor' });
+C.recordPlayer({ place: 4, eaten: 0, survived: 1000, killer: 'toString' });
+const st = C.stats();
+ok(st.killers.constructor === 1 && st.killers.toString === 1, 'a killer called "constructor" is just a name');
+ok(C.cleanName('😀'.repeat(20)).length === 32 && !/[\ud800-\udbff]$/.test(C.cleanName('a' + '😀'.repeat(20))), 'a long name is cut between characters, never inside an emoji');
+
+// Corrupt stored stats.
+const D = player();
+D.recordPlayer({ place: 1, won: true, eaten: 3, survived: 1000 });
+ok(D.stats().played === 1, 'stats start counting');
 console.log('all good');

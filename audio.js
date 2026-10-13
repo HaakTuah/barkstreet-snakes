@@ -547,8 +547,5 @@ window.SnakeAudio = (() => {
   const isMuted = () => muted;
   const toggleMuted = () => setMuted(!muted);
 
-  // Sound has no motion to reduce; kept so the game can call every module the same way.
-  function setReducedMotion() {}
-
-  return { unlock, play, setMuted, isMuted, toggleMuted, setReducedMotion, music, setMusicOn, isMusicOn, toggleMusic };
+  return { unlock, play, setMuted, isMuted, toggleMuted, music, setMusicOn, isMusicOn, toggleMusic };
 })();

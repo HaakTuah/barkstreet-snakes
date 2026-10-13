@@ -3,21 +3,26 @@
 // AI (tuning.js, ai.js and engine.js, loaded unchanged) and prints how each
 // personality did. Runs on all cores; needs only Node.
 //
-//   node tools/simulate.js [rounds] [--seed N] [--ahead] [--json]
+//   node tools/simulate.js [rounds] [--seed N] [--ahead] [--check] [--json] [--root DIR]
 //
 //   rounds    how many rounds (default 200)
-//   --seed N  a fixed random seed, so a run can be repeated exactly
+//   --seed N  a fixed random seed, so a run can be repeated exactly (each round
+//             has its own seed, so it doesn't matter how many cores you have)
 //   --ahead   let every AI decide during the frames before its tick, the way
 //             the browser does; with the same seed the rounds must come out
 //             identical to a run without it
+//   --check   fail (exit 1) if a round stalls, or a personality never wins
 //   --json    print the raw totals instead of the table
+//   --root    play another copy of the game (to compare versions)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const vm = require('vm');
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 
-const ROOT = path.join(__dirname, '..');
+// (Workers don't see the command line, so the root travels with each job.)
+const argRoot = process.argv.indexOf('--root');
+const ROOT = isMainThread ? (argRoot > 0 ? path.resolve(process.argv[argRoot + 1]) : path.join(__dirname, '..')) : workerData.root;
 const MAX_TIME = 600000; // a round still going after 10 minutes counts as stalled
 
 // mulberry32: a small, fast seeded random number generator.
@@ -33,9 +38,11 @@ function seeded(seed) {
 }
 
 // The game's files in a fresh context, with our own Math.random.
-function loadGame(random) {
+// Math.random draws from `rng`, which can be reseeded for every round.
+let rng = Math.random;
+function loadGame() {
   const M = Object.create(Math);
-  M.random = random;
+  M.random = () => rng();
   const ctx = vm.createContext({ window: {}, console, Math: M });
   for (const f of ['tuning.js', 'ai.js', 'engine.js']) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
@@ -43,11 +50,19 @@ function loadGame(random) {
   return { E: ctx.window.SnakeEngine, T: ctx.window.TUNING };
 }
 
-function play({ rounds, seed, ahead }) {
-  const { E, T } = loadGame(seed == null ? Math.random : seeded(seed));
+// How a snake died, finer than the game's killer field.
+const causeOf = s => s.killer === 'self' ? 'self' : s.killer === 'hunger' ? 'starved'
+  : s.cause === 'fell into a woodpecker hole' ? 'hole' : s.killer === 'wall' ? 'wall'
+  : s.cause.startsWith('crashed') ? 'head-on' : 'body';
+
+// Plays rounds [from, to) of the run, each from its own seed.
+function play({ from, to, seed, ahead }) {
+  const { E, T } = loadGame();
   const per = {};
-  const total = { rounds, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: 0, beetles: 0, caught: 0, flown: 0 };
-  for (let r = 0; r < rounds; r++) {
+  const total = { rounds: to - from, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {} };
+  for (let r = from; r < to; r++) {
+    rng = seed == null ? Math.random : seeded(seed + r * 7919);
+    let trace = 0;
     const g = E.createGame({ withPlayer: false });
     for (const s of g.snakes) {
       per[s.name] ||= { rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, beetles: 0, kills: 0, aliveMs: 0, deaths: {} };
@@ -68,14 +83,16 @@ function play({ rounds, seed, ahead }) {
       for (const s of dying) {
         place.set(s, left + 1);
         per[s.name].aliveMs += g.time;
-        const cause = s.killer === 'self' ? 'self' : s.killer === 'wall' ? 'wall' : s.killer === 'hunger' ? 'starved' : 'rival';
+        const cause = causeOf(s);
         per[s.name].deaths[cause] = (per[s.name].deaths[cause] || 0) + 1;
+        total.causes[cause] = (total.causes[cause] || 0) + 1;
         const killer = g.snakes.find(o => o.name === s.killer && o !== s);
         if (killer) per[killer.name].kills++;
       }
       // A cheap fingerprint of every move, to compare runs exactly.
-      for (const s of g.snakes) if (s.alive) total.trace = (total.trace * 31 + s.body[0].x * 24 + s.body[0].y + g.tick) % 1000000007;
+      for (const s of g.snakes) if (s.alive) trace = (trace * 31 + s.body[0].x * 24 + s.body[0].y + g.tick) % 1000000007;
     }
+    total.trace.push([r, trace]);
     const alive = g.snakes.filter(s => s.alive);
     if (g.time >= MAX_TIME) total.stalled++;
     else if (alive.length === 1) { per[alive[0].name].wins++; place.set(alive[0], 1); }
@@ -95,11 +112,12 @@ function play({ rounds, seed, ahead }) {
 }
 
 function merge(results) {
-  const per = {}, total = { rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0 };
+  const per = {}, total = { rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {} };
   for (const r of results) {
     for (const k of ['rounds', 'timeSum', 'sudden', 'draws', 'stalled', 'beetles', 'caught', 'flown']) total[k] += r.total[k];
     total.times.push(...r.total.times);
-    total.trace.push(r.total.trace);
+    total.trace.push(...r.total.trace);
+    for (const [c, n] of Object.entries(r.total.causes)) total.causes[c] = (total.causes[c] || 0) + n;
     for (const [name, p] of Object.entries(r.per)) {
       const t = (per[name] ||= { deaths: {} });
       for (const [k, v] of Object.entries(p)) {
@@ -108,6 +126,8 @@ function merge(results) {
       }
     }
   }
+  // One fingerprint for the whole run, in round order (whatever the number of workers).
+  total.trace = total.trace.sort((a, b) => a[0] - b[0]).reduce((h, [, t]) => (h * 131 + t) % 1000000007, 7);
   return { per, total, suddenAt: results[0].suddenAt };
 }
 
@@ -118,7 +138,10 @@ function report({ per, total, suddenAt }) {
   console.log(`${total.rounds} rounds · length median ${sec(times[times.length >> 1])}, middle half ${sec(times[times.length >> 2])}-${sec(times[(times.length * 3) >> 2])}`
     + ` · ${pct(total.sudden, total.rounds)}% reached the woodpecker (${sec(suddenAt)}) · draws ${total.draws} · stalled ${total.stalled}`);
   if (total.beetles) console.log(`beetles: ${(total.beetles / total.rounds).toFixed(1)} a round, ${pct(total.caught, total.beetles)}% caught, ${pct(total.flown, total.beetles)}% flew off`);
-  console.log(`fingerprint ${total.trace.join('-')}`);
+  const deaths = Object.values(total.causes).reduce((a, b) => a + b, 0);
+  console.log('deaths: ' + Object.entries(total.causes).sort((a, b) => b[1] - a[1]).map(([c, n]) => `${c} ${pct(n, deaths)}%`).join(', ')
+    + ` · into holes: ${((total.causes.hole || 0) / Math.max(1, total.sudden)).toFixed(2)} per woodpecker round`);
+  console.log(`fingerprint ${total.trace}`);
   console.table(Object.entries(per).map(([name, p]) => ({
     name,
     rounds: p.rounds,
@@ -143,9 +166,11 @@ if (isMainThread) {
   const ahead = flag('--ahead');
   const workers = Math.max(1, Math.min(rounds, os.cpus().length - 1));
   const jobs = Array.from({ length: workers }, (_, i) => ({
-    rounds: Math.floor(rounds / workers) + (i < rounds % workers ? 1 : 0),
-    seed: seed == null ? null : seed + i * 7919,
+    from: Math.floor(rounds * i / workers),
+    to: Math.floor(rounds * (i + 1) / workers),
+    seed,
     ahead,
+    root: ROOT,
   }));
   Promise.all(jobs.map(job => new Promise((resolve, reject) => {
     const w = new Worker(__filename, { workerData: job });
@@ -155,6 +180,12 @@ if (isMainThread) {
     const merged = merge(results);
     if (flag('--json')) console.log(JSON.stringify(merged));
     else report(merged);
+    if (flag('--check')) {
+      const never = Object.entries(merged.per).filter(([, p]) => p.rounds >= 20 && !p.wins).map(([n]) => n);
+      const problems = [merged.total.stalled && `${merged.total.stalled} stalled`, never.length && `never won: ${never.join(', ')}`].filter(Boolean);
+      if (problems.length) { console.error('check failed: ' + problems.join('; ')); process.exit(1); }
+      console.log('check ok');
+    }
   }, err => { console.error(err); process.exit(1); });
 } else {
   parentPort.postMessage(play(workerData));

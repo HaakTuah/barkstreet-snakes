@@ -4,6 +4,8 @@
 
 A storybook diorama of a tree trunk seen from above. Four caterpillar-snakes wind across warm bark under a carved wooden frame, while notes on parchment tell you what's going on. Everything should look cut from the same few materials: **bark, heartwood, parchment, ink and leaf**. Nothing should look like a generic app widget. The game isn't classic snake: it's a small rivalry between you and three characters with their own minds and voices. Polish means making every part of that rivalry readable, fair, smooth and charming, not adding more of it.
 
+**The second pass** (see AUDIT.md) adds nothing new to play. It goes after the moments that still felt off when looked at frame by frame: the death freeze-frame that jumped, bends that pulsed, a woodpecker that could peck the cell right in front of you, a Hall of Fame rank that changed its mind, phones and laptops that hid the board or the Play button, and online rooms that broke after a few rejoins. It also moves the frame budget to where the time really goes: the GPU drawing long snakes.
+
 ## Art direction: "storybook bark"
 
 **Why it suits snake.** Snakes and caterpillars belong on bark. The texture gives the grid a sense of place, and the grid stays readable through faint carved lines baked into the wood. Warm, mid-dark bark lets bright characters and food pop by brightness, not only by hue. It's also the direction you chose, inspired by the caterpillar game in *Flåklypa Grand Prix*. It's kept and refined rather than replaced.
@@ -61,7 +63,7 @@ The rivals keep their faces and patterns, and share the blink, the bite and the 
 - **The golden apple** shimmers with a small rotating sparkle star (a non-hue cue). Instead of blinking before it rots, it dims calmly.
 - **Mushrooms** sway slightly.
 - **Beetles** (your Flåklypa idea): a jewel beetle, emerald with a gold rim, that comes out where it's quiet and walks the bark cell by cell with scuttling legs. It's the one food that moves, so it adds a chase to the core loop. **Tuned in the simulator (250 seeded rounds per setting):** a beetle that bolts as fast as a snake was a death trap (rounds 75 s -> 57 s, and 20% of deaths happened within 4 cells of a beetle, as snakes followed it into tight spots); one that scurries at half a snake's speed from any head within 4 cells leaves rounds as they were (72 s, deaths near a beetle 5%) and still makes you chase: 89% are caught, after about 4 s of pursuit. The AIs value one at what it's worth (two apples) and see it through their usual reaction delay. A skitter when one appears, a crunch when you catch it, and Gobbler, Desperado, Sniper and Mason have something to say about it (Mason: "Scarabaeus captus!").
-- **Meat:** a drumstick tinted by the snake it came from, with a light rim so it reads against the bark.
+- **Meat:** a roast drumstick, ringed in the colour of the snake it came from, with a light edge so it reads against the bark. (It used to be tinted all over, and green or purple meat looked spoiled.)
 - **Holes** are baked into the static layer the moment they're pecked. The woodpecker perches on its newest hole, which can never be played on again, never on a playable cell.
 - **The corner leaves move onto the frame** and never cover playable cells.
 - **Sovereign's home** is a smooth, clearly visible tinted disc whose edge matches the trespass rule exactly. Colonist flags keep their St George cross.
@@ -84,17 +86,21 @@ One treatment, used everywhere:
 | Moment | Copy |
 |---|---|
 | Title / subtitle | **Bark & Bite** / *A snake game up a tree* |
-| Start prompt | "Three rivals. One tree. Last snake wriggling wins." The control hint below adapts to keyboard or touch. |
+| Start prompt | **"Ready, Green?"** (your Hall of Fame name, once you have one: the header already says *Bark & Bite*), then "Three rivals. One tree. Last snake wriggling wins." The control hint below adapts to keyboard or touch. |
 | Countdown | Rotating roll-calls ("Up the tree with you:", "Sharing your bark:") above the rival list |
+| Go | "Slither!" when you're playing; "And they're off." when you're watching (the narrator never talks to "you" in a round you're not in) |
 | Pause | Title **Napping**, then a rotating line ("Snakes need rest too."), then "Space or P to wake up" on keyboard or "Tap Wake up" on touch |
 | Death titles | Matched to the cause: "Bonk!" for the edge, "Tangled!" for biting yourself, "Squashed!" for a rival's body, "Head-on!" for a head-on crash, **Starved!** for hunger and **Down the hole!** for the woodpecker |
 | Death flavor | Cause-specific lines, or the killer's own line, rewritten to be cause-neutral |
 | New best | **"New best: 14!"** with a short fanfare and a gold burst. Hall of Fame: "Hall of Fame #2. Carve your name:" |
-| Round over | "You win!" / "{Name} wins" with the winner's punchline, without repeating the title |
-| Control hints | Keyboard: "Arrows or WASD steer · Space naps · Enter starts over · H for the Hall of Fame" (plus "M sound · N music" under the board); touch: "Swipe on the bark to steer · tap ⏸ to nap" |
+| Round over | "You win!" / "{Name} wins" with the winner's punchline, without repeating the title. A win says "Won in 2:10 · score 14"; a draw says "You shared 1st" |
+| Control hints | Every item is a key and a verb. Start card: "Arrows or WASD steer · Space naps · Enter starts · H opens the Hall of Fame"; under the board, "Enter starts over" instead, plus "M mutes · N toggles the music"; touch: "Swipe to steer · Tap ⏸ to nap" |
+| Screen readers | A card is announced as sentences ("Bonk! You hit the wall, 4th place, score 2. The tree goes on. You don't. New best: 14!"), never "dot" |
 
 **Rules for every string:**
 - One noun for the measure: **Score** (food eaten) and **Best**.
+- Typographer's apostrophes and quotes (’ “ ”) and a real ellipsis (…) everywhere a player can see. The Chinese lines are keyed by the English, so the two change together.
+- A kill or win line never repeats the chatter the player has just seen (Desperado's "Draw, partner" belongs to his chatter; his kill line is "Desperado drew first.").
 - "you" in the middle of a sentence, never "You".
 - The snakes call you by your Hall of Fame name, or **Green** if you haven't set one.
 - Mason speaks only phony Latin. His *Life of Brian* moments get answers: the Metagamer corrects "Romanes eunt domus", and "Biggus Dickus" (then "Incontinentia Buttocks") sets the others off giggling, as it does Pilate's guards.
@@ -106,15 +112,18 @@ One treatment, used everywhere:
 | Target | Concrete check |
 |---|---|
 | Smooth motion at 60/120/144 Hz | Fixed timestep driven from one rAF loop with interpolation; a snake moves exactly one cell per tick, never stalls at cell boundaries |
-| Frame budget | script + render per frame: **p95 ≤ 3 ms, worst ≤ 6.9 ms** (one 144 Hz frame) in the long-snake scene and at death and particle moments. *Measured in Chrome at 2× density, watching at normal speed, over five runs: p95 0.9-1.9 ms, p99 2.1-5.3 ms, worst 6.7-13.1 ms (0-0.3% of frames over 6.94 ms), and no frame over 16.7 ms in any run. The p95 target is met. The worst-case target is not reliably met: now and then one AI decision on a crowded board lands in the same frame as a draw. At 4× watching speed (four times the ticks), a few frames a minute go over 16.7 ms.* |
+| Frame budget | Script per frame **p95 ≤ 2 ms, worst ≤ 6.9 ms** (one 144 Hz frame). **GPU raster for the long-snake scene (4 × 70 segments) ≤ 3.5 ms**, half a 144 Hz frame, so the browser's own work fits beside ours. The first pass measured script time only; the second pass traced the GPU process and found that long snakes cost it 6.5 ms a frame (see AUDIT.md). *Measured after the second pass: script p95 0.7-1.2 ms (met); GPU raster 2.0 ms, down from 6.5 (met); the worst frame in a minute is 5-7 ms at normal speed and up to 12 ms at 4x, so the worst-case target is still not reliably met (an AI decision sharing a frame with a draw). Details in the "After" section of AUDIT.md.* |
 | Honest speed | Spectator 4× runs at 4.0× (±2%); ticks don't drift by their own cost |
 | Input never lost | Two turns pressed within one tick both apply, on consecutive ticks; no input combo ever reverses into the neck |
 | Eating feels good | Pop, particles, sound and score bump appear in the same frame as the bite tick; the gulp travels the body |
-| Death lands softly | A 350 ms freeze-frame with a puff (plus a 4 px shake, only for your death and only without reduced motion), then the card rises in over about 250 ms |
-| Restart is instant | Enter/R/Play: a short 3-beat countdown (3 × 350 ms) that **any direction key or swipe skips** (and steers) |
+| Death lands softly | A 350 ms freeze-frame **of the moment of impact**: every snake stays exactly where it was drawn, and yours holds its pose, eyes crossed out, its head pressed into whatever it hit, with a spark at the point of contact and a 4 px shake of the board at the impact (only for your death, and only without reduced motion). Then it bursts into meat with a puff (with reduced motion it fades instead), and the card rises in over about 250 ms. Online the round never stops for anyone: your snake still holds its pose for the moment, and only your card waits |
+| The round's last frame | The final move glides like any other, then the board rests |
+| Restart is instant | Enter/R/Play: a short 3-beat countdown (3 × 350 ms) that **any direction key or swipe skips** (and steers). An arrow on the start card starts the round already turning |
 | Gentle difficulty | Tick 120 ms → 90 ms over 2 minutes; the first 3 ticks of a round are eased (170 → 120 ms) so the opening is forgiving |
-| Touch precision | A swipe registers once the finger has travelled half a cell (at least 12 px, about 3 mm, against finger jitter), without lifting; one touch can chain several turns; the page never scrolls or refreshes |
-| Never a dead moment | Every key in every state does something visible, or is documented as ignored (e.g. arrows while paused) |
+| Touch precision | A swipe registers once the finger has travelled half a cell (at least 12 px, about 3 mm, against finger jitter), without lifting; one touch can chain several turns. **During a round a swipe works anywhere on the screen**, including over the countdown, and the page never scrolls or refreshes |
+| Never a dead moment | Every key in every state does something visible, or is documented as ignored (arrows while napping or on a round-over card). Space and Enter always mean nap and start over, unless a card or dialog button has keyboard focus |
+| Rivals explained everywhere | Desktop cards list each rival with a line on how it plays; on small boards the card lists names only, and tapping a rival's tag above the board shows its line (phones have no tooltips) |
+| The board fits | On every screen from a 320×460 phone to a 1280×720 laptop, the whole board and the card's buttons are visible without scrolling; wide, short screens put the board beside the scores |
 
 ## The round's arc
 
@@ -130,9 +139,15 @@ A round has a shape, and the music follows it:
 | Watching | - | Quieter, no percussion |
 | Napping | - | Ducked to about a third |
 
-**The woodpecker comes at 2:00, not 3:00** (your call, and the numbers agree). With hunger, food is what keeps a round going, and late rounds were dragging. Over 600 simulated AI rounds the median round now lasts 72 s, the middle half 45-108 s, and 20% of rounds reach the woodpecker, so it's a real event rather than a rarity. Every personality still wins 13-40% of the rounds it plays.
+**The woodpecker comes at 2:00, not 3:00** (your call, and the numbers agree). With hunger, food is what keeps a round going, and late rounds were dragging. Over 600 simulated AI rounds the median round lasts 71 s, the middle half 46-112 s, and 21% of rounds reach the woodpecker, so it's a real event rather than a rarity. Every personality wins 15-31% of the rounds it plays. (Gobbler had slipped to 8%: it chased food straight into other snakes. It now flinches from heads a little more, so it lives longer and, true to form, eats a third more.)
 
-**The Hall of Fame ranks by place, then time alive, then food** (your call). Food stops appearing at 2:00, so food eaten mostly measures how early you died; time alive measures how well you played.
+**The woodpecker plays fair.** It pecks the next free cell of the ring, but never one within 3 cells of a head, and never under food; it comes back for skipped cells later. Before, it could peck the cell right in front of you, leaving one tick (90 ms) to react, while the AIs, who saw holes instantly, always dodged. Now the AIs see holes with the same reaction delay as everything else. Over 600 simulated rounds the AIs fall into holes *less* often than before (0.23 times per woodpecker round, down from 0.31), because there's always time to see one coming.
+
+**A cornered AI makes the sensible last move.** When every move looks fatal, a wall, a hole or its own body is certain death, but a rival's cell may already be free (it sees rivals as they were a moment ago), so it bets on the cell that frees up soonest. It used to pick at random, and those were the deaths that looked dumbest: self-bites fell from 15% to 8% of AI deaths and wall crashes from 7% to 2%. Two heads that swap cells now count as a head-on, as they look.
+
+**Starving is decided after eating.** A snake whose head reaches food on the tick it would starve eats instead.
+
+**The Hall of Fame ranks by place, then time alive, then food** (your call). Food stops appearing at 2:00, so food eaten mostly measures how early you died; time alive measures how well you played. The rank on your death card already counts the snakes still alive (they'll all finish ahead of you), so it's the rank the round-over card will show.
 
 ## Sound
 
@@ -147,13 +162,14 @@ Every sound is synthesised live with the Web Audio API, through one AudioContext
 Friends-only rooms, peer to peer, so it stays a static site with nothing to deploy and no accounts.
 
 - **The host's browser runs the game**, exactly the code that runs alone (`engine.js`, the AIs, the chatter). Every tick it sends friends a compact picture of the board (about 0.9 KB, so about 8 KB/s per friend); friends send back only their turns. Their screens glide between ticks with the same renderer. `tools/online-test.js` checks that a friend's board matches the host's on every tick, and two real browsers matched on every tick of whole rounds.
-- **Fair, in keeping with the AI rule:** the rivals never know who's a person. Lag would favour the host, who has none, so the host's own turns are delayed by half the friends' average round trip.
-- **Never stalls:** a friend's browser says "still here" four times a second. After 0.75 s of silence an AI steers their snake (so a hiccup doesn't drive them into a wall), and any turn they send hands it straight back; a banner appears only if the silence lasts 2 s. If they leave, the AI finishes their round. If the host leaves, friends get a card saying so.
+- **Fair, in keeping with the AI rule:** the rivals never know who's a person. Lag would favour the host, who has none. A friend sees each tick half a round trip late, and their turn takes another half to arrive, so the host's own turns wait **a full average round trip** (at most 150 ms), in the order they were pressed.
+- **Never stalls:** a friend's browser says "still here" four times a second. After 0.75 s of silence an AI steers their snake (so a hiccup doesn't drive them into a wall), and any turn they send hands it straight back; a banner appears only if the silence lasts 2 s. **A friend who switches tabs says so at once**, and the AI steers until they turn again (a hidden tab's "still here" slows to once a second, which used to make the AI flicker on and off). The host's own snake gets the same stand-in while the host's tab is hidden. If a friend leaves, the AI finishes their round. If the host leaves, friends get a card saying so; if the connection drops, the card says that instead and offers to rejoin.
+- **Rooms stay healthy:** each person's shared Hall of Fame rows are kept once, replaced when they rejoin and dropped when they leave, so messages stay far under PeerJS's 16 KB limit however often people come and go. Everything from the network is checked and clamped (names, colours, dates, numbers) before it's stored or drawn.
 - **The host's tab may be hidden:** browsers stop animation frames there, so a tiny worker clock keeps the round going.
 - **What changes online:** no napping, no countdown skipping, no watching speeds; your Hall of Fame and stats keep only your own result; chatter is the host's, passed on, so everyone sees the same lines.
 - **Connecting:** PeerJS (from cdnjs with an integrity hash, loaded only when someone opens Play with friends) and its free public broker introduce the browsers; STUN finds a route for most networks. Strict ones need a relay (TURN), which needs a signup, so it's left as a marked spot in `net.js`.
-- **A shared Hall of Fame** (your idea): on joining, each browser sends its own best rounds (up to 10, never AI rows), and the host passes everyone's on, so friends' rows appear in each other's tables in their seat colors, tagged "friend". Each browser also records every person's result in rounds played together. Every browser has a private random player id and every round an id, so a round is stored once, whoever recorded or shared it first (`tools/records-test.js`). **Only you**, your best and your stats count only your own rounds. AI results aren't kept for online rounds, or every table would fill with the host's rivals.
-- **People get seat colors** (green, lemon, lavender, sky) and the same cream outline, and names are made unique (a friend called "Sniper" becomes "Sniper 2" in a round with the rival).
+- **A shared Hall of Fame** (your idea): on joining, each browser sends its own best rounds (up to 10, never AI rows), and the host passes everyone's on, so friends' rows appear in each other's tables in their seat colors, tagged "friend". Each browser also records every person's result in rounds played together. Every browser has a random player id (the friends you play with see it; a result claiming to be yours is never taken from a friend, so no one can pass for you) and every round an id, so a round is stored once, whoever recorded or shared it first (`tools/records-test.js`). Shared rows are kept once per person and checked like anything else from outside: names, colours, dates and numbers are cleaned, and only a person's own rows are passed on. **Only you**, your best and your stats count only your own rounds. AI results aren't kept for online rounds, or every table would fill with the host's rivals.
+- **People get seat colors** (green, lemon, lavender, sky), each with its own marking on the body and in its dot (plain, spots, rings, dots: lavender and sky look alike to many colour-blind players), and the same cream outline, and names are made unique (a friend called "Sniper" becomes "Sniper 2" in a round with the rival).
 
 ## Architecture change (and why)
 
@@ -185,4 +201,15 @@ Each line gives the guideline, what was done, and why.
 - **"Particles in the palette's colors":** *adapted.* Particles use the palette plus the color of what was eaten (golden for golden apples, the snake's tint for meat), so the burst says what happened.
 - **"High score in localStorage":** *kept and extended.* There's Best plus the existing Hall of Fame and stats, every access in try/catch. Watched AI-only rounds now count in the Hall of Fame (your request), but never in your personal stats.
 - **"Pause automatically on blur/visibility":** *applied to hidden tabs, and to window blur only while you're playing.* A watched AI round keeps running when you click elsewhere on the same screen, but pauses when hidden.
-- **"Speech bubbles"** *(not in the brief, but they affect readability):* kept and toned down. They're smaller, slightly translucent, follow the gliding head, never outlive their round, and long lines go to the log only on small boards.
+- **"Speech bubbles"** *(not in the brief, but they affect readability):* kept and toned down. They're smaller, slightly translucent, follow the gliding head, never outlive their round, and long lines go to the log only on small boards. They sit beside a snake going up or down (never over its path or its body), fade while your head is near one, and a snake doesn't repeat a line within 45 s of game time; Mason's *Life of Brian* routines come once per visit. Banners move to the board's foot while a head passes under them.
+
+### Second pass
+
+- **"Move the simulation off the main thread":** *still adapted, with a corrected reason.* A Web Worker built from a blob does run from `file://` (the host's hidden-tab clock already is one), so that wasn't the obstacle. The real cost is that the renderer and the chatter read ten fields of each AI's memory every frame, which a worker would have to mirror back each tick. The measured tail came from the first decision of a round (the JIT warming up) and from decisions sharing a frame with a tick, so instead every rival's brain is warmed on the start card and no thinking happens in a frame that has just ticked.
+- **"Throttle rendering when paused or hidden":** *already true, one part skipped.* Nothing is drawn while napping, on a card or in a hidden tab (GPU idle). The animation loop itself keeps running on those screens to schedule the music, at 0.1 ms a frame; a second clock for the idle case isn't worth the complexity.
+- **"Zero allocation in the hot path":** *now applied to the renderer too.* The per-segment colour lookup built strings every frame (half of the render script time in the long-snake scene); colours now come from a cached ramp per snake, and the remaining closures and array literals are hoisted. The engine's one snapshot per tick for the AIs' reaction delay stays, as before.
+- **"Batch draw calls into one path":** *reversed, on measurement.* With Chrome's GPU canvas, one path of 70 circles is triangulated every frame, and bands stroked between circles break batching; separate circle fills batch into one GPU operation even across colours. So bodies are drawn as all bands (rectangles), then all circles.
+- **A jitter buffer for friends' screens:** *skipped.* Tick spacing measured steady (118-122 ms, even with the host's tab hidden), and a buffer would add latency for everyone.
+- **Command letters on Colemak and Workman:** *skipped.* WASD is read by physical key so it works on any layout; on Colemak, the physical S key types "r", so giving letters priority would restart your round when you steer down.
+- **Renaming the storage keys and `pellet`:** *skipped.* Renaming keys would orphan everyone's saved Hall of Fame; the rest is cosmetic.
+- **Splitting snake.js (the friends' lobby into its own file) and the long `drawFace` and `decide()`:** *skipped for now.* Big moves with no change a player can see; noted in AUDIT.md for later.

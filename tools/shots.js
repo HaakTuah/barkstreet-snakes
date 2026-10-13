@@ -1,0 +1,117 @@
+#!/usr/bin/env node
+// The screenshot tour, in headless Chrome: every state of the game on a
+// desktop window, a phone and a phone on its side.
+//
+//   node tools/shots.js [outDir]      (default: shots/)
+//
+// Your snake is steered by an autopilot (a rival's brain, through real key
+// events) until a lively moment, then crashed on purpose.
+const path = require('path');
+const fs = require('fs');
+const { launch, serve, HELPERS } = require('./browser');
+
+const out = path.resolve(process.argv[2] || 'shots');
+fs.mkdirSync(out, { recursive: true });
+
+(async () => {
+  const site = await serve();
+  const URL = site.url + '?debug';
+  const b = await launch();
+  const shot = async name => { await b.shot(path.join(out, name)); console.log('shot', name); };
+  // Play until a lively moment with your snake alive (a few tries).
+  const playUntil = async (ms, length, rivals) => {
+    for (let attempt = 0; attempt < 6; attempt++) {
+      await b.eval(`document.getElementById('start').click(); pilot.on = true; pilot.crash = false; 'ok'`);
+      const ok = await b.eval(`waitFor(() => SnakeDebug.state() === 'over' || !me().alive || (SnakeDebug.game().time > ${ms} && me().body.length >= ${length} && SnakeDebug.game().snakes.filter(s => s.alive).length >= ${rivals}), 90000).then(() => me().alive && SnakeDebug.state() === 'running')`);
+      if (ok) return;
+    }
+    throw new Error('could not stay alive long enough');
+  };
+  try {
+    // ---------------------------------------------------------------- desktop
+    await b.viewport(800, 800);
+    await b.go(URL);
+    await b.eval(HELPERS);
+    await b.sleep(500);
+    await shot('title.jpg');
+
+    await playUntil(22000, 10, 3);
+    await shot('gameplay.jpg');
+
+    // Just after a bite: crumbs, the gulp, "+1".
+    await b.eval(`(() => { const n = me().eaten; return waitFor(() => me().eaten > n || !me().alive, 40000); })()`);
+    await b.sleep(70);
+    await shot('eating.jpg');
+
+    await b.key('p');
+    await b.sleep(450);
+    await shot('pause.jpg');
+    await b.key('p');
+    await b.sleep(200);
+
+    // Crash on purpose: the freeze-frame, then the death card.
+    await b.eval(`pilot.crash = true; waitFor(() => !me().alive, 20000).then(() => 1)`);
+    await b.sleep(120);
+    await shot('death.jpg');
+    await b.eval(`waitFor(cardUp, 5000).then(() => 1)`);
+    await b.sleep(450);
+    await shot('death-card.jpg');
+
+    // Watch the rest at 4x until someone wins, with a beetle and sudden death if they come.
+    await b.eval(`pilot.on = false; document.getElementById('watch').click(); 'ok'`);
+    await b.eval(`running()`);
+    await b.key('3');
+    const beetle = await b.eval(`waitFor(() => SnakeDebug.state() === 'over' || SnakeDebug.game().food.some(f => f.kind === 'beetle'), 90000).then(() => SnakeDebug.game().food.some(f => f.kind === 'beetle')).catch(() => false)`);
+    if (beetle) { await b.sleep(250); await shot('beetle.jpg'); }
+    const late = await b.eval(`waitFor(() => SnakeDebug.state() === 'over' || SnakeDebug.game().time > TUNING.SUDDEN_DEATH_MS + 6000, 240000).then(() => SnakeDebug.state() !== 'over')`);
+    if (late) await shot('sudden-death.jpg');
+    await b.eval(`waitFor(() => SnakeDebug.state() === 'over' && cardUp(), 240000).then(() => 1)`);
+    await b.sleep(500);
+    await shot('game-over.jpg');
+
+    await b.eval(`document.getElementById('records-open').click(); 'ok'`);
+    await b.sleep(400);
+    await shot('hall-of-fame.jpg');
+    await b.eval(`document.querySelector('#records .tab[data-tab="stats"]')?.click(); 'ok'`);
+    await b.sleep(300);
+    await shot('your-story.jpg');
+    await b.key('Escape');
+    await b.sleep(300);
+
+    await b.eval(`document.getElementById('friends').click(); 'ok'`);
+    await b.sleep(800);
+    await shot('friends.jpg');
+
+    // ----------------------------------------------------------------- a laptop
+    await b.viewport(1280, 720);
+    await b.go(URL);
+    await b.eval(HELPERS);
+    await playUntil(12000, 6, 3);
+    await shot('laptop-gameplay.jpg');
+
+    // ----------------------------------------------------------------- a phone
+    await b.viewport(375, 812, { scale: 2, mobile: true });
+    await b.go(URL);
+    await b.eval(HELPERS);
+    await b.sleep(500);
+    await shot('mobile-title.jpg');
+    await playUntil(18000, 8, 2);
+    await shot('mobile-gameplay.jpg');
+    await b.eval(`pilot.crash = true; waitFor(() => !me().alive, 20000).then(() => waitFor(cardUp, 5000)).then(() => 1)`);
+    await b.sleep(450);
+    await shot('mobile-death.jpg');
+
+    // ------------------------------------------------------ a phone on its side
+    await b.viewport(812, 375, { scale: 2, mobile: true });
+    await b.go(URL);
+    await b.eval(HELPERS);
+    await b.eval(`document.getElementById('start').click(); pilot.on = true; 'ok'`);
+    await b.sleep(6000);
+    await shot('mobile-landscape.jpg');
+
+    if (b.errors.length) console.log('page errors:', b.errors);
+  } finally {
+    await b.close();
+    site.close();
+  }
+})().catch(e => { console.error(e); process.exit(1); });

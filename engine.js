@@ -28,7 +28,7 @@ window.SnakeEngine = (() => {
     const d = spawn.dir;
     const body = [0, 1, 2].map(k => ({ x: spawn.x - d.x * k, y: spawn.y - d.y * k }));
     return {
-      id, body, dir: d, alive: true, grow: 0, eaten: 0, pellets: 0, lastAte: 0, nextStarve: T.HUNGER_MS,
+      id, body, dir: d, alive: true, grow: 0, eaten: 0, pellets: 0, lastAte: 0, ateTick: -1, nextStarve: T.HUNGER_MS,
       queue: [], cause: null, killer: null, killerId: null, diedAt: null, memory: {}, planned: null, plannedTick: -1, ...props,
     };
   }
@@ -53,9 +53,10 @@ window.SnakeEngine = (() => {
   function createGame({ humans = null, withPlayer = true, personas = null } = {}) {
     const people = (humans || (withPlayer ? [{ name: 'You', color: PLAYER_COLOR }] : [])).slice(0, SPAWNS.length);
     const wanted = T.OPPONENTS + 1 - people.length;
-    const keys = (personas || pickOpponents(wanted)).filter(k => PERSONAS[k]).slice(0, wanted);
+    const keys = (personas || pickOpponents(wanted)).filter(k => Object.prototype.hasOwnProperty.call(PERSONAS, k)).slice(0, wanted);
     const snakes = [];
-    const taken = new Set(keys.map(k => PERSONAS[k].name));
+    // (The killer of a snake that hit a wall, itself or hunger is that word, so no one may be called it.)
+    const taken = new Set([...keys.map(k => PERSONAS[k].name), 'wall', 'self', 'hunger']);
     for (const h of people) {
       const base = String(h.name || 'Green');
       let name = base;
@@ -211,17 +212,19 @@ window.SnakeEngine = (() => {
     }
   }
 
-  // Sudden death: peck the next free cell, outermost ring first.
+  // Sudden death: peck the next free cell, outermost ring first. Never under a
+  // body or food, and never within PECK_CLEARANCE cells of a head, so a hole
+  // can't open right in front of anyone; skipped cells get their turn later.
   function peck(game) {
     if (!suddenDeath(game) || game.tick % T.PECK_EVERY) return;
     markBodies(game);
+    for (const f of game.food) bodyStamp[key(f.x, f.y)] = stamp;
     const order = game.peckOrder;
     for (let i = game.peckAt; i < order.length; i++) {
       const c = order[i];
       const k = key(c.x, c.y);
-      if (game.holes.has(k) || bodyStamp[k] === stamp) continue;
+      if (game.holes.has(k) || bodyStamp[k] === stamp || nearHead(game, c)) continue;
       game.holes.add(k);
-      game.food = game.food.filter(f => f.x !== c.x || f.y !== c.y);
       if (!game.woodpecker) game.events.push({ type: 'woodpecker' });
       game.events.push({ type: 'peck', x: c.x, y: c.y });
       game.woodpecker = { x: c.x, y: c.y, at: game.time };
@@ -230,19 +233,39 @@ window.SnakeEngine = (() => {
     while (game.peckAt < order.length && game.holes.has(key(order[game.peckAt].x, order[game.peckAt].y))) game.peckAt++;
   }
 
+  function nearHead(game, c) {
+    for (const s of game.snakes) {
+      if (s.alive && Math.abs(s.body[0].x - c.x) + Math.abs(s.body[0].y - c.y) <= T.PECK_CLEARANCE) return true;
+    }
+    return false;
+  }
+
   function snapshot(game) {
     game.history.push({
       snakes: game.snakes.filter(s => s.alive).map(s => ({
         id: s.id, body: s.body.map(c => ({ x: c.x, y: c.y })), dir: s.dir,
       })),
       food: game.food.map(f => ({ ...f })),
+      holes: game.holes.size,
     });
     if (game.history.length > T.HISTORY) game.history.shift();
   }
 
-  // What an AI "sees": its own body now, everything else as of its reaction
-  // time ago. Rivals are just ids and bodies; nothing says which one is human.
-  // Holes don't move, so those are always current.
+  // The holes as they were in a snapshot (the first `n` pecked; a Set keeps
+  // insertion order). Shared by every AI deciding on the same tick.
+  function holesSeen(game, n) {
+    if (n >= game.holes.size) return game.holes;
+    if (game.holesView?.n !== n || game.holesView.of !== game.holes) {
+      const set = new Set();
+      for (const k of game.holes) { if (set.size === n) break; set.add(k); }
+      game.holesView = { n, of: game.holes, set };
+    }
+    return game.holesView.set;
+  }
+
+  // What an AI "sees": its own body now, everything else (holes included) as
+  // of its reaction time ago, like a person would. Rivals are just ids and
+  // bodies; nothing says which one is human.
   function aiView(game, snake) {
     const delay = Math.max(1, Math.round(T.REACTION_MS / tickMs(game)));
     const idx = Math.max(0, game.history.length - 1 - delay);
@@ -252,7 +275,7 @@ window.SnakeEngine = (() => {
       me: { id: snake.id, body: snake.body, dir: snake.dir, grow: snake.grow, hungerLeft: hungerLeft(game, snake) },
       others: snap.snakes.filter(o => o.id !== snake.id),
       food: snap.food,
-      holes: game.holes,
+      holes: holesSeen(game, snap.holes),
       age: game.history.length - 1 - idx,
       tick: game.tick,
       timeMs: game.time,
@@ -280,17 +303,19 @@ window.SnakeEngine = (() => {
   function step(game) {
     game.events = [];
 
-    const dying = [];
+    // Hunger: each overdue snake loses a segment. One already at its minimum
+    // length starves this tick, unless its head reaches food first.
+    const dying = [], starving = [];
     for (const s of game.snakes) {
       if (!s.alive || game.time < s.nextStarve) continue;
       s.nextStarve = game.time + T.STARVE_EVERY_MS;
       if (s.grow > 0) s.grow--;
       else if (s.body.length > T.MIN_LENGTH) s.body.pop();
-      else { s.cause = 'starved'; s.killer = 'hunger'; dying.push(s); continue; }
+      else { starving.push(s); continue; }
       if (hungerLeft(game, s) > -T.STARVE_EVERY_MS) game.events.push({ type: 'starving', snake: s });
     }
 
-    const alive = game.snakes.filter(s => s.alive && !dying.includes(s));
+    const alive = game.snakes.filter(s => s.alive);
 
     for (const s of alive) {
       if (s.isPlayer && !s.autopilot) {
@@ -334,9 +359,11 @@ window.SnakeEngine = (() => {
         s.cause = 'fell into a woodpecker hole'; s.killer = 'wall';
       } else if (bodyStamp[k] === stamp) {
         const other = game.snakes[bodyOwner[k]];
+        // Two heads swapping cells met head-on, just as if they'd met in one.
+        const swapped = other !== s && x === other.body[0].x && y === other.body[0].y && other.next?.x === s.body[0].x && other.next?.y === s.body[0].y;
         s.killer = other === s ? 'self' : other.name;
         s.killerId = other.id;
-        s.cause = other === s ? 'bit itself' : `ran into ${other.name}`;
+        s.cause = other === s ? 'bit itself' : swapped ? `crashed head-on into ${other.name}` : `ran into ${other.name}`;
       } else if (headStamp[k] === stamp && headCount[k] > 1) {
         const other = alive.find(o => o !== s && o.next.x === x && o.next.y === y);
         s.cause = `crashed head-on into ${other.name}`; s.killer = other.name; s.killerId = other.id;
@@ -349,10 +376,17 @@ window.SnakeEngine = (() => {
       s.body.unshift(s.next);
       if (s.tailMoves) s.body.pop(); else s.grow--;
     }
+    for (const s of dying) s.alive = false;
+
+    eat(game);
+    for (const s of starving) {
+      if (!s.alive || s.ateTick === game.tick) continue; // crashed anyway, or reached food in time
+      s.cause = 'starved'; s.killer = 'hunger'; s.alive = false;
+      dying.push(s);
+    }
 
     // Dead snakes turn into meat (never on food, living bodies or holes).
     if (dying.length) {
-      for (const s of dying) s.alive = false; // before marking, so only the living block meat
       markBodies(game);
       for (const f of game.food) bodyStamp[key(f.x, f.y)] = stamp;
       for (const s of dying) {
@@ -367,6 +401,17 @@ window.SnakeEngine = (() => {
       }
     }
 
+    crawl(game);
+    peck(game);
+    fillFood(game);
+    game.time += tickMs(game);
+    game.tick++;
+    snapshot(game);
+    return dying;
+  }
+
+  // Every living head on food eats it.
+  function eat(game) {
     for (const s of game.snakes) {
       if (!s.alive) continue;
       const h = s.body[0];
@@ -384,20 +429,13 @@ window.SnakeEngine = (() => {
       } else {
         const growth = f.kind === 'golden' ? T.GOLDEN_GROWTH : f.kind === 'beetle' ? T.BEETLE_GROWTH : 1;
         s.lastAte = game.time;
+        s.ateTick = game.tick;
         s.nextStarve = game.time + T.HUNGER_MS;
         s.grow += growth;
         s.eaten += growth;
         if (f.kind === 'pellet') s.pellets++;
       }
     }
-
-    crawl(game);
-    peck(game);
-    fillFood(game);
-    game.time += tickMs(game);
-    game.tick++;
-    snapshot(game);
-    return dying;
   }
 
   return {

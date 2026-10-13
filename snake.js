@@ -39,42 +39,47 @@
   const pick = list => list[Math.floor(Math.random() * list.length)];
   const FLAVOR = {
     intro: 'Three rivals. One tree. Last snake wriggling wins.',
-    hintKeys: 'Arrows or WASD steer · Space naps · Enter starts over · H for the Hall of Fame',
-    hintTouch: 'Swipe on the bark to steer · tap ⏸ to nap',
+    hintStart: 'Arrows or WASD steer · Space naps · Enter starts · H opens the Hall of Fame',
+    hintKeys: 'Arrows or WASD steer · Space naps · Enter starts over · H opens the Hall of Fame · M mutes · N toggles the music',
+    hintOnline: 'Arrows or WASD steer · M mutes · N toggles the music',
+    hintTouch: 'Swipe to steer · Tap ⏸ to nap',
     rivals: ['Your rivals today:', 'Up the tree with you:', 'Sharing your bark:'],
     spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
-    go: ['Slither!', 'Off you go!', 'Go, go, go!'],
-    pause: ['Snakes need rest too.', 'Having a little nap on the bark.', 'The tree will wait.'],
+    go: ['Slither!', 'Off you go.', 'Mind the edges.'],
+    goWatch: ['And they’re off.', 'Off they slither.', 'Let the wriggling begin.'],
+    pause: ['Snakes need rest too.', 'Curled up in a warm patch of bark.', 'The tree will wait.'],
     wake: touchFirst ? 'Tap Wake up when you’re ready.' : 'Space or P to wake up.',
-    deathTitle: { wall: ['Bonk!', 'Splat!', 'Oof.'], self: ['Tangled!', 'Knotted!', 'Oops.'], rival: ['Squashed!', 'Splat!', 'Oof.'], headOn: ['Bonk!', 'Head-on!'] },
-    wall: ['The tree goes on. You don’t.', 'That edge came out of nowhere.'],
-    self: ['You tied yourself in a knot.', 'Ouch. That was your own tail.'],
-    hole: ['The woodpecker sends its regards.', 'Mind the gap.'],
-    starved: ['Should have eaten something.', 'Hunger always wins in the end.'],
-    win: ['King of the tree!', 'Last snake wriggling.', 'You outlasted them all.'],
-    draw: ['Nobody made it out.', 'Everyone loses. How fair.'],
+    deathTitle: { wall: ['Bonk!', 'Thwack!'], self: ['Tangled!', 'Knotted!'], rival: ['Squashed!', 'Splat!'], headOn: ['Head-on!', 'Clonk!'] },
+    wall: ['The tree goes on. You don’t.', 'That edge came out of nowhere.', 'Even trees have edges.'],
+    self: ['Of all the snakes to bite.', 'You were in your own way.', 'You can’t outrun yourself.'],
+    hole: ['The woodpecker sends its regards.', 'Mind the gap.', 'The woodpecker missed you. The hole didn’t.'],
+    starved: ['Should have eaten something.', 'Hunger always wins in the end.', 'All slither, no snacks.'],
+    win: ['King of the tree.', 'Last snake wriggling.', 'You outlasted them all.', 'The whole tree is yours. For now.'],
+    draw: ['Nobody made it out.', 'Everyone loses. How fair.', 'A dead heat. Emphasis on dead.'],
     golden: ['A golden apple! Everyone pretends not to have seen it.', 'Something shiny just grew on the bark.'],
-    woodpecker: ['The woodpecker is here. Holes are closing in from the edges.', 'Knock knock. The woodpecker has arrived.'],
+    woodpecker: ['The woodpecker is here, pecking in from the edges.', 'Rat-a-tat. The woodpecker has arrived.'],
     youGolden: ['Golden! +3.', 'Shiny and delicious. +3.'],
-    beetle: ['A beetle is out for a walk. Catch it if you can!', 'Something crunchy is crawling about.'],
+    beetle: ['A beetle is out for a walk. It won’t get far.', 'Something crunchy is crawling about.'],
     youBeetle: ['Crunchy! +2.', 'Caught it! +2.'],
     youMushroom: ['You feel smaller. And somehow wiser.', 'A little less of you. Sneaky.'],
-    youHungry: ['Your tummy is rumbling. Eat something!', 'Getting peckish… find food soon!'],
+    youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
     newBest: n => `New best: ${n}!`,
     friendWin: ['Bragging rights, for now.', 'Rematch?', 'Fair and square. Probably.'],
-    friendKill: ['No hard feelings. Probably.', 'Friendship is complicated.', 'That calls for a rematch.'],
+    friendKill: ['No hard feelings. Well, a few.', 'Friendship is complicated.', 'That calls for a rematch.'],
     friendsIntro: 'Host a game and send your friends the link, or join theirs. Empty seats get AI rivals.',
-    hostIntro: 'Send this link to up to three friends. Empty seats get AI rivals.',
+    hostIntro: location.protocol === 'file:' ? 'Send this code to up to three friends. Empty seats get AI rivals.' : 'Send this link to up to three friends. Empty seats get AI rivals.',
     joining: code => `Knocking on room ${code}…`,
     waiting: (name, next) => `Waiting for ${name} to start the ${next ? 'next ' : ''}round.`,
     roomGone: name => `${name} closed the room.`,
     roomLost: 'Lost the connection to the room.',
     friendLeft: name => `${name} left. An AI takes over their snake.`,
-    friendJoined: name => `${name} joined, with their best rounds for your Hall of Fame.`,
+    friendJoined: name => `${name} is up the tree. Their best rounds are in your Hall of Fame.`,
     friendAway: name => `${name} went quiet. An AI steers until they’re back.`,
     friendBack: name => `${name} is back.`,
     youAway: 'You went quiet for a moment, so an AI steered for you.',
-    watchingFirst: 'You’re watching this round. You’re in from the next one.',
+    takeBack: 'An AI kept your snake going. Steer to take it back.',
+    watchingFirst: 'This round’s already going. You’re in from the next one.',
+    rivals0: 'Just friends today. No mercy:',
   };
 
   // "you" for your own snake, the name for everyone else.
@@ -90,7 +95,7 @@
   // ---------------------------------------------------------- game state
 
   // state: 'ready' (start card) | 'lobby' (play with friends) | 'countdown' | 'running' | 'paused' | 'over'
-  let game, state = 'ready', speed = 1;
+  let game, state = 'ready', speed = 1, watchSpeed = 1;
   // Online play, or null when playing alone:
   // { role: 'host' | 'guest', room, code, seat (yours in this round, -1 if watching),
   //   players: [{ id, name, color }] (host: everyone in the room, seat order),
@@ -101,6 +106,23 @@
   let acc = 0, tickLen = T.OPENING_TICK, lastFrame = 0, drawAlpha = 1, dirty = true;
   let beatsLeft = 0, beatTimer = 0;
   let freezeUntil = 0, pendingCard = null, cardAt = 0; // times on the frame clock (rAF timestamps)
+  let shownCard = null, napOver = null; // the card on screen, and the one a nap covered
+  let firstCard = true; // (focus on page load goes to the card, not silently to Play)
+  let nameInvite = false, nameFocusAt = 0; // the name field is waiting to be offered; when it took focus
+  const keysHeld = new Set(), swallowed = new Set(); // keys down now; keys the name field is ignoring until released
+  function inviteName() {
+    nameInvite = false;
+    if (nameRow.hidden || overlay.classList.contains('hidden')) return;
+    nameFocusAt = performance.now();
+    nameInput.focus({ preventScroll: true });
+  }
+  document.addEventListener('keydown', e => keysHeld.add(e.code || e.key), true);
+  document.addEventListener('keyup', e => {
+    keysHeld.delete(e.code || e.key);
+    swallowed.delete(e.code);
+    if (nameInvite && !keysHeld.size) setTimeout(() => { if (nameInvite && !keysHeld.size) inviteName(); }, 250);
+  }, true);
+  window.addEventListener('blur', () => keysHeld.clear());
   let thinkQueue = [];
   let best = Records.getBest();
   let boardPx = 0; // the board's CSS width, kept by a ResizeObserver (no layout reads in the loop)
@@ -138,7 +160,7 @@
   }
 
   function frame(now) {
-    const dt = lastFrame ? Math.max(0, Math.min(250, now - lastFrame)) : 16;
+    const dt = lastFrame ? Math.max(0, Math.min(T.MAX_FRAME_MS, now - lastFrame)) : 16;
     lastFrame = now;
     const t0 = performance.now();
     let tickCost = 0;
@@ -151,40 +173,61 @@
 
     if (state === 'running' && guesting()) {
       // A friend's screen doesn't simulate: it glides between the host's ticks.
-      if (pendingCard && now >= freezeUntil) { const c = pendingCard; pendingCard = null; showCard(c); }
+      showPending(now >= freezeUntil);
       drawAlpha = Math.min(1, (performance.now() - online.lastTickAt) / tickLen);
       dirty = true;
     } else if (state === 'running') {
-      if (now >= freezeUntil) {
-        if (pendingCard) { const c = pendingCard; pendingCard = null; showCard(c); }
+      // Alone, your death stops the round for a moment. Online it never stops:
+      // the round is everyone's, and only your card waits.
+      const frozen = () => !online && now < freezeUntil;
+      let busy = false; // a frame that ticks or shows a card has done enough: thinking waits a frame
+      if (showPending(now >= freezeUntil)) busy = true;
+      if (!frozen()) {
         acc += dt;
         let steps = 0;
-        while (acc >= tickLen && steps < 4 && state === 'running' && now >= freezeUntil) {
+        while (acc >= tickLen && steps < T.MAX_CATCHUP && state === 'running' && !frozen()) {
           acc -= tickLen;
           const ts = performance.now();
           tick();
           tickCost += performance.now() - ts;
           steps++;
         }
-        if (steps === 4) acc = Math.min(acc, tickLen); // after a long stall, don't race to catch up
-        think(dt);
-        drawAlpha = state === 'running' && now >= freezeUntil ? Math.min(1, acc / tickLen) : 1;
+        if (steps === T.MAX_CATCHUP) acc = Math.min(acc, tickLen); // after a long stall, don't race to catch up
+        if (!steps && !busy) think(dt);
       }
+      // Between the last two cells. While frozen, `acc` stands still, so the
+      // board holds the very moment of the crash, with nothing jumping ahead.
+      drawAlpha = Math.min(1, acc / tickLen);
       dirty = true;
     } else if (state === 'over') {
-      if (pendingCard && now >= cardAt) { const c = pendingCard; pendingCard = null; showCard(c); }
-      drawAlpha = 1;
-      if (R.particles > 0 || pendingCard) dirty = true;
+      showPending(now >= cardAt);
+      // The last move glides like any other, then the board rests.
+      if (drawAlpha < 1) {
+        drawAlpha = guesting() ? Math.min(1, (performance.now() - online.lastTickAt) / tickLen) : Math.min(1, (acc += dt) / tickLen);
+        dirty = true;
+      }
+      if (R.particles > 0 || R.holding() || pendingCard) dirty = true;
     }
 
     Audio.music(musicStage(), mood);
 
     if (dirty && !document.hidden) {
       R.frame(drawAlpha, now);
-      Chatter.layout(drawAlpha, boardPx);
-      dirty = state === 'running' || state === 'countdown' || R.particles > 0;
+      Chatter.layout(drawAlpha, boardPx, player());
+      toastFade();
+      dirty = state === 'running' || state === 'countdown' || R.particles > 0 || R.holding();
     }
     perf.record(performance.now() - t0, tickCost);
+  }
+
+  // A card waiting for its moment (after the death freeze, or the round's last
+  // breath) comes up once `due`. Returns whether it did.
+  function showPending(due) {
+    if (!pendingCard || !due) return false;
+    const c = pendingCard;
+    pendingCard = null;
+    showCard(c);
+    return true;
   }
 
   // A host's hidden tab still has to run the round for everyone, but browsers
@@ -245,7 +288,8 @@
     // hiccupped), say so once you're back.
     const piloted = !!player()?.autopilot;
     if (piloted && !wasPiloted) online.pilotedAt = performance.now();
-    if (wasPiloted && !piloted && player() && performance.now() - online.pilotedAt > 2000) toast(FLAVOR.youAway, 2200);
+    if (wasPiloted && !piloted && player() && performance.now() - online.pilotedAt > 2000 && !online.toldAway) toast(FLAVOR.youAway, 2200);
+    if (!piloted) online.toldAway = false;
     tickLen = msg.len || E.tickMs(game);
     online.lastTickAt = performance.now();
     afterTick(dying, wasAlive);
@@ -263,11 +307,21 @@
     const alive = game.snakes.filter(s => s.alive);
     for (const s of dying) finishSnake(s, { place: alive.length + 1, draw: alive.length === 0 });
     thinkQueue = guesting() ? [] : alive.filter(s => !s.isPlayer || s.autopilot);
+    const youJustDied = wasAlive && !playerAlive();
+    if (youJustDied) deathMoment();
     if (alive.length <= 1) {
       if (alive.length) finishSnake(alive[0], { place: 1, won: true });
       return endRound();
     }
-    if (wasAlive && !playerAlive()) youDied();
+    if (youJustDied) youDied();
+  }
+
+  // The moment you die: the board holds still (alone), your snake holds its
+  // pose with its eyes screwed shut, then bursts. Also when it ends the round.
+  function deathMoment() {
+    freezeUntil = lastFrame + (reducedMQ.matches ? T.DEATH_FREEZE / 2 : T.DEATH_FREEZE);
+    R.hold(freezeUntil);
+    R.shake(T.SHAKE_PX);
   }
 
   // Each segment's previous cell, for interpolation. Reuses the same objects.
@@ -313,6 +367,7 @@
       return;
     }
     if (state !== 'ready' || aiOnly !== !game.withPlayer) newGame({ aiOnly });
+    speed = aiOnly ? watchSpeed : 1; // (after you die you can still speed up, from 1x)
     state = 'countdown';
     beatsLeft = 3;
     beatTimer = 0;
@@ -332,7 +387,7 @@
   // Online the countdown can't be skipped (everyone starts together).
   function showBeat(n) {
     Audio.play('beat');
-    showCard({ title: String(n), text: game.rivalsLine, primary: online ? null : 'Go!', opponents: true, quiet: true });
+    showCard({ title: String(n), text: game.rivalsLine, primary: online ? null : 'Go!', opponents: true, quiet: true, beat: true });
   }
 
   function go() {
@@ -342,16 +397,17 @@
     hideCard();
     Audio.play('go');
     if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
-    else toast(pick(FLAVOR.go), 1100);
+    else toast(pick(game.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1100);
     acc = 0;
     lastFrame = 0;
     updateControls();
-    say(game.withPlayer ? 'Go.' : 'The AIs are off.');
+    say(game.withPlayer ? 'Go.' : 'And they’re off.');
   }
 
   function pause() {
     if (state !== 'running' || online) return; // no napping online: the round goes on for everyone
     state = 'paused';
+    napOver = !overlay.classList.contains('hidden') && shownCard?.reward ? shownCard : null; // your death card: back on waking
     Chatter.clearBubbles();
     showCard({
       title: 'Napping', text: `${pick(FLAVOR.pause)} ${FLAVOR.wake}`,
@@ -363,22 +419,22 @@
   function resume() {
     if (state !== 'paused') return;
     state = 'running';
-    hideCard();
+    if (napOver) showCard({ ...napOver, quiet: true });
+    else hideCard();
+    napOver = null;
     lastFrame = 0;
     updateControls();
   }
 
   function youDied() {
     const p = player();
-    freezeUntil = lastFrame + (reducedMQ.matches ? T.DEATH_FREEZE / 2 : T.DEATH_FREEZE);
-    R.shake(T.SHAKE_PX);
     const titles = FLAVOR.deathTitle;
     const title = p.killer === 'hunger' ? 'Starved!' : p.cause === 'fell into a woodpecker hole' ? 'Down the hole!'
       : pick(p.killer === 'wall' ? titles.wall : p.killer === 'self' ? titles.self : p.cause.startsWith('crashed') ? titles.headOn : titles.rival);
     pendingCard = {
       title,
       text: `You ${yourCause(p)} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
-      flavor: killLine(p), primary: 'Play again', secondary: 'Watch', reward: true,
+      flavor: killLine(p), primary: 'Play again', secondary: 'Keep watching', reward: true,
       ...(online && { primary: 'Keep watching', secondary: hosting() ? 'Close room' : 'Leave room', actions: { primary: hideCard, secondary: leaveRoom } }),
     };
     updateControls();
@@ -394,9 +450,11 @@
     const flavor = !winner ? pick(FLAVOR.draw) : isMe(winner) ? pick(FLAVOR.win) : winner.persona ? winner.persona.win : pick(FLAVOR.friendWin);
     if (isMe(winner)) Audio.play('win');
     const me = player();
-    const yours = me && game.result
-      ? `You finished ${game.result.won ? '1st' : Records.ordinal(game.result.place)} · ${Records.clock(game.result.survived)} · score ${me.eaten}`
-      : '';
+    const r = game.result;
+    const yours = !me || !r ? ''
+      : r.won ? `Won in ${Records.clock(r.survived)} · score ${me.eaten}`
+      : r.draw ? `You shared 1st · lasted ${Records.clock(r.survived)} · score ${me.eaten}`
+      : `You finished ${Records.ordinal(r.place)} · lasted ${Records.clock(r.survived)} · score ${me.eaten}`;
     if (online) {
       pendingCard = hosting()
         ? { title, flavor, text: yours, reward: !!me, primary: 'Play again', secondary: 'Close room', lobby: { players: true },
@@ -470,12 +528,12 @@
       game.firstBlood = true;
       const v = dying[0];
       const killer = game.snakes.find(o => o.name === v.killer && o !== v);
-      return toast(killer ? `First blood! ${who(killer)} got ${who(v, true)}.` : `First blood: ${who(v)} ${isMe(v) ? yourCause(v) : causeFor(v)}.`);
+      return toast(killer ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : `First out: ${who(v, true)} ${isMe(v) ? yourCause(v) : causeFor(v)}.`);
     }
     for (const e of game.events) if (e.type === 'woodpecker') return toast(pick(FLAVOR.woodpecker));
     if (dying.length && alive.length === 2) {
       const [a, b] = isMe(alive[0]) ? [alive[1], alive[0]] : alive;
-      return toast(`It's down to ${who(a)} and ${who(b, true)}.`);
+      return toast(`It’s down to ${who(a)} and ${who(b, true)}.`);
     }
     const me = player();
     if (me?.alive) {
@@ -492,8 +550,31 @@
     }
   }
 
-  let toastTimer;
+  // A banner fades while a head passes under it, so it never hides the board
+  // (its size is estimated from the text, so this reads no layout).
+  let toastTimer, toastChars = 0, toastUnder = '';
+  function toastFade() {
+    let top = false, bottom = false;
+    if (!toastEl.hidden && boardPx && game) {
+      const cell = boardPx / GRID;
+      const rows = Math.ceil(52 / cell), half = Math.min(boardPx - 32, toastChars * 7.6 + 32) / 2 / cell;
+      for (const s of game.snakes) {
+        const h = s.body[0];
+        if (!s.alive || Math.abs(h.x + 0.5 - GRID / 2) >= half + 0.5) continue;
+        if (h.y < rows) top = true;
+        if (h.y >= GRID - rows) bottom = true;
+      }
+    }
+    const place = !top ? '' : bottom ? 'under' : 'low'; // moved down, or (if a head's there too) faded
+    if (place !== toastUnder) {
+      toastEl.classList.toggle('low', place === 'low');
+      toastEl.classList.toggle('under', place === 'under');
+      toastUnder = place;
+    }
+  }
   function toast(text, ms = 2800) {
+    toastChars = text.length;
+    toastEl.classList.remove('settled'); // (a new banner drops in)
     toastEl.textContent = text;
     toastEl.hidden = false;
     say(text);
@@ -501,14 +582,15 @@
     toastTimer = setTimeout(hideToast, ms);
   }
   function hideToast() { clearTimeout(toastTimer); toastEl.hidden = true; }
+  toastEl.addEventListener('animationend', () => toastEl.classList.add('settled'));
 
   // Screen reader announcements (a permanently rendered, visually hidden region).
   function say(text) { announcer.textContent = text; }
 
+  const BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.35)', color: '#fde68a', offset: 0.4 }, { transform: 'scale(1)' }];
+  const BUMP_TIMING = { duration: 280, easing: 'ease-out' };
   function bump(el) {
-    el.classList.remove('bump');
-    void el.offsetWidth; // restart the CSS animation (a rare, deliberate reflow on a bite)
-    el.classList.add('bump');
+    if (!reducedMQ.matches) el.animate?.(BUMP, BUMP_TIMING);
   }
 
   // ----------------------------------------------------------- the cards
@@ -519,6 +601,7 @@
   let cardActions = null;
   function showCard(card) {
     hideToast();
+    shownCard = card;
     cardTitle.textContent = card.title;
     cardText.textContent = card.text || '';
     cardText.hidden = !card.text;
@@ -526,6 +609,8 @@
     flavorEl.hidden = !card.flavor;
     opponentsEl.hidden = !card.opponents;
     hintEl.hidden = state !== 'ready';
+    clearTimeout(blurbTimer);
+    cardText.classList.remove('said');
     helpEl.hidden = state === 'ready'; // the start card already shows the controls
     startBtn.hidden = !card.primary;
     if (card.primary) startBtn.textContent = card.primary;
@@ -547,38 +632,70 @@
         Audio.play('best');
       }
       if (game.newBest) { badgeEl.textContent = FLAVOR.newBest(best); badgeEl.hidden = false; }
-      const rank = Records.rankOf(game.entryId);
+      const rank = yourRank();
       if (rank.overall && (rank.overall <= 3 || game.newBest)) {
         nameRank.textContent = `Hall of Fame #${rank.overall}. Carve your name:`;
         nameRow.hidden = false;
       } else if (rank.personal === 1 && game.newBest) {
-        nameRank.textContent = 'Your best round yet. Carve your name:';
+        nameRank.textContent = 'Top of your own list. Carve your name:';
         nameRow.hidden = false;
       }
       if (!nameRow.hidden && document.activeElement !== nameInput) nameInput.value = Records.hasName() ? Records.getName() : '';
+      if (!nameRow.hidden) namingEntry = game.entryId;
     }
 
+    overlay.querySelector('.card').classList.toggle('beat', !!card.beat); // the countdown: a big number
     overlay.classList.remove('hidden');
     overlay.querySelector('.card').scrollTop = 0;
-    if (!card.quiet) say(`${card.title}. ${card.text || ''} ${card.flavor || ''}`);
+    if (!card.quiet) say(announcement(card));
     // The name field only takes focus the first time, on a keyboard: once you
     // have a name, Enter and R restart straight away, and phones never get
     // their keyboard popped up over the card.
     if (document.activeElement !== nameInput) {
       const invite = !nameRow.hidden && !touchFirst && !Records.hasName();
-      (invite ? nameInput : card.primary ? startBtn : card.secondary ? watchBtn : overlay.querySelector('.card')).focus({ preventScroll: true });
+      const cardEl = overlay.querySelector('.card');
+      (firstCard ? cardEl : card.primary ? startBtn : card.secondary ? watchBtn : cardEl).focus({ preventScroll: true });
+      firstCard = false;
+      // The name field is offered once your hands are off the keys (someone
+      // still steering would otherwise type "dd" into it), and ignores keys
+      // for a moment after it takes focus.
+      nameInvite = invite;
+      if (invite && !keysHeld.size) inviteName();
     }
     updateControls();
   }
 
-  function hideCard() {
-    overlay.classList.add('hidden');
+  // Your Hall of Fame rank. Before the round is over, the snakes still alive
+  // haven't been saved, but they'll all finish ahead of you, so they count.
+  function yourRank() {
+    const rank = Records.rankOf(game.entryId);
+    if (state === 'over' || !rank.overall) return rank;
+    let ahead = 0;
+    for (const s of game.snakes) if (s.alive && (!online || (s.isPlayer && s.owner))) ahead++;
+    const overall = rank.overall + ahead;
+    return { overall: overall <= Records.MAX_SCORES ? overall : 0, personal: rank.personal };
   }
 
+  // A card as a screen reader hears it: whole sentences (" · " would be read
+  // as "dot"), plus the new-best badge and the name prompt.
+  function announcement(card) {
+    const sentence = t => (/[.!?…:]$/.test(t) ? t : `${t}.`);
+    const parts = [card.title, card.text && card.text.replaceAll(' · ', ', '), card.flavor,
+      !badgeEl.hidden && badgeEl.textContent, !nameRow.hidden && nameRank.textContent];
+    return parts.filter(Boolean).map(sentence).join(' ');
+  }
+
+  function hideCard() {
+    overlay.classList.add('hidden');
+    shownCard = null;
+  }
+
+  // The roll-call on the start and countdown cards: every rival, AIs with a
+  // word on how they play, friends tagged as friends.
   function buildOpponents() {
     opponentsEl.textContent = '';
     for (const s of game.snakes) {
-      if (!s.persona) continue;
+      if (isMe(s) || (!s.persona && !online)) continue;
       const li = document.createElement('li');
       const dot = document.createElement('span');
       dot.className = 'dot';
@@ -587,7 +704,7 @@
       name.textContent = s.name;
       const blurb = document.createElement('span');
       blurb.className = 'blurb';
-      blurb.textContent = s.persona.blurb;
+      blurb.textContent = s.persona ? s.persona.blurb : 'Your friend. For now.';
       li.append(dot, name, ' ', blurb);
       opponentsEl.append(li);
     }
@@ -601,12 +718,36 @@
     tagsEl.textContent = '';
     for (const s of game.snakes) {
       const li = document.createElement('li');
-      li.innerHTML = '<span class="dot"></span><span class="name"></span><span class="len"></span><span class="hunger"><i></i></span>';
+      li.innerHTML = '<span class="dot"></span><span class="name"></span><span class="sr-only"></span><span class="len"></span><span class="hunger"><i></i></span>';
       li.querySelector('.name').textContent = isMe(s) ? 'You' : s.name;
       li.title = s.persona ? `${s.name}: ${s.persona.blurb}` : isMe(s) ? 'You' : `${s.name}, a friend`;
+      if (s.persona) li.dataset.blurb = `${s.name}: ${s.persona.blurb}`; // tapped (phones have no tooltips), it says how it plays
+      if (s.personaKey === 'capricious') li.querySelector('.dot').dataset.ring = ''; // its pink ring, as on the board
+      const mark = R.markOf(s.color);
+      if (s.isPlayer && mark) li.querySelector('.dot').dataset.mark = mark;
       tagsEl.append(li);
-      s.tag = { li, dot: li.querySelector('.dot'), len: li.querySelector('.len'), bar: li.querySelector('.hunger i'), last: {} };
+      s.tag = { li, dot: li.querySelector('.dot'), state: li.querySelector('.sr-only'), len: li.querySelector('.len'), bar: li.querySelector('.hunger i'), last: {} };
     }
+  }
+
+  let blurbTimer = 0;
+  tagsEl.addEventListener('click', e => {
+    const blurb = e.target.closest?.('li')?.dataset.blurb;
+    if (!blurb || state === 'running') return;
+    if (overlay.classList.contains('hidden')) return toast(blurb, 3200);
+    clearTimeout(blurbTimer);
+    cardText.textContent = blurb;
+    cardText.hidden = false;
+    cardText.classList.add('said');
+    say(blurb);
+    blurbTimer = setTimeout(restoreText, 3200);
+  });
+  // The card's own words again, after a rival's line stood in for them.
+  function restoreText() {
+    clearTimeout(blurbTimer);
+    cardText.classList.remove('said');
+    cardText.textContent = shownCard?.text || '';
+    cardText.hidden = !shownCard?.text;
   }
 
   function updateHud(force = false) {
@@ -627,6 +768,8 @@
       const starving = s.alive && full < 0.3;
       if (force || last.dot !== dot) { t.dot.style.background = dot; last.dot = dot; }
       if (force || last.len !== len) { t.len.textContent = len; last.len = len; }
+      const said = !s.alive ? ', ' : starving ? ', starving, length ' : ', length '; // (for screen readers)
+      if (force || last.said !== said) { t.state.textContent = said; last.said = said; }
       if (force || last.bar !== bar) { t.bar.style.transform = `scaleX(${bar / 100})`; last.bar = bar; }
       if (force || last.alive !== s.alive) { t.li.classList.toggle('dead', !s.alive); last.alive = s.alive; }
       if (force || last.starving !== starving) { t.li.classList.toggle('starving', starving); last.starving = starving; }
@@ -647,16 +790,20 @@
     pauseBtn.disabled = !canPause;
     pauseBtn.setAttribute('aria-label', state === 'paused' ? 'Wake up' : 'Nap (pause)');
     pauseBtn.dataset.paused = String(state === 'paused');
-    speedEl.hidden = !(canPause && spectating());
+    // (Watching, the speed can be set during the countdown too.)
+    speedEl.hidden = !(spectating() && !online && (canPause || state === 'countdown'));
     for (const b of speedEl.querySelectorAll('button')) b.setAttribute('aria-pressed', String(Number(b.dataset.speed) === speed));
     // Pressed means off (the icon gets its slash); the names stay put.
     muteBtn.setAttribute('aria-pressed', String(Audio.isMuted()));
     musicBtn.setAttribute('aria-pressed', String(!Audio.isMusicOn()));
     musicBtn.disabled = Audio.isMuted();
+    // During a round the page holds still under your fingers (see the swipes).
+    document.documentElement.classList.toggle('playing', (state === 'running' || state === 'countdown') && playerAlive());
   }
 
   function setSpeed(n) {
     speed = n;
+    if (!game.withPlayer) watchSpeed = n;
     tickLen = E.tickMs(game) / (spectating() ? speed : 1);
     updateControls();
   }
@@ -675,7 +822,8 @@
     if (p.queue.length < T.QUEUE) p.queue.push(next);
   }
 
-  // A direction: steers, and during the countdown also skips it.
+  // A direction: steers, and on the start card or during the countdown also
+  // gets the round going (already turning).
   function steer(name) {
     if (!playerAlive()) return;
     if (online) {
@@ -683,17 +831,25 @@
       if (state !== 'countdown' && state !== 'running') return;
       if (guesting()) online.room.send({ t: 'turn', d: name });
       else hostTurn(name);
-    } else if (state === 'countdown') { turn(name); go(); }
+      return;
+    }
+    if (state === 'ready') start();
+    if (state === 'countdown') { turn(name); go(); }
     else if (state === 'running') turn(name);
   }
 
-  // The host plays with no lag, while friends' turns take half a round trip to
-  // arrive. So the host's own turns wait that long too: no one gets a head start.
+  // A friend sees each tick half a round trip late, and their turn takes the
+  // other half to arrive. So the host's own turns wait a whole round trip (in
+  // the order they were pressed): no one gets a head start.
+  let hostTurnAt = 0;
   function hostTurn(name) {
     const me = player();
-    const delay = Math.min(150, online.room.rtt() / 2);
-    if (delay < 4) return turn(name, me);
-    setTimeout(() => { if (me.alive && game.snakes[me.id] === me) turn(name, me); }, delay);
+    if (me.autopilot) me.autopilot = null; // back from a hidden tab: your hands again
+    const now = performance.now();
+    const at = Math.max(now + Math.min(T.HOST_DELAY_MAX, online.room.rtt()), hostTurnAt);
+    hostTurnAt = at;
+    if (at - now < 4) return turn(name, me);
+    setTimeout(() => { if (me.alive && game.snakes[me.id] === me) turn(name, me); }, at - now);
   }
 
   function napKey() {
@@ -708,9 +864,12 @@
     Audio.unlock();
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.target === nameInput) {
+      // (just offered, or a key held down: not typing yet)
+      if (performance.now() - nameFocusAt < 400 || (e.repeat && swallowed.has(e.code))) { swallowed.add(e.code); e.preventDefault(); return; }
       if (e.key === 'Enter') { e.preventDefault(); nameInput.blur(); startBtn.focus({ preventScroll: true }); }
       return;
     }
+    if (e.key === 'Escape' && state === 'lobby' && !online) { backToStart(); return; } // (even from the name or code field)
     if (e.target.closest?.('input, textarea')) return; // typing a name or a room code
     if (!recordsEl.hidden) {
       if (e.key === 'Escape' || e.key === 'h' || e.key === 'H') { e.preventDefault(); closeRecords(); }
@@ -718,12 +877,16 @@
     }
     const dir = KEYS[e.key] || CODES[e.code];
     if (dir) { e.preventDefault(); steer(dir); return; }
-    if (e.repeat) { if (e.key === ' ') e.preventDefault(); return; }
+    // A held key repeats nothing, not even a focused button (holding Enter on
+    // Play would otherwise start the round and then skip its countdown).
+    if (e.repeat) { if (e.key === ' ' || e.key === 'Enter') e.preventDefault(); return; }
     // Enter and Space on a focused button belong to the button.
     if ((e.key === 'Enter' || e.key === ' ') && e.target.closest?.('button')) return;
     if (e.key === ' ' || e.key === 'p' || e.key === 'P') { e.preventDefault(); napKey(); }
     else if (e.key === 'Enter' || e.key === 'r' || e.key === 'R') { e.preventDefault(); start(); }
     else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); openRecords(); }
+    else if (e.key === 'Escape' && state === 'paused') resume();
+    else if (e.key === 'Escape' && state === 'lobby' && !online) backToStart();
     else if (e.key === 'm' || e.key === 'M') toggleMute();
     else if (e.key === 'n' || e.key === 'N') toggleMusic();
     else if ((e.key === '1' || e.key === '2' || e.key === '3') && !speedEl.hidden) setSpeed([1, 2, 4][Number(e.key) - 1]);
@@ -731,34 +894,45 @@
   });
 
   // Swipes: a turn registers as soon as the finger has travelled half a cell,
-  // without lifting, and one touch can chain several turns. The board never
-  // scrolls the page (touch-action: none in the CSS, preventDefault here).
+  // without lifting, and one touch can chain several turns. On the board they
+  // always steer; during a round they steer anywhere on the screen (over the
+  // countdown card too), and the page never scrolls. Buttons stay buttons.
   let swipe = null;
-  canvas.addEventListener('touchstart', e => {
+  const swiping = () => (state === 'running' || state === 'countdown') && playerAlive();
+  document.addEventListener('touchstart', e => {
     Audio.unlock();
+    if (e.target.closest?.('button, input, a, [role="switch"], #records')) return;
+    if (!swiping() && !canvas.contains(e.target)) return;
     const t = e.changedTouches[0];
     if (!swipe) swipe = { id: t.identifier, x: t.clientX, y: t.clientY };
-    if (state === 'running' || state === 'countdown') e.preventDefault();
+    if (swiping()) e.preventDefault();
   }, { passive: false });
-  canvas.addEventListener('touchmove', e => {
+  document.addEventListener('touchmove', e => {
     if (!swipe) return;
     let t = null;
     for (const c of e.changedTouches) if (c.identifier === swipe.id) t = c;
     if (!t) return;
     e.preventDefault();
     const dx = t.clientX - swipe.x, dy = t.clientY - swipe.y;
-    const threshold = Math.max(12, (boardPx || 320) / GRID * T.SWIPE_CELLS);
+    const threshold = Math.max(T.SWIPE_MIN_PX, (boardPx || 320) / GRID * T.SWIPE_CELLS);
     if (Math.max(Math.abs(dx), Math.abs(dy)) < threshold) return;
     steer(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
     swipe.x = t.clientX;
     swipe.y = t.clientY;
   }, { passive: false });
   const endSwipe = e => { for (const c of e.changedTouches) if (swipe && c.identifier === swipe.id) swipe = null; };
-  canvas.addEventListener('touchend', endSwipe);
-  canvas.addEventListener('touchcancel', endSwipe);
+  document.addEventListener('touchend', endSwipe);
+  document.addEventListener('touchcancel', endSwipe);
 
   // Buttons.
   const click = (el, fn) => el.addEventListener('click', e => { Audio.unlock(); Audio.play('ui'); fn(e); });
+  // A button clicked with a mouse or a finger doesn't keep the keyboard, so
+  // Space and Enter go back to napping and starting over. Card and Hall of
+  // Fame buttons keep focus: there, Enter on a focused button is expected.
+  document.addEventListener('click', e => {
+    const b = e.target.closest?.('button');
+    if (b && e.detail > 0 && !b.closest('#overlay, #records')) b.blur();
+  });
   click(startBtn, () => {
     if (cardActions?.primary) cardActions.primary();
     else if (state === 'paused') resume();
@@ -797,34 +971,60 @@
 
   // Renaming your Hall of Fame entry from the card. Saved when you're done
   // (rivals use the new name from the next round).
+  let namingEntry = null; // the round the name field is for (the next may start while you type)
   nameInput.addEventListener('change', () => {
-    if (game.entryId) Records.rename(game.entryId, nameInput.value);
+    if (namingEntry) Records.rename(namingEntry, nameInput.value);
   });
 
   // Nap automatically when the tab is hidden, or when the window loses focus
   // while you're playing (a watched round can keep going on screen). Online the
   // round goes on regardless.
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden || online) return;
-    if (state === 'countdown') { state = 'running'; pause(); }
-    else if (state === 'running') pause();
+    if (online) return awayOnline();
+    if (!document.hidden) return;
+    napNow();
   });
+
+  // Online the round goes on while your tab is hidden, so an AI steers your
+  // snake until you're back and turn again. A friend's tab says so itself: a
+  // hidden tab's "still here" slows to once a second, which looks like a
+  // flickering connection.
+  function awayOnline() {
+    if (guesting()) online.room.send({ t: document.hidden ? 'away' : 'back' });
+    const me = player();
+    if (!me?.alive || (state !== 'countdown' && state !== 'running')) return;
+    if (hosting() && document.hidden) { me.autopilot = PERSONAS.drab; me.queue.length = 0; }
+    if (!document.hidden && (hosting() ? me.autopilot : true)) {
+      toast(FLAVOR.takeBack, 2400);
+      if (guesting()) online.toldAway = true; // (then no "you went quiet" when you do)
+    }
+  }
   window.addEventListener('blur', () => {
-    if (state === 'running' && playerAlive() && !pendingCard && !online) pause();
+    if (online || !playerAlive() || pendingCard) return;
+    napNow();
   });
+
+  // Nap right away; from the countdown, the round starts napping.
+  function napNow() {
+    if (state === 'countdown') state = 'running';
+    if (state === 'running') pause();
+  }
 
   // ------------------------------------------------------ Hall of Fame
 
   let recordsTab = 'scores', scoresFilter = 'all', recordsOpener = null;
 
   function openRecords() {
+    if (online && playerAlive() && (state === 'countdown' || state === 'running')) {
+      toast('The Hall of Fame can wait. Eyes on the bark.', 1800); // the round wouldn't
+      return;
+    }
     if (online) { /* the round goes on behind the dialog */ }
-    else if (state === 'countdown') { state = 'running'; pause(); }
-    else if (state === 'running' && !pendingCard) pause();
+    else if (state === 'countdown' || (state === 'running' && !pendingCard)) napNow();
     recordsOpener = document.activeElement;
     recordsEl.hidden = false;
     mainEl.inert = true;
-    try { renderRecords(); } catch { recordsBody.textContent = 'The records are unreadable. Reset them below.'; }
+    renderRecordsSafely();
     $('records-close').focus();
   }
 
@@ -833,6 +1033,11 @@
     mainEl.inert = false;
     const back = !overlay.classList.contains('hidden') ? (startBtn.hidden ? watchBtn : startBtn) : recordsOpener;
     back?.focus?.({ preventScroll: true });
+  }
+
+  function renderRecordsSafely() {
+    recordsBody.textContent = '';
+    try { renderRecords(); } catch { recordsBody.textContent = 'The Hall of Fame got scrambled. Clear it below to start afresh.'; }
   }
 
   function renderRecords() {
@@ -850,13 +1055,13 @@
     }
   }
 
-  recordsTabs.forEach(t => click(t, () => { recordsTab = t.dataset.tab; renderRecords(); }));
-  filterTabs.forEach(t => click(t, () => { scoresFilter = t.dataset.filter; renderRecords(); }));
+  recordsTabs.forEach(t => click(t, () => { recordsTab = t.dataset.tab; renderRecordsSafely(); }));
+  filterTabs.forEach(t => click(t, () => { scoresFilter = t.dataset.filter; renderRecordsSafely(); }));
   click($('records-open'), openRecords);
   click($('records-close'), closeRecords);
   recordsEl.addEventListener('click', e => { if (e.target === recordsEl) closeRecords(); });
   click($('records-reset'), () => {
-    if (!confirm('Delete all your scores, stats and your best?')) return;
+    if (!confirm('Clear every Hall of Fame row, your story and your Best? There’s no undo.')) return;
     Records.reset();
     best = 0;
     bestEl.textContent = 0;
@@ -899,6 +1104,7 @@
       const label = document.createElement('span');
       if (p) {
         dot.style.background = p.color;
+        if (R.markOf(p.color)) dot.dataset.mark = R.markOf(p.color);
         label.textContent = p.name;
         const tag = document.createElement('span');
         tag.className = 'tag';
@@ -959,12 +1165,12 @@
     startBtn.disabled = true;
     setStatus('Opening a room…');
     try {
-      const room = await Net.host({ newCode: Online.newCode, onJoin: () => {}, onLeave: friendLeft, onMessage: fromFriend });
+      const room = await Net.host({ newCode: Online.newCode, onLeave: friendLeft, onMessage: fromFriend });
       if (attempt !== joinAttempt) { room.close(); return; }
       online = {
         role: 'host', room, code: room.code, seat: 0, hostName: localName(), holesSent: 0,
         players: [{ id: 'host', name: localName(), color: Online.HUMAN_COLORS[0], host: true, owner: Records.playerId() }],
-        shared: [{ color: Online.HUMAN_COLORS[0], entries: Records.shareable(localName()) }],
+        shared: new Map([[Records.playerId(), { color: Online.HUMAN_COLORS[0], entries: Records.shareable(localName()) }]]), // owner -> their best rounds
       };
       keepTimeWhileHidden(true);
       setUrlCode(null);
@@ -1000,22 +1206,24 @@
         return;
       }
       if (online.players.some(p => p.id === id)) return;
+      const owner = typeof msg.owner === 'string' ? msg.owner.replace(/[^a-z0-9]/g, '').slice(0, 40) : '';
+      online.room.admit(id);
       const taken = new Set(online.players.map(p => p.name));
       const base = Online.cleanName(msg.name) || 'Friend';
       let name = base;
       for (let n = 2; taken.has(name); n++) name = `${base} ${n}`;
       const color = Online.HUMAN_COLORS.find(c => !online.players.some(p => p.color === c));
-      const owner = typeof msg.owner === 'string' ? msg.owner.slice(0, 40) : '';
       online.players.push({ id, name, color, owner });
       online.room.send(id, { t: 'welcome', name });
       sendLobby();
-      // Everyone's best rounds go into everyone's Hall of Fame.
-      if (Array.isArray(msg.scores)) {
-        const entries = msg.scores.slice(0, 10);
-        online.shared.push({ color, entries });
-        Records.importShared(entries, color);
-      }
-      online.room.broadcast({ t: 'scores', from: online.shared });
+      // Everyone's best rounds go into everyone's Hall of Fame: kept once per
+      // person (a rejoin replaces them), the newcomer gets everyone's, and
+      // everyone else just the newcomer's, so messages stay small.
+      const entries = owner ? Records.cleanShared(msg.scores, owner) : [];
+      if (owner) online.shared.set(owner, { color, entries });
+      Records.importShared(entries, color);
+      online.room.send(id, { t: 'scores', from: [...online.shared.values()] });
+      for (const p of online.players) if (p.id !== 'host' && p.id !== id) online.room.send(p.id, { t: 'scores', from: [{ color, entries }] });
       if (state === 'lobby') setStatus(FLAVOR.friendJoined(name));
       else toast(FLAVOR.friendJoined(name), 1800);
       // A round under way: they watch this one and play from the next.
@@ -1023,6 +1231,9 @@
         online.room.send(id, Online.round(game, game.humans, game.rivalsLine, game.roundId));
         if (state === 'running') online.room.send(id, { t: 'phase', s: 'go' });
       }
+    } else if (msg.t === 'away' || msg.t === 'back') {
+      const p = online.players.find(o => o.id === id);
+      if (p) p.away = msg.t === 'away';
     } else if (msg.t === 'turn') {
       const s = game.snakes.find(o => o.peer === id);
       if (!s?.alive || s.left || (state !== 'countdown' && state !== 'running') || !Online.DIR_NAMES.includes(msg.d)) return;
@@ -1035,16 +1246,18 @@
   // back, so a hiccup never drives them into a wall. Their browser says "still
   // here" four times a second, so a quiet spell shows within a moment; any turn
   // they send hands the wheel straight back. Short blips pass without a banner.
-  const AWAY_MS = 750, AWAY_TOAST_MS = 2000;
+  // A friend who switched tabs said so: the AI stays at the wheel until they turn.
   function checkAway() {
     for (const s of game.snakes) {
       if (!s.peer || s.peer === 'host' || !s.alive || s.left) continue;
-      const quiet = online.room.quietFor(s.peer);
-      if (quiet > AWAY_MS && !s.autopilot) {
+      const away = online.players.find(p => p.id === s.peer)?.away;
+      const quiet = away ? Infinity : online.room.quietFor(s.peer);
+      if (quiet > T.AWAY_MS && !s.autopilot) {
         s.autopilot = PERSONAS.drab;
         s.queue.length = 0;
-      } else if (quiet <= AWAY_MS && s.autopilot) handBack(s);
-      if (s.autopilot && quiet > AWAY_TOAST_MS && !s.awayToast) {
+        s.awayPilot = !!away;
+      } else if (quiet <= T.AWAY_MS && s.autopilot && !s.awayPilot) handBack(s);
+      if (s.autopilot && quiet > T.AWAY_TOAST_MS && !s.awayToast) {
         s.awayToast = true;
         toast(FLAVOR.friendAway(s.name), 2200);
       }
@@ -1053,6 +1266,7 @@
 
   function handBack(s) {
     s.autopilot = null;
+    s.awayPilot = false;
     if (s.awayToast) toast(FLAVOR.friendBack(s.name), 1500);
     s.awayToast = false;
   }
@@ -1063,6 +1277,7 @@
     const i = online.players.findIndex(p => p.id === id);
     if (i < 0) return;
     const [p] = online.players.splice(i, 1);
+    if (p.owner) online.shared.delete(p.owner);
     const s = game.snakes.find(o => o.peer === id);
     if (s) s.left = true;
     if (s?.alive && (state === 'countdown' || state === 'running')) {
@@ -1081,7 +1296,7 @@
     game.humans = humans;
     game.roundId = Online.newCode() + Date.now().toString(36);
     game.snakes.forEach((s, i) => { if (humans[i]) { s.peer = humans[i].peer; s.owner = humans[i].owner; } });
-    game.rivalsLine = pick(FLAVOR.rivals);
+    game.rivalsLine = game.snakes.some(s => s.persona) ? pick(FLAVOR.rivals) : FLAVOR.rivals0;
     online.holesSent = game.holes.size;
     online.room.broadcast(Online.round(game, humans, game.rivalsLine, game.roundId));
     state = 'countdown';
@@ -1093,9 +1308,14 @@
 
   // ------------- joining
 
+  // (A pasted invite link works too: its ?join= code is used.)
+  const codeIn = text => Online.cleanCode(/join=([a-z0-9]{5})/i.exec(String(text))?.[1] ?? text);
   async function joinRoom(text) {
-    const code = Online.cleanCode(text);
-    if (!Online.isCode(code)) return setStatus('Room codes are five letters and numbers.', true);
+    const code = codeIn(text);
+    if (!Online.isCode(code)) {
+      if (state !== 'lobby') openFriends(); // (a bad ?join= link: show where the problem is)
+      return setStatus('Room codes are five characters, like K7QXM.', true);
+    }
     saveLobbyName();
     const attempt = ++joinAttempt;
     state = 'lobby';
@@ -1124,13 +1344,16 @@
 
   function showGuestLobby() {
     showCard({
-      title: `${online.hostName}’s room`, text: FLAVOR.waiting(online.hostName), secondary: 'Leave room',
+      title: `Room ${online.code}`, text: FLAVOR.waiting(online.hostName), secondary: 'Leave room',
       lobby: { players: true }, actions: { secondary: leaveRoom },
     });
   }
 
   function fromHost(msg) {
     if (!guesting()) return;
+    try { handleHost(msg); } catch { /* a message we can't use (a newer or modified host): ignore it */ }
+  }
+  function handleHost(msg) {
     switch (msg.t) {
       case 'welcome':
         if (state === 'lobby') showGuestLobby();
@@ -1144,7 +1367,8 @@
         });
         break;
       case 'lobby':
-        online.players = msg.players;
+        if (!Array.isArray(msg.players)) break;
+        online.players = msg.players.slice(0, Online.MAX_PEOPLE).filter(p => p && typeof p.name === 'string');
         online.hostName = msg.players.find(p => p.host)?.name || 'the host';
         if (state === 'lobby') showGuestLobby();
         else if (!lobbyPlayers.hidden) renderPlayers();
@@ -1158,7 +1382,9 @@
         else if (msg.s === 'go' && state === 'countdown') go();
         break;
       case 'tick': hostTick(msg); break;
-      case 'say': if (game.snakes[msg.id]) Chatter.replay(game.snakes[msg.id], msg.text); break;
+      case 'say': // (the host's last line can arrive after the round ended here)
+        if ((state === 'countdown' || state === 'running') && game.snakes[msg.id] && typeof msg.text === 'string') Chatter.replay(game.snakes[msg.id], msg.text.slice(0, 200), msg.reply === true);
+        break;
       case 'closed': hostLost('closed'); break;
     }
   }
@@ -1175,19 +1401,17 @@
     game.rivalsLine = online.seat < 0 ? pick(FLAVOR.spectators) : msg.rivals;
     state = 'countdown';
     updateControls();
-    showCard({ title: '…', text: game.rivalsLine, opponents: true, quiet: true });
+    showCard({ title: '…', text: game.rivalsLine, opponents: true, quiet: true, beat: true });
   }
 
   function hostLost(reason) {
     if (!guesting()) return;
-    const name = online.hostName;
+    const { hostName: name, code } = online;
     endOnline();
     state = 'lobby';
     updateControls();
-    showCard({
-      title: 'Room closed', text: reason === 'closed' ? FLAVOR.roomGone(name) : FLAVOR.roomLost,
-      primary: 'Back to the start', actions: { primary: backToStart },
-    });
+    if (reason === 'closed') showCard({ title: 'Room closed', text: FLAVOR.roomGone(name), primary: 'Back', actions: { primary: backToStart } });
+    else showCard({ title: 'Connection lost', text: FLAVOR.roomLost, primary: 'Rejoin', secondary: 'Back', actions: { primary: () => joinRoom(code), secondary: backToStart } });
   }
 
   // ------------- leaving
@@ -1223,6 +1447,9 @@
   });
   lobbyCopy.textContent = navigator.share && touchFirst ? 'Share link' : 'Copy link';
   lobbyLink.addEventListener('focus', () => lobbyLink.select());
+  lobbyCode.addEventListener('input', () => {
+    if (/join=/i.test(lobbyCode.value)) lobbyCode.value = codeIn(lobbyCode.value);
+  });
   lobbyJoin.addEventListener('submit', e => {
     e.preventDefault();
     Audio.unlock();
@@ -1230,8 +1457,14 @@
   });
   lobbyName.addEventListener('change', saveLobbyName);
   // The host passes the chatter on, so every screen has the same lines.
-  Chatter.onSpeak((s, text) => {
-    if (hosting() && (state === 'countdown' || state === 'running')) online.room.broadcast({ t: 'say', id: s.id, text });
+  Chatter.onSpeak((s, text, reply) => {
+    if (hosting() && (state === 'countdown' || state === 'running')) online.room.broadcast({ t: 'say', id: s.id, text, reply });
+  });
+  // Back from the back/forward cache, a room that was closed on the way out is gone.
+  window.addEventListener('pageshow', e => {
+    if (!e.persisted || !online) return;
+    if (guesting()) hostLost('silent');
+    else { endOnline(); ready(); }
   });
   // Closing the tab says goodbye, so friends aren't left waiting.
   window.addEventListener('pagehide', () => {
@@ -1241,7 +1474,7 @@
 
   // ------------------------------------------------- size and motion
 
-  R.init({ canvas, personas: PERSONAS, playerColor: PLAYER_COLOR });
+  R.init({ canvas, personas: PERSONAS });
   Chatter.init({ boardEl, logEl: chatlogEl });
 
   const sizer = new ResizeObserver(entries => {
@@ -1255,6 +1488,12 @@
   });
   // The device-pixel box also reports browser zoom; older browsers get the CSS box.
   try { sizer.observe(canvas, { box: 'device-pixel-content-box' }); } catch { sizer.observe(canvas); }
+  // (Browsers without the device-pixel box don't report a density change on
+  // its own, say moving to another monitor, so listen for that too.)
+  (function watchDensity() {
+    const mq = matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`);
+    mq.addEventListener?.('change', () => { if (boardPx) { R.resize(boardPx); dirty = true; } watchDensity(); }, { once: true });
+  })();
 
   const applyMotion = () => R.setReducedMotion(reducedMQ.matches);
   reducedMQ.addEventListener?.('change', applyMotion);
@@ -1295,17 +1534,27 @@
 
   // ---------------------------------------------------------- start
 
+  // The first decision a brain makes runs cold (the JIT hasn't seen its
+  // paths yet), so each rival makes one practice decision, on a scratch
+  // memory, while the start card is up.
+  function warmUp() {
+    if (state !== 'ready' || !game) return;
+    for (const s of game.snakes) if (s.persona) SnakeAI.decide(E.aiView(game, s), s.persona, {});
+  }
+
   // The start card shows this round's rivals.
   function ready(personas) {
+    startBtn.disabled = false; // (a room that never opened left it disabled)
     newGame({ personas });
     state = 'ready';
-    showCard({ title: 'Bark & Bite', text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true });
+    showCard({ title: `Ready, ${localName()}?`, text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true });
+    setTimeout(warmUp, 400);
   }
 
   // The controls under the board (online there's no napping or starting over).
   function updateHelp() {
-    if (online) setHint(helpEl, touchFirst ? 'Swipe on the bark to steer' : 'Arrows or WASD steer · H for the Hall of Fame · M sound · N music');
-    else setHint(helpEl, touchFirst ? FLAVOR.hintTouch : `${FLAVOR.hintKeys} · M sound · N music`);
+    if (online) setHint(helpEl, touchFirst ? 'Swipe to steer' : FLAVOR.hintOnline);
+    else setHint(helpEl, touchFirst ? FLAVOR.hintTouch : FLAVOR.hintKeys);
   }
 
   // Hints wrap only between items ("Space naps" never splits across lines).
@@ -1318,7 +1567,7 @@
       el.append(span);
     });
   }
-  setHint(hintEl, touchFirst ? FLAVOR.hintTouch : FLAVOR.hintKeys);
+  setHint(hintEl, touchFirst ? FLAVOR.hintTouch : FLAVOR.hintStart);
   updateHelp();
   showChatterState();
   ready();

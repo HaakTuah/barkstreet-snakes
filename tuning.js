@@ -39,19 +39,29 @@ window.TUNING = Object.freeze({
   // ---------------------------------------------------------- sudden death
   SUDDEN_DEATH_MS: 120000,  // the woodpecker arrives after two minutes; no new food after that
   PECK_EVERY: 2,            // ticks between holes once it's here
+  PECK_CLEARANCE: 3,        // it never pecks this close to a head (in cells), so a hole can't open right in front of you
 
   // --------------------------------------------------------------------- AI
   REACTION_MS: 240,         // how stale every AI's view of the other snakes is
   HISTORY: 8,               // board snapshots kept for that delay
+  AI_HUNGRY_MS: 10000,      // with this long left before starving, an AI starts looking for food, harder as it gets closer
 
   // ------------------------------------------------------------- the round
   COUNTDOWN_BEAT: 350,      // 3, 2, 1: each beat this long (any direction skips it)
   DEATH_FREEZE: 350,        // freeze-frame when you die, before the card rises
   ROUND_END_PAUSE: 600,     // let the last moment breathe before the round-over card
+  MAX_FRAME_MS: 250,        // after a stall (a busy machine, a debugger), the round moves on at most this much...
+  MAX_CATCHUP: 4,           // ...and catches up at most this many ticks in one frame
 
   // ----------------------------------------------------------------- input
   QUEUE: 3,                 // turns you can queue ahead
-  SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells
+  SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells...
+  SWIPE_MIN_PX: 12,         // ...and at least this far (about 3 mm), so a jittery finger doesn't turn
+
+  // ---------------------------------------------------------------- online
+  HOST_DELAY_MAX: 150,      // the host's turns wait a friend's round trip, but never longer than this
+  AWAY_MS: 750,             // a friend silent this long gets an AI at the wheel...
+  AWAY_TOAST_MS: 2000,      // ...and a banner if it lasts this long
 
   // ------------------------------------------------------------------ juice
   PARTICLES_EAT: 10,        // particles in an eating pop
@@ -71,4 +81,10 @@ window.TUNING = Object.freeze({
   GOBBLE_LENGTH: 2,
   BITE_MS: 240,             // the head's little squash at the moment of a bite
   CHEW_MS: 420,             // and the mouth's chewing after it
+  CHEEKS_MS: 900,           // Gobbler's cheeks puff up at a bite and go down over this long
+  FLOAT_MS: 700,            // a "+1" rises and fades over this long
+  PECK_MS: 250,             // the woodpecker's head bob at each peck
+  MOOD_RING_MS: 900,        // Capricious's ring flashing out when its mood changes
+  GOLDEN_DIM_TICKS: 30,     // a golden apple dims (calmly) over its last this-many ticks
+  CORPSE_FADE_MS: 250,      // with reduced motion, a dead snake fades over this long instead of bursting
 });

@@ -17,6 +17,7 @@
   --sprout: #a3e635;
   --honey: #fde68a;
   --berry: #dc2626;
+  --berry-text: #b91c1c; /* berry dark enough for small text on parchment (5.6:1) */
   --cream: #f6ecd2;
   --muted: #c4b896;
 
@@ -37,19 +38,21 @@ html, body {
   background: radial-gradient(ellipse at top, var(--night-moss-2), var(--night-moss) 70%) fixed, var(--night-moss);
   overscroll-behavior: none; /* no pull-to-refresh mid-round */
 }
+/* During a round, swipes steer anywhere on the page, so nothing scrolls or zooms. */
+html.playing, html.playing body { touch-action: none; }
 
 body {
   display: flex;
   justify-content: center;
-  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left));
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
   -webkit-tap-highlight-color: transparent;
 }
 
 main {
   width: 100%;
   /* The board grows with the screen but always fits its height. */
-  max-width: min(760px, max(280px, calc(100vh - 260px)));
-  max-width: min(760px, max(280px, calc(100dvh - 260px)));
+  max-width: min(900px, max(280px, calc(100vh - 260px)));
+  max-width: min(900px, max(280px, calc(100dvh - 260px)));
 }
 
 .sr-only {
@@ -79,7 +82,11 @@ button {
   transition: transform 0.08s, box-shadow 0.08s, filter 0.12s;
 }
 
-button:hover { filter: brightness(1.1); }
+/* Hover never lowers the text's contrast: leaf darkens, wood lightens a touch. */
+button:not([class]):not(:disabled):hover { background: #436c0d; }
+button.secondary:not(:disabled):hover { background: rgba(58, 38, 20, 0.06); }
+button.small:not(:disabled):hover, button.icon:not(:disabled):hover, .speed button:hover { background: #8a5429; }
+.speed button[aria-pressed="true"]:hover { background: var(--leaf-dark); }
 button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--leaf-dark); }
 button[hidden] { display: none; }
 button:disabled { opacity: 0.4; cursor: default; filter: none; transform: none; }
@@ -111,7 +118,8 @@ button.icon {
   background: var(--heartwood);
   box-shadow: 0 2px 0 var(--heartwood-dark);
 }
-button.icon svg { width: 18px; height: 18px; fill: var(--cream); stroke: var(--cream); stroke-width: 0; }
+button.icon svg, .trophy svg { width: 18px; height: 18px; fill: currentColor; stroke: currentColor; stroke-width: 0; }
+button.icon { flex-shrink: 0; color: var(--cream); }
 button.icon .wave, button.icon .slash { fill: none; stroke-width: 1.8; stroke-linecap: round; }
 button.icon .slash { display: none; }
 button.icon[aria-pressed="true"] .slash { display: inline; }
@@ -143,10 +151,13 @@ h1 .amp { color: var(--honey); }
 
 .tagline { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); }
 
-.hud { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+header { min-width: 0; }
+.hud { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; color: var(--muted); }
+.hud .stat { white-space: nowrap; }
+.trophy { display: inline-flex; align-items: center; gap: 6px; }
+.trophy svg { display: none; }
 .hud .stat strong { display: inline-block; min-width: 2ch; color: var(--cream); font-variant-numeric: tabular-nums; } /* room for two digits, so a growing score never reflows the header */
-.bump { animation: bump 0.28s ease-out; }
-@keyframes bump { 40% { transform: scale(1.35); color: var(--honey); } }
+.hud .stat strong { transform-origin: left center; } /* its pop (snake.js bump) grows away from the label */
 
 /* -------------------------------------------- the snakes' name tags */
 
@@ -203,15 +214,31 @@ h1 .amp { color: var(--honey); }
   height: 100%;
   border-radius: 999px;
   background: var(--leaf);
-  transform-origin: left;
-  transition: transform 0.3s linear;
+  transform-origin: left; /* (1% steps look smooth; a transition would restyle the page every frame) */
 }
 .scoreboard li.starving .hunger i { background: var(--berry); }
-.scoreboard li.starving { animation: rumble 0.6s ease-in-out infinite alternate; }
-@keyframes rumble { to { box-shadow: 0 2px 0 var(--parchment-2), 0 0 0 2px rgba(220, 38, 38, 0.5); } }
+.scoreboard li[data-blurb] { cursor: help; } /* tap a rival's tag to hear how it plays */
+/* Friends' markings (see MARKS in render.js), in their dots too. */
+.dot[data-ring] { box-shadow: 0 0 0 2px #ec4899; } /* Capricious: a pink ring, whatever its mood */
+.dot[data-mark="spots"] { background-image: radial-gradient(circle at 32% 58%, rgba(58, 38, 20, 0.6) 0 15%, transparent 17%), radial-gradient(circle at 68% 42%, rgba(58, 38, 20, 0.6) 0 15%, transparent 17%) !important; }
+.dot[data-mark="rings"] { background-image: radial-gradient(circle, transparent 0 30%, rgba(58, 38, 20, 0.6) 32% 44%, transparent 46%) !important; }
+.dot[data-mark="dots"] { background-image: radial-gradient(circle, rgba(58, 38, 20, 0.6) 0 26%, transparent 28%) !important; }
+/* Starving: a berry ring pulses around the tag (opacity only, so nothing repaints). */
+.scoreboard li::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.6);
+  opacity: 0;
+  pointer-events: none;
+}
+.scoreboard li.starving::after { animation: rumble 0.6s ease-in-out infinite alternate; }
+@keyframes rumble { to { opacity: 1; } }
 
 /* Out of the round: the tag fades, the words stay readable. */
-.scoreboard li.dead { background: rgba(246, 236, 210, 0.55); animation: none; }
+.scoreboard li.dead { background: rgba(246, 236, 210, 0.66); }
+.scoreboard li.dead::after { animation: none; opacity: 0; }
 .scoreboard li.dead .name { text-decoration: line-through; }
 .scoreboard li.dead .dot { opacity: 0.5; }
 
@@ -277,7 +304,9 @@ canvas {
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--ink-soft) transparent;
-  padding: 18px 20px;
+  --pad-x: 20px;
+  --pad-y: 18px;
+  padding: var(--pad-y) var(--pad-x);
   border-radius: var(--r-card);
   background: var(--parchment);
   color: var(--ink);
@@ -288,10 +317,12 @@ canvas {
 @keyframes rise { from { transform: translateY(14px) scale(0.97); opacity: 0; } }
 
 .card h2 { margin: 0 0 6px; font-size: 2rem; font-weight: 700; color: var(--heartwood); }
-.card p { margin: 0 0 10px; color: var(--ink-soft); }
+.card p { margin: 0 0 10px; color: var(--ink-soft); text-wrap: pretty; }
+.card.beat h2 { font-size: 3.4rem; line-height: 1; margin-bottom: 8px; }
 .card p[hidden] { display: none; }
 .flavor { font-style: italic; color: var(--ink) !important; }
 .hint { margin: 12px 0 0 !important; font-size: 0.8rem; }
+.card p.said { color: var(--ink); font-style: italic; } /* a tapped rival's line, standing in for the card's words */
 
 /* The new-best moment: a honey seal on the card. */
 .badge {
@@ -306,7 +337,30 @@ canvas {
 }
 @keyframes pop { from { transform: scale(0.4); opacity: 0; } }
 
-.buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+/* The buttons stay in view when a card is taller than the board (they stick to its bottom edge). */
+.buttons .text-button { flex-basis: 100%; margin: 2px auto 0; }
+.buttons::before { /* when the card scrolls, what's behind the buttons fades into them */
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 12px;
+  background: linear-gradient(rgba(246, 236, 210, 0), var(--parchment));
+  pointer-events: none;
+}
+.buttons {
+  position: sticky;
+  bottom: calc(3px - var(--pad-y)); /* (inside the card's 3px ring, which stays unbroken) */
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 4px calc(3px - var(--pad-x)) 0;
+  padding: 6px calc(var(--pad-x) - 3px) 8px;
+  background: var(--parchment);
+}
 
 .opponents {
   list-style: none;
@@ -340,10 +394,12 @@ canvas {
   color: var(--ink);
   font: inherit;
   text-align: center;
-  box-shadow: inset 0 0 0 2px var(--parchment-2);
+  box-shadow: inset 0 0 0 1.5px var(--ink-soft);
+  outline: 2px solid transparent; /* (becomes visible in High Contrast) */
+  outline-offset: -2px;
 }
-.name-row input::placeholder { color: var(--ink-soft); opacity: 0.8; }
-.name-row input:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--leaf-dark); }
+.name-row input::placeholder, .lobby input::placeholder { color: var(--ink-soft); opacity: 1; font-style: italic; }
+.name-row input:focus-visible, .lobby input:focus-visible { outline: 2px solid transparent; box-shadow: inset 0 0 0 2.5px var(--leaf-dark); }
 
 /* ------------------------------------------- play with friends: the lobby */
 
@@ -360,19 +416,20 @@ canvas {
   background: #fffbea;
   color: var(--ink);
   font: inherit;
-  box-shadow: inset 0 0 0 2px var(--parchment-2);
+  box-shadow: inset 0 0 0 1.5px var(--ink-soft);
+  outline: 2px solid transparent;
+  outline-offset: -2px;
 }
-.lobby input::placeholder { color: var(--ink-soft); opacity: 0.8; }
-.lobby input:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--leaf-dark); }
 .lobby input:disabled { opacity: 0.7; }
 .lobby-share input { font-size: 0.85rem; color: var(--ink-soft); }
-#lobby-code { flex: 0 1 9ch; text-transform: uppercase; letter-spacing: 0.12em; text-align: center; }
+#lobby-code { flex: none; width: calc(5ch + 0.75em + 30px); text-transform: uppercase; letter-spacing: 0.12em; text-align: center; }
 .lobby-players { list-style: none; margin: 0; padding: 8px 12px; border-radius: var(--r-tag); box-shadow: var(--ring); }
 .lobby-players li { display: flex; align-items: center; gap: 8px; margin: 4px 0; color: var(--ink); }
 .lobby-players .tag { margin-left: auto; font-size: 0.8rem; color: var(--ink-soft); }
 .lobby-players .open-seat { color: var(--ink-soft); font-style: italic; }
 .lobby-status { margin: 0 !important; min-height: 1.2em; font-size: 0.9rem; text-align: center; color: var(--leaf-dark) !important; font-weight: 600; }
-.lobby-status.trouble { color: var(--berry) !important; }
+.lobby-status:empty { min-height: 0; }
+.lobby-status.trouble { color: var(--berry-text) !important; }
 .text-button {
   display: block;
   margin: 12px auto 0;
@@ -389,19 +446,19 @@ canvas {
 }
 .text-button[hidden] { display: none; }
 .card:focus { outline: none; } /* focused only so keys reach it; buttons show the ring */
-.text-button:hover { color: var(--leaf); }
+.text-button:hover { color: var(--leaf-dark); background: none; text-decoration-thickness: 2px; }
 
 /* A banner over the board for the big moments (under the cards). */
 .toast {
   position: absolute;
-  z-index: 2;
+  z-index: 2; /* under the cards (except a tapped rival's blurb: .over) */
   left: 50%;
   top: 12px;
   width: max-content;
   max-width: calc(100% - 32px);
   transform: translateX(-50%);
   padding: 7px 14px;
-  border-radius: 14px;
+  border-radius: var(--r-tag);
   background: var(--parchment);
   color: var(--ink);
   font-size: 0.9rem;
@@ -410,8 +467,15 @@ canvas {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 0 0 2px var(--parchment-2);
   pointer-events: none;
   animation: drop 0.22s ease-out;
+  transition: opacity 0.2s;
 }
 .toast[hidden] { display: none; }
+/* A head passing under the banner: it moves to the board's foot (or, if a
+   head is there too, fades), so it never hides the board. A tapped rival's
+   blurb shows over a card, at the foot too. */
+.toast.low { top: auto; bottom: 12px; }
+.toast.settled { animation: none; } /* (dropped in once; moving it doesn't replay that) */
+.toast.under { opacity: 0.3; }
 @keyframes drop { from { transform: translate(-50%, -10px); opacity: 0; } }
 
 /* Speech bubbles above snakes' heads, positioned by transform each frame. */
@@ -424,7 +488,7 @@ canvas {
   max-width: 38%;
   padding: 3px 8px;
   border-radius: var(--r-tag);
-  background: rgba(255, 251, 234, 0.93);
+  background: rgba(246, 236, 210, 0.94); /* parchment */
   color: var(--ink);
   font-size: 0.76rem;
   font-weight: 500;
@@ -444,7 +508,13 @@ canvas {
   border-top-color: var(--edge, var(--ink-soft));
   transform: translateX(-50%);
 }
-.bubble.below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--edge, var(--ink-soft)); }
+.bubble { transition: opacity 0.2s; }
+.bubble.near { opacity: 0.3; } /* your head is close: the bubble gets out of your way */
+.compact-chat .bubble { max-width: 62%; }
+.bubble[data-side="below"]::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--edge, var(--ink-soft)); }
+.bubble[data-side="left"]::after, .bubble[data-side="right"]::after { top: 50%; border-top-color: transparent; transform: translateY(-50%); }
+.bubble[data-side="left"]::after { left: 100%; border-left-color: var(--edge, var(--ink-soft)); }
+.bubble[data-side="right"]::after { left: auto; right: 100%; border-right-color: var(--edge, var(--ink-soft)); }
 
 /* -------------------------------------------------- below the board */
 
@@ -458,12 +528,12 @@ canvas {
   font-size: 0.85rem;
 }
 .speed[hidden] { display: none; }
-.speed button[aria-pressed="true"] { background: var(--leaf); box-shadow: 0 2px 0 var(--leaf-dark); }
+.speed button[aria-pressed="true"] { background: var(--leaf-dark); box-shadow: 0 2px 0 #1c3007; }
 
 .chatter {
   margin-top: 12px;
   padding: 8px 12px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: rgba(63, 37, 16, 0.55);
   box-shadow: inset 0 0 0 1px rgba(246, 236, 210, 0.08);
 }
@@ -473,9 +543,9 @@ canvas {
 .chatlog { list-style: none; margin: 6px 0 0; padding: 0; min-height: 1.4em; font-size: 0.88rem; }
 .chatlog[hidden] { display: none; }
 .chatlog:empty::before { content: 'Quiet on the bark… for now.'; color: var(--muted); font-style: italic; }
-.chatlog li { padding: 2px 0; opacity: 0.6; }
-.chatlog li:first-child { opacity: 1; }
-.chatlog li:nth-child(2) { opacity: 0.8; }
+.chatlog li { padding: 2px 0; }
+.chatlog li:nth-child(2) span { color: #e4d8ba; }
+.chatlog li:nth-child(n+3) span { color: var(--muted); }
 .chatlog strong { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
 
 .help { margin: 12px 0 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
@@ -536,6 +606,7 @@ canvas {
 .scores-table .won { color: var(--leaf-dark); font-weight: 700; }
 .scores-table .muted { color: var(--ink-soft); }
 .scores-table tr.highlight td { background: rgba(77, 124, 15, 0.16); }
+.scores-table tr.highlight td:first-child { box-shadow: inset 3px 0 0 var(--leaf-dark); }
 
 .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
 .tile { padding: 10px; border-radius: var(--r-tag); background: var(--parchment-2); text-align: center; }
@@ -583,47 +654,124 @@ button.link:active { transform: none; }
 
 /* ------------------------------------------------------ small screens */
 
+/* Cards on small boards (the board is a size container): tighter, and the
+   rivals as a row of names (tap a tag above the board for how one plays). */
+.board { container-type: size; }
+@container (max-height: 380px) {
+  .card { --pad-x: 14px; --pad-y: 12px; }
+  .card h2 { font-size: 1.45rem; margin-bottom: 4px; }
+  .card.beat h2 { font-size: 2.4rem; }
+  .card p { margin-bottom: 8px; font-size: 0.92rem; }
+  .opponents { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; margin-bottom: 8px; }
+  .opponents li { margin: 2px 0; }
+  .opponents .blurb { display: none; }
+  .buttons .text-button { margin-top: 0; }
+  .card:has(.name-row:not([hidden])) .flavor { display: none; }
+  .name-row { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px 8px; font-size: 0.9rem; }
+  .name-row input { width: 140px; padding-block: 6px; }
+  .name-row { margin-bottom: 8px; }
+  .lobby { gap: 8px; }
+  .buttons button { padding-inline: 18px; }
+  .hint { margin-top: 6px !important; font-size: 0.74rem; } /* (the steering hint stays: phones need it most) */
+}
+@container (max-height: 300px) {
+  .card h2 { font-size: 1.25rem; }
+  .flavor, .hint { display: none !important; }
+  button { padding-block: 8px; }
+  .card:has(.name-row:not([hidden])) .badge { display: none; } /* (the prompt is the celebration here; Best shows the number) */
+  /* The two buttons share one row (a stacked pair would cover the card). */
+  .buttons { gap: 8px; }
+  .buttons button:not(.text-button) { flex: 1 1 0; min-width: 0; padding: 7px 8px; font-size: 0.85rem; line-height: 1.15; }
+  .name-row { font-size: 0.82rem; }
+  .buttons .text-button { min-height: 30px; padding-block: 2px; }
+  .card p { font-size: 0.85rem; margin-bottom: 6px; }
+}
+
 @media (max-width: 440px) {
   h1 { font-size: 1.7rem; }
+  /* The header in two rows: the title with Score and Best, then the buttons. */
+  header { align-items: center; }
+  .brand { flex: 1; }
+  .hud { display: contents; }
+  .hud .stat { order: 0; }
+  header::after { content: ''; order: 1; flex-basis: 100%; }
+  .hud button { order: 2; }
+  h1 { white-space: nowrap; }
+  main { max-width: min(760px, max(240px, calc(100vh - 190px))); max-width: min(760px, max(240px, calc(100dvh - 190px))); }
+  /* The Hall of Fame as a trophy, so the header stays one row high. */
+  .trophy { min-width: 34px; padding: 0 8px; justify-content: center; }
+  .trophy svg { display: block; }
+  .trophy .trophy-text { display: none; }
   .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .card { padding: 12px 14px; }
+  .card { --pad-x: 14px; --pad-y: 12px; }
   .card h2 { font-size: 1.5rem; }
   /* Rivals as a row of names; the blurbs live in the tags' tooltips. */
   .opponents { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; }
   .opponents li { margin: 2px 0; }
   .opponents .blurb { display: none; }
   .scores-table .date { display: none; }
+  .scores-table { table-layout: fixed; } /* long names get an ellipsis instead of pushing the table wide */
+  .scores-table th:nth-child(1) { width: 24px; }
+  .scores-table th:nth-child(3) { width: 74px; }
+  .scores-table th:nth-child(4), .scores-table th:nth-child(5) { width: 46px; }
+  .hud { gap: 6px; }
   .scores-table td, .scores-table th { padding-inline: 5px; }
   .bar-row { grid-template-columns: 96px 1fr 28px; }
 }
 
-/* Landscape phones: the header and tags sit beside the board. */
-@media (orientation: landscape) and (max-height: 500px) {
+@media (max-width: 360px) {
+  h1 { font-size: 1.45rem; }
+  .hud .stat { font-size: 0.9rem; }
+}
+
+/* Short phones: no tagline, so the whole board fits the first screen. */
+@media (max-width: 440px) and (max-height: 720px) {
+  .tagline { display: none; }
+  header { margin-bottom: 8px; }
+  .scoreboard { margin-bottom: 8px; }
+}
+
+/* Wide, short screens (laptops, short windows, phones on their side): the
+   header and tags sit beside the board, which takes the full height. */
+@media (min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px) {
   main {
+    --board: min(900px, calc(100vh - 32px), calc(100vw - 260px));
+    --board: min(900px, calc(100dvh - 32px), calc(100vw - 260px));
+    width: auto;
     max-width: none;
     display: grid;
-    grid-template-columns: minmax(180px, 1fr) min(calc(100dvh - 32px), 70vw);
-    gap: 0 16px;
+    grid-template-columns: minmax(180px, 300px) var(--board);
+    gap: 0 20px;
     align-items: start;
   }
   header, .scoreboard, .speed, .chatter, .help { grid-column: 1; }
   .frame { grid-column: 2; grid-row: 1 / span 6; }
   .scoreboard { grid-template-columns: 1fr; }
+  header { flex-wrap: wrap; align-items: center; justify-content: flex-start; }
+  .brand { flex-basis: 100%; }
+  .hud { display: contents; }
+  .hud .stat { order: 0; }
+  header::after { content: ''; order: 1; flex-basis: 100%; }
+  .hud button { order: 2; }
+  .trophy { min-width: 34px; padding: 0 8px; justify-content: center; }
+  .trophy svg { display: block; }
+  .trophy .trophy-text { display: none; }
 }
 
 /* Touch: comfortable targets. */
 @media (pointer: coarse) {
-  button.small, .speed button, .tab, .close, button.icon { min-height: 44px; min-width: 44px; }
+  button, .text-button, button.link, input { min-height: 44px; }
+  button.small, .speed button, .tab, .close, button.icon { min-width: 44px; }
   .speed { gap: 10px; }
 }
 
 /* Reduced motion: no pops, rises or rumbles; the information stays. */
 @media (prefers-reduced-motion: reduce) {
-  .card, .overlay, .badge, .toast, .bump, .records-card, .scoreboard li.starving { animation: none !important; }
-  .scoreboard li.starving { box-shadow: 0 2px 0 var(--parchment-2), 0 0 0 2px rgba(220, 38, 38, 0.5); }
+  .card, .overlay, .badge, .toast, .records-card, .scoreboard li.starving::after { animation: none !important; }
+  .scoreboard li.starving::after { opacity: 1; }
   button, button:active { transition: none; transform: none; }
-  .scoreboard .hunger i { transition: none; }
+  .toast { transition: none; }
 }
 
 /* Windows High Contrast: keep outlines and the colored dots. */
@@ -631,4 +779,6 @@ button.link:active { transform: none; }
   button { border: 1px solid ButtonText; }
   .tab[aria-pressed="true"], .speed button[aria-pressed="true"] { outline: 2px solid Highlight; }
   .dot, .hunger i, .bar-fill { forced-color-adjust: none; }
+  .name-row input, .lobby input { border: 1px solid FieldText; }
+  .name-row input:focus-visible, .lobby input:focus-visible { outline: 2px solid Highlight; }
 }
