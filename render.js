@@ -523,11 +523,13 @@ window.SnakeRender = (() => {
     const m = s.memory;
     switch (look) {
       case 'player': case 'gobbler': return nearest(s, 'food');
-      case 'sniper': case 'sovereign': return headOf(m.victimId);
-      case 'colonist': return headOf(m.victimId) || m.site || null;
-      case 'vulture': return headOf(m.lureId);
-      case 'copycat': return headOf(m.modelId);
-      case 'creeper': return nearest(s, 'tail');
+      case 'drab': return nearest(s, 'food'); // a lazy look at lunch
+      case 'sniper': case 'sovereign': return headOf(m.victimId) || nearest(s, 'head');
+      case 'colonist': return headOf(m.victimId) || m.site || nearest(s, 'head');
+      case 'vulture': return headOf(m.lureId) || nearest(s, 'head');
+      case 'copycat': return headOf(m.modelId) || nearest(s, 'head');
+      case 'creeper': return nearest(s, 'tail') || nearest(s, 'head');
+      case 'mason': return nearest(s, 'head'); // keeping an eye on whoever's near the wall
       case 'ghost': case 'metagamer': case 'desperado': case 'joker': return nearest(s, 'head');
       case 'wildcard': // looks wherever, changing its mind every second or two
         if (now > a.wanderAt) {
@@ -537,7 +539,7 @@ window.SnakeRender = (() => {
         }
         spot.x = a.wx; spot.y = a.wy;
         return spot;
-      default: return null; // Drab and Mason: eyes front
+      default: return nearest(s, 'head');
     }
   }
 
@@ -546,7 +548,8 @@ window.SnakeRender = (() => {
     return o && o.alive ? o.body[0] : null;
   }
 
-  // The nearest food (not mushrooms), rival head, or long rival's tail.
+  // The nearest food (not mushrooms), rival head, or long rival's tail. Every
+  // snake's eyes follow something, so no face ever just stares ahead.
   function nearest(s, what) {
     const h = s.body[0];
     let best = 1e9, out = null;
@@ -1108,6 +1111,9 @@ window.SnakeRender = (() => {
         ctx.ellipse(c * 0.12 + ox, -c * 0.2 + oy, c * 0.1, c * 0.14, 0, 0, TAU);
         ctx.ellipse(c * 0.12 + ox, c * 0.2 + oy, c * 0.1, c * 0.14, 0, 0, TAU);
         ctx.fill();
+        ctx.fillStyle = '#cbd5e1'; // a pale glint in each hollow, turned to what it's watching
+        circle(c * 0.12 + ox * 2.2, -c * 0.2 + oy * 2.2, c * 0.03);
+        circle(c * 0.12 + ox * 2.2, c * 0.2 + oy * 2.2, c * 0.03);
         break;
       }
       case 'sovereign': // a golden crown, spikes pointing back
@@ -1140,21 +1146,30 @@ window.SnakeRender = (() => {
         lookingEyes(0.055);
         break;
       }
-      case 'drab': // bored, half-closed eyes, staring straight ahead
+      case 'drab': { // bored, heavy-lidded eyes that do drift toward lunch
         mouth(open * 0.5);
         if (blinking) { lids(0.09); break; }
+        const ox = gazeX * c * 0.035, oy = gazeY * c * 0.04;
+        ctx.fillStyle = '#fffbea';
+        circle(c * 0.15, -c * 0.2, c * 0.09);
+        circle(c * 0.15, c * 0.2, c * 0.09);
         ctx.fillStyle = INK;
+        circle(c * 0.17 + ox, -c * 0.2 + oy, c * 0.045);
+        circle(c * 0.17 + ox, c * 0.2 + oy, c * 0.045);
+        ctx.fillStyle = mix(color, '#000000', 0.18); // the lids, drooping over the back half
         ctx.beginPath();
-        ctx.arc(c * 0.13, -c * 0.2, c * 0.09, Math.PI / 2, Math.PI * 1.5);
-        ctx.arc(c * 0.13, c * 0.2, c * 0.09, Math.PI / 2, Math.PI * 1.5);
+        ctx.arc(c * 0.15, -c * 0.2, c * 0.1, Math.PI / 2, Math.PI * 1.5);
+        ctx.arc(c * 0.15, c * 0.2, c * 0.1, Math.PI / 2, Math.PI * 1.5);
         ctx.fill();
         ctx.strokeStyle = INK;
-        ctx.lineWidth = c * 0.05;
+        ctx.lineWidth = c * 0.035;
+        ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(c * 0.13, -c * 0.32); ctx.lineTo(c * 0.13, -c * 0.08);
-        ctx.moveTo(c * 0.13, c * 0.08); ctx.lineTo(c * 0.13, c * 0.32);
+        ctx.moveTo(c * 0.15, -c * 0.3); ctx.lineTo(c * 0.15, -c * 0.1);
+        ctx.moveTo(c * 0.15, c * 0.1); ctx.lineTo(c * 0.15, c * 0.3);
         ctx.stroke();
         break;
+      }
       case 'vulture': // beady eyes and a hooked beak that gapes at a meal
         ctx.fillStyle = '#d6d3d1'; // the beak, pale horn...
         ctx.beginPath();
@@ -1178,7 +1193,7 @@ window.SnakeRender = (() => {
           ctx.ellipse(c * 0.44, c * 0.03, c * 0.11 * open, c * 0.035, 0, 0, TAU);
           ctx.fill();
         }
-        lookingEyes(0.04);
+        lookingEyes(0.05);
         break;
       case 'mason': { // laurel wreath around the back of the head; eyes on the job
         // Two branches from a knot at the back, round the sides of the head, open at the front.
@@ -1232,35 +1247,69 @@ window.SnakeRender = (() => {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(c * 0.09, -c * 0.07, c * 0.12, c * 0.14);
         break;
-      case 'wildcard': { // a big swept-over golden hairdo and mismatched eyes, looking every which way
-        ctx.fillStyle = '#fbbf24';
-        ctx.beginPath();
-        ctx.moveTo(-c * 0.45, c * 0.3);
-        ctx.quadraticCurveTo(-c * 0.5, -c * 0.45, c * 0.05, -c * 0.5);
-        ctx.quadraticCurveTo(c * 0.35, -c * 0.5, c * 0.3, -c * 0.25);
-        ctx.quadraticCurveTo(-c * 0.05, -c * 0.3, -c * 0.1, c * 0.35);
+      case 'wildcard': { // a golden combover swept forward with a flip at the front, squinty eyes, a pout
+        // The hair, seen from above: a puffy golden mass at the back, combed
+        // across to one side and forward, ending in a curl over that eye.
+        const hair = () => {
+          ctx.beginPath();
+          ctx.moveTo(-c * 0.2, c * 0.44); // the back of the far side...
+          ctx.bezierCurveTo(-c * 0.62, c * 0.42, -c * 0.66, -c * 0.3, -c * 0.32, -c * 0.5); // ...puffed out round the back...
+          ctx.bezierCurveTo(-c * 0.04, -c * 0.62, c * 0.3, -c * 0.56, c * 0.36, -c * 0.34); // ...swept forward along the near side...
+          ctx.bezierCurveTo(c * 0.4, -c * 0.2, c * 0.24, -c * 0.12, c * 0.18, -c * 0.24); // ...the curl over the brow...
+          ctx.bezierCurveTo(c * 0.1, -c * 0.34, -c * 0.06, -c * 0.12, -c * 0.06, c * 0.08); // ...the parting line, back across...
+          ctx.bezierCurveTo(-c * 0.06, c * 0.26, -c * 0.12, c * 0.38, -c * 0.2, c * 0.44);
+          ctx.closePath();
+        };
+        ctx.save();
+        ctx.translate(-c * 0.02, c * 0.03);
+        hair();
+        ctx.fillStyle = 'rgba(120,53,15,0.35)'; // its shadow on the head
         ctx.fill();
-        ctx.strokeStyle = '#fde68a'; // combed strands, swept the same way
-        ctx.lineWidth = c * 0.025;
+        ctx.restore();
+        hair();
+        ctx.fillStyle = '#fbbf24';
+        ctx.fill();
+        ctx.strokeStyle = '#fde68a'; // combed strands, all swept the same way
+        ctx.lineWidth = c * 0.024;
         ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(-c * 0.36, c * 0.16); ctx.quadraticCurveTo(-c * 0.36, -c * 0.32, c * 0.06, -c * 0.4);
-        ctx.moveTo(-c * 0.24, c * 0.2); ctx.quadraticCurveTo(-c * 0.24, -c * 0.24, c * 0.18, -c * 0.34);
+        ctx.moveTo(-c * 0.18, c * 0.32); ctx.bezierCurveTo(-c * 0.5, c * 0.2, -c * 0.4, -c * 0.42, c * 0.08, -c * 0.46);
+        ctx.moveTo(-c * 0.1, c * 0.16); ctx.bezierCurveTo(-c * 0.34, c * 0.04, -c * 0.24, -c * 0.36, c * 0.2, -c * 0.4);
+        ctx.moveTo(-c * 0.36, c * 0.3); ctx.bezierCurveTo(-c * 0.56, 0, -c * 0.5, -c * 0.34, -c * 0.2, -c * 0.46);
         ctx.stroke();
-        ctx.strokeStyle = 'rgba(180,83,9,0.55)'; // and a parting
+        ctx.strokeStyle = '#d97706'; // the curl's edge
         ctx.lineWidth = c * 0.03;
         ctx.beginPath();
-        ctx.moveTo(-c * 0.12, c * 0.3); ctx.quadraticCurveTo(-c * 0.14, -c * 0.12, c * 0.08, -c * 0.3);
+        ctx.moveTo(c * 0.34, -c * 0.32); ctx.bezierCurveTo(c * 0.36, -c * 0.2, c * 0.24, -c * 0.16, c * 0.2, -c * 0.24);
         ctx.stroke();
-        mouth(open, 0.43);
-        if (blinking) { lids(0.1); break; }
-        ctx.fillStyle = '#ffffff';
-        circle(c * 0.22, -c * 0.14, c * 0.12);
+        // A pout.
+        if (open > 0.08) mouth(open, 0.43);
+        else {
+          ctx.fillStyle = '#f472b6';
+          ctx.beginPath(); ctx.ellipse(c * 0.42, 0, c * 0.045, c * 0.06, 0, 0, TAU); ctx.fill();
+          ctx.fillStyle = '#9d174d';
+          ctx.beginPath(); ctx.ellipse(c * 0.43, 0, c * 0.018, c * 0.025, 0, 0, TAU); ctx.fill();
+        }
+        if (blinking) { lids(0.08); break; }
+        // Squinting eyes, both wandering about together.
+        const ox = gazeX * c * 0.03, oy = gazeY * c * 0.035;
+        ctx.fillStyle = '#fffbea';
+        ctx.beginPath();
+        ctx.ellipse(c * 0.2, -c * 0.06, c * 0.065, c * 0.08, 0, 0, TAU);
+        ctx.ellipse(c * 0.2, c * 0.22, c * 0.065, c * 0.08, 0, 0, TAU);
+        ctx.fill();
         ctx.fillStyle = INK;
-        circle(c * 0.22 + gazeX * c * 0.05, -c * 0.14 + gazeY * c * 0.05, c * 0.06); // the big eye follows...
-        circle(c * 0.2 - gazeX * c * 0.02, c * 0.2 - gazeY * c * 0.02, c * 0.05); // ...the small one has other ideas
+        circle(c * 0.21 + ox, -c * 0.06 + oy, c * 0.04);
+        circle(c * 0.21 + ox, c * 0.22 + oy, c * 0.04);
         ctx.fillStyle = '#ffffff';
-        circle(c * 0.2 + gazeX * c * 0.05, -c * 0.16 + gazeY * c * 0.05, c * 0.022);
+        circle(c * 0.2 + ox, -c * 0.075 + oy, c * 0.015);
+        circle(c * 0.2 + ox, c * 0.205 + oy, c * 0.015);
+        ctx.strokeStyle = INK; // the squint: heavy lids across the back of each eye
+        ctx.lineWidth = c * 0.03;
+        ctx.beginPath();
+        ctx.moveTo(c * 0.17, -c * 0.14); ctx.quadraticCurveTo(c * 0.14, -c * 0.06, c * 0.17, c * 0.02);
+        ctx.moveTo(c * 0.17, c * 0.14); ctx.quadraticCurveTo(c * 0.14, c * 0.22, c * 0.17, c * 0.3);
+        ctx.stroke();
         break;
       }
       case 'copycat': { // cat ears, cat eyes, whiskers, and a party pin
