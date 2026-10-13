@@ -203,8 +203,8 @@ window.SnakeRender = (() => {
   }
   function drawCanopy(now) {
     if (!shadeLayer) shadeLayer = buildShade();
-    const t = reduced ? 0 : now / 1000, over = SIZE * 0.06;
-    const dx = Math.sin(t * 0.43) * 8 + Math.sin(t * 1.7) * 1.6, dy = Math.cos(t * 0.37) * 6 + Math.sin(t * 1.3) * 1.2;
+    const t = reduced ? 0 : now / 1000, over = SIZE * 0.06, gusty = 1 + 2.2 * (sky.wind + sky.storm);
+    const dx = Math.sin(t * 0.43) * 8 + Math.sin(t * 1.7) * 1.6 * gusty * gusty, dy = Math.cos(t * 0.37) * 6 + Math.sin(t * 1.3) * 1.2 * gusty;
     ctx.drawImage(shadeLayer, dx - over, dy - over, SIZE + 2 * over, SIZE + 2 * over);
   }
 
@@ -232,10 +232,14 @@ window.SnakeRender = (() => {
   function drawLeaves(now, dt) {
     if (reduced) { fallen.length = 0; return; }
     if (!nextLeaf) nextLeaf = now + 1500 + Math.random() * 3000;
-    if (now > nextLeaf && fallen.length < 3) {
-      nextLeaf = now + 4500 + Math.random() * 6500;
+    const blow = Math.max(sky.wind, sky.storm * 0.7); // (wind: leaves stream across from the left)
+    if (blow > 0.3 && nextLeaf - now > 700) nextLeaf = now + 200; // (the wind gets up: leaves at once)
+    if (now > nextLeaf && fallen.length < 3 + Math.round(blow * 9)) {
+      nextLeaf = now + (blow > 0.3 ? 250 + Math.random() * 600 : 4500 + Math.random() * 6500);
+      const gust = blow > 0.3;
       fallen.push({
-        x: SIZE * (0.1 + Math.random() * 0.8), y: -CELL, vx: (Math.random() - 0.5) * 30, vy: 26 + Math.random() * 18,
+        x: gust ? -CELL : SIZE * (0.1 + Math.random() * 0.8), y: gust ? Math.random() * SIZE * 0.9 : -CELL,
+        vx: gust ? 160 + Math.random() * 120 : (Math.random() - 0.5) * 30, vy: gust ? 10 + Math.random() * 30 : 26 + Math.random() * 18,
         rot: Math.random() * TAU, spin: (Math.random() - 0.5) * 1.4, ph: Math.random() * TAU, col: LEAVES[Math.floor(Math.random() * LEAVES.length)],
       });
     }
@@ -265,6 +269,7 @@ window.SnakeRender = (() => {
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.drawImage(barkLayer, 0, 0);
     holesDrawn = 0;
+    scorchDrawn = 0; // (scorch marks are baked again too)
   }
 
   // Draw any holes added since last time onto the static layer (a Set keeps
@@ -1877,20 +1882,33 @@ window.SnakeRender = (() => {
         ctx.fill();
         break;
       }
-      case 'metagamer': // round glasses, taped at the bridge, eyes on whoever it's studying
+      case 'metagamer': { // 3D glasses (red and cyan, card frame), eyes on whoever it's studying through them
         mouth(open);
         lookingEyes(0.05);
-        ctx.strokeStyle = '#1f2937';
-        ctx.lineWidth = c * 0.06;
-        ctx.beginPath();
-        ctx.arc(c * 0.15, -c * 0.2, c * 0.14, 0, TAU);
-        ctx.moveTo(c * 0.15 + c * 0.14, c * 0.2);
-        ctx.arc(c * 0.15, c * 0.2, c * 0.14, 0, TAU);
-        ctx.moveTo(c * 0.15, -c * 0.06); ctx.lineTo(c * 0.15, c * 0.06);
-        ctx.stroke();
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(c * 0.09, -c * 0.07, c * 0.12, c * 0.14);
+        const lens = (sg, tint) => {
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(c * 0.03, sg < 0 ? -c * 0.33 : c * 0.07, c * 0.25, c * 0.26, c * 0.06);
+          else ctx.rect(c * 0.03, sg < 0 ? -c * 0.33 : c * 0.07, c * 0.25, c * 0.26);
+          ctx.fillStyle = tint;
+          ctx.fill();
+        };
+        lens(-1, 'rgba(239,68,68,0.62)'); // left eye red...
+        lens(1, 'rgba(14,165,233,0.6)'); // ...right eye cyan
+        for (const [w, col] of [[0.085, '#0f172a'], [0.05, '#f8fafc']]) { // the card frame, outlined so it reads on a cyan head
+          ctx.strokeStyle = col;
+          ctx.lineWidth = c * w;
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          for (const sg of [-1, 1]) {
+            const y0 = sg < 0 ? -c * 0.33 : c * 0.07;
+            if (ctx.roundRect) ctx.roundRect(c * 0.03, y0, c * 0.25, c * 0.26, c * 0.06); else ctx.rect(c * 0.03, y0, c * 0.25, c * 0.26);
+            ctx.moveTo(c * 0.1, sg * c * 0.33); ctx.lineTo(-c * 0.14, sg * c * 0.36); // the arms, back over the head
+          }
+          ctx.moveTo(c * 0.15, -c * 0.07); ctx.lineTo(c * 0.15, c * 0.07); // the bridge
+          ctx.stroke();
+        }
         break;
+      }
       case 'wildcard': { // a golden combover swept forward with a flip at the front, squinty eyes, a pout
         // The hair, seen from above: a puffy golden mass at the back, combed
         // across to one side and forward, ending in a curl over that eye.
@@ -2266,7 +2284,7 @@ window.SnakeRender = (() => {
   function drawMushroomAt(f, x, y, t, pop) {
     const lively = !reduced;
     const left = f.expires != null ? f.expires - game.tick : 99;
-    const wilt = left < 30 ? 1 - left / 30 : 0;
+    const wilt = left < 30 ? Math.min(1, 1 - left / 30) : 0;
     const breathe = lively ? Math.sin(t * 5.1) * 0.04 : 0;
     const lean = (lively ? Math.sin(t * 2.5) * 0.12 : 0) + 0.5 * wilt * (f.x % 2 ? 1 : -1);
     ctx.globalAlpha = 1 - 0.4 * wilt;
@@ -2276,8 +2294,8 @@ window.SnakeRender = (() => {
   }
 
   // Ambient motes from a small pool: spores drifting up off the mushrooms
-  // (kind 0) and glints twinkling round a golden apple (kind 1).
-  const MAX_M = 48;
+  // (kind 0), glints twinkling round a golden apple (1), smoke (2) and embers (3).
+  const MAX_M = 96;
   const mx = new Float32Array(MAX_M), my = new Float32Array(MAX_M), mvx = new Float32Array(MAX_M), mvy = new Float32Array(MAX_M);
   const mlife = new Float32Array(MAX_M), mmax = new Float32Array(MAX_M), msize = new Float32Array(MAX_M);
   const mkind = new Uint8Array(MAX_M);
@@ -2289,30 +2307,69 @@ window.SnakeRender = (() => {
     mx[i] = x; my[i] = y; mvx[i] = vx; mvy[i] = vy; mmax[i] = mlife[i] = life; msize[i] = size; mkind[i] = kind;
     mLive = Math.min(MAX_M, mLive + 1);
   }
+  // Drawn in batches: every mote of a kind at the same fade (four steps of
+  // it) goes in one shape, so a busy fire is a handful of fills, not hundreds.
+  const MOTE_LOOK = [['#fdf2f8', 0.75], null, ['#78716c', 0.32], ['#fdba74', 1]]; // spores, (glints), smoke, embers
+  const mBucket = new Uint8Array(MAX_M), mRad = new Float32Array(MAX_M);
   function drawMotes(dt) {
     if (!mLive) return;
     const st = dt / 1000;
     let live = 0;
-    ctx.fillStyle = '#fdf2f8';
     for (let i = 0; i < MAX_M; i++) {
+      mBucket[i] = 0;
       if (mlife[i] <= 0) continue;
       mlife[i] -= dt;
+      if (mlife[i] <= 0) continue;
       mx[i] += mvx[i] * st;
       my[i] += mvy[i] * st;
-      const t = Math.max(0, mlife[i] / mmax[i]), fade = Math.sin(t * Math.PI); // in and out
+      const t = Math.min(1, Math.max(0, mlife[i] / mmax[i])), fade = Math.sin(t * Math.PI); // in and out
       live++;
-      if (mkind[i] === 0) {
-        mx[i] += Math.sin(mlife[i] / 160) * 0.15; // wafting
-        ctx.globalAlpha = 0.75 * fade;
-        circle(mx[i], my[i], msize[i]);
-      } else {
+      if (mkind[i] === 1) { // a glint: the sparkle sprite, twinkling (only ever a few)
         const w = SPRITE * CELL * msize[i] * fade;
         ctx.globalAlpha = fade;
         ctx.drawImage(starSprite(), mx[i] - w / 2, my[i] - w / 2, w, w);
+        continue;
+      }
+      if (mkind[i] === 0) mx[i] += Math.sin(mlife[i] / 160) * 0.15; // spores waft
+      mRad[i] = mkind[i] === 2 ? msize[i] * (1.6 - t * 0.6) : msize[i]; // (smoke grows as it rises)
+      mBucket[i] = 1 + Math.min(3, Math.floor(fade * 4)); // 1..4
+    }
+    for (let kind = 0; kind < MOTE_LOOK.length; kind++) {
+      const look = MOTE_LOOK[kind];
+      if (!look) continue;
+      ctx.fillStyle = look[0];
+      for (let b = 1; b <= 4; b++) {
+        let any = false;
+        for (let i = 0; i < MAX_M; i++) {
+          if (mBucket[i] !== b || mkind[i] !== kind) continue;
+          if (!any) { ctx.beginPath(); any = true; }
+          ctx.moveTo(mx[i] + mRad[i], my[i]);
+          ctx.arc(mx[i], my[i], mRad[i], 0, TAU);
+        }
+        if (!any) continue;
+        ctx.globalAlpha = look[1] * (b - 0.5) / 4;
+        ctx.fill();
       }
     }
     ctx.globalAlpha = 1;
     mLive = live;
+  }
+
+  // A beetle diving into its burrow: it shrinks away into the hole.
+  function drawDive(now) {
+    if (!dive) return;
+    const age = (now - dive.at) / 320;
+    if (age >= 1 || reduced) { dive = null; return; }
+    const c = CELL, s = 1.35 * (1 - age);
+    ctx.save();
+    ctx.translate(dive.x * c + c / 2, dive.y * c + c / 2);
+    ctx.rotate(dive.ang + age * 2);
+    ctx.scale(s, s);
+    ctx.fillStyle = '#059669';
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = c * 0.03;
+    ctx.beginPath(); ctx.ellipse(-c * 0.02, 0, c * 0.22, c * 0.17, 0, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.restore();
   }
 
   // Every piece of food on the board, under the snakes.
@@ -2327,7 +2384,10 @@ window.SnakeRender = (() => {
       if (pop <= 0) continue;
       const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
       const t = now / 1000 + ((f.x * 7 + f.y * 13) % 10) * 0.63; // each piece on its own beat
-      if (f.kind === 'food') drawAppleAt(appleSprite(), x, y, t, pop, 1);
+      if (f.kind === 'food') {
+        const drop = b?.fell && !reduced ? Math.max(0, 1 - (now - b.at) / 380) : 0; // (a windfall drops from above)
+        drawAppleAt(appleSprite(), x, y - drop * drop * CELL * 3, t, b?.fell ? 1 : pop, 1);
+      }
       else if (f.kind === 'pellet') {
         const h = lively ? 0.5 - 0.5 * Math.cos(t * 3) : 0;
         shadowAt(x + 1, y + CELL * 0.3, pop * 0.85 * (1 - 0.2 * h));
@@ -2361,6 +2421,317 @@ window.SnakeRender = (() => {
     }
   }
 
+  // ------------------------------------------------------------ burrows
+
+  // A beetle burrow: an oval opening in the bark, splintered round its rim,
+  // a little sawdust about it, and cracks that spread from it as the round
+  // goes on (the beetles are hollowing the tree out). Each burrow's cracks
+  // are its own (seeded by where it is) and grow to full length over about
+  // half a minute. It opens with a pop.
+  const CRACK_GROW_TICKS = 260;
+  const crackCache = new Map(); // cell -> branches of [x, y] points (cells)
+  const burrowSeen = new Map(); // cell -> when it first showed (for its pop)
+  function cracksOf(b) {
+    const k = b.y * GRID + b.x;
+    let br = crackCache.get(k);
+    if (br) return br;
+    let seed = (k * 7919 + 13) % 2147483647 || 1;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    br = [];
+    for (let i = 0, n = 3 + Math.floor(rnd() * 2); i < n; i++) {
+      let a = (i / n) * TAU + rnd() * 0.9, x = 0, y = 0;
+      const pts = [[0, 0]];
+      for (let j = 0, len = 5 + Math.floor(rnd() * 4); j < len; j++) {
+        a += (rnd() - 0.5) * 0.9;
+        const step = 0.32 + rnd() * 0.22;
+        x += Math.cos(a) * step; y += Math.sin(a) * step;
+        pts.push([x, y]);
+      }
+      br.push(pts);
+    }
+    crackCache.set(k, br);
+    return br;
+  }
+  function drawBurrows(now) {
+    if (!game.burrows?.length) return;
+    const c = CELL;
+    for (const b of game.burrows) {
+      const k = b.y * GRID + b.x, x = b.x * c + c / 2, y = b.y * c + c / 2;
+      if (!burrowSeen.has(k)) burrowSeen.set(k, now);
+      const pop = popOf(now - burrowSeen.get(k));
+      const grow = Math.min(1, Math.max(0.15, (game.tick - b.at) / CRACK_GROW_TICKS));
+      // The cracks: dark, with a lit lip along one side, thinning out.
+      for (const [col, off, w] of [['rgba(196,154,102,0.28)', 1.2, 1.4], ['rgba(14,7,2,0.7)', 0, 2.2]]) {
+        ctx.strokeStyle = col;
+        ctx.lineCap = ctx.lineJoin = 'round';
+        for (const pts of cracksOf(b)) {
+          const shown = (pts.length - 1) * grow;
+          ctx.lineWidth = w;
+          ctx.beginPath();
+          ctx.moveTo(x + off, y + off);
+          for (let j = 1; j <= Math.ceil(shown); j++) {
+            const t = Math.min(1, shown - (j - 1)), [px, py] = pts[j - 1], [qx, qy] = pts[j];
+            ctx.lineTo(x + off + (px + (qx - px) * t) * c, y + off + (py + (qy - py) * t) * c);
+          }
+          ctx.stroke();
+        }
+      }
+      // The opening (a cached sprite, one of four).
+      const w = SPRITE * CELL * pop;
+      ctx.drawImage(burrowSprite(String(k % 4)), x - w / 2, y - w / 2, w, w);
+    }
+  }
+  // A burrow's opening: splinters round the rim, the dark hole, sawdust.
+  const burrowSprite = v => sprite('burrow', v, drawBurrowHole);
+  const drawBurrowHole = (g, v) => {
+    const c = CELL, seed = Number(v);
+    g.fillStyle = 'rgba(214,180,128,0.55)';
+    g.beginPath(); g.ellipse(0, 0, c * 0.3, c * 0.22, 0.4, 0, TAU); g.fill();
+    const grad = g.createRadialGradient(0, 0, 1, 0, 0, c * 0.24);
+    grad.addColorStop(0, '#050201');
+    grad.addColorStop(0.75, '#1c1007');
+    grad.addColorStop(1, '#3b2412');
+    g.fillStyle = grad;
+    g.beginPath(); g.ellipse(0, 0, c * 0.24, c * 0.16, 0.4, 0, TAU); g.fill();
+    g.fillStyle = 'rgba(232,206,160,0.75)';
+    for (let i = 0; i < 6; i++) {
+      const a = i * 1.9 + seed;
+      g.beginPath(); g.arc(Math.cos(a) * c * (0.34 + (i % 3) * 0.05), Math.sin(a) * c * (0.3 + (i % 2) * 0.06), 1.1 + (i % 2) * 0.5, 0, TAU); g.fill();
+    }
+  };
+
+  // ------------------------------------------------------------ weather
+
+  // How much of each kind of weather is showing (eased, so spells come and go
+  // gradually), the fire as last seen (to know when a cell burns out and
+  // leaves a scorch mark), a lightning bolt, a rainbow.
+  const sky = { sun: 0, wind: 0, rain: 0, storm: 0 };
+  const fireSeen = new Map(); // cell -> it was burning
+  const scorched = [];        // cells that burned (baked into the static layer)
+  let scorchDrawn = 0, fireTick = -1;
+  let bolt = null, flashAt = -1e9, rainbow = null, dive = null;
+
+  function easeSky(dt) {
+    const kind = game.weather?.kind || 'clear';
+    const step = Math.min(1, dt / 1400);
+    for (const k in sky) sky[k] += ((k === kind ? 1 : 0) - sky[k]) * step;
+  }
+
+  // Where the fire was and is: cells that burned out leave a scorch (and a puff of smoke).
+  function trackFire(now) {
+    if (game.tick === fireTick) return;
+    fireTick = game.tick;
+    for (const [k, was] of fireSeen) {
+      if (game.fires?.has(k)) continue;
+      fireSeen.delete(k);
+      if (!was) continue;
+      scorched.push(k);
+      const x = (k % GRID) * CELL + CELL / 2, y = Math.floor(k / GRID) * CELL + CELL / 2;
+      for (let i = 0; i < 3; i++) mote(x + (Math.random() - 0.5) * CELL * 0.5, y, (Math.random() - 0.5) * 10, -18 - Math.random() * 10, 1500, 4 + Math.random() * 3, 2);
+    }
+    if (game.fires) for (const [k, f] of game.fires) fireSeen.set(k, game.tick >= f.from);
+  }
+  function syncScorch() {
+    if (scorchDrawn === scorched.length || !staticLayer) return;
+    const g = staticLayer.getContext('2d');
+    g.setTransform(k, 0, 0, k, 0, 0);
+    for (; scorchDrawn < scorched.length; scorchDrawn++) {
+      const key = scorched[scorchDrawn], x = (key % GRID) * CELL + CELL / 2, y = Math.floor(key / GRID) * CELL + CELL / 2;
+      const grad = g.createRadialGradient(x, y, 1, x, y, CELL * 0.62);
+      grad.addColorStop(0, 'rgba(12,8,6,0.75)');
+      grad.addColorStop(0.6, 'rgba(24,14,8,0.45)');
+      grad.addColorStop(1, 'rgba(24,14,8,0)');
+      g.fillStyle = grad;
+      g.beginPath(); g.arc(x, y, CELL * 0.62, 0, TAU); g.fill();
+      g.fillStyle = 'rgba(160,150,140,0.35)'; // ash
+      for (let i = 0; i < 5; i++) { const a = i * 2.3 + key; g.beginPath(); g.arc(x + Math.cos(a) * CELL * 0.22, y + Math.sin(a) * CELL * 0.18, 1.2, 0, TAU); g.fill(); }
+    }
+  }
+
+  // Fire on the bark: lightning on its way crackles (a ring of light closing
+  // in on the cell, so you can see how long there is), smouldering cells glow,
+  // burning cells flame (deadly), sending up embers and smoke.
+  const fireGlowSprite = () => sprite('fireglow', '', g => {
+    const grad = g.createRadialGradient(0, 0, CELL * 0.1, 0, 0, CELL * 0.95);
+    grad.addColorStop(0, 'rgba(253,186,116,0.6)');
+    grad.addColorStop(1, 'rgba(249,115,22,0)');
+    g.fillStyle = grad;
+    g.beginPath(); g.arc(0, 0, CELL * 0.95, 0, TAU); g.fill();
+  });
+  function flame(g, x, y, h, w, lean) {
+    g.beginPath();
+    g.moveTo(x - w, y);
+    g.quadraticCurveTo(x - w * 0.9, y - h * 0.55, x + lean, y - h);
+    g.quadraticCurveTo(x + w * 0.9, y - h * 0.55, x + w, y);
+    g.quadraticCurveTo(x, y + w * 0.5, x - w, y);
+    g.fill();
+  }
+  // Flames on a burning cell, in eight frames of a flicker that loops (drawn
+  // once each, as sprites: a fire is many curves, and many fires a lot of them).
+  const FLAME_FRAMES = 8;
+  const flameSprite = f => sprite('flame', String(f), drawFlames);
+  const drawFlames = (g, v) => {
+    const c = CELL, p = Number(v) / FLAME_FRAMES * TAU;
+    g.fillStyle = 'rgba(20,8,2,0.55)'; // the burning bark under it
+    g.beginPath(); g.arc(0, c * 0.12, c * 0.4, 0, TAU); g.fill();
+    const base = c * 0.42;
+    for (const [col, sc] of [['#dc2626', 1.12], ['#f97316', 0.9], ['#fbbf24', 0.64], ['#fff7ed', 0.34]]) {
+      g.fillStyle = col;
+      for (let i = -1; i <= 1; i++) {
+        const fl = Math.sin(p * (i === 0 ? 2 : 1) + i * 2.1), lean = Math.sin(p + i * 2.6);
+        flame(g, i * c * 0.22 * sc, base, c * (0.95 + 0.2 * fl - Math.abs(i) * 0.22) * sc, c * 0.19 * (sc * 0.6 + 0.4), lean * c * 0.09);
+      }
+    }
+  };
+  function drawFire(alpha, now) {
+    if (!game.fires?.size) return;
+    const c = CELL, lively = !reduced, t = now / 1000, tickPos = game.tick - 1 + alpha;
+    for (const [k, f] of game.fires) {
+      const x = (k % GRID) * c + c / 2, y = Math.floor(k / GRID) * c + c / 2, ph = k * 0.73;
+      if (tickPos < f.from - 1) {
+        if (f.strike) { // lightning on its way: a ring closing in, and sparks
+          const left = Math.max(0, Math.min(1, (f.from - 1 - tickPos) / T.STRIKE_WARN_TICKS));
+          const flick = lively ? 0.7 + 0.3 * Math.sin(now / 37 + ph) : 1;
+          ctx.strokeStyle = `rgba(221,214,254,${0.85 * flick})`;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.arc(x, y, c * (0.35 + 1.1 * left), 0, TAU); ctx.stroke();
+          ctx.fillStyle = `rgba(196,181,253,${0.35 + 0.3 * (1 - left)})`;
+          circle(x, y, c * 0.34);
+          ctx.strokeStyle = '#f5f3ff';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          for (let i = 0; i < 3; i++) {
+            const a = (lively ? now / 90 : 0) + i * 2.1 + ph, r0 = c * 0.12, r1 = c * 0.42;
+            ctx.moveTo(x + Math.cos(a) * r0, y + Math.sin(a) * r0);
+            ctx.lineTo(x + Math.cos(a + 0.4) * (r0 + r1) / 2, y + Math.sin(a + 0.4) * (r0 + r1) / 2);
+            ctx.lineTo(x + Math.cos(a) * r1, y + Math.sin(a) * r1);
+          }
+          ctx.stroke();
+        } else { // smouldering: an ember glow, a thread of smoke
+          const glow = 0.45 + (lively ? 0.25 * Math.sin(now / 160 + ph) : 0);
+          ctx.fillStyle = `rgba(239,68,68,${glow})`;
+          circle(x, y + c * 0.1, c * 0.2);
+          ctx.fillStyle = `rgba(253,186,116,${glow})`;
+          circle(x, y + c * 0.1, c * 0.09);
+          if (lively && Math.random() < 0.05) mote(x, y, (Math.random() - 0.5) * 6, -16, 1300, 3 + Math.random() * 2, 2);
+        }
+        continue;
+      }
+      // Burning: a glow, then flames, outer to inner.
+      const w = SPRITE * CELL * 1.3; // (one size: the glow flickers by its opacity)
+      ctx.globalAlpha = lively ? 0.8 + 0.2 * Math.sin(t * 9 + ph) : 1;
+      ctx.drawImage(fireGlowSprite(), x - w / 2, y - w / 2, w, w);
+      ctx.globalAlpha = 1;
+      const fr = lively ? Math.floor(t * 12 + ph * 5) % FLAME_FRAMES : 0, fw = SPRITE * CELL;
+      ctx.drawImage(flameSprite(fr), x - fw / 2, y - fw / 2, fw, fw);
+      if (lively && Math.random() < 0.18) mote(x + (Math.random() - 0.5) * c * 0.5, y - c * 0.2, (Math.random() - 0.5) * 14, -40 - Math.random() * 30, 700, 1.4 + Math.random(), 3);
+      if (lively && Math.random() < 0.06) mote(x, y - c * 0.4, (Math.random() - 0.5) * 8, -20, 1800, 4 + Math.random() * 3, 2);
+    }
+  }
+
+  // The sky over the bark: a warm glow for the sun, grey for rain, a storm's
+  // gloom (all under the snakes, so they stay bright); rain falling over
+  // everything; a lightning bolt and its flash; a rainbow after the rain.
+  function drawSkyTint() {
+    const sun = sky.sun, rain = sky.rain, storm = sky.storm;
+    if (sun > 0.01) {
+      ctx.globalAlpha = 0.16 * sun;
+      ctx.drawImage(sunSprite(), -SIZE * 0.2, -SIZE * 0.2, SIZE * 1.2, SIZE * 1.2);
+    }
+    if (rain > 0.01 || storm > 0.01) {
+      ctx.globalAlpha = 0.16 * rain + 0.3 * storm;
+      ctx.fillStyle = storm > rain ? '#140f28' : '#1e293b';
+      ctx.fillRect(0, 0, SIZE, SIZE);
+    }
+    ctx.globalAlpha = 1;
+  }
+  const sunSprite = () => sprite('sun', '', g => { // (a sprite's 2 cells, stretched over the board: it's all soft)
+    const grad = g.createRadialGradient(-CELL * 0.8, -CELL * 0.8, 0, -CELL * 0.8, -CELL * 0.8, CELL * 2.2);
+    grad.addColorStop(0, 'rgba(255,228,160,1)');
+    grad.addColorStop(0.5, 'rgba(255,190,90,0.5)');
+    grad.addColorStop(1, 'rgba(255,170,60,0)');
+    g.fillStyle = grad;
+    g.fillRect(-CELL, -CELL, CELL * 2, CELL * 2);
+  });
+  // Rain: a seamless sheet of streaks, drawn once (at the board's resolution)
+  // and scrolled down and across, in two layers at different speeds for depth.
+  const RAIN_TILE = 384;
+  let rainTile = null;
+  function buildRainTile() {
+    const n = RAIN_TILE, t = makeLayer(n * k, n * k), g = t.getContext('2d');
+    g.scale(k, k);
+    g.strokeStyle = 'rgba(220,232,255,0.6)';
+    g.lineWidth = 1.5;
+    g.lineCap = 'round';
+    let seed = 99;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    g.beginPath();
+    for (let i = 0; i < 60; i++) {
+      const x = rnd() * n, y = rnd() * n, len = 14 + rnd() * 10;
+      for (const dx of [0, -n, n]) for (const dy of [0, -n, n]) { g.moveTo(x + dx, y + dy); g.lineTo(x + dx + len * 0.28, y + dy - len); }
+    }
+    g.stroke();
+    return t;
+  }
+  function drawRain(now) {
+    const wet = Math.max(sky.rain, sky.storm * 0.3); // (a storm only spits: it takes real rain to put fire out)
+    if (wet < 0.02 || reduced) return;
+    if (!rainTile) rainTile = buildRainTile();
+    const n = RAIN_TILE;
+    for (const [speed, alpha] of [[0.85, 1], [1.2, 0.55]]) {
+      const oy = (now * speed) % n, ox = -(now * speed * 0.28) % n;
+      ctx.globalAlpha = wet * alpha;
+      for (let y = oy - n; y < SIZE; y += n) for (let x = ox - n; x < SIZE; x += n) ctx.drawImage(rainTile, x, y, n, n);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawBolt(now) {
+    if (!bolt) return;
+    const age = now - bolt.at;
+    if (age > 320) { bolt = null; return; }
+    const a = 1 - age / 320;
+    for (const [col, w] of [['rgba(196,181,253,0.55)', 9], ['rgba(237,233,254,0.95)', 3.2], ['#ffffff', 1.4]]) {
+      ctx.strokeStyle = col;
+      ctx.globalAlpha = a;
+      ctx.lineWidth = w;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      bolt.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawFlash(now) {
+    const age = now - flashAt;
+    if (age < 0 || age > 300 || reduced) return;
+    ctx.globalAlpha = 0.28 * (1 - age / 300); // (soft, and once: no strobing)
+    ctx.fillStyle = '#f5f3ff';
+    ctx.fillRect(0, 0, SIZE, SIZE);
+    ctx.globalAlpha = 1;
+  }
+  const RAINBOW = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#3b82f6', '#6366f1', '#a855f7'];
+  function drawRainbow(now) {
+    if (!rainbow) return;
+    const age = now - rainbow.at, life = 7000;
+    if (age > life) { rainbow = null; return; }
+    const fade = Math.min(1, age / 700, (life - age) / 1200), c = CELL;
+    // An arc rising off the board's far side and coming down on the golden apple.
+    const x = rainbow.x * c + c / 2, y = rainbow.y * c + c / 2, toLeft = rainbow.x > GRID / 2, R = c * 6;
+    const cx = toLeft ? x - R : x + R;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, SIZE, SIZE); ctx.clip();
+    ctx.globalAlpha = 0.42 * fade;
+    ctx.lineWidth = c * 0.16;
+    RAINBOW.forEach((col, i) => {
+      ctx.strokeStyle = col;
+      ctx.beginPath();
+      ctx.arc(cx, y, R - (i - 3) * c * 0.16, Math.PI, TAU);
+      ctx.stroke();
+    });
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
   // ------------------------------------------------------------ the frame
 
   let shakeUntil = 0, shakePx = 0, lastNow = 0;
@@ -2369,10 +2740,13 @@ window.SnakeRender = (() => {
   function frame(alpha, now) {
     if (!game || !sized) return;
     if (!staticLayer) resetStatic();
-    const dt = lastNow ? Math.min(64, now - lastNow) : 16;
+    const dt = lastNow ? Math.min(64, Math.max(0, now - lastNow)) : 16; // (never backwards: a clock a hair behind another)
     lastNow = now;
     frameDt = Math.max(1, dt);
     syncHoles();
+    trackFire(now);
+    syncScorch();
+    easeSky(dt);
     if (deaths.length || corpses.length) updateCorpses(now);
 
     let sx = 0, sy = 0;
@@ -2405,14 +2779,22 @@ window.SnakeRender = (() => {
       blitCrisp(birdSprite(right ? 'r' : 'l'), wp.x * CELL + CELL / 2 + (right ? peck : -peck), wp.y * CELL + CELL * 0.4);
     }
 
+    drawBurrows(now);
     drawLeaves(now, dt);
     drawFood(alpha, now);
+    drawDive(now);
+    drawFire(alpha, now);
+    drawSkyTint();
+    drawRainbow(now);
 
     if (corpses.length) drawCorpses(alpha, now);
     drawSnakes(alpha, now);
+    drawRain(now);
+    drawBolt(now);
     drawMotes(dt);
     drawParticles(dt);
     drawFloaters(dt);
+    drawFlash(now);
   }
 
   // ------------------------------------------------------------ the world
@@ -2450,8 +2832,25 @@ window.SnakeRender = (() => {
         if (k !== 'hunger') floater(h.x * CELL + CELL / 2, Math.max(CELL * 1.3, h.y * CELL - CELL * 0.2), k === 'wall' || k === 'self' || !game.snakes.some(o => o.name === k) ? 'Bonk!' : 'KO!');
       } else if (e.type === 'peck') {
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 5, 120, 380, 2, '#a16207', '#f6ecd2');
-      } else if (e.type === 'spawn' && e.kind === 'beetle') {
-        beetleAt = now; // (it pops in)
+      } else if ((e.type === 'spawn' && e.kind === 'beetle') || e.type === 'emerge') {
+        beetleAt = now; // (it pops out of its burrow, kicking up a little sawdust)
+        if (e.x >= 0) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 110, 420, 2, '#d6b480', '#a16207');
+      } else if (e.type === 'dive') { // down its burrow
+        dive = { x: e.x, y: e.y, at: now, ang: beetleAng ?? 0 };
+        spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 110, 420, 2, '#d6b480', '#a16207');
+      } else if (e.type === 'burrow') {
+        spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 170, 520, 2.4, '#d6b480', '#3b2412');
+      } else if (e.type === 'gust' && e.x >= 0) { // an apple knocked loose: it drops in
+        born.set(e.y * GRID + e.x, { kind: 'food', at: now, i: 0, next: 0, gen: bornGen, v: '', fell: true });
+      } else if (e.type === 'strike') {
+        const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2, pts = [[x + (Math.random() - 0.5) * CELL * 6, -CELL]];
+        for (let i = 1; i < 9; i++) { const f = i / 9; pts.push([pts[0][0] + (x - pts[0][0]) * f + (Math.random() - 0.5) * CELL * 1.6 * (1 - f), -CELL + (y + CELL) * f]); }
+        pts.push([x, y]);
+        bolt = { pts, at: now };
+        flashAt = now;
+        if (!reduced) { shake(3); spawn(x, y, 14, 260, 520, 2.6, '#fde047', '#f5f3ff'); }
+      } else if (e.type === 'rainbow') {
+        rainbow = { x: e.x, y: e.y, at: now };
       } else if (e.type === 'flown') { // a beetle nobody caught takes off
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 8, 260, T.PARTICLE_LIFE * 1.2, 2.2, '#d1fae5', '#059669');
       }
@@ -2565,6 +2964,7 @@ window.SnakeRender = (() => {
     canvas.width = canvas.height = target;
     k = target / SIZE;
     barkLayer = null;
+    rainTile = null;
     sprites.clear();
     resetStatic();
     syncHoles();
@@ -2597,6 +2997,14 @@ window.SnakeRender = (() => {
     beetleAt = 0;
     fallen.length = 0;
     nextLeaf = 0;
+    crackCache.clear();
+    burrowSeen.clear();
+    fireSeen.clear();
+    scorched.length = 0;
+    scorchDrawn = 0;
+    fireTick = -1;
+    bolt = null; rainbow = null; dive = null; flashAt = -1e9;
+    for (const k in sky) sky[k] = 0;
     // A different stretch of the tree each round.
     barkSeed = 1 + Math.floor(Math.random() * 2147483645);
     barkLayer = null;

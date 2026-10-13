@@ -49,11 +49,22 @@
     goWatch: ['And they’re off.', 'Off they slither.', 'Let the wriggling begin.'],
     pause: ['Snakes need rest too.', 'Curled up in a warm patch of bark.', 'The tree will wait.'],
     wake: touchFirst ? 'Tap Wake up when you’re ready.' : 'Space or P to wake up.',
-    deathTitle: { wall: ['Bonk!', 'Thwack!'], self: ['Tangled!', 'Knotted!'], rival: ['Squashed!', 'Splat!'], headOn: ['Head-on!', 'Clonk!'] },
+    deathTitle: { wall: ['Bonk!', 'Thwack!'], self: ['Tangled!', 'Knotted!'], rival: ['Squashed!', 'Splat!'], headOn: ['Head-on!', 'Clonk!'], fire: ['Toasted!', 'Scorched!'] },
     wall: ['The tree goes on. You don’t.', 'That edge came out of nowhere.', 'Even trees have edges.'],
     self: ['Of all the snakes to bite.', 'You were in your own way.', 'You can’t outrun yourself.'],
     hole: ['The woodpecker sends its regards.', 'Mind the gap.', 'The woodpecker missed you. The hole didn’t.'],
     starved: ['Should have eaten something.', 'Hunger always wins in the end.', 'All slither, no snacks.'],
+    fire: ['Too hot to handle.', 'You found the fire. The hard way.', 'Lightning never strikes twice. It didn’t need to.'],
+    // The weather, as it turns (no banner when it clears).
+    weather: {
+      sun: ['Golden hour: golden apples are ripening.', 'The sun’s out. Golden apples love it.'],
+      wind: ['The wind’s up. Apples are falling!', 'A blustery spell: windfall apples!'],
+      rain: ['Rain! The mushrooms are sprouting.', 'Here comes the rain. Mushrooms love it.'],
+      storm: ['A storm’s brewing. Watch for the crackle.', 'Thunder on the bark. Lightning strikes where it crackles.'],
+    },
+    strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
+    rainbow: ['A rainbow! Something golden at its end…', 'After the rain, a rainbow. And gold.'],
+    burrow: ['A beetle burrow just cracked open.', 'Something’s been digging under the bark.'],
     win: ['King of the tree.', 'Last snake wriggling.', 'You outlasted them all.', 'The whole tree is yours. For now.'],
     draw: ['Nobody made it out.', 'Everyone loses. How fair.', 'A dead heat. Emphasis on dead.'],
     golden: ['A golden apple! Everyone pretends not to have seen it.', 'Something shiny just grew on the bark.'],
@@ -439,7 +450,7 @@
     const p = player();
     const titles = FLAVOR.deathTitle;
     const title = p.killer === 'hunger' ? 'Starved!' : p.cause === 'fell into a woodpecker hole' ? 'Down the hole!'
-      : pick(p.killer === 'wall' ? titles.wall : p.killer === 'self' ? titles.self : p.cause.startsWith('crashed') ? titles.headOn : titles.rival);
+      : pick(p.killer === 'fire' ? titles.fire : p.killer === 'wall' ? titles.wall : p.killer === 'self' ? titles.self : p.cause.startsWith('crashed') ? titles.headOn : titles.rival);
     pendingCard = {
       title,
       text: `You ${yourCause(p)} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
@@ -512,6 +523,7 @@
     if (p.cause === 'fell into a woodpecker hole') return pick(FLAVOR.hole);
     if (p.killer === 'self') return pick(FLAVOR.self);
     if (p.killer === 'hunger') return pick(FLAVOR.starved);
+    if (p.killer === 'fire') return pick(FLAVOR.fire);
     return pick(FLAVOR.wall);
   }
 
@@ -526,6 +538,13 @@
       else if (e.type === 'spawn' && e.kind === 'beetle') Audio.play('beetle');
       else if (e.type === 'peck') Audio.play('peck');
       else if (e.type === 'starving' && isMe(e.snake)) Audio.play('hungry');
+      else if (e.type === 'charge') Audio.play('crackle');
+      else if (e.type === 'strike') Audio.play('thunder');
+      else if (e.type === 'gust') Audio.play('gust');
+      else if (e.type === 'burrow') Audio.play('burrow');
+      else if (e.type === 'dive' || e.type === 'emerge') Audio.play('dig');
+      else if (e.type === 'rainbow') Audio.play('rainbow');
+      else if (e.type === 'weather' && e.kind === 'rain') Audio.play('rain');
     }
     for (const s of dying) if (!isMe(s)) { Audio.play('rivalDeath'); flashFrame('kill'); }
     if (wasAlive && !playerAlive()) Audio.play('death');
@@ -552,6 +571,11 @@
       if (left > T.HUNGER_WARN_MS) game.warnedHunger = false;
     }
     for (const e of game.events) {
+      if (e.type === 'strike') flashFrame('storm', true);
+      if (e.type === 'strike' && !game.struck) { game.struck = true; return toast(pick(FLAVOR.strike), 2200, 'fire'); }
+      if (e.type === 'weather' && FLAVOR.weather[e.kind]) { game.struck = false; flashFrame(e.kind); return toast(pick(FLAVOR.weather[e.kind]), 2800, e.kind); }
+      if (e.type === 'rainbow') { flashFrame('gold', true); return toast(pick(FLAVOR.rainbow), 2800, 'gold'); }
+      if (e.type === 'burrow' && !game.toldBurrow) { game.toldBurrow = true; return toast(pick(FLAVOR.burrow), 2200, 'beetle'); }
       if (e.type === 'spawn' && e.kind === 'golden') { flashFrame('gold'); return toast(pick(FLAVOR.golden), 2800, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'beetle') { flashFrame('beetle'); return toast(pick(FLAVOR.beetle), 2200, 'beetle'); }
       if (e.type === 'eat' && isMe(e.snake) && e.kind === 'beetle') { flashFrame('beetle'); return toast(pick(FLAVOR.youBeetle), 1500, 'beetle'); }
@@ -632,7 +656,7 @@
 
   // The frame lights up round its edge for the big moments, in the moment's
   // colour (only its opacity animates, so it's cheap).
-  const GLOW = { gold: '#fde047', beetle: '#34d399', kill: '#ef4444', bird: '#f97316', go: '#a3e635', win: '#fde68a' };
+  const GLOW = { gold: '#fde047', beetle: '#34d399', kill: '#ef4444', bird: '#f97316', go: '#a3e635', win: '#fde68a', sun: '#fbbf24', wind: '#86efac', rain: '#60a5fa', storm: '#c4b5fd' };
   function flashFrame(kind, strong = false) {
     if (reducedMQ.matches || !glowEl?.animate) return;
     glowEl.style.setProperty('--glow', GLOW[kind]);
@@ -1120,6 +1144,7 @@
       // Every persona's color, not just this round's, plus old names (Viper, Warden).
       const colors = { self: PLAYER_COLOR, Viper: '#c084fc', Warden: '#3b82f6' };
       for (const p of Object.values(PERSONAS)) colors[p.name] = p.ink || p.color;
+      colors.fire = '#f97316';
       Records.renderStats(recordsBody, colors);
     }
   }

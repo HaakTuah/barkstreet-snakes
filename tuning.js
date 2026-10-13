@@ -41,6 +41,37 @@ window.TUNING = Object.freeze({
   PECK_EVERY: 2,            // ticks between holes once it's here
   PECK_CLEARANCE: 3,        // it never pecks this close to a head (in cells), so a hole can't open right in front of you
 
+  // --------------------------------------------------------------- burrows
+  BURROW_MAX: 3,            // beetle burrows that crack open in the bark over a round (harmless to cross)
+  BURROW_NEW_CHANCE: 0.5,   // a beetle coming out opens a new burrow this often (always, if none is free)
+  BEETLE_UNDER_MIN: 8,      // a scared beetle that reaches a burrow dives in, and comes out of one after this many ticks...
+  BEETLE_UNDER_MAX: 16,     // ...up to this many
+
+  // --------------------------------------------------------------- weather
+  WEATHER_FIRST_MS: 20000,  // the first spell of weather comes after this long...
+  CLEAR_MIN_MS: 14000,      // ...and a clear spell between the others lasts this long...
+  CLEAR_MAX_MS: 26000,
+  SPELL_MIN_MS: 12000,      // ...a spell of weather this long
+  SPELL_MAX_MS: 18000,
+  WEATHER_ODDS: Object.freeze({ sun: 2, wind: 3, rain: 3, storm: 3 }), // how likely each spell is...
+  STORM_FROM_MS: 30000,     // ...(no storms before this)
+  SUN_GOLDEN: 5,            // sun: golden hour, golden apples this many times as likely
+  GUST_EVERY_MS: 3500,      // wind: a gust this often, knocking an apple loose...
+  WINDFALL_MAX: 3,          // ...up to this many apples more than usual
+  RAIN_MUSHROOMS: 2,        // rain: this many more mushrooms sprout
+  RAINBOW_CHANCE: 0.5,      // when rain stops: a rainbow, with a golden apple at its end
+  AFTER_STORM_RAIN: 0.6,    // a storm is often followed by rain
+  STRIKE_MIN_MS: 3000,      // storm: lightning this often...
+  STRIKE_MAX_MS: 6000,
+  STRIKE_WARN_TICKS: 10,    // ...crackling where it will strike for this many ticks first (about a second)...
+  STRIKE_CLEARANCE: 4,      // ...never within this many cells of a head
+  FIRE_TICKS: 50,           // a burning cell burns this long (about 5 s) and kills a head that enters it...
+  FIRE_SMOLDER_TICKS: 4,    // ...after smouldering (harmless) this long when fire spreads to it
+  FIRE_SPREAD: 0.1,         // each tick, each burning cell catches a neighbour with this chance...
+  FIRE_MAX: 6,              // ...but one strike's fire covers at most this many cells...
+  FIRE_BOARD_MAX: 30,       // ...and the whole board at most this many
+  RAIN_DOUSE_TICKS: 6,      // rain puts a fire out within this many ticks
+
   // --------------------------------------------------------------------- AI
   REACTION_MS: 240,         // how stale every AI's view of the other snakes is
   HISTORY: 8,               // board snapshots kept for that delay

@@ -291,8 +291,8 @@ window.SnakeRecords = (() => {
     container.append(bars('How you finished', finishes));
 
     // Bar labels, and how each reads in "Your nemesis: …".
-    const killerLabel = k => k === 'wall' ? 'Walls & holes' : k === 'self' ? 'Yourself' : k === 'hunger' ? 'Hunger' : k;
-    const nemesisOf = k => k === 'wall' ? 'the edge of the bark' : k === 'self' ? 'you' : k === 'hunger' ? 'your own tummy' : k;
+    const killerLabel = k => k === 'wall' ? 'Walls & holes' : k === 'self' ? 'Yourself' : k === 'hunger' ? 'Hunger' : k === 'fire' ? 'Fire' : k;
+    const nemesisOf = k => k === 'wall' ? 'the edge of the bark' : k === 'self' ? 'you' : k === 'hunger' ? 'your own tummy' : k === 'fire' ? 'a bolt from the blue' : k;
     const killers = Object.entries(st.killers)
       .map(([k, count]) => ({ key: k, label: killerLabel(k), count, color: colors[k] || '#a8a29e' }))
       .sort((a, b) => b.count - a.count);

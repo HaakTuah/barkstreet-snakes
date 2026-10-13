@@ -569,6 +569,12 @@ canvas {
   animation: shine 1.5s 0.35s ease-in-out infinite;
 }
 @keyframes shine { 55%, 100% { transform: translateX(120%); } }
+/* The weather, as it turns: gold sun, rain blue, a storm's violet night, fire. */
+.toast[data-kind="sun"] { background: linear-gradient(180deg, #fff7d1, #fde68a); box-shadow: 0 0 18px rgba(251, 191, 36, 0.5), inset 0 0 0 2px #f59e0b; }
+.toast[data-kind="wind"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #16a34a; }
+.toast[data-kind="rain"] { background: #e0ecff; color: #1e3a8a; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #3b82f6; }
+.toast[data-kind="storm"] { background: #2e1065; color: #ede9fe; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), inset 0 0 0 2px #a78bfa; }
+.toast[data-kind="fire"] { background: linear-gradient(180deg, #ffedd5, #fdba74); color: #7c2d12; box-shadow: 0 0 18px rgba(249, 115, 22, 0.55), inset 0 0 0 2px #ea580c; }
 .toast[data-kind="go"] { padding: 8px 24px; font-size: 1.3rem; background: var(--leaf); color: #fffbea; box-shadow: 0 4px 0 var(--leaf-dark), 0 8px 20px rgba(0, 0, 0, 0.45); }
 /* A head passing under the banner: it moves to the board's foot (or, if a
    head is there too, fades), so it never hides the board. A tapped rival's
