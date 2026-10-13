@@ -8,7 +8,7 @@ A snake game up a tree: you against three AI rivals on the bark of a tree, drawn
 
 - Four snakes share a 24×24 patch of bark: you (green, with a glowing cream outline) and three AI rivals. Watch their eyes: each one looks at whatever it's after.
 - Hitting the edge, a hole, any snake's body, or another snake's head kills you.
-- When a snake dies, its body turns into meat that anyone can eat.
+- When a snake dies, it falls to pieces: glossy beads in its own colours and markings, which anyone can eat.
 - The last snake alive wins. If you die first, you can watch the rest of the round or start over.
 - The first moves are a little slower, then the game speeds up gently (about 25%) over two minutes.
 - **Hunger:** go 20 seconds without eating (mushrooms don't count) and you start shrinking, one segment every 1.5 seconds. Starve at length 3 and you're out, unless your head reaches food that very moment. The bar under each name shows how hungry everyone is.
@@ -21,7 +21,7 @@ A snake game up a tree: you against three AI rivals on the bark of a tree, drawn
 | Green apple | +1 length. There are always three on the board. |
 | Golden apple | +3 length. Rare, sparkles, and fades before it rots after about 12 seconds. |
 | Red mushroom | Shrinks you by 3 (never below 3). Withers after about 20 seconds and regrows elsewhere. Being short isn't always bad… |
-| Meat | +1 length. What's left of a dead snake. |
+| Beads | +1 length. What's left of a dead snake, in its colours. |
 | Beetle | +2 length. Now and then one crawls out (from 15 s in, not once the woodpecker comes). It wanders slowly, and scurries away (at half a snake's speed) when a head gets within 4 cells, so catching one is a short chase. Uncaught, it flies off after about 30 s. |
 
 ## Play with friends

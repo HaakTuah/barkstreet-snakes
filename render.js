@@ -70,20 +70,33 @@ window.SnakeRender = (() => {
 
   // ------------------------------------------------------------ the bark
 
-  // The bark, drawn once at the current resolution from a fixed seed: the
-  // same tree every round. Faint carved grid lines are baked in so they land
-  // on whole device pixels.
+  // The bark, drawn once per round at the current resolution: a different
+  // stretch of the same tree each round (a new seed). Light through the canopy,
+  // furrows, raised plates with lit edges, cracks, knots with growth rings,
+  // moss and lichen. Faint carved grid lines are baked in so they land on
+  // whole device pixels.
   let barkLayer = null, staticLayer = null, holesDrawn = 0, sized = false;
+  let barkSeed = 7;
 
   function buildBark() {
     const px = SIZE * k;
     const b = makeLayer(px, px);
     const g = b.getContext('2d');
     g.scale(k, k);
-    let seed = 7;
+    let seed = barkSeed;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const dot = (x, y, r) => { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
     g.fillStyle = BARK;
     g.fillRect(0, 0, SIZE, SIZE);
+    // Patches of sun and shade from the canopy, very soft.
+    for (let i = 0; i < 8; i++) {
+      const x = rnd() * SIZE, y = rnd() * SIZE, r = 110 + rnd() * 170, sun = i % 3 !== 2;
+      const grad = g.createRadialGradient(x, y, 0, x, y, r);
+      grad.addColorStop(0, sun ? 'rgba(255,205,130,0.11)' : 'rgba(18,9,3,0.2)');
+      grad.addColorStop(1, sun ? 'rgba(255,205,130,0)' : 'rgba(18,9,3,0)');
+      g.fillStyle = grad;
+      g.fillRect(x - r, y - r, 2 * r, 2 * r);
+    }
     for (let i = 0; i < 260; i++) {
       const dark = rnd() < 0.55;
       g.strokeStyle = dark ? `rgba(28,16,6,${0.15 + rnd() * 0.25})` : `rgba(150,108,66,${0.08 + rnd() * 0.15})`;
@@ -94,7 +107,27 @@ window.SnakeRender = (() => {
       while (y < SIZE + 20) { y += 30 + rnd() * 40; x += (rnd() - 0.5) * 14; g.lineTo(x, y); }
       g.stroke();
     }
-    for (let i = 0; i < 6; i++) { // knots
+    // Raised plates between the furrows, lit along their upper-left edge.
+    for (let i = 0; i < 170; i++) {
+      const x = rnd() * SIZE, y = rnd() * SIZE, w = 5 + rnd() * 9, h = 18 + rnd() * 46, a = (rnd() - 0.5) * 0.2;
+      g.fillStyle = `rgba(122,86,50,${0.1 + rnd() * 0.14})`;
+      g.beginPath(); g.ellipse(x, y, w, h, a, 0, TAU); g.fill();
+      g.strokeStyle = `rgba(196,154,102,${0.1 + rnd() * 0.12})`;
+      g.lineWidth = 1.4;
+      g.beginPath(); g.ellipse(x, y, w, h, a, Math.PI * 0.85, Math.PI * 1.2); g.stroke();
+    }
+    // Cracks: thin, dark and jagged.
+    g.strokeStyle = 'rgba(16,8,2,0.45)';
+    g.lineCap = 'round';
+    for (let i = 0; i < 16; i++) {
+      let x = rnd() * SIZE, y = rnd() * SIZE;
+      g.lineWidth = 1 + rnd() * 1.5;
+      g.beginPath(); g.moveTo(x, y);
+      for (let j = 0, n = 3 + rnd() * 4; j < n; j++) { x += (rnd() - 0.5) * 10; y += 6 + rnd() * 12; g.lineTo(x, y); }
+      g.stroke();
+    }
+    // Knots, with the growth rings round them.
+    for (let i = 0; i < 6; i++) {
       const x = rnd() * SIZE, y = rnd() * SIZE, r = 10 + rnd() * 16;
       const grad = g.createRadialGradient(x, y, 1, x, y, r);
       grad.addColorStop(0, 'rgba(20,10,3,0.8)');
@@ -104,6 +137,26 @@ window.SnakeRender = (() => {
       g.beginPath();
       g.ellipse(x, y, r * 0.6, r, 0, 0, TAU);
       g.fill();
+      g.lineWidth = 1.2;
+      for (let j = 1; j <= 3; j++) {
+        g.strokeStyle = `rgba(30,16,6,${0.28 - j * 0.06})`;
+        g.beginPath(); g.ellipse(x, y, r * 0.6 + j * 4, r + j * 6, 0, 0, TAU); g.stroke();
+      }
+    }
+    // Moss: soft clusters of muted green flecks (dull, so they never pass for food).
+    for (let i = 0; i < 6; i++) {
+      const cx = rnd() * SIZE, cy = rnd() * SIZE, spread = 16 + rnd() * 26;
+      for (let j = 0; j < 70; j++) {
+        const a = rnd() * TAU, d = Math.sqrt(rnd()) * spread;
+        g.fillStyle = `rgba(${92 + rnd() * 26 | 0},${112 + rnd() * 26 | 0},52,${0.22 + rnd() * 0.28})`;
+        dot(cx + Math.cos(a) * d * 0.8, cy + Math.sin(a) * d * 1.3, 1.2 + rnd() * 2.4);
+      }
+    }
+    // Lichen: faint, pale grey-green crusts.
+    for (let i = 0; i < 7; i++) {
+      const cx = rnd() * SIZE, cy = rnd() * SIZE, r = 6 + rnd() * 9;
+      g.fillStyle = 'rgba(190,202,166,0.1)';
+      for (let j = 0; j < 12; j++) { const a = rnd() * TAU, d = Math.sqrt(rnd()) * r; dot(cx + Math.cos(a) * d, cy + Math.sin(a) * d * 1.4, 2 + rnd() * 3); }
     }
     // A soft vignette, so the edge cells read as the edge of the trunk.
     const v = g.createRadialGradient(SIZE / 2, SIZE / 2, SIZE * 0.42, SIZE / 2, SIZE / 2, SIZE * 0.75);
@@ -125,6 +178,82 @@ window.SnakeRender = (() => {
     }
     g.stroke();
     return b;
+  }
+
+  // Leaf shadows from the canopy overhead: soft dark dapples on a small layer
+  // (it's all soft, so a low resolution is plenty), drawn stretched over the
+  // board and swaying in the wind. Built once per round.
+  let shadeLayer = null;
+  function buildShade() {
+    const n = 256, s = makeLayer(n, n), g = s.getContext('2d');
+    let seed = barkSeed * 7 + 3;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 22; i++) {
+      const cx = rnd() * n, cy = rnd() * n;
+      for (let j = 0; j < 6; j++) {
+        const x = cx + (rnd() - 0.5) * 34, y = cy + (rnd() - 0.5) * 34, r = 5 + rnd() * 10;
+        const grad = g.createRadialGradient(x, y, 0, x, y, r * 1.4);
+        grad.addColorStop(0, 'rgba(12,6,2,0.2)');
+        grad.addColorStop(1, 'rgba(12,6,2,0)');
+        g.fillStyle = grad;
+        g.beginPath(); g.ellipse(x, y, r * 1.4, r, rnd() * Math.PI, 0, TAU); g.fill();
+      }
+    }
+    return s;
+  }
+  function drawCanopy(now) {
+    if (!shadeLayer) shadeLayer = buildShade();
+    const t = reduced ? 0 : now / 1000, over = SIZE * 0.06;
+    const dx = Math.sin(t * 0.43) * 8 + Math.sin(t * 1.7) * 1.6, dy = Math.cos(t * 0.37) * 6 + Math.sin(t * 1.3) * 1.2;
+    ctx.drawImage(shadeLayer, dx - over, dy - over, SIZE + 2 * over, SIZE + 2 * over);
+  }
+
+  // Now and then an autumn leaf drifts down the trunk, swaying and turning
+  // (under the food and the snakes, so it never hides anything that matters).
+  const fallen = [];
+  let nextLeaf = 0;
+  const LEAVES = ['#d97706', '#ca8a04', '#b45309', '#a16207'];
+  const leafSprite = c => sprite('leaf', c, drawLeaf);
+  const drawLeaf = (g, col) => {
+    const c = CELL;
+    g.fillStyle = col;
+    g.beginPath();
+    g.moveTo(-c * 0.3, 0);
+    g.quadraticCurveTo(-c * 0.05, -c * 0.2, c * 0.3, 0);
+    g.quadraticCurveTo(-c * 0.05, c * 0.2, -c * 0.3, 0);
+    g.fill();
+    g.strokeStyle = 'rgba(60,30,8,0.55)'; // the midrib and stalk
+    g.lineWidth = c * 0.025;
+    g.beginPath(); g.moveTo(-c * 0.38, 0); g.lineTo(c * 0.24, 0); g.stroke();
+    g.beginPath();
+    for (const x of [-0.12, 0.04]) { g.moveTo(c * x, 0); g.lineTo(c * (x + 0.08), -c * 0.08); g.moveTo(c * x, 0); g.lineTo(c * (x + 0.08), c * 0.08); }
+    g.stroke();
+  };
+  function drawLeaves(now, dt) {
+    if (reduced) { fallen.length = 0; return; }
+    if (!nextLeaf) nextLeaf = now + 1500 + Math.random() * 3000;
+    if (now > nextLeaf && fallen.length < 3) {
+      nextLeaf = now + 4500 + Math.random() * 6500;
+      fallen.push({
+        x: SIZE * (0.1 + Math.random() * 0.8), y: -CELL, vx: (Math.random() - 0.5) * 30, vy: 26 + Math.random() * 18,
+        rot: Math.random() * TAU, spin: (Math.random() - 0.5) * 1.4, ph: Math.random() * TAU, col: LEAVES[Math.floor(Math.random() * LEAVES.length)],
+      });
+    }
+    const st = dt / 1000;
+    for (let i = fallen.length - 1; i >= 0; i--) {
+      const l = fallen[i], sway = Math.sin(now / 800 + l.ph);
+      l.x += (l.vx + sway * 26) * st;
+      l.y += l.vy * st;
+      l.rot += (l.spin + Math.cos(now / 800 + l.ph) * 0.7) * st;
+      if (l.y > SIZE + CELL || l.x < -CELL * 2 || l.x > SIZE + CELL * 2) { fallen.splice(i, 1); continue; }
+      shadowAt(l.x + 7, l.y + 10, 1.1);
+      ctx.save();
+      ctx.translate(l.x, l.y);
+      ctx.rotate(l.rot);
+      ctx.scale(1, 0.7 + 0.3 * Math.abs(sway)); // tipping as it sways
+      ctx.drawImage(leafSprite(l.col), -SPRITE * CELL / 2, -SPRITE * CELL / 2, SPRITE * CELL, SPRITE * CELL);
+      ctx.restore();
+    }
   }
 
   // The static layer is the bark plus every hole pecked so far.
@@ -202,10 +331,20 @@ window.SnakeRender = (() => {
     if (alpha !== undefined) ctx.globalAlpha = 1;
   }
 
+  // (Food sprites have no shadow of their own: it's drawn apart, on the bark,
+  // so the food can bob up off it.)
+  const shadowSprite = () => sprite('shadow', '', drawShadowBlob);
+  const drawShadowBlob = g => {
+    g.fillStyle = 'rgba(0,0,0,0.28)';
+    g.beginPath(); g.ellipse(0, 0, CELL * 0.29, CELL * 0.09, 0, 0, TAU); g.fill();
+  };
+  function shadowAt(x, y, scale) {
+    const w = SPRITE * CELL * scale;
+    ctx.drawImage(shadowSprite(), x - w / 2, y - w / 2, w, w);
+  }
+
   function drawAppleShape(g, body) {
     const c = CELL;
-    g.fillStyle = 'rgba(0,0,0,0.28)';
-    g.beginPath(); g.ellipse(c * 0.04, c * 0.36, c * 0.28, c * 0.09, 0, 0, TAU); g.fill();
     g.fillStyle = body;
     g.beginPath(); g.arc(0, c * 0.04, c * 0.34, 0, TAU); g.fill();
     g.strokeStyle = 'rgba(30,20,8,0.45)';
@@ -246,8 +385,6 @@ window.SnakeRender = (() => {
   const mushroomSprite = () => sprite('mushroom', '', drawMushroom);
   const drawMushroom = g => {
     const c = CELL;
-    g.fillStyle = 'rgba(0,0,0,0.28)';
-    g.beginPath(); g.ellipse(c * 0.03, c * 0.36, c * 0.3, c * 0.08, 0, 0, TAU); g.fill();
     g.fillStyle = '#fef3c7';
     g.beginPath(); // a rounded stem, like every other shape on the board
     if (g.roundRect) g.roundRect(-c * 0.1, -c * 0.02, c * 0.2, c * 0.36, c * 0.07); else g.rect(-c * 0.1, -c * 0.02, c * 0.2, c * 0.36);
@@ -262,29 +399,48 @@ window.SnakeRender = (() => {
     g.beginPath(); g.arc(c * 0.06, -c * 0.2, c * 0.06, 0, TAU); g.fill();
     g.beginPath(); g.arc(c * 0.22, -c * 0.06, c * 0.05, 0, TAU); g.fill();
   };
-  // A roast drumstick, ringed in the colour of the snake it came from (a tinted
-  // drumstick looked spoiled), with a light edge so it reads on the bark.
-  const meatSprite = color => sprite('meat', color || '', drawMeat);
-  const drawMeat = (g, col) => {
-    const c = CELL;
-    g.rotate(-0.7);
-    g.fillStyle = '#f5f5f4';
-    g.fillRect(c * 0.05, -c * 0.05, c * 0.28, c * 0.1);
-    g.beginPath(); g.arc(c * 0.34, -c * 0.06, c * 0.07, 0, TAU); g.fill();
-    g.beginPath(); g.arc(c * 0.34, c * 0.06, c * 0.07, 0, TAU); g.fill();
-    g.beginPath(); g.ellipse(-c * 0.08, 0, c * 0.24, c * 0.18, 0, 0, TAU);
-    g.strokeStyle = 'rgba(255,240,220,0.6)'; // the light edge...
-    g.lineWidth = c * 0.13;
+  // What's left of a snake: it falls to pieces, glossy beads in its own
+  // colours and markings (Wildcard's rainbow, Mason's bricks, Colonist's
+  // strap, a friend's spots), so no two snakes leave the same remains. A light
+  // rim and a dark edge keep every bead readable on the bark.
+  // variant: 'fill|mark', mark one of '', bricks, strap, strap2, spots, rings, dots, copy, ghost.
+  const beadSprite = v => sprite('bead', v, drawBead);
+  const drawBead = (g, v) => {
+    const c = CELL, r = c * 0.26, bar = v.indexOf('|'), fill = v.slice(0, bar), mark = v.slice(bar + 1);
+    const disc = (x, y, rr) => { g.beginPath(); g.arc(x, y, rr, 0, TAU); g.fill(); };
+    if (mark === 'ghost') g.globalAlpha = 0.72;
+    g.fillStyle = 'rgba(255,244,226,0.5)';
+    disc(0, 0, r + c * 0.05);
+    g.fillStyle = fill;
+    disc(0, 0, r);
+    g.strokeStyle = 'rgba(30,20,8,0.5)';
+    g.lineWidth = c * 0.03;
     g.stroke();
-    g.strokeStyle = col && col[0] === '#' ? col : '#a16207'; // ...the snake's colour inside it...
-    g.lineWidth = c * 0.07;
-    g.stroke();
-    g.fillStyle = '#b4532a'; // ...and the roast
-    g.fill();
-    g.fillStyle = 'rgba(120,45,15,0.55)';
-    g.beginPath(); g.ellipse(-c * 0.02, c * 0.05, c * 0.14, c * 0.09, 0, 0, TAU); g.fill();
-    g.fillStyle = 'rgba(255,255,255,0.3)';
-    g.beginPath(); g.arc(-c * 0.14, -c * 0.06, c * 0.06, 0, TAU); g.fill();
+    g.fillStyle = 'rgba(30,41,59,0.6)';
+    if (mark === 'bricks') {
+      g.fillRect(-r, -c * 0.02, 2 * r, c * 0.04);
+      g.fillRect(-r * 0.3, -r * 0.9, c * 0.04, r * 0.9);
+      g.fillRect(r * 0.3, 0, c * 0.04, r * 0.9);
+    } else if (mark === 'strap' || mark === 'strap2') {
+      g.strokeStyle = '#fef3c7';
+      g.lineWidth = c * 0.07;
+      g.beginPath();
+      const d = r * 0.7, sg = mark === 'strap' ? 1 : -1;
+      g.moveTo(-d, -d * sg); g.lineTo(d, d * sg);
+      g.stroke();
+    } else if (mark === 'spots' || mark === 'dots') {
+      g.fillStyle = 'rgba(58,38,20,0.45)';
+      if (mark === 'dots') disc(0, 0, r * 0.32);
+      else { disc(-r * 0.38, r * 0.12, r * 0.18); disc(r * 0.38, -r * 0.12, r * 0.18); }
+    } else if (mark === 'rings' || mark === 'copy') {
+      g.strokeStyle = mark === 'copy' ? 'rgba(255,255,255,0.75)' : 'rgba(58,38,20,0.5)';
+      g.lineWidth = c * 0.04;
+      if (mark === 'copy') g.setLineDash([c * 0.07, c * 0.07]);
+      g.beginPath(); g.arc(0, 0, r * (mark === 'copy' ? 0.75 : 0.55), 0, TAU); g.stroke();
+      g.setLineDash([]);
+    }
+    g.fillStyle = 'rgba(255,255,255,0.55)'; // the gloss
+    g.beginPath(); g.ellipse(-r * 0.32, -r * 0.38, r * 0.3, r * 0.2, -0.6, 0, TAU); g.fill();
   };
   // The woodpecker: a great spotted woodpecker clinging to the trunk, beak to
   // the right ('r') or mirrored ('l'). Drawn at its real size, about 1.7 cells
@@ -317,25 +473,38 @@ window.SnakeRender = (() => {
 
   // ------------------------------------------------------------ beetles
 
-  // A jewel beetle, drawn live (it turns and walks): an emerald shell with a
-  // gold rim, six legs that scuttle while it moves, and feelers. It glides to
-  // its new cell during the tick it moved, then pauses: a beetle's walk.
+  // A jewel beetle, drawn live: an emerald shell with a gold rim, six legs and
+  // feelers. It steps off and settles into its next cell during the tick it
+  // moves (a beetle's walk: step, pause), legs scuttling, and turns smoothly.
+  // Between steps it's never quite still: its feelers wave, it breathes, and
+  // every few seconds it lifts its wing cases and buzzes, as if about to fly
+  // off. Scared, it trembles. It pops in when it comes out.
+  let beetleAng = null, beetleAt = 0;
   function drawBeetle(f, alpha, now) {
     const moved = game && f.movedAt === game.tick - 1 && f.px != null;
-    const t = moved ? alpha : 1;
-    const gx = moved ? f.px + (f.x - f.px) * t : f.x, gy = moved ? f.py + (f.y - f.py) * t : f.y;
-    const x = gx * CELL + CELL / 2, y = gy * CELL + CELL / 2;
-    const c = CELL;
-    const walking = moved && !reduced;
+    const e = moved ? alpha * alpha * (3 - 2 * alpha) : 1;
+    const gx = moved ? f.px + (f.x - f.px) * e : f.x, gy = moved ? f.py + (f.y - f.py) * e : f.y;
+    let x = gx * CELL + CELL / 2, y = gy * CELL + CELL / 2;
+    const c = CELL, lively = !reduced, t = now / 1000;
+    const walking = moved && lively;
+    const pop = beetleAt ? popOf(now - beetleAt) : 1;
+    if (pop <= 0) return;
+    const heading = Math.atan2(f.dir.y, f.dir.x);
+    if (beetleAng === null || !lively) beetleAng = heading;
+    else beetleAng += Math.atan2(Math.sin(heading - beetleAng), Math.cos(heading - beetleAng)) * Math.min(1, frameDt / 60);
+    if (lively && f.scared && !moved) { x += Math.sin(now / 23) * 0.7; y += Math.cos(now / 31) * 0.7; } // trembling
     const step = walking ? Math.sin(now / (f.scared ? 28 : 45)) : 0;
+    const cycle = ((now - beetleAt) / 1000) % 3.4; // the wing cases lift late in each cycle, if it's not walking
+    const lift = lively && !walking && cycle > 2.7 ? Math.sin((cycle - 2.7) / 0.7 * Math.PI) : 0;
     ctx.fillStyle = 'rgba(0,0,0,0.3)'; // shadow
     ctx.beginPath();
-    ctx.ellipse(x + 2, y + 3, c * 0.38, c * 0.3, 0, 0, TAU);
+    ctx.ellipse(x + 2, y + 3, c * 0.38 * pop, c * 0.3 * pop, 0, 0, TAU);
     ctx.fill();
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(Math.atan2(f.dir.y, f.dir.x));
-    ctx.scale(1.35, 1.35); // about an apple's size, so it's easy to spot
+    ctx.rotate(beetleAng + step * 0.07);
+    const size = 1.35 * pop * (1 + (lively ? Math.sin(t * 3.1) * 0.02 : 0)); // about an apple's size, so it's easy to spot
+    ctx.scale(size, size);
     // Legs: three a side, alternate pairs swinging.
     ctx.strokeStyle = '#1c1917';
     ctx.lineWidth = c * 0.05;
@@ -347,26 +516,51 @@ window.SnakeRender = (() => {
       ctx.moveTo(bx, -c * 0.12); ctx.lineTo(bx + c * 0.06 * leg + sw, -c * 0.32);
       ctx.moveTo(bx, c * 0.12); ctx.lineTo(bx + c * 0.06 * leg - sw, c * 0.32);
     }
-    // Feelers.
-    ctx.moveTo(c * 0.26, -c * 0.04); ctx.quadraticCurveTo(c * 0.38, -c * 0.06, c * 0.42, -c * 0.18);
-    ctx.moveTo(c * 0.26, c * 0.04); ctx.quadraticCurveTo(c * 0.38, c * 0.06, c * 0.42, c * 0.18);
+    // Feelers, waving (twitching when it's scared).
+    const wave = lively ? Math.sin(t * (f.scared ? 15 : 4.5)) * 0.05 : 0;
+    ctx.moveTo(c * 0.26, -c * 0.04); ctx.quadraticCurveTo(c * 0.38, -c * (0.06 + wave), c * 0.42, -c * (0.18 - wave));
+    ctx.moveTo(c * 0.26, c * 0.04); ctx.quadraticCurveTo(c * 0.38, c * (0.06 - wave), c * 0.42, c * (0.18 + wave));
     ctx.stroke();
-    // Head, then the shell with its gold rim, the split down the middle and a shine.
+    // Head, then (when the wing cases are lifted) the dark body under them and
+    // the clear wings unfolding behind, buzzing...
     ctx.fillStyle = '#14532d';
     circle(c * 0.22, 0, c * 0.08);
-    ctx.fillStyle = '#059669';
-    ctx.beginPath();
-    ctx.ellipse(-c * 0.02, 0, c * 0.22, c * 0.17, 0, 0, TAU);
-    ctx.fill();
-    ctx.strokeStyle = '#fbbf24';
+    if (lift > 0) {
+      ctx.fillStyle = '#052e16';
+      ctx.beginPath(); ctx.ellipse(-c * 0.04, 0, c * 0.2, c * 0.12, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(240,249,255,0.7)';
+      ctx.strokeStyle = 'rgba(148,163,184,0.7)';
+      ctx.lineWidth = c * 0.015;
+      const buzz = 0.9 + 0.1 * Math.sin(now / 9);
+      for (const sg of [-1, 1]) {
+        ctx.beginPath();
+        ctx.ellipse(-c * 0.26 * lift, sg * c * 0.14 * lift, c * 0.34 * buzz * lift, c * 0.1, -sg * 0.45 * lift, 0, TAU);
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+    // ...then the shell: two emerald wing cases with a gold rim, which swing
+    // out from the front when it lifts them; the split down the middle and a shine.
     ctx.lineWidth = c * 0.03;
-    ctx.stroke();
-    ctx.strokeStyle = 'rgba(6,47,35,0.8)';
-    ctx.beginPath();
-    ctx.moveTo(c * 0.18, 0); ctx.lineTo(-c * 0.23, 0);
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(209,250,229,0.55)';
-    circle(c * 0.04, -c * 0.08, c * 0.045);
+    for (const sg of [-1, 1]) {
+      ctx.save();
+      if (lift > 0) { ctx.translate(c * 0.16, 0); ctx.rotate(-sg * 0.4 * lift); ctx.translate(-c * 0.16, 0); }
+      ctx.fillStyle = '#059669';
+      ctx.strokeStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.ellipse(-c * 0.02, 0, c * 0.22, c * 0.17, 0, sg < 0 ? Math.PI : 0, sg < 0 ? TAU : Math.PI);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      if (sg < 0) { ctx.fillStyle = 'rgba(209,250,229,0.55)'; circle(c * 0.04, -c * 0.08, c * 0.045); }
+      ctx.restore();
+    }
+    if (!lift) {
+      ctx.strokeStyle = 'rgba(6,47,35,0.8)';
+      ctx.beginPath();
+      ctx.moveTo(c * 0.18, 0); ctx.lineTo(-c * 0.23, 0);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
@@ -865,12 +1059,18 @@ window.SnakeRender = (() => {
       ctx.stroke();
       ctx.setLineDash(NO_DASH);
     }
-    if (s.personaKey === 'capricious') { // always findable, whatever the mood
+    if (s.personaKey === 'capricious') { // always findable, whatever the mood: a pink ring that breathes, pale dashes running round it
       ctx.strokeStyle = '#ec4899';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(pts[0], pts[1], rad[0] + 2, 0, TAU);
+      ctx.arc(pts[0], pts[1], rad[0] + 2.5 + (reduced ? 0 : Math.sin(now / 240) * 1.2), 0, TAU);
       ctx.stroke();
+      ctx.strokeStyle = '#fdf2f8';
+      ctx.setLineDash(MOOD_DASH);
+      ctx.lineDashOffset = reduced ? 0 : -now / 35;
+      ctx.stroke();
+      ctx.setLineDash(NO_DASH);
+      ctx.lineDashOffset = 0;
     }
 
     // Head features, drawn in a frame where +x points the way the snake faces.
@@ -906,7 +1106,7 @@ window.SnakeRender = (() => {
       }
     }
   }
-  const DASH = [3, 3], NO_DASH = [];
+  const DASH = [3, 3], NO_DASH = [], MOOD_DASH = [5, 7];
 
   // Wildcard's long red tie: knotted under the chin, down over the collar and
   // on along the body, bending with it.
@@ -1868,6 +2068,215 @@ window.SnakeRender = (() => {
     }
   }
 
+  // ------------------------------------------------------------ the food
+
+  // When each piece of food first showed, so it pops in once, and when its
+  // next spore or glint is due. Kept by cell rather than by object (a guest
+  // online gets fresh food objects every tick). At the start of a round the
+  // food pops in one piece after another; a dead snake's beads pop in head to
+  // tail. born: cell -> { kind, at, i, next, v (a bead's look) }.
+  const born = new Map();
+  const eatenNow = new Set(); // cells eaten on the last tick (so food that just vanished poofs)
+  let bornTick = -1, bornGen = 0, fresh = true;
+  const POP_MS = 420, RIPPLE_MS = 30;
+
+  function trackFood(now) {
+    if (game.tick === bornTick) return;
+    bornTick = game.tick;
+    bornGen++;
+    let n = 0;
+    for (const f of game.food) {
+      if (f.kind === 'beetle') continue;
+      const key = f.y * GRID + f.x;
+      let b = born.get(key);
+      if (!b || b.kind !== f.kind) {
+        b = { kind: f.kind, at: now + (fresh ? 200 + 90 * n : 0), i: 0, next: 0, gen: 0, v: (f.color || '#a16207') + '|' };
+        born.set(key, b);
+      }
+      b.gen = bornGen;
+      n++;
+    }
+    for (const [key, b] of born) {
+      if (b.gen === bornGen) continue;
+      // Gone without being eaten (a mushroom withered, a golden apple rotted): a little poof.
+      if (!eatenNow.has(key) && (b.kind === 'mushroom' || b.kind === 'golden')) {
+        spawn((key % GRID) * CELL + CELL / 2, Math.floor(key / GRID) * CELL + CELL / 2, 7, 110, 420, 2.2, b.kind === 'golden' ? '#a16207' : '#dc2626', '#f6ecd2');
+      }
+      born.delete(key);
+    }
+    eatenNow.clear();
+    fresh = false;
+  }
+
+  // A dead snake's beads: what each one looks like, and a ripple from head to tail.
+  function noteRemains(s, now) {
+    for (let i = 0; i < s.body.length; i++) {
+      const key = s.body[i].y * GRID + s.body[i].x, old = born.get(key);
+      if (old && old.kind !== 'pellet') continue; // (food there stays food)
+      born.set(key, { kind: 'pellet', at: now + i * RIPPLE_MS, i, next: 0, gen: bornGen, v: beadOf(s, i) });
+    }
+  }
+
+  // The bead a snake leaves at body segment i: its own colours and markings.
+  function beadOf(s, i) {
+    const look = lookOf(s), col = colorOf(s);
+    let fill = col[0] === '#' ? col : '#a16207', mark = '';
+    if (s.personaKey === 'wildcard') fill = i === 0 ? '#f59a52' : i === 1 ? '#f8fafc' : HUES[(i * 28) % 360];
+    else if (look === 'joker') fill = i === 0 ? '#f8fafc' : i % 2 ? '#f59e0b' : '#a21caf';
+    else if (look === 'sniper' && i % 3 === 2) fill = mix(fill, '#fca5a5', 0.35);
+    else if (look === 'vulture' && i < 2) fill = i ? '#f5f5f4' : '#f9a8d4';
+    else if (look === 'desperado' && i === 1) fill = '#dc2626';
+    else if (look === 'desperado' && i >= 4 && i % 4 === 0) fill = '#fde68a';
+    if (!s.persona) mark = MARKS[col] || '';
+    else if (look === 'mason') mark = 'bricks';
+    else if (look === 'colonist') mark = i % 2 ? 'strap' : 'strap2';
+    else if (s.personaKey === 'copycat') mark = 'copy';
+    else if (look === 'ghost') mark = 'ghost';
+    return fill + '|' + mark;
+  }
+
+  // How big something popping in is, ms after it appeared: nothing yet, then
+  // up past full size and back (with reduced motion, simply there).
+  function popOf(ms) {
+    if (reduced) return 1;
+    const t = ms / POP_MS;
+    if (t <= 0) return 0;
+    if (t >= 1) return 1;
+    const u = t - 1;
+    return 1 + 2.7 * u * u * u + 1.7 * u * u;
+  }
+
+  // A sprite drawn at (x, y) + offset, scaled about a pivot (px, py) relative to (x, y).
+  function blitAbout(sp, x, y, px, py, sx, sy, rot) {
+    const half = SPRITE * CELL / 2;
+    ctx.save();
+    ctx.translate(x + px, y + py);
+    if (rot) ctx.rotate(rot);
+    ctx.scale(sx, sy);
+    ctx.drawImage(sp, -half - px, -half - py, SPRITE * CELL, SPRITE * CELL);
+    ctx.restore();
+  }
+
+  // An apple (or the golden one): it bobs up off its shadow and squashes a
+  // touch as it comes down, swaying its leaf; now and then a glint winks on it.
+  // t: seconds, offset per apple so they don't move together.
+  function drawAppleAt(sp, x, y, t, pop, alpha) {
+    const lively = !reduced;
+    const h = lively ? 0.5 - 0.5 * Math.cos(t * 3.9) : 0; // 0 down .. 1 up
+    const sq = lively ? 0.08 * (1 - h) * (1 - h) * (1 - h) : 0;
+    const lift = h * 3.2;
+    ctx.globalAlpha = alpha * (1 - 0.35 * h);
+    shadowAt(x + 1.3, y + CELL * 0.36, pop * (1 - 0.22 * h));
+    ctx.globalAlpha = alpha;
+    blitAbout(sp, x, y - lift, 0, CELL * 0.38, pop * (1 + sq), pop * (1 - sq), lively ? Math.sin(t * 1.9) * 0.06 : 0);
+    const g = (t * 0.27) % 1;
+    if (lively && g < 0.09 && pop >= 1) {
+      const w = SPRITE * CELL * 0.75 * Math.sin(g / 0.09 * Math.PI);
+      ctx.drawImage(starSprite(), x - CELL * 0.13 - w / 2, y - CELL * 0.08 - lift - w / 2, w, w);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // A mushroom sways on its stem and breathes; near the end it wilts, leaning
+  // over, shrinking and fading; and it lets go of a spore now and then.
+  function drawMushroomAt(f, x, y, t, pop) {
+    const lively = !reduced;
+    const left = f.expires != null ? f.expires - game.tick : 99;
+    const wilt = left < 30 ? 1 - left / 30 : 0;
+    const breathe = lively ? Math.sin(t * 5.1) * 0.04 : 0;
+    const lean = (lively ? Math.sin(t * 2.5) * 0.12 : 0) + 0.5 * wilt * (f.x % 2 ? 1 : -1);
+    ctx.globalAlpha = 1 - 0.4 * wilt;
+    shadowAt(x + 1, y + CELL * 0.36, pop * (1 - 0.25 * wilt));
+    blitAbout(mushroomSprite(), x, y, 0, CELL * 0.34, pop * (1 - 0.2 * wilt) * (1 - breathe * 0.5), pop * (1 - 0.3 * wilt) * (1 + breathe), lean);
+    ctx.globalAlpha = 1;
+  }
+
+  // Ambient motes from a small pool: spores drifting up off the mushrooms
+  // (kind 0) and glints twinkling round a golden apple (kind 1).
+  const MAX_M = 48;
+  const mx = new Float32Array(MAX_M), my = new Float32Array(MAX_M), mvx = new Float32Array(MAX_M), mvy = new Float32Array(MAX_M);
+  const mlife = new Float32Array(MAX_M), mmax = new Float32Array(MAX_M), msize = new Float32Array(MAX_M);
+  const mkind = new Uint8Array(MAX_M);
+  let mNext = 0, mLive = 0;
+  function mote(x, y, vx, vy, life, size, kind) {
+    if (reduced) return;
+    const i = mNext;
+    mNext = (mNext + 1) % MAX_M;
+    mx[i] = x; my[i] = y; mvx[i] = vx; mvy[i] = vy; mmax[i] = mlife[i] = life; msize[i] = size; mkind[i] = kind;
+    mLive = Math.min(MAX_M, mLive + 1);
+  }
+  function drawMotes(dt) {
+    if (!mLive) return;
+    const st = dt / 1000;
+    let live = 0;
+    ctx.fillStyle = '#fdf2f8';
+    for (let i = 0; i < MAX_M; i++) {
+      if (mlife[i] <= 0) continue;
+      mlife[i] -= dt;
+      mx[i] += mvx[i] * st;
+      my[i] += mvy[i] * st;
+      const t = Math.max(0, mlife[i] / mmax[i]), fade = Math.sin(t * Math.PI); // in and out
+      live++;
+      if (mkind[i] === 0) {
+        mx[i] += Math.sin(mlife[i] / 160) * 0.15; // wafting
+        ctx.globalAlpha = 0.75 * fade;
+        circle(mx[i], my[i], msize[i]);
+      } else {
+        const w = SPRITE * CELL * msize[i] * fade;
+        ctx.globalAlpha = fade;
+        ctx.drawImage(starSprite(), mx[i] - w / 2, my[i] - w / 2, w, w);
+      }
+    }
+    ctx.globalAlpha = 1;
+    mLive = live;
+  }
+
+  // Every piece of food on the board, under the snakes.
+  function drawFood(alpha, now) {
+    trackFood(now);
+    const lively = !reduced;
+    for (const f of game.food) {
+      if (f.kind === 'beetle') { drawBeetle(f, alpha, now); continue; }
+      const key = f.y * GRID + f.x, b = born.get(key);
+      if (f.kind === 'pellet' && heldCells[key]) { if (b) b.at = now + b.i * RIPPLE_MS; continue; } // (under a held corpse: not yet)
+      const pop = b ? popOf(now - b.at) : 1;
+      if (pop <= 0) continue;
+      const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
+      const t = now / 1000 + ((f.x * 7 + f.y * 13) % 10) * 0.63; // each piece on its own beat
+      if (f.kind === 'food') drawAppleAt(appleSprite(), x, y, t, pop, 1);
+      else if (f.kind === 'pellet') {
+        const h = lively ? 0.5 - 0.5 * Math.cos(t * 3) : 0;
+        shadowAt(x + 1, y + CELL * 0.3, pop * 0.85 * (1 - 0.2 * h));
+        const sz = pop * (1 + (lively ? Math.sin(t * 6) * 0.03 : 0));
+        blitAbout(beadSprite(b ? b.v : (f.color || '#a16207') + '|'), x, y - h * 1.8, 0, 0, sz, sz, 0);
+      } else if (f.kind === 'mushroom') {
+        drawMushroomAt(f, x, y, t, pop);
+        if (lively && b && pop >= 1 && now > b.next) {
+          b.next = now + 800 + Math.random() * 1000;
+          mote(x + (Math.random() - 0.5) * CELL * 0.5, y - CELL * 0.12, (Math.random() - 0.5) * 8, -12 - Math.random() * 8, 1700, 1.3 + Math.random() * 0.9, 0);
+        }
+      } else if (f.kind === 'golden') {
+        // A calm dim instead of a blink when it's about to rot.
+        const left = f.expires - game.tick;
+        const fade = left > T.GOLDEN_DIM_TICKS ? 1 : 0.45 + 0.55 * (left / T.GOLDEN_DIM_TICKS);
+        const glow = pop * (1 + (lively ? 0.14 * Math.sin(t * 4) : 0)), w = SPRITE * CELL * glow;
+        ctx.globalAlpha = fade * (lively ? 0.8 + 0.2 * Math.sin(t * 4) : 1);
+        ctx.drawImage(glowSprite(), x - w / 2, y - w / 2, w, w);
+        drawAppleAt(goldenSprite(), x, y, t * 1.1, pop, fade);
+        ctx.save();
+        ctx.translate(x + CELL * 0.2, y - CELL * 0.22);
+        ctx.rotate(reduced ? 0 : now / 900);
+        ctx.scale(pop, pop);
+        blit(starSprite(), 0, 0, fade);
+        ctx.restore();
+        if (lively && b && pop >= 1 && now > b.next) {
+          b.next = now + 180 + Math.random() * 260;
+          mote(x + (Math.random() - 0.5) * CELL * 1.1, y + (Math.random() - 0.5) * CELL, 0, -6, 650, 0.35 + Math.random() * 0.3, 1);
+        }
+      }
+    }
+  }
+
   // ------------------------------------------------------------ the frame
 
   let shakeUntil = 0, shakePx = 0, lastNow = 0;
@@ -1895,6 +2304,7 @@ window.SnakeRender = (() => {
     ctx.setTransform(1, 0, 0, 1, sx, sy);
     ctx.drawImage(staticLayer, 0, 0);
     ctx.setTransform(k, 0, 0, k, sx, sy);
+    drawCanopy(now);
 
     for (const s of game.snakes) {
       if (!s.alive) continue;
@@ -1911,35 +2321,12 @@ window.SnakeRender = (() => {
       blitCrisp(birdSprite(right ? 'r' : 'l'), wp.x * CELL + CELL / 2 + (right ? peck : -peck), wp.y * CELL + CELL * 0.4);
     }
 
-    const bob = reduced ? 0 : 1;
-    for (const f of game.food) {
-      const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
-      const phase = (f.x * 7 + f.y * 13) % 10; // each item bobs on its own beat
-      if (f.kind === 'beetle') drawBeetle(f, alpha, now);
-      else if (f.kind === 'food') blitCrisp(appleSprite(), x, y + bob * Math.sin(now / 420 + phase) * 1.6);
-      else if (f.kind === 'pellet') { if (!heldCells[f.y * GRID + f.x]) blitCrisp(meatSprite(f.color), x, y); }
-      else if (f.kind === 'mushroom') {
-        ctx.save();
-        ctx.translate(x, y + CELL * 0.3);
-        ctx.rotate(bob * Math.sin(now / 650 + phase) * 0.06);
-        blit(mushroomSprite(), 0, -CELL * 0.3);
-        ctx.restore();
-      } else if (f.kind === 'golden') {
-        // A calm dim instead of a blink when it's about to rot.
-        const left = f.expires - game.tick;
-        const fade = left > T.GOLDEN_DIM_TICKS ? 1 : 0.45 + 0.55 * (left / T.GOLDEN_DIM_TICKS);
-        blitCrisp(glowSprite(), x, y, fade);
-        blitCrisp(goldenSprite(), x, y + bob * Math.sin(now / 380 + phase) * 1.8, fade);
-        ctx.save();
-        ctx.translate(x + CELL * 0.2, y - CELL * 0.22);
-        ctx.rotate(reduced ? 0 : now / 900);
-        blit(starSprite(), 0, 0, fade);
-        ctx.restore();
-      }
-    }
+    drawLeaves(now, dt);
+    drawFood(alpha, now);
 
     if (corpses.length) drawCorpses(alpha, now);
     drawSnakes(alpha, now);
+    drawMotes(dt);
     drawParticles(dt);
     drawFloaters(dt);
   }
@@ -1969,11 +2356,15 @@ window.SnakeRender = (() => {
         else if (e.kind === 'pellet') spawn(x, y, T.PARTICLES_EAT - 4, 150, T.PARTICLE_LIFE * 0.8, 2.6, e.color && e.color[0] === '#' ? e.color : '#c2410c', '#f6ecd2');
         else if (e.kind === 'mushroom') spawn(x, y, T.PARTICLES_EAT - 2, 160, T.PARTICLE_LIFE, 2.6, '#dc2626', '#fffbea');
         else spawn(x, y, T.PARTICLES_EAT, 180, T.PARTICLE_LIFE, 2.8, '#a3e635', '#fde68a'); // sprout and honey: visible on bark and on green snakes alike
+        eatenNow.add(e.y * GRID + e.x);
         if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.6), e.kind === 'golden' ? '+3' : e.kind === 'beetle' ? '+2' : '+1');
       } else if (e.type === 'death') {
         deaths.push(e.snake); // bursts on the next frame, unless the moment is held
+        noteRemains(e.snake, now);
       } else if (e.type === 'peck') {
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 5, 120, 380, 2, '#a16207', '#f6ecd2');
+      } else if (e.type === 'spawn' && e.kind === 'beetle') {
+        beetleAt = now; // (it pops in)
       } else if (e.type === 'flown') { // a beetle nobody caught takes off
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 8, 260, T.PARTICLE_LIFE * 1.2, 2.2, '#d1fae5', '#059669');
       }
@@ -2096,6 +2487,20 @@ window.SnakeRender = (() => {
     pLive = 0;
     plife.fill(0);
     flife.fill(0);
+    mLive = 0;
+    mlife.fill(0);
+    born.clear();
+    eatenNow.clear();
+    bornTick = -1;
+    fresh = true;
+    beetleAng = null;
+    beetleAt = 0;
+    fallen.length = 0;
+    nextLeaf = 0;
+    // A different stretch of the tree each round.
+    barkSeed = 1 + Math.floor(Math.random() * 2147483645);
+    barkLayer = null;
+    shadeLayer = null;
     resetStatic();
   }
 
