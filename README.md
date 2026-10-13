@@ -76,7 +76,7 @@ Each round, three of these sixteen are picked at random. The start screen tells 
 | **Sniper** | blood red, one eye behind a scope | Picks whichever snake it has the best shot at, gets in front of it and squeezes its space. |
 | **Gobbler** | orange, puffy cheeks | Eats everything, even a rival's apple. Hates mushrooms. |
 | **Ghost** | pale, fading body | Keeps away from everyone and eats mushrooms to stay small. |
-| **Sovereign** | royal blue, golden crown | Rules its own patch of log, a shimmering force field in royal blue, and attacks anyone who trespasses. You light up in its colour when you go in. |
+| **Sovereign** | royal blue, golden crown | Rules its own patch of log, a shimmering force field in royal blue, and attacks anyone who trespasses. Its realm grows as it does, shrinks if it wastes away, and drifts off land the woodpecker or fire takes. You light up in its colour when you go in. |
 | **Colonist** | redcoat, tricorn hat | Plants flags all over the board, each colony a force field of its own, and defends every one of them. The first flies the Union Flag, later ones colonial ensigns (blue with the Southern Cross, red with a badge). |
 | **Drab** | khaki, sleepy eyes | Plays it safe and sensible. Nothing special. |
 | **Vulture** | black, pink bald head, hooked beak, scowl | Hovers near snakes in trouble and feeds on what they leave behind. |
@@ -111,6 +111,7 @@ Serve the folder with any static server (for example `npx serve` or `python -m h
 - `node tools/online-test.js` plays rounds through the online protocol and checks that a friend's screen matches the host's every tick.
 - `node tools/simulate.js 200` plays 200 AI-only rounds headlessly with the game's own rules and AI, and prints each personality's win rate, food, kills, how snakes die and so on. Add `--seed 1` to repeat a run exactly (on any machine), `--check` to fail on a stalled round, and `--root <dir>` to play another copy of the game, to compare versions.
 - `node tools/rules-test.js` checks the rules on hand-built boards: tails, head-ons, starving, the woodpecker's manners, what the AIs can see.
+- `node tools/chatter-test.js` checks that every line the rivals say has its Chinese, for Copycat.
 - `node tools/shots.js [dir]` takes the screenshot tour in headless Chrome (title, play, a bite, a nap, a death, the cards, the Hall of Fame, a laptop, a phone both ways), with an autopilot at the wheel. `node tools/bench.js` measures frame times the same way. Both need Chrome (or set `CHROME`); nothing to install.
 
 ### How it's put together

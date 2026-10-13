@@ -33,7 +33,9 @@ window.SnakeAI = (() => {
   //   margin, headRisk, zoneRisk    spare room wanted / fear of a rival's next move / of where it might be (required)
   //   distance                      reward per step of distance from the nearest rival head
   //   hunt                          { squeeze, chase, lead }: shrink the victim's room, get in front of it
-  //   home                          { radius, leave }: stay near a home circle, hunt intruders
+  //   home                          { radius, leave, grow, max, drift }: stay near a home circle (radius
+  //                                   at the start, a cell more for every `grow` segments, up to `max`;
+  //                                   it drifts off lost land every `drift` ticks), hunt intruders
   //   lure                          { weight, dist }: hover about `dist` from a chosen snake's head
   //   turn                          penalty for every change of direction
   //   tail                          reward for riding just behind a rival's tail
@@ -93,7 +95,7 @@ window.SnakeAI = (() => {
         space: 1.5, territory: 1, aggression: 0.2,
         food: 5, eat: 70, pellet: 1.2, foodRange: 30,
         margin: 3, headRisk: 500, zoneRisk: 80,
-        home: { radius: 4, leave: 30 }, hunt: { squeeze: 2.5, chase: 6, lead: 3 },
+        home: { radius: 4, leave: 30, grow: 8, max: 7, drift: 15 }, hunt: { squeeze: 2.5, chase: 6, lead: 3 },
       },
     },
     colonist: {
@@ -412,14 +414,39 @@ window.SnakeAI = (() => {
     const drivers = {
       sniper() { pickVictim(all, ctx.w.hunt); },
 
+      // Its realm: a circle round where it started, that grows as it does
+      // (and shrinks again if it wastes away), and drifts a cell at a time
+      // off land that's been lost (holes, fire). Anyone in it gets hunted.
       sovereign() {
-        const R = ctx.w.home.radius;
-        memory.home ||= {
-          x: Math.min(N - R - 2, Math.max(R + 1, myHead.x)),
-          y: Math.min(N - R - 2, Math.max(R + 1, myHead.y)),
-          radius: R,
-        };
-        ctx.home = memory.home;
+        const H = ctx.w.home, len = me.body.length;
+        memory.home ||= { x: myHead.x, y: myHead.y, radius: H.radius };
+        const home = ctx.home = memory.home;
+        const needs = R => 3 + H.grow * (R - H.radius); // (the length it takes to hold a realm of radius R)
+        if (home.radius < H.max && len >= needs(home.radius + 1)) home.radius++;
+        else if (home.radius > H.radius && len < needs(home.radius) - 2) home.radius--;
+        const fit = v => Math.min(N - home.radius - 2, Math.max(home.radius + 1, v));
+        home.x = fit(home.x);
+        home.y = fit(home.y);
+        if (view.tick >= (memory.driftAt ?? 0)) {
+          memory.driftAt = view.tick + H.drift;
+          const land = (cx, cy) => {
+            let n = 0;
+            for (let y = cy - home.radius; y <= cy + home.radius; y++) {
+              for (let x = cx - home.radius; x <= cx + home.radius; x++) {
+                if (inside(x, y) && Math.hypot(x - cx, y - cy) <= home.radius && !holes.has(y * N + x)) n++;
+              }
+            }
+            return n;
+          };
+          let best = null, most = land(home.x, home.y) + 2; // (only for clearly better land)
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const x = fit(home.x + dx), y = fit(home.y + dy);
+            if (x === home.x && y === home.y) continue;
+            const n = land(x, y);
+            if (n > most) { most = n; best = { x, y }; }
+          }
+          if (best) { home.x = best.x; home.y = best.y; }
+        }
         const intruders = all.filter(k => Math.hypot(heads[k].x - ctx.home.x, heads[k].y - ctx.home.y) <= ctx.home.radius + 1);
         if (intruders.length) pickVictim(intruders, ctx.w.hunt);
         else memory.victimId = null;
