@@ -627,9 +627,11 @@ window.SnakeRender = (() => {
   // Every segment's fill: the look's pattern, fading toward the bark at the tail.
   function fillsOf(s, a, now) {
     const { look, color, n, fills } = a;
-    if (s.personaKey === 'wildcard') {
+    if (s.personaKey === 'wildcard') { // a rainbow body, but an orange tan and a white collar up front
       const t0 = reduced ? 0 : Math.floor(now / 15);
       for (let i = 0; i < n; i++) fills[i] = HUES[(t0 + i * 28) % 360];
+      fills[0] = '#f59a52';
+      if (n > 1) fills[1] = '#f8fafc';
       return;
     }
     if (look === 'joker') {
@@ -827,6 +829,7 @@ window.SnakeRender = (() => {
         }
       }
     }
+    if (s.personaKey === 'wildcard' && n > 2) drawTie(a);
     if (look === 'mason') { // bricks: a mortar line across, the joints staggered
       ctx.fillStyle = 'rgba(30,41,59,0.6)';
       for (let i = 1; i < n; i++) {
@@ -904,6 +907,39 @@ window.SnakeRender = (() => {
     }
   }
   const DASH = [3, 3], NO_DASH = [];
+
+  // Wildcard's long red tie: knotted under the chin, down over the collar and
+  // on along the body, bending with it.
+  function drawTie(a) {
+    const p = a.pts, c = CELL;
+    const seg = (i, j) => { const dx = p[2 * j] - p[2 * i], dy = p[2 * j + 1] - p[2 * i + 1], len = Math.hypot(dx, dy) || 1; return [dx / len, dy / len, len]; };
+    const [ax, ay] = seg(0, 1), [bx, by, blen] = seg(1, 2);
+    // From the chin (just inside the head's edge) to the collar...
+    const kx = p[0] + ax * c * 0.45, ky = p[1] + ay * c * 0.45;
+    const mx = p[2], my = p[3];
+    // ...then on toward the next segment, ending in a point.
+    const end = Math.min(blen, c * 0.85), ex = mx + bx * end, ey = my + by * end;
+    const quad = (x1, y1, w1, x2, y2, w2, dx, dy) => {
+      ctx.moveTo(x1 - dy * w1, y1 + dx * w1); ctx.lineTo(x2 - dy * w2, y2 + dx * w2);
+      ctx.lineTo(x2 + dy * w2, y2 - dx * w2); ctx.lineTo(x1 + dy * w1, y1 - dx * w1); ctx.closePath();
+    };
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    quad(kx, ky, c * 0.07, mx, my, c * 0.12, ax, ay);
+    quad(mx, my, c * 0.12, ex - bx * c * 0.12, ey - by * c * 0.12, c * 0.15, bx, by);
+    ctx.fill();
+    circle(mx, my, c * 0.12); // (smooth where it bends)
+    ctx.beginPath(); // the point
+    ctx.moveTo(ex - bx * c * 0.12 - by * c * 0.15, ey - by * c * 0.12 + bx * c * 0.15);
+    ctx.lineTo(ex, ey);
+    ctx.lineTo(ex - bx * c * 0.12 + by * c * 0.15, ey - by * c * 0.12 - bx * c * 0.15);
+    ctx.fill();
+    ctx.fillStyle = '#991b1b'; // the knot
+    circle(kx, ky, c * 0.08);
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; // a sheen down the middle
+    ctx.lineWidth = c * 0.03;
+    ctx.beginPath(); ctx.moveTo(kx + ax * c * 0.1, ky + ay * c * 0.1); ctx.lineTo(mx, my); ctx.lineTo(ex - bx * c * 0.2, ey - by * c * 0.2); ctx.stroke();
+  }
 
   // The living snakes, in passes, so no snake's shadow falls on another's body.
   const live = [];

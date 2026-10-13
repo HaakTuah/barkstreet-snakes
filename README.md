@@ -74,7 +74,7 @@ Each round, three of these fifteen are picked at random. The start screen tells 
 | **Drab** | khaki, sleepy eyes | Plays it safe and sensible. Nothing special. |
 | **Vulture** | black, pink bald head | Hovers near snakes in trouble and feeds on what they leave behind. |
 | **Mason** | stone bricks, laurel wreath | Walls off the board, then keeps the biggest piece. |
-| **Wildcard** | rainbow, great hair | A random mix of habits, new every round. |
+| **Wildcard** | rainbow, orange tan, golden combover, long red tie | A random mix of habits, new every round. |
 | **Creeper** | teal, slit eyes | Sneaks up and rides right behind other snakes' tails. |
 | **Metagamer** | cyan, taped glasses | Watches how each rival plays, then avoids the aggressive ones, shadows the greedy ones and hunts the evasive ones. |
 | **Capricious** | changes with its mood | Switches between sniper, glutton, hermit and builder every few seconds. |
