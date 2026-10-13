@@ -1037,26 +1037,34 @@ window.SnakeRender = (() => {
 
   // Your face: white eyes whose pupils glance toward the nearest food, a
   // mouth that opens for a bite, a blink now and then, and a forked tongue flick.
+  // A forked tongue flicked out and back every few seconds (more often when
+  // food is near, if `keen`). `rate` stretches the wait: each snake its own rhythm.
+  function tongue(a, now, open, rate, keen = false) {
+    if (deadNow) return;
+    if (now > a.nextTongue) {
+      a.tongueUntil = now + T.TONGUE_MS;
+      a.nextTongue = now + T.TONGUE_EVERY * rate * (keen && a.near <= 3 ? 0.4 : 0.7 + Math.random() * 0.8);
+    }
+    if (now >= a.tongueUntil || open >= 0.08) return;
+    const c = CELL;
+    const t = 1 - Math.abs((a.tongueUntil - now) / T.TONGUE_MS * 2 - 1); // out and back
+    const reach = c * (0.42 + 0.3 * t);
+    ctx.strokeStyle = '#e11d48';
+    ctx.lineWidth = c * 0.06;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(c * 0.42, 0); ctx.lineTo(reach, 0);
+    ctx.moveTo(reach, 0); ctx.lineTo(reach + c * 0.1, -c * 0.07);
+    ctx.moveTo(reach, 0); ctx.lineTo(reach + c * 0.1, c * 0.07);
+    ctx.stroke();
+  }
+  // How often each rival flicks its tongue (1 = like you; Vulture has a beak).
+  const TONGUE_RATE = { gobbler: 0.6, creeper: 0.8, desperado: 0.8, joker: 0.9, drab: 1.8, ghost: 1.8, vulture: 0 };
+
   function drawPlayerFace(s, a, now, blinking) {
     const c = CELL;
     const open = mouthOpen(s, a);
-    // Tongue: every few seconds, more often when food is within 3 cells.
-    if (!deadNow && now > a.nextTongue) {
-      a.tongueUntil = now + T.TONGUE_MS;
-      a.nextTongue = now + T.TONGUE_EVERY * (a.near <= 3 ? 0.4 : 0.7 + Math.random() * 0.8);
-    }
-    if (!deadNow && now < a.tongueUntil && open < 0.08) {
-      const t = 1 - Math.abs((a.tongueUntil - now) / T.TONGUE_MS * 2 - 1); // out and back
-      const reach = c * (0.42 + 0.3 * t);
-      ctx.strokeStyle = '#e11d48';
-      ctx.lineWidth = c * 0.06;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(c * 0.42, 0); ctx.lineTo(reach, 0);
-      ctx.moveTo(reach, 0); ctx.lineTo(reach + c * 0.1, -c * 0.07);
-      ctx.moveTo(reach, 0); ctx.lineTo(reach + c * 0.1, c * 0.07);
-      ctx.stroke();
-    }
+    tongue(a, now, open, 1, true);
     mouth(open, 0.44);
 
     if (blinking) return lids(0.11);
@@ -1084,6 +1092,8 @@ window.SnakeRender = (() => {
     const c = CELL;
     blinkNow = blinking;
     const open = mouthOpen(s, a);
+    const rate = TONGUE_RATE[look] ?? 1.2;
+    if (rate) tongue(a, lastNow, open, rate, look === 'gobbler');
     switch (look) {
       case 'sniper': { // one eye squeezed shut, the other behind a scope that swings onto its target
         ctx.strokeStyle = INK;

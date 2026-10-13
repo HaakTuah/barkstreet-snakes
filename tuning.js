@@ -72,7 +72,7 @@ window.TUNING = Object.freeze({
   BLINK_MIN: 2600,          // snakes blink every BLINK_MIN..BLINK_MAX ms...
   BLINK_MAX: 6000,
   BLINK_MS: 130,            // ...for this long
-  TONGUE_EVERY: 2800,       // your snake flicks its tongue about this often (more near food)
+  TONGUE_EVERY: 2800,       // every snake flicks its tongue about this often (each at its own rate; more near food for you and Gobbler)
   TONGUE_MS: 260,
   GLANCE_EASE: 0.18,        // how quickly eyes turn toward what a snake is looking at (per frame, 0..1)
   GULP: 0.2,                // a bite's bulge travelling down the body (cells added to the radius)...
