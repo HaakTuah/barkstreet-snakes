@@ -8,7 +8,7 @@ A snake game up a tree: you against three AI rivals on the bark of a tree, drawn
 
 - Four snakes share a 24×24 patch of bark: you (green, with a glowing cream outline) and three AI rivals. Watch their eyes: each one looks at whatever it's after.
 - Hitting the edge, a hole, any snake's body, or another snake's head kills you.
-- When a snake dies, its body turns into meat that anyone can eat.
+- When a snake dies, it falls to pieces: glossy beads in its own colours and markings, which anyone can eat.
 - The last snake alive wins. If you die first, you can watch the rest of the round or start over.
 - The first moves are a little slower, then the game speeds up gently (about 25%) over two minutes.
 - **Hunger:** go 20 seconds without eating (mushrooms don't count) and you start shrinking, one segment every 1.5 seconds. Starve at length 3 and you're out, unless your head reaches food that very moment. The bar under each name shows how hungry everyone is.
@@ -21,7 +21,7 @@ A snake game up a tree: you against three AI rivals on the bark of a tree, drawn
 | Green apple | +1 length. There are always three on the board. |
 | Golden apple | +3 length. Rare, sparkles, and fades before it rots after about 12 seconds. |
 | Red mushroom | Shrinks you by 3 (never below 3). Withers after about 20 seconds and regrows elsewhere. Being short isn't always bad… |
-| Meat | +1 length. What's left of a dead snake. |
+| Beads | +1 length. What's left of a dead snake, in its colours. |
 | Beetle | +2 length. Now and then one crawls out (from 15 s in, not once the woodpecker comes). It wanders slowly, and scurries away (at half a snake's speed) when a head gets within 4 cells, so catching one is a short chase. Uncaught, it flies off after about 30 s. |
 
 ## Play with friends
@@ -62,7 +62,7 @@ Press **Watch AIs** on the start screen for a round between four AI snakes, with
 
 ## The rivals
 
-Each round, three of these fifteen are picked at random. The start screen tells you who you're up against and how each one plays.
+Each round, three of these fifteen are picked at random. The start screen tells you who you're up against and how each one plays. Only you have a real forked tongue: every few seconds each rival flicks out something of its own instead, such as Wildcard's dollar bill, Joker's party blower or Desperado's six-shooter.
 
 | Snake | Look | Style |
 |-------|------|-------|
@@ -72,14 +72,14 @@ Each round, three of these fifteen are picked at random. The start screen tells 
 | **Sovereign** | royal blue, golden crown | Rules its own patch of bark (shown on the board) and attacks anyone who trespasses. |
 | **Colonist** | redcoat, tricorn hat | Plants flags all over the board and defends every one of them. |
 | **Drab** | khaki, sleepy eyes | Plays it safe and sensible. Nothing special. |
-| **Vulture** | black, pink bald head | Hovers near snakes in trouble and feeds on what they leave behind. |
+| **Vulture** | black, pink bald head, hooked beak, scowl | Hovers near snakes in trouble and feeds on what they leave behind. |
 | **Mason** | stone bricks, laurel wreath | Walls off the board, then keeps the biggest piece. |
-| **Wildcard** | rainbow, great hair | A random mix of habits, new every round. |
+| **Wildcard** | rainbow, orange tan, golden combover, long red tie | A random mix of habits, new every round. |
 | **Creeper** | teal, slit eyes | Sneaks up and rides right behind other snakes' tails. |
 | **Metagamer** | cyan, taped glasses | Watches how each rival plays, then avoids the aggressive ones, shadows the greedy ones and hunts the evasive ones. |
 | **Capricious** | changes with its mood | Switches between sniper, glutton, hermit and builder every few seconds. |
 | **Copycat** | pale copy of its model, cat ears | Copies whoever seems to be winning, right alongside them. Party member. |
-| **Joker** | jester hat, red nose | Lures chasers into dead ends and swerves away at the last moment. |
+| **Joker** | jester hat, harlequin diamonds, red nose | Lures chasers into dead ends and swerves away at the last moment. |
 | **Desperado** | rust poncho, cowboy hat, bandana | An adrenaline junkie: skims walls, bodies and other heads for the thrill of it. |
 
 All of them share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move, and avoid the space around other snakes' heads. On top of that, each one chases its own goal.
