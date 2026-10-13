@@ -958,24 +958,26 @@ window.SnakeRender = (() => {
   let blinkNow = false, gazeX = 1, gazeY = 0;
   let headCos = 1, headSin = 0; // the heading the face is drawn turned to
 
-  // Closed eyes: two short lids.
-  function lids(r) {
+  // Closed eyes: two short lids (at x, ±y), or crosses if knocked out.
+  function lids(r, x = 0.14, y0 = 0.2) {
     const c = CELL;
     ctx.strokeStyle = INK;
     ctx.lineWidth = c * 0.05;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    for (let y = -0.2; y < 0.3; y += 0.4) {
-      if (deadNow) { // knocked out, not asleep: crosses
-        const d = Math.max(r, 0.08) * 0.85;
-        ctx.moveTo(c * (0.14 - d), c * (y - d)); ctx.lineTo(c * (0.14 + d), c * (y + d));
-        ctx.moveTo(c * (0.14 + d), c * (y - d)); ctx.lineTo(c * (0.14 - d), c * (y + d));
-        continue;
-      }
-      ctx.moveTo(c * 0.14, c * (y - r));
-      ctx.quadraticCurveTo(c * (0.14 + r * 0.9), c * y, c * 0.14, c * (y + r));
+    for (const y of [-y0, y0]) {
+      if (deadNow) { cross(x, y, Math.max(r, 0.08) * 0.85); continue; } // knocked out, not asleep
+      ctx.moveTo(c * x, c * (y - r));
+      ctx.quadraticCurveTo(c * (x + r * 0.9), c * y, c * x, c * (y + r));
     }
     ctx.stroke();
+  }
+
+  // An X at (x, y), half-width d, added to the current path.
+  function cross(x, y, d) {
+    const c = CELL;
+    ctx.moveTo(c * (x - d), c * (y - d)); ctx.lineTo(c * (x + d), c * (y + d));
+    ctx.moveTo(c * (x + d), c * (y - d)); ctx.lineTo(c * (x - d), c * (y + d));
   }
 
   // Plain dark eyes, shifted a touch toward what the snake is looking at.
@@ -990,7 +992,7 @@ window.SnakeRender = (() => {
   // Small white eyes whose pupils turn toward what the snake is looking at.
   // r: the pupil's radius (the white is a size up).
   function lookingEyes(r, x = 0.15, y = 0.2) {
-    if (blinkNow) return lids(r * 1.3);
+    if (blinkNow) return lids(r * 1.3, x, y);
     const c = CELL, w = r * 1.55, reach = (w - r) * 0.85;
     ctx.fillStyle = '#fffbea';
     circle(c * x, -c * y, c * w);
@@ -1027,6 +1029,7 @@ window.SnakeRender = (() => {
   const EAR = [-0.3, 0.1, -0.05, 0.42, -0.45, 0.5];
   const EAR_IN = [-0.28, 0.18, -0.12, 0.38, -0.38, 0.42];
   const JESTER = [-0.1, 0.3, -0.55, 0.62, -0.32, 0.05];
+  const HARLEQUIN = [-0.07, 0.2, 0.15, 0.08, 0.31, 0.2, 0.15, 0.32];
   const WHISKERS = [0.3, 0.45, 0.6];
   // Colonist's tricorn: three corners (one forward), the brim wider than the head.
   const TRI_F = [0.1, 0], TRI_L = [-0.5, -0.6], TRI_R = [-0.5, 0.6], TRI_BOW = 0.1;
@@ -1081,11 +1084,13 @@ window.SnakeRender = (() => {
   // A speck of light in each pupil (at x, ±y + oy, pupils of radius pr), so eyes look alive.
   // (The face is drawn turned to the heading, so the light's offset is turned back.)
   function catchlights(x, y, oy, pr) {
+    catchlight(x, -y + oy, pr);
+    catchlight(x, y + oy, pr);
+  }
+  function catchlight(x, y, pr) {
     const dx = -pr * 0.35, dy = -pr * 0.35;
-    const lx = headCos * dx + headSin * dy, ly = -headSin * dx + headCos * dy;
     ctx.fillStyle = '#ffffff';
-    circle(x + lx, -y + oy + ly, pr * 0.38);
-    circle(x + lx, y + oy + ly, pr * 0.38);
+    circle(x + headCos * dx + headSin * dy, y - headSin * dx + headCos * dy, pr * 0.38);
   }
 
   function drawFace(s, look, color, blinking, a) {
@@ -1095,26 +1100,37 @@ window.SnakeRender = (() => {
     const rate = TONGUE_RATE[look] ?? 1.2;
     if (rate) tongue(a, lastNow, open, rate, look === 'gobbler');
     switch (look) {
-      case 'sniper': { // one eye squeezed shut, the other behind a scope that swings onto its target
+      case 'sniper': { // one eye squeezed shut (it never blinks on the job), the other behind a scope that swings onto its target
         ctx.strokeStyle = INK;
         ctx.lineWidth = c * 0.06;
+        ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(c * 0.08, c * 0.11); ctx.lineTo(c * 0.2, c * 0.2); ctx.lineTo(c * 0.08, c * 0.29);
+        if (deadNow) cross(0.14, 0.2, 0.085);
+        else { ctx.moveTo(c * 0.08, c * 0.11); ctx.lineTo(c * 0.2, c * 0.2); ctx.lineTo(c * 0.08, c * 0.29); }
         ctx.stroke();
         mouth(open, 0.4);
         ctx.save();
         ctx.translate(c * 0.1, -c * 0.2);
-        ctx.rotate(Math.max(-0.45, Math.min(0.45, Math.atan2(gazeY, gazeX)))); // aim, within reason
+        // Aim, within reason; knocked out, the scope slumps off to the side.
+        ctx.rotate(deadNow ? -1.25 : Math.max(-0.45, Math.min(0.45, Math.atan2(gazeY, gazeX))));
         ctx.fillStyle = '#1c1917'; // the scope: eyepiece, tube and a wider front bell
         circle(0, 0, c * 0.14);
         ctx.fillRect(0, -c * 0.09, c * 0.34, c * 0.18);
         circle(c * 0.36, 0, c * 0.15);
         ctx.fillStyle = '#57534e'; // a sheen along the top of the tube
         ctx.fillRect(0, -c * 0.09, c * 0.34, c * 0.045);
-        ctx.fillStyle = '#7dd3fc'; // the lens, with a glint
+        ctx.fillStyle = deadNow ? '#475569' : '#7dd3fc'; // the lens, with a glint (or cracked)
         circle(c * 0.4, 0, c * 0.09);
-        ctx.fillStyle = '#ffffff';
-        circle(c * 0.43, -c * 0.04, c * 0.03);
+        if (deadNow) {
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = c * 0.02;
+          ctx.beginPath();
+          ctx.moveTo(c * 0.34, -c * 0.06); ctx.lineTo(c * 0.4, -c * 0.01); ctx.lineTo(c * 0.37, c * 0.02); ctx.lineTo(c * 0.45, c * 0.06);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = '#ffffff';
+          circle(c * 0.43, -c * 0.04, c * 0.03);
+        }
         ctx.restore();
         break;
       }
@@ -1216,31 +1232,56 @@ window.SnakeRender = (() => {
         ctx.stroke();
         break;
       }
-      case 'vulture': // beady eyes and a hooked beak that gapes at a meal
-        ctx.fillStyle = '#d6d3d1'; // the beak, pale horn...
-        ctx.beginPath();
-        ctx.moveTo(c * 0.3, -c * 0.14);
-        ctx.quadraticCurveTo(c * 0.56, -c * 0.12, c * 0.68, c * 0.02);
-        ctx.quadraticCurveTo(c * 0.56, c * 0.1, c * 0.3, c * 0.14);
-        ctx.closePath();
+      case 'vulture': { // beady eyes under a scowl, and a big hooked beak that gapes at a meal
+        const beak = () => {
+          ctx.beginPath();
+          ctx.moveTo(c * 0.2, -c * 0.17);
+          ctx.quadraticCurveTo(c * 0.56, -c * 0.17, c * 0.8, c * 0.04); // over the top to the hook
+          ctx.quadraticCurveTo(c * 0.62, c * 0.14, c * 0.2, c * 0.17);
+          ctx.closePath();
+        };
+        ctx.fillStyle = '#e7d7a8'; // pale horn, outlined dark so it reads small
+        ctx.strokeStyle = '#292524';
+        ctx.lineWidth = c * 0.04;
+        ctx.lineJoin = 'round';
+        beak();
         ctx.fill();
-        ctx.fillStyle = '#44403c'; // ...hooked, with a dark tip...
+        ctx.save();
+        beak();
+        ctx.clip();
+        ctx.fillStyle = '#a8a29e'; // a grey cere across the base...
+        ctx.fillRect(c * 0.18, -c * 0.2, c * 0.1, c * 0.4);
+        ctx.fillStyle = '#44403c'; // ...and a dark hooked tip
         ctx.beginPath();
-        ctx.moveTo(c * 0.56, -c * 0.07);
-        ctx.quadraticCurveTo(c * 0.66, -c * 0.03, c * 0.68, c * 0.02);
-        ctx.quadraticCurveTo(c * 0.62, c * 0.06, c * 0.55, c * 0.06);
-        ctx.closePath();
+        ctx.moveTo(c * 0.58, -c * 0.2);
+        ctx.quadraticCurveTo(c * 0.62, c * 0.02, c * 0.56, c * 0.2);
+        ctx.lineTo(c * 0.9, c * 0.2); ctx.lineTo(c * 0.9, -c * 0.2);
         ctx.fill();
-        ctx.fillStyle = '#78716c'; // ...and a nostril
-        circle(c * 0.4, -c * 0.05, c * 0.022);
         if (open > 0.08) { // gaping at a meal
           ctx.fillStyle = '#3b0d0d';
           ctx.beginPath();
-          ctx.ellipse(c * 0.44, c * 0.03, c * 0.11 * open, c * 0.035, 0, 0, TAU);
+          ctx.ellipse(c * 0.46, c * 0.03, c * 0.22 * open, c * 0.05, 0.08, 0, TAU);
           ctx.fill();
         }
-        lookingEyes(0.05);
+        ctx.restore();
+        beak();
+        ctx.stroke();
+        ctx.fillStyle = '#44403c'; // a nostril
+        ctx.beginPath();
+        ctx.ellipse(c * 0.36, -c * 0.07, c * 0.04, c * 0.018, 0.2, 0, TAU);
+        ctx.fill();
+        lookingEyes(0.05, 0.1, 0.24);
+        if (!deadNow) { // brows slanting down to the beak
+          ctx.strokeStyle = INK;
+          ctx.lineWidth = c * 0.06;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-c * 0.01, -c * 0.34); ctx.lineTo(c * 0.1, -c * 0.15);
+          ctx.moveTo(-c * 0.01, c * 0.34); ctx.lineTo(c * 0.1, c * 0.15);
+          ctx.stroke();
+        }
         break;
+      }
       case 'mason': { // laurel wreath around the back of the head; eyes on the job
         // Two branches from a knot at the back, round the sides of the head, open at the front.
         ctx.strokeStyle = '#3f6212';
@@ -1417,7 +1458,7 @@ window.SnakeRender = (() => {
         lookingEyes(0.06, 0.2, 0.2);
         break;
       }
-      case 'joker': // jester hat with bells, a clown's red grin and nose, eyes on its mark
+      case 'joker': // jester hat with bells, harlequin diamonds round its eyes, a clown's red grin and nose, eyes on its mark
         poly(JESTER, -1, '#a21caf');
         poly(JESTER, 1, '#f59e0b');
         ctx.fillStyle = '#facc15';
@@ -1433,8 +1474,32 @@ window.SnakeRender = (() => {
         circle(c * 0.33, 0, c * 0.09);
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
         circle(c * 0.3, -c * 0.03, c * 0.025);
-        lookingEyes(0.05);
+        poly(HARLEQUIN, -1, '#a21caf'); // a diamond painted round each eye
+        poly(HARLEQUIN, 1, '#f59e0b');
+        lookingEyes(0.055);
         break;
+      case 'capricious': { // (until its first mood) can't make its mind up: one eye big, one small, a brow cocked
+        mouth(open);
+        if (blinking) { lids(0.09); break; }
+        const eye = (y, w, r) => {
+          const reach = (w - r) * 0.85, ox = gazeX * c * reach, oy = gazeY * c * reach;
+          ctx.fillStyle = '#fffbea';
+          circle(c * 0.15, c * y, c * w);
+          ctx.fillStyle = INK;
+          circle(c * 0.15 + ox, c * y + oy, c * r);
+          catchlight(c * 0.15 + ox, c * y + oy, c * r);
+        };
+        eye(-0.21, 0.12, 0.07);
+        eye(0.21, 0.075, 0.045);
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = c * 0.045;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(c * 0.03, c * 0.11);
+        ctx.quadraticCurveTo(-c * 0.09, c * 0.2, c * 0.02, c * 0.31);
+        ctx.stroke();
+        break;
+      }
       default:
         mouth(open);
         lookingEyes(0.06);
