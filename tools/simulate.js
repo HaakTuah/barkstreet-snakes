@@ -59,7 +59,7 @@ const causeOf = s => s.killer === 'self' ? 'self' : s.killer === 'hunger' ? 'sta
 function play({ from, to, seed, ahead }) {
   const { E, T } = loadGame();
   const per = {};
-  const total = { rounds: to - from, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {} };
+  const total = { rounds: to - from, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {}, crashes: 0, alight: 0, cuts: 0, baked: 0, ash: 0, rot: 0 };
   for (let r = from; r < to; r++) {
     rng = seed == null ? Math.random : seeded(seed + r * 7919);
     let trace = 0;
@@ -78,6 +78,12 @@ function play({ from, to, seed, ahead }) {
         if (e.type === 'spawn' && e.kind === 'beetle') total.beetles++;
         else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
         else if (e.type === 'flown') total.flown++;
+        else if (e.type === 'crash') total.crashes++;
+        else if (e.type === 'alight') total.alight++;
+        else if (e.type === 'cut') total.cuts++;
+        else if (e.type === 'baked') total.baked++;
+        else if (e.type === 'ash') total.ash++;
+        else if (e.type === 'rot') total.rot++;
       }
       const left = g.snakes.filter(s => s.alive).length;
       for (const s of dying) {
@@ -112,9 +118,9 @@ function play({ from, to, seed, ahead }) {
 }
 
 function merge(results) {
-  const per = {}, total = { rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {} };
+  const per = {}, total = { rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {}, crashes: 0, alight: 0, cuts: 0, baked: 0, ash: 0, rot: 0 };
   for (const r of results) {
-    for (const k of ['rounds', 'timeSum', 'sudden', 'draws', 'stalled', 'beetles', 'caught', 'flown']) total[k] += r.total[k];
+    for (const k of ['rounds', 'timeSum', 'sudden', 'draws', 'stalled', 'beetles', 'caught', 'flown', 'crashes', 'alight', 'cuts', 'baked', 'ash', 'rot']) total[k] += r.total[k];
     total.times.push(...r.total.times);
     total.trace.push(...r.total.trace);
     for (const [c, n] of Object.entries(r.total.causes)) total.causes[c] = (total.causes[c] || 0) + n;
@@ -137,6 +143,8 @@ function report({ per, total, suddenAt }) {
   const sec = ms => `${Math.round(ms / 1000)}s`;
   console.log(`${total.rounds} rounds · length median ${sec(times[times.length >> 1])}, middle half ${sec(times[times.length >> 2])}-${sec(times[(times.length * 3) >> 2])}`
     + ` · ${pct(total.sudden, total.rounds)}% reached the woodpecker (${sec(suddenAt)}) · draws ${total.draws} · stalled ${total.stalled}`);
+  const each = n => (n / Math.max(1, total.rounds)).toFixed(1);
+  console.log(`a round: ${each(total.crashes)} crashes survived, ${each(total.alight)} snakes set alight, ${each(total.cuts)} cut by the woodpecker · food: ${each(total.baked)} baked, ${each(total.ash)} to ash, ${each(total.rot)} apples rotted`);
   if (total.beetles) console.log(`beetles: ${(total.beetles / total.rounds).toFixed(1)} a round, ${pct(total.caught, total.beetles)}% caught, ${pct(total.flown, total.beetles)}% flew off`);
   const deaths = Object.values(total.causes).reduce((a, b) => a + b, 0);
   console.log('deaths: ' + Object.entries(total.causes).sort((a, b) => b[1] - a[1]).map(([c, n]) => `${c} ${pct(n, deaths)}%`).join(', ')

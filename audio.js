@@ -20,7 +20,7 @@ window.SnakeAudio = (() => {
     rivalDeath: 120, death: 250, best: 400, win: 600,
     beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, ui: 30, // peck: never more than 3 in any second
     crackle: 300, thunder: 900, gust: 1500, burrow: 1000, dig: 250, rainbow: 1500, rain: 1500,
-    ko: 200, close: 1400, field: 800, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
+    ko: 200, close: 1400, field: 800, bonk: 150, bonked: 300, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
   };
   const RESUME_GRACE = 300;    // ms after unlock() in which cues may queue on a context still waking up
   const NOISE_SECONDS = 0.5;   // length of the one shared noise buffer
@@ -396,6 +396,47 @@ window.SnakeAudio = (() => {
       noise(t, 0.05, 0.22, 'bandpass', 1800, 1.1);
       mallet(t + 0.06, mtof(79), 0.14, 0.26);
       mallet(t + 0.14, mtof(84), 0.26, 0.3);
+    },
+
+    // Your crash: a hollow wooden bonk, a spring's boing as you bounce back, and
+    // a little stars-round-your-head twinkle.
+    bonk(t) {
+      tone(t, 'sine', 210, 0.16, 0.5, 0.002, 90);
+      noise(t, 0.05, 0.2, 'lowpass', 900, 0.8);
+      tone(t + 0.04, 'triangle', 330, 0.3, 0.14, 0.01, 520);
+      mallet(t + 0.16, mtof(88), 0.12, 0.08);
+      mallet(t + 0.24, mtof(91), 0.12, 0.07);
+      mallet(t + 0.32, mtof(88), 0.14, 0.06);
+    },
+    // Someone else's crash: a dull thud off to the side.
+    bonked(t) {
+      tone(t, 'sine', 170, 0.12, 0.22, 0.002, 80);
+      noise(t, 0.04, 0.08, 'lowpass', 700, 0.8);
+    },
+    // You catch fire: a whoosh of flame and a crackle.
+    alight(t) {
+      noise(t, 0.45, 0.2, 'bandpass', 700, 0.7);
+      noise(t + 0.05, 0.3, 0.08, 'highpass', 3000, 0.7);
+      tone(t, 'sawtooth', 90, 0.35, 0.05, 0.05, 140, 500);
+    },
+    // A piece of you falls off in the flames: a hiss and a pop.
+    singe(t) {
+      noise(t, 0.14, 0.09, 'highpass', 2500, 0.8);
+      tone(t + 0.02, 'sine', 600, 0.05, 0.08, 0.002, 300);
+    },
+    // Something's done in the fire: a sizzle and a pop.
+    bake(t) {
+      noise(t, 0.3, 0.06, 'bandpass', 4200, 1.2);
+      tone(t + 0.12, 'sine', 900, 0.06, 0.08, 0.002, 500);
+    },
+    // Gone to ash: a soft puff.
+    ash(t) {
+      noise(t, 0.25, 0.07, 'lowpass', 600, 0.7);
+    },
+    // The woodpecker takes your tail: a sharp snap.
+    snip(t) {
+      noise(t, 0.04, 0.25, 'bandpass', 2400, 2);
+      tone(t, 'square', 1200, 0.04, 0.05, 0.001, 600, 3000);
     },
 
     // Into a rival's force field: an electric hum swelling, a shimmer over it.

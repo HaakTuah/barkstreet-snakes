@@ -40,7 +40,62 @@ function board(bodies, { food = [], time = 0 } = {}) {
 { // Two heads swapping cells is a head-on, for both.
   const g = board([[[[5, 5], [4, 5], [3, 5]], 'right'], [[[6, 5], [7, 5], [8, 5]], 'left']]);
   const dying = E.step(g);
-  check('swapping heads is a head-on', dying.length === 2 && dying.every(s => s.cause.startsWith('crashed head-on')), dying.map(s => s.cause).join(' / '));
+  check('swapping heads is a head-on (at their smallest, both out)', dying.length === 2 && dying.every(s => s.cause.startsWith('crashed head-on')), dying.map(s => s.cause).join(' / '));
+}
+
+// ---------------------------------------------------------------- crashes
+const line = (x0, y, n, dx = -1) => Array.from({ length: n }, (_, i) => [x0 + dx * i, y]);
+const K = (x, y) => y * T.GRID + x;
+const feed = g => { for (const o of g.snakes) { o.lastAte = g.time; o.nextStarve = g.time + T.HUNGER_MS; } };
+
+{ // A crash into the edge: the head bounces, three segments break off as food, a stun; then it goes on.
+  const g = board([[line(23, 5, 8), 'right'], [line(5, 20, 3), 'right']]);
+  const s = g.snakes[0], tail = s.body.slice(-3).map(c => [c.x, c.y]);
+  const dying = E.step(g);
+  const crash = g.events.find(e => e.type === 'crash');
+  check('a crash is not the end', s.alive && !dying.includes(s));
+  check('...it costs three segments', s.body.length === 5, s.body.length);
+  check('...which fall off as food', tail.every(([x, y]) => g.food.some(f => f.kind === 'pellet' && f.x === x && f.y === y)), JSON.stringify(g.food));
+  check('...and says what it hit', crash && crash.snake === s && crash.killer === 'wall' && crash.lost === 3, JSON.stringify(crash && { k: crash.killer, lost: crash.lost }));
+  const head = { ...s.body[0] };
+  for (let t = 0; t < T.STUN_TICKS; t++) { feed(g); E.step(g); }
+  check('...it stays put while stunned', s.body[0].x === head.x && s.body[0].y === head.y);
+  feed(g);
+  E.step(g);
+  check("...then turns to where there's room and goes on", s.alive && (s.body[0].x !== head.x || s.body[0].y !== head.y) && s.dir !== D.right, JSON.stringify(s.body[0]));
+}
+
+{ // Steering while stunned: it goes your way when the stun's over.
+  const g = board([[line(23, 5, 8), 'right'], [line(5, 20, 3), 'right']]);
+  const s = g.snakes[0];
+  E.step(g);
+  s.queue = [D.up];
+  for (let t = 0; t <= T.STUN_TICKS; t++) { feed(g); E.step(g); }
+  check('a stunned snake can steer for when it moves again', s.dir === D.up && s.body[0].y === 4, JSON.stringify(s.body[0]));
+}
+
+{ // At its smallest, a crash is the end; and so is a crash with nowhere to turn.
+  const g = board([[line(23, 5, 3), 'right'], [line(5, 20, 3), 'right']]);
+  check('a crash at the smallest size is the end', E.step(g).includes(g.snakes[0]));
+  // In the top-right corner, facing the edge, its own body wrapped round it: nowhere to go.
+  const g2 = board([[[[23, 0], [22, 0], [22, 1], [23, 1], [23, 2], [22, 2], [21, 2], [21, 1], [21, 0]], 'up'], [line(5, 20, 3), 'right']]);
+  const dying = E.step(g2);
+  check('a crash with nowhere to turn is the end', dying.includes(g2.snakes[0]) && g2.snakes[0].killer === 'wall', g2.snakes[0].cause);
+}
+
+{ // Into a long rival's body: the one who ran into it pays; the rival's fine.
+  const g = board([[line(5, 6, 6), 'right'], [[[6, 9], [6, 8], [6, 7], [6, 6], [6, 5], [6, 4]], 'down']]);
+  E.step(g);
+  const [a, b] = g.snakes;
+  check('running into a body costs you, not them', a.alive && a.body.length === 3 && b.alive && b.body.length === 6 && b.body[0].y === 10, `${a.body.length} / ${b.body.length}`);
+}
+
+{ // A crashed snake's tail doesn't move, so a head heading for it crashes too.
+  // P0 hits the edge going right along row 5; P1 comes down column 18 into P0's tail cell (18, 5).
+  const g = board([[line(23, 5, 6), 'right'], [[[18, 4], [18, 3], [18, 2]], 'down']]);
+  const dying = E.step(g);
+  const p1 = g.snakes[1];
+  check("a crashed snake's tail stays put, and is in the way", dying.includes(p1) && p1.cause === 'ran into P0', p1.cause);
 }
 
 { // A snake out of time reaches food on the very tick: it eats instead of starving.
@@ -60,7 +115,7 @@ function board(bodies, { food = [], time = 0 } = {}) {
   check('unknown and inherited persona keys are ignored', E.createGame({ personas: ['constructor', 'toString', 'drab'], withPlayer: false }).snakes.every(s => s.color));
 }
 
-{ // The woodpecker aims well away from heads, warns before it strikes, and never strikes a body or food.
+{ // The woodpecker aims at patches clear of everyone (while there's room), and warns before it strikes.
   let near = 0, early = 0, underBody = 0, underFood = 0, strikes = 0, cells = 0;
   for (let r = 0; r < 12; r++) {
     const g = E.createGame({ withPlayer: false });
@@ -75,21 +130,38 @@ function board(bodies, { food = [], time = 0 } = {}) {
       for (const e of g.events) {
         if (e.type === 'aim') {
           aimedAt = g.tick;
-          for (const k of g.woodpecker.target) if (heads.some(h => Math.abs(h.x - k % T.GRID) + Math.abs(h.y - Math.floor(k / T.GRID)) <= T.PECK_CLEARANCE)) near++;
+          for (const k of g.woodpecker.target) {
+            if (heads.some(h => Math.abs(h.x - k % T.GRID) + Math.abs(h.y - Math.floor(k / T.GRID)) <= T.PECK_CLEARANCE)) near++;
+            if (foodCells.has(k)) underFood++;
+            if (bodies.has(k)) underBody++;
+          }
         }
         if (e.type === 'peck') {
           strikes++;
           cells += e.cells.length;
           if (g.tick - aimedAt < T.PECK_AIM_TICKS) early++;
-          for (const k of e.cells) { if (foodCells.has(k)) underFood++; if (bodies.has(k)) underBody++; }
         }
       }
     }
   }
-  check('the woodpecker strikes in chunks', strikes > 20 && cells / strikes > T.PECK_CHUNK / 2, `${strikes} strikes, ${(cells / Math.max(1, strikes)).toFixed(1)} cells each`);
+  check('the woodpecker strikes in patches', strikes > 20 && cells / strikes > T.PECK_CHUNK / 2, `${strikes} strikes, ${(cells / Math.max(1, strikes)).toFixed(1)} cells each`);
   check('the woodpecker aims well away from heads', near === 0, `${near} cells too close`);
   check('the woodpecker gives warning', early === 0, `${early} without`);
-  check('the woodpecker never strikes a body or food', underBody + underFood === 0, `${underBody} bodies, ${underFood} food`);
+  check('the woodpecker aims clear of bodies and food', underBody + underFood === 0, `${underBody} bodies, ${underFood} food`);
+}
+
+{ // Whatever's in the patch when it strikes goes: a body there is cut (its tail falls off as food), a head there is out.
+  const g = board([[line(12, 10, 9), 'right'], [line(12, 16, 4), 'right']]);
+  g.time = T.SUDDEN_DEATH_MS;
+  feed(g);
+  // P0 (head at 12,10, nine long) has its fifth segment on (8, 10); P1's head and neck sit in the patch below.
+  g.woodpecker = { x: 8, y: 10, at: g.time, target: [K(8, 10), K(8, 9), K(8, 11), K(13, 16), K(12, 16)], strikeAt: g.tick, last: [], struckAt: -1, restUntil: 0 };
+  for (const o of g.snakes) o.queue = [D.up];
+  const dying = E.step(g);
+  const [a, b] = g.snakes;
+  check('the woodpecker cuts a body in its patch', a.alive && a.body.length === 5 && g.events.some(e => e.type === 'cut' && e.snake === a), a.body.length);
+  check('...and the tail behind the cut falls off as food', [[7, 10], [6, 10], [5, 10]].every(([x, y]) => g.food.some(f => f.kind === 'pellet' && f.x === x && f.y === y)), JSON.stringify(g.food.filter(f => f.kind === 'pellet')));
+  check('...a head in its patch is out', dying.includes(b) && b.cause === 'fell into a woodpecker hole', b.cause);
 }
 
 { // An AI sees a new hole only after its reaction time, like a person.
@@ -120,15 +192,72 @@ function board(bodies, { food = [], time = 0 } = {}) {
 }
 
 // ---------------------------------------------------------------- fire, weather and burrows
-const K = (x, y) => y * T.GRID + x;
 
-{ // Burning bark kills a head that enters it; smouldering bark doesn't (yet).
-  const g = board([[[[5, 5], [4, 5], [3, 5]], 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']]);
-  g.fires.set(K(6, 5), { from: 0, until: 100, group: 1, strike: true });
+
+{ // Crawling into fire sets you alight: a segment lost every so often, roasted, until it goes out; smouldering bark doesn't.
+  const g = board([[line(9, 5, 10), 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']]);
+  g.fires.set(K(10, 5), { from: 0, until: 3, group: 1, strike: true });
   g.fires.set(K(6, 15), { from: 5, until: 100, group: 2, strike: false });
-  const dying = E.step(g);
-  check('a head that crawls into fire burns', dying.length === 1 && dying[0] === g.snakes[0] && dying[0].killer === 'fire', dying.map(s => s.killer).join());
-  check('smouldering bark is still safe', g.snakes[1].alive);
+  g.fireGroups.set(1, 99); g.fireGroups.set(2, 99); // (no spreading)
+  const s = g.snakes[0];
+  E.step(g);
+  check('a head that crawls into fire catches alight', s.alive && s.burnUntil > g.tick && g.events.some(e => e.type === 'alight' && e.snake === s));
+  check('smouldering bark is still safe', g.snakes[1].alive && !(g.snakes[1].burnUntil > g.tick));
+  // (round and round a square, away from the fire)
+  const loop = 'DDDDLLLLUUUURRRR', way = c => ({ D: D.down, L: D.left, U: D.up, R: D.right })[c];
+  let singed = 0, roasted = false;
+  for (let t = 0; t < T.BURN_TICKS + 2; t++) { feed(g); g.food = []; for (const o of g.snakes) o.queue = [way(loop[t % 16])]; E.step(g); singed += g.events.filter(e => e.type === 'singe').length; roasted ||= g.food.some(f => f.kind === 'pellet' && f.cooked); }
+  check('...it loses segments while it burns', singed === Math.floor(T.BURN_TICKS / T.BURN_EVERY) && s.body.length === 10 - singed, `${singed} singes, ${s.body.length} long`);
+  check('...which fall off roasted', roasted);
+  check('...and then it goes out', !(s.burnUntil > g.tick));
+  // At its smallest, the flames finish it.
+  const g2 = board([[line(5, 5, 3), 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']]);
+  g2.fires.set(K(6, 5), { from: 0, until: 100, group: 1, strike: true });
+  const dead = [];
+  for (let t = 0; t < T.BURN_EVERY + 1; t++) { feed(g2); g2.food = []; if (t) g2.snakes[0].queue = [D.down]; dead.push(...E.step(g2)); }
+  check('...at its smallest, it burns up', dead.includes(g2.snakes[0]) && g2.snakes[0].killer === 'fire', g2.snakes[0].cause);
+  // Rain puts a burning snake out sooner.
+  const g3 = board([[line(9, 5, 10), 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']]);
+  g3.fires.set(K(10, 5), { from: 0, until: 100, group: 1, strike: true });
+  g3.weather = { kind: 'rain', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 };
+  E.step(g3);
+  for (let t = 0; t < T.BURN_RAIN_TICKS + 1; t++) { feed(g3); g3.snakes[0].queue = [D.down]; E.step(g3); }
+  check('...rain puts it out sooner', !(g3.snakes[0].burnUntil > g3.tick));
+}
+
+{ // Food in the fire bakes (worth more), then goes to ash.
+  const g = board([[line(5, 5, 3), 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']], { food: [[18, 3]] });
+  g.fires.set(K(18, 3), { from: 0, until: 999, group: 1, strike: false });
+  g.fireGroups.set(1, 99); // (it doesn't spread)
+  const apple = g.food.find(f => f.x === 18 && f.y === 3);
+  let baked = false, ash = false;
+  for (let t = 0; t < T.ASH_TICKS + 2; t++) {
+    feed(g);
+    for (const o of g.snakes) o.queue = [t % 2 ? D.right : D.down];
+    E.step(g);
+    if (g.events.some(e => e.type === 'baked' && e.x === 18)) baked = apple.cooked === 1;
+    if (g.events.some(e => e.type === 'ash' && e.x === 18)) ash = !g.food.includes(apple);
+  }
+  check('an apple in the fire bakes', baked);
+  check('...and burns to ash if it stays in', ash);
+  const g2 = board([[line(5, 5, 3), 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']]);
+  g2.food = [{ x: 6, y: 5, kind: 'food', cooked: 1 }];
+  E.step(g2);
+  check('a baked apple is worth two', g2.snakes[0].eaten === T.COOKED_GROWTH, g2.snakes[0].eaten);
+}
+
+{ // Apples rot away (and another drops somewhere).
+  const g = board([[line(5, 5, 3), 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']]);
+  g.food = [];
+  E.step(g);
+  const apples = g.food.filter(f => f.kind === 'food');
+  check('apples come with a time to rot', apples.length === T.APPLES && apples.every(f => f.expires > g.tick && f.expires <= g.tick + T.APPLE_TICKS * 1.25 + 1), JSON.stringify(apples.map(f => f.expires)));
+  const first = apples[0];
+  first.expires = g.tick + 1;
+  let rotted = false;
+  for (let t = 0; t < 3; t++) { feed(g); for (const o of g.snakes) o.queue = [t % 2 ? D.down : D.right]; E.step(g); rotted ||= g.events.some(e => e.type === 'rot' && e.x === first.x && e.y === first.y); }
+  check('...rot away', rotted && !g.food.includes(first));
+  check('...and another drops', g.food.filter(f => f.kind === 'food').length === T.APPLES);
 }
 
 { // Lightning never lands near a head, crackles first, and only then burns.

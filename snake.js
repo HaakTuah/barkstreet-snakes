@@ -54,7 +54,9 @@
     self: ['Of all the snakes to bite.', 'You were in your own way.', 'You can’t outrun yourself.'],
     hole: ['The woodpecker sends its regards.', 'Mind the gap.', 'The woodpecker missed you. The hole didn’t.'],
     starved: ['Should have eaten something.', 'Hunger always wins in the end.', 'All slither, no snacks.'],
-    fire: ['Too hot to handle.', 'You found the fire. The hard way.', 'Lightning never strikes twice. It didn’t need to.'],
+    fire: ['Too hot to handle.', 'You found the fire. The hard way.', 'Lightning never strikes twice. It didn’t need to.', 'Burned to a crisp. A small crisp.'],
+    tiny: ['Too small to take the knock.', 'Nothing left to lose but you.'],
+    boxed: ['Nowhere left to turn.', 'Boxed in. The bonk was the last straw.'],
     // The weather, as it turns (no banner when it clears).
     weather: {
       sun: ['Golden hour: golden apples are ripening.', 'The sun’s out. Golden apples love it.'],
@@ -71,7 +73,13 @@
     golden: ['A golden apple! Everyone pretends not to have seen it.', 'Something shiny just dropped onto the log.'],
     // The first time in a round you cross into a rival's force field.
     field: { home: name => `You’re in ${name}’s realm now. It noticed.`, colony: name => `That’s one of ${name}’s colonies. It noticed.` },
-    woodpecker: ['The woodpecker is here, pecking in from the edges.', 'Rat-a-tat. The woodpecker has arrived.'],
+    woodpecker: ['The woodpecker is here. Keep out of wherever it’s looking.', 'Rat-a-tat. The woodpecker has come for the log, a patch at a time.'],
+    // The new rules, as they first happen to you in a round.
+    youCrash: ['Bonk! That cost you your tail. Crash when you’re tiny, or boxed in, and you’re out.', 'Ouch. Three segments gone, a moment’s stars. Small and boxed in, a crash is the end.'],
+    youCrashAgain: ['Bonk!', 'Ouch!', 'Mind your head.', 'There goes more tail.'],
+    youAlight: ['You’re on fire! It’ll cost you a piece a second. Rain would help.', 'Hot hot hot! You’re burning, and losing bits of you.'],
+    youCut: ['The woodpecker took your tail!', 'Snip! The woodpecker had your tail.'],
+    baked: ['Something’s baking in the fire. Worth two, if you can take the heat.', 'Baked! Hot food is worth two. Wait for the fire, or don’t.'],
     youGolden: ['Golden! +3.', 'Shiny and delicious. +3.'],
     beetle: ['A beetle is out for a walk. It won’t get far.', 'Something crunchy is crawling about.'],
     youBeetle: ['Crunchy! +2.', 'Caught it! +2.'],
@@ -557,7 +565,9 @@
     if (killer?.persona) return killer.persona.kill;
     if (killer) return pick(FLAVOR.friendKill);
     if (p.cause === 'fell into a woodpecker hole') return pick(FLAVOR.hole);
-    if (p.killer === 'self') return pick(FLAVOR.self);
+    // A crash only ends you when you're tiny or boxed in; boxed in, say so.
+    if ((p.killer === 'self' || p.killer === 'wall') && p.body.length > T.MIN_LENGTH) return pick(FLAVOR.boxed);
+    if (p.killer === 'self') return pick(Math.random() < 0.5 ? FLAVOR.self : FLAVOR.tiny);
     if (p.killer === 'hunger') return pick(FLAVOR.starved);
     if (p.killer === 'fire') return pick(FLAVOR.fire);
     return pick(FLAVOR.wall);
@@ -590,6 +600,12 @@
       else if (e.type === 'weather' && e.kind === 'rain') Audio.play('rain');
       else if (e.type === 'weather' && e.kind === 'snow') Audio.play('snow');
       else if (e.type === 'ember') Audio.play('ember', at(e.x));
+      else if (e.type === 'crash') Audio.play(isMe(e.snake) ? 'bonk' : 'bonked', at(e.x));
+      else if (e.type === 'alight') Audio.play('alight', at(e.snake.body[0].x));
+      else if (e.type === 'singe' && isMe(e.snake)) Audio.play('singe');
+      else if (e.type === 'baked') Audio.play('bake', at(e.x));
+      else if (e.type === 'ash') Audio.play('ash', at(e.x));
+      else if (e.type === 'cut') Audio.play('snip', at(e.x));
     }
     for (const s of dying) {
       if (isMe(s)) continue;
@@ -677,6 +693,14 @@
       if (e.type === 'eat' && isMe(e.snake) && e.kind === 'beetle') { flashFrame('beetle'); return toast(pick(FLAVOR.youBeetle), 1500, 'beetle'); }
       if (e.type === 'eat' && isMe(e.snake) && e.kind === 'golden') { flashFrame('gold', true); return toast(pick(FLAVOR.youGolden), 1500, 'gold'); }
       if (e.type === 'eat' && isMe(e.snake) && e.kind === 'mushroom') return toast(pick(FLAVOR.youMushroom), 1800, 'you');
+      // The new rules, explained the first time each happens to you in a round.
+      if (e.type === 'crash' && isMe(e.snake)) {
+        if (!game.toldCrash) { game.toldCrash = true; return toast(pick(FLAVOR.youCrash), 3200, 'warn'); }
+        return toast(pick(FLAVOR.youCrashAgain), 1100, 'warn');
+      }
+      if (e.type === 'alight' && isMe(e.snake)) { flashFrame('kill'); return toast(pick(FLAVOR.youAlight), 2600, 'fire'); }
+      if (e.type === 'cut' && isMe(e.snake)) return toast(pick(FLAVOR.youCut), 2000, 'bird');
+      if (e.type === 'baked' && !game.toldBaked) { game.toldBaked = true; return toast(pick(FLAVOR.baked), 2600, 'fire'); }
     }
   }
 
