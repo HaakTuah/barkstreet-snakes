@@ -7,12 +7,18 @@ A snake game up a tree: you against three AI rivals on the bark of a tree, drawn
 ## Rules
 
 - Four snakes share a 24×24 patch of bark: you (green, with a glowing cream outline) and three AI rivals. Watch their eyes: each one looks at whatever it's after.
-- Hitting the edge, a hole, any snake's body, or another snake's head kills you.
+- Hitting the edge, a hole, fire, any snake's body, or another snake's head kills you.
 - When a snake dies, it falls to pieces: glossy beads in its own colours and markings, which anyone can eat.
 - The last snake alive wins. If you die first, you can watch the rest of the round or start over.
 - The first moves are a little slower, then the game speeds up gently (about 25%) over two minutes.
 - **Hunger:** go 20 seconds without eating (mushrooms don't count) and you start shrinking, one segment every 1.5 seconds. Starve at length 3 and you're out, unless your head reaches food that very moment. The bar under each name shows how hungry everyone is.
-- **Sudden death:** after two minutes no new food appears, and a woodpecker starts pecking holes in the bark, ring by ring from the edges inwards. It plays fair: it never pecks within 3 cells of a head or under food, so you always have time to see a hole coming.
+- **Weather:** after the first 20 seconds, spells of weather come and go, with clear spells between. Everyone, the rivals included, sees all of it coming.
+  - **Sun:** golden hour. Golden apples are five times as likely.
+  - **Wind:** gusts knock apples loose, up to three more than usual.
+  - **Rain:** two more mushrooms sprout, and any fire goes out. Half the time, when the rain stops, a rainbow comes down on a golden apple.
+  - **Storm** (not before 30 s): lightning. Where it's going to strike crackles for about a second first, and it never strikes within 4 cells of a head. It sets the bark alight: fire burns for about 5 seconds and creeps to the odd neighbouring cell (smouldering first, harmlessly, so you see it coming). Burning bark kills a head that crawls into it. Storms are often followed by rain.
+- **Burrows:** the first beetle cracks a burrow open in the bark, and later ones open more (up to three). Burrows are safe to cross; cracks spread from them as the round goes on. A scared beetle that reaches one dives in and pops out of a burrow a moment later.
+- **Sudden death:** after two minutes no new food appears, the sky clears, and a woodpecker starts pecking holes in the bark, ring by ring from the edges inwards. It plays fair: it never pecks within 3 cells of a head or under food, so you always have time to see a hole coming.
 
 ### Food
 
@@ -22,7 +28,7 @@ A snake game up a tree: you against three AI rivals on the bark of a tree, drawn
 | Golden apple | +3 length. Rare, sparkles, and fades before it rots after about 12 seconds. |
 | Red mushroom | Shrinks you by 3 (never below 3). Withers after about 20 seconds and regrows elsewhere. Being short isn't always bad… |
 | Beads | +1 length. What's left of a dead snake, in its colours. |
-| Beetle | +2 length. Now and then one crawls out (from 15 s in, not once the woodpecker comes). It wanders slowly, and scurries away (at half a snake's speed) when a head gets within 4 cells, so catching one is a short chase. Uncaught, it flies off after about 30 s. |
+| Beetle | +2 length. Now and then one crawls out of a burrow (from 15 s in, not once the woodpecker comes), and a scared one runs for a burrow and dives in. It wanders slowly, and scurries away (at half a snake's speed) when a head gets within 4 cells, so catching one is a short chase. Uncaught, it flies off after about 30 s. |
 
 ## Play with friends
 
@@ -76,7 +82,7 @@ Each round, three of these fifteen are picked at random. The start screen tells 
 | **Mason** | Caesar in marble, laurel wreath | Walls off the board, then keeps the biggest piece. |
 | **Wildcard** | rainbow, orange tan, golden combover, long red tie | A random mix of habits, new every round. |
 | **Creeper** | teal, slit eyes | Sneaks up and rides right behind other snakes' tails. |
-| **Metagamer** | cyan, taped glasses | Watches how each rival plays, then avoids the aggressive ones, shadows the greedy ones and hunts the evasive ones. |
+| **Metagamer** | cyan, 3D glasses | Watches how each rival plays, then avoids the aggressive ones, shadows the greedy ones and hunts the evasive ones. |
 | **Capricious** | changes with its mood | Starts undecided, then switches between sniper, glutton, hermit and builder every few seconds. |
 | **Copycat** | pale copy of its model, cat ears | Copies whoever seems to be winning, right alongside them. Party member. |
 | **Joker** | jester hat, harlequin diamonds, red nose | Lures chasers into dead ends and swerves away at the last moment. |

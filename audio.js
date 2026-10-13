@@ -18,6 +18,7 @@ window.SnakeAudio = (() => {
     eat: 40, golden: 60, meat: 60, mushroom: 80, crunch: 80, beetle: 3000,
     rivalDeath: 120, death: 250, best: 400, win: 600,
     beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, ui: 30, // peck: never more than 3 in any second
+    crackle: 300, thunder: 900, gust: 1500, burrow: 1000, dig: 250, rainbow: 1500, rain: 1500,
   };
   const RESUME_GRACE = 300;    // ms after unlock() in which cues may queue on a context still waking up
   const NOISE_SECONDS = 0.5;   // length of the one shared noise buffer
@@ -329,6 +330,53 @@ window.SnakeAudio = (() => {
       const b = tone(t + 0.26, 'triangle', 115, 0.36, 0.18, 0.06, 74, 380);
       vibrato(b, t + 0.26, 0.36, 9, 12);
       noise(t, 0.45, 0.04, 'lowpass', 260, 0.8);
+    },
+
+    // Lightning on its way: a dry, irregular crackle, high and quiet.
+    crackle(t) {
+      for (let i = 0; i < 9; i++) noise(t + i * 0.035 + Math.random() * 0.02, 0.012, 0.09, 'bandpass', 3200 + Math.random() * 2400, 2);
+    },
+
+    // The strike: a bright crack, then thunder rolling away (overlapping low puffs
+    // of noise, each quieter, over a falling sub). Soft-edged, never a bang.
+    thunder(t) {
+      noise(t, 0.05, 0.22, 'highpass', 1800, 0.7);
+      noise(t, 0.12, 0.2, 'bandpass', 900, 0.8);
+      const rolls = [[0.04, 0.34, 320], [0.22, 0.28, 240], [0.48, 0.22, 200], [0.78, 0.16, 160], [1.1, 0.1, 130]];
+      for (const [at, peak, f] of rolls) noise(t + at, 0.42, peak, 'lowpass', f, 0.7);
+      tone(t + 0.03, 'sine', 62, 1.3, 0.2, 0.04, 38);
+    },
+
+    // A gust of wind: three puffs of air, the middle one highest.
+    gust(t) {
+      noise(t, 0.4, 0.06, 'bandpass', 520, 0.9);
+      noise(t + 0.18, 0.42, 0.08, 'bandpass', 820, 0.9);
+      noise(t + 0.4, 0.4, 0.05, 'bandpass', 600, 0.9);
+    },
+
+    // A burrow cracks open: bark giving way with a low creak, and a crumble.
+    burrow(t) {
+      knock(t, 420, 0.22);
+      noise(t + 0.02, 0.09, 0.14, 'bandpass', 1300, 1.2);
+      const creak = tone(t + 0.05, 'triangle', 190, 0.28, 0.08, 0.02, 130, 700);
+      vibrato(creak, t + 0.05, 0.28, 23, 9);
+      for (let i = 0; i < 3; i++) noise(t + 0.16 + i * 0.05, 0.02, 0.05, 'lowpass', 1100, 0.8);
+    },
+
+    // A beetle scrabbling into (or out of) its burrow.
+    dig(t) {
+      for (let i = 0; i < 4; i++) noise(t + i * 0.045, 0.025, 0.08 - i * 0.012, 'lowpass', 1000, 0.8);
+    },
+
+    // A rainbow: a soft shimmer climbing up a major arpeggio.
+    rainbow(t) {
+      [72, 76, 79, 83, 86, 91].forEach((m, i) => mallet(t + i * 0.06, mtof(m), 0.22, 0.14));
+      tone(t + 0.3, 'sine', mtof(103), 0.5, 0.03, 0.08);
+    },
+
+    // The rain starts: a patter of drops.
+    rain(t) {
+      for (let i = 0; i < 14; i++) noise(t + Math.random() * 0.42, 0.01, 0.03 + Math.random() * 0.03, 'highpass', 3000 + Math.random() * 3000, 0.7);
     },
 
     // Buttons and toggles: a barely-there wood tap.

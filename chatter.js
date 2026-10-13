@@ -12,6 +12,7 @@ window.SnakeChatter = (() => {
       kill: ['Headshot.', 'Next.', 'Too slow, {who}.', 'One shot.'],
       golden: ['Bonus collected.'],
       caught: ['Moving target. Still a headshot.'],
+      weather: { wind: ['Adjusting for wind.'], storm: ['Thunder masks the shot.'] },
       dies: ['Counter-sniped by {who}?', 'Should have relocated.', 'Impossible.'],
     },
     gobbler: {
@@ -25,6 +26,7 @@ window.SnakeChatter = (() => {
       caught: ['Crunchy! Legs and all.'],
       mushroom: ['Ugh, mushrooms. Gross.', 'I feel… smaller. I hate it.'],
       kill: ['Sorry, {who}. You were between me and lunch.', 'Oops. Is that meat?'],
+      weather: { wind: ['It’s raining apples! Best day ever!'], rain: ['Mushroom weather. Yuck.'], sun: ['Golden hour? Golden SNACKS!'] },
       dies: ['Tell my apples… I loved them.'],
     },
     ghost: {
@@ -33,6 +35,7 @@ window.SnakeChatter = (() => {
       idle: ['…', '……', '(silence)', 'boo.'],
       mushroom: ['smaller… better…'],
       kill: ['…sorry.'],
+      weather: { storm: ['…boom.'], rain: ['…drip.'] },
       dies: ['…'],
     },
     sovereign: {
@@ -41,6 +44,7 @@ window.SnakeChatter = (() => {
       idle: ['Our lands are vast.', 'We are not amused.', 'This bark is royal bark.'],
       intruder: ['Trespasser! Guards! …We are the guards.', '{who}, you stand on royal bark!', 'Off our land, {who}!'],
       kill: ['Justice is served.', 'The Crown is merciful. Usually.'],
+      weather: { sun: ['The sun shines on our realm.'], storm: ['We do not approve of this weather.'], rain: ['Fetch the royal umbrella.'] },
       dies: ['The king is dead…', 'Long live… someone else.'],
     },
     colonist: {
@@ -50,6 +54,7 @@ window.SnakeChatter = (() => {
       flag: ['I claim this bark for the Crown!', 'Another colony! Splendid.', 'Mine now. Terribly sorry.'],
       intruder: ['Ahem. That’s a colony, {who}.', 'I say, that patch is spoken for.'],
       kill: ['Frightfully sorry, old chap.', 'Should have read the flag, {who}.'],
+      weather: { rain: ['Ah, proper weather at last.', 'Rain? Just like home.'], storm: ['Batten down the hatches!'], sun: ['The sun never sets on us, you know.'] },
       dies: ['Stiff upper lip…'],
     },
     drab: {
@@ -59,6 +64,7 @@ window.SnakeChatter = (() => {
       eat: ['Food.'],
       woodpecker: ['Oh. A bird.'],
       kill: ['Oh. Sorry, {who}.'],
+      weather: { rain: ['Rain. Great.'], sun: ['It’s sunny.'], wind: ['Windy.'], storm: ['Loud.'] },
       dies: ['Well. That happened.'],
     },
     vulture: {
@@ -67,6 +73,7 @@ window.SnakeChatter = (() => {
       idle: ['Not long now…', 'You look tired, {who}.', 'I’ll wait.', 'Patience…'],
       death: ['Dinner!', 'Ooh, leftovers.', 'Rest in pieces, {who}.'],
       kill: ['I didn’t even have to try.'],
+      weather: { storm: ['Lightning. Something’s bound to cook.'], rain: ['Grim weather. Lovely.'] },
       dies: ['Who’s… eating… whom…'],
     },
     mason: {
@@ -78,6 +85,7 @@ window.SnakeChatter = (() => {
       hungry: ['Panem! Panem et… panem!'],
       woodpecker: ['Picus horribilis!'],
       caught: ['Scarabaeus captus!'],
+      weather: { storm: ['Iuppiter iratus est!'], rain: ['Pluvia! Aquaeductus, ubi es?'], sun: ['Sol invictus!'], wind: ['Ventus maximus!'] },
       dies: ['Et tu, {who}?', 'Alea iacta… estus.', 'Murus… meus… finis.'],
     },
     wildcard: {
@@ -89,6 +97,7 @@ window.SnakeChatter = (() => {
       golden: ['A golden apple. Very classy. Like me.'],
       mushroom: ['Fake food! Very unfair!'],
       kill: ['You’re fired, {who}!', 'Winning! So much winning.'],
+      weather: { sun: ['Beautiful weather. The best weather. Everyone says so.'], storm: ['Nobody knows more about lightning than me.'], wind: ['Tremendous wind. So many apples.'], rain: ['Fake rain!'] },
       dies: ['Rigged! Totally rigged!'],
     },
     creeper: {
@@ -96,6 +105,7 @@ window.SnakeChatter = (() => {
       start: ['psst.'],
       idle: ['behind you.', 'don’t turn around, {who}.', 'hehehe.', 'nice tail, {who}.'],
       kill: ['hehe. gotcha.'],
+      weather: { storm: ['hehe. flickery.'], rain: ['drip drip.'] },
       dies: ['…aww.'],
     },
     metagamer: {
@@ -103,6 +113,7 @@ window.SnakeChatter = (() => {
       start: ['Analysing opponents…', 'I’ve watched the replays.'],
       idle: ['{who}: {label}. Noted.', 'Predictable.', 'Your eat rate is suboptimal, {who}.', 'Running the numbers…'],
       kill: ['As calculated.', 'Exactly as the model predicted.'],
+      weather: { storm: ['Strike probability: rising.'], rain: ['Mushroom density: up.'], sun: ['Golden apple odds: favourable.'], wind: ['Apple supply: increasing.'] },
       dies: ['That… wasn’t in the data.'],
     },
     capricious: {
@@ -115,12 +126,14 @@ window.SnakeChatter = (() => {
         mason: ['Let’s build something!'],
       },
       kill: ['Didn’t plan that. Love it.'],
+      weather: { sun: ['Sunshine! I love sunshine! Today.'], rain: ['Rain! I love rain! For now.'], storm: ['Storms are exciting! Or scary? Both!'], wind: ['Whee!'] },
       dies: ['Changed my mind about living.'],
     },
     copycat: {
       start: ['同志们好！'],
       idle: ['为人民服务！', '团结就是力量！', '同志们，冲啊！', '五年计划，提前完成！'],
       kill: ['向前进！'],
+      weather: { storm: ['雷电交加，同志们小心！'], rain: ['下雨了，同志们！'] },
       dies: ['同志们，再见……'],
     },
     desperado: {
@@ -132,6 +145,7 @@ window.SnakeChatter = (() => {
       woodpecker: ['Now we’re talking! Holes!'],
       beetle: ['Yeehaw, a critter hunt!'],
       caught: ['Lassoed it.'],
+      weather: { storm: ['Lightning? Now we’re talking!', 'Fire on the bark! Yeehaw!'], wind: ['Hold onto your hat!'], rain: ['Rain on the range.'] },
       dies: ['What a ride…', 'Worth it.'],
     },
     joker: {
@@ -140,6 +154,7 @@ window.SnakeChatter = (() => {
       idle: ['Catch me if you can!', 'Why so slithery, {who}?', 'Follow me, it’s a shortcut!', 'Honk honk!'],
       kill: ['And for my next trick…', 'The joke’s on you, {who}!'],
       mushroom: ['Ooh, a funny mushroom!'],
+      weather: { rain: ['Singin’ in the rain!'], storm: ['Shocking!'], wind: ['Blow, wind, blow!'], sun: ['Sun’s out, puns out!'] },
       dies: ['Tough crowd…'],
     },
   };
@@ -148,6 +163,52 @@ window.SnakeChatter = (() => {
   // The Metagamer's labels for how a snake plays, for Copycat's Chinese.
   const ZH_LABELS = { aggressive: '好斗', greedy: '贪吃', evasive: '爱躲', unclear: '看不透' };
   const ZH = {
+    "Adjusting for wind.": "修正风偏。",
+    "Thunder masks the shot.": "雷声掩护枪声。",
+    "It’s raining apples! Best day ever!": "天上掉苹果啦！最棒的一天！",
+    "Mushroom weather. Yuck.": "蘑菇天气。呕。",
+    "Golden hour? Golden SNACKS!": "黄金时刻？黄金零食！",
+    "…boom.": "……轰。",
+    "…drip.": "……滴答。",
+    "The sun shines on our realm.": "阳光照耀着我们的国土。",
+    "We do not approve of this weather.": "我们不批准这种天气。",
+    "Fetch the royal umbrella.": "拿御用雨伞来。",
+    "Ah, proper weather at last.": "啊，终于是像样的天气了。",
+    "Rain? Just like home.": "下雨？跟家里一样。",
+    "Batten down the hatches!": "关好舱门！",
+    "The sun never sets on us, you know.": "要知道，我们可是日不落。",
+    "Rain. Great.": "下雨。真好。",
+    "It’s sunny.": "出太阳了。",
+    "Windy.": "有风。",
+    "Loud.": "好吵。",
+    "Lightning. Something’s bound to cook.": "闪电。总会烤熟点什么。",
+    "Grim weather. Lovely.": "阴沉的天气。真可爱。",
+    "Iuppiter iratus est!": "朱庇特发怒了！",
+    "Pluvia! Aquaeductus, ubi es?": "下雨了！输水道，你在哪儿？",
+    "Sol invictus!": "不败的太阳！",
+    "Ventus maximus!": "超级大风！",
+    "Beautiful weather. The best weather. Everyone says so.": "美丽的天气。最好的天气。大家都这么说。",
+    "Nobody knows more about lightning than me.": "没人比我更懂闪电。",
+    "Tremendous wind. So many apples.": "巨大的风。好多苹果。",
+    "Fake rain!": "假雨！",
+    "hehe. flickery.": "嘿嘿。一闪一闪的。",
+    "drip drip.": "滴答滴答。",
+    "Strike probability: rising.": "雷击概率：上升。",
+    "Mushroom density: up.": "蘑菇密度：上升。",
+    "Golden apple odds: favourable.": "金苹果概率：有利。",
+    "Apple supply: increasing.": "苹果供应：增加。",
+    "Sunshine! I love sunshine! Today.": "阳光！我爱阳光！今天爱。",
+    "Rain! I love rain! For now.": "下雨！我爱下雨！暂时爱。",
+    "Storms are exciting! Or scary? Both!": "暴风雨好刺激！还是好可怕？都是！",
+    "Whee!": "呜呼！",
+    "Lightning? Now we’re talking!": "闪电？这才带劲！",
+    "Fire on the bark! Yeehaw!": "树皮着火啦！咿哈！",
+    "Hold onto your hat!": "抓紧你的帽子！",
+    "Rain on the range.": "牧场下雨了。",
+    "Singin’ in the rain!": "雨中曲！",
+    "Shocking!": "真震撼！",
+    "Blow, wind, blow!": "吹吧，风儿，吹吧！",
+    "Sun’s out, puns out!": "太阳出来，笑话出来！",
     "Moving target. Still a headshot.": "移动靶。照样爆头。",
     "A BEETLE! Crunchy legs, come to Gobbler!": "甲虫！脆脆的腿，快到Gobbler这儿来！",
     "Bug! Bug bug bug!": "虫子！虫子虫子虫子！",
@@ -365,6 +426,7 @@ window.SnakeChatter = (() => {
   let boardEl, logEl, game;
   let enabled = true, compact = false, listener = null;
   let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null, pendingReply = null, saidAt = {};
+  let struck = false; // (lightning has struck in this storm: one remark is enough)
   const LINE_REST = 45000; // a snake doesn't say the same line again within this much game time
   // Mason's Life of Brian moments are told once per visit (a joke told every round isn't one).
   const SET_PIECES = new Set(['Romanes eunt domus.', 'Amicus meus est Biggus Dickus.']);
@@ -395,7 +457,7 @@ window.SnakeChatter = (() => {
 
   function reset(g) {
     game = g;
-    lastAny = -Infinity; lastSaid = {}; seen = {}; lastLine = null; pendingReply = null; saidAt = {};
+    lastAny = -Infinity; lastSaid = {}; seen = {}; lastLine = null; pendingReply = null; saidAt = {}; struck = false;
     clearBubbles();
     logEl.textContent = '';
   }
@@ -591,6 +653,11 @@ window.SnakeChatter = (() => {
         for (const s of alive) {
           if (s.personaKey === 'gobbler' || (e.kind === 'beetle' && s.personaKey === 'desperado')) say(s, e.kind === 'beetle' ? 'beetle' : 'spawn', null, true);
         }
+      } else if (e.type === 'weather' || (e.type === 'strike' && !struck)) {
+        const kind = e.type === 'strike' ? 'storm' : e.kind;
+        if (e.type === 'strike') struck = true; else struck = false;
+        const s = pick(alive.filter(a => VOICES[a.personaKey]?.weather?.[kind]));
+        if (s) say(s, `weather.${kind}`, null, true);
       } else if (e.type === 'woodpecker') {
         const s = pick(alive);
         if (s) { lastSaid[s.id] = -Infinity; say(s, VOICES[s.personaKey].woodpecker ? 'woodpecker' : 'idle', anyone(s), true); }
