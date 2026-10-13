@@ -20,7 +20,7 @@ window.SnakeAudio = (() => {
     rivalDeath: 120, death: 250, best: 400, win: 600,
     beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, ui: 30, // peck: never more than 3 in any second
     crackle: 300, thunder: 900, gust: 1500, burrow: 1000, dig: 250, rainbow: 1500, rain: 1500,
-    ko: 200, close: 1400, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
+    ko: 200, close: 1400, field: 800, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
   };
   const RESUME_GRACE = 300;    // ms after unlock() in which cues may queue on a context still waking up
   const NOISE_SECONDS = 0.5;   // length of the one shared noise buffer
@@ -396,6 +396,14 @@ window.SnakeAudio = (() => {
       noise(t, 0.05, 0.22, 'bandpass', 1800, 1.1);
       mallet(t + 0.06, mtof(79), 0.14, 0.26);
       mallet(t + 0.14, mtof(84), 0.26, 0.3);
+    },
+
+    // Into a rival's force field: an electric hum swelling, a shimmer over it.
+    field(t) {
+      tone(t, 'sawtooth', 110, 0.5, 0.045, 0.1, null, 800);
+      tone(t, 'sawtooth', 111.6, 0.5, 0.04, 0.1, null, 800);
+      tone(t, 'sine', 1760, 0.4, 0.025, 0.06, 2350);
+      noise(t, 0.3, 0.025, 'bandpass', 3200, 2);
     },
 
     // A near miss (your head right by a rival's): air tearing past, and a gasp of a tick.

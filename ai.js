@@ -431,10 +431,11 @@ window.SnakeAI = (() => {
       colonist() {
         const col = ctx.w.colony;
         const clamp = v => Math.min(N - 2, Math.max(1, v));
-        memory.colonies ||= [{ x: clamp(myHead.x), y: clamp(myHead.y), radius: col.radius }];
+        // (n: which colony it is, first, second, ...: each flies its own flag.)
+        memory.colonies ||= [{ x: clamp(myHead.x), y: clamp(myHead.y), radius: col.radius, n: 1 }];
         if (memory.site && manhattan(myHead, memory.site) <= 1) {
-          memory.colonies.push({ ...memory.site, radius: col.radius });
           memory.planted = (memory.planted || 0) + 1;
+          memory.colonies.push({ ...memory.site, radius: col.radius, n: memory.planted + 1 });
           if (memory.colonies.length > col.max) memory.colonies.shift();
           memory.site = null;
           memory.nextSiteAt = view.timeMs + col.every;

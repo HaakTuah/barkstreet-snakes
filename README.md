@@ -1,12 +1,12 @@
 # Bark & Bite
 
-A snake game up a tree: you against three AI rivals on the bark of a tree, drawn at random each round from a cast of sixteen. Plays in the browser, on desktop and phone. Plain HTML, CSS and JavaScript, with no build step, no dependencies and no asset files: every picture is drawn and every sound is synthesised in the page.
+A snake game on a mossy log: you against three AI rivals on a fallen log in the woods, drawn at random each round from a cast of sixteen. Plays in the browser, on desktop and phone. Plain HTML, CSS and JavaScript, with no build step, no dependencies and no asset files: every picture is drawn and every sound is synthesised in the page.
 
 **Play:** https://haaktuah.github.io/snake-game/
 
 ## Rules
 
-- Four snakes share a 24×24 patch of bark: you (green, with a glowing cream outline) and three AI rivals. Watch their eyes: each one looks at whatever it's after.
+- Four snakes share a 24×24 stretch of mossy log: you (green, with a glowing cream outline) and three AI rivals. Watch their eyes: each one looks at whatever it's after.
 - Hitting the edge, a hole, fire, any snake's body, or another snake's head kills you.
 - When a snake dies, it falls to pieces: glossy beads in its own colours and markings, which anyone can eat.
 - The last snake alive wins. If you die first, you can watch the rest of the round or start over.
@@ -15,7 +15,7 @@ A snake game up a tree: you against three AI rivals on the bark of a tree, drawn
 - **Weather:** after the first 20 seconds, spells of weather come and go, with clear spells between. Everyone, the rivals included, sees all of it coming.
   - **Sun:** golden hour. Golden apples are five times as likely.
   - **Wind:** gusts knock apples loose, up to three more than usual.
-  - **Rain:** two more mushrooms sprout, and any fire goes out. Half the time, when the rain stops, a rainbow comes down on a golden apple.
+  - **Rain:** two more mushrooms sprout, and any fire goes out. Half the time, when the rain stops, a rainbow arches right across the log out of a golden apple.
   - **Storm** (not before 30 s): lightning. Where it's going to strike crackles for about a second first, and it never strikes within 4 cells of a head. It sets the bark alight: fire burns for about 5 seconds and creeps to the odd neighbouring cell (smouldering first, harmlessly, so you see it coming). Burning bark kills a head that crawls into it. Storms are often followed by rain.
 - **Burrows:** the first beetle cracks a burrow open in the bark, and later ones open more (up to three). Burrows are safe to cross; cracks spread from them as the round goes on. A scared beetle that reaches one dives in and pops out of a burrow a moment later.
 - **Sudden death:** after two minutes no new food appears, the sky clears, and a big woodpecker lands beside the board. It takes the bark away a chunk at a time, from the edges inwards: it picks a run of cells, eyes it (the chunk glows and cracks, faster and faster) for about a second and a half, drums it out, and rests. It plays fair: it never aims within 3 cells of a head, at a body or at food, so you always see it coming.
@@ -76,8 +76,8 @@ Each round, three of these sixteen are picked at random. The start screen tells 
 | **Sniper** | blood red, one eye behind a scope | Picks whichever snake it has the best shot at, gets in front of it and squeezes its space. |
 | **Gobbler** | orange, puffy cheeks | Eats everything, even a rival's apple. Hates mushrooms. |
 | **Ghost** | pale, fading body | Keeps away from everyone and eats mushrooms to stay small. |
-| **Sovereign** | royal blue, golden crown | Rules its own patch of bark (shown on the board) and attacks anyone who trespasses. |
-| **Colonist** | redcoat, tricorn hat | Plants Union Flags all over the board and defends every one of them. |
+| **Sovereign** | royal blue, golden crown | Rules its own patch of log, a shimmering force field in royal blue, and attacks anyone who trespasses. You light up in its colour when you go in. |
+| **Colonist** | redcoat, tricorn hat | Plants flags all over the board, each colony a force field of its own, and defends every one of them. The first flies the Union Flag, later ones colonial ensigns (blue with the Southern Cross, red with a badge). |
 | **Drab** | khaki, sleepy eyes | Plays it safe and sensible. Nothing special. |
 | **Vulture** | black, pink bald head, hooked beak, scowl | Hovers near snakes in trouble and feeds on what they leave behind. |
 | **Mason** | Caesar in marble, laurel wreath | Walls off the board, then keeps the biggest piece. |
