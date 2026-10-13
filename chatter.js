@@ -60,7 +60,7 @@ window.SnakeChatter = (() => {
     drab: {
       hungry: ["I should eat something."],
       start: ['Hello.', 'Hi. I’m Drab.'],
-      idle: ['Nice weather.', 'Apples are fine.', 'I like beige.', 'This is a tree.', 'Hm.'],
+      idle: ['Nice weather.', 'Apples are fine.', 'I like beige.', 'This is a log.', 'Hm.'],
       eat: ['Food.'],
       woodpecker: ['Oh. A bird.'],
       kill: ['Oh. Sorry, {who}.'],
@@ -389,7 +389,7 @@ window.SnakeChatter = (() => {
     "Nice weather.": "天气不错。",
     "Apples are fine.": "苹果还行。",
     "I like beige.": "我喜欢米色。",
-    "This is a tree.": "这是一棵树。",
+    "This is a log.": "这是一根木头。",
     "Hm.": "嗯。",
     "Food.": "食物。",
     "Oh. A bird.": "哦。一只鸟。",

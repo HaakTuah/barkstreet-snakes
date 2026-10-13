@@ -38,19 +38,19 @@
 
   const pick = list => list[Math.floor(Math.random() * list.length)];
   const FLAVOR = {
-    intro: 'Three rivals. One tree. Last snake wriggling wins.',
+    intro: 'Three rivals. One mossy log. Last snake wriggling wins.',
     hintStart: 'Arrows or WASD steer · Space naps · Enter starts · H opens the Hall of Fame',
     hintKeys: 'Arrows or WASD steer · Space naps · Enter starts over · H opens the Hall of Fame · M mutes · N toggles the music',
     hintOnline: 'Arrows or WASD steer · M mutes · N toggles the music',
     hintTouch: 'Swipe to steer · Tap ⏸ to nap',
-    rivals: ['Your rivals today:', 'Up the tree with you:', 'Sharing your bark:'],
+    rivals: ['Your rivals today:', 'Up on the log with you:', 'Sharing your bark:'],
     spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
     go: ['Slither!', 'Off you go.', 'Mind the edges.'],
     goWatch: ['And they’re off.', 'Off they slither.', 'Let the wriggling begin.'],
-    pause: ['Snakes need rest too.', 'Curled up in a warm patch of bark.', 'The tree will wait.'],
+    pause: ['Snakes need rest too.', 'Curled up in a warm patch of bark.', 'The log will wait.'],
     wake: touchFirst ? 'Tap Wake up when you’re ready.' : 'Space or P to wake up.',
     deathTitle: { wall: ['Bonk!', 'Thwack!'], self: ['Tangled!', 'Knotted!'], rival: ['Squashed!', 'Splat!'], headOn: ['Head-on!', 'Clonk!'], fire: ['Toasted!', 'Scorched!'] },
-    wall: ['The tree goes on. You don’t.', 'That edge came out of nowhere.', 'Even trees have edges.'],
+    wall: ['The log goes on. You don’t.', 'That edge came out of nowhere.', 'Even logs have edges.'],
     self: ['Of all the snakes to bite.', 'You were in your own way.', 'You can’t outrun yourself.'],
     hole: ['The woodpecker sends its regards.', 'Mind the gap.', 'The woodpecker missed you. The hole didn’t.'],
     starved: ['Should have eaten something.', 'Hunger always wins in the end.', 'All slither, no snacks.'],
@@ -66,7 +66,7 @@
     strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
     rainbow: ['A rainbow! Something golden at its end…', 'After the rain, a rainbow. And gold.'],
     burrow: ['A beetle burrow just cracked open.', 'Something’s been digging under the bark.'],
-    win: ['King of the tree.', 'Last snake wriggling.', 'You outlasted them all.', 'The whole tree is yours. For now.'],
+    win: ['King of the log.', 'Last snake wriggling.', 'You outlasted them all.', 'The whole log is yours. For now.'],
     draw: ['Nobody made it out.', 'Everyone loses. How fair.', 'A dead heat. Emphasis on dead.'],
     golden: ['A golden apple! Everyone pretends not to have seen it.', 'Something shiny just grew on the bark.'],
     woodpecker: ['The woodpecker is here, pecking in from the edges.', 'Rat-a-tat. The woodpecker has arrived.'],
@@ -85,7 +85,7 @@
     roomGone: name => `${name} closed the room.`,
     roomLost: 'Lost the connection to the room.',
     friendLeft: name => `${name} left. An AI takes over their snake.`,
-    friendJoined: name => `${name} is up the tree. Their best rounds are in your Hall of Fame.`,
+    friendJoined: name => `${name} is on the log. Their best rounds are in your Hall of Fame.`,
     friendAway: name => `${name} went quiet. An AI steers until they’re back.`,
     friendBack: name => `${name} is back.`,
     youAway: 'You went quiet for a moment, so an AI steered for you.',
@@ -601,8 +601,21 @@
       const h = me.body[0];
       for (const o of game.snakes) if (o !== me && o.alive && Math.abs(o.body[0].x - h.x) <= 1 && Math.abs(o.body[0].y - h.y) <= 1) { Audio.play('close', at(o.body[0].x)); break; }
     }
+    // Crossing into a rival's force field (Sovereign's home, a colony): a hum.
+    if (me?.alive) {
+      const h = me.body[0];
+      let inside = false;
+      for (const o of game.snakes) {
+        if (o === me || !o.alive) continue;
+        if (o.memory.home && Math.hypot(h.x - o.memory.home.x, h.y - o.memory.home.y) <= o.memory.home.radius + 1) inside = true;
+        for (const c of o.memory.colonies || []) if (Math.hypot(h.x - c.x, h.y - c.y) <= c.radius + 1) inside = true;
+      }
+      if (inside && !inField) Audio.play('field', at(h.x));
+      inField = inside;
+    }
     Audio.weather(state === 'running' ? game.weather?.kind : 'none');
   }
+  let inField = false;
 
   // How much danger you're in, for the music: a rival's head close to yours,
   // or little room ahead. 0..1.
@@ -1609,7 +1622,7 @@
   click(lobbyCopy, async () => {
     const link = lobbyLink.value;
     if (navigator.share && touchFirst && link.startsWith('http')) {
-      try { await navigator.share({ title: 'Bark & Bite', text: 'Come and play snake up a tree with me:', url: link }); return; } catch { /* cancelled: copy instead */ }
+      try { await navigator.share({ title: 'Bark & Bite', text: 'Come and play snake on a mossy log with me:', url: link }); return; } catch { /* cancelled: copy instead */ }
     }
     try {
       await navigator.clipboard.writeText(link);
