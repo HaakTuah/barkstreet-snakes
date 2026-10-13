@@ -2930,12 +2930,10 @@ window.SnakeRender = (() => {
   // ------------------------------------------------------------ burrows
 
   // A beetle burrow: an oval opening in the bark, splintered round its rim,
-  // a little sawdust about it, and cracks that spread from it as the round
-  // goes on (the beetles are hollowing the log out). Wood splits along its
-  // grain, so the cracks run along the log, either way from the hole,
-  // tapering, now and then forking. Each burrow's cracks
-  // are its own (seeded by where it is) and grow to full length over about
-  // half a minute. It opens with a pop.
+  // a little sawdust about it, and cracks that spread out from it every
+  // which way as the round goes on (the beetles are hollowing the log out).
+  // Each burrow's cracks are its own (seeded by where it is) and grow to full
+  // length over about half a minute. It opens with a pop.
   const CRACK_GROW_TICKS = 260;
   const crackCache = new Map(); // cell -> branches of [x, y] points (cells)
   const burrowSeen = new Map(); // cell -> when it first showed (for its pop)
@@ -2946,24 +2944,16 @@ window.SnakeRender = (() => {
     let seed = (k * 7919 + 13) % 2147483647 || 1;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     br = [];
-    const split = (x, y, base, len) => {
-      const pts = [[x, y]];
-      let a = base + (rnd() - 0.5) * 0.4;
-      for (let j = 0; j < len; j++) {
-        a += (rnd() - 0.5) * 0.5 + (base - a) * 0.4; // (wandering, but kept to the grain)
-        const step = 0.35 + rnd() * 0.25;
+    for (let i = 0, n = 3 + Math.floor(rnd() * 2); i < n; i++) {
+      let a = (i / n) * TAU + rnd() * 0.9, x = 0, y = 0;
+      const pts = [[0, 0]];
+      for (let j = 0, len = 5 + Math.floor(rnd() * 4); j < len; j++) {
+        a += (rnd() - 0.5) * 0.9;
+        const step = 0.32 + rnd() * 0.22;
         x += Math.cos(a) * step; y += Math.sin(a) * step;
         pts.push([x, y]);
       }
-      return pts;
-    };
-    for (const base of [Math.PI / 2, -Math.PI / 2]) { // (up and down the log)
-      const main = split(0, 0, base, 5 + Math.floor(rnd() * 4));
-      br.push(main);
-      if (rnd() < 0.6) { // a fork
-        const [fx, fy] = main[2 + Math.floor(rnd() * 2)];
-        br.push(split(fx, fy, base + (rnd() < 0.5 ? -0.6 : 0.6), 2 + Math.floor(rnd() * 2)));
-      }
+      br.push(pts);
     }
     crackCache.set(k, br);
     return br;
@@ -2977,19 +2967,19 @@ window.SnakeRender = (() => {
       const pop = popOf(now - burrowSeen.get(k));
       const grow = Math.min(1, Math.max(0.15, (game.tick - b.at) / CRACK_GROW_TICKS));
       // The cracks: dark, with a lit lip along one side, thinning out.
-      ctx.lineCap = ctx.lineJoin = 'round';
-      for (const [col, off, w] of [['rgba(196,154,102,0.28)', 1.2, 1.6], ['rgba(14,7,2,0.7)', 0, 2.8]]) {
+      for (const [col, off, w] of [['rgba(196,154,102,0.28)', 1.2, 1.4], ['rgba(14,7,2,0.7)', 0, 2.2]]) {
         ctx.strokeStyle = col;
+        ctx.lineCap = ctx.lineJoin = 'round';
         for (const pts of cracksOf(b)) {
-          const shown = (pts.length - 1) * grow, thick = pts[0][0] || pts[0][1] ? 0.6 : 1;
-          for (let j = 1; j <= Math.ceil(shown); j++) { // (tapering as it goes)
+          const shown = (pts.length - 1) * grow;
+          ctx.lineWidth = w;
+          ctx.beginPath();
+          ctx.moveTo(x + off, y + off);
+          for (let j = 1; j <= Math.ceil(shown); j++) {
             const t = Math.min(1, shown - (j - 1)), [px, py] = pts[j - 1], [qx, qy] = pts[j];
-            ctx.lineWidth = w * thick * (1 - 0.75 * (j - 1) / (pts.length - 1));
-            ctx.beginPath();
-            ctx.moveTo(x + off + px * c, y + off + py * c);
             ctx.lineTo(x + off + (px + (qx - px) * t) * c, y + off + (py + (qy - py) * t) * c);
-            ctx.stroke();
           }
+          ctx.stroke();
         }
       }
       // The opening (a cached sprite, one of four).
