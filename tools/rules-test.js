@@ -105,5 +105,78 @@ function board(bodies, { food = [], time = 0 } = {}) {
   check('a cornered AI takes the cell that may be free', picks.up === 200, JSON.stringify(picks));
 }
 
+// ---------------------------------------------------------------- fire, weather and burrows
+const K = (x, y) => y * T.GRID + x;
+
+{ // Burning bark kills a head that enters it; smouldering bark doesn't (yet).
+  const g = board([[[[5, 5], [4, 5], [3, 5]], 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']]);
+  g.fires.set(K(6, 5), { from: 0, until: 100, group: 1, strike: true });
+  g.fires.set(K(6, 15), { from: 5, until: 100, group: 2, strike: false });
+  const dying = E.step(g);
+  check('a head that crawls into fire burns', dying.length === 1 && dying[0] === g.snakes[0] && dying[0].killer === 'fire', dying.map(s => s.killer).join());
+  check('smouldering bark is still safe', g.snakes[1].alive);
+}
+
+{ // Lightning never lands near a head, crackles first, and only then burns.
+  let near = 0, early = 0, strikes = 0;
+  for (let r = 0; r < 30; r++) {
+    const g = E.createGame({ withPlayer: false });
+    g.time = 50000;
+    g.weather = { kind: 'storm', since: 50000, until: 1e9, nextGust: 0, nextStrike: 0 };
+    for (let t = 0; t < 120 && g.snakes.some(s => s.alive); t++) {
+      E.step(g);
+      const heads = g.snakes.filter(s => s.alive).map(s => s.body[0]); // (where they were when the lightning chose its spot)
+      for (const e of g.events) {
+        if (e.type === 'charge') {
+          strikes++;
+          if (heads.some(h => Math.abs(h.x - e.x) + Math.abs(h.y - e.y) <= T.STRIKE_CLEARANCE)) near++;
+          const f = g.fires.get(K(e.x, e.y));
+          if (!f || f.from - g.tick < T.STRIKE_WARN_TICKS - 1) early++;
+        }
+      }
+    }
+  }
+  check('storms strike', strikes > 20, `${strikes} strikes`);
+  check('lightning keeps its distance from heads', near === 0, `${near} too close`);
+  check('lightning crackles before it burns', early === 0, `${early} without warning`);
+}
+
+{ // Fire reaches an AI with its reaction delay, and then it keeps out like it keeps out of holes.
+  const g = E.createGame({ withPlayer: false });
+  const s = g.snakes[0];
+  for (let t = 0; t < 3; t++) E.step(g);
+  const k = K(12, 12);
+  g.fires.set(k, { from: g.tick, until: g.tick + 99, group: 9, strike: true });
+  check('fire is unseen at first', !E.aiView(g, s).holes.has(k));
+  for (let t = 0; t < 8; t++) { g.snakes.forEach(o => { o.body = o.body.slice(0, 3); }); E.step(g); if (!g.fires.has(k)) g.fires.set(k, { from: 0, until: g.tick + 99, group: 9, strike: false }); }
+  check('fire reaches the AI after its reaction time', E.aiView(g, g.snakes.find(o => o.alive)).holes.has(k));
+}
+
+{ // Rain puts fire out, and the sky clears for the woodpecker.
+  const g = E.createGame({ withPlayer: false });
+  g.fires.set(K(1, 1), { from: 0, until: 500, group: 1, strike: true });
+  g.weather = { kind: 'rain', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 };
+  for (let t = 0; t < T.RAIN_DOUSE_TICKS + 2; t++) E.step(g);
+  check('rain puts fire out', !g.fires.has(K(1, 1)));
+  g.time = T.SUDDEN_DEATH_MS;
+  E.step(g);
+  check('the sky clears for the woodpecker', g.weather.kind === 'clear', g.weather.kind);
+}
+
+{ // A scared beetle on a burrow dives in and comes out of a burrow a while later; food never sits on a burrow.
+  const g = board([[[[10, 5], [9, 5], [8, 5]], 'right'], [[[20, 20], [19, 20], [18, 20]], 'left']]);
+  g.burrows = [{ x: 12, y: 6, at: 0 }, { x: 2, y: 20, at: 0 }];
+  g.food = [{ x: 11, y: 6, kind: 'beetle', expires: 999, dir: D.right, movedAt: -10 }];
+  let dived = false, emerged = null;
+  for (let t = 0; t < 40; t++) {
+    E.step(g);
+    for (const e of g.events) { if (e.type === 'dive') dived = true; if (e.type === 'emerge') emerged = e; }
+    if (g.food.some(f => f.kind !== 'beetle' && g.burrows.some(b => b.x === f.x && b.y === f.y))) break;
+  }
+  check('a scared beetle dives into its burrow', dived);
+  check('...and comes out of the other one', emerged && emerged.x === 2 && emerged.y === 20, JSON.stringify(emerged));
+  check('nothing grows on a burrow', !g.food.some(f => f.kind !== 'beetle' && g.burrows.some(b => b.x === f.x && b.y === f.y)));
+}
+
 console.log(failed ? `${failed} failed` : 'all good');
 process.exit(failed ? 1 : 0);

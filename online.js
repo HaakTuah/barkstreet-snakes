@@ -17,7 +17,7 @@
 //   { t: 'hello', v, name, owner, scores }  v: VERSION; owner: a player id; scores: your best rounds
 //   { t: 'turn', d }                        'up' | 'down' | 'left' | 'right'
 window.SnakeOnline = (() => {
-  const VERSION = 1;
+  const VERSION = 2; // 2: burrows, fire and weather
   const MAX_PEOPLE = 4;
   // Seat colors for people: the host is green; friends get colors no rival wears.
   const HUMAN_COLORS = ['#4ade80', '#fde047', '#c4b5fd', '#7dd3fc'];
@@ -26,6 +26,9 @@ window.SnakeOnline = (() => {
   const CODE_LENGTH = 5;
   const DIR_NAMES = ['up', 'down', 'left', 'right'];
   const KINDS = ['food', 'golden', 'mushroom', 'pellet', 'beetle'];
+  const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm']; // (the engine's order)
+  // Events that only say where something happened.
+  const AT = ['burrow', 'dive', 'emerge', 'gust', 'charge', 'strike', 'rainbow'];
 
   const newCode = () => Array.from({ length: CODE_LENGTH }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
   const cleanCode = text => String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CODE_LENGTH);
@@ -69,6 +72,10 @@ window.SnakeOnline = (() => {
         : [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, f.color || 0]),
       h: holes,
       w: game.woodpecker ? [game.woodpecker.x, game.woodpecker.y, game.woodpecker.at] : 0,
+      // Burrows, fire (cell, burning from, until, struck by lightning, which fire), the weather.
+      bu: game.burrows.map(b => [b.x, b.y, b.at]),
+      fi: [...game.fires].map(([k, f]) => [k, f.from, f.until, f.strike ? 1 : 0, f.group]),
+      sky: [WEATHER.indexOf(game.weather.kind), game.weather.since, game.weather.until],
       e: game.events.map(encodeEvent).filter(Boolean),
     };
   }
@@ -88,11 +95,12 @@ window.SnakeOnline = (() => {
       case 'eat': return ['eat', e.snake.id, KINDS.indexOf(e.kind), e.x, e.y, e.color || 0];
       case 'death': return ['death', e.snake.id, e.snake.cause, e.snake.killer, e.snake.killerId, e.snake.diedAt];
       case 'starving': return ['starving', e.snake.id];
-      case 'spawn': return ['spawn', e.kind];
+      case 'spawn': return ['spawn', e.kind, e.x ?? -1, e.y ?? -1];
+      case 'weather': return ['weather', WEATHER.indexOf(e.kind)];
       case 'woodpecker': return ['woodpecker'];
       case 'peck': return ['peck', e.x, e.y];
       case 'flown': return ['flown', e.x, e.y];
-      default: return null;
+      default: return AT.includes(e.type) ? [e.type, e.x, e.y] : null;
     }
   }
 
@@ -141,6 +149,11 @@ window.SnakeOnline = (() => {
     });
     for (const k of msg.h) game.holes.add(k);
     game.woodpecker = msg.w ? { x: msg.w[0], y: msg.w[1], at: msg.w[2] } : null;
+    const num = v => Number.isFinite(v);
+    game.burrows = (Array.isArray(msg.bu) ? msg.bu : []).filter(b => Array.isArray(b) && b.every(num)).map(([x, y, at]) => ({ x, y, at }));
+    game.fires = new Map((Array.isArray(msg.fi) ? msg.fi : []).filter(f => Array.isArray(f) && f.every(num))
+      .map(([k, from, until, strike, group]) => [k, { from, until, strike: !!strike, group }]));
+    if (Array.isArray(msg.sky) && msg.sky.every(num)) game.weather = { kind: WEATHER[msg.sky[0]] || 'clear', since: msg.sky[1], until: msg.sky[2] };
 
     const dying = [];
     game.events = msg.e.map(e => {
@@ -152,11 +165,12 @@ window.SnakeOnline = (() => {
           dying.push(snake);
           return { type: 'death', snake };
         case 'starving': return { type: 'starving', snake };
-        case 'spawn': return { type: 'spawn', kind: e[1] };
+        case 'spawn': return { type: 'spawn', kind: e[1], x: e[2], y: e[3] };
+        case 'weather': return { type: 'weather', kind: WEATHER[e[1]] || 'clear' };
         case 'woodpecker': return { type: 'woodpecker' };
         case 'peck': return { type: 'peck', x: e[1], y: e[2] };
         case 'flown': return { type: 'flown', x: e[1], y: e[2] };
-        default: return null;
+        default: return AT.includes(e[0]) ? { type: e[0], x: e[1], y: e[2] } : null;
       }
     }).filter(Boolean);
     return dying;

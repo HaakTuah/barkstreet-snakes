@@ -23,6 +23,8 @@ window.SnakeEngine = (() => {
 
   const key = (x, y) => y * GRID + x;
   const inside = (x, y) => x >= 0 && y >= 0 && x < GRID && y < GRID;
+  const between = (a, b) => a + Math.random() * (b - a);
+  const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm'];
 
   function makeSnake(id, spawn, props) {
     const d = spawn.dir;
@@ -56,7 +58,7 @@ window.SnakeEngine = (() => {
     const keys = (personas || pickOpponents(wanted)).filter(k => Object.prototype.hasOwnProperty.call(PERSONAS, k)).slice(0, wanted);
     const snakes = [];
     // (The killer of a snake that hit a wall, itself or hunger is that word, so no one may be called it.)
-    const taken = new Set([...keys.map(k => PERSONAS[k].name), 'wall', 'self', 'hunger']);
+    const taken = new Set([...keys.map(k => PERSONAS[k].name), 'wall', 'self', 'hunger', 'fire']);
     for (const h of people) {
       const base = String(h.name || 'Green');
       let name = base;
@@ -71,6 +73,13 @@ window.SnakeEngine = (() => {
     const game = {
       snakes, food: [], tick: 0, time: 0, history: [], withPlayer: people.length > 0, events: [],
       holes: new Set(), peckOrder: ringOrder(), peckAt: 0, woodpecker: null,
+      // Beetle burrows ({ x, y, at: the tick it cracked open }), the beetle
+      // underground (if one is), fire (cell -> { from, until, group, strike }:
+      // it burns, and kills, from tick `from` to `until`; before that it's
+      // only smouldering, or crackling where lightning will strike), and the
+      // weather ({ kind, since, until, nextGust, nextStrike }, in game time).
+      burrows: [], underground: null, fires: new Map(), fireGroups: new Map(), fireGroup: 0,
+      weather: { kind: 'clear', since: 0, until: T.WEATHER_FIRST_MS, nextGust: 0, nextStrike: 0 },
     };
     fillFood(game);
     snapshot(game);
@@ -131,50 +140,113 @@ window.SnakeEngine = (() => {
       else if (f.kind === 'beetle') beetles++;
     }
 
-    // Pick from the truly free cells (no bodies, holes or food), worked out
-    // only when something actually needs placing.
+    const place = placer(game);
+    const raining = game.weather.kind === 'rain';
+    for (; apples < T.APPLES; apples++) place({ kind: 'food' });
+    // (Rain: more mushrooms sprout.)
+    for (; mushrooms < T.MUSHROOMS + (raining ? T.RAIN_MUSHROOMS : 0); mushrooms++) place({ kind: 'mushroom', expires: game.tick + T.MUSHROOM_TICKS });
+    // (Sun: golden hour.)
+    const goldenChance = T.GOLDEN_CHANCE * (game.weather.kind === 'sun' ? T.SUN_GOLDEN : 1);
+    if (!golden && Math.random() < goldenChance && place({ kind: 'golden', expires: game.tick + T.GOLDEN_TICKS })) {
+      const g = game.food[game.food.length - 1];
+      game.events.push({ type: 'spawn', kind: 'golden', x: g.x, y: g.y });
+    }
+    // Now and then a beetle comes out of a burrow for a crawl (one at a time).
+    // The first cracks a burrow open where it's quiet; later ones come out of
+    // a free burrow, or now and then open another.
+    if (!beetles && !game.underground && game.time >= T.BEETLE_FIRST_MS && Math.random() < T.BEETLE_CHANCE) {
+      let b = freeBurrow(game, -1);
+      if (game.burrows.length < T.BURROW_MAX && (!b || Math.random() < T.BURROW_NEW_CHANCE)) {
+        const at = place(null, true);
+        if (at) {
+          b = { x: at.x, y: at.y, at: game.tick };
+          game.burrows.push(b);
+          game.events.push({ type: 'burrow', x: b.x, y: b.y });
+        }
+      }
+      if (b) {
+        game.food.push({ x: b.x, y: b.y, kind: 'beetle', expires: game.tick + T.BEETLE_TICKS, dir: CRAWL[Math.floor(Math.random() * 4)], movedAt: game.tick });
+        game.events.push({ type: 'spawn', kind: 'beetle', x: b.x, y: b.y });
+      }
+    }
+  }
+
+  // Picks free cells (no bodies, holes, food, burrows or fire), worked out
+  // only when something actually needs placing. place(props, quiet): puts
+  // food there (props: null to only pick a cell), and returns the cell.
+  // quiet: pick the spot farthest from any head, of a few tries.
+  function placer(game) {
     let free = null;
-    // quiet: pick the spot farthest from any head, of a few tries (where a beetle comes out).
-    const place = (props, quiet = false) => {
+    return (props, quiet = false) => {
       if (!free) {
         markBodies(game);
         for (const f of game.food) bodyStamp[key(f.x, f.y)] = stamp;
         for (const k of game.holes) bodyStamp[k] = stamp;
+        for (const b of game.burrows) bodyStamp[key(b.x, b.y)] = stamp;
+        for (const k of game.fires.keys()) bodyStamp[k] = stamp;
         free = [];
         for (let k = 0; k < CELLS; k++) if (bodyStamp[k] !== stamp) free.push(k);
       }
-      if (!free.length) return false; // a full board: nothing grows, and that's fine
+      if (!free.length) return null; // a full board: nothing grows, and that's fine
       let at = Math.floor(Math.random() * free.length);
       if (quiet) {
         let best = -1;
         for (let t = 0; t < 8; t++) {
           const i = Math.floor(Math.random() * free.length), c = free[i];
-          let gap = 99;
-          for (const s of game.snakes) if (s.alive) gap = Math.min(gap, Math.abs(s.body[0].x - c % GRID) + Math.abs(s.body[0].y - Math.floor(c / GRID)));
+          const gap = headGap(game, c % GRID, Math.floor(c / GRID));
           if (gap > best) { best = gap; at = i; }
         }
       }
       const [k] = free.splice(at, 1);
-      game.food.push({ x: k % GRID, y: Math.floor(k / GRID), ...props });
-      return true;
+      const cell = { x: k % GRID, y: Math.floor(k / GRID) };
+      if (props) game.food.push({ ...cell, ...props });
+      return cell;
     };
-    for (; apples < T.APPLES; apples++) place({ kind: 'food' });
-    for (; mushrooms < T.MUSHROOMS; mushrooms++) place({ kind: 'mushroom', expires: game.tick + T.MUSHROOM_TICKS });
-    if (!golden && Math.random() < T.GOLDEN_CHANCE && place({ kind: 'golden', expires: game.tick + T.GOLDEN_TICKS })) {
-      game.events.push({ type: 'spawn', kind: 'golden' });
-    }
-    // Now and then a beetle comes out for a crawl (one at a time), where it's quiet.
-    if (!beetles && game.time >= T.BEETLE_FIRST_MS && Math.random() < T.BEETLE_CHANCE) {
-      const dir = CRAWL[Math.floor(Math.random() * 4)];
-      if (place({ kind: 'beetle', expires: game.tick + T.BEETLE_TICKS, dir, movedAt: game.tick }, true)) game.events.push({ type: 'spawn', kind: 'beetle' });
-    }
   }
+
+  // How far (in cells) the nearest living head is.
+  function headGap(game, x, y) {
+    let gap = 99;
+    for (const s of game.snakes) if (s.alive) gap = Math.min(gap, Math.abs(s.body[0].x - x) + Math.abs(s.body[0].y - y));
+    return gap;
+  }
+
+  // A burrow a beetle can come out of: nothing on it (not `not`, if
+  // there's another), the one farthest from any head.
+  function freeBurrow(game, not) {
+    markBodies(game);
+    for (const f of game.food) bodyStamp[key(f.x, f.y)] = stamp;
+    let best = null, gap = -1, fallback = null;
+    for (const b of game.burrows) {
+      const k = key(b.x, b.y);
+      if (bodyStamp[k] === stamp || game.fires.has(k) || game.holes.has(k)) continue;
+      if (k === not) { fallback = b; continue; }
+      const g = headGap(game, b.x, b.y);
+      if (g > gap) { gap = g; best = b; }
+    }
+    return best || fallback;
+  }
+  const burrowAt = (game, x, y) => game.burrows.some(b => b.x === x && b.y === y);
 
   // Beetles crawl a cell every few ticks: mostly straight on, now and then
   // turning. With a head close by they scurry away, faster. Never into a body,
   // a hole, other food or off the board; boxed in, they wait.
   const CRAWL = [DIRS.up, DIRS.right, DIRS.down, DIRS.left];
+  // A scared beetle heads for a burrow if one's near, and dives in when it
+  // gets there; it comes out of a burrow (another, if there is one) a moment later.
   function crawl(game) {
+    const u = game.underground;
+    if (u && game.tick >= u.until) {
+      if (game.tick >= u.expires || suddenDeath(game)) game.underground = null; // (it stays home)
+      else {
+        const b = freeBurrow(game, u.from);
+        if (b) {
+          game.food.push({ x: b.x, y: b.y, kind: 'beetle', expires: u.expires, dir: CRAWL[Math.floor(Math.random() * 4)], movedAt: game.tick });
+          game.events.push({ type: 'emerge', x: b.x, y: b.y });
+          game.underground = null;
+        }
+      }
+    }
     let marked = false;
     for (const b of game.food) {
       if (b.kind !== 'beetle') continue;
@@ -190,7 +262,14 @@ window.SnakeEngine = (() => {
         markBodies(game);
         for (const f of game.food) bodyStamp[key(f.x, f.y)] = stamp;
         for (const k of game.holes) bodyStamp[k] = stamp;
+        for (const k of game.fires.keys()) bodyStamp[k] = stamp; // (beetles keep out of fire)
         marked = true;
+      }
+      // The nearest burrow, if one's close enough to run for.
+      let home = null, homeGap = 7;
+      if (scared) for (const h of game.burrows) {
+        const g = Math.abs(h.x - b.x) + Math.abs(h.y - b.y);
+        if (g < homeGap) { homeGap = g; home = h; }
       }
       let best = null, bestScore = -Infinity;
       for (const d of CRAWL) {
@@ -199,7 +278,8 @@ window.SnakeEngine = (() => {
         let score = Math.random(); // a little wandering
         if (d === b.dir) score += 1.5; // it likes to keep going
         else if (d.x === -b.dir.x && d.y === -b.dir.y) score -= 1;
-        if (scared) score += 3 * (Math.abs(nx - hx) + Math.abs(ny - hy) - fear); // away from the nearest head
+        if (scared) score += 3 * (Math.abs(nx - hx) + Math.abs(ny - hy) - fear); // away from the nearest head...
+        if (home) score += 2 * (homeGap - Math.abs(home.x - nx) - Math.abs(home.y - ny)); // ...and home, if it's near
         if (score > bestScore) { bestScore = score; best = d; }
       }
       if (!best) continue;
@@ -209,8 +289,117 @@ window.SnakeEngine = (() => {
       b.movedAt = game.tick;
       b.scared = scared;
       bodyStamp[key(b.x, b.y)] = stamp;
+      if (scared && burrowAt(game, b.x, b.y)) { // home: down it goes
+        game.food.splice(game.food.indexOf(b), 1);
+        game.underground = { until: game.tick + Math.round(between(T.BEETLE_UNDER_MIN, T.BEETLE_UNDER_MAX)), expires: b.expires, from: key(b.x, b.y) };
+        game.events.push({ type: 'dive', x: b.x, y: b.y });
+        break; // (there's only ever one beetle)
+      }
     }
   }
+
+  // ------------------------------------------------------------- weather
+
+  // Spells of weather, one after another with clear spells between: sun
+  // (golden hour), wind (gusts knock apples loose), rain (mushrooms sprout,
+  // fires go out; a rainbow when it stops, with a golden apple at its end)
+  // and storms (lightning, which crackles where it'll strike first, never
+  // near a head, and sets the bark alight). Everyone sees all of it.
+  function weather(game) {
+    const w = game.weather;
+    // (Once the woodpecker is here, the sky clears and stays clear.)
+    if (game.time >= w.until || (suddenDeath(game) && w.kind !== 'clear')) {
+      let next = 'clear';
+      if (suddenDeath(game)) next = 'clear';
+      else if (w.kind === 'clear') next = spell(game);
+      else if (w.kind === 'storm' && Math.random() < T.AFTER_STORM_RAIN) next = 'rain';
+      else if (w.kind === 'rain' && Math.random() < T.RAINBOW_CHANCE) rainbow(game);
+      const span = next === 'clear' ? between(T.CLEAR_MIN_MS, T.CLEAR_MAX_MS) : between(T.SPELL_MIN_MS, T.SPELL_MAX_MS);
+      if (next !== w.kind) game.events.push({ type: 'weather', kind: next });
+      game.weather = { kind: next, since: next === w.kind ? w.since : game.time, until: game.time + span, nextGust: game.time + 600, nextStrike: game.time + between(1200, 2500) };
+    }
+    const now = game.weather;
+    if (now.kind === 'wind' && game.time >= now.nextGust) {
+      now.nextGust = game.time + T.GUST_EVERY_MS;
+      let apples = 0;
+      for (const f of game.food) if (f.kind === 'food') apples++;
+      const fell = apples < T.APPLES + T.WINDFALL_MAX ? placer(game)({ kind: 'food' }) : null;
+      game.events.push({ type: 'gust', x: fell ? fell.x : -1, y: fell ? fell.y : -1 });
+    }
+    if (now.kind === 'storm' && game.time >= now.nextStrike) {
+      now.nextStrike = game.time + between(T.STRIKE_MIN_MS, T.STRIKE_MAX_MS);
+      strike(game);
+    }
+    burn(game);
+  }
+
+  function spell(game) {
+    const odds = Object.entries(T.WEATHER_ODDS).filter(([k]) => k !== 'storm' || game.time >= T.STORM_FROM_MS);
+    let roll = Math.random() * odds.reduce((a, [, n]) => a + n, 0);
+    for (const [k, n] of odds) if ((roll -= n) < 0) return k;
+    return 'clear';
+  }
+
+  // After the rain: a rainbow, and a golden apple at its end (if there isn't one).
+  function rainbow(game) {
+    if (game.food.some(f => f.kind === 'golden')) return;
+    const at = placer(game)({ kind: 'golden', expires: game.tick + T.GOLDEN_TICKS }, true);
+    if (at) game.events.push({ type: 'rainbow', x: at.x, y: at.y });
+  }
+
+  // Lightning picks a free cell well away from every head, and crackles there
+  // for a moment before it strikes.
+  function strike(game) {
+    markBodies(game);
+    for (const f of game.food) bodyStamp[key(f.x, f.y)] = stamp;
+    const spots = [];
+    for (let k = 0; k < CELLS; k++) {
+      const x = k % GRID, y = Math.floor(k / GRID);
+      if (bodyStamp[k] === stamp || game.holes.has(k) || game.fires.has(k) || burrowAt(game, x, y)) continue;
+      if (headGap(game, x, y) <= T.STRIKE_CLEARANCE) continue;
+      spots.push(k);
+    }
+    if (!spots.length) return;
+    const k = spots[Math.floor(Math.random() * spots.length)], from = game.tick + T.STRIKE_WARN_TICKS;
+    const group = ++game.fireGroup;
+    game.fires.set(k, { from, until: from + T.FIRE_TICKS, group, strike: true });
+    game.fireGroups.set(group, 1);
+    game.events.push({ type: 'charge', x: k % GRID, y: Math.floor(k / GRID) });
+  }
+
+  // Fire: a strike lands when its crackling's done, burning cells now and then
+  // catch a neighbour (smouldering first, so everyone sees it coming), and
+  // cells burn out. Rain puts it all out. (Times are ticks: the next tick is
+  // game.tick + 1, when anything that's burning by then can kill.)
+  function burn(game) {
+    if (!game.fires.size) return;
+    const next = game.tick + 1, raining = game.weather.kind === 'rain';
+    let marked = false;
+    for (const [k, f] of game.fires) {
+      if (raining) f.until = Math.min(f.until, Math.max(f.from, next) + T.RAIN_DOUSE_TICKS);
+      if (f.until <= next) { // burnt out
+        game.fires.delete(k);
+        const left = (game.fireGroups.get(f.group) || 1) - 1;
+        if (left > 0) game.fireGroups.set(f.group, left); else game.fireGroups.delete(f.group);
+        continue;
+      }
+      if (f.strike && f.from === next) game.events.push({ type: 'strike', x: k % GRID, y: Math.floor(k / GRID) });
+      if (raining || game.tick < f.from || Math.random() >= T.FIRE_SPREAD || (game.fireGroups.get(f.group) || 0) >= T.FIRE_MAX || game.fires.size >= T.FIRE_BOARD_MAX) continue;
+      if (!marked) {
+        markBodies(game);
+        for (const fo of game.food) bodyStamp[key(fo.x, fo.y)] = stamp;
+        marked = true;
+      }
+      const x = k % GRID, y = Math.floor(k / GRID);
+      const d = CRAWL[Math.floor(Math.random() * 4)], nx = x + d.x, ny = y + d.y, nk = key(nx, ny);
+      if (!inside(nx, ny) || bodyStamp[nk] === stamp || game.holes.has(nk) || game.fires.has(nk) || burrowAt(game, nx, ny)) continue;
+      const from = next + T.FIRE_SMOLDER_TICKS;
+      game.fires.set(nk, { from, until: from + T.FIRE_TICKS, group: f.group, strike: false });
+      game.fireGroups.set(f.group, (game.fireGroups.get(f.group) || 0) + 1);
+    }
+  }
+  // Is cell k burning on this tick (and so deadly)?
+  const burning = (game, k) => { const f = game.fires.get(k); return !!f && game.tick >= f.from && game.tick < f.until; };
 
   // Sudden death: peck the next free cell, outermost ring first. Never under a
   // body or food, and never within PECK_CLEARANCE cells of a head, so a hole
@@ -225,6 +414,7 @@ window.SnakeEngine = (() => {
       const k = key(c.x, c.y);
       if (game.holes.has(k) || bodyStamp[k] === stamp || nearHead(game, c)) continue;
       game.holes.add(k);
+      game.burrows = game.burrows.filter(b => key(b.x, b.y) !== k); // (a burrow pecked open is a hole now)
       if (!game.woodpecker) game.events.push({ type: 'woodpecker' });
       game.events.push({ type: 'peck', x: c.x, y: c.y });
       game.woodpecker = { x: c.x, y: c.y, at: game.time };
@@ -247,8 +437,24 @@ window.SnakeEngine = (() => {
       })),
       food: game.food.map(f => ({ ...f })),
       holes: game.holes.size,
+      fires: game.fires.size ? [...game.fires.keys()] : NO_FIRES, // (crackling, smouldering or burning: keep out)
     });
     if (game.history.length > T.HISTORY) game.history.shift();
+  }
+
+  const NO_FIRES = [];
+
+  // What an AI must keep out of in a snapshot: its holes and any fire (as
+  // walls). Worked out once per snapshot, shared by every AI.
+  function blockedSeen(game, snap) {
+    const holes = holesSeen(game, snap.holes);
+    if (!snap.fires.length) return holes;
+    if (snap.blocked?.n !== holes.size) {
+      const set = new Set(holes);
+      for (const k of snap.fires) set.add(k);
+      snap.blocked = { n: holes.size, set };
+    }
+    return snap.blocked.set;
   }
 
   // The holes as they were in a snapshot (the first `n` pecked; a Set keeps
@@ -263,8 +469,8 @@ window.SnakeEngine = (() => {
     return game.holesView.set;
   }
 
-  // What an AI "sees": its own body now, everything else (holes included) as
-  // of its reaction time ago, like a person would. Rivals are just ids and
+  // What an AI "sees": its own body now, everything else (holes and fire
+  // included) as of its reaction time ago, like a person would. Rivals are just ids and
   // bodies; nothing says which one is human.
   function aiView(game, snake) {
     const delay = Math.max(1, Math.round(T.REACTION_MS / tickMs(game)));
@@ -275,7 +481,7 @@ window.SnakeEngine = (() => {
       me: { id: snake.id, body: snake.body, dir: snake.dir, grow: snake.grow, hungerLeft: hungerLeft(game, snake) },
       others: snap.snakes.filter(o => o.id !== snake.id),
       food: snap.food,
-      holes: holesSeen(game, snap.holes),
+      holes: blockedSeen(game, snap),
       age: game.history.length - 1 - idx,
       tick: game.tick,
       timeMs: game.time,
@@ -298,8 +504,11 @@ window.SnakeEngine = (() => {
 
   // Advance one tick. All snakes move at the same time. Returns the snakes that died.
   // game.events lists what happened this tick, for the chatter, sounds and banners:
-  // { type: 'eat', snake, kind } | { type: 'death', snake } | { type: 'spawn', kind }
+  // { type: 'eat', snake, kind } | { type: 'death', snake } | { type: 'spawn', kind, x, y }
   // | { type: 'starving', snake } | { type: 'woodpecker' } | { type: 'peck', x, y } | { type: 'flown', x, y } (a beetle got away)
+  // | { type: 'burrow', x, y } (one cracked open) | { type: 'dive', x, y } | { type: 'emerge', x, y } (a beetle went down one, came out of one)
+  // | { type: 'weather', kind } | { type: 'gust', x, y } (x -1 if no apple fell) | { type: 'charge', x, y } (lightning on its way)
+  // | { type: 'strike', x, y } | { type: 'rainbow', x, y } (and a golden apple there)
   function step(game) {
     game.events = [];
 
@@ -347,7 +556,7 @@ window.SnakeEngine = (() => {
       headCount[k]++;
     }
 
-    // killer: 'wall' (walls and holes), 'self', 'hunger', or the name of the
+    // killer: 'wall' (walls and holes), 'self', 'hunger', 'fire', or the name of the
     // snake that was hit (killerId: its id). Causes use names; the game turns
     // the name of whoever is watching into "you".
     for (const s of alive) {
@@ -357,6 +566,8 @@ window.SnakeEngine = (() => {
         s.cause = 'hit the wall'; s.killer = 'wall';
       } else if (game.holes.has(k)) {
         s.cause = 'fell into a woodpecker hole'; s.killer = 'wall';
+      } else if (burning(game, k)) {
+        s.cause = 'crawled into the fire'; s.killer = 'fire';
       } else if (bodyStamp[k] === stamp) {
         const other = game.snakes[bodyOwner[k]];
         // Two heads swapping cells met head-on, just as if they'd met in one.
@@ -385,7 +596,7 @@ window.SnakeEngine = (() => {
       dying.push(s);
     }
 
-    // Dead snakes turn into meat (never on food, living bodies or holes).
+    // Dead snakes turn into meat (never on food, living bodies, holes or fire).
     if (dying.length) {
       markBodies(game);
       for (const f of game.food) bodyStamp[key(f.x, f.y)] = stamp;
@@ -394,7 +605,7 @@ window.SnakeEngine = (() => {
         game.events.push({ type: 'death', snake: s });
         for (const c of s.body) {
           const k = key(c.x, c.y);
-          if (bodyStamp[k] === stamp || game.holes.has(k)) continue;
+          if (bodyStamp[k] === stamp || game.holes.has(k) || game.fires.has(k)) continue;
           bodyStamp[k] = stamp;
           game.food.push({ x: c.x, y: c.y, kind: 'pellet', color: s.color });
         }
@@ -404,6 +615,7 @@ window.SnakeEngine = (() => {
     crawl(game);
     peck(game);
     fillFood(game);
+    weather(game);
     game.time += tickMs(game);
     game.tick++;
     snapshot(game);
@@ -439,7 +651,7 @@ window.SnakeEngine = (() => {
   }
 
   return {
-    GRID, PLAYER_COLOR, PERSONAS, DIRS,
+    GRID, PLAYER_COLOR, PERSONAS, DIRS, WEATHER,
     createGame, step, tickMs, hungerLeft, aiView, canThinkAhead, thinkAhead, suddenDeath,
   };
 })();

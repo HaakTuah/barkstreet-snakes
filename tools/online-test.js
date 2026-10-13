@@ -67,6 +67,9 @@ for (let r = 0; r < rounds; r++) {
     same(r, k, 'food', food(host), food(guest));
     same(r, k, 'holes', [...host.holes], [...guest.holes]);
     same(r, k, 'woodpecker', host.woodpecker, guest.woodpecker);
+    same(r, k, 'burrows', host.burrows, guest.burrows);
+    same(r, k, 'fire', [...host.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group]), [...guest.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group]));
+    same(r, k, 'weather', [host.weather.kind, host.weather.since, host.weather.until], [guest.weather.kind, guest.weather.since, guest.weather.until]);
     same(r, k, 'deaths', dyingHost.map(s => [s.id, s.cause, s.killer, s.killerId]), dyingGuest.map(s => [s.id, s.cause, s.killer, s.killerId]));
     same(r, k, 'events', host.events.map(e => [e.type, e.snake?.id, e.kind, e.x, e.y]), guest.events.map(e => [e.type, e.snake?.id, e.kind, e.x, e.y]));
     const look = g => g.snakes.map(s => ['home', 'colonies', 'mood', 'moodChangedAt', 'modelId'].map(f => s.memory[f] ?? null));
