@@ -43,13 +43,13 @@
       <!-- Light running along the wood now and then, and a glow round the edge for the big moments. -->
       <div class="frame-sheen" aria-hidden="true"></div>
       <div id="frame-glow" class="frame-glow" aria-hidden="true"></div>
-      <!-- Moss creeping over the log's edges. -->
+      <!-- Moss creeping over the frame's edges. -->
       <svg class="moss top" style="left: 9%; width: 22%;" viewBox="0 0 120 16" preserveAspectRatio="none" aria-hidden="true"><use href="#mossy"/></svg>
       <svg class="moss top" style="left: 46%; width: 14%;" viewBox="0 0 120 16" preserveAspectRatio="none" aria-hidden="true"><use href="#mossy"/></svg>
       <svg class="moss top" style="left: 70%; width: 18%;" viewBox="0 0 120 16" preserveAspectRatio="none" aria-hidden="true"><use href="#mossy"/></svg>
       <svg class="moss bottom" style="left: 18%; width: 26%;" viewBox="0 0 120 16" preserveAspectRatio="none" aria-hidden="true"><use href="#mossy"/></svg>
       <svg class="moss bottom" style="left: 60%; width: 20%;" viewBox="0 0 120 16" preserveAspectRatio="none" aria-hidden="true"><use href="#mossy"/></svg>
-      <!-- Ferns and leaves at the log's corners (swaying); they never cover the bark. -->
+      <!-- Leaves resting on the frame's corners (swaying); they never cover the bark. -->
       <svg class="leaves tl" viewBox="0 0 80 80" aria-hidden="true"><use href="#leafy"/></svg>
       <svg class="leaves tr" viewBox="0 0 80 80" aria-hidden="true"><use href="#leafy"/></svg>
       <svg class="leaves bl" viewBox="0 0 80 80" aria-hidden="true"><use href="#leafy"/></svg>
@@ -138,11 +138,14 @@
 
   <!-- One leaf cluster, reused on all four corners. -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <!-- A strip of moss: soft green bumps, lighter tips. -->
+    <!-- A strip of moss, the log's own moss: dark olive tufts, each lit on its upper left, fine fuzz, a spore stalk or two. -->
     <symbol id="mossy" viewBox="0 0 120 16">
-      <path d="M0 16 C2 8 8 6 12 10 C14 3 22 2 26 8 C29 4 36 4 39 9 C42 2 52 1 55 8 C58 4 64 5 67 9 C70 3 79 2 82 8 C86 4 92 5 95 9 C99 2 108 3 110 9 C113 6 118 8 120 16 Z" fill="#3f6212"/>
-      <path d="M2 16 C5 11 9 10 12 13 C16 7 22 7 25 12 C30 8 35 9 38 13 C43 7 50 7 54 12 C58 9 63 10 66 13 C71 7 78 7 81 12 C86 9 91 10 94 13 C99 7 106 8 109 12 C112 10 116 11 118 16 Z" fill="#55782a"/>
-      <g fill="#84a94a"><circle cx="13" cy="9" r="1.4"/><circle cx="27" cy="7" r="1.2"/><circle cx="54" cy="6" r="1.5"/><circle cx="68" cy="8" r="1.2"/><circle cx="83" cy="7" r="1.4"/><circle cx="109" cy="8" r="1.2"/></g>
+      <path d="M0 16 C2 8 8 6 12 10 C14 3 22 2 26 8 C29 4 36 4 39 9 C42 2 52 1 55 8 C58 4 64 5 67 9 C70 3 79 2 82 8 C86 4 92 5 95 9 C99 2 108 3 110 9 C113 6 118 8 120 16 Z" fill="#344f1b"/>
+      <g fill="#4f6a2a"><ellipse cx="11" cy="9.5" rx="4" ry="2.6"/><ellipse cx="24" cy="6.5" rx="4.5" ry="2.8"/><ellipse cx="38" cy="8" rx="3.5" ry="2.4"/><ellipse cx="52" cy="5.5" rx="5" ry="3"/><ellipse cx="66" cy="8" rx="3.8" ry="2.4"/><ellipse cx="80" cy="6" rx="4.6" ry="2.8"/><ellipse cx="94" cy="8.5" rx="3.6" ry="2.4"/><ellipse cx="107" cy="6.5" rx="4.4" ry="2.8"/></g>
+      <g fill="#7e9a4c" opacity="0.8"><circle cx="9" cy="8.6" r="1.1"/><circle cx="22" cy="5.4" r="1.2"/><circle cx="50" cy="4.4" r="1.3"/><circle cx="64" cy="7" r="1"/><circle cx="78" cy="5" r="1.2"/><circle cx="105" cy="5.6" r="1.1"/></g>
+      <g fill="#1f3210" opacity="0.6"><circle cx="16" cy="12" r="0.8"/><circle cx="31" cy="11" r="0.7"/><circle cx="45" cy="12.5" r="0.8"/><circle cx="59" cy="11" r="0.7"/><circle cx="73" cy="12" r="0.8"/><circle cx="88" cy="11.5" r="0.7"/><circle cx="101" cy="12" r="0.8"/></g>
+      <g stroke="#7a4620" stroke-width="0.7"><path d="M30 6 L31 2.6"/><path d="M86 5 L84.5 2.2"/></g>
+      <g fill="#93522a"><ellipse cx="31" cy="2.2" rx="0.8" ry="1.2"/><ellipse cx="84.5" cy="1.8" rx="0.8" ry="1.2"/></g>
     </symbol>
     <symbol id="leafy" viewBox="0 0 80 80">
       <path d="M4 4c22 2 40 10 52 24C40 30 20 22 4 4z" fill="#4d7c0f"/>

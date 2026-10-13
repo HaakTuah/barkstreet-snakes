@@ -13,6 +13,8 @@ window.SnakeChatter = (() => {
       golden: ['Bonus collected.'],
       caught: ['Moving target. Still a headshot.'],
       weather: { wind: ['Adjusting for wind.'], storm: ['Thunder masks the shot.'], snow: ['Cold barrel. Steady hands.'] },
+      woodpecker: ['Air support. Not mine.'],
+      rainbow: ['Target marked: the end of the rainbow.'],
       dies: ['Counter-sniped by {who}?', 'Should have relocated.', 'Impossible.'],
     },
     gobbler: {
@@ -27,6 +29,8 @@ window.SnakeChatter = (() => {
       mushroom: ['Ugh, mushrooms. Gross.', 'I feel… smaller. I hate it.'],
       kill: ['Sorry, {who}. You were between me and lunch.', 'Oops. Is that meat?'],
       weather: { wind: ['It’s raining apples! Best day ever!'], rain: ['Mushroom weather. Yuck.'], sun: ['Golden hour? Golden SNACKS!'], snow: ['Winter? But what will I EAT?'] },
+      woodpecker: ['Is it eating the log? Save me some!'],
+      rainbow: ['A rainbow! Does the gold taste good?'],
       dies: ['Tell my apples… I loved them.'],
     },
     ghost: {
@@ -36,6 +40,8 @@ window.SnakeChatter = (() => {
       mushroom: ['smaller… better…'],
       kill: ['…sorry.'],
       weather: { storm: ['…boom.'], rain: ['…drip.'], snow: ['…brr.'] },
+      woodpecker: ['…tap… tap…'],
+      rainbow: ['…pretty.'],
       dies: ['…'],
     },
     sovereign: {
@@ -45,16 +51,21 @@ window.SnakeChatter = (() => {
       intruder: ['Trespasser! Guards! …We are the guards.', '{who}, you stand on royal bark!', 'Off our land, {who}!'],
       kill: ['Justice is served.', 'The Crown is merciful. Usually.'],
       weather: { sun: ['The sun shines on our realm.'], storm: ['We do not approve of this weather.'], rain: ['Fetch the royal umbrella.'], snow: ['Fetch the royal furs.'] },
+      woodpecker: ['Who invited that bird?', 'We did not authorise this pecking.'],
+      rainbow: ['The heavens salute us.'],
+      realm: { grow: ['Our realm expands!', 'A greater sovereign needs a greater realm.', 'Behold: more kingdom.'], shrink: ['Our realm… contracts. Temporarily.', 'A strategic retreat. A royal one.'], move: ['The court relocates.', 'We have moved to better lands.'] },
       dies: ['The king is dead…', 'Long live… someone else.'],
     },
     colonist: {
       hungry: ["I say, is there nothing to eat out here?"],
       start: ['Splendid day for an expedition!', 'Tally ho!'],
       idle: ['I say!', 'Jolly good.', 'Anyone for tea?', 'Rule, Britannia!'],
-      flag: ['I claim this bark for the Crown!', 'Another colony! Splendid.', 'Mine now. Terribly sorry.'],
+      flag: ['I claim this bark for the Crown!', 'Another colony! Splendid.', 'Mine now. Terribly sorry.', 'Run up the ensign!', 'Another ensign for the Empire!'],
       intruder: ['Ahem. That’s a colony, {who}.', 'I say, that patch is spoken for.'],
       kill: ['Frightfully sorry, old chap.', 'Should have read the flag, {who}.'],
       weather: { rain: ['Ah, proper weather at last.', 'Rain? Just like home.'], storm: ['Batten down the hatches!'], sun: ['The sun never sets on us, you know.'], snow: ['Bracing! Simply bracing.'] },
+      woodpecker: ['A woodpecker! Someone fetch my musket. Politely.'],
+      rainbow: ['A rainbow! Plant a flag at the end of it!'],
       dies: ['Stiff upper lip…'],
     },
     drab: {
@@ -65,6 +76,7 @@ window.SnakeChatter = (() => {
       woodpecker: ['Oh. A bird.'],
       kill: ['Oh. Sorry, {who}.'],
       weather: { rain: ['Rain. Great.'], sun: ['It’s sunny.'], wind: ['Windy.'], storm: ['Loud.'], snow: ['Cold.'] },
+      rainbow: ['A rainbow. Colourful.'],
       dies: ['Well. That happened.'],
     },
     vulture: {
@@ -74,6 +86,8 @@ window.SnakeChatter = (() => {
       death: ['Dinner!', 'Ooh, leftovers.', 'Rest in pieces, {who}.'],
       kill: ['I didn’t even have to try.'],
       weather: { storm: ['Lightning. Something’s bound to cook.'], rain: ['Grim weather. Lovely.'], snow: ['Winter. The lean season. My season.'] },
+      woodpecker: ['Ah. A colleague.'],
+      rainbow: ['Pretty. Someone will die chasing it.'],
       dies: ['Who’s… eating… whom…'],
     },
     mason: {
@@ -86,6 +100,7 @@ window.SnakeChatter = (() => {
       woodpecker: ['Picus horribilis!'],
       caught: ['Scarabaeus captus!'],
       weather: { storm: ['Iuppiter iratus est!'], rain: ['Pluvia! Aquaeductus, ubi es?'], sun: ['Sol invictus!'], wind: ['Ventus maximus!'], snow: ['Hiems venit!'] },
+      rainbow: ['Arcus caelestis!'],
       dies: ['Et tu, {who}?', 'Alea iacta… estus.', 'Murus… meus… finis.'],
     },
     wildcard: {
@@ -98,6 +113,8 @@ window.SnakeChatter = (() => {
       mushroom: ['Fake food! Very unfair!'],
       kill: ['You’re fired, {who}!', 'Winning! So much winning.'],
       weather: { sun: ['Beautiful weather. The best weather. Everyone says so.'], storm: ['Nobody knows more about lightning than me.'], wind: ['Tremendous wind. So many apples.'], rain: ['Fake rain!'], snow: ['Global warming? Total hoax. Look at all this snow!'] },
+      woodpecker: ['That bird is a disaster. Total disaster.'],
+      rainbow: ['Rainbows. Overrated. Great gold, though.'],
       dies: ['Rigged! Totally rigged!'],
     },
     creeper: {
@@ -106,6 +123,8 @@ window.SnakeChatter = (() => {
       idle: ['behind you.', 'don’t turn around, {who}.', 'hehehe.', 'nice tail, {who}.'],
       kill: ['hehe. gotcha.'],
       weather: { storm: ['hehe. flickery.'], rain: ['drip drip.'], snow: ['cold tail. still following.'] },
+      woodpecker: ['pecky pecky. hehe.'],
+      rainbow: ['shiny…'],
       dies: ['…aww.'],
     },
     metagamer: {
@@ -114,6 +133,8 @@ window.SnakeChatter = (() => {
       idle: ['{who}: {label}. Noted.', 'Predictable.', 'Your eat rate is suboptimal, {who}.', 'Running the numbers…'],
       kill: ['As calculated.', 'Exactly as the model predicted.'],
       weather: { storm: ['Strike probability: rising.'], rain: ['Mushroom density: up.'], sun: ['Golden apple odds: favourable.'], wind: ['Apple supply: increasing.'], snow: ['Food supply: down. Hunger rate: up.'] },
+      woodpecker: ['Map shrink phase: started.'],
+      rainbow: ['Golden apple confirmed at the rainbow’s end.'],
       dies: ['That… wasn’t in the data.'],
     },
     capricious: {
@@ -128,6 +149,8 @@ window.SnakeChatter = (() => {
       },
       kill: ['Didn’t plan that. Love it.'],
       weather: { sun: ['Sunshine! I love sunshine! Today.'], rain: ['Rain! I love rain! For now.'], storm: ['Storms are exciting! Or scary? Both!'], wind: ['Whee!'], snow: ['Snow! I love snow! For a bit.'] },
+      woodpecker: ['A bird! I love birds! Not this one.'],
+      rainbow: ['A rainbow! Every colour! I can’t choose!'],
       dies: ['Changed my mind about living.'],
     },
     copycat: {
@@ -135,6 +158,8 @@ window.SnakeChatter = (() => {
       idle: ['为人民服务！', '团结就是力量！', '同志们，冲啊！', '五年计划，提前完成！'],
       kill: ['向前进！'],
       weather: { storm: ['雷电交加，同志们小心！'], rain: ['下雨了，同志们！'], snow: ['下雪了，同志们，节约粮食！'] },
+      woodpecker: ['啄木鸟来了，同志们！'],
+      rainbow: ['彩虹！同志们，金苹果！'],
       dies: ['同志们，再见……'],
     },
     desperado: {
@@ -147,6 +172,7 @@ window.SnakeChatter = (() => {
       beetle: ['Yeehaw, a critter hunt!'],
       caught: ['Lassoed it.'],
       weather: { storm: ['Lightning? Now we’re talking!', 'Fire on the bark! Yeehaw!'], wind: ['Hold onto your hat!'], rain: ['Rain on the range.'], snow: ['Cold enough to freeze a cactus.'] },
+      rainbow: ['Race you to the gold, partner!'],
       dies: ['What a ride…', 'Worth it.'],
     },
     mute: {
@@ -155,6 +181,8 @@ window.SnakeChatter = (() => {
       kill: ['*mimes closing a lid on {who}*', '*plays a tiny invisible violin*'],
       caught: ['*mimes a very big beetle*'],
       weather: { rain: ['*opens an invisible umbrella*'], storm: ['*hides under an invisible table*'], wind: ['*leans into the wind*'], sun: ['*puts on invisible sunglasses*'], snow: ['*shivers, silently*'] },
+      woodpecker: ['*covers its ears*'],
+      rainbow: ['*hugs the rainbow*', '*paints the rainbow a little brighter*'],
       dies: ['*mimes being squashed*', '*…*'],
     },
     joker: {
@@ -164,6 +192,8 @@ window.SnakeChatter = (() => {
       kill: ['And for my next trick…', 'The joke’s on you, {who}!'],
       mushroom: ['Ooh, a funny mushroom!'],
       weather: { rain: ['Singin’ in the rain!'], storm: ['Shocking!'], wind: ['Blow, wind, blow!'], sun: ['Sun’s out, puns out!'], snow: ['Snow joke!'] },
+      woodpecker: ['Knock knock! Oh. It’s the woodpecker.'],
+      rainbow: ['Somewhere over the… oh, there it is.'],
       dies: ['Tough crowd…'],
     },
   };
@@ -454,7 +484,45 @@ window.SnakeChatter = (() => {
     "And for my next trick…": "下一个戏法……",
     "The joke’s on you, {who}!": "你才是笑话，{who}！",
     "Ooh, a funny mushroom!": "哦，好玩的蘑菇！",
-    "Tough crowd…": "观众真难搞……"
+    "Tough crowd…": "观众真难搞……",
+    "Air support. Not mine.": "空中支援。不是我的。",
+    "Target marked: the end of the rainbow.": "目标已标记：彩虹的尽头。",
+    "Is it eating the log? Save me some!": "它在吃木头吗？给我留点！",
+    "A rainbow! Does the gold taste good?": "彩虹！那金子好吃吗？",
+    "…tap… tap…": "……嗒……嗒……",
+    "…pretty.": "……真美。",
+    "Who invited that bird?": "谁请了那只鸟？",
+    "We did not authorise this pecking.": "朕没有批准这种啄法。",
+    "The heavens salute us.": "上天在向朕致敬。",
+    "Our realm expands!": "朕的疆土扩张了！",
+    "A greater sovereign needs a greater realm.": "更伟大的君主需要更辽阔的疆土。",
+    "Behold: more kingdom.": "看哪：更多的王国。",
+    "Our realm… contracts. Temporarily.": "朕的疆土……缩小了。暂时的。",
+    "A strategic retreat. A royal one.": "战略撤退。皇家的那种。",
+    "The court relocates.": "朝廷迁都。",
+    "We have moved to better lands.": "朕已迁往更好的土地。",
+    "A woodpecker! Someone fetch my musket. Politely.": "啄木鸟！谁去拿我的火枪。客气点。",
+    "A rainbow! Plant a flag at the end of it!": "彩虹！在它的尽头插上旗子！",
+    "Run up the ensign!": "升起船旗！",
+    "Another ensign for the Empire!": "帝国又多了一面旗！",
+    "A rainbow. Colourful.": "彩虹。挺多颜色的。",
+    "Ah. A colleague.": "啊。同行。",
+    "Pretty. Someone will die chasing it.": "真漂亮。总有人会追着它送命。",
+    "Arcus caelestis!": "天上的拱门！",
+    "That bird is a disaster. Total disaster.": "那只鸟是个灾难。彻头彻尾的灾难。",
+    "Rainbows. Overrated. Great gold, though.": "彩虹。被高估了。不过金子很棒。",
+    "pecky pecky. hehe.": "啄啄啄。嘿嘿。",
+    "shiny…": "亮晶晶……",
+    "Map shrink phase: started.": "地图缩小阶段：开始。",
+    "Golden apple confirmed at the rainbow’s end.": "已确认：彩虹尽头有金苹果。",
+    "A bird! I love birds! Not this one.": "一只鸟！我爱鸟！不爱这只。",
+    "A rainbow! Every colour! I can’t choose!": "彩虹！每种颜色！我选不出来！",
+    "Race you to the gold, partner!": "比比谁先拿到金子，伙计！",
+    "*covers its ears*": "*捂住耳朵*",
+    "*hugs the rainbow*": "*抱住彩虹*",
+    "*paints the rainbow a little brighter*": "*把彩虹涂得更亮一点*",
+    "Knock knock! Oh. It’s the woodpecker.": "咚咚！哦。是啄木鸟。",
+    "Somewhere over the… oh, there it is.": "在彩虹之上的某处……哦，就在这儿。",
   };
 
   const SNAKE_GAP = 4500;  // ms of game time between lines from the same snake
@@ -710,6 +778,9 @@ window.SnakeChatter = (() => {
         if (e.type === 'strike') struck = true; else struck = false;
         const s = pick(alive.filter(a => VOICES[a.personaKey]?.weather?.[kind]));
         if (s) say(s, `weather.${kind}`, null, true);
+      } else if (e.type === 'rainbow') {
+        const s = pick(alive.filter(a => VOICES[a.personaKey]?.rainbow));
+        if (s) say(s, 'rainbow', null, true);
       } else if (e.type === 'woodpecker') {
         const s = pick(alive);
         if (s) { lastSaid[s.id] = -Infinity; say(s, VOICES[s.personaKey].woodpecker ? 'woodpecker' : 'idle', anyone(s), true); }
@@ -723,6 +794,12 @@ window.SnakeChatter = (() => {
         say(s, 'intruder', game.snakes.find(o => o.id === m.victimId));
       }
       if ((m.planted || 0) > (was.planted || 0)) say(s, 'flag');
+      // Sovereign's realm grew, shrank or moved.
+      if (m.home && was.realm) {
+        if (m.home.radius !== was.realm.radius) say(s, m.home.radius > was.realm.radius ? 'realm.grow' : 'realm.shrink', null, true);
+        else if (m.home.x !== was.realm.x || m.home.y !== was.realm.y) say(s, 'realm.move');
+      }
+      was.realm = m.home && { x: m.home.x, y: m.home.y, radius: m.home.radius };
       if (m.moodChangedAt != null && m.moodChangedAt !== was.mood && m.mood) say(s, `mood.${m.mood}`, null, true);
       was.victimId = m.victimId;
       was.planted = m.planted || 0;

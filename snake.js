@@ -64,11 +64,13 @@
       snow: ['Winter! Less food, and you’ll get hungry faster.', 'Snow on the bark. Lean times: eat while you can.'],
     },
     strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
-    rainbow: ['A rainbow! Something golden at its end…', 'After the rain, a rainbow. And gold.'],
+    rainbow: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Follow it to the gold.'],
     burrow: ['A beetle burrow just cracked open.', 'Something’s been digging under the bark.'],
     win: ['King of the log.', 'Last snake wriggling.', 'You outlasted them all.', 'The whole log is yours. For now.'],
     draw: ['Nobody made it out.', 'Everyone loses. How fair.', 'A dead heat. Emphasis on dead.'],
-    golden: ['A golden apple! Everyone pretends not to have seen it.', 'Something shiny just grew on the bark.'],
+    golden: ['A golden apple! Everyone pretends not to have seen it.', 'Something shiny just dropped onto the log.'],
+    // The first time in a round you cross into a rival's force field.
+    field: { home: name => `You’re in ${name}’s realm now. It noticed.`, colony: name => `That’s one of ${name}’s colonies. It noticed.` },
     woodpecker: ['The woodpecker is here, pecking in from the edges.', 'Rat-a-tat. The woodpecker has arrived.'],
     youGolden: ['Golden! +3.', 'Shiny and delicious. +3.'],
     beetle: ['A beetle is out for a walk. It won’t get far.', 'Something crunchy is crawling about.'],
@@ -601,17 +603,21 @@
       const h = me.body[0];
       for (const o of game.snakes) if (o !== me && o.alive && Math.abs(o.body[0].x - h.x) <= 1 && Math.abs(o.body[0].y - h.y) <= 1) { Audio.play('close', at(o.body[0].x)); break; }
     }
-    // Crossing into a rival's force field (Sovereign's home, a colony): a hum.
+    // Crossing into a rival's force field (Sovereign's home, a colony): a
+    // hum, and the first time in a round, a word on whose it is.
     if (me?.alive) {
       const h = me.body[0];
-      let inside = false;
+      let inside = null;
       for (const o of game.snakes) {
         if (o === me || !o.alive) continue;
-        if (o.memory.home && Math.hypot(h.x - o.memory.home.x, h.y - o.memory.home.y) <= o.memory.home.radius + 1) inside = true;
-        for (const c of o.memory.colonies || []) if (Math.hypot(h.x - c.x, h.y - c.y) <= c.radius + 1) inside = true;
+        if (o.memory.home && Math.hypot(h.x - o.memory.home.x, h.y - o.memory.home.y) <= o.memory.home.radius + 1) inside = { o, home: true };
+        for (const c of o.memory.colonies || []) if (Math.hypot(h.x - c.x, h.y - c.y) <= c.radius + 1) inside ||= { o, home: false };
       }
-      if (inside && !inField) Audio.play('field', at(h.x));
-      inField = inside;
+      if (inside && !inField) {
+        Audio.play('field', at(h.x));
+        if (!game.toldField && state === 'running') { game.toldField = true; toast(FLAVOR.field[inside.home ? 'home' : 'colony'](inside.o.name), 2400, 'warn'); }
+      }
+      inField = !!inside;
     }
     Audio.weather(state === 'running' ? game.weather?.kind : 'none');
   }
