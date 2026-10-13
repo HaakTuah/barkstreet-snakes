@@ -403,7 +403,7 @@ window.SnakeRender = (() => {
   // colours and markings (Wildcard's rainbow, Mason's bricks, Colonist's
   // strap, a friend's spots), so no two snakes leave the same remains. A light
   // rim and a dark edge keep every bead readable on the bark.
-  // variant: 'fill|mark', mark one of '', bricks, strap, strap2, spots, rings, dots, copy, ghost.
+  // variant: 'fill|mark', mark one of '', marble, marble2 (a gold vein), strap, strap2, spots, rings, dots, copy, ghost.
   const beadSprite = v => sprite('bead', v, drawBead);
   const drawBead = (g, v) => {
     const c = CELL, r = c * 0.26, bar = v.indexOf('|'), fill = v.slice(0, bar), mark = v.slice(bar + 1);
@@ -417,10 +417,14 @@ window.SnakeRender = (() => {
     g.lineWidth = c * 0.03;
     g.stroke();
     g.fillStyle = 'rgba(30,41,59,0.6)';
-    if (mark === 'bricks') {
-      g.fillRect(-r, -c * 0.02, 2 * r, c * 0.04);
-      g.fillRect(-r * 0.3, -r * 0.9, c * 0.04, r * 0.9);
-      g.fillRect(r * 0.3, 0, c * 0.04, r * 0.9);
+    if (mark === 'marble' || mark === 'marble2') {
+      g.strokeStyle = mark === 'marble2' ? 'rgba(201,162,39,0.85)' : 'rgba(100,116,139,0.6)';
+      g.lineWidth = c * 0.03;
+      g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(-r * 0.7, -r * 0.45); g.quadraticCurveTo(0, r * 0.1, r * 0.75, -r * 0.2);
+      g.moveTo(-r * 0.15, r * 0.75); g.quadraticCurveTo(r * 0.05, r * 0.35, r * 0.6, r * 0.45);
+      g.stroke();
     } else if (mark === 'strap' || mark === 'strap2') {
       g.strokeStyle = '#fef3c7';
       g.lineWidth = c * 0.07;
@@ -628,6 +632,7 @@ window.SnakeRender = (() => {
   const fx = new Float32Array(MAX_F), fy = new Float32Array(MAX_F), flife = new Float32Array(MAX_F);
   const ftext = new Array(MAX_F).fill('');
   const FLOAT_FONT = `700 ${Math.round(CELL * 0.72)}px Fredoka, system-ui, sans-serif`;
+  const FLOAT_FILL = { 'KO!': '#f87171', 'Bonk!': '#fdba74' }; // (the rest in honey)
   const drawFloat = (g, text) => {
     g.font = FLOAT_FONT;
     g.textAlign = 'center';
@@ -636,12 +641,13 @@ window.SnakeRender = (() => {
     g.lineWidth = CELL * 0.14;
     g.strokeStyle = 'rgba(58,38,20,0.85)';
     g.strokeText(text, 0, 0);
-    g.fillStyle = '#fde68a';
+    g.fillStyle = FLOAT_FILL[text] || '#fde68a';
     g.fillText(text, 0, 0);
   };
   let fNext = 0;
   function floater(x, y, text) {
-    fx[fNext] = x; fy[fNext] = y; flife[fNext] = T.FLOAT_MS; ftext[fNext] = text;
+    const half = CELL * (text.length > 3 ? 1.15 : 0.7); // (kept inside the board, words and all)
+    fx[fNext] = Math.min(SIZE - half, Math.max(half, x)); fy[fNext] = y; flife[fNext] = T.FLOAT_MS; ftext[fNext] = text;
     fNext = (fNext + 1) % MAX_F;
   }
   function drawFloaters(dt) {
@@ -653,7 +659,12 @@ window.SnakeRender = (() => {
       flife[i] -= dt;
       const t = Math.max(0, flife[i] / T.FLOAT_MS);
       const y = fy[i] - (reduced ? 0 : (1 - t) * CELL * 0.8); // rises, unless motion is reduced
-      blitCrisp(sprite('float', ftext[i], drawFloat), fx[i], y, Math.min(1, t * 1.6));
+      const sp = sprite('float', ftext[i], drawFloat);
+      if (reduced || t < 0.86) blitCrisp(sp, fx[i], y, Math.min(1, t * 1.6));
+      else { // ...after popping in, from big
+        const w = SPRITE * CELL * (1 + (t - 0.86) / 0.14 * 0.7);
+        ctx.drawImage(sp, fx[i] - w / 2, y - w / 2, w, w);
+      }
     }
   }
 
@@ -1024,15 +1035,17 @@ window.SnakeRender = (() => {
       }
     }
     if (s.personaKey === 'wildcard' && n > 2) drawTie(a);
-    if (look === 'mason') { // bricks: a mortar line across, the joints staggered
-      ctx.fillStyle = 'rgba(30,41,59,0.6)';
-      for (let i = 1; i < n; i++) {
-        const x = pts[2 * i], y = pts[2 * i + 1], r = rad[i];
-        const off = i % 2 ? -r * 0.35 : r * 0.35;
-        const ch = 0.937 * r; // half-chord of the circle at ±0.35r, so joints end on the edge
-        ctx.fillRect(x - r, y - 0.8, 2 * r, 1.6);
-        ctx.fillRect(x + off - 0.8, y - ch, 1.6, ch - 0.8);
-        ctx.fillRect(x - off - 0.8, y + 0.8, 1.6, ch - 0.8);
+    if (look === 'mason') { // Caesar in marble: grey veins wandering across every segment, now and then a gold one
+      ctx.lineCap = 'round';
+      for (let gold = 0; gold < 2; gold++) {
+        ctx.strokeStyle = gold ? 'rgba(201,162,39,0.75)' : 'rgba(100,116,139,0.55)';
+        ctx.lineWidth = gold ? 1.1 : 1.4;
+        ctx.beginPath();
+        for (let i = 1; i < n; i++) {
+          if (gold !== (i % 4 === 3 ? 1 : 0)) continue;
+          marbleVein(pts[2 * i], pts[2 * i + 1], rad[i], i);
+        }
+        ctx.stroke();
       }
     } else if (look === 'colonist') { // a redcoat's cross-belts: a cream strap zig-zagging down the body
       ctx.strokeStyle = '#fef3c7';
@@ -1107,6 +1120,22 @@ window.SnakeRender = (() => {
     }
   }
   const DASH = [3, 3], NO_DASH = [], MOOD_DASH = [5, 7];
+
+  // Marble veins across a disc (centre x, y, radius r), their own way for
+  // each segment i: a long wandering one and a short faint one beside it,
+  // added to the current path.
+  function marbleVein(x, y, r, i) {
+    const a = i * 2.39996, f = i % 2 ? 1 : -1;
+    const arc = (a0, a1, bend, reach) => {
+      const x0 = x + Math.cos(a0) * r * reach, y0 = y + Math.sin(a0) * r * reach;
+      const x1 = x + Math.cos(a1) * r * reach, y1 = y + Math.sin(a1) * r * reach;
+      const mx = (x0 + x1) / 2 - (y1 - y0) * bend, my = (y0 + y1) / 2 + (x1 - x0) * bend;
+      ctx.moveTo(x0, y0);
+      ctx.quadraticCurveTo(mx, my, x1, y1);
+    };
+    arc(a, a + 2.6, 0.35 * f, 0.85);
+    arc(a + 3.6, a + 4.7, -0.5 * f, 0.7);
+  }
 
   // Wildcard's long red tie: knotted under the chin, down over the collar and
   // on along the body, bending with it.
@@ -1248,7 +1277,7 @@ window.SnakeRender = (() => {
     player: [1, 1, forked], capricious: [1.2, 1, forked],
     creeper: [0.8, 1.5, slither], drab: [1.8, 1.6, limp], gobbler: [0.6, 1.4, lick], ghost: [1.8, 1.8, wisp],
     sniper: [1.2, 1.5, laser], sovereign: [1.6, 2.4, carpet], colonist: [1.4, 2.2, telescope], vulture: [1.6, 3, bone],
-    mason: [1.4, 1.8, trowel], metagamer: [1.4, 1.8, magnifier], wildcard: [1.2, 2, bill], desperado: [1.1, 2, revolver],
+    mason: [1.4, 2.4, papyrus], metagamer: [1.4, 2, keyboard], wildcard: [1.2, 2, bill], desperado: [1.1, 2, revolver],
     joker: [1, 2.2, blower], copycat: [1.2, 1.4, blep],
   };
   let flickP = -1, flickT = 0; // the flick being drawn: how far through it is (or -1), and how far out (0..1..0)
@@ -1439,52 +1468,61 @@ window.SnakeRender = (() => {
     ctx.fill();
   }
 
-  // Mason: a brick trowel with a dab of mortar on it.
-  function trowel(t) {
-    const c = CELL;
-    fromMouth();
-    ctx.translate(-c * 0.52 * (1 - stayOut(t)), 0);
-    ctx.fillStyle = '#92400e'; // the handle
-    ctx.fillRect(c * 0.36, -c * 0.045, c * 0.14, c * 0.09);
-    ctx.fillStyle = '#475569'; // the neck
-    ctx.fillRect(c * 0.5, -c * 0.02, c * 0.06, c * 0.04);
-    ctx.fillStyle = '#cbd5e1'; // the blade
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = c * 0.025;
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(c * 0.54, -c * 0.17); ctx.lineTo(c * 0.98, 0); ctx.lineTo(c * 0.54, c * 0.17);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = '#f1f5f9'; // a shine...
-    ctx.beginPath();
-    ctx.moveTo(c * 0.58, -c * 0.12); ctx.lineTo(c * 0.86, -c * 0.03); ctx.lineTo(c * 0.58, -c * 0.06);
-    ctx.fill();
-    ctx.fillStyle = '#a8a29e'; // ...and a dab of mortar
-    circle(c * 0.66, c * 0.05, c * 0.055);
-  }
-
-  // Metagamer: a magnifying glass, to study you more closely.
-  function magnifier(t) {
-    const c = CELL;
-    fromMouth();
-    ctx.translate(-c * 0.55 * (1 - stayOut(t)), 0);
-    ctx.fillStyle = '#7c2d12'; // the handle
-    ctx.fillRect(c * 0.36, -c * 0.045, c * 0.22, c * 0.09);
-    ctx.fillStyle = '#bae6fd'; // the glass in its rim
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = c * 0.055;
-    ctx.beginPath();
-    ctx.arc(c * 0.76, 0, c * 0.16, 0, TAU);
-    ctx.fill();
-    ctx.stroke();
-    ctx.strokeStyle = '#ffffff'; // a glint
-    ctx.lineWidth = c * 0.035;
+  // Mason: a papyrus scroll, unrolled from the mouth: lines of writing (Latin,
+  // naturally), a wooden rod at each end, and what's still rolled up at the far end.
+  function papyrus(t) {
+    const c = CELL, e = stayOut(t), x0 = 0.4, len = 0.56 * e, x1 = x0 + len, w = 0.17, rr = 0.035 + 0.045 * (1 - e);
+    ctx.fillStyle = '#ecdcae'; // the sheet...
+    ctx.fillRect(c * x0, -c * w, c * len, c * w * 2);
+    ctx.fillStyle = 'rgba(146,110,52,0.35)'; // ...browner along its edges
+    ctx.fillRect(c * x0, -c * w, c * len, c * 0.025);
+    ctx.fillRect(c * x0, c * (w - 0.025), c * len, c * 0.025);
+    ctx.strokeStyle = 'rgba(58,38,20,0.6)'; // the writing
+    ctx.lineWidth = c * 0.02;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.arc(c * 0.76, 0, c * 0.09, Math.PI * 1.05, Math.PI * 1.5);
+    for (let i = 0, x = x0 + 0.07; x < x1 - rr - 0.03; i++, x += 0.065) {
+      ctx.moveTo(c * x, -c * (w - 0.05));
+      ctx.lineTo(c * x, c * (w - 0.05 - (i % 3) * 0.05));
+    }
     ctx.stroke();
+    const roll = (x, rad) => { // a rolled end: the roll, its rod's knobs either side
+      ctx.fillStyle = '#d9c38c';
+      ctx.fillRect(c * (x - rad), -c * (w + 0.015), c * rad * 2, c * (w + 0.015) * 2);
+      ctx.fillStyle = 'rgba(58,38,20,0.25)';
+      ctx.fillRect(c * (x + rad * 0.3), -c * (w + 0.015), c * rad * 0.7, c * (w + 0.015) * 2);
+      ctx.fillStyle = '#7c2d12';
+      circle(c * x, -c * (w + 0.05), c * 0.04);
+      circle(c * x, c * (w + 0.05), c * 0.04);
+    };
+    roll(x0, 0.035);
+    roll(x1, rr);
+  }
+
+  // Metagamer: a keyboard, slid out to type up its notes on you (a key or two
+  // lighting up as it types).
+  function keyboard(t, p) {
+    const c = CELL;
+    fromMouth();
+    ctx.translate(-c * 0.62 * (1 - stayOut(t)), 0);
+    ctx.fillStyle = '#334155';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = c * 0.025;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(c * 0.38, -c * 0.19, c * 0.6, c * 0.38, c * 0.05); else ctx.rect(c * 0.38, -c * 0.19, c * 0.6, c * 0.38);
+    ctx.fill();
+    ctx.stroke();
+    const typing = Math.floor(p * 24); // which keys are down right now
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 7; col++) {
+        if (row === 2 && col > 1 && col < 5) continue; // (the space bar's there)
+        const lit = (col * 7 + row * 3 + typing * 5) % 11 === 0;
+        ctx.fillStyle = lit ? '#22d3ee' : '#e2e8f0';
+        ctx.fillRect(c * (0.42 + col * 0.077), c * (-0.15 + row * 0.105), c * 0.06, c * 0.08);
+      }
+    }
+    ctx.fillStyle = typing % 4 === 1 ? '#22d3ee' : '#e2e8f0';
+    ctx.fillRect(c * (0.42 + 2 * 0.077), c * (-0.15 + 2 * 0.105), c * (3 * 0.077 - 0.017), c * 0.08);
   }
 
   // Wildcard: a dollar bill, slid out like a tip.
@@ -2045,8 +2083,57 @@ window.SnakeRender = (() => {
   }
   const RING_DASH = [8, 6];
 
-  // Colonist's colonies: a dashed ring and a St George flag in each.
-  function drawColonies(s) {
+  // The Union Flag, as flown over the Empire's colonies (a redcoat's flag: St
+  // George's cross for England, St Andrew's saltire for Scotland, St Patrick's,
+  // counterchanged, for Ireland), 5:3, its hoist at the sprite's centre.
+  const UNION_W = 0.95, UNION_H = 0.57;
+  const unionSprite = () => sprite('union', '', drawUnion);
+  const drawUnion = g => {
+    const c = CELL, w = c * UNION_W, h = c * UNION_H, y0 = -h / 2, u = h / 30;
+    g.save();
+    g.beginPath(); g.rect(0, y0, w, h); g.clip();
+    g.fillStyle = '#012169';
+    g.fillRect(0, y0, w, h);
+    const cx = w / 2, cy = 0;
+    g.lineCap = 'butt';
+    g.strokeStyle = '#ffffff';
+    g.lineWidth = 6 * u;
+    g.beginPath(); g.moveTo(0, y0); g.lineTo(w, y0 + h); g.moveTo(w, y0); g.lineTo(0, y0 + h); g.stroke();
+    // St Patrick's: each arm offset to one side of the white (anticlockwise), so it turns like a pinwheel.
+    g.strokeStyle = '#c8102e';
+    g.lineWidth = 2 * u;
+    g.beginPath();
+    for (const [ex, ey] of [[0, y0], [w, y0], [w, y0 + h], [0, y0 + h]]) {
+      const len = Math.hypot(ex - cx, ey - cy), dx = (ex - cx) / len, dy = (ey - cy) / len, nx = dy * u, ny = -dx * u;
+      g.moveTo(cx + nx, cy + ny); g.lineTo(ex + nx, ey + ny);
+    }
+    g.stroke();
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, -5 * u, w, 10 * u);
+    g.fillRect(cx - 5 * u, y0, 10 * u, h);
+    g.fillStyle = '#c8102e';
+    g.fillRect(0, -3 * u, w, 6 * u);
+    g.fillRect(cx - 3 * u, y0, 6 * u, h);
+    g.restore();
+    g.strokeStyle = 'rgba(15,23,42,0.4)';
+    g.lineWidth = 1;
+    g.strokeRect(0, y0, w, h);
+  };
+  // Drawn in vertical strips that ripple from the pole outward, so it flies.
+  const FLAG_STRIPS = 8;
+  function drawFlag(x, top, now, phase) {
+    const sp = unionSprite(), half = SPRITE * CELL / 2, dev = sp.width / (SPRITE * CELL);
+    const w = CELL * UNION_W, h = CELL * UNION_H, sw = w / FLAG_STRIPS;
+    for (let i = 0; i < FLAG_STRIPS; i++) {
+      const out = (i + 0.5) / FLAG_STRIPS;
+      const dy = reduced ? 0 : Math.sin(now / 180 - i * 0.9 + phase) * CELL * 0.05 * out;
+      // (each strip a hair wider than its slot, so no seams show between them)
+      ctx.drawImage(sp, (half + i * sw) * dev, (half - h / 2) * dev, (sw + 0.6) * dev, h * dev, x + i * sw, top + dy, sw + 0.6, h);
+    }
+  }
+
+  // Colonist's colonies: a dashed ring and the Union Flag flying over each.
+  function drawColonies(s, now) {
     for (const c of s.memory.colonies) {
       const x = c.x * CELL + CELL / 2, y = c.y * CELL + CELL / 2;
       ctx.globalAlpha = 0.5;
@@ -2058,13 +2145,10 @@ window.SnakeRender = (() => {
       ctx.globalAlpha = 1;
       ctx.strokeStyle = '#e7d7b1';
       ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(x, y + CELL * 0.6); ctx.lineTo(x, y - CELL * 0.9); ctx.stroke();
-      const w = CELL * 0.9, h = CELL * 0.6, top = y - CELL * 0.9;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(x, top, w, h);
-      ctx.fillStyle = '#dc2626';
-      ctx.fillRect(x + w * 0.4, top, w * 0.2, h);
-      ctx.fillRect(x, top + h * 0.38, w, h * 0.24);
+      ctx.beginPath(); ctx.moveTo(x, y + CELL * 0.6); ctx.lineTo(x, y - CELL * 0.95); ctx.stroke();
+      ctx.fillStyle = '#facc15'; // a gilt finial
+      circle(x, y - CELL * 0.97, 2.6);
+      drawFlag(x + 1.5, y - CELL * 0.92, now, c.x * 0.7 + c.y * 1.3);
     }
   }
 
@@ -2128,7 +2212,7 @@ window.SnakeRender = (() => {
     else if (look === 'desperado' && i === 1) fill = '#dc2626';
     else if (look === 'desperado' && i >= 4 && i % 4 === 0) fill = '#fde68a';
     if (!s.persona) mark = MARKS[col] || '';
-    else if (look === 'mason') mark = 'bricks';
+    else if (look === 'mason') mark = i % 4 === 3 ? 'marble2' : 'marble';
     else if (look === 'colonist') mark = i % 2 ? 'strap' : 'strap2';
     else if (s.personaKey === 'copycat') mark = 'copy';
     else if (look === 'ghost') mark = 'ghost';
@@ -2309,7 +2393,7 @@ window.SnakeRender = (() => {
     for (const s of game.snakes) {
       if (!s.alive) continue;
       if (s.memory.home) drawHome(s);
-      if (s.memory.colonies) drawColonies(s);
+      if (s.memory.colonies) drawColonies(s, now);
     }
 
     // The woodpecker perches on its newest hole (which can never be played
@@ -2361,6 +2445,9 @@ window.SnakeRender = (() => {
       } else if (e.type === 'death') {
         deaths.push(e.snake); // bursts on the next frame, unless the moment is held
         noteRemains(e.snake, now);
+        // A comic-book word where it went down: KO! if a snake did it, Bonk! for a wall or a hole.
+        const k = e.snake.killer, h = e.snake.body[0];
+        if (k !== 'hunger') floater(h.x * CELL + CELL / 2, Math.max(CELL * 1.3, h.y * CELL - CELL * 0.2), k === 'wall' || k === 'self' || !game.snakes.some(o => o.name === k) ? 'Bonk!' : 'KO!');
       } else if (e.type === 'peck') {
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 5, 120, 380, 2, '#a16207', '#f6ecd2');
       } else if (e.type === 'spawn' && e.kind === 'beetle') {
@@ -2430,6 +2517,19 @@ window.SnakeRender = (() => {
       }
     }
     ctx.globalAlpha = 1;
+  }
+
+  // Confetti: for a win, a new best (all over the board), or the winner of a
+  // round you're watching (from its head).
+  const CONFETTI = ['#fde68a', '#a3e635', '#f472b6', '#22d3ee', '#fb923c', '#c4b5fd', '#fffbea'];
+  function celebrate(s = null) {
+    if (reduced) return;
+    if (s && s.body.length) {
+      const h = s.body[0];
+      for (let i = 0; i < 4; i++) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 9, 320, T.PARTICLE_LIFE * 2.2, 3.4, CONFETTI[i], CONFETTI[i + 3]);
+      return;
+    }
+    for (let i = 0; i < 12; i++) spawn((i + 0.5) / 12 * SIZE, SIZE * (0.25 + (i % 3) * 0.12), 9, 400, T.PARTICLE_LIFE * 2.8, 4.6, CONFETTI[i % CONFETTI.length], CONFETTI[(i + 3) % CONFETTI.length]);
   }
 
   function shake(px) {
@@ -2505,7 +2605,7 @@ window.SnakeRender = (() => {
   }
 
   return {
-    init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, markOf,
+    init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, markOf, celebrate,
     holding: () => deaths.length > 0 || corpses.length > 0,
     setViewer(id) { viewerId = id; },
     setReducedMotion(v) { reduced = v; },

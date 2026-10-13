@@ -128,7 +128,7 @@ window.SnakeAI = (() => {
       },
     },
     mason: {
-      name: 'Mason', color: '#94a3b8', look: 'mason',
+      name: 'Mason', color: '#ebe5d9', ink: '#8a8170', look: 'mason', // Caesar in marble (ink: his name, outline and tag, in stone)
       blurb: 'Walls off the board, then keeps the biggest piece.',
       kill: 'Mason had a spot picked out for you.',
       win: 'Veni, vidi, Mason.',
@@ -492,14 +492,24 @@ window.SnakeAI = (() => {
         if (ctx.w.hunt) pickVictim(all, ctx.w.hunt);
       },
 
-      // Mood swings: every 8-15 s switch to another persona's weights.
+      // Mood swings. It starts each round undecided (its own self, playing it
+      // safe) for a few seconds, then every 8-15 s takes up another persona's
+      // weights, dithering for a moment in between.
       capricious() {
-        if (!memory.mood || view.timeMs >= memory.moodUntil) {
-          const options = MOODS.filter(m => m !== memory.mood);
-          memory.mood = options[Math.floor(Math.random() * options.length)];
-          memory.moodUntil = view.timeMs + rand(8000, 15000);
+        memory.moodUntil ??= view.timeMs + rand(3500, 5500);
+        if (view.timeMs >= memory.moodUntil) {
+          if (memory.mood) { // over it: a moment of not knowing what next
+            memory.lastMood = memory.mood;
+            memory.mood = null;
+            memory.moodUntil = view.timeMs + rand(1200, 2000);
+          } else {
+            const options = MOODS.filter(m => m !== memory.lastMood);
+            memory.mood = options[Math.floor(Math.random() * options.length)];
+            memory.moodUntil = view.timeMs + rand(8000, 15000);
+          }
           memory.moodChangedAt = view.timeMs;
         }
+        if (!memory.mood) return; // (undecided: its own, safe weights)
         const mood = PERSONAS[memory.mood];
         ctx.w = mood.w;
         if (mood.driver) drivers[mood.driver]();

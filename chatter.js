@@ -470,64 +470,75 @@ window.SnakeChatter = (() => {
     const el = document.createElement('div');
     el.className = 'bubble';
     el.setAttribute('aria-hidden', 'true'); // (screen readers get the log instead)
-    el.textContent = text;
-    if (hasChinese(text)) el.lang = 'zh-Hans';
+    const words = document.createElement('span'); // (the bubble you see: it pops in, while its box is moved about)
+    words.textContent = text;
+    if (hasChinese(text)) words.lang = 'zh-Hans';
+    el.append(words);
     el.style.setProperty('--edge', s.persona?.ink || s.color);
     boardEl.appendChild(el);
-    // Width is estimated from the text, so placing a bubble never reads layout.
-    bubbles.set(s.id, { el, snake: s, until: performance.now() + BUBBLE_MS, w: 0, chars: widthOf(text), x: NaN, y: NaN, side: null, tail: NaN });
-  }
-
-  // A line's width in Latin characters (a Chinese character is about two).
-  function widthOf(text) {
-    let n = 0;
-    for (const ch of text) n += /[\u2e80-\u9fff\uff00-\uffef]/.test(ch) ? 1.9 : 1;
-    return n;
+    bubbles.set(s.id, { el, snake: s, until: performance.now() + BUBBLE_MS, w: 0, h: 0, side: null, shown: null, want: null, wantSince: 0, ox: 0, oy: 0, x: NaN, y: NaN, tail: NaN, near: false });
   }
 
   // Called every frame: bubbles follow the gliding heads, stay inside the
   // board, and expire on time even when the round is over or paused.
+  // A bubble is never in the way of its snake's path: above the head (below
+  // it near the top) for a snake going sideways, beside it (where there's
+  // room) for one going up or down. And it doesn't jump about as the snake
+  // turns: it moves to another side only once that side has been the right
+  // one for a moment (or its own has run out of room), and then glides there.
   // keepClear: your snake, if you're playing: a bubble near your head fades.
+  const SIDE_DELAY = 450, GLIDE_MS = 110;
+  let lastLayout = 0;
   function layout(alpha, boardPx, keepClear = null) {
-    if (!bubbles.size || !boardPx) return;
+    if (!bubbles.size || !boardPx) { lastLayout = 0; return; }
     const now = performance.now();
-    const cellPx = boardPx / window.TUNING.GRID;
+    const glide = lastLayout ? 1 - Math.exp(-Math.min(64, now - lastLayout) / GLIDE_MS) : 1;
+    lastLayout = now;
+    const cellPx = boardPx / window.TUNING.GRID, gap = cellPx * 0.75 + 6; // (6: room for the tail)
     for (const [id, b] of bubbles) {
       if (now > b.until || !b.snake.alive) { b.el.remove(); bubbles.delete(id); continue; }
       window.SnakeRender.headPx(b.snake, alpha, boardPx, headAt);
-      const w = Math.min(boardPx * (compact ? 0.62 : 0.38), b.chars * 6.4 + 22);
-      // Never in the way of the snake's path or its body: above the head (below
-      // near the top) for a snake going sideways, and beside it, on the roomier
-      // side, for one going up or down.
-      let side = 'above', x, y;
+      if (!b.w) { b.w = b.el.offsetWidth; b.h = b.el.offsetHeight; } // (measured once, as it first shows)
+      const w = b.w, h = b.h;
+      const room = side => side === 'above' ? headAt.y - gap - h >= 0 : side === 'below' ? headAt.y + gap + h <= boardPx
+        : side === 'left' ? headAt.x - gap - w >= 0 : headAt.x + gap + w <= boardPx;
+      let want;
       if (b.snake.dir.y !== 0) {
-        side = headAt.x > boardPx / 2 ? 'left' : 'right';
-        x = side === 'left' ? headAt.x - cellPx * 0.75 - w / 2 : headAt.x + cellPx * 0.75 + w / 2;
-        y = headAt.y;
+        want = (b.side === 'left' || b.side === 'right') && room(b.side) ? b.side
+          : room('right') && (headAt.x < boardPx / 2 || !room('left')) ? 'right' : 'left';
       } else {
-        if (headAt.y < cellPx * 3) side = 'below';
-        x = headAt.x;
-        y = side === 'below' ? headAt.y + cellPx * 0.75 : headAt.y - cellPx * 0.75;
+        want = b.side === 'below' && headAt.y < cellPx * 4 ? 'below' : room('above') ? 'above' : 'below';
       }
-      x = Math.round(Math.min(boardPx - w / 2 - 4, Math.max(w / 2 + 4, x)));
-      y = Math.round(Math.min(boardPx - cellPx, Math.max(cellPx, y)));
+      if (!b.side) b.side = want;
+      else if (want !== b.side) {
+        if (b.want !== want) { b.want = want; b.wantSince = now; }
+        if (now - b.wantSince >= SIDE_DELAY || !room(b.side)) { b.side = want; b.want = null; }
+      } else b.want = null;
+      // Where it goes, relative to the head (its top-left corner), eased toward.
+      const tx = b.side === 'left' ? -gap - w : b.side === 'right' ? gap : -w / 2;
+      const ty = b.side === 'above' ? -gap - h : b.side === 'below' ? gap : -h / 2;
+      if (b.side !== b.shown) {
+        if (!b.shown) { b.ox = tx; b.oy = ty; }
+        b.el.dataset.side = b.side;
+        b.shown = b.side;
+      }
+      b.ox += (tx - b.ox) * glide;
+      b.oy += (ty - b.oy) * glide;
+      const x = Math.round(Math.min(boardPx - w - 4, Math.max(4, headAt.x + b.ox)));
+      const y = Math.round(Math.min(boardPx - h - 4, Math.max(4, headAt.y + b.oy)));
       let near = false;
       if (keepClear?.alive) {
         const mine = window.SnakeRender.headPx(keepClear, alpha, boardPx, headMine);
-        const h = b.chars * 6.4 + 22 > w ? 38 : 22; // one line or two (estimated)
-        const cy = side === 'above' ? y - h / 2 : side === 'below' ? y + h / 2 : y;
-        near = Math.abs(mine.x - x) < w / 2 + cellPx * 1.5 && Math.abs(mine.y - cy) < h / 2 + cellPx * 1.5;
+        near = Math.abs(mine.x - x - w / 2) < w / 2 + cellPx * 1.5 && Math.abs(mine.y - y - h / 2) < h / 2 + cellPx * 1.5;
       }
       if (near !== b.near) { b.el.classList.toggle('near', near); b.near = near; }
-      if (x === b.x && y === b.y && side === b.side) continue;
-      if (side !== b.side) b.el.dataset.side = side;
-      if (side === 'above' || side === 'below') { // the tail points at the head even when the bubble is pushed off-centre at an edge
-        const tail = Math.round(50 + ((headAt.x - x) / w) * 100);
-        if (tail !== b.tail) { b.el.style.setProperty('--tail', `${tail}%`); b.tail = tail; }
-      }
-      const ty = side === 'above' ? '-100%' : side === 'below' ? '0' : '-50%';
-      b.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, ${ty})`;
-      b.x = x; b.y = y; b.side = side;
+      if (x === b.x && y === b.y) continue;
+      // The tail points at the head, even when the bubble is pushed along at an edge.
+      const across = b.side === 'above' || b.side === 'below';
+      const tail = Math.round(Math.min(85, Math.max(15, across ? (headAt.x - x) / w * 100 : (headAt.y - y) / h * 100)));
+      if (tail !== b.tail) { b.el.style.setProperty('--tail', `${tail}%`); b.tail = tail; }
+      b.el.style.transform = `translate(${x}px, ${y}px)`;
+      b.x = x; b.y = y;
     }
   }
 
@@ -593,7 +604,7 @@ window.SnakeChatter = (() => {
         say(s, 'intruder', game.snakes.find(o => o.id === m.victimId));
       }
       if ((m.planted || 0) > (was.planted || 0)) say(s, 'flag');
-      if (m.moodChangedAt != null && m.moodChangedAt !== was.mood) say(s, `mood.${m.mood}`, null, true);
+      if (m.moodChangedAt != null && m.moodChangedAt !== was.mood && m.mood) say(s, `mood.${m.mood}`, null, true);
       was.victimId = m.victimId;
       was.planted = m.planted || 0;
       was.mood = m.moodChangedAt;
