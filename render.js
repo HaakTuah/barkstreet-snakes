@@ -2957,7 +2957,7 @@ window.SnakeRender = (() => {
       }
       return pts;
     };
-    for (const base of [0, Math.PI]) {
+    for (const base of [Math.PI / 2, -Math.PI / 2]) { // (up and down the log)
       const main = split(0, 0, base, 5 + Math.floor(rnd() * 4));
       br.push(main);
       if (rnd() < 0.6) { // a fork
