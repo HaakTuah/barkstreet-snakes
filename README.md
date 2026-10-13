@@ -70,14 +70,14 @@ Each round, three of these fifteen are picked at random. The start screen tells 
 | **Gobbler** | orange, puffy cheeks | Eats everything, even a rival's apple. Hates mushrooms. |
 | **Ghost** | pale, fading body | Keeps away from everyone and eats mushrooms to stay small. |
 | **Sovereign** | royal blue, golden crown | Rules its own patch of bark (shown on the board) and attacks anyone who trespasses. |
-| **Colonist** | redcoat, tricorn hat | Plants flags all over the board and defends every one of them. |
+| **Colonist** | redcoat, tricorn hat | Plants Union Flags all over the board and defends every one of them. |
 | **Drab** | khaki, sleepy eyes | Plays it safe and sensible. Nothing special. |
 | **Vulture** | black, pink bald head, hooked beak, scowl | Hovers near snakes in trouble and feeds on what they leave behind. |
-| **Mason** | stone bricks, laurel wreath | Walls off the board, then keeps the biggest piece. |
+| **Mason** | Caesar in marble, laurel wreath | Walls off the board, then keeps the biggest piece. |
 | **Wildcard** | rainbow, orange tan, golden combover, long red tie | A random mix of habits, new every round. |
 | **Creeper** | teal, slit eyes | Sneaks up and rides right behind other snakes' tails. |
 | **Metagamer** | cyan, taped glasses | Watches how each rival plays, then avoids the aggressive ones, shadows the greedy ones and hunts the evasive ones. |
-| **Capricious** | changes with its mood | Switches between sniper, glutton, hermit and builder every few seconds. |
+| **Capricious** | changes with its mood | Starts undecided, then switches between sniper, glutton, hermit and builder every few seconds. |
 | **Copycat** | pale copy of its model, cat ears | Copies whoever seems to be winning, right alongside them. Party member. |
 | **Joker** | jester hat, harlequin diamonds, red nose | Lures chasers into dead ends and swerves away at the last moment. |
 | **Desperado** | rust poncho, cowboy hat, bandana | An adrenaline junkie: skims walls, bodies and other heads for the thrill of it. |

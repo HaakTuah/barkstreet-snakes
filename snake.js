@@ -14,7 +14,7 @@
   // --------------------------------------------------------------- the DOM
 
   const $ = id => document.getElementById(id);
-  const canvas = $('game'), boardEl = document.querySelector('.board'), mainEl = document.querySelector('main');
+  const canvas = $('game'), boardEl = document.querySelector('.board'), mainEl = document.querySelector('main'), glowEl = $('frame-glow');
   const scoreEl = $('score'), bestEl = $('best'), tagsEl = $('scoreboard');
   const overlay = $('overlay'), cardTitle = $('overlay-title'), cardText = $('overlay-text');
   const flavorEl = $('overlay-flavor'), badgeEl = $('overlay-badge'), opponentsEl = $('opponents');
@@ -322,6 +322,7 @@
     freezeUntil = lastFrame + (reducedMQ.matches ? T.DEATH_FREEZE / 2 : T.DEATH_FREEZE);
     R.hold(freezeUntil);
     R.shake(T.SHAKE_PX);
+    flashFrame('kill', true);
   }
 
   // Each segment's previous cell, for interpolation. Reuses the same objects.
@@ -385,9 +386,16 @@
   }
 
   // Online the countdown can't be skipped (everyone starts together).
+  const BEAT = [
+    { transform: 'scale(2.6) rotate(-8deg)', opacity: 0 },
+    { transform: 'scale(0.86) rotate(3deg)', opacity: 1, offset: 0.55 },
+    { transform: 'scale(1.08) rotate(-1deg)', offset: 0.8 },
+    { transform: 'scale(1) rotate(0)' },
+  ];
   function showBeat(n) {
     Audio.play('beat');
     showCard({ title: String(n), text: game.rivalsLine, primary: online ? null : 'Go!', opponents: true, quiet: true, beat: true });
+    if (!reducedMQ.matches) cardTitle.animate?.(BEAT, { duration: 480, easing: 'ease-out' }); // each number slams down
   }
 
   function go() {
@@ -397,7 +405,8 @@
     hideCard();
     Audio.play('go');
     if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
-    else toast(pick(game.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1100);
+    else toast(pick(game.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1300, 'go');
+    flashFrame('go');
     acc = 0;
     lastFrame = 0;
     updateControls();
@@ -449,6 +458,7 @@
     const title = !winner ? 'Draw' : isMe(winner) ? 'You win!' : `${winner.name} wins`;
     const flavor = !winner ? pick(FLAVOR.draw) : isMe(winner) ? pick(FLAVOR.win) : winner.persona ? winner.persona.win : pick(FLAVOR.friendWin);
     if (isMe(winner)) Audio.play('win');
+    if (winner) { R.celebrate(isMe(winner) ? null : winner); flashFrame('win', isMe(winner)); } // confetti: all over for you, from its head for anyone else
     const me = player();
     const r = game.result;
     const yours = !me || !r ? ''
@@ -517,7 +527,7 @@
       else if (e.type === 'peck') Audio.play('peck');
       else if (e.type === 'starving' && isMe(e.snake)) Audio.play('hungry');
     }
-    for (const s of dying) if (!isMe(s)) Audio.play('rivalDeath');
+    for (const s of dying) if (!isMe(s)) { Audio.play('rivalDeath'); flashFrame('kill'); }
     if (wasAlive && !playerAlive()) Audio.play('death');
   }
 
@@ -528,25 +538,25 @@
       game.firstBlood = true;
       const v = dying[0];
       const killer = game.snakes.find(o => o.name === v.killer && o !== v);
-      return toast(killer ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : `First out: ${who(v, true)} ${isMe(v) ? yourCause(v) : causeFor(v)}.`);
+      return toast(killer ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : `First out: ${who(v, true)} ${isMe(v) ? yourCause(v) : causeFor(v)}.`, 2800, 'kill');
     }
-    for (const e of game.events) if (e.type === 'woodpecker') return toast(pick(FLAVOR.woodpecker));
+    for (const e of game.events) if (e.type === 'woodpecker') { flashFrame('bird', true); return toast(pick(FLAVOR.woodpecker), 2800, 'bird'); }
     if (dying.length && alive.length === 2) {
       const [a, b] = isMe(alive[0]) ? [alive[1], alive[0]] : alive;
-      return toast(`It’s down to ${who(a)} and ${who(b, true)}.`);
+      return toast(`It’s down to ${who(a)} and ${who(b, true)}.`, 2800, 'kill');
     }
     const me = player();
     if (me?.alive) {
       const left = E.hungerLeft(game, me);
-      if (left < T.HUNGER_WARN_MS && !game.warnedHunger) { game.warnedHunger = true; return toast(pick(FLAVOR.youHungry)); }
+      if (left < T.HUNGER_WARN_MS && !game.warnedHunger) { game.warnedHunger = true; return toast(pick(FLAVOR.youHungry), 2800, 'warn'); }
       if (left > T.HUNGER_WARN_MS) game.warnedHunger = false;
     }
     for (const e of game.events) {
-      if (e.type === 'spawn' && e.kind === 'golden') return toast(pick(FLAVOR.golden));
-      if (e.type === 'spawn' && e.kind === 'beetle') return toast(pick(FLAVOR.beetle), 2200);
-      if (e.type === 'eat' && isMe(e.snake) && e.kind === 'beetle') return toast(pick(FLAVOR.youBeetle), 1500);
-      if (e.type === 'eat' && isMe(e.snake) && e.kind === 'golden') return toast(pick(FLAVOR.youGolden), 1500);
-      if (e.type === 'eat' && isMe(e.snake) && e.kind === 'mushroom') return toast(pick(FLAVOR.youMushroom), 1800);
+      if (e.type === 'spawn' && e.kind === 'golden') { flashFrame('gold'); return toast(pick(FLAVOR.golden), 2800, 'gold'); }
+      if (e.type === 'spawn' && e.kind === 'beetle') { flashFrame('beetle'); return toast(pick(FLAVOR.beetle), 2200, 'beetle'); }
+      if (e.type === 'eat' && isMe(e.snake) && e.kind === 'beetle') { flashFrame('beetle'); return toast(pick(FLAVOR.youBeetle), 1500, 'beetle'); }
+      if (e.type === 'eat' && isMe(e.snake) && e.kind === 'golden') { flashFrame('gold', true); return toast(pick(FLAVOR.youGolden), 1500, 'gold'); }
+      if (e.type === 'eat' && isMe(e.snake) && e.kind === 'mushroom') return toast(pick(FLAVOR.youMushroom), 1800, 'you');
     }
   }
 
@@ -572,25 +582,61 @@
       toastUnder = place;
     }
   }
-  function toast(text, ms = 2800) {
+  // kind styles the banner for its moment: kill, gold, beetle, bird (the
+  // woodpecker), warn, you (something you ate), go.
+  function toast(text, ms = 2800, kind = '') {
     toastChars = text.length;
-    toastEl.classList.remove('settled'); // (a new banner drops in)
+    toastEl.classList.remove('settled', 'leaving'); // (a new banner slams in)
+    toastEl.dataset.kind = kind;
     toastEl.textContent = text;
     toastEl.hidden = false;
     say(text);
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(hideToast, ms);
+    toastTimer = setTimeout(() => hideToast(true), ms);
   }
-  function hideToast() { clearTimeout(toastTimer); toastEl.hidden = true; }
-  toastEl.addEventListener('animationend', () => toastEl.classList.add('settled'));
+  // Gone at once (a card is coming up), or, when its time is up, faded out.
+  function hideToast(fade = false) {
+    clearTimeout(toastTimer);
+    if (fade && !reducedMQ.matches && !toastEl.hidden) {
+      toastEl.classList.add('leaving');
+      toastTimer = setTimeout(() => { toastEl.hidden = true; toastEl.classList.remove('leaving'); }, 240);
+    } else {
+      toastEl.hidden = true;
+      toastEl.classList.remove('leaving');
+    }
+  }
+  toastEl.addEventListener('animationend', e => { if (e.animationName === 'slam') toastEl.classList.add('settled'); });
 
   // Screen reader announcements (a permanently rendered, visually hidden region).
   function say(text) { announcer.textContent = text; }
 
   const BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.35)', color: '#fde68a', offset: 0.4 }, { transform: 'scale(1)' }];
   const BUMP_TIMING = { duration: 280, easing: 'ease-out' };
-  function bump(el) {
-    if (!reducedMQ.matches) el.animate?.(BUMP, BUMP_TIMING);
+  function bump(el, frames = BUMP) {
+    if (!reducedMQ.matches) el.animate?.(frames, BUMP_TIMING);
+  }
+  // A tag's length when it changes (leaf green on parchment, not honey), a tag
+  // knocked out of the round, and a tag taking the lead.
+  const TAG_BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.45)', color: '#4d7c0f', offset: 0.35 }, { transform: 'scale(1)' }];
+  const KNOCK = [
+    { transform: 'translateX(0) rotate(0)', backgroundColor: '#fca5a5' },
+    { transform: 'translateX(-6px) rotate(-2deg)', offset: 0.18 },
+    { transform: 'translateX(5px) rotate(2deg)', offset: 0.4 },
+    { transform: 'translateX(-3px) rotate(-1deg)', offset: 0.65 },
+    { transform: 'translateX(0) rotate(0)', backgroundColor: 'rgba(246, 236, 210, 0.66)' },
+  ];
+  const CROWNED = [{ transform: 'scale(1)' }, { transform: 'scale(1.06)', offset: 0.4 }, { transform: 'scale(1)' }];
+  function knock(el) {
+    if (!reducedMQ.matches) el.animate?.(KNOCK, { duration: 480, easing: 'ease-out' });
+  }
+
+  // The frame lights up round its edge for the big moments, in the moment's
+  // colour (only its opacity animates, so it's cheap).
+  const GLOW = { gold: '#fde047', beetle: '#34d399', kill: '#ef4444', bird: '#f97316', go: '#a3e635', win: '#fde68a' };
+  function flashFrame(kind, strong = false) {
+    if (reducedMQ.matches || !glowEl?.animate) return;
+    glowEl.style.setProperty('--glow', GLOW[kind]);
+    glowEl.animate([{ opacity: 0 }, { opacity: strong ? 1 : 0.75, offset: 0.12 }, { opacity: 0 }], { duration: strong ? 1500 : 800, easing: 'ease-out' });
   }
 
   // ----------------------------------------------------------- the cards
@@ -630,6 +676,8 @@
       if (game.newBest && !game.celebrated) {
         game.celebrated = true;
         Audio.play('best');
+        R.celebrate();
+        flashFrame('win', true);
       }
       if (game.newBest) { badgeEl.textContent = FLAVOR.newBest(best); badgeEl.hidden = false; }
       const rank = yourRank();
@@ -759,28 +807,49 @@
       if (!force && score > best && !game.passedBest) { game.passedBest = true; bump(bestEl); }
       bestEl.textContent = shownBest;
     }
+    // The leader (the longest snake, if one is longest) wears a crown.
+    let lead = null, top = 0;
+    for (const s of game.snakes) {
+      if (!s.alive) continue;
+      if (s.body.length > top) { top = s.body.length; lead = s; } else if (s.body.length === top) lead = null;
+    }
     for (const s of game.snakes) {
       const t = s.tag, last = t.last;
       const dot = dotColor(s);
+      const leading = s === lead;
       const len = s.alive ? String(s.body.length) : 'out';
       const full = s.alive ? Math.max(0, Math.min(1, E.hungerLeft(game, s) / T.HUNGER_MS)) : 0;
       const bar = Math.round(full * 100);
       const starving = s.alive && full < 0.3;
       if (force || last.dot !== dot) { t.dot.style.background = dot; last.dot = dot; }
-      if (force || last.len !== len) { t.len.textContent = len; last.len = len; }
-      const said = !s.alive ? ', ' : starving ? ', starving, length ' : ', length '; // (for screen readers)
+      if (force || last.len !== len) {
+        t.len.textContent = len;
+        if (!force && s.alive && last.len !== undefined) bump(t.len, TAG_BUMP);
+        last.len = len;
+      }
+      const said = !s.alive ? ', ' : `${starving ? ', starving' : ''}${leading ? ', in the lead' : ''}, length `; // (for screen readers)
       if (force || last.said !== said) { t.state.textContent = said; last.said = said; }
       if (force || last.bar !== bar) { t.bar.style.transform = `scaleX(${bar / 100})`; last.bar = bar; }
-      if (force || last.alive !== s.alive) { t.li.classList.toggle('dead', !s.alive); last.alive = s.alive; }
+      if (force || last.alive !== s.alive) {
+        t.li.classList.toggle('dead', !s.alive);
+        if (!force && !s.alive) knock(t.li);
+        last.alive = s.alive;
+      }
+      if (force || last.leading !== leading) {
+        t.li.classList.toggle('leader', leading);
+        if (!force && leading) bump(t.li, CROWNED);
+        last.leading = leading;
+      }
       if (force || last.starving !== starving) { t.li.classList.toggle('starving', starving); last.starving = starving; }
     }
   }
 
   // The scoreboard dot: the snake's current color, a rainbow for Wildcard,
-  // two-tone for Joker, and Vulture's pink head (black would vanish).
+  // two-tone for Joker, veined marble for Mason, and Vulture's pink head (black would vanish).
   function dotColor(s) {
     if (s.personaKey === 'wildcard') return 'conic-gradient(#f87171, #facc15, #4ade80, #22d3ee, #818cf8, #f472b6, #f87171)';
     if (s.personaKey === 'joker') return 'linear-gradient(90deg, #a21caf 50%, #f59e0b 50%)';
+    if (s.personaKey === 'mason') return 'linear-gradient(135deg, #f5f1e8 0 38%, #8a94a6 40% 45%, #ebe5d9 47% 68%, #c9a227 70% 74%, #ebe5d9 76%)';
     return s.persona?.ink || R.colorOf(s);
   }
 
