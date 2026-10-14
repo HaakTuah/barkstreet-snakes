@@ -4304,9 +4304,8 @@ window.SnakeRender = (() => {
     }
   }
 
-  // Fire on the bark: lightning on its way crackles (a ring of light closing
-  // in on the cell, so you can see how long there is), smouldering cells glow,
-  // burning cells flame (deadly), sending up embers and smoke.
+  // Fire on the bark: smouldering cells glow, burning cells flame (deadly),
+  // sending up embers and smoke. (Lightning on its way: see drawStrikes.)
   const fireGlowSprite = () => sprite('fireglow', '', g => {
     const grad = g.createRadialGradient(0, 0, CELL * 0.1, 0, 0, CELL * 0.95);
     grad.addColorStop(0, 'rgba(253,186,116,0.6)');
@@ -4367,37 +4366,14 @@ window.SnakeRender = (() => {
     const c = CELL, lively = !reduced, t = now / 1000, tickPos = game.tick - 1 + alpha;
     for (const [k, f] of game.fires) {
       const x = (k % GRID) * c + c / 2, y = Math.floor(k / GRID) * c + c / 2, ph = k * 0.73;
-      if (tickPos < f.from - 1) {
-        if (f.strike) { // lightning on its way: a ring closing in, and sparks
-          const left = Math.max(0, Math.min(1, (f.from - 1 - tickPos) / T.STRIKE_WARN_TICKS));
-          const flick = lively ? 0.7 + 0.3 * Math.sin(now / 37 + ph) : 1;
-          ctx.beginPath(); ctx.arc(x, y, c * (0.35 + 1.1 * left), 0, TAU);
-          ctx.strokeStyle = rgba('#c4b5fd', 0.25 * flick);
-          ctx.lineWidth = 9;
-          ctx.stroke();
-          ctx.strokeStyle = rgba('#ede9fe', 0.9 * flick);
-          ctx.lineWidth = 2.2;
-          ctx.stroke();
-          ctx.fillStyle = rgba('#c4b5fd', 0.35 + 0.3 * (1 - left));
-          circle(x, y, c * 0.34);
-          ctx.strokeStyle = '#f5f3ff';
-          ctx.lineWidth = 1.6;
-          ctx.beginPath();
-          for (let i = 0; i < 3; i++) {
-            const a = (lively ? now / 90 : 0) + i * 2.1 + ph, r0 = c * 0.12, r1 = c * 0.42;
-            ctx.moveTo(x + Math.cos(a) * r0, y + Math.sin(a) * r0);
-            ctx.lineTo(x + Math.cos(a + 0.4) * (r0 + r1) / 2, y + Math.sin(a + 0.4) * (r0 + r1) / 2);
-            ctx.lineTo(x + Math.cos(a) * r1, y + Math.sin(a) * r1);
-          }
-          ctx.stroke();
-        } else { // smouldering: a charred patch the size of the cell, its cracks glowing, and a thread of smoke
-          const w = SPRITE * c;
-          ctx.drawImage(charSprite(), x - w / 2, y - w / 2, w, w);
-          ctx.globalAlpha = lively ? 0.6 + 0.4 * Math.sin(now / 160 + ph) : 0.85;
-          ctx.drawImage(emberSprite(), x - w / 2, y - w / 2, w, w);
-          ctx.globalAlpha = 1;
-          if (lively && Math.random() < 0.05) mote(x, y, (Math.random() - 0.5) * 6, -16, 1300, 3 + Math.random() * 2, 2);
-        }
+      if (tickPos < f.from - 1) { // smouldering: a charred patch the size of the cell, its cracks glowing, and a thread of smoke
+        if (f.strike) continue; // (lightning on its way: over the storm's gloom, see drawStrikes)
+        const cw = SPRITE * c;
+        ctx.drawImage(charSprite(), x - cw / 2, y - cw / 2, cw, cw);
+        ctx.globalAlpha = lively ? 0.6 + 0.4 * Math.sin(now / 160 + ph) : 0.85;
+        ctx.drawImage(emberSprite(), x - cw / 2, y - cw / 2, cw, cw);
+        ctx.globalAlpha = 1;
+        if (lively && Math.random() < 0.05) mote(x, y, (Math.random() - 0.5) * 6, -16, 1300, 3 + Math.random() * 2, 2);
         continue;
       }
       // Burning: a glow, then flames, outer to inner.
@@ -4409,6 +4385,42 @@ window.SnakeRender = (() => {
       ctx.drawImage(flameSprite(fr), x - fw / 2, y - fw / 2, fw, fw);
       if (lively && Math.random() < 0.18) mote(x + (Math.random() - 0.5) * c * 0.5, y - c * 0.2, (Math.random() - 0.5) * 14, -40 - Math.random() * 30, 700, 1.4 + Math.random(), 3);
       if (lively && Math.random() < 0.06) mote(x, y - c * 0.4, (Math.random() - 0.5) * 8, -20, 1800, 4 + Math.random() * 3, 2);
+    }
+  }
+  // Lightning on its way: a ring closing in on the cell, so you can see how
+  // long there is, and a bolt in the middle, both opaque and inked like every
+  // other mark on the board, with a soft glow round the ring as the fields'
+  // rims have. Over the storm's gloom (see-through and under it, the mark of
+  // a cell about to catch fire was a grey smudge).
+  const STRIKE_BOLT = [0.17, -0.5, -0.24, 0.09, -0.01, 0.09, -0.15, 0.5, 0.27, -0.11, 0.05, -0.11]; // (a zigzag, one unit tall: x, y, ...)
+  function drawStrikes(alpha, now) {
+    if (!game.fires?.size) return;
+    const c = CELL, lively = !reduced, tickPos = game.tick - 1 + alpha;
+    for (const [k, f] of game.fires) {
+      if (!f.strike || tickPos >= f.from - 1) continue;
+      const x = (k % GRID) * c + c / 2, y = Math.floor(k / GRID) * c + c / 2, ph = k * 0.73;
+      const left = Math.max(0, Math.min(1, (f.from - 1 - tickPos) / T.STRIKE_WARN_TICKS));
+      const flick = lively ? 0.7 + 0.3 * Math.sin(now / 37 + ph) : 1;
+      ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.arc(x, y, c * (0.35 + 1.1 * left), 0, TAU);
+      ctx.strokeStyle = rgba('#c4b5fd', 0.3 * flick);
+      ctx.lineWidth = 10;
+      ctx.stroke();
+      ctx.strokeStyle = '#3a2614';
+      ctx.lineWidth = 4.6;
+      ctx.stroke();
+      ctx.strokeStyle = '#ede9fe';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+      const s = c * 0.85 * (lively ? 1 + 0.07 * Math.sin(now / 37 + ph) : 1); // (the bolt crackles a little)
+      ctx.beginPath();
+      for (let i = 0; i < STRIKE_BOLT.length; i += 2) ctx.lineTo(x + STRIKE_BOLT[i] * s, y + STRIKE_BOLT[i + 1] * s);
+      ctx.closePath();
+      ctx.strokeStyle = '#3a2614';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = '#f5f3ff';
+      ctx.fill();
     }
   }
 
@@ -4903,6 +4915,7 @@ window.SnakeRender = (() => {
     drawDive(now);
     drawFire(alpha, now);
     drawSkyTint();
+    drawStrikes(alpha, now); // (lightning on its way: over the gloom)
     drawRainbow(now);
 
     if (corpses.length) drawCorpses(alpha, now);
