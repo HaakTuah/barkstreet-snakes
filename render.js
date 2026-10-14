@@ -249,43 +249,88 @@ window.SnakeRender = (() => {
     return s;
   }
   // Snow settling on the bark: crisp drifts lying in the furrows, long along
-  // the grain (top to bottom), each a few lumps with a hard lit top and a thin
-  // blue underside, and a glint or two. Drawn at the board's own resolution
-  // (stretched, they blurred into smoke), only once it snows; no dusting over
-  // everything. Whiter the longer it snows; gone soon after.
-  let drifts = null;
-  function buildDrifts() {
-    const d = makeLayer(SIZE * k, SIZE * k), g = d.getContext('2d');
-    g.scale(k, k);
+  // the grain (top to bottom), each a few lumps: a thick white top, lit on its
+  // upper left, over a blue-grey underside with an inked edge. Opaque: they
+  // grow as the snow settles, longer and fatter, and shrink as it melts
+  // (faded in, they were grey smears). Drawn at the board's own resolution
+  // (stretched, they blurred into smoke), in DRIFT_STEPS steps of growth,
+  // only once it snows; none in a force field (it frosts its own honeycomb),
+  // on a burrow or in a hole.
+  const DRIFT_STEPS = 12;
+  let drifts = null, driftStep = -1, driftSig = -1;
+  function buildDrifts(d, step) {
+    const g = d.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, d.width, d.height);
+    g.setTransform(k, 0, 0, k, 0, 0);
     let seed = barkSeed * 13 + 5;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const grown = step / DRIFT_STEPS, wide = 0.4 + 0.6 * grown, long = 0.25 + 0.75 * grown; // (how far it has grown, across and along)
     const lumps = [];
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 16; i++) {
       const x = rnd() * SIZE, y = rnd() * SIZE, a = (rnd() - 0.5) * 0.16; // (the grain's slight lean)
       lumps.length = 0;
-      for (let j = 0, m = 2 + Math.floor(rnd() * 3), ly = y; j < m; j++) {
-        const rx = 2.6 + rnd() * 3.6, ry = rx * (2.4 + rnd() * 2.2);
-        lumps.push([x + (rnd() - 0.5) * 3 + (ly - y) * a, ly, rx, ry]);
-        ly += ry * (1.1 + rnd() * 0.5);
+      let ly = y;
+      for (let j = 0, m = 3 + Math.floor(rnd() * 3); j < m; j++) {
+        const rx = 4.5 + rnd() * 4.5, ry = rx * (2.4 + rnd() * 1.4), lx = x + (rnd() - 0.5) * 3 + (ly - y) * a;
+        if (bareBark(lx - rx - 3, ly - ry - 3, lx + rx + 3, ly + ry + 3)) lumps.push([lx, ly, rx, ry]); // (judged full grown, ink and all, so none comes and goes as it grows)
+        ly += ry * (1.05 + rnd() * 0.35);
       }
+      if (!lumps.length) continue;
+      const mid = (y + ly) / 2; // (it grows out from its middle)
+      for (const l of lumps) { l[1] = mid + (l[1] - mid) * long; l[2] *= wide; l[3] *= long; }
       const shape = (dx, dy, grow) => {
         g.beginPath();
-        for (const [lx, ly, rx, ry] of lumps) { g.moveTo(lx + dx + rx + grow, ly + dy); g.ellipse(lx + dx, ly + dy, rx + grow, ry + grow, a, 0, TAU); }
+        for (const [lx, ly, rx, ry] of lumps) {
+          const ex = Math.max(0.5, rx + grow);
+          g.moveTo(lx + dx + ex * Math.cos(a), ly + dy + ex * Math.sin(a));
+          g.ellipse(lx + dx, ly + dy, ex, Math.max(0.5, ry + grow), a, 0, TAU);
+        }
       };
-      shape(1.2, 1.6, 0.4); g.fillStyle = 'rgba(96,124,170,0.55)'; g.fill(); // (its blue underside, down and to the right of the light)
-      shape(0, 0, 0); g.fillStyle = '#eef4fc'; g.fill();
-      shape(-0.7, -0.9, -0.9); g.fillStyle = '#ffffff'; g.fill(); // (lit along its upper-left, like the plates)
-      g.fillStyle = '#ffffff';
-      if (rnd() < 0.7) { const [lx, ly, rx, ry] = lumps[0]; g.beginPath(); g.arc(lx - rx * 0.3, ly - ry * 0.4, 0.8, 0, TAU); g.fill(); }
+      shape(1.7 * wide, 2.2 * wide, 1.2 * wide); g.fillStyle = '#283246'; g.fill(); // its inked edge, down and to the right of the light...
+      shape(1.1 * wide, 1.5 * wide, 0.5 * wide); g.fillStyle = '#8da2c4'; g.fill(); // ...its blue-grey underside...
+      shape(0, 0, 0); g.fillStyle = '#dde7f5'; g.fill();
+      shape(-0.4 * wide, -0.7 * wide, -0.7 * wide); g.fillStyle = '#ffffff'; g.fill(); // ...and its thick white top, lit along its upper left, like the plates
     }
-    return d;
+  }
+  // Is the box (x0, y0)..(x1, y1) clear of every force field, burrow and hole?
+  function bareBark(x0, y0, x1, y1) {
+    for (const s of game.snakes) {
+      if (!s.alive) continue;
+      if (s.memory.home && overField(s.memory.home, x0, y0, x1, y1)) return false;
+      if (s.memory.colonies) for (const c of s.memory.colonies) if (overField(c, x0, y0, x1, y1)) return false;
+    }
+    if (game.burrows) for (const b of game.burrows) if (x1 > (b.x - 0.3) * CELL && x0 < (b.x + 1.3) * CELL && y1 > (b.y - 0.3) * CELL && y0 < (b.y + 1.3) * CELL) return false;
+    if (game.holes.size) {
+      for (let cy = Math.max(0, Math.floor(y0 / CELL)); cy <= Math.min(GRID - 1, Math.floor(y1 / CELL)); cy++) {
+        for (let cx = Math.max(0, Math.floor(x0 / CELL)); cx <= Math.min(GRID - 1, Math.floor(x1 / CELL)); cx++) if (game.holes.has(cy * GRID + cx)) return false;
+      }
+    }
+    return true;
+  }
+  const overField = (c, x0, y0, x1, y1) => { // (a field's circle, as drawFields draws it, over the box)
+    const fx = c.x * CELL + CELL / 2, fy = c.y * CELL + CELL / 2, r = (c.radius + 1) * CELL;
+    const dx = Math.max(x0 - fx, 0, fx - x1), dy = Math.max(y0 - fy, 0, fy - y1);
+    return dx * dx + dy * dy < r * r;
+  };
+  // What the drifts keep clear of, as one number: made again when it changes.
+  function bareSig() {
+    let h = game.holes.size;
+    if (game.burrows) for (const b of game.burrows) h = (h * 31 + b.y * GRID + b.x + 1) % 999999937;
+    for (const s of game.snakes) {
+      if (!s.alive) continue;
+      const home = s.memory.home;
+      if (home) h = (h * 31 + (home.y * GRID + home.x) * 16 + home.radius + 1) % 999999937;
+      if (s.memory.colonies) for (const c of s.memory.colonies) h = (h * 31 + (c.y * GRID + c.x) * 16 + c.radius + 1) % 999999937;
+    }
+    return h;
   }
   function drawSnowCover() {
     if (snowCover < 0.02) return;
-    if (!drifts) drifts = buildDrifts();
-    ctx.globalAlpha = 0.8 * snowCover;
+    const step = Math.max(1, Math.round(snowCover * DRIFT_STEPS)), sig = bareSig();
+    if (!drifts) { drifts = makeLayer(SIZE * k, SIZE * k); driftStep = -1; }
+    if (step !== driftStep || sig !== driftSig) { buildDrifts(drifts, step); driftStep = step; driftSig = sig; }
     ctx.drawImage(drifts, 0, 0, SIZE, SIZE);
-    ctx.globalAlpha = 1;
   }
 
   // Falling snow: a seamless sheet of flakes, drifting down and swaying, in two layers.
@@ -4674,11 +4719,11 @@ window.SnakeRender = (() => {
     ctx.drawImage(staticLayer, 0, 0);
     ctx.setTransform(k, 0, 0, k, sx, sy);
     drawCanopy(now);
+    drawSnowCover(); // (drifts lie on the bark, under everything on it)
 
     drawFields(now); // (homes and colonies: their force fields, then the colonies' flags)
 
     drawBurrows(now);
-    drawSnowCover();
     drawPatch(alpha, now); // (the woodpecker's next patch, on the bark under the snakes)
     drawLeaves(now, dt);
     drawFood(alpha, now);
@@ -5184,6 +5229,7 @@ window.SnakeRender = (() => {
     barkLayer = null;
     rainTile = null;
     snowTile = null;
+    drifts = null; // (made again at this size: stretched, they'd blur)
     sprites.clear();
     veinSprites.clear();
     fieldLooks.clear();
