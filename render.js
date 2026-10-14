@@ -15,9 +15,12 @@
 // translucent shape made of overlapping pieces (the shadows, a force field's
 // glow round a rival) is drawn opaque into an offscreen veil and laid on once.
 // Force fields are cached layers, with no clip per frame. The per-frame path
-// builds no strings and no closures, but for a passing moment or two (a
-// dash's streak, and the woodpecker working out its perch and tracing its
-// patch, once a patch or when the page moves: not every frame of its stay).
+// builds no strings, closures or arrays (a body across a wrapped edge keeps
+// its offsets on its anim; a loop over both sides goes over SIDES2), only
+// the odd small record of something new (a leaf falling, a raindrop landing
+// on a force field). The exceptions are passing moments: a dash's streak,
+// and the woodpecker working out its perch and tracing its patch, once a
+// patch or when the page moves (not every frame of its stay).
 window.SnakeRender = (() => {
   const T = window.TUNING;
   const GRID = T.GRID;
@@ -26,6 +29,7 @@ window.SnakeRender = (() => {
   const BARK = '#5a3b22';
   const INK = '#0b1210';
   const TAU = Math.PI * 2;
+  const SIDES2 = [-1, 1]; // (either side, for a loop over both: no array made a frame)
 
   let canvas, ctx, PERSONAS;
   let devPerCss = 1;         // device pixels per CSS pixel on the board
@@ -880,7 +884,7 @@ window.SnakeRender = (() => {
       ctx.strokeStyle = 'rgba(148,163,184,0.7)';
       ctx.lineWidth = c * 0.015;
       const buzz = 0.9 + 0.1 * Math.sin(now / 9);
-      for (const sg of [-1, 1]) {
+      for (const sg of SIDES2) {
         ctx.beginPath();
         ctx.ellipse(-c * 0.26 * lift, sg * c * 0.14 * lift, c * 0.34 * buzz * lift, c * 0.1, -sg * 0.45 * lift, 0, TAU);
         ctx.fill();
@@ -893,7 +897,7 @@ window.SnakeRender = (() => {
     // golden mushroom's (gold means a power), pale at the front and deep at
     // the back, rimmed in emerald.
     ctx.lineWidth = c * 0.03;
-    for (const sg of [-1, 1]) {
+    for (const sg of SIDES2) {
       ctx.save();
       if (lift > 0) { ctx.translate(c * 0.16, 0); ctx.rotate(-sg * 0.4 * lift); ctx.translate(-c * 0.16, 0); }
       ctx.fillStyle = f.gold ? honeyShell() : '#059669';
@@ -1085,6 +1089,7 @@ window.SnakeRender = (() => {
         // This frame's layout (see prepare): segment centres, the corner each
         // band bends through, radii and fills, sized for the body as it grows.
         n: 0, pts: new Float32Array(64), cor: new Float32Array(64), rad: new Float32Array(32), fills: new Array(32),
+        offs: null, offList: [], offPool: [], // (where it's drawn across a wrapped edge, if it is: see unwrap)
         look: '', color: '', isPlayer: false, rim: false, bump: 0, tickPos: 0, lean: 0,
       };
       anim.set(s, a);
@@ -1415,16 +1420,19 @@ window.SnakeRender = (() => {
   // near ref (a segment that moved across a wrapped edge: any real move is
   // three cells at most, a crossing nearly the board's width).
   const nearOf = (v, ref) => v - ref > GRID / 2 ? v - GRID : ref - v > GRID / 2 ? v + GRID : v;
+  // ...and the same for a drawn point (in units), a whole board's width.
+  const nearIn = (v, ref) => v - ref > SIZE / 2 ? v - SIZE : ref - v > SIZE / 2 ? v + SIZE : v;
   // A body that runs across a wrapped edge, made one unbroken chain from the
   // head (so parts of it lie off the board), and the offsets to draw it at
-  // as well, so what's off one edge shows at the other.
-  const OFFS = [[0, 0]];
+  // as well, so what's off one edge shows at the other. (Every frame, for a
+  // snake that's had the edges wrap this round: the offsets go in arrays
+  // kept on its anim, and in OFF_XS and OFF_YS, so none is made a frame.)
+  const OFFS = [[0, 0]], OFF_XS = [], OFF_YS = [];
   function unwrap(a, n) {
-    const { pts, cor } = a, half = SIZE / 2;
-    const near = (v, ref) => v - ref > half ? v - SIZE : ref - v > half ? v + SIZE : v;
+    const { pts, cor } = a;
     for (let i = 0; i < n - 1; i++) {
-      cor[2 * i] = near(cor[2 * i], pts[2 * i]); cor[2 * i + 1] = near(cor[2 * i + 1], pts[2 * i + 1]);
-      pts[2 * i + 2] = near(pts[2 * i + 2], cor[2 * i]); pts[2 * i + 3] = near(pts[2 * i + 3], cor[2 * i + 1]);
+      cor[2 * i] = nearIn(cor[2 * i], pts[2 * i]); cor[2 * i + 1] = nearIn(cor[2 * i + 1], pts[2 * i + 1]);
+      pts[2 * i + 2] = nearIn(pts[2 * i + 2], cor[2 * i]); pts[2 * i + 3] = nearIn(pts[2 * i + 3], cor[2 * i + 1]);
     }
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (let i = 0; i < n; i++) {
@@ -1432,12 +1440,20 @@ window.SnakeRender = (() => {
       y0 = Math.min(y0, pts[2 * i + 1]); y1 = Math.max(y1, pts[2 * i + 1]);
     }
     if (x0 >= 0 && y0 >= 0 && x1 <= SIZE && y1 <= SIZE) return null;
-    const xs = [0], ys = [0], offs = [];
+    const xs = OFF_XS, ys = OFF_YS, offs = a.offList, pool = a.offPool;
+    xs.length = ys.length = offs.length = 0;
+    xs.push(0); ys.push(0);
     if (x0 < 0) xs.push(SIZE);
     if (x1 > SIZE) xs.push(-SIZE);
     if (y0 < 0) ys.push(SIZE);
     if (y1 > SIZE) ys.push(-SIZE);
-    for (const ox of xs) for (const oy of ys) offs.push([ox, oy]);
+    for (let i = 0; i < xs.length; i++) {
+      for (let j = 0; j < ys.length; j++) {
+        const p = pool[offs.length] || (pool[offs.length] = [0, 0]);
+        p[0] = xs[i]; p[1] = ys[j];
+        offs.push(p);
+      }
+    }
     return offs;
   }
 
@@ -2008,7 +2024,6 @@ window.SnakeRender = (() => {
       ctx.lineTo(x1, y1);
     }
   }
-  const SIDES2 = [-1, 1];
 
   // Marble veins across a disc (centre x, y, radius r), their own way for
   // each segment i: a long wandering one and a short faint one beside it,
@@ -2181,7 +2196,8 @@ window.SnakeRender = (() => {
     ctx.lineWidth = c * 0.05;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    for (const y of [-y0, y0]) {
+    for (const sg of SIDES2) {
+      const y = sg * y0;
       if (deadNow) { cross(x, y, Math.max(r, 0.08) * 0.85); continue; } // knocked out, not asleep
       ctx.moveTo(c * x, c * (y - r));
       ctx.quadraticCurveTo(c * (x + r * 0.9), c * y, c * x, c * (y + r));
@@ -2647,7 +2663,7 @@ window.SnakeRender = (() => {
     ctx.fillStyle = '#1c1917'; // the lips parted wide...
     ctx.beginPath(); ctx.ellipse(c * 0.4, 0, c * 0.06, c * 0.11, 0, 0, TAU); ctx.fill();
     ctx.fillStyle = '#f1f5f9'; // ...teeth showing
-    for (const sg of [-1, 1]) for (let i = -1; i <= 1; i++) {
+    for (const sg of SIDES2) for (let i = -1; i <= 1; i++) {
       ctx.beginPath(); ctx.moveTo(c * (0.4 + i * 0.03), sg * c * 0.1); ctx.lineTo(c * (0.415 + i * 0.03), sg * c * 0.05); ctx.lineTo(c * (0.43 + i * 0.03), sg * c * 0.1); ctx.fill();
     }
     if (e < 0.05) return;
@@ -2674,7 +2690,7 @@ window.SnakeRender = (() => {
     ctx.fillStyle = '#0b0f19';
     ctx.beginPath(); ctx.ellipse(mx, 0, c * 0.05, gap + c * 0.012, 0, 0, TAU); ctx.fill();
     ctx.fillStyle = '#e2e8f0'; // ...two rows of little silver teeth
-    for (const sg of [-1, 1]) {
+    for (const sg of SIDES2) {
       ctx.beginPath();
       for (let i = 0; i < 4; i++) {
         const tx = mx - c * 0.045 + i * c * 0.026, ty = sg * (gap + c * 0.01);
@@ -2692,7 +2708,7 @@ window.SnakeRender = (() => {
     ctx.fillStyle = '#f8fafc';
     ctx.strokeStyle = 'rgba(58,36,8,0.85)';
     ctx.lineWidth = c * 0.02;
-    for (const sg of [-1, 1]) { // two long fangs, curving forward and in
+    for (const sg of SIDES2) { // two long fangs, curving forward and in
       ctx.beginPath();
       ctx.moveTo(x0 - c * 0.03, sg * c * 0.06);
       ctx.quadraticCurveTo(x0 + c * (0.14 + 0.08 * e), sg * c * 0.08, x0 + c * (0.16 + 0.14 * e), sg * c * (0.02 - 0.04 * e));
@@ -3118,7 +3134,7 @@ window.SnakeRender = (() => {
         ctx.fillStyle = INK; // nostrils
         circle(c * 0.42, -c * 0.06, c * 0.022); circle(c * 0.42, c * 0.06, c * 0.022);
         if (blinking || deadNow) { lids(0.1, 0.14, 0.22); break; }
-        for (const sg of [-1, 1]) { // amber eyes, a black slit each, turned to what it's watching
+        for (const sg of SIDES2) { // amber eyes, a black slit each, turned to what it's watching
           ctx.fillStyle = '#facc15';
           circle(c * 0.14, sg * c * 0.22, c * 0.1);
           ctx.fillStyle = INK;
@@ -3162,7 +3178,7 @@ window.SnakeRender = (() => {
           ctx.lineWidth = c * 0.07;
           ctx.lineCap = 'round';
           ctx.beginPath();
-          for (const sg of [-1, 1]) { ctx.moveTo(c * brow[0], sg * c * 0.34); ctx.quadraticCurveTo(c * brow[1], sg * c * 0.2, c * brow[2], sg * c * 0.07); }
+          for (const sg of SIDES2) { ctx.moveTo(c * brow[0], sg * c * 0.34); ctx.quadraticCurveTo(c * brow[1], sg * c * 0.2, c * brow[2], sg * c * 0.07); }
           ctx.stroke();
         } // ...and a tear under one eye
 
@@ -5542,14 +5558,17 @@ window.SnakeRender = (() => {
     for (const s of game.snakes) { // (by a wrapping head: a glow on the edge it's near)
       if (!s.alive || !(s.wrapUntil > shownTime)) continue;
       const h = s.body[0], hx = h.x * CELL + CELL / 2, hy = h.y * CELL + CELL / 2;
-      for (const [ex, ey, d] of [[0, hy, h.x], [SIZE, hy, GRID - 1 - h.x], [hx, 0, h.y], [hx, SIZE, GRID - 1 - h.y]]) {
-        if (d > 3) continue;
-        const w = SPRITE * CELL * (1.6 - d * 0.3);
-        ctx.globalAlpha = 0.7 * any * (1 - d / 4);
-        ctx.drawImage(glowSprite(), ex - w / 2, ey - w / 2, w, w);
-      }
+      edgeGlow(0, hy, h.x, any); edgeGlow(SIZE, hy, GRID - 1 - h.x, any);
+      edgeGlow(hx, 0, h.y, any); edgeGlow(hx, SIZE, GRID - 1 - h.y, any);
       ctx.globalAlpha = 1;
     }
+  }
+  // The glow at (ex, ey) on the edge, for a wrapping head d cells from it.
+  function edgeGlow(ex, ey, d, any) {
+    if (d > 3) return;
+    const w = SPRITE * CELL * (1.6 - d * 0.3);
+    ctx.globalAlpha = 0.7 * any * (1 - d / 4);
+    ctx.drawImage(glowSprite(), ex - w / 2, ey - w / 2, w, w);
   }
 
   const len3 = (x, y) => Math.hypot(x, y) || 1;
