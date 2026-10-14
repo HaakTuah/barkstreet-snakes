@@ -910,8 +910,6 @@ window.SnakeRender = (() => {
   const GROWN = ['', '+1', '+2', '+3', '+4', '+5']; // (what a bite was worth, without building a string)
   const drawFloat = (g, text) => {
     g.font = FLOAT_FONT;
-    const fit = Math.min(1, CELL * 1.84 / g.measureText(text).width); // (a long word shrinks to fit its sprite)
-    if (fit < 1) g.scale(fit, fit);
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     g.lineJoin = 'round';
@@ -921,9 +919,32 @@ window.SnakeRender = (() => {
     g.fillStyle = FLOAT_FILL[text] || '#fde68a';
     g.fillText(text, 0, 0);
   };
+  // A word's sprite: two cells tall like any other, and as wide as the word
+  // needs (a long word used to shrink to fit, which left a death's Crunch!
+  // smaller than the Bonk! you survive). Drawn once per resolution.
+  const floatHalf = new Map(); // word -> half its width with its ink edge, in units
+  let measureG = null; // (a tiny canvas's context, for measuring a word before its sprite is made)
+  function floatSprite(text) {
+    let byText = sprites.get('float');
+    if (!byText) sprites.set('float', byText = new Map());
+    let s = byText.get(text);
+    if (s) return s;
+    if (!measureG) measureG = makeLayer(1, 1).getContext('2d');
+    measureG.font = FLOAT_FONT;
+    const w = measureG.measureText(text).width + CELL * 0.3, span = Math.max(SPRITE * CELL, w); // (room for its ink edge)
+    floatHalf.set(text, w / 2);
+    s = makeLayer(Math.max(2, Math.round(span * k)), Math.max(2, Math.round(SPRITE * CELL * k)));
+    const g = s.getContext('2d');
+    g.setTransform(s.width / span, 0, 0, s.height / (SPRITE * CELL), s.width / 2, s.height / 2);
+    drawFloat(g, text);
+    byText.set(text, s);
+    return s;
+  }
+  // Half a word's width, as it's kept inside the board (its sprite made, if it isn't yet).
+  const floatHalfOf = text => { floatSprite(text); return Math.max(CELL * (text.length > 3 ? 1.15 : 0.7), floatHalf.get(text)); };
   let fNext = 0;
   function floater(x, y, text) {
-    const half = CELL * (text.length > 3 ? 1.15 : 0.7); // (kept inside the board, words and all)
+    const half = floatHalfOf(text); // (kept inside the board, words and all)
     fx[fNext] = Math.min(SIZE - half, Math.max(half, x)); fy[fNext] = y; flife[fNext] = T.FLOAT_MS; ftext[fNext] = text;
     fNext = (fNext + 1) % MAX_F;
   }
@@ -936,11 +957,11 @@ window.SnakeRender = (() => {
       flife[i] -= dt;
       const t = Math.max(0, flife[i] / T.FLOAT_MS);
       const y = fy[i] - (reduced ? 0 : (1 - t) * CELL * 0.8); // rises, unless motion is reduced
-      const sp = sprite('float', ftext[i], drawFloat);
+      const sp = floatSprite(ftext[i]);
       if (reduced || t < 0.86) blitCrisp(sp, fx[i], y, Math.min(1, t * 1.6));
       else { // ...after popping in, from big
-        const w = SPRITE * CELL * (1 + (t - 0.86) / 0.14 * 0.7);
-        ctx.drawImage(sp, fx[i] - w / 2, y - w / 2, w, w);
+        const grow = (1 + (t - 0.86) / 0.14 * 0.7) / k, w = sp.width * grow, h = sp.height * grow;
+        ctx.drawImage(sp, fx[i] - w / 2, y - h / 2, w, h);
       }
     }
   }
@@ -4919,7 +4940,7 @@ window.SnakeRender = (() => {
     for (let i = blasts.length - 1; i >= 0; i--) {
       const b = blasts[i], t = (now - b.at) / 480;
       if (t >= 1 || t < 0) { blasts.splice(i, 1); continue; }
-      const grow = reduced ? 0.5 : t, pop = 1 - (1 - Math.min(1, t * 2.5)) ** 3; // (it bursts out fast, then holds)
+      const grow = reduced ? 0.5 : t, pop = reduced ? 1 : 1 - (1 - Math.min(1, t * 2.5)) ** 3; // (it bursts out fast, then holds; with reduced motion, it's simply there, fading)
       const w = BLAST_SPAN * CELL * (0.5 + 0.55 * pop);
       ctx.globalAlpha = t < 0.55 ? 1 : (1 - t) / 0.45;
       ctx.drawImage(blastSprite(), b.x - w / 2, b.y - w / 2, w, w);
@@ -5013,19 +5034,22 @@ window.SnakeRender = (() => {
     }
   }
 
-  // Before drawing: unheld deaths burst; held ones whose time is up burst or start fading.
+  // Before drawing: unheld deaths burst; held ones whose time is up burst or
+  // start fading. (With reduced motion a dead snake fades over its beads
+  // under a still starburst: no pieces fly, and nothing grows.)
   function updateCorpses(now) {
     for (const s of deaths) {
+      burst(s);
       if (reduced) corpses.push({ s, until: now, fade: true });
-      else burst(s);
     }
     deaths.length = 0;
     heldCells.fill(0);
     for (let i = corpses.length - 1; i >= 0; i--) {
       const c = corpses[i];
       if (!c.fade && now >= c.until) {
+        burst(c.s);
         if (reduced) c.fade = true;
-        else { burst(c.s); corpses.splice(i, 1); continue; }
+        else { corpses.splice(i, 1); continue; }
       }
       if (c.fade && now >= c.until + FADE_MS) { corpses.splice(i, 1); continue; }
       if (!c.fade) for (const b of c.s.body) heldCells[b.y * GRID + b.x] = 1;
@@ -5116,6 +5140,7 @@ window.SnakeRender = (() => {
     rainTile = null;
     snowTile = null;
     sprites.clear();
+    warmUp(); // (the words and the starburst, at this size)
     veinSprites.clear();
     fieldLooks.clear();
     resetStatic();
@@ -5132,13 +5157,20 @@ window.SnakeRender = (() => {
     PERSONAS = opts.personas;
     k = canvas.width / SIZE;
     // Text sprites drawn before the font arrived get redrawn with it.
-    document.fonts?.ready.then(() => sprites.delete('float'));
+    document.fonts?.ready.then(() => { sprites.delete('float'); floatHalf.clear(); warmUp(); });
   }
 
-  const FLOAT_WORDS = ['+1', '+2', '+3', 'KO!', 'Bonk!', 'Ouch!', '-1', '-2', '-3'];
+  // The words that pop up, and a death's starburst: drawn now, not on the
+  // first bite or the first death (the busiest frame of a round).
+  const FLOAT_WORDS = ['+1', '+2', '+3', 'KO!', 'Crunch!', 'Fwoosh!', 'Boom!', 'Bonk!', 'Ouch!', 'Snip!', '-1', '-2', '-3'];
+  function warmUp() {
+    if (!sized) return;
+    for (const w of FLOAT_WORDS) floatSprite(w);
+    blastSprite();
+  }
   function setGame(g) {
     game = g;
-    if (sized) for (const w of FLOAT_WORDS) sprite('float', w, drawFloat); // (drawn now, not on the first bite)
+    warmUp();
     deaths.length = 0;
     corpses.length = 0;
     pLive = 0;
