@@ -1572,18 +1572,21 @@ window.SnakeRender = (() => {
   // and fainter than the last (a soft edge without a blur), and a touch more
   // round your head. [width or radius (cells), alpha] pairs, outermost first.
   const HALO = [1.42, 0.07, 1.22, 0.1, 1.04, 0.14], HALO_HEAD = [0.8, 0.07, 0.72, 0.1];
-  function drawOutline(s, a) {
-    const mine = a.isPlayer && s.id === viewerId;
-    if (mine) { // (your soft halo, so you find yourself at a glance)
-      const was = ctx.globalAlpha;
-      ctx.strokeStyle = ctx.fillStyle = '#fffbea';
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      spine(a);
-      for (let i = 0; i < HALO.length; i += 2) { ctx.globalAlpha = was * HALO[i + 1]; ctx.lineWidth = CELL * HALO[i]; ctx.stroke(); }
-      for (let i = 0; i < HALO_HEAD.length; i += 2) { ctx.globalAlpha = was * HALO_HEAD[i + 1]; circle(a.pts[0], a.pts[1], CELL * HALO_HEAD[i]); }
-      ctx.globalAlpha = was;
-    }
+  function drawHalo(s, a) {
+    if (!a.isPlayer || s.id !== viewerId) return;
+    const was = ctx.globalAlpha;
+    ctx.strokeStyle = ctx.fillStyle = '#fffbea';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    spine(a);
+    for (let i = 0; i < HALO.length; i += 2) { ctx.globalAlpha = was * HALO[i + 1]; ctx.lineWidth = CELL * HALO[i]; ctx.stroke(); }
+    for (let i = 0; i < HALO_HEAD.length; i += 2) { ctx.globalAlpha = was * HALO_HEAD[i + 1]; circle(a.pts[0], a.pts[1], CELL * HALO_HEAD[i]); }
+    ctx.globalAlpha = was;
+  }
+  // (halo: false for a snake up in the air, whose halo went down with the
+  // ground's outlines: see drawSnakes)
+  function drawOutline(s, a, halo = true) {
+    if (halo) drawHalo(s, a); // (your soft halo, so you find yourself at a glance)
     const own = edgeOf(s, a, false); // (the outline it has anyway)
     if (powered(s)) { // a golden power: a thin, opaque gold line round its own outline, inked outside so it reads on any colour
       const was = ctx.globalAlpha;
@@ -1595,7 +1598,7 @@ window.SnakeRender = (() => {
       ctx.globalAlpha = was;
     }
     if (a.isPlayer) {
-      ctx.fillStyle = mine ? '#fffef8' : FRIEND_OUTLINE;
+      ctx.fillStyle = s.id === viewerId ? '#fffef8' : FRIEND_OUTLINE;
       outlineFills(a, own);
     } else if (a.rim) {
       ctx.fillStyle = RIM;
@@ -2020,22 +2023,24 @@ window.SnakeRender = (() => {
     // Then outlines, bodies, flames and queasy washes, each pass for every
     // snake on the ground, then the same for any up in the air: a leaper's
     // outline goes over what it's hopping, not under it (which made it look
-    // rammed into it rather than above it).
+    // rammed into it rather than above it). Its halo stays with the
+    // ground's outlines, under every body (over the snake it hopped, it
+    // greyed a dark body either side of yours for as long as the arch ran).
     let up = live.length;
     if (leaping) while (up > 0 && overOf(live[up - 1])) up--;
-    drawPasses(0, up, now);
-    if (up < live.length) drawPasses(up, live.length, now);
+    drawPasses(0, up, now, live.length);
+    if (up < live.length) drawPasses(up, live.length, now, 0);
   }
   // Passes over live[from..to) (and for a snake across a wrapped edge, at
-  // each place it shows).
-  function drawPasses(from, to, now) {
+  // each place it shows); the first also takes the halos of live[to..halos).
+  function drawPasses(from, to, now, halos) {
     for (let pass = 0; pass < 4; pass++) {
-      for (let i = from; i < to; i++) {
+      for (let i = from, end = pass ? to : Math.max(to, halos); i < end; i++) {
         const s = live[i], a = anim.get(s), offs = a.offs || OFFS;
         for (let j = 0; j < offs.length; j++) {
           const ox = offs[j][0], oy = offs[j][1];
           if (ox || oy) ctx.translate(ox, oy);
-          if (pass === 0) drawOutline(s, a);
+          if (pass === 0) { if (i >= to) drawHalo(s, a); else drawOutline(s, a, !!halos); }
           else if (pass === 1) drawBody(s, a, now, false);
           else if (pass === 2) { if (s.burnUntil > game.tick) drawBurning(s, a, now); }
           else { // queasy after a mushroom: a sickly green wash, fading
