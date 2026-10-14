@@ -63,7 +63,8 @@ for (let r = 0; r < rounds; r++) {
     same(r, k, 'alive', host.snakes.map(s => s.alive), guest.snakes.map(s => s.alive));
     same(r, k, 'dirs', host.snakes.map(s => s.dir), guest.snakes.map(s => s.dir));
     same(r, k, 'hunger', host.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve]), guest.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve]));
-    same(r, k, 'stuns, burns and leaps', host.snakes.map(s => [s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed]), guest.snakes.map(s => [s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed]));
+    const powers = g => g.snakes.map(s => [s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed, s.dashes, s.leapReadyAt, s.wrapUntil, s.flight ? s.flight.dir : null]);
+    same(r, k, 'stuns, burns and powers', powers(host), powers(guest));
     const food = g => g.food.map(f => [f.x, f.y, f.kind, f.expires, f.color, f.dir && f.kind === 'beetle' ? f.dir : null, f.px ?? null, f.py ?? null, f.movedAt ?? null, !!f.scared, f.heat || 0, !!f.cooked, !!f.gold]);
     same(r, k, 'food', food(host), food(guest));
     same(r, k, 'holes', [...host.holes], [...guest.holes]);

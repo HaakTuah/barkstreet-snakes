@@ -936,6 +936,25 @@ window.SnakeAI = (() => {
       s += Math.random() * 1e-3; // tie-break
       if (s > bestScore) { bestScore = s; bestDir = d; }
     }
+    // Powers. With nothing better than a crash every way, a leap over what's
+    // in front (golden leaps, or the plain leap when it's ready), if there's
+    // somewhere free to land: it asks for it just as a person presses.
+    if (bestScore < DEAD / 2 && !me.dashes && (me.leaps > 0 || me.leapIn === 0)) {
+      const reach = me.leaps > 0 ? 2 : 1, keep = me.grow > 0 ? me.body.length : me.body.length - 1;
+      const mine = (x, y) => { for (let j = 0; j < keep; j++) if (me.body[j].x === x && me.body[j].y === y) return true; return false; };
+      const hurdle = (x, y) => holes.has(y * N + x) || fire.has(y * N + x) || mineFree[y * N + x] > 1 || mine(x, y);
+      for (const d of [bestDir, ...DIR_LIST]) {
+        if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
+        let over = false, ok = true;
+        for (let i = 1; i <= reach + 1 && ok; i++) {
+          const x = myHead.x + d.x * i, y = myHead.y + d.y * i;
+          if (!inside(x, y)) ok = false;
+          else if (i <= reach) over ||= hurdle(x, y);
+          else ok = !hurdle(x, y);
+        }
+        if (ok && over) { bestDir = d; memory.power = view.tick; break; }
+      }
+    }
     return bestDir;
   }
 
