@@ -1221,6 +1221,8 @@ window.SnakeRender = (() => {
   function drawBody(s, a, now, dead) {
     const { n, pts, rad, fills, look, color } = a;
     // Segments: narrower bands joining them, then a round one per cell.
+    // (Bands as rectangles, fillRect's fast path; folding them into each
+    // segment's circle as one shape measured slower.)
     for (let i = n - 2; i >= 0; i--) { ctx.fillStyle = fills[i + 1]; band(a, i, rad[i + 1] * PINCH); }
     for (let i = n - 1; i >= 0; i--) {
       if (i < n - 1 && bends(a, i)) { ctx.fillStyle = fills[i + 1]; circle(a.cor[2 * i], a.cor[2 * i + 1], rad[i + 1] * PINCH); }
@@ -2557,11 +2559,12 @@ window.SnakeRender = (() => {
   // up (it pulses faster, ripples spread from where it came in), and every
   // part of the rival inside glows in the field's colour, as if wading
   // through coloured light. The edge is exactly the trespass line.
-  const rgbaCache = new Map();
+  const rgbaCache = new Map(); // hex -> alpha -> string (no key string built per call)
   function rgba(hex, a) {
-    const key = hex + a;
-    let v = rgbaCache.get(key);
-    if (!v) { const n = parseInt(hex.slice(1), 16); v = `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; rgbaCache.set(key, v); }
+    let byA = rgbaCache.get(hex);
+    if (!byA) rgbaCache.set(hex, byA = new Map());
+    let v = byA.get(a);
+    if (!v) { const n = parseInt(hex.slice(1), 16); v = `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; byA.set(a, v); }
     return v;
   }
   // Each field's look, drawn once per resolution: its glow and edge, and the
@@ -3600,16 +3603,19 @@ window.SnakeRender = (() => {
   function drawWoodpecker(alpha, now, dt) {
     const w = game.woodpecker;
     if (!w || !birdLayer) {
-      if (birdShown) { birdLayer.style.display = 'none'; birdShown = false; bird.placed = false; }
+      if (birdShown) { birdLayer.style.display = 'none'; birdShown = false; bird.placed = false; bird.box = null; }
       return;
     }
     if (!birdShown) { birdLayer.style.display = 'block'; birdShown = true; }
     const dpr = Math.min(window.devicePixelRatio || 1, quality === 2 ? 2 : quality === 1 ? 1.5 : 1);
     const W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
-    if (birdLayer.width !== W || birdLayer.height !== H) { birdLayer.width = W; birdLayer.height = H; }
+    if (birdLayer.width !== W || birdLayer.height !== H) { birdLayer.width = W; birdLayer.height = H; bird.box = null; }
     birdG.setTransform(1, 0, 0, 1, 0, 0);
-    birdG.clearRect(0, 0, W, H);
-    if (!boardRect.w) return;
+    // (The layer is the whole page and the bird a small part of it: only
+    // where it was last drawn is cleared, not the whole page every frame.)
+    if (bird.box) birdG.clearRect(bird.box[0], bird.box[1], bird.box[2], bird.box[3]);
+    else birdG.clearRect(0, 0, W, H);
+    if (!boardRect.w) { bird.box = null; return; }
     const sc = boardRect.w / SIZE * dpr;
     birdG.setTransform(sc, 0, 0, sc, boardRect.x * dpr, boardRect.y * dpr);
 
@@ -3655,6 +3661,8 @@ window.SnakeRender = (() => {
       spawn(tx + (Math.random() - 0.5) * CELL, ty + (Math.random() - 0.5) * CELL, 3, 260, 420, 2.6, '#c08a4a', '#f6ecd2');
     }
     paintWoodpecker(birdG, bird.x, bird.y, 0, bird.flip, { fly, drum, look, crouch, now: lively ? now : 0 });
+    const bx = boardRect.x * dpr + (bird.x - 6 * BU) * sc, by = boardRect.y * dpr + (bird.y - 7 * BU) * sc;
+    bird.box = [Math.floor(bx) - 2, Math.floor(by) - 2, Math.ceil(12 * BU * sc) + 4, Math.ceil(13 * BU * sc) + 4];
   }
 
   // The bird, in its own frame: beak towards +x, head up (-y), clinging by

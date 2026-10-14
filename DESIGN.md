@@ -220,6 +220,19 @@ A round has a shape, and the music follows it:
 
 **Golden beetles and the leap.** About one beetle in three (`GOLD_BEETLE_CHANCE`) comes out golden: a gold shell rimmed in emerald, a glow and glints. Catch one and you get `LEAP_CHARGES` (2) leaps (`LEAP_MAX` 3 held), shown as a golden ring round your head with a pip for each. **To leap, press the way you're already going** (on a phone, swipe forward; for a friend online, it's the same message as a turn): if there's a body or a hole right in front and a free cell beyond, you hop over it, moving two cells in one tick, your body arching over what's in between (still joined up, so nothing else changes); the head arcs up through the air, drawn on top until the arch has run off your tail. The leap waits `LEAP_WINDOW` (3) ticks for something to hop and isn't spent on open ground (so pressing early or mashing the key wastes nothing), and never goes off the board or onto a body. **The rivals leap too**, without asking: whenever they'd otherwise crash. It pairs with the crash rules: a leap is the way out of a box. One power, not a set: warp and wrap-around were considered and left out (they'd make the edges meaningless and muddle the woodpecker's work); if the leap feels good, another could follow. About 0.8 golden beetles come out a round. The narrator announces them ("A golden beetle! Catch it, and you can leap over things."), explains the leap when you catch one, and a springy boing goes with every leap. Online it's protocol 5.
 
+## The fourth performance pass: the page's own work
+
+**Measured first, on a simulated mid-range phone** (headless Chrome, CPU slowed 4x, a 412 px phone screen at 2.5x, a busy watched round: force fields, a ring, a storm, long snakes): drawing the board (`R.frame`) took about 2.5 ms a frame, but the browser's own work round it took more. Restyling, layerizing and painting the page came to over 3 ms a frame, and tracing it with things switched off one at a time showed why: CSS animations that couldn't run on the compositor, so the page did main-thread work every frame for them, and speech bubbles restyling as they moved.
+
+- **The corner leaves** swayed with the `rotate` property (their `transform` mirrored them into the corners), and the page was re-layerized every frame. The mirroring is now inside each SVG, so they sway by `transform`, which the compositor runs.
+- **The frame's light sweep** was a pseudo-element; it's a real element now (pseudo-element animations restyled the page every frame).
+- **The leader's crown** bobs three times when it's crowned, then rests (it bobbed forever). **The title's "&"** rests during a round.
+- **Speech bubbles** move their tail in 5% steps (every change restyled them).
+- **The woodpecker's layer** covers the whole page; only the patch round the bird is cleared each frame, not the whole page.
+- (Drawing each body segment's band into its circle, as one shape, was tried and measured slower than a fast rectangle plus a circle, so it stayed as it was.)
+
+**After, back to back with the same round, per frame:** layerizing 1.45 → 0.37 ms, painting 0.54 → 0.07 ms, restyling 1.20 → 0.63 ms, pre-paint 0.87 → 0.48 ms, commit 1.38 → 1.06 ms. With that much less of the browser's own work, the same 12 seconds fit 1755 frames instead of 1078 (63% more headroom on the main thread). Drawing the board is unchanged (about 2.5 ms a frame at 4x slower; 0.4 ms median on a desktop), and so is everything you see.
+
 ## Sound
 
 **Force fields hum.** When your head crosses into a rival's force field (Sovereign's home or one of Colonist's colonies), a low electric hum swells (two detuned saws, filtered), with a rising shimmer over it and a fizz of noise, panned to where you are. It plays once per crossing, at most every 0.8 s.

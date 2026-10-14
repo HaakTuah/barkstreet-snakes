@@ -153,6 +153,7 @@ h1 {
   text-shadow: 0 2px 0 var(--leaf-dark), 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 h1 .amp { display: inline-block; color: var(--honey); transform-origin: 50% 80%; animation: amp-wiggle 4.2s ease-in-out 1.5s infinite; }
+html.in-round h1 .amp { animation: none; } /* (it rests during a round: nobody's looking, and it costs every frame) */
 @keyframes amp-wiggle {
   0%, 72%, 100% { transform: none; }
   78% { transform: rotate(-14deg) scale(1.12); }
@@ -249,7 +250,7 @@ header { min-width: 0; }
 
 /* The leader (the longest snake) wears a gold ring and a bobbing crown. */
 .scoreboard li.leader { box-shadow: 0 2px 0 var(--parchment-2), inset 0 0 0 2px #d4a017; }
-.scoreboard li.leader .len::before {
+.scoreboard li.leader .len::before { /* (it bobs when crowned, then rests: a crown bobbing forever restyles the page every frame) */
   content: '';
   display: inline-block;
   width: 13px;
@@ -257,7 +258,7 @@ header { min-width: 0; }
   margin-right: 3px;
   vertical-align: -1px;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 11'%3E%3Cpath d='M1.2 3.4l2.8 2.7L6.5 1l2.5 5.1 2.8-2.7-1.1 6.4H2.3z' fill='%23facc15' stroke='%23926a10' stroke-width='.9' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
-  animation: crown-bob 1.6s ease-in-out infinite;
+  animation: crown-bob 1.6s ease-in-out 3;
 }
 @keyframes crown-bob { 50% { transform: translateY(-2px) rotate(-8deg); } }
 
@@ -291,9 +292,9 @@ header { min-width: 0; }
   overflow: hidden;
   pointer-events: none;
 }
-.frame-sheen::before {
-  content: '';
+.frame-sheen > i { /* (a real element, not a pseudo-element, so the compositor can run it) */
   position: absolute;
+  will-change: transform;
   top: -20%;
   bottom: -20%;
   left: 0;
@@ -326,17 +327,18 @@ header { min-width: 0; }
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
 }
 .leaves.tl { left: -8px; top: -8px; }
-.leaves.tr { right: -8px; top: -8px; transform: scaleX(-1); }
-.leaves.bl { left: -8px; bottom: -8px; transform: scaleY(-1); }
-.leaves.br { right: -8px; bottom: -8px; transform: scale(-1, -1); }
-/* ...and sway in the breeze, each on its own beat. (The whole leaf turns,
-   with the rotate property, so the compositor runs it: animating the SVG's
-   insides made the page lay out and repaint every frame.) */
+.leaves.tr { right: -8px; top: -8px; }
+.leaves.bl { left: -8px; bottom: -8px; }
+.leaves.br { right: -8px; bottom: -8px; }
+/* ...and sway in the breeze, each on its own beat. (The whole leaf turns, by
+   its transform, so the compositor runs it: animating the SVG's insides made
+   the page lay out and repaint every frame, and the rotate property had the
+   page re-layerized every frame. The corners' mirroring is in the SVG.) */
 .leaves { will-change: transform; animation: leaf-sway 4.6s ease-in-out infinite alternate; }
 .leaves.tr { animation-delay: -1.3s; animation-duration: 5.2s; }
 .leaves.bl { animation-delay: -2.7s; animation-duration: 5.8s; }
 .leaves.br { animation-delay: -3.9s; animation-duration: 4.9s; }
-@keyframes leaf-sway { from { rotate: -6deg; } to { rotate: 7deg; } }
+@keyframes leaf-sway { from { transform: rotate(-6deg); } to { transform: rotate(7deg); } }
 
 .board {
   position: relative;
@@ -910,7 +912,7 @@ button.link:active { transform: none; }
 /* Reduced motion: no pops, rises or rumbles; the information stays. */
 @media (prefers-reduced-motion: reduce) {
   .card, .overlay, .badge, .toast, .records-card, .scoreboard li.starving::after { animation: none !important; }
-  h1 .amp, .leaves, .frame-sheen::before, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
+  h1 .amp, .leaves, .frame-sheen > i, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
   .scoreboard li.starving::after { opacity: 1; }
   button, button:active { transition: none; transform: none; }
   .toast { transition: none; }
