@@ -271,6 +271,21 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
   check('...for a while', g.events.some(e => e.type === 'crash' && e.snake === me && e.killer === 'wall'));
 }
 
+{ // An AI whose edges wrap goes through one when that's the way out.
+  // At the right edge heading down: below a hole, left a rival's body, behind its own; right, the edge.
+  const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  a.body = [[23, 5], [23, 4], [23, 3], [23, 2], [23, 1]].map(([x, y]) => ({ x, y })); a.dir = D.down; a.wrapUntil = g.time + 5000;
+  b.body = Array.from({ length: 9 }, (_, i) => ({ x: 22, y: 12 - i })); b.dir = D.down; // (22,12) up to (22,4)
+  b.isPlayer = true; b.persona = null; b.queue = [];
+  g.holes.add(K(23, 6));
+  g.food = [];
+  look(g);
+  E.step(g);
+  check("an AI whose edges wrap goes through one when that's the way out", a.alive && a.body[0].x === 0 && a.body[0].y === 5 && !g.events.some(e => e.type === 'crash' && e.snake === a), JSON.stringify(a.body[0]));
+}
+
 { // One golden power at a time: a new one replaces the old.
   const g = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']], { food: [[6, 10, 'leaf']] });
   g.snakes[0].leaps = 2;

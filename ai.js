@@ -628,6 +628,14 @@ window.SnakeAI = (() => {
         const nx = heads[k].x + d.x, ny = heads[k].y + d.y;
         if (inside(nx, ny)) risk[ny * N + nx] += strike;
       }
+      // (Its powers reach further straight on: a dash three cells, a golden
+      // leap three, anyone's leap two if there's something in front to hop.)
+      const fx = heads[k].x + o.dir.x, fy = heads[k].y + o.dir.y;
+      const reach = o.dashes > 0 || o.leaps > 0 ? 3 : inside(fx, fy) && otherFree[fy * N + fx] > 1 ? 2 : 1;
+      for (let i = 2; i <= reach; i++) {
+        const nx = heads[k].x + o.dir.x * i, ny = heads[k].y + o.dir.y * i;
+        if (inside(nx, ny)) risk[ny * N + nx] += strike * 0.5;
+      }
       const stampZ = ++stamp;
       queue[0] = o.body[0].y * N + o.body[0].x;
       seen[queue[0]] = stampZ;
@@ -860,13 +868,20 @@ window.SnakeAI = (() => {
       return score;
     }
 
+    // While the edges wrap for me (a golden mushroom): how many steps ahead
+    // that still holds (ticks are about 110 ms), and a step across an edge
+    // (a neck on the far side) read as the one step it is.
+    const wrapSteps = Math.floor((me.wrap || 0) / 130);
+    const unit = v => v > 1 ? -1 : v < -1 ? 1 : v;
+
     // Score of moving `d` as step t + 1, then playing on for `depth - 1` more steps.
     // `body` is the first `len` cells; the moved body goes into bodies[t + 1].
     function move(body, len, grow, d, depth, t, bonus) {
-      const nx = body[0].x + d.x, ny = body[0].y + d.y;
+      let nx = body[0].x + d.x, ny = body[0].y + d.y;
+      if (t < wrapSteps) { nx = (nx + N) % N; ny = (ny + N) % N; } // (the edges wrap for me a while yet)
       if (!canEnter(body, len, grow, nx, ny, t + 1)) return null;
       const i = ny * N + nx;
-      const turning = d.x !== body[0].x - body[1].x || d.y !== body[0].y - body[1].y;
+      const turning = d.x !== unit(body[0].x - body[1].x) || d.y !== unit(body[0].y - body[1].y);
       // New head in front; the tail moves up unless I'm still growing.
       let g = grow, nlen = len + 1;
       if (g > 0) g--; else nlen--;
@@ -894,7 +909,7 @@ window.SnakeAI = (() => {
     }
 
     function search(body, len, grow, depth, t, bonus) {
-      const backX = body[1].x - body[0].x, backY = body[1].y - body[0].y;
+      const backX = unit(body[1].x - body[0].x), backY = unit(body[1].y - body[0].y);
       let best = -Infinity;
       for (const d of DIR_LIST) {
         if (d.x === backX && d.y === backY) continue;
