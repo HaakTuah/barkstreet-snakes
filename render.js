@@ -350,7 +350,7 @@ window.SnakeRender = (() => {
   // (under the food and the snakes, so it never hides anything that matters).
   const fallen = [];
   let nextLeaf = 0;
-  const LEAVES = ['#d97706', '#ca8a04', '#b45309', '#a16207'];
+  const LEAVES = ['#9a3412', '#7c2d12', '#a0522d', '#8b5a2b']; // (russet and brown: gold means a power)
   const leafSprite = c => sprite('leaf', c, drawLeaf);
   const drawLeaf = (g, col) => {
     const c = CELL;
@@ -562,31 +562,40 @@ window.SnakeRender = (() => {
     }
     g.fill();
   };
-  // A golden leaf (on the wind: dashes), bigger and brighter than the leaves
-  // that fall, with a darker gold midrib and veins and a bright edge.
+  // A golden leaf (on the wind: dashes): a broad ginkgo fan about a cell
+  // across, in Honey, inked like every other pickup and lit along its top:
+  // nothing like the slim autumn leaves blowing past.
   const goldLeafSprite = () => sprite('goldleaf', '', g => {
-    const c = CELL * 1.25;
-    const grad = g.createLinearGradient(-c * 0.3, -c * 0.2, c * 0.3, c * 0.2);
-    grad.addColorStop(0, '#fef08a'); grad.addColorStop(0.55, '#facc15'); grad.addColorStop(1, '#ca8a04');
-    g.fillStyle = grad;
+    const c = CELL;
+    const fan = () => {
+      g.beginPath();
+      g.moveTo(0, c * 0.26); // (the base, where the stalk joins)
+      g.quadraticCurveTo(-c * 0.16, c * 0.05, -c * 0.46, -c * 0.1);
+      g.quadraticCurveTo(-c * 0.42, -c * 0.42, -c * 0.07, -c * 0.44);
+      g.lineTo(0, -c * 0.31); // (the notch in its edge)
+      g.lineTo(c * 0.07, -c * 0.44);
+      g.quadraticCurveTo(c * 0.42, -c * 0.42, c * 0.46, -c * 0.1);
+      g.quadraticCurveTo(c * 0.16, c * 0.05, 0, c * 0.26);
+      g.closePath();
+    };
+    g.strokeStyle = '#3a2614'; // the stalk
+    g.lineWidth = c * 0.07;
+    g.lineCap = 'round';
+    g.beginPath(); g.moveTo(0, c * 0.24); g.quadraticCurveTo(c * 0.02, c * 0.4, c * 0.08, c * 0.48); g.stroke();
+    const grad = g.createLinearGradient(0, -c * 0.44, 0, c * 0.26);
+    grad.addColorStop(0, '#fffbea'); grad.addColorStop(0.35, '#fde68a'); grad.addColorStop(1, '#d4a017');
+    fan();
+    g.fillStyle = grad; g.fill();
+    g.strokeStyle = 'rgba(180,120,10,0.7)'; // veins, fanning out from the base
+    g.lineWidth = c * 0.022;
     g.beginPath();
-    g.moveTo(-c * 0.32, 0);
-    g.quadraticCurveTo(-c * 0.02, -c * 0.24, c * 0.32, 0);
-    g.quadraticCurveTo(-c * 0.02, c * 0.24, -c * 0.32, 0);
-    g.fill();
-    g.strokeStyle = 'rgba(58,38,20,0.7)';
-    g.lineWidth = c * 0.03;
+    for (const a of [-1.05, -0.6, -0.2, 0.2, 0.6, 1.05]) { g.moveTo(0, c * 0.2); g.lineTo(Math.sin(a) * c * 0.4, c * 0.2 - Math.cos(a) * c * 0.56); }
     g.stroke();
-    g.strokeStyle = 'rgba(133,77,14,0.75)'; // the midrib and stalk, and veins
-    g.lineWidth = c * 0.028;
-    g.beginPath(); g.moveTo(-c * 0.42, c * 0.02); g.lineTo(c * 0.26, 0); g.stroke();
-    g.lineWidth = c * 0.02;
-    g.beginPath();
-    for (const x of [-0.16, -0.02, 0.12]) { g.moveTo(c * x, 0); g.lineTo(c * (x + 0.09), -c * 0.1); g.moveTo(c * x, 0); g.lineTo(c * (x + 0.09), c * 0.1); }
-    g.stroke();
-    g.strokeStyle = 'rgba(255,251,234,0.8)'; // a bright edge, catching the light
-    g.lineWidth = c * 0.02;
-    g.beginPath(); g.moveTo(-c * 0.2, -c * 0.1); g.quadraticCurveTo(c * 0.02, -c * 0.19, c * 0.24, -c * 0.03); g.stroke();
+    fan();
+    g.lineJoin = 'round';
+    g.strokeStyle = '#3a2614'; g.lineWidth = c * 0.05; g.stroke();
+    g.strokeStyle = '#fffbea'; g.lineWidth = c * 0.03; // (its top edge, catching the light)
+    g.beginPath(); g.moveTo(-c * 0.36, -c * 0.24); g.quadraticCurveTo(-c * 0.3, -c * 0.38, -c * 0.1, -c * 0.4); g.stroke();
   });
   // A golden mushroom (in the rain: the edges wrap): the mushroom's shape,
   // a gold cap with white spots and a shine.
@@ -946,11 +955,12 @@ window.SnakeRender = (() => {
   }
 
   // Mute is a mood ring: its colour follows how it feels, from what anyone
-  // can see on the board. Stunned: dazed grey. Just made a kill: proud gold.
+  // can see on the board. Stunned: dazed grey. Just made a kill: proud pink.
   // Hemmed in, or a rival's head close: pale with fright. Its victim close:
   // deep rose (closing the box). Stalking someone: deep violet. Otherwise
-  // calm violet. It changes over a moment, in a few steps.
-  const MUTE_MOODS = { calm: '#a855f7', stalking: '#6d28d9', closing: '#be123c', scared: '#dbeafe', proud: '#eab308', dazed: '#9ca3af' };
+  // calm violet. It changes over a moment, in a few steps. (The moods are
+  // spread in lightness as well as hue, so they read on the bark at a glance.)
+  const MUTE_MOODS = { calm: '#c084fc', stalking: '#5b21b6', closing: '#be123c', scared: '#e0f2fe', proud: '#f472b6', dazed: '#9ca3af' };
   const muteState = new Map(), muteShown = new Map(); // snake -> { from, to, at, key }; snake -> the colour now
   // ...and its face says it too: the brows (outer end, arch, inner end, along
   // the head: more negative is higher) and, unless it's biting, the mouth.
@@ -1151,7 +1161,7 @@ window.SnakeRender = (() => {
     a.color = colorOf(s);
     a.isPlayer = !s.persona;
     // A pale rim so dark bodies read on the bark (Joker's amber and white do already).
-    a.rim = !a.isPlayer && a.look !== 'joker' && (a.look === 'vulture' || lumaOf(a.color) < 0.4);
+    a.rim = !a.isPlayer && a.look !== 'joker' && (a.look === 'vulture' || s.personaKey === 'mute' || lumaOf(a.color) < 0.4); // (Mute: always, whatever its mood)
     const prev = s.prev, { pts, cor } = a;
     const snap = a.dashTick === game?.tick;
     if (snap) alpha = 1; // (dashing: it's there at once, its streak behind it)
@@ -1714,9 +1724,9 @@ window.SnakeRender = (() => {
 
   // Small white eyes whose pupils turn toward what the snake is looking at.
   // r: the pupil's radius (the white is a size up).
-  function lookingEyes(r, x = 0.15, y = 0.2) {
+  function lookingEyes(r, x = 0.15, y = 0.2, wide = 1.55) {
     if (blinkNow) return lids(r * 1.3, x, y);
-    const c = CELL, w = r * 1.55, reach = (w - r) * 0.85;
+    const c = CELL, w = r * wide, reach = (w - r) * 0.85;
     ctx.fillStyle = '#fffbea';
     circle(c * x, -c * y, c * w);
     circle(c * x, c * y, c * w);
@@ -2651,28 +2661,42 @@ window.SnakeRender = (() => {
         break;
       }
       case 'mute': { // a mime: white greasepaint, a black beret, high arched brows, a painted tear, small dark lips
-        ctx.fillStyle = '#18181b'; // the beret, on the back of the head, with its little stalk
-        ctx.beginPath(); ctx.ellipse(-c * 0.27, 0, c * 0.19, c * 0.3, 0, 0, TAU); ctx.fill();
-        ctx.strokeStyle = '#18181b';
-        ctx.lineWidth = c * 0.05;
-        ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(-c * 0.44, 0); ctx.lineTo(-c * 0.52, -c * 0.06); ctx.stroke();
+        // The beret: a small disc worn at an angle on the crown, its rim lit
+        // and its stalk in the middle (at the back of the head it read as a hole).
+        ctx.fillStyle = '#18181b';
+        ctx.beginPath(); ctx.ellipse(-c * 0.25, -c * 0.14, c * 0.18, c * 0.22, 0.65, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#3f3f46'; // (a sheen across the felt)
+        ctx.beginPath(); ctx.ellipse(-c * 0.29, -c * 0.2, c * 0.09, c * 0.12, 0.65, 0, TAU); ctx.fill();
+        ctx.strokeStyle = '#a1a1aa';
+        ctx.lineWidth = c * 0.035;
+        ctx.beginPath(); ctx.ellipse(-c * 0.25, -c * 0.14, c * 0.16, c * 0.2, 0.65, Math.PI * 0.9, Math.PI * 1.65); ctx.stroke();
+        ctx.fillStyle = '#18181b';
+        circle(-c * 0.27, -c * 0.16, c * 0.04);
         const mood = muteState.get(s)?.key || 'calm', brow = MUTE_BROWS[mood];
-        if (!open || open < 0.08) { // the lips: a small dark bow (a smug curl when proud, an O when scared)
+        if (!open || open < 0.08) { // the lips: a small dark bow (a big lopsided smirk when proud, an O when scared)
           ctx.fillStyle = ctx.strokeStyle = '#7f1d1d';
-          ctx.lineWidth = c * 0.04;
-          if (mood === 'proud') { ctx.beginPath(); ctx.arc(c * 0.28, 0, c * 0.12, -0.75, 0.75); ctx.stroke(); }
-          else if (mood === 'scared') { ctx.fillStyle = '#18181b'; circle(c * 0.39, 0, c * 0.055); ctx.stroke(); }
+          ctx.lineWidth = c * 0.05;
+          ctx.lineCap = 'round';
+          if (mood === 'proud') { ctx.beginPath(); ctx.arc(c * 0.24, c * 0.04, c * 0.17, -0.95, 0.45); ctx.stroke(); }
+          else if (mood === 'scared') { ctx.fillStyle = '#18181b'; circle(c * 0.39, 0, c * 0.07); ctx.stroke(); }
           else { ctx.beginPath(); ctx.ellipse(c * 0.4, 0, c * 0.035, c * 0.08, 0, 0, TAU); ctx.fill(); }
         } else mouth(open);
         ctx.fillStyle = rgba(color, 0.5); // (cheeks blushing its mood)
         circle(c * 0.24, -c * 0.26, c * 0.07); circle(c * 0.24, c * 0.26, c * 0.07);
-        lookingEyes(0.055);
-        if (!blinking) { // brows: arched high when calm, knitted when it's hunting, raised in the middle when scared...
+        if (mood === 'scared') { // (wide O eyes, ringed in ink: on greasepaint the whites don't show)
+          lookingEyes(0.035, 0.15, 0.2, 3.2);
+          if (!blinkNow) {
+            ctx.strokeStyle = INK;
+            ctx.lineWidth = c * 0.03;
+            ctx.beginPath(); ctx.arc(c * 0.15, -c * 0.2, c * 0.112, 0, TAU); ctx.moveTo(c * 0.262, c * 0.2); ctx.arc(c * 0.15, c * 0.2, c * 0.112, 0, TAU); ctx.stroke();
+          }
+        } else lookingEyes(0.055);
+        if (!blinking) { // brows, bold enough to read at play size: arched high when calm, knitted when it's hunting, raised in the middle when scared...
           ctx.strokeStyle = INK;
-          ctx.lineWidth = c * 0.035;
+          ctx.lineWidth = c * 0.07;
+          ctx.lineCap = 'round';
           ctx.beginPath();
-          for (const sg of [-1, 1]) { ctx.moveTo(c * brow[0], sg * c * 0.3); ctx.quadraticCurveTo(c * brow[1], sg * c * 0.2, c * brow[2], sg * c * 0.1); }
+          for (const sg of [-1, 1]) { ctx.moveTo(c * brow[0], sg * c * 0.34); ctx.quadraticCurveTo(c * brow[1], sg * c * 0.2, c * brow[2], sg * c * 0.07); }
           ctx.stroke();
         } // ...and a tear under one eye
 
@@ -3449,7 +3473,7 @@ window.SnakeRender = (() => {
           const tilt = lively ? Math.sin(t * 2.2) * 0.35 : 0, lift = lively ? Math.sin(t * 3.1) * CELL * 0.06 : 0;
           shadowAt(x + 2, y + CELL * 0.3, pop * 0.7);
           ctx.globalAlpha = fade;
-          blitAbout(goldLeafSprite(), x, y - CELL * 0.05 + lift, 0, 0, pop, pop * (lively ? 0.85 + 0.15 * Math.cos(t * 2.2) : 1), -0.5 + tilt);
+          blitAbout(goldLeafSprite(), x, y - CELL * 0.05 + lift, 0, 0, pop, pop * (lively ? 0.94 + 0.06 * Math.cos(t * 2.2) : 1), tilt * 0.5);
           ctx.globalAlpha = 1;
         } else {
           const bob = lively ? Math.sin(t * 2.5) * CELL * 0.04 : 0;
