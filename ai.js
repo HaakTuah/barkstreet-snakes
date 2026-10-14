@@ -83,12 +83,12 @@ window.SnakeAI = (() => {
     },
     ghost: {
       name: 'Ghost', color: '#f1f5f9', look: 'ghost',
-      blurb: 'Keeps away from everyone and eats mushrooms to stay small.',
+      blurb: 'Keeps its distance from everyone, and slips through the gaps.',
       kill: 'Ghost? You never even saw it.',
       win: 'Was it ever really here?',
       w: {
         space: 2, territory: 0.6,
-        food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 14, fedFactor: 0, mushroomLover: 18,
+        food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 18, fedFactor: 0.4,
         margin: 6, headRisk: 900, zoneRisk: 150, distance: 7,
       },
     },

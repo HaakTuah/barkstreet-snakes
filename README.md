@@ -84,7 +84,7 @@ Each round, three of these seventeen are picked at random. The start screen tell
 |-------|------|-------|
 | **Sniper** | blood red, one eye behind a scope | Picks whichever snake it has the best shot at, gets in front of it and squeezes its space. |
 | **Gobbler** | orange, puffy cheeks | Eats everything, even a rival's apple. Hates mushrooms. |
-| **Ghost** | pale, fading body | Keeps away from everyone and eats mushrooms to stay small. |
+| **Ghost** | pale, fading body | Keeps its distance from everyone, and slips through the gaps. |
 | **Sovereign** | royal blue, golden crown | Rules its own patch of log, a shimmering force field in royal blue, and attacks anyone who trespasses. Its realm grows as it does, shrinks if it wastes away, and drifts off land the woodpecker or fire takes. You light up in its colour when you go in. |
 | **Colonist** | redcoat, tricorn hat | Plants flags all over the board, each colony a force field of its own, and defends every one of them. The first flies the Union Flag, later ones colonial ensigns (blue with the Southern Cross, red with a badge). |
 | **Drab** | khaki, sleepy eyes | Plays it safe and sensible. Nothing special. |

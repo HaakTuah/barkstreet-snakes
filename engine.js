@@ -473,7 +473,8 @@ window.SnakeEngine = (() => {
   const burning = (game, k) => { const f = game.fires.get(k); return !!f && game.tick >= f.from && game.tick < f.until; };
 
   // Sudden death: the woodpecker takes the log away a patch at a time. It
-  // lands, then over and over: picks a patch of PECK_CHUNK cells somewhere on
+  // lands, then over and over (hungrier each time: a shorter rest, a patch a
+  // cell bigger): picks a patch of PECK_CHUNK cells somewhere on
   // the log (clear of every body and all food, and PECK_CLEARANCE cells from
   // every head, while there's such a spot), eyes it for PECK_AIM_TICKS
   // (everyone sees where, and the AIs keep out of it, like a hole), hammers
@@ -513,7 +514,8 @@ window.SnakeEngine = (() => {
       game.burrows = game.burrows.filter(b => !zone.has(key(b.x, b.y))); // (a burrow pecked open is a hole now)
       const hit = [...zone];
       game.events.push({ type: 'peck', x: w.x, y: w.y, cells: hit });
-      w.last = hit; w.struckAt = game.tick; w.target = []; w.restUntil = game.tick + T.PECK_REST_TICKS;
+      w.pecks = (w.pecks || 0) + 1; // (it gets hungrier: shorter rests, bigger patches)
+      w.last = hit; w.struckAt = game.tick; w.target = []; w.restUntil = game.tick + Math.max(T.PECK_REST_MIN, Math.round(T.PECK_REST_TICKS * Math.pow(T.PECK_HUNGRIER, w.pecks)));
       return;
     }
     if (!w.target.length && game.tick >= w.restUntil) {
@@ -547,14 +549,15 @@ window.SnakeEngine = (() => {
         const seed = Math.floor(Math.random() * CELLS);
         if (!ok(seed)) continue;
         const patch = [seed], edge = [seed], inPatch = new Set(patch);
-        while (patch.length < T.PECK_CHUNK && edge.length) {
+        const chunk = Math.min(T.PECK_CHUNK_MAX, T.PECK_CHUNK + (game.woodpecker?.pecks || 0)); // (a cell bigger each time)
+        while (patch.length < chunk && edge.length) {
           const from = edge[Math.floor(Math.random() * edge.length)], x = from % GRID, y = Math.floor(from / GRID);
           const opts = CRAWL.map(d => [x + d.x, y + d.y]).filter(([nx, ny]) => inside(nx, ny) && !inPatch.has(key(nx, ny)) && ok(key(nx, ny)));
           if (!opts.length) { edge.splice(edge.indexOf(from), 1); continue; }
           const [nx, ny] = opts[Math.floor(Math.random() * opts.length)], nk = key(nx, ny);
           patch.push(nk); edge.push(nk); inPatch.add(nk);
         }
-        if (patch.length >= Math.ceil(T.PECK_CHUNK / 2)) return patch;
+        if (patch.length >= Math.ceil(chunk / 2)) return patch;
       }
     }
     return [];
