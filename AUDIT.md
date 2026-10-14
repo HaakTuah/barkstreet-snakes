@@ -231,7 +231,7 @@ Watching at 1× is comfortable (no frame over 16.7 ms in a minute). **The tools 
 
 ## After
 
-Every high and medium finding above is fixed or adapted as planned; the seven refuted ones stay skipped. The lows are done too, except where a row says skip. "After" screenshots of every state are in `docs/screenshots/after-3/`.
+Every high and medium finding above is fixed or adapted as planned (A5 both halves: the woodpecker cuts, and burning leaves land still); the seven refuted ones stay skipped. The lows are done too, except where a row says skip. "After" screenshots of every state are in `docs/screenshots/after-3/`.
 
 ### Frame times
 

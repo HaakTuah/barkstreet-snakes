@@ -1590,7 +1590,7 @@ window.SnakeRender = (() => {
       ctx.globalAlpha = was * poweredFade(s);
       ctx.fillStyle = INK;
       outlineFills(a, own + GOLD_EDGE);
-      ctx.fillStyle = '#f2c94c';
+      ctx.fillStyle = '#fde68a'; // (Honey: gold means a power)
       outlineFills(a, own + 2.5);
       ctx.globalAlpha = was;
     }
