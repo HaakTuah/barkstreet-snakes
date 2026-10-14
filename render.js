@@ -13,7 +13,7 @@
 // batch into one GPU operation, while one path of many contours is
 // triangulated every frame and strokes between circles break the batch. A
 // translucent shape made of overlapping pieces (the shadows, a force field's
-// colour on a rival) is drawn opaque into an offscreen veil and laid on once.
+// glow round a rival) is drawn opaque into an offscreen veil and laid on once.
 // Force fields are cached layers, with no clip per frame. The per-frame path
 // builds no strings and no closures, but for a passing moment or two (a
 // dash's streak, and the woodpecker working out its perch and tracing its
@@ -1512,7 +1512,7 @@ window.SnakeRender = (() => {
 
   // The veil: an offscreen layer the size of the board (and a margin), for
   // a translucent shape made of overlapping pieces (every snake's shadow, a
-  // force field's colour on a rival). The pieces go into it opaque, with fast
+  // force field's glow round a rival). The pieces go into it opaque, with fast
   // fills, and it's laid on the board once at the shape's alpha: an even
   // shade, without a path of a hundred contours triangulated every frame.
   const VEIL_M = 8; // (its margin, in units: the shadow of a body hanging off the edge)
@@ -3215,8 +3215,8 @@ window.SnakeRender = (() => {
   // it passes) and sparks running round the edge. The field lies only on the
   // log that's left: a hole pecked in it stays dark. A rival inside lights it
   // up (it pulses faster, ripples spread from where it came in), and every
-  // part of the rival inside glows in the field's colour, as if wading
-  // through coloured light. The edge is exactly the trespass line.
+  // part of the rival inside has the field's colour clinging round it, as if
+  // wading through coloured light. The edge is exactly the trespass line.
   // A colour with an alpha, as a string, cached. The alpha is quantised to
   // 1/255 (all the canvas keeps of it anyway), so an alpha that changes every
   // frame costs a lookup and the cache stays bounded: at most 256 strings a
@@ -3619,18 +3619,22 @@ window.SnakeRender = (() => {
       }
     }
   }
-  // After the snakes: whatever of a rival is inside a field takes on its
-  // colour, with a glow of it clinging round, as if wading through coloured
-  // light; and a ripple spreads where a head just crossed in. The glow (the
-  // body grown 5, at 0.13) and the colour (grown 0.5, at 0.28 over it) go
-  // into the veil and are laid on as one layer, at 0.28 over 0.13, cut to the
-  // field (and only round what's in it).
-  const HUE = 0.28 + 0.13 * 0.72, hued = [];
+  // After the snakes: whatever of a rival is inside a field has the field's
+  // light clinging round it, as if wading through coloured light: a line of
+  // the field's colour hugging it, just outside everything drawn round it
+  // (an outline, a gold line), and a soft glow of it beyond; and a ripple
+  // spreads where a head just crossed in. The body keeps its own colours
+  // (washed over it, the field's colour turned your green khaki in a red
+  // field and Gobbler's orange mauve in a blue one). The glow (the shape
+  // grown FIELD_GLOW_GROW, at FIELD_GLOW) and the line (FIELD_LINE wide,
+  // opaque) go into the veil, the body and what's round it are cut back out,
+  // and it's laid on as one layer, cut to the field (and only round what's in it).
+  const FIELD_GLOW = 0.16, FIELD_GLOW_GROW = 8, FIELD_LINE = 2.6, hued = [], huedEdge = [];
   function drawFieldHues(now) {
     for (let fi = 0; fi < fieldSpecs.length; fi++) {
       const f = fieldSpecs[fi];
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-      hued.length = 0;
+      hued.length = huedEdge.length = 0;
       for (const s of game.snakes) {
         if (!s.alive || s === f.owner) continue;
         const a = anim.get(s);
@@ -3653,22 +3657,25 @@ window.SnakeRender = (() => {
           if (py < y0) y0 = py;
           if (py > y1) y1 = py;
         }
-        if (touches) hued.push(a);
+        if (touches) { hued.push(a); huedEdge.push(edgeOf(s, a)); }
       }
       if (!hued.length) continue;
       const m = f.r + 1; // (the box: round the bodies, a band and a glow's width more, within the field)
-      x0 = Math.max(f.x - m, x0 - CELL - 6); y0 = Math.max(f.y - m, y0 - CELL - 6);
-      x1 = Math.min(f.x + m, x1 + CELL + 6); y1 = Math.min(f.y + m, y1 + CELL + 6);
+      x0 = Math.max(f.x - m, x0 - CELL - 12); y0 = Math.max(f.y - m, y0 - CELL - 12);
+      x1 = Math.min(f.x + m, x1 + CELL + 12); y1 = Math.min(f.y + m, y1 + CELL + 12);
       veilOn(0, 0, x0, y0, x1, y1);
       ctx.fillStyle = f.color;
-      for (const a of hued) bodyFills(a, 5, f.x, f.y, f.r + CELL);
+      for (let i = 0; i < hued.length; i++) bodyFills(hued[i], huedEdge[i] + FIELD_GLOW_GROW, f.x, f.y, f.r + CELL);
       ctx.globalCompositeOperation = 'destination-out'; // (the glow down to its share)
-      ctx.globalAlpha = 1 - 0.13 / HUE;
+      ctx.globalAlpha = 1 - FIELD_GLOW;
       ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-      ctx.globalCompositeOperation = 'source-over';
       ctx.globalAlpha = 1;
-      for (const a of hued) bodyFills(a, 0.5, f.x, f.y, f.r + CELL);
-      veilOff(HUE, f);
+      ctx.globalCompositeOperation = 'source-over'; // (the line, opaque...)
+      for (let i = 0; i < hued.length; i++) bodyFills(hued[i], huedEdge[i] + FIELD_LINE, f.x, f.y, f.r + CELL);
+      ctx.globalCompositeOperation = 'destination-out'; // (...and the body and what's round it cut back out)
+      for (let i = 0; i < hued.length; i++) bodyFills(hued[i], huedEdge[i], f.x, f.y, f.r + CELL);
+      ctx.globalCompositeOperation = 'source-over';
+      veilOff(1, f);
     }
     for (let i = dimples.length - 1; i >= 0; i--) if (now - dimples[i].at > 450 || now < dimples[i].at) dimples.splice(i, 1);
     for (let i = ripples.length - 1; i >= 0; i--) {
