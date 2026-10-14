@@ -927,7 +927,7 @@ window.SnakeAI = (() => {
         const d = necks[k + 3], slack = d === 1 ? PINNED_DAWDLE : DAWDLE;
         if (trail < d) break;
         if (reach[necks[k]] > t + d + slack || reach[necks[k + 1]] > t + d + slack) continue;
-        return score - NECK - 50 * (need - necks[k + 2]);
+        return score - Math.min(NECK + 50 * (need - necks[k + 2]), TRAPPED - 1); // (never worse than a sure trap, however long I am)
       }
       return score;
     }

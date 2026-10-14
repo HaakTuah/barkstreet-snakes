@@ -183,6 +183,29 @@ const feed = g => { for (const o of g.snakes) { o.lastAte = g.time; o.nextStarve
   check('...the other turns away, the boxed one takes the cell they met in', a.alive && b.alive && a.body[0].x === 11 && a.body[0].y === 10 && b.body[0].x === 12 && b.body[0].y !== 10, JSON.stringify([a.body[0], b.body[0]]));
 }
 
+{ // After a head-on, the longer one may go back into the cell they met in (the other may not): it isn't turned into a dead end.
+  const A = [[10, 10], [9, 10], [8, 10], [8, 11], [9, 11], [10, 11], [11, 11], [11, 12], [11, 13], [11, 14], [11, 15], [11, 16]];
+  const g = board([[A, 'right'], [[[12, 10], [13, 10], [14, 10], [15, 10], [16, 10]], 'left']]);
+  for (const [x, y] of [[10, 8], [9, 9], [11, 9]]) g.holes.add(K(x, y)); // ((10,9), above A's head: a dead end)
+  const [a, b] = g.snakes;
+  E.step(g);
+  let again = 0;
+  for (let t = 0; t < T.STUN_TICKS + 1; t++) { feed(g); E.step(g); again += g.events.filter(e => e.type === 'crash').length; }
+  check('after a head-on the longer one takes the cell they met in, not a dead end', a.alive && b.alive && !again && a.body[0].x === 11 && a.body[0].y === 10 && b.body[0].x === 12 && b.body[0].y !== 10, JSON.stringify([a.body[0], b.body[0]]));
+}
+
+{ // An AI doesn't chase an apple that'll have rotted before it gets there.
+  const g = E.createGame({ withPlayer: false, personas: ['gobbler', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  a.body = line(5, 10, 4).map(([x, y]) => ({ x, y })); a.dir = D.right;
+  b.body = line(20, 22, 4).map(([x, y]) => ({ x, y })); b.dir = D.right;
+  g.food = [{ x: 5, y: 4, kind: 'food', expires: g.tick + 3 }, { x: 5, y: 17, kind: 'food', expires: g.tick + 999 }];
+  g.history = [{ snakes: g.snakes.map(o => ({ id: o.id, body: o.body.map(c => ({ ...c })), dir: o.dir, stun: 0, leaps: 0 })), food: g.food.map(f => ({ ...f })), holes: 0, fires: [], pecks: [] }]; // (what it sees: the board as built)
+  E.step(g);
+  check("an AI skips an apple that'll rot before it gets there", a.body[0].x === 5 && a.body[0].y === 11, JSON.stringify(a.body[0]));
+}
+
 { // Boxed in only if there'll be nowhere to turn when the stun's over: a rival's tail moving on in time counts as room.
   // A hits the right edge at (23,5): below is its own body, above a rival's body that's leaving.
   const A = [[23, 5], [22, 5], [22, 6], [23, 6], [23, 7], [23, 8], [23, 9], [23, 10], [23, 11]];

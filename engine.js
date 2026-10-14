@@ -670,12 +670,13 @@ window.SnakeEngine = (() => {
       s.planned = null;
       s.plannedTick = -1;
       // Over a crash and still facing what it hit (or the cell it met another
-      // head in), without having steered: it turns to where there's room.
-      // (Two heads that met in an empty cell would otherwise both go for it
-      // again, and again, until one of them was too small to bounce.)
+      // head in, while that's shut to it: see shutTo), without having
+      // steered: it turns to where there's room. (Two heads that met in an
+      // empty cell would otherwise both go for it again, and again, until
+      // one of them was too small to bounce.)
       if (s.stunUntil === game.tick) {
-        const nx = s.body[0].x + s.dir.x, ny = s.body[0].y + s.dir.y;
-        if (!steered && (blocked(game, nx, ny) || (s.bounce && s.bounce.x === nx && s.bounce.y === ny))) s.dir = recoil(game, s);
+        const nx = s.body[0].x + s.dir.x, ny = s.body[0].y + s.dir.y, shut = shutTo(game, s);
+        if (!steered && (blocked(game, nx, ny) || (shut && s.bounce.x === nx && s.bounce.y === ny))) s.dir = recoil(game, s, shut);
         s.bounce = null;
       }
       s.next = { x: s.body[0].x + s.dir.x, y: s.body[0].y + s.dir.y };
@@ -799,7 +800,7 @@ window.SnakeEngine = (() => {
       const lost = Math.min(T.CRASH_LOSS, s.body.length - T.MIN_LENGTH);
       for (let n = 0; n < lost; n++) { const t = s.body.pop(); drops.push({ x: t.x, y: t.y, color: s.color }); }
       s.stunUntil = game.tick + 1 + T.STUN_TICKS;
-      s.bounce = c.headOn ? { x: s.next.x, y: s.next.y } : null;
+      s.bounce = c.headOn ? { x: s.next.x, y: s.next.y, by: c.killerId } : null;
       if (c.headOn) s.bumpedBy = { id: c.killerId, tick: game.tick };
       game.events.push({ type: 'crash', snake: s, x: s.next.x, y: s.next.y, cause: c.cause, killer: c.killer, killerId: c.killerId, lost });
     }
@@ -868,20 +869,31 @@ window.SnakeEngine = (() => {
     return false;
   }
 
+  // Just over a head-on: is the cell it met the other head in shut to it?
+  // Only one of the two may go back in, the longer one (the same length:
+  // the one that came first), so they can't meet there again; it's open to
+  // either once the other is out, still stunned, or no longer beside it.
+  function shutTo(game, s) {
+    const b = s.bounce, o = b && game.snakes[b.by];
+    if (!b || !o || !o.alive || o.stunUntil > game.tick || Math.abs(o.body[0].x - b.x) + Math.abs(o.body[0].y - b.y) !== 1) return false;
+    return o.body.length > s.body.length || (o.body.length === s.body.length && o.id < s.id);
+  }
+
   // Just over a crash, facing what it hit: the way to turn, the open side
   // with the most room round it (counted a short way), or straight on if
-  // there's none. Never the cell it met another head in, and, if it can
-  // help it, not a cell another head could step into this tick too (two
-  // heads side by side across a corner would otherwise both turn into the
-  // corner they share, and meet again).
-  function recoil(game, s) {
-    const h = s.body[0], back = s.body[1];
+  // there's none. Never the cell it met another head in while that's shut
+  // to it, and, if it can help it, not a cell another head could step into
+  // this tick too (two heads side by side across a corner would otherwise
+  // both turn into the corner they share, and meet again; the head it met,
+  // if that cell's its own to take, won't).
+  function recoil(game, s, shut) {
+    const h = s.body[0], back = s.body[1], b = s.bounce;
     let best = s.dir, most = -Infinity;
     for (const d of CRAWL) {
-      const x = h.x + d.x, y = h.y + d.y;
-      if ((back && x === back.x && y === back.y) || blocked(game, x, y) || (s.bounce && s.bounce.x === x && s.bounce.y === y)) continue;
+      const x = h.x + d.x, y = h.y + d.y, met = b && b.x === x && b.y === y;
+      if ((back && x === back.x && y === back.y) || blocked(game, x, y) || (met && shut)) continue;
       let room = roomFrom(game, x, y, 24);
-      for (const o of game.snakes) if (o !== s && o.alive && Math.abs(o.body[0].x - x) + Math.abs(o.body[0].y - y) === 1) room -= 100;
+      for (const o of game.snakes) if (o !== s && o.alive && !(met && o.id === b.by) && Math.abs(o.body[0].x - x) + Math.abs(o.body[0].y - y) === 1) room -= 100;
       if (room > most) { most = room; best = d; }
     }
     return best;
