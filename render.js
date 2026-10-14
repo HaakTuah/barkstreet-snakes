@@ -5093,10 +5093,10 @@ window.SnakeRender = (() => {
   // ------------------------------------------------------------ the world
 
   // The first seconds of a round: which snake is yours. A bouncing arrow and
-  // YOU over your head (below it, near the top edge), a ring pulsing round
-  // it, chevrons marching the way you're heading; friends online get their
-  // names. Each screen marks its own snake. It fades once you steer (or a few
-  // seconds in): the game says when (showYou).
+  // YOU over your head (under it, heading down or near the top edge), a ring
+  // pulsing round it, chevrons marching the way you're heading; friends
+  // online get their names. Each screen marks its own snake. It fades once
+  // you steer (or a few seconds in): the game says when (showYou).
   let youOn = false, youA = 0;
   function showYou(on) { youOn = !!on; }
   function drawYou(now) {
@@ -5112,7 +5112,7 @@ window.SnakeRender = (() => {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.lineJoin = 'round';
-      const below = hy < c * 2.6, sgn = below ? 1 : -1; // (near the top edge: under the head, pointing up)
+      const sgn = youSide(s, a, hy);
       if (!mine) { // a friend: the same arrow (a touch smaller), with the name they picked
         marker(hx, hy, sgn, col, s.name, 0.82, t);
         continue;
@@ -5148,7 +5148,19 @@ window.SnakeRender = (() => {
     }
     ctx.globalAlpha = 1;
   }
-  // A bouncing arrow over a head (under it, sgn 1, near the top edge) with a
+  // Which side of its head a snake's arrow goes (-1 over it, 1 under it):
+  // over it, unless its own body's there (heading down, as seat 2 starts
+  // online: the arrow and YOU covered the very snake they pointed at), and
+  // under it then; by an edge, the side with room, body or not. It stays on
+  // its side until that side goes wrong, so it doesn't jump about as the
+  // snake turns, or as it fades out.
+  function youSide(s, a, hy) {
+    let sgn = a.youSgn || -1;
+    if (s.dir.y === -sgn) sgn = -sgn; // (its neck's on that side)
+    if (sgn < 0 ? hy < CELL * 2.6 : hy > SIZE - CELL * 2.6) sgn = -sgn; // (no room for it there)
+    return (a.youSgn = sgn);
+  }
+  // A bouncing arrow over a head (under it, sgn 1: see youSide) with a
   // label in the snake's colour; scale 1 for yours.
   function marker(hx, hy, sgn, col, label, scale, t) {
     const c = CELL * scale;
