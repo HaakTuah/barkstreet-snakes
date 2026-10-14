@@ -94,6 +94,59 @@ const feed = g => { for (const o of g.snakes) { o.lastAte = g.time; o.nextStarve
   check('...but never as a shortcut', !picks2.left, JSON.stringify(picks2));
 }
 
+// ---------------------------------------------------------------- golden beetles and leaps
+{ // A golden beetle gives leaps.
+  const g = board([[line(5, 5, 4), 'right'], [line(5, 20, 3), 'right']]);
+  g.food = [{ x: 6, y: 5, kind: 'beetle', gold: 1, expires: 999, dir: D.up, movedAt: g.tick }];
+  E.step(g);
+  check('a golden beetle gives leaps', g.snakes[0].leaps === T.LEAP_CHARGES && g.snakes[0].eaten === T.BEETLE_GROWTH, g.snakes[0].leaps);
+}
+
+{ // Pressing the way you're going hops over the body in front, onto the cell beyond.
+  const g = board([[line(5, 10, 4), 'right'], [[[6, 8], [6, 9], [6, 10], [6, 11], [6, 12]], 'up']]);
+  const me = g.snakes[0];
+  me.leaps = 2;
+  E.leap(g, me);
+  E.step(g);
+  check('a leap hops over a body', me.alive && me.body[0].x === 7 && me.body[0].y === 10 && me.body[1].x === 6 && me.leaps === 1 && g.events.some(e => e.type === 'leap'), JSON.stringify(me.body.slice(0, 2)));
+  check('...arching over it (its body still joined up)', me.body.every((c, i) => !i || Math.abs(c.x - me.body[i - 1].x) + Math.abs(c.y - me.body[i - 1].y) === 1));
+  check('...and the one hopped over is fine', g.snakes[1].alive);
+}
+
+{ // A leap waits a moment for something to hop, and isn't spent on open ground; never off the board, never onto a body.
+  const g = board([[line(5, 10, 4), 'right'], [[[7, 8], [7, 9], [7, 10], [7, 11], [7, 12]], 'up']]);
+  const me = g.snakes[0];
+  me.leaps = 1;
+  E.leap(g, me);
+  E.step(g); // (open ground ahead: no leap yet)
+  const kept = me.leaps === 1;
+  g.snakes[1].queue = [D.up];
+  E.step(g); // (the body's right in front now)
+  check('a leap waits for something to hop, and is not spent on open ground', kept && me.leaps === 0 && me.body[0].x === 8, JSON.stringify(me.body[0]));
+  const g2 = board([[line(22, 10, 4), 'right'], [[[23, 8], [23, 9], [23, 10], [23, 11], [23, 12]], 'up']]);
+  g2.snakes[0].leaps = 1; E.leap(g2, g2.snakes[0]);
+  E.step(g2);
+  check('...never off the board', g2.snakes[0].leaps === 1 && g2.events.some(e => e.type === 'crash'));
+  const g3 = board([[line(5, 10, 4), 'right'], [[[6, 8], [6, 9], [6, 10], [6, 11], [6, 12]], 'up'], [[[7, 8], [7, 9], [7, 10], [7, 11], [7, 12]], 'up']]);
+  g3.snakes[0].leaps = 1; E.leap(g3, g3.snakes[0]);
+  E.step(g3);
+  check('...never onto a body', g3.snakes[0].leaps === 1 && g3.events.some(e => e.type === 'crash'));
+}
+
+{ // An AI with leaps hops rather than crash (it doesn't have to ask).
+  // At the top edge, heading right: up is the edge, down its own body, right a rival's body (and beyond it, room).
+  const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  a.body = [[5, 0], [4, 0], [4, 1], [5, 1], [5, 2], [4, 2]].map(([x, y]) => ({ x, y })); a.dir = D.right; a.leaps = 1;
+  b.body = [...Array.from({ length: 13 }, (_, i) => ({ x: 6, y: 12 - i })), { x: 7, y: 0 }]; b.dir = D.down;
+  b.isPlayer = true; b.persona = null; b.queue = [];
+  g.food = [];
+  for (const s of g.snakes) s.prev = s.body.map(c => ({ ...c }));
+  E.step(g);
+  check('a boxed-in AI with a leap hops instead of crashing', a.alive && a.leaps === 0 && a.body[0].x === 7 && a.body[0].y === 0, JSON.stringify(a.body[0]));
+}
+
 { // Steering while stunned: it goes your way when the stun's over.
   const g = board([[line(23, 5, 8), 'right'], [line(5, 20, 3), 'right']]);
   const s = g.snakes[0];

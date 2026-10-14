@@ -39,6 +39,8 @@ window.SnakeChatter = (() => {
       burning: ['Am I… cooking? Smells good, actually.'],
       cut: ['My tail! That was full of food!'],
       baked: ['BAKED APPLES! Hot hot hot, worth it!'],
+      goldbug: ['A GOLDEN beetle! Gold AND crunchy!'],
+      leap: ['Wheee! Lunch from above!'],
       dies: ['Tell my apples… I loved them.'],
     },
     ghost: {
@@ -69,6 +71,7 @@ window.SnakeChatter = (() => {
       burning: ['Fetch the royal bucket!'],
       cut: ['That bird has committed treason.'],
       gloat: ['Bow, {who}. Do not bump.'],
+      leap: ['We rise above it all.'],
       dies: ['The king is dead…', 'Long live… someone else.'],
     },
     colonist: {
@@ -150,6 +153,8 @@ window.SnakeChatter = (() => {
       burning: ['Hot. Very hot. The hottest. Tremendous.'],
       cut: ['That bird stole my tail. Total theft.'],
       gloat: ['{who}? Bounced right off me. Sad!'],
+      goldbug: ['A golden beetle. Very classy. Like me.'],
+      leap: ['Nobody jumps better than me.'],
       dies: ['Rigged! Totally rigged!'],
     },
     creeper: {
@@ -178,6 +183,8 @@ window.SnakeChatter = (() => {
       burning: ['Thermal damage: ongoing.'],
       cut: ['Length reduced. Recomputing.'],
       gloat: ['Predicted that, {who}.'],
+      goldbug: ['Golden beetle: mobility upgrade.'],
+      leap: ['Leap executed.'],
       dies: ['That… wasn’t in the data.'],
     },
     capricious: {
@@ -197,6 +204,7 @@ window.SnakeChatter = (() => {
       bonk: ['Ouch! I hate walls! Today.'],
       burning: ['Fire! I love fire! Ow, no I don’t!'],
       cut: ['My tail! I liked that tail!'],
+      leap: ['I can fly! For a second!'],
       dies: ['Changed my mind about living.'],
     },
     copycat: {
@@ -227,6 +235,8 @@ window.SnakeChatter = (() => {
       cut: ['Shot my tail clean off!'],
       gloat: ['Too close, {who}? Never heard of it.'],
       baked: ['Campfire grub!'],
+      goldbug: ['Gold bug! Now that’s a prize, partner.'],
+      leap: ['Yeehaw! Clean over!'],
       dies: ['What a ride…', 'Worth it.'],
     },
     mute: {
@@ -241,7 +251,22 @@ window.SnakeChatter = (() => {
       burning: ['*fans itself, frantically*'],
       cut: ['*looks for its tail*'],
       gloat: ['*mimes {who} bouncing off*'],
+      leap: ['*bows mid-air*'],
       dies: ['*mimes being squashed*', '*…*'],
+    },
+    ouroboros: {
+      hungry: ['Even I must eat. Usually myself.'],
+      start: ['All things return.', 'Here we are again.'],
+      idle: ['The end is the beginning.', 'Round and round.', 'I have done this before, {who}.', 'Everything comes back to me.'],
+      kill: ['Full circle, {who}.', 'You were always going to end here.'],
+      woodpecker: ['Endings peck at everything.'],
+      rainbow: ['A circle, half drawn.'],
+      bonk: ['I meant to come back here.'],
+      burning: ['Fire, then ash, then again.'],
+      cut: ['My tail! I was saving that.'],
+      gloat: ['Around you go, {who}.'],
+      weather: { snow: ['Winter returns. It always does.'], rain: ['The rain comes round again.'] },
+      dies: ['…and begin again.', 'See you next time around.'],
     },
     joker: {
       hungry: ["Why did the snake cross the bark? It was starving."],
@@ -256,6 +281,7 @@ window.SnakeChatter = (() => {
       burning: ['Hot stuff, coming through!'],
       cut: ['Ha! The bird’s got jokes.'],
       gloat: ['Knock knock, {who}! …Bonk!'],
+      leap: ['Hup! Ta-daaa!'],
       dies: ['Tough crowd…'],
     },
   };
@@ -652,7 +678,38 @@ window.SnakeChatter = (() => {
     "Slapstick!": "闹剧！",
     "Hot stuff, coming through!": "烫手货，借过！",
     "Ha! The bird’s got jokes.": "哈！这鸟也会讲笑话。",
-    "Knock knock, {who}! …Bonk!": "咚咚，{who}！……咚！"
+    "Knock knock, {who}! …Bonk!": "咚咚，{who}！……咚！",
+    "Even I must eat. Usually myself.": "连我也得吃东西。通常吃自己。",
+    "All things return.": "万物终将回归。",
+    "Here we are again.": "我们又来了。",
+    "The end is the beginning.": "终点即是起点。",
+    "Round and round.": "一圈又一圈。",
+    "I have done this before, {who}.": "这我以前做过，{who}。",
+    "Everything comes back to me.": "一切都会回到我这里。",
+    "Full circle, {who}.": "画了个圆，{who}。",
+    "You were always going to end here.": "你注定在这里结束。",
+    "Endings peck at everything.": "终结啄食着一切。",
+    "A circle, half drawn.": "一个圆，画了一半。",
+    "I meant to come back here.": "我本来就打算回到这里。",
+    "Fire, then ash, then again.": "火，然后灰，然后再来。",
+    "My tail! I was saving that.": "我的尾巴！我还留着呢。",
+    "Around you go, {who}.": "转圈吧，{who}。",
+    "…and begin again.": "……再从头开始。",
+    "See you next time around.": "下一轮见。",
+    "Winter returns. It always does.": "冬天回来了。它总会回来。",
+    "The rain comes round again.": "雨又转回来了。",
+    "A GOLDEN beetle! Gold AND crunchy!": "金甲虫！又是金的又是脆的！",
+    "Wheee! Lunch from above!": "呜——！从天而降的午饭！",
+    "Gold bug! Now that’s a prize, partner.": "金虫子！这才叫奖品，伙计。",
+    "Yeehaw! Clean over!": "咿哈！干净利落地跳过去了！",
+    "Golden beetle: mobility upgrade.": "金甲虫：机动性升级。",
+    "Leap executed.": "跳跃已执行。",
+    "A golden beetle. Very classy. Like me.": "金甲虫。很高级。像我一样。",
+    "Nobody jumps better than me.": "没人比我跳得更好。",
+    "Hup! Ta-daaa!": "嘿！哒哒——！",
+    "*bows mid-air*": "*在空中鞠躬*",
+    "I can fly! For a second!": "我会飞！就一秒！",
+    "We rise above it all.": "朕凌驾于一切之上。"
   };
 
   const SNAKE_GAP = 4500;  // ms of game time between lines from the same snake
@@ -901,6 +958,7 @@ window.SnakeChatter = (() => {
         say(e.snake, 'hungry', null, true);
       } else if (e.type === 'spawn') {
         for (const s of alive) {
+          if (e.gold && VOICES[s.personaKey]?.goldbug) { say(s, 'goldbug', null, true); continue; }
           if (s.personaKey === 'gobbler' || (e.kind === 'beetle' && s.personaKey === 'desperado')) say(s, e.kind === 'beetle' ? 'beetle' : 'spawn', null, true);
         }
       } else if (e.type === 'weather' || (e.type === 'strike' && !struck)) {
@@ -913,6 +971,8 @@ window.SnakeChatter = (() => {
         const other = e.killerId != null && e.killerId !== e.snake.id ? game.snakes[e.killerId] : null;
         if (e.snake.persona) say(e.snake, 'bonk');
         if (other?.persona && other.alive && Math.random() < 0.5) say(other, 'gloat', e.snake);
+      } else if (e.type === 'leap' && e.snake.persona) {
+        say(e.snake, 'leap', null, true);
       } else if (e.type === 'alight' && e.snake.persona) {
         say(e.snake, 'burning', null, true);
       } else if (e.type === 'cut' && e.snake.persona) {

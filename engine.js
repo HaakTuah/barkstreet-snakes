@@ -33,6 +33,8 @@ window.SnakeEngine = (() => {
       id, body, dir: d, alive: true, grow: 0, eaten: 0, pellets: 0, lastAte: 0, ateTick: -1, nextStarve: T.HUNGER_MS,
       // stunUntil: the tick it moves again after a crash; burnUntil, burnFrom: on fire (from, until)
       stunUntil: -1, burnUntil: -1, burnFrom: -1,
+      // leaps: hops it can make (from golden beetles); leapArmed: the last tick a leap it asked for waits
+      leaps: 0, leapArmed: -1,
       queue: [], cause: null, killer: null, killerId: null, diedAt: null, memory: {}, planned: null, plannedTick: -1, ...props,
     };
   }
@@ -161,8 +163,9 @@ window.SnakeEngine = (() => {
         }
       }
       if (b) {
-        game.food.push({ x: b.x, y: b.y, kind: 'beetle', expires: game.tick + T.BEETLE_TICKS, dir: CRAWL[Math.floor(Math.random() * 4)], movedAt: game.tick });
-        game.events.push({ type: 'spawn', kind: 'beetle', x: b.x, y: b.y });
+        const gold = Math.random() < T.GOLD_BEETLE_CHANCE;
+        game.food.push({ x: b.x, y: b.y, kind: 'beetle', expires: game.tick + T.BEETLE_TICKS, dir: CRAWL[Math.floor(Math.random() * 4)], movedAt: game.tick, ...(gold ? { gold: 1 } : {}) });
+        game.events.push({ type: 'spawn', kind: 'beetle', x: b.x, y: b.y, gold });
       }
     }
   }
@@ -237,7 +240,7 @@ window.SnakeEngine = (() => {
       else {
         const b = freeBurrow(game, u.from);
         if (b) {
-          game.food.push({ x: b.x, y: b.y, kind: 'beetle', expires: u.expires, dir: CRAWL[Math.floor(Math.random() * 4)], movedAt: game.tick });
+          game.food.push({ x: b.x, y: b.y, kind: 'beetle', expires: u.expires, dir: CRAWL[Math.floor(Math.random() * 4)], movedAt: game.tick, ...(u.gold ? { gold: 1 } : {}) });
           game.events.push({ type: 'emerge', x: b.x, y: b.y });
           game.underground = null;
         }
@@ -288,7 +291,7 @@ window.SnakeEngine = (() => {
       bodyStamp[key(b.x, b.y)] = stamp;
       if (scared && burrowAt(game, b.x, b.y)) { // home: down it goes
         game.food.splice(game.food.indexOf(b), 1);
-        game.underground = { until: game.tick + Math.round(between(T.BEETLE_UNDER_MIN, T.BEETLE_UNDER_MAX)), expires: b.expires, from: key(b.x, b.y) };
+        game.underground = { until: game.tick + Math.round(between(T.BEETLE_UNDER_MIN, T.BEETLE_UNDER_MAX)), expires: b.expires, from: key(b.x, b.y), gold: !!b.gold };
         game.events.push({ type: 'dive', x: b.x, y: b.y });
         break; // (there's only ever one beetle)
       }
@@ -605,6 +608,12 @@ window.SnakeEngine = (() => {
   // A person's snake is handed to an AI (autopilot: a persona) when they leave.
   const brainOf = s => s.autopilot || s.persona;
 
+  // A person asks to leap (pressing the way they're going): it waits a few
+  // ticks for something to hop. Does nothing without leaps.
+  function leap(game, s) {
+    if (s?.alive && s.leaps > 0) s.leapArmed = game.tick + T.LEAP_WINDOW;
+  }
+
   function thinkAhead(game, s) {
     s.planned = decide(aiView(game, s), brainOf(s), s.memory);
     s.plannedTick = game.tick;
@@ -614,6 +623,7 @@ window.SnakeEngine = (() => {
   // game.events lists what happened this tick, for the chatter, sounds and banners:
   // { type: 'eat', snake, kind } | { type: 'death', snake } | { type: 'spawn', kind, x, y }
   // | { type: 'crash', snake, x, y, cause, killer, killerId, lost } (it bounced, lost `lost` segments, and is stunned)
+  // | { type: 'leap', snake, x, y } (it hopped over the cell x, y)
   // | { type: 'alight', snake } (crawled into fire) | { type: 'singe', snake } (lost a segment to the flames)
   // | { type: 'starving', snake } | { type: 'woodpecker' } (it came) | { type: 'aim', x, y } | { type: 'peck', x, y, cells } (a patch taken out)
   // | { type: 'cut', snake, x, y, lost } (the woodpecker cut it: its tail fell off) | { type: 'flown', x, y } (a beetle got away)
@@ -669,6 +679,23 @@ window.SnakeEngine = (() => {
         bodyStamp[k] = stamp;
         bodyOwner[k] = s.id;
       }
+    }
+    // A leap: a snake with leaps that asked for one (people press the way
+    // they're going; an AI leaps whenever it would otherwise crash), with a
+    // body or a hole right in front and somewhere to land beyond it, hops
+    // over: it moves two cells this tick, its body arching over what's in
+    // between. (Never off the board.)
+    for (const s of moving) {
+      if (s.leaps <= 0 || (!(s.leapArmed >= game.tick) && s.isPlayer && !s.autopilot)) continue;
+      const mx = s.next.x, my = s.next.y, lx = mx + s.dir.x, ly = my + s.dir.y;
+      if (!inside(mx, my) || !inside(lx, ly)) continue;
+      const mk = key(mx, my), lk = key(lx, ly);
+      if (!(game.holes.has(mk) || bodyStamp[mk] === stamp) || game.holes.has(lk) || bodyStamp[lk] === stamp) continue;
+      s.leapOver = { x: mx, y: my };
+      s.next = { x: lx, y: ly };
+      s.leaps--;
+      s.leapArmed = -1;
+      game.events.push({ type: 'leap', snake: s, x: mx, y: my });
     }
     for (const s of moving) {
       if (!inside(s.next.x, s.next.y)) continue; // off-board heads never meet anyone
@@ -727,7 +754,12 @@ window.SnakeEngine = (() => {
     }
 
     for (const s of moving) {
-      if (crashes.has(s)) continue;
+      if (crashes.has(s)) { s.leapOver = null; continue; }
+      if (s.leapOver) { // (the cell it arched over first, then where it landed)
+        s.body.unshift(s.leapOver);
+        if (s.grow > 0) s.grow--; else s.body.pop();
+        s.leapOver = null;
+      }
       s.body.unshift(s.next);
       if (s.tailMoves) s.body.pop(); else s.grow--;
       if (burning(game, key(s.next.x, s.next.y))) { // crawled into the fire: alight
@@ -855,7 +887,8 @@ window.SnakeEngine = (() => {
       const i = game.food.findIndex(f => f.x === h.x && f.y === h.y);
       if (i < 0) continue;
       const [f] = game.food.splice(i, 1);
-      game.events.push({ type: 'eat', snake: s, kind: f.kind, x: h.x, y: h.y, color: f.color, cooked: !!f.cooked });
+      game.events.push({ type: 'eat', snake: s, kind: f.kind, x: h.x, y: h.y, color: f.color, cooked: !!f.cooked, gold: !!f.gold });
+      if (f.gold) s.leaps = Math.min(T.LEAP_MAX, s.leaps + T.LEAP_CHARGES); // (a golden beetle: leaps)
       if (f.kind === 'mushroom') {
         // Shrink: cancel pending growth first, then drop tail segments.
         let n = T.SHRINK;
@@ -877,6 +910,6 @@ window.SnakeEngine = (() => {
 
   return {
     GRID, PLAYER_COLOR, PERSONAS, DIRS, WEATHER,
-    createGame, step, tickMs, hungerLeft, aiView, canThinkAhead, thinkAhead, suddenDeath,
+    createGame, step, tickMs, hungerLeft, aiView, canThinkAhead, thinkAhead, suddenDeath, leap,
   };
 })();

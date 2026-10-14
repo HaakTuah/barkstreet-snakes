@@ -83,6 +83,9 @@
     youGolden: ['Golden! +3.', 'Shiny and delicious. +3.'],
     beetle: ['A beetle is out for a walk. It won’t get far.', 'Something crunchy is crawling about.'],
     youBeetle: ['Crunchy! +2.', 'Caught it! +2.'],
+    goldBeetle: ['A golden beetle! Catch it, and you can leap over things.', 'Something golden is scuttling about. Catch it: it’s worth a leap or two.'],
+    youGoldBeetle: n => `Golden! You’ve got ${n} leap${n === 1 ? '' : 's'}: press the way you’re going (or swipe forward) to hop over a body or a hole.`,
+    youLeap: ['Hup! Over it.', 'Clean over!'],
     youMushroom: ['You feel smaller. And somehow wiser.', 'A little less of you. Sneaky.'],
     youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
     newBest: n => `New best: ${n}!`,
@@ -615,6 +618,7 @@
       else if (e.type === 'baked') Audio.play('bake', at(e.x));
       else if (e.type === 'ash') Audio.play('ash', at(e.x));
       else if (e.type === 'cut') Audio.play('snip', at(e.x));
+      else if (e.type === 'leap') Audio.play('leap', at(e.x));
     }
     for (const s of dying) {
       if (isMe(s)) continue;
@@ -698,7 +702,10 @@
       if (e.type === 'rainbow') { flashFrame('gold', true); return toast(pick(FLAVOR.rainbow), 2800, 'gold'); }
       if (e.type === 'burrow' && !game.toldBurrow) { game.toldBurrow = true; return toast(pick(FLAVOR.burrow), 2200, 'beetle'); }
       if (e.type === 'spawn' && e.kind === 'golden') { flashFrame('gold'); return toast(pick(FLAVOR.golden), 2800, 'gold'); }
+      if (e.type === 'spawn' && e.kind === 'beetle' && e.gold) { flashFrame('gold'); return toast(pick(FLAVOR.goldBeetle), 2600, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'beetle') { flashFrame('beetle'); return toast(pick(FLAVOR.beetle), 2200, 'beetle'); }
+      if (e.type === 'eat' && isMe(e.snake) && e.gold) { flashFrame('gold', true); return toast(FLAVOR.youGoldBeetle(e.snake.leaps), 3400, 'gold'); }
+      if (e.type === 'leap' && isMe(e.snake)) return toast(pick(FLAVOR.youLeap), 900, 'gold');
       if (e.type === 'eat' && isMe(e.snake) && e.kind === 'beetle') { flashFrame('beetle'); return toast(pick(FLAVOR.youBeetle), 1500, 'beetle'); }
       if (e.type === 'eat' && isMe(e.snake) && e.kind === 'golden') { flashFrame('gold', true); return toast(pick(FLAVOR.youGolden), 1500, 'gold'); }
       if (e.type === 'eat' && isMe(e.snake) && e.kind === 'mushroom') return toast(pick(FLAVOR.youMushroom), 1800, 'you');
@@ -1043,7 +1050,8 @@
   function turn(name, p = player()) {
     const next = DIRS[name];
     const last = p.queue.length ? p.queue[p.queue.length - 1] : p.dir;
-    if (next === last || (next.x === -last.x && next.y === -last.y)) return;
+    if (next === last) return E.leap(game, p); // (the way you're already going: a leap, if you've got one)
+    if (next.x === -last.x && next.y === -last.y) return;
     if (p.queue.length < T.QUEUE) p.queue.push(next);
   }
 

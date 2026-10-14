@@ -620,6 +620,9 @@ window.SnakeRender = (() => {
       g.fillStyle = 'rgba(58,38,20,0.45)';
       if (mark === 'dots') disc(0, 0, r * 0.32);
       else { disc(-r * 0.38, r * 0.12, r * 0.18); disc(r * 0.38, -r * 0.12, r * 0.18); }
+    } else if (mark === 'diamond') {
+      g.fillStyle = 'rgba(58,36,8,0.75)';
+      g.beginPath(); g.moveTo(0, -r * 0.6); g.lineTo(r * 0.6, 0); g.lineTo(0, r * 0.6); g.lineTo(-r * 0.6, 0); g.closePath(); g.fill();
     } else if (mark === 'rings' || mark === 'copy') {
       g.strokeStyle = mark === 'copy' ? 'rgba(255,255,255,0.75)' : 'rgba(58,38,20,0.5)';
       g.lineWidth = c * 0.04;
@@ -655,6 +658,13 @@ window.SnakeRender = (() => {
     const step = walking ? Math.sin(now / (f.scared ? 28 : 45)) : 0;
     const cycle = ((now - beetleAt) / 1000) % 3.4; // the wing cases lift late in each cycle, if it's not walking
     const lift = lively && !walking && cycle > 2.7 ? Math.sin((cycle - 2.7) / 0.7 * Math.PI) : 0;
+    if (f.gold) { // a golden beetle glows, and glints now and then
+      const w = SPRITE * CELL * pop * (1 + (lively ? 0.12 * Math.sin(t * 4) : 0));
+      ctx.globalAlpha = lively ? 0.75 + 0.25 * Math.sin(t * 4) : 0.9;
+      ctx.drawImage(glowSprite(), x - w / 2, y - w / 2, w, w);
+      ctx.globalAlpha = 1;
+      if (lively && Math.random() < 0.06) mote(x + (Math.random() - 0.5) * c, y + (Math.random() - 0.5) * c, 0, -6, 650, 0.3 + Math.random() * 0.3, 1);
+    }
     ctx.fillStyle = 'rgba(0,0,0,0.3)'; // shadow
     ctx.beginPath();
     ctx.ellipse(x + 2, y + 3, c * 0.38 * pop, c * 0.3 * pop, 0, 0, TAU);
@@ -704,8 +714,8 @@ window.SnakeRender = (() => {
     for (const sg of [-1, 1]) {
       ctx.save();
       if (lift > 0) { ctx.translate(c * 0.16, 0); ctx.rotate(-sg * 0.4 * lift); ctx.translate(-c * 0.16, 0); }
-      ctx.fillStyle = '#059669';
-      ctx.strokeStyle = '#fbbf24';
+      ctx.fillStyle = f.gold ? '#fbbf24' : '#059669'; // (a golden one: gold, rimmed in emerald)
+      ctx.strokeStyle = f.gold ? '#047857' : '#fbbf24';
       ctx.beginPath();
       ctx.ellipse(-c * 0.02, 0, c * 0.22, c * 0.17, 0, sg < 0 ? Math.PI : 0, sg < 0 ? TAU : Math.PI);
       ctx.closePath();
@@ -963,6 +973,10 @@ window.SnakeRender = (() => {
     if (t >= 0 && t < 1) return 0.55 * Math.abs(Math.sin(t * Math.PI * 2));
     if (!game) return 0;
     const h = s.body[0];
+    if (s.personaKey === 'ouroboros' && s.body.length > 4) { // (its own tail right ahead: it bites it)
+      const tl = s.body[s.body.length - 1];
+      if ((tl.x - h.x) * s.dir.x + (tl.y - h.y) * s.dir.y === 1 && (tl.x - h.x) * s.dir.y - (tl.y - h.y) * s.dir.x === 0) return 1;
+    }
     for (const f of game.food) {
       if (f.kind === 'mushroom' && s.personaKey !== 'ghost') continue;
       const ahead = (f.x - h.x) * s.dir.x + (f.y - h.y) * s.dir.y;
@@ -1062,6 +1076,12 @@ window.SnakeRender = (() => {
     }
     // A held corpse presses its head a little into whatever it hit.
     if (impact) { pts[0] += s.dir.x * CELL * impact; pts[1] += s.dir.y * CELL * impact; }
+    // Leaping (this tick): the head arcs up and over, the neck after it.
+    if (a.leapTick === game?.tick && !dead && !reduced) {
+      const up = Math.sin(Math.min(1, alpha) * Math.PI) * CELL * 0.7;
+      pts[1] -= up;
+      if (n > 1) pts[3] -= up * 0.45;
+    }
     // Just crashed: the head lunges into what it hit, and bounces back.
     const hit = a.crashAt ? (now - a.crashAt) / 260 : 1;
     if (hit < 1 && hit >= 0 && !dead && !reduced) { const l = Math.sin(hit * Math.PI) * 0.34; pts[0] += a.crashDx * CELL * l; pts[1] += a.crashDy * CELL * l; }
@@ -1252,6 +1272,21 @@ window.SnakeRender = (() => {
         }
         ctx.stroke();
       }
+    } else if (look === 'ouroboros') { // a python's back: a dark diamond on every segment, a pale fleck in each
+      ctx.fillStyle = 'rgba(58,36,8,0.75)';
+      ctx.beginPath();
+      for (let i = 1; i < n; i++) {
+        const x = pts[2 * i], y = pts[2 * i + 1], d = rad[i] * 0.62;
+        ctx.moveTo(x, y - d); ctx.lineTo(x + d, y); ctx.lineTo(x, y + d); ctx.lineTo(x - d, y); ctx.closePath();
+      }
+      ctx.fill();
+      ctx.fillStyle = 'rgba(253,230,138,0.6)';
+      ctx.beginPath();
+      for (let i = 1; i < n; i++) {
+        const x = pts[2 * i], y = pts[2 * i + 1], d = rad[i] * 0.2;
+        ctx.moveTo(x, y - d); ctx.lineTo(x + d, y); ctx.lineTo(x, y + d); ctx.lineTo(x - d, y); ctx.closePath();
+      }
+      ctx.fill();
     } else if (look === 'colonist') { // a redcoat's cross-belts: a cream strap zig-zagging down the body
       ctx.strokeStyle = '#fef3c7';
       ctx.lineWidth = 3;
@@ -1311,6 +1346,19 @@ window.SnakeRender = (() => {
     else drawFace(s, look, color, blinking, a);
     ctx.restore();
 
+    if (!dead && s.leaps > 0) { // leaps held: a golden ring round the head, a pip on it for each
+      const t = reduced ? 0 : now / 1000, rr = CELL * (0.66 + 0.04 * Math.sin(t * 3));
+      ctx.strokeStyle = 'rgba(251,191,36,0.75)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(pts[0], pts[1], rr, 0, TAU); ctx.stroke();
+      ctx.fillStyle = '#fde047';
+      ctx.strokeStyle = 'rgba(58,38,20,0.8)';
+      ctx.lineWidth = 1.2;
+      for (let i = 0; i < s.leaps; i++) {
+        const a2 = -Math.PI / 2 + (i - (s.leaps - 1) / 2) * 0.5;
+        ctx.beginPath(); ctx.arc(pts[0] + Math.cos(a2) * rr, pts[1] + Math.sin(a2) * rr, CELL * 0.11, 0, TAU); ctx.fill(); ctx.stroke();
+      }
+    }
     if (dizzy) { // a faint halo, and three stars going round on it
       const t = reduced ? 0 : now / 240, cy = Math.max(CELL * 0.3, pts[1] - CELL * 0.72);
       ctx.strokeStyle = 'rgba(253,224,71,0.45)';
@@ -1406,6 +1454,9 @@ window.SnakeRender = (() => {
   function drawSnakes(alpha, now) {
     live.length = 0;
     for (const s of game.snakes) if (s.alive) live.push(s);
+    // (a snake leaping, or still arched over another one, goes on top)
+    const over = s => anim.get(s)?.leapUntil > game.tick ? 1 : 0;
+    if (live.some(over)) live.sort((p, q) => over(p) - over(q));
     for (const s of live) drawShadow(prepare(s, alpha, now, false));
     for (const s of live) drawOutline(s, animOf(s, now));
     for (const s of live) drawBody(s, animOf(s, now), now, false);
@@ -1545,7 +1596,7 @@ window.SnakeRender = (() => {
     creeper: [0.8, 1.5, slither], drab: [1.8, 1.6, limp], gobbler: [0.6, 1.4, lick], ghost: [1.8, 1.8, wisp],
     sniper: [1.2, 1.5, laser], sovereign: [1.6, 2.4, carpet], colonist: [1.4, 2.2, telescope], vulture: [1.6, 3, bone],
     mason: [1.4, 2.4, papyrus], metagamer: [1.4, 2, keyboard], wildcard: [1.2, 2, bill], desperado: [1.1, 2, revolver],
-    joker: [1, 2.4, blower], copycat: [1.2, 1.4, blep], mute: [1.1, 2, innerJaw],
+    joker: [1, 2.4, blower], copycat: [1.2, 1.4, blep], mute: [1.1, 2, innerJaw], ouroboros: [1.6, 1.6, fangs],
   };
   let flickP = -1, flickT = 0; // the flick being drawn: how far through it is (or -1), and how far out (0..1..0)
 
@@ -1953,6 +2004,23 @@ window.SnakeRender = (() => {
         ctx.moveTo(tx, ty); ctx.lineTo(tx + c * 0.013, ty - sg * c * 0.032); ctx.lineTo(tx + c * 0.026, ty);
       }
       ctx.fill();
+    }
+  }
+
+  // Ouroboros: no forked tongue (only people have that): it bares its fangs.
+  function fangs(t) {
+    const c = CELL, e = stayOut(t, 2), x0 = c * 0.55; // (from the tip of its snout, past the wedge of its head)
+    ctx.fillStyle = '#1c1917'; // the jaw, dropping open
+    ctx.beginPath(); ctx.ellipse(x0, 0, c * 0.06, c * (0.04 + 0.1 * e), 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#f8fafc';
+    ctx.strokeStyle = 'rgba(58,36,8,0.85)';
+    ctx.lineWidth = c * 0.02;
+    for (const sg of [-1, 1]) { // two long fangs, curving forward and in
+      ctx.beginPath();
+      ctx.moveTo(x0 - c * 0.03, sg * c * 0.06);
+      ctx.quadraticCurveTo(x0 + c * (0.14 + 0.08 * e), sg * c * 0.08, x0 + c * (0.16 + 0.14 * e), sg * c * (0.02 - 0.04 * e));
+      ctx.lineTo(x0 + c * 0.06, sg * c * 0.13);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
     }
   }
 
@@ -2380,6 +2448,30 @@ window.SnakeRender = (() => {
         ctx.fillRect(-c * 0.13, -c * 0.27, c * 0.05, c * 0.54); // hat band
         mouth(open, 0.43);
         lookingEyes(0.06, 0.2, 0.2);
+        break;
+      }
+      case 'ouroboros': { // a real snake's head: a wedge, scaled, slit-pupilled amber eyes, nostrils
+        ctx.fillStyle = color;
+        ctx.strokeStyle = 'rgba(58,36,8,0.8)';
+        ctx.lineWidth = c * 0.04;
+        ctx.beginPath(); // (wider at the jaw, a rounded snout)
+        ctx.moveTo(-c * 0.3, -c * 0.44);
+        ctx.quadraticCurveTo(c * 0.2, -c * 0.4, c * 0.46, -c * 0.12);
+        ctx.quadraticCurveTo(c * 0.54, 0, c * 0.46, c * 0.12);
+        ctx.quadraticCurveTo(c * 0.2, c * 0.4, -c * 0.3, c * 0.44);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = 'rgba(58,36,8,0.75)'; // a diamond on its crown
+        ctx.beginPath(); ctx.moveTo(-c * 0.22, 0); ctx.lineTo(-c * 0.06, -c * 0.12); ctx.lineTo(c * 0.1, 0); ctx.lineTo(-c * 0.06, c * 0.12); ctx.closePath(); ctx.fill();
+        if (open > 0.08) mouth(open, 0.46);
+        ctx.fillStyle = INK; // nostrils
+        circle(c * 0.42, -c * 0.06, c * 0.022); circle(c * 0.42, c * 0.06, c * 0.022);
+        if (blinking || deadNow) { lids(0.1, 0.14, 0.22); break; }
+        for (const sg of [-1, 1]) { // amber eyes, a black slit each, turned to what it's watching
+          ctx.fillStyle = '#facc15';
+          circle(c * 0.14, sg * c * 0.22, c * 0.1);
+          ctx.fillStyle = INK;
+          ctx.beginPath(); ctx.ellipse(c * 0.14 + gazeX * c * 0.035, sg * c * 0.22 + gazeY * c * 0.035, c * 0.025, c * 0.085, 0, 0, TAU); ctx.fill();
+        }
         break;
       }
       case 'mute': { // a mime: white greasepaint, a black beret, high arched brows, a painted tear, small dark lips
@@ -2874,6 +2966,7 @@ window.SnakeRender = (() => {
     if (!s.persona) mark = MARKS[col] || '';
     else if (look === 'mason') mark = i % 4 === 3 ? 'marble2' : 'marble';
     else if (look === 'colonist') mark = i % 2 ? 'strap' : 'strap2';
+    else if (look === 'ouroboros') mark = 'diamond';
     else if (s.personaKey === 'copycat') mark = 'copy';
     else if (look === 'ghost') mark = 'ghost';
     return fill + '|' + mark;
@@ -3822,7 +3915,7 @@ window.SnakeRender = (() => {
         x += e.snake.dir.x * CELL * 0.5; // the crumbs fly from the mouth, not over the face
         y += e.snake.dir.y * CELL * 0.5;
         if (e.kind === 'golden') spawn(x, y, T.PARTICLES_EAT + 6, 220, T.PARTICLE_LIFE, 3.2, '#fde68a', '#fbbf24');
-        else if (e.kind === 'beetle') spawn(x, y, T.PARTICLES_EAT + 4, 200, T.PARTICLE_LIFE, 3, '#059669', '#fbbf24'); // emerald and gold, a crunchy catch
+        else if (e.kind === 'beetle') spawn(x, y, T.PARTICLES_EAT + (e.gold ? 10 : 4), e.gold ? 240 : 200, T.PARTICLE_LIFE, 3, e.gold ? '#fbbf24' : '#059669', e.gold ? '#fffbea' : '#fbbf24'); // emerald and gold, a crunchy catch (a golden one: a burst of gold)
         else if (e.kind === 'pellet') spawn(x, y, T.PARTICLES_EAT - 4, 150, T.PARTICLE_LIFE * 0.8, 2.6, e.color && e.color[0] === '#' ? e.color : '#c2410c', '#f6ecd2');
         else if (e.kind === 'mushroom') { // poison: a puff of spores, and it goes queasy green for a moment
           spawn(x, y, T.PARTICLES_EAT - 2, 160, T.PARTICLE_LIFE, 2.6, '#c084fc', '#84cc16');
@@ -3856,6 +3949,11 @@ window.SnakeRender = (() => {
           if (e.lost >= 1 && e.lost <= 3) floater(h.x * CELL + CELL / 2 - s.dir.x * CELL * 1.2, Math.max(CELL * 1.3, h.y * CELL - CELL * 1.4), '-' + e.lost);
           if (!reduced) shake(4);
         }
+      } else if (e.type === 'leap') { // up and over: a puff of dust where it took off
+        const a = animOf(e.snake, now), h = e.snake.body[2] || e.snake.body[0];
+        a.leapTick = game.tick;
+        a.leapUntil = game.tick + e.snake.body.length; // (until the arch has run off its tail)
+        spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 8, 140, 420, 2.2, '#d6b480', '#fde68a');
       } else if (e.type === 'cut') { // the woodpecker took its tail
         floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.2), 'Ouch!');
       } else if (e.type === 'alight') { // crawled into the fire: a burst of flame
