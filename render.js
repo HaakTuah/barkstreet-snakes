@@ -329,20 +329,24 @@ window.SnakeRender = (() => {
   }
 
   // Burning leaves blown downwind: each arcs from its fire to where it lands,
-  // spinning, trailing sparks.
+  // spinning, trailing sparks. With reduced motion it doesn't fly: it fades
+  // in where it lands (the smoulder that follows marks the cell).
   function drawEmbers(now) {
     for (let i = embers.length - 1; i >= 0; i--) {
       const e = embers[i], t = (now - e.at) / 650;
       if (t >= 1) { embers.splice(i, 1); continue; }
+      const f = reduced ? 1 : t; // (how far along its flight it's drawn)
       const x0 = e.fx * CELL + CELL / 2, y0 = e.fy * CELL + CELL / 2, x1 = e.x * CELL + CELL / 2, y1 = e.y * CELL + CELL / 2;
-      const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t - Math.sin(t * Math.PI) * CELL * 1.6;
+      const x = x0 + (x1 - x0) * f, y = y0 + (y1 - y0) * f - Math.sin(f * Math.PI) * CELL * 1.6;
       const w = SPRITE * CELL * 0.9;
+      if (reduced) ctx.globalAlpha = Math.min(1, t * 2.5, (1 - t) * 4); // (in, a moment there, and out as the smoulder takes over)
       ctx.drawImage(fireGlowSprite(), x - w / 2, y - w / 2, w, w);
       ctx.save();
       ctx.translate(x, y);
-      ctx.rotate(t * 9);
+      ctx.rotate(f * 9);
       ctx.drawImage(leafSprite('#ea580c'), -SPRITE * CELL / 2, -SPRITE * CELL / 2, SPRITE * CELL, SPRITE * CELL);
       ctx.restore();
+      ctx.globalAlpha = 1;
       if (!reduced && Math.random() < 0.5) mote(x, y, (Math.random() - 0.5) * 20, -10 - Math.random() * 20, 450, 1.4, 3);
     }
   }
@@ -4249,9 +4253,15 @@ window.SnakeRender = (() => {
   }
   function drawRain(now) {
     const wet = Math.max(sky.rain, sky.storm * 0.3); // (a storm only spits: it takes real rain to put fire out)
-    if (wet < 0.02 || reduced) return;
+    if (wet < 0.02) return;
     if (!rainTile) rainTile = buildRainTile();
     const n = RAIN_TILE;
+    if (reduced) { // (held still, not taken away: rain is a rule, it puts fire out and brings mushrooms)
+      ctx.globalAlpha = wet * 0.6;
+      for (let y = 0; y < SIZE; y += n) for (let x = 0; x < SIZE; x += n) ctx.drawImage(rainTile, x, y, n, n);
+      ctx.globalAlpha = 1;
+      return;
+    }
     for (const [speed, alpha] of quality === 2 ? RAIN_LAYERS : RAIN_LAYER) {
       const oy = (now * speed) % n, ox = -(now * speed * 0.28) % n;
       ctx.globalAlpha = wet * alpha;
