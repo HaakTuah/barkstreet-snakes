@@ -6,6 +6,8 @@ A storybook diorama of a mossy log on the forest floor, seen from above. Four ca
 
 **The second pass** (see AUDIT.md) adds nothing new to play. It goes after the moments that still felt off when looked at frame by frame: the death freeze-frame that jumped, bends that pulsed, a woodpecker that could peck the cell right in front of you, a Hall of Fame rank that changed its mind, phones and laptops that hid the board or the Play button, and online rooms that broke after a few rejoins. It also moves the frame budget to where the time really goes: the GPU drawing long snakes.
 
+**The third pass** (AUDIT.md) comes after a big round of new rules: crashes that cost length, a smarter AI, leaps, dashes and wrap. Those made the game deeper, and they also made it noisier and harder to read. A held key could fire a power, and the death card no longer explained deaths. A banner came every five seconds, and the powers spoke in a second, lemon gold. Sounds vanished on a phone, and the bodies drifted back to the expensive way of drawing. So this pass is about legibility and restraint. Every rule shows on the board or the card when it matters, the narrator speaks less and better, and gold means power and nothing else. It also fixes the measuring tools first, so the numbers are the game's.
+
 ## Art direction: "storybook bark", on a mossy log
 
 **A log, with the tree's looks.** As the board grew weather, burrows, a woodpecker and force fields, "the bark of a standing tree" stopped making sense: apples fall onto it, snow settles on it, things lie on it rather than cling to it, and snakes don't climb trees. A meadow was considered and turned down: it would lose the woodpecker (it pecks wood), the bark beetles and their burrows, burning wood, and the name *Bark & Bite*. A log on the forest floor, under an apple tree, keeps all of those and fixes the physics: everything lies on top, apples drop from the branches above, snow settles, and snakes really do bask on logs. The first log (a horizontal grain, a strong roll, heavy cushions of moss, a frame of log ends) was busier and darker than the tree, and the tree looked better. So the log now keeps the tree's looks: the same warm bark with its grain running top to bottom (the log runs that way), the same soft sun and shade and the carved heartwood frame, plus a little shadow down both sides where the log rounds away. Moss is a trim, not a carpet: a dozen small soft cushions, mostly down the sides where it wraps round the log, a few on top. Each is a clump of small rounded tufts with a shadow under it, every tuft lit on its upper left and darker round its edge, with fine fuzz and, on the bigger ones, a few red-brown spore stalks. It's dark and olive, well apart from the apples' bright lime, so it never passes for food. The moss along the frame's edges is the same moss, in the same colours. Faint lichen was tried and dropped: at play size its pale rosettes passed for puffs of smoke, which on this board means fire.
@@ -158,6 +160,54 @@ The board and the page around it are never still for long, and the big moments a
 | Never a dead moment | Every key in every state does something visible, or is documented as ignored (arrows while napping or on a round-over card). Space and Enter always mean nap and start over, unless a card or dialog button has keyboard focus |
 | Rivals explained everywhere | Desktop cards list each rival with a line on how it plays; on small boards the card lists names only, and tapping a rival's tag above the board shows its line (phones have no tooltips) |
 | The board fits | On every screen from a 320×460 phone to a 1280×720 laptop, the whole board and the card's buttons are visible without scrolling; wide, short screens put the board beside the scores |
+
+## The third pass: what it settles
+
+**Gold means power.** The powers brought their own lemon yellows (`#fde047`, `#fef08a`, `#eab308`), greenish next to the warm Honey of the gold banner and the crown. They're folded into Honey: fills `#fde68a`, lines `#d4a017`, glints `#fffbea`. The decorative autumn leaves move to russet and brown, and Mute's proud mood leaves gold too, so on this board gold always means a power.
+
+**A power is one token, not a ring.** A golden power used to draw a ring round the head with pips, on top of the stun halo, Capricious's ring, the ready ring and YOU's ring. Now it's:
+- a thin opaque gold line round the body, with an ink line outside it so it reads on any colour, drawn outside your cream outline;
+- pips on a short arc behind the head, turned with it.
+
+The plain leap's cooldown is a thin arc round your own head that fills and closes into the ready flash. That's on the board, where you're looking, not only on the tag. On the tags, a power is a 6 px chip (the chip radius) with small inline icons in ink (a hop, a double chevron, a loop) instead of fallback-font glyphs. A name never gives way to it.
+
+**Height is scale.** The board is seen from above, so a leap rises toward you: the head and neck swell along their path at the top of the arc, and the shadow on the bark spreads and softens. It no longer lifts up the screen, which read as a lunge or a flinch depending on the heading.
+
+**Reduced motion removes movement, never information.** Being in the air is a rule, so a leap keeps a still airborne pose. The woodpecker cuts between perches instead of swooping.
+
+**The narrator speaks less, and better.** Banners go through a small queue:
+- **Lessons** (the first crash, the first leap, a power's first pickup, dropping to your smallest) hold for 2.5 s.
+- **Routine news** waits for a lesson, or is dropped.
+- **Repeats** don't get banners: only the first golden apple and the first beetle of a round are announced, and a repeat crash or a pickup's "+3" is left to the board's own floaters.
+- **While a card is up,** only what changes the round gets through.
+
+Lessons are one idea and 60 characters or fewer. The fine print lives in the README, or comes when it happens (*Snip!*).
+
+**One word for each thing.** The leap is *ahead*: "Press ahead to leap", "Swipe ahead to leap". The edge of the log is the *edge*, never a wall. *Bonk!* is for a knock you survive; a death gets a word that means out.
+
+**Every death says why.** The engine records why a crash was fatal, and the card's first line says it:
+- boxed in ("…with nowhere to turn");
+- at your smallest;
+- the shorter one in a head-on;
+- pecked;
+- blown up.
+
+The rival's quip stays as flavour. A death that ends the round says it on the round-over card too.
+
+**Every sound survives a phone speaker.** A cue's weight can't live only below 150 Hz, so the low cues (death, bonks, thunder, boom, the stinger, the heartbeat) get a midrange knock or body that implies their bass. Every envelope starts from silence. Your own sounds come before rivals', and both come before the world's. Ambient beds stop when the round does.
+
+### Feel targets for the third pass
+
+| Target | Concrete check |
+|---|---|
+| A power only when you ask | A key held down, an auto-repeat, or a turn pressed twice within 180 ms never fires a leap or a dash (a rules test drives repeats) |
+| The first knock really is free | A player who never steers survives their first crash and isn't steered into the edge (the auto-turn breaks ties by the open run ahead) |
+| You can always see why | Every death card names the reason. Your leap's cooldown shows at your head. A press that can't leap gives a thunk |
+| A calmer narrator | In watched AI rounds, about one banner every 8 s or fewer (it was one every 4–5 s), and no lesson replaced within 2.5 s |
+| Frame cost | Full cost per frame (script and GPU, measured to a readback): the long-snake scene ≤ 4 ms (second pass 3.4–3.6, now 5.2–6.4); with force fields on the board ≤ 1.5× the same board without; a new round's first frame doesn't rebuild the bark |
+| No clicks | Every cue rendered offline starts from silence (no sample-level step) |
+| Small speakers | Through a 300 Hz high-pass (a phone speaker), your death still lands louder than an apple |
+| Memory stays flat | Drawing a force field for a minute retains no growing heap (the colour cache is bounded) |
 
 ## The round's arc
 
@@ -368,6 +418,16 @@ Each line gives the guideline, what was done, and why.
 - **"High score in localStorage":** *kept and extended.* There's Best plus the existing Hall of Fame and stats, every access in try/catch. Watched AI-only rounds now count in the Hall of Fame (your request), but never in your personal stats.
 - **"Pause automatically on blur/visibility":** *applied to hidden tabs, and to window blur only while you're playing.* A watched AI round keeps running when you click elsewhere on the same screen, but pauses when hidden.
 - **"Speech bubbles"** *(not in the brief, but they affect readability):* kept and toned down. They're smaller, slightly translucent, follow the gliding head, never outlive their round, and long lines go to the log only on small boards. They sit beside a snake going up or down (never over its path or its body) and above one going sideways. **They don't jump about as a snake turns:** a bubble moves to another side only once that side has been the right one for 0.45 s (or its own has run out of room), and then glides there. Measured over 45 s of watching, a bubble used to jump up to 106 px in a single frame, 61 times; now nothing moves more than 6 px a frame. They fade while your head is near one, and a snake doesn't repeat a line within 45 s of game time; Mason's *Life of Brian* routines come once per visit. Banners move to the board's foot while a head passes under them.
+
+### Third pass
+
+- **"Create a new branch from main":** *adapted.* The pass is branched from `feature/powers`, the top of three open PRs (#22, #23 and #24) that change most of the code. Polishing `main` would mean polishing code that's about to be replaced, and merging it back would conflict everywhere. The PR is stacked on #24 and says so.
+- **"Fixed timestep… buttery smooth on 60/120/144 Hz":** *kept, and one thing changed.* Playing alone, a hitch now catches up at most one tick a frame, so a stall is a moment's slow-down rather than a jump of several cells. Online and when watching fast, wall-clock catch-up stays: there, fairness to the clock matters more.
+- **"The first moves after a start are forgiving":** *extended* to the first crash. A player who hasn't steered is turned toward open space, not toward the nearest edge.
+- **"An on-ramp for new players"** *(raised by the audit, not the brief):* *skipped.* The skeptic's data showed first rounds aren't lopsided; the eased opening and the first free knock do this job.
+- **"Store the body in a ring buffer":** *still adapted*, as before: unshift and pop cost under a microsecond a tick.
+- **"The game works offline":** *kept, and extended.* It plays from `file://` as before. Hosted, a small network-first service worker keeps the last version for offline play, without ever serving a stale one when the network is there. Online play needs the network anyway.
+- **"A visible mute toggle, remembered":** *kept.* The audio now also suspends while muted or while the tab is hidden, which saves battery and stops beds hissing in the background.
 
 ### Second pass
 
