@@ -152,7 +152,7 @@ window.SnakeChatter = (() => {
       cut: ['Caudam meam!'],
       gloat: ['Murum vidisti, {who}?', 'Murus sum, {who}.', 'Ecce murus, {who}.'],
       dies: ['Et tu, {who}?', 'Alea iacta… estus.', 'Murus… meus… finis.'],
-      wrap: ['Sine muro! No wall at all!'],
+      wrap: ['Sine muro! Murus nullus!'],
     },
     wildcard: {
       hungry: ["Very hungry. The hungriest. Nobody has ever been this hungry."],
@@ -257,7 +257,7 @@ window.SnakeChatter = (() => {
       woodpecker: ['Now we’re talking! Holes!'],
       beetle: ['Yeehaw, a critter hunt!', 'Here, little critter…'],
       caught: ['Lassoed it.', 'Roped and branded.'],
-      weather: { storm: ['Lightning? Now we’re talking!', 'Fire on the bark! Yeehaw!'], wind: ['Hold onto your hat!'], rain: ['Rain on the range.'], snow: ['Cold enough to freeze a cactus.'] },
+      weather: { storm: ['Lightning? Now we’re talking!', 'Smell that? Here comes trouble.'], strike: ['Fire on the bark! Yeehaw!'], wind: ['Hold onto your hat!'], rain: ['Rain on the range.'], snow: ['Cold enough to freeze a cactus.'] },
       rainbow: ['Race you to the gold, partner!'],
       bonk: ['Woo! Again!', 'Felt that one.', 'Now I’m awake!'],
       edge: ['Yep. That’s the edge, all right.'],
@@ -414,6 +414,7 @@ window.SnakeChatter = (() => {
     "Storms are exciting! Or scary? Both!": "暴风雨好刺激！还是好可怕？都是！",
     "Whee!": "呜呼！",
     "Lightning? Now we’re talking!": "闪电？这才带劲！",
+    "Smell that? Here comes trouble.": "闻到了吗？麻烦要来了。",
     "Fire on the bark! Yeehaw!": "树皮着火啦！咿哈！",
     "Hold onto your hat!": "抓紧你的帽子！",
     "Rain on the range.": "牧场下雨了。",
@@ -787,7 +788,7 @@ window.SnakeChatter = (() => {
     "The circle tightens. Quickly.": "圆环收紧。很快。",
     "Now you know how it feels, {who}.": "现在你知道那是什么滋味了，{who}。",
     "No end, no beginning. As it should be.": "无始无终。本该如此。",
-    "Sine muro! No wall at all!": "没有墙了！一堵墙都没有！",
+    "Sine muro! Murus nullus!": "没有墙了！一堵墙都没有！",
     "Target acquired.": "目标已锁定。",
     "Clean catch.": "干净利落地抓到了。",
     "Bad angle.": "角度不好。",
@@ -1189,7 +1190,8 @@ window.SnakeChatter = (() => {
         const kind = e.type === 'strike' ? 'storm' : e.kind;
         if (e.type === 'strike') struck = true; else struck = false;
         const s = pick(alive.filter(a => VOICES[a.personaKey]?.weather?.[kind]));
-        if (s) say(s, `weather.${kind}`, null, true);
+        // (The first strike has lines of its own, where a voice has some: as a storm begins, nothing's burning yet.)
+        if (s) say(s, e.type === 'strike' && VOICES[s.personaKey].weather.strike ? 'weather.strike' : `weather.${kind}`, null, true);
       } else if (e.type === 'crash' && e.snake.alive) {
         // Whoever crashed says ouch; now and then, whoever they bounced off gloats.
         // (Almost every bump is into a snake, so ouches fit any bump; the edge,
