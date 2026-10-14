@@ -169,7 +169,7 @@ The board and the page around it are never still for long, and the big moments a
 - a thin opaque gold line round the body, with an ink line outside it so it reads on any colour, drawn outside your cream outline;
 - pips on a short arc behind the head, turned with it.
 
-The plain leap's cooldown is a thin arc round your own head that fills and closes into the ready flash. That's on the board, where you're looking, not only on the tag. On the tags, a power is a 6 px chip (the chip radius) with small inline icons in ink (a hop, a double chevron, a loop) instead of fallback-font glyphs. A name never gives way to it.
+The plain leap's cooldown is a thin arc round your own head that fills and closes into the ready flash. That's on the board, where you're looking, not only on the tag. On the tags, a power is a 6 px chip (the chip radius) with small inline icons in ink (a hop, a double chevron, a loop) instead of fallback-font glyphs. A name never gives way to it: on a narrow tag the chip drops its counts and keeps its icons (the pips on the board and the screen reader's words still give the number). Your own leap's chip fills as it cools, with the icon at full contrast throughout, and is solid when ready.
 
 **Height is scale.** The board is seen from above, so a leap rises toward you: the head and neck swell along their path at the top of the arc, and the shadow on the bark spreads and softens. It no longer lifts up the screen, which read as a lunge or a flinch depending on the heading.
 
@@ -193,6 +193,13 @@ Lessons are one idea and 60 characters or fewer. The fine print lives in the REA
 - blown up.
 
 The rival's quip stays as flavour. A death that ends the round says it on the round-over card too.
+
+**Small mercies at the keys.** A slip shouldn't cost a round, and a press should never be lost without a word:
+- *R* and *Enter* sit next to the steering keys, so mid-round they ask "Start over?" first (the same key again confirms; Space, P or Escape keeps going). In the countdown, *R* is Go, like Enter.
+- Waking from a nap goes through one countdown beat, so your hand is back on the keys before the board moves. An arrow skips the beat, and steers.
+- Stunned, the latest press wins (you get more than one guess while the stars go round). Reversing a queued turn that hasn't happened yet changes your mind instead of being ignored.
+- On a phone, the newest finger takes over a swipe, so a thumb resting on the glass doesn't block the other one.
+- A first round's score is a best only by default: no fanfare until there's a best to beat. Carving your name is offered once a round, not on both cards.
 
 **Every sound survives a phone speaker.** A cue's weight can't live only below 150 Hz, so the low cues (death, bonks, thunder, boom, the stinger, the heartbeat) get a midrange knock or body that implies their bass. Every envelope starts from silence. Your own sounds come before rivals', and both come before the world's. Ambient beds stop when the round does.
 
@@ -421,7 +428,7 @@ Each line gives the guideline, what was done, and why.
 
 ### Third pass
 
-- **"Create a new branch from main":** *adapted.* The pass is branched from `feature/powers`, the top of three open PRs (#22, #23 and #24) that change most of the code. Polishing `main` would mean polishing code that's about to be replaced, and merging it back would conflict everywhere. The PR is stacked on #24 and says so.
+- **"Create a new branch from main":** *adapted.* The pass is branched from `feature/powers`, the top of three open PRs (#22, #23 and #24) that change most of the code. Polishing `main` would mean polishing code that's about to be replaced, and merging it back would conflict everywhere. The three were merged during the pass, but #23 and #24 only into their stacked base branches, so their work never reached `main`. This pass's PR therefore targets `main` and carries them; its description links a view of the pass's own commits.
 - **"Fixed timestep… buttery smooth on 60/120/144 Hz":** *kept, and one thing changed.* Playing alone, a hitch now catches up at most one tick a frame, so a stall is a moment's slow-down rather than a jump of several cells. Online and when watching fast, wall-clock catch-up stays: there, fairness to the clock matters more.
 - **"The first moves after a start are forgiving":** *extended* to the first crash. A player who hasn't steered is turned toward open space, not toward the nearest edge.
 - **"An on-ramp for new players"** *(raised by the audit, not the brief):* *skipped.* The skeptic's data showed first rounds aren't lopsided; the eased opening and the first free knock do this job.
