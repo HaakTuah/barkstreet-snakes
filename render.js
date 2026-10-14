@@ -3856,32 +3856,61 @@ window.SnakeRender = (() => {
   function drawBurrows(now) {
     if (!game.burrows?.length) return;
     const c = CELL;
+    ctx.lineCap = ctx.lineJoin = 'round'; // (as it always left them)
     for (const b of game.burrows) {
-      const k = b.y * GRID + b.x, x = b.x * c + c / 2, y = b.y * c + c / 2;
-      if (!burrowSeen.has(k)) burrowSeen.set(k, now);
-      const pop = popOf(now - burrowSeen.get(k));
+      const key = b.y * GRID + b.x, x = b.x * c + c / 2, y = b.y * c + c / 2;
+      if (!burrowSeen.has(key)) burrowSeen.set(key, now);
+      const pop = popOf(now - burrowSeen.get(key));
       const grow = Math.min(1, Math.max(0.15, (game.tick - b.at) / CRACK_GROW_TICKS));
-      // The cracks: dark, with a lit lip along one side, thinning out.
-      ctx.lineCap = ctx.lineJoin = 'round';
-      for (const [col, off, w] of [['rgba(196,154,102,0.28)', 1.2, 1.6], ['rgba(14,7,2,0.7)', 0, 2.8]]) {
-        ctx.strokeStyle = col;
-        for (const pts of cracksOf(b)) {
-          const shown = (pts.length - 1) * grow, thick = pts[0][0] || pts[0][1] ? 0.6 : 1;
-          for (let j = 1; j <= Math.ceil(shown); j++) { // (tapering as it goes)
-            const t = Math.min(1, shown - (j - 1)), [px, py] = pts[j - 1], [qx, qy] = pts[j];
-            ctx.lineWidth = w * thick * (1 - 0.75 * (j - 1) / (pts.length - 1));
-            ctx.beginPath();
-            ctx.moveTo(x + off + px * c, y + off + py * c);
-            ctx.lineTo(x + off + (px + (qx - px) * t) * c, y + off + (py + (qy - py) * t) * c);
-            ctx.stroke();
-          }
-        }
-      }
+      // The cracks, from their sprite, on whole device pixels.
+      const cs = crackSprite(b, key, grow);
+      ctx.setTransform(1, 0, 0, 1, shakeX, shakeY);
+      ctx.drawImage(cs.c, cs.X, cs.Y);
+      ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
       // The opening (a cached sprite, one of four).
       const w = SPRITE * CELL * pop;
-      ctx.drawImage(burrowSprite(String(k % 4)), x - w / 2, y - w / 2, w, w);
+      ctx.drawImage(burrowSprite(BURROW_LOOKS[key % 4]), x - w / 2, y - w / 2, w, w);
     }
   }
+  const BURROW_LOOKS = ['0', '1', '2', '3'];
+  // A burrow's cracks in a sprite of their own, made again only when they've
+  // grown (they grow a little each tick for about half a minute, then never):
+  // dark, with a lit lip along one side, thinning out.
+  const crackSprites = new Map(); // cell -> { grow, k, c (its canvas), X, Y (where it lands, in device px) }
+  function crackSprite(b, key, grow) {
+    let s = crackSprites.get(key);
+    if (s && s.grow === grow && s.k === k) return s;
+    if (!s) crackSprites.set(key, s = { grow: -1, k: 0, c: null, X: 0, Y: 0 });
+    const branches = cracksOf(b), c = CELL, m = 4; // (m: room for the lines' width and the lip)
+    let x0 = 0, x1 = 0, y0 = 0, y1 = 0;
+    for (const pts of branches) for (const [px, py] of pts) { x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py); }
+    const cx = (b.x + 0.5) * c * k, cy = (b.y + 0.5) * c * k;
+    const X = Math.floor(cx + (x0 * c - m) * k), Y = Math.floor(cy + (y0 * c - m) * k);
+    const w = Math.ceil(cx + (x1 * c + m) * k) - X, h = Math.ceil(cy + (y1 * c + m) * k) - Y;
+    if (!s.c || s.c.width !== w || s.c.height !== h) s.c = makeLayer(w, h);
+    const g = s.c.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, w, h);
+    g.setTransform(k, 0, 0, k, cx - X, cy - Y); // (the hole's centre at the origin)
+    g.lineCap = g.lineJoin = 'round';
+    for (const [col, off, lw] of CRACK_LINES) {
+      g.strokeStyle = col;
+      for (const pts of branches) {
+        const shown = (pts.length - 1) * grow, thick = pts[0][0] || pts[0][1] ? 0.6 : 1;
+        for (let j = 1; j <= Math.ceil(shown); j++) { // (tapering as it goes)
+          const t = Math.min(1, shown - (j - 1)), [px, py] = pts[j - 1], [qx, qy] = pts[j];
+          g.lineWidth = lw * thick * (1 - 0.75 * (j - 1) / (pts.length - 1));
+          g.beginPath();
+          g.moveTo(off + px * c, off + py * c);
+          g.lineTo(off + (px + (qx - px) * t) * c, off + (py + (qy - py) * t) * c);
+          g.stroke();
+        }
+      }
+    }
+    s.X = X; s.Y = Y; s.grow = grow; s.k = k;
+    return s;
+  }
+  const CRACK_LINES = [['rgba(196,154,102,0.28)', 1.2, 1.6], ['rgba(14,7,2,0.7)', 0, 2.8]];
   // A burrow's opening: splinters round the rim, the dark hole, sawdust.
   const burrowSprite = v => sprite('burrow', v, drawBurrowHole);
   const drawBurrowHole = (g, v) => {
@@ -4875,6 +4904,7 @@ window.SnakeRender = (() => {
     fallen.length = 0;
     nextLeaf = 0;
     crackCache.clear();
+    crackSprites.clear();
     burrowSeen.clear();
     fireSeen.clear();
     scorched.length = 0;
