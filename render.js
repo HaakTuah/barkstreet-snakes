@@ -908,10 +908,9 @@ window.SnakeRender = (() => {
   const FLOAT_FONT = `700 ${Math.round(CELL * 0.72)}px Fredoka, system-ui, sans-serif`;
   const FLOAT_FILL = { 'KO!': '#f87171', 'Crunch!': '#f87171', 'Boom!': '#f87171', 'Fwoosh!': '#fb923c', 'Bonk!': '#fdba74', 'Ouch!': '#fdba74', '-1': '#fca5a5', '-2': '#fca5a5', '-3': '#fca5a5' }; // (the rest in honey)
   const GROWN = ['', '+1', '+2', '+3', '+4', '+5']; // (what a bite was worth, without building a string)
+  const FLOAT_TOP = CELL * 1.3, FLOAT_LOW = SIZE - CELL * 0.5; // (a word starts between these, so it can rise and stay on the board)
   const drawFloat = (g, text) => {
     g.font = FLOAT_FONT;
-    const fit = Math.min(1, CELL * 1.84 / g.measureText(text).width); // (a long word shrinks to fit its sprite)
-    if (fit < 1) g.scale(fit, fit);
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     g.lineJoin = 'round';
@@ -921,9 +920,32 @@ window.SnakeRender = (() => {
     g.fillStyle = FLOAT_FILL[text] || '#fde68a';
     g.fillText(text, 0, 0);
   };
+  // A word's sprite: two cells tall like any other, and as wide as the word
+  // needs (a long word used to shrink to fit, which left a death's Crunch!
+  // smaller than the Bonk! you survive). Drawn once per resolution.
+  const floatHalf = new Map(); // word -> half its width with its ink edge, in units
+  let measureG = null; // (a tiny canvas's context, for measuring a word before its sprite is made)
+  function floatSprite(text) {
+    let byText = sprites.get('float');
+    if (!byText) sprites.set('float', byText = new Map());
+    let s = byText.get(text);
+    if (s) return s;
+    if (!measureG) measureG = makeLayer(1, 1).getContext('2d');
+    measureG.font = FLOAT_FONT;
+    const w = measureG.measureText(text).width + CELL * 0.3, span = Math.max(SPRITE * CELL, w); // (room for its ink edge)
+    floatHalf.set(text, w / 2);
+    s = makeLayer(Math.max(2, Math.round(span * k)), Math.max(2, Math.round(SPRITE * CELL * k)));
+    const g = s.getContext('2d');
+    g.setTransform(s.width / span, 0, 0, s.height / (SPRITE * CELL), s.width / 2, s.height / 2);
+    drawFloat(g, text);
+    byText.set(text, s);
+    return s;
+  }
+  // Half a word's width, as it's kept inside the board (its sprite made, if it isn't yet).
+  const floatHalfOf = text => { floatSprite(text); return Math.max(CELL * (text.length > 3 ? 1.15 : 0.7), floatHalf.get(text)); };
   let fNext = 0;
   function floater(x, y, text) {
-    const half = CELL * (text.length > 3 ? 1.15 : 0.7); // (kept inside the board, words and all)
+    const half = floatHalfOf(text); // (kept inside the board, words and all)
     fx[fNext] = Math.min(SIZE - half, Math.max(half, x)); fy[fNext] = y; flife[fNext] = T.FLOAT_MS; ftext[fNext] = text;
     fNext = (fNext + 1) % MAX_F;
   }
@@ -936,11 +958,11 @@ window.SnakeRender = (() => {
       flife[i] -= dt;
       const t = Math.max(0, flife[i] / T.FLOAT_MS);
       const y = fy[i] - (reduced ? 0 : (1 - t) * CELL * 0.8); // rises, unless motion is reduced
-      const sp = sprite('float', ftext[i], drawFloat);
+      const sp = floatSprite(ftext[i]);
       if (reduced || t < 0.86) blitCrisp(sp, fx[i], y, Math.min(1, t * 1.6));
       else { // ...after popping in, from big
-        const w = SPRITE * CELL * (1 + (t - 0.86) / 0.14 * 0.7);
-        ctx.drawImage(sp, fx[i] - w / 2, y - w / 2, w, w);
+        const grow = (1 + (t - 0.86) / 0.14 * 0.7) / k, w = sp.width * grow, h = sp.height * grow;
+        ctx.drawImage(sp, fx[i] - w / 2, y - h / 2, w, h);
       }
     }
   }
@@ -962,7 +984,7 @@ window.SnakeRender = (() => {
         // This frame's layout (see prepare): segment centres, the corner each
         // band bends through, radii and fills, sized for the body as it grows.
         n: 0, pts: new Float32Array(64), cor: new Float32Array(64), rad: new Float32Array(32), fills: new Array(32),
-        look: '', color: '', isPlayer: false, rim: false, bump: 0, tickPos: 0,
+        look: '', color: '', isPlayer: false, rim: false, bump: 0, tickPos: 0, lean: 0,
       };
       anim.set(s, a);
     }
@@ -1101,10 +1123,12 @@ window.SnakeRender = (() => {
 
   // Turn the eyes toward the focus (eased on the screen, so a turn of the
   // head doesn't swing them, and at the same speed at any frame rate).
+  // Stunned, with a turn pressed, they look the way it'll go instead.
   function updateGaze(s, look, a, now) {
-    const f = game ? focusOf(s, look, a, now) : null;
+    const q = game ? queuedOf(s) : null, f = game && !q ? focusOf(s, look, a, now) : null;
     let tx = s.dir.x, ty = s.dir.y; // nothing to look at: straight ahead
-    if (f) {
+    if (q) { tx = q.x; ty = q.y; }
+    else if (f) {
       const h = s.body[0], dx = f.x - h.x, dy = f.y - h.y;
       const len = Math.hypot(dx, dy) || 1;
       a.near = len;
@@ -1491,26 +1515,31 @@ window.SnakeRender = (() => {
   const markOf = color => MARKS[color] || '';
   // Holding a golden power: golden leaps or dashes, or the edges wrapping
   // round for it (fading calmly over its last WRAP_WARN_MS: no strobe).
-  const powered = s => s.leaps > 0 || s.dashes > 0 || s.wrapUntil > game.time;
-  const poweredFade = s => s.leaps > 0 || s.dashes > 0 ? 1 : Math.max(0, Math.min(1, (s.wrapUntil - game.time) / T.WRAP_WARN_MS));
+  const powered = s => s.leaps > 0 || s.dashes > 0 || s.wrapUntil > shownTime;
+  const poweredFade = s => s.leaps > 0 || s.dashes > 0 ? 1 : Math.max(0, Math.min(1, (s.wrapUntil - shownTime) / T.WRAP_WARN_MS));
+  const GOLD_EDGE = 3.9; // (how far the gold line and its ink reach outside a snake's own outline)
+  // Your soft halo: a few faint steps of cream round your body, each wider
+  // and fainter than the last (a soft edge without a blur), and a touch more
+  // round your head. [width or radius (cells), alpha] pairs, outermost first.
+  const HALO = [1.42, 0.07, 1.22, 0.1, 1.04, 0.14], HALO_HEAD = [0.8, 0.07, 0.72, 0.1];
   function drawOutline(s, a) {
     const mine = a.isPlayer && s.id === viewerId;
     if (mine) { // (your soft halo, so you find yourself at a glance)
-      ctx.strokeStyle = 'rgba(255,251,234,0.3)';
+      const was = ctx.globalAlpha;
+      ctx.strokeStyle = ctx.fillStyle = '#fffbea';
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.lineWidth = CELL * 1.34;
       spine(a);
-      ctx.stroke();
-      ctx.fillStyle = 'rgba(255,251,234,0.3)';
-      circle(a.pts[0], a.pts[1], CELL * 0.78);
+      for (let i = 0; i < HALO.length; i += 2) { ctx.globalAlpha = was * HALO[i + 1]; ctx.lineWidth = CELL * HALO[i]; ctx.stroke(); }
+      for (let i = 0; i < HALO_HEAD.length; i += 2) { ctx.globalAlpha = was * HALO_HEAD[i + 1]; circle(a.pts[0], a.pts[1], CELL * HALO_HEAD[i]); }
+      ctx.globalAlpha = was;
     }
-    const own = a.isPlayer ? (mine ? 3.5 : 2.5) : a.rim ? 1.5 : 0; // (the outline it has anyway)
+    const own = edgeOf(s, a, false); // (the outline it has anyway)
     if (powered(s)) { // a golden power: a thin, opaque gold line round its own outline, inked outside so it reads on any colour
       const was = ctx.globalAlpha;
       ctx.globalAlpha = was * poweredFade(s);
       ctx.fillStyle = INK;
-      outlineFills(a, own + 3.9);
+      outlineFills(a, own + GOLD_EDGE);
       ctx.fillStyle = '#f2c94c';
       outlineFills(a, own + 2.5);
       ctx.globalAlpha = was;
@@ -1526,6 +1555,12 @@ window.SnakeRender = (() => {
   // An opaque outline: fast separate fills, unless it's being drawn see-through
   // (a corpse fading), where overlapping pieces would show.
   const outlineFills = (a, grow) => ctx.globalAlpha < 1 ? silhouette(a, grow) : bodyFills(a, grow);
+  // How far a snake's drawn shape reaches beyond its body (units): its own
+  // outline (people's cream, a dark body's rim), and with gold, its gold line.
+  function edgeOf(s, a, gold = true) {
+    const own = a.isPlayer ? (s.id === viewerId ? 3.5 : 2.5) : a.rim ? 1.5 : 0;
+    return gold && powered(s) ? own + GOLD_EDGE : own;
+  }
 
   // Pass 3: the body (bands, then circles tail to head, so the head ends up on
   // top), its pattern and its face.
@@ -1644,14 +1679,16 @@ window.SnakeRender = (() => {
       a.nextBlink = now + T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN);
     }
     if (!dead) { updateGaze(s, look, a, now); steer(s, a, now); }
-    headCos = a.hc; headSin = a.hs;
+    const dizzy = !dead && s.stunUntil > game.tick; // (stunned: its head wobbles, and stars go round it)
+    const q = dizzy ? queuedOf(s) : null, lean = dead ? 0 : leanOf(s, a, q);
+    if (lean) { const h = Math.atan2(a.hs, a.hc) + lean; headCos = Math.cos(h); headSin = Math.sin(h); }
+    else { headCos = a.hc; headSin = a.hs; }
     gazeX = a.gx * headCos + a.gy * headSin; // the gaze, turned into the face's frame
     gazeY = -a.gx * headSin + a.gy * headCos;
     deadNow = dead;
     ctx.save();
     ctx.translate(pts[0], pts[1]);
-    const dizzy = !dead && s.stunUntil > game.tick; // (stunned: its head wobbles, and stars go round it)
-    ctx.rotate(Math.atan2(a.hs, a.hc) + (dizzy && !reduced ? Math.sin(now / 45) * 0.16 : 0));
+    ctx.rotate(Math.atan2(a.hs, a.hc) + lean + (dizzy && !reduced ? Math.sin(now / 45) * 0.16 : 0));
     const faceScale = 1.1 * (1 + a.bump) * (1 + a.swell);
     ctx.scale(faceScale, faceScale);
     if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
@@ -1678,8 +1715,8 @@ window.SnakeRender = (() => {
     // Your own leap coming back: a thin arc round your head, filling as it
     // cools (it closes into the ready flash). Where you're looking, not only
     // on your tag.
-    if (!dead && s.id === viewerId && !s.leaps && !s.dashes && s.body.length > T.MIN_LENGTH && game && game.time < s.leapReadyAt) {
-      const k = Math.max(0, 1 - (s.leapReadyAt - game.time) / T.LEAP_COOLDOWN_MS), a0 = -Math.PI / 2, rr = rad[0] + CELL * 0.22;
+    if (!dead && s.id === viewerId && !s.leaps && !s.dashes && s.body.length > T.MIN_LENGTH && game && shownTime < s.leapReadyAt) {
+      const k = Math.max(0, 1 - (s.leapReadyAt - shownTime) / T.LEAP_COOLDOWN_MS), a0 = -Math.PI / 2, rr = rad[0] + CELL * 0.22;
       ctx.lineCap = 'round';
       ctx.beginPath(); ctx.arc(pts[0], pts[1], rr, a0, a0 + TAU * k);
       ctx.strokeStyle = 'rgba(58,38,20,0.6)';
@@ -1695,8 +1732,8 @@ window.SnakeRender = (() => {
       ctx.lineWidth = 3 * (1 - k) + 1;
       ctx.beginPath(); ctx.arc(pts[0], pts[1], CELL * (0.6 + 0.9 * k), 0, TAU); ctx.stroke();
     }
-    if (dizzy) { // a faint halo, and three stars going round on it
-      const t = reduced ? 0 : now / 240, cy = Math.max(CELL * 0.3, pts[1] - CELL * (pips ? 0.95 : 0.72)); // (higher when pips show, clear of them)
+    if (dizzy) { // a faint halo, and three stars going round on it (clear of its pips and the edge: see starsOff)
+      const t = reduced ? 0 : now / 240, so = starsOff(s), cy = pts[1] + so;
       ctx.strokeStyle = 'rgba(253,224,71,0.45)';
       ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.ellipse(pts[0], cy, CELL * 0.55, CELL * 0.18, 0, 0, TAU); ctx.stroke();
@@ -1708,11 +1745,27 @@ window.SnakeRender = (() => {
         star(pts[0] + Math.cos(a2) * CELL * 0.55, cy + Math.sin(a2) * CELL * 0.18, CELL * 0.22);
         ctx.stroke();
       }
+      // With a turn pressed: a small inked chevron on that side of the head
+      // (past the stars, if they're there; on the board, even pointing off
+      // it), so the press shows as heard, and where it'll take you. (The
+      // eyes look that way too, and the head leans.)
+      if (q) {
+        const d = q.y && (so < 0) === (q.y < 0) ? Math.abs(so) + CELL * 0.62 : CELL * 0.95, w = CELL * 0.2, m = CELL * 0.12;
+        const cx = Math.min(SIZE - m, Math.max(m, pts[0] + q.x * d)), cy2 = Math.min(SIZE - m, Math.max(m, pts[1] + q.y * d));
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx - q.x * w + q.y * w, cy2 - q.y * w + q.x * w);
+        ctx.lineTo(cx, cy2);
+        ctx.lineTo(cx - q.x * w - q.y * w, cy2 - q.y * w - q.x * w);
+        ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.17; ctx.stroke();
+        ctx.strokeStyle = '#fffbea'; ctx.lineWidth = CELL * 0.09; ctx.stroke();
+      }
     }
 
     // Capricious: a ring that flashes out when its mood changes.
     if (!reduced && s.personaKey === 'capricious' && s.memory.moodChangedAt != null && game) {
-      const age = game.time - s.memory.moodChangedAt;
+      const age = Math.max(0, shownTime - s.memory.moodChangedAt); // (it may have changed its mind ahead of the tick that shows it)
       if (age < T.MOOD_RING_MS) {
         ctx.strokeStyle = color;
         ctx.globalAlpha *= 1 - age / T.MOOD_RING_MS;
@@ -1725,6 +1778,40 @@ window.SnakeRender = (() => {
     }
   }
   const DASH = [3, 3], NO_DASH = [], MOOD_DASH = [5, 7];
+
+  // Where a stunned snake's stars go round, as an offset down the screen
+  // from its head: above it, as in any cartoon, unless that's where its pips
+  // are (heading down, they're behind it) or off the board; then below it.
+  // With its pips below and the edge above, below past its pips. Judged by
+  // its cell and the way it's going, which a stun doesn't change, so they
+  // never jump sides mid-stun. (Bonk! keeps clear of them: see onTick.)
+  const STAR_REACH = CELL * 0.42; // (how far the stars reach up and down from their centre)
+  function starsOff(s) {
+    const pips = s.leaps || s.dashes, hy = s.body[0].y * CELL + CELL / 2;
+    let past = 0;
+    for (let sgn = -1; sgn <= 1; sgn += 2) {
+      const behind = pips && s.dir.y === -sgn; // (its pips are on this side)
+      const off = sgn * CELL * (behind ? 1.32 : pips && !s.dir.y ? 0.95 : 0.72); // (higher when pips show beside its head)
+      if (hy + off < STAR_REACH || hy + off > SIZE - STAR_REACH) continue;
+      if (!behind) return off;
+      past ||= off;
+    }
+    return past || -CELL * 0.72;
+  }
+
+  // Stunned, with a turn pressed (q): the head leans a little the way it'll
+  // go (the eyes look there: see updateGaze; and a chevron shows it: see
+  // drawBody), so you can see the press was heard. Eased; held still with
+  // reduced motion (it's news, not wobble).
+  const LEAN = 0.38;
+  function leanOf(s, a, q) {
+    const to = q ? (s.dir.x * q.y - s.dir.y * q.x) * LEAN : 0;
+    a.lean = reduced ? to : a.lean + (to - a.lean) * (1 - Math.exp(-frameDt / 60));
+    return Math.abs(a.lean) < 0.002 ? 0 : a.lean;
+  }
+  // The turn your snake will take when its stun's over, if you've pressed one.
+  // (Yours only: it answers your press, and online a friend's press is theirs to know.)
+  const queuedOf = s => s.id === viewerId && s.stunUntil > game.tick && s.queue?.length ? s.queue[0] : null;
 
   // Marble veins across a disc (centre x, y, radius r), their own way for
   // each segment i: a long wandering one and a short faint one beside it,
@@ -1820,10 +1907,20 @@ window.SnakeRender = (() => {
     for (const s of live) prepare(s, alpha, now, false);
     drawShadows();
     // Then outlines, bodies, flames and queasy washes, each pass for every
-    // snake (and for a snake across a wrapped edge, at each place it shows).
+    // snake on the ground, then the same for any up in the air: a leaper's
+    // outline goes over what it's hopping, not under it (which made it look
+    // rammed into it rather than above it).
+    let up = live.length;
+    if (leaping) while (up > 0 && overOf(live[up - 1])) up--;
+    drawPasses(0, up, now);
+    if (up < live.length) drawPasses(up, live.length, now);
+  }
+  // Passes over live[from..to) (and for a snake across a wrapped edge, at
+  // each place it shows).
+  function drawPasses(from, to, now) {
     for (let pass = 0; pass < 4; pass++) {
-      for (const s of live) {
-        const a = anim.get(s), offs = a.offs || OFFS;
+      for (let i = from; i < to; i++) {
+        const s = live[i], a = anim.get(s), offs = a.offs || OFFS;
         for (let j = 0; j < offs.length; j++) {
           const ox = offs[j][0], oy = offs[j][1];
           if (ox || oy) ctx.translate(ox, oy);
@@ -4576,6 +4673,11 @@ window.SnakeRender = (() => {
   // ------------------------------------------------------------ the frame
 
   let shakeUntil = 0, shakePx = 0, lastNow = 0;
+  // The game's clock as drawn. game.time only moves on a tick, so it's eased
+  // from the last tick's time to this one's, as the bodies are: whatever
+  // fills or fades with it (your leap's arc, a wrap's gold) moves every
+  // frame, not ten steps a second.
+  let timeFrom = 0, timeAt = 0, shownTime = 0;
 
   // alpha: how far the current tick has played out (0..1).
   function frame(alpha, now) {
@@ -4585,6 +4687,7 @@ window.SnakeRender = (() => {
     const dt = lastNow ? Math.min(64, Math.max(0, now - lastNow)) : 16; // (never backwards: a clock a hair behind another)
     lastNow = now;
     frameDt = Math.max(1, dt);
+    shownTime = game.time === timeAt ? timeFrom + (timeAt - timeFrom) * Math.min(1, alpha) : game.time;
     syncHoles();
     trackFire(now);
     syncScorch();
@@ -4624,6 +4727,7 @@ window.SnakeRender = (() => {
     drawSnakes(alpha, now);
     drawFieldHues(now);
     drawTarget(alpha, now);
+    drawRefusal(now);
     drawRain(now);
     drawSnow(now);
     drawEmbers(now);
@@ -4729,10 +4833,33 @@ window.SnakeRender = (() => {
     return f;
   }
 
+  // A leap that can't go: a quick inked × on what it couldn't hop, so the
+  // press shows as heard, and refused (yours only: it answers your press, as
+  // the thunk does). It pops in; with reduced motion it's simply there. Both fade.
+  const REFUSE_MS = 320;
+  const refusal = { x: 0, y: 0, at: -1e9, tick: -1 };
+  function drawRefusal(now) {
+    const t = (now - refusal.at) / REFUSE_MS;
+    if (t < 0 || t >= 1) return;
+    const x = refusal.x, y = refusal.y, d = CELL * 0.24 * (reduced ? 1 : 1 + 0.4 * Math.max(0, 1 - t * 5));
+    ctx.globalAlpha = t < 0.6 ? 1 : (1 - t) / 0.4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x - d, y - d); ctx.lineTo(x + d, y + d);
+    ctx.moveTo(x + d, y - d); ctx.lineTo(x - d, y + d);
+    ctx.strokeStyle = INK; ctx.lineWidth = 7.5; ctx.stroke();
+    ctx.strokeStyle = '#fffbea'; ctx.lineWidth = 3.6; ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
   // Call after every tick, with that tick's events: sets off pops, gulps and puffs.
   function onTick(events) {
     if (!game) return;
     const now = lastNow || performance.now(); // the frame clock, like everything else drawn
+    if (game.time !== timeAt) { // (the drawn clock eases from the last tick's time to this one's: from a tick ago, not across a jump)
+      timeFrom = game.time > timeAt && game.time - timeAt < 1000 ? timeAt : game.time;
+      timeAt = game.time;
+    }
     for (const e of events) {
       if (e.type === 'eat') {
         let x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
@@ -4780,11 +4907,39 @@ window.SnakeRender = (() => {
         const other = e.killerId != null ? game.snakes[e.killerId] : null, col = other ? colorOf(other) : '';
         if (other && col[0] === '#') spawn(px, py, 12, 220, 480, 2.6, col, '#fffbea');
         else spawn(px, py, 12, 220, 480, 2.6, '#c08a4a', '#3b2412'); // (chips of bark)
-        // (at the point of impact, clear of the stars over its head)
-        floater(px + s.dir.x * CELL * 0.4 + (s.dir.y < 0 ? CELL * 1.2 : 0), Math.max(CELL * 1.3, py + s.dir.y * CELL * 0.4), 'Bonk!');
+        // Bonk! at the point of impact, and your -N over your head, behind
+        // it, each kept clear of the stars, a refused leap's × and the edges:
+        // - with the stars or the × on the point of impact, or no room there
+        //   for the word, Bonk! steps aside (heading up or down, to the
+        //   roomier side; heading across, away from the stars);
+        // - with no room there to rise and stay on the board, it goes beside
+        //   the head instead, a little further out (along the row, heading across);
+        // - and a -N the top edge would push down (onto Bonk!, the neck and
+        //   the stars, where they read as one word) goes under Bonk!.
+        const hx = h.x * CELL + CELL / 2, hy = h.y * CELL + CELL / 2, dx = s.dir.x, dy = s.dir.y, side = hx < SIZE / 2 ? 1 : -1;
+        const stars = starsOff(s), refused = s.id === viewerId && refusal.tick === game.tick, half = floatHalfOf('Bonk!');
+        let bx = px + dx * CELL * 0.4, by = py + dy * CELL * 0.4;
+        if (dy && (refused || (stars < 0) === (dy < 0))) bx += side * CELL * 1.2;
+        else if (dx && (refused || bx < half || bx > SIZE - half)) by += stars < 0 ? CELL : -CELL;
+        if (by < FLOAT_TOP || by > FLOAT_LOW) {
+          const on = dx && hx + dx * CELL * 1.9 > half && hx + dx * CELL * 1.9 < SIZE - half; // (room on along the row)
+          bx = hx + (dx ? (on ? dx : -dx) : side) * CELL * 1.9;
+          by = Math.min(FLOAT_LOW, Math.max(FLOAT_TOP, hy));
+        }
+        floater(bx, by, 'Bonk!');
         if (s.id === viewerId) {
-          if (e.lost >= 1 && e.lost <= 3) floater(h.x * CELL + CELL / 2 - s.dir.x * CELL * 1.2, Math.max(CELL * 1.3, h.y * CELL - CELL * 1.4), '-' + e.lost);
+          if (e.lost >= 1 && e.lost <= 3) {
+            const under = hy - CELL * 1.9 < FLOAT_TOP;
+            floater(under ? bx : hx - dx * CELL * 1.2, under ? by + CELL * 0.85 : hy - CELL * 1.9, '-' + e.lost);
+          }
           if (!reduced) shake(4);
+        }
+      } else if (e.type === 'fizzle') { // asked to leap, and it couldn't: refused, on what it couldn't hop (and then ran into)
+        const s = e.snake, h = s.prev?.[0] || s.body[0];
+        if (s.id === viewerId) {
+          refusal.x = ((h.x + s.dir.x + GRID) % GRID) * CELL + CELL / 2;
+          refusal.y = ((h.y + s.dir.y + GRID) % GRID) * CELL + CELL / 2;
+          refusal.at = now; refusal.tick = game.tick;
         }
       } else if (e.type === 'leap') { // up and over: a puff of dust where it took off (and gold, for a golden leap)
         const a = animOf(e.snake, now), h = e.snake.body[e.reach || 1] || e.snake.body[0];
@@ -4797,7 +4952,7 @@ window.SnakeRender = (() => {
         animOf(e.snake, now).dashTick = game.tick;
         const h = e.snake.body[0], x0 = e.x * CELL + CELL / 2, y0 = e.y * CELL + CELL / 2, x1 = h.x * CELL + CELL / 2, y1 = h.y * CELL + CELL / 2;
         if (Math.abs(x1 - x0) + Math.abs(y1 - y0) <= CELL * (T.DASH_LENGTH + 0.5)) { // (not across a wrapped edge)
-          streaks.push({ x0, y0, x1, y1, at: now });
+          streaks.push({ x0, y0, x1, y1, at: now, s: e.snake });
           for (let k = 0; k <= 3; k++) spawn(x0 + (x1 - x0) * k / 3, y0 + (y1 - y0) * k / 3, 4, 90, 500, 1.8, '#fde68a', '#fffbea');
           if (!reduced) for (let k = 0; k < 4; k++) mote(x0 + (Math.random() - 0.5) * CELL * 0.6, y0 + (Math.random() - 0.5) * CELL * 0.6, -(x1 - x0) / len3(x1 - x0, y1 - y0) * 20 + (Math.random() - 0.5) * 10, -(y1 - y0) / len3(x1 - x0, y1 - y0) * 20 - 6, 700, 3 + Math.random() * 2, 2); // (a scuff of dust where it set off)
         }
@@ -4919,7 +5074,7 @@ window.SnakeRender = (() => {
     for (let i = blasts.length - 1; i >= 0; i--) {
       const b = blasts[i], t = (now - b.at) / 480;
       if (t >= 1 || t < 0) { blasts.splice(i, 1); continue; }
-      const grow = reduced ? 0.5 : t, pop = 1 - (1 - Math.min(1, t * 2.5)) ** 3; // (it bursts out fast, then holds)
+      const grow = reduced ? 0.5 : t, pop = reduced ? 1 : 1 - (1 - Math.min(1, t * 2.5)) ** 3; // (it bursts out fast, then holds; with reduced motion, it's simply there, fading)
       const w = BLAST_SPAN * CELL * (0.5 + 0.55 * pop);
       ctx.globalAlpha = t < 0.55 ? 1 : (1 - t) / 0.45;
       ctx.drawImage(blastSprite(), b.x - w / 2, b.y - w / 2, w, w);
@@ -4949,7 +5104,7 @@ window.SnakeRender = (() => {
   }
   function drawWrapEdges(now) {
     let any = 0;
-    for (const s of game.snakes) if (s.alive && s.wrapUntil > game.time) any = Math.max(any, Math.min(1, (s.wrapUntil - game.time) / T.WRAP_WARN_MS));
+    for (const s of game.snakes) if (s.alive && s.wrapUntil > shownTime) any = Math.max(any, Math.min(1, (s.wrapUntil - shownTime) / T.WRAP_WARN_MS));
     if (!any) return;
     const inset = 3, run = 4 * (SIZE - 2 * inset);
     ctx.lineJoin = 'round';
@@ -4976,7 +5131,7 @@ window.SnakeRender = (() => {
     }
     ctx.globalAlpha = 1;
     for (const s of game.snakes) { // (by a wrapping head: a glow on the edge it's near)
-      if (!s.alive || !(s.wrapUntil > game.time)) continue;
+      if (!s.alive || !(s.wrapUntil > shownTime)) continue;
       const h = s.body[0], hx = h.x * CELL + CELL / 2, hy = h.y * CELL + CELL / 2;
       for (const [ex, ey, d] of [[0, hy, h.x], [SIZE, hy, GRID - 1 - h.x], [hx, 0, h.y], [hx, SIZE, GRID - 1 - h.y]]) {
         if (d > 3) continue;
@@ -4991,9 +5146,12 @@ window.SnakeRender = (() => {
   const len3 = (x, y) => Math.hypot(x, y) || 1;
   // A dash's streak, under the snakes (over the dasher it ran a line through
   // its face): a wide wedge of honey light from where it started to the back
-  // of its head, showing either side of the body, and a speed line down each
-  // side, both tapering back to the start; gone in a moment.
-  const streaks = []; // { x0, y0, x1, y1, at }
+  // of its head, and a speed line down each side, inked so it reads on the
+  // bark, both tapering back to the start; gone in a moment. The lines run
+  // just clear of everything drawn round the dasher's body (its outline, a
+  // gold line), which used to cover them.
+  const streaks = []; // { x0, y0, x1, y1, at, s }
+  const STREAK_GAP = 2; // (between the dasher's drawn edge and a line's inked edge, in units)
   function drawStreaks(now) {
     for (let i = streaks.length - 1; i >= 0; i--) {
       const k = streaks[i], t = (now - k.at) / T.STREAK_MS;
@@ -5006,26 +5164,41 @@ window.SnakeRender = (() => {
         ctx.lineTo(ex + nx * (off - w), ey + ny * (off - w));
         ctx.closePath();
       };
+      const speedLine = (off, w, over) => { // (pointed at both ends, widest near the head; `over` runs it a touch past them, for its ink)
+        const mx = k.x0 + (ex - k.x0) * 0.8, my = k.y0 + (ey - k.y0) * 0.8;
+        ctx.moveTo(k.x0 - ux * over + nx * off, k.y0 - uy * over + ny * off);
+        ctx.lineTo(mx + nx * (off + w), my + ny * (off + w));
+        ctx.lineTo(ex + ux * over + nx * off, ey + uy * over + ny * off);
+        ctx.lineTo(mx + nx * (off - w), my + ny * (off - w));
+        ctx.closePath();
+      };
+      const a = anim.get(k.s), w = CELL * 0.1 * (1 - 0.5 * t), ink = 1.4;
+      const side = CELL * 0.44 + (a ? edgeOf(k.s, a) : 0) + STREAK_GAP + ink + w; // (the body's half-width by the neck, and what's drawn round it)
       ctx.fillStyle = rgba('#fde68a', 0.35 * (1 - t));
-      ctx.beginPath(); wedge(0, CELL * 0.62); ctx.fill();
-      ctx.fillStyle = rgba('#fffbea', 0.9 * (1 - t));
-      ctx.beginPath(); wedge(-CELL * 0.6, CELL * 0.07 * (1 - 0.5 * t)); wedge(CELL * 0.6, CELL * 0.07 * (1 - 0.5 * t)); ctx.fill();
+      ctx.beginPath(); wedge(0, side + w); ctx.fill();
+      ctx.fillStyle = rgba('#3a2614', 0.8 * (1 - t));
+      ctx.beginPath(); speedLine(-side, w + ink, ink * 2); speedLine(side, w + ink, ink * 2); ctx.fill();
+      ctx.fillStyle = rgba('#fffbea', 0.95 * (1 - t));
+      ctx.beginPath(); speedLine(-side, w, 0); speedLine(side, w, 0); ctx.fill();
     }
   }
 
-  // Before drawing: unheld deaths burst; held ones whose time is up burst or start fading.
+  // Before drawing: unheld deaths burst; held ones whose time is up burst or
+  // start fading. (With reduced motion a dead snake fades over its beads
+  // under a still starburst: no pieces fly, and nothing grows.)
   function updateCorpses(now) {
     for (const s of deaths) {
+      burst(s);
       if (reduced) corpses.push({ s, until: now, fade: true });
-      else burst(s);
     }
     deaths.length = 0;
     heldCells.fill(0);
     for (let i = corpses.length - 1; i >= 0; i--) {
       const c = corpses[i];
       if (!c.fade && now >= c.until) {
+        burst(c.s);
         if (reduced) c.fade = true;
-        else { burst(c.s); corpses.splice(i, 1); continue; }
+        else { corpses.splice(i, 1); continue; }
       }
       if (c.fade && now >= c.until + FADE_MS) { corpses.splice(i, 1); continue; }
       if (!c.fade) for (const b of c.s.body) heldCells[b.y * GRID + b.x] = 1;
@@ -5116,6 +5289,7 @@ window.SnakeRender = (() => {
     rainTile = null;
     snowTile = null;
     sprites.clear();
+    warmUp(); // (the words and the starburst, at this size)
     veinSprites.clear();
     fieldLooks.clear();
     resetStatic();
@@ -5132,13 +5306,20 @@ window.SnakeRender = (() => {
     PERSONAS = opts.personas;
     k = canvas.width / SIZE;
     // Text sprites drawn before the font arrived get redrawn with it.
-    document.fonts?.ready.then(() => sprites.delete('float'));
+    document.fonts?.ready.then(() => { sprites.delete('float'); floatHalf.clear(); warmUp(); });
   }
 
-  const FLOAT_WORDS = ['+1', '+2', '+3', 'KO!', 'Bonk!', 'Ouch!', '-1', '-2', '-3'];
+  // The words that pop up, and a death's starburst: drawn now, not on the
+  // first bite or the first death (the busiest frame of a round).
+  const FLOAT_WORDS = ['+1', '+2', '+3', 'KO!', 'Crunch!', 'Fwoosh!', 'Boom!', 'Bonk!', 'Ouch!', 'Snip!', '-1', '-2', '-3'];
+  function warmUp() {
+    if (!sized) return;
+    for (const w of FLOAT_WORDS) floatSprite(w);
+    blastSprite();
+  }
   function setGame(g) {
     game = g;
-    if (sized) for (const w of FLOAT_WORDS) sprite('float', w, drawFloat); // (drawn now, not on the first bite)
+    warmUp();
     deaths.length = 0;
     corpses.length = 0;
     pLive = 0;
@@ -5164,6 +5345,8 @@ window.SnakeRender = (() => {
     bolt = null; rainbow = null; dive = null; flashAt = -1e9;
     blasts.length = 0;
     streaks.length = 0;
+    refusal.at = -1e9; refusal.tick = -1;
+    timeFrom = timeAt = shownTime = g.time;
     bird.placed = false; bird.arrivedAt = -1e9;
     for (const k in sky) sky[k] = 0;
     snowCover = 0;
