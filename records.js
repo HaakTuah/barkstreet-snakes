@@ -7,17 +7,27 @@ window.SnakeRecords = (() => {
   const NAME_KEY = 'snake-name';
   const BEST_KEY = 'snake-best';
   const PLAYER_KEY = 'snake-player';
+  const PROBE_KEY = 'snake-probe';
   const MAX_SCORES = 10;
   const MAX_NAME = 16;
   const DEFAULT_NAME = 'Green'; // (what the game calls you until you carve a name)
   const OLD_DEFAULT = 'You';    // (what your unnamed rows used to say: they say Green now)
 
+  // A browser that won't keep anything (storage blocked, or full) still gets
+  // its records for as long as the tab is open: whatever couldn't be written
+  // is kept here instead, as storage would have it, and the Hall of Fame says so.
+  const memory = new Map();
+  let keeping = true;
+  try { localStorage.setItem(PROBE_KEY, '1'); localStorage.removeItem(PROBE_KEY); } catch { keeping = false; }
+  let playedHere = 0, wiped = false; // (this session: rounds recorded, and whether you cleared everything)
+
   function load(key, fallback) {
-    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+    try { return JSON.parse(memory.has(key) ? memory.get(key) : localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
   }
 
   function save(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage unavailable */ }
+    const text = JSON.stringify(value);
+    try { localStorage.setItem(key, text); memory.delete(key); } catch { keeping = false; memory.set(key, text); }
   }
 
   // Names from anywhere (typed, stored or a friend's) lose control and
@@ -153,6 +163,7 @@ window.SnakeRecords = (() => {
     if (killer) st.killers[killer] = (st.killers[killer] || 0) + 1;
     st.totalEaten += num(result.eaten);
     save(STATS_KEY, st);
+    playedHere++;
     return addScore({ ...result, name: getName(), ai: false });
   }
 
@@ -208,11 +219,13 @@ window.SnakeRecords = (() => {
   }
 
   function reset() {
+    for (const key of [SCORES_KEY, STATS_KEY, BEST_KEY]) memory.delete(key);
     try {
       localStorage.removeItem(SCORES_KEY);
       localStorage.removeItem(STATS_KEY);
       localStorage.removeItem(BEST_KEY);
     } catch { /* storage unavailable */ }
+    wiped = true;
   }
 
   // ---------------------------------------------------------------- rendering
@@ -228,6 +241,13 @@ window.SnakeRecords = (() => {
   }
 
   const dot = color => { const d = el('span', { className: 'dot' }); d.style.background = cleanColor(color); return d; };
+  // A tag after a name, with a comma only a screen reader hears ("Green, this round", not "Greenthis round").
+  const tag = text => [el('span', { className: 'sr-only', textContent: ', ' }), el('span', { className: 'who', textContent: text })];
+
+  // At the top of both tabs, while nothing here will outlast the tab.
+  const keepingNote = container => {
+    if (!keeping) container.append(el('p', { className: 'records-note', textContent: 'This browser isn’t keeping records, so these last until you close the tab.' }));
+  };
 
   // filter: 'all' (everyone, overall top 10) or 'me' (your top 10).
   // playerColor colors your rows' dots; AI rows use the color saved with them.
@@ -236,6 +256,7 @@ window.SnakeRecords = (() => {
   function renderScores(container, highlightId, filter, playerColor) {
     const all = scores();
     const list = filter === 'me' ? topPlayer(all) : topOverall(all);
+    keepingNote(container);
     if (!list.length) {
       container.append(el('p', { className: 'empty', textContent: 'No legends yet. Go make one.' }));
       return;
@@ -244,8 +265,8 @@ window.SnakeRecords = (() => {
     const rows = list.map((e, i) => el('tr', { ...(e.id === highlightId && { ariaCurrent: 'true' }), className: [e.id === highlightId && 'highlight', e.ai && 'ai', e.friend && 'friend'].filter(Boolean).join(' ') },
       el('td', { className: 'num', textContent: i + 1 }),
       el('td', { className: 'name', title: e.watched ? `${e.name} (a watched round)` : e.friend ? `${e.name} (a friend)` : e.name },
-        dot(e.ai || e.friend ? e.color : playerColor), e.name, ...(e.friend ? [el('span', { className: 'who', textContent: 'friend' })] : []),
-        ...(e.id === highlightId ? [el('span', { className: 'who', textContent: 'this round' })] : [])),
+        dot(e.ai || e.friend ? e.color : playerColor), e.name, ...(e.friend ? tag('friend') : []),
+        ...(e.id === highlightId ? tag('this round') : [])),
       el('td', { className: e.won ? 'won' : '', textContent: placeLabel(e) }),
       el('td', { className: 'num', textContent: e.survived ? clock(e.survived) : '–' }),
       el('td', { className: 'num', textContent: e.eaten }),
@@ -267,8 +288,10 @@ window.SnakeRecords = (() => {
   // colors: { name -> color } for the snakes, used in the "what got you" bars.
   function renderStats(container, colors) {
     const st = stats();
+    keepingNote(container);
     if (!st.played) {
-      container.append(el('p', { className: 'empty', textContent: "You haven’t played yet. The log is waiting." }));
+      // (Never "you haven't played" to someone who has, this session: after a clear, it's a fresh start.)
+      container.append(el('p', { className: 'empty', textContent: playedHere || wiped ? 'A clean slate. The log is waiting.' : 'You haven’t played yet. The log is waiting.' }));
       return;
     }
     const avgPlace = st.places.reduce((sum, n, i) => sum + n * (i + 1), 0) / st.played;
@@ -302,10 +325,21 @@ window.SnakeRecords = (() => {
     for (let i = 1; i < 4; i++) finishes.push({ label: ordinal(i + 1), count: st.places[i], fill: 'var(--leaf)' });
     container.append(bars('How you finished', finishes));
 
-    // Bar labels, and how each reads in "Your nemesis: …".
-    // (The key stays 'wall', so old stats carry over; the words say edge, as the game does.)
-    const killerLabel = k => k === 'wall' ? 'Edges & holes' : k === 'self' ? 'Yourself' : k === 'hunger' ? 'Hunger' : k === 'fire' ? 'Fire' : k;
-    const nemesisOf = k => k === 'wall' ? 'the edge of the log' : k === 'self' ? 'you' : k === 'hunger' ? 'your own tummy' : k === 'fire' ? 'a bolt from the blue' : k;
+    // What got you that isn't a snake: its bar label, and how it reads in
+    // "Your nemesis: …" (the same thing, in the same words; "&" keeps the edge
+    // and its holes one thing in a tie). The key stays 'wall', so old stats
+    // carry over; the words say edge, as the game does. (Pecks were counted
+    // there too, before the woodpecker had its own.)
+    const NOT_A_SNAKE = {
+      __proto__: null, // (so a rival named "constructor" is just a name)
+      wall: ['Edge & holes', 'the edge & holes'],
+      woodpecker: ['Woodpecker', 'the woodpecker'],
+      self: ['Yourself', 'you'],
+      hunger: ['Hunger', 'your own tummy'],
+      fire: ['Fire', 'a bolt from the blue'],
+    };
+    const killerLabel = k => NOT_A_SNAKE[k]?.[0] ?? k;
+    const nemesisOf = k => NOT_A_SNAKE[k]?.[1] ?? k;
     const killers = Object.entries(st.killers)
       .map(([k, count]) => ({ key: k, label: killerLabel(k), count, color: colors[k] || '#a8a29e' }))
       .sort((a, b) => b.count - a.count);

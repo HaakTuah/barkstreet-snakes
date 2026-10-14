@@ -793,6 +793,7 @@ canvas {
 
 .records-body { min-height: 120px; }
 .empty { margin: 32px 0; text-align: center; color: var(--ink-soft); font-style: italic; }
+.records-note { margin: 0 0 10px; font-size: 0.85rem; text-align: center; color: var(--ink-soft); font-style: italic; text-wrap: balance; }
 
 .scores-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .scores-table th { padding: 6px 7px; text-align: left; font-weight: 500; font-size: 0.8rem; color: var(--ink-soft); }
@@ -918,17 +919,29 @@ button.link:active { transform: none; }
   .opponents .tap-tip { display: block; flex-basis: 100%; font-size: 0.78rem; color: var(--ink-soft); }
   .scores-table .date { display: none; }
   .scores-table { table-layout: fixed; } /* long names get an ellipsis instead of pushing the table wide */
-  .scores-table th:nth-child(1) { width: 24px; }
-  .scores-table th:nth-child(3) { width: 74px; }
-  .scores-table th:nth-child(4), .scores-table th:nth-child(5) { width: 46px; }
+  /* The room goes to the names: Result fits "Won" or "4th" ("Shared 1st" takes two lines),
+     and a tag ("this round", "friend") goes under its name, so a long name can't cut it off. */
+  .scores-table th:nth-child(1) { width: 22px; }
+  .scores-table th:nth-child(3) { width: 50px; }
+  .scores-table th:nth-child(4), .scores-table th:nth-child(5) { width: 42px; }
   .hud { gap: 6px; }
   .scores-table td, .scores-table th { padding-inline: 5px; }
+  .scores-table .name .who { display: block; margin: 1px 0 0 19px; line-height: 1.1; }
   .bar-row { grid-template-columns: 96px 1fr 28px; }
 }
 
 @media (max-width: 360px) {
   h1 { font-size: 1.45rem; }
   .hud .stat { font-size: 0.9rem; }
+}
+
+/* The smallest phones: the Hall of Fame takes more of the screen, so the
+   names have room (they were cut to three letters) and each tab is one line. */
+@media (max-width: 360px) {
+  .records { padding: 8px; }
+  .records-card { padding: 12px; }
+  .records-head .tab { padding-inline: 10px; white-space: nowrap; }
+  .scores-table td, .scores-table th { padding-inline: 4px; }
 }
 
 /* Short phones: no tagline, so the whole board fits the first screen. */
