@@ -74,7 +74,7 @@ window.SnakeAI = (() => {
     gobbler: {
       name: 'Gobbler', color: '#fb923c', look: 'gobbler',
       blurb: 'Eats everything, even a rival’s apple. Hates mushrooms.',
-      kill: ['Gobbler didn’t even look up from lunch.', 'It was going for the apple behind you.', 'Gobbler says sorry. With its mouth full.'],
+      kill: ['Gobbler didn’t even stop chewing.', 'It was going for the apple behind you.', 'Gobbler was thinking about apples. It always is.'],
       win: ['And it’s still hungry.', 'Not a crumb left.', 'Now, about pudding.'],
       w: {
         space: 1, territory: 0.2,
@@ -174,7 +174,7 @@ window.SnakeAI = (() => {
     },
     capricious: {
       name: 'Capricious', color: '#ec4899', look: 'capricious', driver: 'capricious',
-      blurb: 'Changes its mind every few seconds: sniper, glutton, hermit, builder.',
+      blurb: 'Does impressions of Sniper, Gobbler, Ghost and Mason, by turns.',
       kill: ['Capricious felt like it. Just then.', 'A moment later, it wouldn’t have bothered.', 'Wrong place, wrong mood.'],
       win: ['And already wants something else.', 'It loves winning! For now.'],
       w: DRAB, // replaced by the current mood's weights
@@ -200,7 +200,7 @@ window.SnakeAI = (() => {
     mute: {
       name: 'Mute', color: '#a855f7', look: 'mute', driver: 'sniper', // (a rainbow; violet stands in for it in text)
       blurb: 'A mime. Picks someone and closes an invisible box round them.',
-      kill: ['Mute boxed you in. Without a word.', '*taps on your invisible box*', '*lowers an invisible curtain*'],
+      kill: ['Mute had the last word. Silently.', '*taps on your invisible box*', '*lowers an invisible curtain*'],
       win: ['*takes a silent bow*', '*accepts an invisible bouquet*', '*lifts an invisible trophy*'],
       w: {
         space: 1.2, territory: 2, aggression: 0.8,
