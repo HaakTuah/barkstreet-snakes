@@ -4950,7 +4950,7 @@ window.SnakeRender = (() => {
   // A leap that can't go: a quick inked × on what it couldn't hop, so the
   // press shows as heard, and refused (yours only: it answers your press, as
   // the thunk does). It pops in; with reduced motion it's simply there. Both fade.
-  const REFUSE_MS = 320;
+  const REFUSE_MS = 320, REFUSE_REACH = CELL * 0.24 + 3.75; // (how far its arms and their ink reach from its middle, once it's popped in)
   const refusal = { x: 0, y: 0, at: -1e9, tick: -1 };
   function drawRefusal(now) {
     const t = (now - refusal.at) / REFUSE_MS;
@@ -5049,10 +5049,16 @@ window.SnakeRender = (() => {
           if (!reduced) shake(4);
         }
       } else if (e.type === 'fizzle') { // asked to leap, and it couldn't: refused, on what it couldn't hop (and then ran into)
-        const s = e.snake, h = s.prev?.[0] || s.body[0];
+        const s = e.snake;
         if (s.id === viewerId) {
-          refusal.x = ((h.x + s.dir.x + GRID) % GRID) * CELL + CELL / 2;
-          refusal.y = ((h.y + s.dir.y + GRID) % GRID) * CELL + CELL / 2;
+          // The cell it faced, as the engine saw it (a stunned snake's
+          // auto-turn has turned it since). Off the board, at the edge it
+          // faced: on the edge, its whole ink just inside (never wrapped
+          // round to the far side for a snake that doesn't wrap: the
+          // engine wraps it for one that does).
+          const h = s.prev?.[0] || s.body[0], cx = e.x ?? h.x + s.dir.x, cy = e.y ?? h.y + s.dir.y, m = REFUSE_REACH;
+          refusal.x = Math.min(SIZE - m, Math.max(m, cx * CELL + CELL / 2));
+          refusal.y = Math.min(SIZE - m, Math.max(m, cy * CELL + CELL / 2));
           refusal.at = now; refusal.tick = game.tick;
         }
       } else if (e.type === 'leap') { // up and over: a puff of dust where it took off (and gold, for a golden leap)
