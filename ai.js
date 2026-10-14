@@ -88,7 +88,7 @@ window.SnakeAI = (() => {
       win: 'Was it ever really here?',
       w: {
         space: 2, territory: 0.6,
-        food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 10, fedFactor: 0, mushroomLover: 12,
+        food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 14, fedFactor: 0, mushroomLover: 18,
         margin: 6, headRisk: 900, zoneRisk: 150, distance: 7,
       },
     },
@@ -694,8 +694,10 @@ window.SnakeAI = (() => {
     // goes looking for food, harder the closer it gets.
     const myLen = me.body.length + me.grow;
     const hunger = me.hungerLeft == null ? 0 : Math.min(1, Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft) / TUNE.AI_HUNGRY_MS));
-    const shrinking = !hunger && w.mushroomLover != null && myLen >= w.mushroomLover;
-    const fed = !hunger && myLen >= (w.hungryBelow ?? Infinity);
+    // (Once the woodpecker's here nothing new grows: nobody can afford to be picky.)
+    const lean = view.timeMs >= TUNE.SUDDEN_DEATH_MS;
+    const shrinking = !hunger && !lean && w.mushroomLover != null && myLen >= w.mushroomLover;
+    const fed = !hunger && !lean && myLen >= (w.hungryBelow ?? Infinity);
     const foodW = shrinking ? Math.max(3, w.food) : fed ? w.food * w.fedFactor : Math.max(w.food, 8 * hunger) * (1 + 2 * hunger);
     const eatW = shrinking ? Math.max(40, w.eat) : fed ? w.eat * w.fedFactor : Math.max(w.eat, 150 * hunger) * (1 + 2 * hunger);
 
