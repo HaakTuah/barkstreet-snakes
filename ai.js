@@ -394,7 +394,7 @@ window.SnakeAI = (() => {
           const i = queue[read++];
           for (let n = 4 * i; n < 4 * i + 4; n++) {
             const ni = nbr[n];
-            if (ni < 0 || seen[ni] === stampS || otherFree[ni] > d || ownFree[ni] > d - blockT) continue;
+            if (ni < 0 || seen[ni] === stampS || otherFree[ni] > d || (ownFree[ni] && ownFree[ni] > d - blockT)) continue; // (a cell that isn't my body is free of me)
             seen[ni] = stampS;
             room++;
             queue[write++] = ni;
