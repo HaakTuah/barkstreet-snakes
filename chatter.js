@@ -902,8 +902,9 @@ window.SnakeChatter = (() => {
   const SNAKE_GAP = 4500;  // ms of game time between lines from the same snake
   const ANY_GAP = 1200;    // ms between any two lines
   const BUBBLE_MS = 2600;  // how long a bubble stays up (real time)
+  const LAST_WORDS_MS = 2000; // (and a snake's last words, where it went out, when the log can't show them)
   const LOG_SIZE = 5;
-  const COMPACT_CHARS = 32; // on small boards, longer lines go to the log only
+  const COMPACT_CHARS = 32; // on small boards, longer lines go to the log only (while it's on screen)
   // Mason's Life of Brian moments get an answer: [line, who answers, what they say,
   // and the voices' own lines for it, where they have some].
   // (Mason keeps a straight face; Ghost and Creeper aren't the giggling kind,
@@ -918,7 +919,7 @@ window.SnakeChatter = (() => {
   };
 
   let boardEl, logEl, game;
-  let enabled = true, compact = false, listener = null;
+  let enabled = true, compact = false, logShown = true, listener = null;
   let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null, pendingReply = null, saidAt = {};
   let struck = false; // (lightning has struck in this storm: one remark is enough)
   const LINE_REST = 45000; // a snake doesn't say the same line again within this much game time
@@ -952,7 +953,7 @@ window.SnakeChatter = (() => {
     'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!', 'Hey! Sawing in half is MY trick, {who}!',
   ]);
   const toldThisRound = new Set();
-  const bubbles = new Map(); // snake id -> { el, snake, until, w, x, y, below }
+  const bubbles = new Map(); // snake id -> { el, snake, until, at, w, h, side, x, y, ... }
   const headAt = { x: 0, y: 0 }, headMine = { x: 0, y: 0 };
 
   try { enabled = localStorage.getItem('snake-chatter') !== 'off'; } catch { /* storage unavailable */ }
@@ -986,6 +987,13 @@ window.SnakeChatter = (() => {
 
   function init(opts) {
     ({ boardEl, logEl } = opts);
+    // Is the log on screen? On a short screen it's below the fold, and in a
+    // round the page doesn't scroll, so a line put in the log alone would be
+    // lost. (Measured as the page changes size or scrolls, never per frame.)
+    const placeLog = () => { const r = logEl.getBoundingClientRect(); logShown = r.height > 0 && r.top >= 0 && r.top + 20 <= innerHeight; };
+    addEventListener('resize', placeLog, { passive: true });
+    addEventListener('scroll', placeLog, { passive: true });
+    new ResizeObserver(placeLog).observe(logEl.closest('main') || document.body);
   }
 
   function reset(g) {
@@ -1016,8 +1024,7 @@ window.SnakeChatter = (() => {
     if (!enabled || !s) return;
     lastSaid[s.id] = game.time;
     lastAny = game.time;
-    // (On small boards long lines go to the log only, but a reply always gets its bubble: it's the joke.)
-    if (s.alive && !(compact && text.length > COMPACT_CHARS && !reply)) showBubble(s, text);
+    bubble(s, text, reply);
     addLog(s, text);
   }
 
@@ -1059,15 +1066,23 @@ window.SnakeChatter = (() => {
     lastSaid[s.id] = game.time;
     lastAny = game.time;
     lastLine = { speaker: s, text, ...source };
-    // (On small boards long lines go to the log only, but a reply always gets its bubble: it's the joke.)
-    if (s.alive && !(compact && text.length > COMPACT_CHARS && !source?.reply)) showBubble(s, text);
+    bubble(s, text, !!source?.reply);
     addLog(s, text);
     listener?.(s, text, !!source?.reply);
     const reply = source?.template && REPLIES[source.template];
     if (reply) pendingReply = { at: game.time + reply.after, reply, teller: s };
   }
 
-  function showBubble(s, text) {
+  // A line's bubble. On small boards a long line goes to the log alone, if
+  // the log's on screen to show it (a reply always gets its bubble: it's the
+  // joke). A snake that's just gone out says its last words where it went
+  // out, briefly, when the log can't show them.
+  function bubble(s, text, reply) {
+    if (s.alive) { if (!(compact && logShown && text.length > COMPACT_CHARS && !reply)) showBubble(s, text); }
+    else if (!logShown && s.body?.length) showBubble(s, text, s.body[0]);
+  }
+
+  function showBubble(s, text, at = null) {
     bubbles.get(s.id)?.el.remove();
     const el = document.createElement('div');
     el.className = 'bubble';
@@ -1077,7 +1092,7 @@ window.SnakeChatter = (() => {
     el.append(words);
     el.style.setProperty('--edge', s.persona?.ink || s.color);
     boardEl.appendChild(el);
-    bubbles.set(s.id, { el, snake: s, until: performance.now() + BUBBLE_MS, w: 0, h: 0, side: null, shown: null, want: null, wantSince: 0, ox: 0, oy: 0, x: NaN, y: NaN, tail: NaN, near: false });
+    bubbles.set(s.id, { el, snake: s, until: performance.now() + (at ? LAST_WORDS_MS : BUBBLE_MS), at: at && { x: at.x, y: at.y }, w: 0, h: 0, side: null, shown: null, want: null, wantSince: 0, ox: 0, oy: 0, x: NaN, y: NaN, tail: NaN, near: false });
   }
 
   // Called every frame: bubbles follow the gliding heads, stay inside the
@@ -1097,8 +1112,9 @@ window.SnakeChatter = (() => {
     lastLayout = now;
     const cellPx = boardPx / window.TUNING.GRID, gap = cellPx * 0.75 + 6; // (6: room for the tail)
     for (const [id, b] of bubbles) {
-      if (now > b.until || !b.snake.alive) { b.el.remove(); bubbles.delete(id); continue; }
-      window.SnakeRender.headPx(b.snake, alpha, boardPx, headAt);
+      if (now > b.until || (!b.snake.alive && !b.at)) { b.el.remove(); bubbles.delete(id); continue; }
+      if (b.at) { headAt.x = (b.at.x + 0.5) * cellPx; headAt.y = (b.at.y + 0.5) * cellPx; } // (last words: where it went out)
+      else window.SnakeRender.headPx(b.snake, alpha, boardPx, headAt);
       if (!b.w) { b.w = b.el.offsetWidth; b.h = b.el.offsetHeight; } // (measured once, as it first shows)
       const w = b.w, h = b.h;
       const room = side => side === 'above' ? headAt.y - gap - h >= 0 : side === 'below' ? headAt.y + gap + h <= boardPx
