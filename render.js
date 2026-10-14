@@ -1272,9 +1272,23 @@ window.SnakeRender = (() => {
   // narrower band joining it to the next: a caterpillar, so you can count
   // how long a snake is at a glance.
   const PINCH = 0.8;
-  // The body's outline shape, `grow` units bigger all round, as one path
-  // (bands as rectangles, joints as circles), filled once in the current
-  // fill: one draw, and an even shade even where pieces overlap.
+  // The body's outline shape, `grow` units bigger all round, as separate
+  // fills in the current fill: bands as rectangles, joints as circles, the
+  // same shapes the body is drawn with (they batch into one GPU operation).
+  // Only for an opaque fill: where pieces overlap, a translucent one darkens
+  // (that's what the veil and silhouette are for).
+  function bodyFills(a, grow) {
+    const p = a.pts, c = a.cor, rad = a.rad;
+    for (let i = a.n - 2; i >= 0; i--) band(a, i, rad[i + 1] * PINCH + grow);
+    for (let i = a.n - 1; i >= 0; i--) {
+      if (i < a.n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * PINCH + grow);
+      circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
+    }
+  }
+  // The same shape as one path, filled once: an even shade where pieces
+  // overlap, for a translucent fill. (A path of a hundred contours is
+  // triangulated every frame, so it's kept for what's rare: a fading corpse,
+  // a golden outline, a queasy wash.)
   function silhouette(a, grow) {
     ctx.beginPath();
     const p = a.pts, c = a.cor;
@@ -1308,13 +1322,85 @@ window.SnakeRender = (() => {
     }
   }
 
-  // Pass 1, for every snake before any body: the shadow on the bark.
+  // The veil: an offscreen layer the size of the board (and a margin), for
+  // a translucent shape made of overlapping pieces (every snake's shadow, a
+  // force field's colour on a rival). The pieces go into it opaque, with fast
+  // fills, and it's laid on the board once at the shape's alpha: an even
+  // shade, without a path of a hundred contours triangulated every frame.
+  const VEIL_M = 8; // (its margin, in units: the shadow of a body hanging off the edge)
+  let veil = null, veilG = null, boardG = null;
+  let veilX = 0, veilY = 0, vx0 = 0, vy0 = 0, vw = 0, vh = 0;
+  // Draw into the veil (ctx is the veil's until veilOff) within the box
+  // x0..x1, y0..y1 (units), for a layer that lands (dx, dy) units off.
+  function veilOn(dx, dy, x0, y0, x1, y1) {
+    const w = Math.ceil((SIZE + 2 * VEIL_M) * k);
+    if (!veil || veil.width !== w) { veil = makeLayer(w, w); veilG = veil.getContext('2d'); }
+    // (It lands on whole device pixels, so it's never resampled.)
+    const ex = (dx - VEIL_M) * k + shakeX, ey = (dy - VEIL_M) * k + shakeY;
+    veilX = Math.floor(ex); veilY = Math.floor(ey);
+    const ox = VEIL_M * k + ex - veilX, oy = VEIL_M * k + ey - veilY;
+    vx0 = Math.max(0, Math.floor(x0 * k + ox)); vy0 = Math.max(0, Math.floor(y0 * k + oy));
+    vw = Math.min(w, Math.ceil(x1 * k + ox)) - vx0; vh = Math.min(w, Math.ceil(y1 * k + oy)) - vy0;
+    veilG.setTransform(1, 0, 0, 1, 0, 0);
+    veilG.save();
+    veilG.beginPath(); veilG.rect(vx0, vy0, Math.max(0, vw), Math.max(0, vh)); veilG.clip(); // (only the box is touched)
+    veilG.clearRect(vx0, vy0, Math.max(0, vw), Math.max(0, vh));
+    veilG.setTransform(k, 0, 0, k, ox, oy);
+    boardG = ctx;
+    ctx = veilG;
+  }
+  // Back to the board, laying the veil on it at `alpha`.
+  function veilOff(alpha) {
+    veilG.restore();
+    ctx = boardG;
+    if (vw <= 0 || vh <= 0) return;
+    ctx.globalAlpha = alpha;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(veil, vx0, vy0, vw, vh, veilX + vx0, veilY + vy0, vw, vh);
+    ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
+    ctx.globalAlpha = 1;
+  }
+
+  // Pass 1, for every snake before any body: the shadows on the bark, all at
+  // once (in the veil, laid on the bark at 0.3, a little down and to the right).
+  function drawShadows() {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const s of live) {
+      const a = anim.get(s);
+      if (a.offs) { x0 = y0 = -VEIL_M; x1 = y1 = SIZE + VEIL_M; break; } // (across a wrapped edge: anywhere)
+      for (let i = 0; i < a.n; i++) {
+        const x = a.pts[2 * i], y = a.pts[2 * i + 1];
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+    if (x0 > x1) return;
+    veilOn(2, 4, x0 - CELL, y0 - CELL, x1 + CELL, y1 + CELL);
+    ctx.fillStyle = '#000000';
+    for (const s of live) {
+      const a = anim.get(s), offs = a.offs || OFFS;
+      for (let j = 0; j < offs.length; j++) {
+        const ox = offs[j][0], oy = offs[j][1];
+        if (ox || oy) ctx.translate(ox, oy);
+        bodyFills(a, 0);
+        if (ox || oy) ctx.translate(-ox, -oy);
+      }
+    }
+    veilOff(0.3);
+    for (const s of live) { // (in the air: its shadow on the bark below)
+      const a = anim.get(s), offs = a.offs || OFFS;
+      if (a.rise > 0) for (let j = 0; j < offs.length; j++) shadowAt(a.groundX + 2 + offs[j][0], a.groundY + CELL * 0.3 + offs[j][1], 1.1 - 0.4 * a.rise);
+    }
+  }
+  // One snake's shadow on its own, as one translucent path (a corpse: it may
+  // be fading, and it's drawn with its body).
   function drawShadow(a) {
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
     ctx.translate(2, 4);
     silhouette(a, 0);
     ctx.translate(-2, -4);
-    if (a.rise > 0) shadowAt(a.groundX + 2, a.groundY + CELL * 0.3, 1.1 - 0.4 * a.rise); // (in the air: its shadow on the bark below)
   }
 
   // Pass 2: people's cream outline (yours bright with a soft halo, so you find
@@ -1346,12 +1432,15 @@ window.SnakeRender = (() => {
         circle(a.pts[0], a.pts[1], CELL * 0.78);
       }
       ctx.fillStyle = mine ? '#fffef8' : FRIEND_OUTLINE;
-      silhouette(a, mine ? 3.5 : 2.5);
+      outlineFills(a, mine ? 3.5 : 2.5);
     } else if (a.rim) {
       ctx.fillStyle = RIM;
-      silhouette(a, 1.5);
+      outlineFills(a, 1.5);
     }
   }
+  // An opaque outline: fast separate fills, unless it's being drawn see-through
+  // (a corpse fading), where overlapping pieces would show.
+  const outlineFills = (a, grow) => ctx.globalAlpha < 1 ? silhouette(a, grow) : bodyFills(a, grow);
 
   // Pass 3: the body (bands, then circles tail to head, so the head ends up on
   // top), its pattern and its face.
@@ -1367,14 +1456,17 @@ window.SnakeRender = (() => {
       circle(pts[2 * i], pts[2 * i + 1], rad[i]);
     }
 
-    // A little roundness on every segment (light from the top left), in one fill.
+    // A little roundness on every segment (light from the top left): separate
+    // circles, which never touch (a tail that's just grown sits on the segment
+    // before it for a moment: that one's lit once).
     ctx.fillStyle = 'rgba(255,255,255,0.18)';
-    ctx.beginPath();
+    let lx = -1e9, ly = -1e9, lr = 0;
     for (let i = 0; i < n; i++) {
       const hr = rad[i] * 0.35, hx = pts[2 * i] - rad[i] * 0.3, hy = pts[2 * i + 1] - rad[i] * 0.35;
-      ctx.moveTo(hx + hr, hy); ctx.arc(hx, hy, hr, 0, TAU);
+      if (Math.abs(hx - lx) + Math.abs(hy - ly) < hr + lr) continue;
+      circle(hx, hy, hr);
+      lx = hx; ly = hy; lr = hr;
     }
-    ctx.fill();
 
     // Patterns. Each follows the skin (by segment), not the board.
     if (a.isPlayer) {
@@ -1400,16 +1492,10 @@ window.SnakeRender = (() => {
       drawTie(a);
     }
     if (look === 'mason') { // Caesar in marble: grey veins wandering across every segment, now and then a gold one
-      ctx.lineCap = 'round';
-      for (let gold = 0; gold < 2; gold++) {
-        ctx.strokeStyle = gold ? 'rgba(201,162,39,0.75)' : 'rgba(100,116,139,0.55)';
-        ctx.lineWidth = gold ? 1.1 : 1.4;
-        ctx.beginPath();
-        for (let i = 1; i < n; i++) {
-          if (gold !== (i % 4 === 3 ? 1 : 0)) continue;
-          marbleVein(pts[2 * i], pts[2 * i + 1], rad[i], i);
-        }
-        ctx.stroke();
+      for (let i = 1; i < n; i++) {
+        // (each segment's own sprite, drawn at the segment's size before any gulp, and scaled)
+        const rb = Math.round(CELL * (0.44 - 0.1 * (i / (n - 1)))), sp = veinSprite(i, rb), h = (rb + 2) * rad[i] / rb;
+        ctx.drawImage(sp, pts[2 * i] - h, pts[2 * i + 1] - h, 2 * h, 2 * h);
       }
     } else if (look === 'ouroboros') { // a python's back: a dark diamond on every segment, a pale fleck in each
       ctx.fillStyle = 'rgba(58,36,8,0.75)';
@@ -1547,18 +1633,39 @@ window.SnakeRender = (() => {
 
   // Marble veins across a disc (centre x, y, radius r), their own way for
   // each segment i: a long wandering one and a short faint one beside it,
-  // added to the current path.
-  function marbleVein(x, y, r, i) {
+  // added to g's current path.
+  function marbleVein(g, x, y, r, i) {
     const a = i * 2.39996, f = i % 2 ? 1 : -1;
     const arc = (a0, a1, bend, reach) => {
       const x0 = x + Math.cos(a0) * r * reach, y0 = y + Math.sin(a0) * r * reach;
       const x1 = x + Math.cos(a1) * r * reach, y1 = y + Math.sin(a1) * r * reach;
       const mx = (x0 + x1) / 2 - (y1 - y0) * bend, my = (y0 + y1) / 2 + (x1 - x0) * bend;
-      ctx.moveTo(x0, y0);
-      ctx.quadraticCurveTo(mx, my, x1, y1);
+      g.moveTo(x0, y0);
+      g.quadraticCurveTo(mx, my, x1, y1);
     };
     arc(a, a + 2.6, 0.35 * f, 0.85);
     arc(a + 3.6, a + 4.7, -0.5 * f, 0.7);
+  }
+  // Segment i's veins (radius r, whole units) as a sprite: curves are
+  // triangulated every frame they're stroked, a sprite is one blit. A sprite
+  // a segment, since each wanders its own way (a few hundred at most: a long
+  // Mason grows a few sizes over a round).
+  const veinSprites = new Map(); // i * 64 + r -> canvas
+  function veinSprite(i, r) {
+    const key = i * 64 + r;
+    let s = veinSprites.get(key);
+    if (s) return s;
+    if (veinSprites.size >= 800) veinSprites.clear();
+    const half = r + 2, px = Math.max(2, Math.ceil(2 * half * k)), g = (s = makeLayer(px, px)).getContext('2d');
+    g.setTransform(px / (2 * half), 0, 0, px / (2 * half), px / 2, px / 2);
+    g.lineCap = 'round';
+    g.strokeStyle = i % 4 === 3 ? 'rgba(201,162,39,0.75)' : 'rgba(100,116,139,0.55)';
+    g.lineWidth = i % 4 === 3 ? 1.1 : 1.4;
+    g.beginPath();
+    marbleVein(g, 0, 0, r, i);
+    g.stroke();
+    veinSprites.set(key, s);
+    return s;
   }
 
   const STARS = [[-0.45, -0.45], [0.45, -0.45], [0, 0], [-0.45, 0.45], [0.45, 0.45]];
@@ -1606,32 +1713,35 @@ window.SnakeRender = (() => {
 
   // The living snakes, in passes, so no snake's shadow falls on another's body.
   const live = [];
+  // (a snake leaping, or still arched over another one, goes on top)
+  const overOf = s => anim.get(s)?.leapUntil > game.tick ? 1 : 0;
+  const byOver = (p, q) => overOf(p) - overOf(q);
   function drawSnakes(alpha, now) {
     live.length = 0;
-    for (const s of game.snakes) if (s.alive) live.push(s);
-    // (a snake leaping, or still arched over another one, goes on top)
-    const over = s => anim.get(s)?.leapUntil > game.tick ? 1 : 0;
-    if (live.some(over)) live.sort((p, q) => over(p) - over(q));
+    let leaping = false;
+    for (const s of game.snakes) if (s.alive) { live.push(s); if (overOf(s)) leaping = true; }
+    if (leaping) live.sort(byOver);
     for (const s of live) prepare(s, alpha, now, false);
-    // (each pass, for a snake across a wrapped edge, at each place it shows)
-    const each = fn => {
+    drawShadows();
+    // Then outlines, bodies, flames and queasy washes, each pass for every
+    // snake (and for a snake across a wrapped edge, at each place it shows).
+    for (let pass = 0; pass < 4; pass++) {
       for (const s of live) {
-        const a = animOf(s, now);
-        for (const [ox, oy] of a.offs || OFFS) {
+        const a = anim.get(s), offs = a.offs || OFFS;
+        for (let j = 0; j < offs.length; j++) {
+          const ox = offs[j][0], oy = offs[j][1];
           if (ox || oy) ctx.translate(ox, oy);
-          fn(s, a);
+          if (pass === 0) drawOutline(s, a);
+          else if (pass === 1) drawBody(s, a, now, false);
+          else if (pass === 2) { if (s.burnUntil > game.tick) drawBurning(s, a, now); }
+          else { // queasy after a mushroom: a sickly green wash, fading
+            const q = a.queasyAt ? 1 - (now - a.queasyAt) / 1400 : 0;
+            if (q > 0 && q <= 1) { ctx.fillStyle = rgba('#65a30d', 0.38 * q); silhouette(a, 0.5); }
+          }
           if (ox || oy) ctx.translate(-ox, -oy);
         }
       }
-    };
-    each((s, a) => drawShadow(a));
-    each(drawOutline);
-    each((s, a) => drawBody(s, a, now, false));
-    each((s, a) => { if (s.burnUntil > game.tick) drawBurning(s, a, now); });
-    each((s, a) => { // queasy after a mushroom: a sickly green wash, fading
-      const q = a.queasyAt ? 1 - (now - a.queasyAt) / 1400 : 0;
-      if (q > 0 && q <= 1) { ctx.fillStyle = rgba('#65a30d', 0.38 * q); silhouette(a, 0.5); }
-    });
+    }
   }
 
   // A snake on fire: flames along its back (the fire's own flicker, smaller,
@@ -4505,6 +4615,7 @@ window.SnakeRender = (() => {
     rainTile = null;
     snowTile = null;
     sprites.clear();
+    veinSprites.clear();
     fieldLooks.clear();
     resetStatic();
     syncHoles();
