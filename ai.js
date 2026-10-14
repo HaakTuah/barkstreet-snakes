@@ -57,13 +57,14 @@ window.SnakeAI = (() => {
 
   // Each persona: name, color, look (how it's drawn), driver (stateful
   // behaviour, optional), weights, and flavor text: a blurb for the start
-  // screen, a line for when it kills you, and one for when it wins.
+  // screen, and a few lines each for when it kills you and when it wins
+  // (taken in turn, never the same twice running).
   const PERSONAS = {
     sniper: {
       name: 'Sniper', color: '#b91c1c', look: 'sniper', driver: 'sniper',
       blurb: 'Picks whichever snake it has the best shot at and cuts it off.',
-      kill: 'Headshot. It had you lined up three moves ago.',
-      win: 'Nobody was safe.',
+      kill: ['It had you lined up three moves ago.', 'You were the best shot it had.', 'It got in front of you. It always does.'],
+      win: ['Nobody was safe.', 'Not a wasted move.', 'It never once blinked.'],
       w: {
         space: 1, territory: 0.8, aggression: 0.3,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, hungryBelow: 16, fedFactor: 0.3,
@@ -73,8 +74,8 @@ window.SnakeAI = (() => {
     gobbler: {
       name: 'Gobbler', color: '#fb923c', look: 'gobbler',
       blurb: 'Eats everything, even a rival’s apple. Hates mushrooms.',
-      kill: 'Gobbler didn’t even look up from lunch.',
-      win: 'And it’s still hungry.',
+      kill: ['Gobbler didn’t even look up from lunch.', 'It was going for the apple behind you.', 'Gobbler says sorry. With its mouth full.'],
+      win: ['And it’s still hungry.', 'Not a crumb left.', 'Now, about pudding.'],
       w: {
         space: 1, territory: 0.2,
         food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 0.3, mushroom: -3,
@@ -84,8 +85,8 @@ window.SnakeAI = (() => {
     ghost: {
       name: 'Ghost', color: '#f1f5f9', look: 'ghost',
       blurb: 'Keeps its distance from everyone, and slips through the gaps.',
-      kill: 'Ghost? You never even saw it.',
-      win: 'Was it ever really here?',
+      kill: ['Ghost? You never even saw it.', 'Ghost slipped through. You didn’t.', 'You felt a chill. Then nothing.'],
+      win: ['Was it ever really here?', 'It never made a sound.'],
       w: {
         space: 2, territory: 0.6,
         food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 18, fedFactor: 0.4,
@@ -95,8 +96,8 @@ window.SnakeAI = (() => {
     sovereign: {
       name: 'Sovereign', color: '#2563eb', look: 'sovereign', driver: 'sovereign',
       blurb: 'Rules its own patch of bark and attacks anyone who trespasses.',
-      kill: 'The Sovereign does not share.',
-      win: 'Long live the Sovereign.',
+      kill: ['The Sovereign does not share.', 'Removed by royal decree.', 'Every inch is royal. You were on one.'],
+      win: ['Long live the Sovereign.', 'The realm is the whole log now.', 'We are, at last, amused.'],
       w: {
         space: 1.5, territory: 1, aggression: 0.2,
         food: 5, eat: 70, pellet: 1.2, foodRange: 30,
@@ -107,8 +108,8 @@ window.SnakeAI = (() => {
     colonist: {
       name: 'Colonist', color: '#e11d48', look: 'colonist', driver: 'colonist',
       blurb: 'A redcoat who plants flags all over and defends every one.',
-      kill: 'Another patch of bark for the Crown.',
-      win: 'The final flag is planted.',
+      kill: ['Another patch of bark for the Crown.', 'You were annexed. Politely.', 'All very civilised, of course.'],
+      win: ['The final flag is planted.', 'An empire of one log.', 'Victory, then tea.'],
       w: {
         space: 1.2, territory: 1.4, aggression: 0.2,
         food: 5, eat: 70, pellet: 1.2, foodRange: 30,
@@ -120,15 +121,15 @@ window.SnakeAI = (() => {
     drab: {
       name: 'Drab', color: '#c8bf94', look: 'drab',
       blurb: 'Plays it safe and sensible. Nothing special.',
-      kill: 'You lost to Drab. Drab!',
-      win: 'Somehow.',
+      kill: ['You lost to Drab. Drab!', 'Drab didn’t mean anything by it.', 'Beaten by beige.'],
+      win: ['Somehow.', 'Mildly pleased.', 'It says it was fine.'],
       w: DRAB,
     },
     vulture: {
       name: 'Vulture', color: '#27272a', ink: '#f9a8d4', look: 'vulture', driver: 'vulture',
       blurb: 'Circles snakes in trouble and feasts on what they leave behind.',
-      kill: 'Vulture was waiting for this.',
-      win: 'Picking over the leftovers.',
+      kill: ['Vulture was waiting for this.', 'It circled. You slipped. It ate.', 'Vulture thanks you for the beads.'],
+      win: ['Picking over the leftovers.', 'It waited everyone out.', 'Last one at the table.'],
       w: {
         space: 1.5, territory: 0.4,
         food: 4, eat: 60, normalFood: 0.15, pellet: 3, foodRange: 40, contested: true,
@@ -138,8 +139,8 @@ window.SnakeAI = (() => {
     mason: {
       name: 'Mason', color: '#ebe5d9', ink: '#8a8170', look: 'mason', // Caesar in marble (ink: his name, outline and tag, in stone)
       blurb: 'Walls off the board, then keeps the biggest piece.',
-      kill: 'Mason had a spot picked out for you.',
-      win: 'Veni, vidi, Mason.',
+      kill: ['Mason had a spot picked out for you.', 'You were on the wrong side of the wall.', 'All roads led to Mason.'],
+      win: ['Veni, vidi, Mason.', 'Winnus maximus.', 'Rome took longer.'],
       w: {
         space: 1.5, territory: 2.2,
         food: 3, eat: 40, pellet: 1, foodRange: 30,
@@ -149,15 +150,15 @@ window.SnakeAI = (() => {
     wildcard: {
       name: 'Wildcard', color: '#b22234', look: 'wildcard', driver: 'wildcard', // (red, white and blue)
       blurb: 'A random mix of habits, new every round. Great hair.',
-      kill: 'Nobody knows how, least of all Wildcard.',
-      win: 'Tremendous. Nobody wins like this.',
+      kill: ['Nobody knows how, least of all Wildcard.', 'A total accident. It’s calling it genius.'],
+      win: ['Tremendous. Nobody wins like this.', 'A landslide. The biggest ever.', 'Four more rounds!'],
       w: DRAB, // replaced by a random set on its first move
     },
     creeper: {
       name: 'Creeper', color: '#0d9488', look: 'creeper',
       blurb: 'Sneaks up and rides right behind other snakes’ tails.',
-      kill: 'Creeper was never far away.',
-      win: 'Quietly.',
+      kill: ['Creeper was never far away.', 'You should have turned around.', 'It had been following you for ages.'],
+      win: ['Quietly.', 'Nobody looked behind them.'],
       w: {
         space: 1, territory: 0.5,
         food: 3, eat: 50, pellet: 1, foodRange: 30,
@@ -167,29 +168,29 @@ window.SnakeAI = (() => {
     metagamer: {
       name: 'Metagamer', color: '#22d3ee', look: 'metagamer', driver: 'metagamer',
       blurb: 'Studies how each rival plays, then counters it.',
-      kill: 'Metagamer had you figured out.',
-      win: 'The spreadsheet called it.',
+      kill: ['Metagamer had you figured out.', 'Your playstyle: noted. Your round: over.', 'You were a data point.'],
+      win: ['The spreadsheet called it.', 'Win probability: 100%.', 'GG.'],
       w: { ...DRAB, hunt: HUNT, lure: { weight: 5, dist: 6 } },
     },
     capricious: {
       name: 'Capricious', color: '#ec4899', look: 'capricious', driver: 'capricious',
       blurb: 'Changes its mind every few seconds: sniper, glutton, hermit, builder.',
-      kill: 'Capricious felt like it. Just then.',
-      win: 'And already wants something else.',
+      kill: ['Capricious felt like it. Just then.', 'A moment later, it wouldn’t have bothered.', 'Wrong place, wrong mood.'],
+      win: ['And already wants something else.', 'It loves winning! For now.'],
       w: DRAB, // replaced by the current mood's weights
     },
     copycat: {
       name: 'Copycat', color: '#fca5a5', look: 'copycat', driver: 'copycat',
       blurb: 'Copies whoever seems to be winning. Party member.',
-      kill: 'It learned that from someone.',
-      win: 'Imitation pays.',
+      kill: ['It learned that from someone.', 'Somebody taught it that. Maybe you.', 'The Party thanks you for your sacrifice.'],
+      win: ['Imitation pays.', 'A victory for the collective.', 'It copied the winner until it was one.'],
       w: { ...DRAB, mimic: 120, lure: { weight: 4, dist: 5 } },
     },
     desperado: {
       name: 'Desperado', color: '#ea580c', look: 'desperado',
-      blurb: 'Skims walls, bodies and heads for the thrill of it. Yeehaw.',
-      kill: 'Desperado drew first.',
-      win: 'Rides off into the sunset.',
+      blurb: 'Skims edges, bodies and heads for the thrill of it. Yeehaw.',
+      kill: ['Desperado drew first.', 'Another notch on the six-shooter.', 'Every showdown has a loser.'],
+      win: ['Rides off into the sunset.', 'Last snake in town.', 'Not a scratch on the hat.'],
       w: {
         space: 1, territory: 0.6,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, mushroom: 0.5,
@@ -198,9 +199,9 @@ window.SnakeAI = (() => {
     },
     mute: {
       name: 'Mute', color: '#a855f7', look: 'mute', driver: 'sniper', // (a rainbow; violet stands in for it in text)
-      blurb: 'A mime. Picks someone and closes an invisible box around them. Never says a word.',
-      kill: 'Mute boxed you in. Without a word.',
-      win: '*takes a silent bow*',
+      blurb: 'A mime. Picks someone and closes an invisible box round them.',
+      kill: ['Mute boxed you in. Without a word.', '*taps on your invisible box*', '*lowers an invisible curtain*'],
+      win: ['*takes a silent bow*', '*accepts an invisible bouquet*', '*lifts an invisible trophy*'],
       w: {
         space: 1.2, territory: 2, aggression: 0.8,
         food: 4, eat: 70, pellet: 1.2, foodRange: 40,
@@ -210,9 +211,9 @@ window.SnakeAI = (() => {
     },
     ouroboros: {
       name: 'Ouroboros', color: '#b8860b', look: 'ouroboros',
-      blurb: 'Chases its own tail: once it’s long, it moves as a ring, and whatever’s inside is in trouble.',
-      kill: 'Ouroboros came full circle.',
-      win: 'And round again.',
+      blurb: 'Chases its own tail, then moves as a ring. Mind the middle.',
+      kill: ['Ouroboros came full circle.', 'What goes around came around.', 'First its own tail. Then you.'],
+      win: ['And round again.', 'It’s won this one before.'],
       w: {
         space: 1.0, territory: 0.6, aggression: 0.2,
         food: 3, eat: 45, pellet: 1.2, foodRange: 40,
@@ -223,8 +224,8 @@ window.SnakeAI = (() => {
     joker: {
       name: 'Joker', color: '#a21caf', look: 'joker', driver: 'joker',
       blurb: 'Lures chasers into dead ends and swerves away at the last moment.',
-      kill: 'Joker led you on. You followed.',
-      win: 'Who’s laughing now?',
+      kill: ['Joker led you on. You followed.', 'It swerved. You didn’t.', 'You fell for it. Everyone does.'],
+      win: ['Who’s laughing now?', 'Thank you! It’s here all week.', 'And the last laugh.'],
       w: {
         space: 1, territory: 0.6,
         food: 5, eat: 70, pellet: 1.2, foodRange: 40, mushroom: 0.5,
