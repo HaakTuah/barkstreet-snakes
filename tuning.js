@@ -8,7 +8,7 @@ window.TUNING = Object.freeze({
 
   // ------------------------------------------------------------------ food
   APPLES: 3,                // green apples on the board at all times (+1)
-  APPLE_TICKS: 160,         // an apple rots away after about this many ticks (give or take a quarter: 15-20 s), and another drops somewhere
+  APPLE_TICKS: 110,         // an apple rots away after about this many ticks (give or take a quarter: about 8-16 s), and another drops somewhere
   MUSHROOMS: 2,             // red mushrooms on the board at all times
   MUSHROOM_TICKS: 180,      // a mushroom withers (and regrows elsewhere) after this many ticks
   GOLDEN_CHANCE: 0.004,     // chance per tick of a golden apple, while there is none
@@ -72,9 +72,9 @@ window.TUNING = Object.freeze({
   BEETLE_UNDER_MAX: 16,     // ...up to this many
 
   // --------------------------------------------------------------- weather
-  WEATHER_FIRST_MS: 20000,  // the first spell of weather comes after this long...
-  CLEAR_MIN_MS: 14000,      // ...and a clear spell between the others lasts this long...
-  CLEAR_MAX_MS: 26000,
+  WEATHER_FIRST_MS: 15000,  // the first spell of weather comes after this long...
+  CLEAR_MIN_MS: 8000,       // ...and a clear spell between the others lasts this long...
+  CLEAR_MAX_MS: 16000,
   SPELL_MIN_MS: 12000,      // ...a spell of weather this long
   SPELL_MAX_MS: 18000,
   WEATHER_ODDS: Object.freeze({ sun: 2, wind: 3, rain: 3, storm: 3, snow: 2 }), // how likely each spell is...
@@ -84,11 +84,11 @@ window.TUNING = Object.freeze({
   WINDFALL_MAX: 3,          // ...up to this many apples more than usual
   RAIN_MUSHROOMS: 2,        // rain: this many more mushrooms sprout
   RAINBOW_CHANCE: 0.5,      // when rain stops: a rainbow, with a golden apple at its end
-  SNOW_APPLES: 2,           // winter: fewer apples (and no new mushrooms, and golden apples a fifth as likely)...
-  SNOW_HUNGER: 1.5,         // ...and everyone gets hungry this many times as fast (it's cold)
+  SNOW_APPLES: 1,           // winter, the lean season: one apple (rotting twice as fast), no new mushrooms, no golden apples...
+  SNOW_HUNGER: 1.75,        // ...and everyone gets hungry this many times as fast (it's cold)
   AFTER_STORM_RAIN: 0.6,    // a storm is often followed by rain
-  STRIKE_MIN_MS: 3000,      // storm: lightning this often...
-  STRIKE_MAX_MS: 6000,
+  STRIKE_MIN_MS: 2000,      // storm: lightning this often...
+  STRIKE_MAX_MS: 4000,
   STRIKE_WARN_TICKS: 10,    // ...crackling where it will strike for this many ticks first (about a second)...
   STRIKE_CLEARANCE: 4,      // ...never within this many cells of a head
   FIRE_TICKS: 50,           // a burning cell burns this long (about 5 s) and sets alight a head that enters it...

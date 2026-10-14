@@ -144,7 +144,7 @@ window.SnakeEngine = (() => {
     // (Rain: more mushrooms sprout.)
     for (; !winter && mushrooms < T.MUSHROOMS + (raining ? T.RAIN_MUSHROOMS : 0); mushrooms++) place({ kind: 'mushroom', expires: game.tick + T.MUSHROOM_TICKS });
     // (Sun: golden hour. Winter: hardly any.)
-    const goldenChance = T.GOLDEN_CHANCE * (game.weather.kind === 'sun' ? T.SUN_GOLDEN : winter ? 0.2 : 1);
+    const goldenChance = winter ? 0 : T.GOLDEN_CHANCE * (game.weather.kind === 'sun' ? T.SUN_GOLDEN : 1); // (none in winter)
     if (!golden && Math.random() < goldenChance && place({ kind: 'golden', expires: game.tick + T.GOLDEN_TICKS })) {
       const g = game.food[game.food.length - 1];
       game.events.push({ type: 'spawn', kind: 'golden', x: g.x, y: g.y });
@@ -332,10 +332,12 @@ window.SnakeEngine = (() => {
       now.nextStrike = game.time + between(T.STRIKE_MIN_MS, T.STRIKE_MAX_MS);
       strike(game);
     }
-    // Winter: hunger runs faster (the clock to everyone's next meal runs down quicker).
+    // Winter: hunger runs faster (the clock to everyone's next meal runs
+    // down quicker), and apples rot twice as fast.
     if (now.kind === 'snow') {
       const extra = tickMs(game) * (T.SNOW_HUNGER - 1);
       for (const s of game.snakes) if (s.alive) { s.lastAte -= extra; s.nextStarve -= extra; }
+      for (const f of game.food) if (f.kind === 'food' && f.expires != null && !f.cooked) f.expires--;
     }
     burn(game);
   }
@@ -538,6 +540,7 @@ window.SnakeEngine = (() => {
     game.history.push({
       snakes: game.snakes.filter(s => s.alive).map(s => ({
         id: s.id, body: s.body.map(c => ({ x: c.x, y: c.y })), dir: s.dir,
+        stun: Math.max(0, s.stunUntil - game.tick), leaps: s.leaps, // (both show: stars, a golden ring)
       })),
       food: game.food.map(f => ({ ...f })),
       holes: game.holes.size,
@@ -587,7 +590,11 @@ window.SnakeEngine = (() => {
     const snap = game.history[idx];
     return {
       grid: GRID,
-      me: { id: snake.id, body: snake.body, dir: snake.dir, grow: snake.grow, hungerLeft: hungerLeft(game, snake) },
+      me: {
+        id: snake.id, body: snake.body, dir: snake.dir, grow: snake.grow, hungerLeft: hungerLeft(game, snake), leaps: snake.leaps,
+        // (who it just met head-on, if it was in the last 3 s or so: it keeps clear of them for a while)
+        bumped: snake.bumpedBy && game.tick - snake.bumpedBy.tick < 30 ? snake.bumpedBy.id : -1,
+      },
       others: snap.snakes.filter(o => o.id !== snake.id),
       food: snap.food,
       holes: blockedSeen(game, snap),
@@ -595,6 +602,7 @@ window.SnakeEngine = (() => {
       age: game.history.length - 1 - idx,
       tick: game.tick,
       timeMs: game.time,
+      weather: game.weather.kind, // (everyone sees the weather: in winter, apples rot twice as fast)
     };
   }
 
@@ -661,8 +669,16 @@ window.SnakeEngine = (() => {
       }
       s.planned = null;
       s.plannedTick = -1;
-      // Over a crash and still facing what it hit, without having steered: it turns to where there's room.
-      if (s.stunUntil === game.tick && !steered && blocked(game, s.body[0].x + s.dir.x, s.body[0].y + s.dir.y)) s.dir = recoil(game, s);
+      // Over a crash and still facing what it hit (or the cell it met another
+      // head in, while that's shut to it: see shutTo), without having
+      // steered: it turns to where there's room. (Two heads that met in an
+      // empty cell would otherwise both go for it again, and again, until
+      // one of them was too small to bounce.)
+      if (s.stunUntil === game.tick) {
+        const nx = s.body[0].x + s.dir.x, ny = s.body[0].y + s.dir.y, shut = shutTo(game, s);
+        if (!steered && (blocked(game, nx, ny) || (shut && s.bounce.x === nx && s.bounce.y === ny))) s.dir = recoil(game, s, shut);
+        s.bounce = null;
+      }
       s.next = { x: s.body[0].x + s.dir.x, y: s.body[0].y + s.dir.y };
       s.tailMoves = s.grow === 0;
       moving.push(s);
@@ -709,7 +725,8 @@ window.SnakeEngine = (() => {
     // (killerId: its id). Causes use names; the game turns the name of
     // whoever is watching into "you". A snake that crashes stays put, so its
     // tail stays too, and anyone heading into that tail crashes as well.
-    const crashes = new Map();
+    const crashes = crashes0 = new Map();
+    moving0 = moving;
     const crashOf = s => {
       const { x, y } = s.next;
       const k = key(x, y);
@@ -719,11 +736,11 @@ window.SnakeEngine = (() => {
         const other = game.snakes[bodyOwner[k]];
         // Two heads swapping cells met head-on, just as if they'd met in one.
         const swapped = other !== s && x === other.body[0].x && y === other.body[0].y && other.next?.x === s.body[0].x && other.next?.y === s.body[0].y;
-        return { cause: other === s ? 'bit itself' : swapped ? `crashed head-on into ${other.name}` : `ran into ${other.name}`, killer: other === s ? 'self' : other.name, killerId: other.id };
+        return { cause: other === s ? 'bit itself' : swapped ? `crashed head-on into ${other.name}` : `ran into ${other.name}`, killer: other === s ? 'self' : other.name, killerId: other.id, headOn: swapped };
       }
       if (headStamp[k] === stamp && headCount[k] > 1) {
         const other = moving.find(o => o !== s && o.next.x === x && o.next.y === y);
-        return { cause: `crashed head-on into ${other.name}`, killer: other.name, killerId: other.id };
+        return { cause: `crashed head-on into ${other.name}`, killer: other.name, killerId: other.id, headOn: true, meet: true };
       }
       return null;
     };
@@ -740,9 +757,42 @@ window.SnakeEngine = (() => {
     }
 
     // A crash costs CRASH_LOSS segments off the tail (they fall off as food)
-    // and a moment's stun. At MIN_LENGTH, or with nowhere to turn, it's the end.
+    // and a moment's stun. It's the end at MIN_LENGTH, or if there'll be
+    // nowhere to turn when the stun's over (see roomAfterStun: the cells its
+    // tail breaks off from, cells rivals' tails will have left by then, and
+    // a snake that's out count as room). A cell heads met in is room for one
+    // of them once every other head that met there is out or has room of its
+    // own (that one turns away; see recoil). Worked out until nothing
+    // changes, since a snake that's out frees its cells for everyone else;
+    // when nothing does, the shortest of those still boxed in are out first
+    // (and the rest looked at again): so of two snakes that meet head-on, or
+    // run into each other, each with nowhere else to turn, the longer one
+    // bounces (the other's body, turned to food, makes room), and the same
+    // length, both are out.
+    const out = new Set(), live = new Set();
+    for (const [s] of crashes) if (s.body.length <= T.MIN_LENGTH) out.add(s);
+    const room = s => {
+      if (roomAfterStun(game, s, out)) return true;
+      const h = s.body[0], back = s.body[1];
+      for (const d of CRAWL) { // (a cell heads met in: the others there are out, or have room of their own)
+        const x = h.x + d.x, y = h.y + d.y;
+        if ((back && x === back.x && y === back.y) || !inside(x, y)) continue;
+        const met = metAt(s, x, y);
+        if (met && met.every(o => out.has(o) || roomAfterStun(game, o, out))) return true;
+      }
+      return false;
+    };
+    for (let undecided = true; undecided;) {
+      let changed = false;
+      for (const [s] of crashes) if (!out.has(s) && !live.has(s) && room(s)) { live.add(s); changed = true; }
+      if (changed) continue;
+      let least = Infinity;
+      for (const [s] of crashes) if (!out.has(s) && !live.has(s)) least = Math.min(least, s.body.length);
+      undecided = least < Infinity;
+      for (const [s] of crashes) if (!out.has(s) && !live.has(s) && s.body.length === least) out.add(s); // (the shortest still boxed in)
+    }
     for (const [s, c] of crashes) {
-      if (s.body.length <= T.MIN_LENGTH || !canTurn(game, s)) {
+      if (out.has(s)) {
         s.cause = c.cause; s.killer = c.killer; s.killerId = c.killerId;
         dying.push(s);
         continue;
@@ -750,7 +800,9 @@ window.SnakeEngine = (() => {
       const lost = Math.min(T.CRASH_LOSS, s.body.length - T.MIN_LENGTH);
       for (let n = 0; n < lost; n++) { const t = s.body.pop(); drops.push({ x: t.x, y: t.y, color: s.color }); }
       s.stunUntil = game.tick + 1 + T.STUN_TICKS;
-      game.events.push({ type: 'crash', snake: s, x: s.next.x, y: s.next.y, ...c, lost });
+      s.bounce = c.headOn ? { x: s.next.x, y: s.next.y, by: c.killerId } : null;
+      if (c.headOn) s.bumpedBy = { id: c.killerId, tick: game.tick };
+      game.events.push({ type: 'crash', snake: s, x: s.next.x, y: s.next.y, cause: c.cause, killer: c.killer, killerId: c.killerId, lost });
     }
 
     for (const s of moving) {
@@ -817,16 +869,31 @@ window.SnakeEngine = (() => {
     return false;
   }
 
+  // Just over a head-on: is the cell it met the other head in shut to it?
+  // Only one of the two may go back in, the longer one (the same length:
+  // the one that came first), so they can't meet there again; it's open to
+  // either once the other is out, still stunned, or no longer beside it.
+  function shutTo(game, s) {
+    const b = s.bounce, o = b && game.snakes[b.by];
+    if (!b || !o || !o.alive || o.stunUntil > game.tick || Math.abs(o.body[0].x - b.x) + Math.abs(o.body[0].y - b.y) !== 1) return false;
+    return o.body.length > s.body.length || (o.body.length === s.body.length && o.id < s.id);
+  }
+
   // Just over a crash, facing what it hit: the way to turn, the open side
   // with the most room round it (counted a short way), or straight on if
-  // there's none.
-  function recoil(game, s) {
-    const h = s.body[0], back = s.body[1];
-    let best = s.dir, most = -1;
+  // there's none. Never the cell it met another head in while that's shut
+  // to it, and, if it can help it, not a cell another head could step into
+  // this tick too (two heads side by side across a corner would otherwise
+  // both turn into the corner they share, and meet again; the head it met,
+  // if that cell's its own to take, won't).
+  function recoil(game, s, shut) {
+    const h = s.body[0], back = s.body[1], b = s.bounce;
+    let best = s.dir, most = -Infinity;
     for (const d of CRAWL) {
-      const x = h.x + d.x, y = h.y + d.y;
-      if ((back && x === back.x && y === back.y) || blocked(game, x, y)) continue;
-      const room = roomFrom(game, x, y, 24);
+      const x = h.x + d.x, y = h.y + d.y, met = b && b.x === x && b.y === y;
+      if ((back && x === back.x && y === back.y) || blocked(game, x, y) || (met && shut)) continue;
+      let room = roomFrom(game, x, y, 24);
+      for (const o of game.snakes) if (o !== s && o.alive && !(met && o.id === b.by) && Math.abs(o.body[0].x - x) + Math.abs(o.body[0].y - y) === 1) room -= 100;
       if (room > most) { most = room; best = d; }
     }
     return best;
@@ -845,19 +912,67 @@ window.SnakeEngine = (() => {
     return seen.size;
   }
 
-  // After a crash, is there anywhere to turn? A neighbouring cell (not back
-  // into its own neck) that's on the board, not a hole, and not taken by a
-  // body or another head this tick. (Fire counts: you can go through fire.)
-  function canTurn(game, s) {
-    const h = s.body[0], back = s.body[1];
+  // After a crash: will there be anywhere to turn when the stun's over (not
+  // counting a cell heads met in: see the verdict in step)? A neighbouring
+  // cell (not back into its own neck), on the board and not a hole, that's
+  // free by the tick it moves again: free now; a cell another head arrives
+  // in, or a body cell, that'll have been left by then (see freeBy); its own
+  // tail that breaks off in the crash (or its tail end, leaving as it moves);
+  // or a body that's out this tick (it turns to food). Fire counts as room:
+  // you can go through fire. (out: snakes found to be out this tick.)
+  function roomAfterStun(game, s, out) {
+    const h = s.body[0], back = s.body[1], keep = s.body.length - Math.min(T.CRASH_LOSS, s.body.length - T.MIN_LENGTH);
     for (const d of CRAWL) {
       const x = h.x + d.x, y = h.y + d.y, k = key(x, y);
-      if ((back && x === back.x && y === back.y) || !inside(x, y) || game.holes.has(k) || bodyStamp[k] === stamp) continue;
-      if (headStamp[k] === stamp && headCount[k] > 0) continue;
-      return true;
+      if ((back && x === back.x && y === back.y) || !inside(x, y) || game.holes.has(k)) continue;
+      if (headStamp[k] === stamp && headCount[k] > 0) { // (heads arriving there this tick)
+        const o = arrivalAt(x, y);
+        if (o) { if (out.has(o) || freeBy(game, o, -1)) return true; continue; } // (one that gets there: the cell's its head now)
+        if (metAt(s, x, y)) continue; // (only heads that crashed there: a cell they met in)
+      }
+      if (bodyStamp[k] !== stamp) return true;
+      const o = game.snakes[bodyOwner[k]];
+      if (!o || out.has(o)) return true;
+      const j = o.body.findIndex(c => c.x === x && c.y === y);
+      if (j < 0) return true;
+      if (o === s) { if (j >= keep - (s.grow > 0 ? 0 : 1)) return true; continue; } // (its own: the tail that breaks off, or the tail end, leaving as it moves)
+      if (freeBy(game, o, j)) return true;
     }
     return false;
   }
+  // Will cell j of snake o (-1: the cell its head's arriving in) be free by
+  // the tick a snake that crashed this tick moves again (1 + STUN_TICKS
+  // ticks after this one)? It's left on o's (length - j + growth)th move
+  // (a head may take a cell on the tick a tail leaves it), and o's moves
+  // start this tick, or once its stun's over (stunned, or crashed this tick:
+  // then its tail breaks off now, as food).
+  function freeBy(game, o, j) {
+    let L = o.body.length, wait = 0;
+    if (crashes0.has(o)) {
+      const lost = Math.min(T.CRASH_LOSS, L - T.MIN_LENGTH);
+      if (j >= L - lost) return true;
+      L -= lost;
+      wait = 1 + T.STUN_TICKS;
+    } else wait = Math.max(0, o.stunUntil - game.tick);
+    return wait + L - j + o.grow <= 2 + T.STUN_TICKS;
+  }
+  // A head that gets to (x, y) this tick (it doesn't crash), if one does.
+  function arrivalAt(x, y) {
+    for (const o of moving0) if (o.next && o.next.x === x && o.next.y === y && !crashes0.has(o)) return o;
+    return null;
+  }
+  // The other heads that met in (x, y) this tick (an empty cell where heads
+  // arrived and crashed), or null if no heads met there.
+  function metAt(s, x, y) {
+    let met = null;
+    for (const o of moving0) {
+      if (!o.next || o.next.x !== x || o.next.y !== y || !crashes0.has(o)) continue;
+      if (!crashes0.get(o).meet) return null;
+      if (o !== s) (met ||= []).push(o);
+    }
+    return met;
+  }
+  let crashes0 = new Map(), moving0 = []; // (this tick's crashes and moving snakes, for roomAfterStun)
 
   // A snake on fire loses a segment every BURN_EVERY ticks (they fall off,
   // roasted) until it goes out; rain and snow put it out sooner. At
