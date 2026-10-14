@@ -1512,8 +1512,8 @@ window.SnakeRender = (() => {
   const markOf = color => MARKS[color] || '';
   // Holding a golden power: golden leaps or dashes, or the edges wrapping
   // round for it (fading calmly over its last WRAP_WARN_MS: no strobe).
-  const powered = s => s.leaps > 0 || s.dashes > 0 || s.wrapUntil > game.time;
-  const poweredFade = s => s.leaps > 0 || s.dashes > 0 ? 1 : Math.max(0, Math.min(1, (s.wrapUntil - game.time) / T.WRAP_WARN_MS));
+  const powered = s => s.leaps > 0 || s.dashes > 0 || s.wrapUntil > shownTime;
+  const poweredFade = s => s.leaps > 0 || s.dashes > 0 ? 1 : Math.max(0, Math.min(1, (s.wrapUntil - shownTime) / T.WRAP_WARN_MS));
   const GOLD_EDGE = 3.9; // (how far the gold line and its ink reach outside a snake's own outline)
   // Your soft halo: a few faint steps of cream round your body, each wider
   // and fainter than the last (a soft edge without a blur), and a touch more
@@ -1710,8 +1710,8 @@ window.SnakeRender = (() => {
     // Your own leap coming back: a thin arc round your head, filling as it
     // cools (it closes into the ready flash). Where you're looking, not only
     // on your tag.
-    if (!dead && s.id === viewerId && !s.leaps && !s.dashes && s.body.length > T.MIN_LENGTH && game && game.time < s.leapReadyAt) {
-      const k = Math.max(0, 1 - (s.leapReadyAt - game.time) / T.LEAP_COOLDOWN_MS), a0 = -Math.PI / 2, rr = rad[0] + CELL * 0.22;
+    if (!dead && s.id === viewerId && !s.leaps && !s.dashes && s.body.length > T.MIN_LENGTH && game && shownTime < s.leapReadyAt) {
+      const k = Math.max(0, 1 - (s.leapReadyAt - shownTime) / T.LEAP_COOLDOWN_MS), a0 = -Math.PI / 2, rr = rad[0] + CELL * 0.22;
       ctx.lineCap = 'round';
       ctx.beginPath(); ctx.arc(pts[0], pts[1], rr, a0, a0 + TAU * k);
       ctx.strokeStyle = 'rgba(58,38,20,0.6)';
@@ -1744,7 +1744,7 @@ window.SnakeRender = (() => {
 
     // Capricious: a ring that flashes out when its mood changes.
     if (!reduced && s.personaKey === 'capricious' && s.memory.moodChangedAt != null && game) {
-      const age = game.time - s.memory.moodChangedAt;
+      const age = Math.max(0, shownTime - s.memory.moodChangedAt); // (it may have changed its mind ahead of the tick that shows it)
       if (age < T.MOOD_RING_MS) {
         ctx.strokeStyle = color;
         ctx.globalAlpha *= 1 - age / T.MOOD_RING_MS;
@@ -4618,6 +4618,11 @@ window.SnakeRender = (() => {
   // ------------------------------------------------------------ the frame
 
   let shakeUntil = 0, shakePx = 0, lastNow = 0;
+  // The game's clock as drawn. game.time only moves on a tick, so it's eased
+  // from the last tick's time to this one's, as the bodies are: whatever
+  // fills or fades with it (your leap's arc, a wrap's gold) moves every
+  // frame, not ten steps a second.
+  let timeFrom = 0, timeAt = 0, shownTime = 0;
 
   // alpha: how far the current tick has played out (0..1).
   function frame(alpha, now) {
@@ -4627,6 +4632,7 @@ window.SnakeRender = (() => {
     const dt = lastNow ? Math.min(64, Math.max(0, now - lastNow)) : 16; // (never backwards: a clock a hair behind another)
     lastNow = now;
     frameDt = Math.max(1, dt);
+    shownTime = game.time === timeAt ? timeFrom + (timeAt - timeFrom) * Math.min(1, alpha) : game.time;
     syncHoles();
     trackFire(now);
     syncScorch();
@@ -4775,6 +4781,10 @@ window.SnakeRender = (() => {
   function onTick(events) {
     if (!game) return;
     const now = lastNow || performance.now(); // the frame clock, like everything else drawn
+    if (game.time !== timeAt) { // (the drawn clock eases from the last tick's time to this one's: from a tick ago, not across a jump)
+      timeFrom = game.time > timeAt && game.time - timeAt < 1000 ? timeAt : game.time;
+      timeAt = game.time;
+    }
     for (const e of events) {
       if (e.type === 'eat') {
         let x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
@@ -4991,7 +5001,7 @@ window.SnakeRender = (() => {
   }
   function drawWrapEdges(now) {
     let any = 0;
-    for (const s of game.snakes) if (s.alive && s.wrapUntil > game.time) any = Math.max(any, Math.min(1, (s.wrapUntil - game.time) / T.WRAP_WARN_MS));
+    for (const s of game.snakes) if (s.alive && s.wrapUntil > shownTime) any = Math.max(any, Math.min(1, (s.wrapUntil - shownTime) / T.WRAP_WARN_MS));
     if (!any) return;
     const inset = 3, run = 4 * (SIZE - 2 * inset);
     ctx.lineJoin = 'round';
@@ -5018,7 +5028,7 @@ window.SnakeRender = (() => {
     }
     ctx.globalAlpha = 1;
     for (const s of game.snakes) { // (by a wrapping head: a glow on the edge it's near)
-      if (!s.alive || !(s.wrapUntil > game.time)) continue;
+      if (!s.alive || !(s.wrapUntil > shownTime)) continue;
       const h = s.body[0], hx = h.x * CELL + CELL / 2, hy = h.y * CELL + CELL / 2;
       for (const [ex, ey, d] of [[0, hy, h.x], [SIZE, hy, GRID - 1 - h.x], [hx, 0, h.y], [hx, SIZE, GRID - 1 - h.y]]) {
         if (d > 3) continue;
@@ -5232,6 +5242,7 @@ window.SnakeRender = (() => {
     bolt = null; rainbow = null; dive = null; flashAt = -1e9;
     blasts.length = 0;
     streaks.length = 0;
+    timeFrom = timeAt = shownTime = g.time;
     bird.placed = false; bird.arrivedAt = -1e9;
     for (const k in sky) sky[k] = 0;
     snowCover = 0;
