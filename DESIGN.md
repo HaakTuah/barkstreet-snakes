@@ -196,11 +196,14 @@ Lessons are one idea and 60 characters or fewer. The fine print lives in the REA
 The rival's quip stays as flavour. A death that ends the round says it on the round-over card too.
 
 **Small mercies at the keys.** A slip shouldn't cost a round, and a press should never be lost without a word:
-- *R* and *Enter* sit next to the steering keys, so mid-round they ask "Start over?" first (the same key again confirms; Space, P or Escape keeps going). In the countdown, *R* is Go, like Enter.
-- Waking from a nap goes through one countdown beat, so your hand is back on the keys before the board moves. An arrow skips the beat, and steers.
-- Stunned, the latest press wins (you get more than one guess while the stars go round). Reversing a queued turn that hasn't happened yet changes your mind instead of being ignored.
-- On a phone, the newest finger takes over a swipe, so a thumb resting on the glass doesn't block the other one.
-- A first round's score is a best only by default: no fanfare until there's a best to beat. Carving your name is offered once a round, not on both cards.
+- *R* and *Enter* sit next to the steering keys, so mid-round they ask "Start over?" first, naming the key you pressed. The same key again confirms; Space, P, Escape or an arrow keeps going at once (an arrow steers too). In the countdown, *R* is Go, like Enter (never online, where everyone starts together).
+- The nap keys always nap: Space, P and now Escape, in a round or in its countdown (the phone rang). Go is the Go! button, Enter, R or an arrow.
+- Waking from a nap goes through one quiet countdown beat (no YOU, no riser; the round's music carries on), so your hand is back on the keys before the board moves. An arrow skips the beat, and steers. A round napped before its Go gets its real Go on waking. Watching, waking is at once.
+- A nap never covers a death that's about to be told: the card comes up as it would.
+- Stunned, the latest press wins (you get more than one guess while the stars go round), checked against your neck, not the way you were facing when you crashed. Reversing a queued turn that hasn't happened yet changes your mind instead of being ignored, and a U-turn's two keys rolled together count even when the second lands a hair early.
+- On a phone every finger is its own swipe: a thumb resting on the glass doesn't block the other, and can still steer once the other lifts. During a round a swipe may start on a button (the Go! in the middle of the board); a short tap is still a tap.
+- A first round's score is a best only by default: no fanfare until there's a best to beat. Carving your name is offered once a round, not on both cards, and never pressed on you: on a keyboard the card keeps the focus (R, Enter and Space mean what they always mean) and Tab reaches the field.
+- Where four tags in a row would cut the rivals' names (a near-square window), they sit in two rows of two, as on a phone.
 
 **Every sound survives a phone speaker.** A cue's weight can't live only below 150 Hz, so the low cues (death, bonks, thunder, boom, the stinger, the heartbeat) get a midrange knock or body that implies their bass. Every envelope starts from silence. Your own sounds come before rivals', and both come before the world's. Ambient beds stop when the round does.
 
