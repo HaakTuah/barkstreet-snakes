@@ -3163,8 +3163,8 @@ window.SnakeRender = (() => {
       if (f.kind === 'food') {
         const drop = b?.fell && !reduced ? Math.max(0, 1 - (now - b.at) / 380) : 0; // (a new apple drops from the tree above)
         const left = f.expires != null ? f.expires - game.tick : 999;
-        const look = f.cooked ? 'baked' : left > 70 ? 'fresh' : left > 30 ? 'bruised' : 'rotten';
-        const shrivel = look === 'rotten' && left < 12 ? 0.78 + 0.22 * Math.max(0, left) / 12 : 1;
+        const look = f.cooked ? 'baked' : left > 50 ? 'fresh' : left > 22 ? 'bruised' : 'rotten';
+        const shrivel = look === 'rotten' && left < 10 ? 0.78 + 0.22 * Math.max(0, left) / 10 : 1;
         drawAppleAt(appleSprite(look), x, y - drop * drop * CELL * 3, t, (b?.fell ? 1 : pop) * shrivel, 1);
         if (look === 'rotten' && lively) { // a fly has found it
           const fa = now / 150 + f.x * 1.7, fx = x + Math.cos(fa) * CELL * 0.4, fy = y - CELL * 0.32 + Math.sin(fa * 1.6) * CELL * 0.14;

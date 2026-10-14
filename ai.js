@@ -339,11 +339,13 @@ window.SnakeAI = (() => {
     // Opponent bodies as last seen. A segment j from the head leaves its cell
     // after (len - j) ticks; we ignore the time that has passed since the
     // snapshot, which is conservative in case they ate something.
+    // (A rival I saw stunned stays put that much longer: its stars show.)
+    const stunLeft = o => Math.max(0, (o.stun || 0) - age);
     for (const o of others) {
-      const L = o.body.length;
+      const L = o.body.length, still = stunLeft(o);
       o.body.forEach((c, j) => {
         const i = c.y * N + c.x;
-        otherFree[i] = Math.max(otherFree[i], L - j);
+        otherFree[i] = Math.max(otherFree[i], L - j + still);
       });
     }
     mineFree.set(otherFree);
@@ -354,7 +356,7 @@ window.SnakeAI = (() => {
     for (const o of others) {
       const L = o.body.length;
       let hx = o.body[0].x, hy = o.body[0].y;
-      for (let s = 1; s <= age; s++) {
+      for (let s = Math.min(age, o.stun || 0) + 1; s <= age; s++) { // (stunned, it didn't move)
         const nx = hx + o.dir.x, ny = hy + o.dir.y;
         if (!inside(nx, ny) || otherFree[ny * N + nx] > s) break;
         hx = nx; hy = ny;
@@ -618,10 +620,13 @@ window.SnakeAI = (() => {
 
     // Risk: cells each rival could step into next tick (head-on), and its
     // wider reach since I last saw it (soft zone).
+    // (A rival still stunned next tick can't strike; one I just met head-on,
+    // I give twice the berth for a while, so we don't go for the same cell again.)
     others.forEach((o, k) => {
+      const strike = stunLeft(o) > 1 ? 0 : w.headRisk * (o.id === me.bumped ? 2 : 1);
       for (const d of DIR_LIST) {
         const nx = heads[k].x + d.x, ny = heads[k].y + d.y;
-        if (inside(nx, ny)) risk[ny * N + nx] += w.headRisk;
+        if (inside(nx, ny)) risk[ny * N + nx] += strike;
       }
       const stampZ = ++stamp;
       queue[0] = o.body[0].y * N + o.body[0].x;
@@ -667,10 +672,13 @@ window.SnakeAI = (() => {
     // lists the cells worth something.
     foodValue.fill(0); foodGrow.fill(0);
     let foodCount = 0;
-    for (const f of food) foodGrow[f.y * N + f.x] = f.kind === 'mushroom' ? -TUNE.SHRINK : f.kind === 'golden' ? TUNE.GOLDEN_GROWTH : f.kind === 'beetle' ? TUNE.BEETLE_GROWTH : 1;
+    for (const f of food) foodGrow[f.y * N + f.x] = f.kind === 'mushroom' ? -TUNE.SHRINK : f.kind === 'golden' ? TUNE.GOLDEN_GROWTH : f.kind === 'beetle' ? TUNE.BEETLE_GROWTH : f.cooked ? TUNE.COOKED_GROWTH : 1;
     for (const f of food) {
-      const v = worth[f.kind] ?? 0;
+      let v = worth[f.kind] ?? 0;
       if (!v) continue;
+      if (f.cooked && v > 0) v *= TUNE.COOKED_GROWTH; // (baked: worth more)
+      if (f.gold && v > 0) v *= 1.5; // (a golden beetle: leaps too)
+      if (f.kind === 'food' && f.expires != null && f.expires - view.tick < Math.abs(f.x - myHead.x) + Math.abs(f.y - myHead.y)) continue; // (it'll have rotted)
       const i = f.y * N + f.x;
       foodValue[i] += v;
       foodCells[foodCount++] = i;

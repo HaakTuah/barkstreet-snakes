@@ -144,7 +144,7 @@ window.SnakeEngine = (() => {
     // (Rain: more mushrooms sprout.)
     for (; !winter && mushrooms < T.MUSHROOMS + (raining ? T.RAIN_MUSHROOMS : 0); mushrooms++) place({ kind: 'mushroom', expires: game.tick + T.MUSHROOM_TICKS });
     // (Sun: golden hour. Winter: hardly any.)
-    const goldenChance = T.GOLDEN_CHANCE * (game.weather.kind === 'sun' ? T.SUN_GOLDEN : winter ? 0.2 : 1);
+    const goldenChance = winter ? 0 : T.GOLDEN_CHANCE * (game.weather.kind === 'sun' ? T.SUN_GOLDEN : 1); // (none in winter)
     if (!golden && Math.random() < goldenChance && place({ kind: 'golden', expires: game.tick + T.GOLDEN_TICKS })) {
       const g = game.food[game.food.length - 1];
       game.events.push({ type: 'spawn', kind: 'golden', x: g.x, y: g.y });
@@ -332,10 +332,12 @@ window.SnakeEngine = (() => {
       now.nextStrike = game.time + between(T.STRIKE_MIN_MS, T.STRIKE_MAX_MS);
       strike(game);
     }
-    // Winter: hunger runs faster (the clock to everyone's next meal runs down quicker).
+    // Winter: hunger runs faster (the clock to everyone's next meal runs
+    // down quicker), and apples rot twice as fast.
     if (now.kind === 'snow') {
       const extra = tickMs(game) * (T.SNOW_HUNGER - 1);
       for (const s of game.snakes) if (s.alive) { s.lastAte -= extra; s.nextStarve -= extra; }
+      for (const f of game.food) if (f.kind === 'food' && f.expires != null && !f.cooked) f.expires--;
     }
     burn(game);
   }
@@ -538,6 +540,7 @@ window.SnakeEngine = (() => {
     game.history.push({
       snakes: game.snakes.filter(s => s.alive).map(s => ({
         id: s.id, body: s.body.map(c => ({ x: c.x, y: c.y })), dir: s.dir,
+        stun: Math.max(0, s.stunUntil - game.tick), leaps: s.leaps, // (both show: stars, a golden ring)
       })),
       food: game.food.map(f => ({ ...f })),
       holes: game.holes.size,
@@ -587,7 +590,11 @@ window.SnakeEngine = (() => {
     const snap = game.history[idx];
     return {
       grid: GRID,
-      me: { id: snake.id, body: snake.body, dir: snake.dir, grow: snake.grow, hungerLeft: hungerLeft(game, snake) },
+      me: {
+        id: snake.id, body: snake.body, dir: snake.dir, grow: snake.grow, hungerLeft: hungerLeft(game, snake), leaps: snake.leaps,
+        // (who it just met head-on, if it was in the last 3 s or so: it keeps clear of them for a while)
+        bumped: snake.bumpedBy && game.tick - snake.bumpedBy.tick < 30 ? snake.bumpedBy.id : -1,
+      },
       others: snap.snakes.filter(o => o.id !== snake.id),
       food: snap.food,
       holes: blockedSeen(game, snap),
@@ -661,8 +668,15 @@ window.SnakeEngine = (() => {
       }
       s.planned = null;
       s.plannedTick = -1;
-      // Over a crash and still facing what it hit, without having steered: it turns to where there's room.
-      if (s.stunUntil === game.tick && !steered && blocked(game, s.body[0].x + s.dir.x, s.body[0].y + s.dir.y)) s.dir = recoil(game, s);
+      // Over a crash and still facing what it hit (or the cell it met another
+      // head in), without having steered: it turns to where there's room.
+      // (Two heads that met in an empty cell would otherwise both go for it
+      // again, and again, until one of them was too small to bounce.)
+      if (s.stunUntil === game.tick) {
+        const nx = s.body[0].x + s.dir.x, ny = s.body[0].y + s.dir.y;
+        if (!steered && (blocked(game, nx, ny) || (s.bounce && s.bounce.x === nx && s.bounce.y === ny))) s.dir = recoil(game, s);
+        s.bounce = null;
+      }
       s.next = { x: s.body[0].x + s.dir.x, y: s.body[0].y + s.dir.y };
       s.tailMoves = s.grow === 0;
       moving.push(s);
@@ -709,7 +723,7 @@ window.SnakeEngine = (() => {
     // (killerId: its id). Causes use names; the game turns the name of
     // whoever is watching into "you". A snake that crashes stays put, so its
     // tail stays too, and anyone heading into that tail crashes as well.
-    const crashes = new Map();
+    const crashes = crashes0 = new Map();
     const crashOf = s => {
       const { x, y } = s.next;
       const k = key(x, y);
@@ -719,11 +733,11 @@ window.SnakeEngine = (() => {
         const other = game.snakes[bodyOwner[k]];
         // Two heads swapping cells met head-on, just as if they'd met in one.
         const swapped = other !== s && x === other.body[0].x && y === other.body[0].y && other.next?.x === s.body[0].x && other.next?.y === s.body[0].y;
-        return { cause: other === s ? 'bit itself' : swapped ? `crashed head-on into ${other.name}` : `ran into ${other.name}`, killer: other === s ? 'self' : other.name, killerId: other.id };
+        return { cause: other === s ? 'bit itself' : swapped ? `crashed head-on into ${other.name}` : `ran into ${other.name}`, killer: other === s ? 'self' : other.name, killerId: other.id, headOn: swapped };
       }
       if (headStamp[k] === stamp && headCount[k] > 1) {
         const other = moving.find(o => o !== s && o.next.x === x && o.next.y === y);
-        return { cause: `crashed head-on into ${other.name}`, killer: other.name, killerId: other.id };
+        return { cause: `crashed head-on into ${other.name}`, killer: other.name, killerId: other.id, headOn: true };
       }
       return null;
     };
@@ -740,9 +754,30 @@ window.SnakeEngine = (() => {
     }
 
     // A crash costs CRASH_LOSS segments off the tail (they fall off as food)
-    // and a moment's stun. At MIN_LENGTH, or with nowhere to turn, it's the end.
+    // and a moment's stun. It's the end at MIN_LENGTH, or if there'll be
+    // nowhere to turn when the stun's over (see roomAfterStun: the cells its
+    // tail breaks off from, and cells rivals' tails leave meanwhile, count
+    // as room). Two snakes that meet head-on, each with nowhere to turn: the
+    // longer one bounces (the other's body, turned to food, makes room), the
+    // shorter is out; the same length, both out. Worked out until nothing
+    // changes, since a snake that's out frees its cells for everyone else.
+    const out = new Set(), verdict = new Map();
+    for (const [s] of crashes) if (s.body.length <= T.MIN_LENGTH) out.add(s);
+    for (let changed = true; changed;) {
+      changed = false;
+      for (const [s, c] of crashes) {
+        if (out.has(s)) continue;
+        let live = roomAfterStun(game, s, out);
+        if (!live && c.headOn) { // (head-on, both boxed in: the longer lives)
+          const o = game.snakes[c.killerId];
+          if (o && crashes.has(o) && !out.has(o) && !roomAfterStun(game, o, out) && s.body.length > o.body.length) live = true;
+        }
+        if (verdict.get(s) !== live) { verdict.set(s, live); changed = true; }
+      }
+      for (const [s] of crashes) if (!out.has(s) && verdict.get(s) === false) { out.add(s); changed = true; }
+    }
     for (const [s, c] of crashes) {
-      if (s.body.length <= T.MIN_LENGTH || !canTurn(game, s)) {
+      if (out.has(s)) {
         s.cause = c.cause; s.killer = c.killer; s.killerId = c.killerId;
         dying.push(s);
         continue;
@@ -750,7 +785,9 @@ window.SnakeEngine = (() => {
       const lost = Math.min(T.CRASH_LOSS, s.body.length - T.MIN_LENGTH);
       for (let n = 0; n < lost; n++) { const t = s.body.pop(); drops.push({ x: t.x, y: t.y, color: s.color }); }
       s.stunUntil = game.tick + 1 + T.STUN_TICKS;
-      game.events.push({ type: 'crash', snake: s, x: s.next.x, y: s.next.y, ...c, lost });
+      s.bounce = c.headOn ? { x: s.next.x, y: s.next.y } : null;
+      if (c.headOn) s.bumpedBy = { id: c.killerId, tick: game.tick };
+      game.events.push({ type: 'crash', snake: s, x: s.next.x, y: s.next.y, cause: c.cause, killer: c.killer, killerId: c.killerId, lost });
     }
 
     for (const s of moving) {
@@ -819,14 +856,18 @@ window.SnakeEngine = (() => {
 
   // Just over a crash, facing what it hit: the way to turn, the open side
   // with the most room round it (counted a short way), or straight on if
-  // there's none.
+  // there's none. Never the cell it met another head in, and, if it can
+  // help it, not a cell another head could step into this tick too (two
+  // heads side by side across a corner would otherwise both turn into the
+  // corner they share, and meet again).
   function recoil(game, s) {
     const h = s.body[0], back = s.body[1];
-    let best = s.dir, most = -1;
+    let best = s.dir, most = -Infinity;
     for (const d of CRAWL) {
       const x = h.x + d.x, y = h.y + d.y;
-      if ((back && x === back.x && y === back.y) || blocked(game, x, y)) continue;
-      const room = roomFrom(game, x, y, 24);
+      if ((back && x === back.x && y === back.y) || blocked(game, x, y) || (s.bounce && s.bounce.x === x && s.bounce.y === y)) continue;
+      let room = roomFrom(game, x, y, 24);
+      for (const o of game.snakes) if (o !== s && o.alive && Math.abs(o.body[0].x - x) + Math.abs(o.body[0].y - y) === 1) room -= 100;
       if (room > most) { most = room; best = d; }
     }
     return best;
@@ -845,19 +886,33 @@ window.SnakeEngine = (() => {
     return seen.size;
   }
 
-  // After a crash, is there anywhere to turn? A neighbouring cell (not back
-  // into its own neck) that's on the board, not a hole, and not taken by a
-  // body or another head this tick. (Fire counts: you can go through fire.)
-  function canTurn(game, s) {
-    const h = s.body[0], back = s.body[1];
+  // After a crash: will there be anywhere to turn when the stun's over? A
+  // neighbouring cell (not back into its own neck), on the board and not a
+  // hole, that's free by then: free now (and no other head arriving in it);
+  // or part of its own tail that breaks off in the crash; or a rival's body
+  // that'll have moved on by then (a cell j from a snake's head frees after
+  // length - j ticks, later if that snake's stunned or growing too); or a
+  // body that's out this tick (it turns to food). Fire counts as room: you
+  // can go through fire. (out: snakes found to be out this tick.)
+  function roomAfterStun(game, s, out) {
+    const h = s.body[0], back = s.body[1], keep = s.body.length - Math.min(T.CRASH_LOSS, s.body.length - T.MIN_LENGTH);
+    const until = 1 + T.STUN_TICKS; // (ticks from now until it moves again)
     for (const d of CRAWL) {
       const x = h.x + d.x, y = h.y + d.y, k = key(x, y);
-      if ((back && x === back.x && y === back.y) || !inside(x, y) || game.holes.has(k) || bodyStamp[k] === stamp) continue;
-      if (headStamp[k] === stamp && headCount[k] > 0) continue;
-      return true;
+      if ((back && x === back.x && y === back.y) || !inside(x, y) || game.holes.has(k)) continue;
+      if (headStamp[k] === stamp && headCount[k] > 0) continue; // (another head's arriving there)
+      if (bodyStamp[k] !== stamp) return true;
+      const o = game.snakes[bodyOwner[k]];
+      if (!o || out.has(o)) return true;
+      const j = o.body.findIndex(c => c.x === x && c.y === y);
+      if (j < 0) return true;
+      if (o === s) { if (j >= keep) return true; continue; } // (its own: free if it's in the tail that breaks off)
+      const stuck = Math.max(0, o.stunUntil - game.tick) + (crashes0.has(o) ? 1 + T.STUN_TICKS : 0);
+      if (o.body.length - j + o.grow + stuck <= until) return true;
     }
     return false;
   }
+  let crashes0 = new Map(); // (this tick's crashes, for roomAfterStun)
 
   // A snake on fire loses a segment every BURN_EVERY ticks (they fall off,
   // roasted) until it goes out; rain and snow put it out sooner. At
