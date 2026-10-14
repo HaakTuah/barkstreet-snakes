@@ -108,7 +108,7 @@ window.SnakeChatter = (() => {
       hungry: ["I should eat something."],
       start: ['Hello.', 'Hi. I’m Drab.'],
       idle: ['Nice weather.', 'Apples are fine.', 'I like beige.', 'This is a log.', 'Hm.'],
-      eat: ['Food.', 'Eating.', 'Tastes like food.'],
+      eat: ['Food.', 'Eating.', 'Fine.', 'Tastes like food.'],
       woodpecker: ['Oh. A bird.'],
       kill: ['Oh. Sorry, {who}.'],
       weather: { rain: ['Rain. Great.'], sun: ['It’s sunny.'], wind: ['Windy.'], storm: ['Loud.'], snow: ['Cold.'] },
@@ -251,7 +251,7 @@ window.SnakeChatter = (() => {
       idle: ['Living on the edge, partner.', 'Too close? Never heard of it.', 'Is that a wall? Let’s go see.', 'Feel that? That’s being alive.',
         'Let’s make this interesting.', 'Who wants to play chicken?'],
       kill: ['Draw, {who}. Too slow.', 'This bark ain’t big enough for the both of us.'],
-      mushroom: ['Mushroom roulette. Down the hatch!', 'Tasted like danger.', 'Bitter. Thrilling, though.'],
+      mushroom: ['Mushroom roulette. Down the hatch!', 'Tasted like danger.', 'Bitter. Thrilling, though.', 'What doesn’t kill me… shrinks me.'],
       woodpecker: ['Now we’re talking! Holes!'],
       beetle: ['Yeehaw, a critter hunt!', 'Here, little critter…'],
       caught: ['Lassoed it.', 'Roped and branded.'],
@@ -313,7 +313,7 @@ window.SnakeChatter = (() => {
       start: ['Knock knock!', 'Who wants to play a game?'],
       idle: ['Catch me if you can!', 'Why so slithery, {who}?', 'Follow me, it’s a shortcut!', 'Honk honk!', 'Pull my tail!', 'Wanna hear a joke, {who}?'],
       kill: ['And for my next trick…', 'The joke’s on you, {who}!'],
-      mushroom: ['Ooh, a funny mushroom!', 'Fungi! Fun guy! …No?', 'Not so funny now.'],
+      mushroom: ['Ooh, a funny mushroom!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!'],
       weather: { rain: ['Singin’ in the rain!'], storm: ['Shocking!'], wind: ['Blow, wind, blow!'], sun: ['Sun’s out, puns out!'], snow: ['Snow joke!'] },
       woodpecker: ['Knock knock! Oh. It’s the woodpecker.'],
       rainbow: ['Somewhere over the… oh, there it is.'],
@@ -812,6 +812,7 @@ window.SnakeChatter = (() => {
     "I say, {who}! There’s a queue.": "我说，{who}！要排队。",
     "Do mind the paintwork, {who}.": "请当心油漆，{who}。",
     "Eating.": "在吃。",
+    "Fine.": "还行。",
     "Tastes like food.": "吃起来像食物。",
     "Oops.": "哎呀。",
     "That was a bump.": "这是一次碰撞。",
@@ -856,6 +857,7 @@ window.SnakeChatter = (() => {
     "Who wants to play chicken?": "谁想玩胆小鬼游戏？",
     "Tasted like danger.": "尝起来是危险的味道。",
     "Bitter. Thrilling, though.": "苦的。不过很刺激。",
+    "What doesn’t kill me… shrinks me.": "杀不死我的……会让我变小。",
     "Here, little critter…": "过来，小虫子……",
     "Roped and branded.": "套住了，烙上印了。",
     "Now I’m awake!": "这下我醒了！",
@@ -880,6 +882,7 @@ window.SnakeChatter = (() => {
     "Wanna hear a joke, {who}?": "想听个笑话吗，{who}？",
     "Fungi! Fun guy! …No?": "蘑菇！魔菇！……不好笑？",
     "Not so funny now.": "现在不那么好笑了。",
+    "Mushroom? I hardly know ’em!": "蘑菇？我跟它们不熟！",
     "Ba-dum-tss!": "咚哒哒——嚓！",
     "Boing! Do it again, {who}!": "嘣！再来一次，{who}！",
     "Classic {who}. Never gets old.": "经典的{who}。百看不厌。"
@@ -905,7 +908,7 @@ window.SnakeChatter = (() => {
   let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null, pendingReply = null, saidAt = {};
   let struck = false; // (lightning has struck in this storm: one remark is enough)
   const LINE_REST = 45000; // a snake doesn't say the same line again within this much game time
-  const INTRUDER_REST = 20000; // nor call out the same intruder (a head skimming the border goes in and out)
+  const INTRUDER_REST = 25000; // nor call out intruders more often (heads skim in and out at a border)
   // Mason's Life of Brian moments are told once per visit (a joke told every round isn't one).
   const SET_PIECES = new Set(['Romanes eunt domus.', 'Amicus meus est Biggus Dickus.']);
   const toldPieces = new Set();
@@ -928,11 +931,11 @@ window.SnakeChatter = (() => {
     '…boo. …Am I doing Ghost right?', 'Shh. I’m being Ghost.', 'Aedificamus! …Ooh, I speak Latin now!', 'Veni, vidi, aedificavi! …Did I say that right?', 'Wallus maximus! …Is that Latin? It feels Latin.',
     'Sunshine! I love sunshine! Today.', 'Rain! I love rain! For now.', 'Snow! I love snow! For a bit.', 'A bird! I love birds! Not this one.', 'Ouch! I hate walls! Today.', 'Fire! I love fire! Ow, no I don’t!',
     'Ouch! Never doing that again! Probably.', 'Ow! That was fun! No it wasn’t.', 'I can fly! For a second!', 'Oops, {who}! Was that rude?', 'Now I’m hungry! Out of nowhere!', 'Didn’t plan that. Love it.',
-    'Is that a wall? Let’s go see.', 'Yep. That’s a wall.', 'Who wants to play chicken?', 'Cold enough to freeze a cactus.',
+    'Is that a wall? Let’s go see.', 'Yep. That’s a wall.', 'Who wants to play chicken?', 'Cold enough to freeze a cactus.', 'What doesn’t kill me… shrinks me.',
     '*walks into a wall. A real one, this time*', '*plays a tiny invisible violin*', '*holds up an invisible scorecard: 3*',
     'Even I must eat. Usually myself.', 'My tail! I was saving that.', 'Haven’t we met before, {who}?', 'Ah. This bit again.', 'Even the log has an end.',
     'Why did the snake cross the bark? It was starving.', 'Knock knock! Who’s there? Lunch, I hope.', 'Knock knock! Oh. It’s the woodpecker.', 'Somewhere over the… oh, there it is.', 'Knock knock, {who}! …Bonk!',
-    'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!',
+    'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!',
   ]);
   const toldThisRound = new Set();
   const bubbles = new Map(); // snake id -> { el, snake, until, w, x, y, below }
@@ -1205,12 +1208,10 @@ window.SnakeChatter = (() => {
 
     for (const s of alive) {
       const m = s.memory, was = (seen[s.id] ||= {});
-      // Sovereign / Colonist spotting an intruder (the same one again only after a while).
-      if (m.victimId != null && m.victimId !== was.victimId && (m.home || m.colonies)) {
-        const calledOut = (was.calledOut ||= {});
-        if (!(game.time - (calledOut[m.victimId] ?? -Infinity) < INTRUDER_REST)
-          && say(s, 'intruder', game.snakes.find(o => o.id === m.victimId))) calledOut[m.victimId] = game.time;
-      }
+      // Sovereign / Colonist spotting an intruder (now and then: not every time one wanders in).
+      if (m.victimId != null && m.victimId !== was.victimId && (m.home || m.colonies)
+        && !(game.time - (was.calledOutAt ?? -Infinity) < INTRUDER_REST)
+        && say(s, 'intruder', game.snakes.find(o => o.id === m.victimId))) was.calledOutAt = game.time;
       if ((m.planted || 0) > (was.planted || 0)) {
         say(s, 'flag');
         // (planted inside Sovereign's realm: Sovereign has something to say about it)
