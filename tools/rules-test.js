@@ -27,6 +27,7 @@ function board(bodies, { food = [], time = 0 } = {}) {
     s.dir = D[dir];
   });
   g.food = food.map(([x, y, kind = 'food']) => ({ x, y, kind }));
+  g.given = new Set(g.food.map(f => f.y * T.GRID + f.x));
   g.time = time;
   return g;
 }
@@ -112,18 +113,21 @@ const look = g => {
 const joined = b => b.every((c, i) => !i || Math.abs(c.x - b[i - 1].x) + Math.abs(c.y - b[i - 1].y) === 1);
 const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 + i]), 'up']; // (a snake across row 10, heading up)
 
+// (A step with only the food a test put there: nothing that grows mid-test lands in the way.)
+const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * T.GRID + f.x)); return E.step(g); };
+
 { // Anyone can leap: pressing the way you're going hops the body in front, two cells in two ticks, for the tip of its tail.
   const g = board([[line(5, 10, 5), 'right'], wall(6)]);
   const me = g.snakes[0];
   E.leap(g, me);
-  E.step(g);
+  quiet(g);
   check('a leap: up over the body in front', me.alive && me.body[0].x === 6 && me.body[0].y === 10 && !!me.flight && g.events.some(e => e.type === 'leap' && !e.gold), JSON.stringify(me.body[0]));
   check('...for the tip of its tail', me.body.length === 5 - T.LEAP_COST, me.body.length);
   me.queue = [D.down]; // (a turn while it's in the air waits till it lands)
-  E.step(g);
+  quiet(g);
   check('...and down on the far side next tick', me.alive && me.body[0].x === 7 && me.body[0].y === 10 && me.body[1].x === 6 && !me.flight, JSON.stringify(me.body.slice(0, 2)));
   check('...its body still joined up, and the one hopped is fine', joined(me.body) && g.snakes[1].alive);
-  E.step(g);
+  quiet(g);
   check('...then the turn', me.body[0].x === 7 && me.body[0].y === 11, JSON.stringify(me.body[0]));
   check('...and it needs a moment before the next', E.leapIn(g, me) > 0 && E.leapIn(g, me) <= T.LEAP_COOLDOWN_MS, E.leapIn(g, me));
 }
@@ -131,36 +135,36 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
 { // ...not again until it's ready: a crash instead.
   const g = board([[line(5, 10, 6), 'right'], wall(6), wall(8, 4, 12)]);
   const me = g.snakes[0];
-  E.leap(g, me); E.step(g); E.step(g); // (over the first, landing at 7)
-  E.leap(g, me); E.step(g);
+  E.leap(g, me); quiet(g); quiet(g); // (over the first, landing at 7)
+  E.leap(g, me); quiet(g);
   check('a leap needs a moment before the next', !g.events.some(e => e.type === 'leap') && g.events.some(e => e.type === 'crash' && e.snake === me));
   const g2 = board([[line(5, 10, 6), 'right'], wall(6), wall(8, 4, 12)]);
   const m2 = g2.snakes[0];
-  E.leap(g2, m2); E.step(g2); E.step(g2);
+  E.leap(g2, m2); quiet(g2); quiet(g2);
   g2.time += T.LEAP_COOLDOWN_MS;
   feed(g2);
-  E.leap(g2, m2); E.step(g2);
+  E.leap(g2, m2); quiet(g2);
   check('...and then it can again', g2.events.some(e => e.type === 'leap') && m2.body[0].x === 8);
 }
 
 { // Never at its smallest (it costs a segment), never off the board, never onto a body; it waits for something to hop.
   const g = board([[line(5, 10, T.MIN_LENGTH), 'right'], wall(6)]);
   E.leap(g, g.snakes[0]);
-  E.step(g);
+  quiet(g);
   check('no leap at its smallest', !g.events.some(e => e.type === 'leap'));
   const g2 = board([[line(22, 10, 5), 'right'], wall(23)]);
-  E.leap(g2, g2.snakes[0]); E.step(g2);
+  E.leap(g2, g2.snakes[0]); quiet(g2);
   check('...never off the board', !g2.events.some(e => e.type === 'leap') && g2.events.some(e => e.type === 'crash'));
   const g3 = board([[line(5, 10, 5), 'right'], wall(6), wall(7)]);
-  E.leap(g3, g3.snakes[0]); E.step(g3);
+  E.leap(g3, g3.snakes[0]); quiet(g3);
   check('...never onto a body', !g3.events.some(e => e.type === 'leap') && g3.events.some(e => e.type === 'crash'));
   const g4 = board([[line(5, 10, 5), 'right'], wall(7, 9)]);
   const me = g4.snakes[0];
   E.leap(g4, me);
-  E.step(g4); // (open ground ahead: no leap yet)
+  quiet(g4); // (open ground ahead: no leap yet)
   const waited = !g4.events.some(e => e.type === 'leap');
   g4.snakes[1].queue = [D.up];
-  E.step(g4); // (the body's right in front now)
+  quiet(g4); // (the body's right in front now)
   check('...it waits a moment for something to hop', waited && g4.events.some(e => e.type === 'leap') && me.body[0].x === 7, JSON.stringify(me.body[0]));
 }
 
@@ -169,9 +173,9 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
   const me = g.snakes[0];
   me.leaps = 2;
   E.leap(g, me);
-  E.step(g);
+  quiet(g);
   check('a golden leap: two cells up and over at once', me.body[0].x === 7 && me.body[1].x === 6 && !!me.flight && me.leaps === 1 && g.events.some(e => e.type === 'leap' && e.gold), JSON.stringify(me.body.slice(0, 2)));
-  E.step(g);
+  quiet(g);
   check('...landing on the third next tick', me.alive && me.body[0].x === 8 && joined(me.body) && g.snakes.every(o => o.alive), JSON.stringify(me.body[0]));
   check('...free, and ready again at once', me.body.length === 5 && me.leapReadyAt === 0, me.body.length);
 }
@@ -187,9 +191,9 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
     b.isPlayer = true; b.persona = null; b.queue = [];
     g.food = [];
     look(g);
-    E.step(g);
+    quiet(g);
     look(g);
-    E.step(g);
+    quiet(g);
     check(`a boxed-in AI with a ${golden ? 'golden' : 'plain'} leap hops instead of crashing`, a.alive && g.snakes.every(o => o.alive) && a.body[0].x === (golden ? 8 : 7) && a.body[0].y === 0 && a.leaps === 0, JSON.stringify(a.body[0]));
   }
 }
@@ -199,13 +203,13 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
   const me = g.snakes[0];
   me.dashes = 2;
   E.leap(g, me);
-  E.step(g);
+  quiet(g);
   check('a dash: three cells in one tick', me.body[0].x === 8 && me.body[0].y === 10 && joined(me.body) && me.dashes === 1 && g.events.some(e => e.type === 'dash' && e.n === 3), JSON.stringify(me.body.slice(0, 4)));
   check('...eating what was on the way', me.eaten === 2 && !g.food.some(f => f.y === 10 && (f.x === 6 || f.x === 8)), me.eaten);
   const g2 = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']]);
   g2.fires.set(K(7, 10), { from: 0, until: 99, group: 1, strike: false }); g2.fireGroups.set(1, 1);
   g2.snakes[0].dashes = 1;
-  E.leap(g2, g2.snakes[0]); E.step(g2);
+  E.leap(g2, g2.snakes[0]); quiet(g2);
   check('...putting out fire on the way', !g2.fires.size && !(g2.snakes[0].burnUntil > g2.tick) && g2.events.some(e => e.type === 'douse'));
 }
 
@@ -214,12 +218,12 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
   const g = board([[line(5, 10, 5), 'right'], across]);
   const [me, o] = g.snakes;
   me.dashes = 1;
-  E.leap(g, me); E.step(g);
+  E.leap(g, me); quiet(g);
   check('a dash cuts a snake in two', me.alive && me.body[0].x === 8 && o.alive && o.body.length === 6 && g.events.some(e => e.type === 'cut' && e.snake === o && e.by === me.id), o.body.length);
   check('...the rest falls off as food', [11, 12, 13, 14, 15, 16].every(y => g.food.some(f => f.kind === 'pellet' && f.x === 7 && f.y === y)), JSON.stringify(g.food.map(f => [f.x, f.y])));
   const g2 = board([[line(5, 10, 5), 'right'], [Array.from({ length: 8 }, (_, i) => [7, 9 + i]), 'up']]); // (cut right behind its head)
   E.leap(g2, Object.assign(g2.snakes[0], { dashes: 1 }));
-  const dying = E.step(g2);
+  const dying = quiet(g2);
   check('...too near its head, and it\'s out', dying.includes(g2.snakes[1]) && g2.snakes[1].cause === 'got cut in two by P0' && g2.snakes[0].alive, g2.snakes[1].cause);
 }
 
@@ -232,7 +236,7 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
   b.isPlayer = true; b.persona = null; b.queue = [];
   g.food = [];
   look(g);
-  const dying = E.step(g);
+  const dying = quiet(g);
   check('an AI with a dash cuts a rival in two', dying.includes(b) && a.alive && a.dashes === 0, b.cause);
 }
 
@@ -241,7 +245,7 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
   const g = board([[line(5, 10, 8), 'right'], along]);
   const me = g.snakes[0];
   me.dashes = 1;
-  E.leap(g, me); E.step(g);
+  E.leap(g, me); quiet(g);
   const crash = g.events.find(e => e.type === 'crash' && e.snake === me);
   check('a dash into a snake two thick: it gets that far and crashes', me.alive && me.body[0].x === 7 && crash && crash.x === 8, JSON.stringify(me.body[0]));
 }
@@ -249,25 +253,25 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
 { // Dashing into the edge, or a hole: it blows up.
   const g = board([[line(22, 10, 8), 'right'], [line(5, 20, 3), 'right']]);
   E.leap(g, Object.assign(g.snakes[0], { dashes: 1 }));
-  const dying = E.step(g);
+  const dying = quiet(g);
   check('a dash into the edge blows up', dying.includes(g.snakes[0]) && g.snakes[0].cause === 'dashed into the edge and blew up', g.snakes[0].cause);
   const g2 = board([[line(5, 10, 8), 'right'], [line(5, 20, 3), 'right']]);
   g2.holes.add(K(7, 10));
   E.leap(g2, Object.assign(g2.snakes[0], { dashes: 1 }));
-  check('...and into a hole', E.step(g2).includes(g2.snakes[0]) && g2.snakes[0].cause === 'dashed into a woodpecker hole and blew up', g2.snakes[0].cause);
+  check('...and into a hole', quiet(g2).includes(g2.snakes[0]) && g2.snakes[0].cause === 'dashed into a woodpecker hole and blew up', g2.snakes[0].cause);
 }
 
 { // A golden mushroom: for a while the edges wrap round.
   const g = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']], { food: [[6, 10, 'goldcap']] });
   const me = g.snakes[0];
-  E.step(g);
+  quiet(g);
   check('a golden mushroom: the edges wrap', me.wrapUntil > g.time && me.wrapUntil <= g.time + T.WRAP_MS);
   me.body = line(23, 10, 5).map(([x, y]) => ({ x, y }));
-  E.step(g);
+  quiet(g);
   check('...off one side, in at the other', me.alive && me.body[0].x === 0 && me.body[0].y === 10 && !g.events.some(e => e.type === 'crash'), JSON.stringify(me.body[0]));
   me.wrapUntil = g.time;
   me.body = line(23, 10, 5).map(([x, y]) => ({ x, y }));
-  feed(g); E.step(g);
+  feed(g); quiet(g);
   check('...for a while', g.events.some(e => e.type === 'crash' && e.snake === me && e.killer === 'wall'));
 }
 
@@ -282,8 +286,57 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
   g.holes.add(K(23, 6));
   g.food = [];
   look(g);
-  E.step(g);
+  quiet(g);
   check("an AI whose edges wrap goes through one when that's the way out", a.alive && a.body[0].x === 0 && a.body[0].y === 5 && !g.events.some(e => e.type === 'crash' && e.snake === a), JSON.stringify(a.body[0]));
+}
+
+{ // Golden leaps wait for something to hop too, and aren't spent on open ground; one that can't land falls back on the plain leap.
+  const g = board([[line(5, 10, 5), 'right'], wall(8, 9)]);
+  const me = g.snakes[0];
+  me.leaps = 1;
+  E.leap(g, me); quiet(g);
+  check('a golden leap isn\'t spent on open ground', me.leaps === 1 && !g.events.some(e => e.type === 'leap'));
+  const g2 = board([[line(5, 10, 5), 'right'], wall(6), wall(8)]); // (over 6, but 8 is no place to land: the plain leap lands on 7)
+  const m2 = g2.snakes[0];
+  m2.leaps = 1;
+  E.leap(g2, m2); quiet(g2); quiet(g2);
+  check('...one that can\'t land falls back on the plain leap', m2.leaps === 1 && m2.alive && m2.body[0].x === 7 && m2.leapReadyAt > g2.time, JSON.stringify(m2.body[0]));
+}
+
+{ // In the air: no eating, no catching fire, and nothing arriving under you meets you.
+  const g = board([[line(5, 10, 5), 'right'], wall(6), wall(9, 9)], { food: [[7, 10]] }); // (an apple on the golden leap's mid-air cell)
+  const me = g.snakes[0];
+  me.leaps = 1;
+  E.leap(g, me); quiet(g);
+  check('in the air, it doesn\'t eat', me.body[0].x === 7 && me.eaten === 0 && g.food.some(f => f.x === 7 && f.y === 10), me.eaten);
+  const g2 = board([[line(5, 10, 5), 'right'], [[[5, 20], [4, 20], [3, 20]], 'right']]);
+  g2.fires.set(K(6, 10), { from: 0, until: 999, group: 1, strike: false }); g2.fireGroups.set(1, 1);
+  E.leap(g2, g2.snakes[0]); quiet(g2); quiet(g2);
+  check('...leaps over fire without catching it', g2.snakes[0].body[0].x === 7 && !(g2.snakes[0].burnUntil > g2.tick) && g2.events.length >= 0, g2.snakes[0].burnUntil);
+}
+
+{ // A dash crashes into a head, or its own body, like anything it can't cut.
+  const g = board([[line(5, 10, 6), 'right'], [[[7, 10], [7, 11], [7, 12], [7, 13], [7, 14]], 'up']]); // (a head in the way)
+  E.leap(g, Object.assign(g.snakes[0], { dashes: 1 }));
+  quiet(g);
+  check('a dash into a head crashes', g.snakes[0].alive && g.snakes[1].alive && g.events.some(e => e.type === 'crash' && e.snake === g.snakes[0]) && !g.events.some(e => e.type === 'cut'));
+  const coil = [[5, 10], [5, 11], [6, 11], [7, 11], [7, 10], [7, 9], [6, 9], [5, 9], [4, 9], [3, 9]]; // ((7,10), two ahead, is its own body)
+  const g2 = board([[coil, 'right'], [[[5, 20], [4, 20], [3, 20]], 'right']]);
+  E.leap(g2, Object.assign(g2.snakes[0], { dashes: 1 }));
+  quiet(g2);
+  check('...and into its own body', g2.snakes[0].alive && g2.events.some(e => e.type === 'crash' && e.snake === g2.snakes[0] && e.killer === 'self'), JSON.stringify(g2.events.map(e => e.type)));
+}
+
+{ // Rain schedules a golden mushroom now and then (and no other weather does).
+  const g = board([[line(5, 5, 4), 'right'], [line(5, 15, 4), 'right']]);
+  for (const o of g.snakes) o.stunUntil = 1e9;
+  let rains = 0, capsInRain = 0, capsElse = 0;
+  for (let t = 0; t < 4000; t++) {
+    g.time = 0; g.weather = { kind: 'clear', since: 0, until: 0, nextGust: 1e12, nextStrike: 1e12 }; feed(g); quiet(g);
+    if (g.weather.kind === 'rain') { rains++; if (g.weather.goldcapAt != null) capsInRain++; } else if (g.weather.goldcapAt != null) capsElse++;
+  }
+  const rate = capsInRain / rains;
+  check('rain schedules a golden mushroom now and then (and nothing else does)', rains > 300 && Math.abs(rate - T.GOLDCAP_CHANCE) < 0.06 && capsElse === 0, `${capsInRain}/${rains} rains, ${capsElse} otherwise`);
 }
 
 { // One golden power at a time: a new one replaces the old.

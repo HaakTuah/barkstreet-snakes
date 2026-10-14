@@ -1140,7 +1140,8 @@ window.SnakeRender = (() => {
     // A pale rim so dark bodies read on the bark (Joker's amber and white do already).
     a.rim = !a.isPlayer && a.look !== 'joker' && (a.look === 'vulture' || lumaOf(a.color) < 0.4);
     const prev = s.prev, { pts, cor } = a;
-    if (a.dashTick === game?.tick) alpha = 1; // (dashing: it's there at once, its streak behind it)
+    const snap = a.dashTick === game?.tick;
+    if (snap) alpha = 1; // (dashing: it's there at once, its streak behind it)
     // (A snake that's had the edges wrap this round: its body may run off one
     // edge and on at the other, and a segment may move across one.)
     const wrapped = s.wrapUntil >= 0;
@@ -1153,7 +1154,7 @@ window.SnakeRender = (() => {
       // The band to the next segment runs through the cell this one left
       // (where the next one is headed), so a bend never cuts its corner.
       if (i < n - 1) {
-        const q = prev && i < prev.length ? prev[i] : s.body[i + 1];
+        const q = prev && i < prev.length && !snap ? prev[i] : s.body[i + 1]; // (dashing: the bends it lies on now)
         cor[2 * i] = q.x * CELL + CELL / 2;
         cor[2 * i + 1] = q.y * CELL + CELL / 2;
       }
@@ -1190,8 +1191,9 @@ window.SnakeRender = (() => {
   }
 
   // A coordinate (in cells) moved a whole board's width, if that brings it
-  // next to ref (a segment that moved across a wrapped edge).
-  const nearOf = (v, ref) => v - ref > 1 ? v - GRID : ref - v > 1 ? v + GRID : v;
+  // near ref (a segment that moved across a wrapped edge: any real move is
+  // three cells at most, a crossing nearly the board's width).
+  const nearOf = (v, ref) => v - ref > GRID / 2 ? v - GRID : ref - v > GRID / 2 ? v + GRID : v;
   // A body that runs across a wrapped edge, made one unbroken chain from the
   // head (so parts of it lie off the board), and the offsets to draw it at
   // as well, so what's off one edge shows at the other.
@@ -4064,9 +4066,9 @@ window.SnakeRender = (() => {
     drawRainbow(now);
 
     if (corpses.length) drawCorpses(alpha, now);
-    if (streaks.length) drawStreaks(now);
     drawWrapEdges(now);
     drawSnakes(alpha, now);
+    if (streaks.length) drawStreaks(now); // (over the body it's just covered: a blur of speed)
     drawFieldHues(now);
     drawTarget(alpha, now);
     drawRain(now);
@@ -4380,13 +4382,13 @@ window.SnakeRender = (() => {
       const k = streaks[i], t = (now - k.at) / 340;
       if (t >= 1 || t < 0) { streaks.splice(i, 1); continue; }
       const grad = ctx.createLinearGradient(k.x0, k.y0, k.x1, k.y1);
-      grad.addColorStop(0, 'rgba(250,204,21,0)'); grad.addColorStop(1, rgba('#fde047', 0.75 * (1 - t)));
+      grad.addColorStop(0, 'rgba(250,204,21,0)'); grad.addColorStop(1, rgba('#fde047', 0.6 * (1 - t)));
       ctx.strokeStyle = grad;
       ctx.lineCap = 'round';
-      ctx.lineWidth = CELL * 0.7 * (1 - 0.5 * t);
+      ctx.lineWidth = CELL * 0.55 * (1 - 0.5 * t);
       ctx.beginPath(); ctx.moveTo(k.x0, k.y0); ctx.lineTo(k.x1, k.y1); ctx.stroke();
-      ctx.lineWidth = CELL * 0.18 * (1 - t);
-      ctx.strokeStyle = rgba('#fffbea', 0.8 * (1 - t));
+      ctx.lineWidth = CELL * 0.14 * (1 - t);
+      ctx.strokeStyle = rgba('#fffbea', 0.7 * (1 - t));
       ctx.stroke();
     }
   }
@@ -4418,9 +4420,13 @@ window.SnakeRender = (() => {
       const hit = !c.fade && c.s.killer !== 'hunger';
       ctx.globalAlpha = opacity;
       const a = prepare(c.s, c.s.prev ? alpha : 1, now, true, hit ? 0.2 : 0);
-      drawShadow(a);
-      drawOutline(c.s, a);
-      drawBody(c.s, a, now, true);
+      for (const [ox, oy] of a.offs || OFFS) { // (across a wrapped edge: each place it shows)
+        if (ox || oy) ctx.translate(ox, oy);
+        drawShadow(a);
+        drawOutline(c.s, a);
+        drawBody(c.s, a, now, true);
+        if (ox || oy) ctx.translate(-ox, -oy);
+      }
       ctx.globalAlpha = 1;
       if (hit) { // at the point of contact, kept on the board
         const sx = Math.min(SIZE, Math.max(0, a.pts[0] + c.s.dir.x * CELL * 0.55));
@@ -4453,9 +4459,9 @@ window.SnakeRender = (() => {
   // top-left (for speech bubbles). boardPx is the board's CSS width.
   function headPx(s, alpha, boardPx, out) {
     const c = s.body[0], p = s.prev && s.prev[0] ? s.prev[0] : c;
-    const scale = boardPx / GRID;
-    out.x = (p.x + (c.x - p.x) * alpha + 0.5) * scale;
-    out.y = (p.y + (c.y - p.y) * alpha + 0.5) * scale;
+    const scale = boardPx / GRID, px = nearOf(p.x, c.x), py = nearOf(p.y, c.y); // (across a wrapped edge: from just off it)
+    out.x = (px + (c.x - px) * alpha + 0.5) * scale;
+    out.y = (py + (c.y - py) * alpha + 0.5) * scale;
     return out;
   }
 

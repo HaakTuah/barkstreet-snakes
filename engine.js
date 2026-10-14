@@ -496,7 +496,7 @@ window.SnakeEngine = (() => {
       const zone = new Set(w.target.filter(k => !game.holes.has(k)));
       for (const s of game.snakes) {
         if (!s.alive) continue;
-        const i = s.body.findIndex(c => zone.has(key(c.x, c.y)));
+        const i = s.body.findIndex((c, i) => (i || !s.flight) && zone.has(key(c.x, c.y))); // (a head in the air: not its head)
         if (i < 0) continue;
         if (i < T.MIN_LENGTH) { // (its head, or too little left behind it)
           s.cause = 'fell into a woodpecker hole'; s.killer = 'wall'; s.killerId = null;
@@ -692,10 +692,12 @@ window.SnakeEngine = (() => {
     // Everyone decides, except the stunned: they stay put (and can steer meanwhile).
     const moving = [];
     for (const s of alive) {
-      s.tailMoves = false; s.air = false; s.landing = false; s.boom = false;
+      s.tailMoves = false; s.air = false; s.landing = false; s.boom = false; s.passed = null;
       if (s.stunUntil > game.tick) { s.next = null; continue; }
-      if (s.flight) { // in the air: it comes down the way it was going (turns wait till it's landed)
+      let land = null;
+      if (s.flight) { // in the air: it comes down where it was going (turns wait till it's landed)
         s.dir = s.flight.dir;
+        land = s.flight.land;
         s.flight = null;
         s.landing = true;
       } else {
@@ -715,11 +717,11 @@ window.SnakeEngine = (() => {
         // one of them was too small to bounce.)
         if (s.stunUntil === game.tick) {
           const { x: nx, y: ny } = ahead(game, s, s.body[0].x, s.body[0].y, s.dir), shut = shutTo(game, s);
-          if (!steered && (blocked(game, nx, ny) || (shut && s.bounce.x === nx && s.bounce.y === ny))) s.dir = recoil(game, s, shut);
+          if (!steered && !(s.leapArmed >= game.tick) && (blocked(game, nx, ny) || (shut && s.bounce.x === nx && s.bounce.y === ny))) s.dir = recoil(game, s, shut); // (a power asked for counts as steering)
           s.bounce = null;
         }
       }
-      s.next = ahead(game, s, s.body[0].x, s.body[0].y, s.dir);
+      s.next = land ? { x: land.x, y: land.y } : ahead(game, s, s.body[0].x, s.body[0].y, s.dir);
       s.tailMoves = s.grow === 0;
       moving.push(s);
     }
@@ -771,7 +773,7 @@ window.SnakeEngine = (() => {
         return { cause: other === s ? 'bit itself' : swapped ? `crashed head-on into ${other.name}` : `ran into ${other.name}`, killer: other === s ? 'self' : other.name, killerId: other.id, headOn: swapped };
       }
       if (headStamp[k] === stamp && headCount[k] > 1) {
-        const other = moving.find(o => o !== s && o.next.x === x && o.next.y === y);
+        const other = moving.find(o => o !== s && !o.air && o.next.x === x && o.next.y === y);
         return { cause: `crashed head-on into ${other.name}`, killer: other.name, killerId: other.id, headOn: true, meet: true };
       }
       return null;
@@ -803,7 +805,13 @@ window.SnakeEngine = (() => {
     // bounces (the other's body, turned to food, makes room), and the same
     // length, both are out.
     const out = new Set(), live = new Set();
-    for (const [s] of crashes) if (s.body.length <= T.MIN_LENGTH || s.boom) out.add(s); // (too small to bounce; or blown up)
+    for (const [s, c] of crashes) {
+      if (s.landing && game.holes.has(key(s.body[0].x, s.body[0].y))) { // (a landing that crashed: its head comes down on what it hopped; a hole, and in it goes)
+        Object.assign(c, { cause: 'fell into a woodpecker hole', killer: 'wall', killerId: null, headOn: false, meet: false });
+        out.add(s);
+      }
+      if (s.body.length <= T.MIN_LENGTH || s.boom) out.add(s); // (too small to bounce; or blown up)
+    }
     const room = s => {
       if (roomAfterStun(game, s, out)) return true;
       const h = s.body[0], back = s.body[1];
@@ -833,6 +841,10 @@ window.SnakeEngine = (() => {
       const lost = Math.min(T.CRASH_LOSS, s.body.length - T.MIN_LENGTH);
       for (let n = 0; n < lost; n++) { const t = s.body.pop(); drops.push({ x: t.x, y: t.y, color: s.color }); }
       s.stunUntil = game.tick + 1 + T.STUN_TICKS;
+      if (s.landing && burning(game, key(s.body[0].x, s.body[0].y))) { // (come down on fire: alight)
+        if (!(s.burnUntil > game.tick)) { s.burnFrom = game.tick; game.events.push({ type: 'alight', snake: s }); }
+        s.burnUntil = game.tick + T.BURN_TICKS;
+      }
       s.bounce = c.headOn ? { x: s.next.x, y: s.next.y, by: c.killerId } : null;
       if (c.headOn) s.bumpedBy = { id: c.killerId, tick: game.tick };
       game.events.push({ type: 'crash', snake: s, x: s.next.x, y: s.next.y, cause: c.cause, killer: c.killer, killerId: c.killerId, lost });
@@ -953,9 +965,10 @@ window.SnakeEngine = (() => {
     for (const d of CRAWL) {
       const { x, y } = ahead(game, s, h.x, h.y, d), k = key(x, y);
       if ((back && x === back.x && y === back.y) || !inside(x, y) || game.holes.has(k)) continue;
-      const by = arrivalAt(x, y); // (a head that gets there this tick, on the ground or in the air: the cell's its head now)
-      if (by) { if (out.has(by) || freeBy(game, by, -1)) return true; continue; }
-      if (headStamp[k] === stamp && headCount[k] > 0 && metAt(s, x, y)) continue; // (only heads that crashed there: a cell they met in)
+      const by = arrivalAt(x, y); // (a head that gets there this tick, on the ground or in the air: the cell's its head now...)
+      if (by && !out.has(by) && !freeBy(game, by, -1)) continue;
+      if (!by && headStamp[k] === stamp && headCount[k] > 0 && metAt(s, x, y)) continue; // (only heads that crashed there: a cell they met in)
+      // (...and a body there, under one in the air, counts as well)
       if (bodyStamp[k] !== stamp) return true;
       const o = game.snakes[bodyOwner[k]];
       if (!o || out.has(o)) return true;
@@ -1029,16 +1042,18 @@ window.SnakeEngine = (() => {
   // of its tail (it needs more than MIN_LENGTH) and needs a moment before the
   // next; golden ones are free.
   function hop(game, s) {
-    const golden = s.leaps > 0, reach = golden ? 2 : 1;
-    if (!golden && (game.time < s.leapReadyAt || s.body.length <= T.MIN_LENGTH)) return;
-    const path = [];
+    if (s.leaps > 0 && leapOver(game, s, true)) return; // (golden, if it can; if not, the plain one, if that's ready)
+    if (game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH) leapOver(game, s, false);
+  }
+  function leapOver(game, s, golden) {
+    const reach = golden ? 2 : 1, path = [];
     for (let c = s.body[0], i = 0; i <= reach; i++) {
       c = ahead(game, s, c.x, c.y, s.dir);
-      if (!inside(c.x, c.y)) return; // (never off the board)
+      if (!inside(c.x, c.y)) return false; // (never off the board)
       path.push(c);
     }
     const hurdle = c => { const k = key(c.x, c.y); return bodyStamp[k] === stamp || game.holes.has(k) || burning(game, k); };
-    if (!path.slice(0, reach).some(hurdle) || hurdle(path[reach])) return;
+    if (!path.slice(0, reach).some(hurdle) || hurdle(path[reach])) return false;
     if (golden) s.leaps--;
     else {
       s.leapReadyAt = game.time + T.LEAP_COOLDOWN_MS;
@@ -1047,9 +1062,10 @@ window.SnakeEngine = (() => {
     for (let i = 0; i < reach - 1; i++) advance(s, path[i]);
     s.next = path[reach - 1];
     s.air = true;
-    s.flight = { dir: s.dir };
+    s.flight = { dir: s.dir, land: path[reach] };
     s.leapArmed = -1;
     game.events.push({ type: 'leap', snake: s, x: path[0].x, y: path[0].y, gold: golden ? 1 : 0, reach });
+    return true;
   }
 
   // A dash: DASH_LENGTH cells this tick, along the ground. A snake lying
@@ -1075,12 +1091,12 @@ window.SnakeEngine = (() => {
         if (!o || o === s || j <= 0 || thick) break; // (it crashes into that)
         cutAt(game, o, j, s, gone, dying, drops);
       }
-      if (game.fires.has(k)) douse(game, k);
+      const fire = game.fires.get(k);
+      if (fire && !(fire.strike && game.tick < fire.from)) douse(game, k); // (not lightning still on its way)
       if (i === T.DASH_LENGTH) break; // (its head goes here, with everyone else's)
       advance(s, c);
       n++;
-      const f = game.food.findIndex(f => f.x === c.x && f.y === c.y);
-      if (f >= 0) consume(game, s, game.food.splice(f, 1)[0], c.x, c.y);
+      (s.passed ||= []).push(c); // (food on the way: eaten after everyone's moved, with what its head finds)
     }
     game.events.push({ type: 'dash', snake: s, x: from.x, y: from.y, n: n + 1 });
   }
@@ -1126,21 +1142,22 @@ window.SnakeEngine = (() => {
     if (bodyStamp[k] === stamp && bodyOwner[k] === s.id) bodyStamp[k] = 0;
   }
 
-  // Every living head on food eats it (not in the air).
+  // Every living head on food eats it (not in the air), and a dash eats
+  // what was on the cells it passed.
   function eat(game) {
     for (const s of game.snakes) {
       if (!s.alive || s.air) continue;
-      const h = s.body[0];
-      const i = game.food.findIndex(f => f.x === h.x && f.y === h.y);
-      if (i < 0) continue;
-      consume(game, s, game.food.splice(i, 1)[0], h.x, h.y);
+      for (const c of s.passed ? [...s.passed, s.body[0]] : [s.body[0]]) {
+        const i = game.food.findIndex(f => f.x === c.x && f.y === c.y);
+        if (i >= 0) consume(game, s, game.food.splice(i, 1)[0], c.x, c.y);
+      }
     }
   }
   function consume(game, s, f, x, y) {
     game.events.push({ type: 'eat', snake: s, kind: f.kind, x, y, color: f.color, cooked: !!f.cooked, gold: !!f.gold });
     // Golden powers (one golden power at a time: a new one replaces the old).
     if (f.gold) { s.leaps = Math.min(T.LEAP_MAX, s.leaps + T.LEAP_CHARGES); s.dashes = 0; } // (a golden beetle: leaps)
-    if (f.kind === 'leaf') { s.dashes = T.DASH_CHARGES; s.leaps = 0; } // (a golden leaf: dashes)
+    if (f.kind === 'leaf') { s.dashes = T.DASH_CHARGES; s.leaps = 0; s.leapArmed = -1; } // (a golden leaf: dashes, each when pressed for)
     if (f.kind === 'goldcap') s.wrapUntil = game.time + T.WRAP_MS; // (a golden mushroom: the edges wrap)
     if (f.kind === 'mushroom') {
       // Shrink: cancel pending growth first, then drop tail segments.

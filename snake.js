@@ -607,9 +607,10 @@
     for (const e of game.events) {
       if (e.type === 'eat' && isMe(e.snake)) {
         if (e.kind !== 'mushroom') { streak = game.time - streakAt < 2600 ? Math.min(streak + 1, 7) : 0; streakAt = game.time; }
-        Audio.play(e.kind === 'golden' ? 'golden' : e.kind === 'pellet' ? 'meat' : e.kind === 'mushroom' ? 'mushroom' : e.kind === 'beetle' ? 'crunch' : 'eat', { pitch: e.kind === 'mushroom' ? 0 : streak, ...at(e.x) });
+        Audio.play(e.kind === 'goldcap' ? 'wrap' : e.kind === 'golden' || e.kind === 'leaf' ? 'golden' : e.kind === 'pellet' ? 'meat' : e.kind === 'mushroom' ? 'mushroom' : e.kind === 'beetle' ? 'crunch' : 'eat', { pitch: e.kind === 'mushroom' ? 0 : streak, ...at(e.x) });
         bump(scoreEl);
-      } else if (e.type === 'woodpecker') { Audio.play('call'); Audio.play('riser'); }
+      } else if (e.type === 'eat' && e.kind === 'goldcap') Audio.play('wrap', at(e.x)); // (someone else's golden mushroom)
+      else if (e.type === 'woodpecker') { Audio.play('call'); Audio.play('riser'); }
       else if (e.type === 'aim') Audio.play('aim', at(e.x));
       else if (e.type === 'peck' && e.cells?.length) { Audio.play('drum', at(e.x)); Audio.play('crash', at(e.x)); }
       else if (e.type === 'spawn' && e.kind === 'beetle') Audio.play('beetle', at(e.x));
@@ -632,7 +633,6 @@
       else if (e.type === 'leap') Audio.play('leap', at(e.x));
       else if (e.type === 'dash') Audio.play('dash', at(e.x));
       else if (e.type === 'douse') Audio.play('douse', at(e.x));
-      else if (e.type === 'eat' && e.kind === 'goldcap') Audio.play('wrap', at(e.x));
     }
     for (const s of dying) if (/blew up/.test(s.cause)) Audio.play('boom', at(s.body[0].x));
     for (const s of dying) {
@@ -1036,13 +1036,15 @@
       const wrapS = s.alive && s.wrapUntil > game.time ? Math.ceil((s.wrapUntil - game.time) / 1000) : 0;
       const ready = isMe(s) && s.alive && E.leapIn(game, s) === 0;
       const pow = !s.alive ? '' : (s.leaps ? '⤴' + s.leaps : s.dashes ? '»' + s.dashes : isMe(s) ? '⤴' : '') + (wrapS ? ' ⟳' + wrapS : '');
-      const gold = s.alive && (s.leaps > 0 || s.dashes > 0 || wrapS > 0);
-      if (force || last.pow !== pow || last.gold !== gold || last.ready !== ready) {
+      const gold = s.alive && (s.leaps > 0 || s.dashes > 0), wraps = wrapS > 0; // (the wrap: a gold ring, so your leap's readiness still shows)
+      if (force || last.pow !== pow || last.gold !== gold || last.ready !== ready || last.wraps !== wraps) {
         t.pow.textContent = pow;
         t.pow.hidden = !pow;
         t.pow.classList.toggle('gold', gold);
+        t.pow.classList.toggle('wrap', wraps);
         t.pow.classList.toggle('ready', ready);
-        t.pow.title = gold ? 'Holding a golden power' : ready ? 'Your leap’s ready' : 'Your leap needs a moment';
+        t.pow.title = gold ? 'Holding a golden power' : wraps && !isMe(s) ? 'The edges wrap round for it' : ready ? 'Your leap’s ready' : 'Your leap needs a moment';
+        last.wraps = wraps;
         if (!force && isMe(s) && ready && last.ready === false && !s.leaps && !s.dashes) { R.ready(s); Audio.play('ready'); }
         last.pow = pow; last.gold = gold; last.ready = ready;
       }
@@ -1173,7 +1175,8 @@
   });
 
   // Swipes: a turn registers as soon as the finger has travelled half a cell,
-  // without lifting, and one touch can chain several turns. On the board they
+  // without lifting, and one touch can chain several turns (a fresh swipe the
+  // way you're going leaps; a finger that keeps going the same way doesn't). On the board they
   // always steer; during a round they steer anywhere on the screen (over the
   // countdown card too), and the page never scrolls. Buttons stay buttons.
   let swipe = null;
@@ -1195,7 +1198,9 @@
     const dx = t.clientX - swipe.x, dy = t.clientY - swipe.y;
     const threshold = Math.max(T.SWIPE_MIN_PX, (boardPx || 320) / GRID * T.SWIPE_CELLS);
     if (Math.max(Math.abs(dx), Math.abs(dy)) < threshold) return;
-    steer(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+    const dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+    if (dir !== swipe.last) steer(dir); // (a finger still travelling the same way is the same swipe: it doesn't leap)
+    swipe.last = dir;
     swipe.x = t.clientX;
     swipe.y = t.clientY;
   }, { passive: false });

@@ -1012,14 +1012,14 @@ window.SnakeChatter = (() => {
           say(victim, 'dies', killer && killer !== victim ? killer : null, true);
         }
         for (const v of alive) if (v.personaKey === 'vulture' && Math.random() < 0.6) say(v, 'death', victim);
-      } else if (e.type === 'eat' && e.snake.persona) {
+      } else if (e.type === 'eat' && e.snake.persona && e.kind !== 'goldcap') { // (a golden mushroom has its own lines: below)
         if (e.kind === 'golden') say(e.snake, 'golden', null, true);
         else if (e.kind === 'beetle') say(e.snake, 'caught', null, true);
         else if (e.kind === 'mushroom') say(e.snake, 'mushroom');
         else if (Math.random() < 0.15) say(e.snake, 'eat');
       } else if (e.type === 'starving' && e.snake.persona) {
         say(e.snake, 'hungry', null, true);
-      } else if (e.type === 'spawn') {
+      } else if (e.type === 'spawn' && (e.kind === 'golden' || e.kind === 'beetle')) { // (golden apples and beetles; leaves and golden mushrooms have the narrator)
         for (const s of alive) {
           if (e.gold && VOICES[s.personaKey]?.goldbug) { say(s, 'goldbug', null, true); continue; }
           if (s.personaKey === 'gobbler' || (e.kind === 'beetle' && s.personaKey === 'desperado')) say(s, e.kind === 'beetle' ? 'beetle' : 'spawn', null, true);
