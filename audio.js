@@ -34,7 +34,7 @@ window.SnakeAudio = (() => {
     rivalDeath: 120, death: 250, best: 400, win: 600, winBest: 600,
     beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, hungerWarn: 1500, ui: 30, // peck: never more than 3 in any second
     crackle: 300, thunder: 900, gust: 1500, burrow: 1000, dig: 250, rainbow: 1500, rain: 1500,
-    ko: 200, close: 1400, field: 800, bonk: 150, bonked: 300, leap: 200, dash: 150, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
+    ko: 200, close: 1400, field: 800, bonk: 150, bonked: 300, leap: 200, thunk: 250, dash: 150, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
   };
   // A cue that stands for others for a while: a win that's also a best is one phrase.
   const COVERS = { winBest: { win: 6000, best: 6000 } };
@@ -625,6 +625,12 @@ window.SnakeAudio = (() => {
     // Your leap's ready again: a soft tick.
     ready(t) {
       mallet(t, mtof(86), 0.12, 0.05);
+    },
+    // A leap that can't go (it needs a moment, or there's nowhere to land): a dull thunk, flat, no bounce.
+    thunk(t) {
+      tone(t, 'triangle', 260, 0.08, 0.26, 0.002, 150, 900);
+      body(t, 180, 0.07, 0.26, 0.002, 120, 520, 1.2);
+      noise(t, 0.04, 0.08, 'lowpass', 800, 0.8);
     },
     // Someone else's crash: a dull thud off to the side (and its knock, small).
     bonked(t) {
