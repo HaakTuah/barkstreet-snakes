@@ -819,8 +819,9 @@ window.SnakeRender = (() => {
   // Between steps it's never quite still: its feelers wave, it breathes, and
   // every few seconds it lifts its wing cases and buzzes, as if about to fly
   // off. Scared, it trembles. It pops in when it comes out.
-  let beetleAng = null, beetleAt = 0;
+  let beetleAng = null, beetleAt = 0, beetleGold = false; // (gold: the one last drawn, for its dive down a burrow)
   function drawBeetle(f, alpha, now) {
+    beetleGold = !!f.gold;
     const moved = game && f.movedAt === game.tick - 1 && f.px != null;
     const e = moved ? alpha * alpha * (3 - 2 * alpha) : 1;
     const gx = moved ? f.px + (f.x - f.px) * e : f.x, gy = moved ? f.py + (f.y - f.py) * e : f.y;
@@ -887,19 +888,22 @@ window.SnakeRender = (() => {
       }
     }
     // ...then the shell: two emerald wing cases with a gold rim, which swing
-    // out from the front when it lifts them; the split down the middle and a shine.
+    // out from the front when it lifts them; the split down the middle and a
+    // shine. A golden one's are in Honey, like the golden leaf's and the
+    // golden mushroom's (gold means a power), pale at the front and deep at
+    // the back, rimmed in emerald.
     ctx.lineWidth = c * 0.03;
     for (const sg of [-1, 1]) {
       ctx.save();
       if (lift > 0) { ctx.translate(c * 0.16, 0); ctx.rotate(-sg * 0.4 * lift); ctx.translate(-c * 0.16, 0); }
-      ctx.fillStyle = f.gold ? '#fbbf24' : '#059669'; // (a golden one: gold, rimmed in emerald)
+      ctx.fillStyle = f.gold ? honeyShell() : '#059669';
       ctx.strokeStyle = f.gold ? '#047857' : '#fbbf24';
       ctx.beginPath();
       ctx.ellipse(-c * 0.02, 0, c * 0.22, c * 0.17, 0, sg < 0 ? Math.PI : 0, sg < 0 ? TAU : Math.PI);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-      if (sg < 0) { ctx.fillStyle = 'rgba(209,250,229,0.55)'; circle(c * 0.04, -c * 0.08, c * 0.045); }
+      if (sg < 0) { ctx.fillStyle = f.gold ? 'rgba(255,255,255,0.7)' : 'rgba(209,250,229,0.55)'; circle(c * 0.04, -c * 0.08, c * 0.045); }
       ctx.restore();
     }
     if (!lift) {
@@ -909,6 +913,16 @@ window.SnakeRender = (() => {
       ctx.stroke();
     }
     ctx.restore();
+  }
+  // A golden beetle's Honey, front to back: made once, in the shell's own
+  // units, so it turns with the beetle (as its shine does).
+  let honeyGrad = null;
+  function honeyShell() {
+    if (!honeyGrad) {
+      honeyGrad = ctx.createLinearGradient(CELL * 0.2, 0, -CELL * 0.24, 0);
+      honeyGrad.addColorStop(0, '#fffbea'); honeyGrad.addColorStop(0.35, '#fde68a'); honeyGrad.addColorStop(1, '#d4a017');
+    }
+    return honeyGrad;
   }
 
   // --------------------------------------------------------- particles
@@ -4106,8 +4120,8 @@ window.SnakeRender = (() => {
     ctx.translate(dive.x * c + c / 2, dive.y * c + c / 2);
     ctx.rotate(dive.ang + age * 2);
     ctx.scale(s, s);
-    ctx.fillStyle = '#059669';
-    ctx.strokeStyle = '#fbbf24';
+    ctx.fillStyle = dive.gold ? honeyShell() : '#059669';
+    ctx.strokeStyle = dive.gold ? '#047857' : '#fbbf24';
     ctx.lineWidth = c * 0.03;
     ctx.beginPath(); ctx.ellipse(-c * 0.02, 0, c * 0.22, c * 0.17, 0, 0, TAU); ctx.fill(); ctx.stroke();
     ctx.restore();
@@ -5261,7 +5275,7 @@ window.SnakeRender = (() => {
         x += e.snake.dir.x * CELL * 0.5; // the crumbs fly from the mouth, not over the face
         y += e.snake.dir.y * CELL * 0.5;
         if (e.kind === 'golden') spawn(x, y, T.PARTICLES_EAT + 6, 220, T.PARTICLE_LIFE, 3.2, '#fde68a', '#fbbf24');
-        else if (e.kind === 'beetle') spawn(x, y, T.PARTICLES_EAT + (e.gold ? 10 : 4), e.gold ? 240 : 200, T.PARTICLE_LIFE, 3, e.gold ? '#fbbf24' : '#059669', e.gold ? '#fffbea' : '#fbbf24'); // emerald and gold, a crunchy catch (a golden one: a burst of gold)
+        else if (e.kind === 'beetle') spawn(x, y, T.PARTICLES_EAT + (e.gold ? 10 : 4), e.gold ? 240 : 200, T.PARTICLE_LIFE, 3, e.gold ? '#fde68a' : '#059669', e.gold ? '#d4a017' : '#fbbf24'); // emerald and gold, a crunchy catch (a golden one: a burst of Honey, a power's gold)
         else if (e.kind === 'pellet') spawn(x, y, T.PARTICLES_EAT - 4, 150, T.PARTICLE_LIFE * 0.8, 2.6, e.color && e.color[0] === '#' ? e.color : '#c2410c', '#f6ecd2');
         else if (e.kind === 'mushroom') { // poison: a puff of spores, and it goes queasy green for a moment
           spawn(x, y, T.PARTICLES_EAT - 2, 160, T.PARTICLE_LIFE, 2.6, '#c084fc', '#84cc16');
@@ -5382,7 +5396,7 @@ window.SnakeRender = (() => {
         beetleAt = now; // (it pops out of its burrow, kicking up a little sawdust)
         if (e.x >= 0) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 110, 420, 2, '#d6b480', '#a16207');
       } else if (e.type === 'dive') { // down its burrow
-        dive = { x: e.x, y: e.y, at: now, ang: beetleAng ?? 0 };
+        dive = { x: e.x, y: e.y, at: now, ang: beetleAng ?? 0, gold: beetleGold };
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 110, 420, 2, '#d6b480', '#a16207');
       } else if (e.type === 'burrow') {
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 170, 520, 2.4, '#d6b480', '#3b2412');
