@@ -956,7 +956,7 @@ window.SnakeRender = (() => {
   const fx = new Float32Array(MAX_F), fy = new Float32Array(MAX_F), flife = new Float32Array(MAX_F);
   const ftext = new Array(MAX_F).fill('');
   const FLOAT_FONT = `700 ${Math.round(CELL * 0.72)}px Fredoka, system-ui, sans-serif`;
-  const FLOAT_FILL = { 'KO!': '#f87171', 'Crunch!': '#f87171', 'Boom!': '#f87171', 'Fwoosh!': '#fb923c', 'Bonk!': '#fdba74', 'Ouch!': '#fdba74', '-1': '#fca5a5', '-2': '#fca5a5', '-3': '#fca5a5' }; // (the rest in honey)
+  const FLOAT_FILL = { 'KO!': '#f87171', 'Crunch!': '#f87171', 'Boom!': '#f87171', 'Fwoosh!': '#fb923c', 'Bonk!': '#fdba74', 'Ouch!': '#fdba74', 'Snip!': '#fffbea', '-1': '#fca5a5', '-2': '#fca5a5', '-3': '#fca5a5' }; // (what you grow, +1 and so on, in Sprout: Honey by your head means a power)
   const GROWN = ['', '+1', '+2', '+3', '+4', '+5']; // (what a bite was worth, without building a string)
   const FLOAT_TOP = CELL * 1.3, FLOAT_LOW = SIZE - CELL * 0.5; // (a word starts between these, so it can rise and stay on the board)
   const drawFloat = (g, text) => {
@@ -967,7 +967,7 @@ window.SnakeRender = (() => {
     g.lineWidth = CELL * 0.14;
     g.strokeStyle = 'rgba(58,38,20,0.85)';
     g.strokeText(text, 0, 0);
-    g.fillStyle = FLOAT_FILL[text] || '#fde68a';
+    g.fillStyle = FLOAT_FILL[text] || '#a3e635';
     g.fillText(text, 0, 0);
   };
   // A word's sprite: two cells tall like any other, and as wide as the word
@@ -2987,12 +2987,13 @@ window.SnakeRender = (() => {
           ctx.moveTo(c * 0.34, c * 0.08); ctx.lineTo(c * 0.52, c * WHISKERS[w]);
         }
         ctx.stroke();
-        // Party member: a little hammer and sickle on the back of the head.
+        // Party member: a little hammer and sickle on the back of the head,
+        // in the Party's red (in gold, beside its pips, it read as a power's).
         ctx.save();
         ctx.translate(-c * 0.2, 0);
         ctx.rotate(Math.PI / 2);
-        ctx.strokeStyle = '#fde047';
-        ctx.fillStyle = '#fde047';
+        ctx.strokeStyle = '#b91c1c';
+        ctx.fillStyle = '#b91c1c';
         ctx.lineWidth = c * 0.05;
         ctx.beginPath();
         ctx.arc(0, 0, c * 0.15, -Math.PI * 0.25, Math.PI * 0.95);
@@ -3540,7 +3541,7 @@ window.SnakeRender = (() => {
         ctx.stroke();
       }
     }
-    if (seamAt.length) { // the seam: a jagged, flickering line of light, and the odd spark
+    if (seamAt.length) { // the seam: a jagged, flickering line of pale light, and the odd spark (white and lilac: a gold line here read as a power's)
       ctx.beginPath();
       for (let n = 0; n < seamAt.length; n += 2) {
         const a0 = seamAt[n], a1 = seamAt[n + 1], on = n > 0 && seamAt[n - 1] === a0; // (on from the piece before: one line)
@@ -3549,12 +3550,12 @@ window.SnakeRender = (() => {
           const px = x + Math.cos(a) * (rr + jit), py = y + Math.sin(a) * (rr + jit);
           if (q) ctx.lineTo(px, py); else ctx.moveTo(px, py);
         }
-        if (lively && Math.random() < 0.012) spawn(x + Math.cos(a0) * rr, y + Math.sin(a0) * rr, 2, 90, 260, 1.6, '#fef08a', '#ffffff');
+        if (lively && Math.random() < 0.012) spawn(x + Math.cos(a0) * rr, y + Math.sin(a0) * rr, 2, 90, 260, 1.6, '#ede9fe', '#ffffff');
       }
       const join = ctx.lineJoin;
       ctx.lineCap = ctx.lineJoin = 'round';
       ctx.lineWidth = 7;
-      ctx.strokeStyle = rgba('#fde047', lively ? 0.25 + 0.15 * Math.sin(t * 13 + i) : 0.3);
+      ctx.strokeStyle = rgba('#ddd6fe', lively ? 0.3 + 0.15 * Math.sin(t * 13 + i) : 0.35);
       ctx.stroke();
       ctx.lineWidth = 1.8;
       ctx.strokeStyle = rgba('#fefce8', 0.9);
@@ -5065,7 +5066,7 @@ window.SnakeRender = (() => {
           spawn(x, y, T.PARTICLES_EAT - 2, 160, T.PARTICLE_LIFE, 2.6, '#c084fc', '#84cc16');
           a.queasyAt = now;
         }
-        else spawn(x, y, T.PARTICLES_EAT, 180, T.PARTICLE_LIFE, 2.8, '#a3e635', '#fde68a'); // sprout and honey: visible on bark and on green snakes alike
+        else spawn(x, y, T.PARTICLES_EAT, 180, T.PARTICLE_LIFE, 2.8, '#a3e635', '#f6ecd2'); // sprout and parchment: visible on bark and on green snakes alike (gold means a power)
         eatenNow.add(e.y * GRID + e.x);
         if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.6), GROWN[e.kind === 'golden' ? T.GOLDEN_GROWTH : e.kind === 'beetle' ? T.BEETLE_GROWTH : e.cooked ? T.COOKED_GROWTH : 1] || '+1');
       } else if (e.type === 'death') {
@@ -5136,7 +5137,7 @@ window.SnakeRender = (() => {
         a.leapTick = game.tick;
         a.leapGold = !!e.gold;
         a.leapUntil = game.tick + e.snake.body.length + 1; // (until the arch has run off its tail)
-        spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 8, 140, 420, 2.2, '#d6b480', '#fde68a');
+        spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 8, 140, 420, 2.2, '#d6b480', '#c08a4a'); // (bark dust: the plain leap's no power)
         if (e.gold) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 10, 120, 600, 1.8, '#d4a017', '#fffbea'); // (in Honey, a power's gold)
       } else if (e.type === 'dash') { // a golden streak along the way it went, and gold flecks off it
         animOf(e.snake, now).dashTick = game.tick;
@@ -5254,7 +5255,7 @@ window.SnakeRender = (() => {
     g.fillStyle = '#fb923c'; g.fill();
     g.lineWidth = CELL * 0.1; g.strokeStyle = '#3a2614'; g.stroke();
     burstPath(CELL * 0.8, CELL * 1.45, 9, 0.5);
-    g.fillStyle = '#fde68a'; g.fill();
+    g.fillStyle = '#fed7aa'; g.fill(); // (pale orange: gold means a power)
     burstPath(CELL * 0.35, CELL * 0.75, 7, 0.9);
     g.fillStyle = '#fffbea'; g.fill();
     byVariant.set('', sp);
@@ -5422,7 +5423,7 @@ window.SnakeRender = (() => {
 
   // Confetti: for a win, a new best (all over the board), or the winner of a
   // round you're watching (from its head).
-  const CONFETTI = ['#fde68a', '#a3e635', '#f472b6', '#d4a017', '#fb923c', '#c4b5fd', '#84cc16']; // (the board's own colours: Honey, leaf, petal, orange, lilac)
+  const CONFETTI = ['#f6ecd2', '#a3e635', '#f472b6', '#7dd3fc', '#fb923c', '#c4b5fd', '#84cc16']; // (the board's own colours: parchment, leaf, petal, sky, orange, lilac; no gold: gold means a power)
   function celebrate(s = null) {
     if (reduced) return;
     if (s && s.body.length) {
