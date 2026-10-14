@@ -58,7 +58,7 @@
     go: ['Slither!', 'Off you go.', 'Mind the edges.'],
     goWatch: ['And they’re off.', 'Off they slither.', 'Let the wriggling begin.'],
     pause: ['Snakes need rest too.', 'Curled up in a warm patch of bark.', 'The log will wait.'],
-    wake: touchFirst ? 'Tap Wake up when you’re ready.' : 'Space or P to wake up.',
+    wake: touchFirst ? 'Tap Wake up when you’re ready.' : 'Space, P or Esc to wake up.',
     // (Bonk! is for a knock you survive, Snip! for a cut you survive: a
     // death's title is a word that means out.)
     deathTitle: { boom: ['Kaboom!', 'Ka-blam!'], wall: ['Flattened!', 'Splintered!'], self: ['Tangled!', 'Knotted!'], rival: ['Squashed!', 'Splat!'], headOn: ['Out cold!', 'Lights out!'], fire: ['Toasted!', 'Scorched!'], cut: ['Sliced!', 'Halved!'], pecked: ['Pecked!', 'Drilled!'] }, // (never the card's own verb again: "Head-on! You crashed head-on…")
