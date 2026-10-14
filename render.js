@@ -1109,7 +1109,8 @@ window.SnakeRender = (() => {
   // they're spread in lightness as well as hue, so they read on the bark at
   // a glance: dark for a hunt, light for a feeling, palest for fear.)
   const MUTE_MOODS = { calm: '#c084fc', stalking: '#5b21b6', closing: '#86198f', scared: '#ddd6fe', proud: '#e879f9', dazed: '#9ca3af' };
-  const muteState = new Map(), muteShown = new Map(); // snake -> { from, to, at, key }; snake -> the colour now
+  const muteState = new WeakMap(), muteShown = new WeakMap(); // snake -> { from, to, at, key }; snake -> the colour now
+  const MUTE_FADE = 400; // (ms from one mood's colour to the next)
   // ...and its face says it too: the brows (outer end, arch, inner end, along
   // the head: more negative is higher) and, unless it's biting, the mouth.
   const MUTE_BROWS = { calm: [0.05, -0.04, 0.04], stalking: [0.0, 0.03, 0.11], closing: [-0.03, 0.06, 0.15], scared: [0.09, 0.0, -0.05], proud: [0.03, -0.02, 0.07], dazed: [0.07, 0.07, 0.07] };
@@ -1137,13 +1138,23 @@ window.SnakeRender = (() => {
     }
     return false;
   }
+  // Its colour is always a step of the way from one mood to another (a few
+  // dozen colours in all, each a cached colour ramp). A change of mood part
+  // way through a fade starts from whichever mood it was nearer (back to the
+  // one it came from, it just turns round), never from the step on show: that
+  // made a new colour, and a new ramp kept for good, nearly every time.
   function updateMute(s, now) {
     const key = muteMood(s), mood = MUTE_MOODS[key];
     let m = muteState.get(s);
     if (!m) muteState.set(s, m = { from: mood, to: mood, at: -1e9 });
     m.key = key;
-    if (mood !== m.to) { m.from = muteShown.get(s) || m.to; m.to = mood; m.at = now; }
-    const k = reduced ? 1 : Math.min(1, (now - m.at) / 400);
+    if (mood !== m.to) {
+      const k = reduced ? 1 : Math.min(1, (now - m.at) / MUTE_FADE);
+      if (mood === m.from) { m.from = m.to; m.at = now - (1 - k) * MUTE_FADE; } // (turning round, from the step it's on)
+      else { if (k >= 0.5) m.from = m.to; m.at = now; }
+      m.to = mood;
+    }
+    const k = reduced ? 1 : Math.min(1, (now - m.at) / MUTE_FADE);
     muteShown.set(s, mix(m.from, m.to, Math.round(k * 6) / 6)); // (in steps: each a cached colour ramp)
   }
 
@@ -1268,6 +1279,21 @@ window.SnakeRender = (() => {
     let l = lumas.get(c);
     if (l === undefined) { l = c[0] === '#' ? luma(c) : 1; lumas.set(c, l); }
     return l;
+  }
+  // A backstop, as a round starts: the colour caches keep the cast's own
+  // colours (and Mute's moods, and this round's people) and what's mixed from
+  // them; anything else (a step of Mute's between two moods, Copycat's tint
+  // of its model) is dropped, and made again if it's needed again.
+  const keptColours = new Set();
+  function trimColours(g) {
+    keptColours.clear();
+    keptColours.add(BARK);
+    for (const key in PERSONAS) keptColours.add(PERSONAS[key].color);
+    for (const key in MUTE_MOODS) keptColours.add(MUTE_MOODS[key]);
+    for (const s of g.snakes) keptColours.add(s.color);
+    for (const c of ramps.keys()) if (!keptColours.has(c)) ramps.delete(c);
+    for (const c of lumas.keys()) if (!keptColours.has(c)) lumas.delete(c);
+    for (const c of mixCache.keys()) if (!keptColours.has(c)) mixCache.delete(c);
   }
 
   // Wildcard's segments: a tan face, a white collar, then a blue field of
@@ -5727,6 +5753,7 @@ window.SnakeRender = (() => {
     fieldSpecs.length = 0;
     fieldLooks.clear();
     rgbaCache.clear(); // (bounded anyway: a backstop)
+    trimColours(g); // (and so are these)
     drifts = null;
     // A different stretch of log each round: made ahead, if it's ready.
     if (next && next.k === k && sized) { barkSeed = next.seed; barkLayer = next.bark; shadeLayer = next.shade; }
