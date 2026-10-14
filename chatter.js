@@ -945,6 +945,18 @@ window.SnakeChatter = (() => {
 
   const pick = list => list[Math.floor(Math.random() * list.length)];
   const hasChinese = text => /[一-鿿]/.test(text);
+  // A line's words, in a bubble or the log. A stage direction (Mute's mimes,
+  // a giggle: "*waves silently*") is in italics, without its asterisks (a
+  // screen reader would say "star"), and in the log it reads on from the
+  // name: "Mute waves silently". Copycat's Chinese ones go in brackets, as
+  // Ghost's "（沉默）" does (Chinese isn't set in italics).
+  function setWords(el, text) {
+    const mimed = /^\*(.+)\*$/.exec(text), zh = hasChinese(text);
+    if (mimed && zh) el.textContent = `（${mimed[1]}）`;
+    else if (mimed) el.append(Object.assign(document.createElement('em'), { textContent: mimed[1] }));
+    else el.textContent = text;
+    if (zh) el.lang = 'zh-Hans';
+  }
 
   // The log sits on dark wood: lighten dark colors so names stay readable.
   function readable(hex) {
@@ -1047,8 +1059,7 @@ window.SnakeChatter = (() => {
     el.className = 'bubble';
     el.setAttribute('aria-hidden', 'true'); // (screen readers get the log instead)
     const words = document.createElement('span'); // (the bubble you see: it pops in, while its box is moved about)
-    words.textContent = text;
-    if (hasChinese(text)) words.lang = 'zh-Hans';
+    setWords(words, text);
     el.append(words);
     el.style.setProperty('--edge', s.persona?.ink || s.color);
     boardEl.appendChild(el);
@@ -1125,8 +1136,7 @@ window.SnakeChatter = (() => {
     who.textContent = s.name;
     who.style.color = readable(s.persona?.ink || s.color);
     const said = document.createElement('span');
-    said.textContent = text;
-    if (hasChinese(text)) said.lang = 'zh-Hans';
+    setWords(said, text);
     li.append(who, ' ', said);
     logEl.prepend(li);
     while (logEl.children.length > LOG_SIZE) logEl.lastChild.remove();
