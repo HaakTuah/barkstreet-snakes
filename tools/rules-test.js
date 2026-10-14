@@ -147,6 +147,60 @@ const feed = g => { for (const o of g.snakes) { o.lastAte = g.time; o.nextStarve
   check('a boxed-in AI with a leap hops instead of crashing', a.alive && a.leaps === 0 && a.body[0].x === 7 && a.body[0].y === 0, JSON.stringify(a.body[0]));
 }
 
+{ // Two heads that meet in an empty cell bounce, and don't go for it (or each other) again when the stun's over.
+  for (const [a0, a1, label] of [[['right', 10, 10], ['left', 12, 10], 'face to face'], [['down', 16, 15], ['right', 15, 16], 'across a corner']]) {
+    const mk = ([dir, x, y]) => [Array.from({ length: 8 }, (_, i) => [x - D[dir].x * i, y - D[dir].y * i]), dir];
+    const g = board([mk(a0), mk(a1)]);
+    let headOns = 0;
+    for (let t = 0; t < 1 + T.STUN_TICKS + 4; t++) { feed(g); for (const o of g.snakes) o.queue = []; E.step(g); headOns += g.events.filter(e => e.type === 'crash' && e.cause.startsWith('crashed head-on')).length; }
+    check(`heads that meet (${label}) bounce once, not again and again`, headOns === 2 && g.snakes.every(o => o.alive), `${headOns / 2} head-ons`);
+  }
+}
+
+{ // Head-on, both boxed in: the longer bounces, the shorter's out; the same length, both out.
+  // A heads right into (6,5), boxed by its own coils above and below; B heads left into it, boxed the same way.
+  const A = [[5, 5], [4, 5], [4, 6], [5, 6], [6, 6], [6, 7], [5, 7], [4, 7], [3, 7], [3, 6], [3, 5], [3, 4], [4, 4], [5, 4], [5, 3], [5, 2], [5, 1]];
+  const B = [[7, 5], [8, 5], [8, 4], [7, 4], [7, 3], [8, 3], [9, 3], [9, 4], [9, 5], [9, 6], [8, 6], [7, 6], [7, 7], [8, 7], [9, 7], [9, 8], [9, 9]];
+  const g = board([[A, 'right'], [B.slice(0, 15), 'left']]);
+  const dying = E.step(g);
+  check('head-on, both boxed in: the longer bounces', g.snakes[0].alive && g.snakes[0].stunUntil > g.tick, g.snakes[0].cause);
+  check('...and the shorter is out', dying.includes(g.snakes[1]) && g.snakes[1].cause.startsWith('crashed head-on'), g.snakes[1].cause);
+  const g2 = board([[A, 'right'], [B, 'left']]);
+  check('...the same length: both out', E.step(g2).length === 2);
+}
+
+{ // Boxed in only if there'll be nowhere to turn when the stun's over: a rival's tail moving on in time counts as room.
+  // A hits the right edge at (23,5): below is its own body, above a rival's body that's leaving.
+  const A = [[23, 5], [22, 5], [22, 6], [23, 6], [23, 7], [23, 8], [23, 9]];
+  const near = [[19, 4], [20, 4], [21, 4], [22, 4], [23, 4], [23, 3], [23, 2]];               // (23,4) frees in 3 ticks
+  const far = [[19, 4], [20, 4], [21, 4], [22, 4], [23, 4], [23, 3], [23, 2], [23, 1], [23, 0], [22, 0]]; // ...in 6
+  const g = board([[A, 'right'], [near, 'left']]);
+  check('a rival\'s tail moving on before the stun ends counts as room', !E.step(g).includes(g.snakes[0]) && g.snakes[0].alive);
+  const g2 = board([[A, 'right'], [far, 'left']]);
+  check('...one that won\'t, doesn\'t', E.step(g2).includes(g2.snakes[0]));
+  // Its own tail breaking off can open the way too: coiled so the cell above is its own tail end.
+  const coiled = [[23, 5], [22, 5], [22, 6], [23, 6], [23, 7], [22, 7], [21, 7], [21, 6], [21, 5], [21, 4], [22, 4], [23, 4]];
+  const g3 = board([[coiled, 'right'], [[[5, 20], [4, 20], [3, 20]], 'right']]);
+  check('...and so does its own tail breaking off', !E.step(g3).includes(g3.snakes[0]));
+}
+
+{ // Winter is the lean season: one apple, rotting twice as fast, and no golden apples.
+  const g = board([[line(5, 5, 4), 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']]);
+  g.weather = { kind: 'snow', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 };
+  g.food = [];
+  let golden = 0;
+  for (let t = 0; t < 400; t++) { feed(g); for (const o of g.snakes) o.queue = [t % 8 < 4 ? D.down : D.up]; E.step(g); golden += g.food.filter(f => f.kind === 'golden').length; if (t === 2) break; }
+  const apple = g.food.find(f => f.kind === 'food');
+  check('winter: one apple', g.food.filter(f => f.kind === 'food').length === T.SNOW_APPLES && T.SNOW_APPLES === 1);
+  const left = apple.expires - g.tick;
+  feed(g); E.step(g);
+  check('...rotting twice as fast', apple.expires - g.tick === left - 2, `${left} then ${apple.expires - g.tick}`);
+  const g2 = E.createGame({ withPlayer: false });
+  g2.weather = { kind: 'snow', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 };
+  for (let t = 0; t < 600 && g2.snakes.filter(o => o.alive).length > 1; t++) { for (const o of g2.snakes) { o.lastAte = g2.time; o.nextStarve = g2.time + T.HUNGER_MS; } E.step(g2); golden += g2.events.filter(e => e.type === 'spawn' && e.kind === 'golden').length; }
+  check('...and no golden apples', golden === 0, golden);
+}
+
 { // Steering while stunned: it goes your way when the stun's over.
   const g = board([[line(23, 5, 8), 'right'], [line(5, 20, 3), 'right']]);
   const s = g.snakes[0];

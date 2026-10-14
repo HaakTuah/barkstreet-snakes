@@ -761,20 +761,22 @@ window.SnakeEngine = (() => {
     // longer one bounces (the other's body, turned to food, makes room), the
     // shorter is out; the same length, both out. Worked out until nothing
     // changes, since a snake that's out frees its cells for everyone else.
-    const out = new Set(), verdict = new Map();
+    const out = new Set(), live = new Set();
     for (const [s] of crashes) if (s.body.length <= T.MIN_LENGTH) out.add(s);
     for (let changed = true; changed;) {
       changed = false;
       for (const [s, c] of crashes) {
-        if (out.has(s)) continue;
-        let live = roomAfterStun(game, s, out);
-        if (!live && c.headOn) { // (head-on, both boxed in: the longer lives)
-          const o = game.snakes[c.killerId];
-          if (o && crashes.has(o) && !out.has(o) && !roomAfterStun(game, o, out) && s.body.length > o.body.length) live = true;
+        if (out.has(s) || live.has(s)) continue;
+        if (roomAfterStun(game, s, out)) { live.add(s); changed = true; continue; }
+        const o = c.headOn ? game.snakes[c.killerId] : null;
+        if (o && crashes.has(o) && !out.has(o) && !live.has(o) && !roomAfterStun(game, o, out)) { // (head-on, both boxed in)
+          if (s.body.length >= o.body.length) out.add(o); else live.add(o);
+          if (s.body.length <= o.body.length) out.add(s); else live.add(s);
+          changed = true;
         }
-        if (verdict.get(s) !== live) { verdict.set(s, live); changed = true; }
       }
-      for (const [s] of crashes) if (!out.has(s) && verdict.get(s) === false) { out.add(s); changed = true; }
+      // (still boxed in, with everything known to be out counted as room: out)
+      if (!changed) for (const [s] of crashes) if (!out.has(s) && !live.has(s)) { out.add(s); changed = true; }
     }
     for (const [s, c] of crashes) {
       if (out.has(s)) {
