@@ -1830,15 +1830,18 @@ window.SnakeRender = (() => {
 
     // Golden powers held: a pip for each (round for a leap, a diamond for a
     // dash) on a short arc behind the head, turned with it. The gold outline
-    // carries the glow; no ring of its own.
+    // carries the glow; no ring of its own. Three (LEAP_MAX) don't fit in the
+    // neck's pinch (the outer two sat across its outline), so they go a
+    // little further back, closer together, over the first segment, where
+    // the body's widest.
     const pips = dead ? 0 : s.leaps || s.dashes;
     if (pips) {
-      const back = Math.atan2(a.hs, a.hc) + Math.PI, rr = (rad[0] + CELL * 0.2) * (1 + a.swell * 0.5), pr = CELL * 0.11;
+      const three = pips > 2, back = Math.atan2(a.hs, a.hc) + Math.PI, rr = (three ? CELL : rad[0] + CELL * 0.2) * (1 + a.swell * 0.5), pr = CELL * (three ? 0.1 : 0.11), step = three ? 0.27 : 0.55;
       ctx.fillStyle = '#fde68a';
       ctx.strokeStyle = INK;
       ctx.lineWidth = 1.3;
       for (let i = 0; i < pips; i++) {
-        const a2 = back + (i - (pips - 1) / 2) * 0.55, px = pts[0] + Math.cos(a2) * rr, py = pts[1] + Math.sin(a2) * rr;
+        const a2 = back + (i - (pips - 1) / 2) * step, px = pts[0] + Math.cos(a2) * rr, py = pts[1] + Math.sin(a2) * rr;
         ctx.beginPath();
         if (s.leaps) ctx.arc(px, py, pr, 0, TAU);
         else { ctx.moveTo(px, py - pr * 1.3); ctx.lineTo(px + pr, py); ctx.lineTo(px, py + pr * 1.3); ctx.lineTo(px - pr, py); ctx.closePath(); }
@@ -1905,7 +1908,7 @@ window.SnakeRender = (() => {
     let past = 0;
     for (let sgn = -1; sgn <= 1; sgn += 2) {
       const behind = pips && s.dir.y === -sgn; // (its pips are on this side)
-      const off = sgn * CELL * (behind ? 1.32 : pips && !s.dir.y ? 0.95 : 0.72); // (higher when pips show beside its head)
+      const off = sgn * CELL * (behind ? (pips > 2 ? 1.6 : 1.32) : pips && !s.dir.y ? 0.95 : 0.72); // (higher when pips show beside its head; past three, further back, further)
       if (hy + off < STAR_REACH || hy + off > SIZE - STAR_REACH) continue;
       if (!behind) return off;
       past ||= off;
