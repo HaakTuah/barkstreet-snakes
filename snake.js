@@ -53,6 +53,9 @@
     hintOnline: 'Arrows or WASD steer · Press ahead to leap · M mutes · N toggles the music',
     hintOnlineTouch: 'Swipe to steer · Swipe ahead to leap',
     hintTouch: 'Swipe to steer · Swipe ahead to leap · Tap ⏸ to nap',
+    // Watching (Watch AIs, or after you're out): nothing of yours to steer.
+    hintWatch: '1, 2, 4 set the speed · Space naps · Enter plays · H opens the Hall of Fame · M mutes · N toggles the music',
+    hintWatchTouch: 'The speed buttons set 1×, 2× or 4× · Tap ⏸ to nap',
     rivals: ['Your rivals today:', 'Up on the log with you:', 'Sharing your bark:'],
     spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
     go: ['Slither!', 'Off you go.', 'Mind the edges.'],
@@ -191,6 +194,7 @@
   // The clock the board's own effects run on (tongues, beetles, particles,
   // weather): the frame clock, but at 2x or 4x when you're watching that fast.
   let boardClock = performance.now();
+  let helpText = ''; // (the help under the board, as last written)
   let swipeTold = false, swipedToStart = false; // (the first Go on a short phone has said how to steer; unless you swiped to start)
   let beatsLeft = 0, beatTimer = 0, waking = false; // (waking: the one beat back from a nap)
   let freezeUntil = 0, pendingCard = null, cardAt = 0; // times on the frame clock (rAF timestamps)
@@ -1288,6 +1292,7 @@
     // During a round the page holds still under your fingers (see the swipes).
     document.documentElement.classList.toggle('playing', (state === 'running' || state === 'countdown') && playerAlive());
     document.documentElement.classList.toggle('in-round', state === 'running' || state === 'countdown');
+    if (helpEl) updateHelp(); // (watching or playing: the help says what you can do)
   }
 
   function setSpeed(n) {
@@ -2167,9 +2172,11 @@
   }
 
   // The controls under the board (online there's no napping or starting over).
+  // The help under the board, for what you can do now (written only when it changes).
   function updateHelp() {
-    if (online) setHint(helpEl, touchFirst ? FLAVOR.hintOnlineTouch : FLAVOR.hintOnline);
-    else setHint(helpEl, touchFirst ? FLAVOR.hintTouch : FLAVOR.hintKeys);
+    const watching = !online && (state === 'running' || state === 'countdown' || state === 'paused') && !playerAlive();
+    const text = online ? (touchFirst ? FLAVOR.hintOnlineTouch : FLAVOR.hintOnline) : watching ? (touchFirst ? FLAVOR.hintWatchTouch : FLAVOR.hintWatch) : (touchFirst ? FLAVOR.hintTouch : FLAVOR.hintKeys);
+    if (text !== helpText) { helpText = text; setHint(helpEl, text); }
   }
 
   // Hints wrap only between items ("Space naps" never splits across lines).
