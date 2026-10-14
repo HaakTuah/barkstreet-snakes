@@ -1232,19 +1232,15 @@ window.SnakeRender = (() => {
     // A held corpse presses its head a little into whatever it hit.
     if (impact) { pts[0] += s.dir.x * CELL * impact; pts[1] += s.dir.y * CELL * impact; }
     // Leaping: the head rises over what it's hopping as it takes off, and
-    // comes down on the far side the next tick, the neck after it (its shadow
-    // stays on the bark).
+    // comes down on the far side the next tick. Seen from above, rising is
+    // coming toward you, so it's scale (see below), not a lift up the screen
+    // (that read as a lunge or a flinch, depending on the heading); its
+    // shadow pulls away on the bark. With reduced motion: a still pose in the
+    // air for the leap's two ticks (being in the air is a rule, so it shows).
     a.rise = 0;
-    if (!dead && !reduced && game) {
-      const k = Math.min(1, alpha);
-      a.rise = a.leapTick === game.tick ? Math.sin(k * Math.PI / 2) : a.leapTick + 1 === game.tick ? Math.cos(k * Math.PI / 2) : 0;
-      if (a.rise > 0) {
-        const up = a.rise * CELL * (a.leapGold ? 0.9 : 0.7);
-        a.groundX = pts[0]; a.groundY = pts[1];
-        pts[1] -= up;
-        if (n > 1) pts[3] -= up * 0.55;
-        if (n > 2) pts[5] -= up * 0.2;
-      }
+    if (!dead && game) {
+      const k = Math.min(1, alpha), up = a.leapTick === game.tick, down = a.leapTick + 1 === game.tick;
+      a.rise = reduced ? (up || down ? 1 : 0) : up ? Math.sin(k * Math.PI / 2) : down ? Math.cos(k * Math.PI / 2) : 0;
     }
     // Just crashed: the head lunges into what it hit, and bounces back.
     const hit = a.crashAt ? (now - a.crashAt) / 260 : 1;
@@ -1255,6 +1251,8 @@ window.SnakeRender = (() => {
     const bite = (lastNow - a.ateAt) / T.BITE_MS;
     a.bump = !dead && bite >= 0 && bite < 1 ? (a.gulpR > T.GULP ? 0.2 : 0.12) * Math.sin(bite * Math.PI) : 0;
     for (let i = 0; i < n; i++) a.rad[i] = radius(i, n, a, a.tickPos);
+    a.swell = a.rise * (a.leapGold ? T.LEAP_SWELL_GOLD : T.LEAP_SWELL); // (the head and neck swell along their path at the top of the arc)
+    if (a.swell) { a.rad[0] *= 1 + a.swell; if (n > 1) a.rad[1] *= 1 + a.swell * 0.55; if (n > 2) a.rad[2] *= 1 + a.swell * 0.2; }
     fillsOf(s, a, now);
     return a;
   }
@@ -1459,22 +1457,20 @@ window.SnakeRender = (() => {
       }
     }
     if (x0 > x1) return;
-    veilOn(2, 4, x0 - CELL, y0 - CELL, x1 + CELL, y1 + CELL);
+    veilOn(2, 4, x0 - CELL * 2, y0 - CELL * 2, x1 + CELL * 2, y1 + CELL * 2);
     ctx.fillStyle = '#000000';
     for (const s of live) {
-      const a = anim.get(s), offs = a.offs || OFFS;
+      const a = anim.get(s), offs = a.offs || OFFS, away = a.rise * CELL * 0.45; // (in the air: the head's shadow falls further off, away from the light)
+      if (away) { a.pts[0] += away; a.pts[1] += away * 1.3; if (a.n > 1) { a.pts[2] += away * 0.5; a.pts[3] += away * 0.65; } }
       for (let j = 0; j < offs.length; j++) {
         const ox = offs[j][0], oy = offs[j][1];
         if (ox || oy) ctx.translate(ox, oy);
         bodyFills(a, 0);
         if (ox || oy) ctx.translate(-ox, -oy);
       }
+      if (away) { a.pts[0] -= away; a.pts[1] -= away * 1.3; if (a.n > 1) { a.pts[2] -= away * 0.5; a.pts[3] -= away * 0.65; } }
     }
     veilOff(0.3);
-    for (const s of live) { // (in the air: its shadow on the bark below)
-      const a = anim.get(s), offs = a.offs || OFFS;
-      if (a.rise > 0) for (let j = 0; j < offs.length; j++) shadowAt(a.groundX + 2 + offs[j][0], a.groundY + CELL * 0.3 + offs[j][1], 1.1 - 0.4 * a.rise);
-    }
   }
   // One snake's shadow on its own, as one translucent path (a corpse: it may
   // be fading, and it's drawn with its body).
@@ -1494,30 +1490,37 @@ window.SnakeRender = (() => {
   const MARKS = { '#fde047': 'spots', '#c4b5fd': 'rings', '#7dd3fc': 'dots' };
   const markOf = color => MARKS[color] || '';
   // Holding a golden power: golden leaps or dashes, or the edges wrapping
-  // round for it (flickering in its last two seconds).
-  const powered = s => s.leaps > 0 || s.dashes > 0 || (s.wrapUntil > game.time && (reduced || s.wrapUntil - game.time > 2000 || Math.floor(lastNow / 120) % 2 === 0));
+  // round for it (fading calmly over its last WRAP_WARN_MS: no strobe).
+  const powered = s => s.leaps > 0 || s.dashes > 0 || s.wrapUntil > game.time;
+  const poweredFade = s => s.leaps > 0 || s.dashes > 0 ? 1 : Math.max(0, Math.min(1, (s.wrapUntil - game.time) / T.WRAP_WARN_MS));
   function drawOutline(s, a) {
-    if (powered(s)) { // a faint golden outline, breathing, until it's spent
-      ctx.fillStyle = rgba('#fbbf24', reduced ? 0.45 : 0.35 + 0.15 * Math.sin(lastNow / 260));
-      silhouette(a, 5.5);
+    const mine = a.isPlayer && s.id === viewerId;
+    if (mine) { // (your soft halo, so you find yourself at a glance)
+      ctx.strokeStyle = 'rgba(255,251,234,0.3)';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = CELL * 1.34;
+      spine(a);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,251,234,0.3)';
+      circle(a.pts[0], a.pts[1], CELL * 0.78);
+    }
+    const own = a.isPlayer ? (mine ? 3.5 : 2.5) : a.rim ? 1.5 : 0; // (the outline it has anyway)
+    if (powered(s)) { // a golden power: a thin, opaque gold line round its own outline, inked outside so it reads on any colour
+      const was = ctx.globalAlpha;
+      ctx.globalAlpha = was * poweredFade(s);
+      ctx.fillStyle = INK;
+      outlineFills(a, own + 3.9);
+      ctx.fillStyle = '#f2c94c';
+      outlineFills(a, own + 2.5);
+      ctx.globalAlpha = was;
     }
     if (a.isPlayer) {
-      const mine = s.id === viewerId;
-      if (mine) {
-        ctx.strokeStyle = 'rgba(255,251,234,0.3)';
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.lineWidth = CELL * 1.34;
-        spine(a);
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(255,251,234,0.3)';
-        circle(a.pts[0], a.pts[1], CELL * 0.78);
-      }
       ctx.fillStyle = mine ? '#fffef8' : FRIEND_OUTLINE;
-      outlineFills(a, mine ? 3.5 : 2.5);
+      outlineFills(a, own);
     } else if (a.rim) {
       ctx.fillStyle = RIM;
-      outlineFills(a, 1.5);
+      outlineFills(a, own);
     }
   }
   // An opaque outline: fast separate fills, unless it's being drawn see-through
@@ -1649,33 +1652,42 @@ window.SnakeRender = (() => {
     ctx.translate(pts[0], pts[1]);
     const dizzy = !dead && s.stunUntil > game.tick; // (stunned: its head wobbles, and stars go round it)
     ctx.rotate(Math.atan2(a.hs, a.hc) + (dizzy && !reduced ? Math.sin(now / 45) * 0.16 : 0));
-    ctx.scale(1.1 * (1 + a.bump), 1.1 * (1 + a.bump));
+    const faceScale = 1.1 * (1 + a.bump) * (1 + a.swell);
+    ctx.scale(faceScale, faceScale);
     if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
     else drawFace(s, look, color, blinking, a);
     ctx.restore();
 
-    const wrapLeft = game ? s.wrapUntil - game.time : 0;
-    if (!dead && (s.leaps > 0 || s.dashes > 0 || wrapLeft > 0)) { // a golden ring round the head: a pip for each leap (round) or dash (a diamond); wrapping, it runs down
-      const t = reduced ? 0 : now / 1000, rr = CELL * (0.66 + 0.04 * Math.sin(t * 3));
-      ctx.strokeStyle = 'rgba(251,191,36,0.75)';
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(pts[0], pts[1], rr, 0, TAU); ctx.stroke();
-      if (wrapLeft > 0) { // (the edges wrap: a bright arc for the time left)
-        ctx.strokeStyle = '#fef08a';
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(pts[0], pts[1], rr + 3, -Math.PI / 2, -Math.PI / 2 + TAU * Math.min(1, wrapLeft / T.WRAP_MS)); ctx.stroke();
-      }
-      ctx.fillStyle = '#fde047';
-      ctx.strokeStyle = 'rgba(58,38,20,0.8)';
-      ctx.lineWidth = 1.2;
-      const pips = s.leaps || s.dashes;
+    // Golden powers held: a pip for each (round for a leap, a diamond for a
+    // dash) on a short arc behind the head, turned with it. The gold outline
+    // carries the glow; no ring of its own.
+    const pips = dead ? 0 : s.leaps || s.dashes;
+    if (pips) {
+      const back = Math.atan2(a.hs, a.hc) + Math.PI, rr = (rad[0] + CELL * 0.2) * (1 + a.swell * 0.5), pr = CELL * 0.11;
+      ctx.fillStyle = '#fde68a';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 1.3;
       for (let i = 0; i < pips; i++) {
-        const a2 = -Math.PI / 2 + (i - (pips - 1) / 2) * 0.5, px = pts[0] + Math.cos(a2) * rr, py = pts[1] + Math.sin(a2) * rr, pr = CELL * 0.11;
+        const a2 = back + (i - (pips - 1) / 2) * 0.55, px = pts[0] + Math.cos(a2) * rr, py = pts[1] + Math.sin(a2) * rr;
         ctx.beginPath();
         if (s.leaps) ctx.arc(px, py, pr, 0, TAU);
         else { ctx.moveTo(px, py - pr * 1.3); ctx.lineTo(px + pr, py); ctx.lineTo(px, py + pr * 1.3); ctx.lineTo(px - pr, py); ctx.closePath(); }
         ctx.fill(); ctx.stroke();
       }
+    }
+    // Your own leap coming back: a thin arc round your head, filling as it
+    // cools (it closes into the ready flash). Where you're looking, not only
+    // on your tag.
+    if (!dead && s.id === viewerId && !s.leaps && !s.dashes && s.body.length > T.MIN_LENGTH && game && game.time < s.leapReadyAt) {
+      const k = Math.max(0, 1 - (s.leapReadyAt - game.time) / T.LEAP_COOLDOWN_MS), a0 = -Math.PI / 2, rr = rad[0] + CELL * 0.22;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(pts[0], pts[1], rr, a0, a0 + TAU * k);
+      ctx.strokeStyle = 'rgba(58,38,20,0.6)';
+      ctx.lineWidth = 3.6;
+      ctx.stroke();
+      ctx.strokeStyle = '#fffbea';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
     }
     if (!dead && a.readyAt && now - a.readyAt < 450 && !reduced) { // its leap's back: a ring of light, going out
       const k = (now - a.readyAt) / 450;
@@ -1684,7 +1696,7 @@ window.SnakeRender = (() => {
       ctx.beginPath(); ctx.arc(pts[0], pts[1], CELL * (0.6 + 0.9 * k), 0, TAU); ctx.stroke();
     }
     if (dizzy) { // a faint halo, and three stars going round on it
-      const t = reduced ? 0 : now / 240, cy = Math.max(CELL * 0.3, pts[1] - CELL * 0.72);
+      const t = reduced ? 0 : now / 240, cy = Math.max(CELL * 0.3, pts[1] - CELL * (pips ? 0.95 : 0.72)); // (higher when pips show, clear of them)
       ctx.strokeStyle = 'rgba(253,224,71,0.45)';
       ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.ellipse(pts[0], cy, CELL * 0.55, CELL * 0.18, 0, 0, TAU); ctx.stroke();
@@ -4608,8 +4620,8 @@ window.SnakeRender = (() => {
 
     if (corpses.length) drawCorpses(alpha, now);
     drawWrapEdges(now);
+    if (streaks.length) drawStreaks(now); // (under the snakes: beside the dasher, never through it)
     drawSnakes(alpha, now);
-    if (streaks.length) drawStreaks(now); // (over the body it's just covered: a blur of speed)
     drawFieldHues(now);
     drawTarget(alpha, now);
     drawRain(now);
@@ -4786,7 +4798,8 @@ window.SnakeRender = (() => {
         const h = e.snake.body[0], x0 = e.x * CELL + CELL / 2, y0 = e.y * CELL + CELL / 2, x1 = h.x * CELL + CELL / 2, y1 = h.y * CELL + CELL / 2;
         if (Math.abs(x1 - x0) + Math.abs(y1 - y0) <= CELL * (T.DASH_LENGTH + 0.5)) { // (not across a wrapped edge)
           streaks.push({ x0, y0, x1, y1, at: now });
-          for (let k = 0; k <= 3; k++) spawn(x0 + (x1 - x0) * k / 3, y0 + (y1 - y0) * k / 3, 4, 90, 500, 1.8, '#facc15', '#fffbea');
+          for (let k = 0; k <= 3; k++) spawn(x0 + (x1 - x0) * k / 3, y0 + (y1 - y0) * k / 3, 4, 90, 500, 1.8, '#fde68a', '#fffbea');
+          if (!reduced) for (let k = 0; k < 4; k++) mote(x0 + (Math.random() - 0.5) * CELL * 0.6, y0 + (Math.random() - 0.5) * CELL * 0.6, -(x1 - x0) / len3(x1 - x0, y1 - y0) * 20 + (Math.random() - 0.5) * 10, -(y1 - y0) / len3(x1 - x0, y1 - y0) * 20 - 6, 700, 3 + Math.random() * 2, 2); // (a scuff of dust where it set off)
         }
       } else if (e.type === 'douse') { // a fire put out: a hiss of steam
         const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
@@ -4975,21 +4988,28 @@ window.SnakeRender = (() => {
     }
   }
 
-  // A dash's streak: a tapering golden blur along the way it went, gone in a moment.
+  const len3 = (x, y) => Math.hypot(x, y) || 1;
+  // A dash's streak, under the snakes (over the dasher it ran a line through
+  // its face): a wide wedge of honey light from where it started to the back
+  // of its head, showing either side of the body, and a speed line down each
+  // side, both tapering back to the start; gone in a moment.
   const streaks = []; // { x0, y0, x1, y1, at }
   function drawStreaks(now) {
     for (let i = streaks.length - 1; i >= 0; i--) {
-      const k = streaks[i], t = (now - k.at) / 340;
+      const k = streaks[i], t = (now - k.at) / T.STREAK_MS;
       if (t >= 1 || t < 0) { streaks.splice(i, 1); continue; }
-      const grad = ctx.createLinearGradient(k.x0, k.y0, k.x1, k.y1);
-      grad.addColorStop(0, 'rgba(250,204,21,0)'); grad.addColorStop(1, rgba('#fde047', 0.6 * (1 - t)));
-      ctx.strokeStyle = grad;
-      ctx.lineCap = 'round';
-      ctx.lineWidth = CELL * 0.55 * (1 - 0.5 * t);
-      ctx.beginPath(); ctx.moveTo(k.x0, k.y0); ctx.lineTo(k.x1, k.y1); ctx.stroke();
-      ctx.lineWidth = CELL * 0.14 * (1 - t);
-      ctx.strokeStyle = rgba('#fffbea', 0.7 * (1 - t));
-      ctx.stroke();
+      const dx = k.x1 - k.x0, dy = k.y1 - k.y0, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
+      const ex = k.x1 - ux * CELL * 0.35, ey = k.y1 - uy * CELL * 0.35; // (the back of its head)
+      const wedge = (off, w) => { // (a point at the start, w either side of off at the end)
+        ctx.moveTo(k.x0 + nx * off, k.y0 + ny * off);
+        ctx.lineTo(ex + nx * (off + w), ey + ny * (off + w));
+        ctx.lineTo(ex + nx * (off - w), ey + ny * (off - w));
+        ctx.closePath();
+      };
+      ctx.fillStyle = rgba('#fde68a', 0.35 * (1 - t));
+      ctx.beginPath(); wedge(0, CELL * 0.62); ctx.fill();
+      ctx.fillStyle = rgba('#fffbea', 0.9 * (1 - t));
+      ctx.beginPath(); wedge(-CELL * 0.6, CELL * 0.07 * (1 - 0.5 * t)); wedge(CELL * 0.6, CELL * 0.07 * (1 - 0.5 * t)); ctx.fill();
     }
   }
 

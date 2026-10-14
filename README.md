@@ -24,7 +24,7 @@ A snake game on a mossy log: you against three AI rivals on a fallen log in the 
 
 ### Leaping
 
-**Press ahead** (the way you're already going; on a phone, swipe ahead) to leap: with a body, a hole or fire right in front of you and room beyond, you hop over it, two cells in two ticks. It costs the tip of your tail and needs 4 seconds before the next (the `⤴` on your tag lights up when it's ready). With golden leaps or dashes (below), the same press uses those instead; you hold one of the two at a time (the newest replaces the other). A golden mushroom's wrap is a while, not a press: it comes on top of either, and with only the wrap, pressing ahead is the plain leap. Anyone holding one glows faintly gold. The rivals leap, dash and wrap too, by the same rules.
+**Press ahead** (the way you're already going; on a phone, swipe ahead) to leap: with a body, a hole or fire right in front of you and room beyond, you hop over it, two cells in two ticks. It costs the tip of your tail and needs 4 seconds before the next (a thin arc round your head fills as it comes back, and your tag's leap chip fills with it). With golden leaps or dashes (below), the same press uses those instead; you hold one of the two at a time (the newest replaces the other). A golden mushroom's wrap is a while, not a press: it comes on top of either, and with only the wrap, pressing ahead is the plain leap. Anyone holding one wears a thin gold outline, with a pip behind its head for each golden leap or dash. The rivals leap, dash and wrap too, by the same rules.
 
 ### Food
 

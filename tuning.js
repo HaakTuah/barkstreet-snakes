@@ -62,6 +62,9 @@ window.TUNING = Object.freeze({
   HUNGER_WARN_MS: 6000,     // warn you when this much time is left (half again as early at your smallest)
   LESSON_HOLD_MS: 2500,     // a banner that teaches a rule holds at least this long before routine news may replace it
   WRAP_WARN_MS: 2000,       // the edges' wrap: a warning, and the glow fading, this long before it ends
+  LEAP_SWELL: 0.38,         // in the air, the head swells this much at the top of a leap (seen from above, rising is coming toward you)...
+  LEAP_SWELL_GOLD: 0.5,     // ...and a golden leap's, this much
+  STREAK_MS: 340,           // a dash's speed lines fade over this long
 
   // ----------------------------------------------------------------- speed
   OPENING_TICK: 170,        // the first ticks of a round are slower, so the start is forgiving...
