@@ -91,8 +91,8 @@
               <button id="start">Play</button>
               <button id="watch" class="secondary" hidden>Watch</button>
               <button id="friends" class="text-button" type="button" hidden>Play with friends</button>
+              <p id="hint" class="hint" hidden></p>
             </div>
-            <p id="hint" class="hint" hidden></p>
           </div>
         </div>
         <div id="toast" class="toast" aria-hidden="true" hidden></div>
@@ -109,7 +109,7 @@
     <section class="chatter" aria-label="Bark chatter">
       <div class="chatter-head">
         <span id="chatter-label">Bark chatter</span>
-        <button id="chatter-toggle" class="small" role="switch" aria-checked="true" aria-labelledby="chatter-label chatter-toggle">On</button>
+        <button id="chatter-toggle" class="small" role="switch" aria-checked="true" aria-labelledby="chatter-label"><span aria-hidden="true">On</span></button>
       </div>
       <ul id="chatlog" class="chatlog"></ul>
     </section>

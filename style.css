@@ -208,8 +208,9 @@ header { min-width: 0; }
 }
 
 .opponents .tap-tip { display: none; }
-.scoreboard li[role="button"] { cursor: pointer; }
-.scoreboard li:focus-visible { outline: 2px solid var(--honey, #fde68a); outline-offset: 2px; }
+.card.beat .opponents .tap-tip { display: none !important; } /* (a second's countdown: no time to tap, and taps steer) */
+.scoreboard button.name { padding: 0; border: 0; border-radius: 4px; background: none; box-shadow: none; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: none; }
+.scoreboard button.name:active { transform: none; box-shadow: none; }
 .scoreboard .name { flex: 1 1 auto; min-width: 2.2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .scoreboard .len { flex: none; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; } /* (the crown and the number on one line) */
 /* Powers: a chip (6 px, like everything small) with an ink icon and a count.
@@ -241,6 +242,7 @@ header { min-width: 0; }
 .scoreboard .pow.small { color: var(--ink-soft); }
 .scoreboard .pow.gold { background: #fde68a; box-shadow: inset 0 0 0 1px #d4a017; }
 .scoreboard .pow.wrap { box-shadow: inset 0 0 0 1.5px #d4a017; }
+.scoreboard .pow.wrap:not(.gold):not(.mine) { background: #fef3c7; } /* (a rival wrapping: a golden power, so gold, not a greyed-out chip) */
 /* A narrow tag: the chip is just its icons (the board's pips and the screen
    reader's words still give the count), so the name keeps its letters. */
 .scoreboard li { container: tag / inline-size; }
@@ -251,9 +253,12 @@ main { container: page / inline-size; }
 @container page (max-width: 660px) {
   .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@container tag (max-width: 160px) {
+@container tag (max-width: 175px) {
   .scoreboard .pow b { display: none; }
-  .scoreboard .pow { padding-inline: 3px; }
+  .scoreboard .pow { padding-inline: 3px; flex-shrink: 0; min-width: min-content; }
+  .scoreboard .pow > svg ~ .w { display: none; } /* (two powers: the first one's icon; the wrap shows on the board, as the gold outline) */
+  .scoreboard li.leader .len::before { display: none; } /* (the leader's gold ring says it) */
+  .scoreboard .name { font-size: 0.86rem; }
 }
 
 /* Hunger: a thin bar along the bottom of each tag (scaled, never resized). */
@@ -360,7 +365,7 @@ main { container: page / inline-size; }
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  box-shadow: 0 0 0 3px var(--glow, #fde68a), 0 0 30px 8px var(--glow, #fde68a), inset 0 0 26px 6px var(--glow, #fde68a);
+  box-shadow: 0 0 0 3px var(--glow, #fde68a), 0 0 12px 2px var(--glow, #fde68a), inset 0 0 26px 6px var(--glow, #fde68a); /* (a short outer glow: a long one washed the tags above with "knocked out" red) */
 }
 
 /* Leaves rest on the frame's corners and never reach the bark's cells. */
@@ -459,6 +464,7 @@ canvas {
 
 /* The buttons stay in view when a card is taller than the board (they stick to its bottom edge). */
 .buttons .text-button { flex-basis: 100%; margin: 2px auto 0; }
+.buttons .hint { flex-basis: 100%; } /* (in the sticky row with the buttons: always in view, even on a card that scrolls) */
 /* The main button calls you: a ring ripples out from it, over and over. It's
    a pill of light just behind the button, growing out from under it about
    12px and fading: transform and opacity only, so the compositor runs it and
@@ -627,7 +633,7 @@ canvas {
 @keyframes throb { to { background: #fecaca; } }
 .toast[data-kind="beetle"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #059669; }
 .toast[data-kind="bird"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #ea580c; }
-.toast[data-kind="you"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #e0b23a; }
+.toast[data-kind="you"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #84cc16; } /* (yours: your green, not a gold that isn't a power) */
 .toast[data-kind="gold"] { background: linear-gradient(180deg, #fffbea, #fde68a); box-shadow: 0 0 20px rgba(253, 230, 138, 0.65), inset 0 0 0 2px #d4a017; }
 .toast[data-kind="gold"]::after {
   content: '';
@@ -736,7 +742,7 @@ canvas {
 .chatlog strong { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
 
 .help { margin: 12px 0 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
-.hint span, .help span, #overlay-text span { white-space: nowrap; } /* (each item whole: a line breaks only after an item's dot) */
+.hint span, .help span, #overlay-text span.whole { white-space: nowrap; } /* (each item whole, a line breaking only after its dot; a long reason may wrap, rather than run off a phone's card) */
 .sep { font-style: normal; }
 .glyph { display: inline-block; width: 0.62em; height: 0.78em; vertical-align: -0.06em; fill: currentColor; } /* (the pause button's own bars, not a font's) */
 
@@ -878,6 +884,7 @@ button.link:active { transform: none; }
 @container (max-height: 300px) {
   .card h2 { font-size: 1.25rem; }
   .flavor { display: none !important; }
+  .opponents .tap-tip { display: none !important; } /* (the hint needs the room: how to steer comes first) */
   /* Just the first two items of the hint ("Swipe to steer · Swipe ahead to leap"): a new player has to be told that much. */
   .card p.hint { font-size: 0.72rem; margin-top: 4px !important; }
   .hint span:nth-of-type(n+3) { display: none; }
@@ -906,6 +913,7 @@ button.link:active { transform: none; }
   main { max-width: min(760px, max(240px, calc(100vh - 190px))); max-width: min(760px, max(240px, calc(100dvh - 190px))); }
   /* The Hall of Fame as a trophy, so the header stays one row high. */
   .trophy { min-width: 34px; padding: 0 8px; justify-content: center; }
+  .scoreboard li { padding-inline: 7px; gap: 4px; } /* (two tags a row: every letter of a name counts) */
   .trophy svg { display: block; }
   .trophy .trophy-text { display: none; }
   .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -930,14 +938,11 @@ button.link:active { transform: none; }
   .bar-row { grid-template-columns: 100px 1fr 28px; } /* ("Edge & holes" on one line) */
 }
 
+/* The smallest phones. The Hall of Fame takes more of the screen, so the
+   names have room (they were cut to three letters) and each tab is one line. */
 @media (max-width: 360px) {
   h1 { font-size: 1.45rem; }
   .hud .stat { font-size: 0.9rem; }
-}
-
-/* The smallest phones: the Hall of Fame takes more of the screen, so the
-   names have room (they were cut to three letters) and each tab is one line. */
-@media (max-width: 360px) {
   .records { padding: 8px; }
   .records-card { padding: 12px; }
   .records-head .tab { padding-inline: 10px; white-space: nowrap; }
