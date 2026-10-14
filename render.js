@@ -908,6 +908,7 @@ window.SnakeRender = (() => {
   const FLOAT_FONT = `700 ${Math.round(CELL * 0.72)}px Fredoka, system-ui, sans-serif`;
   const FLOAT_FILL = { 'KO!': '#f87171', 'Crunch!': '#f87171', 'Boom!': '#f87171', 'Fwoosh!': '#fb923c', 'Bonk!': '#fdba74', 'Ouch!': '#fdba74', '-1': '#fca5a5', '-2': '#fca5a5', '-3': '#fca5a5' }; // (the rest in honey)
   const GROWN = ['', '+1', '+2', '+3', '+4', '+5']; // (what a bite was worth, without building a string)
+  const FLOAT_TOP = CELL * 1.3, FLOAT_LOW = SIZE - CELL * 0.5; // (a word starts between these, so it can rise and stay on the board)
   const drawFloat = (g, text) => {
     g.font = FLOAT_FONT;
     g.textAlign = 'center';
@@ -983,7 +984,7 @@ window.SnakeRender = (() => {
         // This frame's layout (see prepare): segment centres, the corner each
         // band bends through, radii and fills, sized for the body as it grows.
         n: 0, pts: new Float32Array(64), cor: new Float32Array(64), rad: new Float32Array(32), fills: new Array(32),
-        look: '', color: '', isPlayer: false, rim: false, bump: 0, tickPos: 0,
+        look: '', color: '', isPlayer: false, rim: false, bump: 0, tickPos: 0, lean: 0,
       };
       anim.set(s, a);
     }
@@ -1122,10 +1123,12 @@ window.SnakeRender = (() => {
 
   // Turn the eyes toward the focus (eased on the screen, so a turn of the
   // head doesn't swing them, and at the same speed at any frame rate).
+  // Stunned, with a turn pressed, they look the way it'll go instead.
   function updateGaze(s, look, a, now) {
-    const f = game ? focusOf(s, look, a, now) : null;
+    const q = game ? queuedOf(s) : null, f = game && !q ? focusOf(s, look, a, now) : null;
     let tx = s.dir.x, ty = s.dir.y; // nothing to look at: straight ahead
-    if (f) {
+    if (q) { tx = q.x; ty = q.y; }
+    else if (f) {
       const h = s.body[0], dx = f.x - h.x, dy = f.y - h.y;
       const len = Math.hypot(dx, dy) || 1;
       a.near = len;
@@ -1676,14 +1679,16 @@ window.SnakeRender = (() => {
       a.nextBlink = now + T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN);
     }
     if (!dead) { updateGaze(s, look, a, now); steer(s, a, now); }
-    headCos = a.hc; headSin = a.hs;
+    const dizzy = !dead && s.stunUntil > game.tick; // (stunned: its head wobbles, and stars go round it)
+    const q = dizzy ? queuedOf(s) : null, lean = dead ? 0 : leanOf(s, a, q);
+    if (lean) { const h = Math.atan2(a.hs, a.hc) + lean; headCos = Math.cos(h); headSin = Math.sin(h); }
+    else { headCos = a.hc; headSin = a.hs; }
     gazeX = a.gx * headCos + a.gy * headSin; // the gaze, turned into the face's frame
     gazeY = -a.gx * headSin + a.gy * headCos;
     deadNow = dead;
     ctx.save();
     ctx.translate(pts[0], pts[1]);
-    const dizzy = !dead && s.stunUntil > game.tick; // (stunned: its head wobbles, and stars go round it)
-    ctx.rotate(Math.atan2(a.hs, a.hc) + (dizzy && !reduced ? Math.sin(now / 45) * 0.16 : 0));
+    ctx.rotate(Math.atan2(a.hs, a.hc) + lean + (dizzy && !reduced ? Math.sin(now / 45) * 0.16 : 0));
     const faceScale = 1.1 * (1 + a.bump) * (1 + a.swell);
     ctx.scale(faceScale, faceScale);
     if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
@@ -1727,8 +1732,8 @@ window.SnakeRender = (() => {
       ctx.lineWidth = 3 * (1 - k) + 1;
       ctx.beginPath(); ctx.arc(pts[0], pts[1], CELL * (0.6 + 0.9 * k), 0, TAU); ctx.stroke();
     }
-    if (dizzy) { // a faint halo, and three stars going round on it
-      const t = reduced ? 0 : now / 240, cy = Math.max(CELL * 0.3, pts[1] - CELL * (pips ? 0.95 : 0.72)); // (higher when pips show, clear of them)
+    if (dizzy) { // a faint halo, and three stars going round on it (clear of its pips and the edge: see starsOff)
+      const t = reduced ? 0 : now / 240, so = starsOff(s), cy = pts[1] + so;
       ctx.strokeStyle = 'rgba(253,224,71,0.45)';
       ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.ellipse(pts[0], cy, CELL * 0.55, CELL * 0.18, 0, 0, TAU); ctx.stroke();
@@ -1739,6 +1744,22 @@ window.SnakeRender = (() => {
         const a2 = t + i * TAU / 3;
         star(pts[0] + Math.cos(a2) * CELL * 0.55, cy + Math.sin(a2) * CELL * 0.18, CELL * 0.22);
         ctx.stroke();
+      }
+      // With a turn pressed: a small inked chevron on that side of the head
+      // (past the stars, if they're there; on the board, even pointing off
+      // it), so the press shows as heard, and where it'll take you. (The
+      // eyes look that way too, and the head leans.)
+      if (q) {
+        const d = q.y && (so < 0) === (q.y < 0) ? Math.abs(so) + CELL * 0.62 : CELL * 0.95, w = CELL * 0.2, m = CELL * 0.12;
+        const cx = Math.min(SIZE - m, Math.max(m, pts[0] + q.x * d)), cy2 = Math.min(SIZE - m, Math.max(m, pts[1] + q.y * d));
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx - q.x * w + q.y * w, cy2 - q.y * w + q.x * w);
+        ctx.lineTo(cx, cy2);
+        ctx.lineTo(cx - q.x * w - q.y * w, cy2 - q.y * w - q.x * w);
+        ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.17; ctx.stroke();
+        ctx.strokeStyle = '#fffbea'; ctx.lineWidth = CELL * 0.09; ctx.stroke();
       }
     }
 
@@ -1757,6 +1778,40 @@ window.SnakeRender = (() => {
     }
   }
   const DASH = [3, 3], NO_DASH = [], MOOD_DASH = [5, 7];
+
+  // Where a stunned snake's stars go round, as an offset down the screen
+  // from its head: above it, as in any cartoon, unless that's where its pips
+  // are (heading down, they're behind it) or off the board; then below it.
+  // With its pips below and the edge above, below past its pips. Judged by
+  // its cell and the way it's going, which a stun doesn't change, so they
+  // never jump sides mid-stun. (Bonk! keeps clear of them: see onTick.)
+  const STAR_REACH = CELL * 0.42; // (how far the stars reach up and down from their centre)
+  function starsOff(s) {
+    const pips = s.leaps || s.dashes, hy = s.body[0].y * CELL + CELL / 2;
+    let past = 0;
+    for (let sgn = -1; sgn <= 1; sgn += 2) {
+      const behind = pips && s.dir.y === -sgn; // (its pips are on this side)
+      const off = sgn * CELL * (behind ? 1.32 : pips && !s.dir.y ? 0.95 : 0.72); // (higher when pips show beside its head)
+      if (hy + off < STAR_REACH || hy + off > SIZE - STAR_REACH) continue;
+      if (!behind) return off;
+      past ||= off;
+    }
+    return past || -CELL * 0.72;
+  }
+
+  // Stunned, with a turn pressed (q): the head leans a little the way it'll
+  // go (the eyes look there: see updateGaze; and a chevron shows it: see
+  // drawBody), so you can see the press was heard. Eased; held still with
+  // reduced motion (it's news, not wobble).
+  const LEAN = 0.38;
+  function leanOf(s, a, q) {
+    const to = q ? (s.dir.x * q.y - s.dir.y * q.x) * LEAN : 0;
+    a.lean = reduced ? to : a.lean + (to - a.lean) * (1 - Math.exp(-frameDt / 60));
+    return Math.abs(a.lean) < 0.002 ? 0 : a.lean;
+  }
+  // The turn your snake will take when its stun's over, if you've pressed one.
+  // (Yours only: it answers your press, and online a friend's press is theirs to know.)
+  const queuedOf = s => s.id === viewerId && s.stunUntil > game.tick && s.queue?.length ? s.queue[0] : null;
 
   // Marble veins across a disc (centre x, y, radius r), their own way for
   // each segment i: a long wandering one and a short faint one beside it,
@@ -4672,6 +4727,7 @@ window.SnakeRender = (() => {
     drawSnakes(alpha, now);
     drawFieldHues(now);
     drawTarget(alpha, now);
+    drawRefusal(now);
     drawRain(now);
     drawSnow(now);
     drawEmbers(now);
@@ -4777,6 +4833,25 @@ window.SnakeRender = (() => {
     return f;
   }
 
+  // A leap that can't go: a quick inked × on what it couldn't hop, so the
+  // press shows as heard, and refused (yours only: it answers your press, as
+  // the thunk does). It pops in; with reduced motion it's simply there. Both fade.
+  const REFUSE_MS = 320;
+  const refusal = { x: 0, y: 0, at: -1e9, tick: -1 };
+  function drawRefusal(now) {
+    const t = (now - refusal.at) / REFUSE_MS;
+    if (t < 0 || t >= 1) return;
+    const x = refusal.x, y = refusal.y, d = CELL * 0.24 * (reduced ? 1 : 1 + 0.4 * Math.max(0, 1 - t * 5));
+    ctx.globalAlpha = t < 0.6 ? 1 : (1 - t) / 0.4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x - d, y - d); ctx.lineTo(x + d, y + d);
+    ctx.moveTo(x + d, y - d); ctx.lineTo(x - d, y + d);
+    ctx.strokeStyle = INK; ctx.lineWidth = 7.5; ctx.stroke();
+    ctx.strokeStyle = '#fffbea'; ctx.lineWidth = 3.6; ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
   // Call after every tick, with that tick's events: sets off pops, gulps and puffs.
   function onTick(events) {
     if (!game) return;
@@ -4832,11 +4907,39 @@ window.SnakeRender = (() => {
         const other = e.killerId != null ? game.snakes[e.killerId] : null, col = other ? colorOf(other) : '';
         if (other && col[0] === '#') spawn(px, py, 12, 220, 480, 2.6, col, '#fffbea');
         else spawn(px, py, 12, 220, 480, 2.6, '#c08a4a', '#3b2412'); // (chips of bark)
-        // (at the point of impact, clear of the stars over its head)
-        floater(px + s.dir.x * CELL * 0.4 + (s.dir.y < 0 ? CELL * 1.2 : 0), Math.max(CELL * 1.3, py + s.dir.y * CELL * 0.4), 'Bonk!');
+        // Bonk! at the point of impact, and your -N over your head, behind
+        // it, each kept clear of the stars, a refused leap's × and the edges:
+        // - with the stars or the × on the point of impact, or no room there
+        //   for the word, Bonk! steps aside (heading up or down, to the
+        //   roomier side; heading across, away from the stars);
+        // - with no room there to rise and stay on the board, it goes beside
+        //   the head instead, a little further out (along the row, heading across);
+        // - and a -N the top edge would push down (onto Bonk!, the neck and
+        //   the stars, where they read as one word) goes under Bonk!.
+        const hx = h.x * CELL + CELL / 2, hy = h.y * CELL + CELL / 2, dx = s.dir.x, dy = s.dir.y, side = hx < SIZE / 2 ? 1 : -1;
+        const stars = starsOff(s), refused = s.id === viewerId && refusal.tick === game.tick, half = floatHalfOf('Bonk!');
+        let bx = px + dx * CELL * 0.4, by = py + dy * CELL * 0.4;
+        if (dy && (refused || (stars < 0) === (dy < 0))) bx += side * CELL * 1.2;
+        else if (dx && (refused || bx < half || bx > SIZE - half)) by += stars < 0 ? CELL : -CELL;
+        if (by < FLOAT_TOP || by > FLOAT_LOW) {
+          const on = dx && hx + dx * CELL * 1.9 > half && hx + dx * CELL * 1.9 < SIZE - half; // (room on along the row)
+          bx = hx + (dx ? (on ? dx : -dx) : side) * CELL * 1.9;
+          by = Math.min(FLOAT_LOW, Math.max(FLOAT_TOP, hy));
+        }
+        floater(bx, by, 'Bonk!');
         if (s.id === viewerId) {
-          if (e.lost >= 1 && e.lost <= 3) floater(h.x * CELL + CELL / 2 - s.dir.x * CELL * 1.2, Math.max(CELL * 1.3, h.y * CELL - CELL * 1.4), '-' + e.lost);
+          if (e.lost >= 1 && e.lost <= 3) {
+            const under = hy - CELL * 1.9 < FLOAT_TOP;
+            floater(under ? bx : hx - dx * CELL * 1.2, under ? by + CELL * 0.85 : hy - CELL * 1.9, '-' + e.lost);
+          }
           if (!reduced) shake(4);
+        }
+      } else if (e.type === 'fizzle') { // asked to leap, and it couldn't: refused, on what it couldn't hop (and then ran into)
+        const s = e.snake, h = s.prev?.[0] || s.body[0];
+        if (s.id === viewerId) {
+          refusal.x = ((h.x + s.dir.x + GRID) % GRID) * CELL + CELL / 2;
+          refusal.y = ((h.y + s.dir.y + GRID) % GRID) * CELL + CELL / 2;
+          refusal.at = now; refusal.tick = game.tick;
         }
       } else if (e.type === 'leap') { // up and over: a puff of dust where it took off (and gold, for a golden leap)
         const a = animOf(e.snake, now), h = e.snake.body[e.reach || 1] || e.snake.body[0];
@@ -5242,6 +5345,7 @@ window.SnakeRender = (() => {
     bolt = null; rainbow = null; dive = null; flashAt = -1e9;
     blasts.length = 0;
     streaks.length = 0;
+    refusal.at = -1e9; refusal.tick = -1;
     timeFrom = timeAt = shownTime = g.time;
     bird.placed = false; bird.arrivedAt = -1e9;
     for (const k in sky) sky[k] = 0;
