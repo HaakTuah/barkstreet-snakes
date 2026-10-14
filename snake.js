@@ -271,9 +271,9 @@
   // row), the board draws less, for good: first no canopy shadows and a lower
   // resolution, then the lowest. (Late means half again the shortest frame
   // seen in the window, so 60, 120 and 144 Hz screens are judged alike.)
-  const governor = { frames: 0, late: 0, best: Infinity, dts: [], strikes: 0 };
+  const governor = { frames: 0, late: 0, best: Infinity, dts: [], strikes: 0, pinned: false };
   function govern(dt) {
-    if (state !== 'running' || document.hidden || R.quality === 0 || !game || game.time < 1500 || dt <= 0) return;
+    if (governor.pinned || state !== 'running' || document.hidden || R.quality === 0 || !game || game.time < 1500 || dt <= 0) return;
     governor.dts.push(dt);
     governor.best = Math.min(governor.best, dt);
     if (governor.dts.length < 180) return;
@@ -1886,6 +1886,7 @@
         return state;
       },
       draw: () => R.frame(drawAlpha, boardClock),
+      pinQuality(q) { governor.pinned = true; R.setQuality(q); dirty = true; }, // (benchmarks: the governor stays out of it)
     };
   }
 })();

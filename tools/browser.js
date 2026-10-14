@@ -24,13 +24,14 @@ function findChrome() {
 }
 
 // Serve the game folder; resolves to its base URL.
-function serve() {
+// Serves the game (this repo, or another copy of it: root) on a free local port.
+function serve(root = ROOT) {
   const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.jpg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml' };
   const server = http.createServer((req, res) => {
     let u = decodeURIComponent(req.url.split('?')[0]);
     if (u === '/') u = '/index.html';
-    const file = path.join(ROOT, path.normalize(u));
-    const rel = path.relative(ROOT, file);
+    const file = path.join(root, path.normalize(u));
+    const rel = path.relative(root, file);
     if (rel.startsWith('..') || path.isAbsolute(rel)) { res.writeHead(403); return res.end(); }
     fs.readFile(file, (err, data) => {
       if (err) { res.writeHead(404); return res.end(); }

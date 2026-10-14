@@ -1775,7 +1775,7 @@ window.SnakeRender = (() => {
       a.nextTongue = now + T.TONGUE_EVERY * rate * (keen && a.near <= 3 ? 0.4 : 0.7 + Math.random() * 0.8);
     }
     if (now >= a.tongueUntil || open >= 0.08) return;
-    flickP = 1 - (a.tongueUntil - now) / a.tongueMs;
+    flickP = Math.min(1, Math.max(0, 1 - (a.tongueUntil - now) / a.tongueMs)); // (kept in 0..1, whatever the clock does)
     flickT = 1 - Math.abs(flickP * 2 - 1); // out and back
     if (!draw) return;
     ctx.save();
