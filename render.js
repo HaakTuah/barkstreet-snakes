@@ -1100,12 +1100,15 @@ window.SnakeRender = (() => {
   }
 
   // Mute is a mood ring: its colour follows how it feels, from what anyone
-  // can see on the board. Stunned: dazed grey. Just made a kill: proud pink.
-  // Hemmed in, or a rival's head close: pale with fright. Its victim close:
-  // deep rose (closing the box). Stalking someone: deep violet. Otherwise
-  // calm violet. It changes over a moment, in a few steps. (The moods are
-  // spread in lightness as well as hue, so they read on the bark at a glance.)
-  const MUTE_MOODS = { calm: '#c084fc', stalking: '#5b21b6', closing: '#be123c', scared: '#e0f2fe', proud: '#f472b6', dazed: '#9ca3af' };
+  // can see on the board. Stunned: dazed grey. Just made a kill: proud
+  // orchid. Hemmed in, or a rival's head close: a pale lilac with fright. Its
+  // victim close: deep plum (closing the box). Stalking someone: deep violet.
+  // Otherwise calm lavender. It changes over a moment, in a few steps. (The
+  // moods keep to violets and magentas no other rival wears: as rose it
+  // passed for Sniper or Colonist, white for Ghost, pink for Capricious. And
+  // they're spread in lightness as well as hue, so they read on the bark at
+  // a glance: dark for a hunt, light for a feeling, palest for fear.)
+  const MUTE_MOODS = { calm: '#c084fc', stalking: '#5b21b6', closing: '#86198f', scared: '#ddd6fe', proud: '#e879f9', dazed: '#9ca3af' };
   const muteState = new Map(), muteShown = new Map(); // snake -> { from, to, at, key }; snake -> the colour now
   // ...and its face says it too: the brows (outer end, arch, inner end, along
   // the head: more negative is higher) and, unless it's biting, the mouth.
