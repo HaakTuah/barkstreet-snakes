@@ -82,12 +82,12 @@ window.SnakeRender = (() => {
   let barkLayer = null, staticLayer = null, holesDrawn = 0, sized = false;
   let barkSeed = 7;
 
-  function buildBark() {
+  function buildBark(from = barkSeed) {
     const px = SIZE * k;
     const b = makeLayer(px, px);
     const g = b.getContext('2d');
     g.scale(k, k);
-    let seed = barkSeed;
+    let seed = from;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const dot = (x, y, r) => { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
     g.fillStyle = BARK;
@@ -227,9 +227,9 @@ window.SnakeRender = (() => {
   // (it's all soft, so a low resolution is plenty), drawn stretched over the
   // board and swaying in the wind. Built once per round.
   let shadeLayer = null;
-  function buildShade() {
+  function buildShade(from = barkSeed) {
     const n = 256, s = makeLayer(n, n), g = s.getContext('2d');
-    let seed = barkSeed * 7 + 3;
+    let seed = from * 7 + 3;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < 22; i++) {
       const cx = rnd() * n, cy = rnd() * n;
@@ -416,6 +416,30 @@ window.SnakeRender = (() => {
     g.drawImage(barkLayer, 0, 0);
     holesDrawn = 0;
     scorchDrawn = 0; // (scorch marks are baked again too)
+  }
+
+  // The next round's stretch of log, made ahead: once nothing has been drawn
+  // for a moment (a card is up, or a nap), its bark and leaf shadows are
+  // built in idle time, and the GPU is set to draw them then. Starting a
+  // round just swaps them in (setGame builds them itself if none are ready:
+  // the first round, or the board resized meanwhile).
+  let next = null, nextTimer = 0, lastDrawAt = 0; // next: { seed, k, bark, shade }
+  function wantNext() {
+    if (!next && !nextTimer) nextTimer = setTimeout(nextWhenIdle, 400);
+  }
+  function nextWhenIdle() {
+    nextTimer = 0;
+    if (next || !sized) return;
+    if (performance.now() - lastDrawAt < 350) return wantNext(); // (a round's being drawn: wait for a card)
+    if (window.requestIdleCallback) requestIdleCallback(makeNext, { timeout: 1000 });
+    else makeNext();
+  }
+  function makeNext() {
+    if (next || !sized) return;
+    if (performance.now() - lastDrawAt < 350) return wantNext(); // (drawing again meanwhile)
+    const seed = 1 + Math.floor(Math.random() * 2147483645);
+    next = { seed, k, bark: buildBark(seed), shade: buildShade(seed) };
+    try { window.createImageBitmap?.(next.bark).then(b => b.close(), () => {}); } catch { /* it's drawn when it's used instead */ }
   }
 
   // Draw any holes added since last time onto the static layer (a Set keeps
@@ -4398,6 +4422,7 @@ window.SnakeRender = (() => {
   // alpha: how far the current tick has played out (0..1).
   function frame(alpha, now) {
     if (!game || !sized) return;
+    lastDrawAt = performance.now(); // (the next round's log waits until nothing's drawn)
     if (!staticLayer) resetStatic();
     const dt = lastNow ? Math.min(64, Math.max(0, now - lastNow)) : 16; // (never backwards: a clock a hair behind another)
     lastNow = now;
@@ -4870,6 +4895,7 @@ window.SnakeRender = (() => {
     fieldLooks.clear();
     resetStatic();
     syncHoles();
+    if (next && next.k !== k) { next = null; wantNext(); } // (the next round's log, at this size)
     return true;
   }
 
@@ -4926,11 +4952,12 @@ window.SnakeRender = (() => {
     fieldLooks.clear();
     rgbaCache.clear(); // (bounded anyway: a backstop)
     drifts = null;
-    // A different stretch of log each round.
-    barkSeed = 1 + Math.floor(Math.random() * 2147483645);
-    barkLayer = null;
-    shadeLayer = null;
+    // A different stretch of log each round: made ahead, if it's ready.
+    if (next && next.k === k && sized) { barkSeed = next.seed; barkLayer = next.bark; shadeLayer = next.shade; }
+    else { barkSeed = 1 + Math.floor(Math.random() * 2147483645); barkLayer = null; shadeLayer = null; }
+    next = null;
     resetStatic();
+    wantNext();
   }
 
   return {
