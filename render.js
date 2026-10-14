@@ -830,10 +830,21 @@ window.SnakeRender = (() => {
         py[i] += pvy[i] * step;
         const t = Math.max(0, plife[i] / pmax[i]);
         ctx.globalAlpha = t;
-        if (pshape[i]) { // a scrap of paper, turning over as it falls
+        if (pshape[i]) { // a scrap of paper, spinning and turning over as it falls
           pvx[i] *= 0.985; pvy[i] *= 0.97; // (paper floats)
-          const sz = psize[i], flip = Math.abs(Math.cos(plife[i] / 70 + i));
-          ctx.fillRect(px[i] - sz * flip, py[i] - sz * 0.6, sz * 2 * flip + 0.5, sz * 1.2);
+          const sz = psize[i], turn = Math.cos(plife[i] / 70 + i), spin = plife[i] / 260 + i * 1.3;
+          const ax = Math.cos(spin) * sz, ay = Math.sin(spin) * sz; // (along the scrap)
+          const bx = -Math.sin(spin) * sz * 0.6 * Math.abs(turn), by = Math.cos(spin) * sz * 0.6 * Math.abs(turn); // (across it, thin as it turns edge-on)
+          ctx.beginPath();
+          ctx.moveTo(px[i] - ax - bx, py[i] - ay - by); ctx.lineTo(px[i] + ax - bx, py[i] + ay - by);
+          ctx.lineTo(px[i] + ax + bx, py[i] + ay + by); ctx.lineTo(px[i] - ax + bx, py[i] - ay + by);
+          ctx.fill();
+          if (turn < 0) { // (its back: paler)
+            ctx.globalAlpha = t * 0.45;
+            ctx.fillStyle = '#fffbea';
+            ctx.fill();
+            ctx.fillStyle = PCOLORS[c];
+          }
         } else {
           ctx.beginPath();
           ctx.arc(px[i], py[i], psize[i] * (0.5 + 0.5 * t), 0, TAU);
@@ -851,9 +862,12 @@ window.SnakeRender = (() => {
   const fx = new Float32Array(MAX_F), fy = new Float32Array(MAX_F), flife = new Float32Array(MAX_F);
   const ftext = new Array(MAX_F).fill('');
   const FLOAT_FONT = `700 ${Math.round(CELL * 0.72)}px Fredoka, system-ui, sans-serif`;
-  const FLOAT_FILL = { 'KO!': '#f87171', 'Bonk!': '#fdba74', 'Ouch!': '#fdba74', '-1': '#fca5a5', '-2': '#fca5a5', '-3': '#fca5a5' }; // (the rest in honey)
+  const FLOAT_FILL = { 'KO!': '#f87171', 'Crunch!': '#f87171', 'Boom!': '#f87171', 'Fwoosh!': '#fb923c', 'Bonk!': '#fdba74', 'Ouch!': '#fdba74', '-1': '#fca5a5', '-2': '#fca5a5', '-3': '#fca5a5' }; // (the rest in honey)
+  const GROWN = ['', '+1', '+2', '+3', '+4', '+5']; // (what a bite was worth, without building a string)
   const drawFloat = (g, text) => {
     g.font = FLOAT_FONT;
+    const fit = Math.min(1, CELL * 1.84 / g.measureText(text).width); // (a long word shrinks to fit its sprite)
+    if (fit < 1) g.scale(fit, fit);
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     g.lineJoin = 'round';
@@ -4019,7 +4033,39 @@ window.SnakeRender = (() => {
       ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a + 2.4) * len * 0.8, y + Math.sin(a + 2.4) * len * 0.8);
     }
     ctx.stroke();
+    // ...a darker inside, and a pale rim (inked, so it shows on pale snakes)
+    // closing in on it as the strike nears: to colour-blind eyes the red is
+    // olive on olive bark, but the dark patch and its bracket still read.
+    for (const k of w.target) patch[k] = 1;
+    ctx.globalAlpha = 0.45 + 0.4 * prog;
+    ctx.fillStyle = 'rgba(20,8,2,0.4)';
+    ctx.beginPath();
+    for (const k of w.target) ctx.rect((k % GRID) * CELL, Math.floor(k / GRID) * CELL, CELL, CELL);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    // (the patch's own outline, scaled about its middle: it closes in without crossing itself)
+    let mx = 0, my = 0;
+    for (const k of w.target) { mx += (k % GRID) + 0.5; my += Math.floor(k / GRID) + 0.5; }
+    mx = mx / w.target.length * CELL; my = my / w.target.length * CELL;
+    const z = 1 + 0.6 * (1 - prog), X = v => mx + (v - mx) * z, Y = v => my + (v - my) * z;
+    ctx.beginPath();
+    for (const k of w.target) {
+      const cx = k % GRID, cy = Math.floor(k / GRID), x0 = X(cx * CELL), y0 = Y(cy * CELL), x1 = X((cx + 1) * CELL), y1 = Y((cy + 1) * CELL);
+      if (cy === 0 || !patch[k - GRID]) { ctx.moveTo(x0, y0); ctx.lineTo(x1, y0); }
+      if (cy === GRID - 1 || !patch[k + GRID]) { ctx.moveTo(x0, y1); ctx.lineTo(x1, y1); }
+      if (cx === 0 || !patch[k - 1]) { ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); }
+      if (cx === GRID - 1 || !patch[k + 1]) { ctx.moveTo(x1, y0); ctx.lineTo(x1, y1); }
+    }
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(20,8,2,0.75)';
+    ctx.lineWidth = 4.5;
+    ctx.stroke();
+    ctx.strokeStyle = '#fef3c7';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    for (const k of w.target) patch[k] = 0;
   }
+  const patch = new Uint8Array(GRID * GRID); // (the patch's cells, marked while its rim is drawn)
 
   // ------------------------------------------------------------ the frame
 
@@ -4197,14 +4243,17 @@ window.SnakeRender = (() => {
         }
         else spawn(x, y, T.PARTICLES_EAT, 180, T.PARTICLE_LIFE, 2.8, '#a3e635', '#fde68a'); // sprout and honey: visible on bark and on green snakes alike
         eatenNow.add(e.y * GRID + e.x);
-        if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.6), e.kind === 'golden' ? '+3' : e.kind === 'beetle' ? '+2' : '+1');
+        if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.6), GROWN[e.kind === 'golden' ? T.GOLDEN_GROWTH : e.kind === 'beetle' ? T.BEETLE_GROWTH : e.cooked ? T.COOKED_GROWTH : 1] || '+1');
       } else if (e.type === 'death') {
         deaths.push(e.snake); // bursts on the next frame, unless the moment is held
         noteRemains(e.snake, now);
-        // A comic-book word where it went down: KO! if a snake did it, Bonk! for a wall or a hole.
+        // A comic-book word where it went down, one that means out (Bonk! is
+        // for knocks it survives): KO! if a snake did it, Fwoosh! in the fire,
+        // Boom! for a dash with nowhere to go, Crunch! for the rest.
         const k = e.snake.killer, h = e.snake.body[0];
         if (!reduced && e.snake.killerId === viewerId && e.snake.id !== viewerId && e.snake.killer !== 'self') shake(3); // (your kill: you feel it)
-        if (k !== 'hunger') floater(h.x * CELL + CELL / 2, Math.max(CELL * 1.3, h.y * CELL - CELL * 0.2), k === 'wall' || k === 'self' || !game.snakes.some(o => o.name === k) ? 'Bonk!' : 'KO!');
+        const word = k === 'fire' ? 'Fwoosh!' : e.snake.fatal === 'boom' ? 'Boom!' : k === 'wall' || k === 'self' || e.snake.killerId == null ? 'Crunch!' : 'KO!';
+        if (k !== 'hunger') floater(h.x * CELL + CELL / 2, Math.max(CELL * 1.3, h.y * CELL - CELL * 0.2), word);
       } else if (e.type === 'crash') { // a bonk where it hit, the head's lunge, and its tail breaking off as beads
         const s = e.snake, a = animOf(s, now), h = s.body[0];
         a.crashAt = now; a.crashDx = s.dir.x; a.crashDy = s.dir.y;
@@ -4308,9 +4357,9 @@ window.SnakeRender = (() => {
     deaths.length = 0;
   }
 
-  // Out: it goes off with a pop. A white flash and a shockwave ring in its
-  // colour at its head, a burst of pieces from the head and along the body,
-  // and smoke.
+  // Out: it goes off with a pop. A comic starburst and a shockwave ring in
+  // its colour at its head (both inked, like everything else on the board), a
+  // burst of pieces from the head and along the body, and smoke.
   const blasts = []; // { x, y, at, color }
   function burst(s) {
     const col = colorOf(s), hex = col[0] === '#' ? col : '#f6ecd2', h = s.body[0];
@@ -4323,45 +4372,95 @@ window.SnakeRender = (() => {
     }
     for (let i = 0; i < 6; i++) mote(hx + (Math.random() - 0.5) * CELL, hy + (Math.random() - 0.5) * CELL, (Math.random() - 0.5) * 30, -18 - Math.random() * 18, 1400, 4 + Math.random() * 3, 2);
   }
+  const BLAST_SPAN = 5; // (cells across the starburst's sprite)
+  const blastSprite = () => {
+    let byVariant = sprites.get('blast');
+    if (!byVariant) sprites.set('blast', byVariant = new Map());
+    let sp = byVariant.get('');
+    if (sp) return sp;
+    const size = Math.max(2, Math.round(BLAST_SPAN * CELL * k));
+    sp = makeLayer(size, size);
+    const g = sp.getContext('2d'), scale = size / (BLAST_SPAN * CELL);
+    g.setTransform(scale, 0, 0, scale, size / 2, size / 2);
+    const burstPath = (r0, r1, n, twist) => { // (a star of n uneven points)
+      g.beginPath();
+      for (let i = 0; i < n * 2; i++) {
+        const a = (i / (n * 2)) * TAU + twist, r = i % 2 ? r0 : r1 * (0.8 + 0.2 * ((i * 7) % 5) / 4);
+        if (i) g.lineTo(Math.cos(a) * r, Math.sin(a) * r); else g.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      g.closePath();
+    };
+    g.lineJoin = 'round';
+    burstPath(CELL * 1.25, CELL * 2.2, 11, 0.2);
+    g.fillStyle = '#fb923c'; g.fill();
+    g.lineWidth = CELL * 0.1; g.strokeStyle = '#3a2614'; g.stroke();
+    burstPath(CELL * 0.8, CELL * 1.45, 9, 0.5);
+    g.fillStyle = '#fde68a'; g.fill();
+    burstPath(CELL * 0.35, CELL * 0.75, 7, 0.9);
+    g.fillStyle = '#fffbea'; g.fill();
+    byVariant.set('', sp);
+    return sp;
+  };
   function drawBlasts(now) {
     for (let i = blasts.length - 1; i >= 0; i--) {
       const b = blasts[i], t = (now - b.at) / 480;
       if (t >= 1 || t < 0) { blasts.splice(i, 1); continue; }
-      const grow = reduced ? 0.5 : t;
-      const fr = CELL * (0.7 + 1.5 * grow); // the flash: a fireball, white-hot at the heart
-      const glow = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, fr);
-      glow.addColorStop(0, '#ffffff'); glow.addColorStop(0.35, '#fef08a'); glow.addColorStop(0.7, 'rgba(249,115,22,0.55)'); glow.addColorStop(1, 'rgba(249,115,22,0)');
-      ctx.globalAlpha = (1 - t) * (1 - t);
-      ctx.fillStyle = glow;
-      circle(b.x, b.y, fr);
-      ctx.globalAlpha = 1 - t; // the shockwave
+      const grow = reduced ? 0.5 : t, pop = 1 - (1 - Math.min(1, t * 2.5)) ** 3; // (it bursts out fast, then holds)
+      const w = BLAST_SPAN * CELL * (0.5 + 0.55 * pop);
+      ctx.globalAlpha = t < 0.55 ? 1 : (1 - t) / 0.45;
+      ctx.drawImage(blastSprite(), b.x - w / 2, b.y - w / 2, w, w);
+      ctx.globalAlpha = 1 - t; // the shockwave: an ink ring under one in its colour
+      ctx.beginPath(); ctx.arc(b.x, b.y, CELL * (0.6 + 3.3 * grow), 0, TAU);
+      ctx.strokeStyle = '#3a2614';
+      ctx.lineWidth = 8 * (1 - t) + 3;
+      ctx.stroke();
       ctx.strokeStyle = b.color;
-      ctx.lineWidth = 7 * (1 - t) + 1;
-      ctx.beginPath(); ctx.arc(b.x, b.y, CELL * (0.5 + 3.4 * grow), 0, TAU); ctx.stroke();
-      ctx.strokeStyle = '#fffbea';
-      ctx.lineWidth = 2 * (1 - t);
+      ctx.lineWidth = 8 * (1 - t);
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
   }
 
-  // While the edges wrap round for someone: they shimmer, a golden seam with
-  // light running along it, bright by a wrapping head (fading as it runs out).
+  // While the edges wrap round for someone: a warm gold seam inside the
+  // frame, with two glints running round it, and bright by a wrapping head
+  // (fading calmly over the last WRAP_WARN_MS).
+  const edgeAt = [0, 0]; // (scratch: a point round the seam)
+  function alongEdge(d, inset) { // d px round the seam, clockwise from the top-left corner
+    const L = SIZE - 2 * inset, p = ((d % (4 * L)) + 4 * L) % (4 * L);
+    if (p < L) { edgeAt[0] = inset + p; edgeAt[1] = inset; }
+    else if (p < 2 * L) { edgeAt[0] = SIZE - inset; edgeAt[1] = inset + p - L; }
+    else if (p < 3 * L) { edgeAt[0] = SIZE - inset - (p - 2 * L); edgeAt[1] = SIZE - inset; }
+    else { edgeAt[0] = inset; edgeAt[1] = SIZE - inset - (p - 3 * L); }
+    return edgeAt;
+  }
   function drawWrapEdges(now) {
     let any = 0;
-    for (const s of game.snakes) if (s.alive && s.wrapUntil > game.time) any = Math.max(any, Math.min(1, (s.wrapUntil - game.time) / 2000));
+    for (const s of game.snakes) if (s.alive && s.wrapUntil > game.time) any = Math.max(any, Math.min(1, (s.wrapUntil - game.time) / T.WRAP_WARN_MS));
     if (!any) return;
-    const t = reduced ? 0 : now / 1000;
-    ctx.save();
-    ctx.lineWidth = 6;
-    ctx.strokeStyle = rgba('#fde047', 0.22 * any);
-    ctx.strokeRect(3, 3, SIZE - 6, SIZE - 6);
-    ctx.setLineDash([CELL * 0.5, CELL * 0.5]);
-    ctx.lineDashOffset = -t * CELL * 2;
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = rgba('#fef9c3', 0.55 * any);
-    ctx.strokeRect(2, 2, SIZE - 4, SIZE - 4);
-    ctx.restore();
+    const inset = 3, run = 4 * (SIZE - 2 * inset);
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = rgba('#d4a017', 0.5 * any);
+    ctx.strokeRect(inset, inset, SIZE - 2 * inset, SIZE - 2 * inset);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = rgba('#fde68a', 0.75 * any);
+    ctx.strokeRect(inset, inset, SIZE - 2 * inset, SIZE - 2 * inset);
+    // Two glints, opposite each other, running round with a fading tail.
+    const head = reduced ? run * 0.1 : (now / 1000) * CELL * 6, tail = CELL * 2.4, STEPS = 8;
+    ctx.lineWidth = 2.5;
+    for (let g = 0; g < 2; g++) {
+      for (let i = 0; i < STEPS; i++) {
+        const d0 = head + g * run / 2 - tail * (1 - i / STEPS), d1 = d0 + tail / STEPS;
+        ctx.globalAlpha = any * (i + 1) / STEPS;
+        ctx.strokeStyle = '#fffbea';
+        ctx.beginPath();
+        const p0 = alongEdge(d0, inset); ctx.moveTo(p0[0], p0[1]);
+        const p1 = alongEdge(d1, inset); ctx.lineTo(p1[0], p1[1]);
+        ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
     for (const s of game.snakes) { // (by a wrapping head: a glow on the edge it's near)
       if (!s.alive || !(s.wrapUntil > game.time)) continue;
       const h = s.body[0], hx = h.x * CELL + CELL / 2, hy = h.y * CELL + CELL / 2;
@@ -4439,15 +4538,15 @@ window.SnakeRender = (() => {
 
   // Confetti: for a win, a new best (all over the board), or the winner of a
   // round you're watching (from its head).
-  const CONFETTI = ['#fde68a', '#a3e635', '#f472b6', '#22d3ee', '#fb923c', '#c4b5fd', '#fffbea'];
+  const CONFETTI = ['#fde68a', '#a3e635', '#f472b6', '#d4a017', '#fb923c', '#c4b5fd', '#84cc16']; // (the board's own colours: Honey, leaf, petal, orange, lilac)
   function celebrate(s = null) {
     if (reduced) return;
     if (s && s.body.length) {
       const h = s.body[0];
-      for (let i = 0; i < 4; i++) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 9, 320, T.PARTICLE_LIFE * 3, 3.4, CONFETTI[i], CONFETTI[i + 3], 1);
+      for (let i = 0; i < 4; i++) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 9, 320, T.PARTICLE_LIFE * 3, 4.4, CONFETTI[i], CONFETTI[i + 3], 1);
       return;
     }
-    for (let i = 0; i < 12; i++) spawn((i + 0.5) / 12 * SIZE, SIZE * (0.25 + (i % 3) * 0.12), 9, 400, T.PARTICLE_LIFE * 4, 4.6, CONFETTI[i % CONFETTI.length], CONFETTI[(i + 3) % CONFETTI.length], 1);
+    for (let i = 0; i < 12; i++) spawn((i + 0.5) / 12 * SIZE, SIZE * (0.25 + (i % 3) * 0.12), 9, 400, T.PARTICLE_LIFE * 4, 5.6, CONFETTI[i % CONFETTI.length], CONFETTI[(i + 3) % CONFETTI.length], 1);
   }
 
   function shake(px) {
