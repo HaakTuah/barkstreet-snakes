@@ -4358,28 +4358,43 @@ window.SnakeRender = (() => {
   }
   const BU = CELL * 0.85; // the bird's unit
   const BILL = [2.55, -1.72]; // its beak tip, in units, before its head moves
-  const bird = { x: 0, y: 0, rot: 0, flip: 1, placed: false, arrivedAt: -1e9, chipAt: 0 };
-  // Where it perches to work on a spot (board px): beside the board on the
-  // nearest side with room for it on this screen, else the roomiest. It
-  // always stands upright, facing the spot.
+  const BIRD_BOX = [-1.15, -2.55, 2.65, 3.2]; // (all of it, round its feet, in units, facing right: its back, crown, beak tip, tail)
+  const PERCH_NEAR = 0.65, PERCH_MIN_PX = 30; // (how small it may perch: on a nearer side; and, CSS px tall, where there's no room anywhere)
+  const bird = { x: 0, y: 0, s: 1, rot: 0, flip: 1, placed: false, arrivedAt: -1e9, chipAt: 0 };
+  // Where it perches to work on a spot (board px), and how big (s): beside
+  // the board on the nearest side with room for it on this screen (or with
+  // room for it a little smaller), its beak just short of the board. With
+  // room nowhere (a phone, a tablet), on the frame's left or right, whichever
+  // is nearer the spot, shrunk to fit: about 33 px tall in a phone's gutter
+  // (it's taller than it's deep, so above or below the board it would be
+  // smaller still). Only where that would leave it under PERCH_MIN_PX tall
+  // does its beak reach over the board's edge; otherwise, like the corner
+  // leaves, it never covers a cell. Its whole box stays on the screen and
+  // off the page's furniture. It always stands upright, facing the spot.
   function perchFor(tx, ty) {
     const sc = boardRect.w / SIZE;
     const room = sc ? {
       left: (boardRect.x - boardRect.left) / sc, right: (Math.min(innerWidth, boardRect.right) - boardRect.x - boardRect.w) / sc,
       top: (boardRect.y - boardRect.top) / sc, bottom: (Math.min(innerHeight, boardRect.bottom) - boardRect.y - boardRect.w) / sc,
     } : { left: 999, right: 0, top: 0, bottom: 0 };
-    const need = { left: BU * 3.4, right: BU * 3.4, top: BU * 5, bottom: BU * 5 };
+    const deep = (BIRD_BOX[2] - BIRD_BOX[0]) * BU; // (back to beak tip)
+    const fit = { left: Math.min(1, room.left / deep), right: Math.min(1, room.right / deep), top: room.top >= BU * 5 ? 1 : 0, bottom: room.bottom >= BU * 5 ? 1 : 0 };
     const dist = { left: tx, right: SIZE - tx, top: ty, bottom: SIZE - ty };
-    const fits = Object.keys(dist).filter(k => room[k] >= need[k]).sort((p, q) => dist[p] - dist[q]);
-    const side = fits[0] || Object.keys(room).sort((p, q) => room[q] / need[q] - room[p] / need[p])[0];
+    const nearer = (p, q) => dist[p] - dist[q] || fit[q] - fit[p];
+    const side = Object.keys(dist).filter(k => fit[k] >= PERCH_NEAR).sort(nearer)[0] || (nearer('left', 'right') <= 0 ? 'left' : 'right');
+    const s = Math.max(sc ? Math.min(1, PERCH_MIN_PX / ((BIRD_BOX[3] - BIRD_BOX[1]) * BU * sc)) : 1, fit[side]);
     const along = v => Math.max(BU * 2, Math.min(SIZE - BU * 2, v));
     const face = tx < SIZE / 2 ? 1 : -1; // (above or below the board, it stands off to one side of the spot)
-    switch (side) {
-      case 'left': return { x: -Math.min(BU * 2.7, Math.max(BU, room.left - BU * 0.8)), y: along(ty) + BU * 1.75, flip: 1 };
-      case 'right': return { x: SIZE + Math.min(BU * 2.7, Math.max(BU, room.right - BU * 0.8)), y: along(ty) + BU * 1.75, flip: -1 };
-      case 'top': return { x: along(tx) - face * BU * 1.6, y: -Math.min(BU * 3.3, Math.max(BU * 1.5, room.top - BU * 2.6)), flip: face };
-      default: return { x: along(tx) - face * BU * 1.6, y: SIZE + Math.min(BU * 2.6, Math.max(BU * 2.45, room.bottom - BU * 3.2)), flip: face };
-    }
+    const p = side === 'left' ? { x: -(BIRD_BOX[2] + 0.05) * s * BU, y: along(ty) + BU * 1.75 * s, flip: 1, s }
+      : side === 'right' ? { x: SIZE + (BIRD_BOX[2] + 0.05) * s * BU, y: along(ty) + BU * 1.75 * s, flip: -1, s }
+      : side === 'top' ? { x: along(tx) - face * BU * 1.6, y: -Math.min(BU * 3.3, Math.max(BU * 1.5, room.top - BU * 2.6)), flip: face, s }
+      : { x: along(tx) - face * BU * 1.6, y: SIZE + Math.min(BU * 2.6, Math.max(BU * 2.45, room.bottom - BU * 3.2)), flip: face, s };
+    // (then all of it on the screen, off the furniture: its back first, if it can't all fit)
+    const x0 = (p.flip > 0 ? BIRD_BOX[0] : -BIRD_BOX[2]) * s * BU, x1 = (p.flip > 0 ? BIRD_BOX[2] : -BIRD_BOX[0]) * s * BU;
+    if (p.flip > 0) p.x = Math.max(-room.left - x0, Math.min(SIZE + room.right - x1, p.x));
+    else p.x = Math.min(SIZE + room.right - x1, Math.max(-room.left - x0, p.x));
+    p.y = Math.max(-room.top - BIRD_BOX[1] * s * BU, Math.min(SIZE + room.bottom - BIRD_BOX[3] * s * BU, p.y));
+    return p;
   }
   // Where it has to hover for its beak to reach a spot, facing `flip`.
   const strikeAt = (tx, ty, flip) => ({ x: tx - flip * BILL[0] * BU, y: ty - BILL[1] * BU });
@@ -4410,18 +4425,19 @@ window.SnakeRender = (() => {
     const tp = game.tick - 1 + alpha, lively = !reduced;
     const tx = w.x * CELL + CELL / 2, ty = w.y * CELL + CELL / 2;
     const perch = perchFor(tx, ty), hit = strikeAt(tx, ty, perch.flip);
-    // The pose this moment calls for: perched, flying in or out, drumming.
-    let gx = perch.x, gy = perch.y, fly = 0, drum = false;
+    // The pose this moment calls for: perched, flying in or out, drumming
+    // (at full size over the board, however small it perches).
+    let gx = perch.x, gy = perch.y, gs = perch.s, fly = 0, drum = false;
     const aiming = w.target.length > 0;
     const out = aiming ? Math.max(0, Math.min(1, (tp - (w.strikeAt - 3.5)) / 2.5)) : 0; // flying at it...
     const back = !aiming && w.struckAt >= 0 ? Math.max(0, Math.min(1, (tp - (w.struckAt + 1.5)) / 2.5)) : 1; // ...and home again
     if (aiming && out > 0) {
       const e = lively ? ease(out) : out < 0.5 ? 0 : 1; // (reduced motion: a cut, not a flight)
-      gx = perch.x + (hit.x - perch.x) * e; gy = perch.y + (hit.y - perch.y) * e;
+      gx = perch.x + (hit.x - perch.x) * e; gy = perch.y + (hit.y - perch.y) * e; gs = perch.s + (1 - perch.s) * e;
       fly = out < 1 ? 1 : 0; drum = out >= 1;
     } else if (!aiming && back < 1) {
       const e = lively ? ease(back) : back < 0.5 ? 0 : 1;
-      gx = hit.x + (perch.x - hit.x) * e; gy = hit.y + (perch.y - hit.y) * e;
+      gx = hit.x + (perch.x - hit.x) * e; gy = hit.y + (perch.y - hit.y) * e; gs = 1 + (perch.s - 1) * e;
       fly = back > 0 ? 1 : 0; drum = back === 0;
     }
     // Arriving: swooping down from high above.
@@ -4429,11 +4445,11 @@ window.SnakeRender = (() => {
     if (!lively) fly = 0;
     else if (arrive < 1) { const e = ease(arrive); gy -= (1 - e) * SIZE * 0.9; gx -= (1 - e) * SIZE * 0.25 * perch.flip; fly = 1; }
     // Moving between perches (its next chunk is elsewhere): a quick hop.
-    if (!bird.placed || !lively) { bird.x = gx; bird.y = gy; bird.placed = true; }
-    else if (fly || drum) { bird.x = gx; bird.y = gy; }
+    if (!bird.placed || !lively) { bird.x = gx; bird.y = gy; bird.s = gs; bird.placed = true; }
+    else if (fly || drum) { bird.x = gx; bird.y = gy; bird.s = gs; }
     else {
       const k2 = Math.min(1, dt / 160), dx = gx - bird.x, dy = gy - bird.y;
-      bird.x += dx * k2; bird.y += dy * k2;
+      bird.x += dx * k2; bird.y += dy * k2; bird.s += (gs - bird.s) * k2;
       if (Math.hypot(dx, dy) > BU * 0.8) fly = 1;
     }
     bird.flip = perch.flip;
@@ -4441,7 +4457,7 @@ window.SnakeRender = (() => {
     const crouch = aiming && out === 0 ? Math.max(0, 1 - (w.strikeAt - 3.5 - tp) / T.PECK_AIM_TICKS) : 0;
     let look = 0;
     if (aiming && out === 0) {
-      const hx = bird.x + bird.flip * BU * 0.45, hy = bird.y - BU * 1.75;
+      const hx = bird.x + bird.flip * BU * 0.45 * bird.s, hy = bird.y - BU * 1.75 * bird.s;
       look = Math.max(-1.2, Math.min(1.2, Math.atan2(ty - hy, (tx - hx) * bird.flip)));
     }
     // Chips fly while it drums.
@@ -4449,41 +4465,78 @@ window.SnakeRender = (() => {
       bird.chipAt = now;
       spawn(tx + (Math.random() - 0.5) * CELL, ty + (Math.random() - 0.5) * CELL, 3, 260, 420, 2.6, '#c08a4a', '#f6ecd2');
     }
-    paintWoodpecker(birdG, bird.x, bird.y, 0, bird.flip, { fly, drum, look, crouch, now: lively ? now : 0 });
+    paintWoodpecker(birdG, bird.x, bird.y, 0, bird.flip, bird.s, { fly, drum, look, crouch, now: lively ? now : 0 });
     const bx = boardRect.x * dpr + (bird.x - 6 * BU) * sc, by = boardRect.y * dpr + (bird.y - 7 * BU) * sc;
     bird.box = [Math.floor(bx) - 2, Math.floor(by) - 2, Math.ceil(12 * BU * sc) + 4, Math.ceil(13 * BU * sc) + 4];
   }
 
   // The bird, in its own frame: beak towards +x, head up (-y), clinging by
-  // its feet at the origin, its stiff tail propped below. u = BU.
-  function paintWoodpecker(g, x, y, rot, flip, { fly, drum, look, crouch, now }) {
-    const u = BU, flap = fly ? Math.sin(now / 55) : 0;
+  // its feet at the origin, its stiff tail propped below. u = BU, s its
+  // scale. Inked like everything else on the board, and lit along its upper
+  // left by a warm rim, so its black still reads on the dark page beside it.
+  const BIRD_INK = '#3a2614', BIRD_RIM = '#e8d9b0', WINGS = [1, -1]; // (Ink, and Parchment-2)
+  function paintWoodpecker(g, x, y, rot, flip, s, { fly, drum, look, crouch, now }) {
+    const u = BU, flap = fly ? Math.sin(now / 55) : 0, z = s * (1 + fly * 0.08); // (a touch bigger in the air: nearer to you)
+    const pose = () => { g.translate(x, y); g.rotate(rot); g.scale(flip * z, z); g.translate(0, crouch * u * 0.25); };
+    const oval = (cx, cy, rx, ry, a) => { g.beginPath(); g.ellipse(cx * u, cy * u, rx * u, ry * u, a, 0, TAU); };
+    const ell = (cx, cy, rx, ry, a, col) => { g.fillStyle = col; oval(cx, cy, rx, ry, a); g.fill(); };
+    const lit = (cx, cy, rx, ry, a, at) => { g.beginPath(); g.ellipse(cx * u, cy * u, (rx - 0.07) * u, (ry - 0.07) * u, a, at - a - 0.7, at - a + 0.7); g.stroke(); }; // (a rim inside an oval's edge, round angle at)
+    // Its shadow, on the bark only (on the page beside the board it was a smudge).
     g.save();
-    g.translate(x, y);
-    g.rotate(rot);
-    g.scale(flip * (1 + fly * 0.08), 1 + fly * 0.08); // (a touch bigger in the air: nearer to you)
-    g.translate(0, crouch * u * 0.25);
-    const ell = (cx, cy, rx, ry, a, col) => { g.fillStyle = col; g.beginPath(); g.ellipse(cx * u, cy * u, rx * u, ry * u, a, 0, TAU); g.fill(); };
-    // Its shadow on the bark.
+    g.beginPath(); g.rect(0, 0, SIZE, SIZE); g.clip();
+    pose();
     g.globalAlpha = fly ? 0.18 : 0.28;
     ell(0.35 + fly * 0.6, 0.6 + fly * 0.9, 1.1, 2, 0, '#000');
-    g.globalAlpha = 1;
+    g.restore();
+    g.save();
+    pose();
+    const sun = flip > 0 ? Math.PI * 1.25 : Math.PI * 1.75; // (the screen's upper left, in its own frame, whichever way it faces)
+    const thrust = drum ? (0.5 - 0.5 * Math.cos(now / 26)) * 0.42 : 0, turn = look + (drum ? 0.05 : 0);
+    const toHead = () => { g.translate(0.25 * u, -1.15 * u); g.rotate(turn); g.translate(thrust * u - 0.25 * u, 1.15 * u); }; // (it turns, and drives forward when it drums)
+    const toWing = sg => { g.translate(-0.1 * u, -0.4 * u); g.rotate(sg * (0.9 + 0.7 * flap) + Math.PI); };
+    const tail = () => { g.beginPath(); g.moveTo(-0.55 * u, 1.1 * u); g.lineTo(-0.15 * u, 3.1 * u); g.lineTo(0.3 * u, 1.2 * u); g.closePath(); };
+    const beak = () => { g.beginPath(); g.moveTo(1.05 * u, -2.0 * u); g.lineTo(BILL[0] * u, BILL[1] * u); g.lineTo(1.05 * u, -1.5 * u); g.closePath(); };
+    const feet = () => { g.beginPath(); g.moveTo(0.5 * u, 0.7 * u); g.lineTo(0.95 * u, 0.55 * u); g.moveTo(0.5 * u, 0.95 * u); g.lineTo(0.95 * u, 1.05 * u); };
+    // Its ink first: every part a line's width bigger, under the lot.
+    g.lineJoin = g.lineCap = 'round';
+    g.strokeStyle = BIRD_INK;
+    g.lineWidth = 0.24 * u;
+    if (fly) for (const sg of WINGS) { g.save(); toWing(sg); oval(1.5, 0, 1.6, 0.55, 0); g.stroke(); g.restore(); }
+    tail(); g.stroke();
+    oval(-0.1, 0.3, 0.95, 1.55, 0.08); g.stroke();
+    oval(0.38, 0.45, 0.52, 1.15, 0.12); g.stroke();
+    g.lineWidth = 0.36 * u;
+    feet(); g.stroke();
+    g.save();
+    toHead();
+    g.lineWidth = 0.24 * u;
+    oval(0.45, -1.75, 0.72, 0.7, 0); g.stroke();
+    oval(-0.12, -1.95, 0.3, 0.28, 0); g.stroke();
+    beak(); g.stroke();
+    g.restore();
+    g.strokeStyle = BIRD_RIM;
+    g.lineWidth = 0.11 * u;
     // Wings out when it flies: big, black, barred white, beating.
     if (fly) {
-      for (const sg of [1, -1]) {
+      for (const sg of WINGS) {
         g.save();
-        g.translate(-0.1 * u, -0.4 * u);
-        g.rotate(sg * (0.9 + 0.7 * flap) + Math.PI);
+        toWing(sg);
         ell(1.5, 0, 1.6, 0.55, 0, '#18181b');
+        lit(1.5, 0, 1.6, 0.55, 0, sun - (sg * (0.9 + 0.7 * flap) + Math.PI));
         g.fillStyle = '#f5f5f4';
         for (let i = 0; i < 4; i++) { g.beginPath(); g.arc((0.8 + i * 0.42) * u, (i % 2 ? 0.12 : -0.12) * u, 0.1 * u, 0, TAU); g.fill(); }
         g.restore();
       }
     }
-    // The stiff tail it props itself on, the body, its buff belly, the red under its tail.
+    // The stiff tail it props itself on (lit down its sunny side), the body,
+    // its buff belly, the red under its tail.
     g.fillStyle = '#18181b';
-    g.beginPath(); g.moveTo(-0.55 * u, 1.1 * u); g.lineTo(-0.15 * u, 3.1 * u); g.lineTo(0.3 * u, 1.2 * u); g.fill();
+    tail(); g.fill();
+    g.beginPath();
+    if (flip > 0) { g.moveTo(-0.33 * u, 1.84 * u); g.lineTo(-0.16 * u, 2.69 * u); } else { g.moveTo(0.08 * u, 1.83 * u); g.lineTo(-0.13 * u, 2.7 * u); }
+    g.stroke();
     ell(-0.1, 0.3, 0.95, 1.55, 0.08, '#18181b');
+    lit(-0.1, 0.3, 0.95, 1.55, 0.08, sun);
     ell(0.38, 0.45, 0.52, 1.15, 0.12, '#efe9dc');
     ell(0.22, 1.42, 0.36, 0.3, 0, '#dc2626');
     // The folded wing: a white shoulder patch and white bars.
@@ -4495,14 +4548,13 @@ window.SnakeRender = (() => {
     // Feet, gripping the bark.
     g.strokeStyle = '#57534e';
     g.lineWidth = 0.12 * u;
-    g.lineCap = 'round';
-    g.beginPath(); g.moveTo(0.5 * u, 0.7 * u); g.lineTo(0.95 * u, 0.55 * u); g.moveTo(0.5 * u, 0.95 * u); g.lineTo(0.95 * u, 1.05 * u); g.stroke();
-    // The head, which turns, and drives forward when it drums.
-    const thrust = drum ? (0.5 - 0.5 * Math.cos(now / 26)) * 0.42 : 0;
-    g.translate(0.25 * u, -1.15 * u);
-    g.rotate(look + (drum ? 0.05 : 0));
-    g.translate(thrust * u - 0.25 * u, 1.15 * u);
+    feet(); g.stroke();
+    // The head.
+    toHead();
     ell(0.45, -1.75, 0.72, 0.7, 0, '#18181b');
+    g.strokeStyle = BIRD_RIM;
+    g.lineWidth = 0.11 * u;
+    lit(0.45, -1.75, 0.72, 0.7, 0, sun - turn);
     ell(-0.12, -1.95, 0.3, 0.28, 0, '#dc2626'); // red nape
     ell(0.62, -1.58, 0.44, 0.33, 0, '#f5f5f4'); // white cheek...
     g.strokeStyle = '#18181b'; // ...under a black moustache stripe
@@ -4511,7 +4563,7 @@ window.SnakeRender = (() => {
     ell(0.75, -1.9, 0.14, 0.14, 0, '#0a0a0a'); // the eye, with a glint
     ell(0.79, -1.94, 0.05, 0.05, 0, '#ffffff');
     g.fillStyle = '#71717a'; // the chisel beak
-    g.beginPath(); g.moveTo(1.05 * u, -2.0 * u); g.lineTo(BILL[0] * u, BILL[1] * u); g.lineTo(1.05 * u, -1.5 * u); g.closePath(); g.fill();
+    beak(); g.fill();
     g.fillStyle = '#3f3f46';
     g.beginPath(); g.moveTo(1.05 * u, -2.0 * u); g.lineTo(BILL[0] * u, BILL[1] * u); g.lineTo(1.05 * u, -1.78 * u); g.closePath(); g.fill();
     g.restore();
