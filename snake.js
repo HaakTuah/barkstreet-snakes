@@ -490,7 +490,7 @@
   function showBeat(n) {
     R.showYou(playerAlive());
     Audio.play('beat');
-    if (n === 1) Audio.play('riser'); // (rising into Go!)
+    if (n === 1) Audio.play('riser', { crest: T.COUNTDOWN_BEAT / 1000 }); // (rising into Go!, and topping out on it)
     showCard({ title: String(n), text: waking ? '' : game.rivalsLine, primary: online ? null : 'Go!', opponents: !waking, quiet: true, beat: true });
     if (!reducedMQ.matches) cardTitle.animate?.(BEAT, { duration: 480, easing: 'ease-out' }); // each number slams down
   }
@@ -588,7 +588,7 @@
     const winner = survivors[0];
     const title = !winner ? 'Draw' : isMe(winner) ? 'You win!' : `${winner.name} wins`;
     const flavor = !winner ? pick(FLAVOR.draw) : isMe(winner) ? pick(FLAVOR.win) : winner.persona ? pick(winner.persona.win) : pick(FLAVOR.friendWin);
-    if (isMe(winner)) Audio.play('win');
+    if (isMe(winner)) Audio.play(game.newBest ? 'winBest' : 'win'); // (a win that's a new best: one fanfare, not two on top of each other)
     if (winner) { R.celebrate(isMe(winner) ? null : winner); flashFrame('win', isMe(winner)); } // confetti: all over for you, from its head for anyone else
     const me = player();
     const r = game.result;
@@ -656,16 +656,18 @@
 
   // Sounds come from where they happen on the board, a little left or right.
   const at = x => ({ pan: ((x + 0.5) / GRID * 2 - 1) * 0.8 });
-  // Apples eaten in quick succession climb in pitch: a streak you can hear.
+  // The sound of each thing you eat (anything else is an apple).
+  const EAT_CUES = { goldcap: 'wrap', golden: 'golden', leaf: 'leaf', pellet: 'meat', mushroom: 'mushroom', beetle: 'crunch' };
+  // Apples eaten in quick succession climb a scale: a streak you can hear.
   let streak = 0, streakAt = -1e9;
   function sounds(dying, wasAlive) {
     const me = player();
     for (const e of game.events) {
       if (e.type === 'eat' && isMe(e.snake)) {
         if (e.kind !== 'mushroom') { streak = game.time - streakAt < 2600 ? Math.min(streak + 1, 7) : 0; streakAt = game.time; }
-        Audio.play(e.kind === 'goldcap' ? 'wrap' : e.kind === 'golden' || e.kind === 'leaf' ? 'golden' : e.kind === 'pellet' ? 'meat' : e.kind === 'mushroom' ? 'mushroom' : e.kind === 'beetle' ? 'crunch' : 'eat', { pitch: e.kind === 'mushroom' ? 0 : streak, ...at(e.x) });
+        Audio.play(EAT_CUES[e.kind] || 'eat', { streak: e.kind === 'mushroom' ? 0 : streak, gold: !!e.gold, ...at(e.x) });
         bump(scoreEl);
-      } else if (e.type === 'eat' && e.kind === 'goldcap') Audio.play('wrap', at(e.x)); // (someone else's golden mushroom)
+      } else if (e.type === 'eat' && e.kind === 'goldcap') Audio.play('wrap', { rival: true, ...at(e.x) }); // (someone else's golden mushroom: softer, further off)
       else if (e.type === 'woodpecker') { Audio.play('call'); Audio.play('riser'); }
       else if (e.type === 'aim') Audio.play('aim', at(e.x));
       else if (e.type === 'peck' && e.cells?.length) { Audio.play('drum', at(e.x)); Audio.play('crash', at(e.x)); }
@@ -681,15 +683,15 @@
       else if (e.type === 'weather' && e.kind === 'snow') Audio.play('snow');
       else if (e.type === 'ember') Audio.play('ember', at(e.x));
       else if (e.type === 'crash') Audio.play(isMe(e.snake) ? 'bonk' : 'bonked', at(e.x));
-      else if (e.type === 'alight') Audio.play('alight', at(e.snake.body[0].x));
+      else if (e.type === 'alight') Audio.play('alight', { rival: !isMe(e.snake), ...at(e.snake.body[0].x) });
       else if (e.type === 'singe' && isMe(e.snake)) Audio.play('singe');
       else if (e.type === 'baked') Audio.play('bake', at(e.x));
       else if (e.type === 'ash') Audio.play('ash', at(e.x));
       else if (e.type === 'cut') Audio.play('snip', at(e.x));
-      else if (e.type === 'leap') Audio.play('leap', at(e.x));
-      else if (e.type === 'dash') Audio.play('dash', at(e.x));
+      else if (e.type === 'leap') Audio.play('leap', { rival: !isMe(e.snake), gold: !!e.gold, ...at(e.x) });
+      else if (e.type === 'dash') Audio.play('dash', { rival: !isMe(e.snake), ...at(e.x) });
       else if (e.type === 'douse') Audio.play('douse', at(e.x));
-      else if (e.type === 'fizzle' && isMe(e.snake)) { Audio.play('thunk'); if (!reducedMQ.matches) e.snake.tag?.pow.animate?.(NUDGE, { duration: 260, easing: 'ease-out' }); } // (pressed, and it couldn't go: you hear it, and your badge shakes its head)
+      else if (e.type === 'fizzle' && isMe(e.snake)) { Audio.play('thunk', at(e.snake.body[0].x)); if (!reducedMQ.matches) e.snake.tag?.pow.animate?.(NUDGE, { duration: 260, easing: 'ease-out' }); } // (pressed, and it couldn't go: you hear it, and your badge shakes its head)
     }
     for (const s of dying) if (/blew up/.test(s.cause)) Audio.play('boom', at(s.body[0].x));
     for (const s of dying) {
@@ -771,7 +773,7 @@
       if (wrapLeft > T.WRAP_WARN_MS) game.toldWrapEnd = false;
       const left = E.hungerLeft(game, me), small = me.body.length <= T.MIN_LENGTH;
       const warnAt = T.HUNGER_WARN_MS * (small ? 1.5 : 1); // (at your smallest, starving is the end: a little earlier, and sharper)
-      if (left < warnAt && !game.warnedHunger) { game.warnedHunger = true; Audio.play('hungry'); return toast(small ? FLAVOR.youStarvingSmall : pick(FLAVOR.youHungry), 2800, 'warn', 'lesson'); }
+      if (left < warnAt && !game.warnedHunger) { game.warnedHunger = true; Audio.play('hungerWarn'); return toast(small ? FLAVOR.youStarvingSmall : pick(FLAVOR.youHungry), 2800, 'warn', 'lesson'); }
       if (left > warnAt) game.warnedHunger = false;
       if (small && game.time > 1000 && once('atThree')) return toast(pick(FLAVOR.youAtThree), 2600, 'warn', 'lesson');
     }
@@ -1357,13 +1359,14 @@
     else start({ aiOnly: true });
   });
   click(pauseBtn, () => (state === 'paused' ? resume() : pause()));
-  click(muteBtn, () => toggleMute());
+  muteBtn.addEventListener('click', () => { Audio.unlock(); toggleMute(); }); // (its tap comes after the toggle: see toggleMute)
   click(musicBtn, () => toggleMusic());
   click(speedEl, e => { const b = e.target.closest('button'); if (b) setSpeed(Number(b.dataset.speed)); });
   click(chatterBtn, () => { Chatter.setEnabled(!Chatter.isEnabled()); showChatterState(); });
 
   function toggleMute() {
     Audio.toggleMuted();
+    Audio.play('ui'); // (heard only when the sound's back on: muting is silent, unmuting taps once)
     updateControls();
   }
 

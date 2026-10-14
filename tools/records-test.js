@@ -79,4 +79,18 @@ ok(C.cleanName('😀'.repeat(20)).length === 32 && !/[\ud800-\udbff]$/.test(C.cl
 const D = player();
 D.recordPlayer({ place: 1, won: true, eaten: 3, survived: 1000 });
 ok(D.stats().played === 1, 'stats start counting');
+// Carving a name renames your rounds from before you had one, and only those.
+const E = player();
+E.recordPlayer({ place: 2, eaten: 9, survived: 30000 });
+E.recordPlayer({ place: 3, eaten: 5, survived: 20000 });
+E.importShared(A.shareable('Haakon'), '#4ade80');
+const latest = E.recordPlayer({ place: 1, won: true, eaten: 14, survived: 50000 });
+E.rename(latest, 'Perry');
+ok(E.scores().filter(e => !e.friend).every(e => e.name === 'Perry'), 'carving a name renames your unnamed rounds');
+ok(E.scores().filter(e => e.friend).every(e => e.name === 'Haakon'), "...and nobody else's");
+E.recordPlayer({ place: 4, eaten: 1, survived: 9000 });
+const again = E.recordPlayer({ place: 2, eaten: 8, survived: 40000 });
+E.rename(again, 'P');
+ok(E.scores().filter(e => !e.friend && e.name === 'Perry').length === 4, '...and a later carve leaves named rounds as they were');
+
 console.log('all good');
