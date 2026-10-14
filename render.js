@@ -343,12 +343,15 @@ window.SnakeRender = (() => {
     }
   }
 
+  let canopyOn = false, canopyX = 0, canopyY = 0, canopyW = 0; // (where it was drawn this frame: a hole under a force field draws it again)
   function drawCanopy(now) {
-    if (quality < 2) return;
+    canopyOn = quality === 2;
+    if (!canopyOn) return;
     if (!shadeLayer) shadeLayer = buildShade();
     const t = reduced ? 0 : now / 1000, over = SIZE * 0.06, gusty = 1 + 2.2 * (sky.wind + sky.storm);
     const dx = Math.sin(t * 0.43) * 8 + Math.sin(t * 1.7) * 1.6 * gusty * gusty, dy = Math.cos(t * 0.37) * 6 + Math.sin(t * 1.3) * 1.2 * gusty;
-    ctx.drawImage(shadeLayer, dx - over, dy - over, SIZE + 2 * over, SIZE + 2 * over);
+    canopyX = dx - over; canopyY = dy - over; canopyW = SIZE + 2 * over;
+    ctx.drawImage(shadeLayer, canopyX, canopyY, canopyW, canopyW);
   }
 
   // Now and then an autumn leaf drifts down onto the log, swaying and turning
@@ -1276,15 +1279,23 @@ window.SnakeRender = (() => {
   // fills in the current fill: bands as rectangles, joints as circles, the
   // same shapes the body is drawn with (they batch into one GPU operation).
   // Only for an opaque fill: where pieces overlap, a translucent one darkens
-  // (that's what the veil and silhouette are for).
-  function bodyFills(a, grow) {
-    const p = a.pts, c = a.cor, rad = a.rad;
-    for (let i = a.n - 2; i >= 0; i--) band(a, i, rad[i + 1] * PINCH + grow);
-    for (let i = a.n - 1; i >= 0; i--) {
-      if (i < a.n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * PINCH + grow);
+  // (that's what the veil and silhouette are for). With a reach, only what's
+  // within it of (cx, cy), give or take a segment.
+  function bodyFills(a, grow, cx = 0, cy = 0, reach = 0) {
+    const p = a.pts, c = a.cor, rad = a.rad, n = a.n;
+    for (let i = n - 2; i >= 0; i--) {
+      if (reach && far(p, i, cx, cy, reach) && far(p, i + 1, cx, cy, reach)) continue;
+      const h = rad[i + 1] * PINCH + grow, x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+      if ((near(x1, qx) && near(qx, x2)) || (near(y1, qy) && near(qy, y2))) rectPiece(x1, y1, x2, y2, h); // (straight: one piece, no seam)
+      else { rectPiece(x1, y1, qx, qy, h); rectPiece(qx, qy, x2, y2, h); }
+    }
+    for (let i = n - 1; i >= 0; i--) {
+      if (reach && far(p, i, cx, cy, reach) && (i === n - 1 || far(p, i + 1, cx, cy, reach))) continue;
+      if (i < n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * PINCH + grow);
       circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
     }
   }
+  const far = (p, i, cx, cy, reach) => (p[2 * i] - cx) * (p[2 * i] - cx) + (p[2 * i + 1] - cy) * (p[2 * i + 1] - cy) > reach * reach;
   // The same shape as one path, filled once: an even shade where pieces
   // overlap, for a translucent fill. (A path of a hundred contours is
   // triangulated every frame, so it's kept for what's rare: a fading corpse,
@@ -1304,6 +1315,12 @@ window.SnakeRender = (() => {
       ctx.arc(p[2 * i], p[2 * i + 1], r, 0, TAU);
     }
     ctx.fill();
+  }
+  // One straight piece of a band, filled (pieces always run along the grid;
+  // a zero-length one, or one that doesn't, fills nothing, as in a silhouette).
+  function rectPiece(x1, y1, x2, y2, h) {
+    if (near(y1, y2)) { if (!near(x1, x2)) ctx.fillRect(Math.min(x1, x2), y1 - h, Math.abs(x2 - x1), 2 * h); }
+    else if (near(x1, x2)) ctx.fillRect(x1 - h, Math.min(y1, y2), 2 * h, Math.abs(y2 - y1));
   }
   // One straight piece of a band, added to the current path (pieces always
   // run along the grid; a zero-length one adds nothing).
@@ -1349,14 +1366,17 @@ window.SnakeRender = (() => {
     boardG = ctx;
     ctx = veilG;
   }
-  // Back to the board, laying the veil on it at `alpha`.
-  function veilOff(alpha) {
+  // Back to the board, laying the veil on it at `alpha` (cut to a field's
+  // circle, if one's given).
+  function veilOff(alpha, field = null) {
     veilG.restore();
     ctx = boardG;
     if (vw <= 0 || vh <= 0) return;
+    if (field) { ctx.save(); ctx.beginPath(); ctx.arc(field.x, field.y, field.r, 0, TAU); ctx.clip(); }
     ctx.globalAlpha = alpha;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(veil, vx0, vy0, vw, vh, veilX + vx0, veilY + vy0, vw, vh);
+    if (field) ctx.restore();
     ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
     ctx.globalAlpha = 1;
   }
@@ -2856,10 +2876,11 @@ window.SnakeRender = (() => {
   }
   // Each field's look, drawn once per resolution: its glow and edge, and the
   // honeycomb on its own (for the ripples to light up).
-  const fieldLooks = new Map();
+  const fieldLooks = new Map(); // colour -> radius -> look
   function fieldLook(r, color) {
-    const key = r + color;
-    let f = fieldLooks.get(key);
+    let byR = fieldLooks.get(color);
+    if (!byR) fieldLooks.set(color, byR = new Map());
+    let f = byR.get(r);
     if (f) return f;
     const side = 2 * r + 4, px = Math.max(2, Math.round(side * k));
     const make = () => {
@@ -2923,30 +2944,53 @@ window.SnakeRender = (() => {
     bg.beginPath(); bg.arc(0, 0, r * 0.82, Math.PI * 1.1, Math.PI * 1.38); bg.stroke();
     bg.fillStyle = 'rgba(255,255,255,0.16)';
     bg.beginPath(); bg.arc(Math.cos(Math.PI * 1.47) * r * 0.82, Math.sin(Math.PI * 1.47) * r * 0.82, Math.max(1.5, r * 0.035), 0, TAU); bg.fill();
-    fieldLooks.set(key, f = { body, lattice, side });
+    byR.set(r, f = { body, lattice, side, combPat: null });
     return f;
   }
-  const fields = [];          // this frame's fields: { x, y, r, color, owner, key }
-  const inField = new Map();  // snake -> the field keys its head was in last frame
-  const ripples = [];         // a ripple where someone crossed in: { x, y, color, at }
   // Every field this frame (homes and colonies), drawn knowing about each
   // other: a snake's own fields that overlap (Colonist's colonies) are one
   // merged field, one rim round the lot; where two snakes' fields meet, the
-  // border between them crackles. A field: { x, y, r (drawn, eased as it
-  // moves or swells), color, owner, id, lookR (the radius it's settling to,
-  // whose look is cached), swell (1 just after it grew or shrank, fading) }.
-  const fieldSpecs = [];
+  // border between them crackles. Insides first, then the holes under them,
+  // then every edge. A field is kept from frame to frame, by its key: { key,
+  // x, y, r (drawn, eased as it moves or swells), color, owner, lookR (the
+  // radius it's settling to, whose look is cached), swell (1 just after it
+  // grew or shrank, fading), idLen (the length of its old name: the snow on
+  // it sits by that) }, and this frame's alert, pulse, flare, look, side,
+  // wobble and cut (see cutOf).
+  const fieldSpecs = [];         // this frame's fields, in drawing order
+  const fieldByKey = new Map();  // key -> field
+  const inField = new Map();     // snake -> the field keys its head was in last frame
+  const ripples = [];            // a ripple where someone crossed in: { x, y, color, at }
+  const digits = v => String(v).length;
+  function newField(key, owner, idLen) {
+    const f = { key, x: 0, y: 0, r: 1, color: owner.color, owner, lookR: 1, swell: 0, idLen,
+      alert: false, pulse: 0.5, flare: 0, look: null, side: 0, wobble: 0, cut: null, cutSig: [], rim: null };
+    fieldByKey.set(key, f);
+    return f;
+  }
+  // A colony's field, by its owner, number and cell (a guest online gets
+  // fresh colony objects every tick).
+  function colonyField(s, c) {
+    const n = c.n || 1, key = ((s.id * 4096 + n) * GRID + c.y) * GRID + c.x;
+    const f = fieldByKey.get(key) || newField(key, s, 9 + digits(s.id) + digits(n) + digits(c.x) + digits(c.y));
+    f.x = c.x * CELL + CELL / 2; f.y = c.y * CELL + CELL / 2; f.r = f.lookR = (c.radius + 1) * CELL;
+    f.color = s.color; f.owner = s; f.swell = 0;
+    return f;
+  }
   function drawFields(now) {
     fieldSpecs.length = 0;
     for (const s of game.snakes) {
       if (!s.alive) continue;
       if (s.memory.home) fieldSpecs.push(homeField(s, now));
-      if (s.memory.colonies) for (const c of s.memory.colonies) {
-        const cr = (c.radius + 1) * CELL;
-        fieldSpecs.push({ x: c.x * CELL + CELL / 2, y: c.y * CELL + CELL / 2, r: cr, color: s.color, owner: s, id: 'colony' + s.id + ':' + (c.n || 1) + ':' + c.x + ',' + c.y, lookR: cr, swell: 0 });
-      }
+      if (s.memory.colonies) for (const c of s.memory.colonies) fieldSpecs.push(colonyField(s, c));
     }
-    for (let i = 0; i < fieldSpecs.length; i++) drawField(i, now);
+    if (fieldByKey.size > fieldSpecs.length) { // (one's gone: a colony given up, its snake out)
+      for (const f of fieldByKey.values()) if (!fieldSpecs.includes(f)) fieldByKey.delete(f.key);
+    }
+    if (!fieldSpecs.length) return;
+    for (let i = 0; i < fieldSpecs.length; i++) fieldInside(i, now);
+    patchHoles();
+    for (let i = 0; i < fieldSpecs.length; i++) fieldEdge(i, now);
     for (const s of game.snakes) if (s.alive && s.memory.colonies) drawColonyFlags(s, now);
   }
   // Is (px, py) inside another field (than i): of the same owner (same) or of someone else's?
@@ -2960,98 +3004,244 @@ window.SnakeRender = (() => {
     }
     return false;
   }
-  function drawField(i, now) {
-    const f = fieldSpecs[i], { x, y, r, color, owner, id } = f, lookR = f.lookR || r, swell = f.swell || 0, key = id;
-    fields.push({ x, y, r, color, owner, key });
+  // A field's inside: its dome, breathing (lit up while a rival's in it), the
+  // ripples welling out from the middle (each lights up the honeycomb as it
+  // passes) and the weather on it. No clip: the dome and honeycomb are cut to
+  // the circle already, a ripple is the honeycomb stroked as a ring, and the
+  // holes are drawn back over it afterwards (patchHoles).
+  function fieldInside(i, now) {
+    const f = fieldSpecs[i], x = f.x, y = f.y, r = f.r;
     let alert = false;
     for (const s of game.snakes) {
-      if (!s.alive || s === owner) continue;
+      if (!s.alive || s === f.owner) continue;
       const hx = s.body[0].x * CELL + CELL / 2, hy = s.body[0].y * CELL + CELL / 2;
       if (Math.hypot(hx - x, hy - y) <= r) alert = true;
     }
-    const lively = !reduced, t = now / 1000, look = fieldLook(lookR, color), side = look.side * r / lookR;
-    const pulse = lively ? 0.5 + 0.5 * Math.sin(t * (alert ? 9 : 2.2)) : 0.5;
-    const flare = Math.max(swell, 1 - (now - flashAt) / 700); // (lightning, or it just grew: it flares)
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, TAU);
-    // (holes inside it stay dark: the field lies on the log that's left)
-    for (const h of game.holes) {
-      const hx = (h % GRID) * CELL, hy = Math.floor(h / GRID) * CELL;
-      if (Math.abs(hx + CELL / 2 - x) < r + CELL && Math.abs(hy + CELL / 2 - y) < r + CELL) ctx.rect(hx, hy, CELL, CELL);
-    }
-    ctx.clip('evenodd');
-    for (let j = 0; j < i; j++) { // (not again where its own field's already drawn: one merged field)
-      const o = fieldSpecs[j];
-      if (o.owner !== owner || Math.hypot(o.x - x, o.y - y) >= o.r + r) continue;
-      ctx.beginPath(); ctx.rect(0, 0, SIZE, SIZE); ctx.arc(o.x, o.y, o.r, 0, TAU); ctx.clip('evenodd');
-    }
-    ctx.globalAlpha = alert ? 1 : 0.85 + 0.15 * pulse;
-    ctx.drawImage(look.body, x - side / 2, y - side / 2, side, side);
-    if (lively) { // ripples welling out from the middle, lighting up the honeycomb as they pass
-      for (let i = 0; i < 2; i++) {
-        const p = (t * (alert ? 0.9 : 0.35) + i * 0.5) % 1, rr = r * p, bw = CELL * 0.8;
-        if (quality > 0) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(x, y, rr + bw / 2, 0, TAU);
-          ctx.arc(x, y, Math.max(0.1, rr - bw / 2), 0, TAU, true);
-          ctx.clip();
+    const lively = !reduced, t = now / 1000, look = fieldLook(f.lookR, f.color), side = look.side * r / f.lookR;
+    f.alert = alert; f.look = look; f.side = side;
+    f.pulse = lively ? 0.5 + 0.5 * Math.sin(t * (alert ? 9 : 2.2)) : 0.5;
+    f.flare = Math.max(f.swell, 1 - (now - flashAt) / 700); // (lightning, or it just grew: it flares)
+    const cut = cutOf(i), x0 = x - side / 2, y0 = y - side / 2;
+    ctx.globalAlpha = alert ? 1 : 0.85 + 0.15 * f.pulse;
+    ctx.drawImage(cut ? cut.body : look.body, x0, y0, side, side);
+    if (lively) {
+      for (let n = 0; n < 2; n++) {
+        const p = (t * (alert ? 0.9 : 0.35) + n * 0.5) % 1, rr = r * p;
+        if (quality > 0 && PATTERNS) {
           ctx.globalAlpha = (alert ? 0.5 : 0.24) * Math.sin(p * Math.PI);
-          ctx.drawImage(look.lattice, x - side / 2, y - side / 2, side, side);
-          ctx.restore();
+          ctx.strokeStyle = patternAt(cut || look, false, x0, y0, side);
+          ctx.lineWidth = CELL * 0.8;
+          ctx.beginPath(); ctx.arc(x, y, rr, 0, TAU); ctx.stroke();
         }
-        ctx.globalAlpha = 1;
         ctx.lineWidth = 2;
-        ctx.strokeStyle = rgba(color, 0.22 * (1 - p));
+        if (cut && PATTERNS) { ctx.globalAlpha = 0.22 * (1 - p); ctx.strokeStyle = patternAt(cut, true, x0, y0, side); }
+        else { ctx.globalAlpha = 1; ctx.strokeStyle = rgba(f.color, 0.22 * (1 - p)); }
         ctx.beginPath(); ctx.arc(x, y, rr, 0, TAU); ctx.stroke();
       }
     }
-    const wobble = fieldWeather(x, y, r, color, look.lattice, side, id, now, flare);
-    ctx.restore();
     ctx.globalAlpha = 1;
-    // The rim: a soft glow and a bright line, breathing (and shivering in the
-    // wind)... in pieces: none where it's inside another of its owner's
-    // fields (they're one field), and where it's inside someone else's, a
-    // crackling seam instead (two fields pushing against each other).
-    const rr = r - 2 + wobble, steps = Math.max(24, Math.round(r / 5));
+    f.wobble = fieldWeather(f, i, cut ? cut.lattice : look.lattice, x0, y0, side, now);
+  }
+  // The honeycomb (or, solid, a disc of the field's colour) as a pattern,
+  // laid where the field is drawn: so a ring of it is one stroke.
+  const PATTERNS = typeof DOMMatrix === 'function' && typeof CanvasPattern === 'function' && 'setTransform' in CanvasPattern.prototype;
+  const patM = PATTERNS ? new DOMMatrix() : null;
+  function patternAt(h, solid, x0, y0, side) {
+    const src = solid ? h.solid : h.lattice;
+    let p = solid ? h.solidPat : h.combPat;
+    if (!p) { p = ctx.createPattern(src, 'no-repeat'); if (solid) h.solidPat = p; else h.combPat = p; }
+    patM.a = patM.d = side / src.width; patM.e = x0; patM.f = y0;
+    p.setTransform(patM);
+    return p;
+  }
+  // A field that overlaps its owner's earlier ones (Colonist's colonies) is
+  // drawn without them, so they're one field: its own copies of the dome, the
+  // honeycomb and a solid disc (for its ripples' rings) with those cut out,
+  // made again only when one of them moves or changes size.
+  const sigNow = [];
+  function cutOf(i) {
+    const f = fieldSpecs[i];
+    sigNow.length = 0;
+    for (let j = 0; j < i; j++) {
+      const o = fieldSpecs[j];
+      if (o.owner === f.owner && Math.hypot(o.x - f.x, o.y - f.y) < o.r + f.r) sigNow.push(o.x, o.y, o.r);
+    }
+    if (!sigNow.length) return (f.cut = null);
+    sigNow.push(f.x, f.y, f.r, f.lookR);
+    const sig = f.cutSig;
+    let same = !!f.cut && f.cut.look === f.look && sig.length === sigNow.length;
+    for (let n = 0; same && n < sig.length; n++) same = sig[n] === sigNow[n];
+    if (same) return f.cut;
+    sig.length = 0;
+    for (const v of sigNow) sig.push(v);
+    const look = f.look, px = look.body.width, scale = px / look.side, toLook = f.lookR / f.r;
+    const copy = src => {
+      const c = makeLayer(px, px), g = c.getContext('2d');
+      if (src) g.drawImage(src, 0, 0);
+      else { g.fillStyle = f.color; g.fillRect(0, 0, px, px); }
+      g.globalCompositeOperation = 'destination-out';
+      g.setTransform(scale, 0, 0, scale, px / 2, px / 2);
+      for (let n = 0; n < sig.length - 4; n += 3) { g.beginPath(); g.arc((sig[n] - f.x) * toLook, (sig[n + 1] - f.y) * toLook, sig[n + 2] * toLook, 0, TAU); g.fill(); }
+      return c;
+    };
+    return (f.cut = { look, body: copy(look.body), lattice: copy(look.lattice), solid: copy(null), combPat: null, solidPat: null });
+  }
+  // Holes stay dark under a field: once every field's inside is drawn, the
+  // hole cells under them are drawn again, from the static layer and the
+  // canopy's shade (as it was drawn this frame), instead of clipping them out.
+  const patchAt = new Uint8Array(GRID * GRID); // (the hole cells under a field, this frame)
+  function patchHoles() {
+    if (!game.holes.size || !staticLayer) return;
+    const c2 = CELL / 2;
+    let any = false;
+    patchAt.fill(0);
+    for (const h of game.holes) {
+      const cx = (h % GRID) * CELL + c2, cy = (h - h % GRID) / GRID * CELL + c2;
+      for (let i = 0; i < fieldSpecs.length; i++) {
+        const f = fieldSpecs[i], dx = Math.max(0, Math.abs(cx - f.x) - c2), dy = Math.max(0, Math.abs(cy - f.y) - c2);
+        if (dx * dx + dy * dy < (f.r + 2) * (f.r + 2)) { patchAt[h] = 1; any = true; break; }
+      }
+    }
+    if (!any) return;
+    ctx.setTransform(1, 0, 0, 1, shakeX, shakeY);
+    const s = canopyOn ? shadeLayer.width / (canopyW * k) : 0;
+    for (let y = 0; y < GRID; y++) {
+      for (let x = 0; x < GRID; x++) {
+        if (!patchAt[y * GRID + x]) continue;
+        let e = x; // (a run of them along the row: one piece)
+        while (e + 1 < GRID && patchAt[y * GRID + e + 1]) e++;
+        const X = Math.round(x * CELL * k), Y = Math.round(y * CELL * k), w = Math.round((e + 1) * CELL * k) - X, hh = Math.round((y + 1) * CELL * k) - Y;
+        ctx.drawImage(staticLayer, X, Y, w, hh, X, Y, w, hh);
+        if (s) ctx.drawImage(shadeLayer, (X - canopyX * k) * s, (Y - canopyY * k) * s, w * s, hh * s, X, Y, w, hh);
+        x = e;
+      }
+    }
+    ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
+  }
+  // A field's edge, over every field's inside. The rim: a soft glow and a
+  // bright line, breathing (and shivering in the wind); none where it's
+  // inside another of its owner's fields (they're one field), and where it's
+  // inside someone else's, a crackling seam instead (two fields pushing
+  // against each other). Then snow along its top, and sparks running round it.
+  const pieceKind = new Uint8Array(256); // 0 rim, 1 left out, 2 seam
+  const seamAt = []; // this field's seam pieces: a0, a1, a0, a1, ...
+  // The rim's path, added to g's: unbroken (first < 0), one circle; broken
+  // (first: a piece that isn't rim), each run of rim pieces one arc, so none
+  // is split where the circle starts. Says whether there's any rim.
+  function rimPath(g, x, y, rr, steps, first) {
+    if (first < 0) { g.arc(x, y, rr, 0, TAU); return true; }
+    let from = -1, any = false;
+    for (let m = 1; m <= steps; m++) {
+      const a0 = (first + m) / steps * TAU;
+      if (!pieceKind[(first + m) % steps]) { if (from < 0) from = a0; continue; }
+      if (from < 0) continue;
+      g.moveTo(x + Math.cos(from) * rr, y + Math.sin(from) * rr);
+      g.arc(x, y, rr, from, a0);
+      from = -1;
+      any = true;
+    }
+    return any;
+  }
+  // The rim from two cached layers, its glow and its line (each drawn opaque),
+  // laid on at their own alphas, on whole device pixels so they're never
+  // resampled: a big circle stroked costs several times what a blit does.
+  // When the rim changes (the field moves or swells, or another comes or goes
+  // across it), it's stroked as it is until it holds still for a frame, and
+  // then its layers are made again. Says whether it drew.
+  function rimFrom(f, rr, steps, first, glowA, lineA) {
+    const X = f.x * k, Y = f.y * k;
+    let c = f.rim;
+    if (!c) c = f.rim = { X: 0, Y: 0, rr: 0, k: 0, steps: 0, first: 0, kinds: new Uint8Array(256), built: false, any: false, P: 0, glow: null, line: null };
+    let same = c.X === X && c.Y === Y && c.rr === rr && c.k === k && c.steps === steps && c.first === first;
+    for (let n = 0; same && n < steps; n++) same = c.kinds[n] === pieceKind[n];
+    if (!same) {
+      c.X = X; c.Y = Y; c.rr = rr; c.k = k; c.steps = steps; c.first = first; c.built = false;
+      c.kinds.set(pieceKind.subarray(0, steps));
+      return false;
+    }
+    if (!c.built) {
+      c.built = true;
+      const P = c.P = Math.ceil((rr + 9) * k), size = 2 * P + 2, fx = X - Math.floor(X), fy = Y - Math.floor(Y);
+      for (let layer = 0; layer < 2; layer++) {
+        let cv = layer ? c.line : c.glow;
+        if (!cv || cv.width !== size) { cv = makeLayer(size, size); if (layer) c.line = cv; else c.glow = cv; }
+        const g = cv.getContext('2d');
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        g.clearRect(0, 0, size, size);
+        g.setTransform(k, 0, 0, k, P + 1 + fx, P + 1 + fy); // (the field's centre, where it lands)
+        g.strokeStyle = f.color;
+        g.lineCap = 'round';
+        g.lineWidth = layer ? 1.6 : 8;
+        g.beginPath();
+        c.any = rimPath(g, 0, 0, rr, steps, first);
+        g.stroke();
+      }
+    }
+    if (c.any) {
+      const bx = Math.floor(X) - c.P - 1 + shakeX, by = Math.floor(Y) - c.P - 1 + shakeY;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalAlpha = glowA;
+      ctx.drawImage(c.glow, bx, by);
+      ctx.globalAlpha = lineA;
+      ctx.drawImage(c.line, bx, by);
+      ctx.globalAlpha = 1;
+      ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
+    }
+    return true;
+  }
+  function fieldEdge(i, now) {
+    const f = fieldSpecs[i], x = f.x, y = f.y, r = f.r, color = f.color, alert = f.alert, pulse = f.pulse, flare = f.flare;
+    const lively = !reduced, t = now / 1000;
+    // (Shivering in the wind or flaring, it's stroked as it is; otherwise it
+    // comes from its cached layers, at a wobble too small to see taken as none.)
+    const live = flare > 0.01 || Math.abs(f.wobble) > 0.03;
+    const rr = r - 2 + (live ? f.wobble : 0), steps = Math.min(256, Math.max(24, Math.round(r / 5)));
     const others = fieldSpecs.length > 1;
-    let anyRim = false, seams = null;
-    ctx.beginPath();
-    for (let k = 0; k < steps; k++) {
-      const a0 = k / steps * TAU, a1 = (k + 1) / steps * TAU, am = (a0 + a1) / 2;
-      const mx = x + Math.cos(am) * rr, my = y + Math.sin(am) * rr;
-      if (others && insideOther(i, mx, my, true, 1)) continue;
-      if (others && insideOther(i, mx, my, false)) { (seams ||= []).push([a0, a1]); continue; }
-      ctx.moveTo(x + Math.cos(a0) * rr, y + Math.sin(a0) * rr);
-      ctx.arc(x, y, rr, a0, a1);
-      anyRim = true;
+    let first = -1; // (a piece that isn't rim)
+    seamAt.length = 0;
+    for (let n = 0; n < steps; n++) {
+      let kind = 0;
+      if (others) {
+        const am = (n + 0.5) / steps * TAU, mx = x + Math.cos(am) * rr, my = y + Math.sin(am) * rr;
+        kind = insideOther(i, mx, my, true, 1) ? 1 : insideOther(i, mx, my, false) ? 2 : 0;
+      }
+      pieceKind[n] = kind;
+      if (kind && first < 0) first = n;
+      if (kind === 2) seamAt.push(n / steps * TAU, (n + 1) / steps * TAU);
     }
-    if (anyRim) {
-      ctx.lineWidth = 8 + 4 * flare;
-      ctx.strokeStyle = rgba(color, Math.min(1, (alert ? 0.32 : 0.16) + 0.08 * pulse + 0.3 * flare));
-      ctx.stroke();
-      ctx.lineWidth = 1.6;
-      ctx.strokeStyle = rgba(color, Math.min(1, (alert ? 0.9 : 0.5) + 0.2 * pulse + 0.4 * flare));
-      ctx.stroke();
-    }
-    if (seams) { // the seam: a jagged, flickering line of light, and the odd spark
+    const glowA = Math.min(1, (alert ? 0.32 : 0.16) + 0.08 * pulse + 0.3 * flare), lineA = Math.min(1, (alert ? 0.9 : 0.5) + 0.2 * pulse + 0.4 * flare);
+    if (live || !rimFrom(f, rr, steps, first, glowA, lineA)) {
       ctx.beginPath();
-      for (const [a0, a1] of seams) {
-        for (let q = 0; q <= 3; q++) {
+      if (rimPath(ctx, x, y, rr, steps, first)) {
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 8 + 4 * flare;
+        ctx.strokeStyle = rgba(color, glowA);
+        ctx.stroke();
+        ctx.lineWidth = 1.6;
+        ctx.strokeStyle = rgba(color, lineA);
+        ctx.stroke();
+      }
+    }
+    if (seamAt.length) { // the seam: a jagged, flickering line of light, and the odd spark
+      ctx.beginPath();
+      for (let n = 0; n < seamAt.length; n += 2) {
+        const a0 = seamAt[n], a1 = seamAt[n + 1], on = n > 0 && seamAt[n - 1] === a0; // (on from the piece before: one line)
+        for (let q = on ? 1 : 0; q <= 3; q++) {
           const a = a0 + (a1 - a0) * q / 3, jit = lively ? Math.sin(t * 47 + a * 31 + i) * 2.2 : 0;
           const px = x + Math.cos(a) * (rr + jit), py = y + Math.sin(a) * (rr + jit);
           if (q) ctx.lineTo(px, py); else ctx.moveTo(px, py);
         }
         if (lively && Math.random() < 0.012) spawn(x + Math.cos(a0) * rr, y + Math.sin(a0) * rr, 2, 90, 260, 1.6, '#fef08a', '#ffffff');
       }
-      ctx.lineCap = 'round';
+      const join = ctx.lineJoin;
+      ctx.lineCap = ctx.lineJoin = 'round';
       ctx.lineWidth = 7;
       ctx.strokeStyle = rgba('#fde047', lively ? 0.25 + 0.15 * Math.sin(t * 13 + i) : 0.3);
       ctx.stroke();
       ctx.lineWidth = 1.8;
       ctx.strokeStyle = rgba('#fefce8', 0.9);
       ctx.stroke();
+      ctx.lineJoin = join;
     }
     if (snowCover > 0.02) { // ...snow gathered along its top...
       ctx.lineCap = 'round';
@@ -3059,8 +3249,8 @@ window.SnakeRender = (() => {
       ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(x, y, r - 3, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
       ctx.fillStyle = rgba('#ffffff', 0.7 * snowCover);
-      for (let i = 0; i < 6; i++) {
-        const a = Math.PI * (1.15 + i * 0.14), w = 2 + ((i * 7 + id.length) % 3);
+      for (let n = 0; n < 6; n++) {
+        const a = Math.PI * (1.15 + n * 0.14), w = 2 + ((n * 7 + f.idLen) % 3);
         circle(x + Math.cos(a) * (r - 3), y + Math.sin(a) * (r - 3) - 1, w);
       }
     }
@@ -3075,9 +3265,16 @@ window.SnakeRender = (() => {
   }
   // After the snakes: whatever of a rival is inside a field takes on its
   // colour, with a glow of it clinging round, as if wading through coloured
-  // light; and a ripple spreads where a head just crossed in.
+  // light; and a ripple spreads where a head just crossed in. The glow (the
+  // body grown 5, at 0.13) and the colour (grown 0.5, at 0.28 over it) go
+  // into the veil and are laid on as one layer, at 0.28 over 0.13, cut to the
+  // field (and only round what's in it).
+  const HUE = 0.28 + 0.13 * 0.72, hued = [];
   function drawFieldHues(now) {
-    for (const f of fields) {
+    for (let fi = 0; fi < fieldSpecs.length; fi++) {
+      const f = fieldSpecs[fi];
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      hued.length = 0;
       for (const s of game.snakes) {
         if (!s.alive || s === f.owner) continue;
         const a = anim.get(s);
@@ -3091,18 +3288,32 @@ window.SnakeRender = (() => {
         }
         if (inside) was.add(f.key); else was.delete(f.key);
         let touches = false;
-        for (let i = 0; i < a.n && !touches; i++) touches = Math.hypot(a.pts[2 * i] - f.x, a.pts[2 * i + 1] - f.y) <= f.r + a.rad[i] + 5;
-        if (!touches) continue;
-        ctx.save();
-        ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.clip();
-        ctx.fillStyle = rgba(f.color, 0.13);
-        silhouette(a, 5);
-        ctx.fillStyle = rgba(f.color, 0.28);
-        silhouette(a, 0.5);
-        ctx.restore();
+        for (let i = 0; i < a.n; i++) { // (and the box round what of it is in the field)
+          const px = a.pts[2 * i], py = a.pts[2 * i + 1];
+          if (Math.hypot(px - f.x, py - f.y) > f.r + a.rad[i] + 5) continue;
+          touches = true;
+          if (px < x0) x0 = px;
+          if (px > x1) x1 = px;
+          if (py < y0) y0 = py;
+          if (py > y1) y1 = py;
+        }
+        if (touches) hued.push(a);
       }
+      if (!hued.length) continue;
+      const m = f.r + 1; // (the box: round the bodies, a band and a glow's width more, within the field)
+      x0 = Math.max(f.x - m, x0 - CELL - 6); y0 = Math.max(f.y - m, y0 - CELL - 6);
+      x1 = Math.min(f.x + m, x1 + CELL + 6); y1 = Math.min(f.y + m, y1 + CELL + 6);
+      veilOn(0, 0, x0, y0, x1, y1);
+      ctx.fillStyle = f.color;
+      for (const a of hued) bodyFills(a, 5, f.x, f.y, f.r + CELL);
+      ctx.globalCompositeOperation = 'destination-out'; // (the glow down to its share)
+      ctx.globalAlpha = 1 - 0.13 / HUE;
+      ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      for (const a of hued) bodyFills(a, 0.5, f.x, f.y, f.r + CELL);
+      veilOff(HUE, f);
     }
-    fields.length = 0;
     for (let i = dimples.length - 1; i >= 0; i--) if (now - dimples[i].at > 450 || now < dimples[i].at) dimples.splice(i, 1);
     for (let i = ripples.length - 1; i >= 0; i--) {
       const rp = ripples[i], t = (now - rp.at) / 520;
@@ -3115,40 +3326,48 @@ window.SnakeRender = (() => {
   // The weather on a field, inside it: rain dimples it, snow frosts its
   // honeycomb, wind sends shivers across it, lightning lights it all up.
   // Returns how far its rim shivers in the wind.
-  const dimples = []; // raindrops landing on fields: { id, dx, dy, at }
-  function fieldWeather(x, y, r, color, lattice, side, id, now, flare) {
+  const dimples = []; // raindrops landing on fields: { id (its key), dx, dy, at }
+  function fieldWeather(f, i, lattice, x0, y0, side, now) {
     if (reduced) return 0;
+    const x = f.x, y = f.y, r = f.r, id = f.key;
     const wet = sky.rain + sky.storm * 0.6, blow = Math.max(sky.wind, sky.storm * 0.7), t = now / 1000;
     for (let n = wet * (r / CELL) * 5 * frameDt / 1000; n > 0; n--) { // (about five drops a second per cell of radius)
       if (Math.random() >= n) break;
-      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * r * 0.92;
-      dimples.push({ id, dx: Math.cos(a) * d, dy: Math.sin(a) * d, at: now });
+      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * r * 0.92, dx = Math.cos(a) * d, dy = Math.sin(a) * d;
+      if (f.cut && underEarlier(i, x + dx, y + dy)) continue; // (that's the earlier field's, of the one merged field)
+      dimples.push({ id, dx, dy, at: now });
     }
     let drew = false;
     for (const d of dimples) {
       if (d.id !== id) continue;
       const p = (now - d.at) / 450;
       if (p >= 1 || p < 0) continue;
-      if (!drew) { drew = true; ctx.lineWidth = 1.6; ctx.strokeStyle = ctx.fillStyle = mix(color, '#ffffff', 0.75); }
+      if (!drew) { drew = true; ctx.lineWidth = 1.6; ctx.strokeStyle = ctx.fillStyle = mix(f.color, '#ffffff', 0.75); }
       ctx.globalAlpha = 0.9 * (1 - p);
       ctx.beginPath(); ctx.arc(x + d.dx, y + d.dy, 2 + 10 * p, 0, TAU); ctx.stroke();
       if (p < 0.3) circle(x + d.dx, y + d.dy, 1.8 * (1 - p / 0.3)); // (the drop itself)
     }
-    const lit = 0.9 * flare + 0.28 * snowCover; // (lightning, or frost)
+    const lit = 0.9 * f.flare + 0.28 * snowCover; // (lightning, or frost)
     if (lit > 0.02 && quality > 0) {
       ctx.globalAlpha = Math.min(1, lit);
-      ctx.drawImage(lattice, x - side / 2, y - side / 2, side, side);
+      ctx.drawImage(lattice, x0, y0, side, side);
     }
-    if (blow > 0.05 && quality > 0) { // a shiver sweeping across with the wind (from the left)
-      const p = (t * 0.6 * (1 + blow)) % 1, bx = x - r + p * 2 * r, bw = CELL * 0.9;
-      ctx.save();
-      ctx.beginPath(); ctx.rect(bx - bw, y - r, 2 * bw, 2 * r); ctx.clip();
-      ctx.globalAlpha = 0.6 * blow;
-      ctx.drawImage(lattice, x - side / 2, y - side / 2, side, side);
-      ctx.restore();
+    if (blow > 0.05 && quality > 0) { // a shiver sweeping across with the wind (from the left): the band's slice of the honeycomb
+      const p = (t * 0.6 * (1 + blow)) % 1, bx = x - r + p * 2 * r, bw = CELL * 0.9, s = lattice.width / side;
+      const l = Math.max(x0, bx - bw), rt = Math.min(x0 + side, bx + bw), top = Math.max(y0, y - r), bot = Math.min(y0 + side, y + r);
+      if (rt > l && bot > top) {
+        ctx.globalAlpha = 0.6 * blow;
+        ctx.drawImage(lattice, (l - x0) * s, (top - y0) * s, (rt - l) * s, (bot - top) * s, l, top, rt - l, bot - top);
+      }
     }
     ctx.globalAlpha = 1;
     return blow * 1.3 * Math.sin(t * 11 + x * 0.05);
+  }
+  // Is (px, py) under one of field i's owner's earlier fields?
+  function underEarlier(i, px, py) {
+    const f = fieldSpecs[i];
+    for (let j = 0; j < i; j++) { const o = fieldSpecs[j]; if (o.owner === f.owner && Math.hypot(px - o.x, py - o.y) < o.r) return true; }
+    return false;
   }
   // Sovereign's home: drawn where it is, easing to wherever it has moved or
   // grown to, flaring as it changes size.
@@ -3159,9 +3378,12 @@ window.SnakeRender = (() => {
     let e = homeShown.get(s);
     if (!e) homeShown.set(s, e = { x: tx, y: ty, r: tr, tr, at: -1e9 });
     if (tr !== e.tr) { e.tr = tr; e.at = now; }
-    const k = reduced ? 1 : 1 - Math.exp(-frameDt / 260);
-    e.x += (tx - e.x) * k; e.y += (ty - e.y) * k; e.r += (tr - e.r) * k;
-    return { x: e.x, y: e.y, r: e.r, color: s.color, owner: s, id: 'home' + s.id, lookR: tr, swell: Math.max(0, 1 - (now - e.at) / 900) };
+    const step = reduced ? 1 : 1 - Math.exp(-frameDt / 260);
+    e.x += (tx - e.x) * step; e.y += (ty - e.y) * step; e.r += (tr - e.r) * step;
+    const key = -1 - s.id, f = fieldByKey.get(key) || newField(key, s, 4 + digits(s.id));
+    f.x = e.x; f.y = e.y; f.r = e.r; f.lookR = tr; f.color = s.color; f.owner = s;
+    f.swell = Math.max(0, 1 - (now - e.at) / 900);
+    return f;
   }
 
   // The Union Flag, as flown over the Empire's colonies (a redcoat's flag: St
@@ -4669,6 +4891,8 @@ window.SnakeRender = (() => {
     dimples.length = 0;
     homeShown.clear();
     inField.clear();
+    fieldByKey.clear();
+    fieldSpecs.length = 0;
     fieldLooks.clear();
     rgbaCache.clear(); // (bounded anyway: a backstop)
     drifts = null;
