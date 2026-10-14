@@ -420,17 +420,25 @@ canvas {
 
 /* The buttons stay in view when a card is taller than the board (they stick to its bottom edge). */
 .buttons .text-button { flex-basis: 100%; margin: 2px auto 0; }
-/* The main button calls you: a ring ripples out from it, over and over. */
-#start { position: relative; }
+/* The main button calls you: a ring ripples out from it, over and over. It's
+   a pill of light just behind the button, growing out from under it about
+   12px and fading: transform and opacity only, so the compositor runs it and
+   the card isn't repainted every frame (a box-shadow's spread was). It grows
+   a little more up and down than across, since the button is wider than tall. */
+#start { position: relative; --call-x: 1.22; --call-y: 1.58; }
 #start::after {
   content: '';
   position: absolute;
   inset: 0;
+  z-index: -1; /* (behind the button, in the buttons' own layer) */
   border-radius: inherit;
+  background: rgba(163, 230, 53, 0.65);
+  opacity: 0;
   pointer-events: none;
   animation: call 1.8s ease-out infinite;
 }
-@keyframes call { from { box-shadow: 0 0 0 0 rgba(163, 230, 53, 0.65); } to { box-shadow: 0 0 0 12px rgba(163, 230, 53, 0); } }
+#start:active::after, #start:disabled::after { animation: none; } /* (pressed or disabled, the button is a layer of its own, and the light would show over it) */
+@keyframes call { from { transform: none; opacity: 1; } to { transform: scale(var(--call-x), var(--call-y)); opacity: 0; } }
 .buttons::before { /* when the card scrolls, what's behind the buttons fades into them */
   content: '';
   position: absolute;
@@ -832,6 +840,7 @@ button.link:active { transform: none; }
   /* The two buttons share one row (a stacked pair would cover the card). */
   .buttons { gap: 8px; }
   .buttons button:not(.text-button) { flex: 1 1 0; min-width: 0; padding: 7px 8px; font-size: 0.85rem; line-height: 1.15; }
+  #start { --call-x: 1.18; --call-y: 1.8; } /* (its ring as wide on a smaller button) */
   .name-row { font-size: 0.82rem; }
   .buttons .text-button { min-height: 30px; padding-block: 2px; }
   .card p { font-size: 0.85rem; margin-bottom: 6px; }
