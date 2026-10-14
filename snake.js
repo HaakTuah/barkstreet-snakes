@@ -111,7 +111,7 @@
     fizzle: { resting: 'Your leap needs a moment.', small: 'Too small to leap: it costs tail.', landing: 'Nowhere to land.' },
     newBest: n => `New best: ${n}!`,
     startOver: 'Start over?',
-    startOverText: 'This round’s gone if you do.',
+    startOverText: 'Press it again to start over, or Space to keep going.',
     awake: 'Awake.',
     friendWin: ['Bragging rights, for now.', 'Rematch?', 'Fair and square. Probably.'],
     friendKill: ['No hard feelings. Well, a few.', 'Friendship is complicated.', 'That calls for a rematch.'],
@@ -163,7 +163,7 @@
   // The clock the board's own effects run on (tongues, beetles, particles,
   // weather): the frame clock, but at 2x or 4x when you're watching that fast.
   let boardClock = performance.now();
-  let beatsLeft = 0, beatTimer = 0;
+  let beatsLeft = 0, beatTimer = 0, waking = false; // (waking: the one beat back from a nap)
   let freezeUntil = 0, pendingCard = null, cardAt = 0; // times on the frame clock (rAF timestamps)
   let shownCard = null, napOver = null; // the card on screen, and the one a nap covered
   let firstCard = true; // (focus on page load goes to the card, not silently to Play)
@@ -248,15 +248,16 @@
       if (!frozen()) {
         acc += dt;
         let steps = 0;
-        while (acc >= tickLen && steps < T.MAX_CATCHUP && state === 'running' && !frozen()) {
+        const most = online || spectating() ? T.MAX_CATCHUP : T.SOLO_CATCHUP; // (alone, a hitch is a moment's slow-down, not a jump)
+        while (acc >= tickLen && steps < most && state === 'running' && !frozen()) {
           acc -= tickLen;
           const ts = performance.now();
           tick();
           tickCost += performance.now() - ts;
           steps++;
         }
-        if (steps === T.MAX_CATCHUP) acc = Math.min(acc, tickLen); // after a long stall, don't race to catch up
-        if (!steps && !busy) think(dt);
+        if (steps === most) acc = Math.min(acc, tickLen); // after a long stall, don't race to catch up
+        if (!busy) think(dt, steps > 0);
       }
       // Between the last two cells. While frozen, `acc` stands still, so the
       // board holds the very moment of the crash, with nothing jumping ahead.
@@ -336,10 +337,13 @@
   // Let the AIs think about the next tick in the frames before it (same
   // information, same decisions), spread evenly over the frames that are left:
   // usually one AI per frame, more only when the tick is close (fast speeds).
-  function think(dt) {
+  // A frame that ticked has done enough: it thinks only what the frames left
+  // before the next tick couldn't (at 4x on a 60 Hz screen there are hardly
+  // any frames between ticks).
+  function think(dt, ticked = false) {
     if (!thinkQueue.length) return;
-    const framesLeft = Math.max(1, Math.floor((tickLen - acc) / Math.max(4, dt)));
-    let quota = Math.ceil(thinkQueue.length / framesLeft);
+    const frames = Math.floor((tickLen - acc) / Math.max(4, dt)); // (frames still to come before the tick)
+    let quota = ticked ? thinkQueue.length - frames : Math.ceil(thinkQueue.length / Math.max(1, frames));
     while (thinkQueue.length && quota > 0) {
       const s = thinkQueue.shift();
       if (E.canThinkAhead(game, s)) { E.thinkAhead(game, s); quota--; }
@@ -383,7 +387,6 @@
   // What follows a tick on every screen: effects, sounds, the HUD, banners, placements.
   function afterTick(dying, wasAlive) {
     dangerNow = dangerOf();
-    if (game.woodpecker) placeBoard(); // (once a tick while it's here: the page may have moved)
     R.onTick(game.events);
     sounds(dying, wasAlive);
     updateHud();
@@ -459,6 +462,7 @@
       return;
     }
     if (state !== 'ready' || aiOnly !== !game.withPlayer) newGame({ aiOnly });
+    waking = false;
     speed = watchSpeed = 1; // every round starts at normal speed (watching, you can speed it up again)
     state = 'countdown';
     beatsLeft = 3;
@@ -487,17 +491,25 @@
     R.showYou(playerAlive());
     Audio.play('beat');
     if (n === 1) Audio.play('riser'); // (rising into Go!)
-    showCard({ title: String(n), text: game.rivalsLine, primary: online ? null : 'Go!', opponents: true, quiet: true, beat: true });
+    showCard({ title: String(n), text: waking ? '' : game.rivalsLine, primary: online ? null : 'Go!', opponents: !waking, quiet: true, beat: true });
     if (!reducedMQ.matches) cardTitle.animate?.(BEAT, { duration: 480, easing: 'ease-out' }); // each number slams down
   }
 
   function go() {
+    if (waking) { // (back from a nap: no fanfare, just going again)
+      waking = false;
+      state = 'running';
+      hideCard();
+      lastFrame = 0; // (acc as it was: the board carries on from the very moment it stopped)
+      updateControls();
+      return;
+    }
     if (hosting()) online.room.broadcast({ t: 'phase', s: 'go' });
     if (guesting()) online.lastTickAt = performance.now();
     state = 'running';
     hideCard();
     R.showYou(playerAlive());
-    youHideAt = performance.now() + 3500;
+    youHideAt = performance.now() + T.YOU_MS;
     Audio.play('go');
     if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
     else toast(pick(game.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1300, 'go');
@@ -520,14 +532,37 @@
     updateControls();
   }
 
+  // Start over? (Enter or R while you're alive in a round): napping, with the
+  // card itself focused (not a button), so the same key again confirms, and
+  // Space, P or Escape wakes.
+  function askStartOver() {
+    pause();
+    if (state !== 'paused') return;
+    showCard({ title: FLAVOR.startOver, text: FLAVOR.startOverText, primary: 'Start over', secondary: 'Keep going', actions: { primary: () => start(), secondary: resume } });
+    overlay.querySelector('.card').focus({ preventScroll: true });
+  }
+
+  // Waking: back through one countdown beat (a direction key skips it, and
+  // steers), so your hand has time to get back to the keys. Over your death
+  // card, straight back to it.
   function resume() {
     if (state !== 'paused') return;
-    state = 'running';
-    if (napOver) showCard({ ...napOver, quiet: true });
-    else hideCard();
-    napOver = null;
+    say(FLAVOR.awake);
+    if (napOver) {
+      state = 'running';
+      showCard({ ...napOver, quiet: true });
+      napOver = null;
+      lastFrame = 0;
+      updateControls();
+      return;
+    }
+    state = 'countdown';
+    beatsLeft = 1;
+    beatTimer = 0;
+    waking = true;
     lastFrame = 0;
     updateControls();
+    beat();
   }
 
   function youDied() {
@@ -654,6 +689,7 @@
       else if (e.type === 'leap') Audio.play('leap', at(e.x));
       else if (e.type === 'dash') Audio.play('dash', at(e.x));
       else if (e.type === 'douse') Audio.play('douse', at(e.x));
+      else if (e.type === 'fizzle' && isMe(e.snake)) { Audio.play('thunk'); if (!reducedMQ.matches) e.snake.tag?.pow.animate?.(NUDGE, { duration: 260, easing: 'ease-out' }); } // (pressed, and it couldn't go: you hear it, and your badge shakes its head)
     }
     for (const s of dying) if (/blew up/.test(s.cause)) Audio.play('boom', at(s.body[0].x));
     for (const s of dying) {
@@ -857,6 +893,7 @@
     { transform: 'translateX(-3px) rotate(-1deg)', offset: 0.65 },
     { transform: 'translateX(0) rotate(0)', backgroundColor: 'rgba(246, 236, 210, 0.66)' },
   ];
+  const NUDGE = [{ transform: 'translateX(0)' }, { transform: 'translateX(-3px)', offset: 0.25 }, { transform: 'translateX(3px)', offset: 0.6 }, { transform: 'translateX(0)' }];
   const CROWNED = [{ transform: 'scale(1)' }, { transform: 'scale(1.06)', offset: 0.4 }, { transform: 'scale(1)' }];
   function knock(el) {
     if (!reducedMQ.matches) el.animate?.(KNOCK, { duration: 480, easing: 'ease-out' });
@@ -1127,7 +1164,9 @@
   function setSpeed(n) {
     speed = n;
     if (!game.withPlayer) watchSpeed = n;
+    const was = tickLen;
     tickLen = E.tickMs(game) / (spectating() ? speed : 1);
+    acc *= tickLen / was; // (the same point between ticks: nothing jumps)
     updateControls();
   }
 
@@ -1138,12 +1177,34 @@
 
   // Queue a turn (up to T.QUEUE ahead), checked against the last queued
   // direction so no combo of quick presses can reverse into the neck.
+  // - Pressing the way you're already going asks for your power (a leap), but
+  //   not if you only just turned that way: a turn pressed twice is a turn.
+  // - Reversing a turn that hasn't happened yet changes your mind: it takes
+  //   that turn's place, if it's a legal way from the one before it.
+  // - Stunned, the latest press wins (checked against your neck), so you get
+  //   more than one guess while the stars go round.
   function turn(name, p = player()) {
-    const next = DIRS[name];
+    const next = DIRS[name], now = performance.now();
+    const fresh = !(p.turnedAt && p.turnedAt.dir === next && now - p.turnedAt.at < T.POWER_AFTER_TURN_MS);
+    const reverse = (a, b) => a.x === -b.x && a.y === -b.y;
+    if (p.stunUntil > game.tick) {
+      if (next === p.dir && !p.queue.length) { if (fresh) E.leap(game, p); return; }
+      if (reverse(next, p.dir)) return;
+      p.queue.length = 0;
+      if (next !== p.dir) { p.queue.push(next); p.turnedAt = { dir: next, at: now }; }
+      return;
+    }
     const last = p.queue.length ? p.queue[p.queue.length - 1] : p.dir;
-    if (next === last) return E.leap(game, p); // (the way you're already going: a leap, if you've got one)
-    if (next.x === -last.x && next.y === -last.y) return;
-    if (p.queue.length < T.QUEUE) p.queue.push(next);
+    if (next === last) { if (fresh) E.leap(game, p); return; } // (the way you're already going: a leap, if you've got one)
+    if (reverse(next, last)) {
+      if (!p.queue.length) return;
+      const before = p.queue.length > 1 ? p.queue[p.queue.length - 2] : p.dir;
+      if (next === before || reverse(next, before)) return;
+      p.queue[p.queue.length - 1] = next;
+      p.turnedAt = { dir: next, at: now };
+      return;
+    }
+    if (p.queue.length < T.QUEUE) { p.queue.push(next); p.turnedAt = { dir: next, at: now }; }
   }
 
   // A direction: steers, and on the start card or during the countdown also
@@ -1201,14 +1262,19 @@
       return;
     }
     const dir = KEYS[e.key] || CODES[e.code];
-    if (dir) { e.preventDefault(); steer(dir); return; }
+    if (dir) { e.preventDefault(); if (!e.repeat) steer(dir); return; } // (a held key's repeats steer nothing: its first press did, and a repeat would ask for your power)
     // A held key repeats nothing, not even a focused button (holding Enter on
     // Play would otherwise start the round and then skip its countdown).
     if (e.repeat) { if (e.key === ' ' || e.key === 'Enter') e.preventDefault(); return; }
     // Enter and Space on a focused button belong to the button.
     if ((e.key === 'Enter' || e.key === ' ') && e.target.closest?.('button')) return;
     if (e.key === ' ' || e.key === 'p' || e.key === 'P') { e.preventDefault(); napKey(); }
-    else if (e.key === 'Enter' || e.key === 'r' || e.key === 'R') { e.preventDefault(); start(); }
+    else if (e.key === 'Enter' || e.key === 'r' || e.key === 'R') {
+      e.preventDefault();
+      if (state === 'countdown') go();
+      else if (state === 'running' && playerAlive() && !online) askStartOver(); // (R sits next to D: a slip shouldn't throw a round away)
+      else start();
+    }
     else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); openRecords(); }
     else if (e.key === 'Escape' && state === 'paused') resume();
     else if (e.key === 'Escape' && state === 'lobby' && !online) backToStart();
@@ -1230,7 +1296,7 @@
     if (e.target.closest?.('button, input, a, [role="switch"], #records')) return;
     if (!swiping() && !canvas.contains(e.target)) return;
     const t = e.changedTouches[0];
-    if (!swipe) swipe = { id: t.identifier, x: t.clientX, y: t.clientY };
+    swipe = { id: t.identifier, x: t.clientX, y: t.clientY }; // (the newest finger takes over: a thumb left resting doesn't block the other)
     if (swiping()) e.preventDefault();
   }, { passive: false });
   document.addEventListener('touchmove', e => {
@@ -1809,6 +1875,7 @@
   const placeBoard = () => { const b = canvas.getBoundingClientRect(); R.setBoardRect(b.left, b.top, b.width); };
   window.addEventListener('resize', placeBoard, { passive: true });
   window.addEventListener('scroll', placeBoard, { passive: true });
+  new ResizeObserver(placeBoard).observe(document.querySelector('main')); // (the page around the board changed: it may have moved)
   Chatter.init({ boardEl, logEl: chatlogEl });
 
   const sizer = new ResizeObserver(entries => {
