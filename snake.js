@@ -1042,6 +1042,7 @@
         t.pow.hidden = !pow;
         t.pow.classList.toggle('gold', gold);
         t.pow.classList.toggle('wrap', wraps);
+        t.pow.classList.toggle('mine', isMe(s)); // (only your badge is dim while your leap isn't ready)
         t.pow.classList.toggle('ready', ready);
         t.pow.title = gold ? 'Holding a golden power' : wraps && !isMe(s) ? 'The edges wrap round for it' : ready ? 'Your leap’s ready' : 'Your leap needs a moment';
         last.wraps = wraps;
