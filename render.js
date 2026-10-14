@@ -4847,35 +4847,103 @@ window.SnakeRender = (() => {
     const w2 = SPRITE * CELL * 0.95;
     for (const k of w.target) ctx.drawImage(markSprite(), (k % GRID) * CELL + CELL / 2 - w2 / 2, Math.floor(k / GRID) * CELL + CELL / 2 - w2 / 2, w2, w2);
     ctx.globalAlpha = 1;
-    // ...a darker inside, and a pale rim on its edge (inked, so it shows on
-    // pale snakes), bolder and brighter as the strike nears: to colour-blind
-    // eyes the red is olive on olive bark, but the dark patch and its rim
-    // still read. (It used to close in from outside, over cells it wouldn't take.)
-    for (const k of w.target) patch[k] = 1;
+    // ...a darker inside, and a pale rim round it (inked, so it shows on pale
+    // snakes), bolder and brighter as the strike nears: to colour-blind eyes
+    // the red is olive on olive bark, but the dark patch and its rim still
+    // read. The rim is one line traced round the patch, just inside its
+    // edge, its corners rounded like a chip's (a straight piece along every
+    // cell's edge, meeting square at every notch, read as a computer's
+    // selection box), and the dark inside is rounded to match. (It used to
+    // close in from outside, over cells it wouldn't take.)
+    outlinePatch(w.target);
+    const line = 3.6 + 2.2 * prog, half = line / 2;
     ctx.globalAlpha = 0.45 + 0.4 * prog;
     ctx.fillStyle = 'rgba(20,8,2,0.4)';
     ctx.beginPath();
-    for (const k of w.target) ctx.rect((k % GRID) * CELL, Math.floor(k / GRID) * CELL, CELL, CELL);
+    patchPath(0, PATCH_R + half, Math.max(0, PATCH_R_IN - half)); // (out to the rim's own outer edge)
     ctx.fill();
     ctx.globalAlpha = 1;
     ctx.beginPath();
-    for (const k of w.target) {
-      const cx = k % GRID, cy = Math.floor(k / GRID), x0 = cx * CELL, y0 = cy * CELL, x1 = x0 + CELL, y1 = y0 + CELL;
-      if (cy === 0 || !patch[k - GRID]) { ctx.moveTo(x0, y0); ctx.lineTo(x1, y0); }
-      if (cy === GRID - 1 || !patch[k + GRID]) { ctx.moveTo(x0, y1); ctx.lineTo(x1, y1); }
-      if (cx === 0 || !patch[k - 1]) { ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); }
-      if (cx === GRID - 1 || !patch[k + 1]) { ctx.moveTo(x1, y0); ctx.lineTo(x1, y1); }
-    }
-    ctx.lineCap = 'round';
+    patchPath(half, PATCH_R, PATCH_R_IN);
+    ctx.lineJoin = 'round';
     ctx.strokeStyle = 'rgba(20,8,2,0.75)';
-    ctx.lineWidth = 3.6 + 2.2 * prog;
+    ctx.lineWidth = line;
     ctx.stroke();
     ctx.strokeStyle = rgba('#fef3c7', 0.75 + 0.25 * prog);
     ctx.lineWidth = 1.6 + 1.6 * prog;
     ctx.stroke();
-    for (const k of w.target) patch[k] = 0;
   }
-  const patch = new Uint8Array(GRID * GRID); // (the patch's cells, marked while its rim is drawn)
+  // The patch's outline, traced once each time it changes: its corners, loop
+  // by loop (one round the outside, one round any cell it encloses), in
+  // cells, going round with the patch on the right.
+  const PATCH_R = 7, PATCH_R_IN = 4; // (how round its corners are, and its notches, in units)
+  const patch = new Uint8Array(GRID * GRID); // (the patch's cells, marked while it's traced)
+  const patchWas = new Int16Array(GRID * GRID); // (the cells it was traced for)
+  const pEdge = new Int16Array(16 * GRID * GRID), pUsed = new Uint8Array(4 * GRID * GRID); // (each exposed side: its start corner and way, x, y, dx, dy)
+  const pCorner = new Int16Array(8 * GRID * GRID), pLoopEnd = new Int16Array(GRID * GRID);
+  let patchWasN = -1, pEdges = 0, pLoops = 0;
+  function outlinePatch(target) {
+    let same = target.length === patchWasN;
+    for (let i = 0; same && i < target.length; i++) same = patchWas[i] === target[i];
+    if (same) return;
+    patchWasN = target.length;
+    for (let i = 0; i < target.length; i++) { patchWas[i] = target[i]; patch[target[i]] = 1; }
+    pEdges = 0;
+    for (const k of target) {
+      const x = k % GRID, y = (k - x) / GRID;
+      if (y === 0 || !patch[k - GRID]) patchSide(x, y, 1, 0); // (along its top, left to right...)
+      if (x === GRID - 1 || !patch[k + 1]) patchSide(x + 1, y, 0, 1); // (...down its right...)
+      if (y === GRID - 1 || !patch[k + GRID]) patchSide(x + 1, y + 1, -1, 0); // (...back along its bottom...)
+      if (x === 0 || !patch[k - 1]) patchSide(x, y + 1, 0, -1); // (...and up its left)
+    }
+    for (const k of target) patch[k] = 0;
+    // Chained into loops, keeping only the corners. Where two of its cells
+    // meet only at a corner, the way round turns right, so each keeps its own corner.
+    let nc = 0;
+    pLoops = 0;
+    for (let e0 = 0; e0 < pEdges; e0++) {
+      if (pUsed[e0]) continue;
+      let e = e0;
+      do {
+        const x = pEdge[4 * e] + pEdge[4 * e + 2], y = pEdge[4 * e + 1] + pEdge[4 * e + 3], dx = pEdge[4 * e + 2], dy = pEdge[4 * e + 3];
+        let next = -1;
+        for (let f = 0; f < pEdges; f++) {
+          if ((pUsed[f] && f !== e0) || pEdge[4 * f] !== x || pEdge[4 * f + 1] !== y) continue;
+          next = f;
+          if (pEdge[4 * f + 2] === -dy && pEdge[4 * f + 3] === dx) break; // (the right turn, if there's a choice)
+        }
+        pUsed[e] = 1;
+        if (next < 0) break; // (never: every corner has a way on)
+        if (pEdge[4 * next + 2] !== dx || pEdge[4 * next + 3] !== dy) { pCorner[2 * nc] = x; pCorner[2 * nc + 1] = y; nc++; }
+        e = next;
+      } while (e !== e0);
+      pLoopEnd[pLoops++] = nc;
+    }
+  }
+  function patchSide(x, y, dx, dy) {
+    pEdge[4 * pEdges] = x; pEdge[4 * pEdges + 1] = y; pEdge[4 * pEdges + 2] = dx; pEdge[4 * pEdges + 3] = dy;
+    pUsed[pEdges++] = 0;
+  }
+  // The traced outline, added to the current path: `inset` units inside the
+  // patch, its corners rounded by `outer` and its notches by `inner`.
+  const pqx = new Float32Array(4 * GRID * GRID), pqy = new Float32Array(4 * GRID * GRID), pqr = new Float32Array(4 * GRID * GRID);
+  function patchPath(inset, outer, inner) {
+    for (let l = 0, i0 = 0; l < pLoops; i0 = pLoopEnd[l++]) {
+      const m = pLoopEnd[l] - i0;
+      if (m < 4) continue;
+      for (let j = 0; j < m; j++) {
+        const i = i0 + j, p = i0 + (j + m - 1) % m, nx = i0 + (j + 1) % m;
+        const ax = Math.sign(pCorner[2 * i] - pCorner[2 * p]), ay = Math.sign(pCorner[2 * i + 1] - pCorner[2 * p + 1]);
+        const bx = Math.sign(pCorner[2 * nx] - pCorner[2 * i]), by = Math.sign(pCorner[2 * nx + 1] - pCorner[2 * i + 1]);
+        pqx[j] = pCorner[2 * i] * CELL - inset * (ay + by); // (in from each side: the patch is on the right, -dy, dx)
+        pqy[j] = pCorner[2 * i + 1] * CELL + inset * (ax + bx);
+        pqr[j] = ax * by - ay * bx > 0 ? outer : inner; // (a right turn: a corner of the patch; a left one: a notch)
+      }
+      ctx.moveTo((pqx[m - 1] + pqx[0]) / 2, (pqy[m - 1] + pqy[0]) / 2);
+      for (let j = 0; j < m; j++) ctx.arcTo(pqx[j], pqy[j], pqx[(j + 1) % m], pqy[(j + 1) % m], pqr[j]);
+      ctx.closePath();
+    }
+  }
   // ...and its cracks, spreading across it (faded in as they start, or
   // they're specks on whatever lies there).
   function drawCracks(alpha) {
