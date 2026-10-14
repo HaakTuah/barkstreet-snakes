@@ -904,7 +904,8 @@ window.SnakeChatter = (() => {
       if (x === b.x && y === b.y) continue;
       // The tail points at the head, even when the bubble is pushed along at an edge.
       const across = b.side === 'above' || b.side === 'below';
-      const tail = Math.round(Math.min(85, Math.max(15, across ? (headAt.x - x) / w * 100 : (headAt.y - y) / h * 100)));
+      // (in steps of 5%: every change restyles the bubble)
+      const tail = 5 * Math.round(Math.min(85, Math.max(15, across ? (headAt.x - x) / w * 100 : (headAt.y - y) / h * 100)) / 5);
       if (tail !== b.tail) { b.el.style.setProperty('--tail', `${tail}%`); b.tail = tail; }
       b.el.style.transform = `translate(${x}px, ${y}px)`;
       b.x = x; b.y = y;

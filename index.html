@@ -41,7 +41,7 @@
 
     <div class="frame">
       <!-- Light running along the wood now and then, and a glow round the edge for the big moments. -->
-      <div class="frame-sheen" aria-hidden="true"></div>
+      <div class="frame-sheen" aria-hidden="true"><i></i></div>
       <div id="frame-glow" class="frame-glow" aria-hidden="true"></div>
       <!-- Moss creeping over the frame's edges. -->
       <svg class="moss top" style="left: 9%; width: 22%;" viewBox="0 0 120 16" preserveAspectRatio="none" aria-hidden="true"><use href="#mossy"/></svg>
@@ -51,9 +51,9 @@
       <svg class="moss bottom" style="left: 60%; width: 20%;" viewBox="0 0 120 16" preserveAspectRatio="none" aria-hidden="true"><use href="#mossy"/></svg>
       <!-- Leaves resting on the frame's corners (swaying); they never cover the bark. -->
       <svg class="leaves tl" viewBox="0 0 80 80" aria-hidden="true"><use href="#leafy"/></svg>
-      <svg class="leaves tr" viewBox="0 0 80 80" aria-hidden="true"><use href="#leafy"/></svg>
-      <svg class="leaves bl" viewBox="0 0 80 80" aria-hidden="true"><use href="#leafy"/></svg>
-      <svg class="leaves br" viewBox="0 0 80 80" aria-hidden="true"><use href="#leafy"/></svg>
+      <svg class="leaves tr" viewBox="0 0 80 80" aria-hidden="true"><use href="#leafy" transform="matrix(-1 0 0 1 80 0)"/></svg>
+      <svg class="leaves bl" viewBox="0 0 80 80" aria-hidden="true"><use href="#leafy" transform="matrix(1 0 0 -1 0 80)"/></svg>
+      <svg class="leaves br" viewBox="0 0 80 80" aria-hidden="true"><use href="#leafy" transform="matrix(-1 0 0 -1 80 80)"/></svg>
       <div class="board">
         <canvas id="game" width="768" height="768" role="img" aria-label="The board: four snakes on a mossy log"></canvas>
         <div id="overlay" class="overlay">

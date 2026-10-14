@@ -1031,6 +1031,7 @@
     musicBtn.disabled = Audio.isMuted();
     // During a round the page holds still under your fingers (see the swipes).
     document.documentElement.classList.toggle('playing', (state === 'running' || state === 'countdown') && playerAlive());
+    document.documentElement.classList.toggle('in-round', state === 'running' || state === 'countdown');
   }
 
   function setSpeed(n) {
