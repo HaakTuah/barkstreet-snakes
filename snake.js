@@ -36,24 +36,35 @@
 
   // ----------------------------------------------------------------- words
 
-  const pick = list => list[Math.floor(Math.random() * list.length)];
+  // A line from a list, never the one it gave last time (a single line is just itself).
+  const lastPicked = new WeakMap();
+  const pick = list => {
+    if (!Array.isArray(list)) return list;
+    if (list.length < 2) return list[0];
+    let line;
+    do line = list[Math.floor(Math.random() * list.length)]; while (line === lastPicked.get(list));
+    lastPicked.set(list, line);
+    return line;
+  };
   const FLAVOR = {
     intro: 'Three rivals. One mossy log. Last snake wriggling wins.',
-    hintStart: 'Arrows or WASD steer · the way you’re going leaps · Space naps · Enter starts · H opens the Hall of Fame',
-    hintKeys: 'Arrows or WASD steer · the way you’re going leaps · Space naps · Enter starts over · H opens the Hall of Fame · M mutes · N toggles the music',
-    hintOnline: 'Arrows or WASD steer · the way you’re going leaps · M mutes · N toggles the music',
-    hintTouch: 'Swipe to steer · swipe the way you’re going to leap · Tap ⏸ to nap',
+    hintStart: 'Arrows or WASD steer · Press ahead to leap · Space naps · Enter starts · H opens the Hall of Fame',
+    hintKeys: 'Arrows or WASD steer · Press ahead to leap · Space naps · Enter starts over · H opens the Hall of Fame · M mutes · N toggles the music',
+    hintOnline: 'Arrows or WASD steer · Press ahead to leap · M mutes · N toggles the music',
+    hintTouch: 'Swipe to steer · Swipe ahead to leap · Tap ⏸ to nap',
     rivals: ['Your rivals today:', 'Up on the log with you:', 'Sharing your bark:'],
     spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
     go: ['Slither!', 'Off you go.', 'Mind the edges.'],
     goWatch: ['And they’re off.', 'Off they slither.', 'Let the wriggling begin.'],
     pause: ['Snakes need rest too.', 'Curled up in a warm patch of bark.', 'The log will wait.'],
     wake: touchFirst ? 'Tap Wake up when you’re ready.' : 'Space or P to wake up.',
-    deathTitle: { boom: ['Kaboom!', 'Ka-blam!'], wall: ['Bonk!', 'Thwack!'], self: ['Tangled!', 'Knotted!'], rival: ['Squashed!', 'Splat!'], headOn: ['Head-on!', 'Clonk!'], fire: ['Toasted!', 'Scorched!'] },
+    // (Bonk! is for a knock you survive: a death gets a word that means out.)
+    deathTitle: { boom: ['Kaboom!', 'Ka-blam!'], wall: ['Thwack!', 'Crunch!'], self: ['Tangled!', 'Knotted!'], rival: ['Squashed!', 'Splat!'], headOn: ['Head-on!', 'Clonk!'], fire: ['Toasted!', 'Scorched!'], cut: ['Snip!', 'Sliced!'], pecked: ['Pecked!'] },
     wall: ['The log goes on. You don’t.', 'That edge came out of nowhere.', 'Even logs have edges.'],
     self: ['Of all the snakes to bite.', 'You were in your own way.', 'You can’t outrun yourself.'],
     boom: ['A dash needs somewhere to go.', 'Full speed, no brakes.', 'Golden, briefly.'],
     hole: ['The woodpecker sends its regards.', 'Mind the gap.', 'The woodpecker missed you. The hole didn’t.'],
+    pecked: ['The woodpecker didn’t miss.', 'Rat-a-tat. That was you.'],
     starved: ['Should have eaten something.', 'Hunger always wins in the end.', 'All slither, no snacks.'],
     fire: ['Too hot to handle.', 'You found the fire. The hard way.', 'Lightning never strikes twice. It didn’t need to.', 'Burned to a crisp. A small crisp.'],
     tiny: ['Too small to take the knock.', 'Nothing left to lose but you.'],
@@ -61,44 +72,47 @@
     // The weather, as it turns (no banner when it clears).
     weather: {
       sun: ['Golden hour: golden apples are ripening.', 'The sun’s out. Golden apples love it.'],
-      wind: ['The wind’s up. Apples are falling!', 'A blustery spell: windfall apples!'],
-      rain: ['Rain! The mushrooms are sprouting.', 'Here comes the rain. Mushrooms love it.'],
+      wind: ['The wind’s up. Apples are falling.', 'A blustery spell: windfall apples.'],
+      rain: ['Rain. The mushrooms are sprouting.', 'Here comes the rain. Mushrooms love it.'],
       storm: ['A storm’s brewing. Watch for the crackle.', 'Thunder on the bark. Lightning strikes where it crackles.'],
-      snow: ['Winter! Less food, and you’ll get hungry faster.', 'Snow on the bark. Lean times: eat while you can.'],
+      snow: ['Winter. Less food, and you’ll get hungry faster.', 'Snow on the bark. Lean times: eat while you can.'],
     },
     strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
     rainbow: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Follow it to the gold.'],
-    burrow: ['A beetle burrow just cracked open.', 'Something’s been digging under the bark.'],
+    burrow: ['A beetle burrow just cracked open.', 'A beetle’s been digging under the bark.'],
     win: ['King of the log.', 'Last snake wriggling.', 'You outlasted them all.', 'The whole log is yours. For now.'],
     draw: ['Nobody made it out.', 'Everyone loses. How fair.', 'A dead heat. Emphasis on dead.'],
-    golden: ['A golden apple! Everyone pretends not to have seen it.', 'Something shiny just dropped onto the log.'],
+    golden: ['A golden apple! Everyone pretends not to have seen it.', 'A golden apple just dropped onto the log.'],
     // The first time in a round you cross into a rival's force field.
     field: { home: name => `You’re in ${name}’s realm now. It noticed.`, colony: name => `That’s one of ${name}’s colonies. It noticed.` },
     woodpecker: ['The woodpecker is here. Keep out of wherever it’s looking.', 'Rat-a-tat. The woodpecker has come for the log, a patch at a time.'],
-    // The new rules, as they first happen to you in a round.
-    youCrash: ['Bonk! That cost you your tail. Crash when you’re tiny, or boxed in, and you’re out.', 'Ouch. Three segments gone, a moment’s stars. Small and boxed in, a crash is the end.'],
-    youCrashAgain: ['Bonk!', 'Ouch!', 'Mind your head.', 'There goes more tail.'],
-    youAlight: ['You’re on fire! It’ll cost you a piece a second. Rain would help.', 'Hot hot hot! You’re burning, and losing bits of you.'],
-    youCut: ['The woodpecker took your tail!', 'Snip! The woodpecker had your tail.'],
-    baked: ['Something’s baking in the fire. Worth two, if you can take the heat.', 'Baked! Hot food is worth two. Wait for the fire, or don’t.'],
-    youGolden: ['Golden! +3.', 'Shiny and delicious. +3.'],
-    beetle: ['A beetle is out for a walk. It won’t get far.', 'Something crunchy is crawling about.'],
-    youBeetle: ['Crunchy! +2.', 'Caught it! +2.'],
-    goldBeetle: ['A golden beetle! Catch it for golden leaps: further, and free.', 'Something golden is scuttling about. Catch it: it’s worth a golden leap or two.'],
-    youGoldBeetle: n => `Golden! ${n} golden leap${n === 1 ? '' : 's'}: press the way you’re going to hop up to two cells, free.`,
-    youLeap: ['Hup! Over it.', 'Clean over!'],
-    youLeapFirst: 'Hup! A leap hops a body, a hole or fire. It costs the tip of your tail, and needs a moment before the next.',
-    leaf: ['A golden leaf on the wind! Catch it to dash.', 'Something golden blew onto the log.'],
-    youLeaf: n => `A golden leaf! ${n} dash${n === 1 ? '' : 'es'}: press the way you’re going to shoot three cells, cutting through a snake one thick and putting out fire. Mind the edge.`,
-    youDash: ['Whoosh!', 'Zing!', 'Zoom!'],
-    goldcap: ['A golden mushroom in the rain!', 'Something golden came up in the rain.'],
-    youGoldcap: s => `A golden mushroom! For ${s} seconds the edges let you through: off one side, in at the other.`,
-    wrapEnding: ['The edges are closing!', 'Edges closing in two seconds!'],
+    // The new rules, as they first happen to you in a round: one idea each, short.
+    youCrash: ['Bonk! Crashes cost tail. At 3, or boxed in, you’re out.', 'Ouch: that cost tail. At 3, or boxed in, a crash ends you.'],
+    youAtThree: ['Down to 3. One more bump and you’re out.', 'At 3 now. The next bump is the last.'],
+    youAlight: ['You’re on fire: it takes three bites of tail. Rain helps.', 'Burning, and losing bits of you. Rain would help.'],
+    youCut: ['The woodpecker took your tail.', 'Snip. The woodpecker had your tail.'],
+    baked: ['Baking in the fire: worth two, if you can take the heat.', 'Baked! Hot food is worth two. Wait for the fire, or don’t.'],
+    beetle: ['A beetle is out for a walk. It won’t get far.', 'A beetle is crawling about. Crunchy.'],
+    goldBeetle: ['A golden beetle! Catch it for golden leaps.', 'A golden beetle is scuttling about.'],
+    youGoldBeetle: n => `Golden: ${n} long leap${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Swipe' : 'Press'} ahead.`,
+    youLeapFirst: 'Hup! A leap costs your tail tip, then a short rest.',
+    youDashFirst: 'Whoosh. A dash cuts a thin snake. Mind the edge.',
+    leaf: ['A golden leaf on the wind.', 'A golden leaf just blew onto the log.'],
+    youLeaf: n => `A golden leaf: ${n} dash${n === 1 ? '' : 'es'}. ${touchFirst ? 'Swipe' : 'Press'} ahead to shoot 3 cells.`,
+    goldcap: ['A golden mushroom, up in the rain.', 'A golden mushroom came up in the rain.'],
+    youGoldcap: s => `A golden mushroom: ${s} s with no edges.`,
+    wrapEnding: s => [`The edges are back in ${s} seconds.`, `Edges back in ${s} seconds.`],
     youSnip: name => `Snip! You cut ${name} in two.`,
-    youSnipped: name => `Snip! ${name} dashed right through you.`,
+    youSnipped: name => `Snip. ${name} dashed right through you.`,
     youMushroom: ['You feel smaller. And somehow wiser.', 'A little less of you. Sneaky.'],
     youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
+    youStarvingSmall: 'Starving at 3, with nothing to spare. Eat now.',
+    // A press that couldn't leap (the first time each way, in a round).
+    fizzle: { resting: 'Your leap needs a moment.', small: 'Too small to leap: it costs tail.', landing: 'Nowhere to land.' },
     newBest: n => `New best: ${n}!`,
+    startOver: 'Start over?',
+    startOverText: 'This round’s gone if you do.',
+    awake: 'Awake.',
     friendWin: ['Bragging rights, for now.', 'Rematch?', 'Fair and square. Probably.'],
     friendKill: ['No hard feelings. Well, a few.', 'Friendship is complicated.', 'That calls for a rematch.'],
     friendsIntro: 'Host a game and send your friends the link, or join theirs. Empty seats get AI rivals.',
@@ -126,6 +140,10 @@
   }
   // Your death, in the second person.
   const yourCause = p => p.killer === 'self' ? 'bit yourself' : causeFor(p);
+  // Why a crash was the end (the engine's verdict): length is armour, so a
+  // crash at 40 needs a reason. Other deaths say it in the cause itself.
+  const WHY_OUT = { tiny: ' at your smallest', boxed: ' with nowhere to turn', shorter: ', and it was longer', even: ', the same length: both out' };
+  const howYouDied = p => `You ${yourCause(p)}${WHY_OUT[p.fatal] || ''}`;
 
   // ---------------------------------------------------------- game state
 
@@ -515,11 +533,12 @@
   function youDied() {
     const p = player();
     const titles = FLAVOR.deathTitle;
-    const title = p.killer === 'hunger' ? 'Starved!' : /blew up/.test(p.cause) ? pick(titles.boom) : p.cause === 'fell into a woodpecker hole' ? 'Down the hole!'
+    const title = p.killer === 'hunger' ? 'Starved!' : p.fatal === 'boom' || /blew up/.test(p.cause) ? pick(titles.boom)
+      : p.fatal === 'pecked' ? pick(titles.pecked) : p.fatal === 'cut' ? pick(titles.cut) : p.cause === 'fell into a woodpecker hole' ? 'Down the hole!'
       : pick(p.killer === 'fire' ? titles.fire : p.killer === 'wall' ? titles.wall : p.killer === 'self' ? titles.self : p.cause.startsWith('crashed') ? titles.headOn : titles.rival);
     pendingCard = {
       title,
-      text: `You ${yourCause(p)} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
+      text: `${howYouDied(p)} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
       flavor: killLine(p), primary: 'Play again', secondary: 'Keep watching', reward: true,
       ...(online && { primary: 'Keep watching', secondary: hosting() ? 'Close room' : 'Leave room', actions: { primary: hideCard, secondary: leaveRoom } }),
     };
@@ -533,15 +552,16 @@
     const survivors = game.snakes.filter(s => s.alive);
     const winner = survivors[0];
     const title = !winner ? 'Draw' : isMe(winner) ? 'You win!' : `${winner.name} wins`;
-    const flavor = !winner ? pick(FLAVOR.draw) : isMe(winner) ? pick(FLAVOR.win) : winner.persona ? winner.persona.win : pick(FLAVOR.friendWin);
+    const flavor = !winner ? pick(FLAVOR.draw) : isMe(winner) ? pick(FLAVOR.win) : winner.persona ? pick(winner.persona.win) : pick(FLAVOR.friendWin);
     if (isMe(winner)) Audio.play('win');
     if (winner) { R.celebrate(isMe(winner) ? null : winner); flashFrame('win', isMe(winner)); } // confetti: all over for you, from its head for anyone else
     const me = player();
     const r = game.result;
+    const how = me && !me.alive && me.cause ? howYouDied(me) : '';
     const yours = !me || !r ? ''
       : r.won ? `Won in ${Records.clock(r.survived)} · score ${me.eaten}`
-      : r.draw ? `You shared 1st · lasted ${Records.clock(r.survived)} · score ${me.eaten}`
-      : `You finished ${Records.ordinal(r.place)} · lasted ${Records.clock(r.survived)} · score ${me.eaten}`;
+      : r.draw ? `${how ? `${how} · shared 1st` : 'You shared 1st'} · lasted ${Records.clock(r.survived)} · score ${me.eaten}`
+      : `${how ? `${how} · ${Records.ordinal(r.place)}` : `You finished ${Records.ordinal(r.place)}`} · lasted ${Records.clock(r.survived)} · score ${me.eaten}`;
     if (online) {
       pendingCard = hosting()
         ? { title, flavor, text: yours, reward: !!me, primary: 'Play again', secondary: 'Close room', lobby: { players: true },
@@ -568,7 +588,7 @@
     game.result = s.result;
     game.entryId = Records.recordPlayer({ ...s.result, killer: s.alive ? null : s.killer, round: game.roundId });
     if (s.eaten > best) { best = s.eaten; Records.setBest(best); bestEl.textContent = best; }
-    game.newBest = s.eaten > before && s.eaten > 0;
+    game.newBest = s.eaten > before && before > 0; // (a first round's score is a best by default: nothing to celebrate yet)
   }
 
   // (Online, only your own result is kept: the rivals' places are the host's game.)
@@ -581,19 +601,20 @@
     }
   }
 
-  // Flavor for the death card: the killer's own line, if an AI got you.
+  // Flavor for the death card: the killer's own line, if an AI got you (the
+  // card's fact line already says why).
   function killLine(p) {
     const killer = game.snakes.find(s => s !== p && s.name === p.killer);
-    if (killer?.persona) return killer.persona.kill;
+    if (killer?.persona) return pick(killer.persona.kill);
     if (killer) return pick(FLAVOR.friendKill);
-    if (/blew up/.test(p.cause)) return pick(FLAVOR.boom);
+    if (p.fatal === 'boom' || /blew up/.test(p.cause)) return pick(FLAVOR.boom);
+    if (p.fatal === 'pecked') return pick(FLAVOR.pecked);
     if (p.cause === 'fell into a woodpecker hole') return pick(FLAVOR.hole);
-    // A crash only ends you when you're tiny or boxed in; boxed in, say so.
-    if ((p.killer === 'self' || p.killer === 'wall') && p.body.length > T.MIN_LENGTH) return pick(FLAVOR.boxed);
-    if (p.killer === 'self') return pick(Math.random() < 0.5 ? FLAVOR.self : FLAVOR.tiny);
     if (p.killer === 'hunger') return pick(FLAVOR.starved);
     if (p.killer === 'fire') return pick(FLAVOR.fire);
-    return pick(FLAVOR.wall);
+    if (p.fatal === 'boxed') return pick(FLAVOR.boxed);
+    if (p.killer === 'self') return pick(Math.random() < 0.5 ? FLAVOR.self : FLAVOR.tiny);
+    return pick(p.fatal === 'tiny' && Math.random() < 0.5 ? FLAVOR.tiny : FLAVOR.wall);
   }
 
   // ------------------------------------------------------- sounds, banners
@@ -688,7 +709,9 @@
     return danger;
   }
 
-  // Banners for the big moments of a round (one per tick, most important first).
+  // Banners for the big moments of a round (one per tick, most important
+  // first). Spawns are news once a round; what happens to you is a lesson
+  // the first time; repeats are left to the board's own floaters.
   function announce(dying) {
     const alive = game.snakes.filter(s => s.alive);
     if (dying.length && !game.firstBlood) {
@@ -696,58 +719,54 @@
       const v = dying[0];
       const killer = game.snakes.find(o => o.name === v.killer && o !== v);
       Audio.play('stinger');
-      return toast(killer ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : `First out: ${who(v, true)} ${isMe(v) ? yourCause(v) : causeFor(v)}.`, 2800, 'kill');
+      return toast(killer ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : `First out: ${who(v, true)} ${isMe(v) ? yourCause(v) : causeFor(v)}.`, 2800, 'kill', 'round');
     }
-    for (const e of game.events) if (e.type === 'woodpecker') { flashFrame('bird', true); return toast(pick(FLAVOR.woodpecker), 2800, 'bird'); }
+    for (const e of game.events) if (e.type === 'woodpecker') { flashFrame('bird', true); return toast(pick(FLAVOR.woodpecker), 2800, 'bird', 'round'); }
     if (dying.length && alive.length === 2) {
       const [a, b] = isMe(alive[0]) ? [alive[1], alive[0]] : alive;
       Audio.play('riser');
-      return toast(`It’s down to ${who(a)} and ${who(b, true)}.`, 2800, 'kill');
+      return toast(`It’s down to ${who(a)} and ${who(b, true)}.`, 2800, 'kill', 'round');
     }
     const me = player();
+    const once = key => !game.told?.[key] && ((game.told ||= {})[key] = true); // (the first time this round)
     if (me?.alive) {
       const wrapLeft = me.wrapUntil - game.time;
-      if (wrapLeft > 0 && wrapLeft <= 2000 && !game.toldWrapEnd) { game.toldWrapEnd = true; return toast(pick(FLAVOR.wrapEnding), 1800, 'warn'); }
-      if (wrapLeft > 2000) game.toldWrapEnd = false;
-    }
-    if (me?.alive) {
-      const left = E.hungerLeft(game, me);
-      if (left < T.HUNGER_WARN_MS && !game.warnedHunger) { game.warnedHunger = true; return toast(pick(FLAVOR.youHungry), 2800, 'warn'); }
-      if (left > T.HUNGER_WARN_MS) game.warnedHunger = false;
+      if (wrapLeft > 0 && wrapLeft <= T.WRAP_WARN_MS && !game.toldWrapEnd) { game.toldWrapEnd = true; return toast(pick(FLAVOR.wrapEnding(Math.round(T.WRAP_WARN_MS / 1000))), 1800, 'warn', 'lesson'); }
+      if (wrapLeft > T.WRAP_WARN_MS) game.toldWrapEnd = false;
+      const left = E.hungerLeft(game, me), small = me.body.length <= T.MIN_LENGTH;
+      const warnAt = T.HUNGER_WARN_MS * (small ? 1.5 : 1); // (at your smallest, starving is the end: a little earlier, and sharper)
+      if (left < warnAt && !game.warnedHunger) { game.warnedHunger = true; Audio.play('hungry'); return toast(small ? FLAVOR.youStarvingSmall : pick(FLAVOR.youHungry), 2800, 'warn', 'lesson'); }
+      if (left > warnAt) game.warnedHunger = false;
+      if (small && game.time > 1000 && once('atThree')) return toast(pick(FLAVOR.youAtThree), 2600, 'warn', 'lesson');
     }
     for (const e of game.events) {
       if (e.type === 'strike') flashFrame('storm', true);
       if (e.type === 'strike' && !game.struck) { game.struck = true; return toast(pick(FLAVOR.strike), 2200, 'fire'); }
       if (e.type === 'weather' && FLAVOR.weather[e.kind]) { game.struck = false; flashFrame(e.kind); return toast(pick(FLAVOR.weather[e.kind]), 2800, e.kind); }
       if (e.type === 'rainbow') { flashFrame('gold', true); return toast(pick(FLAVOR.rainbow), 2800, 'gold'); }
-      if (e.type === 'burrow' && !game.toldBurrow) { game.toldBurrow = true; return toast(pick(FLAVOR.burrow), 2200, 'beetle'); }
-      if (e.type === 'spawn' && e.kind === 'golden') { flashFrame('gold'); return toast(pick(FLAVOR.golden), 2800, 'gold'); }
+      if (e.type === 'burrow' && once('burrow')) return toast(pick(FLAVOR.burrow), 2200, 'beetle');
+      if (e.type === 'spawn' && e.kind === 'golden') { flashFrame('gold'); if (once('golden')) return toast(pick(FLAVOR.golden), 2800, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'beetle' && e.gold) { flashFrame('gold'); return toast(pick(FLAVOR.goldBeetle), 2600, 'gold'); }
-      if (e.type === 'spawn' && e.kind === 'beetle') { flashFrame('beetle'); return toast(pick(FLAVOR.beetle), 2200, 'beetle'); }
-      if (e.type === 'eat' && isMe(e.snake) && e.gold) { flashFrame('gold', true); return toast(FLAVOR.youGoldBeetle(e.snake.leaps), 3400, 'gold'); }
-      if (e.type === 'leap' && isMe(e.snake)) {
-        if (!e.gold && !game.toldLeap) { game.toldLeap = true; return toast(FLAVOR.youLeapFirst, 3200, 'you'); }
-        return toast(pick(FLAVOR.youLeap), 900, 'gold');
-      }
+      if (e.type === 'spawn' && e.kind === 'beetle') { flashFrame('beetle'); if (once('beetle')) return toast(pick(FLAVOR.beetle), 2200, 'beetle'); }
       if (e.type === 'spawn' && e.kind === 'leaf') { flashFrame('gold'); return toast(pick(FLAVOR.leaf), 2400, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'goldcap') { flashFrame('gold'); return toast(pick(FLAVOR.goldcap), 2400, 'gold'); }
-      if (e.type === 'eat' && isMe(e.snake) && e.kind === 'leaf') { flashFrame('gold', true); return toast(FLAVOR.youLeaf(e.snake.dashes), 3800, 'gold'); }
-      if (e.type === 'eat' && isMe(e.snake) && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round(T.WRAP_MS / 1000)), 3400, 'gold'); }
-      if (e.type === 'cut' && e.by != null && me && e.by === me.id) return toast(FLAVOR.youSnip(who(e.snake, true)), 1800, 'gold');
-      if (e.type === 'cut' && e.by != null && isMe(e.snake)) return toast(FLAVOR.youSnipped(game.snakes[e.by]?.name || 'Someone'), 2200, 'warn');
-      if (e.type === 'dash' && isMe(e.snake)) return toast(pick(FLAVOR.youDash), 800, 'gold');
-      if (e.type === 'eat' && isMe(e.snake) && e.kind === 'beetle') { flashFrame('beetle'); return toast(pick(FLAVOR.youBeetle), 1500, 'beetle'); }
-      if (e.type === 'eat' && isMe(e.snake) && e.kind === 'golden') { flashFrame('gold', true); return toast(pick(FLAVOR.youGolden), 1500, 'gold'); }
-      if (e.type === 'eat' && isMe(e.snake) && e.kind === 'mushroom') return toast(pick(FLAVOR.youMushroom), 1800, 'you');
-      // The new rules, explained the first time each happens to you in a round.
-      if (e.type === 'crash' && isMe(e.snake)) {
-        if (!game.toldCrash) { game.toldCrash = true; return toast(pick(FLAVOR.youCrash), 3200, 'warn'); }
-        return toast(pick(FLAVOR.youCrashAgain), 1100, 'warn');
-      }
-      if (e.type === 'alight' && isMe(e.snake)) { flashFrame('kill'); return toast(pick(FLAVOR.youAlight), 2600, 'fire'); }
-      if (e.type === 'cut' && isMe(e.snake)) return toast(pick(FLAVOR.youCut), 2000, 'bird');
-      if (e.type === 'baked' && !game.toldBaked) { game.toldBaked = true; return toast(pick(FLAVOR.baked), 2600, 'fire'); }
+      if (!me || !isMe(e.snake || {}) && e.by !== me.id) continue; // (the rest is about you)
+      if (e.type === 'eat' && e.gold) { flashFrame('gold', true); return toast(FLAVOR.youGoldBeetle(e.snake.leaps), 3000, 'gold', 'lesson'); }
+      if (e.type === 'eat' && e.kind === 'leaf') { flashFrame('gold', true); return toast(FLAVOR.youLeaf(e.snake.dashes), 3200, 'gold', 'lesson'); }
+      if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round(T.WRAP_MS / 1000)), 3000, 'gold', 'lesson'); }
+      if (e.type === 'eat' && e.kind === 'beetle') flashFrame('beetle');
+      if (e.type === 'eat' && e.kind === 'golden') flashFrame('gold', true);
+      if (e.type === 'eat' && e.kind === 'mushroom' && once('mushroom')) return toast(pick(FLAVOR.youMushroom), 1800, 'you');
+      if (e.type === 'leap' && !e.gold && once('leap')) return toast(FLAVOR.youLeapFirst, 3000, 'you', 'lesson');
+      if (e.type === 'dash' && once('dash')) return toast(FLAVOR.youDashFirst, 2800, 'gold', 'lesson');
+      if (e.type === 'fizzle' && FLAVOR.fizzle[e.why] && once('fizzle' + e.why)) return toast(FLAVOR.fizzle[e.why], 1800, 'warn', 'lesson');
+      if (e.type === 'cut' && e.by === me.id) return toast(FLAVOR.youSnip(who(e.snake, true)), 1800, 'gold');
+      if (e.type === 'cut' && e.by != null) return toast(FLAVOR.youSnipped(game.snakes[e.by]?.name || 'Someone'), 2200, 'warn', 'lesson');
+      if (e.type === 'cut') return toast(pick(FLAVOR.youCut), 2000, 'bird', 'lesson');
+      if (e.type === 'crash' && once('crash')) return toast(pick(FLAVOR.youCrash), 3000, 'warn', 'lesson');
+      if (e.type === 'alight') { flashFrame('kill'); return toast(pick(FLAVOR.youAlight), 2600, 'fire', 'lesson'); }
     }
+    for (const e of game.events) if (e.type === 'baked' && once('baked')) return toast(pick(FLAVOR.baked), 2600, 'fire');
   }
 
   // A banner fades while a head passes under it, so it never hides the board
@@ -773,20 +792,42 @@
     }
   }
   // kind styles the banner for its moment: kill, gold, beetle, bird (the
-  // woodpecker), warn, you (something you ate), go.
-  function toast(text, ms = 2800, kind = '') {
+  // woodpecker), warn, you (something you ate), go. level says how much it
+  // matters: 'round' (what changes the round: first blood, the last two, the
+  // woodpecker, friends coming and going) always shows; a 'lesson' (a rule,
+  // the first time it happens to you) holds for LESSON_HOLD_MS before
+  // anything but round news may replace it, and one waiting lesson shows
+  // after it; 'news' (the weather, a spawn) is dropped while a lesson
+  // holds. While a card is up, only round news. Screen readers hear round
+  // news and lessons (and the weather), not the chatter of spawns.
+  let toastLevel = 'news', toastHold = 0, waitingLesson = null;
+  const LEVELS = { news: 0, lesson: 1, round: 2 };
+  function toast(text, ms = 2800, kind = '', level = 'news') {
+    const now = performance.now();
+    if (level !== 'round' && !overlay.classList.contains('hidden')) return; // (a card's up)
+    if (!toastEl.hidden && now < toastHold && LEVELS[level] <= LEVELS[toastLevel] && level !== 'round') {
+      if (level === 'lesson') waitingLesson = [text, ms, kind];
+      return;
+    }
+    toastLevel = level;
+    toastHold = level === 'news' ? 0 : now + Math.min(ms, T.LESSON_HOLD_MS);
     toastChars = text.length;
     toastEl.classList.remove('settled', 'leaving'); // (a new banner slams in)
     toastEl.dataset.kind = kind;
     toastEl.textContent = text;
     toastEl.hidden = false;
-    say(text);
+    if (level !== 'news' || kind in FLAVOR.weather) say(text);
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => hideToast(true), ms);
+    toastTimer = setTimeout(() => {
+      if (waitingLesson) { const [t, m, k] = waitingLesson; waitingLesson = null; toastHold = 0; toast(t, m, k, 'lesson'); }
+      else hideToast(true);
+    }, ms);
   }
   // Gone at once (a card is coming up), or, when its time is up, faded out.
   function hideToast(fade = false) {
     clearTimeout(toastTimer);
+    toastHold = 0;
+    if (!fade) waitingLesson = null;
     if (fade && !reducedMQ.matches && !toastEl.hidden) {
       toastEl.classList.add('leaving');
       toastTimer = setTimeout(() => { toastEl.hidden = true; toastEl.classList.remove('leaving'); }, 240);
@@ -879,6 +920,8 @@
         nameRank.textContent = 'Top of your own list. Carve your name:';
         nameRow.hidden = false;
       }
+      if (!nameRow.hidden && game.carveOffered && game.carveOffered !== card.title) nameRow.hidden = true; // (offered once: the round-over card after your death card doesn't ask again)
+      if (!nameRow.hidden) game.carveOffered = card.title;
       if (!nameRow.hidden && document.activeElement !== nameInput) nameInput.value = Records.hasName() ? Records.getName() : '';
       if (!nameRow.hidden) namingEntry = game.entryId;
     }
@@ -1305,7 +1348,7 @@
       return;
     }
     if (online) { /* the round goes on behind the dialog */ }
-    else if (state === 'countdown' || (state === 'running' && !pendingCard)) napNow();
+    else if (state === 'countdown' || (state === 'running' && playerAlive() && !pendingCard)) napNow(); // (only watching: the round goes on, and its card stays)
     recordsOpener = document.activeElement;
     recordsEl.hidden = false;
     mainEl.inert = true;

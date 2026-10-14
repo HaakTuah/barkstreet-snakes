@@ -826,7 +826,11 @@ button.link:active { transform: none; }
 }
 @container (max-height: 300px) {
   .card h2 { font-size: 1.25rem; }
-  .flavor, .hint { display: none !important; }
+  .flavor { display: none !important; }
+  /* Just the first item of the hint ("Swipe to steer"): a new player has to be told that much. */
+  .hint { font-size: 0; margin-top: 4px !important; }
+  .hint span:first-child { font-size: 0.72rem; }
+  .hint span:not(:first-child) { display: none; }
   button { padding-block: 8px; }
   .card:has(.name-row:not([hidden])) .badge { display: none; } /* (the prompt is the celebration here; Best shows the number) */
   /* The two buttons share one row (a stacked pair would cover the card). */

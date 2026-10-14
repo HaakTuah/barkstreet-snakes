@@ -768,7 +768,7 @@ window.SnakeEngine = (() => {
     const crashOf = s => {
       const { x, y } = s.next;
       const k = key(x, y);
-      if (!inside(x, y)) return { cause: s.boom ? 'dashed into the edge and blew up' : 'hit the wall', killer: 'wall', killerId: null };
+      if (!inside(x, y)) return { cause: s.boom ? 'dashed into the edge and blew up' : 'hit the edge', killer: 'wall', killerId: null };
       if (game.holes.has(k)) return { cause: s.boom ? 'dashed into a woodpecker hole and blew up' : 'fell into a woodpecker hole', killer: 'wall', killerId: null };
       if (bodyStamp[k] === stamp) {
         const other = game.snakes[bodyOwner[k]];

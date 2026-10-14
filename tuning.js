@@ -59,7 +59,9 @@ window.TUNING = Object.freeze({
   // ---------------------------------------------------------------- hunger
   HUNGER_MS: 20000,         // this long without food (mushrooms don't count) and you start shrinking
   STARVE_EVERY_MS: 1500,    // ...one segment this often, starving at MIN_LENGTH
-  HUNGER_WARN_MS: 6000,     // warn you when this much time is left
+  HUNGER_WARN_MS: 6000,     // warn you when this much time is left (half again as early at your smallest)
+  LESSON_HOLD_MS: 2500,     // a banner that teaches a rule holds at least this long before routine news may replace it
+  WRAP_WARN_MS: 2000,       // the edges' wrap: a warning, and the glow fading, this long before it ends
 
   // ----------------------------------------------------------------- speed
   OPENING_TICK: 170,        // the first ticks of a round are slower, so the start is forgiving...
@@ -127,10 +129,13 @@ window.TUNING = Object.freeze({
   DEATH_FREEZE: 350,        // freeze-frame when you die, before the card rises
   ROUND_END_PAUSE: 600,     // let the last moment breathe before the round-over card
   MAX_FRAME_MS: 250,        // after a stall (a busy machine, a debugger), the round moves on at most this much...
-  MAX_CATCHUP: 4,           // ...and catches up at most this many ticks in one frame
+  MAX_CATCHUP: 4,           // ...and catches up at most this many ticks in one frame (online, or watching fast: the clock is everyone's)...
+  SOLO_CATCHUP: 1,          // ...but playing alone, at most this many: a hitch is a moment's slow-down, not a jump
+  YOU_MS: 3500,             // YOU marks your snake this long into a round (or 600 ms after you first steer)
 
   // ----------------------------------------------------------------- input
   QUEUE: 3,                 // turns you can queue ahead
+  POWER_AFTER_TURN_MS: 180, // a press the way you just turned, this soon after, is part of the turn (a double tap), not a leap
   SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells...
   SWIPE_MIN_PX: 12,         // ...and at least this far (about 3 mm), so a jittery finger doesn't turn
 
