@@ -754,6 +754,7 @@ window.SnakeAudio = (() => {
 
   function play(name, opts) {
     if (!CUES[name] || !ctx || muted) return;
+    if (name === 'go') goAt = now(); // (the round's music starts on it)
     if (ctx.state !== 'running') {
       // Waking up (the key press that unlocked it, a tap just after unmuting): it waits for the clock.
       if (now() - wokenAt < RESUME_GRACE && waking.length < 4) waking.push({ name, opts, at: now() });
@@ -839,42 +840,52 @@ window.SnakeAudio = (() => {
   // An adaptive track, written note by note on the audio clock. The game calls
   // music(stage, mood) every frame; this schedules the next quarter second of
   // sixteenth notes and moves between arrangements at bar lines, so changes
-  // always land on the beat.
+  // always land on the beat. (Except one: a round's music starts on Go, not at
+  // the title loop's next bar line.)
   //
-  //   stage: 'title'   a slow, calm marimba loop (start screen, round over)
+  //   stage: 'title'   a slow, calm marimba loop (start screen, countdown, round over)
   //          'early'   the loop plus a soft bass
   //          'mid'     a light shaker joins, and the tempo creeps up with the game
   //          'sudden'  the woodpecker is here: a minor key, wood-block knocks
   //          'duel'    the last two snakes: faster, tense, a heartbeat kick
   //          'off'     silence
   //   mood:  { intensity: 0..1, watching: bool, paused: bool, danger: 0..1 }
+  //          (a round's mood: on the title loop it's ignored, so no heartbeat outlives a round)
   //
   // Danger (your head close to a rival's, or boxed in) brings in a heartbeat,
   // drives the bass, and lets a dissonant high note creep into the tune.
   //
   // Everything is quiet and round: sine and triangle tones, short envelopes,
-  // through its own bus so the music can be switched off on its own.
+  // through its own bus so the music can be switched off on its own. The title
+  // loop answers itself every other time round, and fades away after a minute
+  // with nobody at the keys (any key or tap brings it back).
 
   const ARRANGEMENTS = {
     // bpm, the chord roots for the 4-bar loop (MIDI), the scale degrees of each
     // chord, and which layers play.
-    title: { bpm: 84, roots: [48, 45, 41, 43], minor: false, arp: 'quarter', bass: false, shaker: false, knocks: false, kick: false, pad: true },
+    title: { bpm: 84, roots: [48, 45, 41, 43], minor: false, arp: 'quarter', bass: false, shaker: false, knocks: false, kick: false, pad: true, answers: true },
     early: { bpm: 94, roots: [48, 45, 41, 43], minor: false, arp: 'eighth', bass: true, shaker: false, knocks: false, kick: false, pad: true },
     mid: { bpm: 102, roots: [48, 45, 41, 43], minor: false, arp: 'eighth', bass: true, shaker: true, knocks: false, kick: false, pad: true, bells: true },
     sudden: { bpm: 108, roots: [45, 41, 48, 40], minor: true, arp: 'eighth', bass: true, shaker: true, knocks: true, kick: false, pad: true, toms: true },
     duel: { bpm: 124, roots: [45, 41, 43, 40], minor: true, arp: 'sixteenth', bass: true, shaker: true, knocks: true, kick: true, hats: true },
   };
   // Chord shapes over each root: major-ish for the calm loops, minor for the tense ones.
-  const SHAPE_MAJOR = [[0, 4, 7, 12], [0, 3, 7, 12], [0, 4, 7, 12], [0, 4, 7, 11]]; // C  Am  F  G(maj7-ish)
+  const SHAPE_MAJOR = [[0, 4, 7, 12], [0, 3, 7, 12], [0, 4, 7, 12], [0, 4, 7, 10]]; // C  Am  F  G7
   const SHAPE_MINOR = [[0, 3, 7, 12], [0, 4, 7, 12], [0, 4, 7, 12], [0, 4, 7, 10]]; // Am F  C  E7
   const ARP_ORDER = [0, 1, 2, 3, 2, 1, 2, 3];
+  const ARP_ANSWER = [3, 2, 1, 2, 0, 2, 1, 3]; // (the title loop's other time round: the line falls)
   const LOOKAHEAD = 0.25;      // seconds of music scheduled ahead of the audio clock
+  const isRound = stage => stage !== 'title' && stage !== 'off';
 
   let stageNow = 'off', stageWanted = 'off';
   let step = 0;                // sixteenth-note counter within the 4-bar loop (0..63)
+  let pass = 0;                // times round the loop
   let nextAt = 0;              // audio-clock time of the next sixteenth
   let tempo = 90;
-  let musicLevel = 1;          // ducking for watching / paused, eased
+  let musicLevel = 1;          // ducking for watching / paused / idle, eased
+  let titleSince = 0;          // when the title loop last took over
+  let goAt = -Infinity;        // when the last "go" was asked for
+  let section = null;          // the arrangement's own gain, so the title loop can bow out at Go
 
   function setMusicOn(value) {
     musicOn = !!value;
@@ -882,34 +893,36 @@ window.SnakeAudio = (() => {
     if (musicBus) {
       try { musicBus.gain.setTargetAtTime(musicOn ? MUSIC_VOLUME * musicLevel : 0, ctx.currentTime, 0.08); } catch { /* ignore */ }
     }
+    syncBed();
     return musicOn;
   }
   const isMusicOn = () => musicOn;
   const toggleMusic = () => setMusicOn(!musicOn);
 
-  // One music note straight to the music bus: no voice counting, it ends itself.
-  function mtone(t, type, freq, dur, peak, attack, toFreq, lowpass) {
+  // One music note straight to the music bus (or `dest`): no voice counting, it ends itself.
+  function mtone(t, type, freq, dur, peak, attack, toFreq, filter, dest) {
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
-    osc.type = type;
+    shape(osc, type);
     osc.frequency.setValueAtTime(freq, t);
     if (toFreq) osc.frequency.exponentialRampToValueAtTime(toFreq, t + dur);
     envelope(g, t, peak, attack, dur);
     let f = null;
-    if (lowpass) {
+    if (filter) {
       f = ctx.createBiquadFilter();
-      f.type = 'lowpass';
-      f.frequency.value = lowpass;
+      f.type = filter.type || 'lowpass';
+      f.frequency.value = filter.freq || filter;
+      if (filter.q) f.Q.value = filter.q;
       osc.connect(f);
       f.connect(g);
     } else osc.connect(g);
-    g.connect(musicBus);
+    g.connect(dest || section || musicBus);
     osc.start(t);
     osc.stop(t + dur + 0.03);
     osc.onended = () => { try { osc.disconnect(); g.disconnect(); if (f) f.disconnect(); } catch { /* gone */ } };
   }
 
-  function mnoise(t, dur, peak, type, freq, q) {
+  function mnoise(t, dur, peak, type, freq, q, dest) {
     const src = ctx.createBufferSource();
     const f = ctx.createBiquadFilter();
     const g = ctx.createGain();
@@ -920,7 +933,7 @@ window.SnakeAudio = (() => {
     envelope(g, t, peak, 0.002, dur);
     src.connect(f);
     f.connect(g);
-    g.connect(musicBus);
+    g.connect(dest || section || musicBus);
     src.start(t, Math.random() * Math.max(0, NOISE_SECONDS - dur - 0.05));
     src.stop(t + dur + 0.03);
     src.onended = () => { try { src.disconnect(); f.disconnect(); g.disconnect(); } catch { /* gone */ } };
@@ -939,16 +952,20 @@ window.SnakeAudio = (() => {
     const root = a.roots[bar];
     const shape = (a.minor ? SHAPE_MINOR : SHAPE_MAJOR)[bar];
     const quiet = watching ? 0.6 : 1;
+    const answer = a.answers && pass % 2 === 1;
 
     // Bells, high and sparse, answering the tune in the middle of the round.
     if (a.bells && bar % 2 === 1 && (inBar === 6 || inBar === 14)) mmallet(t, root + 24 + shape[inBar === 6 ? 2 : 3], 0.5, 0.035 * quiet);
     // The marimba line: chord tones an octave and a half up, in a rocking order.
     const every = a.arp === 'quarter' ? 4 : a.arp === 'eighth' ? 2 : 1;
     if (inBar % every === 0) {
-      const i = ARP_ORDER[(inBar / every) % ARP_ORDER.length];
+      const order = answer ? ARP_ANSWER : ARP_ORDER;
+      const i = order[(inBar / every) % order.length];
       const accent = inBar % 4 === 0 ? 1 : 0.75;
       mmallet(t, root + 12 + shape[i], a.arp === 'quarter' ? 0.5 : 0.22, 0.09 * accent * quiet);
     }
+    // ...and when it answers, a high note echoes the end of every other bar.
+    if (answer && bar % 2 === 1 && inBar === 14) mmallet(t, root + 24 + shape[1], 0.6, 0.03 * quiet);
     // A long, low note on the downbeat of each bar under the calm loop.
     if (!a.bass && inBar === 0) mtone(t, 'sine', mtof(root - 12), 1.8, 0.05 * quiet, 0.08);
 
@@ -965,9 +982,10 @@ window.SnakeAudio = (() => {
     if (a.knocks && (inBar === 4 || inBar === 12 || inBar === 15)) {
       mtone(t, 'triangle', inBar === 15 ? 1500 : 1150, 0.06, 0.07, 0.001, inBar === 15 ? 1100 : 820, 3000);
     }
-    // A soft heartbeat kick for the duel.
+    // A soft heartbeat kick for the duel (and its beater, for small speakers).
     if (a.kick && (inBar === 0 || inBar === 3 || inBar === 8 || inBar === 11)) {
       mtone(t, 'sine', 110, 0.16, 0.16, 0.004, 48);
+      mnoise(t, 0.025, 0.05, 'bandpass', 700, 1.4);
     }
     // Sudden death: low toms rolling round the bar.
     if (a.toms && (inBar === 6 || inBar === 7 || inBar === 14)) mtone(t, 'sine', inBar === 7 ? 150 : 120, 0.2, 0.1, 0.004, 70);
@@ -986,35 +1004,85 @@ window.SnakeAudio = (() => {
     }
   }
 
-  // The danger layer: a heartbeat (lub-dub on the beat), a driven bass, a
-  // dissonance creeping in on top. danger: 0..1.
+  // The danger layer: a heartbeat (lub-dub on the beat, each beat with a muffled thump a
+  // phone can play), a driven bass, a dissonance creeping in on top. danger: 0..1.
   function scheduleDanger(a, s, t, danger) {
     if (danger < 0.25) return;
     const inBar = s % 16, bar = Math.floor(s / 16) % 4, root = a.roots[bar];
     if (inBar % 4 === 0) {
       mtone(t, 'sine', 62, 0.14, 0.22 * danger, 0.004, 42);
+      mtone(t, 'body', 124, 0.08, 0.12 * danger, 0.004, 84, { type: 'bandpass', freq: 420, q: 1.2 });
+      mnoise(t, 0.04, 0.08 * danger, 'bandpass', 460, 1.4);
       mtone(t + 0.13, 'sine', 56, 0.12, 0.15 * danger, 0.004, 40);
+      mtone(t + 0.13, 'body', 112, 0.07, 0.08 * danger, 0.004, 80, { type: 'bandpass', freq: 400, q: 1.2 });
     }
     if (inBar % 2 === 1) mtone(t, 'triangle', mtof(root - 12), 0.1, 0.07 * danger, 0.004, null, 500);
     if (danger > 0.6 && (inBar === 2 || inBar === 10)) mmallet(t, root + 25, 0.18, 0.05 * danger); // a minor second, uneasy
   }
 
+  // Back on the title loop: the round's over. The woodpecker starts afresh next time.
+  function roundOver() {
+    strikes = 0;
+    aims = 0;
+  }
+
+  // A round's music starts on Go: the title loop bows out at once (its long pad and bass
+  // fade fast) and the round's first bar begins on the same beat as the "go".
+  function newSection(t) {
+    const old = section;
+    if (old) {
+      try { old.gain.setTargetAtTime(0, t, 0.06); } catch { /* gone */ }
+      setTimeout(() => { try { old.disconnect(); } catch { /* gone */ } }, 4000);
+    }
+    section = ctx.createGain();
+    section.gain.value = 1;
+    section.connect(musicBus);
+  }
+
   // Called every frame by the game. Cheap when nothing is due.
   function music(stage, mood) {
-    if (!ctx || ctx.state !== 'running' || !musicOn || muted) { stageWanted = stage; return; }
-    stageWanted = stage;
-    const intensity = mood && Number.isFinite(mood.intensity) ? Math.max(0, Math.min(1, mood.intensity)) : 0;
-    const watching = !!(mood && mood.watching);
-    const danger = mood && Number.isFinite(mood.danger) ? Math.max(0, Math.min(1, mood.danger)) : 0;
-    const level = mood && mood.paused ? 0.35 : watching ? 0.7 : 1;
-    if (Math.abs(level - musicLevel) > 0.01) {
-      musicLevel = level;
-      try { musicBus.gain.setTargetAtTime(MUSIC_VOLUME * musicLevel, ctx.currentTime, 0.25); } catch { /* ignore */ }
+    const round = isRound(stage);
+    if (stage !== stageWanted) {
+      if (!round) { titleSince = now(); if (isRound(stageWanted)) roundOver(); }
+      stageWanted = stage;
     }
-    if (stageNow === 'off' && stageWanted !== 'off') { stageNow = stageWanted; step = 0; nextAt = ctx.currentTime + 0.05; }
+    const paused = round && !!(mood && mood.paused);
+    // The weather belongs to the round: it stops when the round does, and while you nap.
+    bedOpen = round && !paused;
+    syncBed();
+    if (!ctx || ctx.state !== 'running') return;
+    flushWaking();
+    if (!musicOn || muted) return;
+
+    const intensity = round && mood && Number.isFinite(mood.intensity) ? Math.max(0, Math.min(1, mood.intensity)) : 0;
+    const watching = round && !!(mood && mood.watching);
+    const danger = round && mood && Number.isFinite(mood.danger) ? Math.max(0, Math.min(1, mood.danger)) : 0;
+    const idleFor = round ? 0 : now() - Math.max(lastActive, titleSince) - IDLE_MS;
+    const level = idleFor > 0 ? 0 : paused ? 0.35 : watching ? 0.7 : 1;
+    if (Math.abs(level - musicLevel) > 0.01) {
+      // (Idle, the loop fades slowly; back from idle, it comes in over a moment.)
+      const ease = level === 0 ? 3 : musicLevel === 0 ? 0.6 : 0.25;
+      musicLevel = level;
+      try { musicBus.gain.setTargetAtTime(MUSIC_VOLUME * musicLevel, ctx.currentTime, ease); } catch { /* ignore */ }
+    }
+    if (idleFor > IDLE_STOP_MS) { stageNow = 'off'; return; } // faded right out: stop writing notes
+
+    if (stageNow === 'off' && stageWanted !== 'off') {
+      stageNow = stageWanted; step = 0; pass = 0; nextAt = ctx.currentTime + 0.05;
+      newSection(ctx.currentTime);
+    } else if (round && (stageNow === 'title' || now() - goAt < 1000)) {
+      // (Go just went: even a round that comes straight after the last starts from its first bar.)
+      goAt = -Infinity;
+      stageNow = stageWanted; step = 0; pass = 0; nextAt = ctx.currentTime + LEAD;
+      newSection(nextAt);
+    }
     if (stageNow === 'off') return;
-    // Fell behind (the tab was asleep): skip ahead rather than play a burst of notes.
-    if (nextAt < ctx.currentTime - 0.1) nextAt = ctx.currentTime + 0.05;
+    // Fell behind (a stall, or the tab was asleep): skip whole sixteenths, so the groove stays on its grid.
+    if (nextAt < ctx.currentTime - 0.1) {
+      const len = 60 / tempo / 4, skip = Math.ceil((ctx.currentTime - nextAt) / len);
+      nextAt += skip * len;
+      step = (step + skip) % 64;
+    }
 
     while (nextAt < ctx.currentTime + LOOKAHEAD) {
       // Arrangement changes wait for the next bar line.
@@ -1031,31 +1099,48 @@ window.SnakeAudio = (() => {
       } catch { /* a dropped note is fine */ }
       nextAt += 60 / tempo / 4;
       step = (step + 1) % 64;
+      if (step === 0) pass++;
     }
+    drops();
   }
 
   // ---- The weather ----------------------------------------------------------
   //
   // Beds of filtered noise that loop under the music (on the music bus, so the
-  // music switch silences them too): rain hisses, wind gusts (its loudness
-  // swells and falls), a storm rumbles low under a little rain, snow is a
-  // high, airy hush. A new kind fades in as the old one fades out.
+  // music switch silences them too): rain is a soft wash with drops landing
+  // around you, wind gusts (its loudness swells and falls), a storm rumbles low
+  // under a little rain, snow is a high, airy hush. A new kind fades in as the
+  // old one fades out, and they all stop when the round does, or for a nap.
   const BEDS = {
-    rain: [['bandpass', 1800, 0.6, 0.05], ['highpass', 5000, 0.7, 0.02]],
+    rain: [['lowpass', 1400, 0.4, 0.04], ['bandpass', 3400, 0.5, 0.0056]],
     wind: [['lowpass', 520, 0.9, 0.08, true]],
     storm: [['lowpass', 140, 0.8, 0.14], ['bandpass', 1500, 0.6, 0.02]],
     snow: [['highpass', 6000, 0.7, 0.012], ['lowpass', 300, 0.7, 0.02, true]],
   };
-  let bedKind = 'none', bedNodes = [];
+  const DRIPS = { rain: 0.16, storm: 0.6 }; // seconds between drops, on average
+  let bedWanted = 'none', bedKind = 'none', bedNodes = [], bedOpen = true;
+  let drip = null, dripAt = 0;      // where this bed's drops go: { left, right, middle }
+
   function weather(kind) {
-    kind = BEDS[kind] ? kind : 'none';
+    bedWanted = BEDS[kind] ? kind : 'none';
+    syncBed();
+  }
+
+  // Bring the bed you should hear (the weather, in a round, with the music on) in, and the old one out.
+  function syncBed() {
+    const kind = bedOpen && musicOn ? bedWanted : 'none';
     if (kind === bedKind || !ctx || unsupported) return;
     bedKind = kind;
     const t = ctx.currentTime;
     for (const n of bedNodes) { // the old bed fades
-      try { n.g.gain.setTargetAtTime(0, t, 0.6); n.src.stop(t + 3); } catch { /* gone */ }
+      try {
+        n.g.gain.setTargetAtTime(0, t, 0.6);
+        if (n.src) n.src.stop(t + 3);
+        else setTimeout(() => { for (const p of n.parts) { try { p.disconnect(); } catch { /* gone */ } } }, 3500);
+      } catch { /* gone */ }
     }
     bedNodes = [];
+    drip = null;
     if (kind === 'none' || !musicBus) return;
     for (const [type, freq, q, level, gusty] of BEDS[kind]) {
       try {
@@ -1072,11 +1157,42 @@ window.SnakeAudio = (() => {
           lfo.start(t);
           src.onended = () => { try { lfo.stop(); lfo.disconnect(); depth.disconnect(); } catch { /* gone */ } };
         }
-        src.start(t, Math.random() * 2);
+        src.start(t, Math.random() * (NOISE_SECONDS - 1));
         const prev = src.onended;
         src.onended = () => { try { prev?.(); src.disconnect(); f.disconnect(); g.disconnect(); } catch { /* gone */ } };
         bedNodes.push({ src, g });
       } catch { /* the weather stays quiet */ }
+    }
+    if (DRIPS[kind]) {
+      // Drops land a little left, a little right and in front, all through one gain that fades with the bed.
+      try {
+        const g = ctx.createGain(), parts = [g];
+        g.gain.value = 0;
+        g.gain.setTargetAtTime(1, t, 0.8);
+        g.connect(musicBus);
+        bedNodes.push({ g, src: null, parts });
+        drip = { left: g, right: g, middle: g };
+        dripAt = t + 0.3;
+        const side = pan => { const p = ctx.createStereoPanner(); p.pan.value = pan; p.connect(g); parts.push(p); return p; };
+        drip.left = side(-0.6);
+        drip.right = side(0.6);
+      } catch { /* (no panners: the drops fall in front) */ }
+    }
+  }
+
+  // Raindrops on leaves and bark, now and then: each a tiny falling plink, some with a tick.
+  function drops() {
+    if (!drip || !DRIPS[bedKind]) return;
+    const gap = DRIPS[bedKind];
+    if (dripAt < ctx.currentTime) dripAt = ctx.currentTime + 0.02;
+    while (dripAt < ctx.currentTime + LOOKAHEAD) {
+      const r = Math.random(), dest = r < 0.4 ? drip.left : r < 0.8 ? drip.right : drip.middle;
+      const f = 1900 + Math.random() * 2600, peak = 0.004 + Math.random() * Math.random() * 0.014;
+      try {
+        mtone(dripAt, 'sine', f, 0.03, peak, 0.001, f * 0.62, null, dest);
+        if (Math.random() < 0.4) mnoise(dripAt, 0.008, peak * 0.8, 'bandpass', 2800 + Math.random() * 2000, 2, dest);
+      } catch { /* a drop missed */ }
+      dripAt += gap * (0.25 - Math.log(1 - Math.random() * 0.98)); // (random, like rain: mostly short gaps, now and then a pause)
     }
   }
 
