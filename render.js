@@ -31,17 +31,21 @@ window.SnakeRender = (() => {
 
   // ------------------------------------------------------------ utilities
 
-  // Blend two #rrggbb colors; t = 0 gives a, t = 1 gives b. Results are cached,
-  // so calling this with the same arguments every frame costs a lookup.
+  // Blend two #rrggbb colors; t = 0 gives a, t = 1 gives b. Results are cached
+  // (by a, then b, then t: no key string is built), so calling this with the
+  // same arguments every frame costs a lookup.
   const mixCache = new Map();
   function mix(a, b, t) {
-    const key = a + b + t;
-    let out = mixCache.get(key);
+    let byB = mixCache.get(a);
+    if (!byB) mixCache.set(a, byB = new Map());
+    let byT = byB.get(b);
+    if (!byT) byB.set(b, byT = new Map());
+    let out = byT.get(t);
     if (out) return out;
     const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
     const ch = s => Math.round(((pa >> s) & 255) * (1 - t) + ((pb >> s) & 255) * t);
     out = '#' + ((1 << 24) | (ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).slice(1);
-    mixCache.set(key, out);
+    byT.set(t, out);
     return out;
   }
 
@@ -2727,12 +2731,17 @@ window.SnakeRender = (() => {
   // up (it pulses faster, ripples spread from where it came in), and every
   // part of the rival inside glows in the field's colour, as if wading
   // through coloured light. The edge is exactly the trespass line.
-  const rgbaCache = new Map(); // hex -> alpha -> string (no key string built per call)
+  // A colour with an alpha, as a string, cached. The alpha is quantised to
+  // 1/255 (all the canvas keeps of it anyway), so an alpha that changes every
+  // frame costs a lookup and the cache stays bounded: at most 256 strings a
+  // colour (and it's cleared every round, as a backstop).
+  const rgbaCache = new Map(); // hex -> [256] strings, by alpha
   function rgba(hex, a) {
     let byA = rgbaCache.get(hex);
-    if (!byA) rgbaCache.set(hex, byA = new Map());
-    let v = byA.get(a);
-    if (!v) { const n = parseInt(hex.slice(1), 16); v = `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; byA.set(a, v); }
+    if (!byA) rgbaCache.set(hex, byA = new Array(256));
+    const q = a > 0 ? (a < 1 ? Math.round(a * 255) : 255) : 0;
+    let v = byA[q];
+    if (!v) { const n = parseInt(hex.slice(1), 16); v = byA[q] = `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${(q / 255).toFixed(3)})`; }
     return v;
   }
   // Each field's look, drawn once per resolution: its glow and edge, and the
@@ -4550,6 +4559,7 @@ window.SnakeRender = (() => {
     homeShown.clear();
     inField.clear();
     fieldLooks.clear();
+    rgbaCache.clear(); // (bounded anyway: a backstop)
     drifts = null;
     // A different stretch of log each round.
     barkSeed = 1 + Math.floor(Math.random() * 2147483645);
