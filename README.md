@@ -75,7 +75,7 @@ The AI snakes talk. Each one has its own voice: Sovereign uses the royal "we", C
 
 ## Watching the AIs
 
-Press **Watch AIs** on the start screen for a round between four AI snakes, with a 1×/2×/4× speed control. The same control appears when you're watching after dying. Every round starts at 1×, and at 2× or 4× the board's own effects speed up too. Starting over keeps you watching. Watched rounds put the AI snakes in the Hall of Fame, but don't count towards your own stats.
+Press **Watch AIs** on the start screen for a round between four AI snakes, with a 1×/2×/4× speed control (or the keys 1, 2 and 4). The same control appears when you're watching after dying. Every round starts at 1×, and at 2× or 4× the board's own effects speed up too. **Watch again** on the round-over card keeps you watching; Enter or R start a round you play. Watched rounds put the AI snakes in the Hall of Fame, but don't count towards your own stats.
 
 ## The rivals
 

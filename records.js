@@ -240,7 +240,8 @@ window.SnakeRecords = (() => {
     return node;
   }
 
-  const dot = color => { const d = el('span', { className: 'dot' }); d.style.background = cleanColor(color); return d; };
+  // paint: a background the game draws for that snake, as on its tag (Mason's marble, Ghost's pale fill), or null for its colour.
+  const dot = (color, paint = null) => { const d = el('span', { className: 'dot' }); d.style.background = paint || cleanColor(color); return d; };
   // A tag after a name, with a comma only a screen reader hears ("Green, this round", not "Greenthis round").
   const tag = text => [el('span', { className: 'sr-only', textContent: ', ' }), el('span', { className: 'who', textContent: text })];
 
@@ -253,7 +254,8 @@ window.SnakeRecords = (() => {
   // playerColor colors your rows' dots; AI rows use the color saved with them.
   const safeDate = (fmt, d) => { try { return fmt.format(d); } catch { return ''; } };
 
-  function renderScores(container, highlightId, filter, playerColor) {
+  // paint: (a rival's name) => a dot's background, or null (see dot).
+  function renderScores(container, highlightId, filter, playerColor, paint = null) {
     const all = scores();
     const list = filter === 'me' ? topPlayer(all) : topOverall(all);
     keepingNote(container);
@@ -265,7 +267,7 @@ window.SnakeRecords = (() => {
     const rows = list.map((e, i) => el('tr', { ...(e.id === highlightId && { ariaCurrent: 'true' }), className: [e.id === highlightId && 'highlight', e.ai && 'ai', e.friend && 'friend'].filter(Boolean).join(' ') },
       el('td', { className: 'num', textContent: i + 1 }),
       el('td', { className: 'name', title: e.watched ? `${e.name} (a watched round)` : e.friend ? `${e.name} (a friend)` : e.name },
-        dot(e.ai || e.friend ? e.color : playerColor), e.name, ...(e.friend ? tag('friend') : []),
+        dot(e.ai || e.friend ? e.color : playerColor, e.ai && paint ? paint(e.name) : null), e.name, ...(e.friend ? tag('friend') : []),
         ...(e.id === highlightId ? tag('this round') : [])),
       el('td', { className: e.won ? 'won' : '', textContent: placeLabel(e) }),
       el('td', { className: 'num', textContent: e.survived ? clock(e.survived) : '–' }),
@@ -286,7 +288,7 @@ window.SnakeRecords = (() => {
   }
 
   // colors: { name -> color } for the snakes, used in the "what got you" bars.
-  function renderStats(container, colors) {
+  function renderStats(container, colors, paint = null) {
     const st = stats();
     keepingNote(container);
     if (!st.played) {
@@ -311,7 +313,7 @@ window.SnakeRecords = (() => {
       return el('section', { className: 'bars' },
         el('h3', { textContent: title }),
         ...items.map(i => el('div', { className: 'bar-row' },
-          el('span', { className: 'bar-label' }, ...(i.color ? [dot(i.color)] : []), i.label),
+          el('span', { className: 'bar-label' }, ...(i.color ? [dot(i.color, i.paint)] : []), i.label),
           el('span', { className: 'bar-track' },
             el('span', { className: 'bar-fill', style: `width:${100 * i.count / max}%;background:${i.fill || i.color}` })),
           el('span', { className: 'bar-count', textContent: i.count }),
@@ -341,14 +343,14 @@ window.SnakeRecords = (() => {
     const killerLabel = k => NOT_A_SNAKE[k]?.[0] ?? k;
     const nemesisOf = k => NOT_A_SNAKE[k]?.[1] ?? k;
     const killers = Object.entries(st.killers)
-      .map(([k, count]) => ({ key: k, label: killerLabel(k), count, color: colors[k] || '#a8a29e' }))
+      .map(([k, count]) => ({ key: k, label: killerLabel(k), count, color: colors[k] || '#a8a29e', paint: paint ? paint(k) : null }))
       .sort((a, b) => b.count - a.count);
     if (killers.length) {
       const top = killers[0];
       const tied = killers.filter(k => k.count === top.count).map(k => nemesisOf(k.key));
       container.append(el('p', { className: 'nemesis' }, tied.length > 1
         ? `No nemesis yet: ${tied.slice(0, -1).join(', ')} and ${tied[tied.length - 1]} are tied.`
-        : el('span', {}, 'Your nemesis: ', dot(top.color), el('strong', { textContent: nemesisOf(top.key) }), '.')));
+        : el('span', {}, 'Your nemesis: ', dot(top.color, top.paint), el('strong', { textContent: nemesisOf(top.key) }), '.')));
       container.append(bars('What got you', killers));
     }
   }

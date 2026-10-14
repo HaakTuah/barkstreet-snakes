@@ -1258,14 +1258,18 @@
   // The scoreboard dot: the snake's current color,
   // the flag for Wildcard, two-tone for Joker, veined marble for Mason, Mute's
   // mood, and Vulture's pink head (black would vanish).
+  const PERSONA_DOTS = {
+    wildcard: 'linear-gradient(135deg, #3c3b6e 0 42%, #b22234 42% 56%, #fff 56% 70%, #b22234 70% 84%, #fff 84%)',
+    joker: 'linear-gradient(90deg, #a21caf 50%, #f59e0b 50%)',
+    mason: 'radial-gradient(circle at 68% 30%, #c9a227 0 14%, transparent 15%), radial-gradient(circle at 10% 115%, transparent 0 55%, #8a94a6 56% 66%, transparent 67%), #f1ece2', // (marble: a curl of grey vein and a gold fleck, no stripe straight across)
+    ghost: 'radial-gradient(circle at 35% 35%, #f8fafc, #b8c4d4)', // (pale, but not an empty ring)
+  };
   function dotColor(s) {
-    if (s.personaKey === 'wildcard') return 'linear-gradient(135deg, #3c3b6e 0 42%, #b22234 42% 56%, #fff 56% 70%, #b22234 70% 84%, #fff 84%)';
     if (s.personaKey === 'mute') return R.colorOf(s); // (its mood, as it changes)
-    if (s.personaKey === 'joker') return 'linear-gradient(90deg, #a21caf 50%, #f59e0b 50%)';
-    if (s.personaKey === 'mason') return 'radial-gradient(circle at 68% 30%, #c9a227 0 14%, transparent 15%), radial-gradient(circle at 10% 115%, transparent 0 55%, #8a94a6 56% 66%, transparent 67%), #f1ece2'; // (marble: a curl of grey vein and a gold fleck, no stripe straight across)
-    if (s.personaKey === 'ghost') return 'radial-gradient(circle at 35% 35%, #f8fafc, #b8c4d4)'; // (pale, but not an empty ring)
-    return s.persona?.ink || R.colorOf(s);
+    return PERSONA_DOTS[s.personaKey] || s.persona?.ink || R.colorOf(s);
   }
+  // The same dots in the Hall of Fame and Your story, by a rival's name.
+  const dotByName = name => { for (const k in PERSONAS) if (PERSONAS[k].name === name) return PERSONA_DOTS[k] || null; return null; };
 
   // Pause, mute and speed controls: shown and labelled for the current state.
   function updateControls() {
@@ -1635,13 +1639,12 @@
     filterEl.hidden = recordsTab !== 'scores';
     recordsBody.textContent = '';
     if (recordsTab === 'scores') {
-      Records.renderScores(recordsBody, game.entryId, scoresFilter, PLAYER_COLOR);
+      Records.renderScores(recordsBody, game.entryId, scoresFilter, PLAYER_COLOR, dotByName);
     } else {
       // Every persona's color, not just this round's, plus old names (Viper, Warden).
       const colors = { self: PLAYER_COLOR, Viper: '#c084fc', Warden: '#3b82f6', hunger: '#dc2626', wall: '#7a4a24', fire: '#f97316', woodpecker: '#27272a' }; // (hunger in Berry, the edge in Heartwood, fire in flame, the woodpecker in its black)
       for (const p of Object.values(PERSONAS)) colors[p.name] = p.ink || p.color;
-      colors.fire = '#f97316';
-      Records.renderStats(recordsBody, colors);
+      Records.renderStats(recordsBody, colors, dotByName);
     }
   }
 
