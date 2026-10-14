@@ -5551,11 +5551,12 @@ window.SnakeRender = (() => {
 
   const len3 = (x, y) => Math.hypot(x, y) || 1;
   // A dash's streak, under the snakes (over the dasher it ran a line through
-  // its face): a wide wedge of honey light from where it started to the back
-  // of its head, and a speed line down each side, inked so it reads on the
-  // bark, both tapering back to the start; gone in a moment. The lines run
-  // just clear of everything drawn round the dasher's body (its outline, a
-  // gold line), which used to cover them.
+  // its face): a speed line down each side, from where it started to the
+  // back of its head, inked so it reads on the bark, tapering back to the
+  // start; gone in a moment. The lines run just clear of everything drawn
+  // round the dasher's body (its outline, a gold line), which used to cover
+  // them. (A wedge of honey light between them is gone: where it showed past
+  // the body, it was a translucent khaki block, cut square by the head.)
   const streaks = []; // { x0, y0, x1, y1, at, s }
   const STREAK_GAP = 2; // (between the dasher's drawn edge and a line's inked edge, in units)
   function drawStreaks(now) {
@@ -5564,12 +5565,6 @@ window.SnakeRender = (() => {
       if (t >= 1 || t < 0) { streaks.splice(i, 1); continue; }
       const dx = k.x1 - k.x0, dy = k.y1 - k.y0, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
       const ex = k.x1 - ux * CELL * 0.35, ey = k.y1 - uy * CELL * 0.35; // (the back of its head)
-      const wedge = (off, w) => { // (a point at the start, w either side of off at the end)
-        ctx.moveTo(k.x0 + nx * off, k.y0 + ny * off);
-        ctx.lineTo(ex + nx * (off + w), ey + ny * (off + w));
-        ctx.lineTo(ex + nx * (off - w), ey + ny * (off - w));
-        ctx.closePath();
-      };
       const speedLine = (off, w, over) => { // (pointed at both ends, widest near the head; `over` runs it a touch past them, for its ink)
         const mx = k.x0 + (ex - k.x0) * 0.8, my = k.y0 + (ey - k.y0) * 0.8;
         ctx.moveTo(k.x0 - ux * over + nx * off, k.y0 - uy * over + ny * off);
@@ -5580,8 +5575,6 @@ window.SnakeRender = (() => {
       };
       const a = anim.get(k.s), w = CELL * 0.1 * (1 - 0.5 * t), ink = 1.4;
       const side = CELL * 0.44 + (a ? edgeOf(k.s, a) : 0) + STREAK_GAP + ink + w; // (the body's half-width by the neck, and what's drawn round it)
-      ctx.fillStyle = rgba('#fde68a', 0.35 * (1 - t));
-      ctx.beginPath(); wedge(0, side + w); ctx.fill();
       ctx.fillStyle = rgba('#3a2614', 0.8 * (1 - t));
       ctx.beginPath(); speedLine(-side, w + ink, ink * 2); speedLine(side, w + ink, ink * 2); ctx.fill();
       ctx.fillStyle = rgba('#fffbea', 0.95 * (1 - t));
