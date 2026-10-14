@@ -7,8 +7,10 @@
 // snake is the human: every rival is just a snake with an id.
 //
 // Cleverness: for every move sequence up to `depth` steps it scores the result
-// with a timed flood fill (do I still have room?), a Voronoi split of the board
-// (whose territory is this?) and the food it can reach before anyone else.
+// with a timed flood fill (do I still have room? can I get onto my own trail
+// and chase my tail? is the room I need only through a narrow neck that a
+// rival could get to and shut?), a Voronoi split of the board (whose territory
+// is this?) and the food it can reach before anyone else.
 //
 // Personality: on top of that shared sense, each persona adds its own goal
 // terms, and some have a "driver" that runs once per decision with a memory
@@ -234,6 +236,8 @@ window.SnakeAI = (() => {
 
   const TUNE = window.TUNING; // (the rules' numbers, so the AI's picture of them stays true)
   const TRAPPED = 5000;
+  const NECK = 2000;       // the room I need is through a gap a rival could get to and shut...
+  const DAWDLE = 8;        // ...even this many ticks after me (I don't always leave a pocket straight away)
   const HOLE = 1 << 30;    // "frees up" never
   const DEAD = -1e6;
   const EMPTY = new Set();
@@ -246,7 +250,7 @@ window.SnakeAI = (() => {
   // (-1 off the board), and `queue` holds a breadth-first search, one distance
   // after another. No search visits a cell twice, so N * N is always enough.
   let bufN = 0, mineFree, otherFree, ownFree, risk, seen, owner, claimT, ownerStamp;
-  let foodValue, foodGrow, foodCells, queue, nbr;
+  let foodValue, foodGrow, foodCells, queue, nbr, necks, reach;
   let stamp = 0;
   function ensureBuffers(N) {
     if (bufN === N) return;
@@ -264,6 +268,8 @@ window.SnakeAI = (() => {
     foodGrow = new Int8Array(size);     // what eating a cell does to my length
     foodCells = new Int32Array(size);   // food never shares a cell
     queue = new Int32Array(size);
+    necks = new Int32Array(size * 4); // (a neck: its one or two cells, the room before it, and how far it is)
+    reach = new Int32Array(size);     // the soonest any rival could be in a cell (ticks from now)
     nbr = new Int32Array(size * 4);
     for (let i = 0; i < size; i++) {
       const x = i % N, y = (i - x) / N;
@@ -647,6 +653,34 @@ window.SnakeAI = (() => {
       }
     });
 
+    // Reach: the soonest (in ticks from now) any rival could be in each cell,
+    // spreading a cell a tick from where I last saw its head (once its stun
+    // is over), round bodies and my own body as they are now. A gap I need
+    // that a rival can reach first is a gap it could shut.
+    reach.fill(HOLE);
+    body0ToOwnFree(me.body, me.body.length, me.grow);
+    for (const o of others) {
+      const stampR = ++stamp, t0 = (o.stun || 0) - age; // (when it moved, or moves, again)
+      queue[0] = o.body[0].y * N + o.body[0].x;
+      seen[queue[0]] = stampR;
+      reach[queue[0]] = Math.min(reach[queue[0]], t0);
+      let read = 0, write = 1;
+      for (let s = t0 + 1; read < write; s++) {
+        const levelEnd = write, mine = Math.max(0, s); // (my body is all there until now)
+        while (read < levelEnd) {
+          const i = queue[read++];
+          for (let n = 4 * i; n < 4 * i + 4; n++) {
+            const ni = nbr[n];
+            if (ni < 0 || seen[ni] === stampR || otherFree[ni] > s + age || ownFree[ni] > mine) continue;
+            seen[ni] = stampR;
+            if (s < reach[ni]) reach[ni] = s;
+            queue[write++] = ni;
+          }
+        }
+      }
+    }
+    clearOwnFree(me.body, me.body.length);
+
     // How much food matters right now, given how long I already am. A
     // mushroom lover past its length limit wants mushrooms instead. Hunger
     // trumps all of that: with under 10 s before I start starving, everyone
@@ -704,11 +738,20 @@ window.SnakeAI = (() => {
       // 1. Room: timed flood fill from my head (tail cells open up as I move).
       //    It also finds the best food by distance alone, ignoring rivals.
       //    queue[read, write) is still to expand; it holds one distance at a time.
+      //    Two more things it notes, for the trap tests at the end:
+      //    - how soon I can get onto my own trail (a cell my body leaves
+      //      before I get there): from there I can chase my tail round and
+      //      round, so I'm not trapped however little room there is;
+      //    - necks: a distance the fill gets through only one or two cells
+      //      wide, while the room before it is less than I need. Everything
+      //      beyond is through that gap (its cells, the room before it and
+      //      its distance go in `necks`).
       const cap = L * 2 + 20;
+      const need = L + w.margin;
       const stampF = ++stamp;
       seen[headI] = stampF;
       queue[0] = headI;
-      let read = 0, write = 1, space = 0, anyFood = 0;
+      let read = 0, write = 1, space = 0, anyFood = 0, trail = HOLE, neckCount = 0;
       // A contested-food eater keeps searching past the room cap until it sees food.
       for (let d = 1; read < write && (space < cap || (w.contested && !anyFood && d <= w.foodRange)); d++) {
         const levelEnd = write;
@@ -719,10 +762,18 @@ window.SnakeAI = (() => {
             if (ni < 0 || seen[ni] === stampF || mineFree[ni] > t + d || ownFree[ni] > d) continue;
             seen[ni] = stampF;
             space++;
+            if (ownFree[ni] && d < trail) trail = d;
             const v = foodValue[ni];
             if (v > 0) anyFood = Math.max(anyFood, v * Math.max(0, w.foodRange - d));
             queue[write++] = ni;
           }
+        }
+        const width = write - levelEnd;
+        if (width && width <= 2 && levelEnd - 1 < need) {
+          necks[neckCount++] = queue[levelEnd];
+          necks[neckCount++] = queue[write - 1];
+          necks[neckCount++] = levelEnd - 1;
+          necks[neckCount++] = d;
         }
       }
       space = Math.min(space, cap);
@@ -853,8 +904,19 @@ window.SnakeAI = (() => {
 
       clearOwnFree(body, len);
 
-      const need = L + w.margin;
-      if (space < need) score -= TRAPPED + 100 * (need - space);
+      // Trapped: less room than I need, and no way onto my own trail.
+      if (space < need && trail === HOLE) return score - TRAPPED - 100 * (need - space);
+      // Nearly as bad: the room I need is through a neck that a rival could
+      // get to and shut before I'm through, leaving me only the pocket on my
+      // side of it. (Necks nearest first; one I'd get through well before
+      // any rival could get there is mine to pass, and a pocket with my own
+      // trail in it I can circle.)
+      for (let k = 0; k < neckCount; k += 4) {
+        const d = necks[k + 3];
+        if (trail < d) break;
+        if (reach[necks[k]] > t + d + DAWDLE || reach[necks[k + 1]] > t + d + DAWDLE) continue;
+        return score - NECK - 50 * (need - necks[k + 2]);
+      }
       return score;
     }
 

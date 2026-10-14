@@ -94,7 +94,7 @@ Each round, three of these seventeen are picked at random. The start screen tell
 | **Desperado** | rust poncho, cowboy hat, bandana | An adrenaline junkie: skims walls, bodies and other heads for the thrill of it. |
 | **Ouroboros** | a real snake: dark gold python diamonds, a wedge head, slit eyes, fangs | Chases its own tail: once it's long, it moves as a ring, and whatever's inside is in trouble. Now and then it bites its own tail. |
 
-All of them share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move, and avoid the space around other snakes' heads. On top of that, each one chases its own goal.
+All of them share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move (or can chase their own tail), keep out of pockets whose narrow way out another snake could get to and close, and avoid the space around other snakes' heads. On top of that, each one chases its own goal.
 
 They're also fair. They see the other snakes as they were about a quarter of a second ago, like a human's reaction time, so they can't dodge your sudden turns any faster than you could dodge theirs. And they aren't told which snake is you: you're judged only by how you move, like everyone else.
 
