@@ -122,7 +122,7 @@
     roomGone: name => `${name} closed the room.`,
     roomLost: 'Lost the connection to the room.',
     friendLeft: name => `${name} left. An AI takes over their snake.`,
-    friendJoined: name => `${name} is on the log. Their best rounds are in your Hall of Fame.`,
+    friendJoined: name => `${name} is here. Their best rounds join your Hall of Fame.`,
     friendAway: name => `${name} went quiet. An AI steers until they’re back.`,
     friendBack: name => `${name} is back.`,
     youAway: 'You went quiet for a moment, so an AI steered for you.',
@@ -1430,8 +1430,8 @@
       toast('The Hall of Fame can wait. Eyes on the bark.', 1800); // the round wouldn't
       return;
     }
-    if (online) { /* the round goes on behind the dialog */ }
-    else if (state === 'countdown' || (state === 'running' && playerAlive() && !pendingCard)) napNow(); // (only watching: the round goes on, and its card stays)
+    // Napping, if you're playing alone (online, or only watching, the round goes on behind the dialog, and its card stays).
+    if (!online && (state === 'countdown' || (state === 'running' && playerAlive() && !pendingCard))) napNow();
     recordsOpener = document.activeElement;
     recordsEl.hidden = false;
     mainEl.inert = true;
