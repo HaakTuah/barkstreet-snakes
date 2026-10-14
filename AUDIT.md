@@ -263,6 +263,18 @@ What's left in the fields scene is mostly rivals' colour inside fields (about 1.
 | Small speakers | Through a 300 Hz high-pass your death is 7.1 dB louder than an apple at its loudest 100 ms (it was 3.1 dB quieter) |
 | Memory stays flat | Two minutes watching at 4×: heap flat after GC; a minute of fields: flat |
 
+### Critique rounds
+
+Once the plan above was done, the finished build went to five fresh critics a round (looks, words, feel and input, code, and a fresh player with accessibility), each asked for at least ten verified nits and told what earlier rounds had already found. I checked every nit (most came with a reproduction), fixed or adapted the ones that held up, and re-ran the critics' own reproductions afterwards.
+
+| Round | Nits | What they were mostly about |
+|---|---|---|
+| 1 | 72 | Narrator gaps (lessons that never showed, repeats), keys in odd states (napping in the countdown, the death freeze, Start over), touch with two thumbs, the death card's wording, names cut by chips, the leaper drawn under what it hops |
+| 2 | 67 | Regressions from round 1's fixes (a click swallow that ate taps, card items that couldn't wrap on a phone, the 320 px hint pushed below the fold, the tour shooting the wrong states), results a key could skip, U-turn chords, gold used for things that aren't powers |
+| 3 | 58 | Regressions from round 2's fixes (name buttons doubling a tag's height on touch screens, double taps arming leaps across a tick, focused buttons losing their keys, the carve field vanishing mid-word), and smaller things: rainbows off the board, bubbles over bubbles, Mute's moods borrowing rivals' colours |
+
+Each round found fewer, smaller things, but each round's fixes also caused some of the next round's findings. That's why the critics' reproductions are re-run after every round, and why the rules test, the online test and the play checks below are run on the final build.
+
 ### Played
 
 In headless Chrome with real key and touch events: bursts of 2–4 presses inside a tick, 300 times (never a reversal into the neck, none queued); a nap pressed between a turn and its tick (the board holds, the turn goes on waking); a hidden tab (naps, stays napping); resizing through four windows mid-round (the backing follows at full density); a swipe on a phone (it steers, the page holds still); two minutes watching at 4× (no errors, heap flat); a board 80% full (30 ticks drawn, no errors); storage that throws (the game plays and the Hall of Fame opens). Every test suite passes, and seeded simulations give the same trace with and without thinking ahead.

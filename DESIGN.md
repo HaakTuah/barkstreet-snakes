@@ -197,12 +197,13 @@ The rival's quip stays as flavour. A death that ends the round says it on the ro
 
 **Small mercies at the keys.** A slip shouldn't cost a round, and a press should never be lost without a word:
 - *R* and *Enter* sit next to the steering keys, so mid-round they ask "Start over?" first, naming the key you pressed. The same key again confirms; Space, P, Escape or an arrow keeps going at once (an arrow steers too). In the countdown, *R* is Go, like Enter (never online, where everyone starts together).
-- The nap keys always nap: Space, P and now Escape, in a round or in its countdown (the phone rang). Go is the Go! button, Enter, R or an arrow.
+- The nap keys always nap: Space, P and now Escape, in a round or in its countdown (the phone rang). Go is the Go! button, Enter, R or an arrow. On your own death card they keep watching instead (napping would hide why you died), and on the Napping card Enter asks "Start over?" as R does. A button you Tabbed to keeps its own keys (Enter on 2× sets the speed); a new round lets go of it.
+- The press that starts or wakes a round is a steer, never a power (you always start facing right: pressing right to go isn't asking to leap). A turn pressed twice within 120 ms is always the turn; up to 180 ms it's a leap you meant only once the turn has happened, and never with dashes, which go at once.
 - Waking from a nap goes through one quiet countdown beat (no YOU, no riser; the round's music carries on), so your hand is back on the keys before the board moves. An arrow skips the beat, and steers. A round napped before its Go gets its real Go on waking. Watching, waking is at once.
 - A nap never covers a death that's about to be told: the card comes up as it would.
 - Stunned, the latest press wins (you get more than one guess while the stars go round, and a small inked chevron by your head shows which way you pressed, or the leap's hop or the dashes' double chevron for a power asked for, until the moment you move, online too), checked against your neck, not the way you were facing when you crashed. Reversing a queued turn that hasn't happened yet changes your mind instead of being ignored, and a U-turn's two keys rolled together count even when the second lands a hair early.
 - On a phone every finger is its own swipe: a thumb resting on the glass doesn't block the other, and can still steer once the other lifts. During a round a swipe may start on a button (the Go! in the middle of the board); a short tap is still a tap.
-- A first round's score is a best only by default: no fanfare until there's a best to beat. Carving your name is offered once a round, not on both cards, and never pressed on you: on a keyboard the card keeps the focus (R, Enter and Space mean what they always mean) and Tab reaches the field.
+- A first round's score is a best only by default: no fanfare until there's a best to beat. Carving your name is offered once a round, not on both cards, and never pressed on you: on a keyboard the card keeps the focus (R, Enter and Space mean what they always mean) and Tab reaches the field. It stays while you type, even if the round ends under it; named already, the card says "as Haakon"; carving says "Carved".
 - Where four tags in a row would cut the rivals' names (a near-square window), they sit in two rows of two, as on a phone.
 
 **Every sound survives a phone speaker.** A cue's weight can't live only below 150 Hz, so the low cues (death, bonks, thunder, boom, the stinger, the heartbeat) get a midrange knock or body that implies their bass. Every envelope starts from silence. Your own sounds come before rivals', and both come before the world's. Ambient beds stop when the round does.
@@ -211,7 +212,7 @@ The rival's quip stays as flavour. A death that ends the round says it on the ro
 
 | Target | Concrete check |
 |---|---|
-| A power only when you ask | A key held down, an auto-repeat, or a turn pressed twice within 180 ms never fires a leap or a dash (a rules test drives repeats) |
+| A power only when you ask | A key held down, an auto-repeat, a turn pressed twice within 120 ms, or the press that starts or wakes a round never fires a leap or a dash (checked with real key events in headless Chrome) |
 | The first knock really is free | A player who never steers survives their first crash and isn't steered into the edge (the auto-turn breaks ties by the open run ahead) |
 | You can always see why | Every death card names the reason. Your leap's cooldown shows at your head. A press that can't leap gives a thunk and an inked × on what it couldn't hop |
 | A calmer narrator | In watched AI rounds, about one banner every 8 s or fewer (it was one every 4–5 s), and no lesson replaced within 2.5 s |
