@@ -6,12 +6,17 @@
 // units to device pixels.
 //
 // Cost control, measured in Chrome's GPU process as well as in script: the
-// bark, grid lines and holes live on a prerendered static layer; food, meat,
-// the woodpecker and the "+1"s are cached sprites; particles come from a fixed
-// pool; colours come from cached ramps. Bodies are drawn as rectangles, then
-// circles: separate fills batch into one GPU operation, while one path of many
-// circles is triangulated every frame and strokes between circles break the
-// batch. The per-frame path builds no strings and no closures.
+// bark and holes live on a prerendered static layer (the next round's is
+// built ahead, while a card is up); food, meat, the woodpecker and the "+1"s
+// are cached sprites; particles come from a fixed pool; colours come from
+// cached ramps. Bodies are drawn as rectangles, then circles: separate fills
+// batch into one GPU operation, while one path of many contours is
+// triangulated every frame and strokes between circles break the batch. A
+// translucent shape made of overlapping pieces (the shadows, a force field's
+// colour on a rival) is drawn opaque into an offscreen veil and laid on once.
+// Force fields are cached layers, with no clip per frame. The per-frame path
+// builds no strings and no closures, but for a few passing moments (the
+// woodpecker finding its perch, a blast, a dash's streak, smouldering fire).
 window.SnakeRender = (() => {
   const T = window.TUNING;
   const GRID = T.GRID;
@@ -31,17 +36,21 @@ window.SnakeRender = (() => {
 
   // ------------------------------------------------------------ utilities
 
-  // Blend two #rrggbb colors; t = 0 gives a, t = 1 gives b. Results are cached,
-  // so calling this with the same arguments every frame costs a lookup.
+  // Blend two #rrggbb colors; t = 0 gives a, t = 1 gives b. Results are cached
+  // (by a, then b, then t: no key string is built), so calling this with the
+  // same arguments every frame costs a lookup.
   const mixCache = new Map();
   function mix(a, b, t) {
-    const key = a + b + t;
-    let out = mixCache.get(key);
+    let byB = mixCache.get(a);
+    if (!byB) mixCache.set(a, byB = new Map());
+    let byT = byB.get(b);
+    if (!byT) byB.set(b, byT = new Map());
+    let out = byT.get(t);
     if (out) return out;
     const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
     const ch = s => Math.round(((pa >> s) & 255) * (1 - t) + ((pb >> s) & 255) * t);
     out = '#' + ((1 << 24) | (ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).slice(1);
-    mixCache.set(key, out);
+    byT.set(t, out);
     return out;
   }
 
@@ -78,12 +87,12 @@ window.SnakeRender = (() => {
   let barkLayer = null, staticLayer = null, holesDrawn = 0, sized = false;
   let barkSeed = 7;
 
-  function buildBark() {
+  function buildBark(from = barkSeed) {
     const px = SIZE * k;
     const b = makeLayer(px, px);
     const g = b.getContext('2d');
     g.scale(k, k);
-    let seed = barkSeed;
+    let seed = from;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const dot = (x, y, r) => { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
     g.fillStyle = BARK;
@@ -223,9 +232,9 @@ window.SnakeRender = (() => {
   // (it's all soft, so a low resolution is plenty), drawn stretched over the
   // board and swaying in the wind. Built once per round.
   let shadeLayer = null;
-  function buildShade() {
+  function buildShade(from = barkSeed) {
     const n = 256, s = makeLayer(n, n), g = s.getContext('2d');
-    let seed = barkSeed * 7 + 3;
+    let seed = from * 7 + 3;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < 22; i++) {
       const cx = rnd() * n, cy = rnd() * n;
@@ -338,12 +347,15 @@ window.SnakeRender = (() => {
     }
   }
 
+  let canopyOn = false, canopyX = 0, canopyY = 0, canopyW = 0; // (where it was drawn this frame: a hole under a force field draws it again)
   function drawCanopy(now) {
-    if (quality < 2) return;
+    canopyOn = quality === 2;
+    if (!canopyOn) return;
     if (!shadeLayer) shadeLayer = buildShade();
     const t = reduced ? 0 : now / 1000, over = SIZE * 0.06, gusty = 1 + 2.2 * (sky.wind + sky.storm);
     const dx = Math.sin(t * 0.43) * 8 + Math.sin(t * 1.7) * 1.6 * gusty * gusty, dy = Math.cos(t * 0.37) * 6 + Math.sin(t * 1.3) * 1.2 * gusty;
-    ctx.drawImage(shadeLayer, dx - over, dy - over, SIZE + 2 * over, SIZE + 2 * over);
+    canopyX = dx - over; canopyY = dy - over; canopyW = SIZE + 2 * over;
+    ctx.drawImage(shadeLayer, canopyX, canopyY, canopyW, canopyW);
   }
 
   // Now and then an autumn leaf drifts down onto the log, swaying and turning
@@ -408,6 +420,30 @@ window.SnakeRender = (() => {
     g.drawImage(barkLayer, 0, 0);
     holesDrawn = 0;
     scorchDrawn = 0; // (scorch marks are baked again too)
+  }
+
+  // The next round's stretch of log, made ahead: once nothing has been drawn
+  // for a moment (a card is up, or a nap), its bark and leaf shadows are
+  // built in idle time, and the GPU is set to draw them then. Starting a
+  // round just swaps them in (setGame builds them itself if none are ready:
+  // the first round, or the board resized meanwhile).
+  let next = null, nextTimer = 0, lastDrawAt = 0; // next: { seed, k, bark, shade }
+  function wantNext() {
+    if (!next && !nextTimer) nextTimer = setTimeout(nextWhenIdle, 400);
+  }
+  function nextWhenIdle() {
+    nextTimer = 0;
+    if (next || !sized) return;
+    if (performance.now() - lastDrawAt < 350) return wantNext(); // (a round's being drawn: wait for a card)
+    if (window.requestIdleCallback) requestIdleCallback(makeNext, { timeout: 1000 });
+    else makeNext();
+  }
+  function makeNext() {
+    if (next || !sized) return;
+    if (performance.now() - lastDrawAt < 350) return wantNext(); // (drawing again meanwhile)
+    const seed = 1 + Math.floor(Math.random() * 2147483645);
+    next = { seed, k, bark: buildBark(seed), shade: buildShade(seed) };
+    try { window.createImageBitmap?.(next.bark).then(b => b.close(), () => {}); } catch { /* it's drawn when it's used instead */ }
   }
 
   // Draw any holes added since last time onto the static layer (a Set keeps
@@ -969,15 +1005,25 @@ window.SnakeRender = (() => {
     if (s.stunUntil > game.tick) return 'dazed';
     for (const o of game.snakes) if (!o.alive && o.killerId === s.id && o.killer !== 'self' && game.tick - (o.diedAt ?? -99) < 30) return 'proud';
     const h = s.body[0];
-    let shut = 0;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const x = h.x + dx, y = h.y + dy;
-      if (x < 0 || y < 0 || x >= GRID || y >= GRID || game.holes.has(y * GRID + x) || game.snakes.some(o => o.alive && o.body.some(c => c.x === x && c.y === y))) shut++;
+    let shut = 0, near = false;
+    for (let d = 0; d < 4; d++) {
+      const x = h.x + SIDES[2 * d], y = h.y + SIDES[2 * d + 1];
+      if (x < 0 || y < 0 || x >= GRID || y >= GRID || game.holes.has(y * GRID + x) || bodyAt(x, y)) shut++;
     }
-    if (shut >= 3 || game.snakes.some(o => o !== s && o.alive && Math.abs(o.body[0].x - h.x) + Math.abs(o.body[0].y - h.y) <= 2)) return 'scared';
+    for (const o of game.snakes) if (o !== s && o.alive && Math.abs(o.body[0].x - h.x) + Math.abs(o.body[0].y - h.y) <= 2) near = true;
+    if (shut >= 3 || near) return 'scared';
     const v = findById(s.memory.victimId);
     if (v && v.alive) return Math.abs(v.body[0].x - h.x) + Math.abs(v.body[0].y - h.y) <= 4 ? 'closing' : 'stalking';
     return 'calm';
+  }
+  const SIDES = [1, 0, -1, 0, 0, 1, 0, -1];
+  // Is any living snake's body on (x, y)?
+  function bodyAt(x, y) {
+    for (const o of game.snakes) {
+      if (!o.alive) continue;
+      for (const c of o.body) if (c.x === x && c.y === y) return true;
+    }
+    return false;
   }
   function updateMute(s, now) {
     const key = muteMood(s), mood = MUTE_MOODS[key];
@@ -1291,9 +1337,31 @@ window.SnakeRender = (() => {
   // narrower band joining it to the next: a caterpillar, so you can count
   // how long a snake is at a glance.
   const PINCH = 0.8;
-  // The body's outline shape, `grow` units bigger all round, as one path
-  // (bands as rectangles, joints as circles), filled once in the current
-  // fill: one draw, and an even shade even where pieces overlap.
+  // The body's outline shape, `grow` units bigger all round, as separate
+  // fills in the current fill: bands as rectangles, joints as circles, the
+  // same shapes the body is drawn with (they batch into one GPU operation).
+  // Only for an opaque fill: where pieces overlap, a translucent one darkens
+  // (that's what the veil and silhouette are for). With a reach, only what's
+  // within it of (cx, cy), give or take a segment.
+  function bodyFills(a, grow, cx = 0, cy = 0, reach = 0) {
+    const p = a.pts, c = a.cor, rad = a.rad, n = a.n;
+    for (let i = n - 2; i >= 0; i--) {
+      if (reach && far(p, i, cx, cy, reach) && far(p, i + 1, cx, cy, reach)) continue;
+      const h = rad[i + 1] * PINCH + grow, x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+      if ((near(x1, qx) && near(qx, x2)) || (near(y1, qy) && near(qy, y2))) rectPiece(x1, y1, x2, y2, h); // (straight: one piece, no seam)
+      else { rectPiece(x1, y1, qx, qy, h); rectPiece(qx, qy, x2, y2, h); }
+    }
+    for (let i = n - 1; i >= 0; i--) {
+      if (reach && far(p, i, cx, cy, reach) && (i === n - 1 || far(p, i + 1, cx, cy, reach))) continue;
+      if (i < n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * PINCH + grow);
+      circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
+    }
+  }
+  const far = (p, i, cx, cy, reach) => (p[2 * i] - cx) * (p[2 * i] - cx) + (p[2 * i + 1] - cy) * (p[2 * i + 1] - cy) > reach * reach;
+  // The same shape as one path, filled once: an even shade where pieces
+  // overlap, for a translucent fill. (A path of a hundred contours is
+  // triangulated every frame, so it's kept for what's rare: a fading corpse,
+  // a golden outline, a queasy wash.)
   function silhouette(a, grow) {
     ctx.beginPath();
     const p = a.pts, c = a.cor;
@@ -1309,6 +1377,12 @@ window.SnakeRender = (() => {
       ctx.arc(p[2 * i], p[2 * i + 1], r, 0, TAU);
     }
     ctx.fill();
+  }
+  // One straight piece of a band, filled (pieces always run along the grid;
+  // a zero-length one, or one that doesn't, fills nothing, as in a silhouette).
+  function rectPiece(x1, y1, x2, y2, h) {
+    if (near(y1, y2)) { if (!near(x1, x2)) ctx.fillRect(Math.min(x1, x2), y1 - h, Math.abs(x2 - x1), 2 * h); }
+    else if (near(x1, x2)) ctx.fillRect(x1 - h, Math.min(y1, y2), 2 * h, Math.abs(y2 - y1));
   }
   // One straight piece of a band, added to the current path (pieces always
   // run along the grid; a zero-length one adds nothing).
@@ -1327,13 +1401,88 @@ window.SnakeRender = (() => {
     }
   }
 
-  // Pass 1, for every snake before any body: the shadow on the bark.
+  // The veil: an offscreen layer the size of the board (and a margin), for
+  // a translucent shape made of overlapping pieces (every snake's shadow, a
+  // force field's colour on a rival). The pieces go into it opaque, with fast
+  // fills, and it's laid on the board once at the shape's alpha: an even
+  // shade, without a path of a hundred contours triangulated every frame.
+  const VEIL_M = 8; // (its margin, in units: the shadow of a body hanging off the edge)
+  let veil = null, veilG = null, boardG = null;
+  let veilX = 0, veilY = 0, vx0 = 0, vy0 = 0, vw = 0, vh = 0;
+  // Draw into the veil (ctx is the veil's until veilOff) within the box
+  // x0..x1, y0..y1 (units), for a layer that lands (dx, dy) units off.
+  function veilOn(dx, dy, x0, y0, x1, y1) {
+    const w = Math.ceil((SIZE + 2 * VEIL_M) * k);
+    if (!veil || veil.width !== w) { veil = makeLayer(w, w); veilG = veil.getContext('2d'); }
+    // (It lands on whole device pixels, so it's never resampled.)
+    const ex = (dx - VEIL_M) * k + shakeX, ey = (dy - VEIL_M) * k + shakeY;
+    veilX = Math.floor(ex); veilY = Math.floor(ey);
+    const ox = VEIL_M * k + ex - veilX, oy = VEIL_M * k + ey - veilY;
+    vx0 = Math.max(0, Math.floor(x0 * k + ox)); vy0 = Math.max(0, Math.floor(y0 * k + oy));
+    vw = Math.min(w, Math.ceil(x1 * k + ox)) - vx0; vh = Math.min(w, Math.ceil(y1 * k + oy)) - vy0;
+    veilG.setTransform(1, 0, 0, 1, 0, 0);
+    veilG.save();
+    veilG.beginPath(); veilG.rect(vx0, vy0, Math.max(0, vw), Math.max(0, vh)); veilG.clip(); // (only the box is touched)
+    veilG.clearRect(vx0, vy0, Math.max(0, vw), Math.max(0, vh));
+    veilG.setTransform(k, 0, 0, k, ox, oy);
+    boardG = ctx;
+    ctx = veilG;
+  }
+  // Back to the board, laying the veil on it at `alpha` (cut to a field's
+  // circle, if one's given).
+  function veilOff(alpha, field = null) {
+    veilG.restore();
+    ctx = boardG;
+    if (vw <= 0 || vh <= 0) return;
+    if (field) { ctx.save(); ctx.beginPath(); ctx.arc(field.x, field.y, field.r, 0, TAU); ctx.clip(); }
+    ctx.globalAlpha = alpha;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(veil, vx0, vy0, vw, vh, veilX + vx0, veilY + vy0, vw, vh);
+    if (field) ctx.restore();
+    ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
+    ctx.globalAlpha = 1;
+  }
+
+  // Pass 1, for every snake before any body: the shadows on the bark, all at
+  // once (in the veil, laid on the bark at 0.3, a little down and to the right).
+  function drawShadows() {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const s of live) {
+      const a = anim.get(s);
+      if (a.offs) { x0 = y0 = -VEIL_M; x1 = y1 = SIZE + VEIL_M; break; } // (across a wrapped edge: anywhere)
+      for (let i = 0; i < a.n; i++) {
+        const x = a.pts[2 * i], y = a.pts[2 * i + 1];
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+    if (x0 > x1) return;
+    veilOn(2, 4, x0 - CELL, y0 - CELL, x1 + CELL, y1 + CELL);
+    ctx.fillStyle = '#000000';
+    for (const s of live) {
+      const a = anim.get(s), offs = a.offs || OFFS;
+      for (let j = 0; j < offs.length; j++) {
+        const ox = offs[j][0], oy = offs[j][1];
+        if (ox || oy) ctx.translate(ox, oy);
+        bodyFills(a, 0);
+        if (ox || oy) ctx.translate(-ox, -oy);
+      }
+    }
+    veilOff(0.3);
+    for (const s of live) { // (in the air: its shadow on the bark below)
+      const a = anim.get(s), offs = a.offs || OFFS;
+      if (a.rise > 0) for (let j = 0; j < offs.length; j++) shadowAt(a.groundX + 2 + offs[j][0], a.groundY + CELL * 0.3 + offs[j][1], 1.1 - 0.4 * a.rise);
+    }
+  }
+  // One snake's shadow on its own, as one translucent path (a corpse: it may
+  // be fading, and it's drawn with its body).
   function drawShadow(a) {
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
     ctx.translate(2, 4);
     silhouette(a, 0);
     ctx.translate(-2, -4);
-    if (a.rise > 0) shadowAt(a.groundX + 2, a.groundY + CELL * 0.3, 1.1 - 0.4 * a.rise); // (in the air: its shadow on the bark below)
   }
 
   // Pass 2: people's cream outline (yours bright with a soft halo, so you find
@@ -1365,12 +1514,15 @@ window.SnakeRender = (() => {
         circle(a.pts[0], a.pts[1], CELL * 0.78);
       }
       ctx.fillStyle = mine ? '#fffef8' : FRIEND_OUTLINE;
-      silhouette(a, mine ? 3.5 : 2.5);
+      outlineFills(a, mine ? 3.5 : 2.5);
     } else if (a.rim) {
       ctx.fillStyle = RIM;
-      silhouette(a, 1.5);
+      outlineFills(a, 1.5);
     }
   }
+  // An opaque outline: fast separate fills, unless it's being drawn see-through
+  // (a corpse fading), where overlapping pieces would show.
+  const outlineFills = (a, grow) => ctx.globalAlpha < 1 ? silhouette(a, grow) : bodyFills(a, grow);
 
   // Pass 3: the body (bands, then circles tail to head, so the head ends up on
   // top), its pattern and its face.
@@ -1386,14 +1538,17 @@ window.SnakeRender = (() => {
       circle(pts[2 * i], pts[2 * i + 1], rad[i]);
     }
 
-    // A little roundness on every segment (light from the top left), in one fill.
+    // A little roundness on every segment (light from the top left): separate
+    // circles, which never touch (a tail that's just grown sits on the segment
+    // before it for a moment: that one's lit once).
     ctx.fillStyle = 'rgba(255,255,255,0.18)';
-    ctx.beginPath();
+    let lx = -1e9, ly = -1e9, lr = 0;
     for (let i = 0; i < n; i++) {
       const hr = rad[i] * 0.35, hx = pts[2 * i] - rad[i] * 0.3, hy = pts[2 * i + 1] - rad[i] * 0.35;
-      ctx.moveTo(hx + hr, hy); ctx.arc(hx, hy, hr, 0, TAU);
+      if (Math.abs(hx - lx) + Math.abs(hy - ly) < hr + lr) continue;
+      circle(hx, hy, hr);
+      lx = hx; ly = hy; lr = hr;
     }
-    ctx.fill();
 
     // Patterns. Each follows the skin (by segment), not the board.
     if (a.isPlayer) {
@@ -1419,16 +1574,11 @@ window.SnakeRender = (() => {
       drawTie(a);
     }
     if (look === 'mason') { // Caesar in marble: grey veins wandering across every segment, now and then a gold one
-      ctx.lineCap = 'round';
-      for (let gold = 0; gold < 2; gold++) {
-        ctx.strokeStyle = gold ? 'rgba(201,162,39,0.75)' : 'rgba(100,116,139,0.55)';
-        ctx.lineWidth = gold ? 1.1 : 1.4;
-        ctx.beginPath();
-        for (let i = 1; i < n; i++) {
-          if (gold !== (i % 4 === 3 ? 1 : 0)) continue;
-          marbleVein(pts[2 * i], pts[2 * i + 1], rad[i], i);
-        }
-        ctx.stroke();
+      ctx.lineCap = 'round'; // (as the veins always left it, for the wreath)
+      for (let i = 1; i < n; i++) {
+        // (each segment's own sprite, drawn at the segment's size before any gulp, and scaled)
+        const rb = Math.round(CELL * (0.44 - 0.1 * (i / (n - 1)))), sp = veinSprite(i, rb), h = (rb + 2) * rad[i] / rb;
+        ctx.drawImage(sp, pts[2 * i] - h, pts[2 * i + 1] - h, 2 * h, 2 * h);
       }
     } else if (look === 'ouroboros') { // a python's back: a dark diamond on every segment, a pale fleck in each
       ctx.fillStyle = 'rgba(58,36,8,0.75)';
@@ -1566,18 +1716,39 @@ window.SnakeRender = (() => {
 
   // Marble veins across a disc (centre x, y, radius r), their own way for
   // each segment i: a long wandering one and a short faint one beside it,
-  // added to the current path.
-  function marbleVein(x, y, r, i) {
+  // added to g's current path.
+  function marbleVein(g, x, y, r, i) {
     const a = i * 2.39996, f = i % 2 ? 1 : -1;
     const arc = (a0, a1, bend, reach) => {
       const x0 = x + Math.cos(a0) * r * reach, y0 = y + Math.sin(a0) * r * reach;
       const x1 = x + Math.cos(a1) * r * reach, y1 = y + Math.sin(a1) * r * reach;
       const mx = (x0 + x1) / 2 - (y1 - y0) * bend, my = (y0 + y1) / 2 + (x1 - x0) * bend;
-      ctx.moveTo(x0, y0);
-      ctx.quadraticCurveTo(mx, my, x1, y1);
+      g.moveTo(x0, y0);
+      g.quadraticCurveTo(mx, my, x1, y1);
     };
     arc(a, a + 2.6, 0.35 * f, 0.85);
     arc(a + 3.6, a + 4.7, -0.5 * f, 0.7);
+  }
+  // Segment i's veins (radius r, whole units) as a sprite: curves are
+  // triangulated every frame they're stroked, a sprite is one blit. A sprite
+  // a segment, since each wanders its own way (a few hundred at most: a long
+  // Mason grows a few sizes over a round).
+  const veinSprites = new Map(); // i * 64 + r -> canvas
+  function veinSprite(i, r) {
+    const key = i * 64 + r;
+    let s = veinSprites.get(key);
+    if (s) return s;
+    if (veinSprites.size >= 800) veinSprites.clear();
+    const half = r + 2, px = Math.max(2, Math.ceil(2 * half * k)), g = (s = makeLayer(px, px)).getContext('2d');
+    g.setTransform(px / (2 * half), 0, 0, px / (2 * half), px / 2, px / 2);
+    g.lineCap = 'round';
+    g.strokeStyle = i % 4 === 3 ? 'rgba(201,162,39,0.75)' : 'rgba(100,116,139,0.55)';
+    g.lineWidth = i % 4 === 3 ? 1.1 : 1.4;
+    g.beginPath();
+    marbleVein(g, 0, 0, r, i);
+    g.stroke();
+    veinSprites.set(key, s);
+    return s;
   }
 
   const STARS = [[-0.45, -0.45], [0.45, -0.45], [0, 0], [-0.45, 0.45], [0.45, 0.45]];
@@ -1594,21 +1765,17 @@ window.SnakeRender = (() => {
   // on along the body, bending with it.
   function drawTie(a) {
     const p = a.pts, c = CELL;
-    const seg = (i, j) => { const dx = p[2 * j] - p[2 * i], dy = p[2 * j + 1] - p[2 * i + 1], len = Math.hypot(dx, dy) || 1; return [dx / len, dy / len, len]; };
-    const [ax, ay] = seg(0, 1), [bx, by, blen] = seg(1, 2);
+    const alen = Math.hypot(p[2] - p[0], p[3] - p[1]) || 1, ax = (p[2] - p[0]) / alen, ay = (p[3] - p[1]) / alen;
+    const blen = Math.hypot(p[4] - p[2], p[5] - p[3]) || 1, bx = (p[4] - p[2]) / blen, by = (p[5] - p[3]) / blen;
     // From the chin (just inside the head's edge) to the collar...
     const kx = p[0] + ax * c * 0.45, ky = p[1] + ay * c * 0.45;
     const mx = p[2], my = p[3];
     // ...then on toward the next segment, ending in a point.
     const end = Math.min(blen, c * 0.85), ex = mx + bx * end, ey = my + by * end;
-    const quad = (x1, y1, w1, x2, y2, w2, dx, dy) => {
-      ctx.moveTo(x1 - dy * w1, y1 + dx * w1); ctx.lineTo(x2 - dy * w2, y2 + dx * w2);
-      ctx.lineTo(x2 + dy * w2, y2 - dx * w2); ctx.lineTo(x1 + dy * w1, y1 - dx * w1); ctx.closePath();
-    };
     ctx.fillStyle = '#dc2626';
     ctx.beginPath();
-    quad(kx, ky, c * 0.07, mx, my, c * 0.12, ax, ay);
-    quad(mx, my, c * 0.12, ex - bx * c * 0.12, ey - by * c * 0.12, c * 0.15, bx, by);
+    tieQuad(kx, ky, c * 0.07, mx, my, c * 0.12, ax, ay);
+    tieQuad(mx, my, c * 0.12, ex - bx * c * 0.12, ey - by * c * 0.12, c * 0.15, bx, by);
     ctx.fill();
     circle(mx, my, c * 0.12); // (smooth where it bends)
     ctx.beginPath(); // the point
@@ -1622,35 +1789,43 @@ window.SnakeRender = (() => {
     ctx.lineWidth = c * 0.03;
     ctx.beginPath(); ctx.moveTo(kx + ax * c * 0.1, ky + ay * c * 0.1); ctx.lineTo(mx, my); ctx.lineTo(ex - bx * c * 0.2, ey - by * c * 0.2); ctx.stroke();
   }
+  // A piece of the tie from (x1, y1) to (x2, y2), heading (dx, dy): w1 either side, widening to w2.
+  function tieQuad(x1, y1, w1, x2, y2, w2, dx, dy) {
+    ctx.moveTo(x1 - dy * w1, y1 + dx * w1); ctx.lineTo(x2 - dy * w2, y2 + dx * w2);
+    ctx.lineTo(x2 + dy * w2, y2 - dx * w2); ctx.lineTo(x1 + dy * w1, y1 - dx * w1); ctx.closePath();
+  }
 
   // The living snakes, in passes, so no snake's shadow falls on another's body.
   const live = [];
+  // (a snake leaping, or still arched over another one, goes on top)
+  const overOf = s => anim.get(s)?.leapUntil > game.tick ? 1 : 0;
+  const byOver = (p, q) => overOf(p) - overOf(q);
   function drawSnakes(alpha, now) {
     live.length = 0;
-    for (const s of game.snakes) if (s.alive) live.push(s);
-    // (a snake leaping, or still arched over another one, goes on top)
-    const over = s => anim.get(s)?.leapUntil > game.tick ? 1 : 0;
-    if (live.some(over)) live.sort((p, q) => over(p) - over(q));
+    let leaping = false;
+    for (const s of game.snakes) if (s.alive) { live.push(s); if (overOf(s)) leaping = true; }
+    if (leaping) live.sort(byOver);
     for (const s of live) prepare(s, alpha, now, false);
-    // (each pass, for a snake across a wrapped edge, at each place it shows)
-    const each = fn => {
+    drawShadows();
+    // Then outlines, bodies, flames and queasy washes, each pass for every
+    // snake (and for a snake across a wrapped edge, at each place it shows).
+    for (let pass = 0; pass < 4; pass++) {
       for (const s of live) {
-        const a = animOf(s, now);
-        for (const [ox, oy] of a.offs || OFFS) {
+        const a = anim.get(s), offs = a.offs || OFFS;
+        for (let j = 0; j < offs.length; j++) {
+          const ox = offs[j][0], oy = offs[j][1];
           if (ox || oy) ctx.translate(ox, oy);
-          fn(s, a);
+          if (pass === 0) drawOutline(s, a);
+          else if (pass === 1) drawBody(s, a, now, false);
+          else if (pass === 2) { if (s.burnUntil > game.tick) drawBurning(s, a, now); }
+          else { // queasy after a mushroom: a sickly green wash, fading
+            const q = a.queasyAt ? 1 - (now - a.queasyAt) / 1400 : 0;
+            if (q > 0 && q <= 1) { ctx.fillStyle = rgba('#65a30d', 0.38 * q); silhouette(a, 0.5); }
+          }
           if (ox || oy) ctx.translate(-ox, -oy);
         }
       }
-    };
-    each((s, a) => drawShadow(a));
-    each(drawOutline);
-    each((s, a) => drawBody(s, a, now, false));
-    each((s, a) => { if (s.burnUntil > game.tick) drawBurning(s, a, now); });
-    each((s, a) => { // queasy after a mushroom: a sickly green wash, fading
-      const q = a.queasyAt ? 1 - (now - a.queasyAt) / 1400 : 0;
-      if (q > 0 && q <= 1) { ctx.fillStyle = rgba('#65a30d', 0.38 * q); silhouette(a, 0.5); }
-    });
+    }
   }
 
   // A snake on fire: flames along its back (the fire's own flicker, smaller,
@@ -1934,19 +2109,20 @@ window.SnakeRender = (() => {
   function telescope(t) {
     const c = CELL, e = stayOut(t), x = 0.38 - 0.24 * (1 - e);
     fromMouth();
-    const tube = (x0, len, w) => {
-      ctx.fillStyle = '#d4a017';
-      ctx.fillRect(c * x0, -c * w, c * len, c * w * 2);
-      ctx.fillStyle = '#fde68a'; // a shine along the top
-      ctx.fillRect(c * x0, -c * w, c * len, c * w * 0.6);
-      ctx.fillStyle = '#78350f'; // a ring at the front
-      ctx.fillRect(c * (x0 + len - 0.03), -c * w, c * 0.03, c * w * 2);
-    };
     ctx.fillStyle = '#bae6fd'; // the lens
     ctx.fillRect(c * (x + 0.38 * e + 0.17), -c * 0.06, c * 0.035, c * 0.12);
-    tube(x + 0.38 * e, 0.19, 0.075); // the thinnest slides furthest...
-    tube(x + 0.2 * e, 0.2, 0.095);
-    tube(x, 0.22, 0.12); // ...out of the widest
+    spyglassTube(x + 0.38 * e, 0.19, 0.075); // the thinnest slides furthest...
+    spyglassTube(x + 0.2 * e, 0.2, 0.095);
+    spyglassTube(x, 0.22, 0.12); // ...out of the widest
+  }
+  function spyglassTube(x0, len, w) {
+    const c = CELL;
+    ctx.fillStyle = '#d4a017';
+    ctx.fillRect(c * x0, -c * w, c * len, c * w * 2);
+    ctx.fillStyle = '#fde68a'; // a shine along the top
+    ctx.fillRect(c * x0, -c * w, c * len, c * w * 0.6);
+    ctx.fillStyle = '#78350f'; // a ring at the front
+    ctx.fillRect(c * (x0 + len - 0.03), -c * w, c * 0.03, c * w * 2);
   }
 
   // Vulture: a bone, held crosswise and chewed on a moment.
@@ -1955,21 +2131,22 @@ window.SnakeRender = (() => {
     ctx.translate(c * 0.64, 0);
     ctx.rotate(0.3 + Math.sin(p * 14) * 0.08);
     ctx.scale(k, k);
-    const shape = () => {
-      ctx.beginPath();
-      ctx.rect(-c * 0.045, -c * 0.25, c * 0.09, c * 0.5);
-      for (const y of [-0.26, 0.26]) for (const x of [-0.05, 0.05]) {
-        ctx.moveTo(c * (x + 0.06), c * y);
-        ctx.arc(c * x, c * y, c * 0.06, 0, TAU);
-      }
-    };
     ctx.strokeStyle = '#57534e'; // an outline round the whole bone...
     ctx.lineWidth = c * 0.05;
-    shape();
+    boneShape();
     ctx.stroke();
     ctx.fillStyle = '#f5f5f4'; // ...then the bone over it
-    shape();
+    boneShape();
     ctx.fill();
+  }
+  function boneShape() {
+    const c = CELL;
+    ctx.beginPath();
+    ctx.rect(-c * 0.045, -c * 0.25, c * 0.09, c * 0.5);
+    for (let y = -0.26; y < 0.3; y += 0.52) for (let x = -0.05; x < 0.1; x += 0.1) { // (two knobs at each end)
+      ctx.moveTo(c * (x + 0.06), c * y);
+      ctx.arc(c * x, c * y, c * 0.06, 0, TAU);
+    }
   }
 
   // Mason: a papyrus scroll, unrolled from the mouth: lines of writing (Latin,
@@ -1990,17 +2167,19 @@ window.SnakeRender = (() => {
       ctx.lineTo(c * x, c * (w - 0.05 - (i % 3) * 0.05));
     }
     ctx.stroke();
-    const roll = (x, rad) => { // a rolled end: the roll, its rod's knobs either side
-      ctx.fillStyle = '#d9c38c';
-      ctx.fillRect(c * (x - rad), -c * (w + 0.015), c * rad * 2, c * (w + 0.015) * 2);
-      ctx.fillStyle = 'rgba(58,38,20,0.25)';
-      ctx.fillRect(c * (x + rad * 0.3), -c * (w + 0.015), c * rad * 0.7, c * (w + 0.015) * 2);
-      ctx.fillStyle = '#7c2d12';
-      circle(c * x, -c * (w + 0.05), c * 0.04);
-      circle(c * x, c * (w + 0.05), c * 0.04);
-    };
-    roll(x0, 0.035);
-    roll(x1, rr);
+    scrollEnd(x0, 0.035, w);
+    scrollEnd(x1, rr, w);
+  }
+  // A rolled end of the scroll (w: half the sheet's width): the roll, its rod's knobs either side.
+  function scrollEnd(x, rad, w) {
+    const c = CELL;
+    ctx.fillStyle = '#d9c38c';
+    ctx.fillRect(c * (x - rad), -c * (w + 0.015), c * rad * 2, c * (w + 0.015) * 2);
+    ctx.fillStyle = 'rgba(58,38,20,0.25)';
+    ctx.fillRect(c * (x + rad * 0.3), -c * (w + 0.015), c * rad * 0.7, c * (w + 0.015) * 2);
+    ctx.fillStyle = '#7c2d12';
+    circle(c * x, -c * (w + 0.05), c * 0.04);
+    circle(c * x, c * (w + 0.05), c * 0.04);
   }
 
   // Metagamer: a keyboard, slid out to type up its notes on you (a key or two
@@ -2030,6 +2209,7 @@ window.SnakeRender = (() => {
   }
 
   // Wildcard: a dollar bill, slid out like a tip.
+  const BILL_FONT = `800 ${CELL * 0.2}px sans-serif`;
   function bill(t, p) {
     const c = CELL;
     fromMouth();
@@ -2044,7 +2224,7 @@ window.SnakeRender = (() => {
     ctx.lineWidth = c * 0.012;
     ctx.strokeRect(c * 0.4, -c * 0.085, c * 0.44, c * 0.17);
     ctx.fillStyle = '#3f6212'; // ...and the dollar sign in the middle
-    ctx.font = `800 ${c * 0.2}px sans-serif`;
+    ctx.font = BILL_FONT;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('$', c * 0.62, c * 0.01);
@@ -2089,7 +2269,7 @@ window.SnakeRender = (() => {
   // striped, that unrolls from its curl with a toot: at full stretch its
   // fringed tip flutters and a puff of confetti flies off it; then it rolls
   // back up. Outlined, so it reads at phone size.
-  const HORN = ['#ec4899', '#facc15', '#8b5cf6', '#facc15'];
+  const HORN = ['#ec4899', '#facc15', '#8b5cf6', '#facc15'], CURL = new Float64Array(64); // (CURL: its spiral's points, x, y, ...)
   function blower(t, p) {
     const c = CELL, e = stayOut(t, 1.4), k = Math.min(1, t * 5);
     ctx.translate(c * 0.4, 0); // (pops out of the mouth)
@@ -2109,20 +2289,23 @@ window.SnakeRender = (() => {
     }
     const x1 = x0 + len, curl = 1 - e;
     if (curl > 0.04) { // ...and the rest still rolled up at its end: a spiral, curling up and back
-      const R = c * (0.05 + 0.12 * curl), turns = 0.8 + 1.6 * curl, steps = Math.ceil(turns * 10);
-      const pts = [[x1, 0]];
+      const R = c * (0.05 + 0.12 * curl), turns = 0.8 + 1.6 * curl, steps = Math.ceil(turns * 10), pts = CURL;
+      pts[0] = x1; pts[1] = 0;
       for (let i = 1; i <= steps; i++) {
         const a = i / steps * turns * TAU, rr = R * (1 - 0.6 * i / steps);
-        pts.push([x1 + Math.sin(a) * rr, -R + Math.cos(a) * rr]);
+        pts[2 * i] = x1 + Math.sin(a) * rr; pts[2 * i + 1] = -R + Math.cos(a) * rr;
       }
       ctx.lineCap = 'round';
       ctx.strokeStyle = INK;
       ctx.lineWidth = w * 0.8 + c * 0.04;
-      ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(pts[0], pts[1]);
+      for (let i = 1; i <= steps; i++) ctx.lineTo(pts[2 * i], pts[2 * i + 1]);
+      ctx.stroke();
       ctx.lineWidth = w * 0.8;
-      for (let i = 1; i < pts.length; i++) {
+      for (let i = 1; i <= steps; i++) {
         ctx.strokeStyle = HORN[(n + i) % 4];
-        ctx.beginPath(); ctx.moveTo(pts[i - 1][0], pts[i - 1][1]); ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(pts[2 * i - 2], pts[2 * i - 1]); ctx.lineTo(pts[2 * i], pts[2 * i + 1]); ctx.stroke();
       }
     } else { // full stretch: a fringe fluttering at the tip, and a toot of confetti
       ctx.strokeStyle = '#facc15';
@@ -2398,21 +2581,14 @@ window.SnakeRender = (() => {
         break;
       }
       case 'vulture': { // beady eyes under a scowl, and a big hooked beak that gapes at a meal
-        const beak = () => {
-          ctx.beginPath();
-          ctx.moveTo(c * 0.2, -c * 0.17);
-          ctx.quadraticCurveTo(c * 0.56, -c * 0.17, c * 0.8, c * 0.04); // over the top to the hook
-          ctx.quadraticCurveTo(c * 0.62, c * 0.14, c * 0.2, c * 0.17);
-          ctx.closePath();
-        };
         ctx.fillStyle = '#e7d7a8'; // pale horn, outlined dark so it reads small
         ctx.strokeStyle = '#292524';
         ctx.lineWidth = c * 0.04;
         ctx.lineJoin = 'round';
-        beak();
+        vultureBeak();
         ctx.fill();
         ctx.save();
-        beak();
+        vultureBeak();
         ctx.clip();
         ctx.fillStyle = '#a8a29e'; // a grey cere across the base...
         ctx.fillRect(c * 0.18, -c * 0.2, c * 0.1, c * 0.4);
@@ -2429,7 +2605,7 @@ window.SnakeRender = (() => {
           ctx.fill();
         }
         ctx.restore();
-        beak();
+        vultureBeak();
         ctx.stroke();
         ctx.fillStyle = '#44403c'; // a nostril
         ctx.beginPath();
@@ -2488,21 +2664,14 @@ window.SnakeRender = (() => {
       case 'metagamer': { // 3D glasses (red and cyan, card frame), eyes on whoever it's studying through them
         mouth(open);
         lookingEyes(0.05);
-        const lens = (sg, tint) => {
-          ctx.beginPath();
-          if (ctx.roundRect) ctx.roundRect(c * 0.03, sg < 0 ? -c * 0.33 : c * 0.07, c * 0.25, c * 0.26, c * 0.06);
-          else ctx.rect(c * 0.03, sg < 0 ? -c * 0.33 : c * 0.07, c * 0.25, c * 0.26);
-          ctx.fillStyle = tint;
-          ctx.fill();
-        };
-        lens(-1, 'rgba(239,68,68,0.62)'); // left eye red...
-        lens(1, 'rgba(14,165,233,0.6)'); // ...right eye cyan
-        for (const [w, col] of [[0.085, '#0f172a'], [0.05, '#f8fafc']]) { // the card frame, outlined so it reads on a cyan head
-          ctx.strokeStyle = col;
-          ctx.lineWidth = c * w;
+        lens3d(-1, 'rgba(239,68,68,0.62)'); // left eye red...
+        lens3d(1, 'rgba(14,165,233,0.6)'); // ...right eye cyan
+        for (let pass = 0; pass < 2; pass++) { // the card frame, outlined so it reads on a cyan head
+          ctx.strokeStyle = pass ? '#f8fafc' : '#0f172a';
+          ctx.lineWidth = c * (pass ? 0.05 : 0.085);
           ctx.lineJoin = 'round';
           ctx.beginPath();
-          for (const sg of [-1, 1]) {
+          for (let sg = -1; sg <= 1; sg += 2) {
             const y0 = sg < 0 ? -c * 0.33 : c * 0.07;
             if (ctx.roundRect) ctx.roundRect(c * 0.03, y0, c * 0.25, c * 0.26, c * 0.06); else ctx.rect(c * 0.03, y0, c * 0.25, c * 0.26);
             ctx.moveTo(c * 0.1, sg * c * 0.33); ctx.lineTo(-c * 0.14, sg * c * 0.36); // the arms, back over the head
@@ -2513,25 +2682,13 @@ window.SnakeRender = (() => {
         break;
       }
       case 'wildcard': { // a golden combover swept forward with a flip at the front, squinty eyes, a pout
-        // The hair, seen from above: a puffy golden mass at the back, combed
-        // across to one side and forward, ending in a curl over that eye.
-        const hair = () => {
-          ctx.beginPath();
-          ctx.moveTo(-c * 0.2, c * 0.44); // the back of the far side...
-          ctx.bezierCurveTo(-c * 0.62, c * 0.42, -c * 0.66, -c * 0.3, -c * 0.32, -c * 0.5); // ...puffed out round the back...
-          ctx.bezierCurveTo(-c * 0.04, -c * 0.62, c * 0.3, -c * 0.56, c * 0.36, -c * 0.34); // ...swept forward along the near side...
-          ctx.bezierCurveTo(c * 0.4, -c * 0.2, c * 0.24, -c * 0.12, c * 0.18, -c * 0.24); // ...the curl over the brow...
-          ctx.bezierCurveTo(c * 0.1, -c * 0.34, -c * 0.06, -c * 0.12, -c * 0.06, c * 0.08); // ...the parting line, back across...
-          ctx.bezierCurveTo(-c * 0.06, c * 0.26, -c * 0.12, c * 0.38, -c * 0.2, c * 0.44);
-          ctx.closePath();
-        };
         ctx.save();
         ctx.translate(-c * 0.02, c * 0.03);
-        hair();
+        combover();
         ctx.fillStyle = 'rgba(120,53,15,0.35)'; // its shadow on the head
         ctx.fill();
         ctx.restore();
-        hair();
+        combover();
         ctx.fillStyle = '#fbbf24';
         ctx.fill();
         ctx.strokeStyle = '#fde68a'; // combed strands, all swept the same way
@@ -2727,16 +2884,8 @@ window.SnakeRender = (() => {
       case 'capricious': { // (until its first mood) can't make its mind up: one eye big, one small, a brow cocked
         mouth(open);
         if (blinking) { lids(0.09); break; }
-        const eye = (y, w, r) => {
-          const reach = (w - r) * 0.85, ox = gazeX * c * reach, oy = gazeY * c * reach;
-          ctx.fillStyle = '#fffbea';
-          circle(c * 0.15, c * y, c * w);
-          ctx.fillStyle = INK;
-          circle(c * 0.15 + ox, c * y + oy, c * r);
-          catchlight(c * 0.15 + ox, c * y + oy, c * r);
-        };
-        eye(-0.21, 0.12, 0.07);
-        eye(0.21, 0.075, 0.045);
+        oddEye(-0.21, 0.12, 0.07);
+        oddEye(0.21, 0.075, 0.045);
         ctx.strokeStyle = INK;
         ctx.lineWidth = c * 0.045;
         ctx.lineCap = 'round';
@@ -2752,6 +2901,47 @@ window.SnakeRender = (() => {
     }
     blinkNow = false;
   }
+  // (Shapes for the faces, here rather than made afresh every frame.)
+  // Vulture's beak, as the current path.
+  function vultureBeak() {
+    const c = CELL;
+    ctx.beginPath();
+    ctx.moveTo(c * 0.2, -c * 0.17);
+    ctx.quadraticCurveTo(c * 0.56, -c * 0.17, c * 0.8, c * 0.04); // over the top to the hook
+    ctx.quadraticCurveTo(c * 0.62, c * 0.14, c * 0.2, c * 0.17);
+    ctx.closePath();
+  }
+  // One lens of Metagamer's 3D glasses (sg: -1 left, 1 right), filled with its tint.
+  function lens3d(sg, tint) {
+    const c = CELL;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(c * 0.03, sg < 0 ? -c * 0.33 : c * 0.07, c * 0.25, c * 0.26, c * 0.06);
+    else ctx.rect(c * 0.03, sg < 0 ? -c * 0.33 : c * 0.07, c * 0.25, c * 0.26);
+    ctx.fillStyle = tint;
+    ctx.fill();
+  }
+  // Wildcard's hair, seen from above, as the current path: a puffy golden mass
+  // at the back, combed across to one side and forward, ending in a curl over that eye.
+  function combover() {
+    const c = CELL;
+    ctx.beginPath();
+    ctx.moveTo(-c * 0.2, c * 0.44); // the back of the far side...
+    ctx.bezierCurveTo(-c * 0.62, c * 0.42, -c * 0.66, -c * 0.3, -c * 0.32, -c * 0.5); // ...puffed out round the back...
+    ctx.bezierCurveTo(-c * 0.04, -c * 0.62, c * 0.3, -c * 0.56, c * 0.36, -c * 0.34); // ...swept forward along the near side...
+    ctx.bezierCurveTo(c * 0.4, -c * 0.2, c * 0.24, -c * 0.12, c * 0.18, -c * 0.24); // ...the curl over the brow...
+    ctx.bezierCurveTo(c * 0.1, -c * 0.34, -c * 0.06, -c * 0.12, -c * 0.06, c * 0.08); // ...the parting line, back across...
+    ctx.bezierCurveTo(-c * 0.06, c * 0.26, -c * 0.12, c * 0.38, -c * 0.2, c * 0.44);
+    ctx.closePath();
+  }
+  // One of undecided Capricious's eyes (at y: the white's radius w, the pupil's r), turned to what it's watching.
+  function oddEye(y, w, r) {
+    const c = CELL, reach = (w - r) * 0.85, ox = gazeX * c * reach, oy = gazeY * c * reach;
+    ctx.fillStyle = '#fffbea';
+    circle(c * 0.15, c * y, c * w);
+    ctx.fillStyle = INK;
+    circle(c * 0.15 + ox, c * y + oy, c * r);
+    catchlight(c * 0.15 + ox, c * y + oy, c * r);
+  }
 
   // ------------------------------------------------------- homes and flags
 
@@ -2764,20 +2954,26 @@ window.SnakeRender = (() => {
   // up (it pulses faster, ripples spread from where it came in), and every
   // part of the rival inside glows in the field's colour, as if wading
   // through coloured light. The edge is exactly the trespass line.
-  const rgbaCache = new Map(); // hex -> alpha -> string (no key string built per call)
+  // A colour with an alpha, as a string, cached. The alpha is quantised to
+  // 1/255 (all the canvas keeps of it anyway), so an alpha that changes every
+  // frame costs a lookup and the cache stays bounded: at most 256 strings a
+  // colour (and it's cleared every round, as a backstop).
+  const rgbaCache = new Map(); // hex -> [256] strings, by alpha
   function rgba(hex, a) {
     let byA = rgbaCache.get(hex);
-    if (!byA) rgbaCache.set(hex, byA = new Map());
-    let v = byA.get(a);
-    if (!v) { const n = parseInt(hex.slice(1), 16); v = `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; byA.set(a, v); }
+    if (!byA) rgbaCache.set(hex, byA = new Array(256));
+    const q = a > 0 ? (a < 1 ? Math.round(a * 255) : 255) : 0;
+    let v = byA[q];
+    if (!v) { const n = parseInt(hex.slice(1), 16); v = byA[q] = `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${(q / 255).toFixed(3)})`; }
     return v;
   }
   // Each field's look, drawn once per resolution: its glow and edge, and the
   // honeycomb on its own (for the ripples to light up).
-  const fieldLooks = new Map();
+  const fieldLooks = new Map(); // colour -> radius -> look
   function fieldLook(r, color) {
-    const key = r + color;
-    let f = fieldLooks.get(key);
+    let byR = fieldLooks.get(color);
+    if (!byR) fieldLooks.set(color, byR = new Map());
+    let f = byR.get(r);
     if (f) return f;
     const side = 2 * r + 4, px = Math.max(2, Math.round(side * k));
     const make = () => {
@@ -2841,30 +3037,53 @@ window.SnakeRender = (() => {
     bg.beginPath(); bg.arc(0, 0, r * 0.82, Math.PI * 1.1, Math.PI * 1.38); bg.stroke();
     bg.fillStyle = 'rgba(255,255,255,0.16)';
     bg.beginPath(); bg.arc(Math.cos(Math.PI * 1.47) * r * 0.82, Math.sin(Math.PI * 1.47) * r * 0.82, Math.max(1.5, r * 0.035), 0, TAU); bg.fill();
-    fieldLooks.set(key, f = { body, lattice, side });
+    byR.set(r, f = { body, lattice, side, combPat: null });
     return f;
   }
-  const fields = [];          // this frame's fields: { x, y, r, color, owner, key }
-  const inField = new Map();  // snake -> the field keys its head was in last frame
-  const ripples = [];         // a ripple where someone crossed in: { x, y, color, at }
   // Every field this frame (homes and colonies), drawn knowing about each
   // other: a snake's own fields that overlap (Colonist's colonies) are one
   // merged field, one rim round the lot; where two snakes' fields meet, the
-  // border between them crackles. A field: { x, y, r (drawn, eased as it
-  // moves or swells), color, owner, id, lookR (the radius it's settling to,
-  // whose look is cached), swell (1 just after it grew or shrank, fading) }.
-  const fieldSpecs = [];
+  // border between them crackles. Insides first, then the holes under them,
+  // then every edge. A field is kept from frame to frame, by its key: { key,
+  // x, y, r (drawn, eased as it moves or swells), color, owner, lookR (the
+  // radius it's settling to, whose look is cached), swell (1 just after it
+  // grew or shrank, fading), idLen (the length of its old name: the snow on
+  // it sits by that) }, and this frame's alert, pulse, flare, look, side,
+  // wobble and cut (see cutOf).
+  const fieldSpecs = [];         // this frame's fields, in drawing order
+  const fieldByKey = new Map();  // key -> field
+  const inField = new Map();     // snake -> the field keys its head was in last frame
+  const ripples = [];            // a ripple where someone crossed in: { x, y, color, at }
+  const digits = v => String(v).length;
+  function newField(key, owner, idLen) {
+    const f = { key, x: 0, y: 0, r: 1, color: owner.color, owner, lookR: 1, swell: 0, idLen,
+      alert: false, pulse: 0.5, flare: 0, look: null, side: 0, wobble: 0, cut: null, cutSig: [], rim: null };
+    fieldByKey.set(key, f);
+    return f;
+  }
+  // A colony's field, by its owner, number and cell (a guest online gets
+  // fresh colony objects every tick).
+  function colonyField(s, c) {
+    const n = c.n || 1, key = ((s.id * 4096 + n) * GRID + c.y) * GRID + c.x;
+    const f = fieldByKey.get(key) || newField(key, s, 9 + digits(s.id) + digits(n) + digits(c.x) + digits(c.y));
+    f.x = c.x * CELL + CELL / 2; f.y = c.y * CELL + CELL / 2; f.r = f.lookR = (c.radius + 1) * CELL;
+    f.color = s.color; f.owner = s; f.swell = 0;
+    return f;
+  }
   function drawFields(now) {
     fieldSpecs.length = 0;
     for (const s of game.snakes) {
       if (!s.alive) continue;
       if (s.memory.home) fieldSpecs.push(homeField(s, now));
-      if (s.memory.colonies) for (const c of s.memory.colonies) {
-        const cr = (c.radius + 1) * CELL;
-        fieldSpecs.push({ x: c.x * CELL + CELL / 2, y: c.y * CELL + CELL / 2, r: cr, color: s.color, owner: s, id: 'colony' + s.id + ':' + (c.n || 1) + ':' + c.x + ',' + c.y, lookR: cr, swell: 0 });
-      }
+      if (s.memory.colonies) for (const c of s.memory.colonies) fieldSpecs.push(colonyField(s, c));
     }
-    for (let i = 0; i < fieldSpecs.length; i++) drawField(i, now);
+    if (fieldByKey.size > fieldSpecs.length) { // (one's gone: a colony given up, its snake out)
+      for (const f of fieldByKey.values()) if (!fieldSpecs.includes(f)) fieldByKey.delete(f.key);
+    }
+    if (!fieldSpecs.length) return;
+    for (let i = 0; i < fieldSpecs.length; i++) fieldInside(i, now);
+    patchHoles();
+    for (let i = 0; i < fieldSpecs.length; i++) fieldEdge(i, now);
     for (const s of game.snakes) if (s.alive && s.memory.colonies) drawColonyFlags(s, now);
   }
   // Is (px, py) inside another field (than i): of the same owner (same) or of someone else's?
@@ -2878,98 +3097,244 @@ window.SnakeRender = (() => {
     }
     return false;
   }
-  function drawField(i, now) {
-    const f = fieldSpecs[i], { x, y, r, color, owner, id } = f, lookR = f.lookR || r, swell = f.swell || 0, key = id;
-    fields.push({ x, y, r, color, owner, key });
+  // A field's inside: its dome, breathing (lit up while a rival's in it), the
+  // ripples welling out from the middle (each lights up the honeycomb as it
+  // passes) and the weather on it. No clip: the dome and honeycomb are cut to
+  // the circle already, a ripple is the honeycomb stroked as a ring, and the
+  // holes are drawn back over it afterwards (patchHoles).
+  function fieldInside(i, now) {
+    const f = fieldSpecs[i], x = f.x, y = f.y, r = f.r;
     let alert = false;
     for (const s of game.snakes) {
-      if (!s.alive || s === owner) continue;
+      if (!s.alive || s === f.owner) continue;
       const hx = s.body[0].x * CELL + CELL / 2, hy = s.body[0].y * CELL + CELL / 2;
       if (Math.hypot(hx - x, hy - y) <= r) alert = true;
     }
-    const lively = !reduced, t = now / 1000, look = fieldLook(lookR, color), side = look.side * r / lookR;
-    const pulse = lively ? 0.5 + 0.5 * Math.sin(t * (alert ? 9 : 2.2)) : 0.5;
-    const flare = Math.max(swell, 1 - (now - flashAt) / 700); // (lightning, or it just grew: it flares)
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, TAU);
-    // (holes inside it stay dark: the field lies on the log that's left)
-    for (const h of game.holes) {
-      const hx = (h % GRID) * CELL, hy = Math.floor(h / GRID) * CELL;
-      if (Math.abs(hx + CELL / 2 - x) < r + CELL && Math.abs(hy + CELL / 2 - y) < r + CELL) ctx.rect(hx, hy, CELL, CELL);
-    }
-    ctx.clip('evenodd');
-    for (let j = 0; j < i; j++) { // (not again where its own field's already drawn: one merged field)
-      const o = fieldSpecs[j];
-      if (o.owner !== owner || Math.hypot(o.x - x, o.y - y) >= o.r + r) continue;
-      ctx.beginPath(); ctx.rect(0, 0, SIZE, SIZE); ctx.arc(o.x, o.y, o.r, 0, TAU); ctx.clip('evenodd');
-    }
-    ctx.globalAlpha = alert ? 1 : 0.85 + 0.15 * pulse;
-    ctx.drawImage(look.body, x - side / 2, y - side / 2, side, side);
-    if (lively) { // ripples welling out from the middle, lighting up the honeycomb as they pass
-      for (let i = 0; i < 2; i++) {
-        const p = (t * (alert ? 0.9 : 0.35) + i * 0.5) % 1, rr = r * p, bw = CELL * 0.8;
-        if (quality > 0) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(x, y, rr + bw / 2, 0, TAU);
-          ctx.arc(x, y, Math.max(0.1, rr - bw / 2), 0, TAU, true);
-          ctx.clip();
+    const lively = !reduced, t = now / 1000, look = fieldLook(f.lookR, f.color), side = look.side * r / f.lookR;
+    f.alert = alert; f.look = look; f.side = side;
+    f.pulse = lively ? 0.5 + 0.5 * Math.sin(t * (alert ? 9 : 2.2)) : 0.5;
+    f.flare = Math.max(f.swell, 1 - (now - flashAt) / 700); // (lightning, or it just grew: it flares)
+    const cut = cutOf(i), x0 = x - side / 2, y0 = y - side / 2;
+    ctx.globalAlpha = alert ? 1 : 0.85 + 0.15 * f.pulse;
+    ctx.drawImage(cut ? cut.body : look.body, x0, y0, side, side);
+    if (lively) {
+      for (let n = 0; n < 2; n++) {
+        const p = (t * (alert ? 0.9 : 0.35) + n * 0.5) % 1, rr = r * p;
+        if (quality > 0 && PATTERNS) {
           ctx.globalAlpha = (alert ? 0.5 : 0.24) * Math.sin(p * Math.PI);
-          ctx.drawImage(look.lattice, x - side / 2, y - side / 2, side, side);
-          ctx.restore();
+          ctx.strokeStyle = patternAt(cut || look, false, x0, y0, side);
+          ctx.lineWidth = CELL * 0.8;
+          ctx.beginPath(); ctx.arc(x, y, rr, 0, TAU); ctx.stroke();
         }
-        ctx.globalAlpha = 1;
         ctx.lineWidth = 2;
-        ctx.strokeStyle = rgba(color, 0.22 * (1 - p));
+        if (cut && PATTERNS) { ctx.globalAlpha = 0.22 * (1 - p); ctx.strokeStyle = patternAt(cut, true, x0, y0, side); }
+        else { ctx.globalAlpha = 1; ctx.strokeStyle = rgba(f.color, 0.22 * (1 - p)); }
         ctx.beginPath(); ctx.arc(x, y, rr, 0, TAU); ctx.stroke();
       }
     }
-    const wobble = fieldWeather(x, y, r, color, look.lattice, side, id, now, flare);
-    ctx.restore();
     ctx.globalAlpha = 1;
-    // The rim: a soft glow and a bright line, breathing (and shivering in the
-    // wind)... in pieces: none where it's inside another of its owner's
-    // fields (they're one field), and where it's inside someone else's, a
-    // crackling seam instead (two fields pushing against each other).
-    const rr = r - 2 + wobble, steps = Math.max(24, Math.round(r / 5));
+    f.wobble = fieldWeather(f, i, cut ? cut.lattice : look.lattice, x0, y0, side, now);
+  }
+  // The honeycomb (or, solid, a disc of the field's colour) as a pattern,
+  // laid where the field is drawn: so a ring of it is one stroke.
+  const PATTERNS = typeof DOMMatrix === 'function' && typeof CanvasPattern === 'function' && 'setTransform' in CanvasPattern.prototype;
+  const patM = PATTERNS ? new DOMMatrix() : null;
+  function patternAt(h, solid, x0, y0, side) {
+    const src = solid ? h.solid : h.lattice;
+    let p = solid ? h.solidPat : h.combPat;
+    if (!p) { p = ctx.createPattern(src, 'no-repeat'); if (solid) h.solidPat = p; else h.combPat = p; }
+    patM.a = patM.d = side / src.width; patM.e = x0; patM.f = y0;
+    p.setTransform(patM);
+    return p;
+  }
+  // A field that overlaps its owner's earlier ones (Colonist's colonies) is
+  // drawn without them, so they're one field: its own copies of the dome, the
+  // honeycomb and a solid disc (for its ripples' rings) with those cut out,
+  // made again only when one of them moves or changes size.
+  const sigNow = [];
+  function cutOf(i) {
+    const f = fieldSpecs[i];
+    sigNow.length = 0;
+    for (let j = 0; j < i; j++) {
+      const o = fieldSpecs[j];
+      if (o.owner === f.owner && Math.hypot(o.x - f.x, o.y - f.y) < o.r + f.r) sigNow.push(o.x, o.y, o.r);
+    }
+    if (!sigNow.length) return (f.cut = null);
+    sigNow.push(f.x, f.y, f.r, f.lookR);
+    const sig = f.cutSig;
+    let same = !!f.cut && f.cut.look === f.look && sig.length === sigNow.length;
+    for (let n = 0; same && n < sig.length; n++) same = sig[n] === sigNow[n];
+    if (same) return f.cut;
+    sig.length = 0;
+    for (const v of sigNow) sig.push(v);
+    const look = f.look, px = look.body.width, scale = px / look.side, toLook = f.lookR / f.r;
+    const copy = src => {
+      const c = makeLayer(px, px), g = c.getContext('2d');
+      if (src) g.drawImage(src, 0, 0);
+      else { g.fillStyle = f.color; g.fillRect(0, 0, px, px); }
+      g.globalCompositeOperation = 'destination-out';
+      g.setTransform(scale, 0, 0, scale, px / 2, px / 2);
+      for (let n = 0; n < sig.length - 4; n += 3) { g.beginPath(); g.arc((sig[n] - f.x) * toLook, (sig[n + 1] - f.y) * toLook, sig[n + 2] * toLook, 0, TAU); g.fill(); }
+      return c;
+    };
+    return (f.cut = { look, body: copy(look.body), lattice: copy(look.lattice), solid: copy(null), combPat: null, solidPat: null });
+  }
+  // Holes stay dark under a field: once every field's inside is drawn, the
+  // hole cells under them are drawn again, from the static layer and the
+  // canopy's shade (as it was drawn this frame), instead of clipping them out.
+  const patchAt = new Uint8Array(GRID * GRID); // (the hole cells under a field, this frame)
+  function patchHoles() {
+    if (!game.holes.size || !staticLayer) return;
+    const c2 = CELL / 2;
+    let any = false;
+    patchAt.fill(0);
+    for (const h of game.holes) {
+      const cx = (h % GRID) * CELL + c2, cy = (h - h % GRID) / GRID * CELL + c2;
+      for (let i = 0; i < fieldSpecs.length; i++) {
+        const f = fieldSpecs[i], dx = Math.max(0, Math.abs(cx - f.x) - c2), dy = Math.max(0, Math.abs(cy - f.y) - c2);
+        if (dx * dx + dy * dy < (f.r + 2) * (f.r + 2)) { patchAt[h] = 1; any = true; break; }
+      }
+    }
+    if (!any) return;
+    ctx.setTransform(1, 0, 0, 1, shakeX, shakeY);
+    const s = canopyOn ? shadeLayer.width / (canopyW * k) : 0;
+    for (let y = 0; y < GRID; y++) {
+      for (let x = 0; x < GRID; x++) {
+        if (!patchAt[y * GRID + x]) continue;
+        let e = x; // (a run of them along the row: one piece)
+        while (e + 1 < GRID && patchAt[y * GRID + e + 1]) e++;
+        const X = Math.round(x * CELL * k), Y = Math.round(y * CELL * k), w = Math.round((e + 1) * CELL * k) - X, hh = Math.round((y + 1) * CELL * k) - Y;
+        ctx.drawImage(staticLayer, X, Y, w, hh, X, Y, w, hh);
+        if (s) ctx.drawImage(shadeLayer, (X - canopyX * k) * s, (Y - canopyY * k) * s, w * s, hh * s, X, Y, w, hh);
+        x = e;
+      }
+    }
+    ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
+  }
+  // A field's edge, over every field's inside. The rim: a soft glow and a
+  // bright line, breathing (and shivering in the wind); none where it's
+  // inside another of its owner's fields (they're one field), and where it's
+  // inside someone else's, a crackling seam instead (two fields pushing
+  // against each other). Then snow along its top, and sparks running round it.
+  const pieceKind = new Uint8Array(256); // 0 rim, 1 left out, 2 seam
+  const seamAt = []; // this field's seam pieces: a0, a1, a0, a1, ...
+  // The rim's path, added to g's: unbroken (first < 0), one circle; broken
+  // (first: a piece that isn't rim), each run of rim pieces one arc, so none
+  // is split where the circle starts. Says whether there's any rim.
+  function rimPath(g, x, y, rr, steps, first) {
+    if (first < 0) { g.arc(x, y, rr, 0, TAU); return true; }
+    let from = -1, any = false;
+    for (let m = 1; m <= steps; m++) {
+      const a0 = (first + m) / steps * TAU;
+      if (!pieceKind[(first + m) % steps]) { if (from < 0) from = a0; continue; }
+      if (from < 0) continue;
+      g.moveTo(x + Math.cos(from) * rr, y + Math.sin(from) * rr);
+      g.arc(x, y, rr, from, a0);
+      from = -1;
+      any = true;
+    }
+    return any;
+  }
+  // The rim from two cached layers, its glow and its line (each drawn opaque),
+  // laid on at their own alphas, on whole device pixels so they're never
+  // resampled: a big circle stroked costs several times what a blit does.
+  // When the rim changes (the field moves or swells, or another comes or goes
+  // across it), it's stroked as it is until it holds still for a frame, and
+  // then its layers are made again. Says whether it drew.
+  function rimFrom(f, rr, steps, first, glowA, lineA) {
+    const X = f.x * k, Y = f.y * k;
+    let c = f.rim;
+    if (!c) c = f.rim = { X: 0, Y: 0, rr: 0, k: 0, steps: 0, first: 0, kinds: new Uint8Array(256), built: false, any: false, P: 0, glow: null, line: null };
+    let same = c.X === X && c.Y === Y && c.rr === rr && c.k === k && c.steps === steps && c.first === first;
+    for (let n = 0; same && n < steps; n++) same = c.kinds[n] === pieceKind[n];
+    if (!same) {
+      c.X = X; c.Y = Y; c.rr = rr; c.k = k; c.steps = steps; c.first = first; c.built = false;
+      c.kinds.set(pieceKind.subarray(0, steps));
+      return false;
+    }
+    if (!c.built) {
+      c.built = true;
+      const P = c.P = Math.ceil((rr + 9) * k), size = 2 * P + 2, fx = X - Math.floor(X), fy = Y - Math.floor(Y);
+      for (let layer = 0; layer < 2; layer++) {
+        let cv = layer ? c.line : c.glow;
+        if (!cv || cv.width !== size) { cv = makeLayer(size, size); if (layer) c.line = cv; else c.glow = cv; }
+        const g = cv.getContext('2d');
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        g.clearRect(0, 0, size, size);
+        g.setTransform(k, 0, 0, k, P + 1 + fx, P + 1 + fy); // (the field's centre, where it lands)
+        g.strokeStyle = f.color;
+        g.lineCap = 'round';
+        g.lineWidth = layer ? 1.6 : 8;
+        g.beginPath();
+        c.any = rimPath(g, 0, 0, rr, steps, first);
+        g.stroke();
+      }
+    }
+    if (c.any) {
+      const bx = Math.floor(X) - c.P - 1 + shakeX, by = Math.floor(Y) - c.P - 1 + shakeY;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalAlpha = glowA;
+      ctx.drawImage(c.glow, bx, by);
+      ctx.globalAlpha = lineA;
+      ctx.drawImage(c.line, bx, by);
+      ctx.globalAlpha = 1;
+      ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
+    }
+    return true;
+  }
+  function fieldEdge(i, now) {
+    const f = fieldSpecs[i], x = f.x, y = f.y, r = f.r, color = f.color, alert = f.alert, pulse = f.pulse, flare = f.flare;
+    const lively = !reduced, t = now / 1000;
+    // (Shivering in the wind or flaring, it's stroked as it is; otherwise it
+    // comes from its cached layers, at a wobble too small to see taken as none.)
+    const live = flare > 0.01 || Math.abs(f.wobble) > 0.03;
+    const rr = r - 2 + (live ? f.wobble : 0), steps = Math.min(256, Math.max(24, Math.round(r / 5)));
     const others = fieldSpecs.length > 1;
-    let anyRim = false, seams = null;
-    ctx.beginPath();
-    for (let k = 0; k < steps; k++) {
-      const a0 = k / steps * TAU, a1 = (k + 1) / steps * TAU, am = (a0 + a1) / 2;
-      const mx = x + Math.cos(am) * rr, my = y + Math.sin(am) * rr;
-      if (others && insideOther(i, mx, my, true, 1)) continue;
-      if (others && insideOther(i, mx, my, false)) { (seams ||= []).push([a0, a1]); continue; }
-      ctx.moveTo(x + Math.cos(a0) * rr, y + Math.sin(a0) * rr);
-      ctx.arc(x, y, rr, a0, a1);
-      anyRim = true;
+    let first = -1; // (a piece that isn't rim)
+    seamAt.length = 0;
+    for (let n = 0; n < steps; n++) {
+      let kind = 0;
+      if (others) {
+        const am = (n + 0.5) / steps * TAU, mx = x + Math.cos(am) * rr, my = y + Math.sin(am) * rr;
+        kind = insideOther(i, mx, my, true, 1) ? 1 : insideOther(i, mx, my, false) ? 2 : 0;
+      }
+      pieceKind[n] = kind;
+      if (kind && first < 0) first = n;
+      if (kind === 2) seamAt.push(n / steps * TAU, (n + 1) / steps * TAU);
     }
-    if (anyRim) {
-      ctx.lineWidth = 8 + 4 * flare;
-      ctx.strokeStyle = rgba(color, Math.min(1, (alert ? 0.32 : 0.16) + 0.08 * pulse + 0.3 * flare));
-      ctx.stroke();
-      ctx.lineWidth = 1.6;
-      ctx.strokeStyle = rgba(color, Math.min(1, (alert ? 0.9 : 0.5) + 0.2 * pulse + 0.4 * flare));
-      ctx.stroke();
-    }
-    if (seams) { // the seam: a jagged, flickering line of light, and the odd spark
+    const glowA = Math.min(1, (alert ? 0.32 : 0.16) + 0.08 * pulse + 0.3 * flare), lineA = Math.min(1, (alert ? 0.9 : 0.5) + 0.2 * pulse + 0.4 * flare);
+    if (live || !rimFrom(f, rr, steps, first, glowA, lineA)) {
       ctx.beginPath();
-      for (const [a0, a1] of seams) {
-        for (let q = 0; q <= 3; q++) {
+      if (rimPath(ctx, x, y, rr, steps, first)) {
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 8 + 4 * flare;
+        ctx.strokeStyle = rgba(color, glowA);
+        ctx.stroke();
+        ctx.lineWidth = 1.6;
+        ctx.strokeStyle = rgba(color, lineA);
+        ctx.stroke();
+      }
+    }
+    if (seamAt.length) { // the seam: a jagged, flickering line of light, and the odd spark
+      ctx.beginPath();
+      for (let n = 0; n < seamAt.length; n += 2) {
+        const a0 = seamAt[n], a1 = seamAt[n + 1], on = n > 0 && seamAt[n - 1] === a0; // (on from the piece before: one line)
+        for (let q = on ? 1 : 0; q <= 3; q++) {
           const a = a0 + (a1 - a0) * q / 3, jit = lively ? Math.sin(t * 47 + a * 31 + i) * 2.2 : 0;
           const px = x + Math.cos(a) * (rr + jit), py = y + Math.sin(a) * (rr + jit);
           if (q) ctx.lineTo(px, py); else ctx.moveTo(px, py);
         }
         if (lively && Math.random() < 0.012) spawn(x + Math.cos(a0) * rr, y + Math.sin(a0) * rr, 2, 90, 260, 1.6, '#fef08a', '#ffffff');
       }
-      ctx.lineCap = 'round';
+      const join = ctx.lineJoin;
+      ctx.lineCap = ctx.lineJoin = 'round';
       ctx.lineWidth = 7;
       ctx.strokeStyle = rgba('#fde047', lively ? 0.25 + 0.15 * Math.sin(t * 13 + i) : 0.3);
       ctx.stroke();
       ctx.lineWidth = 1.8;
       ctx.strokeStyle = rgba('#fefce8', 0.9);
       ctx.stroke();
+      ctx.lineJoin = join;
     }
     if (snowCover > 0.02) { // ...snow gathered along its top...
       ctx.lineCap = 'round';
@@ -2977,8 +3342,8 @@ window.SnakeRender = (() => {
       ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(x, y, r - 3, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
       ctx.fillStyle = rgba('#ffffff', 0.7 * snowCover);
-      for (let i = 0; i < 6; i++) {
-        const a = Math.PI * (1.15 + i * 0.14), w = 2 + ((i * 7 + id.length) % 3);
+      for (let n = 0; n < 6; n++) {
+        const a = Math.PI * (1.15 + n * 0.14), w = 2 + ((n * 7 + f.idLen) % 3);
         circle(x + Math.cos(a) * (r - 3), y + Math.sin(a) * (r - 3) - 1, w);
       }
     }
@@ -2993,9 +3358,16 @@ window.SnakeRender = (() => {
   }
   // After the snakes: whatever of a rival is inside a field takes on its
   // colour, with a glow of it clinging round, as if wading through coloured
-  // light; and a ripple spreads where a head just crossed in.
+  // light; and a ripple spreads where a head just crossed in. The glow (the
+  // body grown 5, at 0.13) and the colour (grown 0.5, at 0.28 over it) go
+  // into the veil and are laid on as one layer, at 0.28 over 0.13, cut to the
+  // field (and only round what's in it).
+  const HUE = 0.28 + 0.13 * 0.72, hued = [];
   function drawFieldHues(now) {
-    for (const f of fields) {
+    for (let fi = 0; fi < fieldSpecs.length; fi++) {
+      const f = fieldSpecs[fi];
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      hued.length = 0;
       for (const s of game.snakes) {
         if (!s.alive || s === f.owner) continue;
         const a = anim.get(s);
@@ -3009,18 +3381,32 @@ window.SnakeRender = (() => {
         }
         if (inside) was.add(f.key); else was.delete(f.key);
         let touches = false;
-        for (let i = 0; i < a.n && !touches; i++) touches = Math.hypot(a.pts[2 * i] - f.x, a.pts[2 * i + 1] - f.y) <= f.r + a.rad[i] + 5;
-        if (!touches) continue;
-        ctx.save();
-        ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.clip();
-        ctx.fillStyle = rgba(f.color, 0.13);
-        silhouette(a, 5);
-        ctx.fillStyle = rgba(f.color, 0.28);
-        silhouette(a, 0.5);
-        ctx.restore();
+        for (let i = 0; i < a.n; i++) { // (and the box round what of it is in the field)
+          const px = a.pts[2 * i], py = a.pts[2 * i + 1];
+          if (Math.hypot(px - f.x, py - f.y) > f.r + a.rad[i] + 5) continue;
+          touches = true;
+          if (px < x0) x0 = px;
+          if (px > x1) x1 = px;
+          if (py < y0) y0 = py;
+          if (py > y1) y1 = py;
+        }
+        if (touches) hued.push(a);
       }
+      if (!hued.length) continue;
+      const m = f.r + 1; // (the box: round the bodies, a band and a glow's width more, within the field)
+      x0 = Math.max(f.x - m, x0 - CELL - 6); y0 = Math.max(f.y - m, y0 - CELL - 6);
+      x1 = Math.min(f.x + m, x1 + CELL + 6); y1 = Math.min(f.y + m, y1 + CELL + 6);
+      veilOn(0, 0, x0, y0, x1, y1);
+      ctx.fillStyle = f.color;
+      for (const a of hued) bodyFills(a, 5, f.x, f.y, f.r + CELL);
+      ctx.globalCompositeOperation = 'destination-out'; // (the glow down to its share)
+      ctx.globalAlpha = 1 - 0.13 / HUE;
+      ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      for (const a of hued) bodyFills(a, 0.5, f.x, f.y, f.r + CELL);
+      veilOff(HUE, f);
     }
-    fields.length = 0;
     for (let i = dimples.length - 1; i >= 0; i--) if (now - dimples[i].at > 450 || now < dimples[i].at) dimples.splice(i, 1);
     for (let i = ripples.length - 1; i >= 0; i--) {
       const rp = ripples[i], t = (now - rp.at) / 520;
@@ -3033,40 +3419,48 @@ window.SnakeRender = (() => {
   // The weather on a field, inside it: rain dimples it, snow frosts its
   // honeycomb, wind sends shivers across it, lightning lights it all up.
   // Returns how far its rim shivers in the wind.
-  const dimples = []; // raindrops landing on fields: { id, dx, dy, at }
-  function fieldWeather(x, y, r, color, lattice, side, id, now, flare) {
+  const dimples = []; // raindrops landing on fields: { id (its key), dx, dy, at }
+  function fieldWeather(f, i, lattice, x0, y0, side, now) {
     if (reduced) return 0;
+    const x = f.x, y = f.y, r = f.r, id = f.key;
     const wet = sky.rain + sky.storm * 0.6, blow = Math.max(sky.wind, sky.storm * 0.7), t = now / 1000;
     for (let n = wet * (r / CELL) * 5 * frameDt / 1000; n > 0; n--) { // (about five drops a second per cell of radius)
       if (Math.random() >= n) break;
-      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * r * 0.92;
-      dimples.push({ id, dx: Math.cos(a) * d, dy: Math.sin(a) * d, at: now });
+      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * r * 0.92, dx = Math.cos(a) * d, dy = Math.sin(a) * d;
+      if (f.cut && underEarlier(i, x + dx, y + dy)) continue; // (that's the earlier field's, of the one merged field)
+      dimples.push({ id, dx, dy, at: now });
     }
     let drew = false;
     for (const d of dimples) {
       if (d.id !== id) continue;
       const p = (now - d.at) / 450;
       if (p >= 1 || p < 0) continue;
-      if (!drew) { drew = true; ctx.lineWidth = 1.6; ctx.strokeStyle = ctx.fillStyle = mix(color, '#ffffff', 0.75); }
+      if (!drew) { drew = true; ctx.lineWidth = 1.6; ctx.strokeStyle = ctx.fillStyle = mix(f.color, '#ffffff', 0.75); }
       ctx.globalAlpha = 0.9 * (1 - p);
       ctx.beginPath(); ctx.arc(x + d.dx, y + d.dy, 2 + 10 * p, 0, TAU); ctx.stroke();
       if (p < 0.3) circle(x + d.dx, y + d.dy, 1.8 * (1 - p / 0.3)); // (the drop itself)
     }
-    const lit = 0.9 * flare + 0.28 * snowCover; // (lightning, or frost)
+    const lit = 0.9 * f.flare + 0.28 * snowCover; // (lightning, or frost)
     if (lit > 0.02 && quality > 0) {
       ctx.globalAlpha = Math.min(1, lit);
-      ctx.drawImage(lattice, x - side / 2, y - side / 2, side, side);
+      ctx.drawImage(lattice, x0, y0, side, side);
     }
-    if (blow > 0.05 && quality > 0) { // a shiver sweeping across with the wind (from the left)
-      const p = (t * 0.6 * (1 + blow)) % 1, bx = x - r + p * 2 * r, bw = CELL * 0.9;
-      ctx.save();
-      ctx.beginPath(); ctx.rect(bx - bw, y - r, 2 * bw, 2 * r); ctx.clip();
-      ctx.globalAlpha = 0.6 * blow;
-      ctx.drawImage(lattice, x - side / 2, y - side / 2, side, side);
-      ctx.restore();
+    if (blow > 0.05 && quality > 0) { // a shiver sweeping across with the wind (from the left): the band's slice of the honeycomb
+      const p = (t * 0.6 * (1 + blow)) % 1, bx = x - r + p * 2 * r, bw = CELL * 0.9, s = lattice.width / side;
+      const l = Math.max(x0, bx - bw), rt = Math.min(x0 + side, bx + bw), top = Math.max(y0, y - r), bot = Math.min(y0 + side, y + r);
+      if (rt > l && bot > top) {
+        ctx.globalAlpha = 0.6 * blow;
+        ctx.drawImage(lattice, (l - x0) * s, (top - y0) * s, (rt - l) * s, (bot - top) * s, l, top, rt - l, bot - top);
+      }
     }
     ctx.globalAlpha = 1;
     return blow * 1.3 * Math.sin(t * 11 + x * 0.05);
+  }
+  // Is (px, py) under one of field i's owner's earlier fields?
+  function underEarlier(i, px, py) {
+    const f = fieldSpecs[i];
+    for (let j = 0; j < i; j++) { const o = fieldSpecs[j]; if (o.owner === f.owner && Math.hypot(px - o.x, py - o.y) < o.r) return true; }
+    return false;
   }
   // Sovereign's home: drawn where it is, easing to wherever it has moved or
   // grown to, flaring as it changes size.
@@ -3077,9 +3471,12 @@ window.SnakeRender = (() => {
     let e = homeShown.get(s);
     if (!e) homeShown.set(s, e = { x: tx, y: ty, r: tr, tr, at: -1e9 });
     if (tr !== e.tr) { e.tr = tr; e.at = now; }
-    const k = reduced ? 1 : 1 - Math.exp(-frameDt / 260);
-    e.x += (tx - e.x) * k; e.y += (ty - e.y) * k; e.r += (tr - e.r) * k;
-    return { x: e.x, y: e.y, r: e.r, color: s.color, owner: s, id: 'home' + s.id, lookR: tr, swell: Math.max(0, 1 - (now - e.at) / 900) };
+    const step = reduced ? 1 : 1 - Math.exp(-frameDt / 260);
+    e.x += (tx - e.x) * step; e.y += (ty - e.y) * step; e.r += (tr - e.r) * step;
+    const key = -1 - s.id, f = fieldByKey.get(key) || newField(key, s, 4 + digits(s.id));
+    f.x = e.x; f.y = e.y; f.r = e.r; f.lookR = tr; f.color = s.color; f.owner = s;
+    f.swell = Math.max(0, 1 - (now - e.at) / 900);
+    return f;
   }
 
   // The Union Flag, as flown over the Empire's colonies (a redcoat's flag: St
@@ -3262,6 +3659,10 @@ window.SnakeRender = (() => {
   // A sprite drawn at (x, y) + offset, scaled about a pivot (px, py) relative to (x, y).
   function blitAbout(sp, x, y, px, py, sx, sy, rot) {
     const half = SPRITE * CELL / 2;
+    if (!rot) { // (not turned: one scaled blit, no transform to set and undo)
+      ctx.drawImage(sp, x + px - sx * (half + px), y + py - sy * (half + py), SPRITE * CELL * sx, SPRITE * CELL * sy);
+      return;
+    }
     ctx.save();
     ctx.translate(x + px, y + py);
     if (rot) ctx.rotate(rot);
@@ -3552,32 +3953,61 @@ window.SnakeRender = (() => {
   function drawBurrows(now) {
     if (!game.burrows?.length) return;
     const c = CELL;
+    ctx.lineCap = ctx.lineJoin = 'round'; // (as it always left them)
     for (const b of game.burrows) {
-      const k = b.y * GRID + b.x, x = b.x * c + c / 2, y = b.y * c + c / 2;
-      if (!burrowSeen.has(k)) burrowSeen.set(k, now);
-      const pop = popOf(now - burrowSeen.get(k));
+      const key = b.y * GRID + b.x, x = b.x * c + c / 2, y = b.y * c + c / 2;
+      if (!burrowSeen.has(key)) burrowSeen.set(key, now);
+      const pop = popOf(now - burrowSeen.get(key));
       const grow = Math.min(1, Math.max(0.15, (game.tick - b.at) / CRACK_GROW_TICKS));
-      // The cracks: dark, with a lit lip along one side, thinning out.
-      ctx.lineCap = ctx.lineJoin = 'round';
-      for (const [col, off, w] of [['rgba(196,154,102,0.28)', 1.2, 1.6], ['rgba(14,7,2,0.7)', 0, 2.8]]) {
-        ctx.strokeStyle = col;
-        for (const pts of cracksOf(b)) {
-          const shown = (pts.length - 1) * grow, thick = pts[0][0] || pts[0][1] ? 0.6 : 1;
-          for (let j = 1; j <= Math.ceil(shown); j++) { // (tapering as it goes)
-            const t = Math.min(1, shown - (j - 1)), [px, py] = pts[j - 1], [qx, qy] = pts[j];
-            ctx.lineWidth = w * thick * (1 - 0.75 * (j - 1) / (pts.length - 1));
-            ctx.beginPath();
-            ctx.moveTo(x + off + px * c, y + off + py * c);
-            ctx.lineTo(x + off + (px + (qx - px) * t) * c, y + off + (py + (qy - py) * t) * c);
-            ctx.stroke();
-          }
-        }
-      }
+      // The cracks, from their sprite, on whole device pixels.
+      const cs = crackSprite(b, key, grow);
+      ctx.setTransform(1, 0, 0, 1, shakeX, shakeY);
+      ctx.drawImage(cs.c, cs.X, cs.Y);
+      ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
       // The opening (a cached sprite, one of four).
       const w = SPRITE * CELL * pop;
-      ctx.drawImage(burrowSprite(String(k % 4)), x - w / 2, y - w / 2, w, w);
+      ctx.drawImage(burrowSprite(BURROW_LOOKS[key % 4]), x - w / 2, y - w / 2, w, w);
     }
   }
+  const BURROW_LOOKS = ['0', '1', '2', '3'];
+  // A burrow's cracks in a sprite of their own, made again only when they've
+  // grown (they grow a little each tick for about half a minute, then never):
+  // dark, with a lit lip along one side, thinning out.
+  const crackSprites = new Map(); // cell -> { grow, k, c (its canvas), X, Y (where it lands, in device px) }
+  function crackSprite(b, key, grow) {
+    let s = crackSprites.get(key);
+    if (s && s.grow === grow && s.k === k) return s;
+    if (!s) crackSprites.set(key, s = { grow: -1, k: 0, c: null, X: 0, Y: 0 });
+    const branches = cracksOf(b), c = CELL, m = 4; // (m: room for the lines' width and the lip)
+    let x0 = 0, x1 = 0, y0 = 0, y1 = 0;
+    for (const pts of branches) for (const [px, py] of pts) { x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py); }
+    const cx = (b.x + 0.5) * c * k, cy = (b.y + 0.5) * c * k;
+    const X = Math.floor(cx + (x0 * c - m) * k), Y = Math.floor(cy + (y0 * c - m) * k);
+    const w = Math.ceil(cx + (x1 * c + m) * k) - X, h = Math.ceil(cy + (y1 * c + m) * k) - Y;
+    if (!s.c || s.c.width !== w || s.c.height !== h) s.c = makeLayer(w, h);
+    const g = s.c.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, w, h);
+    g.setTransform(k, 0, 0, k, cx - X, cy - Y); // (the hole's centre at the origin)
+    g.lineCap = g.lineJoin = 'round';
+    for (const [col, off, lw] of CRACK_LINES) {
+      g.strokeStyle = col;
+      for (const pts of branches) {
+        const shown = (pts.length - 1) * grow, thick = pts[0][0] || pts[0][1] ? 0.6 : 1;
+        for (let j = 1; j <= Math.ceil(shown); j++) { // (tapering as it goes)
+          const t = Math.min(1, shown - (j - 1)), [px, py] = pts[j - 1], [qx, qy] = pts[j];
+          g.lineWidth = lw * thick * (1 - 0.75 * (j - 1) / (pts.length - 1));
+          g.beginPath();
+          g.moveTo(off + px * c, off + py * c);
+          g.lineTo(off + (px + (qx - px) * t) * c, off + (py + (qy - py) * t) * c);
+          g.stroke();
+        }
+      }
+    }
+    s.X = X; s.Y = Y; s.grow = grow; s.k = k;
+    return s;
+  }
+  const CRACK_LINES = [['rgba(196,154,102,0.28)', 1.2, 1.6], ['rgba(14,7,2,0.7)', 0, 2.8]];
   // A burrow's opening: splinters round the rim, the dark hole, sawdust.
   const burrowSprite = v => sprite('burrow', v, drawBurrowHole);
   const drawBurrowHole = (g, v) => {
@@ -3716,13 +4146,13 @@ window.SnakeRender = (() => {
           const left = Math.max(0, Math.min(1, (f.from - 1 - tickPos) / T.STRIKE_WARN_TICKS));
           const flick = lively ? 0.7 + 0.3 * Math.sin(now / 37 + ph) : 1;
           ctx.beginPath(); ctx.arc(x, y, c * (0.35 + 1.1 * left), 0, TAU);
-          ctx.strokeStyle = `rgba(196,181,253,${0.25 * flick})`;
+          ctx.strokeStyle = rgba('#c4b5fd', 0.25 * flick);
           ctx.lineWidth = 9;
           ctx.stroke();
-          ctx.strokeStyle = `rgba(237,233,254,${0.9 * flick})`;
+          ctx.strokeStyle = rgba('#ede9fe', 0.9 * flick);
           ctx.lineWidth = 2.2;
           ctx.stroke();
-          ctx.fillStyle = `rgba(196,181,253,${0.35 + 0.3 * (1 - left)})`;
+          ctx.fillStyle = rgba('#c4b5fd', 0.35 + 0.3 * (1 - left));
           circle(x, y, c * 0.34);
           ctx.strokeStyle = '#f5f3ff';
           ctx.lineWidth = 1.6;
@@ -3822,18 +4252,20 @@ window.SnakeRender = (() => {
     if (!bolt) return;
     const age = now - bolt.at;
     if (age > 320) { bolt = null; return; }
-    const a = 1 - age / 320;
-    for (const [col, w] of [['rgba(196,181,253,0.55)', 9], ['rgba(237,233,254,0.95)', 3.2], ['#ffffff', 1.4]]) {
-      ctx.strokeStyle = col;
+    const a = 1 - age / 320, pts = bolt.pts;
+    for (let l = 0; l < BOLT_LINES.length; l++) {
+      ctx.strokeStyle = BOLT_LINES[l][0];
       ctx.globalAlpha = a;
-      ctx.lineWidth = w;
+      ctx.lineWidth = BOLT_LINES[l][1];
       ctx.lineJoin = 'round';
       ctx.beginPath();
-      bolt.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
   }
+  const BOLT_LINES = [['rgba(196,181,253,0.55)', 9], ['rgba(237,233,254,0.95)', 3.2], ['#ffffff', 1.4]]; // (a glow, the bolt, its white core)
   function drawFlash(now) {
     const age = now - flashAt;
     if (age < 0 || age > 300 || reduced) return;
@@ -3853,28 +4285,36 @@ window.SnakeRender = (() => {
     if (age > life) { rainbow = null; return; }
     const fade = Math.min(1, age / 600, (life - age) / 1600), grow = reduced ? 1 : Math.min(1, age / 1400), c = CELL;
     const x = rainbow.x * c + c / 2, y = rainbow.y * c + c / 2, fromLeft = rainbow.x < GRID / 2;
-    const R = Math.min(SIZE * 0.95, Math.max(SIZE * 0.45, y - SIZE * 0.1)), cx = fromLeft ? x + R : x - R;
+    const R = Math.min(SIZE * 0.95, Math.max(SIZE * 0.45, y - SIZE * 0.1));
     // From the apple's foot round over the top, as far as it has grown.
-    const a0 = fromLeft ? Math.PI : TAU, dir = fromLeft ? 1 : -1, span = Math.PI * grow, foot = Math.min(span, 0.32);
-    const bw = c * 0.3;
-    const arc = (rad, from, to) => { ctx.beginPath(); ctx.arc(cx, y, rad, a0 + dir * from, a0 + dir * to, !fromLeft); ctx.stroke(); };
-    const bands = (alpha, from, to) => {
-      ctx.globalAlpha = 0.14 * fade * alpha; // a soft glow under it
-      ctx.strokeStyle = '#fffbea';
-      ctx.lineWidth = bw * 9;
-      arc(R, from, to);
-      ctx.globalAlpha = 0.3 * fade * alpha;
-      ctx.lineWidth = bw + 0.8;
-      for (let i = 0; i < RAINBOW.length; i++) { ctx.strokeStyle = RAINBOW[i]; arc(R + (3 - i) * bw, from, to); }
-    };
+    const span = Math.PI * grow, foot = Math.min(span, 0.32);
+    bow.cx = fromLeft ? x + R : x - R; bow.y = y; bow.R = R; bow.fade = fade; bow.fromLeft = fromLeft;
+    bow.a0 = fromLeft ? Math.PI : TAU; bow.dir = fromLeft ? 1 : -1;
     ctx.save();
     ctx.beginPath(); ctx.rect(0, 0, SIZE, SIZE); ctx.clip();
     ctx.lineCap = 'butt';
     // (the foot fades in, out of the apple)
-    for (let i = 0; i < 6; i++) bands((i + 1) / 7, foot * i / 6, foot * (i + 1) / 6);
-    if (span > foot) bands(1, foot, span);
+    for (let i = 0; i < 6; i++) bowBands((i + 1) / 7, foot * i / 6, foot * (i + 1) / 6);
+    if (span > foot) bowBands(1, foot, span);
     ctx.restore();
     ctx.globalAlpha = 1;
+  }
+  // The rainbow's bands (and the glow under them) from `from` to `to` along it, at `alpha`.
+  const bow = { cx: 0, y: 0, R: 0, fade: 0, fromLeft: true, a0: 0, dir: 1 };
+  function bowBands(alpha, from, to) {
+    const bw = CELL * 0.3;
+    ctx.globalAlpha = 0.14 * bow.fade * alpha; // a soft glow under it
+    ctx.strokeStyle = '#fffbea';
+    ctx.lineWidth = bw * 9;
+    bowArc(bow.R, from, to);
+    ctx.globalAlpha = 0.3 * bow.fade * alpha;
+    ctx.lineWidth = bw + 0.8;
+    for (let i = 0; i < RAINBOW.length; i++) { ctx.strokeStyle = RAINBOW[i]; bowArc(bow.R + (3 - i) * bw, from, to); }
+  }
+  function bowArc(rad, from, to) {
+    ctx.beginPath();
+    ctx.arc(bow.cx, bow.y, rad, bow.a0 + bow.dir * from, bow.a0 + bow.dir * to, !bow.fromLeft);
+    ctx.stroke();
   }
 
   // ------------------------------------------------------------ the woodpecker
@@ -4128,6 +4568,7 @@ window.SnakeRender = (() => {
   // alpha: how far the current tick has played out (0..1).
   function frame(alpha, now) {
     if (!game || !sized) return;
+    lastDrawAt = performance.now(); // (the next round's log waits until nothing's drawn)
     if (!staticLayer) resetStatic();
     const dt = lastNow ? Math.min(64, Math.max(0, now - lastNow)) : 16; // (never backwards: a clock a hair behind another)
     lastNow = now;
@@ -4262,12 +4703,18 @@ window.SnakeRender = (() => {
     ctx.lineTo(hx + aw, tip + sgn * ah);
     ctx.closePath();
     ctx.stroke(); ctx.fill();
-    ctx.font = `700 ${Math.round(c * (label === 'YOU' ? 0.85 : 0.62))}px Fredoka, system-ui, sans-serif`;
+    ctx.font = markerFont(Math.round(c * (label === 'YOU' ? 0.85 : 0.62)));
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const ly = tip + sgn * (ah * 1.7 + c * 0.6), half = Math.min(SIZE / 2, ctx.measureText(label).width / 2 + 4), lx = Math.min(SIZE - half, Math.max(half, hx));
     ctx.lineWidth = c * 0.16; ctx.strokeStyle = 'rgba(58,38,20,0.9)'; ctx.strokeText(label, lx, ly);
     ctx.fillStyle = col; ctx.fillText(label, lx, ly);
+  }
+  const markerFonts = new Map(); // size -> font (a size or two: no string built per frame)
+  function markerFont(px) {
+    let f = markerFonts.get(px);
+    if (!f) markerFonts.set(px, f = `700 ${px}px Fredoka, system-ui, sans-serif`);
+    return f;
   }
 
   // Call after every tick, with that tick's events: sets off pops, gulps and puffs.
@@ -4649,9 +5096,11 @@ window.SnakeRender = (() => {
     rainTile = null;
     snowTile = null;
     sprites.clear();
+    veinSprites.clear();
     fieldLooks.clear();
     resetStatic();
     syncHoles();
+    if (next && next.k !== k) { next = null; wantNext(); } // (the next round's log, at this size)
     return true;
   }
 
@@ -4686,6 +5135,7 @@ window.SnakeRender = (() => {
     fallen.length = 0;
     nextLeaf = 0;
     crackCache.clear();
+    crackSprites.clear();
     burrowSeen.clear();
     fireSeen.clear();
     scorched.length = 0;
@@ -4702,13 +5152,17 @@ window.SnakeRender = (() => {
     dimples.length = 0;
     homeShown.clear();
     inField.clear();
+    fieldByKey.clear();
+    fieldSpecs.length = 0;
     fieldLooks.clear();
+    rgbaCache.clear(); // (bounded anyway: a backstop)
     drifts = null;
-    // A different stretch of log each round.
-    barkSeed = 1 + Math.floor(Math.random() * 2147483645);
-    barkLayer = null;
-    shadeLayer = null;
+    // A different stretch of log each round: made ahead, if it's ready.
+    if (next && next.k === k && sized) { barkSeed = next.seed; barkLayer = next.bark; shadeLayer = next.shade; }
+    else { barkSeed = 1 + Math.floor(Math.random() * 2147483645); barkLayer = null; shadeLayer = null; }
+    next = null;
     resetStatic();
+    wantNext();
   }
 
   return {
