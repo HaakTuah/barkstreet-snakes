@@ -207,6 +207,9 @@ header { min-width: 0; }
   box-shadow: 0 0 0 1.5px rgba(58, 38, 20, 0.45);
 }
 
+.opponents .tap-tip { display: none; }
+.scoreboard li[role="button"] { cursor: pointer; }
+.scoreboard li:focus-visible { outline: 2px solid var(--honey, #fde68a); outline-offset: 2px; }
 .scoreboard .name { flex: 1 1 auto; min-width: 2.2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .scoreboard .len { flex: none; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; } /* (the crown and the number on one line) */
 /* Powers: a chip (6 px, like everything small) with an ink icon and a count.
@@ -241,6 +244,13 @@ header { min-width: 0; }
 /* A narrow tag: the chip is just its icons (the board's pips and the screen
    reader's words still give the count), so the name keeps its letters. */
 .scoreboard li { container: tag / inline-size; }
+/* Four tags in a row only where they have room for a name, a chip and a
+   crowned length (a near-square window gives them 130 px): otherwise two rows
+   of two, as on a phone. */
+main { container: page / inline-size; }
+@container page (max-width: 660px) {
+  .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @container tag (max-width: 160px) {
   .scoreboard .pow b { display: none; }
   .scoreboard .pow { padding-inline: 3px; }
@@ -618,7 +628,7 @@ canvas {
 .toast[data-kind="beetle"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #059669; }
 .toast[data-kind="bird"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #ea580c; }
 .toast[data-kind="you"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #e0b23a; }
-.toast[data-kind="gold"] { background: linear-gradient(180deg, #fff7d1, #fde68a); box-shadow: 0 0 20px rgba(253, 224, 71, 0.65), inset 0 0 0 2px #d4a017; }
+.toast[data-kind="gold"] { background: linear-gradient(180deg, #fffbea, #fde68a); box-shadow: 0 0 20px rgba(253, 230, 138, 0.65), inset 0 0 0 2px #d4a017; }
 .toast[data-kind="gold"]::after {
   content: '';
   position: absolute;
@@ -726,7 +736,9 @@ canvas {
 .chatlog strong { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
 
 .help { margin: 12px 0 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
-.hint span, .help span { white-space: nowrap; }
+.hint span, .help span, #overlay-text span { white-space: nowrap; } /* (each item whole: a line breaks only after an item's dot) */
+.sep { font-style: normal; }
+.glyph { display: inline-block; width: 0.62em; height: 0.78em; vertical-align: -0.06em; fill: currentColor; } /* (the pause button's own bars, not a font's) */
 
 /* The woodpecker's layer: the whole window, under the dialogs, never in the way of a tap. */
 .bird-layer {
@@ -852,6 +864,7 @@ button.link:active { transform: none; }
   .opponents { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; margin-bottom: 8px; }
   .opponents li { margin: 2px 0; }
   .opponents .blurb { display: none; }
+  .opponents .tap-tip { display: block; flex-basis: 100%; font-size: 0.78rem; color: var(--ink-soft); }
   .buttons .text-button { margin-top: 0; }
   .card:has(.name-row:not([hidden])) .flavor { display: none; }
   .name-row { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px 8px; font-size: 0.9rem; }
@@ -864,10 +877,10 @@ button.link:active { transform: none; }
 @container (max-height: 300px) {
   .card h2 { font-size: 1.25rem; }
   .flavor { display: none !important; }
-  /* Just the first item of the hint ("Swipe to steer"): a new player has to be told that much. */
-  .hint { font-size: 0; margin-top: 4px !important; }
-  .hint span:first-child { font-size: 0.72rem; }
-  .hint span:not(:first-child) { display: none; }
+  /* Just the first two items of the hint ("Swipe to steer · Swipe ahead to leap"): a new player has to be told that much. */
+  .card p.hint { font-size: 0.72rem; margin-top: 4px !important; }
+  .hint span:nth-of-type(n+3) { display: none; }
+  .hint span:nth-of-type(2) .sep { display: none; }
   button { padding-block: 8px; }
   .card:has(.name-row:not([hidden])) .badge { display: none; } /* (the prompt is the celebration here; Best shows the number) */
   /* The two buttons share one row (a stacked pair would cover the card). */
@@ -902,6 +915,7 @@ button.link:active { transform: none; }
   .opponents { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; }
   .opponents li { margin: 2px 0; }
   .opponents .blurb { display: none; }
+  .opponents .tap-tip { display: block; flex-basis: 100%; font-size: 0.78rem; color: var(--ink-soft); }
   .scores-table .date { display: none; }
   .scores-table { table-layout: fixed; } /* long names get an ellipsis instead of pushing the table wide */
   .scores-table th:nth-child(1) { width: 24px; }
@@ -928,6 +942,7 @@ button.link:active { transform: none; }
    header and tags sit beside the board, which takes the full height. */
 @media (min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px) {
   main {
+    container-type: normal; /* (sized by its content here: a size container would collapse it) */
     --board: min(900px, calc(100vh - 32px), calc(100vw - 260px));
     --board: min(900px, calc(100dvh - 32px), calc(100vw - 260px));
     width: auto;

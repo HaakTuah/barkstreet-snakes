@@ -705,9 +705,15 @@ window.SnakeEngine = (() => {
         s.flight = null;
         s.landing = true;
       } else {
-        const steered = s.isPlayer && !s.autopilot && s.queue.length > 0;
+        let steered = false;
         if (s.isPlayer && !s.autopilot) {
-          if (s.queue.length) s.dir = s.queue.shift();
+          while (s.queue.length) { // (never into its own neck, whatever was pressed: a backstop for the game's own check)
+            const d = s.queue.shift(), c = ahead(game, s, s.body[0].x, s.body[0].y, d), n = s.body[1];
+            if (n && c.x === n.x && c.y === n.y) continue;
+            s.dir = d;
+            steered = true;
+            break;
+          }
         } else {
           s.dir = s.plannedTick === game.tick ? s.planned : decide(aiView(game, s), brainOf(s), s.memory);
           if (s.memory.power === game.tick) leap(game, s); // (it asked for its power, as a person would)

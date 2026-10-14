@@ -138,6 +138,7 @@ window.TUNING = Object.freeze({
 
   // ----------------------------------------------------------------- input
   QUEUE: 3,                 // turns you can queue ahead
+  CHORD_MS: 60,             // a reversal pressed this soon before the turn it needs (a U-turn's keys rolled together) still counts
   POWER_AFTER_TURN_MS: 180, // a press the way you just turned, this soon after, is part of the turn (a double tap), not a leap
   SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells...
   SWIPE_MIN_PX: 12,         // ...and at least this far (about 3 mm), so a jittery finger doesn't turn
