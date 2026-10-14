@@ -248,15 +248,19 @@ window.SnakeRender = (() => {
     }
     return s;
   }
-  // Snow settling on the bark: crisp drifts lying in the furrows, long along
-  // the grain (top to bottom), each a few lumps: a thick white top, lit on its
-  // upper left, over a blue-grey underside with an inked edge. Opaque: they
-  // grow as the snow settles, longer and fatter, and shrink as it melts
-  // (faded in, they were grey smears). Drawn at the board's own resolution
-  // (stretched, they blurred into smoke), in DRIFT_STEPS steps of growth,
-  // only once it snows; none in a force field (it frosts its own honeycomb),
-  // on a burrow or in a hole.
-  const DRIFT_STEPS = 12;
+  // Snow settling on the bark: low drifts lying in the furrows along the
+  // grain (top to bottom), each a long, thin, ragged wedge, wider at one end
+  // and wandering a little as a furrow does, now and then with a lump
+  // missing (two down one furrow): a soft white top over a blue-grey
+  // underside, inked along its lower edge only, away from the light. Opaque:
+  // they grow as the snow settles, longer from their wide end and fatter,
+  // and shrink as it melts (faded in, they were grey smears; as stacks of
+  // tall round lumps, inked all round, they stood up off the log like white
+  // candles, brighter than anything on it). Drawn at the board's own
+  // resolution (stretched, they blurred into smoke), in DRIFT_STEPS steps of
+  // growth, only once it snows; none in a force field (it frosts its own
+  // honeycomb), on a burrow or in a hole.
+  const DRIFT_STEPS = 12, DRIFT_PTS = 12; // (points down each side of one)
   let drifts = null, driftStep = -1, driftSig = -1;
   function buildDrifts(d, step) {
     const g = d.getContext('2d');
@@ -266,31 +270,55 @@ window.SnakeRender = (() => {
     let seed = barkSeed * 13 + 5;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const grown = step / DRIFT_STEPS, wide = 0.4 + 0.6 * grown, long = 0.25 + 0.75 * grown; // (how far it has grown, across and along)
-    const lumps = [];
-    for (let i = 0; i < 16; i++) {
-      const x = rnd() * SIZE, y = rnd() * SIZE, a = (rnd() - 0.5) * 0.16; // (the grain's slight lean)
-      lumps.length = 0;
-      let ly = y;
-      for (let j = 0, m = 3 + Math.floor(rnd() * 3); j < m; j++) {
-        const rx = 4.5 + rnd() * 4.5, ry = rx * (2.4 + rnd() * 1.4), lx = x + (rnd() - 0.5) * 3 + (ly - y) * a;
-        if (bareBark(lx - rx - 3, ly - ry - 3, lx + rx + 3, ly + ry + 3)) lumps.push([lx, ly, rx, ry]); // (judged full grown, ink and all, so none comes and goes as it grows)
-        ly += ry * (1.05 + rnd() * 0.35);
+    const n = DRIFT_PTS, cx = [], cy = [], lw = [], rw = [], ring = [], specks = [];
+    for (let i = 0; i < 20; i++) {
+      const x0 = rnd() * SIZE, y0 = rnd() * SIZE, dir = rnd() < 0.5 ? 1 : -1; // (its wide end, and which way along the grain it runs from there)
+      const len = CELL * (1.3 + rnd() * 3.2), w0 = 5 + rnd() * 5.5, lean = (rnd() - 0.5) * 0.16, bow = (rnd() - 0.5) * 7; // (the grain's slight lean, and a crescent's bow)
+      const gap = rnd() < 0.4 ? 3 + Math.floor(rnd() * (n - 6)) : -1;
+      let x0b = Infinity, x1b = -Infinity, wx = 0;
+      for (let j = 0; j <= n; j++) {
+        const t = j / n, taper = Math.pow(Math.sin(Math.PI * Math.pow(t, 0.55)), 0.7); // (deepest a third of the way along, thinning out to a wisp)
+        wx += (rnd() - 0.5) * 3;
+        cx[j] = x0 + lean * len * t + bow * Math.sin(Math.PI * t) + wx; cy[j] = y0 + dir * len * t;
+        lw[j] = 0.6 + w0 * taper * (0.4 + 0.85 * rnd()); rw[j] = 0.6 + w0 * taper * (0.4 + 0.85 * rnd()); // (ragged, each side its own)
+        x0b = Math.min(x0b, cx[j] - lw[j]); x1b = Math.max(x1b, cx[j] + rw[j]);
       }
-      if (!lumps.length) continue;
-      const mid = (y + ly) / 2; // (it grows out from its middle)
-      for (const l of lumps) { l[1] = mid + (l[1] - mid) * long; l[2] *= wide; l[3] *= long; }
+      for (let s = 0; s < 3; s++) { // (a few crumbs of it beside it)
+        const j = Math.floor(rnd() * n), sd = rnd() < 0.5 ? -1 : 1, r = 0.8 + rnd() * 1.4, off = 2.5 + rnd() * 3;
+        specks[3 * s] = j; specks[3 * s + 1] = sd * off; specks[3 * s + 2] = r;
+      }
+      // (judged full grown, ink and all, so none comes and goes as it grows)
+      if (!bareBark(x0b - 9, Math.min(y0, y0 + dir * len) - 6, x1b + 10, Math.max(y0, y0 + dir * len) + 6)) continue;
+      for (let j = 0; j <= n; j++) { cx[j] = x0 + (cx[j] - x0) * long; cy[j] = y0 + (cy[j] - y0) * long; lw[j] *= wide; rw[j] *= wide; }
+      // One piece of it (points from..to) as an outline, smoothed through
+      // the midpoints: its wide end blunt, the rest tapering.
+      const trace = (from, to, dx, dy, grow) => {
+        ring.length = 0;
+        ring.push(cx[from], cy[from] - dir * (1 + grow));
+        for (let j = from; j <= to; j++) ring.push(cx[j] - Math.max(0.3, lw[j] + grow), cy[j]);
+        ring.push(cx[to], cy[to] + dir * (1 + grow));
+        for (let j = to; j >= from; j--) ring.push(cx[j] + Math.max(0.3, rw[j] + grow), cy[j]);
+        const m = ring.length / 2;
+        g.moveTo(dx + (ring[0] + ring[2]) / 2, dy + (ring[1] + ring[3]) / 2);
+        for (let p = 1; p <= m; p++) {
+          const a = p % m, b = (p + 1) % m;
+          g.quadraticCurveTo(dx + ring[2 * a], dy + ring[2 * a + 1], dx + (ring[2 * a] + ring[2 * b]) / 2, dy + (ring[2 * a + 1] + ring[2 * b + 1]) / 2);
+        }
+        g.closePath();
+      };
       const shape = (dx, dy, grow) => {
         g.beginPath();
-        for (const [lx, ly, rx, ry] of lumps) {
-          const ex = Math.max(0.5, rx + grow);
-          g.moveTo(lx + dx + ex * Math.cos(a), ly + dy + ex * Math.sin(a));
-          g.ellipse(lx + dx, ly + dy, ex, Math.max(0.5, ry + grow), a, 0, TAU);
+        if (gap < 0) trace(0, n, dx, dy, grow);
+        else { trace(0, gap - 1, dx, dy, grow); trace(gap + 1, n, dx, dy, grow); }
+        for (let s = 0; s < specks.length; s += 3) {
+          const j = specks[s], off = specks[s + 1] * wide, r = Math.max(0.4, specks[s + 2] * wide + grow);
+          const sx = dx + cx[j] + off + (off < 0 ? -lw[j] : rw[j]), sy = dy + cy[j];
+          g.moveTo(sx + r, sy); g.arc(sx, sy, r, 0, TAU);
         }
       };
-      shape(1.7 * wide, 2.2 * wide, 1.2 * wide); g.fillStyle = '#283246'; g.fill(); // its inked edge, down and to the right of the light...
-      shape(1.1 * wide, 1.5 * wide, 0.5 * wide); g.fillStyle = '#8da2c4'; g.fill(); // ...its blue-grey underside...
-      shape(0, 0, 0); g.fillStyle = '#dde7f5'; g.fill();
-      shape(-0.4 * wide, -0.7 * wide, -0.7 * wide); g.fillStyle = '#ffffff'; g.fill(); // ...and its thick white top, lit along its upper left, like the plates
+      shape(1.6 * wide, 2 * wide, 0); g.fillStyle = '#283246'; g.fill(); // its ink, down and to the right of the light, so only along its lower edge...
+      shape(0.8 * wide, 1 * wide, 0); g.fillStyle = '#8da2c4'; g.fill(); // ...its blue-grey underside...
+      shape(-0.2 * wide, -0.3 * wide, -0.3 * wide); g.fillStyle = '#eef4fb'; g.fill(); // ...and its soft white top, lit along its upper left
     }
   }
   // Is the box (x0, y0)..(x1, y1) clear of every force field, burrow and hole?
