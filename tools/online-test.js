@@ -72,7 +72,7 @@ for (let r = 0; r < rounds; r++) {
     same(r, k, 'burrows', host.burrows, guest.burrows);
     same(r, k, 'fire', [...host.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]), [...guest.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]));
     same(r, k, 'weather', [host.weather.kind, host.weather.since, host.weather.until], [guest.weather.kind, guest.weather.since, guest.weather.until]);
-    same(r, k, 'deaths', dyingHost.map(s => [s.id, s.cause, s.killer, s.killerId]), dyingGuest.map(s => [s.id, s.cause, s.killer, s.killerId]));
+    same(r, k, 'deaths', dyingHost.map(s => [s.id, s.cause, s.killer, s.killerId, s.fatal || null]), dyingGuest.map(s => [s.id, s.cause, s.killer, s.killerId, s.fatal || null]));
     const ev = g => g.events.map(e => [e.type, e.snake?.id, e.kind, e.x, e.y, e.gold ? 1 : 0, e.reach ?? null, e.n ?? null, e.by ?? null]); // (powers' payloads too)
     same(r, k, 'events', ev(host), ev(guest));
     const look = g => g.snakes.map(s => ['home', 'colonies', 'mood', 'moodChangedAt', 'modelId'].map(f => s.memory[f] ?? null));

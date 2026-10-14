@@ -290,17 +290,17 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check("an AI whose edges wrap goes through one when that's the way out", a.alive && a.body[0].x === 0 && a.body[0].y === 5 && !g.events.some(e => e.type === 'crash' && e.snake === a), JSON.stringify(a.body[0]));
 }
 
-{ // Golden leaps wait for something to hop too, and aren't spent on open ground; one that can't land falls back on the plain leap.
+{ // Golden leaps wait for something to hop too, and aren't spent on open ground; one that can't land three on lands two on, still free.
   const g = board([[line(5, 10, 5), 'right'], wall(8, 9)]);
   const me = g.snakes[0];
   me.leaps = 1;
   E.leap(g, me); quiet(g);
   check('a golden leap isn\'t spent on open ground', me.leaps === 1 && !g.events.some(e => e.type === 'leap'));
-  const g2 = board([[line(5, 10, 5), 'right'], wall(6), wall(8)]); // (over 6, but 8 is no place to land: the plain leap lands on 7)
+  const g2 = board([[line(5, 10, 5), 'right'], wall(6), wall(8)]); // (over 6, but 8 is no place to land: it lands on 7)
   const m2 = g2.snakes[0];
   m2.leaps = 1;
   E.leap(g2, m2); quiet(g2); quiet(g2);
-  check('...one that can\'t land falls back on the plain leap', m2.leaps === 1 && m2.alive && m2.body[0].x === 7 && m2.leapReadyAt > g2.time, JSON.stringify(m2.body[0]));
+  check('...one that can\'t land three on lands on the first free cell, still free', m2.leaps === 0 && m2.alive && m2.body[0].x === 7 && m2.leapReadyAt <= g2.time && m2.body.length === 5, JSON.stringify(m2.body[0]));
 }
 
 { // In the air: no eating, no catching fire, and nothing arriving under you meets you.
@@ -441,6 +441,42 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   g.history = [{ snakes: g.snakes.map(o => ({ id: o.id, body: o.body.map(c => ({ ...c })), dir: o.dir, stun: 0, leaps: 0 })), food: g.food.map(f => ({ ...f })), holes: 0, fires: [], pecks: [] }]; // (what it sees: the board as built)
   E.step(g);
   check("an AI skips an apple that'll rot before it gets there", a.body[0].x === 5 && a.body[0].y === 11, JSON.stringify(a.body[0]));
+}
+
+{ // Over a crash on an open board, not having steered: the auto-turn goes the way with the longest open run, not at the nearest edge.
+  // Heading up into a snake's body at (6,4), near the left edge: left has 6 cells of run, right 17.
+  const g = board([[[[6, 5], [6, 6], [6, 7], [6, 8], [6, 9]], 'up'], [Array.from({ length: 9 }, (_, i) => [2 + i, 4]), 'right']]);
+  const me = g.snakes[0];
+  g.snakes[1].stunUntil = 1e9; // (the body stays put)
+  E.step(g);
+  for (let t = 0; t < T.STUN_TICKS + 1; t++) { feed(g); E.step(g); }
+  check('the auto-turn after a crash goes the way with room to run, not at the edge', me.alive && me.body[0].x === 7 && me.body[0].y === 5, JSON.stringify(me.body[0]));
+}
+
+{ // A crash clears your queued turns; a power you press while stunned goes when the stun's over; a press that can't leap says so.
+  const A = [[23, 5], [22, 5], [21, 5], [20, 5], [19, 5], [18, 5], [17, 5], [16, 5]];
+  const g = board([[A, 'right'], [Array.from({ length: 7 }, (_, i) => [23, 6 + i]), 'down']]);
+  g.snakes[1].stunUntil = 1e9; // (a body below that stays put)
+  const me = g.snakes[0];
+  me.queue = [D.down, D.left]; // (down: into the body below)
+  E.step(g);
+  check('a crash clears the turns pressed before it', me.alive && me.queue.length === 0 && me.stunUntil > g.tick);
+  const g2 = board([[line(6, 10, 8), 'right'], wall(7, 6, 12)]); // (a body right in front)
+  const m2 = g2.snakes[0];
+  m2.stunUntil = g2.tick + 3; // (stunned for 3 more ticks)
+  E.leap(g2, m2); // (pressed at the start of the stun)
+  for (let t = 0; t < 4; t++) { feed(g2); quiet(g2); }
+  check('...a power pressed early in a stun still goes when it ends', !!m2.flight || m2.body[0].x === 8, JSON.stringify(m2.body[0]));
+  const g3 = board([[line(6, 10, 8), 'right'], wall(7, 6, 12)]);
+  const m3 = g3.snakes[0];
+  m3.leapReadyAt = g3.time + 3000; // (resting)
+  E.leap(g3, m3); quiet(g3);
+  check('...a press that can\'t leap says why', g3.events.some(e => e.type === 'fizzle' && e.why === 'resting'), JSON.stringify(g3.events.map(e => e.type)));
+}
+
+{ // Why a crash was the end, for the card: at its smallest.
+  const g = board([[line(23, 5, 3), 'right'], [line(5, 20, 3), 'right']]);
+  check('a crash at its smallest is "tiny"', E.step(g).includes(g.snakes[0]) && g.snakes[0].fatal === 'tiny', g.snakes[0].fatal);
 }
 
 { // Boxed in only if there'll be nowhere to turn when the stun's over: a rival's tail moving on in time counts as room.
@@ -594,7 +630,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   const [a, b] = g.snakes;
   check('the woodpecker cuts a body in its patch', a.alive && a.body.length === 5 && g.events.some(e => e.type === 'cut' && e.snake === a), a.body.length);
   check('...and the tail behind the cut falls off as food', [[7, 10], [6, 10], [5, 10]].every(([x, y]) => g.food.some(f => f.kind === 'pellet' && f.x === x && f.y === y)), JSON.stringify(g.food.filter(f => f.kind === 'pellet')));
-  check('...a head in its patch is out', dying.includes(b) && b.cause === 'fell into a woodpecker hole', b.cause);
+  check('...a head in its patch is out', dying.includes(b) && b.cause === 'got pecked by the woodpecker' && b.fatal === 'pecked', b.cause);
 }
 
 { // An AI sees a new hole only after its reaction time, like a person.
