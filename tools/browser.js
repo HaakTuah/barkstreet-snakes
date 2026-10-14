@@ -23,8 +23,8 @@ function findChrome() {
   return found;
 }
 
-// Serve the game folder; resolves to its base URL.
-// Serves the game (this repo, or another copy of it: root) on a free local port.
+// Serves the game (this repo, or another copy of it: root) on a free local
+// port; resolves to its base URL and a close().
 function serve(root = ROOT) {
   const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.jpg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml' };
   const server = http.createServer((req, res) => {

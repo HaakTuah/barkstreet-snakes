@@ -60,7 +60,6 @@ window.SnakeRender = (() => {
     return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
   }
 
-
   function circle(x, y, r) {
     ctx.beginPath();
     ctx.arc(x, y, r, 0, TAU);
@@ -4616,7 +4615,6 @@ window.SnakeRender = (() => {
     drawCanopy(now);
 
     drawFields(now); // (homes and colonies: their force fields, then the colonies' flags)
-
 
     drawBurrows(now);
     drawSnowCover();
