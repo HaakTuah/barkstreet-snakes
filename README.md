@@ -24,7 +24,7 @@ A snake game on a mossy log: you against three AI rivals on a fallen log in the 
 
 ### Leaping
 
-**Press the way you're already going** (on a phone, swipe that way) to leap: with a body, a hole or fire right in front of you and room beyond, you hop over it, two cells in two ticks. It costs the tip of your tail and needs 4 seconds before the next (the `⤴` on your tag lights up when it's ready). With golden leaps or dashes (below), the same press uses those instead; you hold one of the two at a time (the newest replaces the other). A golden mushroom's wrap is a while, not a press: it comes on top of either, and with only the wrap, pressing forward is the plain leap. Anyone holding one glows faintly gold. The rivals leap, dash and wrap too, by the same rules.
+**Press ahead** (the way you're already going; on a phone, swipe ahead) to leap: with a body, a hole or fire right in front of you and room beyond, you hop over it, two cells in two ticks. It costs the tip of your tail and needs 4 seconds before the next (the `⤴` on your tag lights up when it's ready). With golden leaps or dashes (below), the same press uses those instead; you hold one of the two at a time (the newest replaces the other). A golden mushroom's wrap is a while, not a press: it comes on top of either, and with only the wrap, pressing ahead is the plain leap. Anyone holding one glows faintly gold. The rivals leap, dash and wrap too, by the same rules.
 
 ### Food
 
@@ -56,6 +56,7 @@ Press **Play with friends** on the start screen, then **Host a game** and send t
 | Action | Keyboard | Touch |
 |--------|----------|-------|
 | Steer | Arrow keys or WASD (turns are queued, so quick double turns work) | Swipe (anywhere on the screen during a round) |
+| Leap (or use a golden power) | Press ahead (the way you're going) | Swipe ahead |
 | Nap (pause) | Space or P | ⏸ button |
 | Start / start over | Enter or R (or any arrow on the start screen) | Play button |
 | Hall of Fame | H | Hall of Fame button |
@@ -70,7 +71,7 @@ Everything you hear is made live with the Web Audio API, and placed left or righ
 
 ## Bark chatter
 
-The AI snakes talk. Each one has its own voice: Sovereign uses the royal "we", Colonist is a pompous redcoat, Mason speaks only (dubious) Latin, Ghost mostly says "…", and Copycat repeats whatever it just heard, in Chinese. Some of them talk to each other. Lines pop up in speech bubbles and in a log under the board, which you can switch off.
+The AI snakes talk. Each one has its own voice: Sovereign uses the royal "we", Colonist is a pompous redcoat, Mason speaks only (dubious) Latin, Ghost mostly says "…", and Copycat repeats whatever it just heard, in Chinese. Some of them talk to each other. Lines pop up in speech bubbles and in a log under the board, which you can switch off. A line takes a rest before it comes round again, and a joke is told once a round.
 
 ## Watching the AIs
 
@@ -97,7 +98,7 @@ Each round, three of these seventeen are picked at random. The start screen tell
 | **Capricious** | changes with its mood | Starts undecided, then switches between sniper, glutton, hermit and builder every few seconds. |
 | **Copycat** | pale copy of its model, cat ears | Copies whoever seems to be winning, right alongside them. Party member. |
 | **Joker** | jester hat, harlequin diamonds, red nose | Lures chasers into dead ends and swerves away at the last moment. |
-| **Desperado** | rust poncho, cowboy hat, bandana | An adrenaline junkie: skims walls, bodies and other heads for the thrill of it. |
+| **Desperado** | rust poncho, cowboy hat, bandana | An adrenaline junkie: skims the edge, bodies and other heads for the thrill of it. |
 | **Ouroboros** | a real snake: dark gold python diamonds, a wedge head, slit eyes, fangs | Chases its own tail: once it's long, it moves as a ring, and whatever's inside is in trouble. Now and then it bites its own tail. |
 
 All of them share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move (or can chase their own tail), don't let themselves be pinned against a wall or a body (or shut in a pocket) where another snake could come round and close the way out, and avoid the space around other snakes' heads. On top of that, each one chases its own goal.
@@ -108,7 +109,7 @@ They're also fair. They see the other snakes as they were about a quarter of a s
 
 Everything is saved in your browser only.
 
-- **Hall of Fame:** the top 10 rounds, ranked by finishing place (a win beats any 2nd place), then by how long the snake stayed alive, then by food eaten. The AI snakes get entries too, so you're competing against them on the list. Switch to **Only you** to see your own top 10. When a round makes the top three, or beats your best, you can carve your name on the end screen.
+- **Hall of Fame:** the top 10 rounds, ranked by finishing place (a win beats any 2nd place), then by how long the snake stayed alive, then by food eaten. The AI snakes get entries too, so you're competing against them on the list. Switch to **Only you** to see your own top 10. When a round makes the top three, or beats your best, you can carve your name on the end screen. Until you do, your rounds go in as Green (the game's name for you), and carving a name puts it on all of them.
 - **Your story:** rounds played, wins, average place and score, how often you finished in each place, and what killed you (including your nemesis, the rival that gets you most often).
 
 ## Run locally
@@ -121,7 +122,7 @@ Serve the folder with any static server (for example `npx serve` or `python -m h
 - `node tools/online-test.js` plays rounds through the online protocol and checks that a friend's screen matches the host's every tick.
 - `node tools/simulate.js 200` plays 200 AI-only rounds headlessly with the game's own rules and AI, and prints each personality's win rate, food, kills, how snakes die and so on. Add `--seed 1` to repeat a run exactly (on any machine), `--check` to fail on a stalled round, and `--root <dir>` to play another copy of the game, to compare versions.
 - `node tools/rules-test.js` checks the rules on hand-built boards: tails, head-ons, starving, the woodpecker's manners, what the AIs can see.
-- `node tools/chatter-test.js` checks that every line the rivals say has its Chinese, for Copycat.
+- `node tools/chatter-test.js` checks that every line the rivals say has its Chinese, for Copycat, that no Chinese is left over from a line that's gone, and that every line marked as a punchline is one someone says.
 - `node tools/shots.js [dir]` takes the screenshot tour in headless Chrome (title, play, a bite, a nap, a death, the cards, the Hall of Fame, a laptop, a phone both ways), with an autopilot at the wheel. `node tools/bench.js` measures frame times the same way. Both need Chrome (or set `CHROME`); nothing to install.
 
 ### How it's put together

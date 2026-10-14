@@ -9,7 +9,8 @@ window.SnakeRecords = (() => {
   const PLAYER_KEY = 'snake-player';
   const MAX_SCORES = 10;
   const MAX_NAME = 16;
-  const DEFAULT_NAME = 'You';
+  const DEFAULT_NAME = 'Green'; // (what the game calls you until you carve a name)
+  const OLD_DEFAULT = 'You';    // (what your unnamed rows used to say: they say Green now)
 
   function load(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
@@ -49,9 +50,17 @@ window.SnakeRecords = (() => {
     return raw.filter(e => e && typeof e === 'object' && Number.isFinite(e.place) && isDate(e.date)).map(cleanEntry).sort(compare);
   }
 
+  // A row's name: a renamed rival goes by its new one, and your own unnamed
+  // rows (from before, "You") are Green.
+  function rowName(e) {
+    if (e.ai && typeof e.name === 'string' && RENAMED[e.name]) return RENAMED[e.name];
+    const name = cleanName(e.name);
+    return !name || (name === OLD_DEFAULT && !e.ai && !e.friend) ? DEFAULT_NAME : name;
+  }
+
   function cleanEntry(e) {
     return {
-      id: cleanId(e.id ?? e.date) || cleanId(e.date), name: (e.ai && typeof e.name === 'string' && RENAMED[e.name]) || cleanName(e.name) || DEFAULT_NAME,
+      id: cleanId(e.id ?? e.date) || cleanId(e.date), name: rowName(e),
       color: cleanColor(e.color), ai: !!e.ai,
       place: Math.round(clamp(e.place, 1, 4)), won: !!e.won, draw: !!e.draw,
       eaten: Math.round(clamp(e.eaten, 0, 9999)), survived: Math.round(clamp(e.survived, 0, 36e5)), date: e.date,
@@ -90,7 +99,7 @@ window.SnakeRecords = (() => {
 
   function getName() {
     const n = load(NAME_KEY, DEFAULT_NAME);
-    return typeof n === 'string' && n.trim() ? n.slice(0, MAX_NAME) : DEFAULT_NAME;
+    return typeof n === 'string' && n.trim() && n !== OLD_DEFAULT ? n.slice(0, MAX_NAME) : DEFAULT_NAME;
   }
   const hasName = () => getName() !== DEFAULT_NAME;
 
@@ -183,16 +192,19 @@ window.SnakeRecords = (() => {
 
   // Your name, as the Hall of Fame and your friends online see it.
   function setName(name) {
-    name = cleanName(name) || DEFAULT_NAME;
+    name = cleanName(name);
+    if (!name || name === OLD_DEFAULT) name = DEFAULT_NAME;
     save(NAME_KEY, name);
     return name;
   }
 
+  // Carving a name: this round's row takes it, and so do all your unnamed ones.
   function rename(id, name) {
     name = setName(name);
     const list = scores();
-    const entry = list.find(e => e.id === id);
-    if (entry) { entry.name = name; save(SCORES_KEY, list); }
+    const carve = list.filter(e => e.id === id || (!e.ai && !e.friend && e.name === DEFAULT_NAME));
+    for (const e of carve) e.name = name;
+    if (carve.length) save(SCORES_KEY, list);
   }
 
   function reset() {
@@ -256,7 +268,7 @@ window.SnakeRecords = (() => {
   function renderStats(container, colors) {
     const st = stats();
     if (!st.played) {
-      container.append(el('p', { className: 'empty', textContent: "You haven’t played yet. The tree is waiting." }));
+      container.append(el('p', { className: 'empty', textContent: "You haven’t played yet. The log is waiting." }));
       return;
     }
     const avgPlace = st.places.reduce((sum, n, i) => sum + n * (i + 1), 0) / st.played;
@@ -291,8 +303,9 @@ window.SnakeRecords = (() => {
     container.append(bars('How you finished', finishes));
 
     // Bar labels, and how each reads in "Your nemesis: …".
-    const killerLabel = k => k === 'wall' ? 'Walls & holes' : k === 'self' ? 'Yourself' : k === 'hunger' ? 'Hunger' : k === 'fire' ? 'Fire' : k;
-    const nemesisOf = k => k === 'wall' ? 'the edge of the bark' : k === 'self' ? 'you' : k === 'hunger' ? 'your own tummy' : k === 'fire' ? 'a bolt from the blue' : k;
+    // (The key stays 'wall', so old stats carry over; the words say edge, as the game does.)
+    const killerLabel = k => k === 'wall' ? 'Edges & holes' : k === 'self' ? 'Yourself' : k === 'hunger' ? 'Hunger' : k === 'fire' ? 'Fire' : k;
+    const nemesisOf = k => k === 'wall' ? 'the edge of the log' : k === 'self' ? 'you' : k === 'hunger' ? 'your own tummy' : k === 'fire' ? 'a bolt from the blue' : k;
     const killers = Object.entries(st.killers)
       .map(([k, count]) => ({ key: k, label: killerLabel(k), count, color: colors[k] || '#a8a29e' }))
       .sort((a, b) => b.count - a.count);
