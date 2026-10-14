@@ -290,6 +290,8 @@ window.SnakeChatter = (() => {
       dash: ['*zooms off, holding its beret*'],
       snip: ['*mimes scissors at {who}*'],
       wrap: ['*walks into the edge… and out the other side*'],
+      giggle: ['*shakes with silent laughter*'], // (at Mason's routine: see REPLIES)
+      guffaw: ['*doubles over, silently*'],
     },
     ouroboros: {
       hungry: ['Even I must eat. Usually myself.', 'Hungry again. Of course.'],
@@ -448,6 +450,8 @@ window.SnakeChatter = (() => {
     "Pfft…": "噗……",
     "*snort*": "*噗嗤*",
     "Snrk. Sorry. Go on.": "噗。抱歉。你继续。",
+    "*shakes with silent laughter*": "*无声地笑得发抖*",
+    "*doubles over, silently*": "*无声地笑弯了腰*",
     "Taking position.": "就位。",
     "Scoping the lobby.": "正在观察全场。",
     "In my sights, {who}.": "{who}，你在我的瞄准镜里。",
@@ -900,14 +904,17 @@ window.SnakeChatter = (() => {
   const BUBBLE_MS = 2600;  // how long a bubble stays up (real time)
   const LOG_SIZE = 5;
   const COMPACT_CHARS = 32; // on small boards, longer lines go to the log only
-  // Mason's Life of Brian moments get an answer: [line, who answers, what they say].
-  // (Mason keeps a straight face; Ghost and Creeper aren't the giggling kind.)
+  // Mason's Life of Brian moments get an answer: [line, who answers, what they say,
+  // and the voices' own lines for it, where they have some].
+  // (Mason keeps a straight face; Ghost and Creeper aren't the giggling kind,
+  // and nobody laughs at their own joke. Mute laughs without a sound, and
+  // Copycat in Chinese.)
   const GIGGLE_PROOF = ['mason', 'ghost', 'creeper'];
   const REPLIES = {
     'Romanes eunt domus.': { by: s => s.personaKey === 'metagamer', lines: ['“Romani ite domum”, actually.'], after: 1300 },
-    'Amicus meus est Biggus Dickus.': { by: s => !GIGGLE_PROOF.includes(s.personaKey), lines: ['Pfft…', '*snort*', 'Snrk. Sorry. Go on.'], after: 900,
+    'Amicus meus est Biggus Dickus.': { by: s => !GIGGLE_PROOF.includes(s.personaKey), lines: ['Pfft…', '*snort*', 'Snrk. Sorry. Go on.'], own: 'giggle', after: 900,
       then: 'Et uxor: Incontinentia Buttocks.' }, // ...and Mason, straight-faced, carries on
-    'Et uxor: Incontinentia Buttocks.': { by: s => !GIGGLE_PROOF.includes(s.personaKey), lines: ['BWAHAHA—', 'I can’t. I CAN’T.', '*wheeze*'], after: 800 },
+    'Et uxor: Incontinentia Buttocks.': { by: s => !GIGGLE_PROOF.includes(s.personaKey), lines: ['BWAHAHA—', 'I can’t. I CAN’T.', '*wheeze*'], own: 'guffaw', after: 800 },
   };
 
   let boardEl, logEl, game;
@@ -1057,7 +1064,7 @@ window.SnakeChatter = (() => {
     addLog(s, text);
     listener?.(s, text, !!source?.reply);
     const reply = source?.template && REPLIES[source.template];
-    if (reply) pendingReply = { at: game.time + reply.after, by: reply.by, text: pick(reply.lines), then: reply.then };
+    if (reply) pendingReply = { at: game.time + reply.after, reply, teller: s };
   }
 
   function showBubble(s, text) {
@@ -1264,15 +1271,19 @@ window.SnakeChatter = (() => {
       was.mood = m.moodChangedAt;
     }
 
-    // Someone answers Mason (see REPLIES).
+    // Someone answers Mason (see REPLIES): anyone but whoever told it, in
+    // their own voice (Copycat's giggle is the same giggle, in Chinese).
     if (pendingReply && game.time >= pendingReply.at) {
-      const { by, text, then } = pendingReply;
+      const { reply, teller } = pendingReply;
       pendingReply = null;
-      const who = pick(alive.filter(by));
+      const who = pick(alive.filter(o => o !== teller && reply.by(o)));
       if (who) {
+        const line = pick(VOICES[who.personaKey]?.[reply.own] || reply.lines);
+        const text = who.personaKey === 'copycat' ? ZH[line] ?? line : line;
         lastSaid[who.id] = -Infinity;
         speak(who, text, { template: text, who: null, label: '', reply: true });
-        if (then) pendingReply = { at: game.time + 1400, by: s => s.personaKey === 'mason', text: then };
+        // (and the teller carries on: Mason, or Capricious doing Mason)
+        if (reply.then) pendingReply = { at: game.time + 1400, reply: { by: o => o === teller, lines: [reply.then] }, teller: null };
       }
     }
 
