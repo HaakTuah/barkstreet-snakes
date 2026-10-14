@@ -52,7 +52,7 @@ function loadGame() {
 
 // How a snake died, finer than the game's killer field.
 const causeOf = s => s.killer === 'self' ? 'self' : s.killer === 'hunger' ? 'starved' : s.killer === 'fire' ? 'fire'
-  : s.cause === 'fell into a woodpecker hole' ? 'hole' : s.killer === 'wall' ? 'wall'
+  : /woodpecker hole/.test(s.cause) ? 'hole' : s.killer === 'wall' ? 'wall'
   : s.cause.startsWith('crashed') ? 'head-on' : 'body';
 
 // Plays rounds [from, to) of the run, each from its own seed.

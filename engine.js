@@ -721,7 +721,14 @@ window.SnakeEngine = (() => {
         // one of them was too small to bounce.)
         if (s.stunUntil === game.tick) {
           const { x: nx, y: ny } = ahead(game, s, s.body[0].x, s.body[0].y, s.dir), shut = shutTo(game, s);
-          if (!steered && !(s.leapArmed >= game.tick) && (blocked(game, nx, ny) || (shut && s.bounce.x === nx && s.bounce.y === ny))) s.dir = recoil(game, s, shut); // (a power asked for counts as steering)
+          if (!steered && (blocked(game, nx, ny) || !inside(nx, ny) || (shut && s.bounce.x === nx && s.bounce.y === ny))) {
+            // A power asked for counts as steering, if it can go; one that
+            // can't says why, and the auto-turn takes it clear (it isn't sent
+            // back into what it hit for a press that was never going to work).
+            const no = s.leapArmed >= game.tick ? powerWontGo(game, s) : null;
+            if (no) { game.events.push({ type: 'fizzle', snake: s, why: no }); s.leapArmed = -1; }
+            if (!(s.leapArmed >= game.tick)) s.dir = recoil(game, s, shut);
+          }
           s.bounce = null;
         }
       }
@@ -769,7 +776,7 @@ window.SnakeEngine = (() => {
       const { x, y } = s.next;
       const k = key(x, y);
       if (!inside(x, y)) return { cause: s.boom ? 'dashed into the edge and blew up' : 'hit the edge', killer: 'wall', killerId: null };
-      if (game.holes.has(k)) return { cause: s.boom ? 'dashed into a woodpecker hole and blew up' : 'fell into a woodpecker hole', killer: 'wall', killerId: null };
+      if (game.holes.has(k)) return { cause: s.boom ? 'dashed into a woodpecker hole and blew up' : 'hit a woodpecker hole', killer: 'wall', killerId: null }; // (it bounces off a hole's rim like the edge; only a leap coming down on one falls in)
       if (bodyStamp[k] === stamp) {
         const other = game.snakes[bodyOwner[k]];
         // Two heads swapping cells met head-on, just as if they'd met in one.
@@ -838,13 +845,17 @@ window.SnakeEngine = (() => {
       undecided = least < Infinity;
       for (const [s] of crashes) if (!out.has(s) && !live.has(s) && s.body.length === least) out.add(s); // (the shortest still boxed in)
     }
+    // Why each one out was out (before any survivor loses its tail: the
+    // lengths as they met): at its smallest, blown up, down a hole, or boxed
+    // in; and of two that met head-on, the shorter one, or the same length.
+    for (const [s, c] of crashes) {
+      if (!out.has(s)) continue;
+      const o = c.headOn ? game.snakes[c.killerId] : null;
+      s.fatal = why.get(s) || (o && live.has(o) && o.body.length > s.body.length ? 'shorter' : o && out.has(o) && o.body.length === s.body.length && !why.has(o) ? 'even' : 'boxed');
+    }
     for (const [s, c] of crashes) {
       if (out.has(s)) {
         s.cause = c.cause; s.killer = c.killer; s.killerId = c.killerId;
-        // Why: at its smallest, blown up, down a hole, or boxed in; and of
-        // two that met head-on, the shorter one, or the same length.
-        const o = c.headOn ? game.snakes[c.killerId] : null;
-        s.fatal = why.get(s) || (o && live.has(o) && o.body.length > s.body.length ? 'shorter' : o && out.has(o) && o.body.length === s.body.length && !why.has(o) ? 'even' : 'boxed');
         dying.push(s);
         continue;
       }
@@ -955,6 +966,21 @@ window.SnakeEngine = (() => {
       if (score > most) { most = score; best = d; }
     }
     return best;
+  }
+  // Facing what it hit, with a power asked for: why it can't go ('resting',
+  // 'small' or 'landing'), or null if it can. A dash always goes (that's its
+  // risk); a leap needs to be ready (or golden), and somewhere to land.
+  function powerWontGo(game, s) {
+    if (s.dashes > 0) return null;
+    if (!(s.leaps > 0)) {
+      if (s.body.length <= T.MIN_LENGTH) return 'small';
+      if (game.time < s.leapReadyAt) return 'resting';
+    }
+    for (let c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir), i = 0; i < (s.leaps > 0 ? 2 : 1); i++) {
+      c = ahead(game, s, c.x, c.y, s.dir);
+      if (inside(c.x, c.y) && !blocked(game, c.x, c.y)) return null;
+    }
+    return 'landing';
   }
   // Is (x, y) a tail end that moves on this very tick (its snake moving, not growing)?
   function leavingNow(game, x, y) {
@@ -1074,7 +1100,8 @@ window.SnakeEngine = (() => {
     // Nothing went. Asked with something right in front to hop: say why not
     // (once), so a press isn't silently lost.
     const c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir), k = key(c.x, c.y);
-    if (inside(c.x, c.y) && (bodyStamp[k] === stamp || game.holes.has(k) || burning(game, k))) {
+    if (!inside(c.x, c.y)) { game.events.push({ type: 'fizzle', snake: s, why: 'landing' }); s.leapArmed = -1; return; } // (the edge: nothing to hop, nowhere to land)
+    if (bodyStamp[k] === stamp || game.holes.has(k) || burning(game, k)) {
       const why = s.leaps > 0 || game.time >= s.leapReadyAt ? (s.body.length <= T.MIN_LENGTH && !s.leaps ? 'small' : 'landing') : s.body.length <= T.MIN_LENGTH ? 'small' : 'resting';
       game.events.push({ type: 'fizzle', snake: s, why });
       s.leapArmed = -1;

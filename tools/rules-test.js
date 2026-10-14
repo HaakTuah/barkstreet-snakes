@@ -479,6 +479,29 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('a crash at its smallest is "tiny"', E.step(g).includes(g.snakes[0]) && g.snakes[0].fatal === 'tiny', g.snakes[0].fatal);
 }
 
+{ // Of two that meet head-on, both boxed in, the shorter is out "because it was shorter", whichever seat either sits in.
+  const A = [[5, 5], [4, 5], [4, 6], [5, 6], [6, 6], [6, 7], [5, 7], [4, 7], [3, 7], [3, 6], [3, 5], [3, 4], [4, 4], [5, 4], [5, 3], [5, 2], [5, 1], [5, 0]];
+  const B = [[7, 5], [8, 5], [8, 4], [7, 4], [7, 3], [8, 3], [9, 3], [9, 4], [9, 5], [9, 6], [8, 6], [7, 6], [7, 7], [8, 7], [9, 7], [9, 8], [9, 9], [9, 10]];
+  const g1 = board([[A, 'right'], [B.slice(0, 16), 'left']]), out1 = E.step(g1);
+  const g2 = board([[B.slice(0, 16), 'left'], [A, 'right']]), out2 = E.step(g2);
+  check('a lost head-on is "shorter" with the longer snake in the first seat', out1.length === 1 && out1[0] === g1.snakes[1] && out1[0].fatal === 'shorter', out1.map(s => s.fatal).join());
+  check('...and in the second', out2.length === 1 && out2[0] === g2.snakes[0] && out2[0].fatal === 'shorter', out2.map(s => s.fatal).join());
+}
+
+{ // A leap asked for in a stun that can't go (too small, resting, or at the edge) says so, and the auto-turn still takes you clear.
+  for (const [what, setup] of [['resting', s => { s.leapReadyAt = 1e9; }], ['at the edge', () => {}]]) {
+    const g = board([[line(23, 5, 8), 'right'], [line(5, 20, 3), 'right']]);
+    const me = g.snakes[0];
+    setup(me);
+    E.step(g); // (into the edge: a crash, a stun)
+    E.leap(g, me); // (pressed ahead while the stars go round)
+    let fizzled = false;
+    for (let i = 0; i < T.STUN_TICKS + 2; i++) { feed(g); quiet(g); if (g.events.some(e => e.type === 'fizzle' && e.snake === me)) fizzled = true; }
+    check(`a leap asked for in a stun that can't go (${what}) doesn't send you back into the edge`, me.alive && me.body[0].x < 23 || me.body[0].y !== 5, JSON.stringify(me.body[0]));
+    check(`...and says why (${what})`, fizzled);
+  }
+}
+
 { // Boxed in only if there'll be nowhere to turn when the stun's over: a rival's tail moving on in time counts as room.
   // A hits the right edge at (23,5): below is its own body, above a rival's body that's leaving.
   const A = [[23, 5], [22, 5], [22, 6], [23, 6], [23, 7], [23, 8], [23, 9], [23, 10], [23, 11]];
