@@ -235,54 +235,13 @@ Every high and medium finding above is fixed or adapted as planned (A5 both halv
 
 ### Frame times
 
-Headless Chrome at 800×800 and 2× density, the builds alternating on one machine. "Before" is : this pass's measuring tools on the pre-pass game. Full cost is script plus GPU, each batch closed by a pixel readback. The final build was measured after the three critique rounds; every critique merge measured the same as the build before it (within noise).
+Headless Chrome at 800×800 and 2× density, the builds alternating on one machine. "Before" is `0922499`: this pass's measuring tools on the pre-pass game. Full cost is script plus GPU, each batch closed by a pixel readback. The final build was measured after the three critique rounds; every critique merge measured the same as the build before it (within noise).
 
 | | Before | After | Target |
 |---|---|---|---|
 | Long snakes, full cost per frame (staged scene, interleaved) | 5.5–5.8 ms | 3.8–4.0 ms | ≤ 4 ms: **met** |
 | Force fields, full cost per frame (the same harness) | 11.1–12.0 ms | 6.1–6.7 ms | ≤ 1.5× the same board without fields: **not met**, about 2.3× (it was 3.2–3.7×) |
-| GPU per frame, long snakes / fields (long scene {
-  'main thread busy, ms a second': 356.5,
-  'GPU process busy, ms a second': 943.8,
-  'compositor busy, ms a second': 144.1,
-  'animation frames a second': 404,
-  'animation frame callback, median / p95 / p99 / worst ms': [ 0.55, 1.2, 1.71, 3.26 ],
-  'style, ms a second': 26.5,
-  'paint, ms a second': 22.2,
-  'layout, ms a second': 0,
-  'GPU process per frame, ms': 2.34
-}
-fields scene {
-  'main thread busy, ms a second': 301.8,
-  'GPU process busy, ms a second': 998.1,
-  'compositor busy, ms a second': 116.8,
-  'animation frames a second': 318.5,
-  'animation frame callback, median / p95 / p99 / worst ms': [ 0.81, 1.52, 1.78, 4.55 ],
-  'style, ms a second': 20.7,
-  'paint, ms a second': 16.5,
-  'layout, ms a second': 0,
-  'GPU process per frame, ms': 3.13
-}
-watching at 1x {
-  'main thread busy, ms a second': 313.1,
-  'GPU process busy, ms a second': 759.7,
-  'compositor busy, ms a second': 128.7,
-  'animation frames a second': 238.9,
-  'animation frame callback, median / p95 / p99 / worst ms': [ 0.44, 1.04, 1.77, 3.84 ],
-  'style, ms a second': 31.4,
-  'paint, ms a second': 26.1,
-  'layout, ms a second': 1.6
-}
-watching at 4x {
-  'main thread busy, ms a second': 401.2,
-  'GPU process busy, ms a second': 995.2,
-  'compositor busy, ms a second': 104.4,
-  'animation frames a second': 145.5,
-  'animation frame callback, median / p95 / p99 / worst ms': [ 1.2, 3, 4.09, 8.11 ],
-  'style, ms a second': 31.4,
-  'paint, ms a second': 24.1,
-  'layout, ms a second': 5.3
-}) | 3.1–3.2 / 5.6–6.4 ms | 2.1 / 3.4–3.5 ms | |
+| GPU per frame, long snakes / fields (`tools/trace.js`) | 3.1–3.2 / 5.6–6.4 ms | 2.1 / 3.4–3.5 ms | |
 | Paint, long-snake scene | 38–43 ms a second | 22 ms a second | |
 | Watching at 1× with vsync: frames a second, p99 frame | 37–42, 4.5–5.5 ms | 57, 1.9–2.2 ms | |
 | Watching at 4× with vsync: frames a second | 22–24 | 37 | |
