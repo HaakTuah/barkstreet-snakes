@@ -9,8 +9,10 @@
 // Cleverness: for every move sequence up to `depth` steps it scores the result
 // with a timed flood fill (do I still have room? can I get onto my own trail
 // and chase my tail? is the room I need only through a narrow neck that a
-// rival could get to and shut?), a Voronoi split of the board (whose territory
-// is this?) and the food it can reach before anyone else.
+// rival could get to and shut? most often: am I pinned against a wall or a
+// body, with one or two ways on a rival could come round to?), a Voronoi
+// split of the board (whose territory is this?) and the food it can reach
+// before anyone else.
 //
 // Personality: on top of that shared sense, each persona adds its own goal
 // terms, and some have a "driver" that runs once per decision with a memory
@@ -237,7 +239,12 @@ window.SnakeAI = (() => {
   const TUNE = window.TUNING; // (the rules' numbers, so the AI's picture of them stays true)
   const TRAPPED = 5000;
   const NECK = 2000;       // the room I need is through a gap a rival could get to and shut...
-  const DAWDLE = 8;        // ...even this many ticks after me (I don't always leave a pocket straight away)
+  const DAWDLE = 8;        // ...even this many ticks after me (I don't always leave a pocket straight away)...
+  // ...and the gap right by my head: pinned against a wall or a body, with one
+  // or two ways on that a rival could come round to. This nearest case is
+  // most of what the neck test catches (nine in ten), and its allowance is
+  // the dial between fewer boxed-in deaths and longer rounds.
+  const PINNED_DAWDLE = 8;
   const HOLE = 1 << 30;    // "frees up" never
   const DEAD = -1e6;
   const EMPTY = new Set();
@@ -912,9 +919,9 @@ window.SnakeAI = (() => {
       // any rival could get there is mine to pass, and a pocket with my own
       // trail in it I can circle.)
       for (let k = 0; k < neckCount; k += 4) {
-        const d = necks[k + 3];
+        const d = necks[k + 3], slack = d === 1 ? PINNED_DAWDLE : DAWDLE;
         if (trail < d) break;
-        if (reach[necks[k]] > t + d + DAWDLE || reach[necks[k + 1]] > t + d + DAWDLE) continue;
+        if (reach[necks[k]] > t + d + slack || reach[necks[k + 1]] > t + d + slack) continue;
         return score - NECK - 50 * (need - necks[k + 2]);
       }
       return score;
