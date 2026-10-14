@@ -2118,6 +2118,7 @@ window.SnakeRender = (() => {
     if (leaping) live.sort(byOver);
     for (const s of live) prepare(s, alpha, now, false);
     drawShadows();
+    if (fieldSpecs.length) drawFieldHues(now); // (a field's light round a rival in it, under every outline and body)
     // Then outlines, bodies, flames and queasy washes, each pass for every
     // snake on the ground, then the same for any up in the air: a leaper's
     // outline goes over what it's hopping, not under it (which made it look
@@ -3681,16 +3682,19 @@ window.SnakeRender = (() => {
       }
     }
   }
-  // After the snakes: whatever of a rival is inside a field has the field's
-  // light clinging round it, as if wading through coloured light: a line of
-  // the field's colour hugging it, just outside everything drawn round it
-  // (an outline, a gold line), and a soft glow of it beyond; and a ripple
-  // spreads where a head just crossed in. The body keeps its own colours
-  // (washed over it, the field's colour turned your green khaki in a red
-  // field and Gobbler's orange mauve in a blue one). The glow (the shape
-  // grown FIELD_GLOW_GROW, at FIELD_GLOW) and the line (FIELD_LINE wide,
-  // opaque) go into the veil, the body and what's round it are cut back out,
-  // and it's laid on as one layer, cut to the field (and only round what's in it).
+  // Under the snakes, once their shadows are down (see drawSnakes): whatever
+  // of a rival is inside a field has the field's light clinging round it, as
+  // if wading through coloured light: a line of the field's colour hugging
+  // it, just outside everything drawn round it (an outline, a gold line), and
+  // a soft glow of it beyond; and where a head just crossed in, a ripple
+  // (drawn over the snakes: see drawRipples). The glow (the shape grown
+  // FIELD_GLOW_GROW, at FIELD_GLOW) and the line (FIELD_LINE wide, opaque) go
+  // into the veil and are laid on as one layer, cut to the field (and only
+  // round what's in it); the snake drawn over them covers their inside, so
+  // its body keeps its own colours. (Laid over the body, the field's colour
+  // turned your green khaki in a red field and Gobbler's orange mauve in a
+  // blue one; and cut back out of a layer over the snakes, it cost a frame
+  // a sixth more.)
   const FIELD_GLOW = 0.16, FIELD_GLOW_GROW = 8, FIELD_LINE = 2.6, hued = [], huedEdge = [];
   function drawFieldHues(now) {
     for (let fi = 0; fi < fieldSpecs.length; fi++) {
@@ -3732,13 +3736,13 @@ window.SnakeRender = (() => {
       ctx.globalAlpha = 1 - FIELD_GLOW;
       ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
       ctx.globalAlpha = 1;
-      ctx.globalCompositeOperation = 'source-over'; // (the line, opaque...)
+      ctx.globalCompositeOperation = 'source-over'; // (the line, opaque)
       for (let i = 0; i < hued.length; i++) bodyFills(hued[i], huedEdge[i] + FIELD_LINE, f.x, f.y, f.r + CELL);
-      ctx.globalCompositeOperation = 'destination-out'; // (...and the body and what's round it cut back out)
-      for (let i = 0; i < hued.length; i++) bodyFills(hued[i], huedEdge[i], f.x, f.y, f.r + CELL);
-      ctx.globalCompositeOperation = 'source-over';
       veilOff(1, f);
     }
+  }
+  // Over the snakes: a ripple where a head just crossed into a field.
+  function drawRipples(now) {
     for (let i = dimples.length - 1; i >= 0; i--) if (now - dimples[i].at > 450 || now < dimples[i].at) dimples.splice(i, 1);
     for (let i = ripples.length - 1; i >= 0; i--) {
       const rp = ripples[i], t = (now - rp.at) / 520;
@@ -5130,8 +5134,8 @@ window.SnakeRender = (() => {
     if (corpses.length) drawCorpses(alpha, now);
     drawWrapEdges(now);
     if (streaks.length) drawStreaks(now); // (under the snakes: beside the dasher, never through it)
-    drawSnakes(alpha, now);
-    drawFieldHues(now);
+    drawSnakes(alpha, now); // (and the fields' light round any rival in them, under its body)
+    drawRipples(now);
     drawCracks(alpha);
     drawRefusal(now);
     drawRain(now);
