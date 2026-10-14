@@ -56,9 +56,10 @@ const sum = a => ({ frames: a.length, median: q(a, 0.5), p95: q(a, 0.95), p99: q
     })()`);
     console.log('step(), every AI decision included', step);
 
-    await b.eval(`SnakeDebug.pinQuality?.(2); setInterval(() => { if (SnakeDebug.state() === 'over') document.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', bubbles: true })); }, 300); 'ok'`);
+    await b.eval(`SnakeDebug.pinQuality?.(2); setInterval(() => { if (SnakeDebug.state() === 'over') { document.getElementById('watch').click(); setTimeout(() => window.__speedKey && document.dispatchEvent(new KeyboardEvent('keydown', { key: window.__speedKey, bubbles: true })), 200); } }, 300); 'ok'`);
     for (const [label, key] of [['1x', '1'], ['4x', '3']]) {
       await b.eval(`document.getElementById('watch').click(); 'ok'`);
+      await b.eval(`window.__speedKey = ${JSON.stringify(key)}; 0`); // (pressed again after each restart)
       await b.key(key); // (the speed can be set during the countdown)
       await b.sleep(2500);
       await b.eval(`__ft.length = 0; window.__t0 = performance.now(); 'ok'`);

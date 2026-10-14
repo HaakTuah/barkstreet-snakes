@@ -60,6 +60,7 @@ window.TUNING = Object.freeze({
   HUNGER_MS: 20000,         // this long without food (mushrooms don't count) and you start shrinking
   STARVE_EVERY_MS: 1500,    // ...one segment this often, starving at MIN_LENGTH
   HUNGER_WARN_MS: 6000,     // warn you when this much time is left (half again as early at your smallest)
+  NEWS_HOLD_MS: 1200,       // a routine banner shows at least this long before another routine one may replace it
   LESSON_HOLD_MS: 2500,     // a banner that teaches a rule holds at least this long before routine news may replace it
   WRAP_WARN_MS: 2000,       // the edges' wrap: a warning, and the glow fading, this long before it ends
   LEAP_SWELL: 0.38,         // in the air, the head swells this much at the top of a leap (seen from above, rising is coming toward you)...
@@ -134,10 +135,12 @@ window.TUNING = Object.freeze({
   MAX_FRAME_MS: 250,        // after a stall (a busy machine, a debugger), the round moves on at most this much...
   MAX_CATCHUP: 4,           // ...and catches up at most this many ticks in one frame (online, or watching fast: the clock is everyone's)...
   SOLO_CATCHUP: 1,          // ...but playing alone, at most this many: a hitch is a moment's slow-down, not a jump
+  YOU_AFTER_STEER_MS: 600,  // ...or this long after you first steer (you've found yourself)
   YOU_MS: 3500,             // YOU marks your snake this long into a round (or 600 ms after you first steer)
 
   // ----------------------------------------------------------------- input
   QUEUE: 3,                 // turns you can queue ahead
+  DOUBLE_TAP_MS: 120,       // a press the way you just turned, this soon, is always the turn pressed twice (never a leap)...
   CHORD_MS: 60,             // a reversal pressed this soon before the turn it needs (a U-turn's keys rolled together) still counts
   POWER_AFTER_TURN_MS: 180, // a press the way you just turned, this soon after, is part of the turn (a double tap), not a leap
   SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells...

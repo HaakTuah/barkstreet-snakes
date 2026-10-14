@@ -69,7 +69,7 @@ window.SnakeEngine = (() => {
   // default). Names are made unique, so a person called "Sniper" can't be
   // mistaken for the rival of that name.
   function createGame({ humans = null, withPlayer = true, personas = null } = {}) {
-    const people = (humans || (withPlayer ? [{ name: 'You', color: PLAYER_COLOR }] : [])).slice(0, SPAWNS.length);
+    const people = (humans || (withPlayer ? [{ name: 'Green', color: PLAYER_COLOR }] : [])).slice(0, SPAWNS.length);
     const wanted = T.OPPONENTS + 1 - people.length;
     const keys = (personas || pickOpponents(wanted)).filter(k => Object.prototype.hasOwnProperty.call(PERSONAS, k)).slice(0, wanted);
     const snakes = [];
@@ -567,7 +567,7 @@ window.SnakeEngine = (() => {
     game.history.push({
       snakes: game.snakes.filter(s => s.alive).map(s => ({
         id: s.id, body: s.body.map(c => ({ x: c.x, y: c.y })), dir: s.dir,
-        stun: Math.max(0, s.stunUntil - game.tick), leaps: s.leaps, // (all of it shows: stars, a golden ring...)
+        stun: Math.max(0, s.stunUntil - game.tick), leaps: s.leaps, // (all of it shows: stars, pips, a gold outline...)
         dashes: s.dashes, wrap: Math.max(0, s.wrapUntil - game.time), air: s.flight ? 1 : 0,
       })),
       food: game.food.map(f => ({ ...f })),
@@ -986,7 +986,7 @@ window.SnakeEngine = (() => {
     }
     for (let c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir), i = 0; i < (s.leaps > 0 ? 2 : 1); i++) {
       c = ahead(game, s, c.x, c.y, s.dir);
-      if (inside(c.x, c.y) && !blocked(game, c.x, c.y)) return null;
+      if (inside(c.x, c.y) && (!blocked(game, c.x, c.y) || leavingNow(game, c.x, c.y))) return null; // (a tail leaving this tick is free by the time it lands, as for the auto-turn)
     }
     return 'landing';
   }

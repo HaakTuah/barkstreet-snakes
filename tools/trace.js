@@ -82,9 +82,10 @@ function summarise(events, ms) {
       s['GPU process per frame, ms'] = +(s['GPU process busy, ms a second'] / Math.max(1, s['animation frames a second'])).toFixed(2);
       console.log(`${scene} scene`, s);
     }
-    await b.eval(`SnakeRender.setGame(SnakeDebug.game()); SnakeDebug.pinQuality?.(2); setInterval(() => { if (SnakeDebug.state() === 'over') document.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', bubbles: true })); }, 300); 'ok'`);
+    await b.eval(`SnakeRender.setGame(SnakeDebug.game()); SnakeDebug.pinQuality?.(2); setInterval(() => { if (SnakeDebug.state() === 'over') { document.getElementById('watch').click(); setTimeout(() => window.__speedKey && document.dispatchEvent(new KeyboardEvent('keydown', { key: window.__speedKey, bubbles: true })), 200); } }, 300); 'ok'`);
     for (const [label, key] of [['1x', '1'], ['4x', '3']]) {
       await b.eval(`document.getElementById('watch').click(); 'ok'`);
+      await b.eval(`window.__speedKey = ${JSON.stringify(key)}; 0`); // (pressed again after each restart)
       await b.key(key);
       await b.sleep(3000);
       const ms = SECONDS * 1000;

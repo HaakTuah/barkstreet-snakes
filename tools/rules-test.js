@@ -502,6 +502,20 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   }
 }
 
+{ // A leap asked for in a stun lands on a tail that leaves the tick the stun ends (it's free by then), and isn't refused.
+  const g = board([[line(10, 10, 8), 'right'], [[[11, 6], [11, 7], [11, 8], [11, 9], [11, 10], [11, 11], [11, 12]], 'up'], [[[12, 7], [12, 8], [12, 9], [12, 10]], 'up']]);
+  const [me, wall, tail] = g.snakes;
+  wall.stunUntil = 1e9; // (the body in front stays put)
+  tail.stunUntil = 1e9;
+  me.leapReadyAt = 0;
+  E.step(g); // (into the body: a crash, a stun)
+  tail.stunUntil = me.stunUntil; // (still till the very tick the stun ends, then on its way: its tail leaves (12,10) then)
+  E.leap(g, me);
+  let fizzled = false;
+  for (let i = 0; i < T.STUN_TICKS + 1 && !me.flight; i++) { feed(g); quiet(g); if (g.events.some(e => e.type === 'fizzle' && e.snake === me)) fizzled = true; }
+  check('a leap asked for in a stun may land on a tail leaving that tick', !fizzled && (!!me.flight || me.body[0].x === 12), JSON.stringify(me.body[0]));
+}
+
 { // Boxed in only if there'll be nowhere to turn when the stun's over: a rival's tail moving on in time counts as room.
   // A hits the right edge at (23,5): below is its own body, above a rival's body that's leaving.
   const A = [[23, 5], [22, 5], [22, 6], [23, 6], [23, 7], [23, 8], [23, 9], [23, 10], [23, 11]];
