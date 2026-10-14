@@ -1514,24 +1514,29 @@ window.SnakeRender = (() => {
   // round for it (fading calmly over its last WRAP_WARN_MS: no strobe).
   const powered = s => s.leaps > 0 || s.dashes > 0 || s.wrapUntil > game.time;
   const poweredFade = s => s.leaps > 0 || s.dashes > 0 ? 1 : Math.max(0, Math.min(1, (s.wrapUntil - game.time) / T.WRAP_WARN_MS));
+  const GOLD_EDGE = 3.9; // (how far the gold line and its ink reach outside a snake's own outline)
+  // Your soft halo: a few faint steps of cream round your body, each wider
+  // and fainter than the last (a soft edge without a blur), and a touch more
+  // round your head. [width or radius (cells), alpha] pairs, outermost first.
+  const HALO = [1.42, 0.07, 1.22, 0.1, 1.04, 0.14], HALO_HEAD = [0.8, 0.07, 0.72, 0.1];
   function drawOutline(s, a) {
     const mine = a.isPlayer && s.id === viewerId;
     if (mine) { // (your soft halo, so you find yourself at a glance)
-      ctx.strokeStyle = 'rgba(255,251,234,0.3)';
+      const was = ctx.globalAlpha;
+      ctx.strokeStyle = ctx.fillStyle = '#fffbea';
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.lineWidth = CELL * 1.34;
       spine(a);
-      ctx.stroke();
-      ctx.fillStyle = 'rgba(255,251,234,0.3)';
-      circle(a.pts[0], a.pts[1], CELL * 0.78);
+      for (let i = 0; i < HALO.length; i += 2) { ctx.globalAlpha = was * HALO[i + 1]; ctx.lineWidth = CELL * HALO[i]; ctx.stroke(); }
+      for (let i = 0; i < HALO_HEAD.length; i += 2) { ctx.globalAlpha = was * HALO_HEAD[i + 1]; circle(a.pts[0], a.pts[1], CELL * HALO_HEAD[i]); }
+      ctx.globalAlpha = was;
     }
-    const own = a.isPlayer ? (mine ? 3.5 : 2.5) : a.rim ? 1.5 : 0; // (the outline it has anyway)
+    const own = edgeOf(s, a, false); // (the outline it has anyway)
     if (powered(s)) { // a golden power: a thin, opaque gold line round its own outline, inked outside so it reads on any colour
       const was = ctx.globalAlpha;
       ctx.globalAlpha = was * poweredFade(s);
       ctx.fillStyle = INK;
-      outlineFills(a, own + 3.9);
+      outlineFills(a, own + GOLD_EDGE);
       ctx.fillStyle = '#f2c94c';
       outlineFills(a, own + 2.5);
       ctx.globalAlpha = was;
@@ -1547,6 +1552,12 @@ window.SnakeRender = (() => {
   // An opaque outline: fast separate fills, unless it's being drawn see-through
   // (a corpse fading), where overlapping pieces would show.
   const outlineFills = (a, grow) => ctx.globalAlpha < 1 ? silhouette(a, grow) : bodyFills(a, grow);
+  // How far a snake's drawn shape reaches beyond its body (units): its own
+  // outline (people's cream, a dark body's rim), and with gold, its gold line.
+  function edgeOf(s, a, gold = true) {
+    const own = a.isPlayer ? (s.id === viewerId ? 3.5 : 2.5) : a.rim ? 1.5 : 0;
+    return gold && powered(s) ? own + GOLD_EDGE : own;
+  }
 
   // Pass 3: the body (bands, then circles tail to head, so the head ends up on
   // top), its pattern and its face.
@@ -1841,10 +1852,20 @@ window.SnakeRender = (() => {
     for (const s of live) prepare(s, alpha, now, false);
     drawShadows();
     // Then outlines, bodies, flames and queasy washes, each pass for every
-    // snake (and for a snake across a wrapped edge, at each place it shows).
+    // snake on the ground, then the same for any up in the air: a leaper's
+    // outline goes over what it's hopping, not under it (which made it look
+    // rammed into it rather than above it).
+    let up = live.length;
+    if (leaping) while (up > 0 && overOf(live[up - 1])) up--;
+    drawPasses(0, up, now);
+    if (up < live.length) drawPasses(up, live.length, now);
+  }
+  // Passes over live[from..to) (and for a snake across a wrapped edge, at
+  // each place it shows).
+  function drawPasses(from, to, now) {
     for (let pass = 0; pass < 4; pass++) {
-      for (const s of live) {
-        const a = anim.get(s), offs = a.offs || OFFS;
+      for (let i = from; i < to; i++) {
+        const s = live[i], a = anim.get(s), offs = a.offs || OFFS;
         for (let j = 0; j < offs.length; j++) {
           const ox = offs[j][0], oy = offs[j][1];
           if (ox || oy) ctx.translate(ox, oy);
@@ -4818,7 +4839,7 @@ window.SnakeRender = (() => {
         animOf(e.snake, now).dashTick = game.tick;
         const h = e.snake.body[0], x0 = e.x * CELL + CELL / 2, y0 = e.y * CELL + CELL / 2, x1 = h.x * CELL + CELL / 2, y1 = h.y * CELL + CELL / 2;
         if (Math.abs(x1 - x0) + Math.abs(y1 - y0) <= CELL * (T.DASH_LENGTH + 0.5)) { // (not across a wrapped edge)
-          streaks.push({ x0, y0, x1, y1, at: now });
+          streaks.push({ x0, y0, x1, y1, at: now, s: e.snake });
           for (let k = 0; k <= 3; k++) spawn(x0 + (x1 - x0) * k / 3, y0 + (y1 - y0) * k / 3, 4, 90, 500, 1.8, '#fde68a', '#fffbea');
           if (!reduced) for (let k = 0; k < 4; k++) mote(x0 + (Math.random() - 0.5) * CELL * 0.6, y0 + (Math.random() - 0.5) * CELL * 0.6, -(x1 - x0) / len3(x1 - x0, y1 - y0) * 20 + (Math.random() - 0.5) * 10, -(y1 - y0) / len3(x1 - x0, y1 - y0) * 20 - 6, 700, 3 + Math.random() * 2, 2); // (a scuff of dust where it set off)
         }
@@ -5012,9 +5033,12 @@ window.SnakeRender = (() => {
   const len3 = (x, y) => Math.hypot(x, y) || 1;
   // A dash's streak, under the snakes (over the dasher it ran a line through
   // its face): a wide wedge of honey light from where it started to the back
-  // of its head, showing either side of the body, and a speed line down each
-  // side, both tapering back to the start; gone in a moment.
-  const streaks = []; // { x0, y0, x1, y1, at }
+  // of its head, and a speed line down each side, inked so it reads on the
+  // bark, both tapering back to the start; gone in a moment. The lines run
+  // just clear of everything drawn round the dasher's body (its outline, a
+  // gold line), which used to cover them.
+  const streaks = []; // { x0, y0, x1, y1, at, s }
+  const STREAK_GAP = 2; // (between the dasher's drawn edge and a line's inked edge, in units)
   function drawStreaks(now) {
     for (let i = streaks.length - 1; i >= 0; i--) {
       const k = streaks[i], t = (now - k.at) / T.STREAK_MS;
@@ -5027,10 +5051,22 @@ window.SnakeRender = (() => {
         ctx.lineTo(ex + nx * (off - w), ey + ny * (off - w));
         ctx.closePath();
       };
+      const speedLine = (off, w, over) => { // (pointed at both ends, widest near the head; `over` runs it a touch past them, for its ink)
+        const mx = k.x0 + (ex - k.x0) * 0.8, my = k.y0 + (ey - k.y0) * 0.8;
+        ctx.moveTo(k.x0 - ux * over + nx * off, k.y0 - uy * over + ny * off);
+        ctx.lineTo(mx + nx * (off + w), my + ny * (off + w));
+        ctx.lineTo(ex + ux * over + nx * off, ey + uy * over + ny * off);
+        ctx.lineTo(mx + nx * (off - w), my + ny * (off - w));
+        ctx.closePath();
+      };
+      const a = anim.get(k.s), w = CELL * 0.1 * (1 - 0.5 * t), ink = 1.4;
+      const side = CELL * 0.44 + (a ? edgeOf(k.s, a) : 0) + STREAK_GAP + ink + w; // (the body's half-width by the neck, and what's drawn round it)
       ctx.fillStyle = rgba('#fde68a', 0.35 * (1 - t));
-      ctx.beginPath(); wedge(0, CELL * 0.62); ctx.fill();
-      ctx.fillStyle = rgba('#fffbea', 0.9 * (1 - t));
-      ctx.beginPath(); wedge(-CELL * 0.6, CELL * 0.07 * (1 - 0.5 * t)); wedge(CELL * 0.6, CELL * 0.07 * (1 - 0.5 * t)); ctx.fill();
+      ctx.beginPath(); wedge(0, side + w); ctx.fill();
+      ctx.fillStyle = rgba('#3a2614', 0.8 * (1 - t));
+      ctx.beginPath(); speedLine(-side, w + ink, ink * 2); speedLine(side, w + ink, ink * 2); ctx.fill();
+      ctx.fillStyle = rgba('#fffbea', 0.95 * (1 - t));
+      ctx.beginPath(); speedLine(-side, w, 0); speedLine(side, w, 0); ctx.fill();
     }
   }
 
