@@ -4,56 +4,88 @@
 // and everything runs through one gentle compressor so nothing ever gets harsh.
 //
 //   SnakeAudio.unlock()           call from a key press or tap (browsers keep sound locked until then)
-//   SnakeAudio.play(name, opts)   opts = { pitch: semitones, volume: 0..1, pan: -1..1 (left..right) }; never throws
+//   SnakeAudio.play(name, opts)   never throws; opts = {
+//                                   pitch: semitones, volume: 0..1, pan: -1..1 (left..right),
+//                                   rival: true (a rival's: softer, further off, and it gives way to yours),
+//                                   streak: 0..7 (apples in a row: the pluck climbs a pentatonic scale),
+//                                   gold: true (a golden pickup: a sparkle over the cue),
+//                                   crest: seconds (the riser: how long it rises) }
 //   SnakeAudio.setMuted(b) / isMuted() / toggleMuted()   remembered in this browser
 //   SnakeAudio.music(stage, mood)  the adaptive track (see the music section below)
 //   SnakeAudio.weather(kind)       the weather you can hear: 'rain', 'wind', 'storm', 'snow' or anything else for none
 //   SnakeAudio.setMusicOn(b) / isMusicOn() / toggleMusic()  remembered in this browser
+//
+// The context is made at load and sleeps until the first key or tap; it sleeps
+// again while the sound's muted or the tab is hidden.
 window.SnakeAudio = (() => {
   // ---- Tuning ---------------------------------------------------------------
   const MASTER_VOLUME = 0.5;   // overall loudness, before the compressor
-  const MAX_VOICES = 6;        // cues sounding at once; a new cue past this is dropped...
-  const PRIORITY = { death: true, best: true, win: true, ko: true, stinger: true }; // ...except these, which always play
+  // Cues sounding at once. Your own come first, then rivals', then the world's
+  // (weather, the woodpecker, beetles): each gives way sooner than the one before.
+  const MAX_VOICES = { you: 7, rival: 6, world: 5 };
+  const PRIORITY = { death: true, best: true, win: true, winBest: true, ko: true, stinger: true }; // these always play
+  const WORLD = { beetle: 1, crackle: 1, thunder: 1, gust: 1, burrow: 1, dig: 1, rainbow: 1, rain: 1, snow: 1, ember: 1, woodpecker: 1, call: 1, aim: 1, drum: 1, crash: 1, peck: 1, bake: 1, ash: 1, douse: 1 };
+  const RIVALS = { rivalDeath: 1, bonked: 1 };
+  const RIVAL_VOLUME = 0.5;    // a rival's leap or dash, next to yours...
+  const RIVAL_LOWPASS = 2600;  // ...and a little duller, as if further off
   // Shortest gap in ms between two plays of the same cue, so bursts don't stack up.
   const MIN_INTERVAL = {
-    eat: 40, golden: 60, meat: 60, mushroom: 80, crunch: 80, beetle: 3000,
-    rivalDeath: 120, death: 250, best: 400, win: 600,
-    beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, ui: 30, // peck: never more than 3 in any second
+    eat: 40, golden: 60, meat: 60, mushroom: 80, crunch: 80, beetle: 3000, leaf: 60,
+    rivalDeath: 120, death: 250, best: 400, win: 600, winBest: 600,
+    beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, hungerWarn: 1500, ui: 30, // peck: never more than 3 in any second
     crackle: 300, thunder: 900, gust: 1500, burrow: 1000, dig: 250, rainbow: 1500, rain: 1500,
     ko: 200, close: 1400, field: 800, bonk: 150, bonked: 300, leap: 200, dash: 150, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
   };
-  const RESUME_GRACE = 300;    // ms after unlock() in which cues may queue on a context still waking up
-  const NOISE_SECONDS = 0.5;   // length of the one shared noise buffer
+  // A cue that stands for others for a while: a win that's also a best is one phrase.
+  const COVERS = { winBest: { win: 6000, best: 6000 } };
+  const CHOKES = { go: 'riser' };            // a cue that cuts another short (the riser lands on Go)
+  const CHOKED = { riser: true };
+  const DUCKS = { win: 1.2, best: 0.8, winBest: 1.6 }; // the music steps back under a fanfare (seconds)
+  const RESUME_GRACE = 500;    // ms in which cues asked for while the context wakes still play once it runs
+  const LEAD = 0.005;          // seconds from asking to sounding
+  const NOISE_SECONDS = 4;     // the one shared noise buffer: long enough that long layers never repeat
   const MUTED_KEY = 'barkbite-muted';
   const MUSIC_KEY = 'barkbite-music';
   const MUSIC_VOLUME = 0.55;   // the track, relative to the sound effects
+  const IDLE_MS = 60000;       // the title loop fades after this long with nobody at the keys...
+  const IDLE_STOP_MS = 15000;  // ...and stops this long after
   // ---------------------------------------------------------------------------
 
-  let ctx = null;              // the one AudioContext, made on the first unlock()
+  let ctx = null;              // the one AudioContext, made at load
   let master = null;           // master gain -> compressor -> speakers
-  let musicBus = null;         // the track's own gain, into master
+  let musicBus = null;         // the track's own gain...
+  let duck = null;             // ...through a duck (fanfares), into master
   let musicOn = readFlag(MUSIC_KEY, true);
-  let noiseBuf = null, airBuf = null;
+  let noiseBuf = null;         // built in idle time, or on first use
   let unsupported = false;
-  let primed = false;
-  let resumeAskedAt = -Infinity;
-  let graceArmed = false;      // the wake-up grace is offered once per suspension...
-  let graceCues = 0;           // ...and lets a single cue through
+  let primed = false;          // a gesture has unlocked sound at least once
+  let wokenAt = -Infinity;     // when the context was last asked to wake
+  let waking = [];             // cues asked for while it wakes: [{ name, opts, at }]
+  let dozeTimer = 0;
+  let lastActive = -Infinity;  // the last key, tap or click (unlock() hears them all)
   let muted = readMuted();
 
   let voices = 0;              // cues still sounding
   let generation = 0;          // bumped when the voice count is reset, so late 'ended' events can't skew it
   let lastEnd = 0;             // context time when the last scheduled sound stops
-  let building = null;         // the cue being scheduled right now: { pending }
+  let building = null;         // the cue being scheduled right now: { pending, gen, nodes, end }
   const lastPlayed = {};       // cue name -> ms timestamp
+  const coveredUntil = {};     // cue name -> ms timestamp (see COVERS)
+  const sounding = {};         // cue name -> { voice, end } of its latest play (see CHOKES)
 
   // The pitch and volume of the cue being built; tone() and noise() apply them.
   let pitchMul = 1;
   let volMul = 1;
-  let out = null; // where the cue being built goes: the master, or a panner placing it left or right
+  let out = null; // where the cue being built goes: its own little chain into the master
 
+  const NO_OPTS = {};
   const now = () => (window.performance && window.performance.now ? window.performance.now() : Date.now());
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  const hidden = () => typeof document !== 'undefined' && !!document.hidden;
+  const awake = () => !muted && !hidden();
+  const later = fn => (window.requestIdleCallback ? window.requestIdleCallback(fn, { timeout: 2000 }) : setTimeout(fn, 300));
+  // Resume or suspend the context, ignoring a refusal (old Safari returns no promise at all).
+  const quietly = fn => { try { const p = fn(); if (p && p.catch) p.catch(() => {}); } catch { /* stays as it was */ } };
 
   function readFlag(key, fallback) {
     try { const v = window.localStorage.getItem(key); return v == null ? fallback : v === '1'; } catch { return fallback; }
@@ -69,48 +101,64 @@ window.SnakeAudio = (() => {
 
   // ---- Setup ----------------------------------------------------------------
 
-  function unlock() {
+  // Made at load, so the first key press doesn't wait for it (it took 25-110 ms),
+  // and asleep until that key press: nothing plays before one.
+  function create() {
+    if (ctx) return true;
     if (unsupported) return false;
     try {
-      if (!ctx) {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) { unsupported = true; return false; }
-        // Build everything first, and only keep the context once it's all there.
-        const c = new AC();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) { unsupported = true; return false; }
+      // Build everything first, and only keep the context once it's all there.
+      const c = new AC();
 
-        // A soft compressor catches the odd pile-up (four snakes eating at once) before it can clip.
-        const comp = c.createDynamicsCompressor();
-        comp.threshold.value = -20;
-        comp.knee.value = 18;
-        comp.ratio.value = 4;
-        comp.attack.value = 0.004;
-        comp.release.value = 0.2;
-        comp.connect(c.destination);
+      // A soft compressor catches the odd pile-up (four snakes eating at once) before it can clip.
+      const comp = c.createDynamicsCompressor();
+      comp.threshold.value = -20;
+      comp.knee.value = 18;
+      comp.ratio.value = 4;
+      comp.attack.value = 0.004;
+      comp.release.value = 0.2;
+      comp.connect(c.destination);
 
-        const m = c.createGain();
-        m.gain.value = muted ? 0 : MASTER_VOLUME;
-        m.connect(comp);
+      const m = c.createGain();
+      m.gain.value = muted ? 0 : MASTER_VOLUME;
+      m.connect(comp);
 
-        const mb = c.createGain();
-        mb.gain.value = musicOn ? MUSIC_VOLUME : 0;
-        mb.connect(m);
+      const d = c.createGain();
+      d.gain.value = 1;
+      d.connect(m);
 
-        // White noise, made once and shared by every cue that needs a "tok" or a puff.
-        const len = Math.floor(c.sampleRate * NOISE_SECONDS);
-        const nb = c.createBuffer(1, len, c.sampleRate);
-        const data = nb.getChannelData(0);
-        for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+      const mb = c.createGain();
+      mb.gain.value = musicOn ? MUSIC_VOLUME : 0;
+      mb.connect(d);
 
-        // A longer noise loop for the weather beds (long enough not to sound like a loop).
-        const alen = Math.floor(c.sampleRate * 2.5);
-        const ab = c.createBuffer(1, alen, c.sampleRate);
-        const ad = ab.getChannelData(0);
-        for (let i = 0; i < alen; i++) ad[i] = Math.random() * 2 - 1;
+      ctx = c; master = m; duck = d; musicBus = mb; out = m;
+      ctx.onstatechange = flushWaking;
+      if (c.state === 'running' && c.suspend) quietly(() => c.suspend());
+      later(noiseBuffer);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
-        ctx = c; master = m; musicBus = mb; noiseBuf = nb; airBuf = ab; out = m;
-        ctx.onstatechange = () => { if (ctx.state === 'running') graceArmed = false; };
-      }
+  // White noise, made once and shared by every cue that needs a "tok" or a puff, and by the weather.
+  function noiseBuffer() {
+    if (!noiseBuf && ctx) {
+      const len = Math.floor(ctx.sampleRate * NOISE_SECONDS);
+      const nb = ctx.createBuffer(1, len, ctx.sampleRate);
+      const data = nb.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+      noiseBuf = nb;
+    }
+    return noiseBuf;
+  }
 
+  function unlock() {
+    lastActive = now();
+    if (!create()) return false;
+    try {
       // iOS only opens the speakers once something has played inside a gesture: one silent sample.
       if (!primed) {
         primed = true;
@@ -120,23 +168,47 @@ window.SnakeAudio = (() => {
         src.onended = () => src.disconnect();
         src.start(0);
       }
-
-      if (ctx.state !== 'running' && ctx.state !== 'closed') {
-        if (!graceArmed) { graceArmed = true; graceCues = 0; resumeAskedAt = now(); }
-        try { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch { /* old Safari */ }
-      }
+      if (awake()) wake();
       return true;
     } catch {
       return false;
     }
   }
 
-  // Sound is allowed once unlocked; a context still waking from unlock() counts for a moment,
-  // so the very key press that unlocked it can still make its sound.
-  function ready() {
-    if (!ctx || muted) return false;
-    if (ctx.state === 'running') return true;
-    return ctx.state === 'suspended' && graceCues < 1 && now() - resumeAskedAt < RESUME_GRACE;
+  // Ask a sleeping context to run (from a gesture, or the tab coming back).
+  function wake() {
+    if (!ctx || ctx.state === 'running' || ctx.state === 'closed') return;
+    wokenAt = now();
+    quietly(() => ctx.resume());
+  }
+
+  // The context sleeps while the sound's muted or the tab is hidden (no hiss from
+  // a background tab, and a phone saves its battery), fading out first so nothing
+  // is cut with a click, and wakes when both are over.
+  function settle() {
+    if (!ctx) return;
+    clearTimeout(dozeTimer);
+    try {
+      if (awake()) {
+        master.gain.setTargetAtTime(MASTER_VOLUME, ctx.currentTime, 0.02);
+        if (primed) wake();
+      } else {
+        master.gain.setTargetAtTime(0, ctx.currentTime, 0.02);
+        dozeTimer = setTimeout(() => {
+          if (!awake() && ctx.state === 'running' && ctx.suspend) quietly(() => ctx.suspend());
+        }, 150);
+      }
+    } catch { /* stays as it was */ }
+  }
+  try { document.addEventListener('visibilitychange', settle); } catch { /* no document */ }
+
+  // Cues asked for while the context woke (the key press that woke it, the tap after
+  // unmuting) play once its clock runs, so they come out whole.
+  function flushWaking() {
+    if (!ctx || ctx.state !== 'running' || !waking.length) return;
+    const due = waking;
+    waking = [];
+    for (const w of due) if (now() - w.at < RESUME_GRACE) start(w.name, w.opts);
   }
 
   // ---- Building blocks ------------------------------------------------------
@@ -146,35 +218,43 @@ window.SnakeAudio = (() => {
   function finish(src, end, a, b) {
     const owner = building;
     owner.pending++;
+    if (end > owner.end) owner.end = end;
     if (end > lastEnd) lastEnd = end;
     src.onended = () => {
       try { src.disconnect(); if (a) a.disconnect(); if (b) b.disconnect(); } catch { /* already gone */ }
-      if (--owner.pending === 0 && owner.gen === generation) voices = Math.max(0, voices - 1);
+      if (--owner.pending === 0) {
+        for (const n of owner.nodes) { try { n.disconnect(); } catch { /* gone */ } }
+        if (owner.gen === generation) voices = Math.max(0, voices - 1);
+      }
     };
     src.stop(end);
   }
 
   // Quick rise to `peak`, then an exponential fall to silence: the shape of anything struck.
+  // It starts from silence (a gain is 1 until its first event, and a source can start
+  // a sample before that event lands: a click).
   function envelope(g, t, peak, attack, dur) {
-    g.gain.setValueAtTime(0.0001, t);
+    g.gain.value = 0;
+    g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(Math.max(peak, 0.0002), t + attack);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   }
 
-  // One oscillator through an envelope, optionally sliding to `toFreq` and softened by a lowpass.
-  function tone(t, type, freq, dur, peak, attack, toFreq, lowpass) {
+  // One oscillator through an envelope, optionally sliding to `toFreq` and shaped by a
+  // filter: a lowpass (a number), or { type, freq, q } (a bandpass gives a body a phone can play).
+  function tone(t, type, freq, dur, peak, attack, toFreq, filter) {
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
-    osc.type = type;
+    shape(osc, type);
     osc.frequency.setValueAtTime(freq * pitchMul, t);
     if (toFreq) osc.frequency.exponentialRampToValueAtTime(toFreq * pitchMul, t + dur);
     envelope(g, t, peak * volMul, attack, dur);
     let f = null;
-    if (lowpass) {
+    if (filter) {
       f = ctx.createBiquadFilter();
-      f.type = 'lowpass';
-      f.frequency.value = lowpass * pitchMul;
-      f.Q.value = 0.5;
+      f.type = filter.type || 'lowpass';
+      f.frequency.value = (filter.freq || filter) * pitchMul;
+      f.Q.value = filter.q || 0.5;
       osc.connect(f);
       f.connect(g);
     } else {
@@ -191,7 +271,7 @@ window.SnakeAudio = (() => {
     const src = ctx.createBufferSource();
     const f = ctx.createBiquadFilter();
     const g = ctx.createGain();
-    src.buffer = noiseBuf;
+    src.buffer = noiseBuffer();
     f.type = type;
     f.frequency.value = freq * pitchMul;
     f.Q.value = q;
@@ -205,9 +285,10 @@ window.SnakeAudio = (() => {
 
   // Marimba-ish note: a sine plus the quiet, slightly flat 4th-harmonic "bar" overtone,
   // which dies first. That overtone is what makes it sound like wood instead of a beep.
-  function mallet(t, freq, dur, peak) {
+  // (bright: how hard the mallet was, 1 by default.)
+  function mallet(t, freq, dur, peak, bright = 1) {
     tone(t, 'sine', freq, dur, peak, 0.004);
-    tone(t, 'sine', freq * 3.93, dur * 0.3, peak * 0.2, 0.002);
+    tone(t, 'sine', freq * 3.93, dur * (0.22 + 0.08 * bright), peak * 0.2 * bright, 0.002);
   }
 
   // Wood block: a short triangle that drops in pitch as it dies, plus a tick of bandpassed noise.
@@ -216,11 +297,28 @@ window.SnakeAudio = (() => {
     noise(t, 0.02, peak * 0.45, 'bandpass', freq * 2.2, 4);
   }
 
+  // The midrange a low sound needs on a phone or laptop speaker, which can't play
+  // much under 300 Hz: the same note's upper harmonics through a band, so the ear
+  // still hears the low note (as it does a bass line on a small radio).
+  function body(t, freq, dur, peak, attack, toFreq, band, q = 1.1) {
+    tone(t, 'body', freq, dur, peak, attack, toFreq, { type: 'bandpass', freq: band, q });
+  }
+
+  // An oscillator's waveform: one of the built-in ones, or 'body': the 2nd to 6th harmonics
+  // only (no fundamental, and nothing sharp above them, so a body never buzzes or cracks).
+  let bodyWave = null;
+  function shape(osc, type) {
+    if (type !== 'body') { osc.type = type; return; }
+    bodyWave ||= ctx.createPeriodicWave(new Float32Array(7), new Float32Array([0, 0, 1, 0.8, 0.6, 0.4, 0.25]));
+    osc.setPeriodicWave(bodyWave);
+  }
+
   // Wobble an oscillator's pitch, fading the wobble out over `dur`.
   function vibrato(osc, t, dur, rate, depth) {
     const lfo = ctx.createOscillator();
     const g = ctx.createGain();
     lfo.frequency.value = rate;
+    g.gain.value = 0;
     g.gain.setValueAtTime(depth * pitchMul, t);
     g.gain.linearRampToValueAtTime(0, t + dur);
     lfo.connect(g);
@@ -229,32 +327,64 @@ window.SnakeAudio = (() => {
     finish(lfo, t + dur + 0.03, g);
   }
 
+  // Gold: a run of tiny bells at the top of the scale and a shimmer hanging after them.
+  // It's the sound of a golden pickup, over whatever else it is.
+  function sparkle(t, level) {
+    [100, 103, 105, 108].forEach((m, i) => tone(t + i * 0.032, 'sine', mtof(m), 0.2, 0.05 * level, 0.002));
+    const s = tone(t + 0.1, 'sine', mtof(112), 0.36, 0.022 * level, 0.03);
+    vibrato(s, t + 0.1, 0.36, 11, 70);
+  }
+
   // ---- The cues ---------------------------------------------------------------
+
+  // The notes a pluck may land on: C major pentatonic from E5 up, so whatever the
+  // music is playing (C, Am, F, G, or the minor key), an apple is never a wrong note.
+  const PENTA = [76, 79, 81, 84, 86, 88, 91, 93, 96, 98];
+  const streakOf = (o, top = 7) => Math.max(0, Math.min(top, Math.round(o.streak) || 0));
+  const MEAT_STEPS = [0, 2, 5, 7, 9]; // (semitones: the same scale, from the nom's G)
 
   const WIN_RUN = [[67, 0], [72, 0.1], [76, 0.2], [74, 0.3], [76, 0.4], [79, 0.5]]; // G4 C5 E5 D5 E5 G5
   const WIN_CHORD = [72, 76, 79, 84];                                               // C major, landing
 
+  // The woodpecker gets used to: its first few strikes are the full drum, then
+  // they're shorter and softer, and its aim stops knocking (the patch shows it).
+  let strikes = 0, aims = 0;
+  const strikeLevel = () => (strikes < 3 ? 1 : Math.max(0.5, 1 - 0.1 * (strikes - 2)));
+
   const CUES = {
-    // Green apple: one bright marimba pluck around E5, nudged a hair up or down each time
-    // so a long run of apples doesn't grate, with a crisp little bite of noise on top.
-    eat(t) {
-      mallet(t, mtof(76 + (Math.random() - 0.5) * 1.2), 0.12, 0.24);
-      noise(t, 0.018, 0.07, 'highpass', 3500, 0.7);
+    // Green apple: one bright marimba pluck, in tune with the music (E5, climbing the
+    // pentatonic scale through a streak). It's never quite the same twice: struck a
+    // little harder or softer, brighter or rounder, with a crisp little bite of noise on top.
+    eat(t, o) {
+      const vel = 0.85 + Math.random() * 0.15;
+      mallet(t, mtof(PENTA[streakOf(o)]), 0.12, 0.24 * vel, 0.6 + Math.random() * 0.8);
+      noise(t, 0.018, 0.07 * vel, 'highpass', 3000 + Math.random() * 1200, 0.7);
     },
 
-    // Golden apple: a quick rising G-B-D sparkle with a faint high shimmer hanging after it.
-    golden(t) {
-      mallet(t, mtof(79), 0.14, 0.26);
-      mallet(t + 0.055, mtof(83), 0.14, 0.26);
-      mallet(t + 0.11, mtof(86), 0.26, 0.28);
-      tone(t + 0.11, 'sine', mtof(98), 0.32, 0.04, 0.03);
+    // Golden apple: a quick rising sparkle up the same scale, and gold's own bells over it.
+    golden(t, o) {
+      const i = streakOf(o, 3);
+      mallet(t, mtof(PENTA[i + 1]), 0.14, 0.26);
+      mallet(t + 0.055, mtof(PENTA[i + 3]), 0.14, 0.26);
+      mallet(t + 0.11, mtof(PENTA[i + 5]), 0.26, 0.28);
+      sparkle(t + 0.12, 1);
+    },
+
+    // A golden leaf: a papery flutter, a breath of wind, and gold's bells.
+    leaf(t, o) {
+      for (let i = 0; i < 4; i++) noise(t + i * 0.03, 0.03, 0.09 - i * 0.012, 'bandpass', 2400 + i * 500, 1.6);
+      noise(t, 0.3, 0.04, 'bandpass', 900, 0.8);
+      mallet(t + 0.06, mtof(PENTA[streakOf(o, 3) + 2]), 0.18, 0.2);
+      sparkle(t + 0.08, 1);
     },
 
     // Meat: a low, round "nom": a lowpassed triangle that sags in pitch over a soft sub,
-    // with a muffled fleshy thump of noise.
-    meat(t) {
-      tone(t, 'triangle', 196, 0.16, 0.42, 0.006, 130, 900);
-      tone(t, 'sine', 98, 0.14, 0.22, 0.006, 70);
+    // with a muffled fleshy thump of noise, and the nom's mouth-shaped middle for small speakers.
+    meat(t, o) {
+      const p = Math.pow(2, MEAT_STEPS[streakOf(o, 4)] / 12);
+      tone(t, 'triangle', 196 * p, 0.16, 0.42, 0.006, 130 * p, 900);
+      body(t, 196 * p, 0.14, 0.34, 0.006, 130 * p, 650, 1);
+      tone(t, 'sine', 98 * p, 0.14, 0.22, 0.006, 70 * p);
       noise(t, 0.05, 0.1, 'lowpass', 900, 0.7);
     },
 
@@ -278,19 +408,26 @@ window.SnakeAudio = (() => {
       tone(t, 'triangle', 310, 0.3, 0.07, 0.01, 105, 700);
     },
 
-    // A rival dies somewhere on the trunk: a muffled, far-off thud. Quiet on purpose.
+    // A rival dies somewhere on the log: a muffled, far-off thud. Quiet on purpose.
     rivalDeath(t) {
       tone(t, 'triangle', 140, 0.2, 0.16, 0.008, 70, 400);
+      body(t, 140, 0.14, 0.09, 0.004, 80, 480, 1);
       noise(t, 0.08, 0.05, 'lowpass', 350, 0.7);
     },
 
-    // Your snake dies: a soft impact, then two falling notes, a sigh from G3 down to D3,
-    // over a sub and a low puff of noise. It thuds and lands; it never cracks. About 400 ms.
+    // Your snake dies: a soft wooden impact, then two falling notes, a sigh from G3 down
+    // to D3, over a sub and a low puff of noise. It thuds and lands; it never cracks.
+    // The thud and the sigh both carry a midrange body, so a phone still hears your
+    // death over an apple. About 400 ms.
     death(t) {
       noise(t, 0.09, 0.2, 'lowpass', 900, 0.8); // the impact first...
+      tone(t, 'triangle', 560, 0.12, 0.5, 0.001, 260, 1600);
+      noise(t, 0.08, 0.26, 'bandpass', 700, 1.2);
       tone(t, 'sine', 90, 0.3, 0.32, 0.003, 38);
       tone(t, 'triangle', mtof(55), 0.2, 0.4, 0.006, mtof(53), 1100);
+      body(t, mtof(55), 0.2, 0.32, 0.006, mtof(53), 700, 0.9);
       tone(t + 0.15, 'triangle', mtof(50), 0.27, 0.44, 0.008, mtof(46), 800);
+      body(t + 0.15, mtof(50), 0.27, 0.36, 0.008, mtof(46), 600, 0.9);
       tone(t + 0.15, 'sine', mtof(38), 0.26, 0.28, 0.01, mtof(34));
       noise(t + 0.13, 0.22, 0.09, 'lowpass', 700, 0.6);
     },
@@ -309,6 +446,16 @@ window.SnakeAudio = (() => {
     win(t) {
       for (let i = 0; i < WIN_RUN.length; i++) mallet(t + WIN_RUN[i][1], mtof(WIN_RUN[i][0]), 0.16, 0.32);
       for (let i = 0; i < WIN_CHORD.length; i++) mallet(t + 0.64 + i * 0.018, mtof(WIN_CHORD[i]), 0.5, 0.2);
+    },
+
+    // Won, and a new best too: one phrase, not two fanfares. The win's run lands on the
+    // best's held C6 (doubled below), rolls up into a bright chord, and gold shimmers over it.
+    winBest(t) {
+      for (let i = 0; i < WIN_RUN.length; i++) mallet(t + WIN_RUN[i][1], mtof(WIN_RUN[i][0]), 0.16, 0.32);
+      mallet(t + 0.64, mtof(84), 0.5, 0.4);
+      mallet(t + 0.64, mtof(72), 0.5, 0.18);
+      for (let i = 0; i < WIN_CHORD.length; i++) mallet(t + 0.7 + i * 0.03, mtof(WIN_CHORD[i] + 12), 0.6, 0.12);
+      sparkle(t + 0.8, 0.8);
     },
 
     // Countdown tick: a plain wood block "tok".
@@ -334,13 +481,28 @@ window.SnakeAudio = (() => {
       knock(t, 1500 + Math.random() * 200, 0.08);
     },
 
-    // Starving: a soft, low tummy gurgle, two slow wobbles under a lowpass with a little air.
+    // Starving: a soft, low tummy gurgle, two slow wobbles under a lowpass with a little
+    // air, the growl's throaty middle, and bubbles rising (what a phone hears).
     hungry(t) {
       const a = tone(t, 'triangle', 95, 0.32, 0.22, 0.06, 68, 380);
       vibrato(a, t, 0.32, 7, 10);
+      body(t, 95, 0.3, 0.16, 0.06, 68, 520, 1.4);
       const b = tone(t + 0.26, 'triangle', 115, 0.36, 0.18, 0.06, 74, 380);
       vibrato(b, t + 0.26, 0.36, 9, 12);
+      body(t + 0.26, 115, 0.34, 0.14, 0.06, 74, 560, 1.4);
+      for (let i = 0; i < 3; i++) {
+        const f = 300 + Math.random() * 160;
+        tone(t + 0.08 + i * 0.13 + Math.random() * 0.03, 'sine', f, 0.06, 0.12, 0.004, f * 1.8);
+      }
       noise(t, 0.45, 0.04, 'lowpass', 260, 0.8);
+    },
+
+    // Getting hungry (the warning, before you starve): one soft, low growl and a bubble.
+    hungerWarn(t) {
+      const a = tone(t, 'triangle', 88, 0.42, 0.14, 0.08, 66, 360);
+      vibrato(a, t, 0.42, 6, 8);
+      body(t, 88, 0.4, 0.1, 0.08, 66, 500, 1.4);
+      tone(t + 0.24, 'sine', 340, 0.06, 0.08, 0.004, 600);
     },
 
     // Lightning on its way: a dry, irregular crackle, high and quiet.
@@ -348,13 +510,16 @@ window.SnakeAudio = (() => {
       for (let i = 0; i < 9; i++) noise(t + i * 0.035 + Math.random() * 0.02, 0.012, 0.09, 'bandpass', 3200 + Math.random() * 2400, 2);
     },
 
-    // The strike: a bright crack, then thunder rolling away (overlapping low puffs
-    // of noise, each quieter, over a falling sub). Soft-edged, never a bang.
+    // The strike: a bright crack, then thunder rolling away (overlapping low puffs of noise,
+    // each quieter, with a gritty middle a phone can play, over a falling sub). Soft-edged, never a bang.
     thunder(t) {
       noise(t, 0.05, 0.22, 'highpass', 1800, 0.7);
       noise(t, 0.12, 0.2, 'bandpass', 900, 0.8);
       const rolls = [[0.04, 0.34, 320], [0.22, 0.28, 240], [0.48, 0.22, 200], [0.78, 0.16, 160], [1.1, 0.1, 130]];
-      for (const [at, peak, f] of rolls) noise(t + at, 0.42, peak, 'lowpass', f, 0.7);
+      for (const [at, peak, f] of rolls) {
+        noise(t + at, 0.42, peak, 'lowpass', f, 0.7);
+        noise(t + at, 0.38, peak * 0.75, 'bandpass', f * 2.4, 0.8);
+      }
       tone(t + 0.03, 'sine', 62, 1.3, 0.2, 0.04, 38);
     },
 
@@ -398,11 +563,13 @@ window.SnakeAudio = (() => {
       mallet(t + 0.14, mtof(84), 0.26, 0.3);
     },
 
-    // Your crash: a hollow wooden bonk, a spring's boing as you bounce back, and
-    // a little stars-round-your-head twinkle.
+    // Your crash: a hollow wooden bonk (a low drop, and the hollow knock a phone hears),
+    // a spring's boing as you bounce back, and a little stars-round-your-head twinkle.
     bonk(t) {
       tone(t, 'sine', 210, 0.16, 0.5, 0.002, 90);
+      tone(t, 'triangle', 640, 0.12, 0.38, 0.001, 300, 1600);
       noise(t, 0.05, 0.2, 'lowpass', 900, 0.8);
+      noise(t, 0.05, 0.16, 'bandpass', 760, 1.2);
       tone(t + 0.04, 'triangle', 330, 0.3, 0.14, 0.01, 520);
       mallet(t + 0.16, mtof(88), 0.12, 0.08);
       mallet(t + 0.24, mtof(91), 0.12, 0.07);
@@ -425,24 +592,44 @@ window.SnakeAudio = (() => {
       noise(t, 0.4, 0.1, 'highpass', 3600, 0.7);
       noise(t + 0.03, 0.25, 0.05, 'bandpass', 1200, 1.4);
     },
-    // A golden mushroom: the edges open, a shimmer of bells going up and round.
+    // A golden mushroom: the edges open and you go round. Bells run up and back down to
+    // where they began, swinging from one side to the other and back, under gold's shimmer.
     wrap(t) {
-      [72, 79, 84, 88, 91, 96].forEach((n, i) => mallet(t + i * 0.06, mtof(n), 0.3, 0.07));
-      tone(t, 'sine', 440, 0.6, 0.04, 0.05, 880);
+      const chain = out;
+      let sweep = null;
+      try {
+        sweep = ctx.createStereoPanner();
+        sweep.pan.value = 0;
+        sweep.pan.setValueAtTime(-0.6, t);
+        sweep.pan.linearRampToValueAtTime(0.6, t + 0.3);
+        sweep.pan.linearRampToValueAtTime(-0.6, t + 0.62);
+        sweep.pan.linearRampToValueAtTime(0, t + 0.8);
+        sweep.connect(chain);
+        building.nodes.push(sweep);
+        out = sweep;
+      } catch { sweep = null; }
+      [72, 76, 79, 84, 88, 84, 79, 76, 72].forEach((n, i) => mallet(t + i * 0.07, mtof(n), 0.26, i === 4 ? 0.09 : 0.07));
+      tone(t, 'sine', 440, 0.6, 0.035, 0.05, 880);
+      tone(t + 0.3, 'sine', 880, 0.32, 0.03, 0.04, 440);
+      out = chain;
+      sparkle(t + 0.04, 0.6);
     },
-    // Blown up (a dash into the edge or a hole): a bang and a rumble.
+    // Blown up (a dash into the edge or a hole): a bang and a rumble, with a body in the middle.
     boom(t) {
       noise(t, 0.6, 0.35, 'lowpass', 500, 0.7);
+      noise(t, 0.45, 0.32, 'bandpass', 680, 0.8);
       tone(t, 'sine', 120, 0.5, 0.4, 0.002, 38);
+      tone(t, 'triangle', 300, 0.3, 0.34, 0.002, 110, 1200);
       noise(t + 0.02, 0.18, 0.15, 'bandpass', 1600, 0.8);
     },
     // Your leap's ready again: a soft tick.
     ready(t) {
       mallet(t, mtof(86), 0.12, 0.05);
     },
-    // Someone else's crash: a dull thud off to the side.
+    // Someone else's crash: a dull thud off to the side (and its knock, small).
     bonked(t) {
       tone(t, 'sine', 170, 0.12, 0.22, 0.002, 80);
+      tone(t, 'triangle', 420, 0.08, 0.16, 0.001, 220, 1000);
       noise(t, 0.04, 0.08, 'lowpass', 700, 0.8);
     },
     // You catch fire: a whoosh of flame and a crackle.
@@ -486,24 +673,33 @@ window.SnakeAudio = (() => {
       tone(t, 'triangle', 1900, 0.05, 0.05, 0.001, 1500);
     },
 
-    // The woodpecker drumming a chunk out: a burst of knocks, fast then slowing, like the real thing.
+    // The woodpecker drumming a patch out: a burst of knocks, fast then slowing, like the
+    // real thing. The first few strikes get the whole drum; later ones are shorter and softer.
     drum(t) {
+      const level = strikeLevel(), n = strikes < 3 ? 14 : Math.max(6, 14 - 2 * (strikes - 2));
+      strikes++;
       let at = t;
-      for (let i = 0; i < 14; i++) { knock(at, 1250 + (i % 3) * 60, 0.2 - i * 0.008); at += 0.034 + i * 0.003; }
+      for (let i = 0; i < n; i++) { knock(at, 1250 + (i % 3) * 60, (0.2 - i * 0.008) * level); at += 0.034 + i * 0.003; }
     },
 
-    // The chunk giving way: a woody crunch over a low thud.
+    // The patch giving way: a woody crunch over a low thud (as soft as the drum before it).
     crash(t) {
-      noise(t, 0.16, 0.26, 'bandpass', 850, 0.9);
-      noise(t + 0.03, 0.22, 0.14, 'lowpass', 400, 0.7);
-      tone(t, 'triangle', 110, 0.3, 0.3, 0.004, 55, 500);
+      const level = strikes ? Math.max(0.6, strikeLevel()) : 1;
+      noise(t, 0.16, 0.26 * level, 'bandpass', 850, 0.9);
+      noise(t + 0.01, 0.12, 0.2 * level, 'bandpass', 1300, 1);
+      noise(t + 0.03, 0.22, 0.14 * level, 'lowpass', 400, 0.7);
+      tone(t, 'triangle', 110, 0.3, 0.3 * level, 0.004, 55, 500);
     },
 
-    // It takes aim: two rising ticks over a low pulse (and the music tightens).
+    // It takes aim: two rising ticks over a low pulse (and the music tightens). After a few
+    // strikes only a softer pulse is left: the glowing patch says it all.
     aim(t) {
-      knock(t, 900, 0.14);
-      knock(t + 0.12, 1180, 0.16);
-      tone(t, 'sine', 70, 0.35, 0.16, 0.02, 62);
+      const fresh = aims++ < 3;
+      if (fresh) {
+        knock(t, 900, 0.14);
+        knock(t + 0.12, 1180, 0.16);
+      }
+      tone(t, 'sine', 70, 0.35, fresh ? 0.16 : 0.1, 0.02, 62);
     },
 
     // It arrives: a woodpecker's sharp "kik! kik! kik!" and a beat of wings.
@@ -527,19 +723,25 @@ window.SnakeAudio = (() => {
       for (let i = 0; i < 4; i++) noise(t + 0.05 + i * 0.03, 0.01, 0.05, 'bandpass', 3600, 2);
     },
 
-    // Tension building: rising air and a rising tone (the countdown's last beat, the last two snakes).
-    riser(t) {
-      tone(t, 'sine', 220, 0.9, 0.08, 0.6, 660);
-      tone(t, 'triangle', 330, 0.9, 0.04, 0.6, 990, 2000);
-      noise(t, 0.45, 0.04, 'bandpass', 1500, 0.8);
-      noise(t + 0.4, 0.45, 0.06, 'bandpass', 3200, 0.8);
+    // Tension building: rising air and a rising tone (the countdown's last beat, the last
+    // two snakes, the woodpecker). It tops out after o.crest seconds (0.6 unless told):
+    // the countdown's tops out on Go, and Go cuts it off.
+    riser(t, o) {
+      const up = Number.isFinite(o.crest) ? Math.max(0.15, Math.min(1.2, o.crest)) : 0.6, dur = up + 0.3;
+      tone(t, 'sine', 220, dur, 0.08, up, 660);
+      tone(t, 'triangle', 330, dur, 0.04, up, 990, 2000);
+      noise(t, up * 0.75, 0.04, 'bandpass', 1500, 0.8);
+      noise(t + up * 0.67, 0.45, 0.06, 'bandpass', 3200, 0.8);
     },
 
-    // First blood: a dark stab (a low minor chord struck together) with a hit of noise.
+    // First blood: a dark stab (a low minor chord struck together, its upper octave for small
+    // speakers) with a hit of noise.
     stinger(t) {
       for (const m of [45, 48, 52, 57]) mallet(t, mtof(m), 0.6, 0.12);
+      for (const m of [57, 60, 64]) mallet(t, mtof(m), 0.45, 0.12, 1.4);
       tone(t, 'sine', 55, 0.5, 0.25, 0.005, 40);
       noise(t, 0.08, 0.14, 'lowpass', 1200, 0.8);
+      noise(t, 0.08, 0.16, 'bandpass', 850, 0.9);
     },
 
     // Buttons and toggles: a barely-there wood tap.
@@ -551,38 +753,85 @@ window.SnakeAudio = (() => {
   // ---- Playing --------------------------------------------------------------
 
   function play(name, opts) {
-    const cue = CUES[name];
-    if (!cue || !ready()) return;
+    if (!CUES[name] || !ctx || muted) return;
+    if (ctx.state !== 'running') {
+      // Waking up (the key press that unlocked it, a tap just after unmuting): it waits for the clock.
+      if (now() - wokenAt < RESUME_GRACE && waking.length < 4) waking.push({ name, opts, at: now() });
+      return;
+    }
+    start(name, opts);
+  }
 
+  function start(name, opts) {
+    const cue = CUES[name];
+    const o = opts || NO_OPTS;
     const ms = now();
-    if (ms - (lastPlayed[name] ?? -Infinity) < (MIN_INTERVAL[name] || 0)) return;
+    if (ms - (lastPlayed[name] ?? -Infinity) < (MIN_INTERVAL[name] || 0) || ms < (coveredUntil[name] || 0)) return;
 
     // If onended never arrived (it can go missing), the clock still tells us everything has stopped.
     if (voices > 0 && ctx.currentTime > lastEnd + 0.5) { voices = 0; generation++; }
-    if (voices >= MAX_VOICES && !PRIORITY[name]) return;
+    const tier = o.rival || RIVALS[name] ? 'rival' : WORLD[name] ? 'world' : 'you';
+    if (voices >= MAX_VOICES[tier] && !PRIORITY[name]) return;
 
-    const pitch = opts && Number.isFinite(opts.pitch) ? Math.max(-24, Math.min(24, opts.pitch)) : 0;
-    const volume = opts && Number.isFinite(opts.volume) ? Math.min(1, Math.max(0, opts.volume)) : 1;
+    const pitch = Number.isFinite(o.pitch) ? Math.max(-24, Math.min(24, o.pitch)) : 0;
+    const volume = Number.isFinite(o.volume) ? Math.min(1, Math.max(0, o.volume)) : 1;
     if (volume <= 0) return;
 
     lastPlayed[name] = ms;
+    for (const k in COVERS[name]) coveredUntil[k] = ms + COVERS[name][k];
     pitchMul = Math.pow(2, pitch / 12);
-    volMul = volume;
-    out = master;
-    if (opts && Number.isFinite(opts.pan) && ctx.createStereoPanner) {
-      try { out = ctx.createStereoPanner(); out.pan.value = Math.max(-1, Math.min(1, opts.pan)); out.connect(master); } catch { out = master; }
-    }
-    building = { pending: 0, gen: generation };
+    volMul = volume * (o.rival ? RIVAL_VOLUME : 1);
+    const t = ctx.currentTime + LEAD;
+    building = { pending: 0, gen: generation, nodes: [], end: t };
     voices++;
-    if (ctx.state !== 'running') graceCues++;
     try {
-      cue(ctx.currentTime + 0.005);
+      // The cue's own little chain: a gain (so it can be cut short), a rival's dulled, and placed left or right.
+      const voice = ctx.createGain();
+      voice.gain.value = 1;
+      building.nodes.push(voice);
+      let tail = voice;
+      if (o.rival) {
+        const f = ctx.createBiquadFilter();
+        f.type = 'lowpass';
+        f.frequency.value = RIVAL_LOWPASS;
+        tail.connect(f);
+        building.nodes.push(tail = f);
+      }
+      if (Number.isFinite(o.pan) && ctx.createStereoPanner) {
+        try {
+          const p = ctx.createStereoPanner();
+          p.pan.value = Math.max(-1, Math.min(1, o.pan));
+          tail.connect(p);
+          building.nodes.push(tail = p);
+        } catch { /* stays in the middle */ }
+      }
+      tail.connect(master);
+      out = voice;
+      const choke = sounding[CHOKES[name]];
+      if (choke && choke.end > t) choke.voice.gain.setTargetAtTime(0, t, 0.03);
+      if (DUCKS[name]) duckMusic(t, DUCKS[name]);
+      cue(t, o);
+      if (o.gold && name !== 'golden' && name !== 'leaf' && name !== 'wrap') sparkle(t + 0.05, 0.8);
+      if (CHOKED[name]) sounding[name] = { voice, end: building.end };
     } catch {
       /* a half-built cue just plays what it managed to schedule */
     } finally {
-      if (building.pending === 0) voices = Math.max(0, voices - 1);
+      if (building.pending === 0) {
+        voices = Math.max(0, voices - 1);
+        for (const n of building.nodes) { try { n.disconnect(); } catch { /* gone */ } }
+      }
       building = null;
+      out = master;
     }
+  }
+
+  // The music steps back under a fanfare, then comes back.
+  function duckMusic(t, len) {
+    try {
+      duck.gain.cancelScheduledValues(t);
+      duck.gain.setTargetAtTime(0.3, t, 0.04);
+      duck.gain.setTargetAtTime(1, t + len, 0.35);
+    } catch { /* the music stays up */ }
   }
 
   // ---- Music ----------------------------------------------------------------
@@ -664,7 +913,7 @@ window.SnakeAudio = (() => {
     const src = ctx.createBufferSource();
     const f = ctx.createBiquadFilter();
     const g = ctx.createGain();
-    src.buffer = noiseBuf;
+    src.buffer = noiseBuffer();
     f.type = type;
     f.frequency.value = freq;
     f.Q.value = q;
@@ -807,11 +1056,11 @@ window.SnakeAudio = (() => {
       try { n.g.gain.setTargetAtTime(0, t, 0.6); n.src.stop(t + 3); } catch { /* gone */ }
     }
     bedNodes = [];
-    if (kind === 'none' || !airBuf || !musicBus) return;
+    if (kind === 'none' || !musicBus) return;
     for (const [type, freq, q, level, gusty] of BEDS[kind]) {
       try {
         const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
-        src.buffer = airBuf; src.loop = true;
+        src.buffer = noiseBuffer(); src.loop = true;
         f.type = type; f.frequency.value = freq; f.Q.value = q;
         g.gain.value = 0;
         g.gain.setTargetAtTime(level, t, 0.8);
@@ -836,15 +1085,15 @@ window.SnakeAudio = (() => {
   function setMuted(value) {
     muted = !!value;
     saveMuted();
-    // Fade anything already sounding rather than cutting it with a click.
-    if (master) {
-      try { master.gain.setTargetAtTime(muted ? 0 : MASTER_VOLUME, ctx.currentTime, 0.02); } catch { /* ignore */ }
-    }
+    // Fade anything already sounding rather than cutting it with a click, then let the
+    // context sleep. Unmuted, it wakes, and a cue asked for straight after still plays.
+    settle();
     return muted;
   }
 
   const isMuted = () => muted;
   const toggleMuted = () => setMuted(!muted);
 
+  create();
   return { unlock, play, setMuted, isMuted, toggleMuted, music, weather, setMusicOn, isMusicOn, toggleMusic };
 })();
