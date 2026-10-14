@@ -1889,7 +1889,22 @@
 
   R.init({ canvas, personas: PERSONAS, birdLayer: $('bird-layer') });
   // Where the board is on the page (the woodpecker perches beside it, on its own layer).
-  const placeBoard = () => { const b = canvas.getBoundingClientRect(); R.setBoardRect(b.left, b.top, b.width); };
+  // ...and how far the free page runs round it before the tags, the speed
+  // buttons, the chatter or the header (no perching on those).
+  const furniture = ['header', '.scoreboard', '.speed', '.chatter'].map(q => document.querySelector(q)).filter(Boolean);
+  const placeBoard = () => {
+    const b = canvas.getBoundingClientRect(), free = { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+    for (const el of furniture) {
+      const f = el.getBoundingClientRect();
+      if (!f.width || !f.height) continue; // (hidden)
+      const across = f.left < b.right && f.right > b.left, along = f.top < b.bottom && f.bottom > b.top;
+      if (across && f.bottom <= b.top + 1) free.top = Math.max(free.top, f.bottom);
+      else if (across && f.top >= b.bottom - 1) free.bottom = Math.min(free.bottom, f.top);
+      else if (along && f.right <= b.left + 1) free.left = Math.max(free.left, f.right);
+      else if (along && f.left >= b.right - 1) free.right = Math.min(free.right, f.left);
+    }
+    R.setBoardRect(b.left, b.top, b.width, free);
+  };
   window.addEventListener('resize', placeBoard, { passive: true });
   window.addEventListener('scroll', placeBoard, { passive: true });
   new ResizeObserver(placeBoard).observe(document.querySelector('main')); // (the page around the board changed: it may have moved)

@@ -240,37 +240,36 @@ window.SnakeRender = (() => {
     }
     return s;
   }
-  // Snow settling on the bark: soft white drifts (a small soft layer, stretched
-  // over the board, like the canopy's shadows), whiter the longer it snows.
+  // Snow settling on the bark: crisp drifts lying in the furrows, long along
+  // the grain (top to bottom), each a few lumps with a hard lit top and a thin
+  // blue underside, and a glint or two. Drawn at the board's own resolution
+  // (stretched, they blurred into smoke), only once it snows; no dusting over
+  // everything. Whiter the longer it snows; gone soon after.
   let drifts = null;
   function buildDrifts() {
-    const n = 384, d = makeLayer(n, n), g = d.getContext('2d');
+    const d = makeLayer(SIZE * k, SIZE * k), g = d.getContext('2d');
+    g.scale(k, k);
     let seed = barkSeed * 13 + 5;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    g.fillStyle = 'rgba(236,244,255,0.16)'; // a dusting everywhere...
-    g.fillRect(0, 0, n, n);
-    for (let i = 0; i < 34; i++) { // ...and drifts, long along the grain, each a few lumps: a blue shadow under them, each lump lit on top
-      const x = rnd() * n, y = rnd() * n, lumps = [];
-      for (let j = 0, m = 2 + Math.floor(rnd() * 4); j < m; j++) {
-        const rx = 6 + rnd() * 14;
-        lumps.push([x + (rnd() - 0.5) * 30, y + (rnd() - 0.5) * 8, rx, rx * (0.4 + rnd() * 0.25)]);
+    const lumps = [];
+    for (let i = 0; i < 18; i++) {
+      const x = rnd() * SIZE, y = rnd() * SIZE, a = (rnd() - 0.5) * 0.16; // (the grain's slight lean)
+      lumps.length = 0;
+      for (let j = 0, m = 2 + Math.floor(rnd() * 3), ly = y; j < m; j++) {
+        const rx = 2.6 + rnd() * 3.6, ry = rx * (2.4 + rnd() * 2.2);
+        lumps.push([x + (rnd() - 0.5) * 3 + (ly - y) * a, ly, rx, ry]);
+        ly += ry * (1.1 + rnd() * 0.5);
       }
-      g.fillStyle = 'rgba(120,146,186,0.28)';
-      g.beginPath();
-      for (const [lx, ly, rx, ry] of lumps) { g.moveTo(lx + 1 + rx, ly + ry * 0.45); g.ellipse(lx + 1, ly + ry * 0.45, rx, ry, 0, 0, TAU); }
-      g.fill();
-      for (const [lx, ly, rx, ry] of lumps) {
-        const grad = g.createRadialGradient(lx - rx * 0.25, ly - ry * 0.35, 0, lx, ly, rx);
-        grad.addColorStop(0, 'rgba(255,255,255,1)');
-        grad.addColorStop(0.7, 'rgba(242,247,255,0.95)');
-        grad.addColorStop(0.92, 'rgba(226,236,250,0.7)');
-        grad.addColorStop(1, 'rgba(226,236,250,0)');
-        g.fillStyle = grad;
-        g.beginPath(); g.ellipse(lx, ly, rx, ry, 0, 0, TAU); g.fill();
-      }
+      const shape = (dx, dy, grow) => {
+        g.beginPath();
+        for (const [lx, ly, rx, ry] of lumps) { g.moveTo(lx + dx + rx + grow, ly + dy); g.ellipse(lx + dx, ly + dy, rx + grow, ry + grow, a, 0, TAU); }
+      };
+      shape(1.2, 1.6, 0.4); g.fillStyle = 'rgba(96,124,170,0.55)'; g.fill(); // (its blue underside, down and to the right of the light)
+      shape(0, 0, 0); g.fillStyle = '#eef4fc'; g.fill();
+      shape(-0.7, -0.9, -0.9); g.fillStyle = '#ffffff'; g.fill(); // (lit along its upper-left, like the plates)
+      g.fillStyle = '#ffffff';
+      if (rnd() < 0.7) { const [lx, ly, rx, ry] = lumps[0]; g.beginPath(); g.arc(lx - rx * 0.3, ly - ry * 0.4, 0.8, 0, TAU); g.fill(); }
     }
-    g.fillStyle = 'rgba(255,255,255,0.95)'; // and glints
-    for (let i = 0; i < 140; i++) { g.beginPath(); g.arc(rnd() * n, rnd() * n, 0.6, 0, TAU); g.fill(); }
     return d;
   }
   function drawSnowCover() {
@@ -3580,7 +3579,7 @@ window.SnakeRender = (() => {
   // gradually), the fire as last seen (to know when a cell burns out and
   // leaves a scorch mark), a lightning bolt, a rainbow.
   const sky = { sun: 0, wind: 0, rain: 0, storm: 0, snow: 0 };
-  let snowCover = 0; // how white the bark has gone (it settles slowly, and melts slowly)
+  let snowCover = 0; // how white the bark has gone
   const embers = []; // burning leaves in the air: { fx, fy, x, y, at }
   const fireSeen = new Map(); // cell -> it was burning
   const scorched = [];        // cells that burned (baked into the static layer)
@@ -3591,7 +3590,7 @@ window.SnakeRender = (() => {
     const kind = game.weather?.kind || 'clear';
     const step = Math.min(1, dt / 1400);
     for (const k in sky) sky[k] += ((k === kind ? 1 : 0) - sky[k]) * step;
-    snowCover += ((kind === 'snow' ? 1 : 0) - snowCover) * Math.min(1, dt / (kind === 'snow' ? 7000 : 9000));
+    snowCover += ((kind === 'snow' ? 1 : 0) - snowCover) * Math.min(1, dt / (kind === 'snow' ? 7000 : 1600)); // (it settles slowly, and melts in a few seconds)
   }
 
   // Where the fire was and is: cells that burned out leave a scorch (and a puff of smoke).
@@ -3844,8 +3843,15 @@ window.SnakeRender = (() => {
   // chips; flies back; rests. It's drawn on its own layer over the whole page,
   // so it can sit outside the board.
   let birdLayer = null, birdG = null, birdShown = false;
-  const boardRect = { x: 0, y: 0, w: 0 }; // the board on the page, in CSS px (the game keeps it current)
-  function setBoardRect(x, y, w) { boardRect.x = x; boardRect.y = y; boardRect.w = w; }
+  // The board on the page, in CSS px, and how far the free page runs round it
+  // before the page's own furniture (the tags, the speed buttons, the chatter):
+  // the game keeps both current.
+  const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0 };
+  function setBoardRect(x, y, w, free = null) {
+    boardRect.x = x; boardRect.y = y; boardRect.w = w;
+    boardRect.left = free ? free.left : 0; boardRect.top = free ? free.top : 0;
+    boardRect.right = free ? free.right : innerWidth; boardRect.bottom = free ? free.bottom : innerHeight;
+  }
   const BU = CELL * 0.85; // the bird's unit
   const BILL = [2.55, -1.72]; // its beak tip, in units, before its head moves
   const bird = { x: 0, y: 0, rot: 0, flip: 1, placed: false, arrivedAt: -1e9, chipAt: 0 };
@@ -3855,8 +3861,8 @@ window.SnakeRender = (() => {
   function perchFor(tx, ty) {
     const sc = boardRect.w / SIZE;
     const room = sc ? {
-      left: boardRect.x / sc, right: (innerWidth - boardRect.x - boardRect.w) / sc,
-      top: boardRect.y / sc, bottom: (innerHeight - boardRect.y - boardRect.w) / sc,
+      left: (boardRect.x - boardRect.left) / sc, right: (Math.min(innerWidth, boardRect.right) - boardRect.x - boardRect.w) / sc,
+      top: (boardRect.y - boardRect.top) / sc, bottom: (Math.min(innerHeight, boardRect.bottom) - boardRect.y - boardRect.w) / sc,
     } : { left: 999, right: 0, top: 0, bottom: 0 };
     const need = { left: BU * 3.4, right: BU * 3.4, top: BU * 5, bottom: BU * 5 };
     const dist = { left: tx, right: SIZE - tx, top: ty, bottom: SIZE - ty };
@@ -3884,7 +3890,10 @@ window.SnakeRender = (() => {
     if (!birdShown) { birdLayer.style.display = 'block'; birdShown = true; }
     const dpr = Math.min(window.devicePixelRatio || 1, quality === 2 ? 2 : quality === 1 ? 1.5 : 1);
     const W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
-    if (birdLayer.width !== W || birdLayer.height !== H) { birdLayer.width = W; birdLayer.height = H; bird.box = null; }
+    if (birdLayer.width !== W || birdLayer.height !== H) { // (its CSS size from the same numbers: 100vh on a phone isn't the window you see)
+      birdLayer.width = W; birdLayer.height = H; bird.box = null;
+      birdLayer.style.width = `${innerWidth}px`; birdLayer.style.height = `${innerHeight}px`;
+    }
     birdG.setTransform(1, 0, 0, 1, 0, 0);
     // (The layer is the whole page and the bird a small part of it: only
     // where it was last drawn is cleared, not the whole page every frame.)
@@ -3903,17 +3912,18 @@ window.SnakeRender = (() => {
     const out = aiming ? Math.max(0, Math.min(1, (tp - (w.strikeAt - 3.5)) / 2.5)) : 0; // flying at it...
     const back = !aiming && w.struckAt >= 0 ? Math.max(0, Math.min(1, (tp - (w.struckAt + 1.5)) / 2.5)) : 1; // ...and home again
     if (aiming && out > 0) {
-      const e = ease(out);
+      const e = lively ? ease(out) : out < 0.5 ? 0 : 1; // (reduced motion: a cut, not a flight)
       gx = perch.x + (hit.x - perch.x) * e; gy = perch.y + (hit.y - perch.y) * e;
       fly = out < 1 ? 1 : 0; drum = out >= 1;
     } else if (!aiming && back < 1) {
-      const e = ease(back);
+      const e = lively ? ease(back) : back < 0.5 ? 0 : 1;
       gx = hit.x + (perch.x - hit.x) * e; gy = hit.y + (perch.y - hit.y) * e;
       fly = back > 0 ? 1 : 0; drum = back === 0;
     }
     // Arriving: swooping down from high above.
     const arrive = Math.min(1, (now - bird.arrivedAt) / 1100);
-    if (arrive < 1) { const e = ease(arrive); gy -= (1 - e) * SIZE * 0.9; gx -= (1 - e) * SIZE * 0.25 * perch.flip; fly = 1; }
+    if (!lively) fly = 0;
+    else if (arrive < 1) { const e = ease(arrive); gy -= (1 - e) * SIZE * 0.9; gx -= (1 - e) * SIZE * 0.25 * perch.flip; fly = 1; }
     // Moving between perches (its next chunk is elsewhere): a quick hop.
     if (!bird.placed || !lively) { bird.x = gx; bird.y = gy; bird.placed = true; }
     else if (fly || drum) { bird.x = gx; bird.y = gy; }
