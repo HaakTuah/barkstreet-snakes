@@ -334,9 +334,9 @@ window.SnakeRecords = (() => {
       __proto__: null, // (so a rival named "constructor" is just a name)
       wall: ['Edge & holes', 'the edge & holes'],
       woodpecker: ['Woodpecker', 'the woodpecker'],
-      self: ['Yourself', 'you'],
-      hunger: ['Hunger', 'your own tummy'],
-      fire: ['Fire', 'a bolt from the blue'],
+      self: ['Yourself', 'yourself'],
+      hunger: ['Hunger', 'hunger'],
+      fire: ['Fire', 'fire'],
     };
     const killerLabel = k => NOT_A_SNAKE[k]?.[0] ?? k;
     const nemesisOf = k => NOT_A_SNAKE[k]?.[1] ?? k;

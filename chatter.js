@@ -78,6 +78,7 @@ window.SnakeChatter = (() => {
       edge: ['Move the edge. We command it.'],
       burning: ['Fetch the royal bucket!'],
       cut: ['That bird has committed treason.'],
+      snipped: ['Treason, {who}! That was the royal tail.'],
       gloat: ['Bow, {who}. Do not bump.', 'We felt that, {who}. We disapprove.', 'Mind the royal person, {who}.'],
       leap: ['We rise above it all.'],
       dies: ['The king is dead…', 'Long live… someone else.'],
@@ -151,7 +152,7 @@ window.SnakeChatter = (() => {
       cut: ['Caudam meam!'],
       gloat: ['Murum vidisti, {who}?', 'Murus sum, {who}.', 'Ecce murus, {who}.'],
       dies: ['Et tu, {who}?', 'Alea iacta… estus.', 'Murus… meus… finis.'],
-      wrap: ['Sine muro! No wall at all!'],
+      wrap: ['Sine muro! Murus nullus!'],
     },
     wildcard: {
       hungry: ["Very hungry. The hungriest. Nobody has ever been this hungry."],
@@ -169,6 +170,7 @@ window.SnakeChatter = (() => {
       edge: ['Who moved that? Fake wall!'],
       burning: ['Hot. Very hot. The hottest. Tremendous.'],
       cut: ['That bird stole my tail. Total theft.'],
+      snipped: ['{who} stole my tail! Total theft. Sad!'],
       gloat: ['{who}? Bounced right off me. Sad!', 'Low energy, {who}. Very low energy.', 'Nobody bumps me, {who}. Believe me.'],
       goldbug: ['A golden beetle! I love gold. Gold loves me.'],
       leap: ['Nobody jumps better than me.'],
@@ -255,7 +257,7 @@ window.SnakeChatter = (() => {
       woodpecker: ['Now we’re talking! Holes!'],
       beetle: ['Yeehaw, a critter hunt!', 'Here, little critter…'],
       caught: ['Lassoed it.', 'Roped and branded.'],
-      weather: { storm: ['Lightning? Now we’re talking!', 'Fire on the bark! Yeehaw!'], wind: ['Hold onto your hat!'], rain: ['Rain on the range.'], snow: ['Cold enough to freeze a cactus.'] },
+      weather: { storm: ['Lightning? Now we’re talking!', 'Smell that? Here comes trouble.'], strike: ['Fire on the bark! Yeehaw!'], wind: ['Hold onto your hat!'], rain: ['Rain on the range.'], snow: ['Cold enough to freeze a cactus.'] },
       rainbow: ['Race you to the gold, partner!'],
       bonk: ['Woo! Again!', 'Felt that one.', 'Now I’m awake!'],
       edge: ['Yep. That’s the edge, all right.'],
@@ -320,6 +322,7 @@ window.SnakeChatter = (() => {
       bonk: ['Ow! That one’s on me.', 'Slapstick!', 'Ba-dum-tss!'],
       burning: ['Hot stuff, coming through!'],
       cut: ['Ha! The bird’s got jokes.'],
+      snipped: ['Hey! Sawing in half is MY trick, {who}!'],
       gloat: ['Knock knock, {who}! …Bonk!', 'Boing! Do it again, {who}!', 'Classic {who}. Never gets old.'],
       leap: ['Hup! Ta-daaa!'],
       dies: ['Tough crowd…'],
@@ -411,6 +414,7 @@ window.SnakeChatter = (() => {
     "Storms are exciting! Or scary? Both!": "暴风雨好刺激！还是好可怕？都是！",
     "Whee!": "呜呼！",
     "Lightning? Now we’re talking!": "闪电？这才带劲！",
+    "Smell that? Here comes trouble.": "闻到了吗？麻烦要来了。",
     "Fire on the bark! Yeehaw!": "树皮着火啦！咿哈！",
     "Hold onto your hat!": "抓紧你的帽子！",
     "Rain on the range.": "牧场下雨了。",
@@ -665,6 +669,7 @@ window.SnakeChatter = (() => {
     "Who put that there?": "谁把那个放在那儿的？",
     "Fetch the royal bucket!": "拿御用水桶来！",
     "That bird has committed treason.": "那只鸟犯了叛国罪。",
+    "Treason, {who}! That was the royal tail.": "叛国罪，{who}！那可是皇家的尾巴。",
     "Bow, {who}. Do not bump.": "鞠躬，{who}。不要撞。",
     "I say! Steady on!": "我说！稳着点！",
     "Blast!": "该死！",
@@ -687,6 +692,7 @@ window.SnakeChatter = (() => {
     "Who moved that? Fake wall!": "谁动的？假墙！",
     "Hot. Very hot. The hottest. Tremendous.": "热。非常热。最热的。了不起。",
     "That bird stole my tail. Total theft.": "那只鸟偷了我的尾巴。彻头彻尾的盗窃。",
+    "{who} stole my tail! Total theft. Sad!": "{who}偷了我的尾巴！彻头彻尾的盗窃。可悲！",
     "{who}? Bounced right off me. Sad!": "{who}？直接从我身上弹开了。可悲！",
     "oof.": "哎。",
     "ow ow ow.": "疼疼疼。",
@@ -714,6 +720,7 @@ window.SnakeChatter = (() => {
     "Slapstick!": "闹剧！",
     "Hot stuff, coming through!": "烫手货，借过！",
     "Ha! The bird’s got jokes.": "哈！这鸟也会讲笑话。",
+    "Hey! Sawing in half is MY trick, {who}!": "喂！锯成两半是我的戏法，{who}！",
     "Knock knock, {who}! …Bonk!": "咚咚，{who}！……咚！",
     "Even I must eat. Usually myself.": "连我也得吃东西。通常吃自己。",
     "All things return.": "万物终将回归。",
@@ -781,7 +788,7 @@ window.SnakeChatter = (() => {
     "The circle tightens. Quickly.": "圆环收紧。很快。",
     "Now you know how it feels, {who}.": "现在你知道那是什么滋味了，{who}。",
     "No end, no beginning. As it should be.": "无始无终。本该如此。",
-    "Sine muro! No wall at all!": "没有墙了！一堵墙都没有！",
+    "Sine muro! Murus nullus!": "没有墙了！一堵墙都没有！",
     "Target acquired.": "目标已锁定。",
     "Clean catch.": "干净利落地抓到了。",
     "Bad angle.": "角度不好。",
@@ -919,12 +926,12 @@ window.SnakeChatter = (() => {
     'Run. It helps.', 'Big fan of your stream, {who}.', 'Moving target. Still a headshot.', 'Taking fire. Literally.', 'Bounced off me, {who}? Cute.',
     'Am I… cooking? Smells good, actually.', 'Oops. Is that meat?', 'My tail! That was full of food!', 'Who hid a mushroom in the snacks?!', 'Six legs, six times the flavour!', 'Ow! Is the edge edible?', 'Wheee! Lunch from above!',
     'boo.',
-    'Trespasser! Guards! …We are the guards.', 'The Crown is merciful. Usually.', 'A strategic retreat. A royal one.', 'We shall have it executed.', 'Move the edge. We command it.', 'One day all this will be ours. Today, in fact.', 'That bird has committed treason.',
+    'Trespasser! Guards! …We are the guards.', 'The Crown is merciful. Usually.', 'A strategic retreat. A royal one.', 'We shall have it executed.', 'Move the edge. We command it.', 'One day all this will be ours. Today, in fact.', 'That bird has committed treason.', 'Treason, {who}! That was the royal tail.',
     'Mine now. Terribly sorry.', 'I claim this for the Crown. Which crown? Mine.', 'Do you have a flag, {who}? No flag, no colony.', 'Papers, {who}? No? Off you pop.', 'A minor diplomatic incident.', 'I say, {who}! There’s a queue.', 'I appear to be on fire. How awkward.', 'Rain? Just like home.',
     'I like beige.', 'This is a log.', 'Tastes like food.', 'That was a bump.',
     'Rest in pieces, {who}.', 'I’m not on the menu.', 'Leftovers… of me?',
     'Vidi, vici, veni.', 'Divide et imperium-ium.', 'Murus maximus. Very bigus.', 'Wallus erectus.', 'Bonkus interruptus.', 'Murus sum, {who}.',
-    '{who}? Total loser. Sad!', 'Global warming? Total hoax. Look at all this snow!', 'Fake news! That never happened.', 'Who moved that? Fake wall!', 'I’m bigger than ever. Ask anyone.', 'Low energy, {who}. Very low energy.', 'Nobody bumps me, {who}. Believe me.', 'That bird stole my tail. Total theft.',
+    '{who}? Total loser. Sad!', 'Global warming? Total hoax. Look at all this snow!', 'Fake news! That never happened.', 'Who moved that? Fake wall!', 'I’m bigger than ever. Ask anyone.', 'Low energy, {who}. Very low energy.', 'Nobody bumps me, {who}. Believe me.', 'That bird stole my tail. Total theft.', '{who} stole my tail! Total theft. Sad!',
     'nice tail, {who}.', 'we should hang out, {who}.', 'peekaboo, {who}.', 'shh. nobody saw that.',
     'Your eat rate is suboptimal, {who}.', 'Input lag, {who}?',
     'Taking position. …Ooh, I like being Sniper.', 'Headshot! …Is that how Sniper says it?', 'Pew pew! …Sniper doesn’t say pew pew, does it?', 'FOOD. NOW. …Is Gobbler always this hungry?', 'Snacks! All the snacks! …How does Gobbler stop?',
@@ -935,7 +942,7 @@ window.SnakeChatter = (() => {
     '*walks into a wall. A real one, this time*', '*plays a tiny invisible violin*', '*holds up an invisible scorecard: 3*',
     'Even I must eat. Usually myself.', 'My tail! I was saving that.', 'Haven’t we met before, {who}?', 'Ah. This bit again.', 'Even the log has an end.',
     'Why did the snake cross the bark? It was starving.', 'Knock knock! Who’s there? Lunch, I hope.', 'Knock knock! Oh. It’s the woodpecker.', 'Somewhere over the… oh, there it is.', 'Knock knock, {who}! …Bonk!',
-    'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!',
+    'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!', 'Hey! Sawing in half is MY trick, {who}!',
   ]);
   const toldThisRound = new Set();
   const bubbles = new Map(); // snake id -> { el, snake, until, w, x, y, below }
@@ -945,6 +952,18 @@ window.SnakeChatter = (() => {
 
   const pick = list => list[Math.floor(Math.random() * list.length)];
   const hasChinese = text => /[一-鿿]/.test(text);
+  // A line's words, in a bubble or the log. A stage direction (Mute's mimes,
+  // a giggle: "*waves silently*") is in italics, without its asterisks (a
+  // screen reader would say "star"), and in the log it reads on from the
+  // name: "Mute waves silently". Copycat's Chinese ones go in brackets, as
+  // Ghost's "（沉默）" does (Chinese isn't set in italics).
+  function setWords(el, text) {
+    const mimed = /^\*(.+)\*$/.exec(text), zh = hasChinese(text);
+    if (mimed && zh) el.textContent = `（${mimed[1]}）`;
+    else if (mimed) el.append(Object.assign(document.createElement('em'), { textContent: mimed[1] }));
+    else el.textContent = text;
+    if (zh) el.lang = 'zh-Hans';
+  }
 
   // The log sits on dark wood: lighten dark colors so names stay readable.
   function readable(hex) {
@@ -1047,8 +1066,7 @@ window.SnakeChatter = (() => {
     el.className = 'bubble';
     el.setAttribute('aria-hidden', 'true'); // (screen readers get the log instead)
     const words = document.createElement('span'); // (the bubble you see: it pops in, while its box is moved about)
-    words.textContent = text;
-    if (hasChinese(text)) words.lang = 'zh-Hans';
+    setWords(words, text);
     el.append(words);
     el.style.setProperty('--edge', s.persona?.ink || s.color);
     boardEl.appendChild(el);
@@ -1125,8 +1143,7 @@ window.SnakeChatter = (() => {
     who.textContent = s.name;
     who.style.color = readable(s.persona?.ink || s.color);
     const said = document.createElement('span');
-    said.textContent = text;
-    if (hasChinese(text)) said.lang = 'zh-Hans';
+    setWords(said, text);
     li.append(who, ' ', said);
     logEl.prepend(li);
     while (logEl.children.length > LOG_SIZE) logEl.lastChild.remove();
@@ -1173,7 +1190,8 @@ window.SnakeChatter = (() => {
         const kind = e.type === 'strike' ? 'storm' : e.kind;
         if (e.type === 'strike') struck = true; else struck = false;
         const s = pick(alive.filter(a => VOICES[a.personaKey]?.weather?.[kind]));
-        if (s) say(s, `weather.${kind}`, null, true);
+        // (The first strike has lines of its own, where a voice has some: as a storm begins, nothing's burning yet.)
+        if (s) say(s, e.type === 'strike' && VOICES[s.personaKey].weather.strike ? 'weather.strike' : `weather.${kind}`, null, true);
       } else if (e.type === 'crash' && e.snake.alive) {
         // Whoever crashed says ouch; now and then, whoever they bounced off gloats.
         // (Almost every bump is into a snake, so ouches fit any bump; the edge,
@@ -1190,9 +1208,14 @@ window.SnakeChatter = (() => {
         say(e.snake, 'wrap', null, true);
       } else if (e.type === 'alight' && e.snake.persona) {
         say(e.snake, 'burning', null, true);
-      } else if (e.type === 'cut' && e.by != null && game.snakes[e.by]?.persona) { // (a dash cut it: the dasher crows)
-        say(game.snakes[e.by], 'snip', e.snake, true);
-      } else if (e.type === 'cut' && e.snake.persona) {
+      } else if (e.type === 'cut' && e.by != null) {
+        // A dash cut it: the dasher crows, and the one cut has words for whoever
+        // it was, you included. Its 'cut' lines are for the woodpecker, so a
+        // voice that blames the bird there has 'snipped' lines for a dash.
+        const dasher = game.snakes[e.by];
+        if (dasher?.persona) say(dasher, 'snip', e.snake, true);
+        if (e.snake.persona) say(e.snake, VOICES[e.snake.personaKey]?.snipped ? 'snipped' : 'cut', dasher, true);
+      } else if (e.type === 'cut' && e.snake.persona) { // (the woodpecker)
         say(e.snake, 'cut', null, true);
       } else if (e.type === 'baked') {
         const s = pick(alive.filter(a => VOICES[a.personaKey]?.baked));

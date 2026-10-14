@@ -74,7 +74,7 @@ window.SnakeAI = (() => {
     gobbler: {
       name: 'Gobbler', color: '#fb923c', look: 'gobbler',
       blurb: 'Eats everything, even a rival’s apple. Hates mushrooms.',
-      kill: ['Gobbler didn’t even stop chewing.', 'It was going for the apple behind you.', 'Gobbler was thinking about apples. It always is.'],
+      kill: ['Gobbler didn’t even stop chewing.', 'It burped. That was the eulogy.', 'Gobbler was thinking about apples. It always is.'],
       win: ['And it’s still hungry.', 'Not a crumb left.', 'Now, about pudding.'],
       w: {
         space: 1, territory: 0.2,

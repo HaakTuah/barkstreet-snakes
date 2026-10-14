@@ -20,7 +20,7 @@ A snake game on a mossy log: you against three AI rivals on a fallen log in the 
   - **Storm** (not before 30 s): lightning. Where it's going to strike crackles for about a second first, and it never strikes within 4 cells of a head. It sets the bark alight: fire burns for about 5 seconds and creeps to the odd neighbouring cell (smouldering first, harmlessly, so you see it coming). **Crawl into fire and you catch alight:** for about 2 seconds you lose a segment every 6 ticks, 3 in all, the same as a crash (they fall off roasted), but you keep moving; rain or snow puts you out sooner; at your smallest, it finishes you. Boxed in, the rivals will take the fire over a crash too. **Food in the fire cooks:** an apple or a bead bakes after about 2 seconds (worth 2), and goes to ash if it stays in. Storms are often followed by rain.
 - **Burrows:** the first beetle cracks a burrow open in the bark, and later ones open more (up to three). Burrows are safe to cross; cracks spread from them as the round goes on. A scared beetle that reaches one dives in and pops out of a burrow a moment later.
 - **Sudden death:** after two minutes no new food appears, the sky clears, and a big woodpecker lands beside the board. Every few seconds it picks a patch of about 7 cells somewhere on the log, eyes it (the patch glows and cracks, faster and faster) for about a second and a half, swoops in and drums it out. It aims clear of everyone while it can (never at a body or food, never within 2 cells of a head), but once it's chosen, whatever's in the patch when it strikes goes: food, fire, and any part of a snake. Caught by the body and you lose everything behind the cut (it falls off as beads); caught by the head and you're out. It gets hungrier as it goes: each rest a little shorter, each patch a cell bigger, so the log shrinks faster and faster. With nothing new to eat and apples rotting away, hunger and the woodpecker finish the round.
-- **Winter** (snow, now and then a spell of weather): the lean season. One apple, rotting twice as fast, no new mushrooms, no golden apples, and everyone gets hungry 1.75 times as fast. Snow puts fire out. In **wind**, a fire flings burning leaves downwind: they smoulder first, then burn small.
+- **Winter** (snow, now and then a spell of weather): the lean season. One apple, rotting twice as fast, no new mushrooms, no golden apples, and everyone gets hungry 1.75 times as fast. Snow puts fire out. In **wind** and storms, a fire flings burning leaves downwind: they smoulder first, then burn small.
 
 ### Leaping
 
@@ -57,11 +57,11 @@ Press **Play with friends** on the start screen, then **Host a game** and send t
 |--------|----------|-------|
 | Steer | Arrow keys or WASD (turns are queued, so quick double turns work) | Swipe (anywhere on the screen during a round) |
 | Leap (or use a golden power) | Press ahead (the way you're going) | Swipe ahead |
-| Nap (pause) | Space or P | ⏸ button |
-| Start / start over | Enter or R (or any arrow on the start screen) | Play button |
+| Nap (pause) | Space, P or Esc | ⏸ button |
+| Start / start over | Enter or R (mid-round it asks first: press it again), or any arrow on the start screen | Play button |
 | Hall of Fame | H | Hall of Fame button |
 | Sound / music | M / N | 🔈 / ♪ buttons |
-| Watching speed | 1, 2, 3 | 1× 2× 4× buttons |
+| Watching speed | 1, 2, 4 | 1× 2× 4× buttons |
 
 The game naps by itself when you switch tabs or windows, so you never come back to a dead snake.
 
