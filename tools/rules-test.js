@@ -248,12 +248,12 @@ const feed = g => { for (const o of g.snakes) { o.lastAte = g.time; o.nextStarve
   const left = apple.expires - g.tick;
   feed(g); E.step(g);
   check('...rotting twice as fast', apple.expires - g.tick === left - 2, `${left} then ${apple.expires - g.tick}`);
-  // (Nobody moves, for a long while: in clear weather golden apples come; in winter, none.)
+  // (Nobody moves, for a long while, the clock held back so sudden death never comes: in clear weather golden apples come; in winter, none.)
   const goldens = kind => {
     const g2 = board([[line(5, 5, 4), 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']]);
     for (const o of g2.snakes) o.stunUntil = 1e9;
     let n = 0;
-    for (let t = 0; t < 3000; t++) { g2.weather = { kind, since: 0, until: 1e12, nextGust: 1e12, nextStrike: 1e12 }; feed(g2); E.step(g2); n += g2.events.filter(e => e.type === 'spawn' && e.kind === 'golden').length; g2.food = g2.food.filter(f => f.kind !== 'golden'); }
+    for (let t = 0; t < 3000; t++) { g2.time = 0; g2.weather = { kind, since: 0, until: 1e12, nextGust: 1e12, nextStrike: 1e12 }; feed(g2); E.step(g2); n += g2.events.filter(e => e.type === 'spawn' && e.kind === 'golden').length; g2.food = g2.food.filter(f => f.kind !== 'golden'); }
     return n;
   };
   golden = goldens('snow');
