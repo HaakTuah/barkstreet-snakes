@@ -6,12 +6,17 @@
 // units to device pixels.
 //
 // Cost control, measured in Chrome's GPU process as well as in script: the
-// bark, grid lines and holes live on a prerendered static layer; food, meat,
-// the woodpecker and the "+1"s are cached sprites; particles come from a fixed
-// pool; colours come from cached ramps. Bodies are drawn as rectangles, then
-// circles: separate fills batch into one GPU operation, while one path of many
-// circles is triangulated every frame and strokes between circles break the
-// batch. The per-frame path builds no strings and no closures.
+// bark and holes live on a prerendered static layer (the next round's is
+// built ahead, while a card is up); food, meat, the woodpecker and the "+1"s
+// are cached sprites; particles come from a fixed pool; colours come from
+// cached ramps. Bodies are drawn as rectangles, then circles: separate fills
+// batch into one GPU operation, while one path of many contours is
+// triangulated every frame and strokes between circles break the batch. A
+// translucent shape made of overlapping pieces (the shadows, a force field's
+// colour on a rival) is drawn opaque into an offscreen veil and laid on once.
+// Force fields are cached layers, with no clip per frame. The per-frame path
+// builds no strings and no closures, but for a few passing moments (the
+// woodpecker finding its perch, a blast, a dash's streak, smouldering fire).
 window.SnakeRender = (() => {
   const T = window.TUNING;
   const GRID = T.GRID;
@@ -977,15 +982,25 @@ window.SnakeRender = (() => {
     if (s.stunUntil > game.tick) return 'dazed';
     for (const o of game.snakes) if (!o.alive && o.killerId === s.id && o.killer !== 'self' && game.tick - (o.diedAt ?? -99) < 30) return 'proud';
     const h = s.body[0];
-    let shut = 0;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const x = h.x + dx, y = h.y + dy;
-      if (x < 0 || y < 0 || x >= GRID || y >= GRID || game.holes.has(y * GRID + x) || game.snakes.some(o => o.alive && o.body.some(c => c.x === x && c.y === y))) shut++;
+    let shut = 0, near = false;
+    for (let d = 0; d < 4; d++) {
+      const x = h.x + SIDES[2 * d], y = h.y + SIDES[2 * d + 1];
+      if (x < 0 || y < 0 || x >= GRID || y >= GRID || game.holes.has(y * GRID + x) || bodyAt(x, y)) shut++;
     }
-    if (shut >= 3 || game.snakes.some(o => o !== s && o.alive && Math.abs(o.body[0].x - h.x) + Math.abs(o.body[0].y - h.y) <= 2)) return 'scared';
+    for (const o of game.snakes) if (o !== s && o.alive && Math.abs(o.body[0].x - h.x) + Math.abs(o.body[0].y - h.y) <= 2) near = true;
+    if (shut >= 3 || near) return 'scared';
     const v = findById(s.memory.victimId);
     if (v && v.alive) return Math.abs(v.body[0].x - h.x) + Math.abs(v.body[0].y - h.y) <= 4 ? 'closing' : 'stalking';
     return 'calm';
+  }
+  const SIDES = [1, 0, -1, 0, 0, 1, 0, -1];
+  // Is any living snake's body on (x, y)?
+  function bodyAt(x, y) {
+    for (const o of game.snakes) {
+      if (!o.alive) continue;
+      for (const c of o.body) if (c.x === x && c.y === y) return true;
+    }
+    return false;
   }
   function updateMute(s, now) {
     const key = muteMood(s), mood = MUTE_MOODS[key];
@@ -1726,21 +1741,17 @@ window.SnakeRender = (() => {
   // on along the body, bending with it.
   function drawTie(a) {
     const p = a.pts, c = CELL;
-    const seg = (i, j) => { const dx = p[2 * j] - p[2 * i], dy = p[2 * j + 1] - p[2 * i + 1], len = Math.hypot(dx, dy) || 1; return [dx / len, dy / len, len]; };
-    const [ax, ay] = seg(0, 1), [bx, by, blen] = seg(1, 2);
+    const alen = Math.hypot(p[2] - p[0], p[3] - p[1]) || 1, ax = (p[2] - p[0]) / alen, ay = (p[3] - p[1]) / alen;
+    const blen = Math.hypot(p[4] - p[2], p[5] - p[3]) || 1, bx = (p[4] - p[2]) / blen, by = (p[5] - p[3]) / blen;
     // From the chin (just inside the head's edge) to the collar...
     const kx = p[0] + ax * c * 0.45, ky = p[1] + ay * c * 0.45;
     const mx = p[2], my = p[3];
     // ...then on toward the next segment, ending in a point.
     const end = Math.min(blen, c * 0.85), ex = mx + bx * end, ey = my + by * end;
-    const quad = (x1, y1, w1, x2, y2, w2, dx, dy) => {
-      ctx.moveTo(x1 - dy * w1, y1 + dx * w1); ctx.lineTo(x2 - dy * w2, y2 + dx * w2);
-      ctx.lineTo(x2 + dy * w2, y2 - dx * w2); ctx.lineTo(x1 + dy * w1, y1 - dx * w1); ctx.closePath();
-    };
     ctx.fillStyle = '#dc2626';
     ctx.beginPath();
-    quad(kx, ky, c * 0.07, mx, my, c * 0.12, ax, ay);
-    quad(mx, my, c * 0.12, ex - bx * c * 0.12, ey - by * c * 0.12, c * 0.15, bx, by);
+    tieQuad(kx, ky, c * 0.07, mx, my, c * 0.12, ax, ay);
+    tieQuad(mx, my, c * 0.12, ex - bx * c * 0.12, ey - by * c * 0.12, c * 0.15, bx, by);
     ctx.fill();
     circle(mx, my, c * 0.12); // (smooth where it bends)
     ctx.beginPath(); // the point
@@ -1753,6 +1764,11 @@ window.SnakeRender = (() => {
     ctx.strokeStyle = 'rgba(255,255,255,0.25)'; // a sheen down the middle
     ctx.lineWidth = c * 0.03;
     ctx.beginPath(); ctx.moveTo(kx + ax * c * 0.1, ky + ay * c * 0.1); ctx.lineTo(mx, my); ctx.lineTo(ex - bx * c * 0.2, ey - by * c * 0.2); ctx.stroke();
+  }
+  // A piece of the tie from (x1, y1) to (x2, y2), heading (dx, dy): w1 either side, widening to w2.
+  function tieQuad(x1, y1, w1, x2, y2, w2, dx, dy) {
+    ctx.moveTo(x1 - dy * w1, y1 + dx * w1); ctx.lineTo(x2 - dy * w2, y2 + dx * w2);
+    ctx.lineTo(x2 + dy * w2, y2 - dx * w2); ctx.lineTo(x1 + dy * w1, y1 - dx * w1); ctx.closePath();
   }
 
   // The living snakes, in passes, so no snake's shadow falls on another's body.
@@ -2069,19 +2085,20 @@ window.SnakeRender = (() => {
   function telescope(t) {
     const c = CELL, e = stayOut(t), x = 0.38 - 0.24 * (1 - e);
     fromMouth();
-    const tube = (x0, len, w) => {
-      ctx.fillStyle = '#d4a017';
-      ctx.fillRect(c * x0, -c * w, c * len, c * w * 2);
-      ctx.fillStyle = '#fde68a'; // a shine along the top
-      ctx.fillRect(c * x0, -c * w, c * len, c * w * 0.6);
-      ctx.fillStyle = '#78350f'; // a ring at the front
-      ctx.fillRect(c * (x0 + len - 0.03), -c * w, c * 0.03, c * w * 2);
-    };
     ctx.fillStyle = '#bae6fd'; // the lens
     ctx.fillRect(c * (x + 0.38 * e + 0.17), -c * 0.06, c * 0.035, c * 0.12);
-    tube(x + 0.38 * e, 0.19, 0.075); // the thinnest slides furthest...
-    tube(x + 0.2 * e, 0.2, 0.095);
-    tube(x, 0.22, 0.12); // ...out of the widest
+    spyglassTube(x + 0.38 * e, 0.19, 0.075); // the thinnest slides furthest...
+    spyglassTube(x + 0.2 * e, 0.2, 0.095);
+    spyglassTube(x, 0.22, 0.12); // ...out of the widest
+  }
+  function spyglassTube(x0, len, w) {
+    const c = CELL;
+    ctx.fillStyle = '#d4a017';
+    ctx.fillRect(c * x0, -c * w, c * len, c * w * 2);
+    ctx.fillStyle = '#fde68a'; // a shine along the top
+    ctx.fillRect(c * x0, -c * w, c * len, c * w * 0.6);
+    ctx.fillStyle = '#78350f'; // a ring at the front
+    ctx.fillRect(c * (x0 + len - 0.03), -c * w, c * 0.03, c * w * 2);
   }
 
   // Vulture: a bone, held crosswise and chewed on a moment.
@@ -2090,21 +2107,22 @@ window.SnakeRender = (() => {
     ctx.translate(c * 0.64, 0);
     ctx.rotate(0.3 + Math.sin(p * 14) * 0.08);
     ctx.scale(k, k);
-    const shape = () => {
-      ctx.beginPath();
-      ctx.rect(-c * 0.045, -c * 0.25, c * 0.09, c * 0.5);
-      for (const y of [-0.26, 0.26]) for (const x of [-0.05, 0.05]) {
-        ctx.moveTo(c * (x + 0.06), c * y);
-        ctx.arc(c * x, c * y, c * 0.06, 0, TAU);
-      }
-    };
     ctx.strokeStyle = '#57534e'; // an outline round the whole bone...
     ctx.lineWidth = c * 0.05;
-    shape();
+    boneShape();
     ctx.stroke();
     ctx.fillStyle = '#f5f5f4'; // ...then the bone over it
-    shape();
+    boneShape();
     ctx.fill();
+  }
+  function boneShape() {
+    const c = CELL;
+    ctx.beginPath();
+    ctx.rect(-c * 0.045, -c * 0.25, c * 0.09, c * 0.5);
+    for (let y = -0.26; y < 0.3; y += 0.52) for (let x = -0.05; x < 0.1; x += 0.1) { // (a knob at each corner)
+      ctx.moveTo(c * (x + 0.06), c * y);
+      ctx.arc(c * x, c * y, c * 0.06, 0, TAU);
+    }
   }
 
   // Mason: a papyrus scroll, unrolled from the mouth: lines of writing (Latin,
@@ -2125,17 +2143,19 @@ window.SnakeRender = (() => {
       ctx.lineTo(c * x, c * (w - 0.05 - (i % 3) * 0.05));
     }
     ctx.stroke();
-    const roll = (x, rad) => { // a rolled end: the roll, its rod's knobs either side
-      ctx.fillStyle = '#d9c38c';
-      ctx.fillRect(c * (x - rad), -c * (w + 0.015), c * rad * 2, c * (w + 0.015) * 2);
-      ctx.fillStyle = 'rgba(58,38,20,0.25)';
-      ctx.fillRect(c * (x + rad * 0.3), -c * (w + 0.015), c * rad * 0.7, c * (w + 0.015) * 2);
-      ctx.fillStyle = '#7c2d12';
-      circle(c * x, -c * (w + 0.05), c * 0.04);
-      circle(c * x, c * (w + 0.05), c * 0.04);
-    };
-    roll(x0, 0.035);
-    roll(x1, rr);
+    scrollEnd(x0, 0.035, w);
+    scrollEnd(x1, rr, w);
+  }
+  // A rolled end of the scroll (w: half the sheet's width): the roll, its rod's knobs either side.
+  function scrollEnd(x, rad, w) {
+    const c = CELL;
+    ctx.fillStyle = '#d9c38c';
+    ctx.fillRect(c * (x - rad), -c * (w + 0.015), c * rad * 2, c * (w + 0.015) * 2);
+    ctx.fillStyle = 'rgba(58,38,20,0.25)';
+    ctx.fillRect(c * (x + rad * 0.3), -c * (w + 0.015), c * rad * 0.7, c * (w + 0.015) * 2);
+    ctx.fillStyle = '#7c2d12';
+    circle(c * x, -c * (w + 0.05), c * 0.04);
+    circle(c * x, c * (w + 0.05), c * 0.04);
   }
 
   // Metagamer: a keyboard, slid out to type up its notes on you (a key or two
@@ -2165,6 +2185,7 @@ window.SnakeRender = (() => {
   }
 
   // Wildcard: a dollar bill, slid out like a tip.
+  const BILL_FONT = `800 ${CELL * 0.2}px sans-serif`;
   function bill(t, p) {
     const c = CELL;
     fromMouth();
@@ -2179,7 +2200,7 @@ window.SnakeRender = (() => {
     ctx.lineWidth = c * 0.012;
     ctx.strokeRect(c * 0.4, -c * 0.085, c * 0.44, c * 0.17);
     ctx.fillStyle = '#3f6212'; // ...and the dollar sign in the middle
-    ctx.font = `800 ${c * 0.2}px sans-serif`;
+    ctx.font = BILL_FONT;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('$', c * 0.62, c * 0.01);
@@ -2224,7 +2245,7 @@ window.SnakeRender = (() => {
   // striped, that unrolls from its curl with a toot: at full stretch its
   // fringed tip flutters and a puff of confetti flies off it; then it rolls
   // back up. Outlined, so it reads at phone size.
-  const HORN = ['#ec4899', '#facc15', '#8b5cf6', '#facc15'];
+  const HORN = ['#ec4899', '#facc15', '#8b5cf6', '#facc15'], CURL = new Float64Array(64); // (CURL: its spiral's points, x, y, ...)
   function blower(t, p) {
     const c = CELL, e = stayOut(t, 1.4), k = Math.min(1, t * 5);
     ctx.translate(c * 0.4, 0); // (pops out of the mouth)
@@ -2244,20 +2265,23 @@ window.SnakeRender = (() => {
     }
     const x1 = x0 + len, curl = 1 - e;
     if (curl > 0.04) { // ...and the rest still rolled up at its end: a spiral, curling up and back
-      const R = c * (0.05 + 0.12 * curl), turns = 0.8 + 1.6 * curl, steps = Math.ceil(turns * 10);
-      const pts = [[x1, 0]];
+      const R = c * (0.05 + 0.12 * curl), turns = 0.8 + 1.6 * curl, steps = Math.ceil(turns * 10), pts = CURL;
+      pts[0] = x1; pts[1] = 0;
       for (let i = 1; i <= steps; i++) {
         const a = i / steps * turns * TAU, rr = R * (1 - 0.6 * i / steps);
-        pts.push([x1 + Math.sin(a) * rr, -R + Math.cos(a) * rr]);
+        pts[2 * i] = x1 + Math.sin(a) * rr; pts[2 * i + 1] = -R + Math.cos(a) * rr;
       }
       ctx.lineCap = 'round';
       ctx.strokeStyle = INK;
       ctx.lineWidth = w * 0.8 + c * 0.04;
-      ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(pts[0], pts[1]);
+      for (let i = 1; i <= steps; i++) ctx.lineTo(pts[2 * i], pts[2 * i + 1]);
+      ctx.stroke();
       ctx.lineWidth = w * 0.8;
-      for (let i = 1; i < pts.length; i++) {
+      for (let i = 1; i <= steps; i++) {
         ctx.strokeStyle = HORN[(n + i) % 4];
-        ctx.beginPath(); ctx.moveTo(pts[i - 1][0], pts[i - 1][1]); ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(pts[2 * i - 2], pts[2 * i - 1]); ctx.lineTo(pts[2 * i], pts[2 * i + 1]); ctx.stroke();
       }
     } else { // full stretch: a fringe fluttering at the tip, and a toot of confetti
       ctx.strokeStyle = '#facc15';
@@ -2533,21 +2557,14 @@ window.SnakeRender = (() => {
         break;
       }
       case 'vulture': { // beady eyes under a scowl, and a big hooked beak that gapes at a meal
-        const beak = () => {
-          ctx.beginPath();
-          ctx.moveTo(c * 0.2, -c * 0.17);
-          ctx.quadraticCurveTo(c * 0.56, -c * 0.17, c * 0.8, c * 0.04); // over the top to the hook
-          ctx.quadraticCurveTo(c * 0.62, c * 0.14, c * 0.2, c * 0.17);
-          ctx.closePath();
-        };
         ctx.fillStyle = '#e7d7a8'; // pale horn, outlined dark so it reads small
         ctx.strokeStyle = '#292524';
         ctx.lineWidth = c * 0.04;
         ctx.lineJoin = 'round';
-        beak();
+        vultureBeak();
         ctx.fill();
         ctx.save();
-        beak();
+        vultureBeak();
         ctx.clip();
         ctx.fillStyle = '#a8a29e'; // a grey cere across the base...
         ctx.fillRect(c * 0.18, -c * 0.2, c * 0.1, c * 0.4);
@@ -2564,7 +2581,7 @@ window.SnakeRender = (() => {
           ctx.fill();
         }
         ctx.restore();
-        beak();
+        vultureBeak();
         ctx.stroke();
         ctx.fillStyle = '#44403c'; // a nostril
         ctx.beginPath();
@@ -2623,21 +2640,14 @@ window.SnakeRender = (() => {
       case 'metagamer': { // 3D glasses (red and cyan, card frame), eyes on whoever it's studying through them
         mouth(open);
         lookingEyes(0.05);
-        const lens = (sg, tint) => {
-          ctx.beginPath();
-          if (ctx.roundRect) ctx.roundRect(c * 0.03, sg < 0 ? -c * 0.33 : c * 0.07, c * 0.25, c * 0.26, c * 0.06);
-          else ctx.rect(c * 0.03, sg < 0 ? -c * 0.33 : c * 0.07, c * 0.25, c * 0.26);
-          ctx.fillStyle = tint;
-          ctx.fill();
-        };
-        lens(-1, 'rgba(239,68,68,0.62)'); // left eye red...
-        lens(1, 'rgba(14,165,233,0.6)'); // ...right eye cyan
-        for (const [w, col] of [[0.085, '#0f172a'], [0.05, '#f8fafc']]) { // the card frame, outlined so it reads on a cyan head
-          ctx.strokeStyle = col;
-          ctx.lineWidth = c * w;
+        lens3d(-1, 'rgba(239,68,68,0.62)'); // left eye red...
+        lens3d(1, 'rgba(14,165,233,0.6)'); // ...right eye cyan
+        for (let pass = 0; pass < 2; pass++) { // the card frame, outlined so it reads on a cyan head
+          ctx.strokeStyle = pass ? '#f8fafc' : '#0f172a';
+          ctx.lineWidth = c * (pass ? 0.05 : 0.085);
           ctx.lineJoin = 'round';
           ctx.beginPath();
-          for (const sg of [-1, 1]) {
+          for (let sg = -1; sg <= 1; sg += 2) {
             const y0 = sg < 0 ? -c * 0.33 : c * 0.07;
             if (ctx.roundRect) ctx.roundRect(c * 0.03, y0, c * 0.25, c * 0.26, c * 0.06); else ctx.rect(c * 0.03, y0, c * 0.25, c * 0.26);
             ctx.moveTo(c * 0.1, sg * c * 0.33); ctx.lineTo(-c * 0.14, sg * c * 0.36); // the arms, back over the head
@@ -2648,25 +2658,13 @@ window.SnakeRender = (() => {
         break;
       }
       case 'wildcard': { // a golden combover swept forward with a flip at the front, squinty eyes, a pout
-        // The hair, seen from above: a puffy golden mass at the back, combed
-        // across to one side and forward, ending in a curl over that eye.
-        const hair = () => {
-          ctx.beginPath();
-          ctx.moveTo(-c * 0.2, c * 0.44); // the back of the far side...
-          ctx.bezierCurveTo(-c * 0.62, c * 0.42, -c * 0.66, -c * 0.3, -c * 0.32, -c * 0.5); // ...puffed out round the back...
-          ctx.bezierCurveTo(-c * 0.04, -c * 0.62, c * 0.3, -c * 0.56, c * 0.36, -c * 0.34); // ...swept forward along the near side...
-          ctx.bezierCurveTo(c * 0.4, -c * 0.2, c * 0.24, -c * 0.12, c * 0.18, -c * 0.24); // ...the curl over the brow...
-          ctx.bezierCurveTo(c * 0.1, -c * 0.34, -c * 0.06, -c * 0.12, -c * 0.06, c * 0.08); // ...the parting line, back across...
-          ctx.bezierCurveTo(-c * 0.06, c * 0.26, -c * 0.12, c * 0.38, -c * 0.2, c * 0.44);
-          ctx.closePath();
-        };
         ctx.save();
         ctx.translate(-c * 0.02, c * 0.03);
-        hair();
+        combover();
         ctx.fillStyle = 'rgba(120,53,15,0.35)'; // its shadow on the head
         ctx.fill();
         ctx.restore();
-        hair();
+        combover();
         ctx.fillStyle = '#fbbf24';
         ctx.fill();
         ctx.strokeStyle = '#fde68a'; // combed strands, all swept the same way
@@ -2848,16 +2846,8 @@ window.SnakeRender = (() => {
       case 'capricious': { // (until its first mood) can't make its mind up: one eye big, one small, a brow cocked
         mouth(open);
         if (blinking) { lids(0.09); break; }
-        const eye = (y, w, r) => {
-          const reach = (w - r) * 0.85, ox = gazeX * c * reach, oy = gazeY * c * reach;
-          ctx.fillStyle = '#fffbea';
-          circle(c * 0.15, c * y, c * w);
-          ctx.fillStyle = INK;
-          circle(c * 0.15 + ox, c * y + oy, c * r);
-          catchlight(c * 0.15 + ox, c * y + oy, c * r);
-        };
-        eye(-0.21, 0.12, 0.07);
-        eye(0.21, 0.075, 0.045);
+        oddEye(-0.21, 0.12, 0.07);
+        oddEye(0.21, 0.075, 0.045);
         ctx.strokeStyle = INK;
         ctx.lineWidth = c * 0.045;
         ctx.lineCap = 'round';
@@ -2872,6 +2862,47 @@ window.SnakeRender = (() => {
         lookingEyes(0.06);
     }
     blinkNow = false;
+  }
+  // (Shapes for the faces, here rather than made afresh every frame.)
+  // Vulture's beak, as the current path.
+  function vultureBeak() {
+    const c = CELL;
+    ctx.beginPath();
+    ctx.moveTo(c * 0.2, -c * 0.17);
+    ctx.quadraticCurveTo(c * 0.56, -c * 0.17, c * 0.8, c * 0.04); // over the top to the hook
+    ctx.quadraticCurveTo(c * 0.62, c * 0.14, c * 0.2, c * 0.17);
+    ctx.closePath();
+  }
+  // One lens of Metagamer's 3D glasses (sg: -1 left, 1 right), filled with its tint.
+  function lens3d(sg, tint) {
+    const c = CELL;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(c * 0.03, sg < 0 ? -c * 0.33 : c * 0.07, c * 0.25, c * 0.26, c * 0.06);
+    else ctx.rect(c * 0.03, sg < 0 ? -c * 0.33 : c * 0.07, c * 0.25, c * 0.26);
+    ctx.fillStyle = tint;
+    ctx.fill();
+  }
+  // Wildcard's hair, seen from above, as the current path: a puffy golden mass
+  // at the back, combed across to one side and forward, ending in a curl over that eye.
+  function combover() {
+    const c = CELL;
+    ctx.beginPath();
+    ctx.moveTo(-c * 0.2, c * 0.44); // the back of the far side...
+    ctx.bezierCurveTo(-c * 0.62, c * 0.42, -c * 0.66, -c * 0.3, -c * 0.32, -c * 0.5); // ...puffed out round the back...
+    ctx.bezierCurveTo(-c * 0.04, -c * 0.62, c * 0.3, -c * 0.56, c * 0.36, -c * 0.34); // ...swept forward along the near side...
+    ctx.bezierCurveTo(c * 0.4, -c * 0.2, c * 0.24, -c * 0.12, c * 0.18, -c * 0.24); // ...the curl over the brow...
+    ctx.bezierCurveTo(c * 0.1, -c * 0.34, -c * 0.06, -c * 0.12, -c * 0.06, c * 0.08); // ...the parting line, back across...
+    ctx.bezierCurveTo(-c * 0.06, c * 0.26, -c * 0.12, c * 0.38, -c * 0.2, c * 0.44);
+    ctx.closePath();
+  }
+  // One of undecided Capricious's eyes (at y: the white's radius w, the pupil's r), turned to what it's watching.
+  function oddEye(y, w, r) {
+    const c = CELL, reach = (w - r) * 0.85, ox = gazeX * c * reach, oy = gazeY * c * reach;
+    ctx.fillStyle = '#fffbea';
+    circle(c * 0.15, c * y, c * w);
+    ctx.fillStyle = INK;
+    circle(c * 0.15 + ox, c * y + oy, c * r);
+    catchlight(c * 0.15 + ox, c * y + oy, c * r);
   }
 
   // ------------------------------------------------------- homes and flags
@@ -3590,6 +3621,10 @@ window.SnakeRender = (() => {
   // A sprite drawn at (x, y) + offset, scaled about a pivot (px, py) relative to (x, y).
   function blitAbout(sp, x, y, px, py, sx, sy, rot) {
     const half = SPRITE * CELL / 2;
+    if (!rot) { // (not turned: one scaled blit, no transform to set and undo)
+      ctx.drawImage(sp, x + px - sx * (half + px), y + py - sy * (half + py), SPRITE * CELL * sx, SPRITE * CELL * sy);
+      return;
+    }
     ctx.save();
     ctx.translate(x + px, y + py);
     if (rot) ctx.rotate(rot);
@@ -4053,13 +4088,13 @@ window.SnakeRender = (() => {
           const left = Math.max(0, Math.min(1, (f.from - 1 - tickPos) / T.STRIKE_WARN_TICKS));
           const flick = lively ? 0.7 + 0.3 * Math.sin(now / 37 + ph) : 1;
           ctx.beginPath(); ctx.arc(x, y, c * (0.35 + 1.1 * left), 0, TAU);
-          ctx.strokeStyle = `rgba(196,181,253,${0.25 * flick})`;
+          ctx.strokeStyle = rgba('#c4b5fd', 0.25 * flick);
           ctx.lineWidth = 9;
           ctx.stroke();
-          ctx.strokeStyle = `rgba(237,233,254,${0.9 * flick})`;
+          ctx.strokeStyle = rgba('#ede9fe', 0.9 * flick);
           ctx.lineWidth = 2.2;
           ctx.stroke();
-          ctx.fillStyle = `rgba(196,181,253,${0.35 + 0.3 * (1 - left)})`;
+          ctx.fillStyle = rgba('#c4b5fd', 0.35 + 0.3 * (1 - left));
           circle(x, y, c * 0.34);
           ctx.strokeStyle = '#f5f3ff';
           ctx.lineWidth = 1.6;
@@ -4159,18 +4194,20 @@ window.SnakeRender = (() => {
     if (!bolt) return;
     const age = now - bolt.at;
     if (age > 320) { bolt = null; return; }
-    const a = 1 - age / 320;
-    for (const [col, w] of [['rgba(196,181,253,0.55)', 9], ['rgba(237,233,254,0.95)', 3.2], ['#ffffff', 1.4]]) {
-      ctx.strokeStyle = col;
+    const a = 1 - age / 320, pts = bolt.pts;
+    for (let l = 0; l < BOLT_LINES.length; l++) {
+      ctx.strokeStyle = BOLT_LINES[l][0];
       ctx.globalAlpha = a;
-      ctx.lineWidth = w;
+      ctx.lineWidth = BOLT_LINES[l][1];
       ctx.lineJoin = 'round';
       ctx.beginPath();
-      bolt.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
   }
+  const BOLT_LINES = [['rgba(196,181,253,0.55)', 9], ['rgba(237,233,254,0.95)', 3.2], ['#ffffff', 1.4]]; // (a glow, the bolt, its white core)
   function drawFlash(now) {
     const age = now - flashAt;
     if (age < 0 || age > 300 || reduced) return;
@@ -4190,28 +4227,36 @@ window.SnakeRender = (() => {
     if (age > life) { rainbow = null; return; }
     const fade = Math.min(1, age / 600, (life - age) / 1600), grow = reduced ? 1 : Math.min(1, age / 1400), c = CELL;
     const x = rainbow.x * c + c / 2, y = rainbow.y * c + c / 2, fromLeft = rainbow.x < GRID / 2;
-    const R = Math.min(SIZE * 0.95, Math.max(SIZE * 0.45, y - SIZE * 0.1)), cx = fromLeft ? x + R : x - R;
+    const R = Math.min(SIZE * 0.95, Math.max(SIZE * 0.45, y - SIZE * 0.1));
     // From the apple's foot round over the top, as far as it has grown.
-    const a0 = fromLeft ? Math.PI : TAU, dir = fromLeft ? 1 : -1, span = Math.PI * grow, foot = Math.min(span, 0.32);
-    const bw = c * 0.3;
-    const arc = (rad, from, to) => { ctx.beginPath(); ctx.arc(cx, y, rad, a0 + dir * from, a0 + dir * to, !fromLeft); ctx.stroke(); };
-    const bands = (alpha, from, to) => {
-      ctx.globalAlpha = 0.14 * fade * alpha; // a soft glow under it
-      ctx.strokeStyle = '#fffbea';
-      ctx.lineWidth = bw * 9;
-      arc(R, from, to);
-      ctx.globalAlpha = 0.3 * fade * alpha;
-      ctx.lineWidth = bw + 0.8;
-      for (let i = 0; i < RAINBOW.length; i++) { ctx.strokeStyle = RAINBOW[i]; arc(R + (3 - i) * bw, from, to); }
-    };
+    const span = Math.PI * grow, foot = Math.min(span, 0.32);
+    bow.cx = fromLeft ? x + R : x - R; bow.y = y; bow.R = R; bow.fade = fade; bow.fromLeft = fromLeft;
+    bow.a0 = fromLeft ? Math.PI : TAU; bow.dir = fromLeft ? 1 : -1;
     ctx.save();
     ctx.beginPath(); ctx.rect(0, 0, SIZE, SIZE); ctx.clip();
     ctx.lineCap = 'butt';
     // (the foot fades in, out of the apple)
-    for (let i = 0; i < 6; i++) bands((i + 1) / 7, foot * i / 6, foot * (i + 1) / 6);
-    if (span > foot) bands(1, foot, span);
+    for (let i = 0; i < 6; i++) bowBands((i + 1) / 7, foot * i / 6, foot * (i + 1) / 6);
+    if (span > foot) bowBands(1, foot, span);
     ctx.restore();
     ctx.globalAlpha = 1;
+  }
+  // The rainbow's bands (and the glow under them) from `from` to `to` along it, at `alpha`.
+  const bow = { cx: 0, y: 0, R: 0, fade: 0, fromLeft: true, a0: 0, dir: 1 };
+  function bowBands(alpha, from, to) {
+    const bw = CELL * 0.3;
+    ctx.globalAlpha = 0.14 * bow.fade * alpha; // a soft glow under it
+    ctx.strokeStyle = '#fffbea';
+    ctx.lineWidth = bw * 9;
+    bowArc(bow.R, from, to);
+    ctx.globalAlpha = 0.3 * bow.fade * alpha;
+    ctx.lineWidth = bw + 0.8;
+    for (let i = 0; i < RAINBOW.length; i++) { ctx.strokeStyle = RAINBOW[i]; bowArc(bow.R + (3 - i) * bw, from, to); }
+  }
+  function bowArc(rad, from, to) {
+    ctx.beginPath();
+    ctx.arc(bow.cx, bow.y, rad, bow.a0 + bow.dir * from, bow.a0 + bow.dir * to, !bow.fromLeft);
+    ctx.stroke();
   }
 
   // ------------------------------------------------------------ the woodpecker
@@ -4557,12 +4602,18 @@ window.SnakeRender = (() => {
     ctx.lineTo(hx + aw, tip + sgn * ah);
     ctx.closePath();
     ctx.stroke(); ctx.fill();
-    ctx.font = `700 ${Math.round(c * (label === 'YOU' ? 0.85 : 0.62))}px Fredoka, system-ui, sans-serif`;
+    ctx.font = markerFont(Math.round(c * (label === 'YOU' ? 0.85 : 0.62)));
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const ly = tip + sgn * (ah * 1.7 + c * 0.6), half = Math.min(SIZE / 2, ctx.measureText(label).width / 2 + 4), lx = Math.min(SIZE - half, Math.max(half, hx));
     ctx.lineWidth = c * 0.16; ctx.strokeStyle = 'rgba(58,38,20,0.9)'; ctx.strokeText(label, lx, ly);
     ctx.fillStyle = col; ctx.fillText(label, lx, ly);
+  }
+  const markerFonts = new Map(); // size -> font (a size or two: no string built per frame)
+  function markerFont(px) {
+    let f = markerFonts.get(px);
+    if (!f) markerFonts.set(px, f = `700 ${px}px Fredoka, system-ui, sans-serif`);
+    return f;
   }
 
   // Call after every tick, with that tick's events: sets off pops, gulps and puffs.
