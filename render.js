@@ -1074,7 +1074,7 @@ window.SnakeRender = (() => {
   // the head: more negative is higher) and, unless it's biting, the mouth.
   const MUTE_BROWS = { calm: [0.05, -0.04, 0.04], stalking: [0.0, 0.03, 0.11], closing: [-0.03, 0.06, 0.15], scared: [0.09, 0.0, -0.05], proud: [0.03, -0.02, 0.07], dazed: [0.07, 0.07, 0.07] };
   function muteMood(s) {
-    if (s.stunUntil > game.tick) return 'dazed';
+    if (s.stunUntil >= game.tick) return 'dazed'; // (until it moves again, as the stars: see drawBody)
     for (const o of game.snakes) if (!o.alive && o.killerId === s.id && o.killer !== 'self' && game.tick - (o.diedAt ?? -99) < 30) return 'proud';
     const h = s.body[0];
     let shut = 0, near = false;
@@ -1173,7 +1173,7 @@ window.SnakeRender = (() => {
 
   // Turn the eyes toward the focus (eased on the screen, so a turn of the
   // head doesn't swing them, and at the same speed at any frame rate).
-  // Stunned, with a turn pressed, they look the way it'll go instead.
+  // Stunned, with a turn pressed (or a power asked for), they look the way it'll go instead.
   function updateGaze(s, look, a, now) {
     const q = game ? queuedOf(s) : null, f = game && !q ? focusOf(s, look, a, now) : null;
     let tx = s.dir.x, ty = s.dir.y; // nothing to look at: straight ahead
@@ -1729,7 +1729,7 @@ window.SnakeRender = (() => {
       a.nextBlink = now + T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN);
     }
     if (!dead) { updateGaze(s, look, a, now); steer(s, a, now); }
-    const dizzy = !dead && s.stunUntil > game.tick; // (stunned: its head wobbles, and stars go round it)
+    const dizzy = !dead && s.stunUntil >= game.tick; // (stunned: its head wobbles, and stars go round it, until the tick it moves again)
     const q = dizzy ? queuedOf(s) : null, lean = dead ? 0 : leanOf(s, a, q);
     if (lean) { const h = Math.atan2(a.hs, a.hc) + lean; headCos = Math.cos(h); headSin = Math.sin(h); }
     else { headCos = a.hc; headSin = a.hs; }
@@ -1783,7 +1783,7 @@ window.SnakeRender = (() => {
       ctx.beginPath(); ctx.arc(pts[0], pts[1], CELL * (0.6 + 0.9 * k), 0, TAU); ctx.stroke();
     }
     if (dizzy) { // three stars going round, cream and inked (gold by a head means a power), clear of its pips and the edge: see starsOff
-      const t = reduced ? 0 : now / 240, so = starsOff(s), cy = pts[1] + so;
+      const t = reduced ? 0 : now / 240, cy = pts[1] + starsOff(s);
       ctx.fillStyle = '#fffbea';
       ctx.strokeStyle = 'rgba(58,38,20,0.85)';
       ctx.lineWidth = 1.3;
@@ -1791,22 +1791,6 @@ window.SnakeRender = (() => {
         const a2 = t + i * TAU / 3;
         star(pts[0] + Math.cos(a2) * CELL * 0.55, cy + Math.sin(a2) * CELL * 0.18, CELL * 0.22);
         ctx.stroke();
-      }
-      // With a turn pressed: a small inked chevron on that side of the head
-      // (past the stars, if they're there; on the board, even pointing off
-      // it), so the press shows as heard, and where it'll take you. (The
-      // eyes look that way too, and the head leans.)
-      if (q) {
-        const d = q.y && (so < 0) === (q.y < 0) ? Math.abs(so) + CELL * 0.62 : CELL * 0.95, w = CELL * 0.2, m = CELL * 0.12;
-        const cx = Math.min(SIZE - m, Math.max(m, pts[0] + q.x * d)), cy2 = Math.min(SIZE - m, Math.max(m, pts[1] + q.y * d));
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-        ctx.moveTo(cx - q.x * w + q.y * w, cy2 - q.y * w + q.x * w);
-        ctx.lineTo(cx, cy2);
-        ctx.lineTo(cx - q.x * w - q.y * w, cy2 - q.y * w - q.x * w);
-        ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.17; ctx.stroke();
-        ctx.strokeStyle = '#fffbea'; ctx.lineWidth = CELL * 0.09; ctx.stroke();
       }
     }
 
@@ -1848,7 +1832,7 @@ window.SnakeRender = (() => {
 
   // Stunned, with a turn pressed (q): the head leans a little the way it'll
   // go (the eyes look there: see updateGaze; and a chevron shows it: see
-  // drawBody), so you can see the press was heard. Eased; held still with
+  // drawPress), so you can see the press was heard. Eased; held still with
   // reduced motion (it's news, not wobble).
   const LEAN = 0.38;
   function leanOf(s, a, q) {
@@ -1856,9 +1840,89 @@ window.SnakeRender = (() => {
     a.lean = reduced ? to : a.lean + (to - a.lean) * (1 - Math.exp(-frameDt / 60));
     return Math.abs(a.lean) < 0.002 ? 0 : a.lean;
   }
-  // The turn your snake will take when its stun's over, if you've pressed one.
-  // (Yours only: it answers your press, and online a friend's press is theirs to know.)
-  const queuedOf = s => s.id === viewerId && s.stunUntil > game.tick && s.queue?.length ? s.queue[0] : null;
+  // The way your snake will go when its stun's over, if you've said: a turn
+  // you've pressed, or ahead, for a power (it waits for the move). Until the
+  // tick it moves, as the stars. (Yours only: it answers your press. Online
+  // the queue is the host's, so a press is shown as this screen saw it: see
+  // pressed.)
+  function queuedOf(s) {
+    if (s.id !== viewerId || s.stunUntil < game.tick) return null;
+    if (press.stun === s.stunUntil) return press.dir;
+    if (s.queue?.length) return s.queue[0];
+    return s.leapArmed >= s.stunUntil ? s.dir : null;
+  }
+  // A press while your snake is stunned, as this screen saw it: online the
+  // queue is the host's, so a friend's screen never has it, and the host's
+  // own press waits a round trip (the game says as it sends one). Taken as
+  // the game takes it: never into the neck; the latest wins; ahead asks for
+  // a power, or after a turn, changes your mind back. For this stun only.
+  const press = { dir: null, stun: -1 };
+  function pressed(dir) {
+    const s = game && findById(viewerId);
+    if (!dir || !s || s.stunUntil < game.tick) { press.dir = null; press.stun = -1; return; }
+    const h = s.body[0], n = s.body[1];
+    if (n && (h.x + dir.x + GRID) % GRID === n.x && (h.y + dir.y + GRID) % GRID === n.y) return; // (into its neck: nothing)
+    const ahead = dir.x === s.dir.x && dir.y === s.dir.y;
+    const turned = press.stun === s.stunUntil ? !!press.dir && !(press.dir.x === s.dir.x && press.dir.y === s.dir.y) : s.queue?.length > 0;
+    press.dir = ahead && turned ? null : dir;
+    press.stun = s.stunUntil;
+  }
+  // Stunned, with a turn pressed: a small inked chevron on that side of your
+  // head (past the stars, if they're there; on the board, even pointing off
+  // it), so the press shows as heard, and where it'll take you. (The eyes
+  // look that way too, and the head leans.) With a power asked for (ahead,
+  // or ahead and then a turn: it goes the way you go), its own mark there
+  // instead, a little further out (it's longer). Over every snake and word:
+  // ahead, it's over what you hit, and the Bonk! there.
+  function drawPress() {
+    const s = findById(viewerId), a = s && s.alive && s.stunUntil >= game.tick ? anim.get(s) : null;
+    const q = a && a.n ? queuedOf(s) : null;
+    if (!q) return;
+    const pts = a.pts, so = starsOff(s), power = s.leapArmed >= s.stunUntil || (q.x === s.dir.x && q.y === s.dir.y);
+    const d = (q.y && (so < 0) === (q.y < 0) ? Math.abs(so) + CELL * 0.62 : CELL * 0.95) + (power ? CELL * (s.dashes > 0 ? 0.18 : 0.28) : 0);
+    const w = CELL * 0.2, m = CELL * 0.12;
+    const cx = Math.min(SIZE - m, Math.max(m, pts[0] + q.x * d)), cy = Math.min(SIZE - m, Math.max(m, pts[1] + q.y * d));
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    if (power) pressMark(cx, cy, q, s.dashes > 0);
+    else {
+      ctx.moveTo(cx - q.x * w + q.y * w, cy - q.y * w + q.x * w);
+      ctx.lineTo(cx, cy);
+      ctx.lineTo(cx - q.x * w - q.y * w, cy - q.y * w - q.x * w);
+    }
+    ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.17; ctx.stroke();
+    ctx.strokeStyle = power && (s.leaps || s.dashes) ? '#fde68a' : '#fffbea'; ctx.lineWidth = CELL * 0.09; ctx.stroke(); // (a golden power's in Honey)
+  }
+  // A power asked for, as a mark where the chevron would go (its tip at x,
+  // y, pointing along q), added to the current path: the leap's hop, as on
+  // its chip (an arc up and over, ending in an arrowhead), or for dashes,
+  // their double chevron.
+  function pressMark(x, y, q, dash) {
+    const w = CELL * 0.2;
+    if (dash) {
+      for (let i = 0; i < 2; i++) {
+        const tx = x - q.x * w * 0.95 * i, ty = y - q.y * w * 0.95 * i;
+        ctx.moveTo(tx - q.x * w + q.y * w, ty - q.y * w + q.x * w);
+        ctx.lineTo(tx, ty);
+        ctx.lineTo(tx - q.x * w - q.y * w, ty - q.y * w - q.x * w);
+      }
+      return;
+    }
+    // (up the screen for a turn across it, to the left for one up or down: never upside down)
+    const bx = -Math.abs(q.y), by = -Math.abs(q.x), span = w * 1.25, rise = w * 1.5;
+    const x0 = x - q.x * span * 2, y0 = y - q.y * span * 2, x1 = x, y1 = y; // (from behind, landing at the tip)
+    const kx = (x0 + x1) / 2 + bx * rise, ky = (y0 + y1) / 2 + by * rise;
+    ctx.moveTo(x0, y0);
+    ctx.quadraticCurveTo(kx, ky, x1, y1);
+    const ux = x1 - kx, uy = y1 - ky, ul = Math.hypot(ux, uy) || 1, ah = w * 0.75; // (the arrowhead, along the way it comes down)
+    for (const sg of SIDES2) {
+      const c = Math.cos(2.5 * sg), sn = Math.sin(2.5 * sg), ax = (ux * c - uy * sn) / ul, ay = (ux * sn + uy * c) / ul;
+      ctx.moveTo(x1 + ax * ah, y1 + ay * ah);
+      ctx.lineTo(x1, y1);
+    }
+  }
+  const SIDES2 = [-1, 1];
 
   // Marble veins across a disc (centre x, y, radius r), their own way for
   // each segment i: a long wandering one and a short faint one beside it,
@@ -4852,6 +4916,7 @@ window.SnakeRender = (() => {
     drawParticles(dt);
     drawYou(now);
     drawFloaters(dt);
+    drawPress(); // (over the Bonk! a crash puts where you'll press)
     drawFlash(now);
     drawWoodpecker(alpha, now, dt);
   }
@@ -5467,6 +5532,7 @@ window.SnakeRender = (() => {
     blasts.length = 0;
     streaks.length = 0;
     refusal.at = -1e9; refusal.tick = -1;
+    press.dir = null; press.stun = -1;
     timeFrom = timeAt = shownTime = g.time;
     bird.placed = false; bird.arrivedAt = -1e9;
     for (const k in sky) sky[k] = 0;
@@ -5492,7 +5558,7 @@ window.SnakeRender = (() => {
   return {
     showYou,
     ready: s => { animOf(s, lastNow || performance.now()).readyAt = lastNow || performance.now(); },
-    init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, markOf, celebrate, setQuality, setBoardRect,
+    init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, markOf, celebrate, setQuality, setBoardRect, pressed,
     get quality() { return quality; },
     holding: () => deaths.length > 0 || corpses.length > 0,
     setViewer(id) { viewerId = id; },
