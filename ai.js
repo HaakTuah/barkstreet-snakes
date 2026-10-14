@@ -699,6 +699,11 @@ window.SnakeAI = (() => {
     const foodW = shrinking ? Math.max(3, w.food) : fed ? w.food * w.fedFactor : Math.max(w.food, 8 * hunger) * (1 + 2 * hunger);
     const eatW = shrinking ? Math.max(40, w.eat) : fed ? w.eat * w.fedFactor : Math.max(w.eat, 150 * hunger) * (1 + 2 * hunger);
 
+    // How many ticks an apple I saw has left (in winter it rots twice as
+    // fast, and has done since I saw it).
+    const winter = view.weather === 'snow';
+    const applesLeft = f => winter && !f.cooked ? (f.expires - view.tick - age) / 2 : f.expires - view.tick; // (baked, it keeps)
+
     // Food worth by kind. Negative means "avoid eating".
     const apple = w.normalFood ?? 1;
     const worth = {
@@ -719,7 +724,7 @@ window.SnakeAI = (() => {
       if (!v) continue;
       if (f.cooked && v > 0) v *= TUNE.COOKED_GROWTH; // (baked: worth more)
       if (f.gold && v > 0) v *= 1.5; // (a golden beetle: leaps too)
-      if (f.kind === 'food' && f.expires != null && f.expires - view.tick < Math.abs(f.x - myHead.x) + Math.abs(f.y - myHead.y)) continue; // (it'll have rotted)
+      if (f.kind === 'food' && f.expires != null && applesLeft(f) < Math.abs(f.x - myHead.x) + Math.abs(f.y - myHead.y)) continue; // (it'll have rotted)
       const i = f.y * N + f.x;
       foodValue[i] += v;
       foodCells[foodCount++] = i;

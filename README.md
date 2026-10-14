@@ -11,9 +11,9 @@ A snake game on a mossy log: you against three AI rivals on a fallen log in the 
 - When a snake dies, it falls to pieces: glossy beads in its own colours and markings, which anyone can eat.
 - The last snake alive wins. If you die first, you can watch the rest of the round or start over.
 - The first moves are a little slower, then the game speeds up gently (about 25%) over two minutes.
-- **Apples rot:** each lasts 10 to 14 seconds (it bruises, browns and gets a fly as it goes), then it rots away and a fresh one drops from the tree above somewhere else.
+- **Apples rot:** each lasts about 8 to 16 seconds (less as the round speeds up) (it bruises, browns and gets a fly as it goes), then it rots away and a fresh one drops from the tree above somewhere else.
 - **Hunger:** go 20 seconds without eating (mushrooms don't count) and you start shrinking, one segment every 1.5 seconds. Starve at length 3 and you're out, unless your head reaches food that very moment. The bar under each name shows how hungry everyone is.
-- **Weather:** after the first 20 seconds, spells of weather come and go, with clear spells between. Everyone, the rivals included, sees all of it coming.
+- **Weather:** after the first 15 seconds, spells of weather come and go, with clear spells between. Everyone, the rivals included, sees all of it coming.
   - **Sun:** golden hour. Golden apples are five times as likely.
   - **Wind:** gusts knock apples loose, up to three more than usual.
   - **Rain:** two more mushrooms sprout, and any fire goes out. Half the time, when the rain stops, a rainbow arches right across the log out of a golden apple.
