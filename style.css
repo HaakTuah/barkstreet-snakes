@@ -927,7 +927,7 @@ button.link:active { transform: none; }
   .hud { gap: 6px; }
   .scores-table td, .scores-table th { padding-inline: 5px; }
   .scores-table .name .who { display: block; margin: 1px 0 0 19px; line-height: 1.1; }
-  .bar-row { grid-template-columns: 96px 1fr 28px; }
+  .bar-row { grid-template-columns: 100px 1fr 28px; } /* ("Edge & holes" on one line) */
 }
 
 @media (max-width: 360px) {

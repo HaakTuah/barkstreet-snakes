@@ -1543,7 +1543,7 @@
       Records.renderScores(recordsBody, game.entryId, scoresFilter, PLAYER_COLOR);
     } else {
       // Every persona's color, not just this round's, plus old names (Viper, Warden).
-      const colors = { self: PLAYER_COLOR, Viper: '#c084fc', Warden: '#3b82f6' };
+      const colors = { self: PLAYER_COLOR, Viper: '#c084fc', Warden: '#3b82f6', woodpecker: '#dc2626' }; // (the woodpecker: its red crest)
       for (const p of Object.values(PERSONAS)) colors[p.name] = p.ink || p.color;
       colors.fire = '#f97316';
       Records.renderStats(recordsBody, colors);

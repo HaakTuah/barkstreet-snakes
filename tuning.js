@@ -71,7 +71,7 @@ window.TUNING = Object.freeze({
   OPENING_TICKS: 3,         // ...for this many ticks, easing down to START_TICK
   START_TICK: 120,          // ms per tick once the round is underway
   MIN_TICK: 90,             // the fastest it ever gets...
-  RAMP_MS: 120000,          // ...reached after this much game time (a gentle 25% speed-up)
+  RAMP_MS: 120000,          // ...reached after this much game time (a gentle speed-up: about a third faster)
   MUSIC_MID_MS: 45000,      // the soundtrack picks up (shaker, faster) after this much game time
 
   // ---------------------------------------------------------- sudden death
