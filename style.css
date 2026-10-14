@@ -207,15 +207,43 @@ header { min-width: 0; }
   box-shadow: 0 0 0 1.5px rgba(58, 38, 20, 0.45);
 }
 
-.scoreboard .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.scoreboard .len { font-weight: 700; font-variant-numeric: tabular-nums; }
-/* Powers: a little badge (golden when it's a golden power; yours, lit when your leap's ready). */
-.scoreboard .pow { flex: 0 3 auto; min-width: 1.3em; overflow: hidden; text-overflow: clip; padding: 0 5px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; line-height: 1.35; color: var(--ink-soft); background: rgba(58, 38, 20, 0.08); opacity: 0.55; white-space: nowrap; }
-.scoreboard .pow.ready { opacity: 1; color: var(--ink); background: rgba(58, 38, 20, 0.14); }
-.scoreboard .pow.gold { opacity: 1; color: #713f12; background: #fde047; box-shadow: 0 0 0 1px rgba(161, 98, 7, 0.5); }
-.scoreboard .pow.wrap { box-shadow: 0 0 0 1.5px #eab308; }
-.scoreboard .pow.wrap:not(.mine) { opacity: 1; color: var(--ink); } /* the edges wrap: a gold ring (your leap's readiness still shows) */
-/* (the badge gives way before the name does, on a narrow tag) */
+.scoreboard .name { flex: 1 1 auto; min-width: 2.2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scoreboard .len { flex: none; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; } /* (the crown and the number on one line) */
+/* Powers: a chip (6 px, like everything small) with an ink icon and a count.
+   Golden powers are Honey. Your own leap fills as it cools and is solid when
+   ready; the icon and numbers keep full contrast all the while. The edges
+   wrapping add a loop and the seconds left, in a Honey line. On a narrow tag
+   the badge gives way first, down to its icon, and the name keeps its room. */
+.scoreboard .pow {
+  flex: 0 40 auto;
+  min-width: 19px;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  overflow: hidden;
+  padding: 1px 4px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+  white-space: nowrap;
+  background: linear-gradient(90deg, rgba(58, 38, 20, 0.16) var(--fill, 100%), rgba(58, 38, 20, 0.05) var(--fill, 100%));
+}
+.scoreboard .pow svg { flex: none; width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.scoreboard .pow b { font-weight: 700; font-variant-numeric: tabular-nums; }
+.scoreboard .pow .w { display: inline-flex; align-items: center; gap: 1px; margin-left: 3px; }
+.scoreboard .pow.ready { background: rgba(58, 38, 20, 0.18); box-shadow: inset 0 0 0 1px rgba(58, 38, 20, 0.3); }
+.scoreboard .pow.small { color: var(--ink-soft); }
+.scoreboard .pow.gold { background: #fde68a; box-shadow: inset 0 0 0 1px #d4a017; }
+.scoreboard .pow.wrap { box-shadow: inset 0 0 0 1.5px #d4a017; }
+/* A narrow tag: the chip is just its icons (the board's pips and the screen
+   reader's words still give the count), so the name keeps its letters. */
+.scoreboard li { container: tag / inline-size; }
+@container tag (max-width: 160px) {
+  .scoreboard .pow b { display: none; }
+  .scoreboard .pow { padding-inline: 3px; }
+}
 
 /* Hunger: a thin bar along the bottom of each tag (scaled, never resized). */
 .scoreboard .hunger {
@@ -556,6 +584,7 @@ canvas {
   font-size: 0.9rem;
   font-weight: 600;
   text-align: center;
+  text-wrap: balance; /* (two even lines, not a long one and a word) */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 0 0 2px var(--parchment-2);
   pointer-events: none;
   animation: slam 0.46s cubic-bezier(0.2, 0.9, 0.3, 1.2);

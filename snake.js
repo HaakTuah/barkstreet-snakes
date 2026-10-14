@@ -807,12 +807,12 @@
 
   // A banner fades while a head passes under it, so it never hides the board
   // (its size is estimated from the text, so this reads no layout).
-  let toastTimer, toastChars = 0, toastUnder = '';
+  let toastTimer, toastW = 0, toastH = 0, toastUnder = '';
   function toastFade() {
     let top = false, bottom = false;
     if (!toastEl.hidden && boardPx && game) {
       const cell = boardPx / GRID;
-      const rows = Math.ceil(52 / cell), half = Math.min(boardPx - 32, toastChars * 7.6 + 32) / 2 / cell;
+      const rows = Math.ceil((toastH + 12) / cell), half = toastW / 2 / cell; // (its real size: a long banner on a phone wraps to several lines)
       for (const s of game.snakes) {
         const h = s.body[0];
         if (!s.alive || Math.abs(h.x + 0.5 - GRID / 2) >= half + 0.5) continue;
@@ -847,11 +847,11 @@
     }
     toastLevel = level;
     toastHold = level === 'news' ? 0 : now + Math.min(ms, T.LESSON_HOLD_MS);
-    toastChars = text.length;
     toastEl.classList.remove('settled', 'leaving'); // (a new banner slams in)
     toastEl.dataset.kind = kind;
     toastEl.textContent = text;
     toastEl.hidden = false;
+    toastW = toastEl.offsetWidth; toastH = toastEl.offsetHeight; // (measured once a banner, unscaled by its slam)
     if (level !== 'news' || kind in FLAVOR.weather) say(text);
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
@@ -1037,7 +1037,7 @@
     tagsEl.textContent = '';
     for (const s of game.snakes) {
       const li = document.createElement('li');
-      li.innerHTML = '<span class="dot"></span><span class="name"></span><span class="sr-only"></span><span class="pow" hidden></span><span class="len"></span><span class="hunger"><i></i></span>';
+      li.innerHTML = '<span class="dot"></span><span class="name"></span><span class="sr-only"></span><span class="pow" aria-hidden="true" hidden></span><span class="len"></span><span class="hunger"><i></i></span>';
       li.querySelector('.name').textContent = isMe(s) ? 'You' : s.name;
       li.title = s.persona ? `${s.name}: ${s.persona.blurb}` : isMe(s) ? 'You' : `${s.name}, a friend`;
       if (s.persona) li.dataset.blurb = `${s.name}: ${s.persona.blurb}`; // tapped (phones have no tooltips), it says how it plays
@@ -1098,7 +1098,9 @@
         if (!force && s.alive && last.len !== undefined) bump(t.len, TAG_BUMP);
         last.len = len;
       }
-      const said = !s.alive ? ', ' : `${starving ? ', starving' : ''}${leading ? ', in the lead' : ''}, length `; // (for screen readers)
+      // Powers, in words for screen readers (the badge itself is hidden from them).
+      const holds = !s.alive ? '' : s.leaps ? `, ${s.leaps} golden leap${s.leaps === 1 ? '' : 's'}` : s.dashes ? `, ${s.dashes} dash${s.dashes === 1 ? '' : 'es'}` : '';
+      const said = !s.alive ? ', ' : `${starving ? ', starving' : ''}${leading ? ', in the lead' : ''}${holds}${s.wrapUntil > game.time ? ', the edges wrap for it' : ''}, length `; // (for screen readers)
       if (force || last.said !== said) { t.state.textContent = said; last.said = said; }
       if (force || last.bar !== bar) { t.bar.style.transform = `scaleX(${bar / 100})`; last.bar = bar; }
       if (force || last.alive !== s.alive) {
@@ -1112,25 +1114,39 @@
         last.leading = leading;
       }
       if (force || last.starving !== starving) { t.li.classList.toggle('starving', starving); last.starving = starving; }
-      // Powers: golden leaps (⤴2), dashes (»2), the edges wrapping (⟳ and seconds left); on your own tag, your leap (⤴), lit when it's ready.
+      // Powers: a chip with an icon in ink and a count. Golden leaps and
+      // dashes are Honey; the edges wrapping add a loop and the seconds left;
+      // on your own tag, your leap, filling as it cools and solid when ready.
       const wrapS = s.alive && s.wrapUntil > game.time ? Math.ceil((s.wrapUntil - game.time) / 1000) : 0;
-      const ready = isMe(s) && s.alive && E.leapIn(game, s) === 0;
-      const pow = !s.alive ? '' : (s.leaps ? '⤴' + s.leaps : s.dashes ? '»' + s.dashes : isMe(s) ? '⤴' : '') + (wrapS ? ' ⟳' + wrapS : '');
-      const gold = s.alive && (s.leaps > 0 || s.dashes > 0), wraps = wrapS > 0; // (the wrap: a gold ring, so your leap's readiness still shows)
-      if (force || last.pow !== pow || last.gold !== gold || last.ready !== ready || last.wraps !== wraps) {
-        t.pow.textContent = pow;
+      const leapIn = isMe(s) && s.alive ? E.leapIn(game, s) : 0, ready = isMe(s) && s.alive && leapIn === 0, small = leapIn === Infinity;
+      const kind = !s.alive ? '' : s.leaps ? 'leap' : s.dashes ? 'dash' : isMe(s) ? 'leap' : '', count = s.leaps || s.dashes || '';
+      const pow = kind || wrapS ? `${kind}|${count}|${wrapS}` : '';
+      const gold = s.alive && (s.leaps > 0 || s.dashes > 0), wraps = wrapS > 0;
+      const fill = small ? 0 : Math.floor((1 - leapIn / T.LEAP_COOLDOWN_MS) * 10) * 10; // (in tenths: a write a few times a second, not every frame)
+      if (force || last.pow !== pow) {
+        t.pow.innerHTML = (kind ? POW_ICON[kind] + (count ? `<b>${count}</b>` : '') : '') + (wrapS ? `<span class="w">${POW_ICON.wrap}<b>${wrapS}</b></span>` : '');
         t.pow.hidden = !pow;
+        last.pow = pow;
+      }
+      if (force || last.fill !== fill) { t.pow.style.setProperty('--fill', `${fill}%`); last.fill = fill; }
+      if (force || last.gold !== gold || last.ready !== ready || last.wraps !== wraps || last.small !== small) {
         t.pow.classList.toggle('gold', gold);
         t.pow.classList.toggle('wrap', wraps);
-        t.pow.classList.toggle('mine', isMe(s)); // (only your badge is dim while your leap isn't ready)
-        t.pow.classList.toggle('ready', ready);
-        t.pow.title = gold ? 'Holding a golden power' : wraps && !isMe(s) ? 'The edges wrap round for it' : ready ? 'Your leap’s ready' : 'Your leap needs a moment';
-        last.wraps = wraps;
+        t.pow.classList.toggle('ready', ready || !isMe(s));
+        t.pow.classList.toggle('small', small);
+        t.pow.title = gold ? (s.leaps ? 'Golden leaps: long ones, free' : 'Dashes: three cells at once') : wraps && !isMe(s) ? 'The edges wrap round for it' : ready ? 'Your leap’s ready' : small ? 'Too small to leap' : 'Your leap needs a moment';
         if (!force && isMe(s) && ready && last.ready === false && !s.leaps && !s.dashes) { R.ready(s); Audio.play('ready'); }
-        last.pow = pow; last.gold = gold; last.ready = ready;
+        last.gold = gold; last.ready = ready; last.wraps = wraps; last.small = small;
       }
     }
   }
+
+  // The badge's icons: small inline drawings in ink (no fallback-font glyphs).
+  const POW_ICON = {
+    leap: '<svg viewBox="0 0 12 12"><path d="M1.5 10.5C2.5 3 9 2.5 10.5 9.5"/><path d="M8.2 8.4l2.3 1.4.8-2.5"/></svg>',
+    dash: '<svg viewBox="0 0 12 12"><path d="M2 2.5 5.5 6 2 9.5M6.5 2.5 10 6l-3.5 3.5"/></svg>',
+    wrap: '<svg viewBox="0 0 12 12"><path d="M10 6.5a4 4 0 1 1-1.4-3"/><path d="M9.2 1.4l-.4 2.3-2.3-.3"/></svg>',
+  };
 
   // The scoreboard dot: the snake's current color,
   // the flag for Wildcard, two-tone for Joker, veined marble for Mason, Mute's
@@ -1148,6 +1164,7 @@
     const canPause = !online && (state === 'running' || state === 'paused');
     pauseBtn.disabled = !canPause;
     pauseBtn.setAttribute('aria-label', state === 'paused' ? 'Wake up' : 'Nap (pause)');
+    pauseBtn.title = state === 'paused' ? 'Wake up (Space)' : 'Nap (Space)';
     pauseBtn.dataset.paused = String(state === 'paused');
     // (Watching, the speed can be set during the countdown too.)
     speedEl.hidden = !(spectating() && !online && (canPause || state === 'countdown'));
