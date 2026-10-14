@@ -1551,6 +1551,7 @@ window.SnakeRender = (() => {
       drawTie(a);
     }
     if (look === 'mason') { // Caesar in marble: grey veins wandering across every segment, now and then a gold one
+      ctx.lineCap = 'round'; // (as the veins always left it, for the wreath)
       for (let i = 1; i < n; i++) {
         // (each segment's own sprite, drawn at the segment's size before any gulp, and scaled)
         const rb = Math.round(CELL * (0.44 - 0.1 * (i / (n - 1)))), sp = veinSprite(i, rb), h = (rb + 2) * rad[i] / rb;
@@ -2119,7 +2120,7 @@ window.SnakeRender = (() => {
     const c = CELL;
     ctx.beginPath();
     ctx.rect(-c * 0.045, -c * 0.25, c * 0.09, c * 0.5);
-    for (let y = -0.26; y < 0.3; y += 0.52) for (let x = -0.05; x < 0.1; x += 0.1) { // (a knob at each corner)
+    for (let y = -0.26; y < 0.3; y += 0.52) for (let x = -0.05; x < 0.1; x += 0.1) { // (two knobs at each end)
       ctx.moveTo(c * (x + 0.06), c * y);
       ctx.arc(c * x, c * y, c * 0.06, 0, TAU);
     }
