@@ -10,8 +10,8 @@ A snake game on a mossy log: you against three AI rivals on a fallen log in the 
 - **Crashes hurt, they don't kill (mostly).** Hit the edge, a hole, any snake's body or another snake's head and your head bounces back: you lose 3 segments off your tail (they break off as beads anyone can eat) and you're stunned for a moment, stars round your head. Steer meanwhile, and you go your way when it's over; if you don't, you turn to where there's room. **You're out** if you crash when you're at your smallest (3), or if there'll be nowhere to turn when the stun's over (a tail that'll have moved on by then counts as room). Two snakes meeting head-on with nowhere to turn: the longer one bounces, the shorter one's out (the same length: both). Everyone starts at 4, so your first crash costs one segment, not the round; after that, every apple is armour: the longer you are, the more knocks you can take.
 - When a snake dies, it falls to pieces: glossy beads in its own colours and markings, which anyone can eat.
 - The last snake alive wins. If you die first, you can watch the rest of the round or start over.
-- The first moves are a little slower, then the game speeds up gently (about 25%) over two minutes.
-- **Apples rot:** each lasts about 8 to 16 seconds (less as the round speeds up) (it bruises, browns and gets a fly as it goes), then it rots away and a fresh one drops from the tree above somewhere else.
+- The first moves are a little slower, then the game speeds up gently over two minutes, to about a third faster.
+- **Apples rot:** each lasts about 8 to 16 seconds, less as the round speeds up. It bruises, browns and gets a fly as it goes, then rots away, and a fresh one drops from the tree above somewhere else.
 - **Hunger:** go 20 seconds without eating (mushrooms don't count) and you start shrinking, one segment every 1.5 seconds. Starve at length 3 and you're out, unless your head reaches food that very moment. The bar under each name shows how hungry everyone is.
 - **Weather:** after the first 15 seconds, spells of weather come and go, with clear spells between. Everyone, the rivals included, sees all of it coming.
   - **Sun:** golden hour. Golden apples are five times as likely.
@@ -30,9 +30,9 @@ A snake game on a mossy log: you against three AI rivals on a fallen log in the 
 
 | Item | Effect |
 |------|--------|
-| Green apple | +1 length. There are always three on the board. |
+| Green apple | +1 length. Usually three on the board (one in winter, more in a wind, and no new ones once the woodpecker comes). |
 | Golden apple | +3 length. Rare, sparkles, and fades before it rots after about 12 seconds. |
-| Red mushroom | Poisonous, and it looks it (a violet haze, stink lines, spores). Shrinks you by 3 (never below 3). Withers after about 20 seconds and regrows elsewhere. Being short isn't always bad… |
+| Red mushroom | Poisonous, and it looks it (a violet haze, stink lines, spores). Shrinks you by 3 (never below 3). Withers after about 20 seconds and regrows elsewhere. |
 | Beads | +1 length. What's left of a dead snake, or the tail that broke off in a crash, in its colours. Roasted ones (from a snake on fire) are +2. |
 | Baked apple | +2 length. An apple that sat in a fire for about 2 seconds: steaming, glazed and split. |
 | Golden beetle | +2 length, and **two golden leaps** (up to three held): three cells in two ticks, hopping up to two, free. About one beetle in three is golden. |
@@ -79,7 +79,7 @@ Press **Watch AIs** on the start screen for a round between four AI snakes, with
 
 ## The rivals
 
-Each round, three of these seventeen are picked at random. The start screen tells you who you're up against and how each one plays. Only you have a real forked tongue: every few seconds each rival flicks out something of its own instead, such as Wildcard's dollar bill, Joker's party blower or Desperado's six-shooter.
+Each round, three of these seventeen are picked at random. The start screen tells you who you're up against and how each one plays. Only you have a real forked tongue: every few seconds each rival flicks out something of its own instead, such as Wildcard's dollar bill, Joker's party horn or Desperado's six-shooter.
 
 | Snake | Look | Style |
 |-------|------|-------|
@@ -95,22 +95,22 @@ Each round, three of these seventeen are picked at random. The start screen tell
 | **Mute** | a mood-ring mime: white greasepaint, beret, a painted tear; its body turns the colour of how it feels | Picks someone and closes an invisible box around them. Never says a word (it mimes). |
 | **Creeper** | teal, slit eyes | Sneaks up and rides right behind other snakes' tails. |
 | **Metagamer** | cyan, 3D glasses | Watches how each rival plays, then avoids the aggressive ones, shadows the greedy ones and hunts the evasive ones. |
-| **Capricious** | changes with its mood | Starts undecided, then switches between sniper, glutton, hermit and builder every few seconds. |
+| **Capricious** | changes with its mood | Starts undecided, then does impressions of Sniper, Gobbler, Ghost or Mason, ten seconds or so at a time. |
 | **Copycat** | pale copy of its model, cat ears | Copies whoever seems to be winning, right alongside them. Party member. |
 | **Joker** | jester hat, harlequin diamonds, red nose | Lures chasers into dead ends and swerves away at the last moment. |
 | **Desperado** | rust poncho, cowboy hat, bandana | An adrenaline junkie: skims the edge, bodies and other heads for the thrill of it. |
 | **Ouroboros** | a real snake: dark gold python diamonds, a wedge head, slit eyes, fangs | Chases its own tail: once it's long, it moves as a ring, and whatever's inside is in trouble. Now and then it bites its own tail. |
 
-All of them share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move (or can chase their own tail), don't let themselves be pinned against a wall or a body (or shut in a pocket) where another snake could come round and close the way out, and avoid the space around other snakes' heads. On top of that, each one chases its own goal.
+All of them share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move (or can chase their own tail), don't let themselves be pinned against the edge or a body (or shut in a pocket) where another snake could come round and close the way out, and avoid the space around other snakes' heads. On top of that, each one chases its own goal.
 
 They're also fair. They see the other snakes as they were about a quarter of a second ago, like a human's reaction time, so they can't dodge your sudden turns any faster than you could dodge theirs. And they aren't told which snake is you: you're judged only by how you move, like everyone else.
 
 ## Hall of Fame and stats
 
-Everything is saved in your browser only.
+Everything is saved in your browser only. If your browser won't keep anything (storage blocked, or full), the records last until you close the tab, and the Hall of Fame says so.
 
 - **Hall of Fame:** the top 10 rounds, ranked by finishing place (a win beats any 2nd place), then by how long the snake stayed alive, then by food eaten. The AI snakes get entries too, so you're competing against them on the list. Switch to **Only you** to see your own top 10. When a round makes the top three, or beats your best, you can carve your name on the end screen. Until you do, your rounds go in as Green (the game's name for you), and carving a name puts it on all of them.
-- **Your story:** rounds played, wins, average place and score, how often you finished in each place, and what killed you (including your nemesis, the rival that gets you most often).
+- **Your story:** rounds played, wins, average place and score, how often you finished in each place, and what killed you (including your nemesis, whatever gets you most often).
 
 ## Run locally
 
@@ -118,7 +118,7 @@ Serve the folder with any static server (for example `npx serve` or `python -m h
 
 - `?perf` shows a frame-time overlay (toggle it with the ` key).
 - `?debug` adds `SnakeDebug` to the console, for example `SnakeDebug.setup(['sniper', 'mason', 'ghost'])` to start a round against chosen rivals.
-- `node tools/records-test.js` checks that shared and played-together rounds land in each friend's Hall of Fame exactly once.
+- `node tools/records-test.js` checks that shared and played-together rounds land in each friend's Hall of Fame exactly once, and that a browser that won't keep records still has them until the tab closes.
 - `node tools/online-test.js` plays rounds through the online protocol and checks that a friend's screen matches the host's every tick.
 - `node tools/simulate.js 200` plays 200 AI-only rounds headlessly with the game's own rules and AI, and prints each personality's win rate, food, kills, how snakes die and so on. Add `--seed 1` to repeat a run exactly (on any machine), `--check` to fail on a stalled round, and `--root <dir>` to play another copy of the game, to compare versions.
 - `node tools/rules-test.js` checks the rules on hand-built boards: tails, head-ons, starving, the woodpecker's manners, what the AIs can see.
