@@ -231,4 +231,38 @@ Watching at 1× is comfortable (no frame over 16.7 ms in a minute). **The tools 
 
 ## After
 
-*(Filled in at the end of the pass.)*
+Every high and medium finding above is fixed or adapted as planned; the seven refuted ones stay skipped. The lows are done too, except where a row says skip. "After" screenshots of every state are in `docs/screenshots/after-3/`.
+
+### Frame times
+
+The same tools on both builds (`tools/bench.js 20`, `tools/trace.js 8`), headless Chrome at 800×800 and 2× density, before and after runs alternating on one machine. "Before" is `0922499`: this pass's measuring tools on the pre-pass game. Full cost is script plus GPU, each batch closed by a pixel readback.
+
+| | Before | After | Target |
+|---|---|---|---|
+| Long snakes, full cost per frame | 5.5–5.9 ms | 3.9 ms | ≤ 4 ms: **met** |
+| Force fields, full cost per frame | 24.3–24.9 ms | 5.3 ms | ≤ 1.5× the same board without fields: **not met**, about 2.3× (it was 3.2–3.7×) |
+| GPU per frame, long snakes / fields | 2.7–2.8 / 4.4 ms | 1.9 / 2.5 ms | |
+| Paint, long-snake scene | 13–16 ms a second | 6 ms a second | |
+| Watching at 1×: frames a second, p99 frame | 37–42, 4.5–5.5 ms | 57, 1.9–2.2 ms | |
+| Watching at 4×: frames a second | 22–24 | 37 | |
+| A new round's first frame | 53–63 ms (the bark rebuilt) | 12–18 ms (built in idle time) | no bark rebuild: **met** |
+| One tick, every AI decision included (median / p99) | 1 / 2.8–3.1 ms | 0.8–1 / 2.5–3.3 ms | |
+| Colour cache, a minute of fields in wind and storm | 2.9 → 5.9 MB retained | flat at 2.5–2.6 MB | flat: **met** |
+
+What's left in the fields scene is mostly rivals' colour inside fields (about 1.7 ms, bound by how many circles it draws), the live seams (0.6 ms, kept live for their crackle) and ripples (0.35 ms). That's on a stress scene with a realm, three colonies and four 30-cell snakes; a typical round never gets there.
+
+### Feel targets
+
+| Target | Result |
+|---|---|
+| A power only when you ask | Held keys' repeats steer nothing, and a turn pressed twice within 180 ms is a turn (checked with real key events in headless Chrome) |
+| The first knock really is free | The auto-turn picks the side with room, then the longest open run, then the one furthest from the edge (rules test) |
+| You can always see why | Death cards name the reason ("You hit the edge at your smallest"); your leap's cooldown is an arc at your head; a press that can't leap thunks and shakes your badge |
+| A calmer narrator | Watching AI rounds: one banner every 12.4 s (it was 10.6 s with this harness; 4.9 s in the audit's count, which included every repeat); playing: every 8.4 s (6.5 s); the golden apple once a round (it was three times) |
+| No clicks | 0 of 51 cues leak a step from silence (25 of 564 renders did) |
+| Small speakers | Through a 300 Hz high-pass your death is 7.1 dB louder than an apple at its loudest 100 ms (it was 3.1 dB quieter) |
+| Memory stays flat | Two minutes watching at 4×: heap flat after GC; a minute of fields: flat |
+
+### Played
+
+In headless Chrome with real key and touch events: bursts of 2–4 presses inside a tick, 300 times (never a reversal into the neck, none queued); a nap pressed between a turn and its tick (the board holds, the turn goes on waking); a hidden tab (naps, stays napping); resizing through four windows mid-round (the backing follows at full density); a swipe on a phone (it steers, the page holds still); two minutes watching at 4× (no errors, heap flat); a board 80% full (30 ticks drawn, no errors); storage that throws (the game plays and the Hall of Fame opens). Every test suite passes, and seeded simulations give the same trace with and without thinking ahead.

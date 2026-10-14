@@ -230,6 +230,7 @@ header { min-width: 0; }
   white-space: nowrap;
   background: linear-gradient(90deg, rgba(58, 38, 20, 0.16) var(--fill, 100%), rgba(58, 38, 20, 0.05) var(--fill, 100%));
 }
+.scoreboard .pow[hidden] { display: none; } /* (its display would otherwise win over hidden: an empty chip, like a dash) */
 .scoreboard .pow svg { flex: none; width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .scoreboard .pow b { font-weight: 700; font-variant-numeric: tabular-nums; }
 .scoreboard .pow .w { display: inline-flex; align-items: center; gap: 1px; margin-left: 3px; }
