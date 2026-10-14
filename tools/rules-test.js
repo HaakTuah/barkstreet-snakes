@@ -333,29 +333,82 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
 
 { // Head-on, both boxed in: the longer bounces, the shorter's out; the same length, both out.
   // A heads right into (6,5), boxed by its own coils above and below; B heads left into it, boxed the same way.
-  const A = [[5, 5], [4, 5], [4, 6], [5, 6], [6, 6], [6, 7], [5, 7], [4, 7], [3, 7], [3, 6], [3, 5], [3, 4], [4, 4], [5, 4], [5, 3], [5, 2], [5, 1]];
-  const B = [[7, 5], [8, 5], [8, 4], [7, 4], [7, 3], [8, 3], [9, 3], [9, 4], [9, 5], [9, 6], [8, 6], [7, 6], [7, 7], [8, 7], [9, 7], [9, 8], [9, 9]];
-  const g = board([[A, 'right'], [B.slice(0, 15), 'left']]);
+  const A = [[5, 5], [4, 5], [4, 6], [5, 6], [6, 6], [6, 7], [5, 7], [4, 7], [3, 7], [3, 6], [3, 5], [3, 4], [4, 4], [5, 4], [5, 3], [5, 2], [5, 1], [5, 0]];
+  const B = [[7, 5], [8, 5], [8, 4], [7, 4], [7, 3], [8, 3], [9, 3], [9, 4], [9, 5], [9, 6], [8, 6], [7, 6], [7, 7], [8, 7], [9, 7], [9, 8], [9, 9], [9, 10]];
+  const g = board([[A, 'right'], [B.slice(0, 16), 'left']]);
   const dying = E.step(g);
   check('head-on, both boxed in: the longer bounces', g.snakes[0].alive && g.snakes[0].stunUntil > g.tick, g.snakes[0].cause);
   check('...and the shorter is out', dying.includes(g.snakes[1]) && g.snakes[1].cause.startsWith('crashed head-on'), g.snakes[1].cause);
   const g2 = board([[A, 'right'], [B, 'left']]);
   check('...the same length: both out', E.step(g2).length === 2);
+  // Against one at its smallest (out anyway), the long one bounces too.
+  const g3 = board([[A, 'right'], [[[7, 5], [8, 5], [9, 5]], 'left']]);
+  const d3 = E.step(g3);
+  check('...and against one at its smallest', g3.snakes[0].alive && d3.includes(g3.snakes[1]), g3.snakes[0].cause);
+}
+
+{ // Head-on where only one is boxed in: the other has room of its own and turns away, so the cell they met in is the boxed one's way out.
+  const A = [[10, 10], [9, 10], [9, 9], [10, 9], [11, 9], [11, 8], [10, 8], [9, 8], [8, 8], [8, 9], [8, 10], [8, 11], [9, 11], [10, 11], [11, 11], [11, 12], [11, 13], [11, 14], [11, 15]];
+  const g = board([[A, 'right'], [[[12, 10], [13, 10], [14, 10], [15, 10], [16, 10]], 'left']]);
+  const [a, b] = g.snakes;
+  const dying = E.step(g);
+  check('head-on, only one boxed in: both bounce', !dying.length && a.alive && b.alive && a.stunUntil > g.tick && b.stunUntil > g.tick, a.cause);
+  for (let t = 0; t < T.STUN_TICKS + 1; t++) { feed(g); E.step(g); }
+  check('...the other turns away, the boxed one takes the cell they met in', a.alive && b.alive && a.body[0].x === 11 && a.body[0].y === 10 && b.body[0].x === 12 && b.body[0].y !== 10, JSON.stringify([a.body[0], b.body[0]]));
+}
+
+{ // After a head-on, the longer one may go back into the cell they met in (the other may not): it isn't turned into a dead end.
+  const A = [[10, 10], [9, 10], [8, 10], [8, 11], [9, 11], [10, 11], [11, 11], [11, 12], [11, 13], [11, 14], [11, 15], [11, 16]];
+  const g = board([[A, 'right'], [[[12, 10], [13, 10], [14, 10], [15, 10], [16, 10]], 'left']]);
+  for (const [x, y] of [[10, 8], [9, 9], [11, 9]]) g.holes.add(K(x, y)); // ((10,9), above A's head: a dead end)
+  const [a, b] = g.snakes;
+  E.step(g);
+  let again = 0;
+  for (let t = 0; t < T.STUN_TICKS + 1; t++) { feed(g); E.step(g); again += g.events.filter(e => e.type === 'crash').length; }
+  check('after a head-on the longer one takes the cell they met in, not a dead end', a.alive && b.alive && !again && a.body[0].x === 11 && a.body[0].y === 10 && b.body[0].x === 12 && b.body[0].y !== 10, JSON.stringify([a.body[0], b.body[0]]));
+}
+
+{ // An AI doesn't chase an apple that'll have rotted before it gets there.
+  const g = E.createGame({ withPlayer: false, personas: ['gobbler', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  a.body = line(5, 10, 4).map(([x, y]) => ({ x, y })); a.dir = D.right;
+  b.body = line(20, 22, 4).map(([x, y]) => ({ x, y })); b.dir = D.right;
+  g.food = [{ x: 5, y: 4, kind: 'food', expires: g.tick + 3 }, { x: 5, y: 17, kind: 'food', expires: g.tick + 999 }];
+  g.history = [{ snakes: g.snakes.map(o => ({ id: o.id, body: o.body.map(c => ({ ...c })), dir: o.dir, stun: 0, leaps: 0 })), food: g.food.map(f => ({ ...f })), holes: 0, fires: [], pecks: [] }]; // (what it sees: the board as built)
+  E.step(g);
+  check("an AI skips an apple that'll rot before it gets there", a.body[0].x === 5 && a.body[0].y === 11, JSON.stringify(a.body[0]));
 }
 
 { // Boxed in only if there'll be nowhere to turn when the stun's over: a rival's tail moving on in time counts as room.
   // A hits the right edge at (23,5): below is its own body, above a rival's body that's leaving.
-  const A = [[23, 5], [22, 5], [22, 6], [23, 6], [23, 7], [23, 8], [23, 9]];
-  const near = [[19, 4], [20, 4], [21, 4], [22, 4], [23, 4], [23, 3], [23, 2]];               // (23,4) frees in 3 ticks
-  const far = [[19, 4], [20, 4], [21, 4], [22, 4], [23, 4], [23, 3], [23, 2], [23, 1], [23, 0], [22, 0]]; // ...in 6
+  const A = [[23, 5], [22, 5], [22, 6], [23, 6], [23, 7], [23, 8], [23, 9], [23, 10], [23, 11]];
+  const near = [[19, 4], [20, 4], [21, 4], [22, 4], [23, 4], [23, 3], [23, 2]];                      // (23,4) is left in 3 ticks
+  const just = [[19, 4], [20, 4], [21, 4], [22, 4], [23, 4], [23, 3], [23, 2], [23, 1], [23, 0], [22, 0]]; // ...in 6: the tick A moves again
+  const late = [...just, [21, 0]];                                                                       // ...in 7: too late
   const g = board([[A, 'right'], [near, 'left']]);
   check('a rival\'s tail moving on before the stun ends counts as room', !E.step(g).includes(g.snakes[0]) && g.snakes[0].alive);
-  const g2 = board([[A, 'right'], [far, 'left']]);
+  const g1 = board([[A, 'right'], [just, 'left']]);
+  check('...even on the very tick it moves again', !E.step(g1).includes(g1.snakes[0]));
+  const g2 = board([[A, 'right'], [late, 'left']]);
   check('...one that won\'t, doesn\'t', E.step(g2).includes(g2.snakes[0]));
   // Its own tail breaking off can open the way too: coiled so the cell above is its own tail end.
   const coiled = [[23, 5], [22, 5], [22, 6], [23, 6], [23, 7], [22, 7], [21, 7], [21, 6], [21, 5], [21, 4], [22, 4], [23, 4]];
   const g3 = board([[coiled, 'right'], [[[5, 20], [4, 20], [3, 20]], 'right']]);
   check('...and so does its own tail breaking off', !E.step(g3).includes(g3.snakes[0]));
+  // The cell it ran into counts too, if that tail's gone by then (heading up into (23,4): a hole to its left, the edge to its right).
+  const up = [[23, 5], [23, 6], [23, 7], [23, 8], [23, 9], [23, 10], [23, 11]];
+  const g4 = board([[up, 'up'], [near, 'left']]);
+  g4.holes.add(K(22, 5));
+  check('...and so does the tail it ran into', !E.step(g4).includes(g4.snakes[0]), g4.snakes[0].cause);
+  // A rival that crashes this tick too: the tail that breaks off it is room at once (it's food).
+  const R = [[19, 3], [20, 3], [21, 3], [22, 3], [23, 3], [23, 4], [22, 4]]; // ((23,4) is its sixth cell; a hole ahead of it)
+  const g5 = board([[A, 'right'], [R, 'left']]);
+  g5.holes.add(K(18, 3));
+  check('...and so does a rival\'s tail breaking off in a crash', !E.step(g5).includes(g5.snakes[0]), g5.snakes[0].cause);
+  const g6 = board([[A, 'right'], [R, 'left']]);
+  g6.snakes[1].stunUntil = 50; // (stunned, not crashing: its tail stays)
+  check('...not a stunned one\'s', E.step(g6).includes(g6.snakes[0]));
 }
 
 { // Winter is the lean season: one apple, rotting twice as fast, and no golden apples.
@@ -369,10 +422,17 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
   const left = apple.expires - g.tick;
   feed(g); E.step(g);
   check('...rotting twice as fast', apple.expires - g.tick === left - 2, `${left} then ${apple.expires - g.tick}`);
-  const g2 = E.createGame({ withPlayer: false });
-  g2.weather = { kind: 'snow', since: 0, until: 1e9, nextGust: 0, nextStrike: 0 };
-  for (let t = 0; t < 600 && g2.snakes.filter(o => o.alive).length > 1; t++) { for (const o of g2.snakes) { o.lastAte = g2.time; o.nextStarve = g2.time + T.HUNGER_MS; } E.step(g2); golden += g2.events.filter(e => e.type === 'spawn' && e.kind === 'golden').length; }
-  check('...and no golden apples', golden === 0, golden);
+  // (Nobody moves, for a long while, the clock held back so sudden death never comes: in clear weather golden apples come; in winter, none.)
+  const goldens = kind => {
+    const g2 = board([[line(5, 5, 4), 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']]);
+    for (const o of g2.snakes) o.stunUntil = 1e9;
+    let n = 0;
+    for (let t = 0; t < 3000; t++) { g2.time = 0; g2.weather = { kind, since: 0, until: 1e12, nextGust: 1e12, nextStrike: 1e12 }; feed(g2); E.step(g2); n += g2.events.filter(e => e.type === 'spawn' && e.kind === 'golden').length; g2.food = g2.food.filter(f => f.kind !== 'golden'); }
+    return n;
+  };
+  golden = goldens('snow');
+  const clear = goldens('clear');
+  check('...and no golden apples', golden === 0 && clear > 3, `${golden} in winter, ${clear} in clear weather`);
 }
 
 { // Steering while stunned: it goes your way when the stun's over.

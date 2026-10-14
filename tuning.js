@@ -8,7 +8,7 @@ window.TUNING = Object.freeze({
 
   // ------------------------------------------------------------------ food
   APPLES: 3,                // green apples on the board at all times (+1)
-  APPLE_TICKS: 110,         // an apple rots away after about this many ticks (give or take a quarter: 10-14 s), and another drops somewhere
+  APPLE_TICKS: 110,         // an apple rots away after about this many ticks (give or take a quarter: about 8-16 s), and another drops somewhere
   MUSHROOMS: 2,             // red mushrooms on the board at all times
   MUSHROOM_TICKS: 180,      // a mushroom withers (and regrows elsewhere) after this many ticks
   GOLDEN_CHANCE: 0.004,     // chance per tick of a golden apple, while there is none
