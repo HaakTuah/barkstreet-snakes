@@ -918,7 +918,7 @@ window.SnakeChatter = (() => {
     'Et uxor: Incontinentia Buttocks.': { by: s => !GIGGLE_PROOF.includes(s.personaKey), lines: ['BWAHAHA—', 'I can’t. I CAN’T.', '*wheeze*'], own: 'guffaw', after: 800 },
   };
 
-  let boardEl, logEl, game;
+  let boardEl, logEl, bannerEl, game;
   let enabled = true, compact = false, logShown = true, listener = null;
   let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null, pendingReply = null, saidAt = {};
   let struck = false; // (lightning has struck in this storm: one remark is enough)
@@ -953,8 +953,9 @@ window.SnakeChatter = (() => {
     'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!', 'Hey! Sawing in half is MY trick, {who}!',
   ]);
   const toldThisRound = new Set();
-  const bubbles = new Map(); // snake id -> { el, snake, until, at, w, h, side, x, y, ... }
+  const bubbles = new Map(); // snake id -> { el, snake, until, at, w, h, side, x, y, ... }, oldest first
   const headAt = { x: 0, y: 0 }, headMine = { x: 0, y: 0 };
+  const taken = []; // (this frame: the banner's box and the bubbles placed so far)
 
   try { enabled = localStorage.getItem('snake-chatter') !== 'off'; } catch { /* storage unavailable */ }
 
@@ -994,6 +995,10 @@ window.SnakeChatter = (() => {
     addEventListener('resize', placeLog, { passive: true });
     addEventListener('scroll', placeLog, { passive: true });
     new ResizeObserver(placeLog).observe(logEl.closest('main') || document.body);
+    // The banner over the board: bubbles keep out of its way. Its box is read
+    // only after it changes (a new banner, moved to the foot, gone).
+    bannerEl = boardEl.querySelector('.toast');
+    if (bannerEl) new MutationObserver(() => { bannerStale = true; }).observe(bannerEl, { attributes: true, attributeFilter: ['hidden', 'class', 'data-kind'], childList: true, characterData: true, subtree: true });
   }
 
   function reset(g) {
@@ -1084,6 +1089,7 @@ window.SnakeChatter = (() => {
 
   function showBubble(s, text, at = null) {
     bubbles.get(s.id)?.el.remove();
+    bubbles.delete(s.id); // (so the newest comes last: it's the one that makes way)
     const el = document.createElement('div');
     el.className = 'bubble';
     el.setAttribute('aria-hidden', 'true'); // (screen readers get the log instead)
@@ -1092,7 +1098,7 @@ window.SnakeChatter = (() => {
     el.append(words);
     el.style.setProperty('--edge', s.persona?.ink || s.color);
     boardEl.appendChild(el);
-    bubbles.set(s.id, { el, snake: s, until: performance.now() + (at ? LAST_WORDS_MS : BUBBLE_MS), at: at && { x: at.x, y: at.y }, w: 0, h: 0, side: null, shown: null, want: null, wantSince: 0, ox: 0, oy: 0, x: NaN, y: NaN, tail: NaN, near: false });
+    bubbles.set(s.id, { el, snake: s, until: performance.now() + (at ? LAST_WORDS_MS : BUBBLE_MS), at: at && { x: at.x, y: at.y }, w: 0, h: 0, box: { x: 0, y: 0, w: 0, h: 0 }, side: null, shown: null, want: null, wantSince: 0, ox: 0, oy: 0, x: NaN, y: NaN, tail: NaN, near: false });
   }
 
   // Called every frame: bubbles follow the gliding heads, stay inside the
@@ -1102,8 +1108,10 @@ window.SnakeChatter = (() => {
   // room) for one going up or down. And it doesn't jump about as the snake
   // turns: it moves to another side only once that side has been the right
   // one for a moment (or its own has run out of room), and then glides there.
+  // Nor does it cover the banner or an older bubble: a side that would has no
+  // room, and with no side clear, it's nudged out of the way (gliding too).
   // keepClear: your snake, if you're playing: a bubble near your head fades.
-  const SIDE_DELAY = 450, GLIDE_MS = 110;
+  const SIDE_DELAY = 450, GLIDE_MS = 110, CLEAR = 4; // (CLEAR: px between a bubble and what it keeps out of)
   let lastLayout = 0;
   function layout(alpha, boardPx, keepClear = null) {
     if (!bubbles.size || !boardPx) { lastLayout = 0; return; }
@@ -1111,29 +1119,42 @@ window.SnakeChatter = (() => {
     const glide = lastLayout ? 1 - Math.exp(-Math.min(64, now - lastLayout) / GLIDE_MS) : 1;
     lastLayout = now;
     const cellPx = boardPx / window.TUNING.GRID, gap = cellPx * 0.75 + 6; // (6: room for the tail)
+    if (bannerStale || bannerPx !== boardPx) readBanner(boardPx);
+    taken.length = 0;
+    if (banner) taken.push(banner);
     for (const [id, b] of bubbles) {
       if (now > b.until || (!b.snake.alive && !b.at)) { b.el.remove(); bubbles.delete(id); continue; }
       if (b.at) { headAt.x = (b.at.x + 0.5) * cellPx; headAt.y = (b.at.y + 0.5) * cellPx; } // (last words: where it went out)
       else window.SnakeRender.headPx(b.snake, alpha, boardPx, headAt);
       if (!b.w) { b.w = b.el.offsetWidth; b.h = b.el.offsetHeight; } // (measured once, as it first shows)
       const w = b.w, h = b.h;
-      const room = side => side === 'above' ? headAt.y - gap - h >= 0 : side === 'below' ? headAt.y + gap + h <= boardPx
+      const inX = v => Math.min(boardPx - w - 4, Math.max(4, v)), inY = v => Math.min(boardPx - h - 4, Math.max(4, v));
+      // Where it sits on a side, relative to the head (its top-left corner),
+      // and where that is on the board; whether that side fits on the board,
+      // whether it's clear there too, or can be nudged clear (see nudge).
+      const offX = side => side === 'left' ? -gap - w : side === 'right' ? gap : -w / 2;
+      const offY = side => side === 'above' ? -gap - h : side === 'below' ? gap : -h / 2;
+      const spotX = side => inX(headAt.x + offX(side)), spotY = side => inY(headAt.y + offY(side));
+      const fits = side => side === 'above' ? headAt.y - gap - h >= 0 : side === 'below' ? headAt.y + gap + h <= boardPx
         : side === 'left' ? headAt.x - gap - w >= 0 : headAt.x + gap + w <= boardPx;
-      let want;
-      if (b.snake.dir.y !== 0) {
-        want = (b.side === 'left' || b.side === 'right') && room(b.side) ? b.side
-          : room('right') && (headAt.x < boardPx / 2 || !room('left')) ? 'right' : 'left';
-      } else {
-        want = b.side === 'below' && headAt.y < cellPx * 4 ? 'below' : room('above') ? 'above' : 'below';
-      }
+      const clear = side => fits(side) && free(spotX(side), spotY(side), w, h);
+      const movable = side => fits(side) && nudge(side, spotX(side), spotY(side), w, h, boardPx);
+      const choose = room => b.snake.dir.y !== 0
+        ? (b.side === 'left' || b.side === 'right') && room(b.side) ? b.side : room('right') && (headAt.x < boardPx / 2 || !room('left')) ? 'right' : 'left'
+        : b.side === 'below' && headAt.y < cellPx * 4 ? 'below' : room('above') ? 'above' : 'below';
+      let want = choose(clear);
+      if (!clear(want)) want = choose(movable); // (no side's clear as it is: one it can be nudged clear on,
+      if (!movable(want)) want = choose(fits); //  or failing that, the side it'd have alone)
       if (!b.side) b.side = want;
       else if (want !== b.side) {
         if (b.want !== want) { b.want = want; b.wantSince = now; }
-        if (now - b.wantSince >= SIDE_DELAY || !room(b.side)) { b.side = want; b.want = null; }
+        if (now - b.wantSince >= SIDE_DELAY || !fits(b.side) || (!movable(b.side) && movable(want))) { b.side = want; b.want = null; }
       } else b.want = null;
-      // Where it goes, relative to the head (its top-left corner), eased toward.
-      const tx = b.side === 'left' ? -gap - w : b.side === 'right' ? gap : -w / 2;
-      const ty = b.side === 'above' ? -gap - h : b.side === 'below' ? gap : -h / 2;
+      // Where it goes, relative to the head, eased toward.
+      let tx = offX(b.side), ty = offY(b.side);
+      if (taken.length && nudge(b.side, spotX(b.side), spotY(b.side), w, h, boardPx) && (nudged.x || nudged.y)) {
+        tx = spotX(b.side) + nudged.x - headAt.x; ty = spotY(b.side) + nudged.y - headAt.y;
+      }
       if (b.side !== b.shown) {
         if (!b.shown) { b.ox = tx; b.oy = ty; }
         b.el.dataset.side = b.side;
@@ -1141,8 +1162,11 @@ window.SnakeChatter = (() => {
       }
       b.ox += (tx - b.ox) * glide;
       b.oy += (ty - b.oy) * glide;
-      const x = Math.round(Math.min(boardPx - w - 4, Math.max(4, headAt.x + b.ox)));
-      const y = Math.round(Math.min(boardPx - h - 4, Math.max(4, headAt.y + b.oy)));
+      const x = Math.round(inX(headAt.x + b.ox));
+      const y = Math.round(inY(headAt.y + b.oy));
+      // (where it's going, not where it's got to: newer bubbles keep clear of that)
+      b.box.x = inX(headAt.x + tx); b.box.y = inY(headAt.y + ty); b.box.w = w; b.box.h = h;
+      taken.push(b.box);
       let near = false;
       if (keepClear?.alive) {
         const mine = window.SnakeRender.headPx(keepClear, alpha, boardPx, headMine);
@@ -1158,6 +1182,51 @@ window.SnakeChatter = (() => {
       b.el.style.transform = `translate(${x}px, ${y}px)`;
       b.x = x; b.y = y;
     }
+  }
+
+  // Is this box clear of the banner and the bubbles placed so far?
+  function free(x, y, w, h) {
+    for (const r of taken) if (x < r.x + r.w + CLEAR && r.x < x + w + CLEAR && y < r.y + r.h + CLEAR && r.y < y + h + CLEAR) return false;
+    return true;
+  }
+
+  // A bubble with no clear side moves out of the way by as little as it can:
+  // along its side (its tail still on the head, headAt) or further off, never
+  // back over its snake. Whether it's clear, there or so moved; nudged: the
+  // shift (none, if it was clear already or nothing helps).
+  const nudged = { x: 0, y: 0 };
+  function nudge(side, x, y, w, h, boardPx) {
+    nudged.x = nudged.y = 0;
+    if (free(x, y, w, h)) return true;
+    const across = side === 'above' || side === 'below';
+    let best = Infinity;
+    for (const r of taken) {
+      if (!(x < r.x + r.w + CLEAR && r.x < x + w + CLEAR && y < r.y + r.h + CLEAR && r.y < y + h + CLEAR)) continue;
+      for (let k = 0; k < 4; k++) { // (past its right, left, bottom or top)
+        const dx = k === 0 ? r.x + r.w + CLEAR - x : k === 1 ? r.x - CLEAR - w - x : 0;
+        const dy = k === 2 ? r.y + r.h + CLEAR - y : k === 3 ? r.y - CLEAR - h - y : 0;
+        const d = Math.abs(dx) + Math.abs(dy);
+        if (d >= best || x + dx < 4 || x + dx > boardPx - w - 4 || y + dy < 4 || y + dy > boardPx - h - 4) continue;
+        const along = across ? dx : dy, off = across ? dy : dx;
+        const toward = side === 'above' || side === 'left' ? off > 0 : off < 0;
+        const head = across ? headAt.x - x - dx : headAt.y - y - dy, span = across ? w : h;
+        if (toward || (along && (head < span * 0.15 || head > span * 0.85)) || !free(x + dx, y + dy, w, h)) continue;
+        best = d; nudged.x = dx; nudged.y = dy;
+      }
+    }
+    return best < Infinity;
+  }
+
+  // The banner's box on the board (it's centred by a transform, which the
+  // offsets leave out). While it's faded for a head under it, the board
+  // comes first and bubbles may cross it.
+  let banner = null, bannerStale = true, bannerPx = 0;
+  function readBanner(boardPx) {
+    bannerStale = false;
+    bannerPx = boardPx;
+    if (!bannerEl || bannerEl.hidden || bannerEl.classList.contains('under')) { banner = null; return; }
+    const w = bannerEl.offsetWidth;
+    banner = { x: bannerEl.offsetLeft - w / 2, y: bannerEl.offsetTop, w, h: bannerEl.offsetHeight };
   }
 
   function addLog(s, text) {
