@@ -42,6 +42,8 @@ window.SnakeAI = (() => {
   //   mimic                         bonus for moving the way the model snake moves
   //   colony, goal                  { radius, max, every }: plant and defend flags; pull per step toward the next site
   //   thrill                        reward for every wall, body or rival head right next to me
+  //   coil                          { weight, from }: from this length on, reward for keeping my head
+  //                                   close behind my own tail, so I move as a ring
   const DRAB = {
     space: 1.2, territory: 1.5, aggression: 0.3,
     food: 5, eat: 80, pellet: 1.2, foodRange: 60,
@@ -200,6 +202,18 @@ window.SnakeAI = (() => {
         food: 4, eat: 70, pellet: 1.2, foodRange: 40,
         margin: 6, headRisk: 700, zoneRisk: 120,
         hunt: { squeeze: 4, chase: 2, lead: 1 },
+      },
+    },
+    ouroboros: {
+      name: 'Ouroboros', color: '#b8860b', look: 'ouroboros',
+      blurb: 'Chases its own tail: once it’s long, it moves as a ring, and whatever’s inside is in trouble.',
+      kill: 'Ouroboros came full circle.',
+      win: 'And round again.',
+      w: {
+        space: 1.0, territory: 0.6, aggression: 0.2,
+        food: 3, eat: 45, pellet: 1.2, foodRange: 40,
+        margin: 3, headRisk: 800, zoneRisk: 150,
+        coil: { weight: 20, from: 10 },
       },
     },
     joker: {
@@ -815,7 +829,11 @@ window.SnakeAI = (() => {
         if (out > 0) score -= w.home.leave * out;
       }
 
-      // 8. Riding just behind a rival's tail.
+      // 8. Coiling: once long enough, keeping my head close behind my own tail,
+      //    so I move as a ring (anything inside it is boxed in).
+      if (w.coil && len >= w.coil.from) score += w.coil.weight * Math.max(0, 5 - manhattan(head, body[len - 1]));
+
+      // 9. Riding just behind a rival's tail.
       if (w.tail) {
         let best = 0;
         for (const o of others) {

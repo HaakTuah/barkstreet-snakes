@@ -1,6 +1,6 @@
 # Bark & Bite
 
-A snake game on a mossy log: you against three AI rivals on a fallen log in the woods, drawn at random each round from a cast of sixteen. Plays in the browser, on desktop and phone. Plain HTML, CSS and JavaScript, with no build step, no dependencies and no asset files: every picture is drawn and every sound is synthesised in the page.
+A snake game on a mossy log: you against three AI rivals on a fallen log in the woods, drawn at random each round from a cast of seventeen. Plays in the browser, on desktop and phone. Plain HTML, CSS and JavaScript, with no build step, no dependencies and no asset files: every picture is drawn and every sound is synthesised in the page.
 
 **Play:** https://haaktuah.github.io/snake-game/
 
@@ -31,6 +31,7 @@ A snake game on a mossy log: you against three AI rivals on a fallen log in the 
 | Red mushroom | Poisonous, and it looks it (a violet haze, stink lines, spores). Shrinks you by 3 (never below 3). Withers after about 20 seconds and regrows elsewhere. Being short isn't always bad… |
 | Beads | +1 length. What's left of a dead snake, or the tail that broke off in a crash, in its colours. Roasted ones (from a snake on fire) are +2. |
 | Baked apple | +2 length. An apple that sat in a fire for about 2 seconds: steaming, glazed and split. |
+| Golden beetle | +2 length, and **two leaps** (up to three held; a golden ring with a pip for each shows round your head). About one beetle in three is golden. **To leap, press the way you're already going** (on a phone, swipe forward): with a body or a hole right in front of you and room beyond, you hop over it. The leap waits a moment for something to hop, and isn't spent on open ground; never off the board. The rivals leap too, when they'd otherwise crash. |
 | Beetle | +2 length. Now and then one crawls out of a burrow (from 15 s in, not once the woodpecker comes), and a scared one runs for a burrow and dives in. It wanders slowly, and scurries away (at half a snake's speed) when a head gets within 4 cells, so catching one is a short chase. Uncaught, it flies off after about 30 s. |
 
 ## Play with friends
@@ -71,7 +72,7 @@ Press **Watch AIs** on the start screen for a round between four AI snakes, with
 
 ## The rivals
 
-Each round, three of these sixteen are picked at random. The start screen tells you who you're up against and how each one plays. Only you have a real forked tongue: every few seconds each rival flicks out something of its own instead, such as Wildcard's dollar bill, Joker's party blower or Desperado's six-shooter.
+Each round, three of these seventeen are picked at random. The start screen tells you who you're up against and how each one plays. Only you have a real forked tongue: every few seconds each rival flicks out something of its own instead, such as Wildcard's dollar bill, Joker's party blower or Desperado's six-shooter.
 
 | Snake | Look | Style |
 |-------|------|-------|
@@ -91,6 +92,7 @@ Each round, three of these sixteen are picked at random. The start screen tells 
 | **Copycat** | pale copy of its model, cat ears | Copies whoever seems to be winning, right alongside them. Party member. |
 | **Joker** | jester hat, harlequin diamonds, red nose | Lures chasers into dead ends and swerves away at the last moment. |
 | **Desperado** | rust poncho, cowboy hat, bandana | An adrenaline junkie: skims walls, bodies and other heads for the thrill of it. |
+| **Ouroboros** | a real snake: dark gold python diamonds, a wedge head, slit eyes, fangs | Chases its own tail: once it's long, it moves as a ring, and whatever's inside is in trouble. Now and then it bites its own tail. |
 
 All of them share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move, and avoid the space around other snakes' heads. On top of that, each one chases its own goal.
 
