@@ -4570,7 +4570,8 @@ window.SnakeRender = (() => {
   }
 
   // On the board: the chunk it's eyeing glows and cracks, the pulse quickening
-  // as the strike nears.
+  // as the strike nears. The glow, the dark and the rim lie on the bark,
+  // under the snakes; the cracks run over them (whatever's there goes too).
   const markSprite = () => sprite('mark', '', g => {
     const grad = g.createRadialGradient(0, 0, 0, 0, 0, CELL * 0.85);
     grad.addColorStop(0, 'rgba(239,68,68,0.55)');
@@ -4579,29 +4580,25 @@ window.SnakeRender = (() => {
     g.fillStyle = grad;
     g.beginPath(); g.arc(0, 0, CELL * 0.85, 0, TAU); g.fill();
   });
-  function drawTarget(alpha, now) {
+  // How far through its aim it is (0..1), or -1 if it isn't aiming.
+  function aimed(alpha) {
     const w = game.woodpecker;
-    if (!w || !w.target.length) return;
-    const tp = game.tick - 1 + alpha, prog = Math.max(0, Math.min(1, 1 - (w.strikeAt - tp) / T.PECK_AIM_TICKS));
+    if (!w || !w.target.length) return -1;
+    return Math.max(0, Math.min(1, 1 - (w.strikeAt - (game.tick - 1 + alpha)) / T.PECK_AIM_TICKS));
+  }
+  function drawPatch(alpha, now) {
+    const prog = aimed(alpha), w = game.woodpecker;
+    if (prog < 0) return;
     const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now * (0.008 + 0.03 * prog));
     // A red glow welling up through the chunk (soft, cell by cell, so it runs together)...
     ctx.globalAlpha = 0.45 + 0.45 * pulse * (0.4 + prog * 0.6);
     const w2 = SPRITE * CELL * 0.95;
     for (const k of w.target) ctx.drawImage(markSprite(), (k % GRID) * CELL + CELL / 2 - w2 / 2, Math.floor(k / GRID) * CELL + CELL / 2 - w2 / 2, w2, w2);
     ctx.globalAlpha = 1;
-    // ...and cracks spreading across it.
-    ctx.strokeStyle = 'rgba(20,8,2,0.75)';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    for (const k of w.target) {
-      const x = (k % GRID) * CELL + CELL / 2, y = Math.floor(k / GRID) * CELL + CELL / 2, a = k * 1.7, len = CELL * 0.45 * prog;
-      ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
-      ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a + 2.4) * len * 0.8, y + Math.sin(a + 2.4) * len * 0.8);
-    }
-    ctx.stroke();
-    // ...a darker inside, and a pale rim (inked, so it shows on pale snakes)
-    // closing in on it as the strike nears: to colour-blind eyes the red is
-    // olive on olive bark, but the dark patch and its bracket still read.
+    // ...a darker inside, and a pale rim on its edge (inked, so it shows on
+    // pale snakes), bolder and brighter as the strike nears: to colour-blind
+    // eyes the red is olive on olive bark, but the dark patch and its rim
+    // still read. (It used to close in from outside, over cells it wouldn't take.)
     for (const k of w.target) patch[k] = 1;
     ctx.globalAlpha = 0.45 + 0.4 * prog;
     ctx.fillStyle = 'rgba(20,8,2,0.4)';
@@ -4609,14 +4606,9 @@ window.SnakeRender = (() => {
     for (const k of w.target) ctx.rect((k % GRID) * CELL, Math.floor(k / GRID) * CELL, CELL, CELL);
     ctx.fill();
     ctx.globalAlpha = 1;
-    // (the patch's own outline, scaled about its middle: it closes in without crossing itself)
-    let mx = 0, my = 0;
-    for (const k of w.target) { mx += (k % GRID) + 0.5; my += Math.floor(k / GRID) + 0.5; }
-    mx = mx / w.target.length * CELL; my = my / w.target.length * CELL;
-    const z = 1 + 0.6 * (1 - prog), X = v => mx + (v - mx) * z, Y = v => my + (v - my) * z;
     ctx.beginPath();
     for (const k of w.target) {
-      const cx = k % GRID, cy = Math.floor(k / GRID), x0 = X(cx * CELL), y0 = Y(cy * CELL), x1 = X((cx + 1) * CELL), y1 = Y((cy + 1) * CELL);
+      const cx = k % GRID, cy = Math.floor(k / GRID), x0 = cx * CELL, y0 = cy * CELL, x1 = x0 + CELL, y1 = y0 + CELL;
       if (cy === 0 || !patch[k - GRID]) { ctx.moveTo(x0, y0); ctx.lineTo(x1, y0); }
       if (cy === GRID - 1 || !patch[k + GRID]) { ctx.moveTo(x0, y1); ctx.lineTo(x1, y1); }
       if (cx === 0 || !patch[k - 1]) { ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); }
@@ -4624,14 +4616,31 @@ window.SnakeRender = (() => {
     }
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'rgba(20,8,2,0.75)';
-    ctx.lineWidth = 4.5;
+    ctx.lineWidth = 3.6 + 2.2 * prog;
     ctx.stroke();
-    ctx.strokeStyle = '#fef3c7';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = rgba('#fef3c7', 0.75 + 0.25 * prog);
+    ctx.lineWidth = 1.6 + 1.6 * prog;
     ctx.stroke();
     for (const k of w.target) patch[k] = 0;
   }
   const patch = new Uint8Array(GRID * GRID); // (the patch's cells, marked while its rim is drawn)
+  // ...and its cracks, spreading across it (faded in as they start, or
+  // they're specks on whatever lies there).
+  function drawCracks(alpha) {
+    const prog = aimed(alpha), w = game.woodpecker;
+    if (prog <= 0) return;
+    ctx.strokeStyle = 'rgba(20,8,2,0.75)';
+    ctx.lineWidth = 1.6;
+    ctx.globalAlpha = Math.min(1, prog * 5);
+    ctx.beginPath();
+    for (const k of w.target) {
+      const x = (k % GRID) * CELL + CELL / 2, y = Math.floor(k / GRID) * CELL + CELL / 2, a = k * 1.7, len = CELL * 0.45 * prog;
+      ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
+      ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a + 2.4) * len * 0.8, y + Math.sin(a + 2.4) * len * 0.8);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
 
   // ------------------------------------------------------------ the frame
 
@@ -4670,6 +4679,7 @@ window.SnakeRender = (() => {
 
     drawBurrows(now);
     drawSnowCover();
+    drawPatch(alpha, now); // (the woodpecker's next patch, on the bark under the snakes)
     drawLeaves(now, dt);
     drawFood(alpha, now);
     drawDive(now);
@@ -4682,7 +4692,7 @@ window.SnakeRender = (() => {
     if (streaks.length) drawStreaks(now); // (under the snakes: beside the dasher, never through it)
     drawSnakes(alpha, now);
     drawFieldHues(now);
-    drawTarget(alpha, now);
+    drawCracks(alpha);
     drawRain(now);
     drawSnow(now);
     drawEmbers(now);
