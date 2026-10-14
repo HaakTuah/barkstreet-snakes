@@ -668,7 +668,8 @@ window.SnakeEngine = (() => {
   // | { type: 'crash', snake, x, y, cause, killer, killerId, lost } (it bounced, lost `lost` segments, and is stunned)
   // | { type: 'leap', snake, x, y, gold, reach } (it took off over the cell x, y; reach: cells it rises over, landing next tick)
   // | { type: 'dash', snake, x, y, n } (it dashed n cells from x, y) | { type: 'douse', x, y } (a dash put a fire out)
-  // | { type: 'fizzle', snake, why } (asked to leap with something in front, but couldn't: 'resting', 'small' or 'landing')
+  // | { type: 'fizzle', snake, why, x, y } (asked to leap with something in front, but couldn't: 'resting', 'small' or
+  //   'landing'; x, y the cell it faced, off the board at the edge)
   // | { type: 'alight', snake } (crawled into fire) | { type: 'singe', snake } (lost a segment to the flames)
   // | { type: 'starving', snake } | { type: 'woodpecker' } (it came) | { type: 'aim', x, y } | { type: 'peck', x, y, cells } (a patch taken out)
   // | { type: 'cut', snake, x, y, lost, by } (the woodpecker, or a dash (by: who), cut it: its tail fell off) | { type: 'flown', x, y } (a beetle got away)
@@ -727,12 +728,12 @@ window.SnakeEngine = (() => {
         // one of them was too small to bounce.)
         if (s.stunUntil === game.tick) {
           const { x: nx, y: ny } = ahead(game, s, s.body[0].x, s.body[0].y, s.dir), shut = shutTo(game, s);
-          if (!steered && (blocked(game, nx, ny) || !inside(nx, ny) || (shut && s.bounce.x === nx && s.bounce.y === ny))) {
+          if (!steered && (blocked(game, nx, ny) || (shut && s.bounce.x === nx && s.bounce.y === ny))) {
             // A power asked for counts as steering, if it can go; one that
             // can't says why, and the auto-turn takes it clear (it isn't sent
             // back into what it hit for a press that was never going to work).
             const no = s.leapArmed >= game.tick ? powerWontGo(game, s) : null;
-            if (no) { game.events.push({ type: 'fizzle', snake: s, why: no }); s.leapArmed = -1; }
+            if (no) { game.events.push({ type: 'fizzle', snake: s, why: no, x: nx, y: ny }); s.leapArmed = -1; } // (where it faced: the auto-turn is about to turn it)
             if (!(s.leapArmed >= game.tick)) s.dir = recoil(game, s, shut);
           }
           s.bounce = null;
@@ -862,6 +863,7 @@ window.SnakeEngine = (() => {
     for (const [s, c] of crashes) {
       if (out.has(s)) {
         s.cause = c.cause; s.killer = c.killer; s.killerId = c.killerId;
+        s.queue.length = 0; // (out: nothing it pressed is ever going to happen)
         dying.push(s);
         continue;
       }
@@ -1106,10 +1108,10 @@ window.SnakeEngine = (() => {
     // Nothing went. Asked with something right in front to hop: say why not
     // (once), so a press isn't silently lost.
     const c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir), k = key(c.x, c.y);
-    if (!inside(c.x, c.y)) { game.events.push({ type: 'fizzle', snake: s, why: 'landing' }); s.leapArmed = -1; return; } // (the edge: nothing to hop, nowhere to land)
+    if (!inside(c.x, c.y)) { game.events.push({ type: 'fizzle', snake: s, why: 'landing', x: c.x, y: c.y }); s.leapArmed = -1; return; } // (the edge: nothing to hop, nowhere to land)
     if (bodyStamp[k] === stamp || game.holes.has(k) || burning(game, k)) {
       const why = s.leaps > 0 || game.time >= s.leapReadyAt ? (s.body.length <= T.MIN_LENGTH && !s.leaps ? 'small' : 'landing') : s.body.length <= T.MIN_LENGTH ? 'small' : 'resting';
-      game.events.push({ type: 'fizzle', snake: s, why });
+      game.events.push({ type: 'fizzle', snake: s, why, x: c.x, y: c.y });
       s.leapArmed = -1;
     }
   }
@@ -1123,7 +1125,6 @@ window.SnakeEngine = (() => {
     }
     const hurdle = c => { const k = key(c.x, c.y); return bodyStamp[k] === stamp || game.holes.has(k) || burning(game, k); };
     if (!path.slice(0, reach).some(hurdle) || hurdle(path[reach])) return false;
-    if (golden && reach === 1 && !hurdle(path[0])) return false;
     if (golden) s.leaps--;
     else {
       s.leapReadyAt = game.time + T.LEAP_COOLDOWN_MS;

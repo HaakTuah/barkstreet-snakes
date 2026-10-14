@@ -100,7 +100,7 @@ window.SnakeOnline = (() => {
       case 'leap': return ['leap', e.snake.id, e.x, e.y, e.gold ? 1 : 0, e.reach];
       case 'dash': return ['dash', e.snake.id, e.x, e.y, e.n];
       case 'death': return ['death', e.snake.id, e.snake.cause, e.snake.killer, e.snake.killerId, e.snake.diedAt, e.snake.fatal || 0];
-      case 'fizzle': return ['fizzle', e.snake.id, e.why];
+      case 'fizzle': return ['fizzle', e.snake.id, e.why, e.x, e.y];
       case 'crash': return ['crash', e.snake.id, e.x, e.y, e.cause, e.killer, e.killerId, e.lost];
       case 'cut': return ['cut', e.snake.id, e.x, e.y, e.lost, e.by ?? -1];
       case 'spawn': return ['spawn', e.kind, e.x ?? -1, e.y ?? -1, e.gold ? 1 : 0];
@@ -195,7 +195,7 @@ window.SnakeOnline = (() => {
           dying.push(snake);
           return { type: 'death', snake };
         case 'crash': return { type: 'crash', snake, x: e[2], y: e[3], cause: String(e[4] || ''), killer: e[5], killerId: Number.isInteger(e[6]) ? e[6] : null, lost: Number(e[7]) || 0 };
-        case 'fizzle': return snake ? { type: 'fizzle', snake, why: String(e[2] || '') } : null;
+        case 'fizzle': return snake ? { type: 'fizzle', snake, why: String(e[2] || ''), x: Number(e[3]) || 0, y: Number(e[4]) || 0 } : null;
         case 'cut': return snake ? { type: 'cut', snake, x: e[2], y: e[3], lost: Number(e[4]) || 0, by: Number.isInteger(e[5]) && e[5] >= 0 ? e[5] : null } : null;
         case 'spawn': return { type: 'spawn', kind: e[1], x: e[2], y: e[3], gold: !!e[4] };
         case 'weather': return { type: 'weather', kind: WEATHER[e[1]] || 'clear' };
