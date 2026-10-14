@@ -377,9 +377,15 @@ window.SnakeRender = (() => {
     return t;
   }
   function drawSnow(now) {
-    if (sky.snow < 0.02 || reduced) return;
+    if (sky.snow < 0.02) return;
     if (!snowTile) snowTile = buildSnowTile();
     const n = RAIN_TILE;
+    if (reduced) { // (held still, not taken away, like the rain: snow is a rule too, it puts fire out and starts the lean season)
+      ctx.globalAlpha = sky.snow * 0.6;
+      for (let y = 0; y < SIZE; y += n) for (let x = 0; x < SIZE; x += n) ctx.drawImage(snowTile, x, y, n, n);
+      ctx.globalAlpha = 1;
+      return;
+    }
     for (const [speed, alpha, sway] of quality === 2 ? SNOW_LAYERS : SNOW_LAYER) {
       const oy = (now * speed) % n, ox = (Math.sin(now / 1700 * speed * 4) * 30 + now * speed * 0.15) % n;
       ctx.globalAlpha = sky.snow * alpha;
