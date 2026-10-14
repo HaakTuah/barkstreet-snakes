@@ -3686,6 +3686,26 @@ window.SnakeRender = (() => {
       }
     }
   };
+  // Where fire will spread next: a charred patch, and its glowing cracks (apart, so only the glow pulses).
+  const charSprite = () => sprite('char', '', g => {
+    const c = CELL;
+    g.fillStyle = 'rgba(20,8,2,0.5)';
+    g.beginPath(); g.ellipse(0, c * 0.03, c * 0.43, c * 0.37, 0.3, 0, TAU); g.fill();
+  });
+  const emberSprite = () => sprite('ember', '', g => {
+    const c = CELL;
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    g.beginPath();
+    g.moveTo(-c * 0.28, -c * 0.05); g.lineTo(-c * 0.08, c * 0.02); g.lineTo(c * 0.05, -c * 0.14); g.lineTo(c * 0.27, -c * 0.06);
+    g.moveTo(-c * 0.08, c * 0.02); g.lineTo(-c * 0.02, c * 0.24);
+    g.moveTo(c * 0.05, -c * 0.14); g.lineTo(c * 0.13, c * 0.13);
+    g.strokeStyle = '#ef4444'; g.lineWidth = c * 0.09; g.stroke();
+    g.strokeStyle = '#fb923c'; g.lineWidth = c * 0.05; g.stroke();
+    g.strokeStyle = '#fde68a'; g.lineWidth = c * 0.02; g.stroke(); // (white-hot in the middle)
+    g.fillStyle = '#f97316';
+    for (const [ex, ey] of [[-0.21, 0.15], [0.21, 0.12], [0.02, -0.27]]) { g.beginPath(); g.arc(ex * c, ey * c, c * 0.045, 0, TAU); g.fill(); }
+  });
   function drawFire(alpha, now) {
     if (!game.fires?.size) return;
     const c = CELL, lively = !reduced, t = now / 1000, tickPos = game.tick - 1 + alpha;
@@ -3714,12 +3734,12 @@ window.SnakeRender = (() => {
             ctx.lineTo(x + Math.cos(a) * r1, y + Math.sin(a) * r1);
           }
           ctx.stroke();
-        } else { // smouldering: an ember glow, a thread of smoke
-          const glow = 0.45 + (lively ? 0.25 * Math.sin(now / 160 + ph) : 0);
-          ctx.fillStyle = `rgba(239,68,68,${glow})`;
-          circle(x, y + c * 0.1, c * 0.2);
-          ctx.fillStyle = `rgba(253,186,116,${glow})`;
-          circle(x, y + c * 0.1, c * 0.09);
+        } else { // smouldering: a charred patch the size of the cell, its cracks glowing, and a thread of smoke
+          const w = SPRITE * c;
+          ctx.drawImage(charSprite(), x - w / 2, y - w / 2, w, w);
+          ctx.globalAlpha = lively ? 0.6 + 0.4 * Math.sin(now / 160 + ph) : 0.85;
+          ctx.drawImage(emberSprite(), x - w / 2, y - w / 2, w, w);
+          ctx.globalAlpha = 1;
           if (lively && Math.random() < 0.05) mote(x, y, (Math.random() - 0.5) * 6, -16, 1300, 3 + Math.random() * 2, 2);
         }
         continue;
