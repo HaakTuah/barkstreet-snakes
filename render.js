@@ -579,10 +579,10 @@ window.SnakeRender = (() => {
   const appleSprite = (v = 'fresh') => sprite('apple', v, drawApple);
   const goldenSprite = () => sprite('golden', '', drawGolden);
   const glowSprite = () => sprite('glow', '', drawGlow);
-  const drawGlow = g => {
+  const drawGlow = g => { // (in Honey: gold means a power)
     const grad = g.createRadialGradient(0, 0, CELL * 0.2, 0, 0, CELL * 0.8);
-    grad.addColorStop(0, 'rgba(253,224,71,0.55)');
-    grad.addColorStop(1, 'rgba(253,224,71,0)');
+    grad.addColorStop(0, 'rgba(253,230,138,0.55)');
+    grad.addColorStop(1, 'rgba(253,230,138,0)');
     g.fillStyle = grad;
     g.beginPath(); g.arc(0, 0, CELL * 0.8, 0, TAU); g.fill();
   };
@@ -634,29 +634,31 @@ window.SnakeRender = (() => {
     g.beginPath(); g.moveTo(-c * 0.36, -c * 0.24); g.quadraticCurveTo(-c * 0.3, -c * 0.38, -c * 0.1, -c * 0.4); g.stroke();
   });
   // A golden mushroom (in the rain: the edges wrap): the mushroom's shape,
-  // a gold cap with white spots and a shine.
+  // its cap in the golden leaf's Honey and inked like it, with white spots
+  // (ringed, so they show on the pale gold) and a shine.
   const goldcapSprite = () => sprite('goldcap', '', g => {
     const c = CELL;
+    g.lineJoin = 'round';
+    g.strokeStyle = '#3a2614';
+    g.lineWidth = c * 0.05;
     g.fillStyle = '#fef3c7';
     g.beginPath();
     if (g.roundRect) g.roundRect(-c * 0.1, -c * 0.02, c * 0.2, c * 0.36, c * 0.07); else g.rect(-c * 0.1, -c * 0.02, c * 0.2, c * 0.36);
-    g.fill();
-    const grad = g.createLinearGradient(0, -c * 0.3, 0, 0);
-    grad.addColorStop(0, '#fef08a'); grad.addColorStop(0.5, '#facc15'); grad.addColorStop(1, '#b45309');
+    g.fill(); g.stroke();
+    const grad = g.createLinearGradient(0, -c * 0.32, 0, 0);
+    grad.addColorStop(0, '#fffbea'); grad.addColorStop(0.35, '#fde68a'); grad.addColorStop(1, '#d4a017');
     g.fillStyle = grad;
-    g.beginPath(); g.ellipse(0, 0, c * 0.42, c * 0.32, 0, Math.PI, 0); g.closePath(); g.fill();
-    g.strokeStyle = 'rgba(58,38,20,0.6)';
-    g.lineWidth = c * 0.05;
-    g.stroke();
+    g.beginPath(); g.ellipse(0, 0, c * 0.42, c * 0.32, 0, Math.PI, 0); g.closePath(); g.fill(); g.stroke();
     g.fillStyle = '#ffffff';
-    g.beginPath(); g.arc(-c * 0.19, -c * 0.1, c * 0.06, 0, TAU); g.fill();
-    g.beginPath(); g.arc(c * 0.06, -c * 0.21, c * 0.06, 0, TAU); g.fill();
-    g.beginPath(); g.arc(c * 0.23, -c * 0.06, c * 0.05, 0, TAU); g.fill();
+    g.strokeStyle = 'rgba(180,120,10,0.7)'; // (the leaf's veins)
+    g.lineWidth = c * 0.022;
+    for (const [x, y, r] of GOLDCAP_SPOTS) { g.beginPath(); g.arc(c * x, c * y, c * r, 0, TAU); g.fill(); g.stroke(); }
     g.strokeStyle = 'rgba(255,251,234,0.85)'; // a shine on the cap
     g.lineWidth = c * 0.04;
     g.lineCap = 'round';
     g.beginPath(); g.arc(0, 0, c * 0.3, Math.PI * 1.2, Math.PI * 1.45); g.stroke();
   });
+  const GOLDCAP_SPOTS = [[-0.19, -0.1, 0.06], [0.06, -0.21, 0.06], [0.23, -0.06, 0.05]];
   const mushroomSprite = () => sprite('mushroom', '', drawMushroom);
   const drawMushroom = g => {
     const c = CELL;
@@ -1695,13 +1697,10 @@ window.SnakeRender = (() => {
       ctx.lineWidth = 3 * (1 - k) + 1;
       ctx.beginPath(); ctx.arc(pts[0], pts[1], CELL * (0.6 + 0.9 * k), 0, TAU); ctx.stroke();
     }
-    if (dizzy) { // a faint halo, and three stars going round on it
+    if (dizzy) { // three stars going round, cream and inked (gold by a head means a power)
       const t = reduced ? 0 : now / 240, cy = Math.max(CELL * 0.3, pts[1] - CELL * (pips ? 0.95 : 0.72)); // (higher when pips show, clear of them)
-      ctx.strokeStyle = 'rgba(253,224,71,0.45)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.ellipse(pts[0], cy, CELL * 0.55, CELL * 0.18, 0, 0, TAU); ctx.stroke();
-      ctx.fillStyle = '#fde047';
-      ctx.strokeStyle = 'rgba(58,38,20,0.75)';
+      ctx.fillStyle = '#fffbea';
+      ctx.strokeStyle = 'rgba(58,38,20,0.85)';
       ctx.lineWidth = 1.3;
       for (let i = 0; i < 3; i++) {
         const a2 = t + i * TAU / 3;
@@ -4792,7 +4791,7 @@ window.SnakeRender = (() => {
         a.leapGold = !!e.gold;
         a.leapUntil = game.tick + e.snake.body.length + 1; // (until the arch has run off its tail)
         spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 8, 140, 420, 2.2, '#d6b480', '#fde68a');
-        if (e.gold) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 10, 120, 600, 1.8, '#fde047', '#fffbea');
+        if (e.gold) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 10, 120, 600, 1.8, '#d4a017', '#fffbea'); // (in Honey, a power's gold)
       } else if (e.type === 'dash') { // a golden streak along the way it went, and gold flecks off it
         animOf(e.snake, now).dashTick = game.tick;
         const h = e.snake.body[0], x0 = e.x * CELL + CELL / 2, y0 = e.y * CELL + CELL / 2, x1 = h.x * CELL + CELL / 2, y1 = h.y * CELL + CELL / 2;
@@ -4807,7 +4806,7 @@ window.SnakeRender = (() => {
         if (!reduced) for (let k = 0; k < 4; k++) mote(x + (Math.random() - 0.5) * CELL * 0.6, y, (Math.random() - 0.5) * 12, -20 - Math.random() * 14, 1200, 4 + Math.random() * 3, 2);
       } else if (e.type === 'cut') { // the woodpecker took its tail, or a dash cut through it
         floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.2), e.by != null ? 'Snip!' : 'Ouch!');
-        if (e.by != null) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 220, 500, 2.4, '#facc15', e.snake.color || '#fffbea');
+        if (e.by != null) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 220, 500, 2.4, '#d4a017', e.snake.color || '#fffbea');
       } else if (e.type === 'alight') { // crawled into the fire: a burst of flame
         const h = e.snake.body[0];
         spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 14, 200, 520, 2.6, '#f97316', '#fde047');
