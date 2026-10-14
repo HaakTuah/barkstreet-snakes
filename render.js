@@ -292,7 +292,7 @@ window.SnakeRender = (() => {
       if (!bareBark(x0b - 9, Math.min(y0, y0 + dir * len) - 6, x1b + 10, Math.max(y0, y0 + dir * len) + 6)) continue;
       for (let j = 0; j <= n; j++) { cx[j] = x0 + (cx[j] - x0) * long; cy[j] = y0 + (cy[j] - y0) * long; lw[j] *= wide; rw[j] *= wide; }
       // One piece of it (points from..to) as an outline, smoothed through
-      // the midpoints: its wide end blunt, the rest tapering.
+      // the midpoints, its ends rounded off.
       const trace = (from, to, dx, dy, grow) => {
         ring.length = 0;
         ring.push(cx[from], cy[from] - dir * (1 + grow));
@@ -4897,7 +4897,7 @@ window.SnakeRender = (() => {
     ctx.globalAlpha = 1;
     ctx.beginPath();
     patchPath(half, PATCH_R, PATCH_R_IN);
-    ctx.lineJoin = 'round';
+    ctx.lineCap = ctx.lineJoin = 'round';
     ctx.strokeStyle = 'rgba(20,8,2,0.75)';
     ctx.lineWidth = line;
     ctx.stroke();
