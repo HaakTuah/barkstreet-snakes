@@ -22,6 +22,10 @@ A snake game on a mossy log: you against three AI rivals on a fallen log in the 
 - **Sudden death:** after two minutes no new food appears, the sky clears, and a big woodpecker lands beside the board. Every few seconds it picks a patch of about 7 cells somewhere on the log, eyes it (the patch glows and cracks, faster and faster) for about a second and a half, swoops in and drums it out. It aims clear of everyone while it can (never at a body or food, never within 2 cells of a head), but once it's chosen, whatever's in the patch when it strikes goes: food, fire, and any part of a snake. Caught by the body and you lose everything behind the cut (it falls off as beads); caught by the head and you're out. With nothing new to eat and apples rotting away, hunger and the woodpecker finish the round.
 - **Winter** (snow, now and then a spell of weather): only two apples, no new mushrooms, golden apples rare, and everyone gets hungry half as fast again. Snow puts fire out. In **wind**, a fire flings burning leaves downwind: they smoulder first, then burn small.
 
+### Leaping
+
+**Press the way you're already going** (on a phone, swipe that way) to leap: with a body, a hole or fire right in front of you and room beyond, you hop over it, two cells in two ticks. It costs the tip of your tail and needs 4 seconds before the next (the `⤴` on your tag lights up when it's ready). With a golden power (below), the same press uses that instead; you hold one golden power at a time. Anyone holding one glows faintly gold. The rivals leap, dash and wrap too, by the same rules.
+
 ### Food
 
 | Item | Effect |
@@ -31,7 +35,9 @@ A snake game on a mossy log: you against three AI rivals on a fallen log in the 
 | Red mushroom | Poisonous, and it looks it (a violet haze, stink lines, spores). Shrinks you by 3 (never below 3). Withers after about 20 seconds and regrows elsewhere. Being short isn't always bad… |
 | Beads | +1 length. What's left of a dead snake, or the tail that broke off in a crash, in its colours. Roasted ones (from a snake on fire) are +2. |
 | Baked apple | +2 length. An apple that sat in a fire for about 2 seconds: steaming, glazed and split. |
-| Golden beetle | +2 length, and **two leaps** (up to three held; a golden ring with a pip for each shows round your head). About one beetle in three is golden. **To leap, press the way you're already going** (on a phone, swipe forward): with a body or a hole right in front of you and room beyond, you hop over it. The leap waits a moment for something to hop, and isn't spent on open ground; never off the board. The rivals leap too, when they'd otherwise crash. |
+| Golden beetle | +2 length, and **two golden leaps** (up to three held): three cells in two ticks, hopping up to two, free. About one beetle in three is golden. |
+| Golden leaf | Only on the wind, and rare. +1 length and **two dashes**: three cells in one tick, cutting through a snake one cell thick and putting out fire. Dash into the edge or a hole and you blow up. |
+| Golden mushroom | Only in the rain, and rarer still. +1 length, and for **12 seconds the edges wrap round** for you: off one side, in at the other. |
 | Beetle | +2 length. Now and then one crawls out of a burrow (from 15 s in, not once the woodpecker comes), and a scared one runs for a burrow and dives in. It wanders slowly, and scurries away (at half a snake's speed) when a head gets within 4 cells, so catching one is a short chase. Uncaught, it flies off after about 30 s. |
 
 ## Play with friends

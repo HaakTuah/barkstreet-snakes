@@ -201,7 +201,7 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
   E.leap(g, me);
   E.step(g);
   check('a dash: three cells in one tick', me.body[0].x === 8 && me.body[0].y === 10 && joined(me.body) && me.dashes === 1 && g.events.some(e => e.type === 'dash' && e.n === 3), JSON.stringify(me.body.slice(0, 4)));
-  check('...eating what was on the way', me.eaten === 2 && !g.food.some(f => f.y === 10 && f.kind === 'food'), me.eaten);
+  check('...eating what was on the way', me.eaten === 2 && !g.food.some(f => f.y === 10 && (f.x === 6 || f.x === 8)), me.eaten);
   const g2 = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']]);
   g2.fires.set(K(7, 10), { from: 0, until: 99, group: 1, strike: false }); g2.fireGroups.set(1, 1);
   g2.snakes[0].dashes = 1;
@@ -221,6 +221,19 @@ const wall = (x, y0 = 8, n = 5) => [Array.from({ length: n }, (_, i) => [x, y0 +
   E.leap(g2, Object.assign(g2.snakes[0], { dashes: 1 }));
   const dying = E.step(g2);
   check('...too near its head, and it\'s out', dying.includes(g2.snakes[1]) && g2.snakes[1].cause === 'got cut in two by P0' && g2.snakes[0].alive, g2.snakes[1].cause);
+}
+
+{ // An AI with a dash uses it to cut a rival in two right behind its head.
+  const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  a.body = line(5, 10, 5).map(([x, y]) => ({ x, y })); a.dir = D.right; a.dashes = 1;
+  b.body = Array.from({ length: 12 }, (_, i) => ({ x: 7, y: 9 + i })); b.dir = D.up; // (its head at 7,9: cut at 7,10, right behind it)
+  b.isPlayer = true; b.persona = null; b.queue = [];
+  g.food = [];
+  look(g);
+  const dying = E.step(g);
+  check('an AI with a dash cuts a rival in two', dying.includes(b) && a.alive && a.dashes === 0, b.cause);
 }
 
 { // A dash crashes into anything it can't cut: a snake two thick (it gets that far first).
