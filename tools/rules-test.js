@@ -1251,6 +1251,14 @@ const picks = (view, persona = 'drab', n = 50) => {
   check('nobody steers for a mushroom', !ate.length, ate.join(', '));
 }
 
+{ // A mushroom takes SHRINK segments off: to a rival, fed or not, that's as many apples lost. Keeping off one is worth a turn it dislikes (two apples' worth).
+  const w = AI.PERSONAS.drab.w, fussy = { ...AI.PERSONAS.drab, w: { ...w, turn: 2 * (w.food * w.foodRange + w.eat) } }; // (an apple, to a rival not hungry)
+  const view = () => aiView({ me: aiMe(line(8, 12, 6), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], food: [{ x: 9, y: 12, kind: 'mushroom', expires: 999 }] });
+  let ate = 0;
+  for (let i = 0; i < 20; i++) if (AI.decide(view(), fussy, {}) === D.right) ate++;
+  check('a mushroom costs a rival three apples: it turns away, though a turn costs it two', !ate, `${ate} of 20 ate it`);
+}
+
 { // A hole under its own tail is still a hole once the tail has gone: it never follows its tail in.
   // Heading up into the top edge, its tail just to the left; right, a rival's body (which may be gone by now).
   const corner = hole => () => aiView({

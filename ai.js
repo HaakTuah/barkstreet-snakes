@@ -30,7 +30,7 @@ window.SnakeAI = (() => {
   //   space, territory, aggression  room / board share / shrinking everyone else
   //   food, eat, pellet, foodRange  pull per step toward food, eating bonus, pellet worth, reach (required)
   //   normalFood                    worth of a green apple (default 1); a golden apple is worth 3x
-  //   mushroom                      worth of a mushroom, which shrinks you (default -1: avoid; never more while hungry)
+  //   mushroom                      worth of a mushroom, which shrinks you (default and at most -SHRINK: it costs that many apples' worth of length)
   //   contested                     how much food a rival reaches first still counts (0-1, true = 1; hunger raises it)
   //   hungryBelow, fedFactor        at this length or more, food matters only fedFactor as much
   //   margin, headRisk, zoneRisk    spare room wanted / fear of a rival's next move / of where it might be (required)
@@ -653,7 +653,7 @@ window.SnakeAI = (() => {
     if (desperate) {
       const w0 = ctx.w;
       ctx.w = {
-        ...w0, contested: 1, foodRange: Math.max(60, w0.foodRange), normalFood: 1, pellet: Math.max(1, w0.pellet ?? 1), mushroom: -1,
+        ...w0, contested: 1, foodRange: Math.max(60, w0.foodRange), normalFood: 1, pellet: Math.max(1, w0.pellet ?? 1), mushroom: -TUNE.SHRINK,
         margin: Math.min(2, w0.margin), headRisk: 0.4 * w0.headRisk, zoneRisk: 0.3 * w0.zoneRisk,
         territory: 0.5 * w0.territory, aggression: 0, distance: 0, tail: 0, thrill: 0, turn: 0, coil: null, thick: 0, hunt: HUNT,
       };
@@ -757,7 +757,7 @@ window.SnakeAI = (() => {
       golden: TUNE.GOLDEN_GROWTH * Math.max(apple, hunger),
       beetle: TUNE.BEETLE_GROWTH * Math.max(apple, hunger), // it moves, but it's worth what it's worth
       pellet: w.pellet ?? 1,
-      mushroom: hunger > 0 ? Math.min(-1, w.mushroom ?? -1) : w.mushroom ?? -1, // (never worth anything while hungry: it shrinks you, and it isn't a meal)
+      mushroom: Math.min(-TUNE.SHRINK, w.mushroom ?? -TUNE.SHRINK), // (it takes SHRINK segments off, and it isn't a meal: as many apples lost, hungry or not)
       leaf: 2 * Math.max(apple, hunger, 0.5), // (golden powers: worth it for what they do)
       goldcap: 1.5 * Math.max(apple, hunger, 0.5),
     };

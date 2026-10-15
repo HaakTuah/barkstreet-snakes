@@ -739,7 +739,8 @@ window.SnakeEngine = (() => {
   }
   // A snake asks to flash: a person with E, Shift or a swipe the way they're
   // going, an AI by saying so (memory.flash: the tick). It goes the next tick
-  // it moves: golden (a dash) if it holds any, else the plain one if rested.
+  // it moves on the ground (in the air, once it's down): golden (a dash) if
+  // it holds any, else the plain one if rested.
   function flash(game, s) {
     if (s?.alive) s.flashArmed = Math.max(game.tick, s.stunUntil); // (stunned: when it moves again)
   }
