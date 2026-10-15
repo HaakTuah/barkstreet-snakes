@@ -572,6 +572,21 @@ window.SnakeEngine = (() => {
     }
   }
 
+  // A head on the ground over a hole, with nothing across it any more,
+  // falls in. (A jump whose landing was taken comes down on what it hopped:
+  // a body lying across a hole holds it up, until that body moves on.)
+  function fallIn(game, dying) {
+    if (!game.holes.size) return;
+    for (const s of game.snakes) {
+      const h = s.body[0];
+      if (!s.alive || s.flight || !game.holes.has(key(h.x, h.y))) continue;
+      if (game.snakes.some(o => o !== s && o.alive && o.body.some(b => b.x === h.x && b.y === h.y))) continue;
+      s.cause = 'fell into a woodpecker hole'; s.killer = 'wall'; s.killerId = null; s.fatal = 'hole';
+      s.alive = false;
+      dying.push(s);
+    }
+  }
+
   // A patch for the woodpecker, grown cell by cell from a start: under a body
   // PECK_UNDER_BODY of the time (any snake's, never a head), beside an old
   // hollow PECK_WIDEN of the time (fewer, bigger hollows), else anywhere. It
@@ -930,8 +945,12 @@ window.SnakeEngine = (() => {
     const out = new Set(), live = new Set();
     const why = new Map(); // (why a crash was the end: for the card)
     for (const [s, c] of crashes) {
-      const h = s.body[0]; // (a landing that crashed: its head comes down on what it hopped; a hole, and in it goes, unless a body lies across it)
-      if (s.landing && game.holes.has(key(h.x, h.y)) && !game.snakes.some(o => o !== s && o.alive && o.body.some(b => b.x === h.x && b.y === h.y))) {
+      // (A landing that crashed: its head comes down on what it hopped; a
+      // hole, and in it goes, unless a body lies across it that's still
+      // there once everyone's moved: that holds it up, till it moves on too,
+      // and then it falls in (see fallIn).)
+      const h = s.body[0], stays = (o, j) => j < o.body.length - 1 || !o.tailMoves || crashes.has(o) || !moving.includes(o);
+      if (s.landing && game.holes.has(key(h.x, h.y)) && !game.snakes.some(o => o !== s && o.alive && !gone.has(o) && o.body.some((b, j) => b.x === h.x && b.y === h.y && stays(o, j)))) {
         Object.assign(c, { cause: 'fell into a woodpecker hole', killer: 'wall', killerId: null, headOn: false, meet: false });
         out.add(s); why.set(s, 'hole');
       }
@@ -1007,6 +1026,7 @@ window.SnakeEngine = (() => {
 
     crawl(game);
     peck(game, dying);
+    fallIn(game, dying);
 
     // Dead snakes fall to beads (every other segment: see leavesBead), and
     // broken-off pieces too (all of them), never on food, living bodies,

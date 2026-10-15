@@ -637,6 +637,25 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   }
 }
 
+{ // A jump whose landing is taken comes down on what it hopped. A body lying across a hole holds it up, till that body moves on: then it falls in.
+  for (const [n, what] of [[5, 'moving on at once'], [8, 'moving on in its stun'], [13, 'there till its stun is over']]) {
+    const g = board([[line(5, 10, 6), 'right'], [Array.from({ length: n }, (_, i) => [6, 7 + i]), 'up'], [[[7, 12], [7, 13], [7, 14], [7, 15]], 'up']]);
+    const [me, r, q] = g.snakes; // (q comes up column 7 into the landing, (7,10), as me comes down)
+    g.holes.add(K(6, 10));
+    E.leap(g, me);
+    let left = -1, off = -1;
+    for (let t = 0; t < 12 && me.alive; t++) {
+      const tick = g.tick;
+      feed(g); quiet(g);
+      if (t === 1) q.stunUntil = 1e9; // (after the head-on, q stays put)
+      if (left < 0 && t > 0 && !r.body.some(c => c.x === 6 && c.y === 10)) left = tick;
+      if (off < 0 && t > 0 && me.alive && (me.body[0].x !== 6 || me.body[0].y !== 10)) off = tick;
+    }
+    const fell = !me.alive && me.cause === 'fell into a woodpecker hole';
+    check(`a jump that comes down on a body bridging a hole (${what}) falls in when it's gone, not before`, n === 13 ? me.alive && off > 0 : fell && me.diedAt === left, `${me.alive ? 'alive' : me.cause} died ${me.diedAt}, bridge gone ${left}, off ${off}`);
+  }
+}
+
 { // Boxed in only if there'll be nowhere to turn when the stun's over: a rival's tail moving on in time counts as room.
   // A hits the right edge at (23,5): below is its own body, above a rival's body that's leaving.
   const A = [[23, 5], [22, 5], [22, 6], [23, 6], [23, 7], [23, 8], [23, 9], [23, 10], [23, 11]];
