@@ -764,6 +764,139 @@ window.SnakeRender = (() => {
     g.fillStyle = 'rgba(255,255,255,0.55)'; // the gloss
     g.beginPath(); g.ellipse(-r * 0.32, -r * 0.38, r * 0.3, r * 0.2, -0.6, 0, TAU); g.fill();
   };
+  // The Field guide's pictures (beside each rule on its card): one thing,
+  // px device pixels square on a canvas of its own, drawn with the board's
+  // own sprites; a power as a small glyph in its accent colour inside the
+  // gold every power wears; a hole, fire and land on a tile of bark. Made
+  // once a kind and size. Kinds: apple, golden, mushroom, goldcap, leaf,
+  // beetle, goldbeetle, pellet, roast (a roasted bead), baked (a baked
+  // apple), jump, flash, wrap, hole, fire, land.
+  const guideSprites = new Map(); // kind and size -> canvas
+  function guideSprite(kind, px) {
+    px = Math.max(8, Math.round(px));
+    const key = kind + ' ' + px;
+    let c = guideSprites.get(key);
+    if (c) return c;
+    c = makeLayer(px, px);
+    const g = c.getContext('2d'), tile = GUIDE_TILE[kind], s = px / (CELL * (tile ? 2 * tile : 1.2));
+    g.setTransform(s, 0, 0, s, px / 2, px / 2); // (the thing's middle in the middle, in the board's units)
+    if (tile) barkTile(g, tile * CELL);
+    (GUIDE[kind] || GUIDE.apple)(g);
+    guideSprites.set(key, c);
+    return c;
+  }
+  const GUIDE_TILE = { hole: 1.5, land: 1.25, fire: 0.95 }; // (on a tile of bark this many cells either side of the middle)
+  const GUIDE = {
+    apple: g => drawApple(g, 'fresh'),
+    baked: g => drawApple(g, 'baked'),
+    golden: g => { guideGlow(g); drawGolden(g); g.translate(CELL * 0.2, -CELL * 0.22); drawStar(g); },
+    mushroom: g => { g.translate(0, CELL * 0.04); drawMushroom(g); },
+    goldcap: g => { guideGlow(g); g.translate(0, CELL * 0.04); drawGoldcap(g); },
+    leaf: g => { guideGlow(g); drawGoldLeaf(g); },
+    beetle: g => drawGuideBeetle(g, false),
+    goldbeetle: g => { guideGlow(g); drawGuideBeetle(g, true); },
+    pellet: g => { g.scale(1.5, 1.5); drawBead(g, '#fb923c|'); },
+    roast: g => { g.scale(1.5, 1.5); drawBead(g, ROAST); },
+    jump: g => drawPowerGlyph(g, 'jump'),
+    flash: g => drawPowerGlyph(g, 'flash'),
+    wrap: g => drawPowerGlyph(g, 'wrap'),
+    fire: g => { drawFireGlow(g); g.scale(1.3, 1.3); drawFlames(g, '0'); },
+    hole: g => { guideCells(GUIDE_HOLE); g.translate(-12 * CELL, -12 * CELL); drawPits(g, guideMask, 0, 0, GRID - 1, GRID - 1); },
+    land: g => { guideCells(GUIDE_LAND); g.translate(-12 * CELL, -12 * CELL); paintLand(g, null, guideMask, guideNone, '#2563eb', 0, NO_HOLES); },
+  };
+  const guideGlow = g => { g.save(); g.scale(0.72, 0.72); drawGlow(g); g.restore(); }; // (a power's glow, all of it inside the picture)
+  // The cells of the guide's hole (an L, in the middle of a board) and its land (a staircase across it).
+  const GUIDE_HOLE = [[11, 11], [12, 11], [11, 12]], GUIDE_LAND = [];
+  for (let y = 9; y < 16; y++) for (let x = 9; x < 16; x++) if (x + y >= 24) GUIDE_LAND.push([x, y]);
+  const guideMask = new Uint8Array(GRID * GRID), guideNone = new Uint8Array(GRID * GRID), NO_HOLES = new Set();
+  function guideCells(cells) {
+    guideMask.fill(0);
+    for (const [x, y] of cells) guideMask[y * GRID + x] = 1;
+  }
+  // A rounded tile of bark, `half` units either side of the middle (clipped to: the rest goes on it).
+  function barkTile(g, half) {
+    g.beginPath();
+    if (g.roundRect) g.roundRect(-half, -half, 2 * half, 2 * half, half * 0.25); else g.rect(-half, -half, 2 * half, 2 * half);
+    g.fillStyle = BARK;
+    g.fill();
+    g.clip();
+    g.lineCap = 'round';
+    for (let i = 0; i < 9; i++) { // (a few furrows along the grain)
+      const x = -half + (i + 0.5) * 2 * half / 9 + (noise(i, 1, 30) - 0.5) * 6;
+      g.strokeStyle = i % 2 ? 'rgba(28,16,6,0.3)' : 'rgba(150,108,66,0.18)';
+      g.lineWidth = 2 + noise(i, 2, 30) * 4;
+      g.beginPath(); g.moveTo(x, -half); g.quadraticCurveTo(x + (noise(i, 3, 30) - 0.5) * 8, 0, x, half); g.stroke();
+    }
+  }
+  // A beetle, standing still and heading up, as drawBeetle draws it between steps (a golden one in Honey).
+  const drawGuideBeetle = (g, gold) => {
+    const c = CELL;
+    g.save();
+    g.rotate(-Math.PI / 2);
+    g.scale(1.25, 1.25);
+    g.strokeStyle = '#1c1917';
+    g.lineWidth = c * 0.05;
+    g.lineCap = 'round';
+    g.beginPath();
+    for (let leg = -1; leg <= 1; leg++) {
+      const bx = leg * c * 0.12;
+      g.moveTo(bx, -c * 0.12); g.lineTo(bx + c * 0.06 * leg, -c * 0.32);
+      g.moveTo(bx, c * 0.12); g.lineTo(bx + c * 0.06 * leg, c * 0.32);
+    }
+    g.moveTo(c * 0.26, -c * 0.04); g.quadraticCurveTo(c * 0.38, -c * 0.06, c * 0.42, -c * 0.18);
+    g.moveTo(c * 0.26, c * 0.04); g.quadraticCurveTo(c * 0.38, c * 0.06, c * 0.42, c * 0.18);
+    g.stroke();
+    g.fillStyle = '#14532d';
+    g.beginPath(); g.arc(c * 0.22, 0, c * 0.08, 0, TAU); g.fill();
+    let shell = '#059669';
+    if (gold) {
+      shell = g.createLinearGradient(c * 0.2, 0, -c * 0.24, 0);
+      shell.addColorStop(0, '#fffbea'); shell.addColorStop(0.35, '#fde68a'); shell.addColorStop(1, '#d4a017');
+    }
+    g.lineWidth = c * 0.03;
+    for (const sg of SIDES2) {
+      g.fillStyle = shell;
+      g.strokeStyle = gold ? '#047857' : '#fbbf24';
+      g.beginPath(); g.ellipse(-c * 0.02, 0, c * 0.22, c * 0.17, 0, sg < 0 ? Math.PI : 0, sg < 0 ? TAU : Math.PI); g.closePath();
+      g.fill(); g.stroke();
+    }
+    g.fillStyle = gold ? 'rgba(255,255,255,0.7)' : 'rgba(209,250,229,0.55)';
+    g.beginPath(); g.arc(c * 0.04, -c * 0.08, c * 0.045, 0, TAU); g.fill();
+    g.strokeStyle = 'rgba(6,47,35,0.8)';
+    g.beginPath(); g.moveTo(c * 0.18, 0); g.lineTo(-c * 0.23, 0); g.stroke();
+    g.restore();
+  };
+  // A power's glyph: its shape stroked thick in ink, then in the gold every
+  // power wears, then in its own accent (sky for the jump, ember for the
+  // flash, the gold itself for the wrap), so it reads by its shape too: a
+  // hop arc for the jump, a double chevron for the flash, a looped arrow for
+  // the wrap.
+  const POWER_ACCENT = { jump: '#a8dcf5', flash: '#f7a866', wrap: '#fde68a' };
+  const drawPowerGlyph = (g, kind) => {
+    const c = CELL;
+    const shape = () => {
+      g.beginPath();
+      if (kind === 'jump') { // up and over, landing beyond
+        g.moveTo(-c * 0.36, c * 0.26); g.quadraticCurveTo(-c * 0.06, -c * 0.62, c * 0.3, c * 0.2);
+        g.moveTo(c * 0.08, c * 0.12); g.lineTo(c * 0.3, c * 0.2); g.lineTo(c * 0.36, -c * 0.03);
+      } else if (kind === 'flash') { // two chevrons, onward
+        for (const dx of [-0.2, 0.1]) { g.moveTo(c * (dx - 0.1), -c * 0.26); g.lineTo(c * (dx + 0.14), 0); g.lineTo(c * (dx - 0.1), c * 0.26); }
+      } else { // round and back in again
+        const end = Math.PI * 1.3, r = c * 0.24, ex = Math.cos(end) * r, ey = Math.sin(end) * r, tx = -Math.sin(end), ty = Math.cos(end), L = c * 0.15, W = c * 0.13;
+        g.arc(0, c * 0.02, r, -Math.PI * 0.4, end);
+        g.moveTo(ex - L * tx + W * Math.cos(end), c * 0.02 + ey - L * ty + W * Math.sin(end));
+        g.lineTo(ex, c * 0.02 + ey);
+        g.lineTo(ex - L * tx - W * Math.cos(end), c * 0.02 + ey - L * ty - W * Math.sin(end));
+      }
+    };
+    g.lineCap = g.lineJoin = 'round';
+    for (const [col, w] of [['#3a2614', 0.27], [kind === 'wrap' ? '#d4a017' : '#fde68a', 0.19], [POWER_ACCENT[kind], 0.1]]) {
+      g.strokeStyle = col;
+      g.lineWidth = c * w;
+      shape();
+      g.stroke();
+    }
+  };
   // ------------------------------------------------------------ beetles
 
   // A jewel beetle, drawn live: an emerald shell with a gold rim, six legs and
@@ -6120,6 +6253,7 @@ window.SnakeRender = (() => {
     holding: () => deaths.length > 0 || corpses.length > 0,
     setViewer(id) { viewerId = id; },
     setReducedMotion(v) { reduced = v; },
+    guideSprite, // (the Field guide's pictures)
     get particles() { return pLive; },
   };
 })();
