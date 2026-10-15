@@ -24,7 +24,7 @@ window.SnakeAudio = (() => {
   // (weather, the woodpecker, beetles): each gives way sooner than the one before.
   const MAX_VOICES = { you: 7, rival: 6, world: 5 };
   const PRIORITY = { death: true, best: true, win: true, winBest: true, ko: true, stinger: true }; // these always play
-  const WORLD = { beetle: 1, crackle: 1, thunder: 1, gust: 1, burrow: 1, dig: 1, rainbow: 1, rain: 1, snow: 1, ember: 1, woodpecker: 1, call: 1, aim: 1, drum: 1, crash: 1, peck: 1, bake: 1, ash: 1, douse: 1 };
+  const WORLD = { beetle: 1, crackle: 1, thunder: 1, gust: 1, burrow: 1, dig: 1, rainbow: 1, rain: 1, snow: 1, ember: 1, woodpecker: 1, call: 1, aim: 1, drum: 1, crash: 1, peck: 1, bake: 1, ash: 1, douse: 1, lastApples: 1 };
   const RIVALS = { rivalDeath: 1, bonked: 1 };
   const RIVAL_VOLUME = 0.5;    // a rival's leap or dash, next to yours...
   const RIVAL_LOWPASS = 2600;  // ...and a little duller, as if further off
@@ -699,7 +699,7 @@ window.SnakeAudio = (() => {
     ash(t) {
       noise(t, 0.25, 0.07, 'lowpass', 600, 0.7);
     },
-    // The woodpecker takes your tail: a sharp snap.
+    // A tail cut off (a golden dash through a snake): a sharp snap.
     snip(t) {
       noise(t, 0.04, 0.25, 'bandpass', 2400, 2);
       tone(t, 'square', 1200, 0.04, 0.05, 0.001, 600, 3000);
