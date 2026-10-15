@@ -302,6 +302,7 @@
 
     if (youHideAt && (performance.now() > youHideAt || !playerAlive())) { youHideAt = 0; showYou(false); }
     if (dirty && !document.hidden) {
+      R.setLead(lead());
       R.frame(drawAlpha, boardClock);
       Chatter.layout(drawAlpha, boardPx, player());
       if (steerHintOn) placeSteerHint();
@@ -366,9 +367,12 @@
   // A frame that ticked has done enough: it thinks only what the frames left
   // before the next tick couldn't (at 4x on a 60 Hz screen there are hardly
   // any frames between ticks).
+  // How far ahead the board is drawn, in ticks (a time, so it's the same lead
+  // at every speed; a person's timing is in milliseconds, not ticks).
+  const lead = () => Math.min(T.DRAW_LEAD_MAX, T.DRAW_LEAD_MS / tickLen);
   function think(dt, ticked = false) {
     if (!thinkQueue.length) return;
-    const frames = Math.floor((tickLen - acc) / Math.max(4, dt)); // (frames still to come before the tick)
+    const frames = Math.floor((tickLen * (1 - lead()) - acc) / Math.max(4, dt)); // (frames still to come before the board is drawn into the next move: see R.setLead)
     let quota = ticked ? thinkQueue.length - frames : Math.ceil(thinkQueue.length / Math.max(1, frames));
     while (thinkQueue.length && quota > 0) {
       const s = thinkQueue.shift();
@@ -1470,7 +1474,7 @@
     const press = swipe && state === 'running' ? swipeTo : turn;
     if (state === 'running' || state === 'countdown') { game.steered = true; hideSteerHint(); } // (you've found the controls)
     if (state === 'running' && youHideAt) youHideAt = Math.min(youHideAt, performance.now() + T.YOU_AFTER_STEER_MS); // (you've found yourself)
-    const heard = () => { const p = player(); if (p.stunUntil >= game.tick && (swipe || DIRS[name] !== p.dir || p.queue.length)) R.pressed?.(DIRS[name]); }; // (stunned: the chevron by your head shows it was heard; only for a press that's taken: a key the way you face changes nothing)
+    const heard = () => R.pressed?.(DIRS[name]); // (your press shows at once: your head leans that way and is drawn ahead from it, online too, before the host's game takes it; stunned, the chevron by your head. pressed() takes it as the game does: never into the neck, and the way you face is nothing)
     if (online) {
       // Online the countdown runs its course; presses go to the host's game.
       if (state !== 'countdown' && state !== 'running') return;

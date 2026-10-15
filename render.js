@@ -12,13 +12,14 @@
 // cached ramps. Bodies are drawn as rectangles, then circles: separate fills
 // batch into one GPU operation, while one path of many contours is
 // triangulated every frame and strokes between circles break the batch. A
-// translucent shape made of overlapping pieces (the shadows, a force field's
-// glow round a rival) is drawn opaque into an offscreen veil and laid on once.
-// Force fields are cached layers, with no clip per frame. The per-frame path
+// translucent shape made of overlapping pieces (the shadows, a land's colour
+// round a rival on it) is drawn opaque into an offscreen veil and laid on
+// once. Sovereign's and Colonist's land are cached layers, made again only
+// when the land changes. The per-frame path
 // builds no strings, closures or arrays (a body across a wrapped edge keeps
 // its offsets on its anim; a loop over both sides goes over SIDES2), only
-// the odd small record of something new (a leaf falling, a raindrop landing
-// on a force field). The exceptions are passing moments: a dash's streak,
+// the odd small record of something new (a leaf falling). The exceptions
+// are passing moments: a dash's streak,
 // and the woodpecker working out its perch and tracing its patch, once a
 // patch or when the page moves (not every frame of its stay).
 window.SnakeRender = (() => {
@@ -1096,17 +1097,19 @@ window.SnakeRender = (() => {
   const FLOAT_FONT = `700 ${Math.round(CELL * 0.72)}px Fredoka, system-ui, sans-serif`;
   const FLOAT_FILL = { 'KO!': '#f87171', 'Crunch!': '#f87171', 'Boom!': '#f87171', 'Fwoosh!': '#fb923c', 'Bonk!': '#fdba74', 'Ouch!': '#fdba74', 'Snip!': '#fffbea', '-1': '#fca5a5', '-2': '#fca5a5', '-3': '#fca5a5' }; // (what you grow, +1 and so on, in Sprout: Honey by your head means a power)
   const GROWN = ['', '+1', '+2', '+3', '+4', '+5']; // (what a bite was worth, without building a string)
+  const OWN = ['', '~+1', '~+2']; // (your own bead: length back, not a meal, so a muted word: '~' marks it)
   const FLOAT_TOP = CELL * 1.3, FLOAT_LOW = SIZE - CELL * 0.5; // (a word starts between these, so it can rise and stay on the board)
   const drawFloat = (g, text) => {
+    const muted = text[0] === '~', word = muted ? text.slice(1) : text;
     g.font = FLOAT_FONT;
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     g.lineJoin = 'round';
     g.lineWidth = CELL * 0.14;
-    g.strokeStyle = 'rgba(58,38,20,0.85)';
-    g.strokeText(text, 0, 0);
-    g.fillStyle = FLOAT_FILL[text] || '#a3e635';
-    g.fillText(text, 0, 0);
+    g.strokeStyle = muted ? 'rgba(58,38,20,0.55)' : 'rgba(58,38,20,0.85)';
+    g.strokeText(word, 0, 0);
+    g.fillStyle = muted ? '#d9c9a3' : FLOAT_FILL[word] || '#a3e635'; // (muted: Parchment, not Sprout)
+    g.fillText(word, 0, 0);
   };
   // A word's sprite: two cells tall like any other, and as wide as the word
   // needs (a long word used to shrink to fit, which left a death's Crunch!
@@ -1120,7 +1123,7 @@ window.SnakeRender = (() => {
     if (s) return s;
     if (!measureG) measureG = makeLayer(1, 1).getContext('2d');
     measureG.font = FLOAT_FONT;
-    const w = measureG.measureText(text).width + CELL * 0.3, span = Math.max(SPRITE * CELL, w); // (room for its ink edge)
+    const w = measureG.measureText(text[0] === '~' ? text.slice(1) : text).width + CELL * 0.3, span = Math.max(SPRITE * CELL, w); // (room for its ink edge)
     floatHalf.set(text, w / 2);
     s = makeLayer(Math.max(2, Math.round(span * k)), Math.max(2, Math.round(SPRITE * CELL * k)));
     const g = s.getContext('2d');
@@ -1439,7 +1442,7 @@ window.SnakeRender = (() => {
       fills[i] = (stripe && i % 3 === 2 ? stripe : ramp)[fade];
     }
     if (look === 'vulture') { fills[0] = '#f9a8d4'; if (n > 1) fills[1] = '#f5f5f4'; } // bald pink head, white neck ruff
-    if (look === 'desperado') { if (n > 1) fills[1] = '#dc2626'; for (let i = 4; i < n; i += 4) fills[i] = '#fde68a'; } // bandana, poncho stripes
+    if (look === 'desperado') { if (n > 1) fills[1] = '#dc2626'; for (let i = 4; i < n; i += 4) fills[i] = '#ecdfc3'; } // bandana, poncho stripes (woven cream: Honey means a power)
     if (mime) fills[0] = '#f8fafc';
   }
 
@@ -1538,12 +1541,13 @@ window.SnakeRender = (() => {
   }
 
   // ------------------------------------------- drawing half a tick ahead
-  // The board is drawn DRAW_LEAD of a tick ahead (drawing only: no rule
+  // The board is drawn DRAW_LEAD_MS ahead (drawing only: no rule
   // changes, and nobody learns anything sooner), so the cell your head is
   // drawn in is the cell your press turns at. Past its cell's centre, each
   // snake goes on toward where it'll be next: its head to the cell it moves
   // into, the rest one cell on (a growing tail stays, a segment more).
   let leadNow = 0, leadRest = false; // (this frame's lead, in ticks; and whether the board rests at its cells: the round's over)
+  let leadTicks = 0.5; // (the lead, in ticks at the speed it's played: the game says, see setLead)
   // Cells a body will still be on after the next move (a tail that moves on
   // leaves its cell; a stunned or growing snake's stays), once a tick.
   const stays = new Uint8Array(GRID * GRID);
@@ -1825,7 +1829,7 @@ window.SnakeRender = (() => {
 
   // The veil: an offscreen layer the size of the board (and a margin), for
   // a translucent shape made of overlapping pieces (every snake's shadow, a
-  // force field's glow round a rival). The pieces go into it opaque, with fast
+  // land's colour round a rival on it). The pieces go into it opaque, with fast
   // fills, and it's laid on the board once at the shape's alpha: an even
   // shade, without a path of a hundred contours triangulated every frame.
   const VEIL_M = 8; // (its margin, in units: the shadow of a body hanging off the edge)
@@ -1850,17 +1854,14 @@ window.SnakeRender = (() => {
     boardG = ctx;
     ctx = veilG;
   }
-  // Back to the board, laying the veil on it at `alpha` (cut to a field's
-  // circle, if one's given).
-  function veilOff(alpha, field = null) {
+  // Back to the board, laying the veil on it at `alpha`.
+  function veilOff(alpha) {
     veilG.restore();
     ctx = boardG;
     if (vw <= 0 || vh <= 0) return;
-    if (field) { ctx.save(); ctx.beginPath(); ctx.arc(field.x, field.y, field.r, 0, TAU); ctx.clip(); }
     ctx.globalAlpha = alpha;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(veil, vx0, vy0, vw, vh, veilX + vx0, veilY + vy0, vw, vh);
-    if (field) ctx.restore();
     ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
     ctx.globalAlpha = 1;
   }
@@ -2488,7 +2489,7 @@ window.SnakeRender = (() => {
     meetings();
     for (const s of live) prepare(s, alpha, now, false);
     drawShadows();
-    if (fieldSpecs.length) drawFieldHues(now); // (a field's light round a rival in it, under every outline and body)
+    if (fieldSpecs.length) drawFieldHues(now); // (a land's colour round a rival on it, under every outline and body)
     // Then outlines, bodies, flames and queasy washes, each pass for every
     // snake on the ground, then the same for any up in the air: a leaper's
     // outline goes over what it's hopping, not under it (which made it look
@@ -4509,7 +4510,7 @@ window.SnakeRender = (() => {
     else if (look === 'sniper' && i % 3 === 2) fill = mix(fill, '#fca5a5', 0.35);
     else if (look === 'vulture' && i < 2) fill = i ? '#f5f5f4' : '#f9a8d4';
     else if (look === 'desperado' && i === 1) fill = '#dc2626';
-    else if (look === 'desperado' && i >= 4 && i % 4 === 0) fill = '#fde68a';
+    else if (look === 'desperado' && i >= 4 && i % 4 === 0) fill = '#ecdfc3'; // (its poncho's cream stripes)
     if (!s.persona) mark = MARKS[col] || '';
     else if (look === 'mason') mark = i % 4 === 3 ? 'marble2' : 'marble';
     else if (look === 'colonist') mark = i % 2 ? 'strap' : 'strap2';
@@ -5872,7 +5873,7 @@ window.SnakeRender = (() => {
     lastNow = now;
     frameDt = Math.max(1, dt);
     shownTime = game.time === timeAt ? timeFrom + (timeAt - timeFrom) * Math.min(1, alpha) : game.time;
-    leadNow = game.tick === 0 && alpha >= 1 ? 0 : T.DRAW_LEAD; // (drawn ahead from the round's Go: see prepare)
+    leadNow = game.tick === 0 && alpha >= 1 ? 0 : leadTicks; // (drawn ahead from the round's Go: see prepare)
     let alive = 0;
     for (const s of game.snakes) if (s.alive) alive++;
     leadRest = alive < 2;
@@ -6086,7 +6087,7 @@ window.SnakeRender = (() => {
         }
         else spawn(x, y, T.PARTICLES_EAT, 180, T.PARTICLE_LIFE, 2.8, '#a3e635', '#f6ecd2'); // sprout and parchment: visible on bark and on green snakes alike (gold means a power)
         eatenNow.add(e.y * GRID + e.x);
-        if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.6), GROWN[e.kind === 'golden' ? T.GOLDEN_GROWTH : e.kind === 'beetle' ? T.BEETLE_GROWTH : e.cooked ? T.COOKED_GROWTH : 1] || '+1');
+        if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.6), (e.own ? OWN : GROWN)[e.kind === 'golden' ? T.GOLDEN_GROWTH : e.kind === 'beetle' ? T.BEETLE_GROWTH : e.cooked ? T.COOKED_GROWTH : 1] || '+1');
       } else if (e.type === 'death') {
         deaths.push(e.snake); // bursts on the next frame, unless the moment is held
         noteRemains(e.snake, now);
@@ -6531,6 +6532,7 @@ window.SnakeRender = (() => {
   function warmUp() {
     if (!sized) return;
     for (const w of FLOAT_WORDS) floatSprite(w);
+    floatSprite(OWN[1]); floatSprite(OWN[2]);
     blastSprite();
   }
   function setGame(g) {
@@ -6592,6 +6594,7 @@ window.SnakeRender = (() => {
     holding: () => deaths.length > 0 || corpses.length > 0,
     setViewer(id) { viewerId = id; },
     setReducedMotion(v) { reduced = v; },
+    setLead(ticks) { leadTicks = ticks; },
     guideSprite, // (the Field guide's pictures)
     get particles() { return pLive; },
   };
