@@ -1178,7 +1178,7 @@ window.SnakeChatter = (() => {
   const LAND_ROT_REST = 30000;  // food rotting in Sovereign's realm or Colonist's colonies
   const DESPERATE_REST = 30000; // starving soon (it can come and go as it eats a little)
   const FLASH_REST = 20000;     // its own plain flashes (everyone flashes, about four times a minute)
-  const NEAR_FOOD = 4;          // food that rots or burns this near its head (cells, and nearer than anyone's) was food it was after
+  const NEAR_FOOD = 5;          // food that rots or burns this near its head (cells, and nearer than anyone's) was food it was after
   // Mason's Life of Brian moments are told once per visit (a joke told every round isn't one).
   const SET_PIECES = new Set(['Romanes eunt domus.', 'Amicus meus est Biggus Dickus.']);
   const toldPieces = new Set();
@@ -1244,6 +1244,8 @@ window.SnakeChatter = (() => {
   // Land, by the one rule the AI, the HUD and the borders use: cell x, y is a
   // field's land when its centre is within the field's radius plus LAND_REACH.
   const onLand = (x, y, f) => Math.hypot(x - f.x, y - f.y) <= f.radius + window.TUNING.LAND_REACH;
+  // The fields a snake holds: Sovereign's realm, or Colonist's colonies (or none).
+  const landsOf = m => m.home ? [m.home] : m.colonies?.length ? m.colonies : null;
   // Do two fields share a cell of land? (Where they do, the map hatches it.)
   function sharesLand(a, b) {
     const N = window.TUNING.GRID, r = Math.ceil(a.radius + window.TUNING.LAND_REACH);
@@ -1563,7 +1565,8 @@ window.SnakeChatter = (() => {
         else if (e.kind === 'mushroom') say(e.snake, 'mushroom');
         else if (Math.random() < 0.15) say(e.snake, 'eat');
       } else if (e.type === 'starving' && e.snake.persona) {
-        say(e.snake, 'hungry', null, true);
+        // (unless it's just said it's desperate: that said it)
+        if (!(game.time - (seen[e.snake.id]?.desperateAt ?? -Infinity) < 15000)) say(e.snake, 'hungry', null, true);
       } else if (e.type === 'spawn' && (e.kind === 'golden' || e.kind === 'beetle')) { // (golden apples and beetles; leaves and golden mushrooms have the narrator)
         for (const s of alive) {
           if (e.gold && VOICES[s.personaKey]?.goldbug) { say(s, 'goldbug', null, true); continue; }
@@ -1614,8 +1617,10 @@ window.SnakeChatter = (() => {
         if (s?.persona) say(s, 'ash');
       } else if (e.type === 'rot') {
         // Rotted (an apple, or a bead) before whoever was nearest got to it.
+        // (On its own land, Sovereign or Colonist minds the land instead: below.)
         const s = after(e.x, e.y), was = s && (seen[s.id] ||= {});
-        if (s?.persona && Math.random() < 0.5 && !(game.time - (was.rotAt ?? -Infinity) < ROT_REST) && say(s, 'rot')) was.rotAt = game.time;
+        const own = s && landsOf(s.memory)?.some(f => onLand(e.x, e.y, f));
+        if (s?.persona && !own && Math.random() < 0.7 && !(game.time - (was.rotAt ?? -Infinity) < ROT_REST) && say(s, 'rot')) was.rotAt = game.time;
       } else if (e.type === 'lastApples') {
         const s = pick(alive.filter(a => VOICES[a.personaKey]?.last));
         if (s) say(s, 'last', null, true);
@@ -1643,13 +1648,13 @@ window.SnakeChatter = (() => {
       }
       // Sovereign and Colonist: their land on fire, pecked full of holes, or
       // food rotting on it.
-      const lands = m.home ? [m.home] : m.colonies?.length ? m.colonies : null;
+      const lands = landsOf(m);
       if (lands) {
         const N = window.TUNING.GRID, tag = m.home ? 'realm' : 'colony';
         const inLand = k => lands.some(f => onLand(k % N, Math.floor(k / N), f));
         for (const e of game.events) {
           if (e.type === 'peck' && (e.cells || []).some(inLand)) say(s, tag + '.pecked', null, true);
-          else if (e.type === 'rot' && inLand(e.y * N + e.x) && !(game.time - (was.landRotAt ?? -Infinity) < LAND_ROT_REST) && say(s, tag + '.rotten')) was.landRotAt = game.time;
+          else if (e.type === 'rot' && inLand(e.y * N + e.x) && !(game.time - (was.landRotAt ?? -Infinity) < LAND_ROT_REST) && say(s, tag + '.rotten', null, true)) was.landRotAt = game.time;
         }
         if (game.tick % 10 === 0 && game.fires?.size && game.time - (was.fireAt ?? -1e9) > 12000) {
           for (const [k, f] of game.fires) if (game.tick >= f.from && inLand(k)) { was.fireAt = game.time; say(s, tag + '.burning', null, true); break; }

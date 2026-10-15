@@ -211,7 +211,7 @@ console.log('ok   every voice speaks up when pecked under, put out, starving, cu
   const g = stage(['vulture'], { 0: [15, 12], 1: [12, 12] }), [you, vul] = g.snakes;
   check(tick(g, [{ type: 'ash', x: 13, y: 12, kind: 'mushroom' }]).length === 0, 'a mushroom burnt to ash: nothing');
   check(tick(g, [{ type: 'ash', x: 14, y: 12, kind: 'food' }], 5000).length === 0, 'ash nearer your head than the rival\'s: the rival says nothing');
-  check(tick(g, [{ type: 'rot', x: 12, y: 17, kind: 'apple' }], 5000).length === 0, 'rot 5 cells away: nothing');
+  check(tick(g, [{ type: 'rot', x: 12, y: 18, kind: 'apple' }], 5000).length === 0, 'rot 6 cells away: nothing');
   check(says(tick(g, [{ type: 'rot', x: 12, y: 14, kind: 'apple' }], 5000), vul, VOICES.vulture.rot), 'rot 2 cells away: a rot line');
   check(tick(g, [{ type: 'rot', x: 12, y: 14, kind: 'pellet' }], 20000).length === 0, '...and no other for 40 s');
   void you;
