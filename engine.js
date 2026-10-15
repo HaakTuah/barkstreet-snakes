@@ -42,11 +42,13 @@ window.SnakeEngine = (() => {
       // stunUntil: the tick it moves again after a crash; burnUntil, burnFrom: on fire (from, until)
       stunUntil: -1, burnUntil: -1, burnFrom: -1,
       // Powers. leaps: golden leaps held (golden beetles); dashes: golden
-      // dashes held (golden leaves; one golden power at a time); leapReadyAt:
-      // when it can next leap (game time); wrapUntil: the edges wrap round for
-      // it till then (a golden mushroom); flight: { dir } while it's in the air
-      // (it lands next tick); leapArmed: the last tick a power it asked for waits.
-      leaps: 0, dashes: 0, leapReadyAt: 0, wrapUntil: -1, flight: null, leapArmed: -1,
+      // flashes held (golden leaves); both can be held at once. leapReadyAt,
+      // flashReadyAt: when it can next jump, or flash, plainly (game time);
+      // wrapUntil: the edges wrap round for it till then (a golden mushroom);
+      // flight: { dir } while it's in the air (it lands next tick); leapArmed:
+      // the last tick a jump it asked for waits; flashArmed: the tick a flash
+      // it asked for goes (the next one it moves).
+      leaps: 0, dashes: 0, leapReadyAt: 0, flashReadyAt: 0, wrapUntil: -1, flight: null, leapArmed: -1, flashArmed: -1,
       queue: [], cause: null, killer: null, killerId: null, diedAt: null, memory: {}, planned: null, plannedTick: -1, ...props,
     };
   }
@@ -620,8 +622,8 @@ window.SnakeEngine = (() => {
       grid: GRID,
       me: {
         id: snake.id, body: snake.body, dir: snake.dir, grow: snake.grow, hungerLeft: hungerLeft(game, snake),
-        // (its powers: golden leaps and dashes held, how long the edges still wrap for it, how long till it can leap)
-        leaps: snake.leaps, dashes: snake.dashes, wrap: Math.max(0, snake.wrapUntil - game.time), leapIn: leapIn(game, snake),
+        // (its powers: golden leaps and dashes held, how long the edges still wrap for it, how long till it can jump, and flash)
+        leaps: snake.leaps, dashes: snake.dashes, wrap: Math.max(0, snake.wrapUntil - game.time), leapIn: leapIn(game, snake), flashIn: flashIn(game, snake),
         // (who it just met head-on, if it was in the last 3 s or so: it keeps clear of them for a while)
         bumped: snake.bumpedBy && game.tick - snake.bumpedBy.tick < 30 ? snake.bumpedBy.id : -1,
       },
@@ -646,16 +648,22 @@ window.SnakeEngine = (() => {
   // A person's snake is handed to an AI (autopilot: a persona) when they leave.
   const brainOf = s => s.autopilot || s.persona;
 
-  // A snake asks to use its power: a person by pressing the way they're
-  // going, an AI by saying so when it decides (memory.power: the tick). With
-  // golden dashes, it dashes at once; otherwise it leaps (golden, or the
-  // plain one when it's ready) as soon as there's something right in front
-  // to hop and somewhere to land, waiting a few ticks for that.
+  // A snake asks to jump: a person with Space or a tap, an AI by saying so
+  // when it decides (memory.power: the tick). It leaps (golden, or the plain
+  // one when it's ready) as soon as there's something right in front to hop
+  // and somewhere to land, waiting a few ticks for that.
   function leap(game, s) {
     if (s?.alive) s.leapArmed = Math.max(game.tick, s.stunUntil) + T.LEAP_WINDOW; // (stunned: from when it moves again)
   }
-  // How long until it can leap (ms; 0: now), golden powers included.
-  const leapIn = (game, s) => s.leaps > 0 || s.dashes > 0 ? 0 : s.body.length <= T.MIN_LENGTH ? Infinity : Math.max(0, s.leapReadyAt - game.time);
+  // A snake asks to flash: a person with E, Shift or a swipe the way they're
+  // going, an AI by saying so (memory.flash: the tick). It goes the next tick
+  // it moves: golden (a dash) if it holds any, else the plain one if rested.
+  function flash(game, s) {
+    if (s?.alive) s.flashArmed = Math.max(game.tick, s.stunUntil); // (stunned: when it moves again)
+  }
+  // How long until it can jump, or flash (ms; 0: now), golden charges included.
+  const leapIn = (game, s) => s.leaps > 0 ? 0 : s.body.length <= T.MIN_LENGTH ? Infinity : Math.max(0, s.leapReadyAt - game.time);
+  const flashIn = (game, s) => s.dashes > 0 ? 0 : T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH ? Infinity : Math.max(0, s.flashReadyAt - game.time);
 
   function thinkAhead(game, s) {
     s.planned = decide(aiView(game, s), brainOf(s), s.memory);
@@ -717,7 +725,8 @@ window.SnakeEngine = (() => {
           }
         } else {
           s.dir = s.plannedTick === game.tick ? s.planned : decide(aiView(game, s), brainOf(s), s.memory);
-          if (s.memory.power === game.tick) leap(game, s); // (it asked for its power, as a person would)
+          if (s.memory.power === game.tick) leap(game, s); // (it asked to jump, or flash, as a person would)
+          if (s.memory.flash === game.tick) flash(game, s);
         }
         s.planned = null;
         s.plannedTick = -1;
@@ -732,9 +741,10 @@ window.SnakeEngine = (() => {
             // A power asked for counts as steering, if it can go; one that
             // can't says why, and the auto-turn takes it clear (it isn't sent
             // back into what it hit for a press that was never going to work).
-            const no = s.leapArmed >= game.tick ? powerWontGo(game, s) : null;
-            if (no) { game.events.push({ type: 'fizzle', snake: s, why: no, x: nx, y: ny }); s.leapArmed = -1; } // (where it faced: the auto-turn is about to turn it)
-            if (!(s.leapArmed >= game.tick)) s.dir = recoil(game, s, shut);
+            const asked = s.leapArmed >= game.tick || s.flashArmed >= game.tick;
+            const no = asked ? powerWontGo(game, s) : null;
+            if (no) { game.events.push({ type: 'fizzle', snake: s, why: no, x: nx, y: ny, flash: s.flashArmed >= game.tick ? 1 : 0 }); s.leapArmed = -1; s.flashArmed = -1; } // (where it faced: the auto-turn is about to turn it)
+            if (!(s.leapArmed >= game.tick || s.flashArmed >= game.tick)) s.dir = recoil(game, s, shut);
           }
           s.bounce = null;
         }
@@ -756,13 +766,15 @@ window.SnakeEngine = (() => {
         bodyOwner[k] = s.id;
       }
     }
-    // Powers, for a snake that asked (see leap()), in turn: a dash, or a leap.
-    // A snake cut in two by a dash, too short to go on, is out (gone).
+    // Powers, for a snake that asked (see leap() and flash()), in turn: a
+    // flash (golden: a dash), else a jump. A snake cut in two by a dash, too
+    // short to go on, is out (gone).
     const gone = new Set();
+    moving0 = moving; // (a jump won't take off toward a landing another head is moving into)
     for (const s of moving) {
-      if (gone.has(s) || s.landing || !(s.leapArmed >= game.tick)) continue;
-      if (s.dashes > 0) dash(game, s, gone, dying, drops);
-      else hop(game, s);
+      if (gone.has(s) || s.landing) continue;
+      if (s.flashArmed >= game.tick) { flashGo(game, s, gone, dying, drops); continue; }
+      if (s.leapArmed >= game.tick) hop(game, s);
     }
     if (gone.size) for (let i = moving.length - 1; i >= 0; i--) if (gone.has(moving[i])) moving.splice(i, 1);
     for (const s of moving) {
@@ -976,10 +988,15 @@ window.SnakeEngine = (() => {
     return best;
   }
   // Facing what it hit, with a power asked for: why it can't go ('resting',
-  // 'small' or 'landing'), or null if it can. A dash always goes (that's its
-  // risk); a leap needs to be ready (or golden), and somewhere to land.
+  // 'small' or 'landing'), or null if it can. A flash goes if it's golden
+  // (that's its risk) or rested; a jump needs to be ready (or golden), and
+  // somewhere to land.
   function powerWontGo(game, s) {
-    if (s.dashes > 0) return null;
+    if (s.flashArmed >= game.tick) {
+      if (s.dashes > 0) return null;
+      if (T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH) return 'small';
+      return game.time < s.flashReadyAt ? 'resting' : null;
+    }
     if (!(s.leaps > 0)) {
       if (s.body.length <= T.MIN_LENGTH) return 'small';
       if (game.time < s.leapReadyAt) return 'resting';
@@ -1125,6 +1142,8 @@ window.SnakeEngine = (() => {
     }
     const hurdle = c => { const k = key(c.x, c.y); return bodyStamp[k] === stamp || game.holes.has(k) || burning(game, k); };
     if (!path.slice(0, reach).some(hurdle) || hurdle(path[reach])) return false;
+    const land = path[reach]; // (nor toward a landing another head on the ground is moving into this tick: it'd come down on it)
+    if (moving0.some(o => o !== s && !o.air && !o.flight && o.next && o.next.x === land.x && o.next.y === land.y)) return false;
     if (golden) s.leaps--;
     else {
       s.leapReadyAt = game.time + T.LEAP_COOLDOWN_MS;
@@ -1150,7 +1169,6 @@ window.SnakeEngine = (() => {
   // two thick, its own body): it gets that far and crashes into it.
   function dash(game, s, gone, dying, drops) {
     s.dashes--;
-    s.leapArmed = -1;
     const from = s.body[0];
     let n = 0;
     for (let c = from, i = 1; i <= T.DASH_LENGTH; i++) {
@@ -1173,6 +1191,34 @@ window.SnakeEngine = (() => {
       (s.passed ||= []).push(c); // (food on the way: eaten after everyone's moved, with what its head finds)
     }
     game.events.push({ type: 'dash', snake: s, x: from.x, y: from.y, n: n + 1 });
+  }
+  // A flash: golden dashes held, a dash (above). The plain one goes
+  // FLASH_LENGTH cells this tick, along the ground, then rests: it cuts
+  // nothing and puts nothing out; whatever's in the way (a body, a hole, the
+  // edge, fire) it gets that far and runs into, as a crawl would.
+  function flashGo(game, s, gone, dying, drops) {
+    s.flashArmed = -1;
+    if (s.dashes > 0) return dash(game, s, gone, dying, drops);
+    const small = T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH;
+    if (small || game.time < s.flashReadyAt) {
+      const c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir);
+      game.events.push({ type: 'fizzle', snake: s, why: small ? 'small' : 'resting', x: c.x, y: c.y, flash: 1 });
+      return;
+    }
+    s.flashReadyAt = game.time + T.FLASH_COOLDOWN_MS;
+    for (let n = 0; n < T.FLASH_COST; n++) trim(s);
+    const from = s.body[0];
+    let n = 0;
+    for (let c = from, i = 1; i <= T.FLASH_LENGTH; i++) {
+      c = ahead(game, s, c.x, c.y, s.dir);
+      s.next = c;
+      const k = key(c.x, c.y);
+      if (i === T.FLASH_LENGTH || !inside(c.x, c.y) || game.holes.has(k) || bodyStamp[k] === stamp || burning(game, k)) break; // (its head goes here, with everyone else's)
+      advance(s, c);
+      n++;
+      (s.passed ||= []).push(c); // (food on the way: eaten after everyone's moved)
+    }
+    game.events.push({ type: 'dash', snake: s, x: from.x, y: from.y, n: n + 1, plain: 1 });
   }
   // A dash cuts o at body index j (by: the dasher).
   function cutAt(game, o, j, by, gone, dying, drops) {
@@ -1229,10 +1275,10 @@ window.SnakeEngine = (() => {
   }
   function consume(game, s, f, x, y) {
     game.events.push({ type: 'eat', snake: s, kind: f.kind, x, y, color: f.color, cooked: !!f.cooked, gold: !!f.gold });
-    // Golden powers (one golden power at a time: a new one replaces the old).
-    if (f.gold) { s.leaps = Math.min(T.LEAP_MAX, s.leaps + T.LEAP_CHARGES); s.dashes = 0; } // (a golden beetle: leaps)
-    if (f.kind === 'leaf') { s.dashes = T.DASH_CHARGES; s.leaps = 0; s.leapArmed = -1; } // (a golden leaf: dashes, each when pressed for)
-    if (f.kind === 'goldcap') s.wrapUntil = game.time + T.WRAP_MS; // (a golden mushroom: the edges wrap)
+    // Golden powers add up: each kind on top of what's held, any kinds at once.
+    if (f.gold) s.leaps = Math.min(T.LEAP_MAX, s.leaps + T.LEAP_CHARGES); // (a golden beetle: golden jumps)
+    if (f.kind === 'leaf') s.dashes = Math.min(T.DASH_MAX, s.dashes + T.DASH_CHARGES); // (a golden leaf: golden flashes, dashes)
+    if (f.kind === 'goldcap') s.wrapUntil = Math.min(Math.max(s.wrapUntil, game.time) + T.WRAP_MS, game.time + T.WRAP_MAX_MS); // (a golden mushroom: the edges wrap, a while longer)
     if (f.kind === 'mushroom') {
       // Shrink: cancel pending growth first, then drop tail segments.
       let n = T.SHRINK;
@@ -1253,6 +1299,6 @@ window.SnakeEngine = (() => {
 
   return {
     GRID, PLAYER_COLOR, PERSONAS, DIRS, WEATHER,
-    createGame, step, tickMs, hungerLeft, aiView, canThinkAhead, thinkAhead, suddenDeath, leap, leapIn,
+    createGame, step, tickMs, hungerLeft, aiView, canThinkAhead, thinkAhead, suddenDeath, leap, leapIn, flash, flashIn,
   };
 })();

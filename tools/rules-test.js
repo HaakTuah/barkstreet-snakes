@@ -202,14 +202,14 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   const g = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']], { food: [[6, 10], [8, 10]] });
   const me = g.snakes[0];
   me.dashes = 2;
-  E.leap(g, me);
+  E.flash(g, me);
   quiet(g);
   check('a dash: three cells in one tick', me.body[0].x === 8 && me.body[0].y === 10 && joined(me.body) && me.dashes === 1 && g.events.some(e => e.type === 'dash' && e.n === 3), JSON.stringify(me.body.slice(0, 4)));
   check('...eating what was on the way', me.eaten === 2 && !g.food.some(f => f.y === 10 && (f.x === 6 || f.x === 8)), me.eaten);
   const g2 = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']]);
   g2.fires.set(K(7, 10), { from: 0, until: 99, group: 1, strike: false }); g2.fireGroups.set(1, 1);
   g2.snakes[0].dashes = 1;
-  E.leap(g2, g2.snakes[0]); quiet(g2);
+  E.flash(g2, g2.snakes[0]); quiet(g2);
   check('...putting out fire on the way', !g2.fires.size && !(g2.snakes[0].burnUntil > g2.tick) && g2.events.some(e => e.type === 'douse'));
 }
 
@@ -218,11 +218,11 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   const g = board([[line(5, 10, 5), 'right'], across]);
   const [me, o] = g.snakes;
   me.dashes = 1;
-  E.leap(g, me); quiet(g);
+  E.flash(g, me); quiet(g);
   check('a dash cuts a snake in two', me.alive && me.body[0].x === 8 && o.alive && o.body.length === 6 && g.events.some(e => e.type === 'cut' && e.snake === o && e.by === me.id), o.body.length);
   check('...the rest falls off as food', [11, 12, 13, 14, 15, 16].every(y => g.food.some(f => f.kind === 'pellet' && f.x === 7 && f.y === y)), JSON.stringify(g.food.map(f => [f.x, f.y])));
   const g2 = board([[line(5, 10, 5), 'right'], [Array.from({ length: 8 }, (_, i) => [7, 9 + i]), 'up']]); // (cut right behind its head)
-  E.leap(g2, Object.assign(g2.snakes[0], { dashes: 1 }));
+  E.flash(g2, Object.assign(g2.snakes[0], { dashes: 1 }));
   const dying = quiet(g2);
   check('...too near its head, and it\'s out', dying.includes(g2.snakes[1]) && g2.snakes[1].cause === 'got cut in two by P0' && g2.snakes[0].alive, g2.snakes[1].cause);
 }
@@ -245,19 +245,19 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   const g = board([[line(5, 10, 8), 'right'], along]);
   const me = g.snakes[0];
   me.dashes = 1;
-  E.leap(g, me); quiet(g);
+  E.flash(g, me); quiet(g);
   const crash = g.events.find(e => e.type === 'crash' && e.snake === me);
   check('a dash into a snake two thick: it gets that far and crashes', me.alive && me.body[0].x === 7 && crash && crash.x === 8, JSON.stringify(me.body[0]));
 }
 
 { // Dashing into the edge, or a hole: it blows up.
   const g = board([[line(22, 10, 8), 'right'], [line(5, 20, 3), 'right']]);
-  E.leap(g, Object.assign(g.snakes[0], { dashes: 1 }));
+  E.flash(g, Object.assign(g.snakes[0], { dashes: 1 }));
   const dying = quiet(g);
   check('a dash into the edge blows up', dying.includes(g.snakes[0]) && g.snakes[0].cause === 'dashed into the edge and blew up', g.snakes[0].cause);
   const g2 = board([[line(5, 10, 8), 'right'], [line(5, 20, 3), 'right']]);
   g2.holes.add(K(7, 10));
-  E.leap(g2, Object.assign(g2.snakes[0], { dashes: 1 }));
+  E.flash(g2, Object.assign(g2.snakes[0], { dashes: 1 }));
   check('...and into a hole', quiet(g2).includes(g2.snakes[0]) && g2.snakes[0].cause === 'dashed into a woodpecker hole and blew up', g2.snakes[0].cause);
 }
 
@@ -317,12 +317,12 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
 
 { // A dash crashes into a head, or its own body, like anything it can't cut.
   const g = board([[line(5, 10, 6), 'right'], [[[7, 10], [7, 11], [7, 12], [7, 13], [7, 14]], 'up']]); // (a head in the way)
-  E.leap(g, Object.assign(g.snakes[0], { dashes: 1 }));
+  E.flash(g, Object.assign(g.snakes[0], { dashes: 1 }));
   quiet(g);
   check('a dash into a head crashes', g.snakes[0].alive && g.snakes[1].alive && g.events.some(e => e.type === 'crash' && e.snake === g.snakes[0]) && !g.events.some(e => e.type === 'cut'));
   const coil = [[5, 10], [5, 11], [6, 11], [7, 11], [7, 10], [7, 9], [6, 9], [5, 9], [4, 9], [3, 9]]; // ((7,10), two ahead, is its own body)
   const g2 = board([[coil, 'right'], [[[5, 20], [4, 20], [3, 20]], 'right']]);
-  E.leap(g2, Object.assign(g2.snakes[0], { dashes: 1 }));
+  E.flash(g2, Object.assign(g2.snakes[0], { dashes: 1 }));
   quiet(g2);
   check('...and into its own body', g2.snakes[0].alive && g2.events.some(e => e.type === 'crash' && e.snake === g2.snakes[0] && e.killer === 'self'), JSON.stringify(g2.events.map(e => e.type)));
 }
@@ -349,11 +349,38 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('...and bigger patches', pecks[pecks.length - 1].n > T.PECK_CHUNK && pecks[pecks.length - 1].n <= T.PECK_CHUNK_MAX, JSON.stringify(pecks.map(p => p.n)));
 }
 
-{ // One golden power at a time: a new one replaces the old.
+{ // Golden powers add up: a leaf on top of golden leaps keeps them; another leaf adds, up to DASH_MAX.
   const g = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']], { food: [[6, 10, 'leaf']] });
-  g.snakes[0].leaps = 2;
+  g.snakes[0].leaps = 2; g.snakes[0].dashes = 2;
   E.step(g);
-  check('one golden power at a time (a leaf for leaps: dashes)', g.snakes[0].dashes === T.DASH_CHARGES && g.snakes[0].leaps === 0);
+  check('golden powers add up (a leaf, holding leaps and dashes)', g.snakes[0].dashes === Math.min(T.DASH_MAX, 2 + T.DASH_CHARGES) && g.snakes[0].leaps === 2, JSON.stringify([g.snakes[0].leaps, g.snakes[0].dashes]));
+  const g2 = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']], { food: [[6, 10, 'goldcap']] });
+  g2.snakes[0].wrapUntil = g2.time + 9500;
+  const t0 = g2.time;
+  E.step(g2);
+  check('...a second golden mushroom adds its time, up to WRAP_MAX_MS', g2.snakes[0].wrapUntil - t0 <= 9500 + T.WRAP_MS && g2.snakes[0].wrapUntil - g2.time <= T.WRAP_MAX_MS && g2.snakes[0].wrapUntil - g2.time > T.WRAP_MS + 5000, g2.snakes[0].wrapUntil - g2.time);
+}
+
+{ // Jump and flash are separate presses: holding golden dashes, a jump still hops (it doesn't dash into the hole).
+  const g = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']]);
+  const me = g.snakes[0];
+  me.dashes = 1;
+  g.holes.add(K(6, 10));
+  E.leap(g, me); quiet(g);
+  check('holding dashes, a jump hops a hole (it doesn\'t dash in)', me.alive && me.dashes === 1 && g.events.some(e => e.type === 'leap'), me.cause);
+}
+
+{ // Everyone can flash: two cells in one tick along the ground, then it rests.
+  const g = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']], { food: [[6, 10]] });
+  const me = g.snakes[0];
+  E.flash(g, me); quiet(g);
+  check('a plain flash: two cells in one tick, eating on the way', me.body[0].x === 7 && joined(me.body) && me.eaten === 1 && g.events.some(e => e.type === 'dash' && e.plain && e.n === T.FLASH_LENGTH), JSON.stringify(me.body.slice(0, 3)));
+  check('...then it rests', E.flashIn(g, me) > 0 && E.flashIn(g, me) <= T.FLASH_COOLDOWN_MS);
+  E.flash(g, me); quiet(g);
+  check('...a flash while resting fizzles (a crawl instead)', me.body[0].x === 8 && g.events.some(e => e.type === 'fizzle' && e.why === 'resting' && e.flash), JSON.stringify(g.events.map(e => e.type)));
+  const g2 = board([[line(5, 10, 5), 'right'], [[[7, 8], [7, 9], [7, 10], [7, 11], [7, 12], [7, 13]], 'up']]);
+  E.flash(g2, g2.snakes[0]); quiet(g2);
+  check('...into a body it doesn\'t cut: it gets that far and runs into it', g2.snakes[0].body[0].x === 6 && g2.snakes[1].body.length === 6 && g2.events.some(e => e.type === 'crash' && e.snake === g2.snakes[0]), JSON.stringify(g2.snakes[0].body[0]));
 }
 
 { // Golden leaves come on the wind, golden mushrooms in the rain, and never otherwise.

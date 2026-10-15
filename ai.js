@@ -1059,7 +1059,7 @@ window.SnakeAI = (() => {
     // somewhere with room.
     if (me.dashes > 0 && memory.power !== view.tick) {
       const d = bestDash(bestScore < DEAD / 2);
-      if (d) { bestDir = d; memory.power = view.tick; }
+      if (d) { bestDir = d; memory.flash = view.tick; }
     }
     return bestDir;
 

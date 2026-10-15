@@ -21,22 +21,29 @@ window.TUNING = Object.freeze({
   BEETLE_SCARED_EVERY: 2,   // ...or every 2, scurrying away (half a snake's speed: a chase you can win)...
   BEETLE_FEAR: 4,           // ...from any head within this many cells
   BEETLE_GROWTH: 2,         // a beetle is worth this much
-  // Powers. Everyone can leap: press the way you're going and you hop one
-  // cell (a body, a hole or fire) and land on the next, two cells in two
-  // ticks, for the tip of your tail; then it needs a moment.
+  // Powers. Everyone can jump and flash, two separate presses (Space or a
+  // tap; E, Shift or a swipe the way you're going). A jump hops one cell (a
+  // body, a hole or fire) and lands on the next, two cells in two ticks, for
+  // the tip of your tail; then it needs a moment. A flash goes FLASH_LENGTH
+  // cells in one tick along the ground, free, then rests.
   LEAP_COST: 1,             // a leap costs this many segments off the tail (and needs more than MIN_LENGTH)...
   LEAP_COOLDOWN_MS: 4000,   // ...and can't be done again for this long
-  LEAP_WINDOW: 3,           // pressing the way you're going: the power waits this many ticks for something to hop
+  LEAP_WINDOW: 3,           // a jump pressed for waits this many ticks for something to hop
+  FLASH_LENGTH: 2,          // a flash: this many cells in one tick, along the ground (it eats on the way; whatever's in the way, it runs into as a crawl would)...
+  FLASH_COST: 0,            // ...for this many segments off the tail (free: a cost made rounds longer and starved snakes, in simulation)...
+  FLASH_COOLDOWN_MS: 6000,  // ...and then it rests this long
   GOLD_BEETLE_CHANCE: 0.3,  // a beetle coming out is a golden one this often: catch it for golden leaps (three cells in two ticks, hopping up to two; free)...
   LEAP_CHARGES: 2,          // ...this many (up to LEAP_MAX held at once)
   LEAP_MAX: 3,
   LEAF_CHANCE: 0.07,        // wind: each gust might blow a golden leaf onto the log (one at a time): dashes...
   LEAF_TICKS: 90,           // ...it blows away after this many ticks
-  DASH_CHARGES: 2,          // ...this many: three cells in one tick, cutting through a snake one cell thick and putting out fire (the edge or a hole: you blow up)
+  DASH_CHARGES: 2,          // ...this many (up to DASH_MAX held): golden flashes, three cells in one tick, cutting through a snake one cell thick and putting out fire (the edge or a hole: you blow up)
+  DASH_MAX: 3,
   DASH_LENGTH: 3,
   GOLDCAP_CHANCE: 0.12,     // rain: once in a while a golden mushroom comes up (one a spell, at most)...
   GOLDCAP_TICKS: 120,       // ...and withers after this many ticks
-  WRAP_MS: 12000,           // ...eat it, and for this long the edges wrap round (off one side, in at the other)
+  WRAP_MS: 12000,           // ...eat it, and for this long the edges wrap round (off one side, in at the other); another adds as much again...
+  WRAP_MAX_MS: 20000,       // ...up to this much in all
   SHRINK: 3,                // a mushroom takes this many segments off...
   MIN_LENGTH: 3,            // ...but never below this
   START_LENGTH: 4,          // every snake starts this long: one more than the least, so a first crash costs a segment, not the round
