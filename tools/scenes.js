@@ -131,4 +131,27 @@ const strikes = (rounds = 24) => `(async () => {
   return { steady: sum(steady), strike: sum(strike) };
 })()`;
 
-module.exports = { SCENES, setup, throughput, strikes };
+// Page-side source: on the holes scene, fire burning out. Each round sets
+// three cells burning (a frame, untimed), times a steady frame, then the
+// frame where they burn out and their soot is painted into the board (see
+// render.js's drawScorch), each closed by a readback. Resolves to { steady,
+// burnout } summaries.
+const burnouts = (rounds = 24) => `(async () => {
+  const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return +s[Math.min(s.length - 1, Math.floor(s.length * p))].toFixed(2); };
+  const sum = a => ({ median: q(a, 0.5), p90: q(a, 0.9), worst: q(a, 1) });
+  const g = __scene.game, x = document.getElementById('game').getContext('2d'), steady = [], burnout = [];
+  let seed = 5;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let n = 0; n < ${rounds}; n++) {
+    await new Promise(r => setTimeout(r, 15));
+    const cells = [];
+    while (cells.length < 3) { const k = Math.floor(rnd() * 576); if (!g.holes.has(k) && !cells.includes(k)) cells.push(k); }
+    g.fires = new Map(cells.map(k => [k, { from: 0, until: 1e9 }])); g.tick++; __t += 16; __scene.draw(0.5, __t); x.getImageData(0, 0, 1, 1);
+    let t0 = performance.now(); __t += 16; __scene.draw(0.5, __t); x.getImageData(0, 0, 1, 1); steady.push(performance.now() - t0);
+    g.fires = new Map(); g.tick++;
+    t0 = performance.now(); __t += 16; __scene.draw(0.5, __t); x.getImageData(0, 0, 1, 1); burnout.push(performance.now() - t0);
+  }
+  return { steady: sum(steady), burnout: sum(burnout) };
+})()`;
+
+module.exports = { SCENES, setup, throughput, strikes, burnouts };

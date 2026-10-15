@@ -490,7 +490,7 @@ window.SnakeRender = (() => {
     g.drawImage(barkLayer, 0, 0);
     holesDrawn = 0;
     holeMask.fill(0); // (the holes are painted again, from the first)
-    scorchDrawn = 0; // (scorch marks are baked again too)
+    scorchDrawn = 0; scorchMask.fill(0); // (scorch marks are baked again too)
   }
 
   // The next round's stretch of log, made ahead: once nothing has been drawn
@@ -5046,31 +5046,94 @@ window.SnakeRender = (() => {
     }
     if (game.fires) for (const [k, f] of game.fires) fireSeen.set(k, game.tick >= f.from);
   }
-  // Scorch marks go on the static layer under the pits: one beside a hole
-  // paints its box again (see paintStatic), so the pit stays on top.
+  // Scorch marks are soot, not holes: each burned cell adds to a smudge of
+  // char along the grain, and the cells of one burn run together into one
+  // smudge (each layer of soot is filled once over all of them, so where
+  // they overlap it's no darker: never a dark round centre, never a disc a
+  // cell; at most about 0.3 alpha), streaked along the grain, with a few
+  // pale cinders (lighter than any pit floor). They're on the static layer
+  // under the pits: a new one paints its box again (see paintStatic),
+  // soot and pits and all, so what's beside it matches.
+  const scorchMask = new Uint8Array(GRID * GRID); // (cells whose soot is on the static layer)
   function syncScorch() {
     if (scorchDrawn === scorched.length || !staticLayer) return;
-    const g = staticLayer.getContext('2d');
+    const all = scorchDrawn === 0 && scorched.length > 8; // (the layer made again: everything, in one go)
+    let x0 = GRID, y0 = GRID, x1 = -1, y1 = -1;
+    const flush = () => { if (x1 >= 0) paintStatic(x0 - 1, y0 - 1, x1 + 1, y1 + 1); x0 = y0 = GRID; x1 = y1 = -1; };
     for (; scorchDrawn < scorched.length; scorchDrawn++) {
       const key = scorched[scorchDrawn], x = key % GRID, y = (key - x) / GRID;
-      if (holeMask[key]) continue;
-      let near = false;
-      for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) if (x + dx >= 0 && x + dx < GRID && y + dy >= 0 && y + dy < GRID && holeMask[key + dy * GRID + dx]) { near = true; break; }
-      if (near) { scorchDrawn++; paintStatic(x - 1, y - 1, x + 1, y + 1); scorchDrawn--; continue; }
-      g.setTransform(k, 0, 0, k, 0, 0);
-      scorchAt(g, key);
+      if (scorchMask[key] || holeMask[key]) continue;
+      scorchMask[key] = 1;
+      if (!all && x1 >= 0 && (Math.max(x1, x) - Math.min(x0, x) > 5 || Math.max(y1, y) - Math.min(y0, y) > 5)) flush(); // (far apart: a box each)
+      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    }
+    flush();
+  }
+  // The soot of the burned cells that reach cells cx0..cx1, cy0..cy1, on g
+  // (in the board's units). Each layer of soot is drawn as one shape over
+  // all of them, small (SOOT_RES pixels a cell, on a grid that lines up
+  // with the cells, so a box painted again matches what's round it) and
+  // then laid on the bark at its size, which softens its edges: no rim, no
+  // ring, just a smudge darkest where the burn was thickest. A cell's soot
+  // reaches less than a cell and a half from its centre, so the cells a
+  // cell round the box are all it takes.
+  const SOOT = [[0.76, 0.98, 0.3, '#0e0907'], [0.4, 0.6, 0.13, '#a39a8f']]; // (each layer's half width and height, in cells, alpha and colour: the char, and ash over its middle)
+  const SOOT_RES = 4;
+  const sootMasks = [];
+  function drawScorch(g, cx0, cy0, cx1, cy1) {
+    const keys = [];
+    for (let y = Math.max(0, cy0 - 1); y <= Math.min(GRID - 1, cy1 + 1); y++) {
+      for (let x = Math.max(0, cx0 - 1); x <= Math.min(GRID - 1, cx1 + 1); x++) { const key = y * GRID + x; if (scorchMask[key] && !holeMask[key]) keys.push(key); }
+    }
+    if (!keys.length) return;
+    // (A mask a layer, each the whole board and two cells round it, on the
+    // same grid every time, so a box matches what's round it; only the box
+    // and two cells round it are made afresh, and the box and a cell round it
+    // laid on: the rest is outside what's painted.)
+    const M = (GRID + 4) * SOOT_RES, u = SOOT_RES / CELL, sx = (cx0 + 1) * SOOT_RES, sy = (cy0 + 1) * SOOT_RES, sw = (cx1 - cx0 + 3) * SOOT_RES, sh = (cy1 - cy0 + 3) * SOOT_RES;
+    for (let l = 0; l < SOOT.length; l++) {
+      const [rx, ry, alpha, colour] = SOOT[l];
+      const mask = sootMasks[l] ||= makeLayer(M, M), m = mask.getContext('2d', { willReadFrequently: true }); // (kept off the GPU: drawn on and then laid on the board each time, a canvas there costs ms a time, waiting on itself)
+      m.setTransform(1, 0, 0, 1, 0, 0);
+      m.clearRect(cx0 * SOOT_RES, cy0 * SOOT_RES, (cx1 - cx0 + 5) * SOOT_RES, (cy1 - cy0 + 5) * SOOT_RES);
+      m.setTransform(u, 0, 0, u, 2 * SOOT_RES, 2 * SOOT_RES);
+      m.fillStyle = colour;
+      for (const key of keys) { m.beginPath(); sootBlob(m, key, rx * CELL, ry * CELL); m.fill(); } // (opaque, so where they overlap is no darker)
+      g.save();
+      g.globalAlpha = alpha;
+      g.imageSmoothingEnabled = true; // (bilinear: it softens a quarter of a cell)
+      g.drawImage(mask, sx, sy, sw, sh, (cx0 - 1) * CELL, (cy0 - 1) * CELL, sw / u, sh / u);
+      g.restore();
+    }
+    for (const key of keys) { // (a cell at a time, so a box painted again draws each just as before)
+      const x = (key % GRID) * CELL, y = Math.floor(key / GRID) * CELL;
+      g.beginPath();
+      for (let n = 0; n < 3; n++) { // (char along the grain)
+        const len = CELL * (0.45 + 0.45 * noise(key, n, 31));
+        g.rect(x + 5 + noise(key, n, 32) * (CELL - 10), y + CELL / 2 - len / 2 + (noise(key, n, 33) - 0.5) * CELL * 0.3, 0.7 + noise(key, n, 34) * 0.6, len);
+      }
+      g.fillStyle = 'rgba(10,6,4,0.22)'; g.fill();
+      g.beginPath();
+      for (let n = 0; n < 2; n++) { // (a few cinders)
+        const cx = x + 5 + noise(key, n, 35) * (CELL - 10), cy = y + 5 + noise(key, n, 36) * (CELL - 10), r = 0.8 + noise(key, n, 37) * 0.6;
+        g.moveTo(cx + r, cy); g.arc(cx, cy, r, 0, TAU);
+      }
+      g.fillStyle = 'rgba(176,164,148,0.4)'; g.fill();
     }
   }
-  function scorchAt(g, key) {
-    const x = (key % GRID) * CELL + CELL / 2, y = Math.floor(key / GRID) * CELL + CELL / 2;
-    const grad = g.createRadialGradient(x, y, 1, x, y, CELL * 0.62);
-    grad.addColorStop(0, 'rgba(12,8,6,0.75)');
-    grad.addColorStop(0.6, 'rgba(24,14,8,0.45)');
-    grad.addColorStop(1, 'rgba(24,14,8,0)');
-    g.fillStyle = grad;
-    g.beginPath(); g.arc(x, y, CELL * 0.62, 0, TAU); g.fill();
-    g.fillStyle = 'rgba(160,150,140,0.35)'; // ash
-    for (let i = 0; i < 5; i++) { const a = i * 2.3 + key; g.beginPath(); g.arc(x + Math.cos(a) * CELL * 0.22, y + Math.sin(a) * CELL * 0.18, 1.2, 0, TAU); g.fill(); }
+  // One cell's soot, on p: an uneven oval along the grain, a little off its centre.
+  function sootBlob(p, key, rx, ry) {
+    const cx = (key % GRID + 0.5 + (noise(key, 0, 38) - 0.5) * 0.2) * CELL, cy = (Math.floor(key / GRID) + 0.5 + (noise(key, 0, 39) - 0.5) * 0.2) * CELL;
+    const N = 10;
+    let px = 0, py = 0;
+    for (let i = 0; i <= N + 1; i++) { // (smooth: through the middles of an uneven ten-sided ring)
+      const j = i % N, a = j / N * TAU, w = 0.84 + 0.32 * noise(key, j, 40);
+      const x = cx + Math.cos(a) * rx * w, y = cy + Math.sin(a) * ry * w;
+      if (i === 1) p.moveTo((px + x) / 2, (py + y) / 2);
+      else if (i > 1) p.quadraticCurveTo(px, py, (px + x) / 2, (py + y) / 2);
+      px = x; py = y;
+    }
+    p.closePath();
   }
 
   // Fire on the bark: smouldering cells glow, burning cells flame (deadly),
@@ -5823,10 +5886,7 @@ window.SnakeRender = (() => {
     g.beginPath(); g.rect(X0, Y0, X1 - X0, Y1 - Y0); g.clip();
     g.drawImage(barkLayer, X0, Y0, X1 - X0, Y1 - Y0, X0, Y0, X1 - X0, Y1 - Y0);
     g.setTransform(k, 0, 0, k, 0, 0);
-    for (let n = 0; n < scorchDrawn; n++) {
-      const key = scorched[n], x = key % GRID, y = (key - x) / GRID;
-      if (x >= cx0 - 1 && x <= cx1 + 1 && y >= cy0 - 1 && y <= cy1 + 1 && !holeMask[key]) scorchAt(g, key);
-    }
+    drawScorch(g, cx0, cy0, cx1, cy1);
     drawPits(g, holeMask, cx0 - 1, cy0 - 1, cx1 + 1, cy1 + 1);
     g.restore();
   }
@@ -6650,6 +6710,7 @@ window.SnakeRender = (() => {
     fireSeen.clear();
     scorched.length = 0;
     scorchDrawn = 0;
+    scorchMask.fill(0);
     fireTick = -1;
     bolt = null; rainbow = null; dive = null; flashAt = -1e9;
     blasts.length = 0;
