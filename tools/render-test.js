@@ -6,6 +6,10 @@
 //   when the head is drawn past its cell's centre, before its tick, and the
 //   head never stands still after it (your E key, on a virtual 60 Hz clock,
 //   at 120 and 90 ms ticks).
+// - Space and E together, a body one thick right in front: the game hops
+//   first, and so does the drawing (the head rises on before the tick, never
+//   standing still or sliding back, and no dash is drawn through the body);
+//   stunned, the mark shows the hop (two thick, nowhere to land: the flash).
 // - A dead snake's beads keep its markings (Joker's purple and amber,
 //   Wildcard's collar, stars and stripes), though only every other segment
 //   leaves one.
@@ -59,11 +63,12 @@ const STAGE = `(() => {
     await b.viewport(800, 800);
 
     // ------------------------------------------------- a flash, as drawn
-    for (const { what, time, gold } of [
-      { what: 'a flash at 120 ms ticks', time: 1000, gold: false },
-      { what: 'a flash at full speed', time: 'TUNING.SUDDEN_DEATH_MS - 1000', gold: false }, // (as fast as it gets before the woodpecker comes)
-      { what: 'a golden dash', time: 1000, gold: true },
-    ]) {
+    // A real round, its loop stopped and stepped by hand on a virtual 60 Hz
+    // clock (vf(n): n frames), the rivals stunned out of the way, everyone
+    // held fed, its clock held at `time`. Each frame keeps where your head's
+    // drawn (__frames: x, y in cells) and the streaks drawn (__streaks), each
+    // tick your head's cells and what it did (__steps).
+    const round = async time => {
       await ev(`window.__autoRaf = true; 'ok'`);
       await b.go(site.url + '?debug');
       await ev(`document.getElementById('start').click(); 'ok'`);
@@ -71,15 +76,15 @@ const STAGE = `(() => {
       await ev(`(() => {
         window.__autoRaf = false;
         const E = SnakeEngine, step = E.step;
-        window.__steps = []; window.__frames = [];
+        window.__steps = []; window.__frames = []; window.__streaks = []; window.__parts = [];
         E.step = g => {
           const me = g.snakes[0], from = me.body[0].x, out = step(g);
-          __steps.push({ frame: __frames.length, from, to: me.body[0].x, dash: g.events.some(e => e.type === 'dash' && e.snake === me) });
+          __steps.push({ frame: __frames.length, from, to: me.body[0].x, dash: g.events.some(e => e.type === 'dash' && e.snake === me), leap: g.events.some(e => e.type === 'leap' && e.snake === me) });
           g.food.length = 0; g.time = ${time}; g.weather.until = 1e12;
           for (const s of g.snakes) { s.nextStarve = 1e15; s.lastAte = g.time; }
           return out;
         };
-        window.vf = n => { for (let i = 0; i < n; i++) { SnakeDebug.frames(1, 1000 / 60); const g = SnakeDebug.game(), o = SnakeRender.headPx(g.snakes[0], 1, TUNING.GRID * ${CELL}, {}); __frames.push(o.x / ${CELL} - 0.5); } };
+        window.vf = n => { for (let i = 0; i < n; i++) { SnakeDebug.frames(1, 1000 / 60); const g = SnakeDebug.game(), o = SnakeRender.headPx(g.snakes[0], 1, TUNING.GRID * ${CELL}, {}); __frames.push({ x: o.x / ${CELL} - 0.5, y: o.y / ${CELL} - 0.5 }); __streaks.push(SnakeRender.streaked()); __parts.push(SnakeRender.particles); } };
         const g = SnakeDebug.game();
         g.snakes.forEach((s, i) => { if (i) { s.stunUntil = 1e9; const x = (i - 1) * 2; s.body = [{ x, y: 21 }, { x, y: 22 }, { x, y: 23 }]; s.prev = null; } });
         g.food.length = 0; g.time = ${time};
@@ -87,16 +92,34 @@ const STAGE = `(() => {
         return 'ok';
       })()`);
       await ev('vf(40)'); // (past the opening's slower ticks)
+    };
+    // Frames until the next tick, and then n more.
+    const toTick = async (n = 0) => {
+      const n0 = await ev('__steps.length');
+      for (let i = 0; i < 14 && await ev('__steps.length') === n0; i++) await ev('vf(1)');
+      if (n) await ev(`vf(${n})`);
+    };
+    const KEYS = { e: ['KeyE', 69], ' ': ['Space', 32], ArrowUp: ['ArrowUp', 38] };
+    const press = async key => {
+      const [code, vk] = KEYS[key];
+      await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode: vk, text: key.length === 1 ? key : undefined });
+      await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode: vk });
+    };
+    const step = (frames, f) => Math.hypot(frames[f].x - frames[f - 1].x, frames[f].y - frames[f - 1].y); // (cells the head's drawn moving, frame f - 1 to f)
+    const FAST = 'TUNING.SUDDEN_DEATH_MS - 1000'; // (as fast as it gets before the woodpecker comes)
+    for (const { what, time, gold } of [
+      { what: 'a flash at 120 ms ticks', time: 1000, gold: false },
+      { what: 'a flash at full speed', time: FAST, gold: false },
+      { what: 'a golden dash', time: 1000, gold: true },
+    ]) {
+      await round(time);
       await ev(`(() => { const g = SnakeDebug.game(), me = g.snakes[0]; me.body = [8, 7, 6, 5, 4, 3].map(x => ({ x, y: 12 })); me.prev = null; me.dir = SnakeEngine.DIRS.right; me.queue.length = 0; me.stunUntil = -1; me.flight = null; me.leapArmed = me.flashArmed = -1; me.flashReadyAt = 0; me.dashes = ${gold ? 2 : 0}; me.leaps = 0; return 'ok'; })()`);
       await ev('vf(12)');
       // Just after a tick, press E (early in the tick: the head still short of its cell's centre).
-      const n0 = await ev('__steps.length');
-      for (let i = 0; i < 12 && await ev('__steps.length') === n0; i++) await ev('vf(1)');
-      await ev('vf(1)');
-      await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'e', code: 'KeyE', windowsVirtualKeyCode: 69, text: 'e' });
-      await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'e', code: 'KeyE', windowsVirtualKeyCode: 69 });
+      await toTick(1);
+      await press('e');
       await ev('vf(24)');
-      const { steps, frames } = await ev('({ steps: __steps, frames: __frames })');
+      const { steps, frames: drawn } = await ev('({ steps: __steps, frames: __frames })'), frames = drawn.map(f => f.x);
       const dash = steps.find(s => s.dash && s.to - s.from >= 2);
       if (!dash) { check(false, `${what}: it went`, 'no dash'); continue; }
       const prev = steps.filter(s => s.frame < dash.frame).pop(), seen = frames.slice(prev ? prev.frame : 0, dash.frame).some(x => x > dash.from + 1);
@@ -104,6 +127,46 @@ const STAGE = `(() => {
       const after = [];
       for (let f = dash.frame; f < dash.frame + 6 && f < frames.length; f++) after.push(frames[f] - frames[f - 1]);
       check(after.every(d => d > 0.04 && d < 0.45), `${what}: glides on, never standing still`, `steps a frame from its tick: ${after.map(d => d.toFixed(2)).join(', ')} cells`);
+    }
+
+    // Set right after a tick, to be right as the next one's done (the
+    // drawing reads the board once a tick): your snake along row 12 heading
+    // right, its head in column 8 once it's moved, rested, holding `dashes`
+    // golden flashes; and (page-side source) anything else.
+    const setUp = async (dashes, more = '') => {
+      await toTick();
+      await ev(`(() => {
+        const g = SnakeDebug.game(), me = g.snakes[0], E = SnakeEngine;
+        me.body = [7, 6, 5, 4, 3, 2].map(x => ({ x, y: 12 })); me.prev = me.body.map(c => ({ x: c.x - 1, y: c.y })); me.dir = E.DIRS.right; me.queue.length = 0;
+        me.stunUntil = -1; me.flight = null; me.leapArmed = me.flashArmed = -1; me.flashReadyAt = me.leapReadyAt = 0; me.dashes = ${dashes}; me.leaps = 0; me.grow = 0;
+        ${more}
+        return 'ok';
+      })()`);
+      await toTick();
+    };
+
+    // A jump and a flash pressed together, a body one thick right in front:
+    // the game hops (the flash waits till it's landed), and so does the
+    // drawing. The head rises on toward it before the tick, never standing
+    // still nor sliding back, and no dash is drawn through the body (it was
+    // drawn guessing the flash: a plain one stood still for half a tick, a
+    // golden one dashed through the body and slid back once it leapt).
+    for (const gold of [false, true]) {
+      const what = `Space and E together, a body right in front${gold ? ', golden flashes held' : ''}`;
+      await round(1000);
+      await setUp(gold ? 2 : 0, `const o = g.snakes[1]; o.body = [10, 11, 12, 13, 14].map(y => ({ x: 9, y })); o.prev = o.body.map(c => ({ ...c })); o.dir = E.DIRS.up; o.stunUntil = 1e9;`);
+      await ev('vf(1)');
+      const f0 = await ev('__frames.length');
+      await press(' '); await press('e');
+      await toTick(6);
+      const { steps, frames, streaks } = await ev('({ steps: __steps, frames: __frames, streaks: __streaks })');
+      const tick = steps.find(s => s.frame >= f0);
+      check(!!tick && tick.leap && !tick.dash, `${what}: the game hops`, tick ? `${tick.leap ? 'a leap' : 'no leap'}${tick.dash ? ', and a dash' : ''}` : 'no tick');
+      if (!tick) continue;
+      const moves = [];
+      for (let f = f0; f < tick.frame + 6 && f < frames.length; f++) moves.push(frames[f].x - frames[f - 1].x);
+      check(moves.every(d => d > 0.04 && d < 0.45), `${what}: the head rises on, never standing still`, `steps a frame from the press: ${moves.map(d => d.toFixed(2)).join(', ')} cells (the tick after the ${tick.frame - f0 + 1}th)`);
+      check(streaks.slice(f0, tick.frame).every(k => !k.length), `${what}: no dash drawn before the tick`);
     }
 
     // ------------------------------------------------ staged boards
@@ -130,6 +193,31 @@ const STAGE = `(() => {
     check(beads.joker.every((c, i) => (i % 2 ? purple : amber)(c)), 'Joker’s beads alternate amber and purple', JSON.stringify(beads.joker));
     const wildWant = [navy, navy, white, red, white, red];
     check(beads.wild.every((c, i) => wildWant[i](c)), 'Wildcard’s beads keep the stars and stripes', JSON.stringify(beads.wild));
+
+    // Stunned, a jump and a flash both asked, a turn up pressed, a body one
+    // thick right above: the game will hop it (a jump goes first), so the
+    // mark is the jump's hop, in sky, not the flash's chevrons, in ember.
+    // Two thick, there's nowhere to land: the flash's.
+    const marks = await ev(`(() => {
+      const out = {};
+      for (const thick of [1, 2]) {
+        const g = stage(['creeper', 'ghost', 'mason']), [you, o] = g.snakes;
+        setBody(you, Array.from({ length: 8 }, (_, i) => [10 - i, 13]), 'right');
+        setBody(o, Array.from({ length: 7 * thick }, (_, i) => i < 7 ? [7 + i, 12] : [20 - i, 11]), 'left'); o.stunUntil = 1e9;
+        you.stunUntil = g.tick + 2; you.queue = [E.DIRS.up]; you.leapReadyAt = you.flashReadyAt = 0;
+        E.leap(g, you); E.flash(g, you);
+        show(g); drawN(10);
+        const d = pixels(9, 10.5, 3, 2.5).data, near = (i, c) => Math.abs(d[i] - c[0]) < 30 && Math.abs(d[i + 1] - c[1]) < 30 && Math.abs(d[i + 2] - c[2]) < 30;
+        let sky = 0, ember = 0;
+        for (let i = 0; i < d.length; i += 4) { if (near(i, [168, 220, 245])) sky++; else if (near(i, [247, 168, 102])) ember++; }
+        const did = [];
+        for (let k = 0; k < 3; k++) { E.step(g); for (const e of g.events) if (e.snake === you && ['leap', 'dash', 'fizzle', 'crash'].includes(e.type)) did.push(e.type); }
+        out[thick] = { sky, ember, did: did.join(', ') || 'nothing' };
+      }
+      return out;
+    })()`);
+    check(marks[1].sky > 8 && marks[1].ember < 3 && marks[1].did.startsWith('leap'), 'stunned, a jump and a flash asked, a body one thick ahead: the jump’s mark (the game hops)', `sky ${marks[1].sky}, ember ${marks[1].ember} pixels; then ${marks[1].did}`);
+    check(marks[2].ember > 8 && marks[2].sky < 3, 'stunned, both asked, a body two thick ahead: the flash’s mark', `sky ${marks[2].sky}, ember ${marks[2].ember} pixels; then ${marks[2].did}`);
 
     // Golden power pips at the board's edge: as many shown as in the middle.
     const pips = await ev(`(() => {

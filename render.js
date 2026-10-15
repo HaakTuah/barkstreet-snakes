@@ -1634,8 +1634,7 @@ window.SnakeRender = (() => {
     return s.plannedTick === game.tick && s.planned ? s.planned : s.dir;
   }
   // Has it asked to jump, or to flash, for this tick? (Asked both, the game
-  // hops first if the jump can go; predict() still guesses the flash, and a
-  // wrong guess eases back.)
+  // hops first if the jump can go, and so does the guess: see predict.)
   const asksJump = s => s.leapArmed >= game.tick || ((!s.isPlayer || s.autopilot) && s.plannedTick === game.tick && s.memory.power === game.tick);
   const asksFlash = s => s.flashArmed >= game.tick || ((!s.isPlayer || s.autopilot) && s.plannedTick === game.tick && s.memory.flash === game.tick);
   // Where a snake goes next, as far as this screen can tell (a.mx, a.my;
@@ -1643,27 +1642,39 @@ window.SnakeRender = (() => {
   // anything). A stunned snake stays. One about to crash (off the board, a
   // hole, a body still there after the move) holds at its cell's centre,
   // and the crash's lunge plays at the tick. One in the air comes down where
-  // it was going. A jump asked for, with something to hop and somewhere to
-  // land, leaps: it starts rising before its tick. A flash asked for that's
-  // sure to go and take it more than a cell runs on ahead (a.mf: the cells
-  // past the next): from when its head is drawn past its cell's centre, it's
-  // drawn where the flash takes it, as it will be at the tick. (Fire isn't a
-  // crash: a crawl goes in.)
+  // it was going. A jump asked for that can go (see hops) leaps: it starts
+  // rising before its tick, whether or not a flash is asked for too (the
+  // game hops first: the flash waits till it's landed). Else a flash asked
+  // for that's sure to go and take it more than a cell runs on ahead (a.mf:
+  // the cells past the next): from when its head is drawn past its cell's
+  // centre, it's drawn where the flash takes it, as it will be at the tick.
+  // (Fire isn't a crash: a crawl goes in.)
   function predict(s, a) {
     const h = s.body[0];
     a.mx = h.x; a.my = h.y; a.mv = 0; a.mg = 0; a.ml = 0; a.mf = 0;
     if (!s.alive || s.stunUntil > game.tick) return;
     const d = s.flight ? s.flight.dir : wayOf(s), x = wrapX(s, h.x + d.x), y = wrapX(s, h.y + d.y);
     a.mx = x; a.my = y; a.mv = 1; a.mg = s.grow > 0 ? 1 : 0; a.mdx = d.x; a.mdy = d.y;
+    if (!s.flight && asksJump(s) && hops(s, h, d, game.time)) { a.ml = 1; return; }
     if (!s.flight && asksFlash(s)) {
       const go = flashReach(s, d, x, y);
       if (go > 1) { a.mf = go - 1; a.mx = wrapX(s, h.x + d.x * go); a.my = wrapX(s, h.y + d.y * go); return; }
     }
-    if (!s.flight && asksJump(s) && !asksFlash(s) && (s.leaps > 0 || (game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH)) && hurdleAt(x, y)) {
-      const lx = wrapX(s, x + d.x), ly = wrapX(s, y + d.y), fx = wrapX(s, lx + d.x), fy = wrapX(s, ly + d.y);
-      if (!offBoard(lx, ly) && (!hurdleAt(lx, ly) || (s.leaps > 0 && !offBoard(fx, fy) && !hurdleAt(fx, fy)))) { a.ml = 1; return; } // (a golden one hops two)
-    }
     if (offBoard(x, y) || game.holes.has(y * GRID + x) || stays[y * GRID + x]) { a.mv = 0; a.mg = 0; }
+  }
+  // Would a jump asked for go, its head at h heading d, the game's clock at
+  // t (as the game's hopPlan has it)? Golden, or the plain one rested and
+  // long enough; something right in front to hop and a free cell beyond it
+  // to land on, or, golden, something in the two in front and the third free.
+  function hops(s, h, d, t) {
+    const gold = s.leaps > 0;
+    if (!gold && (t < s.leapReadyAt || s.body.length <= T.MIN_LENGTH)) return false;
+    const x1 = wrapX(s, h.x + d.x), y1 = wrapX(s, h.y + d.y), x2 = wrapX(s, x1 + d.x), y2 = wrapX(s, y1 + d.y);
+    if (offBoard(x1, y1) || offBoard(x2, y2)) return false;
+    const over = hurdleAt(x1, y1);
+    if (over && !hurdleAt(x2, y2)) return true;
+    const x3 = wrapX(s, x2 + d.x), y3 = wrapX(s, y2 + d.y);
+    return gold && !offBoard(x3, y3) && (over || hurdleAt(x2, y2)) && !hurdleAt(x3, y3);
   }
   // How many cells a flash asked for takes a head this tick, (x, y) being
   // the first, as the game moves it: a plain one, if it's rested, up to
@@ -2472,13 +2483,16 @@ window.SnakeRender = (() => {
   // it), so the press shows as heard, and where it'll take you. (The eyes
   // look that way too, and the head leans.) With a jump or a flash asked for
   // (it goes the way you go), its own mark there instead, a little further
-  // out (it's longer), in its accent (a golden one's in Honey). Over every
-  // snake and word: ahead, it's over what you hit, and the Bonk! there.
+  // out (it's longer), in its accent (a golden one's in Honey). Asked both,
+  // the jump's, if it can go that way when the stun's over (the game hops
+  // first), else the flash's. Over every snake and word: ahead, it's over
+  // what you hit, and the Bonk! there.
   function drawPress() {
     const s = findById(viewerId), a = s && s.alive && s.stunUntil >= game.tick ? anim.get(s) : null;
     const q = a && a.n ? queuedOf(s, a) : null;
     if (!q) return;
-    const flash = s.flashArmed >= s.stunUntil, power = flash || s.leapArmed >= s.stunUntil; // (asked both: the flash's mark, though the game hops first if the jump can go)
+    const jump = s.leapArmed >= s.stunUntil, at = game.time + Math.max(0, s.stunUntil - game.tick) * (timeAt - timeFrom || T.START_TICK); // (the game's clock when it moves again)
+    const flash = s.flashArmed >= s.stunUntil && !(jump && hops(s, s.body[0], q, at)), power = flash || jump;
     const pts = a.pts, so = starsOff(s);
     const d = (q.y && (so < 0) === (q.y < 0) ? Math.abs(so) + CELL * 0.62 : CELL * 0.95) + (power ? CELL * (flash ? 0.18 : 0.28) : 0);
     const w = CELL * 0.2, m = CELL * 0.12;
@@ -6836,5 +6850,6 @@ window.SnakeRender = (() => {
     setLead(ticks) { leadTicks = ticks; },
     guideSprite, // (the Field guide's pictures)
     get particles() { return pLive; },
+    streaked: () => streaks.map(k => ({ from: [k.fx, k.fy], to: [k.tx, k.ty], seen: k.pre >= 0 })), // (the dash streaks drawn: for the tests)
   };
 })();
