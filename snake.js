@@ -1707,7 +1707,9 @@
   //   with something to hop on the way: a thumb resting on the glass, ready
   //   to steer, isn't a jump. A touch that becomes a swipe never jumps (a
   //   jump its hold asked for that hasn't gone yet is taken back), and nor
-  //   does a thumb that was resting while another one swiped.
+  //   does a thumb that was resting while another one swiped (its jump is
+  //   taken back too, if it's still resting). One that lifted first was a
+  //   tap: a swipe after it leaves its jump be.
   // Every finger on the glass is its own: a thumb left resting doesn't block
   // the other, and can still steer once the other lifts. Buttons stay
   // buttons: during a round a swipe may start on one (the Go! in the middle
@@ -1716,12 +1718,11 @@
   // that comes up by itself (your death's, the round's end) takes no touch
   // that began as it came up, nor one of a run of quick touches that did
   // (CARD_TAP_MS, CARD_MASH_MS): mashing jump never plays again.
-  const swipes = new Map(); // touch id -> { x, y (the anchor), x0, y0 (where it touched), at, far (furthest from there), run (when its run of touches began), last, button, tapOnly, moved, tap, timer }
+  const swipes = new Map(); // touch id -> { x, y (the anchor), x0, y0 (where it touched), at, far (furthest from there), run (when its run of touches began), last, button, tapOnly, moved, tap, timer, held (when its hold asked for a jump that may not have gone yet) }
   const swiping = () => (state === 'running' || state === 'countdown') && playerAlive();
   const swipeMin = () => Math.max(T.SWIPE_MIN_PX, (boardPx || 320) / GRID * T.SWIPE_CELLS); // (how far a fresh swipe goes before it counts)
   let touchAt = -Infinity, runFrom = -Infinity; // (the last touch, and when the run of quick touches it's in began)
   let lastSwipe = null; // the last swipe to register: { dir, sw (its touch), up (when it lifted; 0 while it's down), turn (it turned, not flashed) }
-  let holdJump = 0; // (when a finger held still asked for a jump that may not have gone yet)
   document.addEventListener('touchstart', e => {
     Audio.unlock();
     const now = performance.now();
@@ -1733,7 +1734,7 @@
     const tapOnly = !!button && !swiping(); // (outside a round a button touch is a tap or a scroll, never a swipe)
     const taps = !button && !e.target.closest?.('#scoreboard') && state === 'running' && playerAlive(); // (a tap here would be a jump)
     for (const t of e.changedTouches) {
-      const sw = { x: t.clientX, y: t.clientY, x0: t.clientX, y0: t.clientY, at: now, far: 0, run: runFrom, last: null, button, tapOnly, moved: false, tap: taps, timer: 0 };
+      const sw = { x: t.clientX, y: t.clientY, x0: t.clientX, y0: t.clientY, at: now, far: 0, run: runFrom, last: null, button, tapOnly, moved: false, tap: taps, timer: 0, held: 0 };
       if (taps) sw.timer = setTimeout(() => held(sw), T.TAP_JUMP_MS);
       swipes.set(t.identifier, sw);
     }
@@ -1744,26 +1745,33 @@
     if (!sw.tap) return;
     sw.tap = false;
     clearTimeout(sw.timer);
-    holdJump = 0; // (a jump meant: nothing to take back)
+    for (const o of swipes.values()) o.held = 0; // (a jump meant: nothing to take back)
     power('leap');
   }
   // Held still: a jump now, if there's something to hop on the way (it waits
-  // a few ticks for it); else the lift says whether it was a tap.
+  // a few ticks for it); else the lift says whether it was a tap. The jump
+  // is this touch's to take back while it's on the glass (see swiped); once
+  // it lifts without swiping, it was a tap, and the jump stays.
   function held(sw) {
     sw.timer = 0;
     const me = player();
     if (!sw.tap || !me?.alive || !hurdleAhead(me, T.LEAP_WINDOW + 1, true)) return;
     tapped(sw);
-    holdJump = performance.now();
+    sw.held = performance.now();
   }
-  // A swipe registered: a jump a finger held still asked for, not gone yet,
-  // is taken back (it was a thumb about to steer), and a thumb that's been
-  // resting meanwhile isn't tapping.
+  // A swipe registered: a jump asked for by a finger held still, not gone
+  // yet, is taken back if that finger is the one swiping, or is still
+  // resting on the glass while another swipes (it was a thumb about to
+  // steer); and a thumb that's been resting meanwhile isn't tapping.
   function swiped(by) {
     const now = performance.now();
-    for (const sw of swipes.values()) if (sw !== by && sw.tap && now - sw.at >= T.TAP_JUMP_MS) { sw.tap = false; clearTimeout(sw.timer); }
-    if (!holdJump || now - holdJump > (T.LEAP_WINDOW + 1) * tickLen) return;
-    holdJump = 0;
+    let heldAt = 0;
+    for (const sw of swipes.values()) {
+      if (sw !== by && sw.tap && now - sw.at >= T.TAP_JUMP_MS) { sw.tap = false; clearTimeout(sw.timer); }
+      heldAt = Math.max(heldAt, sw.held);
+      sw.held = 0;
+    }
+    if (!heldAt || now - heldAt > (T.LEAP_WINDOW + 1) * tickLen) return;
     if (state !== 'running' || !playerAlive()) return;
     if (guesting()) online.room.send({ t: 'pow', k: 'unleap' });
     else if (hosting()) hostPress(s => unleap(game, s));

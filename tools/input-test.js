@@ -16,7 +16,8 @@
 //   arrive once a frame, as Chrome sends them, paced in real time so the
 //   tap's own clock runs true); nor does a thumb resting before it swipes,
 //   or while the other one swipes. A finger held still jumps before it lifts
-//   only with something to hop. A quick tap that drifts 7-11 px as it lifts
+//   only with something to hop; once it's lifted, a swipe after it leaves
+//   that jump be (a held tap, then a flash). A quick tap that drifts 7-11 px as it lifts
 //   still jumps; a long stroke 35-44° off the axis still turns; a double
 //   flick the same way is the turn, not a flash.
 // - Mashing jump over your death's card never starts a round.
@@ -467,6 +468,47 @@ const KEYS = {
     await ev('vadvance(50)');
     const two = await ev(`({ leaps: __log.powers.slice(${before}).filter(p => p.kind === 'leap').length, q: SnakeDebug.game().snakes[0].queue.map(dirName).join(',') })`);
     check(two.leaps === 0 && two.q === 'up', 'a thumb resting while the other swipes doesn’t jump', JSON.stringify(two));
+    // ...but with something to hop, its jump has gone before the other
+    // swipes: taken back while it's still resting.
+    await ev('centre()');
+    await hole(2);
+    await touch('touchStart', [{ x: cx - 60, y: cy + 60, id: 1 }]);
+    await ev('vadvance(100)');
+    const armedRest = await ev('SnakeDebug.game().snakes[0].leapArmed >= 0');
+    for (let f = 0; f <= 6; f++) {
+      await touch(f ? 'touchMove' : 'touchStart', [{ x: cx - 60, y: cy + 60, id: 1 }, { x: cx + 60, y: cy + 40 - f * 10, id: 2 }]);
+      await ev(`vadvance(${P})`);
+    }
+    const twoHop = await ev(`(() => { const me = SnakeDebug.game().snakes[0]; return { armed: me.leapArmed >= 0, q: me.queue.map(dirName).join(',') }; })()`);
+    await touch('touchMove', [{ x: cx - 60, y: cy + 60, id: 1 }]);
+    await touch('touchEnd', []);
+    await ev('vadvance(50)');
+    await ev(`SnakeDebug.game().holes.clear(); 'ok'`);
+    check(armedRest && !twoHop.armed && twoHop.q === 'up', 'a thumb resting with something to hop, while the other swipes: its jump is taken back', JSON.stringify(twoHop));
+    // A tap held long enough to jump before it lifted, then (the finger up)
+    // a fresh swipe ahead: a jump and a flash, both kept. The tap was a tap,
+    // whatever the next touch does. (Something right in front: the jump,
+    // then the flash once down; three ahead: the flash, then the jump.)
+    const combos = [];
+    let combosOk = 0;
+    for (const [ahead, want] of [[1, 'leap dash:plain'], [3, 'dash:plain leap']]) {
+      for (const contact of [100, 150]) {
+        await ev('centre()');
+        await hole(ahead);
+        await touch('touchStart', [{ x: cx + 20, y: cy + 30, id: 1 }]);
+        await ev(`vadvance(${contact})`);
+        await touch('touchEnd', []);
+        await ev('vadvance(50)');
+        const steps = await ev('__log.steps.length');
+        await swipe(1, 0, { frames: 5 });
+        for (let n = 0; n < 4; n++) await toTick();
+        await ev(`SnakeDebug.game().holes.clear(); 'ok'`);
+        const got = await ev(`__log.steps.slice(${steps}).flatMap(s => s.evs).join(' ')`);
+        combos.push(`${ahead} ahead, held ${contact} ms: ${got || 'nothing'}`);
+        if (got === want) combosOk++;
+      }
+    }
+    check(combosOk === 4, 'a held tap, lifted, then a fresh swipe ahead: the jump and the flash both go', combos.join('; '));
 
     // A quick tap that rolls a few pixels as it lifts is still a tap.
     const drifts = [];
