@@ -1094,10 +1094,15 @@ window.SnakeAI = (() => {
     return bestDir;
 
     // - The flash, rested: two cells in a tick along the ground, every one
-    //   of them free by then, for about an apple (it's free, but it rests).
-    //   Only the way I'd crawl anyway, or any way out of a crash. (Weighing
-    //   every way cost half as much again as the whole decision, for a
-    //   third more flashes; the rest were no better for it.)
+    //   of them free by then, only the way I'd crawl anyway (or any way out
+    //   of a crash). It costs two apples (it's free, but it rests: at one,
+    //   rivals flashed three times a minute and did no better than the same
+    //   rivals never flashing, or worse; an edge that small is mostly the
+    //   search's own guesswork), or one to win a race (food a rival could
+    //   reach as soon as I'd crawl there, but not as soon as I'd flash) or
+    //   to get out of a crash. (Weighing every way cost half as much again
+    //   as the whole decision, for a third more flashes; the rest were no
+    //   better for it.)
     // - Golden dashes: only to cut someone in two (more readily the more
     //   aggressive I am), to grab something golden first, or as the way out.
     //   (Spent on speed, they stopped cutting anyone.)
@@ -1136,11 +1141,22 @@ window.SnakeAI = (() => {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
         if (me.dashes > 0) consider(d, true, dashOpt(d), 0.6, extra);
-        else if (me.flashIn === 0 && (trapped || d === crawlDir)) consider(d, true, flashOpt(d), 1, extra);
+        else if (me.flashIn === 0 && (trapped || d === crawlDir)) consider(d, true, flashOpt(d), trapped || race(d) ? 1 : 2, extra);
         if (me.leaps > 0) consider(d, false, leapOpt(d, 2) ?? leapOpt(d, 1), 0.35, extra);
         else if (jump) consider(d, false, leapOpt(d, 1), TUNE.LEAP_COST + 0.5, extra);
       }
       return best;
+
+      // A race: food straight on, or that way, that a rival could get to
+      // just as soon as I'd crawl there (but not as soon as I'd flash there,
+      // a tick sooner).
+      function race(d) {
+        for (const f of food) {
+          const i = f.y * N + f.x, k = Math.abs(f.x - myHead.x) + Math.abs(f.y - myHead.y);
+          if (foodValue[i] > 0 && reach[i] === k && Math.abs(f.x - myHead.x - 2 * d.x) + Math.abs(f.y - myHead.y - 2 * d.y) === k - 2) return true;
+        }
+        return false;
+      }
 
       // The cells a power passes, from my head, into path; false if one's off the board.
       function trace(d, n) {
