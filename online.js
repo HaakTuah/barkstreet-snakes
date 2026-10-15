@@ -74,7 +74,7 @@ window.SnakeOnline = (() => {
         s.alive ? 1 : 0, DIR_NAMES.indexOf(dirName(s.dir)), s.eaten, s.lastAte, s.nextStarve, cells(s),
         memoryOf(s), s.autopilot ? 1 : 0, s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed,
         s.dashes, s.leapReadyAt, s.wrapUntil, s.flight ? DIR_NAMES.indexOf(dirName(s.flight.dir)) : -1,
-        s.flashReadyAt, s.flashArmed,
+        s.flashReadyAt, s.flashArmed, s.mealMs,
       ]),
       // A beetle also says which way it faces and where it came from, so it
       // walks on every screen; a bead, whose it was (it rots, as all food does).
@@ -183,7 +183,7 @@ window.SnakeOnline = (() => {
     game.tick = msg.k;
     game.time = msg.ms;
     const num = v => Number.isFinite(v);
-    msg.s.forEach(([alive, dir, eaten, lastAte, nextStarve, cells, memory, autopilot, stunUntil, burnUntil, burnFrom, leaps, leapArmed, dashes, leapReadyAt, wrapUntil, flight, flashReadyAt, flashArmed], id) => {
+    msg.s.forEach(([alive, dir, eaten, lastAte, nextStarve, cells, memory, autopilot, stunUntil, burnUntil, burnFrom, leaps, leapArmed, dashes, leapReadyAt, wrapUntil, flight, flashReadyAt, flashArmed, mealMs], id) => {
       const s = game.snakes[id];
       if (!s) return;
       s.alive = !!alive;
@@ -203,6 +203,7 @@ window.SnakeOnline = (() => {
       s.flight = num(flight) && flight >= 0 && DIRS[DIR_NAMES[flight]] ? { dir: DIRS[DIR_NAMES[flight]] } : null;
       s.flashReadyAt = num(flashReadyAt) ? flashReadyAt : 0;
       s.flashArmed = num(flashArmed) ? flashArmed : -1;
+      s.mealMs = num(mealMs) && mealMs > 0 ? mealMs : s.mealMs; // (for the hunger bar)
       s.planned = null; s.plannedTick = -1; s.queue.length = 0; // (the last tick's plan is spent: this one's follows, see applyPlan)
       const body = s.body;
       body.length = cells.length;

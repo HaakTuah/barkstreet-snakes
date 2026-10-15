@@ -79,8 +79,8 @@ window.TUNING = Object.freeze({
   LEAP_SWELL: 0.38,         // in the air, the head swells this much at the top of a leap (seen from above, rising is coming toward you)...
   LEAP_SWELL_GOLD: 0.5,     // ...and a golden leap's, this much
   STREAK_MS: 340,           // a dash's speed lines fade over this long
-  DRAW_LEAD_MS: 60,         // the board is drawn this far ahead (drawing only: the cell your head is drawn in is the cell your press turns at): half a tick at first, two thirds at full speed...
-  DRAW_LEAD_MAX: 0.75,      // ...but never more than this much of a tick (watching fast, ticks are short)
+  DRAW_LEAD_MS: 60,         // the board is drawn this far ahead (drawing only: the cell your head is drawn in is the cell your press turns at)...
+  DRAW_LEAD_MAX: 0.5,       // ...but never more than half a tick (45 ms at full speed): any more, and late in a tick your head was drawn in the next cell while a press still turned it at this one, and it was pulled back
   FACE_EASE_MS: 60,         // your own face turns toward a new heading over about this long (rivals keep the steady line)
 
   // ----------------------------------------------------------------- speed

@@ -38,7 +38,7 @@ window.SnakeEngine = (() => {
     const d = spawn.dir;
     const body = Array.from({ length: T.START_LENGTH }, (_, k) => ({ x: spawn.x - d.x * k, y: spawn.y - d.y * k }));
     return {
-      id, body, dir: d, alive: true, grow: 0, eaten: 0, pellets: 0, lastAte: 0, ateTick: -1, nextStarve: T.HUNGER_MS,
+      id, body, dir: d, alive: true, grow: 0, eaten: 0, pellets: 0, lastAte: 0, ateTick: -1, nextStarve: T.HUNGER_MS, mealMs: T.HUNGER_MS, // (mealMs: how long its last meal keeps it, for the hunger bar)
       // stunUntil: the tick it moves again after a crash; burnUntil, burnFrom: on fire (from, until)
       stunUntil: -1, burnUntil: -1, burnFrom: -1,
       // Powers. leaps: golden leaps held (golden beetles); dashes: golden
@@ -1497,6 +1497,7 @@ window.SnakeEngine = (() => {
         const lasts = mealLasts(game);
         s.lastAte = game.time - (T.HUNGER_MS - lasts);
         s.nextStarve = game.time + lasts;
+        s.mealMs = lasts;
       }
       s.ateTick = game.tick; // (a snake out of time that reaches any food, its own too, grows instead of starving this tick)
       s.grow += growth;

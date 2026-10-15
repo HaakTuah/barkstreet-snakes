@@ -1350,9 +1350,10 @@
       const dot = dotColor(s);
       const leading = s === lead;
       const len = s.alive ? String(s.body.length) : 'out';
-      const full = s.alive ? Math.max(0, Math.min(1, E.hungerLeft(game, s) / T.HUNGER_MS)) : 0;
+      const left = s.alive ? E.hungerLeft(game, s) : 0;
+      const full = s.alive ? Math.max(0, Math.min(1, left / (s.mealMs || T.HUNGER_MS))) : 0; // (against the last meal: full after any, though one mid-round lasts less)
       const bar = Math.round(full * 100);
-      const starving = s.alive && full < 0.3;
+      const starving = s.alive && left < T.HUNGER_WARN_MS;
       if (force || last.dot !== dot) { t.dot.style.background = dot; last.dot = dot; }
       if (force || last.len !== len) {
         t.len.textContent = len;
