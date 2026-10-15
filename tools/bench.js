@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 // Frame-time benchmark in headless Chrome (at 2x pixel density):
-//   1. the staged scenes (tools/scenes.js: long snakes, force fields): the
-//      script time of draw(), and the full cost of a frame (script plus the
-//      GPU's raster, measured to a readback: see scenes.js)
+//   1. the staged scenes (tools/scenes.js: long snakes, Sovereign's and
+//      Colonist's land with and without it, holes): the script time of
+//      draw(), and the full cost of a frame (script plus the GPU's raster,
+//      measured to a readback: see scenes.js); what the land costs, as a
+//      ratio to its twin without it; and the woodpecker's strike, a frame
+//      that paints 14 new holes, against a steady one
 //   2. step(): whole ticks including every AI decision, over AI-only rounds
 //   3. real frames: script time of every animation frame while watching at
 //      1x and 4x, with the drawing quality pinned (the governor stays out)
@@ -13,7 +16,7 @@
 // process), see tools/trace.js.
 const path = require('path');
 const { launch, serve } = require('./browser');
-const { setup, throughput } = require('./scenes');
+const { setup, throughput, strikes } = require('./scenes');
 const args = process.argv.slice(2);
 const at = args.indexOf('--root'), ROOT = at >= 0 ? path.resolve(args.splice(at, 2)[1]) : undefined;
 const WATCH = Number(args[0]) || 60;
@@ -30,7 +33,8 @@ const sum = a => ({ frames: a.length, median: q(a, 0.5), p95: q(a, 0.95), p99: q
         window.requestAnimationFrame = cb => raf(ts => { const t0 = performance.now(); cb(ts); window.__ft.push(performance.now() - t0); }); })();` });
     await b.go(site.url + '?debug');
 
-    for (const scene of ['long', 'fields']) {
+    const full = {};
+    for (const scene of ['long', 'fields', 'nofields', 'intruders', 'intruders-bare', 'holes']) {
       await b.eval(setup(scene));
       const script = await b.eval(`(() => { ${SUMMARY}
         const times = [], x = document.getElementById('game').getContext('2d');
@@ -41,9 +45,12 @@ const sum = a => ({ frames: a.length, median: q(a, 0.5), p95: q(a, 0.95), p99: q
         }
         return sum(times.slice(100));
       })()`); // (script only: the GPU's share is in the full cost)
-      const full = await b.eval(throughput());
-      console.log(`${scene} scene: draw() script`, script, `full cost per frame ${full} ms`);
+      full[scene] = await b.eval(throughput());
+      console.log(`${scene} scene: draw() script`, script, `full cost per frame ${full[scene]} ms`);
     }
+    console.log(`the land's full cost: ${(full.fields / full.nofields).toFixed(2)}x the same board without it (at most 1.5x), ${(full.intruders / full['intruders-bare']).toFixed(2)}x with a rival on it`);
+    await b.eval(setup('holes'));
+    console.log("the woodpecker's strike, holes scene (full cost of a frame, ms)", await b.eval(strikes()));
     await b.eval(`SnakeRender.setGame(SnakeDebug.game()); 'ok'`);
 
     const step = await b.eval(`(() => { ${SUMMARY}
