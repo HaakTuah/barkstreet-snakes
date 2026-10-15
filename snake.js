@@ -337,12 +337,16 @@
   }
 
   // A card waiting for its moment (after the death freeze, or the round's last
-  // breath) comes up once `due`. Returns whether it did.
+  // breath) comes up once `due`. Returns whether it did. It came up by
+  // itself, maybe under a finger mashing jump: for a moment, its buttons take
+  // no touch that began before (see the touches).
+  let cardShownAt = -Infinity;
   function showPending(due) {
     if (!pendingCard || !due) return false;
     const c = pendingCard;
     pendingCard = null;
     showCard(c);
+    cardShownAt = performance.now();
     return true;
   }
 
@@ -924,10 +928,13 @@
   }
 
   // Is there something to hop on your line, within n cells (a body, a hole, fire)?
-  function hurdleAhead(s, n) {
+  // (next: on the way it goes next, a turn queued included.)
+  function hurdleAhead(s, n, next = false) {
+    const d = next && s.queue.length ? s.queue[0] : s.dir, wrap = s.wrapUntil > game.time;
     for (let i = 1, x = s.body[0].x, y = s.body[0].y; i <= n; i++) {
-      x += s.dir.x; y += s.dir.y;
-      if (x < 0 || y < 0 || x >= GRID || y >= GRID) return false;
+      x += d.x; y += d.y;
+      if (wrap) { x = (x + GRID) % GRID; y = (y + GRID) % GRID; } // (the edges wrapping: on round)
+      else if (x < 0 || y < 0 || x >= GRID || y >= GRID) return false;
       const k = y * GRID + x;
       if (game.holes.has(k) || game.fires?.has(k)) return true;
       for (const o of game.snakes) if (o.alive && o.body.some(c => c.x === x && c.y === y)) return true;
@@ -1585,7 +1592,10 @@
     if (hosting()) return hostPress(me => powerOf(me, kind));
     powerOf(player(), kind);
   }
-  const powerOf = (s, kind) => (kind === 'flash' ? E.flash : E.leap)(game, s);
+  const powerOf = (s, kind) => (kind === 'unleap' ? unleap : kind === 'flash' ? E.flash : E.leap)(game, s);
+  // A jump asked for and not gone yet, taken back (a finger held still that
+  // turned out to be a swipe: see the touches).
+  const unleap = (g, s) => { if (s?.alive && s.leapArmed >= g.tick) s.leapArmed = -1; };
 
   // A friend sees each tick half a round trip late, and their presses take
   // the other half to arrive. So the host's own presses (turns and powers)
@@ -1678,30 +1688,48 @@
   // screen (over the countdown card too); the page never scrolls.
   // - A swipe steers: a turn registers once the finger has travelled half a
   //   cell (at least SWIPE_MIN_PX), without lifting, its way clearly the
-  //   finger's (half again the other: a diagonal waits). One touch chains
-  //   turns, each after SWIPE_CHAIN_PX more, counted from where the finger
-  //   turned. A fresh swipe the way you're going flashes; a finger that keeps
-  //   going that way doesn't.
+  //   finger's (half again the other: a slant waits, until the finger has
+  //   gone SWIPE_SURE times that far, when its main way counts). One touch
+  //   chains turns, each after SWIPE_CHAIN_PX more, counted from where the
+  //   finger turned. A fresh swipe the way you're going flashes; a finger
+  //   that keeps going that way doesn't, nor does a second swipe the way the
+  //   last one turned you, just after it lifted (POWER_AFTER_TURN_MS: the
+  //   turn swiped twice, to make sure).
   // - A tap jumps: a touch that lifts without travelling (TAP_STILL_PX), or
-  //   stays that still for TAP_JUMP_MS, anywhere but a working button or a
-  //   name tag. A touch that becomes a swipe never jumps.
+  //   quickly (TAP_QUICK_MS) without travelling as far as a swipe (a finger
+  //   rolls as it lifts), anywhere but a working button or a name tag. Held
+  //   still for TAP_JUMP_MS, it jumps without waiting for the lift, but only
+  //   with something to hop on the way: a thumb resting on the glass, ready
+  //   to steer, isn't a jump. A touch that becomes a swipe never jumps (a
+  //   jump its hold asked for that hasn't gone yet is taken back), and nor
+  //   does a thumb that was resting while another one swiped.
   // Every finger on the glass is its own: a thumb left resting doesn't block
   // the other, and can still steer once the other lifts. Buttons stay
   // buttons: during a round a swipe may start on one (the Go! in the middle
   // of the board, the header's), and once it's travelled it steers and the
-  // button's click is swallowed; a short tap is still a click.
-  const swipes = new Map(); // touch id -> { x, y (the anchor), x0, y0 (where it touched), last, button, tapOnly, moved, tap, timer }
+  // button's click is swallowed; a short tap is still a click. But a card
+  // that comes up by itself (your death's, the round's end) takes no touch
+  // that began as it came up, nor one of a run of quick touches that did
+  // (CARD_TAP_MS, CARD_MASH_MS): mashing jump never plays again.
+  const swipes = new Map(); // touch id -> { x, y (the anchor), x0, y0 (where it touched), at, far (furthest from there), run (when its run of touches began), last, button, tapOnly, moved, tap, timer }
   const swiping = () => (state === 'running' || state === 'countdown') && playerAlive();
+  const swipeMin = () => Math.max(T.SWIPE_MIN_PX, (boardPx || 320) / GRID * T.SWIPE_CELLS); // (how far a fresh swipe goes before it counts)
+  let touchAt = -Infinity, runFrom = -Infinity; // (the last touch, and when the run of quick touches it's in began)
+  let lastSwipe = null; // the last swipe to register: { dir, sw (its touch), up (when it lifted; 0 while it's down), turn (it turned, not flashed) }
+  let holdJump = 0; // (when a finger held still asked for a jump that may not have gone yet)
   document.addEventListener('touchstart', e => {
     Audio.unlock();
+    const now = performance.now();
+    if (now - touchAt >= T.CARD_MASH_MS) runFrom = now;
+    touchAt = now;
     if (e.target.closest?.('input, a, #records')) return;
     const button = e.target.closest?.('button:not(:disabled), [role="switch"]');
     if (!button && !swiping() && !canvas.contains(e.target)) return;
     const tapOnly = !!button && !swiping(); // (outside a round a button touch is a tap or a scroll, never a swipe)
     const taps = !button && !e.target.closest?.('#scoreboard') && state === 'running' && playerAlive(); // (a tap here would be a jump)
     for (const t of e.changedTouches) {
-      const sw = { x: t.clientX, y: t.clientY, x0: t.clientX, y0: t.clientY, last: null, button, tapOnly, moved: false, tap: taps, timer: 0 };
-      if (taps) sw.timer = setTimeout(() => tapped(sw), T.TAP_JUMP_MS); // (held still: a tap, without waiting for the lift)
+      const sw = { x: t.clientX, y: t.clientY, x0: t.clientX, y0: t.clientY, at: now, far: 0, run: runFrom, last: null, button, tapOnly, moved: false, tap: taps, timer: 0 };
+      if (taps) sw.timer = setTimeout(() => held(sw), T.TAP_JUMP_MS);
       swipes.set(t.identifier, sw);
     }
     if (swiping() && !button) e.preventDefault(); // (not on a button: its tap must still be a click)
@@ -1711,23 +1739,54 @@
     if (!sw.tap) return;
     sw.tap = false;
     clearTimeout(sw.timer);
+    holdJump = 0; // (a jump meant: nothing to take back)
     power('leap');
+  }
+  // Held still: a jump now, if there's something to hop on the way (it waits
+  // a few ticks for it); else the lift says whether it was a tap.
+  function held(sw) {
+    sw.timer = 0;
+    const me = player();
+    if (!sw.tap || !me?.alive || !hurdleAhead(me, T.LEAP_WINDOW + 1, true)) return;
+    tapped(sw);
+    holdJump = performance.now();
+  }
+  // A swipe registered: a jump a finger held still asked for, not gone yet,
+  // is taken back (it was a thumb about to steer), and a thumb that's been
+  // resting meanwhile isn't tapping.
+  function swiped(by) {
+    const now = performance.now();
+    for (const sw of swipes.values()) if (sw !== by && sw.tap && now - sw.at >= T.TAP_JUMP_MS) { sw.tap = false; clearTimeout(sw.timer); }
+    if (!holdJump || now - holdJump > (T.LEAP_WINDOW + 1) * tickLen) return;
+    holdJump = 0;
+    if (state !== 'running' || !playerAlive()) return;
+    if (guesting()) online.room.send({ t: 'pow', k: 'unleap' });
+    else if (hosting()) hostPress(s => unleap(game, s));
+    else unleap(game, player());
   }
   document.addEventListener('touchmove', e => {
     for (const t of e.changedTouches) {
       const sw = swipes.get(t.identifier);
       if (!sw) continue;
-      if (sw.tap && Math.hypot(t.clientX - sw.x0, t.clientY - sw.y0) > T.TAP_STILL_PX) { sw.tap = false; clearTimeout(sw.timer); } // (travelling: not a tap)
+      const from0 = Math.hypot(t.clientX - sw.x0, t.clientY - sw.y0);
+      sw.far = Math.max(sw.far, from0);
+      if (sw.timer && from0 > T.TAP_STILL_PX) { clearTimeout(sw.timer); sw.timer = 0; } // (moving: no jump before the lift)
+      if (sw.tap && sw.far >= swipeMin()) sw.tap = false; // (travelling: not a tap)
       const dx = t.clientX - sw.x, dy = t.clientY - sw.y, ax = Math.abs(dx), ay = Math.abs(dy);
       if (sw.tapOnly) { if (ax + ay > 12) sw.moved = true; continue; } // (a card scrolling: let it)
       e.preventDefault();
       const dir = ax > ay ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
       if (dir === sw.last) { sw.x = t.clientX; sw.y = t.clientY; continue; } // (still going the way it registered: the anchor keeps up, so a turn counts from where the finger turns)
-      const threshold = sw.last ? T.SWIPE_CHAIN_PX : Math.max(T.SWIPE_MIN_PX, (boardPx || 320) / GRID * T.SWIPE_CELLS);
-      if (Math.max(ax, ay) < threshold || Math.max(ax, ay) < T.SWIPE_AXIS * Math.min(ax, ay)) continue;
+      const threshold = sw.last ? T.SWIPE_CHAIN_PX : swipeMin(), most = Math.max(ax, ay);
+      if (most < threshold || (most < T.SWIPE_AXIS * Math.min(ax, ay) && Math.hypot(dx, dy) < threshold * T.SWIPE_SURE)) continue; // (too short, or a slant not yet far enough to be sure)
       sw.tap = false; // (a swipe is never a jump)
       clearTimeout(sw.timer);
-      steer(dir, true);
+      sw.timer = 0;
+      const now = performance.now(), me = player(), ahead = me && (me.queue.length ? me.queue[me.queue.length - 1] : me.dir);
+      const twice = !sw.last && lastSwipe?.turn && lastSwipe.sw !== sw && lastSwipe.dir === dir && (!lastSwipe.up || now - lastSwipe.up < T.POWER_AFTER_TURN_MS); // (the last turn swiped again, to make sure: it steers, never flashes)
+      steer(dir, !twice);
+      swiped(sw);
+      lastSwipe = { dir, sw, up: 0, turn: !!me && DIRS[dir] !== ahead };
       sw.last = dir;
       sw.x = t.clientX;
       sw.y = t.clientY;
@@ -1737,13 +1796,17 @@
   // button: a swipe cancels its click; a tap presses it here (with another
   // finger resting on the glass the browser wouldn't).
   const endSwipe = e => {
+    const now = performance.now();
     for (const c of e.changedTouches) {
       const sw = swipes.get(c.identifier);
       swipes.delete(c.identifier);
       if (!sw) continue;
       clearTimeout(sw.timer);
-      if (sw.tap && e.type === 'touchend' && Math.hypot(c.clientX - sw.x0, c.clientY - sw.y0) <= T.TAP_STILL_PX) tapped(sw);
+      if (lastSwipe?.sw === sw) lastSwipe.up = now;
+      const far = Math.max(sw.far, Math.hypot(c.clientX - sw.x0, c.clientY - sw.y0));
+      if (sw.tap && e.type === 'touchend' && (far <= T.TAP_STILL_PX || (far < swipeMin() && now - sw.at < T.TAP_QUICK_MS))) tapped(sw);
       sw.tap = false;
+      if (e.type === 'touchend' && sw.run < cardShownAt + T.CARD_TAP_MS && (!sw.button || overlay.contains(sw.button))) { e.preventDefault(); continue; } // (begun as a card came up by itself, or in a run of touches that was: no click, the browser's or ours)
       if (!sw.button || e.type !== 'touchend' || sw.moved) continue; // (a scroll: the browser's own business)
       e.preventDefault(); // (no click of the browser's own: never twice, never a swipe's)
       if (!sw.last && sw.button.contains(document.elementFromPoint(c.clientX, c.clientY))) sw.button.click();
@@ -1752,8 +1815,11 @@
   document.addEventListener('touchend', endSwipe, { passive: false });
   document.addEventListener('touchcancel', endSwipe);
 
-  // Buttons.
-  const click = (el, fn) => el.addEventListener('click', e => { Audio.unlock(); Audio.play('ui'); fn(e); });
+  // Buttons. (ok: whether a click counts.)
+  const click = (el, fn, ok = null) => el.addEventListener('click', e => { if (ok && !ok(e)) return; Audio.unlock(); Audio.play('ui'); fn(e); });
+  // A card that came up by itself takes no pointer's click for a moment
+  // (keys are fine: Space never presses its buttons unless you Tabbed to one).
+  const cardSettled = e => !(e.detail > 0 && performance.now() < cardShownAt + T.CARD_TAP_MS);
   // A button clicked with a mouse or a finger doesn't keep the keyboard, so
   // Space and Enter go back to jumping and starting over. Card and Hall of
   // Fame buttons keep focus: there, Enter on a focused button is expected.
@@ -1766,13 +1832,13 @@
     else if (state === 'paused') resume();
     else if (state === 'countdown') go();
     else start({ aiOnly: false });
-  });
+  }, cardSettled);
   click(watchBtn, () => {
     if (cardActions?.secondary) cardActions.secondary();
     else if (state === 'running') hideCard();        // keep watching after you died
     else if (state === 'paused') { if (playerAlive()) askStartOver(null); else start(); } // "Start over" on touch: it asks first, too (out already, there's nothing to lose)
     else start({ aiOnly: true });
-  });
+  }, cardSettled);
   click(pauseBtn, () => (state === 'paused' ? resume() : state === 'running' && !playerAlive() && shownCard?.reward && !overlay.classList.contains('hidden') ? hideCard() : napNow()));
   muteBtn.addEventListener('click', () => { Audio.unlock(); toggleMute(); }); // (its tap comes after the toggle: see toggleMute)
   click(musicBtn, () => toggleMusic());

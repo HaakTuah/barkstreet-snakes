@@ -14,7 +14,12 @@
 //   engine within one tick and one frame.
 // - Swipes never jump, over a sweep of finger speeds and angles (touch moves
 //   arrive once a frame, as Chrome sends them, paced in real time so the
-//   tap's own clock runs true).
+//   tap's own clock runs true); nor does a thumb resting before it swipes,
+//   or while the other one swipes. A finger held still jumps before it lifts
+//   only with something to hop. A quick tap that drifts 7-11 px as it lifts
+//   still jumps; a long stroke 35-44° off the axis still turns; a double
+//   flick the same way is the turn, not a flash.
+// - Mashing jump over your death's card never starts a round.
 // It prints what it measured: press-to-tick, tap-to-jump and swipe latencies.
 //
 //   node tools/input-test.js
@@ -326,21 +331,26 @@ const KEYS = {
       return 'ok';
     })()`);
 
-    // A tap jumps (on lift, or held still for TAP_JUMP_MS); taps on a button or a tag don't.
-    const tapLat = [];
+    // A tap jumps (on lift, or held still for TAP_JUMP_MS with something to
+    // hop on the way); taps on a button or a tag don't.
+    const tapLat = [], tapLatHop = [];
     let tapsOk = 0;
-    for (const contact of [30, 50, 70, 90, 120, 200, 400]) {
-      await ev('centre()');
-      before = await powers();
-      await touch('touchStart', [{ x: cx + 20, y: cy + 30, id: 1 }]);
-      await ev(`vadvance(${contact})`);
-      await touch('touchEnd', []);
-      await ev('vadvance(50)');
-      const asked = await ev(`__log.powers.slice(${before})`);
-      const t = await ev('__touch');
-      if (asked.length === 1 && asked[0].kind === 'leap') { tapsOk++; tapLat.push(t.did - t.start); }
+    for (const ahead of [0, 3]) {
+      for (const contact of [30, 50, 70, 90, 120, 200, 400]) {
+        await ev('centre()');
+        if (ahead) await ev(`(() => { const g = SnakeDebug.game(), h = g.snakes[0].body[0]; g.holes.add(h.y * 24 + h.x + ${ahead}); return 'ok'; })()`);
+        before = await powers();
+        await touch('touchStart', [{ x: cx + 20, y: cy + 30, id: 1 }]);
+        await ev(`vadvance(${contact})`);
+        await touch('touchEnd', []);
+        await ev('vadvance(50)');
+        await ev(`SnakeDebug.game().holes.clear(); 'ok'`);
+        const asked = await ev(`__log.powers.slice(${before})`);
+        const t = await ev('__touch');
+        if (asked.length === 1 && asked[0].kind === 'leap') { tapsOk++; (ahead ? tapLatHop : tapLat).push(t.did - t.start); }
+      }
     }
-    check(tapsOk === 7, 'a tap on the board jumps, once', `${tapsOk}/7, touch-down to jump ${JSON.stringify(stats(tapLat))}`);
+    check(tapsOk === 14, 'a tap on the board jumps, once', `${tapsOk}/14, touch-down to jump ${JSON.stringify(stats(tapLat))}; with a hole ahead ${JSON.stringify(stats(tapLatHop))}`);
     before = await powers();
     for (const sel of ['#mute', '#scoreboard li:nth-child(2)', '#scoreboard li:nth-child(1)']) {
       const r = await ev(`document.querySelector('${sel}').getBoundingClientRect().toJSON()`);
@@ -352,12 +362,13 @@ const KEYS = {
     await ev(`SnakeAudio.isMuted() && document.getElementById('mute').click(); 'ok'`); // (unmuted again)
     check(await powers() === before && await state() === 'running', 'a tap on a button or a name tag doesn’t jump');
 
-    // A finger: down at a random point in a frame, then moving at v px/ms
-    // (dx, dy: its way), its position sent at each frame, up to 70 px.
-    const swipe = async (dx, dy, { v = 0.6, frames = 8, from = [cx - dx * 30, cy - dy * 30] } = {}) => {
+    // A finger: down at a random point in a frame (resting first for rest
+    // ms), then moving at v px/ms (dx, dy: its way), its position sent at
+    // each frame, up to 70 px.
+    const swipe = async (dx, dy, { v = 0.6, frames = 8, from = [cx - dx * 30, cy - dy * 30], rest = 0 } = {}) => {
       let t = (1 - Math.random()) * P; // (from the touch to the next frame)
       await touch('touchStart', [{ x: from[0], y: from[1], id: 1 }]);
-      await ev(`vadvance(${t})`);
+      await ev(`vadvance(${rest + t})`);
       for (let f = 0; f < frames; f++) {
         const d = Math.min(70, t * v);
         await touch('touchMove', [{ x: from[0] + dx * d, y: from[1] + dy * d, id: 1 }]);
@@ -374,15 +385,19 @@ const KEYS = {
     await swipe(1, 0, { frames: 12 });
     const ahead = await ev(`__log.powers.slice(${before}).map(p => p.kind).join(',')`);
     check(ahead === 'flash', 'a fresh swipe ahead flashes, once, however far the finger goes', ahead || 'nothing');
-    await ev('centre()');
-    await swipe(0, -1, { frames: 4 }); // (a turn up...)
-    before = await powers();
-    await swipe(0, -1, { frames: 4 }); // (...and up again, at once: the turn swiped twice)
-    const twice = await powers() - before;
-    await ev('vadvance(200)');
-    await swipe(0, -1, { frames: 4 }); // (...and again, a moment later: a flash)
-    const later = await ev(`__log.powers.slice(${before}).map(p => p.kind).join(',')`);
-    check(twice === 0 && later === 'flash', 'a swipe the way you just turned is that turn again, not a flash; a moment later, it flashes', later || 'nothing');
+    // A swipe the way the last one turned you, just after it lifted, is that
+    // turn swiped twice (a double flick, to make sure), not a flash: the
+    // second touch down 60-250 ms after the first lifts. A moment later, a flash.
+    const flicks = [];
+    for (const gap of [0, 60, 120, 170, 250, 400]) {
+      await ev('centre()');
+      await swipe(0, -1, { frames: 4 }); // (a turn up: about 60 ms of motion, then the lift...)
+      before = await powers();
+      await ev(`vadvance(${Math.max(0, gap - 50)})`);
+      await swipe(0, -1, { frames: 4 }); // (...and up again)
+      flicks.push(`${gap}:${await ev(`__log.powers.slice(${before}).map(p => p.kind).join(',')`) || '-'}`);
+    }
+    check(flicks.join(' ') === '0:- 60:- 120:- 170:- 250:- 400:flash', 'a swipe the way you just turned is that turn again, not a flash; a moment later, it flashes', `gap from lift: ${flicks.join(' ')}`);
 
     // A chained turn: one finger, right and then up, at 0.6 px/ms; the second
     // turn counts from the corner (SWIPE_CHAIN_PX).
@@ -409,6 +424,87 @@ const KEYS = {
     }
     check(chained === 8, 'one finger chains turns (right, then up)', `${chained}/8, corner to turn ${JSON.stringify(stats(chainLat))}`);
 
+    // A finger held still jumps without waiting for the lift only with
+    // something to hop on the way; a thumb resting before it swipes doesn't
+    // jump (and a jump its hold asked for, not gone yet, is taken back);
+    // nor does a thumb resting while the other swipes.
+    const hole = n => ev(`(() => { const g = SnakeDebug.game(), h = g.snakes[0].body[0]; g.holes.add(h.y * 24 + h.x + ${n}); return 'ok'; })()`);
+    const leaps = from => ev(`__log.powers.slice(${from}).filter(p => p.kind === 'leap').length`);
+    await ev('centre()');
+    await hole(2);
+    before = await powers();
+    await touch('touchStart', [{ x: cx + 20, y: cy + 30, id: 1 }]);
+    await ev('vadvance(100)');
+    const heldJump = await leaps(before);
+    await touch('touchEnd', []);
+    await ev('vadvance(50)');
+    await ev(`SnakeDebug.game().holes.clear(); 'ok'`);
+    check(heldJump === 1 && await leaps(before) === 1, 'held still with something to hop, a touch jumps before it lifts, once', `${heldJump} by 100 ms`);
+    const rests = [];
+    let failedRest = false;
+    for (const [rest, ahead] of [[90, 0], [120, 0], [200, 0], [120, 2]]) {
+      await ev('centre()');
+      if (ahead) await hole(ahead);
+      before = await powers();
+      await swipe(0, -1, { frames: 5, rest });
+      const r = await ev(`(() => { const me = SnakeDebug.game().snakes[0]; return { q: me.queue.map(dirName).join(','), armed: me.leapArmed }; })()`);
+      await ev(`SnakeDebug.game().holes.clear(); 'ok'`);
+      rests.push(`${rest} ms${ahead ? ' (a hole ahead)' : ''}: ${r.q || 'no turn'}, ${r.armed >= 0 ? 'a jump waiting' : 'no jump waiting'}`);
+      if (r.q !== 'up' || r.armed >= 0) failedRest = true;
+    }
+    check(!failedRest, 'a thumb resting before it swipes turns, and no jump goes', rests.join('; '));
+    await ev('centre()');
+    before = await powers();
+    await touch('touchStart', [{ x: cx - 60, y: cy + 60, id: 1 }]); // (a thumb resting...)
+    await ev('vadvance(100)');
+    for (let f = 0; f <= 6; f++) { // (...while the other swipes up)
+      await touch(f ? 'touchMove' : 'touchStart', [{ x: cx - 60, y: cy + 60, id: 1 }, { x: cx + 60, y: cy + 40 - f * 10, id: 2 }]);
+      await ev(`vadvance(${P})`);
+    }
+    await touch('touchMove', [{ x: cx - 60, y: cy + 60, id: 1 }]); // (the swiping one lifts...)
+    await ev('vadvance(120)');
+    await touch('touchEnd', []); // (...then the resting one)
+    await ev('vadvance(50)');
+    const two = await ev(`({ leaps: __log.powers.slice(${before}).filter(p => p.kind === 'leap').length, q: SnakeDebug.game().snakes[0].queue.map(dirName).join(',') })`);
+    check(two.leaps === 0 && two.q === 'up', 'a thumb resting while the other swipes doesn’t jump', JSON.stringify(two));
+
+    // A quick tap that rolls a few pixels as it lifts is still a tap.
+    const drifts = [];
+    for (const d of [3, 7, 9, 11]) {
+      let ok = 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        await ev('centre()');
+        before = await powers();
+        await touch('touchStart', [{ x: cx + 20, y: cy + 30, id: 1 }]);
+        await ev(`vadvance(${P})`);
+        await touch('touchMove', [{ x: cx + 20 + dx * d / 2, y: cy + 30 + dy * d / 2, id: 1 }]);
+        await ev(`vadvance(${P})`);
+        await touch('touchMove', [{ x: cx + 20 + dx * d, y: cy + 30 + dy * d, id: 1 }]);
+        await ev(`vadvance(${50 - 2 * P})`);
+        await touch('touchEnd', []);
+        await ev('vadvance(50)');
+        const q = await ev('SnakeDebug.game().snakes[0].queue.length');
+        if (await leaps(before) === 1 && !q) ok++;
+      }
+      drifts.push(`${d} px ${ok}/4`);
+    }
+    check(drifts.every(t => t.endsWith('4/4')), 'a quick tap that drifts as it lifts still jumps', drifts.join(', '));
+
+    // A long straight stroke well off the axis still turns, its main way.
+    const slants = [];
+    for (const deg of [35, 44]) {
+      let ok = 0;
+      for (const [dx, dy, name] of [[1, 0, 'right'], [-1, 0, 'left']]) {
+        await ev('centre()');
+        await ev("face('up')");
+        const a = deg * Math.PI / 180;
+        await swipe(dx * Math.cos(a), -Math.sin(a), { v: 0.5, frames: 13 });
+        if (await ev("SnakeDebug.game().snakes[0].queue.map(dirName).join(',')") === name) ok++;
+      }
+      slants.push(`${deg}° ${ok}/2`);
+    }
+    check(slants.every(t => t.endsWith('2/2')), 'a long stroke 35-44° off the axis turns its main way', slants.join(', '));
+
     // Swipes never jump: finger speeds 0.15-1.2 px/ms, straight and slanted, every way.
     const reg = {};
     let jumps = 0, swipes = 0, wrong = 0, none = 0;
@@ -434,11 +530,37 @@ const KEYS = {
     check(jumps === 0, 'swipes never jump', `${jumps} of ${swipes} swipes; ${none} slanted 40° never registered (a way must be half again the other), ${wrong} went another way`);
     const regStats = Object.fromEntries(Object.entries(reg).map(([v, l]) => [v, stats(l).median]));
 
+    // Your death's card: a thumb mashing jump as you crash, landing on its
+    // Play again, never starts a round; a tap once it's settled does.
+    await ev('centre()');
+    await ev(`(() => { const me = SnakeDebug.game().snakes[0]; me.body = [{ x: 22, y: 12 }, { x: 21, y: 12 }, { x: 20, y: 12 }]; me.prev = null; return 'ok'; })()`);
+    const mash = [];
+    for (let i = 0; i < 14; i++) { // (a tap every 110 ms for about 1.5 s)
+      const up = await ev('cardUp()');
+      const at = up ? await ev(`(() => { const r = document.getElementById('start').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`) : { x: cx + 20, y: cy + 30 };
+      await touch('touchStart', [{ ...at, id: 1 }]);
+      await ev('vadvance(50)');
+      await touch('touchEnd', []);
+      await ev('vadvance(60)');
+      await ev('vf(7)');
+      mash.push(`${up ? 'card' : 'board'}:${await state()}`);
+    }
+    const mashed = await ev(`({ s: SnakeDebug.state(), up: cardUp(), alive: SnakeDebug.game().snakes[0].alive, title: document.getElementById('overlay-title').textContent })`);
+    await ev('vadvance(600)'); await ev('vf(36)');
+    const r = await ev(`(() => { const r = document.getElementById('start').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
+    await touch('touchStart', [{ ...r, id: 1 }]);
+    await ev('vadvance(60)');
+    await touch('touchEnd', []);
+    await ev('vadvance(20)');
+    const settled = await state();
+    check(!mashed.alive && mashed.up && mashed.s === 'running' && mash.some(m => m.startsWith('card')) && settled === 'countdown',
+      'mashing jump over your death card never plays again; a tap once it’s settled does', `${mashed.title} ${mash.filter(m => m.startsWith('card')).length} taps on Play again, then ${settled}`);
+
     console.log(results.join('\n'));
     console.log('\nmeasured (virtual 60 Hz, 120 ms ticks):');
     console.log('  press to tick, turns:', JSON.stringify(stats(turnLat)));
     console.log('  press to tick, jumps:', JSON.stringify(stats(pressLat.jump)), ' flashes:', JSON.stringify(stats(pressLat.flash)));
-    console.log('  touch-down to jump (taps held 30-400 ms):', JSON.stringify(stats(tapLat)));
+    console.log('  touch-down to jump (taps held 30-400 ms; nothing to hop: on the lift):', JSON.stringify(stats(tapLat)), ' with a hole ahead (held still: at TAP_JUMP_MS):', JSON.stringify(stats(tapLatHop)));
     console.log('  a chained turn, from the finger’s corner (0.6 px/ms):', JSON.stringify(stats(chainLat)));
     console.log('  touch-down to a swipe registering, median ms by finger speed (px/ms):', JSON.stringify(regStats));
     if (b.errors.length) { console.log('page errors:', b.errors); failed++; }
