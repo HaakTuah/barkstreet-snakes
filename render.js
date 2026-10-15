@@ -1842,7 +1842,7 @@ window.SnakeRender = (() => {
   // Sky against ember is the pair colour-blind eyes tell apart best; the
   // accents appear on power marks only.
   const HONEY = '#fde68a', GLINT = '#fffbea';
-  const SKY = '#a8dcf5', SKY_LINE = '#2f6f96', EMBER = '#f7a866', EMBER_LINE = '#b5531d';
+  const SKY = '#a8dcf5', EMBER = '#f7a866', EMBER_LINE = '#b5531d'; // (sky's own line, #2f6f96, isn't needed: ink outlines every sky mark)
   const RUN_DASH = [CELL * 0.14, CELL * 0.36], GLINT_DASH = [CELL * 1.4, CELL * 7]; // (ember dashes; one glint every so far)
   // Your soft halo: a few faint steps of cream round your body, each wider
   // and fainter than the last (a soft edge without a blur), and a touch more
@@ -5870,8 +5870,8 @@ window.SnakeRender = (() => {
   // them. (A wedge of honey light between them is gone: where it showed past
   // the body, it was a translucent khaki block, cut square by the head.) A
   // golden dash's lines are gold with an ember core; a plain flash's are
-  // ember, thinner, fainter and shorter (from half way), so the golden one
-  // is the bigger deal.
+  // ember, thinner, inked more faintly and shorter (from a third of the
+  // way), so the golden one is the bigger deal.
   const streaks = []; // { x0, y0, x1, y1, at, s, plain }
   const STREAK_GAP = 2; // (between the dasher's drawn edge and a line's inked edge, in units)
   function drawStreaks(now) {
@@ -5880,7 +5880,7 @@ window.SnakeRender = (() => {
       if (t >= 1 || t < 0) { streaks.splice(i, 1); continue; }
       const dx = k.x1 - k.x0, dy = k.y1 - k.y0, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
       const ex = k.x1 - ux * CELL * 0.35, ey = k.y1 - uy * CELL * 0.35; // (the back of its head)
-      const sx = k.plain ? k.x0 + (ex - k.x0) * 0.45 : k.x0, sy = k.plain ? k.y0 + (ey - k.y0) * 0.45 : k.y0; // (where its lines start)
+      const sx = k.plain ? k.x0 + (ex - k.x0) * 0.35 : k.x0, sy = k.plain ? k.y0 + (ey - k.y0) * 0.35 : k.y0; // (where its lines start)
       const speedLine = (off, w, over) => { // (pointed at both ends, widest near the head; `over` runs it a touch past them, for its ink)
         const mx = sx + (ex - sx) * 0.8, my = sy + (ey - sy) * 0.8;
         ctx.moveTo(sx - ux * over + nx * off, sy - uy * over + ny * off);
@@ -5889,11 +5889,11 @@ window.SnakeRender = (() => {
         ctx.lineTo(mx + nx * (off - w), my + ny * (off - w));
         ctx.closePath();
       };
-      const a = anim.get(k.s), w = CELL * (k.plain ? 0.075 : 0.1) * (1 - 0.5 * t), ink = 1.4;
+      const a = anim.get(k.s), w = CELL * (k.plain ? 0.085 : 0.1) * (1 - 0.5 * t), ink = 1.4;
       const side = CELL * 0.44 + (a ? edgeOf(k.s, a) : 0) + STREAK_GAP + ink + w; // (the body's half-width by the neck, and what's drawn round it)
-      ctx.fillStyle = rgba('#3a2614', (k.plain ? 0.6 : 0.8) * (1 - t));
+      ctx.fillStyle = rgba('#3a2614', (k.plain ? 0.7 : 0.8) * (1 - t));
       ctx.beginPath(); speedLine(-side, w + ink, ink * 2); speedLine(side, w + ink, ink * 2); ctx.fill();
-      ctx.fillStyle = rgba(k.plain ? EMBER : HONEY, (k.plain ? 0.85 : 0.95) * (1 - t));
+      ctx.fillStyle = rgba(k.plain ? EMBER : HONEY, 0.95 * (1 - t));
       ctx.beginPath(); speedLine(-side, w, 0); speedLine(side, w, 0); ctx.fill();
       if (k.plain) continue;
       ctx.fillStyle = rgba(EMBER_LINE, 0.9 * (1 - t)); // (the ember core)

@@ -48,6 +48,21 @@ fs.mkdirSync(out, { recursive: true });
     await b.sleep(70);
     await shot('eating.jpg');
 
+    // Powers on the board, staged on the live round: golden leaps and dashes
+    // held at once (yours: sky round pips one side, ember diamonds the other,
+    // ember dashes running along the gold; and a rival's golden leaps: a
+    // rival given dashes uses them at once), then both your plain rests
+    // cooling (the half-rings round your head), then a plain flash a moment
+    // after it went (its ember streak).
+    await b.eval(`(() => { const r = SnakeDebug.game().snakes.find(s => s.alive && s.persona); me().leaps = 2; me().dashes = 2; if (r) r.leaps = 3; return 1; })()`);
+    await b.sleep(400);
+    await shot('powers-held.jpg');
+    await b.eval(`(() => { const g = SnakeDebug.game(); me().leaps = 0; me().dashes = 0; me().leapReadyAt = g.time + 2500; me().flashReadyAt = g.time + 4500; return 1; })()`);
+    await b.sleep(300);
+    await shot('powers-resting.jpg');
+    const flashed = await b.eval(`(() => { const g = SnakeDebug.game(); me().flashReadyAt = 0; SnakeEngine.flash(g, me()); return waitFor(() => me().flashReadyAt > 0 || !me().alive, 3000).then(() => me().alive); })()`);
+    if (flashed) { await b.sleep(60); await shot('powers-flash.jpg'); }
+
     // A nap over a live board, then back (waking takes a beat).
     await b.key('p');
     await b.sleep(450);
@@ -104,6 +119,9 @@ fs.mkdirSync(out, { recursive: true });
     await shot('mobile-title.jpg');
     await playUntil(18000, 8, 2);
     await shot('mobile-gameplay.jpg');
+    await b.eval(`(() => { const g = SnakeDebug.game(); me().leapReadyAt = g.time + 2500; me().flashReadyAt = g.time + 4500; return 1; })()`);
+    await b.sleep(300);
+    await shot('mobile-powers-resting.jpg'); // (your two rests, at phone size)
     await b.eval(`pilot.crash = true; waitFor(() => !me().alive, 20000).then(() => waitFor(cardUp, 5000)).then(() => 1)`);
     await b.sleep(450);
     await shot('mobile-death.jpg');
