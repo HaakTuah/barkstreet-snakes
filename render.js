@@ -1095,7 +1095,7 @@ window.SnakeRender = (() => {
         // whether it moves (mv), grows (mg) or leaps (ml); the same as the
         // last frame drew them (pTick: that frame's tick), and each segment's
         // easing out of a wrong guess (fix: units, fading; see prepare).
-        mx: 0, my: 0, mv: 0, mg: 0, ml: 0, pmx: 0, pmy: 0, pmv: 0, pTick: -1, rise: 0, swell: 0,
+        mx: 0, my: 0, mv: 0, mg: 0, ml: 0, pmx: 0, pmy: 0, pmv: 0, pTick: -1, phx: -99, phy: -99, fixFar: false, rise: 0, swell: 0,
         fix: new Float32Array(64), fixOn: false, tdx: s.dir.x, tdy: s.dir.y, bx: 0, by: 0, drawnAt: -1,
         jc: false, fc: false, flashFx: -1e9, // (your rests: cooling last frame; when your flash came back)
       };
@@ -1517,8 +1517,8 @@ window.SnakeRender = (() => {
     const d = s.flight ? s.flight.dir : wayOf(s), x = wrapX(s, h.x + d.x), y = wrapX(s, h.y + d.y);
     a.mx = x; a.my = y; a.mv = 1; a.mg = s.grow > 0 ? 1 : 0;
     if (!s.flight && asksJump(s) && !asksFlash(s) && (s.leaps > 0 || (game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH)) && hurdleAt(x, y)) {
-      const lx = wrapX(s, x + d.x), ly = wrapX(s, y + d.y);
-      if (!offBoard(lx, ly) && !hurdleAt(lx, ly)) { a.ml = 1; return; }
+      const lx = wrapX(s, x + d.x), ly = wrapX(s, y + d.y), fx = wrapX(s, lx + d.x), fy = wrapX(s, ly + d.y);
+      if (!offBoard(lx, ly) && (!hurdleAt(lx, ly) || (s.leaps > 0 && !offBoard(fx, fy) && !hurdleAt(fx, fy)))) { a.ml = 1; return; } // (a golden one hops two)
     }
     if (offBoard(x, y) || game.holes.has(y * GRID + x) || stays[y * GRID + x]) { a.mv = 0; a.mg = 0; }
   }
@@ -1538,19 +1538,26 @@ window.SnakeRender = (() => {
   // second half of a tick, a crash nobody saw coming, or the tick shows it
   // went elsewhere), the difference stays on each segment as an offset that
   // fades over about FIX_MS. A dash isn't eased: it's there at once.
-  const FIX_MS = 35;
+  const FIX_MS = 35, FIX_SPEED = CELL * 0.012; // (units a ms: 12 cells a second, about a snake's top speed)
   const wd = v => v > GRID / 2 ? v - GRID : v < -GRID / 2 ? v + GRID : v; // (a step in cells, across a wrapped edge)
   function refix(s, a, at, snap) {
     const n = s.body.length, fix = a.fix, body = s.body, prev = s.prev;
-    if (a.fixOn) { // (what's left fades)
-      const keep = Math.exp(-frameDt / (FIX_MS / 3));
-      let most = 0;
-      for (let i = 0; i < fix.length; i++) { fix[i] *= keep; most = Math.max(most, Math.abs(fix[i])); }
-      if (most < 0.25) { fix.fill(0); a.fixOn = false; }
+    if (a.fixOn) { // (what's left fades, never faster than FIX_SPEED: a big one takes a little longer)
+      const keep = Math.exp(-frameDt / (FIX_MS / 3)), most = FIX_SPEED * frameDt;
+      let left = 0;
+      for (let i = 0; i < fix.length; i += 2) {
+        const x = fix[i], y = fix[i + 1], d = Math.hypot(x, y);
+        if (!d) continue;
+        const k = Math.max(keep, 1 - most / d);
+        fix[i] = x * k; fix[i + 1] = y * k;
+        left = Math.max(left, d * k);
+      }
+      if (left < 0.25) { fix.fill(0); a.fixOn = false; }
     }
-    if (snap || reduced || (a.pTick !== game.tick && a.pTick !== game.tick - 1) || (a.pTick !== game.tick && !prev)) { // (dashing, or too long since: start afresh)
+    const same = a.pTick === game.tick, from = same ? body[0] : prev?.[0]; // (where its head was when it last guessed)
+    if (snap || reduced || (!same && a.pTick !== game.tick - 1) || !from || from.x !== a.phx || from.y !== a.phy) { // (dashing, too long since, or put somewhere else: start afresh)
       if (a.fixOn) { fix.fill(0); a.fixOn = false; }
-    } else if (a.pTick === game.tick) { // (the same tick: a different guess)
+    } else if (same) { // (the same tick: a different guess)
       const kk = Math.max(0, at - 1);
       if (kk > 0 && (a.pmv !== a.mv || a.pmx !== a.mx || a.pmy !== a.my)) {
         const hx = body[0].x, hy = body[0].y;
@@ -1565,10 +1572,13 @@ window.SnakeRender = (() => {
         if (ex || ey) fixAdd(a, i, ex, ey);
       }
     }
-    a.pmx = a.mx; a.pmy = a.my; a.pmv = a.mv; a.pTick = game.tick;
+    if (a.fixOn && a.fixFar) { fix.fill(0); a.fixOn = false; } // (more than a guess could be out by: it jumped, so it jumps)
+    a.fixFar = false;
+    a.pmx = a.mx; a.pmy = a.my; a.pmv = a.mv; a.pTick = game.tick; a.phx = body[0].x; a.phy = body[0].y;
   }
   function fixAdd(a, i, dx, dy) {
     if (Math.abs(dx) + Math.abs(dy) < 0.01) return;
+    if (Math.abs(dx) + Math.abs(dy) > 2.5) a.fixFar = true;
     a.fixOn = true;
     a.fix[2 * i] += dx * CELL; a.fix[2 * i + 1] += dy * CELL;
   }
