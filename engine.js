@@ -795,7 +795,7 @@ window.SnakeEngine = (() => {
     const alive = game.snakes.filter(s => s.alive);
 
     // Everyone decides, except the stunned: they stay put (and can steer meanwhile).
-    const moving = [], fallback = new Map(); // (fallback: the auto-turn, for a power asked for over a crash that may not go after all)
+    const moving = [], fallback = new Map(), held = new Map(); // (fallback: the auto-turn, for a power asked for over a crash that may not go after all; held: a flash there that can't go, and why)
     for (const s of alive) {
       s.tailMoves = false; s.air = false; s.landing = false; s.boom = false; s.passed = null;
       if (s.stunUntil > game.tick) { s.next = null; continue; }
@@ -834,10 +834,12 @@ window.SnakeEngine = (() => {
             // two); one that can't says why, and the auto-turn takes it clear:
             // it isn't sent back into what it hit, nor blown up, for a press
             // that was never going to work. (One that can go and then doesn't,
-            // its landing taken as it goes, gets the auto-turn too: see below.)
+            // its landing taken as it goes, gets the auto-turn too: see below.
+            // So does a flash that can't go asked with a jump that can: it
+            // waits on the jump, and says why once the jump hasn't gone.)
             const jump = s.leapArmed >= game.tick && leapWontGo(game, s), fl = s.flashArmed >= game.tick && flashWontGo(game, s, shut); // (false: not asked; null: it can go)
             const turn = recoil(game, s, shut);
-            if (jump === null || fl === null) fallback.set(s, turn);
+            if (jump === null || fl === null) { fallback.set(s, turn); if (fl) held.set(s, fl); }
             else {
               if (jump || fl) { game.events.push({ type: 'fizzle', snake: s, why: fl || jump, x: nx, y: ny, flash: fl ? 1 : 0 }); s.leapArmed = -1; s.flashArmed = -1; } // (where it faced: the auto-turn is about to turn it)
               s.dir = turn;
@@ -867,7 +869,10 @@ window.SnakeEngine = (() => {
     // goes first if it can (something right in front to hop, somewhere to
     // land): no flash gets past that, so a jump and a flash pressed together
     // hop it, and the flash waits till it's landed, like one asked for in the
-    // air. Else the flash goes (golden: a dash), and a jump waits its few
+    // air. So does a flash that would only get as far as something further
+    // on that the jump is for (see jumpFor): the snake crawls up to it and
+    // hops it, so the two pressed together are never worse than the jump
+    // alone. Else the flash goes (golden: a dash), and a jump waits its few
     // ticks for something to hop. The flashes are all worked out on the board
     // as it was before any of them moved, and two through one cell meet
     // there, so no seat goes first. A snake cut in two by a dash, too short
@@ -877,8 +882,12 @@ window.SnakeEngine = (() => {
     for (const s of moving) {
       if (s.landing) { if (s.flashArmed >= game.tick) s.flashArmed = game.tick + 1; continue; } // (on its way down: once it's moving on the ground)
       const jump = s.leapArmed >= game.tick, fl = s.flashArmed >= game.tick;
-      if (jump && (!fl || hopPlan(game, s))) { hops.push(s); if (fl) s.flashArmed = game.tick + 1; }
-      else if (fl) plans.push(flashPlan(game, s));
+      if (jump && (!fl || held.has(s) || hopPlan(game, s))) { hops.push(s); if (fl) s.flashArmed = game.tick + 1; continue; }
+      if (!fl) continue;
+      const p = flashPlan(game, s), k = jump ? jumpFor(game, s, p) : -1;
+      if (k < 0) { plans.push(p); continue; }
+      s.flashArmed = game.tick + 1; // (it waits on the jump: right in front, the jump says why it can't go; further on, the snake goes straight on to it, no auto-turn)
+      if (k === 0) hops.push(s); else went.add(s);
     }
     settle(game, plans);
     for (const p of plans) if (flashGo(game, p, cuts)) went.add(p.s);
@@ -890,6 +899,12 @@ window.SnakeEngine = (() => {
       if (j > 0 && !gone.has(c.o)) cutAt(game, c.o, j, c.by, gone, dying, drops);
     }
     for (const s of hops) if (!gone.has(s)) hop(game, s);
+    for (const [s, why] of held) { // (the jump it waited on hasn't gone: it says why it can't, where it faced, and the auto-turn takes it clear)
+      if (gone.has(s) || s.air || !(s.flashArmed > game.tick)) continue;
+      const c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir);
+      game.events.push({ type: 'fizzle', snake: s, why, x: c.x, y: c.y, flash: 1 });
+      s.flashArmed = -1;
+    }
     for (const [s, d] of fallback) if (!s.air && !went.has(s)) { s.dir = d; s.next = ahead(game, s, s.body[0].x, s.body[0].y, d); }
     if (gone.size) for (let i = moving.length - 1; i >= 0; i--) if (gone.has(moving[i])) moving.splice(i, 1);
     for (const s of moving) {
@@ -1003,6 +1018,7 @@ window.SnakeEngine = (() => {
       const lost = Math.min(T.CRASH_LOSS, s.body.length - T.MIN_LENGTH);
       for (let n = 0; n < lost; n++) { const t = s.body.pop(); drops.push({ x: t.x, y: t.y, color: s.color, owner: s.id }); }
       s.stunUntil = game.tick + 1 + T.STUN_TICKS;
+      if (s.flashArmed > game.tick) s.flashArmed = s.stunUntil; // (a flash waiting on a jump, or on its landing: it goes when it moves again, as one pressed in a stun does)
       if (s.landing && burning(game, key(s.body[0].x, s.body[0].y))) { // (come down on fire: alight)
         if (!(s.burnUntil > game.tick)) { s.burnFrom = game.tick; game.events.push({ type: 'alight', snake: s }); }
         s.burnUntil = game.tick + T.BURN_TICKS;
@@ -1290,6 +1306,25 @@ window.SnakeEngine = (() => {
   function hopPlan(game, s) {
     if (s.leaps > 0) return leapPath(game, s, 2) || leapPath(game, s, 1);
     return game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH ? leapPath(game, s, 1) : null;
+  }
+  // A flash asked for with a jump (p: its plan): if it would stop at a hurdle
+  // (run into it, or blow up in it: not a snake one thick a dash cuts, nor
+  // fire it puts out) that the jump could clear once it's right in front,
+  // how many cells before it that is (0: right in front), else -1. The way
+  // there must be free, the jump ready (golden, or rested), still asked for
+  // by then, and somewhere to land beyond the hurdle as things stand.
+  function jumpFor(game, s, p) {
+    if (p.why) return -1;
+    const k = p.cells.length - 1, end = p.cells[k];
+    if (!inside(end.x, end.y) || !hurdle(game, end) || (p.gold && !p.boom && !(p.solid[k] && !p.cuts.some(x => x.i === k)))) return -1;
+    if (p.cells.slice(0, k).some(c => hurdle(game, c)) || s.leapArmed < game.tick + k) return -1;
+    if (!(s.leaps > 0 || (game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH))) return -1;
+    for (let c = end, i = 0; i < (s.leaps > 0 ? 2 : 1); i++) {
+      c = ahead(game, s, c.x, c.y, s.dir);
+      if (!inside(c.x, c.y)) return -1;
+      if (!hurdle(game, c)) return k;
+    }
+    return -1;
   }
   // Something a leap goes over: a body (still there after this tick's crawl), a hole or fire.
   const hurdle = (game, c) => { const k = key(c.x, c.y); return bodyStamp[k] === stamp || game.holes.has(k) || burning(game, k); };
