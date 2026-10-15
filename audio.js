@@ -24,7 +24,7 @@ window.SnakeAudio = (() => {
   // (weather, the woodpecker, beetles): each gives way sooner than the one before.
   const MAX_VOICES = { you: 7, rival: 6, world: 5 };
   const PRIORITY = { death: true, best: true, win: true, winBest: true, ko: true, stinger: true }; // these always play
-  const WORLD = { beetle: 1, crackle: 1, thunder: 1, gust: 1, burrow: 1, dig: 1, rainbow: 1, rain: 1, snow: 1, ember: 1, woodpecker: 1, call: 1, aim: 1, drum: 1, crash: 1, peck: 1, bake: 1, ash: 1, douse: 1 };
+  const WORLD = { beetle: 1, crackle: 1, thunder: 1, gust: 1, burrow: 1, dig: 1, rainbow: 1, rain: 1, snow: 1, ember: 1, woodpecker: 1, call: 1, aim: 1, drum: 1, crash: 1, peck: 1, bake: 1, ash: 1, douse: 1, lastApples: 1 };
   const RIVALS = { rivalDeath: 1, bonked: 1 };
   const RIVAL_VOLUME = 0.5;    // a rival's leap or dash, next to yours...
   const RIVAL_LOWPASS = 2600;  // ...and a little duller, as if further off
@@ -35,6 +35,7 @@ window.SnakeAudio = (() => {
     beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, hungerWarn: 1500, ui: 30, // peck: never more than 3 in any second
     crackle: 300, thunder: 900, gust: 1500, burrow: 1000, dig: 250, rainbow: 1500, rain: 1500,
     ko: 200, close: 1400, field: 800, bonk: 150, bonked: 300, leap: 200, thunk: 250, dash: 150, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
+    flash: 150, flashReady: 600, lastApples: 4000,
   };
   // A cue that stands for others for a while: a win that's also a best is one phrase.
   const COVERS = { winBest: { win: 6000, best: 6000 } };
@@ -283,6 +284,25 @@ window.SnakeAudio = (() => {
     finish(src, t + dur + 0.03, f, g);
   }
 
+  // Air rushing past: noise that swells in and dies away, through a ringing lowpass
+  // sweeping up from `from` to `to` Hz (a whoosh, where noise() is a puff).
+  function whoosh(t, dur, peak, from, to) {
+    const src = ctx.createBufferSource();
+    const f = ctx.createBiquadFilter();
+    const g = ctx.createGain();
+    src.buffer = noiseBuffer();
+    f.type = 'lowpass';
+    f.Q.value = 4;
+    f.frequency.setValueAtTime(from * pitchMul, t);
+    f.frequency.exponentialRampToValueAtTime(to * pitchMul, t + dur * 0.7);
+    envelope(g, t, peak * volMul, dur * 0.35, dur);
+    src.connect(f);
+    f.connect(g);
+    g.connect(out || master);
+    src.start(t, Math.random() * Math.max(0, NOISE_SECONDS - dur - 0.05));
+    finish(src, t + dur + 0.03, f, g);
+  }
+
   // Marimba-ish note: a sine plus the quiet, slightly flat 4th-harmonic "bar" overtone,
   // which dies first. That overtone is what makes it sound like wood instead of a beep.
   // (bright: how hard the mallet was, 1 by default.)
@@ -295,6 +315,14 @@ window.SnakeAudio = (() => {
   function knock(t, freq, peak) {
     tone(t, 'triangle', freq * 1.4, 0.07, peak, 0.001, freq, freq * 3);
     noise(t, 0.02, peak * 0.45, 'bandpass', freq * 2.2, 4);
+  }
+
+  // A muffled drum (a hand on the skin keeps it short): a low skin that sags in pitch,
+  // its thud of air, and the skin's hollow middle, which is what a phone hears.
+  function tom(t, freq, peak) {
+    tone(t, 'sine', freq * 1.5, 0.2, peak, 0.002, freq);
+    body(t, freq * 1.2, 0.14, peak * 0.7, 0.002, freq, freq * 5, 1);
+    noise(t, 0.05, peak * 0.35, 'lowpass', 600, 0.7);
   }
 
   // The midrange a low sound needs on a phone or laptop speaker, which can't play
@@ -581,11 +609,24 @@ window.SnakeAudio = (() => {
       noise(t + 0.02, 0.18, 0.06, 'bandpass', 1800, 1.2);
       mallet(t + 0.18, mtof(84), 0.12, 0.07);
     },
-    // A dash: a zip, rising fast, and a rush of air.
+    // A dash (a golden flash): a zip, rising fast, and a rush of air.
     dash(t) {
       tone(t, 'sawtooth', 260, 0.16, 0.08, 0.004, 1400, 2400);
       noise(t, 0.2, 0.12, 'bandpass', 2600, 0.9);
       mallet(t + 0.12, mtof(91), 0.1, 0.06);
+    },
+    // A plain flash: lighter than a dash, all air. A short whoosh sweeping up past
+    // you, and a flick of ember at its end.
+    flash(t) {
+      whoosh(t, 0.17, 0.11, 500, 3200);
+      noise(t + 0.13, 0.01, 0.05, 'bandpass', 4200, 3);
+    },
+    // Your flash is rested: a small ember spark, a crackle and a glint sliding up
+    // (where the jump's ready is a wooden tick).
+    flashReady(t) {
+      noise(t, 0.012, 0.065, 'bandpass', 4200, 3);
+      noise(t + 0.035, 0.01, 0.05, 'bandpass', 5600, 3);
+      tone(t + 0.015, 'triangle', mtof(91), 0.1, 0.05, 0.003, mtof(96), 6000);
     },
     // A fire put out: a hiss of steam.
     douse(t) {
@@ -658,18 +699,22 @@ window.SnakeAudio = (() => {
     ash(t) {
       noise(t, 0.25, 0.07, 'lowpass', 600, 0.7);
     },
-    // The woodpecker takes your tail: a sharp snap.
+    // A tail cut off (a golden dash through a snake): a sharp snap.
     snip(t) {
       noise(t, 0.04, 0.25, 'bandpass', 2400, 2);
       tone(t, 'square', 1200, 0.04, 0.05, 0.001, 600, 3000);
     },
 
-    // Into a rival's force field: an electric hum swelling, a shimmer over it.
+    // Over a border into a rival's land (Sovereign's realm, a colony): a muffled
+    // drum knocks twice, as at a border post, and a fife answers with a short call
+    // (a quick note up to a held one, breathy, with a player's wobble).
     field(t) {
-      tone(t, 'sawtooth', 110, 0.5, 0.045, 0.1, null, 800);
-      tone(t, 'sawtooth', 111.6, 0.5, 0.04, 0.1, null, 800);
-      tone(t, 'sine', 1760, 0.4, 0.025, 0.06, 2350);
-      noise(t, 0.3, 0.025, 'bandpass', 3200, 2);
+      tom(t, 118, 0.052);
+      tom(t + 0.13, 98, 0.066);
+      tone(t + 0.13, 'triangle', mtof(79), 0.07, 0.035, 0.008, null, 3000);
+      const f = tone(t + 0.19, 'triangle', mtof(84), 0.3, 0.05, 0.015, null, 3200);
+      vibrato(f, t + 0.25, 0.24, 6, 9);
+      noise(t + 0.19, 0.22, 0.012, 'bandpass', mtof(84) * 2, 2);
     },
 
     // A near miss (your head right by a rival's): air tearing past, and a gasp of a tick.
@@ -715,6 +760,19 @@ window.SnakeAudio = (() => {
         tone(t + i * 0.13, 'sine', 4700, 0.04, 0.04, 0.002);
       }
       for (let i = 0; i < 3; i++) noise(t + 0.45 + i * 0.09, 0.07, 0.07, 'lowpass', 700, 0.8);
+    },
+
+    // The last apples start falling, one at a time: soft notes falling down the
+    // minor key, each landing with a little bump on the bark, over a low note
+    // that sags as it fades. A warning, not a fright.
+    lastApples(t) {
+      [[76, 0], [72, 0.22], [69, 0.44], [64, 0.7]].forEach(([m, at], i) => {
+        mallet(t + at, mtof(m), 0.36, 0.105 - i * 0.012, 0.7);
+        noise(t + at + 0.06, 0.035, 0.05, 'lowpass', 500, 0.7);
+      });
+      tone(t + 0.44, 'sine', mtof(45), 0.9, 0.06, 0.12, mtof(43));
+      body(t + 0.44, mtof(45), 0.8, 0.04, 0.12, mtof(43), 450, 1);
+      noise(t + 0.3, 0.6, 0.02, 'bandpass', 900, 0.8);
     },
 
     // Winter arrives: glassy bells, high and slow, over a breath of cold air.
