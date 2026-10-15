@@ -3361,10 +3361,10 @@ window.SnakeRender = (() => {
   // edges, its corners rounded. The cells are the land the rules mean (see
   // onLand), so a head on a washed cell is on it, and one off it isn't.
   // Where two owners' land meets, the line is dashed in both colours; land
-  // both claim is hatched in both. Holes are lost land: the
-  // wash and the line go round them. Sovereign's capital flies a banner,
-  // the colonies their flags. While a rival's head is on the land, its
-  // border breathes softly; where one crosses in, it lights up from there.
+  // both claim is hatched in both. Holes are lost land: the wash and the
+  // line go round them. Sovereign's capital flies a banner, the colonies
+  // their flags. While a rival's head is on the land, its border breathes
+  // softly; where one crosses in, it lights up from there.
   //
   // Each owner's land is a cached layer (and a second, its border's glow),
   // made again only when that land changes: it grows, shrinks or moves, a
@@ -3373,6 +3373,7 @@ window.SnakeRender = (() => {
   // border grows across the log (with reduced motion, at once), and when
   // its owner goes, the land shrinks back into its capital. Per frame: a
   // blit or two an owner, one for the contested dashes, and the flags.
+
   // A colour with an alpha, as a string, cached. The alpha is quantised to
   // 1/255 (all the canvas keeps of it anyway), so an alpha that changes every
   // frame costs a lookup and the cache stays bounded: at most 256 strings a
@@ -3616,7 +3617,7 @@ window.SnakeRender = (() => {
         if (reduced) { showStep(r, -1); r.step = -1; spanShown(r); }
         else {
           planGrowth(r);
-          if (!r.steps) { showStep(r, -1); r.step = -1; } else { showStep(r, 0); r.stepAt = now; }
+          if (!r.steps) { showStep(r, -1); r.step = -1; spanShown(r); } else { showStep(r, 0); r.stepAt = now; }
         }
       }
     }
