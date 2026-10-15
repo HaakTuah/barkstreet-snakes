@@ -1091,6 +1091,13 @@ window.SnakeRender = (() => {
         n: 0, pts: new Float32Array(64), cor: new Float32Array(64), rad: new Float32Array(32), fills: new Array(32),
         offs: null, offList: [], offPool: [], // (where it's drawn across a wrapped edge, if it is: see unwrap)
         look: '', color: '', isPlayer: false, rim: false, bump: 0, tickPos: 0, lean: 0,
+        // Drawn ahead (see predict): the cell its head goes to next (mx, my),
+        // whether it moves (mv), grows (mg) or leaps (ml); the same as the
+        // last frame drew them (pTick: that frame's tick), and each segment's
+        // easing out of a wrong guess (fix: units, fading; see prepare).
+        mx: 0, my: 0, mv: 0, mg: 0, ml: 0, pmx: 0, pmy: 0, pmv: 0, pTick: -1, rise: 0, swell: 0,
+        fix: new Float32Array(64), fixOn: false, tdx: s.dir.x, tdy: s.dir.y, bx: 0, by: 0, drawnAt: -1,
+        jc: false, fc: false, flashFx: -1e9, // (your rests: cooling last frame; when your flash came back)
       };
       anim.set(s, a);
     }
@@ -1243,10 +1250,12 @@ window.SnakeRender = (() => {
 
   // Turn the eyes toward the focus (eased on the screen, so a turn of the
   // head doesn't swing them, and at the same speed at any frame rate).
-  // Stunned, with a turn pressed (or a power asked for), they look the way it'll go instead.
+  // With a turn pressed that hasn't shown yet (or, stunned, a jump or a
+  // flash asked for), they look the way it'll go instead, quickly: it's
+  // your press, answered.
   function updateGaze(s, look, a, now) {
-    const q = game ? queuedOf(s) : null, f = game && !q ? focusOf(s, look, a, now) : null;
-    let tx = s.dir.x, ty = s.dir.y; // nothing to look at: straight ahead
+    const q = game ? queuedOf(s, a) : null, f = game && !q ? focusOf(s, look, a, now) : null;
+    let tx = a.tdx, ty = a.tdy; // nothing to look at: straight ahead
     if (q) { tx = q.x; ty = q.y; }
     else if (f) {
       const h = s.body[0], dx = f.x - h.x, dy = f.y - h.y;
@@ -1254,7 +1263,7 @@ window.SnakeRender = (() => {
       a.near = len;
       tx = dx / len; ty = dy / len;
     } else a.near = 99;
-    const ease = 1 - Math.pow(1 - T.GLANCE_EASE, frameDt / 16.7);
+    const ease = 1 - Math.pow(1 - (q ? 0.5 : T.GLANCE_EASE), frameDt / 16.7);
     a.gx += (tx - a.gx) * ease;
     a.gy += (ty - a.gy) * ease;
   }
@@ -1352,24 +1361,35 @@ window.SnakeRender = (() => {
   }
 
   // Once a frame per snake: where each segment is (between its last two
-  // cells), the cell each band bends through, radii and fills.
+  // cells, and on toward the next: see predict), the cell each band bends
+  // through, radii and fills.
   function prepare(s, alpha, now, dead, impact = 0) {
     const a = animOf(s, now);
     const n = s.body.length;
-    if (a.rad.length < n) {
-      a.pts = new Float32Array(4 * n); a.cor = new Float32Array(4 * n);
-      a.rad = new Float32Array(2 * n); a.fills = new Array(2 * n);
-    }
-    a.n = n;
     a.look = lookOf(s);
     if (s.personaKey === 'mute' && !dead) updateMute(s, now);
     a.color = colorOf(s);
     a.isPlayer = !s.persona;
     // A pale rim so dark bodies read on the bark (Joker's amber and white do already).
     a.rim = !a.isPlayer && a.look !== 'joker' && (a.look === 'vulture' || s.personaKey === 'mute' || lumaOf(a.color) < 0.4); // (Mute: always, whatever its mood)
-    const prev = s.prev, { pts, cor } = a;
+    // How far through its move it's drawn: up to 1, from its last cells to
+    // these; past 1, on toward the next (see predict). Not past its cells
+    // once it's dead or the round's over (the board rests), nor before the
+    // round's first tick.
     const snap = a.dashTick === game?.tick;
-    if (snap) alpha = 1; // (dashing: it's there at once, its streak behind it)
+    let at = alpha + leadNow;
+    if (dead || !game || leadRest) at = Math.min(1, at);
+    if (snap) at = Math.max(1, at); // (dashing: it's there at once, its streak behind it)
+    if (dead || !game) { a.mv = 0; a.ml = 0; }
+    const k1 = Math.min(1, at), k2 = a.mv ? at - k1 : 0;
+    const m = k2 > 0 && a.mg ? n + 1 : n; // (growing: its tail stays where it is, a segment more)
+    if (a.rad.length < m) {
+      a.pts = new Float32Array(4 * m); a.cor = new Float32Array(4 * m);
+      a.rad = new Float32Array(2 * m); a.fills = new Array(2 * m);
+      const fix = new Float32Array(4 * m); fix.set(a.fix); a.fix = fix;
+    }
+    a.n = m;
+    const prev = s.prev, { pts, cor } = a;
     // (A snake that's had the edges wrap this round: its body may run off one
     // edge and on at the other, and a segment may move across one.)
     const wrapped = s.wrapUntil >= 0;
@@ -1377,17 +1397,30 @@ window.SnakeRender = (() => {
       const c = s.body[i];
       const p = prev && i < prev.length ? prev[i] : c;
       const px = wrapped ? nearOf(p.x, c.x) : p.x, py = wrapped ? nearOf(p.y, c.y) : p.y;
-      pts[2 * i] = (px + (c.x - px) * alpha) * CELL + CELL / 2;
-      pts[2 * i + 1] = (py + (c.y - py) * alpha) * CELL + CELL / 2;
+      let x = px + (c.x - px) * k1, y = py + (c.y - py) * k1;
+      if (k2 > 0) { // (on toward the cell ahead of it: the next one's, or for the head, where it goes next)
+        const qx = i ? s.body[i - 1].x : a.mx, qy = i ? s.body[i - 1].y : a.my;
+        x += ((wrapped ? nearOf(qx, c.x) : qx) - c.x) * k2;
+        y += ((wrapped ? nearOf(qy, c.y) : qy) - c.y) * k2;
+      }
+      pts[2 * i] = x * CELL + CELL / 2;
+      pts[2 * i + 1] = y * CELL + CELL / 2;
       // The band to the next segment runs through the cell this one left
       // (where the next one is headed), so a bend never cuts its corner.
-      if (i < n - 1) {
-        const q = prev && i < prev.length && !snap ? prev[i] : s.body[i + 1]; // (dashing: the bends it lies on now)
+      if (i < m - 1) {
+        const q = k2 > 0 ? c : prev && i < prev.length && !snap ? prev[i] : s.body[i + 1]; // (dashing: the bends it lies on now)
         cor[2 * i] = q.x * CELL + CELL / 2;
         cor[2 * i + 1] = q.y * CELL + CELL / 2;
       }
     }
-    a.offs = wrapped ? unwrap(a, n) : null;
+    if (m > n) { pts[2 * n] = cor[2 * n - 2]; pts[2 * n + 1] = cor[2 * n - 1]; } // (the tail end that stays)
+    if (game) refix(s, a, at, snap);
+    if (a.fixOn) for (let i = 0; i < 2 * m; i++) pts[i] += a.fix[i];
+    a.bx = pts[0]; a.by = pts[1]; a.drawnAt = lastNow; // (where its head is drawn, for its speech bubble)
+    a.offs = wrapped ? unwrap(a, m) : null;
+    // The way it's heading as drawn: past its cell's centre, the way it goes next.
+    if (k2 > 0) { let dx = a.mx - s.body[0].x, dy = a.my - s.body[0].y; if (dx > 1) dx = -1; else if (dx < -1) dx = 1; if (dy > 1) dy = -1; else if (dy < -1) dy = 1; a.tdx = dx; a.tdy = dy; }
+    else { a.tdx = s.dir.x; a.tdy = s.dir.y; }
     // A held corpse presses its head a little into whatever it hit.
     if (impact) { pts[0] += s.dir.x * CELL * impact; pts[1] += s.dir.y * CELL * impact; }
     // Leaping: the head rises over what it's hopping as it takes off, and
@@ -1396,11 +1429,16 @@ window.SnakeRender = (() => {
     // (that read as a lunge or a flinch, depending on the heading); its
     // shadow pulls away on the bark. With reduced motion: a still pose in the
     // air for the leap's two ticks (being in the air is a rule, so it shows).
-    a.rise = 0;
+    // Drawn ahead, a leap that's sure to go starts rising before its tick.
+    let rise = 0;
     if (!dead && game) {
-      const k = Math.min(1, alpha), up = a.leapTick === game.tick, down = a.leapTick + 1 === game.tick;
-      a.rise = reduced ? (up || down ? 1 : 0) : up ? Math.sin(k * Math.PI / 2) : down ? Math.cos(k * Math.PI / 2) : 0;
+      const p = a.leapTick >= game.tick - 1 ? game.tick - a.leapTick + at : a.ml ? k2 : 0; // (how far through the leap's two ticks it's drawn)
+      rise = p > 0 && p < 2 ? (reduced ? 1 : Math.sin(p * Math.PI / 2)) : 0;
+      if (a.ml && !(a.leapTick >= game.tick - 1)) a.leapGold = s.leaps > 0;
     }
+    // (eased a touch, so a leap seen late, or a guess put right, never pops)
+    a.rise = reduced || dead ? rise : a.rise + (rise - a.rise) * (1 - Math.exp(-frameDt / 25));
+    if (a.rise < 0.002) a.rise = 0;
     // Just crashed: the head lunges into what it hit, and bounces back.
     const hit = a.crashAt ? (now - a.crashAt) / 260 : 1;
     if (hit < 1 && hit >= 0 && !dead && !reduced) { const l = Math.sin(hit * Math.PI) * 0.34; pts[0] += a.crashDx * CELL * l; pts[1] += a.crashDy * CELL * l; }
@@ -1409,11 +1447,130 @@ window.SnakeRender = (() => {
     a.tickPos = game ? game.tick - 1 + alpha : 0;
     const bite = (lastNow - a.ateAt) / T.BITE_MS;
     a.bump = !dead && bite >= 0 && bite < 1 ? (a.gulpR > T.GULP ? 0.2 : 0.12) * Math.sin(bite * Math.PI) : 0;
-    for (let i = 0; i < n; i++) a.rad[i] = radius(i, n, a, a.tickPos);
+    for (let i = 0; i < m; i++) a.rad[i] = radius(i, m, a, a.tickPos);
     a.swell = a.rise * (a.leapGold ? T.LEAP_SWELL_GOLD : T.LEAP_SWELL); // (the head and neck swell along their path at the top of the arc)
-    if (a.swell) { a.rad[0] *= 1 + a.swell; if (n > 1) a.rad[1] *= 1 + a.swell * 0.55; if (n > 2) a.rad[2] *= 1 + a.swell * 0.2; }
+    if (a.swell) { a.rad[0] *= 1 + a.swell; if (m > 1) a.rad[1] *= 1 + a.swell * 0.55; if (m > 2) a.rad[2] *= 1 + a.swell * 0.2; }
     fillsOf(s, a, now);
     return a;
+  }
+
+  // ------------------------------------------- drawing half a tick ahead
+  // The board is drawn DRAW_LEAD of a tick ahead (drawing only: no rule
+  // changes, and nobody learns anything sooner), so the cell your head is
+  // drawn in is the cell your press turns at. Past its cell's centre, each
+  // snake goes on toward where it'll be next: its head to the cell it moves
+  // into, the rest one cell on (a growing tail stays, a segment more).
+  let leadNow = 0, leadRest = false; // (this frame's lead, in ticks; and whether the board rests at its cells: the round's over)
+  // Cells a body will still be on after the next move (a tail that moves on
+  // leaves its cell; a stunned or growing snake's stays), once a tick.
+  const stays = new Uint8Array(GRID * GRID);
+  let staysTick = -1, staysGame = null;
+  function syncStays() {
+    if (staysTick === game.tick && staysGame === game) return;
+    staysTick = game.tick; staysGame = game;
+    stays.fill(0);
+    for (const o of game.snakes) {
+      if (!o.alive) continue;
+      const keep = o.stunUntil > game.tick || o.grow > 0 ? o.body.length : o.body.length - 1;
+      for (let j = 0; j < keep; j++) { const c = o.body[j]; if (c.x >= 0 && c.y >= 0 && c.x < GRID && c.y < GRID) stays[c.y * GRID + c.x] = 1; }
+    }
+  }
+  const burningAt = (x, y) => { const f = game.fires.get(y * GRID + x); return !!f && game.tick >= f.from && game.tick < f.until; };
+  const offBoard = (x, y) => x < 0 || y < 0 || x >= GRID || y >= GRID;
+  const hurdleAt = (x, y) => !offBoard(x, y) && (stays[y * GRID + x] === 1 || game.holes.has(y * GRID + x) || burningAt(x, y)); // (what a leap hops)
+  const wrapX = (s, v) => s.wrapUntil > game.time ? (v + GRID) % GRID : v;
+  // Would a turn take it back into its own neck (the game never takes one)?
+  function intoNeck(s, d) {
+    const n = s.body[1];
+    return !!n && wrapX(s, s.body[0].x + d.x) === n.x && wrapX(s, s.body[0].y + d.y) === n.y;
+  }
+  // Your press, as this screen saw it, not yet taken: online the queue is
+  // the host's (a friend's screen never has it, and the host's own press
+  // waits a round trip), so it shows from the press. For a few ticks at most.
+  const PRESS_TICKS = 3;
+  const heardOf = s => press.stun < 0 && !!press.dir && press.tick >= game.tick - PRESS_TICKS && !(press.dir.x === s.dir.x && press.dir.y === s.dir.y) && !intoNeck(s, press.dir);
+  // The way a snake goes next: a person's first queued turn (as the game
+  // takes it: never into its own neck), or your press as this screen saw it;
+  // a rival's plan made ahead of the tick; else on as it's going.
+  function wayOf(s) {
+    if (s.isPlayer && !s.autopilot) {
+      for (let i = 0; i < s.queue.length; i++) if (!intoNeck(s, s.queue[i])) return s.queue[i];
+      return s.id === viewerId && heardOf(s) ? press.dir : s.dir;
+    }
+    return s.plannedTick === game.tick && s.planned ? s.planned : s.dir;
+  }
+  // Has it asked to jump, or to flash (a flash goes first), for this tick?
+  const asksJump = s => s.leapArmed >= game.tick || ((!s.isPlayer || s.autopilot) && s.plannedTick === game.tick && s.memory.power === game.tick);
+  const asksFlash = s => s.flashArmed >= game.tick || ((!s.isPlayer || s.autopilot) && s.plannedTick === game.tick && s.memory.flash === game.tick);
+  // Where a snake goes next, as far as this screen can tell (a.mx, a.my;
+  // drawing only: read from what the game already knows, never deciding
+  // anything). A stunned snake stays. One about to crash (off the board, a
+  // hole, a body still there after the move) holds at its cell's centre,
+  // and the crash's lunge plays at the tick. One in the air comes down where
+  // it was going. A jump asked for, with something to hop and somewhere to
+  // land, leaps: it starts rising before its tick. (Fire isn't a crash: a
+  // crawl goes in.)
+  function predict(s, a) {
+    const h = s.body[0];
+    a.mx = h.x; a.my = h.y; a.mv = 0; a.mg = 0; a.ml = 0;
+    if (!s.alive || s.stunUntil > game.tick) return;
+    const d = s.flight ? s.flight.dir : wayOf(s), x = wrapX(s, h.x + d.x), y = wrapX(s, h.y + d.y);
+    a.mx = x; a.my = y; a.mv = 1; a.mg = s.grow > 0 ? 1 : 0;
+    if (!s.flight && asksJump(s) && !asksFlash(s) && (s.leaps > 0 || (game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH)) && hurdleAt(x, y)) {
+      const lx = wrapX(s, x + d.x), ly = wrapX(s, y + d.y);
+      if (!offBoard(lx, ly) && !hurdleAt(lx, ly)) { a.ml = 1; return; }
+    }
+    if (offBoard(x, y) || game.holes.has(y * GRID + x) || stays[y * GRID + x]) { a.mv = 0; a.mg = 0; }
+  }
+  // Two heads going into the same cell meet head-on: both hold (heads in the air never meet).
+  function meetings() {
+    for (let i = 0; i < live.length; i++) {
+      const p = anim.get(live[i]);
+      if (!p.mv || p.ml) continue;
+      for (let j = i + 1; j < live.length; j++) {
+        const q = anim.get(live[j]);
+        if (q.mv && !q.ml && q.mx === p.mx && q.my === p.my) { p.mv = q.mv = 0; p.mg = q.mg = 0; }
+      }
+    }
+  }
+  // Easing out of a wrong guess. Nothing drawn ever jumps: when where a
+  // snake's drawn heading changes (a plan made late, your press in the
+  // second half of a tick, a crash nobody saw coming, or the tick shows it
+  // went elsewhere), the difference stays on each segment as an offset that
+  // fades over about FIX_MS. A dash isn't eased: it's there at once.
+  const FIX_MS = 35;
+  const wd = v => v > GRID / 2 ? v - GRID : v < -GRID / 2 ? v + GRID : v; // (a step in cells, across a wrapped edge)
+  function refix(s, a, at, snap) {
+    const n = s.body.length, fix = a.fix, body = s.body, prev = s.prev;
+    if (a.fixOn) { // (what's left fades)
+      const keep = Math.exp(-frameDt / (FIX_MS / 3));
+      let most = 0;
+      for (let i = 0; i < fix.length; i++) { fix[i] *= keep; most = Math.max(most, Math.abs(fix[i])); }
+      if (most < 0.25) { fix.fill(0); a.fixOn = false; }
+    }
+    if (snap || reduced || (a.pTick !== game.tick && a.pTick !== game.tick - 1) || (a.pTick !== game.tick && !prev)) { // (dashing, or too long since: start afresh)
+      if (a.fixOn) { fix.fill(0); a.fixOn = false; }
+    } else if (a.pTick === game.tick) { // (the same tick: a different guess)
+      const kk = Math.max(0, at - 1);
+      if (kk > 0 && (a.pmv !== a.mv || a.pmx !== a.mx || a.pmy !== a.my)) {
+        const hx = body[0].x, hy = body[0].y;
+        fixAdd(a, 0, kk * (a.pmv * wd(a.pmx - hx) - a.mv * wd(a.mx - hx)), kk * (a.pmv * wd(a.pmy - hy) - a.mv * wd(a.my - hy)));
+        if (a.pmv !== a.mv) for (let i = 1; i < n; i++) fixAdd(a, i, kk * (a.pmv - a.mv) * wd(body[i - 1].x - body[i].x), kk * (a.pmv - a.mv) * wd(body[i - 1].y - body[i].y));
+      }
+    } else { // (a tick on: where the last guess would have it now, against where it is)
+      const k1 = Math.min(1, at);
+      for (let i = 0; i < n && i < prev.length; i++) {
+        const p = prev[i], qx = i ? prev[i - 1].x : a.pmx, qy = i ? prev[i - 1].y : a.pmy;
+        const ex = a.pmv * wd(qx - p.x) * at - wd(body[i].x - p.x) * k1, ey = a.pmv * wd(qy - p.y) * at - wd(body[i].y - p.y) * k1;
+        if (ex || ey) fixAdd(a, i, ex, ey);
+      }
+    }
+    a.pmx = a.mx; a.pmy = a.my; a.pmv = a.mv; a.pTick = game.tick;
+  }
+  function fixAdd(a, i, dx, dy) {
+    if (Math.abs(dx) + Math.abs(dy) < 0.01) return;
+    a.fixOn = true;
+    a.fix[2 * i] += dx * CELL; a.fix[2 * i + 1] += dy * CELL;
   }
 
   // A coordinate (in cells) moved a whole board's width, if that brings it
@@ -1471,26 +1628,15 @@ window.SnakeRender = (() => {
 
   const near = (u, v) => Math.abs(u - v) < 0.01;
 
-  // One straight piece of a band, half-width h, as a rectangle (pieces always
-  // run along the grid; anything else would be a bug, drawn as a line).
-  function piece(x1, y1, x2, y2, h) {
-    if (near(y1, y2)) { if (!near(x1, x2)) ctx.fillRect(Math.min(x1, x2), y1 - h, Math.abs(x2 - x1), 2 * h); }
-    else if (near(x1, x2)) ctx.fillRect(x1 - h, Math.min(y1, y2), 2 * h, Math.abs(y2 - y1));
-    else {
-      ctx.strokeStyle = ctx.fillStyle;
-      ctx.lineWidth = 2 * h;
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    }
-  }
-
-  // The band from segment i to i + 1: through its corner cell. Straight, it's
+  // The band from segment i to i + 1, half-width h: through its corner cell,
+  // as rectangles (see rectPiece). Straight, it's
   // one piece (two pieces meeting mid-band leave a hairline seam when a cell
   // isn't a whole number of pixels); at a bend the corner's circle covers the join.
   function band(a, i, h) {
     const p = a.pts, c = a.cor;
     const x1 = p[2 * i], y1 = p[2 * i + 1], cx = c[2 * i], cy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
-    if ((near(x1, cx) && near(cx, x2)) || (near(y1, cy) && near(cy, y2))) piece(x1, y1, x2, y2, h);
-    else { piece(x1, y1, cx, cy, h); piece(cx, cy, x2, y2, h); }
+    if ((near(x1, cx) && near(cx, x2)) || (near(y1, cy) && near(cy, y2))) rectPiece(x1, y1, x2, y2, h);
+    else { rectPiece(x1, y1, cx, cy, h); rectPiece(cx, cy, x2, y2, h); }
   }
 
   // Does the band from i to i + 1 turn a corner (and need its outside rounded)?
@@ -1546,17 +1692,26 @@ window.SnakeRender = (() => {
     }
     ctx.fill();
   }
-  // One straight piece of a band, filled (pieces always run along the grid;
-  // a zero-length one, or one that doesn't, fills nothing, as in a silhouette).
+  // One straight piece of a band, filled (pieces run along the grid, but
+  // for a moment while a head eases out of a wrong guess: see refix; a
+  // zero-length one fills nothing, as in a silhouette).
   function rectPiece(x1, y1, x2, y2, h) {
     if (near(y1, y2)) { if (!near(x1, x2)) ctx.fillRect(Math.min(x1, x2), y1 - h, Math.abs(x2 - x1), 2 * h); }
     else if (near(x1, x2)) ctx.fillRect(x1 - h, Math.min(y1, y2), 2 * h, Math.abs(y2 - y1));
+    else { ctx.beginPath(); slant(x1, y1, x2, y2, h); ctx.fill(); }
   }
-  // One straight piece of a band, added to the current path (pieces always
-  // run along the grid; a zero-length one adds nothing).
+  // One straight piece of a band, added to the current path (the same; a
+  // zero-length one adds nothing).
   function pieceRect(x1, y1, x2, y2, h) {
     if (near(y1, y2)) { if (!near(x1, x2)) ctx.rect(Math.min(x1, x2), y1 - h, Math.abs(x2 - x1), 2 * h); }
     else if (near(x1, x2)) ctx.rect(x1 - h, Math.min(y1, y2), 2 * h, Math.abs(y2 - y1));
+    else slant(x1, y1, x2, y2, h);
+  }
+  // A piece off the grid, as a closed shape wound the way rect() winds (so
+  // a silhouette's pieces never cancel each other out).
+  function slant(x1, y1, x2, y2, h) {
+    const l = Math.hypot(x2 - x1, y2 - y1), nx = -(y2 - y1) / l * h, ny = (x2 - x1) / l * h;
+    ctx.moveTo(x1 - nx, y1 - ny); ctx.lineTo(x2 - nx, y2 - ny); ctx.lineTo(x2 + nx, y2 + ny); ctx.lineTo(x1 + nx, y1 + ny); ctx.closePath();
   }
 
   // The path through every segment centre and corner, head to tail.
@@ -1829,7 +1984,7 @@ window.SnakeRender = (() => {
     }
     if (!dead) { updateGaze(s, look, a, now); steer(s, a, now); }
     const dizzy = !dead && s.stunUntil >= game.tick; // (stunned: its head wobbles, and stars go round it, until the tick it moves again)
-    const q = dizzy ? queuedOf(s) : null, lean = dead ? 0 : leanOf(s, a, q);
+    const q = dead ? null : queuedOf(s, a), lean = dead ? 0 : leanOf(s, a, q);
     if (lean) { const h = Math.atan2(a.hs, a.hc) + lean; headCos = Math.cos(h); headSin = Math.sin(h); }
     else { headCos = a.hc; headSin = a.hs; }
     gazeX = a.gx * headCos + a.gy * headSin; // the gaze, turned into the face's frame
@@ -1932,42 +2087,60 @@ window.SnakeRender = (() => {
     return past || -CELL * 0.72;
   }
 
-  // Stunned, with a turn pressed (q): the head leans a little the way it'll
-  // go (the eyes look there: see updateGaze; and a chevron shows it: see
-  // drawPress), so you can see the press was heard. Eased; held still with
-  // reduced motion (it's news, not wobble).
+  // A turn you've pressed (q) that the drawing doesn't show yet: the head
+  // leans a little the way it'll go, from the press on (the eyes look there:
+  // see updateGaze; stunned, a chevron shows it too: see drawPress), so you
+  // can see the press was heard before the tick takes it. Once the head's
+  // drawn heading that way (past its cell's centre: see prepare), the lean
+  // goes. Eased; held still with reduced motion (it's news, not wobble).
   const LEAN = 0.38;
   function leanOf(s, a, q) {
-    const to = q ? (s.dir.x * q.y - s.dir.y * q.x) * LEAN : 0;
-    a.lean = reduced ? to : a.lean + (to - a.lean) * (1 - Math.exp(-frameDt / 60));
+    const to = q ? (a.tdx * q.y - a.tdy * q.x) * LEAN : 0;
+    a.lean = reduced ? to : a.lean + (to - a.lean) * (1 - Math.exp(-frameDt / T.FACE_EASE_MS));
     return Math.abs(a.lean) < 0.002 ? 0 : a.lean;
   }
-  // The way your snake will go when its stun's over, if you've said: a turn
-  // you've pressed, or ahead, for a power (it waits for the move). Until the
-  // tick it moves, as the stars. (Yours only: it answers your press. Online
-  // the queue is the host's, so a press is shown as this screen saw it: see
-  // pressed.)
-  function queuedOf(s) {
-    if (s.id !== viewerId || s.stunUntil < game.tick) return null;
-    if (press.stun === s.stunUntil) return press.dir;
-    if (s.queue?.length) return s.queue[0];
-    return s.leapArmed >= s.stunUntil ? s.dir : null;
+  // The way you've pressed to go that the drawing doesn't show yet (yours
+  // only: it answers your press). On the move: the first turn queued that
+  // isn't the way your head's drawn heading (following the queue as it
+  // changes), or online, your press as this screen saw it (see pressed).
+  // Stunned: the way you'll go when the stun's over, if you've said (a turn,
+  // or ahead for a jump or a flash asked for), until the tick it moves, as
+  // the stars. Nothing for a press the game didn't take.
+  function queuedOf(s, a) {
+    if (s.id !== viewerId || !game) return null;
+    if (s.stunUntil >= game.tick) {
+      if (press.stun === s.stunUntil) return press.dir || (s.leapArmed >= s.stunUntil || s.flashArmed >= s.stunUntil ? s.dir : null);
+      if (s.queue?.length) return s.queue[0];
+      return s.leapArmed >= s.stunUntil || s.flashArmed >= s.stunUntil ? s.dir : null;
+    }
+    const q = s.queue;
+    if (q?.length) {
+      for (let i = 0; i < q.length; i++) if (q[i].x !== a.tdx || q[i].y !== a.tdy) return intoNeck(s, q[i]) ? null : q[i];
+      return null;
+    }
+    return heardOf(s) && (press.dir.x !== a.tdx || press.dir.y !== a.tdy) ? press.dir : null;
   }
-  // A press while your snake is stunned, as this screen saw it: online the
-  // queue is the host's, so a friend's screen never has it, and the host's
-  // own press waits a round trip (the game says as it sends one). Taken as
-  // the game takes it: never into the neck; the latest wins; ahead asks for
-  // a power, or after a turn, changes your mind back. For this stun only.
-  const press = { dir: null, stun: -1 };
+  // A press, as this screen saw it (the game says as it takes one: online
+  // the queue is the host's, so a friend's screen never has it, and the
+  // host's own press waits a round trip). Taken as the game takes it: never
+  // into the neck, and the way you're already going is nothing; the latest
+  // wins. Stunned, a press is for this stun only, and the way you were going
+  // after a turn changes your mind back. A crash forgets one on the move.
+  const press = { dir: null, stun: -1, tick: -1 };
   function pressed(dir) {
     const s = game && findById(viewerId);
-    if (!dir || !s || s.stunUntil < game.tick) { press.dir = null; press.stun = -1; return; }
-    const h = s.body[0], n = s.body[1];
-    if (n && (h.x + dir.x + GRID) % GRID === n.x && (h.y + dir.y + GRID) % GRID === n.y) return; // (into its neck: nothing)
+    if (!dir || !s || !s.alive) { press.dir = null; press.stun = -1; press.tick = -1; return; }
+    if (intoNeck(s, dir)) return; // (into its neck: nothing)
     const ahead = dir.x === s.dir.x && dir.y === s.dir.y;
+    if (s.stunUntil < game.tick) { // (on the move)
+      if (ahead) return;
+      press.dir = dir; press.stun = -1; press.tick = game.tick;
+      return;
+    }
     const turned = press.stun === s.stunUntil ? !!press.dir && !(press.dir.x === s.dir.x && press.dir.y === s.dir.y) : s.queue?.length > 0;
-    press.dir = ahead && turned ? null : dir;
-    press.stun = s.stunUntil;
+    if (ahead && !turned) return;
+    press.dir = ahead ? null : dir;
+    press.stun = s.stunUntil; press.tick = game.tick;
   }
   // Stunned, with a turn pressed: a small inked chevron on that side of your
   // head (past the stars, if they're there; on the board, even pointing off
@@ -1978,7 +2151,7 @@ window.SnakeRender = (() => {
   // ahead, it's over what you hit, and the Bonk! there.
   function drawPress() {
     const s = findById(viewerId), a = s && s.alive && s.stunUntil >= game.tick ? anim.get(s) : null;
-    const q = a && a.n ? queuedOf(s) : null;
+    const q = a && a.n ? queuedOf(s, a) : null;
     if (!q) return;
     const pts = a.pts, so = starsOff(s), power = s.leapArmed >= s.stunUntil || (q.x === s.dir.x && q.y === s.dir.y);
     const d = (q.y && (so < 0) === (q.y < 0) ? Math.abs(so) + CELL * 0.62 : CELL * 0.95) + (power ? CELL * (s.dashes > 0 ? 0.18 : 0.28) : 0);
@@ -2109,13 +2282,16 @@ window.SnakeRender = (() => {
   // The living snakes, in passes, so no snake's shadow falls on another's body.
   const live = [];
   // (a snake leaping, or still arched over another one, goes on top)
-  const overOf = s => anim.get(s)?.leapUntil > game.tick ? 1 : 0;
+  const overOf = s => { const a = anim.get(s); return a && (a.leapUntil > game.tick || a.ml) ? 1 : 0; }; // (or about to: see predict)
   const byOver = (p, q) => overOf(p) - overOf(q);
   function drawSnakes(alpha, now) {
     live.length = 0;
     let leaping = false;
     for (const s of game.snakes) if (s.alive) { live.push(s); if (overOf(s)) leaping = true; }
     if (leaping) live.sort(byOver);
+    syncStays();
+    for (const s of live) predict(s, animOf(s, now));
+    meetings();
     for (const s of live) prepare(s, alpha, now, false);
     drawShadows();
     if (fieldSpecs.length) drawFieldHues(now); // (a field's light round a rival in it, under every outline and body)
@@ -2175,17 +2351,20 @@ window.SnakeRender = (() => {
   // gazeX/gazeY: where this snake's eyes point (a unit vector in that frame).
   let blinkNow = false, gazeX = 1, gazeY = 0;
   let headCos = 1, headSin = 0; // the heading the face is drawn turned to
-  // The way the head faces, as drawn: it swings round smoothly when the
-  // snake turns, and when it turns again and again (a staircase, a wiggle)
-  // it holds a steady line between them, instead of whipping round every
-  // tick and flinging its tongue from side to side.
+  // The way the head faces, as drawn (the way it's drawn heading: see
+  // prepare): it swings round smoothly when the snake turns, and when a
+  // rival turns again and again (a staircase, a wiggle) it holds a steady
+  // line between them, instead of whipping round every tick and flinging its
+  // tongue from side to side. Yours turns quickly, busy or not
+  // (FACE_EASE_MS): it's your press, and your face is how you see it taken.
   function steer(s, a, now) {
-    if (a.hc === undefined) { a.hx = a.hc = s.dir.x; a.hy = a.hs = s.dir.y; a.ldx = s.dir.x; a.ldy = s.dir.y; a.turned = [-1e9, -1e9]; }
-    if (s.dir.x !== a.ldx || s.dir.y !== a.ldy) { a.ldx = s.dir.x; a.ldy = s.dir.y; a.turned[0] = a.turned[1]; a.turned[1] = now; }
+    const dx = a.tdx, dy = a.tdy;
+    if (a.hc === undefined) { a.hx = a.hc = dx; a.hy = a.hs = dy; a.ldx = dx; a.ldy = dy; a.turned = [-1e9, -1e9]; }
+    if (dx !== a.ldx || dy !== a.ldy) { a.ldx = dx; a.ldy = dy; a.turned[0] = a.turned[1]; a.turned[1] = now; }
     const busy = now - a.turned[0] < 650; // (two turns close together)
-    const k = reduced ? 1 : 1 - Math.exp(-frameDt / (busy ? 300 : 70));
-    a.hx += (s.dir.x - a.hx) * k;
-    a.hy += (s.dir.y - a.hy) * k;
+    const k = reduced ? 1 : 1 - Math.exp(-frameDt / (s.id === viewerId ? T.FACE_EASE_MS : busy ? 300 : 70));
+    a.hx += (dx - a.hx) * k;
+    a.hy += (dy - a.hy) * k;
     const len = Math.hypot(a.hx, a.hy) || 1;
     a.hc = a.hx / len; a.hs = a.hy / len;
   }
@@ -5097,6 +5276,10 @@ window.SnakeRender = (() => {
     lastNow = now;
     frameDt = Math.max(1, dt);
     shownTime = game.time === timeAt ? timeFrom + (timeAt - timeFrom) * Math.min(1, alpha) : game.time;
+    leadNow = game.tick === 0 && alpha >= 1 ? 0 : T.DRAW_LEAD; // (drawn ahead from the round's Go: see prepare)
+    let alive = 0;
+    for (const s of game.snakes) if (s.alive) alive++;
+    leadRest = alive < 2;
     syncHoles();
     trackFire(now);
     syncScorch();
@@ -5320,6 +5503,7 @@ window.SnakeRender = (() => {
       } else if (e.type === 'crash') { // a bonk where it hit, the head's lunge, and its tail breaking off as beads
         const s = e.snake, a = animOf(s, now), h = s.body[0];
         a.crashAt = now; a.crashDx = s.dir.x; a.crashDy = s.dir.y;
+        if (s.id === viewerId && press.stun < 0) press.dir = null; // (what you'd pressed was for a board that's gone, as the game says)
         // (its tail breaks off as beads in its own markings, last segment last)
         const prev = s.prev || [];
         for (let i = s.body.length; i < s.body.length + e.lost && i < prev.length; i++) {
@@ -5676,6 +5860,8 @@ window.SnakeRender = (() => {
   // Where a snake's head is drawn right now, in CSS pixels from the board's
   // top-left (for speech bubbles). boardPx is the board's CSS width.
   function headPx(s, alpha, boardPx, out) {
+    const a = anim.get(s);
+    if (a && a.drawnAt === lastNow && lastNow) { out.x = a.bx * boardPx / SIZE; out.y = a.by * boardPx / SIZE; return out; } // (as drawn this frame: ahead, and easing out of any wrong guess)
     const c = s.body[0], p = s.prev && s.prev[0] ? s.prev[0] : c;
     const scale = boardPx / GRID, px = nearOf(p.x, c.x), py = nearOf(p.y, c.y); // (across a wrapped edge: from just off it)
     out.x = (px + (c.x - px) * alpha + 0.5) * scale;
@@ -5772,7 +5958,7 @@ window.SnakeRender = (() => {
     blasts.length = 0;
     streaks.length = 0;
     refusal.at = -1e9; refusal.tick = -1;
-    press.dir = null; press.stun = -1;
+    press.dir = null; press.stun = -1; press.tick = -1;
     timeFrom = timeAt = shownTime = g.time;
     bird.placed = false; bird.arrivedAt = -1e9;
     for (const k in sky) sky[k] = 0;
