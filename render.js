@@ -1174,6 +1174,13 @@ window.SnakeRender = (() => {
         n: 0, pts: new Float32Array(64), cor: new Float32Array(64), rad: new Float32Array(32), fills: new Array(32),
         offs: null, offList: [], offPool: [], // (where it's drawn across a wrapped edge, if it is: see unwrap)
         look: '', color: '', isPlayer: false, rim: false, bump: 0, tickPos: 0, lean: 0,
+        // Drawn ahead (see predict): the cell its head goes to next (mx, my),
+        // whether it moves (mv), grows (mg) or leaps (ml); the same as the
+        // last frame drew them (pTick: that frame's tick), and each segment's
+        // easing out of a wrong guess (fix: units, fading; see prepare).
+        mx: 0, my: 0, mv: 0, mg: 0, ml: 0, pmx: 0, pmy: 0, pmv: 0, pTick: -1, phx: -99, phy: -99, fixFar: false, rise: 0, swell: 0,
+        fix: new Float32Array(64), fixOn: false, tdx: s.dir.x, tdy: s.dir.y, bx: 0, by: 0, drawnAt: -1,
+        jc: false, fc: false, flashFx: -1e9, // (your rests: cooling last frame; when your flash came back)
       };
       anim.set(s, a);
     }
@@ -1326,10 +1333,12 @@ window.SnakeRender = (() => {
 
   // Turn the eyes toward the focus (eased on the screen, so a turn of the
   // head doesn't swing them, and at the same speed at any frame rate).
-  // Stunned, with a turn pressed (or a power asked for), they look the way it'll go instead.
+  // With a turn pressed that hasn't shown yet (or, stunned, a jump or a
+  // flash asked for), they look the way it'll go instead, quickly: it's
+  // your press, answered.
   function updateGaze(s, look, a, now) {
-    const q = game ? queuedOf(s) : null, f = game && !q ? focusOf(s, look, a, now) : null;
-    let tx = s.dir.x, ty = s.dir.y; // nothing to look at: straight ahead
+    const q = game ? queuedOf(s, a) : null, f = game && !q ? focusOf(s, look, a, now) : null;
+    let tx = a.tdx, ty = a.tdy; // nothing to look at: straight ahead
     if (q) { tx = q.x; ty = q.y; }
     else if (f) {
       const h = s.body[0], dx = f.x - h.x, dy = f.y - h.y;
@@ -1337,7 +1346,7 @@ window.SnakeRender = (() => {
       a.near = len;
       tx = dx / len; ty = dy / len;
     } else a.near = 99;
-    const ease = 1 - Math.pow(1 - T.GLANCE_EASE, frameDt / 16.7);
+    const ease = 1 - Math.pow(1 - (q ? 0.5 : T.GLANCE_EASE), frameDt / 16.7);
     a.gx += (tx - a.gx) * ease;
     a.gy += (ty - a.gy) * ease;
   }
@@ -1435,24 +1444,35 @@ window.SnakeRender = (() => {
   }
 
   // Once a frame per snake: where each segment is (between its last two
-  // cells), the cell each band bends through, radii and fills.
+  // cells, and on toward the next: see predict), the cell each band bends
+  // through, radii and fills.
   function prepare(s, alpha, now, dead, impact = 0) {
     const a = animOf(s, now);
     const n = s.body.length;
-    if (a.rad.length < n) {
-      a.pts = new Float32Array(4 * n); a.cor = new Float32Array(4 * n);
-      a.rad = new Float32Array(2 * n); a.fills = new Array(2 * n);
-    }
-    a.n = n;
     a.look = lookOf(s);
     if (s.personaKey === 'mute' && !dead) updateMute(s, now);
     a.color = colorOf(s);
     a.isPlayer = !s.persona;
     // A pale rim so dark bodies read on the bark (Joker's amber and white do already).
     a.rim = !a.isPlayer && a.look !== 'joker' && (a.look === 'vulture' || s.personaKey === 'mute' || lumaOf(a.color) < 0.4); // (Mute: always, whatever its mood)
-    const prev = s.prev, { pts, cor } = a;
+    // How far through its move it's drawn: up to 1, from its last cells to
+    // these; past 1, on toward the next (see predict). Not past its cells
+    // once it's dead or the round's over (the board rests), nor before the
+    // round's first tick.
     const snap = a.dashTick === game?.tick;
-    if (snap) alpha = 1; // (dashing: it's there at once, its streak behind it)
+    let at = alpha + leadNow;
+    if (dead || !game || leadRest) at = Math.min(1, at);
+    if (snap) at = Math.max(1, at); // (dashing: it's there at once, its streak behind it)
+    if (dead || !game) { a.mv = 0; a.ml = 0; }
+    const k1 = Math.min(1, at), k2 = a.mv ? at - k1 : 0;
+    const m = k2 > 0 && a.mg ? n + 1 : n; // (growing: its tail stays where it is, a segment more)
+    if (a.rad.length < m) {
+      a.pts = new Float32Array(4 * m); a.cor = new Float32Array(4 * m);
+      a.rad = new Float32Array(2 * m); a.fills = new Array(2 * m);
+      const fix = new Float32Array(4 * m); fix.set(a.fix); a.fix = fix;
+    }
+    a.n = m;
+    const prev = s.prev, { pts, cor } = a;
     // (A snake that's had the edges wrap this round: its body may run off one
     // edge and on at the other, and a segment may move across one.)
     const wrapped = s.wrapUntil >= 0;
@@ -1460,17 +1480,30 @@ window.SnakeRender = (() => {
       const c = s.body[i];
       const p = prev && i < prev.length ? prev[i] : c;
       const px = wrapped ? nearOf(p.x, c.x) : p.x, py = wrapped ? nearOf(p.y, c.y) : p.y;
-      pts[2 * i] = (px + (c.x - px) * alpha) * CELL + CELL / 2;
-      pts[2 * i + 1] = (py + (c.y - py) * alpha) * CELL + CELL / 2;
+      let x = px + (c.x - px) * k1, y = py + (c.y - py) * k1;
+      if (k2 > 0) { // (on toward the cell ahead of it: the next one's, or for the head, where it goes next)
+        const qx = i ? s.body[i - 1].x : a.mx, qy = i ? s.body[i - 1].y : a.my;
+        x += ((wrapped ? nearOf(qx, c.x) : qx) - c.x) * k2;
+        y += ((wrapped ? nearOf(qy, c.y) : qy) - c.y) * k2;
+      }
+      pts[2 * i] = x * CELL + CELL / 2;
+      pts[2 * i + 1] = y * CELL + CELL / 2;
       // The band to the next segment runs through the cell this one left
       // (where the next one is headed), so a bend never cuts its corner.
-      if (i < n - 1) {
-        const q = prev && i < prev.length && !snap ? prev[i] : s.body[i + 1]; // (dashing: the bends it lies on now)
+      if (i < m - 1) {
+        const q = k2 > 0 ? c : prev && i < prev.length && !snap ? prev[i] : s.body[i + 1]; // (dashing: the bends it lies on now)
         cor[2 * i] = q.x * CELL + CELL / 2;
         cor[2 * i + 1] = q.y * CELL + CELL / 2;
       }
     }
-    a.offs = wrapped ? unwrap(a, n) : null;
+    if (m > n) { pts[2 * n] = cor[2 * n - 2]; pts[2 * n + 1] = cor[2 * n - 1]; } // (the tail end that stays)
+    if (game) refix(s, a, at, snap);
+    if (a.fixOn) for (let i = 0; i < 2 * m; i++) pts[i] += a.fix[i];
+    a.bx = pts[0]; a.by = pts[1]; a.drawnAt = lastNow; // (where its head is drawn, for its speech bubble)
+    a.offs = wrapped ? unwrap(a, m) : null;
+    // The way it's heading as drawn: past its cell's centre, the way it goes next.
+    if (k2 > 0) { let dx = a.mx - s.body[0].x, dy = a.my - s.body[0].y; if (dx > 1) dx = -1; else if (dx < -1) dx = 1; if (dy > 1) dy = -1; else if (dy < -1) dy = 1; a.tdx = dx; a.tdy = dy; }
+    else { a.tdx = s.dir.x; a.tdy = s.dir.y; }
     // A held corpse presses its head a little into whatever it hit.
     if (impact) { pts[0] += s.dir.x * CELL * impact; pts[1] += s.dir.y * CELL * impact; }
     // Leaping: the head rises over what it's hopping as it takes off, and
@@ -1479,11 +1512,16 @@ window.SnakeRender = (() => {
     // (that read as a lunge or a flinch, depending on the heading); its
     // shadow pulls away on the bark. With reduced motion: a still pose in the
     // air for the leap's two ticks (being in the air is a rule, so it shows).
-    a.rise = 0;
+    // Drawn ahead, a leap that's sure to go starts rising before its tick.
+    let rise = 0;
     if (!dead && game) {
-      const k = Math.min(1, alpha), up = a.leapTick === game.tick, down = a.leapTick + 1 === game.tick;
-      a.rise = reduced ? (up || down ? 1 : 0) : up ? Math.sin(k * Math.PI / 2) : down ? Math.cos(k * Math.PI / 2) : 0;
+      const p = a.leapTick >= game.tick - 1 ? game.tick - a.leapTick + at : a.ml ? k2 : 0; // (how far through the leap's two ticks it's drawn)
+      rise = p > 0 && p < 2 ? (reduced ? 1 : Math.sin(p * Math.PI / 2)) : 0;
+      if (a.ml && !(a.leapTick >= game.tick - 1)) a.leapGold = s.leaps > 0;
     }
+    // (eased a touch, so a leap seen late, or a guess put right, never pops)
+    a.rise = reduced || dead ? rise : a.rise + (rise - a.rise) * (1 - Math.exp(-frameDt / 25));
+    if (a.rise < 0.002) a.rise = 0;
     // Just crashed: the head lunges into what it hit, and bounces back.
     const hit = a.crashAt ? (now - a.crashAt) / 260 : 1;
     if (hit < 1 && hit >= 0 && !dead && !reduced) { const l = Math.sin(hit * Math.PI) * 0.34; pts[0] += a.crashDx * CELL * l; pts[1] += a.crashDy * CELL * l; }
@@ -1492,11 +1530,140 @@ window.SnakeRender = (() => {
     a.tickPos = game ? game.tick - 1 + alpha : 0;
     const bite = (lastNow - a.ateAt) / T.BITE_MS;
     a.bump = !dead && bite >= 0 && bite < 1 ? (a.gulpR > T.GULP ? 0.2 : 0.12) * Math.sin(bite * Math.PI) : 0;
-    for (let i = 0; i < n; i++) a.rad[i] = radius(i, n, a, a.tickPos);
+    for (let i = 0; i < m; i++) a.rad[i] = radius(i, m, a, a.tickPos);
     a.swell = a.rise * (a.leapGold ? T.LEAP_SWELL_GOLD : T.LEAP_SWELL); // (the head and neck swell along their path at the top of the arc)
-    if (a.swell) { a.rad[0] *= 1 + a.swell; if (n > 1) a.rad[1] *= 1 + a.swell * 0.55; if (n > 2) a.rad[2] *= 1 + a.swell * 0.2; }
+    if (a.swell) { a.rad[0] *= 1 + a.swell; if (m > 1) a.rad[1] *= 1 + a.swell * 0.55; if (m > 2) a.rad[2] *= 1 + a.swell * 0.2; }
     fillsOf(s, a, now);
     return a;
+  }
+
+  // ------------------------------------------- drawing half a tick ahead
+  // The board is drawn DRAW_LEAD of a tick ahead (drawing only: no rule
+  // changes, and nobody learns anything sooner), so the cell your head is
+  // drawn in is the cell your press turns at. Past its cell's centre, each
+  // snake goes on toward where it'll be next: its head to the cell it moves
+  // into, the rest one cell on (a growing tail stays, a segment more).
+  let leadNow = 0, leadRest = false; // (this frame's lead, in ticks; and whether the board rests at its cells: the round's over)
+  // Cells a body will still be on after the next move (a tail that moves on
+  // leaves its cell; a stunned or growing snake's stays), once a tick.
+  const stays = new Uint8Array(GRID * GRID);
+  let staysTick = -1, staysGame = null;
+  function syncStays() {
+    if (staysTick === game.tick && staysGame === game) return;
+    staysTick = game.tick; staysGame = game;
+    stays.fill(0);
+    for (const o of game.snakes) {
+      if (!o.alive) continue;
+      const keep = o.stunUntil > game.tick || o.grow > 0 ? o.body.length : o.body.length - 1;
+      for (let j = 0; j < keep; j++) { const c = o.body[j]; if (c.x >= 0 && c.y >= 0 && c.x < GRID && c.y < GRID) stays[c.y * GRID + c.x] = 1; }
+    }
+  }
+  const burningAt = (x, y) => { const f = game.fires.get(y * GRID + x); return !!f && game.tick >= f.from && game.tick < f.until; };
+  const offBoard = (x, y) => x < 0 || y < 0 || x >= GRID || y >= GRID;
+  const hurdleAt = (x, y) => !offBoard(x, y) && (stays[y * GRID + x] === 1 || game.holes.has(y * GRID + x) || burningAt(x, y)); // (what a leap hops)
+  const wrapX = (s, v) => s.wrapUntil > game.time ? (v + GRID) % GRID : v;
+  // Would a turn take it back into its own neck (the game never takes one)?
+  function intoNeck(s, d) {
+    const n = s.body[1];
+    return !!n && wrapX(s, s.body[0].x + d.x) === n.x && wrapX(s, s.body[0].y + d.y) === n.y;
+  }
+  // Your press, as this screen saw it, not yet taken: online the queue is
+  // the host's (a friend's screen never has it, and the host's own press
+  // waits a round trip), so it shows from the press. For a few ticks at most.
+  const PRESS_TICKS = 3;
+  const heardOf = s => press.stun < 0 && !!press.dir && press.tick >= game.tick - PRESS_TICKS && !(press.dir.x === s.dir.x && press.dir.y === s.dir.y) && !intoNeck(s, press.dir);
+  // The way a snake goes next: a person's first queued turn (as the game
+  // takes it: never into its own neck), or your press as this screen saw it;
+  // a rival's plan made ahead of the tick; else on as it's going.
+  function wayOf(s) {
+    if (s.isPlayer && !s.autopilot) {
+      for (let i = 0; i < s.queue.length; i++) if (!intoNeck(s, s.queue[i])) return s.queue[i];
+      return s.id === viewerId && heardOf(s) ? press.dir : s.dir;
+    }
+    return s.plannedTick === game.tick && s.planned ? s.planned : s.dir;
+  }
+  // Has it asked to jump, or to flash (a flash goes first), for this tick?
+  const asksJump = s => s.leapArmed >= game.tick || ((!s.isPlayer || s.autopilot) && s.plannedTick === game.tick && s.memory.power === game.tick);
+  const asksFlash = s => s.flashArmed >= game.tick || ((!s.isPlayer || s.autopilot) && s.plannedTick === game.tick && s.memory.flash === game.tick);
+  // Where a snake goes next, as far as this screen can tell (a.mx, a.my;
+  // drawing only: read from what the game already knows, never deciding
+  // anything). A stunned snake stays. One about to crash (off the board, a
+  // hole, a body still there after the move) holds at its cell's centre,
+  // and the crash's lunge plays at the tick. One in the air comes down where
+  // it was going. A jump asked for, with something to hop and somewhere to
+  // land, leaps: it starts rising before its tick. (Fire isn't a crash: a
+  // crawl goes in.)
+  function predict(s, a) {
+    const h = s.body[0];
+    a.mx = h.x; a.my = h.y; a.mv = 0; a.mg = 0; a.ml = 0;
+    if (!s.alive || s.stunUntil > game.tick) return;
+    const d = s.flight ? s.flight.dir : wayOf(s), x = wrapX(s, h.x + d.x), y = wrapX(s, h.y + d.y);
+    a.mx = x; a.my = y; a.mv = 1; a.mg = s.grow > 0 ? 1 : 0;
+    if (!s.flight && asksJump(s) && !asksFlash(s) && (s.leaps > 0 || (game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH)) && hurdleAt(x, y)) {
+      const lx = wrapX(s, x + d.x), ly = wrapX(s, y + d.y), fx = wrapX(s, lx + d.x), fy = wrapX(s, ly + d.y);
+      if (!offBoard(lx, ly) && (!hurdleAt(lx, ly) || (s.leaps > 0 && !offBoard(fx, fy) && !hurdleAt(fx, fy)))) { a.ml = 1; return; } // (a golden one hops two)
+    }
+    if (offBoard(x, y) || game.holes.has(y * GRID + x) || stays[y * GRID + x]) { a.mv = 0; a.mg = 0; }
+  }
+  // Two heads going into the same cell meet head-on: both hold (heads in the air never meet).
+  function meetings() {
+    for (let i = 0; i < live.length; i++) {
+      const p = anim.get(live[i]);
+      if (!p.mv || p.ml) continue;
+      for (let j = i + 1; j < live.length; j++) {
+        const q = anim.get(live[j]);
+        if (q.mv && !q.ml && q.mx === p.mx && q.my === p.my) { p.mv = q.mv = 0; p.mg = q.mg = 0; }
+      }
+    }
+  }
+  // Easing out of a wrong guess. Nothing drawn ever jumps: when where a
+  // snake's drawn heading changes (a plan made late, your press in the
+  // second half of a tick, a crash nobody saw coming, or the tick shows it
+  // went elsewhere), the difference stays on each segment as an offset that
+  // fades over about FIX_MS. A dash isn't eased: it's there at once.
+  const FIX_MS = 35, FIX_SPEED = CELL * 0.012; // (units a ms: 12 cells a second, about a snake's top speed)
+  const wd = v => v > GRID / 2 ? v - GRID : v < -GRID / 2 ? v + GRID : v; // (a step in cells, across a wrapped edge)
+  function refix(s, a, at, snap) {
+    const n = s.body.length, fix = a.fix, body = s.body, prev = s.prev;
+    if (a.fixOn) { // (what's left fades, never faster than FIX_SPEED: a big one takes a little longer)
+      const keep = Math.exp(-frameDt / (FIX_MS / 3)), most = FIX_SPEED * frameDt;
+      let left = 0;
+      for (let i = 0; i < fix.length; i += 2) {
+        const x = fix[i], y = fix[i + 1], d = Math.hypot(x, y);
+        if (!d) continue;
+        const k = Math.max(keep, 1 - most / d);
+        fix[i] = x * k; fix[i + 1] = y * k;
+        left = Math.max(left, d * k);
+      }
+      if (left < 0.25) { fix.fill(0); a.fixOn = false; }
+    }
+    const same = a.pTick === game.tick, from = same ? body[0] : prev?.[0]; // (where its head was when it last guessed)
+    if (snap || reduced || (!same && a.pTick !== game.tick - 1) || !from || from.x !== a.phx || from.y !== a.phy) { // (dashing, too long since, or put somewhere else: start afresh)
+      if (a.fixOn) { fix.fill(0); a.fixOn = false; }
+    } else if (same) { // (the same tick: a different guess)
+      const kk = Math.max(0, at - 1);
+      if (kk > 0 && (a.pmv !== a.mv || a.pmx !== a.mx || a.pmy !== a.my)) {
+        const hx = body[0].x, hy = body[0].y;
+        fixAdd(a, 0, kk * (a.pmv * wd(a.pmx - hx) - a.mv * wd(a.mx - hx)), kk * (a.pmv * wd(a.pmy - hy) - a.mv * wd(a.my - hy)));
+        if (a.pmv !== a.mv) for (let i = 1; i < n; i++) fixAdd(a, i, kk * (a.pmv - a.mv) * wd(body[i - 1].x - body[i].x), kk * (a.pmv - a.mv) * wd(body[i - 1].y - body[i].y));
+      }
+    } else { // (a tick on: where the last guess would have it now, against where it is)
+      const k1 = Math.min(1, at);
+      for (let i = 0; i < n && i < prev.length; i++) {
+        const p = prev[i], qx = i ? prev[i - 1].x : a.pmx, qy = i ? prev[i - 1].y : a.pmy;
+        const ex = a.pmv * wd(qx - p.x) * at - wd(body[i].x - p.x) * k1, ey = a.pmv * wd(qy - p.y) * at - wd(body[i].y - p.y) * k1;
+        if (ex || ey) fixAdd(a, i, ex, ey);
+      }
+    }
+    if (a.fixOn && a.fixFar) { fix.fill(0); a.fixOn = false; } // (more than a guess could be out by: it jumped, so it jumps)
+    a.fixFar = false;
+    a.pmx = a.mx; a.pmy = a.my; a.pmv = a.mv; a.pTick = game.tick; a.phx = body[0].x; a.phy = body[0].y;
+  }
+  function fixAdd(a, i, dx, dy) {
+    if (Math.abs(dx) + Math.abs(dy) < 0.01) return;
+    if (Math.abs(dx) + Math.abs(dy) > 2.5) a.fixFar = true;
+    a.fixOn = true;
+    a.fix[2 * i] += dx * CELL; a.fix[2 * i + 1] += dy * CELL;
   }
 
   // A coordinate (in cells) moved a whole board's width, if that brings it
@@ -1554,26 +1721,15 @@ window.SnakeRender = (() => {
 
   const near = (u, v) => Math.abs(u - v) < 0.01;
 
-  // One straight piece of a band, half-width h, as a rectangle (pieces always
-  // run along the grid; anything else would be a bug, drawn as a line).
-  function piece(x1, y1, x2, y2, h) {
-    if (near(y1, y2)) { if (!near(x1, x2)) ctx.fillRect(Math.min(x1, x2), y1 - h, Math.abs(x2 - x1), 2 * h); }
-    else if (near(x1, x2)) ctx.fillRect(x1 - h, Math.min(y1, y2), 2 * h, Math.abs(y2 - y1));
-    else {
-      ctx.strokeStyle = ctx.fillStyle;
-      ctx.lineWidth = 2 * h;
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    }
-  }
-
-  // The band from segment i to i + 1: through its corner cell. Straight, it's
+  // The band from segment i to i + 1, half-width h: through its corner cell,
+  // as rectangles (see rectPiece). Straight, it's
   // one piece (two pieces meeting mid-band leave a hairline seam when a cell
   // isn't a whole number of pixels); at a bend the corner's circle covers the join.
   function band(a, i, h) {
     const p = a.pts, c = a.cor;
     const x1 = p[2 * i], y1 = p[2 * i + 1], cx = c[2 * i], cy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
-    if ((near(x1, cx) && near(cx, x2)) || (near(y1, cy) && near(cy, y2))) piece(x1, y1, x2, y2, h);
-    else { piece(x1, y1, cx, cy, h); piece(cx, cy, x2, y2, h); }
+    if ((near(x1, cx) && near(cx, x2)) || (near(y1, cy) && near(cy, y2))) rectPiece(x1, y1, x2, y2, h);
+    else { rectPiece(x1, y1, cx, cy, h); rectPiece(cx, cy, x2, y2, h); }
   }
 
   // Does the band from i to i + 1 turn a corner (and need its outside rounded)?
@@ -1614,39 +1770,54 @@ window.SnakeRender = (() => {
   // triangulated every frame, so it's kept for what's rare: a fading corpse,
   // a golden outline, a queasy wash.)
   function silhouette(a, grow) {
+    shape(a, grow);
+    ctx.fill();
+  }
+  // ...as the current path (to fill, or to clip to).
+  // (Only segments i0 to i1, for a short stretch: cheap to clip to.)
+  function shape(a, grow, i0 = 0, i1 = a.n - 1) {
     ctx.beginPath();
     const p = a.pts, c = a.cor;
-    for (let i = a.n - 2; i >= 0; i--) {
+    for (let i = i1 - 1; i >= i0; i--) {
       const h = a.rad[i + 1] * PINCH + grow, x1 = p[2 * i], y1 = p[2 * i + 1], cx = c[2 * i], cy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
       pieceRect(x1, y1, cx, cy, h);
       pieceRect(cx, cy, x2, y2, h);
     }
-    for (let i = a.n - 1; i >= 0; i--) {
-      if (i < a.n - 1 && bends(a, i)) { const r = a.rad[i + 1] * PINCH + grow; ctx.moveTo(a.cor[2 * i] + r, a.cor[2 * i + 1]); ctx.arc(a.cor[2 * i], a.cor[2 * i + 1], r, 0, TAU); }
+    for (let i = i1; i >= i0; i--) {
+      if (i < i1 && bends(a, i)) { const r = a.rad[i + 1] * PINCH + grow; ctx.moveTo(a.cor[2 * i] + r, a.cor[2 * i + 1]); ctx.arc(a.cor[2 * i], a.cor[2 * i + 1], r, 0, TAU); }
       const r = a.rad[i] + grow;
       ctx.moveTo(p[2 * i] + r, p[2 * i + 1]);
       ctx.arc(p[2 * i], p[2 * i + 1], r, 0, TAU);
     }
-    ctx.fill();
   }
-  // One straight piece of a band, filled (pieces always run along the grid;
-  // a zero-length one, or one that doesn't, fills nothing, as in a silhouette).
+  // One straight piece of a band, filled (pieces run along the grid, but
+  // for a moment while a head eases out of a wrong guess: see refix; a
+  // zero-length one fills nothing, as in a silhouette).
   function rectPiece(x1, y1, x2, y2, h) {
     if (near(y1, y2)) { if (!near(x1, x2)) ctx.fillRect(Math.min(x1, x2), y1 - h, Math.abs(x2 - x1), 2 * h); }
     else if (near(x1, x2)) ctx.fillRect(x1 - h, Math.min(y1, y2), 2 * h, Math.abs(y2 - y1));
+    else { ctx.beginPath(); slant(x1, y1, x2, y2, h); ctx.fill(); }
   }
-  // One straight piece of a band, added to the current path (pieces always
-  // run along the grid; a zero-length one adds nothing).
+  // One straight piece of a band, added to the current path (the same; a
+  // zero-length one adds nothing).
   function pieceRect(x1, y1, x2, y2, h) {
     if (near(y1, y2)) { if (!near(x1, x2)) ctx.rect(Math.min(x1, x2), y1 - h, Math.abs(x2 - x1), 2 * h); }
     else if (near(x1, x2)) ctx.rect(x1 - h, Math.min(y1, y2), 2 * h, Math.abs(y2 - y1));
+    else slant(x1, y1, x2, y2, h);
+  }
+  // A piece off the grid, as a closed shape wound the way rect() winds (so
+  // a silhouette's pieces never cancel each other out).
+  function slant(x1, y1, x2, y2, h) {
+    const l = Math.hypot(x2 - x1, y2 - y1), nx = -(y2 - y1) / l * h, ny = (x2 - x1) / l * h;
+    ctx.moveTo(x1 - nx, y1 - ny); ctx.lineTo(x2 - nx, y2 - ny); ctx.lineTo(x2 + nx, y2 + ny); ctx.lineTo(x1 + nx, y1 + ny); ctx.closePath();
   }
 
-  // The path through every segment centre and corner, head to tail.
-  function spine(a) {
+  // The path through every segment centre and corner, head to tail (or from
+  // segment i0 to i1).
+  function spine(a, i0 = 0, i1 = a.n - 1) {
     ctx.beginPath();
-    ctx.moveTo(a.pts[0], a.pts[1]);
-    for (let i = 1; i < a.n; i++) {
+    ctx.moveTo(a.pts[2 * i0], a.pts[2 * i0 + 1]);
+    for (let i = i0 + 1; i <= i1; i++) {
       ctx.lineTo(a.cor[2 * i - 2], a.cor[2 * i - 1]);
       ctx.lineTo(a.pts[2 * i], a.pts[2 * i + 1]);
     }
@@ -1745,8 +1916,19 @@ window.SnakeRender = (() => {
   // Holding a golden power: golden leaps or dashes, or the edges wrapping
   // round for it (fading calmly over its last WRAP_WARN_MS: no strobe).
   const powered = s => s.leaps > 0 || s.dashes > 0 || s.wrapUntil > shownTime;
-  const poweredFade = s => s.leaps > 0 || s.dashes > 0 ? 1 : Math.max(0, Math.min(1, (s.wrapUntil - shownTime) / T.WRAP_WARN_MS));
+  const wrapFade = s => Math.max(0, Math.min(1, (s.wrapUntil - shownTime) / T.WRAP_WARN_MS));
+  const poweredFade = s => s.leaps > 0 || s.dashes > 0 ? 1 : wrapFade(s);
   const GOLD_EDGE = 3.9; // (how far the gold line and its ink reach outside a snake's own outline)
+  // Power marks. Gold (Honey) is the family: a gold line round a snake says
+  // it holds a power. Each kind adds an accent of its own, with a shape and
+  // a motion, so it reads without its hue: jumps are sky (round pips),
+  // flashes are ember (diamond pips, dashes running back along the gold
+  // line, a streak), and the wrap is a glint running slowly round the gold.
+  // Sky against ember is the pair colour-blind eyes tell apart best; the
+  // accents appear on power marks only.
+  const HONEY = '#fde68a', GLINT = '#fffbea';
+  const SKY = '#a8dcf5', EMBER = '#f7a866', EMBER_LINE = '#b5531d'; // (sky's own line, #2f6f96, isn't needed: ink outlines every sky mark)
+  const RUN_DASH = [CELL * 0.14, CELL * 0.36], GLINT_DASH = [CELL * 1.4, CELL * 40]; // (ember dashes; a glint, alone)
   // Your soft halo: a few faint steps of cream round your body, each wider
   // and fainter than the last (a soft edge without a blur), and a touch more
   // round your head. [width or radius (cells), alpha] pairs, outermost first.
@@ -1772,8 +1954,9 @@ window.SnakeRender = (() => {
       ctx.globalAlpha = was * poweredFade(s);
       ctx.fillStyle = INK;
       outlineFills(a, own + GOLD_EDGE);
-      ctx.fillStyle = '#fde68a'; // (Honey: gold means a power)
+      ctx.fillStyle = HONEY; // (Honey: gold means a power)
       outlineFills(a, own + 2.5);
+      if (s.alive && (s.dashes > 0 || s.wrapUntil > shownTime)) goldRuns(s, a, own);
       ctx.globalAlpha = was;
     }
     if (a.isPlayer) {
@@ -1782,6 +1965,48 @@ window.SnakeRender = (() => {
     } else if (a.rim) {
       ctx.fillStyle = RIM;
       outlineFills(a, own);
+    }
+  }
+  // Along the gold line, in its own shape (the body and any outline of its
+  // own cover the rest): for golden flashes, short ember dashes running back
+  // from the head over its first few segments, as if it's going fast; for the
+  // wrap, a slow glint running down it, fading with the gold over its last
+  // WRAP_WARN_MS. Each is clipped to the few segments it's on (a whole long
+  // body's shape as a clip cost the GPU several ms a frame). With reduced
+  // motion they hold still.
+  const RUN_SEGS = 6, GLINT_GAP = 6, GLINT_SPEED = 3; // (segments the dashes run along; cells between one glint and the next; cells a second)
+  function goldRuns(s, a, own) {
+    ctx.lineCap = 'butt';
+    ctx.lineJoin = 'round';
+    if (s.dashes > 0) {
+      const i1 = Math.min(a.n - 1, RUN_SEGS);
+      ctx.save();
+      shape(a, own + 2.5, 0, i1);
+      ctx.clip();
+      spine(a, 0, i1);
+      ctx.lineWidth = CELL * 1.8;
+      ctx.strokeStyle = EMBER_LINE;
+      ctx.setLineDash(RUN_DASH);
+      ctx.lineDashOffset = reduced ? 0 : -lastNow * CELL / 260;
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (s.wrapUntil > shownTime && a.n > 1) {
+      const g = reduced ? 1 : (lastNow / 1000 * GLINT_SPEED) % (a.n - 1 + GLINT_GAP); // (how far down it the glint is, in segments)
+      if (g < a.n - 1) {
+        const i0 = Math.max(0, Math.floor(g) - 1), i1 = Math.min(a.n - 1, Math.floor(g) + 2), was = ctx.globalAlpha;
+        ctx.save();
+        shape(a, own + 2.5, i0, i1);
+        ctx.clip();
+        spine(a, i0, i1);
+        ctx.globalAlpha = s.leaps > 0 || s.dashes > 0 ? was * wrapFade(s) : was; // (the gold itself fades with it when the wrap is all it holds)
+        ctx.lineWidth = CELL * 1.8;
+        ctx.strokeStyle = GLINT;
+        ctx.setLineDash(GLINT_DASH);
+        ctx.lineDashOffset = GLINT_DASH[0] / 2 - (g - i0) * CELL; // (the glint's middle at g)
+        ctx.stroke();
+        ctx.restore();
+      }
     }
   }
   // An opaque outline: fast separate fills, unless it's being drawn see-through
@@ -1912,7 +2137,7 @@ window.SnakeRender = (() => {
     }
     if (!dead) { updateGaze(s, look, a, now); steer(s, a, now); }
     const dizzy = !dead && s.stunUntil >= game.tick; // (stunned: its head wobbles, and stars go round it, until the tick it moves again)
-    const q = dizzy ? queuedOf(s) : null, lean = dead ? 0 : leanOf(s, a, q);
+    const q = dead ? null : queuedOf(s, a), lean = dead ? 0 : leanOf(s, a, q);
     if (lean) { const h = Math.atan2(a.hs, a.hc) + lean; headCos = Math.cos(h); headSin = Math.sin(h); }
     else { headCos = a.hc; headSin = a.hs; }
     gazeX = a.gx * headCos + a.gy * headSin; // the gaze, turned into the face's frame
@@ -1927,46 +2152,29 @@ window.SnakeRender = (() => {
     else drawFace(s, look, color, blinking, a);
     ctx.restore();
 
-    // Golden powers held: a pip for each (round for a leap, a diamond for a
-    // dash) on a short arc behind the head, turned with it. The gold outline
-    // carries the glow; no ring of its own. Three (LEAP_MAX) don't fit in the
-    // neck's pinch (the outer two sat across its outline), so they go a
-    // little further back, closer together, over the first segment, where
-    // the body's widest.
-    const pips = dead ? 0 : s.leaps || s.dashes;
-    if (pips) {
-      const three = pips > 2, back = Math.atan2(a.hs, a.hc) + Math.PI, rr = (three ? CELL : rad[0] + CELL * 0.2) * (1 + a.swell * 0.5), pr = CELL * (three ? 0.1 : 0.11), step = three ? 0.27 : 0.55;
-      ctx.fillStyle = '#fde68a';
+    // Golden powers held: a pip for each on a short arc behind the head,
+    // turned with it: round, in sky, for a golden leap; a diamond, in ember,
+    // for a dash. Holding both, the leaps go on its left and the dashes on
+    // its right, a gap between. The gold outline carries the glow; no ring
+    // of its own. Three or more don't fit in the neck's pinch (the outer two
+    // sat across its outline), so they go a little further back, closer
+    // together, over the first segment, where the body's widest.
+    const leaps = dead ? 0 : s.leaps, dashes = dead ? 0 : s.dashes;
+    if (leaps || dashes) {
+      const n = leaps + dashes, many = n > 2, back = Math.atan2(a.hs, a.hc) + Math.PI, rr = (many ? CELL : rad[0] + CELL * 0.2) * (1 + a.swell * 0.5);
+      const pr = CELL * (many ? 0.115 : 0.125), step = many ? 0.3 : 0.6, gap = leaps && dashes ? 0.6 : 0, mid = (n - 1 + gap) / 2;
       ctx.strokeStyle = INK;
       ctx.lineWidth = 1.3;
-      for (let i = 0; i < pips; i++) {
-        const a2 = back + (i - (pips - 1) / 2) * step, px = pts[0] + Math.cos(a2) * rr, py = pts[1] + Math.sin(a2) * rr;
+      for (let i = 0; i < n; i++) {
+        const leap = i < leaps, a2 = back + (mid - i - (leap ? 0 : gap)) * step, px = pts[0] + Math.cos(a2) * rr, py = pts[1] + Math.sin(a2) * rr;
+        ctx.fillStyle = leap ? SKY : EMBER;
         ctx.beginPath();
-        if (s.leaps) ctx.arc(px, py, pr, 0, TAU);
-        else { ctx.moveTo(px, py - pr * 1.3); ctx.lineTo(px + pr, py); ctx.lineTo(px, py + pr * 1.3); ctx.lineTo(px - pr, py); ctx.closePath(); }
+        if (leap) ctx.arc(px, py, pr, 0, TAU);
+        else { ctx.moveTo(px, py - pr * 1.35); ctx.lineTo(px + pr * 1.05, py); ctx.lineTo(px, py + pr * 1.35); ctx.lineTo(px - pr * 1.05, py); ctx.closePath(); }
         ctx.fill(); ctx.stroke();
       }
     }
-    // Your own leap coming back: a thin arc round your head, filling as it
-    // cools (it closes into the ready flash). Where you're looking, not only
-    // on your tag.
-    if (!dead && s.id === viewerId && !s.leaps && !s.dashes && s.body.length > T.MIN_LENGTH && game && shownTime < s.leapReadyAt) {
-      const k = Math.max(0, 1 - (s.leapReadyAt - shownTime) / T.LEAP_COOLDOWN_MS), a0 = -Math.PI / 2, rr = rad[0] + CELL * 0.22;
-      ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.arc(pts[0], pts[1], rr, a0, a0 + TAU * k);
-      ctx.strokeStyle = 'rgba(58,38,20,0.6)';
-      ctx.lineWidth = 3.6;
-      ctx.stroke();
-      ctx.strokeStyle = '#fffbea';
-      ctx.lineWidth = 1.8;
-      ctx.stroke();
-    }
-    if (!dead && a.readyAt && now - a.readyAt < 450 && !reduced) { // its leap's back: a ring of light, going out
-      const k = (now - a.readyAt) / 450;
-      ctx.strokeStyle = rgba('#fffbea', 0.8 * (1 - k));
-      ctx.lineWidth = 3 * (1 - k) + 1;
-      ctx.beginPath(); ctx.arc(pts[0], pts[1], CELL * (0.6 + 0.9 * k), 0, TAU); ctx.stroke();
-    }
+    if (!dead && s.id === viewerId && game) drawRests(s, a, now);
     if (dizzy) { // three stars going round, cream and inked (gold by a head means a power), clear of its pips and the edge: see starsOff
       const t = reduced ? 0 : now / 240, cy = pts[1] + starsOff(s);
       ctx.fillStyle = '#fffbea';
@@ -1995,6 +2203,63 @@ window.SnakeRender = (() => {
   }
   const DASH = [3, 3], NO_DASH = [], MOOD_DASH = [5, 7];
 
+  // Your two plain rests, as two half-rings round your head, fixed to the
+  // screen: your jump's on the left, in sky, and your flash's on the right,
+  // in ember. Each shows while it rests, filling from the bottom (a faint
+  // track shows how far it has to go), and gives one bright flick when it's
+  // back. Where you're looking, not only on your tag. (Holding golden leaps
+  // or dashes, that press is ready anyway: no half-ring for it.)
+  const REST_GAP = 0.36; // (radians left clear at the top and the bottom, between the halves)
+  function drawRests(s, a, now) {
+    const x = a.pts[0], y = a.pts[1], rr = a.rad[0] + CELL * 0.3;
+    const canJump = !s.leaps && s.body.length > T.MIN_LENGTH, canFlash = !s.dashes && (T.FLASH_COST <= 0 || s.body.length > T.MIN_LENGTH);
+    const jump = canJump && shownTime < s.leapReadyAt, flash = canFlash && shownTime < s.flashReadyAt;
+    if (a.jc && !jump && canJump && !(now - a.readyAt < 600)) a.readyAt = now; // (back: the flick)
+    if (a.fc && !flash && canFlash && !(now - a.flashFx < 600)) a.flashFx = now;
+    a.jc = jump; a.fc = flash;
+    if (jump) restHalf(x, y, rr, -1, 1 - (s.leapReadyAt - shownTime) / T.LEAP_COOLDOWN_MS, SKY);
+    if (flash) restHalf(x, y, rr, 1, 1 - (s.flashReadyAt - shownTime) / T.FLASH_COOLDOWN_MS, EMBER);
+    if (a.readyAt && now - a.readyAt < 450) restFlick(x, y, rr, -1, (now - a.readyAt) / 450, SKY);
+    if (now - a.flashFx < 450) restFlick(x, y, rr, 1, (now - a.flashFx) / 450, EMBER);
+  }
+  // A half-ring round (x, y) on the left (side -1) or right (1), from the
+  // bottom up to k of the way to the top (the path only).
+  function halfArc(x, y, r, side, k) {
+    const g = REST_GAP / 2, a0 = Math.PI / 2 - side * g;
+    ctx.beginPath();
+    ctx.arc(x, y, r, a0, a0 - side * (Math.PI - 2 * g) * Math.max(0, Math.min(1, k)), side > 0);
+  }
+  function restHalf(x, y, r, side, k, col) {
+    ctx.lineCap = 'round';
+    halfArc(x, y, r, side, 1); // (the track)
+    ctx.strokeStyle = 'rgba(58,38,20,0.45)';
+    ctx.lineWidth = 4.4;
+    ctx.stroke();
+    if (k <= 0) return;
+    halfArc(x, y, r, side, k);
+    ctx.strokeStyle = 'rgba(58,38,20,0.85)';
+    ctx.lineWidth = 5.6;
+    ctx.stroke();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 3.2;
+    ctx.stroke();
+  }
+  // Back: the whole half-ring, bright, going out on its side and fading (with
+  // reduced motion it stays where it is, fading).
+  function restFlick(x, y, r, side, t, col) {
+    const was = ctx.globalAlpha;
+    ctx.lineCap = 'round';
+    halfArc(x, y, r + (reduced ? 0 : CELL * 0.5 * t), side, 1);
+    ctx.globalAlpha = was * (1 - t);
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 5 * (1 - t) + 2;
+    ctx.stroke();
+    ctx.strokeStyle = GLINT;
+    ctx.lineWidth = 2.5 * (1 - t) + 1;
+    ctx.stroke();
+    ctx.globalAlpha = was;
+  }
+
   // Where a stunned snake's stars go round, as an offset down the screen
   // from its head: above it, as in any cartoon, unless that's where its pips
   // are (heading down, they're behind it) or off the board; then below it.
@@ -2003,11 +2268,11 @@ window.SnakeRender = (() => {
   // never jump sides mid-stun. (Bonk! keeps clear of them: see onTick.)
   const STAR_REACH = CELL * 0.42; // (how far the stars reach up and down from their centre)
   function starsOff(s) {
-    const pips = s.leaps || s.dashes, hy = s.body[0].y * CELL + CELL / 2;
+    const pips = s.leaps + s.dashes, hy = s.body[0].y * CELL + CELL / 2;
     let past = 0;
     for (let sgn = -1; sgn <= 1; sgn += 2) {
       const behind = pips && s.dir.y === -sgn; // (its pips are on this side)
-      const off = sgn * CELL * (behind ? (pips > 2 ? 1.6 : 1.32) : pips && !s.dir.y ? 0.95 : 0.72); // (higher when pips show beside its head; further past three, which sit further back)
+      const off = sgn * CELL * (behind ? (pips > 2 ? 1.6 : 1.32) : pips && !s.dir.y ? (pips > 3 ? 1.12 : 0.95) : 0.72); // (higher when pips show beside its head, higher still for both kinds' wider arc; further past three, which sit further back)
       if (hy + off < STAR_REACH || hy + off > SIZE - STAR_REACH) continue;
       if (!behind) return off;
       past ||= off;
@@ -2015,74 +2280,93 @@ window.SnakeRender = (() => {
     return past || -CELL * 0.72;
   }
 
-  // Stunned, with a turn pressed (q): the head leans a little the way it'll
-  // go (the eyes look there: see updateGaze; and a chevron shows it: see
-  // drawPress), so you can see the press was heard. Eased; held still with
-  // reduced motion (it's news, not wobble).
+  // A turn you've pressed (q) that the drawing doesn't show yet: the head
+  // leans a little the way it'll go, from the press on (the eyes look there:
+  // see updateGaze; stunned, a chevron shows it too: see drawPress), so you
+  // can see the press was heard before the tick takes it. Once the head's
+  // drawn heading that way (past its cell's centre: see prepare), the lean
+  // goes. Eased; held still with reduced motion (it's news, not wobble).
   const LEAN = 0.38;
   function leanOf(s, a, q) {
-    const to = q ? (s.dir.x * q.y - s.dir.y * q.x) * LEAN : 0;
-    a.lean = reduced ? to : a.lean + (to - a.lean) * (1 - Math.exp(-frameDt / 60));
+    const to = q ? (a.tdx * q.y - a.tdy * q.x) * LEAN : 0;
+    a.lean = reduced ? to : a.lean + (to - a.lean) * (1 - Math.exp(-frameDt / T.FACE_EASE_MS));
     return Math.abs(a.lean) < 0.002 ? 0 : a.lean;
   }
-  // The way your snake will go when its stun's over, if you've said: a turn
-  // you've pressed, or ahead, for a power (it waits for the move). Until the
-  // tick it moves, as the stars. (Yours only: it answers your press. Online
-  // the queue is the host's, so a press is shown as this screen saw it: see
-  // pressed.)
-  function queuedOf(s) {
-    if (s.id !== viewerId || s.stunUntil < game.tick) return null;
-    if (press.stun === s.stunUntil) return press.dir;
-    if (s.queue?.length) return s.queue[0];
-    return s.leapArmed >= s.stunUntil ? s.dir : null;
+  // The way you've pressed to go that the drawing doesn't show yet (yours
+  // only: it answers your press). On the move: the first turn queued that
+  // isn't the way your head's drawn heading (following the queue as it
+  // changes), or online, your press as this screen saw it (see pressed).
+  // Stunned: the way you'll go when the stun's over, if you've said (a turn,
+  // or ahead for a jump or a flash asked for), until the tick it moves, as
+  // the stars. Nothing for a press the game didn't take.
+  function queuedOf(s, a) {
+    if (s.id !== viewerId || !game) return null;
+    if (s.stunUntil >= game.tick) {
+      if (press.stun === s.stunUntil) return press.dir || (s.leapArmed >= s.stunUntil || s.flashArmed >= s.stunUntil ? s.dir : null);
+      if (s.queue?.length) return s.queue[0];
+      return s.leapArmed >= s.stunUntil || s.flashArmed >= s.stunUntil ? s.dir : null;
+    }
+    const q = s.queue;
+    if (q?.length) {
+      for (let i = 0; i < q.length; i++) if (q[i].x !== a.tdx || q[i].y !== a.tdy) return intoNeck(s, q[i]) ? null : q[i];
+      return null;
+    }
+    return heardOf(s) && (press.dir.x !== a.tdx || press.dir.y !== a.tdy) ? press.dir : null;
   }
-  // A press while your snake is stunned, as this screen saw it: online the
-  // queue is the host's, so a friend's screen never has it, and the host's
-  // own press waits a round trip (the game says as it sends one). Taken as
-  // the game takes it: never into the neck; the latest wins; ahead asks for
-  // a power, or after a turn, changes your mind back. For this stun only.
-  const press = { dir: null, stun: -1 };
+  // A press, as this screen saw it (the game says as it takes one: online
+  // the queue is the host's, so a friend's screen never has it, and the
+  // host's own press waits a round trip). Taken as the game takes it: never
+  // into the neck, and the way you're already going is nothing; the latest
+  // wins. Stunned, a press is for this stun only, and the way you were going
+  // after a turn changes your mind back. A crash forgets one on the move.
+  const press = { dir: null, stun: -1, tick: -1 };
   function pressed(dir) {
     const s = game && findById(viewerId);
-    if (!dir || !s || s.stunUntil < game.tick) { press.dir = null; press.stun = -1; return; }
-    const h = s.body[0], n = s.body[1];
-    if (n && (h.x + dir.x + GRID) % GRID === n.x && (h.y + dir.y + GRID) % GRID === n.y) return; // (into its neck: nothing)
+    if (!dir || !s || !s.alive) { press.dir = null; press.stun = -1; press.tick = -1; return; }
+    if (intoNeck(s, dir)) return; // (into its neck: nothing)
     const ahead = dir.x === s.dir.x && dir.y === s.dir.y;
+    if (s.stunUntil < game.tick) { // (on the move)
+      if (ahead) return;
+      press.dir = dir; press.stun = -1; press.tick = game.tick;
+      return;
+    }
     const turned = press.stun === s.stunUntil ? !!press.dir && !(press.dir.x === s.dir.x && press.dir.y === s.dir.y) : s.queue?.length > 0;
-    press.dir = ahead && turned ? null : dir;
-    press.stun = s.stunUntil;
+    if (ahead && !turned) return;
+    press.dir = ahead ? null : dir;
+    press.stun = s.stunUntil; press.tick = game.tick;
   }
   // Stunned, with a turn pressed: a small inked chevron on that side of your
   // head (past the stars, if they're there; on the board, even pointing off
   // it), so the press shows as heard, and where it'll take you. (The eyes
-  // look that way too, and the head leans.) With a power asked for (ahead,
-  // or ahead and then a turn: it goes the way you go), its own mark there
-  // instead, a little further out (it's longer). Over every snake and word:
-  // ahead, it's over what you hit, and the Bonk! there.
+  // look that way too, and the head leans.) With a jump or a flash asked for
+  // (it goes the way you go), its own mark there instead, a little further
+  // out (it's longer), in its accent (a golden one's in Honey). Over every
+  // snake and word: ahead, it's over what you hit, and the Bonk! there.
   function drawPress() {
     const s = findById(viewerId), a = s && s.alive && s.stunUntil >= game.tick ? anim.get(s) : null;
-    const q = a && a.n ? queuedOf(s) : null;
+    const q = a && a.n ? queuedOf(s, a) : null;
     if (!q) return;
-    const pts = a.pts, so = starsOff(s), power = s.leapArmed >= s.stunUntil || (q.x === s.dir.x && q.y === s.dir.y);
-    const d = (q.y && (so < 0) === (q.y < 0) ? Math.abs(so) + CELL * 0.62 : CELL * 0.95) + (power ? CELL * (s.dashes > 0 ? 0.18 : 0.28) : 0);
+    const flash = s.flashArmed >= s.stunUntil, power = flash || s.leapArmed >= s.stunUntil; // (a flash goes first)
+    const pts = a.pts, so = starsOff(s);
+    const d = (q.y && (so < 0) === (q.y < 0) ? Math.abs(so) + CELL * 0.62 : CELL * 0.95) + (power ? CELL * (flash ? 0.18 : 0.28) : 0);
     const w = CELL * 0.2, m = CELL * 0.12;
     const cx = Math.min(SIZE - m, Math.max(m, pts[0] + q.x * d)), cy = Math.min(SIZE - m, Math.max(m, pts[1] + q.y * d));
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
-    if (power) pressMark(cx, cy, q, s.dashes > 0);
+    if (power) pressMark(cx, cy, q, flash);
     else {
       ctx.moveTo(cx - q.x * w + q.y * w, cy - q.y * w + q.x * w);
       ctx.lineTo(cx, cy);
       ctx.lineTo(cx - q.x * w - q.y * w, cy - q.y * w - q.x * w);
     }
     ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.17; ctx.stroke();
-    ctx.strokeStyle = power && (s.leaps || s.dashes) ? '#fde68a' : '#fffbea'; ctx.lineWidth = CELL * 0.09; ctx.stroke(); // (a golden power's in Honey)
+    ctx.strokeStyle = !power ? GLINT : (flash ? s.dashes : s.leaps) > 0 ? HONEY : flash ? EMBER : SKY; ctx.lineWidth = CELL * 0.09; ctx.stroke();
   }
   // A power asked for, as a mark where the chevron would go (its tip at x,
-  // y, pointing along q), added to the current path: the leap's hop, as on
-  // its chip (an arc up and over, ending in an arrowhead), or for dashes,
-  // their double chevron.
+  // y, pointing along q), added to the current path: the jump's hop, as on
+  // its chip (an arc up and over, ending in an arrowhead), or the flash's
+  // double chevron.
   function pressMark(x, y, q, dash) {
     const w = CELL * 0.2;
     if (dash) {
@@ -2192,13 +2476,16 @@ window.SnakeRender = (() => {
   // The living snakes, in passes, so no snake's shadow falls on another's body.
   const live = [];
   // (a snake leaping, or still arched over another one, goes on top)
-  const overOf = s => anim.get(s)?.leapUntil > game.tick ? 1 : 0;
+  const overOf = s => { const a = anim.get(s); return a && (a.leapUntil > game.tick || a.ml) ? 1 : 0; }; // (or about to: see predict)
   const byOver = (p, q) => overOf(p) - overOf(q);
   function drawSnakes(alpha, now) {
     live.length = 0;
     let leaping = false;
     for (const s of game.snakes) if (s.alive) { live.push(s); if (overOf(s)) leaping = true; }
     if (leaping) live.sort(byOver);
+    syncStays();
+    for (const s of live) predict(s, animOf(s, now));
+    meetings();
     for (const s of live) prepare(s, alpha, now, false);
     drawShadows();
     if (fieldSpecs.length) drawFieldHues(now); // (a field's light round a rival in it, under every outline and body)
@@ -2258,17 +2545,20 @@ window.SnakeRender = (() => {
   // gazeX/gazeY: where this snake's eyes point (a unit vector in that frame).
   let blinkNow = false, gazeX = 1, gazeY = 0;
   let headCos = 1, headSin = 0; // the heading the face is drawn turned to
-  // The way the head faces, as drawn: it swings round smoothly when the
-  // snake turns, and when it turns again and again (a staircase, a wiggle)
-  // it holds a steady line between them, instead of whipping round every
-  // tick and flinging its tongue from side to side.
+  // The way the head faces, as drawn (the way it's drawn heading: see
+  // prepare): it swings round smoothly when the snake turns, and when a
+  // rival turns again and again (a staircase, a wiggle) it holds a steady
+  // line between them, instead of whipping round every tick and flinging its
+  // tongue from side to side. Yours turns quickly, busy or not
+  // (FACE_EASE_MS): it's your press, and your face is how you see it taken.
   function steer(s, a, now) {
-    if (a.hc === undefined) { a.hx = a.hc = s.dir.x; a.hy = a.hs = s.dir.y; a.ldx = s.dir.x; a.ldy = s.dir.y; a.turned = [-1e9, -1e9]; }
-    if (s.dir.x !== a.ldx || s.dir.y !== a.ldy) { a.ldx = s.dir.x; a.ldy = s.dir.y; a.turned[0] = a.turned[1]; a.turned[1] = now; }
+    const dx = a.tdx, dy = a.tdy;
+    if (a.hc === undefined) { a.hx = a.hc = dx; a.hy = a.hs = dy; a.ldx = dx; a.ldy = dy; a.turned = [-1e9, -1e9]; }
+    if (dx !== a.ldx || dy !== a.ldy) { a.ldx = dx; a.ldy = dy; a.turned[0] = a.turned[1]; a.turned[1] = now; }
     const busy = now - a.turned[0] < 650; // (two turns close together)
-    const k = reduced ? 1 : 1 - Math.exp(-frameDt / (busy ? 300 : 70));
-    a.hx += (s.dir.x - a.hx) * k;
-    a.hy += (s.dir.y - a.hy) * k;
+    const k = reduced ? 1 : 1 - Math.exp(-frameDt / (s.id === viewerId ? T.FACE_EASE_MS : busy ? 300 : 70));
+    a.hx += (dx - a.hx) * k;
+    a.hy += (dy - a.hy) * k;
     const len = Math.hypot(a.hx, a.hy) || 1;
     a.hc = a.hx / len; a.hs = a.hy / len;
   }
@@ -5582,6 +5872,10 @@ window.SnakeRender = (() => {
     lastNow = now;
     frameDt = Math.max(1, dt);
     shownTime = game.time === timeAt ? timeFrom + (timeAt - timeFrom) * Math.min(1, alpha) : game.time;
+    leadNow = game.tick === 0 && alpha >= 1 ? 0 : T.DRAW_LEAD; // (drawn ahead from the round's Go: see prepare)
+    let alive = 0;
+    for (const s of game.snakes) if (s.alive) alive++;
+    leadRest = alive < 2;
     syncHoles();
     trackFire(now);
     syncScorch();
@@ -5740,11 +6034,13 @@ window.SnakeRender = (() => {
     return f;
   }
 
-  // A leap that can't go: a quick inked × on what it couldn't hop, so the
-  // press shows as heard, and refused (yours only: it answers your press, as
-  // the thunk does). It pops in; with reduced motion it's simply there. Both fade.
+  // A jump or a flash that can't go: a quick inked × on what it couldn't hop
+  // (or where it would have gone), in the press's own accent (sky for a
+  // jump, ember for a flash), so the press shows as heard, and refused (yours
+  // only: it answers your press, as the thunk does). It pops in; with
+  // reduced motion it's simply there. Both fade.
   const REFUSE_MS = 320, REFUSE_REACH = CELL * 0.24 + 3.75; // (how far its arms and their ink reach from its middle, once it's popped in)
-  const refusal = { x: 0, y: 0, at: -1e9, tick: -1 };
+  const refusal = { x: 0, y: 0, at: -1e9, tick: -1, flash: false };
   function drawRefusal(now) {
     const t = (now - refusal.at) / REFUSE_MS;
     if (t < 0 || t >= 1) return;
@@ -5755,7 +6051,7 @@ window.SnakeRender = (() => {
     ctx.moveTo(x - d, y - d); ctx.lineTo(x + d, y + d);
     ctx.moveTo(x + d, y - d); ctx.lineTo(x - d, y + d);
     ctx.strokeStyle = INK; ctx.lineWidth = 7.5; ctx.stroke();
-    ctx.strokeStyle = '#fffbea'; ctx.lineWidth = 3.6; ctx.stroke();
+    ctx.strokeStyle = refusal.flash ? EMBER : SKY; ctx.lineWidth = 3.6; ctx.stroke();
     ctx.globalAlpha = 1;
   }
 
@@ -5804,6 +6100,7 @@ window.SnakeRender = (() => {
       } else if (e.type === 'crash') { // a bonk where it hit, the head's lunge, and its tail breaking off as beads
         const s = e.snake, a = animOf(s, now), h = s.body[0];
         a.crashAt = now; a.crashDx = s.dir.x; a.crashDy = s.dir.y;
+        if (s.id === viewerId && press.stun < 0) press.dir = null; // (what you'd pressed was for a board that's gone, as the game says)
         // (its tail breaks off as beads in its own markings, last segment last)
         const prev = s.prev || [];
         for (let i = s.body.length; i < s.body.length + e.lost && i < prev.length; i++) {
@@ -5841,9 +6138,10 @@ window.SnakeRender = (() => {
           }
           if (!reduced) shake(4);
         }
-      } else if (e.type === 'fizzle') { // asked to leap, and it couldn't: refused, on what it couldn't hop (and then ran into)
+      } else if (e.type === 'fizzle') { // asked to jump or flash, and it couldn't: refused, on what it couldn't hop (and then ran into), or where it would have gone
         const s = e.snake;
         if (s.id === viewerId) {
+          refusal.flash = !!e.flash;
           // The cell it faced, as the engine saw it (a stunned snake's
           // auto-turn has turned it since). Off the board, at the edge it
           // faced: on the edge, its whole ink just inside (never wrapped
@@ -5861,12 +6159,12 @@ window.SnakeRender = (() => {
         a.leapUntil = game.tick + e.snake.body.length + 1; // (until the arch has run off its tail)
         spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 8, 140, 420, 2.2, '#d6b480', '#c08a4a'); // (bark dust: the plain leap's no power)
         if (e.gold) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 10, 120, 600, 1.8, '#d4a017', '#fffbea'); // (in Honey, a power's gold)
-      } else if (e.type === 'dash') { // a golden streak along the way it went, and gold flecks off it
+      } else if (e.type === 'dash') { // a streak along the way it went: a golden dash's in gold and ember, with flecks of both; a plain flash's in ember, lighter
         animOf(e.snake, now).dashTick = game.tick;
-        const h = e.snake.body[0], x0 = e.x * CELL + CELL / 2, y0 = e.y * CELL + CELL / 2, x1 = h.x * CELL + CELL / 2, y1 = h.y * CELL + CELL / 2;
+        const h = e.snake.body[0], x0 = e.x * CELL + CELL / 2, y0 = e.y * CELL + CELL / 2, x1 = h.x * CELL + CELL / 2, y1 = h.y * CELL + CELL / 2, plain = !!e.plain;
         if (Math.abs(x1 - x0) + Math.abs(y1 - y0) <= CELL * (T.DASH_LENGTH + 0.5)) { // (not across a wrapped edge)
-          streaks.push({ x0, y0, x1, y1, at: now, s: e.snake });
-          for (let k = 0; k <= 3; k++) spawn(x0 + (x1 - x0) * k / 3, y0 + (y1 - y0) * k / 3, 4, 90, 500, 1.8, '#fde68a', '#fffbea');
+          streaks.push({ x0, y0, x1, y1, at: now, s: e.snake, plain });
+          for (let k = 0; k <= 3; k++) spawn(x0 + (x1 - x0) * k / 3, y0 + (y1 - y0) * k / 3, plain ? 2 : 4, 90, 500, 1.8, plain ? EMBER : HONEY, plain ? GLINT : EMBER);
           if (!reduced) for (let k = 0; k < 4; k++) mote(x0 + (Math.random() - 0.5) * CELL * 0.6, y0 + (Math.random() - 0.5) * CELL * 0.6, -(x1 - x0) / len3(x1 - x0, y1 - y0) * 20 + (Math.random() - 0.5) * 10, -(y1 - y0) / len3(x1 - x0, y1 - y0) * 20 - 6, 700, 3 + Math.random() * 2, 2); // (a scuff of dust where it set off)
         }
       } else if (e.type === 'douse') { // a fire put out: a hiss of steam
@@ -6066,8 +6364,11 @@ window.SnakeRender = (() => {
   // start; gone in a moment. The lines run just clear of everything drawn
   // round the dasher's body (its outline, a gold line), which used to cover
   // them. (A wedge of honey light between them is gone: where it showed past
-  // the body, it was a translucent khaki block, cut square by the head.)
-  const streaks = []; // { x0, y0, x1, y1, at, s }
+  // the body, it was a translucent khaki block, cut square by the head.) A
+  // golden dash's lines are gold with an ember core; a plain flash's are
+  // ember, thinner, inked more faintly and shorter (from a third of the
+  // way), so the golden one is the bigger deal.
+  const streaks = []; // { x0, y0, x1, y1, at, s, plain }
   const STREAK_GAP = 2; // (between the dasher's drawn edge and a line's inked edge, in units)
   function drawStreaks(now) {
     for (let i = streaks.length - 1; i >= 0; i--) {
@@ -6075,20 +6376,24 @@ window.SnakeRender = (() => {
       if (t >= 1 || t < 0) { streaks.splice(i, 1); continue; }
       const dx = k.x1 - k.x0, dy = k.y1 - k.y0, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
       const ex = k.x1 - ux * CELL * 0.35, ey = k.y1 - uy * CELL * 0.35; // (the back of its head)
+      const sx = k.plain ? k.x0 + (ex - k.x0) * 0.35 : k.x0, sy = k.plain ? k.y0 + (ey - k.y0) * 0.35 : k.y0; // (where its lines start)
       const speedLine = (off, w, over) => { // (pointed at both ends, widest near the head; `over` runs it a touch past them, for its ink)
-        const mx = k.x0 + (ex - k.x0) * 0.8, my = k.y0 + (ey - k.y0) * 0.8;
-        ctx.moveTo(k.x0 - ux * over + nx * off, k.y0 - uy * over + ny * off);
+        const mx = sx + (ex - sx) * 0.8, my = sy + (ey - sy) * 0.8;
+        ctx.moveTo(sx - ux * over + nx * off, sy - uy * over + ny * off);
         ctx.lineTo(mx + nx * (off + w), my + ny * (off + w));
         ctx.lineTo(ex + ux * over + nx * off, ey + uy * over + ny * off);
         ctx.lineTo(mx + nx * (off - w), my + ny * (off - w));
         ctx.closePath();
       };
-      const a = anim.get(k.s), w = CELL * 0.1 * (1 - 0.5 * t), ink = 1.4;
+      const a = anim.get(k.s), w = CELL * (k.plain ? 0.085 : 0.1) * (1 - 0.5 * t), ink = 1.4;
       const side = CELL * 0.44 + (a ? edgeOf(k.s, a) : 0) + STREAK_GAP + ink + w; // (the body's half-width by the neck, and what's drawn round it)
-      ctx.fillStyle = rgba('#3a2614', 0.8 * (1 - t));
+      ctx.fillStyle = rgba('#3a2614', (k.plain ? 0.7 : 0.8) * (1 - t));
       ctx.beginPath(); speedLine(-side, w + ink, ink * 2); speedLine(side, w + ink, ink * 2); ctx.fill();
-      ctx.fillStyle = rgba('#fffbea', 0.95 * (1 - t));
+      ctx.fillStyle = rgba(k.plain ? EMBER : HONEY, 0.95 * (1 - t));
       ctx.beginPath(); speedLine(-side, w, 0); speedLine(side, w, 0); ctx.fill();
+      if (k.plain) continue;
+      ctx.fillStyle = rgba(EMBER_LINE, 0.9 * (1 - t)); // (the ember core)
+      ctx.beginPath(); speedLine(-side, w * 0.4, -len * 0.25); speedLine(side, w * 0.4, -len * 0.25); ctx.fill();
     }
   }
 
@@ -6160,6 +6465,8 @@ window.SnakeRender = (() => {
   // Where a snake's head is drawn right now, in CSS pixels from the board's
   // top-left (for speech bubbles). boardPx is the board's CSS width.
   function headPx(s, alpha, boardPx, out) {
+    const a = anim.get(s);
+    if (a && a.drawnAt === lastNow && lastNow) { out.x = a.bx * boardPx / SIZE; out.y = a.by * boardPx / SIZE; return out; } // (as drawn this frame: ahead, and easing out of any wrong guess)
     const c = s.body[0], p = s.prev && s.prev[0] ? s.prev[0] : c;
     const scale = boardPx / GRID, px = nearOf(p.x, c.x), py = nearOf(p.y, c.y); // (across a wrapped edge: from just off it)
     out.x = (px + (c.x - px) * alpha + 0.5) * scale;
@@ -6255,7 +6562,7 @@ window.SnakeRender = (() => {
     blasts.length = 0;
     streaks.length = 0;
     refusal.at = -1e9; refusal.tick = -1;
-    press.dir = null; press.stun = -1;
+    press.dir = null; press.stun = -1; press.tick = -1;
     timeFrom = timeAt = shownTime = g.time;
     bird.placed = false; bird.arrivedAt = -1e9;
     for (const k in sky) sky[k] = 0;
@@ -6278,7 +6585,8 @@ window.SnakeRender = (() => {
 
   return {
     showYou,
-    ready: s => { animOf(s, lastNow || performance.now()).readyAt = lastNow || performance.now(); },
+    // (your jump's back, or with 'flash' your flash: its half-ring's flick; the renderer sees both itself, so this only makes sure)
+    ready: (s, kind) => { const a = animOf(s, lastNow || performance.now()), now = lastNow || performance.now(); if (kind === 'flash') { if (!(now - a.flashFx < 600)) a.flashFx = now; } else if (!(now - a.readyAt < 600)) a.readyAt = now; },
     init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, markOf, celebrate, setQuality, setBoardRect, pressed,
     get quality() { return quality; },
     holding: () => deaths.length > 0 || corpses.length > 0,
