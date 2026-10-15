@@ -207,6 +207,16 @@ console.log('ok   every voice speaks up when pecked under, put out, starving, cu
   tick(g, [], 5000);
   check(says(tick(g), gob, VOICES.gobbler.doused), 'put out in the snow: a doused line');
 }
+{ // The rain comes while a rival burns: someone else remarks on the rain, and the one on fire on being put out.
+  const g = stage(['gobbler', 'drab'], { 1: [12, 12], 2: [12, 18] }), [, gob, drab] = g.snakes;
+  gob.burnFrom = g.tick; gob.burnUntil = g.tick + 10;
+  tick(g, [], 5000);
+  g.weather.kind = 'rain';
+  const h = tick(g, [{ type: 'weather', kind: 'rain' }]);
+  check(says(h, drab, VOICES.drab.weather.rain) && !h.some(x => x.s === gob), 'the rain starts: the snake on fire leaves the weather to others');
+  gob.burnUntil = g.tick + 1;
+  check(says(tick(g, [], 600), gob, VOICES.gobbler.doused), '...and is put out with a word');
+}
 { // Ash and rot are for whoever was nearest (you included), and near; and nobody mourns a mushroom.
   const g = stage(['vulture'], { 0: [15, 12], 1: [12, 12] }), [you, vul] = g.snakes;
   check(tick(g, [{ type: 'ash', x: 13, y: 12, kind: 'mushroom' }]).length === 0, 'a mushroom burnt to ash: nothing');

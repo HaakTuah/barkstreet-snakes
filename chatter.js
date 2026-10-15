@@ -1575,7 +1575,9 @@ window.SnakeChatter = (() => {
       } else if (e.type === 'weather' || (e.type === 'strike' && !struck)) {
         const kind = e.type === 'strike' ? 'storm' : e.kind;
         if (e.type === 'strike') struck = true; else struck = false;
-        const s = pick(alive.filter(a => VOICES[a.personaKey]?.weather?.[kind]));
+        // (A snake on fire keeps its breath for being put out.)
+        const wet = kind === 'rain' || kind === 'snow';
+        const s = pick(alive.filter(a => VOICES[a.personaKey]?.weather?.[kind] && !(wet && a.burnUntil > game.tick)));
         // (The first strike has lines of its own, where a voice has some: as a storm begins, nothing's burning yet.)
         if (s) say(s, e.type === 'strike' && VOICES[s.personaKey].weather.strike ? 'weather.strike' : `weather.${kind}`, null, true);
       } else if (e.type === 'crash' && e.snake.alive) {
