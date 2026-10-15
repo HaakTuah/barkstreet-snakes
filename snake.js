@@ -1199,6 +1199,7 @@
     steerHintEl.classList.add('on');
     hintBox.w = steerHintEl.offsetWidth; hintBox.h = steerHintEl.offsetHeight; // (measured once a round: no layout reads in the loop)
     steerHintOn = true;
+    hintSpot = 0;
     placeSteerHint();
   }
   function hideSteerHint() {
@@ -1207,18 +1208,42 @@
     steerHintEl.classList.remove('on');
   }
   // Level with the YOU label: over your head (under it heading down, or by
-  // the top edge, as the arrow goes), on whichever side has room. It rides
-  // along with your head (a transform: the compositor's work).
+  // the top edge, as the arrow goes), on whichever side has room and no
+  // rival's speech bubble (else the other side, else level with your head's
+  // other side: a line a rival's just started saying stays readable). It
+  // rides along with your head (a transform: the compositor's work).
+  const bubbles = [], bubbleSize = new WeakMap(); // (the bubbles' boxes this frame; each one's size, measured once, as the chatter does)
+  let hintSpot = 0;
   function placeSteerHint() {
     const me = player();
     if (!me?.alive || !boardPx) return hideSteerHint();
     R.headPx(me, drawAlpha, boardPx, hintAt);
-    const c = boardPx / GRID;
+    const c = boardPx / GRID, w = hintBox.w, h = hintBox.h;
     let sgn = me.dir.y > 0 ? 1 : -1;
     if (sgn < 0 ? hintAt.y < c * 2.6 : hintAt.y > boardPx - c * 2.6) sgn = -sgn;
-    hintBox.x = Math.round(hintAt.x + c * 1.3 + hintBox.w <= boardPx - 4 ? hintAt.x + c * 1.3 : Math.max(4, hintAt.x - c * 1.3 - hintBox.w));
-    hintBox.y = Math.round(hintAt.y + sgn * c * 2.5 - hintBox.h / 2);
+    const right = hintAt.x + c * 1.3, left = hintAt.x - c * 1.3 - w;
+    const sides = right + w <= boardPx - 4 ? [right, left] : [Math.max(4, left), right];
+    const spots = [];
+    for (const s of [sgn, -sgn]) for (const x of sides) if (x >= 4 && x + w <= boardPx - 4) spots.push({ x, y: Math.min(boardPx - h - 4, Math.max(4, hintAt.y + s * c * 2.5 - h / 2)) });
+    bubbleBoxes();
+    const clear = p => bubbles.every(b => p.x >= b.x + b.w + 4 || b.x >= p.x + w + 4 || p.y >= b.y + b.h + 4 || b.y >= p.y + h + 4);
+    if (!(spots[hintSpot] && clear(spots[hintSpot]))) hintSpot = Math.max(0, spots.findIndex(clear)); // (it stays put while it can: no hopping to and fro)
+    const spot = spots[hintSpot] || { x: sides[0], y: hintAt.y + sgn * c * 2.5 - h / 2 }; // (no spot clear: where it'd be anyway)
+    hintBox.x = Math.round(spot.x);
+    hintBox.y = Math.round(spot.y);
     steerHintEl.style.transform = `translate(${hintBox.x}px, ${hintBox.y}px)`;
+  }
+  // The rivals' speech bubbles on the board, as the chatter placed them (its
+  // transforms: no layout read but a new bubble's size, once).
+  function bubbleBoxes() {
+    bubbles.length = 0;
+    for (const el of boardEl.querySelectorAll('.bubble')) {
+      const m = /translate\((-?[\d.]+)px, (-?[\d.]+)px\)/.exec(el.style.transform);
+      if (!m) continue;
+      let size = bubbleSize.get(el);
+      if (!size) bubbleSize.set(el, size = { w: el.offsetWidth, h: el.offsetHeight });
+      bubbles.push({ x: Number(m[1]), y: Number(m[2]), w: size.w, h: size.h });
+    }
   }
 
   // ------------------------------------------------------------- the HUD

@@ -702,6 +702,10 @@ canvas {
   will-change: transform;
   transition: opacity 0.2s;
 }
+/* With no card up, over the woodpecker's layer too: a rival's "Mind the
+   gap!" comes as the bird drums right by it, and the words come first.
+   (Still under the cards, and under the Hall of Fame, later in the page.) */
+.overlay.hidden ~ .bubble { z-index: 10; }
 .bubble > span {
   display: block;
   position: relative;
