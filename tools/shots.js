@@ -97,6 +97,12 @@ fs.mkdirSync(out, { recursive: true });
     await b.eval(`document.querySelector('#records .tab[data-tab="stats"]')?.click(); 'ok'`);
     await b.sleep(300);
     await shot('your-story.jpg');
+    await b.eval(`document.querySelector('#records .tab[data-tab="guide"]')?.click(); 'ok'`); // (the Field guide: every picture drawn by the renderer)
+    await b.sleep(300);
+    await shot('field-guide.jpg');
+    await b.eval(`(() => { const body = document.getElementById('records-body'); if (body) body.scrollTop = body.scrollHeight; return 'ok'; })()`);
+    await b.sleep(200);
+    await shot('field-guide-end.jpg');
     await b.key('Escape');
     await b.sleep(300);
 

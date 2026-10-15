@@ -4,8 +4,9 @@
 //      Colonist's land with and without it, holes): the script time of
 //      draw(), and the full cost of a frame (script plus the GPU's raster,
 //      measured to a readback: see scenes.js); what the land costs, as a
-//      ratio to its twin without it; and the woodpecker's strike, a frame
-//      that paints 14 new holes, against a steady one
+//      ratio to its twin without it; the woodpecker's strike, a frame
+//      that paints 14 new holes, against a steady one; and fire burning
+//      out, a frame that paints three cells' soot, against a steady one
 //   2. step(): whole ticks including every AI decision, over AI-only rounds
 //   3. real frames: script time of every animation frame while watching at
 //      1x and 4x, with the drawing quality pinned (the governor stays out)
@@ -16,7 +17,7 @@
 // process), see tools/trace.js.
 const path = require('path');
 const { launch, serve } = require('./browser');
-const { setup, throughput, strikes } = require('./scenes');
+const { setup, throughput, strikes, burnouts } = require('./scenes');
 const args = process.argv.slice(2);
 const at = args.indexOf('--root'), ROOT = at >= 0 ? path.resolve(args.splice(at, 2)[1]) : undefined;
 const WATCH = Number(args[0]) || 60;
@@ -51,6 +52,8 @@ const sum = a => ({ frames: a.length, median: q(a, 0.5), p95: q(a, 0.95), p99: q
     console.log(`the land's full cost: ${(full.fields / full.nofields).toFixed(2)}x the same board without it (at most 1.5x), ${(full.intruders / full['intruders-bare']).toFixed(2)}x with a rival on it`);
     await b.eval(setup('holes'));
     console.log("the woodpecker's strike, holes scene (full cost of a frame, ms)", await b.eval(strikes()));
+    await b.eval(setup('holes'));
+    console.log('fire burning out in three cells, their soot painted in, holes scene (full cost of a frame, ms)', await b.eval(burnouts()));
     await b.eval(`SnakeRender.setGame(SnakeDebug.game()); 'ok'`);
 
     const step = await b.eval(`(() => { ${SUMMARY}
