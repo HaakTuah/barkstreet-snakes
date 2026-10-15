@@ -20,7 +20,8 @@
 //   that jump be (a held tap, then a flash). A quick tap that drifts 7-11 px as it lifts
 //   still jumps; a long stroke 35-44° off the axis still turns; a double
 //   flick the same way is the turn, not a flash.
-// - Mashing jump over your death's card never starts a round.
+// - Mashing jump over your death's card never starts a round, nor focuses
+//   its name field (the phone's keyboard).
 // It prints what it measured: press-to-tick, tap-to-jump and swipe latencies.
 //
 //   node tools/input-test.js
@@ -300,7 +301,7 @@ const KEYS = {
     // game's own stay stopped, so nothing moves on the board. Page-side:
     // when each touch began, and when it first did something (a power, or a
     // turn queued), on that clock.
-    await ev(`(() => {
+    const VCLOCK = `(() => {
       (function idle() { __raf(idle); })();
       const real = window.setTimeout.bind(window), unreal = window.clearTimeout.bind(window);
       const vc = window.__vclock = { now: 0, timers: new Map(), id: 1e6 }, base = performance.now();
@@ -330,7 +331,8 @@ const KEYS = {
       document.addEventListener('touchmove', seen, { passive: true });
       for (const n of ['leap', 'flash']) { const f = SnakeEngine[n]; SnakeEngine[n] = (g, s) => { if (!__touch.did) { __touch.did = vc.now; __touch.what = n; } return f(g, s); }; }
       return 'ok';
-    })()`);
+    })()`;
+    await ev(VCLOCK);
 
     // A tap jumps (on lift, or held still for TAP_JUMP_MS with something to
     // hop on the way); taps on a button or a tag don't.
@@ -597,6 +599,38 @@ const KEYS = {
     const settled = await state();
     check(!mashed.alive && mashed.up && mashed.s === 'running' && mash.some(m => m.startsWith('card')) && settled === 'countdown',
       'mashing jump over your death card never plays again; a tap once it’s settled does', `${mashed.title} ${mash.filter(m => m.startsWith('card')).length} taps on Play again, then ${settled}`);
+
+    // Nor does mashing focus its name field. A round that earned a place in
+    // the Hall of Fame (a new best here) offers "Carve your name" in the
+    // card's middle, just where a thumb mashing jump lands, and a focused
+    // field brings the phone's keyboard up over the round. A tap on it (or
+    // its words) once the card's settled does focus it.
+    await ev(`(() => { localStorage.setItem('snake-best', '1'); return 'ok'; })()`);
+    await freshRound();
+    await ev(VCLOCK);
+    await ev(`(() => { const me = SnakeDebug.game().snakes[0]; me.body = [{ x: 22, y: 12 }, { x: 21, y: 12 }, { x: 20, y: 12 }]; me.prev = null; me.eaten = 25; return 'ok'; })()`);
+    const fieldAt = id => ev(`(() => { const r = document.getElementById('${id}').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
+    let carveTaps = 0, focusedMash = false;
+    for (let i = 0; i < 14; i++) {
+      const offered = await ev(`cardUp() && !document.getElementById('name-row').hidden`);
+      const at = offered ? await fieldAt(i % 2 ? 'name-rank' : 'name-input') : { x: cx, y: cy };
+      if (offered) carveTaps++;
+      await touch('touchStart', [{ ...at, id: 1 }]);
+      await ev('vadvance(50)');
+      await touch('touchEnd', []);
+      await ev('vadvance(60)');
+      await ev('vf(7)');
+      if (await ev(`document.activeElement?.id === 'name-input'`)) focusedMash = true;
+    }
+    const carveState = await state();
+    await ev('vadvance(600)'); await ev('vf(36)');
+    await touch('touchStart', [{ ...await fieldAt('name-input'), id: 1 }]);
+    await ev('vadvance(60)');
+    await touch('touchEnd', []);
+    await ev('vadvance(20)');
+    const focusedLater = await ev(`document.activeElement?.id === 'name-input'`);
+    check(carveTaps > 0 && !focusedMash && carveState === 'running' && focusedLater,
+      'mashing jump over a card offering the carve never focuses the name field; a tap once it’s settled does', `${carveTaps} taps on the field or its words, ${focusedMash ? 'focused' : 'not focused'}; then ${focusedLater ? 'focused' : 'not focused'}`);
 
     console.log(results.join('\n'));
     console.log('\nmeasured (virtual 60 Hz, 120 ms ticks):');

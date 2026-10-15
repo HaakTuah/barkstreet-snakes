@@ -1717,7 +1717,8 @@
   // button's click is swallowed; a short tap is still a click. But a card
   // that comes up by itself (your death's, the round's end) takes no touch
   // that began as it came up, nor one of a run of quick touches that did
-  // (CARD_TAP_MS, CARD_MASH_MS): mashing jump never plays again.
+  // (CARD_TAP_MS, CARD_MASH_MS): mashing jump never plays again, nor
+  // focuses the name field it offers (the phone's keyboard over the round).
   const swipes = new Map(); // touch id -> { x, y (the anchor), x0, y0 (where it touched), at, far (furthest from there), run (when its run of touches began), last, button, tapOnly, moved, tap, timer, held (when its hold asked for a jump that may not have gone yet) }
   const swiping = () => (state === 'running' || state === 'countdown') && playerAlive();
   const swipeMin = () => Math.max(T.SWIPE_MIN_PX, (boardPx || 320) / GRID * T.SWIPE_CELLS); // (how far a fresh swipe goes before it counts)
@@ -1728,6 +1729,7 @@
     const now = performance.now();
     if (now - touchAt >= T.CARD_MASH_MS) runFrom = now;
     touchAt = now;
+    if (!swiping() && runFrom < cardShownAt + T.CARD_TAP_MS && e.target.closest?.('#overlay input, #overlay label, #overlay a')) { e.preventDefault(); return; } // (a card that came up by itself under a run of quick touches: its name field takes none of them either, no focus and no phone keyboard over the round)
     if (e.target.closest?.('input, a, #records')) return;
     const button = e.target.closest?.('button:not(:disabled), [role="switch"]');
     if (!button && !swiping() && !canvas.contains(e.target)) return;
