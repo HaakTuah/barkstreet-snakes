@@ -746,6 +746,16 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
     const fell = !me.alive && me.cause === 'fell into a woodpecker hole';
     check(`a jump that comes down on a body bridging a hole (${what}) falls in when it's gone, not before`, n === 13 ? me.alive && off > 0 : fell && me.diedAt === left, `${me.alive ? 'alive' : me.cause} died ${me.diedAt}, bridge gone ${left}, off ${off}`);
   }
+  // The bridge's snake crashes as it comes down: the tail it loses is no bridge (in it goes, no crash first), the rest still is.
+  for (const [n, lost] of [[11, true], [15, false]]) {
+    const g = board([[line(5, 10, 6), 'right'], [Array.from({ length: n }, (_, i) => [6, 1 + i]), 'up'], [[[7, 12], [7, 13], [7, 14], [7, 15]], 'up']]);
+    const [me] = g.snakes; // (the bridge heads up into the top edge, and crashes there as me comes down; (6,10) is its tail end then, or well inside it)
+    g.holes.add(K(6, 10));
+    E.leap(g, me);
+    feed(g); quiet(g); feed(g); quiet(g);
+    const crashed = g.events.some(e => e.type === 'crash' && e.snake === me);
+    check(`a jump coming down on a bridge whose snake crashes as it lands: ${lost ? 'the bridge is in the tail it loses, so in it goes, with no crash first' : 'the bridge is in what it keeps, so it holds'}`, lost ? !me.alive && me.cause === 'fell into a woodpecker hole' && !crashed : me.alive && crashed, `${me.alive ? 'alive' : me.cause}, crashed ${crashed}`);
+  }
 }
 
 { // Boxed in only if there'll be nowhere to turn when the stun's over: a rival's tail moving on in time counts as room.

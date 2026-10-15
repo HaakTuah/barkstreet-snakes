@@ -970,8 +970,10 @@ window.SnakeEngine = (() => {
       // (A landing that crashed: its head comes down on what it hopped; a
       // hole, and in it goes, unless a body lies across it that's still
       // there once everyone's moved: that holds it up, till it moves on too,
-      // and then it falls in (see fallIn).)
-      const h = s.body[0], stays = (o, j) => j < o.body.length - 1 || !o.tailMoves || crashes.has(o) || !moving.includes(o);
+      // and then it falls in (see fallIn). A body that crashes this tick
+      // stays, but for the tail it loses, and none of it if it's blown up or
+      // at its smallest: it's out.)
+      const h = s.body[0], stays = (o, j) => crashes.has(o) ? !o.boom && o.body.length > T.MIN_LENGTH && j < o.body.length - Math.min(T.CRASH_LOSS, o.body.length - T.MIN_LENGTH) : j < o.body.length - 1 || !o.tailMoves || !moving.includes(o);
       if (s.landing && game.holes.has(key(h.x, h.y)) && !game.snakes.some(o => o !== s && o.alive && !gone.has(o) && o.body.some((b, j) => b.x === h.x && b.y === h.y && stays(o, j)))) {
         Object.assign(c, { cause: 'fell into a woodpecker hole', killer: 'wall', killerId: null, headOn: false, meet: false });
         out.add(s); why.set(s, 'hole');
