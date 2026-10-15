@@ -108,10 +108,9 @@
     steerHint: touchFirst ? 'Swipe to steer' : 'Arrows or WASD to steer',
     leapNothing: 'Jumps hop over a snake, a hole or fire.',
     leapEarly: 'A bit early: jump when it’s right in front.',
-    swipeAhead: 'Tap to jump over things. Swipe ahead to flash.',
+    powersFirst: 'Tap to jump over things. Swipe ahead to flash.', // (a short phone's first Go: steering is beside YOU)
     bothOut: ['Nobody walked away from that one.', 'A draw, of sorts.', 'Both of you. At once.'],
     wakeBeat: 'Ready…',
-    swipeFirst: 'Swipe to steer. Tap to jump.',
     baked: ['Baking in the fire: worth 2, if you can take the heat.', 'Baked: hot food is worth 2, if you can take the heat.'],
     bakedWatch: ['Baking in the fire: worth 2, to whoever takes the heat.'],
     beetle: ['A beetle is out for a walk. It won’t get far.', 'A beetle is crawling about. Crunchy.'],
@@ -202,7 +201,7 @@
   // weather): the frame clock, but at 2x or 4x when you're watching that fast.
   let boardClock = performance.now();
   let helpText = ''; // (the help under the board, as last written)
-  let swipeTold = false, swipedToStart = false; // (the first Go on a short phone has said how to steer; unless you swiped to start)
+  let powersTold = false; // (the first Go on a short phone has said how to jump and flash)
   let flashedEver = false; // (you've flashed, or pressed to: the flash's key needn't be told again this visit)
   let beatsLeft = 0, beatTimer = 0, waking = false; // (waking: the one beat back from a nap)
   let freezeUntil = 0, pendingCard = null, cardAt = 0; // times on the frame clock (rAF timestamps)
@@ -549,7 +548,7 @@
     youHideAt = performance.now() + T.YOU_MS;
     Audio.play('go');
     if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
-    else if (touchFirst && game.withPlayer && !swipeTold && helpEl.getBoundingClientRect().top > innerHeight - 8) { swipeTold = true; toast(swipedToStart ? FLAVOR.swipeAhead : FLAVOR.swipeFirst, 2600, 'go', 'lesson'); } // (a short phone: the help under the board is off the screen)
+    else if (touchFirst && game.withPlayer && !powersTold && helpEl.getBoundingClientRect().top > innerHeight - 8) { powersTold = true; toast(FLAVOR.powersFirst, 2600, 'go', 'lesson'); } // (a short phone: the help under the board is off the screen; how to steer is beside YOU)
     else toast(pick(game.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1300, 'go');
     flashFrame('go');
     acc = 0;
@@ -1638,7 +1637,6 @@
       if (Math.max(ax, ay) < threshold || Math.max(ax, ay) < T.SWIPE_AXIS * Math.min(ax, ay)) continue;
       sw.tap = false; // (a swipe is never a jump)
       clearTimeout(sw.timer);
-      if (state === 'ready' || state === 'countdown') swipedToStart = true;
       steer(dir, true);
       sw.last = dir;
       sw.x = t.clientX;

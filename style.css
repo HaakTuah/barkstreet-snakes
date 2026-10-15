@@ -261,6 +261,7 @@ main { container: page / inline-size; }
   .scoreboard .chip b { display: none; }
   .scoreboard .chip { padding-inline: 3px; }
   .scoreboard .pow { flex-shrink: 0; min-width: min-content; }
+  .scoreboard .chip:not(.wrap) ~ .chip.wrap { display: none; } /* (with other powers, the wrap gives way: it shows on the board, as the gold shimmer) */
   .scoreboard li.leader .len::before { display: none; } /* (the leader's gold ring says it) */
   .scoreboard .name { font-size: 0.86rem; }
 }
