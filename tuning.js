@@ -8,6 +8,8 @@ window.TUNING = Object.freeze({
 
   // ------------------------------------------------------------------ food
   APPLES: 3,                // green apples on the board at all times (+1)
+  APPLES_LATE: 2,           // ...and this many once the opening's over (hunger should matter mid-round)...
+  APPLES_LATE_FROM: 45000,  // ...from this much game time
   APPLE_TICKS: 110,         // an apple rots away after about this many ticks (give or take a quarter: about 8-16 s), and another drops somewhere
   MUSHROOMS: 2,             // red mushrooms on the board at all times
   MUSHROOM_TICKS: 180,      // a mushroom withers (and regrows elsewhere) after this many ticks
@@ -17,6 +19,10 @@ window.TUNING = Object.freeze({
   BEETLE_FIRST_MS: 15000,   // beetles start coming out after this long...
   BEETLE_CHANCE: 0.006,     // ...with this chance per tick, while there is none (and no woodpecker)
   BEETLE_TICKS: 260,        // a beetle nobody catches flies off after this many ticks
+  PELLET_TICKS: 150,        // body food (beads) rots after about this many ticks (give or take a quarter)...
+  PELLET_COOKED: 1.5,       // ...roasted beads last this many times as long
+  CORPSE_EVERY: 2,          // a dead snake leaves a bead on every this-many segments (at least MIN_LENGTH of them); crash drops and cut tails stay whole
+  SHROOM_GAP: 2,            // mushrooms never sprout this close to a head (nobody could see one appear in front of them in time)
   BEETLE_EVERY: 3,          // it crawls one cell every this many ticks...
   BEETLE_SCARED_EVERY: 2,   // ...or every 2, scurrying away (half a snake's speed: a chase you can win)...
   BEETLE_FEAR: 4,           // ...from any head within this many cells
@@ -73,6 +79,8 @@ window.TUNING = Object.freeze({
   LEAP_SWELL: 0.38,         // in the air, the head swells this much at the top of a leap (seen from above, rising is coming toward you)...
   LEAP_SWELL_GOLD: 0.5,     // ...and a golden leap's, this much
   STREAK_MS: 340,           // a dash's speed lines fade over this long
+  DRAW_LEAD: 0.5,           // the board is drawn this many ticks ahead (drawing only: the cell your head is drawn in is the cell your press turns at)
+  FACE_EASE_MS: 60,         // your own face turns toward a new heading over about this long (rivals keep the steady line)
 
   // ----------------------------------------------------------------- speed
   OPENING_TICK: 170,        // the first ticks of a round are slower, so the start is forgiving...
@@ -92,6 +100,9 @@ window.TUNING = Object.freeze({
   PECK_REST_MIN: 12,
   PECK_CHUNK_MAX: 14,       // ...and each patch a cell bigger than the last (up to this)
   PECK_CLEARANCE: 2,        // it aims clear of every body and food, this far from every head, while there's such a spot
+  PECK_UNDER_BODY: 0.33,    // this share of strikes starts under a body (a body lying over a fresh hole bridges it; only a head falls in)
+  PECK_WIDEN: 0.5,          // this share widens an old hollow (fewer, bigger hollows)
+  SD_APPLE_GAP: 20,         // sudden death: with no apple on the board, the next falls this many ticks times how many have fallen since 2:00 after the last went
 
   // --------------------------------------------------------------- burrows
   BURROW_MAX: 3,            // beetle burrows that crack open in the bark over a round (harmless to cross)
@@ -107,6 +118,7 @@ window.TUNING = Object.freeze({
   SPELL_MAX_MS: 18000,
   WEATHER_ODDS: Object.freeze({ sun: 2, wind: 3, rain: 3, storm: 3, snow: 2 }), // how likely each spell is...
   STORM_FROM_MS: 30000,     // ...(no storms before this)
+  SNOW_FROM_MS: 45000,      // ...(and no winter before this: snow in the first half-minute starved 5-long snakes)
   SUN_GOLDEN: 5,            // sun: golden hour, golden apples this many times as likely
   GUST_EVERY_MS: 3500,      // wind: a gust this often, knocking an apple loose...
   WINDFALL_MAX: 3,          // ...up to this many apples more than usual
@@ -123,6 +135,7 @@ window.TUNING = Object.freeze({
   FIRE_SMOLDER_TICKS: 4,    // ...after smouldering (harmless) this long when fire spreads to it
   FIRE_SPREAD: 0.1,         // each tick, each burning cell catches a neighbour with this chance...
   FIRE_MAX: 6,              // ...but one strike's fire covers at most this many cells...
+  FIRE_TOTAL: 12,           // ...and catches at most this many over its whole life...
   FIRE_BOARD_MAX: 30,       // ...and the whole board at most this many
   RAIN_DOUSE_TICKS: 6,      // rain (or snow) puts a fire out within this many ticks
   EMBER_CHANCE: 0.025,      // wind (and storms): each tick, a burning cell flings a burning leaf with this chance...
@@ -134,6 +147,8 @@ window.TUNING = Object.freeze({
   REACTION_MS: 240,         // how stale every AI's view of the other snakes is
   HISTORY: 8,               // board snapshots kept for that delay
   AI_HUNGRY_MS: 10000,      // with this long left before starving, an AI starts looking for food, harder as it gets closer
+  AI_DESPERATE_MS: 11000,   // with less than this much life left by hunger (its own clock, shrinking included), an AI drops its errands and takes its chances for food
+  LAND_REACH: 0.5,          // a cell is Sovereign's or a colony's land when its centre is within the field's radius plus this of the field's centre (one rule: AI, chatter, HUD, borders)
 
   // ------------------------------------------------------------- the round
   COUNTDOWN_BEAT: 350,      // 3, 2, 1: each beat this long (any direction skips it)
@@ -152,6 +167,9 @@ window.TUNING = Object.freeze({
   POWER_AFTER_TURN_MS: 180, // a press the way you just turned, this soon after, is part of the turn (a double tap), not a leap
   SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells...
   SWIPE_MIN_PX: 12,         // ...and at least this far (about 3 mm), so a jittery finger doesn't turn
+  SWIPE_CHAIN_PX: 8,        // ...but a finger already swiping chains its next turn after this far
+  TAP_JUMP_MS: 60,          // a touch that stays still this long (or lifts sooner without travelling) is a tap: a jump
+  TAP_STILL_PX: 6,          // ...still: within this far of where it touched
 
   // ---------------------------------------------------------------- online
   HOST_DELAY_MAX: 150,      // the host's turns wait a friend's round trip, but never longer than this
