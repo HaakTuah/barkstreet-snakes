@@ -406,7 +406,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
     g.weather = { kind, since: 0, until: 1e12, nextGust: 0, nextStrike: 1e12 };
     other += kinds(g, 'leaf', 300) + (kind === 'rain' ? 0 : kinds(g, 'goldcap', 300));
   }
-  check('golden leaves come on the wind', leaves > 5 && leaves < 80, leaves);
+  check('golden leaves come on the wind', Math.abs(leaves - 400 * T.LEAF_CHANCE) < 200 * T.LEAF_CHANCE + 5, `${leaves} in 400 gusts`);
   check('...golden mushrooms in the rain', caps === 1, caps);
   check('...and never otherwise', other === 0, other);
 }
@@ -877,6 +877,46 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('...downwind', upwind === 0, `${upwind} upwind`);
   check('...that smoulder first', early === 0, `${early} without warning`);
   check('...and burn small, without spreading', spread === 0, `${spread} spread`);
+}
+
+{ // A lightning fire burns itself out: at most FIRE_MAX cells at once, and FIRE_TOTAL over its whole life.
+  let most = 0, out = 0;
+  const trials = 30;
+  for (let r = 0; r < trials; r++) {
+    const g = board([[[[2, 2], [1, 2], [0, 2]], 'right'], [[[2, 20], [1, 20], [0, 20]], 'right']]);
+    for (const o of g.snakes) o.stunUntil = 1e9;
+    g.weather = { kind: 'clear', since: 0, until: 1e12, nextGust: 1e12, nextStrike: 1e12 };
+    g.fires.set(K(12, 12), { from: 0, until: T.FIRE_TICKS, group: 1, strike: true }); g.fireGroups.set(1, 1); g.fireTotals.set(1, 1);
+    const caught = new Set();
+    for (let t = 0; t < 1500 && g.fires.size; t++) { feed(g); quiet(g); for (const [k, f] of g.fires) caught.add(k + ':' + f.from); }
+    most = Math.max(most, caught.size);
+    if (!g.fires.size) out++;
+  }
+  check('a lightning fire catches at most FIRE_TOTAL cells over its life', most <= T.FIRE_TOTAL && most > T.FIRE_MAX, `${most} at most`);
+  check('...so it burns itself out', out === trials, `${out} of ${trials}`);
+}
+
+{ // Weather comes from a shuffled bag: every kind before any repeats. Storms and snow drawn too early wait in it.
+  const g = board([[line(5, 5, 4), 'right'], [line(5, 15, 4), 'right']]);
+  for (const o of g.snakes) o.stunUntil = 1e9;
+  const next = time => { g.time = time; g.weather = { kind: 'clear', since: 0, until: 0, nextGust: 1e12, nextStrike: 1e12 }; feed(g); quiet(g); return g.weather.kind; };
+  const bag = Object.entries(T.WEATHER_ODDS).flatMap(([k, n]) => Array(n).fill(k)), late = bag.filter(k => k === 'storm' || k === 'snow');
+  const early = Array.from({ length: bag.length - late.length }, () => next(Math.min(T.STORM_FROM_MS, T.SNOW_FROM_MS) - 5000));
+  const then = Array.from({ length: late.length }, () => next(Math.max(T.STORM_FROM_MS, T.SNOW_FROM_MS) + 5000));
+  check('no storms or snow early on: they wait in the bag', early.sort().join() === bag.filter(k => !late.includes(k)).sort().join(), early.join());
+  check('...and come once they may', then.sort().join() === late.sort().join(), then.join());
+  const runs = [];
+  for (let r = 0; r < 6; r++) runs.push(Array.from({ length: bag.length }, () => next(60000)).sort().join());
+  check('...every kind comes before any repeats', runs.every(r => r === bag.sort().join()), runs.join(' / '));
+  // A storm's rain comes on top: it doesn't use up the bag's.
+  let rains = 0;
+  for (let t = 0; t < 30; t++) {
+    g.weatherBag = ['rain'];
+    g.time = 60000; g.weather = { kind: 'storm', since: 0, until: 0, nextGust: 1e12, nextStrike: 1e12 }; feed(g); quiet(g);
+    if (g.weather.kind === 'rain') rains++;
+    if (g.weatherBag.join() !== 'rain') break;
+  }
+  check('...and a storm\'s rain comes on top', rains > 5 && g.weatherBag.join() === 'rain', `${rains} rains, bag ${g.weatherBag.join()}`);
 }
 
 { // A scared beetle on a burrow dives in and comes out of a burrow a while later; food never sits on a burrow.

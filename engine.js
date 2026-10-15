@@ -96,8 +96,13 @@ window.SnakeEngine = (() => {
       // it burns (setting alight any head that enters) from tick `from` to `until`; before that it's
       // only smouldering, or crackling where lightning will strike), and the
       // weather ({ kind, since, until, nextGust, nextStrike }, in game time).
-      burrows: [], underground: null, fires: new Map(), fireGroups: new Map(), fireGroup: 0,
-      weather: { kind: 'clear', since: 0, until: T.WEATHER_FIRST_MS, nextGust: 0, nextStrike: 0 },
+      // fireGroups: how many cells each fire has burning now; fireTotals: how
+      // many it has caught over its life. weatherBag: the spells still to come
+      // before any kind repeats (see spell). sdApples: apples fallen since the
+      // woodpecker came; sdAppleAt: the tick the next falls.
+      burrows: [], underground: null, fires: new Map(), fireGroups: new Map(), fireTotals: new Map(), fireGroup: 0,
+      weather: { kind: 'clear', since: 0, until: T.WEATHER_FIRST_MS, nextGust: 0, nextStrike: 0 }, weatherBag: [],
+      sdApples: 0, sdAppleAt: null,
     };
     fillFood(game);
     snapshot(game);
@@ -368,11 +373,20 @@ window.SnakeEngine = (() => {
     burn(game);
   }
 
+  // The next spell, drawn from a shuffled bag (WEATHER_ODDS of each kind), so
+  // every kind comes before any comes again. Storms can't come before
+  // STORM_FROM_MS, nor snow before SNOW_FROM_MS: they stay in the bag for
+  // later (with nothing else left in it, the next bag goes in behind).
   function spell(game) {
-    const odds = Object.entries(T.WEATHER_ODDS).filter(([k]) => k !== 'storm' || game.time >= T.STORM_FROM_MS);
-    let roll = Math.random() * odds.reduce((a, [, n]) => a + n, 0);
-    for (const [k, n] of odds) if ((roll -= n) < 0) return k;
-    return 'clear';
+    const bag = game.weatherBag, ok = k => (k !== 'storm' || game.time >= T.STORM_FROM_MS) && (k !== 'snow' || game.time >= T.SNOW_FROM_MS);
+    if (!bag.some(ok)) {
+      const more = [];
+      for (const [k, n] of Object.entries(T.WEATHER_ODDS)) for (let i = 0; i < n; i++) more.push(k);
+      for (let i = more.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [more[i], more[j]] = [more[j], more[i]]; }
+      bag.push(...more);
+    }
+    const i = bag.findIndex(ok);
+    return i < 0 ? 'clear' : bag.splice(i, 1)[0];
   }
 
   // After the rain: a rainbow, and a golden apple at its end (if there isn't one).
@@ -398,14 +412,16 @@ window.SnakeEngine = (() => {
     const k = spots[Math.floor(Math.random() * spots.length)], from = game.tick + T.STRIKE_WARN_TICKS;
     const group = ++game.fireGroup;
     game.fires.set(k, { from, until: from + T.FIRE_TICKS, group, strike: true });
-    game.fireGroups.set(group, 1);
+    game.fireGroups.set(group, 1); game.fireTotals.set(group, 1);
     game.events.push({ type: 'charge', x: k % GRID, y: Math.floor(k / GRID) });
   }
 
   // Fire: a strike lands when its crackling's done, burning cells now and then
-  // catch a neighbour (smouldering first, so everyone sees it coming), and
-  // cells burn out. Rain puts it all out. (Times are ticks: the next tick is
-  // game.tick + 1, when anything that's burning by then can kill.)
+  // catch a neighbour (smouldering first, so everyone sees it coming: at most
+  // FIRE_MAX of one fire's cells at once, and FIRE_TOTAL over its life, so it
+  // burns itself out), and cells burn out. Rain puts it all out. (Times are
+  // ticks: the next tick is game.tick + 1, when anything that's burning by
+  // then can kill.)
   function burn(game) {
     if (!game.fires.size) return;
     const next = game.tick + 1, raining = game.weather.kind === 'rain' || game.weather.kind === 'snow'; // (rain or snow: it goes out)
@@ -413,16 +429,11 @@ window.SnakeEngine = (() => {
     let marked = false;
     for (const [k, f] of game.fires) {
       if (raining) f.until = Math.min(f.until, Math.max(f.from, next) + T.RAIN_DOUSE_TICKS);
-      if (f.until <= next) { // burnt out
-        game.fires.delete(k);
-        const left = (game.fireGroups.get(f.group) || 1) - 1;
-        if (left > 0) game.fireGroups.set(f.group, left); else game.fireGroups.delete(f.group);
-        continue;
-      }
+      if (f.until <= next) { putOut(game, k); continue; } // burnt out
       if (f.strike && f.from === next) game.events.push({ type: 'strike', x: k % GRID, y: Math.floor(k / GRID) });
       // Wind: a burning leaf blown downwind (to the right), to start a small fire where it lands.
       if (windy && !raining && !f.ember && game.tick >= f.from && game.fires.size < T.FIRE_BOARD_MAX && Math.random() < T.EMBER_CHANCE) ember(game, k);
-      if (f.ember || raining || game.tick < f.from || Math.random() >= T.FIRE_SPREAD || (game.fireGroups.get(f.group) || 0) >= T.FIRE_MAX || game.fires.size >= T.FIRE_BOARD_MAX) continue;
+      if (f.ember || raining || game.tick < f.from || Math.random() >= T.FIRE_SPREAD || (game.fireGroups.get(f.group) || 0) >= T.FIRE_MAX || (game.fireTotals.get(f.group) || 1) >= T.FIRE_TOTAL || game.fires.size >= T.FIRE_BOARD_MAX) continue;
       if (!marked) {
         markBodies(game);
         for (const fo of game.food) if (fo.kind === 'beetle') bodyStamp[key(fo.x, fo.y)] = stamp; // (food can catch; a beetle runs)
@@ -434,12 +445,20 @@ window.SnakeEngine = (() => {
       const from = next + T.FIRE_SMOLDER_TICKS;
       game.fires.set(nk, { from, until: from + T.FIRE_TICKS, group: f.group, strike: false });
       game.fireGroups.set(f.group, (game.fireGroups.get(f.group) || 0) + 1);
+      game.fireTotals.set(f.group, (game.fireTotals.get(f.group) || 1) + 1);
     }
     cook(game);
   }
-  // Food in a burning cell cooks: an apple or a piece of meat bakes (worth
-  // more, and an apple stops rotting for a while), and anything left in too
-  // long goes to ash.
+  // A cell's fire gone (burnt out, put out by a dash, or pecked out), and its fire's counts with it.
+  function putOut(game, k) {
+    const f = game.fires.get(k);
+    game.fires.delete(k);
+    const left = (game.fireGroups.get(f.group) || 1) - 1;
+    if (left > 0) game.fireGroups.set(f.group, left);
+    else { game.fireGroups.delete(f.group); game.fireTotals.delete(f.group); }
+  }
+  // Food in a burning cell cooks: an apple or a bead bakes (worth more, and
+  // it stops rotting for a while), and anything left in too long goes to ash.
   function cook(game) {
     let ash = false;
     for (const f of game.food) {
@@ -1231,15 +1250,12 @@ window.SnakeEngine = (() => {
     }
     const cut = o.body.splice(j);
     for (const b of cut) unstamp(o, b);
-    for (let i = 1; i < cut.length; i++) drops.push({ x: cut[i].x, y: cut[i].y, color: o.color });
+    for (let i = 1; i < cut.length; i++) drops.push({ x: cut[i].x, y: cut[i].y, color: o.color, owner: o.id });
     if (o.tailMoves) unstamp(o, o.body[o.body.length - 1]); // (its new tail moves on this tick)
     game.events.push({ type: 'cut', snake: o, x: cut[0].x, y: cut[0].y, lost: cut.length, by: by.id });
   }
   function douse(game, k) {
-    const f = game.fires.get(k);
-    game.fires.delete(k);
-    const left = (game.fireGroups.get(f.group) || 1) - 1;
-    if (left > 0) game.fireGroups.set(f.group, left); else game.fireGroups.delete(f.group);
+    putOut(game, k);
     game.events.push({ type: 'douse', x: k % GRID, y: Math.floor(k / GRID) });
   }
   // Mid-tick, for the cells a leap or a dash passes on the way: its head on a
