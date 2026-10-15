@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Checks the online protocol: plays rounds on a "host" game, sends every tick
 // through JSON to a "guest" game, and checks after every tick that the guest
-// sees exactly the host's board (bodies, food, holes, the woodpecker, deaths).
+// sees exactly the host's board (bodies, food, holes, the woodpecker, deaths,
+// powers). The people jump and flash now and then, through the same 'pow'
+// message a friend's browser sends.
 // Every message must fit PeerJS's 16 KB limit, and a guest must shrug off a
 // malformed one.
 //
@@ -27,7 +29,7 @@ const wire = msg => {
   return JSON.parse(text);
 };
 
-let ticks = 0, checks = 0;
+let ticks = 0, checks = 0, presses = 0, flashes = 0;
 const fail = (round, tick, what, a, b) => {
   console.error(`round ${round}, tick ${tick}: ${what} differs\n  host:  ${JSON.stringify(a)}\n  guest: ${JSON.stringify(b)}`);
   process.exit(1);
@@ -52,7 +54,17 @@ for (let r = 0; r < rounds; r++) {
 
   let holesSent = 0;
   while (host.snakes.filter(s => s.alive).length > 1 && host.time < 400000) {
+    // A person presses a power now and then (about one press a second each),
+    // as their browser would: a message, checked, then the engine's own call.
+    for (const s of host.snakes) {
+      if (!s.isPlayer || !s.alive || Math.random() > 0.12) continue;
+      const msg = wire({ t: 'pow', k: O.POWERS[Math.random() < 0.6 ? 1 : 0] });
+      if (!O.POWERS.includes(msg.k)) continue;
+      (msg.k === 'flash' ? E.flash : E.leap)(host, s);
+      presses++;
+    }
     const dyingHost = E.step(host);
+    flashes += host.events.filter(e => e.type === 'dash' && e.plain).length;
     const msg = wire(O.tick(host, { holesFrom: holesSent, tickLen: E.tickMs(host) }));
     holesSent = host.holes.size;
     const dyingGuest = O.apply(guest, msg, E.DIRS);
@@ -63,9 +75,9 @@ for (let r = 0; r < rounds; r++) {
     same(r, k, 'alive', host.snakes.map(s => s.alive), guest.snakes.map(s => s.alive));
     same(r, k, 'dirs', host.snakes.map(s => s.dir), guest.snakes.map(s => s.dir));
     same(r, k, 'hunger', host.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve]), guest.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve]));
-    const powers = g => g.snakes.map(s => [s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed, s.dashes, s.leapReadyAt, s.wrapUntil, s.flight ? s.flight.dir : null]);
+    const powers = g => g.snakes.map(s => [s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed, s.dashes, s.leapReadyAt, s.wrapUntil, s.flight ? s.flight.dir : null, s.flashReadyAt, s.flashArmed]);
     same(r, k, 'stuns, burns and powers', powers(host), powers(guest));
-    const food = g => g.food.map(f => [f.x, f.y, f.kind, f.expires, f.color, f.dir && f.kind === 'beetle' ? f.dir : null, f.px ?? null, f.py ?? null, f.movedAt ?? null, !!f.scared, f.heat || 0, !!f.cooked, !!f.gold]);
+    const food = g => g.food.map(f => [f.x, f.y, f.kind, f.expires, f.color, f.dir && f.kind === 'beetle' ? f.dir : null, f.px ?? null, f.py ?? null, f.movedAt ?? null, !!f.scared, f.heat || 0, !!f.cooked, !!f.gold, f.owner ?? null]);
     same(r, k, 'food', food(host), food(guest));
     same(r, k, 'holes', [...host.holes], [...guest.holes]);
     same(r, k, 'woodpecker', host.woodpecker, guest.woodpecker);
@@ -73,9 +85,9 @@ for (let r = 0; r < rounds; r++) {
     same(r, k, 'fire', [...host.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]), [...guest.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]));
     same(r, k, 'weather', [host.weather.kind, host.weather.since, host.weather.until], [guest.weather.kind, guest.weather.since, guest.weather.until]);
     same(r, k, 'deaths', dyingHost.map(s => [s.id, s.cause, s.killer, s.killerId, s.fatal || null]), dyingGuest.map(s => [s.id, s.cause, s.killer, s.killerId, s.fatal || null]));
-    const ev = g => g.events.map(e => [e.type, e.snake?.id, e.kind, e.x, e.y, e.gold ? 1 : 0, e.reach ?? null, e.n ?? null, e.by ?? null]); // (powers' payloads too)
+    const ev = g => g.events.map(e => [e.type, e.snake?.id, e.kind, e.x, e.y, e.gold ? 1 : 0, e.reach ?? null, e.n ?? null, e.by ?? null, e.plain ? 1 : 0, e.flash ? 1 : 0, e.own ? 1 : 0, e.type === 'peck' ? e.under ?? [] : null, e.color ?? null]); // (powers' payloads too, and what the lessons need)
     same(r, k, 'events', ev(host), ev(guest));
-    const look = g => g.snakes.map(s => ['home', 'colonies', 'mood', 'moodChangedAt', 'modelId'].map(f => s.memory[f] ?? null));
+    const look = g => g.snakes.map(s => ['home', 'colonies', 'mood', 'moodChangedAt', 'modelId', 'desperate'].map(f => s.memory[f] ?? null));
     same(r, k, 'looks', look(host), look(guest));
   }
 }
@@ -96,4 +108,8 @@ bad.s[1][6] = { mood: 'constructor', colonies: 'not a list', home: 5, victimId: 
 O.apply(g, bad, E.DIRS);
 if (g.snakes[1].memory.mood || g.snakes[1].memory.colonies || g.snakes[1].memory.home || g.snakes[1].memory.victimId) { console.error('malformed memory got through'); process.exit(1); }
 
-console.log(`ok: ${rounds} rounds, ${ticks} ticks, ${checks} checks, guest matched the host every tick; biggest message ${biggest} bytes`);
+// A guest's press the host can't use (an unknown power, a made-up direction) is refused.
+if (O.POWERS.includes('dash') || O.POWERS.includes(undefined) || O.DIR_NAMES.includes('ahead')) { console.error('a bad press got through'); process.exit(1); }
+if (!flashes) { console.error('no plain flash happened: the test lost its point'); process.exit(1); }
+
+console.log(`ok: ${rounds} rounds, ${ticks} ticks, ${checks} checks, guest matched the host every tick (${presses} power presses, ${flashes} plain flashes); biggest message ${biggest} bytes`);
