@@ -2,8 +2,11 @@
 // Checks the online protocol: plays rounds on a "host" game, sends every tick
 // through JSON to a "guest" game, and checks after every tick that the guest
 // sees exactly the host's board (bodies, food, holes, the woodpecker, deaths,
-// powers). The people jump and flash now and then, through the same 'pow'
-// message a friend's browser sends.
+// powers). The people jump and flash now and then (and take a held jump
+// back), through the same 'pow' message a friend's browser sends; one of
+// them steers by queueing turns, as presses do. Between ticks the guest gets
+// the host's plans (the rivals' thinking ahead, a person's queued turn), and
+// draws ahead from the same ones.
 // Every message must fit PeerJS's 16 KB limit, and a guest must shrug off a
 // malformed one.
 //
@@ -29,7 +32,7 @@ const wire = msg => {
   return JSON.parse(text);
 };
 
-let ticks = 0, checks = 0, presses = 0, flashes = 0;
+let ticks = 0, checks = 0, presses = 0, flashes = 0, plans = 0;
 const fail = (round, tick, what, a, b) => {
   console.error(`round ${round}, tick ${tick}: ${what} differs\n  host:  ${JSON.stringify(a)}\n  guest: ${JSON.stringify(b)}`);
   process.exit(1);
@@ -44,8 +47,10 @@ for (let r = 0; r < rounds; r++) {
   const people = 2 + (r % 3);
   const humans = Array.from({ length: people }, (_, i) => ({ name: i === 1 ? 'Sniper' : `Friend ${i}`, color: O.HUMAN_COLORS[i], peer: `p${i}` }));
   const host = E.createGame({ humans });
-  // People steer like an AI would (so rounds last), through their input queues.
-  for (const s of host.snakes) if (s.isPlayer) s.autopilot = E.PERSONAS.drab;
+  // People steer like an AI would (so rounds last): the first by queueing
+  // turns, as a person's presses do; the others with an AI at the wheel.
+  for (const s of host.snakes) if (s.isPlayer && s.id > 0) s.autopilot = E.PERSONAS.drab;
+  const person = host.snakes[0], mind = {};
 
   const roundMsg = wire(O.round(host, humans, 'Up the tree with you:'));
   const guest = E.createGame({ humans: roundMsg.humans, personas: roundMsg.personas });
@@ -58,9 +63,10 @@ for (let r = 0; r < rounds; r++) {
     // as their browser would: a message, checked, then the engine's own call.
     for (const s of host.snakes) {
       if (!s.isPlayer || !s.alive || Math.random() > 0.12) continue;
-      const msg = wire({ t: 'pow', k: O.POWERS[Math.random() < 0.6 ? 1 : 0] });
+      const msg = wire({ t: 'pow', k: O.POWERS[Math.random() < 0.6 ? 1 : Math.random() < 0.85 ? 0 : 2] });
       if (!O.POWERS.includes(msg.k)) continue;
-      (msg.k === 'flash' ? E.flash : E.leap)(host, s);
+      if (msg.k === 'unleap') { if (s.leapArmed >= host.tick) s.leapArmed = -1; } // (a held jump taken back, as the host does)
+      else (msg.k === 'flash' ? E.flash : E.leap)(host, s);
       presses++;
     }
     const dyingHost = E.step(host);
@@ -89,8 +95,27 @@ for (let r = 0; r < rounds; r++) {
     same(r, k, 'events', ev(host), ev(guest));
     const look = g => g.snakes.map(s => ['home', 'colonies', 'mood', 'moodChangedAt', 'modelId', 'desperate'].map(f => s.memory[f] ?? null));
     same(r, k, 'looks', look(host), look(guest));
+
+    // Between ticks the rivals think ahead, and the host sends where everyone
+    // goes next: the guest draws ahead from the same plans (and a person's
+    // queued turn and powers asked for), for this tick only.
+    for (const s of host.snakes) if (E.canThinkAhead(host, s)) E.thinkAhead(host, s);
+    if (person.alive) { // (the person steers between ticks: a turn queued when its mind says so, as a press would)
+      const d = ctx.window.SnakeAI.decide(E.aiView(host, person), E.PERSONAS.drab, mind);
+      if (d !== person.dir) person.queue.push(d);
+      if (Math.random() < 0.1) E.leap(host, person); // (and asks to jump now and then)
+    }
+    const p = wire(O.plan(host));
+    if (!O.applyPlan(guest, p, E.DIRS, -1)) fail(r, k, 'a plan for this tick', 'taken', 'refused');
+    const next = g => g.snakes.map(s => !s.alive ? null : !s.isPlayer || s.autopilot
+      ? [s.plannedTick === g.tick ? s.planned : null, s.plannedTick === g.tick && s.memory.power === g.tick, s.plannedTick === g.tick && s.memory.flash === g.tick]
+      : [s.queue[0] || null, s.leapArmed >= g.tick, s.flashArmed >= g.tick]);
+    same(r, k, 'plans', next(host), next(guest));
+    plans++;
+    if (O.applyPlan(guest, { ...p, k: p.k - 1 }, E.DIRS, -1)) fail(r, k, 'a stale plan', 'refused', 'taken');
   }
 }
+if (!plans) { console.error('no plan was sent: the test lost its point'); process.exit(1); }
 
 // The biggest scores message: four people, each with ten rounds under long names.
 const owner = i => 'owner' + i + 'abcdefghijklmnopqrstuvwxyz0123456789'.slice(0, 28);
@@ -112,4 +137,4 @@ if (g.snakes[1].memory.mood || g.snakes[1].memory.colonies || g.snakes[1].memory
 if (O.POWERS.includes('dash') || O.POWERS.includes(undefined) || O.DIR_NAMES.includes('ahead')) { console.error('a bad press got through'); process.exit(1); }
 if (!flashes) { console.error('no plain flash happened: the test lost its point'); process.exit(1); }
 
-console.log(`ok: ${rounds} rounds, ${ticks} ticks, ${checks} checks, guest matched the host every tick (${presses} power presses, ${flashes} plain flashes); biggest message ${biggest} bytes`);
+console.log(`ok: ${rounds} rounds, ${ticks} ticks, ${checks} checks, guest matched the host every tick (${presses} power presses, ${flashes} plain flashes, ${plans} plans); biggest message ${biggest} bytes`);

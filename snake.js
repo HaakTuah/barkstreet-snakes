@@ -263,6 +263,7 @@
       // A friend's screen doesn't simulate: it glides between the host's ticks.
       showPending(now >= freezeUntil);
       drawAlpha = Math.min(1, (performance.now() - online.lastTickAt) / tickLen);
+      easeLead(dt);
       dirty = true;
     } else if (state === 'running') {
       // Alone, your death stops the round for a moment. Online it never stops:
@@ -270,6 +271,7 @@
       const frozen = () => !online && now < freezeUntil;
       let busy = false; // a frame that ticks or shows a card has done enough: thinking waits a frame
       if (showPending(now >= freezeUntil)) busy = true;
+      easeLead(dt, frozen());
       if (!frozen()) {
         acc += dt;
         let steps = 0;
@@ -283,6 +285,7 @@
         }
         if (steps === most) acc = Math.min(acc, tickLen); // after a long stall, don't race to catch up
         if (!busy) think(dt, steps > 0);
+        if (hosting() && !planSent && !thinkQueue.length && state === 'running') sendPlan(); // (the rivals have thought: friends draw them ahead the way they're going)
       }
       // Between the last two cells. While frozen, `acc` stands still, so the
       // board holds the very moment of the crash, with nothing jumping ahead.
@@ -302,7 +305,7 @@
 
     if (youHideAt && (performance.now() > youHideAt || !playerAlive())) { youHideAt = 0; showYou(false); }
     if (dirty && !document.hidden) {
-      R.setLead(lead());
+      R.setLead(leadAt);
       R.frame(drawAlpha, boardClock);
       Chatter.layout(drawAlpha, boardPx, player());
       if (steerHintOn) placeSteerHint();
@@ -361,23 +364,44 @@
     }
   }
 
-  // Let the AIs think about the next tick in the frames before it (same
-  // information, same decisions), spread evenly over the frames that are left:
-  // usually one AI per frame, more only when the tick is close (fast speeds).
-  // A frame that ticked has done enough: it thinks only what the frames left
-  // before the next tick couldn't (at 4x on a 60 Hz screen there are hardly
-  // any frames between ticks).
   // How far ahead the board is drawn, in ticks (a time, so it's the same lead
-  // at every speed; a person's timing is in milliseconds, not ticks).
-  const lead = () => Math.min(T.DRAW_LEAD_MAX, T.DRAW_LEAD_MS / tickLen);
+  // at every speed; a person's timing is in milliseconds, not ticks): only
+  // while someone's playing on this screen. Watching alone (Watch AIs, or
+  // after you're out) there's no press to keep up with, so the board is
+  // drawn on its ticks and the rivals have the whole tick to think in (see
+  // think). Going away after your death, the lead eases out (the board a
+  // touch slower for a moment, never while it's held still): nothing jumps back.
+  let leadAt = 0;
+  const leadWanted = () => (spectating() && !online ? 0 : Math.min(T.DRAW_LEAD_MAX, T.DRAW_LEAD_MS / tickLen));
+  function easeLead(dt, held = false) {
+    const want = leadWanted();
+    if (want >= leadAt) leadAt = want;
+    else if (!held) leadAt = Math.max(want, leadAt - 0.5 * dt / tickLen);
+  }
+  // Let the AIs think about the next tick in the frames before it (same
+  // information, same decisions), before the board is drawn into their next
+  // move (see R.setLead; the frame that draws it thinks first). Not in a
+  // frame that ticked, which has done enough, unless no later frame is left
+  // in time (at 4x on a 60 Hz screen, there may be none); else spread over
+  // the frames that are left, one a frame, two when they're few (at full
+  // speed, playing, there are about two).
   function think(dt, ticked = false) {
     if (!thinkQueue.length) return;
-    const frames = Math.floor((tickLen * (1 - lead()) - acc) / Math.max(4, dt)); // (frames still to come before the board is drawn into the next move: see R.setLead)
-    let quota = ticked ? thinkQueue.length - frames : Math.ceil(thinkQueue.length / Math.max(1, frames));
+    const left = Math.max(0, Math.ceil((tickLen * (1 - leadAt) - acc) / Math.max(4, dt))); // (frames after this one, up to the one that draws the next move)
+    if (ticked && left > 0) return;
+    let quota = ticked ? thinkQueue.length : Math.min(2, Math.ceil(thinkQueue.length / (left + 1)));
     while (thinkQueue.length && quota > 0) {
       const s = thinkQueue.shift();
       if (E.canThinkAhead(game, s)) { E.thinkAhead(game, s); quota--; }
     }
+  }
+
+  // Hosting: where everyone goes next, for friends' screens, once a tick when
+  // the rivals have thought, and again when a person's press changes it.
+  let planSent = false;
+  function sendPlan() {
+    planSent = true;
+    online.room.broadcast(Online.plan(game));
   }
 
   // One tick of the rules (alone, or as the host: friends get a copy).
@@ -390,6 +414,7 @@
     if (hosting()) {
       online.room.broadcast(Online.tick(game, { holesFrom: online.holesSent, tickLen }));
       online.holesSent = game.holes.size;
+      planSent = false;
     }
     Chatter.update();
     afterTick(dying, wasAlive);
@@ -472,6 +497,7 @@
     pendingCard = null;
     R.setGame(game);
     R.setViewer(player()?.id ?? -1); // your snake gets the bright outline
+    leadAt = leadWanted();
     Audio.weather('none');
     streak = 0;
     Chatter.reset(game);
@@ -1571,8 +1597,9 @@
     const now = performance.now();
     const at = Math.max(now + Math.min(T.HOST_DELAY_MAX, online.room.rtt()), hostPressAt);
     hostPressAt = at;
-    if (at - now < 4) return fn(me);
-    setTimeout(() => { if (me.alive && game.snakes[me.id] === me) fn(me); }, at - now);
+    const press = () => { fn(me); if (planSent && state === 'running' && online) sendPlan(); }; // (friends see it coming)
+    if (at - now < 4) return press();
+    setTimeout(() => { if (me.alive && game.snakes[me.id] === me) press(); }, at - now);
   }
 
   // A result is on its way (your death's card in the freeze, or the round's
@@ -2126,6 +2153,7 @@
       if (msg.t === 'pow') powerOf(s, msg.k);
       else if (msg.t === 'swipe' && state === 'running') swipeTo(msg.d, s);
       else turn(msg.d, s);
+      if (planSent && state === 'running') sendPlan(); // (the others see it coming)
     }
   }
 
@@ -2269,6 +2297,7 @@
         else if (msg.s === 'go' && state === 'countdown') go();
         break;
       case 'tick': hostTick(msg); break;
+      case 'plan': if (state === 'running' && game) Online.applyPlan(game, msg, DIRS, online.seat); break; // (drawing ahead: where everyone goes next)
       case 'say': // (the host's last line can arrive after the round ended here)
         if ((state === 'countdown' || state === 'running') && game.snakes[msg.id] && typeof msg.text === 'string') Chatter.replay(game.snakes[msg.id], msg.text.slice(0, 200), msg.reply === true);
         break;
