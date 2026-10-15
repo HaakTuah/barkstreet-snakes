@@ -658,9 +658,11 @@ canvas {
 .toast[data-kind="fire"] { background: linear-gradient(180deg, #ffedd5, #fdba74); color: #7c2d12; box-shadow: 0 0 18px rgba(249, 115, 22, 0.55), inset 0 0 0 2px #ea580c; }
 .toast[data-kind="go"] { padding: 8px 24px; font-size: 1.3rem; background: var(--leaf); color: #fffbea; box-shadow: 0 4px 0 var(--leaf-dark), 0 8px 20px rgba(0, 0, 0, 0.45); }
 /* A head passing under the banner: it moves to the board's foot (or, if a
-   head is there too, fades), so it never hides the board. A tapped rival's
-   blurb shows over a card, at the foot too. */
+   head is there too, to the middle; with heads everywhere, it fades), so it
+   never hides the board. A tapped rival's blurb shows over a card, at the
+   foot too. */
 .toast.low { top: auto; bottom: 12px; }
+.toast.mid { top: calc(50% - var(--toast-h, 0px) / 2); }
 .toast.settled { animation: none; } /* (dropped in once; moving it doesn't replay that) */
 .toast.under { opacity: 0.3; }
 
