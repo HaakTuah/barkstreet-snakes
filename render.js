@@ -2003,6 +2003,8 @@ window.SnakeRender = (() => {
   // accents appear on power marks only.
   const HONEY = '#fde68a', GLINT = '#fffbea';
   const SKY = '#a8dcf5', EMBER = '#f7a866', EMBER_LINE = '#b5531d'; // (sky's own line, #2f6f96, isn't needed: ink outlines every sky mark)
+  const PIP_KEY = 0.9, PIP_RING = 2.3; // (a pip's parchment keyline reaches this far past its colour, and its ink past that, in units)
+  let PIPS = new Float64Array(3 * (T.LEAP_MAX + T.DASH_MAX)); // (each pip's place and spoke, this frame)
   const RUN_DASH = [CELL * 0.14, CELL * 0.36], GLINT_DASH = [CELL * 1.4, CELL * 40]; // (ember dashes; a glint, alone)
   // Your soft halo: a few faint steps of cream round your body, each wider
   // and fainter than the last (a soft edge without a blur), and a touch more
@@ -2232,23 +2234,15 @@ window.SnakeRender = (() => {
     // for a dash. Holding both, the leaps go on its left and the dashes on
     // its right, a gap between. The gold outline carries the glow; no ring
     // of its own. Three or more don't fit in the neck's pinch (the outer two
-    // sat across its outline), so they go a little further back, closer
-    // together, over the first segment, where the body's widest.
+    // sat across its outline), so they go a little further back, over the
+    // first segment, where the body's widest. Each is ringed in parchment
+    // inside an ink line, so it reads on any body (ember on Gobbler's
+    // orange, sky on Metagamer's cyan), and a diamond points along the arc's
+    // spokes, so side by side they never touch (three of them read as a
+    // zigzag seam). At the board's edge they all move in together, so none
+    // is cut off (on a phone the tag hides the counts: the pips are them).
     const leaps = dead ? 0 : s.leaps, dashes = dead ? 0 : s.dashes;
-    if (leaps || dashes) {
-      const n = leaps + dashes, many = n > 2, back = Math.atan2(a.hs, a.hc) + Math.PI, rr = (many ? CELL : rad[0] + CELL * 0.2) * (1 + a.swell * 0.5);
-      const pr = CELL * (many ? 0.13 : 0.15), step = many ? 0.33 : 0.66, gap = leaps && dashes ? 0.6 : 0, mid = (n - 1 + gap) / 2;
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 1.3;
-      for (let i = 0; i < n; i++) {
-        const leap = i < leaps, a2 = back + (mid - i - (leap ? 0 : gap)) * step, px = pts[0] + Math.cos(a2) * rr, py = pts[1] + Math.sin(a2) * rr;
-        ctx.fillStyle = leap ? SKY : EMBER;
-        ctx.beginPath();
-        if (leap) ctx.arc(px, py, pr, 0, TAU);
-        else { ctx.moveTo(px, py - pr * 1.35); ctx.lineTo(px + pr * 1.05, py); ctx.lineTo(px, py + pr * 1.35); ctx.lineTo(px - pr * 1.05, py); ctx.closePath(); }
-        ctx.fill(); ctx.stroke();
-      }
-    }
+    if (leaps || dashes) drawPips(pts[0], pts[1], Math.atan2(a.hs, a.hc) + Math.PI, rad[0], a.swell, leaps, dashes, !a.offs); // (not across a wrapped edge: there it shows at the other)
     if (!dead && s.id === viewerId && game) drawRests(s, a, now);
     if (dizzy) { // three stars going round, cream and inked (gold by a head means a power), clear of its pips and the edge: see starsOff
       const t = reduced ? 0 : now / 240, cy = pts[1] + starsOff(s);
@@ -2277,6 +2271,41 @@ window.SnakeRender = (() => {
     }
   }
   const DASH = [3, 3], NO_DASH = [], MOOD_DASH = [5, 7];
+
+  // The pips of golden powers held (see drawBody), round a head at (x, y)
+  // of radius hr, on the arc behind it (back: that way, as an angle; swell:
+  // its leap's). With keepOn, at the board's edge they all move in together.
+  function drawPips(x, y, back, hr, swell, leaps, dashes, keepOn) {
+    const n = leaps + dashes, many = n > 2, rr = (many ? CELL : hr + CELL * 0.2) * (1 + swell * 0.5);
+    const pr = CELL * (many ? 0.12 : 0.14), step = many ? 0.44 : 0.78, gap = leaps && dashes ? (many ? 0.35 : 0.6) : 0, mid = (n - 1 + gap) / 2;
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    if (PIPS.length < 3 * n) PIPS = new Float64Array(3 * n);
+    for (let i = 0; i < n; i++) {
+      const a2 = back + (mid - i - (i < leaps ? 0 : gap)) * step, px = x + Math.cos(a2) * rr, py = y + Math.sin(a2) * rr;
+      PIPS[3 * i] = px; PIPS[3 * i + 1] = py; PIPS[3 * i + 2] = a2;
+      x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py);
+    }
+    const edge = (pr + PIP_RING) * 1.5 + 1; // (as far as one reaches from its centre, and a unit to spare)
+    const sx = keepOn ? Math.max(0, edge - x0) - Math.max(0, x1 - (SIZE - edge)) : 0, sy = keepOn ? Math.max(0, edge - y0) - Math.max(0, y1 - (SIZE - edge)) : 0;
+    for (let i = 0; i < n; i++) drawPip(PIPS[3 * i] + sx, PIPS[3 * i + 1] + sy, PIPS[3 * i + 2], pr, i < leaps);
+  }
+  // One pip at (x, y), its spoke at angle a2, its colour pr in radius: a
+  // sky disc for a leap, an ember diamond (its long way along the spoke) for
+  // a dash; ringed in parchment, then ink.
+  function drawPip(x, y, a2, pr, leap) {
+    const ux = Math.cos(a2), uy = Math.sin(a2);
+    for (let k = 0; k < 3; k++) {
+      const r = pr + (k === 0 ? PIP_RING : k === 1 ? PIP_KEY : 0);
+      ctx.fillStyle = k === 0 ? INK : k === 1 ? GLINT : leap ? SKY : EMBER;
+      ctx.beginPath();
+      if (leap) ctx.arc(x, y, r, 0, TAU);
+      else {
+        ctx.moveTo(x + ux * r * 1.5, y + uy * r * 1.5); ctx.lineTo(x - uy * r * 0.95, y + ux * r * 0.95);
+        ctx.lineTo(x - ux * r * 1.5, y - uy * r * 1.5); ctx.lineTo(x + uy * r * 0.95, y - ux * r * 0.95); ctx.closePath();
+      }
+      ctx.fill();
+    }
+  }
 
   // Your two plain rests, as two half-rings round your head, fixed to the
   // screen: your jump's on the left, in sky, and your flash's on the right,
@@ -2347,7 +2376,7 @@ window.SnakeRender = (() => {
     let past = 0;
     for (let sgn = -1; sgn <= 1; sgn += 2) {
       const behind = pips && s.dir.y === -sgn; // (its pips are on this side)
-      const off = sgn * CELL * (behind ? (pips > 2 ? 1.6 : 1.32) : pips && !s.dir.y ? (pips > 3 ? 1.12 : 0.95) : 0.72); // (higher when pips show beside its head, higher still for both kinds' wider arc; further past three, which sit further back)
+      const off = sgn * CELL * (behind ? (pips > 2 ? 1.78 : 1.44) : pips && !s.dir.y ? (pips > 4 ? 1.5 : pips > 3 ? 1.3 : 1.02) : 0.72); // (higher when pips show beside its head, higher still for both kinds' wider arc; further past three, which sit further back)
       if (hy + off < STAR_REACH || hy + off > SIZE - STAR_REACH) continue;
       if (!behind) return off;
       past ||= off;
