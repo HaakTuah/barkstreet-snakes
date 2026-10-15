@@ -418,18 +418,19 @@ Friends-only rooms, peer to peer, so it stays a static site with nothing to depl
 
 ## Round four: the owner's feedback, and the calls
 
-After the third pass the owner played and sent a list: the controls feel delayed, the powers should be two presses, a flash for everyone, holes under bodies, holes that look better, borders instead of force fields, rivals that use their powers, a food economy that's too rich in the middle and too thin at the end, and a check that everything promised is actually in. Seven investigators measured each area first (headless Chrome with real key and touch events, and instrumented copies of the simulator, hundreds of seeded rounds a variant). These are the calls, each with the reason. Numbers marked *measured* come from those runs; the final balance numbers are in "Round four, measured" once the build is tuned.
+After the third pass the owner played and sent a list: the controls feel delayed, the powers should be two presses, a flash for everyone, holes under bodies, holes that look better, borders instead of force fields, rivals that use their powers, a food economy that's too rich in the middle and too thin at the end, and a check that everything promised is actually in. Seven investigators measured each area first (headless Chrome with real key and touch events, and instrumented copies of the simulator, hundreds of seeded rounds a variant). These are the calls, each with the reason, as built. Numbers marked *measured* come from those runs; where the build went another way than the call, it says so and why. The build's own numbers are in "Round four, measured".
 
 ### Two powers, two presses
 
 The one power press (pressing the way you're going) is split in two. A press that did "whatever power you happen to hold" blew snakes up: holding a golden dash, pressing forward to hop a hole dashed into it instead.
 
 - **Jump:** Space, or a tap on a phone. It hops one cell (a body, a hole or fire) as before, waiting up to `LEAP_WINDOW` ticks for something to hop; golden leaps go first and are free.
-- **Flash:** E, or Shift (the sprint key in most PC games, and the right Shift sits beside the arrows), or on a phone a swipe the way you're already going. Golden flashes (the dashes) go first.
-- **Steering keys only steer.** Pressing the way you're already going does nothing now. It was the old power press, and held keys and auto-repeat fired it by accident; the 120/180 ms double-tap guards go with it.
-- **Nap moves to P and Esc** (and the ⏸ button). Space can't both nap and jump, and jumping is what Space is for in a game. Enter, R or an arrow starts and starts over, as before.
-- **Space, E and Shift never start, wake or dismiss anything.** They're the keys you mash in a fight, and mashing jump just after you die mustn't start a new round. A button you Tabbed to still takes Space, as buttons do.
-- **On a phone, a tap jumps** once it's clearly a tap: the finger lifts without travelling, or stays still for `TAP_JUMP_MS`. Going on touch-down would fire a jump on every dodge, because a swipe takes 15–50 ms to tell apart from a tap and a dodge always has something in front to hop.
+- **Flash:** E (by where it sits, like WASD), or either Shift (the sprint key in most PC games, and the right Shift sits beside the arrows), or on a phone a swipe the way you're already going. Golden flashes (the dashes) go first.
+- **Steering keys only steer.** Pressing the way you're already going does nothing now. It was the old power press, and held keys and auto-repeat fired it by accident; the 120 ms double-tap guard goes with it. The 180 ms one (`POWER_AFTER_TURN_MS`) stays, for swipes only: a fresh swipe the way you just turned, that soon, is the turn swiped twice, not a flash, so a quick double swipe to make sure can't fire a golden flash into an edge. Keys need no guard.
+- **Nap moves to P and Esc** (and the ⏸ button). Space can't both nap and jump, and jumping is what Space is for in a game. Enter, R or an arrow starts and starts over, as before; P and Esc no longer start a round from the start or round-over card.
+- **Space, E and Shift never start, wake or dismiss anything.** They're the keys you mash in a fight, and mashing jump just after you die mustn't start a new round. A button you Tabbed to still takes Space, as buttons do. (That's tracked from the Tab key itself: a card's button the game focused after a keypress also looks keyboard-focused to the browser, and mashed Space would start a round.)
+- **On a phone, a tap jumps** once it's clearly a tap: the finger lifts within 6 px of where it touched, or stays that still for `TAP_JUMP_MS` (80 ms). Going on touch-down would fire a jump on every dodge, because a swipe takes 15–50 ms to tell apart from a tap and a dodge always has something in front to hop. *As built*, 80 ms rather than 60: the slowest swipe measured (0.15 px/ms) is seen moving by about 57 ms, since touch moves arrive once a frame, so 60 left a 3 ms margin and 80 leaves about 23. A quick tap still jumps on lift. A touch on a button or a name tag (yours too) never jumps.
+- **Teaching it.** The flash's key is taught once a round, from 6 s in, until you've flashed. A short phone (where the help under the board is off the screen) teaches both on the first Go: "Tap to jump over things. Swipe ahead to flash." Steering is taught beside YOU (see "What was promised and missing").
 
 This changes the third pass's feel-target promise ("Space and Enter always mean nap and start over"). It now reads: P and Esc nap, Enter starts over, Space jumps.
 
@@ -437,7 +438,7 @@ This changes the third pass's feel-target promise ("Space and Enter always mean 
 
 Everyone can flash: **two cells in one tick, along the ground, free, then a 6 s rest** (`FLASH_LENGTH`, `FLASH_COST`, `FLASH_COOLDOWN_MS`). It eats what it passes. It cuts nothing and puts nothing out: whatever is in the way, it gets that far and runs into, as a crawl would.
 
-**Why free:** *measured*, a flash that cost a tail segment made rounds 6 s longer and pushed starving from 16% to 26% of deaths. A free one at 6 s kept rounds as they were, and the AI used it about 4 times a minute, to its advantage.
+**Why free:** *measured*, a flash that cost a tail segment made rounds 6 s longer and pushed starving from 16% to 26% of deaths. A free one at 6 s kept rounds as they were, and the investigators' AI used it about 4 times a minute, to its advantage. (The built AI flashes about 3 times a minute: see Rivals.)
 
 Golden leaves now give **golden flashes** (still called dashes in the rules): three cells, cutting a snake one cell thick, putting fire out, and blowing up at the edge or a hole. They go before the plain flash and leave its rest alone.
 
@@ -454,109 +455,116 @@ You can hold leaps and dashes at once, since they're different presses. Before t
 
 Gold stays the family colour: an outline of gold means "this snake holds a power". Each kind also gets an accent of its own, plus a shape and a motion, so you can read it at a glance without relying on hue:
 - **Jumps are sky:** round pips.
-- **Flashes are ember:** diamond pips and a streak.
-- **The wrap** is a gold shimmer running along the outline.
+- **Flashes are ember:** diamond pips, short ember dashes running back along the gold line from the head (over its first 6 segments: clipping to a whole long body cost the GPU up to 7 ms a frame), and a streak.
+- **The wrap** is a slow glint running down the gold line, fading with it over the wrap's last 2 s.
 
-Sky against ember is the pair colour-blind eyes separate best, and the shapes carry it without colour too. This bends the third pass's "gold means power and nothing else" a little: gold is still only ever power, and the accents appear only on power marks.
+Sky against ember is the pair colour-blind eyes separate best, and the shapes carry it without colour too. This bends the third pass's "gold means power and nothing else" a little: gold is still only ever power, and the accents appear only on power marks. (So Desperado's poncho stripes went from Honey to cream.)
 
-Your two plain rests show as two half-rings round your head, fixed to the screen: jump on the left, flash on the right. Each fills as it rests and gives one bright flick when it's ready.
+The pips sit on a short arc behind the head, a little bigger now (0.15 of a cell; 0.13 with three or more); holding both kinds, the leaps sit on the snake's left of the arc and the dashes on its right. Your two plain rests show as two half-rings round your head, fixed to the screen: jump on the left in sky, flash on the right in ember. Each fills from the bottom over a faint track as it rests (not shown while you hold golden ones of that kind) and gives one bright flick when it's ready. A stunned press shows the jump's hop or the flash's double chevron in its accent (Honey when golden), and a press that can't go an inked × in it. On the tags, one chip per power: golden jumps sky, golden flashes ember, both on Honey with the count. Your own tag always shows your plain jump and flash, filling in their accents as they rest; rivals show chips only while they hold golden powers or the wrap.
 
 ### The woodpecker: holes under you, and holes that look like holes
 
-- **It pecks under bodies too.** A third of its strikes start under a snake (`PECK_UNDER_BODY`). A body lying over a fresh hole **bridges it**: it isn't cut and drops nothing, and the cell is an ordinary hole once the tail has passed. Only a head on the ground in the patch falls in.
+- **It pecks under bodies too.** A third of its strikes start under a snake (`PECK_UNDER_BODY`, any body but never a head; the same share on every strike, the first included). A body lying over a fresh hole **bridges it**: it isn't cut and drops nothing, and the cell is an ordinary hole once the tail has passed. Only a head on the ground in the patch falls in. A jump whose landing was taken meanwhile comes down on a bridging body, not into the hole under it.
   - *Why:* the old cut took 32 segments on average and was decided by reaction time. *Measured*, 40 of 49 cuts were heads already heading into the mark, exactly within the 240 ms nobody can react in.
-- **It aims at least 5 cells from every head** (`PECK_CLEARANCE` 4, from 2), so nobody can be inside a fresh mark before they can see it.
+- **It aims at least 5 cells from every head** (`PECK_CLEARANCE` 4, from 2), and clear of all food, while there's such a spot, so nobody can be inside a fresh mark before they can see it. (In 600 AI rounds on each of two seeds it had to aim nearer a head 4 times in about 20,000 aims.)
 - **Fewer, bigger hollows.** Half the strikes widen an old hollow (`PECK_WIDEN`), and patches grow compact. The log ends up with a few big hollows instead of a pegboard.
+- **Bigger patches** (decided in the balance pass, once the rest was built): 9 cells, a cell bigger each strike up to 16 (`PECK_CHUNK`, `PECK_CHUNK_MAX`; from 7 and 14). See "Events and timings".
 - **Holes stay permanent and only ever added.** The squeeze is what ends rounds, and online play relies on it.
 - **The look.** One pit per connected hollow, traced along the cell edges:
   - a torn, inked lip;
   - a dark floor;
   - a far wall lit from the top left like everything else;
-  - splinters and sawdust round the rim;
+  - splinters over the rim and sawdust round it;
   - at the board's edge, a notch bitten out of the log.
-  
-  The old look, one round dark disc a cell, read as bubble wrap.
-- **The aim marker.** It's traced with the same outline. Its cracks run along the grain under the snakes, and peck dents appear round the rim as the strike nears.
-- **The first time it pecks under you:** "Pecking under you! Only your head can fall in."
+
+  They lie on the static layer under the snakes, so a body bridging a hole is drawn across it, and a strike paints again only the box round its new holes. The old look, one round dark disc a cell, read as bubble wrap.
+- **The aim marker.** It's traced with the same outline and still glows red. Its cracks run along the grain under the snakes, and peck dents appear round the rim as the strike nears.
+- **The rivals tell a mark from a hole** (`view.pecks`, added at the merge). A mark isn't a hole yet, so a golden leap or a jump for food may hop real holes but never a mark; a flash or a dash treats a mark as a wall.
+- **The first time it pecks under you:** "Pecking under you! Only your head can fall in." (It replaces "The woodpecker took your tail.")
 
 ### Food
 
 **Does your own food poison you?** No, and it won't. Poison would punish the natural move of picking your tail back up after a crash, and seat colours can look alike. But **your own beads aren't a meal**: they give the length back (and the score), not the hunger clock.
 
 *Measured*, 24% of the beads eaten were the eater's own, and crashing on purpose and then eating your own beads was a free hunger reset.
-- **Telling it:** a muted +1 with no hunger refill, and once: "Your own tail won't feed you."
+- **Telling it:** a muted Parchment +1 (+2 roasted) with no hunger refill, and once: "Your own tail won't feed you."
 - **Owners:** beads carry their owner, so this is the same rule for everyone, AI included.
+- **One mercy:** a snake out of time that reaches its own bead that very tick grows instead of starving (as with any food); its next shrink takes the growth back.
 
-**Body food rots.** Beads fade, shrink and go after about 14 s (`PELLET_TICKS`, ± a quarter; roasted ones last half again), in their own colours, like apples do.
+**Body food rots.** Beads fade, shrink and go after about 14 s (`PELLET_TICKS`, ± a quarter; roasted ones last half again), in a puff of their own colour, as apples do.
 
-**A body leaves every other segment** (at least 3 beads), not all of it. A kill was worth +30 to +70, and the winner of the first big fight snowballed. Crash drops, cut tails and burnt bits stay whole.
+**A body leaves every other segment** (at least 3 beads, from the head; where there are too few, the skipped segments nearest the tail make up the number), not all of it. A kill was worth +30 to +70, and the winner of the first big fight snowballed. Crash drops, cut tails and burnt bits stay whole.
 
 **Too much food mid-round, too little at the end?** Yes on both counts. *Measured:*
 - Before 2:00, hunger mattered for 0.8% of snake-time: the median gap between meals was 1.4 s against a 20 s clock.
 - After 2:00, 24% of snake-time was starving, and two thirds of sudden-death starvations happened with no food on the board at all.
 
 The calls:
-- **Three apples for the first 45 s, then two.** The opening stays generous; after that, hunger matters.
-- **The last apples fall one at a time.** In sudden death, food no longer stops dead. Once the board has no apple, another drops, each wait longer than the last (about 2 s, 4 s, 6 s…). It's announced once: "The last apples are falling."
+- **Three apples all round.** Two after 0:45 was the first call, so hunger would matter mid-round. *Measured*, it hardly did: before 2:00 snakes spent 4.4% of their time in the hunger warning, against 2.9% with three. What it did do: shorter snakes at 2:00 left more room once the woodpecker came, so rounds ran 5 s longer, a quarter of sudden death's deaths were in holes, and starving rose from 2% to 7% of all deaths. So the dial was taken out (`APPLES_LATE` is gone). The middle is leaner anyway: beads rot, a dead snake leaves every other segment, and your own beads aren't a meal.
+- **The last apples fall one at a time.** In sudden death, food no longer stops dead. Once the board has no apple, another drops, each wait longer than the last (`SD_APPLE_GAP`, 20 ticks, times its number: about 2 s, 4 s, 6 s…), never in the woodpecker's mark. It's announced once, with its own falling notes: "The last apples are falling."
 - **No winter before 45 s.** Snow in the first half-minute starved 5-long snakes in about 1 round in 5. *Measured*, 55% of early starving happened in snow, which is 8% of that time.
 - **Mushrooms never sprout within 2 cells of a head.** Nobody can see one appear in front of them in time.
-- **Golden apples and leaves land somewhere quiet** (the farthest of 8 tries from every head). They become a race you can see, instead of gone in 1.5 s.
+- **Golden apples, leaves and mushrooms land somewhere quiet** (the farthest of 8 tries from every head). They become a race you can see, instead of gone in 1.5 s.
 
 ### Rivals
 
-- **Mushrooms.** Desperado and Joker still valued mushrooms at +0.5, left over from before mushrooms became pure poison. They ate about 8 a round and won 11%. Gone: nobody seeks mushrooms now.
-- **A starving rival takes its chances.** When the hunger it can see (its own clock, as a person sees their bar) leaves it less than about 11 s of life, a rival:
+- **Mushrooms.** Desperado and Joker still valued mushrooms at +0.5, left over from before mushrooms became pure poison. They ate about 8 a round and won 11%. Gone: nobody seeks mushrooms now, and to every rival a mushroom only ever counts against a move. *Measured*, rivals ate 6.2 a round before and 2.0 now, out of about 15 that sprout: the ones still eaten are in the way when every other move scores worse.
+- **A starving rival takes its chances.** When the hunger it can see (its own clock, as a person sees their bar) leaves it less than about 11 s of life (`AI_DESPERATE_MS`), a rival:
   - drops its personality's errands (home, mimicry, coiling, lures);
-  - goes for any food, even food a rival might reach first;
+  - goes for any food, even food a rival might reach first (never its own beads, which aren't a meal);
   - takes more risk near heads;
-  - may jump or flash for food;
+  - may jump or flash for food (every power costs it half while it's desperate);
   - with no food in reach, hunts, to make someone crash and drop beads.
-  
-  It's the same rule for every snake.
+
+  It's the same rule for every snake. *Measured*, it's on for about 1% of snake-time and halved starving deaths. At 6 s a starvation before 1:00 came back in 0.7% of rounds; at 16 s nothing changed.
 - **Rivals use their powers, when it pays.** Each power is weighed as a move in the rival's own search, less a price in apples, and pressed only when it beats crawling:
-  - *Flashes:* often, about 4 a minute (*measured*).
-  - *Jumps:* to escape and to reach food first.
-  - *Golden leaps:* nearly all used, instead of 40% wasted.
-  - *Golden dashes:* kept for cuts, for something golden, or for a way out.
-  
-  *Tried and lost (measured, A/B):* jumping for position, pressing a jump in advance "just in case", and pricing powers under about one apple. Using powers more doesn't win by itself.
-- **Fixed: the board split.** Since the first pass, rivals never got any territory in the AI's board split (a time-base bug), so aggression and contested food did nothing. Mason, Mute, Gobbler and Vulture were partly missing their characters. It's fixed and the personalities are retuned, including the thicker walls promised for the trappers (Mute, Mason, Sniper).
+  - *Flashes:* often, about 3 a minute (*measured*, 3.1 in the shipped build). Weighed the way the rival would crawl anyway (any way, out of a crash), priced at an apple. Weighing every way cost 1.65 times the decision's mean time (1.88 times its p99, over the 1.7 budget) and did no better.
+  - *Jumps:* to escape, and to reach food (landing on it or one cell short, priced at 1.5 apples). About 4 plain jumps a round, nearly all out of a crash.
+  - *Golden leaps:* 99% used, instead of 48% (priced at a third of an apple).
+  - *Golden dashes:* kept for cuts (0.6 of an apple), for something golden, or for a way out. About 1.5 a round, cutting someone about once; nobody blows themselves up.
+  - Every rival allows for any other flashing 2 cells straight ahead (at half weight).
+
+  *Tried and lost (measured, A/B):* jumping for position, pressing a jump in advance "just in case", and pricing powers under about one apple. Using powers more doesn't win by itself: the whole package measured neutral against the same AI without powers (mean place 2.499 against 2.497 over 1000 rounds). Used often, and it doesn't hurt.
+- **Fixed: the board split.** Since the first pass, rivals never got any territory in the AI's board split (a time-base bug), so aggression and contested food did nothing. Mason, Mute, Gobbler and Vulture were partly missing their characters. It's fixed. Once it worked, the personalities already sat in the 15–35% band, so none was retuned (Sniper's aggression stayed 0.3: at 0.5 it fell to 19%). The trappers (Mute, Mason, Sniper) got the thicker walls promised for them, as a weight for their own body beside their head: the share of Mason's body lying beside another stretch of itself went from 14% to 21%, Mute's and Sniper's from 27% to about 30%. Gobbler now really does eat a rival's apple.
 
 ### Borders, not force fields
 
 Sovereign's realm and Colonist's colonies are drawn as **borders on a map**, like a grand strategy game, not as domes:
 - the land, cell-exact, under a light wash in the owner's colour;
-- a strong band along the inside of an inked edge, its corners rounded;
-- dashed two-colour lines and hatching where two claims meet;
-- land that grows ring by ring as a realm widens and shrinks back when its owner dies;
-- a soft breathing glow while a rival is on it;
-- Sovereign's capital marked with a swallow-tailed banner in parchment and ink. No gold: gold means power.
+- a band and a riband of colour along the inside of an inked line, its corners rounded (no line along the board's edge or round a hole);
+- where two claims meet, a line dashed in both colours, and hatching on land both claim;
+- land that grows a ring of cells at a time as a realm widens, and shrinks back into its capital when its owner dies;
+- a border that flares as it changes and when lightning strikes, breathes while a rival's head is on it, and lights up from where a head crosses in;
+- a rival on the land wearing the land's colour round its pieces on the land's own cells (where two claim it, the later realm's colour);
+- Sovereign's capital marked with a swallow-tailed banner in parchment and ink, its crown inked, trimmed in the realm's colour (a blue banner vanished into the blue wash), and Colonist's flags on inked poles with parchment knobs. No gold: gold means power.
 
-The land rule becomes one rule everywhere: a cell is land if its centre is within radius + `LAND_REACH` (0.5) of a field's centre. That removes the one-cell nubs the old radius + 1 left at the four tips. Snow lies on land like anywhere else. The domes' weather effects go, except a flare when lightning strikes. Crossing a border sounds like a muffled drum knock with a fife note, not an electric hum.
+*As built*, the contested dashes stand still. Marching, their many short pieces cost about as much as all the rest of the land together, so they're cached in one small layer. The optional light sweep across the land was left out.
 
-*Why:* the domes cost about 3.3 ms a frame in a real round (2.6 times the same board without them). The prototype borders cost about 0.9 ms and read better at phone size.
+The land rule becomes one rule everywhere (the AI, the chatter, the HUD and the borders): a cell is land if its centre is within radius + `LAND_REACH` (0.5) of a field's centre. That removes the one-cell nubs the old radius + 1 left at the four tips. Snow lies on land like anywhere else, tinted by it. The domes' weather effects go, except a flare when lightning strikes. Crossing a border sounds like a muffled drum knock with a fife note, not an electric hum.
+
+*Why:* the domes cost about 3.3 ms a frame in a real round (2.6 times the same board without them). *Measured* as built, the staged scene with both owners' land costs 1.28–1.40 times the same board without it (the domes 2.26–2.62), and their canvases hold 5.2 MB instead of 23.9. They read better at phone size.
 
 ### Events and timings
 
-- **Weather comes from a shuffled bag:** every kind before any repeats. *Measured*, 42% of rounds saw no storm, and half saw three kinds or fewer.
+- **Weather comes from a shuffled bag:** every kind before any repeats. *Measured*, 42% of rounds saw no storm, and half saw three kinds or fewer. `WEATHER_ODDS` now counts how many of each kind go in the bag: one each, since two of a kind could repeat before the others came. A storm drawn before 0:30, or snow before 0:45, waits in the bag.
 - **A lightning fire has a budget:** at most 12 cells over its life (`FIRE_TOTAL`), besides 6 at once. Fires kept themselves going until rain came, some for over a minute.
-- **More golden power food.** Golden things are worth more now that they stack and the rivals use them: leaves 0.07 → 0.25 a gust, golden mushrooms 0.12 → 0.4 a rain spell, golden beetles 0.3 → 0.4.
-- **Unchanged, because measured right:**
-  - the woodpecker at 2:00 and its pace;
-  - the 120 → 90 ms speed ramp;
-  - the median round of about 165 s.
+- **More golden power food.** Golden things are worth more now that they stack and the rivals use them: leaves 0.07 → 0.25 a gust, golden mushrooms 0.12 → 0.55 a rain spell (at 0.4 the wrap still missed most rounds), golden beetles 0.3 → 0.4.
+- **Unchanged, because measured right:** the woodpecker at 2:00, and the 120 → 90 ms speed ramp.
+- **Changed once the rest was built:** the woodpecker's patches start at 9 cells and grow to 16 (`PECK_CHUNK`, `PECK_CHUNK_MAX`; from 7 and 14). With a flash for everyone and rivals that see starving coming, nearly every snake now reaches 2:00, so sudden death ran a minute. Now it's about 50 s, and the median round about 170 s. (The woodpecker's speed turned out to be the weak lever: hungrier rests changed nothing, and shorter shortest rests saved 2 s.)
 
 ### Controls that keep up
 
 *Measured*, the delay wasn't lost input. The board was drawn one tick in the past, so the moment your head was drawn reaching a cell was the moment its turn window closed. A press made when you saw the head arrive was late 77–88% of the time. The AI looked swift because it decides on the tick, against its own exact position.
 
-- **The board is drawn half a tick ahead** (`DRAW_LEAD`). The cell your head is drawn in is the cell your press turns at. In the model, on-time presses go from 12–23% to 76–88%. It changes the drawing only, never a rule:
-  - rivals' next half step comes from the plans they've already made;
-  - a head about to crash holds at its cell centre instead of overshooting;
-  - online friends draw from what they know (their own presses).
-- **Your press shows at once.** Your eyes look and your head leans the way you pressed, before the tick takes it.
-- **Your face turns quickly** (about 60 ms). The 300 ms "steady line" stays for the rivals, whose tongues it was for. *Measured*, in swift play your face lagged 214 ms.
-- **Chained swipes are lighter.** A finger already swiping chains turns at 8 px (a new touch still needs 12, to tell it from a tap). The anchor moves to where each turn registered.
+- **The board is drawn ahead:** 60 ms (`DRAW_LEAD_MS`), but never more than three quarters of a tick (`DRAW_LEAD_MAX`, for watching fast). That's half a tick at 120 ms ticks and two thirds at 90. The cell your head is drawn in is the cell your press turns at. (It was built as half a tick, as first called, but at full speed half a tick is only 45 ms, too little to cover a press made as the head is seen to arrive; the delay of a screen and of a person's timing is in milliseconds, not ticks.) *Measured* with real keys on a virtual 60 Hz clock, half a tick ahead: on-time presses went from 13–21% to 72–88% at 120 ms ticks, and from 12–26% to 60–73% at 90 ms. It changes the drawing only, never a rule:
+  - rivals' next step comes from the plans they've already made, and they make them before the board is drawn into their next move;
+  - a head about to crash holds at its cell centre instead of overshooting (fire isn't a crash, so a head heading into fire doesn't hold);
+  - a guess that turns out wrong (a plan made late, a press in the second half of a tick) eases to the right place, never faster than a snake moves; a dash still snaps;
+  - online friends draw from what they know (their own presses);
+  - the board rests at its cells before Go and once the round's over.
+- **Your press shows at once.** Every steering press, not only a stunned one, and online too: your eyes look and your head leans the way you pressed, and it's drawn ahead from there, before the tick takes it.
+- **Your face turns quickly** (about 60 ms, `FACE_EASE_MS`). The 300 ms "steady line" stays for the rivals, whose tongues it was for. *Measured*, in swift play your face lagged 214 ms. As built, it comes within 45° of the new way 53 ms after the press (180 ms before, on the same test).
+- **Chained swipes are lighter.** A finger already swiping chains turns at 8 px (a new touch still needs 12, to tell it from a tap). The anchor keeps up with the finger while it goes the way it registered, so a turn counts from where the finger turns (*measured*, about 19 ms after the corner at 0.6 px/ms). A turn's way must be half again the other (`SWIPE_AXIS` 1.5), so a diagonal waits until it's clearly one way.
 
 ### What was promised and missing
 
@@ -564,25 +572,28 @@ The completeness audit went through every request across three sessions. About 1
 - rivals planning with their powers;
 - the board-split fix;
 - the trappers' thicker walls;
-- lines for being put out by rain, for ash and for rot, and Sovereign and Colonist complaining when rot ruins their land;
-- a "swipe or arrows to steer" hint beside the YOU arrow.
+- lines for being put out by rain, for ash and for rot, and Sovereign and Colonist complaining when rot ruins their land (see "Lines and announcements");
+- a steering hint beside the YOU arrow: "Swipe to steer" or "Arrows or WASD to steer", riding with your head until you steer (a banner moves aside for it).
 
 Things an expert would expect, added:
-- a **Field guide** beside Hall of Fame and Your story: every food and power, with its picture and a one-line rule;
+- a **Field guide** beside Hall of Fame and Your story: every food and power, with its picture and a one-line rule, and the keys for each power. On phones (440 px or narrower) the Hall of Fame tab is a trophy, so three tabs fit 320 px; "Clear everything" hides on the guide;
 - powers you can tell apart (above);
 - beads that rot (above);
-- a stop to eating back your own crash.
+- a stop to eating back your own crash;
+- new lessons: "Your own tail won't feed you.", "Pecking under you! Only your head can fall in.", the flash's key, and the round's news "The last apples are falling."
 
 Docs that contradicted the game are corrected: the holes were said to be trenches, the power marks were described from before the third pass, the "rare" golden apple came 5 times a round, and Joker's mushroom habit was missing.
 
 ### Online
 
 Protocol 7:
-- jump and flash are separate messages;
-- each snake's flash rest and flash request;
-- beads' owner and rot;
+- presses are three messages: a key's turn (`{t:'turn'}`, it only steers), a fresh swipe (`{t:'swipe'}`: the host decides whether it's "ahead", against its own queue, which a friend can't see) and a power (`{t:'pow'}`, jump or flash);
+- each snake's flash rest and flash request, and plain flashes;
+- beads' owner, and eating your own;
 - holes under bodies;
-- the trickle of last apples.
+- rot, saying whether it was an apple or a bead (and the bead's colour);
+- the trickle of last apples, and where the first fell;
+- whether a rival is desperate (the chatter voices it).
 
 ## Skipped or adapted guidelines
 
