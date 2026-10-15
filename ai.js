@@ -69,7 +69,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1, territory: 0.8, aggression: 0.3,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, hungryBelow: 16, fedFactor: 0.3,
-        margin: 10, headRisk: 600, zoneRisk: 80, hunt: HUNT,
+        margin: 10, headRisk: 600, zoneRisk: 80, thick: 15, hunt: HUNT,
       },
     },
     gobbler: {
@@ -78,9 +78,9 @@ window.SnakeAI = (() => {
       kill: ['Gobbler didn’t even stop chewing.', 'It burped. That was the eulogy.', 'Gobbler was thinking about apples. It always is.'],
       win: ['And it’s still hungry.', 'Not a crumb left.', 'Now, about pudding.'],
       w: {
-        space: 1, territory: 0.2,
-        food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 0.3, mushroom: -3,
-        margin: 6, headRisk: 1500, zoneRisk: 500, // greedy, but it flinches from heads (it used to win only 8%)
+        space: 1.6, territory: 0.2,
+        food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 1, mushroom: -3,
+        margin: 10, headRisk: 1500, zoneRisk: 500, // greedy (a rival's apple too), but it flinches from heads and wants room (it used to win only 8%)
       },
     },
     ghost: {
@@ -91,7 +91,7 @@ window.SnakeAI = (() => {
       w: {
         space: 2, territory: 0.6,
         food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 18, fedFactor: 0.4,
-        margin: 6, headRisk: 900, zoneRisk: 150, distance: 7,
+        margin: 6, headRisk: 900, zoneRisk: 150, distance: 6,
       },
     },
     sovereign: {
@@ -132,7 +132,7 @@ window.SnakeAI = (() => {
       kill: ['Vulture was waiting for this.', 'It circled. You slipped. It ate.', 'Vulture thanks you for the beads.'],
       win: ['Picking over the leftovers.', 'It waited everyone out.', 'Last one at the table.'],
       w: {
-        space: 1.5, territory: 0.4,
+        space: 1.3, territory: 0.4,
         food: 4, eat: 60, normalFood: 0.15, pellet: 3, foodRange: 40, contested: true,
         margin: 6, headRisk: 900, zoneRisk: 200, lure: { weight: 8, dist: 8 },
       },
@@ -143,9 +143,9 @@ window.SnakeAI = (() => {
       kill: ['Mason had a spot picked out for you.', 'You were on the wrong side of the wall.', 'All roads led to Mason.'],
       win: ['Veni, vidi, Mason.', 'Winnus maximus.', 'Rome took longer.'],
       w: {
-        space: 1.5, territory: 2.2,
+        space: 1.3, territory: 1.8,
         food: 3, eat: 40, pellet: 1, foodRange: 30,
-        margin: 6, headRisk: 800, zoneRisk: 150, turn: 25,
+        margin: 6, headRisk: 800, zoneRisk: 150, turn: 25, thick: 45,
       },
     },
     wildcard: {
@@ -204,9 +204,9 @@ window.SnakeAI = (() => {
       kill: ['Mute had the last word. Silently.', '*taps on your invisible box*', '*lowers an invisible curtain*'],
       win: ['*takes a silent bow*', '*accepts an invisible bouquet*', '*lifts an invisible trophy*'],
       w: {
-        space: 1.2, territory: 2, aggression: 0.8,
+        space: 1.2, territory: 1.6, aggression: 0.8,
         food: 4, eat: 70, pellet: 1.2, foodRange: 40,
-        margin: 6, headRisk: 700, zoneRisk: 120,
+        margin: 6, headRisk: 700, zoneRisk: 120, thick: 15,
         hunt: { squeeze: 4, chase: 2, lead: 1 },
       },
     },
@@ -655,7 +655,7 @@ window.SnakeAI = (() => {
       ctx.w = {
         ...w0, contested: 1, foodRange: Math.max(60, w0.foodRange), normalFood: 1, pellet: Math.max(1, w0.pellet ?? 1), mushroom: -1,
         margin: Math.min(2, w0.margin), headRisk: 0.4 * w0.headRisk, zoneRisk: 0.3 * w0.zoneRisk,
-        territory: 0.5 * w0.territory, aggression: 0, distance: 0, tail: 0, thrill: 0, turn: 0, coil: null, hunt: HUNT,
+        territory: 0.5 * w0.territory, aggression: 0, distance: 0, tail: 0, thrill: 0, turn: 0, coil: null, thick: 0, hunt: HUNT,
       };
       ctx.victim = -1; ctx.target = null; ctx.lure = -1; ctx.avoid = null; ctx.home = null; ctx.mimicDir = null; ctx.goal = null;
       const meal = f => f.kind !== 'mushroom' && !(f.kind === 'pellet' && f.owner === me.id) && manhattan(f, myHead) <= lifeTicks;
