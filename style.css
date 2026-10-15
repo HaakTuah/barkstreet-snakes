@@ -916,8 +916,8 @@ button.link:active { transform: none; }
   .opponents .tap-tip { display: block; flex-basis: 100%; font-size: 0.78rem; color: var(--ink-soft); }
   .buttons .text-button { margin-top: 0; min-height: 32px; }
   .buttons { gap: 6px 10px; }
-  .hint span:nth-of-type(n+3) { display: none; } /* (a small card: how to steer and leap; the rest is under the board) */
-  .hint span:nth-of-type(2) .sep { display: none; }
+  .hint span:nth-of-type(n+4) { display: none; } /* (a small card: how to steer, jump and flash; the rest is under the board) */
+  .hint span:nth-of-type(3) .sep { display: none; }
   .card:has(.name-row:not([hidden])) .flavor { display: none; }
   .name-row { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px 8px; font-size: 0.9rem; }
   .name-row input { width: 140px; padding-block: 6px; }
@@ -930,7 +930,7 @@ button.link:active { transform: none; }
   .card h2 { font-size: 1.25rem; }
   .flavor { display: none !important; }
   .opponents .tap-tip { display: none !important; } /* (the hint needs the room: how to steer comes first) */
-  /* Just the first two items of the hint ("Swipe to steer · Swipe ahead to leap"): a new player has to be told that much. */
+  /* Just the first two items of the hint ("Swipe to steer · Tap to jump"): a new player has to be told that much (the flash has its own lesson). */
   .card p.hint { font-size: 0.72rem; margin-top: 4px !important; }
   .hint span:nth-of-type(n+3) { display: none; }
   .hint span:nth-of-type(2) .sep { display: none; }

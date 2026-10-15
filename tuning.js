@@ -167,6 +167,7 @@ window.TUNING = Object.freeze({
   SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells...
   SWIPE_MIN_PX: 12,         // ...and at least this far (about 3 mm), so a jittery finger doesn't turn
   SWIPE_CHAIN_PX: 8,        // ...but a finger already swiping chains its next turn after this far
+  SWIPE_AXIS: 1.5,          // ...its way this many times the other (a diagonal waits until it's clearly one way)
   TAP_JUMP_MS: 80,          // a touch that stays still this long (or lifts sooner without travelling) is a tap: a jump (a slow swipe, 0.15 px/ms, is seen moving by about 57 ms: touch moves come once a frame)
   TAP_STILL_PX: 6,          // ...still: within this far of where it touched
 

@@ -177,7 +177,7 @@
     if (p.fatal === 'hunger') return 'You ran out of food at your smallest'; // (under "Starved!": not "You starved" again)
     if (p.fatal === 'pecked') return 'The woodpecker struck right by your head';
     if (p.fatal === 'fire') return 'The flames got you at your smallest';
-    if (p.fatal === 'cut') return `${game.snakes[p.killerId]?.name || 'A'}’s dash cut you right behind the head`;
+    if (p.fatal === 'cut') return `${game.snakes[p.killerId]?.name || 'A'}’s golden flash cut you right behind the head`;
     const k = p.killerId != null ? game.snakes[p.killerId] : null;
     const why = p.fatal === 'shorter' && k && !k.persona ? ', and they were longer' : WHY_OUT[p.fatal] || ''; // (a friend is "they")
     return `You ${yourCause(p)}${why}`;
@@ -929,7 +929,7 @@
     }
   }
   // kind styles the banner for its moment: kill, gold, beetle, bird (the
-  // woodpecker), warn, fire, you (a lesson about your own leap), go, and the
+  // woodpecker), warn, fire, you (a lesson about your own powers, or your own tail), go, and the
   // weather's own (sun, wind, rain, storm, snow). level says how much it
   // matters: 'round' (what changes the round: first blood, the last two, the
   // woodpecker, friends coming and going) always shows; a 'lesson' (a rule,
@@ -1471,7 +1471,7 @@
     const press = swipe && state === 'running' ? swipeTo : turn;
     if (state === 'running' || state === 'countdown') { game.steered = true; hideSteerHint(); } // (you've found the controls)
     if (state === 'running' && youHideAt) youHideAt = Math.min(youHideAt, performance.now() + T.YOU_AFTER_STEER_MS); // (you've found yourself)
-    const heard = () => { if (player().stunUntil >= game.tick) R.pressed?.(DIRS[name]); }; // (stunned: the chevron by your head shows it was heard; only for a press that's taken)
+    const heard = () => { const p = player(); if (p.stunUntil >= game.tick && (swipe || DIRS[name] !== p.dir || p.queue.length)) R.pressed?.(DIRS[name]); }; // (stunned: the chevron by your head shows it was heard; only for a press that's taken: a key the way you face changes nothing)
     if (online) {
       // Online the countdown runs its course; presses go to the host's game.
       if (state !== 'countdown' && state !== 'running') return;
@@ -1530,6 +1530,7 @@
   // Space be a jump, so mashing jump just after you die can't start a round.
   let tabbing = false, tabbed = null;
   document.addEventListener('focusin', e => { tabbed = tabbing ? e.target : null; tabbing = false; });
+  document.addEventListener('keyup', e => { if (e.key === 'Tab') tabbing = false; }); // (a Tab that took focus out of the page: the game's next focus isn't yours)
 
   document.addEventListener('keydown', e => {
     Audio.unlock();
@@ -1634,7 +1635,7 @@
       const dir = ax > ay ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
       if (dir === sw.last) { sw.x = t.clientX; sw.y = t.clientY; continue; } // (still going the way it registered: the anchor keeps up, so a turn counts from where the finger turns)
       const threshold = sw.last ? T.SWIPE_CHAIN_PX : Math.max(T.SWIPE_MIN_PX, (boardPx || 320) / GRID * T.SWIPE_CELLS);
-      if (Math.max(ax, ay) < threshold || Math.max(ax, ay) < 1.5 * Math.min(ax, ay)) continue;
+      if (Math.max(ax, ay) < threshold || Math.max(ax, ay) < T.SWIPE_AXIS * Math.min(ax, ay)) continue;
       sw.tap = false; // (a swipe is never a jump)
       clearTimeout(sw.timer);
       if (state === 'ready' || state === 'countdown') swipedToStart = true;
