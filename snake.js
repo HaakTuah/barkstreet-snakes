@@ -1981,6 +1981,8 @@
     ['Your powers', [
       ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space'}: hop a snake, a hole or fire. It costs your tail’s tip, then rests ${secs(T.LEAP_COOLDOWN_MS)} s.`],
       ['flash', 'Flash', `${touchFirst ? 'A swipe the way you’re going' : 'E or Shift'}: two cells in a blink, free. Then it rests ${secs(T.FLASH_COOLDOWN_MS)} s.`],
+      ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden flashes.'],
+      ['rests', 'Resting', 'Two half-rings round your head: your jump (left) and your flash (right) coming back.'],
     ]],
     ['The log', [
       ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
@@ -1989,7 +1991,7 @@
     ]],
   ];
   // (Until the renderer can draw a picture, a stand-in.)
-  const GUIDE_STAND_IN = { apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', pellet: '🟢', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', fire: '🔥', hole: '🕳️', land: '🚩' };
+  const GUIDE_STAND_IN = { apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', pellet: '🟢', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', hole: '🕳️', land: '🚩' };
   function renderGuide() {
     const px = Math.round(36 * (window.devicePixelRatio || 1));
     for (const [title, rows] of GUIDE) {
