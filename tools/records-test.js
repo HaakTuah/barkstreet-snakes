@@ -1,15 +1,22 @@
 #!/usr/bin/env node
 // Checks the Hall of Fame across friends: two players' records, sharing best
 // rounds, playing a round together, sharing again. Nothing may appear twice.
+// And a browser that won't keep anything still has its records until the tab
+// closes, and says so.
 //
 //   node tools/records-test.js
 const fs = require('fs');
 const vm = require('vm');
 const src = fs.readFileSync(require('path').join(__dirname, '..', 'records.js'), 'utf8');
-function player() {
+// Just enough of a page to render into: elements are { className, textContent, children }.
+const document = { createElement: tag => ({ tag, children: [], style: {}, append(...c) { this.children.push(...c); } }) };
+const text = n => (n && typeof n === 'object' ? (n.textContent ?? '') + n.children.map(text).join('') : String(n));
+const find = (n, cls) => (n && typeof n === 'object' ? [...(n.className === cls ? [n] : []), ...n.children.flatMap(c => find(c, cls))] : []);
+// storage: a browser's localStorage (by default one that works).
+function player(storage) {
   const store = new Map();
-  const localStorage = { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) };
-  const ctx = vm.createContext({ window: {}, localStorage, console, Math, Date, Intl });
+  const localStorage = storage || { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) };
+  const ctx = vm.createContext({ window: {}, localStorage, document, console, Math, Date, Intl });
   vm.runInContext(src, ctx);
   return ctx.window.SnakeRecords;
 }
@@ -79,4 +86,76 @@ ok(C.cleanName('😀'.repeat(20)).length === 32 && !/[\ud800-\udbff]$/.test(C.cl
 const D = player();
 D.recordPlayer({ place: 1, won: true, eaten: 3, survived: 1000 });
 ok(D.stats().played === 1, 'stats start counting');
+// Carving a name renames your rounds from before you had one, and only those.
+const E = player();
+E.recordPlayer({ place: 2, eaten: 9, survived: 30000 });
+E.recordPlayer({ place: 3, eaten: 5, survived: 20000 });
+E.importShared(A.shareable('Haakon'), '#4ade80');
+const latest = E.recordPlayer({ place: 1, won: true, eaten: 14, survived: 50000 });
+E.rename(latest, 'Perry');
+ok(E.scores().filter(e => !e.friend).every(e => e.name === 'Perry'), 'carving a name renames your unnamed rounds');
+ok(E.scores().filter(e => e.friend).every(e => e.name === 'Haakon'), "...and nobody else's");
+E.recordPlayer({ place: 4, eaten: 1, survived: 9000 });
+const again = E.recordPlayer({ place: 2, eaten: 8, survived: 40000 });
+E.rename(again, 'P');
+ok(E.scores().filter(e => !e.friend && e.name === 'Perry').length === 4, '...and a later carve leaves named rounds as they were');
+
+// What got you, in the same words on the bar and as your nemesis; the woodpecker has its own.
+const F = player();
+F.recordPlayer({ place: 4, eaten: 2, survived: 9000, killer: 'woodpecker' });
+F.recordPlayer({ place: 3, eaten: 4, survived: 19000, killer: 'woodpecker' });
+F.recordPlayer({ place: 4, eaten: 1, survived: 5000, killer: 'wall' });
+let page = document.createElement('div');
+F.renderStats(page, {});
+ok(text(find(page, 'nemesis')[0]) === 'Your nemesis: the woodpecker.' && find(page, 'bar-label').some(l => text(l) === 'Woodpecker'), 'a peck counts for the woodpecker, by name');
+ok(find(page, 'bar-label').some(l => text(l) === 'Edge & holes'), '...and the edge is the edge');
+F.recordPlayer({ place: 4, eaten: 1, survived: 5000, killer: 'wall' });
+page = document.createElement('div');
+F.renderStats(page, {});
+ok(text(find(page, 'nemesis')[0]) === 'No nemesis yet: the woodpecker and the edge & holes are tied.', 'a tie says who in the same words');
+
+// The tags after a name are read as words of their own.
+page = document.createElement('div');
+F.renderScores(page, F.scores()[0].id, 'all', '#4ade80');
+const named = find(page, 'name')[0];
+ok(text(named).endsWith(', this round') && find(named, 'sr-only').length === 1, 'a screen reader hears "Green, this round", not "Greenthis round"');
+
+// Storage blocked: every access throws (some private modes, locked-down browsers).
+const blocked = () => { throw new Error('SecurityError: The operation is insecure.'); };
+const G = player({ getItem: blocked, setItem: blocked, removeItem: blocked });
+page = document.createElement('div');
+G.renderStats(page, {});
+ok(find(page, 'records-note').length === 1 && text(find(page, 'empty')[0]).startsWith('You haven’t played yet'), "with storage blocked, Your story says it isn't kept, and that you haven't played");
+G.recordPlayer({ place: 2, eaten: 7, survived: 50000, killer: 'Sniper' });
+G.recordPlayer({ place: 1, won: true, eaten: 12, survived: 90000 });
+G.setBest(12);
+G.rename(G.scores()[0].id, 'Perry');
+ok(G.stats().played === 2 && G.scores().length === 2 && G.getBest() === 12, '...but the rounds played still count until the tab closes');
+ok(G.getName() === 'Perry' && G.scores().every(e => e.name === 'Perry'), '...and so does the name you carved');
+page = document.createElement('div');
+G.renderScores(page, null, 'all', '#4ade80');
+ok(text(find(page, 'records-note')[0]) === 'This browser isn’t keeping records, so these last until you close the tab.' && find(page, 'scores-table').length === 1, 'the Hall of Fame shows them, and says why they won’t last');
+page = document.createElement('div');
+G.renderStats(page, {});
+ok(find(page, 'records-note').length === 1 && !find(page, 'empty').length && text(page).includes('Your nemesis'), 'Your story too, and never says you haven’t played');
+G.reset();
+page = document.createElement('div');
+G.renderStats(page, {});
+ok(G.stats().played === 0 && text(find(page, 'empty')[0]).startsWith('A clean slate'), 'clearing everything clears it, and it’s a clean slate, not a log you never played on');
+
+// Storage that fills up: what it already has stays, the rest is kept for the session.
+const full = new Map();
+let room = 3;
+const H = player({ getItem: k => (full.has(k) ? full.get(k) : null), setItem: (k, v) => { if (!full.has(k) && --room < 0) throw new Error('QuotaExceededError'); full.set(k, String(v)); }, removeItem: k => full.delete(k) });
+H.recordPlayer({ place: 3, eaten: 4, survived: 30000 });
+H.recordPlayer({ place: 1, won: true, eaten: 9, survived: 60000 });
+page = document.createElement('div');
+H.renderScores(page, null, 'me', '#4ade80');
+ok(H.stats().played === 2 && H.scores().length === 2 && find(page, 'records-note').length === 1, 'full storage: the rounds are still there, and the Hall of Fame says they won’t last');
+const I = player();
+page = document.createElement('div');
+I.renderScores(page, null, 'all', '#4ade80');
+I.renderStats(page, {});
+ok(!find(page, 'records-note').length, 'storage that works says nothing about it');
+
 console.log('all good');

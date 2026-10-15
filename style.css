@@ -207,8 +207,60 @@ header { min-width: 0; }
   box-shadow: 0 0 0 1.5px rgba(58, 38, 20, 0.45);
 }
 
-.scoreboard .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.scoreboard .len { font-weight: 700; font-variant-numeric: tabular-nums; }
+.opponents .tap-tip { display: none; }
+.card.beat .opponents .tap-tip { display: none !important; } /* (a second's countdown: no time to tap, and taps steer) */
+.scoreboard button.name { min-height: 0; padding: 0; border: 0; border-radius: 4px; background: none; box-shadow: none; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: none; }
+.scoreboard button.name:active { transform: none; box-shadow: none; }
+.scoreboard :focus-visible { outline-color: var(--ink); outline-offset: 1px; } /* (Ink on parchment: Honey there is invisible) */
+.scoreboard .name { flex: 1 1 auto; min-width: 2.2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scoreboard .len { flex: none; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; } /* (the crown and the number on one line) */
+/* Powers: a chip (6 px, like everything small) with an ink icon and a count.
+   Golden powers are Honey. Your own leap fills as it cools and is solid when
+   ready; the icon and numbers keep full contrast all the while. The edges
+   wrapping add a loop and the seconds left, in a Honey line. On a narrow tag
+   the badge gives way first, down to its icon, and the name keeps its room. */
+.scoreboard .pow {
+  flex: 0 40 auto;
+  min-width: 19px;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  overflow: hidden;
+  padding: 1px 4px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+  white-space: nowrap;
+  background: linear-gradient(90deg, rgba(58, 38, 20, 0.4) var(--fill, 100%), rgba(58, 38, 20, 0.06) var(--fill, 100%)); /* (filled about 3:1 against empty: readable at a glance) */
+}
+.scoreboard .pow[hidden] { display: none; } /* (its display would otherwise win over hidden: an empty chip, like a dash) */
+.scoreboard .pow svg { flex: none; width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.scoreboard .pow b { font-weight: 700; font-variant-numeric: tabular-nums; }
+.scoreboard .pow .w { display: inline-flex; align-items: center; gap: 1px; margin-left: 3px; }
+.scoreboard .pow.ready { background: rgba(58, 38, 20, 0.4); box-shadow: inset 0 0 0 1px rgba(58, 38, 20, 0.55); }
+.scoreboard .pow.small { color: var(--ink-soft); }
+.scoreboard .pow.gold { background: #fde68a; box-shadow: inset 0 0 0 1px #d4a017; }
+.scoreboard .pow.wrap { box-shadow: inset 0 0 0 1.5px #d4a017; }
+.scoreboard .pow.wrap:not(.gold):not(.mine) { background: #fef3c7; } /* (a rival wrapping: a golden power, so gold, not a greyed-out chip) */
+/* A narrow tag: the chip is just its icons (the board's pips and the screen
+   reader's words still give the count), so the name keeps its letters. */
+.scoreboard li { container: tag / inline-size; }
+/* Four tags in a row only where they have room for a name, a chip and a
+   crowned length (a near-square window gives them 130 px): otherwise two rows
+   of two, as on a phone. */
+main { container: page / inline-size; }
+@container page (max-width: 660px) {
+  .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container tag (max-width: 175px) {
+  .scoreboard .pow b { display: none; }
+  .scoreboard .pow { padding-inline: 3px; flex-shrink: 0; min-width: min-content; }
+  .scoreboard .pow > svg ~ .w { display: none; } /* (two powers: the first one's icon; the wrap shows on the board, as the gold outline) */
+  .scoreboard li.leader .len::before { display: none; } /* (the leader's gold ring says it) */
+  .scoreboard .name { font-size: 0.86rem; }
+}
 
 /* Hunger: a thin bar along the bottom of each tag (scaled, never resized). */
 .scoreboard .hunger {
@@ -257,7 +309,7 @@ header { min-width: 0; }
   height: 11px;
   margin-right: 3px;
   vertical-align: -1px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 11'%3E%3Cpath d='M1.2 3.4l2.8 2.7L6.5 1l2.5 5.1 2.8-2.7-1.1 6.4H2.3z' fill='%23facc15' stroke='%23926a10' stroke-width='.9' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 11'%3E%3Cpath d='M1.2 3.4l2.8 2.7L6.5 1l2.5 5.1 2.8-2.7-1.1 6.4H2.3z' fill='%23fde68a' stroke='%23d4a017' stroke-width='.9' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
   animation: crown-bob 1.6s ease-in-out 3;
 }
 @keyframes crown-bob { 50% { transform: translateY(-2px) rotate(-8deg); } }
@@ -314,7 +366,7 @@ header { min-width: 0; }
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  box-shadow: 0 0 0 3px var(--glow, #fde68a), 0 0 30px 8px var(--glow, #fde68a), inset 0 0 26px 6px var(--glow, #fde68a);
+  box-shadow: 0 0 0 3px var(--glow, #fde68a), 0 0 12px 2px var(--glow, #fde68a), inset 0 0 26px 6px var(--glow, #fde68a); /* (a short outer glow: a long one washed the tags above with "knocked out" red) */
 }
 
 /* Leaves rest on the frame's corners and never reach the bark's cells. */
@@ -413,17 +465,26 @@ canvas {
 
 /* The buttons stay in view when a card is taller than the board (they stick to its bottom edge). */
 .buttons .text-button { flex-basis: 100%; margin: 2px auto 0; }
-/* The main button calls you: a ring ripples out from it, over and over. */
-#start { position: relative; }
+.buttons .hint { flex-basis: 100%; margin-top: 0 !important; } /* (in the sticky row with the buttons: always in view, even on a card that scrolls) */
+/* The main button calls you: a ring ripples out from it, over and over. It's
+   a pill of light just behind the button, growing out from under it about
+   12px and fading: transform and opacity only, so the compositor runs it and
+   the card isn't repainted every frame (a box-shadow's spread was). It grows
+   a little more up and down than across, since the button is wider than tall. */
+#start { position: relative; --call-x: 1.22; --call-y: 1.58; }
 #start::after {
   content: '';
   position: absolute;
   inset: 0;
+  z-index: -1; /* (behind the button, in the buttons' own layer) */
   border-radius: inherit;
+  background: rgba(163, 230, 53, 0.65);
+  opacity: 0;
   pointer-events: none;
   animation: call 1.8s ease-out infinite;
 }
-@keyframes call { from { box-shadow: 0 0 0 0 rgba(163, 230, 53, 0.65); } to { box-shadow: 0 0 0 12px rgba(163, 230, 53, 0); } }
+#start:active::after, #start:disabled::after { animation: none; } /* (pressed or disabled, the button is a layer of its own, and the light would show over it) */
+@keyframes call { from { transform: none; opacity: 1; } to { transform: scale(var(--call-x), var(--call-y)); opacity: 0; } }
 .buttons::before { /* when the card scrolls, what's behind the buttons fades into them */
   content: '';
   position: absolute;
@@ -549,6 +610,7 @@ canvas {
   font-size: 0.9rem;
   font-weight: 600;
   text-align: center;
+  text-wrap: balance; /* (two even lines, not a long one and a word) */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 0 0 2px var(--parchment-2);
   pointer-events: none;
   animation: slam 0.46s cubic-bezier(0.2, 0.9, 0.3, 1.2);
@@ -572,8 +634,8 @@ canvas {
 @keyframes throb { to { background: #fecaca; } }
 .toast[data-kind="beetle"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #059669; }
 .toast[data-kind="bird"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #ea580c; }
-.toast[data-kind="you"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #e0b23a; }
-.toast[data-kind="gold"] { background: linear-gradient(180deg, #fff7d1, #fde68a); box-shadow: 0 0 20px rgba(253, 224, 71, 0.65), inset 0 0 0 2px #d4a017; }
+.toast[data-kind="you"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #4ade80; } /* (yours: your snake's green, not a gold that isn't a power) */
+.toast[data-kind="gold"] { background: linear-gradient(180deg, #fffbea, #fde68a); box-shadow: 0 0 20px rgba(253, 230, 138, 0.65), inset 0 0 0 2px #d4a017; }
 .toast[data-kind="gold"]::after {
   content: '';
   position: absolute;
@@ -681,14 +743,15 @@ canvas {
 .chatlog strong { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
 
 .help { margin: 12px 0 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
-.hint span, .help span { white-space: nowrap; }
+.hint span, .help span, #overlay-text span.whole { white-space: nowrap; } /* (each item whole, a line breaking only after its dot; a long reason may wrap, rather than run off a phone's card) */
+.sep { font-style: normal; }
+.glyph { display: inline-block; width: 0.62em; height: 0.78em; vertical-align: -0.06em; fill: currentColor; } /* (the pause button's own bars, not a font's) */
 
 /* The woodpecker's layer: the whole window, under the dialogs, never in the way of a tap. */
 .bird-layer {
   position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
+  top: 0;
+  left: 0; /* (sized by the game, to the window it draws for) */
   z-index: 9;
   display: none;
   pointer-events: none;
@@ -737,6 +800,7 @@ canvas {
 
 .records-body { min-height: 120px; }
 .empty { margin: 32px 0; text-align: center; color: var(--ink-soft); font-style: italic; }
+.records-note { margin: 0 0 10px; font-size: 0.85rem; text-align: center; color: var(--ink-soft); font-style: italic; text-wrap: balance; }
 
 .scores-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .scores-table th { padding: 6px 7px; text-align: left; font-weight: 500; font-size: 0.8rem; color: var(--ink-soft); }
@@ -808,7 +872,11 @@ button.link:active { transform: none; }
   .opponents { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; margin-bottom: 8px; }
   .opponents li { margin: 2px 0; }
   .opponents .blurb { display: none; }
-  .buttons .text-button { margin-top: 0; }
+  .opponents .tap-tip { display: block; flex-basis: 100%; font-size: 0.78rem; color: var(--ink-soft); }
+  .buttons .text-button { margin-top: 0; min-height: 32px; }
+  .buttons { gap: 6px 10px; }
+  .hint span:nth-of-type(n+3) { display: none; } /* (a small card: how to steer and leap; the rest is under the board) */
+  .hint span:nth-of-type(2) .sep { display: none; }
   .card:has(.name-row:not([hidden])) .flavor { display: none; }
   .name-row { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px 8px; font-size: 0.9rem; }
   .name-row input { width: 140px; padding-block: 6px; }
@@ -819,12 +887,18 @@ button.link:active { transform: none; }
 }
 @container (max-height: 300px) {
   .card h2 { font-size: 1.25rem; }
-  .flavor, .hint { display: none !important; }
+  .flavor { display: none !important; }
+  .opponents .tap-tip { display: none !important; } /* (the hint needs the room: how to steer comes first) */
+  /* Just the first two items of the hint ("Swipe to steer · Swipe ahead to leap"): a new player has to be told that much. */
+  .card p.hint { font-size: 0.72rem; margin-top: 4px !important; }
+  .hint span:nth-of-type(n+3) { display: none; }
+  .hint span:nth-of-type(2) .sep { display: none; }
   button { padding-block: 8px; }
   .card:has(.name-row:not([hidden])) .badge { display: none; } /* (the prompt is the celebration here; Best shows the number) */
   /* The two buttons share one row (a stacked pair would cover the card). */
   .buttons { gap: 8px; }
   .buttons button:not(.text-button) { flex: 1 1 0; min-width: 0; padding: 7px 8px; font-size: 0.85rem; line-height: 1.15; }
+  #start { --call-x: 1.18; --call-y: 1.8; } /* (its ring as wide on a smaller button) */
   .name-row { font-size: 0.82rem; }
   .buttons .text-button { min-height: 30px; padding-block: 2px; }
   .card p { font-size: 0.85rem; margin-bottom: 6px; }
@@ -843,6 +917,7 @@ button.link:active { transform: none; }
   main { max-width: min(760px, max(240px, calc(100vh - 190px))); max-width: min(760px, max(240px, calc(100dvh - 190px))); }
   /* The Hall of Fame as a trophy, so the header stays one row high. */
   .trophy { min-width: 34px; padding: 0 8px; justify-content: center; }
+  .scoreboard li { padding-inline: 7px; gap: 4px; } /* (two tags a row: every letter of a name counts) */
   .trophy svg { display: block; }
   .trophy .trophy-text { display: none; }
   .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -853,19 +928,29 @@ button.link:active { transform: none; }
   .opponents { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; }
   .opponents li { margin: 2px 0; }
   .opponents .blurb { display: none; }
+  .opponents .tap-tip { display: block; flex-basis: 100%; font-size: 0.78rem; color: var(--ink-soft); }
   .scores-table .date { display: none; }
   .scores-table { table-layout: fixed; } /* long names get an ellipsis instead of pushing the table wide */
-  .scores-table th:nth-child(1) { width: 24px; }
-  .scores-table th:nth-child(3) { width: 74px; }
-  .scores-table th:nth-child(4), .scores-table th:nth-child(5) { width: 46px; }
+  /* The room goes to the names: Result fits "Won" or "4th" ("Shared 1st" takes two lines),
+     and a tag ("this round", "friend") goes under its name, so a long name can't cut it off. */
+  .scores-table th:nth-child(1) { width: 22px; }
+  .scores-table th:nth-child(3) { width: 50px; }
+  .scores-table th:nth-child(4), .scores-table th:nth-child(5) { width: 42px; }
   .hud { gap: 6px; }
   .scores-table td, .scores-table th { padding-inline: 5px; }
-  .bar-row { grid-template-columns: 96px 1fr 28px; }
+  .scores-table .name .who { display: block; margin: 1px 0 0 19px; line-height: 1.1; }
+  .bar-row { grid-template-columns: 100px 1fr 28px; } /* ("Edge & holes" on one line) */
 }
 
+/* The smallest phones. The Hall of Fame takes more of the screen, so the
+   names have room (they were cut to three letters) and each tab is one line. */
 @media (max-width: 360px) {
   h1 { font-size: 1.45rem; }
   .hud .stat { font-size: 0.9rem; }
+  .records { padding: 8px; }
+  .records-card { padding: 12px; }
+  .records-head .tab { padding-inline: 10px; white-space: nowrap; }
+  .scores-table td, .scores-table th { padding-inline: 4px; }
 }
 
 /* Short phones: no tagline, so the whole board fits the first screen. */
@@ -879,6 +964,7 @@ button.link:active { transform: none; }
    header and tags sit beside the board, which takes the full height. */
 @media (min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px) {
   main {
+    container-type: normal; /* (sized by its content here: a size container would collapse it) */
     --board: min(900px, calc(100vh - 32px), calc(100vw - 260px));
     --board: min(900px, calc(100dvh - 32px), calc(100vw - 260px));
     width: auto;

@@ -11,15 +11,18 @@ window.SnakeChatter = (() => {
       idle: ['I see you, {who}.', 'In my sights, {who}.', 'Steady…', 'Nowhere to hide.', 'Big fan of your stream, {who}.'],
       kill: ['Headshot.', 'Next.', 'Too slow, {who}.', 'One shot.'],
       golden: ['Bonus collected.'],
-      caught: ['Moving target. Still a headshot.'],
+      caught: ['Moving target. Still a headshot.', 'Target acquired.', 'Clean catch.'],
       weather: { wind: ['Adjusting for wind.'], storm: ['Thunder masks the shot.'], snow: ['Cold barrel. Steady hands.'] },
       woodpecker: ['Air support. Not mine.'],
       rainbow: ['Target marked: the end of the rainbow.'],
-      bonk: ['Recalibrating.', 'Minor setback.'],
+      bonk: ['Recalibrating.', 'Minor setback.', 'Bad angle.'],
+      edge: ['Out of bounds.'],
       burning: ['Taking fire. Literally.'],
       cut: ['Lost my rear guard.'],
-      gloat: ['Bounced off me, {who}? Cute.'],
+      gloat: ['Bounced off me, {who}? Cute.', 'Wrong lane, {who}.', 'Marked, {who}.'],
       dies: ['Counter-sniped by {who}?', 'Should have relocated.', 'Impossible.'],
+      dash: ['Repositioning. Fast.'],
+      snip: ['Clean cut, {who}.'],
     },
     gobbler: {
       hungry: ["So… hungry… can’t… go on…","FOOD. NOW."],
@@ -27,32 +30,35 @@ window.SnakeChatter = (() => {
       idle: ['Nom.', 'Anyone gonna finish that apple?', 'I smell apples.', 'Snack time!', 'Is that… food?'],
       eat: ['Nom nom nom.', 'Delicious!', 'More!', 'Crunchy!'],
       golden: ['GOLDEN APPLE. MINE.', 'Shiny AND tasty!'],
-      spawn: ['A GOLDEN APPLE! Out of my way!'],
+      spawn: ['A GOLDEN APPLE! Out of my way!', 'Dibs on the golden one!', 'GOLD! FOOD! GOLD FOOD!'],
       beetle: ['A BEETLE! Crunchy legs, come to Gobbler!', 'Bug! Bug bug bug!'],
-      caught: ['Crunchy! Legs and all.'],
-      mushroom: ['Ugh, mushrooms. Gross.', 'I feel… smaller. I hate it.'],
+      caught: ['Crunchy! Legs and all.', 'Six legs, six times the flavour!'],
+      mushroom: ['Ugh, mushrooms. Gross.', 'I feel… smaller. I hate it.', 'Who hid a mushroom in the snacks?!'],
       kill: ['Sorry, {who}. You were between me and lunch.', 'Oops. Is that meat?'],
       weather: { wind: ['It’s raining apples! Best day ever!'], rain: ['Mushroom weather. Yuck.'], sun: ['Golden hour? Golden SNACKS!'], snow: ['Winter? But what will I EAT?'] },
       woodpecker: ['Is it eating the log? Save me some!'],
       rainbow: ['A rainbow! Does the gold taste good?'],
-      bonk: ['Ow! My snacks!', 'Oof. Dropped my lunch.'],
+      bonk: ['Ow! My snacks!', 'Oof. Dropped my lunch.', 'Ow! I need a snack.'],
+      edge: ['Ow! Is the edge edible?'],
       burning: ['Am I… cooking? Smells good, actually.'],
       cut: ['My tail! That was full of food!'],
       baked: ['BAKED APPLES! Hot hot hot, worth it!'],
       goldbug: ['A GOLDEN beetle! Gold AND crunchy!'],
       leap: ['Wheee! Lunch from above!'],
       dies: ['Tell my apples… I loved them.'],
+      dash: ['Fast food!'],
+      snip: ['Snip! Snack-sized, {who}.'],
     },
     ghost: {
       hungry: ["…hungry…"],
       start: ['…'],
-      idle: ['…', '……', '(silence)', 'boo.'],
-      mushroom: ['smaller… better…'],
+      idle: ['…', '……', '(silence)', 'boo.', '…hello?'],
+      mushroom: ['…bitter.', '…fainter.'],
       kill: ['…sorry.'],
       weather: { storm: ['…boom.'], rain: ['…drip.'], snow: ['…brr.'] },
       woodpecker: ['…tap… tap…'],
       rainbow: ['…pretty.'],
-      bonk: ['…ow.'],
+      bonk: ['…ow.', '…oops.'],
       burning: ['…warm.'],
       cut: ['…lighter.'],
       dies: ['…'],
@@ -60,47 +66,56 @@ window.SnakeChatter = (() => {
     sovereign: {
       hungry: ["We require a banquet. Immediately."],
       start: ['Kneel.', 'We are pleased to receive you. Do not touch anything.'],
-      idle: ['Our lands are vast.', 'We are not amused.', 'This bark is royal bark.'],
-      intruder: ['Trespasser! Guards! …We are the guards.', '{who}, you stand on royal bark!', 'Off our land, {who}!'],
+      idle: ['Our lands are vast.', 'We are not amused.', 'This bark is royal bark.', 'One day all this will be ours. Today, in fact.'],
+      intruder: ['Trespasser! Guards! …We are the guards.', '{who}, you stand on royal bark!', 'Off our land, {who}!', 'Who let {who} in?',
+        'The realm is closed to the public, {who}.', 'We do not recall inviting you, {who}.'],
       kill: ['Justice is served.', 'The Crown is merciful. Usually.'],
       weather: { sun: ['The sun shines on our realm.'], storm: ['We do not approve of this weather.'], rain: ['Fetch the royal umbrella.'], snow: ['Fetch the royal furs.'] },
       woodpecker: ['Who invited that bird?', 'We did not authorise this pecking.'],
       rainbow: ['The heavens salute us.'],
-      realm: { grow: ['Our realm expands!', 'A greater sovereign needs a greater realm.', 'Behold: more kingdom.'], shrink: ['Our realm… contracts. Temporarily.', 'A strategic retreat. A royal one.'], move: ['The court relocates.', 'We have moved to better lands.'] },
-      bonk: ['We meant to do that.', 'Who put that there?'],
+      realm: { grow: ['Our realm expands!', 'A greater sovereign needs a greater realm.', 'Behold: more kingdom.'], shrink: ['Our realm… contracts. Temporarily.', 'A strategic retreat. A royal one.'], move: ['The court relocates.', 'We have moved to better lands.'], burning: ['Our realm is ablaze! Fetch the royal bucket!', 'Who set fire to the royal grounds?'], pecked: ['That bird is pecking holes in OUR land!', 'Our realm, full of holes. Unacceptable.'], invaded: ['A colony? On OUR land, {who}?!', '{who} dares plant a flag in our realm!'] },
+      bonk: ['We meant to do that.', 'Who put that there?', 'We shall have it executed.'],
+      edge: ['Move the edge. We command it.'],
       burning: ['Fetch the royal bucket!'],
       cut: ['That bird has committed treason.'],
-      gloat: ['Bow, {who}. Do not bump.'],
+      snipped: ['Treason, {who}! That was the royal tail.'],
+      gloat: ['Bow, {who}. Do not bump.', 'We felt that, {who}. We disapprove.', 'Mind the royal person, {who}.'],
       leap: ['We rise above it all.'],
       dies: ['The king is dead…', 'Long live… someone else.'],
+      dash: ['Make way for the crown!'],
+      snip: ['Divided, {who}, and ruled.'],
+      wrap: ['Our realm knows no edges now.'],
     },
     colonist: {
       hungry: ["I say, is there nothing to eat out here?"],
       start: ['Splendid day for an expedition!', 'Tally ho!'],
       idle: ['I say!', 'Jolly good.', 'Anyone for tea?', 'Rule, Britannia!'],
-      flag: ['I claim this bark for the Crown!', 'Another colony! Splendid.', 'Mine now. Terribly sorry.', 'Run up the ensign!', 'Another ensign for the Empire!'],
-      intruder: ['Ahem. That’s a colony, {who}.', 'I say, that patch is spoken for.'],
+      flag: ['I claim this bark for the Crown!', 'Another colony! Splendid.', 'Mine now. Terribly sorry.', 'Run up the ensign!', 'Another ensign for the Empire!', 'I claim this for the Crown. Which crown? Mine.'],
+      intruder: ['Ahem. That’s a colony, {who}.', 'I say, that patch is spoken for.', 'Do you have a flag, {who}? No flag, no colony.',
+        'Papers, {who}? No? Off you pop.', 'British bark now, {who}. Wipe your scales.'],
       kill: ['Frightfully sorry, old chap.', 'Should have read the flag, {who}.'],
       weather: { rain: ['Ah, proper weather at last.', 'Rain? Just like home.'], storm: ['Batten down the hatches!'], sun: ['The sun never sets on us, you know.'], snow: ['Bracing! Simply bracing.'] },
       woodpecker: ['A woodpecker! Someone fetch my musket. Politely.'],
       rainbow: ['A rainbow! Plant a flag at the end of it!'],
-      bonk: ['I say! Steady on!', 'Blast!'],
+      bonk: ['I say! Steady on!', 'Blast!', 'A minor diplomatic incident.'],
       burning: ['I appear to be on fire. How awkward.'],
       cut: ['Dash it, my tail!'],
-      gloat: ['Mind the Empire, {who}.'],
+      gloat: ['Mind the Empire, {who}.', 'I say, {who}! There’s a queue.', 'Do mind the paintwork, {who}.'],
       baked: ['Roast dinner! Splendid.'],
+      colony: { burning: ['I say, the colony’s on fire!', 'Fire in the colony! Form a bucket chain!'], pecked: ['That bird’s pecking up my colony!', 'Blast! Holes all over the colony.'] },
       dies: ['Stiff upper lip…'],
     },
     drab: {
       hungry: ["I should eat something."],
       start: ['Hello.', 'Hi. I’m Drab.'],
       idle: ['Nice weather.', 'Apples are fine.', 'I like beige.', 'This is a log.', 'Hm.'],
-      eat: ['Food.'],
+      eat: ['Food.', 'Eating.', 'Fine.', 'Tastes like food.'],
       woodpecker: ['Oh. A bird.'],
       kill: ['Oh. Sorry, {who}.'],
       weather: { rain: ['Rain. Great.'], sun: ['It’s sunny.'], wind: ['Windy.'], storm: ['Loud.'], snow: ['Cold.'] },
       rainbow: ['A rainbow. Colourful.'],
-      bonk: ['Ow.'],
+      bonk: ['Ow.', 'Oops.', 'That was a bump.'],
+      edge: ['That’s the edge.'],
       burning: ['Hot.'],
       cut: ['Hm. Shorter.'],
       dies: ['Well. That happened.'],
@@ -108,16 +123,16 @@ window.SnakeChatter = (() => {
     vulture: {
       hungry: ["Someone die already. I’m starving."],
       start: ['Ahh, fresh snakes.'],
-      idle: ['Not long now…', 'You look tired, {who}.', 'I’ll wait.', 'Patience…'],
-      death: ['Dinner!', 'Ooh, leftovers.', 'Rest in pieces, {who}.'],
+      idle: ['Not long now…', 'You look tired, {who}.', 'I’ll wait.', 'Patience…', 'Take your time, {who}. No rush.', 'Any minute now…'],
+      death: ['Dinner!', 'Ooh, leftovers.', 'Rest in pieces, {who}.', 'Waste not, want not.'],
       kill: ['I didn’t even have to try.'],
       weather: { storm: ['Lightning. Something’s bound to cook.'], rain: ['Grim weather. Lovely.'], snow: ['Winter. The lean season. My season.'] },
       woodpecker: ['Ah. A colleague.'],
       rainbow: ['Pretty. Someone will die chasing it.'],
-      bonk: ['Not the plan.'],
+      bonk: ['Not the plan.', 'I’m not on the menu.', 'Tsk.'],
       burning: ['I’m the one who eats the roast!'],
       cut: ['Leftovers… of me?'],
-      gloat: ['Keep bumping, {who}. I’ll wait.'],
+      gloat: ['Keep bumping, {who}. I’ll wait.', 'That looked expensive, {who}.', 'Smaller every time, {who}.'],
       dies: ['Who’s… eating… whom…'],
     },
     mason: {
@@ -128,93 +143,106 @@ window.SnakeChatter = (() => {
       kill: ['Veni, vidi, vici.', 'Murum non vidisti, {who}?', 'Requiescat in barko, {who}.'],
       hungry: ['Panem! Panem et… panem!'],
       woodpecker: ['Picus horribilis!'],
-      caught: ['Scarabaeus captus!'],
+      caught: ['Scarabaeus captus!', 'Crunchus deliciosus!'],
       weather: { storm: ['Iuppiter iratus est!'], rain: ['Pluvia! Aquaeductus, ubi es?'], sun: ['Sol invictus!'], wind: ['Ventus maximus!'], snow: ['Hiems venit!'] },
       rainbow: ['Arcus caelestis!'],
-      bonk: ['Murus! Unde venit?', 'Ouchus maximus.'],
+      bonk: ['Ouchus maximus.', 'Caput meum!', 'Bonkus interruptus.'],
+      edge: ['Murus! Unde venit?'],
       burning: ['Roma ardet!'],
       cut: ['Caudam meam!'],
-      gloat: ['Murum vidisti, {who}?'],
+      gloat: ['Murum vidisti, {who}?', 'Murus sum, {who}.', 'Ecce murus, {who}.'],
       dies: ['Et tu, {who}?', 'Alea iacta… estus.', 'Murus… meus… finis.'],
+      wrap: ['Sine muro! Murus nullus!'],
     },
     wildcard: {
       hungry: ["Very hungry. The hungriest. Nobody has ever been this hungry."],
       start: ['Hello, everybody. Tremendous crowd today.', 'I’m going to win. Bigly.'],
       idle: ['Nobody slithers better than me, believe me.', 'I have the best scales. Everybody says so.',
         'Many snakes are saying it.', 'Sad!', 'Fake apples!', '{who}? Total loser. Sad!'],
-      eat: ['Tremendous snack. The best snack.'],
+      eat: ['Tremendous snack. The best snack.', 'I only eat the best food. Everybody knows it.', 'Nobody eats like me. Nobody.'],
       golden: ['A golden apple. Very classy. Like me.'],
-      mushroom: ['Fake food! Very unfair!'],
+      mushroom: ['Fake food! Very unfair!', 'I’m bigger than ever. Ask anyone.'],
       kill: ['You’re fired, {who}!', 'Winning! So much winning.'],
       weather: { sun: ['Beautiful weather. The best weather. Everyone says so.'], storm: ['Nobody knows more about lightning than me.'], wind: ['Tremendous wind. So many apples.'], rain: ['Fake rain!'], snow: ['Global warming? Total hoax. Look at all this snow!'] },
       woodpecker: ['That bird is a disaster. Total disaster.'],
       rainbow: ['Rainbows. Overrated. Great gold, though.'],
-      bonk: ['Who moved that? Fake wall!'],
+      bonk: ['Fake news! That never happened.', 'Very unfair. Everybody saw it.'],
+      edge: ['Who moved that? Fake wall!'],
       burning: ['Hot. Very hot. The hottest. Tremendous.'],
       cut: ['That bird stole my tail. Total theft.'],
-      gloat: ['{who}? Bounced right off me. Sad!'],
-      goldbug: ['A golden beetle. Very classy. Like me.'],
+      snipped: ['{who} stole my tail! Total theft. Sad!'],
+      gloat: ['{who}? Bounced right off me. Sad!', 'Low energy, {who}. Very low energy.', 'Nobody bumps me, {who}. Believe me.'],
+      goldbug: ['A golden beetle! I love gold. Gold loves me.'],
       leap: ['Nobody jumps better than me.'],
       dies: ['Rigged! Totally rigged!'],
+      dash: ['Fastest dash in history. Everyone says so.'],
+      snip: ['You’re cut, {who}! Tremendously cut.'],
+      wrap: ['Walls? Who needs walls? Not today.'],
     },
     creeper: {
       hungry: ["so… hungry…"],
       start: ['psst.'],
-      idle: ['behind you.', 'don’t turn around, {who}.', 'hehehe.', 'nice tail, {who}.'],
+      idle: ['behind you.', 'don’t turn around, {who}.', 'hehehe.', 'nice tail, {who}.', 'don’t mind me.', 'we should hang out, {who}.'],
       kill: ['hehe. gotcha.'],
       weather: { storm: ['hehe. flickery.'], rain: ['drip drip.'], snow: ['cold tail. still following.'] },
       woodpecker: ['pecky pecky. hehe.'],
       rainbow: ['shiny…'],
-      bonk: ['oof.'],
+      bonk: ['oof.', 'shh. nobody saw that.'],
       burning: ['ow ow ow.'],
       cut: ['…my tail.'],
-      gloat: ['hehe. bonk, {who}.'],
+      gloat: ['hehe. bonk, {who}.', 'peekaboo, {who}.', 'i was right here, {who}.'],
       dies: ['…aww.'],
     },
     metagamer: {
       hungry: ["Caloric deficit detected."],
       start: ['Analysing opponents…', 'I’ve watched the replays.'],
-      idle: ['{who}: {label}. Noted.', 'Predictable.', 'Your eat rate is suboptimal, {who}.', 'Running the numbers…'],
+      idle: ['{who}: {label}. Noted.', 'Predictable.', 'Your eat rate is suboptimal, {who}.', 'Running the numbers…', 'Sample size: growing.', 'Off-meta play, {who}. Bold.'],
       kill: ['As calculated.', 'Exactly as the model predicted.'],
       weather: { storm: ['Strike probability: rising.'], rain: ['Mushroom density: up.'], sun: ['Golden apple odds: favourable.'], wind: ['Apple supply: increasing.'], snow: ['Food supply: down. Hunger rate: up.'] },
       woodpecker: ['Map shrink phase: started.'],
       rainbow: ['Golden apple confirmed at the rainbow’s end.'],
-      bonk: ['Collision logged.', 'Variance.'],
+      bonk: ['Collision logged.', 'Variance.', 'Unforced error.'],
+      edge: ['Map edge: confirmed.'],
       burning: ['Thermal damage: ongoing.'],
       cut: ['Length reduced. Recomputing.'],
-      gloat: ['Predicted that, {who}.'],
+      gloat: ['Predicted that, {who}.', 'Pathing error, {who}.', 'Input lag, {who}?'],
       goldbug: ['Golden beetle: mobility upgrade.'],
       leap: ['Leap executed.'],
       dies: ['That… wasn’t in the data.'],
+      dash: ['Dash: optimal.'],
+      snip: ['Cut {who} in two. Noted.'],
     },
     capricious: {
       hungry: ["Now I’m hungry! Out of nowhere!"],
       start: ['Ooh, what shall I be today?'],
       // Taking up a mood, it does an impression (and can't help asking how it went).
       mood: {
-        sniper: ['Taking position. …Ooh, I like being Sniper.', 'Headshot! …Is that how Sniper says it?'],
-        gobbler: ['FOOD. NOW. …Is Gobbler always this hungry?', 'Nom nom nom! I’m Gobbler now!'],
-        ghost: ['…', '…boo. …Am I doing Ghost right?'],
-        mason: ['Aedificamus! …Ooh, I speak Latin now!', 'Veni, vidi, aedificavi! …Did I say that right?'],
+        sniper: ['Taking position. …Ooh, I like being Sniper.', 'Headshot! …Is that how Sniper says it?', 'Pew pew! …Sniper doesn’t say pew pew, does it?'],
+        gobbler: ['FOOD. NOW. …Is Gobbler always this hungry?', 'Nom nom nom! I’m Gobbler now!', 'Snacks! All the snacks! …How does Gobbler stop?'],
+        ghost: ['…', '…boo. …Am I doing Ghost right?', 'Shh. I’m being Ghost.'],
+        mason: ['Aedificamus! …Ooh, I speak Latin now!', 'Veni, vidi, aedificavi! …Did I say that right?', 'Wallus maximus! …Is that Latin? It feels Latin.'],
       },
       kill: ['Didn’t plan that. Love it.'],
       weather: { sun: ['Sunshine! I love sunshine! Today.'], rain: ['Rain! I love rain! For now.'], storm: ['Storms are exciting! Or scary? Both!'], wind: ['Whee!'], snow: ['Snow! I love snow! For a bit.'] },
       woodpecker: ['A bird! I love birds! Not this one.'],
       rainbow: ['A rainbow! Every colour! I can’t choose!'],
-      bonk: ['Ouch! I hate walls! Today.'],
+      bonk: ['Ouch! Never doing that again! Probably.', 'Ow! That was fun! No it wasn’t.'],
+      edge: ['Ouch! I hate edges! Today.'],
       burning: ['Fire! I love fire! Ow, no I don’t!'],
       cut: ['My tail! I liked that tail!'],
       leap: ['I can fly! For a second!'],
       dies: ['Changed my mind about living.'],
+      dash: ['Zoom! I felt like it!'],
+      snip: ['Oops, {who}! Was that rude?'],
     },
     copycat: {
       start: ['同志们好！'],
-      idle: ['为人民服务！', '团结就是力量！', '同志们，冲啊！', '五年计划，提前完成！'],
+      idle: ['为人民服务！', '团结就是力量！', '同志们，冲啊！', '五年计划，提前完成！', '自力更生！', '劳动最光荣！'],
       kill: ['向前进！'],
       weather: { storm: ['雷电交加，同志们小心！'], rain: ['下雨了，同志们！'], snow: ['下雪了，同志们，节约粮食！'] },
       woodpecker: ['啄木鸟来了，同志们！'],
       rainbow: ['彩虹！同志们，金苹果！'],
-      bonk: ['哎哟！'],
+      bonk: ['哎哟！', '哎呀，同志们！'],
       burning: ['着火了，同志们！'],
       cut: ['尾巴没了，同志们！'],
       dies: ['同志们，再见……'],
@@ -222,67 +250,86 @@ window.SnakeChatter = (() => {
     desperado: {
       hungry: ["Running on fumes, partner."],
       start: ['Yeehaw!', 'Saddle up, partner.'],
-      idle: ['Living on the edge, partner.', 'Too close? Never heard of it.', 'Is that a wall? Let’s go see.', 'Feel that? That’s being alive.'],
+      idle: ['Living on the edge, partner.', 'Too close? Never heard of it.', 'Is that the edge? Let’s go see.', 'Feel that? That’s being alive.',
+        'Let’s make this interesting.', 'Who wants to play chicken?'],
       kill: ['Draw, {who}. Too slow.', 'This bark ain’t big enough for the both of us.'],
-      mushroom: ['Mushroom roulette. Down the hatch!'],
+      mushroom: ['Mushroom roulette. Down the hatch!', 'Tasted like danger.', 'Bitter. Thrilling, though.', 'What doesn’t kill me… shrinks me.'],
       woodpecker: ['Now we’re talking! Holes!'],
-      beetle: ['Yeehaw, a critter hunt!'],
-      caught: ['Lassoed it.'],
-      weather: { storm: ['Lightning? Now we’re talking!', 'Fire on the bark! Yeehaw!'], wind: ['Hold onto your hat!'], rain: ['Rain on the range.'], snow: ['Cold enough to freeze a cactus.'] },
+      beetle: ['Yeehaw, a critter hunt!', 'Here, little critter…'],
+      caught: ['Lassoed it.', 'Roped and branded.'],
+      weather: { storm: ['Lightning? Now we’re talking!', 'Smell that? Here comes trouble.'], strike: ['Fire on the bark! Yeehaw!'], wind: ['Hold onto your hat!'], rain: ['Rain on the range.'], snow: ['Cold enough to freeze a cactus.'] },
       rainbow: ['Race you to the gold, partner!'],
-      bonk: ['Woo! Again!', 'Felt that one.'],
+      bonk: ['Woo! Again!', 'Felt that one.', 'Now I’m awake!'],
+      edge: ['Yep. That’s the edge, all right.'],
       burning: ['Yeehaw, I’m on fire!'],
       cut: ['Shot my tail clean off!'],
-      gloat: ['Too close, {who}? Never heard of it.'],
+      gloat: ['Close one, {who}! Do it again.', 'Now that’s a rush, {who}!'],
       baked: ['Campfire grub!'],
       goldbug: ['Gold bug! Now that’s a prize, partner.'],
       leap: ['Yeehaw! Clean over!'],
       dies: ['What a ride…', 'Worth it.'],
+      dash: ['Yeehaw, full gallop!'],
+      snip: ['Cut you down to size, {who}.'],
     },
     mute: {
       start: ['*waves silently*', '*takes a deep, silent bow*'],
-      idle: ['*pulls an invisible rope*', '*trapped in an invisible box*', '*leans on nothing*', '*walks against an invisible wind*', '*tips an invisible hat at {who}*', '*draws a box in the air around {who}*'],
+      idle: ['*pulls an invisible rope*', '*trapped in an invisible box*', '*leans on nothing*', '*walks against an invisible wind*', '*tips an invisible hat at {who}*', '*draws a box in the air around {who}*',
+        '*juggles invisible apples*', '*climbs an invisible ladder*'],
       kill: ['*mimes closing a lid on {who}*', '*plays a tiny invisible violin*'],
-      caught: ['*mimes a very big beetle*'],
+      caught: ['*mimes a very big beetle*', '*pats its tummy, silently*'],
       weather: { rain: ['*opens an invisible umbrella*'], storm: ['*hides under an invisible table*'], wind: ['*leans into the wind*'], sun: ['*puts on invisible sunglasses*'], snow: ['*shivers, silently*'] },
       woodpecker: ['*covers its ears*'],
       rainbow: ['*hugs the rainbow*', '*paints the rainbow a little brighter*'],
-      bonk: ['*rubs its head, silently*', '*walks into a wall. A real one, this time*'],
+      bonk: ['*rubs its head, silently*', '*mimes seeing stars*'],
+      edge: ['*walks into a wall. A real one, this time*'],
       burning: ['*fans itself, frantically*'],
       cut: ['*looks for its tail*'],
-      gloat: ['*mimes {who} bouncing off*'],
+      gloat: ['*mimes {who} bouncing off*', '*holds up an invisible scorecard: 3*', '*dusts itself off, smugly*'],
       leap: ['*bows mid-air*'],
       dies: ['*mimes being squashed*', '*…*'],
+      dash: ['*zooms off, holding its beret*'],
+      snip: ['*mimes scissors at {who}*'],
+      wrap: ['*walks into the edge… and out the other side*'],
+      giggle: ['*shakes with silent laughter*'], // (at Mason's routine: see REPLIES)
+      guffaw: ['*doubles over, silently*'],
     },
     ouroboros: {
-      hungry: ['Even I must eat. Usually myself.'],
+      hungry: ['Even I must eat. Usually myself.', 'Hungry again. Of course.'],
       start: ['All things return.', 'Here we are again.'],
-      idle: ['The end is the beginning.', 'Round and round.', 'I have done this before, {who}.', 'Everything comes back to me.'],
-      kill: ['Full circle, {who}.', 'You were always going to end here.'],
+      idle: ['The end is the beginning.', 'Round and round.', 'I have done this before, {who}.', 'Everything comes back to me.',
+        'Haven’t we met before, {who}?', 'Ah. This bit again.'],
+      kill: ['Back to the start, {who}.', 'You were always going to end here.'],
       woodpecker: ['Endings peck at everything.'],
       rainbow: ['A circle, half drawn.'],
-      bonk: ['I meant to come back here.'],
+      bonk: ['I meant to come back here.', 'This has happened before.'],
+      edge: ['Even the log has an end.'],
       burning: ['Fire, then ash, then again.'],
       cut: ['My tail! I was saving that.'],
-      gloat: ['Around you go, {who}.'],
+      gloat: ['Around you go, {who}.', 'You’ll be back, {who}.', 'Again, {who}? Always again.'],
       weather: { snow: ['Winter returns. It always does.'], rain: ['The rain comes round again.'] },
       dies: ['…and begin again.', 'See you next time around.'],
+      dash: ['The circle tightens. Quickly.'],
+      snip: ['Now you know how it feels, {who}.'],
+      wrap: ['No end, no beginning. As it should be.'],
     },
     joker: {
-      hungry: ["Why did the snake cross the bark? It was starving."],
+      hungry: ["Why did the snake cross the bark? It was starving.", 'Knock knock! Who’s there? Lunch, I hope.'],
       start: ['Knock knock!', 'Who wants to play a game?'],
-      idle: ['Catch me if you can!', 'Why so slithery, {who}?', 'Follow me, it’s a shortcut!', 'Honk honk!'],
+      idle: ['Catch me if you can!', 'Why so slithery, {who}?', 'Follow me, it’s a shortcut!', 'Honk honk!', 'Pull my tail!', 'Wanna hear a joke, {who}?'],
       kill: ['And for my next trick…', 'The joke’s on you, {who}!'],
-      mushroom: ['Ooh, a funny mushroom!'],
+      mushroom: ['Ooh, a funny mushroom!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!'],
       weather: { rain: ['Singin’ in the rain!'], storm: ['Shocking!'], wind: ['Blow, wind, blow!'], sun: ['Sun’s out, puns out!'], snow: ['Snow joke!'] },
       woodpecker: ['Knock knock! Oh. It’s the woodpecker.'],
       rainbow: ['Somewhere over the… oh, there it is.'],
-      bonk: ['Ow! That one’s on me.', 'Slapstick!'],
+      bonk: ['Ow! That one’s on me.', 'Slapstick!', 'Ba-dum-tss!'],
       burning: ['Hot stuff, coming through!'],
       cut: ['Ha! The bird’s got jokes.'],
-      gloat: ['Knock knock, {who}! …Bonk!'],
+      snipped: ['Hey! Sawing in half is MY trick, {who}!'],
+      gloat: ['Knock knock, {who}! …Bonk!', 'Boing! Do it again, {who}!', 'Classic {who}. Never gets old.'],
       leap: ['Hup! Ta-daaa!'],
       dies: ['Tough crowd…'],
+      dash: ['Wheeee, nyoom!'],
+      snip: ['Ta-da! {who}, sawn in half!'],
     },
   };
 
@@ -369,6 +416,7 @@ window.SnakeChatter = (() => {
     "Storms are exciting! Or scary? Both!": "暴风雨好刺激！还是好可怕？都是！",
     "Whee!": "呜呼！",
     "Lightning? Now we’re talking!": "闪电？这才带劲！",
+    "Smell that? Here comes trouble.": "闻到了吗？麻烦要来了。",
     "Fire on the bark! Yeehaw!": "树皮着火啦！咿哈！",
     "Hold onto your hat!": "抓紧你的帽子！",
     "Rain on the range.": "牧场下雨了。",
@@ -402,6 +450,8 @@ window.SnakeChatter = (() => {
     "Pfft…": "噗……",
     "*snort*": "*噗嗤*",
     "Snrk. Sorry. Go on.": "噗。抱歉。你继续。",
+    "*shakes with silent laughter*": "*无声地笑得发抖*",
+    "*doubles over, silently*": "*无声地笑弯了腰*",
     "Taking position.": "就位。",
     "Scoping the lobby.": "正在观察全场。",
     "In my sights, {who}.": "{who}，你在我的瞄准镜里。",
@@ -436,7 +486,7 @@ window.SnakeChatter = (() => {
     "Saddle up, partner.": "上马吧，伙计。",
     "Living on the edge, partner.": "刀尖上过日子，伙计。",
     "Too close? Never heard of it.": "太近了？没听说过。",
-    "Is that a wall? Let’s go see.": "那是墙吗？去看看。",
+    "Is that the edge? Let’s go see.": "那是边缘吗？去看看。",
     "Feel that? That’s being alive.": "感觉到了吗？这才叫活着。",
     "Draw, {who}. Too slow.": "拔枪吧，{who}。太慢了。",
     "This bark ain’t big enough for the both of us.": "这块树皮容不下我们两个。",
@@ -470,11 +520,10 @@ window.SnakeChatter = (() => {
     "Sorry, {who}. You were between me and lunch.": "抱歉，{who}。你挡住我的午饭了。",
     "Oops. Is that meat?": "哎呀。那是肉吗？",
     "Tell my apples… I loved them.": "告诉我的苹果……我爱过它们。",
-    "…": "……",
     "……": "…………",
     "(silence)": "（沉默）",
     "boo.": "吓！",
-    "smaller… better…": "更小……更好……",
+    "…bitter.": "……苦。",
     "…sorry.": "……对不起。",
     "Kneel.": "跪下。",
     "We are pleased to receive you. Do not touch anything.": "朕很高兴接见你。什么都别碰。",
@@ -557,10 +606,6 @@ window.SnakeChatter = (() => {
     "Exactly as the model predicted.": "和模型预测的一模一样。",
     "That… wasn’t in the data.": "这……不在数据里。",
     "Ooh, what shall I be today?": "哦，今天我当什么好呢？",
-    "I’m a sniper now! Pew pew!": "我现在是狙击手了！砰砰！",
-    "Ooh! I’m hungry now!": "哦！我现在饿了！",
-    "Leave me alone. I mean it.": "别管我。我是认真的。",
-    "Let’s build something!": "我们来盖点东西吧！",
     "Didn’t plan that. Love it.": "没计划过。但我喜欢。",
     "Changed my mind about living.": "我改变主意了……关于活着。",
     "Knock knock!": "咚咚！",
@@ -628,6 +673,7 @@ window.SnakeChatter = (() => {
     "Who put that there?": "谁把那个放在那儿的？",
     "Fetch the royal bucket!": "拿御用水桶来！",
     "That bird has committed treason.": "那只鸟犯了叛国罪。",
+    "Treason, {who}! That was the royal tail.": "叛国罪，{who}！那可是皇家的尾巴。",
     "Bow, {who}. Do not bump.": "鞠躬，{who}。不要撞。",
     "I say! Steady on!": "我说！稳着点！",
     "Blast!": "该死！",
@@ -650,6 +696,7 @@ window.SnakeChatter = (() => {
     "Who moved that? Fake wall!": "谁动的？假墙！",
     "Hot. Very hot. The hottest. Tremendous.": "热。非常热。最热的。了不起。",
     "That bird stole my tail. Total theft.": "那只鸟偷了我的尾巴。彻头彻尾的盗窃。",
+    "{who} stole my tail! Total theft. Sad!": "{who}偷了我的尾巴！彻头彻尾的盗窃。可悲！",
     "{who}? Bounced right off me. Sad!": "{who}？直接从我身上弹开了。可悲！",
     "oof.": "哎。",
     "ow ow ow.": "疼疼疼。",
@@ -660,14 +707,13 @@ window.SnakeChatter = (() => {
     "Thermal damage: ongoing.": "热伤害：持续中。",
     "Length reduced. Recomputing.": "长度减少。重新计算。",
     "Predicted that, {who}.": "早就预测到了，{who}。",
-    "Ouch! I hate walls! Today.": "哎哟！我讨厌墙！今天讨厌。",
+    "Ouch! I hate edges! Today.": "哎哟！我讨厌边缘！今天讨厌。",
     "Fire! I love fire! Ow, no I don’t!": "火！我爱火！哎哟，不爱了！",
     "My tail! I liked that tail!": "我的尾巴！我喜欢那条尾巴！",
     "Woo! Again!": "呜呼！再来！",
     "Felt that one.": "这下有感觉。",
     "Yeehaw, I’m on fire!": "咿哈，我着火了！",
     "Shot my tail clean off!": "尾巴被打掉了！",
-    "Too close, {who}? Never heard of it.": "太近了，{who}？没听说过。",
     "Campfire grub!": "篝火大餐！",
     "*rubs its head, silently*": "*默默揉头*",
     "*walks into a wall. A real one, this time*": "*撞上一堵墙。这次是真的*",
@@ -678,6 +724,7 @@ window.SnakeChatter = (() => {
     "Slapstick!": "闹剧！",
     "Hot stuff, coming through!": "烫手货，借过！",
     "Ha! The bird’s got jokes.": "哈！这鸟也会讲笑话。",
+    "Hey! Sawing in half is MY trick, {who}!": "喂！锯成两半是我的戏法，{who}！",
     "Knock knock, {who}! …Bonk!": "咚咚，{who}！……咚！",
     "Even I must eat. Usually myself.": "连我也得吃东西。通常吃自己。",
     "All things return.": "万物终将回归。",
@@ -686,7 +733,7 @@ window.SnakeChatter = (() => {
     "Round and round.": "一圈又一圈。",
     "I have done this before, {who}.": "这我以前做过，{who}。",
     "Everything comes back to me.": "一切都会回到我这里。",
-    "Full circle, {who}.": "画了个圆，{who}。",
+    "Back to the start, {who}.": "回到起点吧，{who}。",
     "You were always going to end here.": "你注定在这里结束。",
     "Endings peck at everything.": "终结啄食着一切。",
     "A circle, half drawn.": "一个圆，画了一半。",
@@ -704,44 +751,228 @@ window.SnakeChatter = (() => {
     "Yeehaw! Clean over!": "咿哈！干净利落地跳过去了！",
     "Golden beetle: mobility upgrade.": "金甲虫：机动性升级。",
     "Leap executed.": "跳跃已执行。",
-    "A golden beetle. Very classy. Like me.": "金甲虫。很高级。像我一样。",
+    "A golden beetle! I love gold. Gold loves me.": "金甲虫！我爱金子。金子也爱我。",
     "Nobody jumps better than me.": "没人比我跳得更好。",
     "Hup! Ta-daaa!": "嘿！哒哒——！",
     "*bows mid-air*": "*在空中鞠躬*",
     "I can fly! For a second!": "我会飞！就一秒！",
-    "We rise above it all.": "朕凌驾于一切之上。"
+    "We rise above it all.": "朕凌驾于一切之上。",
+    "Our realm is ablaze! Fetch the royal bucket!": "朕的疆土着火了！拿御用水桶来！",
+    "Who set fire to the royal grounds?": "谁放火烧了皇家领地？",
+    "That bird is pecking holes in OUR land!": "那只鸟在朕的土地上啄洞！",
+    "Our realm, full of holes. Unacceptable.": "朕的疆土满是窟窿。不可接受。",
+    "A colony? On OUR land, {who}?!": "殖民地？在朕的土地上，{who}？！",
+    "{who} dares plant a flag in our realm!": "{who}竟敢在朕的疆土上插旗！",
+    "I say, the colony’s on fire!": "我说，殖民地着火了！",
+    "Fire in the colony! Form a bucket chain!": "殖民地起火了！排成一队传水桶！",
+    "That bird’s pecking up my colony!": "那只鸟在啄我的殖民地！",
+    "Blast! Holes all over the colony.": "该死！殖民地上全是洞。",
+    "I claim this for the Crown. Which crown? Mine.": "我以王室之名占领这里。哪个王室？我的。",
+    "Fast food!": "快餐！",
+    "Snip! Snack-sized, {who}.": "咔嚓！{who}，零食大小。",
+    "Make way for the crown!": "为王冠让路！",
+    "Divided, {who}, and ruled.": "分而治之，{who}。",
+    "Our realm knows no edges now.": "朕的疆土如今没有边界。",
+    "Fastest dash in history. Everyone says so.": "史上最快的冲刺。大家都这么说。",
+    "You’re cut, {who}! Tremendously cut.": "你被砍了，{who}！砍得非常彻底。",
+    "Walls? Who needs walls? Not today.": "墙？谁需要墙？今天不需要。",
+    "Dash: optimal.": "冲刺：最优解。",
+    "Cut {who} in two. Noted.": "把{who}切成两半。已记录。",
+    "Zoom! I felt like it!": "嗖！我就想这么干！",
+    "Oops, {who}! Was that rude?": "哎呀，{who}！这样是不是不礼貌？",
+    "Yeehaw, full gallop!": "驾——全速飞奔！",
+    "Cut you down to size, {who}.": "把你削短了，{who}。",
+    "*zooms off, holding its beret*": "*按着贝雷帽飞奔而去*",
+    "*mimes scissors at {who}*": "*对着{who}比划剪刀*",
+    "*walks into the edge… and out the other side*": "*走进边缘……从另一边走出来*",
+    "Wheeee, nyoom!": "呜——嗖！",
+    "Ta-da! {who}, sawn in half!": "当当！{who}，被锯成两半！",
+    "Repositioning. Fast.": "快速转移阵地。",
+    "Clean cut, {who}.": "干净利落，{who}。",
+    "The circle tightens. Quickly.": "圆环收紧。很快。",
+    "Now you know how it feels, {who}.": "现在你知道那是什么滋味了，{who}。",
+    "No end, no beginning. As it should be.": "无始无终。本该如此。",
+    "Sine muro! Murus nullus!": "没有墙了！一堵墙都没有！",
+    "Target acquired.": "目标已锁定。",
+    "Clean catch.": "干净利落地抓到了。",
+    "Bad angle.": "角度不好。",
+    "Out of bounds.": "出界了。",
+    "Wrong lane, {who}.": "走错道了，{who}。",
+    "Marked, {who}.": "{who}，已标记。",
+    "Dibs on the golden one!": "金的那个归我了！",
+    "GOLD! FOOD! GOLD FOOD!": "金子！食物！金子食物！",
+    "Six legs, six times the flavour!": "六条腿，六倍的美味！",
+    "Who hid a mushroom in the snacks?!": "谁把蘑菇藏在零食里了？！",
+    "Ow! I need a snack.": "哎哟！我得吃点零食。",
+    "Ow! Is the edge edible?": "哎哟！边缘能吃吗？",
+    "…hello?": "……有人吗？",
+    "…fainter.": "……更淡了。",
+    "…oops.": "……哎呀。",
+    "One day all this will be ours. Today, in fact.": "总有一天这一切都是朕的。其实就是今天。",
+    "Who let {who} in?": "谁放{who}进来的？",
+    "The realm is closed to the public, {who}.": "朕的疆土不对外开放，{who}。",
+    "We do not recall inviting you, {who}.": "朕不记得邀请过你，{who}。",
+    "We shall have it executed.": "朕要把它处死。",
+    "Move the edge. We command it.": "把边缘挪开。朕命令你。",
+    "We felt that, {who}. We disapprove.": "朕感觉到了，{who}。朕不赞成。",
+    "Mind the royal person, {who}.": "小心龙体，{who}。",
+    "Do you have a flag, {who}? No flag, no colony.": "你有旗子吗，{who}？没有旗子，就没有殖民地。",
+    "Papers, {who}? No? Off you pop.": "证件呢，{who}？没有？那就请回吧。",
+    "British bark now, {who}. Wipe your scales.": "现在是英国的树皮了，{who}。把鳞片擦干净。",
+    "A minor diplomatic incident.": "一起小小的外交事件。",
+    "I say, {who}! There’s a queue.": "我说，{who}！要排队。",
+    "Do mind the paintwork, {who}.": "请当心油漆，{who}。",
+    "Eating.": "在吃。",
+    "Fine.": "还行。",
+    "Tastes like food.": "吃起来像食物。",
+    "Oops.": "哎呀。",
+    "That was a bump.": "这是一次碰撞。",
+    "That’s the edge.": "那是边缘。",
+    "Take your time, {who}. No rush.": "慢慢来，{who}。不着急。",
+    "Any minute now…": "随时都会……",
+    "Waste not, want not.": "不浪费，不匮乏。",
+    "I’m not on the menu.": "我可不在菜单上。",
+    "Tsk.": "啧。",
+    "That looked expensive, {who}.": "这下代价不小啊，{who}。",
+    "Smaller every time, {who}.": "一次比一次小，{who}。",
+    "Crunchus deliciosus!": "脆脆的，好吃！",
+    "Caput meum!": "我的头！",
+    "Bonkus interruptus.": "咚……被打断了。",
+    "Murus sum, {who}.": "我就是墙，{who}。",
+    "Ecce murus, {who}.": "看哪，墙，{who}。",
+    "I only eat the best food. Everybody knows it.": "我只吃最好的食物。大家都知道。",
+    "Nobody eats like me. Nobody.": "没人像我这么能吃。没有人。",
+    "I’m bigger than ever. Ask anyone.": "我比以往任何时候都大。随便问谁。",
+    "Fake news! That never happened.": "假新闻！根本没发生过。",
+    "Very unfair. Everybody saw it.": "非常不公平。大家都看见了。",
+    "Low energy, {who}. Very low energy.": "没精神，{who}。非常没精神。",
+    "Nobody bumps me, {who}. Believe me.": "没人能撞我，{who}。相信我。",
+    "don’t mind me.": "别管我。",
+    "we should hang out, {who}.": "我们该一起玩玩，{who}。",
+    "shh. nobody saw that.": "嘘。没人看见。",
+    "peekaboo, {who}.": "躲猫猫，{who}。",
+    "i was right here, {who}.": "我一直在这儿呢，{who}。",
+    "Sample size: growing.": "样本量：增长中。",
+    "Off-meta play, {who}. Bold.": "非主流打法，{who}。大胆。",
+    "Unforced error.": "非受迫性失误。",
+    "Map edge: confirmed.": "地图边缘：已确认。",
+    "Pathing error, {who}.": "寻路错误，{who}。",
+    "Input lag, {who}?": "输入延迟，{who}？",
+    "Pew pew! …Sniper doesn’t say pew pew, does it?": "砰砰！……狙击手不说砰砰的，对吧？",
+    "Snacks! All the snacks! …How does Gobbler stop?": "零食！所有的零食！……贪吃蛇是怎么停下来的？",
+    "Shh. I’m being Ghost.": "嘘。我在演鬼魂。",
+    "Wallus maximus! …Is that Latin? It feels Latin.": "超级大墙！……这是拉丁语吗？感觉像拉丁语。",
+    "Ouch! Never doing that again! Probably.": "哎哟！再也不这样了！大概吧。",
+    "Ow! That was fun! No it wasn’t.": "哎哟！真好玩！不，一点也不好玩。",
+    "Let’s make this interesting.": "来点刺激的吧。",
+    "Who wants to play chicken?": "谁想玩胆小鬼游戏？",
+    "Tasted like danger.": "尝起来是危险的味道。",
+    "Bitter. Thrilling, though.": "苦的。不过很刺激。",
+    "What doesn’t kill me… shrinks me.": "杀不死我的……会让我变小。",
+    "Here, little critter…": "过来，小虫子……",
+    "Roped and branded.": "套住了，烙上印了。",
+    "Now I’m awake!": "这下我醒了！",
+    "Yep. That’s the edge, all right.": "没错。还真是边缘。",
+    "Close one, {who}! Do it again.": "好险，{who}！再来一次。",
+    "Now that’s a rush, {who}!": "这才叫刺激，{who}！",
+    "*juggles invisible apples*": "*抛接看不见的苹果*",
+    "*climbs an invisible ladder*": "*爬一架看不见的梯子*",
+    "*pats its tummy, silently*": "*默默拍拍肚子*",
+    "*mimes seeing stars*": "*比划眼冒金星*",
+    "*holds up an invisible scorecard: 3*": "*举起一张看不见的记分牌：3分*",
+    "*dusts itself off, smugly*": "*得意地掸掸身上的灰*",
+    "Hungry again. Of course.": "又饿了。当然。",
+    "Haven’t we met before, {who}?": "我们以前见过吧，{who}？",
+    "Ah. This bit again.": "啊。又是这一段。",
+    "This has happened before.": "这以前发生过。",
+    "Even the log has an end.": "连木头也有尽头。",
+    "You’ll be back, {who}.": "你会回来的，{who}。",
+    "Again, {who}? Always again.": "又来，{who}？总是又来。",
+    "Knock knock! Who’s there? Lunch, I hope.": "咚咚！谁呀？希望是午饭。",
+    "Pull my tail!": "拉拉我的尾巴！",
+    "Wanna hear a joke, {who}?": "想听个笑话吗，{who}？",
+    "Fungi! Fun guy! …No?": "蘑菇！魔菇！……不好笑？",
+    "Not so funny now.": "现在不那么好笑了。",
+    "Mushroom? I hardly know ’em!": "蘑菇？我跟它们不熟！",
+    "Ba-dum-tss!": "咚哒哒——嚓！",
+    "Boing! Do it again, {who}!": "嘣！再来一次，{who}！",
+    "Classic {who}. Never gets old.": "经典的{who}。百看不厌。"
   };
 
   const SNAKE_GAP = 4500;  // ms of game time between lines from the same snake
   const ANY_GAP = 1200;    // ms between any two lines
   const BUBBLE_MS = 2600;  // how long a bubble stays up (real time)
+  const LAST_WORDS_MS = 2000; // (and a snake's last words, where it went out, when the log can't show them)
   const LOG_SIZE = 5;
-  const COMPACT_CHARS = 32; // on small boards, longer lines go to the log only
-  // Mason's Life of Brian moments get an answer: [line, who answers, what they say].
-  // (Mason keeps a straight face; Ghost and Creeper aren't the giggling kind.)
+  const COMPACT_CHARS = 32; // on small boards, longer lines go to the log only (while it's on screen)
+  // Mason's Life of Brian moments get an answer: [line, who answers, what they say,
+  // and the voices' own lines for it, where they have some].
+  // (Mason keeps a straight face; Ghost and Creeper aren't the giggling kind,
+  // and nobody laughs at their own joke. Mute laughs without a sound, and
+  // Copycat in Chinese.)
   const GIGGLE_PROOF = ['mason', 'ghost', 'creeper'];
   const REPLIES = {
     'Romanes eunt domus.': { by: s => s.personaKey === 'metagamer', lines: ['“Romani ite domum”, actually.'], after: 1300 },
-    'Amicus meus est Biggus Dickus.': { by: s => !GIGGLE_PROOF.includes(s.personaKey), lines: ['Pfft…', '*snort*', 'Snrk. Sorry. Go on.'], after: 900,
+    'Amicus meus est Biggus Dickus.': { by: s => !GIGGLE_PROOF.includes(s.personaKey), lines: ['Pfft…', '*snort*', 'Snrk. Sorry. Go on.'], own: 'giggle', after: 900,
       then: 'Et uxor: Incontinentia Buttocks.' }, // ...and Mason, straight-faced, carries on
-    'Et uxor: Incontinentia Buttocks.': { by: s => !GIGGLE_PROOF.includes(s.personaKey), lines: ['BWAHAHA—', 'I can’t. I CAN’T.', '*wheeze*'], after: 800 },
+    'Et uxor: Incontinentia Buttocks.': { by: s => !GIGGLE_PROOF.includes(s.personaKey), lines: ['BWAHAHA—', 'I can’t. I CAN’T.', '*wheeze*'], own: 'guffaw', after: 800 },
   };
 
-  let boardEl, logEl, game;
-  let enabled = true, compact = false, listener = null;
+  let boardEl, logEl, bannerEl, game;
+  let enabled = true, compact = false, logShown = true, listener = null;
   let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null, pendingReply = null, saidAt = {};
   let struck = false; // (lightning has struck in this storm: one remark is enough)
   const LINE_REST = 45000; // a snake doesn't say the same line again within this much game time
+  const INTRUDER_REST = 25000; // nor call out intruders more often (heads skim in and out at a border)
   // Mason's Life of Brian moments are told once per visit (a joke told every round isn't one).
   const SET_PIECES = new Set(['Romanes eunt domus.', 'Amicus meus est Biggus Dickus.']);
   const toldPieces = new Set();
-  const bubbles = new Map(); // snake id -> { el, snake, until, w, x, y, below }
+  // Lines with a punchline are told once a round: a round runs two minutes and
+  // more, and a joke told three times in it isn't one. The rest only rest a while.
+  // (Each voice's on rows of their own, in the order above.)
+  const PUNCHLINES = new Set([
+    'Run. It helps.', 'Big fan of your stream, {who}.', 'Moving target. Still a headshot.', 'Taking fire. Literally.', 'Bounced off me, {who}? Cute.',
+    'Am I… cooking? Smells good, actually.', 'Oops. Is that meat?', 'My tail! That was full of food!', 'Who hid a mushroom in the snacks?!', 'Six legs, six times the flavour!', 'Ow! Is the edge edible?', 'Wheee! Lunch from above!',
+    'boo.',
+    'Trespasser! Guards! …We are the guards.', 'The Crown is merciful. Usually.', 'A strategic retreat. A royal one.', 'We shall have it executed.', 'Move the edge. We command it.', 'One day all this will be ours. Today, in fact.', 'That bird has committed treason.', 'Treason, {who}! That was the royal tail.',
+    'Mine now. Terribly sorry.', 'I claim this for the Crown. Which crown? Mine.', 'Do you have a flag, {who}? No flag, no colony.', 'Papers, {who}? No? Off you pop.', 'A minor diplomatic incident.', 'I say, {who}! There’s a queue.', 'I appear to be on fire. How awkward.', 'Rain? Just like home.',
+    'I like beige.', 'This is a log.', 'Tastes like food.', 'That was a bump.',
+    'Rest in pieces, {who}.', 'I’m not on the menu.', 'Leftovers… of me?',
+    'Vidi, vici, veni.', 'Divide et imperium-ium.', 'Murus maximus. Very bigus.', 'Wallus erectus.', 'Bonkus interruptus.', 'Murus sum, {who}.',
+    '{who}? Total loser. Sad!', 'Global warming? Total hoax. Look at all this snow!', 'Fake news! That never happened.', 'Who moved that? Fake wall!', 'I’m bigger than ever. Ask anyone.', 'Low energy, {who}. Very low energy.', 'Nobody bumps me, {who}. Believe me.', 'That bird stole my tail. Total theft.', '{who} stole my tail! Total theft. Sad!',
+    'nice tail, {who}.', 'we should hang out, {who}.', 'peekaboo, {who}.', 'shh. nobody saw that.',
+    'Your eat rate is suboptimal, {who}.', 'Input lag, {who}?',
+    'Taking position. …Ooh, I like being Sniper.', 'Headshot! …Is that how Sniper says it?', 'Pew pew! …Sniper doesn’t say pew pew, does it?', 'FOOD. NOW. …Is Gobbler always this hungry?', 'Snacks! All the snacks! …How does Gobbler stop?',
+    '…boo. …Am I doing Ghost right?', 'Shh. I’m being Ghost.', 'Aedificamus! …Ooh, I speak Latin now!', 'Veni, vidi, aedificavi! …Did I say that right?', 'Wallus maximus! …Is that Latin? It feels Latin.',
+    'Sunshine! I love sunshine! Today.', 'Rain! I love rain! For now.', 'Snow! I love snow! For a bit.', 'A bird! I love birds! Not this one.', 'Ouch! I hate edges! Today.', 'Fire! I love fire! Ow, no I don’t!',
+    'Ouch! Never doing that again! Probably.', 'Ow! That was fun! No it wasn’t.', 'I can fly! For a second!', 'Oops, {who}! Was that rude?', 'Now I’m hungry! Out of nowhere!', 'Didn’t plan that. Love it.',
+    'Is that the edge? Let’s go see.', 'Yep. That’s the edge, all right.', 'Who wants to play chicken?', 'Cold enough to freeze a cactus.', 'What doesn’t kill me… shrinks me.',
+    '*walks into a wall. A real one, this time*', '*plays a tiny invisible violin*', '*holds up an invisible scorecard: 3*',
+    'Even I must eat. Usually myself.', 'My tail! I was saving that.', 'Haven’t we met before, {who}?', 'Ah. This bit again.', 'Even the log has an end.',
+    'Why did the snake cross the bark? It was starving.', 'Knock knock! Who’s there? Lunch, I hope.', 'Knock knock! Oh. It’s the woodpecker.', 'Somewhere over the… oh, there it is.', 'Knock knock, {who}! …Bonk!',
+    'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!', 'Hey! Sawing in half is MY trick, {who}!',
+  ]);
+  const toldThisRound = new Set();
+  const bubbles = new Map(); // snake id -> { el, snake, until, at, w, h, side, x, y, ... }, oldest first
   const headAt = { x: 0, y: 0 }, headMine = { x: 0, y: 0 };
+  const taken = []; // (this frame: the banner's box and the bubbles placed so far)
 
   try { enabled = localStorage.getItem('snake-chatter') !== 'off'; } catch { /* storage unavailable */ }
 
   const pick = list => list[Math.floor(Math.random() * list.length)];
   const hasChinese = text => /[一-鿿]/.test(text);
+  // A line's words, in a bubble or the log. A stage direction (Mute's mimes,
+  // a giggle: "*waves silently*") is in italics, without its asterisks (a
+  // screen reader would say "star"), and in the log it reads on from the
+  // name: "Mute waves silently". Copycat's Chinese ones go in brackets, as
+  // Ghost's "（沉默）" does (Chinese isn't set in italics).
+  function setWords(el, text) {
+    const mimed = /^\*(.+)\*$/.exec(text), zh = hasChinese(text);
+    if (mimed && zh) el.textContent = `（${mimed[1]}）`;
+    else if (mimed) el.append(Object.assign(document.createElement('em'), { textContent: mimed[1] }));
+    else el.textContent = text;
+    if (zh) el.lang = 'zh-Hans';
+  }
 
   // The log sits on dark wood: lighten dark colors so names stay readable.
   function readable(hex) {
@@ -757,11 +988,23 @@ window.SnakeChatter = (() => {
 
   function init(opts) {
     ({ boardEl, logEl } = opts);
+    // Is the log on screen? On a short screen it's below the fold, and in a
+    // round the page doesn't scroll, so a line put in the log alone would be
+    // lost. (Measured as the page changes size or scrolls, never per frame.)
+    const placeLog = () => { const r = logEl.getBoundingClientRect(); logShown = r.height > 0 && r.top >= 0 && r.top + 20 <= innerHeight; };
+    addEventListener('resize', placeLog, { passive: true });
+    addEventListener('scroll', placeLog, { passive: true });
+    new ResizeObserver(placeLog).observe(logEl.closest('main') || document.body);
+    // The banner over the board: bubbles keep out of its way. Its box is read
+    // only after it changes (a new banner, moved to the foot, gone).
+    bannerEl = boardEl.querySelector('.toast');
+    if (bannerEl) new MutationObserver(() => { bannerStale = true; }).observe(bannerEl, { attributes: true, attributeFilter: ['hidden', 'class', 'data-kind'], childList: true, characterData: true, subtree: true });
   }
 
   function reset(g) {
     game = g;
     lastAny = -Infinity; lastSaid = {}; seen = {}; lastLine = null; pendingReply = null; saidAt = {}; struck = false;
+    toldThisRound.clear();
     clearBubbles();
     logEl.textContent = '';
   }
@@ -786,14 +1029,13 @@ window.SnakeChatter = (() => {
     if (!enabled || !s) return;
     lastSaid[s.id] = game.time;
     lastAny = game.time;
-    // (On small boards long lines go to the log only, but a reply always gets its bubble: it's the joke.)
-    if (s.alive && !(compact && text.length > COMPACT_CHARS && !reply)) showBubble(s, text);
+    bubble(s, text, reply);
     addLog(s, text);
   }
 
   // Have snake s say a line from one of its lists. urgent lines skip the global gap.
   // Lines naming someone ({who}) are only used when there is someone to name;
-  // last words prefer them ("Et tu, Sniper?").
+  // last words prefer them ("Et tu, Sniper?"). Returns whether it said one.
   function say(s, key, who, urgent = false) {
     if (!enabled || !s.persona) return;
     const find = v => key.includes('.') ? key.split('.').reduce((o, k) => o?.[k], v) : v?.[key];
@@ -810,13 +1052,16 @@ window.SnakeChatter = (() => {
     if (now - (lastSaid[s.id] ?? -Infinity) < SNAKE_GAP) return;
     if (!urgent && now - lastAny < ANY_GAP) return;
     const said = saidAt[s.id] ||= new Map();
-    const fresh = pool.filter(l => !SET_PIECES.has(l) ? !(game.time - (said.get(l) ?? -Infinity) < LINE_REST) : !toldPieces.has(l));
-    if (!fresh.length) return; // (nothing new to say: quiet beats a repeat)
+    const told = l => SET_PIECES.has(l) ? toldPieces.has(l) : PUNCHLINES.has(l) ? toldThisRound.has(l) : game.time - (said.get(l) ?? -Infinity) < LINE_REST;
+    const fresh = pool.filter(l => !told(l));
+    if (!fresh.length) return false; // (nothing new to say: quiet beats a repeat)
     const template = pick(fresh);
     said.set(template, game.time);
     if (SET_PIECES.has(template)) toldPieces.add(template);
+    if (PUNCHLINES.has(template)) toldThisRound.add(template);
     const label = (who && s.memory.labels?.[who.id]) || 'unclear';
     speak(s, fill(template, who ? nameOf(who) : '', label), { template, who, label });
+    return true;
   }
 
   // (Replacers are functions, so a name like "$'" is just a name.)
@@ -826,26 +1071,34 @@ window.SnakeChatter = (() => {
     lastSaid[s.id] = game.time;
     lastAny = game.time;
     lastLine = { speaker: s, text, ...source };
-    // (On small boards long lines go to the log only, but a reply always gets its bubble: it's the joke.)
-    if (s.alive && !(compact && text.length > COMPACT_CHARS && !source?.reply)) showBubble(s, text);
+    bubble(s, text, !!source?.reply);
     addLog(s, text);
     listener?.(s, text, !!source?.reply);
     const reply = source?.template && REPLIES[source.template];
-    if (reply) pendingReply = { at: game.time + reply.after, by: reply.by, text: pick(reply.lines), then: reply.then };
+    if (reply) pendingReply = { at: game.time + reply.after, reply, teller: s };
   }
 
-  function showBubble(s, text) {
+  // A line's bubble. On small boards a long line goes to the log alone, if
+  // the log's on screen to show it (a reply always gets its bubble: it's the
+  // joke). A snake that's just gone out says its last words where it went
+  // out, briefly, when the log can't show them.
+  function bubble(s, text, reply) {
+    if (s.alive) { if (!(compact && logShown && text.length > COMPACT_CHARS && !reply)) showBubble(s, text); }
+    else if (!logShown && s.body?.length) showBubble(s, text, s.body[0]);
+  }
+
+  function showBubble(s, text, at = null) {
     bubbles.get(s.id)?.el.remove();
+    bubbles.delete(s.id); // (so the newest comes last: it's the one that makes way)
     const el = document.createElement('div');
     el.className = 'bubble';
     el.setAttribute('aria-hidden', 'true'); // (screen readers get the log instead)
     const words = document.createElement('span'); // (the bubble you see: it pops in, while its box is moved about)
-    words.textContent = text;
-    if (hasChinese(text)) words.lang = 'zh-Hans';
+    setWords(words, text);
     el.append(words);
     el.style.setProperty('--edge', s.persona?.ink || s.color);
     boardEl.appendChild(el);
-    bubbles.set(s.id, { el, snake: s, until: performance.now() + BUBBLE_MS, w: 0, h: 0, side: null, shown: null, want: null, wantSince: 0, ox: 0, oy: 0, x: NaN, y: NaN, tail: NaN, near: false });
+    bubbles.set(s.id, { el, snake: s, until: performance.now() + (at ? LAST_WORDS_MS : BUBBLE_MS), at: at && { x: at.x, y: at.y }, w: 0, h: 0, box: { x: 0, y: 0, w: 0, h: 0 }, side: null, shown: null, want: null, wantSince: 0, ox: 0, oy: 0, x: NaN, y: NaN, tail: NaN, near: false });
   }
 
   // Called every frame: bubbles follow the gliding heads, stay inside the
@@ -855,8 +1108,10 @@ window.SnakeChatter = (() => {
   // room) for one going up or down. And it doesn't jump about as the snake
   // turns: it moves to another side only once that side has been the right
   // one for a moment (or its own has run out of room), and then glides there.
+  // Nor does it cover the banner or an older bubble: a side that would has no
+  // room, and with no side clear, it's nudged out of the way (gliding too).
   // keepClear: your snake, if you're playing: a bubble near your head fades.
-  const SIDE_DELAY = 450, GLIDE_MS = 110;
+  const SIDE_DELAY = 450, GLIDE_MS = 110, CLEAR = 4; // (CLEAR: px between a bubble and what it keeps out of)
   let lastLayout = 0;
   function layout(alpha, boardPx, keepClear = null) {
     if (!bubbles.size || !boardPx) { lastLayout = 0; return; }
@@ -864,28 +1119,42 @@ window.SnakeChatter = (() => {
     const glide = lastLayout ? 1 - Math.exp(-Math.min(64, now - lastLayout) / GLIDE_MS) : 1;
     lastLayout = now;
     const cellPx = boardPx / window.TUNING.GRID, gap = cellPx * 0.75 + 6; // (6: room for the tail)
+    if (bannerStale || bannerPx !== boardPx) readBanner(boardPx);
+    taken.length = 0;
+    if (banner) taken.push(banner);
     for (const [id, b] of bubbles) {
-      if (now > b.until || !b.snake.alive) { b.el.remove(); bubbles.delete(id); continue; }
-      window.SnakeRender.headPx(b.snake, alpha, boardPx, headAt);
+      if (now > b.until || (!b.snake.alive && !b.at)) { b.el.remove(); bubbles.delete(id); continue; }
+      if (b.at) { headAt.x = (b.at.x + 0.5) * cellPx; headAt.y = (b.at.y + 0.5) * cellPx; } // (last words: where it went out)
+      else window.SnakeRender.headPx(b.snake, alpha, boardPx, headAt);
       if (!b.w) { b.w = b.el.offsetWidth; b.h = b.el.offsetHeight; } // (measured once, as it first shows)
       const w = b.w, h = b.h;
-      const room = side => side === 'above' ? headAt.y - gap - h >= 0 : side === 'below' ? headAt.y + gap + h <= boardPx
+      const inX = v => Math.min(boardPx - w - 4, Math.max(4, v)), inY = v => Math.min(boardPx - h - 4, Math.max(4, v));
+      // Where it sits on a side, relative to the head (its top-left corner),
+      // and where that is on the board; whether that side fits on the board,
+      // whether it's clear there too, or can be nudged clear (see nudge).
+      const offX = side => side === 'left' ? -gap - w : side === 'right' ? gap : -w / 2;
+      const offY = side => side === 'above' ? -gap - h : side === 'below' ? gap : -h / 2;
+      const spotX = side => inX(headAt.x + offX(side)), spotY = side => inY(headAt.y + offY(side));
+      const fits = side => side === 'above' ? headAt.y - gap - h >= 0 : side === 'below' ? headAt.y + gap + h <= boardPx
         : side === 'left' ? headAt.x - gap - w >= 0 : headAt.x + gap + w <= boardPx;
-      let want;
-      if (b.snake.dir.y !== 0) {
-        want = (b.side === 'left' || b.side === 'right') && room(b.side) ? b.side
-          : room('right') && (headAt.x < boardPx / 2 || !room('left')) ? 'right' : 'left';
-      } else {
-        want = b.side === 'below' && headAt.y < cellPx * 4 ? 'below' : room('above') ? 'above' : 'below';
-      }
+      const clear = side => fits(side) && free(spotX(side), spotY(side), w, h);
+      const movable = side => fits(side) && nudge(side, spotX(side), spotY(side), w, h, boardPx);
+      const choose = room => b.snake.dir.y !== 0
+        ? (b.side === 'left' || b.side === 'right') && room(b.side) ? b.side : room('right') && (headAt.x < boardPx / 2 || !room('left')) ? 'right' : 'left'
+        : b.side === 'below' && headAt.y < cellPx * 4 ? 'below' : room('above') ? 'above' : 'below';
+      let want = choose(clear);
+      if (!clear(want)) want = choose(movable); // (no side's clear as it is: one it can be nudged clear on,
+      if (!movable(want)) want = choose(fits); //  or failing that, the side it'd have alone)
       if (!b.side) b.side = want;
       else if (want !== b.side) {
         if (b.want !== want) { b.want = want; b.wantSince = now; }
-        if (now - b.wantSince >= SIDE_DELAY || !room(b.side)) { b.side = want; b.want = null; }
+        if (now - b.wantSince >= SIDE_DELAY || !fits(b.side) || (!movable(b.side) && movable(want))) { b.side = want; b.want = null; }
       } else b.want = null;
-      // Where it goes, relative to the head (its top-left corner), eased toward.
-      const tx = b.side === 'left' ? -gap - w : b.side === 'right' ? gap : -w / 2;
-      const ty = b.side === 'above' ? -gap - h : b.side === 'below' ? gap : -h / 2;
+      // Where it goes, relative to the head, eased toward.
+      let tx = offX(b.side), ty = offY(b.side);
+      if (taken.length && nudge(b.side, spotX(b.side), spotY(b.side), w, h, boardPx) && (nudged.x || nudged.y)) {
+        tx = spotX(b.side) + nudged.x - headAt.x; ty = spotY(b.side) + nudged.y - headAt.y;
+      }
       if (b.side !== b.shown) {
         if (!b.shown) { b.ox = tx; b.oy = ty; }
         b.el.dataset.side = b.side;
@@ -893,8 +1162,11 @@ window.SnakeChatter = (() => {
       }
       b.ox += (tx - b.ox) * glide;
       b.oy += (ty - b.oy) * glide;
-      const x = Math.round(Math.min(boardPx - w - 4, Math.max(4, headAt.x + b.ox)));
-      const y = Math.round(Math.min(boardPx - h - 4, Math.max(4, headAt.y + b.oy)));
+      const x = Math.round(inX(headAt.x + b.ox));
+      const y = Math.round(inY(headAt.y + b.oy));
+      // (where it's going, not where it's got to: newer bubbles keep clear of that)
+      b.box.x = inX(headAt.x + tx); b.box.y = inY(headAt.y + ty); b.box.w = w; b.box.h = h;
+      taken.push(b.box);
       let near = false;
       if (keepClear?.alive) {
         const mine = window.SnakeRender.headPx(keepClear, alpha, boardPx, headMine);
@@ -912,14 +1184,58 @@ window.SnakeChatter = (() => {
     }
   }
 
+  // Is this box clear of the banner and the bubbles placed so far?
+  function free(x, y, w, h) {
+    for (const r of taken) if (x < r.x + r.w + CLEAR && r.x < x + w + CLEAR && y < r.y + r.h + CLEAR && r.y < y + h + CLEAR) return false;
+    return true;
+  }
+
+  // A bubble with no clear side moves out of the way by as little as it can:
+  // along its side (its tail still on the head, headAt) or further off, never
+  // back over its snake. Whether it's clear, there or so moved; nudged: the
+  // shift (none, if it was clear already or nothing helps).
+  const nudged = { x: 0, y: 0 };
+  function nudge(side, x, y, w, h, boardPx) {
+    nudged.x = nudged.y = 0;
+    if (free(x, y, w, h)) return true;
+    const across = side === 'above' || side === 'below';
+    let best = Infinity;
+    for (const r of taken) {
+      if (!(x < r.x + r.w + CLEAR && r.x < x + w + CLEAR && y < r.y + r.h + CLEAR && r.y < y + h + CLEAR)) continue;
+      for (let k = 0; k < 4; k++) { // (past its right, left, bottom or top)
+        const dx = k === 0 ? r.x + r.w + CLEAR - x : k === 1 ? r.x - CLEAR - w - x : 0;
+        const dy = k === 2 ? r.y + r.h + CLEAR - y : k === 3 ? r.y - CLEAR - h - y : 0;
+        const d = Math.abs(dx) + Math.abs(dy);
+        if (d >= best || x + dx < 4 || x + dx > boardPx - w - 4 || y + dy < 4 || y + dy > boardPx - h - 4) continue;
+        const along = across ? dx : dy, off = across ? dy : dx;
+        const toward = side === 'above' || side === 'left' ? off > 0 : off < 0;
+        const head = across ? headAt.x - x - dx : headAt.y - y - dy, span = across ? w : h;
+        if (toward || (along && (head < span * 0.15 || head > span * 0.85)) || !free(x + dx, y + dy, w, h)) continue;
+        best = d; nudged.x = dx; nudged.y = dy;
+      }
+    }
+    return best < Infinity;
+  }
+
+  // The banner's box on the board (it's centred by a transform, which the
+  // offsets leave out). While it's faded for a head under it, the board
+  // comes first and bubbles may cross it.
+  let banner = null, bannerStale = true, bannerPx = 0;
+  function readBanner(boardPx) {
+    bannerStale = false;
+    bannerPx = boardPx;
+    if (!bannerEl || bannerEl.hidden || bannerEl.classList.contains('under')) { banner = null; return; }
+    const w = bannerEl.offsetWidth;
+    banner = { x: bannerEl.offsetLeft - w / 2, y: bannerEl.offsetTop, w, h: bannerEl.offsetHeight };
+  }
+
   function addLog(s, text) {
     const li = document.createElement('li');
     const who = document.createElement('strong');
     who.textContent = s.name;
     who.style.color = readable(s.persona?.ink || s.color);
     const said = document.createElement('span');
-    said.textContent = text;
-    if (hasChinese(text)) said.lang = 'zh-Hans';
+    setWords(said, text);
     li.append(who, ' ', said);
     logEl.prepend(li);
     while (logEl.children.length > LOG_SIZE) logEl.lastChild.remove();
@@ -950,14 +1266,14 @@ window.SnakeChatter = (() => {
           say(victim, 'dies', killer && killer !== victim ? killer : null, true);
         }
         for (const v of alive) if (v.personaKey === 'vulture' && Math.random() < 0.6) say(v, 'death', victim);
-      } else if (e.type === 'eat' && e.snake.persona) {
+      } else if (e.type === 'eat' && e.snake.persona && e.kind !== 'goldcap') { // (a golden mushroom has its own lines: below)
         if (e.kind === 'golden') say(e.snake, 'golden', null, true);
         else if (e.kind === 'beetle') say(e.snake, 'caught', null, true);
         else if (e.kind === 'mushroom') say(e.snake, 'mushroom');
         else if (Math.random() < 0.15) say(e.snake, 'eat');
       } else if (e.type === 'starving' && e.snake.persona) {
         say(e.snake, 'hungry', null, true);
-      } else if (e.type === 'spawn') {
+      } else if (e.type === 'spawn' && (e.kind === 'golden' || e.kind === 'beetle')) { // (golden apples and beetles; leaves and golden mushrooms have the narrator)
         for (const s of alive) {
           if (e.gold && VOICES[s.personaKey]?.goldbug) { say(s, 'goldbug', null, true); continue; }
           if (s.personaKey === 'gobbler' || (e.kind === 'beetle' && s.personaKey === 'desperado')) say(s, e.kind === 'beetle' ? 'beetle' : 'spawn', null, true);
@@ -966,17 +1282,32 @@ window.SnakeChatter = (() => {
         const kind = e.type === 'strike' ? 'storm' : e.kind;
         if (e.type === 'strike') struck = true; else struck = false;
         const s = pick(alive.filter(a => VOICES[a.personaKey]?.weather?.[kind]));
-        if (s) say(s, `weather.${kind}`, null, true);
+        // (The first strike has lines of its own, where a voice has some: as a storm begins, nothing's burning yet.)
+        if (s) say(s, e.type === 'strike' && VOICES[s.personaKey].weather.strike ? 'weather.strike' : `weather.${kind}`, null, true);
       } else if (e.type === 'crash' && e.snake.alive) {
         // Whoever crashed says ouch; now and then, whoever they bounced off gloats.
+        // (Almost every bump is into a snake, so ouches fit any bump; the edge,
+        // where it tried to go off the board, has lines of its own.)
         const other = e.killerId != null && e.killerId !== e.snake.id ? game.snakes[e.killerId] : null;
-        if (e.snake.persona) say(e.snake, 'bonk');
+        const N = window.TUNING.GRID, edge = e.x < 0 || e.y < 0 || e.x >= N || e.y >= N;
+        if (e.snake.persona && !(edge && say(e.snake, 'edge'))) say(e.snake, 'bonk');
         if (other?.persona && other.alive && Math.random() < 0.5) say(other, 'gloat', e.snake);
       } else if (e.type === 'leap' && e.snake.persona) {
-        say(e.snake, 'leap', null, true);
+        if (e.gold || Math.random() < 0.3) say(e.snake, 'leap', null, !!e.gold); // (everyone leaps now: a golden one's worth a word)
+      } else if (e.type === 'dash' && e.snake.persona) {
+        say(e.snake, 'dash', null, true);
+      } else if (e.type === 'eat' && e.kind === 'goldcap' && e.snake.persona) {
+        say(e.snake, 'wrap', null, true);
       } else if (e.type === 'alight' && e.snake.persona) {
         say(e.snake, 'burning', null, true);
-      } else if (e.type === 'cut' && e.snake.persona) {
+      } else if (e.type === 'cut' && e.by != null) {
+        // A dash cut it: the dasher crows, and the one cut has words for whoever
+        // it was, you included. Its 'cut' lines are for the woodpecker, so a
+        // voice that blames the bird there has 'snipped' lines for a dash.
+        const dasher = game.snakes[e.by];
+        if (dasher?.persona) say(dasher, 'snip', e.snake, true);
+        if (e.snake.persona) say(e.snake, VOICES[e.snake.personaKey]?.snipped ? 'snipped' : 'cut', dasher, true);
+      } else if (e.type === 'cut' && e.snake.persona) { // (the woodpecker)
         say(e.snake, 'cut', null, true);
       } else if (e.type === 'baked') {
         const s = pick(alive.filter(a => VOICES[a.personaKey]?.baked));
@@ -992,11 +1323,27 @@ window.SnakeChatter = (() => {
 
     for (const s of alive) {
       const m = s.memory, was = (seen[s.id] ||= {});
-      // Sovereign / Colonist spotting an intruder.
-      if (m.victimId != null && m.victimId !== was.victimId && (m.home || m.colonies)) {
-        say(s, 'intruder', game.snakes.find(o => o.id === m.victimId));
+      // Sovereign / Colonist spotting an intruder (now and then: not every time one wanders in).
+      if (m.victimId != null && m.victimId !== was.victimId && (m.home || m.colonies)
+        && !(game.time - (was.calledOutAt ?? -Infinity) < INTRUDER_REST)
+        && say(s, 'intruder', game.snakes.find(o => o.id === m.victimId))) was.calledOutAt = game.time;
+      if ((m.planted || 0) > (was.planted || 0)) {
+        say(s, 'flag');
+        // (planted inside Sovereign's realm: Sovereign has something to say about it)
+        const c = m.colonies?.[m.colonies.length - 1];
+        const sov = c && alive.find(o => o !== s && o.memory.home && Math.hypot(c.x - o.memory.home.x, c.y - o.memory.home.y) <= o.memory.home.radius + 1 + c.radius);
+        if (sov) say(sov, 'realm.invaded', s, true);
       }
-      if ((m.planted || 0) > (was.planted || 0)) say(s, 'flag');
+      // Sovereign and Colonist: their land on fire, or pecked full of holes.
+      const lands = m.home ? [{ x: m.home.x, y: m.home.y, r: m.home.radius + 1 }] : m.colonies?.length ? m.colonies.map(c => ({ x: c.x, y: c.y, r: c.radius + 1 })) : null;
+      if (lands) {
+        const N = window.TUNING.GRID, tag = m.home ? 'realm' : 'colony';
+        const inLand = k => lands.some(l => Math.hypot(k % N - l.x, Math.floor(k / N) - l.y) <= l.r);
+        for (const e of game.events) if (e.type === 'peck' && (e.cells || []).some(inLand)) say(s, tag + '.pecked', null, true);
+        if (game.tick % 10 === 0 && game.fires?.size && game.time - (was.fireAt ?? -1e9) > 12000) {
+          for (const [k, f] of game.fires) if (game.tick >= f.from && inLand(k)) { was.fireAt = game.time; say(s, tag + '.burning', null, true); break; }
+        }
+      }
       // Sovereign's realm grew, shrank or moved.
       if (m.home && was.realm) {
         if (m.home.radius !== was.realm.radius) say(s, m.home.radius > was.realm.radius ? 'realm.grow' : 'realm.shrink', null, true);
@@ -1009,15 +1356,19 @@ window.SnakeChatter = (() => {
       was.mood = m.moodChangedAt;
     }
 
-    // Someone answers Mason (see REPLIES).
+    // Someone answers Mason (see REPLIES): anyone but whoever told it, in
+    // their own voice (Copycat's giggle is the same giggle, in Chinese).
     if (pendingReply && game.time >= pendingReply.at) {
-      const { by, text, then } = pendingReply;
+      const { reply, teller } = pendingReply;
       pendingReply = null;
-      const who = pick(alive.filter(by));
+      const who = pick(alive.filter(o => o !== teller && reply.by(o)));
       if (who) {
+        const line = pick(VOICES[who.personaKey]?.[reply.own] || reply.lines);
+        const text = who.personaKey === 'copycat' ? ZH[line] ?? line : line;
         lastSaid[who.id] = -Infinity;
         speak(who, text, { template: text, who: null, label: '', reply: true });
-        if (then) pendingReply = { at: game.time + 1400, by: s => s.personaKey === 'mason', text: then };
+        // (and the teller carries on: Mason, or Capricious doing Mason)
+        if (reply.then) pendingReply = { at: game.time + 1400, reply: { by: o => o === teller, lines: [reply.then] }, teller: null };
       }
     }
 

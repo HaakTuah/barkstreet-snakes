@@ -9,7 +9,7 @@
 // Cleverness: for every move sequence up to `depth` steps it scores the result
 // with a timed flood fill (do I still have room? can I get onto my own trail
 // and chase my tail? is the room I need only through a narrow neck that a
-// rival could get to and shut? most often: am I pinned against a wall or a
+// rival could get to and shut? most often: am I pinned against the edge or a
 // body, with one or two ways on a rival could come round to?), a Voronoi
 // split of the board (whose territory is this?) and the food it can reach
 // before anyone else.
@@ -57,13 +57,14 @@ window.SnakeAI = (() => {
 
   // Each persona: name, color, look (how it's drawn), driver (stateful
   // behaviour, optional), weights, and flavor text: a blurb for the start
-  // screen, a line for when it kills you, and one for when it wins.
+  // screen, and a few lines each for when it kills you and when it wins
+  // (taken in turn, never the same twice running).
   const PERSONAS = {
     sniper: {
       name: 'Sniper', color: '#b91c1c', look: 'sniper', driver: 'sniper',
       blurb: 'Picks whichever snake it has the best shot at and cuts it off.',
-      kill: 'Headshot. It had you lined up three moves ago.',
-      win: 'Nobody was safe.',
+      kill: ['It had you lined up three moves ago.', 'You were the best shot it had.', 'It got in front of you. It always does.'],
+      win: ['Nobody was safe.', 'Not a wasted move.', 'It never once blinked.'],
       w: {
         space: 1, territory: 0.8, aggression: 0.3,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, hungryBelow: 16, fedFactor: 0.3,
@@ -73,8 +74,8 @@ window.SnakeAI = (() => {
     gobbler: {
       name: 'Gobbler', color: '#fb923c', look: 'gobbler',
       blurb: 'Eats everything, even a rival’s apple. Hates mushrooms.',
-      kill: 'Gobbler didn’t even look up from lunch.',
-      win: 'And it’s still hungry.',
+      kill: ['Gobbler didn’t even stop chewing.', 'It burped. That was the eulogy.', 'Gobbler was thinking about apples. It always is.'],
+      win: ['And it’s still hungry.', 'Not a crumb left.', 'Now, about pudding.'],
       w: {
         space: 1, territory: 0.2,
         food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 0.3, mushroom: -3,
@@ -83,20 +84,20 @@ window.SnakeAI = (() => {
     },
     ghost: {
       name: 'Ghost', color: '#f1f5f9', look: 'ghost',
-      blurb: 'Keeps away from everyone and eats mushrooms to stay small.',
-      kill: 'Ghost? You never even saw it.',
-      win: 'Was it ever really here?',
+      blurb: 'Keeps its distance from everyone, and slips through the gaps.',
+      kill: ['Ghost? You never even saw it.', 'Ghost slipped through. You didn’t.', 'You felt a chill. Then nothing.'],
+      win: ['Was it ever really here?', 'It never made a sound.'],
       w: {
         space: 2, territory: 0.6,
-        food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 14, fedFactor: 0, mushroomLover: 18,
+        food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 18, fedFactor: 0.4,
         margin: 6, headRisk: 900, zoneRisk: 150, distance: 7,
       },
     },
     sovereign: {
       name: 'Sovereign', color: '#2563eb', look: 'sovereign', driver: 'sovereign',
       blurb: 'Rules its own patch of bark and attacks anyone who trespasses.',
-      kill: 'The Sovereign does not share.',
-      win: 'Long live the Sovereign.',
+      kill: ['The Sovereign does not share.', 'Removed by royal decree.', 'Every inch is royal. You were on one.'],
+      win: ['Long live the Sovereign.', 'The realm is the whole log now.', 'We are, at last, amused.'],
       w: {
         space: 1.5, territory: 1, aggression: 0.2,
         food: 5, eat: 70, pellet: 1.2, foodRange: 30,
@@ -107,8 +108,8 @@ window.SnakeAI = (() => {
     colonist: {
       name: 'Colonist', color: '#e11d48', look: 'colonist', driver: 'colonist',
       blurb: 'A redcoat who plants flags all over and defends every one.',
-      kill: 'Another patch of bark for the Crown.',
-      win: 'The final flag is planted.',
+      kill: ['Another patch of bark for the Crown.', 'You were annexed. Politely.', 'All very civilised, of course.'],
+      win: ['The final flag is planted.', 'An empire of one log.', 'Victory, then tea.'],
       w: {
         space: 1.2, territory: 1.4, aggression: 0.2,
         food: 5, eat: 70, pellet: 1.2, foodRange: 30,
@@ -120,15 +121,15 @@ window.SnakeAI = (() => {
     drab: {
       name: 'Drab', color: '#c8bf94', look: 'drab',
       blurb: 'Plays it safe and sensible. Nothing special.',
-      kill: 'You lost to Drab. Drab!',
-      win: 'Somehow.',
+      kill: ['You lost to Drab. Drab!', 'Drab didn’t mean anything by it.', 'Beaten by beige.'],
+      win: ['Somehow.', 'Mildly pleased.', 'It says it was fine.'],
       w: DRAB,
     },
     vulture: {
       name: 'Vulture', color: '#27272a', ink: '#f9a8d4', look: 'vulture', driver: 'vulture',
       blurb: 'Circles snakes in trouble and feasts on what they leave behind.',
-      kill: 'Vulture was waiting for this.',
-      win: 'Picking over the leftovers.',
+      kill: ['Vulture was waiting for this.', 'It circled. You slipped. It ate.', 'Vulture thanks you for the beads.'],
+      win: ['Picking over the leftovers.', 'It waited everyone out.', 'Last one at the table.'],
       w: {
         space: 1.5, territory: 0.4,
         food: 4, eat: 60, normalFood: 0.15, pellet: 3, foodRange: 40, contested: true,
@@ -138,8 +139,8 @@ window.SnakeAI = (() => {
     mason: {
       name: 'Mason', color: '#ebe5d9', ink: '#8a8170', look: 'mason', // Caesar in marble (ink: his name, outline and tag, in stone)
       blurb: 'Walls off the board, then keeps the biggest piece.',
-      kill: 'Mason had a spot picked out for you.',
-      win: 'Veni, vidi, Mason.',
+      kill: ['Mason had a spot picked out for you.', 'You were on the wrong side of the wall.', 'All roads led to Mason.'],
+      win: ['Veni, vidi, Mason.', 'Winnus maximus.', 'Rome took longer.'],
       w: {
         space: 1.5, territory: 2.2,
         food: 3, eat: 40, pellet: 1, foodRange: 30,
@@ -149,15 +150,15 @@ window.SnakeAI = (() => {
     wildcard: {
       name: 'Wildcard', color: '#b22234', look: 'wildcard', driver: 'wildcard', // (red, white and blue)
       blurb: 'A random mix of habits, new every round. Great hair.',
-      kill: 'Nobody knows how, least of all Wildcard.',
-      win: 'Tremendous. Nobody wins like this.',
+      kill: ['Nobody knows how, least of all Wildcard.', 'A total accident. It’s calling it genius.'],
+      win: ['Tremendous. Nobody wins like this.', 'A landslide. The biggest ever.', 'Four more rounds!'],
       w: DRAB, // replaced by a random set on its first move
     },
     creeper: {
       name: 'Creeper', color: '#0d9488', look: 'creeper',
       blurb: 'Sneaks up and rides right behind other snakes’ tails.',
-      kill: 'Creeper was never far away.',
-      win: 'Quietly.',
+      kill: ['Creeper was never far away.', 'You should have turned around.', 'It had been following you for ages.'],
+      win: ['Quietly.', 'Nobody looked behind them.'],
       w: {
         space: 1, territory: 0.5,
         food: 3, eat: 50, pellet: 1, foodRange: 30,
@@ -167,29 +168,29 @@ window.SnakeAI = (() => {
     metagamer: {
       name: 'Metagamer', color: '#22d3ee', look: 'metagamer', driver: 'metagamer',
       blurb: 'Studies how each rival plays, then counters it.',
-      kill: 'Metagamer had you figured out.',
-      win: 'The spreadsheet called it.',
+      kill: ['Metagamer had you figured out.', 'Your playstyle: noted. Your round: over.', 'You were a data point.'],
+      win: ['The spreadsheet called it.', 'Win probability: 100%.', 'GG.'],
       w: { ...DRAB, hunt: HUNT, lure: { weight: 5, dist: 6 } },
     },
     capricious: {
       name: 'Capricious', color: '#ec4899', look: 'capricious', driver: 'capricious',
-      blurb: 'Changes its mind every few seconds: sniper, glutton, hermit, builder.',
-      kill: 'Capricious felt like it. Just then.',
-      win: 'And already wants something else.',
+      blurb: 'Does impressions of Sniper, Gobbler, Ghost and Mason, by turns.',
+      kill: ['Capricious felt like it. Just then.', 'A moment later, it wouldn’t have bothered.', 'Wrong place, wrong mood.'],
+      win: ['And already wants something else.', 'It loves winning! For now.'],
       w: DRAB, // replaced by the current mood's weights
     },
     copycat: {
       name: 'Copycat', color: '#fca5a5', look: 'copycat', driver: 'copycat',
       blurb: 'Copies whoever seems to be winning. Party member.',
-      kill: 'It learned that from someone.',
-      win: 'Imitation pays.',
+      kill: ['It learned that from someone.', 'Somebody taught it that. Maybe you.', 'The Party thanks you for your sacrifice.'],
+      win: ['Imitation pays.', 'A victory for the collective.', 'It copied the winner until it was one.'],
       w: { ...DRAB, mimic: 120, lure: { weight: 4, dist: 5 } },
     },
     desperado: {
       name: 'Desperado', color: '#ea580c', look: 'desperado',
-      blurb: 'Skims walls, bodies and heads for the thrill of it. Yeehaw.',
-      kill: 'Desperado drew first.',
-      win: 'Rides off into the sunset.',
+      blurb: 'Skims edges, bodies and heads for the thrill of it. Yeehaw.',
+      kill: ['Desperado drew first.', 'Another notch on the six-shooter.', 'Every showdown has a loser.'],
+      win: ['Rides off into the sunset.', 'Last snake in town.', 'Not a scratch on the hat.'],
       w: {
         space: 1, territory: 0.6,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, mushroom: 0.5,
@@ -198,9 +199,9 @@ window.SnakeAI = (() => {
     },
     mute: {
       name: 'Mute', color: '#a855f7', look: 'mute', driver: 'sniper', // (a rainbow; violet stands in for it in text)
-      blurb: 'A mime. Picks someone and closes an invisible box around them. Never says a word.',
-      kill: 'Mute boxed you in. Without a word.',
-      win: '*takes a silent bow*',
+      blurb: 'A mime. Picks someone and closes an invisible box round them.',
+      kill: ['Mute had the last word. Silently.', '*taps on your invisible box*', '*lowers an invisible curtain*'],
+      win: ['*takes a silent bow*', '*accepts an invisible bouquet*', '*lifts an invisible trophy*'],
       w: {
         space: 1.2, territory: 2, aggression: 0.8,
         food: 4, eat: 70, pellet: 1.2, foodRange: 40,
@@ -210,9 +211,9 @@ window.SnakeAI = (() => {
     },
     ouroboros: {
       name: 'Ouroboros', color: '#b8860b', look: 'ouroboros',
-      blurb: 'Chases its own tail: once it’s long, it moves as a ring, and whatever’s inside is in trouble.',
-      kill: 'Ouroboros came full circle.',
-      win: 'And round again.',
+      blurb: 'Chases its own tail, then moves as a ring. Mind the middle.',
+      kill: ['Ouroboros came full circle.', 'What goes around came around.', 'First its own tail. Then you.'],
+      win: ['And round again.', 'It’s won this one before.'],
       w: {
         space: 1.0, territory: 0.6, aggression: 0.2,
         food: 3, eat: 45, pellet: 1.2, foodRange: 40,
@@ -223,8 +224,8 @@ window.SnakeAI = (() => {
     joker: {
       name: 'Joker', color: '#a21caf', look: 'joker', driver: 'joker',
       blurb: 'Lures chasers into dead ends and swerves away at the last moment.',
-      kill: 'Joker led you on. You followed.',
-      win: 'Who’s laughing now?',
+      kill: ['Joker led you on. You followed.', 'It swerved. You didn’t.', 'You fell for it. Everyone does.'],
+      win: ['Who’s laughing now?', 'Thank you! It’s here all week.', 'And the last laugh.'],
       w: {
         space: 1, territory: 0.6,
         food: 5, eat: 70, pellet: 1.2, foodRange: 40, mushroom: 0.5,
@@ -240,7 +241,7 @@ window.SnakeAI = (() => {
   const TRAPPED = 5000;
   const NECK = 2000;       // the room I need is through a gap a rival could get to and shut...
   const DAWDLE = 8;        // ...even this many ticks after me (I don't always leave a pocket straight away)...
-  // ...and the gap right by my head: pinned against a wall or a body, with one
+  // ...and the gap right by my head: pinned against the edge or a body, with one
   // or two ways on that a rival could come round to. This nearest case is
   // most of what the neck test catches (nine in ten), and its allowance is
   // the dial between fewer boxed-in deaths and longer rounds.
@@ -370,7 +371,8 @@ window.SnakeAI = (() => {
       const L = o.body.length;
       let hx = o.body[0].x, hy = o.body[0].y;
       for (let s = Math.min(age, o.stun || 0) + 1; s <= age; s++) { // (stunned, it didn't move)
-        const nx = hx + o.dir.x, ny = hy + o.dir.y;
+        let nx = hx + o.dir.x, ny = hy + o.dir.y;
+        if (o.wrap > 0) { nx = (nx + N) % N; ny = (ny + N) % N; } // (the edges wrap for it a while)
         if (!inside(nx, ny) || otherFree[ny * N + nx] > s) break;
         hx = nx; hy = ny;
         mineFree[hy * N + hx] = Math.max(mineFree[hy * N + hx], L);
@@ -637,9 +639,18 @@ window.SnakeAI = (() => {
     // I give twice the berth for a while, so we don't go for the same cell again.)
     others.forEach((o, k) => {
       const strike = stunLeft(o) > 1 ? 0 : w.headRisk * (o.id === me.bumped ? 2 : 1);
+      const wrapO = o.wrap > 0, at = v => wrapO ? (v + N) % N : v; // (the edges wrap for it a while)
       for (const d of DIR_LIST) {
-        const nx = heads[k].x + d.x, ny = heads[k].y + d.y;
+        const nx = at(heads[k].x + d.x), ny = at(heads[k].y + d.y);
         if (inside(nx, ny)) risk[ny * N + nx] += strike;
+      }
+      // (Its powers reach further straight on: a dash three cells, a golden
+      // leap three, anyone's leap two if there's something in front to hop.)
+      const fx = at(heads[k].x + o.dir.x), fy = at(heads[k].y + o.dir.y);
+      const far = o.dashes > 0 || o.leaps > 0 ? 3 : inside(fx, fy) && otherFree[fy * N + fx] > 1 ? 2 : 1;
+      for (let i = 2; i <= far; i++) {
+        const nx = at(heads[k].x + o.dir.x * i), ny = at(heads[k].y + o.dir.y * i);
+        if (inside(nx, ny)) risk[ny * N + nx] += strike * 0.5;
       }
       const stampZ = ++stamp;
       queue[0] = o.body[0].y * N + o.body[0].x;
@@ -714,6 +725,8 @@ window.SnakeAI = (() => {
       beetle: shrinking ? 0 : TUNE.BEETLE_GROWTH * Math.max(apple, hunger), // it moves, but it's worth what it's worth
       pellet: shrinking ? 0 : (w.pellet ?? 1),
       mushroom: shrinking ? 2 : (w.mushroom ?? -1),
+      leaf: 2 * Math.max(apple, hunger, 0.5), // (golden powers: worth it for what they do)
+      goldcap: 1.5 * Math.max(apple, hunger, 0.5),
     };
     // Per cell: foodValue is what eating it is worth (0 if nothing), foodGrow
     // what it does to my length (a mushroom takes off up to SHRINK). foodCells
@@ -934,13 +947,20 @@ window.SnakeAI = (() => {
       return score;
     }
 
+    // While the edges wrap for me (a golden mushroom): how many steps ahead
+    // that still holds (ticks are about 110 ms), and a step across an edge
+    // (a neck on the far side) read as the one step it is.
+    const wrapSteps = Math.floor((me.wrap || 0) / 130);
+    const unit = v => v > 1 ? -1 : v < -1 ? 1 : v;
+
     // Score of moving `d` as step t + 1, then playing on for `depth - 1` more steps.
     // `body` is the first `len` cells; the moved body goes into bodies[t + 1].
     function move(body, len, grow, d, depth, t, bonus) {
-      const nx = body[0].x + d.x, ny = body[0].y + d.y;
+      let nx = body[0].x + d.x, ny = body[0].y + d.y;
+      if (t < wrapSteps) { nx = (nx + N) % N; ny = (ny + N) % N; } // (the edges wrap for me a while yet)
       if (!canEnter(body, len, grow, nx, ny, t + 1)) return null;
       const i = ny * N + nx;
-      const turning = d.x !== body[0].x - body[1].x || d.y !== body[0].y - body[1].y;
+      const turning = d.x !== unit(body[0].x - body[1].x) || d.y !== unit(body[0].y - body[1].y);
       // New head in front; the tail moves up unless I'm still growing.
       let g = grow, nlen = len + 1;
       if (g > 0) g--; else nlen--;
@@ -968,7 +988,7 @@ window.SnakeAI = (() => {
     }
 
     function search(body, len, grow, depth, t, bonus) {
-      const backX = body[1].x - body[0].x, backY = body[1].y - body[0].y;
+      const backX = unit(body[1].x - body[0].x), backY = unit(body[1].y - body[0].y);
       let best = -Infinity;
       for (const d of DIR_LIST) {
         if (d.x === backX && d.y === backY) continue;
@@ -1012,7 +1032,89 @@ window.SnakeAI = (() => {
       s += Math.random() * 1e-3; // tie-break
       if (s > bestScore) { bestScore = s; bestDir = d; }
     }
+    // Powers. With nothing better than a crash every way, a leap over what's
+    // in front (golden leaps, or the plain leap when it's ready), if there's
+    // somewhere free to land: it asks for it just as a person presses.
+    if (bestScore < DEAD / 2 && !me.dashes && (me.leaps > 0 || me.leapIn === 0)) {
+      const reach = me.leaps > 0 ? 2 : 1, keep = me.grow > 0 ? me.body.length : me.body.length - 1;
+      const mine = (x, y) => { for (let j = 0; j < keep; j++) if (me.body[j].x === x && me.body[j].y === y) return true; return false; };
+      const hurdle = (x, y) => holes.has(y * N + x) || fire.has(y * N + x) || mineFree[y * N + x] > 1 || mine(x, y);
+      for (const d of [bestDir, ...DIR_LIST]) {
+        if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
+        let over = false, ok = true;
+        for (let i = 1; i <= reach + 1 && ok; i++) {
+          const x = myHead.x + d.x * i, y = myHead.y + d.y * i;
+          if (!inside(x, y)) ok = false;
+          else if (i <= reach) over ||= hurdle(x, y);
+          else ok = !hurdle(x, y);
+        }
+        if (ok && over) { bestDir = d; memory.power = view.tick; break; }
+      }
+    }
+    // Golden dashes: three cells at once along the ground. Worth one to cut a
+    // rival in two (out, if it's cut right behind its head; otherwise for a
+    // good length off it, more so the more aggressive it is), to grab
+    // something golden first, or as the way out. Never into the edge or a
+    // hole (it'd blow up), never where it would crash, and only landing
+    // somewhere with room.
+    if (me.dashes > 0 && memory.power !== view.tick) {
+      const d = bestDash(bestScore < DEAD / 2);
+      if (d) { bestDir = d; memory.power = view.tick; }
+    }
     return bestDir;
+
+    function bestDash(trapped) {
+      const L = TUNE.DASH_LENGTH, keep = me.grow > 0 ? me.body.length : me.body.length - 1, wrap = me.wrap > 0;
+      const own = new Set();
+      for (let j = 0; j < keep; j++) own.add(me.body[j].y * N + me.body[j].x);
+      const wall = i => holes.has(i) && !fire.has(i); // (a hole, or where the woodpecker's about to strike; fire's put out)
+      const bodyAt = (x, y) => { // a rival's body there, and how far down it, as it'll be by the dash (it's moved on since I saw it, unless stunned)
+        for (const o of others) for (let j = 0; j < o.body.length; j++) if (o.body[j].x === x && o.body[j].y === y) return { o, j0: j, j: j + Math.max(0, age - (o.stun || 0)) };
+        return null;
+      };
+      const gold = new Set(); // (food worth dashing for: golden things)
+      for (const f of food) if (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold) gold.add(f.y * N + f.x);
+      const cutW = 0.5 + (w.aggression || 0);
+      let best = null, bestV = 5.5;
+      for (const d of DIR_LIST) {
+        if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
+        let x = myHead.x, y = myHead.y, v = trapped ? 100 : 0, ok = true;
+        for (let i = 1; i <= L && ok; i++) {
+          x += d.x; y += d.y;
+          if (wrap) { x = (x + N) % N; y = (y + N) % N; }
+          const k = y * N + x;
+          if (!inside(x, y) || wall(k) || own.has(k)) { ok = false; break; }
+          if (fire.has(k)) { /* (fire: it's put out) */ } else if (mineFree[k] > 1) { // (a rival's body that'll still be there)
+            const b = bodyAt(x, y), px = x + d.x, py = y + d.y;
+            const thick = b && inside(px, py) && b.o.body.some(c => c.x === px && c.y === py);
+            if (!b || b.j0 === 0 || thick) { ok = false; break; } // (a head, or two thick: a crash)
+            v += b.j < TUNE.MIN_LENGTH ? 60 : (b.o.body.length - b.j) * cutW;
+          }
+          if (gold.has(k)) v += 3 * Math.max(1, foodValue[k]); // (something golden, first)
+          if (i === L && risk[k] > 0) v -= 4; // (landing by a rival's head)
+        }
+        if (!ok || v <= bestV) continue;
+        const room = roomAt(y * N + x, own, Math.min(40, myLen + 4));
+        if (room < Math.min(40, myLen + 4)) continue;
+        best = d; bestV = v;
+      }
+      return best;
+    }
+    function roomAt(i0, own, cap) {
+      const z = ++stamp;
+      queue[0] = i0; seen[i0] = z;
+      let read = 0, write = 1;
+      while (read < write && write < cap) {
+        const i = queue[read++];
+        for (let n = 4 * i; n < 4 * i + 4; n++) {
+          const ni = nbr[n];
+          if (ni < 0 || seen[ni] === z || (holes.has(ni) && !fire.has(ni)) || mineFree[ni] > 2 || own.has(ni)) continue;
+          seen[ni] = z;
+          queue[write++] = ni;
+        }
+      }
+      return write;
+    }
   }
 
   return { DIRS, PERSONAS, POOL, decide };

@@ -7,16 +7,27 @@ window.SnakeRecords = (() => {
   const NAME_KEY = 'snake-name';
   const BEST_KEY = 'snake-best';
   const PLAYER_KEY = 'snake-player';
+  const PROBE_KEY = 'snake-probe';
   const MAX_SCORES = 10;
   const MAX_NAME = 16;
-  const DEFAULT_NAME = 'You';
+  const DEFAULT_NAME = 'Green'; // (what the game calls you until you carve a name)
+  const OLD_DEFAULT = 'You';    // (what your unnamed rows used to say: they say Green now)
+
+  // A browser that won't keep anything (storage blocked, or full) still gets
+  // its records for as long as the tab is open: whatever couldn't be written
+  // is kept here instead, as storage would have it, and the Hall of Fame says so.
+  const memory = new Map();
+  let keeping = true;
+  try { localStorage.setItem(PROBE_KEY, '1'); localStorage.removeItem(PROBE_KEY); } catch { keeping = false; }
+  let playedHere = 0, wiped = false; // (this session: rounds recorded, and whether you cleared everything)
 
   function load(key, fallback) {
-    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+    try { return JSON.parse(memory.has(key) ? memory.get(key) : localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
   }
 
   function save(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage unavailable */ }
+    const text = JSON.stringify(value);
+    try { localStorage.setItem(key, text); memory.delete(key); } catch { keeping = false; memory.set(key, text); }
   }
 
   // Names from anywhere (typed, stored or a friend's) lose control and
@@ -49,9 +60,17 @@ window.SnakeRecords = (() => {
     return raw.filter(e => e && typeof e === 'object' && Number.isFinite(e.place) && isDate(e.date)).map(cleanEntry).sort(compare);
   }
 
+  // A row's name: a renamed rival goes by its new one, and your own unnamed
+  // rows (from before, "You") are Green.
+  function rowName(e) {
+    if (e.ai && typeof e.name === 'string' && RENAMED[e.name]) return RENAMED[e.name];
+    const name = cleanName(e.name);
+    return !name || (name === OLD_DEFAULT && !e.ai && !e.friend) ? DEFAULT_NAME : name;
+  }
+
   function cleanEntry(e) {
     return {
-      id: cleanId(e.id ?? e.date) || cleanId(e.date), name: (e.ai && typeof e.name === 'string' && RENAMED[e.name]) || cleanName(e.name) || DEFAULT_NAME,
+      id: cleanId(e.id ?? e.date) || cleanId(e.date), name: rowName(e),
       color: cleanColor(e.color), ai: !!e.ai,
       place: Math.round(clamp(e.place, 1, 4)), won: !!e.won, draw: !!e.draw,
       eaten: Math.round(clamp(e.eaten, 0, 9999)), survived: Math.round(clamp(e.survived, 0, 36e5)), date: e.date,
@@ -90,7 +109,7 @@ window.SnakeRecords = (() => {
 
   function getName() {
     const n = load(NAME_KEY, DEFAULT_NAME);
-    return typeof n === 'string' && n.trim() ? n.slice(0, MAX_NAME) : DEFAULT_NAME;
+    return typeof n === 'string' && n.trim() && n !== OLD_DEFAULT ? n.slice(0, MAX_NAME) : DEFAULT_NAME;
   }
   const hasName = () => getName() !== DEFAULT_NAME;
 
@@ -144,6 +163,7 @@ window.SnakeRecords = (() => {
     if (killer) st.killers[killer] = (st.killers[killer] || 0) + 1;
     st.totalEaten += num(result.eaten);
     save(STATS_KEY, st);
+    playedHere++;
     return addScore({ ...result, name: getName(), ai: false });
   }
 
@@ -183,24 +203,29 @@ window.SnakeRecords = (() => {
 
   // Your name, as the Hall of Fame and your friends online see it.
   function setName(name) {
-    name = cleanName(name) || DEFAULT_NAME;
+    name = cleanName(name);
+    if (!name || name === OLD_DEFAULT) name = DEFAULT_NAME;
     save(NAME_KEY, name);
     return name;
   }
 
+  // Carving a name: this round's row takes it, and so do all your unnamed ones.
   function rename(id, name) {
     name = setName(name);
     const list = scores();
-    const entry = list.find(e => e.id === id);
-    if (entry) { entry.name = name; save(SCORES_KEY, list); }
+    const carve = list.filter(e => e.id === id || (!e.ai && !e.friend && e.name === DEFAULT_NAME));
+    for (const e of carve) e.name = name;
+    if (carve.length) save(SCORES_KEY, list);
   }
 
   function reset() {
+    for (const key of [SCORES_KEY, STATS_KEY, BEST_KEY]) memory.delete(key);
     try {
       localStorage.removeItem(SCORES_KEY);
       localStorage.removeItem(STATS_KEY);
       localStorage.removeItem(BEST_KEY);
     } catch { /* storage unavailable */ }
+    wiped = true;
   }
 
   // ---------------------------------------------------------------- rendering
@@ -215,15 +240,25 @@ window.SnakeRecords = (() => {
     return node;
   }
 
-  const dot = color => { const d = el('span', { className: 'dot' }); d.style.background = cleanColor(color); return d; };
+  // paint: a background the game draws for that snake, as on its tag (Mason's marble, Ghost's pale fill), or null for its colour.
+  const dot = (color, paint = null) => { const d = el('span', { className: 'dot' }); d.style.background = paint || cleanColor(color); return d; };
+  // A tag after a name, with a comma only a screen reader hears ("Green, this round", not "Greenthis round").
+  const tag = text => [el('span', { className: 'sr-only', textContent: ', ' }), el('span', { className: 'who', textContent: text })];
+
+  // At the top of both tabs, while nothing here will outlast the tab.
+  const keepingNote = container => {
+    if (!keeping) container.append(el('p', { className: 'records-note', textContent: 'This browser isn’t keeping records, so these last until you close the tab.' }));
+  };
 
   // filter: 'all' (everyone, overall top 10) or 'me' (your top 10).
   // playerColor colors your rows' dots; AI rows use the color saved with them.
   const safeDate = (fmt, d) => { try { return fmt.format(d); } catch { return ''; } };
 
-  function renderScores(container, highlightId, filter, playerColor) {
+  // paint: (a rival's name) => a dot's background, or null (see dot).
+  function renderScores(container, highlightId, filter, playerColor, paint = null) {
     const all = scores();
     const list = filter === 'me' ? topPlayer(all) : topOverall(all);
+    keepingNote(container);
     if (!list.length) {
       container.append(el('p', { className: 'empty', textContent: 'No legends yet. Go make one.' }));
       return;
@@ -232,8 +267,8 @@ window.SnakeRecords = (() => {
     const rows = list.map((e, i) => el('tr', { ...(e.id === highlightId && { ariaCurrent: 'true' }), className: [e.id === highlightId && 'highlight', e.ai && 'ai', e.friend && 'friend'].filter(Boolean).join(' ') },
       el('td', { className: 'num', textContent: i + 1 }),
       el('td', { className: 'name', title: e.watched ? `${e.name} (a watched round)` : e.friend ? `${e.name} (a friend)` : e.name },
-        dot(e.ai || e.friend ? e.color : playerColor), e.name, ...(e.friend ? [el('span', { className: 'who', textContent: 'friend' })] : []),
-        ...(e.id === highlightId ? [el('span', { className: 'who', textContent: 'this round' })] : [])),
+        dot(e.ai || e.friend ? e.color : playerColor, e.ai && paint ? paint(e.name) : null), e.name, ...(e.friend ? tag('friend') : []),
+        ...(e.id === highlightId ? tag('this round') : [])),
       el('td', { className: e.won ? 'won' : '', textContent: placeLabel(e) }),
       el('td', { className: 'num', textContent: e.survived ? clock(e.survived) : '–' }),
       el('td', { className: 'num', textContent: e.eaten }),
@@ -253,10 +288,12 @@ window.SnakeRecords = (() => {
   }
 
   // colors: { name -> color } for the snakes, used in the "what got you" bars.
-  function renderStats(container, colors) {
+  function renderStats(container, colors, paint = null) {
     const st = stats();
+    keepingNote(container);
     if (!st.played) {
-      container.append(el('p', { className: 'empty', textContent: "You haven’t played yet. The tree is waiting." }));
+      // (Never "you haven't played" to someone who has, this session: after a clear, it's a fresh start.)
+      container.append(el('p', { className: 'empty', textContent: playedHere || wiped ? 'A clean slate. The log is waiting.' : 'You haven’t played yet. The log is waiting.' }));
       return;
     }
     const avgPlace = st.places.reduce((sum, n, i) => sum + n * (i + 1), 0) / st.played;
@@ -276,7 +313,7 @@ window.SnakeRecords = (() => {
       return el('section', { className: 'bars' },
         el('h3', { textContent: title }),
         ...items.map(i => el('div', { className: 'bar-row' },
-          el('span', { className: 'bar-label' }, ...(i.color ? [dot(i.color)] : []), i.label),
+          el('span', { className: 'bar-label' }, ...(i.color ? [dot(i.color, i.paint)] : []), i.label),
           el('span', { className: 'bar-track' },
             el('span', { className: 'bar-fill', style: `width:${100 * i.count / max}%;background:${i.fill || i.color}` })),
           el('span', { className: 'bar-count', textContent: i.count }),
@@ -290,18 +327,30 @@ window.SnakeRecords = (() => {
     for (let i = 1; i < 4; i++) finishes.push({ label: ordinal(i + 1), count: st.places[i], fill: 'var(--leaf)' });
     container.append(bars('How you finished', finishes));
 
-    // Bar labels, and how each reads in "Your nemesis: …".
-    const killerLabel = k => k === 'wall' ? 'Walls & holes' : k === 'self' ? 'Yourself' : k === 'hunger' ? 'Hunger' : k === 'fire' ? 'Fire' : k;
-    const nemesisOf = k => k === 'wall' ? 'the edge of the bark' : k === 'self' ? 'you' : k === 'hunger' ? 'your own tummy' : k === 'fire' ? 'a bolt from the blue' : k;
+    // What got you that isn't a snake: its bar label, and how it reads in
+    // "Your nemesis: …" (the same thing, in the same words; "&" keeps the edge
+    // and its holes one thing in a tie). The key stays 'wall', so old stats
+    // carry over; the words say edge, as the game does. (Pecks were counted
+    // there too, before the woodpecker had its own.)
+    const NOT_A_SNAKE = {
+      __proto__: null, // (so a rival named "constructor" is just a name)
+      wall: ['Edge & holes', 'the edge & holes'],
+      woodpecker: ['Woodpecker', 'the woodpecker'],
+      self: ['Yourself', 'yourself'],
+      hunger: ['Hunger', 'hunger'],
+      fire: ['Fire', 'fire'],
+    };
+    const killerLabel = k => NOT_A_SNAKE[k]?.[0] ?? k;
+    const nemesisOf = k => NOT_A_SNAKE[k]?.[1] ?? k;
     const killers = Object.entries(st.killers)
-      .map(([k, count]) => ({ key: k, label: killerLabel(k), count, color: colors[k] || '#a8a29e' }))
+      .map(([k, count]) => ({ key: k, label: killerLabel(k), count, color: colors[k] || '#a8a29e', paint: paint ? paint(k) : null }))
       .sort((a, b) => b.count - a.count);
     if (killers.length) {
       const top = killers[0];
       const tied = killers.filter(k => k.count === top.count).map(k => nemesisOf(k.key));
       container.append(el('p', { className: 'nemesis' }, tied.length > 1
         ? `No nemesis yet: ${tied.slice(0, -1).join(', ')} and ${tied[tied.length - 1]} are tied.`
-        : el('span', {}, 'Your nemesis: ', dot(top.color), el('strong', { textContent: nemesisOf(top.key) }), '.')));
+        : el('span', {}, 'Your nemesis: ', dot(top.color, top.paint), el('strong', { textContent: nemesisOf(top.key) }), '.')));
       container.append(bars('What got you', killers));
     }
   }

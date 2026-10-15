@@ -21,10 +21,22 @@ window.TUNING = Object.freeze({
   BEETLE_SCARED_EVERY: 2,   // ...or every 2, scurrying away (half a snake's speed: a chase you can win)...
   BEETLE_FEAR: 4,           // ...from any head within this many cells
   BEETLE_GROWTH: 2,         // a beetle is worth this much
-  GOLD_BEETLE_CHANCE: 0.3,  // a beetle coming out is a golden one this often: catch it and you can leap...
-  LEAP_CHARGES: 2,          // ...this many times (up to LEAP_MAX held at once)...
+  // Powers. Everyone can leap: press the way you're going and you hop one
+  // cell (a body, a hole or fire) and land on the next, two cells in two
+  // ticks, for the tip of your tail; then it needs a moment.
+  LEAP_COST: 1,             // a leap costs this many segments off the tail (and needs more than MIN_LENGTH)...
+  LEAP_COOLDOWN_MS: 4000,   // ...and can't be done again for this long
+  LEAP_WINDOW: 3,           // pressing the way you're going: the power waits this many ticks for something to hop
+  GOLD_BEETLE_CHANCE: 0.3,  // a beetle coming out is a golden one this often: catch it for golden leaps (three cells in two ticks, hopping up to two; free)...
+  LEAP_CHARGES: 2,          // ...this many (up to LEAP_MAX held at once)
   LEAP_MAX: 3,
-  LEAP_WINDOW: 3,           // ...pressing the way you're going: the leap waits this many ticks for something to hop
+  LEAF_CHANCE: 0.07,        // wind: each gust might blow a golden leaf onto the log (one at a time): dashes...
+  LEAF_TICKS: 90,           // ...it blows away after this many ticks
+  DASH_CHARGES: 2,          // ...this many: three cells in one tick, cutting through a snake one cell thick and putting out fire (the edge or a hole: you blow up)
+  DASH_LENGTH: 3,
+  GOLDCAP_CHANCE: 0.12,     // rain: once in a while a golden mushroom comes up (one a spell, at most)...
+  GOLDCAP_TICKS: 120,       // ...and withers after this many ticks
+  WRAP_MS: 12000,           // ...eat it, and for this long the edges wrap round (off one side, in at the other)
   SHRINK: 3,                // a mushroom takes this many segments off...
   MIN_LENGTH: 3,            // ...but never below this
   START_LENGTH: 4,          // every snake starts this long: one more than the least, so a first crash costs a segment, not the round
@@ -47,14 +59,20 @@ window.TUNING = Object.freeze({
   // ---------------------------------------------------------------- hunger
   HUNGER_MS: 20000,         // this long without food (mushrooms don't count) and you start shrinking
   STARVE_EVERY_MS: 1500,    // ...one segment this often, starving at MIN_LENGTH
-  HUNGER_WARN_MS: 6000,     // warn you when this much time is left
+  HUNGER_WARN_MS: 6000,     // warn you when this much time is left (half again as early at your smallest)
+  NEWS_HOLD_MS: 1200,       // a routine banner shows at least this long before another routine one may replace it
+  LESSON_HOLD_MS: 2500,     // a banner that teaches a rule holds at least this long before routine news may replace it
+  WRAP_WARN_MS: 2000,       // the edges' wrap: a warning, and the glow fading, this long before it ends
+  LEAP_SWELL: 0.38,         // in the air, the head swells this much at the top of a leap (seen from above, rising is coming toward you)...
+  LEAP_SWELL_GOLD: 0.5,     // ...and a golden leap's, this much
+  STREAK_MS: 340,           // a dash's speed lines fade over this long
 
   // ----------------------------------------------------------------- speed
   OPENING_TICK: 170,        // the first ticks of a round are slower, so the start is forgiving...
   OPENING_TICKS: 3,         // ...for this many ticks, easing down to START_TICK
   START_TICK: 120,          // ms per tick once the round is underway
   MIN_TICK: 90,             // the fastest it ever gets...
-  RAMP_MS: 120000,          // ...reached after this much game time (a gentle 25% speed-up)
+  RAMP_MS: 120000,          // ...reached after this much game time (a gentle speed-up: about a third faster)
   MUSIC_MID_MS: 45000,      // the soundtrack picks up (shaker, faster) after this much game time
 
   // ---------------------------------------------------------- sudden death
@@ -62,7 +80,10 @@ window.TUNING = Object.freeze({
   PECK_ARRIVE_TICKS: 12,    // it lands, has a look round...
   PECK_CHUNK: 7,            // ...then takes out a patch of this many cells somewhere on the log...
   PECK_AIM_TICKS: 17,       // ...eyeing it this long first (everyone sees where: about a second and a half)...
-  PECK_REST_TICKS: 36,      // ...and resting this long after each strike (about 3.5 s)
+  PECK_REST_TICKS: 36,      // ...and resting this long after its first strike (about 3.5 s)...
+  PECK_HUNGRIER: 0.85,      // ...but it gets hungrier: each rest this much of the one before (down to PECK_REST_MIN)...
+  PECK_REST_MIN: 12,
+  PECK_CHUNK_MAX: 14,       // ...and each patch a cell bigger than the last (up to this)
   PECK_CLEARANCE: 2,        // it aims clear of every body and food, this far from every head, while there's such a spot
 
   // --------------------------------------------------------------- burrows
@@ -112,10 +133,16 @@ window.TUNING = Object.freeze({
   DEATH_FREEZE: 350,        // freeze-frame when you die, before the card rises
   ROUND_END_PAUSE: 600,     // let the last moment breathe before the round-over card
   MAX_FRAME_MS: 250,        // after a stall (a busy machine, a debugger), the round moves on at most this much...
-  MAX_CATCHUP: 4,           // ...and catches up at most this many ticks in one frame
+  MAX_CATCHUP: 4,           // ...and catches up at most this many ticks in one frame (online, or watching fast: the clock is everyone's)...
+  SOLO_CATCHUP: 1,          // ...but playing alone, at most this many: a hitch is a moment's slow-down, not a jump
+  YOU_AFTER_STEER_MS: 600,  // ...or this long after you first steer (you've found yourself)
+  YOU_MS: 3500,             // YOU marks your snake this long into a round (or 600 ms after you first steer)
 
   // ----------------------------------------------------------------- input
   QUEUE: 3,                 // turns you can queue ahead
+  DOUBLE_TAP_MS: 120,       // a press the way you just turned, this soon, is always the turn pressed twice (never a leap)...
+  CHORD_MS: 60,             // a reversal pressed this soon before the turn it needs (a U-turn's keys rolled together) still counts
+  POWER_AFTER_TURN_MS: 180, // a press the way you just turned, this soon after, is part of the turn (a double tap), not a leap
   SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells...
   SWIPE_MIN_PX: 12,         // ...and at least this far (about 3 mm), so a jittery finger doesn't turn
 

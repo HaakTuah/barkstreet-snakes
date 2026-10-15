@@ -38,15 +38,22 @@ fs.mkdirSync(out, { recursive: true });
     await playUntil(22000, 10, 3);
     await shot('gameplay.jpg');
 
-    // Just after a bite: crumbs, the gulp, "+1".
-    await b.eval(`(() => { const n = me().eaten; return waitFor(() => me().eaten > n || !me().alive, 40000); })()`);
+    // Just after a bite: crumbs, the gulp, "+1" (a round where you go hungry first doesn't count: play on).
+    for (let tries = 0; ; tries++) {
+      const bit = await b.eval(`(() => { const n = me().eaten; return waitFor(() => me().eaten > n || !me().alive, 40000).then(() => me().alive); })()`);
+      if (bit) break;
+      if (tries === 3) throw new Error('could not catch a bite');
+      await playUntil(22000, 10, 3);
+    }
     await b.sleep(70);
     await shot('eating.jpg');
 
+    // A nap over a live board, then back (waking takes a beat).
     await b.key('p');
     await b.sleep(450);
     await shot('pause.jpg');
     await b.key('p');
+    await b.eval(`running()`);
     await b.sleep(200);
 
     // Crash on purpose: the freeze-frame, then the death card.

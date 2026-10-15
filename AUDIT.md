@@ -1,293 +1,281 @@
-# Audit: Bark & Bite, second polish pass
+# Audit: Bark & Bite, third polish pass
 
-Baseline: `main` at `9848d00` (after PR #9: online play, beetles, faces with gaze, the look book). The first pass's audit is at [`3e2d8bc`](https://github.com/HaakTuah/snake-game/blob/3e2d8bc/AUDIT.md); almost all of it was fixed in PR #4.
+Baseline: `polish/extreme` at `8a22961`, which is `main` (`7792572`) plus the three open PRs of the last round: #22 (crash rules, a smarter AI), #23 (looks and lines) and #24 (powers). Polishing code that's about to land means stacking on them (see DESIGN.md, *Skipped or adapted*). The second pass's audit is at [`2b948db`](https://github.com/HaakTuah/snake-game/blob/2b948db/AUDIT.md), and the first's at [`3e2d8bc`](https://github.com/HaakTuah/snake-game/blob/3e2d8bc/AUDIT.md). Almost everything in those was fixed.
 
 ## How this audit was done
 
-- **Read in full:** every file, through seven lenses, by seven independent reviewers: loop, input and online; rules, fairness and AI; visuals; copy; performance; accessibility and layout; robustness and code health. Each reviewer was told what DESIGN.md already decided, so settled choices weren't re-reported.
-- **Played:** in headless Chrome, with an autopilot steering your snake through real key events, at 800×800, on a 375×812 phone and on an 812×375 landscape phone. The reviewers also drove real touch, mouse and keyboard input, two- and three-tab online rounds (and one round through the real PeerJS broker), and 21 viewport sizes from 320×256 to 2560×1329.
-- **Measured, not guessed:** simulated rounds for the rules and balance (over 3,000), Chrome traces for the frame budget, contrast computed from the rendered colours, and hostile input fed to the records and the protocol.
-- **Verified:** I checked every high and medium finding against the code myself; several were also found independently by two reviewers (the death freeze-frame, Space going to clicked buttons, the Hall of Fame rank, the online Hall of Fame mid-round).
-- **"Before" screenshots** of every state are in `docs/screenshots/before-2/`.
+- **Read in full, through eight lenses, by eight independent auditors:** loop and input; rules and feel; visuals; words; sound; performance; accessibility, layout and robustness; and a fresh player. Each was told what DESIGN.md had already settled and what the earlier audits had fixed, so settled choices weren't re-reported.
+- **Played, in headless Chrome:**
+  - real key, mouse and multi-touch events, with an autopilot steering your snake;
+  - real-time and hand-stepped frames at 60, 120 and 144 Hz;
+  - 32 viewports from 320×480 to 2560×1600, portrait and landscape, with phones at 2–3×;
+  - two-tab online rounds;
+  - audio rendered offline through the game's own graph and measured for loudness and spectrum.
+- **Measured, not guessed:**
+  - CPU profiles and Chrome traces;
+  - draw-call counts;
+  - paired A/B variants of render.js drawn in the same page, so machine load hits both alike;
+  - retained heap after forced GCs;
+  - seeded simulations.
+- **Every high and medium finding was checked by a separate skeptic,** told to refute it and to re-judge its severity. Seven were refuted and are listed as skipped. Many were re-rated, and the severities below are the skeptics'.
+- **"Before" screenshots** of every state are in `docs/screenshots/before-3/`.
 
-Severity: **high** breaks play, **medium** is a clear defect or a real cost, **low** is polish. Plan: **fix**, **adapt** (fixed differently from the suggestion), or **skip** (with the reason).
+Severity:
+- **high** breaks play or clearly hurts the experience;
+- **medium** is a clear defect or a real cost a picky player would notice;
+- **low** is polish.
+
+Plan:
+- **fix**;
+- **adapt** (fixed differently from the suggestion);
+- **skip** (with the reason).
+
+Where two lenses found the same thing, it's listed once.
 
 ---
 
-## Baseline performance
+## Baseline performance, and a correction
 
-The first pass measured script time only. This time the reviewers also traced Chrome's GPU process, and that's where the real cost turned out to be. All numbers: headless Chrome 155, 800×800 at 2× density (1040 px canvas), Intel Iris Xe, a quiet machine.
+The first numbers I recorded for this pass were alarming:
+- frames of 120–650 ms in the long-snake scene (`tools/bench.js`);
+- the GPU process saturated at 25 ms a frame (a new `tools/trace.js`);
+- a 4.7 ms median frame when watching at 4×.
 
-| Measurement | median | p95 | p99 | worst | notes |
-|---|---|---|---|---|---|
-| Script per frame, watching at 1× (60 s) | 0.2 ms | 1.5 | 3.5 | 7.5 | 6 of 6,877 frames over 6.94 ms (one 144 Hz frame) |
-| Script per frame, watching at 4× (60 s) | 1.1 ms | 6.2 | 8.6 | 18.8 | 110 of 3,429 frames over 6.94 ms; half the frame rate of 1× |
-| Main thread per frame, all work (20 s trace, 1×) | 0.95 ms | 1.52 | 2.04 | 6.64 | style recalc on every frame (0.13 ms median) |
-| GPU process (CrGpuMain), watching at 1× | | | | | **58% busy** (580 ms per second) |
-| **GPU raster, long-snake scene** (4 × 70 segments, 30 meat, 40 holes) | **6.55 ms** | | | | three runs: 6.53, 6.56, 6.56; script for the same frames 0.5 ms |
-| `step()` including every AI decision (4 AI-only rounds) | 0.9 ms | 1.9 | 2.3 | 8.9 | the think-ahead spreads this over frames |
-| Load | | | | | first contentful paint 256 ms, about 280 KB of scripts |
+**The performance auditor showed most of that was the harness:**
+- trace.js called `setGame` every frame, rebuilding the whole bark texture;
+- its "nap" didn't work during the countdown, so the game's own round drew underneath;
+- bench.js's draw loop never waited for the GPU, so every ~40th frame paid for the queue (its real figure is the mean, 4.7–6.9 ms, not the median);
+- watching runs depend on headless Chrome's frame rate and on the quality governor, which lowered quality mid-run.
 
-**The headline:** a frame's script is cheap, but drawing long snakes costs the GPU process 6.5 ms a frame, nearly a whole 144 Hz frame on its own, and grows with length (10.4 ms at 110 segments). Each body band is stroked between two circles, which breaks Chrome's batching, and the shadow, highlight and brick paths are many-contour paths that get triangulated every frame (P1).
+**The game's real costs, from paired variants drawn back to back in one page, each batch closed by a pixel readback (full cost: script plus GPU):**
+
+| Scene | Cost per frame |
+|---|---|
+| Long snakes (4 × 70 segments, beads, holes), second pass | 3.4–3.6 ms |
+| Long snakes, now | 5.2–6.4 ms (about 1.6×: see P2) |
+| Force fields on the board (a realm, three colonies, holes, four snakes of 30) | 17.9 ms, against 6.4 ms with the fields off (see P1) |
+| Each round's first frame | 40–55 ms of GPU, while the bark is rebuilt (P6) |
+
+Watching at 1× is comfortable (no frame over 16.7 ms in a minute). **The tools get fixed first** (P3), so before-and-after numbers in this pass come from a harness that measures the game.
 
 ---
 
-## 1. Loop, timing and input (including online)
+## 1. Loop and input
 
-| # | Sev | Issue | Where | Plan |
-|---|---|---|---|---|
-| L1 | medium | **The death freeze-frame jumps every snake a cell ahead, holds it, then snaps it back.** During the freeze the draw position is forced to the end of the tick; afterwards it falls back mid-tick. Measured: a rival leapt a full cell in one frame, held 350 ms, then jumped back 0.6 cell. The round's last frame jumps the same way. (Also found by the visuals reviewer.) | snake.js:171, 176 | fix: draw at the true mid-tick position during the freeze; ease the last frame of a round instead of jumping |
-| L2 | medium | **On touch, swipes during the 3-2-1 countdown are swallowed.** The swipe listeners are on the canvas, which the countdown card covers, so a swipe neither skips nor steers, and a finger put down during the countdown never steers after Go. | snake.js:737, style.css:260 | fix: listen on the board, not the canvas |
-| L3 | medium | **Online, a friend who switches tabs loses their snake.** Hidden tabs throttle the 4-per-second "still here" to once a second, so the stand-in AI flickers on and off (it steered 1 tick in 10) and the snake mostly drives straight. The host's own snake has no stand-in at all while the host's tab is hidden. | snake.js:1039, net.js:147 | fix: the tab says "away" and "back" itself; hand back only on a real turn |
-| L4 | medium | **Online, the host's death freezes the round for everyone** for 350 ms (guest tick gaps 121, 119, 460 ms). | snake.js:157, 373 | fix: the host's simulation never freezes; only its own drawing and card do |
-| L5 | low-med | **Clicking another window during the countdown doesn't pause**, so the round then runs unattended. | snake.js:812 | fix |
-| L6 | low-med | **Space and Enter go to whichever HUD button you last clicked** (mute, music, speed, chatter, Hall of Fame) instead of napping or starting over. Holding Enter on a card button also repeats and skips the countdown. (Also found by the accessibility reviewer.) | snake.js:723 | fix |
-| L7 | low | **A friend's screen can keep a speech bubble on the round-over screen**: the host's last chatter arrives after the round ended there. | snake.js:1161 | fix |
-| L8 | low | **The host's input delay is half what fairness needs.** A friend sees each tick half a round trip late *and* their turn takes another half to arrive; the host only waits half. (Also found by the rules reviewer.) | snake.js:692 | fix: delay the host by the full round trip (capped) |
-| L9 | low | **Online, H opens the Hall of Fame mid-round and your arrows stop working**; nobody steers your snake. (Also found by the accessibility reviewer.) | snake.js:715, 820 | fix: not while you're alive in an online round |
-| L10 | low | The host's delayed turns can fire out of order when the round-trip estimate changes between two quick presses. | snake.js:694 | fix: first in, first out |
-| L11 | low | Space (or hiding the tab) while the death card is up swaps it for the nap card, and waking hides your death card for good. | snake.js:699, 807 | fix: the death card comes back |
-| L12 | low | Arrows on the start card do nothing. | snake.js:678 | fix: an arrow starts the round, already turning |
-| L13 | low | Friends' screens have no jitter buffer: a late tick stalls the glide. | snake.js:155 | skip: measured tick spacing is steady (118-122 ms, even with the host's tab hidden); a buffer would add latency for everyone |
-| L14 | low | Any lost connection says "{host} closed the room", and there's no way back in. | net.js:142, snake.js:1181 | fix: "Lost the connection" unless it was really closed, and a Rejoin button |
-| L15 | low | A friend renaming on the round-over card can lose the name if the host starts the next round mid-typing (unverified). | snake.js:800 | fix |
-| L16 | low | Coming back to the page from the back/forward cache leaves a frozen online board (unverified). | snake.js:1237 | fix |
-| L17 | v. low | On Colemak/Workman, physical WASD wins over the command letters (Colemak's R is the physical S). | snake.js:719 | skip: the alternative would restart your round when a Colemak player steers down |
+| ID | Sev | Finding | Plan |
+|---|---|---|---|
+| L1 | high | **Held keys and double-tapped turns fire powers.** Arrow and WASD keydowns are handled before the `e.repeat` check (snake.js:1160-1164). So OS auto-repeat calls `turn()` 30 times a second, and every repeat that matches your heading arms your power. Holding a turn key fires a dash a tick (into the edge: *Kaboom!*). Leaps happen by themselves, and golden leaps are burned. After a crash, the armed power cancels the auto-turn, so a held key slams you back into the wall every 5 ticks. A double tap (17–150 ms apart) is a turn plus a dash. The swipe version was fixed in #24; the keyboard one wasn't. Online, every repeat is sent too. (Found by four lenses.) | **fix:** a power asks only on a fresh press. Ignore repeats for powers, and treat a press within about 180 ms of a turn to that same direction as part of the turn. Guests filter repeats before sending. |
+| L2 | medium | **A stun locks in your first panic press, and replays a stale combo.** A stunned snake doesn't consume its queue, and a press is checked against the last *queued* turn. So during the 4-tick stun your first press is final (Up then Down drops the Down), and turns queued before the crash replay on a board that no longer exists. DESIGN promises "you can steer meanwhile". | **fix:** a crash clears the queue. While stunned, the latest press wins, checked against your neck. |
+| L3 | medium | **A finger already on the screen blocks every other swipe.** Only one touch is tracked (snake.js:1189), so a resting thumb or the other thumb in two-thumb play swallows the next swipe silently. | **fix:** the newest touch takes over. |
+| L4 | low | **R restarts a live round instantly.** R sits next to D, so a WASD player can throw away a two-minute round with no undo. In the countdown, R re-rolls the rivals while Enter means Go. | **fix:** while you're alive mid-round, R or Enter naps with *Start over?* focused, and a second press confirms. On cards, restarting stays instant. In the countdown, R means Go. |
+| L5 | low | A hitch becomes a jump: up to 250 ms is caught up in one frame (4 ticks). | **fix:** playing alone, catch up at most one tick per frame (a hitch is a moment's slow-down, not a jump). Online and when watching fast, keep wall-clock catch-up. |
+| L6 | low | Changing the watching speed teleports every snake, forward or back half a cell. | **fix:** rescale the accumulator, so drawn positions stay continuous. |
+| L7 | low | Waking from a nap is instant: the snake moves 30 ms after Space, with your hand still on it. | **fix:** wake through one countdown beat that a direction key skips (and steers). |
+| L8 | low | The key that starts a round blocks 9–20 ms (the bark rebuild), and the first key of a session 50–120 ms (creating audio). | **fix:** P6 and S10. |
+| L9 | low | At 4× on a 60 Hz screen, half the AI decisions land inside the tick's own frame. | **fix:** the thinking quota counts the frames left before the tick, this one included. |
+| — | medium | *(refuted)* Chained swipes make phantom turns from a swipe's curve. | **skip:** the skeptic couldn't reproduce it with real touch curves; the threshold and `swipe.last` already handle them. |
 
-## 2. Rules, fairness and AI
+## 2. Rules and feel
 
-| # | Sev | Issue | Where | Plan |
-|---|---|---|---|---|
-| R1 | medium | **The AIs see woodpecker holes instantly** (everything else they see is 2-3 ticks old), **and the woodpecker often pecks the cell right in front of a moving head**: 45 times in 67 sudden-death rounds. A person gets at most one tick (90 ms) of warning; Drab dodged the same hole 200 times out of 200. | engine.js:255, 215 | fix: the woodpecker never pecks within 3 cells of a head (it comes back later), and the AIs see holes with the same delay as everything else |
-| R2 | medium | **When every move looks blocked, the AI picks at random, including certain death**, even when one cell is "blocked" only by a rival's tail that has already moved on. 8.8% of AI deaths are these coin flips, most into a wall or its own body: the deaths that look dumbest. | ai.js:827 | fix: a wall, hole or own body is certain death; a rival's old position is only maybe |
-| R3 | low | Two heads swapping cells is reported as "ran into", not a head-on (31% of head-ons). | engine.js:335 | fix |
-| R4 | low | A person named "wall", "self" or "hunger" turns their kills into walls, self-bites or starvation (title, flavour, stats). | engine.js:337 | fix: reserve those names |
-| R5 | low | The woodpecker silently deletes a beetle (or an apple) under its beak. | engine.js:224 | fix: it pecks around food |
-| R6 | low | A snake starving this tick dies even as its head reaches an apple. | engine.js:284 | fix: reaching food in time saves you |
-| R7 | low | The AI's model of a mushroom ignores pending growth. | ai.js:796 | fix |
-| R8 | low | ai.js hard-codes growth, shrink, minimum length and a 10 s hunger window instead of reading tuning.js (which loads after it). | ai.js:584-604 | fix |
-| R9 | low | Gobbler wins about 11% of rounds, below the 13-40% DESIGN.md promises. | DESIGN.md:133 | re-measure after R1/R2, then retune or correct the doc |
+| ID | Sev | Finding | Plan |
+|---|---|---|---|
+| R1 | high | **After a crash, the auto-turn steers you toward the nearest edge.** `recoil()` scores sides by flood-fill room capped at 24 cells, which every side reaches on an open board, so the tie goes to the first direction tried. A new player who hasn't steered yet is out about 3.3 s into their first round. | **fix:** break ties by the straight run ahead, then by distance from the edge. |
+| R2 | medium | **Death cards don't say why a crash ended you.** Was it being boxed in, being at your smallest, losing a head-on as the shorter one, or a peck? The reason only shows for walls and self-bites. A rival involved gets its quip instead; a tiny death into a rival shows the killer's line. A lost head-on never says the other was longer. Length is armour now, so a death at 40 needs a reason. (Found by two lenses.) | **fix:** the engine records why a crash was fatal, and the card's fact line says it ("You ran into Sniper with nowhere to turn", "…at your smallest", "Head-on with Sniper, and it was longer"). The quip stays as flavour. |
+| R3 | medium | **When your death ends the round (the duel), no card says how you died.** `endRound()` returns before `youDied()`. | **fix:** the round-over line starts with your cause and reason. |
+| R4 | medium | **You can't see when your leap is ready, and a press that can't leap does nothing.** The state lives in an 18 px chip above the board. A press with a body ahead while cooling down (or at 3, or with nowhere to land) is silent; you find out by crashing. At 3 the tooltip still says "needs a moment". | **fix:** a thin arc round your head fills over the cooldown and closes into the ready ring. Pressing with a hurdle ahead when the leap can't go gives a dull thunk and a nudge of the tag. |
+| R5 | low | A golden leap falls back to the paid leap (or a crash) when the cell three on is taken. | **fix:** a golden leap lands on the first free cell after the hurdle (two or three on), free. |
+| R6 | medium | **Teaching banners get replaced within a second by routine ones.** That includes the first crash, first leap and the powers, with about 22 banners a round. | **fix:** a banner queue with priorities. Lessons hold 2.5 s; routine news waits or is dropped (see T1). |
+| R7 | medium | **Nothing tells you you're at 3, where the next bump ends you.** The first-crash copy also states the rule wrongly (T4). | **fix:** a one-time banner the first time you drop to 3, and a correct first-crash line. |
+| R8 | medium | **A leap pressed just after a crash is lost.** It's armed for 3 ticks; the stun lasts 5. | **fix:** while stunned, a power waits until the stun's over. |
+| R9 | low | The auto-turn after a stun ignores a tail leaving that very tick, though that tail is why the verdict let you live. | **fix:** recoil judges sides with the verdict's timings. |
+| R10 | low | A golden leap leaves food under its own body on the cell it crawls through. | **fix:** that cell is eaten after the move, like a dash's. |
+| R11 | low | Baked food floats "+1" (it's worth 2). "A piece a second" for fire (it's three pieces, one every ~0.6 s). | **fix** (with T11). |
+| — | medium | *(refuted)* No on-ramp: newcomers draw the full-strength cast. | **skip:** the skeptic's data shows first rounds aren't lopsided; the forgiving start and the first-knock length do this job. |
 
 ## 3. Visuals
 
-| # | Sev | Issue | Where | Plan |
-|---|---|---|---|---|
-| V2 | medium | **The freeze-frame doesn't show your snake or what you hit**: it has already turned into meat. | render.js:1301 | fix: the dying snake holds its pose (eyes shut tight) through the freeze, then bursts |
-| V3 | medium | **Bends cut their corner mid-tick and square it again on the tick**, so every bend pulses 8 times a second; most visible on your outline. | render.js:634, 759 | fix: bands go through the corner cell |
-| V4 | medium | **Mason's bricks flip every tick**: the pattern follows the board, not the skin. | render.js:664 | fix |
-| V5 | medium | **Short landscape phones hide Play and Host** (568×320: the start card hides 231 px), and the header overflows. | style.css:586 | fix: compact cards with the buttons always in view |
-| V6 | medium | **Laptops get a small board**: 440 px at 1280×720, with the header wrapping and 800 px of empty width. (Also found by the accessibility reviewer at 1280×560.) | style.css:51 | fix: side by side on wide, short screens |
-| V7 | med-low | On 320 px phones "Hall of Fame" wraps to three lines, Score and Best stack, and the death card hides Play again. | style.css | fix: a trophy icon button on small screens |
-| V8 | med-low | The woodpecker is blurry (cached at 1×, drawn 1.4× larger) and reads as a black bean. | render.js:256, 1296 | fix: redrawn at size, with a red crest and a white cheek |
-| V9 | low | Every food sprite is slightly resampled (sprite size rounded up, drawn at fractional pixels). | render.js:170 | fix |
-| V10 | med-low | Banners cover the top 2-4 rows; the woodpecker banner hides the holes it announces. | style.css:395 | fix: banners fade out of the way when a head is beneath |
-| V11 | med-low | Chinese bubbles are clipped at the board edge (their width is estimated for Latin text). | chatter.js:473 | fix |
-| V12 | low | A bubble always sits above the head, covering the path of a snake heading up. | chatter.js:475 | fix: away from the way it's heading |
-| V13 | low | Colonist's white X on every segment reads as a stack of "close" icons. | render.js:671 | fix: a bandolier stripe |
-| V14 | low | Dark bodies get a rim on every segment (strings of beads); your outline ignores the taper. | render.js:620, 682 | fix |
-| V15 | low | With reduced motion a dying snake just vanishes. | render.js:350 | fix: it fades |
-| V16 | low | At the bite, the burst and the "+1" cover the face, right when it gulps; "+1" is clipped on the top row. | render.js:1324, 397 | fix |
-| V17 | low | Catchlights turn with the head; every other highlight is lit from the top left. | render.js:872 | fix |
-| V18 | low | Each snake's shadow falls on the snakes drawn before it. | render.js:1301 | fix: all shadows first |
-| V19 | low | Eyes turn 2.4× faster at 144 Hz than at 60 Hz. | render.js:534 | fix |
-| V20 | low | Palette drift on the canvas and page: several golds and near-whites, radii off the 6/10/16/20 scale. | render.js:18, style.css | adapt: radii and bubble colours fixed; pupils stay near-black (they need the contrast) |
-| V21 | low | Lobby: the room-code placeholder is clipped, an empty status line and hidden tags leave gaps. | style.css:369 | fix |
-| V22 | low | Grid lines are 1 device pixel: nearly invisible on 3× phones. | render.js:111 | fix |
-| V24 | low | Creeper's and Ghost's faded tails are hard to see (about 1.4:1 and 2:1), and they kill on contact. (Also found by the accessibility reviewer.) | render.js:564 | fix: a floor on the fade |
-| O2 | low | The score's pop spreads into its label: "Score15". | style.css:148 | fix |
+| ID | Sev | Finding | Plan |
+|---|---|---|---|
+| V1 | high | **Winter drifts look like grey smoke.** A 384 px layer is stretched 2.7–5.3× over the board, so the lit lumps blur into translucent puffs. They lie across the grain, not along it. They sit over fields and burrows, a dusting greys the whole bark, and they linger long after the snow. (Found by two lenses.) | **fix:** fewer, crisp drifts at full resolution, long along the grain in the furrows. Each has a hard lit top and a thin blue underside. No full-board dusting. They melt in a few seconds once the snow stops. |
+| V2 | medium | **The wrap's edge is a dashed "marching ants" rectangle,** the computer look DESIGN removed once. (Two lenses.) | **fix:** a warm gold seam along the inside of the frame with a glint running round it, brightest where a wrapping head is near; no line dash. |
+| V3 | low | The golden power outline reads as a brown smudge on bark, vanishes on yellow and tan snakes, and is mostly hidden under your cream outline. | **fix:** a thin opaque gold line with an ink line outside it, drawn outside your outline. |
+| V4 | medium | **Power badges cut rival names to "So…", "Colo…", even "Y…" for you.** `.name` has a 0 basis, so the badge never gives way. (Three lenses.) | **fix:** names get priority; the badge shrinks to its icon first. |
+| V5 | medium | **Long power banners cover up to 6.5 rows on a phone,** while the "head under the banner" check assumes one 52 px line. | **fix:** short banners (T3), the check uses the banner's real height, and `text-wrap: balance`. |
+| V6 | low | The dash streak lies over the dasher's body, a white line through its face. | **fix:** a tapering wedge under the snake, from where it was to the back of its head, with a scuff on the bark. |
+| V7 | low | The leap lifts the head straight up the screen whatever the heading: heading up it lunges, heading down it flinches. (Two lenses.) | **fix:** height from scale. The head and neck swell along their path at the top of the arc, and the shadow spreads and softens on the bark. |
+| V8 | low | Ring overload on heads: the power ring and pips, stun halo and stars, Capricious's ring, the ready ring and YOU's ring, all thin yellow circles. | **adapt:** powers become pips on a short arc behind the head, turned with it (the outline carries the glow). Stun stars ride higher when pips show. |
+| V9 | low | Confetti reads as dead pixels: tiny axis-aligned squares, with an off-palette cyan. | **fix:** bigger rotated paper scraps in the palette, with a lighter back face. |
+| V10 | low | The death fireball is a soft airbrush gradient, from a different hand. | **fix:** a flat comic starburst with an ink outline, puffs of smoke, and a thick shockwave ring with an ink edge, cached as a sprite. |
+| V11 | low | In its last 2 s the wrap's outline strobes at 4 Hz. | **fix:** a calm fade, like the golden apple's. |
+| V12 | low | The powers brought a second, greenish lemon gold, a pill badge (chips are 6 px) and fallback-font glyphs (⤴, ⟳). | **fix:** fold them into Honey. The badge becomes a chip with small inline SVG icons in ink. Mute's proud mood leaves gold to the powers. |
+| V13 | low | Mute's mood acting is unreadable at play size. Its beret reads as a hole, two moods are near-identical violets, and its pale rim flickers on and off with its mood. | **fix:** a smaller beret on the crown with a lit rim, bolder brows, moods spread in lightness, and the rim fixed per snake. |
+| — | medium | *(refuted)* The golden leaf is too small and looks like the autumn leaves. | **adapt anyway, cheaply:** draw it a full cell with an ink outline (every other power food has one), and move the decorative leaves to russet and brown, so gold always means power. |
 
-## 4. Copy
+## 4. Words
 
-| # | Sev | Issue | Where | Plan |
-|---|---|---|---|---|
-| T1 | medium | **The narrator talks to "you" in rounds you're only watching**: "Off you go!", "Catch it if you can!", and screen readers hear "The AIs are off." | snake.js:46, 59, 349 | fix |
-| T2 | medium | The start card says "Enter starts over"; the hints mix grammar ("H for the Hall of Fame"); the touch hint starts "tap" in lowercase. | snake.js:42 | fix |
-| T3 | medium | The death card's "Watch" vs online "Keep watching" for the same action; bare "Watch" reads like "Watch AIs". | snake.js:381 | fix: "Keep watching" |
-| T4 | medium | Screen readers hear "Bonk!. You hit the wall dot 4th place dot score 2 The tree goes on." (and the card twice). (Also found by the accessibility reviewer.) | snake.js:563 | fix |
-| T5 | medium | Kill and win lines repeat the chatter word for word (Desperado's "Draw, partner", Metagamer's "As calculated.", Joker's "Gotcha!"). | ai.js:163, 183, 194 | fix |
-| T6 | medium | A draw says "You finished 1st" under "Draw / Nobody made it out." | snake.js:398 | fix: "You shared 1st" |
-| T7 | medium | Curly and straight apostrophes are mixed across the game. | all | fix (the Chinese table is keyed by the English, so lookups normalise quotes) |
-| T8-T17 | low | "That was your own tail" (it almost never is), Mason's line for a head-on, the Life of Brian payoff too long to bubble on phones, "First blood: You…", nemesis "Yourself / Starvation", records wording, "best" meaning two things, too many exclamation marks, Wildcard praising an "apple" while eating meat, voice slips. | snake.js, ai.js, chatter.js, records.js | fix |
-| T18-T21 | low | Online copy: friends missing from the roll-call, "the host's room" placeholder, "Room closed" for a dropped connection, long network errors, the woodpecker banner. | snake.js, net.js | fix |
-| T22-T29 | low | The pause card's widow and fragment, thin rotations (two lines each), the win card saying it three times, blurbs unreachable on phones, repeated phrases, giggles from Ghost, README drift, the start card's title repeating the header. | various | fix |
+| ID | Sev | Finding | Plan |
+|---|---|---|---|
+| T1 | medium | **Banner flood.** Every golden apple (about every 6 s in sun), every beetle and every repeat crash gets a banner; that's one every 4–5 s. (Three lenses.) | **fix:** the first golden apple and first beetle of a round only. No repeat-crash banner (the board's Bonk! and −N carry it). No "Golden! +3" or "Crunchy! +2" (the floater says it). |
+| T2 | medium | **The leap hints are a garden path.** "the way you’re going leaps" names no key. "swipe the way you’re going to leap" reads as "swipe in the direction you'll leap". (Three lenses.) | **fix:** one word for it everywhere, *ahead*: "Press ahead to leap" and "Swipe ahead to leap". The narrator says press or swipe to match the device. |
+| T3 | medium | **Power banners are paragraphs** (up to 141 characters), read mid-play. | **fix:** 60 characters or fewer, one idea each. The fine print goes to the README, or to the moment it happens. |
+| T4 | medium | **The first-crash banner states the rules wrongly.** "Three segments gone" is wrong when it cost 1 (the −1 floater says so), and "Small *and* boxed in" should be *or*. | **fix:** built from what you actually lost, with *or*. |
+| T5 | low | Rivals' crash lines blame a wall, but 97% of crashes are into another snake. | **fix:** the lines fit any bump ("Fake snake!"), and walls keep their own. |
+| T6 | low | **A woodpecker strike is told as "fell into a hole"**, with "The woodpecker missed you". | **fix:** its own cause ("got pecked by the woodpecker"), title (*Pecked!*) and lines. |
+| T7 | medium | **Kill and win lines don't rotate,** and Sniper's and Ouroboros's repeat the chatter you just saw. | **fix:** 2–3 of each per rival, never the same twice running. Reword the two repeats. |
+| T8 | medium | **Chatter punchlines come back 3–4 times a round.** Lines rest 45 s, and rounds now run 2.5 min. | **fix:** a line with a punchline is a set piece, said once a round; small pools get more lines. |
+| T9 | low | Screen readers hear the power glyph inside the length ("length ⤴25"). | **fix:** the badge is hidden from them, and the sr text says it in words. |
+| T10 | low | Floaters and titles that don't match: +1 for baked food, Bonk! for burning up, *Squashed!* for a dash cut. "Bonk!" means both "survived" and "out". | **fix:** "+2", "Fwoosh!", "Snip!"/"Sliced!". Bonk! is for knocks you survive, and death titles use words that mean out. |
+| T11 | low | Voice drift: exclamation marks all over the powers' lines, and seven banners open with "Something…". | **fix:** "!" for the big moments; name the thing itself. |
+| T12 | low | The edge has four names: wall, edge, "Walls & holes", "the edge of the bark". | **fix:** *edge* everywhere. Records store the killer key, not the words, so stats carry over. |
+| T13 | low | **Stale strings.** "The tree is waiting." "A piece a second." "The edges are closing!" (reads as shrinking). The pause button's title stays "Nap" while napping. "Yee-haw" vs "Yeehaw". | **fix.** |
+| T14 | low | Unnamed Hall of Fame rows say "You", but the game calls you "Green". | **fix:** your rows say *Green* until you carve a name, and carving it renames all of them. |
+| T15 | low | Mute's and Ouroboros's blurbs run long on the start card. | **fix.** |
+| T16 | low | README's controls lack the leap. Four orphaned Chinese lines for removed Capricious lines. | **fix**, and chatter-test flags orphans. |
 
-## 5. Performance
+## 5. Sound
 
-| # | Sev | Issue | Where | Plan |
-|---|---|---|---|---|
-| P1 | **high** | **Snake bodies are bound by GPU raster**: 6.5 ms a frame for 4 × 70 segments (see the baseline). Bands interleaved with circles break batching; shadow, highlight and brick paths are many-contour paths. The reviewer measured a fix at 2.85 ms (−57%) with 0.17% of pixels changed. | render.js:596-705 | fix: bands first as rectangles, then all circles; separate circles for shadows and highlights; bricks as rectangles |
-| P2 | medium | AI decisions sometimes land in a frame with other work: worst 8.5-20 ms, mostly the first decision of a round (JIT warm-up). | snake.js:170, ai.js | fix: no thinking in a frame that just ticked; warm every rival's brain on the start card |
-| P3 | medium | The hunger bars' CSS transition forces a style recalc and pre-paint on every frame (−28% main-thread work without it). | style.css:207 | fix |
-| P4 | medium | The per-segment colour lookup builds strings every frame: half of render script time, 5.7 MB/s of garbage in the long scene. | render.js:553 | fix: a cached colour ramp per snake |
-| P5 | low-med | Bite, death and card frames stack work: a forced reflow for the score pop, "+1" text drawn per frame, `focus()` layout. | snake.js:508, render.js:394 | fix |
-| P6 | low | The "starving" rumble animates box-shadow, repainting the tags every frame. | style.css:210 | fix |
-| P7 | low | Speech bubbles write two inline styles every frame. | chatter.js:466 | fix: only on change |
-| P8 | low | Other per-frame allocations (closures, array literals, sprite-key strings). | render.js | fix |
-| P9 | low | Idle screens keep the animation loop running for the music clock (0.1 ms a frame, GPU idle). | snake.js:135 | skip: nothing is drawn; the cost is negligible and one clock is simpler |
-| P10 | low | The static layer is built twice at startup and on every resize event. | render.js:1365 | fix |
-| P11 | low | A friend's screen deletes keys on AI memory every tick (slow objects for the renderer). | online.js:119 | fix |
+| ID | Sev | Finding | Plan |
+|---|---|---|---|
+| S1 | high | **Random one-sample clicks.** Every cue's gain is 1.0 until its envelope starts, and at 48 kHz a source sometimes starts a sample early. | **fix:** every envelope starts from silence. |
+| S2 | high | **The weighty cues vanish on phone and laptop speakers.** Death, bonks, thunder, boom, the stinger and the heartbeat carry 70–98% of their energy below 150 Hz. On a phone your death is as loud as an apple. | **fix:** each low cue gets a midrange body (a knock or thud transient at 300–1200 Hz) that implies its missing bass. |
+| S3 | medium | The danger heartbeat outlives the round: it pounds on the *You win!* card and into the next countdown. | **fix:** the mood resets when the round ends. |
+| S4 | medium | The weather bed outlives the round and the tab: rain hisses on the round-over card and from a hidden, napping tab. | **fix:** silence it at the end of a round and on a nap. The audio is suspended while the tab is hidden or the sound muted. |
+| S5 | medium | The rain bed is a flat hiss, 8–9 dB louder than the other beds. | **fix:** about 9 dB down, a softer band, and droplet ticks. |
+| S6 | medium | Sudden death becomes a woodblock ostinato, 11 dB over the music: aim, drum and crash every 2.6 s. | **fix:** the full drum for the first strikes, then shorter and softer. The aim knocks drop after a few, since the patch already shows it. |
+| S7 | medium | The apple pluck is randomly out of tune with the marimba under it, and a streak climbs chromatically. | **fix:** in tune, varied by timbre and velocity. The streak climbs a pentatonic scale. |
+| S8 | low | Go doesn't land: the riser crests after Go, and the round's music comes in up to 2.9 s late. | **fix:** the riser crests on Go, and the round's music starts on it. |
+| S9 | medium | The first key or click of a session blocks 25–110 ms creating the AudioContext, and the first countdown beat comes out short. | **fix:** create it at load (suspended) and only resume it on the gesture. Noise buffers are built lazily. |
+| S10 | low | Golden pickups have no sound of their own. The golden beetle crunches like a plain one, the leaf borrows the golden apple's sound, and wrap sounds like the rainbow. Rivals' pickups play at full volume. | **fix:** a golden sparkle layer, a wrap that goes *round*, and rivals' pickups softer. |
+| S11 | low | A win that's also a new best stacks two fanfares. | **fix:** one phrase, and the music ducks under it. |
+| S12 | low | The "tummy rumbling" banner is silent; the gurgle only comes once you're starving. | **fix:** a soft growl at the warning. |
+| S13 | low | Mute feedback is backwards: unmuting is silent, muting clips a tap. | **fix:** the tap plays after the toggle, only when sound's on. |
+| S14 | low | After a stall, the music scheduler's recovery drops the groove off its grid. | **fix:** catch up by whole steps. |
+| S15 | low | Long noise layers replay the same 0.5 s snippet: the thunder's five rolls are one. | **fix:** a longer noise buffer. |
+| S16 | low | The voice cap drops your own cues before ambient ones; rivals' leaps and dashes sound like yours. | **fix:** tiers (yours, then rivals', then the world). Rivals' powers are softer. |
+| S17 | low | One 11-second title loop repeats forever on every menu. Bar 4's Gmaj7 sounds like a wrong note. | **adapt:** light variation every other pass, the menu music fading after a minute idle, and G7 in bar 4. |
+| — | medium | *(refuted)* The dash's payoff is silent under the music. | **skip:** a measurement artefact; both cues are clearly audible. |
 
-## 6. Accessibility, layout and craft
+## 6. Performance
 
-| # | Sev | Issue | Where | Plan |
-|---|---|---|---|---|
-| A1 | medium | **On short boards the card's Play button is hidden below a scroll, with keyboard focus on it** (1280×560 window, 200% zoom, landscape phones, the 320 px death card). | style.css:274 | fix: the buttons always stay in view (with V5) |
-| A3 | medium | On landscape phones the board covers the Hall of Fame button. | style.css:146 | fix |
-| A4 | medium | Windows High Contrast: the icons disappear and the text fields lose their edges and focus ring. | style.css:114, 343 | fix |
-| A5 | medium | Contrast below AA: lobby errors 4.10:1, the pressed speed button 4.24, dead tags 4.44, faded chat names 4.25, placeholders 4.24, hover states 4.25 and 3.62, input edges 1.2:1. | style.css | fix |
-| A6 | medium | Online, seats 3 and 4 (lavender and sky) are nearly identical with deuteranopia, and friends share a face and outline. | online.js:23 | fix: each friend's snake gets its own marking |
-| A8 | low | Announcements are lost while the Hall of Fame is open (the announcer is inside the inert main). | index.html:104 | fix |
-| A9 | low | (see V6) | | |
-| A10 | low | Horizontal scrolling at 400% zoom. | style.css:606 | fix |
-| A11 | low | Touch targets under 44 px (Play 40, "Play with friends" 28, Reset 27, inputs 36). | style.css | fix |
-| A12 | low | On phones the page scrolls during play (82 px at 320×568) and a swipe on the frame or the tags scrolls the board away. | style.css | fix: the board fits the first screen, and swipes work anywhere during play |
-| A14 | low | Visible labels missing from accessible names ("Carve your name:", "Have a code?", the "On" switch). | index.html:56, 71, 98 | fix |
-| A15 | low | No focus ring on load, so the first Tab silently skips Play. | snake.js:569 | fix |
-| A16 | low | The 3× density cap blurs 3.5× phones. | render.js:1365 | fix: cap the canvas size, not the density |
-| A17 | low | Bubbles duplicate the log for screen readers; the canvas has no `role="img"`; tags read as "Sniper 3"; the "this round" row has no non-visual marker. | various | fix |
-| A20 | low | No bottom safe-area padding on notched phones. | style.css:44 | fix |
+| ID | Sev | Finding | Plan |
+|---|---|---|---|
+| P1 | medium | **Force fields cost about twice the rest of the board together.** Every frame, for every field: evenodd clips with hole rects, merge clips, two clipped ripple blits, a rim of 24–51 arcs stroked twice, weather, and two clipped silhouettes per rival touching it. That's 17.9 ms a frame against 6.4 ms with fields off. | **fix:** each owner's merged field is cached as a layer (rebuilt only when it changes) and blitted, with pulse, flare and alert as alpha. Ripples are sprites with no clip, and holes are drawn over the field. |
+| P2 | medium | **Bodies regressed to many-contour paths,** against DESIGN's own rule: shadows, outlines and highlights are each one path of 70–139 contours, plus Mason's veins as strokes. That's 1.6× the second pass's GPU cost; the prototype fix measured 0.67–0.71 of the current cost. | **fix:** opaque outlines as separate fills, all shadows into one offscreen layer composited once at 0.3, highlights as circles, Mason's veins as cached sprites. |
+| P3 | medium | **The benchmark tools measured artefacts** (see the correction above). | **fix first:** trace.js sets the scene once and keeps the round off. bench.js closes batches with a GPU readback and reports throughput. The quality is pinned during benchmarks. A throughput tool compares variants in one page. |
+| P4 | low | `rgba()`'s cache grows forever: a new string per frame for every continuously varying alpha (5 MB a minute with a field on the board). | **fix:** quantise alpha. |
+| P5 | medium | **Every new round hitches its first countdown beat:** the bark is rebuilt in that frame (4–9 ms of script, 40–55 ms of GPU). | **fix:** build the next round's bark in idle time while a card is up; starting just swaps it in. |
+| P6 | low | A forced layout every tick while the woodpecker is here. | **fix:** use the observed board rect. |
+| P7 | low | The Play button's ripple animates box-shadow, repainting every card each frame. | **fix:** a pseudo-element animated by transform and opacity. |
+| P8 | low | Burrow cracks are stroked segment by segment every frame. | **fix:** cache them. |
+| P9 | low | The per-frame path still builds a few strings and closures (render.js:14 says it doesn't). | **fix** where they are. |
+| — | medium | *(refuted)* Gobbler's and Vulture's decisions cost 5–10× the others. | **skip:** at most about 2×, and bounded by the board; the 4× quota fix (L9) covers the frame tail. |
 
-## 7. Robustness and code health
+## 7. Accessibility, layout and robustness
 
-| # | Sev | Issue | Where | Plan |
-|---|---|---|---|---|
-| B1 | **high** | **Online rooms break after about seven joins.** Every friend who joins (or rejoins after a reload) appends their Hall of Fame rows to a list the host re-sends in full. Past 16 KB, PeerJS refuses the message with an error, which the host treats as every friend leaving at once; nobody can join that room again. Reproduced end to end with two browsers. | snake.js:1015, net.js:88 | fix: one set of rows per person, replaced on rejoin and removed on leave; oversize messages never drop anyone; a size check in the protocol test |
-| B2 | medium | One friend's row with an impossible date breaks your Hall of Fame for good, and spreads to everyone in the room. | records.js:35, 214 | fix |
-| B3 | medium | Colours from the network go into a `style` string, so a modified client can inject CSS into your saved Hall of Fame. | records.js:203 | fix: only `#rrggbb` |
-| B4 | medium | Hosting and joining can hang forever, and Back then leaves Play disabled. | snake.js:956, net.js:26 | fix: time limits, and Play is re-enabled |
-| B5 | low | Names like "constructor" corrupt your stats. | records.js:65 | fix |
-| B6 | low | Guests don't check the shape of the host's messages. | online.js:101 | fix |
-| B7 | low | Connections that never said hello still get every broadcast; round-trip samples aren't checked. | net.js:75, 85 | fix |
-| B8 | low | A modified client can claim your player id and swallow your result. DESIGN.md calls the id private; it isn't. | records.js:165 | fix |
-| B9 | low | Names with `$'` or `` $` `` mangle chatter lines. | chatter.js:439 | fix |
-| B10 | low | Names keep control and bidi characters; the 16-character cut can split an emoji. | online.js:33 | fix: one shared name cleaner |
-| B11 | low | Stored values aren't range-checked ("−2 rounds", "1.5th place"). | records.js | fix |
-| B12 | low | Browsers too old for the code show a dead Play button. | index.html | fix: a one-line message |
-| B13 | low | Numbers that shape play live outside tuning.js. (With R8.) | various | fix |
-| B14-B16 | low | Dead code, misleading comments ("nothing allocates"), duplicated logic. | various | fix |
-| B17 | low | Inconsistent naming (storage keys, `pellet` vs meat). | various | skip: renaming storage keys would orphan saved records; the rest is cosmetic |
-| B18 | low | snake.js is 1,350 lines; `drawFace` and `decide()` are long. | | skip: a big move with no player-visible change; noted for later |
-| B19 | low | Tests: the simulator asserts nothing, the protocol test never checks sizes or hostile input. | tools/ | fix: assertions, size and hostile-input checks, one runner |
+| ID | Sev | Finding | Plan |
+|---|---|---|---|
+| A1 | medium | **The woodpecker's next patch is shown almost only by hue.** To colour-blind players the red glow is olive on olive bark, and 15% of deaths are pecks. | **fix:** a brightness and shape cue: a pale rim round the patch that tightens as the strike nears, and a darker inside. |
+| A2 | low | With reduced motion a leap is invisible: the head just sits on the body it's hopping. | **fix:** a static airborne pose. Reduced motion removes movement, not information. |
+| A3 | low | Your leap badge and wrap countdown sit at 2.19:1 while the leap cools down. | **fix:** with V4/V12, cooldown shows as a fill, and the icon and numbers stay at full contrast. |
+| A4 | medium | **On phones the woodpecker's layer is stretched and misplaced**: CSS 100vh against a backing sized to innerHeight. | **fix:** the CSS size and the backing come from the same numbers. |
+| A5 | low | With reduced motion the woodpecker still swoops across the screen and burning leaves spin. | **fix:** cuts or short fades instead. |
+| A6 | low | Smouldering cells, the warning before fire spreads, are a 2–4 px dim red dot. | **fix:** a small ember mark the size of the cell. |
+| A7 | low | Every banner goes to the live region (about 21 a minute when watching), and waking is silent. | **fix:** only banners about you or the round's state; *Awake.* on resume. |
+| A8 | low | Feel numbers outside tuning.js. The wrap's "two seconds" lives in four places. | **fix:** `WRAP_WARN_MS` and a small juice block in tuning.js. |
+| A9 | low | No favicon (a 404 on every load from a server), and no offline cache once hosted. | **fix:** an inline SVG favicon, and a network-first service worker on http(s). |
+| A10 | low | Small leftovers: an empty branch, a comment that says the opposite of its CSS, doubled blank lines. | **fix.** |
+| — | medium | *(refuted)* Screen readers hear badges merged into the length digits. | **skip** as stated; the real part is T9. |
 
-## 8. Found while playing
+## 8. A fresh player
 
-| # | Sev | Issue | Where | Plan |
-|---|---|---|---|---|
-| O1 | medium | **The death card says "Hall of Fame #1", then the round-over card says "#3"** for the same round: the rivals who outlast you are saved at the end of the round. (Also found by the accessibility reviewer.) | snake.js:424, 550 | fix: the death card already counts the snakes still alive |
+| ID | Sev | Finding | Plan |
+|---|---|---|---|
+| F1 | medium | **Opening the Hall of Fame from your death card swaps the card for *Napping*.** On a phone, its right-hand button becomes *Start over*. | **fix:** don't nap when you're only watching, and closing brings back the card that was up. |
+| F2 | medium | **The woodpecker perches over the HUD**: the rivals' tags at 800×800, the speed buttons on phones. | **fix:** perching avoids the header, tags, speed control and chatter. |
+| F3 | low | Unearned celebration on a fresh profile: fanfare, confetti and *Carve your name* for a 14-second last place. | **fix:** celebrate a best only once there's one to beat. Offer to carve once, not twice. |
+| F4 | low | On the smallest phones, a new player is never told how to steer before their first round. | **fix:** "Swipe to steer" stays on the smallest card. |
+| F5 | low | Banners keep firing behind your death card and stick out from under it. | **fix:** while a card is up, only critical banners. |
+| F6 | low | The hunger warning is as gentle at length 3, where it means death, as anywhere. | **fix:** a sharper line at your smallest, a little earlier. |
+| — | medium | *(refuted)* A half-second freeze in the sudden-death duel. | **skip:** the harness (see the correction). |
 
 ---
 
 ## Already good, keep
 
-- **The loop:** one rAF fixed-timestep loop with the remainder carried, sane after stalls, AI thinking paced across frames with identical decisions (fingerprint-checked).
-- **The rules:** order-independent collisions, tail-leaving legal, food never on a body (30k ticks checked), 4-fold symmetric spawns, rounds always end, no `isPlayer` anywhere in the AI.
-- **Input:** a 3-deep queue with no reversal path (including the host's delayed turns and autopilot hand-back), physical WASD, name fields never hijacked.
-- **The faces:** each rival has a distinct silhouette, gaze shows intent, and the shared blink, chew and gulp work.
-- **Crispness:** the canvas matches device pixels exactly at every common density, the bark and grid are prerendered on whole pixels.
-- **Accessibility:** focus rings everywhere at about 13:1, a proper modal Hall of Fame, one polite status region, `zh-Hans` on Chinese lines, reduced motion covered in CSS and canvas.
-- **Robustness:** every storage access wrapped; the game plays with storage blocked, full or corrupt and with Web Audio missing; nothing from storage or the network reaches the DOM as HTML; the loop survives exceptions; all three tools pass.
-- **Copy:** the voice holds; many lines are genuinely funny ("The tree goes on. You don't.", "Veni, vidi, Mason.", the whole Biggus Dickus chain).
-
----
+- **The loop.**
+  - A fixed timestep with interpolation: motion is exactly even at 60, 120 and 144 Hz (0 spread over 1,000+ frames) and ticks don't drift.
+  - The 3-deep turn buffer: 0 reversals into the neck over 3,708 fuzzed presses.
+  - WASD by physical key.
+  - The instant starts (an arrow on the title card is moving in 167 ms), the YOU marker, the forgiving opening ticks and the first free knock.
+- **The rules.** Collisions resolved all at once, the boxed-in verdict with real timings, food only on free cells, a full board that just stops growing food, and no stalls in 135k simulated ticks.
+- **The log.**
+  - The grain running top to bottom, the lit plates, the knots and the moss; a different stretch every round.
+  - The caterpillar body you can count and its cream outline for you.
+  - The faces with gaze, blink and gags that read at play size.
+- **The words that are written, not generated:**
+  - "The log goes on. You don’t."
+  - "Everyone loses. How fair."
+  - "Lightning never strikes twice. It didn’t need to."
+  - Drab's "Somehow."
+  - "You lost to Drab. Drab!"
+- **The rival voices** hold across every key.
+- **Sound.** One AudioContext, no node leaks after 400 cues, a master compressor that doesn't pump, music that follows the round and feels the danger.
+- **Performance.**
+  - One rAF loop, with nothing drawn on cards, naps or hidden tabs.
+  - The occupancy grid and the lazy food placer.
+  - Pooled, batched particles.
+  - Cached sprites and colour ramps.
+  - HUD writes only on change.
+  - Typed-array scratch in the AI (most personas decide in 0.3 ms).
+- **Layout** holds at 32 viewports from 320×480 to 2560×1600, and at 200% zoom: no sideways scroll, the board fully in view, the buttons reachable. The canvas backing matches the device pixels exactly at every size and density.
 
 ## After
 
-### Performance, before and after
+Every high and medium finding above is fixed or adapted as planned (A5 both halves: the woodpecker cuts, and burning leaves land still); the seven refuted ones stay skipped. The lows are done too, except where a row says skip. "After" screenshots of every state are in `docs/screenshots/after-3/`.
 
-Both builds measured in the same session on the same machine (headless Chrome, 800×800 at 2× density, watching AI rounds), alternating runs so machine noise hits both. `tools/bench.js` reproduces the script-time numbers; the GPU and main-thread figures come from Chrome traces. The final build is measured in every row except the three trace rows (GPU busy, main thread, style), which were taken just before the critique rounds; those rounds only removed drawing work.
+### Frame times
 
-| Measurement | Before | After |
-|---|---|---|
-| **GPU raster, long-snake scene** (4 × 70 segments) | 6.53-6.56 ms a frame | **2.00-2.02 ms** (−69%) |
-| Frames the browser keeps up with, unthrottled, 1× / 4× | 229-231 / 195-203 a second | **240 / 239-240** |
-| GPU process busy, watching at 1× / 4× | 653 / 786 ms a second | **299 / 331** (−54%, −58%) |
-| Main thread per frame, all work, 1× (median / p99) | 1.02 / 2.33 ms | **0.76 / 2.08** |
-| Main thread per frame, all work, 4× (median / p99) | 1.28 / 2.77 ms | **1.15 / 2.31** |
-| Style recalculation, 1× | 35.6 ms a second | **17.9** |
-| Script per frame, 1× (p95 / p99 / worst) | 0.7-0.8 / 1.1-1.2 / 4.3-5.8 ms | 0.7 / 1.2 / 5.0-7.0 |
-| Script per frame, 4× (p95 / p99 / worst) | 1.1 / 1.7-1.8 / 5.8-7.2 ms | 0.9-1.2 / 1.6-2.3 / 6.3-11.9 |
-| Frames over 16.7 ms in a minute, 1× / 4× | 0 / 0 | 0 / 0 |
-| One AI decision, on identical positions (median) | 0.283 ms | 0.278 ms |
+Headless Chrome at 800×800 and 2× density, the builds alternating on one machine. "Before" is `0922499`: this pass's measuring tools on the pre-pass game. Full cost is script plus GPU, each batch closed by a pixel readback. The final build was measured after the three critique rounds; every critique merge measured the same as the build before it (within noise).
 
-Script time per frame is about the same as before. Bodies are now more, cheaper fills, offset by the cached colour ramps. The GPU does a third of the work it did for long snakes, so the browser keeps up at a higher frame rate. Each AI decision costs the same. Rounds now have more snakes alive for longer (Gobbler's retune, sensible last moves), so there's simply more game to think about.
+| | Before | After | Target |
+|---|---|---|---|
+| Long snakes, full cost per frame (staged scene, interleaved) | 5.5–5.8 ms | 3.8–4.0 ms | ≤ 4 ms: **met** |
+| Force fields, full cost per frame (the same harness) | 11.1–12.0 ms | 6.1–6.7 ms | ≤ 1.5× the same board without fields: **not met**, about 2.3× (it was 3.2–3.7×) |
+| GPU per frame, long snakes / fields (`tools/trace.js`) | 3.1–3.2 / 5.6–6.4 ms | 2.1 / 3.4–3.5 ms | |
+| Paint, long-snake scene | 38–43 ms a second | 22 ms a second | |
+| Watching at 1× with vsync: frames a second, p99 frame | 37–42, 4.5–5.5 ms | 57, 1.9–2.2 ms | |
+| Watching at 4× with vsync: frames a second | 22–24 | 37 | |
+| Watching with the frame rate uncapped (a run without vsync): frames a second at 1× / 4× | 35–40 / 18–22 (GPU-bound) | 235 / 185 | |
+| A new round's first frame | 53–63 ms (the bark rebuilt) | 12–18 ms (built in idle time) | no bark rebuild: **met** |
+| One tick, every AI decision included (median / p99) | 1–1.6 / 2.8–4.5 ms | 0.8–1.4 / 2.5–4.9 ms | |
+| Colour cache, a minute of fields in wind and storm | 2.9 → 5.9 MB retained | flat at 2.5–2.6 MB | flat: **met** |
 
-Against DESIGN.md's budget:
-- **Script p95 ≤ 2 ms:** met at both speeds.
-- **GPU raster ≤ 3.5 ms for the long-snake scene:** met.
-- **Worst frame ≤ 6.9 ms:** still not reliably met, in either build. The slowest frame in a minute is 5-7 ms at normal speed and up to 12 ms at 4×, usually an AI decision sharing a frame with a draw. No frame came near 16.7 ms.
+What's left in the fields scene is mostly rivals' colour inside fields, the live seams (kept live for their crackle) and ripples. That's on a stress scene with a realm, three colonies and four 30-cell snakes; a typical round never gets there. (The absolute numbers move a little between runs of the machine; the before/after pairs are always from the same run.)
 
-### What happened to the plan
+### Feel targets
 
-Everything marked **fix** above was fixed, except where noted here.
-
-- **Adapted:**
-  - **B8** (someone claiming your player id): a friend's result that claims to be yours is never recorded, so no one can pass for you. Refusing the same id twice was tried and dropped: it stopped two tabs on one machine from playing together, which is how most people try "Play with friends" first.
-  - **P10:** the bark is built once at startup; resizes still rebuild it at once, so the board is never blurry mid-resize.
-  - **V20:** radii and bubble colours are back on the scale; pupils stay near-black.
-  - **T25 / A18** (blurbs on phones): tapping a rival's tag above the board shows its line.
-  - **V21:** the code field fits a code, and an empty status line takes no room; the name tags stay invisible in the lobby rather than collapsing, so the board doesn't jump.
-  - **T29:** the start card's title is "Ready, Green?" (your name, once you've carved it).
-- **Skipped, as planned:** L13 (no jitter buffer), L17 (Colemak command letters), P9 (one clock for the music), B17 (storage keys), B18 (splitting snake.js). Reasons are in the tables above and in DESIGN.md.
-- **Audio:** no reviewer found a problem; the one leftover, a no-op `setReducedMotion`, was removed.
-
-### Verification
-
-- **Play tests** in headless Chrome, with real key and touch events:
-  - two turns inside one tick apply on consecutive ticks, and a reversal is ignored;
-  - a turn pressed just before a nap applies on waking;
-  - a hidden tab naps, and so does a blur during the countdown;
-  - after a resize the canvas matches the device pixels;
-  - a swipe over the countdown card skips it, steers, and the page stays put;
-  - a nearly full board never throws;
-  - with storage blocked the game plays and the Hall of Fame opens;
-  - three minutes at 4× ran ten rounds without an error.
-- **Online:**
-  - two and three tabs on a stand-in network: friends' turns, a hidden friend, the host's death, late joiners and late chatter;
-  - `tools/online-test.js` checks every tick and every message's size, plus a malformed tick.
-- **Rules:** `tools/rules-test.js` and 600 seeded simulated rounds.
-- **Layout:** 11 screen sizes from 320×460 to 1920×1080. At each the board is fully visible, Play is visible and reachable on the start and death cards, and nothing scrolls sideways.
-- **Accessibility:** contrast measured on every text element, High Contrast in both themes, keyboard order and focus rings.
+| Target | Result |
+|---|---|
+| A power only when you ask | Held keys' repeats steer nothing, and a turn pressed twice within 180 ms is a turn (checked with real key events in headless Chrome) |
+| The first knock really is free | The auto-turn picks the side with room, then the longest open run, then the one furthest from the edge (rules test) |
+| You can always see why | Death cards name the reason ("You hit the edge at your smallest"); your leap's cooldown is an arc at your head; a press that can't leap thunks and shakes your badge |
+| A calmer narrator | Watching AI rounds: one banner every 12.4 s (it was 10.6 s with this harness; 4.9 s in the audit's count, which included every repeat); playing: every 8.4 s (6.5 s); the golden apple once a round (it was three times) |
+| No clicks | 0 of 51 cues leak a step from silence (25 of 564 renders did) |
+| Small speakers | Through a 300 Hz high-pass your death is 7.1 dB louder than an apple at its loudest 100 ms (it was 3.1 dB quieter) |
+| Memory stays flat | Two minutes watching at 4×: heap flat after GC; a minute of fields: flat |
 
 ### Critique rounds
 
-- **Round one:**
-  - **From a fresh critic,** C1-C14:
-    - **The worst:** napping during the countdown brought the countdown card back over a running round, and friends' phones silently dropped long chatter lines.
-    - **Others:**
-      - hairline seams across bodies at 125%/150% scaling;
-      - a death moment that read as asleep;
-      - repetitive chatter;
-      - banners over the cards;
-      - the phone hint;
-      - the side layout's header;
-      - stats that disagreed about draws;
-      - copy;
-      - bigger boards for big screens.
-  - **From my own pass over the screenshots:**
-    - meat that looked spoiled;
-    - an unclear self-bite line;
-    - the clipped code field;
-    - a square mushroom stem;
-    - a small countdown number;
-    - the speed control unusable during a watched round's countdown, which my own benchmark had also tripped over.
-  - All fixed in "Critique round one".
-- **Round two** (a second fresh critic, D1-D9): nine findings, three of them introduced by round one's own fixes, all fixed in "Critique round two":
-  - **Stray keys became your name.** A keyboard player still steering (WASD) or pressing R typed into the auto-focused "Carve your name" field, and that became their name for good; this was also on `main`. The field is now offered only once no key is held, and it ignores keys for a moment after.
-  - **`Object.hasOwn` was newer than the old-browser check.** It slipped past that check, so Play was dead again in Chrome 85-92.
-  - **The page was scroll-locked while you were only watching.**
-  - **The name prompt hid under the pinned buttons on small phones.** On the smallest boards the buttons now share a row and the badge gives way.
-  - **Smaller items:**
-    - the impact spark landed off the board on wall hits;
-    - a watching speed carried into a played round (also on `main`);
-    - a tapped rival's line covered "Play with friends" (it now shows inside the card);
-    - Capricious's tag dot borrowed its mood's colour (it keeps its pink ring);
-    - the room code field turned a pasted invite link into "https" (a pasted link now works, and placeholders look like examples).
-- **Round three:** a regression-focused check of the two rounds' changes. All fixed in "Critique round three"; checking those fixes directly turned up nothing further, so the loop stopped there.
-  - **Regressions from round two:**
-    - a tapped rival's line went into a hint line that the smallest boards hide (it now stands in for the card's main text, visible everywhere);
-    - the name field ignored held keys like Backspace (now only a key whose first press it swallowed).
-  - **Smaller items:**
-    - the 320×460 start card hid its third rival behind the buttons;
-    - the wall-hit spark sat on the face (it now straddles the wall);
-    - a banner re-ran its drop-in whenever it moved back;
-    - the Hall of Fame could scroll sideways at 320 px with a long name.
+Once the plan above was done, the finished build went to five fresh critics a round (looks, words, feel and input, code, and a fresh player with accessibility), each asked for at least ten verified nits and told what earlier rounds had already found. I checked every nit (most came with a reproduction), fixed or adapted the ones that held up, and re-ran the critics' own reproductions afterwards.
+
+| Round | Nits | What they were mostly about |
+|---|---|---|
+| 1 | 72 | Narrator gaps (lessons that never showed, repeats), keys in odd states (napping in the countdown, the death freeze, Start over), touch with two thumbs, the death card's wording, names cut by chips, the leaper drawn under what it hops |
+| 2 | 67 | Regressions from round 1's fixes (a click swallow that ate taps, card items that couldn't wrap on a phone, the 320 px hint pushed below the fold, the tour shooting the wrong states), results a key could skip, U-turn chords, gold used for things that aren't powers |
+| 3 | 58 | Regressions from round 2's fixes (name buttons doubling a tag's height on touch screens, double taps arming leaps across a tick, focused buttons losing their keys, the carve field vanishing mid-word), and smaller things: rainbows off the board, bubbles over bubbles, Mute's moods borrowing rivals' colours |
+
+Each round found fewer, smaller things, but each round's fixes also caused some of the next round's findings. That's why the critics' reproductions are re-run after every round, and why the rules test, the online test and the play checks below are run on the final build.
+
+### Played
+
+In headless Chrome with real key and touch events: bursts of 2–4 presses inside a tick, 300 times (never a reversal into the neck, none queued); a nap pressed between a turn and its tick (the board holds, the turn goes on waking); a hidden tab (naps, stays napping); resizing through four windows mid-round (the backing follows at full density); a swipe on a phone (it steers, the page holds still); two minutes watching at 4× (no errors, heap flat); a board 80% full (30 ticks drawn, no errors); storage that throws (the game plays and the Hall of Fame opens). Every test suite passes, and seeded simulations give the same trace with and without thinking ahead.
