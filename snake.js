@@ -22,7 +22,7 @@
   const startBtn = $('start'), watchBtn = $('watch');
   const toastEl = $('toast'), speedEl = $('speed'), announcer = $('announcer'), hintEl = $('hint'), helpEl = $('help');
   const pauseBtn = $('pause'), muteBtn = $('mute'), musicBtn = $('music'), chatterBtn = $('chatter-toggle'), chatlogEl = $('chatlog');
-  const recordsEl = $('records'), recordsBody = $('records-body');
+  const recordsEl = $('records'), recordsBody = $('records-body'), resetBtn = $('records-reset');
   const recordsTabs = [...document.querySelectorAll('#records .tab[data-tab]')];
   const filterEl = $('scores-filter'), filterTabs = [...filterEl.querySelectorAll('.tab')];
   const friendsBtn = $('friends'), lobbyEl = $('lobby'), lobbyName = $('lobby-name'), lobbyShare = $('lobby-share');
@@ -1787,15 +1787,89 @@
     recordsTabs.forEach(t => t.setAttribute('aria-pressed', String(t.dataset.tab === recordsTab)));
     filterTabs.forEach(t => t.setAttribute('aria-pressed', String(t.dataset.filter === scoresFilter)));
     filterEl.hidden = recordsTab !== 'scores';
+    resetBtn.hidden = recordsTab === 'guide'; // (nothing there to clear)
     recordsBody.textContent = '';
     if (recordsTab === 'scores') {
       Records.renderScores(recordsBody, game.entryId, scoresFilter, PLAYER_COLOR, dotByName);
+    } else if (recordsTab === 'guide') {
+      renderGuide();
     } else {
       // Every persona's color, not just this round's, plus old names (Viper, Warden).
       const colors = { self: PLAYER_COLOR, Viper: '#c084fc', Warden: '#3b82f6', hunger: '#dc2626', wall: '#7a4a24', fire: '#f97316', woodpecker: '#27272a' }; // (hunger in Berry, the edge in Heartwood, fire in flame, the woodpecker in its black)
       for (const p of Object.values(PERSONAS)) colors[p.name] = p.ink || p.color;
       Records.renderStats(recordsBody, colors, dotByName);
     }
+  }
+
+  // The Field guide: every food, power and danger, with its picture (drawn by
+  // the renderer, as it is on the log) and its rule in a line or two.
+  const secs = ms => Math.round(ms / 1000);
+  const GUIDE = [
+    ['Food', [
+      ['apple', 'Apple', 'Worth 1, and a full tummy. Leave it too long and it rots.'],
+      ['golden', 'Golden apple', `Worth ${T.GOLDEN_GROWTH}, and everyone saw it land.`],
+      ['beetle', 'Beetle', `Worth ${T.BEETLE_GROWTH}. It scurries from heads, at half your speed.`],
+      ['pellet', 'Beads', 'What a crash leaves behind: worth 1 each, and they rot. Your own give the length back, not a meal.'],
+      [['baked', 'roast'], 'Baked and roast', `Food left in a fire bakes: worth ${T.COOKED_GROWTH}, if you can take the heat. Then it’s ash.`],
+      ['mushroom', 'Mushroom', `Poison: ${T.SHRINK} off your tail (never below ${T.MIN_LENGTH}). Mind the purple haze.`],
+    ]],
+    ['Golden things', [
+      ['goldbeetle', 'Golden beetle', `${T.LEAP_CHARGES} golden jumps: long, free, no rest. Hold up to ${T.LEAP_MAX}.`],
+      ['leaf', 'Golden leaf', `${T.DASH_CHARGES} golden flashes: three cells at once, slicing thin snakes. Never at an edge or a hole.`],
+      ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(T.WRAP_MS)} s a mushroom (up to ${secs(T.WRAP_MAX_MS)}).`],
+    ]],
+    ['Your powers', [
+      ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space'}: hop a snake, a hole or fire. It costs your tail’s tip, then rests ${secs(T.LEAP_COOLDOWN_MS)} s.`],
+      ['flash', 'Flash', `${touchFirst ? 'A swipe the way you’re going' : 'E or Shift'}: two cells in a blink, free. Then it rests ${secs(T.FLASH_COOLDOWN_MS)} s.`],
+    ]],
+    ['The log', [
+      ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
+      ['hole', 'Holes', 'The woodpecker’s, from 2:00. Bump one like the edge; a peck right under your head is the end.'],
+      ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and it notices.'],
+    ]],
+  ];
+  // (Until the renderer can draw a picture, a stand-in.)
+  const GUIDE_STAND_IN = { apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', pellet: '🟢', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', fire: '🔥', hole: '🕳️', land: '🚩' };
+  function renderGuide() {
+    const px = Math.round(36 * (window.devicePixelRatio || 1));
+    for (const [title, rows] of GUIDE) {
+      const head = document.createElement('h3');
+      head.className = 'guide-head';
+      head.textContent = title;
+      const list = document.createElement('ul');
+      list.className = 'guide';
+      for (const [kinds, name, rule] of rows) {
+        const li = document.createElement('li');
+        const pics = document.createElement('span');
+        pics.className = 'guide-pics';
+        pics.setAttribute('aria-hidden', 'true');
+        for (const kind of [].concat(kinds)) pics.append(guidePic(kind, px));
+        const text = document.createElement('p');
+        const strong = document.createElement('strong');
+        strong.textContent = name;
+        text.append(strong, ' ', rule);
+        li.append(pics, text);
+        list.append(li);
+      }
+      recordsBody.append(head, list);
+    }
+  }
+  // One thing's picture, a copy of the renderer's own (36 px, sharp at any density).
+  function guidePic(kind, px) {
+    let art = null;
+    try { art = R.guideSprite?.(kind, px); } catch { /* the stand-in, below */ }
+    if (art?.width) {
+      const c = document.createElement('canvas');
+      c.width = art.width;
+      c.height = art.height;
+      c.getContext('2d').drawImage(art, 0, 0);
+      c.className = 'guide-art';
+      return c;
+    }
+    const span = document.createElement('span');
+    span.className = 'guide-art stand-in';
+    span.textContent = GUIDE_STAND_IN[kind] || '•';
+    return span;
   }
 
   recordsTabs.forEach(t => click(t, () => { recordsTab = t.dataset.tab; renderRecordsSafely(); }));

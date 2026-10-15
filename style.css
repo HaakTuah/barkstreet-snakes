@@ -815,6 +815,7 @@ canvas {
 
 .tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--parchment-2); }
 .tab { padding: 6px 14px; font-size: 0.9rem; background: transparent; color: var(--ink); box-shadow: none; }
+.tab .tab-icon { display: none; width: 18px; height: 18px; fill: currentColor; vertical-align: -3px; } /* (the Hall of Fame as a trophy, on phones) */
 .tab:active { transform: none; box-shadow: none; }
 .tab[aria-pressed="true"] { background: var(--heartwood); color: var(--cream); }
 .tabs-small { display: inline-flex; margin-bottom: 8px; }
@@ -854,6 +855,20 @@ canvas {
 .bar-label { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .bar-track { height: 10px; border-radius: 999px; background: var(--parchment-2); overflow: hidden; }
 .bar-fill { display: block; height: 100%; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(58, 38, 20, 0.35); }
+
+/* The Field guide: each thing's picture beside its rule, in groups. */
+.guide-head { margin: 4px 0 4px; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+.guide { margin: 0 0 12px; padding: 0; list-style: none; }
+.guide li { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--parchment-2); }
+.guide li:first-child { border-top: 0; }
+.guide-pics { flex: none; display: flex; align-items: center; justify-content: center; width: 44px; }
+.guide-art { flex: none; width: 36px; height: 36px; }
+.guide-pics .guide-art:nth-child(2) { margin: 10px 0 0 -14px; } /* (two: the second a little in front, lower down) */
+.guide-pics .guide-art:first-child:not(:only-child) { width: 30px; height: 30px; margin-top: -10px; }
+.guide-pics .guide-art:nth-child(2) { width: 30px; height: 30px; }
+.guide-art.stand-in { display: inline-flex; align-items: center; justify-content: center; font-size: 22px; line-height: 1; }
+.guide p { margin: 0; font-size: 0.88rem; line-height: 1.35; color: var(--ink); text-wrap: pretty; }
+.guide strong { font-weight: 600; }
 .bar-count { text-align: right; font-variant-numeric: tabular-nums; }
 
 button.link {
@@ -947,6 +962,10 @@ button.link:active { transform: none; }
   .trophy svg { display: block; }
   .trophy .trophy-text { display: none; }
   .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Three tabs and the close on one row: the Hall of Fame's tab is its trophy too. */
+  .records-head .tab { white-space: nowrap; }
+  .records-head .tab-icon { display: inline-block; }
+  .records-head .tab-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .card { --pad-x: 14px; --pad-y: 12px; }
   .card h2 { font-size: 1.5rem; }
@@ -975,7 +994,7 @@ button.link:active { transform: none; }
   .hud .stat { font-size: 0.9rem; }
   .records { padding: 8px; }
   .records-card { padding: 12px; }
-  .records-head .tab { padding-inline: 10px; white-space: nowrap; }
+  .records-head .tab { padding-inline: 8px; white-space: nowrap; }
   .scores-table td, .scores-table th { padding-inline: 4px; }
 }
 
