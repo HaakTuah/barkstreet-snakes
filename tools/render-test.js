@@ -10,6 +10,10 @@
 //   first, and so does the drawing (the head rises on before the tick, never
 //   standing still or sliding back, and no dash is drawn through the body);
 //   stunned, the mark shows the hop (two thick, nowhere to land: the flash).
+// - A flash, then a turn two frames later (even in the tick's own frame):
+//   the head glides to the new way, never leaping across; its streak goes
+//   the new way, none left along the old row, and no flecks fly before the
+//   tick.
 // - A dead snake's beads keep its markings (Joker's purple and amber,
 //   Wildcard's collar, stars and stripes), though only every other segment
 //   leaves one.
@@ -167,6 +171,38 @@ const STAGE = `(() => {
       for (let f = f0; f < tick.frame + 6 && f < frames.length; f++) moves.push(frames[f].x - frames[f - 1].x);
       check(moves.every(d => d > 0.04 && d < 0.45), `${what}: the head rises on, never standing still`, `steps a frame from the press: ${moves.map(d => d.toFixed(2)).join(', ')} cells (the tick after the ${tick.frame - f0 + 1}th)`);
       check(streaks.slice(f0, tick.frame).every(k => !k.length), `${what}: no dash drawn before the tick`);
+    }
+
+    // A flash, then a turn two frames later (E rolled into an arrow): the
+    // game takes the turn and flashes the new way. The drawing glides there,
+    // as fast as a dash goes, never leaping across (it jumped 1.8 cells in a
+    // frame, a golden one 3.3), and the streak goes the new way: none is
+    // left along the old row, and no flecks fly before the tick (a guess
+    // that's put right leaves none). At full speed the turn's press can land
+    // in the tick's own frame (the tick shows it went elsewhere): the same.
+    for (const { what, time, gold, e } of [
+      { what: 'a flash, then a turn', time: 1000, gold: false, e: 3 },
+      { what: 'a golden dash, then a turn', time: 1000, gold: true, e: 3 },
+      { what: 'a flash at full speed, then a turn', time: FAST, gold: false, e: 2 },
+    ]) {
+      await round(time);
+      await setUp(gold ? 2 : 0);
+      const f0 = await ev('__frames.length');
+      await ev(`vf(${e})`);
+      await press('e');
+      await ev('vf(2)');
+      await press('ArrowUp');
+      await ev('vf(14)');
+      const { steps, frames, streaks, parts } = await ev('({ steps: __steps, frames: __frames, streaks: __streaks, parts: __parts })');
+      const fa = f0 + e + 2, tick = steps.find(s => s.frame >= f0 + e);
+      check(!!tick && tick.dash, `${what}: it flashed`, tick ? `the tick after the ${tick.frame - f0 + 1}th frame` : 'no tick');
+      if (!tick) continue;
+      const moves = [];
+      for (let f = fa; f < fa + 10 && f < frames.length; f++) moves.push(step(frames, f));
+      check(moves.every(d => d < 0.7), `${what}: the head glides to the new way, never leaping across`, `steps a frame from the turn: ${moves.map(d => d.toFixed(2)).join(', ')} cells${tick.frame === fa ? ' (its tick the turn’s frame)' : ''}`);
+      const old = streaks.slice(fa).some(ks => ks.some(k => k.to[1] === 12 && k.to[0] > 8)), up = streaks.slice(tick.frame).some(ks => ks.some(k => k.to[0] === 8 && k.to[1] < 12));
+      check(!old && up, `${what}: its streak goes the new way`, `${old ? 'one left along the old row' : 'none along the old row'}, ${up ? 'one going up' : 'none going up'}`);
+      check(parts.slice(f0, tick.frame).every(n => n === 0), `${what}: no flecks before the tick`, `particles a frame: ${parts.slice(f0, tick.frame + 1).join(', ')}`);
     }
 
     // ------------------------------------------------ staged boards
