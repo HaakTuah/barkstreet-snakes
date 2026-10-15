@@ -772,7 +772,9 @@ window.SnakeRender = (() => {
   // gold every power wears; a hole, fire and land on a tile of bark. Made
   // once a kind and size. Kinds: apple, golden, mushroom, goldcap, leaf,
   // beetle, goldbeetle, pellet, roast (a roasted bead), baked (a baked
-  // apple), jump, flash, wrap, hole, fire, land.
+  // apple), jump, flash, wrap, hole, fire, land, held (a snake holding
+  // golden powers: its gold line and a pip of each kind), rests (you, your
+  // jump and flash resting: your two half-rings).
   const guideSprites = new Map(); // kind and size -> canvas
   function guideSprite(kind, px) {
     px = Math.max(8, Math.round(px));
@@ -787,12 +789,12 @@ window.SnakeRender = (() => {
     guideSprites.set(key, c);
     return c;
   }
-  const GUIDE_TILE = { hole: 1.5, land: 1.25, fire: 0.95 }; // (on a tile of bark this many cells either side of the middle)
+  const GUIDE_TILE = { hole: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05 }; // (on a tile of bark this many cells either side of the middle)
   const GUIDE = {
     apple: g => drawApple(g, 'fresh'),
     baked: g => drawApple(g, 'baked'),
     golden: g => { guideGlow(g); drawGolden(g); g.translate(CELL * 0.2, -CELL * 0.22); drawStar(g); },
-    mushroom: g => { g.translate(0, CELL * 0.04); drawMushroom(g); },
+    mushroom: g => { g.scale(1.2, 1.2); drawHaze(g); g.translate(0, CELL * 0.04); drawMushroom(g); }, // (on bark, as on the log: its cream stem vanished on the card; and the purple haze its rule mentions)
     goldcap: g => { guideGlow(g); g.translate(0, CELL * 0.04); drawGoldcap(g); },
     leaf: g => { guideGlow(g); drawGoldLeaf(g); },
     beetle: g => drawGuideBeetle(g, false),
@@ -805,7 +807,31 @@ window.SnakeRender = (() => {
     fire: g => { drawFireGlow(g); g.scale(1.3, 1.3); drawFlames(g, '0'); },
     hole: g => { guideCells(GUIDE_HOLE); g.translate(-12 * CELL, -12 * CELL); drawPits(g, guideMask, 0, 0, GRID - 1, GRID - 1); },
     land: g => { guideCells(GUIDE_LAND); g.translate(-12 * CELL, -12 * CELL); paintLand(g, null, guideMask, guideNone, '#2563eb', 0, NO_HOLES); },
+    held: g => guideSnake(g, '#2563eb', false, (x, y) => drawPips(x, y, Math.PI, CELL * 0.54, 0, 1, 1, false)),
+    rests: g => guideSnake(g, '#4ade80', true, (x, y) => { const rr = CELL * 0.84; restHalf(x, y, rr, -1, 0.6, SKY); restHalf(x, y, rr, 1, 0.3, EMBER); }),
   };
+  // A guide's snake: its head and neck heading right on the tile, in the
+  // board's own shapes (drawn on the guide's canvas for the moment): a
+  // rival's in its colour (gold round it: it holds golden powers), or yours
+  // in your cream outline; then marks(x, y) round its head.
+  function guideSnake(g, color, you, marks) {
+    const was = ctx;
+    ctx = g;
+    try {
+      const hx = you ? 0 : CELL * 0.2, a = { n: 3, pts: new Float32Array([hx, 0, hx - CELL, 0, hx - 2 * CELL, 0]), cor: new Float32Array([hx - CELL * 0.5, 0, hx - CELL * 1.5, 0]), rad: new Float32Array([CELL * 0.54, CELL * 0.44, CELL * 0.39]) };
+      if (!you) { g.fillStyle = INK; bodyFills(a, GOLD_EDGE); g.fillStyle = HONEY; bodyFills(a, 2.5); }
+      else { g.fillStyle = '#fffef8'; bodyFills(a, 3.5); }
+      g.fillStyle = color;
+      bodyFills(a, 0);
+      g.fillStyle = 'rgba(255,255,255,0.18)'; // (each segment's sheen)
+      for (let i = 0; i < 3; i++) circle(a.pts[2 * i] - a.rad[i] * 0.3, -a.rad[i] * 0.3, a.rad[i] * 0.32);
+      for (const sg of SIDES2) { // (its eyes, ahead)
+        g.fillStyle = '#fffbea'; circle(hx + CELL * 0.16, sg * CELL * 0.2, CELL * 0.13);
+        g.fillStyle = INK; circle(hx + CELL * 0.2, sg * CELL * 0.2, CELL * 0.07);
+      }
+      marks(hx, 0);
+    } finally { ctx = was; }
+  }
   const guideGlow = g => { g.save(); g.scale(0.72, 0.72); drawGlow(g); g.restore(); }; // (a power's glow, all of it inside the picture)
   // The cells of the guide's hole (an L, in the middle of a board) and its land (a staircase across it).
   const GUIDE_HOLE = [[11, 11], [12, 11], [11, 12]], GUIDE_LAND = [];
