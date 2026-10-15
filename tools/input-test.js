@@ -289,6 +289,55 @@ const KEYS = {
     for (const k of [' ', 'e', 'ShiftRight']) { await key(k); await ev('vf(2)'); }
     check(over.s === 'over' && over.up && await state() === 'over', 'the round-over card: Space, E and Shift start nothing', JSON.stringify(over));
 
+    // The rivals think about their next move in the frames after a tick (not
+    // the tick's own, while there are frames enough), and every one has before
+    // the board is drawn into it: at full speed (90 ms ticks) on a 60 Hz
+    // screen, and on a 30 Hz one (a phone saving power), you playing.
+    const thought = [];
+    for (const hz of [60, 30]) {
+      await ev(`window.__autoRaf = true; 'ok'`);
+      await b.go(site.url + '?debug');
+      await ev(`document.getElementById('start').click(); 'ok'`);
+      await ev(`new Promise(r => { const c = () => SnakeDebug.state() === 'running' ? r('ok') : setTimeout(c, 10); c(); })`);
+      await ev(`window.__autoRaf = false; 'ok'`);
+      thought.push(await ev(`(() => {
+        const E = SnakeEngine, R = SnakeRender, AI = SnakeAI, dt = 1000 / ${hz}, mind = {};
+        E.tickMs = () => 90;
+        const st = { hz: ${hz}, ticks: 0, crossings: 0, unplanned: 0, tickFrames: 0, thoughtOnTick: 0 };
+        let lead = 0, crossed = -1, ticked = false, thinks = 0;
+        const setLead = R.setLead; R.setLead = t => { lead = t; return setLead(t); };
+        const think = E.thinkAhead; E.thinkAhead = (g, s) => { thinks++; return think(g, s); };
+        const step = E.step; E.step = g => { ticked = true; return step(g); };
+        const frame = R.frame; R.frame = (alpha, now) => {
+          const g = SnakeDebug.game();
+          if (alpha + lead > 1 && crossed !== g.tick) { // (drawn into the next move: everyone who can think has)
+            crossed = g.tick; st.crossings++;
+            for (const s of g.snakes) if (s !== g.snakes[0] && E.canThinkAhead(g, s)) st.unplanned++;
+          }
+          return frame(alpha, now);
+        };
+        let last = -1;
+        for (let i = 0; i < ${hz} * 20; i++) {
+          const g = SnakeDebug.game(), me = g.snakes[0];
+          if (SnakeDebug.state() !== 'running' || !me.alive) break;
+          if (g.tick !== last) { // (you, steered as a careful player would, and nobody starving)
+            last = g.tick;
+            const d = AI.decide(E.aiView(g, me), E.PERSONAS.drab, mind);
+            if (d !== me.dir && !me.queue.length) me.queue.push(d);
+            for (const s of g.snakes) s.nextStarve = Math.max(s.nextStarve, g.time + 5000);
+          }
+          ticked = false; thinks = 0;
+          SnakeDebug.frames(1, dt);
+          if (ticked) { st.tickFrames++; if (thinks) st.thoughtOnTick++; }
+        }
+        st.ticks = SnakeDebug.game().tick;
+        return st;
+      })()`));
+    }
+    check(thought.every(t => t.crossings >= 100 && !t.unplanned) && !thought[0].thoughtOnTick,
+      'the rivals have all thought before the board is drawn into their next move (60 and 30 Hz, full speed); at 60 Hz never in the frame that ticked',
+      thought.map(t => `${t.hz} Hz: ${t.unplanned} unplanned in ${t.crossings} ticks, ${t.thoughtOnTick} of ${t.tickFrames} tick frames thought`).join('; '));
+
     // -------------------------------------------------------------- touch
     await b.viewport(390, 844, { scale: 3, mobile: true });
     await freshRound();

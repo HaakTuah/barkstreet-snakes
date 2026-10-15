@@ -388,16 +388,17 @@
   }
   // Let the AIs think about the next tick in the frames before it (same
   // information, same decisions), before the board is drawn into their next
-  // move (see R.setLead; the frame that draws it thinks first). Not in a
-  // frame that ticked, which has done enough, unless no later frame is left
-  // in time (at 4x on a 60 Hz screen, there may be none); else spread over
+  // move (see R.setLead; the frame that draws it thinks first). Spread over
   // the frames that are left, one a frame, two when they're few (at full
-  // speed, playing, there are about two).
+  // speed, playing, there are about two); not in a frame that ticked, which
+  // has done enough, unless those can't fit them all. The frame that draws
+  // it thinks everyone still to: on a 30 Hz screen (a phone saving power)
+  // that may be the only one after the tick, and a rival left out was drawn
+  // heading on, then pulled round when it turned.
   function think(dt, ticked = false) {
     if (!thinkQueue.length) return;
     const left = Math.max(0, Math.ceil((tickLen * (1 - leadAt) - acc) / Math.max(4, dt))); // (frames after this one, up to the one that draws the next move)
-    if (ticked && left > 0) return;
-    let quota = ticked ? thinkQueue.length : Math.min(2, Math.ceil(thinkQueue.length / (left + 1)));
+    let quota = !left ? thinkQueue.length : ticked ? thinkQueue.length - 2 * left : Math.min(2, Math.ceil(thinkQueue.length / (left + 1)));
     while (thinkQueue.length && quota > 0) {
       const s = thinkQueue.shift();
       if (E.canThinkAhead(game, s)) { E.thinkAhead(game, s); quota--; }
