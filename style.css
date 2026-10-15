@@ -883,6 +883,7 @@ button.link {
   box-shadow: none;
 }
 button.link:active { transform: none; }
+button.link[hidden] { display: none; } /* (its display would otherwise win over hidden: the Field guide has nothing to clear) */
 
 /* The dev-only frame-time overlay (?perf, or ` with ?debug). */
 .perf {
