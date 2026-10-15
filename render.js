@@ -5720,16 +5720,17 @@ window.SnakeRender = (() => {
     // ...a darker inside, and a pale rim round it (inked, so it shows on pale
     // snakes), bolder and brighter as the strike nears: to colour-blind eyes
     // the red is olive on olive bark, but the dark patch and its rim still
-    // read. The rim is its pit's outline, just inside the patch's edge, its
-    // corners rounded as the pit's are (a straight piece along every cell's
-    // edge, meeting square at every notch, read as a computer's selection
-    // box). (It used to close in from outside, over cells it wouldn't take.)
-    outlinePatch(w.target);
+    // read. The rim is its pit's torn lip to come, just inside the patch's
+    // edge, wobbling as the lip will, its corners well rounded (a straight
+    // piece along every cell's edge, meeting square at every notch, or a thin
+    // even line with small corners, read as a computer's selection box). (It
+    // used to close in from outside, over cells it wouldn't take.)
+    outlinePatch(w);
     const line = 3.6 + 2.2 * prog, half = line / 2;
     ctx.globalAlpha = 0.45 + 0.4 * prog;
     ctx.fillStyle = 'rgba(20,8,2,0.4)';
     ctx.beginPath();
-    patchPath(0, PATCH_R + half, Math.max(0, PATCH_R_IN - half)); // (out to the rim's own outer edge)
+    patchPath(0, MARK_R + half, Math.max(0, PATCH_R_IN - half), MARK_TEAR); // (out to the rim's own outer edge)
     ctx.fill();
     // Cracks spreading from each cell's middle along the grain, as wood
     // splits (faded in as they start, or they're specks), lit along their far
@@ -5755,7 +5756,7 @@ window.SnakeRender = (() => {
     }
     ctx.globalAlpha = 1;
     ctx.beginPath();
-    patchPath(half, PATCH_R, PATCH_R_IN);
+    patchPath(half, MARK_R, PATCH_R_IN, MARK_TEAR);
     ctx.lineCap = ctx.lineJoin = 'round';
     ctx.strokeStyle = 'rgba(20,8,2,0.75)';
     ctx.lineWidth = line;
@@ -5763,16 +5764,17 @@ window.SnakeRender = (() => {
     ctx.strokeStyle = rgba('#fef3c7', 0.75 + 0.25 * prog);
     ctx.lineWidth = 1.6 + 1.6 * prog;
     ctx.stroke();
-    // ...and its pecks, denting the rim here and there, more and more as the strike nears.
+    // ...and its pecks, nicks bitten into the rim from outside, more and more
+    // as the strike nears, first and thickest where the bird is at it.
     const dents = Math.floor(prog * dentN);
     if (dents) {
       ctx.fillStyle = '#140a04';
       ctx.beginPath();
-      for (let n = 0; n < dents; n++) { const d = dentOrder[n]; ctx.moveTo(dentX[d] + DENT_R, dentY[d]); ctx.arc(dentX[d], dentY[d], DENT_R, 0, TAU); }
+      for (let n = 0; n < dents; n++) { const d = dentOrder[n]; ctx.moveTo(dentX[d] + dentR[d], dentY[d]); ctx.arc(dentX[d], dentY[d], dentR[d], 0, TAU); }
       ctx.fill();
       ctx.fillStyle = 'rgba(254,243,199,0.7)'; // (a fleck of pale wood on each one's far side, where the light falls in)
       ctx.beginPath();
-      for (let n = 0; n < dents; n++) { const d = dentOrder[n], x = dentX[d] + DENT_R * 0.45, y = dentY[d] + DENT_R * 0.45; ctx.moveTo(x + DENT_R * 0.4, y); ctx.arc(x, y, DENT_R * 0.4, 0, TAU); }
+      for (let n = 0; n < dents; n++) { const d = dentOrder[n], rr = dentR[d], x = dentX[d] + rr * 0.45, y = dentY[d] + rr * 0.45; ctx.moveTo(x + rr * 0.4, y); ctx.arc(x, y, rr * 0.4, 0, TAU); }
       ctx.fill();
     }
   }
@@ -5780,16 +5782,18 @@ window.SnakeRender = (() => {
   // kept as its corners, loop by loop (round the outside, and round any cell
   // it encloses), in cells, with the ways in and out of each; and with it,
   // each cell's cracks and the dents round the rim.
-  const PATCH_R = 7, PATCH_R_IN = 3, PIT_PUSH = 14; // (how round its corners are, and its notches, in units, as its pit's will be; how far it runs on under the frame at the board's edge)
-  const DENT_R = 2.1, DENT_EVERY = 12; // (a dent's size, and how far apart they come round the rim, in units)
+  const PATCH_R = 7, PATCH_R_IN = 3, PIT_PUSH = 14; // (how round its pit's corners are, and its notches, in units; how far it runs on under the frame at the board's edge)
+  const MARK_R = 11, MARK_TEAR = 1.1; // (how round the mark's own corners are, and how far its rim wobbles, in units)
+  const DENT_R = 2.1, DENT_EVERY = 12; // (a dent's size, give or take a third, and about how far apart they come round the rim, in units)
   const patch = new Uint8Array(N2); // (the patch's cells, marked while it's traced)
   const patchWas = new Int16Array(N2); // (the cells it was traced for)
   const pGX = new Int8Array(4 * N2), pGY = new Int8Array(4 * N2), pIn = new Int8Array(4 * N2), pOut = new Int8Array(4 * N2), pLoopEnd = new Int32Array(N2);
   const DIRX = [1, 0, -1, 0], DIRY = [0, 1, 0, -1], dirOf = (dx, dy) => dx > 0 ? 0 : dy > 0 ? 1 : dx < 0 ? 2 : 3;
   const markCX = new Float32Array(N2), markCY = new Float32Array(N2), markCr = new Float32Array(8 * N2);
-  const dentX = new Float32Array(4 * N2), dentY = new Float32Array(4 * N2), dentOrder = new Int16Array(4 * N2);
+  const dentX = new Float32Array(4 * N2), dentY = new Float32Array(4 * N2), dentR = new Float32Array(4 * N2), dentAt = new Float32Array(4 * N2), dentOrder = new Int16Array(4 * N2);
   let patchWasN = -1, pLoops = 0, markN = 0, dentN = 0;
-  function outlinePatch(target) {
+  function outlinePatch(w) {
+    const target = w.target;
     let same = target.length === patchWasN;
     for (let i = 0; same && i < target.length; i++) same = patchWas[i] === target[i];
     if (same) return;
@@ -5821,24 +5825,29 @@ window.SnakeRender = (() => {
         markCr[p + 2] = markCr[p] + Math.cos(a2) * (l2 - l1); markCr[p + 3] = markCr[p + 1] + Math.sin(a2) * (l2 - l1);
       }
     }
-    // The dents: every DENT_EVERY units along the rim (on the board), coming in a scattered order.
+    // The dents: nicks round the rim (on the board), each its own size and
+    // unevenly spaced (dots evenly spaced on the rim read as a dotted
+    // selection box), set out past the rim's line so it stays whole, closer
+    // together near where the bird pecks, and coming there first.
     dentN = 0;
-    const inset = 2.6;
+    const inset = 2.6, bx = (w.x + 0.5) * CELL, by = (w.y + 0.5) * CELL;
     for (let l = 0, i0 = 0; l < pLoops; i0 = pLoopEnd[l++]) {
       const m = pLoopEnd[l] - i0;
       for (let j = 0; j < m; j++) {
         const c0 = i0 + j, c1 = i0 + (j + 1) % m;
         const x0 = cornerX(c0, inset, PIT_PUSH), y0 = cornerY(c0, inset, PIT_PUSH), x1 = cornerX(c1, inset, PIT_PUSH), y1 = cornerY(c1, inset, PIT_PUSH);
-        const len = Math.hypot(x1 - x0, y1 - y0);
-        for (let d = DENT_EVERY / 2 + PATCH_R; d < len - PATCH_R; d += DENT_EVERY) {
-          const x = x0 + (x1 - x0) * d / len, y = y0 + (y1 - y0) * d / len;
+        const len = Math.hypot(x1 - x0, y1 - y0), ux = (x1 - x0) / len, uy = (y1 - y0) / len;
+        for (let d = MARK_R * 0.7 + DENT_EVERY * noise(pGX[c0], pGY[c0], 24); d < len - MARK_R * 0.7;) {
+          const x = x0 + ux * d, y = y0 + uy * d, near = Math.hypot(x - bx, y - by) / CELL, at = Math.round(x) * 977 + Math.round(y);
+          const rr = DENT_R * (0.67 + 0.66 * noise(at, 1, 23));
+          d += DENT_EVERY * (0.6 + noise(at, 2, 23)) * (near < 1.6 ? 0.65 : 1);
           if (x < 2 || y < 2 || x > SIZE - 2 || y > SIZE - 2) continue;
-          dentX[dentN] = x; dentY[dentN] = y; dentOrder[dentN] = dentN; dentN++;
+          dentX[dentN] = x + uy * rr * 0.6; dentY[dentN] = y - ux * rr * 0.6; dentR[dentN] = rr; // (out, away from its cells)
+          dentAt[dentN] = near + 1.5 * noise(at, 3, 23); dentOrder[dentN] = dentN; dentN++;
         }
       }
     }
-    const key = d => noise(Math.round(dentX[d]), Math.round(dentY[d]), 15);
-    dentOrder.subarray(0, dentN).sort((p, q) => key(p) - key(q));
+    dentOrder.subarray(0, dentN).sort((p, q) => dentAt[p] - dentAt[q]);
   }
   // Corner c of the traced patch, `inset` units in toward it (pushed on
   // under the frame at the board's edge, as its pit will be).
@@ -5851,8 +5860,10 @@ window.SnakeRender = (() => {
     return pGY[c] === 0 ? y - push : pGY[c] === GRID ? y + push : y;
   }
   // The traced outline, added to the current path: `inset` units inside the
-  // patch, its corners rounded by `outer` and its notches by `inner`.
-  function patchPath(inset, outer, inner) {
+  // patch, its corners rounded by `outer` and its notches by `inner`, its
+  // straight runs wobbling out by up to `tear` as its pit's lip will (see
+  // raggedPath: the same wobble, seeded by where it is).
+  function patchPath(inset, outer, inner, tear = 0) {
     for (let l = 0, i0 = 0; l < pLoops; i0 = pLoopEnd[l++]) {
       const m = pLoopEnd[l] - i0;
       if (m < 4) continue;
@@ -5860,8 +5871,9 @@ window.SnakeRender = (() => {
         const c = i0 + j;
         qx[j] = cornerX(c, inset, PIT_PUSH); qy[j] = cornerY(c, inset, PIT_PUSH);
         qr[j] = DIRX[pIn[c]] * DIRY[pOut[c]] - DIRY[pIn[c]] * DIRX[pOut[c]] > 0 ? outer : inner; // (a right turn: a corner of the patch; a left one: a notch)
+        qdx[j] = DIRX[pOut[c]]; qdy[j] = DIRY[pOut[c]]; qgx[j] = pGX[c] * CELL; qgy[j] = pGY[c] * CELL;
       }
-      cornersPath(ctx, m);
+      if (tear) raggedPath(ctx, m, tear, 1, 1); else cornersPath(ctx, m);
     }
   }
 
