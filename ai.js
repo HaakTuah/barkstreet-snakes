@@ -250,6 +250,7 @@ window.SnakeAI = (() => {
   const EMPTY = new Set();
   const ROOM_CAP = 120;    // stop counting a rival's room past this
   const DISTANCE_CAP = 14; // distance-keepers are happy once this far away
+  const FLASH_NEAR = 1;    // a flash is weighed only a way whose crawl is within this many flash prices of the best
 
   // Scratch buffers, reused between calls (grid size is fixed per page), so the
   // search allocates next to nothing however many positions it scores. Besides
@@ -257,7 +258,7 @@ window.SnakeAI = (() => {
   // (-1 off the board), and `queue` holds a breadth-first search, one distance
   // after another. No search visits a cell twice, so N * N is always enough.
   let bufN = 0, mineFree, otherFree, ownFree, risk, seen, owner, claimT, ownerStamp;
-  let foodValue, foodGrow, foodCells, queue, nbr, necks, reach;
+  let foodValue, foodGrow, foodCells, queue, nbr, necks, reach, myCells;
   let stamp = 0;
   function ensureBuffers(N) {
     if (bufN === N) return;
@@ -277,6 +278,7 @@ window.SnakeAI = (() => {
     queue = new Int32Array(size);
     necks = new Int32Array(size * 4); // (a neck: its one or two cells, the room before it, and how far it is)
     reach = new Int32Array(size);     // the soonest any rival could be in a cell (ticks from now)
+    myCells = new Int32Array(size);   // my own body as it is (marked with a stamp)
     nbr = new Int32Array(size * 4);
     for (let i = 0; i < size; i++) {
       const x = i % N, y = (i - x) / N;
@@ -344,7 +346,7 @@ window.SnakeAI = (() => {
     ensureBuffers(N);
     ensureOwners(others.length + 1);
     const steps = Math.max(1, depth); // even a depth-0 search makes one move
-    ensureBodies(steps, me.body.length + steps); // a body grows at most one cell a step
+    ensureBodies(Math.max(2, steps), me.body.length + steps + 4); // a body grows at most one cell a step (a power moves up to three at once, eating)
     mineFree.fill(0); otherFree.fill(0); risk.fill(0);
 
     const inside = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
@@ -672,9 +674,10 @@ window.SnakeAI = (() => {
         if (inside(nx, ny)) risk[ny * N + nx] += strike;
       }
       // (Its powers reach further straight on: a dash three cells, a golden
-      // leap three, anyone's leap two if there's something in front to hop.)
+      // leap three; anyone's flash two, and anyone's leap if there's
+      // something in front to hop. It may be resting them: I can't tell.)
       const fx = at(heads[k].x + o.dir.x), fy = at(heads[k].y + o.dir.y);
-      const far = o.dashes > 0 || o.leaps > 0 ? 3 : inside(fx, fy) && otherFree[fy * N + fx] > 1 ? 2 : 1;
+      const far = o.dashes > 0 || o.leaps > 0 ? 3 : Math.max(TUNE.FLASH_LENGTH, inside(fx, fy) && otherFree[fy * N + fx] > 1 ? 2 : 1);
       for (let i = 2; i <= far; i++) {
         const nx = at(heads[k].x + o.dir.x * i), ny = at(heads[k].y + o.dir.y * i);
         if (inside(nx, ny)) risk[ny * N + nx] += strike * 0.5;
@@ -1058,7 +1061,9 @@ window.SnakeAI = (() => {
     }
 
     let bestDir = me.dir, bestScore = -Infinity;
-    for (const d of DIR_LIST) {
+    const crawls = [-Infinity, -Infinity, -Infinity, -Infinity]; // (each way's, for the powers)
+    for (let k = 0; k < 4; k++) {
+      const d = DIR_LIST[k];
       if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
       let s = move(me.body, me.body.length, me.grow, d, depth, 0, 0);
       if (s === null) {
@@ -1067,90 +1072,190 @@ window.SnakeAI = (() => {
       }
       else if (ctx.mimicDir && sameDir(d, ctx.mimicDir)) s += w.mimic;
       s += Math.random() * 1e-3; // tie-break
+      crawls[k] = s;
       if (s > bestScore) { bestScore = s; bestDir = d; }
     }
-    // Powers. With nothing better than a crash every way, a leap over what's
-    // in front (golden leaps, or the plain leap when it's ready), if there's
-    // somewhere free to land: it asks for it just as a person presses.
-    if (bestScore < DEAD / 2 && !me.dashes && (me.leaps > 0 || me.leapIn === 0)) {
-      const reach = me.leaps > 0 ? 2 : 1, keep = me.grow > 0 ? me.body.length : me.body.length - 1;
-      const mine = (x, y) => { for (let j = 0; j < keep; j++) if (me.body[j].x === x && me.body[j].y === y) return true; return false; };
-      const hurdle = (x, y) => holes.has(y * N + x) || fire.has(y * N + x) || mineFree[y * N + x] > 1 || mine(x, y);
-      for (const d of [bestDir, ...DIR_LIST]) {
-        if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
-        let over = false, ok = true;
-        for (let i = 1; i <= reach + 1 && ok; i++) {
-          const x = myHead.x + d.x * i, y = myHead.y + d.y * i;
-          if (!inside(x, y)) ok = false;
-          else if (i <= reach) over ||= hurdle(x, y);
-          else ok = !hurdle(x, y);
-        }
-        if (ok && over) { bestDir = d; memory.power = view.tick; break; }
-      }
-    }
-    // Golden dashes: three cells at once along the ground. Worth one to cut a
-    // rival in two (out, if it's cut right behind its head; otherwise for a
-    // good length off it, more so the more aggressive it is), to grab
-    // something golden first, or as the way out. Never into the edge or a
-    // hole (it'd blow up), never where it would crash, and only landing
-    // somewhere with room.
-    if (me.dashes > 0 && memory.power !== view.tick) {
-      const d = bestDash(bestScore < DEAD / 2);
-      if (d) { bestDir = d; memory.flash = view.tick; }
+    // Powers: each weighed as a move. The same search as crawling, from
+    // where the power leaves me and to the same horizon, plus what it eats on
+    // the way, less the risk where it lands and a price in apples (what an
+    // apple is worth to me right now). Pressed only when it beats the best
+    // crawl, and asked for just as a person presses (memory.flash, memory.power).
+    const pick = powerPick(bestScore);
+    if (pick) {
+      bestDir = pick.d;
+      if (pick.flash) memory.flash = view.tick; else memory.power = view.tick;
     }
     return bestDir;
 
-    function bestDash(trapped) {
-      const L = TUNE.DASH_LENGTH, keep = me.grow > 0 ? me.body.length : me.body.length - 1, wrap = me.wrap > 0;
-      const own = new Set();
-      for (let j = 0; j < keep; j++) own.add(me.body[j].y * N + me.body[j].x);
-      const wall = i => holes.has(i) && !fire.has(i); // (a hole, or where the woodpecker's about to strike; fire's put out)
-      const bodyAt = (x, y) => { // a rival's body there, and how far down it, as it'll be by the dash (it's moved on since I saw it, unless stunned)
-        for (const o of others) for (let j = 0; j < o.body.length; j++) if (o.body[j].x === x && o.body[j].y === y) return { o, j0: j, j: j + Math.max(0, age - (o.stun || 0)) };
-        return null;
+    // - The flash, rested: two cells in a tick along the ground, every one
+    //   of them free by then, for about an apple (it's free, but it rests).
+    // - Golden dashes: only to cut someone in two (more readily the more
+    //   aggressive I am), to grab something golden first, or as the way out.
+    //   (Spent on speed, they stopped cutting anyone.)
+    // - Golden leaps: whenever one pays (they're free, and held they're wasted).
+    // - The plain jump: out of a crash, or to come down on food (it costs a
+    //   segment and a rest: jumping for position, or just in case, lost).
+    // Desperate, every power is half the price. (Nobody's told anyone's rests.)
+    function powerPick(crawl) {
+      const jump = me.leaps > 0 || (me.leapIn === 0 && me.body.length > TUNE.MIN_LENGTH);
+      if (me.flashIn !== 0 && !jump) return null;
+      const U = Math.max(40, foodW * w.foodRange + eatW); // (an apple, to me, now)
+      const cheap = desperate ? 0.5 : 1;
+      const keep = me.grow > 0 ? me.body.length : me.body.length - 1, stampM = ++stamp;
+      for (let j = 0; j < keep; j++) myCells[me.body[j].y * N + me.body[j].x] = stampM;
+      const trapped = crawl < DEAD / 2;
+      const pecks = view.pecks; // (the woodpecker's mark, if I'm shown it apart from the holes)
+      const cellAt = (x, y) => {
+        if (me.wrap > 0) { x = (x + N) % N; y = (y + N) % N; } // (the edges wrap for me)
+        return inside(x, y) ? y * N + x : -1;
       };
-      const gold = new Set(); // (food worth dashing for: golden things)
-      for (const f of food) if (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold) gold.add(f.y * N + f.x);
-      const cutW = 0.5 + (w.aggression || 0);
-      let best = null, bestV = 5.5;
-      for (const d of DIR_LIST) {
+      const free = i => i >= 0 && myCells[i] !== stampM && mineFree[i] <= 1; // (free by next tick)
+      // Something to hop: a body still there next tick (mine too), or fire;
+      // a hole, if I can tell it from the woodpecker's mark (a mark isn't a
+      // hole yet: I'd crawl in), or if it's that or a crash.
+      const hurdle = i => myCells[i] === stampM || (mineFree[i] > 1 && (mineFree[i] < HOLE || fire.has(i) || (pecks ? !pecks.has(i) : trapped)));
+      const path = [0, 0, 0];
+      const ate = [-1, -1, -1], ateV = [0, 0, 0];
+      let ateL = 0, ateG = 0, ateGain = 0;
+      let best = null;
+      const consider = (d, flash, v, price, extra) => {
+        if (v === null) return;
+        v += extra - price * cheap * U;
+        if (v > (best ? best.v : crawl + 1)) best = { d, flash, v };
+      };
+      for (let k = 0; k < 4; k++) {
+        const d = DIR_LIST[k];
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
-        let x = myHead.x, y = myHead.y, v = trapped ? 100 : 0, ok = true;
-        for (let i = 1; i <= L && ok; i++) {
-          x += d.x; y += d.y;
-          if (wrap) { x = (x + N) % N; y = (y + N) % N; }
-          const k = y * N + x;
-          if (!inside(x, y) || wall(k) || own.has(k)) { ok = false; break; }
-          if (fire.has(k)) { /* (fire: it's put out) */ } else if (mineFree[k] > 1) { // (a rival's body that'll still be there)
-            const b = bodyAt(x, y), px = x + d.x, py = y + d.y;
-            const thick = b && inside(px, py) && b.o.body.some(c => c.x === px && c.y === py);
-            if (!b || b.j0 === 0 || thick) { ok = false; break; } // (a head, or two thick: a crash)
-            v += b.j < TUNE.MIN_LENGTH ? 60 : (b.o.body.length - b.j) * cutW;
-          }
-          if (gold.has(k)) v += 3 * Math.max(1, foodValue[k]); // (something golden, first)
-          if (i === L && risk[k] > 0) v -= 4; // (landing by a rival's head)
-        }
-        if (!ok || v <= bestV) continue;
-        const room = roomAt(y * N + x, own, Math.min(40, myLen + 4));
-        if (room < Math.min(40, myLen + 4)) continue;
-        best = d; bestV = v;
+        const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
+        if (me.dashes > 0) consider(d, true, dashOpt(d), 0.6, extra);
+        else if (me.flashIn === 0 && crawls[k] > crawl - FLASH_NEAR * cheap * U) consider(d, true, flashOpt(d), 1, extra); // (only a way that crawls nearly as well: it's the dearest to weigh)
+        if (me.leaps > 0) consider(d, false, leapOpt(d, 2) ?? leapOpt(d, 1), 0.35, extra);
+        else if (jump) consider(d, false, leapOpt(d, 1), TUNE.LEAP_COST + 0.5, extra);
       }
       return best;
-    }
-    function roomAt(i0, own, cap) {
-      const z = ++stamp;
-      queue[0] = i0; seen[i0] = z;
-      let read = 0, write = 1;
-      while (read < write && write < cap) {
-        const i = queue[read++];
-        for (let n = 4 * i; n < 4 * i + 4; n++) {
-          const ni = nbr[n];
-          if (ni < 0 || seen[ni] === z || (holes.has(ni) && !fire.has(ni)) || mineFree[ni] > 2 || own.has(ni)) continue;
-          seen[ni] = z;
-          queue[write++] = ni;
+
+      // The cells a power passes, from my head, into path; false if one's off the board.
+      function trace(d, n) {
+        let x = myHead.x, y = myHead.y;
+        for (let i = 0; i < n; i++) {
+          const c = cellAt(x + d.x, y + d.y);
+          if (c < 0) return false;
+          x = c % N; y = (c - x) / N;
+          path[i] = c;
         }
+        return true;
       }
-      return write;
+
+      // A leap over `reach` cells (golden: two if it can, else one, as the
+      // engine tries them), landing on the next, two ticks from now.
+      function leapOpt(d, reach) {
+        const golden = me.leaps > 0;
+        if (!trace(d, reach + 1)) return null;
+        let over = false;
+        for (let i = 0; i < reach; i++) over ||= hurdle(path[i]);
+        const land = path[reach];
+        if (!over || !free(land)) return null;
+        if (!golden && !trapped && !(foodValue[land] > 0)) { // (the plain jump: out of a crash, or onto food, or just short of it)
+          const lx = land % N, past = cellAt(lx + d.x, (land - lx) / N + d.y);
+          if (!(past >= 0 && foodValue[past] > 0)) return null;
+        }
+        let L = me.body.length, g = me.grow;
+        if (!golden) for (let n = 0; n < TUNE.LEAP_COST; n++) { if (g > 0) g--; else L--; }
+        for (let i = 0; i <= reach; i++) { if (g > 0) g--; else L--; L++; }
+        const nb = bodies[2];
+        for (let j = 0; j < L; j++) {
+          if (j <= reach) { const c = path[reach - j]; nb[j].x = c % N; nb[j].y = (c - nb[j].x) / N; }
+          else { const b = me.body[j - reach - 1]; nb[j].x = b.x; nb[j].y = b.y; }
+        }
+        // (It eats where it lands, and a golden leap what it crawls over first.)
+        eatOn(reach === 2 && !hurdle(path[0]) ? path[0] : -1, land, -1, L, g, 0.85);
+        const gain = ateGain - 0.6 * risk[land];
+        const score = depth > 2 ? search(nb, ateL, ateG, depth - 2, 2, gain) : evaluate(nb, ateL, ateG, 2) + gain;
+        uneat();
+        return score;
+      }
+
+      // The plain flash: FLASH_LENGTH cells this tick, along the ground, every
+      // one free by then (a body, a hole, fire or the edge would stop it there:
+      // a crash), and never stopping in the woodpecker's mark.
+      function flashOpt(d) {
+        const F = TUNE.FLASH_LENGTH;
+        if (!trace(d, F)) return null;
+        for (let i = 0; i < F; i++) if (!free(path[i])) return null;
+        return groundOpt(F, 0);
+      }
+
+      // A golden dash: DASH_LENGTH cells, cutting a snake one cell thick and
+      // putting fire out; never into the edge or a hole (it'd blow up), a
+      // head or a snake two thick (a crash), or my own body.
+      function dashOpt(d) {
+        const L = TUNE.DASH_LENGTH;
+        if (!trace(d, L)) return null;
+        const agg = (w.aggression || 0) + (w.hunt ? 0.5 : 0);
+        let cut = 0, gold = false;
+        for (let i = 0; i < L; i++) {
+          const c = path[i], x = c % N, y = (c - x) / N;
+          if (myCells[c] === stampM) return null;
+          if (holes.has(c) && !fire.has(c)) return null; // (a hole, or the woodpecker's mark: it'd blow up, or soon)
+          if (!holes.has(c) && mineFree[c] > 1) { // (a rival's body that'll still be there)
+            let o = null, j0 = -1;
+            for (const r of others) { j0 = r.body.findIndex(q => q.x === x && q.y === y); if (j0 >= 0) { o = r; break; } }
+            if (!o || j0 === 0) return null; // (a head, or where one may be)
+            const px = x + d.x, py = y + d.y;
+            if (o.body.some(q => q.x === px && q.y === py)) return null; // (two thick)
+            const j = j0 + Math.max(0, age - (o.stun || 0)); // (where it's cut: it's moved on since I saw it)
+            cut += j < TUNE.MIN_LENGTH ? 6 * (0.5 + agg) : Math.max(0, o.body.length - j) * 0.4 * (0.5 + agg); // (in apples: out, or its tail off)
+          }
+          for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold)) gold = true;
+        }
+        if (!cut && !gold && !trapped) return null;
+        return groundOpt(L, cut * U);
+      }
+
+      // Along the ground: n cells this tick (path[0..n-1]), eating them.
+      function groundOpt(n, bonus) {
+        let L = me.body.length, g = me.grow;
+        for (let i = 0; i < n; i++) { if (g > 0) g--; else L--; L++; }
+        const nb = bodies[1];
+        for (let j = 0; j < L; j++) {
+          if (j < n) { const c = path[n - 1 - j]; nb[j].x = c % N; nb[j].y = (c - nb[j].x) / N; }
+          else { const b = me.body[j - n]; nb[j].x = b.x; nb[j].y = b.y; }
+        }
+        eatOn(path[0], path[1], n > 2 ? path[2] : -1, L, g, 1);
+        const gain = bonus + ateGain - risk[path[n - 1]];
+        const score = depth > 1 ? search(nb, ateL, ateG, depth - 1, 1, gain) : evaluate(nb, ateL, ateG, 1) + gain;
+        uneat();
+        return score;
+      }
+
+      // Eating the cells a power passes (a, b, c; -1: none), as a move eats:
+      // what it's worth (ateGain), and my length and growth after (ateL, ateG;
+      // a mushroom shrinks me). The food's off the board meanwhile: uneat puts it back.
+      function eatOn(a, b, c, L, g, soon) {
+        ate[0] = a; ate[1] = b; ate[2] = c;
+        ateGain = 0;
+        for (let k = 0; k < 3; k++) {
+          const i = ate[k];
+          ateV[k] = 0;
+          if (i < 0) continue;
+          const v = foodValue[i], change = foodGrow[i];
+          if (change < 0) {
+            let n = -change;
+            const fromGrow = Math.min(g, n);
+            g -= fromGrow;
+            n -= fromGrow;
+            for (; n > 0 && L > TUNE.MIN_LENGTH; n--) L--;
+          } else g += change;
+          if (!v) continue;
+          ateGain += v * (foodW * w.foodRange + eatW * soon);
+          ateV[k] = v;
+          foodValue[i] = 0;
+        }
+        ateL = L; ateG = g;
+      }
+      function uneat() {
+        for (let k = 0; k < 3; k++) if (ateV[k]) foodValue[ate[k]] = ateV[k];
+      }
     }
   }
 
