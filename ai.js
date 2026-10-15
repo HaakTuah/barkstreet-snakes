@@ -47,6 +47,8 @@ window.SnakeAI = (() => {
   //   thrill                        reward for every wall, body or rival head right next to me
   //   coil                          { weight, from }: from this length on, reward for keeping my head
   //                                   close behind my own tail, so I move as a ring
+  //   thick                         reward for each cell of my own body beside my head (not my neck):
+  //                                   a wall two thick can't be hopped
   const DRAB = {
     space: 1.2, territory: 1.5, aggression: 0.3,
     food: 5, eat: 80, pellet: 1.2, foodRange: 60,
@@ -250,7 +252,6 @@ window.SnakeAI = (() => {
   const EMPTY = new Set();
   const ROOM_CAP = 120;    // stop counting a rival's room past this
   const DISTANCE_CAP = 14; // distance-keepers are happy once this far away
-  const FLASH_NEAR = 1;    // a flash is weighed only a way whose crawl is within this many flash prices of the best
 
   // Scratch buffers, reused between calls (grid size is fixed per page), so the
   // search allocates next to nothing however many positions it scores. Besides
@@ -959,6 +960,14 @@ window.SnakeAI = (() => {
       //    so I move as a ring (anything inside it is boxed in).
       if (w.coil && len >= w.coil.from) score += w.coil.weight * Math.max(0, 5 - manhattan(head, body[len - 1]));
 
+      //    Thick walls (the trappers): my own body beside my head (not my
+      //    neck). Doubled back along myself, my wall is two thick: nobody
+      //    can hop it.
+      if (w.thick) {
+        const neckI = body[1].y * N + body[1].x;
+        for (let n = 4 * headI; n < 4 * headI + 4; n++) if (nbr[n] >= 0 && nbr[n] !== neckI && ownFree[nbr[n]] > 0) score += w.thick;
+      }
+
       // 9. Riding just behind a rival's tail.
       if (w.tail) {
         let best = 0;
@@ -1061,9 +1070,7 @@ window.SnakeAI = (() => {
     }
 
     let bestDir = me.dir, bestScore = -Infinity;
-    const crawls = [-Infinity, -Infinity, -Infinity, -Infinity]; // (each way's, for the powers)
-    for (let k = 0; k < 4; k++) {
-      const d = DIR_LIST[k];
+    for (const d of DIR_LIST) {
       if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
       let s = move(me.body, me.body.length, me.grow, d, depth, 0, 0);
       if (s === null) {
@@ -1072,7 +1079,6 @@ window.SnakeAI = (() => {
       }
       else if (ctx.mimicDir && sameDir(d, ctx.mimicDir)) s += w.mimic;
       s += Math.random() * 1e-3; // tie-break
-      crawls[k] = s;
       if (s > bestScore) { bestScore = s; bestDir = d; }
     }
     // Powers: each weighed as a move. The same search as crawling, from
@@ -1080,7 +1086,7 @@ window.SnakeAI = (() => {
     // the way, less the risk where it lands and a price in apples (what an
     // apple is worth to me right now). Pressed only when it beats the best
     // crawl, and asked for just as a person presses (memory.flash, memory.power).
-    const pick = powerPick(bestScore);
+    const pick = powerPick(bestScore, bestDir);
     if (pick) {
       bestDir = pick.d;
       if (pick.flash) memory.flash = view.tick; else memory.power = view.tick;
@@ -1089,6 +1095,9 @@ window.SnakeAI = (() => {
 
     // - The flash, rested: two cells in a tick along the ground, every one
     //   of them free by then, for about an apple (it's free, but it rests).
+    //   Only the way I'd crawl anyway, or any way out of a crash. (Weighing
+    //   every way cost half as much again as the whole decision, for a
+    //   third more flashes; the rest were no better for it.)
     // - Golden dashes: only to cut someone in two (more readily the more
     //   aggressive I am), to grab something golden first, or as the way out.
     //   (Spent on speed, they stopped cutting anyone.)
@@ -1096,7 +1105,7 @@ window.SnakeAI = (() => {
     // - The plain jump: out of a crash, or to come down on food (it costs a
     //   segment and a rest: jumping for position, or just in case, lost).
     // Desperate, every power is half the price. (Nobody's told anyone's rests.)
-    function powerPick(crawl) {
+    function powerPick(crawl, crawlDir) {
       const jump = me.leaps > 0 || (me.leapIn === 0 && me.body.length > TUNE.MIN_LENGTH);
       if (me.flashIn !== 0 && !jump) return null;
       const U = Math.max(40, foodW * w.foodRange + eatW); // (an apple, to me, now)
@@ -1123,12 +1132,11 @@ window.SnakeAI = (() => {
         v += extra - price * cheap * U;
         if (v > (best ? best.v : crawl + 1)) best = { d, flash, v };
       };
-      for (let k = 0; k < 4; k++) {
-        const d = DIR_LIST[k];
+      for (const d of DIR_LIST) {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
         if (me.dashes > 0) consider(d, true, dashOpt(d), 0.6, extra);
-        else if (me.flashIn === 0 && crawls[k] > crawl - FLASH_NEAR * cheap * U) consider(d, true, flashOpt(d), 1, extra); // (only a way that crawls nearly as well: it's the dearest to weigh)
+        else if (me.flashIn === 0 && (trapped || d === crawlDir)) consider(d, true, flashOpt(d), 1, extra);
         if (me.leaps > 0) consider(d, false, leapOpt(d, 2) ?? leapOpt(d, 1), 0.35, extra);
         else if (jump) consider(d, false, leapOpt(d, 1), TUNE.LEAP_COST + 0.5, extra);
       }
