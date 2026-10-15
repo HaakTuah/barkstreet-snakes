@@ -3359,8 +3359,8 @@ window.SnakeRender = (() => {
   // inside of its border, and the border an inked line along the cell
   // edges, its corners rounded. The cells are the land the rules mean (see
   // onLand), so a head on a washed cell is on it, and one off it isn't.
-  // Where two owners' land meets, the line is dashed in both colours and
-  // marches; land both claim is hatched in both. Holes are lost land: the
+  // Where two owners' land meets, the line is dashed in both colours; land
+  // both claim is hatched in both. Holes are lost land: the
   // wash and the line go round them. Sovereign's capital flies a banner,
   // the colonies their flags. While a rival's head is on the land, its
   // border breathes softly; where one crosses in, it lights up from there.
@@ -3371,7 +3371,7 @@ window.SnakeRender = (() => {
   // changes beside it. A change plays out a ring of cells at a time, so the
   // border grows across the log (with reduced motion, at once), and when
   // its owner goes, the land shrinks back into its capital. Per frame: a
-  // blit or two an owner, the contested dashes and the flags.
+  // blit or two an owner, one for the contested dashes, and the flags.
   // A colour with an alpha, as a string, cached. The alpha is quantised to
   // 1/255 (all the canvas keeps of it anyway), so an alpha that changes every
   // frame costs a lookup and the cache stays bounded: at most 256 strings a
@@ -3434,9 +3434,10 @@ window.SnakeRender = (() => {
   // Loop l's corners, placed `inset` units in toward its cells and pushed
   // `push` units out past the board's edge (a hollow there is a notch
   // bitten out of the log: its outline runs on under the frame), each with
-  // how round it is (a corner of the cells `out`, a notch `inn`) and the way
-  // on from it. Into qx, qy, qr, qdx, qdy; says how many.
-  const qx = new Float32Array(4 * N2), qy = new Float32Array(4 * N2), qr = new Float32Array(4 * N2), qdx = new Int8Array(4 * N2), qdy = new Int8Array(4 * N2);
+  // how round it is (a corner of the cells `out`, a notch `inn`), the way on
+  // from it and where it is on the grid. Into qx, qy, qr, qdx, qdy, qgx, qgy;
+  // says how many.
+  const qx = new Float32Array(4 * N2), qy = new Float32Array(4 * N2), qr = new Float32Array(4 * N2), qdx = new Int8Array(4 * N2), qdy = new Int8Array(4 * N2), qgx = new Int16Array(4 * N2), qgy = new Int16Array(4 * N2);
   function cornersOf(l, inset, out, inn, push) {
     const a = tAt[l], n = tAt[l + 1] - a;
     let m = 0;
@@ -3449,7 +3450,7 @@ window.SnakeRender = (() => {
         if (tX[i] === 0) x -= push; else if (tX[i] === GRID) x += push;
         if (tY[i] === 0) y -= push; else if (tY[i] === GRID) y += push;
       }
-      qx[m] = x; qy[m] = y; qr[m] = ax * by - ay * bx > 0 ? out : inn; qdx[m] = bx; qdy[m] = by;
+      qx[m] = x; qy[m] = y; qr[m] = ax * by - ay * bx > 0 ? out : inn; qdx[m] = bx; qdy[m] = by; qgx[m] = tX[i] * CELL; qgy[m] = tY[i] * CELL;
       m++;
     }
     return m;
@@ -3653,7 +3654,7 @@ window.SnakeRender = (() => {
       g.lineCap = g.lineJoin = 'round';
     }
     paintLand(r.layer.getContext('2d'), r.glow.getContext('2d'), r.shown, otherLand, r.color, r.idx, game.holes);
-    // Its contested sides (dashed every frame, as they march). Where its
+    // Its contested sides (dashed in their own layer: see buildDashes). Where its
     // land runs into another's that also covers its own cell there, only
     // this realm has the side, so it dashes both halves.
     for (let l = 0; l < tLoops; l++) {
@@ -3816,10 +3817,13 @@ window.SnakeRender = (() => {
       const r = fieldSpecs[i];
       if (r.gone && r.step < 0 && r.bx1 < 0) { realms.delete(r.owner); fieldSpecs.splice(i, 1); }
     }
-    for (const r of fieldSpecs) if (r.dirty || r.builtK !== k) buildRealm(r);
+    let built = fieldSpecs.length !== dashFor;
+    for (const r of fieldSpecs) if (r.dirty || r.builtK !== k) { buildRealm(r); built = true; }
+    if (built) buildDashes();
     const lively = !reduced, t = now / 1000;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     for (const r of fieldSpecs) if (r.any) ctx.drawImage(r.layer, r.X + shakeX, r.Y + shakeY);
+    if (dashAny) ctx.drawImage(dashLayer, dashX + shakeX, dashY + shakeY);
     // Lit up: breathing softly, quicker and brighter, while a rival's head is
     // on the land; flaring as it changes, and in a lightning flash; and from
     // where a head crossed in, lighting up along itself (see drawFieldHues).
@@ -3850,18 +3854,6 @@ window.SnakeRender = (() => {
     }
     ctx.globalAlpha = 1;
     ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
-    // Where two owners' land meets: half-cell dashes in both colours over an
-    // ink line, marching, each owner's between the other's.
-    const march = lively ? (t * 0.6) % 1 : 0;
-    ctx.lineCap = 'butt';
-    ctx.lineJoin = 'round';
-    for (const r of fieldSpecs) {
-      if (!r.shared.length) continue;
-      const s0 = (march + (r.idx % 2 ? 0.5 : 0)) % 1;
-      dashes(r, s0, null);
-      for (const o of fieldSpecs) if (o !== r && r.sharedTo.includes(o)) dashes(r, (s0 + 0.5) % 1, o); // (the other half, where only this realm has the side)
-    }
-    ctx.lineCap = 'round';
     // The flags, while the land under them is still there.
     for (const r of fieldSpecs) {
       const s = r.owner;
@@ -3870,37 +3862,69 @@ window.SnakeRender = (() => {
     }
   }
 
-  // Half of each of r's contested sides, from s0 along it (to s0 + 0.5), in
-  // r's colour over an ink line; or with o, the halves of the sides only r
-  // has against o's land, in o's colour.
-  function dashes(r, s0, o) {
-    const sh = r.shared, at = r.sharedAt, s1 = s0 + 0.5;
-    ctx.beginPath();
+  // Where two owners' land meets: every contested side dashed half in one
+  // owner's colour, half in the other's, over an ink line, in one cached
+  // layer for every realm, made again whenever any land is (stroked every
+  // frame, the dashes' many short pieces cost as much as the rest of the
+  // land; marching, they cost that and more).
+  let dashLayer = null, dashX = 0, dashY = 0, dashAny = false, dashFor = 0; // (dashFor: how many realms it was made for)
+  function buildDashes() {
+    dashFor = fieldSpecs.length;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const r of fieldSpecs) {
+      for (let i = 0; i < r.shared.length; i += 3) {
+        x0 = Math.min(x0, r.shared[i]); x1 = Math.max(x1, r.shared[i]);
+        y0 = Math.min(y0, r.shared[i + 1]); y1 = Math.max(y1, r.shared[i + 1]);
+      }
+    }
+    dashAny = x1 >= x0;
+    if (!dashAny) return;
+    dashX = Math.floor((x0 - 4) * k); dashY = Math.floor((y0 - 4) * k);
+    const w = Math.ceil((x1 + 4) * k) - dashX + 1, h = Math.ceil((y1 + 4) * k) - dashY + 1;
+    if (!dashLayer) dashLayer = makeLayer(w, h);
+    else if (dashLayer.width !== w || dashLayer.height !== h) { dashLayer.width = w; dashLayer.height = h; }
+    const g = dashLayer.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, w, h);
+    g.setTransform(k, 0, 0, k, -dashX, -dashY);
+    g.lineCap = 'butt';
+    g.lineJoin = 'round';
+    for (const r of fieldSpecs) {
+      if (!r.shared.length) continue;
+      const s0 = r.idx % 2 ? 0.5 : 0;
+      dashes(g, r, s0, null);
+      for (const o of fieldSpecs) if (o !== r && r.sharedTo.includes(o)) dashes(g, r, 0.5 - s0, o); // (the other half, where only this realm has the side)
+    }
+  }
+  // Half of each of r's contested sides, from s0 along it (to s0 + 0.5), on
+  // g in r's colour over an ink line; or with o, the halves of the sides
+  // only r has against o's land, in o's colour.
+  function dashes(g, r, s0, o) {
+    const sh = r.shared, at = r.sharedAt;
+    g.beginPath();
     for (let n = 0; n < r.sharedTo.length; n++) {
       if (o && r.sharedTo[n] !== o) continue;
-      const i0 = at[n], i1 = at[n + 1], L = sh[i1 - 1];
-      if (s1 <= 1) dashAlong(sh, i0, i1, s0 * L, s1 * L);
-      else { dashAlong(sh, i0, i1, s0 * L, L); dashAlong(sh, i0, i1, 0, (s1 - 1) * L); }
+      const L = sh[at[n + 1] - 1];
+      dashAlong(g, sh, at[n], at[n + 1], s0 * L, (s0 + 0.5) * L);
     }
     const col = o ? o.color : r.color;
-    ctx.strokeStyle = rgba(mix(col, '#1c1209', 0.72), 0.95);
-    ctx.lineWidth = 5;
-    ctx.stroke();
-    ctx.strokeStyle = col;
-    ctx.lineWidth = 2.6;
-    ctx.stroke();
+    g.strokeStyle = rgba(mix(col, '#1c1209', 0.72), 0.95);
+    g.lineWidth = 5;
+    g.stroke();
+    g.strokeStyle = col;
+    g.lineWidth = 2.6;
+    g.stroke();
   }
-
-  // The stretch u0..u1 along a side's line of points (sh[i0..i1]: see sideLine), added to the path.
-  function dashAlong(sh, i0, i1, u0, u1) {
+  // The stretch u0..u1 along a side's line of points (sh[i0..i1]: see sideLine), added to g's path.
+  function dashAlong(g, sh, i0, i1, u0, u1) {
     let started = false;
     for (let i = i0; i + 3 < i1; i += 3) {
       const la = sh[i + 2], lb = sh[i + 5];
       if (lb < u0 || la > u1) continue;
       const span = lb - la || 1, f0 = Math.max(0, (u0 - la) / span), f1 = Math.min(1, (u1 - la) / span);
       const ax = sh[i], ay = sh[i + 1], bx = sh[i + 3], by = sh[i + 4];
-      if (!started) { ctx.moveTo(ax + (bx - ax) * f0, ay + (by - ay) * f0); started = true; }
-      ctx.lineTo(ax + (bx - ax) * f1, ay + (by - ay) * f1);
+      if (!started) { g.moveTo(ax + (bx - ax) * f0, ay + (by - ay) * f0); started = true; }
+      g.lineTo(ax + (bx - ax) * f1, ay + (by - ay) * f1);
     }
   }
 
@@ -4051,16 +4075,17 @@ window.SnakeRender = (() => {
   // soft glow of it beyond. Only the pieces on the land's own cells (no
   // clip: the cut is cell-exact). The glow (the shape grown FIELD_GLOW_GROW,
   // at FIELD_GLOW) and the line (FIELD_LINE wide, opaque) go into the veil
-  // and are laid on as one layer; the snake drawn over them covers their
+  // and are laid on as one layer, every land's at once (on land two owners
+  // claim, the later colour wins); the snake drawn over them covers their
   // inside, so its body keeps its own colours. Where a head just crossed in:
   // a ripple at it (over the snakes: see drawRipples), and the border lights
   // up from there.
-  const FIELD_GLOW = 0.16, FIELD_GLOW_GROW = 8, FIELD_LINE = 2.6, hued = [], huedEdge = [];
+  const FIELD_GLOW = 0.16, FIELD_GLOW_GROW = 8, FIELD_LINE = 2.6, hued = [], huedEdge = [], huedOn = [];
   function drawFieldHues(now) {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    hued.length = huedEdge.length = huedOn.length = 0;
     for (const r of fieldSpecs) {
       if (!r.any || r.gone) continue;
-      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-      hued.length = huedEdge.length = 0;
       for (const s of game.snakes) {
         if (!s.alive || s === r.owner) continue;
         const a = anim.get(s);
@@ -4083,20 +4108,20 @@ window.SnakeRender = (() => {
           if (py < y0) y0 = py;
           if (py > y1) y1 = py;
         }
-        if (touches) { hued.push(a); huedEdge.push(edgeOf(s, a)); }
+        if (touches) { hued.push(a); huedEdge.push(edgeOf(s, a)); huedOn.push(r); }
       }
-      if (!hued.length) continue;
-      veilOn(0, 0, x0 - CELL - 12, y0 - CELL - 12, x1 + CELL + 12, y1 + CELL + 12);
-      ctx.fillStyle = r.color;
-      for (let i = 0; i < hued.length; i++) bodyFillsOn(hued[i], huedEdge[i] + FIELD_GLOW_GROW, r);
-      ctx.globalCompositeOperation = 'destination-out'; // (the glow down to its share)
-      ctx.globalAlpha = 1 - FIELD_GLOW;
-      ctx.fillRect(x0 - CELL - 12, y0 - CELL - 12, x1 - x0 + 2 * CELL + 24, y1 - y0 + 2 * CELL + 24);
-      ctx.globalAlpha = 1;
-      ctx.globalCompositeOperation = 'source-over'; // (the line, opaque)
-      for (let i = 0; i < hued.length; i++) bodyFillsOn(hued[i], huedEdge[i] + FIELD_LINE, r);
-      veilOff(1);
     }
+    if (!hued.length) return;
+    x0 -= CELL + 12; y0 -= CELL + 12; x1 += CELL + 12; y1 += CELL + 12; // (round the bodies, a band and a glow's width more)
+    veilOn(0, 0, x0, y0, x1, y1);
+    for (let i = 0; i < hued.length; i++) { ctx.fillStyle = huedOn[i].color; bodyFillsOn(hued[i], huedEdge[i] + FIELD_GLOW_GROW, huedOn[i]); }
+    ctx.globalCompositeOperation = 'destination-out'; // (the glow down to its share)
+    ctx.globalAlpha = 1 - FIELD_GLOW;
+    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over'; // (the line, opaque)
+    for (let i = 0; i < hued.length; i++) { ctx.fillStyle = huedOn[i].color; bodyFillsOn(hued[i], huedEdge[i] + FIELD_LINE, huedOn[i]); }
+    veilOff(1);
   }
   // Is the drawn point (px, py) on a cell of r's land?
   function onShown(r, px, py) {
@@ -5432,11 +5457,19 @@ window.SnakeRender = (() => {
     drawPits(g, holeMask, cx0 - 1, cy0 - 1, cx1 + 1, cy1 + 1);
     g.restore();
   }
-  // The pits of the holes in m (every hollow reaching cells bx0..bx1,
-  // by0..by1), on g (in the board's units).
+  // The pits of the holes in m that reach cells bx0..bx1, by0..by1, on g (in
+  // the board's units). Only the holes within a cell of those are traced (a
+  // hollow's far reaches change nothing near them, and where the window cuts
+  // a hollow, what's drawn stays outside the box being painted): a strike
+  // late in sudden death traces a corner of a big hollow, not all of it.
+  const pitWindow = new Uint8Array(N2);
   function drawPits(g, m, bx0, by0, bx1, by1) {
-    traceCells(m);
-    const lip = new Path2D(), pit = new Path2D(), deep = new Path2D(), grain = new Path2D();
+    pitWindow.fill(0);
+    for (let y = Math.max(0, by0 - 1); y <= Math.min(GRID - 1, by1 + 1); y++) {
+      for (let x = Math.max(0, bx0 - 1); x <= Math.min(GRID - 1, bx1 + 1); x++) pitWindow[y * GRID + x] = m[y * GRID + x];
+    }
+    traceCells(pitWindow);
+    const lipInk = new Path2D(), lip = new Path2D(), pitInk = new Path2D(), pit = new Path2D(), deep = new Path2D(), grain = new Path2D();
     const dust = [new Path2D(), new Path2D()], spl = [new Path2D(), new Path2D()];
     let any = false;
     for (let l = 0; l < tLoops; l++) {
@@ -5445,8 +5478,12 @@ window.SnakeRender = (() => {
       for (let j = a; j < end; j++) { x0 = Math.min(x0, tX[j]); x1 = Math.max(x1, tX[j]); y0 = Math.min(y0, tY[j]); y1 = Math.max(y1, tY[j]); }
       if (x1 <= bx0 || x0 > bx1 + 1 || y1 <= by0 || y0 > by1 + 1) continue; // (its grid points' box against the cells')
       any = true;
+      // (each line a fill a little bigger than what's filled over it, not a
+      // stroke: a stroke of a long torn edge is several fills' work)
+      raggedPath(lipInk, cornersOf(l, -PIT_LIP - 0.8, 9.8, 4.2, PIT_PUSH), 0.9, 1, 1);
       raggedPath(lip, cornersOf(l, -PIT_LIP, 9, 5, PIT_PUSH), 0.9, 1, 1);
-      raggedPath(pit, cornersOf(l, PIT_RIM, PATCH_R, PATCH_R_IN, PIT_PUSH), 1.4, -1, 2);
+      raggedPath(pitInk, cornersOf(l, PIT_RIM - 0.9, PATCH_R + 0.9, PATCH_R_IN - 0.9, PIT_PUSH), 1.4, -1, 2);
+      raggedPath(pit, cornersOf(l, PIT_RIM + 0.9, PATCH_R - 0.9, PATCH_R_IN + 0.9, PIT_PUSH), 1.4, -1, 2);
       cornersPath(deep, cornersOf(l, PIT_RIM + 2, PATCH_R, PATCH_R_IN, PIT_PUSH));
       for (let j = a; j < end; j++) sideBits(j, a, end, dust, spl);
     }
@@ -5455,17 +5492,15 @@ window.SnakeRender = (() => {
       for (let x = Math.max(0, bx0); x <= Math.min(GRID - 1, bx1); x++) {
         const key = y * GRID + x;
         if (!m[key]) continue;
-        for (let n = 0; n < 4; n++) { // (the grain, down the far wall)
-          const lx = x * CELL + 4 + noise(key, n, 3) * 24;
-          grain.moveTo(lx, y * CELL); grain.lineTo(lx + (noise(key, n, 4) - 0.5) * 2, (y + 1) * CELL);
-        }
+        for (let n = 0; n < 4; n++) grain.rect(x * CELL + 4 + noise(key, n, 3) * 24, y * CELL, 0.8, CELL); // (the grain, down the far wall)
       }
     }
     g.lineJoin = 'round';
     g.fillStyle = 'rgba(226,190,136,0.7)'; g.fill(dust[0]);
     g.fillStyle = 'rgba(176,124,70,0.75)'; g.fill(dust[1]);
+    g.fillStyle = 'rgba(28,14,5,0.5)'; g.fill(lipInk);
     g.fillStyle = '#9a683a'; g.fill(lip);
-    g.strokeStyle = 'rgba(28,14,5,0.5)'; g.lineWidth = 1.1; g.stroke(lip);
+    g.fillStyle = '#140a04'; g.fill(pitInk);
     g.save();
     g.fillStyle = '#5c3a1f'; g.fill(pit); // (the far wall...)
     g.clip(pit);
@@ -5474,16 +5509,16 @@ window.SnakeRender = (() => {
     g.translate(-3, -3);
     g.fillStyle = '#0f0804'; g.fill(deep); // (...and the dark floor)
     g.translate(7.5, 8.5);
-    g.strokeStyle = 'rgba(30,15,5,0.35)'; g.lineWidth = 0.8; g.stroke(grain);
+    g.fillStyle = 'rgba(30,15,5,0.35)'; g.fill(grain);
     g.restore();
-    g.strokeStyle = '#140a04'; g.lineWidth = 1.8; g.stroke(pit);
     g.fillStyle = '#b58350'; g.fill(spl[0]);
     g.fillStyle = '#7e522c'; g.fill(spl[1]);
   }
   // The corners at hand (from cornersOf) as a torn edge on p: each corner
   // rounded in a few straight pieces, each straight run wobbling out (sgn
   // 1, away from the cells) or in (-1) by up to amp, sampled every 3 units
-  // at fixed places on the board, so a run wobbles alike wherever it starts.
+  // at fixed places on the board, so a run wobbles alike wherever it starts
+  // (and alike at any inset: an outline and its ink keep together).
   function raggedPath(p, m, amp, sgn, salt) {
     if (m < 4) return;
     for (let j = 0; j < m; j++) {
@@ -5496,7 +5531,7 @@ window.SnakeRender = (() => {
       const nj = (j + 1) % m, ex = qx[nj] - ox * qr[nj], ey = qy[nj] - oy * qr[nj], nx = oy * sgn, ny = -ox * sgn;
       const from = ox ? bx : by, to = ox ? ex : ey, step = 3 * (ox || oy);
       for (let v = (step > 0 ? Math.floor(from / 3) + 1 : Math.ceil(from / 3) - 1) * 3; step > 0 ? v < to - 1 : v > to + 1; v += step) {
-        const x = ox ? v : bx, y = ox ? by : v, w = amp * noise(Math.round(x * 2), Math.round(y * 2), salt) * (noise(Math.round(x * 2), Math.round(y * 2), salt + 5) < 0.2 ? 2 : 1);
+        const x = ox ? v : bx, y = ox ? by : v, at = Math.round(v * 2), on = ox ? qgy[j] : qgx[j], w = amp * noise(at, on, salt) * (noise(at, on, salt + 5) < 0.2 ? 2 : 1);
         p.lineTo(x + nx * w, y + ny * w);
       }
     }
@@ -5514,8 +5549,8 @@ window.SnakeRender = (() => {
       const along = 2.5 + s * 5.4 + (noise(e, s, 6) - 0.5) * 3;
       if (along < lo || along > hi || noise(e, s, 7) < 0.45) continue;
       const out = PIT_LIP + 2 + noise(e, s, 8) * 6, r = 0.6 + noise(e, s, 9) * 1.1, x = sx + dx * along + nx * out, y = sy + dy * along + ny * out;
-      const p = dust[noise(e, s, 10) < 0.5 ? 0 : 1];
-      p.moveTo(x + r, y); p.arc(x, y, r, 0, TAU);
+      const p = dust[noise(e, s, 10) < 0.5 ? 0 : 1]; // (a chip: four corners, cheaper to fill than a round speck, and a speck that size looks no different)
+      p.moveTo(x + r, y); p.lineTo(x, y + r); p.lineTo(x - r, y); p.lineTo(x, y - r); p.closePath();
     }
     const across = sd === 0 || sd === 2, slots = across ? 4 : 2; // (torn across the grain, the top and bottom edges splinter most)
     for (let s = 0; s < slots; s++) {
