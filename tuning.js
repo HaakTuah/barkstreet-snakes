@@ -164,13 +164,17 @@ window.TUNING = Object.freeze({
   // ----------------------------------------------------------------- input
   QUEUE: 3,                 // turns you can queue ahead
   CHORD_MS: 60,             // a reversal pressed this soon before the turn it needs (a U-turn's keys rolled together) still counts
-  POWER_AFTER_TURN_MS: 180, // a fresh swipe the way you just turned, this soon after, is the turn swiped twice, not a flash (keys only steer: no such guard)
+  POWER_AFTER_TURN_MS: 300, // a fresh swipe the way the last swipe turned you, this soon after that one lifted (or while it's down), is the turn swiped twice to make sure, not a flash (a double flick puts its second touch down 150-280 ms after the first lifts; keys only steer: no such guard)
   SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells...
   SWIPE_MIN_PX: 12,         // ...and at least this far (about 3 mm), so a jittery finger doesn't turn
   SWIPE_CHAIN_PX: 8,        // ...but a finger already swiping chains its next turn after this far
-  SWIPE_AXIS: 1.5,          // ...its way this many times the other (a diagonal waits until it's clearly one way)
-  TAP_JUMP_MS: 80,          // a touch that stays still this long (or lifts sooner without travelling) is a tap: a jump (a slow swipe, 0.15 px/ms, is seen moving by about 57 ms: touch moves come once a frame)
-  TAP_STILL_PX: 6,          // ...still: within this far of where it touched
+  SWIPE_AXIS: 1.5,          // ...its way this many times the other (a slant waits until it's clearly one way)...
+  SWIPE_SURE: 2,            // ...or until it's gone this many times the distance, when its main way counts (a straight stroke 35-45° off never turned at all)
+  TAP_JUMP_MS: 80,          // a touch that stays still this long is a jump without waiting for the lift, if there's something to hop on the way (a resting thumb isn't a jump; a slow swipe, 0.15 px/ms, is seen moving by about 57 ms: touch moves come once a frame)
+  TAP_STILL_PX: 6,          // ...still: within this far of where it touched; a touch that lifts this still is a tap: a jump...
+  TAP_QUICK_MS: 250,        // ...and so is one lifted this soon that never went as far as a swipe (a finger rolls 7-11 px as it lifts in a hurry)
+  CARD_TAP_MS: 500,         // a card that comes up by itself (your death's, the round's end) takes no touch on its buttons that began before it, or this soon after...
+  CARD_MASH_MS: 350,        // ...nor one of a run of touches, each this soon after the last, that did (mashing jump never plays again)
 
   // ---------------------------------------------------------------- online
   HOST_DELAY_MAX: 150,      // the host's turns wait a friend's round trip, but never longer than this

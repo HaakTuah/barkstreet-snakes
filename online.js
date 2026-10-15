@@ -11,16 +11,17 @@
 //   { t: 'scores', from: [{ color, entries }] }  everyone's best rounds, for each other's Halls of Fame
 //   { t: 'phase', s: 'countdown', beat } | { t: 'phase', s: 'go' }
 //   { t: 'tick', ... }                      see tick() below
+//   { t: 'plan', k, s }                     where each snake goes next, once the rivals have thought (see plan())
 //   { t: 'say', id, text }                  a line of chatter
 //   { t: 'closed' }                         the host closed the room
 // Guest -> host
 //   { t: 'hello', v, name, owner, scores }  v: VERSION; owner: a player id; scores: your best rounds
 //   { t: 'turn', d }                        'up' | 'down' | 'left' | 'right' (a key: it only steers)
 //   { t: 'swipe', d }                       a fresh swipe: the way you're going flashes, any other way steers
-//   { t: 'pow', k }                         'leap' (Space, a tap) | 'flash' (E, Shift)
+//   { t: 'pow', k }                         'leap' (Space, a tap) | 'flash' (E, Shift) | 'unleap' (a jump a finger held still asked for, taken back: it was a swipe)
 window.SnakeOnline = (() => {
-  const VERSION = 7; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples
-  const POWERS = ['leap', 'flash'];
+  const VERSION = 8; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back
+  const POWERS = ['leap', 'flash', 'unleap'];
   const MAX_PEOPLE = 4;
   // Seat colors for people: the host is green; friends get colors no rival wears.
   const HUMAN_COLORS = ['#4ade80', '#fde047', '#c4b5fd', '#7dd3fc'];
@@ -88,6 +89,50 @@ window.SnakeOnline = (() => {
       sky: [WEATHER.indexOf(game.weather.kind), game.weather.since, game.weather.until],
       e: game.events.map(encodeEvent).filter(Boolean),
     };
+  }
+
+  // Where each snake goes next, as the host knows it between ticks, so a
+  // friend's screen draws everyone ahead the way they're really going (see
+  // the renderer's lead): a rival's plan once it's thought (and whether it
+  // asked to jump or flash), a person's first queued turn and powers asked
+  // for. Per snake: [way (DIR_NAMES index; -1: not known, on as it's going),
+  // jump, flash], or 0 for the dead. Drawing only: the next tick says what
+  // really happened.
+  function plan(game) {
+    return {
+      t: 'plan', k: game.tick,
+      s: game.snakes.map(s => {
+        if (!s.alive) return 0;
+        const ai = !s.isPlayer || !!s.autopilot, thought = ai && s.plannedTick === game.tick;
+        const d = ai ? (thought ? s.planned : null) : s.queue[0] || null;
+        const jump = ai ? thought && s.memory.power === game.tick : s.leapArmed >= game.tick;
+        const flash = ai ? thought && s.memory.flash === game.tick : s.flashArmed >= game.tick;
+        return [d ? DIR_NAMES.indexOf(dirName(d)) : -1, jump ? 1 : 0, flash ? 1 : 0];
+      }),
+    };
+  }
+
+  // A plan from the host, on a friend's screen (only for the tick it's for;
+  // mine: this screen's own seat, whose presses it shows itself).
+  function applyPlan(game, msg, DIRS, mine = -1) {
+    if (!msg || msg.k !== game.tick || !Array.isArray(msg.s)) return false;
+    msg.s.forEach((p, id) => {
+      const s = game.snakes[id];
+      if (!s?.alive || id === mine || !Array.isArray(p)) return;
+      const d = DIRS[DIR_NAMES[p[0]]] || null;
+      if (!s.isPlayer || s.autopilot) {
+        s.planned = d;
+        s.plannedTick = d ? game.tick : -1;
+        if (p[1]) s.memory.power = game.tick;
+        if (p[2]) s.memory.flash = game.tick;
+      } else {
+        s.queue.length = 0;
+        if (d) s.queue.push(d);
+        if (p[1]) s.leapArmed = Math.max(s.leapArmed, game.tick);
+        if (p[2]) s.flashArmed = Math.max(s.flashArmed, game.tick);
+      }
+    });
+    return true;
   }
 
   function memoryOf(s) {
@@ -158,6 +203,7 @@ window.SnakeOnline = (() => {
       s.flight = num(flight) && flight >= 0 && DIRS[DIR_NAMES[flight]] ? { dir: DIRS[DIR_NAMES[flight]] } : null;
       s.flashReadyAt = num(flashReadyAt) ? flashReadyAt : 0;
       s.flashArmed = num(flashArmed) ? flashArmed : -1;
+      s.planned = null; s.plannedTick = -1; s.queue.length = 0; // (the last tick's plan is spent: this one's follows, see applyPlan)
       const body = s.body;
       body.length = cells.length;
       for (let i = 0; i < cells.length; i++) {
@@ -224,5 +270,5 @@ window.SnakeOnline = (() => {
     return dying;
   }
 
-  return { VERSION, MAX_PEOPLE, HUMAN_COLORS, DIR_NAMES, POWERS, newCode, cleanCode, isCode, cleanName, round, tick, apply };
+  return { VERSION, MAX_PEOPLE, HUMAN_COLORS, DIR_NAMES, POWERS, newCode, cleanCode, isCode, cleanName, round, tick, apply, plan, applyPlan };
 })();
