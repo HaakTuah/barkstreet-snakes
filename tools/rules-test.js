@@ -1117,6 +1117,14 @@ const picks = (view, persona = 'drab', n = 50) => {
   });
   const p = picks(view);
   check("a starving AI doesn't chase its own beads", p.down === 50, JSON.stringify(p));
+  // ...nor a bead that'll have rotted before it gets there.
+  const rotting = () => aiView({
+    me: aiMe(line(12, 12, 4), 'right', { hungerLeft: 3000, starveIn: 3000 }),
+    others: [aiRival(1, line(20, 22, 4), 'right')],
+    food: [{ x: 12, y: 8, kind: 'pellet', owner: 1, expires: 13 }, { x: 12, y: 17, kind: 'pellet', owner: 1, expires: 999 }],
+  });
+  const r = picks(rotting);
+  check("...nor a bead that'll rot before it gets there", r.down === 50, JSON.stringify(r));
 }
 
 { // Nobody steers for a mushroom: with one right in front and room everywhere else, no persona eats it (hungry or not).
