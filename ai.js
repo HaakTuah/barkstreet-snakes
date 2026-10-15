@@ -30,7 +30,7 @@ window.SnakeAI = (() => {
   //   space, territory, aggression  room / board share / shrinking everyone else
   //   food, eat, pellet, foodRange  pull per step toward food, eating bonus, pellet worth, reach (required)
   //   normalFood                    worth of a green apple (default 1); a golden apple is worth 3x
-  //   mushroom                      worth of a mushroom, which shrinks you (default -1: avoid; never more while hungry)
+  //   mushroom                      worth of a mushroom, which shrinks you (default and at most -SHRINK: it costs that many apples' worth of length)
   //   contested                     how much food a rival reaches first still counts (0-1, true = 1; hunger raises it)
   //   hungryBelow, fedFactor        at this length or more, food matters only fedFactor as much
   //   margin, headRisk, zoneRisk    spare room wanted / fear of a rival's next move / of where it might be (required)
@@ -653,7 +653,7 @@ window.SnakeAI = (() => {
     if (desperate) {
       const w0 = ctx.w;
       ctx.w = {
-        ...w0, contested: 1, foodRange: Math.max(60, w0.foodRange), normalFood: 1, pellet: Math.max(1, w0.pellet ?? 1), mushroom: -1,
+        ...w0, contested: 1, foodRange: Math.max(60, w0.foodRange), normalFood: 1, pellet: Math.max(1, w0.pellet ?? 1), mushroom: -TUNE.SHRINK,
         margin: Math.min(2, w0.margin), headRisk: 0.4 * w0.headRisk, zoneRisk: 0.3 * w0.zoneRisk,
         territory: 0.5 * w0.territory, aggression: 0, distance: 0, tail: 0, thrill: 0, turn: 0, coil: null, thick: 0, hunt: HUNT,
       };
@@ -757,7 +757,7 @@ window.SnakeAI = (() => {
       golden: TUNE.GOLDEN_GROWTH * Math.max(apple, hunger),
       beetle: TUNE.BEETLE_GROWTH * Math.max(apple, hunger), // it moves, but it's worth what it's worth
       pellet: w.pellet ?? 1,
-      mushroom: hunger > 0 ? Math.min(-1, w.mushroom ?? -1) : w.mushroom ?? -1, // (never worth anything while hungry: it shrinks you, and it isn't a meal)
+      mushroom: Math.min(-TUNE.SHRINK, w.mushroom ?? -TUNE.SHRINK), // (it takes SHRINK segments off, and it isn't a meal: as many apples lost, hungry or not)
       leaf: 2 * Math.max(apple, hunger, 0.5), // (golden powers: worth it for what they do)
       goldcap: 1.5 * Math.max(apple, hunger, 0.5),
     };
@@ -1094,10 +1094,15 @@ window.SnakeAI = (() => {
     return bestDir;
 
     // - The flash, rested: two cells in a tick along the ground, every one
-    //   of them free by then, for about an apple (it's free, but it rests).
-    //   Only the way I'd crawl anyway, or any way out of a crash. (Weighing
-    //   every way cost half as much again as the whole decision, for a
-    //   third more flashes; the rest were no better for it.)
+    //   of them free by then, only the way I'd crawl anyway (or any way out
+    //   of a crash). It costs two apples (it's free, but it rests: at one,
+    //   rivals flashed three times a minute and did no better than the same
+    //   rivals never flashing, or worse; an edge that small is mostly the
+    //   search's own guesswork), or one to win a race (food a rival could
+    //   reach as soon as I'd crawl there, but not as soon as I'd flash) or
+    //   to get out of a crash. (Weighing every way cost half as much again
+    //   as the whole decision, for a third more flashes; the rest were no
+    //   better for it.)
     // - Golden dashes: only to cut someone in two (more readily the more
     //   aggressive I am), to grab something golden first, or as the way out.
     //   (Spent on speed, they stopped cutting anyone.)
@@ -1136,11 +1141,22 @@ window.SnakeAI = (() => {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
         if (me.dashes > 0) consider(d, true, dashOpt(d), 0.6, extra);
-        else if (me.flashIn === 0 && (trapped || d === crawlDir)) consider(d, true, flashOpt(d), 1, extra);
+        else if (me.flashIn === 0 && (trapped || d === crawlDir)) consider(d, true, flashOpt(d), trapped || race(d) ? 1 : 2, extra);
         if (me.leaps > 0) consider(d, false, leapOpt(d, 2) ?? leapOpt(d, 1), 0.35, extra);
         else if (jump) consider(d, false, leapOpt(d, 1), TUNE.LEAP_COST + 0.5, extra);
       }
       return best;
+
+      // A race: food straight on, or that way, that a rival could get to
+      // just as soon as I'd crawl there (but not as soon as I'd flash there,
+      // a tick sooner).
+      function race(d) {
+        for (const f of food) {
+          const i = f.y * N + f.x, k = Math.abs(f.x - myHead.x) + Math.abs(f.y - myHead.y);
+          if (foodValue[i] > 0 && reach[i] === k && Math.abs(f.x - myHead.x - 2 * d.x) + Math.abs(f.y - myHead.y - 2 * d.y) === k - 2) return true;
+        }
+        return false;
+      }
 
       // The cells a power passes, from my head, into path; false if one's off the board.
       function trace(d, n) {
