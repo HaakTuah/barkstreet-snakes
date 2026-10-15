@@ -488,6 +488,7 @@ window.SnakeRender = (() => {
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.drawImage(barkLayer, 0, 0);
     holesDrawn = 0;
+    holeMask.fill(0); // (the holes are painted again, from the first)
     scorchDrawn = 0; // (scorch marks are baked again too)
   }
 
@@ -3644,13 +3645,14 @@ window.SnakeRender = (() => {
     const ux = r.bx0 * CELL - LAND_MARGIN, uy = r.by0 * CELL - LAND_MARGIN;
     r.X = Math.floor(ux * k); r.Y = Math.floor(uy * k);
     const pw = Math.ceil(((r.bx1 + 1) * CELL + LAND_MARGIN) * k) - r.X + 1, ph = Math.ceil(((r.by1 + 1) * CELL + LAND_MARGIN) * k) - r.Y + 1;
-    if (!r.layer) { r.layer = makeLayer(pw, ph); r.glow = makeLayer(pw, ph); }
+    if (!r.layer) { r.layer = makeLayer(pw, ph); r.glow = makeLayer(pw / 2, ph / 2); }
     for (const c of [r.layer, r.glow]) {
-      if (c.width !== pw || c.height !== ph) { c.width = pw; c.height = ph; }
+      const s = c === r.glow ? 0.5 : 1, w = Math.ceil(pw * s), h = Math.ceil(ph * s); // (the glow at half the resolution: it's soft, and a quarter of the pixels to light up)
+      if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
       const g = c.getContext('2d');
       g.setTransform(1, 0, 0, 1, 0, 0);
-      g.clearRect(0, 0, pw, ph);
-      g.setTransform(k, 0, 0, k, -r.X, -r.Y);
+      g.clearRect(0, 0, w, h);
+      g.setTransform(k * s, 0, 0, k * s, -r.X * s, -r.Y * s);
       g.lineCap = g.lineJoin = 'round';
     }
     paintLand(r.layer.getContext('2d'), r.glow.getContext('2d'), r.shown, otherLand, r.color, r.idx, game.holes);
@@ -3841,15 +3843,16 @@ window.SnakeRender = (() => {
       const pulse = lively ? 0.5 + 0.5 * Math.sin(t * (2.2 + 5 * r.alertA)) : 0.5;
       const flare = Math.max(0, 1 - (now - r.changedAt) / 900, 1 - (now - flashAt) / 700);
       const a = Math.min(1, r.alertA * (0.1 + 0.15 * pulse) + 0.7 * flare);
-      if (a > 0.01) { ctx.globalAlpha = a; ctx.drawImage(r.glow, r.X + shakeX, r.Y + shakeY); }
+      const gw = r.glow.width, gh = r.glow.height;
+      if (a > 0.01) { ctx.globalAlpha = a; ctx.drawImage(r.glow, r.X + shakeX, r.Y + shakeY, 2 * gw, 2 * gh); }
       for (let i = r.pulses.length - 1; i >= 0; i--) {
         const p = r.pulses[i], u = (now - p.at) / 650;
         if (u >= 1 || u < 0) { r.pulses.splice(i, 1); continue; }
-        const half = CELL * (0.8 + 4 * u) * k, cx = p.x * k - r.X, cy = p.y * k - r.Y, gw = r.glow.width, gh = r.glow.height;
+        const half = CELL * (0.8 + 4 * u) * k / 2, cx = (p.x * k - r.X) / 2, cy = (p.y * k - r.Y) / 2; // (in the glow's half-size pixels)
         const sx = Math.max(0, Math.floor(cx - half)), sy = Math.max(0, Math.floor(cy - half)), ex = Math.min(gw, Math.ceil(cx + half)), ey = Math.min(gh, Math.ceil(cy + half));
         if (ex <= sx || ey <= sy) continue;
         ctx.globalAlpha = 0.9 * (1 - u);
-        ctx.drawImage(r.glow, sx, sy, ex - sx, ey - sy, r.X + sx + shakeX, r.Y + sy + shakeY, ex - sx, ey - sy);
+        ctx.drawImage(r.glow, sx, sy, ex - sx, ey - sy, r.X + 2 * sx + shakeX, r.Y + 2 * sy + shakeY, 2 * (ex - sx), 2 * (ey - sy));
       }
     }
     ctx.globalAlpha = 1;
@@ -5423,7 +5426,6 @@ window.SnakeRender = (() => {
   function syncHoles() {
     if (!game || !staticLayer || game.holes.size === holesDrawn) return;
     if (game.holes.size < holesDrawn) resetStatic();
-    if (!holesDrawn) holeMask.fill(0);
     let x0 = GRID, y0 = GRID, x1 = -1, y1 = -1, i = 0;
     for (const key of game.holes) {
       if (i++ < holesDrawn) continue;
