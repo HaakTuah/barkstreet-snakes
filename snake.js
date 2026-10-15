@@ -132,8 +132,10 @@
     youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
     youStarvingSmall: 'Starving at\u00a03, with nothing to spare. Eat now.',
     // A press that couldn't go (the first time each way, in a round): a jump, or a flash.
+    // (A flash is free, FLASH_COST 0, so it's never too small; it has nowhere
+    // to go only over a crash: straight back in, or blown up at the edge or a hole.)
     fizzle: { resting: 'Your jump needs a moment.', small: 'Too small to jump: it costs tail.', landing: 'Nowhere to land.' },
-    fizzleFlash: { resting: 'Your flash needs a moment.', small: 'Too small to flash: it costs tail.' },
+    fizzleFlash: { resting: 'Your flash needs a moment.', landing: 'Nowhere to flash.' },
     newBest: n => `New best: ${n}!`,
     startOver: 'Start over?',
     startOverText: key => key ? `${key} again starts over. P, Esc or an arrow keeps going.` : 'This round’s gone if you do.',
@@ -368,13 +370,15 @@
     }
   }
 
-  // How far ahead the board is drawn, in ticks (a time, so it's the same lead
-  // at every speed; a person's timing is in milliseconds, not ticks): only
-  // while someone's playing on this screen. Watching alone (Watch AIs, or
-  // after you're out) there's no press to keep up with, so the board is
-  // drawn on its ticks and the rivals have the whole tick to think in (see
-  // think). Going away after your death, the lead eases out (the board a
-  // touch slower for a moment, never while it's held still): nothing jumps back.
+  // How far ahead the board is drawn, in ticks (DRAW_LEAD_MS, but at most
+  // half a tick: 60 ms at 120 ms ticks, 45 at full speed; any more, and late
+  // in a tick your head was drawn in the next cell while a press still turned
+  // it at this one): only while someone's playing on this screen. Watching
+  // alone (Watch AIs, or after you're out) there's no press to keep up
+  // with, so the board is drawn on its ticks and the rivals have the whole
+  // tick to think in (see think). Going away after your death, the lead
+  // eases out (the board a touch slower for a moment, never while it's held
+  // still): nothing jumps back.
   let leadAt = 0;
   const leadWanted = () => (spectating() && !online ? 0 : Math.min(T.DRAW_LEAD_MAX, T.DRAW_LEAD_MS / tickLen));
   function easeLead(dt, held = false) {
@@ -575,7 +579,7 @@
     if (hosting()) online.room.broadcast({ t: 'phase', s: 'go' });
     if (guesting()) online.lastTickAt = performance.now();
     game.went = true; // (the round has had its Go: a nap from here on wakes through one quiet beat)
-    if (document.activeElement?.closest?.('button') && !document.activeElement.closest('#overlay, #records')) document.activeElement.blur(); // (Space naps again: a header button Tabbed to last round lets go)
+    if (document.activeElement?.closest?.('button') && !document.activeElement.closest('#overlay, #records')) document.activeElement.blur(); // (Space jumps again: a header button Tabbed to last round lets go)
     state = 'running';
     hideCard();
     showYou(playerAlive());
@@ -607,8 +611,8 @@
   }
 
   // Start over? (Enter or R while you're alive in a round): napping, with the
-  // card itself focused (not a button), so the same key again confirms; Space,
-  // P, Escape or an arrow keeps going, at once (you were playing a moment ago).
+  // card itself focused (not a button), so the same key again confirms; P,
+  // Escape or an arrow keeps going, at once (you were playing a moment ago).
   let askingStartOver = false, napToast = null;
   let startOverFromNap = false;
   function askStartOver(key) {
@@ -1153,8 +1157,8 @@
     overlay.classList.remove('hidden');
     overlay.querySelector('.card').scrollTop = 0;
     if (!card.quiet) say(announcement(card));
-    // Focus: the card itself on the first card, on a countdown (Space naps
-    // there, so a focused Go! mustn't take it) and when the carve is offered
+    // Focus: the card itself on the first card, on a countdown (a focused Go!
+    // mustn't take a key meant for the round) and when the carve is offered
     // (Tab goes to the name field); otherwise its main button.
     if (document.activeElement !== nameInput) {
       const cardEl = overlay.querySelector('.card');
@@ -1977,6 +1981,8 @@
     ['Your powers', [
       ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space'}: hop a snake, a hole or fire. It costs your tail’s tip, then rests ${secs(T.LEAP_COOLDOWN_MS)} s.`],
       ['flash', 'Flash', `${touchFirst ? 'A swipe the way you’re going' : 'E or Shift'}: two cells in a blink, free. Then it rests ${secs(T.FLASH_COOLDOWN_MS)} s.`],
+      ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden flashes.'],
+      ['rests', 'Resting', 'Two half-rings round your head: your jump (left) and your flash (right) coming back.'],
     ]],
     ['The log', [
       ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
@@ -1985,7 +1991,7 @@
     ]],
   ];
   // (Until the renderer can draw a picture, a stand-in.)
-  const GUIDE_STAND_IN = { apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', pellet: '🟢', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', fire: '🔥', hole: '🕳️', land: '🚩' };
+  const GUIDE_STAND_IN = { apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', pellet: '🟢', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', hole: '🕳️', land: '🚩' };
   function renderGuide() {
     const px = Math.round(36 * (window.devicePixelRatio || 1));
     for (const [title, rows] of GUIDE) {
@@ -2564,7 +2570,7 @@
     if (text !== helpText) { helpText = text; setHint(helpEl, text); }
   }
 
-  // Hints wrap only between items ("Space naps" never splits across lines).
+  // Hints wrap only between items ("E or Shift flashes" never splits across lines).
   // Items joined by " · ", each kept whole, a line breaking only after a dot
   // (the dot rides with the item before it); ⏸ drawn as the pause button's bars.
   function setHint(el, text) {

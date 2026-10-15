@@ -1633,7 +1633,9 @@ window.SnakeRender = (() => {
     }
     return s.plannedTick === game.tick && s.planned ? s.planned : s.dir;
   }
-  // Has it asked to jump, or to flash (a flash goes first), for this tick?
+  // Has it asked to jump, or to flash, for this tick? (Asked both, the game
+  // hops first if the jump can go; predict() still guesses the flash, and a
+  // wrong guess eases back.)
   const asksJump = s => s.leapArmed >= game.tick || ((!s.isPlayer || s.autopilot) && s.plannedTick === game.tick && s.memory.power === game.tick);
   const asksFlash = s => s.flashArmed >= game.tick || ((!s.isPlayer || s.autopilot) && s.plannedTick === game.tick && s.memory.flash === game.tick);
   // Where a snake goes next, as far as this screen can tell (a.mx, a.my;
@@ -2476,7 +2478,7 @@ window.SnakeRender = (() => {
     const s = findById(viewerId), a = s && s.alive && s.stunUntil >= game.tick ? anim.get(s) : null;
     const q = a && a.n ? queuedOf(s, a) : null;
     if (!q) return;
-    const flash = s.flashArmed >= s.stunUntil, power = flash || s.leapArmed >= s.stunUntil; // (a flash goes first)
+    const flash = s.flashArmed >= s.stunUntil, power = flash || s.leapArmed >= s.stunUntil; // (asked both: the flash's mark, though the game hops first if the jump can go)
     const pts = a.pts, so = starsOff(s);
     const d = (q.y && (so < 0) === (q.y < 0) ? Math.abs(so) + CELL * 0.62 : CELL * 0.95) + (power ? CELL * (flash ? 0.18 : 0.28) : 0);
     const w = CELL * 0.2, m = CELL * 0.12;
@@ -6398,7 +6400,7 @@ window.SnakeRender = (() => {
         const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
         spawn(x, y, 10, 80, 600, 2.4, '#e2e8f0', '#94a3b8');
         if (!reduced) for (let k = 0; k < 4; k++) mote(x + (Math.random() - 0.5) * CELL * 0.6, y, (Math.random() - 0.5) * 12, -20 - Math.random() * 14, 1200, 4 + Math.random() * 3, 2);
-      } else if (e.type === 'cut') { // the woodpecker took its tail, or a dash cut through it
+      } else if (e.type === 'cut') { // a golden flash (a dash) cut through it (the woodpecker's cuts, its "Ouch!", went in round four)
         floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.2), e.by != null ? 'Snip!' : 'Ouch!');
         if (e.by != null) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 220, 500, 2.4, '#d4a017', e.snake.color || '#fffbea');
       } else if (e.type === 'alight') { // crawled into the fire: a burst of flame
