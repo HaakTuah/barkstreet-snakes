@@ -174,7 +174,7 @@
   const WHY_OUT = { tiny: ' at your smallest', boxed: ' with nowhere to turn', shorter: ', and it was longer', even: ', the same length: both out' };
   const howYouDied = p => {
     if (p.fatal === 'hunger') return 'You ran out of food at your smallest'; // (under "Starved!": not "You starved" again)
-    if (p.fatal === 'pecked') return 'The woodpecker struck right by your head';
+    if (p.fatal === 'pecked') return 'The woodpecker struck right under your head'; // (only a head in the patch is out: a body over it bridges it)
     if (p.fatal === 'fire') return 'The flames got you at your smallest';
     if (p.fatal === 'cut') return `${game.snakes[p.killerId]?.name || 'A'}’s golden flash cut you right behind the head`;
     const k = p.killerId != null ? game.snakes[p.killerId] : null;
@@ -810,11 +810,18 @@
   // first). Spawns are news once a round; what happens to you is a lesson
   // the first time; repeats are left to the board's own floaters.
   function announce(dying) {
-    const alive = game.snakes.filter(s => s.alive);
     if (player() && dying.includes(player())) { // (your own death: its card is a moment away, and says it; nothing over the freeze-frame)
       if (!game.firstBlood) { game.firstBlood = true; Audio.play('stinger'); }
       return;
     }
+    news(dying);
+    // Sudden death's trickle (once a round): news that waits its turn, after
+    // whatever this tick said, never cutting short the woodpecker's own banner
+    // (or first blood, or the last two).
+    if (game.events.some(e => e.type === 'lastApples')) toast(FLAVOR.lastApples, 2800, '', 'lesson');
+  }
+  function news(dying) {
+    const alive = game.snakes.filter(s => s.alive);
     if (dying.length && !game.firstBlood) {
       game.firstBlood = true;
       Audio.play('stinger');
@@ -827,7 +834,6 @@
       }
     }
     for (const e of game.events) if (e.type === 'woodpecker') { flashFrame('bird', true); return toast(lineFor('woodpecker'), 2800, 'bird', 'round'); }
-    for (const e of game.events) if (e.type === 'lastApples') return toast(FLAVOR.lastApples, 2800, '', 'round'); // (sudden death's trickle: once a round)
     if (dying.length && alive.length === 2) {
       const [a, b] = isMe(alive[0]) ? [alive[1], alive[0]] : alive;
       Audio.play('riser');
@@ -869,7 +875,7 @@
       if (e.type === 'eat' && e.own && once('ownBead')) return toast(FLAVOR.youOwnBead, 2600, 'you', 'lesson');
       if (e.type === 'eat' && e.gold) { flashFrame('gold', true); return toast(FLAVOR.youGoldBeetle(e.snake.leaps), 3000, 'gold', 'lesson'); }
       if (e.type === 'eat' && e.kind === 'leaf') { flashFrame('gold', true); return toast(FLAVOR.youLeaf(e.snake.dashes), 3200, 'gold', 'lesson'); }
-      if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round(T.WRAP_MS / 1000)), 3000, 'gold', 'lesson'); }
+      if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round((me.wrapUntil - game.time) / 1000)), 3000, 'gold', 'lesson'); } // (a second one adds to the first: the real total)
       if (e.type === 'eat' && e.kind === 'beetle') flashFrame('beetle');
       if (e.type === 'eat' && e.kind === 'golden') flashFrame('gold', true);
       if (e.type === 'eat' && e.kind === 'mushroom' && once('mushroom')) return toast(pick(FLAVOR.youMushroom), 1800, 'warn');
@@ -1812,7 +1818,7 @@
       ['apple', 'Apple', 'Worth 1, and a full tummy. Leave it too long and it rots.'],
       ['golden', 'Golden apple', `Worth ${T.GOLDEN_GROWTH}, and everyone saw it land.`],
       ['beetle', 'Beetle', `Worth ${T.BEETLE_GROWTH}. It scurries from heads, at half your speed.`],
-      ['pellet', 'Beads', 'What a crash leaves behind: worth 1 each, and they rot. Your own give the length back, not a meal.'],
+      ['pellet', 'Beads', `What a crash knocks off, and what a dead snake leaves (${T.CORPSE_EVERY === 2 ? 'every other segment' : T.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${T.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own give the length back, not a meal.`],
       [['baked', 'roast'], 'Baked and roast', `Food left in a fire bakes: worth ${T.COOKED_GROWTH}, if you can take the heat. Then it’s ash.`],
       ['mushroom', 'Mushroom', `Poison: ${T.SHRINK} off your tail (never below ${T.MIN_LENGTH}). Mind the purple haze.`],
     ]],
@@ -1850,7 +1856,10 @@
         const text = document.createElement('p');
         const strong = document.createElement('strong');
         strong.textContent = name;
-        text.append(strong, ' ', rule);
+        const pause = document.createElement('span'); // (a screen reader hears the name, then the rule: not "Golden beetle 2 golden jumps")
+        pause.className = 'sr-only';
+        pause.textContent = '.';
+        text.append(strong, pause, ' ', rule);
         li.append(pics, text);
         list.append(li);
       }
