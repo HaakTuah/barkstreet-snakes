@@ -1493,8 +1493,8 @@ window.SnakeEngine = (() => {
       while (n-- > 0 && s.body.length > T.MIN_LENGTH) s.body.pop();
     } else {
       const growth = f.kind === 'golden' ? T.GOLDEN_GROWTH : f.kind === 'beetle' ? T.BEETLE_GROWTH : f.cooked ? T.COOKED_GROWTH : 1;
-      if (!own) {
-        const lasts = mealLasts(game);
+      if (!own) { // (a meal never leaves it less time than it had: one just after HUNGER_MID_FROM_MS on top of one just before keeps the longer; mealMs, what a full bar means, is then that long)
+        const lasts = Math.max(mealLasts(game), hungerLeft(game, s));
         s.lastAte = game.time - (T.HUNGER_MS - lasts);
         s.nextStarve = game.time + lasts;
         s.mealMs = lasts;
