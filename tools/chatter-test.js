@@ -8,8 +8,10 @@
 // pecked under, put out by the rain, sees food burn or rot, starves, is cut
 // by a dash, and (where it has lines for them) flashes or hears the last
 // apples fall; Sovereign and Colonist mind rot on their land, by the one
-// land rule; and the rarer lines keep to their rests. Last, a few whole AI
-// rounds with the chatter listening, to see nothing throws.
+// land rule; and the rarer lines keep to their rests. Then a few whole AI
+// rounds with the chatter listening, to see nothing throws. Last, the sound
+// (audio.js on a stand-in AudioContext): a rival's flash, jump or the like
+// never silences yours, and your own golden ones in a row are each heard.
 //
 //   node tools/chatter-test.js
 const fs = require('fs');
@@ -301,6 +303,74 @@ console.log('ok   the rarer lines keep to their rests; land is radius + LAND_REA
   console.log(`ok   ${rounds} whole AI rounds with the chatter listening: ${total} lines, nothing thrown`);
 }
 
+// ------------------------------------------------------------ the sound's gaps
+// audio.js on a stand-in AudioContext whose nodes take any call: a cue that
+// plays builds its voice (a gain), one its gap holds back builds nothing.
+// Yours never waits on a rival's (now that every rival flashes a few times a
+// minute, it would swallow yours); a rival's gives way to yours. And your own
+// golden dashes or jumps, one straight after another, are each heard.
+{
+  const asrc = fs.readFileSync(path.join(ROOT, 'audio.js'), 'utf8');
+  const head = '  const MIN_INTERVAL = {', start = asrc.indexOf(head), end = asrc.indexOf('\n  };\n', start);
+  if (start < 0 || end < 0) throw new Error('no MIN_INTERVAL in audio.js');
+  const GAP = new Function(`return ${asrc.slice(start + head.length - 1, end + '\n  }'.length)}`)();
+  // The quickest your own can come again: a dash the very next tick, a jump the
+  // tick after it lands; at full speed, and dealt out a frame early on a 30 Hz screen.
+  const FRAME = 1000 / 30;
+  const soonest = { dash: T.MIN_TICK - FRAME, leap: 2 * T.MIN_TICK - FRAME };
+  for (const [cue, ms] of Object.entries(soonest)) check(GAP[cue] < ms, `the '${cue}' gap (${GAP[cue]} ms) is under the quickest your own can come again (${ms.toFixed(0)} ms)`);
+  let clock = 0, gains = 0;
+  const stub = () => new Proxy(function () { return stub(); }, {
+    get: (f, k) => (k in f || typeof k === 'symbol' ? f[k] : (f[k] = stub())),
+  });
+  class Context {
+    constructor() { this.state = 'suspended'; this.sampleRate = 8000; this.destination = stub(); }
+    get currentTime() { return clock / 1000; }
+    resume() { this.state = 'running'; this.onstatechange?.(); }
+    suspend() { this.state = 'suspended'; }
+    createGain() { gains++; return stub(); }
+    createBuffer(channels, length) { return { getChannelData: () => new Float32Array(length) }; }
+  }
+  for (const m of ['createDynamicsCompressor', 'createBiquadFilter', 'createOscillator', 'createBufferSource', 'createStereoPanner', 'createPeriodicWave']) Context.prototype[m] = stub;
+  const actx = vm.createContext({
+    window: { AudioContext: Context, performance: { now: () => clock } },
+    document: { hidden: false, addEventListener() {} }, setTimeout: () => 0, clearTimeout() {},
+  });
+  vm.runInContext(asrc, actx, { filename: 'audio.js' });
+  const A = actx.window.SnakeAudio;
+  check(A.unlock(), 'the sound unlocks on the stand-in context');
+  const sounds = (name, opts) => { const before = gains; A.play(name, opts); return gains > before; };
+  const RIVAL = { rival: true, pan: 0.4 };
+  // (Each case starts well apart from the last, so nothing earlier is still sounding or resting.)
+  for (const cue of ['flash', 'dash', 'leap', 'alight', 'wrap']) {
+    const gap = GAP[cue];
+    check(gap > 0, `'${cue}' has a gap`);
+    clock += 5000;
+    sounds(cue, RIVAL);
+    check(sounds(cue), `your ${cue} in the same moment as a rival's still sounds`);
+    clock += 5000;
+    sounds(cue, RIVAL); clock += gap / 3;
+    check(sounds(cue), `your ${cue} just after a rival's still sounds`);
+    clock += 5000;
+    sounds(cue); clock += gap / 3;
+    check(!sounds(cue, RIVAL), `a rival's ${cue} just after yours gives way`);
+    clock += 5000;
+    check(sounds(cue, RIVAL), `a rival's ${cue} sounds`); clock += gap / 3;
+    check(!sounds(cue, RIVAL), `...another rival's ${gap / 3} ms later waits`); clock += gap;
+    check(sounds(cue, RIVAL), `...and one ${gap} ms after that sounds`);
+    clock += 5000;
+    check(sounds(cue), `your ${cue} sounds`); clock += gap / 3;
+    check(!sounds(cue), `...your next ${gap / 3} ms later waits (bursts don't stack)`); clock += gap;
+    check(sounds(cue), `...and your next ${gap} ms after that sounds`);
+  }
+  for (const [cue, ms] of Object.entries(soonest)) {
+    clock += 5000;
+    sounds(cue, { gold: true }); clock += ms;
+    check(sounds(cue, { gold: true }), `your golden ${cue} ${ms.toFixed(0)} ms after your last still sounds`);
+  }
+  console.log('ok   the sound: a rival\'s flash, dash, jump, catching fire or golden mushroom never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard');
+}
+
 if (fails) { console.error(`${fails} failed`); process.exit(1); }
-console.log(`ok   ${checks} checks of the chatter playing`);
+console.log(`ok   ${checks} checks of the chatter and the sound playing`);
 console.log('all good');

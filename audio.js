@@ -29,12 +29,16 @@ window.SnakeAudio = (() => {
   const RIVAL_VOLUME = 0.5;    // a rival's leap or dash, next to yours...
   const RIVAL_LOWPASS = 2600;  // ...and a little duller, as if further off
   // Shortest gap in ms between two plays of the same cue, so bursts don't stack up.
+  // A rival's keeps its gap from rivals' and from yours; yours, only from your own
+  // (a rival's flash never swallows yours). A dash's is well under the fastest tick, and a
+  // jump's under two (it lands first), a 30 Hz screen's frame and all: your golden dashes
+  // or jumps on each other's heels are each heard.
   const MIN_INTERVAL = {
     eat: 40, golden: 60, meat: 60, mushroom: 80, crunch: 80, beetle: 3000, leaf: 60,
     rivalDeath: 120, death: 250, best: 400, win: 600, winBest: 600,
     beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, hungerWarn: 1500, ui: 30, // peck: never more than 3 in any second
     crackle: 300, thunder: 900, gust: 1500, burrow: 1000, dig: 250, rainbow: 1500, rain: 1500,
-    ko: 200, close: 1400, field: 800, bonk: 150, bonked: 300, leap: 200, thunk: 250, dash: 150, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
+    ko: 200, close: 1400, field: 800, bonk: 150, bonked: 300, leap: 120, thunk: 250, dash: 50, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
     flash: 150, flashReady: 600, lastApples: 4000,
   };
   // A cue that stands for others for a while: a win that's also a best is one phrase.
@@ -70,7 +74,7 @@ window.SnakeAudio = (() => {
   let generation = 0;          // bumped when the voice count is reset, so late 'ended' events can't skew it
   let lastEnd = 0;             // context time when the last scheduled sound stops
   let building = null;         // the cue being scheduled right now: { pending, gen, nodes, end }
-  const lastPlayed = {};       // cue name -> ms timestamp
+  const lastPlayed = {};       // cue name (a rival's play: name + '~') -> ms timestamp (see MIN_INTERVAL)
   const coveredUntil = {};     // cue name -> ms timestamp (see COVERS)
   const sounding = {};         // cue name -> { voice, end } of its latest play (see CHOKES)
 
@@ -831,7 +835,8 @@ window.SnakeAudio = (() => {
     const cue = CUES[name];
     const o = opts || NO_OPTS;
     const ms = now();
-    if (ms - (lastPlayed[name] ?? -Infinity) < (MIN_INTERVAL[name] || 0) || ms < (coveredUntil[name] || 0)) return;
+    const key = o.rival ? name + '~' : name, gap = MIN_INTERVAL[name] || 0;
+    if (ms - (lastPlayed[key] ?? -Infinity) < gap || ms - (lastPlayed[name] ?? -Infinity) < gap || ms < (coveredUntil[name] || 0)) return;
 
     // If onended never arrived (it can go missing), the clock still tells us everything has stopped.
     if (voices > 0 && ctx.currentTime > lastEnd + 0.5) { voices = 0; generation++; }
@@ -842,7 +847,7 @@ window.SnakeAudio = (() => {
     const volume = Number.isFinite(o.volume) ? Math.min(1, Math.max(0, o.volume)) : 1;
     if (volume <= 0) return;
 
-    lastPlayed[name] = ms;
+    lastPlayed[key] = ms;
     for (const k in COVERS[name]) coveredUntil[k] = ms + COVERS[name][k];
     pitchMul = Math.pow(2, pitch / 12);
     volMul = volume * (o.rival ? RIVAL_VOLUME : 1);
