@@ -4805,17 +4805,19 @@ window.SnakeRender = (() => {
   // A roast: a piece of snake that fell off in the flames, browned all over.
   const ROAST = '#92400e|';
   // A bead going off, laid over it as it does: a dull brown film and brown
-  // spots, for any bead's colours. From BEAD_OFF ticks before it rots it
+  // spots, for any bead's colours; on a dark bead (Vulture's black,
+  // Wildcard's navy), where brown spots don't show, a pale mould instead:
+  // a grey film and grey-beige spots. From BEAD_OFF ticks before it rots it
   // comes over it; in its last BEAD_GOING it shrinks and dims.
-  const BEAD_OFF = 45, BEAD_GOING = 15;
-  const beadRotSprite = () => sprite('beadrot', '', drawBeadRot);
-  const drawBeadRot = g => {
-    const c = CELL, r = c * 0.26;
-    g.fillStyle = 'rgba(82,60,34,0.6)';
+  const BEAD_OFF = 45, BEAD_GOING = 15, BEAD_DARK = 0.26; // (a bead this dark or darker goes off pale)
+  const beadRotSprite = pale => sprite('beadrot', pale ? 'pale' : '', drawBeadRot);
+  const drawBeadRot = (g, variant) => {
+    const c = CELL, r = c * 0.26, pale = variant === 'pale';
+    g.fillStyle = pale ? 'rgba(150,142,120,0.45)' : 'rgba(82,60,34,0.6)';
     g.beginPath(); g.arc(0, 0, r + c * 0.035, 0, TAU); g.fill();
-    g.fillStyle = 'rgba(52,30,10,0.65)';
+    g.fillStyle = pale ? 'rgba(214,204,164,0.65)' : 'rgba(52,30,10,0.65)';
     for (const [x, y, rr] of [[0.1, 0.07, 0.065], [-0.1, 0.11, 0.045], [0.11, -0.09, 0.04], [-0.06, -0.02, 0.03]]) { g.beginPath(); g.arc(c * x, c * y, c * rr, 0, TAU); g.fill(); }
-    g.strokeStyle = 'rgba(52,30,10,0.55)'; // (a wrinkle)
+    g.strokeStyle = pale ? 'rgba(214,204,164,0.55)' : 'rgba(52,30,10,0.55)'; // (a wrinkle)
     g.lineWidth = c * 0.025;
     g.lineCap = 'round';
     g.beginPath(); g.moveTo(-r * 0.6, -r * 0.35); g.quadraticCurveTo(-r * 0.1, -r * 0.05, -r * 0.35, r * 0.45); g.stroke();
@@ -4866,7 +4868,7 @@ window.SnakeRender = (() => {
         shadowAt(x + 1, y + CELL * 0.3, pop * 0.85 * (1 - 0.2 * h) * (0.72 + 0.28 * going));
         const sz = pop * (0.72 + 0.28 * going) * (1 + (lively ? Math.sin(t * 6) * 0.03 * (1 - off) : 0));
         blitAbout(beadSprite(f.cooked ? ROAST : b ? b.v : (f.color || '#a16207') + '|'), x, y - h * 1.8, 0, 0, sz, sz, 0);
-        if (off > 0) { ctx.globalAlpha = (0.5 + 0.5 * going) * off; blitAbout(beadRotSprite(), x, y - h * 1.8, 0, 0, sz, sz, 0); }
+        if (off > 0) { ctx.globalAlpha = (0.5 + 0.5 * going) * off; blitAbout(beadRotSprite(!f.cooked && lumaOf(beadFill(f)) < BEAD_DARK), x, y - h * 1.8, 0, 0, sz, sz, 0); }
         ctx.globalAlpha = 1;
         if (f.cooked && !off) steam(b, x, y, now);
       } else if (f.kind === 'mushroom') {
