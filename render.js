@@ -1691,16 +1691,17 @@ window.SnakeRender = (() => {
     ctx.fill();
   }
   // ...as the current path (to fill, or to clip to).
-  function shape(a, grow) {
+  // (Only segments i0 to i1, for a short stretch: cheap to clip to.)
+  function shape(a, grow, i0 = 0, i1 = a.n - 1) {
     ctx.beginPath();
     const p = a.pts, c = a.cor;
-    for (let i = a.n - 2; i >= 0; i--) {
+    for (let i = i1 - 1; i >= i0; i--) {
       const h = a.rad[i + 1] * PINCH + grow, x1 = p[2 * i], y1 = p[2 * i + 1], cx = c[2 * i], cy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
       pieceRect(x1, y1, cx, cy, h);
       pieceRect(cx, cy, x2, y2, h);
     }
-    for (let i = a.n - 1; i >= 0; i--) {
-      if (i < a.n - 1 && bends(a, i)) { const r = a.rad[i + 1] * PINCH + grow; ctx.moveTo(a.cor[2 * i] + r, a.cor[2 * i + 1]); ctx.arc(a.cor[2 * i], a.cor[2 * i + 1], r, 0, TAU); }
+    for (let i = i1; i >= i0; i--) {
+      if (i < i1 && bends(a, i)) { const r = a.rad[i + 1] * PINCH + grow; ctx.moveTo(a.cor[2 * i] + r, a.cor[2 * i + 1]); ctx.arc(a.cor[2 * i], a.cor[2 * i + 1], r, 0, TAU); }
       const r = a.rad[i] + grow;
       ctx.moveTo(p[2 * i] + r, p[2 * i + 1]);
       ctx.arc(p[2 * i], p[2 * i + 1], r, 0, TAU);
@@ -1728,11 +1729,12 @@ window.SnakeRender = (() => {
     ctx.moveTo(x1 - nx, y1 - ny); ctx.lineTo(x2 - nx, y2 - ny); ctx.lineTo(x2 + nx, y2 + ny); ctx.lineTo(x1 + nx, y1 + ny); ctx.closePath();
   }
 
-  // The path through every segment centre and corner, head to tail.
-  function spine(a) {
+  // The path through every segment centre and corner, head to tail (or from
+  // segment i0 to i1).
+  function spine(a, i0 = 0, i1 = a.n - 1) {
     ctx.beginPath();
-    ctx.moveTo(a.pts[0], a.pts[1]);
-    for (let i = 1; i < a.n; i++) {
+    ctx.moveTo(a.pts[2 * i0], a.pts[2 * i0 + 1]);
+    for (let i = i0 + 1; i <= i1; i++) {
       ctx.lineTo(a.cor[2 * i - 2], a.cor[2 * i - 1]);
       ctx.lineTo(a.pts[2 * i], a.pts[2 * i + 1]);
     }
@@ -1843,7 +1845,7 @@ window.SnakeRender = (() => {
   // accents appear on power marks only.
   const HONEY = '#fde68a', GLINT = '#fffbea';
   const SKY = '#a8dcf5', EMBER = '#f7a866', EMBER_LINE = '#b5531d'; // (sky's own line, #2f6f96, isn't needed: ink outlines every sky mark)
-  const RUN_DASH = [CELL * 0.14, CELL * 0.36], GLINT_DASH = [CELL * 1.4, CELL * 7]; // (ember dashes; one glint every so far)
+  const RUN_DASH = [CELL * 0.14, CELL * 0.36], GLINT_DASH = [CELL * 1.4, CELL * 40]; // (ember dashes; a glint, alone)
   // Your soft halo: a few faint steps of cream round your body, each wider
   // and fainter than the last (a soft edge without a blur), and a touch more
   // round your head. [width or radius (cells), alpha] pairs, outermost first.
@@ -1884,35 +1886,45 @@ window.SnakeRender = (() => {
   }
   // Along the gold line, in its own shape (the body and any outline of its
   // own cover the rest): for golden flashes, short ember dashes running back
-  // from the head, as if it's going fast; for the wrap, a slow glint running
-  // round, fading with the gold over its last WRAP_WARN_MS. (With reduced
-  // motion they hold still.)
+  // from the head over its first few segments, as if it's going fast; for the
+  // wrap, a slow glint running down it, fading with the gold over its last
+  // WRAP_WARN_MS. Each is clipped to the few segments it's on (a whole long
+  // body's shape as a clip cost the GPU several ms a frame). With reduced
+  // motion they hold still.
+  const RUN_SEGS = 6, GLINT_GAP = 6, GLINT_SPEED = 3; // (segments the dashes run along; cells between one glint and the next; cells a second)
   function goldRuns(s, a, own) {
-    ctx.save();
-    shape(a, own + 2.5);
-    ctx.clip();
-    spine(a);
     ctx.lineCap = 'butt';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = CELL * 1.8;
     if (s.dashes > 0) {
+      const i1 = Math.min(a.n - 1, RUN_SEGS);
+      ctx.save();
+      shape(a, own + 2.5, 0, i1);
+      ctx.clip();
+      spine(a, 0, i1);
+      ctx.lineWidth = CELL * 1.8;
       ctx.strokeStyle = EMBER_LINE;
       ctx.setLineDash(RUN_DASH);
       ctx.lineDashOffset = reduced ? 0 : -lastNow * CELL / 260;
       ctx.stroke();
+      ctx.restore();
     }
-    if (s.wrapUntil > shownTime) {
-      const was = ctx.globalAlpha;
-      ctx.globalAlpha = s.leaps > 0 || s.dashes > 0 ? was * wrapFade(s) : was; // (the gold itself fades with it when the wrap is all it holds)
-      ctx.strokeStyle = GLINT;
-      ctx.setLineDash(GLINT_DASH);
-      ctx.lineDashOffset = reduced ? 0 : -lastNow * CELL / 600;
-      ctx.stroke();
-      ctx.globalAlpha = was;
+    if (s.wrapUntil > shownTime && a.n > 1) {
+      const g = reduced ? 1 : (lastNow / 1000 * GLINT_SPEED) % (a.n - 1 + GLINT_GAP); // (how far down it the glint is, in segments)
+      if (g < a.n - 1) {
+        const i0 = Math.max(0, Math.floor(g) - 1), i1 = Math.min(a.n - 1, Math.floor(g) + 2), was = ctx.globalAlpha;
+        ctx.save();
+        shape(a, own + 2.5, i0, i1);
+        ctx.clip();
+        spine(a, i0, i1);
+        ctx.globalAlpha = s.leaps > 0 || s.dashes > 0 ? was * wrapFade(s) : was; // (the gold itself fades with it when the wrap is all it holds)
+        ctx.lineWidth = CELL * 1.8;
+        ctx.strokeStyle = GLINT;
+        ctx.setLineDash(GLINT_DASH);
+        ctx.lineDashOffset = GLINT_DASH[0] / 2 - (g - i0) * CELL; // (the glint's middle at g)
+        ctx.stroke();
+        ctx.restore();
+      }
     }
-    ctx.setLineDash(NO_DASH);
-    ctx.lineDashOffset = 0;
-    ctx.restore();
   }
   // An opaque outline: fast separate fills, unless it's being drawn see-through
   // (a corpse fading), where overlapping pieces would show.
