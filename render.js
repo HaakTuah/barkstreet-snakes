@@ -2163,7 +2163,7 @@ window.SnakeRender = (() => {
     const leaps = dead ? 0 : s.leaps, dashes = dead ? 0 : s.dashes;
     if (leaps || dashes) {
       const n = leaps + dashes, many = n > 2, back = Math.atan2(a.hs, a.hc) + Math.PI, rr = (many ? CELL : rad[0] + CELL * 0.2) * (1 + a.swell * 0.5);
-      const pr = CELL * (many ? 0.115 : 0.125), step = many ? 0.3 : 0.6, gap = leaps && dashes ? 0.6 : 0, mid = (n - 1 + gap) / 2;
+      const pr = CELL * (many ? 0.13 : 0.15), step = many ? 0.33 : 0.66, gap = leaps && dashes ? 0.6 : 0, mid = (n - 1 + gap) / 2;
       ctx.strokeStyle = INK;
       ctx.lineWidth = 1.3;
       for (let i = 0; i < n; i++) {
