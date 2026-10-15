@@ -4076,23 +4076,23 @@ window.SnakeRender = (() => {
   // it, as if it were wading through it: a line of the colour hugging it,
   // just outside everything drawn round it (an outline, a gold line), and a
   // soft glow of it beyond. Only the pieces on the land's own cells (no
-  // clip: the cut is cell-exact). The glow (the shape grown FIELD_GLOW_GROW,
-  // at FIELD_GLOW) and the line (FIELD_LINE wide, opaque) go into the veil
-  // and are laid on as one layer, every land's at once (on land two owners
-  // claim, the later colour wins); the snake drawn over them covers their
-  // inside, so its body keeps its own colours. Where a head just crossed in:
-  // a ripple at it (over the snakes: see drawRipples), and the border lights
-  // up from there.
-  const FIELD_GLOW = 0.16, FIELD_GLOW_GROW = 8, FIELD_LINE = 2.6, hued = [], huedEdge = [], huedOn = [];
+  // clip: the cut is cell-exact). The glow (the shape grown FIELD_GLOW_GROW)
+  // goes into the veil, a snake at a time and only round what of it is on
+  // land, and is laid on at FIELD_GLOW; the line (FIELD_LINE wide, opaque)
+  // goes straight on the board. The snake drawn over them covers their
+  // inside, so its body keeps its own colours (on land two owners claim,
+  // the later colour wins). Where a head just crossed in: a ripple at it
+  // (over the snakes: see drawRipples), and the border lights up from there.
+  const FIELD_GLOW = 0.16, FIELD_GLOW_GROW = 8, FIELD_LINE = 2.6, huedOn = [];
   function drawFieldHues(now) {
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    hued.length = huedEdge.length = huedOn.length = 0;
-    for (const r of fieldSpecs) {
-      if (!r.any || r.gone) continue;
-      for (const s of game.snakes) {
-        if (!s.alive || s === r.owner) continue;
-        const a = anim.get(s);
-        if (!a || !a.n) continue;
+    for (const s of game.snakes) {
+      if (!s.alive) continue;
+      const a = anim.get(s);
+      if (!a || !a.n) continue;
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      huedOn.length = 0;
+      for (const r of fieldSpecs) {
+        if (!r.any || r.gone || s === r.owner) continue;
         const h = s.body[0], inside = r.shown[h.y * GRID + h.x] === 1;
         let was = inField.get(s);
         if (!was) inField.set(s, was = new Set());
@@ -4111,20 +4111,15 @@ window.SnakeRender = (() => {
           if (py < y0) y0 = py;
           if (py > y1) y1 = py;
         }
-        if (touches) { hued.push(a); huedEdge.push(edgeOf(s, a)); huedOn.push(r); }
+        if (touches) huedOn.push(r);
       }
+      if (!huedOn.length) continue;
+      const edge = edgeOf(s, a), m = CELL + 12; // (round the pieces: a band and a glow's width more)
+      veilOn(0, 0, x0 - m, y0 - m, x1 + m, y1 + m);
+      for (const r of huedOn) { ctx.fillStyle = r.color; bodyFillsOn(a, edge + FIELD_GLOW_GROW, r); }
+      veilOff(FIELD_GLOW);
+      for (const r of huedOn) { ctx.fillStyle = r.color; bodyFillsOn(a, edge + FIELD_LINE, r); }
     }
-    if (!hued.length) return;
-    x0 -= CELL + 12; y0 -= CELL + 12; x1 += CELL + 12; y1 += CELL + 12; // (round the bodies, a band and a glow's width more)
-    veilOn(0, 0, x0, y0, x1, y1);
-    for (let i = 0; i < hued.length; i++) { ctx.fillStyle = huedOn[i].color; bodyFillsOn(hued[i], huedEdge[i] + FIELD_GLOW_GROW, huedOn[i]); }
-    ctx.globalCompositeOperation = 'destination-out'; // (the glow down to its share)
-    ctx.globalAlpha = 1 - FIELD_GLOW;
-    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over'; // (the line, opaque)
-    for (let i = 0; i < hued.length; i++) { ctx.fillStyle = huedOn[i].color; bodyFillsOn(hued[i], huedEdge[i] + FIELD_LINE, huedOn[i]); }
-    veilOff(1);
   }
   // Is the drawn point (px, py) on a cell of r's land?
   function onShown(r, px, py) {
