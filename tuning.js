@@ -162,13 +162,12 @@ window.TUNING = Object.freeze({
 
   // ----------------------------------------------------------------- input
   QUEUE: 3,                 // turns you can queue ahead
-  DOUBLE_TAP_MS: 120,       // a press the way you just turned, this soon, is always the turn pressed twice (never a leap)...
   CHORD_MS: 60,             // a reversal pressed this soon before the turn it needs (a U-turn's keys rolled together) still counts
-  POWER_AFTER_TURN_MS: 180, // a press the way you just turned, this soon after, is part of the turn (a double tap), not a leap
+  POWER_AFTER_TURN_MS: 180, // a fresh swipe the way you just turned, this soon after, is the turn swiped twice, not a flash (keys only steer: no such guard)
   SWIPE_CELLS: 0.5,         // a swipe registers after the finger travels this many cells...
   SWIPE_MIN_PX: 12,         // ...and at least this far (about 3 mm), so a jittery finger doesn't turn
   SWIPE_CHAIN_PX: 8,        // ...but a finger already swiping chains its next turn after this far
-  TAP_JUMP_MS: 60,          // a touch that stays still this long (or lifts sooner without travelling) is a tap: a jump
+  TAP_JUMP_MS: 80,          // a touch that stays still this long (or lifts sooner without travelling) is a tap: a jump (a slow swipe, 0.15 px/ms, is seen moving by about 57 ms: touch moves come once a frame)
   TAP_STILL_PX: 6,          // ...still: within this far of where it touched
 
   // ---------------------------------------------------------------- online

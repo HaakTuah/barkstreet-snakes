@@ -214,18 +214,21 @@ header { min-width: 0; }
 .scoreboard :focus-visible { outline-color: var(--ink); outline-offset: 1px; } /* (Ink on parchment: Honey there is invisible) */
 .scoreboard .name { flex: 1 1 auto; min-width: 2.2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .scoreboard .len { flex: none; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; } /* (the crown and the number on one line) */
-/* Powers: a chip (6 px, like everything small) with an ink icon and a count.
-   Golden powers are Honey. Your own leap fills as it cools and is solid when
-   ready; the icon and numbers keep full contrast all the while. The edges
-   wrapping add a loop and the seconds left, in a Honey line. On a narrow tag
-   the badge gives way first, down to its icon, and the name keeps its room. */
-.scoreboard .pow {
-  flex: 0 40 auto;
-  min-width: 19px;
+/* Powers: a chip each (6 px, like everything small), an ink icon and a
+   count. Gold is the family: a golden power held is a Honey chip in a gold
+   line, its icon in its own accent (jumps sky, flashes ember), with how many
+   are held. Your own jump and flash fill in their accent as they rest, and
+   are solid, ringed, when ready (greyed when you're too small for them); the
+   icon keeps full contrast all the while. The edges wrapping: a loop and the
+   seconds left, in a gold line. On a narrow tag the chips give way first,
+   down to their icons, and the name keeps its room. */
+.scoreboard .pow { flex: 0 40 auto; min-width: 19px; display: inline-flex; align-items: center; gap: 2px; overflow: hidden; }
+.scoreboard .pow[hidden] { display: none; } /* (its display would otherwise win over hidden) */
+.scoreboard .chip {
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 1px;
-  overflow: hidden;
   padding: 1px 4px;
   border-radius: 6px;
   font-size: 0.75rem;
@@ -233,19 +236,19 @@ header { min-width: 0; }
   line-height: 1.2;
   color: var(--ink);
   white-space: nowrap;
-  background: linear-gradient(90deg, rgba(58, 38, 20, 0.4) var(--fill, 100%), rgba(58, 38, 20, 0.06) var(--fill, 100%)); /* (filled about 3:1 against empty: readable at a glance) */
 }
-.scoreboard .pow[hidden] { display: none; } /* (its display would otherwise win over hidden: an empty chip, like a dash) */
-.scoreboard .pow svg { flex: none; width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.scoreboard .pow b { font-weight: 700; font-variant-numeric: tabular-nums; }
-.scoreboard .pow .w { display: inline-flex; align-items: center; gap: 1px; margin-left: 3px; }
-.scoreboard .pow.ready { background: rgba(58, 38, 20, 0.4); box-shadow: inset 0 0 0 1px rgba(58, 38, 20, 0.55); }
-.scoreboard .pow.small { color: var(--ink-soft); }
-.scoreboard .pow.gold { background: #fde68a; box-shadow: inset 0 0 0 1px #d4a017; }
-.scoreboard .pow.wrap { box-shadow: inset 0 0 0 1.5px #d4a017; }
-.scoreboard .pow.wrap:not(.gold):not(.mine) { background: #fef3c7; } /* (a rival wrapping: a golden power, so gold, not a greyed-out chip) */
-/* A narrow tag: the chip is just its icons (the board's pips and the screen
-   reader's words still give the count), so the name keeps its letters. */
+.scoreboard .chip svg { flex: none; width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.scoreboard .chip b { font-weight: 700; font-variant-numeric: tabular-nums; }
+.scoreboard .chip.mine { --rest: #a8dcf5; --line: #2f6f96; background: linear-gradient(90deg, var(--rest) var(--fill, 100%), rgba(58, 38, 20, 0.16) var(--fill, 100%)); }
+.scoreboard .chip.flash.mine { --rest: #f7a866; --line: #b5531d; }
+.scoreboard .chip.mine.ready { background: var(--rest); box-shadow: inset 0 0 0 1px var(--line); }
+.scoreboard .chip.mine.small { background: rgba(58, 38, 20, 0.08); color: var(--ink-soft); }
+.scoreboard .chip.gold { background: #fde68a; box-shadow: inset 0 0 0 1px #d4a017; }
+.scoreboard .chip.gold.jump svg { color: #2f6f96; }
+.scoreboard .chip.gold.flash svg { color: #b5531d; }
+.scoreboard .chip.wrap { background: #fef3c7; box-shadow: inset 0 0 0 1.5px #d4a017; }
+/* A narrow tag: the chips are just their icons (the board's pips and the
+   screen reader's words still give the counts), so the name keeps its letters. */
 .scoreboard li { container: tag / inline-size; }
 /* Four tags in a row only where they have room for a name, a chip and a
    crowned length (a near-square window gives them 130 px): otherwise two rows
@@ -255,9 +258,9 @@ main { container: page / inline-size; }
   .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @container tag (max-width: 175px) {
-  .scoreboard .pow b { display: none; }
-  .scoreboard .pow { padding-inline: 3px; flex-shrink: 0; min-width: min-content; }
-  .scoreboard .pow > svg ~ .w { display: none; } /* (two powers: the first one's icon; the wrap shows on the board, as the gold outline) */
+  .scoreboard .chip b { display: none; }
+  .scoreboard .chip { padding-inline: 3px; }
+  .scoreboard .pow { flex-shrink: 0; min-width: min-content; }
   .scoreboard li.leader .len::before { display: none; } /* (the leader's gold ring says it) */
   .scoreboard .name { font-size: 0.86rem; }
 }
@@ -660,6 +663,29 @@ canvas {
 .toast.settled { animation: none; } /* (dropped in once; moving it doesn't replay that) */
 .toast.under { opacity: 0.3; }
 
+/* How to steer, level with the YOU arrow as a round starts: positioned by
+   transform each frame (it rides along with your head), never in a finger's
+   way, gone once you steer. Your snake's green, like YOU. */
+.steer-hint {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  top: 0;
+  padding: 2px 8px;
+  border-radius: var(--r-tag);
+  background: rgba(246, 236, 210, 0.94); /* parchment */
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 0 0 2px #4ade80;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+  will-change: transform;
+}
+.steer-hint.on { opacity: 1; }
+
 /* Speech bubbles by snakes' heads: the box is positioned by transform each
    frame (snake.js / chatter.js); the bubble inside it pops in from its tail. */
 .bubble {
@@ -1001,7 +1027,7 @@ button.link:active { transform: none; }
   h1 .amp, .leaves, .frame-sheen > i, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
   .scoreboard li.starving::after { opacity: 1; }
   button, button:active { transition: none; transform: none; }
-  .toast { transition: none; }
+  .toast, .steer-hint { transition: none; }
 }
 
 /* Windows High Contrast: keep outlines and the colored dots. */
