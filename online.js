@@ -31,7 +31,7 @@ window.SnakeOnline = (() => {
   const KINDS = ['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap'];
   const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm', 'snow']; // (the engine's order)
   // Events that only say where something happened (and, for food, what).
-  const AT = ['burrow', 'dive', 'emerge', 'gust', 'charge', 'strike', 'rainbow', 'aim', 'douse'];
+  const AT = ['burrow', 'dive', 'emerge', 'gust', 'charge', 'strike', 'rainbow', 'aim', 'douse', 'lastApples'];
   const FOOD_AT = ['baked', 'ash'];
   // Events about one snake.
   const SNAKE = ['starving', 'alight', 'singe'];
@@ -114,8 +114,7 @@ window.SnakeOnline = (() => {
       case 'ember': return ['ember', e.x, e.y, e.fx, e.fy];
       case 'woodpecker': return ['woodpecker'];
       case 'peck': return ['peck', e.x, e.y, e.cells || [], e.under || []];
-      case 'rot': return ['rot', e.x, e.y, KINDS.indexOf(e.kind), e.color || 0];
-      case 'lastApples': return ['lastApples'];
+      case 'rot': return ['rot', e.x, e.y, e.kind === 'pellet' ? 1 : 0, e.color || 0]; // (an apple, or a bead in its colour)
       case 'flown': return ['flown', e.x, e.y];
       default:
         if (SNAKE.includes(e.type)) return [e.type, e.snake.id];
@@ -214,8 +213,7 @@ window.SnakeOnline = (() => {
         case 'ember': return { type: 'ember', x: e[1], y: e[2], fx: e[3], fy: e[4] };
         case 'woodpecker': return { type: 'woodpecker' };
         case 'peck': return { type: 'peck', x: e[1], y: e[2], cells: Array.isArray(e[3]) ? e[3].filter(Number.isInteger) : [], under: Array.isArray(e[4]) ? e[4].filter(Number.isInteger) : [] };
-        case 'rot': return { type: 'rot', x: e[1], y: e[2], ...(KINDS[e[3]] ? { kind: KINDS[e[3]] } : {}), ...(typeof e[4] === 'string' ? { color: e[4] } : {}) };
-        case 'lastApples': return { type: 'lastApples' };
+        case 'rot': return { type: 'rot', x: e[1], y: e[2], kind: e[3] ? 'pellet' : 'apple', ...(typeof e[4] === 'string' ? { color: e[4] } : {}) };
         case 'flown': return { type: 'flown', x: e[1], y: e[2] };
         default:
           if (SNAKE.includes(e[0])) return snake ? { type: e[0], snake } : null;
