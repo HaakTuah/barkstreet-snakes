@@ -1178,10 +1178,12 @@ window.SnakeRender = (() => {
         offs: null, offList: [], offPool: [], // (where it's drawn across a wrapped edge, if it is: see unwrap)
         look: '', color: '', isPlayer: false, rim: false, bump: 0, tickPos: 0, lean: 0,
         // Drawn ahead (see predict): the cell its head goes to next (mx, my),
-        // whether it moves (mv), grows (mg) or leaps (ml); the same as the
-        // last frame drew them (pTick: that frame's tick), and each segment's
-        // easing out of a wrong guess (fix: units, fading; see prepare).
-        mx: 0, my: 0, mv: 0, mg: 0, ml: 0, pmx: 0, pmy: 0, pmv: 0, pTick: -1, phx: -99, phy: -99, fixFar: false, rise: 0, swell: 0,
+        // whether it moves (mv), grows (mg) or leaps (ml), how many cells
+        // further a flash takes it (mf) and which way (mdx, mdy); the same as
+        // the last frame drew them (pTick: that frame's tick), and each
+        // segment's easing out of a wrong guess (fix: units, fading; see
+        // prepare). streakTick: the tick its flash was seen coming.
+        mx: 0, my: 0, mv: 0, mg: 0, ml: 0, mf: 0, mdx: 0, mdy: 0, pmx: 0, pmy: 0, pmv: 0, pmf: 0, pmdx: 0, pmdy: 0, streakTick: -1, pTick: -1, phx: -99, phy: -99, fixFar: false, rise: 0, swell: 0,
         fix: new Float32Array(64), fixOn: false, tdx: s.dir.x, tdy: s.dir.y, bx: 0, by: 0, drawnAt: -1,
         jc: false, fc: false, flashFx: -1e9, // (your rests: cooling last frame; when your flash came back)
       };
@@ -1461,12 +1463,17 @@ window.SnakeRender = (() => {
     // How far through its move it's drawn: up to 1, from its last cells to
     // these; past 1, on toward the next (see predict). Not past its cells
     // once it's dead or the round's over (the board rests), nor before the
-    // round's first tick.
-    const snap = a.dashTick === game?.tick;
+    // round's first tick. Dashed this tick (a flash): it's there at once, its
+    // streak behind it, and goes on gliding from a cell back along its own
+    // body, so it never stands still (the cells it skipped are the dash; if
+    // the flash was seen coming, it's drawn on from just where it was). One
+    // that ran into something at once, or is out, is at its cells.
+    const snap = a.dashTick === game?.tick, h0 = s.body[0], p0 = s.prev?.[0];
+    const ran = snap && !dead && !!p0 && (p0.x !== h0.x || p0.y !== h0.y);
     let at = alpha + leadNow;
     if (dead || !game || leadRest) at = Math.min(1, at);
-    if (snap) at = Math.max(1, at); // (dashing: it's there at once, its streak behind it)
-    if (dead || !game) { a.mv = 0; a.ml = 0; }
+    if (snap && !ran) at = Math.max(1, at);
+    if (dead || !game) { a.mv = 0; a.ml = 0; a.mf = 0; }
     const k1 = Math.min(1, at), k2 = a.mv ? at - k1 : 0;
     const m = k2 > 0 && a.mg ? n + 1 : n; // (growing: its tail stays where it is, a segment more)
     if (a.rad.length < m) {
@@ -1479,33 +1486,47 @@ window.SnakeRender = (() => {
     // (A snake that's had the edges wrap this round: its body may run off one
     // edge and on at the other, and a segment may move across one.)
     const wrapped = s.wrapUntil >= 0;
+    let behind = s.body[n - 1]; // (dashed: where its tail was a cell back along its body, if it moved)
+    if (ran) for (let j = prev.length - 2; j >= 0; j--) if (prev[j].x === behind.x && prev[j].y === behind.y) { behind = prev[j + 1]; break; }
     for (let i = 0; i < n; i++) {
       const c = s.body[i];
-      const p = prev && i < prev.length ? prev[i] : c;
+      const p = ran ? (i < n - 1 ? s.body[i + 1] : behind) : prev && i < prev.length ? prev[i] : c;
       const px = wrapped ? nearOf(p.x, c.x) : p.x, py = wrapped ? nearOf(p.y, c.y) : p.y;
       let x = px + (c.x - px) * k1, y = py + (c.y - py) * k1;
-      if (k2 > 0) { // (on toward the cell ahead of it: the next one's, or for the head, where it goes next)
-        const qx = i ? s.body[i - 1].x : a.mx, qy = i ? s.body[i - 1].y : a.my;
-        x += ((wrapped ? nearOf(qx, c.x) : qx) - c.x) * k2;
-        y += ((wrapped ? nearOf(qy, c.y) : qy) - c.y) * k2;
+      // The band to the next segment runs through the cell this one left
+      // (where the next one is headed), so a bend never cuts its corner.
+      let qx, qy;
+      if (k2 > 0 && a.mf) { // (a flash on ahead: from its cell on the flash's way, or its body, to the next)
+        along(s, a, i + 1); const fx = wrapped ? nearOf(chX, c.x) : chX, fy = wrapped ? nearOf(chY, c.y) : chY;
+        qx = chX; qy = chY;
+        along(s, a, i);
+        x = fx + ((wrapped ? nearOf(chX, fx) : chX) - fx) * k2;
+        y = fy + ((wrapped ? nearOf(chY, fy) : chY) - fy) * k2;
+      } else if (k2 > 0) { // (on toward the cell ahead of it: the next one's, or for the head, where it goes next)
+        const nx = i ? s.body[i - 1].x : a.mx, ny = i ? s.body[i - 1].y : a.my;
+        x += ((wrapped ? nearOf(nx, c.x) : nx) - c.x) * k2;
+        y += ((wrapped ? nearOf(ny, c.y) : ny) - c.y) * k2;
+        qx = c.x; qy = c.y;
+      } else { // (the cell it left; dashed, the bends it lies on now)
+        const q = ran ? p : prev && i < prev.length && !snap ? prev[i] : s.body[Math.min(i + 1, n - 1)];
+        qx = q.x; qy = q.y;
       }
       pts[2 * i] = x * CELL + CELL / 2;
       pts[2 * i + 1] = y * CELL + CELL / 2;
-      // The band to the next segment runs through the cell this one left
-      // (where the next one is headed), so a bend never cuts its corner.
       if (i < m - 1) {
-        const q = k2 > 0 ? c : prev && i < prev.length && !snap ? prev[i] : s.body[i + 1]; // (dashing: the bends it lies on now)
-        cor[2 * i] = q.x * CELL + CELL / 2;
-        cor[2 * i + 1] = q.y * CELL + CELL / 2;
+        cor[2 * i] = qx * CELL + CELL / 2;
+        cor[2 * i + 1] = qy * CELL + CELL / 2;
       }
     }
     if (m > n) { pts[2 * n] = cor[2 * n - 2]; pts[2 * n + 1] = cor[2 * n - 1]; } // (the tail end that stays)
+    if (k2 > 0 && a.mf && a.streakTick !== game.tick) { a.streakTick = game.tick; streakOf(s, h0.x, h0.y, a.mx, a.my, !(s.dashes > 0), now, game.tick); } // (its flash, seen coming: its streak now)
     if (game) refix(s, a, at, snap);
     if (a.fixOn) for (let i = 0; i < 2 * m; i++) pts[i] += a.fix[i];
     a.bx = pts[0]; a.by = pts[1]; a.drawnAt = lastNow; // (where its head is drawn, for its speech bubble)
     a.offs = wrapped ? unwrap(a, m) : null;
     // The way it's heading as drawn: past its cell's centre, the way it goes next.
-    if (k2 > 0) { let dx = a.mx - s.body[0].x, dy = a.my - s.body[0].y; if (dx > 1) dx = -1; else if (dx < -1) dx = 1; if (dy > 1) dy = -1; else if (dy < -1) dy = 1; a.tdx = dx; a.tdy = dy; }
+    if (k2 > 0 && a.mf) { a.tdx = a.mdx; a.tdy = a.mdy; }
+    else if (k2 > 0) { let dx = a.mx - s.body[0].x, dy = a.my - s.body[0].y; if (dx > 1) dx = -1; else if (dx < -1) dx = 1; if (dy > 1) dy = -1; else if (dy < -1) dy = 1; a.tdx = dx; a.tdy = dy; }
     else { a.tdx = s.dir.x; a.tdy = s.dir.y; }
     // A held corpse presses its head a little into whatever it hit.
     if (impact) { pts[0] += s.dir.x * CELL * impact; pts[1] += s.dir.y * CELL * impact; }
@@ -1595,19 +1616,67 @@ window.SnakeRender = (() => {
   // hole, a body still there after the move) holds at its cell's centre,
   // and the crash's lunge plays at the tick. One in the air comes down where
   // it was going. A jump asked for, with something to hop and somewhere to
-  // land, leaps: it starts rising before its tick. (Fire isn't a crash: a
-  // crawl goes in.)
+  // land, leaps: it starts rising before its tick. A flash asked for that's
+  // sure to go and take it more than a cell runs on ahead (a.mf: the cells
+  // past the next): from when its head is drawn past its cell's centre, it's
+  // drawn where the flash takes it, as it will be at the tick. (Fire isn't a
+  // crash: a crawl goes in.)
   function predict(s, a) {
     const h = s.body[0];
-    a.mx = h.x; a.my = h.y; a.mv = 0; a.mg = 0; a.ml = 0;
+    a.mx = h.x; a.my = h.y; a.mv = 0; a.mg = 0; a.ml = 0; a.mf = 0;
     if (!s.alive || s.stunUntil > game.tick) return;
     const d = s.flight ? s.flight.dir : wayOf(s), x = wrapX(s, h.x + d.x), y = wrapX(s, h.y + d.y);
-    a.mx = x; a.my = y; a.mv = 1; a.mg = s.grow > 0 ? 1 : 0;
+    a.mx = x; a.my = y; a.mv = 1; a.mg = s.grow > 0 ? 1 : 0; a.mdx = d.x; a.mdy = d.y;
+    if (!s.flight && asksFlash(s)) {
+      const go = flashReach(s, d, x, y);
+      if (go > 1) { a.mf = go - 1; a.mx = wrapX(s, h.x + d.x * go); a.my = wrapX(s, h.y + d.y * go); return; }
+    }
     if (!s.flight && asksJump(s) && !asksFlash(s) && (s.leaps > 0 || (game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH)) && hurdleAt(x, y)) {
       const lx = wrapX(s, x + d.x), ly = wrapX(s, y + d.y), fx = wrapX(s, lx + d.x), fy = wrapX(s, ly + d.y);
       if (!offBoard(lx, ly) && (!hurdleAt(lx, ly) || (s.leaps > 0 && !offBoard(fx, fy) && !hurdleAt(fx, fy)))) { a.ml = 1; return; } // (a golden one hops two)
     }
     if (offBoard(x, y) || game.holes.has(y * GRID + x) || stays[y * GRID + x]) { a.mv = 0; a.mg = 0; }
+  }
+  // How many cells a flash asked for takes a head this tick, (x, y) being
+  // the first, as the game moves it: a plain one, if it's rested, up to
+  // FLASH_LENGTH, stopping short of what it'd run into (into fire, as a crawl
+  // goes); a golden one, a dash, DASH_LENGTH, through a body one cell thick
+  // (it cuts it) and fire. 0 if it won't go, or blows up (a dash into the
+  // edge or a hole: that shows at its tick).
+  function flashReach(s, d, x, y) {
+    const gold = s.dashes > 0;
+    if (!gold && (game.time < s.flashReadyAt || (T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH))) return 0;
+    const len = gold ? T.DASH_LENGTH : T.FLASH_LENGTH;
+    for (let i = 1; ; i++) {
+      const k = y * GRID + x;
+      if (gold) {
+        if (offBoard(x, y)) return 0;
+        if (stays[k] && !cutsAt(s, x, y, d)) return i - 1;
+        if (game.holes.has(k)) return 0;
+      } else if (offBoard(x, y) || game.holes.has(k) || stays[k]) return i - 1;
+      else if (burningAt(x, y)) return i;
+      if (i === len) return i;
+      x = wrapX(s, x + d.x); y = wrapX(s, y + d.y);
+    }
+  }
+  // Would a dash heading d cut the body at (x, y)? Another snake's, behind
+  // its head, one cell thick there.
+  function cutsAt(s, x, y, d) {
+    const o = snakeAt(x, y), j = o ? o.body.findIndex(c => c.x === x && c.y === y) : -1;
+    if (!o || o === s || j <= 0) return false;
+    const px = wrapX(s, x + d.x), py = wrapX(s, y + d.y);
+    return offBoard(px, py) || !stays[py * GRID + px] || snakeAt(px, py) !== o;
+  }
+  const snakeAt = (x, y) => game.snakes.find(o => o.alive && o.body.some(c => c.x === x && c.y === y)) || null; // (whose body is on (x, y))
+  // The j-th cell of the way a snake with a flash on ahead (a.mf) is drawn
+  // heading, into chX, chY: the cells the flash takes its head through, from
+  // where it lands, then its body (segment i goes from cell i + 1 to cell
+  // i). With `last`, its last guess's, on its last body.
+  let chX = 0, chY = 0;
+  function along(s, a, j, last) {
+    const go = (last ? a.pmf : a.mf) + 1, body = last ? s.prev : s.body;
+    if (j < go) { const h = body[0]; chX = wrapX(s, h.x + (last ? a.pmdx : a.mdx) * (go - j)); chY = wrapX(s, h.y + (last ? a.pmdy : a.mdy) * (go - j)); }
+    else { const c = body[Math.min(j - go, body.length - 1)]; chX = c.x; chY = c.y; }
   }
   // Two heads going into the same cell meet head-on: both hold (heads in the air never meet).
   function meetings() {
@@ -1644,6 +1713,8 @@ window.SnakeRender = (() => {
     const same = a.pTick === game.tick, from = same ? body[0] : prev?.[0]; // (where its head was when it last guessed)
     if (snap || reduced || (!same && a.pTick !== game.tick - 1) || !from || from.x !== a.phx || from.y !== a.phy) { // (dashing, too long since, or put somewhere else: start afresh)
       if (a.fixOn) { fix.fill(0); a.fixOn = false; }
+    } else if (same && (a.pmf !== a.mf || (a.mf && (a.pmx !== a.mx || a.pmy !== a.my)))) { // (a flash seen coming, or no longer: it's there at once, as a dash is)
+      if (a.fixOn) { fix.fill(0); a.fixOn = false; }
     } else if (same) { // (the same tick: a different guess)
       const kk = Math.max(0, at - 1);
       if (kk > 0 && (a.pmv !== a.mv || a.pmx !== a.mx || a.pmy !== a.my)) {
@@ -1654,14 +1725,17 @@ window.SnakeRender = (() => {
     } else { // (a tick on: where the last guess would have it now, against where it is)
       const k1 = Math.min(1, at);
       for (let i = 0; i < n && i < prev.length; i++) {
-        const p = prev[i], qx = i ? prev[i - 1].x : a.pmx, qy = i ? prev[i - 1].y : a.pmy;
-        const ex = a.pmv * wd(qx - p.x) * at - wd(body[i].x - p.x) * k1, ey = a.pmv * wd(qy - p.y) * at - wd(body[i].y - p.y) * k1;
+        const p = prev[i];
+        let gx, gy; // (where the last guess would have it now, from p)
+        if (a.pmf) { along(s, a, i + 1, true); const fx = chX, fy = chY; along(s, a, i, true); gx = wd(fx - p.x) + wd(chX - fx) * at; gy = wd(fy - p.y) + wd(chY - fy) * at; } // (a flash that didn't go)
+        else { const qx = i ? prev[i - 1].x : a.pmx, qy = i ? prev[i - 1].y : a.pmy; gx = a.pmv * wd(qx - p.x) * at; gy = a.pmv * wd(qy - p.y) * at; }
+        const ex = gx - wd(body[i].x - p.x) * k1, ey = gy - wd(body[i].y - p.y) * k1;
         if (ex || ey) fixAdd(a, i, ex, ey);
       }
     }
     if (a.fixOn && a.fixFar) { fix.fill(0); a.fixOn = false; } // (more than a guess could be out by: it jumped, so it jumps)
     a.fixFar = false;
-    a.pmx = a.mx; a.pmy = a.my; a.pmv = a.mv; a.pTick = game.tick; a.phx = body[0].x; a.phy = body[0].y;
+    a.pmx = a.mx; a.pmy = a.my; a.pmv = a.mv; a.pmf = a.mf; a.pmdx = a.mdx; a.pmdy = a.mdy; a.pTick = game.tick; a.phx = body[0].x; a.phy = body[0].y;
   }
   function fixAdd(a, i, dx, dy) {
     if (Math.abs(dx) + Math.abs(dy) < 0.01) return;
@@ -6172,12 +6246,9 @@ window.SnakeRender = (() => {
         if (e.gold) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 10, 120, 600, 1.8, '#d4a017', '#fffbea'); // (in Honey, a power's gold)
       } else if (e.type === 'dash') { // a streak along the way it went: a golden dash's in gold and ember, with flecks of both; a plain flash's in ember, lighter
         animOf(e.snake, now).dashTick = game.tick;
-        const h = e.snake.body[0], x0 = e.x * CELL + CELL / 2, y0 = e.y * CELL + CELL / 2, x1 = h.x * CELL + CELL / 2, y1 = h.y * CELL + CELL / 2, plain = !!e.plain;
-        if (Math.abs(x1 - x0) + Math.abs(y1 - y0) <= CELL * (T.DASH_LENGTH + 0.5)) { // (not across a wrapped edge)
-          streaks.push({ x0, y0, x1, y1, at: now, s: e.snake, plain });
-          for (let k = 0; k <= 3; k++) spawn(x0 + (x1 - x0) * k / 3, y0 + (y1 - y0) * k / 3, plain ? 2 : 4, 90, 500, 1.8, plain ? EMBER : HONEY, plain ? GLINT : EMBER);
-          if (!reduced) for (let k = 0; k < 4; k++) mote(x0 + (Math.random() - 0.5) * CELL * 0.6, y0 + (Math.random() - 0.5) * CELL * 0.6, -(x1 - x0) / len3(x1 - x0, y1 - y0) * 20 + (Math.random() - 0.5) * 10, -(y1 - y0) / len3(x1 - x0, y1 - y0) * 20 - 6, 700, 3 + Math.random() * 2, 2); // (a scuff of dust where it set off)
-        }
+        const h = e.snake.body[0], seen = streaks.findIndex(k => k.s === e.snake && k.pre === game.tick - 1); // (seen coming: see prepare)
+        if (seen >= 0 && streaks[seen].fx === e.x && streaks[seen].fy === e.y && streaks[seen].tx === h.x && streaks[seen].ty === h.y) streaks[seen].pre = -1; // (as it was seen: it stays)
+        else { if (seen >= 0) streaks.splice(seen, 1); streakOf(e.snake, e.x, e.y, h.x, h.y, !!e.plain, now, -1); }
       } else if (e.type === 'douse') { // a fire put out: a hiss of steam
         const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
         spawn(x, y, 10, 80, 600, 2.4, '#e2e8f0', '#94a3b8');
@@ -6379,12 +6450,22 @@ window.SnakeRender = (() => {
   // golden dash's lines are gold with an ember core; a plain flash's are
   // ember, thinner, inked more faintly and shorter (from a third of the
   // way), so the golden one is the bigger deal.
-  const streaks = []; // { x0, y0, x1, y1, at, s, plain }
+  const streaks = []; // { x0, y0, x1, y1, at, s, plain, fx, fy, tx, ty (its cells), pre (seen coming on that tick, until it goes) }
   const STREAK_GAP = 2; // (between the dasher's drawn edge and a line's inked edge, in units)
+  // A dash's streak from cell (fx, fy) to (tx, ty), and its flecks and the
+  // scuff where it set off: at its tick, or (pre: that tick) as soon as it's
+  // drawn there, seen coming.
+  function streakOf(s, fx, fy, tx, ty, plain, now, pre) {
+    const x0 = fx * CELL + CELL / 2, y0 = fy * CELL + CELL / 2, x1 = tx * CELL + CELL / 2, y1 = ty * CELL + CELL / 2;
+    if (Math.abs(x1 - x0) + Math.abs(y1 - y0) > CELL * (T.DASH_LENGTH + 0.5)) return; // (not across a wrapped edge)
+    streaks.push({ x0, y0, x1, y1, at: now, s, plain, fx, fy, tx, ty, pre });
+    for (let k = 0; k <= 3; k++) spawn(x0 + (x1 - x0) * k / 3, y0 + (y1 - y0) * k / 3, plain ? 2 : 4, 90, 500, 1.8, plain ? EMBER : HONEY, plain ? GLINT : EMBER);
+    if (!reduced) for (let k = 0; k < 4; k++) mote(x0 + (Math.random() - 0.5) * CELL * 0.6, y0 + (Math.random() - 0.5) * CELL * 0.6, -(x1 - x0) / len3(x1 - x0, y1 - y0) * 20 + (Math.random() - 0.5) * 10, -(y1 - y0) / len3(x1 - x0, y1 - y0) * 20 - 6, 700, 3 + Math.random() * 2, 2); // (a scuff of dust where it set off)
+  }
   function drawStreaks(now) {
     for (let i = streaks.length - 1; i >= 0; i--) {
       const k = streaks[i], t = (now - k.at) / T.STREAK_MS;
-      if (t >= 1 || t < 0) { streaks.splice(i, 1); continue; }
+      if (t >= 1 || t < 0 || (k.pre >= 0 && k.pre < game.tick)) { streaks.splice(i, 1); continue; } // (or seen coming, and it didn't go)
       const dx = k.x1 - k.x0, dy = k.y1 - k.y0, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
       const ex = k.x1 - ux * CELL * 0.35, ey = k.y1 - uy * CELL * 0.35; // (the back of its head)
       const sx = k.plain ? k.x0 + (ex - k.x0) * 0.35 : k.x0, sy = k.plain ? k.y0 + (ey - k.y0) * 0.35 : k.y0; // (where its lines start)
