@@ -134,9 +134,8 @@ window.SnakeEngine = (() => {
 
   // An apple: it rots away after a while (and another drops somewhere else).
   const apple = game => ({ kind: 'food', expires: game.tick + Math.round(T.APPLE_TICKS * between(0.75, 1.25)) });
-  // How many apples the board keeps: three for the opening, then two (hunger
-  // should matter mid-round); in winter, one.
-  const applesWanted = game => game.weather.kind === 'snow' ? T.SNOW_APPLES : game.time >= T.APPLES_LATE_FROM ? T.APPLES_LATE : T.APPLES;
+  // How many apples the board keeps: three; in winter, one.
+  const applesWanted = game => game.weather.kind === 'snow' ? T.SNOW_APPLES : T.APPLES;
 
   function fillFood(game) {
     // Apples, golden apples and beads rot, mushrooms wither, and beetles nobody caught fly off.
@@ -698,6 +697,7 @@ window.SnakeEngine = (() => {
       food: snap.food,
       holes: blockedSeen(game, snap),
       fire: fireSeen(snap), // (among the holes: the cells that are only fire, which it can go through, at a price)
+      pecks: snap.pecks.length ? (snap.peckSet ||= new Set(snap.pecks)) : NO_CELLS, // (among them too: the woodpecker's mark, not a hole yet: nothing to hop)
       age: game.history.length - 1 - idx,
       tick: game.tick,
       timeMs: game.time,

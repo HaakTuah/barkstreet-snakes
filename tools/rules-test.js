@@ -823,11 +823,11 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   for (let t = 0; t < 3; t++) { feed(g); for (const o of g.snakes) o.queue = [t % 2 ? D.down : D.right]; E.step(g); rotted ||= g.events.some(e => e.type === 'rot' && e.kind === 'apple' && e.x === first.x && e.y === first.y); }
   check('...rot away', rotted && !g.food.includes(first));
   check('...and another drops', g.food.filter(f => f.kind === 'food').length === T.APPLES);
-  // Three for the opening, then two (and in winter, one).
-  const g2 = board([[line(5, 5, 3), 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']], { time: T.APPLES_LATE_FROM });
+  // Three all round, late in the round too (in winter, one).
+  const g2 = board([[line(5, 5, 3), 'right'], [[[5, 15], [4, 15], [3, 15]], 'right']], { time: 100000 });
   g2.food = [];
   E.step(g2);
-  check('...three for the opening, then two', T.APPLES === 3 && g2.food.filter(f => f.kind === 'food').length === T.APPLES_LATE, g2.food.filter(f => f.kind === 'food').length);
+  check('...three all round', g2.food.filter(f => f.kind === 'food').length === T.APPLES, g2.food.filter(f => f.kind === 'food').length);
 }
 
 { // Beads remember whose they were, and rot (roasted ones later): crash drops, singes, cut tails and corpses alike.

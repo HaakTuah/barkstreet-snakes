@@ -7,9 +7,7 @@ window.TUNING = Object.freeze({
   OPPONENTS: 3,             // AI rivals in a normal round (an AI-only round has one more)
 
   // ------------------------------------------------------------------ food
-  APPLES: 3,                // green apples on the board for the opening (eaten or rotted, another drops somewhere)...
-  APPLES_LATE: 3,           // ...and this many once the opening's over (two, measured, hardly made hunger matter mid-round, but rounds ran longer and more snakes starved at the end)...
-  APPLES_LATE_FROM: 45000,  // ...from this much game time
+  APPLES: 3,                // green apples on the board at all times (eaten or rotted, another drops somewhere; two after the opening was tried: rounds ran longer and more snakes starved at the end)
   APPLE_TICKS: 110,         // an apple rots away after about this many ticks (give or take a quarter: about 8-16 s), and another drops somewhere
   MUSHROOMS: 2,             // red mushrooms on the board at all times
   MUSHROOM_TICKS: 180,      // a mushroom withers (and regrows elsewhere) after this many ticks
@@ -79,7 +77,8 @@ window.TUNING = Object.freeze({
   LEAP_SWELL: 0.38,         // in the air, the head swells this much at the top of a leap (seen from above, rising is coming toward you)...
   LEAP_SWELL_GOLD: 0.5,     // ...and a golden leap's, this much
   STREAK_MS: 340,           // a dash's speed lines fade over this long
-  DRAW_LEAD: 0.5,           // the board is drawn this many ticks ahead (drawing only: the cell your head is drawn in is the cell your press turns at)
+  DRAW_LEAD_MS: 60,         // the board is drawn this far ahead (drawing only: the cell your head is drawn in is the cell your press turns at): half a tick at first, two thirds at full speed...
+  DRAW_LEAD_MAX: 0.75,      // ...but never more than this much of a tick (watching fast, ticks are short)
   FACE_EASE_MS: 60,         // your own face turns toward a new heading over about this long (rivals keep the steady line)
 
   // ----------------------------------------------------------------- speed
