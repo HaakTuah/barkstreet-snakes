@@ -4048,6 +4048,12 @@ window.SnakeRender = (() => {
     }
   }
 
+  // A bead that went (from its rot event): its own fill, as drawn.
+  function beadFill(e) {
+    const v = born.get(e.y * GRID + e.x)?.v, fill = v ? v.slice(0, v.indexOf('|')) : e.color;
+    return fill && fill[0] === '#' ? fill : '#a16207';
+  }
+
   // The bead a snake leaves at body segment i: its own colours and markings.
   function beadOf(s, i) {
     const look = lookOf(s), col = colorOf(s);
@@ -4239,6 +4245,22 @@ window.SnakeRender = (() => {
 
   // A roast: a piece of snake that fell off in the flames, browned all over.
   const ROAST = '#92400e|';
+  // A bead going off, laid over it as it does: a dull brown film and brown
+  // spots, for any bead's colours. From BEAD_OFF ticks before it rots it
+  // comes over it; in its last BEAD_GOING it shrinks and dims.
+  const BEAD_OFF = 45, BEAD_GOING = 15;
+  const beadRotSprite = () => sprite('beadrot', '', drawBeadRot);
+  const drawBeadRot = g => {
+    const c = CELL, r = c * 0.26;
+    g.fillStyle = 'rgba(82,60,34,0.6)';
+    g.beginPath(); g.arc(0, 0, r + c * 0.035, 0, TAU); g.fill();
+    g.fillStyle = 'rgba(52,30,10,0.65)';
+    for (const [x, y, rr] of [[0.1, 0.07, 0.065], [-0.1, 0.11, 0.045], [0.11, -0.09, 0.04], [-0.06, -0.02, 0.03]]) { g.beginPath(); g.arc(c * x, c * y, c * rr, 0, TAU); g.fill(); }
+    g.strokeStyle = 'rgba(52,30,10,0.55)'; // (a wrinkle)
+    g.lineWidth = c * 0.025;
+    g.lineCap = 'round';
+    g.beginPath(); g.moveTo(-r * 0.6, -r * 0.35); g.quadraticCurveTo(-r * 0.1, -r * 0.05, -r * 0.35, r * 0.45); g.stroke();
+  };
   // Baked food steams now and then.
   function steam(b, x, y, now) {
     if (reduced || !b || now < b.next) return;
@@ -4275,11 +4297,19 @@ window.SnakeRender = (() => {
         if (look === 'baked') steam(b, x, y, now);
       }
       else if (f.kind === 'pellet') {
-        const h = lively ? 0.5 - 0.5 * Math.cos(t * 3) : 0;
-        shadowAt(x + 1, y + CELL * 0.3, pop * 0.85 * (1 - 0.2 * h));
-        const sz = pop * (1 + (lively ? Math.sin(t * 6) * 0.03 : 0));
+        // A bead goes off as its time runs out, as an apple does: a dull film
+        // and brown spots come over it and it all but stops bobbing; then it
+        // shrinks and dims, and goes in a puff of its own colours (see onTick).
+        const left = f.expires != null ? f.expires - (game.tick - 1 + alpha) : 999;
+        const off = left < BEAD_OFF ? Math.min(1, (BEAD_OFF - left) / (BEAD_OFF - BEAD_GOING)) : 0, going = Math.max(0, Math.min(1, left / BEAD_GOING));
+        const h = lively ? (0.5 - 0.5 * Math.cos(t * 3)) * (1 - 0.7 * off) : 0;
+        ctx.globalAlpha = 0.5 + 0.5 * going;
+        shadowAt(x + 1, y + CELL * 0.3, pop * 0.85 * (1 - 0.2 * h) * (0.72 + 0.28 * going));
+        const sz = pop * (0.72 + 0.28 * going) * (1 + (lively ? Math.sin(t * 6) * 0.03 * (1 - off) : 0));
         blitAbout(beadSprite(f.cooked ? ROAST : b ? b.v : (f.color || '#a16207') + '|'), x, y - h * 1.8, 0, 0, sz, sz, 0);
-        if (f.cooked) steam(b, x, y, now);
+        if (off > 0) { ctx.globalAlpha = (0.5 + 0.5 * going) * off; blitAbout(beadRotSprite(), x, y - h * 1.8, 0, 0, sz, sz, 0); }
+        ctx.globalAlpha = 1;
+        if (f.cooked && !off) steam(b, x, y, now);
       } else if (f.kind === 'mushroom') {
         drawMushroomAt(f, x, y, t, pop);
         if (lively && b && pop >= 1 && now > b.next) {
@@ -5698,8 +5728,8 @@ window.SnakeRender = (() => {
         eatenNow.add(e.y * GRID + e.x);
         spawn(x, y, 10, 140, 600, 2.4, '#a8a29e', '#57534e');
         for (let i = 0; i < 3; i++) mote(x, y - CELL * 0.2, (Math.random() - 0.5) * 8, -16, 1400, 3, 2);
-      } else if (e.type === 'rot') { // rotted away: a brown puff
-        spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 8, 110, 460, 2.2, '#8a6a2a', '#57534e');
+      } else if (e.type === 'rot') { // rotted away: a brown puff (a bead, in its own colour)
+        spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 8, 110, 460, 2.2, e.kind === 'pellet' ? beadFill(e) : '#8a6a2a', '#57534e');
       } else if (e.type === 'woodpecker') {
         bird.arrivedAt = now;
       } else if (e.type === 'peck') { // a chunk comes out: chips flying from every cell, and a thump
