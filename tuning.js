@@ -99,7 +99,7 @@ window.TUNING = Object.freeze({
   PECK_HUNGRIER: 0.85,      // ...but it gets hungrier: each rest this much of the one before (down to PECK_REST_MIN)...
   PECK_REST_MIN: 12,
   PECK_CHUNK_MAX: 14,       // ...and each patch a cell bigger than the last (up to this)
-  PECK_CLEARANCE: 2,        // it aims clear of every body and food, this far from every head, while there's such a spot
+  PECK_CLEARANCE: 4,        // it aims clear of all food, and more than this far from every head (nobody can be in a fresh mark before they can see it), while there's such a spot
   PECK_UNDER_BODY: 0.33,    // this share of strikes starts under a body (a body lying over a fresh hole bridges it; only a head falls in)
   PECK_WIDEN: 0.5,          // this share widens an old hollow (fewer, bigger hollows)
   SD_APPLE_GAP: 20,         // sudden death: with no apple on the board, the next falls this many ticks times how many have fallen since 2:00 after the last went

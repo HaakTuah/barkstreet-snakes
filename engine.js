@@ -495,18 +495,18 @@ window.SnakeEngine = (() => {
 
   // Sudden death: the woodpecker takes the log away a patch at a time. It
   // lands, then over and over (hungrier each time: a shorter rest, a patch a
-  // cell bigger): picks a patch of PECK_CHUNK cells somewhere on
-  // the log (clear of every body and all food, and PECK_CLEARANCE cells from
-  // every head, while there's such a spot), eyes it for PECK_AIM_TICKS
-  // (everyone sees where, and the AIs keep out of it, like a hole), hammers
-  // it all out at once, and rests a good while. Whatever's in the patch when
-  // it strikes goes: food, fire, a burrow, and any part of a snake. A head
-  // there, and that snake's out; a body there is cut, and everything behind
-  // the cut falls off as food (out too, if what's left is less than
-  // MIN_LENGTH).
+  // cell bigger): picks a patch of PECK_CHUNK cells somewhere on the log
+  // (clear of all food, and PECK_CLEARANCE cells from every head, while
+  // there's such a spot: see pickPatch), eyes it for PECK_AIM_TICKS (everyone
+  // sees where, and the AIs keep out of it, like a hole), hammers it all out
+  // at once, and rests a good while. Whatever's in the patch when it strikes
+  // goes: food, fire and a burrow. A head on the ground there, and that
+  // snake's out; a body lying across it bridges the new hole (it isn't cut,
+  // and drops nothing), and the cell is a hole like any other once its tail
+  // has passed.
   // game.woodpecker: { at (time it came), target: [cells it's aiming at],
   //   strikeAt (tick), last: [cells it took out last], struckAt (tick), restUntil (tick), x, y (where it's busy) }
-  function peck(game, dying, drops) {
+  function peck(game, dying) {
     if (!suddenDeath(game)) return;
     let w = game.woodpecker;
     if (!w) {
@@ -516,25 +516,22 @@ window.SnakeEngine = (() => {
     }
     if (w.target.length && game.tick >= w.strikeAt) {
       const zone = new Set(w.target.filter(k => !game.holes.has(k)));
+      const under = []; // (whose bodies lay across it: they're fine)
       for (const s of game.snakes) {
         if (!s.alive) continue;
-        const i = s.body.findIndex((c, i) => (i || !s.flight) && zone.has(key(c.x, c.y))); // (a head in the air: not its head)
-        if (i < 0) continue;
-        if (i < T.MIN_LENGTH) { // (its head, or too little left behind it)
+        if (!s.flight && zone.has(key(s.body[0].x, s.body[0].y))) { // (a head in the air isn't in it)
           s.cause = 'got pecked by the woodpecker'; s.killer = 'wall'; s.killerId = null; s.fatal = 'pecked';
           s.alive = false;
           dying.push(s);
           continue;
         }
-        const cut = s.body.splice(i);
-        for (const c of cut) if (!zone.has(key(c.x, c.y))) drops.push({ x: c.x, y: c.y, color: s.color });
-        game.events.push({ type: 'cut', snake: s, x: cut[0].x, y: cut[0].y, lost: cut.length });
+        if (s.body.some((c, i) => i && zone.has(key(c.x, c.y)))) under.push(s.id);
       }
-      for (const k of zone) { game.holes.add(k); game.fires.delete(k); } // (a burning cell pecked out: the fire there's gone too)
+      for (const k of zone) { game.holes.add(k); if (game.fires.has(k)) putOut(game, k); } // (a burning cell pecked out: the fire there's gone too)
       game.food = game.food.filter(f => !zone.has(key(f.x, f.y)));
       game.burrows = game.burrows.filter(b => !zone.has(key(b.x, b.y))); // (a burrow pecked open is a hole now)
       const hit = [...zone];
-      game.events.push({ type: 'peck', x: w.x, y: w.y, cells: hit });
+      game.events.push({ type: 'peck', x: w.x, y: w.y, cells: hit, under });
       w.pecks = (w.pecks || 0) + 1; // (it gets hungrier: shorter rests, bigger patches)
       w.last = hit; w.struckAt = game.tick; w.target = []; w.restUntil = game.tick + Math.max(T.PECK_REST_MIN, Math.round(T.PECK_REST_TICKS * Math.pow(T.PECK_HUNGRIER, w.pecks)));
       return;
@@ -551,23 +548,34 @@ window.SnakeEngine = (() => {
     }
   }
 
-  // A patch for the woodpecker: grown cell by cell from a random start. It
-  // keeps clear of everyone while it can: first of every body, all food and
-  // PECK_CLEARANCE cells round every head; failing that, of bodies and heads
-  // themselves; failing that, anywhere left.
+  // A patch for the woodpecker, grown cell by cell from a start: under a body
+  // PECK_UNDER_BODY of the time (any snake's, never a head), beside an old
+  // hollow PECK_WIDEN of the time (fewer, bigger hollows), else anywhere. It
+  // grows compact: a cell with more of the patch, or old holes, beside it is
+  // likelier. It keeps clear of all food and PECK_CLEARANCE cells round every
+  // head while it can; failing that, of food and heads themselves; failing
+  // that, anywhere left.
   const PATCH_TRIES = [[true, T.PECK_CLEARANCE], [true, 0], [false, -1]];
   function pickPatch(game) {
-    markBodies(game);
     const foodAt = new Set(game.food.map(f => key(f.x, f.y)));
+    const roll = Math.random();
+    const nearHole = k => CRAWL.some(d => { const x = k % GRID + d.x, y = Math.floor(k / GRID) + d.y; return inside(x, y) && game.holes.has(key(x, y)); });
     for (const [clear, gap] of PATCH_TRIES) {
       const ok = k => {
         if (game.holes.has(k)) return false;
         if (!clear) return true;
-        if (bodyStamp[k] === stamp || foodAt.has(k)) return false;
+        if (foodAt.has(k)) return false;
         return headGap(game, k % GRID, Math.floor(k / GRID)) > gap;
       };
-      for (let t = 0; t < 30; t++) {
-        const seed = Math.floor(Math.random() * CELLS);
+      // Where it'd like to start this time (tried first, then anywhere).
+      const pool = [];
+      if (roll < T.PECK_UNDER_BODY) {
+        for (const s of game.snakes) if (s.alive) for (let j = 1; j < s.body.length; j++) { const k = key(s.body[j].x, s.body[j].y); if (ok(k)) pool.push(k); }
+      } else if (roll < T.PECK_UNDER_BODY + T.PECK_WIDEN && game.holes.size) {
+        for (let k = 0; k < CELLS; k++) if (ok(k) && nearHole(k)) pool.push(k);
+      }
+      for (let t = pool.length ? -15 : 0; t < 30; t++) {
+        const seed = t < 0 ? pool[Math.floor(Math.random() * pool.length)] : Math.floor(Math.random() * CELLS);
         if (!ok(seed)) continue;
         const patch = [seed], edge = [seed], inPatch = new Set(patch);
         const chunk = Math.min(T.PECK_CHUNK_MAX, T.PECK_CHUNK + (game.woodpecker?.pecks || 0)); // (a cell bigger each time)
@@ -575,7 +583,21 @@ window.SnakeEngine = (() => {
           const from = edge[Math.floor(Math.random() * edge.length)], x = from % GRID, y = Math.floor(from / GRID);
           const opts = CRAWL.map(d => [x + d.x, y + d.y]).filter(([nx, ny]) => inside(nx, ny) && !inPatch.has(key(nx, ny)) && ok(key(nx, ny)));
           if (!opts.length) { edge.splice(edge.indexOf(from), 1); continue; }
-          const [nx, ny] = opts[Math.floor(Math.random() * opts.length)], nk = key(nx, ny);
+          // (each way weighs (1 + 3 for each neighbour in the patch + 2 for each old hole beside it), squared)
+          let total = 0;
+          const weights = opts.map(([ox, oy]) => {
+            let n = 1;
+            for (const d of CRAWL) {
+              const ax = ox + d.x, ay = oy + d.y;
+              if (!inside(ax, ay)) continue;
+              if (inPatch.has(key(ax, ay))) n += 3; else if (game.holes.has(key(ax, ay))) n += 2;
+            }
+            total += n * n;
+            return n * n;
+          });
+          let r = Math.random() * total, i = 0;
+          while (i < opts.length - 1 && (r -= weights[i]) >= 0) i++;
+          const nk = key(opts[i][0], opts[i][1]);
           patch.push(nk); edge.push(nk); inPatch.add(nk);
         }
         if (patch.length >= Math.ceil(chunk / 2)) return patch;
@@ -814,13 +836,13 @@ window.SnakeEngine = (() => {
       const { x, y } = s.next;
       const k = key(x, y);
       if (!inside(x, y)) return { cause: s.boom ? 'dashed into the edge and blew up' : 'hit the edge', killer: 'wall', killerId: null };
-      if (game.holes.has(k)) return { cause: s.boom ? 'dashed into a woodpecker hole and blew up' : 'hit a woodpecker hole', killer: 'wall', killerId: null }; // (it bounces off a hole's rim like the edge; only a leap coming down on one falls in)
-      if (bodyStamp[k] === stamp) {
+      if (bodyStamp[k] === stamp && !s.boom) { // (a body first: one lying over a hole is what it hit)
         const other = game.snakes[bodyOwner[k]];
         // Two heads swapping cells met head-on, just as if they'd met in one.
         const swapped = other !== s && x === other.body[0].x && y === other.body[0].y && other.next?.x === s.body[0].x && other.next?.y === s.body[0].y;
         return { cause: other === s ? 'bit itself' : swapped ? `crashed head-on into ${other.name}` : `ran into ${other.name}`, killer: other === s ? 'self' : other.name, killerId: other.id, headOn: swapped };
       }
+      if (game.holes.has(k)) return { cause: s.boom ? 'dashed into a woodpecker hole and blew up' : 'hit a woodpecker hole', killer: 'wall', killerId: null }; // (it bounces off a hole's rim like the edge; only a leap coming down on one falls in)
       if (headStamp[k] === stamp && headCount[k] > 1) {
         const other = moving.find(o => o !== s && !o.air && o.next.x === x && o.next.y === y);
         return { cause: `crashed head-on into ${other.name}`, killer: other.name, killerId: other.id, headOn: true, meet: true };
@@ -856,7 +878,8 @@ window.SnakeEngine = (() => {
     const out = new Set(), live = new Set();
     const why = new Map(); // (why a crash was the end: for the card)
     for (const [s, c] of crashes) {
-      if (s.landing && game.holes.has(key(s.body[0].x, s.body[0].y))) { // (a landing that crashed: its head comes down on what it hopped; a hole, and in it goes)
+      const h = s.body[0]; // (a landing that crashed: its head comes down on what it hopped; a hole, and in it goes, unless a body lies across it)
+      if (s.landing && game.holes.has(key(h.x, h.y)) && !game.snakes.some(o => o !== s && o.alive && o.body.some(b => b.x === h.x && b.y === h.y))) {
         Object.assign(c, { cause: 'fell into a woodpecker hole', killer: 'wall', killerId: null, headOn: false, meet: false });
         out.add(s); why.set(s, 'hole');
       }
@@ -931,7 +954,7 @@ window.SnakeEngine = (() => {
     singe(game, dying, drops);
 
     crawl(game);
-    peck(game, dying, drops);
+    peck(game, dying);
 
     // Dead snakes turn into meat, and broken-off pieces into food (never on
     // food, living bodies, holes or fire).
@@ -1026,8 +1049,10 @@ window.SnakeEngine = (() => {
     }
     return 'landing';
   }
-  // Is (x, y) a tail end that moves on this very tick (its snake moving, not growing)?
+  // Is (x, y) a tail end that moves on this very tick (its snake moving, not
+  // growing)? Not if it lies over a hole: what it leaves is the hole.
   function leavingNow(game, x, y) {
+    if (game.holes.has(key(x, y))) return false;
     for (const o of game.snakes) {
       if (!o.alive || o.grow > 0 || o.stunUntil > game.tick) continue;
       const t = o.body[o.body.length - 1];
@@ -1194,14 +1219,15 @@ window.SnakeEngine = (() => {
       c = ahead(game, s, c.x, c.y, s.dir);
       s.next = c;
       const k = key(c.x, c.y);
-      if (!inside(c.x, c.y) || game.holes.has(k)) { s.boom = true; break; }
-      if (bodyStamp[k] === stamp) {
+      if (!inside(c.x, c.y)) { s.boom = true; break; }
+      if (bodyStamp[k] === stamp) { // (a body first: one lying over a hole is cut, and then it's into the hole)
         const o = game.snakes[bodyOwner[k]], j = o ? o.body.findIndex(b => b.x === c.x && b.y === c.y) : -1;
         const past = ahead(game, s, c.x, c.y, s.dir), pk = key(past.x, past.y);
         const thick = inside(past.x, past.y) && bodyStamp[pk] === stamp && bodyOwner[pk] === bodyOwner[k];
         if (!o || o === s || j <= 0 || thick) break; // (it crashes into that)
         cutAt(game, o, j, s, gone, dying, drops);
       }
+      if (game.holes.has(k)) { s.boom = true; break; }
       const fire = game.fires.get(k);
       if (fire && !(fire.strike && game.tick < fire.from)) douse(game, k); // (not lightning still on its way)
       if (i === T.DASH_LENGTH) break; // (its head goes here, with everyone else's)

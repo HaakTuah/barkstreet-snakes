@@ -648,53 +648,86 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('unknown and inherited persona keys are ignored', E.createGame({ personas: ['constructor', 'toString', 'drab'], withPlayer: false }).snakes.every(s => s.color));
 }
 
-{ // The woodpecker aims at patches clear of everyone (while there's room), and warns before it strikes.
-  let near = 0, early = 0, underBody = 0, underFood = 0, strikes = 0, cells = 0;
+{ // The woodpecker aims clear of heads and food (while there's room), under bodies too, and warns before it strikes.
+  let near = 0, early = 0, underFood = 0, strikes = 0, cells = 0, aims = 0, underBodies = 0, besideHoles = 0, under = 0, cuts = 0;
   for (let r = 0; r < 12; r++) {
     const g = E.createGame({ withPlayer: false });
     g.time = T.SUDDEN_DEATH_MS;
-    for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; } // (fed, so they last)
+    for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; s.grow = 30; } // (fed, so they last, and long, as by 2:00)
     let aimedAt = -1;
     for (let t = 0; t < 500 && g.snakes.filter(s => s.alive).length > 1; t++) {
-      const foodCells = new Set(g.food.map(f => f.y * T.GRID + f.x));
+      const foodCells = new Set(g.food.map(f => f.y * T.GRID + f.x)), holes = new Set(g.holes);
       E.step(g);
       const heads = g.snakes.filter(s => s.alive).map(s => s.body[0]); // (as they were when it took aim)
       const bodies = new Set(g.snakes.filter(s => s.alive).flatMap(s => s.body.map(c => c.y * T.GRID + c.x)));
       for (const e of g.events) {
         if (e.type === 'aim') {
           aimedAt = g.tick;
+          aims++;
           for (const k of g.woodpecker.target) {
             if (heads.some(h => Math.abs(h.x - k % T.GRID) + Math.abs(h.y - Math.floor(k / T.GRID)) <= T.PECK_CLEARANCE)) near++;
             if (foodCells.has(k)) underFood++;
-            if (bodies.has(k)) underBody++;
           }
+          if (g.woodpecker.target.some(k => bodies.has(k))) underBodies++;
+          if (g.woodpecker.target.some(k => [-1, 1, -T.GRID, T.GRID].some(d => holes.has(k + d)))) besideHoles++;
         }
         if (e.type === 'peck') {
           strikes++;
           cells += e.cells.length;
+          under += e.under.length;
           if (g.tick - aimedAt < T.PECK_AIM_TICKS) early++;
         }
+        if (e.type === 'cut') cuts++;
       }
     }
   }
   check('the woodpecker strikes in patches', strikes > 20 && cells / strikes > T.PECK_CHUNK / 2, `${strikes} strikes, ${(cells / Math.max(1, strikes)).toFixed(1)} cells each`);
   check('the woodpecker aims well away from heads', near === 0, `${near} cells too close`);
   check('the woodpecker gives warning', early === 0, `${early} without`);
-  check('the woodpecker aims clear of bodies and food', underBody + underFood === 0, `${underBody} bodies, ${underFood} food`);
+  check('the woodpecker aims clear of food', underFood === 0, `${underFood} food`);
+  check('...but under bodies, often', underBodies > aims * T.PECK_UNDER_BODY && under > 0, `${underBodies} of ${aims} aims, ${under} snakes under strikes`);
+  check('...widens old hollows', besideHoles > aims * T.PECK_WIDEN, `${besideHoles} of ${aims} aims beside an old hole`);
+  check('...and never cuts', cuts === 0, `${cuts} cuts`);
 }
 
-{ // Whatever's in the patch when it strikes goes: a body there is cut (its tail falls off as food), a head there is out.
-  const g = board([[line(12, 10, 9), 'right'], [line(12, 16, 4), 'right']]);
+{ // A body lying across the patch when it strikes bridges the new hole: no cut, nothing dropped; the hole's there once its tail has passed.
+  const g = board([[line(12, 10, 9), 'right'], [line(12, 16, 4), 'right'], [line(5, 20, 3), 'right']]);
   g.time = T.SUDDEN_DEATH_MS;
   feed(g);
-  // P0 (head at 12,10, nine long) has its fifth segment on (8, 10); P1's head and neck sit in the patch below.
-  g.woodpecker = { x: 8, y: 10, at: g.time, target: [K(8, 10), K(8, 9), K(8, 11), K(13, 16), K(12, 16)], strikeAt: g.tick, last: [], struckAt: -1, restUntil: 0 };
-  for (const o of g.snakes) o.queue = [D.up];
+  // P0 (head at 12,10, nine long) lies across (8, 10); P1 turns up out of the patch, its neck left in it; P2's head goes into it.
+  g.woodpecker = { x: 8, y: 10, at: g.time, target: [K(8, 10), K(8, 9), K(8, 11), K(12, 16), K(12, 17), K(6, 20)], strikeAt: g.tick, last: [], struckAt: -1, restUntil: 0 };
+  g.snakes[1].queue = [D.up];
   const dying = E.step(g);
-  const [a, b] = g.snakes;
-  check('the woodpecker cuts a body in its patch', a.alive && a.body.length === 5 && g.events.some(e => e.type === 'cut' && e.snake === a), a.body.length);
-  check('...and the tail behind the cut falls off as food', [[7, 10], [6, 10], [5, 10]].every(([x, y]) => g.food.some(f => f.kind === 'pellet' && f.x === x && f.y === y)), JSON.stringify(g.food.filter(f => f.kind === 'pellet')));
-  check('...a head in its patch is out', dying.includes(b) && b.cause === 'got pecked by the woodpecker' && b.fatal === 'pecked', b.cause);
+  const [a, b, c] = g.snakes, peck = g.events.find(e => e.type === 'peck');
+  check('a body across the struck patch bridges it (no cut)', a.alive && a.body.length === 9 && joined(a.body) && !g.events.some(e => e.type === 'cut'), a.body.length);
+  check('...and drops nothing', !g.food.some(f => f.kind === 'pellet' && f.owner === a.id), JSON.stringify(g.food.filter(f => f.kind === 'pellet' && f.owner === a.id)));
+  check('...a neck in the patch is fine too', b.alive && b.body.length === 4, b.cause);
+  check('...the strike says whose bodies lay under it', peck && peck.under.length === 2 && peck.under.includes(a.id) && peck.under.includes(b.id), JSON.stringify(peck && peck.under));
+  check('...but a head on the ground in it is out', dying.includes(c) && c.cause === 'got pecked by the woodpecker' && c.fatal === 'pecked', c.cause);
+  for (let t = 0; t < 5; t++) { feed(g); quiet(g); }
+  check('...and once its tail has passed, it\'s a hole like any other', a.alive && g.holes.has(K(8, 10)) && !a.body.some(p => p.x === 8 && p.y === 10), JSON.stringify(a.body.slice(-2)));
+}
+
+{ // Bodies lying over holes: running into one is running into that snake, a dash cuts it and then blows up in the hole, and an auto-turn never takes a tail over a hole for room.
+  const g = board([[line(5, 5, 6), 'right'], [[[6, 3], [6, 4], [6, 5], [6, 6], [6, 7], [6, 8]], 'up']]);
+  g.holes.add(K(6, 5)); // (under P1's third segment)
+  E.step(g);
+  const crash = g.events.find(e => e.type === 'crash' && e.snake === g.snakes[0]);
+  check('running into a body that lies over a hole is running into that snake', crash && crash.cause === 'ran into P1' && crash.killerId === g.snakes[1].id, crash && crash.cause);
+  const g2 = board([[line(5, 10, 5), 'right'], [[[7, 6], [7, 7], [7, 8], [7, 9], [7, 10], [7, 11], [7, 12], [7, 13]], 'up']]);
+  g2.holes.add(K(7, 10)); // (under P1's fifth segment)
+  g2.snakes[0].dashes = 1;
+  E.flash(g2, g2.snakes[0]);
+  const dying = quiet(g2);
+  check('a dash cuts a body lying over a hole...', g2.snakes[1].alive && g2.snakes[1].body.length === 4 && g2.events.some(e => e.type === 'cut' && e.by === g2.snakes[0].id), g2.snakes[1].body.length);
+  check('...and then blows up in the hole', dying.includes(g2.snakes[0]) && g2.snakes[0].cause === 'dashed into a woodpecker hole and blew up', g2.snakes[0].cause);
+  // A's stun ends facing the edge: up is P1's tail end, leaving this tick but lying over a hole; down's a dead end, but open.
+  const g3 = board([[[[23, 5], [22, 5], [21, 5], [20, 5], [19, 5], [18, 5]], 'right'], [[[20, 1], [21, 1], [22, 1], [23, 1], [23, 2], [23, 3], [23, 4]], 'left']]);
+  for (const k of [K(23, 4), K(22, 6), K(23, 7)]) g3.holes.add(k);
+  g3.snakes[0].stunUntil = g3.tick; g3.snakes[0].bounce = null;
+  g3.snakes[1].queue = [D.left];
+  feed(g3); quiet(g3);
+  check('after a stun, it never turns into a hole under a leaving tail', g3.snakes[0].alive && g3.snakes[0].dir === D.down && g3.snakes[0].body[0].y === 6, JSON.stringify(g3.snakes[0].body[0]));
 }
 
 { // An AI sees a new hole only after its reaction time, like a person.
