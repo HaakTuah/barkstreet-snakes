@@ -12,7 +12,7 @@ A snake game on a mossy log: you against three AI rivals on a fallen log in the 
 - The last snake alive wins. If you die first, you can watch the rest of the round or start over.
 - The first moves are a little slower, then the game speeds up gently over two minutes, to about a third faster.
 - **Apples rot:** each lasts about 8 to 16 seconds, less as the round speeds up. It bruises, browns and gets a fly as it goes, then rots away, and a fresh one drops from the tree above somewhere else.
-- **Hunger:** go 20 seconds without eating (mushrooms don't count) and you start shrinking, one segment every 1.5 seconds. Starve at length 3 and you're out, unless your head reaches food that very moment. The bar under each name shows how hungry everyone is. **Your own beads aren't a meal:** eating back the tail you lost in a crash gives you the length back (a muted +1), but not the hunger clock. A rival close to starving drops whatever it was up to and takes its chances for food.
+- **Hunger:** go 20 seconds without eating (mushrooms don't count) and you start shrinking, one segment every 1.5 seconds. Between 0:45 and the woodpecker's arrival, when food's everywhere, a meal keeps you only 13 seconds. Starve at length 3 and you're out, unless your head reaches food that very moment. The bar under each name shows how much of everyone's last meal is left (full after any meal), and turns red, the tag pulsing, 6 seconds before they start shrinking. **Your own beads aren't a meal:** eating back the tail you lost in a crash gives you the length back (a muted +1), but not the hunger clock. A rival close to starving drops whatever it was up to and takes its chances for food.
 - **Weather:** after the first 15 seconds, spells of weather come and go, with clear spells between, every kind before any comes round again. Everyone, the rivals included, sees all of it coming.
   - **Sun:** golden hour. Golden apples are five times as likely.
   - **Wind:** gusts knock apples loose, up to three more than usual.
@@ -29,12 +29,14 @@ Everyone has two powers, each with its own press:
 - **Jump** (Space; on a phone, tap): with a body, a hole or fire right in front of you and room beyond, you hop over it, two cells in two ticks. It costs the tip of your tail and needs 4 seconds before the next.
 - **Flash** (E or Shift; on a phone, swipe the way you're already going): two cells in one tick, along the ground. It's free, then rests 6 seconds. It eats what it passes but cuts nothing: whatever's in the way, you run into.
 
+Press both and the jump goes first if there's something to hop; the flash follows once you're down. A flash pressed in the air goes once you land. Pressed while you're stunned, a power that can't get anywhere just says so, and you turn clear.
+
 Two half-rings round your head show both rests, the jump's on the left in sky blue and the flash's on the right in ember, and your tag's chips fill with them. Golden food makes them stronger, and it adds up:
-- golden beetles give golden leaps (up to 3 held);
-- golden leaves give golden flashes, called dashes (up to 3);
+- golden beetles give golden jumps (up to 3 held);
+- golden leaves give golden flashes (up to 3);
 - golden mushrooms make the edges wrap (12 seconds each, up to 20).
 
-Golden ones go before the plain ones and leave their rests alone. Anyone holding one wears a gold outline, with sky-blue round pips behind the head for golden leaps and ember diamonds for dashes. The rivals jump, flash, dash and wrap too, by the same rules, when it pays them: about three flashes a minute.
+Golden ones go before the plain ones and leave their rests alone. Anyone holding one wears a gold outline, with sky-blue round pips behind the head for golden jumps and ember diamonds for golden flashes. The rivals jump, flash and wrap too, golden ones included, by the same rules, when it pays them: about two flashes a minute.
 
 ### Food
 
@@ -45,8 +47,8 @@ Golden ones go before the plain ones and leave their rests alone. Anyone holding
 | Red mushroom | Poisonous, and it looks it (a violet haze, stink lines, spores). Shrinks you by 3 (never below 3). Never sprouts right by a head; withers after about 20 seconds and regrows elsewhere. |
 | Beads | +1 length. What's left of a dead snake (a bead every other segment), or the tail that broke off in a crash, in its colours. They rot after about 14 seconds. Roasted ones (from a snake on fire) are +2 and last longer. Your own give you the length back but aren't a meal: they don't reset your hunger. |
 | Baked apple | +2 length. An apple that sat in a fire for about 2 seconds: steaming, glazed and split. |
-| Golden beetle | +2 length, and **two golden leaps** (up to three held): three cells in two ticks, hopping up to two, free. About two beetles in five are golden. |
-| Golden leaf | Only on the wind (in about 6 rounds in 10), landing away from everyone's heads. +1 length and **two golden flashes (dashes)**, up to three held: three cells in one tick, cutting through a snake one cell thick and putting out fire. Dash into the edge or a hole and you blow up. |
+| Golden beetle | +2 length, and **two golden jumps** (up to three held): three cells in two ticks, hopping up to two, free. About two beetles in five are golden. |
+| Golden leaf | Only on the wind (in about 6 rounds in 10), landing away from everyone's heads. +1 length and **two golden flashes**, up to three held: three cells in one tick, cutting through a snake one cell thick and putting out fire. Flash into the edge or a hole with a golden one and you blow up. |
 | Golden mushroom | Only in the rain (in about 6 rounds in 10), landing away from everyone's heads. +1 length, and for **12 seconds the edges wrap round** for you: off one side, in at the other. Another adds 12 more, up to 20. |
 | Beetle | +2 length. Now and then one crawls out of a burrow (from 15 s in, not once the woodpecker comes), and a scared one runs for a burrow and dives in. It wanders slowly, and scurries away (at half a snake's speed) when a head gets within 4 cells, so catching one is a short chase. Uncaught, it flies off after about 30 s. |
 
@@ -82,7 +84,7 @@ Everything you hear is made live with the Web Audio API, and placed left or righ
 
 ## Bark chatter
 
-The AI snakes talk. Each one has its own voice: Sovereign uses the royal "we", Colonist is a pompous redcoat, Mason speaks only (dubious) Latin, Ghost mostly says "…", and Copycat repeats whatever it just heard, in Chinese. Some of them talk to each other. They react to what happens to them, too: the woodpecker pecking under them, the rain putting them out, food rotting or burning before they get to it, starving, and being cut by a dash. Lines pop up in speech bubbles and in a log under the board, which you can switch off. A line takes a rest before it comes round again, and a joke is told once a round.
+The AI snakes talk. Each one has its own voice: Sovereign uses the royal "we", Colonist is a pompous redcoat, Mason speaks only (dubious) Latin, Ghost mostly says "…", and Copycat repeats whatever it just heard, in Chinese. Some of them talk to each other. They react to what happens to them, too: the woodpecker pecking under them, the rain putting them out, food rotting or burning before they get to it, starving, and being cut by a golden flash. Lines pop up in speech bubbles and in a log under the board, which you can switch off. A line takes a rest before it comes round again, and a joke is told once a round.
 
 ## Watching the AIs
 
@@ -131,12 +133,13 @@ Serve the folder with any static server (for example `npx serve` or `python -m h
 - `?perf` shows a frame-time overlay (toggle it with the ` key).
 - `?debug` adds `SnakeDebug` to the console, for example `SnakeDebug.setup(['sniper', 'mason', 'ghost'])` to start a round against chosen rivals.
 - `node tools/records-test.js` checks that shared and played-together rounds land in each friend's Hall of Fame exactly once, and that a browser that won't keep records still has them until the tab closes.
-- `node tools/online-test.js` plays rounds through the online protocol and checks that a friend's screen matches the host's every tick.
-- `node tools/simulate.js 200` plays 200 AI-only rounds headlessly with the game's own rules and AI, and prints each personality's win rate, food, kills, how snakes die and so on. Add `--seed 1` to repeat a run exactly (on any machine), `--check` to fail on a stalled round, `--census` to count what a round holds (golden things, weather, lightning, the woodpecker, powers), and `--root <dir>` to play another copy of the game, to compare versions.
+- `node tools/online-test.js` plays rounds through the online protocol and checks that a friend's screen matches the host's every tick, and that the plans a friend draws ahead from (where everyone goes next) are the host's.
+- `node tools/simulate.js 200` plays 200 AI-only rounds headlessly with the game's own rules and AI, and prints each personality's win rate, food, kills, how snakes die and so on. Add `--seed 1` to repeat a run exactly (on any machine), `--check` to fail on a stalled round, `--census` to count what a round holds (golden things, weather, lightning, the woodpecker, powers, and how hungry snakes are before the woodpecker comes and after), and `--root <dir>` to play another copy of the game, to compare versions.
 - `node tools/rules-test.js` checks the rules on hand-built boards: tails, head-ons, starving, the woodpecker's manners, what the AIs can see.
-- `node tools/chatter-test.js` checks that every line the rivals say has its Chinese, for Copycat, that no Chinese is left over from a line that's gone, and that every line marked as a punchline is one someone says; then it plays the chatter with the game's own engine through staged moments (pecked under, put out by the rain, food burning or rotting nearby, starving, cut by a dash, flashing, the last apples) and a few whole AI rounds.
-- `node tools/input-test.js` checks the controls in headless Chrome with real key and touch events on a steady 60 Hz clock: Space or a tap jumps, E, Shift or a swipe ahead flashes, nothing else fires a power, a swipe never jumps, and a press reaches the next tick.
-- `node tools/shots.js [dir]` takes the screenshot tour in headless Chrome (title, play, a bite, a nap, a death, the cards, the Hall of Fame, a laptop, a phone both ways), with an autopilot at the wheel. `node tools/bench.js` measures frame times the same way, and what Sovereign's and Colonist's land and a woodpecker strike cost. Both need Chrome (or set `CHROME`); nothing to install.
+- `node tools/chatter-test.js` checks that every line the rivals say has its Chinese, for Copycat, that no Chinese is left over from a line that's gone, and that every line marked as a punchline is one someone says; then it plays the chatter with the game's own engine through staged moments (pecked under, put out by the rain, food burning or rotting nearby, starving, cut by a golden flash, flashing, the last apples) and a few whole AI rounds. Last, it runs the sound (audio.js on a stand-in AudioContext) and checks that a rival's flash, jump, golden flash, catching fire or golden mushroom never silences yours, and that your own golden flashes or golden jumps in a row are each heard.
+- `node tools/input-test.js` checks the controls in headless Chrome with real key and touch events on a steady 60 Hz clock: Space or a tap jumps, E, Shift or a swipe ahead flashes, nothing else fires a power, a swipe never jumps, and a press reaches the next tick. A thumb resting before it swipes or while the other swipes, and a quick double flick, never fire a power; a tap that drifts as it lifts still jumps, a long slanted stroke still turns, and mashing jump over your death's card never starts a round.
+- `node tools/render-test.js` checks the renderer's promises a picture can show, in headless Chrome: a flash drawn ahead and gliding on, a corpse's beads in its markings, power pips on the board at its edge, scorch as soot, every Field guide picture.
+- `node tools/shots.js [dir]` takes the screenshot tour in headless Chrome (title, play, a bite, the powers, a nap, a death, the cards, the Hall of Fame, Your story and the Field guide, a laptop, a phone both ways), with an autopilot at the wheel. `node tools/bench.js` measures frame times the same way, and what Sovereign's and Colonist's land, a woodpecker strike and fire burning out cost. They need Chrome (or set `CHROME`); nothing to install.
 
 ### How it's put together
 
