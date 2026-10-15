@@ -313,6 +313,10 @@ window.SnakeAI = (() => {
   const manhattan = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
   const sameDir = (a, b) => a.x === b.x && a.y === b.y;
   const rand = (a, b) => a + Math.random() * (b - a);
+  // Land (Sovereign's realm, a colony): a cell whose centre is within the
+  // field's radius, and LAND_REACH, of its centre. (One rule everywhere: the
+  // AI, the chatter, the tags and the borders drawn.)
+  const onLand = (c, f) => Math.hypot(c.x - f.x, c.y - f.y) <= f.radius + TUNE.LAND_REACH;
 
   // Wildcard: a random but sensible set of weights, drawn once per round.
   function randomWeights() {
@@ -465,7 +469,7 @@ window.SnakeAI = (() => {
             let n = 0;
             for (let y = cy - home.radius; y <= cy + home.radius; y++) {
               for (let x = cx - home.radius; x <= cx + home.radius; x++) {
-                if (inside(x, y) && Math.hypot(x - cx, y - cy) <= home.radius && !holes.has(y * N + x)) n++;
+                if (inside(x, y) && Math.hypot(x - cx, y - cy) <= home.radius + TUNE.LAND_REACH && !holes.has(y * N + x)) n++;
               }
             }
             return n;
@@ -479,7 +483,7 @@ window.SnakeAI = (() => {
           }
           if (best) { home.x = best.x; home.y = best.y; }
         }
-        const intruders = all.filter(k => Math.hypot(heads[k].x - ctx.home.x, heads[k].y - ctx.home.y) <= ctx.home.radius + 1);
+        const intruders = all.filter(k => onLand(heads[k], ctx.home));
         if (intruders.length) pickVictim(intruders, ctx.w.hunt);
         else memory.victimId = null;
       },
@@ -515,7 +519,7 @@ window.SnakeAI = (() => {
           memory.site = best;
           if (!best) memory.nextSiteAt = view.timeMs + col.every;
         }
-        const intruders = all.filter(k => memory.colonies.some(c => Math.hypot(heads[k].x - c.x, heads[k].y - c.y) <= c.radius + 1));
+        const intruders = all.filter(k => memory.colonies.some(c => onLand(heads[k], c)));
         if (intruders.length) pickVictim(intruders, ctx.w.hunt);
         else {
           memory.victimId = null;
@@ -831,7 +835,11 @@ window.SnakeAI = (() => {
             queue[write++] = i;
           }
         }
-        const levelEnd = write;
+        // A cell is claimed at T + 1 once whoever's in it has left: the free
+        // tables count ticks from now (a rival's search starts in the past,
+        // when everything empty now was empty too), and my own body, placed
+        // at time t, ownFree - t. (Worked out once a level: it's the hot loop.)
+        const levelEnd = write, freeBy = Math.max(0, T + 1), ownBy = T + 1 - t;
         while (read < levelEnd) {
           const i = queue[read++];
           const own = owner[i];
@@ -847,7 +855,8 @@ window.SnakeAI = (() => {
               }
               continue;
             }
-            if (free[ni] > T + 1 || ownFree[ni] > T + 1 - t) continue;
+            const mine = ownFree[ni];
+            if (free[ni] > freeBy || (mine > 0 && mine > ownBy)) continue;
             ownerStamp[ni] = stampV; owner[ni] = own; claimT[ni] = T + 1; counts[own]++;
             queue[write++] = ni;
           }
@@ -911,7 +920,7 @@ window.SnakeAI = (() => {
 
       // 7. Staying home.
       if (ctx.home) {
-        const out = Math.hypot(head.x - ctx.home.x, head.y - ctx.home.y) - ctx.home.radius;
+        const out = Math.hypot(head.x - ctx.home.x, head.y - ctx.home.y) - ctx.home.radius - TUNE.LAND_REACH;
         if (out > 0) score -= w.home.leave * out;
       }
 
