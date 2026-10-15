@@ -3865,6 +3865,8 @@ window.SnakeRender = (() => {
   const RC = CELL / 2;             // (how round its corners are: half a cell, so a diagonal edge is a hand-drawn wave)
   const HOLE_LOST = -1000;         // (land lost to a hole goes at once)
   const LAND_BAND = [1.3, 0.05, 0.9, 0.06, 0.55, 0.08]; // (the soft band inside the border: width in cells, alpha, ...)
+  const LAND_INK = 'rgba(28,18,9,0.92)', KEYLINE = 'rgba(246,236,210,0.75)', BORDER_INK = 2.2, BORDER_KEY = 1.2; // (a border's ink and its parchment keyline, and their widths in units)
+  const KEYLINE_SOLID = '#ddd0b2'; // (the keyline, opaque, for round a rival on the land)
   const realms = new Map();        // owner -> realm
   const fieldSpecs = [];           // this frame's realms, in drawing order
   const inField = new Map();       // snake -> the owners whose land its head was on last frame
@@ -4101,9 +4103,12 @@ window.SnakeRender = (() => {
   // band deepening toward its border inside it, a strong riband of colour
   // hugging the line (an old map's hand-colouring), hatching where it's
   // contested (one diagonal each, by idx, so two owners make a light plaid),
-  // and the inked line itself (none along the board's edge or a hole: that's
-  // coast). On gg, if given, its border's glow, for when it lights up.
-  // other: the other owners' land; lost: the holes.
+  // and the inked line itself, with a parchment keyline just inside it
+  // (none along the board's edge or a hole: that's coast). The colour alone
+  // carries nothing for a colour-blind eye (Colonist's rose goes grey-khaki,
+  // its ink no darker than the bark's grain): the light keyline against the
+  // ink does, for every eye. On gg, if given, its border's glow, for when it
+  // lights up. other: the other owners' land; lost: the holes.
   function paintLand(g, gg, m, other, col, idx, lost) {
     traceCells(m);
     for (let j = 0; j < tAt[tLoops]; j++) {
@@ -4122,6 +4127,11 @@ window.SnakeRender = (() => {
       for (let n = 0; n < LAND_BAND.length; n += 2) { g.globalAlpha = LAND_BAND[n + 1]; g.lineWidth = LAND_BAND[n] * CELL; g.stroke(edge); }
       g.globalAlpha = 0.55; g.lineWidth = 12; g.stroke(edge); // (half of it shows: 6 units inside the line)
       g.globalAlpha = 1;
+    }
+    if (anyBorder) { // (the keyline: inside the land, from the ink's inner edge on; the ink goes over its outer part, below)
+      g.strokeStyle = KEYLINE;
+      g.lineWidth = 2 * (BORDER_INK / 2 + BORDER_KEY);
+      g.stroke(border);
     }
     let x0 = GRID, y0 = GRID, x1 = -1, y1 = -1;
     const hatch = new Path2D();
@@ -4144,8 +4154,8 @@ window.SnakeRender = (() => {
     }
     g.restore();
     if (anyBorder) {
-      g.strokeStyle = rgba(mix(col, '#1c1209', 0.72), 0.95);
-      g.lineWidth = 3;
+      g.strokeStyle = LAND_INK;
+      g.lineWidth = BORDER_INK;
       g.stroke(border);
     }
     if (gg && anyEdge) {
@@ -4306,7 +4316,7 @@ window.SnakeRender = (() => {
       dashAlong(g, sh, at[n], at[n + 1], s0 * L, (s0 + 0.5) * L);
     }
     const col = o ? o.color : r.color;
-    g.strokeStyle = rgba(mix(col, '#1c1209', 0.72), 0.95);
+    g.strokeStyle = LAND_INK;
     g.lineWidth = 5;
     g.stroke();
     g.strokeStyle = col;
@@ -4476,8 +4486,12 @@ window.SnakeRender = (() => {
   // land, and is laid on at FIELD_GLOW; the line (FIELD_LINE wide, opaque)
   // goes straight on the board. The snake drawn over them covers their
   // inside, so its body keeps its own colours (on land two owners claim,
-  // the later colour wins). Where a head just crossed in: a ripple at it
-  // (over the snakes: see drawRipples), and the border lights up from there.
+  // the later colour wins). Outside the line, the border's own parchment
+  // keyline, so it shows round a body of the land's own hue (rose round
+  // Sniper's red) and to colour-blind eyes (the bark beyond it is its ink:
+  // an ink ring as well cost a third pass). Where a head just crossed
+  // in: a ripple at it (over the snakes: see drawRipples), and the border
+  // lights up from there.
   const FIELD_GLOW = 0.16, FIELD_GLOW_GROW = 8, FIELD_LINE = 2.6, huedOn = [];
   function drawFieldHues(now) {
     for (const s of game.snakes) {
@@ -4513,6 +4527,8 @@ window.SnakeRender = (() => {
       veilOn(0, 0, x0 - m, y0 - m, x1 + m, y1 + m);
       for (const r of huedOn) { ctx.fillStyle = r.color; bodyFillsOn(a, edge + FIELD_GLOW_GROW, r); }
       veilOff(FIELD_GLOW);
+      ctx.fillStyle = KEYLINE_SOLID; // (opaque: the pieces overlap)
+      for (const r of huedOn) bodyFillsOn(a, edge + FIELD_LINE + BORDER_KEY, r);
       for (const r of huedOn) { ctx.fillStyle = r.color; bodyFillsOn(a, edge + FIELD_LINE, r); }
     }
   }
