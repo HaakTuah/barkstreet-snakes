@@ -607,66 +607,72 @@ Protocol 7, and 8 after the critique:
 ## Round four, measured
 
 AI-only rounds as `tools/simulate.js` plays them (`--census` prints most of this): 600 seeded rounds each on seeds 3 and 11, every cell "seed 3 / seed 11" unless it says otherwise. The builds:
-- **merged**: the branch as it stands. From 234abd3 on, only drawing, input and docs changed, so e1afcb0 plays the same rounds. Fingerprints 716587532 / 346214756; `simulate.js 60 --seed 3` gives 153523588 with and without `--ahead`.
-- **after balance**: the balance pass's final build, the same rules but for the rivals telling the woodpecker's mark from a hole (165991245 / 15180574). Some numbers the census doesn't print; they come from this build, and say so.
+- **final**: fed9bff, after round four's critique: a meal mid-round keeps you 13 s, the plain flash is priced at two apples and a mushroom at three, a jump pressed with a flash goes first, flashes are worked out together, and a power that can't go in a stun says so (6c84438 already plays these rounds; fed9bff and the docs commits after it change no rule). Fingerprints 275874727 / 211829363, both `--check` ok (re-run on the docs commits after fed9bff: the same output, line for line); `simulate.js 60 --seed 3` gives 419130314 with and without `--ahead`.
+- **merged**: the branch before the critique. From 234abd3 on, only drawing, input and docs changed, so e1afcb0 plays the same rounds. Fingerprints 716587532 / 346214756; `simulate.js 60 --seed 3` gives 153523588 with and without `--ahead`.
+- **after balance**: the balance pass's final build, the same rules as merged but for the rivals telling the woodpecker's mark from a hole (165991245 / 15180574). Some numbers the census doesn't print; they come from this build, and say so.
 - **before balance**: round four's rules and AI before the balance pass (2a8158c: two apples after 0:45, patches of 7 to 14, golden mushrooms 0.4; 288269477 / 789394841).
 
 ### The targets
 
-All met.
+Merged, all were met. Final, all but two: one personality's win rate on one seed, and the plain flashes, which are fewer on purpose.
 
-| Target | Before balance | Merged |
+| Target | Before balance | Merged | Final |
+|---|---|---|---|
+| Median round (155–175 s) | 180 / 181 s | 169 / 171 s (middle half 160–178 / 162–180) | 169 / 170 s (middle half 161–179 / 161–180) |
+| Rounds reaching the woodpecker (at least 90%) | 99.7 / 100% | 99 / 100% | 99 / 100% |
+| Sudden death, median (35–60 s) | 60 / 61 s | 49 / 51 s (middle half 40–58 / 42–60) | 49 / 50 s (middle half 41–59 / 41–60) |
+| Starving (at most 8% of deaths) | 6 / 8% | 2 / 1% | 3 / 2% |
+| A starvation before 1:00 (under 5% of rounds) | 0.3 / 0.3% | 0.2 / 0.3% (after balance) | under 0.5% / under 0.5% (the census rounds both to 0%) |
+| Every personality's win rate (15–35%) | 18–31 / 18–32% | 18–33 / 16–33% | 15–34 / **12**–35% |
+| Holes, share of sudden death's deaths (at most 25%) | 25 / 25% | 22 / 22% | 24 / 24% |
+| Woodpecker aims near a head (rare) | 7 of 12,751 / 4 of 12,892 | 4 of 10,062 / 0 of 10,497 | 1 of 10,260 / 5 of 10,341 |
+| Plain flashes a minute alive (about 3–5) | 2.94 / 2.92 | 3.1 / 3.1 | **2.1 / 2.1** |
+| Golden leaps used (over 90%) | 99 / 99% | 99 / 99% | 99 / 99% |
+| A storm in a round (at least 80%) | 87 / 87% | 87 / 89% | 87 / 86% |
+| Snake-time in the hunger warning before 2:00 (at least 8%: the critique's) | | 3.0 / 3.2% (the critique's census of e1afcb0) | 8.8 / 8.9% |
+
+- **Win rates.** Final, Gobbler wins 12% on seed 11 (17% on seed 3), under the floor. The critique's rules fix ran 800 rounds with Gobbler in every one: 16.0% on its rules against 15.6% on e1afcb0's, so it reads as sampling noise (a personality's sampling error here is about 3 points), not a change; that run hasn't been repeated since. On the floor: Desperado and Creeper on seed 3, Wildcard on seed 11 (15%). On top: Mute and Copycat on seed 3 (34%), Sovereign on seed 11 (35%). Merged, Desperado on seed 11 (16%) was closest to the edge and Vulture on top on both seeds (33%).
+- **Plain flashes.** Below the balance pass's 3–5 a minute on purpose: at one apple a flash, rivals flashed 3.1 times a minute and did no better than never flashing, so the critique priced it at two (see Rivals).
+
+### What a round holds
+
+| | Merged | Final |
 |---|---|---|
-| Median round (155–175 s) | 180 / 181 s | 169 / 171 s (middle half 160–178 / 162–180) |
-| Rounds reaching the woodpecker (at least 90%) | 99.7 / 100% | 99 / 100% |
-| Sudden death, median (35–60 s) | 60 / 61 s | 49 / 51 s (middle half 40–58 / 42–60) |
-| Starving (at most 8% of deaths) | 6 / 8% | 2 / 1% |
-| A starvation before 1:00 (under 5% of rounds) | 0.3 / 0.3% | 0.2 / 0.3% (after balance) |
-| Every personality's win rate (15–35%) | 18–31 / 18–32% | 18–33 / 16–33% |
-| Holes, share of sudden death's deaths (at most 25%) | 25 / 25% | 22 / 22% |
-| Woodpecker aims near a head (rare) | 7 of 12,751 / 4 of 12,892 | 4 of 10,062 / 0 of 10,497 |
-| Plain flashes a minute alive (about 3–5) | 2.94 / 2.92 | 3.1 / 3.1 |
-| Golden leaps used (over 90%) | 99 / 99% | 99 / 99% |
-| A storm in a round (at least 80%) | 87 / 87% | 87 / 89% |
+| Crashes survived a round | 10.6 / 10.2 | 10.0 / 10.5 |
+| Draws, of 600 | 2 / 1 (no round stalls) | 0 / 0 (no round stalls) |
+| Golden apples a round | 5.2 / 5.3 | 5.3 / 5.3 |
+| Golden beetles a round (rounds with one) | 1.61 (86%) / 1.58 (83%) | 1.57 (82%) / 1.55 (83%) |
+| Golden leaves a round (rounds with one) | 0.84 (57%) / 0.85 (61%) | 0.78 (55%) / 0.81 (57%) |
+| Golden mushrooms a round (rounds with one) | 0.71 (61%) / 0.68 (59%) | 0.70 (60%) / 0.67 (58%) |
+| Golden power food eaten, a snake a round (more than 2) | 0.73 (4%) / 0.72 (3%) | 0.72 (4%) / 0.71 (3%) |
+| Mushrooms eaten a round (about 15 sprout) | 2.0 / 2.0 | 1.4 / 1.4 |
+| Rotted a round: apples, beads | 7.0, 2.9 / 7.1, 3.0 | 6.4, 3.1 / 6.4, 2.7 |
+| Beetles a round (caught) | 4.1 (90%) / 4.1 (90%) | 4.0 (91%) / 4.1 (91%) |
+| Spells a round: sun, wind, rain, storm, snow | 0.80, 0.85, 1.31, 0.87, 0.78 / 0.80, 0.83, 1.30, 0.89, 0.80 | 0.84, 0.81, 1.30, 0.87, 0.77 / 0.79, 0.84, 1.29, 0.86, 0.82 |
+| Lightning strikes a round | 4.0 / 4.1 | 4.0 / 3.8 |
+| Woodpecker strikes a sudden death; holes at the end | 16.4; 233 / 17.1; 244 | 16.7; 239 / 16.8; 239 |
+| Plain flashes a minute alive | 3.1 / 3.1 | 2.1 / 2.1 |
+| Plain jumps a round; dashes a round (cutting someone) | 3.88; 1.50 (1.0) / 3.81; 1.51 (1.1) | 3.84; 1.39 (1.0) / 3.82; 1.47 (1.1) |
+| Deaths, all: body, self, hole, edge, pecked, head-on, starved, cut | 42, 25, 19, 5, 4, 4, 2, 0% / 43, 25, 19, 5, 4, 3, 1, 1% | 44, 23, 19, 4, 4, 3, 3, 1% / 40, 24, 20, 6, 4, 3, 2, 1% |
+| Sudden death's deaths: body, self, hole, edge, pecked, head-on, starved | 37, 27, 22, 5, 5, 3, 2% / 39, 27, 22, 5, 4, 2, 1% | 38, 25, 24, 5, 5, 2, 2% / 34, 26, 24, 6, 5, 3, 2% |
+| Snake-time in the hunger warning (starving), before the woodpecker; after | | 8.8% (2.2%); 28.1% (14.8%) / 8.9% (2.2%); 28.1% (15.1%) |
 
-Desperado on seed 11 (16%) is the closest to the edge; it wins 23% on seed 3 (merged), and a personality's sampling error here is about 3 points. Vulture is on top on both seeds (33%).
-
-### What a round holds (merged)
-
-| | Seed 3 / seed 11 |
-|---|---|
-| Crashes survived a round | 10.6 / 10.2 |
-| Draws, of 600 | 2 / 1 (no round stalls) |
-| Golden apples a round | 5.2 / 5.3 |
-| Golden beetles a round (rounds with one) | 1.61 (86%) / 1.58 (83%) |
-| Golden leaves a round (rounds with one) | 0.84 (57%) / 0.85 (61%) |
-| Golden mushrooms a round (rounds with one) | 0.71 (61%) / 0.68 (59%) |
-| Golden power food eaten, a snake a round (more than 2) | 0.73 (4%) / 0.72 (3%) |
-| Mushrooms eaten a round | 2.0 / 2.0 (about 15 sprout) |
-| Rotted a round: apples, beads | 7.0, 2.9 / 7.1, 3.0 |
-| Beetles a round (caught) | 4.1 (90%) / 4.1 (90%) |
-| Spells a round: sun, wind, rain, storm, snow | 0.80, 0.85, 1.31, 0.87, 0.78 / 0.80, 0.83, 1.30, 0.89, 0.80 |
-| Lightning strikes a round | 4.0 / 4.1 |
-| Woodpecker strikes a sudden death; holes at the end | 16.4; 233 / 17.1; 244 |
-| Plain jumps a round; dashes a round (cutting someone) | 3.88; 1.50 (1.0) / 3.81; 1.51 (1.1) |
-| Deaths, all: body, self, hole, edge, pecked, head-on, starved, cut | 42, 25, 19, 5, 4, 4, 2, 0% / 43, 25, 19, 5, 4, 3, 1, 1% |
-| Sudden death's deaths: body, self, hole, edge, pecked, head-on, starved | 37, 27, 22, 5, 5, 3, 2% / 39, 27, 22, 5, 4, 2, 1% |
-
-From the after-balance build (seed 3 / seed 11), what the census doesn't print:
+From the after-balance build (seed 3 / seed 11), what the census doesn't print, not measured again since:
 - the first death comes at a median 127 / 126 s (137 / 138 before balance); 0.5 deaths a round come before 2:00;
 - the last apples: about 5 a round, the first at a median 126 s;
 - a golden thing of some kind turns up in 98 / 99% of rounds;
 - the first storm comes at a median 45 / 48 s, and every round sees a median four kinds of weather;
 - lightning fires live a median 12.4 / 12.7 s (the longest 26 s): 29% burn themselves out, 63–65% are put out by rain or snow, and 6–9% are still burning at 2:00 or the end;
 - 45% of strikes have a body across the patch;
-- starving is 0.8% of snake-time before 2:00 and 12% after (1.2% and 17% before balance).
+- starving is 0.8% of snake-time before 2:00 and 12% after (1.2% and 17% before balance). Final, with a meal mid-round keeping you 13 s, the census gives 2.2 / 2.2% before the woodpecker and 15 / 15% after (above; counted its own way, so not quite comparable).
 
 ### Are the events' timings and chances right?
 
-Most were. Three changed in the balance pass:
+Most were. Three changed in the balance pass, and one after the critique:
 - three apples all round (see Food);
 - the woodpecker's patches start at 9 cells and grow to 16. Nearly every snake reaches 2:00 now, so sudden death had more to finish and ran a minute; now it's about 50 s;
-- golden mushrooms in 55% of rain spells (from 40%), so every kind of golden power food turns up in most rounds.
+- golden mushrooms in 55% of rain spells (from 40%), so every kind of golden power food turns up in most rounds;
+- after the critique, a meal between 0:45 and the woodpecker keeps you 13 s (see Food), so hunger matters mid-round: 8.8 / 8.9% of snake-time in the warning before 2:00, from 3.0 / 3.2%, with the round as long as it was.
 
 Tried and left as they were (300 seeded rounds each, against a median of 179 s with 59 s of sudden death):
 - a hungrier woodpecker (each rest 0.8 of the last): no change;
@@ -680,12 +686,12 @@ Tried and left as they were (300 seeded rounds each, against a median of 179 s w
 ### Should a power be stronger or weaker?
 
 No:
-- **Flash rest:** at 8 s the rivals flash 2.7 times a minute instead of 3.1, and nothing else changes (the win spread widened to 9–41%); at 5 s, 3.3, and nothing else changes.
+- **Flash rest:** at 8 s the rivals flash 2.7 times a minute instead of 3.1, and nothing else changes (the win spread widened to 9–41%); at 5 s, 3.3, and nothing else changes. (Measured with the flash priced at one apple; the critique found that price didn't pay, and at two apples rivals flash 2.1 times a minute: see Rivals.)
 - **Jump rest:** 3 s or 6 s makes no measurable difference. The rivals jump about 4 times a round, nearly all out of a crash.
-- **Golden leaps** are 99% used. **Dashes:** 1.5 a round, cutting someone about once; nobody blows themselves up.
+- **Golden leaps** are 99% used. **Dashes:** about 1.4–1.5 a round, cutting someone about once; nobody blows themselves up.
 - **Desperate mode:** a rival turns desperate with 11 s of hunger left. At 6 s, a starvation before 1:00 comes back in 0.7% of rounds; at 16 s, nothing changes.
 
-**Worth knowing:** the first death now comes at a median 2:07 (the balance pass puts it at about 1:20 before round four). The flash, desperate mode and the fixed board split keep the rivals alive until the woodpecker comes.
+**Worth knowing:** the first death came at a median 2:07 after balance (the balance pass puts it at about 1:20 before round four); it hasn't been measured on the final build, where a meal mid-round keeps you 13 s. The flash, desperate mode and the fixed board split keep the rivals alive until the woodpecker comes.
 
 ### What the rules alone did
 
@@ -720,23 +726,28 @@ Round four's rules with the AI from before round four (538a773's) against the AI
 
 A/B tests, 1000 rounds each (mean place, ±0.025 a group, lower is better): the whole powers package against the same AI without powers 2.499 / 2.497 (neutral); flash against no flash 2.483 / 2.512 (within noise); weighing the flash only the way it crawls against every way 2.497 / 2.499; rivals' flashes at a quarter weight against half 2.498 / 2.498.
 
+After the critique (its rules fix, seat-split A/B: half the seats never plain-flash): at one apple a plain flash came out about 0.03 of a place worse than never flashing, pooled over 3,400 rounds, with 13.6% of flashes followed by a crash or a death within 3 s (6.6% at any moment). At two apples, even (+0.031 and −0.023 on two seeds); head to head against the one-apple price, 0.02 of a place better over 2,000 rounds. A 1,000-round split varies by about 0.05 between seeds, so that last is a lean, not a proof.
+
 ### What it costs
 
 - **The AI's decision** (`decide()`), against 538a773's AI on the same positions: 1.35–1.41 times the mean and 1.33–1.44 times the p99 (budget: p99 at most 1.7 times).
-- **The land** (staged scenes, full cost to a readback, against the same board without land; budget 1.5 times): 1.28–1.40 times, against 2.26–2.62 for the force fields. In a real round, the one quiet run gave +1.1 to +1.3 ms a frame against the domes' +2.9 to +6.6, before the last two cost cuts; the final build measured +3.6 ms under load (the domes +5.7 to +6.5 in the same conditions). The budget is +1.0 ms, so a quiet re-run is still owed. Canvases 5.2 MB (budget 8), against 23.9. Land is rebuilt about 50 times a round, median 0.1–0.3 ms, worst 0.7–4.0 ms.
+- **The AI's pacing:** the lead had packed every decision into the frame that ticked. Since the critique they're spread over the frames after it (see "Controls that keep up"): no decision in a tick frame; a frame's thinking and stepping at p95 / p99, 2.0 / 3.0 ms playing (from 2.7 / 4.0), 0.8 / 1.3 watching at 1× (from 1.4 / 2.1), 2.7 / 4.3 at 4× (from 3.4 / 5.0).
+- **The land** (staged scenes, full cost to a readback, against the same board without land; budget 1.5 times): 1.28–1.40 times, against 2.26–2.62 for the force fields. In a real round, the one quiet run gave +1.1 to +1.3 ms a frame against the domes' +2.9 to +6.6, before the last two cost cuts; the merged build measured +3.6 ms under load (the domes +5.7 to +6.5 in the same conditions). The budget is +1.0 ms, so a quiet re-run is still owed. Canvases 5.2 MB (budget 8), against 23.9. Land is rebuilt about 50 times a round, median 0.1–0.3 ms, worst 0.7–4.0 ms. With the critique's keyline (two fill passes for a rival on the land; an ink ring outside it too took a third, and 1.6 times), interleaved on a heavily loaded machine: the land 1.50 times against 1.53 for the build before it, a rival on the land 1.47 against 1.38. That machine's absolute times were unusable, so the quiet re-run is owed for these too.
 - **The pits:** a strike's frame costs 1.5–1.6 ms of script (1.1–1.2 before; a steady frame 0.9–1.2), and 1.9–2.0 ms of full cost more than a steady frame on a near-quiet machine (0.7–1.0 before; the woodpecker report asked for 2 ms or less). Painting a whole board of holes again costs 1.5–1.7 ms. A strike's box repaint matches a full repaint but for at most 896 pixels of about a million, each off by at most 8 levels.
-- **Telling powers apart:** frame cost within noise. The worst case, 4 snakes of 70 all holding leaps, dashes and the wrap, is 11.3 ms full both before and after.
+- **Soot** (the critique): a cell that burns out paints its box again, about 0.2 ms of script a cell (a three-cell burn-out frame, about 0.6 ms more than a steady one). Against a full repaint, 59 burned cells and a strike: 0 pixels differ (the old scorch marks: 835, by up to 68 levels).
+- **Telling powers apart:** frame cost within noise. The worst case, 4 snakes of 70 all holding leaps, dashes and the wrap, is 11.3 ms full both before and after (measured before the critique ringed the pips).
 
 All on a shared, noisy machine (Iris Xe graphics, headless Chrome at 800×800, 2x); ratios between interleaved runs hold up better than absolute times.
 
 ### The controls
 
-With real keys and touches on a virtual 60 Hz clock (`tools/input-test.js`, all 25 checks pass):
-- Every press reaches the engine within a tick plus a frame. Turns: mean 66–72 ms from press to tick, at most 132 (the limit is 136.7). Jumps: mean 52–82 ms, at most 123. Flashes: mean 62–78 ms, at most 132.
+With real keys and touches on a virtual 60 Hz clock (`tools/input-test.js`; merged, all 25 checks passed; final, 30 checks, all pass):
+- Every press reaches the engine within a tick plus a frame. Merged: turns, mean 66–72 ms from press to tick, at most 132 (the limit is 136.7); jumps, mean 52–82 ms, at most 123; flashes, mean 62–78 ms, at most 132. Final, one run: turns mean 69 ms, at most 126; jumps 68, at most 107; flashes 69, at most 126.
 - Two presses in one tick turn on consecutive ticks, 20 times of 20.
-- A tap jumps at its lift or 80 ms after touch-down, whichever comes first.
-- A swipe registers, at the median, after about 91 ms at 0.15 px/ms, 48 at 0.3, 27 at 0.6 and 18 at 1.2. A chained turn registers about 19 ms after the finger's corner at 0.6 px/ms.
-- Swipes that jumped: 0 of 160 (8 speeds, 5 slants, 4 ways). The 32 at 40° never register, by design; none went the wrong way.
+- A tap jumps at its lift or 80 ms after touch-down, whichever comes first (merged). Final: held still, a touch jumps 80 ms after touch-down only with something to hop (with a hole ahead, 7 taps held 30–400 ms each jumped by 80 ms); with nothing to hop, at its lift. A quick tap that drifts 3–11 px as it lifts jumps (16 of 16); a thumb resting 90–200 ms before it swipes, or while the other swipes, never does.
+- A swipe registers, at the median, after about 91 ms at 0.15 px/ms, 48 at 0.3, 27 at 0.6 and 18 at 1.2 (merged; final, one run: 90, 46, 29 and 21). A chained turn registers about 19 ms after the finger's corner at 0.6 px/ms (merged; final, 28).
+- Swipes that jumped: 0 of 160 (8 speeds, 5 slants, 4 ways). Merged, the 32 at 40° never registered, by design; final, a stroke that goes on registers its main way, so none fail to (and a long stroke at 35° or 44° turns, 2 of 2 each). None went the wrong way.
+- Final: a second swipe the way the last one turned you is that turn again at every gap tried up to 250 ms after its lift (the guard is 300), and a flash at 400; mashing jump over your death's card never plays again (9 taps landed on Play again; one after a pause started the countdown).
 
 Drawn ahead, with real keys and a press at the first frame the head is drawn reaching the cell, plus 30 ms and a person's scatter (σ), 200 presses each:
 
@@ -747,16 +758,17 @@ Drawn ahead, with real keys and a press at the first frame the head is drawn rea
 | 90 ms | 25 ms | 12.5% | 73% |
 | 90 ms | 40 ms | 25.5% | 59.5% |
 
-What's left is mostly late presses. The merged build draws 60 ms ahead instead, which is the same half tick at 120 ms but two thirds of one at 90, so full speed should do about as well as 120 ms ticks; it hasn't been measured this way since.
+What's left is mostly late presses. The final build draws exactly this far ahead: half a tick, 60 ms at 120 ms ticks and 45 ms at full speed, so its on-time presses are these, 60–73% at full speed. The merged build drew 60 ms ahead at full speed too, more than half a tick, hoping to do as well there as at 120 ms ticks; but late in a tick your head was then drawn in the next cell while a press still turned it at this one, and was pulled back (22 of 160 random presses, as the critique measured), so the lead is at most half a tick again.
 
 - Your face comes within 45° of the new way 53 ms after the press in swift play (180 before; p90 82 ms), 52 ms for a turn on its own (88 before).
-- Rivals' guessed steps are wrong at the tick 3.6 times in 1000 moves (2.0 in a test with their plans made early, as the merged build now makes them). No drawn head moves more than 0.39 of a cell in a frame, except a golden leap (0.57).
+- Rivals' guessed steps are wrong at the tick 3.6 times in 1000 moves (2.0 in a test with their plans made early, as the merged build makes them). No drawn head moves more than 0.39 of a cell in a frame, except a golden leap (0.57).
+- Flashes drawn ahead (the critique), in watched AI rounds over 30,000 frames: 87 of 88 shown before their tick, no wrong guesses, no dash standing still. `tools/render-test.js`: shown before the tick at 120 ms ticks, at full speed and golden, and gliding on after it at an even 0.14 of a cell a frame at 120 ms ticks (0.18 at full speed).
 
 ### The rest
 
-- **Online** (`tools/online-test.js`): 20 rounds, about 30,500 ticks, the friend's board matching the host's on every tick; about 8,300 power presses and 1,000 plain flashes a run; the biggest message 10,495 bytes (PeerJS's limit is 16 KB).
-- **Chatter** (`tools/chatter-test.js`): 717 lines and 688 Chinese ones, 142 punchlines, 195 staged checks. On a patched build before the merge, the rivals said as much as before (52.7 lines a round, from 52.6), the hungry lines giving way to desperate ones (1.8 a round, from 2.2, beside 2.2 desperate).
-- **Sound** (rendered offline through the whole chain): the new cues sit with the old, peaks −20 to −29 dBFS; the border's crossing is about as loud as the hum it replaces, and a plain flash a little softer than a golden dash.
+- **Online** (`tools/online-test.js`): merged, 20 rounds, about 30,500 ticks, the friend's board matching the host's on every tick; about 8,300 power presses and 1,000 plain flashes a run; the biggest message 10,495 bytes (PeerJS's limit is 16 KB). Final, one run: 20 rounds, 33,654 ticks and 538,484 checks, the friend's board and plans (33,654) matching the host's on every tick; 10,595 power presses and 1,365 plain flashes; the biggest message 10,495 bytes.
+- **Chatter** (`tools/chatter-test.js`): 717 lines and 688 Chinese ones, 142 punchlines; final, 250 checks of the chatter and the sound playing (merged, 195 of the chatter). On a patched build before the merge, the rivals said as much as before (52.7 lines a round, from 52.6), the hungry lines giving way to desperate ones (1.8 a round, from 2.2, beside 2.2 desperate).
+- **Sound** (rendered offline through the whole chain): the new cues sit with the old, peaks −20 to −29 dBFS; the border's crossing is about as loud as the hum it replaces, and a plain flash a little softer than a golden dash. After the critique, a rival's cue never silences yours, and your own golden ones in a row are each heard: in a model of 100 seeded rounds (game time), none of yours was swallowed (flashes 0 of 781, jumps 0 of 161, golden dashes 0 of 26). Before, a rival's play could silence yours, and with that fixed, 6 of your 26 golden dashes were still swallowed by your own one before, until the gaps came down to 50 ms for a dash and 120 for a jump.
 
 ## Skipped or adapted guidelines
 
