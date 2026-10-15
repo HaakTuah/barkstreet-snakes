@@ -22,6 +22,9 @@
 //   flick the same way is the turn, not a flash.
 // - Mashing jump over your death's card never starts a round, nor focuses
 //   its name field (the phone's keyboard).
+// And two of the loop's own: the rivals have all thought before the board is
+// drawn into their next move (at 30 frames a second too), and a banner keeps
+// its place while that's clear.
 // It prints what it measured: press-to-tick, tap-to-jump and swipe latencies.
 //
 //   node tools/input-test.js
@@ -622,6 +625,38 @@ const KEYS = {
     }
     check(jumps === 0, 'swipes never jump', `${jumps} of ${swipes} swipes; ${none} slanted 40° never registered (a way must be half again the other), ${wrong} went another way`);
     const regStats = Object.fromEntries(Object.entries(reg).map(([v, l]) => [v, stats(l).median]));
+
+    // A banner stays where it is while its place is clear: a head coming into
+    // it moves it to the first place that's clear (the top, the foot, the
+    // middle), and with heads in all three it fades where it is. (Picked
+    // afresh every frame, it went back to the top the moment that cleared,
+    // and hopped about three times in its three seconds on a short phone.)
+    await ev('centre()');
+    await ev(`(() => {
+      const E = SnakeEngine;
+      window.put = (id, x, y, dir = 'right') => { const s = SnakeDebug.game().snakes[id], d = E.DIRS[dir]; s.body = s.body.map((c, i) => ({ x: x - d.x * i, y: y - d.y * i })); s.prev = null; s.dir = d; s.queue.length = 0; return 'ok'; };
+      window.slot = () => { const t = document.getElementById('toast'); return t.hidden ? 'hidden' : (t.classList.contains('low') ? 'foot' : t.classList.contains('mid') ? 'middle' : 'top') + (t.classList.contains('under') ? ' faded' : ''); };
+      const step = E.step; E.step = g => { const out = step(g); if (window.__news) { g.events.push(window.__news); window.__news = null; } return out; }; // (news, on the next tick)
+      return 'ok';
+    })()`);
+    await ev(`put(1, 12, 22, 'down')`); // (a rival's head at the foot)
+    await ev('put(0, 12, 6)'); // (yours in none of the three)
+    await ev(`(() => { delete SnakeDebug.game().told?.golden; window.__news = { type: 'spawn', kind: 'golden' }; return 'ok'; })()`);
+    await toTick();
+    const slots = [await ev('slot()')];
+    for (const [moves, why] of [
+      [['put(0, 12, 2)'], 'yours at the top'],
+      [['put(0, 12, 6)'], 'yours out again'],
+      [[`put(2, 12, 1, 'up')`, 'put(0, 12, 12)'], 'a rival at the top, yours in the middle'],
+      [['put(0, 12, 6)'], 'yours out again'],
+      [[`put(2, 4, 21, 'down')`, 'put(0, 12, 12)'], 'the rival away, yours in the middle'],
+    ]) {
+      for (const m of moves) await ev(m);
+      await ev('vf(1)');
+      slots.push(`${why}: ${await ev('slot()')}`);
+    }
+    check(slots.map(s => s.replace(/^.*: /, '')).join(', ') === 'top, middle, middle, middle faded, middle, top',
+      'a banner stays put while its place is clear, moves only when a head comes into it, and fades where it is with heads everywhere', slots.join('; '));
 
     // Your death's card: a thumb mashing jump as you crash, landing on its
     // Play again, never starts a round; a tap once it's settled does.

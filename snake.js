@@ -951,45 +951,67 @@
   const newsFree = () => overlay.classList.contains('hidden') && (toastEl.hidden || performance.now() >= toastHold);
 
   // A banner keeps out of the way of heads (and the woodpecker's mark, a
-  // crackle, the steering hint): at the top, or else at the foot, or else in
-  // the middle of the board, and only if they're everywhere it fades while
-  // they pass (its size is measured once a banner, so this reads no layout).
-  // A lesson's time runs while you can read it: faded, it stays that much
-  // longer (once, up to its hold again).
-  let toastTimer, toastW = 0, toastH = 0, toastUnder = '';
+  // crackle, the steering hint). It comes up in the first of its three
+  // places that's clear (the top, the foot, the middle of the board), and
+  // stays there while that place is clear: only something coming into it
+  // moves it on, to the first place that's clear and looks to stay so (the
+  // heads a couple of cells on, the way they're going), else the first
+  // that's clear; with none clear, it fades where it is while they pass.
+  // (Picked afresh every frame, a banner on a short phone hopped about three
+  // times in its three seconds, half its stays under 0.4 s.) Its size is
+  // measured once a banner, so this reads no layout. A lesson's time runs
+  // while you can read it: faded, it stays that much longer (once, up to its
+  // hold again).
+  let toastTimer, toastW = 0, toastH = 0, toastSlot = '', toastUnder = false, toastFresh = true; // (where it is: '' the top, 'low' the foot, 'mid' the middle; whether it's faded there; whether it's a new banner, still to place)
   let toastFaded = 0, toastFadedAt = 0, toastLonger = false; // (how long this banner has been faded, since when, and whether it's had its time back)
+  const SLOTS = ['', 'low', 'mid'], SHIFT = [{ opacity: 0 }, { opacity: 1 }];
   function toastFade() {
-    if (toastEl.classList.contains('leaving')) return; // (going: it goes from where it is)
-    let top = false, bottom = false, mid = false;
-    if (!toastEl.hidden && boardPx && game) {
+    if (toastEl.hidden || toastEl.classList.contains('leaving')) return; // (going: it goes from where it is)
+    const busy = { '': false, low: false, mid: false }, soon = { '': false, low: false, mid: false };
+    if (boardPx && game) {
       const cell = boardPx / GRID;
       const rows = Math.ceil((toastH + 12) / cell), half = toastW / 2 / cell, midHalf = (toastH / 2 + 6) / cell; // (its real size: a long banner on a phone wraps to several lines)
-      const under = (x, y) => { // (a cell the banner would hide, if it's one that matters)
-        if (Math.abs(x + 0.5 - GRID / 2) >= half + 0.5) return;
-        if (y < rows) top = true;
-        if (y >= GRID - rows) bottom = true;
-        if (y + 1 > GRID / 2 - midHalf && y < GRID / 2 + midHalf) mid = true;
+      const under = (x, y, into = busy) => { // (a cell the banner would hide, if it's one that matters)
+        if (Math.abs(x + 0.5 - GRID / 2) >= half + 0.5 || y < 0 || y >= GRID) return;
+        if (y < rows) into[''] = true;
+        if (y >= GRID - rows) into.low = true;
+        if (y + 1 > GRID / 2 - midHalf && y < GRID / 2 + midHalf) into.mid = true;
       };
-      for (const s of game.snakes) if (s.alive) under(s.body[0].x, s.body[0].y);
+      for (const s of game.snakes) {
+        if (!s.alive) continue;
+        const h = s.body[0], d = s.queue?.[0] || s.dir;
+        under(h.x, h.y);
+        if (d) for (let i = 1; i <= 2; i++) under(h.x + d.x * i, h.y + d.y * i, soon); // (where it's going)
+      }
       if (steerHintOn && Math.abs(hintBox.x + hintBox.w / 2 - boardPx / 2) < (toastW + hintBox.w) / 2) { // (the steering hint, by YOU: the banner makes way)
         const y0 = hintBox.y, y1 = hintBox.y + hintBox.h, m = (boardPx - toastH) / 2;
-        if (y0 < toastH + 16) top = true;
-        if (y1 > boardPx - toastH - 16) bottom = true;
-        if (y1 > m - 4 && y0 < m + toastH + 4) mid = true;
+        if (y0 < toastH + 16) busy[''] = true;
+        if (y1 > boardPx - toastH - 16) busy.low = true;
+        if (y1 > m - 4 && y0 < m + toastH + 4) busy.mid = true;
       }
       for (const k of game.woodpecker?.target || []) under(k % GRID, Math.floor(k / GRID)); // (the patch it's warning about)
       if (game.fires) for (const [k, f] of game.fires) if (f.strike && f.from > game.tick) under(k % GRID, Math.floor(k / GRID)); // (a crackle about to strike)
     }
-    const place = !top ? '' : !bottom ? 'low' : !mid ? 'mid' : 'under'; // moved down, or to the middle, or (heads everywhere) faded
-    if (place !== toastUnder) {
-      const now = performance.now();
-      if (toastUnder === 'under') toastFaded += now - toastFadedAt;
-      if (place === 'under') toastFadedAt = now;
-      toastEl.classList.toggle('low', place === 'low');
-      toastEl.classList.toggle('mid', place === 'mid');
-      toastEl.classList.toggle('under', place === 'under');
-      toastUnder = place;
+    let slot = toastFresh ? '' : toastSlot, faded = false;
+    if (toastFresh || busy[slot]) { // (new, or something's come into its place)
+      const clear = SLOTS.filter(k => !busy[k]);
+      if (clear.length) slot = clear.find(k => !soon[k]) ?? clear[0];
+      else faded = true;
     }
+    const moved = !toastFresh && slot !== toastSlot;
+    toastFresh = false;
+    if (faded !== toastUnder) {
+      const now = performance.now();
+      if (toastUnder) toastFaded += now - toastFadedAt;
+      else toastFadedAt = now;
+      toastEl.classList.toggle('under', faded);
+      toastUnder = faded;
+    }
+    if (slot === toastSlot) return;
+    toastEl.classList.toggle('low', slot === 'low');
+    toastEl.classList.toggle('mid', slot === 'mid');
+    toastSlot = slot;
+    if (moved && !reducedMQ.matches) toastEl.animate?.(SHIFT, { duration: 140, easing: 'ease-out' }); // (it comes up in its new place, rather than blinking there)
   }
   // kind styles the banner for its moment: kill, gold, beetle, bird (the
   // woodpecker), warn, fire, you (a lesson about your own powers, or your own tail), go, and the
@@ -1026,6 +1048,8 @@
     toastW = toastEl.offsetWidth; toastH = toastEl.offsetHeight; // (measured once a banner, unscaled by its slam)
     toastEl.style.setProperty('--toast-h', `${toastH}px`); // (in the middle: centred by its top, so its slam keeps the transform)
     toastFaded = 0; toastFadedAt = now; toastLonger = false;
+    toastFresh = true;
+    toastFade(); // (placed before it's first drawn: a new banner doesn't start where the last one was)
     if (!opts.quiet && (level !== 'news' || kind in FLAVOR.weather)) say(text);
     clearTimeout(toastTimer);
     toastTimer = setTimeout(nextToast, ms);
@@ -1033,7 +1057,7 @@
   // The next lesson that still holds, or the banner fades. (A lesson that
   // spent a while faded under the heads first gets that time back, once.)
   function nextToast() {
-    const now = performance.now(), faded = toastFaded + (toastUnder === 'under' ? now - toastFadedAt : 0);
+    const now = performance.now(), faded = toastFaded + (toastUnder ? now - toastFadedAt : 0);
     if (toastLevel === 'lesson' && !toastLonger && !toastEl.hidden && faded >= 300) {
       toastLonger = true;
       const more = Math.min(faded, T.LESSON_HOLD_MS);
