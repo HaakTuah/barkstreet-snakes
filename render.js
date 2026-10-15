@@ -1677,6 +1677,11 @@ window.SnakeRender = (() => {
   // triangulated every frame, so it's kept for what's rare: a fading corpse,
   // a golden outline, a queasy wash.)
   function silhouette(a, grow) {
+    shape(a, grow);
+    ctx.fill();
+  }
+  // ...as the current path (to fill, or to clip to).
+  function shape(a, grow) {
     ctx.beginPath();
     const p = a.pts, c = a.cor;
     for (let i = a.n - 2; i >= 0; i--) {
@@ -1690,7 +1695,6 @@ window.SnakeRender = (() => {
       ctx.moveTo(p[2 * i] + r, p[2 * i + 1]);
       ctx.arc(p[2 * i], p[2 * i + 1], r, 0, TAU);
     }
-    ctx.fill();
   }
   // One straight piece of a band, filled (pieces run along the grid, but
   // for a moment while a head eases out of a wrong guess: see refix; a
@@ -1817,8 +1821,19 @@ window.SnakeRender = (() => {
   // Holding a golden power: golden leaps or dashes, or the edges wrapping
   // round for it (fading calmly over its last WRAP_WARN_MS: no strobe).
   const powered = s => s.leaps > 0 || s.dashes > 0 || s.wrapUntil > shownTime;
-  const poweredFade = s => s.leaps > 0 || s.dashes > 0 ? 1 : Math.max(0, Math.min(1, (s.wrapUntil - shownTime) / T.WRAP_WARN_MS));
+  const wrapFade = s => Math.max(0, Math.min(1, (s.wrapUntil - shownTime) / T.WRAP_WARN_MS));
+  const poweredFade = s => s.leaps > 0 || s.dashes > 0 ? 1 : wrapFade(s);
   const GOLD_EDGE = 3.9; // (how far the gold line and its ink reach outside a snake's own outline)
+  // Power marks. Gold (Honey) is the family: a gold line round a snake says
+  // it holds a power. Each kind adds an accent of its own, with a shape and
+  // a motion, so it reads without its hue: jumps are sky (round pips),
+  // flashes are ember (diamond pips, dashes running back along the gold
+  // line, a streak), and the wrap is a glint running slowly round the gold.
+  // Sky against ember is the pair colour-blind eyes tell apart best; the
+  // accents appear on power marks only.
+  const HONEY = '#fde68a', GLINT = '#fffbea';
+  const SKY = '#a8dcf5', SKY_LINE = '#2f6f96', EMBER = '#f7a866', EMBER_LINE = '#b5531d';
+  const RUN_DASH = [CELL * 0.14, CELL * 0.36], GLINT_DASH = [CELL * 1.4, CELL * 7]; // (ember dashes; one glint every so far)
   // Your soft halo: a few faint steps of cream round your body, each wider
   // and fainter than the last (a soft edge without a blur), and a touch more
   // round your head. [width or radius (cells), alpha] pairs, outermost first.
@@ -1844,8 +1859,9 @@ window.SnakeRender = (() => {
       ctx.globalAlpha = was * poweredFade(s);
       ctx.fillStyle = INK;
       outlineFills(a, own + GOLD_EDGE);
-      ctx.fillStyle = '#fde68a'; // (Honey: gold means a power)
+      ctx.fillStyle = HONEY; // (Honey: gold means a power)
       outlineFills(a, own + 2.5);
+      if (s.alive && (s.dashes > 0 || s.wrapUntil > shownTime)) goldRuns(s, a, own);
       ctx.globalAlpha = was;
     }
     if (a.isPlayer) {
@@ -1855,6 +1871,38 @@ window.SnakeRender = (() => {
       ctx.fillStyle = RIM;
       outlineFills(a, own);
     }
+  }
+  // Along the gold line, in its own shape (the body and any outline of its
+  // own cover the rest): for golden flashes, short ember dashes running back
+  // from the head, as if it's going fast; for the wrap, a slow glint running
+  // round, fading with the gold over its last WRAP_WARN_MS. (With reduced
+  // motion they hold still.)
+  function goldRuns(s, a, own) {
+    ctx.save();
+    shape(a, own + 2.5);
+    ctx.clip();
+    spine(a);
+    ctx.lineCap = 'butt';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = CELL * 1.8;
+    if (s.dashes > 0) {
+      ctx.strokeStyle = EMBER_LINE;
+      ctx.setLineDash(RUN_DASH);
+      ctx.lineDashOffset = reduced ? 0 : -lastNow * CELL / 260;
+      ctx.stroke();
+    }
+    if (s.wrapUntil > shownTime) {
+      const was = ctx.globalAlpha;
+      ctx.globalAlpha = s.leaps > 0 || s.dashes > 0 ? was * wrapFade(s) : was; // (the gold itself fades with it when the wrap is all it holds)
+      ctx.strokeStyle = GLINT;
+      ctx.setLineDash(GLINT_DASH);
+      ctx.lineDashOffset = reduced ? 0 : -lastNow * CELL / 600;
+      ctx.stroke();
+      ctx.globalAlpha = was;
+    }
+    ctx.setLineDash(NO_DASH);
+    ctx.lineDashOffset = 0;
+    ctx.restore();
   }
   // An opaque outline: fast separate fills, unless it's being drawn see-through
   // (a corpse fading), where overlapping pieces would show.
@@ -1999,46 +2047,29 @@ window.SnakeRender = (() => {
     else drawFace(s, look, color, blinking, a);
     ctx.restore();
 
-    // Golden powers held: a pip for each (round for a leap, a diamond for a
-    // dash) on a short arc behind the head, turned with it. The gold outline
-    // carries the glow; no ring of its own. Three (LEAP_MAX) don't fit in the
-    // neck's pinch (the outer two sat across its outline), so they go a
-    // little further back, closer together, over the first segment, where
-    // the body's widest.
-    const pips = dead ? 0 : s.leaps || s.dashes;
-    if (pips) {
-      const three = pips > 2, back = Math.atan2(a.hs, a.hc) + Math.PI, rr = (three ? CELL : rad[0] + CELL * 0.2) * (1 + a.swell * 0.5), pr = CELL * (three ? 0.1 : 0.11), step = three ? 0.27 : 0.55;
-      ctx.fillStyle = '#fde68a';
+    // Golden powers held: a pip for each on a short arc behind the head,
+    // turned with it: round, in sky, for a golden leap; a diamond, in ember,
+    // for a dash. Holding both, the leaps go on its left and the dashes on
+    // its right, a gap between. The gold outline carries the glow; no ring
+    // of its own. Three or more don't fit in the neck's pinch (the outer two
+    // sat across its outline), so they go a little further back, closer
+    // together, over the first segment, where the body's widest.
+    const leaps = dead ? 0 : s.leaps, dashes = dead ? 0 : s.dashes;
+    if (leaps || dashes) {
+      const n = leaps + dashes, many = n > 2, back = Math.atan2(a.hs, a.hc) + Math.PI, rr = (many ? CELL : rad[0] + CELL * 0.2) * (1 + a.swell * 0.5);
+      const pr = CELL * (many ? 0.115 : 0.125), step = many ? 0.3 : 0.6, gap = leaps && dashes ? 0.6 : 0, mid = (n - 1 + gap) / 2;
       ctx.strokeStyle = INK;
       ctx.lineWidth = 1.3;
-      for (let i = 0; i < pips; i++) {
-        const a2 = back + (i - (pips - 1) / 2) * step, px = pts[0] + Math.cos(a2) * rr, py = pts[1] + Math.sin(a2) * rr;
+      for (let i = 0; i < n; i++) {
+        const leap = i < leaps, a2 = back + (mid - i - (leap ? 0 : gap)) * step, px = pts[0] + Math.cos(a2) * rr, py = pts[1] + Math.sin(a2) * rr;
+        ctx.fillStyle = leap ? SKY : EMBER;
         ctx.beginPath();
-        if (s.leaps) ctx.arc(px, py, pr, 0, TAU);
-        else { ctx.moveTo(px, py - pr * 1.3); ctx.lineTo(px + pr, py); ctx.lineTo(px, py + pr * 1.3); ctx.lineTo(px - pr, py); ctx.closePath(); }
+        if (leap) ctx.arc(px, py, pr, 0, TAU);
+        else { ctx.moveTo(px, py - pr * 1.35); ctx.lineTo(px + pr * 1.05, py); ctx.lineTo(px, py + pr * 1.35); ctx.lineTo(px - pr * 1.05, py); ctx.closePath(); }
         ctx.fill(); ctx.stroke();
       }
     }
-    // Your own leap coming back: a thin arc round your head, filling as it
-    // cools (it closes into the ready flash). Where you're looking, not only
-    // on your tag.
-    if (!dead && s.id === viewerId && !s.leaps && !s.dashes && s.body.length > T.MIN_LENGTH && game && shownTime < s.leapReadyAt) {
-      const k = Math.max(0, 1 - (s.leapReadyAt - shownTime) / T.LEAP_COOLDOWN_MS), a0 = -Math.PI / 2, rr = rad[0] + CELL * 0.22;
-      ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.arc(pts[0], pts[1], rr, a0, a0 + TAU * k);
-      ctx.strokeStyle = 'rgba(58,38,20,0.6)';
-      ctx.lineWidth = 3.6;
-      ctx.stroke();
-      ctx.strokeStyle = '#fffbea';
-      ctx.lineWidth = 1.8;
-      ctx.stroke();
-    }
-    if (!dead && a.readyAt && now - a.readyAt < 450 && !reduced) { // its leap's back: a ring of light, going out
-      const k = (now - a.readyAt) / 450;
-      ctx.strokeStyle = rgba('#fffbea', 0.8 * (1 - k));
-      ctx.lineWidth = 3 * (1 - k) + 1;
-      ctx.beginPath(); ctx.arc(pts[0], pts[1], CELL * (0.6 + 0.9 * k), 0, TAU); ctx.stroke();
-    }
+    if (!dead && s.id === viewerId && game) drawRests(s, a, now);
     if (dizzy) { // three stars going round, cream and inked (gold by a head means a power), clear of its pips and the edge: see starsOff
       const t = reduced ? 0 : now / 240, cy = pts[1] + starsOff(s);
       ctx.fillStyle = '#fffbea';
@@ -2067,6 +2098,63 @@ window.SnakeRender = (() => {
   }
   const DASH = [3, 3], NO_DASH = [], MOOD_DASH = [5, 7];
 
+  // Your two plain rests, as two half-rings round your head, fixed to the
+  // screen: your jump's on the left, in sky, and your flash's on the right,
+  // in ember. Each shows while it rests, filling from the bottom (a faint
+  // track shows how far it has to go), and gives one bright flick when it's
+  // back. Where you're looking, not only on your tag. (Holding golden leaps
+  // or dashes, that press is ready anyway: no half-ring for it.)
+  const REST_GAP = 0.36; // (radians left clear at the top and the bottom, between the halves)
+  function drawRests(s, a, now) {
+    const x = a.pts[0], y = a.pts[1], rr = a.rad[0] + CELL * 0.3;
+    const canJump = !s.leaps && s.body.length > T.MIN_LENGTH, canFlash = !s.dashes && (T.FLASH_COST <= 0 || s.body.length > T.MIN_LENGTH);
+    const jump = canJump && shownTime < s.leapReadyAt, flash = canFlash && shownTime < s.flashReadyAt;
+    if (a.jc && !jump && canJump && !(now - a.readyAt < 600)) a.readyAt = now; // (back: the flick)
+    if (a.fc && !flash && canFlash && !(now - a.flashFx < 600)) a.flashFx = now;
+    a.jc = jump; a.fc = flash;
+    if (jump) restHalf(x, y, rr, -1, 1 - (s.leapReadyAt - shownTime) / T.LEAP_COOLDOWN_MS, SKY);
+    if (flash) restHalf(x, y, rr, 1, 1 - (s.flashReadyAt - shownTime) / T.FLASH_COOLDOWN_MS, EMBER);
+    if (a.readyAt && now - a.readyAt < 450) restFlick(x, y, rr, -1, (now - a.readyAt) / 450, SKY);
+    if (now - a.flashFx < 450) restFlick(x, y, rr, 1, (now - a.flashFx) / 450, EMBER);
+  }
+  // A half-ring round (x, y) on the left (side -1) or right (1), from the
+  // bottom up to k of the way to the top (the path only).
+  function halfArc(x, y, r, side, k) {
+    const g = REST_GAP / 2, a0 = Math.PI / 2 - side * g;
+    ctx.beginPath();
+    ctx.arc(x, y, r, a0, a0 - side * (Math.PI - 2 * g) * Math.max(0, Math.min(1, k)), side > 0);
+  }
+  function restHalf(x, y, r, side, k, col) {
+    ctx.lineCap = 'round';
+    halfArc(x, y, r, side, 1); // (the track)
+    ctx.strokeStyle = 'rgba(58,38,20,0.45)';
+    ctx.lineWidth = 4.4;
+    ctx.stroke();
+    if (k <= 0) return;
+    halfArc(x, y, r, side, k);
+    ctx.strokeStyle = 'rgba(58,38,20,0.85)';
+    ctx.lineWidth = 5.6;
+    ctx.stroke();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 3.2;
+    ctx.stroke();
+  }
+  // Back: the whole half-ring, bright, going out on its side and fading (with
+  // reduced motion it stays where it is, fading).
+  function restFlick(x, y, r, side, t, col) {
+    const was = ctx.globalAlpha;
+    ctx.lineCap = 'round';
+    halfArc(x, y, r + (reduced ? 0 : CELL * 0.5 * t), side, 1);
+    ctx.globalAlpha = was * (1 - t);
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 5 * (1 - t) + 2;
+    ctx.stroke();
+    ctx.strokeStyle = GLINT;
+    ctx.lineWidth = 2.5 * (1 - t) + 1;
+    ctx.stroke();
+    ctx.globalAlpha = was;
+  }
+
   // Where a stunned snake's stars go round, as an offset down the screen
   // from its head: above it, as in any cartoon, unless that's where its pips
   // are (heading down, they're behind it) or off the board; then below it.
@@ -2075,11 +2163,11 @@ window.SnakeRender = (() => {
   // never jump sides mid-stun. (Bonk! keeps clear of them: see onTick.)
   const STAR_REACH = CELL * 0.42; // (how far the stars reach up and down from their centre)
   function starsOff(s) {
-    const pips = s.leaps || s.dashes, hy = s.body[0].y * CELL + CELL / 2;
+    const pips = s.leaps + s.dashes, hy = s.body[0].y * CELL + CELL / 2;
     let past = 0;
     for (let sgn = -1; sgn <= 1; sgn += 2) {
       const behind = pips && s.dir.y === -sgn; // (its pips are on this side)
-      const off = sgn * CELL * (behind ? (pips > 2 ? 1.6 : 1.32) : pips && !s.dir.y ? 0.95 : 0.72); // (higher when pips show beside its head; further past three, which sit further back)
+      const off = sgn * CELL * (behind ? (pips > 2 ? 1.6 : 1.32) : pips && !s.dir.y ? (pips > 3 ? 1.12 : 0.95) : 0.72); // (higher when pips show beside its head, higher still for both kinds' wider arc; further past three, which sit further back)
       if (hy + off < STAR_REACH || hy + off > SIZE - STAR_REACH) continue;
       if (!behind) return off;
       past ||= off;
@@ -2145,34 +2233,35 @@ window.SnakeRender = (() => {
   // Stunned, with a turn pressed: a small inked chevron on that side of your
   // head (past the stars, if they're there; on the board, even pointing off
   // it), so the press shows as heard, and where it'll take you. (The eyes
-  // look that way too, and the head leans.) With a power asked for (ahead,
-  // or ahead and then a turn: it goes the way you go), its own mark there
-  // instead, a little further out (it's longer). Over every snake and word:
-  // ahead, it's over what you hit, and the Bonk! there.
+  // look that way too, and the head leans.) With a jump or a flash asked for
+  // (it goes the way you go), its own mark there instead, a little further
+  // out (it's longer), in its accent (a golden one's in Honey). Over every
+  // snake and word: ahead, it's over what you hit, and the Bonk! there.
   function drawPress() {
     const s = findById(viewerId), a = s && s.alive && s.stunUntil >= game.tick ? anim.get(s) : null;
     const q = a && a.n ? queuedOf(s, a) : null;
     if (!q) return;
-    const pts = a.pts, so = starsOff(s), power = s.leapArmed >= s.stunUntil || (q.x === s.dir.x && q.y === s.dir.y);
-    const d = (q.y && (so < 0) === (q.y < 0) ? Math.abs(so) + CELL * 0.62 : CELL * 0.95) + (power ? CELL * (s.dashes > 0 ? 0.18 : 0.28) : 0);
+    const flash = s.flashArmed >= s.stunUntil, power = flash || s.leapArmed >= s.stunUntil; // (a flash goes first)
+    const pts = a.pts, so = starsOff(s);
+    const d = (q.y && (so < 0) === (q.y < 0) ? Math.abs(so) + CELL * 0.62 : CELL * 0.95) + (power ? CELL * (flash ? 0.18 : 0.28) : 0);
     const w = CELL * 0.2, m = CELL * 0.12;
     const cx = Math.min(SIZE - m, Math.max(m, pts[0] + q.x * d)), cy = Math.min(SIZE - m, Math.max(m, pts[1] + q.y * d));
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
-    if (power) pressMark(cx, cy, q, s.dashes > 0);
+    if (power) pressMark(cx, cy, q, flash);
     else {
       ctx.moveTo(cx - q.x * w + q.y * w, cy - q.y * w + q.x * w);
       ctx.lineTo(cx, cy);
       ctx.lineTo(cx - q.x * w - q.y * w, cy - q.y * w - q.x * w);
     }
     ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.17; ctx.stroke();
-    ctx.strokeStyle = power && (s.leaps || s.dashes) ? '#fde68a' : '#fffbea'; ctx.lineWidth = CELL * 0.09; ctx.stroke(); // (a golden power's in Honey)
+    ctx.strokeStyle = !power ? GLINT : (flash ? s.dashes : s.leaps) > 0 ? HONEY : flash ? EMBER : SKY; ctx.lineWidth = CELL * 0.09; ctx.stroke();
   }
   // A power asked for, as a mark where the chevron would go (its tip at x,
-  // y, pointing along q), added to the current path: the leap's hop, as on
-  // its chip (an arc up and over, ending in an arrowhead), or for dashes,
-  // their double chevron.
+  // y, pointing along q), added to the current path: the jump's hop, as on
+  // its chip (an arc up and over, ending in an arrowhead), or the flash's
+  // double chevron.
   function pressMark(x, y, q, dash) {
     const w = CELL * 0.2;
     if (dash) {
@@ -5439,11 +5528,13 @@ window.SnakeRender = (() => {
     return f;
   }
 
-  // A leap that can't go: a quick inked × on what it couldn't hop, so the
-  // press shows as heard, and refused (yours only: it answers your press, as
-  // the thunk does). It pops in; with reduced motion it's simply there. Both fade.
+  // A jump or a flash that can't go: a quick inked × on what it couldn't hop
+  // (or where it would have gone), in the press's own accent (sky for a
+  // jump, ember for a flash), so the press shows as heard, and refused (yours
+  // only: it answers your press, as the thunk does). It pops in; with
+  // reduced motion it's simply there. Both fade.
   const REFUSE_MS = 320, REFUSE_REACH = CELL * 0.24 + 3.75; // (how far its arms and their ink reach from its middle, once it's popped in)
-  const refusal = { x: 0, y: 0, at: -1e9, tick: -1 };
+  const refusal = { x: 0, y: 0, at: -1e9, tick: -1, flash: false };
   function drawRefusal(now) {
     const t = (now - refusal.at) / REFUSE_MS;
     if (t < 0 || t >= 1) return;
@@ -5454,7 +5545,7 @@ window.SnakeRender = (() => {
     ctx.moveTo(x - d, y - d); ctx.lineTo(x + d, y + d);
     ctx.moveTo(x + d, y - d); ctx.lineTo(x - d, y + d);
     ctx.strokeStyle = INK; ctx.lineWidth = 7.5; ctx.stroke();
-    ctx.strokeStyle = '#fffbea'; ctx.lineWidth = 3.6; ctx.stroke();
+    ctx.strokeStyle = refusal.flash ? EMBER : SKY; ctx.lineWidth = 3.6; ctx.stroke();
     ctx.globalAlpha = 1;
   }
 
@@ -5541,9 +5632,10 @@ window.SnakeRender = (() => {
           }
           if (!reduced) shake(4);
         }
-      } else if (e.type === 'fizzle') { // asked to leap, and it couldn't: refused, on what it couldn't hop (and then ran into)
+      } else if (e.type === 'fizzle') { // asked to jump or flash, and it couldn't: refused, on what it couldn't hop (and then ran into), or where it would have gone
         const s = e.snake;
         if (s.id === viewerId) {
+          refusal.flash = !!e.flash;
           // The cell it faced, as the engine saw it (a stunned snake's
           // auto-turn has turned it since). Off the board, at the edge it
           // faced: on the edge, its whole ink just inside (never wrapped
@@ -5561,12 +5653,12 @@ window.SnakeRender = (() => {
         a.leapUntil = game.tick + e.snake.body.length + 1; // (until the arch has run off its tail)
         spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 8, 140, 420, 2.2, '#d6b480', '#c08a4a'); // (bark dust: the plain leap's no power)
         if (e.gold) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 10, 120, 600, 1.8, '#d4a017', '#fffbea'); // (in Honey, a power's gold)
-      } else if (e.type === 'dash') { // a golden streak along the way it went, and gold flecks off it
+      } else if (e.type === 'dash') { // a streak along the way it went: a golden dash's in gold and ember, with flecks of both; a plain flash's in ember, lighter
         animOf(e.snake, now).dashTick = game.tick;
-        const h = e.snake.body[0], x0 = e.x * CELL + CELL / 2, y0 = e.y * CELL + CELL / 2, x1 = h.x * CELL + CELL / 2, y1 = h.y * CELL + CELL / 2;
+        const h = e.snake.body[0], x0 = e.x * CELL + CELL / 2, y0 = e.y * CELL + CELL / 2, x1 = h.x * CELL + CELL / 2, y1 = h.y * CELL + CELL / 2, plain = !!e.plain;
         if (Math.abs(x1 - x0) + Math.abs(y1 - y0) <= CELL * (T.DASH_LENGTH + 0.5)) { // (not across a wrapped edge)
-          streaks.push({ x0, y0, x1, y1, at: now, s: e.snake });
-          for (let k = 0; k <= 3; k++) spawn(x0 + (x1 - x0) * k / 3, y0 + (y1 - y0) * k / 3, 4, 90, 500, 1.8, '#fde68a', '#fffbea');
+          streaks.push({ x0, y0, x1, y1, at: now, s: e.snake, plain });
+          for (let k = 0; k <= 3; k++) spawn(x0 + (x1 - x0) * k / 3, y0 + (y1 - y0) * k / 3, plain ? 2 : 4, 90, 500, 1.8, plain ? EMBER : HONEY, plain ? GLINT : EMBER);
           if (!reduced) for (let k = 0; k < 4; k++) mote(x0 + (Math.random() - 0.5) * CELL * 0.6, y0 + (Math.random() - 0.5) * CELL * 0.6, -(x1 - x0) / len3(x1 - x0, y1 - y0) * 20 + (Math.random() - 0.5) * 10, -(y1 - y0) / len3(x1 - x0, y1 - y0) * 20 - 6, 700, 3 + Math.random() * 2, 2); // (a scuff of dust where it set off)
         }
       } else if (e.type === 'douse') { // a fire put out: a hiss of steam
@@ -5766,8 +5858,11 @@ window.SnakeRender = (() => {
   // start; gone in a moment. The lines run just clear of everything drawn
   // round the dasher's body (its outline, a gold line), which used to cover
   // them. (A wedge of honey light between them is gone: where it showed past
-  // the body, it was a translucent khaki block, cut square by the head.)
-  const streaks = []; // { x0, y0, x1, y1, at, s }
+  // the body, it was a translucent khaki block, cut square by the head.) A
+  // golden dash's lines are gold with an ember core; a plain flash's are
+  // ember, thinner, fainter and shorter (from half way), so the golden one
+  // is the bigger deal.
+  const streaks = []; // { x0, y0, x1, y1, at, s, plain }
   const STREAK_GAP = 2; // (between the dasher's drawn edge and a line's inked edge, in units)
   function drawStreaks(now) {
     for (let i = streaks.length - 1; i >= 0; i--) {
@@ -5775,20 +5870,24 @@ window.SnakeRender = (() => {
       if (t >= 1 || t < 0) { streaks.splice(i, 1); continue; }
       const dx = k.x1 - k.x0, dy = k.y1 - k.y0, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
       const ex = k.x1 - ux * CELL * 0.35, ey = k.y1 - uy * CELL * 0.35; // (the back of its head)
+      const sx = k.plain ? k.x0 + (ex - k.x0) * 0.45 : k.x0, sy = k.plain ? k.y0 + (ey - k.y0) * 0.45 : k.y0; // (where its lines start)
       const speedLine = (off, w, over) => { // (pointed at both ends, widest near the head; `over` runs it a touch past them, for its ink)
-        const mx = k.x0 + (ex - k.x0) * 0.8, my = k.y0 + (ey - k.y0) * 0.8;
-        ctx.moveTo(k.x0 - ux * over + nx * off, k.y0 - uy * over + ny * off);
+        const mx = sx + (ex - sx) * 0.8, my = sy + (ey - sy) * 0.8;
+        ctx.moveTo(sx - ux * over + nx * off, sy - uy * over + ny * off);
         ctx.lineTo(mx + nx * (off + w), my + ny * (off + w));
         ctx.lineTo(ex + ux * over + nx * off, ey + uy * over + ny * off);
         ctx.lineTo(mx + nx * (off - w), my + ny * (off - w));
         ctx.closePath();
       };
-      const a = anim.get(k.s), w = CELL * 0.1 * (1 - 0.5 * t), ink = 1.4;
+      const a = anim.get(k.s), w = CELL * (k.plain ? 0.075 : 0.1) * (1 - 0.5 * t), ink = 1.4;
       const side = CELL * 0.44 + (a ? edgeOf(k.s, a) : 0) + STREAK_GAP + ink + w; // (the body's half-width by the neck, and what's drawn round it)
-      ctx.fillStyle = rgba('#3a2614', 0.8 * (1 - t));
+      ctx.fillStyle = rgba('#3a2614', (k.plain ? 0.6 : 0.8) * (1 - t));
       ctx.beginPath(); speedLine(-side, w + ink, ink * 2); speedLine(side, w + ink, ink * 2); ctx.fill();
-      ctx.fillStyle = rgba('#fffbea', 0.95 * (1 - t));
+      ctx.fillStyle = rgba(k.plain ? EMBER : HONEY, (k.plain ? 0.85 : 0.95) * (1 - t));
       ctx.beginPath(); speedLine(-side, w, 0); speedLine(side, w, 0); ctx.fill();
+      if (k.plain) continue;
+      ctx.fillStyle = rgba(EMBER_LINE, 0.9 * (1 - t)); // (the ember core)
+      ctx.beginPath(); speedLine(-side, w * 0.4, -len * 0.25); speedLine(side, w * 0.4, -len * 0.25); ctx.fill();
     }
   }
 
@@ -5984,7 +6083,8 @@ window.SnakeRender = (() => {
 
   return {
     showYou,
-    ready: s => { animOf(s, lastNow || performance.now()).readyAt = lastNow || performance.now(); },
+    // (your jump's back, or with 'flash' your flash: its half-ring's flick; the renderer sees both itself, so this only makes sure)
+    ready: (s, kind) => { const a = animOf(s, lastNow || performance.now()), now = lastNow || performance.now(); if (kind === 'flash') { if (!(now - a.flashFx < 600)) a.flashFx = now; } else if (!(now - a.readyAt < 600)) a.readyAt = now; },
     init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, markOf, celebrate, setQuality, setBoardRect, pressed,
     get quality() { return quality; },
     holding: () => deaths.length > 0 || corpses.length > 0,
