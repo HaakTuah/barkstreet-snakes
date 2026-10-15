@@ -478,7 +478,8 @@ window.SnakeRender = (() => {
     }
   }
 
-  // The static layer is the bark plus every hole pecked so far.
+  // The static layer is the bark, the scorch marks fire has left, and every
+  // hole pecked so far (see paintStatic, with the woodpecker).
   function resetStatic() {
     if (!sized) { staticLayer = null; holesDrawn = 0; return; } // (built once the board has its real size)
     if (!barkLayer) barkLayer = buildBark();
@@ -512,39 +513,6 @@ window.SnakeRender = (() => {
     const seed = 1 + Math.floor(Math.random() * 2147483645);
     next = { seed, k, bark: buildBark(seed), shade: buildShade(seed) };
     try { window.createImageBitmap?.(next.bark).then(b => b.close(), () => {}); } catch { /* it's drawn when it's used instead */ }
-  }
-
-  // Draw any holes added since last time onto the static layer (a Set keeps
-  // insertion order, so new holes are always at the end).
-  function syncHoles() {
-    if (!game || game.holes.size === holesDrawn) return;
-    if (game.holes.size < holesDrawn) resetStatic();
-    const g = staticLayer.getContext('2d');
-    g.setTransform(k, 0, 0, k, 0, 0);
-    // The new holes (a whole chunk at a time) are gouges that run together:
-    // first a ragged lighter rim round all of them, then the dark hollows.
-    const fresh = [];
-    let i = 0;
-    for (const key of game.holes) if (i++ >= holesDrawn) fresh.push(key);
-    for (let pass = 0; pass < 2; pass++) {
-      for (const key of fresh) {
-        const x = (key % GRID) * CELL + CELL / 2, y = Math.floor(key / GRID) * CELL + CELL / 2, j = (key * 37) % 7 / 7;
-        if (!pass) {
-          g.fillStyle = 'rgba(176,124,70,0.5)'; // torn wood round the edge
-          g.beginPath(); g.ellipse(x, y, CELL * (0.66 + j * 0.08), CELL * (0.62 + (1 - j) * 0.08), j * 2, 0, TAU); g.fill();
-          continue;
-        }
-        const grad = g.createRadialGradient(x, y, 1, x, y, CELL * 0.62);
-        grad.addColorStop(0, '#070402');
-        grad.addColorStop(0.75, '#1c1007');
-        grad.addColorStop(1, '#3b2412');
-        g.fillStyle = grad;
-        g.beginPath();
-        g.ellipse(x, y, CELL * (0.58 + j * 0.06), CELL * (0.55 + (1 - j) * 0.06), j * 2, 0, TAU);
-        g.fill();
-      }
-    }
-    holesDrawn = game.holes.size;
   }
 
   // -------------------------------------------------------------- sprites
@@ -4503,35 +4471,46 @@ window.SnakeRender = (() => {
     snowCover += ((kind === 'snow' ? 1 : 0) - snowCover) * Math.min(1, dt / (kind === 'snow' ? 7000 : 1600)); // (it settles slowly, and melts in a few seconds)
   }
 
-  // Where the fire was and is: cells that burned out leave a scorch (and a puff of smoke).
+  // Where the fire was and is: cells that burned out leave a scorch (and a
+  // puff of smoke); a burning cell the woodpecker took leaves its pit.
   function trackFire(now) {
     if (game.tick === fireTick) return;
     fireTick = game.tick;
     for (const [k, was] of fireSeen) {
       if (game.fires?.has(k)) continue;
       fireSeen.delete(k);
-      if (!was) continue;
+      if (!was || game.holes.has(k)) continue;
       scorched.push(k);
       const x = (k % GRID) * CELL + CELL / 2, y = Math.floor(k / GRID) * CELL + CELL / 2;
       for (let i = 0; i < 3; i++) mote(x + (Math.random() - 0.5) * CELL * 0.5, y, (Math.random() - 0.5) * 10, -18 - Math.random() * 10, 1500, 4 + Math.random() * 3, 2);
     }
     if (game.fires) for (const [k, f] of game.fires) fireSeen.set(k, game.tick >= f.from);
   }
+  // Scorch marks go on the static layer under the pits: one beside a hole
+  // paints its box again (see paintStatic), so the pit stays on top.
   function syncScorch() {
     if (scorchDrawn === scorched.length || !staticLayer) return;
     const g = staticLayer.getContext('2d');
-    g.setTransform(k, 0, 0, k, 0, 0);
     for (; scorchDrawn < scorched.length; scorchDrawn++) {
-      const key = scorched[scorchDrawn], x = (key % GRID) * CELL + CELL / 2, y = Math.floor(key / GRID) * CELL + CELL / 2;
-      const grad = g.createRadialGradient(x, y, 1, x, y, CELL * 0.62);
-      grad.addColorStop(0, 'rgba(12,8,6,0.75)');
-      grad.addColorStop(0.6, 'rgba(24,14,8,0.45)');
-      grad.addColorStop(1, 'rgba(24,14,8,0)');
-      g.fillStyle = grad;
-      g.beginPath(); g.arc(x, y, CELL * 0.62, 0, TAU); g.fill();
-      g.fillStyle = 'rgba(160,150,140,0.35)'; // ash
-      for (let i = 0; i < 5; i++) { const a = i * 2.3 + key; g.beginPath(); g.arc(x + Math.cos(a) * CELL * 0.22, y + Math.sin(a) * CELL * 0.18, 1.2, 0, TAU); g.fill(); }
+      const key = scorched[scorchDrawn], x = key % GRID, y = (key - x) / GRID;
+      if (holeMask[key]) continue;
+      let near = false;
+      for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) if (x + dx >= 0 && x + dx < GRID && y + dy >= 0 && y + dy < GRID && holeMask[key + dy * GRID + dx]) { near = true; break; }
+      if (near) { scorchDrawn++; paintStatic(x - 1, y - 1, x + 1, y + 1); scorchDrawn--; continue; }
+      g.setTransform(k, 0, 0, k, 0, 0);
+      scorchAt(g, key);
     }
+  }
+  function scorchAt(g, key) {
+    const x = (key % GRID) * CELL + CELL / 2, y = Math.floor(key / GRID) * CELL + CELL / 2;
+    const grad = g.createRadialGradient(x, y, 1, x, y, CELL * 0.62);
+    grad.addColorStop(0, 'rgba(12,8,6,0.75)');
+    grad.addColorStop(0.6, 'rgba(24,14,8,0.45)');
+    grad.addColorStop(1, 'rgba(24,14,8,0)');
+    g.fillStyle = grad;
+    g.beginPath(); g.arc(x, y, CELL * 0.62, 0, TAU); g.fill();
+    g.fillStyle = 'rgba(160,150,140,0.35)'; // ash
+    for (let i = 0; i < 5; i++) { const a = i * 2.3 + key; g.beginPath(); g.arc(x + Math.cos(a) * CELL * 0.22, y + Math.sin(a) * CELL * 0.18, 1.2, 0, TAU); g.fill(); }
   }
 
   // Fire on the bark: smouldering cells glow, burning cells flame (deadly),
@@ -5056,8 +5035,10 @@ window.SnakeRender = (() => {
   }
 
   // On the board: the chunk it's eyeing glows and cracks, the pulse quickening
-  // as the strike nears. The glow, the dark and the rim lie on the bark,
-  // under the snakes; the cracks run over them (whatever's there goes too).
+  // as the strike nears, and its pecks dent the rim. It's traced with the
+  // outline its pit will have, and all of it lies on the bark, under the
+  // snakes: a body lying over it bridges the hole to come (only a head on
+  // the ground in it falls in), so nothing is drawn across a body.
   const markSprite = () => sprite('mark', '', drawMark);
   const drawMark = g => {
     const grad = g.createRadialGradient(0, 0, 0, 0, 0, CELL * 0.85);
@@ -5085,11 +5066,10 @@ window.SnakeRender = (() => {
     // ...a darker inside, and a pale rim round it (inked, so it shows on pale
     // snakes), bolder and brighter as the strike nears: to colour-blind eyes
     // the red is olive on olive bark, but the dark patch and its rim still
-    // read. The rim is one line traced round the patch, just inside its
-    // edge, its corners rounded like a chip's (a straight piece along every
-    // cell's edge, meeting square at every notch, read as a computer's
-    // selection box), and the dark inside is rounded to match. (It used to
-    // close in from outside, over cells it wouldn't take.)
+    // read. The rim is its pit's outline, just inside the patch's edge, its
+    // corners rounded as the pit's are (a straight piece along every cell's
+    // edge, meeting square at every notch, read as a computer's selection
+    // box). (It used to close in from outside, over cells it wouldn't take.)
     outlinePatch(w.target);
     const line = 3.6 + 2.2 * prog, half = line / 2;
     ctx.globalAlpha = 0.45 + 0.4 * prog;
@@ -5097,6 +5077,28 @@ window.SnakeRender = (() => {
     ctx.beginPath();
     patchPath(0, PATCH_R + half, Math.max(0, PATCH_R_IN - half)); // (out to the rim's own outer edge)
     ctx.fill();
+    // Cracks spreading from each cell's middle along the grain, as wood
+    // splits (faded in as they start, or they're specks), lit along their far
+    // lip like a burrow's...
+    if (prog > 0) {
+      ctx.globalAlpha = Math.min(1, prog * 5);
+      ctx.lineCap = ctx.lineJoin = 'round';
+      for (const [col, off, lw] of CRACK_LINES) {
+        ctx.strokeStyle = col;
+        for (let part = 0; part < 2; part++) { // (tapering: from the middle, then on to the tip)
+          ctx.lineWidth = lw * (part ? 0.55 : 0.9);
+          ctx.beginPath();
+          for (let i = 0; i < markN; i++) {
+            const x = markCX[i] + off, y = markCY[i] + off;
+            for (let p = 8 * i; p < 8 * i + 8; p += 4) {
+              if (part) { ctx.moveTo(x + markCr[p] * prog, y + markCr[p + 1] * prog); ctx.lineTo(x + markCr[p + 2] * prog, y + markCr[p + 3] * prog); }
+              else { ctx.moveTo(x, y); ctx.lineTo(x + markCr[p] * prog, y + markCr[p + 1] * prog); }
+            }
+          }
+          ctx.stroke();
+        }
+      }
+    }
     ctx.globalAlpha = 1;
     ctx.beginPath();
     patchPath(half, PATCH_R, PATCH_R_IN);
@@ -5107,94 +5109,265 @@ window.SnakeRender = (() => {
     ctx.strokeStyle = rgba('#fef3c7', 0.75 + 0.25 * prog);
     ctx.lineWidth = 1.6 + 1.6 * prog;
     ctx.stroke();
+    // ...and its pecks, denting the rim here and there, more and more as the strike nears.
+    const dents = Math.floor(prog * dentN);
+    if (dents) {
+      ctx.fillStyle = '#140a04';
+      ctx.beginPath();
+      for (let n = 0; n < dents; n++) { const d = dentOrder[n]; ctx.moveTo(dentX[d] + DENT_R, dentY[d]); ctx.arc(dentX[d], dentY[d], DENT_R, 0, TAU); }
+      ctx.fill();
+      ctx.fillStyle = 'rgba(254,243,199,0.7)'; // (a fleck of pale wood on each one's far side, where the light falls in)
+      ctx.beginPath();
+      for (let n = 0; n < dents; n++) { const d = dentOrder[n], x = dentX[d] + DENT_R * 0.45, y = dentY[d] + DENT_R * 0.45; ctx.moveTo(x + DENT_R * 0.4, y); ctx.arc(x, y, DENT_R * 0.4, 0, TAU); }
+      ctx.fill();
+    }
   }
-  // The patch's outline, traced once each time it changes: its corners, loop
-  // by loop (one round the outside, one round any cell it encloses), in
-  // cells, going round with the patch on the right.
-  const PATCH_R = 7, PATCH_R_IN = 4; // (how round its corners are, and its notches, in units)
-  const patch = new Uint8Array(GRID * GRID); // (the patch's cells, marked while it's traced)
-  const patchWas = new Int16Array(GRID * GRID); // (the cells it was traced for)
-  const pEdge = new Int16Array(16 * GRID * GRID), pUsed = new Uint8Array(4 * GRID * GRID); // (each exposed side: its start corner and way, x, y, dx, dy)
-  const pCorner = new Int16Array(8 * GRID * GRID), pLoopEnd = new Int16Array(GRID * GRID);
-  let patchWasN = -1, pEdges = 0, pLoops = 0;
+  // The patch's outline, traced once each time it changes (see traceCells),
+  // kept as its corners, loop by loop (round the outside, and round any cell
+  // it encloses), in cells, with the ways in and out of each; and with it,
+  // each cell's cracks and the dents round the rim.
+  const PATCH_R = 7, PATCH_R_IN = 3, PIT_PUSH = 14; // (how round its corners are, and its notches, in units, as its pit's will be; how far it runs on under the frame at the board's edge)
+  const DENT_R = 2.1, DENT_EVERY = 12; // (a dent's size, and how far apart they come round the rim, in units)
+  const patch = new Uint8Array(N2); // (the patch's cells, marked while it's traced)
+  const patchWas = new Int16Array(N2); // (the cells it was traced for)
+  const pGX = new Int8Array(4 * N2), pGY = new Int8Array(4 * N2), pIn = new Int8Array(4 * N2), pOut = new Int8Array(4 * N2), pLoopEnd = new Int32Array(N2);
+  const DIRX = [1, 0, -1, 0], DIRY = [0, 1, 0, -1], dirOf = (dx, dy) => dx > 0 ? 0 : dy > 0 ? 1 : dx < 0 ? 2 : 3;
+  const markCX = new Float32Array(N2), markCY = new Float32Array(N2), markCr = new Float32Array(8 * N2);
+  const dentX = new Float32Array(4 * N2), dentY = new Float32Array(4 * N2), dentOrder = new Int16Array(4 * N2);
+  let patchWasN = -1, pLoops = 0, markN = 0, dentN = 0;
   function outlinePatch(target) {
     let same = target.length === patchWasN;
     for (let i = 0; same && i < target.length; i++) same = patchWas[i] === target[i];
     if (same) return;
     patchWasN = target.length;
+    patch.fill(0);
     for (let i = 0; i < target.length; i++) { patchWas[i] = target[i]; patch[target[i]] = 1; }
-    pEdges = 0;
-    for (const k of target) {
-      const x = k % GRID, y = (k - x) / GRID;
-      if (y === 0 || !patch[k - GRID]) patchSide(x, y, 1, 0); // (along its top, left to right...)
-      if (x === GRID - 1 || !patch[k + 1]) patchSide(x + 1, y, 0, 1); // (...down its right...)
-      if (y === GRID - 1 || !patch[k + GRID]) patchSide(x + 1, y + 1, -1, 0); // (...back along its bottom...)
-      if (x === 0 || !patch[k - 1]) patchSide(x, y + 1, 0, -1); // (...and up its left)
-    }
-    for (const k of target) patch[k] = 0;
-    // Chained into loops, keeping only the corners. Where two of its cells
-    // meet only at a corner, the way round turns right, so each keeps its own corner.
+    traceCells(patch);
     let nc = 0;
-    pLoops = 0;
-    for (let e0 = 0; e0 < pEdges; e0++) {
-      if (pUsed[e0]) continue;
-      let e = e0;
-      do {
-        const x = pEdge[4 * e] + pEdge[4 * e + 2], y = pEdge[4 * e + 1] + pEdge[4 * e + 3], dx = pEdge[4 * e + 2], dy = pEdge[4 * e + 3];
-        let next = -1;
-        for (let f = 0; f < pEdges; f++) {
-          if ((pUsed[f] && f !== e0) || pEdge[4 * f] !== x || pEdge[4 * f + 1] !== y) continue;
-          next = f;
-          if (pEdge[4 * f + 2] === -dy && pEdge[4 * f + 3] === dx) break; // (the right turn, if there's a choice)
-        }
-        pUsed[e] = 1;
-        if (next < 0) break; // (never: every corner has a way on)
-        if (pEdge[4 * next + 2] !== dx || pEdge[4 * next + 3] !== dy) { pCorner[2 * nc] = x; pCorner[2 * nc + 1] = y; nc++; }
-        e = next;
-      } while (e !== e0);
-      pLoopEnd[pLoops++] = nc;
+    for (let l = 0; l < tLoops; l++) {
+      const a = tAt[l], n = tAt[l + 1] - a;
+      for (let j = 0; j < n; j++) {
+        const p = a + (j + n - 1) % n, i = a + j, q = a + (j + 1) % n;
+        const ax = tX[i] - tX[p], ay = tY[i] - tY[p], bx = tX[q] - tX[i], by = tY[q] - tY[i];
+        if (ax === bx && ay === by) continue;
+        pGX[nc] = tX[i]; pGY[nc] = tY[i]; pIn[nc] = dirOf(ax, ay); pOut[nc] = dirOf(bx, by); nc++;
+      }
+      pLoopEnd[l] = nc;
     }
+    pLoops = tLoops;
+    // Each cell's cracks: one up the log, one down, wandering a little off the grain.
+    markN = target.length;
+    for (let i = 0; i < markN; i++) {
+      const key = target[i], x = key % GRID, y = (key - x) / GRID;
+      markCX[i] = x * CELL + CELL / 2; markCY[i] = y * CELL + CELL / 2;
+      for (let c = 0; c < 2; c++) {
+        const base = c ? Math.PI / 2 : -Math.PI / 2, a1 = base + (noise(key, c, 11) - 0.5) * 0.7, a2 = a1 + (noise(key, c, 12) - 0.5) * 0.7;
+        const l1 = CELL * (0.16 + 0.08 * noise(key, c, 13)), l2 = l1 + CELL * (0.12 + 0.1 * noise(key, c, 14)), p = 8 * i + 4 * c;
+        markCr[p] = Math.cos(a1) * l1; markCr[p + 1] = Math.sin(a1) * l1;
+        markCr[p + 2] = markCr[p] + Math.cos(a2) * (l2 - l1); markCr[p + 3] = markCr[p + 1] + Math.sin(a2) * (l2 - l1);
+      }
+    }
+    // The dents: every DENT_EVERY units along the rim (on the board), coming in a scattered order.
+    dentN = 0;
+    const inset = 2.6;
+    for (let l = 0, i0 = 0; l < pLoops; i0 = pLoopEnd[l++]) {
+      const m = pLoopEnd[l] - i0;
+      for (let j = 0; j < m; j++) {
+        const c0 = i0 + j, c1 = i0 + (j + 1) % m;
+        const x0 = cornerX(c0, inset, PIT_PUSH), y0 = cornerY(c0, inset, PIT_PUSH), x1 = cornerX(c1, inset, PIT_PUSH), y1 = cornerY(c1, inset, PIT_PUSH);
+        const len = Math.hypot(x1 - x0, y1 - y0);
+        for (let d = DENT_EVERY / 2 + PATCH_R; d < len - PATCH_R; d += DENT_EVERY) {
+          const x = x0 + (x1 - x0) * d / len, y = y0 + (y1 - y0) * d / len;
+          if (x < 2 || y < 2 || x > SIZE - 2 || y > SIZE - 2) continue;
+          dentX[dentN] = x; dentY[dentN] = y; dentOrder[dentN] = dentN; dentN++;
+        }
+      }
+    }
+    const key = d => noise(Math.round(dentX[d]), Math.round(dentY[d]), 15);
+    dentOrder.subarray(0, dentN).sort((p, q) => key(p) - key(q));
   }
-  function patchSide(x, y, dx, dy) {
-    pEdge[4 * pEdges] = x; pEdge[4 * pEdges + 1] = y; pEdge[4 * pEdges + 2] = dx; pEdge[4 * pEdges + 3] = dy;
-    pUsed[pEdges++] = 0;
+  // Corner c of the traced patch, `inset` units in toward it (pushed on
+  // under the frame at the board's edge, as its pit will be).
+  function cornerX(c, inset, push) {
+    const x = pGX[c] * CELL - inset * (DIRY[pIn[c]] + DIRY[pOut[c]]);
+    return pGX[c] === 0 ? x - push : pGX[c] === GRID ? x + push : x;
+  }
+  function cornerY(c, inset, push) {
+    const y = pGY[c] * CELL + inset * (DIRX[pIn[c]] + DIRX[pOut[c]]);
+    return pGY[c] === 0 ? y - push : pGY[c] === GRID ? y + push : y;
   }
   // The traced outline, added to the current path: `inset` units inside the
   // patch, its corners rounded by `outer` and its notches by `inner`.
-  const pqx = new Float32Array(4 * GRID * GRID), pqy = new Float32Array(4 * GRID * GRID), pqr = new Float32Array(4 * GRID * GRID);
   function patchPath(inset, outer, inner) {
     for (let l = 0, i0 = 0; l < pLoops; i0 = pLoopEnd[l++]) {
       const m = pLoopEnd[l] - i0;
       if (m < 4) continue;
       for (let j = 0; j < m; j++) {
-        const i = i0 + j, p = i0 + (j + m - 1) % m, nx = i0 + (j + 1) % m;
-        const ax = Math.sign(pCorner[2 * i] - pCorner[2 * p]), ay = Math.sign(pCorner[2 * i + 1] - pCorner[2 * p + 1]);
-        const bx = Math.sign(pCorner[2 * nx] - pCorner[2 * i]), by = Math.sign(pCorner[2 * nx + 1] - pCorner[2 * i + 1]);
-        pqx[j] = pCorner[2 * i] * CELL - inset * (ay + by); // (in from each side: the patch is on the right, -dy, dx)
-        pqy[j] = pCorner[2 * i + 1] * CELL + inset * (ax + bx);
-        pqr[j] = ax * by - ay * bx > 0 ? outer : inner; // (a right turn: a corner of the patch; a left one: a notch)
+        const c = i0 + j;
+        qx[j] = cornerX(c, inset, PIT_PUSH); qy[j] = cornerY(c, inset, PIT_PUSH);
+        qr[j] = DIRX[pIn[c]] * DIRY[pOut[c]] - DIRY[pIn[c]] * DIRX[pOut[c]] > 0 ? outer : inner; // (a right turn: a corner of the patch; a left one: a notch)
       }
-      ctx.moveTo((pqx[m - 1] + pqx[0]) / 2, (pqy[m - 1] + pqy[0]) / 2);
-      for (let j = 0; j < m; j++) ctx.arcTo(pqx[j], pqy[j], pqx[(j + 1) % m], pqy[(j + 1) % m], pqr[j]);
-      ctx.closePath();
+      cornersPath(ctx, m);
     }
   }
-  // ...and its cracks, spreading across it (faded in as they start, or
-  // they're specks on whatever lies there).
-  function drawCracks(alpha) {
-    const prog = aimed(alpha), w = game.woodpecker;
-    if (prog <= 0) return;
-    ctx.strokeStyle = 'rgba(20,8,2,0.75)';
-    ctx.lineWidth = 1.6;
-    ctx.globalAlpha = Math.min(1, prog * 5);
-    ctx.beginPath();
-    for (const k of w.target) {
-      const x = (k % GRID) * CELL + CELL / 2, y = Math.floor(k / GRID) * CELL + CELL / 2, a = k * 1.7, len = CELL * 0.45 * prog;
-      ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
-      ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a + 2.4) * len * 0.8, y + Math.sin(a + 2.4) * len * 0.8);
+
+  // Holes are pits in the log, one per hollow (holes side by side run
+  // together), traced along the cell edges, so a hole's edge is its cell's
+  // edge: a torn lip of fresh pale wood, inked; a dark floor, and its far
+  // wall (lower right) lit from the upper left, like everything else on the
+  // board, the grain showing in it; splinters over the rim and sawdust
+  // round it; and at the board's edge, a notch bitten out of the log (its
+  // outline runs on under the frame). (One round dark disc a cell read as
+  // bubble wrap.) They're on the static layer, under everything: a body
+  // lying across a hole bridges it, and is drawn over it. Every wobble,
+  // splinter and speck is seeded by where it is, so a piece painted again
+  // matches what's beside it, and a strike paints again only the box round
+  // its new holes (see paintStatic).
+  const PIT_LIP = 1, PIT_RIM = 3.5; // (how far the lip reaches out over the bark, and the pit's edge in from the cell's, in units)
+  const holeMask = new Uint8Array(N2);
+  // A number 0..1 for a place and a salt, the same every time.
+  function noise(x, y, salt) {
+    let h = Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(salt, 1274126177);
+    h = Math.imul(h ^ (h >>> 13), 1103515245);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+  // Draw any holes added since last time onto the static layer (a Set keeps
+  // insertion order, so new holes are always at the end): the box round
+  // them, a cell more (where a hollow widens, its old lip goes), painted again.
+  function syncHoles() {
+    if (!game || !staticLayer || game.holes.size === holesDrawn) return;
+    if (game.holes.size < holesDrawn) resetStatic();
+    if (!holesDrawn) holeMask.fill(0);
+    let x0 = GRID, y0 = GRID, x1 = -1, y1 = -1, i = 0;
+    for (const key of game.holes) {
+      if (i++ < holesDrawn) continue;
+      holeMask[key] = 1;
+      const x = key % GRID, y = (key - x) / GRID;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
     }
-    ctx.stroke();
-    ctx.globalAlpha = 1;
+    holesDrawn = game.holes.size;
+    paintStatic(x0 - 1, y0 - 1, x1 + 1, y1 + 1);
+  }
+  // Paint the static layer again over cells cx0..cx1, cy0..cy1, in its
+  // order: the bark, the scorch marks drawn so far, the pits.
+  function paintStatic(cx0, cy0, cx1, cy1) {
+    cx0 = Math.max(0, cx0); cy0 = Math.max(0, cy0); cx1 = Math.min(GRID - 1, cx1); cy1 = Math.min(GRID - 1, cy1);
+    if (cx1 < cx0 || cy1 < cy0) return;
+    const g = staticLayer.getContext('2d');
+    const X0 = Math.floor(cx0 * CELL * k), Y0 = Math.floor(cy0 * CELL * k);
+    const X1 = cx1 === GRID - 1 ? staticLayer.width : Math.ceil((cx1 + 1) * CELL * k), Y1 = cy1 === GRID - 1 ? staticLayer.height : Math.ceil((cy1 + 1) * CELL * k);
+    g.save();
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.beginPath(); g.rect(X0, Y0, X1 - X0, Y1 - Y0); g.clip();
+    g.drawImage(barkLayer, X0, Y0, X1 - X0, Y1 - Y0, X0, Y0, X1 - X0, Y1 - Y0);
+    g.setTransform(k, 0, 0, k, 0, 0);
+    for (let n = 0; n < scorchDrawn; n++) {
+      const key = scorched[n], x = key % GRID, y = (key - x) / GRID;
+      if (x >= cx0 - 1 && x <= cx1 + 1 && y >= cy0 - 1 && y <= cy1 + 1 && !holeMask[key]) scorchAt(g, key);
+    }
+    drawPits(g, holeMask, cx0 - 1, cy0 - 1, cx1 + 1, cy1 + 1);
+    g.restore();
+  }
+  // The pits of the holes in m (every hollow reaching cells bx0..bx1,
+  // by0..by1), on g (in the board's units).
+  function drawPits(g, m, bx0, by0, bx1, by1) {
+    traceCells(m);
+    const lip = new Path2D(), pit = new Path2D(), deep = new Path2D(), grain = new Path2D();
+    const dust = [new Path2D(), new Path2D()], spl = [new Path2D(), new Path2D()];
+    let any = false;
+    for (let l = 0; l < tLoops; l++) {
+      const a = tAt[l], end = tAt[l + 1];
+      let x0 = GRID, y0 = GRID, x1 = 0, y1 = 0;
+      for (let j = a; j < end; j++) { x0 = Math.min(x0, tX[j]); x1 = Math.max(x1, tX[j]); y0 = Math.min(y0, tY[j]); y1 = Math.max(y1, tY[j]); }
+      if (x1 <= bx0 || x0 > bx1 + 1 || y1 <= by0 || y0 > by1 + 1) continue; // (its grid points' box against the cells')
+      any = true;
+      raggedPath(lip, cornersOf(l, -PIT_LIP, 9, 5, PIT_PUSH), 0.9, 1, 1);
+      raggedPath(pit, cornersOf(l, PIT_RIM, PATCH_R, PATCH_R_IN, PIT_PUSH), 1.4, -1, 2);
+      cornersPath(deep, cornersOf(l, PIT_RIM + 2, PATCH_R, PATCH_R_IN, PIT_PUSH));
+      for (let j = a; j < end; j++) sideBits(j, a, end, dust, spl);
+    }
+    if (!any) return;
+    for (let y = Math.max(0, by0); y <= Math.min(GRID - 1, by1); y++) {
+      for (let x = Math.max(0, bx0); x <= Math.min(GRID - 1, bx1); x++) {
+        const key = y * GRID + x;
+        if (!m[key]) continue;
+        for (let n = 0; n < 4; n++) { // (the grain, down the far wall)
+          const lx = x * CELL + 4 + noise(key, n, 3) * 24;
+          grain.moveTo(lx, y * CELL); grain.lineTo(lx + (noise(key, n, 4) - 0.5) * 2, (y + 1) * CELL);
+        }
+      }
+    }
+    g.lineJoin = 'round';
+    g.fillStyle = 'rgba(226,190,136,0.7)'; g.fill(dust[0]);
+    g.fillStyle = 'rgba(176,124,70,0.75)'; g.fill(dust[1]);
+    g.fillStyle = '#9a683a'; g.fill(lip);
+    g.strokeStyle = 'rgba(28,14,5,0.5)'; g.lineWidth = 1.1; g.stroke(lip);
+    g.save();
+    g.fillStyle = '#5c3a1f'; g.fill(pit); // (the far wall...)
+    g.clip(pit);
+    g.translate(-4.5, -5.5);
+    g.fillStyle = '#2a170a'; g.fill(pit); // (...shaded but where the light falls in from the upper left...)
+    g.translate(-3, -3);
+    g.fillStyle = '#0f0804'; g.fill(deep); // (...and the dark floor)
+    g.translate(7.5, 8.5);
+    g.strokeStyle = 'rgba(30,15,5,0.35)'; g.lineWidth = 0.8; g.stroke(grain);
+    g.restore();
+    g.strokeStyle = '#140a04'; g.lineWidth = 1.8; g.stroke(pit);
+    g.fillStyle = '#b58350'; g.fill(spl[0]);
+    g.fillStyle = '#7e522c'; g.fill(spl[1]);
+  }
+  // The corners at hand (from cornersOf) as a torn edge on p: each corner
+  // rounded in a few straight pieces, each straight run wobbling out (sgn
+  // 1, away from the cells) or in (-1) by up to amp, sampled every 3 units
+  // at fixed places on the board, so a run wobbles alike wherever it starts.
+  function raggedPath(p, m, amp, sgn, salt) {
+    if (m < 4) return;
+    for (let j = 0; j < m; j++) {
+      const pj = (j + m - 1) % m, ix = qdx[pj], iy = qdy[pj], ox = qdx[j], oy = qdy[j], r = qr[j];
+      const ax = qx[j] - ix * r, ay = qy[j] - iy * r, bx = qx[j] + ox * r, by = qy[j] + oy * r;
+      for (let s = 0; s <= 4; s++) {
+        const t = s / 4, u = 1 - t, x = u * u * ax + 2 * u * t * qx[j] + t * t * bx, y = u * u * ay + 2 * u * t * qy[j] + t * t * by;
+        if (j || s) p.lineTo(x, y); else p.moveTo(x, y);
+      }
+      const nj = (j + 1) % m, ex = qx[nj] - ox * qr[nj], ey = qy[nj] - oy * qr[nj], nx = oy * sgn, ny = -ox * sgn;
+      const from = ox ? bx : by, to = ox ? ex : ey, step = 3 * (ox || oy);
+      for (let v = (step > 0 ? Math.floor(from / 3) + 1 : Math.ceil(from / 3) - 1) * 3; step > 0 ? v < to - 1 : v > to + 1; v += step) {
+        const x = ox ? v : bx, y = ox ? by : v, w = amp * noise(Math.round(x * 2), Math.round(y * 2), salt) * (noise(Math.round(x * 2), Math.round(y * 2), salt + 5) < 0.2 ? 2 : 1);
+        p.lineTo(x + nx * w, y + ny * w);
+      }
+    }
+    p.closePath();
+  }
+  // A traced side's sawdust on the bark and splinters over the rim (none
+  // along the board's edge, and none in a rounded corner), seeded by the side.
+  function sideBits(j, a, end, dust, spl) {
+    const e = tSide[j], i = e >> 2, sd = e & 3, cx = i % GRID, cy = (i - cx) / GRID, nx = NX[sd], ny = NY[sd];
+    if (cx + nx < 0 || cy + ny < 0 || cx + nx >= GRID || cy + ny >= GRID) return;
+    const q = j + 1 < end ? j + 1 : a, pr = j > a ? j - 1 : end - 1, n2 = q + 1 < end ? q + 1 : a;
+    const sx = tX[j] * CELL, sy = tY[j] * CELL, dx = tX[q] - tX[j], dy = tY[q] - tY[j];
+    const lo = tX[j] - tX[pr] !== dx || tY[j] - tY[pr] !== dy ? 7 : 0, hi = tX[n2] - tX[q] !== dx || tY[n2] - tY[q] !== dy ? CELL - 7 : CELL; // (clear of a rounded corner at either end)
+    for (let s = 0; s < 6; s++) { // sawdust, on the bark just past the lip
+      const along = 2.5 + s * 5.4 + (noise(e, s, 6) - 0.5) * 3;
+      if (along < lo || along > hi || noise(e, s, 7) < 0.45) continue;
+      const out = PIT_LIP + 2 + noise(e, s, 8) * 6, r = 0.6 + noise(e, s, 9) * 1.1, x = sx + dx * along + nx * out, y = sy + dy * along + ny * out;
+      const p = dust[noise(e, s, 10) < 0.5 ? 0 : 1];
+      p.moveTo(x + r, y); p.arc(x, y, r, 0, TAU);
+    }
+    const across = sd === 0 || sd === 2, slots = across ? 4 : 2; // (torn across the grain, the top and bottom edges splinter most)
+    for (let s = 0; s < slots; s++) {
+      if (noise(e, s, 16) < (across ? 0.2 : 0.4)) continue;
+      const along = (s + 0.5) * CELL / slots + (noise(e, s, 17) - 0.5) * (CELL / slots - 4);
+      if (along < lo + 1 || along > hi - 1) continue;
+      const lift = noise(e, s, 18) < 0.25 ? -1 : 1; // (a quarter lift outward, onto the lip)
+      const len = (across ? 2.5 + noise(e, s, 19) * 4.5 : 1.2 + noise(e, s, 19) * 2) * (lift < 0 ? 0.7 : 1), w = 0.7 + noise(e, s, 20) * 0.9, bend = (noise(e, s, 21) - 0.5) * 2.4;
+      const bx = sx + dx * along - nx * (PIT_RIM - 0.5), by = sy + dy * along - ny * (PIT_RIM - 0.5);
+      const tx = bx - nx * len * lift + dx * bend, ty = by - ny * len * lift + dy * bend;
+      const p = spl[noise(e, s, 22) < 0.6 ? 0 : 1];
+      p.moveTo(bx - dx * w, by - dy * w); p.lineTo(tx, ty); p.lineTo(bx + dx * w, by + dy * w); p.closePath();
+    }
   }
 
   // ------------------------------------------------------------ the frame
@@ -5254,7 +5427,6 @@ window.SnakeRender = (() => {
     if (streaks.length) drawStreaks(now); // (under the snakes: beside the dasher, never through it)
     drawSnakes(alpha, now); // (and the fields' light round any rival in them, under its body)
     drawRipples(now);
-    drawCracks(alpha);
     drawRefusal(now);
     drawRain(now);
     drawSnow(now);
