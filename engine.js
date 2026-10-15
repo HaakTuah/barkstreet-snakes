@@ -121,7 +121,13 @@ window.SnakeEngine = (() => {
   const suddenDeath = game => game.time >= T.SUDDEN_DEATH_MS;
 
   // Milliseconds until a snake starts starving (negative once it has).
+  // (lastAte is when it ate as the clock counts it: a meal that lasts less
+  // than HUNGER_MS counts as eaten that much earlier, and winter moves it on.)
   const hungerLeft = (game, s) => s.lastAte + T.HUNGER_MS - game.time;
+  // How long a meal keeps a snake from shrinking: HUNGER_MS in the opening
+  // and once the woodpecker's here, HUNGER_MID_MS between, when food is
+  // everywhere (with a long clock, hunger hardly ever mattered then).
+  const mealLasts = game => game.time >= T.HUNGER_MID_FROM_MS && !suddenDeath(game) ? T.HUNGER_MID_MS : T.HUNGER_MS;
 
   // Mark every living body cell in the occupancy grid (with a fresh stamp).
   function markBodies(game) {
@@ -1488,8 +1494,9 @@ window.SnakeEngine = (() => {
     } else {
       const growth = f.kind === 'golden' ? T.GOLDEN_GROWTH : f.kind === 'beetle' ? T.BEETLE_GROWTH : f.cooked ? T.COOKED_GROWTH : 1;
       if (!own) {
-        s.lastAte = game.time;
-        s.nextStarve = game.time + T.HUNGER_MS;
+        const lasts = mealLasts(game);
+        s.lastAte = game.time - (T.HUNGER_MS - lasts);
+        s.nextStarve = game.time + lasts;
       }
       s.ateTick = game.tick; // (a snake out of time that reaches any food, its own too, grows instead of starving this tick)
       s.grow += growth;
