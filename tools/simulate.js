@@ -15,7 +15,8 @@
 //   --json    print the raw totals instead of the table
 //   --census  also print what a round holds: golden things, weather and
 //             lightning, the woodpecker (and any aim it had to make near a
-//             head), the powers used, and how sudden death goes
+//             head), the powers used, how sudden death goes, and how hungry
+//             snakes are before the woodpecker comes and after
 //   --root    play another copy of the game (to compare versions)
 const fs = require('fs');
 const os = require('os');
@@ -63,6 +64,7 @@ const census = () => ({
   golden: 0, goldBeetles: 0, leaves: 0, goldcaps: 0, mushrooms: 0, strikes: 0, sun: 0, wind: 0, rain: 0, storm: 0, snow: 0,
   goldBeetleRounds: 0, leafRounds: 0, goldcapRounds: 0, stormRounds: 0, starvedEarly: 0,
   pecks: 0, holes: 0, aims: 0, aimsNear: 0, flashes: 0, jumps: 0, goldLeaps: 0, goldGot: 0, dashes: 0, pickups: 0, greedy: 0,
+  aliveEarly: 0, hungryEarly: 0, starvingEarly: 0, aliveLate: 0, hungryLate: 0, starvingLate: 0, // (snake-ticks before and after the woodpecker: alive, in the hunger warning, starving)
   causesSD: {}, sdTimes: [],
 });
 
@@ -88,7 +90,8 @@ function play({ from, to, seed, ahead }) {
       // In order, stopping at the first snake that must decide in the tick, so
       // the random numbers are drawn in the same order as without --ahead.
       if (ahead) for (const s of g.snakes) { if (!s.alive) continue; if (!E.canThinkAhead(g, s)) break; E.thinkAhead(g, s); }
-      const held = g.snakes.map(s => s.leaps);
+      const held = g.snakes.map(s => s.leaps), late = E.suddenDeath(g);
+      for (const s of g.snakes) if (s.alive) { const left = E.hungerLeft(g, s); c[late ? 'aliveLate' : 'aliveEarly']++; if (left < T.HUNGER_WARN_MS) c[late ? 'hungryLate' : 'hungryEarly']++; if (left < 0) c[late ? 'starvingLate' : 'starvingEarly']++; }
       const dying = E.step(g);
       for (const e of g.events) {
         if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
@@ -200,6 +203,8 @@ function report({ per, total, suddenAt }, withCensus) {
       + ` · aims near a head (no spot clear of every head): ${c.aimsNear} of ${c.aims} · deaths: ` + Object.entries(c.causesSD).sort((x, y) => y[1] - x[1]).map(([k, n]) => `${k} ${pct(n, sdDeaths)}%`).join(', '));
     console.log(`powers: ${(c.flashes / Math.max(1, minutes)).toFixed(1)} plain flashes a minute alive, ${a(c.jumps)} plain jumps a round, golden leaps ${pct(c.goldLeaps, c.goldGot)}% used, ${a(c.dashes)} dashes`
       + ` · golden power food: ${(c.pickups / Math.max(1, snakeRounds)).toFixed(2)} a snake a round (more than 2: ${pct(c.greedy, snakeRounds)}%) · a starvation before 1:00 in ${of(c.starvedEarly)} of rounds`);
+    const share = (n, d) => (100 * n / Math.max(1, d)).toFixed(1) + '%';
+    console.log(`hunger: before the woodpecker, ${share(c.hungryEarly, c.aliveEarly)} of snake-time in the hunger warning (${share(c.starvingEarly, c.aliveEarly)} starving); after, ${share(c.hungryLate, c.aliveLate)} (${share(c.starvingLate, c.aliveLate)})`);
   }
   console.table(Object.entries(per).map(([name, p]) => ({
     name,
