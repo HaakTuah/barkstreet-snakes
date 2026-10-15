@@ -1417,17 +1417,29 @@ window.SnakeEngine = (() => {
   }
   // Two flashes through one cell this tick: each stops there (it cuts
   // nothing there), and they meet as two heads do, whatever their seats.
+  // Two head-on along one line pass through a stretch of cells both ways,
+  // each reaching its own first of them before the other's: they meet
+  // halfway, both in its middle cell, or (an even stretch) each going into
+  // the middle cell the other has just taken, a swap, which is a head-on as
+  // it is for two crawling heads (see crashOf).
   function settle(game, plans) {
     for (let again = plans.length > 1; again;) {
       again = false;
-      const count = new Map();
-      for (const p of plans) if (p.cells) for (let i = 0, n = reachOf(game, p); i < n; i++) { const k = key(p.cells[i].x, p.cells[i].y); count.set(k, (count.get(k) || 0) + 1); }
+      const at = new Map(), reach = new Map(), first = new Map(), stops = []; // (at: each cell a head gets through or into, and the flashes that do; first: each flash's first cell another passes too)
       for (const p of plans) {
         if (!p.cells) continue;
-        const n = reachOf(game, p);
-        let i = 0;
-        while (i < n && !(count.get(key(p.cells[i].x, p.cells[i].y)) > 1)) i++;
-        if (i === n || (i === p.cells.length - 1 && !p.cuts.some(x => x.i === i))) continue; // (no other, or they meet where it was going anyway)
+        reach.set(p, reachOf(game, p));
+        for (let i = 0; i < reach.get(p); i++) { const k = key(p.cells[i].x, p.cells[i].y); if (!at.has(k)) at.set(k, []); at.get(k).push(p); }
+      }
+      for (const [p, n] of reach) for (let i = 0; i < n; i++) if (at.get(key(p.cells[i].x, p.cells[i].y)).length > 1) { first.set(p, i); break; }
+      for (const [p, i] of first) {
+        const there = at.get(key(p.cells[i].x, p.cells[i].y)), q = there.length === 2 && there.find(o => o !== p), y = q && q.cells[first.get(q)];
+        let stop = i;
+        if (y && at.get(key(y.x, y.y)).length === 2) for (let n = i + 1; n < reach.get(p); n++) if (p.cells[n].x === y.x && p.cells[n].y === y.y) { stop = i + Math.floor((n - i + 1) / 2); break; } // (passing each other: halfway)
+        stops.push([p, stop]);
+      }
+      for (const [p, i] of stops) {
+        if (i === p.cells.length - 1 && !p.cuts.some(x => x.i === i)) continue; // (they meet where it was going anyway)
         p.cells.length = p.solid.length = i + 1;
         p.boom = false;
         p.cuts = p.cuts.filter(x => x.i < i);

@@ -709,6 +709,24 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
     });
     check(`two ${gold ? 'golden ' : ''}flashes through one cell meet head-on, whatever their seats`, outcome[0] === outcome[1] && (outcome[0].match(/head-on/g) || []).length === 2, outcome.join(' / '));
   }
+  // Head-on along one line, they meet wherever their ways cross, whatever the gap (even or odd), plain or golden, whatever their seats.
+  const wrong = [];
+  for (let gap = 0; gap <= 6; gap++) for (const [ga, gb] of [[0, 0], [1, 1], [0, 1], [1, 0]]) {
+    const ra = Math.min(gap, ga ? T.DASH_LENGTH : T.FLASH_LENGTH), rb = Math.min(gap, gb ? T.DASH_LENGTH : T.FLASH_LENGTH);
+    const meet = gap === 0 || ra + rb > gap; // (their ways share a cell; at no gap, each runs into the other's head)
+    const outcome = [0, 1].map(order => {
+      const A = [line(5, 10, 6), 'right'], B = [line(6 + gap, 10, 6, 1), 'left'];
+      const g = board(order ? [B, A] : [A, B]);
+      const [a, b] = order ? [g.snakes[1], g.snakes[0]] : g.snakes;
+      a.dashes = ga; b.dashes = gb;
+      E.flash(g, a); E.flash(g, b);
+      quiet(g);
+      const headOn = s => g.events.some(e => e.type === 'crash' && e.snake === s && e.cause.startsWith('crashed head-on'));
+      return `${headOn(a) ? 'head-on' : 'no'}/${headOn(b) ? 'head-on' : 'no'} at ${a.body[0].x}/${b.body[0].x}`;
+    });
+    if (outcome[0] !== outcome[1] || !outcome[0].startsWith(meet ? 'head-on/head-on' : 'no/no')) wrong.push(`gap ${gap} ${ga ? 'golden' : 'plain'}/${gb ? 'golden' : 'plain'}: ${outcome.join(' | ')}`);
+  }
+  check('two flashes head-on along a line meet wherever their ways cross (any gap, plain or golden, either seat)', !wrong.length, wrong.join('; '));
 }
 
 { // A jump whose landing is taken comes down on what it hopped. A body lying across a hole holds it up, till that body moves on: then it falls in.
