@@ -2316,8 +2316,9 @@ window.SnakeRender = (() => {
     // inside an ink line, so it reads on any body (ember on Gobbler's
     // orange, sky on Metagamer's cyan), and a diamond points along the arc's
     // spokes, so side by side they never touch (three of them read as a
-    // zigzag seam). At the board's edge they all move in together, so none
-    // is cut off (on a phone the tag hides the counts: the pips are them).
+    // zigzag seam). At the board's edge the arc swings round the head onto
+    // the board, so none is cut off and none lands on the head (on a phone
+    // the tag hides the counts: the pips are them).
     const leaps = dead ? 0 : s.leaps, dashes = dead ? 0 : s.dashes;
     if (leaps || dashes) drawPips(pts[0], pts[1], Math.atan2(a.hs, a.hc) + Math.PI, rad[0], a.swell, leaps, dashes, !a.offs); // (not across a wrapped edge: there it shows at the other)
     if (!dead && s.id === viewerId && game) drawRests(s, a, now);
@@ -2351,20 +2352,55 @@ window.SnakeRender = (() => {
 
   // The pips of golden powers held (see drawBody), round a head at (x, y)
   // of radius hr, on the arc behind it (back: that way, as an angle; swell:
-  // its leap's). With keepOn, at the board's edge they all move in together.
+  // its leap's). With keepOn, kept on the board: see placePips.
   function drawPips(x, y, back, hr, swell, leaps, dashes, keepOn) {
+    const n = placePips(x, y, back, hr, swell, leaps, dashes, keepOn);
+    for (let i = 0; i < n; i++) drawPip(PIPS[3 * i], PIPS[3 * i + 1], PIPS[3 * i + 2], PIP_R, i < leaps);
+  }
+  // Where those pips go, into PIPS (each one's place and spoke), their
+  // colour's radius into PIP_R; returns how many. With keepOn, where the arc
+  // behind the head would leave the board (a head that's just turned off an
+  // edge, or at a corner), it swings round the head toward the board's
+  // middle, as little as it takes to come on, staying as far from the head
+  // as ever: never over it, or its eyes (moving the arc in slid it across
+  // the head). Only if no swing brings it all on (many pips in a corner)
+  // does it move in as well, from the swing that leaves least off, which
+  // takes it away from the head. PIP_MOVED: it swung, or moved.
+  let PIP_R = 0, PIP_MOVED = false, PIP_SX = 0, PIP_SY = 0;
+  const PIP_SWING = 0.05; // (radians a step, swinging round)
+  function placePips(x, y, back, hr, swell, leaps, dashes, keepOn) {
     const n = leaps + dashes, many = n > 2, rr = (many ? CELL : hr + CELL * 0.2) * (1 + swell * 0.5);
-    const pr = CELL * (many ? 0.12 : 0.14), step = many ? 0.44 : 0.78, gap = leaps && dashes ? (many ? 0.35 : 0.6) : 0, mid = (n - 1 + gap) / 2;
-    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    const step = many ? 0.44 : 0.78, gap = leaps && dashes ? (many ? 0.35 : 0.6) : 0, mid = (n - 1 + gap) / 2;
+    const pr = PIP_R = CELL * (many ? 0.12 : 0.14), edge = (pr + PIP_RING) * 1.5 + 1; // (as far as one reaches from its centre, and a unit to spare)
     if (PIPS.length < 3 * n) PIPS = new Float64Array(3 * n);
+    PIP_MOVED = false;
+    let off = pipArc(x, y, back, rr, n, leaps, step, gap, mid, edge);
+    if (!keepOn || !off) return n;
+    const way = Math.cos(back) * (SIZE / 2 - y) - Math.sin(back) * (SIZE / 2 - x) >= 0 ? 1 : -1; // (turning by + takes it toward the middle)
+    let least = off, best = 0;
+    for (let j = 1; off && j * PIP_SWING <= Math.PI; j++) {
+      for (let side = 0; side < 2 && off; side++) {
+        const turn = (side ? -way : way) * j * PIP_SWING;
+        off = pipArc(x, y, back + turn, rr, n, leaps, step, gap, mid, edge);
+        if (off < least) { least = off; best = turn; }
+      }
+    }
+    if (off) { pipArc(x, y, back + best, rr, n, leaps, step, gap, mid, edge); for (let i = 0; i < n; i++) { PIPS[3 * i] += PIP_SX; PIPS[3 * i + 1] += PIP_SY; } }
+    PIP_MOVED = true;
+    return n;
+  }
+  // The arc of n pips at radius rr round (x, y), its middle at angle ang,
+  // into PIPS; returns how far it's off the board (0: it's on), and the
+  // move that would bring it on into PIP_SX, PIP_SY.
+  function pipArc(x, y, ang, rr, n, leaps, step, gap, mid, edge) {
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (let i = 0; i < n; i++) {
-      const a2 = back + (mid - i - (i < leaps ? 0 : gap)) * step, px = x + Math.cos(a2) * rr, py = y + Math.sin(a2) * rr;
+      const a2 = ang + (mid - i - (i < leaps ? 0 : gap)) * step, px = x + Math.cos(a2) * rr, py = y + Math.sin(a2) * rr;
       PIPS[3 * i] = px; PIPS[3 * i + 1] = py; PIPS[3 * i + 2] = a2;
       x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py);
     }
-    const edge = (pr + PIP_RING) * 1.5 + 1; // (as far as one reaches from its centre, and a unit to spare)
-    const sx = keepOn ? Math.max(0, edge - x0) - Math.max(0, x1 - (SIZE - edge)) : 0, sy = keepOn ? Math.max(0, edge - y0) - Math.max(0, y1 - (SIZE - edge)) : 0;
-    for (let i = 0; i < n; i++) drawPip(PIPS[3 * i] + sx, PIPS[3 * i + 1] + sy, PIPS[3 * i + 2], pr, i < leaps);
+    PIP_SX = Math.max(0, edge - x0) - Math.max(0, x1 - (SIZE - edge)); PIP_SY = Math.max(0, edge - y0) - Math.max(0, y1 - (SIZE - edge));
+    return Math.abs(PIP_SX) + Math.abs(PIP_SY);
   }
   // One pip at (x, y), its spoke at angle a2, its colour pr in radius: a
   // sky disc for a leap, an ember diamond (its long way along the spoke) for
@@ -2444,16 +2480,31 @@ window.SnakeRender = (() => {
   // Where a stunned snake's stars go round, as an offset down the screen
   // from its head: above it, as in any cartoon, unless that's where its pips
   // are (heading down, they're behind it) or off the board; then below it.
-  // With its pips below and the edge above, below past its pips. Judged by
-  // its cell and the way it's going, which a stun doesn't change, so they
-  // never jump sides mid-stun. (Bonk! keeps clear of them: see onTick.)
+  // With its pips below and the edge above, below past its pips. Pips swung
+  // round at the board's edge (see placePips): on the side they don't
+  // reach, or past them. Judged by its cell and the way it's going, which a
+  // stun doesn't change, so they never jump sides mid-stun. (Bonk! keeps
+  // clear of them: see onTick.)
   const STAR_REACH = CELL * 0.42; // (how far the stars reach up and down from their centre)
   function starsOff(s) {
-    const pips = s.leaps + s.dashes, hy = s.body[0].y * CELL + CELL / 2;
+    const pips = s.leaps + s.dashes, h = s.body[0], hx = h.x * CELL + CELL / 2, hy = h.y * CELL + CELL / 2;
+    let up = 0, down = 0, moved = false;
+    if (pips) { // (where its pips are, its head in its cell)
+      const n = placePips(hx, hy, Math.atan2(-s.dir.y, -s.dir.x), CELL * 0.54, 0, s.leaps, s.dashes, !anim.get(s)?.offs), reach = (PIP_R + PIP_RING) * 1.5;
+      moved = PIP_MOVED;
+      for (let i = 0; i < n; i++) { up = Math.max(up, hy - PIPS[3 * i + 1] + reach); down = Math.max(down, PIPS[3 * i + 1] - hy + reach); }
+    }
     let past = 0;
     for (let sgn = -1; sgn <= 1; sgn += 2) {
-      const behind = pips && s.dir.y === -sgn; // (its pips are on this side)
-      const off = sgn * CELL * (behind ? (pips > 2 ? 1.78 : 1.44) : pips && !s.dir.y ? (pips > 4 ? 1.5 : pips > 3 ? 1.3 : 1.02) : 0.72); // (higher when pips show beside its head, higher still for both kinds' wider arc; further past three, which sit further back)
+      let behind, off;
+      if (moved) { // (clear of them)
+        const clear = (sgn < 0 ? up : down) + STAR_REACH;
+        behind = clear > CELL * 0.72; // (its pips are on this side)
+        off = sgn * Math.max(CELL * 0.72, clear);
+      } else {
+        behind = pips && s.dir.y === -sgn;
+        off = sgn * CELL * (behind ? (pips > 2 ? 1.78 : 1.44) : pips && !s.dir.y ? (pips > 4 ? 1.5 : pips > 3 ? 1.3 : 1.02) : 0.72); // (higher when pips show beside its head, higher still for both kinds' wider arc; further past three, which sit further back)
+      }
       if (hy + off < STAR_REACH || hy + off > SIZE - STAR_REACH) continue;
       if (!behind) return off;
       past ||= off;

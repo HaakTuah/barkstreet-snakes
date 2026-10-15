@@ -18,7 +18,9 @@
 //   Wildcard's collar, stars and stripes), though only every other segment
 //   leaves one.
 // - Golden power pips stay on the board at its edge (a head in the first
-//   column shows as many of them as one in the middle).
+//   column, the top row or a corner shows as many of them as one in the
+//   middle), never on the head (none inside its face, where moving the arc
+//   in put them over its eyes), and stunned, the stars keep clear of them.
 // - Scorch marks are soot, not holes: a burned cell is no more than a little
 //   darker, and not darkest in its middle.
 // - Every Field guide picture draws (the mushroom on bark; a snake holding
@@ -255,21 +257,50 @@ const STAGE = `(() => {
     check(marks[1].sky > 8 && marks[1].ember < 3 && marks[1].did.startsWith('leap'), 'stunned, a jump and a flash asked, a body one thick ahead: the jump’s mark (the game hops)', `sky ${marks[1].sky}, ember ${marks[1].ember} pixels; then ${marks[1].did}`);
     check(marks[2].ember > 8 && marks[2].sky < 3, 'stunned, both asked, a body two thick ahead: the flash’s mark', `sky ${marks[2].sky}, ember ${marks[2].ember} pixels; then ${marks[2].did}`);
 
-    // Golden power pips at the board's edge: as many shown as in the middle.
+    // Golden power pips at the board's edge, the arc behind the head off it
+    // (a head just turned off an edge, a corner): none cut off (as many of
+    // their pixels as in the middle of the board), none on the head (no sky
+    // or ember inside its face: moving the arc in put them over its eyes),
+    // and stunned, the stars keep clear of them (as many still showing). On
+    // a bigger board: a pip is a few pixels across on the usual one.
+    await b.viewport(1600, 1600);
+    await b.sleep(400);
     const pips = await ev(`(() => {
-      const count = x => {
-        const g = stage(['gobbler', 'ghost', 'mason']), you = g.snakes[0];
-        setBody(you, Array.from({ length: 8 }, (_, i) => [x, 6 + i]), 'up'); you.leaps = 2; you.dashes = 2;
+      const look = (body, dir, leaps, dashes, middle, stun) => {
+        const g = stage(['creeper', 'vulture', 'mason']), you = g.snakes[0], [hx, hy] = body[0], dx = middle ? 11 - hx : 0, dy = middle ? 11 - hy : 0;
+        setBody(you, body.map(([x, y]) => [x + dx, y + dy]), dir); you.leaps = leaps; you.dashes = dashes;
+        g.snakes.slice(1).forEach((s, i) => setBody(s, [[19, 19 + 2 * i], [18, 19 + 2 * i], [17, 19 + 2 * i]], 'right'));
+        if (stun) you.stunUntil = g.tick + 5;
         show(g); drawN(20);
-        const d = pixels(Math.max(0, x - 3), 3, 7, 6).data, near = (i, c) => Math.abs(d[i] - c[0]) < 30 && Math.abs(d[i + 1] - c[1]) < 30 && Math.abs(d[i + 2] - c[2]) < 30;
-        let sky = 0, ember = 0;
-        for (let i = 0; i < d.length; i += 4) { if (near(i, [168, 220, 245])) sky++; else if (near(i, [247, 168, 102])) ember++; }
-        return { sky, ember };
+        const x0 = Math.max(0, hx + dx - 3), y0 = Math.max(0, hy + dy - 3), w = Math.min(TUNING.GRID, hx + dx + 4) - x0, h = Math.min(TUNING.GRID, hy + dy + 4) - y0;
+        const p = pixels(x0, y0, w, h), d = p.data, ppc = p.width / w, near = (i, c) => Math.abs(d[i] - c[0]) < 30 && Math.abs(d[i + 1] - c[1]) < 30 && Math.abs(d[i + 2] - c[2]) < 30;
+        let all = 0, face = 0, sky = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          if (near(i, [168, 220, 245])) sky++;
+          else if (!near(i, [247, 168, 102])) continue;
+          all++;
+          const px = x0 + ((i / 4) % p.width + 0.5) / ppc, py = y0 + (Math.floor(i / 4 / p.width) + 0.5) / ppc;
+          if (Math.hypot(px - (hx + dx + 0.5), py - (hy + dy + 0.5)) < 0.44) face++;
+        }
+        return { all, face, sky, ember: all - sky };
       };
-      return { edge: count(0), middle: count(10) };
+      const col = (x, y0, n) => Array.from({ length: n }, (_, i) => [x, y0 + i]), row = (x0, y, n) => Array.from({ length: n }, (_, i) => [x0 + i, y]);
+      const cases = [
+        ['in the first column heading up', col(0, 6, 8), 'up', 2, 2],
+        ['in the first column heading right, just turned off it', col(0, 6, 6), 'right', 3, 2],
+        ['in the first column heading right, one of each', col(0, 6, 6), 'right', 1, 1],
+        ['in the top row heading down', row(12, 0, 6), 'down', 2, 2],
+        ['in the bottom-left corner heading right', Array.from({ length: 6 }, (_, i) => [0, 23 - i]), 'right', 3, 3],
+        ['in the last column heading left', col(23, 12, 6), 'left', 2, 1],
+      ];
+      return cases.map(([what, body, dir, leaps, dashes]) => ({ what, edge: look(body, dir, leaps, dashes, false, false), stun: look(body, dir, leaps, dashes, false, true), middle: look(body, dir, leaps, dashes, true, false) }));
     })()`);
-    check(pips.edge.sky >= 0.85 * pips.middle.sky && pips.edge.ember >= 0.85 * pips.middle.ember && pips.middle.sky > 0 && pips.middle.ember > 0,
-      'golden power pips stay on the board at its edge', `sky and ember pixels, at the edge ${pips.edge.sky} and ${pips.edge.ember}, in the middle ${pips.middle.sky} and ${pips.middle.ember}`);
+    for (const { what, edge, stun, middle } of pips) {
+      check(middle.all > 0 && edge.all >= 0.85 * middle.all && edge.face === 0 && stun.all >= 0.85 * middle.all,
+        `golden power pips ${what}: all on the board, none on the head, clear of the stun stars`, `sky and ember pixels ${edge.sky} and ${edge.ember} (in the middle ${middle.sky} and ${middle.ember}, stunned ${stun.sky} and ${stun.ember}), ${edge.face} inside its face`);
+    }
+    await b.viewport(800, 800);
+    await b.sleep(400);
 
     // Scorch: soot, not holes (no canopy or falling leaves: SnakeDebug.pinQuality(0)).
     const soot = await ev(`(() => {
