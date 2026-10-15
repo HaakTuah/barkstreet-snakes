@@ -3801,14 +3801,13 @@ window.SnakeRender = (() => {
       const owns = s.alive && (s.memory.home || s.memory.colonies);
       let r = realms.get(s);
       if (!owns && !r) continue;
-      if (!r) realms.set(s, r = newRealm(s));
+      if (!r) { r = newRealm(s); r.idx = realms.size; realms.set(s, r); } // (its place, for which way it hatches and when its dashes come: kept while it lasts)
       r.gone = !owns;
       if (owns) {
         const sig = fieldsSig(s);
         if (sig !== r.fieldSig) { r.fieldSig = sig; sitesOf(r, s); }
         if (r.color !== s.color) { r.color = s.color; r.dirty = true; }
       }
-      r.idx = fieldSpecs.length;
       fieldSpecs.push(r);
     }
     if (!fieldSpecs.length) return;
@@ -3905,9 +3904,9 @@ window.SnakeRender = (() => {
     }
   }
 
-  // Sovereign's capital: a swallow-tailed banner on a pole, in its own colour
-  // with a parchment crown and trim, inked (no gold: gold means a power),
-  // fluttering like the colonies' flags.
+  // Sovereign's capital: a swallow-tailed banner on a pole, as a map marks a
+  // capital: parchment and ink (no gold: gold means a power), an inked crown
+  // on it and a trim in the realm's colour, fluttering like the colonies' flags.
   const BANNER_W = 0.95, BANNER_H = 0.62;
   const bannerSprite = col => sprite('banner', col, drawBannerCloth);
   const drawBannerCloth = (g, col) => {
@@ -3915,16 +3914,15 @@ window.SnakeRender = (() => {
     g.lineJoin = 'round';
     g.beginPath();
     g.moveTo(0, y0); g.lineTo(w, y0); g.lineTo(w - notch, 0); g.lineTo(w, y0 + h); g.lineTo(0, y0 + h); g.closePath();
-    g.fillStyle = col; g.fill();
-    g.strokeStyle = mix(col, '#0b1210', 0.6); g.lineWidth = 1.6; g.stroke();
-    g.strokeStyle = '#f6ecd2'; g.lineWidth = 0.9; // (a parchment trim inside its edge)
-    g.beginPath(); g.moveTo(1.6, y0 + 1.6); g.lineTo(w - 3, y0 + 1.6); g.moveTo(1.6, y0 + h - 1.6); g.lineTo(w - 3, y0 + h - 1.6); g.stroke();
-    const cx = w * 0.36, cy = 0.5, cw = h * 0.62, ch = h * 0.42; // (a crown, in parchment and ink)
+    g.fillStyle = '#f6ecd2'; g.fill();
+    g.strokeStyle = '#3a2614'; g.lineWidth = 1.6; g.stroke();
+    g.strokeStyle = col; g.lineWidth = 1.4; // (a trim inside its edge, in the realm's colour)
+    g.beginPath(); g.moveTo(2, y0 + 2.2); g.lineTo(w - 3.4, y0 + 2.2); g.moveTo(2, y0 + h - 2.2); g.lineTo(w - 3.4, y0 + h - 2.2); g.stroke();
+    const cx = w * 0.36, cy = 0.5, cw = h * 0.62, ch = h * 0.42; // (the crown, in ink)
     g.beginPath();
     g.moveTo(cx - cw / 2, cy + ch / 2); g.lineTo(cx - cw / 2, cy - ch / 2); g.lineTo(cx - cw / 4, cy - ch * 0.05); g.lineTo(cx, cy - ch / 2 - 1);
     g.lineTo(cx + cw / 4, cy - ch * 0.05); g.lineTo(cx + cw / 2, cy - ch / 2); g.lineTo(cx + cw / 2, cy + ch / 2); g.closePath();
-    g.fillStyle = '#f6ecd2'; g.fill();
-    g.strokeStyle = '#3a2614'; g.lineWidth = 0.9; g.stroke();
+    g.fillStyle = '#3a2614'; g.fill();
   };
   function drawBanner(home, col, now) {
     const x = home.x * CELL + CELL / 2, y = home.y * CELL + CELL / 2;
