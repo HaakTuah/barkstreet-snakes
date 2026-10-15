@@ -4485,12 +4485,22 @@ window.SnakeRender = (() => {
     fresh = false;
   }
 
-  // A dead snake's beads: what each one looks like, and a ripple from head to tail.
+  // A dead snake's beads: what each one looks like, and a ripple from head to
+  // tail. A corpse leaves a bead on every other segment (see the engine's
+  // leavesBead), so the markings go by the bead's place among the beads it
+  // left, not by its segment: Joker's beads still alternate purple and amber,
+  // Wildcard's still run collar, stars and stripes. (The ripple keeps the
+  // segment's time, so it still runs down the body.)
+  const remainsAt = new Set();
   function noteRemains(s, now) {
-    for (let i = 0; i < s.body.length; i++) {
+    remainsAt.clear();
+    for (const f of game.food) if (f.kind === 'pellet' && (f.owner == null || f.owner === s.id)) remainsAt.add(f.y * GRID + f.x);
+    for (let i = 0, n = -1; i < s.body.length; i++) {
       const key = s.body[i].y * GRID + s.body[i].x, old = born.get(key);
+      if (!remainsAt.has(key)) continue; // (no bead left there)
+      n++;
       if (old && old.kind !== 'pellet') continue; // (food there stays food)
-      born.set(key, { kind: 'pellet', at: now + i * RIPPLE_MS, i, next: 0, gen: bornGen, v: beadOf(s, i) });
+      born.set(key, { kind: 'pellet', at: now + i * RIPPLE_MS, i, next: 0, gen: bornGen, v: beadOf(s, n) });
     }
   }
 
