@@ -87,7 +87,7 @@ class El {
   querySelector() { return null; }
 }
 // Seeded randomness for the game; a fixed roll for the chatter's own chances
-// (0.45: a 'rot' or 'flash' chance passes, small talk and Copycat stay quiet).
+// (0.38: a 'rot' or 'flash' chance passes, small talk and Copycat stay quiet).
 function seeded(seed) {
   let a = seed >>> 0;
   return () => {
@@ -127,7 +127,7 @@ function stage(personas, heads = {}) {
 function tick(g, events = [], ms = 100) {
   g.tick++; g.time += ms; g.events = events;
   heard = [];
-  roll = 0.45;
+  roll = 0.38;
   try { C.update(); } finally { roll = null; }
   return heard;
 }
@@ -265,13 +265,13 @@ console.log('ok   every voice speaks up when pecked under, put out, starving, cu
   col.memory.desperate = true;
   check(tick(g, [], 40000).some(x => x.s === col), '...but in a new spell later on (its one line rests 45 s too)');
 }
-{ // A golden dash keeps its own lines; a plain flash with nobody near says nothing; flash lines rest 20 s.
+{ // A golden dash keeps its own lines; a plain flash with nobody near says nothing; flash lines rest 30 s.
   const g = stage(['desperado'], { 0: [3, 22], 1: [12, 12] }), [you, des] = g.snakes;
   check(says(tick(g, [{ type: 'dash', snake: des, x: 9, y: 12, n: 3 }]), des, VOICES.desperado.dash), 'a golden dash: a dash line');
   check(tick(g, [{ type: 'dash', snake: des, x: 10, y: 12, n: 2, plain: 1 }], 5000).length === 0, 'a plain flash on its own: nothing');
-  you.body = at(14, 13);
+  you.body = at(13, 13);
   check(says(tick(g, [{ type: 'dash', snake: des, x: 10, y: 12, n: 2, plain: 1 }], 5000), des, VOICES.desperado.flash.past, you), 'a flash past your head: a flash line');
-  check(tick(g, [{ type: 'dash', snake: des, x: 10, y: 12, n: 2, plain: 1 }], 6000).length === 0, '...and no other for 20 s');
+  check(tick(g, [{ type: 'dash', snake: des, x: 10, y: 12, n: 2, plain: 1 }], 6000).length === 0, '...and no other for 30 s');
 }
 { // A dash cut: the dasher crows, and the one cut names it.
   const g = stage(['sovereign', 'wildcard'], { 1: [12, 12], 2: [12, 16] }), [, sov, wild] = g.snakes;

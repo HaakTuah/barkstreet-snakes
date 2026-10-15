@@ -1177,7 +1177,7 @@ window.SnakeChatter = (() => {
   const ROT_REST = 40000;       // food rotting by its head (beads rot all through the endgame)
   const LAND_ROT_REST = 30000;  // food rotting in Sovereign's realm or Colonist's colonies
   const DESPERATE_REST = 30000; // starving soon (it can come and go as it eats a little)
-  const FLASH_REST = 20000;     // its own plain flashes (everyone flashes, about four times a minute)
+  const FLASH_REST = 30000;     // its own plain flashes (everyone flashes, about four times a minute)
   const NEAR_FOOD = 5;          // food that rots or burns this near its head (cells, and nearer than anyone's) was food it was after
   // Mason's Life of Brian moments are told once per visit (a joke told every round isn't one).
   const SET_PIECES = new Set(['Romanes eunt domus.', 'Amicus meus est Biggus Dickus.']);
@@ -1510,16 +1510,18 @@ window.SnakeChatter = (() => {
     while (logEl.children.length > LOG_SIZE) logEl.lastChild.remove();
   }
 
-  // Everyone flashes, often, so a plain flash is worth a word only now and
-  // then: when it grabbed food from under a rival's nose (first), or shot
-  // right past a rival's head (past).
-  function flashed(s) {
-    const was = (seen[s.id] ||= {});
+  // Everyone flashes, often (about ten a round), so a plain flash is worth a
+  // word only now and then: when it grabbed food from under a rival's nose
+  // (first), or shot right by a rival's head (past: beside a cell it crossed).
+  function flashed(e) {
+    const s = e.snake, was = (seen[s.id] ||= {});
     if (game.time - (was.flashAt ?? -Infinity) < FLASH_REST) return;
     const near = (x, y, r) => game.snakes.find(o => o !== s && o.alive && Math.abs(o.body[0].x - x) <= r && Math.abs(o.body[0].y - y) <= r);
-    const ate = game.events.find(e => e.type === 'eat' && e.snake === s && e.kind !== 'mushroom');
-    const beaten = ate && near(ate.x, ate.y, NEAR_FOOD), passed = !ate && near(s.body[0].x, s.body[0].y, 2);
-    if ((beaten || passed) && Math.random() < 0.6 && say(s, beaten ? 'flash.first' : 'flash.past', beaten || passed, true)) was.flashAt = game.time;
+    const ate = game.events.find(f => f.type === 'eat' && f.snake === s && f.kind !== 'mushroom');
+    const beaten = ate && near(ate.x, ate.y, 3);
+    let passed = null;
+    if (!ate) for (const c of s.body.slice(0, Math.max(1, e.n || 1))) if ((passed = near(c.x, c.y, 1))) break;
+    if ((beaten || passed) && Math.random() < 0.4 && say(s, beaten ? 'flash.first' : 'flash.past', beaten || passed, true)) was.flashAt = game.time;
   }
 
   // Called once per tick, after the engine moved everyone.
@@ -1592,7 +1594,7 @@ window.SnakeChatter = (() => {
         if (e.gold || Math.random() < 0.3) say(e.snake, 'leap', null, !!e.gold); // (everyone leaps now: a golden one's worth a word)
       } else if (e.type === 'dash' && e.snake.persona) {
         if (!e.plain) say(e.snake, 'dash', null, true); // (a golden dash)
-        else flashed(e.snake);
+        else flashed(e);
       } else if (e.type === 'eat' && e.kind === 'goldcap' && e.snake.persona) {
         say(e.snake, 'wrap', null, true);
       } else if (e.type === 'alight' && e.snake.persona) {
