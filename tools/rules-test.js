@@ -544,6 +544,99 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('a leap asked for in a stun may land on a tail leaving that tick', !fizzled && (!!me.flight || me.body[0].x === 12), JSON.stringify(me.body[0]));
 }
 
+{ // A leap asked for in a stun whose landing another head moves into that very tick: it can't go, and the auto-turn still takes it clear.
+  const g = board([[[[5, 10], [4, 10], [3, 10], [2, 10], [1, 10], [0, 10], [0, 11], [0, 12], [0, 13]], 'right'], [Array.from({ length: 6 }, (_, i) => [6, 6 + i]), 'up'], [[[7, 16], [7, 17], [7, 18], [7, 19]], 'up']]);
+  const [me, wall, runner] = g.snakes;
+  wall.stunUntil = 1e9; // (one thick, across column 6; the runner comes up column 7 into the landing, (7,10), the tick the stun ends)
+  let crashes = 0, fizzled = false;
+  for (let t = 0; t < 2 + T.STUN_TICKS + 2; t++) {
+    if (t === 1) E.leap(g, me);
+    runner.queue = [D.up];
+    feed(g); quiet(g);
+    crashes += g.events.filter(e => e.type === 'crash' && e.snake === me).length;
+    if (g.events.some(e => e.type === 'fizzle' && e.snake === me)) fizzled = true;
+  }
+  check('a leap asked for in a stun whose landing is taken as it goes: the auto-turn takes it clear', me.alive && crashes === 1 && me.body.length === 6 && me.body[0].x === 5 && me.body[0].y !== 10, `${crashes} crashes, ${JSON.stringify(me.body[0])}`);
+  check('...and it says why', fizzled);
+}
+
+{ // A flash asked for in a stun that can't get anywhere (into the edge or body it hit; golden, into the edge or a hole) says so, and the auto-turn takes it clear: it isn't sent back in, nor blown up.
+  const atEdge = () => board([[line(23, 5, 8), 'right'], [line(5, 20, 3), 'right']]);
+  const atBody = () => { const g = board([[line(6, 10, 8), 'right'], wall(7, 6, 12)]); g.snakes[1].stunUntil = 1e9; return g; };
+  const atHole = () => { const g = board([[line(6, 10, 8), 'right'], [line(5, 20, 3), 'right']]); g.holes.add(K(7, 10)); return g; };
+  for (const [what, make, dashes] of [['plain, at the edge', atEdge, 0], ['plain, at a body', atBody, 0], ['golden, at the edge', atEdge, 2], ['golden, at a hole', atHole, 2]]) {
+    const g = make(), me = g.snakes[0];
+    me.dashes = dashes;
+    feed(g); quiet(g); // (a crash, a stun)
+    const head = { ...me.body[0] }, len = me.body.length;
+    E.flash(g, me); // (pressed, or swiped the way it faces, while the stars go round)
+    let fizzled = false, crashes = 0;
+    for (let i = 0; i < T.STUN_TICKS + 2; i++) {
+      feed(g); quiet(g);
+      if (g.events.some(e => e.type === 'fizzle' && e.snake === me && e.flash && e.why === 'landing')) fizzled = true;
+      crashes += g.events.filter(e => e.type === 'crash' && e.snake === me).length;
+    }
+    check(`a flash asked for in a stun that can't get anywhere (${what}) doesn't send you back in`, me.alive && crashes === 0 && me.body.length === len && (me.body[0].x !== head.x || me.body[0].y !== head.y) && me.dashes === dashes, `${me.cause || ''} ${crashes} crashes, ${JSON.stringify(me.body[0])}`);
+    check(`...and says why (${what})`, fizzled);
+  }
+  const g = atBody(), [me, o] = g.snakes; // (golden, at a body one thick: that's a cut, and it goes)
+  feed(g); quiet(g);
+  me.dashes = 1;
+  E.flash(g, me);
+  for (let i = 0; i < T.STUN_TICKS + 1; i++) { feed(g); quiet(g); }
+  check('...but a golden one at a body one thick goes: it cuts it', me.alive && me.dashes === 0 && o.body.length === 4 && me.body[0].x === 9, JSON.stringify(me.body[0]));
+}
+
+// ---------------------------------------------------------------- jump and flash together
+{ // A jump and a flash pressed together with something right in front: it hops it (no flash gets past that, and none blows up in a hole), then flashes once it's down.
+  for (const [what, gold] of [['a body', false], ['a hole, holding golden flashes', true]]) {
+    const g = board([[line(5, 10, 6), 'right'], gold ? [line(5, 20, 3), 'right'] : wall(6)]);
+    const me = g.snakes[0];
+    if (gold) { g.holes.add(K(6, 10)); me.dashes = 1; }
+    E.leap(g, me); E.flash(g, me);
+    quiet(g);
+    check(`a jump and a flash pressed together at ${what}: it hops`, me.alive && !!me.flight && g.events.some(e => e.type === 'leap' && e.snake === me) && !g.events.some(e => e.snake === me && (e.type === 'dash' || e.type === 'crash')), JSON.stringify(g.events.map(e => e.type)));
+    feed(g); quiet(g); // (down on the far side)
+    const early = g.events.some(e => e.type === 'dash' && e.snake === me);
+    feed(g); quiet(g);
+    check(`...and flashes once it's down (${what})`, me.alive && !early && g.events.some(e => e.type === 'dash' && e.snake === me) && me.body[0].x === 7 + (gold ? T.DASH_LENGTH : T.FLASH_LENGTH), JSON.stringify(me.body[0]));
+  }
+  for (const gold of [false, true]) { // (Space a moment early, then E as the hole comes up)
+    const g = board([[line(5, 10, 6), 'right'], [line(5, 20, 3), 'right']]);
+    const me = g.snakes[0];
+    g.holes.add(K(7, 10));
+    me.dashes = gold ? 1 : 0;
+    E.leap(g, me); quiet(g); // (open ground: the jump waits)
+    E.flash(g, me); quiet(g); // (the hole's right in front)
+    check(`a jump pressed early, then a flash as a hole comes up${gold ? ' (golden)' : ''}: it hops`, me.alive && g.events.some(e => e.type === 'leap' && e.snake === me) && !g.events.some(e => e.type === 'dash'), me.cause);
+  }
+}
+
+{ // A flash pressed in the air isn't lost: it goes once the snake's down.
+  const g = board([[line(5, 10, 6), 'right'], wall(6)]);
+  const me = g.snakes[0];
+  E.leap(g, me); quiet(g); // (up)
+  E.flash(g, me); feed(g); quiet(g); // (pressed in the air; down on the far side)
+  const early = g.events.some(e => e.type === 'dash');
+  feed(g); quiet(g);
+  check('a flash pressed in the air goes once it\'s down', !early && g.events.some(e => e.type === 'dash' && e.snake === me && e.plain) && me.body[0].x === 7 + T.FLASH_LENGTH && E.flashIn(g, me) > 0, JSON.stringify(me.body[0]));
+}
+
+{ // Two flashes through one cell in one tick meet there head-on, whichever seat either sits in; golden ones too.
+  const A = [line(5, 10, 6), 'right'], B = [[[6, 11], [6, 12], [6, 13], [6, 14], [6, 15], [6, 16]], 'up'];
+  for (const gold of [false, true]) {
+    const outcome = [[A, B], [B, A]].map(order => {
+      const g = board(order);
+      for (const s of g.snakes) { s.dashes = gold ? 1 : 0; E.flash(g, s); }
+      quiet(g);
+      const of = s => `${s.alive ? 'alive' : 'out'} ${s.body.length} at ${s.body[0].x},${s.body[0].y}${g.events.some(e => e.type === 'crash' && e.snake === s && e.cause.startsWith('crashed head-on')) ? ', head-on' : ''}`;
+      const [a, b] = order[0] === A ? g.snakes : [g.snakes[1], g.snakes[0]];
+      return `A ${of(a)}; B ${of(b)}`;
+    });
+    check(`two ${gold ? 'golden ' : ''}flashes through one cell meet head-on, whatever their seats`, outcome[0] === outcome[1] && (outcome[0].match(/head-on/g) || []).length === 2, outcome.join(' / '));
+  }
+}
+
 { // Boxed in only if there'll be nowhere to turn when the stun's over: a rival's tail moving on in time counts as room.
   // A hits the right edge at (23,5): below is its own body, above a rival's body that's leaving.
   const A = [[23, 5], [22, 5], [22, 6], [23, 6], [23, 7], [23, 8], [23, 9], [23, 10], [23, 11]];
