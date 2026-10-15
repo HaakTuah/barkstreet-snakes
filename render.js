@@ -263,8 +263,8 @@ window.SnakeRender = (() => {
   // tall round lumps, inked all round, they stood up off the log like white
   // candles, brighter than anything on it). Drawn at the board's own
   // resolution (stretched, they blurred into smoke), in DRIFT_STEPS steps of
-  // growth, only once it snows; none in a force field (it frosts its own
-  // honeycomb), on a burrow or in a hole.
+  // growth, only once it snows; none on a burrow or in a hole (they lie on
+  // Sovereign's and Colonist's land like anywhere else, tinted by it).
   const DRIFT_STEPS = 12, DRIFT_PTS = 12; // (points down each side of one)
   let drifts = null, driftStep = -1, driftSig = -1;
   function buildDrifts(d, step) {
@@ -326,13 +326,8 @@ window.SnakeRender = (() => {
       shape(-0.2 * wide, -0.3 * wide, -0.3 * wide); g.fillStyle = '#eef4fb'; g.fill(); // ...and its soft white top, lit along its upper left
     }
   }
-  // Is the box (x0, y0)..(x1, y1) clear of every force field, burrow and hole?
+  // Is the box (x0, y0)..(x1, y1) clear of every burrow and hole?
   function bareBark(x0, y0, x1, y1) {
-    for (const s of game.snakes) {
-      if (!s.alive) continue;
-      if (s.memory.home && overField(s.memory.home, x0, y0, x1, y1)) return false;
-      if (s.memory.colonies) for (const c of s.memory.colonies) if (overField(c, x0, y0, x1, y1)) return false;
-    }
     if (game.burrows) for (const b of game.burrows) if (x1 > (b.x - 0.3) * CELL && x0 < (b.x + 1.3) * CELL && y1 > (b.y - 0.3) * CELL && y0 < (b.y + 1.3) * CELL) return false;
     if (game.holes.size) {
       for (let cy = Math.max(0, Math.floor(y0 / CELL)); cy <= Math.min(GRID - 1, Math.floor(y1 / CELL)); cy++) {
@@ -341,21 +336,10 @@ window.SnakeRender = (() => {
     }
     return true;
   }
-  const overField = (c, x0, y0, x1, y1) => { // (a field's circle, as drawFields draws it, over the box)
-    const fx = c.x * CELL + CELL / 2, fy = c.y * CELL + CELL / 2, r = (c.radius + 1) * CELL;
-    const dx = Math.max(x0 - fx, 0, fx - x1), dy = Math.max(y0 - fy, 0, fy - y1);
-    return dx * dx + dy * dy < r * r;
-  };
   // What the drifts keep clear of, as one number: made again when it changes.
   function bareSig() {
     let h = game.holes.size;
     if (game.burrows) for (const b of game.burrows) h = (h * 31 + b.y * GRID + b.x + 1) % 999999937;
-    for (const s of game.snakes) {
-      if (!s.alive) continue;
-      const home = s.memory.home;
-      if (home) h = (h * 31 + (home.y * GRID + home.x) * 16 + home.radius + 1) % 999999937;
-      if (s.memory.colonies) for (const c of s.memory.colonies) h = (h * 31 + (c.y * GRID + c.x) * 16 + c.radius + 1) % 999999937;
-    }
     return h;
   }
   function drawSnowCover() {
@@ -434,15 +418,12 @@ window.SnakeRender = (() => {
     }
   }
 
-  let canopyOn = false, canopyX = 0, canopyY = 0, canopyW = 0; // (where it was drawn this frame: a hole under a force field draws it again)
   function drawCanopy(now) {
-    canopyOn = quality === 2;
-    if (!canopyOn) return;
+    if (quality !== 2) return;
     if (!shadeLayer) shadeLayer = buildShade();
     const t = reduced ? 0 : now / 1000, over = SIZE * 0.06, gusty = 1 + 2.2 * (sky.wind + sky.storm);
     const dx = Math.sin(t * 0.43) * 8 + Math.sin(t * 1.7) * 1.6 * gusty * gusty, dy = Math.cos(t * 0.37) * 6 + Math.sin(t * 1.3) * 1.2 * gusty;
-    canopyX = dx - over; canopyY = dy - over; canopyW = SIZE + 2 * over;
-    ctx.drawImage(shadeLayer, canopyX, canopyY, canopyW, canopyW);
+    ctx.drawImage(shadeLayer, dx - over, dy - over, SIZE + 2 * over, SIZE + 2 * over);
   }
 
   // Now and then an autumn leaf drifts down onto the log, swaying and turning
@@ -3271,15 +3252,25 @@ window.SnakeRender = (() => {
 
   // ------------------------------------------------------- homes and flags
 
-  // Sovereign's home and Colonist's colonies are force fields: a dome of light
-  // in the owner's colour, deepest at the rim, a fine honeycomb of light
-  // showing toward its edge and a gleam on its upper left (like a bubble),
-  // with ripples welling out from the middle (each lights up the honeycomb as
-  // it passes) and sparks running round the edge. The field lies only on the
-  // log that's left: a hole pecked in it stays dark. A rival inside lights it
-  // up (it pulses faster, ripples spread from where it came in), and every
-  // part of the rival inside has the field's colour clinging round it, as if
-  // wading through coloured light. The edge is exactly the trespass line.
+  // Sovereign's realm and Colonist's colonies are land on a map, drawn the
+  // way an old hand-coloured map (or a grand strategy game) draws a country:
+  // its cells washed in the owner's colour, deepest in a band along the
+  // inside of its border, and the border an inked line along the cell
+  // edges, its corners rounded. The cells are the land the rules mean (see
+  // onLand), so a head on a washed cell is on it, and one off it isn't.
+  // Where two owners' land meets, the line is dashed in both colours and
+  // marches; land both claim is hatched in both. Holes are lost land: the
+  // wash and the line go round them. Sovereign's capital flies a banner,
+  // the colonies their flags. While a rival's head is on the land, its
+  // border breathes softly; where one crosses in, it lights up from there.
+  //
+  // Each owner's land is a cached layer (and a second, its border's glow),
+  // made again only when that land changes: it grows, shrinks or moves, a
+  // colony comes or goes, a hole is pecked in it, or a neighbour's land
+  // changes beside it. A change plays out a ring of cells at a time, so the
+  // border grows across the log (with reduced motion, at once), and when
+  // its owner goes, the land shrinks back into its capital. Per frame: a
+  // blit or two an owner, the contested dashes and the flags.
   // A colour with an alpha, as a string, cached. The alpha is quantised to
   // 1/255 (all the canvas keeps of it anyway), so an alpha that changes every
   // frame costs a lookup and the cache stays bounded: at most 256 strings a
@@ -3293,526 +3284,571 @@ window.SnakeRender = (() => {
     if (!v) { const n = parseInt(hex.slice(1), 16); v = byA[q] = `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${(q / 255).toFixed(3)})`; }
     return v;
   }
-  // Each field's look, drawn once per resolution: its glow and edge, and the
-  // honeycomb on its own (for the ripples to light up).
-  const fieldLooks = new Map(); // colour -> radius -> look
-  function fieldLook(r, color) {
-    let byR = fieldLooks.get(color);
-    if (!byR) fieldLooks.set(color, byR = new Map());
-    let f = byR.get(r);
-    if (f) return f;
-    const side = 2 * r + 4, px = Math.max(2, Math.round(side * k));
-    const make = () => {
-      const c = makeLayer(px, px), g = c.getContext('2d');
-      g.setTransform(px / side, 0, 0, px / side, px / 2, px / 2);
-      return [c, g];
+  // The land rule, the one the AIs, the banner and the chatter go by: a
+  // cell is a field's land when its centre is within the field's radius
+  // (plus LAND_REACH) of the field's centre cell. Every land test in the
+  // renderer goes through the realms' masks, made with this.
+  const onLand = (f, x, y) => Math.hypot(x - f.x, y - f.y) <= f.radius + T.LAND_REACH;
+
+  // Tracing cells' outline (land, a hollow, the woodpecker's patch): every
+  // exposed side of a marked cell, chained into loops that run clockwise
+  // with the cells on their right (y down), as the grid points they pass.
+  // Where two cells meet only at a corner, a loop keeps to its own cell, so
+  // each keeps its own rounded corner. Into arrays made once: loop l is
+  // points tAt[l] to tAt[l + 1] - 1, each the start of one side (tSide: its
+  // cell * 4 + 0 top, 1 right, 2 bottom or 3 left).
+  const N2 = GRID * GRID, W1 = GRID + 1;
+  const SX0 = [0, 1, 1, 0], SY0 = [0, 0, 1, 1], SX1 = [1, 1, 0, 0], SY1 = [0, 1, 1, 0], NX = [0, 1, 0, -1], NY = [-1, 0, 1, 0];
+  const tOut = new Int32Array(2 * W1 * W1), tOpen = new Uint8Array(4 * N2), tSeen = new Uint8Array(4 * N2);
+  const tX = new Int8Array(4 * N2), tY = new Int8Array(4 * N2), tSide = new Int32Array(4 * N2), tKind = new Uint8Array(4 * N2), tAt = new Int32Array(N2 + 1);
+  let tLoops = 0;
+  function traceCells(m) {
+    tOut.fill(-1); tOpen.fill(0); tSeen.fill(0);
+    for (let i = 0; i < N2; i++) {
+      if (!m[i]) continue;
+      const x = i % GRID, y = (i - x) / GRID;
+      for (let sd = 0; sd < 4; sd++) {
+        const nx = x + NX[sd], ny = y + NY[sd];
+        if (nx >= 0 && ny >= 0 && nx < GRID && ny < GRID && m[ny * GRID + nx]) continue;
+        const e = 4 * i + sd, p = 2 * ((y + SY0[sd]) * W1 + x + SX0[sd]);
+        tOpen[e] = 1;
+        if (tOut[p] < 0) tOut[p] = e; else tOut[p + 1] = e;
+      }
+    }
+    let n = 0;
+    tLoops = 0;
+    for (let e0 = 0; e0 < 4 * N2; e0++) {
+      if (!tOpen[e0] || tSeen[e0]) continue;
+      tAt[tLoops++] = n;
+      for (let e = e0; e >= 0 && !tSeen[e];) {
+        tSeen[e] = 1;
+        const i = e >> 2, sd = e & 3, x = i % GRID, y = (i - x) / GRID;
+        tX[n] = x + SX0[sd]; tY[n] = y + SY0[sd]; tSide[n++] = e;
+        const p = 2 * ((y + SY1[sd]) * W1 + x + SX1[sd]), b = tOut[p + 1];
+        e = b >= 0 && b >> 2 === i ? b : tOut[p]; // (at a corner shared with a diagonal cell: keep to the same cell)
+      }
+    }
+    tAt[tLoops] = n;
+  }
+  // Loop l's corners, placed `inset` units in toward its cells and pushed
+  // `push` units out past the board's edge (a hollow there is a notch
+  // bitten out of the log: its outline runs on under the frame), each with
+  // how round it is (a corner of the cells `out`, a notch `inn`) and the way
+  // on from it. Into qx, qy, qr, qdx, qdy; says how many.
+  const qx = new Float32Array(4 * N2), qy = new Float32Array(4 * N2), qr = new Float32Array(4 * N2), qdx = new Int8Array(4 * N2), qdy = new Int8Array(4 * N2);
+  function cornersOf(l, inset, out, inn, push) {
+    const a = tAt[l], n = tAt[l + 1] - a;
+    let m = 0;
+    for (let j = 0; j < n; j++) {
+      const p = a + (j + n - 1) % n, i = a + j, q = a + (j + 1) % n;
+      const ax = tX[i] - tX[p], ay = tY[i] - tY[p], bx = tX[q] - tX[i], by = tY[q] - tY[i];
+      if (ax === bx && ay === by) continue;
+      let x = tX[i] * CELL - inset * (ay + by), y = tY[i] * CELL + inset * (ax + bx); // (in from both sides: the cells are on the right, -dy, dx)
+      if (push) {
+        if (tX[i] === 0) x -= push; else if (tX[i] === GRID) x += push;
+        if (tY[i] === 0) y -= push; else if (tY[i] === GRID) y += push;
+      }
+      qx[m] = x; qy[m] = y; qr[m] = ax * by - ay * bx > 0 ? out : inn; qdx[m] = bx; qdy[m] = by;
+      m++;
+    }
+    return m;
+  }
+  // The corners at hand (from cornersOf) as a closed path on p (a context or a Path2D).
+  function cornersPath(p, m) {
+    if (m < 4) return;
+    p.moveTo((qx[m - 1] + qx[0]) / 2, (qy[m - 1] + qy[0]) / 2);
+    for (let j = 0; j < m; j++) { const n = (j + 1) % m; p.arcTo(qx[j], qy[j], qx[n], qy[n], qr[j]); }
+    p.closePath();
+  }
+
+  // Each realm: an owner's land as it's shown (and the land it's heading
+  // for, as it changes), and its cached layers.
+  const GROW_MS = 55;              // (a ring of land this often, as it changes)
+  const RC = CELL / 2;             // (how round its corners are: half a cell, so a diagonal edge is a hand-drawn wave)
+  const HOLE_LOST = -1000;         // (land lost to a hole goes at once)
+  const LAND_BAND = [1.3, 0.05, 0.9, 0.06, 0.55, 0.08]; // (the soft band inside the border: width in cells, alpha, ...)
+  const realms = new Map();        // owner -> realm
+  const fieldSpecs = [];           // this frame's realms, in drawing order
+  const inField = new Map();       // snake -> the owners whose land its head was on last frame
+  const ripples = [];              // a ripple where a head crossed onto someone's land: { x, y, color, at }
+  const landQ = new Int16Array(N2), landD = new Int16Array(N2), lostD = new Int16Array(N2), landWas = new Uint8Array(N2), otherLand = new Uint8Array(N2);
+  function newRealm(s) {
+    return {
+      owner: s, color: s.color, idx: 0, gone: false, fieldSig: NaN, sig: NaN,
+      sites: [], // (its fields as last seen, the capital first: { x, y, radius })
+      target: new Uint8Array(N2), shown: new Uint8Array(N2), from: new Uint8Array(N2), order: new Int16Array(N2),
+      steps: 0, step: -1, stepAt: 0, bx0: 0, by0: 0, bx1: -1, by1: -1, // (the cells a change spans: its layers' size while it plays out)
+      layer: null, glow: null, X: 0, Y: 0, builtK: 0, dirty: true, any: false,
+      shared: [], sharedAt: [], sharedTo: [], // (its contested sides: see sideLine; where each starts; and the realm across each, where only this one has the side)
+      changedAt: -1e9, alertA: 0, pulses: [],
     };
-    const comb = (g, alpha) => { // pointy-topped hexagons, centre to corner hs
-      const hs = CELL * 0.3, w = Math.sqrt(3) * hs, rows = Math.ceil(r / (1.5 * hs)) + 1, cols = Math.ceil(r / w) + 1;
-      g.strokeStyle = mix(color, '#ffffff', 0.55);
-      g.globalAlpha = alpha;
-      g.lineWidth = 0.9;
-      g.beginPath();
-      for (let row = -rows; row <= rows; row++) {
-        for (let col = -cols; col <= cols; col++) {
-          const hx = col * w + (row & 1 ? w / 2 : 0), hy = row * 1.5 * hs;
-          for (let i = 0; i <= 6; i++) {
-            const a = Math.PI / 6 + i * Math.PI / 3, ex = hx + Math.cos(a) * hs, ey = hy + Math.sin(a) * hs;
-            if (i) g.lineTo(ex, ey); else g.moveTo(ex, ey);
-          }
+  }
+  // An owner's fields, as one number (a guest online gets fresh ones every tick).
+  function fieldsSig(s) {
+    let h = 7;
+    const home = s.memory.home;
+    if (home) h = (h * 131 + (home.y * GRID + home.x) * 16 + home.radius) % 1000000007;
+    if (s.memory.colonies) for (const c of s.memory.colonies) h = (h * 131 + (c.y * GRID + c.x) * 16 + c.radius + 1) % 1000000007;
+    return h;
+  }
+  function sitesOf(r, s) {
+    r.sites.length = 0;
+    if (s.memory.home) r.sites.push({ x: s.memory.home.x, y: s.memory.home.y, radius: s.memory.home.radius });
+    if (s.memory.colonies) for (const c of s.memory.colonies) r.sites.push({ x: c.x, y: c.y, radius: c.radius });
+  }
+  // The land a realm should show: its fields' land, less the holes (none, once its owner's gone).
+  function claimInto(r) {
+    const m = r.target;
+    m.fill(0);
+    if (r.gone) return;
+    for (const f of r.sites) {
+      const R = f.radius + T.LAND_REACH;
+      for (let y = Math.max(0, Math.ceil(f.y - R)); y <= Math.min(GRID - 1, Math.floor(f.y + R)); y++) {
+        for (let x = Math.max(0, Math.ceil(f.x - R)); x <= Math.min(GRID - 1, Math.floor(f.x + R)); x++) {
+          if (onLand(f, x, y) && !game.holes.has(y * GRID + x)) m[y * GRID + x] = 1;
         }
+      }
+    }
+  }
+  // How far cell i is from the nearest of a realm's field centres, in rings.
+  function ringOf(r, i) {
+    const x = i % GRID, y = (i - x) / GRID;
+    let d = Infinity;
+    for (const f of r.sites) d = Math.min(d, Math.hypot(x - f.x, y - f.y));
+    return 1 + Math.floor(d);
+  }
+  // A change of land, played out a ring at a time (order: the step a cell
+  // comes at, or minus the step it goes at). Cells gained: nearest the land
+  // kept first, and new land round its field's centre, as a circle. Cells
+  // lost: farthest from what's kept first, or with nothing kept (its owner's
+  // gone), farthest from its centres, so it shrinks back into its capital.
+  // Holes take their cell at once.
+  function planGrowth(r) {
+    const t = r.target, sh = r.shown, ord = r.order;
+    let qn = 0, kept = false;
+    landD.fill(-1);
+    for (let i = 0; i < N2; i++) if (t[i] && sh[i]) { landD[i] = 0; landQ[qn++] = i; kept = true; }
+    for (const f of r.sites) { const i = f.y * GRID + f.x; if (t[i] && landD[i] < 0) { landD[i] = 0; landQ[qn++] = i; } }
+    spread(qn);
+    let most = 0;
+    for (let i = 0; i < N2; i++) {
+      ord[i] = 0;
+      if (!t[i] || sh[i]) continue;
+      const ring = ringOf(r, i), d = kept ? landD[i] : -1;
+      ord[i] = d >= 1 && d <= ring ? d : ring;
+      if (ord[i] > most) most = ord[i];
+    }
+    qn = 0;
+    landD.fill(-1);
+    for (let i = 0; i < N2; i++) if (t[i]) { landD[i] = 0; landQ[qn++] = i; }
+    spread(qn);
+    let far = 0;
+    for (let i = 0; i < N2; i++) {
+      if (!sh[i] || t[i] || game.holes.has(i)) continue;
+      lostD[i] = qn ? Math.max(1, landD[i]) : ringOf(r, i);
+      if (lostD[i] > far) far = lostD[i];
+    }
+    for (let i = 0; i < N2; i++) if (sh[i] && !t[i]) ord[i] = game.holes.has(i) ? HOLE_LOST : -(far + 1 - lostD[i]);
+    r.steps = Math.max(most, far);
+    r.from.set(sh);
+    r.step = 0;
+    // (its layers span all of it, before and after, while it plays out: they're not made again at every size)
+    r.bx0 = r.by0 = GRID; r.bx1 = r.by1 = -1;
+    for (let i = 0; i < N2; i++) if (t[i] || sh[i]) spanCell(r, i);
+  }
+  function spanCell(r, i) {
+    const x = i % GRID, y = (i - x) / GRID;
+    if (x < r.bx0) r.bx0 = x;
+    if (x > r.bx1) r.bx1 = x;
+    if (y < r.by0) r.by0 = y;
+    if (y > r.by1) r.by1 = y;
+  }
+  // Distances from the cells already queued, cell by cell (a breadth-first spread).
+  function spread(qn) {
+    for (let read = 0; read < qn; read++) {
+      const i = landQ[read], x = i % GRID, d = landD[i] + 1;
+      if (x > 0 && landD[i - 1] < 0) { landD[i - 1] = d; landQ[qn++] = i - 1; }
+      if (x < GRID - 1 && landD[i + 1] < 0) { landD[i + 1] = d; landQ[qn++] = i + 1; }
+      if (i >= GRID && landD[i - GRID] < 0) { landD[i - GRID] = d; landQ[qn++] = i - GRID; }
+      if (i < N2 - GRID && landD[i + GRID] < 0) { landD[i + GRID] = d; landQ[qn++] = i + GRID; }
+    }
+  }
+  // The land shown at step n of a change (or, n < 0, all of where it was heading).
+  function showStep(r, n) {
+    const sh = r.shown, from = r.from, ord = r.order;
+    landWas.set(sh);
+    if (n < 0) sh.set(r.target);
+    else {
+      for (let i = 0; i < N2; i++) {
+        const o = ord[i];
+        sh[i] = o > 0 ? (o <= n ? 1 : from[i]) : o < 0 ? (o === HOLE_LOST || -o <= n ? 0 : from[i]) : from[i];
+      }
+    }
+    markDirty(r);
+  }
+  // A realm's land changed (from landWas): its layers are made again, and so
+  // are those of any other realm a changed cell lies on or beside (its
+  // contested sides moved).
+  function markDirty(r) {
+    r.dirty = true;
+    for (const o of fieldSpecs) {
+      if (o === r || o.dirty) continue;
+      const m = o.shown;
+      for (let i = 0; i < N2; i++) {
+        if (r.shown[i] === landWas[i]) continue;
+        const x = i % GRID;
+        if (m[i] || (x > 0 && m[i - 1]) || (x < GRID - 1 && m[i + 1]) || (i >= GRID && m[i - GRID]) || (i < N2 - GRID && m[i + GRID])) { o.dirty = true; break; }
+      }
+    }
+  }
+  function updateRealm(r, now) {
+    const sig = ((r.fieldSig * 31 + game.holes.size) * 2 + (r.gone ? 1 : 0)) % 1000000007;
+    if (sig !== r.sig) {
+      r.sig = sig;
+      claimInto(r);
+      let differs = false;
+      for (let i = 0; i < N2 && !differs; i++) differs = r.target[i] !== r.shown[i];
+      if (differs) {
+        if (!r.gone) r.changedAt = now;
+        if (reduced) { showStep(r, -1); r.step = -1; spanShown(r); }
+        else {
+          planGrowth(r);
+          if (!r.steps) { showStep(r, -1); r.step = -1; } else { showStep(r, 0); r.stepAt = now; }
+        }
+      }
+    }
+    if (r.step >= 0 && now - r.stepAt >= GROW_MS) {
+      r.step++;
+      r.stepAt = now;
+      if (r.step < r.steps) showStep(r, r.step);
+      else { showStep(r, -1); r.step = -1; spanShown(r); } // (done: its layers shrink to what's left)
+    }
+  }
+  function spanShown(r) {
+    r.bx0 = r.by0 = GRID; r.bx1 = r.by1 = -1;
+    for (let i = 0; i < N2; i++) if (r.shown[i]) spanCell(r, i);
+  }
+
+  // A realm's cached layers, made again: its land and its border's glow, the
+  // size of the cells it spans (and a margin, for the line and the glow),
+  // landing on whole device pixels.
+  const LAND_MARGIN = 10;
+  function buildRealm(r) {
+    r.dirty = false; r.builtK = k; r.shared.length = r.sharedAt.length = r.sharedTo.length = 0;
+    r.any = r.bx1 >= 0;
+    if (!r.any) return;
+    otherLand.fill(0);
+    for (const o of fieldSpecs) if (o !== r) for (let i = 0; i < N2; i++) if (o.shown[i]) otherLand[i] = 1;
+    const ux = r.bx0 * CELL - LAND_MARGIN, uy = r.by0 * CELL - LAND_MARGIN;
+    r.X = Math.floor(ux * k); r.Y = Math.floor(uy * k);
+    const pw = Math.ceil(((r.bx1 + 1) * CELL + LAND_MARGIN) * k) - r.X + 1, ph = Math.ceil(((r.by1 + 1) * CELL + LAND_MARGIN) * k) - r.Y + 1;
+    if (!r.layer) { r.layer = makeLayer(pw, ph); r.glow = makeLayer(pw, ph); }
+    for (const c of [r.layer, r.glow]) {
+      if (c.width !== pw || c.height !== ph) { c.width = pw; c.height = ph; }
+      const g = c.getContext('2d');
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.clearRect(0, 0, pw, ph);
+      g.setTransform(k, 0, 0, k, -r.X, -r.Y);
+      g.lineCap = g.lineJoin = 'round';
+    }
+    paintLand(r.layer.getContext('2d'), r.glow.getContext('2d'), r.shown, otherLand, r.color, r.idx, game.holes);
+    // Its contested sides (dashed every frame, as they march). Where its
+    // land runs into another's that also covers its own cell there, only
+    // this realm has the side, so it dashes both halves.
+    for (let l = 0; l < tLoops; l++) {
+      const a = tAt[l], n = tAt[l + 1] - a;
+      for (let j = 0; j < n; j++) {
+        if (tKind[a + j] !== 1) continue;
+        r.sharedAt.push(r.shared.length);
+        sideLine(r.shared, a, n, j);
+        const e = tSide[a + j], i = e >> 2, across = i + NX[e & 3] + NY[e & 3] * GRID;
+        let to = null;
+        for (const o of fieldSpecs) if (o !== r && o.shown[across]) { to = o.shown[i] ? o : null; break; }
+        r.sharedTo.push(to);
+      }
+    }
+    r.sharedAt.push(r.shared.length);
+  }
+  // Side j of the loop at a (n points) as a line of points along the
+  // rounded border (half of a rounded corner at either end is the side's),
+  // from its smaller end, so both owners' dashes fall alike: x, y and how
+  // far along, pushed onto out.
+  const sidePts = [];
+  function sideLine(out, a, n, j) {
+    const sx = runX(a, n, j), sy = runY(a, n, j), ex = runX(a, n, j + 1), ey = runY(a, n, j + 1);
+    const dx = Math.sign(ex - sx), dy = Math.sign(ey - sy);
+    const px = Math.sign(sx - runX(a, n, j - 1)), py = Math.sign(sy - runY(a, n, j - 1)); // (the side before...)
+    const nx = Math.sign(runX(a, n, j + 2) - ex), ny = Math.sign(runY(a, n, j + 2) - ey); // (...and after)
+    sidePts.length = 0;
+    if (px !== dx || py !== dy) arcHalf(sx, sy, px, py, dx, dy, 0.5, 1); else sidePts.push(sx, sy);
+    if (nx !== dx || ny !== dy) arcHalf(ex, ey, dx, dy, nx, ny, 0, 0.5); else sidePts.push(ex, ey);
+    const back = ex < sx || ey < sy, m = sidePts.length / 2;
+    let len = 0, lx = 0, ly = 0;
+    for (let q = 0; q < m; q++) {
+      const p = back ? m - 1 - q : q, x = sidePts[2 * p], y = sidePts[2 * p + 1];
+      if (q) len += Math.hypot(x - lx, y - ly);
+      out.push(x, y, len);
+      lx = x; ly = y;
+    }
+  }
+  // Part (t0..t1) of the rounded corner at (cx, cy), coming in along (ix, iy) and going on along (ox, oy), onto sidePts.
+  function arcHalf(cx, cy, ix, iy, ox, oy, t0, t1) {
+    const ox0 = cx + (ox - ix) * RC, oy0 = cy + (oy - iy) * RC, a1 = Math.atan2(-iy * RC - (oy - iy) * RC, -ix * RC - (ox - ix) * RC);
+    let sweep = Math.atan2(cy + oy * RC - oy0, cx + ox * RC - ox0) - a1;
+    if (sweep > Math.PI) sweep -= TAU; else if (sweep < -Math.PI) sweep += TAU;
+    for (let s = 0; s <= 4; s++) { const an = a1 + sweep * (t0 + (t1 - t0) * s / 4); sidePts.push(ox0 + Math.cos(an) * RC, oy0 + Math.sin(an) * RC); }
+  }
+  // Land (cells m) as it looks, on g: a light wash over all of it, a soft
+  // band deepening toward its border inside it, a strong riband of colour
+  // hugging the line (an old map's hand-colouring), hatching where it's
+  // contested (one diagonal each, by idx, so two owners make a light plaid),
+  // and the inked line itself (none along the board's edge or a hole: that's
+  // coast). On gg, if given, its border's glow, for when it lights up.
+  // other: the other owners' land; lost: the holes.
+  function paintLand(g, gg, m, other, col, idx, lost) {
+    traceCells(m);
+    for (let j = 0; j < tAt[tLoops]; j++) {
+      const e = tSide[j], i = e >> 2, sd = e & 3, x = i % GRID + NX[sd], y = (i - i % GRID) / GRID + NY[sd];
+      tKind[j] = x < 0 || y < 0 || x >= GRID || y >= GRID || lost.has(y * GRID + x) ? 2 : other[y * GRID + x] ? 1 : 0;
+    }
+    const land = new Path2D(), edge = new Path2D(), border = new Path2D();
+    for (let l = 0; l < tLoops; l++) cornersPath(land, cornersOf(l, 0, RC, RC, 0));
+    const anyBorder = runsPath(border, 0), anyEdge = runsPath(edge, 0) | runsPath(edge, 1);
+    g.fillStyle = rgba(col, 0.1);
+    g.fill(land, 'evenodd');
+    g.save();
+    g.clip(land, 'evenodd');
+    if (anyEdge) {
+      g.strokeStyle = col;
+      for (let n = 0; n < LAND_BAND.length; n += 2) { g.globalAlpha = LAND_BAND[n + 1]; g.lineWidth = LAND_BAND[n] * CELL; g.stroke(edge); }
+      g.globalAlpha = 0.55; g.lineWidth = 12; g.stroke(edge); // (half of it shows: 6 units inside the line)
+      g.globalAlpha = 1;
+    }
+    let x0 = GRID, y0 = GRID, x1 = -1, y1 = -1;
+    const hatch = new Path2D();
+    for (let i = 0; i < N2; i++) {
+      if (!m[i] || !other[i]) continue;
+      const x = i % GRID, y = (i - x) / GRID;
+      hatch.rect(x * CELL, y * CELL, CELL, CELL);
+      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    }
+    if (x1 >= 0) {
+      g.clip(hatch);
+      g.strokeStyle = rgba(col, 0.32);
+      g.lineWidth = 1.3;
+      g.beginPath();
+      const L = (x1 - x0 + y1 - y0 + 2) * CELL, X0 = x0 * CELL, Y0 = y0 * CELL, Y1 = (y1 + 1) * CELL;
+      for (let d = 0; d <= L; d += 14) { // (diagonals across the box, from its left edge)
+        if (idx % 2) { g.moveTo(X0 + d - (Y1 - Y0), Y0); g.lineTo(X0 + d, Y1); } else { g.moveTo(X0 + d - (Y1 - Y0), Y1); g.lineTo(X0 + d, Y0); }
       }
       g.stroke();
-      g.globalAlpha = 1;
-    };
-    // The honeycomb alone, cut to the circle.
-    const [lattice, lg] = make();
-    comb(lg, 0.7);
-    lg.globalCompositeOperation = 'destination-in';
-    lg.beginPath(); lg.arc(0, 0, r - 1, 0, TAU); lg.fill();
-    // The field: its glow, deepest at the rim...
-    const [body, bg] = make();
-    const grad = bg.createRadialGradient(0, 0, 0, 0, 0, r);
-    grad.addColorStop(0, rgba(color, 0.05));
-    grad.addColorStop(0.6, rgba(color, 0.1));
-    grad.addColorStop(0.9, rgba(color, 0.24));
-    grad.addColorStop(0.985, rgba(color, 0.42));
-    grad.addColorStop(1, rgba(color, 0));
-    bg.fillStyle = grad;
-    bg.fillRect(-r, -r, 2 * r, 2 * r);
-    // ...the honeycomb, showing only toward the edge...
-    const [edge, eg] = make();
-    eg.setTransform(1, 0, 0, 1, 0, 0);
-    eg.drawImage(lattice, 0, 0);
-    eg.setTransform(px / side, 0, 0, px / side, px / 2, px / 2);
-    eg.globalCompositeOperation = 'destination-in';
-    const fade = eg.createRadialGradient(0, 0, 0, 0, 0, r);
-    fade.addColorStop(0.55, 'rgba(0,0,0,0)');
-    fade.addColorStop(0.85, 'rgba(0,0,0,0.16)');
-    fade.addColorStop(0.97, 'rgba(0,0,0,0.42)');
-    fade.addColorStop(1, 'rgba(0,0,0,0)');
-    eg.fillStyle = fade;
-    eg.fillRect(-r, -r, 2 * r, 2 * r);
-    bg.setTransform(1, 0, 0, 1, 0, 0);
-    bg.drawImage(edge, 0, 0);
-    bg.setTransform(px / side, 0, 0, px / side, px / 2, px / 2);
-    // ...and a gleam on its upper left, like light on a bubble.
-    bg.lineCap = 'round';
-    bg.strokeStyle = 'rgba(255,255,255,0.2)';
-    bg.lineWidth = Math.max(2, r * 0.06);
-    bg.beginPath(); bg.arc(0, 0, r * 0.82, Math.PI * 1.1, Math.PI * 1.38); bg.stroke();
-    bg.fillStyle = 'rgba(255,255,255,0.16)';
-    bg.beginPath(); bg.arc(Math.cos(Math.PI * 1.47) * r * 0.82, Math.sin(Math.PI * 1.47) * r * 0.82, Math.max(1.5, r * 0.035), 0, TAU); bg.fill();
-    byR.set(r, f = { body, lattice, side, combPat: null });
-    return f;
-  }
-  // Every field this frame (homes and colonies), drawn knowing about each
-  // other: a snake's own fields that overlap (Colonist's colonies) are one
-  // merged field, one rim round the lot; where two snakes' fields meet, the
-  // border between them crackles. Insides first, then the holes under them,
-  // then every edge. A field is kept from frame to frame, by its key: { key,
-  // x, y, r (drawn, eased as it moves or swells), color, owner, lookR (the
-  // radius it's settling to, whose look is cached), swell (1 just after it
-  // grew or shrank, fading), idLen (the length of its old name: the snow on
-  // it sits by that) }, and this frame's alert, pulse, flare, look, side,
-  // wobble and cut (see cutOf).
-  const fieldSpecs = [];         // this frame's fields, in drawing order
-  const fieldByKey = new Map();  // key -> field
-  const inField = new Map();     // snake -> the field keys its head was in last frame
-  const ripples = [];            // a ripple where someone crossed in: { x, y, color, at }
-  const digits = v => String(v).length;
-  function newField(key, owner, idLen) {
-    const f = { key, x: 0, y: 0, r: 1, color: owner.color, owner, lookR: 1, swell: 0, idLen,
-      alert: false, pulse: 0.5, flare: 0, look: null, side: 0, wobble: 0, cut: null, cutSig: [], rim: null };
-    fieldByKey.set(key, f);
-    return f;
-  }
-  // A colony's field, by its owner, number and cell (a guest online gets
-  // fresh colony objects every tick).
-  function colonyField(s, c) {
-    const n = c.n || 1, key = ((s.id * 4096 + n) * GRID + c.y) * GRID + c.x;
-    const f = fieldByKey.get(key) || newField(key, s, 9 + digits(s.id) + digits(n) + digits(c.x) + digits(c.y));
-    f.x = c.x * CELL + CELL / 2; f.y = c.y * CELL + CELL / 2; f.r = f.lookR = (c.radius + 1) * CELL;
-    f.color = s.color; f.owner = s; f.swell = 0;
-    return f;
-  }
-  function drawFields(now) {
-    fieldSpecs.length = 0;
-    for (const s of game.snakes) {
-      if (!s.alive) continue;
-      if (s.memory.home) fieldSpecs.push(homeField(s, now));
-      if (s.memory.colonies) for (const c of s.memory.colonies) fieldSpecs.push(colonyField(s, c));
     }
-    if (fieldByKey.size > fieldSpecs.length) { // (one's gone: a colony given up, its snake out)
-      for (const f of fieldByKey.values()) if (!fieldSpecs.includes(f)) fieldByKey.delete(f.key);
+    g.restore();
+    if (anyBorder) {
+      g.strokeStyle = rgba(mix(col, '#1c1209', 0.72), 0.95);
+      g.lineWidth = 3;
+      g.stroke(border);
     }
-    if (!fieldSpecs.length) return;
-    for (let i = 0; i < fieldSpecs.length; i++) fieldInside(i, now);
-    patchHoles();
-    for (let i = 0; i < fieldSpecs.length; i++) fieldEdge(i, now);
-    for (const s of game.snakes) if (s.alive && s.memory.colonies) drawColonyFlags(s, now);
-  }
-  // Is (px, py) inside another field (than i): of the same owner (same) or of someone else's?
-  function insideOther(i, px, py, same, slack = 0) {
-    const f = fieldSpecs[i];
-    for (let j = 0; j < fieldSpecs.length; j++) {
-      if (j === i) continue;
-      const o = fieldSpecs[j];
-      if ((o.owner === f.owner) !== same) continue;
-      if (Math.hypot(px - o.x, py - o.y) < o.r - slack) return true;
+    if (gg && anyEdge) {
+      gg.strokeStyle = col;
+      gg.globalAlpha = 0.5; gg.lineWidth = 9; gg.stroke(edge);
+      gg.globalAlpha = 1; gg.strokeStyle = mix(col, '#fff7e0', 0.45); gg.lineWidth = 2.5; gg.stroke(edge);
     }
-    return false;
   }
-  // A field's inside: its dome, breathing (lit up while a rival's in it), the
-  // ripples welling out from the middle (each lights up the honeycomb as it
-  // passes) and the weather on it. No clip: the dome and honeycomb are cut to
-  // the circle already, a ripple is the honeycomb stroked as a ring, and the
-  // holes are drawn back over it afterwards (patchHoles).
-  function fieldInside(i, now) {
-    const f = fieldSpecs[i], x = f.x, y = f.y, r = f.r;
-    let alert = false;
-    for (const s of game.snakes) {
-      if (!s.alive || s === f.owner) continue;
-      const hx = s.body[0].x * CELL + CELL / 2, hy = s.body[0].y * CELL + CELL / 2;
-      if (Math.hypot(hx - x, hy - y) <= r) alert = true;
-    }
-    const lively = !reduced, t = now / 1000, look = fieldLook(f.lookR, f.color), side = look.side * r / f.lookR;
-    f.alert = alert; f.look = look; f.side = side;
-    f.pulse = lively ? 0.5 + 0.5 * Math.sin(t * (alert ? 9 : 2.2)) : 0.5;
-    f.flare = Math.max(f.swell, 1 - (now - flashAt) / 700); // (lightning, or it just grew: it flares)
-    const cut = cutOf(i), x0 = x - side / 2, y0 = y - side / 2;
-    ctx.globalAlpha = alert ? 1 : 0.85 + 0.15 * f.pulse;
-    ctx.drawImage(cut ? cut.body : look.body, x0, y0, side, side);
-    if (lively) {
-      for (let n = 0; n < 2; n++) {
-        const p = (t * (alert ? 0.9 : 0.35) + n * 0.5) % 1, rr = r * p;
-        if (quality > 0 && PATTERNS) {
-          ctx.globalAlpha = (alert ? 0.5 : 0.24) * Math.sin(p * Math.PI);
-          ctx.strokeStyle = patternAt(cut || look, false, x0, y0, side);
-          ctx.lineWidth = CELL * 0.8;
-          ctx.beginPath(); ctx.arc(x, y, rr, 0, TAU); ctx.stroke();
-        }
-        ctx.lineWidth = 2;
-        if (cut && PATTERNS) { ctx.globalAlpha = 0.22 * (1 - p); ctx.strokeStyle = patternAt(cut, true, x0, y0, side); }
-        else { ctx.globalAlpha = 1; ctx.strokeStyle = rgba(f.color, 0.22 * (1 - p)); }
-        ctx.beginPath(); ctx.arc(x, y, rr, 0, TAU); ctx.stroke();
-      }
-    }
-    ctx.globalAlpha = 1;
-    f.wobble = fieldWeather(f, i, cut ? cut.lattice : look.lattice, x0, y0, side, now);
-  }
-  // The honeycomb (or, solid, a disc of the field's colour) as a pattern,
-  // laid where the field is drawn: so a ring of it is one stroke.
-  const PATTERNS = typeof DOMMatrix === 'function' && typeof CanvasPattern === 'function' && 'setTransform' in CanvasPattern.prototype;
-  const patM = PATTERNS ? new DOMMatrix() : null;
-  function patternAt(h, solid, x0, y0, side) {
-    const src = solid ? h.solid : h.lattice;
-    let p = solid ? h.solidPat : h.combPat;
-    if (!p) { p = ctx.createPattern(src, 'no-repeat'); if (solid) h.solidPat = p; else h.combPat = p; }
-    patM.a = patM.d = side / src.width; patM.e = x0; patM.f = y0;
-    p.setTransform(patM);
-    return p;
-  }
-  // A field that overlaps its owner's earlier ones (Colonist's colonies) is
-  // drawn without them, so they're one field: its own copies of the dome, the
-  // honeycomb and a solid disc (for its ripples' rings) with those cut out,
-  // made again only when one of them moves or changes size.
-  const sigNow = [];
-  function cutOf(i) {
-    const f = fieldSpecs[i];
-    sigNow.length = 0;
-    for (let j = 0; j < i; j++) {
-      const o = fieldSpecs[j];
-      if (o.owner === f.owner && Math.hypot(o.x - f.x, o.y - f.y) < o.r + f.r) sigNow.push(o.x, o.y, o.r);
-    }
-    if (!sigNow.length) return (f.cut = null);
-    sigNow.push(f.x, f.y, f.r, f.lookR);
-    const sig = f.cutSig;
-    let same = !!f.cut && f.cut.look === f.look && sig.length === sigNow.length;
-    for (let n = 0; same && n < sig.length; n++) same = sig[n] === sigNow[n];
-    if (same) return f.cut;
-    sig.length = 0;
-    for (const v of sigNow) sig.push(v);
-    const look = f.look, px = look.body.width, scale = px / look.side, toLook = f.lookR / f.r;
-    const copy = src => {
-      const c = makeLayer(px, px), g = c.getContext('2d');
-      if (src) g.drawImage(src, 0, 0);
-      else { g.fillStyle = f.color; g.fillRect(0, 0, px, px); }
-      g.globalCompositeOperation = 'destination-out';
-      g.setTransform(scale, 0, 0, scale, px / 2, px / 2);
-      for (let n = 0; n < sig.length - 4; n += 3) { g.beginPath(); g.arc((sig[n] - f.x) * toLook, (sig[n + 1] - f.y) * toLook, sig[n + 2] * toLook, 0, TAU); g.fill(); }
-      return c;
-    };
-    return (f.cut = { look, body: copy(look.body), lattice: copy(look.lattice), solid: copy(null), combPat: null, solidPat: null });
-  }
-  // Holes stay dark under a field: once every field's inside is drawn, the
-  // hole cells under them are drawn again, from the static layer and the
-  // canopy's shade (as it was drawn this frame), instead of clipping them out.
-  const patchAt = new Uint8Array(GRID * GRID); // (the hole cells under a field, this frame)
-  function patchHoles() {
-    if (!game.holes.size || !staticLayer) return;
-    const c2 = CELL / 2;
+  // Every run of traced sides of one kind (0 border, 1 contested) as open
+  // subpaths of p, rounded at their corners as the land is. Says whether there were any.
+  function runsPath(p, want) {
     let any = false;
-    patchAt.fill(0);
-    for (const h of game.holes) {
-      const cx = (h % GRID) * CELL + c2, cy = (h - h % GRID) / GRID * CELL + c2;
-      for (let i = 0; i < fieldSpecs.length; i++) {
-        const f = fieldSpecs[i], dx = Math.max(0, Math.abs(cx - f.x) - c2), dy = Math.max(0, Math.abs(cy - f.y) - c2);
-        if (dx * dx + dy * dy < (f.r + 2) * (f.r + 2)) { patchAt[h] = 1; any = true; break; }
+    for (let l = 0; l < tLoops; l++) {
+      const a = tAt[l], n = tAt[l + 1] - a;
+      let all = true;
+      for (let j = a; j < a + n; j++) if (tKind[j] !== want) { all = false; break; }
+      if (all) { cornersPath(p, cornersOf(l, 0, RC, RC, 0)); any = true; continue; }
+      let s0 = 0;
+      while (tKind[a + s0] === want) s0++; // (from just after a run, so none is split where the loop starts)
+      for (let m = 1; m <= n; m++) {
+        const j = (s0 + m) % n;
+        if (tKind[a + j] !== want) continue;
+        let e = j;
+        while (tKind[a + (e + 1) % n] === want) e++;
+        runPath(p, a, n, j, e);
+        any = true;
+        m += e - j;
       }
-    }
-    if (!any) return;
-    ctx.setTransform(1, 0, 0, 1, shakeX, shakeY);
-    const s = canopyOn ? shadeLayer.width / (canopyW * k) : 0;
-    for (let y = 0; y < GRID; y++) {
-      for (let x = 0; x < GRID; x++) {
-        if (!patchAt[y * GRID + x]) continue;
-        let e = x; // (a run of them along the row: one piece)
-        while (e + 1 < GRID && patchAt[y * GRID + e + 1]) e++;
-        const X = Math.round(x * CELL * k), Y = Math.round(y * CELL * k), w = Math.round((e + 1) * CELL * k) - X, hh = Math.round((y + 1) * CELL * k) - Y;
-        ctx.drawImage(staticLayer, X, Y, w, hh, X, Y, w, hh);
-        if (s) ctx.drawImage(shadeLayer, (X - canopyX * k) * s, (Y - canopyY * k) * s, w * s, hh * s, X, Y, w, hh);
-        x = e;
-      }
-    }
-    ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
-  }
-  // A field's edge, over every field's inside. The rim: a soft glow and a
-  // bright line, breathing (and shivering in the wind); none where it's
-  // inside another of its owner's fields (they're one field), and where it's
-  // inside someone else's, a crackling seam instead (two fields pushing
-  // against each other). Then snow along its top, and sparks running round it.
-  const pieceKind = new Uint8Array(256); // 0 rim, 1 left out, 2 seam
-  const seamAt = []; // this field's seam pieces: a0, a1, a0, a1, ...
-  // The rim's path, added to g's: unbroken (first < 0), one circle; broken
-  // (first: a piece that isn't rim), each run of rim pieces one arc, so none
-  // is split where the circle starts. Says whether there's any rim.
-  function rimPath(g, x, y, rr, steps, first) {
-    if (first < 0) { g.arc(x, y, rr, 0, TAU); return true; }
-    let from = -1, any = false;
-    for (let m = 1; m <= steps; m++) {
-      const a0 = (first + m) / steps * TAU;
-      if (!pieceKind[(first + m) % steps]) { if (from < 0) from = a0; continue; }
-      if (from < 0) continue;
-      g.moveTo(x + Math.cos(from) * rr, y + Math.sin(from) * rr);
-      g.arc(x, y, rr, from, a0);
-      from = -1;
-      any = true;
     }
     return any;
   }
-  // The rim from two cached layers, its glow and its line (each drawn opaque),
-  // laid on at their own alphas, on whole device pixels so they're never
-  // resampled: a big circle stroked costs several times what a blit does.
-  // When the rim changes (the field moves or swells, or another comes or goes
-  // across it), it's stroked as it is until it holds still for a frame, and
-  // then its layers are made again. Says whether it drew.
-  function rimFrom(f, rr, steps, first, glowA, lineA) {
-    const X = f.x * k, Y = f.y * k;
-    let c = f.rim;
-    if (!c) c = f.rim = { X: 0, Y: 0, rr: 0, k: 0, steps: 0, first: 0, kinds: new Uint8Array(256), built: false, any: false, P: 0, glow: null, line: null };
-    let same = c.X === X && c.Y === Y && c.rr === rr && c.k === k && c.steps === steps && c.first === first;
-    for (let n = 0; same && n < steps; n++) same = c.kinds[n] === pieceKind[n];
-    if (!same) {
-      c.X = X; c.Y = Y; c.rr = rr; c.k = k; c.steps = steps; c.first = first; c.built = false;
-      c.kinds.set(pieceKind.subarray(0, steps));
-      return false;
+  // Sides j0..j1 of the loop at a (n points), as an open path on p. A corner
+  // at either end is drawn whole, so a run ends round.
+  const runX = (a, n, j) => tX[a + ((j % n) + n) % n] * CELL, runY = (a, n, j) => tY[a + ((j % n) + n) % n] * CELL;
+  function runPath(p, a, n, j0, j1) {
+    const dx = j => Math.sign(runX(a, n, j + 1) - runX(a, n, j)), dy = j => Math.sign(runY(a, n, j + 1) - runY(a, n, j));
+    const corner = j => dx(j - 1) !== dx(j) || dy(j - 1) !== dy(j);
+    const x0 = runX(a, n, j0), y0 = runY(a, n, j0);
+    if (corner(j0)) { p.moveTo(x0 - dx(j0 - 1) * RC, y0 - dy(j0 - 1) * RC); p.arcTo(x0, y0, x0 + dx(j0) * RC, y0 + dy(j0) * RC, RC); }
+    else p.moveTo(x0, y0);
+    for (let j = j0; j <= j1; j++) {
+      const x = runX(a, n, j + 1), y = runY(a, n, j + 1);
+      if (corner(j + 1)) p.arcTo(x, y, x + dx(j + 1) * RC, y + dy(j + 1) * RC, RC);
+      else if (j === j1) p.lineTo(x, y);
     }
-    if (!c.built) {
-      c.built = true;
-      const P = c.P = Math.ceil((rr + 9) * k), size = 2 * P + 2, fx = X - Math.floor(X), fy = Y - Math.floor(Y);
-      for (let layer = 0; layer < 2; layer++) {
-        let cv = layer ? c.line : c.glow;
-        if (!cv || cv.width !== size) { cv = makeLayer(size, size); if (layer) c.line = cv; else c.glow = cv; }
-        const g = cv.getContext('2d');
-        g.setTransform(1, 0, 0, 1, 0, 0);
-        g.clearRect(0, 0, size, size);
-        g.setTransform(k, 0, 0, k, P + 1 + fx, P + 1 + fy); // (the field's centre, where it lands)
-        g.strokeStyle = f.color;
-        g.lineCap = 'round';
-        g.lineWidth = layer ? 1.6 : 8;
-        g.beginPath();
-        c.any = rimPath(g, 0, 0, rr, steps, first);
-        g.stroke();
-      }
-    }
-    if (c.any) {
-      const bx = Math.floor(X) - c.P - 1 + shakeX, by = Math.floor(Y) - c.P - 1 + shakeY;
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.globalAlpha = glowA;
-      ctx.drawImage(c.glow, bx, by);
-      ctx.globalAlpha = lineA;
-      ctx.drawImage(c.line, bx, by);
-      ctx.globalAlpha = 1;
-      ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
-    }
-    return true;
   }
-  function fieldEdge(i, now) {
-    const f = fieldSpecs[i], x = f.x, y = f.y, r = f.r, color = f.color, alert = f.alert, pulse = f.pulse, flare = f.flare;
+
+  function drawFields(now) {
+    fieldSpecs.length = 0;
+    for (const s of game.snakes) {
+      const owns = s.alive && (s.memory.home || s.memory.colonies);
+      let r = realms.get(s);
+      if (!owns && !r) continue;
+      if (!r) realms.set(s, r = newRealm(s));
+      r.gone = !owns;
+      if (owns) {
+        const sig = fieldsSig(s);
+        if (sig !== r.fieldSig) { r.fieldSig = sig; sitesOf(r, s); }
+        if (r.color !== s.color) { r.color = s.color; r.dirty = true; }
+      }
+      r.idx = fieldSpecs.length;
+      fieldSpecs.push(r);
+    }
+    if (!fieldSpecs.length) return;
+    for (const r of fieldSpecs) updateRealm(r, now);
+    for (let i = fieldSpecs.length - 1; i >= 0; i--) { // (a fallen owner's land, once it has shrunk away)
+      const r = fieldSpecs[i];
+      if (r.gone && r.step < 0 && r.bx1 < 0) { realms.delete(r.owner); fieldSpecs.splice(i, 1); }
+    }
+    for (const r of fieldSpecs) if (r.dirty || r.builtK !== k) buildRealm(r);
     const lively = !reduced, t = now / 1000;
-    // (Shivering in the wind or flaring, it's stroked as it is; otherwise it
-    // comes from its cached layers, at a wobble too small to see taken as none.)
-    const live = flare > 0.01 || Math.abs(f.wobble) > 0.03;
-    const rr = r - 2 + (live ? f.wobble : 0), steps = Math.min(256, Math.max(24, Math.round(r / 5)));
-    const others = fieldSpecs.length > 1;
-    let first = -1; // (a piece that isn't rim)
-    seamAt.length = 0;
-    for (let n = 0; n < steps; n++) {
-      let kind = 0;
-      if (others) {
-        const am = (n + 0.5) / steps * TAU, mx = x + Math.cos(am) * rr, my = y + Math.sin(am) * rr;
-        kind = insideOther(i, mx, my, true, 1) ? 1 : insideOther(i, mx, my, false) ? 2 : 0;
-      }
-      pieceKind[n] = kind;
-      if (kind && first < 0) first = n;
-      if (kind === 2) seamAt.push(n / steps * TAU, (n + 1) / steps * TAU);
-    }
-    const glowA = Math.min(1, (alert ? 0.32 : 0.16) + 0.08 * pulse + 0.3 * flare), lineA = Math.min(1, (alert ? 0.9 : 0.5) + 0.2 * pulse + 0.4 * flare);
-    if (live || !rimFrom(f, rr, steps, first, glowA, lineA)) {
-      ctx.beginPath();
-      if (rimPath(ctx, x, y, rr, steps, first)) {
-        ctx.lineCap = 'round';
-        ctx.lineWidth = 8 + 4 * flare;
-        ctx.strokeStyle = rgba(color, glowA);
-        ctx.stroke();
-        ctx.lineWidth = 1.6;
-        ctx.strokeStyle = rgba(color, lineA);
-        ctx.stroke();
-      }
-    }
-    if (seamAt.length) { // the seam: a jagged, flickering line of pale light, and the odd spark (white and lilac: a gold line here read as a power's)
-      ctx.beginPath();
-      for (let n = 0; n < seamAt.length; n += 2) {
-        const a0 = seamAt[n], a1 = seamAt[n + 1], on = n > 0 && seamAt[n - 1] === a0; // (on from the piece before: one line)
-        for (let q = on ? 1 : 0; q <= 3; q++) {
-          const a = a0 + (a1 - a0) * q / 3, jit = lively ? Math.sin(t * 47 + a * 31 + i) * 2.2 : 0;
-          const px = x + Math.cos(a) * (rr + jit), py = y + Math.sin(a) * (rr + jit);
-          if (q) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    for (const r of fieldSpecs) if (r.any) ctx.drawImage(r.layer, r.X + shakeX, r.Y + shakeY);
+    // Lit up: breathing softly, quicker and brighter, while a rival's head is
+    // on the land; flaring as it changes, and in a lightning flash; and from
+    // where a head crossed in, lighting up along itself (see drawFieldHues).
+    for (const r of fieldSpecs) {
+      if (!r.any) continue;
+      let alert = false;
+      if (!r.gone) {
+        for (const s of game.snakes) {
+          if (!s.alive || s === r.owner) continue;
+          const h = s.body[0];
+          if (r.shown[h.y * GRID + h.x]) { alert = true; break; }
         }
-        if (lively && Math.random() < 0.012) spawn(x + Math.cos(a0) * rr, y + Math.sin(a0) * rr, 2, 90, 260, 1.6, '#ede9fe', '#ffffff');
       }
-      const join = ctx.lineJoin;
-      ctx.lineCap = ctx.lineJoin = 'round';
-      ctx.lineWidth = 7;
-      ctx.strokeStyle = rgba('#ddd6fe', lively ? 0.3 + 0.15 * Math.sin(t * 13 + i) : 0.35);
-      ctx.stroke();
-      ctx.lineWidth = 1.8;
-      ctx.strokeStyle = rgba('#fefce8', 0.9);
-      ctx.stroke();
-      ctx.lineJoin = join;
-    }
-    if (snowCover > 0.02) { // ...snow gathered along its top...
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = rgba('#ffffff', 0.55 * snowCover);
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(x, y, r - 3, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
-      ctx.fillStyle = rgba('#ffffff', 0.7 * snowCover);
-      for (let n = 0; n < 6; n++) {
-        const a = Math.PI * (1.15 + n * 0.14), w = 2 + ((n * 7 + f.idLen) % 3);
-        circle(x + Math.cos(a) * (r - 3), y + Math.sin(a) * (r - 3) - 1, w);
-      }
-    }
-    if (lively) { // ...with sparks running round it
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      for (let n = 0; n < 5; n++) {
-        const a = t * (0.5 + n * 0.12) * (n % 2 ? 1 : -1) + n * 1.3, sx = x + Math.cos(a) * (r - 2), sy = y + Math.sin(a) * (r - 2);
-        if (others && insideOther(i, sx, sy, true, 1)) continue;
-        circle(sx, sy, 1.7);
-      }
-    }
-  }
-  // Under the snakes, once their shadows are down (see drawSnakes): whatever
-  // of a rival is inside a field has the field's light clinging round it, as
-  // if wading through coloured light: a line of the field's colour hugging
-  // it, just outside everything drawn round it (an outline, a gold line), and
-  // a soft glow of it beyond; and where a head just crossed in, a ripple
-  // (drawn over the snakes: see drawRipples). The glow (the shape grown
-  // FIELD_GLOW_GROW, at FIELD_GLOW) and the line (FIELD_LINE wide, opaque) go
-  // into the veil and are laid on as one layer, cut to the field (and only
-  // round what's in it); the snake drawn over them covers their inside, so
-  // its body keeps its own colours. (Laid over the body, the field's colour
-  // turned your green khaki in a red field and Gobbler's orange mauve in a
-  // blue one; and cut back out of a layer over the snakes, it cost a frame
-  // a sixth more.)
-  const FIELD_GLOW = 0.16, FIELD_GLOW_GROW = 8, FIELD_LINE = 2.6, hued = [], huedEdge = [];
-  function drawFieldHues(now) {
-    for (let fi = 0; fi < fieldSpecs.length; fi++) {
-      const f = fieldSpecs[fi];
-      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-      hued.length = huedEdge.length = 0;
-      for (const s of game.snakes) {
-        if (!s.alive || s === f.owner) continue;
-        const a = anim.get(s);
-        if (!a || !a.n) continue;
-        const hx = s.body[0].x * CELL + CELL / 2, hy = s.body[0].y * CELL + CELL / 2, inside = Math.hypot(hx - f.x, hy - f.y) <= f.r;
-        let was = inField.get(s);
-        if (!was) inField.set(s, was = new Set());
-        if (inside && !was.has(f.key)) { // just crossed in
-          ripples.push({ x: a.pts[0], y: a.pts[1], color: f.color, at: now });
-          spawn(a.pts[0], a.pts[1], 8, 160, 420, 2.2, f.color, '#ffffff');
-        }
-        if (inside) was.add(f.key); else was.delete(f.key);
-        let touches = false;
-        for (let i = 0; i < a.n; i++) { // (and the box round what of it is in the field)
-          const px = a.pts[2 * i], py = a.pts[2 * i + 1];
-          if (Math.hypot(px - f.x, py - f.y) > f.r + a.rad[i] + 5) continue;
-          touches = true;
-          if (px < x0) x0 = px;
-          if (px > x1) x1 = px;
-          if (py < y0) y0 = py;
-          if (py > y1) y1 = py;
-        }
-        if (touches) { hued.push(a); huedEdge.push(edgeOf(s, a)); }
-      }
-      if (!hued.length) continue;
-      const m = f.r + 1; // (the box: round the bodies, a band and a glow's width more, within the field)
-      x0 = Math.max(f.x - m, x0 - CELL - 12); y0 = Math.max(f.y - m, y0 - CELL - 12);
-      x1 = Math.min(f.x + m, x1 + CELL + 12); y1 = Math.min(f.y + m, y1 + CELL + 12);
-      veilOn(0, 0, x0, y0, x1, y1);
-      ctx.fillStyle = f.color;
-      for (let i = 0; i < hued.length; i++) bodyFills(hued[i], huedEdge[i] + FIELD_GLOW_GROW, f.x, f.y, f.r + CELL);
-      ctx.globalCompositeOperation = 'destination-out'; // (the glow down to its share)
-      ctx.globalAlpha = 1 - FIELD_GLOW;
-      ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-      ctx.globalAlpha = 1;
-      ctx.globalCompositeOperation = 'source-over'; // (the line, opaque)
-      for (let i = 0; i < hued.length; i++) bodyFills(hued[i], huedEdge[i] + FIELD_LINE, f.x, f.y, f.r + CELL);
-      veilOff(1, f);
-    }
-  }
-  // Over the snakes: a ripple where a head just crossed into a field.
-  function drawRipples(now) {
-    for (let i = dimples.length - 1; i >= 0; i--) if (now - dimples[i].at > 450 || now < dimples[i].at) dimples.splice(i, 1);
-    for (let i = ripples.length - 1; i >= 0; i--) {
-      const rp = ripples[i], t = (now - rp.at) / 520;
-      if (t >= 1) { ripples.splice(i, 1); continue; }
-      ctx.lineWidth = 3 * (1 - t);
-      ctx.strokeStyle = rgba(rp.color, 0.8 * (1 - t));
-      ctx.beginPath(); ctx.arc(rp.x, rp.y, CELL * (0.4 + 1.3 * t), 0, TAU); ctx.stroke();
-    }
-  }
-  // The weather on a field, inside it: rain dimples it, snow frosts its
-  // honeycomb, wind sends shivers across it, lightning lights it all up.
-  // Returns how far its rim shivers in the wind.
-  const dimples = []; // raindrops landing on fields: { id (its key), dx, dy, at }
-  function fieldWeather(f, i, lattice, x0, y0, side, now) {
-    if (reduced) return 0;
-    const x = f.x, y = f.y, r = f.r, id = f.key;
-    const wet = sky.rain + sky.storm * 0.6, blow = Math.max(sky.wind, sky.storm * 0.7), t = now / 1000;
-    for (let n = wet * (r / CELL) * 5 * frameDt / 1000; n > 0; n--) { // (about five drops a second per cell of radius)
-      if (Math.random() >= n) break;
-      const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * r * 0.92, dx = Math.cos(a) * d, dy = Math.sin(a) * d;
-      if (f.cut && underEarlier(i, x + dx, y + dy)) continue; // (that's the earlier field's, of the one merged field)
-      dimples.push({ id, dx, dy, at: now });
-    }
-    let drew = false;
-    for (const d of dimples) {
-      if (d.id !== id) continue;
-      const p = (now - d.at) / 450;
-      if (p >= 1 || p < 0) continue;
-      if (!drew) { drew = true; ctx.lineWidth = 1.6; ctx.strokeStyle = ctx.fillStyle = mix(f.color, '#ffffff', 0.75); }
-      ctx.globalAlpha = 0.9 * (1 - p);
-      ctx.beginPath(); ctx.arc(x + d.dx, y + d.dy, 2 + 10 * p, 0, TAU); ctx.stroke();
-      if (p < 0.3) circle(x + d.dx, y + d.dy, 1.8 * (1 - p / 0.3)); // (the drop itself)
-    }
-    const lit = 0.9 * f.flare + 0.28 * snowCover; // (lightning, or frost)
-    if (lit > 0.02 && quality > 0) {
-      ctx.globalAlpha = Math.min(1, lit);
-      ctx.drawImage(lattice, x0, y0, side, side);
-    }
-    if (blow > 0.05 && quality > 0) { // a shiver sweeping across with the wind (from the left): the band's slice of the honeycomb
-      const p = (t * 0.6 * (1 + blow)) % 1, bx = x - r + p * 2 * r, bw = CELL * 0.9, s = lattice.width / side;
-      const l = Math.max(x0, bx - bw), rt = Math.min(x0 + side, bx + bw), top = Math.max(y0, y - r), bot = Math.min(y0 + side, y + r);
-      if (rt > l && bot > top) {
-        ctx.globalAlpha = 0.6 * blow;
-        ctx.drawImage(lattice, (l - x0) * s, (top - y0) * s, (rt - l) * s, (bot - top) * s, l, top, rt - l, bot - top);
+      r.alertA += ((alert ? 1 : 0) - r.alertA) * Math.min(1, frameDt / 200);
+      const pulse = lively ? 0.5 + 0.5 * Math.sin(t * (2.2 + 5 * r.alertA)) : 0.5;
+      const flare = Math.max(0, 1 - (now - r.changedAt) / 900, 1 - (now - flashAt) / 700);
+      const a = Math.min(1, r.alertA * (0.1 + 0.15 * pulse) + 0.7 * flare);
+      if (a > 0.01) { ctx.globalAlpha = a; ctx.drawImage(r.glow, r.X + shakeX, r.Y + shakeY); }
+      for (let i = r.pulses.length - 1; i >= 0; i--) {
+        const p = r.pulses[i], u = (now - p.at) / 650;
+        if (u >= 1 || u < 0) { r.pulses.splice(i, 1); continue; }
+        const half = CELL * (0.8 + 4 * u) * k, cx = p.x * k - r.X, cy = p.y * k - r.Y, gw = r.glow.width, gh = r.glow.height;
+        const sx = Math.max(0, Math.floor(cx - half)), sy = Math.max(0, Math.floor(cy - half)), ex = Math.min(gw, Math.ceil(cx + half)), ey = Math.min(gh, Math.ceil(cy + half));
+        if (ex <= sx || ey <= sy) continue;
+        ctx.globalAlpha = 0.9 * (1 - u);
+        ctx.drawImage(r.glow, sx, sy, ex - sx, ey - sy, r.X + sx + shakeX, r.Y + sy + shakeY, ex - sx, ey - sy);
       }
     }
     ctx.globalAlpha = 1;
-    return blow * 1.3 * Math.sin(t * 11 + x * 0.05);
+    ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
+    // Where two owners' land meets: half-cell dashes in both colours over an
+    // ink line, marching, each owner's between the other's.
+    const march = lively ? (t * 0.6) % 1 : 0;
+    ctx.lineCap = 'butt';
+    ctx.lineJoin = 'round';
+    for (const r of fieldSpecs) {
+      if (!r.shared.length) continue;
+      const s0 = (march + (r.idx % 2 ? 0.5 : 0)) % 1;
+      dashes(r, s0, null);
+      for (const o of fieldSpecs) if (o !== r && r.sharedTo.includes(o)) dashes(r, (s0 + 0.5) % 1, o); // (the other half, where only this realm has the side)
+    }
+    ctx.lineCap = 'round';
+    // The flags, while the land under them is still there.
+    for (const r of fieldSpecs) {
+      const s = r.owner;
+      if (s.memory.home && r.shown[s.memory.home.y * GRID + s.memory.home.x]) drawBanner(s.memory.home, r.color, now);
+      if (s.memory.colonies) drawColonyFlags(r, now);
+    }
   }
-  // Is (px, py) under one of field i's owner's earlier fields?
-  function underEarlier(i, px, py) {
-    const f = fieldSpecs[i];
-    for (let j = 0; j < i; j++) { const o = fieldSpecs[j]; if (o.owner === f.owner && Math.hypot(px - o.x, py - o.y) < o.r) return true; }
-    return false;
+
+  // Half of each of r's contested sides, from s0 along it (to s0 + 0.5), in
+  // r's colour over an ink line; or with o, the halves of the sides only r
+  // has against o's land, in o's colour.
+  function dashes(r, s0, o) {
+    const sh = r.shared, at = r.sharedAt, s1 = s0 + 0.5;
+    ctx.beginPath();
+    for (let n = 0; n < r.sharedTo.length; n++) {
+      if (o && r.sharedTo[n] !== o) continue;
+      const i0 = at[n], i1 = at[n + 1], L = sh[i1 - 1];
+      if (s1 <= 1) dashAlong(sh, i0, i1, s0 * L, s1 * L);
+      else { dashAlong(sh, i0, i1, s0 * L, L); dashAlong(sh, i0, i1, 0, (s1 - 1) * L); }
+    }
+    const col = o ? o.color : r.color;
+    ctx.strokeStyle = rgba(mix(col, '#1c1209', 0.72), 0.95);
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2.6;
+    ctx.stroke();
   }
-  // Sovereign's home: drawn where it is, easing to wherever it has moved or
-  // grown to, flaring as it changes size.
-  const homeShown = new Map(); // snake -> { x, y, r, tr, at }
-  function homeField(s, now) {
-    const h = s.memory.home;
-    const tx = h.x * CELL + CELL / 2, ty = h.y * CELL + CELL / 2, tr = (h.radius + 1) * CELL;
-    let e = homeShown.get(s);
-    if (!e) homeShown.set(s, e = { x: tx, y: ty, r: tr, tr, at: -1e9 });
-    if (tr !== e.tr) { e.tr = tr; e.at = now; }
-    const step = reduced ? 1 : 1 - Math.exp(-frameDt / 260);
-    e.x += (tx - e.x) * step; e.y += (ty - e.y) * step; e.r += (tr - e.r) * step;
-    const key = -1 - s.id, f = fieldByKey.get(key) || newField(key, s, 4 + digits(s.id));
-    f.x = e.x; f.y = e.y; f.r = e.r; f.lookR = tr; f.color = s.color; f.owner = s;
-    f.swell = Math.max(0, 1 - (now - e.at) / 900);
-    return f;
+
+  // The stretch u0..u1 along a side's line of points (sh[i0..i1]: see sideLine), added to the path.
+  function dashAlong(sh, i0, i1, u0, u1) {
+    let started = false;
+    for (let i = i0; i + 3 < i1; i += 3) {
+      const la = sh[i + 2], lb = sh[i + 5];
+      if (lb < u0 || la > u1) continue;
+      const span = lb - la || 1, f0 = Math.max(0, (u0 - la) / span), f1 = Math.min(1, (u1 - la) / span);
+      const ax = sh[i], ay = sh[i + 1], bx = sh[i + 3], by = sh[i + 4];
+      if (!started) { ctx.moveTo(ax + (bx - ax) * f0, ay + (by - ay) * f0); started = true; }
+      ctx.lineTo(ax + (bx - ax) * f1, ay + (by - ay) * f1);
+    }
+  }
+
+  // Sovereign's capital: a swallow-tailed banner on a pole, in its own colour
+  // with a parchment crown and trim, inked (no gold: gold means a power),
+  // fluttering like the colonies' flags.
+  const BANNER_W = 0.95, BANNER_H = 0.62;
+  const bannerSprite = col => sprite('banner', col, drawBannerCloth);
+  const drawBannerCloth = (g, col) => {
+    const c = CELL, w = c * BANNER_W, h = c * BANNER_H, y0 = -h / 2, notch = w * 0.28;
+    g.lineJoin = 'round';
+    g.beginPath();
+    g.moveTo(0, y0); g.lineTo(w, y0); g.lineTo(w - notch, 0); g.lineTo(w, y0 + h); g.lineTo(0, y0 + h); g.closePath();
+    g.fillStyle = col; g.fill();
+    g.strokeStyle = mix(col, '#0b1210', 0.6); g.lineWidth = 1.6; g.stroke();
+    g.strokeStyle = '#f6ecd2'; g.lineWidth = 0.9; // (a parchment trim inside its edge)
+    g.beginPath(); g.moveTo(1.6, y0 + 1.6); g.lineTo(w - 3, y0 + 1.6); g.moveTo(1.6, y0 + h - 1.6); g.lineTo(w - 3, y0 + h - 1.6); g.stroke();
+    const cx = w * 0.36, cy = 0.5, cw = h * 0.62, ch = h * 0.42; // (a crown, in parchment and ink)
+    g.beginPath();
+    g.moveTo(cx - cw / 2, cy + ch / 2); g.lineTo(cx - cw / 2, cy - ch / 2); g.lineTo(cx - cw / 4, cy - ch * 0.05); g.lineTo(cx, cy - ch / 2 - 1);
+    g.lineTo(cx + cw / 4, cy - ch * 0.05); g.lineTo(cx + cw / 2, cy - ch / 2); g.lineTo(cx + cw / 2, cy + ch / 2); g.closePath();
+    g.fillStyle = '#f6ecd2'; g.fill();
+    g.strokeStyle = '#3a2614'; g.lineWidth = 0.9; g.stroke();
+  };
+  function drawBanner(home, col, now) {
+    const x = home.x * CELL + CELL / 2, y = home.y * CELL + CELL / 2;
+    flagPole(x, y);
+    const sp = bannerSprite(col), half = SPRITE * CELL / 2, dev = sp.width / (SPRITE * CELL);
+    const w = CELL * BANNER_W, h = CELL * BANNER_H + 2, sw = w / FLAG_STRIPS, top = y - CELL * 0.95 - 1;
+    for (let i = 0; i < FLAG_STRIPS; i++) {
+      const out = (i + 0.5) / FLAG_STRIPS;
+      const dy = reduced ? 0 : Math.sin(now / 200 - i * 0.9 + home.x) * CELL * 0.05 * out;
+      ctx.drawImage(sp, (half + i * sw) * dev, (half - h / 2) * dev, (sw + 0.6) * dev, h * dev, x + 1.5 + i * sw, top + dy, sw + 0.6, h);
+    }
+  }
+  // A flagpole: inked, with a parchment core and a parchment knob on top.
+  function flagPole(x, y) {
+    ctx.strokeStyle = '#3a2614';
+    ctx.lineWidth = 3.4;
+    ctx.beginPath(); ctx.moveTo(x, y + CELL * 0.6); ctx.lineTo(x, y - CELL * 0.98); ctx.stroke();
+    ctx.strokeStyle = '#e7d7b1';
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+    ctx.fillStyle = '#f6ecd2';
+    circle(x, y - CELL, 2.8);
+    ctx.strokeStyle = '#3a2614';
+    ctx.lineWidth = 1;
+    ctx.stroke();
   }
 
   // The Union Flag, as flown over the Empire's colonies (a redcoat's flag: St
@@ -3897,18 +3933,101 @@ window.SnakeRender = (() => {
     }
   }
 
-  // Colonist's colonies: a force field each, and a flag flying over it (the
-  // Union Flag over the first, an ensign over later ones).
-  function drawColonyFlags(s, now) {
-    for (const c of s.memory.colonies) {
+  // Colonist's colonies: a flag flying over each (the Union Flag over the
+  // first, an ensign over later ones), on its pole with a parchment knob.
+  function drawColonyFlags(r, now) {
+    for (const c of r.owner.memory.colonies) {
+      if (!r.shown[c.y * GRID + c.x]) continue;
       const x = c.x * CELL + CELL / 2, y = c.y * CELL + CELL / 2;
-      ctx.strokeStyle = '#e7d7b1';
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(x, y + CELL * 0.6); ctx.lineTo(x, y - CELL * 0.95); ctx.stroke();
-      ctx.fillStyle = '#facc15'; // a gilt finial
-      circle(x, y - CELL * 0.97, 2.6);
+      flagPole(x, y);
       const n = c.n || 1;
       drawFlag(x + 1.5, y - CELL * 0.92, now, c.x * 0.7 + c.y * 1.3, n === 1 ? 'union' : n % 2 ? 'red' : 'blue');
+    }
+  }
+
+  // Under the snakes, once their shadows are down (see drawSnakes): whatever
+  // of a rival lies on someone's land has that land's colour clinging round
+  // it, as if it were wading through it: a line of the colour hugging it,
+  // just outside everything drawn round it (an outline, a gold line), and a
+  // soft glow of it beyond. Only the pieces on the land's own cells (no
+  // clip: the cut is cell-exact). The glow (the shape grown FIELD_GLOW_GROW,
+  // at FIELD_GLOW) and the line (FIELD_LINE wide, opaque) go into the veil
+  // and are laid on as one layer; the snake drawn over them covers their
+  // inside, so its body keeps its own colours. Where a head just crossed in:
+  // a ripple at it (over the snakes: see drawRipples), and the border lights
+  // up from there.
+  const FIELD_GLOW = 0.16, FIELD_GLOW_GROW = 8, FIELD_LINE = 2.6, hued = [], huedEdge = [];
+  function drawFieldHues(now) {
+    for (const r of fieldSpecs) {
+      if (!r.any || r.gone) continue;
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      hued.length = huedEdge.length = 0;
+      for (const s of game.snakes) {
+        if (!s.alive || s === r.owner) continue;
+        const a = anim.get(s);
+        if (!a || !a.n) continue;
+        const h = s.body[0], inside = r.shown[h.y * GRID + h.x] === 1;
+        let was = inField.get(s);
+        if (!was) inField.set(s, was = new Set());
+        if (inside && !was.has(r.owner) && !reduced) { // (just crossed in)
+          ripples.push({ x: a.pts[0], y: a.pts[1], color: r.color, at: now });
+          r.pulses.push({ x: a.pts[0], y: a.pts[1], at: now });
+        }
+        if (inside) was.add(r.owner); else was.delete(r.owner);
+        let touches = false;
+        for (let i = 0; i < a.n; i++) {
+          const px = a.pts[2 * i], py = a.pts[2 * i + 1];
+          if (!onShown(r, px, py)) continue;
+          touches = true;
+          if (px < x0) x0 = px;
+          if (px > x1) x1 = px;
+          if (py < y0) y0 = py;
+          if (py > y1) y1 = py;
+        }
+        if (touches) { hued.push(a); huedEdge.push(edgeOf(s, a)); }
+      }
+      if (!hued.length) continue;
+      veilOn(0, 0, x0 - CELL - 12, y0 - CELL - 12, x1 + CELL + 12, y1 + CELL + 12);
+      ctx.fillStyle = r.color;
+      for (let i = 0; i < hued.length; i++) bodyFillsOn(hued[i], huedEdge[i] + FIELD_GLOW_GROW, r);
+      ctx.globalCompositeOperation = 'destination-out'; // (the glow down to its share)
+      ctx.globalAlpha = 1 - FIELD_GLOW;
+      ctx.fillRect(x0 - CELL - 12, y0 - CELL - 12, x1 - x0 + 2 * CELL + 24, y1 - y0 + 2 * CELL + 24);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over'; // (the line, opaque)
+      for (let i = 0; i < hued.length; i++) bodyFillsOn(hued[i], huedEdge[i] + FIELD_LINE, r);
+      veilOff(1);
+    }
+  }
+  // Is the drawn point (px, py) on a cell of r's land?
+  function onShown(r, px, py) {
+    const x = Math.floor(px / CELL), y = Math.floor(py / CELL);
+    return x >= 0 && y >= 0 && x < GRID && y < GRID && r.shown[y * GRID + x] === 1;
+  }
+  // bodyFills (see the snakes' drawing), only the pieces on r's land: a
+  // band where either of its ends is, a segment where it is.
+  function bodyFillsOn(a, grow, r) {
+    const p = a.pts, c = a.cor, rad = a.rad, n = a.n;
+    for (let i = n - 2; i >= 0; i--) {
+      if (!onShown(r, p[2 * i], p[2 * i + 1]) && !onShown(r, p[2 * i + 2], p[2 * i + 3])) continue;
+      const h = rad[i + 1] * PINCH + grow, x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+      if ((near(x1, qx) && near(qx, x2)) || (near(y1, qy) && near(qy, y2))) rectPiece(x1, y1, x2, y2, h);
+      else { rectPiece(x1, y1, qx, qy, h); rectPiece(qx, qy, x2, y2, h); }
+    }
+    for (let i = n - 1; i >= 0; i--) {
+      if (!onShown(r, p[2 * i], p[2 * i + 1])) continue;
+      if (i < n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * PINCH + grow);
+      circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
+    }
+  }
+  // Over the snakes: a ripple where a head just crossed onto someone's land.
+  function drawRipples(now) {
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      const rp = ripples[i], t = (now - rp.at) / 520;
+      if (t >= 1 || t < 0) { ripples.splice(i, 1); continue; }
+      ctx.lineWidth = 3 * (1 - t);
+      ctx.strokeStyle = rgba(rp.color, 0.8 * (1 - t));
+      ctx.beginPath(); ctx.arc(rp.x, rp.y, CELL * (0.4 + 1.3 * t), 0, TAU); ctx.stroke();
     }
   }
 
@@ -4505,8 +4624,7 @@ window.SnakeRender = (() => {
   }
   // Lightning on its way: a ring closing in on the cell, so you can see how
   // long there is, and a bolt in the middle, both opaque and inked like every
-  // other mark on the board, with a soft glow round the ring as the fields'
-  // rims have. Over the storm's gloom (see-through and under it, the mark of
+  // other mark on the board, with a soft glow round the ring. Over the storm's gloom (see-through and under it, the mark of
   // a cell about to catch fire was a grey smudge).
   const STRIKE_BOLT = [0.17, -0.5, -0.24, 0.09, -0.01, 0.09, -0.15, 0.5, 0.27, -0.11, 0.05, -0.11]; // (a zigzag, one unit tall: x, y, ...)
   function drawStrikes(alpha, now) {
@@ -5119,7 +5237,7 @@ window.SnakeRender = (() => {
     drawCanopy(now);
     drawSnowCover(); // (drifts lie on the bark, under everything on it)
 
-    drawFields(now); // (homes and colonies: their force fields, then the colonies' flags)
+    drawFields(now); // (Sovereign's and Colonist's land, its borders and flags)
 
     drawBurrows(now);
     drawPatch(alpha, now); // (the woodpecker's next patch, on the bark under the snakes)
@@ -5717,7 +5835,6 @@ window.SnakeRender = (() => {
     sprites.clear();
     warmUp(); // (the words and the starburst, at this size)
     veinSprites.clear();
-    fieldLooks.clear();
     resetStatic();
     syncHoles();
     if (next && next.k !== k) { next = null; wantNext(); } // (the next round's log, at this size)
@@ -5779,12 +5896,9 @@ window.SnakeRender = (() => {
     snowCover = 0;
     embers.length = 0;
     ripples.length = 0;
-    dimples.length = 0;
-    homeShown.clear();
+    realms.clear();
     inField.clear();
-    fieldByKey.clear();
     fieldSpecs.length = 0;
-    fieldLooks.clear();
     rgbaCache.clear(); // (bounded anyway: a backstop)
     trimColours(g); // (and so are these)
     drifts = null;
