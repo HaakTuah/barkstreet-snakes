@@ -30,9 +30,8 @@ window.SnakeAI = (() => {
   //   space, territory, aggression  room / board share / shrinking everyone else
   //   food, eat, pellet, foodRange  pull per step toward food, eating bonus, pellet worth, reach (required)
   //   normalFood                    worth of a green apple (default 1); a golden apple is worth 3x
-  //   mushroom                      worth of a mushroom, which shrinks you (default -1: avoid)
-  //   mushroomLover                 from this length on, seek mushrooms and ignore apples
-  //   contested                     how much food a rival reaches first still counts (0-1, true = 1)
+  //   mushroom                      worth of a mushroom, which shrinks you (default -1: avoid; never more while hungry)
+  //   contested                     how much food a rival reaches first still counts (0-1, true = 1; hunger raises it)
   //   hungryBelow, fedFactor        at this length or more, food matters only fedFactor as much
   //   margin, headRisk, zoneRisk    spare room wanted / fear of a rival's next move / of where it might be (required)
   //   distance                      reward per step of distance from the nearest rival head
@@ -193,7 +192,7 @@ window.SnakeAI = (() => {
       win: ['Rides off into the sunset.', 'Last snake in town.', 'Not a scratch on the hat.'],
       w: {
         space: 1, territory: 0.6,
-        food: 6, eat: 80, pellet: 1.5, foodRange: 40, mushroom: 0.5,
+        food: 6, eat: 80, pellet: 1.5, foodRange: 40,
         margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25,
       },
     },
@@ -228,7 +227,7 @@ window.SnakeAI = (() => {
       win: ['Who’s laughing now?', 'Thank you! It’s here all week.', 'And the last laugh.'],
       w: {
         space: 1, territory: 0.6,
-        food: 5, eat: 70, pellet: 1.2, foodRange: 40, mushroom: 0.5,
+        food: 5, eat: 70, pellet: 1.2, foodRange: 40,
         margin: 4, headRisk: 600, zoneRisk: 40, turn: -12,
         lure: { weight: 6, dist: 3 }, hunt: { squeeze: 3, chase: 0, lead: 2 },
       },
@@ -635,6 +634,30 @@ window.SnakeAI = (() => {
     }
 
     if (persona.driver && others.length) drivers[persona.driver]();
+
+    // Desperate: hunger will finish me soon. My own clock, as a person sees
+    // their bar: till my next shrink, then a segment every STARVE_EVERY_MS
+    // down to my smallest (all of it faster in snow). Nothing else matters
+    // now: no errands, any food I can reach in time (a rival's too), and
+    // risks I wouldn't take otherwise. With no food in reach, I hunt: a
+    // rival that crashes drops beads.
+    const myLen = me.body.length + me.grow;
+    const winter = view.weather === 'snow';
+    const lifeMs = me.starveIn == null ? Infinity : (me.starveIn + (myLen - TUNE.MIN_LENGTH) * TUNE.STARVE_EVERY_MS) / (winter ? TUNE.SNOW_HUNGER : 1);
+    const lifeTicks = lifeMs / Math.max(TUNE.MIN_TICK, TUNE.START_TICK - (TUNE.START_TICK - TUNE.MIN_TICK) * view.timeMs / TUNE.RAMP_MS);
+    const desperate = lifeMs < TUNE.AI_DESPERATE_MS;
+    memory.desperate = desperate;
+    if (desperate) {
+      const w0 = ctx.w;
+      ctx.w = {
+        ...w0, contested: 1, foodRange: Math.max(60, w0.foodRange), normalFood: 1, pellet: Math.max(1, w0.pellet ?? 1), mushroom: -1,
+        margin: Math.min(2, w0.margin), headRisk: 0.4 * w0.headRisk, zoneRisk: 0.3 * w0.zoneRisk,
+        territory: 0.5 * w0.territory, aggression: 0, distance: 0, tail: 0, thrill: 0, turn: 0, coil: null, hunt: HUNT,
+      };
+      ctx.victim = -1; ctx.target = null; ctx.lure = -1; ctx.avoid = null; ctx.home = null; ctx.mimicDir = null; ctx.goal = null;
+      const meal = f => f.kind !== 'mushroom' && !(f.kind === 'pellet' && f.owner === me.id) && manhattan(f, myHead) <= lifeTicks;
+      if (others.length && !food.some(meal)) pickVictim(all, HUNT);
+    }
     const w = ctx.w;
 
     // Risk: cells each rival could step into next tick (head-on), and its
@@ -703,32 +726,34 @@ window.SnakeAI = (() => {
     }
     clearOwnFree(me.body, me.body.length);
 
-    // How much food matters right now, given how long I already am. A
-    // mushroom lover past its length limit wants mushrooms instead. Hunger
-    // trumps all of that: with under 10 s before I start starving, everyone
-    // goes looking for food, harder the closer it gets.
-    const myLen = me.body.length + me.grow;
+    // How much food matters right now, given how long I already am. Hunger
+    // trumps that: with under 10 s before I start starving, everyone goes
+    // looking for food, harder the closer it gets (and food a rival may
+    // reach first counts for more); desperate, harder still.
     const hunger = me.hungerLeft == null ? 0 : Math.min(1, Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft) / TUNE.AI_HUNGRY_MS));
     // (Once the woodpecker's here nothing new grows: nobody can afford to be picky.)
     const lean = view.timeMs >= TUNE.SUDDEN_DEATH_MS;
-    const shrinking = !hunger && !lean && w.mushroomLover != null && myLen >= w.mushroomLover;
     const fed = !hunger && !lean && myLen >= (w.hungryBelow ?? Infinity);
-    const foodW = shrinking ? Math.max(3, w.food) : fed ? w.food * w.fedFactor : Math.max(w.food, 8 * hunger) * (1 + 2 * hunger);
-    const eatW = shrinking ? Math.max(40, w.eat) : fed ? w.eat * w.fedFactor : Math.max(w.eat, 150 * hunger) * (1 + 2 * hunger);
+    const foodW0 = fed ? w.food * w.fedFactor : Math.max(w.food, 8 * hunger) * (1 + 2 * hunger);
+    const eatW0 = fed ? w.eat * w.fedFactor : Math.max(w.eat, 150 * hunger) * (1 + 2 * hunger);
+    const foodW = desperate ? Math.max(60, foodW0) : foodW0, eatW = desperate ? Math.max(600, eatW0) : eatW0;
+    const contested = Math.max(Number(w.contested || 0), hunger);
+    // (My own beads give the length back, but they aren't a meal: they're
+    // worth to me what they'd be worth if I weren't hungry at all.)
+    const calm = Math.min(1, (w.food * w.foodRange + w.eat) / (foodW * w.foodRange + eatW));
 
-    // How many ticks an apple I saw has left (in winter it rots twice as
-    // fast, and has done since I saw it).
-    const winter = view.weather === 'snow';
-    const applesLeft = f => winter && !f.cooked ? (f.expires - view.tick - age) / 2 : f.expires - view.tick; // (baked, it keeps)
+    // How many ticks something I saw has left before it rots, withers or
+    // flies off (in winter an apple rots twice as fast, and has done since I saw it).
+    const ticksLeft = f => winter && f.kind === 'food' && !f.cooked ? (f.expires - view.tick - age) / 2 : f.expires - view.tick; // (baked, it keeps)
 
     // Food worth by kind. Negative means "avoid eating".
     const apple = w.normalFood ?? 1;
     const worth = {
-      food: shrinking ? 0 : Math.max(apple, hunger),
-      golden: shrinking ? 0 : TUNE.GOLDEN_GROWTH * Math.max(apple, hunger),
-      beetle: shrinking ? 0 : TUNE.BEETLE_GROWTH * Math.max(apple, hunger), // it moves, but it's worth what it's worth
-      pellet: shrinking ? 0 : (w.pellet ?? 1),
-      mushroom: shrinking ? 2 : (w.mushroom ?? -1),
+      food: Math.max(apple, hunger),
+      golden: TUNE.GOLDEN_GROWTH * Math.max(apple, hunger),
+      beetle: TUNE.BEETLE_GROWTH * Math.max(apple, hunger), // it moves, but it's worth what it's worth
+      pellet: w.pellet ?? 1,
+      mushroom: hunger > 0 ? Math.min(-1, w.mushroom ?? -1) : w.mushroom ?? -1, // (never worth anything while hungry: it shrinks you, and it isn't a meal)
       leaf: 2 * Math.max(apple, hunger, 0.5), // (golden powers: worth it for what they do)
       goldcap: 1.5 * Math.max(apple, hunger, 0.5),
     };
@@ -743,7 +768,10 @@ window.SnakeAI = (() => {
       if (!v) continue;
       if (f.cooked && v > 0) v *= TUNE.COOKED_GROWTH; // (baked: worth more)
       if (f.gold && v > 0) v *= 1.5; // (a golden beetle: leaps too)
-      if (f.kind === 'food' && f.expires != null && applesLeft(f) < Math.abs(f.x - myHead.x) + Math.abs(f.y - myHead.y)) continue; // (it'll have rotted)
+      if (f.kind === 'pellet' && f.owner === me.id) v *= calm;
+      const away = manhattan(f, myHead);
+      if (f.expires != null && ticksLeft(f) < away) continue; // (it'll be gone before I get there)
+      if (desperate && v > 0 && away > lifeTicks + 1) continue; // (I'd starve on the way)
       const i = f.y * N + f.x;
       foodValue[i] += v;
       foodCells[foodCount++] = i;
@@ -865,7 +893,7 @@ window.SnakeAI = (() => {
       }
 
       // 3. Food: a steady pull of foodW per step closer. Normally only food I
-      //    reach before any rival counts; a contested eater counts all of it.
+      //    reach before any rival counts in full.
       let foodScore = 0;
       for (let k = 0; k < foodCount; k++) {
         const i = foodCells[k], v = foodValue[i];
@@ -873,9 +901,9 @@ window.SnakeAI = (() => {
           foodScore = Math.max(foodScore, v * Math.max(0, w.foodRange - (claimT[i] - t)));
         }
       }
-      if (w.contested) foodScore = Math.max(foodScore, Number(w.contested) * anyFood);
-      // Nothing uncontested: drift toward the nearest food anyway, more weakly.
-      else if (foodScore === 0) foodScore = 0.3 * anyFood;
+      // The rest counts as much as I care (contested: hunger raises it), and
+      // with nothing uncontested I drift toward the nearest anyway, more weakly.
+      foodScore = Math.max(foodScore, (foodScore ? contested : Math.max(0.3, contested)) * anyFood);
 
       let othersTerritory = 0;
       for (let k = 1; k < owners; k++) othersTerritory += counts[k];
