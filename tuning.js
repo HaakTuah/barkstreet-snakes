@@ -7,7 +7,7 @@ window.TUNING = Object.freeze({
   OPPONENTS: 3,             // AI rivals in a normal round (an AI-only round has one more)
 
   // ------------------------------------------------------------------ food
-  APPLES: 3,                // green apples on the board at all times (+1)
+  APPLES: 3,                // green apples on the board for the opening (eaten or rotted, another drops somewhere)...
   APPLES_LATE: 2,           // ...and this many once the opening's over (hunger should matter mid-round)...
   APPLES_LATE_FROM: 45000,  // ...from this much game time
   APPLE_TICKS: 110,         // an apple rots away after about this many ticks (give or take a quarter: about 8-16 s), and another drops somewhere
@@ -91,7 +91,7 @@ window.TUNING = Object.freeze({
   MUSIC_MID_MS: 45000,      // the soundtrack picks up (shaker, faster) after this much game time
 
   // ---------------------------------------------------------- sudden death
-  SUDDEN_DEATH_MS: 120000,  // the woodpecker arrives after two minutes; no new food after that
+  SUDDEN_DEATH_MS: 120000,  // the woodpecker arrives after two minutes; nothing new grows after that but the last apples (SD_APPLE_GAP)
   PECK_ARRIVE_TICKS: 12,    // it lands, has a look round...
   PECK_CHUNK: 7,            // ...then takes out a patch of this many cells somewhere on the log...
   PECK_AIM_TICKS: 17,       // ...eyeing it this long first (everyone sees where: about a second and a half)...
@@ -102,7 +102,7 @@ window.TUNING = Object.freeze({
   PECK_CLEARANCE: 4,        // it aims clear of all food, and more than this far from every head (nobody can be in a fresh mark before they can see it), while there's such a spot
   PECK_UNDER_BODY: 0.33,    // this share of strikes starts under a body (a body lying over a fresh hole bridges it; only a head falls in)
   PECK_WIDEN: 0.5,          // this share widens an old hollow (fewer, bigger hollows)
-  SD_APPLE_GAP: 20,         // sudden death: with no apple on the board, the next falls this many ticks times how many have fallen since 2:00 after the last went
+  SD_APPLE_GAP: 20,         // sudden death: with no apple on the board, the next falls this many ticks after the last went, times its number (about 2 s, 4 s, 6 s...)
 
   // --------------------------------------------------------------- burrows
   BURROW_MAX: 3,            // beetle burrows that crack open in the bark over a round (harmless to cross)
