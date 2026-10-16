@@ -2723,7 +2723,7 @@ window.SnakeRender = (() => {
     meetings();
     for (const s of live) prepare(s, alpha, now, false);
     drawShadows();
-    if (fieldSpecs.length) drawFieldHues(now); // (a land's colour round a rival on it, under every outline and body)
+    if (fieldSpecs.length && huesOn) drawFieldHues(now); // (a land's colour round a rival on it, under every outline and body)
     // Then outlines, bodies, flames and queasy washes, each pass for every
     // snake on the ground, then the same for any up in the air: a leaper's
     // outline goes over what it's hopping, not under it (which made it look
@@ -4612,18 +4612,21 @@ window.SnakeRender = (() => {
   // it, as if it were wading through it: a line of the colour hugging it,
   // just outside everything drawn round it (an outline, a gold line), and a
   // soft glow of it beyond. Only the pieces on the land's own cells (no
-  // clip: the cut is cell-exact). The glow (the shape grown FIELD_GLOW_GROW)
-  // goes into the veil, a snake at a time and only round what of it is on
-  // land, and is laid on at FIELD_GLOW; the line (FIELD_LINE wide, opaque)
-  // goes straight on the board. The snake drawn over them covers their
-  // inside, so its body keeps its own colours (on land two owners claim,
-  // the later colour wins). Outside the line, the border's own parchment
-  // keyline, so it shows round a body of the land's own hue (rose round
-  // Sniper's red) and to colour-blind eyes (the bark beyond it is its ink:
-  // an ink ring as well cost a third pass). Where a head just crossed
-  // in: a ripple at it (over the snakes: see drawRipples), and the border
-  // lights up from there.
+  // clip: the cut is cell-exact). The glow (the shape grown FIELD_GLOW_GROW,
+  // smoothed: see bodyFillsOn) goes into the veil, a snake at a time and
+  // only round what of it is on land, and is laid on at FIELD_GLOW; the
+  // line (FIELD_LINE wide, opaque) goes straight on the board. The snake
+  // drawn over them covers their inside, so its body keeps its own colours
+  // (on land two owners claim, the later colour wins). Outside the line,
+  // the border's own parchment keyline, so it shows round a body of the
+  // land's own hue (rose round Sniper's red) and to colour-blind eyes (the
+  // bark beyond it is its ink: an ink ring as well cost a third pass).
+  // Each pass is separate fills, not one path: one path of the pieces (or
+  // of only the circles), or the line stroked round its fill, cost more.
+  // Where a head just crossed in: a ripple at it (over the snakes: see
+  // drawRipples), and the border lights up from there.
   const FIELD_GLOW = 0.16, FIELD_GLOW_GROW = 8, FIELD_LINE = 2.6, huedOn = [];
+  let huesOn = true; // (off only for tools/bench.js, timing them: see hues below)
   function drawFieldHues(now) {
     for (const s of game.snakes) {
       if (!s.alive) continue;
@@ -4656,7 +4659,7 @@ window.SnakeRender = (() => {
       if (!huedOn.length) continue;
       const edge = edgeOf(s, a), m = CELL + 12; // (round the pieces: a band and a glow's width more)
       veilOn(0, 0, x0 - m, y0 - m, x1 + m, y1 + m);
-      for (const r of huedOn) { ctx.fillStyle = r.color; bodyFillsOn(a, edge + FIELD_GLOW_GROW, r); }
+      for (const r of huedOn) { ctx.fillStyle = r.color; bodyFillsOn(a, edge + FIELD_GLOW_GROW, r, true); }
       veilOff(FIELD_GLOW);
       ctx.fillStyle = KEYLINE_SOLID; // (opaque: the pieces overlap)
       for (const r of huedOn) bodyFillsOn(a, edge + FIELD_LINE + BORDER_KEY, r);
@@ -4669,20 +4672,38 @@ window.SnakeRender = (() => {
     return x >= 0 && y >= 0 && x < GRID && y < GRID && r.shown[y * GRID + x] === 1;
   }
   // bodyFills (see the snakes' drawing), only the pieces on r's land: a
-  // band where either of its ends is, a segment where it is.
-  function bodyFillsOn(a, grow, r) {
-    const p = a.pts, c = a.cor, rad = a.rad, n = a.n;
+  // band where either of its ends is, a segment where it is. Soft (the
+  // glow): a smooth sausage instead of the caterpillar's bumps and waists,
+  // its bands as wide as its segments, so a segment's round is needed only
+  // at the ends and where the body turns. (A circle is the dear part of a
+  // pass: *measured*, one 40 units across costs about five times a square
+  // 40 units a side, and the glow's, grown furthest, are the biggest. Soft,
+  // the land's colour round a rival costs 0.1 to 0.3 ms a frame less, most
+  // of what its keyline costs: see tools/bench.js --land.)
+  function bodyFillsOn(a, grow, r, soft) {
+    const p = a.pts, c = a.cor, rad = a.rad, n = a.n, pinch = soft ? 1 : PINCH;
     for (let i = n - 2; i >= 0; i--) {
       if (!onShown(r, p[2 * i], p[2 * i + 1]) && !onShown(r, p[2 * i + 2], p[2 * i + 3])) continue;
-      const h = rad[i + 1] * PINCH + grow, x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+      const h = rad[i + 1] * pinch + grow, x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
       if ((near(x1, qx) && near(qx, x2)) || (near(y1, qy) && near(qy, y2))) rectPiece(x1, y1, x2, y2, h);
       else { rectPiece(x1, y1, qx, qy, h); rectPiece(qx, qy, x2, y2, h); }
     }
     for (let i = n - 1; i >= 0; i--) {
       if (!onShown(r, p[2 * i], p[2 * i + 1])) continue;
-      if (i < n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * PINCH + grow);
-      circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
+      if (i < n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * pinch + grow);
+      if (!soft || !straightAt(a, i)) circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
     }
+  }
+  // Does the body run straight through segment i's centre, along the grid
+  // (not at either end)? In from the corner behind it (or the segment before,
+  // if that corner's where it is), out to the corner ahead (or the next).
+  function straightAt(a, i) {
+    if (i === 0 || i >= a.n - 1) return false;
+    const p = a.pts, c = a.cor, x = p[2 * i], y = p[2 * i + 1];
+    let ax = c[2 * i - 2], ay = c[2 * i - 1], bx = c[2 * i], by = c[2 * i + 1];
+    if (near(ax, x) && near(ay, y)) { ax = p[2 * i - 2]; ay = p[2 * i - 1]; }
+    if (near(bx, x) && near(by, y)) { bx = p[2 * i + 2]; by = p[2 * i + 3]; }
+    return (near(ax, x) && near(x, bx)) || (near(ay, y) && near(y, by));
   }
   // Over the snakes: a ripple where a head just crossed onto someone's land.
   function drawRipples(now) {
@@ -6949,5 +6970,6 @@ window.SnakeRender = (() => {
     guideSprite, // (the Field guide's pictures)
     get particles() { return pLive; },
     streaked: () => streaks.map(k => ({ from: [k.fx, k.fy], to: [k.tx, k.ty], seen: k.pre >= 0 })), // (the dash streaks drawn: for the tests)
+    hues(on) { huesOn = !!on; }, // (a land's colour round a rival on it, drawn or not: for the benchmark, which times it)
   };
 })();
