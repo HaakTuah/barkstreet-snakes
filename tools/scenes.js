@@ -86,9 +86,22 @@ const SCENES = {
   })()`,
 };
 
+// Page-side source: window.__sync(), which waits for the GPU to finish the
+// board, by reading one pixel of it back through a one-pixel canvas of its
+// own. (Read back from the board itself, Chrome takes it for a canvas that's
+// read often and moves it off the GPU: after about a hundred readbacks every
+// frame cost ten times as much, a circle the most, so whatever ran late in a
+// run of tools/bench.js was timed on the CPU.)
+const SYNC = `window.__sync ||= (() => {
+  const c = document.getElementById('game'), p = document.createElement('canvas'); p.width = p.height = 1;
+  const g = p.getContext('2d', { willReadFrequently: true });
+  return () => { g.drawImage(c, 0, 0, 1, 1, 0, 0, 1, 1); g.getImageData(0, 0, 1, 1); };
+})();`;
+
 // Page-side source that sets up a scene: window.__scene.draw(alpha, now).
 // It's drawn for a moment first, so what pops in or grows has settled.
 const setup = name => `(() => {
+  ${SYNC}
   const R = SnakeRender, g = ${SCENES[name]};
   R.setGame(g);
   window.__scene = { game: g, f: 0, strike: g.strike || null, draw(alpha, now) { R.frame(alpha, now); } };
@@ -99,11 +112,11 @@ const setup = name => `(() => {
 
 // Page-side source: the full cost of a frame (script and the GPU's raster),
 // drawn back to back in batches, each closed by a one-pixel readback that
-// waits for the GPU. Resolves to ms per frame (median over the batches).
+// waits for the GPU (see SYNC). Resolves to ms per frame (median over the batches).
 const throughput = (batches = 12, frames = 30) => `(async () => {
-  const c = document.getElementById('game'), x = c.getContext('2d');
+  ${SYNC}
   window.__t ||= performance.now(); // (one clock for every run in the page: it only goes forward)
-  const run = () => { const t0 = performance.now(); for (let i = 0; i < ${frames}; i++) { __t += 7; __scene.draw((__scene.f++ % 10) / 10, __t); } x.getImageData(0, 0, 1, 1); return (performance.now() - t0) / ${frames}; };
+  const run = () => { const t0 = performance.now(); for (let i = 0; i < ${frames}; i++) { __t += 7; __scene.draw((__scene.f++ % 10) / 10, __t); } __sync(); return (performance.now() - t0) / ${frames}; };
   run();
   const out = [];
   for (let b = 0; b < ${batches}; b++) { await new Promise(r => setTimeout(r, 20)); out.push(run()); }
@@ -118,13 +131,14 @@ const throughput = (batches = 12, frames = 30) => `(async () => {
 const strikes = (rounds = 24) => `(async () => {
   const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return +s[Math.min(s.length - 1, Math.floor(s.length * p))].toFixed(2); };
   const sum = a => ({ median: q(a, 0.5), p90: q(a, 0.9), worst: q(a, 1) });
-  const g = __scene.game, x = document.getElementById('game').getContext('2d'), steady = [], strike = [];
+  ${SYNC}
+  const g = __scene.game, steady = [], strike = [];
   for (let n = 0; n < ${rounds}; n++) {
     await new Promise(r => setTimeout(r, 15));
-    x.getImageData(0, 0, 1, 1);
-    let t0 = performance.now(); __t += 16; __scene.draw(0.5, __t); x.getImageData(0, 0, 1, 1); steady.push(performance.now() - t0);
+    __sync();
+    let t0 = performance.now(); __t += 16; __scene.draw(0.5, __t); __sync(); steady.push(performance.now() - t0);
     for (const k of __scene.strike) g.holes.add(k);
-    t0 = performance.now(); __t += 16; __scene.draw(0.5, __t); x.getImageData(0, 0, 1, 1); strike.push(performance.now() - t0);
+    t0 = performance.now(); __t += 16; __scene.draw(0.5, __t); __sync(); strike.push(performance.now() - t0);
     for (const k of __scene.strike) g.holes.delete(k);
     __t += 16; __scene.draw(0.5, __t); // (the board painted again without them)
   }
@@ -139,17 +153,18 @@ const strikes = (rounds = 24) => `(async () => {
 const burnouts = (rounds = 24) => `(async () => {
   const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return +s[Math.min(s.length - 1, Math.floor(s.length * p))].toFixed(2); };
   const sum = a => ({ median: q(a, 0.5), p90: q(a, 0.9), worst: q(a, 1) });
-  const g = __scene.game, x = document.getElementById('game').getContext('2d'), steady = [], burnout = [];
+  ${SYNC}
+  const g = __scene.game, steady = [], burnout = [];
   let seed = 5;
   const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   for (let n = 0; n < ${rounds}; n++) {
     await new Promise(r => setTimeout(r, 15));
     const cells = [];
     while (cells.length < 3) { const k = Math.floor(rnd() * 576); if (!g.holes.has(k) && !cells.includes(k)) cells.push(k); }
-    g.fires = new Map(cells.map(k => [k, { from: 0, until: 1e9 }])); g.tick++; __t += 16; __scene.draw(0.5, __t); x.getImageData(0, 0, 1, 1);
-    let t0 = performance.now(); __t += 16; __scene.draw(0.5, __t); x.getImageData(0, 0, 1, 1); steady.push(performance.now() - t0);
+    g.fires = new Map(cells.map(k => [k, { from: 0, until: 1e9 }])); g.tick++; __t += 16; __scene.draw(0.5, __t); __sync();
+    let t0 = performance.now(); __t += 16; __scene.draw(0.5, __t); __sync(); steady.push(performance.now() - t0);
     g.fires = new Map(); g.tick++;
-    t0 = performance.now(); __t += 16; __scene.draw(0.5, __t); x.getImageData(0, 0, 1, 1); burnout.push(performance.now() - t0);
+    t0 = performance.now(); __t += 16; __scene.draw(0.5, __t); __sync(); burnout.push(performance.now() - t0);
   }
   return { steady: sum(steady), burnout: sum(burnout) };
 })()`;

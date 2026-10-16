@@ -1208,9 +1208,11 @@ window.SnakeRender = (() => {
         // further a flash takes it (mf) and which way (mdx, mdy); the same as
         // the last frame drew them (pTick: that frame's tick), and each
         // segment's easing out of a wrong guess (fix: units, fading; see
-        // prepare). streakTick: the tick its flash was seen coming.
-        mx: 0, my: 0, mv: 0, mg: 0, ml: 0, mf: 0, mdx: 0, mdy: 0, pmx: 0, pmy: 0, pmv: 0, pmf: 0, pmdx: 0, pmdy: 0, streakTick: -1, pTick: -1, phx: -99, phy: -99, fixFar: false, rise: 0, swell: 0,
-        fix: new Float32Array(64), fixOn: false, tdx: s.dir.x, tdy: s.dir.y, bx: 0, by: 0, drawnAt: -1,
+        // prepare; fixFast: a flash's guess put right, which goes as fast as
+        // a dash). streakTick: the tick its flash was seen coming, and where
+        // to (streakX, streakY).
+        mx: 0, my: 0, mv: 0, mg: 0, ml: 0, mf: 0, mdx: 0, mdy: 0, pmx: 0, pmy: 0, pmv: 0, pmf: 0, pmdx: 0, pmdy: 0, streakTick: -1, streakX: 0, streakY: 0, pTick: -1, phx: -99, phy: -99, fixFar: false, rise: 0, swell: 0,
+        fix: new Float32Array(64), fixOn: false, fixFast: false, tdx: s.dir.x, tdy: s.dir.y, bx: 0, by: 0, drawnAt: -1,
         jc: false, fc: false, flashFx: -1e9, // (your rests: cooling last frame; when your flash came back)
       };
       anim.set(s, a);
@@ -1545,8 +1547,13 @@ window.SnakeRender = (() => {
       }
     }
     if (m > n) { pts[2 * n] = cor[2 * n - 2]; pts[2 * n + 1] = cor[2 * n - 1]; } // (the tail end that stays)
-    if (k2 > 0 && a.mf && a.streakTick !== game.tick) { a.streakTick = game.tick; streakOf(s, h0.x, h0.y, a.mx, a.my, !(s.dashes > 0), now, game.tick); } // (its flash, seen coming: its streak now)
-    if (game) refix(s, a, at, snap);
+    // Its flash, seen coming: its streak now (its flecks once it's gone: see
+    // onTick). Seen going another way, or somewhere else, or not going after
+    // all (a turn pressed since, say): that streak goes, and the new way gets
+    // its own.
+    if (a.streakTick === game?.tick && !(k2 > 0 && a.mf && a.streakX === a.mx && a.streakY === a.my)) { unstreak(s); a.streakTick = -1; }
+    if (k2 > 0 && a.mf && a.streakTick !== game.tick) { a.streakTick = game.tick; a.streakX = a.mx; a.streakY = a.my; streakOf(s, h0.x, h0.y, a.mx, a.my, !(s.dashes > 0), now, game.tick); }
+    if (game) refix(s, a, at, snap, ran ? behind : null);
     if (a.fixOn) for (let i = 0; i < 2 * m; i++) pts[i] += a.fix[i];
     a.bx = pts[0]; a.by = pts[1]; a.drawnAt = lastNow; // (where its head is drawn, for its speech bubble)
     a.offs = wrapped ? unwrap(a, m) : null;
@@ -1634,8 +1641,7 @@ window.SnakeRender = (() => {
     return s.plannedTick === game.tick && s.planned ? s.planned : s.dir;
   }
   // Has it asked to jump, or to flash, for this tick? (Asked both, the game
-  // hops first if the jump can go; predict() still guesses the flash, and a
-  // wrong guess eases back.)
+  // hops first if the jump can go, and so does the guess: see predict.)
   const asksJump = s => s.leapArmed >= game.tick || ((!s.isPlayer || s.autopilot) && s.plannedTick === game.tick && s.memory.power === game.tick);
   const asksFlash = s => s.flashArmed >= game.tick || ((!s.isPlayer || s.autopilot) && s.plannedTick === game.tick && s.memory.flash === game.tick);
   // Where a snake goes next, as far as this screen can tell (a.mx, a.my;
@@ -1643,27 +1649,39 @@ window.SnakeRender = (() => {
   // anything). A stunned snake stays. One about to crash (off the board, a
   // hole, a body still there after the move) holds at its cell's centre,
   // and the crash's lunge plays at the tick. One in the air comes down where
-  // it was going. A jump asked for, with something to hop and somewhere to
-  // land, leaps: it starts rising before its tick. A flash asked for that's
-  // sure to go and take it more than a cell runs on ahead (a.mf: the cells
-  // past the next): from when its head is drawn past its cell's centre, it's
-  // drawn where the flash takes it, as it will be at the tick. (Fire isn't a
-  // crash: a crawl goes in.)
+  // it was going. A jump asked for that can go (see hops) leaps: it starts
+  // rising before its tick, whether or not a flash is asked for too (the
+  // game hops first: the flash waits till it's landed). Else a flash asked
+  // for that's sure to go and take it more than a cell runs on ahead (a.mf:
+  // the cells past the next): from when its head is drawn past its cell's
+  // centre, it's drawn where the flash takes it, as it will be at the tick.
+  // (Fire isn't a crash: a crawl goes in.)
   function predict(s, a) {
     const h = s.body[0];
     a.mx = h.x; a.my = h.y; a.mv = 0; a.mg = 0; a.ml = 0; a.mf = 0;
     if (!s.alive || s.stunUntil > game.tick) return;
     const d = s.flight ? s.flight.dir : wayOf(s), x = wrapX(s, h.x + d.x), y = wrapX(s, h.y + d.y);
     a.mx = x; a.my = y; a.mv = 1; a.mg = s.grow > 0 ? 1 : 0; a.mdx = d.x; a.mdy = d.y;
+    if (!s.flight && asksJump(s) && hops(s, h, d, game.time)) { a.ml = 1; return; }
     if (!s.flight && asksFlash(s)) {
       const go = flashReach(s, d, x, y);
       if (go > 1) { a.mf = go - 1; a.mx = wrapX(s, h.x + d.x * go); a.my = wrapX(s, h.y + d.y * go); return; }
     }
-    if (!s.flight && asksJump(s) && !asksFlash(s) && (s.leaps > 0 || (game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH)) && hurdleAt(x, y)) {
-      const lx = wrapX(s, x + d.x), ly = wrapX(s, y + d.y), fx = wrapX(s, lx + d.x), fy = wrapX(s, ly + d.y);
-      if (!offBoard(lx, ly) && (!hurdleAt(lx, ly) || (s.leaps > 0 && !offBoard(fx, fy) && !hurdleAt(fx, fy)))) { a.ml = 1; return; } // (a golden one hops two)
-    }
     if (offBoard(x, y) || game.holes.has(y * GRID + x) || stays[y * GRID + x]) { a.mv = 0; a.mg = 0; }
+  }
+  // Would a jump asked for go, its head at h heading d, the game's clock at
+  // t (as the game's hopPlan has it)? Golden, or the plain one rested and
+  // long enough; something right in front to hop and a free cell beyond it
+  // to land on, or, golden, something in the two in front and the third free.
+  function hops(s, h, d, t) {
+    const gold = s.leaps > 0;
+    if (!gold && (t < s.leapReadyAt || s.body.length <= T.MIN_LENGTH)) return false;
+    const x1 = wrapX(s, h.x + d.x), y1 = wrapX(s, h.y + d.y), x2 = wrapX(s, x1 + d.x), y2 = wrapX(s, y1 + d.y);
+    if (offBoard(x1, y1) || offBoard(x2, y2)) return false;
+    const over = hurdleAt(x1, y1);
+    if (over && !hurdleAt(x2, y2)) return true;
+    const x3 = wrapX(s, x2 + d.x), y3 = wrapX(s, y2 + d.y);
+    return gold && !offBoard(x3, y3) && (over || hurdleAt(x2, y2)) && !hurdleAt(x3, y3);
   }
   // How many cells a flash asked for takes a head this tick, (x, y) being
   // the first, as the game moves it: a plain one, if it's rested, up to
@@ -1699,10 +1717,10 @@ window.SnakeRender = (() => {
   // The j-th cell of the way a snake with a flash on ahead (a.mf) is drawn
   // heading, into chX, chY: the cells the flash takes its head through, from
   // where it lands, then its body (segment i goes from cell i + 1 to cell
-  // i). With `last`, its last guess's, on its last body.
+  // i). With `last`, its last guess's, on its last body (or on `body`).
   let chX = 0, chY = 0;
-  function along(s, a, j, last) {
-    const go = (last ? a.pmf : a.mf) + 1, body = last ? s.prev : s.body;
+  function along(s, a, j, last, body = last ? s.prev : s.body) {
+    const go = (last ? a.pmf : a.mf) + 1;
     if (j < go) { const h = body[0]; chX = wrapX(s, h.x + (last ? a.pmdx : a.mdx) * (go - j)); chY = wrapX(s, h.y + (last ? a.pmdy : a.mdy) * (go - j)); }
     else { const c = body[Math.min(j - go, body.length - 1)]; chX = c.x; chY = c.y; }
   }
@@ -1721,13 +1739,19 @@ window.SnakeRender = (() => {
   // snake's drawn heading changes (a plan made late, your press in the
   // second half of a tick, a crash nobody saw coming, or the tick shows it
   // went elsewhere), the difference stays on each segment as an offset that
-  // fades over about FIX_MS. A dash isn't eased: it's there at once.
-  const FIX_MS = 35, FIX_SPEED = CELL * 0.012; // (units a ms: 12 cells a second, about a snake's top speed)
+  // fades over about FIX_MS. A dash isn't eased: it's there at once; nor is
+  // a flash seen coming (it's there at once, as a dash is). But a flash seen
+  // coming that then goes another way (a turn pressed after it, even in the
+  // tick's own frame), or somewhere else, is put right as any other guess
+  // is, as fast as a dash goes (FIX_DASH); one that doesn't go at all eases
+  // back as any other. (behind: dashed this tick, where its tail is drawn
+  // from, a cell back along its body: see prepare.)
+  const FIX_MS = 35, FIX_SPEED = CELL * 0.012, FIX_DASH = CELL * 0.03; // (units a ms: 12 cells a second, about a snake's top speed; 30, about a dash's)
   const wd = v => v > GRID / 2 ? v - GRID : v < -GRID / 2 ? v + GRID : v; // (a step in cells, across a wrapped edge)
-  function refix(s, a, at, snap) {
+  function refix(s, a, at, snap, behind) {
     const n = s.body.length, fix = a.fix, body = s.body, prev = s.prev;
     if (a.fixOn) { // (what's left fades, never faster than FIX_SPEED: a big one takes a little longer)
-      const keep = Math.exp(-frameDt / (FIX_MS / 3)), most = FIX_SPEED * frameDt;
+      const keep = Math.exp(-frameDt / (FIX_MS / 3)), most = (a.fixFast ? FIX_DASH : FIX_SPEED) * frameDt;
       let left = 0;
       for (let i = 0; i < fix.length; i += 2) {
         const x = fix[i], y = fix[i + 1], d = Math.hypot(x, y);
@@ -1736,13 +1760,22 @@ window.SnakeRender = (() => {
         fix[i] = x * k; fix[i + 1] = y * k;
         left = Math.max(left, d * k);
       }
-      if (left < 0.25) { fix.fill(0); a.fixOn = false; }
+      if (left < 0.25) unfix(a);
     }
     const same = a.pTick === game.tick, from = same ? body[0] : prev?.[0]; // (where its head was when it last guessed)
-    if (snap || reduced || (!same && a.pTick !== game.tick - 1) || !from || from.x !== a.phx || from.y !== a.phy) { // (dashing, too long since, or put somewhere else: start afresh)
-      if (a.fixOn) { fix.fill(0); a.fixOn = false; }
-    } else if (same && (a.pmf !== a.mf || (a.mf && (a.pmx !== a.mx || a.pmy !== a.my)))) { // (a flash seen coming, or no longer: it's there at once, as a dash is)
-      if (a.fixOn) { fix.fill(0); a.fixOn = false; }
+    const fresh = !!from && from.x === a.phx && from.y === a.phy && (same || a.pTick === game.tick - 1); // (it last guessed from where it was: this tick, or the last)
+    if (reduced || !fresh || (snap && !same && !(a.pmf && behind))) { // (a dash not seen coming, too long since, or put somewhere else: start afresh)
+      if (a.fixOn) unfix(a);
+    } else if (same && a.mf && !a.pmf) { // (a flash seen coming: it's there at once, as a dash is)
+      if (a.fixOn) unfix(a);
+    } else if (same && a.pmf && (a.mf !== a.pmf || a.mx !== a.pmx || a.my !== a.pmy || a.mdx !== a.pmdx || a.mdy !== a.pmdy)) { // (a flash seen coming that's now going another way, or somewhere else, or not at all)
+      const k2 = Math.max(0, at - 1);
+      if (k2 > 0) for (let i = 0; i < n; i++) {
+        drawnOff(s, a, i, k2, true); const ox = offX, oy = offY;
+        drawnOff(s, a, i, k2, false);
+        fixAdd(a, i, ox - offX, oy - offY, 2 * T.DASH_LENGTH); // (two guesses at right angles: never more than this apart)
+      }
+      if (a.fixOn) a.fixFast = true;
     } else if (same) { // (the same tick: a different guess)
       const kk = Math.max(0, at - 1);
       if (kk > 0 && (a.pmv !== a.mv || a.pmx !== a.mx || a.pmy !== a.my)) {
@@ -1750,26 +1783,42 @@ window.SnakeRender = (() => {
         fixAdd(a, 0, kk * (a.pmv * wd(a.pmx - hx) - a.mv * wd(a.mx - hx)), kk * (a.pmv * wd(a.pmy - hy) - a.mv * wd(a.my - hy)));
         if (a.pmv !== a.mv) for (let i = 1; i < n; i++) fixAdd(a, i, kk * (a.pmv - a.mv) * wd(body[i - 1].x - body[i].x), kk * (a.pmv - a.mv) * wd(body[i - 1].y - body[i].y));
       }
-    } else { // (a tick on: where the last guess would have it now, against where it is)
+    } else { // (a tick on: where the last guess would have it now, against where it is; a flash seen coming that's gone, from where it's drawn going on from)
       const k1 = Math.min(1, at);
       for (let i = 0; i < n && i < prev.length; i++) {
-        const p = prev[i];
+        const p = prev[i], b = !behind ? p : i < n - 1 ? body[i + 1] : behind;
         let gx, gy; // (where the last guess would have it now, from p)
-        if (a.pmf) { along(s, a, i + 1, true); const fx = chX, fy = chY; along(s, a, i, true); gx = wd(fx - p.x) + wd(chX - fx) * at; gy = wd(fy - p.y) + wd(chY - fy) * at; } // (a flash that didn't go)
+        if (a.pmf) { along(s, a, i + 1, true); const fx = chX, fy = chY; along(s, a, i, true); gx = wd(fx - p.x) + wd(chX - fx) * at; gy = wd(fy - p.y) + wd(chY - fy) * at; } // (a flash that didn't go, or went)
         else { const qx = i ? prev[i - 1].x : a.pmx, qy = i ? prev[i - 1].y : a.pmy; gx = a.pmv * wd(qx - p.x) * at; gy = a.pmv * wd(qy - p.y) * at; }
-        const ex = gx - wd(body[i].x - p.x) * k1, ey = gy - wd(body[i].y - p.y) * k1;
-        if (ex || ey) fixAdd(a, i, ex, ey);
+        const ex = gx - wd(b.x - p.x) - wd(body[i].x - b.x) * k1, ey = gy - wd(b.y - p.y) - wd(body[i].y - b.y) * k1;
+        if (ex || ey) fixAdd(a, i, ex, ey, behind ? 2 * T.DASH_LENGTH : 2.5);
       }
+      if (behind && a.fixOn) a.fixFast = true;
     }
-    if (a.fixOn && a.fixFar) { fix.fill(0); a.fixOn = false; } // (more than a guess could be out by: it jumped, so it jumps)
+    if (a.fixOn && a.fixFar) unfix(a); // (more than a guess could be out by: it jumped, so it jumps)
     a.fixFar = false;
     a.pmx = a.mx; a.pmy = a.my; a.pmv = a.mv; a.pmf = a.mf; a.pmdx = a.mdx; a.pmdy = a.mdy; a.pTick = game.tick; a.phx = body[0].x; a.phy = body[0].y;
   }
-  function fixAdd(a, i, dx, dy) {
+  function fixAdd(a, i, dx, dy, far = 2.5) {
     if (Math.abs(dx) + Math.abs(dy) < 0.01) return;
-    if (Math.abs(dx) + Math.abs(dy) > 2.5) a.fixFar = true;
+    if (Math.abs(dx) + Math.abs(dy) > far) a.fixFar = true;
     a.fixOn = true;
     a.fix[2 * i] += dx * CELL; a.fix[2 * i + 1] += dy * CELL;
+  }
+  function unfix(a) { a.fix.fill(0); a.fixOn = false; a.fixFast = false; }
+  // Where segment i is drawn, k2 (> 0) on past its cell, as this frame's
+  // guess has it (or with `last`, the last frame's, this tick), in cells
+  // from its cell: into offX, offY. (As prepare draws it: see there.)
+  let offX = 0, offY = 0;
+  function drawnOff(s, a, i, k2, last) {
+    const c = s.body[i];
+    if (last ? a.pmf : a.mf) {
+      along(s, a, i + 1, last, s.body); const fx = wd(chX - c.x), fy = wd(chY - c.y);
+      along(s, a, i, last, s.body); offX = fx + (wd(chX - c.x) - fx) * k2; offY = fy + (wd(chY - c.y) - fy) * k2;
+    } else {
+      const v = last ? a.pmv : a.mv, nx = i ? s.body[i - 1].x : last ? a.pmx : a.mx, ny = i ? s.body[i - 1].y : last ? a.pmy : a.my;
+      offX = v * wd(nx - c.x) * k2; offY = v * wd(ny - c.y) * k2;
+    }
   }
 
   // A coordinate (in cells) moved a whole board's width, if that brings it
@@ -2267,8 +2316,9 @@ window.SnakeRender = (() => {
     // inside an ink line, so it reads on any body (ember on Gobbler's
     // orange, sky on Metagamer's cyan), and a diamond points along the arc's
     // spokes, so side by side they never touch (three of them read as a
-    // zigzag seam). At the board's edge they all move in together, so none
-    // is cut off (on a phone the tag hides the counts: the pips are them).
+    // zigzag seam). At the board's edge the arc swings round the head onto
+    // the board, so none is cut off and none lands on the head (on a phone
+    // the tag hides the counts: the pips are them).
     const leaps = dead ? 0 : s.leaps, dashes = dead ? 0 : s.dashes;
     if (leaps || dashes) drawPips(pts[0], pts[1], Math.atan2(a.hs, a.hc) + Math.PI, rad[0], a.swell, leaps, dashes, !a.offs); // (not across a wrapped edge: there it shows at the other)
     if (!dead && s.id === viewerId && game) drawRests(s, a, now);
@@ -2302,20 +2352,55 @@ window.SnakeRender = (() => {
 
   // The pips of golden powers held (see drawBody), round a head at (x, y)
   // of radius hr, on the arc behind it (back: that way, as an angle; swell:
-  // its leap's). With keepOn, at the board's edge they all move in together.
+  // its leap's). With keepOn, kept on the board: see placePips.
   function drawPips(x, y, back, hr, swell, leaps, dashes, keepOn) {
+    const n = placePips(x, y, back, hr, swell, leaps, dashes, keepOn);
+    for (let i = 0; i < n; i++) drawPip(PIPS[3 * i], PIPS[3 * i + 1], PIPS[3 * i + 2], PIP_R, i < leaps);
+  }
+  // Where those pips go, into PIPS (each one's place and spoke), their
+  // colour's radius into PIP_R; returns how many. With keepOn, where the arc
+  // behind the head would leave the board (a head that's just turned off an
+  // edge, or at a corner), it swings round the head toward the board's
+  // middle, as little as it takes to come on, staying as far from the head
+  // as ever: never over it, or its eyes (moving the arc in slid it across
+  // the head). Only if no swing brings it all on (many pips in a corner)
+  // does it move in as well, from the swing that leaves least off, which
+  // takes it away from the head. PIP_MOVED: it swung, or moved.
+  let PIP_R = 0, PIP_MOVED = false, PIP_SX = 0, PIP_SY = 0;
+  const PIP_SWING = 0.05; // (radians a step, swinging round)
+  function placePips(x, y, back, hr, swell, leaps, dashes, keepOn) {
     const n = leaps + dashes, many = n > 2, rr = (many ? CELL : hr + CELL * 0.2) * (1 + swell * 0.5);
-    const pr = CELL * (many ? 0.12 : 0.14), step = many ? 0.44 : 0.78, gap = leaps && dashes ? (many ? 0.35 : 0.6) : 0, mid = (n - 1 + gap) / 2;
-    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    const step = many ? 0.44 : 0.78, gap = leaps && dashes ? (many ? 0.35 : 0.6) : 0, mid = (n - 1 + gap) / 2;
+    const pr = PIP_R = CELL * (many ? 0.12 : 0.14), edge = (pr + PIP_RING) * 1.5 + 1; // (as far as one reaches from its centre, and a unit to spare)
     if (PIPS.length < 3 * n) PIPS = new Float64Array(3 * n);
+    PIP_MOVED = false;
+    let off = pipArc(x, y, back, rr, n, leaps, step, gap, mid, edge);
+    if (!keepOn || !off) return n;
+    const way = Math.cos(back) * (SIZE / 2 - y) - Math.sin(back) * (SIZE / 2 - x) >= 0 ? 1 : -1; // (turning by + takes it toward the middle)
+    let least = off, best = 0;
+    for (let j = 1; off && j * PIP_SWING <= Math.PI; j++) {
+      for (let side = 0; side < 2 && off; side++) {
+        const turn = (side ? -way : way) * j * PIP_SWING;
+        off = pipArc(x, y, back + turn, rr, n, leaps, step, gap, mid, edge);
+        if (off < least) { least = off; best = turn; }
+      }
+    }
+    if (off) { pipArc(x, y, back + best, rr, n, leaps, step, gap, mid, edge); for (let i = 0; i < n; i++) { PIPS[3 * i] += PIP_SX; PIPS[3 * i + 1] += PIP_SY; } }
+    PIP_MOVED = true;
+    return n;
+  }
+  // The arc of n pips at radius rr round (x, y), its middle at angle ang,
+  // into PIPS; returns how far it's off the board (0: it's on), and the
+  // move that would bring it on into PIP_SX, PIP_SY.
+  function pipArc(x, y, ang, rr, n, leaps, step, gap, mid, edge) {
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (let i = 0; i < n; i++) {
-      const a2 = back + (mid - i - (i < leaps ? 0 : gap)) * step, px = x + Math.cos(a2) * rr, py = y + Math.sin(a2) * rr;
+      const a2 = ang + (mid - i - (i < leaps ? 0 : gap)) * step, px = x + Math.cos(a2) * rr, py = y + Math.sin(a2) * rr;
       PIPS[3 * i] = px; PIPS[3 * i + 1] = py; PIPS[3 * i + 2] = a2;
       x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py);
     }
-    const edge = (pr + PIP_RING) * 1.5 + 1; // (as far as one reaches from its centre, and a unit to spare)
-    const sx = keepOn ? Math.max(0, edge - x0) - Math.max(0, x1 - (SIZE - edge)) : 0, sy = keepOn ? Math.max(0, edge - y0) - Math.max(0, y1 - (SIZE - edge)) : 0;
-    for (let i = 0; i < n; i++) drawPip(PIPS[3 * i] + sx, PIPS[3 * i + 1] + sy, PIPS[3 * i + 2], pr, i < leaps);
+    PIP_SX = Math.max(0, edge - x0) - Math.max(0, x1 - (SIZE - edge)); PIP_SY = Math.max(0, edge - y0) - Math.max(0, y1 - (SIZE - edge));
+    return Math.abs(PIP_SX) + Math.abs(PIP_SY);
   }
   // One pip at (x, y), its spoke at angle a2, its colour pr in radius: a
   // sky disc for a leap, an ember diamond (its long way along the spoke) for
@@ -2395,16 +2480,31 @@ window.SnakeRender = (() => {
   // Where a stunned snake's stars go round, as an offset down the screen
   // from its head: above it, as in any cartoon, unless that's where its pips
   // are (heading down, they're behind it) or off the board; then below it.
-  // With its pips below and the edge above, below past its pips. Judged by
-  // its cell and the way it's going, which a stun doesn't change, so they
-  // never jump sides mid-stun. (Bonk! keeps clear of them: see onTick.)
+  // With its pips below and the edge above, below past its pips. Pips swung
+  // round at the board's edge (see placePips): on the side they don't
+  // reach, or past them. Judged by its cell and the way it's going, which a
+  // stun doesn't change, so they never jump sides mid-stun. (Bonk! keeps
+  // clear of them: see onTick.)
   const STAR_REACH = CELL * 0.42; // (how far the stars reach up and down from their centre)
   function starsOff(s) {
-    const pips = s.leaps + s.dashes, hy = s.body[0].y * CELL + CELL / 2;
+    const pips = s.leaps + s.dashes, h = s.body[0], hx = h.x * CELL + CELL / 2, hy = h.y * CELL + CELL / 2;
+    let up = 0, down = 0, moved = false;
+    if (pips) { // (where its pips are, its head in its cell)
+      const n = placePips(hx, hy, Math.atan2(-s.dir.y, -s.dir.x), CELL * 0.54, 0, s.leaps, s.dashes, !anim.get(s)?.offs), reach = (PIP_R + PIP_RING) * 1.5;
+      moved = PIP_MOVED;
+      for (let i = 0; i < n; i++) { up = Math.max(up, hy - PIPS[3 * i + 1] + reach); down = Math.max(down, PIPS[3 * i + 1] - hy + reach); }
+    }
     let past = 0;
     for (let sgn = -1; sgn <= 1; sgn += 2) {
-      const behind = pips && s.dir.y === -sgn; // (its pips are on this side)
-      const off = sgn * CELL * (behind ? (pips > 2 ? 1.78 : 1.44) : pips && !s.dir.y ? (pips > 4 ? 1.5 : pips > 3 ? 1.3 : 1.02) : 0.72); // (higher when pips show beside its head, higher still for both kinds' wider arc; further past three, which sit further back)
+      let behind, off;
+      if (moved) { // (clear of them)
+        const clear = (sgn < 0 ? up : down) + STAR_REACH;
+        behind = clear > CELL * 0.72; // (its pips are on this side)
+        off = sgn * Math.max(CELL * 0.72, clear);
+      } else {
+        behind = pips && s.dir.y === -sgn;
+        off = sgn * CELL * (behind ? (pips > 2 ? 1.78 : 1.44) : pips && !s.dir.y ? (pips > 4 ? 1.5 : pips > 3 ? 1.3 : 1.02) : 0.72); // (higher when pips show beside its head, higher still for both kinds' wider arc; further past three, which sit further back)
+      }
       if (hy + off < STAR_REACH || hy + off > SIZE - STAR_REACH) continue;
       if (!behind) return off;
       past ||= off;
@@ -2472,13 +2572,16 @@ window.SnakeRender = (() => {
   // it), so the press shows as heard, and where it'll take you. (The eyes
   // look that way too, and the head leans.) With a jump or a flash asked for
   // (it goes the way you go), its own mark there instead, a little further
-  // out (it's longer), in its accent (a golden one's in Honey). Over every
-  // snake and word: ahead, it's over what you hit, and the Bonk! there.
+  // out (it's longer), in its accent (a golden one's in Honey). Asked both,
+  // the jump's, if it can go that way when the stun's over (the game hops
+  // first), else the flash's. Over every snake and word: ahead, it's over
+  // what you hit, and the Bonk! there.
   function drawPress() {
     const s = findById(viewerId), a = s && s.alive && s.stunUntil >= game.tick ? anim.get(s) : null;
     const q = a && a.n ? queuedOf(s, a) : null;
     if (!q) return;
-    const flash = s.flashArmed >= s.stunUntil, power = flash || s.leapArmed >= s.stunUntil; // (asked both: the flash's mark, though the game hops first if the jump can go)
+    const jump = s.leapArmed >= s.stunUntil, at = game.time + Math.max(0, s.stunUntil - game.tick) * (timeAt - timeFrom || T.START_TICK); // (the game's clock when it moves again)
+    const flash = s.flashArmed >= s.stunUntil && !(jump && hops(s, s.body[0], q, at)), power = flash || jump;
     const pts = a.pts, so = starsOff(s);
     const d = (q.y && (so < 0) === (q.y < 0) ? Math.abs(so) + CELL * 0.62 : CELL * 0.95) + (power ? CELL * (flash ? 0.18 : 0.28) : 0);
     const w = CELL * 0.2, m = CELL * 0.12;
@@ -2620,7 +2723,7 @@ window.SnakeRender = (() => {
     meetings();
     for (const s of live) prepare(s, alpha, now, false);
     drawShadows();
-    if (fieldSpecs.length) drawFieldHues(now); // (a land's colour round a rival on it, under every outline and body)
+    if (fieldSpecs.length && huesOn) drawFieldHues(now); // (a land's colour round a rival on it, under every outline and body)
     // Then outlines, bodies, flames and queasy washes, each pass for every
     // snake on the ground, then the same for any up in the air: a leaper's
     // outline goes over what it's hopping, not under it (which made it look
@@ -4509,18 +4612,21 @@ window.SnakeRender = (() => {
   // it, as if it were wading through it: a line of the colour hugging it,
   // just outside everything drawn round it (an outline, a gold line), and a
   // soft glow of it beyond. Only the pieces on the land's own cells (no
-  // clip: the cut is cell-exact). The glow (the shape grown FIELD_GLOW_GROW)
-  // goes into the veil, a snake at a time and only round what of it is on
-  // land, and is laid on at FIELD_GLOW; the line (FIELD_LINE wide, opaque)
-  // goes straight on the board. The snake drawn over them covers their
-  // inside, so its body keeps its own colours (on land two owners claim,
-  // the later colour wins). Outside the line, the border's own parchment
-  // keyline, so it shows round a body of the land's own hue (rose round
-  // Sniper's red) and to colour-blind eyes (the bark beyond it is its ink:
-  // an ink ring as well cost a third pass). Where a head just crossed
-  // in: a ripple at it (over the snakes: see drawRipples), and the border
-  // lights up from there.
+  // clip: the cut is cell-exact). The glow (the shape grown FIELD_GLOW_GROW,
+  // smoothed: see bodyFillsOn) goes into the veil, a snake at a time and
+  // only round what of it is on land, and is laid on at FIELD_GLOW; the
+  // line (FIELD_LINE wide, opaque) goes straight on the board. The snake
+  // drawn over them covers their inside, so its body keeps its own colours
+  // (on land two owners claim, the later colour wins). Outside the line,
+  // the border's own parchment keyline, so it shows round a body of the
+  // land's own hue (rose round Sniper's red) and to colour-blind eyes (the
+  // bark beyond it is its ink: an ink ring as well cost a third pass).
+  // Each pass is separate fills, not one path: one path of the pieces (or
+  // of only the circles), or the line stroked round its fill, cost more.
+  // Where a head just crossed in: a ripple at it (over the snakes: see
+  // drawRipples), and the border lights up from there.
   const FIELD_GLOW = 0.16, FIELD_GLOW_GROW = 8, FIELD_LINE = 2.6, huedOn = [];
+  let huesOn = true; // (off only for tools/bench.js, timing them: see hues below)
   function drawFieldHues(now) {
     for (const s of game.snakes) {
       if (!s.alive) continue;
@@ -4553,7 +4659,7 @@ window.SnakeRender = (() => {
       if (!huedOn.length) continue;
       const edge = edgeOf(s, a), m = CELL + 12; // (round the pieces: a band and a glow's width more)
       veilOn(0, 0, x0 - m, y0 - m, x1 + m, y1 + m);
-      for (const r of huedOn) { ctx.fillStyle = r.color; bodyFillsOn(a, edge + FIELD_GLOW_GROW, r); }
+      for (const r of huedOn) { ctx.fillStyle = r.color; bodyFillsOn(a, edge + FIELD_GLOW_GROW, r, true); }
       veilOff(FIELD_GLOW);
       ctx.fillStyle = KEYLINE_SOLID; // (opaque: the pieces overlap)
       for (const r of huedOn) bodyFillsOn(a, edge + FIELD_LINE + BORDER_KEY, r);
@@ -4566,20 +4672,38 @@ window.SnakeRender = (() => {
     return x >= 0 && y >= 0 && x < GRID && y < GRID && r.shown[y * GRID + x] === 1;
   }
   // bodyFills (see the snakes' drawing), only the pieces on r's land: a
-  // band where either of its ends is, a segment where it is.
-  function bodyFillsOn(a, grow, r) {
-    const p = a.pts, c = a.cor, rad = a.rad, n = a.n;
+  // band where either of its ends is, a segment where it is. Soft (the
+  // glow): a smooth sausage instead of the caterpillar's bumps and waists,
+  // its bands as wide as its segments, so a segment's round is needed only
+  // at the ends and where the body turns. (A circle is the dear part of a
+  // pass: *measured*, one 40 units across costs about five times a square
+  // 40 units a side, and the glow's, grown furthest, are the biggest. Soft,
+  // the land's colour round a rival costs 0.1 to 0.3 ms a frame less, most
+  // of what its keyline costs: see tools/bench.js --land.)
+  function bodyFillsOn(a, grow, r, soft) {
+    const p = a.pts, c = a.cor, rad = a.rad, n = a.n, pinch = soft ? 1 : PINCH;
     for (let i = n - 2; i >= 0; i--) {
       if (!onShown(r, p[2 * i], p[2 * i + 1]) && !onShown(r, p[2 * i + 2], p[2 * i + 3])) continue;
-      const h = rad[i + 1] * PINCH + grow, x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+      const h = rad[i + 1] * pinch + grow, x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
       if ((near(x1, qx) && near(qx, x2)) || (near(y1, qy) && near(qy, y2))) rectPiece(x1, y1, x2, y2, h);
       else { rectPiece(x1, y1, qx, qy, h); rectPiece(qx, qy, x2, y2, h); }
     }
     for (let i = n - 1; i >= 0; i--) {
       if (!onShown(r, p[2 * i], p[2 * i + 1])) continue;
-      if (i < n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * PINCH + grow);
-      circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
+      if (i < n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * pinch + grow);
+      if (!soft || !straightAt(a, i)) circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
     }
+  }
+  // Does the body run straight through segment i's centre, along the grid
+  // (not at either end)? In from the corner behind it (or the segment before,
+  // if that corner's where it is), out to the corner ahead (or the next).
+  function straightAt(a, i) {
+    if (i === 0 || i >= a.n - 1) return false;
+    const p = a.pts, c = a.cor, x = p[2 * i], y = p[2 * i + 1];
+    let ax = c[2 * i - 2], ay = c[2 * i - 1], bx = c[2 * i], by = c[2 * i + 1];
+    if (near(ax, x) && near(ay, y)) { ax = p[2 * i - 2]; ay = p[2 * i - 1]; }
+    if (near(bx, x) && near(by, y)) { bx = p[2 * i + 2]; by = p[2 * i + 3]; }
+    return (near(ax, x) && near(x, bx)) || (near(ay, y) && near(y, by));
   }
   // Over the snakes: a ripple where a head just crossed onto someone's land.
   function drawRipples(now) {
@@ -6394,7 +6518,7 @@ window.SnakeRender = (() => {
       } else if (e.type === 'dash') { // a streak along the way it went: a golden dash's in gold and ember, with flecks of both; a plain flash's in ember, lighter
         animOf(e.snake, now).dashTick = game.tick;
         const h = e.snake.body[0], seen = streaks.findIndex(k => k.s === e.snake && k.pre === game.tick - 1); // (seen coming: see prepare)
-        if (seen >= 0 && streaks[seen].fx === e.x && streaks[seen].fy === e.y && streaks[seen].tx === h.x && streaks[seen].ty === h.y) streaks[seen].pre = -1; // (as it was seen: it stays)
+        if (seen >= 0 && streaks[seen].fx === e.x && streaks[seen].fy === e.y && streaks[seen].tx === h.x && streaks[seen].ty === h.y) { streaks[seen].pre = -1; sparksOf(streaks[seen]); } // (as it was seen: it stays, and now its flecks fly)
         else { if (seen >= 0) streaks.splice(seen, 1); streakOf(e.snake, e.x, e.y, h.x, h.y, !!e.plain, now, -1); }
       } else if (e.type === 'douse') { // a fire put out: a hiss of steam
         const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
@@ -6599,15 +6723,24 @@ window.SnakeRender = (() => {
   // way), so the golden one is the bigger deal.
   const streaks = []; // { x0, y0, x1, y1, at, s, plain, fx, fy, tx, ty (its cells), pre (seen coming on that tick, until it goes) }
   const STREAK_GAP = 2; // (between the dasher's drawn edge and a line's inked edge, in units)
-  // A dash's streak from cell (fx, fy) to (tx, ty), and its flecks and the
-  // scuff where it set off: at its tick, or (pre: that tick) as soon as it's
-  // drawn there, seen coming.
+  // A dash's streak from cell (fx, fy) to (tx, ty): at its tick, with its
+  // flecks and the scuff where it set off; or (pre: that tick) as soon as
+  // it's drawn there, seen coming, its flecks and scuff once it's gone (a
+  // guess put right, or that didn't go, leaves none: see unstreak).
   function streakOf(s, fx, fy, tx, ty, plain, now, pre) {
     const x0 = fx * CELL + CELL / 2, y0 = fy * CELL + CELL / 2, x1 = tx * CELL + CELL / 2, y1 = ty * CELL + CELL / 2;
     if (Math.abs(x1 - x0) + Math.abs(y1 - y0) > CELL * (T.DASH_LENGTH + 0.5)) return; // (not across a wrapped edge)
-    streaks.push({ x0, y0, x1, y1, at: now, s, plain, fx, fy, tx, ty, pre });
+    const k = { x0, y0, x1, y1, at: now, s, plain, fx, fy, tx, ty, pre };
+    streaks.push(k);
+    if (pre < 0) sparksOf(k);
+  }
+  function sparksOf({ x0, y0, x1, y1, plain }) {
     for (let k = 0; k <= 3; k++) spawn(x0 + (x1 - x0) * k / 3, y0 + (y1 - y0) * k / 3, plain ? 2 : 4, 90, 500, 1.8, plain ? EMBER : HONEY, plain ? GLINT : EMBER);
     if (!reduced) for (let k = 0; k < 4; k++) mote(x0 + (Math.random() - 0.5) * CELL * 0.6, y0 + (Math.random() - 0.5) * CELL * 0.6, -(x1 - x0) / len3(x1 - x0, y1 - y0) * 20 + (Math.random() - 0.5) * 10, -(y1 - y0) / len3(x1 - x0, y1 - y0) * 20 - 6, 700, 3 + Math.random() * 2, 2); // (a scuff of dust where it set off)
+  }
+  // A streak seen coming this tick that won't go as seen: gone.
+  function unstreak(s) {
+    for (let i = streaks.length - 1; i >= 0; i--) if (streaks[i].s === s && streaks[i].pre === game.tick) streaks.splice(i, 1);
   }
   function drawStreaks(now) {
     for (let i = streaks.length - 1; i >= 0; i--) {
@@ -6836,5 +6969,7 @@ window.SnakeRender = (() => {
     setLead(ticks) { leadTicks = ticks; },
     guideSprite, // (the Field guide's pictures)
     get particles() { return pLive; },
+    streaked: () => streaks.map(k => ({ from: [k.fx, k.fy], to: [k.tx, k.ty], seen: k.pre >= 0 })), // (the dash streaks drawn: for the tests)
+    hues(on) { huesOn = !!on; }, // (a land's colour round a rival on it, drawn or not: for the benchmark, which times it)
   };
 })();
