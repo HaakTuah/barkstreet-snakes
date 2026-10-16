@@ -216,7 +216,7 @@ The rival's quip stays as flavour. A death that ends the round says it on the ro
 | The first knock really is free | A player who never steers survives their first crash and isn't steered into the edge (the auto-turn breaks ties by the open run ahead) |
 | You can always see why | Every death card names the reason. Your leap's cooldown shows at your head (since round four, both rests: the jump's and the flash's half-rings). A press that can't go gives a thunk and an inked × (sky for a jump, ember for a flash) on what it couldn't hop |
 | A calmer narrator | In watched AI rounds, about one banner every 8 s or fewer (it was one every 4–5 s), and no lesson replaced within 2.5 s |
-| Frame cost | Full cost per frame (script and GPU, measured to a readback): the long-snake scene ≤ 4 ms (second pass 3.4–3.6, now 5.2–6.4); with Sovereign's and Colonist's land on the board ≤ 1.5× the same board without (`tools/bench.js` prints it; round four's borders measured 1.28–1.40×, the force fields before them 2.26–2.62×); a new round's first frame doesn't rebuild the bark |
+| Frame cost | Full cost per frame (script and GPU, measured to a readback): the long-snake scene ≤ 4 ms (second pass 3.4–3.6; round four, interleaved with the build before it on one machine: 3.5–4.5 against 3.6–4.2, the same within noise); with Sovereign's and Colonist's land on the board ≤ 1.5× the same board without (`tools/bench.js` prints it; round four's borders measured 1.28–1.40×, the force fields before them 2.26–2.62×; the same staged scene, interleaved: 3.0–3.2 ms with the borders against 4.9–5.2 with the force fields); a new round's first frame doesn't rebuild the bark |
 | No clicks | Every cue rendered offline starts from silence (no sample-level step) |
 | Small speakers | Through a 300 Hz high-pass (a phone speaker), your death still lands louder than an apple |
 | Memory stays flat | Drawing the land for a minute retains no growing heap (the colour cache is bounded) |
@@ -512,7 +512,7 @@ The calls:
 
 ### Rivals
 
-- **Mushrooms.** Desperado and Joker still valued mushrooms at +0.5, left over from before mushrooms became pure poison. They ate about 8 a round and won 11%. Gone: nobody seeks mushrooms now, and to every rival a mushroom only ever counts against a move. *Measured*, rivals ate 6.2 a round before and 2.0 after, out of about 15 that sprout: the ones still eaten were in the way when every other move scored worse. After the critique, a mushroom costs a rival three apples (the three segments it takes), fed or hungry; it was priced at one. Rivals eat about 1.4 a round now (1.40 / 1.38, from 1.99 / 1.96). Nearly all of those are boxed in or stepping round a trap, every other way scoring far worse.
+- **Mushrooms.** Desperado and Joker still valued mushrooms at +0.5, left over from before mushrooms became pure poison. They ate about 8 a round and won 11%. Gone: nobody seeks mushrooms now, and to every rival a mushroom only ever counts against a move. *Measured*, rivals ate 6.2 a round before and 2.0 after, out of about 15 that sprout: the ones still eaten were in the way when every other move scored worse. After the critique, a mushroom costs a rival three apples (the three segments it takes), fed or hungry; it was priced at one. Rivals eat about 1.3 a round now (1.30 / 1.33 in the final census, from 1.99 / 1.96), Gobbler, which hates them, half as readily again. Nearly all of those are boxed in or stepping round a trap, every other way scoring far worse.
 - **A starving rival takes its chances.** When the hunger it can see (its own clock, as a person sees their bar) leaves it less than about 11 s of life (`AI_DESPERATE_MS`), a rival:
   - drops its personality's errands (home, mimicry, coiling, lures);
   - goes for any food, even food a rival might reach first (never its own beads, which aren't a meal);
@@ -607,55 +607,74 @@ Protocol 7, and 8 after the critique:
 ## Round four, measured
 
 AI-only rounds as `tools/simulate.js` plays them (`--census` prints most of this): 600 seeded rounds each on seeds 3 and 11, every cell "seed 3 / seed 11" unless it says otherwise. The builds:
-- **final**: fed9bff, after round four's critique: a meal mid-round keeps you 13 s, the plain flash is priced at two apples and a mushroom at three, a jump pressed with a flash goes first, flashes are worked out together, and a power that can't go in a stun says so (6c84438 already plays these rounds; fed9bff and the docs commits after it change no rule). Fingerprints 275874727 / 211829363, both `--check` ok (re-run on the docs commits after fed9bff: the same output, line for line); `simulate.js 60 --seed 3` gives 419130314 with and without `--ahead`.
+- **final**: cb45603, after both of round four's critique rounds. The first gave:
+  - a meal mid-round that keeps you 13 s;
+  - the plain flash priced at two apples and a mushroom at three;
+  - a jump pressed with a flash goes first;
+  - flashes worked out together;
+  - a power that can't go in a stun says so.
+
+  The second gave:
+  - a jump pressed with a flash also goes first when the hurdle is two or three cells ahead;
+  - a meal just after 0:45 never shortens your time;
+  - two flashes head-on meet;
+  - a landing on a bridge whose owner crashes that tick holds;
+  - Gobbler more careful near heads (headRisk 2200, zoneRisk 700) and twice as wary of mushrooms.
+
+  Fingerprints 709828060 / 633168818, both `--check` ok. `simulate.js 60 --seed 3` gives 109438746 with and without `--ahead`.
+- **first critique**: fed9bff, after the first critique round only (275874727 / 211829363). Numbers below marked "first critique" come from it.
 - **merged**: the branch before the critique. From 234abd3 on, only drawing, input and docs changed, so e1afcb0 plays the same rounds. Fingerprints 716587532 / 346214756; `simulate.js 60 --seed 3` gives 153523588 with and without `--ahead`.
 - **after balance**: the balance pass's final build, the same rules as merged but for the rivals telling the woodpecker's mark from a hole (165991245 / 15180574). Some numbers the census doesn't print; they come from this build, and say so.
 - **before balance**: round four's rules and AI before the balance pass (2a8158c: two apples after 0:45, patches of 7 to 14, golden mushrooms 0.4; 288269477 / 789394841).
 
 ### The targets
 
-Merged, all were met. Final, all but two: one personality's win rate on one seed, and the plain flashes, which are fewer on purpose.
+Merged, all were met. Final, all but two: the win rates on single seeds (two personalities a point or two outside the band, each within its sampling error), and the plain flashes, which are fewer on purpose.
 
 | Target | Before balance | Merged | Final |
 |---|---|---|---|
-| Median round (155–175 s) | 180 / 181 s | 169 / 171 s (middle half 160–178 / 162–180) | 169 / 170 s (middle half 161–179 / 161–180) |
-| Rounds reaching the woodpecker (at least 90%) | 99.7 / 100% | 99 / 100% | 99 / 100% |
-| Sudden death, median (35–60 s) | 60 / 61 s | 49 / 51 s (middle half 40–58 / 42–60) | 49 / 50 s (middle half 41–59 / 41–60) |
+| Median round (155–175 s) | 180 / 181 s | 169 / 171 s (middle half 160–178 / 162–180) | 170 / 171 s (middle half 159–179 / 162–179) |
+| Rounds reaching the woodpecker (at least 90%) | 99.7 / 100% | 99 / 100% | 100 / 100% |
+| Sudden death, median (35–60 s) | 60 / 61 s | 49 / 51 s (middle half 40–58 / 42–60) | 50 / 51 s (middle half 39–59 / 42–59) |
 | Starving (at most 8% of deaths) | 6 / 8% | 2 / 1% | 3 / 2% |
-| A starvation before 1:00 (under 5% of rounds) | 0.3 / 0.3% | 0.2 / 0.3% (after balance) | under 0.5% / under 0.5% (the census rounds both to 0%) |
-| Every personality's win rate (15–35%) | 18–31 / 18–32% | 18–33 / 16–33% | 15–34 / **12**–35% |
-| Holes, share of sudden death's deaths (at most 25%) | 25 / 25% | 22 / 22% | 24 / 24% |
-| Woodpecker aims near a head (rare) | 7 of 12,751 / 4 of 12,892 | 4 of 10,062 / 0 of 10,497 | 1 of 10,260 / 5 of 10,341 |
+| A starvation before 1:00 (under 5% of rounds) | 0.3 / 0.3% | 0.2 / 0.3% (after balance) | 1% / under 0.5% |
+| Every personality's win rate (15–35%) | 18–31 / 18–32% | 18–33 / 16–33% | 15–**37** / **13**–32% (both seeds together: 16.5–34%) |
+| Holes, share of sudden death's deaths (at most 25%) | 25 / 25% | 22 / 22% | 22 / 24% |
+| Woodpecker aims near a head (rare) | 7 of 12,751 / 4 of 12,892 | 4 of 10,062 / 0 of 10,497 | 1 of 10,196 / 0 of 10,431 |
 | Plain flashes a minute alive (about 3–5) | 2.94 / 2.92 | 3.1 / 3.1 | **2.1 / 2.1** |
 | Golden jumps used (over 90%) | 99 / 99% | 99 / 99% | 99 / 99% |
-| A storm in a round (at least 80%) | 87 / 87% | 87 / 89% | 87 / 86% |
-| Snake-time in the hunger warning before 2:00 (at least 8%: the critique's) | | 3.0 / 3.2% (the critique's census of e1afcb0) | 8.8 / 8.9% |
+| A storm in a round (at least 80%) | 87 / 87% | 87 / 89% | 89 / 84% |
+| Snake-time in the hunger warning before 2:00 (at least 8%: the critique's) | | 3.0 / 3.2% (the critique's census of e1afcb0) | 8.5 / 8.7% |
 
-- **Win rates.** Final, Gobbler wins 12% on seed 11 (17% on seed 3), under the floor. The critique's rules fix ran 800 rounds with Gobbler in every one: 16.0% on its rules against 15.6% on e1afcb0's, so it reads as sampling noise (a personality's sampling error here is about 3 points), not a change; that run hasn't been repeated since. On the floor: Desperado and Creeper on seed 3, Wildcard on seed 11 (15%). On top: Mute and Copycat on seed 3 (34%), Sovereign on seed 11 (35%). Merged, Desperado on seed 11 (16%) was closest to the edge and Vulture on top on both seeds (33%).
+- **Win rates.** Each personality plays about 140 rounds a seed here, so its rate wanders about 3.5 points either way from seed to seed.
+  - **First critique:** Gobbler won 12% on seed 11 (17% on seed 3). The second critique made it more careful near heads (headRisk 2200, zoneRisk 700) and twice as wary of mushrooms; with no mushroom-lover left, it was eating as many as anyone, against its "hates mushrooms".
+  - **Final:** Gobbler wins 20% on seed 3 and 13% on seed 11. Over 800 rounds with Gobbler in every one, the first critique measured 16.0% against 15.6% on e1afcb0, so seed 11 reads as a bad draw for it rather than a weak snake. Gobbler is still the personality to watch.
+  - **Final, at the top:** Mute wins 37% on seed 3 and 31% on seed 11, 34% over both.
+  - **Merged:** Desperado on seed 11 (16%) was closest to the edge, and Vulture was on top on both seeds (33%).
 - **Plain flashes.** Below the balance pass's 3–5 a minute on purpose: at one apple a flash, rivals flashed 3.1 times a minute and did no better than never flashing, so the critique priced it at two (see Rivals).
 
 ### What a round holds
 
 | | Merged | Final |
 |---|---|---|
-| Crashes survived a round | 10.6 / 10.2 | 10.0 / 10.5 |
-| Draws, of 600 | 2 / 1 (no round stalls) | 0 / 0 (no round stalls) |
+| Crashes survived a round | 10.6 / 10.2 | 10.2 / 10.4 |
+| Draws, of 600 | 2 / 1 (no round stalls) | 0 / 1 (no round stalls) |
 | Golden apples a round | 5.2 / 5.3 | 5.3 / 5.3 |
-| Golden beetles a round (rounds with one) | 1.61 (86%) / 1.58 (83%) | 1.57 (82%) / 1.55 (83%) |
-| Golden leaves a round (rounds with one) | 0.84 (57%) / 0.85 (61%) | 0.78 (55%) / 0.81 (57%) |
-| Golden mushrooms a round (rounds with one) | 0.71 (61%) / 0.68 (59%) | 0.70 (60%) / 0.67 (58%) |
-| Golden power food eaten, a snake a round (more than 2) | 0.73 (4%) / 0.72 (3%) | 0.72 (4%) / 0.71 (3%) |
-| Mushrooms eaten a round (about 15 sprout) | 2.0 / 2.0 | 1.4 / 1.4 |
-| Rotted a round: apples, beads | 7.0, 2.9 / 7.1, 3.0 | 6.4, 3.1 / 6.4, 2.7 |
-| Beetles a round (caught) | 4.1 (90%) / 4.1 (90%) | 4.0 (91%) / 4.1 (91%) |
-| Spells a round: sun, wind, rain, storm, snow | 0.80, 0.85, 1.31, 0.87, 0.78 / 0.80, 0.83, 1.30, 0.89, 0.80 | 0.84, 0.81, 1.30, 0.87, 0.77 / 0.79, 0.84, 1.29, 0.86, 0.82 |
+| Golden beetles a round (rounds with one) | 1.61 (86%) / 1.58 (83%) | 1.59 (82%) / 1.63 (84%) |
+| Golden leaves a round (rounds with one) | 0.84 (57%) / 0.85 (61%) | 0.78 (54%) / 0.80 (57%) |
+| Golden mushrooms a round (rounds with one) | 0.71 (61%) / 0.68 (59%) | 0.69 (60%) / 0.66 (57%) |
+| Golden power food eaten, a snake a round (more than 2) | 0.73 (4%) / 0.72 (3%) | 0.71 (4%) / 0.72 (3%) |
+| Mushrooms eaten a round (about 15 sprout) | 2.0 / 2.0 | 1.3 / 1.3 |
+| Rotted a round: apples, beads | 7.0, 2.9 / 7.1, 3.0 | 6.3, 2.9 / 6.4, 2.9 |
+| Beetles a round (caught) | 4.1 (90%) / 4.1 (90%) | 4.0 (91%) / 4.0 (93%) |
+| Spells a round: sun, wind, rain, storm, snow | 0.80, 0.85, 1.31, 0.87, 0.78 / 0.80, 0.83, 1.30, 0.89, 0.80 | 0.83, 0.81, 1.31, 0.89, 0.78 / 0.80, 0.84, 1.29, 0.84, 0.82 |
 | Lightning strikes a round | 4.0 / 4.1 | 4.0 / 3.8 |
-| Woodpecker strikes a sudden death; holes at the end | 16.4; 233 / 17.1; 244 | 16.7; 239 / 16.8; 239 |
+| Woodpecker strikes a sudden death; holes at the end | 16.4; 233 / 17.1; 244 | 16.5; 235 / 16.9; 241 |
 | Plain flashes a minute alive | 3.1 / 3.1 | 2.1 / 2.1 |
-| Plain jumps a round; golden flashes a round (cutting someone) | 3.88; 1.50 (1.0) / 3.81; 1.51 (1.1) | 3.84; 1.39 (1.0) / 3.82; 1.47 (1.1) |
-| Deaths, all: body, self, hole, edge, pecked, head-on, starved, cut | 42, 25, 19, 5, 4, 4, 2, 0% / 43, 25, 19, 5, 4, 3, 1, 1% | 44, 23, 19, 4, 4, 3, 3, 1% / 40, 24, 20, 6, 4, 3, 2, 1% |
-| Sudden death's deaths: body, self, hole, edge, pecked, head-on, starved | 37, 27, 22, 5, 5, 3, 2% / 39, 27, 22, 5, 4, 2, 1% | 38, 25, 24, 5, 5, 2, 2% / 34, 26, 24, 6, 5, 3, 2% |
-| Snake-time in the hunger warning (starving), before the woodpecker; after | | 8.8% (2.2%); 28.1% (14.8%) / 8.9% (2.2%); 28.1% (15.1%) |
+| Plain jumps a round; golden flashes a round (cutting someone) | 3.88; 1.50 (1.0) / 3.81; 1.51 (1.1) | 3.84; 1.37 (1.0) / 3.79; 1.45 (1.1) |
+| Deaths, all: body, self, hole, edge, pecked, head-on, starved, cut | 42, 25, 19, 5, 4, 4, 2, 0% / 43, 25, 19, 5, 4, 3, 1, 1% | 45, 22, 17, 5, 4, 3, 3, 0% / 40, 23, 20, 6, 5, 4, 2, 0% |
+| Sudden death's deaths: body, self, hole, edge, pecked, head-on, starved | 37, 27, 22, 5, 5, 3, 2% / 39, 27, 22, 5, 4, 2, 1% | 39, 24, 22, 6, 5, 3, 2% / 34, 25, 24, 6, 5, 3, 2% |
+| Snake-time in the hunger warning (starving), before the woodpecker; after | | 8.5% (2.1%); 27.8% (14.6%) / 8.7% (2.2%); 27.8% (14.6%) |
 
 From the after-balance build (seed 3 / seed 11), what the census doesn't print, not measured again since:
 - the first death comes at a median 127 / 126 s (137 / 138 before balance); 0.5 deaths a round come before 2:00;
@@ -664,7 +683,7 @@ From the after-balance build (seed 3 / seed 11), what the census doesn't print, 
 - the first storm comes at a median 45 / 48 s, and every round sees a median four kinds of weather;
 - lightning fires live a median 12.4 / 12.7 s (the longest 26 s): 29% burn themselves out, 63–65% are put out by rain or snow, and 6–9% are still burning at 2:00 or the end;
 - 45% of strikes have a body across the patch;
-- starving is 0.8% of snake-time before 2:00 and 12% after (1.2% and 17% before balance). Final, with a meal mid-round keeping you 13 s, the census gives 2.2 / 2.2% before the woodpecker and 15 / 15% after (above; counted its own way, so not quite comparable).
+- starving is 0.8% of snake-time before 2:00 and 12% after (1.2% and 17% before balance). Final, with a meal mid-round keeping you 13 s, the census gives 2.1 / 2.2% before the woodpecker and 14.6 / 14.6% after (above; counted its own way, so not quite comparable).
 
 ### Are the events' timings and chances right?
 
