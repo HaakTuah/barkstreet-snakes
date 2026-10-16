@@ -79,8 +79,8 @@ window.SnakeAI = (() => {
       win: ['And it’s still hungry.', 'Not a crumb left.', 'Now, about pudding.'],
       w: {
         space: 1.6, territory: 0.2,
-        food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 1, mushroom: -3,
-        margin: 10, headRisk: 1500, zoneRisk: 500, // greedy (a rival's apple too), but it flinches from heads and wants room (it used to win only 8%)
+        food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 1, mushroom: -6, // (twice what a mushroom costs anyone else: it hates them)
+        margin: 10, headRisk: 2200, zoneRisk: 700, // greedy (a rival's apple too), but it flinches from heads and wants room (it used to win only 8%; at 1500 and 500, 12-17%)
       },
     },
     ghost: {

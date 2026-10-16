@@ -587,6 +587,38 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('...but a golden one at a body one thick goes: it cuts it', me.alive && me.dashes === 0 && o.body.length === 4 && me.body[0].x === 9, JSON.stringify(me.body[0]));
 }
 
+{ // A jump and a flash asked for together in a stun, where only the jump could go and its landing's taken as it goes: the flash
+  // doesn't go instead (back into what it hit, or blown up in it); it says why, and the auto-turn takes it clear.
+  for (const [what, hole, dashes] of [['at a hole, holding golden flashes', true, 1], ['at a hole', true, 0], ['at a body', false, 0]]) {
+    const g = board([[[[5, 10], [4, 10], [3, 10], [2, 10], [1, 10], [0, 10], [0, 11], [0, 12], [0, 13]], 'right'], hole ? [line(20, 2, 4), 'right'] : [Array.from({ length: 6 }, (_, i) => [6, 6 + i]), 'up'], [[[7, 16], [7, 17], [7, 18], [7, 19]], 'up']]);
+    const [me, other, runner] = g.snakes;
+    other.stunUntil = 1e9; // (the runner comes up column 7 into the landing, (7,10), the tick the stun ends)
+    if (hole) g.holes.add(K(6, 10));
+    me.dashes = dashes;
+    let crashes = 0, said = 0;
+    for (let t = 0; t < 2 + T.STUN_TICKS + 2 && me.alive; t++) {
+      if (t === 1) { E.leap(g, me); E.flash(g, me); }
+      runner.queue = [D.up];
+      feed(g); quiet(g);
+      crashes += g.events.filter(e => e.type === 'crash' && e.snake === me).length;
+      said += g.events.filter(e => e.type === 'fizzle' && e.snake === me && e.flash && e.why === 'landing').length;
+    }
+    check(`a jump and a flash asked for in a stun, the jump's landing taken (${what}): no flash back in, and the auto-turn takes it clear`, me.alive && crashes === 1 && me.body.length === 6 && me.dashes === dashes && me.body[0].x === 5 && me.body[0].y !== 10, `${me.cause || ''} ${crashes} crashes, ${JSON.stringify(me.body[0])}`);
+    check(`...and the flash says why (${what})`, said === 1, said);
+  }
+  // Over a head-on in an empty cell that's shut to it (the other's longer), facing it: nothing there to hop, and no flash through it.
+  const g = board([[line(5, 10, 8), 'right'], [Array.from({ length: 10 }, (_, i) => [6, 11 + i]), 'up']]);
+  const [a, b] = g.snakes;
+  let bumps = 0, said = 0;
+  for (let t = 0; t < 8 && a.alive && b.alive; t++) {
+    if (t === 2) { E.leap(g, a); E.flash(g, a); }
+    feed(g); quiet(g);
+    bumps += g.events.filter(e => e.type === 'crash').length;
+    said += g.events.filter(e => e.type === 'fizzle' && e.snake === a && e.flash).length;
+  }
+  check('a jump and a flash asked for in a stun, facing the cell shut to it after a head-on: no flash through it, and it turns away', a.alive && b.alive && bumps === 2 && said === 1 && b.body.length === 7 && a.body.length === 5, `${bumps} crashes, ${said} said, ${a.body.length} / ${b.body.length}`);
+}
+
 // ---------------------------------------------------------------- jump and flash together
 { // A jump and a flash pressed together with something right in front: it hops it (no flash gets past that, and none blows up in a hole), then flashes once it's down.
   for (const [what, gold] of [['a body', false], ['a hole, holding golden flashes', true]]) {
@@ -610,6 +642,19 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
     E.flash(g, me); quiet(g); // (the hole's right in front)
     check(`a jump pressed early, then a flash as a hole comes up${gold ? ' (golden)' : ''}: it hops`, me.alive && g.events.some(e => e.type === 'leap' && e.snake === me) && !g.events.some(e => e.type === 'dash'), me.cause);
   }
+  // Further on: a flash that would only get as far as what the jump's for (running into it, or blowing up in it)
+  // waits, the snake crawls up to it and hops it, then flashes. Pressed together, never worse than the jump alone.
+  for (const [what, dist, gold, hole] of [['a hole two ahead', 2, false, true], ['a hole two ahead, holding golden flashes', 2, true, true], ['a hole three ahead, holding golden flashes', 3, true, true], ['a body two ahead', 2, false, false], ['a body two ahead, holding golden flashes', 2, true, false]]) {
+    const g = board([[line(5, 10, 6), 'right'], hole ? [line(5, 20, 3), 'right'] : wall(5 + dist)]);
+    const me = g.snakes[0];
+    if (hole) g.holes.add(K(5 + dist, 10)); else g.snakes[1].stunUntil = 1e9;
+    me.dashes = gold ? 1 : 0;
+    E.leap(g, me); E.flash(g, me);
+    const seen = [];
+    for (let t = 0; t < dist + 3 && me.alive; t++) { feed(g); quiet(g); for (const e of g.events) if (e.snake === me && ['leap', 'dash', 'crash', 'fizzle'].includes(e.type)) seen.push(`${e.type}@${g.tick - 1}`); }
+    const want = gold && !hole ? 'dash@0' : `leap@${dist - 1},dash@${dist + 1}`; // (a golden flash cuts a body one thick: it goes at once)
+    check(`a jump and a flash pressed together with ${what}: ${gold && !hole ? 'the flash cuts it' : 'it crawls up, hops, then flashes'}`, me.alive && seen.join() === want && me.dashes === 0, `${seen.join()} ${me.cause || ''}`);
+  }
 }
 
 { // A flash pressed in the air isn't lost: it goes once the snake's down.
@@ -620,6 +665,35 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   const early = g.events.some(e => e.type === 'dash');
   feed(g); quiet(g);
   check('a flash pressed in the air goes once it\'s down', !early && g.events.some(e => e.type === 'dash' && e.snake === me && e.plain) && me.body[0].x === 7 + T.FLASH_LENGTH && E.flashIn(g, me) > 0, JSON.stringify(me.body[0]));
+}
+
+{ // A flash waiting on a jump isn't lost when the jump doesn't land cleanly: it goes when the snake moves again, as one pressed in a stun does.
+  // Pressed in the air, and the landing's taken (it comes down on what it hopped, stunned).
+  const g = board([[line(5, 10, 8), 'right'], wall(6, 7, 7), [[[7, 12], [7, 13], [7, 14], [7, 15]], 'up']]);
+  const [me, w, r] = g.snakes;
+  w.stunUntil = 1e9; // (r comes up column 7 into the landing, (7,10), as me comes down)
+  E.leap(g, me);
+  const seen = [];
+  for (let t = 0; t < 3 + T.STUN_TICKS && me.alive; t++) {
+    if (t === 1) E.flash(g, me);
+    if (t === 2) r.stunUntil = 1e9;
+    feed(g); quiet(g);
+    for (const e of g.events) if (e.snake === me && ['leap', 'dash', 'crash', 'fizzle'].includes(e.type)) seen.push(`${e.type}@${g.tick - 1}`);
+  }
+  check('a flash pressed in the air, the landing taken: it goes when the stun\'s over', me.alive && seen.join() === `leap@0,crash@1,dash@${2 + T.STUN_TICKS}`, seen.join());
+  // Pressed with a jump that was to go first, but another's flash takes its landing as it goes (jumps go after flashes):
+  // it crawls into what it meant to hop, and its golden flash goes when the stun's over (it cuts through).
+  const g2 = board([[line(5, 10, 8), 'right'], wall(6, 7, 7), [[[7, 12], [7, 13], [7, 14], [7, 15], [7, 16]], 'up']]);
+  const [a, w2, f] = g2.snakes;
+  w2.stunUntil = 1e9;
+  a.dashes = 1;
+  E.leap(g2, a); E.flash(g2, a); E.flash(g2, f); // (f flashes up column 7, through (7,10))
+  const seen2 = [];
+  for (let t = 0; t < 2 + T.STUN_TICKS && a.alive; t++) {
+    feed(g2); quiet(g2);
+    for (const e of g2.events) if ((e.snake === a || e.by === a.id) && ['leap', 'dash', 'crash', 'fizzle', 'cut'].includes(e.type)) seen2.push(`${e.type}@${g2.tick - 1}`);
+  }
+  check('a jump and a flash pressed together, the jump\'s landing taken as it goes: the flash goes when the stun\'s over', a.alive && seen2.join() === `fizzle@0,crash@0,dash@${1 + T.STUN_TICKS},cut@${1 + T.STUN_TICKS}` && a.dashes === 0, seen2.join());
 }
 
 { // Two flashes through one cell in one tick meet there head-on, whichever seat either sits in; golden ones too.
@@ -635,6 +709,24 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
     });
     check(`two ${gold ? 'golden ' : ''}flashes through one cell meet head-on, whatever their seats`, outcome[0] === outcome[1] && (outcome[0].match(/head-on/g) || []).length === 2, outcome.join(' / '));
   }
+  // Head-on along one line, they meet wherever their ways cross, whatever the gap (even or odd), plain or golden, whatever their seats.
+  const wrong = [];
+  for (let gap = 0; gap <= 6; gap++) for (const [ga, gb] of [[0, 0], [1, 1], [0, 1], [1, 0]]) {
+    const ra = Math.min(gap, ga ? T.DASH_LENGTH : T.FLASH_LENGTH), rb = Math.min(gap, gb ? T.DASH_LENGTH : T.FLASH_LENGTH);
+    const meet = gap === 0 || ra + rb > gap; // (their ways share a cell; at no gap, each runs into the other's head)
+    const outcome = [0, 1].map(order => {
+      const A = [line(5, 10, 6), 'right'], B = [line(6 + gap, 10, 6, 1), 'left'];
+      const g = board(order ? [B, A] : [A, B]);
+      const [a, b] = order ? [g.snakes[1], g.snakes[0]] : g.snakes;
+      a.dashes = ga; b.dashes = gb;
+      E.flash(g, a); E.flash(g, b);
+      quiet(g);
+      const headOn = s => g.events.some(e => e.type === 'crash' && e.snake === s && e.cause.startsWith('crashed head-on'));
+      return `${headOn(a) ? 'head-on' : 'no'}/${headOn(b) ? 'head-on' : 'no'} at ${a.body[0].x}/${b.body[0].x}`;
+    });
+    if (outcome[0] !== outcome[1] || !outcome[0].startsWith(meet ? 'head-on/head-on' : 'no/no')) wrong.push(`gap ${gap} ${ga ? 'golden' : 'plain'}/${gb ? 'golden' : 'plain'}: ${outcome.join(' | ')}`);
+  }
+  check('two flashes head-on along a line meet wherever their ways cross (any gap, plain or golden, either seat)', !wrong.length, wrong.join('; '));
 }
 
 { // A jump whose landing is taken comes down on what it hopped. A body lying across a hole holds it up, till that body moves on: then it falls in.
@@ -653,6 +745,16 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
     }
     const fell = !me.alive && me.cause === 'fell into a woodpecker hole';
     check(`a jump that comes down on a body bridging a hole (${what}) falls in when it's gone, not before`, n === 13 ? me.alive && off > 0 : fell && me.diedAt === left, `${me.alive ? 'alive' : me.cause} died ${me.diedAt}, bridge gone ${left}, off ${off}`);
+  }
+  // The bridge's snake crashes as it comes down: the tail it loses is no bridge (in it goes, no crash first), the rest still is.
+  for (const [n, lost] of [[11, true], [15, false]]) {
+    const g = board([[line(5, 10, 6), 'right'], [Array.from({ length: n }, (_, i) => [6, 1 + i]), 'up'], [[[7, 12], [7, 13], [7, 14], [7, 15]], 'up']]);
+    const [me] = g.snakes; // (the bridge heads up into the top edge, and crashes there as me comes down; (6,10) is its tail end then, or well inside it)
+    g.holes.add(K(6, 10));
+    E.leap(g, me);
+    feed(g); quiet(g); feed(g); quiet(g);
+    const crashed = g.events.some(e => e.type === 'crash' && e.snake === me);
+    check(`a jump coming down on a bridge whose snake crashes as it lands: ${lost ? 'the bridge is in the tail it loses, so in it goes, with no crash first' : 'the bridge is in what it keeps, so it holds'}`, lost ? !me.alive && me.cause === 'fell into a woodpecker hole' && !crashed : me.alive && crashed, `${me.alive ? 'alive' : me.cause}, crashed ${crashed}`);
   }
 }
 
@@ -1013,6 +1115,17 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   };
   const opening = meal(T.HUNGER_MID_FROM_MS - 5000), mid = meal(T.HUNGER_MID_FROM_MS + 5000), late = meal(T.SUDDEN_DEATH_MS + 1000);
   check('a meal lasts HUNGER_MS in the opening, HUNGER_MID_MS mid-round, HUNGER_MS once the woodpecker\'s here', [opening, mid, late].map(String).join(' ') === [[T.HUNGER_MS, T.HUNGER_MS], [T.HUNGER_MID_MS, T.HUNGER_MID_MS], [T.HUNGER_MS, T.HUNGER_MS]].map(String).join(' '), JSON.stringify([opening, mid, late]));
+  // A meal just before HUNGER_MID_FROM_MS, then one just after: the second never takes time away (nor does the bar fill for less than is left).
+  const g = board([[line(5, 10, 5), 'right'], [line(5, 20, 3), 'right']], { food: [[6, 10]], time: T.HUNGER_MID_FROM_MS - 100 });
+  g.weather.until = 1e12;
+  const s = g.snakes[0];
+  feed(g); quiet(g);
+  const first = s.nextStarve;
+  while (g.time < T.HUNGER_MID_FROM_MS + 1000) quiet(g);
+  g.food = [{ x: s.body[0].x + 1, y: s.body[0].y, kind: 'food' }]; g.given = new Set([g.food[0].y * T.GRID + g.food[0].x]);
+  const before = E.hungerLeft(g, s);
+  quiet(g);
+  check('...and a meal just after HUNGER_MID_FROM_MS never shortens what an earlier one left', s.ateTick === g.tick - 1 && before > T.HUNGER_MID_MS && Math.abs(s.nextStarve - first) < 1e-6 && Math.abs(s.mealMs - before) < 1e-6, JSON.stringify({ first, now: s.nextStarve, before, mealMs: s.mealMs }));
 }
 
 { // Sudden death: the last apples fall one at a time, each wait longer than the last; the first is announced; nothing else grows.
@@ -1270,6 +1383,11 @@ const picks = (view, persona = 'drab', n = 50) => {
   let ate = 0;
   for (let i = 0; i < 20; i++) if (AI.decide(view(), fussy, {}) === D.right) ate++;
   check('a mushroom costs a rival three apples: it turns away, though a turn costs it two', !ate, `${ate} of 20 ate it`);
+  // Gobbler hates them (as its blurb says): it keeps off one at a turn it dislikes more than the mushroom costs anyone else, where others eat it.
+  const atTurn = (key, apples) => { const p = AI.PERSONAS[key], w = p.w; return { ...p, w: { ...w, turn: apples * (w.food * w.foodRange + w.eat) } }; };
+  const eats = brain => { let n = 0; for (let i = 0; i < 20; i++) if (AI.decide(view(), brain, {}) === D.right) n++; return n; };
+  const gobbler = eats(atTurn('gobbler', 4.5)), drab = eats(atTurn('drab', 4.5));
+  check('Gobbler hates mushrooms: it turns away at a turn worth four and a half apples, where Drab eats one', !gobbler && drab === 20, `Gobbler ${gobbler}, Drab ${drab} of 20 ate it`);
 }
 
 { // A hole under its own tail is still a hole once the tail has gone: it never follows its tail in.
