@@ -214,18 +214,21 @@ header { min-width: 0; }
 .scoreboard :focus-visible { outline-color: var(--ink); outline-offset: 1px; } /* (Ink on parchment: Honey there is invisible) */
 .scoreboard .name { flex: 1 1 auto; min-width: 2.2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .scoreboard .len { flex: none; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; } /* (the crown and the number on one line) */
-/* Powers: a chip (6 px, like everything small) with an ink icon and a count.
-   Golden powers are Honey. Your own leap fills as it cools and is solid when
-   ready; the icon and numbers keep full contrast all the while. The edges
-   wrapping add a loop and the seconds left, in a Honey line. On a narrow tag
-   the badge gives way first, down to its icon, and the name keeps its room. */
-.scoreboard .pow {
-  flex: 0 40 auto;
-  min-width: 19px;
+/* Powers: a chip each (6 px, like everything small), an ink icon and a
+   count. Gold is the family: a golden power held is a Honey chip in a gold
+   line, its icon in its own accent (jumps sky, flashes ember), with how many
+   are held. Your own jump and flash fill in their accent as they rest, and
+   are solid, ringed, when ready (greyed when you're too small for them); the
+   icon keeps full contrast all the while. The edges wrapping: a loop and the
+   seconds left, in a gold line. On a narrow tag the chips give way first,
+   down to their icons, and the name keeps its room. */
+.scoreboard .pow { flex: 0 40 auto; min-width: 19px; display: inline-flex; align-items: center; gap: 2px; overflow: hidden; }
+.scoreboard .pow[hidden] { display: none; } /* (its display would otherwise win over hidden) */
+.scoreboard .chip {
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 1px;
-  overflow: hidden;
   padding: 1px 4px;
   border-radius: 6px;
   font-size: 0.75rem;
@@ -233,19 +236,19 @@ header { min-width: 0; }
   line-height: 1.2;
   color: var(--ink);
   white-space: nowrap;
-  background: linear-gradient(90deg, rgba(58, 38, 20, 0.4) var(--fill, 100%), rgba(58, 38, 20, 0.06) var(--fill, 100%)); /* (filled about 3:1 against empty: readable at a glance) */
 }
-.scoreboard .pow[hidden] { display: none; } /* (its display would otherwise win over hidden: an empty chip, like a dash) */
-.scoreboard .pow svg { flex: none; width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.scoreboard .pow b { font-weight: 700; font-variant-numeric: tabular-nums; }
-.scoreboard .pow .w { display: inline-flex; align-items: center; gap: 1px; margin-left: 3px; }
-.scoreboard .pow.ready { background: rgba(58, 38, 20, 0.4); box-shadow: inset 0 0 0 1px rgba(58, 38, 20, 0.55); }
-.scoreboard .pow.small { color: var(--ink-soft); }
-.scoreboard .pow.gold { background: #fde68a; box-shadow: inset 0 0 0 1px #d4a017; }
-.scoreboard .pow.wrap { box-shadow: inset 0 0 0 1.5px #d4a017; }
-.scoreboard .pow.wrap:not(.gold):not(.mine) { background: #fef3c7; } /* (a rival wrapping: a golden power, so gold, not a greyed-out chip) */
-/* A narrow tag: the chip is just its icons (the board's pips and the screen
-   reader's words still give the count), so the name keeps its letters. */
+.scoreboard .chip svg { flex: none; width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.scoreboard .chip b { font-weight: 700; font-variant-numeric: tabular-nums; }
+.scoreboard .chip.mine { --rest: #a8dcf5; --line: #2f6f96; background: linear-gradient(90deg, var(--rest) var(--fill, 100%), rgba(58, 38, 20, 0.16) var(--fill, 100%)); }
+.scoreboard .chip.flash.mine { --rest: #f7a866; --line: #b5531d; }
+.scoreboard .chip.mine.ready { background: var(--rest); box-shadow: inset 0 0 0 1px var(--line); }
+.scoreboard .chip.mine.small { background: rgba(58, 38, 20, 0.08); color: var(--ink-soft); }
+.scoreboard .chip.gold { background: #fde68a; box-shadow: inset 0 0 0 1px #d4a017; }
+.scoreboard .chip.gold.jump svg { color: #2f6f96; }
+.scoreboard .chip.gold.flash svg { color: #b5531d; }
+.scoreboard .chip.wrap { background: #fef3c7; box-shadow: inset 0 0 0 1.5px #d4a017; }
+/* A narrow tag: the chips are just their icons (the board's pips and the
+   screen reader's words still give the counts), so the name keeps its letters. */
 .scoreboard li { container: tag / inline-size; }
 /* Four tags in a row only where they have room for a name, a chip and a
    crowned length (a near-square window gives them 130 px): otherwise two rows
@@ -255,9 +258,10 @@ main { container: page / inline-size; }
   .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @container tag (max-width: 175px) {
-  .scoreboard .pow b { display: none; }
-  .scoreboard .pow { padding-inline: 3px; flex-shrink: 0; min-width: min-content; }
-  .scoreboard .pow > svg ~ .w { display: none; } /* (two powers: the first one's icon; the wrap shows on the board, as the gold outline) */
+  .scoreboard .chip b { display: none; }
+  .scoreboard .chip { padding-inline: 3px; }
+  .scoreboard .pow { flex-shrink: 0; min-width: min-content; }
+  .scoreboard .chip:not(.wrap) ~ .chip.wrap { display: none; } /* (with other powers, the wrap gives way: it shows on the board, as the gold shimmer) */
   .scoreboard li.leader .len::before { display: none; } /* (the leader's gold ring says it) */
   .scoreboard .name { font-size: 0.86rem; }
 }
@@ -597,7 +601,7 @@ canvas {
 /* A banner over the board for the big moments (under the cards). */
 .toast {
   position: absolute;
-  z-index: 2; /* under the cards (except a tapped rival's blurb: .over) */
+  z-index: 2; /* under the cards */
   left: 50%;
   top: 12px;
   width: max-content;
@@ -653,12 +657,36 @@ canvas {
 .toast[data-kind="snow"] { background: #f0f9ff; color: #0c4a6e; box-shadow: 0 0 18px rgba(186, 230, 253, 0.6), inset 0 0 0 2px #7dd3fc; }
 .toast[data-kind="fire"] { background: linear-gradient(180deg, #ffedd5, #fdba74); color: #7c2d12; box-shadow: 0 0 18px rgba(249, 115, 22, 0.55), inset 0 0 0 2px #ea580c; }
 .toast[data-kind="go"] { padding: 8px 24px; font-size: 1.3rem; background: var(--leaf); color: #fffbea; box-shadow: 0 4px 0 var(--leaf-dark), 0 8px 20px rgba(0, 0, 0, 0.45); }
-/* A head passing under the banner: it moves to the board's foot (or, if a
-   head is there too, fades), so it never hides the board. A tapped rival's
-   blurb shows over a card, at the foot too. */
+/* A head coming into the banner's place: it moves to the board's foot or
+   its middle, whichever's clear, and stays there while that is (with heads
+   everywhere, it fades where it is), so it never hides the board. */
 .toast.low { top: auto; bottom: 12px; }
+.toast.mid { top: calc(50% - var(--toast-h, 0px) / 2); }
 .toast.settled { animation: none; } /* (dropped in once; moving it doesn't replay that) */
 .toast.under { opacity: 0.3; }
+
+/* How to steer, level with the YOU arrow as a round starts: positioned by
+   transform each frame (it rides along with your head), never in a finger's
+   way, gone once you steer. Your snake's green, like YOU. */
+.steer-hint {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  top: 0;
+  padding: 2px 8px;
+  border-radius: var(--r-tag);
+  background: rgba(246, 236, 210, 0.94); /* parchment */
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 0 0 2px #4ade80;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+  will-change: transform;
+}
+.steer-hint.on { opacity: 1; }
 
 /* Speech bubbles by snakes' heads: the box is positioned by transform each
    frame (snake.js / chatter.js); the bubble inside it pops in from its tail. */
@@ -673,6 +701,10 @@ canvas {
   will-change: transform;
   transition: opacity 0.2s;
 }
+/* With no card up, over the woodpecker's layer too: a rival's "Mind the
+   gap!" comes as the bird drums right by it, and the words come first.
+   (Still under the cards, and under the Hall of Fame, later in the page.) */
+.overlay.hidden ~ .bubble { z-index: 10; }
 .bubble > span {
   display: block;
   position: relative;
@@ -789,6 +821,7 @@ canvas {
 
 .tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--parchment-2); }
 .tab { padding: 6px 14px; font-size: 0.9rem; background: transparent; color: var(--ink); box-shadow: none; }
+.tab .tab-icon { display: none; width: 18px; height: 18px; fill: currentColor; vertical-align: -3px; } /* (the Hall of Fame as a trophy, on phones) */
 .tab:active { transform: none; box-shadow: none; }
 .tab[aria-pressed="true"] { background: var(--heartwood); color: var(--cream); }
 .tabs-small { display: inline-flex; margin-bottom: 8px; }
@@ -828,6 +861,20 @@ canvas {
 .bar-label { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .bar-track { height: 10px; border-radius: 999px; background: var(--parchment-2); overflow: hidden; }
 .bar-fill { display: block; height: 100%; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(58, 38, 20, 0.35); }
+
+/* The Field guide: each thing's picture beside its rule, in groups. */
+.guide-head { margin: 4px 0 4px; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+.guide { margin: 0 0 12px; padding: 0; list-style: none; }
+.guide li { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--parchment-2); }
+.guide li:first-child { border-top: 0; }
+.guide-pics { flex: none; display: flex; align-items: center; justify-content: center; width: 44px; }
+.guide-art { flex: none; width: 36px; height: 36px; }
+.guide-pics .guide-art:nth-child(2) { margin: 10px 0 0 -14px; } /* (two: the second a little in front, lower down) */
+.guide-pics .guide-art:first-child:not(:only-child) { width: 30px; height: 30px; margin-top: -10px; }
+.guide-pics .guide-art:nth-child(2) { width: 30px; height: 30px; }
+.guide-art.stand-in { display: inline-flex; align-items: center; justify-content: center; font-size: 22px; line-height: 1; }
+.guide p { margin: 0; font-size: 0.88rem; line-height: 1.35; color: var(--ink); text-wrap: pretty; }
+.guide strong { font-weight: 600; }
 .bar-count { text-align: right; font-variant-numeric: tabular-nums; }
 
 button.link {
@@ -842,6 +889,7 @@ button.link {
   box-shadow: none;
 }
 button.link:active { transform: none; }
+button.link[hidden] { display: none; } /* (its display would otherwise win over hidden: the Field guide has nothing to clear) */
 
 /* The dev-only frame-time overlay (?perf, or ` with ?debug). */
 .perf {
@@ -875,8 +923,8 @@ button.link:active { transform: none; }
   .opponents .tap-tip { display: block; flex-basis: 100%; font-size: 0.78rem; color: var(--ink-soft); }
   .buttons .text-button { margin-top: 0; min-height: 32px; }
   .buttons { gap: 6px 10px; }
-  .hint span:nth-of-type(n+3) { display: none; } /* (a small card: how to steer and leap; the rest is under the board) */
-  .hint span:nth-of-type(2) .sep { display: none; }
+  .hint span:nth-of-type(n+4) { display: none; } /* (a small card: how to steer, jump and flash; the rest is under the board) */
+  .hint span:nth-of-type(3) .sep { display: none; }
   .card:has(.name-row:not([hidden])) .flavor { display: none; }
   .name-row { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px 8px; font-size: 0.9rem; }
   .name-row input { width: 140px; padding-block: 6px; }
@@ -889,7 +937,7 @@ button.link:active { transform: none; }
   .card h2 { font-size: 1.25rem; }
   .flavor { display: none !important; }
   .opponents .tap-tip { display: none !important; } /* (the hint needs the room: how to steer comes first) */
-  /* Just the first two items of the hint ("Swipe to steer · Swipe ahead to leap"): a new player has to be told that much. */
+  /* Just the first two items of the hint ("Swipe to steer · Tap to jump"): a new player has to be told that much (the flash has its own lesson). */
   .card p.hint { font-size: 0.72rem; margin-top: 4px !important; }
   .hint span:nth-of-type(n+3) { display: none; }
   .hint span:nth-of-type(2) .sep { display: none; }
@@ -921,6 +969,10 @@ button.link:active { transform: none; }
   .trophy svg { display: block; }
   .trophy .trophy-text { display: none; }
   .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Three tabs and the close on one row: the Hall of Fame's tab is its trophy too. */
+  .records-head .tab { white-space: nowrap; }
+  .records-head .tab-icon { display: inline-block; }
+  .records-head .tab-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .card { --pad-x: 14px; --pad-y: 12px; }
   .card h2 { font-size: 1.5rem; }
@@ -949,7 +1001,7 @@ button.link:active { transform: none; }
   .hud .stat { font-size: 0.9rem; }
   .records { padding: 8px; }
   .records-card { padding: 12px; }
-  .records-head .tab { padding-inline: 10px; white-space: nowrap; }
+  .records-head .tab { padding-inline: 8px; white-space: nowrap; }
   .scores-table td, .scores-table th { padding-inline: 4px; }
 }
 
@@ -1001,7 +1053,7 @@ button.link:active { transform: none; }
   h1 .amp, .leaves, .frame-sheen > i, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
   .scoreboard li.starving::after { opacity: 1; }
   button, button:active { transition: none; transform: none; }
-  .toast { transition: none; }
+  .toast, .steer-hint { transition: none; }
 }
 
 /* Windows High Contrast: keep outlines and the colored dots. */

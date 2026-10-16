@@ -30,9 +30,8 @@ window.SnakeAI = (() => {
   //   space, territory, aggression  room / board share / shrinking everyone else
   //   food, eat, pellet, foodRange  pull per step toward food, eating bonus, pellet worth, reach (required)
   //   normalFood                    worth of a green apple (default 1); a golden apple is worth 3x
-  //   mushroom                      worth of a mushroom, which shrinks you (default -1: avoid)
-  //   mushroomLover                 from this length on, seek mushrooms and ignore apples
-  //   contested                     how much food a rival reaches first still counts (0-1, true = 1)
+  //   mushroom                      worth of a mushroom, which shrinks you (default and at most -SHRINK: it costs that many apples' worth of length)
+  //   contested                     how much food a rival reaches first still counts (0-1, true = 1; hunger raises it)
   //   hungryBelow, fedFactor        at this length or more, food matters only fedFactor as much
   //   margin, headRisk, zoneRisk    spare room wanted / fear of a rival's next move / of where it might be (required)
   //   distance                      reward per step of distance from the nearest rival head
@@ -48,6 +47,8 @@ window.SnakeAI = (() => {
   //   thrill                        reward for every wall, body or rival head right next to me
   //   coil                          { weight, from }: from this length on, reward for keeping my head
   //                                   close behind my own tail, so I move as a ring
+  //   thick                         reward for each cell of my own body beside my head (not my neck):
+  //                                   a wall two thick can't be hopped
   const DRAB = {
     space: 1.2, territory: 1.5, aggression: 0.3,
     food: 5, eat: 80, pellet: 1.2, foodRange: 60,
@@ -68,7 +69,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1, territory: 0.8, aggression: 0.3,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, hungryBelow: 16, fedFactor: 0.3,
-        margin: 10, headRisk: 600, zoneRisk: 80, hunt: HUNT,
+        margin: 10, headRisk: 600, zoneRisk: 80, thick: 15, hunt: HUNT,
       },
     },
     gobbler: {
@@ -77,9 +78,9 @@ window.SnakeAI = (() => {
       kill: ['Gobbler didn’t even stop chewing.', 'It burped. That was the eulogy.', 'Gobbler was thinking about apples. It always is.'],
       win: ['And it’s still hungry.', 'Not a crumb left.', 'Now, about pudding.'],
       w: {
-        space: 1, territory: 0.2,
-        food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 0.3, mushroom: -3,
-        margin: 6, headRisk: 1500, zoneRisk: 500, // greedy, but it flinches from heads (it used to win only 8%)
+        space: 1.6, territory: 0.2,
+        food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 1, mushroom: -6, // (twice what a mushroom costs anyone else: it hates them)
+        margin: 10, headRisk: 2200, zoneRisk: 700, // greedy (a rival's apple too), but it flinches from heads and wants room (it used to win only 8%; at 1500 and 500, 12-17%)
       },
     },
     ghost: {
@@ -90,7 +91,7 @@ window.SnakeAI = (() => {
       w: {
         space: 2, territory: 0.6,
         food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 18, fedFactor: 0.4,
-        margin: 6, headRisk: 900, zoneRisk: 150, distance: 7,
+        margin: 6, headRisk: 900, zoneRisk: 150, distance: 6,
       },
     },
     sovereign: {
@@ -131,7 +132,7 @@ window.SnakeAI = (() => {
       kill: ['Vulture was waiting for this.', 'It circled. You slipped. It ate.', 'Vulture thanks you for the beads.'],
       win: ['Picking over the leftovers.', 'It waited everyone out.', 'Last one at the table.'],
       w: {
-        space: 1.5, territory: 0.4,
+        space: 1.3, territory: 0.4,
         food: 4, eat: 60, normalFood: 0.15, pellet: 3, foodRange: 40, contested: true,
         margin: 6, headRisk: 900, zoneRisk: 200, lure: { weight: 8, dist: 8 },
       },
@@ -142,9 +143,9 @@ window.SnakeAI = (() => {
       kill: ['Mason had a spot picked out for you.', 'You were on the wrong side of the wall.', 'All roads led to Mason.'],
       win: ['Veni, vidi, Mason.', 'Winnus maximus.', 'Rome took longer.'],
       w: {
-        space: 1.5, territory: 2.2,
+        space: 1.3, territory: 1.8,
         food: 3, eat: 40, pellet: 1, foodRange: 30,
-        margin: 6, headRisk: 800, zoneRisk: 150, turn: 25,
+        margin: 6, headRisk: 800, zoneRisk: 150, turn: 25, thick: 45,
       },
     },
     wildcard: {
@@ -193,7 +194,7 @@ window.SnakeAI = (() => {
       win: ['Rides off into the sunset.', 'Last snake in town.', 'Not a scratch on the hat.'],
       w: {
         space: 1, territory: 0.6,
-        food: 6, eat: 80, pellet: 1.5, foodRange: 40, mushroom: 0.5,
+        food: 6, eat: 80, pellet: 1.5, foodRange: 40,
         margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25,
       },
     },
@@ -203,9 +204,9 @@ window.SnakeAI = (() => {
       kill: ['Mute had the last word. Silently.', '*taps on your invisible box*', '*lowers an invisible curtain*'],
       win: ['*takes a silent bow*', '*accepts an invisible bouquet*', '*lifts an invisible trophy*'],
       w: {
-        space: 1.2, territory: 2, aggression: 0.8,
+        space: 1.2, territory: 1.6, aggression: 0.8,
         food: 4, eat: 70, pellet: 1.2, foodRange: 40,
-        margin: 6, headRisk: 700, zoneRisk: 120,
+        margin: 6, headRisk: 700, zoneRisk: 120, thick: 15,
         hunt: { squeeze: 4, chase: 2, lead: 1 },
       },
     },
@@ -228,7 +229,7 @@ window.SnakeAI = (() => {
       win: ['Who’s laughing now?', 'Thank you! It’s here all week.', 'And the last laugh.'],
       w: {
         space: 1, territory: 0.6,
-        food: 5, eat: 70, pellet: 1.2, foodRange: 40, mushroom: 0.5,
+        food: 5, eat: 70, pellet: 1.2, foodRange: 40,
         margin: 4, headRisk: 600, zoneRisk: 40, turn: -12,
         lure: { weight: 6, dist: 3 }, hunt: { squeeze: 3, chase: 0, lead: 2 },
       },
@@ -258,7 +259,7 @@ window.SnakeAI = (() => {
   // (-1 off the board), and `queue` holds a breadth-first search, one distance
   // after another. No search visits a cell twice, so N * N is always enough.
   let bufN = 0, mineFree, otherFree, ownFree, risk, seen, owner, claimT, ownerStamp;
-  let foodValue, foodGrow, foodCells, queue, nbr, necks, reach;
+  let foodValue, foodGrow, foodCells, queue, nbr, necks, reach, myCells;
   let stamp = 0;
   function ensureBuffers(N) {
     if (bufN === N) return;
@@ -278,6 +279,7 @@ window.SnakeAI = (() => {
     queue = new Int32Array(size);
     necks = new Int32Array(size * 4); // (a neck: its one or two cells, the room before it, and how far it is)
     reach = new Int32Array(size);     // the soonest any rival could be in a cell (ticks from now)
+    myCells = new Int32Array(size);   // my own body as it is (marked with a stamp)
     nbr = new Int32Array(size * 4);
     for (let i = 0; i < size; i++) {
       const x = i % N, y = (i - x) / N;
@@ -313,6 +315,10 @@ window.SnakeAI = (() => {
   const manhattan = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
   const sameDir = (a, b) => a.x === b.x && a.y === b.y;
   const rand = (a, b) => a + Math.random() * (b - a);
+  // Land (Sovereign's realm, a colony): a cell whose centre is within the
+  // field's radius, and LAND_REACH, of its centre. (One rule everywhere: the
+  // AI, the chatter, the tags and the borders drawn.)
+  const onLand = (c, f) => Math.hypot(c.x - f.x, c.y - f.y) <= f.radius + TUNE.LAND_REACH;
 
   // Wildcard: a random but sensible set of weights, drawn once per round.
   function randomWeights() {
@@ -341,7 +347,7 @@ window.SnakeAI = (() => {
     ensureBuffers(N);
     ensureOwners(others.length + 1);
     const steps = Math.max(1, depth); // even a depth-0 search makes one move
-    ensureBodies(steps, me.body.length + steps); // a body grows at most one cell a step
+    ensureBodies(Math.max(2, steps), me.body.length + steps + 4); // a body grows at most one cell a step (a power moves up to three at once, eating)
     mineFree.fill(0); otherFree.fill(0); risk.fill(0);
 
     const inside = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
@@ -465,7 +471,7 @@ window.SnakeAI = (() => {
             let n = 0;
             for (let y = cy - home.radius; y <= cy + home.radius; y++) {
               for (let x = cx - home.radius; x <= cx + home.radius; x++) {
-                if (inside(x, y) && Math.hypot(x - cx, y - cy) <= home.radius && !holes.has(y * N + x)) n++;
+                if (inside(x, y) && Math.hypot(x - cx, y - cy) <= home.radius + TUNE.LAND_REACH && !holes.has(y * N + x)) n++;
               }
             }
             return n;
@@ -479,7 +485,7 @@ window.SnakeAI = (() => {
           }
           if (best) { home.x = best.x; home.y = best.y; }
         }
-        const intruders = all.filter(k => Math.hypot(heads[k].x - ctx.home.x, heads[k].y - ctx.home.y) <= ctx.home.radius + 1);
+        const intruders = all.filter(k => onLand(heads[k], ctx.home));
         if (intruders.length) pickVictim(intruders, ctx.w.hunt);
         else memory.victimId = null;
       },
@@ -515,7 +521,7 @@ window.SnakeAI = (() => {
           memory.site = best;
           if (!best) memory.nextSiteAt = view.timeMs + col.every;
         }
-        const intruders = all.filter(k => memory.colonies.some(c => Math.hypot(heads[k].x - c.x, heads[k].y - c.y) <= c.radius + 1));
+        const intruders = all.filter(k => memory.colonies.some(c => onLand(heads[k], c)));
         if (intruders.length) pickVictim(intruders, ctx.w.hunt);
         else {
           memory.victimId = null;
@@ -631,6 +637,30 @@ window.SnakeAI = (() => {
     }
 
     if (persona.driver && others.length) drivers[persona.driver]();
+
+    // Desperate: hunger will finish me soon. My own clock, as a person sees
+    // their bar: till my next shrink, then a segment every STARVE_EVERY_MS
+    // down to my smallest (all of it faster in snow). Nothing else matters
+    // now: no errands, any food I can reach in time (a rival's too), and
+    // risks I wouldn't take otherwise. With no food in reach, I hunt: a
+    // rival that crashes drops beads.
+    const myLen = me.body.length + me.grow;
+    const winter = view.weather === 'snow';
+    const lifeMs = me.starveIn == null ? Infinity : (me.starveIn + (myLen - TUNE.MIN_LENGTH) * TUNE.STARVE_EVERY_MS) / (winter ? TUNE.SNOW_HUNGER : 1);
+    const lifeTicks = lifeMs / Math.max(TUNE.MIN_TICK, TUNE.START_TICK - (TUNE.START_TICK - TUNE.MIN_TICK) * view.timeMs / TUNE.RAMP_MS);
+    const desperate = lifeMs < TUNE.AI_DESPERATE_MS;
+    memory.desperate = desperate;
+    if (desperate) {
+      const w0 = ctx.w;
+      ctx.w = {
+        ...w0, contested: 1, foodRange: Math.max(60, w0.foodRange), normalFood: 1, pellet: Math.max(1, w0.pellet ?? 1), mushroom: -TUNE.SHRINK,
+        margin: Math.min(2, w0.margin), headRisk: 0.4 * w0.headRisk, zoneRisk: 0.3 * w0.zoneRisk,
+        territory: 0.5 * w0.territory, aggression: 0, distance: 0, tail: 0, thrill: 0, turn: 0, coil: null, thick: 0, hunt: HUNT,
+      };
+      ctx.victim = -1; ctx.target = null; ctx.lure = -1; ctx.avoid = null; ctx.home = null; ctx.mimicDir = null; ctx.goal = null;
+      const meal = f => f.kind !== 'mushroom' && !(f.kind === 'pellet' && f.owner === me.id) && manhattan(f, myHead) <= lifeTicks;
+      if (others.length && !food.some(meal)) pickVictim(all, HUNT);
+    }
     const w = ctx.w;
 
     // Risk: cells each rival could step into next tick (head-on), and its
@@ -645,9 +675,10 @@ window.SnakeAI = (() => {
         if (inside(nx, ny)) risk[ny * N + nx] += strike;
       }
       // (Its powers reach further straight on: a dash three cells, a golden
-      // leap three, anyone's leap two if there's something in front to hop.)
+      // leap three; anyone's flash two, and anyone's leap if there's
+      // something in front to hop. It may be resting them: I can't tell.)
       const fx = at(heads[k].x + o.dir.x), fy = at(heads[k].y + o.dir.y);
-      const far = o.dashes > 0 || o.leaps > 0 ? 3 : inside(fx, fy) && otherFree[fy * N + fx] > 1 ? 2 : 1;
+      const far = o.dashes > 0 || o.leaps > 0 ? 3 : Math.max(TUNE.FLASH_LENGTH, inside(fx, fy) && otherFree[fy * N + fx] > 1 ? 2 : 1);
       for (let i = 2; i <= far; i++) {
         const nx = at(heads[k].x + o.dir.x * i), ny = at(heads[k].y + o.dir.y * i);
         if (inside(nx, ny)) risk[ny * N + nx] += strike * 0.5;
@@ -699,32 +730,34 @@ window.SnakeAI = (() => {
     }
     clearOwnFree(me.body, me.body.length);
 
-    // How much food matters right now, given how long I already am. A
-    // mushroom lover past its length limit wants mushrooms instead. Hunger
-    // trumps all of that: with under 10 s before I start starving, everyone
-    // goes looking for food, harder the closer it gets.
-    const myLen = me.body.length + me.grow;
+    // How much food matters right now, given how long I already am. Hunger
+    // trumps that: with under 10 s before I start starving, everyone goes
+    // looking for food, harder the closer it gets (and food a rival may
+    // reach first counts for more); desperate, harder still.
     const hunger = me.hungerLeft == null ? 0 : Math.min(1, Math.max(0, (TUNE.AI_HUNGRY_MS - me.hungerLeft) / TUNE.AI_HUNGRY_MS));
     // (Once the woodpecker's here nothing new grows: nobody can afford to be picky.)
     const lean = view.timeMs >= TUNE.SUDDEN_DEATH_MS;
-    const shrinking = !hunger && !lean && w.mushroomLover != null && myLen >= w.mushroomLover;
     const fed = !hunger && !lean && myLen >= (w.hungryBelow ?? Infinity);
-    const foodW = shrinking ? Math.max(3, w.food) : fed ? w.food * w.fedFactor : Math.max(w.food, 8 * hunger) * (1 + 2 * hunger);
-    const eatW = shrinking ? Math.max(40, w.eat) : fed ? w.eat * w.fedFactor : Math.max(w.eat, 150 * hunger) * (1 + 2 * hunger);
+    const foodW0 = fed ? w.food * w.fedFactor : Math.max(w.food, 8 * hunger) * (1 + 2 * hunger);
+    const eatW0 = fed ? w.eat * w.fedFactor : Math.max(w.eat, 150 * hunger) * (1 + 2 * hunger);
+    const foodW = desperate ? Math.max(60, foodW0) : foodW0, eatW = desperate ? Math.max(600, eatW0) : eatW0;
+    const contested = Math.max(Number(w.contested || 0), hunger);
+    // (My own beads give the length back, but they aren't a meal: they're
+    // worth to me what they'd be worth if I weren't hungry at all.)
+    const calm = Math.min(1, (w.food * w.foodRange + w.eat) / (foodW * w.foodRange + eatW));
 
-    // How many ticks an apple I saw has left (in winter it rots twice as
-    // fast, and has done since I saw it).
-    const winter = view.weather === 'snow';
-    const applesLeft = f => winter && !f.cooked ? (f.expires - view.tick - age) / 2 : f.expires - view.tick; // (baked, it keeps)
+    // How many ticks something I saw has left before it rots, withers or
+    // flies off (in winter an apple rots twice as fast, and has done since I saw it).
+    const ticksLeft = f => winter && f.kind === 'food' && !f.cooked ? (f.expires - view.tick - age) / 2 : f.expires - view.tick; // (baked, it keeps)
 
     // Food worth by kind. Negative means "avoid eating".
     const apple = w.normalFood ?? 1;
     const worth = {
-      food: shrinking ? 0 : Math.max(apple, hunger),
-      golden: shrinking ? 0 : TUNE.GOLDEN_GROWTH * Math.max(apple, hunger),
-      beetle: shrinking ? 0 : TUNE.BEETLE_GROWTH * Math.max(apple, hunger), // it moves, but it's worth what it's worth
-      pellet: shrinking ? 0 : (w.pellet ?? 1),
-      mushroom: shrinking ? 2 : (w.mushroom ?? -1),
+      food: Math.max(apple, hunger),
+      golden: TUNE.GOLDEN_GROWTH * Math.max(apple, hunger),
+      beetle: TUNE.BEETLE_GROWTH * Math.max(apple, hunger), // it moves, but it's worth what it's worth
+      pellet: w.pellet ?? 1,
+      mushroom: Math.min(-TUNE.SHRINK, w.mushroom ?? -TUNE.SHRINK), // (it takes SHRINK segments off, and it isn't a meal: as many apples lost, hungry or not)
       leaf: 2 * Math.max(apple, hunger, 0.5), // (golden powers: worth it for what they do)
       goldcap: 1.5 * Math.max(apple, hunger, 0.5),
     };
@@ -739,7 +772,10 @@ window.SnakeAI = (() => {
       if (!v) continue;
       if (f.cooked && v > 0) v *= TUNE.COOKED_GROWTH; // (baked: worth more)
       if (f.gold && v > 0) v *= 1.5; // (a golden beetle: leaps too)
-      if (f.kind === 'food' && f.expires != null && applesLeft(f) < Math.abs(f.x - myHead.x) + Math.abs(f.y - myHead.y)) continue; // (it'll have rotted)
+      if (f.kind === 'pellet' && f.owner === me.id) v *= calm;
+      const away = manhattan(f, myHead);
+      if (f.expires != null && ticksLeft(f) < away) continue; // (it'll be gone before I get there)
+      if (desperate && v > 0 && away > lifeTicks + 1) continue; // (I'd starve on the way)
       const i = f.y * N + f.x;
       foodValue[i] += v;
       foodCells[foodCount++] = i;
@@ -831,7 +867,11 @@ window.SnakeAI = (() => {
             queue[write++] = i;
           }
         }
-        const levelEnd = write;
+        // A cell is claimed at T + 1 once whoever's in it has left: the free
+        // tables count ticks from now (a rival's search starts in the past,
+        // when everything empty now was empty too), and my own body, placed
+        // at time t, ownFree - t. (Worked out once a level: it's the hot loop.)
+        const levelEnd = write, freeBy = Math.max(0, T + 1), ownBy = T + 1 - t;
         while (read < levelEnd) {
           const i = queue[read++];
           const own = owner[i];
@@ -847,7 +887,8 @@ window.SnakeAI = (() => {
               }
               continue;
             }
-            if (free[ni] > T + 1 || ownFree[ni] > T + 1 - t) continue;
+            const mine = ownFree[ni];
+            if (free[ni] > freeBy || (mine > 0 && mine > ownBy)) continue;
             ownerStamp[ni] = stampV; owner[ni] = own; claimT[ni] = T + 1; counts[own]++;
             queue[write++] = ni;
           }
@@ -856,7 +897,7 @@ window.SnakeAI = (() => {
       }
 
       // 3. Food: a steady pull of foodW per step closer. Normally only food I
-      //    reach before any rival counts; a contested eater counts all of it.
+      //    reach before any rival counts in full.
       let foodScore = 0;
       for (let k = 0; k < foodCount; k++) {
         const i = foodCells[k], v = foodValue[i];
@@ -864,9 +905,9 @@ window.SnakeAI = (() => {
           foodScore = Math.max(foodScore, v * Math.max(0, w.foodRange - (claimT[i] - t)));
         }
       }
-      if (w.contested) foodScore = Math.max(foodScore, Number(w.contested) * anyFood);
-      // Nothing uncontested: drift toward the nearest food anyway, more weakly.
-      else if (foodScore === 0) foodScore = 0.3 * anyFood;
+      // The rest counts as much as I care (contested: hunger raises it), and
+      // with nothing uncontested I drift toward the nearest anyway, more weakly.
+      foodScore = Math.max(foodScore, (foodScore ? contested : Math.max(0.3, contested)) * anyFood);
 
       let othersTerritory = 0;
       for (let k = 1; k < owners; k++) othersTerritory += counts[k];
@@ -911,13 +952,21 @@ window.SnakeAI = (() => {
 
       // 7. Staying home.
       if (ctx.home) {
-        const out = Math.hypot(head.x - ctx.home.x, head.y - ctx.home.y) - ctx.home.radius;
+        const out = Math.hypot(head.x - ctx.home.x, head.y - ctx.home.y) - ctx.home.radius - TUNE.LAND_REACH;
         if (out > 0) score -= w.home.leave * out;
       }
 
       // 8. Coiling: once long enough, keeping my head close behind my own tail,
       //    so I move as a ring (anything inside it is boxed in).
       if (w.coil && len >= w.coil.from) score += w.coil.weight * Math.max(0, 5 - manhattan(head, body[len - 1]));
+
+      //    Thick walls (the trappers): my own body beside my head (not my
+      //    neck). Doubled back along myself, my wall is two thick: nobody
+      //    can hop it.
+      if (w.thick) {
+        const neckI = body[1].y * N + body[1].x;
+        for (let n = 4 * headI; n < 4 * headI + 4; n++) if (nbr[n] >= 0 && nbr[n] !== neckI && ownFree[nbr[n]] > 0) score += w.thick;
+      }
 
       // 9. Riding just behind a rival's tail.
       if (w.tail) {
@@ -1032,88 +1081,205 @@ window.SnakeAI = (() => {
       s += Math.random() * 1e-3; // tie-break
       if (s > bestScore) { bestScore = s; bestDir = d; }
     }
-    // Powers. With nothing better than a crash every way, a leap over what's
-    // in front (golden leaps, or the plain leap when it's ready), if there's
-    // somewhere free to land: it asks for it just as a person presses.
-    if (bestScore < DEAD / 2 && !me.dashes && (me.leaps > 0 || me.leapIn === 0)) {
-      const reach = me.leaps > 0 ? 2 : 1, keep = me.grow > 0 ? me.body.length : me.body.length - 1;
-      const mine = (x, y) => { for (let j = 0; j < keep; j++) if (me.body[j].x === x && me.body[j].y === y) return true; return false; };
-      const hurdle = (x, y) => holes.has(y * N + x) || fire.has(y * N + x) || mineFree[y * N + x] > 1 || mine(x, y);
-      for (const d of [bestDir, ...DIR_LIST]) {
-        if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
-        let over = false, ok = true;
-        for (let i = 1; i <= reach + 1 && ok; i++) {
-          const x = myHead.x + d.x * i, y = myHead.y + d.y * i;
-          if (!inside(x, y)) ok = false;
-          else if (i <= reach) over ||= hurdle(x, y);
-          else ok = !hurdle(x, y);
-        }
-        if (ok && over) { bestDir = d; memory.power = view.tick; break; }
-      }
-    }
-    // Golden dashes: three cells at once along the ground. Worth one to cut a
-    // rival in two (out, if it's cut right behind its head; otherwise for a
-    // good length off it, more so the more aggressive it is), to grab
-    // something golden first, or as the way out. Never into the edge or a
-    // hole (it'd blow up), never where it would crash, and only landing
-    // somewhere with room.
-    if (me.dashes > 0 && memory.power !== view.tick) {
-      const d = bestDash(bestScore < DEAD / 2);
-      if (d) { bestDir = d; memory.power = view.tick; }
+    // Powers: each weighed as a move. The same search as crawling, from
+    // where the power leaves me and to the same horizon, plus what it eats on
+    // the way, less the risk where it lands and a price in apples (what an
+    // apple is worth to me right now). Pressed only when it beats the best
+    // crawl, and asked for just as a person presses (memory.flash, memory.power).
+    const pick = powerPick(bestScore, bestDir);
+    if (pick) {
+      bestDir = pick.d;
+      if (pick.flash) memory.flash = view.tick; else memory.power = view.tick;
     }
     return bestDir;
 
-    function bestDash(trapped) {
-      const L = TUNE.DASH_LENGTH, keep = me.grow > 0 ? me.body.length : me.body.length - 1, wrap = me.wrap > 0;
-      const own = new Set();
-      for (let j = 0; j < keep; j++) own.add(me.body[j].y * N + me.body[j].x);
-      const wall = i => holes.has(i) && !fire.has(i); // (a hole, or where the woodpecker's about to strike; fire's put out)
-      const bodyAt = (x, y) => { // a rival's body there, and how far down it, as it'll be by the dash (it's moved on since I saw it, unless stunned)
-        for (const o of others) for (let j = 0; j < o.body.length; j++) if (o.body[j].x === x && o.body[j].y === y) return { o, j0: j, j: j + Math.max(0, age - (o.stun || 0)) };
-        return null;
+    // - The flash, rested: two cells in a tick along the ground, every one
+    //   of them free by then, only the way I'd crawl anyway (or any way out
+    //   of a crash). It costs two apples (it's free, but it rests: at one,
+    //   rivals flashed three times a minute and did no better than the same
+    //   rivals never flashing, or worse; an edge that small is mostly the
+    //   search's own guesswork), or one to win a race (food a rival could
+    //   reach as soon as I'd crawl there, but not as soon as I'd flash) or
+    //   to get out of a crash. (Weighing every way cost half as much again
+    //   as the whole decision, for a third more flashes; the rest were no
+    //   better for it.)
+    // - Golden dashes: only to cut someone in two (more readily the more
+    //   aggressive I am), to grab something golden first, or as the way out.
+    //   (Spent on speed, they stopped cutting anyone.)
+    // - Golden leaps: whenever one pays (they're free, and held they're wasted).
+    // - The plain jump: out of a crash, or to come down on food (it costs a
+    //   segment and a rest: jumping for position, or just in case, lost).
+    // Desperate, every power is half the price. (Nobody's told anyone's rests.)
+    function powerPick(crawl, crawlDir) {
+      const jump = me.leaps > 0 || (me.leapIn === 0 && me.body.length > TUNE.MIN_LENGTH);
+      if (me.flashIn !== 0 && !jump) return null;
+      const U = Math.max(40, foodW * w.foodRange + eatW); // (an apple, to me, now)
+      const cheap = desperate ? 0.5 : 1;
+      const keep = me.grow > 0 ? me.body.length : me.body.length - 1, stampM = ++stamp;
+      for (let j = 0; j < keep; j++) myCells[me.body[j].y * N + me.body[j].x] = stampM;
+      const trapped = crawl < DEAD / 2;
+      const pecks = view.pecks; // (the woodpecker's mark, if I'm shown it apart from the holes)
+      const cellAt = (x, y) => {
+        if (me.wrap > 0) { x = (x + N) % N; y = (y + N) % N; } // (the edges wrap for me)
+        return inside(x, y) ? y * N + x : -1;
       };
-      const gold = new Set(); // (food worth dashing for: golden things)
-      for (const f of food) if (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold) gold.add(f.y * N + f.x);
-      const cutW = 0.5 + (w.aggression || 0);
-      let best = null, bestV = 5.5;
+      const free = i => i >= 0 && myCells[i] !== stampM && mineFree[i] <= 1; // (free by next tick)
+      // Something to hop: a body still there next tick (mine too), or fire;
+      // a hole, if I can tell it from the woodpecker's mark (a mark isn't a
+      // hole yet: I'd crawl in), or if it's that or a crash.
+      const hurdle = i => myCells[i] === stampM || (mineFree[i] > 1 && (mineFree[i] < HOLE || fire.has(i) || (pecks ? !pecks.has(i) : trapped)));
+      const path = [0, 0, 0];
+      const ate = [-1, -1, -1], ateV = [0, 0, 0];
+      let ateL = 0, ateG = 0, ateGain = 0;
+      let best = null;
+      const consider = (d, flash, v, price, extra) => {
+        if (v === null) return;
+        v += extra - price * cheap * U;
+        if (v > (best ? best.v : crawl + 1)) best = { d, flash, v };
+      };
       for (const d of DIR_LIST) {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
-        let x = myHead.x, y = myHead.y, v = trapped ? 100 : 0, ok = true;
-        for (let i = 1; i <= L && ok; i++) {
-          x += d.x; y += d.y;
-          if (wrap) { x = (x + N) % N; y = (y + N) % N; }
-          const k = y * N + x;
-          if (!inside(x, y) || wall(k) || own.has(k)) { ok = false; break; }
-          if (fire.has(k)) { /* (fire: it's put out) */ } else if (mineFree[k] > 1) { // (a rival's body that'll still be there)
-            const b = bodyAt(x, y), px = x + d.x, py = y + d.y;
-            const thick = b && inside(px, py) && b.o.body.some(c => c.x === px && c.y === py);
-            if (!b || b.j0 === 0 || thick) { ok = false; break; } // (a head, or two thick: a crash)
-            v += b.j < TUNE.MIN_LENGTH ? 60 : (b.o.body.length - b.j) * cutW;
-          }
-          if (gold.has(k)) v += 3 * Math.max(1, foodValue[k]); // (something golden, first)
-          if (i === L && risk[k] > 0) v -= 4; // (landing by a rival's head)
-        }
-        if (!ok || v <= bestV) continue;
-        const room = roomAt(y * N + x, own, Math.min(40, myLen + 4));
-        if (room < Math.min(40, myLen + 4)) continue;
-        best = d; bestV = v;
+        const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
+        if (me.dashes > 0) consider(d, true, dashOpt(d), 0.6, extra);
+        else if (me.flashIn === 0 && (trapped || d === crawlDir)) consider(d, true, flashOpt(d), trapped || race(d) ? 1 : 2, extra);
+        if (me.leaps > 0) consider(d, false, leapOpt(d, 2) ?? leapOpt(d, 1), 0.35, extra);
+        else if (jump) consider(d, false, leapOpt(d, 1), TUNE.LEAP_COST + 0.5, extra);
       }
       return best;
-    }
-    function roomAt(i0, own, cap) {
-      const z = ++stamp;
-      queue[0] = i0; seen[i0] = z;
-      let read = 0, write = 1;
-      while (read < write && write < cap) {
-        const i = queue[read++];
-        for (let n = 4 * i; n < 4 * i + 4; n++) {
-          const ni = nbr[n];
-          if (ni < 0 || seen[ni] === z || (holes.has(ni) && !fire.has(ni)) || mineFree[ni] > 2 || own.has(ni)) continue;
-          seen[ni] = z;
-          queue[write++] = ni;
+
+      // A race: food straight on, or that way, that a rival could get to
+      // just as soon as I'd crawl there (but not as soon as I'd flash there,
+      // a tick sooner).
+      function race(d) {
+        for (const f of food) {
+          const i = f.y * N + f.x, k = Math.abs(f.x - myHead.x) + Math.abs(f.y - myHead.y);
+          if (foodValue[i] > 0 && reach[i] === k && Math.abs(f.x - myHead.x - 2 * d.x) + Math.abs(f.y - myHead.y - 2 * d.y) === k - 2) return true;
         }
+        return false;
       }
-      return write;
+
+      // The cells a power passes, from my head, into path; false if one's off the board.
+      function trace(d, n) {
+        let x = myHead.x, y = myHead.y;
+        for (let i = 0; i < n; i++) {
+          const c = cellAt(x + d.x, y + d.y);
+          if (c < 0) return false;
+          x = c % N; y = (c - x) / N;
+          path[i] = c;
+        }
+        return true;
+      }
+
+      // A leap over `reach` cells (golden: two if it can, else one, as the
+      // engine tries them), landing on the next, two ticks from now.
+      function leapOpt(d, reach) {
+        const golden = me.leaps > 0;
+        if (!trace(d, reach + 1)) return null;
+        let over = false;
+        for (let i = 0; i < reach; i++) over ||= hurdle(path[i]);
+        const land = path[reach];
+        if (!over || !free(land)) return null;
+        if (!golden && !trapped && !(foodValue[land] > 0)) { // (the plain jump: out of a crash, or onto food, or just short of it)
+          const lx = land % N, past = cellAt(lx + d.x, (land - lx) / N + d.y);
+          if (!(past >= 0 && foodValue[past] > 0)) return null;
+        }
+        let L = me.body.length, g = me.grow;
+        if (!golden) for (let n = 0; n < TUNE.LEAP_COST; n++) { if (g > 0) g--; else L--; }
+        for (let i = 0; i <= reach; i++) { if (g > 0) g--; else L--; L++; }
+        const nb = bodies[2];
+        for (let j = 0; j < L; j++) {
+          if (j <= reach) { const c = path[reach - j]; nb[j].x = c % N; nb[j].y = (c - nb[j].x) / N; }
+          else { const b = me.body[j - reach - 1]; nb[j].x = b.x; nb[j].y = b.y; }
+        }
+        // (It eats where it lands, and a golden leap what it crawls over first.)
+        eatOn(reach === 2 && !hurdle(path[0]) ? path[0] : -1, land, -1, L, g, 0.85);
+        const gain = ateGain - 0.6 * risk[land];
+        const score = depth > 2 ? search(nb, ateL, ateG, depth - 2, 2, gain) : evaluate(nb, ateL, ateG, 2) + gain;
+        uneat();
+        return score;
+      }
+
+      // The plain flash: FLASH_LENGTH cells this tick, along the ground, every
+      // one free by then (a body, a hole, fire or the edge would stop it there:
+      // a crash), and never stopping in the woodpecker's mark.
+      function flashOpt(d) {
+        const F = TUNE.FLASH_LENGTH;
+        if (!trace(d, F)) return null;
+        for (let i = 0; i < F; i++) if (!free(path[i])) return null;
+        return groundOpt(F, 0);
+      }
+
+      // A golden dash: DASH_LENGTH cells, cutting a snake one cell thick and
+      // putting fire out; never into the edge or a hole (it'd blow up), a
+      // head or a snake two thick (a crash), or my own body.
+      function dashOpt(d) {
+        const L = TUNE.DASH_LENGTH;
+        if (!trace(d, L)) return null;
+        const agg = (w.aggression || 0) + (w.hunt ? 0.5 : 0);
+        let cut = 0, gold = false;
+        for (let i = 0; i < L; i++) {
+          const c = path[i], x = c % N, y = (c - x) / N;
+          if (myCells[c] === stampM) return null;
+          if (holes.has(c) && !fire.has(c)) return null; // (a hole, or the woodpecker's mark: it'd blow up, or soon)
+          if (!holes.has(c) && mineFree[c] > 1) { // (a rival's body that'll still be there)
+            let o = null, j0 = -1;
+            for (const r of others) { j0 = r.body.findIndex(q => q.x === x && q.y === y); if (j0 >= 0) { o = r; break; } }
+            if (!o || j0 === 0) return null; // (a head, or where one may be)
+            const px = x + d.x, py = y + d.y;
+            if (o.body.some(q => q.x === px && q.y === py)) return null; // (two thick)
+            const j = j0 + Math.max(0, age - (o.stun || 0)); // (where it's cut: it's moved on since I saw it)
+            cut += j < TUNE.MIN_LENGTH ? 6 * (0.5 + agg) : Math.max(0, o.body.length - j) * 0.4 * (0.5 + agg); // (in apples: out, or its tail off)
+          }
+          for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold)) gold = true;
+        }
+        if (!cut && !gold && !trapped) return null;
+        return groundOpt(L, cut * U);
+      }
+
+      // Along the ground: n cells this tick (path[0..n-1]), eating them.
+      function groundOpt(n, bonus) {
+        let L = me.body.length, g = me.grow;
+        for (let i = 0; i < n; i++) { if (g > 0) g--; else L--; L++; }
+        const nb = bodies[1];
+        for (let j = 0; j < L; j++) {
+          if (j < n) { const c = path[n - 1 - j]; nb[j].x = c % N; nb[j].y = (c - nb[j].x) / N; }
+          else { const b = me.body[j - n]; nb[j].x = b.x; nb[j].y = b.y; }
+        }
+        eatOn(path[0], path[1], n > 2 ? path[2] : -1, L, g, 1);
+        const gain = bonus + ateGain - risk[path[n - 1]];
+        const score = depth > 1 ? search(nb, ateL, ateG, depth - 1, 1, gain) : evaluate(nb, ateL, ateG, 1) + gain;
+        uneat();
+        return score;
+      }
+
+      // Eating the cells a power passes (a, b, c; -1: none), as a move eats:
+      // what it's worth (ateGain), and my length and growth after (ateL, ateG;
+      // a mushroom shrinks me). The food's off the board meanwhile: uneat puts it back.
+      function eatOn(a, b, c, L, g, soon) {
+        ate[0] = a; ate[1] = b; ate[2] = c;
+        ateGain = 0;
+        for (let k = 0; k < 3; k++) {
+          const i = ate[k];
+          ateV[k] = 0;
+          if (i < 0) continue;
+          const v = foodValue[i], change = foodGrow[i];
+          if (change < 0) {
+            let n = -change;
+            const fromGrow = Math.min(g, n);
+            g -= fromGrow;
+            n -= fromGrow;
+            for (; n > 0 && L > TUNE.MIN_LENGTH; n--) L--;
+          } else g += change;
+          if (!v) continue;
+          ateGain += v * (foodW * w.foodRange + eatW * soon);
+          ateV[k] = v;
+          foodValue[i] = 0;
+        }
+        ateL = L; ateG = g;
+      }
+      function uneat() {
+        for (let k = 0; k < 3; k++) if (ateV[k]) foodValue[ate[k]] = ateV[k];
+      }
     }
   }
 
