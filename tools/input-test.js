@@ -16,10 +16,15 @@
 //   arrive once a frame, as Chrome sends them, paced in real time so the
 //   tap's own clock runs true); nor does a thumb resting before it swipes,
 //   or while the other one swipes. A finger held still jumps before it lifts
-//   only with something to hop. A quick tap that drifts 7-11 px as it lifts
+//   only with something to hop; once it's lifted, a swipe after it leaves
+//   that jump be (a held tap, then a flash). A quick tap that drifts 7-11 px as it lifts
 //   still jumps; a long stroke 35-44° off the axis still turns; a double
 //   flick the same way is the turn, not a flash.
-// - Mashing jump over your death's card never starts a round.
+// - Mashing jump over your death's card never starts a round, nor focuses
+//   its name field (the phone's keyboard).
+// And two of the loop's own: the rivals have all thought before the board is
+// drawn into their next move (at 30 frames a second too), and a banner keeps
+// its place while that's clear.
 // It prints what it measured: press-to-tick, tap-to-jump and swipe latencies.
 //
 //   node tools/input-test.js
@@ -287,6 +292,55 @@ const KEYS = {
     for (const k of [' ', 'e', 'ShiftRight']) { await key(k); await ev('vf(2)'); }
     check(over.s === 'over' && over.up && await state() === 'over', 'the round-over card: Space, E and Shift start nothing', JSON.stringify(over));
 
+    // The rivals think about their next move in the frames after a tick (not
+    // the tick's own, while there are frames enough), and every one has before
+    // the board is drawn into it: at full speed (90 ms ticks) on a 60 Hz
+    // screen, and on a 30 Hz one (a phone saving power), you playing.
+    const thought = [];
+    for (const hz of [60, 30]) {
+      await ev(`window.__autoRaf = true; 'ok'`);
+      await b.go(site.url + '?debug');
+      await ev(`document.getElementById('start').click(); 'ok'`);
+      await ev(`new Promise(r => { const c = () => SnakeDebug.state() === 'running' ? r('ok') : setTimeout(c, 10); c(); })`);
+      await ev(`window.__autoRaf = false; 'ok'`);
+      thought.push(await ev(`(() => {
+        const E = SnakeEngine, R = SnakeRender, AI = SnakeAI, dt = 1000 / ${hz}, mind = {};
+        E.tickMs = () => 90;
+        const st = { hz: ${hz}, ticks: 0, crossings: 0, unplanned: 0, tickFrames: 0, thoughtOnTick: 0 };
+        let lead = 0, crossed = -1, ticked = false, thinks = 0;
+        const setLead = R.setLead; R.setLead = t => { lead = t; return setLead(t); };
+        const think = E.thinkAhead; E.thinkAhead = (g, s) => { thinks++; return think(g, s); };
+        const step = E.step; E.step = g => { ticked = true; return step(g); };
+        const frame = R.frame; R.frame = (alpha, now) => {
+          const g = SnakeDebug.game();
+          if (alpha + lead > 1 && crossed !== g.tick) { // (drawn into the next move: everyone who can think has)
+            crossed = g.tick; st.crossings++;
+            for (const s of g.snakes) if (s !== g.snakes[0] && E.canThinkAhead(g, s)) st.unplanned++;
+          }
+          return frame(alpha, now);
+        };
+        let last = -1;
+        for (let i = 0; i < ${hz} * 20; i++) {
+          const g = SnakeDebug.game(), me = g.snakes[0];
+          if (SnakeDebug.state() !== 'running' || !me.alive) break;
+          if (g.tick !== last) { // (you, steered as a careful player would, and nobody starving)
+            last = g.tick;
+            const d = AI.decide(E.aiView(g, me), E.PERSONAS.drab, mind);
+            if (d !== me.dir && !me.queue.length) me.queue.push(d);
+            for (const s of g.snakes) s.nextStarve = Math.max(s.nextStarve, g.time + 5000);
+          }
+          ticked = false; thinks = 0;
+          SnakeDebug.frames(1, dt);
+          if (ticked) { st.tickFrames++; if (thinks) st.thoughtOnTick++; }
+        }
+        st.ticks = SnakeDebug.game().tick;
+        return st;
+      })()`));
+    }
+    check(thought.every(t => t.crossings >= 100 && !t.unplanned) && !thought[0].thoughtOnTick,
+      'the rivals have all thought before the board is drawn into their next move (60 and 30 Hz, full speed); at 60 Hz never in the frame that ticked',
+      thought.map(t => `${t.hz} Hz: ${t.unplanned} unplanned in ${t.crossings} ticks, ${t.thoughtOnTick} of ${t.tickFrames} tick frames thought`).join('; '));
+
     // -------------------------------------------------------------- touch
     await b.viewport(390, 844, { scale: 3, mobile: true });
     await freshRound();
@@ -299,7 +353,7 @@ const KEYS = {
     // game's own stay stopped, so nothing moves on the board. Page-side:
     // when each touch began, and when it first did something (a power, or a
     // turn queued), on that clock.
-    await ev(`(() => {
+    const VCLOCK = `(() => {
       (function idle() { __raf(idle); })();
       const real = window.setTimeout.bind(window), unreal = window.clearTimeout.bind(window);
       const vc = window.__vclock = { now: 0, timers: new Map(), id: 1e6 }, base = performance.now();
@@ -329,7 +383,8 @@ const KEYS = {
       document.addEventListener('touchmove', seen, { passive: true });
       for (const n of ['leap', 'flash']) { const f = SnakeEngine[n]; SnakeEngine[n] = (g, s) => { if (!__touch.did) { __touch.did = vc.now; __touch.what = n; } return f(g, s); }; }
       return 'ok';
-    })()`);
+    })()`;
+    await ev(VCLOCK);
 
     // A tap jumps (on lift, or held still for TAP_JUMP_MS with something to
     // hop on the way); taps on a button or a tag don't.
@@ -467,6 +522,47 @@ const KEYS = {
     await ev('vadvance(50)');
     const two = await ev(`({ leaps: __log.powers.slice(${before}).filter(p => p.kind === 'leap').length, q: SnakeDebug.game().snakes[0].queue.map(dirName).join(',') })`);
     check(two.leaps === 0 && two.q === 'up', 'a thumb resting while the other swipes doesn’t jump', JSON.stringify(two));
+    // ...but with something to hop, its jump has gone before the other
+    // swipes: taken back while it's still resting.
+    await ev('centre()');
+    await hole(2);
+    await touch('touchStart', [{ x: cx - 60, y: cy + 60, id: 1 }]);
+    await ev('vadvance(100)');
+    const armedRest = await ev('SnakeDebug.game().snakes[0].leapArmed >= 0');
+    for (let f = 0; f <= 6; f++) {
+      await touch(f ? 'touchMove' : 'touchStart', [{ x: cx - 60, y: cy + 60, id: 1 }, { x: cx + 60, y: cy + 40 - f * 10, id: 2 }]);
+      await ev(`vadvance(${P})`);
+    }
+    const twoHop = await ev(`(() => { const me = SnakeDebug.game().snakes[0]; return { armed: me.leapArmed >= 0, q: me.queue.map(dirName).join(',') }; })()`);
+    await touch('touchMove', [{ x: cx - 60, y: cy + 60, id: 1 }]);
+    await touch('touchEnd', []);
+    await ev('vadvance(50)');
+    await ev(`SnakeDebug.game().holes.clear(); 'ok'`);
+    check(armedRest && !twoHop.armed && twoHop.q === 'up', 'a thumb resting with something to hop, while the other swipes: its jump is taken back', JSON.stringify(twoHop));
+    // A tap held long enough to jump before it lifted, then (the finger up)
+    // a fresh swipe ahead: a jump and a flash, both kept. The tap was a tap,
+    // whatever the next touch does. (Something right in front: the jump,
+    // then the flash once down; three ahead: the flash, then the jump.)
+    const combos = [];
+    let combosOk = 0;
+    for (const [ahead, want] of [[1, 'leap dash:plain'], [3, 'dash:plain leap']]) {
+      for (const contact of [100, 150]) {
+        await ev('centre()');
+        await hole(ahead);
+        await touch('touchStart', [{ x: cx + 20, y: cy + 30, id: 1 }]);
+        await ev(`vadvance(${contact})`);
+        await touch('touchEnd', []);
+        await ev('vadvance(50)');
+        const steps = await ev('__log.steps.length');
+        await swipe(1, 0, { frames: 5 });
+        for (let n = 0; n < 4; n++) await toTick();
+        await ev(`SnakeDebug.game().holes.clear(); 'ok'`);
+        const got = await ev(`__log.steps.slice(${steps}).flatMap(s => s.evs).join(' ')`);
+        combos.push(`${ahead} ahead, held ${contact} ms: ${got || 'nothing'}`);
+        if (got === want) combosOk++;
+      }
+    }
+    check(combosOk === 4, 'a held tap, lifted, then a fresh swipe ahead: the jump and the flash both go', combos.join('; '));
 
     // A quick tap that rolls a few pixels as it lifts is still a tap.
     const drifts = [];
@@ -530,6 +626,38 @@ const KEYS = {
     check(jumps === 0, 'swipes never jump', `${jumps} of ${swipes} swipes; ${none} slanted 40° never registered (a way must be half again the other), ${wrong} went another way`);
     const regStats = Object.fromEntries(Object.entries(reg).map(([v, l]) => [v, stats(l).median]));
 
+    // A banner stays where it is while its place is clear: a head coming into
+    // it moves it to the first place that's clear (the top, the foot, the
+    // middle), and with heads in all three it fades where it is. (Picked
+    // afresh every frame, it went back to the top the moment that cleared,
+    // and hopped about three times in its three seconds on a short phone.)
+    await ev('centre()');
+    await ev(`(() => {
+      const E = SnakeEngine;
+      window.put = (id, x, y, dir = 'right') => { const s = SnakeDebug.game().snakes[id], d = E.DIRS[dir]; s.body = s.body.map((c, i) => ({ x: x - d.x * i, y: y - d.y * i })); s.prev = null; s.dir = d; s.queue.length = 0; return 'ok'; };
+      window.slot = () => { const t = document.getElementById('toast'); return t.hidden ? 'hidden' : (t.classList.contains('low') ? 'foot' : t.classList.contains('mid') ? 'middle' : 'top') + (t.classList.contains('under') ? ' faded' : ''); };
+      const step = E.step; E.step = g => { const out = step(g); if (window.__news) { g.events.push(window.__news); window.__news = null; } return out; }; // (news, on the next tick)
+      return 'ok';
+    })()`);
+    await ev(`put(1, 12, 22, 'down')`); // (a rival's head at the foot)
+    await ev('put(0, 12, 6)'); // (yours in none of the three)
+    await ev(`(() => { delete SnakeDebug.game().told?.golden; window.__news = { type: 'spawn', kind: 'golden' }; return 'ok'; })()`);
+    await toTick();
+    const slots = [await ev('slot()')];
+    for (const [moves, why] of [
+      [['put(0, 12, 2)'], 'yours at the top'],
+      [['put(0, 12, 6)'], 'yours out again'],
+      [[`put(2, 12, 1, 'up')`, 'put(0, 12, 12)'], 'a rival at the top, yours in the middle'],
+      [['put(0, 12, 6)'], 'yours out again'],
+      [[`put(2, 4, 21, 'down')`, 'put(0, 12, 12)'], 'the rival away, yours in the middle'],
+    ]) {
+      for (const m of moves) await ev(m);
+      await ev('vf(1)');
+      slots.push(`${why}: ${await ev('slot()')}`);
+    }
+    check(slots.map(s => s.replace(/^.*: /, '')).join(', ') === 'top, middle, middle, middle faded, middle, top',
+      'a banner stays put while its place is clear, moves only when a head comes into it, and fades where it is with heads everywhere', slots.join('; '));
+
     // Your death's card: a thumb mashing jump as you crash, landing on its
     // Play again, never starts a round; a tap once it's settled does.
     await ev('centre()');
@@ -555,6 +683,38 @@ const KEYS = {
     const settled = await state();
     check(!mashed.alive && mashed.up && mashed.s === 'running' && mash.some(m => m.startsWith('card')) && settled === 'countdown',
       'mashing jump over your death card never plays again; a tap once it’s settled does', `${mashed.title} ${mash.filter(m => m.startsWith('card')).length} taps on Play again, then ${settled}`);
+
+    // Nor does mashing focus its name field. A round that earned a place in
+    // the Hall of Fame (a new best here) offers "Carve your name" in the
+    // card's middle, just where a thumb mashing jump lands, and a focused
+    // field brings the phone's keyboard up over the round. A tap on it (or
+    // its words) once the card's settled does focus it.
+    await ev(`(() => { localStorage.setItem('snake-best', '1'); return 'ok'; })()`);
+    await freshRound();
+    await ev(VCLOCK);
+    await ev(`(() => { const me = SnakeDebug.game().snakes[0]; me.body = [{ x: 22, y: 12 }, { x: 21, y: 12 }, { x: 20, y: 12 }]; me.prev = null; me.eaten = 25; return 'ok'; })()`);
+    const fieldAt = id => ev(`(() => { const r = document.getElementById('${id}').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
+    let carveTaps = 0, focusedMash = false;
+    for (let i = 0; i < 14; i++) {
+      const offered = await ev(`cardUp() && !document.getElementById('name-row').hidden`);
+      const at = offered ? await fieldAt(i % 2 ? 'name-rank' : 'name-input') : { x: cx, y: cy };
+      if (offered) carveTaps++;
+      await touch('touchStart', [{ ...at, id: 1 }]);
+      await ev('vadvance(50)');
+      await touch('touchEnd', []);
+      await ev('vadvance(60)');
+      await ev('vf(7)');
+      if (await ev(`document.activeElement?.id === 'name-input'`)) focusedMash = true;
+    }
+    const carveState = await state();
+    await ev('vadvance(600)'); await ev('vf(36)');
+    await touch('touchStart', [{ ...await fieldAt('name-input'), id: 1 }]);
+    await ev('vadvance(60)');
+    await touch('touchEnd', []);
+    await ev('vadvance(20)');
+    const focusedLater = await ev(`document.activeElement?.id === 'name-input'`);
+    check(carveTaps > 0 && !focusedMash && carveState === 'running' && focusedLater,
+      'mashing jump over a card offering the carve never focuses the name field; a tap once it’s settled does', `${carveTaps} taps on the field or its words, ${focusedMash ? 'focused' : 'not focused'}; then ${focusedLater ? 'focused' : 'not focused'}`);
 
     console.log(results.join('\n'));
     console.log('\nmeasured (virtual 60 Hz, 120 ms ticks):');

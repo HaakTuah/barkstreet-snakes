@@ -388,16 +388,17 @@
   }
   // Let the AIs think about the next tick in the frames before it (same
   // information, same decisions), before the board is drawn into their next
-  // move (see R.setLead; the frame that draws it thinks first). Not in a
-  // frame that ticked, which has done enough, unless no later frame is left
-  // in time (at 4x on a 60 Hz screen, there may be none); else spread over
+  // move (see R.setLead; the frame that draws it thinks first). Spread over
   // the frames that are left, one a frame, two when they're few (at full
-  // speed, playing, there are about two).
+  // speed, playing, there are about two); not in a frame that ticked, which
+  // has done enough, unless those can't fit them all. The frame that draws
+  // it thinks everyone still to: on a 30 Hz screen (a phone saving power)
+  // that may be the only one after the tick, and a rival left out was drawn
+  // heading on, then pulled round when it turned.
   function think(dt, ticked = false) {
     if (!thinkQueue.length) return;
     const left = Math.max(0, Math.ceil((tickLen * (1 - leadAt) - acc) / Math.max(4, dt))); // (frames after this one, up to the one that draws the next move)
-    if (ticked && left > 0) return;
-    let quota = ticked ? thinkQueue.length : Math.min(2, Math.ceil(thinkQueue.length / (left + 1)));
+    let quota = !left ? thinkQueue.length : ticked ? thinkQueue.length - 2 * left : Math.min(2, Math.ceil(thinkQueue.length / (left + 1)));
     while (thinkQueue.length && quota > 0) {
       const s = thinkQueue.shift();
       if (E.canThinkAhead(game, s)) { E.thinkAhead(game, s); quota--; }
@@ -950,45 +951,67 @@
   const newsFree = () => overlay.classList.contains('hidden') && (toastEl.hidden || performance.now() >= toastHold);
 
   // A banner keeps out of the way of heads (and the woodpecker's mark, a
-  // crackle, the steering hint): at the top, or else at the foot, or else in
-  // the middle of the board, and only if they're everywhere it fades while
-  // they pass (its size is measured once a banner, so this reads no layout).
-  // A lesson's time runs while you can read it: faded, it stays that much
-  // longer (once, up to its hold again).
-  let toastTimer, toastW = 0, toastH = 0, toastUnder = '';
+  // crackle, the steering hint). It comes up in the first of its three
+  // places that's clear (the top, the foot, the middle of the board), and
+  // stays there while that place is clear: only something coming into it
+  // moves it on, to the first place that's clear and looks to stay so (the
+  // heads a couple of cells on, the way they're going), else the first
+  // that's clear; with none clear, it fades where it is while they pass.
+  // (Picked afresh every frame, a banner on a short phone hopped about three
+  // times in its three seconds, half its stays under 0.4 s.) Its size is
+  // measured once a banner, so this reads no layout. A lesson's time runs
+  // while you can read it: faded, it stays that much longer (once, up to its
+  // hold again).
+  let toastTimer, toastW = 0, toastH = 0, toastSlot = '', toastUnder = false, toastFresh = true; // (where it is: '' the top, 'low' the foot, 'mid' the middle; whether it's faded there; whether it's a new banner, still to place)
   let toastFaded = 0, toastFadedAt = 0, toastLonger = false; // (how long this banner has been faded, since when, and whether it's had its time back)
+  const SLOTS = ['', 'low', 'mid'], SHIFT = [{ opacity: 0 }, { opacity: 1 }];
   function toastFade() {
-    if (toastEl.classList.contains('leaving')) return; // (going: it goes from where it is)
-    let top = false, bottom = false, mid = false;
-    if (!toastEl.hidden && boardPx && game) {
+    if (toastEl.hidden || toastEl.classList.contains('leaving')) return; // (going: it goes from where it is)
+    const busy = { '': false, low: false, mid: false }, soon = { '': false, low: false, mid: false };
+    if (boardPx && game) {
       const cell = boardPx / GRID;
       const rows = Math.ceil((toastH + 12) / cell), half = toastW / 2 / cell, midHalf = (toastH / 2 + 6) / cell; // (its real size: a long banner on a phone wraps to several lines)
-      const under = (x, y) => { // (a cell the banner would hide, if it's one that matters)
-        if (Math.abs(x + 0.5 - GRID / 2) >= half + 0.5) return;
-        if (y < rows) top = true;
-        if (y >= GRID - rows) bottom = true;
-        if (y + 1 > GRID / 2 - midHalf && y < GRID / 2 + midHalf) mid = true;
+      const under = (x, y, into = busy) => { // (a cell the banner would hide, if it's one that matters)
+        if (Math.abs(x + 0.5 - GRID / 2) >= half + 0.5 || y < 0 || y >= GRID) return;
+        if (y < rows) into[''] = true;
+        if (y >= GRID - rows) into.low = true;
+        if (y + 1 > GRID / 2 - midHalf && y < GRID / 2 + midHalf) into.mid = true;
       };
-      for (const s of game.snakes) if (s.alive) under(s.body[0].x, s.body[0].y);
+      for (const s of game.snakes) {
+        if (!s.alive) continue;
+        const h = s.body[0], d = s.queue?.[0] || s.dir;
+        under(h.x, h.y);
+        if (d) for (let i = 1; i <= 2; i++) under(h.x + d.x * i, h.y + d.y * i, soon); // (where it's going)
+      }
       if (steerHintOn && Math.abs(hintBox.x + hintBox.w / 2 - boardPx / 2) < (toastW + hintBox.w) / 2) { // (the steering hint, by YOU: the banner makes way)
         const y0 = hintBox.y, y1 = hintBox.y + hintBox.h, m = (boardPx - toastH) / 2;
-        if (y0 < toastH + 16) top = true;
-        if (y1 > boardPx - toastH - 16) bottom = true;
-        if (y1 > m - 4 && y0 < m + toastH + 4) mid = true;
+        if (y0 < toastH + 16) busy[''] = true;
+        if (y1 > boardPx - toastH - 16) busy.low = true;
+        if (y1 > m - 4 && y0 < m + toastH + 4) busy.mid = true;
       }
       for (const k of game.woodpecker?.target || []) under(k % GRID, Math.floor(k / GRID)); // (the patch it's warning about)
       if (game.fires) for (const [k, f] of game.fires) if (f.strike && f.from > game.tick) under(k % GRID, Math.floor(k / GRID)); // (a crackle about to strike)
     }
-    const place = !top ? '' : !bottom ? 'low' : !mid ? 'mid' : 'under'; // moved down, or to the middle, or (heads everywhere) faded
-    if (place !== toastUnder) {
-      const now = performance.now();
-      if (toastUnder === 'under') toastFaded += now - toastFadedAt;
-      if (place === 'under') toastFadedAt = now;
-      toastEl.classList.toggle('low', place === 'low');
-      toastEl.classList.toggle('mid', place === 'mid');
-      toastEl.classList.toggle('under', place === 'under');
-      toastUnder = place;
+    let slot = toastFresh ? '' : toastSlot, faded = false;
+    if (toastFresh || busy[slot]) { // (new, or something's come into its place)
+      const clear = SLOTS.filter(k => !busy[k]);
+      if (clear.length) slot = clear.find(k => !soon[k]) ?? clear[0];
+      else faded = true;
     }
+    const moved = !toastFresh && slot !== toastSlot;
+    toastFresh = false;
+    if (faded !== toastUnder) {
+      const now = performance.now();
+      if (toastUnder) toastFaded += now - toastFadedAt;
+      else toastFadedAt = now;
+      toastEl.classList.toggle('under', faded);
+      toastUnder = faded;
+    }
+    if (slot === toastSlot) return;
+    toastEl.classList.toggle('low', slot === 'low');
+    toastEl.classList.toggle('mid', slot === 'mid');
+    toastSlot = slot;
+    if (moved && !reducedMQ.matches) toastEl.animate?.(SHIFT, { duration: 140, easing: 'ease-out' }); // (it comes up in its new place, rather than blinking there)
   }
   // kind styles the banner for its moment: kill, gold, beetle, bird (the
   // woodpecker), warn, fire, you (a lesson about your own powers, or your own tail), go, and the
@@ -1025,6 +1048,8 @@
     toastW = toastEl.offsetWidth; toastH = toastEl.offsetHeight; // (measured once a banner, unscaled by its slam)
     toastEl.style.setProperty('--toast-h', `${toastH}px`); // (in the middle: centred by its top, so its slam keeps the transform)
     toastFaded = 0; toastFadedAt = now; toastLonger = false;
+    toastFresh = true;
+    toastFade(); // (placed before it's first drawn: a new banner doesn't start where the last one was)
     if (!opts.quiet && (level !== 'news' || kind in FLAVOR.weather)) say(text);
     clearTimeout(toastTimer);
     toastTimer = setTimeout(nextToast, ms);
@@ -1032,7 +1057,7 @@
   // The next lesson that still holds, or the banner fades. (A lesson that
   // spent a while faded under the heads first gets that time back, once.)
   function nextToast() {
-    const now = performance.now(), faded = toastFaded + (toastUnder === 'under' ? now - toastFadedAt : 0);
+    const now = performance.now(), faded = toastFaded + (toastUnder ? now - toastFadedAt : 0);
     if (toastLevel === 'lesson' && !toastLonger && !toastEl.hidden && faded >= 300) {
       toastLonger = true;
       const more = Math.min(faded, T.LESSON_HOLD_MS);
@@ -1707,7 +1732,9 @@
   //   with something to hop on the way: a thumb resting on the glass, ready
   //   to steer, isn't a jump. A touch that becomes a swipe never jumps (a
   //   jump its hold asked for that hasn't gone yet is taken back), and nor
-  //   does a thumb that was resting while another one swiped.
+  //   does a thumb that was resting while another one swiped (its jump is
+  //   taken back too, if it's still resting). One that lifted first was a
+  //   tap: a swipe after it leaves its jump be.
   // Every finger on the glass is its own: a thumb left resting doesn't block
   // the other, and can still steer once the other lifts. Buttons stay
   // buttons: during a round a swipe may start on one (the Go! in the middle
@@ -1715,25 +1742,26 @@
   // button's click is swallowed; a short tap is still a click. But a card
   // that comes up by itself (your death's, the round's end) takes no touch
   // that began as it came up, nor one of a run of quick touches that did
-  // (CARD_TAP_MS, CARD_MASH_MS): mashing jump never plays again.
-  const swipes = new Map(); // touch id -> { x, y (the anchor), x0, y0 (where it touched), at, far (furthest from there), run (when its run of touches began), last, button, tapOnly, moved, tap, timer }
+  // (CARD_TAP_MS, CARD_MASH_MS): mashing jump never plays again, nor
+  // focuses the name field it offers (the phone's keyboard over the round).
+  const swipes = new Map(); // touch id -> { x, y (the anchor), x0, y0 (where it touched), at, far (furthest from there), run (when its run of touches began), last, button, tapOnly, moved, tap, timer, held (when its hold asked for a jump that may not have gone yet) }
   const swiping = () => (state === 'running' || state === 'countdown') && playerAlive();
   const swipeMin = () => Math.max(T.SWIPE_MIN_PX, (boardPx || 320) / GRID * T.SWIPE_CELLS); // (how far a fresh swipe goes before it counts)
   let touchAt = -Infinity, runFrom = -Infinity; // (the last touch, and when the run of quick touches it's in began)
   let lastSwipe = null; // the last swipe to register: { dir, sw (its touch), up (when it lifted; 0 while it's down), turn (it turned, not flashed) }
-  let holdJump = 0; // (when a finger held still asked for a jump that may not have gone yet)
   document.addEventListener('touchstart', e => {
     Audio.unlock();
     const now = performance.now();
     if (now - touchAt >= T.CARD_MASH_MS) runFrom = now;
     touchAt = now;
+    if (!swiping() && runFrom < cardShownAt + T.CARD_TAP_MS && e.target.closest?.('#overlay input, #overlay label, #overlay a')) { e.preventDefault(); return; } // (a card that came up by itself under a run of quick touches: its name field takes none of them either, no focus and no phone keyboard over the round)
     if (e.target.closest?.('input, a, #records')) return;
     const button = e.target.closest?.('button:not(:disabled), [role="switch"]');
     if (!button && !swiping() && !canvas.contains(e.target)) return;
     const tapOnly = !!button && !swiping(); // (outside a round a button touch is a tap or a scroll, never a swipe)
     const taps = !button && !e.target.closest?.('#scoreboard') && state === 'running' && playerAlive(); // (a tap here would be a jump)
     for (const t of e.changedTouches) {
-      const sw = { x: t.clientX, y: t.clientY, x0: t.clientX, y0: t.clientY, at: now, far: 0, run: runFrom, last: null, button, tapOnly, moved: false, tap: taps, timer: 0 };
+      const sw = { x: t.clientX, y: t.clientY, x0: t.clientX, y0: t.clientY, at: now, far: 0, run: runFrom, last: null, button, tapOnly, moved: false, tap: taps, timer: 0, held: 0 };
       if (taps) sw.timer = setTimeout(() => held(sw), T.TAP_JUMP_MS);
       swipes.set(t.identifier, sw);
     }
@@ -1744,26 +1772,33 @@
     if (!sw.tap) return;
     sw.tap = false;
     clearTimeout(sw.timer);
-    holdJump = 0; // (a jump meant: nothing to take back)
+    for (const o of swipes.values()) o.held = 0; // (a jump meant: nothing to take back)
     power('leap');
   }
   // Held still: a jump now, if there's something to hop on the way (it waits
-  // a few ticks for it); else the lift says whether it was a tap.
+  // a few ticks for it); else the lift says whether it was a tap. The jump
+  // is this touch's to take back while it's on the glass (see swiped); once
+  // it lifts without swiping, it was a tap, and the jump stays.
   function held(sw) {
     sw.timer = 0;
     const me = player();
     if (!sw.tap || !me?.alive || !hurdleAhead(me, T.LEAP_WINDOW + 1, true)) return;
     tapped(sw);
-    holdJump = performance.now();
+    sw.held = performance.now();
   }
-  // A swipe registered: a jump a finger held still asked for, not gone yet,
-  // is taken back (it was a thumb about to steer), and a thumb that's been
-  // resting meanwhile isn't tapping.
+  // A swipe registered: a jump asked for by a finger held still, not gone
+  // yet, is taken back if that finger is the one swiping, or is still
+  // resting on the glass while another swipes (it was a thumb about to
+  // steer); and a thumb that's been resting meanwhile isn't tapping.
   function swiped(by) {
     const now = performance.now();
-    for (const sw of swipes.values()) if (sw !== by && sw.tap && now - sw.at >= T.TAP_JUMP_MS) { sw.tap = false; clearTimeout(sw.timer); }
-    if (!holdJump || now - holdJump > (T.LEAP_WINDOW + 1) * tickLen) return;
-    holdJump = 0;
+    let heldAt = 0;
+    for (const sw of swipes.values()) {
+      if (sw !== by && sw.tap && now - sw.at >= T.TAP_JUMP_MS) { sw.tap = false; clearTimeout(sw.timer); }
+      heldAt = Math.max(heldAt, sw.held);
+      sw.held = 0;
+    }
+    if (!heldAt || now - heldAt > (T.LEAP_WINDOW + 1) * tickLen) return;
     if (state !== 'running' || !playerAlive()) return;
     if (guesting()) online.room.send({ t: 'pow', k: 'unleap' });
     else if (hosting()) hostPress(s => unleap(game, s));
