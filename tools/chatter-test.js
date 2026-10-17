@@ -10,12 +10,13 @@
 // apples fall; Sovereign and Colonist mind rot on their land, by the one
 // land rule; and the rarer lines keep to their rests. Star, the power addict,
 // has a line for every moment anyone has, shows off its flashes and jumps at
-// most every 10 s (even flashing the moment its rest is over), grumbles while
-// it rests, crows over golden things, greets a rainbow as family, and now and
-// then Wildcard or Mason answers it. Then a few whole AI rounds with the
-// chatter listening (two with Star), to see nothing throws. Last, the sound
-// (audio.js on a stand-in AudioContext): a rival's flash, jump or the like
-// never silences yours, and your own golden ones in a row are each heard.
+// most every 10 s (even flashing the moment its rest is over, when it doesn't
+// say its flash is back), grumbles while it rests, crows over golden things,
+// greets a rainbow as family, and now and then Wildcard or Mason answers it.
+// Then a few whole AI rounds with the chatter listening (two with Star), to
+// see nothing throws. Last, the sound (audio.js on a stand-in AudioContext):
+// a rival's flash, jump or the like never silences yours, and your own
+// golden ones in a row are each heard.
 //
 //   node tools/chatter-test.js
 const fs = require('fs');
@@ -316,12 +317,20 @@ const STAR = VOICES.star;
   check(says(tick(g, [{ type: 'dash', snake: star, x: 9, y: 12, n: 3 }], 10500), star, STAR.dash), 'a golden dash 10.5 s later: a dash line');
   star.flashReadyAt = g.time + 10600;
   check(tick(g, [], 10000).length === 0, 'resting: nothing yet');
-  check(says(tick(g, [], 700), star, STAR.ready), '...and its flash back from its rest: a ready line');
+  check(tick(g, [], 700).length === 0, '...its flash back from its rest: nothing yet (it flashes the moment it can, as a rule)');
+  check(says(tick(g, [], 1000), star, STAR.ready), '...but still back a second later: a ready line');
+  star.flashReadyAt = g.time + 12000;
+  tick(g, [], 11900);
+  check(tick(g).length === 0, 'its rest over again: nothing yet');
+  star.flashReadyAt = g.time + 100 + T.FLASH_COOLDOWN_MS; // (it flashes the tick after its rest ends, as its AI does)
+  let h = tick(g, flash());
+  check(says(h, star, STAR.zoom), `...and it flashes a tick later: the flash has the word (said: ${lineOf(h, star)})`);
+  check(!says(tick(g, [], 1000), star, STAR.ready) && !says(tick(g, [], 1000), star, STAR.ready), '...and no ready line after it');
   star.flashReadyAt = g.time + 12000;
   tick(g, [], 11900);
   star.flashReadyAt = g.time + 100 + T.FLASH_COOLDOWN_MS; // (as when it flashes the moment its rest ends: resting again at once)
-  check(!says(tick(g), star, STAR.ready), 'a rest that ends in another flash: no ready line');
-  tick(g, [], 20000); // (its rest is over: it may say so)
+  check(!says(tick(g), star, STAR.ready) && !says(tick(g, [], 1000), star, STAR.ready), 'a rest that ends in another flash on the same tick: no ready line either');
+  tick(g, [], 20000); tick(g, [], 1000); // (its rest is over: it may say so)
   check(tick(g, flash(you), 20000).length === 0 && tick(g, [{ type: 'leap', snake: you, x: 3, y: 22, gold: 1 }], 20000).length === 0, 'your flashes and jumps: nobody speaks for you');
   you.body = at(13, 13);
   check(says(tick(g, flash(), 20000), star, STAR.flash.past, you), 'Star flashes past your head: a flash.past line, naming you');
@@ -364,26 +373,28 @@ const STAR = VOICES.star;
     check(says(tick(g, flash(), 12000, 0.2), star, STAR.zoom) && says(tick(g, [], 1200), other, list, star), '...but 56 s later, yes');
   }
 }
-console.log('ok   Star shows off its flashes, jumps, golden dashes and flash back (half the time, every 10 s at most), grumbles while it rests, crows over golden things and is first to greet a rainbow; Wildcard and Mason answer it now and then');
+console.log('ok   Star shows off its flashes, jumps, golden dashes and flash back (half the time, every 10 s at most; its flash back only once it\'s been back a second), grumbles while it rests, crows over golden things and is first to greet a rainbow; Wildcard and Mason answer it now and then');
 
-// The power habit at its worst: Star flashing the moment its rest is over and
-// jumping every 4 s for three minutes, with you, Wildcard and Mason by it
-// (all still), and the chatter's own chances: how often it shows off, and is answered.
+// The power habit at its worst: Star flashing the tick after its rest is over
+// (as its AI does) and jumping every 4 s for three minutes, with you, Wildcard
+// and Mason by it (all still), and the chatter's own chances: how often it
+// shows off, and is answered (and never says its flash is back: it isn't, for long).
 {
   rng = seeded(7);
   const g = stage(['star', 'wildcard', 'mason'], { 0: [3, 22], 1: [12, 12], 2: [20, 4], 3: [4, 4] }), [, star] = g.snakes;
   const shows = new Set(['zoom', 'leap', 'dash', 'ready', 'flash.first', 'flash.past'].flatMap(k => k.split('.').reduce((o, p) => o[p], STAR)));
   const answers = new Set([...VOICES.wildcard.showoff, ...VOICES.mason.showoff].map(l => l.replaceAll('{who}', star.name)));
-  let showed = [], answered = 0, said = 0;
+  const ready = new Set(STAR.ready);
+  let showed = [], answered = 0, said = 0, readied = 0;
   for (let t = 0; t < 1800; t++) {
     g.tick++; g.time += 100;
     const events = [];
-    if (g.time >= star.flashReadyAt) { star.flashReadyAt = g.time + T.FLASH_COOLDOWN_MS; events.push({ type: 'dash', snake: star, x: 10, y: 12, n: 2, plain: 1 }); }
+    if (g.time >= star.flashReadyAt + 100) { star.flashReadyAt = g.time + T.FLASH_COOLDOWN_MS; events.push({ type: 'dash', snake: star, x: 10, y: 12, n: 2, plain: 1 }); }
     if (t % 40 === 20) events.push({ type: 'leap', snake: star, x: 12, y: 12, gold: 0, reach: 2 });
     g.events = events; heard = [];
     C.update();
     for (const x of heard) {
-      if (x.s === star) { said++; if (shows.has(x.text)) showed.push(g.time); }
+      if (x.s === star) { said++; if (shows.has(x.text)) showed.push(g.time); if (ready.has(x.text)) readied++; }
       if (answers.has(x.text)) answered++;
     }
   }
@@ -391,6 +402,7 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   check(Math.min(...gaps) >= 10000, `showing off at its worst: never twice within 10 s (closest ${Math.min(...gaps) / 1000} s)`);
   check(showed.length >= 6 && showed.length <= 18, `...but often: ${showed.length} times in 3 minutes (every ${(180 / showed.length).toFixed(1)} s on average), ${said} lines in all`);
   check(answered >= 1 && answered <= 5, `...answered ${answered} times`);
+  check(readied === 0, `...and its flash back, a tick before it flashes again: no ready line (${readied})`);
   console.log(`ok   Star at its most addicted (a flash every 6 s, a jump every 4): shows off ${showed.length} times in 3 minutes, never within 10 s (closest ${Math.min(...gaps) / 1000} s); ${said} lines in all; answered ${answered} times`);
 }
 

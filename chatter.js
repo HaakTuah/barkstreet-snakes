@@ -469,8 +469,9 @@ window.SnakeChatter = (() => {
       resting: ['Rest, rest, rest. I’ll rest when I’m old!', 'Come on, come on… I’m not getting any younger.', 'Hmph. In my day, a flash came right back.',
         'Don’t mind me, {who}. Just catching my breath.', 'Grumble, grumble. Is it ready yet?'],
       ready: ['There’s my sparkle! Look out.', 'Rested! Well, rested enough.', 'Back in business!', 'Ah, there it is! Who’s next?'],
-      zoom: ['Whee! Still got it!', 'Zip! Just like the old days!', 'Look, no legs!', 'Fast as ever. Faster, even!', 'Did you see that? Want to see it again?', 'Ho ho! Still sparkling!'],
-      leap: ['Up and over, sonny!', 'Hup! Old star, new tricks!', 'Look at me! A shooting star!', 'Over we go! Ho ho!'],
+      zoom: ['Whee! Still got it!', 'Zip! Just like the old days!', 'Look, no legs!', 'Fast as ever. Faster, even!', 'Did you see that? Want to see it again?', 'Ho ho! Still sparkling!',
+        'Blink and you missed me!', 'Ahh, wind in my mustache!', 'They don’t make flashes like that anymore.'],
+      leap: ['Up and over, sonny!', 'Hup! Old star, new tricks!', 'Look at me! A shooting star!', 'Over we go! Ho ho!', 'These old springs still work!'],
       dash: ['Golden zoom! Oh, that’s the good stuff!', 'Out of my way, I’m golden!'],
       flash: { first: ['Early star gets the apple, {who}!', 'Beat you to it, {who}!'], past: ['Mind the mustache, {who}!', 'Feel that breeze, {who}? That was me.'] },
       stash: ['Golden! Into the stash it goes.', 'More gold for the old star!', 'Ooh, the good stuff. Mine!'],
@@ -1219,10 +1220,14 @@ window.SnakeChatter = (() => {
     "Fast as ever. Faster, even!": "快如往昔。甚至更快！",
     "Did you see that? Want to see it again?": "看见了吗？想再看一次吗？",
     "Ho ho! Still sparkling!": "嚯嚯！还是那么闪亮！",
+    "Blink and you missed me!": "一眨眼，我就过去了！",
+    "Ahh, wind in my mustache!": "啊，风吹胡子的感觉！",
+    "They don’t make flashes like that anymore.": "这样的闪现，如今可不多见了。",
     "Up and over, sonny!": "跳过去喽，小子！",
     "Hup! Old star, new tricks!": "嘿！老星星，新把戏！",
     "Look at me! A shooting star!": "看我！一颗流星！",
     "Over we go! Ho ho!": "翻过去喽！嚯嚯！",
+    "These old springs still work!": "这把老弹簧还挺好使！",
     "Golden zoom! Oh, that’s the good stuff!": "金色冲刺！哦，这才是好东西！",
     "Out of my way, I’m golden!": "让开，我可是金光闪闪的！",
     "Early star gets the apple, {who}!": "早起的星星有苹果吃，{who}！",
@@ -1318,6 +1323,10 @@ window.SnakeChatter = (() => {
   // its flash back from its rest. Half the time, and all of them together at
   // most this often:
   const SHOW_OFF_REST = 10000, SHOW_OFF_CHANCE = 0.5;
+  // Its flash back is cheered only once it's been back this long: it flashes
+  // the moment it can, as a rule (a tenth of a second later, mostly), and then
+  // it's the flash that's worth a word, not a flash it no longer has.
+  const READY_AFTER = 1000;
   // ...and once in a while someone answers it, a moment later (Wildcard brags
   // back, Mason in Latin): a round has a few, at most.
   const ANSWER_CHANCE = 0.25, ANSWER_AFTER = 1100, ANSWER_REST = 40000;
@@ -1350,7 +1359,7 @@ window.SnakeChatter = (() => {
     'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!', 'Hey! Sawing in half is MY trick, {who}!', 'Fire’s out! What a wet blanket.', 'Ashes to ashes, snack to dust!', 'Rotten luck!', 'Hole-y moly!', 'Now you see it, {who}. Now you don’t!', 'Beep beep, {who}!',
     'In my day we flashed uphill both ways!', 'Did I tell you I once jumped the whole log, {who}?', 'This mustache has seen things, {who}.', 'I was fast before fast was cool.',
     'Rest, rest, rest. I’ll rest when I’m old!', 'Come on, come on… I’m not getting any younger.', 'Hmph. In my day, a flash came right back.', 'Rested! Well, rested enough.',
-    'Look, no legs!', 'Did you see that? Want to see it again?', 'Hup! Old star, new tricks!', 'Early star gets the apple, {who}!', 'Feel that breeze, {who}? That was me.', 'A golden bug! Come to Grandpa!',
+    'Look, no legs!', 'Did you see that? Want to see it again?', 'They don’t make flashes like that anymore.', 'Hup! Old star, new tricks!', 'Early star gets the apple, {who}!', 'Feel that breeze, {who}? That was me.', 'A golden bug! Come to Grandpa!',
     'Sorry, {who}! I don’t do brakes.', 'Lightning! Now there’s a flash I respect.', 'Rain! You know what comes after rain…', 'Family!', 'Oh, look at you! You’ve grown!', 'There’s my trail! I wondered where it went.',
     'Oof! Tripped on my own mustache.', 'Ow! That wasn’t there in my day.', 'Whoa! The log used to be bigger.', 'Hot! Hot! I’m a star, not a comet!', 'Careful, {who}! Old, not slow.', 'Rotted? I must be slowing down.',
   ]);
@@ -1857,10 +1866,13 @@ window.SnakeChatter = (() => {
       }
       was.realm = m.home && { x: m.home.x, y: m.home.y, radius: m.home.radius };
       if (m.moodChangedAt != null && m.moodChangedAt !== was.mood && m.mood) say(s, `mood.${m.mood}`, null, true);
-      // Star's flash back from its rest (unless it's flashed again already): raring to go.
+      // Star's flash back from its rest: raring to go, once it's been back a
+      // moment (if it flashes or jumps by then, it's resting again: no word).
       if (showsOff(s)) {
         const resting = game.time < s.flashReadyAt;
-        if (was.resting && !resting) showOff(s, 'ready');
+        if (was.resting && !resting) was.readyAt = game.time + READY_AFTER;
+        if (resting) was.readyAt = null;
+        else if (was.readyAt != null && game.time >= was.readyAt) { was.readyAt = null; showOff(s, 'ready'); }
         was.resting = resting;
       }
       was.victimId = m.victimId;
