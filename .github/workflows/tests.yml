@@ -1,0 +1,47 @@
+# The game's own checks, on every push and pull request: the rules, online
+# play, the rivals' chatter and the records in Node, the same seeded rounds
+# with and without thinking ahead, and the renderer's and controls' promises
+# in headless Chrome (the runner has it).
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Rules
+        run: node tools/rules-test.js
+      - name: Online
+        run: node tools/online-test.js
+      - name: Chatter
+        run: node tools/chatter-test.js
+      - name: Records
+        run: node tools/records-test.js
+      - name: The same rounds with and without thinking ahead
+        run: |
+          a=$(node tools/simulate.js 60 --seed 3 --check | grep fingerprint)
+          b=$(node tools/simulate.js 60 --seed 3 --check --ahead | grep fingerprint)
+          echo "plain: $a"; echo "ahead: $b"
+          test "$a" = "$b"
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Render
+        run: node tools/render-test.js
+      - name: Controls
+        run: node tools/input-test.js

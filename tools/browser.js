@@ -48,7 +48,9 @@ async function launch() {
     '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
     '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--mute-audio',
     '--autoplay-policy=no-user-gesture-required', '--disable-renderer-backgrounding',
-    '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', 'about:blank',
+    '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows',
+    ...(process.env.CI ? ['--no-sandbox'] : []), // (a CI runner's Linux can't give Chrome its sandbox)
+    'about:blank',
   ], { stdio: ['ignore', 'ignore', 'pipe'] });
   // Chrome says where its DevTools endpoint is on stderr.
   const port = await new Promise((resolve, reject) => {
