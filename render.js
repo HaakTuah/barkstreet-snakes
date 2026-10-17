@@ -10,7 +10,7 @@
 // built ahead, while a card is up); food, meat, the woodpecker and the "+1"s
 // are cached sprites (and so is Star's head, its star and its mustache,
 // each turned as it's drawn); particles come from a fixed pool; colours come
-// from cached ramps (Star's rainbow too). Bodies
+// from cached ramps (Star's rainbow too, and Copycat's copy of it). Bodies
 // are drawn as rectangles, then circles: separate fills batch into one GPU
 // operation, while one path of many contours is triangulated every frame
 // and strokes between circles break the batch. A
@@ -1216,7 +1216,7 @@ window.SnakeRender = (() => {
         mx: 0, my: 0, mv: 0, mg: 0, ml: 0, mf: 0, mdx: 0, mdy: 0, pmx: 0, pmy: 0, pmv: 0, pmf: 0, pmdx: 0, pmdy: 0, streakTick: -1, streakX: 0, streakY: 0, pTick: -1, phx: -99, phy: -99, fixFar: false, rise: 0, swell: 0,
         fix: new Float32Array(64), fixOn: false, fixFast: false, tdx: s.dir.x, tdy: s.dir.y, bx: 0, by: 0, drawnAt: -1,
         jc: false, fc: false, flashFx: -1e9, // (your rests: cooling last frame; when your flash came back)
-        star: false, turn: 0, face: 0, hue: 0, hueAt: -1, glow: 1, brow: 1, flareAt: -1e9, shedAt: 0, // (Star: its head a star, turned so, its face upright; its rainbow; its tell; its tail's twinkles)
+        star: false, turn: 0, face: 0, hue: 0, hueAt: -1, glow: 1, brow: 1, flareAt: -1e9, shedAt: 0, // (Star: its head a star, turned so, its face upright; its rainbow (and Copycat's copy of it); its tell; its tail's twinkles)
       };
       anim.set(s, a);
     }
@@ -1239,10 +1239,15 @@ window.SnakeRender = (() => {
     if (s.personaKey === 'capricious' && s.memory.mood) return PERSONAS[s.memory.mood].color;
     if (s.personaKey === 'copycat' && game) {
       const model = findById(s.memory.modelId);
+      if (model && model.alive && lookOf(model) === 'star') return COPY_STAR; // (its body's a pale rainbow: see fillsOf)
       if (model && model.alive) return mix(model.personaKey === 'capricious' ? colorOf(model) : model.color, '#ffffff', 0.45);
     }
     return s.color;
   }
+  // Copycat copying Star, as one colour (its body is a pale copy of Star's
+  // rainbow): the rainbow's violet end, paled as its copy is. Not the tint of
+  // Star's stand-in colour in text, a pale gold that read as a power.
+  const COPY_STAR = '#d19df7'; // (paleRainbowOf(275)[0])
 
   // Mute is a mood ring: its colour follows how it feels, from what anyone
   // can see on the board. Stunned: dazed grey. Just made a kill: proud
@@ -1427,7 +1432,8 @@ window.SnakeRender = (() => {
   // round the wheel at one lightness, as #rrggbb, so it fades toward the
   // bark at the tail like any colour. rainbowOf(h)[p] is hue h faded p% of
   // the way to the bark (p up to 30, the cast's fade), made the first time
-  // it's needed and kept (it's never more than 360 short ramps).
+  // it's needed and kept (it's never more than 360 short ramps, and as many
+  // of Copycat's pale copy).
   const HUE_RGB = new Uint8Array(3 * 360), rainbows = new Array(360);
   for (let h = 0; h < 360; h++) { // (hsl(h, 85%, 62%), the old rainbow's)
     const c = (1 - Math.abs(2 * 0.62 - 1)) * 0.85, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = 0.62 - c / 2, s = Math.floor(h / 60);
@@ -1435,17 +1441,37 @@ window.SnakeRender = (() => {
     HUE_RGB[3 * h] = Math.round((r + m) * 255); HUE_RGB[3 * h + 1] = Math.round((g + m) * 255); HUE_RGB[3 * h + 2] = Math.round((b + m) * 255);
   }
   const RAINBOW_FADE = 30;
-  function rainbowOf(h) {
-    let ramp = rainbows[h];
-    if (!ramp) {
-      ramp = rainbows[h] = new Array(RAINBOW_FADE + 1);
-      const bark = parseInt(BARK.slice(1), 16);
-      for (let p = 0; p <= RAINBOW_FADE; p++) {
-        const ch = (j, sh) => Math.round(HUE_RGB[3 * h + j] * (1 - p / 100) + ((bark >> sh) & 255) * p / 100);
-        ramp[p] = '#' + ((1 << 24) | (ch(0, 16) << 16) | (ch(1, 8) << 8) | ch(2, 0)).toString(16).slice(1);
-      }
+  const rainbowOf = h => rainbows[h] || (rainbows[h] = bowRamp(h, 0));
+  // Copycat's copy of it (while it copies Star): each hue mixed as far
+  // toward white as its tint of anyone else (0.45), so it reads as a copy
+  // of Star's rainbow; never one pale gold all over, as the tint of Star's
+  // stand-in colour in text was (that read as a power, and hid its gold line).
+  const paleRainbows = new Array(360);
+  const paleRainbowOf = h => paleRainbows[h] || (paleRainbows[h] = bowRamp(h, 0.45));
+  function bowRamp(h, pale) {
+    const ramp = new Array(RAINBOW_FADE + 1), bark = parseInt(BARK.slice(1), 16);
+    for (let p = 0; p <= RAINBOW_FADE; p++) {
+      const ch = (j, sh) => Math.round((HUE_RGB[3 * h + j] * (1 - pale) + 255 * pale) * (1 - p / 100) + ((bark >> sh) & 255) * p / 100);
+      ramp[p] = '#' + ((1 << 24) | (ch(0, 16) << 16) | (ch(1, 8) << 8) | ch(2, 0)).toString(16).slice(1);
     }
     return ramp;
+  }
+  // The rainbow a snake wears, if any (its ramps, by hue): Star's own, or
+  // Copycat's pale copy while its model is Star; null for anyone else.
+  function bowOf(s) {
+    if (lookOf(s) === 'star') return rainbowOf;
+    if (s.personaKey === 'copycat' && game) {
+      const m = findById(s.memory.modelId);
+      if (m && m.alive && lookOf(m) === 'star') return paleRainbowOf;
+    }
+    return null;
+  }
+  // Where its rainbow's hue is at its head: flowing on (a degree every 15 ms,
+  // held at 0 with reduced motion), or once it's out, where it stopped.
+  function bowHue(s, a, now) {
+    if (!s.alive) { if (a.hueAt < 0) a.hueAt = a.hue; return a.hueAt; }
+    a.hueAt = -1;
+    return a.hue = reduced ? 0 : Math.floor(now / 15) % 360;
   }
   const lumas = new Map();
   function lumaOf(c) {
@@ -1485,12 +1511,11 @@ window.SnakeRender = (() => {
       for (let i = 0; i < n; i++) fills[i] = i === 0 ? '#f8fafc' : i % 2 ? '#f59e0b' : '#a21caf';
       return;
     }
-    if (look === 'star') { // a rainbow trailing a sunflower star (its head is drawn apart: see drawStarHead), flowing down from the head, fading toward the bark at the tail
-      if (!s.alive) { if (a.hueAt < 0) a.hueAt = a.hue; } // (out: its rainbow stops where it was)
-      else { a.hueAt = -1; a.hue = reduced ? 0 : Math.floor(now / 15) % 360; } // (held still with reduced motion)
-      const h0 = a.hueAt >= 0 ? a.hueAt : a.hue;
-      fills[0] = STAR_SUN;
-      for (let i = 1; i < n; i++) fills[i] = rainbowOf((h0 + 360 - (i * RAINBOW_STEP) % 360) % 360)[Math.round(RAINBOW_FADE * i / (n - 1))];
+    const bow = bowOf(s);
+    if (bow) { // a rainbow trailing a sunflower star (its head is drawn apart: see drawStarHead), flowing down from the head (held still with reduced motion; out, it stops where it was), fading toward the bark at the tail; or Copycat's pale copy of it, head and all
+      const h0 = bowHue(s, a, now);
+      for (let i = 0; i < n; i++) fills[i] = bow((h0 + 360 - (i * RAINBOW_STEP) % 360) % 360)[n > 1 ? Math.round(RAINBOW_FADE * i / (n - 1)) : 0];
+      if (look === 'star') fills[0] = STAR_SUN;
       return;
     }
     const ramp = rampOf(color);
@@ -3974,9 +3999,9 @@ window.SnakeRender = (() => {
         ctx.stroke();
         break;
       }
-      case 'copycat': { // cat ears, cat eyes, whiskers, and a party pin
-        poly(EAR, -1, color);
-        poly(EAR, 1, color);
+      case 'copycat': { // cat ears (its head's colour: copying Star, a hue of its pale rainbow), cat eyes, whiskers, and a party pin
+        poly(EAR, -1, a.fills[0]);
+        poly(EAR, 1, a.fills[0]);
         poly(EAR_IN, -1, '#f9a8d4');
         poly(EAR_IN, 1, '#f9a8d4');
         mouth(open * 0.7, 0.4);
@@ -5116,12 +5141,12 @@ window.SnakeRender = (() => {
 
   // The bead a snake leaves at body segment i: its own colours and markings.
   function beadOf(s, i) {
-    const look = lookOf(s), col = colorOf(s);
+    const look = lookOf(s), col = colorOf(s), bow = bowOf(s);
     let fill = col[0] === '#' ? col : '#a16207', mark = '';
     if (s.personaKey === 'wildcard') fill = WILD(i);
     else if (look === 'mute') fill = i === 0 ? '#f8fafc' : fill; // (its mood's colour as it went)
     else if (look === 'joker') fill = i === 0 ? '#f8fafc' : i % 2 ? '#f59e0b' : '#a21caf';
-    else if (look === 'star') fill = rainbowOf(TWINKLE_HUES[i % TWINKLE_HUES.length])[0]; // (its rainbow, in order: red, orange, yellow, green, blue, violet, and round again)
+    else if (bow) fill = bow(TWINKLE_HUES[i % TWINKLE_HUES.length])[0]; // (its rainbow, in order: red, orange, yellow, green, blue, violet, and round again; Copycat's copy of it, pale)
     else if (look === 'sniper' && i % 3 === 2) fill = mix(fill, '#fca5a5', 0.35);
     else if (look === 'vulture' && i < 2) fill = i ? '#f5f5f4' : '#f9a8d4';
     else if (look === 'desperado' && i === 1) fill = '#dc2626';
@@ -6798,8 +6823,9 @@ window.SnakeRender = (() => {
           if (!born.has(key)) born.set(key, { kind: 'pellet', at: now + (i - s.body.length) * RIPPLE_MS, i, next: 0, gen: bornGen, v: beadOf(s, i) });
         }
         const px = (h.x + 0.5 + s.dir.x * 0.5) * CELL, py = (h.y + 0.5 + s.dir.y * 0.5) * CELL;
-        const other = e.killerId != null ? game.snakes[e.killerId] : null, col = other ? colorOf(other) : '';
-        if (other && col[0] === '#') spawn(px, py, 12, 220, 480, 2.6, col, '#fffbea');
+        const other = e.killerId != null ? game.snakes[e.killerId] : null, col = other ? colorOf(other) : '', bow = other && bowOf(other);
+        if (bow) spawnBow(px, py, 12, 220, 480, 2.6, bow); // (a rainbow's in its colours: see burst)
+        else if (other && col[0] === '#') spawn(px, py, 12, 220, 480, 2.6, col, '#fffbea');
         else spawn(px, py, 12, 220, 480, 2.6, '#c08a4a', '#3b2412'); // (chips of bark)
         // Bonk! at the point of impact, and your -N over your head, behind
         // it, each kept clear of the stars, a refused leap's × and the edges:
@@ -6927,18 +6953,27 @@ window.SnakeRender = (() => {
 
   // Out: it goes off with a pop. A comic starburst and a shockwave ring in
   // its colour at its head (both inked, like everything else on the board), a
-  // burst of pieces from the head and along the body, and smoke.
-  const blasts = []; // { x, y, at, color }
+  // burst of pieces from the head and along the body, and smoke. A rainbow
+  // (Star's, or Copycat's copy of it) goes off in its colours: the ring in
+  // six arcs round the rainbow, the pieces in pairs of them (in Star's
+  // stand-in colour in text, the ring and the pieces were gold and cream, a
+  // golden pickup's).
+  const blasts = []; // { x, y, at, color, bow (a rainbow's ramps, by hue, or null) }
   function burst(s) {
-    const col = colorOf(s), hex = col[0] === '#' ? col : '#f6ecd2', h = s.body[0];
+    const col = colorOf(s), hex = col[0] === '#' ? col : '#f6ecd2', h = s.body[0], bow = bowOf(s);
     const hx = h.x * CELL + CELL / 2, hy = h.y * CELL + CELL / 2;
-    blasts.push({ x: hx, y: hy, at: lastNow, color: hex });
-    spawn(hx, hy, 26, 380, T.PARTICLE_LIFE * 1.3, 3.4, hex, '#fffbea');
+    blasts.push({ x: hx, y: hy, at: lastNow, color: hex, bow });
+    if (bow) spawnBow(hx, hy, 26, 380, T.PARTICLE_LIFE * 1.3, 3.4, bow);
+    else spawn(hx, hy, 26, 380, T.PARTICLE_LIFE * 1.3, 3.4, hex, '#fffbea');
     for (let i = 1; i < s.body.length; i += 2) {
       const c = s.body[i];
-      spawn(c.x * CELL + CELL / 2, c.y * CELL + CELL / 2, Math.max(2, Math.round(T.PARTICLES_DEATH / Math.ceil(s.body.length / 2))), 240, T.PARTICLE_LIFE * 1.2, 3, s.personaKey === 'star' ? rainbowOf(TWINKLE_HUES[(i >> 1) % TWINKLE_HUES.length])[0] : hex, '#a16207'); // (Star's in its rainbow's colours, as its beads)
+      spawn(c.x * CELL + CELL / 2, c.y * CELL + CELL / 2, Math.max(2, Math.round(T.PARTICLES_DEATH / Math.ceil(s.body.length / 2))), 240, T.PARTICLE_LIFE * 1.2, 3, bow ? bow(TWINKLE_HUES[(i >> 1) % TWINKLE_HUES.length])[0] : hex, '#a16207'); // (a rainbow's in its colours, as its beads)
     }
     for (let i = 0; i < 6; i++) mote(hx + (Math.random() - 0.5) * CELL, hy + (Math.random() - 0.5) * CELL, (Math.random() - 0.5) * 30, -18 - Math.random() * 18, 1400, 4 + Math.random() * 3, 2);
+  }
+  // n pieces in a rainbow's six colours, a pair at a time.
+  function spawnBow(x, y, n, speed, life, size, bow) {
+    for (let j = 0; j < TWINKLE_HUES.length; j += 2) spawn(x, y, Math.ceil(n / 3), speed, life, size, bow(TWINKLE_HUES[j])[0], bow(TWINKLE_HUES[j + 1])[0]);
   }
   const BLAST_SPAN = 5; // (cells across the starburst's sprite)
   const blastSprite = () => {
@@ -6977,14 +7012,25 @@ window.SnakeRender = (() => {
       const w = BLAST_SPAN * CELL * (0.5 + 0.55 * pop);
       ctx.globalAlpha = t < 0.55 ? 1 : (1 - t) / 0.45;
       ctx.drawImage(blastSprite(), b.x - w / 2, b.y - w / 2, w, w);
-      ctx.globalAlpha = 1 - t; // the shockwave: an ink ring under one in its colour
-      ctx.beginPath(); ctx.arc(b.x, b.y, CELL * (0.6 + 3.3 * grow), 0, TAU);
+      ctx.globalAlpha = 1 - t; // the shockwave: an ink ring under one in its colour (a rainbow's: six arcs round it)
+      const rr = CELL * (0.6 + 3.3 * grow);
+      ctx.beginPath(); ctx.arc(b.x, b.y, rr, 0, TAU);
       ctx.strokeStyle = '#3a2614';
       ctx.lineWidth = 8 * (1 - t) + 3;
       ctx.stroke();
-      ctx.strokeStyle = b.color;
       ctx.lineWidth = 8 * (1 - t);
-      ctx.stroke();
+      if (b.bow) {
+        ctx.lineCap = 'butt';
+        for (let j = 0; j < TWINKLE_HUES.length; j++) {
+          const a0 = (j / TWINKLE_HUES.length - 0.25) * TAU;
+          ctx.beginPath(); ctx.arc(b.x, b.y, rr, a0, a0 + TAU / TWINKLE_HUES.length);
+          ctx.strokeStyle = b.bow(TWINKLE_HUES[j])[0];
+          ctx.stroke();
+        }
+      } else {
+        ctx.strokeStyle = b.color;
+        ctx.stroke();
+      }
     }
     ctx.globalAlpha = 1;
   }
