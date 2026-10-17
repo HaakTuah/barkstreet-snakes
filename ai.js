@@ -54,9 +54,9 @@ window.SnakeAI = (() => {
   //                                   costs anyone else, wherever it ends with no more risk than `risk`
   //                                   (beyond that, the full price); everyWay: the flash weighed every way,
   //                                   not just the way I'd crawl; jumpAny: the plain jump over any hurdle
-  //                                   with somewhere free to land, not just out of a crash or onto food;
-  //                                   dashSpend: golden dashes spent on speed too, not just on cuts and
-  //                                   golden things
+  //                                   with somewhere free to land that no rival could reach first, not
+  //                                   just out of a crash or onto food; dashSpend: golden dashes spent on
+  //                                   speed too, not just on cuts and golden things
   //   golden                        { power, apple, contested }: golden power food (golden beetles, leaves,
   //                                   golden mushrooms) worth this many times what it's worth to anyone
   //                                   else, and a golden apple this many; contested: how much golden power
@@ -1151,9 +1151,10 @@ window.SnakeAI = (() => {
     // Desperate, every power is half the price. (Nobody's told anyone's rests.)
     // A power habit (w.powers: Star's) prices them all far lower, and may
     // weigh the flash every way, jump any hurdle there's somewhere to land
-    // beyond, and spend golden dashes on speed; by the same tests of where
-    // each goes (it never takes one into a crash) and the same risk where it
-    // ends. One that ends where a rival could strike costs it the full price.
+    // beyond that no rival could get to first, and spend golden dashes on
+    // speed; by the same tests of where each goes (it never takes one into a
+    // crash) and the same risk where it ends. One that ends where a rival
+    // could strike costs it the full price.
     function powerPick(crawl, crawlDir) {
       const jump = me.leaps > 0 || (me.leapIn === 0 && me.body.length > TUNE.MIN_LENGTH);
       if (me.flashIn !== 0 && !jump) return null;
@@ -1215,29 +1216,32 @@ window.SnakeAI = (() => {
         return true;
       }
 
-      // A leap over `reach` cells (golden: two if it can, else one, as the
+      // A leap over `span` cells (golden: two if it can, else one, as the
       // engine tries them), landing on the next, two ticks from now.
-      function leapOpt(d, reach) {
+      function leapOpt(d, span) {
         const golden = me.leaps > 0;
-        if (!trace(d, reach + 1)) return null;
+        if (!trace(d, span + 1)) return null;
         let over = false;
-        for (let i = 0; i < reach; i++) over ||= hurdle(path[i]);
-        const land = path[reach];
+        for (let i = 0; i < span; i++) over ||= hurdle(path[i]);
+        const land = path[span];
         if (!over || !free(land)) return null;
-        if (!golden && !trapped && !habit.jumpAny && !(foodValue[land] > 0)) { // (the plain jump: out of a crash, or onto food, or just short of it)
+        if (!golden && !trapped && !(foodValue[land] > 0)) { // (the plain jump: out of a crash, or onto food, or just short of it)
           const lx = land % N, past = cellAt(lx + d.x, (land - lx) / N + d.y);
-          if (!(past >= 0 && foodValue[past] > 0)) return null;
+          // (A habit's jump, for its own sake, only where no rival could get
+          // to the landing before I'm down: one moving in as I take off and
+          // the jump doesn't go, and I crawl into what I meant to hop.)
+          if (!(past >= 0 && foodValue[past] > 0) && !(habit.jumpAny && reach[land] > 2)) return null;
         }
         let L = me.body.length, g = me.grow;
         if (!golden) for (let n = 0; n < TUNE.LEAP_COST; n++) { if (g > 0) g--; else L--; }
-        for (let i = 0; i <= reach; i++) { if (g > 0) g--; else L--; L++; }
+        for (let i = 0; i <= span; i++) { if (g > 0) g--; else L--; L++; }
         const nb = bodies[2];
         for (let j = 0; j < L; j++) {
-          if (j <= reach) { const c = path[reach - j]; nb[j].x = c % N; nb[j].y = (c - nb[j].x) / N; }
-          else { const b = me.body[j - reach - 1]; nb[j].x = b.x; nb[j].y = b.y; }
+          if (j <= span) { const c = path[span - j]; nb[j].x = c % N; nb[j].y = (c - nb[j].x) / N; }
+          else { const b = me.body[j - span - 1]; nb[j].x = b.x; nb[j].y = b.y; }
         }
         // (It eats where it lands, and a golden leap what it crawls over first.)
-        eatOn(reach === 2 && !hurdle(path[0]) ? path[0] : -1, land, -1, L, g, 0.85);
+        eatOn(span === 2 && !hurdle(path[0]) ? path[0] : -1, land, -1, L, g, 0.85);
         endRisk = risk[land];
         const gain = ateGain - 0.6 * risk[land];
         const score = depth > 2 ? search(nb, ateL, ateG, depth - 2, 2, gain) : evaluate(nb, ateL, ateG, 2) + gain;
