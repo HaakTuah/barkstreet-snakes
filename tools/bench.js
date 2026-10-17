@@ -80,7 +80,7 @@ const sum = a => ({ frames: a.length, median: q(a, 0.5), p95: q(a, 0.95), p99: q
     if (LAND_ONLY) { await b.eval(`SnakeDebug.pinQuality?.(2); 'ok'`); await landTwins(b, PAIRS); return; }
 
     const full = {};
-    for (const scene of ['long', 'fields', 'nofields', 'intruders', 'intruders-bare', 'holes']) {
+    for (const scene of ['long', 'long-star', 'fields', 'nofields', 'intruders', 'intruders-bare', 'holes']) {
       await b.eval(setup(scene));
       const script = await b.eval(`(() => { ${SUMMARY}
         const times = [];
