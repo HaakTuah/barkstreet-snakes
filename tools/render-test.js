@@ -262,16 +262,22 @@ const STAGE = `(() => {
     // their pixels as in the middle of the board), none on the head (no sky
     // or ember inside its face: moving the arc in put them over its eyes),
     // and stunned, the stars keep clear of them (as many still showing). On
-    // a bigger board: a pip is a few pixels across on the usual one.
+    // a bigger board: a pip is a few pixels across on the usual one. Each
+    // look is drawn on the same clock (the ember dashes running along the
+    // gold line, and the stars going round, at the same place in every one:
+    // on the page's own clock, their edges' blend with the gold passed for
+    // ember a varying amount, and an edge sometimes fell short), with no
+    // falling leaves.
     await b.viewport(1600, 1600);
     await b.sleep(400);
     const pips = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
       const look = (body, dir, leaps, dashes, middle, stun) => {
         const g = stage(['creeper', 'vulture', 'mason']), you = g.snakes[0], [hx, hy] = body[0], dx = middle ? 11 - hx : 0, dy = middle ? 11 - hy : 0;
         setBody(you, body.map(([x, y]) => [x + dx, y + dy]), dir); you.leaps = leaps; you.dashes = dashes;
         g.snakes.slice(1).forEach((s, i) => setBody(s, [[19, 19 + 2 * i], [18, 19 + 2 * i], [17, 19 + 2 * i]], 'right'));
         if (stun) you.stunUntil = g.tick + 5;
-        show(g); drawN(20);
+        __t = 5e6; show(g); drawN(20);
         const x0 = Math.max(0, hx + dx - 3), y0 = Math.max(0, hy + dy - 3), w = Math.min(TUNING.GRID, hx + dx + 4) - x0, h = Math.min(TUNING.GRID, hy + dy + 4) - y0;
         const p = pixels(x0, y0, w, h), d = p.data, ppc = p.width / w, near = (i, c) => Math.abs(d[i] - c[0]) < 30 && Math.abs(d[i + 1] - c[1]) < 30 && Math.abs(d[i + 2] - c[2]) < 30;
         let all = 0, face = 0, sky = 0;
@@ -293,7 +299,9 @@ const STAGE = `(() => {
         ['in the bottom-left corner heading right', Array.from({ length: 6 }, (_, i) => [0, 23 - i]), 'right', 3, 3],
         ['in the last column heading left', col(23, 12, 6), 'left', 2, 1],
       ];
-      return cases.map(([what, body, dir, leaps, dashes]) => ({ what, edge: look(body, dir, leaps, dashes, false, false), stun: look(body, dir, leaps, dashes, false, true), middle: look(body, dir, leaps, dashes, true, false) }));
+      const out = cases.map(([what, body, dir, leaps, dashes]) => ({ what, edge: look(body, dir, leaps, dashes, false, false), stun: look(body, dir, leaps, dashes, false, true), middle: look(body, dir, leaps, dashes, true, false) }));
+      SnakeDebug.pinQuality(2);
+      return out;
     })()`);
     for (const { what, edge, stun, middle } of pips) {
       check(middle.all > 0 && edge.all >= 0.85 * middle.all && edge.face === 0 && stun.all >= 0.85 * middle.all,
