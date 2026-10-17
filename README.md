@@ -36,7 +36,7 @@ Two half-rings round your head show both rests, the jump's on the left in sky bl
 - golden leaves give golden flashes (up to 3);
 - golden mushrooms make the edges wrap (12 seconds each, up to 20).
 
-Golden ones go before the plain ones and leave their rests alone. Anyone holding one wears a gold outline, with sky-blue round pips behind the head for golden jumps and ember diamonds for golden flashes. The rivals jump, flash and wrap too, golden ones included, by the same rules, when it pays them: about two flashes a minute.
+Golden ones go before the plain ones and leave their rests alone. Anyone holding one wears a gold outline, with sky-blue round pips behind the head for golden jumps and ember diamonds for golden flashes. The rivals jump, flash and wrap too, golden ones included, by the same rules, when it pays them: about two flashes a minute (Star, the power addict, nine or ten).
 
 ### Food
 
