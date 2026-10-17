@@ -9,10 +9,11 @@
 // bark and holes live on a prerendered static layer (the next round's is
 // built ahead, while a card is up); food, meat, the woodpecker and the "+1"s
 // are cached sprites (and so is Star's head, its star and its mustache,
-// turned as it's drawn); particles come from a fixed pool; colours come from
-// cached ramps (Star's rainbow too). Bodies are drawn as rectangles, then circles: separate fills
-// batch into one GPU operation, while one path of many contours is
-// triangulated every frame and strokes between circles break the batch. A
+// each turned as it's drawn); particles come from a fixed pool; colours come
+// from cached ramps (Star's rainbow too). Bodies
+// are drawn as rectangles, then circles: separate fills batch into one GPU
+// operation, while one path of many contours is triangulated every frame
+// and strokes between circles break the batch. A
 // translucent shape made of overlapping pieces (the shadows, a land's colour
 // round a rival on it) is drawn opaque into an offscreen veil and laid on
 // once. Sovereign's and Colonist's land are cached layers, made again only
@@ -1215,7 +1216,7 @@ window.SnakeRender = (() => {
         mx: 0, my: 0, mv: 0, mg: 0, ml: 0, mf: 0, mdx: 0, mdy: 0, pmx: 0, pmy: 0, pmv: 0, pmf: 0, pmdx: 0, pmdy: 0, streakTick: -1, streakX: 0, streakY: 0, pTick: -1, phx: -99, phy: -99, fixFar: false, rise: 0, swell: 0,
         fix: new Float32Array(64), fixOn: false, fixFast: false, tdx: s.dir.x, tdy: s.dir.y, bx: 0, by: 0, drawnAt: -1,
         jc: false, fc: false, flashFx: -1e9, // (your rests: cooling last frame; when your flash came back)
-        star: false, turn: 0, hue: 0, hueAt: -1, lit: true, glow: 1, flareAt: -1e9, shedAt: 0, // (Star: its head a star, turned so; its rainbow; its tell; its tail's twinkles)
+        star: false, turn: 0, face: 0, hue: 0, hueAt: -1, glow: 1, brow: 1, flareAt: -1e9, shedAt: 0, // (Star: its head a star, turned so, its face upright; its rainbow; its tell; its tail's twinkles)
       };
       anim.set(s, a);
     }
@@ -1488,7 +1489,7 @@ window.SnakeRender = (() => {
       if (!s.alive) { if (a.hueAt < 0) a.hueAt = a.hue; } // (out: its rainbow stops where it was)
       else { a.hueAt = -1; a.hue = reduced ? 0 : Math.floor(now / 15) % 360; } // (held still with reduced motion)
       const h0 = a.hueAt >= 0 ? a.hueAt : a.hue;
-      fills[0] = STAR_BODY[STAR_STEPS];
+      fills[0] = STAR_SUN;
       for (let i = 1; i < n; i++) fills[i] = rainbowOf((h0 + 360 - (i * RAINBOW_STEP) % 360) % 360)[Math.round(RAINBOW_FADE * i / (n - 1))];
       return;
     }
@@ -1603,7 +1604,9 @@ window.SnakeRender = (() => {
     // wobble. (Out, it stays as it was: a corpse never drawn alive takes the
     // way it went.)
     if (!dead || a.hc === undefined) steer(s, a, now);
-    a.turn = Math.atan2(a.hs, a.hc) + (!dead && game && s.stunUntil >= game.tick && !reduced ? Math.sin(now / 45) * 0.16 : 0);
+    const wobble = !dead && game && s.stunUntil >= game.tick && !reduced ? Math.sin(now / 45) * 0.16 : 0;
+    a.turn = Math.atan2(a.hs, a.hc) + wobble;
+    if (a.star) a.face = starFace(a) + wobble; // (a star's points turn with it; its face stays upright: see starFace)
     // A held corpse presses its head a little into whatever it hit.
     if (impact) { pts[0] += s.dir.x * CELL * impact; pts[1] += s.dir.y * CELL * impact; }
     // Leaping: the head rises over what it's hopping as it takes off, and
@@ -2339,15 +2342,16 @@ window.SnakeRender = (() => {
     if (!dead) updateGaze(s, look, a, now); // (it's turned in prepare: see steer)
     const dizzy = !dead && s.stunUntil >= game.tick; // (stunned: its head wobbles, and stars go round it, until the tick it moves again)
     const q = dead ? null : queuedOf(s, a), lean = dead ? 0 : leanOf(s, a, q);
-    if (lean) { const h = Math.atan2(a.hs, a.hc) + lean; headCos = Math.cos(h); headSin = Math.sin(h); }
+    if (a.star) { const h = starFace(a) + lean; headCos = Math.cos(h); headSin = Math.sin(h); } // (a star's face is upright, whichever way it heads)
+    else if (lean) { const h = Math.atan2(a.hs, a.hc) + lean; headCos = Math.cos(h); headSin = Math.sin(h); }
     else { headCos = a.hc; headSin = a.hs; }
     gazeX = a.gx * headCos + a.gy * headSin; // the gaze, turned into the face's frame
     gazeY = -a.gx * headSin + a.gy * headCos;
     deadNow = dead;
-    if (a.star) drawStarHead(s, a, now, dead); // (its head: a star, turned with its face)
+    if (a.star) drawStarHead(s, a, now, dead); // (its head: a star, its points turned with its heading, its mustache upright with its face)
     ctx.save();
     ctx.translate(pts[0], pts[1]);
-    ctx.rotate(a.turn + lean); // (and stunned, its wobble: see prepare)
+    ctx.rotate((a.star ? a.face : a.turn) + lean); // (and stunned, its wobble: see prepare)
     const faceScale = 1.1 * (1 + a.bump) * (1 + a.swell);
     ctx.scale(faceScale, faceScale);
     if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
@@ -2764,20 +2768,31 @@ window.SnakeRender = (() => {
   // STAR_OUT and its valleys STAR_IN times the head's radius, a point to the
   // back: STAR_TURN) grown round by STAR_ROUND, so its points are softly
   // rounded, and any outline grown round it (its shadow, a gold line) is
-  // the same star grown further. It's turned with its face (see prepare).
+  // the same star grown further. Its points turn with its heading (see
+  // prepare); its face stays upright (see starFace).
   const STAR_OUT = 1.3, STAR_IN = 0.68, STAR_ROUND = 0.25, STAR_TURN = Math.PI;
   const STAR_A = Math.atan2(STAR_OUT - STAR_IN * Math.cos(Math.PI / 5), STAR_IN * Math.sin(Math.PI / 5)); // (how far round from a point's middle its rounding runs, either way)
   const STAR_MITRE = 1 / Math.cos(STAR_A - Math.PI / 5); // (how far a valley moves out, a unit of growing)
   const STAR_TIP = STAR_OUT + STAR_ROUND; // (how far its points reach, in head radii)
   const STAR_INK = 1.3, STAR_RIM = 2; // (its ink outline and its orange rim, in units, inside its edge)
-  // Its tell: its flash ready, it's lit and twinkles; resting, it dims (and
-  // grumbles: see its face). A few steps between the two, each a colour
-  // made once.
-  const STAR_STEPS = 6, STAR_BODY = [], STAR_EDGE = [];
-  for (let k = 0; k <= STAR_STEPS; k++) { STAR_BODY.push(mix('#c9a64a', '#f9c22e', k / STAR_STEPS)); STAR_EDGE.push(mix('#a5712b', '#e8890c', k / STAR_STEPS)); }
+  // Its colours: sunflower, rimmed in orange; and dim (a point of it while
+  // its flash rests: see its tell), a muted mustard rimmed in brown.
+  const STAR_SUN = '#f9c22e', STAR_SUN_RIM = '#e8890c', STAR_DIM = '#b0893a', STAR_DIM_RIM = '#8a5c24';
   const RAINBOW_STEP = 28; // (degrees of hue from one segment to the next)
   // As the engine's flashIn sees it (golden flashes go anyway), on the clock as drawn.
   const flashReady = s => s.dashes > 0 || (!(T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH) && shownTime >= s.flashReadyAt);
+  // How far through its flash's rest it is, on the clock as drawn: 0 as it
+  // flashes, 1 once the flash is back (holding golden flashes, 1).
+  const restOf = s => s.dashes > 0 ? 1 : Math.max(0, Math.min(1, 1 - (s.flashReadyAt - shownTime) / T.FLASH_COOLDOWN_MS));
+  // Its face is upright whichever way it heads, as in the owner's picture
+  // (brows, eyes, then the big mustache: heading up, turned with its
+  // heading, the mustache sat over its eyes and read as huge angry brows),
+  // its chin tipped STAR_LEAN the way it's heading across the screen. That
+  // keeps the mustache over its two lower points heading down, left or
+  // right; heading up, its back point is straight down, under its chin. The
+  // angle its face's +x (its chin) is drawn at.
+  const STAR_LEAN = Math.PI / 10;
+  const starFace = a => Math.PI / 2 - STAR_LEAN * a.hc;
   // The star round a's head, `grow` units bigger all round (smaller, if
   // it's negative), added to the current path, wound the way rect() and
   // arc() wind (so it never cancels a silhouette's other pieces out).
@@ -2793,19 +2808,39 @@ window.SnakeRender = (() => {
     }
     g.closePath();
   }
-  // Its head: the star, inked and rimmed in orange, with its mustache (one
-  // sprite for each step of its tell, heading right, turned and scaled as
-  // it's drawn: as paths, the star and the mustache cost the GPU about a
-  // millisecond a frame), its sheen, and lit while its flash is ready, a
-  // twinkle on its points (one on each of two, going round; when the flash
-  // comes back, all five at once, big). Resting, it dims. Out, it's dim.
+  // Its tell: a countdown on its five points. Its middle is always its
+  // sunflower. As it flashes, its points go dim (in a moment, and its
+  // twinkles burst off them: see onTick's dash), and they light again one
+  // by one as its rest runs down, a point for each fifth of it (1.2 s),
+  // going round from its back point, each lighting over the last STAR_FADE
+  // of its step; the fifth lights as the flash is back, and while it's
+  // ready two twinkles go round its points. (Lit only while its flash was
+  // ready, it was dim nearly all the time: it flashes the moment it can, so
+  // lit lasted a tick, a blink with reduced motion.) Holding golden flashes,
+  // all five are lit. With reduced motion a point lights at once. Its brows
+  // knit as it flashes, and relax through the first part of its rest (see
+  // its face).
+  const STAR_FADE = 0.2;
+  // Its head: the star (a sprite for each count of its points lit, heading
+  // right, turned and scaled as it's drawn, the point that's lighting drawn
+  // over it fading in), its mustache (a sprite of its own, upright with its
+  // face: as paths, the star and its mustache cost the GPU about half a
+  // millisecond a frame), its sheen, and its twinkles. Out, its points are dim.
   function drawStarHead(s, a, now, dead) {
-    const lit = !dead && !!game && flashReady(s);
-    if (lit && !a.lit) a.flareAt = now; // (back: its flick)
-    a.lit = lit;
-    a.glow = reduced ? +lit : a.glow + (+lit - a.glow) * (1 - Math.exp(-frameDt / 90));
-    const k = Math.round(a.glow * STAR_STEPS), x = a.pts[0], y = a.pts[1], r = a.rad[0], sc = r / STAR_R;
-    blitAbout(starHeadSprite(k), x, y, 0, 0, sc, sc, a.turn);
+    const lit = !dead && !!game && flashReady(s), rest = !dead && game ? restOf(s) : 0;
+    a.glow = reduced || rest >= a.glow ? rest : a.glow + (rest - a.glow) * (1 - Math.exp(-frameDt / 90)); // (filling with the clock; spent, its points go out in a moment)
+    const knit = Math.max(0, Math.min(1, (a.glow - 0.15) / 0.3));
+    a.brow = reduced ? +(a.glow >= 0.3) : knit * knit * (3 - 2 * knit);
+    const fill = a.glow * 5, n = Math.min(5, Math.floor(fill + 1e-9)), part = reduced || n === 5 ? 0 : Math.min(1, (fill - n - 1) / STAR_FADE + 1);
+    const x = a.pts[0], y = a.pts[1], r = a.rad[0], sc = r / STAR_R;
+    blitAbout(starHeadSprite(n), x, y, 0, 0, sc, sc, a.turn);
+    if (part > 0.02) {
+      const was = ctx.globalAlpha;
+      ctx.globalAlpha = was * part;
+      blitAbout(starPointSprite(n), x, y, 0, 0, sc, sc, a.turn);
+      ctx.globalAlpha = was;
+    }
+    blitAbout(stacheSprite(), x, y, 0, 0, sc, sc, a.face);
     ctx.fillStyle = 'rgba(255,255,255,0.22)'; // (its sheen, as every segment's: light from the top left, whichever way it's turned)
     circle(x - r * 0.3, y - r * 0.36, r * 0.34);
     const flare = reduced ? 1 : (now - a.flareAt) / 450;
@@ -2824,22 +2859,56 @@ window.SnakeRender = (() => {
       ctx.drawImage(glintSprite(), x + Math.cos(t) * d - w / 2, y + Math.sin(t) * d - w / 2, w, w);
     }
   }
-  const STAR_R = CELL * 0.54; // (its head's radius, unswollen: its sprite's)
-  const starHeadSprite = k => sprite('starhead', k, drawStarHeadSprite);
-  const drawStarHeadSprite = (g, k) => {
+  const STAR_R = CELL * 0.54; // (its head's radius, unswollen: its sprites')
+  const starHeadSprite = n => sprite('starhead', n, drawStarHeadSprite);
+  const starPointSprite = j => sprite('starpoint', j, drawStarPointSprite);
+  const stacheSprite = () => sprite('stache', '', drawStacheSprite);
+  // The star, inked, dim, then lit in its middle and its first n points.
+  const drawStarHeadSprite = (g, n) => {
     g.fillStyle = INK;
     g.beginPath(); starTrace(g, 0, 0, STAR_TURN, STAR_R, 0); g.fill();
-    g.fillStyle = STAR_EDGE[k];
-    g.beginPath(); starTrace(g, 0, 0, STAR_TURN, STAR_R, -STAR_INK); g.fill();
-    g.fillStyle = STAR_BODY[k];
-    g.beginPath(); starTrace(g, 0, 0, STAR_TURN, STAR_R, -STAR_INK - STAR_RIM); g.fill();
-    g.scale(1.1, 1.1); // (its face's scale: see drawBody)
-    mustache(g);
+    starFill(g, STAR_DIM_RIM, STAR_DIM);
+    g.beginPath();
+    starMiddle(g);
+    for (let j = 0; j < n; j++) starPoint(g, j);
+    g.clip();
+    starFill(g, STAR_SUN_RIM, STAR_SUN);
   };
-  // Its mustache, in the face's frame (+x the way it's heading, a cell
-  // CELL): two big drooping halves from under its eyes, out over its two
-  // front points, scalloped along their ends; inked, so white reads on
-  // sunflower, with a few strands.
+  // (Its point j alone, lit: drawn over the star where it's dim, as it lights.)
+  const drawStarPointSprite = (g, j) => {
+    g.beginPath(); starPoint(g, j); g.clip();
+    starFill(g, STAR_SUN_RIM, STAR_SUN);
+  };
+  const drawStacheSprite = g => { g.scale(1.1, 1.1); mustache(g); }; // (at its face's scale: see drawBody)
+  // Its rim and its body, in these colours, inside its ink.
+  function starFill(g, rim, body) {
+    g.fillStyle = rim;
+    g.beginPath(); starTrace(g, 0, 0, STAR_TURN, STAR_R, -STAR_INK); g.fill();
+    g.fillStyle = body;
+    g.beginPath(); starTrace(g, 0, 0, STAR_TURN, STAR_R, -STAR_INK - STAR_RIM); g.fill();
+  }
+  // Its middle (the pentagon through its valleys) and its point j (the
+  // star beyond the pentagon's side under it), added to g's path, to clip to.
+  const STAR_DIP = (STAR_IN + STAR_ROUND * STAR_MITRE) * STAR_R; // (a valley, at its ink's edge)
+  function starMiddle(g) {
+    for (let j = 0; j < 5; j++) {
+      const v = STAR_TURN + (j + 0.5) * TAU / 5;
+      if (j) g.lineTo(Math.cos(v) * STAR_DIP, Math.sin(v) * STAR_DIP);
+      else g.moveTo(Math.cos(v) * STAR_DIP, Math.sin(v) * STAR_DIP);
+    }
+    g.closePath();
+  }
+  function starPoint(g, j) {
+    const t = STAR_TURN + j * TAU / 5, v0 = t - Math.PI / 5, v1 = t + Math.PI / 5;
+    g.moveTo(Math.cos(v0) * STAR_DIP, Math.sin(v0) * STAR_DIP);
+    g.lineTo(Math.cos(t) * CELL * 2, Math.sin(t) * CELL * 2); // (well past its tip)
+    g.lineTo(Math.cos(v1) * STAR_DIP, Math.sin(v1) * STAR_DIP);
+    g.closePath();
+  }
+  // Its mustache, in the face's frame (+x its chin, a cell CELL): two big
+  // drooping halves from under its eyes, out over its two lower points,
+  // scalloped along their ends; inked, so white reads on sunflower, with a
+  // few strands.
   function mustache(g) {
     const c = CELL;
     g.beginPath();
@@ -3565,7 +3634,7 @@ window.SnakeRender = (() => {
     ctx.save();
     ctx.translate(x1, 0);
     ctx.rotate(reduced ? 0 : p * TAU);
-    ctx.fillStyle = STAR_BODY[STAR_STEPS];
+    ctx.fillStyle = STAR_SUN;
     ctx.strokeStyle = INK;
     ctx.lineWidth = c * 0.04;
     ctx.lineJoin = 'round';
@@ -4077,11 +4146,11 @@ window.SnakeRender = (() => {
           for (const sg of SIDES2) { ctx.beginPath(); ctx.ellipse(-c * 0.02 + ox, sg * c * 0.105 + oy, c * 0.135, c * 0.072, 0, 0, TAU); ctx.fill(); }
           catchlights(-c * 0.05 + ox, c * 0.105, oy, c * 0.1);
         }
-        // Bushy white brows, a puffy tuft over each eye: raised while its
-        // flash is ready, knitted (grumpy) while it rests. (Each puff a
-        // circle of its own: the GPU's quickest shape.)
+        // Bushy white brows, a puffy tuft over each eye: knitted (grumpy) as
+        // it flashes, raised again through the first part of its rest (see
+        // drawStarHead). (Each puff a circle of its own: the GPU's quickest shape.)
         if (!deadNow) {
-          const up = a.glow, inner = -0.12 - 0.09 * up, outer = -0.25 + 0.06 * up;
+          const up = a.brow, inner = -0.12 - 0.09 * up, outer = -0.25 + 0.06 * up;
           for (let pass = 0; pass < 2; pass++) {
             ctx.fillStyle = pass ? '#fffdf6' : INK;
             for (const sg of SIDES2) for (let j = 0; j < 3; j++) {
@@ -6782,6 +6851,7 @@ window.SnakeRender = (() => {
         if (e.gold) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 10, 120, 600, 1.8, '#d4a017', '#fffbea'); // (in Honey, a power's gold)
       } else if (e.type === 'dash') { // a streak along the way it went: a golden dash's in gold and ember, with flecks of both; a plain flash's in ember, lighter
         animOf(e.snake, now).dashTick = game.tick;
+        if (e.plain && lookOf(e.snake) === 'star') animOf(e.snake, now).flareAt = now; // (Star's flash spent: its twinkles burst off its points as they go dim, see drawStarHead)
         const h = e.snake.body[0], seen = streaks.findIndex(k => k.s === e.snake && k.pre === game.tick - 1); // (seen coming: see prepare)
         if (seen >= 0 && streaks[seen].fx === e.x && streaks[seen].fy === e.y && streaks[seen].tx === h.x && streaks[seen].ty === h.y) { streaks[seen].pre = -1; sparksOf(streaks[seen]); } // (as it was seen: it stays, and now its flecks fly)
         else { if (seen >= 0) streaks.splice(seen, 1); streakOf(e.snake, e.x, e.y, h.x, h.y, !!e.plain, now, -1); }
