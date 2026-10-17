@@ -1,6 +1,6 @@
 # Bark & Bite
 
-A snake game on a mossy log: you against three AI rivals on a fallen log in the woods, drawn at random each round from a cast of seventeen. Plays in the browser, on desktop and phone. Plain HTML, CSS and JavaScript, with no build step, no dependencies and no asset files: every picture is drawn and every sound is synthesised in the page.
+A snake game on a mossy log: you against three AI rivals on a fallen log in the woods, drawn at random each round from a cast of eighteen. Plays in the browser, on desktop and phone. Plain HTML, CSS and JavaScript, with no build step, no dependencies and no asset files: every picture is drawn and every sound is synthesised in the page.
 
 **Play:** https://haaktuah.github.io/snake-game/
 
@@ -92,7 +92,7 @@ Press **Watch AIs** on the start screen for a round between four AI snakes, with
 
 ## The rivals
 
-Each round, three of these seventeen are picked at random. The start screen tells you who you're up against and how each one plays. Only you have a real forked tongue: every few seconds each rival flicks out something of its own instead, such as Wildcard's dollar bill, Joker's party horn or Desperado's six-shooter.
+Each round, three of these eighteen are picked at random. The start screen tells you who you're up against and how each one plays. Only you have a real forked tongue: every few seconds each rival flicks out something of its own instead, such as Wildcard's dollar bill, Joker's party horn or Desperado's six-shooter.
 
 | Snake | Look | Style |
 |-------|------|-------|
@@ -113,6 +113,7 @@ Each round, three of these seventeen are picked at random. The start screen tell
 | **Joker** | jester hat, harlequin diamonds, red nose | Lures chasers into dead ends and swerves away at the last moment. |
 | **Desperado** | rust poncho, cowboy hat, bandana | An adrenaline junkie: skims the edge, bodies and other heads for the thrill of it. |
 | **Ouroboros** | a real snake: dark gold python diamonds, a wedge head, slit eyes, fangs | Chases its own tail: once it's long, it moves as a ring, and whatever's inside is in trouble. Now and then it bites its own tail. |
+| **Star** | a sunflower star with a big white walrus mustache, a rainbow streaming behind it | A power addict: jumps and flashes every chance it gets, and craves anything golden that feeds the habit. Its star twinkles while its flash is ready and dims while it rests: catch it then. |
 
 All of them share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move (or can chase their own tail), don't let themselves be pinned against the edge or a body (or shut in a pocket) where another snake could come round and close the way out, and avoid the space around other snakes' heads. On top of that, each one chases its own goal.
 
