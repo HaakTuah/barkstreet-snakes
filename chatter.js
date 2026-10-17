@@ -11,7 +11,8 @@ window.SnakeChatter = (() => {
   // a plain flash that beat {who} to food (first) or shot past {who} (past);
   // last, the last apples are falling. Star's own: zoom, any flash of its
   // own; ready, its flash back from its rest; resting, small talk while it
-  // rests; stash, golden power food it ate.)
+  // rests; stash, golden power food it ate. showoff: an answer to Star's
+  // showing off ({who} is Star).)
   const VOICES = {
     sniper: {
       hungry: ["Hungry. Someone will do."],
@@ -216,6 +217,7 @@ window.SnakeChatter = (() => {
       flash: { first: ['Veni, vidi, edi.'], past: ['Celerissimus!'] },
       dies: ['Et tu, {who}?', 'Alea iacta… estus.', 'Murus… meus… finis.'],
       wrap: ['Sine muro! Murus nullus!'],
+      showoff: ['Festina lente, {who}!', 'Showoffus maximus.', 'Stella celerrima!'], // (answering Star: see showOff)
     },
     wildcard: {
       hungry: ["Very hungry. The hungriest. Nobody has ever been this hungry."],
@@ -247,6 +249,7 @@ window.SnakeChatter = (() => {
       flash: { first: ['Mine, {who}. Tremendous speed.'], past: ['So fast. Faster than {who}. Everyone saw it.'] },
       snip: ['You’re cut, {who}! Tremendously cut.'],
       wrap: ['Walls? Who needs walls? Not today.'],
+      showoff: ['Showing off, {who}? I show off better.', 'Fast? I invented fast, {who}.'], // (answering Star)
     },
     creeper: {
       hungry: ["so… hungry…"],
@@ -456,7 +459,7 @@ window.SnakeChatter = (() => {
     // A jolly old-timer who can't stop showing off: its own flashes and jumps
     // (zoom, leap, dash), its flash back from its rest (ready), grumbling
     // while it rests (resting, in its small talk) and golden power food it
-    // eats (stash: a golden beetle or leaf).
+    // eats (stash: a golden beetle or leaf). See showOff.
     star: {
       hungry: ['Can’t flash on an empty stomach.'],
       desperate: ['Even a star’s got to eat!'],
@@ -1269,7 +1272,12 @@ window.SnakeChatter = (() => {
     "Went out with a twinkle…": "闪着光走了……",
     "Tell ’em I was quick, {who}.": "告诉他们我很快，{who}。",
     "Heh heh! Oh, my.": "嘿嘿！哎呀呀。",
-    "Har har! Oh, my mustache!": "哈哈哈！哎哟，我的胡子！"
+    "Har har! Oh, my mustache!": "哈哈哈！哎哟，我的胡子！",
+    "Festina lente, {who}!": "欲速则不达，{who}！",
+    "Showoffus maximus.": "超级爱炫耀。",
+    "Stella celerrima!": "最快的星星！",
+    "Showing off, {who}? I show off better.": "炫耀，{who}？我炫耀得更好。",
+    "Fast? I invented fast, {who}.": "快？快是我发明的，{who}。"
   };
 
   const SNAKE_GAP = 4500;  // ms of game time between lines from the same snake
@@ -1295,6 +1303,7 @@ window.SnakeChatter = (() => {
   let enabled = true, compact = false, logShown = true, listener = null;
   let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null, pendingReply = null, saidAt = {};
   let struck = false; // (lightning has struck in this storm: one remark is enough)
+  let pendingAnswer = null, answeredAt = -Infinity; // (an answer to Star's showing off, on its way; the last one)
   const LINE_REST = 45000; // a snake doesn't say the same line again within this much game time
   const INTRUDER_REST = 25000; // nor call out intruders more often (heads skim in and out at a border)
   // Some moments come often in a long round, so each snake remarks on them at most this often:
@@ -1304,6 +1313,14 @@ window.SnakeChatter = (() => {
   const DESPERATE_REST = 30000; // starving soon (it can come and go as it eats a little)
   const FLASH_REST = 30000;     // its own plain flashes (everyone flashes, about four times a minute)
   const NEAR_FOOD = 5;          // food that rots or burns this near its head (cells, and nearer than anyone's) was food it was after
+  // Star lives for its powers (it flashes whenever it's rested and jumps every
+  // hurdle), so it cheers them all: its flashes, jumps and golden dashes, and
+  // its flash back from its rest. Half the time, and all of them together at
+  // most this often:
+  const SHOW_OFF_REST = 10000, SHOW_OFF_CHANCE = 0.5;
+  // ...and once in a while someone answers it, a moment later (Wildcard brags
+  // back, Mason in Latin): a round has a few, at most.
+  const ANSWER_CHANCE = 0.25, ANSWER_AFTER = 1100, ANSWER_REST = 40000;
   // Mason's Life of Brian moments are told once per visit (a joke told every round isn't one).
   const SET_PIECES = new Set(['Romanes eunt domus.', 'Amicus meus est Biggus Dickus.']);
   const toldPieces = new Set();
@@ -1318,8 +1335,8 @@ window.SnakeChatter = (() => {
     'Mine now. Terribly sorry.', 'I claim this for the Crown. Which crown? Mine.', 'Do you have a flag, {who}? No flag, no colony.', 'Papers, {who}? No? Off you pop.', 'A minor diplomatic incident.', 'I say, {who}! There’s a queue.', 'I appear to be on fire. How awkward.', 'Rain? Just like home.', 'Put out by the weather. How very British.', 'Burnt to a cinder. Like Sunday lunch.', 'Mind the gap!', 'The last apples? Ration them, chaps.',
     'I like beige.', 'This is a log.', 'Tastes like food.', 'That was a bump.',
     'Rest in pieces, {who}.', 'I’m not on the menu.', 'Leftovers… of me?', 'Gone already? I like them ripe.', 'No more waiting. I’ll make my own leftovers.',
-    'Vidi, vici, veni.', 'Divide et imperium-ium.', 'Murus maximus. Very bigus.', 'Wallus erectus.', 'Bonkus interruptus.', 'Murus sum, {who}.', 'Pons sum!', 'Veni, vidi, edi.', 'Rottus maximus.',
-    '{who}? Total loser. Sad!', 'Global warming? Total hoax. Look at all this snow!', 'Fake news! That never happened.', 'Who moved that? Fake wall!', 'I’m bigger than ever. Ask anyone.', 'Low energy, {who}. Very low energy.', 'Nobody bumps me, {who}. Believe me.', '{who} stole my tail! Total theft. Sad!', 'A hole under me? Fake hole. Didn’t even feel it.', 'Fire’s out. Nobody puts out fires like me.', 'Rotten food. Who’s responsible? Not me.', 'So fast. Faster than {who}. Everyone saw it.',
+    'Vidi, vici, veni.', 'Divide et imperium-ium.', 'Murus maximus. Very bigus.', 'Wallus erectus.', 'Bonkus interruptus.', 'Murus sum, {who}.', 'Pons sum!', 'Veni, vidi, edi.', 'Rottus maximus.', 'Festina lente, {who}!', 'Showoffus maximus.',
+    '{who}? Total loser. Sad!', 'Global warming? Total hoax. Look at all this snow!', 'Fake news! That never happened.', 'Who moved that? Fake wall!', 'I’m bigger than ever. Ask anyone.', 'Low energy, {who}. Very low energy.', 'Nobody bumps me, {who}. Believe me.', '{who} stole my tail! Total theft. Sad!', 'A hole under me? Fake hole. Didn’t even feel it.', 'Fire’s out. Nobody puts out fires like me.', 'Rotten food. Who’s responsible? Not me.', 'So fast. Faster than {who}. Everyone saw it.', 'Showing off, {who}? I show off better.', 'Fast? I invented fast, {who}.',
     'nice tail, {who}.', 'we should hang out, {who}.', 'peekaboo, {who}.', 'shh. nobody saw that.',
     'Your eat rate is suboptimal, {who}.', 'Input lag, {who}?', 'Frame-perfect, {who}.',
     'Taking position. …Ooh, I like being Sniper.', 'Headshot! …Is that how Sniper says it?', 'Pew pew! …Sniper doesn’t say pew pew, does it?', 'FOOD. NOW. …Is Gobbler always this hungry?', 'Snacks! All the snacks! …How does Gobbler stop?',
@@ -1403,6 +1420,7 @@ window.SnakeChatter = (() => {
   function reset(g) {
     game = g;
     lastAny = -Infinity; lastSaid = {}; seen = {}; lastLine = null; pendingReply = null; saidAt = {}; struck = false;
+    pendingAnswer = null; answeredAt = -Infinity;
     toldThisRound.clear();
     clearBubbles();
     logEl.textContent = '';
@@ -1643,15 +1661,33 @@ window.SnakeChatter = (() => {
   // Everyone flashes, often (about ten a round), so a plain flash is worth a
   // word only now and then: when it grabbed food from under a rival's nose
   // (first), or shot right by a rival's head (past: beside a cell it crossed).
+  // Star cheers any flash of its own (zoom), as it shows off (see showOff).
   function flashed(e) {
-    const s = e.snake, was = (seen[s.id] ||= {});
-    if (game.time - (was.flashAt ?? -Infinity) < FLASH_REST) return;
+    const s = e.snake, was = (seen[s.id] ||= {}), star = showsOff(s);
+    if (!star && game.time - (was.flashAt ?? -Infinity) < FLASH_REST) return;
     const near = (x, y, r) => game.snakes.find(o => o !== s && o.alive && Math.abs(o.body[0].x - x) <= r && Math.abs(o.body[0].y - y) <= r);
     const ate = game.events.find(f => f.type === 'eat' && f.snake === s && f.kind !== 'mushroom');
     const beaten = ate && near(ate.x, ate.y, 3);
     let passed = null;
     if (!ate) for (const c of s.body.slice(0, Math.max(1, e.n || 1))) if ((passed = near(c.x, c.y, 1))) break;
-    if ((beaten || passed) && Math.random() < 0.4 && say(s, beaten ? 'flash.first' : 'flash.past', beaten || passed, true)) was.flashAt = game.time;
+    if (star) showOff(s, beaten ? 'flash.first' : passed ? 'flash.past' : 'zoom', beaten || passed);
+    else if ((beaten || passed) && Math.random() < 0.4 && say(s, beaten ? 'flash.first' : 'flash.past', beaten || passed, true)) was.flashAt = game.time;
+  }
+
+  // Star, the power addict, cheers its every flash, jump and golden dash, and
+  // its flash back from its rest: those keep to a rest of their own, or it
+  // would never stop. (While its flash rests, its small talk grumbles.)
+  const showsOff = s => s.personaKey === 'star';
+  // A line for showing off (key; who: a rival it beat to food or shot past),
+  // half the time and at most every SHOW_OFF_REST; whether it said one. Now
+  // and then someone with words for it answers a moment later (see update).
+  function showOff(s, key, who = null) {
+    const was = (seen[s.id] ||= {});
+    if (game.time - (was.showAt ?? -Infinity) < SHOW_OFF_REST || !(Math.random() < SHOW_OFF_CHANCE) || !say(s, key, who, true)) return false;
+    was.showAt = game.time;
+    const answers = game.snakes.some(o => o !== s && o.alive && VOICES[o.personaKey]?.showoff);
+    if (answers && !pendingAnswer && game.time - answeredAt >= ANSWER_REST && Math.random() < ANSWER_CHANCE) pendingAnswer = { at: game.time + ANSWER_AFTER, teller: s };
+    return true;
   }
 
   // Called once per tick, after the engine moved everyone.
@@ -1693,9 +1729,10 @@ window.SnakeChatter = (() => {
         for (const v of alive) if (v.personaKey === 'vulture' && Math.random() < 0.6) say(v, 'death', victim);
       } else if (e.type === 'eat' && e.snake.persona && e.kind !== 'goldcap') { // (a golden mushroom has its own lines: below)
         if (e.kind === 'golden') say(e.snake, 'golden', null, true);
+        else if ((e.gold || e.kind === 'leaf') && VOICES[e.snake.personaKey]?.stash) say(e.snake, 'stash', null, true); // (golden power food: Star crows over its stash)
         else if (e.kind === 'beetle') say(e.snake, 'caught', null, true);
         else if (e.kind === 'mushroom') say(e.snake, 'mushroom');
-        else if (Math.random() < 0.15) say(e.snake, 'eat');
+        else if (Math.random() < (showsOff(e.snake) ? 0.05 : 0.15)) say(e.snake, 'eat'); // (Star only has eyes for golden things)
       } else if (e.type === 'starving' && e.snake.persona) {
         // (unless it's just said it's desperate: that said it)
         if (!(game.time - (seen[e.snake.id]?.desperateAt ?? -Infinity) < 15000)) say(e.snake, 'hungry', null, true);
@@ -1721,10 +1758,12 @@ window.SnakeChatter = (() => {
         if (e.snake.persona && !(edge && say(e.snake, 'edge'))) say(e.snake, 'bonk');
         if (other?.persona && other.alive && Math.random() < 0.5) say(other, 'gloat', e.snake);
       } else if (e.type === 'leap' && e.snake.persona) {
-        if (e.gold || Math.random() < 0.3) say(e.snake, 'leap', null, !!e.gold); // (everyone leaps now: a golden one's worth a word)
+        if (showsOff(e.snake)) showOff(e.snake, 'leap');
+        else if (e.gold || Math.random() < 0.3) say(e.snake, 'leap', null, !!e.gold); // (everyone leaps now: a golden one's worth a word)
       } else if (e.type === 'dash' && e.snake.persona) {
-        if (!e.plain) say(e.snake, 'dash', null, true); // (a golden dash)
-        else flashed(e);
+        if (e.plain) flashed(e);
+        else if (showsOff(e.snake)) showOff(e.snake, 'dash'); // (a golden dash: Star spends them on speed too)
+        else say(e.snake, 'dash', null, true);
       } else if (e.type === 'eat' && e.kind === 'goldcap' && e.snake.persona) {
         say(e.snake, 'wrap', null, true);
       } else if (e.type === 'alight' && e.snake.persona) {
@@ -1759,8 +1798,12 @@ window.SnakeChatter = (() => {
         const s = pick(alive.filter(a => VOICES[a.personaKey]?.last));
         if (s) say(s, 'last', null, true);
       } else if (e.type === 'rainbow') {
-        const s = pick(alive.filter(a => VOICES[a.personaKey]?.rainbow));
-        if (s) say(s, 'rainbow', null, true);
+        // (Star's own colours, up in the sky: family, and it says so first)
+        const kin = alive.find(showsOff);
+        if (!(kin && say(kin, 'rainbow', null, true))) {
+          const s = pick(alive.filter(a => a !== kin && VOICES[a.personaKey]?.rainbow));
+          if (s) say(s, 'rainbow', null, true);
+        }
       } else if (e.type === 'woodpecker') {
         const s = pick(alive);
         if (s) { lastSaid[s.id] = -Infinity; say(s, VOICES[s.personaKey].woodpecker ? 'woodpecker' : 'idle', anyone(s), true); }
@@ -1814,6 +1857,12 @@ window.SnakeChatter = (() => {
       }
       was.realm = m.home && { x: m.home.x, y: m.home.y, radius: m.home.radius };
       if (m.moodChangedAt != null && m.moodChangedAt !== was.mood && m.mood) say(s, `mood.${m.mood}`, null, true);
+      // Star's flash back from its rest (unless it's flashed again already): raring to go.
+      if (showsOff(s)) {
+        const resting = game.time < s.flashReadyAt;
+        if (was.resting && !resting) showOff(s, 'ready');
+        was.resting = resting;
+      }
       was.victimId = m.victimId;
       was.planted = m.planted || 0;
       was.mood = m.moodChangedAt;
@@ -1835,6 +1884,14 @@ window.SnakeChatter = (() => {
       }
     }
 
+    // Someone answers Star's showing off, in their own voice (see showOff).
+    if (pendingAnswer && game.time >= pendingAnswer.at) {
+      const { teller } = pendingAnswer;
+      pendingAnswer = null;
+      const who = teller.alive && pick(alive.filter(o => o !== teller && VOICES[o.personaKey]?.showoff));
+      if (who && say(who, 'showoff', teller, true)) answeredAt = game.time;
+    }
+
     // Copycat repeats exactly what it just heard, in Chinese.
     const cat = alive.find(s => s.personaKey === 'copycat');
     if (cat && lastLine?.template && lastLine.speaker !== cat && game.time - lastAny > 500 && Math.random() < 0.35) {
@@ -1846,10 +1903,10 @@ window.SnakeChatter = (() => {
     }
     if (lastLine && game.time - lastAny > 2000) lastLine = null;
 
-    // Small talk now and then.
+    // Small talk now and then. (Star, while its flash rests, grumbles as often as not.)
     if (game.time - lastAny > 3500 && Math.random() < 0.04) {
       const s = pick(alive);
-      if (s) say(s, 'idle', anyone(s));
+      if (s) say(s, showsOff(s) && game.time < s.flashReadyAt && Math.random() < 0.5 ? 'resting' : 'idle', anyone(s));
     }
   }
 
