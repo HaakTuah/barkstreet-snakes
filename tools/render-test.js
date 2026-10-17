@@ -21,6 +21,11 @@
 //   column, the top row or a corner shows as many of them as one in the
 //   middle), never on the head (none inside its face, where moving the arc
 //   in put them over its eyes), and stunned, the stars keep clear of them.
+// - Star: its head is a star (five points round it, one to the back), its
+//   rainbow flows down its body from the head (and holds still with reduced
+//   motion), it's lit while its flash is ready and dim while it rests, its
+//   gold line runs round its points, and a dead Star's beads go round the
+//   rainbow from its head.
 // - Scorch marks are soot, not holes: a burned cell is no more than a little
 //   darker, and not darkest in its middle.
 // - Every Field guide picture draws (the mushroom on bark; a snake holding
@@ -307,6 +312,73 @@ const STAGE = `(() => {
       check(middle.all > 0 && edge.all >= 0.85 * middle.all && edge.face === 0 && stun.all >= 0.85 * middle.all,
         `golden power pips ${what}: all on the board, none on the head, clear of the stun stars`, `sky and ember pixels ${edge.sky} and ${edge.ember} (in the middle ${middle.sky} and ${middle.ember}, stunned ${stun.sky} and ${stun.ember}), ${edge.face} inside its face`);
     }
+
+    // Star: a star for a head (five points round it, where a round head has
+    // none), the old rainbow flowing down its body from the head (held still
+    // with reduced motion), its tell (lit while its flash is ready, dim
+    // while it rests), the gold line round its points, and its beads in
+    // rainbow order. Two Stars heading right along rows 8 and 14, one
+    // resting, one ready; Mason (a round head) beside them.
+    const stars = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const hue = ([r, g, b]) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn || 1; const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return Math.round((h * 60 + 360) % 360); };
+      const yellow = ([r, g, b]) => r > 150 && g > 100 && b < 120 && r - b > 70 && r >= g, honey = ([r, g, b]) => r > 225 && g > 195 && b > 95 && b < 185;
+      const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
+      // The colours round a head, n of them, r cells out, starting straight ahead (heading right) and going round.
+      const ring = (s, r, n = 72) => { const [cx, cy] = at(s), p = pixels(cx - 1.5, cy - 1.5, 3, 3), ppc = p.width / 3, out = [];
+        for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, j = (Math.round((1.5 + Math.sin(a) * r) * ppc) * p.width + Math.round((1.5 + Math.cos(a) * r) * ppc)) * 4; out.push([p.data[j], p.data[j + 1], p.data[j + 2]]); }
+        return out; };
+      // The middles of the runs of colours that pass is(), in degrees round from straight ahead.
+      const runs = (ring, is) => { const n = ring.length, out = []; for (let i = 0; i < n; i++) { if (!is(ring[i]) || is(ring[(i + n - 1) % n])) continue; let j = i; while (is(ring[(j + 1) % n]) && j - i < n) j++; out.push(Math.round(((i + j) / 2 / n * 360) % 360)); } return out; };
+      const seg = (s, i) => { const [cx, cy] = at(s); return rgb(cx - i + 0.04, cy + 0.04); }; // (segment i's middle, below its sheen)
+      const SEGS = [2, 3, 4, 7], out = {};
+      const g = stage(['star', 'star', 'mason']), [you, rest, ready] = g.snakes;
+      setBody(rest, Array.from({ length: 16 }, (_, i) => [16 - i, 8]), 'right'); rest.flashReadyAt = g.time + 1e6;
+      setBody(ready, Array.from({ length: 16 }, (_, i) => [16 - i, 14]), 'right'); ready.flashReadyAt = 0;
+      R.setReducedMotion(true); // (its rainbow held still: its neck isn't yellow, nor its points twinkling)
+      __t = 7e6; show(g); drawN(20);
+      out.points = [0.66, 0.7].map(r => runs(ring(rest, r), yellow));
+      const still = SEGS.map(i => seg(rest, i));
+      drawN(15); // (half a second on)
+      out.still = { before: still, after: SEGS.map(i => seg(rest, i)) };
+      R.setReducedMotion(false);
+      drawN(20);
+      const t0 = SEGS.map(i => hue(seg(rest, i)));
+      for (let i = 0; i < 28; i++) { __t += 15; R.frame(0.5, __t); } // (28 hues on, 15 ms each: a segment's worth)
+      const t1 = SEGS.map(i => hue(seg(rest, i)));
+      out.flow = { t0, t1 };
+      // The tell: the colour of its star's two arms and its back point (half a cell out: clear of its face, its sheen and its twinkles), ready and resting.
+      const body = s => { const r = ring(s, 0.48, 360), c = [108, 180, 252].flatMap(d => [-3, 0, 3].map(k => r[d + k])); return Math.round(c.reduce((t, [R_, G, B]) => t + 0.299 * R_ + 0.587 * G + 0.114 * B, 0) / c.length); };
+      out.tell = { ready: body(ready), rest: body(rest) };
+      // Golden powers held: the gold line round its two front points.
+      rest.leaps = 2; drawN(10);
+      const gold = ring(rest, 0.875, 360);
+      out.gold = [-36, 36].map(d => [-2, -1, 0, 1, 2].some(k => honey(gold[(360 + d + k) % 360])));
+      R.setReducedMotion(false);
+      // A dead Star's beads: every other segment, round the rainbow from its head.
+      const g2 = stage(['star', 'ghost', 'mason']), st = g2.snakes[1];
+      setBody(st, Array.from({ length: 16 }, (_, i) => [20 - i, 10]), 'right');
+      show(g2); drawN(10);
+      st.alive = false; st.killer = 'wall'; st.body.forEach((c, j) => { if (j % TUNING.CORPSE_EVERY === 0) g2.food.push({ x: c.x, y: c.y, kind: 'pellet', color: st.color, owner: st.id, expires: g2.tick + 900 }); });
+      g2.tick++;
+      R.onTick([{ type: 'death', snake: st }]);
+      drawN(90);
+      out.beads = [0, 1, 2, 3, 4, 5, 6].map(n => hue(rgb(20 - n * TUNING.CORPSE_EVERY + 0.5, 10 + 0.55)));
+      SnakeDebug.pinQuality(2);
+      return out;
+    })()`);
+    const dh = (a, b) => Math.abs(((a - b + 540) % 360) - 180), POINTS = [36, 108, 180, 252, 324]; // (heading right, a point to the back)
+    check(stars.points.some(p => p.length === 5 && POINTS.every(d => p.some(m => dh(m, d) < 12))), 'Star’s head is a star: five points round it, one to the back',
+      `yellow runs ${stars.points.map((p, i) => `${[0.66, 0.7][i]} cells out at ${p.join(', ')}°`).join('; ')} (a round head reaches 0.54)`);
+    const same = stars.still.before.every((c, i) => c.every((v, j) => Math.abs(v - stars.still.after[i][j]) <= 2));
+    check(same, 'Star’s rainbow holds still with reduced motion', `segments 2, 3, 4, 7: ${JSON.stringify(stars.still.before)} then ${JSON.stringify(stars.still.after)}`);
+    const { t0, t1 } = stars.flow;
+    check(new Set(t0).size === 4 && t0.every((h, i) => dh(h, t1[i]) > 15) && dh(t1[1], t0[0]) < 14 && dh(t1[2], t0[1]) < 14,
+      'Star’s rainbow flows down its body from the head', `hues of segments 2, 3, 4, 7: ${t0.join(', ')}, a segment’s worth later ${t1.join(', ')}`);
+    check(stars.tell.ready > stars.tell.rest * 1.1, 'Star’s tell: lit while its flash is ready, dim while it rests', `its star’s brightness ${stars.tell.ready} ready, ${stars.tell.rest} resting`);
+    check(stars.gold.every(Boolean), 'holding golden powers, Star’s gold line runs round its points', `Honey just past its two front points: ${stars.gold.join(', ')}`);
+    const want = [0, 32, 55, 130, 205, 275, 0];
+    check(stars.beads.every((h, i) => dh(h, want[i]) < 22), 'a dead Star’s beads go round the rainbow from its head', `hues ${stars.beads.join(', ')} (red, orange, yellow, green, blue, violet, red: ${want.join(', ')})`);
     await b.viewport(800, 800);
     await b.sleep(400);
 
