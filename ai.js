@@ -248,9 +248,9 @@ window.SnakeAI = (() => {
     },
     star: {
       name: 'Star', color: '#eab308', look: 'star', // (a rainbow body behind a sunflower star; sunflower stands in for it in text)
-      blurb: 'A power addict. Jumps and flashes every chance it gets.',
-      kill: ['Star was there in a flash.', 'You never saw it coming. It was already past.', 'Too slow, sonny!'],
-      win: ['Still got it!', 'Never once sat still.', 'One more flash, for the road.'],
+      blurb: 'Jumps and flashes every chance it gets. Hoards anything golden.',
+      kill: ['Star was there in a flash.', 'Back in its day, that was just the warm-up.', 'Too slow, sonny!'],
+      win: ['Not bad for an old-timer.', 'Never once sat still.', 'One more flash, for the road.'],
       w: {
         space: 1, territory: 1.2, // (at 0.6 it won 23%, in every round of 800; at 1.2, 26.5%)
         food: 5, eat: 70, pellet: 1.2, foodRange: 40,
