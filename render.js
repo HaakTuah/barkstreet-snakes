@@ -8,10 +8,12 @@
 // Cost control, measured in Chrome's GPU process as well as in script: the
 // bark and holes live on a prerendered static layer (the next round's is
 // built ahead, while a card is up); food, meat, the woodpecker and the "+1"s
-// are cached sprites; particles come from a fixed pool; colours come from
-// cached ramps. Bodies are drawn as rectangles, then circles: separate fills
-// batch into one GPU operation, while one path of many contours is
-// triangulated every frame and strokes between circles break the batch. A
+// are cached sprites (and so is Star's head, its star and its mustache,
+// each turned as it's drawn); particles come from a fixed pool; colours come
+// from cached ramps (Star's rainbow too, and Copycat's copy of it). Bodies
+// are drawn as rectangles, then circles: separate fills batch into one GPU
+// operation, while one path of many contours is triangulated every frame
+// and strokes between circles break the batch. A
 // translucent shape made of overlapping pieces (the shadows, a land's colour
 // round a rival on it) is drawn opaque into an offscreen veil and laid on
 // once. Sovereign's and Colonist's land are cached layers, made again only
@@ -717,7 +719,7 @@ window.SnakeRender = (() => {
     g.beginPath(); g.arc(c * 0.22, -c * 0.06, c * 0.05, 0, TAU); g.fill();
   };
   // What's left of a snake: it falls to pieces, glossy beads in its own
-  // colours and markings (Wildcard's rainbow, Mason's bricks, Colonist's
+  // colours and markings (Star's rainbow, Mason's marble, Colonist's
   // strap, a friend's spots), so no two snakes leave the same remains. A light
   // rim and a dark edge keep every bead readable on the bark.
   // variant: 'fill|mark', mark one of '', marble, marble2 (a gold vein), strap, strap2, spots, rings, dots, copy, ghost.
@@ -1214,6 +1216,7 @@ window.SnakeRender = (() => {
         mx: 0, my: 0, mv: 0, mg: 0, ml: 0, mf: 0, mdx: 0, mdy: 0, pmx: 0, pmy: 0, pmv: 0, pmf: 0, pmdx: 0, pmdy: 0, streakTick: -1, streakX: 0, streakY: 0, pTick: -1, phx: -99, phy: -99, fixFar: false, rise: 0, swell: 0,
         fix: new Float32Array(64), fixOn: false, fixFast: false, tdx: s.dir.x, tdy: s.dir.y, bx: 0, by: 0, drawnAt: -1,
         jc: false, fc: false, flashFx: -1e9, // (your rests: cooling last frame; when your flash came back)
+        star: false, turn: 0, face: 0, hue: 0, hueAt: -1, glow: 1, brow: 1, flareAt: -1e9, shedAt: 0, // (Star: its head a star, turned so, its face upright; its rainbow (and Copycat's copy of it); its tell; its tail's twinkles)
       };
       anim.set(s, a);
     }
@@ -1236,10 +1239,15 @@ window.SnakeRender = (() => {
     if (s.personaKey === 'capricious' && s.memory.mood) return PERSONAS[s.memory.mood].color;
     if (s.personaKey === 'copycat' && game) {
       const model = findById(s.memory.modelId);
+      if (model && model.alive && lookOf(model) === 'star') return COPY_STAR; // (its body's a pale rainbow: see fillsOf)
       if (model && model.alive) return mix(model.personaKey === 'capricious' ? colorOf(model) : model.color, '#ffffff', 0.45);
     }
     return s.color;
   }
+  // Copycat copying Star, as one colour (its body is a pale copy of Star's
+  // rainbow): the rainbow's violet end, paled as its copy is. Not the tint of
+  // Star's stand-in colour in text, a pale gold that read as a power.
+  const COPY_STAR = '#d19df7'; // (paleRainbowOf(275)[0])
 
   // Mute is a mood ring: its colour follows how it feels, from what anyone
   // can see on the board. Stunned: dazed grey. Just made a kill: proud
@@ -1324,6 +1332,7 @@ window.SnakeRender = (() => {
       case 'creeper': return nearest(s, 'tail') || nearest(s, 'head');
       case 'mason': return nearest(s, 'head'); // keeping an eye on whoever's near the wall
       case 'ghost': case 'metagamer': case 'desperado': case 'joker': return nearest(s, 'head');
+      case 'star': return nearest(s, 'gold') || nearest(s, 'head'); // (it craves golden powers above everything)
       case 'wildcard': // looks wherever, changing its mind every second or two
         if (now > a.wanderAt) {
           a.wanderAt = now + 900 + Math.random() * 1600;
@@ -1341,14 +1350,15 @@ window.SnakeRender = (() => {
     return o && o.alive ? o.body[0] : null;
   }
 
-  // The nearest food (not mushrooms), rival head, or long rival's tail. Every
-  // snake's eyes follow something, so no face ever just stares ahead.
+  // The nearest food (not mushrooms), golden power (a golden beetle, a
+  // golden leaf or a golden mushroom), rival head, or long rival's tail.
+  // Every snake's eyes follow something, so no face ever just stares ahead.
   function nearest(s, what) {
     const h = s.body[0];
     let best = 1e9, out = null;
-    if (what === 'food') {
+    if (what === 'food' || what === 'gold') {
       for (const f of game.food) {
-        if (f.kind === 'mushroom') continue;
+        if (f.kind === 'mushroom' || (what === 'gold' && !(f.kind === 'leaf' || f.kind === 'goldcap' || (f.kind === 'beetle' && f.gold)))) continue;
         const d = (f.x - h.x) * (f.x - h.x) + (f.y - h.y) * (f.y - h.y);
         if (d > 0 && d < best) { best = d; out = f; }
       }
@@ -1418,6 +1428,51 @@ window.SnakeRender = (() => {
     }
     return ramp;
   }
+  // The rainbow (Star's trail; Wildcard's body once, then Mute's): 360 hues
+  // round the wheel at one lightness, as #rrggbb, so it fades toward the
+  // bark at the tail like any colour. rainbowOf(h)[p] is hue h faded p% of
+  // the way to the bark (p up to 30, the cast's fade), made the first time
+  // it's needed and kept (it's never more than 360 short ramps, and as many
+  // of Copycat's pale copy).
+  const HUE_RGB = new Uint8Array(3 * 360), rainbows = new Array(360);
+  for (let h = 0; h < 360; h++) { // (hsl(h, 85%, 62%), the old rainbow's)
+    const c = (1 - Math.abs(2 * 0.62 - 1)) * 0.85, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = 0.62 - c / 2, s = Math.floor(h / 60);
+    const r = s === 0 || s === 5 ? c : s === 1 || s === 4 ? x : 0, g = s === 1 || s === 2 ? c : s === 0 || s === 3 ? x : 0, b = s === 3 || s === 4 ? c : s === 2 || s === 5 ? x : 0;
+    HUE_RGB[3 * h] = Math.round((r + m) * 255); HUE_RGB[3 * h + 1] = Math.round((g + m) * 255); HUE_RGB[3 * h + 2] = Math.round((b + m) * 255);
+  }
+  const RAINBOW_FADE = 30;
+  const rainbowOf = h => rainbows[h] || (rainbows[h] = bowRamp(h, 0));
+  // Copycat's copy of it (while it copies Star): each hue mixed as far
+  // toward white as its tint of anyone else (0.45), so it reads as a copy
+  // of Star's rainbow; never one pale gold all over, as the tint of Star's
+  // stand-in colour in text was (that read as a power, and hid its gold line).
+  const paleRainbows = new Array(360);
+  const paleRainbowOf = h => paleRainbows[h] || (paleRainbows[h] = bowRamp(h, 0.45));
+  function bowRamp(h, pale) {
+    const ramp = new Array(RAINBOW_FADE + 1), bark = parseInt(BARK.slice(1), 16);
+    for (let p = 0; p <= RAINBOW_FADE; p++) {
+      const ch = (j, sh) => Math.round((HUE_RGB[3 * h + j] * (1 - pale) + 255 * pale) * (1 - p / 100) + ((bark >> sh) & 255) * p / 100);
+      ramp[p] = '#' + ((1 << 24) | (ch(0, 16) << 16) | (ch(1, 8) << 8) | ch(2, 0)).toString(16).slice(1);
+    }
+    return ramp;
+  }
+  // The rainbow a snake wears, if any (its ramps, by hue): Star's own, or
+  // Copycat's pale copy while its model is Star; null for anyone else.
+  function bowOf(s) {
+    if (lookOf(s) === 'star') return rainbowOf;
+    if (s.personaKey === 'copycat' && game) {
+      const m = findById(s.memory.modelId);
+      if (m && m.alive && lookOf(m) === 'star') return paleRainbowOf;
+    }
+    return null;
+  }
+  // Where its rainbow's hue is at its head: flowing on (a degree every 15 ms,
+  // held at 0 with reduced motion), or once it's out, where it stopped.
+  function bowHue(s, a, now) {
+    if (!s.alive) { if (a.hueAt < 0) a.hueAt = a.hue; return a.hueAt; }
+    a.hueAt = -1;
+    return a.hue = reduced ? 0 : Math.floor(now / 15) % 360;
+  }
   const lumas = new Map();
   function lumaOf(c) {
     let l = lumas.get(c);
@@ -1456,6 +1511,13 @@ window.SnakeRender = (() => {
       for (let i = 0; i < n; i++) fills[i] = i === 0 ? '#f8fafc' : i % 2 ? '#f59e0b' : '#a21caf';
       return;
     }
+    const bow = bowOf(s);
+    if (bow) { // a rainbow trailing a sunflower star (its head is drawn apart: see drawStarHead), flowing down from the head (held still with reduced motion; out, it stops where it was), fading toward the bark at the tail; or Copycat's pale copy of it, head and all
+      const h0 = bowHue(s, a, now);
+      for (let i = 0; i < n; i++) fills[i] = bow((h0 + 360 - (i * RAINBOW_STEP) % 360) % 360)[n > 1 ? Math.round(RAINBOW_FADE * i / (n - 1)) : 0];
+      if (look === 'star') fills[0] = STAR_SUN;
+      return;
+    }
     const ramp = rampOf(color);
     let stripe = null;
     if (look === 'sniper') {
@@ -1483,6 +1545,7 @@ window.SnakeRender = (() => {
     const a = animOf(s, now);
     const n = s.body.length;
     a.look = lookOf(s);
+    a.star = a.look === 'star'; // (a star for a head, not a circle: its shadow and outlines follow its points)
     if (s.personaKey === 'mute' && !dead) updateMute(s, now);
     a.color = colorOf(s);
     a.isPlayer = !s.persona;
@@ -1561,6 +1624,14 @@ window.SnakeRender = (() => {
     if (k2 > 0 && a.mf) { a.tdx = a.mdx; a.tdy = a.mdy; }
     else if (k2 > 0) { let dx = a.mx - s.body[0].x, dy = a.my - s.body[0].y; if (dx > 1) dx = -1; else if (dx < -1) dx = 1; if (dy > 1) dy = -1; else if (dy < -1) dy = 1; a.tdx = dx; a.tdy = dy; }
     else { a.tdx = s.dir.x; a.tdy = s.dir.y; }
+    // The way its face is turned (see steer), settled once a frame, before
+    // its shadow and outlines (a star's are its points), and stunned, its
+    // wobble. (Out, it stays as it was: a corpse never drawn alive takes the
+    // way it went.)
+    if (!dead || a.hc === undefined) steer(s, a, now);
+    const wobble = !dead && game && s.stunUntil >= game.tick && !reduced ? Math.sin(now / 45) * 0.16 : 0;
+    a.turn = Math.atan2(a.hs, a.hc) + wobble;
+    if (a.star) a.face = starFace(a) + wobble; // (a star's points turn with it; its face stays upright: see starFace)
     // A held corpse presses its head a little into whatever it hit.
     if (impact) { pts[0] += s.dir.x * CELL * impact; pts[1] += s.dir.y * CELL * impact; }
     // Leaping: the head rises over what it's hopping as it takes off, and
@@ -1916,7 +1987,8 @@ window.SnakeRender = (() => {
     for (let i = n - 1; i >= 0; i--) {
       if (reach && far(p, i, cx, cy, reach) && (i === n - 1 || far(p, i + 1, cx, cy, reach))) continue;
       if (i < n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * PINCH + grow);
-      circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
+      if (i === 0 && a.star) { ctx.beginPath(); starPath(a, grow); ctx.fill(); }
+      else circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
     }
   }
   const far = (p, i, cx, cy, reach) => (p[2 * i] - cx) * (p[2 * i] - cx) + (p[2 * i + 1] - cy) * (p[2 * i + 1] - cy) > reach * reach;
@@ -1940,6 +2012,7 @@ window.SnakeRender = (() => {
     }
     for (let i = i1; i >= i0; i--) {
       if (i < i1 && bends(a, i)) { const r = a.rad[i + 1] * PINCH + grow; ctx.moveTo(a.cor[2 * i] + r, a.cor[2 * i + 1]); ctx.arc(a.cor[2 * i], a.cor[2 * i + 1], r, 0, TAU); }
+      if (i === 0 && a.star) { starPath(a, grow); continue; }
       const r = a.rad[i] + grow;
       ctx.moveTo(p[2 * i] + r, p[2 * i + 1]);
       ctx.arc(p[2 * i], p[2 * i + 1], r, 0, TAU);
@@ -2183,6 +2256,7 @@ window.SnakeRender = (() => {
     for (let i = n - 2; i >= 0; i--) { ctx.fillStyle = fills[i + 1]; band(a, i, rad[i + 1] * PINCH); }
     for (let i = n - 1; i >= 0; i--) {
       if (i < n - 1 && bends(a, i)) { ctx.fillStyle = fills[i + 1]; circle(a.cor[2 * i], a.cor[2 * i + 1], rad[i + 1] * PINCH); }
+      if (i === 0 && a.star) break; // (a star's head is drawn with its face)
       ctx.fillStyle = fills[i];
       circle(pts[2 * i], pts[2 * i + 1], rad[i]);
     }
@@ -2192,7 +2266,7 @@ window.SnakeRender = (() => {
     // before it for a moment: that one's lit once).
     ctx.fillStyle = 'rgba(255,255,255,0.18)';
     let lx = -1e9, ly = -1e9, lr = 0;
-    for (let i = 0; i < n; i++) {
+    for (let i = a.star ? 1 : 0; i < n; i++) {
       const hr = rad[i] * 0.35, hx = pts[2 * i] - rad[i] * 0.3, hy = pts[2 * i + 1] - rad[i] * 0.35;
       if (Math.abs(hx - lx) + Math.abs(hy - ly) < hr + lr) continue;
       circle(hx, hy, hr);
@@ -2282,6 +2356,7 @@ window.SnakeRender = (() => {
       ctx.setLineDash(NO_DASH);
       ctx.lineDashOffset = 0;
     }
+    if (a.star && !dead) shedTwinkle(s, a, now);
 
     // Head features, drawn in a frame where +x points the way the snake faces.
     const blinking = dead || now < a.blinkUntil;
@@ -2289,17 +2364,19 @@ window.SnakeRender = (() => {
       a.blinkUntil = now + T.BLINK_MS;
       a.nextBlink = now + T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN);
     }
-    if (!dead) { updateGaze(s, look, a, now); steer(s, a, now); }
+    if (!dead) updateGaze(s, look, a, now); // (it's turned in prepare: see steer)
     const dizzy = !dead && s.stunUntil >= game.tick; // (stunned: its head wobbles, and stars go round it, until the tick it moves again)
     const q = dead ? null : queuedOf(s, a), lean = dead ? 0 : leanOf(s, a, q);
-    if (lean) { const h = Math.atan2(a.hs, a.hc) + lean; headCos = Math.cos(h); headSin = Math.sin(h); }
+    if (a.star) { const h = starFace(a) + lean; headCos = Math.cos(h); headSin = Math.sin(h); } // (a star's face is upright, whichever way it heads)
+    else if (lean) { const h = Math.atan2(a.hs, a.hc) + lean; headCos = Math.cos(h); headSin = Math.sin(h); }
     else { headCos = a.hc; headSin = a.hs; }
     gazeX = a.gx * headCos + a.gy * headSin; // the gaze, turned into the face's frame
     gazeY = -a.gx * headSin + a.gy * headCos;
     deadNow = dead;
+    if (a.star) drawStarHead(s, a, now, dead); // (its head: a star, its points turned with its heading, its mustache upright with its face)
     ctx.save();
     ctx.translate(pts[0], pts[1]);
-    ctx.rotate(Math.atan2(a.hs, a.hc) + lean + (dizzy && !reduced ? Math.sin(now / 45) * 0.16 : 0));
+    ctx.rotate((a.star ? a.face : a.turn) + lean); // (and stunned, its wobble: see prepare)
     const faceScale = 1.1 * (1 + a.bump) * (1 + a.swell);
     ctx.scale(faceScale, faceScale);
     if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
@@ -2320,7 +2397,7 @@ window.SnakeRender = (() => {
     // the board, so none is cut off and none lands on the head (on a phone
     // the tag hides the counts: the pips are them).
     const leaps = dead ? 0 : s.leaps, dashes = dead ? 0 : s.dashes;
-    if (leaps || dashes) drawPips(pts[0], pts[1], Math.atan2(a.hs, a.hc) + Math.PI, rad[0], a.swell, leaps, dashes, !a.offs); // (not across a wrapped edge: there it shows at the other)
+    if (leaps || dashes) drawPips(pts[0], pts[1], Math.atan2(a.hs, a.hc) + Math.PI, a.star ? rad[0] * STAR_TIP : rad[0], a.swell, leaps, dashes, !a.offs); // (not across a wrapped edge: there it shows at the other)
     if (!dead && s.id === viewerId && game) drawRests(s, a, now);
     if (dizzy) { // three stars going round, cream and inked (gold by a head means a power), clear of its pips and the edge: see starsOff
       const t = reduced ? 0 : now / 240, cy = pts[1] + starsOff(s);
@@ -2369,7 +2446,7 @@ window.SnakeRender = (() => {
   let PIP_R = 0, PIP_MOVED = false, PIP_SX = 0, PIP_SY = 0;
   const PIP_SWING = 0.05; // (radians a step, swinging round)
   function placePips(x, y, back, hr, swell, leaps, dashes, keepOn) {
-    const n = leaps + dashes, many = n > 2, rr = (many ? CELL : hr + CELL * 0.2) * (1 + swell * 0.5);
+    const n = leaps + dashes, many = n > 2, rr = (many ? Math.max(CELL, hr + CELL * 0.2) : hr + CELL * 0.2) * (1 + swell * 0.5);
     const step = many ? 0.44 : 0.78, gap = leaps && dashes ? (many ? 0.35 : 0.6) : 0, mid = (n - 1 + gap) / 2;
     const pr = PIP_R = CELL * (many ? 0.12 : 0.14), edge = (pr + PIP_RING) * 1.5 + 1; // (as far as one reaches from its centre, and a unit to spare)
     if (PIPS.length < 3 * n) PIPS = new Float64Array(3 * n);
@@ -2487,10 +2564,11 @@ window.SnakeRender = (() => {
   // clear of them: see onTick.)
   const STAR_REACH = CELL * 0.42; // (how far the stars reach up and down from their centre)
   function starsOff(s) {
-    const pips = s.leaps + s.dashes, h = s.body[0], hx = h.x * CELL + CELL / 2, hy = h.y * CELL + CELL / 2;
+    const pips = s.leaps + s.dashes, h = s.body[0], hx = h.x * CELL + CELL / 2, hy = h.y * CELL + CELL / 2, star = !!anim.get(s)?.star;
+    const more = star ? CELL * 0.26 : 0, nigh = CELL * 0.72 + more; // (a star's points reach further than a round head: its stars go round further out)
     let up = 0, down = 0, moved = false;
     if (pips) { // (where its pips are, its head in its cell)
-      const n = placePips(hx, hy, Math.atan2(-s.dir.y, -s.dir.x), CELL * 0.54, 0, s.leaps, s.dashes, !anim.get(s)?.offs), reach = (PIP_R + PIP_RING) * 1.5;
+      const n = placePips(hx, hy, Math.atan2(-s.dir.y, -s.dir.x), CELL * 0.54 * (star ? STAR_TIP : 1), 0, s.leaps, s.dashes, !anim.get(s)?.offs), reach = (PIP_R + PIP_RING) * 1.5;
       moved = PIP_MOVED;
       for (let i = 0; i < n; i++) { up = Math.max(up, hy - PIPS[3 * i + 1] + reach); down = Math.max(down, PIPS[3 * i + 1] - hy + reach); }
     }
@@ -2499,17 +2577,17 @@ window.SnakeRender = (() => {
       let behind, off;
       if (moved) { // (clear of them)
         const clear = (sgn < 0 ? up : down) + STAR_REACH;
-        behind = clear > CELL * 0.72; // (its pips are on this side)
-        off = sgn * Math.max(CELL * 0.72, clear);
+        behind = clear > nigh; // (its pips are on this side)
+        off = sgn * Math.max(nigh, clear);
       } else {
         behind = pips && s.dir.y === -sgn;
-        off = sgn * CELL * (behind ? (pips > 2 ? 1.78 : 1.44) : pips && !s.dir.y ? (pips > 4 ? 1.5 : pips > 3 ? 1.3 : 1.02) : 0.72); // (higher when pips show beside its head, higher still for both kinds' wider arc; further past three, which sit further back)
+        off = sgn * (CELL * (behind ? (pips > 2 ? 1.78 : 1.44) : pips && !s.dir.y ? (pips > 4 ? 1.5 : pips > 3 ? 1.3 : 1.02) : 0.72) + more); // (higher when pips show beside its head, higher still for both kinds' wider arc; further past three, which sit further back)
       }
       if (hy + off < STAR_REACH || hy + off > SIZE - STAR_REACH) continue;
       if (!behind) return off;
       past ||= off;
     }
-    return past || -CELL * 0.72;
+    return past || -nigh;
   }
 
   // A turn you've pressed (q) that the drawing doesn't show yet: the head
@@ -2708,6 +2786,220 @@ window.SnakeRender = (() => {
     ctx.lineTo(x2 + dy * w2, y2 - dx * w2); ctx.lineTo(x1 + dy * w1, y1 - dx * w1); ctx.closePath();
   }
 
+  // Star: a five-pointed star for a head, sunflower yellow deeper than Honey
+  // (gold means a power: the gold line round a body is the power, a yellow
+  // on a face is a look), with an orange rim and an ink outline, and the old
+  // rainbow trailing it (see fillsOf). The star is a sharp one (its points
+  // STAR_OUT and its valleys STAR_IN times the head's radius, a point to the
+  // back: STAR_TURN) grown round by STAR_ROUND, so its points are softly
+  // rounded, and any outline grown round it (its shadow, a gold line) is
+  // the same star grown further. Its points turn with its heading (see
+  // prepare); its face stays upright (see starFace).
+  const STAR_OUT = 1.3, STAR_IN = 0.68, STAR_ROUND = 0.25, STAR_TURN = Math.PI;
+  const STAR_A = Math.atan2(STAR_OUT - STAR_IN * Math.cos(Math.PI / 5), STAR_IN * Math.sin(Math.PI / 5)); // (how far round from a point's middle its rounding runs, either way)
+  const STAR_MITRE = 1 / Math.cos(STAR_A - Math.PI / 5); // (how far a valley moves out, a unit of growing)
+  const STAR_TIP = STAR_OUT + STAR_ROUND; // (how far its points reach, in head radii)
+  const STAR_INK = 1.3, STAR_RIM = 2; // (its ink outline and its orange rim, in units, inside its edge)
+  // Its colours: sunflower, rimmed in orange; and dim (a point of it while
+  // its flash rests: see its tell), a muted mustard rimmed in brown.
+  const STAR_SUN = '#f9c22e', STAR_SUN_RIM = '#e8890c', STAR_DIM = '#b0893a', STAR_DIM_RIM = '#8a5c24';
+  const RAINBOW_STEP = 28; // (degrees of hue from one segment to the next)
+  // As the engine's flashIn sees it (golden flashes go anyway), on the clock as drawn.
+  const flashReady = s => s.dashes > 0 || (!(T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH) && shownTime >= s.flashReadyAt);
+  // How far through its flash's rest it is, on the clock as drawn: 0 as it
+  // flashes, 1 once the flash is back (holding golden flashes, 1).
+  const restOf = s => s.dashes > 0 ? 1 : Math.max(0, Math.min(1, 1 - (s.flashReadyAt - shownTime) / T.FLASH_COOLDOWN_MS));
+  // Its face is upright whichever way it heads, as in the owner's picture
+  // (brows, eyes, then the big mustache: heading up, turned with its
+  // heading, the mustache sat over its eyes and read as huge angry brows),
+  // its chin tipped STAR_LEAN the way it's heading across the screen. That
+  // keeps the mustache over its two lower points heading down, left or
+  // right; heading up, its back point is straight down, under its chin. The
+  // angle its face's +x (its chin) is drawn at.
+  const STAR_LEAN = Math.PI / 10;
+  const starFace = a => Math.PI / 2 - STAR_LEAN * a.hc;
+  // The star round a's head, `grow` units bigger all round (smaller, if
+  // it's negative), added to the current path, wound the way rect() and
+  // arc() wind (so it never cancels a silhouette's other pieces out).
+  function starPath(a, grow) { starTrace(ctx, a.pts[0], a.pts[1], a.turn + STAR_TURN, a.rad[0], grow); }
+  // (The same on g: a star round (x, y), its first point at angle t0, for a head of radius r.)
+  function starTrace(g, x, y, t0, r, grow) {
+    const rho = Math.max(0, STAR_ROUND * r + grow), dip = STAR_IN * r + rho * STAR_MITRE;
+    for (let j = 0; j < 5; j++) {
+      const t = t0 + j * TAU / 5, ox = x + Math.cos(t) * STAR_OUT * r, oy = y + Math.sin(t) * STAR_OUT * r, v = t + Math.PI / 5;
+      if (!j) g.moveTo(ox + Math.cos(t - STAR_A) * rho, oy + Math.sin(t - STAR_A) * rho);
+      g.arc(ox, oy, rho, t - STAR_A, t + STAR_A);
+      g.lineTo(x + Math.cos(v) * dip, y + Math.sin(v) * dip);
+    }
+    g.closePath();
+  }
+  // Its tell: a countdown on its five points. Its middle is always its
+  // sunflower. As it flashes, its points go dim (in a moment, and its
+  // twinkles burst off them: see onTick's dash), and they light again one
+  // by one as its rest runs down, a point for each fifth of it (1.2 s),
+  // going round from its back point, each lighting over the last STAR_FADE
+  // of its step; the fifth lights as the flash is back, and while it's
+  // ready two twinkles go round its points. (Lit only while its flash was
+  // ready, it was dim nearly all the time: it flashes the moment it can, so
+  // lit lasted a tick, a blink with reduced motion.) Holding golden flashes,
+  // all five are lit. With reduced motion a point lights at once. Its brows
+  // knit as it flashes, and relax through the first part of its rest (see
+  // its face).
+  const STAR_FADE = 0.2;
+  // Its head: the star (a sprite for each count of its points lit, heading
+  // right, turned and scaled as it's drawn, the point that's lighting drawn
+  // over it fading in), its mustache (a sprite of its own, upright with its
+  // face: as paths, the star and its mustache cost the GPU about half a
+  // millisecond a frame), its sheen, and its twinkles. Out, its points are dim.
+  function drawStarHead(s, a, now, dead) {
+    const lit = !dead && !!game && flashReady(s), rest = !dead && game ? restOf(s) : 0;
+    a.glow = reduced || rest >= a.glow ? rest : a.glow + (rest - a.glow) * (1 - Math.exp(-frameDt / 90)); // (filling with the clock; spent, its points go out in a moment)
+    const knit = Math.max(0, Math.min(1, (a.glow - 0.15) / 0.3));
+    a.brow = reduced ? +(a.glow >= 0.3) : knit * knit * (3 - 2 * knit);
+    const fill = a.glow * 5, n = Math.min(5, Math.floor(fill + 1e-9)), part = reduced || n === 5 ? 0 : Math.min(1, (fill - n - 1) / STAR_FADE + 1);
+    const x = a.pts[0], y = a.pts[1], r = a.rad[0], sc = r / STAR_R;
+    blitAbout(starHeadSprite(n), x, y, 0, 0, sc, sc, a.turn);
+    if (part > 0.02) {
+      const was = ctx.globalAlpha;
+      ctx.globalAlpha = was * part;
+      blitAbout(starPointSprite(n), x, y, 0, 0, sc, sc, a.turn);
+      ctx.globalAlpha = was;
+    }
+    blitAbout(stacheSprite(), x, y, 0, 0, sc, sc, a.face);
+    ctx.fillStyle = 'rgba(255,255,255,0.22)'; // (its sheen, as every segment's: light from the top left, whichever way it's turned)
+    circle(x - r * 0.3, y - r * 0.36, r * 0.34);
+    const flare = reduced ? 1 : (now - a.flareAt) / 450;
+    if (!lit && !(flare < 1)) return;
+    for (let j = 0; j < 5; j++) {
+      let size;
+      if (flare >= 0 && flare < 1 && !reduced) size = 1.7 * (1 - flare) + 0.3 * flare; // (all five, going out)
+      else if (!lit) continue;
+      else if (reduced) size = j === 0 || j === 2 ? 0.9 : 0; // (two, held still)
+      else { // (two at a time, going round, each swelling and going)
+        const beat = now / 420, on = Math.floor(beat) % 5, p = beat - Math.floor(beat);
+        size = j === on || j === (on + 2) % 5 ? Math.sin(p * Math.PI) : 0;
+      }
+      if (size <= 0.05) continue;
+      const t = a.turn + STAR_TURN + j * TAU / 5, d = STAR_OUT * r, w = SPRITE * CELL * r * 0.36 * size / GLINT_R;
+      ctx.drawImage(glintSprite(), x + Math.cos(t) * d - w / 2, y + Math.sin(t) * d - w / 2, w, w);
+    }
+  }
+  const STAR_R = CELL * 0.54; // (its head's radius, unswollen: its sprites')
+  const starHeadSprite = n => sprite('starhead', n, drawStarHeadSprite);
+  const starPointSprite = j => sprite('starpoint', j, drawStarPointSprite);
+  const stacheSprite = () => sprite('stache', '', drawStacheSprite);
+  // The star, inked, dim, then lit in its middle and its first n points.
+  const drawStarHeadSprite = (g, n) => {
+    g.fillStyle = INK;
+    g.beginPath(); starTrace(g, 0, 0, STAR_TURN, STAR_R, 0); g.fill();
+    starFill(g, STAR_DIM_RIM, STAR_DIM);
+    g.beginPath();
+    starMiddle(g);
+    for (let j = 0; j < n; j++) starPoint(g, j);
+    g.clip();
+    starFill(g, STAR_SUN_RIM, STAR_SUN);
+  };
+  // (Its point j alone, lit: drawn over the star where it's dim, as it lights.)
+  const drawStarPointSprite = (g, j) => {
+    g.beginPath(); starPoint(g, j); g.clip();
+    starFill(g, STAR_SUN_RIM, STAR_SUN);
+  };
+  const drawStacheSprite = g => { g.scale(1.1, 1.1); mustache(g); }; // (at its face's scale: see drawBody)
+  // Its rim and its body, in these colours, inside its ink.
+  function starFill(g, rim, body) {
+    g.fillStyle = rim;
+    g.beginPath(); starTrace(g, 0, 0, STAR_TURN, STAR_R, -STAR_INK); g.fill();
+    g.fillStyle = body;
+    g.beginPath(); starTrace(g, 0, 0, STAR_TURN, STAR_R, -STAR_INK - STAR_RIM); g.fill();
+  }
+  // Its middle (the pentagon through its valleys) and its point j (the
+  // star beyond the pentagon's side under it), added to g's path, to clip to.
+  const STAR_DIP = (STAR_IN + STAR_ROUND * STAR_MITRE) * STAR_R; // (a valley, at its ink's edge)
+  function starMiddle(g) {
+    for (let j = 0; j < 5; j++) {
+      const v = STAR_TURN + (j + 0.5) * TAU / 5;
+      if (j) g.lineTo(Math.cos(v) * STAR_DIP, Math.sin(v) * STAR_DIP);
+      else g.moveTo(Math.cos(v) * STAR_DIP, Math.sin(v) * STAR_DIP);
+    }
+    g.closePath();
+  }
+  function starPoint(g, j) {
+    const t = STAR_TURN + j * TAU / 5, v0 = t - Math.PI / 5, v1 = t + Math.PI / 5;
+    g.moveTo(Math.cos(v0) * STAR_DIP, Math.sin(v0) * STAR_DIP);
+    g.lineTo(Math.cos(t) * CELL * 2, Math.sin(t) * CELL * 2); // (well past its tip)
+    g.lineTo(Math.cos(v1) * STAR_DIP, Math.sin(v1) * STAR_DIP);
+    g.closePath();
+  }
+  // Its mustache, in the face's frame (+x its chin, a cell CELL): two big
+  // drooping halves from under its eyes, out over its two lower points,
+  // scalloped along their ends; inked, so white reads on sunflower, with a
+  // few strands.
+  function mustache(g) {
+    const c = CELL;
+    g.beginPath();
+    for (const sg of SIDES2) {
+      g.moveTo(c * 0.07, 0);
+      g.bezierCurveTo(c * 0.03, sg * c * 0.16, c * 0.1, sg * c * 0.32, c * 0.26, sg * c * 0.38);
+      g.quadraticCurveTo(c * 0.38, sg * c * 0.42, c * 0.43, sg * c * 0.31);
+      g.quadraticCurveTo(c * 0.35, sg * c * 0.3, c * 0.35, sg * c * 0.22);
+      g.quadraticCurveTo(c * 0.27, sg * c * 0.2, c * 0.29, sg * c * 0.12);
+      g.quadraticCurveTo(c * 0.22, sg * c * 0.08, c * 0.25, 0);
+      g.closePath();
+    }
+    g.fillStyle = '#fffdf6';
+    g.fill();
+    g.strokeStyle = INK;
+    g.lineWidth = c * 0.035;
+    g.lineJoin = 'round';
+    g.stroke();
+    g.strokeStyle = 'rgba(58,38,20,0.3)';
+    g.lineWidth = c * 0.02;
+    g.lineCap = 'round';
+    g.beginPath();
+    for (const sg of SIDES2) {
+      g.moveTo(c * 0.12, sg * c * 0.1); g.quadraticCurveTo(c * 0.16, sg * c * 0.24, c * 0.3, sg * c * 0.3);
+      g.moveTo(c * 0.17, sg * c * 0.05); g.quadraticCurveTo(c * 0.21, sg * c * 0.14, c * 0.27, sg * c * 0.18);
+    }
+    g.stroke();
+  }
+  // A four-point twinkle, white and finely inked, as a sprite (its tips
+  // GLINT_R from its middle).
+  const GLINT_R = CELL * 0.9;
+  const glintSprite = () => sprite('glint', '', g => { sparkle(g, 0, 0, GLINT_R); g.fillStyle = '#ffffff'; g.fill(); g.strokeStyle = 'rgba(58,38,20,0.6)'; g.lineWidth = CELL * 0.12; g.lineJoin = 'round'; g.stroke(); });
+  // A four-point twinkle at (x, y), r to its tips, as g's current path (its
+  // sides curving in).
+  function sparkle(g, x, y, r) {
+    const w = r * 0.14;
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.quadraticCurveTo(x + w, y + w, x, y + r);
+    g.quadraticCurveTo(x - w, y + w, x - r, y);
+    g.quadraticCurveTo(x - w, y - w, x, y - r);
+    g.quadraticCurveTo(x + w, y - w, x + r, y);
+    g.closePath();
+  }
+  // Now and then its tail sheds a small twinkle, in one of the rainbow's
+  // colours, drifting off behind it (lively only; no glow: only you glow).
+  const TWINKLE = 5, TWINKLE_HUES = [0, 32, 55, 130, 205, 275]; // (its mote kinds, a colour each: see drawMotes)
+  function shedTwinkle(s, a, now) {
+    if (reduced || now < a.shedAt || a.n < 2) return;
+    a.shedAt = now + 280 + Math.random() * 420;
+    const n = a.n, x = a.pts[2 * n - 2], y = a.pts[2 * n - 1], dx = x - a.pts[2 * n - 4], dy = y - a.pts[2 * n - 3], l = Math.hypot(dx, dy) || 1;
+    const sp = 8 + Math.random() * 10, side = (Math.random() - 0.5) * 14;
+    mote(x + dx / l * a.rad[n - 1] * 0.6, y + dy / l * a.rad[n - 1] * 0.6, dx / l * sp - dy / l * side, dy / l * sp + dx / l * side - 4, 700 + Math.random() * 400, 0.42 + Math.random() * 0.25, TWINKLE + Math.floor(Math.random() * TWINKLE_HUES.length));
+  }
+  const twinkleSprite = i => sprite('twinkle', i, drawTwinkle);
+  const drawTwinkle = (g, i) => {
+    const c = CELL, h = TWINKLE_HUES[i], hue = rainbowOf(h)[0];
+    const path = (r, w) => { g.beginPath(); g.moveTo(r, 0); g.quadraticCurveTo(w, w, 0, r); g.quadraticCurveTo(-w, w, -r, 0); g.quadraticCurveTo(-w, -w, 0, -r); g.quadraticCurveTo(w, -w, r, 0); g.closePath(); };
+    g.lineJoin = 'round';
+    path(c * 0.3, c * 0.05);
+    g.fillStyle = hue; g.fill();
+    g.strokeStyle = 'rgba(58,38,20,0.55)'; g.lineWidth = c * 0.03; g.stroke();
+    path(c * 0.13, c * 0.025);
+    g.fillStyle = '#fffbea'; g.fill();
+  };
+
   // The living snakes, in passes, so no snake's shadow falls on another's body.
   const live = [];
   // (a snake leaping, or still arched over another one, goes on top)
@@ -2891,6 +3183,7 @@ window.SnakeRender = (() => {
     sniper: [1.2, 1.5, laser], sovereign: [1.6, 2.4, carpet], colonist: [1.4, 2.2, telescope], vulture: [1.6, 3, bone],
     mason: [1.4, 2.4, papyrus], metagamer: [1.4, 2, keyboard], wildcard: [1.2, 2, bill], desperado: [1.1, 2, revolver],
     joker: [1, 2.4, blower], copycat: [1.2, 1.4, blep], mute: [1.1, 2, innerJaw], ouroboros: [1.6, 1.6, fangs],
+    star: [0.9, 1.8, flickStar],
   };
   let flickP = -1, flickT = 0; // the flick being drawn: how far through it is (or -1), and how far out (0..1..0)
 
@@ -3341,6 +3634,45 @@ window.SnakeRender = (() => {
     ctx.stroke();
   }
 
+  // Star: a tiny star flicked out on a puff of rainbow (a ribbon of its
+  // colours, arching from its mouth), spinning, a glint on it at full
+  // stretch, then back. Drawn big from the mouth, and inked, so it reads at
+  // phone size.
+  function flickStar(t, p) {
+    const c = CELL, e = stayOut(t, 1.8), x0 = c * 0.38, x1 = x0 + c * 0.6 * e, bands = TWINKLE_HUES.length, w = c * 0.032;
+    ctx.translate(x0, 0);
+    ctx.scale(1.35, 1.35);
+    ctx.translate(-x0, 0);
+    if (e > 0.05) {
+      const lift = -c * 0.16 * e + (reduced ? 0 : Math.sin(p * 20) * c * 0.03), mx = (x0 + x1) / 2;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x0, 0); ctx.quadraticCurveTo(mx, lift, x1, 0);
+      ctx.strokeStyle = INK; ctx.lineWidth = bands * w + c * 0.05; ctx.stroke();
+      for (let j = 0; j < bands; j++) {
+        const dy = (j - (bands - 1) / 2) * w;
+        ctx.beginPath(); ctx.moveTo(x0, dy * 0.5); ctx.quadraticCurveTo(mx, lift + dy, x1, dy * 0.7);
+        ctx.strokeStyle = rainbowOf(TWINKLE_HUES[j])[0]; ctx.lineWidth = w + 0.6; ctx.stroke();
+      }
+    }
+    const rr = c * 0.17 * Math.min(1, e * 2) * (reduced ? 1 : 1 + 0.12 * Math.sin(p * 44)); // (the star, twinkling)
+    if (rr < 0.5) return;
+    ctx.save();
+    ctx.translate(x1, 0);
+    ctx.rotate(reduced ? 0 : p * TAU);
+    ctx.fillStyle = STAR_SUN;
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = c * 0.04;
+    ctx.lineJoin = 'round';
+    star(0, 0, rr);
+    ctx.stroke();
+    ctx.restore();
+    if (t > 0.6) { // (a glint on it at full stretch)
+      ctx.fillStyle = '#ffffff';
+      sparkle(ctx, x1 + rr * 0.55, -rr * 0.6, rr * 1.2 * (t - 0.6) / 0.4);
+      ctx.fill();
+    }
+  }
+
   // Your face: white eyes whose pupils glance toward the nearest food, a
   // mouth that opens for a bite, a blink now and then, and a forked tongue flick.
 
@@ -3667,9 +3999,9 @@ window.SnakeRender = (() => {
         ctx.stroke();
         break;
       }
-      case 'copycat': { // cat ears, cat eyes, whiskers, and a party pin
-        poly(EAR, -1, color);
-        poly(EAR, 1, color);
+      case 'copycat': { // cat ears (its head's colour: copying Star, a hue of its pale rainbow), cat eyes, whiskers, and a party pin
+        poly(EAR, -1, a.fills[0]);
+        poly(EAR, 1, a.fills[0]);
         poly(EAR_IN, -1, '#f9a8d4');
         poly(EAR_IN, 1, '#f9a8d4');
         mouth(open * 0.7, 0.4);
@@ -3827,6 +4159,31 @@ window.SnakeRender = (() => {
         ctx.moveTo(c * 0.03, c * 0.11);
         ctx.quadraticCurveTo(-c * 0.09, c * 0.2, c * 0.02, c * 0.31);
         ctx.stroke();
+        break;
+      }
+      case 'star': { // a star's face (the star itself and its huge white walrus mustache: see drawStarHead): tall oval eyes, bushy white brows
+        mouth(open, 0.36); // (under the mustache)
+        // Tall oval eyes, glancing at what it's after, a catchlight in each.
+        if (blinking) lids(0.08, -0.01, 0.105);
+        else {
+          const ox = gazeX * c * 0.035, oy = gazeY * c * 0.03;
+          ctx.fillStyle = INK;
+          for (const sg of SIDES2) { ctx.beginPath(); ctx.ellipse(-c * 0.02 + ox, sg * c * 0.105 + oy, c * 0.135, c * 0.072, 0, 0, TAU); ctx.fill(); }
+          catchlights(-c * 0.05 + ox, c * 0.105, oy, c * 0.1);
+        }
+        // Bushy white brows, a puffy tuft over each eye: knitted (grumpy) as
+        // it flashes, raised again through the first part of its rest (see
+        // drawStarHead). (Each puff a circle of its own: the GPU's quickest shape.)
+        if (!deadNow) {
+          const up = a.brow, inner = -0.12 - 0.09 * up, outer = -0.25 + 0.06 * up;
+          for (let pass = 0; pass < 2; pass++) {
+            ctx.fillStyle = pass ? '#fffdf6' : INK;
+            for (const sg of SIDES2) for (let j = 0; j < 3; j++) {
+              const u = j / 2;
+              circle(c * (inner + (outer - inner) * u - 0.04 * Math.sin(u * Math.PI)), sg * c * (0.07 + 0.15 * u), c * (0.062 - 0.012 * u) + (pass ? 0 : c * 0.028));
+            }
+          }
+        }
         break;
       }
       default:
@@ -4691,7 +5048,8 @@ window.SnakeRender = (() => {
     for (let i = n - 1; i >= 0; i--) {
       if (!onShown(r, p[2 * i], p[2 * i + 1])) continue;
       if (i < n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * pinch + grow);
-      if (!soft || !straightAt(a, i)) circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
+      if (i === 0 && a.star) { ctx.beginPath(); starPath(a, grow); ctx.fill(); }
+      else if (!soft || !straightAt(a, i)) circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
     }
   }
   // Does the body run straight through segment i's centre, along the grid
@@ -4760,7 +5118,7 @@ window.SnakeRender = (() => {
   // tail. A corpse leaves a bead on every other segment (see the engine's
   // leavesBead), so the markings go by the bead's place among the beads it
   // left, not by its segment: Joker's beads still alternate purple and amber,
-  // Wildcard's still run collar, stars and stripes. (The ripple keeps the
+  // Wildcard's still run collar, stars and stripes, Star's round the rainbow. (The ripple keeps the
   // segment's time, so it still runs down the body.)
   const remainsAt = new Set();
   function noteRemains(s, now) {
@@ -4783,11 +5141,12 @@ window.SnakeRender = (() => {
 
   // The bead a snake leaves at body segment i: its own colours and markings.
   function beadOf(s, i) {
-    const look = lookOf(s), col = colorOf(s);
+    const look = lookOf(s), col = colorOf(s), bow = bowOf(s);
     let fill = col[0] === '#' ? col : '#a16207', mark = '';
     if (s.personaKey === 'wildcard') fill = WILD(i);
     else if (look === 'mute') fill = i === 0 ? '#f8fafc' : fill; // (its mood's colour as it went)
     else if (look === 'joker') fill = i === 0 ? '#f8fafc' : i % 2 ? '#f59e0b' : '#a21caf';
+    else if (bow) fill = bow(TWINKLE_HUES[i % TWINKLE_HUES.length])[0]; // (its rainbow, in order: red, orange, yellow, green, blue, violet, and round again; Copycat's copy of it, pale)
     else if (look === 'sniper' && i % 3 === 2) fill = mix(fill, '#fca5a5', 0.35);
     else if (look === 'vulture' && i < 2) fill = i ? '#f5f5f4' : '#f9a8d4';
     else if (look === 'desperado' && i === 1) fill = '#dc2626';
@@ -4922,10 +5281,10 @@ window.SnakeRender = (() => {
       my[i] += mvy[i] * st;
       const t = Math.min(1, Math.max(0, mlife[i] / mmax[i])), fade = Math.sin(t * Math.PI); // in and out
       live++;
-      if (mkind[i] === 1) { // a glint: the sparkle sprite, twinkling (only ever a few)
+      if (mkind[i] === 1 || mkind[i] >= TWINKLE) { // a glint: the sparkle sprite, twinkling (only ever a few); or one of Star's, in a colour of its rainbow
         const w = SPRITE * CELL * msize[i] * fade;
         ctx.globalAlpha = fade;
-        ctx.drawImage(starSprite(), mx[i] - w / 2, my[i] - w / 2, w, w);
+        ctx.drawImage(mkind[i] === 1 ? starSprite() : twinkleSprite(mkind[i] - TWINKLE), mx[i] - w / 2, my[i] - w / 2, w, w);
         continue;
       }
       if (mkind[i] === 0) mx[i] += Math.sin(mlife[i] / 160) * 0.15; // spores waft
@@ -6435,7 +6794,7 @@ window.SnakeRender = (() => {
         y += e.snake.dir.y * CELL * 0.5;
         if (e.kind === 'golden') spawn(x, y, T.PARTICLES_EAT + 6, 220, T.PARTICLE_LIFE, 3.2, '#fde68a', '#fbbf24');
         else if (e.kind === 'beetle') spawn(x, y, T.PARTICLES_EAT + (e.gold ? 10 : 4), e.gold ? 240 : 200, T.PARTICLE_LIFE, 3, e.gold ? '#fde68a' : '#059669', e.gold ? '#d4a017' : '#fbbf24'); // emerald and gold, a crunchy catch (a golden one: a burst of Honey, a power's gold)
-        else if (e.kind === 'pellet') spawn(x, y, T.PARTICLES_EAT - 4, 150, T.PARTICLE_LIFE * 0.8, 2.6, e.color && e.color[0] === '#' ? e.color : '#c2410c', '#f6ecd2');
+        else if (e.kind === 'pellet') spawn(x, y, T.PARTICLES_EAT - 4, 150, T.PARTICLE_LIFE * 0.8, 2.6, beadFill(e), '#f6ecd2'); // (the bead's own colour, as it was drawn)
         else if (e.kind === 'mushroom') { // poison: a puff of spores, and it goes queasy green for a moment
           spawn(x, y, T.PARTICLES_EAT - 2, 160, T.PARTICLE_LIFE, 2.6, '#c084fc', '#84cc16');
           a.queasyAt = now;
@@ -6464,8 +6823,9 @@ window.SnakeRender = (() => {
           if (!born.has(key)) born.set(key, { kind: 'pellet', at: now + (i - s.body.length) * RIPPLE_MS, i, next: 0, gen: bornGen, v: beadOf(s, i) });
         }
         const px = (h.x + 0.5 + s.dir.x * 0.5) * CELL, py = (h.y + 0.5 + s.dir.y * 0.5) * CELL;
-        const other = e.killerId != null ? game.snakes[e.killerId] : null, col = other ? colorOf(other) : '';
-        if (other && col[0] === '#') spawn(px, py, 12, 220, 480, 2.6, col, '#fffbea');
+        const other = e.killerId != null ? game.snakes[e.killerId] : null, col = other ? colorOf(other) : '', bow = other && bowOf(other);
+        if (bow) spawnBow(px, py, 12, 220, 480, 2.6, bow); // (a rainbow's in its colours: see burst)
+        else if (other && col[0] === '#') spawn(px, py, 12, 220, 480, 2.6, col, '#fffbea');
         else spawn(px, py, 12, 220, 480, 2.6, '#c08a4a', '#3b2412'); // (chips of bark)
         // Bonk! at the point of impact, and your -N over your head, behind
         // it, each kept clear of the stars, a refused leap's × and the edges:
@@ -6517,6 +6877,7 @@ window.SnakeRender = (() => {
         if (e.gold) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 10, 120, 600, 1.8, '#d4a017', '#fffbea'); // (in Honey, a power's gold)
       } else if (e.type === 'dash') { // a streak along the way it went: a golden dash's in gold and ember, with flecks of both; a plain flash's in ember, lighter
         animOf(e.snake, now).dashTick = game.tick;
+        if (e.plain && lookOf(e.snake) === 'star') animOf(e.snake, now).flareAt = now; // (Star's flash spent: its twinkles burst off its points as they go dim, see drawStarHead)
         const h = e.snake.body[0], seen = streaks.findIndex(k => k.s === e.snake && k.pre === game.tick - 1); // (seen coming: see prepare)
         if (seen >= 0 && streaks[seen].fx === e.x && streaks[seen].fy === e.y && streaks[seen].tx === h.x && streaks[seen].ty === h.y) { streaks[seen].pre = -1; sparksOf(streaks[seen]); } // (as it was seen: it stays, and now its flecks fly)
         else { if (seen >= 0) streaks.splice(seen, 1); streakOf(e.snake, e.x, e.y, h.x, h.y, !!e.plain, now, -1); }
@@ -6592,18 +6953,27 @@ window.SnakeRender = (() => {
 
   // Out: it goes off with a pop. A comic starburst and a shockwave ring in
   // its colour at its head (both inked, like everything else on the board), a
-  // burst of pieces from the head and along the body, and smoke.
-  const blasts = []; // { x, y, at, color }
+  // burst of pieces from the head and along the body, and smoke. A rainbow
+  // (Star's, or Copycat's copy of it) goes off in its colours: the ring in
+  // six arcs round the rainbow, the pieces in pairs of them (in Star's
+  // stand-in colour in text, the ring and the pieces were gold and cream, a
+  // golden pickup's).
+  const blasts = []; // { x, y, at, color, bow (a rainbow's ramps, by hue, or null) }
   function burst(s) {
-    const col = colorOf(s), hex = col[0] === '#' ? col : '#f6ecd2', h = s.body[0];
+    const col = colorOf(s), hex = col[0] === '#' ? col : '#f6ecd2', h = s.body[0], bow = bowOf(s);
     const hx = h.x * CELL + CELL / 2, hy = h.y * CELL + CELL / 2;
-    blasts.push({ x: hx, y: hy, at: lastNow, color: hex });
-    spawn(hx, hy, 26, 380, T.PARTICLE_LIFE * 1.3, 3.4, hex, '#fffbea');
+    blasts.push({ x: hx, y: hy, at: lastNow, color: hex, bow });
+    if (bow) spawnBow(hx, hy, 26, 380, T.PARTICLE_LIFE * 1.3, 3.4, bow);
+    else spawn(hx, hy, 26, 380, T.PARTICLE_LIFE * 1.3, 3.4, hex, '#fffbea');
     for (let i = 1; i < s.body.length; i += 2) {
       const c = s.body[i];
-      spawn(c.x * CELL + CELL / 2, c.y * CELL + CELL / 2, Math.max(2, Math.round(T.PARTICLES_DEATH / Math.ceil(s.body.length / 2))), 240, T.PARTICLE_LIFE * 1.2, 3, hex, '#a16207');
+      spawn(c.x * CELL + CELL / 2, c.y * CELL + CELL / 2, Math.max(2, Math.round(T.PARTICLES_DEATH / Math.ceil(s.body.length / 2))), 240, T.PARTICLE_LIFE * 1.2, 3, bow ? bow(TWINKLE_HUES[(i >> 1) % TWINKLE_HUES.length])[0] : hex, '#a16207'); // (a rainbow's in its colours, as its beads)
     }
     for (let i = 0; i < 6; i++) mote(hx + (Math.random() - 0.5) * CELL, hy + (Math.random() - 0.5) * CELL, (Math.random() - 0.5) * 30, -18 - Math.random() * 18, 1400, 4 + Math.random() * 3, 2);
+  }
+  // n pieces in a rainbow's six colours, a pair at a time.
+  function spawnBow(x, y, n, speed, life, size, bow) {
+    for (let j = 0; j < TWINKLE_HUES.length; j += 2) spawn(x, y, Math.ceil(n / 3), speed, life, size, bow(TWINKLE_HUES[j])[0], bow(TWINKLE_HUES[j + 1])[0]);
   }
   const BLAST_SPAN = 5; // (cells across the starburst's sprite)
   const blastSprite = () => {
@@ -6642,14 +7012,25 @@ window.SnakeRender = (() => {
       const w = BLAST_SPAN * CELL * (0.5 + 0.55 * pop);
       ctx.globalAlpha = t < 0.55 ? 1 : (1 - t) / 0.45;
       ctx.drawImage(blastSprite(), b.x - w / 2, b.y - w / 2, w, w);
-      ctx.globalAlpha = 1 - t; // the shockwave: an ink ring under one in its colour
-      ctx.beginPath(); ctx.arc(b.x, b.y, CELL * (0.6 + 3.3 * grow), 0, TAU);
+      ctx.globalAlpha = 1 - t; // the shockwave: an ink ring under one in its colour (a rainbow's: six arcs round it)
+      const rr = CELL * (0.6 + 3.3 * grow);
+      ctx.beginPath(); ctx.arc(b.x, b.y, rr, 0, TAU);
       ctx.strokeStyle = '#3a2614';
       ctx.lineWidth = 8 * (1 - t) + 3;
       ctx.stroke();
-      ctx.strokeStyle = b.color;
       ctx.lineWidth = 8 * (1 - t);
-      ctx.stroke();
+      if (b.bow) {
+        ctx.lineCap = 'butt';
+        for (let j = 0; j < TWINKLE_HUES.length; j++) {
+          const a0 = (j / TWINKLE_HUES.length - 0.25) * TAU;
+          ctx.beginPath(); ctx.arc(b.x, b.y, rr, a0, a0 + TAU / TWINKLE_HUES.length);
+          ctx.strokeStyle = b.bow(TWINKLE_HUES[j])[0];
+          ctx.stroke();
+        }
+      } else {
+        ctx.strokeStyle = b.color;
+        ctx.stroke();
+      }
     }
     ctx.globalAlpha = 1;
   }

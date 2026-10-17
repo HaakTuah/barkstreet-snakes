@@ -1469,14 +1469,17 @@
   // The scoreboard dot: the snake's current color,
   // the flag for Wildcard, two-tone for Joker, veined marble for Mason, Mute's
   // mood, and Vulture's pink head (black would vanish).
+  const COPY_STAR_DOT = 'radial-gradient(circle at 50% 50%, #d19df7 0 28%, transparent 30%), conic-gradient(#f7b4b4, #fbc9a0, #fbe6a0, #a8e6b8, #a8c6f9, #b9b6f4, #dcb6f9, #f7b4b4)';
   const PERSONA_DOTS = {
     wildcard: 'linear-gradient(135deg, #3c3b6e 0 42%, #b22234 42% 56%, #fff 56% 70%, #b22234 70% 84%, #fff 84%)',
     joker: 'linear-gradient(90deg, #a21caf 50%, #f59e0b 50%)',
     mason: 'radial-gradient(circle at 68% 30%, #c9a227 0 14%, transparent 15%), radial-gradient(circle at 10% 115%, transparent 0 55%, #8a94a6 56% 66%, transparent 67%), #f1ece2', // (marble: a curl of grey vein and a gold fleck, no stripe straight across)
     ghost: 'radial-gradient(circle at 35% 35%, #f8fafc, #b8c4d4)', // (pale, but not an empty ring)
+    star: 'radial-gradient(circle at 50% 50%, #f9c22e 0 28%, transparent 30%), conic-gradient(#ef4444, #f97316, #facc15, #22c55e, #3b82f6, #6366f1, #a855f7, #ef4444)', // (a rainbow round its sunflower star)
   };
   function dotColor(s) {
     if (s.personaKey === 'mute') return R.colorOf(s); // (its mood, as it changes)
+    if (s.personaKey === 'copycat' && game?.snakes[s.memory.modelId]?.personaKey === 'star') return COPY_STAR_DOT; // (copying Star: a pale copy of its rainbow)
     return PERSONA_DOTS[s.personaKey] || s.persona?.ink || R.colorOf(s);
   }
   // The same dots in the Hall of Fame and Your story, by a rival's name.
