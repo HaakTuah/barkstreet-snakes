@@ -789,6 +789,37 @@ What's left is mostly late presses. The final build draws exactly this far ahead
 - **Chatter** (`tools/chatter-test.js`): 717 lines and 688 Chinese ones, 142 punchlines; final, 250 checks of the chatter and the sound playing (merged, 195 of the chatter). On a patched build before the merge, the rivals said as much as before (52.7 lines a round, from 52.6), the hungry lines giving way to desperate ones (1.8 a round, from 2.2, beside 2.2 desperate).
 - **Sound** (rendered offline through the whole chain): the new cues sit with the old, peaks −20 to −29 dBFS; the border's crossing is about as loud as the hum it replaces, and a plain flash a little softer than a golden one. After the critique, a rival's cue never silences yours, and your own golden ones in a row are each heard: in a model of 100 seeded rounds (game time), none of yours was swallowed (flashes 0 of 781, jumps 0 of 161, golden flashes 0 of 26). Before, a rival's play could silence yours, and with that fixed, 6 of your 26 golden flashes were still swallowed by your own one before, until the gaps came down to 50 ms for a golden flash and 120 for a jump.
 
+## Round five: Star
+
+The owner's idea: bring back the rainbow body we dropped and give it to a new rival, **Star**. Star is inspired by the stars of the original Paper Mario, the one with the big mustache, so it looks like a star with a rainbow following it. It's a power addict that jumps and flashes as often as it can. These are the calls.
+
+**Why it belongs.** Round four made jumping and flashing central, but every rival prices them the same way. Star is the first rival whose whole character is the powers: it shows what they can do. The rainbow also finally gets a home that fits.
+- It was Wildcard's first, then Mute's.
+- Mute became a mood ring, because a mime's colour should be its mood.
+- A shooting star dragging a rainbow is the most natural use the rainbow has had.
+
+**The look.** It's our own star, not a copy:
+- **The head** is a five-pointed star with softly rounded points. It has tall oval eyes with a catchlight, bushy white brows, and a huge white walrus mustache.
+- **The head's colour.** Star is sunflower yellow, deeper than Honey, with an orange rim and an ink outline. Gold means power, and Star's yellow must never pass for a power mark. Sovereign's crown and Wildcard's combover set the precedent: a yellow on a face is a look, and the gold outline round a body is the power. When Star holds golden powers, it gets that outline like anyone.
+- **The body** is the old rainbow: hues flowing down from the head, as they did on Wildcard and Mute, fading toward the bark at the tail like everyone's. With reduced motion, the rainbow holds still.
+- **Its tail sheds a few small twinkles.** There's no halo: only you glow.
+- **For its tongue gag**, it flicks out a tiny twinkling star on a puff of rainbow.
+- **Its beads** come out in rainbow order.
+
+**The tell.** An addict's weakness is the comedown. Star's star twinkles brightly while its flash is ready and dims while it rests. Bait it into spending its flash, and box it in while it's dim. This is drawing only. It shows what the rules already know, and the rivals don't use it: they assume anyone may flash, as before.
+
+**How it plays.** Star prices powers far below anyone else, by the same rules and the same engine calls.
+- **Flashes:** whenever it's rested and the flash doesn't run into anything, weighed every way, not just the way it would crawl. That's about four times as often as anyone else.
+- **Jumps:** every hurdle it meets that has somewhere to land, not just out of a crash.
+- **Golden dashes:** spent on speed too, not only on cuts.
+- **Golden power food** (beetles, leaves, golden mushrooms): it craves it above everything, to feed the habit.
+
+Round four measured that spending powers on small gains makes a rival weaker. So Star stays a real threat in two ways: it never flashes or jumps into a crash, and its craving for golden things keeps it stocked. It's tuned by simulation into the same 15–35% band as everyone.
+
+**Its voice.** A jolly old-timer who can't stop showing off: "Whee! Still got it!", "In my day we flashed uphill both ways!" It cheers its own flashes and jumps, gets grumpy while it rests, and hoards golden things. Every line has its Chinese for Copycat.
+
+**The cast** is eighteen now. Star's dot on the tags is a little rainbow, and its colour in text is its sunflower.
+
 ## Skipped or adapted guidelines
 
 Each line gives the guideline, what was done, and why.
