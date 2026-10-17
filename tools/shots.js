@@ -27,6 +27,30 @@ fs.mkdirSync(out, { recursive: true });
     }
     throw new Error('could not stay alive long enough');
   };
+  // A round with Star in it (beside Ouroboros and Desperado, the rivals
+  // nearest it in colour), played until a dozen seconds in with you and Star
+  // both still going (a few tries); false if Star never lasted.
+  const starRound = async () => {
+    for (let attempt = 0; attempt < 6; attempt++) {
+      await b.eval(`SnakeDebug.setup(['star', 'ouroboros', 'desperado']); document.getElementById('start').click(); pilot.on = true; pilot.crash = false; 'ok'`);
+      const ok = await b.eval(`(() => { const st = () => SnakeDebug.game().snakes.find(s => s.personaKey === 'star');
+        return waitFor(() => SnakeDebug.state() === 'over' || !me().alive || !st().alive || SnakeDebug.game().time > 12000, 90000).then(() => me().alive && st().alive && SnakeDebug.state() === 'running'); })()`);
+      if (ok) return true;
+    }
+    return false;
+  };
+  // Star, staged on that round: lit while its flash is ready (twinkling, its
+  // rainbow trailing it), then holding golden jumps with its flash resting
+  // (dim and grumbling, the gold line round its points, its pips past them).
+  const starShots = async prefix => {
+    if (!await starRound()) { console.log('no Star moment: it went out every time'); return; }
+    await b.eval(`(() => { const st = SnakeDebug.game().snakes.find(s => s.personaKey === 'star'); st.flashReadyAt = 0; return 1; })()`);
+    await b.sleep(150);
+    await shot(`${prefix}star.jpg`);
+    await b.eval(`(() => { const g = SnakeDebug.game(), st = g.snakes.find(s => s.personaKey === 'star'); st.leaps = 2; st.dashes = 0; st.flashReadyAt = g.time + 5000; return 1; })()`);
+    await b.sleep(400);
+    await shot(`${prefix}star-gold.jpg`);
+  };
   try {
     // ---------------------------------------------------------------- desktop
     await b.viewport(800, 800);
@@ -110,6 +134,10 @@ fs.mkdirSync(out, { recursive: true });
     await b.sleep(800);
     await shot('friends.jpg');
 
+    await b.go(URL);
+    await b.eval(HELPERS);
+    await starShots('');
+
     // ----------------------------------------------------------------- a laptop
     await b.viewport(1280, 720);
     await b.go(URL);
@@ -131,6 +159,9 @@ fs.mkdirSync(out, { recursive: true });
     await b.eval(`pilot.crash = true; waitFor(() => !me().alive, 20000).then(() => waitFor(cardUp, 5000)).then(() => 1)`);
     await b.sleep(450);
     await shot('mobile-death.jpg');
+    await b.go(URL);
+    await b.eval(HELPERS);
+    await starShots('mobile-');
 
     // ------------------------------------------------------ a phone on its side
     await b.viewport(812, 375, { scale: 2, mobile: true });
