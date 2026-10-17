@@ -18,7 +18,7 @@ Baseline: `polish/extreme` at `8a22961`, which is `main` (`7792572`) plus the th
   - retained heap after forced GCs;
   - seeded simulations.
 - **Every high and medium finding was checked by a separate skeptic,** told to refute it and to re-judge its severity. Seven were refuted and are listed as skipped. Many were re-rated, and the severities below are the skeptics'.
-- **"Before" screenshots** of every state are in `docs/screenshots/before-3/`.
+- **"Before" screenshots** of every state are on the `pr-media` branch, in [`screenshots/before-3/`](https://github.com/HaakTuah/snake-game/tree/pr-media/screenshots/before-3) (they were in `docs/screenshots/` until the screenshots moved out of main, so a download is only the game).
 
 Severity:
 - **high** breaks play or clearly hurts the experience;
@@ -231,7 +231,7 @@ Watching at 1× is comfortable (no frame over 16.7 ms in a minute). **The tools 
 
 ## After
 
-Every high and medium finding above is fixed or adapted as planned (A5 both halves: the woodpecker cuts, and burning leaves land still); the seven refuted ones stay skipped. The lows are done too, except where a row says skip. "After" screenshots of every state are in `docs/screenshots/after-3/`.
+Every high and medium finding above is fixed or adapted as planned (A5 both halves: the woodpecker cuts, and burning leaves land still); the seven refuted ones stay skipped. The lows are done too, except where a row says skip. "After" screenshots of every state are on the `pr-media` branch, in [`screenshots/after-3/`](https://github.com/HaakTuah/snake-game/tree/pr-media/screenshots/after-3).
 
 ### Frame times
 
