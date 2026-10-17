@@ -234,6 +234,17 @@ window.SnakeAI = (() => {
         lure: { weight: 6, dist: 3 }, hunt: { squeeze: 3, chase: 0, lead: 2 },
       },
     },
+    star: {
+      name: 'Star', color: '#eab308', look: 'star', // (a rainbow body behind a sunflower star; sunflower stands in for it in text)
+      blurb: 'A power addict. Jumps and flashes every chance it gets.',
+      kill: ['Star was there in a flash.', 'You never saw it coming. It was already past.', 'Too slow, sonny!'],
+      win: ['Still got it!', 'Never once sat still.', 'One more flash, for the road.'],
+      w: {
+        space: 1, territory: 0.6,
+        food: 5, eat: 70, pellet: 1.2, foodRange: 40,
+        margin: 4, headRisk: 700, zoneRisk: 100,
+      },
+    },
   };
   const POOL = Object.keys(PERSONAS);
   const MOODS = ['sniper', 'gobbler', 'ghost', 'mason'];
