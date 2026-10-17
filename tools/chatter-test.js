@@ -12,11 +12,12 @@
 // has a line for every moment anyone has, shows off its flashes and jumps at
 // most every 10 s (even flashing the moment its rest is over, when it doesn't
 // say its flash is back), grumbles while it rests, crows over golden things,
-// greets a rainbow as family, and now and then Wildcard or Mason answers it.
-// Then a few whole AI rounds with the chatter listening (two with Star), to
-// see nothing throws. Last, the sound (audio.js on a stand-in AudioContext):
-// a rival's flash, jump or the like never silences yours, and your own
-// golden ones in a row are each heard.
+// greets a rainbow as family (its own moments aren't crowded out by its
+// showing off), and now and then Wildcard or Mason answers it. Then a few
+// whole AI rounds with the chatter listening (two with Star), to see nothing
+// throws. Last, the sound (audio.js on a stand-in AudioContext): a rival's
+// flash, jump or the like never silences yours, and your own golden ones in
+// a row are each heard.
 //
 //   node tools/chatter-test.js
 const fs = require('fs');
@@ -342,23 +343,39 @@ const STAR = VOICES.star;
   g = stage(['star'], { 0: [3, 22], 1: [12, 12] }); [you, star] = g.snakes;
   check(says(tick(g, [], 4000, 0.01), star, STAR.idle, you), `rested: its small talk (said: ${lineOf(heard, star)})`);
 }
-{ // Golden power food: Star crows over its stash (a golden beetle or a leaf); a golden mushroom, its wrap. Anyone else's lines are as they were.
+{ // Golden power food: Star crows over its stash (a golden beetle or a leaf), even just after another line; a golden mushroom, its wrap. Anyone else's lines are as they were.
   const g = stage(['star', 'gobbler'], { 0: [3, 22], 1: [12, 12], 2: [12, 18] }), [, star, gob] = g.snakes;
-  check(says(tick(g, [{ type: 'eat', snake: star, kind: 'beetle', x: 12, y: 12, gold: true }]), star, STAR.stash), 'Star eats a golden beetle: a stash line');
-  check(says(tick(g, [{ type: 'eat', snake: star, kind: 'leaf', x: 12, y: 12, gold: false }], 5000), star, STAR.stash), '...a golden leaf: a stash line');
+  check(says(tick(g, [{ type: 'dash', snake: star, x: 10, y: 12, n: 2, plain: 1 }], 100, 0.2), star, STAR.zoom), 'Star shows off');
+  check(says(tick(g, [{ type: 'eat', snake: star, kind: 'beetle', x: 12, y: 12, gold: true }], 1000), star, STAR.stash), '...and eats a golden beetle a second later: a stash line all the same');
+  check(says(tick(g, [{ type: 'eat', snake: star, kind: 'leaf', x: 12, y: 12, gold: false }], 1000), star, STAR.stash), '...a golden leaf a second after that: a stash line all the same');
   check(says(tick(g, [{ type: 'eat', snake: star, kind: 'goldcap', x: 12, y: 12, gold: false }], 5000), star, STAR.wrap), '...a golden mushroom: a wrap line');
   check(says(tick(g, [{ type: 'eat', snake: star, kind: 'golden', x: 12, y: 12, gold: false }], 5000), star, STAR.golden), '...a golden apple: a golden line');
   check(says(tick(g, [{ type: 'eat', snake: gob, kind: 'beetle', x: 12, y: 18, gold: true }], 5000), gob, VOICES.gobbler.caught), 'Gobbler eats a golden beetle: still a caught line');
   const h = tick(g, [{ type: 'spawn', kind: 'beetle', x: 20, y: 20, gold: 1 }], 5000);
   check(says(h, star, STAR.goldbug) && says(h, gob, VOICES.gobbler.goldbug), 'a golden beetle comes out: Star wants it too');
 }
-{ // A rainbow: Star's own colours, so it's first to say so; if it's just spoken, someone else does.
+{ // A rainbow: Star's own colours, so it's first to say so, even just after another line; with Star out, someone else does.
   const g = stage(['gobbler', 'star', 'colonist'], { 0: [3, 22], 1: [12, 4], 2: [12, 12], 3: [12, 20] }), [, gob, star, col] = g.snakes;
   let h = tick(g, [{ type: 'rainbow', x: 5, y: 5 }]);
   check(says(h, star, STAR.rainbow) && h.length === 1, `a rainbow: Star says so ("${lineOf(h, star)}")`);
-  tick(g, [{ type: 'eat', snake: star, kind: 'golden', x: 12, y: 12 }], 60000);
+  check(says(tick(g, [{ type: 'eat', snake: star, kind: 'golden', x: 12, y: 12 }], 60000), star, STAR.golden), 'Star eats a golden apple');
   h = tick(g, [{ type: 'rainbow', x: 5, y: 5 }], 1000);
-  check(h.length === 1 && (says(h, gob, VOICES.gobbler.rainbow) || says(h, col, VOICES.colonist.rainbow)), 'a rainbow just after Star spoke: someone else remarks on it');
+  check(says(h, star, STAR.rainbow) && h.length === 1, `...and a rainbow a second later: Star says so all the same ("${lineOf(h, star)}")`);
+  h = tick(g, [{ type: 'leap', snake: star, x: 12, y: 12, gold: 1, reach: 2 }, { type: 'rainbow', x: 5, y: 5 }], 60000);
+  check(says(h, star, STAR.leap) && h.filter(x => x.s === star).length === 1 && (says(h, gob, VOICES.gobbler.rainbow) || says(h, col, VOICES.colonist.rainbow)),
+    'a rainbow in the very tick Star cheers its golden jump: one line at a time from Star (someone else greets the rainbow)');
+  star.alive = false;
+  h = tick(g, [{ type: 'rainbow', x: 5, y: 5 }], 60000);
+  check(h.length === 1 && (says(h, gob, VOICES.gobbler.rainbow) || says(h, col, VOICES.colonist.rainbow)), 'a rainbow with Star out: someone else remarks on it');
+}
+{ // Star's kill and its being cut, a second after it showed off: their lines all the same.
+  const g = stage(['star', 'sovereign', 'gobbler'], { 0: [3, 22], 1: [12, 12], 2: [12, 4], 3: [12, 18] }), [, star, sov, gob] = g.snakes;
+  check(says(tick(g, [{ type: 'dash', snake: star, x: 10, y: 12, n: 2, plain: 1 }], 100, 0.2), star, STAR.zoom), 'Star shows off');
+  gob.alive = false; gob.killer = star.name; gob.killerId = star.id;
+  let h = tick(g, [{ type: 'death', snake: gob }], 1000);
+  check(says(h, star, STAR.kill, gob), `...and knocks Gobbler out a second later: a kill line all the same (said: ${lineOf(h, star)})`);
+  h = tick(g, [{ type: 'cut', snake: star, x: 11, y: 12, lost: 2, by: sov.id }], 1000);
+  check(says(h, star, STAR.cut, sov) && says(h, sov, VOICES.sovereign.snip, star), `...and is cut by Sovereign's golden dash a second after that: a cut line all the same (said: ${lineOf(h, star)})`);
 }
 { // Now and then a rival answers Star's showing off, a moment later, naming it: not every time, and not again for 40 s.
   for (const [k, list] of [['wildcard', VOICES.wildcard.showoff], ['mason', VOICES.mason.showoff]]) {
@@ -373,7 +390,7 @@ const STAR = VOICES.star;
     check(says(tick(g, flash(), 12000, 0.2), star, STAR.zoom) && says(tick(g, [], 1200), other, list, star), '...but 56 s later, yes');
   }
 }
-console.log('ok   Star shows off its flashes, jumps, golden dashes and flash back (half the time, every 10 s at most; its flash back only once it\'s been back a second), grumbles while it rests, crows over golden things and is first to greet a rainbow; Wildcard and Mason answer it now and then');
+console.log('ok   Star shows off its flashes, jumps, golden dashes and flash back (half the time, every 10 s at most; its flash back only once it\'s been back a second), grumbles while it rests, crows over golden things and greets a rainbow first, even just after another line, as it does its kill or a cut; Wildcard and Mason answer it now and then');
 
 // The power habit at its worst: Star flashing the tick after its rest is over
 // (as its AI does) and jumping every 4 s for three minutes, with you, Wildcard

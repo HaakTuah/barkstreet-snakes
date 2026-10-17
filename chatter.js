@@ -1685,8 +1685,13 @@ window.SnakeChatter = (() => {
 
   // Star, the power addict, cheers its every flash, jump and golden dash, and
   // its flash back from its rest: those keep to a rest of their own, or it
-  // would never stop. (While its flash rests, its small talk grumbles.)
+  // would never stop. (While its flash rests, its small talk grumbles.) It
+  // talks so much that its own moments (golden power food, a rainbow, a
+  // kill, a cut) would mostly come while it's still in its gap after the
+  // last line: those clear it (ownMoment), unless that line was this tick's
+  // (one line at a time).
   const showsOff = s => s.personaKey === 'star';
+  const ownMoment = s => { if (s && showsOff(s) && lastSaid[s.id] < game.time) lastSaid[s.id] = -Infinity; };
   // A line for showing off (key; who: a rival it beat to food or shot past),
   // half the time and at most every SHOW_OFF_REST; whether it said one. Now
   // and then someone with words for it answers a moment later (see update).
@@ -1730,7 +1735,10 @@ window.SnakeChatter = (() => {
       if (e.type === 'death') {
         const victim = e.snake;
         const killer = byName(victim.killer);
-        if (killer?.persona && killer.alive && killer !== victim) say(killer, 'kill', victim, true);
+        if (killer?.persona && killer.alive && killer !== victim) {
+          ownMoment(killer);
+          say(killer, 'kill', victim, true);
+        }
         if (victim.persona) {
           lastSaid[victim.id] = -Infinity;
           say(victim, 'dies', killer && killer !== victim ? killer : null, true);
@@ -1738,7 +1746,7 @@ window.SnakeChatter = (() => {
         for (const v of alive) if (v.personaKey === 'vulture' && Math.random() < 0.6) say(v, 'death', victim);
       } else if (e.type === 'eat' && e.snake.persona && e.kind !== 'goldcap') { // (a golden mushroom has its own lines: below)
         if (e.kind === 'golden') say(e.snake, 'golden', null, true);
-        else if ((e.gold || e.kind === 'leaf') && VOICES[e.snake.personaKey]?.stash) say(e.snake, 'stash', null, true); // (golden power food: Star crows over its stash)
+        else if ((e.gold || e.kind === 'leaf') && VOICES[e.snake.personaKey]?.stash) { ownMoment(e.snake); say(e.snake, 'stash', null, true); } // (golden power food: Star crows over its stash)
         else if (e.kind === 'beetle') say(e.snake, 'caught', null, true);
         else if (e.kind === 'mushroom') say(e.snake, 'mushroom');
         else if (Math.random() < (showsOff(e.snake) ? 0.05 : 0.15)) say(e.snake, 'eat'); // (Star only has eyes for golden things)
@@ -1781,6 +1789,7 @@ window.SnakeChatter = (() => {
         // A golden dash cut it (the woodpecker cuts nothing now): the dasher
         // crows, and the one cut has words for whoever it was, you included.
         const dasher = e.by != null ? byId(e.by) : null;
+        ownMoment(dasher); ownMoment(e.snake);
         if (dasher?.persona) say(dasher, 'snip', e.snake, true);
         if (e.snake.persona) say(e.snake, 'cut', dasher, true);
       } else if (e.type === 'peck' && e.under?.length) {
@@ -1809,6 +1818,7 @@ window.SnakeChatter = (() => {
       } else if (e.type === 'rainbow') {
         // (Star's own colours, up in the sky: family, and it says so first)
         const kin = alive.find(showsOff);
+        ownMoment(kin);
         if (!(kin && say(kin, 'rainbow', null, true))) {
           const s = pick(alive.filter(a => a !== kin && VOICES[a.personaKey]?.rainbow));
           if (s) say(s, 'rainbow', null, true);
