@@ -23,9 +23,13 @@
 //   in put them over its eyes), and stunned, the stars keep clear of them.
 // - Star: its head is a star (five points round it, one to the back), its
 //   rainbow flows down its body from the head (and holds still with reduced
-//   motion), it's lit while its flash is ready and dim while it rests, its
-//   gold line runs round its points, and a dead Star's beads go round the
-//   rainbow from its head.
+//   motion), its gold line runs round its points, and a dead Star's beads go
+//   round the rainbow from its head. Its tell is a countdown: its points go
+//   dim as it flashes and light one by one through its rest, its middle
+//   always lit (with reduced motion too: a point at a time, never a blink),
+//   and its twinkles burst as it flashes, not as its flash comes back. Its
+//   face is upright at every heading. Copycat copying it wears a pale copy
+//   of its rainbow (not a pale gold), and it goes off in a rainbow ring.
 // - Scorch marks are soot, not holes: a burned cell is no more than a little
 //   darker, and not darkest in its middle.
 // - Every Field guide picture draws (the mushroom on bark; a snake holding
@@ -315,10 +319,10 @@ const STAGE = `(() => {
 
     // Star: a star for a head (five points round it, where a round head has
     // none), the old rainbow flowing down its body from the head (held still
-    // with reduced motion), its tell (lit while its flash is ready, dim
-    // while it rests), the gold line round its points, and its beads in
+    // with reduced motion), the gold line round its points, and its beads in
     // rainbow order. Two Stars heading right along rows 8 and 14, one
-    // resting, one ready; Mason (a round head) beside them.
+    // resting, one ready; Mason (a round head) beside them. (Its tell, its
+    // face and its rainbow on others: below.)
     const stars = await ev(`(() => {
       SnakeDebug.pinQuality(0);
       const hue = ([r, g, b]) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn || 1; const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return Math.round((h * 60 + 360) % 360); };
@@ -347,9 +351,6 @@ const STAGE = `(() => {
       for (let i = 0; i < 28; i++) { __t += 15; R.frame(0.5, __t); } // (28 hues on, 15 ms each: a segment's worth)
       const t1 = SEGS.map(i => hue(seg(rest, i)));
       out.flow = { t0, t1 };
-      // The tell: the colour of its star's two arms and its back point (half a cell out: clear of its face, its sheen and its twinkles), ready and resting.
-      const body = s => { const r = ring(s, 0.48, 360), c = [108, 180, 252].flatMap(d => [-3, 0, 3].map(k => r[d + k])); return Math.round(c.reduce((t, [R_, G, B]) => t + 0.299 * R_ + 0.587 * G + 0.114 * B, 0) / c.length); };
-      out.tell = { ready: body(ready), rest: body(rest) };
       // Golden powers held: the gold line round its two front points.
       rest.leaps = 2; drawN(10);
       const gold = ring(rest, 0.875, 360);
@@ -375,10 +376,155 @@ const STAGE = `(() => {
     const { t0, t1 } = stars.flow;
     check(new Set(t0).size === 4 && t0.every((h, i) => dh(h, t1[i]) > 15) && dh(t1[1], t0[0]) < 14 && dh(t1[2], t0[1]) < 14,
       'Star’s rainbow flows down its body from the head', `hues of segments 2, 3, 4, 7: ${t0.join(', ')}, a segment’s worth later ${t1.join(', ')}`);
-    check(stars.tell.ready > stars.tell.rest * 1.1, 'Star’s tell: lit while its flash is ready, dim while it rests', `its star’s brightness ${stars.tell.ready} ready, ${stars.tell.rest} resting`);
     check(stars.gold.every(Boolean), 'holding golden powers, Star’s gold line runs round its points', `Honey just past its two front points: ${stars.gold.join(', ')}`);
     const want = [0, 32, 55, 130, 205, 275, 0];
     check(stars.beads.every((h, i) => dh(h, want[i]) < 22), 'a dead Star’s beads go round the rainbow from its head', `hues ${stars.beads.join(', ')} (red, orange, yellow, green, blue, violet, red: ${want.join(', ')})`);
+
+    // Star's tell is a countdown on its points: its middle always its
+    // sunflower; just flashed, its five points dim; they light one by one as
+    // its rest runs down (a point each 1.2 s), and never go out until it
+    // flashes again, with reduced motion too (it flashes the moment it can,
+    // so a star lit only while its flash was ready was dim nearly all the
+    // time, and with reduced motion blinked). Its twinkles burst off its
+    // points as it flashes, not as its flash comes back (it never holds it
+    // for long). Its face is upright at every heading (the mustache under its
+    // eyes: heading up it sat over them, as huge angry brows). Stars heading
+    // down, read at three of its points (its back point, up, the first to
+    // light, the next round, the second, and the last: the other two have
+    // its mustache over them) and either side of its eyes, in pixels of
+    // just its sunflower or its dim mustard (an inked edge over sunflower
+    // passes for mustard).
+    const tell = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
+      const SUN = [249, 194, 46], DIM = [176, 137, 58], d2 = (p, q) => (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2;
+      // Lit (1) or dim (0), r cells out from s's head at angle ang: more pixels round there of its sunflower than of its mustard.
+      const lit = (s, ang, r) => { const [cx, cy] = at(s), p = pixels(cx + Math.cos(ang) * r - 0.07, cy + Math.sin(ang) * r - 0.07, 0.14, 0.14); let sun = 0, dim = 0;
+        for (let i = 0; i < p.data.length; i += 4) { const c = [p.data[i], p.data[i + 1], p.data[i + 2]]; if (d2(c, SUN) < 15 * 15) sun++; else if (d2(c, DIM) < 15 * 15) dim++; }
+        return sun > dim ? 1 : 0; };
+      const points = s => [0, 1, 4].map(j => lit(s, (270 + 72 * j) * Math.PI / 180, 0.55)).join(''); // (its first, second and fifth)
+      const middle = s => lit(s, 0, 0.33) && lit(s, Math.PI, 0.33) ? 1 : 0;
+      const down = (s, x) => setBody(s, Array.from({ length: 10 }, (_, i) => [x, 14 - i]), 'down');
+      const out = { now: {}, run: {} };
+      for (const still of [true, false]) {
+        R.setReducedMotion(still);
+        const how = still ? 'reduced' : 'lively';
+        // Just flashed, half rested, rested.
+        const g = stage(['star', 'star', 'star']), [, a, b2, c] = g.snakes;
+        down(a, 6); down(b2, 12); down(c, 18);
+        a.flashReadyAt = g.time + 6000; b2.flashReadyAt = g.time + 3000; c.flashReadyAt = g.time;
+        show(g); drawN(20);
+        out.now[how] = [a, b2, c].map(s => ({ points: points(s), middle: middle(s) }));
+        // A whole rest, a frame every 100 ms of the game's clock: its points lit, and its middle.
+        const g2 = stage(['star', 'mason', 'ghost']), st = g2.snakes[1];
+        down(st, 12);
+        st.flashReadyAt = g2.time + 6000;
+        show(g2); drawN(20, 0.5, 100);
+        const run = [];
+        for (let t = 0; t <= 6500; t += 100) { g2.time = 60000 + t; drawN(1, 0.5, 100); run.push([t, points(st).split('').reduce((n, v) => n + +v, 0), middle(st)]); }
+        out.run[how] = run;
+      }
+      // The burst: its flash comes back (no burst), then it flashes (a burst), lively.
+      R.setReducedMotion(false);
+      const white = s => { const [cx, cy] = at(s), p = pixels(cx - 1.2, cy - 1.2, 2.4, 2.4); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (p.data[i] > 240 && p.data[i + 1] > 240 && p.data[i + 2] > 240) n++; return n; };
+      const g3 = stage(['star', 'mason', 'ghost']), st3 = g3.snakes[1];
+      down(st3, 12);
+      st3.flashReadyAt = g3.time + 100;
+      show(g3); drawN(20);
+      const base = white(st3);
+      g3.time += 200; // (its flash back)
+      let back = 0; for (let i = 0; i < 8; i++) { drawN(1); back = Math.max(back, white(st3) - base); }
+      st3.flashReadyAt = g3.time + 6000; g3.tick++;
+      R.onTick([{ type: 'dash', snake: st3, x: 12, y: 11, n: 3, plain: 1 }]); // (it flashes)
+      let flash = 0; for (let i = 0; i < 8; i++) { drawN(1); flash = Math.max(flash, white(st3) - base); }
+      out.burst = { base, back, flash };
+      R.setReducedMotion(false);
+      SnakeDebug.pinQuality(2);
+      return out;
+    })()`);
+    for (const how of ['reduced', 'lively']) {
+      const [spent, half, full] = tell.now[how];
+      check(spent.points === '000' && half.points === '110' && full.points === '111' && spent.middle && half.middle && full.middle,
+        `Star’s tell, ${how === 'reduced' ? 'with reduced motion' : 'lively'}: just flashed its points are dim, half rested the first two lit, rested all, its middle lit throughout`,
+        `its first, second and fifth points ${spent.points}, ${half.points}, ${full.points}; its middle ${spent.middle}${half.middle}${full.middle}`);
+      const run = tell.run[how], steps = run.filter((r, i) => i && r[1] !== run[i - 1][1]), when = [1200, 2400, 6000];
+      check(run[0][1] === 0 && run.every(r => r[2]) && steps.length === 3 && steps.every((r, i) => r[1] === i + 1 && Math.abs(r[0] - when[i]) <= 250),
+        `Star’s tell, ${how === 'reduced' ? 'with reduced motion' : 'lively'}: through a rest its points light in turn, a point each 1.2 s, none going out, its middle lit`,
+        `its first, second and fifth points lit (ms into the rest: how many) ${steps.map(r => `${r[0]}: ${r[1]}`).join(', ')}; middle dim in ${run.filter(r => !r[2]).length} of ${run.length} frames`);
+    }
+    check(tell.burst.flash > 150 && tell.burst.back * 3 < tell.burst.flash, 'Star’s twinkles burst off its points as it flashes, not as its flash comes back',
+      `white pixels round its head over a few frames: ${tell.burst.back} as its flash came back, ${tell.burst.flash} as it flashed (${tell.burst.base} before)`);
+    // Its face at each heading, half rested (no twinkles) and held still, on
+    // a sharper board (more pixels to its mustache): the white past the reach
+    // of its brows (and eyes) is its mustache's ends, and sits under its middle.
+    await b.viewport(800, 800, { scale: 2 });
+    await b.sleep(400);
+    const face = await ev(`(() => {
+      SnakeDebug.pinQuality(2);
+      R.setReducedMotion(true);
+      const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
+      const g = stage(['star', 'star', 'star']), heads = g.snakes;
+      setBody(heads[0], Array.from({ length: 8 }, (_, i) => [5, 8 + i]), 'up');
+      setBody(heads[1], Array.from({ length: 8 }, (_, i) => [12, 15 - i]), 'down');
+      setBody(heads[2], Array.from({ length: 8 }, (_, i) => [8 + i, 20]), 'left');
+      setBody(heads[3], Array.from({ length: 8 }, (_, i) => [20 - i, 4]), 'right');
+      heads[0].persona = heads[1].persona; heads[0].personaKey = 'star'; heads[0].memory = {}; // (you, as a Star)
+      for (const s of heads) s.flashReadyAt = g.time + 3000;
+      show(g); R.setViewer(99); drawN(20);
+      const out = heads.map(s => { const [cx, cy] = at(s), p = pixels(cx - 1, cy - 1, 2, 2); let n = 0, sy = 0;
+        for (let y = 0; y < p.height; y++) for (let x = 0; x < p.width; x++) {
+          const i = (y * p.width + x) * 4, mn = Math.min(p.data[i], p.data[i + 1], p.data[i + 2]), mx = Math.max(p.data[i], p.data[i + 1], p.data[i + 2]);
+          if (mn > 185 && mx - mn < 45 && Math.abs(x / p.width * 2 - 1) > 0.36) { n++; sy += y; } // (whitish, more than 0.36 cells to either side)
+        }
+        return { n, below: n ? +((sy / n) / p.height * 2 - 1).toFixed(2) : 0 }; }); // (cells below its middle)
+      R.setReducedMotion(false);
+      return out;
+    })()`);
+    check(face.every(f => f.n >= 6 && f.below > 0.1), 'Star’s face is upright at every heading: its mustache under its eyes',
+      `its mustache’s ends (pixels, cells below the head’s middle), heading up, down, left, right: ${face.map(f => `${f.n}, ${f.below}`).join('; ')}`);
+
+    // Star's rainbow on others: Copycat copying Star wears a pale copy of it,
+    // flowing as Star's does (its tint of Star's stand-in colour in text was
+    // a pale gold all over, that read as a power and hid its gold line), and
+    // the shockwave Star goes off with is its rainbow, not that gold (with
+    // reduced motion, the ring's there at once: read round its lower half,
+    // clear of the word over its head).
+    const bows = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const hue = ([r, g, b]) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn || 1; const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return Math.round((h * 60 + 360) % 360); };
+      const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
+      const seg = (s, i) => { const [cx, cy] = at(s); return rgb(cx - i + 0.04, cy + 0.04); };
+      const SEGS = [2, 3, 4, 7], out = {};
+      R.setReducedMotion(false);
+      const g = stage(['copycat', 'star', 'mason']), [, cc, st] = g.snakes;
+      setBody(st, Array.from({ length: 12 }, (_, i) => [16 - i, 8]), 'right');
+      setBody(cc, Array.from({ length: 12 }, (_, i) => [16 - i, 14]), 'right'); cc.memory.modelId = st.id;
+      show(g); drawN(20);
+      out.copy = SEGS.map(i => seg(cc, i));
+      out.star = SEGS.map(i => seg(st, i));
+      out.tint = R.colorOf(cc);
+      // Star out: its shockwave, held still (reduced motion), a moment on.
+      R.setReducedMotion(true);
+      const g2 = stage(['star', 'ghost', 'mason']), s2 = g2.snakes[1];
+      setBody(s2, Array.from({ length: 12 }, (_, i) => [16 - i, 12]), 'right');
+      show(g2); drawN(5);
+      s2.alive = false; s2.killer = 'wall'; g2.tick++;
+      R.onTick([{ type: 'death', snake: s2 }]);
+      drawN(1);
+      const [hx, hy] = [16.5, 12.5], rr = 2.25; // (its ring, held at half its reach)
+      out.ring = [0, 60, 120, 180].map(d => hue(rgb(hx + Math.cos(d * Math.PI / 180) * rr - 0.06, hy + Math.sin(d * Math.PI / 180) * rr - 0.06)));
+      R.setReducedMotion(false);
+      SnakeDebug.pinQuality(2);
+      return out;
+    })()`);
+    const hueOf = ([r, g, b]) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn || 1; const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return Math.round((h * 60 + 360) % 360); };
+    const copyHues = bows.copy.map(hueOf), starHues = bows.star.map(hueOf), paler = bows.copy.every((c, i) => Math.min(...c) > Math.min(...bows.star[i]) + 20);
+    check(new Set(copyHues).size === 4 && copyHues.every((h, i) => dh(h, starHues[i]) < 14) && paler && bows.tint !== '#f3d577',
+      'Copycat copying Star wears a pale copy of its rainbow, flowing with Star’s, not a pale gold',
+      `hues of segments 2, 3, 4, 7: ${copyHues.join(', ')} (Star’s ${starHues.join(', ')}); ${JSON.stringify(bows.copy)} against ${JSON.stringify(bows.star)}; its colour ${bows.tint}`);
+    const ringWant = [32, 55, 130, 205]; // (orange, yellow, green, blue: the arcs at 0°, 60°, 120° and 180°)
+    check(bows.ring.every((h, i) => dh(h, ringWant[i]) < 25), 'Star goes off in a ring of its rainbow, not its stand-in gold',
+      `the ring’s hues at 0°, 60°, 120°, 180°: ${bows.ring.join(', ')} (want about ${ringWant.join(', ')})`);
     await b.viewport(800, 800);
     await b.sleep(400);
 
