@@ -11,8 +11,9 @@ window.SnakeChatter = (() => {
   // a plain flash that beat {who} to food (first) or shot past {who} (past);
   // last, the last apples are falling. Star's own: zoom, any flash of its
   // own; ready, its flash back from its rest; resting, small talk while it
-  // rests; stash, golden power food it ate. showoff: an answer to Star's
-  // showing off ({who} is Star).)
+  // rests; stash, a golden beetle it ate (a golden leaf's flashes, it spends
+  // at once: a dash line). showoff: an answer to Star's showing off ({who}
+  // is Star).)
   const VOICES = {
     sniper: {
       hungry: ["Hungry. Someone will do."],
@@ -459,7 +460,8 @@ window.SnakeChatter = (() => {
     // A jolly old-timer who can't stop showing off: its own flashes and jumps
     // (zoom, leap, dash), its flash back from its rest (ready), grumbling
     // while it rests (resting, in its small talk) and golden power food it
-    // eats (stash: a golden beetle or leaf). See showOff.
+    // eats (stash, a golden beetle; a golden leaf's flashes, spent at once,
+    // get a dash line). See showOff.
     star: {
       hungry: ['Can’t flash on an empty stomach.'],
       desperate: ['Even a star’s got to eat!'],
@@ -469,11 +471,12 @@ window.SnakeChatter = (() => {
       resting: ['Rest, rest, rest. I’ll rest when I’m old!', 'Come on, come on… I’m not getting any younger.', 'Hmph. In my day, a flash came right back.',
         'Don’t mind me, {who}. Just catching my breath.', 'Grumble, grumble. Is it ready yet?'],
       ready: ['There’s my sparkle! Look out.', 'Rested! Well, rested enough.', 'Back in business!', 'Ah, there it is! Who’s next?'],
-      zoom: ['Whee! Still got it!', 'Zip! Just like the old days!', 'Look, no legs!', 'Fast as ever. Faster, even!', 'Did you see that? Want to see it again?', 'Ho ho! Still sparkling!'],
-      leap: ['Up and over, sonny!', 'Hup! Old star, new tricks!', 'Look at me! A shooting star!', 'Over we go! Ho ho!'],
-      dash: ['Golden zoom! Oh, that’s the good stuff!', 'Out of my way, I’m golden!'],
+      zoom: ['Whee! Still got it!', 'Zip! Just like the old days!', 'Look, no legs!', 'Fast as ever. Faster, even!', 'Did you see that? Want to see it again?', 'Ho ho! Still sparkling!',
+        'Blink and you missed me!', 'Ahh, wind in my mustache!', 'They don’t make flashes like that anymore.'],
+      leap: ['Up and over, sonny!', 'Hup! Old star, new tricks!', 'Look at me! A shooting star!', 'Over we go! Ho ho!', 'These old springs still work!'],
+      dash: ['Golden zoom! Oh, that’s the good stuff!', 'Out of my way, I’m golden!'], // (and for a golden leaf: it spends its flashes there and then)
       flash: { first: ['Early star gets the apple, {who}!', 'Beat you to it, {who}!'], past: ['Mind the mustache, {who}!', 'Feel that breeze, {who}? That was me.'] },
-      stash: ['Golden! Into the stash it goes.', 'More gold for the old star!', 'Ooh, the good stuff. Mine!'],
+      stash: ['Golden! Straight in the tank.', 'More gold for the old star!', 'Ooh, the good stuff. Mine!'], // (a golden beetle)
       golden: ['Golden! Like my glory days.'],
       caught: ['Gotcha, bug! Nothing gets past me.'],
       goldbug: ['A golden bug! Come to Grandpa!', 'A golden beetle! Oh, I need that.'],
@@ -1219,17 +1222,21 @@ window.SnakeChatter = (() => {
     "Fast as ever. Faster, even!": "快如往昔。甚至更快！",
     "Did you see that? Want to see it again?": "看见了吗？想再看一次吗？",
     "Ho ho! Still sparkling!": "嚯嚯！还是那么闪亮！",
+    "Blink and you missed me!": "一眨眼，我就过去了！",
+    "Ahh, wind in my mustache!": "啊，风吹胡子的感觉！",
+    "They don’t make flashes like that anymore.": "这样的闪现，如今可不多见了。",
     "Up and over, sonny!": "跳过去喽，小子！",
     "Hup! Old star, new tricks!": "嘿！老星星，新把戏！",
     "Look at me! A shooting star!": "看我！一颗流星！",
     "Over we go! Ho ho!": "翻过去喽！嚯嚯！",
+    "These old springs still work!": "这把老弹簧还挺好使！",
     "Golden zoom! Oh, that’s the good stuff!": "金色冲刺！哦，这才是好东西！",
     "Out of my way, I’m golden!": "让开，我可是金光闪闪的！",
     "Early star gets the apple, {who}!": "早起的星星有苹果吃，{who}！",
     "Beat you to it, {who}!": "抢先一步，{who}！",
     "Mind the mustache, {who}!": "小心胡子，{who}！",
     "Feel that breeze, {who}? That was me.": "感觉到那阵风了吗，{who}？那是我。",
-    "Golden! Into the stash it goes.": "金的！收进我的小金库。",
+    "Golden! Straight in the tank.": "金的！直接加满油。",
     "More gold for the old star!": "老星星又多了些金子！",
     "Ooh, the good stuff. Mine!": "哦，好东西。我的！",
     "Golden! Like my glory days.": "金的！就像我的黄金岁月。",
@@ -1316,8 +1323,12 @@ window.SnakeChatter = (() => {
   // Star lives for its powers (it flashes whenever it's rested and jumps every
   // hurdle), so it cheers them all: its flashes, jumps and golden dashes, and
   // its flash back from its rest. Half the time, and all of them together at
-  // most this often:
+  // most this often (a golden dash or jump is rarer: always, if it can):
   const SHOW_OFF_REST = 10000, SHOW_OFF_CHANCE = 0.5;
+  // Its flash back is cheered only once it's been back this long: it flashes
+  // the moment it can, as a rule (a tenth of a second later, mostly), and then
+  // it's the flash that's worth a word, not a flash it no longer has.
+  const READY_AFTER = 1000;
   // ...and once in a while someone answers it, a moment later (Wildcard brags
   // back, Mason in Latin): a round has a few, at most.
   const ANSWER_CHANCE = 0.25, ANSWER_AFTER = 1100, ANSWER_REST = 40000;
@@ -1350,7 +1361,7 @@ window.SnakeChatter = (() => {
     'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!', 'Hey! Sawing in half is MY trick, {who}!', 'Fire’s out! What a wet blanket.', 'Ashes to ashes, snack to dust!', 'Rotten luck!', 'Hole-y moly!', 'Now you see it, {who}. Now you don’t!', 'Beep beep, {who}!',
     'In my day we flashed uphill both ways!', 'Did I tell you I once jumped the whole log, {who}?', 'This mustache has seen things, {who}.', 'I was fast before fast was cool.',
     'Rest, rest, rest. I’ll rest when I’m old!', 'Come on, come on… I’m not getting any younger.', 'Hmph. In my day, a flash came right back.', 'Rested! Well, rested enough.',
-    'Look, no legs!', 'Did you see that? Want to see it again?', 'Hup! Old star, new tricks!', 'Early star gets the apple, {who}!', 'Feel that breeze, {who}? That was me.', 'A golden bug! Come to Grandpa!',
+    'Look, no legs!', 'Did you see that? Want to see it again?', 'They don’t make flashes like that anymore.', 'Hup! Old star, new tricks!', 'Early star gets the apple, {who}!', 'Feel that breeze, {who}? That was me.', 'A golden bug! Come to Grandpa!',
     'Sorry, {who}! I don’t do brakes.', 'Lightning! Now there’s a flash I respect.', 'Rain! You know what comes after rain…', 'Family!', 'Oh, look at you! You’ve grown!', 'There’s my trail! I wondered where it went.',
     'Oof! Tripped on my own mustache.', 'Ow! That wasn’t there in my day.', 'Whoa! The log used to be bigger.', 'Hot! Hot! I’m a star, not a comet!', 'Careful, {who}! Old, not slow.', 'Rotted? I must be slowing down.',
   ]);
@@ -1676,14 +1687,22 @@ window.SnakeChatter = (() => {
 
   // Star, the power addict, cheers its every flash, jump and golden dash, and
   // its flash back from its rest: those keep to a rest of their own, or it
-  // would never stop. (While its flash rests, its small talk grumbles.)
+  // would never stop. (While its flash rests, its small talk grumbles.) It
+  // talks so much that its own moments (golden power food, a rainbow, a
+  // kill, a cut) would mostly come while it's still in its gap after the
+  // last line: those clear it (ownMoment), unless that line was this tick's
+  // (one line at a time).
   const showsOff = s => s.personaKey === 'star';
+  const ownMoment = s => { if (s && showsOff(s) && lastSaid[s.id] < game.time) lastSaid[s.id] = -Infinity; };
   // A line for showing off (key; who: a rival it beat to food or shot past),
-  // half the time and at most every SHOW_OFF_REST; whether it said one. Now
-  // and then someone with words for it answers a moment later (see update).
-  function showOff(s, key, who = null) {
+  // half the time and at most every SHOW_OFF_REST (sure: a golden dash or
+  // jump, a round has one or two of each, so whenever it can); whether it
+  // said one. Now and then someone with words for it answers a moment later
+  // (see update).
+  function showOff(s, key, who = null, sure = false) {
     const was = (seen[s.id] ||= {});
-    if (game.time - (was.showAt ?? -Infinity) < SHOW_OFF_REST || !(Math.random() < SHOW_OFF_CHANCE) || !say(s, key, who, true)) return false;
+    if (!sure && (game.time - (was.showAt ?? -Infinity) < SHOW_OFF_REST || !(Math.random() < SHOW_OFF_CHANCE))) return false;
+    if (!say(s, key, who, true)) return false;
     was.showAt = game.time;
     const answers = game.snakes.some(o => o !== s && o.alive && VOICES[o.personaKey]?.showoff);
     if (answers && !pendingAnswer && game.time - answeredAt >= ANSWER_REST && Math.random() < ANSWER_CHANCE) pendingAnswer = { at: game.time + ANSWER_AFTER, teller: s };
@@ -1717,11 +1736,15 @@ window.SnakeChatter = (() => {
       if (s) say(s, 'start', anyone(s));
     }
 
+    const dashed = []; // (the rivals who made a golden dash: their lines wait for its cuts, below)
     for (const e of game.events || []) {
       if (e.type === 'death') {
         const victim = e.snake;
         const killer = byName(victim.killer);
-        if (killer?.persona && killer.alive && killer !== victim) say(killer, 'kill', victim, true);
+        if (killer?.persona && killer.alive && killer !== victim) {
+          ownMoment(killer);
+          say(killer, 'kill', victim, true);
+        }
         if (victim.persona) {
           lastSaid[victim.id] = -Infinity;
           say(victim, 'dies', killer && killer !== victim ? killer : null, true);
@@ -1729,8 +1752,13 @@ window.SnakeChatter = (() => {
         for (const v of alive) if (v.personaKey === 'vulture' && Math.random() < 0.6) say(v, 'death', victim);
       } else if (e.type === 'eat' && e.snake.persona && e.kind !== 'goldcap') { // (a golden mushroom has its own lines: below)
         if (e.kind === 'golden') say(e.snake, 'golden', null, true);
-        else if ((e.gold || e.kind === 'leaf') && VOICES[e.snake.personaKey]?.stash) say(e.snake, 'stash', null, true); // (golden power food: Star crows over its stash)
-        else if (e.kind === 'beetle') say(e.snake, 'caught', null, true);
+        else if ((e.gold || e.kind === 'leaf') && showsOff(e.snake)) {
+          // Golden power food, for Star's habit. A leaf's golden flashes it
+          // spends there and then (a tick later, mostly: too soon for another
+          // word), so it cheers them now; a golden beetle, it crows over.
+          ownMoment(e.snake);
+          if (e.kind === 'leaf') showOff(e.snake, 'dash', null, true); else say(e.snake, 'stash', null, true);
+        } else if (e.kind === 'beetle') say(e.snake, 'caught', null, true);
         else if (e.kind === 'mushroom') say(e.snake, 'mushroom');
         else if (Math.random() < (showsOff(e.snake) ? 0.05 : 0.15)) say(e.snake, 'eat'); // (Star only has eyes for golden things)
       } else if (e.type === 'starving' && e.snake.persona) {
@@ -1758,12 +1786,11 @@ window.SnakeChatter = (() => {
         if (e.snake.persona && !(edge && say(e.snake, 'edge'))) say(e.snake, 'bonk');
         if (other?.persona && other.alive && Math.random() < 0.5) say(other, 'gloat', e.snake);
       } else if (e.type === 'leap' && e.snake.persona) {
-        if (showsOff(e.snake)) showOff(e.snake, 'leap');
+        if (showsOff(e.snake)) showOff(e.snake, 'leap', null, !!e.gold);
         else if (e.gold || Math.random() < 0.3) say(e.snake, 'leap', null, !!e.gold); // (everyone leaps now: a golden one's worth a word)
       } else if (e.type === 'dash' && e.snake.persona) {
         if (e.plain) flashed(e);
-        else if (showsOff(e.snake)) showOff(e.snake, 'dash'); // (a golden dash: Star spends them on speed too)
-        else say(e.snake, 'dash', null, true);
+        else dashed.push(e.snake); // (a golden dash: its line comes after the tick's cuts, below)
       } else if (e.type === 'eat' && e.kind === 'goldcap' && e.snake.persona) {
         say(e.snake, 'wrap', null, true);
       } else if (e.type === 'alight' && e.snake.persona) {
@@ -1772,6 +1799,7 @@ window.SnakeChatter = (() => {
         // A golden dash cut it (the woodpecker cuts nothing now): the dasher
         // crows, and the one cut has words for whoever it was, you included.
         const dasher = e.by != null ? byId(e.by) : null;
+        ownMoment(dasher); ownMoment(e.snake);
         if (dasher?.persona) say(dasher, 'snip', e.snake, true);
         if (e.snake.persona) say(e.snake, 'cut', dasher, true);
       } else if (e.type === 'peck' && e.under?.length) {
@@ -1800,6 +1828,7 @@ window.SnakeChatter = (() => {
       } else if (e.type === 'rainbow') {
         // (Star's own colours, up in the sky: family, and it says so first)
         const kin = alive.find(showsOff);
+        ownMoment(kin);
         if (!(kin && say(kin, 'rainbow', null, true))) {
           const s = pick(alive.filter(a => a !== kin && VOICES[a.personaKey]?.rainbow));
           if (s) say(s, 'rainbow', null, true);
@@ -1809,6 +1838,10 @@ window.SnakeChatter = (() => {
         if (s) { lastSaid[s.id] = -Infinity; say(s, VOICES[s.personaKey].woodpecker ? 'woodpecker' : 'idle', anyone(s), true); }
       }
     }
+    // A golden dash's own line, once the tick's cuts and crashes have had
+    // theirs: one that cut someone (a tail off, or in two) has said so with
+    // its snip or kill line, which say more; failing those, it says this.
+    for (const s of dashed) if (showsOff(s)) showOff(s, 'dash', null, true); else say(s, 'dash', null, true); // (Star spends them on speed too)
 
     for (const s of alive) {
       const m = s.memory, was = (seen[s.id] ||= {});
@@ -1857,10 +1890,13 @@ window.SnakeChatter = (() => {
       }
       was.realm = m.home && { x: m.home.x, y: m.home.y, radius: m.home.radius };
       if (m.moodChangedAt != null && m.moodChangedAt !== was.mood && m.mood) say(s, `mood.${m.mood}`, null, true);
-      // Star's flash back from its rest (unless it's flashed again already): raring to go.
+      // Star's flash back from its rest: raring to go, once it's been back a
+      // moment (if it flashes or jumps by then, it's resting again: no word).
       if (showsOff(s)) {
         const resting = game.time < s.flashReadyAt;
-        if (was.resting && !resting) showOff(s, 'ready');
+        if (was.resting && !resting) was.readyAt = game.time + READY_AFTER;
+        if (resting) was.readyAt = null;
+        else if (was.readyAt != null && game.time >= was.readyAt) { was.readyAt = null; showOff(s, 'ready'); }
         was.resting = resting;
       }
       was.victimId = m.victimId;
