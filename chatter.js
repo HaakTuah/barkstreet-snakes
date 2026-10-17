@@ -9,7 +9,10 @@ window.SnakeChatter = (() => {
   // rain or snow put its fire out; ash and rot, food it was nearest burnt or
   // rotted; desperate, starving soon, it drops its errands for food; flash,
   // a plain flash that beat {who} to food (first) or shot past {who} (past);
-  // last, the last apples are falling.)
+  // last, the last apples are falling. Star's own: zoom, any flash of its
+  // own; ready, its flash back from its rest; resting, small talk while it
+  // rests; stash, golden power food it ate. showoff: an answer to Star's
+  // showing off ({who} is Star).)
   const VOICES = {
     sniper: {
       hungry: ["Hungry. Someone will do."],
@@ -214,6 +217,7 @@ window.SnakeChatter = (() => {
       flash: { first: ['Veni, vidi, edi.'], past: ['Celerissimus!'] },
       dies: ['Et tu, {who}?', 'Alea iacta… estus.', 'Murus… meus… finis.'],
       wrap: ['Sine muro! Murus nullus!'],
+      showoff: ['Festina lente, {who}!', 'Showoffus maximus.', 'Stella celerrima!'], // (answering Star: see showOff)
     },
     wildcard: {
       hungry: ["Very hungry. The hungriest. Nobody has ever been this hungry."],
@@ -245,6 +249,7 @@ window.SnakeChatter = (() => {
       flash: { first: ['Mine, {who}. Tremendous speed.'], past: ['So fast. Faster than {who}. Everyone saw it.'] },
       snip: ['You’re cut, {who}! Tremendously cut.'],
       wrap: ['Walls? Who needs walls? Not today.'],
+      showoff: ['Showing off, {who}? I show off better.', 'Fast? I invented fast, {who}.'], // (answering Star)
     },
     creeper: {
       hungry: ["so… hungry…"],
@@ -450,6 +455,50 @@ window.SnakeChatter = (() => {
       dash: ['Wheeee, nyoom!'],
       flash: { first: ['Now you see it, {who}. Now you don’t!'], past: ['Beep beep, {who}!'] },
       snip: ['Ta-da! {who}, sawn in half!'],
+    },
+    // A jolly old-timer who can't stop showing off: its own flashes and jumps
+    // (zoom, leap, dash), its flash back from its rest (ready), grumbling
+    // while it rests (resting, in its small talk) and golden power food it
+    // eats (stash: a golden beetle or leaf). See showOff.
+    star: {
+      hungry: ['Can’t flash on an empty stomach.'],
+      desperate: ['Even a star’s got to eat!'],
+      start: ['Stand back, young’uns. Watch this.', 'Oh, I’ve waited all day for this!'],
+      idle: ['In my day we flashed uphill both ways!', 'Did I tell you I once jumped the whole log, {who}?', 'Keep up, {who}! I’m only warming up.',
+        'This mustache has seen things, {who}.', 'Sitting still is for rocks.', 'I was fast before fast was cool.'],
+      resting: ['Rest, rest, rest. I’ll rest when I’m old!', 'Come on, come on… I’m not getting any younger.', 'Hmph. In my day, a flash came right back.',
+        'Don’t mind me, {who}. Just catching my breath.', 'Grumble, grumble. Is it ready yet?'],
+      ready: ['There’s my sparkle! Look out.', 'Rested! Well, rested enough.', 'Back in business!', 'Ah, there it is! Who’s next?'],
+      zoom: ['Whee! Still got it!', 'Zip! Just like the old days!', 'Look, no legs!', 'Fast as ever. Faster, even!', 'Did you see that? Want to see it again?', 'Ho ho! Still sparkling!'],
+      leap: ['Up and over, sonny!', 'Hup! Old star, new tricks!', 'Look at me! A shooting star!', 'Over we go! Ho ho!'],
+      dash: ['Golden zoom! Oh, that’s the good stuff!', 'Out of my way, I’m golden!'],
+      flash: { first: ['Early star gets the apple, {who}!', 'Beat you to it, {who}!'], past: ['Mind the mustache, {who}!', 'Feel that breeze, {who}? That was me.'] },
+      stash: ['Golden! Into the stash it goes.', 'More gold for the old star!', 'Ooh, the good stuff. Mine!'],
+      golden: ['Golden! Like my glory days.'],
+      caught: ['Gotcha, bug! Nothing gets past me.'],
+      goldbug: ['A golden bug! Come to Grandpa!', 'A golden beetle! Oh, I need that.'],
+      wrap: ['No edges? Now that’s my kind of log!', 'Out one side, in the other! Marvellous!'],
+      eat: ['Fuel for the flashes!', 'Mm. Rocket fuel.'],
+      mushroom: ['Bleh. That’s slowing-down food.', 'Shrunk! Still quick, though.'],
+      kill: ['Sorry, {who}! I don’t do brakes.', 'Whoops! That’s speed for you.'],
+      weather: { wind: ['Wind at my back! Whee!'], storm: ['Lightning! Now there’s a flash I respect.'], rain: ['Rain! You know what comes after rain…'], sun: ['Sunshine! Twinkle weather.'], snow: ['Brr! Cold’s no good for old stars.'] },
+      woodpecker: ['Peck away, bird. You’ll never catch me!'],
+      last: ['The last apples! Race you all!'],
+      rainbow: ['Family!', 'Oh, look at you! You’ve grown!', 'There’s my trail! I wondered where it went.'],
+      bonk: ['Oof! Tripped on my own mustache.', 'Ow! That wasn’t there in my day.', 'Ho! Still in one piece.'],
+      edge: ['Whoa! The log used to be bigger.'],
+      burning: ['Hot! Hot! I’m a star, not a comet!'],
+      doused: ['Phew! Back to twinkling.'],
+      under: ['A hole under me? Pfft. I’ve hopped bigger.'],
+      cut: ['My rainbow! Who snipped my rainbow?', 'Hey, {who}! That was my best stripe!'],
+      snip: ['Snip! Sorry, {who}, can’t stop!'],
+      gloat: ['Easy, {who}! Mind my points.', 'Careful, {who}! Old, not slow.'],
+      baked: ['Baked apples! Smells like the old days.'],
+      ash: ['Burnt! I should’ve flashed for it.'],
+      rot: ['Rotted? I must be slowing down.'],
+      dies: ['Went out with a twinkle…', 'Tell ’em I was quick, {who}.'],
+      giggle: ['Heh heh! Oh, my.'], // (at Mason's routine: see REPLIES)
+      guffaw: ['Har har! Oh, my mustache!'],
     },
   };
 
@@ -1144,7 +1193,91 @@ window.SnakeChatter = (() => {
     "Fire’s out! What a wet blanket.": "火灭了！真扫兴。",
     "Hole-y moly!": "洞洞洞，我的天！",
     "Now you see it, {who}. Now you don’t!": "现在你看见了，{who}。现在看不见了！",
-    "Beep beep, {who}!": "哔哔，{who}！"
+    "Beep beep, {who}!": "哔哔，{who}！",
+    "Can’t flash on an empty stomach.": "空着肚子可闪不起来。",
+    "Even a star’s got to eat!": "星星也得吃饭！",
+    "Stand back, young’uns. Watch this.": "年轻人，往后站。看好了。",
+    "Oh, I’ve waited all day for this!": "哦，这一刻我等了一整天！",
+    "In my day we flashed uphill both ways!": "想当年，我们来回都是上坡，照样一路闪过去！",
+    "Did I tell you I once jumped the whole log, {who}?": "{who}，我跟你说过我跳过整根木头吗？",
+    "Keep up, {who}! I’m only warming up.": "跟上，{who}！我才刚热身。",
+    "This mustache has seen things, {who}.": "{who}，这胡子可是见过世面的。",
+    "Sitting still is for rocks.": "一动不动是石头干的事。",
+    "I was fast before fast was cool.": "快还没流行的时候，我就已经很快了。",
+    "Rest, rest, rest. I’ll rest when I’m old!": "歇着，歇着，歇着。等我老了再歇！",
+    "Come on, come on… I’m not getting any younger.": "快点，快点……我可不会越活越年轻。",
+    "Hmph. In my day, a flash came right back.": "哼。想当年，闪完马上就能再闪。",
+    "Don’t mind me, {who}. Just catching my breath.": "别管我，{who}。我就喘口气。",
+    "Grumble, grumble. Is it ready yet?": "嘟囔，嘟囔。好了没有？",
+    "There’s my sparkle! Look out.": "我的光芒回来了！小心。",
+    "Rested! Well, rested enough.": "歇好了！嗯，歇得差不多了。",
+    "Back in business!": "重新开张！",
+    "Ah, there it is! Who’s next?": "啊，回来了！下一个是谁？",
+    "Whee! Still got it!": "呜呼！宝刀未老！",
+    "Zip! Just like the old days!": "嗖！就像当年一样！",
+    "Look, no legs!": "看，连腿都不用！",
+    "Fast as ever. Faster, even!": "快如往昔。甚至更快！",
+    "Did you see that? Want to see it again?": "看见了吗？想再看一次吗？",
+    "Ho ho! Still sparkling!": "嚯嚯！还是那么闪亮！",
+    "Up and over, sonny!": "跳过去喽，小子！",
+    "Hup! Old star, new tricks!": "嘿！老星星，新把戏！",
+    "Look at me! A shooting star!": "看我！一颗流星！",
+    "Over we go! Ho ho!": "翻过去喽！嚯嚯！",
+    "Golden zoom! Oh, that’s the good stuff!": "金色冲刺！哦，这才是好东西！",
+    "Out of my way, I’m golden!": "让开，我可是金光闪闪的！",
+    "Early star gets the apple, {who}!": "早起的星星有苹果吃，{who}！",
+    "Beat you to it, {who}!": "抢先一步，{who}！",
+    "Mind the mustache, {who}!": "小心胡子，{who}！",
+    "Feel that breeze, {who}? That was me.": "感觉到那阵风了吗，{who}？那是我。",
+    "Golden! Into the stash it goes.": "金的！收进我的小金库。",
+    "More gold for the old star!": "老星星又多了些金子！",
+    "Ooh, the good stuff. Mine!": "哦，好东西。我的！",
+    "Golden! Like my glory days.": "金的！就像我的黄金岁月。",
+    "Gotcha, bug! Nothing gets past me.": "抓到你了，虫子！什么都逃不过我。",
+    "A golden bug! Come to Grandpa!": "金虫子！快到爷爷这儿来！",
+    "A golden beetle! Oh, I need that.": "金甲虫！哦，我需要那个。",
+    "No edges? Now that’s my kind of log!": "没有边缘？这才是我喜欢的木头！",
+    "Out one side, in the other! Marvellous!": "这边出去，那边进来！妙极了！",
+    "Fuel for the flashes!": "闪现的燃料！",
+    "Mm. Rocket fuel.": "嗯。火箭燃料。",
+    "Bleh. That’s slowing-down food.": "呸。那是让人变慢的东西。",
+    "Shrunk! Still quick, though.": "缩水了！不过还是很快。",
+    "Sorry, {who}! I don’t do brakes.": "抱歉，{who}！我不会刹车。",
+    "Whoops! That’s speed for you.": "哎呀！速度就是这样。",
+    "Wind at my back! Whee!": "顺风！呜呼！",
+    "Lightning! Now there’s a flash I respect.": "闪电！这才是我佩服的闪。",
+    "Rain! You know what comes after rain…": "下雨了！你知道雨后会有什么……",
+    "Sunshine! Twinkle weather.": "出太阳了！闪亮的好天气。",
+    "Brr! Cold’s no good for old stars.": "好冷！冷天对老星星可不好。",
+    "Peck away, bird. You’ll never catch me!": "使劲啄吧，鸟儿。你永远抓不到我！",
+    "The last apples! Race you all!": "最后的苹果！大家比比谁快！",
+    "Family!": "一家人！",
+    "Oh, look at you! You’ve grown!": "哦，看看你！长这么大了！",
+    "There’s my trail! I wondered where it went.": "那是我的尾迹！我还在想它去哪儿了。",
+    "Oof! Tripped on my own mustache.": "哎哟！被自己的胡子绊倒了。",
+    "Ow! That wasn’t there in my day.": "哎哟！我那个年代可没这东西。",
+    "Ho! Still in one piece.": "嚯！还是完整的。",
+    "Whoa! The log used to be bigger.": "哇！这根木头以前可大多了。",
+    "Hot! Hot! I’m a star, not a comet!": "烫！烫！我是星星，不是彗星！",
+    "Phew! Back to twinkling.": "呼！又能闪亮了。",
+    "A hole under me? Pfft. I’ve hopped bigger.": "我身下有洞？哼。我跳过更大的。",
+    "My rainbow! Who snipped my rainbow?": "我的彩虹！谁剪了我的彩虹？",
+    "Hey, {who}! That was my best stripe!": "喂，{who}！那是我最漂亮的一道！",
+    "Snip! Sorry, {who}, can’t stop!": "咔嚓！抱歉，{who}，停不下来！",
+    "Easy, {who}! Mind my points.": "慢点，{who}！小心我的尖角。",
+    "Careful, {who}! Old, not slow.": "小心，{who}！我老，可不慢。",
+    "Baked apples! Smells like the old days.": "烤苹果！闻起来像从前的日子。",
+    "Burnt! I should’ve flashed for it.": "烧没了！我该闪过去拿的。",
+    "Rotted? I must be slowing down.": "烂了？我一定是变慢了。",
+    "Went out with a twinkle…": "闪着光走了……",
+    "Tell ’em I was quick, {who}.": "告诉他们我很快，{who}。",
+    "Heh heh! Oh, my.": "嘿嘿！哎呀呀。",
+    "Har har! Oh, my mustache!": "哈哈哈！哎哟，我的胡子！",
+    "Festina lente, {who}!": "欲速则不达，{who}！",
+    "Showoffus maximus.": "超级爱炫耀。",
+    "Stella celerrima!": "最快的星星！",
+    "Showing off, {who}? I show off better.": "炫耀，{who}？我炫耀得更好。",
+    "Fast? I invented fast, {who}.": "快？快是我发明的，{who}。"
   };
 
   const SNAKE_GAP = 4500;  // ms of game time between lines from the same snake
@@ -1170,6 +1303,7 @@ window.SnakeChatter = (() => {
   let enabled = true, compact = false, logShown = true, listener = null;
   let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null, pendingReply = null, saidAt = {};
   let struck = false; // (lightning has struck in this storm: one remark is enough)
+  let pendingAnswer = null, answeredAt = -Infinity; // (an answer to Star's showing off, on its way; the last one)
   const LINE_REST = 45000; // a snake doesn't say the same line again within this much game time
   const INTRUDER_REST = 25000; // nor call out intruders more often (heads skim in and out at a border)
   // Some moments come often in a long round, so each snake remarks on them at most this often:
@@ -1179,6 +1313,14 @@ window.SnakeChatter = (() => {
   const DESPERATE_REST = 30000; // starving soon (it can come and go as it eats a little)
   const FLASH_REST = 30000;     // its own plain flashes (everyone flashes, about four times a minute)
   const NEAR_FOOD = 5;          // food that rots or burns this near its head (cells, and nearer than anyone's) was food it was after
+  // Star lives for its powers (it flashes whenever it's rested and jumps every
+  // hurdle), so it cheers them all: its flashes, jumps and golden dashes, and
+  // its flash back from its rest. Half the time, and all of them together at
+  // most this often:
+  const SHOW_OFF_REST = 10000, SHOW_OFF_CHANCE = 0.5;
+  // ...and once in a while someone answers it, a moment later (Wildcard brags
+  // back, Mason in Latin): a round has a few, at most.
+  const ANSWER_CHANCE = 0.25, ANSWER_AFTER = 1100, ANSWER_REST = 40000;
   // Mason's Life of Brian moments are told once per visit (a joke told every round isn't one).
   const SET_PIECES = new Set(['Romanes eunt domus.', 'Amicus meus est Biggus Dickus.']);
   const toldPieces = new Set();
@@ -1193,8 +1335,8 @@ window.SnakeChatter = (() => {
     'Mine now. Terribly sorry.', 'I claim this for the Crown. Which crown? Mine.', 'Do you have a flag, {who}? No flag, no colony.', 'Papers, {who}? No? Off you pop.', 'A minor diplomatic incident.', 'I say, {who}! There’s a queue.', 'I appear to be on fire. How awkward.', 'Rain? Just like home.', 'Put out by the weather. How very British.', 'Burnt to a cinder. Like Sunday lunch.', 'Mind the gap!', 'The last apples? Ration them, chaps.',
     'I like beige.', 'This is a log.', 'Tastes like food.', 'That was a bump.',
     'Rest in pieces, {who}.', 'I’m not on the menu.', 'Leftovers… of me?', 'Gone already? I like them ripe.', 'No more waiting. I’ll make my own leftovers.',
-    'Vidi, vici, veni.', 'Divide et imperium-ium.', 'Murus maximus. Very bigus.', 'Wallus erectus.', 'Bonkus interruptus.', 'Murus sum, {who}.', 'Pons sum!', 'Veni, vidi, edi.', 'Rottus maximus.',
-    '{who}? Total loser. Sad!', 'Global warming? Total hoax. Look at all this snow!', 'Fake news! That never happened.', 'Who moved that? Fake wall!', 'I’m bigger than ever. Ask anyone.', 'Low energy, {who}. Very low energy.', 'Nobody bumps me, {who}. Believe me.', '{who} stole my tail! Total theft. Sad!', 'A hole under me? Fake hole. Didn’t even feel it.', 'Fire’s out. Nobody puts out fires like me.', 'Rotten food. Who’s responsible? Not me.', 'So fast. Faster than {who}. Everyone saw it.',
+    'Vidi, vici, veni.', 'Divide et imperium-ium.', 'Murus maximus. Very bigus.', 'Wallus erectus.', 'Bonkus interruptus.', 'Murus sum, {who}.', 'Pons sum!', 'Veni, vidi, edi.', 'Rottus maximus.', 'Festina lente, {who}!', 'Showoffus maximus.',
+    '{who}? Total loser. Sad!', 'Global warming? Total hoax. Look at all this snow!', 'Fake news! That never happened.', 'Who moved that? Fake wall!', 'I’m bigger than ever. Ask anyone.', 'Low energy, {who}. Very low energy.', 'Nobody bumps me, {who}. Believe me.', '{who} stole my tail! Total theft. Sad!', 'A hole under me? Fake hole. Didn’t even feel it.', 'Fire’s out. Nobody puts out fires like me.', 'Rotten food. Who’s responsible? Not me.', 'So fast. Faster than {who}. Everyone saw it.', 'Showing off, {who}? I show off better.', 'Fast? I invented fast, {who}.',
     'nice tail, {who}.', 'we should hang out, {who}.', 'peekaboo, {who}.', 'shh. nobody saw that.',
     'Your eat rate is suboptimal, {who}.', 'Input lag, {who}?', 'Frame-perfect, {who}.',
     'Taking position. …Ooh, I like being Sniper.', 'Headshot! …Is that how Sniper says it?', 'Pew pew! …Sniper doesn’t say pew pew, does it?', 'FOOD. NOW. …Is Gobbler always this hungry?', 'Snacks! All the snacks! …How does Gobbler stop?',
@@ -1206,6 +1348,11 @@ window.SnakeChatter = (() => {
     'Even I must eat. Usually myself.', 'My tail! I was saving that.', 'Haven’t we met before, {who}?', 'Ah. This bit again.', 'Even the log has an end.', 'The last apples. Until the first ones, next time.',
     'Why did the snake cross the bark? It was starving.', 'Knock knock! Who’s there? Lunch, I hope.', 'Knock knock! Oh. It’s the woodpecker.', 'Somewhere over the… oh, there it is.', 'Knock knock, {who}! …Bonk!',
     'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!', 'Hey! Sawing in half is MY trick, {who}!', 'Fire’s out! What a wet blanket.', 'Ashes to ashes, snack to dust!', 'Rotten luck!', 'Hole-y moly!', 'Now you see it, {who}. Now you don’t!', 'Beep beep, {who}!',
+    'In my day we flashed uphill both ways!', 'Did I tell you I once jumped the whole log, {who}?', 'This mustache has seen things, {who}.', 'I was fast before fast was cool.',
+    'Rest, rest, rest. I’ll rest when I’m old!', 'Come on, come on… I’m not getting any younger.', 'Hmph. In my day, a flash came right back.', 'Rested! Well, rested enough.',
+    'Look, no legs!', 'Did you see that? Want to see it again?', 'Hup! Old star, new tricks!', 'Early star gets the apple, {who}!', 'Feel that breeze, {who}? That was me.', 'A golden bug! Come to Grandpa!',
+    'Sorry, {who}! I don’t do brakes.', 'Lightning! Now there’s a flash I respect.', 'Rain! You know what comes after rain…', 'Family!', 'Oh, look at you! You’ve grown!', 'There’s my trail! I wondered where it went.',
+    'Oof! Tripped on my own mustache.', 'Ow! That wasn’t there in my day.', 'Whoa! The log used to be bigger.', 'Hot! Hot! I’m a star, not a comet!', 'Careful, {who}! Old, not slow.', 'Rotted? I must be slowing down.',
   ]);
   const toldThisRound = new Set();
   const bubbles = new Map(); // snake id -> { el, snake, until, at, w, h, side, x, y, ... }, oldest first
@@ -1273,6 +1420,7 @@ window.SnakeChatter = (() => {
   function reset(g) {
     game = g;
     lastAny = -Infinity; lastSaid = {}; seen = {}; lastLine = null; pendingReply = null; saidAt = {}; struck = false;
+    pendingAnswer = null; answeredAt = -Infinity;
     toldThisRound.clear();
     clearBubbles();
     logEl.textContent = '';
@@ -1513,15 +1661,33 @@ window.SnakeChatter = (() => {
   // Everyone flashes, often (about ten a round), so a plain flash is worth a
   // word only now and then: when it grabbed food from under a rival's nose
   // (first), or shot right by a rival's head (past: beside a cell it crossed).
+  // Star cheers any flash of its own (zoom), as it shows off (see showOff).
   function flashed(e) {
-    const s = e.snake, was = (seen[s.id] ||= {});
-    if (game.time - (was.flashAt ?? -Infinity) < FLASH_REST) return;
+    const s = e.snake, was = (seen[s.id] ||= {}), star = showsOff(s);
+    if (!star && game.time - (was.flashAt ?? -Infinity) < FLASH_REST) return;
     const near = (x, y, r) => game.snakes.find(o => o !== s && o.alive && Math.abs(o.body[0].x - x) <= r && Math.abs(o.body[0].y - y) <= r);
     const ate = game.events.find(f => f.type === 'eat' && f.snake === s && f.kind !== 'mushroom');
     const beaten = ate && near(ate.x, ate.y, 3);
     let passed = null;
     if (!ate) for (const c of s.body.slice(0, Math.max(1, e.n || 1))) if ((passed = near(c.x, c.y, 1))) break;
-    if ((beaten || passed) && Math.random() < 0.4 && say(s, beaten ? 'flash.first' : 'flash.past', beaten || passed, true)) was.flashAt = game.time;
+    if (star) showOff(s, beaten ? 'flash.first' : passed ? 'flash.past' : 'zoom', beaten || passed);
+    else if ((beaten || passed) && Math.random() < 0.4 && say(s, beaten ? 'flash.first' : 'flash.past', beaten || passed, true)) was.flashAt = game.time;
+  }
+
+  // Star, the power addict, cheers its every flash, jump and golden dash, and
+  // its flash back from its rest: those keep to a rest of their own, or it
+  // would never stop. (While its flash rests, its small talk grumbles.)
+  const showsOff = s => s.personaKey === 'star';
+  // A line for showing off (key; who: a rival it beat to food or shot past),
+  // half the time and at most every SHOW_OFF_REST; whether it said one. Now
+  // and then someone with words for it answers a moment later (see update).
+  function showOff(s, key, who = null) {
+    const was = (seen[s.id] ||= {});
+    if (game.time - (was.showAt ?? -Infinity) < SHOW_OFF_REST || !(Math.random() < SHOW_OFF_CHANCE) || !say(s, key, who, true)) return false;
+    was.showAt = game.time;
+    const answers = game.snakes.some(o => o !== s && o.alive && VOICES[o.personaKey]?.showoff);
+    if (answers && !pendingAnswer && game.time - answeredAt >= ANSWER_REST && Math.random() < ANSWER_CHANCE) pendingAnswer = { at: game.time + ANSWER_AFTER, teller: s };
+    return true;
   }
 
   // Called once per tick, after the engine moved everyone.
@@ -1563,9 +1729,10 @@ window.SnakeChatter = (() => {
         for (const v of alive) if (v.personaKey === 'vulture' && Math.random() < 0.6) say(v, 'death', victim);
       } else if (e.type === 'eat' && e.snake.persona && e.kind !== 'goldcap') { // (a golden mushroom has its own lines: below)
         if (e.kind === 'golden') say(e.snake, 'golden', null, true);
+        else if ((e.gold || e.kind === 'leaf') && VOICES[e.snake.personaKey]?.stash) say(e.snake, 'stash', null, true); // (golden power food: Star crows over its stash)
         else if (e.kind === 'beetle') say(e.snake, 'caught', null, true);
         else if (e.kind === 'mushroom') say(e.snake, 'mushroom');
-        else if (Math.random() < 0.15) say(e.snake, 'eat');
+        else if (Math.random() < (showsOff(e.snake) ? 0.05 : 0.15)) say(e.snake, 'eat'); // (Star only has eyes for golden things)
       } else if (e.type === 'starving' && e.snake.persona) {
         // (unless it's just said it's desperate: that said it)
         if (!(game.time - (seen[e.snake.id]?.desperateAt ?? -Infinity) < 15000)) say(e.snake, 'hungry', null, true);
@@ -1591,10 +1758,12 @@ window.SnakeChatter = (() => {
         if (e.snake.persona && !(edge && say(e.snake, 'edge'))) say(e.snake, 'bonk');
         if (other?.persona && other.alive && Math.random() < 0.5) say(other, 'gloat', e.snake);
       } else if (e.type === 'leap' && e.snake.persona) {
-        if (e.gold || Math.random() < 0.3) say(e.snake, 'leap', null, !!e.gold); // (everyone leaps now: a golden one's worth a word)
+        if (showsOff(e.snake)) showOff(e.snake, 'leap');
+        else if (e.gold || Math.random() < 0.3) say(e.snake, 'leap', null, !!e.gold); // (everyone leaps now: a golden one's worth a word)
       } else if (e.type === 'dash' && e.snake.persona) {
-        if (!e.plain) say(e.snake, 'dash', null, true); // (a golden dash)
-        else flashed(e);
+        if (e.plain) flashed(e);
+        else if (showsOff(e.snake)) showOff(e.snake, 'dash'); // (a golden dash: Star spends them on speed too)
+        else say(e.snake, 'dash', null, true);
       } else if (e.type === 'eat' && e.kind === 'goldcap' && e.snake.persona) {
         say(e.snake, 'wrap', null, true);
       } else if (e.type === 'alight' && e.snake.persona) {
@@ -1629,8 +1798,12 @@ window.SnakeChatter = (() => {
         const s = pick(alive.filter(a => VOICES[a.personaKey]?.last));
         if (s) say(s, 'last', null, true);
       } else if (e.type === 'rainbow') {
-        const s = pick(alive.filter(a => VOICES[a.personaKey]?.rainbow));
-        if (s) say(s, 'rainbow', null, true);
+        // (Star's own colours, up in the sky: family, and it says so first)
+        const kin = alive.find(showsOff);
+        if (!(kin && say(kin, 'rainbow', null, true))) {
+          const s = pick(alive.filter(a => a !== kin && VOICES[a.personaKey]?.rainbow));
+          if (s) say(s, 'rainbow', null, true);
+        }
       } else if (e.type === 'woodpecker') {
         const s = pick(alive);
         if (s) { lastSaid[s.id] = -Infinity; say(s, VOICES[s.personaKey].woodpecker ? 'woodpecker' : 'idle', anyone(s), true); }
@@ -1684,6 +1857,12 @@ window.SnakeChatter = (() => {
       }
       was.realm = m.home && { x: m.home.x, y: m.home.y, radius: m.home.radius };
       if (m.moodChangedAt != null && m.moodChangedAt !== was.mood && m.mood) say(s, `mood.${m.mood}`, null, true);
+      // Star's flash back from its rest (unless it's flashed again already): raring to go.
+      if (showsOff(s)) {
+        const resting = game.time < s.flashReadyAt;
+        if (was.resting && !resting) showOff(s, 'ready');
+        was.resting = resting;
+      }
       was.victimId = m.victimId;
       was.planted = m.planted || 0;
       was.mood = m.moodChangedAt;
@@ -1705,6 +1884,14 @@ window.SnakeChatter = (() => {
       }
     }
 
+    // Someone answers Star's showing off, in their own voice (see showOff).
+    if (pendingAnswer && game.time >= pendingAnswer.at) {
+      const { teller } = pendingAnswer;
+      pendingAnswer = null;
+      const who = teller.alive && pick(alive.filter(o => o !== teller && VOICES[o.personaKey]?.showoff));
+      if (who && say(who, 'showoff', teller, true)) answeredAt = game.time;
+    }
+
     // Copycat repeats exactly what it just heard, in Chinese.
     const cat = alive.find(s => s.personaKey === 'copycat');
     if (cat && lastLine?.template && lastLine.speaker !== cat && game.time - lastAny > 500 && Math.random() < 0.35) {
@@ -1716,10 +1903,10 @@ window.SnakeChatter = (() => {
     }
     if (lastLine && game.time - lastAny > 2000) lastLine = null;
 
-    // Small talk now and then.
+    // Small talk now and then. (Star, while its flash rests, grumbles as often as not.)
     if (game.time - lastAny > 3500 && Math.random() < 0.04) {
       const s = pick(alive);
-      if (s) say(s, 'idle', anyone(s));
+      if (s) say(s, showsOff(s) && game.time < s.flashReadyAt && Math.random() < 0.5 ? 'resting' : 'idle', anyone(s));
     }
   }
 
