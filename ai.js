@@ -54,9 +54,9 @@ window.SnakeAI = (() => {
   //                                   costs anyone else, wherever it ends with no more risk than `risk`
   //                                   (beyond that, the full price); everyWay: the flash weighed every way,
   //                                   not just the way I'd crawl; jumpAny: the plain jump over any hurdle
-  //                                   with somewhere free to land, not just out of a crash or onto food;
-  //                                   dashSpend: golden dashes spent on speed too, not just on cuts and
-  //                                   golden things
+  //                                   with somewhere free to land that no rival could reach first, not
+  //                                   just out of a crash or onto food; dashSpend: golden dashes spent on
+  //                                   speed too (at the full price), not just on cuts and golden things
   //   golden                        { power, apple, contested }: golden power food (golden beetles, leaves,
   //                                   golden mushrooms) worth this many times what it's worth to anyone
   //                                   else, and a golden apple this many; contested: how much golden power
@@ -248,16 +248,17 @@ window.SnakeAI = (() => {
     },
     star: {
       name: 'Star', color: '#eab308', look: 'star', // (a rainbow body behind a sunflower star; sunflower stands in for it in text)
-      blurb: 'Jumps and flashes every chance it gets. Hoards anything golden.',
-      kill: ['Star was there in a flash.', 'Back in its day, that was just the warm-up.', 'Too slow, sonny!'],
+      blurb: 'Jumps and flashes every chance it gets. Catch it when it dims.',
+      kill: ['Star was there in a flash.', 'Back in its day, that was just the warm-up.', 'Make a wish.'],
       win: ['Not bad for an old-timer.', 'Never once sat still.', 'One more flash, for the road.'],
       w: {
-        space: 1, territory: 1.2, // (at 0.6 it won 23%, in every round of 800; at 1.2, 26.5%)
+        space: 1, territory: 1.2, // (at 0.6 it won 23%, in every round of 800; at 1.2, 26.5%, and 28.4% once its jumps kept clear of heads and its golden dashes weren't thrown away)
         food: 5, eat: 70, pellet: 1.2, foodRange: 40,
         margin: 4, headRisk: 700, zoneRisk: 100,
         // Its powers are free to it, unless one ends where a rival could
-        // strike (half a head's risk: in reach of its powers, or nearer): it
-        // flashes over four times as often as anyone, and jumps ten times as often.
+        // strike (half a head's risk: in reach of its powers, or nearer), or
+        // it's a golden dash just for speed: it flashes over four times as
+        // often as anyone, and jumps ten times as often.
         powers: { price: 0, risk: 350, everyWay: true, jumpAny: true, dashSpend: true },
         golden: { power: 6, apple: 1.5, contested: 0.5 }, // (it eats about twice as much golden power food as anyone)
       },
@@ -1151,9 +1152,11 @@ window.SnakeAI = (() => {
     // Desperate, every power is half the price. (Nobody's told anyone's rests.)
     // A power habit (w.powers: Star's) prices them all far lower, and may
     // weigh the flash every way, jump any hurdle there's somewhere to land
-    // beyond, and spend golden dashes on speed; by the same tests of where
-    // each goes (it never takes one into a crash) and the same risk where it
-    // ends. One that ends where a rival could strike costs it the full price.
+    // beyond that no rival could get to first, and spend golden dashes on
+    // speed (at the full price: free, it threw both away at once); by the
+    // same tests of where each goes (it never takes one into a crash) and the
+    // same risk where it ends. One that ends where a rival could strike costs
+    // it the full price.
     function powerPick(crawl, crawlDir) {
       const jump = me.leaps > 0 || (me.leapIn === 0 && me.body.length > TUNE.MIN_LENGTH);
       if (me.flashIn !== 0 && !jump) return null;
@@ -1175,11 +1178,13 @@ window.SnakeAI = (() => {
       const hurdle = i => myCells[i] === stampM || (mineFree[i] > 1 && (mineFree[i] < HOLE || fire.has(i) || (pecks ? !pecks.has(i) : trapped)));
       const path = [0, 0, 0];
       const ate = [-1, -1, -1], ateV = [0, 0, 0];
-      let ateL = 0, ateG = 0, ateGain = 0, endRisk = 0; // (endRisk: the risk where the last one weighed ends)
+      let ateL = 0, ateG = 0, ateGain = 0, endRisk = 0, idle = false; // (endRisk: the risk where the last one weighed ends; idle: it was a golden dash just for speed)
       let best = null;
       const consider = (d, flash, v, price, extra) => {
+        const full = endRisk > safe || idle;
+        idle = false;
         if (v === null) return;
-        v += extra - price * cheap * (endRisk > safe ? 1 : habit.price) * U;
+        v += extra - price * cheap * (full ? 1 : habit.price) * U;
         if (v > (best ? best.v : crawl + 1)) best = { d, flash, v };
       };
       for (const d of DIR_LIST) {
@@ -1215,29 +1220,32 @@ window.SnakeAI = (() => {
         return true;
       }
 
-      // A leap over `reach` cells (golden: two if it can, else one, as the
+      // A leap over `span` cells (golden: two if it can, else one, as the
       // engine tries them), landing on the next, two ticks from now.
-      function leapOpt(d, reach) {
+      function leapOpt(d, span) {
         const golden = me.leaps > 0;
-        if (!trace(d, reach + 1)) return null;
+        if (!trace(d, span + 1)) return null;
         let over = false;
-        for (let i = 0; i < reach; i++) over ||= hurdle(path[i]);
-        const land = path[reach];
+        for (let i = 0; i < span; i++) over ||= hurdle(path[i]);
+        const land = path[span];
         if (!over || !free(land)) return null;
-        if (!golden && !trapped && !habit.jumpAny && !(foodValue[land] > 0)) { // (the plain jump: out of a crash, or onto food, or just short of it)
+        if (!golden && !trapped && !(foodValue[land] > 0)) { // (the plain jump: out of a crash, or onto food, or just short of it)
           const lx = land % N, past = cellAt(lx + d.x, (land - lx) / N + d.y);
-          if (!(past >= 0 && foodValue[past] > 0)) return null;
+          // (A habit's jump, for its own sake, only where no rival could get
+          // to the landing before I'm down: one moving in as I take off and
+          // the jump doesn't go, and I crawl into what I meant to hop.)
+          if (!(past >= 0 && foodValue[past] > 0) && !(habit.jumpAny && reach[land] > 2)) return null;
         }
         let L = me.body.length, g = me.grow;
         if (!golden) for (let n = 0; n < TUNE.LEAP_COST; n++) { if (g > 0) g--; else L--; }
-        for (let i = 0; i <= reach; i++) { if (g > 0) g--; else L--; L++; }
+        for (let i = 0; i <= span; i++) { if (g > 0) g--; else L--; L++; }
         const nb = bodies[2];
         for (let j = 0; j < L; j++) {
-          if (j <= reach) { const c = path[reach - j]; nb[j].x = c % N; nb[j].y = (c - nb[j].x) / N; }
-          else { const b = me.body[j - reach - 1]; nb[j].x = b.x; nb[j].y = b.y; }
+          if (j <= span) { const c = path[span - j]; nb[j].x = c % N; nb[j].y = (c - nb[j].x) / N; }
+          else { const b = me.body[j - span - 1]; nb[j].x = b.x; nb[j].y = b.y; }
         }
         // (It eats where it lands, and a golden leap what it crawls over first.)
-        eatOn(reach === 2 && !hurdle(path[0]) ? path[0] : -1, land, -1, L, g, 0.85);
+        eatOn(span === 2 && !hurdle(path[0]) ? path[0] : -1, land, -1, L, g, 0.85);
         endRisk = risk[land];
         const gain = ateGain - 0.6 * risk[land];
         const score = depth > 2 ? search(nb, ateL, ateG, depth - 2, 2, gain) : evaluate(nb, ateL, ateG, 2) + gain;
@@ -1278,7 +1286,10 @@ window.SnakeAI = (() => {
           }
           for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold)) gold = true;
         }
-        if (!cut && !gold && !trapped && !habit.dashSpend) return null;
+        if (!cut && !gold && !trapped) { // (just for speed: only a habit's, and at anyone's price, so only for a real gain; free, it spent both at once, a zig-zag that got it nothing)
+          if (!habit.dashSpend) return null;
+          idle = true;
+        }
         return groundOpt(L, cut * U);
       }
 
