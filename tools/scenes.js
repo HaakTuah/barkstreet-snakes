@@ -4,6 +4,8 @@
 // game itself stays on its title card, so nothing else draws.
 //
 //   long:      4 snakes x 70 segments, 40 beads, 60 holes (the second pass's scene)
+//   long-star: the same with Star in Sniper's seat (round five: its rainbow, its
+//              star for a head and the twinkles its tail sheds)
 //   fields:    Sovereign's realm and Colonist's three colonies (two overlapping,
 //              one inside the realm), 150 holes, 4 snakes of 30
 //   nofields:  the same board without the land (its twin: the land's cost is the ratio)
@@ -28,9 +30,8 @@ const fields = ({ land = true, intruder = false } = {}) => `(() => {
     for (let k = 0; k < 150; k++) g.holes.add(((k * 37) % 24) * 24 + (k * 11) % 24);
     return g;
   })()`;
-const SCENES = {
-  long: `(() => {
-    const E = SnakeEngine, R = SnakeRender, g = E.createGame({ withPlayer: true, personas: ['sniper', 'mason', 'gobbler'] });
+const long = first => `(() => {
+    const E = SnakeEngine, R = SnakeRender, g = E.createGame({ withPlayer: true, personas: ['${first}', 'mason', 'gobbler'] });
     g.snakes.forEach((s, i) => {
       const body = [];
       for (let k = 0; k < 70; k++) body.push({ x: Math.floor(k / 24) % 2 ? 23 - k % 24 : k % 24, y: Math.min(23, i * 6 + Math.floor(k / 24)) });
@@ -40,7 +41,10 @@ const SCENES = {
     for (let k = 0; k < 40; k++) g.food.push({ x: k % 24, y: 4 + (k % 2) * 6 + Math.floor(k / 24), kind: 'pellet', color: '#4ade80' });
     for (let k = 0; k < 60; k++) g.holes.add((5 + Math.floor(k / 24) * 6 + 2) * 24 + k % 24);
     return g;
-  })()`,
+  })()`;
+const SCENES = {
+  long: long('sniper'),
+  'long-star': long('star'),
   fields: fields(),
   nofields: fields({ land: false }),
   intruders: fields({ intruder: true }),
