@@ -1736,6 +1736,7 @@ window.SnakeChatter = (() => {
       if (s) say(s, 'start', anyone(s));
     }
 
+    const dashed = []; // (the rivals who made a golden dash: their lines wait for its cuts, below)
     for (const e of game.events || []) {
       if (e.type === 'death') {
         const victim = e.snake;
@@ -1789,8 +1790,7 @@ window.SnakeChatter = (() => {
         else if (e.gold || Math.random() < 0.3) say(e.snake, 'leap', null, !!e.gold); // (everyone leaps now: a golden one's worth a word)
       } else if (e.type === 'dash' && e.snake.persona) {
         if (e.plain) flashed(e);
-        else if (showsOff(e.snake)) showOff(e.snake, 'dash', null, true); // (a golden dash: Star spends them on speed too)
-        else say(e.snake, 'dash', null, true);
+        else dashed.push(e.snake); // (a golden dash: its line comes after the tick's cuts, below)
       } else if (e.type === 'eat' && e.kind === 'goldcap' && e.snake.persona) {
         say(e.snake, 'wrap', null, true);
       } else if (e.type === 'alight' && e.snake.persona) {
@@ -1838,6 +1838,10 @@ window.SnakeChatter = (() => {
         if (s) { lastSaid[s.id] = -Infinity; say(s, VOICES[s.personaKey].woodpecker ? 'woodpecker' : 'idle', anyone(s), true); }
       }
     }
+    // A golden dash's own line, once the tick's cuts and crashes have had
+    // theirs: one that cut someone (a tail off, or in two) has said so with
+    // its snip or kill line, which say more; failing those, it says this.
+    for (const s of dashed) if (showsOff(s)) showOff(s, 'dash', null, true); else say(s, 'dash', null, true); // (Star spends them on speed too)
 
     for (const s of alive) {
       const m = s.memory, was = (seen[s.id] ||= {});

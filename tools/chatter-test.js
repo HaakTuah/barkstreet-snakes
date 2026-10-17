@@ -13,7 +13,8 @@
 // most every 10 s (even flashing the moment its rest is over, when it doesn't
 // say its flash is back), grumbles while it rests, crows over golden things,
 // greets a rainbow as family (its own moments aren't crowded out by its
-// showing off), and now and then Wildcard or Mason answers it. Then a few
+// showing off), and now and then Wildcard or Mason answers it; a golden dash
+// that cuts someone leaves the words to the snip or the kill. Then a few
 // whole AI rounds with the chatter listening (two with Star), to see nothing
 // throws. Last, the sound (audio.js on a stand-in AudioContext): a rival's
 // flash, jump or the like never silences yours, and your own golden ones in
@@ -320,6 +321,8 @@ const STAR = VOICES.star;
   check(says(tick(g, jump(), 8000), star, STAR.leap), '...but a plain jump 10.5 s after: a leap line');
   check(says(tick(g, dash(), 5000, 0.6), star, STAR.dash), 'a golden dash 5 s later: a dash line all the same, whatever the roll');
   check(tick(g, flash(), 5000).length === 0, '...and a flash 5 s after that: nothing');
+  let h = tick(g, [...dash(), { type: 'cut', snake: you, x: 3, y: 22, lost: 2, by: star.id }], 10500);
+  check(says(h, star, STAR.snip, you) && !says(h, star, STAR.dash), `a golden dash that cuts your tail off: Star's snip, not its dash line (said: ${lineOf(h, star)})`);
   star.flashReadyAt = g.time + 10600;
   check(tick(g, [], 10000).length === 0, 'resting: nothing yet');
   check(tick(g, [], 700).length === 0, '...its flash back from its rest: nothing yet (it flashes the moment it can, as a rule)');
@@ -328,7 +331,7 @@ const STAR = VOICES.star;
   tick(g, [], 11900);
   check(tick(g).length === 0, 'its rest over again: nothing yet');
   star.flashReadyAt = g.time + 100 + T.FLASH_COOLDOWN_MS; // (it flashes the tick after its rest ends, as its AI does)
-  let h = tick(g, flash());
+  h = tick(g, flash());
   check(says(h, star, STAR.zoom), `...and it flashes a tick later: the flash has the word (said: ${lineOf(h, star)})`);
   check(!says(tick(g, [], 1000), star, STAR.ready) && !says(tick(g, [], 1000), star, STAR.ready), '...and no ready line after it');
   star.flashReadyAt = g.time + 12000;
@@ -382,6 +385,17 @@ const STAR = VOICES.star;
   h = tick(g, [{ type: 'cut', snake: star, x: 11, y: 12, lost: 2, by: sov.id }], 1000);
   check(says(h, star, STAR.cut, sov) && says(h, sov, VOICES.sovereign.snip, star), `...and is cut by Sovereign's golden dash a second after that: a cut line all the same (said: ${lineOf(h, star)})`);
 }
+{ // Anyone's golden dash that cuts someone leaves the words to its snip (a tail off) or its kill line (in two): they say more than a dash line. Failing those, its dash line.
+  const g = stage(['sovereign', 'gobbler'], { 0: [3, 22], 1: [12, 12], 2: [12, 18] }), [you, sov, gob] = g.snakes;
+  const dash = () => ({ type: 'dash', snake: sov, x: 9, y: 12, n: 3 });
+  let h = tick(g, [dash(), { type: 'cut', snake: you, x: 3, y: 22, lost: 2, by: sov.id }]);
+  check(says(h, sov, VOICES.sovereign.snip, you) && !says(h, sov, VOICES.sovereign.dash), `a golden dash that cuts your tail off: the dasher's snip (said: ${lineOf(h, sov)})`);
+  gob.alive = false; gob.killer = sov.name; gob.killerId = sov.id; gob.fatal = 'cut';
+  h = tick(g, [dash(), { type: 'death', snake: gob }], 6000);
+  check(says(h, sov, VOICES.sovereign.kill, gob) && !says(h, sov, VOICES.sovereign.dash), `...one that cuts Gobbler in two: its kill line (said: ${lineOf(h, sov)})`);
+  h = tick(g, [dash(), { type: 'cut', snake: you, x: 3, y: 22, lost: 2, by: sov.id }], 6000);
+  check(says(h, sov, VOICES.sovereign.dash), `...and another that cuts your tail, its one snip said only lately: its dash line after all (said: ${lineOf(h, sov)})`);
+}
 { // Now and then a rival answers Star's showing off, a moment later, naming it: not every time, and not again for 40 s.
   for (const [k, list] of [['wildcard', VOICES.wildcard.showoff], ['mason', VOICES.mason.showoff]]) {
     const g = stage(['star', k], { 0: [3, 22], 1: [12, 12], 2: [20, 4] }), [, star, other] = g.snakes;
@@ -395,7 +409,7 @@ const STAR = VOICES.star;
     check(says(tick(g, flash(), 12000, 0.2), star, STAR.zoom) && says(tick(g, [], 1200), other, list, star), '...but 56 s later, yes');
   }
 }
-console.log('ok   Star shows off its flashes, jumps, golden dashes and flash back (half the time, every 10 s at most; a golden one whenever it can; its flash back only once it\'s been back a second), grumbles while it rests, crows over golden things and greets a rainbow first, even just after another line, as it does its kill or a cut; Wildcard and Mason answer it now and then');
+console.log('ok   Star shows off its flashes, jumps, golden dashes and flash back (half the time, every 10 s at most; a golden one whenever it can; its flash back only once it\'s been back a second), grumbles while it rests, crows over golden things and greets a rainbow first, even just after another line, as it does its kill or a cut; Wildcard and Mason answer it now and then; a golden dash that cuts leaves the words to the snip or the kill');
 
 // The power habit at its worst: Star flashing the tick after its rest is over
 // (as its AI does) and jumping every 4 s for three minutes, with you, Wildcard
