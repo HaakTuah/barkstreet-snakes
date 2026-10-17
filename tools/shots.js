@@ -39,15 +39,18 @@ fs.mkdirSync(out, { recursive: true });
     }
     return false;
   };
-  // Star, staged on that round: lit while its flash is ready (twinkling, its
-  // rainbow trailing it), then holding golden jumps with its flash resting
-  // (dim and grumbling, the gold line round its points, its pips past them).
+  // Star, staged on that round as it mostly looks: part way through its
+  // flash's rest, three of its points lit again (its tell counts down on
+  // them; ready, it flashes at once, so a ready Star is a rare sight), its
+  // rainbow trailing it; then holding golden jumps with its flash just spent
+  // (its points dim and its brows knitted, the gold line round its points,
+  // its pips past them).
   const starShots = async prefix => {
     if (!await starRound()) { console.log('no Star moment: it went out every time'); return; }
-    await b.eval(`(() => { const st = SnakeDebug.game().snakes.find(s => s.personaKey === 'star'); st.flashReadyAt = 0; return 1; })()`);
+    await b.eval(`(() => { const g = SnakeDebug.game(), st = g.snakes.find(s => s.personaKey === 'star'); st.dashes = 0; st.flashReadyAt = g.time + 2400; return 1; })()`);
     await b.sleep(150);
     await shot(`${prefix}star.jpg`);
-    await b.eval(`(() => { const g = SnakeDebug.game(), st = g.snakes.find(s => s.personaKey === 'star'); st.leaps = 2; st.dashes = 0; st.flashReadyAt = g.time + 5000; return 1; })()`);
+    await b.eval(`(() => { const g = SnakeDebug.game(), st = g.snakes.find(s => s.personaKey === 'star'); st.leaps = 2; st.dashes = 0; st.flashReadyAt = g.time + 5800; return 1; })()`);
     await b.sleep(400);
     await shot(`${prefix}star-gold.jpg`);
   };
