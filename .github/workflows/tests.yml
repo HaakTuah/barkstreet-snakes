@@ -1,7 +1,7 @@
 # The game's own checks, on every push and pull request: the rules, online
 # play, the rivals' chatter and the records in Node, the same seeded rounds
 # with and without thinking ahead, and the renderer's and controls' promises
-# in headless Chrome (the runner has it).
+# in headless Chrome (the runner has it). The two jobs run side by side.
 name: tests
 
 on:
@@ -26,12 +26,20 @@ jobs:
         run: node tools/chatter-test.js
       - name: Records
         run: node tools/records-test.js
+      # Four of seed 3's rounds, each played on its own seed (round r of a run
+      # with --seed S is round 0 of one with --seed S + 7919 r): 29, 37 and
+      # 38, and 47. Between them they cross every kind of event the engine
+      # has, the rare ones too (a snake alight and singed, a fire put out,
+      # food burnt to ash, a beetle flown off: each comes up in one of seed
+      # 3's first 60 rounds), for a sixteenth of what those 60 cost.
       - name: The same rounds with and without thinking ahead
         run: |
-          a=$(node tools/simulate.js 60 --seed 3 --check | grep fingerprint)
-          b=$(node tools/simulate.js 60 --seed 3 --check --ahead | grep fingerprint)
-          echo "plain: $a"; echo "ahead: $b"
-          test "$a" = "$b"
+          for run in "1 --seed 229654" "2 --seed 293006" "1 --seed 372196"; do
+            a=$(node tools/simulate.js $run --check | grep fingerprint)
+            b=$(node tools/simulate.js $run --check --ahead | grep fingerprint)
+            echo "$run: plain $a, ahead $b"
+            test "$a" = "$b"
+          done
 
   browser:
     runs-on: ubuntu-latest
