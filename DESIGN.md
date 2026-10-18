@@ -950,7 +950,46 @@ Escapes from a chase went from about half (51%) to 43% with live food alone, and
   - *the bridge:* a segment over a pit hangs by how far in from the rim it is. Its shadow drops 0.2 and 0.28 cells further, a little bigger, and leaves the bark once half way over. Its underside is a crescent in a darker step of its own colour; a span sags (up to 15% smaller in the middle); a tail end past the rim droops, up to 30% smaller and darker, until it leaves the cell.
   - *the cost:* nothing new is clipped or veiled; shadows over a pit go in the bark's veil, crescents are cached colour steps, and what's near a hole is worked out once a tick. Against 11fb49a, in one page with interleaved frames: the long, long-star, fields and holes scenes within noise (0.95 to 1.03); the new bridges scene 1.10, and leaps 1.21 while a jump is in the air (about half a second a jump).
 
-*(The woodpecker's fairness, food and beetles follow, from the simulation study.)*
+**The woodpecker plays fair** (the owner saw Mute shut in by a mark beside it, with no way to plan for it, and called the holes "a rather odd shape"). A study played each idea alone and together, 300 seeded rounds to screen and 600 on two seeds to confirm. What's kept:
+- **It never shuts you in.** It won't pick a patch that leaves any snake less room than its length (room judged with the real timings, tails leaving), while it has another to pick.
+- **No crumbs.** A patch that would cut off an island of one or two cells takes those cells too. They're in the mark from the start, so you see them go. If a snake or food is on them, it picks another patch.
+- **It knocks food aside.** Patches may cover food now. Before, it kept off food, and the holes went round apples and mushrooms in odd shapes. At the strike each piece is knocked to the nearest free cell outside the patch. Ties go to the one nearest the middle of the log, then the first by row. It's a rule, never chance, so a rival can work it out, and so can you: through the aim the food in the mark trembles, and a faint ring shows where it will land.
+- **Rounder hollows.** After a patch grows, any cell beside it with three or more of its neighbours in the patch (or old holes, or the edge) is filled in, and one-cell spurs are dropped. The holes read as hollows pecked on purpose, not scribbles.
+- **Bigger bites, shorter rests:** patches of 12 cells growing to 20 (were 9 to 16), and rests from 30 ticks down to 10 (were 36 to 12). Sudden death stays as long, since fewer, rounder holes take as long to fill the log.
+- **It still comes at 2:00.** Arrival tied to how full the log is was tried; it moved the round's length around without making it fairer.
+- **Measured** (600 rounds, seeds 3 and 11; the AI as it was):
+  - sudden-death deaths sealed in by a patch: 21% → 3%;
+  - the biggest island's snake wins 41% of the time (was 60–64%), so the end is no longer a lottery;
+  - one- and two-cell islands: 2.3 a round → 0;
+  - median round 172 and 170 s.
+- **The cue:** the mark covers the crumbs it will take; knocked food trembles, and a ring shows where it'll land; at the strike, the food flies there in an arc.
+- **The lesson:** at your first sudden death, "The woodpecker knocks food aside, and never shuts you in."
+- **The rivals** see the same: they work out where knocked food lands (the engine's own rule, exported), and race for it when it pays.
+- *Crossing the mark* (a rival leaving a marked patch before the strike) is left for PR B, with powers that let you do it on purpose.
+
+**Less fruit, more beetles** (the owner: food is "a bit too plentiful most of the time", and more beetles, please). Rivals now hunt beetles well (above), so beetles can carry more of the food:
+- two apples on the log, not three;
+- up to two beetles out at once, coming out twice as often (0.012 a tick), and still coming in sudden death;
+- one in eight is golden (was two in five), so golden leaps stay about three a round;
+- **a cornered beetle digs in:** with a head within 6 cells and no burrow within 7, it stops and bores into the bark for 8 ticks (about a second). It can still be caught while it digs; then it's underground, and comes out of a burrow later, as after a dive. Without it, a beetle in open bark was nearly always caught once the rivals hunted well (escapes fell to about 11%); with it, escapes are 28%, inside the 20–35% that keeps a chase worth it.
+  - *The cue:* it stops, sawdust sprays, it sinks into the bark as the time runs out, and a little heap of sawdust is left where it went in.
+  - *The lesson:* the first time one digs in near you, "A cornered beetle digs in. Grab it before it's gone!"
+  - *The rivals* see a digging beetle stay put until it's gone, and race for it when they can get there in time.
+- **Measured** (600 rounds, seeds 3 and 11): meals mid-round 19.8 → 16.6 a minute; beetles caught 3.7 → 13 a round; starving 3.1% and 3.3% of deaths.
+- **Gobbler** came out lowest (14.3% on seed 11) with fewer apples, so it's tuned: beetles are its food too.
+
+**A strike that doesn't stutter** (the owner saw a big lag spike while the woodpecker was out). A strike that cuts Sovereign's or Colonist's land rebuilt the land's picture in the strike's frame: 34 to 67 ms, a visible hitch. Now the land after the strike is drawn during the 17-tick aim, a little each frame, and swapped in at the strike (if the land changes otherwise meanwhile, it's built the old way). The bird's own layer is cut down to the board and its perch, and isn't rebuilt when a phone's address bar moves.
+
+**Star's rainbow streams.** The owner asked whether the rainbow still changes colour as it did for Wildcard and Mute, since it no longer looked animated. It did change, but its colours flowed back along the body at about a quarter of the crawl, so over the log they crept forward with the snake and looked painted on. (The old one flowed toward the head, which added up to an obvious shimmer.) Now the flow is tied to the distance Star travels, about 1.25 times its crawl, so the colours stream backward over the log behind it like a trail. Each segment changes hue about once a second. It settles when Star is stunned or stops, and bursts on a flash. With reduced motion the colours drift slowly in place instead. Copycat's pale copy stays in step.
+
+**Phones.**
+- **The screen stays awake** while you play, in the countdown, and while you watch an AI round (a screen wake lock, asked for again when you come back to the tab). It's let go when you nap or a card or menu is up. Where it isn't supported, nothing changes.
+- **A bigger board.** In portrait the board now runs edge to edge: no page padding beside it, and the frame slims to a thin rim with the moss allowed to run off the edge. That's 346 → about 382 points wide on a 390-point phone, every cell 10% bigger. You still see the whole log (no camera, no zoom).
+- **Landscape** (the owner: "miniscule"). The board takes the full height less a thin rim, and the column beside it gets compact: 268 → about 310 points on a phone with its browser bars showing.
+- **Full screen:** a button where the browser allows it (Android, desktops) gives the game the whole screen; in landscape that's a board of about 380. iPhones can't do that for a page, so "Add to Home Screen" opens the game standalone, without Safari's bars. It uses the iPhone's own snapshot for its icon, since the game has no asset files.
+- **The woodpecker's perch.** With the board edge to edge there's no gutter beside it. So in portrait the bird perches on a ledge between the board and the chatter, in the spare height, at a size you can see. In landscape it perches at the side, as before. Perched, it never covers a cell.
+
+**Controls anyone can guess** (the owner: their father wouldn't know WASD). The arrow keys always steered; now the words say them first: "Arrow keys steer (or WASD)". And a mouse works for the powers: the left button jumps, the right button flashes, with no menu popping up over the board. Local two-player comes later (PR D).
 
 ## Skipped or adapted guidelines
 
