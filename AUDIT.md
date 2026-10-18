@@ -1,4 +1,4 @@
-# Audit: Bark & Bite, third polish pass
+# Audit: Barkstreet Snakes (then called Bark & Bite), third polish pass
 
 Baseline: `polish/extreme` at `8a22961`, which is `main` (`7792572`) plus the three open PRs of the last round: #22 (crash rules, a smarter AI), #23 (looks and lines) and #24 (powers). Polishing code that's about to land means stacking on them (see DESIGN.md, *Skipped or adapted*). The second pass's audit is at [`2b948db`](https://github.com/HaakTuah/snake-game/blob/2b948db/AUDIT.md), and the first's at [`3e2d8bc`](https://github.com/HaakTuah/snake-game/blob/3e2d8bc/AUDIT.md). Almost everything in those was fixed.
 
