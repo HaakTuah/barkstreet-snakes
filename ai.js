@@ -293,9 +293,19 @@ window.SnakeAI = (() => {
   // the per-cell grids: `nbr` lists each cell's neighbours in DIR_LIST order
   // (-1 off the board), and `queue` holds a breadth-first search, one distance
   // after another. No search visits a cell twice, so N * N is always enough.
-  let bufN = 0, mineFree, otherFree, ownFree, risk, seen, owner, claimT, ownerStamp;
+  let bufN = 0, mineFree, otherFree, ownFree, risk, seen;
   let foodValue, foodGrow, foodCells, goldCells, queue, nbr, necks, reach, myCells, myDist, marks, leave, leaveStamp, chase, chaseKey;
   let stamp = 0;
+  // The territory search's own board (see evaluate), framed by a border of
+  // HOLE so a cell's neighbours are just a row either side of it and a cell
+  // either side (W wide; `framed` gives a cell's index on it). `terr` holds
+  // for each cell when it frees up for a rival, or once the search claims it,
+  // CLAIMED plus when, and whose it is (in its lowest bits); `terrFree` is
+  // what every search starts from (copied in whole: quicker than undoing
+  // one), and `meLater` is when a cell frees up for me, where that's later
+  // (a rival may be where I last saw it heading).
+  let W = 0, framed, around, terr, terrFree, meLater;
+  const CLAIMED = HOLE + (HOLE >> 1), NOW = -HOLE; // (NOW: free already)
   // A beetle as the search moves it: its state after s of its crawls (slot s;
   // 0: as it is; BUG_SLOT and the next: playing a chase out): its cell (-1:
   // eaten, or down a burrow), its way (in BUG_WAYS; -1: none) and when it last moved.
@@ -310,9 +320,6 @@ window.SnakeAI = (() => {
     ownFree = new Int32Array(size);
     risk = new Float32Array(size);
     seen = new Int32Array(size);
-    owner = new Int8Array(size);
-    claimT = new Int32Array(size);
-    ownerStamp = new Int32Array(size);
     foodValue = new Float64Array(size); // what eating a cell is worth
     foodGrow = new Int8Array(size);     // what eating a cell does to my length
     foodCells = new Int32Array(size);   // food never shares a cell
@@ -335,15 +342,21 @@ window.SnakeAI = (() => {
         nbr[4 * i + k] = nx >= 0 && ny >= 0 && nx < N && ny < N ? ny * N + nx : -1;
       });
     }
+    W = N + 2;
+    around = Int32Array.of(-W, W, -1, 1); // (in DIR_LIST order)
+    framed = new Int32Array(size);
+    for (let i = 0; i < size; i++) framed[i] = W + 1 + i + 2 * Math.floor(i / N);
+    terr = new Int32Array(W * W).fill(HOLE);
+    terrFree = new Int32Array(W * W).fill(HOLE);
+    meLater = new Int32Array(W * W).fill(NOW);
   }
 
-  // Territory per snake and where its search starts, for up to `n` snakes.
+  // Where each snake's territory search starts, for up to `n` snakes.
   // (And coughs: how many of each rival's next moves eat nothing.)
-  let ownersCap = 0, counts, srcI, srcT, srcOwn, coughs;
+  let ownersCap = 0, srcI, srcT, srcOwn, coughs;
   function ensureOwners(n) {
     if (n <= ownersCap) return;
     ownersCap = n;
-    counts = new Int32Array(n);
     coughs = new Int32Array(n);
     srcI = new Int32Array(n);
     srcT = new Int32Array(n);
@@ -433,6 +446,12 @@ window.SnakeAI = (() => {
         mineFree[hy * N + hx] = Math.max(mineFree[hy * N + hx], L);
       }
       heads.push({ x: hx, y: hy });
+    }
+    // The territory search's board, from the same tables (a cell free now: NOW).
+    for (let i = 0; i < N * N; i++) {
+      const p = framed[i], o = otherFree[i], m = mineFree[i];
+      terrFree[p] = o > 0 ? o : NOW;
+      meLater[p] = m > o ? m : NOW;
     }
 
     // How much room snake k has from its predicted head. `blockT` > 0 means my
@@ -1058,53 +1077,59 @@ window.SnakeAI = (() => {
       // 2. Territory: multi-source BFS, opponents start at their last seen
       //    head `age` ticks in the past, I start at my head at time t.
       //    Sources go in time order: the rivals all start at -age, and on a
-      //    tie I go first.
-      const stampV = ++stamp;
-      const owners = others.length + 1;
-      counts.fill(0, 0, owners);
+      //    tie I go first. It runs on its own board (terr: see the buffers),
+      //    with my body placed on it at time t: a cell is claimed at T + 1
+      //    once whoever's in it has left (the free tables count ticks from
+      //    now: a rival's search starts in the past, when everything empty
+      //    now was empty too), and terr says when that is for anyone, or
+      //    whose it is since when: CLAIMED + (T + age) * 2^bits + tag, where
+      //    the tag is 1 for me, k + 2 for rival k and 0 once contested.
+      terr.set(terrFree);
+      for (let j = 0; j < len; j++) { const p = framed[body[j].y * N + body[j].x], b = terrFree[p], m = len - j + grow + t; terr[p] = b > m ? b : m; }
+      const owners = others.length + 1, bits = 32 - Math.clz32(owners), tags = (1 << bits) - 1;
+      let mine = 0, theirs = 0; // (how many cells are mine, and how many the rivals')
       let ns = 0;
-      const meFirst = t <= -age;
-      if (meFirst) { srcI[ns] = headI; srcT[ns] = t; srcOwn[ns++] = 0; }
+      const meFirst = t <= -age, headP = framed[headI];
+      if (meFirst) { srcI[ns] = headP; srcT[ns] = t; srcOwn[ns++] = 1; }
       for (let k = 0; k < others.length; k++) {
         const h = others[k].body[0];
-        srcI[ns] = h.y * N + h.x; srcT[ns] = -age; srcOwn[ns++] = k + 1;
+        srcI[ns] = framed[h.y * N + h.x]; srcT[ns] = -age; srcOwn[ns++] = k + 2;
       }
-      if (!meFirst) { srcI[ns] = headI; srcT[ns] = t; srcOwn[ns++] = 0; }
+      if (!meFirst) { srcI[ns] = headP; srcT[ns] = t; srcOwn[ns++] = 1; }
       let si = 0;
       let T = srcT[0];
+      const B = terr, Q = queue, ML = meLater, A = around; // (the hot loop's own names for them)
       read = write = 0; // queue[read, write) now holds the cells claimed at time T
       while (read < write || si < ns) {
         while (si < ns && srcT[si] === T) {
-          const i = srcI[si], own = srcOwn[si++];
-          if (ownerStamp[i] !== stampV) {
-            ownerStamp[i] = stampV; owner[i] = own; claimT[i] = T; counts[own]++;
-            queue[write++] = i;
+          const p = srcI[si], tag = srcOwn[si++];
+          if (terr[p] < CLAIMED) {
+            terr[p] = CLAIMED + ((T + age) << bits) + tag;
+            if (tag === 1) mine++; else theirs++;
+            queue[write++] = p;
           }
         }
-        // A cell is claimed at T + 1 once whoever's in it has left: the free
-        // tables count ticks from now (a rival's search starts in the past,
-        // when everything empty now was empty too), and my own body, placed
-        // at time t, ownFree - t. (Worked out once a level: it's the hot loop.)
-        const levelEnd = write, freeBy = Math.max(0, T + 1), ownBy = T + 1 - t;
+        // (Worked out once a level: it's the hot loop.)
+        const levelEnd = write, T1 = T + 1, next = CLAIMED + ((T1 + age) << bits);
         while (read < levelEnd) {
-          const i = queue[read++];
-          const own = owner[i];
-          if (own < 0) continue; // became contested
-          const free = own === 0 ? mineFree : otherFree;
-          for (let n = 4 * i; n < 4 * i + 4; n++) {
-            const ni = nbr[n];
-            if (ni < 0) continue;
-            if (ownerStamp[ni] === stampV) {
-              if (claimT[ni] === T + 1 && owner[ni] >= 0 && owner[ni] !== own) {
-                counts[owner[ni]]--;
-                owner[ni] = -1;
+          const p = Q[read++], tag = B[p] & tags;
+          if (!tag) continue; // became contested
+          const me = tag === 1, claim = next + tag;
+          for (let k = 0; k < 4; k++) {
+            const q = p + A[k];
+            const s = B[q];
+            if (s <= T1) { // free by then (for me, unless a rival may be there)
+              if (me && ML[q] > T1) continue;
+              B[q] = claim;
+              if (me) mine++; else theirs++;
+              Q[write++] = q;
+            } else if (s >= next) { // claimed at T + 1 by someone else: contested
+              const other = s & tags;
+              if (other && other !== tag) {
+                if (other === 1) mine--; else theirs--;
+                B[q] = next;
               }
-              continue;
             }
-            const mine = ownFree[ni];
-            if (free[ni] > freeBy || (mine > 0 && mine > ownBy)) continue;
-            ownerStamp[ni] = stampV; owner[ni] = own; claimT[ni] = T + 1; counts[own]++;
-            queue[write++] = ni;
           }
         }
         T = read < write || si >= ns ? T + 1 : srcT[si];
@@ -1117,11 +1142,11 @@ window.SnakeAI = (() => {
       //    a meal once I'm over it, if no rival could get there before that.)
       let foodScore = 0;
       for (let k = 0; k < foodCount; k++) {
-        const i = foodCells[k], v = foodValue[i];
-        if (v <= 0 || ownerStamp[i] !== stampV) continue;
-        let when = claimT[i];
-        if (owner[i] !== 0) {
-          const o = owner[i] - 1;
+        const i = foodCells[k], v = foodValue[i], s = terr[framed[i]];
+        if (v <= 0 || s < CLAIMED) continue;
+        let when = ((s - CLAIMED) >> bits) - age;
+        if ((s & tags) !== 1) {
+          const o = (s & tags) - 2;
           if (o < 0) continue;
           const can = marks[i] === stampTheirs + o ? Infinity : coughs[o]; // (till when it can't eat it)
           if (when > can) continue;
@@ -1138,7 +1163,7 @@ window.SnakeAI = (() => {
         const c = bugCell[t], m = bugCatch(t, head.x, head.y);
         if (m > 0) {
           const pull = bugV * Math.max(0, w.foodRange - BUG_HURRY * (m - t));
-          if (ownerStamp[c] === stampV && owner[c] === 0) foodScore = Math.max(foodScore, pull);
+          if (terr[framed[c]] >= CLAIMED && (terr[framed[c]] & tags) === 1) foodScore = Math.max(foodScore, pull);
           else anyFood = Math.max(anyFood, pull);
           if (bugGold) foodScore = Math.max(foodScore, craving.contested * pull);
         }
@@ -1152,12 +1177,9 @@ window.SnakeAI = (() => {
         if (v > 0) foodScore = Math.max(foodScore, craving.contested * v * Math.max(0, w.foodRange - Math.abs(x - head.x) - Math.abs((i - x) / N - head.y)));
       }
 
-      let othersTerritory = 0;
-      for (let k = 1; k < owners; k++) othersTerritory += counts[k];
-
       let score = w.space * space
-        + w.territory * counts[0]
-        - (w.aggression || 0) * othersTerritory
+        + w.territory * mine
+        - (w.aggression || 0) * theirs
         + foodW * foodScore;
 
       // 4. Hunting: shrink the victim's room and get in front of it.
