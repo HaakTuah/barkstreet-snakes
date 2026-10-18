@@ -116,7 +116,7 @@ for (let r = 0; r < rounds; r++) {
     same(r, k, 'fire', [...host.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]), [...guest.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]));
     same(r, k, 'weather', [host.weather.kind, host.weather.since, host.weather.until], [guest.weather.kind, guest.weather.since, guest.weather.until]);
     same(r, k, 'deaths', dyingHost.map(s => [s.id, s.cause, s.killer, s.killerId, s.fatal || null]), dyingGuest.map(s => [s.id, s.cause, s.killer, s.killerId, s.fatal || null]));
-    const ev = g => g.events.map(e => [e.type, e.snake?.id, e.kind, e.x, e.y, e.gold ? 1 : 0, e.reach ?? null, e.n ?? null, e.by ?? null, e.plain ? 1 : 0, e.flash ? 1 : 0, e.own ? 1 : 0, e.type === 'peck' ? e.under ?? [] : null, e.color ?? null, e.tx ?? null, e.ty ?? null]); // (powers' payloads too, what the lessons need, and where a spat or nudged piece rolled)
+    const ev = g => g.events.map(e => [e.type, e.snake?.id, e.kind, e.x, e.y, e.gold ? 1 : 0, e.reach ?? null, e.n ?? null, e.by ?? null, e.plain ? 1 : 0, e.flash ? 1 : 0, e.type === 'peck' ? e.under ?? [] : null, e.color ?? null, e.tx ?? null, e.ty ?? null]); // (powers' payloads too, what the lessons need, and where a spat or nudged piece rolled)
     same(r, k, 'events', ev(host), ev(guest));
     const look = g => g.snakes.map(s => ['home', 'colonies', 'mood', 'moodChangedAt', 'modelId', 'desperate'].map(f => s.memory[f] ?? null));
     same(r, k, 'looks', look(host), look(guest));
