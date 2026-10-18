@@ -302,16 +302,20 @@ window.SnakeAI = (() => {
   let bufN = 0, mineFree, otherFree, ownFree, risk, seen;
   let foodValue, foodGrow, foodCells, goldCells, beadCells, queue, nbr, necks, reach, myCells, marks, leave, leaveStamp, chase, chaseKey;
   let stamp = 0;
-  // The territory search's own board (see evaluate), framed by a border of
-  // HOLE so a cell's neighbours are just a row either side of it and a cell
-  // either side (W wide; `framed` gives a cell's index on it). `terr` holds
-  // for each cell when it frees up for a rival, or once the search claims it,
-  // CLAIMED plus when, and whose it is (in its lowest bits); `terrFree` is
-  // what every search starts from (copied in whole: quicker than undoing
-  // one), and `meLater` is when a cell frees up for me, where that's later
-  // (a rival may be where I last saw it heading).
-  // My room's flood fill runs on it too (seenF, distF: where it got to and
-  // how soon), and `unframed` gives a cell's index on the grid again (-1: the frame).
+  // The board the searches of a search state run on (see evaluate), framed
+  // by a border of HOLE so a cell's neighbours are just a row either side of
+  // it and a cell either side (W wide; `framed` gives a cell's index on it,
+  // `unframed` its index on the grid again, -1 for the frame). `terr` holds
+  // for each cell when it frees up for a rival, my body placed on it, or once
+  // the territory search claims it, CLAIMED plus when, and whose it is (in
+  // its lowest bits); `terrFree` is what every search state starts from
+  // (copied in whole: quicker than undoing one); `meLater` is when a cell
+  // frees up for me, where that's later (a rival may be where I last saw it
+  // heading: the cells in laterCells, laterWas keeping the board's own while
+  // my room's fill reads them). inBody marks my body in a search state;
+  // seenF and distF, where my room's fill got to and how soon; seenH, where
+  // a hunted rival's room did. `reach` is on it too, and reachBlock, when a
+  // cell frees up for a rival's reach.
   let W = 0, framed, unframed, terr, terrFree, meLater, laterCells, laterWas, inBody, seenF, seenH, distF, reachBlock;
   const CLAIMED = HOLE + (HOLE >> 1), NOW = -HOLE; // (NOW: free already)
   // A beetle as the search moves it: its state after s of its crawls (slot s;
@@ -590,19 +594,20 @@ window.SnakeAI = (() => {
   // AI, the chatter, the tags and the borders drawn.)
   const onLand = (c, f) => Math.hypot(c.x - f.x, c.y - f.y) <= f.radius + TUNE.LAND_REACH;
 
-  // A persona's weights (the ones the search reads) as one shape, whoever's
-  // they are, none of them left out (a weight it hasn't got is undefined
-  // either way): the compiled search reads each the same way every time,
-  // instead of learning a new shape with every persona it meets, and
-  // starting over.
-  const weighed = w => ({
-    space: w.space, territory: w.territory, aggression: w.aggression,
-    food: w.food, eat: w.eat, pellet: w.pellet, foodRange: w.foodRange, normalFood: w.normalFood, mushroom: w.mushroom,
-    contested: w.contested, hungryBelow: w.hungryBelow, fedFactor: w.fedFactor,
-    margin: w.margin, headRisk: w.headRisk, zoneRisk: w.zoneRisk, distance: w.distance,
-    hunt: w.hunt, home: w.home, lure: w.lure, turn: w.turn, tail: w.tail, mimic: w.mimic,
-    colony: w.colony, goal: w.goal, thrill: w.thrill, coil: w.coil, thick: w.thick, powers: w.powers, golden: w.golden,
-  });
+  // A persona's weights as one shape, whoever's they are: every weight above,
+  // in this order, and a weight it hasn't got undefined, as it would read
+  // anyway (a new one, not listed here, still reads true, just slower). The
+  // compiled search reads each the same way every time, instead of learning
+  // a new shape with every persona it meets, and starting over.
+  const WEIGHTS = {
+    space: undefined, territory: undefined, aggression: undefined,
+    food: undefined, eat: undefined, pellet: undefined, foodRange: undefined, normalFood: undefined, mushroom: undefined,
+    contested: undefined, hungryBelow: undefined, fedFactor: undefined,
+    margin: undefined, headRisk: undefined, zoneRisk: undefined, distance: undefined,
+    hunt: undefined, home: undefined, lure: undefined, turn: undefined, tail: undefined, mimic: undefined,
+    colony: undefined, goal: undefined, thrill: undefined, coil: undefined, thick: undefined, powers: undefined, golden: undefined,
+  };
+  const weighed = w => Object.assign({ ...WEIGHTS }, w);
 
   // Wildcard: a random but sensible set of weights, drawn once per round.
   function randomWeights() {
@@ -1133,11 +1138,7 @@ window.SnakeAI = (() => {
     // still coughs, and the rivals' own beads.)
     let coughMax = 0, beadCount = 0;
     for (let k = 0; k < others.length; k++) coughMax = Math.max(coughMax, coughs[k]);
-    for (let k = 0; k < foodCount; k++) if (marks[foodCells[k]] >= stampTheirs && marks[foodCells[k]] < stampTheirs + others.length) beadCells[beadCount++] = foodCells[k];
-    const beadsOpen = () => {
-      for (let k = 0; k < beadCount; k++) if (foodValue[beadCells[k]] > 0 && terr[framed[beadCells[k]]] < CLAIMED) return true;
-      return false;
-    };
+    for (let k = 0; k < foodCount; k++) if (marks[foodCells[k]] >= stampTheirs && marks[foodCells[k]] < marksEnd) beadCells[beadCount++] = foodCells[k];
 
     // A beetle: its way is there for anyone to read. It crawls a cell every
     // BEETLE_EVERY ticks, straight on till something's in the way; with a
