@@ -879,14 +879,22 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
 }
 
 { // The woodpecker aims clear of heads and food (while there's room), under bodies too, and warns before it strikes.
-  // (Six seeded rounds: about 85 strikes, with the same rivals and boards every run.)
+  // (Eight seeded rounds, with the same rivals and boards every run, and no
+  // rests: it takes aim again the moment it has struck, so they bring about
+  // 160 aims and 155 strikes. With its rests, six rounds brought 85, and
+  // caught a clearance kept for all but one cell in 13 only two or three
+  // times in some of them, as a change to the engine re-rolls them all. This
+  // way any such rounds catch it, about a dozen times. Its rests are checked
+  // above.)
   let near = 0, early = 0, underFood = 0, strikes = 0, cells = 0, aims = 0, underBodies = 0, besideHoles = 0, under = 0, cuts = 0;
-  for (let r = 0; r < 6; r++) seededWhile(101 + r, () => {
+  for (let r = 0; r < 8; r++) seededWhile(101 + r, () => {
     const g = E.createGame({ withPlayer: false });
     g.time = T.SUDDEN_DEATH_MS;
     for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; s.grow = 30; } // (fed, so they last, and long, as by 2:00)
     let aimedAt = -1;
     for (let t = 0; t < 500 && g.snakes.filter(s => s.alive).length > 1; t++) {
+      const w = g.woodpecker;
+      if (w && !w.target.length) w.restUntil = Math.min(w.restUntil, g.tick + 1); // (no rest: it aims this tick)
       const foodCells = new Set(g.food.map(f => f.y * T.GRID + f.x)), holes = new Set(g.holes);
       E.step(g);
       const heads = g.snakes.filter(s => s.alive).map(s => s.body[0]); // (as they were when it took aim)
@@ -1338,13 +1346,18 @@ const freeHere = g => (x, y) => !g.holes.has(K(x, y)) && !g.food.some(f => f.x =
 }
 
 { // Lightning never lands near a head, crackles first, and only then burns.
-  // (Ten seeded rounds: about 45 strikes, the same every run.)
+  // (Ten seeded rounds, the same every run, in a storm that strikes every
+  // tick: 1,200 strikes. At its own pace, every 2-4 s, they brought about 45,
+  // and a clearance kept for all but one cell in 13 was caught by one strike
+  // of them, or none, as a change to the engine re-rolled them. This way any
+  // such rounds catch it, about twenty times.)
   let near = 0, early = 0, strikes = 0;
   for (let r = 0; r < 10; r++) seededWhile(151 + r, () => {
     const g = E.createGame({ withPlayer: false });
     g.time = 50000;
     g.weather = { kind: 'storm', since: 50000, until: 1e9, nextGust: 0, nextStrike: 0 };
     for (let t = 0; t < 120 && g.snakes.some(s => s.alive); t++) {
+      g.weather.nextStrike = 0; // (it strikes this tick)
       E.step(g);
       const heads = g.snakes.filter(s => s.alive).map(s => s.body[0]); // (where they were when the lightning chose its spot)
       for (const e of g.events) {
@@ -1357,7 +1370,7 @@ const freeHere = g => (x, y) => !g.holes.has(K(x, y)) && !g.food.some(f => f.x =
       }
     }
   });
-  check('storms strike', strikes > 20, `${strikes} strikes`);
+  check('storms strike', strikes > 1000, `${strikes} strikes`);
   check('lightning keeps its distance from heads', near === 0, `${near} too close`);
   check('lightning crackles before it burns', early === 0, `${early} without warning`);
 }
@@ -1709,13 +1722,15 @@ const powered = (got, mark) => Object.entries(got).filter(([, out]) => Object.ke
 }
 
 { // Star craves golden things: a golden leaf four to the right, an apple three to the left. Star goes for the leaf; anyone who likes apples takes the apple first.
+  // (Seeded: Wildcard draws its weights at random, afresh each time here, and
+  // about one draw in 200 goes for the leaf: so one run in 50 failed.)
   const view = () => aiView({
     me: aiMe([[12, 12], [12, 13], [12, 14], [12, 15]], 'up'),
     others: [aiRival(1, line(22, 22, 5), 'right')],
     food: [{ x: 16, y: 12, kind: 'leaf', expires: 999 }, { x: 9, y: 12, kind: 'food', expires: 999 }],
   });
-  const star = habits(view, ['star']).star;
-  const fond = rest.filter(k => (AI.PERSONAS[k].w.normalFood ?? 1) >= 1), got = habits(view, fond, 4);
+  const fond = rest.filter(k => (AI.PERSONAS[k].w.normalFood ?? 1) >= 1);
+  const [star, got] = seededWhile(171, () => [habits(view, ['star']).star, habits(view, fond, 4)]);
   const leafFirst = fond.filter(k => got[k].left !== 4);
   check('Star chases a golden leaf over an apple', star.right === 10, JSON.stringify(star));
   check('...where everyone else who likes apples takes the apple first', !leafFirst.length, leafFirst.join(', '));
