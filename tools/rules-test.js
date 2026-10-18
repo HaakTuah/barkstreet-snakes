@@ -1790,6 +1790,38 @@ const dirOf = d => Object.keys(D).find(k => D[k] === d);
   }
 }
 
+{ // A beetle runs for its burrow: one bound to get there first isn't worth the chase. Heading right, a beetle 3 on (scared,
+  // making for its burrow two beyond), an apple 4 up: knowing the burrow, it takes the apple; not knowing it, the beetle.
+  const view = () => aiView({ me: aiMe(line(10, 12, 5), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], tick: 10,
+    food: [{ x: 13, y: 12, kind: 'beetle', expires: 999, dir: D.right, movedAt: 0, px: 12, py: 12, scared: true }, { x: 10, y: 8, kind: 'food', expires: 999 }] });
+  const go = memory => { const out = {}; for (let i = 0; i < 20; i++) { const d = dirOf(AI.decide(view(), AI.PERSONAS.drab, JSON.parse(JSON.stringify(memory)))); out[d] = (out[d] || 0) + 1; } return out; };
+  const knows = go({ burrows: [K(15, 12)] }), blind = go({});
+  check("an AI doesn't chase a beetle bound to dive into its burrow first", knows.up === 20, JSON.stringify(knows));
+  check('...unless it doesn\'t know the burrow is there', blind.right === 20, JSON.stringify(blind));
+  // It learns a burrow by seeing a beetle come out of it (one that hasn't moved since is on its burrow), and forgets one pecked open.
+  const memory = {};
+  AI.decide(aiView({ me: aiMe(line(10, 12, 5), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], food: [{ x: 4, y: 4, kind: 'beetle', expires: 999, dir: D.up, movedAt: 9 }, { x: 20, y: 20, kind: 'beetle', expires: 999, dir: D.up, movedAt: 9, px: 20, py: 21 }] }), AI.PERSONAS.drab, memory);
+  const learnt = [...memory.burrows];
+  AI.decide(aiView({ me: aiMe(line(10, 12, 5), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], holes: new Set([K(4, 4)]) }), AI.PERSONAS.drab, memory);
+  check('...it learns a burrow by seeing a beetle come out of it, and forgets one pecked open', JSON.stringify(learnt) === JSON.stringify([K(4, 4)]) && !memory.burrows.length, JSON.stringify({ learnt, now: memory.burrows }));
+}
+
+{ // In the game: a beetle crawling along the edge of the log, and running once it's near: Gobbler goes where it's heading and catches it.
+  const g = E.createGame({ withPlayer: false, personas: ['gobbler', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  a.body = line(6, 19, 5).map(([x, y]) => ({ x, y })); a.dir = D.right;
+  b.body = line(20, 2, 4).map(([x, y]) => ({ x, y })); b.dir = D.right; b.isPlayer = true; b.persona = null; b.queue = [];
+  lay(g, { x: 9, y: 22, kind: 'beetle', expires: 999, dir: D.right, movedAt: -10, px: 8, py: 22 });
+  lookNow(g);
+  let caught = -1;
+  for (let t = 0; t < 30 && caught < 0; t++) {
+    feed(g); kept(g);
+    if (g.events.some(e => e.type === 'eat' && e.kind === 'beetle' && e.snake === a)) caught = t + 1;
+  }
+  check('in the game: it catches a beetle running from it along the edge', caught > 0 && caught <= 12, `caught on move ${caught}`);
+}
+
 { // A flag the woodpecker pecks out is a lost colony: Colonist drops it at once, land and all, and sets off to plant another.
   // A fire on a flag, or the woodpecker's mark (not a hole yet), loses nothing.
   const colonies = () => [{ x: 6, y: 6, radius: 4, n: 1 }, { x: 14, y: 8, radius: 4, n: 2 }, { x: 18, y: 18, radius: 4, n: 3 }];
