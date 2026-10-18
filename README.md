@@ -142,6 +142,24 @@ Serve the folder with any static server (for example `npx serve` or `python -m h
 - `node tools/render-test.js` checks the renderer's promises a picture can show, in headless Chrome: a flash drawn ahead and gliding on, a corpse's beads in its markings, power pips on the board at its edge, scorch as soot, every Field guide picture, Star's look (a star for a head, its rainbow flowing back from it, its tell, its beads, its mustache gag), jumps (the arch, the shadow across the hurdle, dust and trail, and none of the motion with reduced motion), bridges (shade, sag, the shadow in the pit, a drooping tail), choking (cheeks, the spat bead's arc, a shut mouth and cough puffs, rolls and scurries) and a pecked flag (it tips and falls, the land shrinks into the pit, a banner carried).
 - `node tools/shots.js [dir]` takes the screenshot tour in headless Chrome (title, play, a bite, the powers, a nap, a death, the cards, the Hall of Fame, Your story and the Field guide, a round with Star, a jump, a bridge, Star's gag, a choke and a falling flag, a laptop, a phone both ways), with an autopilot at the wheel. `node tools/bench.js` measures frame times the same way, and what Sovereign's and Colonist's land, a woodpecker strike, fire burning out and Star's look cost. They need Chrome (or set `CHROME`); nothing to install.
 
+### Running experiments
+
+A balance question ("does this shorten sudden death?", "did my change hurt anyone?") is cheapest answered in three steps:
+
+1. **Screen it with `tools/abtest.js`**, which plays two copies of the game on the same seeded rounds, paired, and stops as soon as every number asked for has a verdict: B higher, lower, or the same within a margin that matters. It plays 100 rounds a seed at a time (seeds 3 and 11, up to 600 each), and its intervals stay honest however early it stops, so a clear answer usually takes one or two looks instead of 600 rounds a seed on each side. Ask only for what the question is about, since it stops only when all of it is decided: `--metrics` picks from `length`, `sd`, `deaths`, `starving`, `powers`, `win` and `place`, and `trademarks` (each personality's, as `--signatures` measures them) when a change mustn't blunt them.
+
+   `node tools/abtest.js . ../variant --metrics sd,deaths`
+
+2. **Fast-forward a late-game question.** `--at 120000` stores every round at 2:00, as A plays it, and plays both copies on from there. The openings, most of a round's work, are played once, and the two sides are the same round up to the woodpecker, so a difference shows sooner. By hand, `simulate.js --save-at` stores the rounds (and prints where) and `--from` goes on with them under any copy; with the same files, every round comes out exactly as played straight through.
+
+   `node tools/abtest.js . ../variant --at 120000 --metrics sd`
+
+   `node tools/simulate.js 600 --seed 3 --save-at 120000`, then `node tools/simulate.js --from FILE --root ../variant --census`
+
+3. **Confirm once, at the end**, with the numbers you'll report: `node tools/simulate.js 600 --seed 3 --census --root ../variant` (and `--seed 11`). `--census` includes a table for each personality (flashes and jumps a minute, golden pickups, chokes, crashes survived, time alive, food, kills), so there's no need for a harness of your own.
+
+Every seeded round is cached by the files that played it, round by round, so asking again or for more rounds plays only the new ones: the A side of one experiment is free in the next, and the rounds an abtest without `--at` played are free in the confirmation. Only one simulation runs on the machine at a time (the next waits its turn), on half the cores, at low priority.
+
 ### How it's put together
 
 | File | What it does |
