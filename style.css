@@ -26,6 +26,12 @@
   --r-frame: 20px;
   --ring: inset 0 0 0 3px var(--parchment-2);
   --font: 'Fredoka', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
+  /* The screen's safe area (a notch, rounded corners, the home bar): the
+     page keeps inside it, and the game reads it (the woodpecker perches in it). */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
 }
 
 * { box-sizing: border-box; }
@@ -743,6 +749,10 @@ canvas {
 
 /* -------------------------------------------------- below the board */
 
+/* The woodpecker's ledge: room under the board for it to perch, only on a
+   phone held upright (see the small screens). */
+.perch-ledge { display: none; pointer-events: none; }
+
 .speed {
   display: flex;
   align-items: center;
@@ -1019,6 +1029,36 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .scoreboard { margin-bottom: 8px; }
 }
 
+/* Phones held upright: the board runs edge to edge (346 → 382 px on a
+   390 px phone), its frame a thin rim, the moss and the corner leaves
+   running off the screen's edges (clipped there, so nothing scrolls
+   sideways); everything else keeps its margin. Under the board, a ledge
+   for the woodpecker in the height to spare (it stands there, about 53 px
+   tall, instead of in a gutter beside the board that's gone): about 11% of
+   the width, less on a short screen, and the board shrinks only where even
+   a small ledge wouldn't fit below it. */
+@media (max-width: 440px) {
+  body { padding-left: var(--safe-l); padding-right: var(--safe-r); }
+  main {
+    --ledge: clamp(28px, calc(100vh - 100vw - 300px), 11vw);
+    --ledge: clamp(28px, calc(100dvh - 100vw - 300px), 11vw);
+    max-width: min(760px, max(240px, calc(100vh - 190px - var(--ledge) - max(0px, var(--safe-t) - 12px))));
+    max-width: min(760px, max(240px, calc(100dvh - 190px - var(--ledge) - max(0px, var(--safe-t) - 12px))));
+    overflow-x: hidden; /* (before Safari 16) */
+    overflow-x: clip;
+  }
+  header, .scoreboard, .speed, .chatter, .help { margin-inline: 12px; }
+  .frame { padding: 4px; border-radius: 9px; }
+  .moss.top { top: -12px; }
+  .moss.bottom { bottom: -12px; }
+  .leaves { width: 28px; height: 28px; } /* (their blades along the rim, never over a cell) */
+  .leaves.tl { left: -10px; top: -10px; }
+  .leaves.tr { right: -10px; top: -10px; }
+  .leaves.bl { left: -10px; bottom: -10px; }
+  .leaves.br { right: -10px; bottom: -10px; }
+  .perch-ledge { display: block; height: var(--ledge); }
+}
+
 /* Wide, short screens (laptops, short windows, phones on their side): the
    header and tags sit beside the board, which takes the full height. */
 @media (min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px) {
@@ -1045,6 +1085,43 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .trophy { min-width: 34px; padding: 0 8px; justify-content: center; }
   .trophy svg { display: block; }
   .trophy .trophy-text { display: none; }
+}
+
+/* Phones on their side: the board takes the full height less a thin rim
+   (268 → 310 px with a phone's browser bars showing, about 380 in full
+   screen), and the column beside it gets compact enough to fit that height
+   too: no tagline, smaller words, the tags two by two, and the chatter
+   taking what's left (its newest lines; the oldest are cut). Nothing
+   scrolls. The woodpecker perches beside the board, in the gap or the
+   margin. */
+@media (min-aspect-ratio: 5/4) and (max-height: 500px) and (min-width: 480px) {
+  body { padding-top: var(--safe-t); padding-bottom: var(--safe-b); }
+  main {
+    --board: min(calc(100vh - var(--safe-t) - var(--safe-b)), calc(100vw - 268px - max(12px, var(--safe-l)) - max(12px, var(--safe-r))));
+    --board: min(calc(100dvh - var(--safe-t) - var(--safe-b)), calc(100vw - 268px - max(12px, var(--safe-l)) - max(12px, var(--safe-r))));
+    height: var(--board);
+    overflow: hidden; /* (before Safari 16) */
+    overflow: clip; /* (the moss and leaves run off the top and bottom) */
+    grid-template-rows: auto auto auto minmax(0, max-content) auto 1fr;
+    gap: 0 24px; /* (the woodpecker's room, where the screen has no margin to spare: 24 px, and the column at least 244) */
+  }
+  header { grid-row: 1; margin-bottom: 6px; row-gap: 4px; }
+  .scoreboard { grid-row: 2; margin-bottom: 6px; gap: 4px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .speed { grid-row: 3; margin-top: 0; margin-bottom: 6px; }
+  .chatter { grid-row: 4; margin-top: 0; max-height: 100%; overflow: hidden; padding: 4px 10px 6px; }
+  .help { grid-row: 5; margin-top: 6px; font-size: 0.74rem; }
+  .frame { grid-row: 1 / -1; padding: 5px; border-radius: 12px; }
+  h1 { font-size: 1.4rem; white-space: nowrap; }
+  .tagline { display: none; }
+  .hud .stat { font-size: 0.9rem; }
+  .scoreboard li { padding: 3px 7px 6px; gap: 4px; font-size: 0.84rem; }
+  .scoreboard .hunger { left: 7px; right: 7px; bottom: 2px; }
+  .chatlog { margin-top: 2px; font-size: 0.82rem; }
+  .moss.top { top: -12px; }
+  .moss.bottom { bottom: -12px; }
+  .leaves { width: 30px; height: 30px; }
+  .leaves.tl, .leaves.tr { top: -11px; }
+  .leaves.bl, .leaves.br { bottom: -11px; }
 }
 
 /* Touch: comfortable targets. */

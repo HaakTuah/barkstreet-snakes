@@ -2505,10 +2505,15 @@
   R.init({ canvas, personas: PERSONAS, birdLayer: $('bird-layer') });
   // Where the board is on the page (the woodpecker perches beside it, on its own layer).
   // ...and how far the free page runs round it before the tags, the speed
-  // buttons, the chatter or the header (no perching on those).
+  // buttons, the chatter or the header (no perching on those), inside the
+  // screen's safe area (not under a notch); and how tall the ledge under it
+  // is (a phone held upright: the bird perches there).
   const furniture = ['header', '.scoreboard', '.speed', '.chatter'].map(q => document.querySelector(q)).filter(Boolean);
+  const ledgeEl = $('perch-ledge'), rootStyle = getComputedStyle(document.documentElement);
+  const inset = name => parseFloat(rootStyle.getPropertyValue(name)) || 0;
   const placeBoard = () => {
-    const b = canvas.getBoundingClientRect(), free = { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+    const b = canvas.getBoundingClientRect();
+    const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: ledgeEl ? ledgeEl.offsetHeight : 0 };
     for (const el of furniture) {
       const f = el.getBoundingClientRect();
       if (!f.width || !f.height) continue; // (hidden)
