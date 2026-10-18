@@ -6,9 +6,12 @@
 // Then it plays the chatter itself (chatter.js with the game's own engine, on
 // a stand-in page) through staged moments: every voice speaks up when it's
 // pecked under, put out by the rain, sees food burn or rot, starves, is cut
-// by a dash, and (where it has lines for them) flashes or hears the last
-// apples fall; Sovereign and Colonist mind rot on their land, by the one
-// land rule; and the rarer lines keep to their rests. Star, the power addict,
+// by a dash, chokes on its own bead, eats what your cough nudged aside, and
+// (where it has lines for them) flashes or hears the last apples fall;
+// Sovereign and Colonist mind rot on their land, by the one land rule, and
+// a capital or a colony the woodpecker takes; and the rarer lines keep to
+// their rests (a choke's 20 s, a windfall's thanks now and then, only for
+// what a choke or a cough knocked aside, soon after). Star, the power addict,
 // has a line for every moment anyone has, shows off its flashes and jumps at
 // most every 10 s (even flashing the moment its rest is over, when it doesn't
 // say its flash is back), grumbles while it rests, crows over golden things,
@@ -67,7 +70,7 @@ for (const l of PUNCHLINES) ok(spoken.has(l), `punchline "${l}" is a line someon
 
 // Every voice has the moments anyone can have; the woodpecker cuts nothing
 // now, so no voice blames the bird for its tail.
-const EVERYONE = ['under', 'doused', 'ash', 'rot', 'desperate', 'cut'];
+const EVERYONE = ['under', 'doused', 'ash', 'rot', 'desperate', 'cut', 'choke', 'windfall'];
 for (const [who, voice] of Object.entries(VOICES)) {
   for (const k of EVERYONE) ok(voice[k]?.length, `${who} has '${k}' lines`);
   ok(!voice.snipped, `${who}: 'snipped' is gone (a dash's cut is 'cut' now)`);
@@ -76,6 +79,9 @@ for (const [who, voice] of Object.entries(VOICES)) {
 }
 ok(VOICES.sovereign.realm?.rotten?.length, 'Sovereign minds rot in its realm');
 ok(VOICES.colonist.colony?.rotten?.length, 'Colonist minds rot in its colonies');
+ok(VOICES.sovereign.realm?.capital?.length, 'Sovereign has lines for a capital the woodpecker took');
+ok(VOICES.colonist.colony?.lost?.length, 'Colonist has lines for a colony the woodpecker took');
+for (const [who, voice] of Object.entries(VOICES)) ok((voice.windfall || []).every(l => l.includes('{who}') || chinese(l)), `${who}: its 'windfall' lines thank the cougher by name`);
 // Star, the newest, has lines for every moment anyone has lines for (but the
 // ones that are someone's own: Vulture's deaths, the land, Capricious's
 // moods, Gobbler's and Desperado's spawns and first strike, the answers to
@@ -196,6 +202,15 @@ for (const k of keys) {
   h = tick(g, [{ type: 'cut', snake: ai, x: 10, y: 12, lost: 2, by: you.id }]);
   check(says(h, ai, v.cut, you), `${k} says a 'cut' line when a dash cuts it (said: ${lineOf(h, ai)})`);
 
+  [g, you, ai] = fresh();
+  h = tick(g, [{ type: 'choke', snake: ai, x: 12, y: 12, tx: 12, ty: 11 }]);
+  check(says(h, ai, v.choke), `${k} says a 'choke' line when it chokes on its own bead (said: ${lineOf(h, ai)})`);
+
+  [g, you, ai] = fresh();
+  check(tick(g, [{ type: 'nudge', snake: you, kind: 'food', x: 3, y: 20, tx: 3, ty: 19 }]).length === 0, `${k}: your cough nudges an apple aside: nothing yet`);
+  h = tick(g, [{ type: 'eat', snake: ai, kind: 'food', x: 3, y: 19 }], 800);
+  check(says(h, ai, v.windfall, you), `${k} says a 'windfall' line when it eats an apple your cough nudged aside (said: ${lineOf(h, ai)})`);
+
   if (v.flash?.first) {
     [g, you, ai] = fresh({ 0: [14, 14] });
     h = tick(g, [{ type: 'dash', snake: ai, x: 10, y: 12, n: 2, plain: 1 }, { type: 'eat', snake: ai, kind: 'food', x: 12, y: 12 }]);
@@ -212,7 +227,7 @@ for (const k of keys) {
     check(says(h, ai, v.last), `${k} says a 'last' line when the last apples start falling (said: ${lineOf(h, ai)})`);
   }
 }
-console.log('ok   every voice speaks up when pecked under, put out, starving, cut, and when food burns or rots by it (and flashes, and the last apples, where it has lines)');
+console.log('ok   every voice speaks up when pecked under, put out, starving, cut, choking on its own bead, eating food your cough knocked aside, and when food burns or rots by it (and flashes, and the last apples, where it has lines)');
 
 { // The woodpecker under a body: at most every 12 s, and only for the living.
   const g = stage(['mason'], { 0: [3, 20], 1: [12, 12] }), [, mason] = g.snakes;
@@ -304,6 +319,79 @@ console.log('ok   every voice speaks up when pecked under, put out, starving, cu
   check(says(h, sov, VOICES.sovereign.snip, wild) && says(h, wild, VOICES.wildcard.cut, sov), `cut by a dash: "${lineOf(h, sov)}" / "${lineOf(h, wild)}"`);
 }
 console.log('ok   the rarer lines keep to their rests; land is radius + LAND_REACH; ash and rot go to whoever was nearest');
+
+// Choking on your own bead (round six A): the choker's line, at most every
+// 20 s; the thanks of whoever eats what a choke spat or a cough nudged aside,
+// now and then; and the woodpecker taking a colony's flag or the capital.
+{ // A choke: a line, then none for 20 s; not from a snake that's out; nobody speaks for you; Copycat in Chinese.
+  const g = stage(['sniper', 'copycat'], { 0: [3, 20], 1: [12, 12], 2: [12, 18] }), [you, sniper, cat] = g.snakes;
+  const choke = s => [{ type: 'choke', snake: s, x: s.body[0].x, y: s.body[0].y, tx: s.body[0].x, ty: s.body[0].y - 1 }];
+  check(says(tick(g, choke(sniper)), sniper, VOICES.sniper.choke), 'Sniper chokes on its own bead: a choke line');
+  check(tick(g, choke(sniper), 12000).length === 0, '...and none when it chokes again 12 s later');
+  check(says(tick(g, choke(sniper), 9000), sniper, VOICES.sniper.choke), '...but another 21 s after the first');
+  check(tick(g, choke(you), 5000).length === 0, 'you choke: nobody speaks for you');
+  check(says(tick(g, choke(cat), 5000), cat, VOICES.copycat.choke), 'Copycat chokes: in Chinese');
+  sniper.alive = false;
+  check(tick(g, choke(sniper), 30000).length === 0, '...and a snake that\'s out says nothing');
+}
+{ // A windfall: what a choke spat or a cough nudged aside, eaten by a rival soon after (the same tick too): thanks, half the time, at most every 30 s.
+  const g = stage(['vulture', 'gobbler'], { 0: [3, 20], 1: [12, 12], 2: [12, 18] }), [you, vul, gob] = g.snakes;
+  const nudge = (s, x, y, tx, ty, kind = 'food') => ({ type: 'nudge', snake: s, kind, x, y, tx, ty });
+  const eat = (s, x, y, kind = 'food') => ({ type: 'eat', snake: s, kind, x, y });
+  const thanks = (h, s, who) => says(h, s, VOICES[s.personaKey].windfall, who);
+  let h = tick(g, [eat(vul, 4, 19, 'pellet'), { type: 'choke', snake: you, x: 4, y: 20, tx: 4, ty: 19 }]);
+  check(thanks(h, vul, you), `your bead, spat aside and eaten by Vulture the same tick: "${lineOf(h, vul)}"`);
+  check(tick(g, [nudge(you, 5, 20, 5, 19), eat(gob, 5, 19)], 5000, 0.6).length === 0, 'an apple your cough nudged, eaten by Gobbler, and the roll says no: nothing');
+  check(tick(g, [eat(gob, 5, 19)], 5000).length === 0, '...and that settled it: another apple there later is just an apple');
+  tick(g, [nudge(you, 6, 20, 6, 19)], 100);
+  check(tick(g, [eat(gob, 6, 19)], 7000).length === 0, 'one eaten 7 s after it was nudged: just an apple');
+  tick(g, [nudge(gob, 7, 18, 7, 17)], 100);
+  check(tick(g, [eat(gob, 7, 17)], 1500).length === 0, 'Gobbler eats what its own cough nudged, once it\'s over: nothing');
+  tick(g, [nudge(you, 8, 20, 8, 19)], 100);
+  check(tick(g, [eat(you, 8, 19)], 500).length === 0 && tick(g, [eat(gob, 8, 19)], 500).length === 0, 'you eat what your cough nudged: nothing, and that settled it');
+  tick(g, [nudge(you, 9, 9, 9, 10, 'beetle')], 5000);
+  h = tick(g, [eat(gob, 11, 11, 'beetle')], 1000);
+  check(thanks(h, gob, you) && !says(h, gob, VOICES.gobbler.caught), `a beetle your cough nudged scurries off, and Gobbler catches it 3 cells on: thanks, not its catch line ("${lineOf(h, gob)}")`);
+  check(!thanks(tick(g, [nudge(you, 4, 4, 4, 5), eat(gob, 4, 5)], 10000), gob, you), '...and no thanks again 10 s later');
+  h = tick(g, [nudge(vul, 14, 4, 14, 5), eat(gob, 14, 5)], 25000);
+  check(thanks(h, gob, vul), `...but 35 s after, for an apple Vulture's cough nudged: thanks, naming Vulture ("${lineOf(h, gob)}")`);
+  tick(g, [nudge(you, 2, 2, 2, 3, 'beetle')], 40000);
+  h = tick(g, [eat(gob, 9, 9, 'beetle')], 1000);
+  check(!thanks(h, gob, you) && says(h, gob, VOICES.gobbler.caught), 'a beetle caught far from where it was nudged: its own catch, no thanks');
+}
+{ // Colonist: the woodpecker pecks out a colony's flag cell and the colony is lost: it says so, even just after another line, and the peck itself goes without its "pecked" line. Planting one too many lets the oldest go: no loss.
+  const g = stage(['colonist'], { 0: [3, 22], 1: [22, 2] }), [, col] = g.snakes;
+  const [one, two] = col.memory.colonies = [{ x: 6, y: 6, radius: 4, n: 1 }, { x: 14, y: 8, radius: 4, n: 2 }];
+  col.memory.planted = 1;
+  tick(g);
+  check(tick(g, [{ type: 'peck', x: 14, y: 8, cells: [K(14, 8), K(15, 8)], under: [] }], 5000).length === 0, 'the woodpecker pecks out a flag cell: no "pecked" line');
+  g.holes.add(K(14, 8)); g.holes.add(K(15, 8));
+  check(says(tick(g, [{ type: 'rot', x: 7, y: 7, kind: 'apple' }], 5000), col, VOICES.colonist.colony.rotten), '...rot in the other colony: its line');
+  col.memory.colonies = [one]; // (the AI drops the lost colony at once)
+  let h = tick(g, [], 1000);
+  check(says(h, col, VOICES.colonist.colony.lost), `...and the colony is lost a second later: "${lineOf(h, col)}"`);
+  col.memory.colonies = [{ x: 18, y: 18, radius: 4, n: 3 }]; col.memory.planted = 2; // (a new flag, and the oldest let go)
+  h = tick(g, [], 5000);
+  check(says(h, col, VOICES.colonist.flag) && !says(h, col, VOICES.colonist.colony.lost), 'a new flag, the oldest let go: a flag line, no loss');
+  void two;
+}
+{ // Sovereign: the woodpecker pecks out its capital and the realm moves at once: it says so, even just after another line; the peck itself goes without its "pecked" line; a drift elsewhere is a plain move.
+  const g = stage(['sovereign'], { 0: [3, 22], 1: [20, 2] }), [, sov] = g.snakes;
+  sov.memory.home = { x: 10, y: 10, radius: 3 };
+  tick(g);
+  check(tick(g, [{ type: 'peck', x: 10, y: 10, cells: [K(10, 10), K(10, 11)], under: [] }], 5000).length === 0, 'the woodpecker pecks out the capital: no "pecked" line');
+  g.holes.add(K(10, 10)); g.holes.add(K(10, 11));
+  check(says(tick(g, [{ type: 'rot', x: 11, y: 9, kind: 'apple' }], 5000), sov, VOICES.sovereign.realm.rotten), '...rot in the realm: its line');
+  sov.memory.home = { x: 12, y: 10, radius: 3 }; // (the AI moves it at once, to good land)
+  let h = tick(g, [], 1000);
+  check(says(h, sov, VOICES.sovereign.realm.capital), `...and the realm moves off its pecked capital a second later: "${lineOf(h, sov)}"`);
+  sov.memory.home = { x: 13, y: 10, radius: 4 };
+  h = tick(g, [], 5000);
+  check(says(h, sov, VOICES.sovereign.realm.grow) && !says(h, sov, VOICES.sovereign.realm.capital), 'later, it grows as it drifts: a grow line, not the capital again');
+  sov.memory.home = { x: 14, y: 10, radius: 4 };
+  check(says(tick(g, [], 5000), sov, VOICES.sovereign.realm.move), '...and a drift off good land: a plain move');
+}
+console.log('ok   choking: the choker\'s line at most every 20 s; a rival who eats what a choke spat or a cough nudged aside thanks the cougher, now and then; a colony or capital the woodpecker took is news, and its peck goes without the "pecked" line');
 
 // Star shows off: any flash of its own, its jumps and golden dashes, and its
 // flash back from its rest, half the time and all together at most every 10 s
@@ -447,6 +535,11 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
 {
   let total = 0, rounds = 0;
   const per = {};
+  // (Chokes and what coughs knocked aside, as the engine has them, and the lines for them.)
+  const chokeLines = new Set(Object.values(VOICES).flatMap(v => v.choke || []));
+  const esc = s => s.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
+  const thanks = Object.values(VOICES).flatMap(v => v.windfall || []).map(l => new RegExp(`^${l.split('{who}').map(esc).join('.+')}$`));
+  let chokes = 0, knocked = 0, choked = 0, thanked = 0;
   for (let r = 0; r < 4; r++) {
     rng = seeded(31 + r * 7919);
     const g = E.createGame({ withPlayer: false });
@@ -457,11 +550,14 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
       C.update();
       total += heard.length;
       for (const x of heard) per[x.s.personaKey] = (per[x.s.personaKey] || 0) + 1;
+      for (const e of g.events) { if (e.type === 'choke') chokes++; if (e.type === 'choke' || e.type === 'nudge') knocked++; }
+      for (const x of heard) { if (chokeLines.has(x.text)) choked++; if (thanks.some(t => t.test(x.text))) thanked++; }
     }
     rounds++;
   }
   check(total > 20 * rounds, `whole rounds: the rivals talk (${total} lines in ${rounds} rounds)`);
-  console.log(`ok   ${rounds} whole AI rounds with the chatter listening: ${total} lines, nothing thrown`);
+  check(choked <= chokes && thanked <= knocked, `...a choke line only for a choke (${choked} of ${chokes}), thanks only for food knocked aside (${thanked} for ${knocked} pieces)`);
+  console.log(`ok   ${rounds} whole AI rounds with the chatter listening: ${total} lines, nothing thrown (${chokes} chokes, ${choked} remarked on; ${knocked} pieces spat or nudged aside, ${thanked} thanks)`);
   // ...and two with Star, the rivals who answer it and Copycat (who repeats it in Chinese).
   let star = 0, zh = 0;
   for (let r = 0; r < 2; r++) {
