@@ -1397,8 +1397,12 @@ window.SnakeRender = (() => {
   // The mouth: open when food is right in front, then a couple of chews after a bite.
   let deadNow = false; // the snake being drawn has just died: mouth shut
   let frameDt = 16;     // this frame's length, for easing
+  // Choked on its own bead, it coughs for a moment and eats nothing (the
+  // engine's s.coughUntil, synced to guests): its mouth stays shut, and no
+  // tongue or gag comes out (see drawCough for its puffs).
+  const coughing = s => !!game && s.coughUntil > game.tick;
   function mouthOpen(s, a) {
-    if (deadNow) return 0;
+    if (deadNow || coughing(s)) return 0;
     const t = (lastNow - a.ateAt) / T.CHEW_MS;
     if (t >= 0 && t < 1) return 0.55 * Math.abs(Math.sin(t * Math.PI * 2));
     if (!game) return 0;
@@ -2865,7 +2869,7 @@ window.SnakeRender = (() => {
       blitAbout(starPointSprite(n), x, y, 0, 0, sc, sc, a.turn);
       ctx.globalAlpha = was;
     }
-    blitAbout(stacheSprite(), x, y, 0, 0, sc, sc, a.face);
+    blitAbout(stacheSprite(stacheStep(s, a, now)), x, y, 0, 0, sc, sc, a.face); // (twirling, as its gag: see stacheSprite)
     ctx.fillStyle = 'rgba(255,255,255,0.22)'; // (its sheen, as every segment's: light from the top left, whichever way it's turned)
     circle(x - r * 0.3, y - r * 0.36, r * 0.34);
     const flare = reduced ? 1 : (now - a.flareAt) / 450;
@@ -2887,7 +2891,19 @@ window.SnakeRender = (() => {
   const STAR_R = CELL * 0.54; // (its head's radius, unswollen: its sprites')
   const starHeadSprite = n => sprite('starhead', n, drawStarHeadSprite);
   const starPointSprite = j => sprite('starpoint', j, drawStarPointSprite);
-  const stacheSprite = () => sprite('stache', '', drawStacheSprite);
+  // Its gag (anyone else's tongue): its mustache's ends twirl and flick up,
+  // and a little harrumph puffs out from under it; nothing pokes out of its
+  // mouth. A sprite for each of STACHE_STEPS steps through the flick (0 is
+  // the mustache at rest), so it costs what the still one does; with reduced
+  // motion the ends still twirl (it's the gag), without the puff.
+  const STACHE_STEPS = 16;
+  const stacheSprite = (i = 0) => sprite('stache', reduced && i ? -i : i, drawStacheSprite);
+  // The step of its gag a snake's flick is at (0: not flicking), as tongue() times it.
+  function stacheStep(s, a, now) {
+    if (deadNow || now >= a.tongueUntil || coughing(s) || mouthOpen(s, a) >= 0.08) return 0;
+    const p = 1 - (a.tongueUntil - now) / a.tongueMs;
+    return Math.max(1, Math.min(STACHE_STEPS - 1, Math.round(p * STACHE_STEPS)));
+  }
   // The star, inked, dim, then lit in its middle and its first n points.
   const drawStarHeadSprite = (g, n) => {
     g.fillStyle = INK;
@@ -2904,7 +2920,12 @@ window.SnakeRender = (() => {
     g.beginPath(); starPoint(g, j); g.clip();
     starFill(g, STAR_SUN_RIM, STAR_SUN);
   };
-  const drawStacheSprite = g => { g.scale(1.1, 1.1); mustache(g); }; // (at its face's scale: see drawBody)
+  const drawStacheSprite = (g, i) => { // (at its face's scale: see drawBody)
+    g.scale(1.1, 1.1);
+    const p = Math.abs(i) / STACHE_STEPS;
+    if (i > 0) harrumph(g, p);
+    mustache(g, Math.min(1, 1.7 * (1 - Math.abs(2 * p - 1))));
+  };
   // Its rim and its body, in these colours, inside its ink.
   function starFill(g, rim, body) {
     g.fillStyle = rim;
@@ -2933,17 +2954,25 @@ window.SnakeRender = (() => {
   // Its mustache, in the face's frame (+x its chin, a cell CELL): two big
   // drooping halves from under its eyes, out over its two lower points,
   // scalloped along their ends; inked, so white reads on sunflower, with a
-  // few strands.
-  function mustache(g) {
-    const c = CELL;
+  // few strands. Twirled (t, 0..1: its gag), each half's outer end bends up
+  // toward its eyes, more the further out it is, and its tip curls round in
+  // a little inked twirl. (Made once a step: see stacheSprite.)
+  function mustache(g, t = 0) {
+    const c = CELL, th = t * 1.2;
+    let sg = 1;
+    // (a point of a half, bent: turned about a hinge out under its eye, by more toward its end)
+    const bx = (x, y) => { const w = bend(y), a = sg * th * w, dx = x - 0.17, dy = y - sg * 0.13; return c * (0.17 + dx * Math.cos(a) - dy * Math.sin(a)); };
+    const by = (x, y) => { const w = bend(y), a = sg * th * w, dx = x - 0.17, dy = y - sg * 0.13; return c * (sg * 0.13 + dx * Math.sin(a) + dy * Math.cos(a)); };
+    const bend = y => { const u = Math.max(0, Math.min(1, (Math.abs(y) - 0.12) / 0.3)); return u * u * (3 - 2 * u); };
+    const P = (x, y) => [bx(x, sg * y), by(x, sg * y)];
     g.beginPath();
-    for (const sg of SIDES2) {
-      g.moveTo(c * 0.07, 0);
-      g.bezierCurveTo(c * 0.03, sg * c * 0.16, c * 0.1, sg * c * 0.32, c * 0.26, sg * c * 0.38);
-      g.quadraticCurveTo(c * 0.38, sg * c * 0.42, c * 0.43, sg * c * 0.31);
-      g.quadraticCurveTo(c * 0.35, sg * c * 0.3, c * 0.35, sg * c * 0.22);
-      g.quadraticCurveTo(c * 0.27, sg * c * 0.2, c * 0.29, sg * c * 0.12);
-      g.quadraticCurveTo(c * 0.22, sg * c * 0.08, c * 0.25, 0);
+    for (sg of SIDES2) {
+      g.moveTo(...P(0.07, 0));
+      g.bezierCurveTo(...P(0.03, 0.16), ...P(0.1, 0.32), ...P(0.26, 0.38));
+      g.quadraticCurveTo(...P(0.38, 0.42), ...P(0.43, 0.31));
+      g.quadraticCurveTo(...P(0.35, 0.3), ...P(0.35, 0.22));
+      g.quadraticCurveTo(...P(0.27, 0.2), ...P(0.29, 0.12));
+      g.quadraticCurveTo(...P(0.22, 0.08), ...P(0.25, 0));
       g.closePath();
     }
     g.fillStyle = '#fffdf6';
@@ -2952,15 +2981,52 @@ window.SnakeRender = (() => {
     g.lineWidth = c * 0.035;
     g.lineJoin = 'round';
     g.stroke();
+    if (t > 0.05) { // (its twirls: from each end, curling in and round)
+      g.lineCap = 'round';
+      for (const [col, w] of [[INK, 0.085], ['#fffdf6', 0.045]]) {
+        g.strokeStyle = col;
+        g.lineWidth = c * w;
+        g.beginPath();
+        for (sg of SIDES2) {
+          const [x0, y0] = P(0.4, 0.37), [x1, y1] = P(0.32, 0.43), a0 = Math.atan2(y0 - y1, x0 - x1); // (the way out of its end)
+          let x = x0, y = y0;
+          g.moveTo(x, y);
+          for (let j = 1; j <= 12; j++) {
+            const u = j / 12, a = a0 + sg * u * 4.4 * t, step = c * 0.045 * (1 - 0.6 * u) * Math.min(1, t * 1.5);
+            x += Math.cos(a) * step; y += Math.sin(a) * step;
+            g.lineTo(x, y);
+          }
+        }
+        g.stroke();
+      }
+    }
     g.strokeStyle = 'rgba(58,38,20,0.3)';
     g.lineWidth = c * 0.02;
     g.lineCap = 'round';
     g.beginPath();
-    for (const sg of SIDES2) {
-      g.moveTo(c * 0.12, sg * c * 0.1); g.quadraticCurveTo(c * 0.16, sg * c * 0.24, c * 0.3, sg * c * 0.3);
-      g.moveTo(c * 0.17, sg * c * 0.05); g.quadraticCurveTo(c * 0.21, sg * c * 0.14, c * 0.27, sg * c * 0.18);
+    for (sg of SIDES2) {
+      g.moveTo(...P(0.12, 0.1)); g.quadraticCurveTo(...P(0.16, 0.24), ...P(0.3, 0.3));
+      g.moveTo(...P(0.17, 0.05)); g.quadraticCurveTo(...P(0.21, 0.14), ...P(0.27, 0.18));
     }
     g.stroke();
+  }
+  // The harrumph, p (0..1) through its gag: a little puff of breath out
+  // from under its mustache, toward its chin and to either side, growing and
+  // fading; inked lightly, so it reads on the bark.
+  function harrumph(g, p) {
+    const u = (p - 0.3) / 0.6;
+    if (u <= 0 || u >= 1) return;
+    const c = CELL, fade = 1 - u * u;
+    g.lineWidth = c * 0.044;
+    for (const [x0, y0, dx, dy, r0, r1] of [[0.46, 0, 0.24, 0, 0.06, 0.14], [0.42, 0.22, 0.18, 0.18, 0.045, 0.1], [0.42, -0.22, 0.18, -0.18, 0.045, 0.1]]) {
+      const x = c * (x0 + dx * u), y = c * (y0 + dy * u), r = c * (r0 + (r1 - r0) * u);
+      g.beginPath(); // (a little cloud: three rounds, its ink stroked under its fill, so only the outside shows)
+      for (const [ox, oy, rr] of [[0, 0, 1], [-0.6, 0.55, 0.62], [-0.6, -0.55, 0.62]]) { g.moveTo(x + ox * r + rr * r, y + oy * r); g.arc(x + ox * r, y + oy * r, rr * r, 0, TAU); }
+      g.strokeStyle = `rgba(58,38,20,${(0.5 * fade).toFixed(3)})`;
+      g.stroke();
+      g.fillStyle = `rgba(255,253,246,${(0.92 * fade).toFixed(3)})`;
+      g.fill();
+    }
   }
   // A four-point twinkle, white and finely inked, as a sprite (its tips
   // GLINT_R from its middle).
@@ -3183,7 +3249,7 @@ window.SnakeRender = (() => {
     sniper: [1.2, 1.5, laser], sovereign: [1.6, 2.4, carpet], colonist: [1.4, 2.2, telescope], vulture: [1.6, 3, bone],
     mason: [1.4, 2.4, papyrus], metagamer: [1.4, 2, keyboard], wildcard: [1.2, 2, bill], desperado: [1.1, 2, revolver],
     joker: [1, 2.4, blower], copycat: [1.2, 1.4, blep], mute: [1.1, 2, innerJaw], ouroboros: [1.6, 1.6, fangs],
-    star: [0.9, 1.8, flickStar],
+    star: [0.9, 1.8, fakeStache], // (Star's own is its mustache, twirling: see stacheSprite; this is Copycat's copy of it)
   };
   let flickP = -1, flickT = 0; // the flick being drawn: how far through it is (or -1), and how far out (0..1..0)
 
@@ -3634,43 +3700,17 @@ window.SnakeRender = (() => {
     ctx.stroke();
   }
 
-  // Star: a tiny star flicked out on a puff of rainbow (a ribbon of its
-  // colours, arching from its mouth), spinning, a glint on it at full
-  // stretch, then back. Drawn big from the mouth, and inked, so it reads at
-  // phone size.
-  function flickStar(t, p) {
-    const c = CELL, e = stayOut(t, 1.8), x0 = c * 0.38, x1 = x0 + c * 0.6 * e, bands = TWINKLE_HUES.length, w = c * 0.032;
-    ctx.translate(x0, 0);
-    ctx.scale(1.35, 1.35);
-    ctx.translate(-x0, 0);
-    if (e > 0.05) {
-      const lift = -c * 0.16 * e + (reduced ? 0 : Math.sin(p * 20) * c * 0.03), mx = (x0 + x1) / 2;
-      ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(x0, 0); ctx.quadraticCurveTo(mx, lift, x1, 0);
-      ctx.strokeStyle = INK; ctx.lineWidth = bands * w + c * 0.05; ctx.stroke();
-      for (let j = 0; j < bands; j++) {
-        const dy = (j - (bands - 1) / 2) * w;
-        ctx.beginPath(); ctx.moveTo(x0, dy * 0.5); ctx.quadraticCurveTo(mx, lift + dy, x1, dy * 0.7);
-        ctx.strokeStyle = rainbowOf(TWINKLE_HUES[j])[0]; ctx.lineWidth = w + 0.6; ctx.stroke();
-      }
-    }
-    const rr = c * 0.17 * Math.min(1, e * 2) * (reduced ? 1 : 1 + 0.12 * Math.sin(p * 44)); // (the star, twinkling)
-    if (rr < 0.5) return;
-    ctx.save();
-    ctx.translate(x1, 0);
-    ctx.rotate(reduced ? 0 : p * TAU);
-    ctx.fillStyle = STAR_SUN;
-    ctx.strokeStyle = INK;
-    ctx.lineWidth = c * 0.04;
-    ctx.lineJoin = 'round';
-    star(0, 0, rr);
-    ctx.stroke();
-    ctx.restore();
-    if (t > 0.6) { // (a glint on it at full stretch)
-      ctx.fillStyle = '#ffffff';
-      sparkle(ctx, x1 + rr * 0.55, -rr * 0.6, rr * 1.2 * (t - 0.6) / 0.4);
-      ctx.fill();
-    }
+  // Star's gag is its mustache, twirling (see stacheSprite): nothing comes
+  // out of its mouth. Copycat copying it can't grow one, so it holds up a
+  // stick-on mustache under its nose for the length of a flick, and twirls
+  // that (the same sprite, smaller, in its own face's frame).
+  function fakeStache(t, p) {
+    const e = Math.min(1, t * 3);
+    if (e < 0.05) return;
+    const sc = 0.72 * e / 1.1; // (the sprite is at a face's scale already)
+    ctx.translate(CELL * 0.14, 0);
+    ctx.scale(sc, sc);
+    blit(stacheSprite(Math.max(1, Math.min(STACHE_STEPS - 1, Math.round(p * STACHE_STEPS)))), 0, 0);
   }
 
   // Your face: white eyes whose pupils glance toward the nearest food, a
@@ -3679,7 +3719,7 @@ window.SnakeRender = (() => {
   function drawPlayerFace(s, a, now, blinking) {
     const c = CELL;
     const open = mouthOpen(s, a);
-    tongue(a, now, open, 'player', true);
+    tongue(a, now, coughing(s) ? 1 : open, 'player', true); // (coughing, its mouth is shut)
     mouth(open, 0.44);
 
     if (blinking) return lids(0.11);
@@ -3710,7 +3750,7 @@ window.SnakeRender = (() => {
     blinkNow = blinking;
     const open = mouthOpen(s, a);
     const flicks = look === 'copycat' ? copiedLook(s) : look;
-    tongue(a, lastNow, open, flicks, flicks === 'gobbler', look !== 'sniper');
+    tongue(a, lastNow, coughing(s) ? 1 : open, flicks, flicks === 'gobbler', look !== 'sniper' && look !== 'star'); // (Sniper's comes out of its scope, and Star's is its mustache: see drawStarHead; coughing, its mouth is shut)
     switch (look) {
       case 'sniper': { // one eye squeezed shut (it never blinks on the job), the other behind a scope that swings onto its target
         ctx.strokeStyle = INK;
@@ -7352,5 +7392,6 @@ window.SnakeRender = (() => {
     get particles() { return pLive; },
     streaked: () => streaks.map(k => ({ from: [k.fx, k.fy], to: [k.tx, k.ty], seen: k.pre >= 0 })), // (the dash streaks drawn: for the tests)
     hues(on) { huesOn = !!on; }, // (a land's colour round a rival on it, drawn or not: for the benchmark, which times it)
+    flick(s, p) { const a = animOf(s, lastNow), [, len] = FLICKS[lookOf(s)] || FLICKS.player; a.tongueMs = T.TONGUE_MS * len; a.tongueUntil = lastNow + (1 - p) * a.tongueMs; a.nextTongue = lastNow + 1e9; }, // (its tongue or gag p of the way through, and then no more: for the tests)
   };
 })();

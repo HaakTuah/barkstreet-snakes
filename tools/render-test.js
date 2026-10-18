@@ -30,6 +30,8 @@
 //   and its twinkles burst as it flashes, not as its flash comes back. Its
 //   face is upright at every heading. Copycat copying it wears a pale copy
 //   of its rainbow (not a pale gold), and it goes off in a rainbow ring.
+//   Its gag is its mustache: the ends twirl up beside its eyes and nothing
+//   comes out past its chin; Copycat copying it holds up a stick-on one.
 // - Scorch marks are soot, not holes: a burned cell is no more than a little
 //   darker, and not darkest in its middle.
 // - Every Field guide picture draws (the mushroom on bark; a snake holding
@@ -482,6 +484,32 @@ const STAGE = `(() => {
     })()`);
     check(face.every(f => f.n >= 6 && f.below > 0.1), 'Star’s face is upright at every heading: its mustache under its eyes',
       `its mustache’s ends (pixels, cells below the head’s middle), heading up, down, left, right: ${face.map(f => `${f.n}, ${f.below}`).join('; ')}`);
+
+    // Star's gag is its mustache (round six A; it flicked out a star on a
+    // ribbon of rainbow, which the owner didn't like): half way through it,
+    // the mustache's ends have twirled up beside its eyes, and nothing bright
+    // has come out past its chin (only a pale puff of breath). Copycat
+    // copying it holds up a stick-on mustache under its nose instead. Star
+    // heading down (its face upright, its chin down), Copycat heading right.
+    const gag = await ev(`(() => {
+      SnakeDebug.pinQuality(2);
+      R.setReducedMotion(false);
+      const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
+      const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
+      const white = (r, g, b) => Math.min(r, g, b) > 200 && Math.max(r, g, b) - Math.min(r, g, b) < 40, bright = (r, g, b) => Math.max(r, g, b) > 150 && Math.max(r, g, b) - Math.min(r, g, b) > 90;
+      const g = stage(['star', 'copycat', 'mason']), [, st, cc] = g.snakes;
+      setBody(st, Array.from({ length: 8 }, (_, i) => [8, 9 - i]), 'down'); st.flashReadyAt = g.time + 3000; // (half rested: no twinkles)
+      setBody(cc, Array.from({ length: 8 }, (_, i) => [13 - i, 16]), 'right'); cc.memory.modelId = st.id;
+      show(g); R.setViewer(99); drawN(20);
+      const look = () => { const [x, y] = at(st), [cx, cy] = at(cc);
+        return { beside: count(x - 0.74, y - 0.14, 0.3, 0.26, white) + count(x + 0.44, y - 0.14, 0.3, 0.26, white), past: count(x - 0.45, y + 0.86, 0.9, 0.6, bright), nose: count(cx + 0.18, cy - 0.32, 0.36, 0.64, white) }; };
+      const rest = look();
+      R.flick(st, 0.5); R.flick(cc, 0.5); drawN(1, 0.5, 0.01);
+      return { rest, mid: look() };
+    })()`);
+    check(gag.mid.beside > 3 * gag.rest.beside + 12 && gag.mid.past === 0 && gag.rest.past === 0, 'Star’s gag is its mustache: its ends twirl up beside its eyes, and nothing comes out past its chin',
+      `white beside its eyes ${gag.rest.beside} at rest, ${gag.mid.beside} half way through; bright pixels past its chin ${gag.rest.past}, ${gag.mid.past}`);
+    check(gag.mid.nose > gag.rest.nose + 12, 'Copycat copying Star holds up a stick-on mustache', `white at its nose ${gag.rest.nose} at rest, ${gag.mid.nose} half way through its flick`);
 
     // Star's rainbow on others: Copycat copying Star wears a pale copy of it,
     // flowing as Star's does (its tint of Star's stand-in colour in text was
