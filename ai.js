@@ -312,7 +312,7 @@ window.SnakeAI = (() => {
   // (a rival may be where I last saw it heading).
   // My room's flood fill runs on it too (seenF, distF: where it got to and
   // how soon), and `unframed` gives a cell's index on the grid again (-1: the frame).
-  let W = 0, framed, unframed, terr, terrFree, meLater, laterCells, laterWas, inBody, seenF, distF, reachBlock;
+  let W = 0, framed, unframed, terr, terrFree, meLater, laterCells, laterWas, inBody, seenF, seenH, distF, reachBlock;
   const CLAIMED = HOLE + (HOLE >> 1), NOW = -HOLE; // (NOW: free already)
   // A beetle as the search moves it: its state after s of its crawls (slot s;
   // 0: as it is; BUG_SLOT and the next: playing a chase out): its cell (-1:
@@ -360,6 +360,7 @@ window.SnakeAI = (() => {
     laterCells = new Int32Array(size);
     laterWas = new Int32Array(size);
     seenF = new Int32Array(W * W);
+    seenH = new Int32Array(W * W);
     reach = new Int32Array(W * W);      // the soonest any rival could be in a cell (ticks from now)
     reachBlock = new Int32Array(W * W).fill(HOLE);
     distF = new Int32Array(W * W);
@@ -367,11 +368,13 @@ window.SnakeAI = (() => {
 
   // Where each snake's territory search starts, for up to `n` snakes.
   // (And coughs: how many of each rival's next moves eat nothing.)
-  let ownersCap = 0, srcI, srcT, srcOwn, coughs;
+  let ownersCap = 0, srcI, srcT, srcOwn, coughs, headX, headY;
   function ensureOwners(n) {
     if (n <= ownersCap) return;
     ownersCap = n;
     coughs = new Int32Array(n);
+    headX = new Int32Array(n); // (the rivals' heads where I reckon they are now, for the beetle)
+    headY = new Int32Array(n);
     srcI = new Int32Array(n);
     srcT = new Int32Array(n);
     srcOwn = new Int8Array(n);
@@ -394,6 +397,16 @@ window.SnakeAI = (() => {
   // a kind of food) is compiled again, which costs more the bigger it is, and
   // runs uncompiled meanwhile. Each cell's four neighbours are written out, in
   // DIR_LIST order: they're the hot loops.
+
+  // A body on a table of when each cell frees up: its segment j of len
+  // leaves after len - j + extra ticks (where something else is there
+  // longer, that stays).
+  function occupy(table, body, len, extra, N) {
+    for (let j = 0; j < len; j++) {
+      const c = body[j], i = c.y * N + c.x, v = len - j + extra;
+      if (v > table[i]) table[i] = v;
+    }
+  }
 
   // The territory board's tables, from otherFree and mineFree (a cell free
   // now: NOW), and the cells meLater holds longer, in laterCells. Returns how many.
@@ -431,6 +444,31 @@ window.SnakeAI = (() => {
         if (S[q] !== stampR && B[q] <= s) { S[q] = stampR; if (s < R[q]) R[q] = s; Q[write++] = q; }
       }
     }
+  }
+
+  // How much room a rival has from its head at start, with my body on the
+  // territory board in its way (see decide's roomOf: the same count, for a
+  // search state), marked in seenH.
+  function roomOn(start) {
+    const stampS = ++stamp, Q = queue, S = seenH, B = terr, Wd = W;
+    S[start] = stampS;
+    Q[0] = start;
+    let read = 0, write = 1, room = 0;
+    for (let d = 1; read < write && room < ROOM_CAP; d++) {
+      const levelEnd = write;
+      while (read < levelEnd) {
+        const p = Q[read++];
+        let q = p - Wd;
+        if (S[q] !== stampS && B[q] <= d) { S[q] = stampS; room++; Q[write++] = q; }
+        q = p + Wd;
+        if (S[q] !== stampS && B[q] <= d) { S[q] = stampS; room++; Q[write++] = q; }
+        q = p - 1;
+        if (S[q] !== stampS && B[q] <= d) { S[q] = stampS; room++; Q[write++] = q; }
+        q = p + 1;
+        if (S[q] !== stampS && B[q] <= d) { S[q] = stampS; room++; Q[write++] = q; }
+      }
+    }
+    return Math.min(room, ROOM_CAP);
   }
 
   // My room's flood fill (see evaluate), from my head at headP, t moves on,
@@ -607,13 +645,7 @@ window.SnakeAI = (() => {
     // snapshot, which is conservative in case they ate something.
     // (A rival I saw stunned stays put that much longer: its stars show.)
     const stunLeft = o => Math.max(0, (o.stun || 0) - age);
-    for (const o of others) {
-      const L = o.body.length, still = stunLeft(o);
-      for (let j = 0; j < L; j++) {
-        const c = o.body[j], i = c.y * N + c.x;
-        otherFree[i] = Math.max(otherFree[i], L - j + still);
-      }
-    }
+    for (const o of others) occupy(otherFree, o.body, o.body.length, stunLeft(o), N);
     mineFree.set(otherFree);
 
     // Where is each opponent now? Assume it kept going straight for `age`
@@ -629,6 +661,7 @@ window.SnakeAI = (() => {
         hx = nx; hy = ny;
         mineFree[hy * N + hx] = Math.max(mineFree[hy * N + hx], L);
       }
+      headX[heads.length] = hx; headY[heads.length] = hy;
       heads.push({ x: hx, y: hy });
     }
     // The territory search's board, from the same tables.
@@ -1033,7 +1066,7 @@ window.SnakeAI = (() => {
       marks[f.y * N + f.x] = f.kind === 'pellet' && f.owner === me.id ? stampOwn : k >= 0 ? stampTheirs + k : stampFood;
       theirBeads ||= k >= 0;
     }
-    const foodAt = i => marks[i] >= stampFood && marks[i] < stampTheirs + others.length;
+    const marksEnd = stampTheirs + others.length, foodAt = i => marks[i] >= stampFood && marks[i] < marksEnd;
 
     // The same goes for rivals: none can eat its own beads, nor anything
     // while it coughs (I see a cough as I see the rival, a moment late), so
@@ -1142,15 +1175,15 @@ window.SnakeAI = (() => {
       if (since < bugRest) return; // (too soon to crawl, scared or not)
       const x = c % N, y = (c - x) / N;
       let fear = Math.abs(x - hx) + Math.abs(y - hy), fx = hx, fy = hy;
-      for (let k = 0; k < heads.length; k++) { const h = heads[k], d = Math.abs(x - h.x) + Math.abs(y - h.y); if (d < fear) { fear = d; fx = h.x; fy = h.y; } }
+      for (let k = 0; k < others.length; k++) { const d = Math.abs(x - headX[k]) + Math.abs(y - headY[k]); if (d < fear) { fear = d; fx = headX[k]; fy = headY[k]; } }
       const scared = fear <= TUNE.BEETLE_FEAR;
       if (since < (scared ? TUNE.BEETLE_SCARED_EVERY : TUNE.BEETLE_EVERY)) return;
       let home = -1, homeGap = 7;
-      if (scared) for (const b of burrows) { const g = Math.abs(b % N - x) + Math.abs((b - b % N) / N - y); if (g < homeGap) { homeGap = g; home = b; } }
+      if (scared) for (let k = 0; k < burrows.length; k++) { const b = burrows[k], g = Math.abs(b % N - x) + Math.abs((b - b % N) / N - y); if (g < homeGap) { homeGap = g; home = b; } }
       let best = -1, bestScore = -Infinity;
       for (let k = 0; k < 4; k++) {
         const nx = x + BUG_WAYS[k].x, ny = y + BUG_WAYS[k].y, ni = ny * N + nx;
-        if (!inside(nx, ny) || mineFree[ni] > s + 1 || (leaveStamp[ni] === stampL && leave[ni] > s + 1) || (nx === hx && ny === hy) || (ni !== bugCell[0] && foodAt(ni))) continue;
+        if (nx < 0 || ny < 0 || nx >= N || ny >= N || mineFree[ni] > s + 1 || (leaveStamp[ni] === stampL && leave[ni] > s + 1) || (nx === hx && ny === hy) || (ni !== bugCell[0] && marks[ni] >= stampFood && marks[ni] < marksEnd)) continue;
         let score = 0.5; // (its wandering, on average)
         if (k === way) score += 1.5; else if (way >= 0 && k === (way + 2) % 4) score -= 1;
         if (scared) score += 3 * (Math.abs(nx - fx) + Math.abs(ny - fy) - fear);
@@ -1203,10 +1236,10 @@ window.SnakeAI = (() => {
       const L = len + grow;
       const head = body[0];
       const headI = head.y * N + head.x;
-      body0ToOwnFree(body, len, grow);
       // A cell can be entered at absolute time T (ticks from now) once its
       // occupant has left: mineFree (or otherFree, for a rival) <= T, and my
-      // own body, placed at time t, needs ownFree <= T - t.
+      // own body, placed at time t, needs its own time (len - j + grow for
+      // segment j) <= T - t.
 
       // 1. Room: timed flood fill from my head (tail cells open up as I move).
       //    It also finds the best food by distance alone, ignoring rivals.
@@ -1240,6 +1273,12 @@ window.SnakeAI = (() => {
         }
       }
       space = Math.min(space, cap);
+      // (What the hunting and the thrill (see 4. and on) want of the board as it
+      // is, before the territory search claims it: the victim's room, and
+      // how much right next to my head is taken a move on, the edge too.)
+      const victimRoom = ctx.victim >= 0 ? roomOn(framed[heads[ctx.victim].y * N + heads[ctx.victim].x]) : 0;
+      let edge = 0;
+      if (w.thrill) for (const q of [headP - W, headP + W, headP - 1, headP + 1]) if (terr[q] > t + 1 || meLater[q] > t + 1) edge++;
 
       // 2. Territory: multi-source BFS, opponents start at their last seen
       //    head `age` ticks in the past, I start at my head at time t.
@@ -1316,7 +1355,7 @@ window.SnakeAI = (() => {
 
       // 4. Hunting: shrink the victim's room and get in front of it.
       if (ctx.victim >= 0) {
-        score -= w.hunt.squeeze * roomOf(ctx.victim, t);
+        score -= w.hunt.squeeze * victimRoom;
         score -= w.hunt.chase * manhattan(head, ctx.target);
       }
 
@@ -1338,11 +1377,6 @@ window.SnakeAI = (() => {
 
       // Desperado: the closer to danger, the better.
       if (w.thrill) {
-        let edge = 0;
-        for (let n = 4 * headI; n < 4 * headI + 4; n++) {
-          const ni = nbr[n];
-          if (ni < 0 || mineFree[ni] > t + 1 || ownFree[ni] > 1) edge++;
-        }
         for (const h of heads) if (manhattan(head, h) <= 3) edge++;
         score += w.thrill * edge;
       }
@@ -1361,8 +1395,8 @@ window.SnakeAI = (() => {
       //    neck). Doubled back along myself, my wall is two thick: nobody
       //    can hop it.
       if (w.thick) {
-        const neckI = body[1].y * N + body[1].x;
-        for (let n = 4 * headI; n < 4 * headI + 4; n++) if (nbr[n] >= 0 && nbr[n] !== neckI && ownFree[nbr[n]] > 0) score += w.thick;
+        const neckP = framed[body[1].y * N + body[1].x];
+        for (const q of [headP - W, headP + W, headP - 1, headP + 1]) if (q !== neckP && inBody[q] === bodyMark) score += w.thick;
       }
 
       // 9. Riding just behind a rival's tail.
@@ -1374,8 +1408,6 @@ window.SnakeAI = (() => {
         }
         score += w.tail * best;
       }
-
-      clearOwnFree(body, len);
 
       // Trapped: less room than I need, and no way onto my own trail.
       if (space < need && trail === HOLE) return score - TRAPPED - 100 * (need - space);
