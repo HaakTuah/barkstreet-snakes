@@ -3,7 +3,7 @@
 // AI (tuning.js, ai.js and engine.js, loaded unchanged) and prints how each
 // personality did. Runs on all cores; needs only Node.
 //
-//   node tools/simulate.js [rounds] [--seed N] [--ahead] [--check] [--json] [--census] [--root DIR]
+//   node tools/simulate.js [rounds] [--seed N] [--ahead] [--check] [--json] [--census] [--signatures] [--root DIR]
 //
 //   rounds    how many rounds (default 200)
 //   --seed N  a fixed random seed, so a run can be repeated exactly (each round
@@ -20,6 +20,13 @@
 //             beads: how many were eaten (and how many by the snake they
 //             broke off), how often a snake choked on its own, and what it
 //             nudged aside coughing
+//   --signatures  also print each personality's trademark, measured on
+//             every snake so each has the field to stand against: Mason's
+//             straight runs and its body lying beside itself, Ouroboros's
+//             coils, Creeper riding tails, Ghost's distance, Gobbler's share
+//             of the food and Vulture's of the beads, Sovereign at home,
+//             Mute boxing its target, Joker's lures, Desperado's skims and
+//             Star's powers (see SIGNS)
 //   --root    play another copy of the game (to compare versions)
 const fs = require('fs');
 const os = require('os');
@@ -72,8 +79,83 @@ const census = () => ({
   causesSD: {}, sdTimes: [],
 });
 
+// What --signatures measures, per snake (summed over its ticks and rounds;
+// each trademark is read against everyone else's, the field):
+//   moves, runs        moves made, and runs of them the same way (Mason: long straight runs)
+//   cells, beside      body cells, and those lying beside another part of the same body (Mason's thick walls)
+//   long, coiled       ticks 10 or more long, and of those, with the head within 3 of its own tail (Ouroboros)
+//   riding             ticks with the head within 2 of the tail end of a rival 8 or longer (Creeper)
+//   apart              distance from the nearest rival head, summed over ticks (capped at 14: Ghost)
+//   foodShare, beadShare  its share of the round's food eaten, and of the beads (summed over rounds: Gobbler, Vulture)
+//   homeTicks, atHome  ticks with a realm, and of those, the head on it (Sovereign)
+//   hunting, boxing    ticks with a target, and of those, its body within 2 of the target's head (Mute)
+//   luring             ticks with a rival head 2 to 4 away: just out of its reach, close enough to follow (Joker)
+//   skims              ticks with the head beside the edge, a hole or a body (not its own neck), or a rival head within 2 (Desperado)
+//   flashes, jumps     plain and golden flashes, and jumps of both kinds (Star: a minute alive)
+const SIGNS = ['moves', 'runs', 'cells', 'beside', 'long', 'coiled', 'riding', 'apart', 'foodShare', 'beadShare', 'homeTicks', 'atHome', 'hunting', 'boxing', 'luring', 'skims', 'flashes', 'jumps', 'ticks'];
+
+// Takes one tick's signatures, after the step (was: each snake's head and
+// heading before it, and whether it has moved yet this round; brought up to date).
+function signatures(g, T, per, was) {
+  const N = T.GRID, mark = signatures.mark ||= new Int32Array(N * N), owner = signatures.owner ||= new Int32Array(N * N);
+  const stampOf = () => (signatures.stamp = (signatures.stamp || 0) + 1);
+  const alive = g.snakes.filter(s => s.alive);
+  const all = stampOf(); // (every living body's cells, for the skims)
+  for (const s of alive) for (const c of s.body) { mark[c.y * N + c.x] = all; owner[c.y * N + c.x] = s.id; }
+  const bodyAt = (x, y) => x >= 0 && y >= 0 && x < N && y < N && mark[y * N + x] === all;
+  for (const s of alive) {
+    const p = per[s.name].sig, h = s.body[0], L = s.body.length;
+    const w = was[s.id];
+    p.ticks++;
+    if (h.x !== w.x || h.y !== w.y) { p.moves++; if (s.dir !== w.dir || !w.moved) p.runs++; w.moved = true; }
+    w.x = h.x; w.y = h.y; w.dir = s.dir;
+    // Lying beside itself: a cell with another of its own (not the one before or after it) beside it.
+    const index = signatures.index ||= new Int32Array(N * N), own = stampOf();
+    s.body.forEach((c, j) => { mark[c.y * N + c.x] = own; index[c.y * N + c.x] = j; });
+    s.body.forEach((c, j) => {
+      p.cells++;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const x = c.x + dx, y = c.y + dy, i = y * N + x;
+        if (x >= 0 && y >= 0 && x < N && y < N && mark[i] === own && Math.abs(index[i] - j) > 1) { p.beside++; break; }
+      }
+    });
+    for (const c of s.body) mark[c.y * N + c.x] = all; // (back to everyone's)
+    if (L >= 10) { p.long++; if (Math.abs(h.x - s.body[L - 1].x) + Math.abs(h.y - s.body[L - 1].y) <= 3) p.coiled++; }
+    let nearest = 14, lure = false, ride = false;
+    for (const o of alive) {
+      if (o === s) continue;
+      const oh = o.body[0], d = Math.abs(oh.x - h.x) + Math.abs(oh.y - h.y), t = o.body[o.body.length - 1];
+      nearest = Math.min(nearest, d);
+      if (d >= 2 && d <= 4) lure = true;
+      if (o.body.length >= 8 && Math.abs(t.x - h.x) + Math.abs(t.y - h.y) <= 2) ride = true;
+    }
+    p.apart += nearest;
+    if (lure) p.luring++;
+    if (ride) p.riding++;
+    let skim = nearest <= 2;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const x = h.x + dx, y = h.y + dy;
+      if (L > 1 && x === s.body[1].x && y === s.body[1].y) continue;
+      if (x < 0 || y < 0 || x >= N || y >= N || g.holes.has(y * N + x) || bodyAt(x, y)) skim = true;
+    }
+    if (skim) p.skims++;
+    const home = s.memory.home;
+    if (home) { p.homeTicks++; if (Math.hypot(h.x - home.x, h.y - home.y) <= home.radius + T.LAND_REACH) p.atHome++; }
+    const victim = s.memory.victimId != null && g.snakes.find(o => o.id === s.memory.victimId);
+    if (victim && victim.alive) {
+      p.hunting++;
+      const vh = victim.body[0];
+      if (s.body.some(c => Math.abs(c.x - vh.x) + Math.abs(c.y - vh.y) <= 2)) p.boxing++;
+    }
+  }
+  for (const e of g.events) {
+    if (e.type === 'dash') per[e.snake.name].sig.flashes++;
+    else if (e.type === 'leap') per[e.snake.name].sig.jumps++;
+  }
+}
+
 // Plays rounds [from, to) of the run, each from its own seed.
-function play({ from, to, seed, ahead }) {
+function play({ from, to, seed, ahead, signs }) {
   const { E, T } = loadGame();
   const per = {};
   const total = { rounds: to - from, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {}, crashes: 0, alight: 0, cuts: 0, baked: 0, ash: 0, rot: 0, rotBeads: 0, census: census() };
@@ -85,9 +167,10 @@ function play({ from, to, seed, ahead }) {
     let trace = 0;
     const g = E.createGame({ withPlayer: false });
     for (const s of g.snakes) {
-      per[s.name] ||= { rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, beetles: 0, kills: 0, aliveMs: 0, deaths: {} };
+      per[s.name] ||= { rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, beetles: 0, kills: 0, aliveMs: 0, deaths: {}, ...(signs ? { sig: Object.fromEntries(SIGNS.map(k => [k, 0])) } : {}) };
       per[s.name].rounds++;
     }
+    const was = g.snakes.map(s => ({ x: s.body[0].x, y: s.body[0].y, dir: s.dir, moved: false })); // (for --signatures)
     const place = new Map();
     const seen = new Set(), picked = g.snakes.map(() => 0); // (what this round had; golden power food each snake ate)
     while (g.snakes.some(s => s.alive) && g.snakes.filter(s => s.alive).length > 1 && g.time < MAX_TIME) {
@@ -97,6 +180,7 @@ function play({ from, to, seed, ahead }) {
       const held = g.snakes.map(s => s.leaps), late = E.suddenDeath(g);
       for (const s of g.snakes) if (s.alive) { const left = E.hungerLeft(g, s); c[late ? 'aliveLate' : 'aliveEarly']++; if (left < T.HUNGER_WARN_MS) c[late ? 'hungryLate' : 'hungryEarly']++; if (left < 0) c[late ? 'starvingLate' : 'starvingEarly']++; }
       const dying = E.step(g);
+      if (signs) signatures(g, T, per, was);
       for (const e of g.events) {
         if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
         else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
@@ -146,12 +230,14 @@ function play({ from, to, seed, ahead }) {
     if (g.time >= MAX_TIME) total.stalled++;
     else if (alive.length === 1) { per[alive[0].name].wins++; place.set(alive[0], 1); }
     else total.draws++;
+    const food = g.snakes.reduce((n, s) => n + s.eaten, 0), beads = g.snakes.reduce((n, s) => n + s.pellets, 0);
     for (const s of g.snakes) {
       const p = per[s.name];
       p.placeSum += place.get(s) || 1;
       p.eaten += s.eaten;
       p.pellets += s.pellets;
       if (s.alive) p.aliveMs += g.time;
+      if (signs) { p.sig.foodShare += s.eaten / Math.max(1, food); p.sig.beadShare += s.pellets / Math.max(1, beads); }
     }
     total.timeSum += g.time;
     total.times.push(g.time);
@@ -177,7 +263,7 @@ function merge(results) {
     for (const [name, p] of Object.entries(r.per)) {
       const t = (per[name] ||= { deaths: {} });
       for (const [k, v] of Object.entries(p)) {
-        if (k === 'deaths') for (const [d, n] of Object.entries(v)) t.deaths[d] = (t.deaths[d] || 0) + n;
+        if (k === 'deaths' || k === 'sig') for (const [d, n] of Object.entries(v)) (t[k] ||= {})[d] = (t[k][d] || 0) + n;
         else t[k] = (t[k] || 0) + v;
       }
     }
@@ -229,6 +315,34 @@ function report({ per, total, suddenAt }, withCensus) {
   })).sort((a, b) => b['win%'] - a['win%'] || a.place - b.place));
 }
 
+// --signatures: each trademark as a ratio of two sums (see SIGNS), for one
+// personality and for the field (everyone else together).
+const TRADEMARKS = [
+  ['Mason', 'straight run', 'moves', 'runs', 1], ['Mason', 'body beside itself', 'beside', 'cells', '%'],
+  ['Ouroboros', 'coiled (10 long or more)', 'coiled', 'long', '%'], ['Creeper', 'riding a tail', 'riding', 'ticks', '%'],
+  ['Ghost', 'cells from the nearest head', 'apart', 'ticks', 1], ['Gobbler', 'share of the food', 'foodShare', 'rounds', '%'],
+  ['Vulture', 'share of the beads', 'beadShare', 'rounds', '%'], ['Sovereign', 'at home', 'atHome', 'homeTicks', '%'],
+  ['Mute', 'boxing its target (of ticks hunting)', 'boxing', 'hunting', '%'], ['Joker', 'luring a rival on', 'luring', 'ticks', '%'],
+  ['Desperado', 'skimming danger', 'skims', 'ticks', '%'], ['Star', 'flashes a minute', 'flashes', 'minutes', 1], ['Star', 'jumps a minute', 'jumps', 'minutes', 1],
+];
+function reportSignatures(per) {
+  const sum = (names, k) => names.reduce((n, name) => n + (k === 'rounds' ? per[name].rounds : k === 'minutes' ? per[name].aliveMs / 60000 : per[name].sig[k]), 0);
+  const ratio = (names, a, b, unit) => { const v = sum(names, a) / Math.max(1e-9, sum(names, b)); return unit === '%' ? (100 * v).toFixed(1) + '%' : v.toFixed(2); };
+  const names = Object.keys(per);
+  console.log('trademarks (each against the field: everyone else together)');
+  for (const [who, what, a, b, unit] of TRADEMARKS) {
+    if (!per[who]) continue;
+    const field = names.filter(n => n !== who && sum([n], b) > 0);
+    console.log(`  ${who}, ${what}: ${ratio([who], a, b, unit)} · field ${field.length ? ratio(field, a, b, unit) : 'none'}`);
+  }
+  console.table(names.sort().map(name => {
+    const one = [name], r = (a, b, unit) => sum(one, b) > 0 ? ratio(one, a, b, unit) : '';
+    return { name, run: r('moves', 'runs', 1), beside: r('beside', 'cells', '%'), coiled: r('coiled', 'long', '%'), riding: r('riding', 'ticks', '%'), apart: r('apart', 'ticks', 1),
+      food: r('foodShare', 'rounds', '%'), beads: r('beadShare', 'rounds', '%'), home: r('atHome', 'homeTicks', '%'), boxing: r('boxing', 'hunting', '%'), luring: r('luring', 'ticks', '%'),
+      skims: r('skims', 'ticks', '%'), 'flash/min': r('flashes', 'minutes', 1), 'jump/min': r('jumps', 'minutes', 1) };
+  }));
+}
+
 if (isMainThread) {
   const args = process.argv.slice(2);
   const flag = name => args.includes(name);
@@ -242,6 +356,7 @@ if (isMainThread) {
     to: Math.floor(rounds * (i + 1) / workers),
     seed,
     ahead,
+    signs: flag('--signatures'),
     root: ROOT,
   }));
   Promise.all(jobs.map(job => new Promise((resolve, reject) => {
@@ -251,7 +366,10 @@ if (isMainThread) {
   }))).then(results => {
     const merged = merge(results);
     if (flag('--json')) console.log(JSON.stringify(merged));
-    else report(merged, flag('--census'));
+    else {
+      report(merged, flag('--census'));
+      if (flag('--signatures')) reportSignatures(merged.per);
+    }
     if (flag('--check')) {
       const never = Object.entries(merged.per).filter(([, p]) => p.rounds >= 20 && !p.wins).map(([n]) => n);
       const problems = [merged.total.stalled && `${merged.total.stalled} stalled`, never.length && `never won: ${never.join(', ')}`].filter(Boolean);
