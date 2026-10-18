@@ -16,7 +16,10 @@
 //   --census  also print what a round holds: golden things, weather and
 //             lightning, the woodpecker (and any aim it had to make near a
 //             head), the powers used, how sudden death goes, and how hungry
-//             snakes are before the woodpecker comes and after
+//             snakes are before the woodpecker comes and after, and the
+//             beads: how many were eaten (and how many by the snake they
+//             broke off), how often a snake choked on its own, and what it
+//             nudged aside coughing
 //   --root    play another copy of the game (to compare versions)
 const fs = require('fs');
 const os = require('os');
@@ -65,6 +68,7 @@ const census = () => ({
   goldBeetleRounds: 0, leafRounds: 0, goldcapRounds: 0, stormRounds: 0, starvedEarly: 0,
   pecks: 0, holes: 0, aims: 0, aimsNear: 0, flashes: 0, jumps: 0, goldLeaps: 0, goldGot: 0, dashes: 0, pickups: 0, greedy: 0,
   aliveEarly: 0, hungryEarly: 0, starvingEarly: 0, aliveLate: 0, hungryLate: 0, starvingLate: 0, // (snake-ticks before and after the woodpecker: alive, in the hunger warning, starving)
+  beads: 0, ownBeads: 0, chokes: 0, chokeRounds: 0, nudges: 0, nudgedBeads: 0, // (beads eaten, and by the snake they broke off; chokes; food nudged aside coughing, and the beads among it)
   causesSD: {}, sdTimes: [],
 });
 
@@ -112,7 +116,10 @@ function play({ from, to, seed, ahead }) {
         else if (e.type === 'aim') { c.aims++; if (g.woodpecker.target.some(k => nearHead(g, k))) c.aimsNear++; }
         else if (e.type === 'leap') { if (e.gold) c.goldLeaps++; else c.jumps++; }
         else if (e.type === 'dash') { if (e.plain) c.flashes++; else c.dashes++; }
+        if (e.type === 'choke') { c.chokes++; seen.add('choke'); }
+        else if (e.type === 'nudge') { c.nudges++; if (e.kind === 'pellet') c.nudgedBeads++; }
         if (e.type === 'eat') {
+          if (e.kind === 'pellet') { c.beads++; if (e.own) c.ownBeads++; }
           if (e.kind === 'mushroom') c.mushrooms++;
           if (e.gold || e.kind === 'leaf' || e.kind === 'goldcap') picked[e.snake.id]++;
         }
@@ -149,7 +156,7 @@ function play({ from, to, seed, ahead }) {
     total.timeSum += g.time;
     total.times.push(g.time);
     if (E.suddenDeath(g)) { total.sudden++; c.sdTimes.push(g.time - T.SUDDEN_DEATH_MS); c.holes += g.holes.size; }
-    for (const k of ['goldBeetle', 'leaf', 'goldcap', 'storm', 'starvedEarly']) if (seen.has(k)) c[k === 'starvedEarly' ? k : k + 'Rounds']++;
+    for (const k of ['goldBeetle', 'leaf', 'goldcap', 'storm', 'starvedEarly', 'choke']) if (seen.has(k)) c[k === 'starvedEarly' ? k : k + 'Rounds']++;
     for (const n of picked) { c.pickups += n; if (n > 2) c.greedy++; }
   }
   return { per, total, suddenAt: T.SUDDEN_DEATH_MS };
@@ -205,6 +212,7 @@ function report({ per, total, suddenAt }, withCensus) {
       + ` · golden power food: ${(c.pickups / Math.max(1, snakeRounds)).toFixed(2)} a snake a round (more than 2: ${pct(c.greedy, snakeRounds)}%) · a starvation before 1:00 in ${of(c.starvedEarly)} of rounds`);
     const share = (n, d) => (100 * n / Math.max(1, d)).toFixed(1) + '%';
     console.log(`hunger: before the woodpecker, ${share(c.hungryEarly, c.aliveEarly)} of snake-time in the hunger warning (${share(c.starvingEarly, c.aliveEarly)} starving); after, ${share(c.hungryLate, c.aliveLate)} (${share(c.starvingLate, c.aliveLate)})`);
+    console.log(`beads: ${a(c.beads)} eaten a round, ${share(c.ownBeads, c.beads)} of them by the snake they broke off · chokes ${a(c.chokes)} a round (in ${of(c.chokeRounds)} of rounds), food nudged aside coughing ${a(c.nudges)} (beads ${a(c.nudgedBeads)})`);
   }
   console.table(Object.entries(per).map(([name, p]) => ({
     name,
