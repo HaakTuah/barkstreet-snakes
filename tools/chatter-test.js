@@ -17,8 +17,9 @@
 // that cuts someone leaves the words to the snip or the kill. Then a few
 // whole AI rounds with the chatter listening (two with Star), to see nothing
 // throws. Last, the sound (audio.js on a stand-in AudioContext): a rival's
-// flash, jump or the like never silences yours, and your own golden ones in
-// a row are each heard.
+// flash, jump, choke or the like never silences yours, your own golden ones
+// in a row are each heard, your choke and its cough (a beat later) each time
+// you can choke, and nothing while muted.
 //
 //   node tools/chatter-test.js
 const fs = require('fs');
@@ -494,6 +495,9 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   const FRAME = 1000 / 30;
   const soonest = { dash: T.MIN_TICK - FRAME, leap: 2 * T.MIN_TICK - FRAME };
   for (const [cue, ms] of Object.entries(soonest)) check(GAP[cue] < ms, `the '${cue}' gap (${GAP[cue]} ms) is under the quickest your own can come again (${ms.toFixed(0)} ms)`);
+  // (You can choke again as soon as your cough is over: both are heard again.)
+  const again = T.COUGH_TICKS * T.MIN_TICK - FRAME;
+  for (const cue of ['choke', 'cough']) check(GAP[cue] < again, `the '${cue}' gap (${GAP[cue]} ms) is under the soonest you can choke again (${again.toFixed(0)} ms)`);
   let clock = 0, gains = 0;
   const stub = () => new Proxy(function () { return stub(); }, {
     get: (f, k) => (k in f || typeof k === 'symbol' ? f[k] : (f[k] = stub())),
@@ -517,7 +521,7 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   const sounds = (name, opts) => { const before = gains; A.play(name, opts); return gains > before; };
   const RIVAL = { rival: true, pan: 0.4 };
   // (Each case starts well apart from the last, so nothing earlier is still sounding or resting.)
-  for (const cue of ['flash', 'dash', 'leap', 'alight', 'wrap']) {
+  for (const cue of ['flash', 'dash', 'leap', 'alight', 'wrap', 'choke', 'cough']) {
     const gap = GAP[cue];
     check(gap > 0, `'${cue}' has a gap`);
     clock += 5000;
@@ -543,7 +547,19 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
     sounds(cue, { gold: true }); clock += ms;
     check(sounds(cue, { gold: true }), `your golden ${cue} ${ms.toFixed(0)} ms after your last still sounds`);
   }
-  console.log('ok   the sound: a rival\'s flash, dash, jump, catching fire or golden mushroom never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard');
+  // The cough comes a beat after the choke (delay): its gap counts from when it was asked for.
+  clock += 5000;
+  check(sounds('choke') && sounds('cough', { delay: 0.3 }), 'your choke, and your cough a beat later: both');
+  clock += 300;
+  check(!sounds('cough'), '...and another cough asked for as that one sounds waits (a cough never loops)');
+  clock += again;
+  check(sounds('choke') && sounds('cough', { delay: 0.3 }), '...but your next choke and cough, as soon as you can choke again, sound');
+  clock += 5000;
+  A.setMuted(true);
+  check(!sounds('choke') && !sounds('cough', { delay: 0.3 }) && !sounds('choke', RIVAL), 'muted: no choke, no cough, yours or a rival\'s');
+  A.setMuted(false);
+  check(sounds('choke') && sounds('cough', { delay: 0.3 }), '...and with the sound back on, both');
+  console.log('ok   the sound: a rival\'s flash, dash, jump, catching fire, golden mushroom, choke or cough never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard, and your choke and cough each time you can choke; muted, neither');
 }
 
 if (fails) { console.error(`${fails} failed`); process.exit(1); }
