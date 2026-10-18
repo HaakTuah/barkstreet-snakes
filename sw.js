@@ -2,7 +2,7 @@
 // so a new version is never hidden behind an old one, and the cache only
 // when the network's gone. Same-origin GETs only (the font and online play
 // go their own way).
-const CACHE = 'barkstreet-snakes-1'; // (a new name drops the old cache on activate)
+const CACHE = 'barkstreet-snakes-1'; // (a new name drops the old cache on activate; only the game's own: every project site of the account shares this origin)
 const FILES = ['./', 'index.html', 'style.css', 'tuning.js', 'ai.js', 'engine.js', 'records.js', 'chatter.js', 'audio.js', 'render.js', 'online.js', 'net.js', 'snake.js'];
 
 self.addEventListener('install', e => {
@@ -10,7 +10,7 @@ self.addEventListener('install', e => {
   // (one file failing doesn't stop the rest: it's cached the next time it's fetched)
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(FILES.map(f => c.add(f).catch(() => {})))));
 });
-self.addEventListener('activate', e => e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
+self.addEventListener('activate', e => e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE && /^(barkstreet-snakes|bark-and-bite)-/.test(k)).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 
 self.addEventListener('fetch', e => {
   const req = e.request;

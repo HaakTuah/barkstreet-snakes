@@ -1,4 +1,4 @@
-// The canvas renderer for Bark & Bite.
+// The canvas renderer for Barkstreet Snakes.
 //
 // The board is drawn in a fixed logical space of GRID cells of CELL units
 // (768 × 768). The canvas backing store is sized to the board's real size ×
