@@ -34,6 +34,13 @@
 //   comes out past its chin; Copycat copying it holds up a stick-on one.
 // - Scorch marks are soot, not holes: a burned cell is no more than a little
 //   darker, and not darkest in its middle.
+// - Jumps you can see: at the top the neck arches up behind the head and
+//   the shadow, left on the ground, falls across the body hopped; after, the
+//   body still arches over what it crossed (both, for a golden jump over
+//   two); dust puffs at take-off, rings the landing, and a faint trail
+//   marks the way; with reduced motion the lift and shadow, no dust or trail.
+// - Bridges you can see: a body over a pit is shaded underneath and sags,
+//   its shadow falls into the pit, and a tail end over a hole droops, darker.
 // - Every Field guide picture draws (the mushroom on bark; a snake holding
 //   golden powers; your rests).
 //
@@ -572,6 +579,108 @@ const STAGE = `(() => {
     })()`);
     check(soot.every(s => s.cell >= 0.78), 'a burned cell is no more than a little darker', soot.map(s => s.cell).join(', '));
     check(soot.every(s => s.mid >= 0.8 * s.cell), 'and not darkest in its middle (no dark disc)', soot.map(s => `${s.mid}/${s.cell}`).join(', '));
+
+    // Jumps you can see (round six A: a jump was mostly the head swelling).
+    // Your snake jumps Gobbler's body, lying one thick across its way, and
+    // then, golden, Gobbler's and Sniper's side by side; the jump asked for
+    // a tick ahead, as a press is, and drawn half a tick ahead, as the game
+    // draws it. At the top of the jump its neck is up behind its head, in an
+    // arch (wider than its body further back), and its shadow, left on the
+    // ground, falls across the body it hops (just below it and to the right,
+    // that body darkens: the shadow was drawn under every body). Two ticks
+    // on, its body still arches over what it crossed (the segment over it
+    // wider than the rest), over both for the golden jump. Lively, dust
+    // puffs where it takes off and rings where it lands, and a faint trail
+    // marks its way; with reduced motion, none of either, but the lift and
+    // the shadow still show.
+    await b.viewport(800, 800, { scale: 2 });
+    await b.sleep(400);
+    const jumps = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
+      const green = (r, g, b) => g > 150 && g > r + 40 && g > b + 30, trail = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b > 140 && b > 110 && !green(r, g, b);
+      const doStep = g => { for (const s of g.snakes) s.prev = s.body.map(c => ({ ...c })); E.step(g); R.onTick(g.events); };
+      const frame = al => { __t += 30; R.frame(al, __t); };
+      const out = {};
+      for (const still of [false, true]) for (const gold of [false, true]) {
+        R.setReducedMotion(still);
+        const g = stage(['gobbler', 'sniper', 'mason']), [you, gob, sn, ma] = g.snakes;
+        for (const s of g.snakes) s.nextStarve = 1e15;
+        setBody(ma, [[2, 22], [1, 22], [0, 22]], 'right'); ma.stunUntil = 1e9;
+        setBody(sn, [[6, 22], [5, 22], [4, 22]], 'right'); sn.stunUntil = 1e9;
+        setBody(you, Array.from({ length: 8 }, (_, i) => [9 - i, 12]), 'right'); you.leapReadyAt = 0;
+        setBody(gob, Array.from({ length: 9 }, (_, i) => [10, 8 + i]), 'down'); gob.stunUntil = 1e9;
+        if (gold) { setBody(sn, Array.from({ length: 9 }, (_, i) => [11, 16 - i]), 'up'); you.leaps = 2; }
+        show(g); R.setViewer(99); R.setLead(0.5); drawN(10, 1); // (no rests round its head, nor halo: they'd pass for the trail)
+        frame(0);
+        const under0 = lum(pixels(9.62, 13.4, 0.76, 0.35)); // (the body it hops, below it, clear of its outline)
+        E.leap(g, you);
+        for (const al of [0.25, 0.5, 0.75]) frame(al);
+        doStep(g);
+        for (const al of [0, 0.25, 0.5]) frame(al); // (the top of the jump)
+        const hx = R.headPx(you, 0.5, TUNING.GRID * ${CELL}, {}).x / ${CELL}; // (where its head's drawn: its neck's a cell behind)
+        const r = { under: +(lum(pixels(9.62, 13.4, 0.76, 0.35)) / under0).toFixed(2), neck: count(hx - 0.9, 11, 0.2, 2, green), back: count(hx - 3.9, 11, 0.2, 2, green), off: R.motes };
+        doStep(g);
+        frame(0.25); const m0 = R.motes;
+        frame(0.5); // (down)
+        r.ring = R.motes - m0;
+        r.trail = count(9.85, 11.5, 1.5, 0.2, trail) + count(9.85, 13.3, 1.5, 0.2, trail);
+        doStep(g); frame(0.5);
+        r.cross = count(10.4, 11, 0.2, 2, green); r.cross2 = count(11.4, 11, 0.2, 2, green); r.flat = count(7.4, 11, 0.2, 2, green);
+        out[(still ? 'reduced ' : '') + (gold ? 'golden' : 'plain')] = r;
+      }
+      R.setReducedMotion(false);
+      R.setLead(0.5);
+      SnakeDebug.pinQuality(2);
+      return out;
+    })()`);
+    for (const [what, r] of Object.entries(jumps)) {
+      const still = what.startsWith('reduced');
+      check(r.neck > 1.12 * r.back && r.under < 0.96, `a ${what} jump: at its top its neck arches up behind its head, and its shadow falls across what it hops`,
+        `its neck ${r.neck} pixels across, ${r.back} further back; the body under it, below and to the right, at ${r.under} of its brightness`);
+      check(r.cross > 1.15 * r.flat && (!what.includes('golden') || r.cross2 > 1.15 * r.flat), `a ${what} jump: two ticks on, its body still arches over what it crossed`,
+        `the segment over it ${r.cross}${what.includes('golden') ? ` and ${r.cross2}` : ''} pixels across, ${r.flat} on the bark`);
+      if (still) check(r.off === 0 && r.ring === 0 && r.trail === 0, `a ${what} jump: no dust and no trail`, `${r.off} motes as it took off, ${r.ring} more as it landed; ${r.trail} trail pixels`);
+      else check(r.off >= 4 && r.ring >= 8 && (what.includes('golden') || r.trail > 30), `a ${what} jump: dust puffs as it takes off and rings it as it lands, and a faint trail marks its way`,
+        `${r.off} motes as it took off, ${r.ring} more as it landed${what.includes('golden') ? '' : `; ${r.trail} trail pixels beside its way`}`);
+    }
+
+    // Bridges you can see (round six A: a body over a hole looked as if it
+    // hovered). Sniper lies across a hollow three cells long (its body over
+    // the middle one) and Gobbler's tail lies over a hole, its head on the
+    // bark; each against the same body with no hole there, and the hollow
+    // against itself with nobody over it. Over the pit, the span is shaded
+    // underneath (its lower edge darker, its upper half as it was) and sags
+    // (narrower), and its shadow falls down into the pit, further than on
+    // the bark (the pit below it darker); the tail hanging over the hole
+    // droops into it, darker.
+    const bridge = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
+      const reddish = (r, g, b) => r > 120 && r > g + 50 && r > b + 40;
+      const g = stage(['sniper', 'gobbler', 'mason']), [you, sn, gob, ma] = g.snakes;
+      setBody(you, [[2, 22], [1, 22], [0, 22]], 'right'); you.stunUntil = 1e9;
+      setBody(ma, [[2, 2], [1, 2], [0, 2]], 'right'); ma.stunUntil = 1e9;
+      const HOLES = [11 * 24 + 10, 12 * 24 + 10, 13 * 24 + 10, 5 * 24 + 18];
+      const look = () => ({ width: count(10.4, 11.3, 0.2, 2.4, reddish), edge: lum(pixels(10.3, 12.7, 0.4, 0.14)), top: lum(pixels(10.3, 12.16, 0.4, 0.14)), pit: lum(pixels(10.2, 13.1, 0.6, 0.35)), tail: lum(pixels(18.3, 5.3, 0.4, 0.4)) });
+      const place = () => { setBody(sn, Array.from({ length: 8 }, (_, i) => [13 - i, 12]), 'right'); sn.stunUntil = 1e9; setBody(gob, [[15, 5], [16, 5], [17, 5], [18, 5]], 'left'); gob.stunUntil = 1e9; };
+      for (const k of HOLES) g.holes.add(k);
+      place(); show(g); drawN(10, 1);
+      const over = look();
+      setBody(sn, Array.from({ length: 8 }, (_, i) => [13 - i, 20]), 'right'); setBody(gob, [[15, 8], [16, 8], [17, 8], [18, 8]], 'left');
+      g.tick++; drawN(4, 1);
+      const empty = look();
+      for (const k of HOLES) g.holes.delete(k);
+      place(); g.tick++; drawN(4, 1);
+      const bark = look();
+      SnakeDebug.pinQuality(2);
+      return { over, empty, bark };
+    })()`);
+    const { over, empty, bark } = bridge, f2 = v => v.toFixed(2);
+    check(over.edge / over.top < 0.85 * bark.edge / bark.top && over.width < 0.9 * bark.width, 'a body over a pit is shaded underneath and sags between the rims',
+      `its lower edge at ${f2(over.edge / over.top)} of its upper half's brightness (${f2(bark.edge / bark.top)} on the bark); ${over.width} pixels across, ${bark.width} on the bark`);
+    check(over.pit < 0.95 * empty.pit, 'its shadow falls down into the pit', `the pit below it at ${f2(over.pit / empty.pit)} of its brightness with nobody over it`);
+    check(over.tail < 0.75 * bark.tail, 'a tail end over a hole droops into it, darker', `at ${f2(over.tail / bark.tail)} of its brightness on the bark`);
 
     // The Field guide's pictures.
     const guide = await ev(`(() => {

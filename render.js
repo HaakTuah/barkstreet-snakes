@@ -1217,6 +1217,12 @@ window.SnakeRender = (() => {
         fix: new Float32Array(64), fixOn: false, fixFast: false, tdx: s.dir.x, tdy: s.dir.y, bx: 0, by: 0, drawnAt: -1,
         jc: false, fc: false, flashFx: -1e9, // (your rests: cooling last frame; when your flash came back)
         star: false, turn: 0, face: 0, hue: 0, hueAt: -1, glow: 1, brow: 1, flareAt: -1e9, shedAt: 0, // (Star: its head a star, turned so, its face upright; its rainbow (and Copycat's copy of it); its tell; its tail's twinkles)
+        // Up in the air and over holes (see liftOf and sinkOf): each segment's
+        // lift (0..1, the top of a jump 1) and how far it hangs over a pit
+        // (0..1) and sinks into it; its jumps, while their arch lasts; when it
+        // last came down (its squash).
+        lift: new Float32Array(32), hang: new Float32Array(32), sink: new Float32Array(32), lifted: false, bridging: false, liftSw: T.LEAP_SWELL,
+        hops: [], holeTick: -1, holeGame: null, nearHole: false, landAt: -1e9, squash: 0,
       };
       anim.set(s, a);
     }
@@ -1574,6 +1580,7 @@ window.SnakeRender = (() => {
     if (a.rad.length < m) {
       a.pts = new Float32Array(4 * m); a.cor = new Float32Array(4 * m);
       a.rad = new Float32Array(2 * m); a.fills = new Array(2 * m);
+      a.lift = new Float32Array(2 * m); a.hang = new Float32Array(2 * m); a.sink = new Float32Array(2 * m);
       const fix = new Float32Array(4 * m); fix.set(a.fix); a.fix = fix;
     }
     a.n = m;
@@ -1638,22 +1645,11 @@ window.SnakeRender = (() => {
     if (a.star) a.face = starFace(a) + wobble; // (a star's points turn with it; its face stays upright: see starFace)
     // A held corpse presses its head a little into whatever it hit.
     if (impact) { pts[0] += s.dir.x * CELL * impact; pts[1] += s.dir.y * CELL * impact; }
-    // Leaping: the head rises over what it's hopping as it takes off, and
-    // comes down on the far side the next tick. Seen from above, rising is
-    // coming toward you, so it's scale (see below), not a lift up the screen
-    // (that read as a lunge or a flinch, depending on the heading); its
-    // shadow pulls away on the bark. With reduced motion: a still pose in the
-    // air for the leap's two ticks (being in the air is a rule, so it shows).
-    // Drawn ahead, a leap that's sure to go starts rising before its tick.
-    let rise = 0;
-    if (!dead && game) {
-      const p = a.leapTick >= game.tick - 1 ? game.tick - a.leapTick + at : a.ml ? k2 : 0; // (how far through the leap's two ticks it's drawn)
-      rise = p > 0 && p < 2 ? (reduced ? 1 : Math.sin(p * Math.PI / 2)) : 0;
-      if (a.ml && !(a.leapTick >= game.tick - 1)) a.leapGold = s.leaps > 0;
-    }
-    // (eased a touch, so a leap seen late, or a guess put right, never pops)
-    a.rise = reduced || dead ? rise : a.rise + (rise - a.rise) * (1 - Math.exp(-frameDt / 25));
-    if (a.rise < 0.002) a.rise = 0;
+    // Up in the air: a jump's arch along its body, and over a hole, how far
+    // each segment hangs into the pit (see liftOf and sinkOf: they size the
+    // segments below, and its shadow: see drawShadows).
+    if (!dead && game) liftOf(s, a, at, k2, now);
+    else if (a.lifted || a.hops.length) { a.lift.fill(0); a.lifted = false; a.hops.length = 0; a.rise = 0; }
     // Just crashed: the head lunges into what it hit, and bounces back.
     const hit = a.crashAt ? (now - a.crashAt) / 260 : 1;
     if (hit < 1 && hit >= 0 && !dead && !reduced) { const l = Math.sin(hit * Math.PI) * 0.34; pts[0] += a.crashDx * CELL * l; pts[1] += a.crashDy * CELL * l; }
@@ -1663,10 +1659,157 @@ window.SnakeRender = (() => {
     const bite = (lastNow - a.ateAt) / T.BITE_MS;
     a.bump = !dead && bite >= 0 && bite < 1 ? (a.gulpR > T.GULP ? 0.2 : 0.12) * Math.sin(bite * Math.PI) : 0;
     for (let i = 0; i < m; i++) a.rad[i] = radius(i, m, a, a.tickPos);
-    a.swell = a.rise * (a.leapGold ? T.LEAP_SWELL_GOLD : T.LEAP_SWELL); // (the head and neck swell along their path at the top of the arc)
-    if (a.swell) { a.rad[0] *= 1 + a.swell; if (m > 1) a.rad[1] *= 1 + a.swell * 0.55; if (m > 2) a.rad[2] *= 1 + a.swell * 0.2; }
+    // Seen from above, up is toward you: what's in the air swells (its head
+    // the most at the top of a jump, its neck after it, in an arch), and
+    // what hangs into a pit is smaller (see sinkOf). (A lift up the screen
+    // read as a lunge or a flinch, depending on the heading.)
+    a.swell = a.lifted ? a.lift[0] * a.liftSw : 0;
+    if (a.lifted) for (let i = 0; i < m; i++) if (a.lift[i]) a.rad[i] *= 1 + a.lift[i] * a.liftSw;
+    if (!dead && game) sinkOf(s, a);
+    else if (a.bridging) { a.hang.fill(0); a.sink.fill(0); a.bridging = false; }
+    if (a.bridging) for (let i = 0; i < m; i++) if (a.sink[i]) a.rad[i] *= 1 - SINK_SHRINK * a.sink[i];
+    // Come down from a jump: a squash (its head a touch wider, its face
+    // flattened along the way it's going: see drawBody), and a ring of dust (see liftOf).
+    const sq = (now - a.landAt) / LAND_MS;
+    a.squash = !dead && !reduced && sq >= 0 && sq < 1 ? Math.sin(sq * Math.PI) * (1 - sq) * 1.6 : 0;
+    if (a.squash) a.rad[0] *= 1 + 0.16 * a.squash;
     fillsOf(s, a, now);
     return a;
+  }
+
+  // ------------------------------------------- jumps, and bodies over holes
+
+  // A jump, seen from above. Up is toward you, so what's in the air swells,
+  // and its shadow stays on the ground, falling further off the higher it
+  // is (away from the light, down and to the right: see drawShadows). Its
+  // lift is an arch over what it hops: each segment is up by how near it is
+  // to that (a cell either side: so the head rises as it takes off, is at
+  // the top over the hurdle, and comes down on the far side, and the neck
+  // follows it up and over), and the neck is held up by the head (NECK).
+  // Once it's down, the arch stays over a body it crossed for as long as
+  // that body's there (CROSS_H: its body bridging the other's, which passes
+  // under), and over anything else settles down (over a hole, its body
+  // bridges it: see sinkOf). Drawn ahead, a jump that's sure to go starts up
+  // before its tick. Taking off puffs dust (see onTick), landing squashes its
+  // head and rings dust round it, and a faint trail marks its way through
+  // the air (see drawTrails). With reduced motion: the lift and its shadow,
+  // and none of the dust or the trail (being in the air is a rule, so it shows).
+  const NECK = [1, 0.7, 0.4, 0.15], CROSS_H = 0.45, LAND_MS = 230;
+  function liftOf(s, a, at, k2, now) {
+    const hops = a.hops, m = a.n, lift = a.lift, pts = a.pts;
+    if (a.lifted) lift.fill(0);
+    a.lifted = false;
+    let head = 0; // (the head's own lift, before it's eased)
+    if (a.ml) { // (a jump seen coming: its head starts up toward what it hops)
+      let flying = false;
+      for (let j = 0; j < hops.length; j++) if (game.tick - hops[j].tick < 2) flying = true;
+      if (!flying) {
+        head = reduced ? +(k2 > 0) : archAt(s, pts[0], pts[1], a.mx, a.my, a.mx, a.my);
+        a.liftSw = s.leaps > 0 ? T.LEAP_SWELL_GOLD : T.LEAP_SWELL;
+      }
+    }
+    for (let j = hops.length - 1; j >= 0; j--) {
+      const r = hops[j], p = game.tick - r.tick + at, flight = p < 2; // (how far through its two ticks in the air it's drawn)
+      if (!flight && !r.landed) { // (down: its squash, a ring of dust where it came down)
+        r.landed = true; r.landedAt = now;
+        if (s.alive) { a.landAt = now; dustRing((r.x1 + r.dx + 0.5) * CELL, (r.y1 + r.dy + 0.5) * CELL); }
+      }
+      if (r.jTick !== game.tick) { // (where in its body the cells it hopped are now, and whether a body still lies under them: once a tick)
+        r.jTick = game.tick;
+        r.under = false;
+        for (let x = r.x0, y = r.y0, n = 0; n < 3; n++) {
+          const key = y * GRID + x;
+          if (x >= 0 && y >= 0 && x < GRID && y < GRID && (cover[key] >= 2 || (cover[key] === 1 && coverBy[key] !== s.id))) r.under = true;
+          if (x === r.x1 && y === r.y1) break;
+          x += r.dx; y += r.dy;
+        }
+      }
+      const to = flight ? 1 : r.under ? CROSS_H : 0;
+      r.h = flight || reduced ? to : r.h + (to - r.h) * (1 - Math.exp(-frameDt / 90));
+      if (game.tick > r.until || (!flight && r.h < 0.01 && !to)) { hops.splice(j, 1); continue; }
+      if (r.h < 0.005) continue;
+      a.liftSw = r.gold ? T.LEAP_SWELL_GOLD : T.LEAP_SWELL;
+      for (let i = 0; i < m; i++) {
+        const v = r.h * archAt(s, pts[2 * i], pts[2 * i + 1], r.x0, r.y0, r.x1, r.y1);
+        if (v > lift[i]) lift[i] = v;
+      }
+      if (flight && (lift[0] > head || reduced)) head = reduced ? 1 : lift[0]; // (with reduced motion, a still pose up in the air for its two ticks)
+    }
+    // (the head eased a touch, so a jump seen late, or a guess put right, never pops)
+    a.rise = reduced ? head : a.rise + (head - a.rise) * (1 - Math.exp(-frameDt / 25));
+    if (a.rise < 0.002) a.rise = 0;
+    lift[0] = a.rise;
+    for (let i = 1; i < NECK.length && i < m; i++) if (a.rise * NECK[i] > lift[i]) lift[i] = a.rise * NECK[i];
+    for (let i = 0; i < m && !a.lifted; i++) if (lift[i] > 0.002) a.lifted = true;
+  }
+  // How far up a jump's arch is at (x, y) (units), over the cells it hops
+  // from (x0, y0) to (x1, y1): at the top over them, down a cell either side.
+  function archAt(s, x, y, x0, y0, x1, y1) {
+    let dx = x / CELL - 0.5 - x0, dy = y / CELL - 0.5 - y0, sx = x1 - x0, sy = y1 - y0;
+    if (s.wrapUntil >= 0) { dx = wd(dx); dy = wd(dy); sx = wd(sx); sy = wd(sy); } // (across a wrapped edge)
+    const l2 = sx * sx + sy * sy;
+    if (l2) { const t = Math.max(0, Math.min(1, (dx * sx + dy * sy) / l2)); dx -= sx * t; dy -= sy * t; }
+    const d = Math.hypot(dx, dy);
+    return d < 1 ? Math.cos(d * Math.PI / 2) : 0;
+  }
+  // A jump's records, from its leap event: the cells it hops (x0, y0 to x1,
+  // y1), the way it went, its tick, its arch's height now, until when.
+  function hopped(s, e, now) {
+    const a = animOf(s, now), h = s.body[0], hops = a.hops;
+    if (hops.length >= 3) hops.shift();
+    hops.push({ x0: e.x, y0: e.y, x1: h.x, y1: h.y, dx: s.dir.x, dy: s.dir.y, tick: game.tick, gold: !!e.gold, h: 1, landed: false, landedAt: 0, until: game.tick + s.body.length + 2, under: false, jTick: -1 });
+  }
+
+  // A body over a hole, seen from above: nothing under it, so it's shaded
+  // underneath (away from the light: see shadeUnder), its shadow falls deeper,
+  // onto the pit's floor and far wall, softer and further off (see
+  // drawShadows), and it's a little smaller the lower it is. Each segment
+  // hangs over the pit by how far in from its rim it's drawn (hang, 0..1);
+  // between rims, a span sags a little, most in its middle; a tail end with
+  // nothing under it beyond the rim droops down into the pit (smaller and
+  // darker) until it's out of the cell. What's up in the air doesn't sag.
+  const HANG_RIM = 0.1, SINK_SHRINK = 0.3, SAG = 0.5; // (where the pit's rim is, in from a hole cell's edge, in cells; how much smaller a segment as low as it goes is; how low a span sags)
+  let supH = new Float32Array(64), supT = new Float32Array(64);
+  function sinkOf(s, a) {
+    const m = a.n, hang = a.hang, sink = a.sink, pts = a.pts;
+    if (a.holeTick !== game.tick || a.holeGame !== game) { a.holeTick = game.tick; a.holeGame = game; a.nearHole = nearHole(s); } // (once a tick: is any of it on or leaving a hole?)
+    if (!a.nearHole) { if (a.bridging) { hang.fill(0); sink.fill(0); a.bridging = false; } return; }
+    let any = false;
+    for (let i = 0; i < m; i++) { hang[i] = overHole(pts[2 * i], pts[2 * i + 1]); if (hang[i]) any = true; }
+    if (!any) { if (a.bridging) sink.fill(0); a.bridging = false; return; }
+    a.bridging = true;
+    if (supH.length < m) { supH = new Float32Array(2 * m); supT = new Float32Array(2 * m); }
+    // (how many segments to the nearest on firm bark, toward its head, and toward its tail)
+    for (let i = 0, last = -1; i < m; i++) { if (hang[i] < 0.02) last = i; supH[i] = last < 0 ? Infinity : i - last; }
+    for (let i = m - 1, last = -1; i >= 0; i--) { if (hang[i] < 0.02) last = i; supT[i] = last < 0 ? Infinity : last - i; }
+    for (let i = 0; i < m; i++) {
+      const o = hang[i], h = supH[i], t = supT[i];
+      const z = !o ? 0 : h < Infinity && t < Infinity ? SAG * Math.min(1, Math.min(h, t) / 1.5) // (a span between rims, sagging)
+        : h < Infinity ? Math.min(1, 0.8 + 0.2 * (h - 1)) : 0; // (its tail end, hanging off the rim; its head end's in the air, or going in)
+      sink[i] = o * z * Math.max(0, 1 - 3 * a.lift[i]);
+    }
+  }
+  // Is any of a snake's body on a hole, or leaving one?
+  function nearHole(s) {
+    if (!game.holes.size) return false;
+    for (const c of s.body) if (c.x >= 0 && c.y >= 0 && c.x < GRID && c.y < GRID && holeMask[c.y * GRID + c.x]) return true;
+    if (s.prev) for (const c of s.prev) if (c.x >= 0 && c.y >= 0 && c.x < GRID && c.y < GRID && holeMask[c.y * GRID + c.x]) return true;
+    return false;
+  }
+  // How far over a pit a point (units) is: 0 on the bark or the rim, rising
+  // to 1 half a cell in from the rim of the hole cell it's in (a cell with
+  // holes all round is all pit).
+  function overHole(x, y) {
+    const fx = x / CELL, fy = y / CELL, cx = Math.floor(fx), cy = Math.floor(fy), key = cy * GRID + cx;
+    if (cx < 0 || cy < 0 || cx >= GRID || cy >= GRID || !holeMask[key]) return 0;
+    const u = fx - cx, v = fy - cy;
+    let d = 0.5;
+    if (cx > 0 && !holeMask[key - 1]) d = Math.min(d, u);
+    if (cx < GRID - 1 && !holeMask[key + 1]) d = Math.min(d, 1 - u);
+    if (cy > 0 && !holeMask[key - GRID]) d = Math.min(d, v);
+    if (cy < GRID - 1 && !holeMask[key + GRID]) d = Math.min(d, 1 - v);
+    const k = Math.max(0, Math.min(1, (d - HANG_RIM) / (0.5 - HANG_RIM)));
+    return k * k * (3 - 2 * k);
   }
 
   // ------------------------------------------- drawing half a tick ahead
@@ -1679,16 +1822,24 @@ window.SnakeRender = (() => {
   let leadTicks = 0.5; // (the lead, in ticks at the speed it's played: the game says, see setLead)
   // Cells a body will still be on after the next move (a tail that moves on
   // leaves its cell; a stunned or growing snake's stays), once a tick.
-  const stays = new Uint8Array(GRID * GRID);
+  // (And how many snakes' bodies lie on each cell now, and the last of them:
+  // a body crossing another's, after a jump, is held up over it: see liftOf.)
+  const stays = new Uint8Array(GRID * GRID), cover = new Uint8Array(GRID * GRID), coverBy = new Int16Array(GRID * GRID);
   let staysTick = -1, staysGame = null;
   function syncStays() {
     if (staysTick === game.tick && staysGame === game) return;
     staysTick = game.tick; staysGame = game;
-    stays.fill(0);
+    stays.fill(0); cover.fill(0); coverBy.fill(-1);
     for (const o of game.snakes) {
       if (!o.alive) continue;
       const keep = o.stunUntil > game.tick || o.grow > 0 ? o.body.length : o.body.length - 1;
-      for (let j = 0; j < keep; j++) { const c = o.body[j]; if (c.x >= 0 && c.y >= 0 && c.x < GRID && c.y < GRID) stays[c.y * GRID + c.x] = 1; }
+      for (let j = 0; j < o.body.length; j++) {
+        const c = o.body[j];
+        if (c.x < 0 || c.y < 0 || c.x >= GRID || c.y >= GRID) continue;
+        const key = c.y * GRID + c.x;
+        if (j < keep) stays[key] = 1;
+        if (coverBy[key] !== o.id) { coverBy[key] = o.id; cover[key]++; }
+      }
     }
   }
   const burningAt = (x, y) => { const f = game.fires.get(y * GRID + x); return !!f && game.tick >= f.from && game.tick < f.until; };
@@ -2082,25 +2233,36 @@ window.SnakeRender = (() => {
     boardG = ctx;
     ctx = veilG;
   }
-  // Back to the board, laying the veil on it at `alpha`.
-  function veilOff(alpha) {
+  // Back to the board, laying the veil on it at `alpha` (with soft, twice,
+  // that many units apart either way: a soft edge, its middle twice as dark).
+  function veilOff(alpha, soft = 0) {
     veilG.restore();
     ctx = boardG;
     if (vw <= 0 || vh <= 0) return;
     ctx.globalAlpha = alpha;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(veil, vx0, vy0, vw, vh, veilX + vx0, veilY + vy0, vw, vh);
+    if (!soft) ctx.drawImage(veil, vx0, vy0, vw, vh, veilX + vx0, veilY + vy0, vw, vh);
+    else for (const sg of SIDES2) { const d = Math.round(sg * soft * k); ctx.drawImage(veil, vx0, vy0, vw, vh, veilX + vx0 + d, veilY + vy0 + d, vw, vh); }
     ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
     ctx.globalAlpha = 1;
   }
 
-  // Pass 1, for every snake before any body: the shadows on the bark, all at
-  // once (in the veil, laid on the bark at 0.3, a little down and to the right).
-  function drawShadows() {
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    for (const s of live) {
-      const a = anim.get(s);
-      if (a.offs) { x0 = y0 = -VEIL_M; x1 = y1 = SIZE + VEIL_M; break; } // (across a wrapped edge: anywhere)
+  // Pass 1, before any body: the shadows of live[from..to) on the bark, all
+  // at once (in the veil, laid on the bark at 0.3, a little down and to the
+  // right). A segment up in the air casts its shadow further off, on the
+  // ground (see liftOf: the higher, the further, and a little smaller, never
+  // swollen with it), and one over a pit casts it down onto the pit's floor
+  // and far wall (see pitShadows): its shadow up on the bark is cut out
+  // over the pit. (A snake in the air has its shadows drawn after the
+  // bodies on the ground, so the hurdle passes under with its shadow across
+  // it: see drawSnakes.)
+  const LIFT_DX = CELL * 0.62, LIFT_DY = CELL * 0.82, LIFT_SHRINK = 0.15; // (at the top of a jump: how much further off, and smaller)
+  function drawShadows(from, to) {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, pits = false;
+    for (let j = from; j < to; j++) {
+      const a = anim.get(live[j]);
+      if (a.bridging) pits = true;
+      if (a.offs) { x0 = y0 = -VEIL_M; x1 = y1 = SIZE + VEIL_M; continue; } // (across a wrapped edge: anywhere)
       for (let i = 0; i < a.n; i++) {
         const x = a.pts[2 * i], y = a.pts[2 * i + 1];
         if (x < x0) x0 = x;
@@ -2112,19 +2274,109 @@ window.SnakeRender = (() => {
     if (x0 > x1) return;
     veilOn(2, 4, x0 - CELL * 2, y0 - CELL * 2, x1 + CELL * 2, y1 + CELL * 2);
     ctx.fillStyle = '#000000';
-    for (const s of live) {
-      const a = anim.get(s), offs = a.offs || OFFS, away = a.rise * CELL * 0.45; // (in the air: the head's shadow falls further off, away from the light)
-      if (away) { a.pts[0] += away; a.pts[1] += away * 1.3; if (a.n > 1) { a.pts[2] += away * 0.5; a.pts[3] += away * 0.65; } }
-      for (let j = 0; j < offs.length; j++) {
-        const ox = offs[j][0], oy = offs[j][1];
+    for (let j = from; j < to; j++) {
+      const a = anim.get(live[j]), offs = a.offs || OFFS, moved = a.lifted && shadowShape(a, false);
+      for (let k = 0; k < offs.length; k++) {
+        const ox = offs[k][0], oy = offs[k][1];
         if (ox || oy) ctx.translate(ox, oy);
         bodyFills(a, 0);
         if (ox || oy) ctx.translate(-ox, -oy);
       }
-      if (away) { a.pts[0] -= away; a.pts[1] -= away * 1.3; if (a.n > 1) { a.pts[2] -= away * 0.5; a.pts[3] -= away * 0.65; } }
+      if (moved) unshadow(a);
+    }
+    if (pits) { // (over the pits, the bark's shadow goes: its shadow's down in the pit)
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      pitsUnder(from, to);
+      ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
     }
     veilOff(0.3);
+    if (pits) pitShadows(from, to);
   }
+  // A body over a pit: its shadow down on the pit's floor and far wall, the
+  // further off the further over it it is (DEEP_DX, DEEP_DY), in its own
+  // veil clipped to the pits under it, softer than on the bark: a little
+  // bigger, fainter, and laid on twice a little apart, for a soft edge.
+  const DEEP_DX = CELL * 0.22, DEEP_DY = CELL * 0.3, DEEP_GROW = 2.5, DEEP_ALPHA = 0.11, DEEP_SOFT = 1.6;
+  function pitShadows(from, to) {
+    ctx.save();
+    ctx.beginPath();
+    pitsUnder(from, to);
+    ctx.clip();
+    veilOn(2, 4, pitBox[0], pitBox[1], pitBox[2], pitBox[3]);
+    ctx.fillStyle = '#000000';
+    for (let j = from; j < to; j++) {
+      const a = anim.get(live[j]);
+      if (!a.bridging) continue;
+      shadowShape(a, true);
+      bodyFills(a, 0);
+      unshadow(a);
+    }
+    veilOff(DEEP_ALPHA, DEEP_SOFT);
+    ctx.restore();
+  }
+  // The pits under the bodies of live[from..to) that hang over one (every
+  // hole cell within a cell of a segment over one), as the current path:
+  // each cell, in from its rim where it meets the bark (where the pit's
+  // opening is; at the board's edge a hollow runs on). Their box (units) into pitBox.
+  const pitBox = [0, 0, 0, 0];
+  function pitsUnder(from, to) {
+    pitSpan[0] = pitSpan[1] = GRID; pitSpan[2] = pitSpan[3] = -1;
+    for (let j = from; j < to; j++) {
+      const a = anim.get(live[j]);
+      if (a.bridging) for (let i = 0; i < a.n; i++) if (a.hang[i]) spanPit(a, i);
+    }
+    pitRects();
+  }
+  // (The cells within one of segment i, into pitSpan: x0, y0, x1, y1.)
+  const pitSpan = [0, 0, 0, 0];
+  function spanPit(a, i) {
+    const cx = Math.floor(a.pts[2 * i] / CELL), cy = Math.floor(a.pts[2 * i + 1] / CELL);
+    if (cx - 1 < pitSpan[0]) pitSpan[0] = cx - 1;
+    if (cy - 1 < pitSpan[1]) pitSpan[1] = cy - 1;
+    if (cx + 1 > pitSpan[2]) pitSpan[2] = cx + 1;
+    if (cy + 1 > pitSpan[3]) pitSpan[3] = cy + 1;
+  }
+  // Every hole cell in pitSpan, as the current path (each in from its rim
+  // where it meets the bark: the pit's opening), its box (units) into pitBox.
+  function pitRects() {
+    const bx0 = Math.max(0, pitSpan[0]), by0 = Math.max(0, pitSpan[1]), bx1 = Math.min(GRID - 1, pitSpan[2]), by1 = Math.min(GRID - 1, pitSpan[3]);
+    pitBox[0] = bx0 * CELL; pitBox[1] = by0 * CELL; pitBox[2] = (bx1 + 1) * CELL; pitBox[3] = (by1 + 1) * CELL;
+    for (let y = by0; y <= by1; y++) {
+      for (let x = bx0; x <= bx1; x++) {
+        const key = y * GRID + x;
+        if (!holeMask[key]) continue;
+        const l = x > 0 && !holeMask[key - 1] ? PIT_RIM : 0, r = x < GRID - 1 && !holeMask[key + 1] ? PIT_RIM : 0;
+        const t = y > 0 && !holeMask[key - GRID] ? PIT_RIM : 0, b = y < GRID - 1 && !holeMask[key + GRID] ? PIT_RIM : 0;
+        ctx.rect(x * CELL + l, y * CELL + t, CELL - l - r, CELL - t - b);
+      }
+    }
+  }
+  // A body's shadow, moved (see drawShadows): its points, corners and radii
+  // swapped for copies (in arrays kept for it, made again only for a longer
+  // snake), each segment moved by its lift (and with deep, by how far over a
+  // pit it is) and sized as on the ground; unshadow puts them back.
+  let shP = new Float32Array(128), shC = new Float32Array(128), shR = new Float32Array(64), keptP = null, keptC = null, keptR = null;
+  function shadowShape(a, deep) {
+    const m = a.n, lift = a.lift, hang = a.hang, sink = a.sink, up = a.lifted, sw = a.liftSw;
+    if (shR.length < m) { shP = new Float32Array(4 * m); shC = new Float32Array(4 * m); shR = new Float32Array(2 * m); }
+    for (let i = 0; i < m; i++) {
+      const l = up ? lift[i] : 0, o = deep ? hang[i] : 0;
+      shP[2 * i] = a.pts[2 * i] + l * LIFT_DX + o * DEEP_DX;
+      shP[2 * i + 1] = a.pts[2 * i + 1] + l * LIFT_DY + o * DEEP_DY;
+      shR[i] = a.rad[i] / (1 + l * sw) / (1 - SINK_SHRINK * sink[i]) * (1 - LIFT_SHRINK * l) + (deep ? DEEP_GROW * o : 0);
+      if (i < m - 1) {
+        const l2 = up ? (l + lift[i + 1]) / 2 : 0, o2 = deep ? (o + hang[i + 1]) / 2 : 0;
+        shC[2 * i] = a.cor[2 * i] + l2 * LIFT_DX + o2 * DEEP_DX;
+        shC[2 * i + 1] = a.cor[2 * i + 1] + l2 * LIFT_DY + o2 * DEEP_DY;
+      }
+    }
+    keptP = a.pts; keptC = a.cor; keptR = a.rad;
+    a.pts = shP; a.cor = shC; a.rad = shR;
+    return true;
+  }
+  function unshadow(a) { a.pts = keptP; a.cor = keptC; a.rad = keptR; }
   // One snake's shadow on its own, as one translucent path (a corpse: it may
   // be fading, and it's drawn with its body).
   function drawShadow(a) {
@@ -2360,6 +2612,7 @@ window.SnakeRender = (() => {
       ctx.setLineDash(NO_DASH);
       ctx.lineDashOffset = 0;
     }
+    if (a.bridging && !dead) shadeUnder(a); // (over a pit: shaded underneath, a hanging tail darker)
     if (a.star && !dead) shedTwinkle(s, a, now);
 
     // Head features, drawn in a frame where +x points the way the snake faces.
@@ -2382,7 +2635,7 @@ window.SnakeRender = (() => {
     ctx.translate(pts[0], pts[1]);
     ctx.rotate((a.star ? a.face : a.turn) + lean); // (and stunned, its wobble: see prepare)
     const faceScale = 1.1 * (1 + a.bump) * (1 + a.swell);
-    ctx.scale(faceScale, faceScale);
+    ctx.scale(faceScale * (1 - 0.22 * a.squash), faceScale * (1 + 0.12 * a.squash)); // (come down from a jump: squashed along the way it's going, a moment)
     if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
     else drawFace(s, look, color, blinking, a);
     ctx.restore();
@@ -2430,6 +2683,50 @@ window.SnakeRender = (() => {
     }
   }
   const DASH = [3, 3], NO_DASH = [], MOOD_DASH = [5, 7];
+  // A body over a pit (see sinkOf): with nothing under it to light it from
+  // below, its side away from the light (down and to the right) is in shade
+  // just where it's over the pit's opening; and a tail end hanging into the
+  // pit darkens the deeper it hangs. (Each run of it over the pit, clipped to
+  // its own shape and to the pits under it: its spine, moved down and to the
+  // right, stroked wide and faint, then narrower and darker, so the shade
+  // deepens toward its edge.)
+  const UNDER = '#140a04', UNDER_OFF = 0.85, UNDER_W = [1.4, 0.13, 1, 0.14, 0.6, 0.17]; // (how far the spine moves, in radii; its widths, in radii, and alphas)
+  function shadeUnder(a) {
+    const { n, pts, rad, hang, sink } = a;
+    for (let i0 = 0; i0 < n;) {
+      if (hang[i0] < 0.02) { i0++; continue; }
+      let i1 = i0;
+      while (i1 + 1 < n && hang[i1 + 1] >= 0.02) i1++;
+      const j0 = Math.max(0, i0 - 1), j1 = Math.min(n - 1, i1 + 1), off = rad[i0] * UNDER_OFF;
+      ctx.save();
+      pitSpan[0] = pitSpan[1] = GRID; pitSpan[2] = pitSpan[3] = -1;
+      for (let i = i0; i <= i1; i++) spanPit(a, i);
+      ctx.beginPath();
+      pitRects();
+      ctx.clip();
+      shape(a, 0, j0, j1);
+      ctx.clip();
+      ctx.translate(off, off);
+      ctx.lineCap = 'butt';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = UNDER;
+      spine(a, j0, j1);
+      for (let w = 0; w < UNDER_W.length; w += 2) {
+        ctx.lineWidth = rad[i0] * UNDER_W[w];
+        ctx.globalAlpha = UNDER_W[w + 1];
+        ctx.stroke();
+      }
+      ctx.restore();
+      i0 = i1 + 1;
+    }
+    ctx.fillStyle = UNDER;
+    for (let i = 0; i < n; i++) {
+      if (sink[i] <= SAG) continue;
+      ctx.globalAlpha = Math.min(1, (sink[i] - SAG) / (1 - SAG)) * 0.7; // (hanging into the pit: darker, the deeper)
+      circle(pts[2 * i], pts[2 * i + 1], rad[i]);
+    }
+    ctx.globalAlpha = 1;
+  }
 
   // The pips of golden powers held (see drawBody), round a head at (x, y)
   // of radius hr, on the arc behind it (back: that way, as an angle; swell:
@@ -2862,11 +3159,12 @@ window.SnakeRender = (() => {
     a.brow = reduced ? +(a.glow >= 0.3) : knit * knit * (3 - 2 * knit);
     const fill = a.glow * 5, n = Math.min(5, Math.floor(fill + 1e-9)), part = reduced || n === 5 ? 0 : Math.min(1, (fill - n - 1) / STAR_FADE + 1);
     const x = a.pts[0], y = a.pts[1], r = a.rad[0], sc = r / STAR_R;
-    blitAbout(starHeadSprite(n), x, y, 0, 0, sc, sc, a.turn);
+    const sx = sc * (1 - 0.22 * a.squash), sy = sc * (1 + 0.12 * a.squash); // (come down from a jump, squashed a moment, as a face is)
+    blitAbout(starHeadSprite(n), x, y, 0, 0, sx, sy, a.turn);
     if (part > 0.02) {
       const was = ctx.globalAlpha;
       ctx.globalAlpha = was * part;
-      blitAbout(starPointSprite(n), x, y, 0, 0, sc, sc, a.turn);
+      blitAbout(starPointSprite(n), x, y, 0, 0, sx, sy, a.turn);
       ctx.globalAlpha = was;
     }
     blitAbout(stacheSprite(stacheStep(s, a, now)), x, y, 0, 0, sc, sc, a.face); // (twirling, as its gag: see stacheSprite)
@@ -3046,7 +3344,7 @@ window.SnakeRender = (() => {
   }
   // Now and then its tail sheds a small twinkle, in one of the rainbow's
   // colours, drifting off behind it (lively only; no glow: only you glow).
-  const TWINKLE = 5, TWINKLE_HUES = [0, 32, 55, 130, 205, 275]; // (its mote kinds, a colour each: see drawMotes)
+  const TWINKLE = 6, TWINKLE_HUES = [0, 32, 55, 130, 205, 275]; // (its mote kinds, a colour each, after the others: see drawMotes)
   function shedTwinkle(s, a, now) {
     if (reduced || now < a.shedAt || a.n < 2) return;
     a.shedAt = now + 280 + Math.random() * 420;
@@ -3080,18 +3378,24 @@ window.SnakeRender = (() => {
     for (const s of live) predict(s, animOf(s, now));
     meetings();
     for (const s of live) prepare(s, alpha, now, false);
-    drawShadows();
-    if (fieldSpecs.length && huesOn) drawFieldHues(now); // (a land's colour round a rival on it, under every outline and body)
-    // Then outlines, bodies, flames and queasy washes, each pass for every
-    // snake on the ground, then the same for any up in the air: a leaper's
-    // outline goes over what it's hopping, not under it (which made it look
-    // rammed into it rather than above it). Its halo stays with the
-    // ground's outlines, under every body (over the snake it hopped, it
-    // greyed a dark body either side of yours for as long as the arch ran).
     let up = live.length;
     if (leaping) while (up > 0 && overOf(live[up - 1])) up--;
+    drawShadows(0, up);
+    if (fieldSpecs.length && huesOn) drawFieldHues(now); // (a land's colour round a rival on it, under every outline and body)
+    // Then outlines, bodies, flames and queasy washes, each pass for every
+    // snake on the ground, then the same for any up in the air, its shadow
+    // first, over the bodies on the ground (the hurdle passes under it with
+    // the shadow across it), and its trail: a leaper's outline goes over
+    // what it's hopping, not under it (which made it look rammed into it
+    // rather than above it). Its halo stays with the ground's outlines,
+    // under every body (over the snake it hopped, it greyed a dark body
+    // either side of yours for as long as the arch ran).
     drawPasses(0, up, now, live.length);
-    if (up < live.length) drawPasses(up, live.length, now, 0);
+    if (up < live.length) {
+      drawShadows(up, live.length);
+      drawTrails(up, live.length, now);
+      drawPasses(up, live.length, now, 0);
+    }
   }
   // Passes over live[from..to) (and for a snake across a wrapped edge, at
   // each place it shows); the first also takes the halos of live[to..halos).
@@ -3113,6 +3417,45 @@ window.SnakeRender = (() => {
         }
       }
     }
+  }
+
+  // A jump's faint trail through the air: two thin arcs either side of the
+  // way its head went, as far apart as its head was swollen there, so they
+  // bow out over what it hopped; from where it took off to its head (once
+  // it's down, to where it landed), fading as it lands. In
+  // parchment, faint: a power's gold is for powers. None with reduced motion.
+  const TRAIL_MS = 260;
+  function drawTrails(from, to, now) {
+    if (reduced) return;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = '#fffbea';
+    for (let j = from; j < to; j++) {
+      const a = anim.get(live[j]);
+      for (let n = 0; n < a.hops.length; n++) {
+        const r = a.hops[n], fade = r.landed ? 1 - (now - r.landedAt) / TRAIL_MS : 1;
+        if (fade <= 0) continue;
+        const reach = Math.abs(r.x1 - r.x0) + Math.abs(r.y1 - r.y0) + 1, sw = r.gold ? T.LEAP_SWELL_GOLD : T.LEAP_SWELL;
+        const tx = (r.x0 - r.dx + 0.5) * CELL, ty = (r.y0 - r.dy + 0.5) * CELL; // (where it took off)
+        let end = reach + 1;
+        if (!r.landed) end = Math.min(end, ((a.pts[0] - tx) * r.dx + (a.pts[1] - ty) * r.dy) / CELL); // (to its head: they run on round it, just outside it)
+        if (end <= 0.3) continue;
+        ctx.globalAlpha = 0.55 * fade;
+        ctx.beginPath();
+        for (const sg of SIDES2) {
+          for (let u = 0.3; ; u += 0.125) {
+            if (u > end) u = end;
+            const d = u < 1 ? 1 - u : u > reach ? u - reach : 0, w = CELL * 0.54 * (1 + sw * (d < 1 ? Math.cos(d * Math.PI / 2) : 0)) + 6;
+            const x = tx + r.dx * u * CELL - r.dy * sg * w, y = ty + r.dy * u * CELL + r.dx * sg * w;
+            if (u === 0.3) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            if (u >= end) break;
+          }
+        }
+        ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
   }
 
   // A snake on fire: flames along its back (the fire's own flicker, smaller,
@@ -5290,8 +5633,8 @@ window.SnakeRender = (() => {
   }
 
   // Ambient motes from a small pool: poison spores drifting up off the mushrooms
-  // (kind 0, violet), glints twinkling round a golden apple (1), smoke (2), embers (3)
-  // and steam off baked food (4).
+  // (kind 0, violet), glints twinkling round a golden apple (1), smoke (2), embers (3),
+  // steam off baked food (4), dust kicked up by a jump (5) and Star's twinkles (6 on).
   const MAX_M = 96;
   const mx = new Float32Array(MAX_M), my = new Float32Array(MAX_M), mvx = new Float32Array(MAX_M), mvy = new Float32Array(MAX_M);
   const mlife = new Float32Array(MAX_M), mmax = new Float32Array(MAX_M), msize = new Float32Array(MAX_M);
@@ -5306,7 +5649,23 @@ window.SnakeRender = (() => {
   }
   // Drawn in batches: every mote of a kind at the same fade (four steps of
   // it) goes in one shape, so a busy fire is a handful of fills, not hundreds.
-  const MOTE_LOOK = [['#d8b4fe', 0.7], null, ['#78716c', 0.32], ['#fdba74', 1], ['#f8fafc', 0.4]]; // spores, (glints), smoke, embers, steam
+  const MOTE_LOOK = [['#d8b4fe', 0.7], null, ['#78716c', 0.32], ['#fdba74', 1], ['#f8fafc', 0.4], ['#d6b480', 0.6]]; // spores, (glints), smoke, embers, steam, dust
+  const DUST = 5;
+  // Dust kicked up off the bark: puffs kicked back (against dx, dy) where a
+  // jump takes off, and a ring of them where it comes down. (Motes: none
+  // with reduced motion.)
+  function dustPuffs(x, y, dx, dy) {
+    for (let i = 0; i < 6; i++) {
+      const side = i % 2 ? 1 : -1, sp = 8 + Math.random() * 12, out = 26 + Math.random() * 18; // (out to either side, a little back)
+      mote(x + side * dy * CELL * 0.3, y - side * dx * CELL * 0.3, -dx * sp + dy * side * out, -dy * sp - dx * side * out, 420 + Math.random() * 200, 2.6 + Math.random() * 1.4, DUST);
+    }
+  }
+  function dustRing(x, y) {
+    for (let i = 0; i < 10; i++) {
+      const ang = (i + Math.random() * 0.4) * TAU / 10, sp = 36 + Math.random() * 16;
+      mote(x + Math.cos(ang) * CELL * 0.32, y + Math.sin(ang) * CELL * 0.32, Math.cos(ang) * sp, Math.sin(ang) * sp, 400 + Math.random() * 140, 2.4 + Math.random() * 1.2, DUST);
+    }
+  }
   const mBucket = new Uint8Array(MAX_M), mRad = new Float32Array(MAX_M);
   function drawMotes(dt) {
     if (!mLive) return;
@@ -5328,7 +5687,7 @@ window.SnakeRender = (() => {
         continue;
       }
       if (mkind[i] === 0) mx[i] += Math.sin(mlife[i] / 160) * 0.15; // spores waft
-      mRad[i] = mkind[i] === 2 || mkind[i] === 4 ? msize[i] * (1.6 - t * 0.6) : msize[i]; // (smoke and steam grow as they rise)
+      mRad[i] = mkind[i] === 2 || mkind[i] >= 4 ? msize[i] * (1.6 - t * 0.6) : msize[i]; // (smoke, steam and dust grow as they go)
       mBucket[i] = 1 + Math.min(3, Math.floor(fade * 4)); // 1..4
     }
     for (let kind = 0; kind < MOTE_LOOK.length; kind++) {
@@ -6908,12 +7267,12 @@ window.SnakeRender = (() => {
           refusal.y = Math.min(SIZE - m, Math.max(m, cy * CELL + CELL / 2));
           refusal.at = now; refusal.tick = game.tick;
         }
-      } else if (e.type === 'leap') { // up and over: a puff of dust where it took off (and gold, for a golden leap)
+      } else if (e.type === 'leap') { // up and over (see liftOf): puffs of dust kicked back where it took off (and gold, for a golden leap)
         const a = animOf(e.snake, now), h = e.snake.body[e.reach || 1] || e.snake.body[0];
-        a.leapTick = game.tick;
-        a.leapGold = !!e.gold;
+        hopped(e.snake, e, now);
         a.leapUntil = game.tick + e.snake.body.length + 1; // (until the arch has run off its tail)
         spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 8, 140, 420, 2.2, '#d6b480', '#c08a4a'); // (bark dust: the plain leap's no power)
+        dustPuffs(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, e.snake.dir.x, e.snake.dir.y);
         if (e.gold) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 10, 120, 600, 1.8, '#d4a017', '#fffbea'); // (in Honey, a power's gold)
       } else if (e.type === 'dash') { // a streak along the way it went: a golden dash's in gold and ember, with flecks of both; a plain flash's in ember, lighter
         animOf(e.snake, now).dashTick = game.tick;
@@ -7390,6 +7749,7 @@ window.SnakeRender = (() => {
     setLead(ticks) { leadTicks = ticks; },
     guideSprite, // (the Field guide's pictures)
     get particles() { return pLive; },
+    get motes() { let n = 0; for (let i = 0; i < MAX_M; i++) if (mlife[i] > 0) n++; return n; }, // (dust, smoke and the like in the air: for the tests)
     streaked: () => streaks.map(k => ({ from: [k.fx, k.fy], to: [k.tx, k.ty], seen: k.pre >= 0 })), // (the dash streaks drawn: for the tests)
     hues(on) { huesOn = !!on; }, // (a land's colour round a rival on it, drawn or not: for the benchmark, which times it)
     flick(s, p) { const a = animOf(s, lastNow), [, len] = FLICKS[lookOf(s)] || FLICKS.player; a.tongueMs = T.TONGUE_MS * len; a.tongueUntil = lastNow + (1 - p) * a.tongueMs; a.nextTongue = lastNow + 1e9; }, // (its tongue or gag p of the way through, and then no more: for the tests)
