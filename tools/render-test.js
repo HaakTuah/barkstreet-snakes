@@ -45,6 +45,9 @@
 //   puff and the bead is spat aside in an arc to where it went; coughing,
 //   the mouth stays shut and puffs of breath come out (with reduced motion
 //   too); nudged food rolls aside, and a beetle scurries.
+// - A pecked flag is a lost colony: the flag tips and falls into the pit
+//   (the other colony's stands), its land shrinks away into the pit, and
+//   Sovereign's banner is carried to its new capital, not jumping there.
 // - Every Field guide picture draws (the mushroom on bark; a snake holding
 //   golden powers; your rests).
 //
@@ -746,6 +749,53 @@ const STAGE = `(() => {
       `Gobbler’s mouth, an apple right ahead: ${choke.before.mouth} pixels open, ${choke.cough.mouth} coughing, ${choke.after.mouth} after; puffs ${choke.cough.puffs}, with reduced motion ${choke.still.puffs}, after ${choke.after.puffs}`);
     check(between(choke.mid.apple, 15.5, 12.5, 16.5, 13.5) && !!choke.end.apple && Math.abs(choke.end.apple[0] - 15.5) < 0.15 && between(choke.mid.beetle, 4.5, 12.5, 5.5, 12.5) && !!choke.end.beetle && Math.abs(choke.end.beetle[0] - 4.5) < 0.15,
       'food a coughing head nudges rolls aside, and a beetle scurries', `the apple half way at ${choke.mid.apple}, then ${choke.end.apple}; the beetle ${choke.mid.beetle}, then ${choke.end.beetle}`);
+
+    // A pecked flag is a lost colony (round six A). The woodpecker pecks out
+    // the cell under Colonist's second colony's flag, and under Sovereign's
+    // capital; a tick later Colonist forgets the colony and Sovereign's realm
+    // moves, as the rules have it. The flag doesn't vanish: it's still there
+    // just after the peck, tips over (its ensign's navy lower) and is gone
+    // into the pit a moment later, the other colony's flag standing; the
+    // lost land shrinks away into the pit (its far edge before its near
+    // one); and the banner is carried from the old capital (between the two,
+    // part way) to the new one, not jumping there.
+    const lost = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const centre = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0, sx = 0, sy = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) { n++; sx += (i / 4) % p.width; sy += Math.floor(i / 4 / p.width); } return n ? [n, +(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : [0]; };
+      const navy = (r, g, b) => b > 80 && r < 40 && g < 60, cream = (r, g, b) => r > 225 && g > 215 && b > 180;
+      const g = stage(['colonist', 'sovereign', 'mason']), [you, col, sov, ma] = g.snakes;
+      setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
+      setBody(col, Array.from({ length: 6 }, (_, i) => [2 + i, 2]), 'left');
+      setBody(sov, Array.from({ length: 6 }, (_, i) => [22 - i, 21]), 'right');
+      setBody(ma, [[2, 18], [1, 18], [0, 18]], 'right');
+      col.memory.colonies = [{ x: 5, y: 8, radius: 3, n: 1 }, { x: 12, y: 7, radius: 3, n: 2 }];
+      sov.memory.home = { x: 17, y: 15, radius: 4 };
+      show(g); drawN(30, 0.5, 60);
+      const flag = () => centre(11.5, 5.4, 2.6, 2.8, navy), banner = (x0, x1) => centre(x0, 13, x1 - x0, 3, cream);
+      const out = { before: { flag: flag(), other: centre(4.5, 5.4, 2.6, 2.8, navy) } };
+      for (const k of [7 * 24 + 12, 7 * 24 + 13, 8 * 24 + 12, 15 * 24 + 17, 15 * 24 + 16, 16 * 24 + 17]) g.holes.add(k);
+      g.tick++; R.onTick([{ type: 'peck', x: 12, y: 7, cells: [7 * 24 + 12] }]);
+      drawN(1, 0.5, 60);
+      out.pecked = { flag: flag() };
+      drawN(1, 0.5, 60); // (a tick later: forgotten, and moved)
+      col.memory.colonies = [col.memory.colonies[0]]; sov.memory.home = { x: 12, y: 14, radius: 4 }; g.tick++;
+      drawN(2, 0.5, 60);
+      out.tipping = { flag: flag() };
+      drawN(1, 0.5, 60);
+      out.shrinking = { far: R.landShown(col, 9, 7), near: R.landShown(col, 11, 7) }; // (three cells from the pit, and one)
+      drawN(3, 0.5, 60);
+      out.carried = banner(12.6, 18.4); // (about half way)
+      drawN(20, 0.5, 60);
+      out.after = { flag: flag(), other: centre(4.5, 5.4, 2.6, 2.8, navy), land: R.landShown(col, 11, 7), banner: banner(11, 14.4) };
+      SnakeDebug.pinQuality(2);
+      return out;
+    })()`);
+    const lf = lost;
+    check(lf.before.flag[0] > 20 && lf.pecked.flag[0] > 20 && lf.tipping.flag[0] > 5 && lf.tipping.flag[2] > lf.pecked.flag[2] + 0.1 && lf.after.flag[0] === 0 && lf.after.other[0] > 10,
+      'a colony’s flag pecked out tips over and falls into the pit; the other colony’s stands', `its ensign’s navy (pixels, y): ${lf.before.flag.join(' at ')} before, ${lf.pecked.flag.join(' at ')} just after the peck, ${lf.tipping.flag.join(' at ')} tipping, ${lf.after.flag[0]} after; the other ${lf.after.other[0]}`);
+    check(!lf.shrinking.far && lf.shrinking.near && !lf.after.land, 'its land shrinks away into the pit', `three cells from the pit ${lf.shrinking.far ? 'still there' : 'gone'} while the cell beside it is ${lf.shrinking.near ? 'still there' : 'gone'}; ${lf.after.land ? 'some left' : 'all gone'} after`);
+    check(lf.carried[0] > 10 && lf.carried[1] > 13.5 && lf.carried[1] < 16.8 && lf.after.banner[0] > 10 && Math.abs(lf.after.banner[1] - 12.9) < 0.6,
+      'Sovereign’s banner is carried to its new capital', `its parchment part way at x ${lf.carried[1]} (${lf.carried[0]} pixels; from 17 to 12), then at ${lf.after.banner[1]}`);
 
     // The Field guide's pictures.
     const guide = await ev(`(() => {

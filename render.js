@@ -4807,6 +4807,8 @@ window.SnakeRender = (() => {
       layer: null, glow: null, X: 0, Y: 0, builtK: 0, dirty: true, any: false,
       shared: [], sharedAt: [], sharedTo: [], // (its contested sides: see sideLine; where each starts; and the realm across each, where only this one has the side)
       changedAt: -1e9, alertA: 0, pulses: [],
+      fallen: [], // (its colonies lost to the woodpecker, a while: { x, y, radius, at }, see drawColonyFlags)
+      banner: null, // (its banner as drawn, carried when its capital moves: see drawRealmBanner)
     };
   }
   // An owner's fields, as one number (a guest online gets fresh ones every tick).
@@ -4871,7 +4873,8 @@ window.SnakeRender = (() => {
     let far = 0;
     for (let i = 0; i < N2; i++) {
       if (!sh[i] || t[i] || game.holes.has(i)) continue;
-      lostD[i] = qn ? Math.max(1, landD[i]) : ringOf(r, i);
+      const pit = pitRing(r, i); // (a colony lost to the woodpecker: its land shrinks away into its pit)
+      lostD[i] = pit > 0 ? pit : qn ? Math.max(1, landD[i]) : ringOf(r, i);
       if (lostD[i] > far) far = lostD[i];
     }
     for (let i = 0; i < N2; i++) if (sh[i] && !t[i]) ord[i] = game.holes.has(i) ? HOLE_LOST : -(far + 1 - lostD[i]);
@@ -4881,6 +4884,13 @@ window.SnakeRender = (() => {
     // (its layers span all of it, before and after, while it plays out: they're not made again at every size)
     r.bx0 = r.by0 = GRID; r.bx1 = r.by1 = -1;
     for (let i = 0; i < N2; i++) if (t[i] || sh[i]) spanCell(r, i);
+  }
+  // How far cell i is from the pit of a colony of r's that fell into one, in
+  // rings (0 if it isn't that colony's land).
+  function pitRing(r, i) {
+    const x = i % GRID, y = (i - x) / GRID;
+    for (const f of r.fallen) if (onLand(f, x, y)) return 1 + Math.floor(Math.hypot(x - f.x, y - f.y));
+    return 0;
   }
   function spanCell(r, i) {
     const x = i % GRID, y = (i - x) / GRID;
@@ -5188,12 +5198,15 @@ window.SnakeRender = (() => {
     }
     ctx.globalAlpha = 1;
     ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
-    // The flags, while the land under them is still there.
+    // The flags, while the land under them is still there (one the
+    // woodpecker pecked out falls into the pit, and a capital's banner is
+    // carried to the new one: see drawColonyFlags and drawRealmBanner).
     for (const r of fieldSpecs) {
       const s = r.owner;
-      if (s.memory.home && r.shown[s.memory.home.y * GRID + s.memory.home.x]) drawBanner(s.memory.home, r.color, now);
+      if (s.memory.home) drawRealmBanner(r, s.memory.home, now);
       if (s.memory.colonies) drawColonyFlags(r, now);
     }
+    if (fallenFlags.length) drawFallenFlags(now);
   }
 
   // Where two owners' land meets: every contested side dashed half in one
@@ -5282,16 +5295,47 @@ window.SnakeRender = (() => {
     g.lineTo(cx + cw / 4, cy - ch * 0.05); g.lineTo(cx + cw / 2, cy - ch / 2); g.lineTo(cx + cw / 2, cy + ch / 2); g.closePath();
     g.fillStyle = '#3a2614'; g.fill();
   };
-  function drawBanner(home, col, now) {
-    const x = home.x * CELL + CELL / 2, y = home.y * CELL + CELL / 2;
+  // (At cx, cy in cells; tilted about its pole's foot and scaled, as it's
+  // carried; fluttering on its own beat.)
+  function drawBanner(cx, cy, col, now, tilt = 0, sc = 1, beat = cx) {
+    const x = cx * CELL + CELL / 2, y = cy * CELL + CELL / 2, turned = tilt || sc !== 1;
+    if (turned) { ctx.save(); ctx.translate(x, y + CELL * 0.6); ctx.rotate(tilt); ctx.scale(sc, sc); ctx.translate(-x, -y - CELL * 0.6); }
     flagPole(x, y);
     const sp = bannerSprite(col), half = SPRITE * CELL / 2, dev = sp.width / (SPRITE * CELL);
     const w = CELL * BANNER_W, h = CELL * BANNER_H + 2, sw = w / FLAG_STRIPS, top = y - CELL * 0.95 - 1;
     for (let i = 0; i < FLAG_STRIPS; i++) {
       const out = (i + 0.5) / FLAG_STRIPS;
-      const dy = reduced ? 0 : Math.sin(now / 200 - i * 0.9 + home.x) * CELL * 0.05 * out;
+      const dy = reduced ? 0 : Math.sin(now / 200 - i * 0.9 + beat) * CELL * 0.05 * out;
       ctx.drawImage(sp, (half + i * sw) * dev, (half - h / 2) * dev, (sw + 0.6) * dev, h * dev, x + 1.5 + i * sw, top + dy, sw + 0.6, h);
     }
+    if (turned) ctx.restore();
+  }
+  // Sovereign's banner over its capital, as drawn. When the capital moves,
+  // it goes too: a quick glide as the realm drifts a cell; pecked out from
+  // under it, it teeters over the pit until the realm moves (at once, as
+  // the rules have it), and is carried there, lifted (bigger) and leaning
+  // the way it's going. While the land under it is there, as before, or
+  // while it's on its way. With reduced motion it's simply at the new
+  // capital, and doesn't teeter.
+  const BANNER_GLIDE_MS = 240, BANNER_CARRY_MS = 700;
+  function drawRealmBanner(r, home, now) {
+    let b = r.banner;
+    if (!b) b = r.banner = { fx: home.x, fy: home.y, tx: home.x, ty: home.y, at: -1e9, carry: false };
+    const dur = b.carry ? BANNER_CARRY_MS : BANNER_GLIDE_MS;
+    let u = reduced ? 1 : Math.max(0, Math.min(1, (now - b.at) / dur)), e = u * u * (3 - 2 * u);
+    if (home.x !== b.tx || home.y !== b.ty) { // (moved: from where it's drawn now)
+      const fx = b.fx + (b.tx - b.fx) * e, fy = b.fy + (b.ty - b.fy) * e;
+      b.carry = !!holeMask[b.ty * GRID + b.tx];
+      b.fx = fx; b.fy = fy; b.tx = home.x; b.ty = home.y; b.at = now;
+      u = reduced ? 1 : 0; e = u;
+    }
+    const x = b.fx + (b.tx - b.fx) * e, y = b.fy + (b.ty - b.fy) * e, key = home.y * GRID + home.x;
+    const pecked = u >= 1 && !!holeMask[key] && !r.gone;
+    if (u >= 1 && !pecked && !r.shown[key]) return;
+    let tilt = 0, sc = 1;
+    if (u < 1 && b.carry) { const l = Math.sin(u * Math.PI); sc = 1 + 0.2 * l; tilt = 0.3 * l * (b.tx >= b.fx ? 1 : -1); }
+    else if (pecked && !reduced) tilt = Math.sin(now / 85) * 0.2;
+    drawBanner(x, y, r.color, now, tilt, sc, home.x);
   }
   // A flagpole: inked, with a parchment core and a parchment knob on top.
   function flagPole(x, y) {
@@ -5392,15 +5436,56 @@ window.SnakeRender = (() => {
 
   // Colonist's colonies: a flag flying over each (the Union Flag over the
   // first, an ensign over later ones), on its pole with a parchment knob.
+  // A colony whose flag cell the woodpecker pecks out is lost (Colonist
+  // forgets it at once): its flag tips over and drops into the pit,
+  // shrinking and going dark as it goes, and its land shrinks away into
+  // the pit after it (see pitRing). With reduced motion the flag fades
+  // where it stood. (Each kept while the colony's still remembered, so it
+  // falls once.)
   function drawColonyFlags(r, now) {
+    for (let i = r.fallen.length - 1; i >= 0; i--) if (now - r.fallen[i].at > 5000) r.fallen.splice(i, 1);
     for (const c of r.owner.memory.colonies) {
-      if (!r.shown[c.y * GRID + c.x]) continue;
+      const key = c.y * GRID + c.x, n = c.n || 1, kind = n === 1 ? 'union' : n % 2 ? 'red' : 'blue';
+      if (holeMask[key]) { fellIn(r, c, kind, now); continue; }
+      if (!r.shown[key]) continue;
       const x = c.x * CELL + CELL / 2, y = c.y * CELL + CELL / 2;
       flagPole(x, y);
-      const n = c.n || 1;
-      drawFlag(x + 1.5, y - CELL * 0.92, now, c.x * 0.7 + c.y * 1.3, n === 1 ? 'union' : n % 2 ? 'red' : 'blue');
+      drawFlag(x + 1.5, y - CELL * 0.92, now, c.x * 0.7 + c.y * 1.3, kind);
     }
   }
+  const FALL_MS = 760, FALL_STILL_MS = 400;
+  const fallenFlags = []; // { owner, x, y, kind, beat, at }
+  function fellIn(r, c, kind, now) {
+    for (const f of fallenFlags) if (f.owner === r.owner && f.x === c.x && f.y === c.y) return;
+    fallenFlags.push({ owner: r.owner, x: c.x, y: c.y, kind, beat: c.x * 0.7 + c.y * 1.3, at: now });
+    r.fallen.push({ x: c.x, y: c.y, radius: c.radius, at: now });
+  }
+  function drawFallenFlags(now) {
+    for (let i = fallenFlags.length - 1; i >= 0; i--) {
+      const f = fallenFlags[i], u = (now - f.at) / (reduced ? FALL_STILL_MS : FALL_MS);
+      if (u >= 1) { // (gone: forgotten once Colonist has forgotten the colony)
+        let kept = false;
+        for (const c of f.owner.memory.colonies || NO_SITES) if (c.x === f.x && c.y === f.y) kept = true;
+        if (!kept) fallenFlags.splice(i, 1);
+        continue;
+      }
+      const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2, foot = y + CELL * 0.6;
+      ctx.save();
+      if (reduced) ctx.globalAlpha = 1 - u;
+      else { // (tipping over the way it flies, then dropping in: smaller and fading into the dark)
+        const tip = Math.min(1, u / 0.45), drop = Math.max(0, (u - 0.35) / 0.65), s = 1 - 0.65 * drop;
+        ctx.globalAlpha = 1 - drop * drop;
+        ctx.translate(x, foot + drop * CELL * 0.3);
+        ctx.rotate(tip * tip * 1.3);
+        ctx.scale(s, s);
+        ctx.translate(-x, -foot);
+      }
+      flagPole(x, y);
+      drawFlag(x + 1.5, y - CELL * 0.92, now, f.beat, f.kind);
+      ctx.restore();
+    }
+  }
+  const NO_SITES = [];
 
   // Under the snakes, once their shadows are down (see drawSnakes): whatever
   // of a rival lies on someone's land has that land's colour clinging round
@@ -7806,6 +7891,7 @@ window.SnakeRender = (() => {
     beetleAng = null;
     beetleAt = 0;
     beetleNudge = null;
+    fallenFlags.length = 0;
     fallen.length = 0;
     nextLeaf = 0;
     crackCache.clear();
@@ -7856,6 +7942,7 @@ window.SnakeRender = (() => {
     get motes() { let n = 0; for (let i = 0; i < MAX_M; i++) if (mlife[i] > 0) n++; return n; }, // (dust, smoke and the like in the air: for the tests)
     streaked: () => streaks.map(k => ({ from: [k.fx, k.fy], to: [k.tx, k.ty], seen: k.pre >= 0 })), // (the dash streaks drawn: for the tests)
     hues(on) { huesOn = !!on; }, // (a land's colour round a rival on it, drawn or not: for the benchmark, which times it)
+    landShown: (s, x, y) => !!realms.get(s)?.shown[y * GRID + x], // (whether a cell of s's land is drawn: for the tests)
     flick(s, p) { const a = animOf(s, lastNow), [, len] = FLICKS[lookOf(s)] || FLICKS.player; a.tongueMs = T.TONGUE_MS * len; a.tongueUntil = lastNow + (1 - p) * a.tongueMs; a.nextTongue = lastNow + 1e9; }, // (its tongue or gag p of the way through, and then no more: for the tests)
   };
 })();
