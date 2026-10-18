@@ -9,7 +9,8 @@
 //                                   rival: true (a rival's: softer, further off, and it gives way to yours),
 //                                   streak: 0..7 (apples in a row: the pluck climbs a pentatonic scale),
 //                                   gold: true (a golden pickup: a sparkle over the cue),
-//                                   crest: seconds (the riser: how long it rises) }
+//                                   crest: seconds (the riser: how long it rises),
+//                                   delay: seconds, 0..1 (it sounds that much later, on the audio clock: the cough a beat after the choke) }
 //   SnakeAudio.setMuted(b) / isMuted() / toggleMuted()   remembered in this browser
 //   SnakeAudio.music(stage, mood)  the adaptive track (see the music section below)
 //   SnakeAudio.weather(kind)       the weather you can hear: 'rain', 'wind', 'storm', 'snow' or anything else for none
@@ -40,11 +41,12 @@ window.SnakeAudio = (() => {
     crackle: 300, thunder: 900, gust: 1500, burrow: 1000, dig: 250, rainbow: 1500, rain: 1500,
     ko: 200, close: 1400, field: 800, bonk: 150, bonked: 300, leap: 120, thunk: 250, dash: 50, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
     flash: 150, flashReady: 600, lastApples: 4000,
+    choke: 300, cough: 600, // (your next choke can come as soon as your cough is over, COUGH_TICKS ticks on: both are heard again)
   };
   // A cue that stands for others for a while: a win that's also a best is one phrase.
   const COVERS = { winBest: { win: 6000, best: 6000 } };
-  const CHOKES = { go: 'riser' };            // a cue that cuts another short (the riser lands on Go)
-  const CHOKED = { riser: true };
+  const CUTS_SHORT = { go: 'riser' };        // a cue that cuts another short (the riser lands on Go)
+  const CUT_SHORT = { riser: true };
   const DUCKS = { win: 1.2, best: 0.8, winBest: 1.6 }; // the music steps back under a fanfare (seconds)
   const RESUME_GRACE = 500;    // ms in which cues asked for while the context wakes still play once it runs
   const LEAD = 0.005;          // seconds from asking to sounding
@@ -76,7 +78,7 @@ window.SnakeAudio = (() => {
   let building = null;         // the cue being scheduled right now: { pending, gen, nodes, end }
   const lastPlayed = {};       // cue name (a rival's play: name + '~') -> ms timestamp (see MIN_INTERVAL)
   const coveredUntil = {};     // cue name -> ms timestamp (see COVERS)
-  const sounding = {};         // cue name -> { voice, end } of its latest play (see CHOKES)
+  const sounding = {};         // cue name -> { voice, end } of its latest play (see CUTS_SHORT)
 
   // The pitch and volume of the cue being built; tone() and noise() apply them.
   let pitchMul = 1;
@@ -537,6 +539,31 @@ window.SnakeAudio = (() => {
       tone(t + 0.24, 'sine', 340, 0.06, 0.08, 0.004, 600);
     },
 
+    // Choking on your own bead: a gag (a strangled gulp that rattles in the
+    // throat), then a spit, "ptoo" (the lips popping, a hollow "oo"), and the
+    // bead landing aside on the bark with a little tok. About 400 ms.
+    choke(t) {
+      const gag = tone(t, 'triangle', 170, 0.11, 0.26, 0.004, 250, 900);
+      vibrato(gag, t, 0.11, 38, 30);
+      body(t, 170, 0.1, 0.34, 0.004, 250, 720, 1.6);
+      noise(t, 0.09, 0.16, 'bandpass', 1100, 2.4);
+      tone(t + 0.14, 'sine', 190, 0.03, 0.22, 0.002, 90);
+      noise(t + 0.14, 0.014, 0.26, 'bandpass', 3600, 1.2);
+      body(t + 0.15, 300, 0.13, 0.36, 0.006, 210, 620, 1.2);
+      noise(t + 0.15, 0.1, 0.1, 'bandpass', 1500, 1);
+      knock(t + 0.32, 1250, 0.1);
+    },
+
+    // The cough after it: a small one, two dry hacks, the second softer (each
+    // a burst of breath through the throat over a short voiced thump).
+    cough(t) {
+      for (const [at, k] of [[0, 1], [0.15, 0.7]]) {
+        noise(t + at, 0.08, 0.24 * k, 'bandpass', 760, 1.1);
+        noise(t + at, 0.05, 0.06 * k, 'highpass', 2600, 0.7);
+        body(t + at, 190, 0.07, 0.26 * k, 0.003, 140, 560, 1.2);
+      }
+    },
+
     // Lightning on its way: a dry, irregular crackle, high and quiet.
     crackle(t) {
       for (let i = 0; i < 9; i++) noise(t + i * 0.035 + Math.random() * 0.02, 0.012, 0.09, 'bandpass', 3200 + Math.random() * 2400, 2);
@@ -846,12 +873,13 @@ window.SnakeAudio = (() => {
     const pitch = Number.isFinite(o.pitch) ? Math.max(-24, Math.min(24, o.pitch)) : 0;
     const volume = Number.isFinite(o.volume) ? Math.min(1, Math.max(0, o.volume)) : 1;
     if (volume <= 0) return;
+    const delay = Number.isFinite(o.delay) ? Math.max(0, Math.min(1, o.delay)) : 0;
 
     lastPlayed[key] = ms;
     for (const k in COVERS[name]) coveredUntil[k] = ms + COVERS[name][k];
     pitchMul = Math.pow(2, pitch / 12);
     volMul = volume * (o.rival ? RIVAL_VOLUME : 1);
-    const t = ctx.currentTime + LEAD;
+    const t = ctx.currentTime + LEAD + delay;
     building = { pending: 0, gen: generation, nodes: [], end: t };
     voices++;
     try {
@@ -877,12 +905,12 @@ window.SnakeAudio = (() => {
       }
       tail.connect(master);
       out = voice;
-      const choke = sounding[CHOKES[name]];
-      if (choke && choke.end > t) choke.voice.gain.setTargetAtTime(0, t, 0.03);
+      const cut = sounding[CUTS_SHORT[name]];
+      if (cut && cut.end > t) cut.voice.gain.setTargetAtTime(0, t, 0.03);
       if (DUCKS[name]) duckMusic(t, DUCKS[name]);
       cue(t, o);
       if (o.gold && name !== 'golden' && name !== 'leaf' && name !== 'wrap') sparkle(t + 0.05, 0.8);
-      if (CHOKED[name]) sounding[name] = { voice, end: building.end };
+      if (CUT_SHORT[name]) sounding[name] = { voice, end: building.end };
     } catch {
       /* a half-built cue just plays what it managed to schedule */
     } finally {
