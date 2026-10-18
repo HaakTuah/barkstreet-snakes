@@ -113,7 +113,7 @@ The board and the page around it are never still for long, and the big moments a
 - **On the board:** **Bonk!** for a knock a snake survives; where one goes out, a comic-book **KO!** if another snake did it, **Fwoosh!** in the fire, **Boom!** for a golden flash with nowhere to go and **Crunch!** for the rest; **confetti** for a win or a new best (all over the board), or from the winner's head when you're watching: paper scraps that flutter and tumble as they fall, not dots. **The woodpecker's next chunk** glows red from within, cell by cell, and cracks along the grain, under the snakes (a body over it bridges the hole), pulsing faster as the strike nears. Its rim is the pit's torn lip to come: it wobbles as the lip will, its corners a little rounder, and the bird's pecks are nicks bitten in from outside it, each its own size and unevenly spaced, coming first and closer together where it's striking (it used to be marked with dashed boxes, the one thing on the board that looked like a computer's; round four traced it with the pits' own outline, but its dents, evenly spaced dots on the rim, still read as a dotted selection box until the critique made them nicks). The lightning's closing ring has a soft glow round it.
 - **The name tags:** a length pops when it changes, a snake knocked out of the round shakes its tag (flushing red), and the leader (the longest snake, if one is longest) wears a gold ring and a bobbing crown.
 - **Chatter:** each new line slides into the log; bubbles pop out of their tail (see below).
-- **The title's ampersand** gives a wiggle now and then.
+- **The title's S is a snake** (see Voice and copy): every 4.2 s a wave runs down it, head first, then it tastes the air twice, and it blinks on a beat of its own. Each joint is turned by the compositor, so nothing is laid out or painted while it moves.
 
 ## Voice and copy
 
@@ -121,7 +121,7 @@ The board and the page around it are never still for long, and the big moments a
 
 | Moment | Copy |
 |---|---|
-| Title / subtitle | **Barkstreet Snakes** (called *Bark & Bite* until 2026-10-18; the S of Snakes wriggles in Honey as the ampersand did) / *A snake game on a mossy log* |
+| Title / subtitle | **Barkstreet Snakes** (called *Bark & Bite* until 2026-10-18). The S of Snakes is a honey snake, one of the board's: inked, lit from the upper left with a glint on every segment, a caramel shadow side (no power gold), its head at the top with two big eyes and a little smile looking along the word, its tail tapering to a curl at the foot. It wriggles, tastes the air and blinks (see Grabbing attention); in a round and with reduced motion it rests, tongue in and eyes open, and in forced colours it's the plain letter. The letter stays as text under the drawing, so the heading is read out and copied as "Barkstreet Snakes" (`tools/title-s.js` draws it) / *A snake game on a mossy log* |
 | Start prompt | **"Ready, Green?"** (your Hall of Fame name, once you have one: the header already says *Barkstreet Snakes*), then "Three rivals. One mossy log. Last snake wriggling wins." The control hint below adapts to keyboard or touch. |
 | Countdown | Rotating roll-calls ("Up on the log with you:", "Sharing your bark:") above the rival list |
 | Go | "Slither!" when you're playing; "And they're off." when you're watching (the narrator never talks to "you" in a round you're not in) |

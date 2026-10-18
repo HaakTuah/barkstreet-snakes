@@ -152,14 +152,71 @@ h1 {
   color: var(--sprout);
   text-shadow: 0 2px 0 var(--leaf-dark), 0 4px 10px rgba(0, 0, 0, 0.5);
 }
-h1 .amp { display: inline-block; color: var(--honey); /* (the S of Snakes, wriggling now and then) */ transform-origin: 50% 80%; animation: amp-wiggle 4.2s ease-in-out 1.5s infinite; }
-html.in-round h1 .amp { animation: none; } /* (it rests during a round: nobody's looking, and it costs every frame) */
-@keyframes amp-wiggle {
-  0%, 72%, 100% { transform: none; }
-  78% { transform: rotate(-14deg) scale(1.12); }
-  85% { transform: rotate(11deg) scale(1.12); }
-  92% { transform: rotate(-4deg); }
+/* title-s: the S of Snakes, a honey snake. (Drawn and written by tools/title-s.js: change it there.)
+   The letter stays as text, only see-through: it's what's read out and
+   copied, and it keeps its place in the word. The drawing stands on the
+   baseline from the letter's left edge (the <i>, an empty box whose baseline
+   is the line's, so it sits the same in Fredoka and the stand-in font). The
+   <b> is the drawing's box (it casts the title's drop), each piece of the
+   snake an <svg> of its own in that same box, and each joint an empty box (a
+   <span>) holding the piece that hangs from it and the joints beyond, turned
+   by a transform the compositor runs: nothing is laid out or painted while
+   it moves. Each box's line is exactly its drawing's height (line-height: 0),
+   so its top left is the drawing's in any font; negative margins keep them
+   all from taking room or raising the title's line. */
+h1 .snake-s { color: transparent; text-shadow: none; padding-right: 0.02em; white-space: nowrap; } /* (inline: a box round it would split the word, "S nakes", for a screen reader; nowrap: where the title wraps, the snake goes with its letter) */
+h1 .snake-s :is(i, span) { display: inline-block; width: 0; height: 0; }
+h1 .snake-s :is(b, span) { line-height: 0; }
+h1 .snake-s b { display: inline-block; width: .84em; height: 1em; margin: -0.5em -.74em -0.2em -.1em; filter: drop-shadow(0 2px 0 var(--leaf-dark)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)); } /* (the title's own drop; the tongue goes under it, so it casts none) */
+h1 .snake-s span { margin-top: -0.5em; }
+h1 .snake-s svg { width: .84em; height: 1em; margin: 0 -.84em 0 0; vertical-align: -.1em; overflow: visible; }
+h1 .snake-s .s-tongue { margin: -0.5em -.74em 0 -.1em; }
+/* Now and then it wriggles: a wave down its body, head first (each piece
+   turns on the joint it hangs from, and the pieces beyond it go with it; the
+   middle holds still), then it tastes the air twice. It blinks on a beat of
+   its own: a shut-eyed head over the open one, for a moment. */
+h1 .snake-s .s-up { transform-origin: .434em .565em; animation: s-up 4.2s ease-in-out 1.58s infinite; }
+h1 .snake-s .s-neck { transform-origin: .221em .364em; animation: s-neck 4.2s ease-in-out 1.5s infinite; }
+h1 .snake-s .s-low { transform-origin: .447em .799em; animation: s-low 4.2s ease-in-out 1.66s infinite; }
+h1 .snake-s .s-tail { transform-origin: .284em .807em; animation: s-tail 4.2s ease-in-out 1.74s infinite; }
+h1 .snake-s .s-shut { opacity: 0; animation: s-blink 5.3s steps(1, end) 3.4s infinite; }
+h1 .snake-s .s-tongue { opacity: 0; animation: s-flick 4.2s ease-in-out 1.5s infinite; }
+html.in-round h1 .snake-s * { animation: none; } /* (it rests during a round, tongue in and eyes open: nobody's looking) */
+@keyframes s-neck {
+  0%, 23.81%, 100% { transform: rotate(0deg); }
+  5.71% { transform: rotate(11deg); }
+  11.9% { transform: rotate(-11deg); }
+  18.33% { transform: rotate(4.95deg); }
 }
+@keyframes s-up {
+  0%, 23.81%, 100% { transform: rotate(0deg); }
+  5.71% { transform: rotate(7deg); }
+  11.9% { transform: rotate(-7deg); }
+  18.33% { transform: rotate(3.15deg); }
+}
+@keyframes s-low {
+  0%, 23.81%, 100% { transform: rotate(0deg); }
+  5.71% { transform: rotate(8deg); }
+  11.9% { transform: rotate(-8deg); }
+  18.33% { transform: rotate(3.6deg); }
+}
+@keyframes s-tail {
+  0%, 23.81%, 100% { transform: rotate(0deg); }
+  5.71% { transform: rotate(14deg); }
+  11.9% { transform: rotate(-14deg); }
+  18.33% { transform: rotate(6.3deg); }
+}
+@keyframes s-flick {
+  0%, 25.24%, 38.57%, 100% { opacity: 0; transform: translate(-.168em, .006em); }
+  25.95%, 37.86% { opacity: 1; }
+  28.57%, 34.52% { transform: none; }
+  31.67% { transform: translate(-.059em, .002em); }
+}
+@keyframes s-blink {
+  0% { opacity: 1; }
+  2.64% { opacity: 0; }
+}
+/* (end of title-s) */
 
 .tagline { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); }
 
@@ -1057,7 +1114,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
 /* Reduced motion: no pops, rises or rumbles; the information stays. */
 @media (prefers-reduced-motion: reduce) {
   .card, .overlay, .badge, .toast, .records-card, .scoreboard li.starving::after { animation: none !important; }
-  h1 .amp, .leaves, .frame-sheen > i, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
+  h1 .snake-s *, .leaves, .frame-sheen > i, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
   .scoreboard li.starving::after { opacity: 1; }
   button, button:active { transition: none; transform: none; }
   .toast, .steer-hint { transition: none; }
@@ -1070,4 +1127,6 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .dot, .hunger i, .bar-fill { forced-color-adjust: none; }
   .name-row input, .lobby input { border: 1px solid FieldText; }
   .name-row input:focus-visible, .lobby input:focus-visible { outline: 2px solid Highlight; }
+  h1 .snake-s { color: inherit; } /* (the plain letter: the drawing keeps its own colours, so it goes) */
+  h1 .snake-s > i { display: none; }
 }
