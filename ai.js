@@ -294,7 +294,7 @@ window.SnakeAI = (() => {
   // (-1 off the board), and `queue` holds a breadth-first search, one distance
   // after another. No search visits a cell twice, so N * N is always enough.
   let bufN = 0, mineFree, otherFree, ownFree, risk, seen;
-  let foodValue, foodGrow, foodCells, goldCells, queue, nbr, necks, reach, myCells, myDist, marks, leave, leaveStamp, chase, chaseKey;
+  let foodValue, foodGrow, foodCells, goldCells, beadCells, queue, nbr, necks, reach, myCells, myDist, marks, leave, leaveStamp, chase, chaseKey;
   let stamp = 0;
   // The territory search's own board (see evaluate), framed by a border of
   // HOLE so a cell's neighbours are just a row either side of it and a cell
@@ -324,6 +324,7 @@ window.SnakeAI = (() => {
     foodGrow = new Int8Array(size);     // what eating a cell does to my length
     foodCells = new Int32Array(size);   // food never shares a cell
     goldCells = new Int32Array(size);
+    beadCells = new Int32Array(size);   // (the rivals' own beads among them)
     queue = new Int32Array(size);
     necks = new Int32Array(size * 4); // (a neck: its one or two cells, the room before it, and how far it is)
     reach = new Int32Array(size);     // the soonest any rival could be in a cell (ticks from now)
@@ -930,6 +931,16 @@ window.SnakeAI = (() => {
       foodCells[foodCount++] = i;
       if (craving.contested && v > 0 && (f.gold || f.kind === 'leaf' || f.kind === 'goldcap')) goldCells[goldCount++] = i;
     }
+    // (For the territory search, which can stop once I claim nothing more
+    // unless food a rival gets to could still be mine: how long any rival
+    // still coughs, and the rivals' own beads.)
+    let coughMax = 0, beadCount = 0;
+    for (let k = 0; k < others.length; k++) coughMax = Math.max(coughMax, coughs[k]);
+    for (let k = 0; k < foodCount; k++) if (marks[foodCells[k]] >= stampTheirs && marks[foodCells[k]] < stampTheirs + others.length) beadCells[beadCount++] = foodCells[k];
+    const beadsOpen = () => {
+      for (let k = 0; k < beadCount; k++) if (foodValue[beadCells[k]] > 0 && terr[framed[beadCells[k]]] < CLAIMED) return true;
+      return false;
+    };
 
     // A beetle: its way is there for anyone to read. It crawls a cell every
     // BEETLE_EVERY ticks, straight on till something's in the way; with a
@@ -1110,7 +1121,7 @@ window.SnakeAI = (() => {
           }
         }
         // (Worked out once a level: it's the hot loop.)
-        const levelEnd = write, T1 = T + 1, next = CLAIMED + ((T1 + age) << bits);
+        const levelEnd = write, T1 = T + 1, next = CLAIMED + ((T1 + age) << bits), mineBefore = mine;
         while (read < levelEnd) {
           const p = Q[read++], tag = B[p] & tags;
           if (!tag) continue; // became contested
@@ -1132,6 +1143,11 @@ window.SnakeAI = (() => {
             }
           }
         }
+        // Once I claim nothing more, the rest is the rivals sharing out what's
+        // left among themselves, which counts only for an aggressive snake,
+        // or where a rival claims food it can't eat (it's coughing, or it's
+        // its own bead): with none of that, the search can stop here.
+        if (mine === mineBefore && T >= t && !w.aggression && T1 + 1 > coughMax && !beadsOpen()) break;
         T = read < write || si >= ns ? T + 1 : srcT[si];
       }
 
