@@ -7865,7 +7865,6 @@ window.SnakeRender = (() => {
   function warmUp() {
     if (!sized) return;
     for (const w of FLOAT_WORDS) floatSprite(w);
-    floatSprite(OWN[1]); floatSprite(OWN[2]);
     blastSprite();
   }
   function setGame(g) {
