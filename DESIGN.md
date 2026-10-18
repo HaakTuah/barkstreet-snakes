@@ -879,6 +879,61 @@ Per persona, from a scratch census of the same rounds (the same fingerprints), S
 - **Its voice:** above, under "Its voice" (60 whole rounds on the chatter's own chances, seed 5).
 - **Tests:** `tools/rules-test.js` has nine checks of Star's habit (five fail on the stub), `tools/render-test.js` six of its look (five fail on the stub; the sixth, its rainbow holding still with reduced motion, passes on the stub's plain fade anyway), and `tools/chatter-test.js` plays its voice through (297 checks of the chatter and the sound, from 250).
 
+## Round six A: fairness and fixes
+
+After Star, the owner played and sent a long run of notes. They became a plan of three PRs, built one after another:
+- **A** (this one): fairness and fixes;
+- **B**: the new moves and the rivals' power styles;
+- **C**: weather, fire, polish, a gentler start and a last optimization pass.
+
+Three rules from the owner hold for all of them:
+- **Every new rule has a visible cue and a lesson** (a one-time banner, and a row in the Field guide).
+- **Every rival accounts for every change.** It uses the new rule when it pays and sees it used against it, through the same engine calls as a person.
+- **Every rival keeps its trademark.** Mason's straight lines, Ouroboros's coils, Creeper's tail-riding and the rest are measured before and after.
+
+**Choking on your own tail.** Your own beads (the tail a crash knocks off, or a cut takes) can't be eaten back any more:
+- **The choke.** Your head gags on one and spits it aside; it stays food for anyone else. You lose nothing, but you don't get your crash back.
+  - *Why:* you can turn on a dime, so you were nearly always first to your own beads; 24% of bead meals were the eater's own. A crash cost almost nothing, and the planned "drop your tail" move would have cost nothing either.
+- **The cough** (the owner's addition). After choking, you cough for about a second and can't eat. It never chains: more of your own beads met while coughing are just spat aside.
+- **Nudging.** Food your coughing head reaches is nudged one cell aside, out in the open, where a rival can take it. (Left under you, it would be hidden from everyone and waiting for you.)
+- **Where it rolls is a rule, never chance** (the owner: chance here feels like cheating):
+  1. turning into it, it's knocked to the outside of the turn;
+  2. going straight, it rolls to the side with more open log;
+  3. a tie goes toward the middle;
+  4. if that side is blocked, it goes to the other; if both are blocked, it stays.
+
+  A spat bead goes by the same rule. Rivals predict it, and so can you.
+- **The cue:** a shut mouth and cough puffs.
+- **The lesson:** "You choke on your own tail!"
+- **This replaces** round four's "your own beads are length, not a meal".
+
+**Rivals see food as it is.** Rivals see other snakes a quarter of a second late, like a person's reaction, and DESIGN only ever promised that. By accident they saw food that late too. It didn't matter for apples, which don't move. For beetles it did: they chased where a beetle *was*, wiggled behind it and lost it ("self-sabotage", the owner said). Now:
+- food is seen as it is now;
+- the delay stays for snakes;
+- a rival aims where a fleeing beetle is heading, from the way it faces and its pace, which anyone can see.
+
+**A pecked flag is a lost colony.** Land used to outlive its flag when the woodpecker pecked it out. Now:
+- **Colonist:** a colony whose flag cell becomes a hole is lost. Its flag falls into the pit, its land shrinks away, and Colonist may plant again.
+- **Sovereign:** a pecked capital moves the realm at once to the nearest good land, banner and all.
+
+**Star's mustache.** The owner didn't like Star's tongue gag (a tiny star on a ribbon of rainbow). Its gag is now its mustache: the ends twirl and flick up with a little "harrumph" puff. Nothing pokes out.
+
+**Bridges and jumps you can see.**
+- **A body over a hole** looked as if it hovered. Now:
+  - its shadow drops onto the pit floor, deeper and softer than on the bark;
+  - the span over the gap is shaded underneath and sags a little between the rims;
+  - the tail end over a hole droops down into it.
+- **A jump was easy to miss** (mostly the head swelling). Now:
+  - the body lifts along the neck in an arc;
+  - its shadow stays on the ground, visibly apart;
+  - the hurdle passes underneath with the shadow across it;
+  - dust puffs at take-off, and a faint arc trails behind;
+  - landing brings a squash and a ring of dust.
+
+  Both read at phone size and hold still with reduced motion.
+
+*(The woodpecker's fairness, food and beetles follow, from the simulation study.)*
+
 ## Skipped or adapted guidelines
 
 Each line gives the guideline, what was done, and why.
