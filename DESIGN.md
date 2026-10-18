@@ -972,7 +972,7 @@ Escapes from a chase went from about half (51%) to 43% with live food alone, and
 - up to two beetles out at once, coming out twice as often (0.012 a tick), and still coming in sudden death;
 - one in eight is golden (was two in five), so golden leaps stay about three a round;
 - **a cornered beetle digs in:** with a head within 6 cells and no burrow within 7, it stops and bores into the bark for 8 ticks (about a second). It can still be caught while it digs; then it's underground, and comes out of a burrow later, as after a dive. Without it, a beetle in open bark was nearly always caught once the rivals hunted well (escapes fell to about 11%); with it, escapes are 28%, inside the 20–35% that keeps a chase worth it.
-  - *The cue:* it stops, sawdust sprays, it sinks into the bark as the time runs out, and a little heap of sawdust is left where it went in.
+  - *The cue:* it stops, sawdust sprays, it sinks into the bark as the time runs out, and its hole fills with sawdust behind it: bark beetles pack their tunnels with their own sawdust (frass). A little heap is left for a few seconds where it went in, a plug, not a hole. It makes no burrow: a burrow at every dig would leave an escape hatch for the next beetle, push escapes past the 20–35% that keeps a chase worth it, and take room from the apples (nothing grows on burrows).
   - *The lesson:* the first time one digs in near you, "A cornered beetle digs in. Grab it before it's gone!"
   - *The rivals* see a digging beetle stay put until it's gone, and race for it when they can get there in time.
 - **Measured** (600 rounds, seeds 3 and 11): meals mid-round 19.8 → 16.6 a minute; beetles caught 3.7 → 13 a round; starving 3.1% and 3.3% of deaths.
