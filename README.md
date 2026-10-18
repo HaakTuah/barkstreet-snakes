@@ -146,7 +146,7 @@ Serve the folder with any static server (for example `npx serve` or `python -m h
 
 A balance question ("does this shorten sudden death?", "did my change hurt anyone?") is cheapest answered in three steps:
 
-1. **Screen it with `tools/abtest.js`**, which plays two copies of the game on the same seeded rounds, paired, and stops as soon as every number asked for has a verdict: B higher, lower, or the same within a margin that matters. It plays 100 rounds a seed at a time (seeds 3 and 11, up to 600 each), and its intervals stay honest however early it stops, so a clear answer usually takes one or two looks instead of 600 rounds a seed on each side. Ask only for what the question is about, since it stops only when all of it is decided: `--metrics` picks from `length`, `sd`, `deaths`, `starving`, `powers`, `win` and `place`.
+1. **Screen it with `tools/abtest.js`**, which plays two copies of the game on the same seeded rounds, paired, and stops as soon as every number asked for has a verdict: B higher, lower, or the same within a margin that matters. It plays 100 rounds a seed at a time (seeds 3 and 11, up to 600 each), and its intervals stay honest however early it stops, so a clear answer usually takes one or two looks instead of 600 rounds a seed on each side. Ask only for what the question is about, since it stops only when all of it is decided: `--metrics` picks from `length`, `sd`, `deaths`, `starving`, `powers`, `win` and `place`, and `trademarks` (each personality's, as `--signatures` measures them) when a change mustn't blunt them.
 
    `node tools/abtest.js . ../variant --metrics sd,deaths`
 

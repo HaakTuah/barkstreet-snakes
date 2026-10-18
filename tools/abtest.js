@@ -26,8 +26,8 @@
 //   A, B        the two copies (folders with tuning.js, ai.js and engine.js); A defaults to this one
 //   --seed N    a seed to play (repeat it for more; default 3 and 11)
 //   --rounds N  at most this many rounds a seed (default 600)
-//   --batch N   rounds a seed in a look (default 100: six looks)
-//   --metrics   the rows to print and decide on, by group (default all of them):
+//   --batch N   rounds a seed in a look (default 100: six looks; with fewer than about 50 pairs a look, the intervals are rough)
+//   --metrics   the rows to print and decide on, by group (default all of them but trademarks):
 //                 length    the median round
 //                 sd        sudden death: its median length (of the rounds that reached it), and how many did
 //                 deaths    what snakes died of (each cause's share of the deaths)
@@ -35,6 +35,8 @@
 //                 powers    plain flashes a minute alive, plain jumps, golden leaps used, golden dashes and golden power food a round
 //                 win       each personality's win rate (of the rounds it played)
 //                 place     each personality's average place
+//                 trademarks  each personality's trademark, as simulate.js --signatures measures it
+//                           (Mason's straight runs, Ghost's distance, Star's flashes...; played with --signatures)
 //   --at MS     fast-forward: store every round at game time MS as A plays it (simulate.js
 //               --save-at), and play both on from there; for questions about the late game
 //               (2:00, the woodpecker, is 120000). Only what happens after MS can differ
@@ -46,7 +48,10 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const GROUPS = ['length', 'sd', 'deaths', 'starving', 'powers', 'win', 'place'];
+const { TRADEMARKS } = require('./simulate.js');
+
+const GROUPS = ['length', 'sd', 'deaths', 'starving', 'powers', 'win', 'place', 'trademarks'];
+const USUAL = GROUPS.filter(g => g !== 'trademarks'); // (trademarks need rounds played with --signatures: asked for, not by default)
 
 // What one round says, for the rows (from simulate.js --per-round).
 function valuesOf(res) {
@@ -64,7 +69,7 @@ function valuesOf(res) {
 // The rows of the groups asked for. A ratio row is a sum over the rounds
 // over another (num / den), times scale; a median row, the median of a value
 // over the rounds that have one. margin: a difference that doesn't matter.
-function rowsFor(As, Bs, groups = GROUPS, margins = new Map()) {
+function rowsFor(As, Bs, groups = USUAL, margins = new Map()) {
   const rows = [], add = (group, key, label, unit, spec, margin) => groups.includes(group) && rows.push({ group, key, label, unit, margin: margins.get(key) ?? margins.get(group) ?? margin, ...spec });
   add('length', 'length', 'round length, median', 's', { median: v => v.length }, 3);
   add('sd', 'sd', 'sudden death length, median', 's', { median: v => v.sd }, 4);
@@ -82,6 +87,15 @@ function rowsFor(As, Bs, groups = GROUPS, margins = new Map()) {
   const of = (v, name, k) => v.per[name]?.[k] || 0;
   for (const n of names) add('win', 'win.' + n, `win%: ${n}`, '%', { num: v => of(v, n, 'wins'), den: v => of(v, n, 'rounds'), scale: 100 }, 3);
   for (const n of names) add('place', 'place.' + n, `place: ${n}`, '', { num: v => of(v, n, 'placeSum'), den: v => of(v, n, 'rounds') }, 0.1);
+  // (each a ratio of two of its sums, as simulate.js's TRADEMARKS has it; a % row's margin is 2 points, another's a tenth of A's value)
+  const sign = (v, name, k) => { const p = v.per[name]; return !p ? 0 : k === 'rounds' ? p.rounds : k === 'minutes' ? p.aliveMs / 60000 : p.sig?.[k] || 0; };
+  for (const [who, what, a, b, unit] of TRADEMARKS) {
+    if (!names.includes(who)) continue;
+    const spec = { num: v => sign(v, who, a), den: v => sign(v, who, b), scale: unit === '%' ? 100 : 1 };
+    let margin = 2;
+    if (unit !== '%') { let N = 0, D = 0; for (const v of As) { N += spec.num(v); D += spec.den(v); } margin = D ? +(0.1 * N / D).toPrecision(2) : null; }
+    add('trademarks', `trademark.${who}.${a}`, `${who}: ${what}`, unit === '%' ? '%' : '', spec, margin);
+  }
   return rows;
 }
 
@@ -185,8 +199,9 @@ if (require.main === module) {
   const MAX = Number(one('--rounds')) || 600, BATCH = Math.min(MAX, Number(one('--batch')) || 100), LOOKS = Math.ceil(MAX / BATCH);
   const ALPHA = Number(one('--alpha')) || 0.05, LEVEL = ALPHA / LOOKS; // (each look's intervals: Bonferroni over the looks)
   const at = one('--at'), json = args.includes('--json'), workers = one('--workers');
-  const groups = (one('--metrics') || GROUPS.join(',')).split(',').map(g => g.trim()).filter(Boolean);
+  const groups = (one('--metrics') || USUAL.join(',')).split(',').map(g => g.trim()).filter(Boolean);
   for (const g of groups) if (!GROUPS.includes(g)) fail(`no metric ${g} (there are ${GROUPS.join(', ')})`);
+  const signs = groups.includes('trademarks') ? ['--signatures'] : [];
   const margins = new Map(all('--margin').map(m => { const [k, v] = m.split('='); return [k, Number(v)]; }));
 
   // Playing, through simulate.js (what it played, and the CPU it took, is added up in spent).
@@ -201,9 +216,9 @@ if (require.main === module) {
   };
   // The first n rounds of a seed under one side, each round's own numbers.
   const roundsOf = (side, seed, n) => {
-    if (at == null) return simulate(side, String(n), '--seed', String(seed), '--per-round').rounds;
-    const { states } = simulate('A', String(n), '--seed', String(seed), '--save-at', String(at)); // (stored as A plays them; cached, so a look plays only its new rounds' openings)
-    return simulate(side, String(n), '--from', states, '--per-round').rounds;
+    if (at == null) return simulate(side, String(n), '--seed', String(seed), '--per-round', ...signs).rounds;
+    const { states } = simulate('A', String(n), '--seed', String(seed), '--save-at', String(at), ...signs); // (stored as A plays them; cached, so a look plays only its new rounds' openings)
+    return simulate(side, String(n), '--from', states, '--per-round').rounds; // (with --signatures if they were stored with them)
   };
 
   // The looks: a batch more on every seed, till every row has a verdict.

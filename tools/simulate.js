@@ -446,7 +446,7 @@ function linesByRound(lines) {
 const lineOf = (r, kind, value) => `{"r":${r},"${kind}":${JSON.stringify(value)}}`;
 const parsed = line => JSON.parse(line)[ROUND.exec(line)[2]];
 
-if (isMainThread) {
+if (isMainThread && require.main === module) {
   const args = process.argv.slice(2);
   const flag = name => args.includes(name);
   const WITH_VALUE = ['--seed', '--root', '--workers', '--save-at', '--save', '--from'];
@@ -581,7 +581,7 @@ if (isMainThread) {
     }
     done({ rounds: todo.length, cpu: seconds });
   }).catch(err => { console.error(err); process.exit(1); });
-} else {
+} else if (!isMainThread) {
   // A core: plays the rounds it's handed (or goes on with them), one at a time.
   const { E, T, ctx } = loadGame();
   const roots = { SnakeAI: ctx.window.SnakeAI, SnakeEngine: ctx.window.SnakeEngine, TUNING: ctx.window.TUNING };
@@ -594,3 +594,6 @@ if (isMainThread) {
     parentPort.postMessage({ r: out.r, line: out.state ? lineOf(out.r, 'state', State.encode(out.state, known)) : lineOf(out.r, workerData.saveAt != null ? 'done' : 'result', out.result) });
   });
 }
+
+// (For tools/abtest.js: the trademarks, measured the same way.)
+module.exports = { TRADEMARKS };
