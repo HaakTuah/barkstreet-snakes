@@ -791,7 +791,7 @@ window.SnakeRender = (() => {
     guideSprites.set(key, c);
     return c;
   }
-  const GUIDE_TILE = { hole: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05 }; // (on a tile of bark this many cells either side of the middle)
+  const GUIDE_TILE = { hole: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, choke: 1.15, lostflag: 1.2 }; // (on a tile of bark this many cells either side of the middle)
   const GUIDE = {
     apple: g => drawApple(g, 'fresh'),
     baked: g => drawApple(g, 'baked'),
@@ -811,6 +811,29 @@ window.SnakeRender = (() => {
     land: g => { guideCells(GUIDE_LAND); g.translate(-12 * CELL, -12 * CELL); paintLand(g, null, guideMask, guideNone, '#2563eb', 0, NO_HOLES); },
     held: g => guideSnake(g, '#2563eb', false, (x, y) => drawPips(x, y, Math.PI, CELL * 0.54, 0, 1, 1, false)),
     rests: g => guideSnake(g, '#4ade80', true, (x, y) => { const rr = CELL * 0.84; restHalf(x, y, rr, -1, 0.6, SKY); restHalf(x, y, rr, 1, 0.3, EMBER); }),
+    choke: g => guideSnake(g, '#4ade80', true, x => { // (choking on its own bead: cheeks puffed, the bead spat aside in an arc, a cough of breath)
+      const c = CELL;
+      g.beginPath();
+      for (const sg of SIDES2) { g.moveTo(x + c * 0.56, sg * c * 0.38); g.arc(x + c * 0.4, sg * c * 0.38, c * 0.16, 0, TAU); }
+      g.strokeStyle = INK; g.lineWidth = c * 0.04; g.stroke();
+      g.fillStyle = '#4ade80'; g.fill();
+      for (const sg of SIDES2) { g.fillStyle = '#fffbea'; circle(x + c * 0.16, sg * c * 0.2, c * 0.13); g.fillStyle = INK; circle(x + c * 0.2, sg * c * 0.2, c * 0.07); } // (its eyes again, over its cheeks)
+      g.strokeStyle = 'rgba(255,251,234,0.8)'; g.lineWidth = c * 0.045; g.lineCap = 'round'; g.setLineDash([c * 0.07, c * 0.09]);
+      g.beginPath(); g.moveTo(x + c * 0.55, c * 0.12); g.quadraticCurveTo(x + c * 1.0, c * 0.02, x + c * 0.8, c * 0.5); g.stroke();
+      g.setLineDash(NO_DASH);
+      g.save(); g.translate(x + c * 0.78, c * 0.74); drawBead(g, '#4ade80|'); g.restore();
+      const px = x + c * 0.8, py = -c * 0.5, r = c * 0.13; // (a puff of a cough)
+      g.beginPath();
+      for (let j = 0; j < COUGH_PUFF.length; j += 3) { const cx = px + COUGH_PUFF[j] * r, cy = py + COUGH_PUFF[j + 1] * r, cr = COUGH_PUFF[j + 2] * r; g.moveTo(cx + cr, cy); g.arc(cx, cy, cr, 0, TAU); }
+      g.strokeStyle = 'rgba(58,38,20,0.6)'; g.lineWidth = c * 0.05; g.stroke();
+      g.fillStyle = '#fbf7ec'; g.fill();
+    }),
+    lostflag: g => { // (a colony lost to the woodpecker: its flag tipping into the pit pecked out under it)
+      guideCells(GUIDE_PIT); g.save(); g.translate(-12.5 * CELL, -12.5 * CELL); drawPits(g, guideMask, 0, 0, GRID - 1, GRID - 1); g.restore();
+      const was = ctx;
+      ctx = g;
+      try { g.translate(-CELL * 0.2, CELL * 0.25); g.rotate(0.5); g.scale(0.8, 0.8); g.translate(0, -CELL * 0.6); flagPole(0, 0); drawFlag(1.5, -CELL * 0.92, 0, 0, 'blue'); } finally { ctx = was; }
+    },
   };
   // A guide's snake: its head and neck heading right on the tile, in the
   // board's own shapes (drawn on the guide's canvas for the moment): a
@@ -836,7 +859,7 @@ window.SnakeRender = (() => {
   }
   const guideGlow = g => { g.save(); g.scale(0.72, 0.72); drawGlow(g); g.restore(); }; // (a power's glow, all of it inside the picture)
   // The cells of the guide's hole (an L, in the middle of a board) and its land (a staircase across it).
-  const GUIDE_HOLE = [[11, 11], [12, 11], [11, 12]], GUIDE_LAND = [];
+  const GUIDE_HOLE = [[11, 11], [12, 11], [11, 12]], GUIDE_PIT = [[12, 12]], GUIDE_LAND = [];
   for (let y = 9; y < 16; y++) for (let x = 9; x < 16; x++) if (x + y >= 24) GUIDE_LAND.push([x, y]);
   const guideMask = new Uint8Array(GRID * GRID), guideNone = new Uint8Array(GRID * GRID), NO_HOLES = new Set();
   function guideCells(cells) {
