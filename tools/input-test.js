@@ -24,7 +24,9 @@
 //   its name field (the phone's keyboard).
 // And two of the loop's own: the rivals have all thought before the board is
 // drawn into their next move (at 30 frames a second too), and a banner keeps
-// its place while that's clear.
+// its place while that's clear. And choking as the page tells it: your first
+// choke's and nudge's lessons, a choke's gag and its cough a beat later (once
+// a cough), and a rival's heard as a rival's.
 // It prints what it measured: press-to-tick, tap-to-jump and swipe latencies.
 //
 //   node tools/input-test.js
@@ -657,6 +659,49 @@ const KEYS = {
     }
     check(slots.map(s => s.replace(/^.*: /, '')).join(', ') === 'top, middle, middle, middle faded, middle, top',
       'a banner stays put while its place is clear, moves only when a head comes into it, and fades where it is with heads everywhere', slots.join('; '));
+
+    // Choking, as the page tells it (the engine's chokes and nudges staged by
+    // hand, as it makes them): your first choke's lesson, and its gag at once
+    // and its cough a beat later, once a cough (a bead spat while you cough
+    // starts no other); your first nudge's lesson, once the choke's has had
+    // its time; a rival's choke and cough, heard as a rival's. (What the page
+    // asks to play: the cues themselves are audio.js's.)
+    await ev(`(() => {
+      const E = SnakeEngine, A = SnakeAudio, play = A.play, g = SnakeDebug.game();
+      window.__heard = [];
+      A.play = (name, opts) => { if (name === 'choke' || name === 'cough') __heard.push({ name, rival: !!opts?.rival, tick: SnakeDebug.game().tick }); return play(name, opts); };
+      Object.assign(g.told ||= {}, { beetle: true, goldBeetle: true, leaf: true, goldcap: true, burrow: true, rainbow: true, baked: true }); // (no news on the tick to speak first)
+      const step = E.step; E.step = g => { const out = step(g); const f = window.__staged; window.__staged = null; if (f) f(g); return out; };
+      // A choke on the next tick (fresh: a cough from it; again: a bead spat mid-cough), or a nudge.
+      window.stageChoke = (id, fresh = true) => { window.__staged = g => { const s = g.snakes[id], h = s.body[0]; g.events.push({ type: 'choke', snake: s, x: h.x, y: h.y, tx: h.x, ty: h.y - 1 }); if (fresh) s.coughUntil = g.tick - 1 + TUNING.COUGH_TICKS; }; return 'ok'; };
+      window.stageNudge = (id, kind) => { window.__staged = g => { const s = g.snakes[id], h = s.body[0]; g.events.push({ type: 'nudge', snake: s, kind, x: h.x, y: h.y, tx: h.x + 1, ty: h.y }); }; return 'ok'; };
+      window.toastText = () => { const t = document.getElementById('toast'); return t.hidden ? '' : t.textContent; };
+      return 'ok';
+    })()`);
+    await ev('vadvance(4000)'); // (the banner before has had its time)
+    await ev('stageChoke(0)');
+    await toTick();
+    const choked = await ev(`({ tick: SnakeDebug.game().tick, toast: toastText() })`);
+    await toTick(); await toTick();
+    await ev('stageChoke(0, false)'); // (another of your beads, mid-cough)
+    await toTick(); await toTick(); await toTick();
+    await ev(`stageNudge(0, 'food')`);
+    await toTick();
+    const nudgedAt = await ev('toastText()');
+    await ev('vadvance(3000)');
+    const nudged = await ev('toastText()');
+    const mine = await ev('__heard.splice(0)');
+    await ev('stageChoke(1)');
+    await toTick(); await toTick(); await toTick();
+    const theirs = await ev('__heard.splice(0)');
+    await ev(`(() => { for (const s of SnakeDebug.game().snakes) s.coughUntil = -1; return 'ok'; })()`);
+    const said = list => list.map(h => `${h.name}${h.rival ? '~' : ''}@${h.tick - choked.tick}`).join(' ');
+    check(choked.toast === 'You choke on your own tail!' && said(mine) === 'choke@0 cough@2 choke@3',
+      'your first choke: its lesson, its gag, and its cough two ticks later, once a cough', `“${choked.toast}”; heard ${said(mine)}`);
+    check(nudgedAt === choked.toast && nudged === 'No eating while you cough: food rolls aside.',
+      'your first nudge while coughing: its lesson, once the choke’s has had its time', `“${nudgedAt}”, then “${nudged}”`);
+    check(theirs.length === 2 && theirs.every(h => h.rival) && theirs[1].tick - theirs[0].tick === 2 && theirs[0].name === 'choke' && theirs[1].name === 'cough',
+      'a rival’s choke and cough are heard as a rival’s', theirs.map(h => `${h.name}${h.rival ? '~' : ''}`).join(' '));
 
     // Your death's card: a thumb mashing jump as you crash, landing on its
     // Play again, never starts a round; a tap once it's settled does.
