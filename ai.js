@@ -312,7 +312,7 @@ window.SnakeAI = (() => {
   // (a rival may be where I last saw it heading).
   // My room's flood fill runs on it too (seenF, distF: where it got to and
   // how soon), and `unframed` gives a cell's index on the grid again (-1: the frame).
-  let W = 0, framed, unframed, terr, terrFree, meLater, inBody, seenF, distF, reachBlock;
+  let W = 0, framed, unframed, terr, terrFree, meLater, laterCells, laterWas, inBody, seenF, distF, reachBlock;
   const CLAIMED = HOLE + (HOLE >> 1), NOW = -HOLE; // (NOW: free already)
   // A beetle as the search moves it: its state after s of its crawls (slot s;
   // 0: as it is; BUG_SLOT and the next: playing a chase out): its cell (-1:
@@ -357,6 +357,8 @@ window.SnakeAI = (() => {
     terrFree = new Int32Array(W * W).fill(HOLE);
     meLater = new Int32Array(W * W).fill(NOW);
     inBody = new Int32Array(W * W);   // (my body in a search state, marked with a stamp)
+    laterCells = new Int32Array(size);
+    laterWas = new Int32Array(size);
     seenF = new Int32Array(W * W);
     reach = new Int32Array(W * W);      // the soonest any rival could be in a cell (ticks from now)
     reachBlock = new Int32Array(W * W).fill(HOLE);
@@ -459,11 +461,14 @@ window.SnakeAI = (() => {
       }
       heads.push({ x: hx, y: hy });
     }
-    // The territory search's board, from the same tables (a cell free now: NOW).
+    // The territory search's board, from the same tables (a cell free now:
+    // NOW), and the cells meLater holds longer than that.
+    let laterCount = 0;
     for (let i = 0; i < N * N; i++) {
       const p = framed[i], o = otherFree[i], m = mineFree[i];
       terrFree[p] = o > 0 ? o : NOW;
       meLater[p] = m > o ? m : NOW;
+      if (m > o) laterCells[laterCount++] = p;
     }
 
     // How much room snake k has from its predicted head. `blockT` > 0 means my
@@ -1080,42 +1085,43 @@ window.SnakeAI = (() => {
       const cap = L * 2 + 20;
       const need = L + w.margin;
       const stampF = ++stamp, Q = queue, S = seenF, B = terr, ML = meLater, Wd = W; // (the hot loops' own names for them)
+      // (For the fill, where meLater says a cell's taken longer, the board
+      // says so too, a moment: one test where it would be two.)
+      for (let k = 0; k < laterCount; k++) { const q = laterCells[k]; laterWas[k] = B[q]; if (ML[q] > B[q]) B[q] = ML[q]; }
       S[headP] = stampF;
       Q[0] = headP;
       let read = 0, write = 1, space = 0, anyFood = 0, trail = HOLE, neckCount = 0;
-      // A contested-food eater keeps searching past the room cap until it sees food.
-      for (let d = 1; read < write && (space < cap || (w.contested && !anyFood && d <= w.foodRange)); d++) {
-        const levelEnd = write, by = t + d, pull = Math.max(0, w.foodRange - (t + d > mute ? d : mute + 1 - t)); // (coughing, I'd only nudge it)
+      // A contested-food eater keeps searching past the room cap until it sees
+      // food, so it looks for food as it goes; anyone else, once it's done.
+      const eager = !!w.contested;
+      for (let d = 1; read < write && (space < cap || (eager && !anyFood && d <= w.foodRange)); d++) {
+        const levelEnd = write, by = t + d, pull = eager ? Math.max(0, w.foodRange - (t + d > mute ? d : mute + 1 - t)) : 0; // (coughing, I'd only nudge it)
         while (read < levelEnd) {
           // (Its four neighbours in DIR_LIST order, written out: it's a hot loop.)
           const p = Q[read++];
           let q = p - Wd;
-          if (S[q] !== stampF && B[q] <= by && ML[q] <= by) {
+          if (S[q] !== stampF && B[q] <= by) {
             S[q] = stampF; distF[q] = d; space++; Q[write++] = q;
-            if (inBody[q] === bodyMark && d < trail) trail = d;
-            const v = foodValue[unframed[q]];
-            if (v > 0) anyFood = Math.max(anyFood, v * pull);
+            if (d < trail && inBody[q] === bodyMark) trail = d;
+            if (eager) { const v = foodValue[unframed[q]]; if (v > 0) anyFood = Math.max(anyFood, v * pull); }
           }
           q = p + Wd;
-          if (S[q] !== stampF && B[q] <= by && ML[q] <= by) {
+          if (S[q] !== stampF && B[q] <= by) {
             S[q] = stampF; distF[q] = d; space++; Q[write++] = q;
-            if (inBody[q] === bodyMark && d < trail) trail = d;
-            const v = foodValue[unframed[q]];
-            if (v > 0) anyFood = Math.max(anyFood, v * pull);
+            if (d < trail && inBody[q] === bodyMark) trail = d;
+            if (eager) { const v = foodValue[unframed[q]]; if (v > 0) anyFood = Math.max(anyFood, v * pull); }
           }
           q = p - 1;
-          if (S[q] !== stampF && B[q] <= by && ML[q] <= by) {
+          if (S[q] !== stampF && B[q] <= by) {
             S[q] = stampF; distF[q] = d; space++; Q[write++] = q;
-            if (inBody[q] === bodyMark && d < trail) trail = d;
-            const v = foodValue[unframed[q]];
-            if (v > 0) anyFood = Math.max(anyFood, v * pull);
+            if (d < trail && inBody[q] === bodyMark) trail = d;
+            if (eager) { const v = foodValue[unframed[q]]; if (v > 0) anyFood = Math.max(anyFood, v * pull); }
           }
           q = p + 1;
-          if (S[q] !== stampF && B[q] <= by && ML[q] <= by) {
+          if (S[q] !== stampF && B[q] <= by) {
             S[q] = stampF; distF[q] = d; space++; Q[write++] = q;
-            if (inBody[q] === bodyMark && d < trail) trail = d;
-            const v = foodValue[unframed[q]];
-            if (v > 0) anyFood = Math.max(anyFood, v * pull);
+            if (d < trail && inBody[q] === bodyMark) trail = d;
+            if (eager) { const v = foodValue[unframed[q]]; if (v > 0) anyFood = Math.max(anyFood, v * pull); }
           }
         }
         const width = write - levelEnd;
@@ -1124,6 +1130,13 @@ window.SnakeAI = (() => {
           necks[neckCount++] = queue[write - 1];
           necks[neckCount++] = levelEnd - 1;
           necks[neckCount++] = d;
+        }
+      }
+      for (let k = 0; k < laterCount; k++) B[laterCells[k]] = laterWas[k];
+      if (!eager) { // (the food the fill got to, but my head's own cell)
+        for (let k = 0; k < foodCount; k++) {
+          const i = foodCells[k], v = foodValue[i], p = framed[i];
+          if (v > 0 && S[p] === stampF && p !== headP) { const d = distF[p]; anyFood = Math.max(anyFood, v * Math.max(0, w.foodRange - (t + d > mute ? d : mute + 1 - t))); }
         }
       }
       space = Math.min(space, cap);
