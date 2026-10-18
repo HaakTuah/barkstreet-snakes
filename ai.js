@@ -449,6 +449,10 @@ window.SnakeAI = (() => {
     // toward / keep away from. Drivers fill it in from the game state.
     const ctx = { w: persona.w, victim: -1, target: null, lure: -1, avoid: null, home: null, mimicDir: null };
     const indexOf = id => others.findIndex(o => o.id === id);
+    // A hole the woodpecker made, as I see it (among the holes I keep out
+    // of, fire and its mark aren't pits).
+    const fire = view.fire || EMPTY, mark = view.pecks || EMPTY;
+    const pitAt = i => holes.has(i) && !fire.has(i) && !mark.has(i), pit = (x, y) => pitAt(y * N + x);
 
     // Choose the rival I have the best shot at: little room, I can get in
     // front of it quickly, and long (more pellets). Stick with the current
@@ -487,6 +491,8 @@ window.SnakeAI = (() => {
       // Its realm: a circle round where it started, that grows as it does
       // (and shrinks again if it wastes away), and drifts a cell at a time
       // off land that's been lost (holes, fire). Anyone in it gets hunted.
+      // A capital the woodpecker pecks out moves the realm at once, banner
+      // and all, to the nearest good land.
       sovereign() {
         const H = ctx.w.home, len = me.body.length;
         memory.home ||= { x: myHead.x, y: myHead.y, radius: H.radius };
@@ -497,21 +503,35 @@ window.SnakeAI = (() => {
         const fit = v => Math.min(N - home.radius - 2, Math.max(home.radius + 1, v));
         home.x = fit(home.x);
         home.y = fit(home.y);
-        if (view.tick >= (memory.driftAt ?? 0)) {
-          memory.driftAt = view.tick + H.drift;
-          const land = (cx, cy) => {
-            let n = 0;
-            for (let y = cy - home.radius; y <= cy + home.radius; y++) {
-              for (let x = cx - home.radius; x <= cx + home.radius; x++) {
-                if (inside(x, y) && Math.hypot(x - cx, y - cy) <= home.radius + TUNE.LAND_REACH && !holes.has(y * N + x)) n++;
+        const land = (cx, cy) => {
+          let n = 0;
+          for (let y = cy - home.radius; y <= cy + home.radius; y++) {
+            for (let x = cx - home.radius; x <= cx + home.radius; x++) {
+              if (inside(x, y) && Math.hypot(x - cx, y - cy) <= home.radius + TUNE.LAND_REACH && !holes.has(y * N + x)) n++;
+            }
+          }
+          return n;
+        };
+        if (pit(home.x, home.y)) { // (the nearest capital that isn't a pit, the most land of those as near)
+          let best = null, most = -1;
+          for (let r = 1; r < N && !best; r++) {
+            for (let dx = -r; dx <= r; dx++) {
+              for (const dy of dx === -r || dx === r ? [0] : [r - Math.abs(dx), Math.abs(dx) - r]) {
+                const x = fit(home.x + dx), y = fit(home.y + dy);
+                if (Math.abs(x - home.x) + Math.abs(y - home.y) !== r || pit(x, y)) continue; // (that far, once fitted on the board)
+                const n = land(x, y);
+                if (n > most) { most = n; best = { x, y }; }
               }
             }
-            return n;
-          };
+          }
+          if (best) { home.x = best.x; home.y = best.y; memory.driftAt = view.tick + H.drift; }
+        }
+        if (view.tick >= (memory.driftAt ?? 0)) {
+          memory.driftAt = view.tick + H.drift;
           let best = null, most = land(home.x, home.y) + 2; // (only for clearly better land)
           for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
             const x = fit(home.x + dx), y = fit(home.y + dy);
-            if (x === home.x && y === home.y) continue;
+            if ((x === home.x && y === home.y) || pit(x, y)) continue;
             const n = land(x, y);
             if (n > most) { most = n; best = { x, y }; }
           }
@@ -524,12 +544,19 @@ window.SnakeAI = (() => {
 
       // Plant a flag where it starts, then every so often travel to the open
       // spot furthest from rivals and plant another (oldest flag goes when it
-      // has too many). Anyone near any flag gets hunted.
+      // has too many). Anyone near any flag gets hunted. A flag the
+      // woodpecker pecks out falls into the pit: that colony is lost, land
+      // and all, and it sets off to plant another.
       colonist() {
         const col = ctx.w.colony;
         const clamp = v => Math.min(N - 2, Math.max(1, v));
         // (n: which colony it is, first, second, ...: each flies its own flag.)
         memory.colonies ||= [{ x: clamp(myHead.x), y: clamp(myHead.y), radius: col.radius, n: 1 }];
+        if (memory.colonies.some(c => pit(c.x, c.y))) {
+          memory.colonies = memory.colonies.filter(c => !pit(c.x, c.y));
+          if (!memory.site) memory.nextSiteAt = view.timeMs;
+        }
+        if (memory.site && pit(memory.site.x, memory.site.y)) { memory.site = null; memory.nextSiteAt = view.timeMs; } // (and where it was going, another)
         if (memory.site && manhattan(myHead, memory.site) <= 1) {
           memory.planted = (memory.planted || 0) + 1;
           memory.colonies.push({ ...memory.site, radius: col.radius, n: memory.planted + 1 });
@@ -1094,7 +1121,6 @@ window.SnakeAI = (() => {
     // Better than any crash, though, is going through fire: it costs as much
     // as a crash, but I keep moving (never just as a shortcut: only when
     // every other way is a crash or worse).
-    const fire = view.fire || EMPTY;
     function throughFire(x, y) {
       if (!inside(x, y) || !fire.has(y * N + x)) return false;
       const keep = me.grow > 0 ? me.body.length : me.body.length - 1;
