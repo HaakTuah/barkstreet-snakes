@@ -1,4 +1,4 @@
-/* Bark & Bite: "storybook bark".
+/* Barkstreet Snakes: "storybook bark".
    Eight interface colors (see DESIGN.md), one rounded type family, one frame
    treatment: parchment with an inset ring, wood for anything structural, leaf
    for anything you press. */
@@ -152,7 +152,7 @@ h1 {
   color: var(--sprout);
   text-shadow: 0 2px 0 var(--leaf-dark), 0 4px 10px rgba(0, 0, 0, 0.5);
 }
-h1 .amp { display: inline-block; color: var(--honey); transform-origin: 50% 80%; animation: amp-wiggle 4.2s ease-in-out 1.5s infinite; }
+h1 .amp { display: inline-block; color: var(--honey); /* (the S of Snakes, wriggling now and then) */ transform-origin: 50% 80%; animation: amp-wiggle 4.2s ease-in-out 1.5s infinite; }
 html.in-round h1 .amp { animation: none; } /* (it rests during a round: nobody's looking, and it costs every frame) */
 @keyframes amp-wiggle {
   0%, 72%, 100% { transform: none; }
@@ -1003,6 +1003,13 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .records-card { padding: 12px; }
   .records-head .tab { padding-inline: 8px; white-space: nowrap; }
   .scores-table td, .scores-table th { padding-inline: 4px; }
+}
+
+/* The narrowest phones: the title, Score and Best still on one row ("Barkstreet Snakes" is longer than the old name). */
+@media (max-width: 340px) {
+  h1 { font-size: 1.25rem; }
+  .hud .stat { font-size: 0.8rem; }
+  header { column-gap: 6px; }
 }
 
 /* Short phones: no tagline, so the whole board fits the first screen. */

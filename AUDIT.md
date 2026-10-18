@@ -1,6 +1,6 @@
-# Audit: Bark & Bite, third polish pass
+# Audit: Barkstreet Snakes (then called Bark & Bite), third polish pass
 
-Baseline: `polish/extreme` at `8a22961`, which is `main` (`7792572`) plus the three open PRs of the last round: #22 (crash rules, a smarter AI), #23 (looks and lines) and #24 (powers). Polishing code that's about to land means stacking on them (see DESIGN.md, *Skipped or adapted*). The second pass's audit is at [`2b948db`](https://github.com/HaakTuah/snake-game/blob/2b948db/AUDIT.md), and the first's at [`3e2d8bc`](https://github.com/HaakTuah/snake-game/blob/3e2d8bc/AUDIT.md). Almost everything in those was fixed.
+Baseline: `polish/extreme` at `8a22961`, which is `main` (`7792572`) plus the three open PRs of the last round: #22 (crash rules, a smarter AI), #23 (looks and lines) and #24 (powers). Polishing code that's about to land means stacking on them (see DESIGN.md, *Skipped or adapted*). The second pass's audit is at [`2b948db`](https://github.com/HaakTuah/barkstreet-snakes/blob/2b948db/AUDIT.md), and the first's at [`3e2d8bc`](https://github.com/HaakTuah/barkstreet-snakes/blob/3e2d8bc/AUDIT.md). Almost everything in those was fixed.
 
 ## How this audit was done
 
@@ -18,7 +18,7 @@ Baseline: `polish/extreme` at `8a22961`, which is `main` (`7792572`) plus the th
   - retained heap after forced GCs;
   - seeded simulations.
 - **Every high and medium finding was checked by a separate skeptic,** told to refute it and to re-judge its severity. Seven were refuted and are listed as skipped. Many were re-rated, and the severities below are the skeptics'.
-- **"Before" screenshots** of every state are on the `pr-media` branch, in [`screenshots/before-3/`](https://github.com/HaakTuah/snake-game/tree/pr-media/screenshots/before-3) (they were in `docs/screenshots/` until the screenshots moved out of main, so a download is only the game).
+- **"Before" screenshots** of every state are on the `pr-media` branch, in [`screenshots/before-3/`](https://github.com/HaakTuah/barkstreet-snakes/tree/pr-media/screenshots/before-3) (they were in `docs/screenshots/` until the screenshots moved out of main, so a download is only the game).
 
 Severity:
 - **high** breaks play or clearly hurts the experience;
@@ -231,7 +231,7 @@ Watching at 1× is comfortable (no frame over 16.7 ms in a minute). **The tools 
 
 ## After
 
-Every high and medium finding above is fixed or adapted as planned (A5 both halves: the woodpecker cuts, and burning leaves land still); the seven refuted ones stay skipped. The lows are done too, except where a row says skip. "After" screenshots of every state are on the `pr-media` branch, in [`screenshots/after-3/`](https://github.com/HaakTuah/snake-game/tree/pr-media/screenshots/after-3).
+Every high and medium finding above is fixed or adapted as planned (A5 both halves: the woodpecker cuts, and burning leaves land still); the seven refuted ones stay skipped. The lows are done too, except where a row says skip. "After" screenshots of every state are on the `pr-media` branch, in [`screenshots/after-3/`](https://github.com/HaakTuah/barkstreet-snakes/tree/pr-media/screenshots/after-3).
 
 ### Frame times
 

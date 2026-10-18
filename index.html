@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#15201a">
-  <title>Bark &amp; Bite</title>
+  <title>Barkstreet Snakes</title>
   <!-- The icon: your green snake on the dark wood, inline (no request, no 404). -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2315201a'/%3E%3Cpath d='M6 25c0-6 4-7 8-7s6-3 6-8' fill='none' stroke='%234ade80' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='21' cy='9' r='5.5' fill='%234ade80'/%3E%3Ccircle cx='22.6' cy='7.6' r='1.5' fill='%2315201a'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +17,7 @@
   <main>
     <header>
       <div class="brand">
-        <h1>Bark <span class="amp">&amp;</span> Bite</h1>
+        <h1>Barkstreet <span class="amp">S</span>nakes</h1>
         <p class="tagline">A snake game on a mossy log</p>
       </div>
       <div class="hud">
@@ -60,7 +60,7 @@
         <canvas id="game" width="768" height="768" role="img" aria-label="The board: four snakes on a mossy log"></canvas>
         <div id="overlay" class="overlay">
           <div class="card" role="dialog" tabindex="-1" aria-labelledby="overlay-title">
-            <h2 id="overlay-title">Bark &amp; Bite</h2>
+            <h2 id="overlay-title">Barkstreet Snakes</h2>
             <p id="overlay-text"></p>
             <p id="overlay-flavor" class="flavor" hidden></p>
             <p id="overlay-badge" class="badge" hidden></p>
@@ -164,7 +164,7 @@
     // Browsers too old for the game's code (before 2020) get a word instead of a Play button that does nothing.
     try { new Function('let a = {}; a.b ??= a?.c ?? 1;'); } catch {
       document.getElementById('overlay-title').textContent = 'This log needs a newer browser';
-      document.getElementById('overlay-text').textContent = 'Bark & Bite runs in any recent Chrome, Edge, Firefox or Safari.';
+      document.getElementById('overlay-text').textContent = 'Barkstreet Snakes runs in any recent Chrome, Edge, Firefox or Safari.';
       document.querySelector('.buttons').style.display = 'none';
     }
   </script>
