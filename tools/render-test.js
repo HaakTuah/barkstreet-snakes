@@ -50,6 +50,9 @@
 //   Sovereign's banner is carried to its new capital, not jumping there.
 // - Every Field guide picture draws (the mushroom on bark; a snake holding
 //   golden powers; your rests).
+// - The next round's stretch of log, made ahead in idle time, is the very
+//   bark and leaf shadows a round starting without it builds from the same
+//   seed.
 //
 //   node tools/render-test.js [--seed N]   (N: other staged boards, other bark)
 const { launch, serve } = require('./browser');
@@ -68,8 +71,10 @@ const check = (ok, what, detail = '') => {
 // new viewport: three frames, the last two at the same size); and the same
 // randomness every time, from a seed set as each staged board is shown (so
 // each gets the same stretch of bark: nothing else draws at random while
-// the loop is stopped, and no next log is made ahead in idle time, when it
-// would have drawn its own).
+// the loop is stopped). Nothing runs in idle time on its own: the next
+// round's log the renderer asks to make ahead then is kept (__nextLog), and
+// made only by the check that compares it with one built directly; made
+// whenever the page found a moment, it would have drawn its own seed.
 const PRE = `(() => {
   const raw = window.requestAnimationFrame.bind(window);
   window.__autoRaf = true;
@@ -78,7 +83,8 @@ const PRE = `(() => {
   let seed = ${SEED};
   window.__reseed = s => { seed = s >>> 0; };
   Math.random = () => { seed = (seed + 0x6d2b79f5) >>> 0; let t = seed; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-  window.requestIdleCallback = () => 0;
+  window.__nextLog = null;
+  window.requestIdleCallback = cb => { if (cb.name === 'makeNext') window.__nextLog = cb; return 0; };
 })();`;
 
 // Staged boards, drawn by hand (the page's loop stopped), and pixels read off them.
@@ -709,17 +715,31 @@ const STAGE = `(() => {
     // Gobbler coughs with an apple right ahead: its mouth stays shut (it
     // gapes at food otherwise) and puffs of breath come out past it, with
     // reduced motion too. Food a coughing head nudges rolls there (half way,
-    // it's between the cells), and a beetle scurries.
+    // it's between the cells), and a beetle scurries. Every count and centre
+    // is of pixels the snakes and food changed: against the same board with
+    // nobody near and nothing on it (the same log under it), so none depends
+    // on the bark (a knot's ink beside Joker's face passed for its cheeks).
     const choke = await ev(`(() => {
       SnakeDebug.pinQuality(0);
       const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
-      const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
-      const centre = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0, sx = 0, sy = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) { n++; sx += (i / 4) % p.width; sy += Math.floor(i / 4 / p.width); } return n ? [+(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : null; };
+      const g = stage(['joker', 'gobbler', 'mason']), [you, jo, gob, ma] = g.snakes;
+      // The bare board: everyone still along the bottom row, where stage() put them, no food. (Shown again, below, it gets the same log.)
+      show(g); R.setViewer(99); drawN(20, 0.5);
+      const cv = document.getElementById('game'), W = cv.width, kk = W / (TUNING.GRID * ${CELL}), bare = cv.getContext('2d').getImageData(0, 0, W, cv.height).data;
+      const changed = (x, y, w, h, is, each) => { // (each pixel in the box that passes is() and isn't what the bare board has there)
+        const p = pixels(x, y, w, h), d = p.data, px = Math.round(x * ${CELL} * kk), py = Math.round(y * ${CELL} * kk);
+        for (let i = 0; i < d.length; i += 4) {
+          const col = (i / 4) % p.width, row = Math.floor(i / 4 / p.width), j = ((py + row) * W + px + col) * 4;
+          if (is(d[i], d[i + 1], d[i + 2]) && Math.abs(d[i] - bare[j]) + Math.abs(d[i + 1] - bare[j + 1]) + Math.abs(d[i + 2] - bare[j + 2]) > 24) each(col, row);
+        }
+        return p;
+      };
+      const count = (x, y, w, h, is) => { let n = 0; changed(x, y, w, h, is, () => n++); return n; };
+      const centre = (x, y, w, h, is) => { let n = 0, sx = 0, sy = 0; const p = changed(x, y, w, h, is, (c, r) => { n++; sx += c; sy += r; }); return n ? [+(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : null; };
       const sky = (r, g, b) => b > 200 && g > 150 && r < 120, face = (r, g, b) => Math.min(r, g, b) > 215 || Math.max(r, g, b) < 40, mouth = (r, g, b) => r > 40 && r < 90 && g < 30 && b < 30;
       const lime = (r, g, b) => g > 150 && r > 100 && r < 170 && b < 60, emerald = (r, g, b) => g > 110 && g > r + 60 && b > 80 && b < g;
       const pale = (r, g, b) => Math.min(r, g, b) > 200 && b > 180;
       const out = {};
-      const g = stage(['joker', 'gobbler', 'mason']), [you, jo, gob, ma] = g.snakes;
       setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
       setBody(jo, Array.from({ length: 6 }, (_, i) => [8 - i, 8]), 'right');
       setBody(gob, Array.from({ length: 6 }, (_, i) => [8 - i, 16]), 'right');
@@ -729,6 +749,12 @@ const STAGE = `(() => {
       g.food.push({ x: 15, y: 12, kind: 'food', expires: g.tick + 900 });
       g.food.push({ x: 4, y: 12, kind: 'beetle', dir: E.DIRS.right, movedAt: g.tick - 50, expires: g.tick + 900 });
       show(g); R.setViewer(99); drawN(20, 0.5); // (half way through the tick, drawn at its cells: nobody's moving)
+      { // (the bark far from everyone, cells 19 to 23 across, 8 to 10 down, is just as it was bare: the same log)
+        const x0 = Math.round(19 * ${CELL} * kk), y0 = Math.round(8 * ${CELL} * kk), w = W - x0, d = cv.getContext('2d').getImageData(x0, y0, w, Math.round(3 * ${CELL} * kk)).data;
+        let n = 0;
+        for (let i = 0; i < d.length; i += 4) { const j = ((y0 + Math.floor(i / 4 / w)) * W + x0 + (i / 4) % w) * 4; if (d[i] !== bare[j] || d[i + 1] !== bare[j + 1] || d[i + 2] !== bare[j + 2]) n++; }
+        if (n) throw new Error('the choke board’s bark far from everyone isn’t as it was bare (' + n + ' pixels): its counts would be against another log');
+      }
       // (each measured from where its head's drawn that frame, as it eases out of the move the drawing guessed it'd make)
       const cheeks = () => { const [x, y] = at(jo); return count(x + 0.05, y - 0.8, 0.6, 0.24, face); }; // (white or ink, just past its face, on the side the bead doesn't fly over)
       const shut = () => { const [x, y] = at(gob); return count(x, y - 0.4, 0.8, 0.8, mouth); }, puffed = () => { const [x, y] = at(gob); return count(x + 0.55, y - 0.45, 0.8, 0.9, pale); };
@@ -827,6 +853,35 @@ const STAGE = `(() => {
     check(Object.values(guide).every(g => g.ink > 200), 'every Field guide picture draws', Object.entries(guide).filter(([, g]) => g.ink <= 200).map(([k]) => k).join(', ') || 'all');
     check(guide.mushroom.edge > 200, 'the guide’s mushroom is on bark');
     check(guide.held.sky > 0 && guide.held.ember > 0 && guide.rests.sky > 0 && guide.rests.ember > 0, 'the guide shows golden pips and your rests', `held ${guide.held.sky}/${guide.held.ember}, rests ${guide.rests.sky}/${guide.rests.ember} sky/ember pixels`);
+
+    // The next round's stretch of log, made ahead: once nothing has been
+    // drawn for a moment, the renderer asks to build its bark and leaf
+    // shadows in idle time, and a round starting takes them. Made then (its
+    // seed the first number drawn from S) and taken by a round starting (whose
+    // own seed, had it built its log itself, would have come from elsewhere),
+    // the board is the very one a round builds itself from S, bark and leaf
+    // shadows (lively, at full quality), and not another seed's. Each round
+    // is started and drawn the same way, after another: the same board
+    // afresh, as stage() makes one (new snakes, so their blinks and eyes start
+    // again), its first frame a second after the last. (Last of the staged
+    // boards, so the others keep their seeds.)
+    const START = `const S = ${SEED} * 1000 + 901, start = seed => {
+      __reseed(S + 5);
+      const g = E.createGame({ withPlayer: true, personas: ['gobbler', 'ghost', 'mason'] }); g.food = []; g.time = 60000; g.tick = 500; g.weather.until = 1e12; g.snakes.forEach((s, i) => setBody(s, [[2 + 4 * i, 23], [1 + 4 * i, 23], [4 * i, 23]], 'right'));
+      const c = document.getElementById('game'); __t = 9e6 - 1000; R.frame(0.5, __t); R.setViewer(0); __reseed(seed); R.setGame(g); __reseed(S + 2); __t = 9e6; drawN(5);
+      return c.getContext('2d').getImageData(0, 0, c.width, c.height).data; };`;
+    await ev(`(() => { SnakeDebug.pinQuality(2); show(stage(['gobbler', 'ghost', 'mason'])); ${START} start(S + 4); window.__nextLog = null; return 'ok'; })()`);
+    const asked = await ev(`new Promise(r => { const t0 = performance.now(); (function f() { if (window.__nextLog || performance.now() - t0 > 8000) r(!!window.__nextLog); else setTimeout(f, 50); })(); })`);
+    const log = !asked ? null : await ev(`(() => {
+      ${START}
+      __reseed(S); __nextLog(); // (made now, as in idle time)
+      const idle = start(S + 3), direct = start(S), other = start(S + 1), W = document.getElementById('game').width;
+      const differ = (a, b) => { let n = 0, x0 = W, y0 = W, x1 = -1, y1 = -1; for (let i = 0; i < a.length; i += 4) if (Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]) > 6) { n++; const x = (i / 4) % W, y = Math.floor(i / 4 / W); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+        const cell = v => (v / W * TUNING.GRID).toFixed(1); return { n, where: n ? cell(x0) + '-' + cell(x1) + ' across, ' + cell(y0) + '-' + cell(y1) + ' down' : '' }; };
+      return { pixels: idle.length / 4, idle: differ(idle, direct), other: differ(other, direct).n };
+    })()`);
+    check(!!log && log.idle.n === 0 && log.other > log.pixels / 4, 'the next round’s log, made ahead in idle time, is the very bark and leaf shadows a round builds itself from the same seed',
+      !log ? 'the renderer never asked for it in idle time' : `${log.idle.n} of ${log.pixels} pixels differ from it built directly${log.idle.n ? ` (cells ${log.idle.where})` : ''}; another seed’s, ${log.other}`);
 
     console.log(results.join('\n'));
     if (b.errors.length) { console.log('page errors:', b.errors); failed++; }
