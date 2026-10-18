@@ -138,6 +138,9 @@ button.icon[aria-pressed="true"] .wave { display: none; }
 #pause .play { display: none; }
 #pause[data-paused="true"] .play { display: inline; }
 #pause[data-paused="true"] .bar { display: none; }
+#fullscreen path { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; } /* (corners going out; in full screen, coming in) */
+#fullscreen[hidden], #fullscreen .shrink, #fullscreen[data-full="true"] .grow { display: none; } /* (hidden: its icon look would otherwise win) */
+#fullscreen[data-full="true"] .shrink { display: inline; }
 
 /* -------------------------------------------------------------- header */
 
@@ -1085,6 +1088,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .trophy { min-width: 34px; padding: 0 8px; justify-content: center; }
   .trophy svg { display: block; }
   .trophy .trophy-text { display: none; }
+  header { column-gap: 6px; } /* (five buttons in a row, 44 px each on a touch screen, in a 244 px column) */
 }
 
 /* Phones on their side: the board takes the full height less a thin rim

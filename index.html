@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#15201a">
+  <!-- Added to a home screen, the game opens on its own, without the browser's bars (on an iPhone, under a see-through status bar). -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Barkstreet Snakes</title>
   <!-- The icon: your green snake on the dark wood, inline (no request, no 404). -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2315201a'/%3E%3Cpath d='M6 25c0-6 4-7 8-7s6-3 6-8' fill='none' stroke='%234ade80' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='21' cy='9' r='5.5' fill='%234ade80'/%3E%3Ccircle cx='22.6' cy='7.6' r='1.5' fill='%2315201a'/%3E%3C/svg%3E">
@@ -35,6 +39,10 @@
         <button id="records-open" class="small trophy" aria-label="Hall of Fame" title="Hall of Fame (H)">
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 3h8v1.5h2.6c.5 0 .9.4.8.9-.3 2.4-1.7 4-3.8 4.4A4.4 4.4 0 0 1 11 12.3V14h2.2c.5 0 .8.4.8.8V17H6v-2.2c0-.4.3-.8.8-.8H9v-1.7a4.4 4.4 0 0 1-2.6-2.5C4.3 9.4 2.9 7.8 2.6 5.4c-.1-.5.3-.9.8-.9H6zm-1.8 3c.3 1 .9 1.8 1.8 2.2V6zm11.6 0H14v2.2c.9-.4 1.5-1.2 1.8-2.2z"/></svg>
           <span class="trophy-text">Hall of Fame</span>
+        </button>
+        <!-- Full screen, where the browser allows it (the game shows it; iPhones can't). -->
+        <button id="fullscreen" class="icon" aria-label="Full screen" title="Full screen" hidden>
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path class="grow" d="M3.6 7.6v-4h4M12.4 3.6h4v4M16.4 12.4v4h-4M7.6 16.4h-4v-4"/><path class="shrink" d="M7.6 3.6v4h-4M16.4 7.6h-4v-4M12.4 16.4v-4h4M3.6 12.4h4v4"/></svg>
         </button>
       </div>
     </header>

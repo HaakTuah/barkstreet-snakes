@@ -1888,6 +1888,26 @@
   click(speedEl, e => { const b = e.target.closest('button'); if (b) setSpeed(Number(b.dataset.speed)); });
   click(chatterBtn, () => { Chatter.setEnabled(!Chatter.isEnabled()); showChatterState(); });
 
+  // Full screen, where the browser allows it (Android, desktops; an iPhone
+  // can't, and "Add to Home Screen" opens the game without Safari's bars
+  // instead). The button says which way it goes; Esc leaves too.
+  const fullBtn = $('fullscreen');
+  if (document.fullscreenEnabled) {
+    const showFull = () => {
+      const full = !!document.fullscreenElement;
+      fullBtn.dataset.full = String(full);
+      fullBtn.setAttribute('aria-label', full ? 'Leave full screen' : 'Full screen');
+      fullBtn.title = full ? 'Leave full screen (Esc)' : 'Full screen';
+    };
+    click(fullBtn, () => {
+      const asked = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+      asked?.catch?.(() => {}); // (refused: the button stays as it was)
+    });
+    document.addEventListener('fullscreenchange', showFull);
+    showFull();
+    fullBtn.hidden = false;
+  }
+
   function toggleMute() {
     Audio.toggleMuted();
     Audio.play('ui'); // (heard only when the sound's back on: muting is silent, unmuting taps once)
