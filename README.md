@@ -2,7 +2,7 @@
 
 A snake game on a mossy log: you against three AI rivals on a fallen log in the woods, drawn at random each round from a cast of eighteen. Plays in the browser, on desktop and phone. Plain HTML, CSS and JavaScript, with no build step, no dependencies and no asset files: every picture is drawn and every sound is synthesised in the page.
 
-**Play:** https://haaktuah.github.io/snake-game/
+**Play:** https://haaktuah.github.io/barkstreet-snakes/
 
 ## Rules
 
