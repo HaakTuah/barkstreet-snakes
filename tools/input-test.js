@@ -45,12 +45,20 @@ const stats = list => {
 };
 
 // Before the page's own scripts: a switch for its animation loop (and the
-// browser's own, for a loop of frames that draws nothing).
+// browser's own, raw); and the page's endless decorations held still (the
+// leaves swaying, the frame's sheen, the Play button's call: what reduced
+// motion stills), so the frames the browser keeps making cost next to
+// nothing while nothing moves. The controls are the same either way.
 const PRE = `(() => {
   const raw = window.requestAnimationFrame.bind(window);
   window.__raf = raw;
   window.__autoRaf = true;
   window.requestAnimationFrame = cb => raw(ts => { if (window.__autoRaf) cb(ts); });
+  document.addEventListener('DOMContentLoaded', () => {
+    const still = document.createElement('style');
+    still.textContent = 'h1 .amp, .leaves, .frame-sheen > i, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }';
+    document.head.append(still);
+  });
 })();`;
 
 // In the page, once a round is going: the virtual clock (vf), a log of every
@@ -75,6 +83,7 @@ const INSTRUMENT = `(() => {
     return out;
   };
   window.vf = n => { for (let i = 0; i < n; i++) { __vt += ${P}; SnakeDebug.frames(1, ${P}); } return SnakeDebug.state(); };
+  window.toTick = () => { const n = L.steps.length; for (let i = 0; i < 20; i++) { vf(1); if (L.steps.length > n) break; } return 'ok'; };
   window.hold = () => {
     const g = SnakeDebug.game();
     g.snakes.forEach((s, i) => { if (i === 0) return; s.stunUntil = 1e9; const x = (i - 1) * 2; s.body = [{ x, y: 21 }, { x, y: 22 }, { x, y: 23 }]; s.prev = null; });
@@ -120,20 +129,29 @@ const KEYS = {
   const key = async name => { await down(name); await up(name); };
   const powers = () => ev('__log.powers.length');
   const state = () => ev('SnakeDebug.state()');
-  // A fresh round, held still, the page's loop stopped; your snake in the middle heading right.
-  const freshRound = async () => {
+  // A round started from a fresh start card, the page's loop stopped once it
+  // runs (its countdown on the virtual clock too: its frames, without waiting
+  // them out), drawn at the plainest quality (the controls don't care, and
+  // each frame driven by hand costs a fraction).
+  const startRound = async () => {
     await ev(`window.__autoRaf = true; 'ok'`);
-    await b.go(site.url + '?debug');
+    await b.go(site.url + '?debug', { settle: 0 });
+    await ev('new Promise(r => __raf(() => __raf(r)))'); // (laid out)
     await ev(`document.getElementById('start').click(); 'ok'`);
-    await ev(`new Promise(r => { const c = () => SnakeDebug.state() === 'running' ? r('ok') : setTimeout(c, 10); c(); })`);
-    await ev(`window.__autoRaf = false; 'ok'`);
+    const going = await ev(`(() => { window.__autoRaf = false; for (let i = 0; i < 600 && SnakeDebug.state() !== 'running'; i++) SnakeDebug.frames(1, ${P}); return SnakeDebug.state(); })()`);
+    if (going !== 'running') throw new Error('the round never started: ' + going);
+    await ev(`SnakeDebug.pinQuality(0); 'ok'`);
+  };
+  // A fresh round, held still; your snake in the middle heading right.
+  const freshRound = async () => {
+    await startRound();
     await ev(INSTRUMENT);
     await ev('hold()');
     await ev('centre()');
     await ev('vf(30)');
   };
   // Frames until the next tick has run (and the frame it ran in).
-  const toTick = async () => { const n = await ev('__log.steps.length'); for (let i = 0; i < 20; i++) { await ev('vf(1)'); if (await ev('__log.steps.length') > n) return; } };
+  const toTick = () => ev('toTick()');
 
   try {
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: PRE });
@@ -300,11 +318,7 @@ const KEYS = {
     // screen, and on a 30 Hz one (a phone saving power), you playing.
     const thought = [];
     for (const hz of [60, 30]) {
-      await ev(`window.__autoRaf = true; 'ok'`);
-      await b.go(site.url + '?debug');
-      await ev(`document.getElementById('start').click(); 'ok'`);
-      await ev(`new Promise(r => { const c = () => SnakeDebug.state() === 'running' ? r('ok') : setTimeout(c, 10); c(); })`);
-      await ev(`window.__autoRaf = false; 'ok'`);
+      await startRound();
       thought.push(await ev(`(() => {
         const E = SnakeEngine, R = SnakeRender, AI = SnakeAI, dt = 1000 / ${hz}, mind = {};
         E.tickMs = () => 90;
@@ -421,16 +435,18 @@ const KEYS = {
 
     // A finger: down at a random point in a frame (resting first for rest
     // ms), then moving at v px/ms (dx, dy: its way), its position sent at
-    // each frame, up to 70 px.
-    const swipe = async (dx, dy, { v = 0.6, frames = 8, from = [cx - dx * 30, cy - dy * 30], rest = 0 } = {}) => {
+    // each frame, up to 70 px (or, with lift: n, lifting n frames after it
+    // first did something, still going).
+    const swipe = async (dx, dy, { v = 0.6, frames = 8, from = [cx - dx * 30, cy - dy * 30], rest = 0, lift = Infinity } = {}) => {
       let t = (1 - Math.random()) * P; // (from the touch to the next frame)
       await touch('touchStart', [{ x: from[0], y: from[1], id: 1 }]);
       await ev(`vadvance(${rest + t})`);
-      for (let f = 0; f < frames; f++) {
+      for (let f = 0, after = 0; f < frames; f++) {
         const d = Math.min(70, t * v);
         await touch('touchMove', [{ x: from[0] + dx * d, y: from[1] + dy * d, id: 1 }]);
-        await ev(`vadvance(${P})`);
+        const did = await ev(`vadvance(${P}), __touch.did`);
         t += P;
+        if (did && ++after > lift) break;
       }
       await touch('touchEnd', []);
       await ev('vadvance(50)');
@@ -604,6 +620,8 @@ const KEYS = {
     check(slants.every(t => t.endsWith('2/2')), 'a long stroke 35-44° off the axis turns its main way', slants.join(', '));
 
     // Swipes never jump: finger speeds 0.15-1.2 px/ms, straight and slanted, every way.
+    // (Each lifts two frames after it turns, still going: the lift the tap rule
+    // could most easily mistake; one that never turns goes the whole 70 px.)
     const reg = {};
     let jumps = 0, swipes = 0, wrong = 0, none = 0;
     for (const v of [0.15, 0.2, 0.3, 0.45, 0.6, 0.8, 1.0, 1.2]) {
@@ -613,7 +631,7 @@ const KEYS = {
           await ev(`face('${name === 'down' ? 'right' : name === 'up' ? 'left' : 'up'}')`); // (never straight back, nor ahead: every swipe is a turn)
           const a = slant * Math.PI / 180, sx = dx * Math.cos(a) - dy * Math.sin(a), sy = dy * Math.cos(a) + dx * Math.sin(a);
           before = await powers();
-          await swipe(sx, sy, { v, frames: Math.ceil(70 / v / P) + 1 });
+          await swipe(sx, sy, { v, frames: Math.ceil(70 / v / P) + 1, lift: 2 });
           swipes++;
           const asked = await ev(`__log.powers.slice(${before}).map(p => p.kind)`);
           if (asked.includes('leap')) jumps++;

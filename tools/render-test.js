@@ -51,9 +51,10 @@
 // - Every Field guide picture draws (the mushroom on bark; a snake holding
 //   golden powers; your rests).
 //
-//   node tools/render-test.js
+//   node tools/render-test.js [--seed N]   (N: other staged boards, other bark)
 const { launch, serve } = require('./browser');
 
+const SEED = process.argv.includes('--seed') ? Number(process.argv[process.argv.indexOf('--seed') + 1]) : 1;
 const CELL = 32; // (the board's units a cell, as render.js draws them)
 const results = [];
 let failed = 0;
@@ -62,11 +63,22 @@ const check = (ok, what, detail = '') => {
   if (!ok) failed++;
 };
 
-// Before the page's own scripts: a switch for its animation loop.
+// Before the page's own scripts: a switch for its animation loop; a wait for
+// the page to settle (the board laid out, at its size, after a load or a
+// new viewport: three frames, the last two at the same size); and the same
+// randomness every time, from a seed set as each staged board is shown (so
+// each gets the same stretch of bark: nothing else draws at random while
+// the loop is stopped, and no next log is made ahead in idle time, when it
+// would have drawn its own).
 const PRE = `(() => {
   const raw = window.requestAnimationFrame.bind(window);
   window.__autoRaf = true;
   window.requestAnimationFrame = cb => raw(ts => { if (window.__autoRaf) cb(ts); });
+  window.__settle = () => new Promise(r => { let was = '', n = 0; (function f() { raw(() => { const c = document.getElementById('game'), now = c ? c.width + 'x' + c.height : ''; n = now === was ? n + 1 : 0; was = now; if (n >= 2) r('ok'); else f(); }); })(); });
+  let seed = ${SEED};
+  window.__reseed = s => { seed = s >>> 0; };
+  Math.random = () => { seed = (seed + 0x6d2b79f5) >>> 0; let t = seed; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  window.requestIdleCallback = () => 0;
 })();`;
 
 // Staged boards, drawn by hand (the page's loop stopped), and pixels read off them.
@@ -76,8 +88,9 @@ const STAGE = `(() => {
   window.__t = performance.now() + 1e6;
   window.drawN = (n, alpha = 0.5, step = 33) => { for (let i = 0; i < n; i++) { __t += step; R.frame(alpha, __t); } return n; };
   window.setBody = (s, cells, dir) => { s.body = cells.map(([x, y]) => ({ x, y })); s.prev = s.body.map(c => ({ ...c })); s.dir = E.DIRS[dir]; s.queue = []; s.planned = null; };
-  window.stage = personas => { const g = E.createGame({ withPlayer: true, personas }); g.food = []; g.time = 60000; g.tick = 500; g.weather.until = 1e12; g.snakes.forEach((s, i) => setBody(s, [[2 + 4 * i, 23], [1 + 4 * i, 23], [4 * i, 23]], 'right')); return g; };
-  window.show = g => { document.getElementById('overlay').classList.add('hidden'); R.setViewer(0); R.setGame(g); return g; };
+  let boards = 0;
+  window.stage = personas => { __reseed(${SEED} * 1000 + ++boards); const g = E.createGame({ withPlayer: true, personas }); g.food = []; g.time = 60000; g.tick = 500; g.weather.until = 1e12; g.snakes.forEach((s, i) => setBody(s, [[2 + 4 * i, 23], [1 + 4 * i, 23], [4 * i, 23]], 'right')); return g; };
+  window.show = g => { document.getElementById('overlay').classList.add('hidden'); R.setViewer(0); __reseed(${SEED} * 1000 + 500 + boards); R.setGame(g); return g; };
   // The board's pixels in a box of cells (x0, y0, w, h in cells), as an ImageData.
   window.pixels = (x0, y0, w, h) => { const c = document.getElementById('game'), k = c.width / (TUNING.GRID * ${CELL}); return c.getContext('2d').getImageData(Math.round(x0 * ${CELL} * k), Math.round(y0 * ${CELL} * k), Math.round(w * ${CELL} * k), Math.round(h * ${CELL} * k)); };
   window.lum = d => { let s = 0; for (let i = 0; i < d.data.length; i += 4) s += 0.299 * d.data[i] + 0.587 * d.data[i + 1] + 0.114 * d.data[i + 2]; return s / (d.data.length / 4); };
@@ -101,9 +114,12 @@ const STAGE = `(() => {
     // tick your head's cells and what it did (__steps).
     const round = async time => {
       await ev(`window.__autoRaf = true; 'ok'`);
-      await b.go(site.url + '?debug');
+      await b.go(site.url + '?debug', { settle: 0 });
+      await ev('__settle()');
       await ev(`document.getElementById('start').click(); 'ok'`);
-      await ev(`new Promise(r => { const c = () => SnakeDebug.state() === 'running' ? r('ok') : setTimeout(c, 10); c(); })`);
+      // (the countdown on the virtual clock too: its frames, without waiting them out)
+      const going = await ev(`(() => { window.__autoRaf = false; for (let i = 0; i < 600 && SnakeDebug.state() !== 'running'; i++) SnakeDebug.frames(1, 1000 / 60); return SnakeDebug.state(); })()`);
+      if (going !== 'running') throw new Error('the round never started: ' + going);
       await ev(`(() => {
         window.__autoRaf = false;
         const E = SnakeEngine, step = E.step;
@@ -125,11 +141,7 @@ const STAGE = `(() => {
       await ev('vf(40)'); // (past the opening's slower ticks)
     };
     // Frames until the next tick, and then n more.
-    const toTick = async (n = 0) => {
-      const n0 = await ev('__steps.length');
-      for (let i = 0; i < 14 && await ev('__steps.length') === n0; i++) await ev('vf(1)');
-      if (n) await ev(`vf(${n})`);
-    };
+    const toTick = (n = 0) => ev(`(() => { const n0 = __steps.length; for (let i = 0; i < 14 && __steps.length === n0; i++) vf(1); vf(${n}); return 'ok'; })()`);
     const KEYS = { e: ['KeyE', 69], ' ': ['Space', 32], ArrowUp: ['ArrowUp', 38] };
     const press = async key => {
       const [code, vk] = KEYS[key];
@@ -234,8 +246,8 @@ const STAGE = `(() => {
 
     // ------------------------------------------------ staged boards
     await ev(`window.__autoRaf = true; 'ok'`);
-    await b.go(site.url + '?debug');
-    await b.sleep(300);
+    await b.go(site.url + '?debug', { settle: 0 });
+    await ev('__settle()');
     await ev(STAGE);
 
     // A dead snake's beads: every other segment, in its own markings.
@@ -294,7 +306,7 @@ const STAGE = `(() => {
     // ember a varying amount, and an edge sometimes fell short), with no
     // falling leaves.
     await b.viewport(1600, 1600);
-    await b.sleep(400);
+    await ev('__settle()');
     const pips = await ev(`(() => {
       SnakeDebug.pinQuality(0);
       const look = (body, dir, leaps, dashes, middle, stun) => {
@@ -474,7 +486,7 @@ const STAGE = `(() => {
     // a sharper board (more pixels to its mustache): the white past the reach
     // of its brows (and eyes) is its mustache's ends, and sits under its middle.
     await b.viewport(800, 800, { scale: 2 });
-    await b.sleep(400);
+    await ev('__settle()');
     const face = await ev(`(() => {
       SnakeDebug.pinQuality(2);
       R.setReducedMotion(true);
@@ -568,7 +580,7 @@ const STAGE = `(() => {
     check(bows.ring.every((h, i) => dh(h, ringWant[i]) < 25), 'Star goes off in a ring of its rainbow, not its stand-in gold',
       `the ring’s hues at 0°, 60°, 120°, 180°: ${bows.ring.join(', ')} (want about ${ringWant.join(', ')})`);
     await b.viewport(800, 800);
-    await b.sleep(400);
+    await ev('__settle()');
 
     // Scorch: soot, not holes (no canopy or falling leaves: SnakeDebug.pinQuality(0)).
     const soot = await ev(`(() => {
@@ -601,7 +613,7 @@ const STAGE = `(() => {
     // marks its way; with reduced motion, none of either, but the lift and
     // the shadow still show.
     await b.viewport(800, 800, { scale: 2 });
-    await b.sleep(400);
+    await ev('__settle()');
     const jumps = await ev(`(() => {
       SnakeDebug.pinQuality(0);
       const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
