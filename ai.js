@@ -388,6 +388,162 @@ window.SnakeAI = (() => {
     }
   }
 
+  // The searches over the framed board, kept apart from decide and evaluate
+  // (they read only these tables and plain numbers), so each is compiled once
+  // and stays so: a function that meets something of a new shape (a persona,
+  // a kind of food) is compiled again, which costs more the bigger it is, and
+  // runs uncompiled meanwhile. Each cell's four neighbours are written out, in
+  // DIR_LIST order: they're the hot loops.
+
+  // The territory board's tables, from otherFree and mineFree (a cell free
+  // now: NOW), and the cells meLater holds longer, in laterCells. Returns how many.
+  function frameBoards(N) {
+    let n = 0;
+    for (let i = 0; i < N * N; i++) {
+      const p = framed[i], o = otherFree[i], m = mineFree[i];
+      terrFree[p] = o > 0 ? o : NOW;
+      meLater[p] = m > o ? m : NOW;
+      if (m > o) laterCells[n++] = p;
+    }
+    return n;
+  }
+
+  // A rival's reach (see decide), from cell h on the framed board, where it
+  // moves again from t0: the soonest it could be in each cell, into `reach`
+  // (where anyone's is sooner, that stays).
+  function reachFrom(h, t0) {
+    const stampR = ++stamp, Q = queue, S = seenF, B = reachBlock, R = reach, Wd = W;
+    Q[0] = h;
+    S[h] = stampR;
+    R[h] = Math.min(R[h], t0);
+    let read = 0, write = 1;
+    for (let s = t0 + 1; read < write; s++) {
+      const levelEnd = write;
+      while (read < levelEnd) {
+        const p = Q[read++];
+        let q = p - Wd;
+        if (S[q] !== stampR && B[q] <= s) { S[q] = stampR; if (s < R[q]) R[q] = s; Q[write++] = q; }
+        q = p + Wd;
+        if (S[q] !== stampR && B[q] <= s) { S[q] = stampR; if (s < R[q]) R[q] = s; Q[write++] = q; }
+        q = p - 1;
+        if (S[q] !== stampR && B[q] <= s) { S[q] = stampR; if (s < R[q]) R[q] = s; Q[write++] = q; }
+        q = p + 1;
+        if (S[q] !== stampR && B[q] <= s) { S[q] = stampR; if (s < R[q]) R[q] = s; Q[write++] = q; }
+      }
+    }
+  }
+
+  // My room's flood fill (see evaluate), from my head at headP, t moves on,
+  // marking what it gets to with stampF (and how soon, in distF); my body is
+  // on the territory board, marked in inBody with bodyMark. eager: look for
+  // food as it goes (a contested-food eater, which searches on past the room
+  // cap, up to foodRange, till it sees some). Into `room`: how many cells
+  // (not capped), how soon I'm on my own trail (HOLE: never) and how many
+  // necks (in `necks`, four numbers each); it returns the best food it saw if eager.
+  const room = new Int32Array(3);
+  function fillRoom(headP, t, cap, need, eager, foodRange, mute, bodyMark, stampF, laterCount) {
+    const Q = queue, S = seenF, B = terr, ML = meLater, D = distF, Wd = W;
+    // (Where meLater says a cell's taken longer, the board says so too while
+    // it runs: one test where it would be two.)
+    for (let k = 0; k < laterCount; k++) { const q = laterCells[k]; laterWas[k] = B[q]; if (ML[q] > B[q]) B[q] = ML[q]; }
+    S[headP] = stampF;
+    Q[0] = headP;
+    let read = 0, write = 1, space = 0, anyFood = 0, trail = HOLE, neckCount = 0;
+    for (let d = 1; read < write && (space < cap || (eager && !anyFood && d <= foodRange)); d++) {
+      const levelEnd = write, by = t + d, pull = eager ? Math.max(0, foodRange - (t + d > mute ? d : mute + 1 - t)) : 0; // (coughing, I'd only nudge it)
+      while (read < levelEnd) {
+        const p = Q[read++];
+        let q = p - Wd;
+        if (S[q] !== stampF && B[q] <= by) {
+          S[q] = stampF; D[q] = d; space++; Q[write++] = q;
+          if (d < trail && inBody[q] === bodyMark) trail = d;
+          if (eager) { const v = foodValue[unframed[q]]; if (v > 0) anyFood = Math.max(anyFood, v * pull); }
+        }
+        q = p + Wd;
+        if (S[q] !== stampF && B[q] <= by) {
+          S[q] = stampF; D[q] = d; space++; Q[write++] = q;
+          if (d < trail && inBody[q] === bodyMark) trail = d;
+          if (eager) { const v = foodValue[unframed[q]]; if (v > 0) anyFood = Math.max(anyFood, v * pull); }
+        }
+        q = p - 1;
+        if (S[q] !== stampF && B[q] <= by) {
+          S[q] = stampF; D[q] = d; space++; Q[write++] = q;
+          if (d < trail && inBody[q] === bodyMark) trail = d;
+          if (eager) { const v = foodValue[unframed[q]]; if (v > 0) anyFood = Math.max(anyFood, v * pull); }
+        }
+        q = p + 1;
+        if (S[q] !== stampF && B[q] <= by) {
+          S[q] = stampF; D[q] = d; space++; Q[write++] = q;
+          if (d < trail && inBody[q] === bodyMark) trail = d;
+          if (eager) { const v = foodValue[unframed[q]]; if (v > 0) anyFood = Math.max(anyFood, v * pull); }
+        }
+      }
+      const width = write - levelEnd;
+      if (width && width <= 2 && levelEnd - 1 < need) {
+        necks[neckCount++] = Q[levelEnd];
+        necks[neckCount++] = Q[write - 1];
+        necks[neckCount++] = levelEnd - 1;
+        necks[neckCount++] = d;
+      }
+    }
+    for (let k = 0; k < laterCount; k++) B[laterCells[k]] = laterWas[k];
+    room[0] = space; room[1] = trail; room[2] = neckCount;
+    return anyFood;
+  }
+
+  // The territory search (see evaluate): its sources in srcI, srcT, srcOwn
+  // [0, ns), my body on the board placed at time t. Into `tally`: my count
+  // and the rivals'. stop: it may stop once I claim nothing more, when no
+  // rival still coughs after coughMax and no rival's own bead is left
+  // unclaimed (beadCells[0, beadCount)) (see evaluate).
+  const tally = new Int32Array(2);
+  function spread(ns, t, age, bits, tags, stop, coughMax, beadCount) {
+    const B = terr, Q = queue, ML = meLater, Wd = W;
+    let mine = 0, theirs = 0, si = 0, T = srcT[0], read = 0, write = 0; // (Q[read, write): the cells claimed at time T)
+    while (read < write || si < ns) {
+      while (si < ns && srcT[si] === T) {
+        const p = srcI[si], tag = srcOwn[si++];
+        if (B[p] < CLAIMED) {
+          B[p] = CLAIMED + ((T + age) << bits) + tag;
+          if (tag === 1) mine++; else theirs++;
+          Q[write++] = p;
+        }
+      }
+      // (Worked out once a level; my cells apart from the rivals'.)
+      const levelEnd = write, T1 = T + 1, next = CLAIMED + ((T1 + age) << bits), mineBefore = mine, mineNext = next + 1;
+      while (read < levelEnd) {
+        const p = Q[read++], tag = B[p] & tags;
+        if (tag === 1) { // mine: a cell free by then for me (unless a rival may be there), or a rival's claimed at T + 1 (contested)
+          let q = p - Wd, s = B[q];
+          if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && (s & tags) > 1) { theirs--; B[q] = next; }
+          q = p + Wd; s = B[q];
+          if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && (s & tags) > 1) { theirs--; B[q] = next; }
+          q = p - 1; s = B[q];
+          if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && (s & tags) > 1) { theirs--; B[q] = next; }
+          q = p + 1; s = B[q];
+          if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && (s & tags) > 1) { theirs--; B[q] = next; }
+        } else if (tag) { // a rival's (0: it became contested): a cell free by then, or someone else's claimed at T + 1 (contested)
+          const claim = next + tag;
+          let q = p - Wd, s = B[q], o = s & tags;
+          if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
+          q = p + Wd; s = B[q]; o = s & tags;
+          if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
+          q = p - 1; s = B[q]; o = s & tags;
+          if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
+          q = p + 1; s = B[q]; o = s & tags;
+          if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
+        }
+      }
+      if (mine === mineBefore && T >= t && stop && T1 + 1 > coughMax) {
+        let open = false; // (a rival's own bead nobody's claimed yet)
+        for (let k = 0; k < beadCount && !open; k++) open = foodValue[beadCells[k]] > 0 && B[framed[beadCells[k]]] < CLAIMED;
+        if (!open) break;
+      }
+      T = read < write || si >= ns ? T + 1 : srcT[si];
+    }
+    tally[0] = mine; tally[1] = theirs;
+  }
+
   const manhattan = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
   const sameDir = (a, b) => a.x === b.x && a.y === b.y;
   const rand = (a, b) => a + Math.random() * (b - a);
@@ -395,6 +551,20 @@ window.SnakeAI = (() => {
   // field's radius, and LAND_REACH, of its centre. (One rule everywhere: the
   // AI, the chatter, the tags and the borders drawn.)
   const onLand = (c, f) => Math.hypot(c.x - f.x, c.y - f.y) <= f.radius + TUNE.LAND_REACH;
+
+  // A persona's weights (the ones the search reads) as one shape, whoever's
+  // they are, none of them left out (a weight it hasn't got is undefined
+  // either way): the compiled search reads each the same way every time,
+  // instead of learning a new shape with every persona it meets, and
+  // starting over.
+  const weighed = w => ({
+    space: w.space, territory: w.territory, aggression: w.aggression,
+    food: w.food, eat: w.eat, pellet: w.pellet, foodRange: w.foodRange, normalFood: w.normalFood, mushroom: w.mushroom,
+    contested: w.contested, hungryBelow: w.hungryBelow, fedFactor: w.fedFactor,
+    margin: w.margin, headRisk: w.headRisk, zoneRisk: w.zoneRisk, distance: w.distance,
+    hunt: w.hunt, home: w.home, lure: w.lure, turn: w.turn, tail: w.tail, mimic: w.mimic,
+    colony: w.colony, goal: w.goal, thrill: w.thrill, coil: w.coil, thick: w.thick, powers: w.powers, golden: w.golden,
+  });
 
   // Wildcard: a random but sensible set of weights, drawn once per round.
   function randomWeights() {
@@ -461,15 +631,9 @@ window.SnakeAI = (() => {
       }
       heads.push({ x: hx, y: hy });
     }
-    // The territory search's board, from the same tables (a cell free now:
-    // NOW), and the cells meLater holds longer than that.
-    let laterCount = 0;
-    for (let i = 0; i < N * N; i++) {
-      const p = framed[i], o = otherFree[i], m = mineFree[i];
-      terrFree[p] = o > 0 ? o : NOW;
-      meLater[p] = m > o ? m : NOW;
-      if (m > o) laterCells[laterCount++] = p;
-    }
+    // The territory search's board, from the same tables.
+    const laterCount = frameBoards(N);
+    const tagBits = 32 - Math.clz32(others.length + 1), tags = (1 << tagBits) - 1; // (see evaluate)
 
     // How much room snake k has from its predicted head. `blockT` > 0 means my
     // body (as placed in ownFree for a search state at time blockT) is in the way.
@@ -500,7 +664,7 @@ window.SnakeAI = (() => {
     // ------------------------------------------------------------- drivers
     // ctx: the effective weights for this decision plus who to hunt / lure
     // toward / keep away from. Drivers fill it in from the game state.
-    const ctx = { w: persona.w, victim: -1, target: null, lure: -1, avoid: null, home: null, mimicDir: null };
+    const ctx = { w: persona.w, victim: -1, target: null, lure: -1, avoid: null, home: null, mimicDir: null, goal: null }; // (every field from the start: one shape)
     const indexOf = id => others.findIndex(o => o.id === id);
     // A hole the woodpecker made, as I see it (among the holes I keep out
     // of, fire and its mark aren't pits).
@@ -773,7 +937,7 @@ window.SnakeAI = (() => {
       const meal = f => f.kind !== 'mushroom' && !(f.kind === 'pellet' && f.owner === me.id) && manhattan(f, myHead) <= lifeTicks;
       if (others.length && !food.some(meal)) pickVictim(all, HUNT);
     }
-    const w = ctx.w;
+    const w = weighed(ctx.w);
 
     // Risk: cells each rival could step into next tick (head-on), and its
     // wider reach since I last saw it (soft zone).
@@ -824,28 +988,7 @@ window.SnakeAI = (() => {
     for (let i = 0; i < N * N; i++) reachBlock[framed[i]] = otherFree[i] - age;
     me.body.forEach((c, j) => { const i = c.y * N + c.x; reachBlock[framed[i]] = Math.max(otherFree[i] - age, me.body.length - j + me.grow); });
     reach.fill(HOLE);
-    for (const o of others) {
-      const stampR = ++stamp, t0 = (o.stun || 0) - age; // (when it moved, or moves, again)
-      const h = framed[o.body[0].y * N + o.body[0].x], Q = queue, S = seenF, B = reachBlock, R = reach, Wd = W; // (the loop's own names for them)
-      Q[0] = h;
-      S[h] = stampR;
-      R[h] = Math.min(R[h], t0);
-      let read = 0, write = 1;
-      for (let s = t0 + 1; read < write; s++) {
-        const levelEnd = write;
-        while (read < levelEnd) { // (each cell's four neighbours in DIR_LIST order, written out: it's a hot loop)
-          const p = Q[read++];
-          let q = p - Wd;
-          if (S[q] !== stampR && B[q] <= s) { S[q] = stampR; if (s < R[q]) R[q] = s; Q[write++] = q; }
-          q = p + Wd;
-          if (S[q] !== stampR && B[q] <= s) { S[q] = stampR; if (s < R[q]) R[q] = s; Q[write++] = q; }
-          q = p - 1;
-          if (S[q] !== stampR && B[q] <= s) { S[q] = stampR; if (s < R[q]) R[q] = s; Q[write++] = q; }
-          q = p + 1;
-          if (S[q] !== stampR && B[q] <= s) { S[q] = stampR; if (s < R[q]) R[q] = s; Q[write++] = q; }
-        }
-      }
-    }
+    for (const o of others) reachFrom(framed[o.body[0].y * N + o.body[0].x], (o.stun || 0) - age); // (from when it moved, or moves, again)
 
     // How much food matters right now, given how long I already am. Hunger
     // trumps that: with under 10 s before I start starving, everyone goes
@@ -1084,59 +1227,16 @@ window.SnakeAI = (() => {
       for (let j = 0; j < len; j++) { const p = framed[body[j].y * N + body[j].x], b = terrFree[p], m = len - j + grow + t; terr[p] = b > m ? b : m; inBody[p] = bodyMark; }
       const cap = L * 2 + 20;
       const need = L + w.margin;
-      const stampF = ++stamp, Q = queue, S = seenF, B = terr, ML = meLater, Wd = W; // (the hot loops' own names for them)
-      // (For the fill, where meLater says a cell's taken longer, the board
-      // says so too, a moment: one test where it would be two.)
-      for (let k = 0; k < laterCount; k++) { const q = laterCells[k]; laterWas[k] = B[q]; if (ML[q] > B[q]) B[q] = ML[q]; }
-      S[headP] = stampF;
-      Q[0] = headP;
-      let read = 0, write = 1, space = 0, anyFood = 0, trail = HOLE, neckCount = 0;
+      const stampF = ++stamp;
       // A contested-food eater keeps searching past the room cap until it sees
       // food, so it looks for food as it goes; anyone else, once it's done.
       const eager = !!w.contested;
-      for (let d = 1; read < write && (space < cap || (eager && !anyFood && d <= w.foodRange)); d++) {
-        const levelEnd = write, by = t + d, pull = eager ? Math.max(0, w.foodRange - (t + d > mute ? d : mute + 1 - t)) : 0; // (coughing, I'd only nudge it)
-        while (read < levelEnd) {
-          // (Its four neighbours in DIR_LIST order, written out: it's a hot loop.)
-          const p = Q[read++];
-          let q = p - Wd;
-          if (S[q] !== stampF && B[q] <= by) {
-            S[q] = stampF; distF[q] = d; space++; Q[write++] = q;
-            if (d < trail && inBody[q] === bodyMark) trail = d;
-            if (eager) { const v = foodValue[unframed[q]]; if (v > 0) anyFood = Math.max(anyFood, v * pull); }
-          }
-          q = p + Wd;
-          if (S[q] !== stampF && B[q] <= by) {
-            S[q] = stampF; distF[q] = d; space++; Q[write++] = q;
-            if (d < trail && inBody[q] === bodyMark) trail = d;
-            if (eager) { const v = foodValue[unframed[q]]; if (v > 0) anyFood = Math.max(anyFood, v * pull); }
-          }
-          q = p - 1;
-          if (S[q] !== stampF && B[q] <= by) {
-            S[q] = stampF; distF[q] = d; space++; Q[write++] = q;
-            if (d < trail && inBody[q] === bodyMark) trail = d;
-            if (eager) { const v = foodValue[unframed[q]]; if (v > 0) anyFood = Math.max(anyFood, v * pull); }
-          }
-          q = p + 1;
-          if (S[q] !== stampF && B[q] <= by) {
-            S[q] = stampF; distF[q] = d; space++; Q[write++] = q;
-            if (d < trail && inBody[q] === bodyMark) trail = d;
-            if (eager) { const v = foodValue[unframed[q]]; if (v > 0) anyFood = Math.max(anyFood, v * pull); }
-          }
-        }
-        const width = write - levelEnd;
-        if (width && width <= 2 && levelEnd - 1 < need) {
-          necks[neckCount++] = queue[levelEnd];
-          necks[neckCount++] = queue[write - 1];
-          necks[neckCount++] = levelEnd - 1;
-          necks[neckCount++] = d;
-        }
-      }
-      for (let k = 0; k < laterCount; k++) B[laterCells[k]] = laterWas[k];
+      let anyFood = fillRoom(headP, t, cap, need, eager, w.foodRange, mute, bodyMark, stampF, laterCount), space = room[0];
+      const trail = room[1], neckCount = room[2];
       if (!eager) { // (the food the fill got to, but my head's own cell)
         for (let k = 0; k < foodCount; k++) {
           const i = foodCells[k], v = foodValue[i], p = framed[i];
-          if (v > 0 && S[p] === stampF && p !== headP) { const d = distF[p]; anyFood = Math.max(anyFood, v * Math.max(0, w.foodRange - (t + d > mute ? d : mute + 1 - t))); }
+          if (v > 0 && seenF[p] === stampF && p !== headP) { const d = distF[p]; anyFood = Math.max(anyFood, v * Math.max(0, w.foodRange - (t + d > mute ? d : mute + 1 - t))); }
         }
       }
       space = Math.min(space, cap);
@@ -1151,8 +1251,7 @@ window.SnakeAI = (() => {
       //    now was empty too), and terr says when that is for anyone, or
       //    whose it is since when: CLAIMED + (T + age) * 2^bits + tag, where
       //    the tag is 1 for me, k + 2 for rival k and 0 once contested.
-      const owners = others.length + 1, bits = 32 - Math.clz32(owners), tags = (1 << bits) - 1;
-      let mine = 0, theirs = 0; // (how many cells are mine, and how many the rivals')
+      const bits = tagBits;
       let ns = 0;
       const meFirst = t <= -age;
       if (meFirst) { srcI[ns] = headP; srcT[ns] = t; srcOwn[ns++] = 1; }
@@ -1161,51 +1260,12 @@ window.SnakeAI = (() => {
         srcI[ns] = framed[h.y * N + h.x]; srcT[ns] = -age; srcOwn[ns++] = k + 2;
       }
       if (!meFirst) { srcI[ns] = headP; srcT[ns] = t; srcOwn[ns++] = 1; }
-      let si = 0;
-      let T = srcT[0];
-      read = write = 0; // queue[read, write) now holds the cells claimed at time T
-      while (read < write || si < ns) {
-        while (si < ns && srcT[si] === T) {
-          const p = srcI[si], tag = srcOwn[si++];
-          if (terr[p] < CLAIMED) {
-            terr[p] = CLAIMED + ((T + age) << bits) + tag;
-            if (tag === 1) mine++; else theirs++;
-            queue[write++] = p;
-          }
-        }
-        // (Worked out once a level: it's the hot loop, written out for each of
-        // the four neighbours, in DIR_LIST order, and for my cells apart.)
-        const levelEnd = write, T1 = T + 1, next = CLAIMED + ((T1 + age) << bits), mineBefore = mine, mineNext = next + 1;
-        while (read < levelEnd) {
-          const p = Q[read++], tag = B[p] & tags;
-          if (tag === 1) { // mine: a cell free by then for me (unless a rival may be there), or a rival's claimed at T + 1 (contested)
-            let q = p - Wd, s = B[q];
-            if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && (s & tags) > 1) { theirs--; B[q] = next; }
-            q = p + Wd; s = B[q];
-            if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && (s & tags) > 1) { theirs--; B[q] = next; }
-            q = p - 1; s = B[q];
-            if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && (s & tags) > 1) { theirs--; B[q] = next; }
-            q = p + 1; s = B[q];
-            if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && (s & tags) > 1) { theirs--; B[q] = next; }
-          } else if (tag) { // a rival's (0: it became contested): a cell free by then, or someone else's claimed at T + 1 (contested)
-            const claim = next + tag;
-            let q = p - Wd, s = B[q], o = s & tags;
-            if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
-            q = p + Wd; s = B[q]; o = s & tags;
-            if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
-            q = p - 1; s = B[q]; o = s & tags;
-            if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
-            q = p + 1; s = B[q]; o = s & tags;
-            if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
-          }
-        }
-        // Once I claim nothing more, the rest is the rivals sharing out what's
-        // left among themselves, which counts only for an aggressive snake,
-        // or where a rival claims food it can't eat (it's coughing, or it's
-        // its own bead): with none of that, the search can stop here.
-        if (mine === mineBefore && T >= t && !w.aggression && T1 + 1 > coughMax && !beadsOpen()) break;
-        T = read < write || si >= ns ? T + 1 : srcT[si];
-      }
+      // Once I claim nothing more, the rest is the rivals sharing out what's
+      // left among themselves, which counts only for an aggressive snake,
+      // or where a rival claims food it can't eat (it's coughing, or it's
+      // its own bead): with none of that, the search can stop there.
+      spread(ns, t, age, bits, tags, !w.aggression, coughMax, beadCount);
+      const mine = tally[0], theirs = tally[1]; // (how many cells are mine, and how many the rivals')
 
       // 3. Food: a steady pull of foodW per step closer. Normally only food I
       //    reach before any rival counts in full, or that a rival gets to
