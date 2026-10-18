@@ -364,7 +364,7 @@ if (isMainThread) {
   // it's cached (in the system's temp folder) and read back.
   const cacheFile = seed == null ? null : path.join(os.tmpdir(), 'barkbite-sim-cache', require('crypto').createHash('sha1')
     .update(['tuning.js', 'ai.js', 'engine.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).concat(fs.readFileSync(__filename, 'utf8')).join('\u0000')) // (this file too: what a run counts can change)
-    .update(JSON.stringify({ rounds, seed, ahead, v: 1 })).digest('hex') + '.json');
+    .update(JSON.stringify({ rounds, seed, ahead, signs: flag('--signatures'), v: 1 })).digest('hex') + '.json');
   const finish = merged => {
     if (flag('--json')) console.log(JSON.stringify(merged));
     else {
