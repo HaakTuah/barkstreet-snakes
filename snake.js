@@ -2463,7 +2463,7 @@
   click(lobbyCopy, async () => {
     const link = lobbyLink.value;
     if (navigator.share && touchFirst && link.startsWith('http')) {
-      try { await navigator.share({ title: 'Bark & Bite', text: 'Come and play snake on a mossy log with me:', url: link }); return; } catch { /* cancelled: copy instead */ }
+      try { await navigator.share({ title: 'Barkstreet Snakes', text: 'Come and play snake on a mossy log with me:', url: link }); return; } catch { /* cancelled: copy instead */ }
     }
     try {
       await navigator.clipboard.writeText(link);

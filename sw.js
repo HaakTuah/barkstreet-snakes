@@ -2,7 +2,7 @@
 // so a new version is never hidden behind an old one, and the cache only
 // when the network's gone. Same-origin GETs only (the font and online play
 // go their own way).
-const CACHE = 'bark-and-bite-2'; // (a new name drops the old cache on activate)
+const CACHE = 'barkstreet-snakes-1'; // (a new name drops the old cache on activate)
 const FILES = ['./', 'index.html', 'style.css', 'tuning.js', 'ai.js', 'engine.js', 'records.js', 'chatter.js', 'audio.js', 'render.js', 'online.js', 'net.js', 'snake.js'];
 
 self.addEventListener('install', e => {

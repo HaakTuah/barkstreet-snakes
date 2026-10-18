@@ -1,4 +1,4 @@
-// Sound for Bark & Bite: a tiny Web Audio synthesiser with no audio files.
+// Sound for Barkstreet Snakes: a tiny Web Audio synthesiser with no audio files.
 // Every cue is built from three soft, woody ingredients: a marimba-like mallet
 // note, a wood-block knock, and a pinch of filtered noise. Envelopes are short,
 // and everything runs through one gentle compressor so nothing ever gets harsh.
