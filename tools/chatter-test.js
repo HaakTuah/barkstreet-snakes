@@ -17,9 +17,11 @@
 // say its flash is back), grumbles while it rests, crows over golden things,
 // greets a rainbow as family (its own moments aren't crowded out by its
 // showing off), and now and then Wildcard or Mason answers it; a golden dash
-// that cuts someone leaves the words to the snip or the kill. Then a few
-// whole AI rounds with the chatter listening (two with Star), to see nothing
-// throws. Last, the sound (audio.js on a stand-in AudioContext): a rival's
+// that cuts someone leaves the words to the snip or the kill. Then two
+// whole AI rounds with the chatter listening, to see nothing throws: one with
+// the rivals who have the most to say about the board (Sovereign's realm and
+// Colonist's colonies, intruders and fire on them, Vulture at every death,
+// Capricious in its moods), one with Star and the rivals who answer it. Last, the sound (audio.js on a stand-in AudioContext): a rival's
 // flash, jump, choke or the like never silences yours, your own golden ones
 // in a row are each heard, your choke and its cough (a beat later) each time
 // you can choke, and nothing while muted.
@@ -318,7 +320,41 @@ console.log('ok   every voice speaks up when pecked under, put out, starving, cu
   const h = tick(g, [{ type: 'cut', snake: wild, x: 10, y: 16, lost: 2, by: sov.id }]);
   check(says(h, sov, VOICES.sovereign.snip, wild) && says(h, wild, VOICES.wildcard.cut, sov), `cut by a dash: "${lineOf(h, sov)}" / "${lineOf(h, wild)}"`);
 }
-console.log('ok   the rarer lines keep to their rests; land is radius + LAND_REACH; ash and rot go to whoever was nearest');
+{ // What whole rounds bring now and then, staged: last words naming the killer, Vulture at a death, a mushroom eaten,
+  // Metagamer's small talk with its label for you, someone at the woodpecker's coming, and Sovereign's realm growing,
+  // shrinking and on fire.
+  let g = stage(['sniper', 'vulture'], { 1: [12, 12], 2: [12, 18] });
+  const [you, sniper, vul] = g.snakes;
+  Object.assign(sniper, { alive: false, killer: you.name, killerId: you.id });
+  let h = tick(g, [{ type: 'death', snake: sniper }]);
+  check(says(h, sniper, VOICES.sniper.dies.filter(l => l.includes('{who}')), you), `last words name the killer (said: ${lineOf(h, sniper)})`);
+  Object.assign(you, { alive: false, killer: 'wall' });
+  h = tick(g, [{ type: 'death', snake: you }], 5000);
+  check(says(h, vul, VOICES.vulture.death, you), `Vulture marks a death (said: ${lineOf(h, vul)})`);
+  g = stage(['gobbler'], { 1: [12, 12] });
+  h = tick(g, [{ type: 'eat', snake: g.snakes[1], kind: 'mushroom', x: 12, y: 12 }]);
+  check(says(h, g.snakes[1], VOICES.gobbler.mushroom), `a rival that eats a mushroom grimaces (said: ${lineOf(h, g.snakes[1])})`);
+  g = stage(['metagamer'], { 1: [12, 12] });
+  const meta = g.snakes[1];
+  meta.memory.labels = { [g.snakes[0].id]: 'greedy' };
+  h = tick(g, [], 4000, 0.01); // (a roll low enough for small talk, and its first line)
+  check(lineOf(h, meta) === `${g.snakes[0].name}: greedy. Noted.`, `Metagamer's small talk says what it makes of you (said: ${lineOf(h, meta)})`);
+  h = tick(g, [{ type: 'woodpecker' }], 5000);
+  check(says(h, meta, VOICES.metagamer.woodpecker), `...and someone remarks on the woodpecker's coming (said: ${lineOf(h, meta)})`);
+  g = stage(['sovereign'], { 0: [3, 22], 1: [20, 2] });
+  const sov = g.snakes[1];
+  sov.memory.home = { x: 10, y: 10, radius: 4 };
+  tick(g);
+  sov.memory.home = { x: 10, y: 10, radius: 5 };
+  check(says(tick(g, [], 5000), sov, VOICES.sovereign.realm.grow), 'Sovereign\'s realm grows: it says so');
+  sov.memory.home = { x: 10, y: 10, radius: 4 };
+  check(says(tick(g, [], 5000), sov, VOICES.sovereign.realm.shrink), '...and shrinks: that too');
+  g.fires.set(K(11, 10), { from: g.tick, until: g.tick + 50, group: 1, strike: true });
+  h = [];
+  for (let i = 0; i < 10 && !h.length; i++) h = tick(g, [], i ? 100 : 5000);
+  check(says(h, sov, VOICES.sovereign.realm.burning), 'fire on its land: Sovereign minds');
+}
+console.log('ok   the rarer lines keep to their rests; land is radius + LAND_REACH; ash and rot go to whoever was nearest; last words, a mushroom, small talk, the woodpecker and a realm changing, staged');
 
 // Choking on your own bead (round six A): the choker's line, at most every
 // 20 s; the thanks of whoever eats what a choke spat or a cough nudged aside,
@@ -532,6 +568,8 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
 }
 
 // Whole rounds of rivals with the chatter listening: nothing throws, and it talks.
+// (These two, with what's staged above, run every line of chatter.js that six
+// rounds did, four of them with rivals at random.)
 {
   let total = 0, rounds = 0;
   const per = {};
@@ -540,9 +578,9 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   const esc = s => s.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
   const thanks = Object.values(VOICES).flatMap(v => v.windfall || []).map(l => new RegExp(`^${l.split('{who}').map(esc).join('.+')}$`));
   let chokes = 0, knocked = 0, choked = 0, thanked = 0;
-  for (let r = 0; r < 4; r++) {
+  for (let r = 0; r < 1; r++) {
     rng = seeded(31 + r * 7919);
-    const g = E.createGame({ withPlayer: false });
+    const g = E.createGame({ withPlayer: false, personas: ['sovereign', 'colonist', 'vulture', 'capricious'] });
     C.reset(g);
     while (g.snakes.filter(s => s.alive).length > 1 && g.time < 400000) {
       E.step(g);
@@ -557,10 +595,10 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   }
   check(total > 20 * rounds, `whole rounds: the rivals talk (${total} lines in ${rounds} rounds)`);
   check(choked <= chokes && thanked <= knocked, `...a choke line only for a choke (${choked} of ${chokes}), thanks only for food knocked aside (${thanked} for ${knocked} pieces)`);
-  console.log(`ok   ${rounds} whole AI rounds with the chatter listening: ${total} lines, nothing thrown (${chokes} chokes, ${choked} remarked on; ${knocked} pieces spat or nudged aside, ${thanked} thanks)`);
-  // ...and two with Star, the rivals who answer it and Copycat (who repeats it in Chinese).
+  console.log(`ok   ${rounds} whole AI round${rounds > 1 ? 's' : ''} of Sovereign, Colonist, Vulture and Capricious with the chatter listening: ${total} lines, nothing thrown (${chokes} chokes, ${choked} remarked on; ${knocked} pieces spat or nudged aside, ${thanked} thanks)`);
+  // ...and one with Star, the rivals who answer it and Copycat (who repeats it in Chinese).
   let star = 0, zh = 0;
-  for (let r = 0; r < 2; r++) {
+  for (let r = 0; r < 1; r++) {
     rng = seeded(97 + r * 7919);
     const g = E.createGame({ withPlayer: false, personas: ['star', 'wildcard', 'mason', 'copycat'] });
     C.reset(g);
@@ -571,8 +609,8 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
       for (const x of heard) { if (x.s.personaKey === 'star') star++; if (x.s.personaKey === 'copycat' && /[一-鿿]/.test(x.text) && !x.text.includes('{')) zh++; }
     }
   }
-  check(star > 10, `whole rounds with Star: it talks (${star} lines in 2 rounds)`);
-  console.log(`ok   2 whole AI rounds with Star, Wildcard, Mason and Copycat: Star ${star} lines, Copycat ${zh} in Chinese, nothing thrown`);
+  check(star > 5, `a whole round with Star: it talks (${star} lines)`);
+  console.log(`ok   a whole AI round with Star, Wildcard, Mason and Copycat: Star ${star} lines, Copycat ${zh} in Chinese, nothing thrown`);
 }
 
 // ------------------------------------------------------------ the sound's gaps
