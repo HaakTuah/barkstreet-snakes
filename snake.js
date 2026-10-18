@@ -71,6 +71,7 @@
     hole: ['The woodpecker sends its regards.', 'Mind the gap.', 'The woodpecker missed you. Its hole didn’t.'],
     pecked: ['The woodpecker didn’t miss.', 'Rat-a-tat. That was you.'],
     starved: ['Should have eaten something.', 'Hunger always wins in the end.', 'All slither, no snacks.'],
+    starvedCoughing: ['Food right there, and you mid-cough.', 'Choked on your own tail, then starved. Rough day.'], // (out of time while coughing: what you reached rolled aside)
     fire: ['Too hot to handle.', 'You found the fire. The hard way.', 'Lightning never strikes twice. It didn’t need to.', 'Burned to a crisp. A small crisp.'],
     // The weather, as it turns (no banner when it clears).
     weather: {
@@ -100,7 +101,8 @@
     youAtThree: ['Down to\u00a03. One more crash and you’re out.', 'At\u00a03 now. The next crash is the last.'],
     youAlight: ['On fire: 3 bites of tail, and at\u00a03 it ends you. Rain helps.', 'Burning, and losing bits of you. At\u00a03 it ends you.'],
     youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
-    youOwnBead: 'Your own tail won’t feed you.', // (it gives the length back, not the meal)
+    youChoke: 'You choke on your own tail!', // (your own beads: spat aside, and a cough)
+    youCoughing: 'No eating while you cough: food rolls aside.', // (true whenever it shows: a lesson may wait out the cough)
     lastApples: 'The last apples are falling.',
     // Your flash, ready and never used yet: the key, once a round (until you've flashed).
     flashKey: touchFirst ? 'Your flash is ready: swipe the way you’re going.' : 'Your flash is ready: E or Shift, two cells in a blink.',
@@ -738,7 +740,7 @@
     if (p.fatal === 'boom' || /blew up/.test(p.cause)) return pick(FLAVOR.boom);
     if (p.fatal === 'pecked') return pick(FLAVOR.pecked);
     if (/woodpecker hole/.test(p.cause)) return pick(FLAVOR.hole);
-    if (p.killer === 'hunger') return pick(FLAVOR.starved);
+    if (p.killer === 'hunger') return pick(p.diedAt < p.coughUntil ? FLAVOR.starvedCoughing : FLAVOR.starved);
     if (p.killer === 'fire') return pick(FLAVOR.fire);
     return pick(p.killer === 'self' ? FLAVOR.self : FLAVOR.wall); // (the card's fact line already says why: boxed in, or at your smallest)
   }
@@ -751,6 +753,7 @@
   const EAT_CUES = { goldcap: 'wrap', golden: 'golden', leaf: 'leaf', pellet: 'meat', mushroom: 'mushroom', beetle: 'crunch' };
   // Apples eaten in quick succession climb a scale: a streak you can hear.
   let streak = 0, streakAt = -1e9;
+  const COUGH_BEAT = 2; // ticks from a choke's gag to its cough
   function sounds(dying, wasAlive) {
     const me = player();
     for (const e of game.events) {
@@ -779,11 +782,24 @@
       else if (e.type === 'baked') Audio.play('bake', at(e.x));
       else if (e.type === 'ash') Audio.play('ash', at(e.x));
       else if (e.type === 'cut') Audio.play('snip', at(e.x));
+      else if (e.type === 'choke') { // (a gag and a spit; its cough follows, below)
+        Audio.play('choke', { rival: !isMe(e.snake), ...at(e.x) });
+        const heard = (game.coughs ||= new Map()), c = heard.get(e.snake.id);
+        if (!c || c.until !== e.snake.coughUntil) heard.set(e.snake.id, { at: game.tick + COUGH_BEAT, until: e.snake.coughUntil }); // (once a cough: a bead spat while it coughs doesn't start another)
+        if (isMe(e.snake)) streakAt = -1e9; // (no meal: the apples' scale starts again)
+      }
       else if (e.type === 'leap') Audio.play('leap', { rival: !isMe(e.snake), gold: !!e.gold, ...at(e.x) });
       else if (e.type === 'dash') Audio.play(e.plain ? 'flash' : 'dash', { rival: !isMe(e.snake), ...at(e.x) }); // (a plain flash, or a golden one)
       else if (e.type === 'lastApples') Audio.play('lastApples');
       else if (e.type === 'douse') Audio.play('douse', at(e.x));
       else if (e.type === 'fizzle' && isMe(e.snake)) { Audio.play('thunk', at(e.snake.body[0].x)); (e.flash ? e.snake.tag?.flash : e.snake.tag?.jump)?.animate?.(reducedMQ.matches ? REFUSED : NUDGE, { duration: reducedMQ.matches ? 420 : 260, easing: 'ease-out' }); } // (pressed, and it couldn't go: you hear it, and its chip shakes its head; with reduced motion it flashes)
+    }
+    // A choke's cough, a beat after its gag.
+    if (game.coughs) for (const [id, c] of game.coughs) {
+      if (c.at == null || game.tick < c.at) continue;
+      c.at = null;
+      const s = game.snakes[id];
+      if (s?.alive) Audio.play('cough', { rival: !isMe(s), ...at(s.body[0].x) });
     }
     for (const s of dying) if (/blew up/.test(s.cause)) Audio.play('boom', at(s.body[0].x));
     for (const s of dying) {
@@ -907,7 +923,8 @@
       if (e.type === 'spawn' && e.kind === 'goldcap') { flashFrame('gold'); if (newsOnce('goldcap')) return toast(lineFor('goldcap'), 2400, 'gold'); }
       if (e.type === 'peck' && me?.alive && e.under?.includes(me.id) && once('peckedUnder')) return toast(FLAVOR.youPeckedUnder, 2800, 'bird', 'lesson'); // (struck under your body: a bridge, not a cut)
       if (!me || !isMe(e.snake || {}) && e.by !== me.id) continue; // (the rest is about you)
-      if (e.type === 'eat' && e.own && once('ownBead')) return toast(FLAVOR.youOwnBead, 2600, 'you', 'lesson');
+      if (e.type === 'choke' && once('choke')) return toast(FLAVOR.youChoke, 2600, 'you', 'lesson');
+      if (e.type === 'nudge' && once('nudge')) return toast(FLAVOR.youCoughing, 2600, 'you', 'lesson');
       if (e.type === 'eat' && e.gold) { flashFrame('gold', true); return toast(FLAVOR.youGoldBeetle(e.snake.leaps), 3000, 'gold', 'lesson'); }
       if (e.type === 'eat' && e.kind === 'leaf') { flashFrame('gold', true); return toast(FLAVOR.youLeaf(e.snake.dashes), 3200, 'gold', 'lesson'); }
       if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round((me.wrapUntil - game.time) / 1000)), 3000, 'gold', 'lesson'); } // (a second one adds to the first: the real total)
@@ -2002,12 +2019,14 @@
   // The Field guide: every food, power and danger, with its picture (drawn by
   // the renderer, as it is on the log) and its rule in a line or two.
   const secs = ms => Math.round(ms / 1000);
+  const coughFor = Math.max(1, secs(T.COUGH_TICKS * T.START_TICK)); // (a cough's ticks at the round's usual pace)
   const GUIDE = [
     ['Food', [
       ['apple', 'Apple', 'Worth 1, and a full tummy. Leave it too long and it rots.'],
       ['golden', 'Golden apple', `Worth ${T.GOLDEN_GROWTH}, and everyone saw it land.`],
       ['beetle', 'Beetle', `Worth ${T.BEETLE_GROWTH}. It scurries from heads, at half your speed.`],
-      ['pellet', 'Beads', `What a crash knocks off, and what a dead snake leaves (${T.CORPSE_EVERY === 2 ? 'every other segment' : T.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${T.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own give the length back, not a meal.`],
+      ['pellet', 'Beads', `What a crash knocks off, and what a dead snake leaves (${T.CORPSE_EVERY === 2 ? 'every other segment' : T.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${T.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own make you choke: you spit them aside.`],
+      ['cough', 'Coughing', `After a choke you cough for ${coughFor === 1 ? 'about a second' : `about ${coughFor} seconds`} (puffs, mouth shut) and can’t eat. Food you reach rolls aside: out of a turn, or to the side with more open log.`],
       [['baked', 'roast'], 'Baked and roast', `Food left in a fire bakes: worth ${T.COOKED_GROWTH}, if you can take the heat. Then it’s ash.`],
       ['mushroom', 'Mushroom', `Poison: ${T.SHRINK} off your tail (never below ${T.MIN_LENGTH}). Mind the purple haze.`],
     ]],
@@ -2028,8 +2047,11 @@
       ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and it notices.'],
     ]],
   ];
-  // (Until the renderer can draw a picture, a stand-in.)
-  const GUIDE_STAND_IN = { apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', pellet: '🟢', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', hole: '🕳️', land: '🚩' };
+  // (Until the renderer can draw a picture, a stand-in. It draws a kind it
+  // doesn't know as an apple, so the kinds it has no picture for yet are
+  // named here.)
+  const GUIDE_STAND_IN = { apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', pellet: '🟢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', hole: '🕳️', land: '🚩' };
+  const GUIDE_UNDRAWN = new Set(['cough']);
   function renderGuide() {
     const px = Math.round(36 * (window.devicePixelRatio || 1));
     for (const [title, rows] of GUIDE) {
@@ -2060,7 +2082,7 @@
   // One thing's picture, a copy of the renderer's own (36 px, sharp at any density).
   function guidePic(kind, px) {
     let art = null;
-    try { art = R.guideSprite?.(kind, px); } catch { /* the stand-in, below */ }
+    try { if (!GUIDE_UNDRAWN.has(kind)) art = R.guideSprite?.(kind, px); } catch { /* the stand-in, below */ }
     if (art?.width) {
       const c = document.createElement('canvas');
       c.width = art.width;
