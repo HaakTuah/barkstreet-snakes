@@ -659,7 +659,6 @@ window.SnakeEngine = (() => {
         stun: Math.max(0, s.stunUntil - game.tick), leaps: s.leaps, // (all of it shows: stars, pips, a gold outline, cough puffs...)
         dashes: s.dashes, wrap: Math.max(0, s.wrapUntil - game.time), air: s.flight ? 1 : 0, cough: Math.max(0, s.coughUntil - game.tick),
       })),
-      food: game.food.map(f => ({ ...f })),
       holes: game.holes.size,
       // (Fire, crackling, smouldering or burning, and the woodpecker's next patch: keep out.)
       fires: game.fires.size ? [...game.fires.keys()] : NO_FIRES,
@@ -698,9 +697,11 @@ window.SnakeEngine = (() => {
     return game.holesView.set;
   }
 
-  // What an AI "sees": its own body now, everything else (holes and fire
-  // included) as of its reaction time ago, like a person would. Rivals are just ids and
-  // bodies; nothing says which one is human.
+  // What an AI "sees": its own body now, the other snakes (and holes and
+  // fire) as of its reaction time ago, like a person would; the food as it
+  // is now (a beetle as it is: where it is, which way it faces, when it last
+  // moved, and whether it's scurrying). Rivals are just ids and bodies;
+  // nothing says which one is human.
   function aiView(game, snake) {
     const delay = Math.max(1, Math.round(T.REACTION_MS / tickMs(game)));
     const idx = Math.max(0, game.history.length - 1 - delay);
@@ -718,7 +719,7 @@ window.SnakeEngine = (() => {
         coughIn: Math.max(0, snake.coughUntil - game.tick),
       },
       others: snap.snakes.filter(o => o.id !== snake.id),
-      food: snap.food,
+      food: game.food, // (as it is: it only changes on a tick, so thinking ahead sees what the tick would)
       holes: blockedSeen(game, snap),
       fire: fireSeen(snap), // (among the holes: the cells that are only fire, which it can go through, at a price)
       pecks: snap.pecks.length ? (snap.peckSet ||= new Set(snap.pecks)) : NO_CELLS, // (among them too: the woodpecker's mark, not a hole yet: nothing to hop)
@@ -731,8 +732,10 @@ window.SnakeEngine = (() => {
 
   // The game can let an AI think ahead of the tick (spread over the frames in
   // between), as long as nothing it looks at can change before the tick:
-  // everything in aiView() is fixed between ticks, except a snake about to
-  // starve, which shrinks at the start of the tick and must decide after that.
+  // everything in aiView() is fixed between ticks (the food too: it only
+  // moves, grows or goes during a tick, after everyone has decided), except
+  // a snake about to starve, which shrinks at the start of the tick and must
+  // decide after that.
   // (A stunned snake doesn't decide at all until it can move again, nor one in the air.)
   const canThinkAhead = (game, s) => s.alive && (!s.isPlayer || !!s.autopilot) && game.time < s.nextStarve && s.plannedTick !== game.tick && s.stunUntil <= game.tick && !s.flight;
 
