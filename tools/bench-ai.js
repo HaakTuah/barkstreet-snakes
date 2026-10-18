@@ -6,7 +6,10 @@
 // through both, so a busy machine slows both alike. Every position must come
 // out the same from both: the way it goes and everything it notes in its
 // memory, with the same random numbers. (Each position is made over in each
-// copy's own context first, as that copy's engine would make it.) Needs only
+// copy's own context first, as that copy's engine would make it.) A change
+// that isn't meant to be exact (an approximation) is weighed by how many
+// don't: how many went another way, how many only noted something else,
+// and for which personas (and then by tools/simulate.js). Needs only
 // Node, and is gentle on the machine: one core, at below-normal priority.
 //
 //   node tools/bench-ai.js [--base REV|DIR] [--root DIR] [--seed N] [--rounds N] [--every K] [--max N]
@@ -175,8 +178,8 @@ const ms = x => x.toFixed(3);
   // A first pass over a few hundred, untimed, so both are compiled and warm.
   for (let p = 0; p < Math.min(P, 300); p++) for (const copy of copies) decideIn(copy, p);
   const best = copies.map(() => new Float64Array(P).fill(Infinity)), cpu = copies.map(() => 0);
-  const byKey = {};
-  let wrong = 0;
+  const byKey = {}, wrongBy = {};
+  let wrong = 0, turned = 0;
   for (let p = 0; p < P; p++) {
     for (let r = 0; r < REPEAT; r++) {
       const order = (p + r) % 2 && copies.length > 1 ? [1, 0] : copies.map((_, i) => i);
@@ -191,6 +194,8 @@ const ms = x => x.toFixed(3);
       byKey[out[0].key].push(p);
       const [a, b] = out, da = dirName(copies[0].AI, a.d), db = dirName(copies[1].AI, b.d), diff = differences(a.memory, b.memory);
       if (da !== db || diff.length) {
+        wrongBy[a.key] = (wrongBy[a.key] || 0) + 1;
+        if (da !== db) turned++;
         if (++wrong <= 10) console.log(`DIFFERENT at position ${p} (${a.key}): ${da !== db ? `goes ${da} against ${db}` : ''}${diff.length ? ` memory: ${diff.join(', ')}` : ''}`);
       }
     }
@@ -207,7 +212,14 @@ const ms = x => x.toFixed(3);
   const ratio = k => (Number(rows[copies[0].label][k]) / Number(rows[copies[1].label][k])).toFixed(2) + 'x';
   console.log(`after is faster by: cpu mean ${ratio('cpu mean')}, mean ${ratio('mean')}, p50 ${ratio('p50')}, p95 ${ratio('p95')}, p99 ${ratio('p99')}`);
   const mean = (i, ps) => ps.reduce((x, p) => x + best[i][p], 0) / ps.length;
-  console.table(Object.fromEntries(Object.entries(byKey).sort().map(([k, ps]) => [k, { positions: ps.length, before: ms(mean(0, ps)), after: ms(mean(1, ps)), 'faster by': (mean(0, ps) / mean(1, ps)).toFixed(2) + 'x' }])));
-  if (wrong) { console.log(`${wrong} of ${P} positions came out DIFFERENT`); process.exit(1); }
+  console.table(Object.fromEntries(Object.entries(byKey).sort().map(([k, ps]) => [k, {
+    positions: ps.length, before: ms(mean(0, ps)), after: ms(mean(1, ps)), 'faster by': (mean(0, ps) / mean(1, ps)).toFixed(2) + 'x',
+    ...(wrong ? { different: wrongBy[k] || 0 } : {}), // (only when some are: for weighing a change that isn't meant to be exact)
+  }])));
+  if (wrong) {
+    const pct = n => (100 * n / P).toFixed(1) + '%';
+    console.log(`${wrong} of ${P} positions (${pct(wrong)}) came out DIFFERENT: ${turned} (${pct(turned)}) went another way, ${wrong - turned} only noted something else in memory`);
+    process.exit(1);
+  }
   console.log(`all ${P} positions came out the same in both: the way it went, and its memory`);
 })();
