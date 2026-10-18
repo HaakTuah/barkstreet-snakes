@@ -14,6 +14,12 @@
 //   intruders-bare: the same board without the land (its twin)
 //   holes:     late sudden death, about 170 holes in a few big hollows, 3 snakes
 //              of 30; __scene.strike is a patch of 14 more, for a strike frame
+//   bridges:   round six A's bodies over holes: 4 snakes of 30 lying across
+//              ditches of holes (bridging them: shadows down in the pits, shaded
+//              underneath, sagging), and a tail hanging into one
+//   leaps:     the long scene with two snakes up in the air, held at the top of
+//              a jump, its tick never coming (round six A: the arch along the
+//              neck, its shadow laid over the bodies on the ground, the trail)
 const fields = ({ land = true, intruder = false } = {}) => `(() => {
     const E = SnakeEngine, g = E.createGame({ withPlayer: true, personas: ['sovereign', 'colonist', 'gobbler'] });
     const [you, sov, col, gob] = g.snakes;
@@ -45,6 +51,23 @@ const long = first => `(() => {
 const SCENES = {
   long: long('sniper'),
   'long-star': long('star'),
+  bridges: `(() => {
+    const E = SnakeEngine, g = E.createGame({ withPlayer: true, personas: ['sniper', 'mason', 'gobbler'] });
+    for (let y = 0; y < 24; y++) for (const x of [4, 5, 11, 17, 18]) g.holes.add(y * 24 + x); // (ditches down the log, one and two cells wide)
+    g.snakes.forEach((s, i) => {
+      const row = 2 + i * 6, body = [];
+      for (let k = 0; k < 30; k++) body.push(k < 22 ? { x: 22 - k, y: row } : { x: 1, y: row + 1 + (k - 22) % 3 }); // (across the ditches, then down the left)
+      s.body = body; s.prev = body.map(c => ({ ...c })); s.dir = E.DIRS.right;
+    });
+    const t = g.snakes[3]; t.body = t.body.slice(0, 18); t.prev = t.body.map(c => ({ ...c })); // (its tail end over the ditch at 4 and 5)
+    g.food = [];
+    return g;
+  })()`,
+  leaps: `(() => {
+    const g = ${long('sniper')}, [a, b] = g.snakes;
+    window.__leaps = [{ type: 'leap', snake: a, x: a.body[0].x, y: a.body[0].y, gold: 0, reach: 1 }, { type: 'leap', snake: b, x: b.body[0].x, y: b.body[0].y, gold: 1, reach: 1 }];
+    return g;
+  })()`,
   fields: fields(),
   nofields: fields({ land: false }),
   intruders: fields({ intruder: true }),
@@ -108,6 +131,7 @@ const setup = name => `(() => {
   ${SYNC}
   const R = SnakeRender, g = ${SCENES[name]};
   R.setGame(g);
+  if (window.__leaps) { R.onTick(__leaps); window.__leaps = null; } // (the leaps scene's jumps, as the game reports them)
   window.__scene = { game: g, f: 0, strike: g.strike || null, draw(alpha, now) { R.frame(alpha, now); } };
   window.__t ||= performance.now(); // (one clock for every run in the page: it only goes forward)
   for (let i = 0; i < 100; i++) { __t += 16; R.frame(0.5, __t); }

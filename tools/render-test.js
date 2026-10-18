@@ -30,8 +30,24 @@
 //   and its twinkles burst as it flashes, not as its flash comes back. Its
 //   face is upright at every heading. Copycat copying it wears a pale copy
 //   of its rainbow (not a pale gold), and it goes off in a rainbow ring.
+//   Its gag is its mustache: the ends twirl up beside its eyes and nothing
+//   comes out past its chin; Copycat copying it holds up a stick-on one.
 // - Scorch marks are soot, not holes: a burned cell is no more than a little
 //   darker, and not darkest in its middle.
+// - Jumps you can see: at the top the neck arches up behind the head and
+//   the shadow, left on the ground, falls across the body hopped; after, the
+//   body still arches over what it crossed (both, for a golden jump over
+//   two); dust puffs at take-off, rings the landing, and a faint trail
+//   marks the way; with reduced motion the lift and shadow, no dust or trail.
+// - Bridges you can see: a body over a pit is shaded underneath and sags,
+//   its shadow falls into the pit, and a tail end over a hole droops, darker.
+// - Choking (staged from the engine's choke and nudge events): the cheeks
+//   puff and the bead is spat aside in an arc to where it went; coughing,
+//   the mouth stays shut and puffs of breath come out (with reduced motion
+//   too); nudged food rolls aside, and a beetle scurries.
+// - A pecked flag is a lost colony: the flag tips and falls into the pit
+//   (the other colony's stands), its land shrinks away into the pit, and
+//   Sovereign's banner is carried to its new capital, not jumping there.
 // - Every Field guide picture draws (the mushroom on bark; a snake holding
 //   golden powers; your rests).
 //
@@ -483,6 +499,32 @@ const STAGE = `(() => {
     check(face.every(f => f.n >= 6 && f.below > 0.1), 'Star’s face is upright at every heading: its mustache under its eyes',
       `its mustache’s ends (pixels, cells below the head’s middle), heading up, down, left, right: ${face.map(f => `${f.n}, ${f.below}`).join('; ')}`);
 
+    // Star's gag is its mustache (round six A; it flicked out a star on a
+    // ribbon of rainbow, which the owner didn't like): half way through it,
+    // the mustache's ends have twirled up beside its eyes, and nothing bright
+    // has come out past its chin (only a pale puff of breath). Copycat
+    // copying it holds up a stick-on mustache under its nose instead. Star
+    // heading down (its face upright, its chin down), Copycat heading right.
+    const gag = await ev(`(() => {
+      SnakeDebug.pinQuality(2);
+      R.setReducedMotion(false);
+      const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
+      const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
+      const white = (r, g, b) => Math.min(r, g, b) > 200 && Math.max(r, g, b) - Math.min(r, g, b) < 40, bright = (r, g, b) => Math.max(r, g, b) > 150 && Math.max(r, g, b) - Math.min(r, g, b) > 90;
+      const g = stage(['star', 'copycat', 'mason']), [, st, cc] = g.snakes;
+      setBody(st, Array.from({ length: 8 }, (_, i) => [8, 9 - i]), 'down'); st.flashReadyAt = g.time + 3000; // (half rested: no twinkles)
+      setBody(cc, Array.from({ length: 8 }, (_, i) => [13 - i, 16]), 'right'); cc.memory.modelId = st.id;
+      show(g); R.setViewer(99); drawN(20);
+      const look = () => { const [x, y] = at(st), [cx, cy] = at(cc);
+        return { beside: count(x - 0.74, y - 0.14, 0.3, 0.26, white) + count(x + 0.44, y - 0.14, 0.3, 0.26, white), past: count(x - 0.45, y + 0.86, 0.9, 0.6, bright), nose: count(cx + 0.18, cy - 0.32, 0.36, 0.64, white) }; };
+      const rest = look();
+      R.flick(st, 0.5); R.flick(cc, 0.5); drawN(1, 0.5, 0.01);
+      return { rest, mid: look() };
+    })()`);
+    check(gag.mid.beside > 3 * gag.rest.beside + 12 && gag.mid.past === 0 && gag.rest.past === 0, 'Star’s gag is its mustache: its ends twirl up beside its eyes, and nothing comes out past its chin',
+      `white beside its eyes ${gag.rest.beside} at rest, ${gag.mid.beside} half way through; bright pixels past its chin ${gag.rest.past}, ${gag.mid.past}`);
+    check(gag.mid.nose > gag.rest.nose + 12, 'Copycat copying Star holds up a stick-on mustache', `white at its nose ${gag.rest.nose} at rest, ${gag.mid.nose} half way through its flick`);
+
     // Star's rainbow on others: Copycat copying Star wears a pale copy of it,
     // flowing as Star's does (its tint of Star's stand-in colour in text was
     // a pale gold all over, that read as a power and hid its gold line), and
@@ -545,10 +587,220 @@ const STAGE = `(() => {
     check(soot.every(s => s.cell >= 0.78), 'a burned cell is no more than a little darker', soot.map(s => s.cell).join(', '));
     check(soot.every(s => s.mid >= 0.8 * s.cell), 'and not darkest in its middle (no dark disc)', soot.map(s => `${s.mid}/${s.cell}`).join(', '));
 
+    // Jumps you can see (round six A: a jump was mostly the head swelling).
+    // Your snake jumps Gobbler's body, lying one thick across its way, and
+    // then, golden, Gobbler's and Sniper's side by side; the jump asked for
+    // a tick ahead, as a press is, and drawn half a tick ahead, as the game
+    // draws it. At the top of the jump its neck is up behind its head, in an
+    // arch (wider than its body further back), and its shadow, left on the
+    // ground, falls across the body it hops (just below it and to the right,
+    // that body darkens: the shadow was drawn under every body). Two ticks
+    // on, its body still arches over what it crossed (the segment over it
+    // wider than the rest), over both for the golden jump. Lively, dust
+    // puffs where it takes off and rings where it lands, and a faint trail
+    // marks its way; with reduced motion, none of either, but the lift and
+    // the shadow still show.
+    await b.viewport(800, 800, { scale: 2 });
+    await b.sleep(400);
+    const jumps = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
+      const green = (r, g, b) => g > 150 && g > r + 40 && g > b + 30, trail = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b > 140 && b > 110 && !green(r, g, b);
+      const doStep = g => { for (const s of g.snakes) s.prev = s.body.map(c => ({ ...c })); E.step(g); g.food.length = 0; R.onTick(g.events); }; // (no food: an apple that turned up would pass for a body)
+      const frame = al => { __t += 30; R.frame(al, __t); };
+      const out = {};
+      for (const still of [false, true]) for (const gold of [false, true]) {
+        R.setReducedMotion(still);
+        const g = stage(['gobbler', 'sniper', 'mason']), [you, gob, sn, ma] = g.snakes;
+        for (const s of g.snakes) s.nextStarve = 1e15;
+        setBody(ma, [[2, 22], [1, 22], [0, 22]], 'right'); ma.stunUntil = 1e9;
+        setBody(sn, [[6, 22], [5, 22], [4, 22]], 'right'); sn.stunUntil = 1e9;
+        setBody(you, Array.from({ length: 8 }, (_, i) => [9 - i, 12]), 'right'); you.leapReadyAt = 0;
+        setBody(gob, Array.from({ length: 9 }, (_, i) => [10, 8 + i]), 'down'); gob.stunUntil = 1e9;
+        if (gold) { setBody(sn, Array.from({ length: 9 }, (_, i) => [11, 16 - i]), 'up'); you.leaps = 2; }
+        show(g); R.setViewer(99); R.setLead(0.5); drawN(10, 1); // (no rests round its head, nor halo: they'd pass for the trail)
+        frame(0);
+        const under0 = lum(pixels(9.62, 13.4, 0.76, 0.35)); // (the body it hops, below it, clear of its outline)
+        E.leap(g, you);
+        for (const al of [0.25, 0.5, 0.75]) frame(al);
+        doStep(g);
+        for (const al of [0, 0.25, 0.5]) frame(al); // (the top of the jump)
+        const hx = R.headPx(you, 0.5, TUNING.GRID * ${CELL}, {}).x / ${CELL}; // (where its head's drawn: its neck's a cell behind, and measured just ahead of it, clear of the dust kicked up behind)
+        const r = { under: +(lum(pixels(9.62, 13.4, 0.76, 0.35)) / under0).toFixed(2), neck: count(hx - 0.65, 11, 0.2, 2, green), back: count(hx - 3.65, 11, 0.2, 2, green), off: R.motes };
+        doStep(g);
+        frame(0.25); const m0 = R.motes;
+        frame(0.5); // (down)
+        r.ring = R.motes - m0;
+        r.trail = count(9.85, 11.5, 1.5, 0.2, trail) + count(9.85, 13.3, 1.5, 0.2, trail);
+        doStep(g); frame(0.5);
+        r.cross = count(10.4, 11, 0.2, 2, green); r.cross2 = count(11.4, 11, 0.2, 2, green); r.flat = count(7.4, 11, 0.2, 2, green);
+        out[(still ? 'reduced ' : '') + (gold ? 'golden' : 'plain')] = r;
+      }
+      R.setReducedMotion(false);
+      R.setLead(0.5);
+      SnakeDebug.pinQuality(2);
+      return out;
+    })()`);
+    for (const [what, r] of Object.entries(jumps)) {
+      const still = what.startsWith('reduced');
+      check(r.neck > 1.12 * r.back && r.under < 0.96, `a ${what} jump: at its top its neck arches up behind its head, and its shadow falls across what it hops`,
+        `its neck ${r.neck} pixels across, ${r.back} further back; the body under it, below and to the right, at ${r.under} of its brightness`);
+      check(r.cross > 1.15 * r.flat && (!what.includes('golden') || r.cross2 > 1.15 * r.flat), `a ${what} jump: two ticks on, its body still arches over what it crossed`,
+        `the segment over it ${r.cross}${what.includes('golden') ? ` and ${r.cross2}` : ''} pixels across, ${r.flat} on the bark`);
+      if (still) check(r.off === 0 && r.ring === 0 && r.trail === 0, `a ${what} jump: no dust and no trail`, `${r.off} motes as it took off, ${r.ring} more as it landed; ${r.trail} trail pixels`);
+      else check(r.off >= 4 && r.ring >= 8 && (what.includes('golden') || r.trail > 30), `a ${what} jump: dust puffs as it takes off and rings it as it lands, and a faint trail marks its way`,
+        `${r.off} motes as it took off, ${r.ring} more as it landed${what.includes('golden') ? '' : `; ${r.trail} trail pixels beside its way`}`);
+    }
+
+    // Bridges you can see (round six A: a body over a hole looked as if it
+    // hovered). Sniper lies across a hollow three cells long (its body over
+    // the middle one) and Gobbler's tail lies over a hole, its head on the
+    // bark; each against the same body with no hole there, and the hollow
+    // against itself with nobody over it. Over the pit, the span is shaded
+    // underneath (its lower edge darker, its upper half as it was) and sags
+    // (narrower), and its shadow falls down into the pit, further than on
+    // the bark (the pit below it darker); the tail hanging over the hole
+    // droops into it, darker.
+    const bridge = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
+      const reddish = (r, g, b) => r > 120 && r > g + 50 && r > b + 40;
+      const g = stage(['sniper', 'gobbler', 'mason']), [you, sn, gob, ma] = g.snakes;
+      setBody(you, [[2, 22], [1, 22], [0, 22]], 'right'); you.stunUntil = 1e9;
+      setBody(ma, [[2, 2], [1, 2], [0, 2]], 'right'); ma.stunUntil = 1e9;
+      const HOLES = [11 * 24 + 10, 12 * 24 + 10, 13 * 24 + 10, 5 * 24 + 18];
+      const look = () => ({ width: count(10.4, 11.3, 0.2, 2.4, reddish), edge: lum(pixels(10.3, 12.7, 0.4, 0.14)), top: lum(pixels(10.3, 12.16, 0.4, 0.14)), pit: lum(pixels(10.2, 13.1, 0.6, 0.35)), tail: lum(pixels(18.3, 5.3, 0.4, 0.4)) });
+      const place = () => { setBody(sn, Array.from({ length: 8 }, (_, i) => [13 - i, 12]), 'right'); sn.stunUntil = 1e9; setBody(gob, [[15, 5], [16, 5], [17, 5], [18, 5]], 'left'); gob.stunUntil = 1e9; };
+      for (const k of HOLES) g.holes.add(k);
+      place(); show(g); drawN(10, 1);
+      const over = look();
+      setBody(sn, Array.from({ length: 8 }, (_, i) => [13 - i, 20]), 'right'); setBody(gob, [[15, 8], [16, 8], [17, 8], [18, 8]], 'left');
+      g.tick++; drawN(4, 1);
+      const empty = look();
+      for (const k of HOLES) g.holes.delete(k);
+      place(); g.tick++; drawN(4, 1);
+      const bark = look();
+      SnakeDebug.pinQuality(2);
+      return { over, empty, bark };
+    })()`);
+    const { over, empty, bark } = bridge, f2 = v => v.toFixed(2);
+    check(over.edge / over.top < 0.85 * bark.edge / bark.top && over.width < 0.9 * bark.width, 'a body over a pit is shaded underneath and sags between the rims',
+      `its lower edge at ${f2(over.edge / over.top)} of its upper half's brightness (${f2(bark.edge / bark.top)} on the bark); ${over.width} pixels across, ${bark.width} on the bark`);
+    check(over.pit < 0.95 * empty.pit, 'its shadow falls down into the pit', `the pit below it at ${f2(over.pit / empty.pit)} of its brightness with nobody over it`);
+    check(over.tail < 0.75 * bark.tail, 'a tail end over a hole droops into it, darker', `at ${f2(over.tail / bark.tail)} of its brightness on the bark`);
+
+    // Choking and the cough (round six A), staged as the engine reports them
+    // (the choke and nudge events, s.coughUntil). Joker chokes on its own
+    // bead right in front of it and spits it aside: its cheeks puff out for
+    // a moment (its white face wider across), and the bead flies up over its
+    // head (purple over its white face half way) and lands where it went.
+    // Gobbler coughs with an apple right ahead: its mouth stays shut (it
+    // gapes at food otherwise) and puffs of breath come out past it, with
+    // reduced motion too. Food a coughing head nudges rolls there (half way,
+    // it's between the cells), and a beetle scurries.
+    const choke = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
+      const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
+      const centre = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0, sx = 0, sy = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) { n++; sx += (i / 4) % p.width; sy += Math.floor(i / 4 / p.width); } return n ? [+(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : null; };
+      const sky = (r, g, b) => b > 200 && g > 150 && r < 120, face = (r, g, b) => Math.min(r, g, b) > 215 || Math.max(r, g, b) < 40, mouth = (r, g, b) => r > 40 && r < 90 && g < 30 && b < 30;
+      const lime = (r, g, b) => g > 150 && r > 100 && r < 170 && b < 60, emerald = (r, g, b) => g > 110 && g > r + 60 && b > 80 && b < g;
+      const pale = (r, g, b) => Math.min(r, g, b) > 200 && b > 180;
+      const out = {};
+      const g = stage(['joker', 'gobbler', 'mason']), [you, jo, gob, ma] = g.snakes;
+      setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
+      setBody(jo, Array.from({ length: 6 }, (_, i) => [8 - i, 8]), 'right');
+      setBody(gob, Array.from({ length: 6 }, (_, i) => [8 - i, 16]), 'right');
+      setBody(ma, Array.from({ length: 6 }, (_, i) => [16, 6 - i]), 'down');
+      g.food.push({ x: 8, y: 10, kind: 'pellet', color: '#38bdf8', owner: jo.id, expires: g.tick + 900 }); // (sky: nothing else here is)
+      g.food.push({ x: 10, y: 16, kind: 'food', expires: g.tick + 900 });
+      g.food.push({ x: 15, y: 12, kind: 'food', expires: g.tick + 900 });
+      g.food.push({ x: 4, y: 12, kind: 'beetle', dir: E.DIRS.right, movedAt: g.tick - 50, expires: g.tick + 900 });
+      show(g); R.setViewer(99); drawN(20, 0.5); // (half way through the tick, drawn at its cells: nobody's moving)
+      // (each measured from where its head's drawn that frame, as it eases out of the move the drawing guessed it'd make)
+      const cheeks = () => { const [x, y] = at(jo); return count(x + 0.05, y - 0.8, 0.6, 0.24, face); }; // (white or ink, just past its face, on the side the bead doesn't fly over)
+      const shut = () => { const [x, y] = at(gob); return count(x, y - 0.4, 0.8, 0.8, mouth); }, puffed = () => { const [x, y] = at(gob); return count(x + 0.55, y - 0.45, 0.8, 0.9, pale); };
+      out.before = { cheeks: cheeks(), mouth: shut() };
+      g.tick++;
+      jo.coughUntil = g.tick + 9; gob.coughUntil = g.tick + 9;
+      R.onTick([{ type: 'choke', snake: jo, x: 9, y: 8, tx: 8, ty: 10 }, { type: 'nudge', snake: ma, kind: 'food', x: 16, y: 13, tx: 15, ty: 12 }, { type: 'nudge', snake: ma, kind: 'beetle', x: 5, y: 12, tx: 4, ty: 12 }]);
+      drawN(1, 0.05, 80);
+      out.gag = { cheeks: cheeks() };
+      drawN(1, 0.5, 80); // (half way: 160 ms)
+      out.mid = { bead: centre(7.5, 7.5, 3, 4, sky), apple: centre(14.2, 11.2, 3, 3, lime), beetle: centre(3, 11, 3, 2, emerald) };
+      g.tick++; drawN(4, 0.5, 80); // (the next tick: all of it there)
+      out.end = { bead: centre(7.5, 7.5, 3, 4, sky), apple: centre(14.2, 11.2, 3, 3, lime), beetle: centre(3, 11, 3, 2, emerald) };
+      const puffs = () => { let n = 0; for (let i = 0; i < 10; i++) { drawN(1, 0.5, 30); n = Math.max(n, puffed()); } return n; };
+      out.cough = { mouth: shut(), puffs: puffs() };
+      R.setReducedMotion(true);
+      out.still = { puffs: puffs() };
+      R.setReducedMotion(false);
+      gob.coughUntil = -1; g.tick++; drawN(10, 0.5, 30);
+      out.after = { mouth: shut(), puffs: puffed() };
+      SnakeDebug.pinQuality(2);
+      return out;
+    })()`);
+    const between = (c, x0, y0, x1, y1) => !!c && Math.min(x0, x1) + 0.1 < c[0] && c[0] < Math.max(x0, x1) - 0.1 && Math.min(y0, y1) - 0.05 < c[1] && c[1] < Math.max(y0, y1) + 0.05;
+    const bead = choke.mid.bead, line = 8.5 + 2 * (bead ? (9.5 - bead[0]) : 0); // (where on a straight slide from the cell ahead of it, 9, 8, to 8, 10, it'd be)
+    check(choke.gag.cheeks > choke.before.cheeks + 8 && between(bead, 8.5, 8.5, 9.5, 10.5) && bead[1] < line - 0.3 && !!choke.end.bead && Math.abs(choke.end.bead[0] - 8.5) < 0.12 && Math.abs(choke.end.bead[1] - 10.5) < 0.2,
+      'choking on its own bead, its cheeks puff out and it spits the bead aside, up in a little arc, to land where it went',
+      `its face just past its cheeks ${choke.before.cheeks} pixels, then ${choke.gag.cheeks} as it gags; the bead half way at ${bead} (a slide would be at y ${line.toFixed(2)}), then at ${choke.end.bead}`);
+    check(choke.before.mouth > 20 && choke.cough.mouth * 3 < choke.before.mouth && choke.after.mouth > 20 && choke.cough.puffs > 10 && choke.still.puffs > 10 && choke.after.puffs === 0, 'coughing, its mouth stays shut and puffs of breath come out past it (with reduced motion too)',
+      `Gobbler’s mouth, an apple right ahead: ${choke.before.mouth} pixels open, ${choke.cough.mouth} coughing, ${choke.after.mouth} after; puffs ${choke.cough.puffs}, with reduced motion ${choke.still.puffs}, after ${choke.after.puffs}`);
+    check(between(choke.mid.apple, 15.5, 12.5, 16.5, 13.5) && !!choke.end.apple && Math.abs(choke.end.apple[0] - 15.5) < 0.15 && between(choke.mid.beetle, 4.5, 12.5, 5.5, 12.5) && !!choke.end.beetle && Math.abs(choke.end.beetle[0] - 4.5) < 0.15,
+      'food a coughing head nudges rolls aside, and a beetle scurries', `the apple half way at ${choke.mid.apple}, then ${choke.end.apple}; the beetle ${choke.mid.beetle}, then ${choke.end.beetle}`);
+
+    // A pecked flag is a lost colony (round six A). The woodpecker pecks out
+    // the cell under Colonist's second colony's flag, and under Sovereign's
+    // capital; a tick later Colonist forgets the colony and Sovereign's realm
+    // moves, as the rules have it. The flag doesn't vanish: it's still there
+    // just after the peck, tips over (its ensign's navy lower) and is gone
+    // into the pit a moment later, the other colony's flag standing; the
+    // lost land shrinks away into the pit (its far edge before its near
+    // one); and the banner is carried from the old capital (between the two,
+    // part way) to the new one, not jumping there.
+    const lost = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const centre = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0, sx = 0, sy = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) { n++; sx += (i / 4) % p.width; sy += Math.floor(i / 4 / p.width); } return n ? [n, +(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : [0]; };
+      const navy = (r, g, b) => b > 80 && r < 40 && g < 60, cream = (r, g, b) => r > 225 && g > 215 && b > 180;
+      const g = stage(['colonist', 'sovereign', 'mason']), [you, col, sov, ma] = g.snakes;
+      setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
+      setBody(col, Array.from({ length: 6 }, (_, i) => [2 + i, 2]), 'left');
+      setBody(sov, Array.from({ length: 6 }, (_, i) => [22 - i, 21]), 'right');
+      setBody(ma, [[2, 18], [1, 18], [0, 18]], 'right');
+      col.memory.colonies = [{ x: 5, y: 8, radius: 3, n: 1 }, { x: 12, y: 7, radius: 3, n: 2 }];
+      sov.memory.home = { x: 17, y: 15, radius: 4 };
+      show(g); drawN(30, 0.5, 60);
+      const flag = () => centre(11.5, 5.4, 2.6, 2.8, navy), banner = (x0, x1) => centre(x0, 13, x1 - x0, 3, cream);
+      const out = { before: { flag: flag(), other: centre(4.5, 5.4, 2.6, 2.8, navy) } };
+      for (const k of [7 * 24 + 12, 7 * 24 + 13, 8 * 24 + 12, 15 * 24 + 17, 15 * 24 + 16, 16 * 24 + 17]) g.holes.add(k);
+      g.tick++; R.onTick([{ type: 'peck', x: 12, y: 7, cells: [7 * 24 + 12] }]);
+      drawN(1, 0.5, 60);
+      out.pecked = { flag: flag() };
+      drawN(1, 0.5, 60); // (a tick later: forgotten, and moved)
+      col.memory.colonies = [col.memory.colonies[0]]; sov.memory.home = { x: 12, y: 14, radius: 4 }; g.tick++;
+      drawN(2, 0.5, 60);
+      out.tipping = { flag: flag() };
+      drawN(1, 0.5, 60);
+      out.shrinking = { far: R.landShown(col, 9, 7), near: R.landShown(col, 11, 7) }; // (three cells from the pit, and one)
+      drawN(3, 0.5, 60);
+      out.carried = banner(12.6, 18.4); // (about half way)
+      drawN(20, 0.5, 60);
+      out.after = { flag: flag(), other: centre(4.5, 5.4, 2.6, 2.8, navy), land: R.landShown(col, 11, 7), banner: banner(11, 14.4) };
+      SnakeDebug.pinQuality(2);
+      return out;
+    })()`);
+    const lf = lost;
+    check(lf.before.flag[0] > 20 && lf.pecked.flag[0] > 20 && lf.tipping.flag[0] > 5 && lf.tipping.flag[2] > lf.pecked.flag[2] + 0.1 && lf.after.flag[0] === 0 && lf.after.other[0] > 10,
+      'a colony’s flag pecked out tips over and falls into the pit; the other colony’s stands', `its ensign’s navy (pixels, y): ${lf.before.flag.join(' at ')} before, ${lf.pecked.flag.join(' at ')} just after the peck, ${lf.tipping.flag.join(' at ')} tipping, ${lf.after.flag[0]} after; the other ${lf.after.other[0]}`);
+    check(!lf.shrinking.far && lf.shrinking.near && !lf.after.land, 'its land shrinks away into the pit', `three cells from the pit ${lf.shrinking.far ? 'still there' : 'gone'} while the cell beside it is ${lf.shrinking.near ? 'still there' : 'gone'}; ${lf.after.land ? 'some left' : 'all gone'} after`);
+    check(lf.carried[0] > 10 && lf.carried[1] > 13.5 && lf.carried[1] < 16.8 && lf.after.banner[0] > 10 && Math.abs(lf.after.banner[1] - 12.9) < 0.6,
+      'Sovereign’s banner is carried to its new capital', `its parchment part way at x ${lf.carried[1]} (${lf.carried[0]} pixels; from 17 to 12), then at ${lf.after.banner[1]}`);
+
     // The Field guide's pictures.
     const guide = await ev(`(() => {
       const out = {};
-      for (const k of ['apple', 'golden', 'mushroom', 'goldcap', 'leaf', 'beetle', 'goldbeetle', 'pellet', 'roast', 'baked', 'jump', 'flash', 'wrap', 'held', 'rests', 'hole', 'fire', 'land']) {
+      for (const k of ['apple', 'golden', 'mushroom', 'goldcap', 'leaf', 'beetle', 'goldbeetle', 'pellet', 'roast', 'baked', 'jump', 'flash', 'wrap', 'held', 'rests', 'hole', 'fire', 'land', 'choke', 'lostflag']) {
         const c = R.guideSprite(k, 72), d = c.getContext('2d').getImageData(0, 0, 72, 72).data;
         let ink = 0, sky = 0, ember = 0;
         for (let i = 0; i < d.length; i += 4) {
