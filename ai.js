@@ -312,7 +312,7 @@ window.SnakeAI = (() => {
   // (a rival may be where I last saw it heading).
   // My room's flood fill runs on it too (seenF, distF: where it got to and
   // how soon), and `unframed` gives a cell's index on the grid again (-1: the frame).
-  let W = 0, framed, unframed, around, terr, terrFree, meLater, inBody, seenF, distF, reachBlock;
+  let W = 0, framed, unframed, terr, terrFree, meLater, inBody, seenF, distF, reachBlock;
   const CLAIMED = HOLE + (HOLE >> 1), NOW = -HOLE; // (NOW: free already)
   // A beetle as the search moves it: its state after s of its crawls (slot s;
   // 0: as it is; BUG_SLOT and the next: playing a chase out): its cell (-1:
@@ -350,7 +350,6 @@ window.SnakeAI = (() => {
       });
     }
     W = N + 2;
-    around = Int32Array.of(-W, W, -1, 1); // (in DIR_LIST order)
     framed = new Int32Array(size);
     unframed = new Int32Array(W * W).fill(-1);
     for (let i = 0; i < size; i++) { framed[i] = W + 1 + i + 2 * Math.floor(i / N); unframed[framed[i]] = i; }
@@ -822,22 +821,23 @@ window.SnakeAI = (() => {
     reach.fill(HOLE);
     for (const o of others) {
       const stampR = ++stamp, t0 = (o.stun || 0) - age; // (when it moved, or moves, again)
-      const h = framed[o.body[0].y * N + o.body[0].x], Q = queue, S = seenF, B = reachBlock, R = reach, A = around; // (the loop's own names for them)
+      const h = framed[o.body[0].y * N + o.body[0].x], Q = queue, S = seenF, B = reachBlock, R = reach, Wd = W; // (the loop's own names for them)
       Q[0] = h;
       S[h] = stampR;
       R[h] = Math.min(R[h], t0);
       let read = 0, write = 1;
       for (let s = t0 + 1; read < write; s++) {
         const levelEnd = write;
-        while (read < levelEnd) {
+        while (read < levelEnd) { // (each cell's four neighbours in DIR_LIST order, written out: it's a hot loop)
           const p = Q[read++];
-          for (let k = 0; k < 4; k++) {
-            const q = p + A[k];
-            if (S[q] === stampR || B[q] > s) continue;
-            S[q] = stampR;
-            if (s < R[q]) R[q] = s;
-            Q[write++] = q;
-          }
+          let q = p - Wd;
+          if (S[q] !== stampR && B[q] <= s) { S[q] = stampR; if (s < R[q]) R[q] = s; Q[write++] = q; }
+          q = p + Wd;
+          if (S[q] !== stampR && B[q] <= s) { S[q] = stampR; if (s < R[q]) R[q] = s; Q[write++] = q; }
+          q = p - 1;
+          if (S[q] !== stampR && B[q] <= s) { S[q] = stampR; if (s < R[q]) R[q] = s; Q[write++] = q; }
+          q = p + 1;
+          if (S[q] !== stampR && B[q] <= s) { S[q] = stampR; if (s < R[q]) R[q] = s; Q[write++] = q; }
         }
       }
     }
@@ -1079,25 +1079,43 @@ window.SnakeAI = (() => {
       for (let j = 0; j < len; j++) { const p = framed[body[j].y * N + body[j].x], b = terrFree[p], m = len - j + grow + t; terr[p] = b > m ? b : m; inBody[p] = bodyMark; }
       const cap = L * 2 + 20;
       const need = L + w.margin;
-      const stampF = ++stamp, Q = queue, S = seenF, B = terr, ML = meLater, A = around; // (the hot loops' own names for them)
+      const stampF = ++stamp, Q = queue, S = seenF, B = terr, ML = meLater, Wd = W; // (the hot loops' own names for them)
       S[headP] = stampF;
       Q[0] = headP;
       let read = 0, write = 1, space = 0, anyFood = 0, trail = HOLE, neckCount = 0;
       // A contested-food eater keeps searching past the room cap until it sees food.
       for (let d = 1; read < write && (space < cap || (w.contested && !anyFood && d <= w.foodRange)); d++) {
-        const levelEnd = write, by = t + d;
+        const levelEnd = write, by = t + d, pull = Math.max(0, w.foodRange - (t + d > mute ? d : mute + 1 - t)); // (coughing, I'd only nudge it)
         while (read < levelEnd) {
+          // (Its four neighbours in DIR_LIST order, written out: it's a hot loop.)
           const p = Q[read++];
-          for (let k = 0; k < 4; k++) {
-            const q = p + A[k];
-            if (S[q] === stampF || B[q] > by || ML[q] > by) continue;
-            S[q] = stampF;
-            distF[q] = d;
-            space++;
+          let q = p - Wd;
+          if (S[q] !== stampF && B[q] <= by && ML[q] <= by) {
+            S[q] = stampF; distF[q] = d; space++; Q[write++] = q;
             if (inBody[q] === bodyMark && d < trail) trail = d;
             const v = foodValue[unframed[q]];
-            if (v > 0) anyFood = Math.max(anyFood, v * Math.max(0, w.foodRange - (t + d > mute ? d : mute + 1 - t))); // (coughing, I'd only nudge it)
-            Q[write++] = q;
+            if (v > 0) anyFood = Math.max(anyFood, v * pull);
+          }
+          q = p + Wd;
+          if (S[q] !== stampF && B[q] <= by && ML[q] <= by) {
+            S[q] = stampF; distF[q] = d; space++; Q[write++] = q;
+            if (inBody[q] === bodyMark && d < trail) trail = d;
+            const v = foodValue[unframed[q]];
+            if (v > 0) anyFood = Math.max(anyFood, v * pull);
+          }
+          q = p - 1;
+          if (S[q] !== stampF && B[q] <= by && ML[q] <= by) {
+            S[q] = stampF; distF[q] = d; space++; Q[write++] = q;
+            if (inBody[q] === bodyMark && d < trail) trail = d;
+            const v = foodValue[unframed[q]];
+            if (v > 0) anyFood = Math.max(anyFood, v * pull);
+          }
+          q = p + 1;
+          if (S[q] !== stampF && B[q] <= by && ML[q] <= by) {
+            S[q] = stampF; distF[q] = d; space++; Q[write++] = q;
+            if (inBody[q] === bodyMark && d < trail) trail = d;
+            const v = foodValue[unframed[q]];
+            if (v > 0) anyFood = Math.max(anyFood, v * pull);
           }
         }
         const width = write - levelEnd;
@@ -1142,27 +1160,30 @@ window.SnakeAI = (() => {
             queue[write++] = p;
           }
         }
-        // (Worked out once a level: it's the hot loop.)
-        const levelEnd = write, T1 = T + 1, next = CLAIMED + ((T1 + age) << bits), mineBefore = mine;
+        // (Worked out once a level: it's the hot loop, written out for each of
+        // the four neighbours, in DIR_LIST order, and for my cells apart.)
+        const levelEnd = write, T1 = T + 1, next = CLAIMED + ((T1 + age) << bits), mineBefore = mine, mineNext = next + 1;
         while (read < levelEnd) {
           const p = Q[read++], tag = B[p] & tags;
-          if (!tag) continue; // became contested
-          const me = tag === 1, claim = next + tag;
-          for (let k = 0; k < 4; k++) {
-            const q = p + A[k];
-            const s = B[q];
-            if (s <= T1) { // free by then (for me, unless a rival may be there)
-              if (me && ML[q] > T1) continue;
-              B[q] = claim;
-              if (me) mine++; else theirs++;
-              Q[write++] = q;
-            } else if (s >= next) { // claimed at T + 1 by someone else: contested
-              const other = s & tags;
-              if (other && other !== tag) {
-                if (other === 1) mine--; else theirs--;
-                B[q] = next;
-              }
-            }
+          if (tag === 1) { // mine: a cell free by then for me (unless a rival may be there), or a rival's claimed at T + 1 (contested)
+            let q = p - Wd, s = B[q];
+            if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && (s & tags) > 1) { theirs--; B[q] = next; }
+            q = p + Wd; s = B[q];
+            if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && (s & tags) > 1) { theirs--; B[q] = next; }
+            q = p - 1; s = B[q];
+            if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && (s & tags) > 1) { theirs--; B[q] = next; }
+            q = p + 1; s = B[q];
+            if (s <= T1) { if (ML[q] <= T1) { B[q] = mineNext; mine++; Q[write++] = q; } } else if (s >= next && (s & tags) > 1) { theirs--; B[q] = next; }
+          } else if (tag) { // a rival's (0: it became contested): a cell free by then, or someone else's claimed at T + 1 (contested)
+            const claim = next + tag;
+            let q = p - Wd, s = B[q], o = s & tags;
+            if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
+            q = p + Wd; s = B[q]; o = s & tags;
+            if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
+            q = p - 1; s = B[q]; o = s & tags;
+            if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
+            q = p + 1; s = B[q]; o = s & tags;
+            if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
           }
         }
         // Once I claim nothing more, the rest is the rivals sharing out what's
