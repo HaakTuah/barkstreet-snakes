@@ -11,7 +11,7 @@
 // The rounds are seeded (the same every run: --seed N plays others) and
 // their line-ups chosen, so every look a snake's memory sends crosses:
 // Sovereign's realm, Colonist's colonies and the site it's off to plant,
-// Capricious's moods, Copycat's model, Joker's lure, a hunter's victim; and
+// Capricious's moods, Copycat's model, Vulture's lure, a hunter's victim; and
 // a person called Sniper plays the rival of that name. It counts what
 // crossed: every kind of event the engine has (read from engine.js) and
 // everything each said, every field of a tick (a snake's whenever it
