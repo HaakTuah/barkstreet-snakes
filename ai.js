@@ -294,7 +294,7 @@ window.SnakeAI = (() => {
   // (-1 off the board), and `queue` holds a breadth-first search, one distance
   // after another. No search visits a cell twice, so N * N is always enough.
   let bufN = 0, mineFree, otherFree, ownFree, risk, seen, owner, claimT, ownerStamp;
-  let foodValue, foodGrow, foodCells, goldCells, queue, nbr, necks, reach, myCells, myDist, marks, leave, leaveStamp;
+  let foodValue, foodGrow, foodCells, goldCells, queue, nbr, necks, reach, myCells, myDist, marks, leave, leaveStamp, chase, chaseKey;
   let stamp = 0;
   // A beetle as the search moves it: its state after s of its crawls (slot s;
   // 0: as it is; BUG_SLOT and the next: playing a chase out): its cell (-1:
@@ -325,6 +325,8 @@ window.SnakeAI = (() => {
     marks = new Int32Array(size);     // where there is food, and whose own beads (marked with stamps)
     leave = new Int32Array(size);     // when each cell of my body as it is is left (where leaveStamp has a stamp)
     leaveStamp = new Int32Array(size);
+    chase = new Int32Array(size);     // a beetle's chase played out from a cell (where chaseKey holds what it was worked out for)
+    chaseKey = new Float64Array(size * 6);
     nbr = new Int32Array(size * 4);
     for (let i = 0; i < size; i++) {
       const x = i % N, y = (i - x) / N;
@@ -921,7 +923,7 @@ window.SnakeAI = (() => {
     // that it's away first. I learn the burrows by seeing beetles come out of
     // them (one that hasn't moved since is on its burrow), and forget one
     // pecked open.
-    let bugV = 0, bugGold = false, bugUntil = Infinity, stampL = 0;
+    let bugV = 0, bugGold = false, bugUntil = Infinity, stampL = 0, stampC = 0;
     let burrows = memory.burrows ||= [];
     for (const f of food) if (f.kind === 'beetle' && f.px == null && !burrows.includes(f.y * N + f.x)) burrows.push(f.y * N + f.x);
     if (burrows.some(pitAt)) burrows = memory.burrows = burrows.filter(i => !pitAt(i));
@@ -932,7 +934,7 @@ window.SnakeAI = (() => {
       if (desperate) bugUntil = Math.min(bugUntil, lifeTicks + 1); // (I'd starve first)
       bugCell[0] = bug.y * N + bug.x; bugMoved[0] = bug.movedAt ?? view.tick;
       bugWay[0] = bug.dir ? BUG_WAYS.findIndex(d => sameDir(d, bug.dir)) : -1;
-      stampL = ++stamp; // (my body as it is, and when each cell of it is left: the beetle can't go there)
+      stampL = ++stamp; stampC = ++stamp; // (my body as it is, and when each cell of it is left: the beetle can't go there)
       me.body.forEach((c, j) => { leaveStamp[c.y * N + c.x] = stampL; leave[c.y * N + c.x] = me.body.length - j + me.grow; });
     } else bugCell[0] = -1;
     // The beetle's crawl after my move s + 1 (the tick s from now), with my
@@ -965,8 +967,16 @@ window.SnakeAI = (() => {
     // From a search's end (my head at (hx, hy) after t moves): the move I'd
     // catch the beetle on, going straight for it (the longer way first);
     // too far to tell, as many moves again as it's away then; or -1 if it's
-    // away first (down its burrow, flown off, or I'd starve).
+    // away first (down its burrow, flown off, or I'd starve). (Searches that
+    // end on the same cell, the beetle as it was, play out the same chase:
+    // it's worked out once.)
     function bugCatch(t, hx, hy) {
+      const at = hy * N + hx, k = 6 * at;
+      if (chaseKey[k] === stampC && chaseKey[k + 1] === t && chaseKey[k + 2] === mute && chaseKey[k + 3] === bugCell[t] && chaseKey[k + 4] === bugWay[t] && chaseKey[k + 5] === bugMoved[t]) return chase[at];
+      chaseKey[k] = stampC; chaseKey[k + 1] = t; chaseKey[k + 2] = mute; chaseKey[k + 3] = bugCell[t]; chaseKey[k + 4] = bugWay[t]; chaseKey[k + 5] = bugMoved[t];
+      return (chase[at] = playChase(t, hx, hy));
+    }
+    function playChase(t, hx, hy) {
       let from = BUG_SLOT;
       bugCell[from] = bugCell[t]; bugWay[from] = bugWay[t]; bugMoved[from] = bugMoved[t];
       for (let m = t + 1; m <= BUG_AHEAD; m++) {
