@@ -753,6 +753,7 @@
   const EAT_CUES = { goldcap: 'wrap', golden: 'golden', leaf: 'leaf', pellet: 'meat', mushroom: 'mushroom', beetle: 'crunch' };
   // Apples eaten in quick succession climb a scale: a streak you can hear.
   let streak = 0, streakAt = -1e9;
+  const COUGH_BEAT = 2; // ticks from a choke's gag to its cough
   function sounds(dying, wasAlive) {
     const me = player();
     for (const e of game.events) {
@@ -781,11 +782,24 @@
       else if (e.type === 'baked') Audio.play('bake', at(e.x));
       else if (e.type === 'ash') Audio.play('ash', at(e.x));
       else if (e.type === 'cut') Audio.play('snip', at(e.x));
+      else if (e.type === 'choke') { // (a gag and a spit; its cough follows, below)
+        Audio.play('choke', { rival: !isMe(e.snake), ...at(e.x) });
+        const heard = (game.coughs ||= new Map()), c = heard.get(e.snake.id);
+        if (!c || c.until !== e.snake.coughUntil) heard.set(e.snake.id, { at: game.tick + COUGH_BEAT, until: e.snake.coughUntil }); // (once a cough: a bead spat while it coughs doesn't start another)
+        if (isMe(e.snake)) streakAt = -1e9; // (no meal: the apples' scale starts again)
+      }
       else if (e.type === 'leap') Audio.play('leap', { rival: !isMe(e.snake), gold: !!e.gold, ...at(e.x) });
       else if (e.type === 'dash') Audio.play(e.plain ? 'flash' : 'dash', { rival: !isMe(e.snake), ...at(e.x) }); // (a plain flash, or a golden one)
       else if (e.type === 'lastApples') Audio.play('lastApples');
       else if (e.type === 'douse') Audio.play('douse', at(e.x));
       else if (e.type === 'fizzle' && isMe(e.snake)) { Audio.play('thunk', at(e.snake.body[0].x)); (e.flash ? e.snake.tag?.flash : e.snake.tag?.jump)?.animate?.(reducedMQ.matches ? REFUSED : NUDGE, { duration: reducedMQ.matches ? 420 : 260, easing: 'ease-out' }); } // (pressed, and it couldn't go: you hear it, and its chip shakes its head; with reduced motion it flashes)
+    }
+    // A choke's cough, a beat after its gag.
+    if (game.coughs) for (const [id, c] of game.coughs) {
+      if (c.at == null || game.tick < c.at) continue;
+      c.at = null;
+      const s = game.snakes[id];
+      if (s?.alive) Audio.play('cough', { rival: !isMe(s), ...at(s.body[0].x) });
     }
     for (const s of dying) if (/blew up/.test(s.cause)) Audio.play('boom', at(s.body[0].x));
     for (const s of dying) {
