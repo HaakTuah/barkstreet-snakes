@@ -44,6 +44,12 @@ function serve(root = ROOT) {
 
 async function launch() {
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'barkbite-chrome-'));
+  // Chrome runs at below-normal priority, so whoever's using the computer
+  // comes first (its processes take it from here as they start: lowered for
+  // the spawn, then set back). BARKBITE_PRIORITY=normal for timing runs.
+  const pr = os.constants.priority, low = process.env.BARKBITE_PRIORITY !== 'normal';
+  let was = null;
+  if (low) try { was = os.getPriority(); os.setPriority(pr.PRIORITY_BELOW_NORMAL); } catch {}
   const proc = spawn(findChrome(), [
     '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
     '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--mute-audio',
@@ -52,6 +58,7 @@ async function launch() {
     ...(process.env.CI ? ['--no-sandbox'] : []), // (a CI runner's Linux can't give Chrome its sandbox)
     'about:blank',
   ], { stdio: ['ignore', 'ignore', 'pipe'] });
+  if (was != null) try { os.setPriority(was); } catch {}
   // Chrome says where its DevTools endpoint is on stderr.
   const port = await new Promise((resolve, reject) => {
     let text = '';

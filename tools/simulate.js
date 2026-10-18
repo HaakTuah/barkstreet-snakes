@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 // Headless balance check. Plays AI-only rounds with the game's own rules and
 // AI (tuning.js, ai.js and engine.js, loaded unchanged) and prints how each
-// personality did. Runs on all cores; needs only Node.
+// personality did. Needs only Node. It's gentle on the machine by default:
+// half the cores, at below-normal priority (whoever's using the computer
+// comes first), one run at a time across the machine (a second run waits
+// its turn), and a seeded run already played with the same files and
+// options is read back from a cache instead of played again.
 //
 //   node tools/simulate.js [rounds] [--seed N] [--ahead] [--check] [--json] [--census] [--root DIR]
+//                          [--workers N] [--fresh] [--no-wait]
 //
 //   rounds    how many rounds (default 200)
 //   --seed N  a fixed random seed, so a run can be repeated exactly (each round
@@ -18,6 +23,9 @@
 //             head), the powers used, how sudden death goes, and how hungry
 //             snakes are before the woodpecker comes and after
 //   --root    play another copy of the game (to compare versions)
+//   --workers N  how many cores to use (default: half of them; or SIM_WORKERS)
+//   --fresh   play it even if the cache has it
+//   --no-wait don't wait for another run on the machine to finish
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -228,7 +236,44 @@ if (isMainThread) {
   const rounds = Number(args.find((a, i) => /^\d+$/.test(a) && args[i - 1] !== '--seed')) || 200;
   const seed = value('--seed');
   const ahead = flag('--ahead');
-  const workers = Math.max(1, Math.min(rounds, os.cpus().length - 1));
+  const workers = Math.max(1, Math.min(rounds, value('--workers') || Number(process.env.SIM_WORKERS) || Math.floor(os.cpus().length / 2)));
+  try { os.setPriority(os.constants.priority.PRIORITY_BELOW_NORMAL); } catch {} // (the machine's own user comes first; the worker threads share this priority)
+  // A seeded run is the same every time with the same files and options, so
+  // it's cached (in the system's temp folder) and read back.
+  const cacheFile = seed == null ? null : path.join(os.tmpdir(), 'barkbite-sim-cache', require('crypto').createHash('sha1')
+    .update(['tuning.js', 'ai.js', 'engine.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).concat(fs.readFileSync(__filename, 'utf8')).join('\u0000')) // (this file too: what a run counts can change)
+    .update(JSON.stringify({ rounds, seed, ahead, v: 1 })).digest('hex') + '.json');
+  const finish = merged => {
+    if (flag('--json')) console.log(JSON.stringify(merged));
+    else report(merged, flag('--census'));
+    if (flag('--check')) {
+      const never = Object.entries(merged.per).filter(([, p]) => p.rounds >= 20 && !p.wins).map(([n]) => n);
+      const problems = [merged.total.stalled && `${merged.total.stalled} stalled`, never.length && `never won: ${never.join(', ')}`].filter(Boolean);
+      if (problems.length) { console.error('check failed: ' + problems.join('; ')); process.exit(1); }
+      console.log('check ok');
+    }
+  };
+  if (cacheFile && !flag('--fresh') && fs.existsSync(cacheFile)) {
+    if (!flag('--json')) console.log('(played before with these files and options: read from the cache; --fresh plays it again)');
+    finish(JSON.parse(fs.readFileSync(cacheFile, 'utf8')));
+    return;
+  }
+  // One run at a time on the machine: a lock file, taken over if its owner's gone.
+  const lock = path.join(os.tmpdir(), 'barkbite-sim.lock');
+  const alive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
+  const take = () => { try { fs.writeFileSync(lock, String(process.pid), { flag: 'wx' }); return true; } catch { return false; } };
+  if (!flag('--no-wait')) {
+    let told = false;
+    while (!take()) {
+      let owner = 0;
+      try { owner = Number(fs.readFileSync(lock, 'utf8')); } catch {}
+      if (!owner || !alive(owner)) { try { fs.unlinkSync(lock); } catch {} continue; }
+      if (!told) { console.error(`(waiting for another simulation on this machine, pid ${owner}; --no-wait runs at once)`); told = true; }
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2000);
+    }
+    process.on('exit', () => { try { if (fs.readFileSync(lock, 'utf8') === String(process.pid)) fs.unlinkSync(lock); } catch {} });
+    for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => process.exit(130));
+  }
   const jobs = Array.from({ length: workers }, (_, i) => ({
     from: Math.floor(rounds * i / workers),
     to: Math.floor(rounds * (i + 1) / workers),
@@ -242,14 +287,8 @@ if (isMainThread) {
     w.once('error', reject);
   }))).then(results => {
     const merged = merge(results);
-    if (flag('--json')) console.log(JSON.stringify(merged));
-    else report(merged, flag('--census'));
-    if (flag('--check')) {
-      const never = Object.entries(merged.per).filter(([, p]) => p.rounds >= 20 && !p.wins).map(([n]) => n);
-      const problems = [merged.total.stalled && `${merged.total.stalled} stalled`, never.length && `never won: ${never.join(', ')}`].filter(Boolean);
-      if (problems.length) { console.error('check failed: ' + problems.join('; ')); process.exit(1); }
-      console.log('check ok');
-    }
+    if (cacheFile) { try { fs.mkdirSync(path.dirname(cacheFile), { recursive: true }); fs.writeFileSync(cacheFile, JSON.stringify(merged)); } catch {} }
+    finish(merged);
   }, err => { console.error(err); process.exit(1); });
 } else {
   parentPort.postMessage(play(workerData));
