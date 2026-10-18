@@ -77,6 +77,24 @@ function load(files, label, wrap) {
   });
   copy.AI = ctx.window.SnakeAI;
   copy.E = ctx.window.SnakeEngine;
+  // A position made over in this copy's own context, as its engine would
+  // make it (objects from another context have other hidden classes, which
+  // the compiled AI would keep stumbling over, as it never does in a game).
+  copy.adopt = vm.runInContext(`(x => {
+    const made = new Map();
+    const make = v => {
+      if (typeof v !== 'object' || v === null) return v;
+      if (made.has(v)) return made.get(v);
+      const tag = Object.prototype.toString.call(v);
+      if (tag === '[object Set]') { const s = new Set(); made.set(v, s); for (const e of v) s.add(make(e)); return s; }
+      if (tag === '[object Map]') { const m = new Map(); made.set(v, m); for (const [k, e] of v) m.set(make(k), make(e)); return m; }
+      const o = tag === '[object Array]' ? [] : {};
+      made.set(v, o);
+      for (const k of Object.keys(v)) o[k] = make(v[k]);
+      return o;
+    };
+    return make(x);
+  })`, ctx);
   return copy;
 }
 
@@ -142,7 +160,7 @@ const ms = x => x.toFixed(3);
   // it: the compiler's and the collector's own threads are left out.)
   const cpuNow = process.threadCpuUsage ? c0 => process.threadCpuUsage(c0) : c0 => process.cpuUsage(c0);
   const decideIn = (copy, p) => {
-    const { view, key, memory } = v8.deserialize(positions[p]);
+    const { view, key, memory } = copy.adopt(v8.deserialize(positions[p]));
     copy.rng = seeded(p * 7919 + 1);
     const t0 = process.hrtime.bigint(), c0 = cpuNow();
     const d = copy.AI.decide(view, copy.AI.PERSONAS[key], memory);
