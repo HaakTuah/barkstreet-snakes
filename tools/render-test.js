@@ -625,8 +625,8 @@ const STAGE = `(() => {
         for (const al of [0.25, 0.5, 0.75]) frame(al);
         doStep(g);
         for (const al of [0, 0.25, 0.5]) frame(al); // (the top of the jump)
-        const hx = R.headPx(you, 0.5, TUNING.GRID * ${CELL}, {}).x / ${CELL}; // (where its head's drawn: its neck's a cell behind)
-        const r = { under: +(lum(pixels(9.62, 13.4, 0.76, 0.35)) / under0).toFixed(2), neck: count(hx - 0.9, 11, 0.2, 2, green), back: count(hx - 3.9, 11, 0.2, 2, green), off: R.motes };
+        const hx = R.headPx(you, 0.5, TUNING.GRID * ${CELL}, {}).x / ${CELL}; // (where its head's drawn: its neck's a cell behind, and measured just ahead of it, clear of the dust kicked up behind)
+        const r = { under: +(lum(pixels(9.62, 13.4, 0.76, 0.35)) / under0).toFixed(2), neck: count(hx - 0.65, 11, 0.2, 2, green), back: count(hx - 3.65, 11, 0.2, 2, green), off: R.motes };
         doStep(g);
         frame(0.25); const m0 = R.motes;
         frame(0.5); // (down)

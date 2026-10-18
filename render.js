@@ -2184,21 +2184,27 @@ window.SnakeRender = (() => {
   // Only for an opaque fill: where pieces overlap, a translucent one darkens
   // (that's what the veil and silhouette are for). With a reach, only what's
   // within it of (cx, cy), give or take a segment.
-  function bodyFills(a, grow, cx = 0, cy = 0, reach = 0) {
-    const p = a.pts, c = a.cor, rad = a.rad, n = a.n;
+  // (For a shadow, only some of it: with pit 1, what's on firm ground or by
+  // a pit's rim, or 2, what's well over a pit (HANG_DRY); with air 1, what's
+  // on the ground, or 2, what's up in the air: see drawShadows.)
+  function bodyFills(a, grow, cx = 0, cy = 0, reach = 0, pit = 0, air = 0) {
+    const p = a.pts, c = a.cor, rad = a.rad, n = a.n, some = pit || air;
     for (let i = n - 2; i >= 0; i--) {
       if (reach && far(p, i, cx, cy, reach) && far(p, i + 1, cx, cy, reach)) continue;
+      if (some && leftOut(a, i, i + 1, pit, air)) continue;
       const h = rad[i + 1] * PINCH + grow, x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
       if ((near(x1, qx) && near(qx, x2)) || (near(y1, qy) && near(qy, y2))) rectPiece(x1, y1, x2, y2, h); // (straight: one piece, no seam)
       else { rectPiece(x1, y1, qx, qy, h); rectPiece(qx, qy, x2, y2, h); }
     }
     for (let i = n - 1; i >= 0; i--) {
       if (reach && far(p, i, cx, cy, reach) && (i === n - 1 || far(p, i + 1, cx, cy, reach))) continue;
-      if (i < n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * PINCH + grow);
+      if (i < n - 1 && bends(a, i) && !(some && leftOut(a, i, i + 1, pit, air))) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * PINCH + grow);
+      if (some && leftOut(a, i, i, pit, air)) continue;
       if (i === 0 && a.star) { ctx.beginPath(); starPath(a, grow); ctx.fill(); }
       else circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
     }
   }
+  const leftOut = (a, i, j, pit, air) => (pit && (a.hang[i] >= HANG_DRY || a.hang[j] >= HANG_DRY) !== (pit === 2)) || (air && (a.lift[i] > 0 || a.lift[j] > 0) !== (air === 2));
   const far = (p, i, cx, cy, reach) => (p[2 * i] - cx) * (p[2 * i] - cx) + (p[2 * i + 1] - cy) * (p[2 * i + 1] - cy) > reach * reach;
   // The same shape as one path, filled once: an even shade where pieces
   // overlap, for a translucent fill. (A path of a hundred contours is
@@ -2286,36 +2292,37 @@ window.SnakeRender = (() => {
     boardG = ctx;
     ctx = veilG;
   }
-  // Back to the board, laying the veil on it at `alpha` (with soft, twice,
-  // that many units apart either way: a soft edge, its middle twice as dark).
-  function veilOff(alpha, soft = 0) {
+  // Back to the board, laying the veil on it at `alpha`.
+  function veilOff(alpha) {
     veilG.restore();
     ctx = boardG;
     if (vw <= 0 || vh <= 0) return;
     ctx.globalAlpha = alpha;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    if (!soft) ctx.drawImage(veil, vx0, vy0, vw, vh, veilX + vx0, veilY + vy0, vw, vh);
-    else for (const sg of SIDES2) { const d = Math.round(sg * soft * k); ctx.drawImage(veil, vx0, vy0, vw, vh, veilX + vx0 + d, veilY + vy0 + d, vw, vh); }
+    ctx.drawImage(veil, vx0, vy0, vw, vh, veilX + vx0, veilY + vy0, vw, vh);
     ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
     ctx.globalAlpha = 1;
   }
 
-  // Pass 1, before any body: the shadows of live[from..to) on the bark, all
-  // at once (in the veil, laid on the bark at 0.3, a little down and to the
-  // right). A segment up in the air casts its shadow further off, on the
-  // ground (see liftOf: the higher, the further, and a little smaller, never
-  // swollen with it), and one over a pit casts it down onto the pit's floor
-  // and far wall (see pitShadows): its shadow up on the bark is cut out
-  // over the pit. (A snake in the air has its shadows drawn after the
-  // bodies on the ground, so the hurdle passes under with its shadow across
-  // it: see drawSnakes.)
+  // Pass 1, before any body: the shadows on the bark, all at once (in the
+  // veil, laid on the bark at 0.3, a little down and to the right). A
+  // segment up in the air casts its shadow further off, on the ground (see
+  // liftOf: the higher, the further, and a little smaller, never swollen
+  // with it): of a snake in the air (live[up..]), that part is laid after
+  // the bodies on the ground, so the hurdle passes under with the shadow
+  // across it (see drawAirShadows), and only what's on the ground is laid
+  // here. What's well over a pit casts its shadow down into the pit, onto
+  // its floor and far wall: further off (DEEP_DX, DEEP_DY) and a little
+  // bigger, as a shadow cast further away is, and none on the bark there.
+  // (In the same veil, with no clip: it's near enough to keep to the pit,
+  // and the pit is dark.)
   const LIFT_DX = CELL * 0.62, LIFT_DY = CELL * 0.82, LIFT_SHRINK = 0.15; // (at the top of a jump: how much further off, and smaller)
-  function drawShadows(from, to) {
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, pits = false;
-    for (let j = from; j < to; j++) {
-      const a = anim.get(live[j]);
-      if (a.bridging) pits = true;
-      if (a.offs) { x0 = y0 = -VEIL_M; x1 = y1 = SIZE + VEIL_M; continue; } // (across a wrapped edge: anywhere)
+  const DEEP_DX = CELL * 0.2, DEEP_DY = CELL * 0.28, DEEP_GROW = 1.5, HANG_DRY = 0.5; // (how much further off, and bigger; how far over a pit casts its shadow into it, not on the bark)
+  function drawShadows(up) {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const s of live) {
+      const a = anim.get(s);
+      if (a.offs) { x0 = y0 = -VEIL_M; x1 = y1 = SIZE + VEIL_M; break; } // (across a wrapped edge: anywhere)
       for (let i = 0; i < a.n; i++) {
         const x = a.pts[2 * i], y = a.pts[2 * i + 1];
         if (x < x0) x0 = x;
@@ -2327,102 +2334,80 @@ window.SnakeRender = (() => {
     if (x0 > x1) return;
     veilOn(2, 4, x0 - CELL * 2, y0 - CELL * 2, x1 + CELL * 2, y1 + CELL * 2);
     ctx.fillStyle = '#000000';
-    for (let j = from; j < to; j++) {
-      const a = anim.get(live[j]), offs = a.offs || OFFS, moved = a.lifted && shadowShape(a, false);
+    for (let j = 0; j < live.length; j++) {
+      const a = anim.get(live[j]), offs = a.offs || OFFS, air = j >= up && a.lifted ? 1 : 0;
+      for (let pass = a.bridging ? 2 : 1; pass > 0; pass--) { // (into the pit, then on the bark)
+        const moved = pass === 2 ? shadowShape(a, true) : air === 0 && a.lifted && shadowShape(a, false); // (a snake on the ground still arching down: moved, under the bodies)
+        for (let k = 0; k < offs.length; k++) {
+          const ox = offs[k][0], oy = offs[k][1];
+          if (ox || oy) ctx.translate(ox, oy);
+          bodyFills(a, pass === 2 ? DEEP_GROW : 0, 0, 0, 0, a.bridging ? pass : 0, pass === 2 ? 0 : air);
+          if (ox || oy) ctx.translate(-ox, -oy);
+        }
+        if (moved) unshadow(a);
+      }
+    }
+    veilOff(0.3);
+  }
+  // The shadows of what of live[up..] is up in the air (and on firm ground
+  // or by a pit's rim: what's over one has its shadow in the pit already),
+  // over the bodies on the ground (see drawShadows), moved off: a few
+  // segments, as one path filled once (an even shade, with no veil to lay).
+  function drawAirShadows(up) {
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.translate(2, 4);
+    for (let j = up; j < live.length; j++) {
+      const a = anim.get(live[j]), offs = a.offs || OFFS;
+      if (!a.lifted) continue;
+      shadowShape(a, false);
       for (let k = 0; k < offs.length; k++) {
         const ox = offs[k][0], oy = offs[k][1];
         if (ox || oy) ctx.translate(ox, oy);
-        bodyFills(a, 0);
+        airPath(a);
+        ctx.fill();
         if (ox || oy) ctx.translate(-ox, -oy);
       }
-      if (moved) unshadow(a);
-    }
-    if (pits) { // (over the pits, the bark's shadow goes: its shadow's down in the pit)
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.beginPath();
-      pitsUnder(from, to);
-      ctx.fill();
-      ctx.globalCompositeOperation = 'source-over';
-    }
-    veilOff(0.3);
-    if (pits) pitShadows(from, to);
-  }
-  // A body over a pit: its shadow down on the pit's floor and far wall, the
-  // further off the further over it it is (DEEP_DX, DEEP_DY), in its own
-  // veil clipped to the pits under it, softer than on the bark: a little
-  // bigger, fainter, and laid on twice a little apart, for a soft edge.
-  const DEEP_DX = CELL * 0.22, DEEP_DY = CELL * 0.3, DEEP_GROW = 2.5, DEEP_ALPHA = 0.11, DEEP_SOFT = 1.6;
-  function pitShadows(from, to) {
-    ctx.save();
-    ctx.beginPath();
-    pitsUnder(from, to);
-    ctx.clip();
-    veilOn(2, 4, pitBox[0], pitBox[1], pitBox[2], pitBox[3]);
-    ctx.fillStyle = '#000000';
-    for (let j = from; j < to; j++) {
-      const a = anim.get(live[j]);
-      if (!a.bridging) continue;
-      shadowShape(a, true);
-      bodyFills(a, 0);
       unshadow(a);
     }
-    veilOff(DEEP_ALPHA, DEEP_SOFT);
-    ctx.restore();
+    ctx.translate(-2, -4);
   }
-  // The pits under the bodies of live[from..to) that hang over one (every
-  // hole cell within a cell of a segment over one), as the current path:
-  // each cell, in from its rim where it meets the bark (where the pit's
-  // opening is; at the board's edge a hollow runs on). Their box (units) into pitBox.
-  const pitBox = [0, 0, 0, 0];
-  function pitsUnder(from, to) {
-    pitSpan[0] = pitSpan[1] = GRID; pitSpan[2] = pitSpan[3] = -1;
-    for (let j = from; j < to; j++) {
-      const a = anim.get(live[j]);
-      if (a.bridging) for (let i = 0; i < a.n; i++) if (a.hang[i]) spanPit(a, i);
+  // (As the current path: its pieces up in the air, but those over a pit.)
+  function airPath(a) {
+    const p = a.pts, c = a.cor, rad = a.rad, n = a.n, pit = a.bridging ? 1 : 0;
+    ctx.beginPath();
+    for (let i = n - 2; i >= 0; i--) {
+      if (leftOut(a, i, i + 1, pit, 2)) continue;
+      const h = rad[i + 1] * PINCH, x1 = p[2 * i], y1 = p[2 * i + 1], cx = c[2 * i], cy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+      pieceRect(x1, y1, cx, cy, h);
+      pieceRect(cx, cy, x2, y2, h);
+      if (bends(a, i)) { const r = rad[i + 1] * PINCH; ctx.moveTo(cx + r, cy); ctx.arc(cx, cy, r, 0, TAU); }
     }
-    pitRects();
-  }
-  // (The cells within one of segment i, into pitSpan: x0, y0, x1, y1.)
-  const pitSpan = [0, 0, 0, 0];
-  function spanPit(a, i) {
-    const cx = Math.floor(a.pts[2 * i] / CELL), cy = Math.floor(a.pts[2 * i + 1] / CELL);
-    if (cx - 1 < pitSpan[0]) pitSpan[0] = cx - 1;
-    if (cy - 1 < pitSpan[1]) pitSpan[1] = cy - 1;
-    if (cx + 1 > pitSpan[2]) pitSpan[2] = cx + 1;
-    if (cy + 1 > pitSpan[3]) pitSpan[3] = cy + 1;
-  }
-  // Every hole cell in pitSpan, as the current path (each in from its rim
-  // where it meets the bark: the pit's opening), its box (units) into pitBox.
-  function pitRects() {
-    const bx0 = Math.max(0, pitSpan[0]), by0 = Math.max(0, pitSpan[1]), bx1 = Math.min(GRID - 1, pitSpan[2]), by1 = Math.min(GRID - 1, pitSpan[3]);
-    pitBox[0] = bx0 * CELL; pitBox[1] = by0 * CELL; pitBox[2] = (bx1 + 1) * CELL; pitBox[3] = (by1 + 1) * CELL;
-    for (let y = by0; y <= by1; y++) {
-      for (let x = bx0; x <= bx1; x++) {
-        const key = y * GRID + x;
-        if (!holeMask[key]) continue;
-        const l = x > 0 && !holeMask[key - 1] ? PIT_RIM : 0, r = x < GRID - 1 && !holeMask[key + 1] ? PIT_RIM : 0;
-        const t = y > 0 && !holeMask[key - GRID] ? PIT_RIM : 0, b = y < GRID - 1 && !holeMask[key + GRID] ? PIT_RIM : 0;
-        ctx.rect(x * CELL + l, y * CELL + t, CELL - l - r, CELL - t - b);
-      }
+    for (let i = n - 1; i >= 0; i--) {
+      if (leftOut(a, i, i, pit, 2)) continue;
+      if (i === 0 && a.star) { starPath(a, 0); continue; }
+      ctx.moveTo(p[2 * i] + rad[i], p[2 * i + 1]);
+      ctx.arc(p[2 * i], p[2 * i + 1], rad[i], 0, TAU);
     }
   }
-  // A body's shadow, moved (see drawShadows): its points, corners and radii
+  // A body's shadow moved (see drawShadows): its points, corners and radii
   // swapped for copies (in arrays kept for it, made again only for a longer
-  // snake), each segment moved by its lift (and with deep, by how far over a
-  // pit it is) and sized as on the ground; unshadow puts them back.
+  // snake), each segment moved off by its lift (and with deep, all of it
+  // down into the pit: only what's over one is drawn so, and moved alike,
+  // its bands stay straight, quick rectangles) and sized as on the ground;
+  // unshadow puts them back.
   let shP = new Float32Array(128), shC = new Float32Array(128), shR = new Float32Array(64), keptP = null, keptC = null, keptR = null;
   function shadowShape(a, deep) {
-    const m = a.n, lift = a.lift, hang = a.hang, sink = a.sink, up = a.lifted, sw = a.liftSw;
+    const m = a.n, lift = a.lift, sink = a.sink, sw = a.liftSw, up = a.lifted, dx = deep ? DEEP_DX : 0, dy = deep ? DEEP_DY : 0;
     if (shR.length < m) { shP = new Float32Array(4 * m); shC = new Float32Array(4 * m); shR = new Float32Array(2 * m); }
     for (let i = 0; i < m; i++) {
-      const l = up ? lift[i] : 0, o = deep ? hang[i] : 0;
-      shP[2 * i] = a.pts[2 * i] + l * LIFT_DX + o * DEEP_DX;
-      shP[2 * i + 1] = a.pts[2 * i + 1] + l * LIFT_DY + o * DEEP_DY;
-      shR[i] = a.rad[i] / (1 + l * sw) / (1 - SINK_SHRINK * sink[i]) * (1 - LIFT_SHRINK * l) + (deep ? DEEP_GROW * o : 0);
+      const l = up ? lift[i] : 0;
+      shP[2 * i] = a.pts[2 * i] + l * LIFT_DX + dx;
+      shP[2 * i + 1] = a.pts[2 * i + 1] + l * LIFT_DY + dy;
+      shR[i] = a.rad[i] / (1 + l * sw) / (1 - SINK_SHRINK * sink[i]) * (1 - LIFT_SHRINK * l);
       if (i < m - 1) {
-        const l2 = up ? (l + lift[i + 1]) / 2 : 0, o2 = deep ? (o + hang[i + 1]) / 2 : 0;
-        shC[2 * i] = a.cor[2 * i] + l2 * LIFT_DX + o2 * DEEP_DX;
-        shC[2 * i + 1] = a.cor[2 * i + 1] + l2 * LIFT_DY + o2 * DEEP_DY;
+        const l2 = up ? (l + lift[i + 1]) / 2 : 0;
+        shC[2 * i] = a.cor[2 * i] + l2 * LIFT_DX + dx;
+        shC[2 * i + 1] = a.cor[2 * i + 1] + l2 * LIFT_DY + dy;
       }
     }
     keptP = a.pts; keptC = a.cor; keptR = a.rad;
@@ -2569,6 +2554,7 @@ window.SnakeRender = (() => {
       ctx.fillStyle = fills[i];
       circle(pts[2 * i], pts[2 * i + 1], rad[i]);
     }
+    if (a.bridging && !dead) shadeUnder(a); // (over a pit: shaded underneath, a hanging tail darker)
 
     // A little roundness on every segment (light from the top left): separate
     // circles, which never touch (a tail that's just grown sits on the segment
@@ -2665,7 +2651,6 @@ window.SnakeRender = (() => {
       ctx.setLineDash(NO_DASH);
       ctx.lineDashOffset = 0;
     }
-    if (a.bridging && !dead) shadeUnder(a); // (over a pit: shaded underneath, a hanging tail darker)
     if (a.star && !dead) shedTwinkle(s, a, now);
 
     // Head features, drawn in a frame where +x points the way the snake faces.
@@ -2739,40 +2724,27 @@ window.SnakeRender = (() => {
   }
   const DASH = [3, 3], NO_DASH = [], MOOD_DASH = [5, 7];
   // A body over a pit (see sinkOf): with nothing under it to light it from
-  // below, its side away from the light (down and to the right) is in shade
-  // just where it's over the pit's opening; and a tail end hanging into the
-  // pit darkens the deeper it hangs. (Each run of it over the pit, clipped to
-  // its own shape and to the pits under it: its spine, moved down and to the
-  // right, stroked wide and faint, then narrower and darker, so the shade
-  // deepens toward its edge.)
-  const UNDER = '#140a04', UNDER_OFF = 0.85, UNDER_W = [1.4, 0.13, 1, 0.14, 0.6, 0.17]; // (how far the spine moves, in radii; its widths, in radii, and alphas)
+  // below, its side away from the light (down and to the right) is in shade,
+  // the more the further over the pit it is; and a tail end hanging into the
+  // pit darkens the deeper it hangs. Drawn over its segments as they are,
+  // before their sheen and markings: each one over the pit again in a darker
+  // step of its own colour, then in its own colour a little up and to the
+  // left and smaller, leaving a crescent of shade along its lower right.
+  // (Two circles each, the GPU's quickest shape, and no clip: a clip to a
+  // body's shape costs it dearly. Each step of shade is a cached colour,
+  // four of them.)
+  const UNDER = '#140a04', UNDER_DARK = 0.42, UNDER_IN = 0.11; // (the shade at its darkest; how far its lit part moves in, in radii)
+  const shadeOf = (c, o) => mix(c, UNDER, Math.ceil(o * 4) / 4 * UNDER_DARK);
   function shadeUnder(a) {
-    const { n, pts, rad, hang, sink } = a;
-    for (let i0 = 0; i0 < n;) {
-      if (hang[i0] < 0.02) { i0++; continue; }
-      let i1 = i0;
-      while (i1 + 1 < n && hang[i1 + 1] >= 0.02) i1++;
-      const j0 = Math.max(0, i0 - 1), j1 = Math.min(n - 1, i1 + 1), off = rad[i0] * UNDER_OFF;
-      ctx.save();
-      pitSpan[0] = pitSpan[1] = GRID; pitSpan[2] = pitSpan[3] = -1;
-      for (let i = i0; i <= i1; i++) spanPit(a, i);
-      ctx.beginPath();
-      pitRects();
-      ctx.clip();
-      shape(a, 0, j0, j1);
-      ctx.clip();
-      ctx.translate(off, off);
-      ctx.lineCap = 'butt';
-      ctx.lineJoin = 'round';
-      ctx.strokeStyle = UNDER;
-      spine(a, j0, j1);
-      for (let w = 0; w < UNDER_W.length; w += 2) {
-        ctx.lineWidth = rad[i0] * UNDER_W[w];
-        ctx.globalAlpha = UNDER_W[w + 1];
-        ctx.stroke();
-      }
-      ctx.restore();
-      i0 = i1 + 1;
+    const { n, pts, rad, fills, hang, sink } = a;
+    for (let i = n - 1; i >= 0; i--) {
+      const o = hang[i];
+      if (o < 0.02 || (i === 0 && a.star)) continue; // (a star's head is drawn with its face)
+      const x = pts[2 * i], y = pts[2 * i + 1], r = rad[i], d = r * UNDER_IN;
+      ctx.fillStyle = shadeOf(fills[i], o);
+      circle(x, y, r);
+      ctx.fillStyle = fills[i];
+      circle(x - d, y - d, r - d * Math.SQRT2);
     }
     ctx.fillStyle = UNDER;
     for (let i = 0; i < n; i++) {
@@ -3435,19 +3407,19 @@ window.SnakeRender = (() => {
     for (const s of live) prepare(s, alpha, now, false);
     let up = live.length;
     if (leaping) while (up > 0 && overOf(live[up - 1])) up--;
-    drawShadows(0, up);
+    drawShadows(up);
     if (fieldSpecs.length && huesOn) drawFieldHues(now); // (a land's colour round a rival on it, under every outline and body)
     // Then outlines, bodies, flames and queasy washes, each pass for every
-    // snake on the ground, then the same for any up in the air, its shadow
-    // first, over the bodies on the ground (the hurdle passes under it with
-    // the shadow across it), and its trail: a leaper's outline goes over
-    // what it's hopping, not under it (which made it look rammed into it
-    // rather than above it). Its halo stays with the ground's outlines,
-    // under every body (over the snake it hopped, it greyed a dark body
-    // either side of yours for as long as the arch ran).
+    // snake on the ground, then the same for any up in the air, the shadow
+    // of what of it's in the air first, over the bodies on the ground (the
+    // hurdle passes under it with the shadow across it), and its trail: a
+    // leaper's outline goes over what it's hopping, not under it (which made
+    // it look rammed into it rather than above it). Its halo stays with the
+    // ground's outlines, under every body (over the snake it hopped, it
+    // greyed a dark body either side of yours for as long as the arch ran).
     drawPasses(0, up, now, live.length);
     if (up < live.length) {
-      drawShadows(up, live.length);
+      drawAirShadows(up);
       drawTrails(up, live.length, now);
       drawPasses(up, live.length, now, 0);
     }
@@ -3495,7 +3467,7 @@ window.SnakeRender = (() => {
         const tx = (r.x0 - r.dx + 0.5) * CELL, ty = (r.y0 - r.dy + 0.5) * CELL; // (where it took off)
         let end = reach + 1;
         if (!r.landed) end = Math.min(end, ((a.pts[0] - tx) * r.dx + (a.pts[1] - ty) * r.dy) / CELL); // (to its head: they run on round it, just outside it)
-        if (end <= 0.3) continue;
+        if (!(end > 0.3)) continue; // (nothing behind its head yet; and never a trail of no length, nor of none at all)
         ctx.globalAlpha = 0.55 * fade;
         ctx.beginPath();
         for (const sg of SIDES2) {
