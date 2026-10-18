@@ -88,7 +88,7 @@ const census = () => ({
 //   apart              distance from the nearest rival head, summed over ticks (capped at 14: Ghost)
 //   foodShare, beadShare  its share of the round's food eaten, and of the beads (summed over rounds: Gobbler, Vulture)
 //   homeTicks, atHome  ticks with a realm, and of those, the head on it (Sovereign)
-//   hunting, boxing    ticks with a target, and of those, its body within 2 of the target's head (Mute)
+//   hunting, boxing    ticks with a target, and of those, closing the box: the target's head within 4 of its own (Mute: the rule its mood ring shows)
 //   luring             ticks with a rival head 2 to 4 away: just out of its reach, close enough to follow (Joker)
 //   skims              ticks with the head beside the edge, a hole or a body (not its own neck), or a rival head within 2 (Desperado)
 //   flashes, jumps     plain and golden flashes, and jumps of both kinds (Star: a minute alive)
@@ -97,11 +97,11 @@ const SIGNS = ['moves', 'runs', 'cells', 'beside', 'long', 'coiled', 'riding', '
 // Takes one tick's signatures, after the step (was: each snake's head and
 // heading before it, and whether it has moved yet this round; brought up to date).
 function signatures(g, T, per, was) {
-  const N = T.GRID, mark = signatures.mark ||= new Int32Array(N * N), owner = signatures.owner ||= new Int32Array(N * N);
+  const N = T.GRID, mark = signatures.mark ||= new Int32Array(N * N);
   const stampOf = () => (signatures.stamp = (signatures.stamp || 0) + 1);
   const alive = g.snakes.filter(s => s.alive);
   const all = stampOf(); // (every living body's cells, for the skims)
-  for (const s of alive) for (const c of s.body) { mark[c.y * N + c.x] = all; owner[c.y * N + c.x] = s.id; }
+  for (const s of alive) for (const c of s.body) mark[c.y * N + c.x] = all;
   const bodyAt = (x, y) => x >= 0 && y >= 0 && x < N && y < N && mark[y * N + x] === all;
   for (const s of alive) {
     const p = per[s.name].sig, h = s.body[0], L = s.body.length;
@@ -145,7 +145,7 @@ function signatures(g, T, per, was) {
     if (victim && victim.alive) {
       p.hunting++;
       const vh = victim.body[0];
-      if (s.body.some(c => Math.abs(c.x - vh.x) + Math.abs(c.y - vh.y) <= 2)) p.boxing++;
+      if (Math.abs(vh.x - h.x) + Math.abs(vh.y - h.y) <= 4) p.boxing++;
     }
   }
   for (const e of g.events) {
@@ -322,7 +322,7 @@ const TRADEMARKS = [
   ['Ouroboros', 'coiled (10 long or more)', 'coiled', 'long', '%'], ['Creeper', 'riding a tail', 'riding', 'ticks', '%'],
   ['Ghost', 'cells from the nearest head', 'apart', 'ticks', 1], ['Gobbler', 'share of the food', 'foodShare', 'rounds', '%'],
   ['Vulture', 'share of the beads', 'beadShare', 'rounds', '%'], ['Sovereign', 'at home', 'atHome', 'homeTicks', '%'],
-  ['Mute', 'boxing its target (of ticks hunting)', 'boxing', 'hunting', '%'], ['Joker', 'luring a rival on', 'luring', 'ticks', '%'],
+  ['Mute', 'closing the box (its target within 4, of ticks hunting)', 'boxing', 'hunting', '%'], ['Joker', 'luring a rival on', 'luring', 'ticks', '%'],
   ['Desperado', 'skimming danger', 'skims', 'ticks', '%'], ['Star', 'flashes a minute', 'flashes', 'minutes', 1], ['Star', 'jumps a minute', 'jumps', 'minutes', 1],
 ];
 function reportSignatures(per) {
