@@ -41,6 +41,10 @@
 //   marks the way; with reduced motion the lift and shadow, no dust or trail.
 // - Bridges you can see: a body over a pit is shaded underneath and sags,
 //   its shadow falls into the pit, and a tail end over a hole droops, darker.
+// - Choking (staged from the engine's choke and nudge events): the cheeks
+//   puff and the bead is spat aside in an arc to where it went; coughing,
+//   the mouth stays shut and puffs of breath come out (with reduced motion
+//   too); nudged food rolls aside, and a beetle scurries.
 // - Every Field guide picture draws (the mushroom on bark; a snake holding
 //   golden powers; your rests).
 //
@@ -599,7 +603,7 @@ const STAGE = `(() => {
       SnakeDebug.pinQuality(0);
       const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
       const green = (r, g, b) => g > 150 && g > r + 40 && g > b + 30, trail = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b > 140 && b > 110 && !green(r, g, b);
-      const doStep = g => { for (const s of g.snakes) s.prev = s.body.map(c => ({ ...c })); E.step(g); R.onTick(g.events); };
+      const doStep = g => { for (const s of g.snakes) s.prev = s.body.map(c => ({ ...c })); E.step(g); g.food.length = 0; R.onTick(g.events); }; // (no food: an apple that turned up would pass for a body)
       const frame = al => { __t += 30; R.frame(al, __t); };
       const out = {};
       for (const still of [false, true]) for (const gold of [false, true]) {
@@ -681,6 +685,67 @@ const STAGE = `(() => {
       `its lower edge at ${f2(over.edge / over.top)} of its upper half's brightness (${f2(bark.edge / bark.top)} on the bark); ${over.width} pixels across, ${bark.width} on the bark`);
     check(over.pit < 0.95 * empty.pit, 'its shadow falls down into the pit', `the pit below it at ${f2(over.pit / empty.pit)} of its brightness with nobody over it`);
     check(over.tail < 0.75 * bark.tail, 'a tail end over a hole droops into it, darker', `at ${f2(over.tail / bark.tail)} of its brightness on the bark`);
+
+    // Choking and the cough (round six A), staged as the engine reports them
+    // (the choke and nudge events, s.coughUntil). Joker chokes on its own
+    // bead right in front of it and spits it aside: its cheeks puff out for
+    // a moment (its white face wider across), and the bead flies up over its
+    // head (purple over its white face half way) and lands where it went.
+    // Gobbler coughs with an apple right ahead: its mouth stays shut (it
+    // gapes at food otherwise) and puffs of breath come out past it, with
+    // reduced motion too. Food a coughing head nudges rolls there (half way,
+    // it's between the cells), and a beetle scurries.
+    const choke = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
+      const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
+      const centre = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0, sx = 0, sy = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) { n++; sx += (i / 4) % p.width; sy += Math.floor(i / 4 / p.width); } return n ? [+(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : null; };
+      const sky = (r, g, b) => b > 200 && g > 150 && r < 120, face = (r, g, b) => Math.min(r, g, b) > 215 || Math.max(r, g, b) < 40, mouth = (r, g, b) => r > 40 && r < 90 && g < 30 && b < 30;
+      const lime = (r, g, b) => g > 150 && r > 100 && r < 170 && b < 60, emerald = (r, g, b) => g > 110 && g > r + 60 && b > 80 && b < g;
+      const pale = (r, g, b) => Math.min(r, g, b) > 200 && b > 180;
+      const out = {};
+      const g = stage(['joker', 'gobbler', 'mason']), [you, jo, gob, ma] = g.snakes;
+      setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
+      setBody(jo, Array.from({ length: 6 }, (_, i) => [8 - i, 8]), 'right');
+      setBody(gob, Array.from({ length: 6 }, (_, i) => [8 - i, 16]), 'right');
+      setBody(ma, Array.from({ length: 6 }, (_, i) => [16, 6 - i]), 'down');
+      g.food.push({ x: 8, y: 10, kind: 'pellet', color: '#38bdf8', owner: jo.id, expires: g.tick + 900 }); // (sky: nothing else here is)
+      g.food.push({ x: 10, y: 16, kind: 'food', expires: g.tick + 900 });
+      g.food.push({ x: 15, y: 12, kind: 'food', expires: g.tick + 900 });
+      g.food.push({ x: 4, y: 12, kind: 'beetle', dir: E.DIRS.right, movedAt: g.tick - 50, expires: g.tick + 900 });
+      show(g); R.setViewer(99); drawN(20, 0.5); // (half way through the tick, drawn at its cells: nobody's moving)
+      // (each measured from where its head's drawn that frame, as it eases out of the move the drawing guessed it'd make)
+      const cheeks = () => { const [x, y] = at(jo); return count(x + 0.05, y - 0.8, 0.6, 0.24, face); }; // (white or ink, just past its face, on the side the bead doesn't fly over)
+      const shut = () => { const [x, y] = at(gob); return count(x, y - 0.4, 0.8, 0.8, mouth); }, puffed = () => { const [x, y] = at(gob); return count(x + 0.55, y - 0.45, 0.8, 0.9, pale); };
+      out.before = { cheeks: cheeks(), mouth: shut() };
+      g.tick++;
+      jo.coughUntil = g.tick + 9; gob.coughUntil = g.tick + 9;
+      R.onTick([{ type: 'choke', snake: jo, x: 9, y: 8, tx: 8, ty: 10 }, { type: 'nudge', snake: ma, kind: 'food', x: 16, y: 13, tx: 15, ty: 12 }, { type: 'nudge', snake: ma, kind: 'beetle', x: 5, y: 12, tx: 4, ty: 12 }]);
+      drawN(1, 0.05, 80);
+      out.gag = { cheeks: cheeks() };
+      drawN(1, 0.5, 80); // (half way: 160 ms)
+      out.mid = { bead: centre(7.5, 7.5, 3, 4, sky), apple: centre(14.2, 11.2, 3, 3, lime), beetle: centre(3, 11, 3, 2, emerald) };
+      g.tick++; drawN(4, 0.5, 80); // (the next tick: all of it there)
+      out.end = { bead: centre(7.5, 7.5, 3, 4, sky), apple: centre(14.2, 11.2, 3, 3, lime), beetle: centre(3, 11, 3, 2, emerald) };
+      const puffs = () => { let n = 0; for (let i = 0; i < 10; i++) { drawN(1, 0.5, 30); n = Math.max(n, puffed()); } return n; };
+      out.cough = { mouth: shut(), puffs: puffs() };
+      R.setReducedMotion(true);
+      out.still = { puffs: puffs() };
+      R.setReducedMotion(false);
+      gob.coughUntil = -1; g.tick++; drawN(10, 0.5, 30);
+      out.after = { mouth: shut(), puffs: puffed() };
+      SnakeDebug.pinQuality(2);
+      return out;
+    })()`);
+    const between = (c, x0, y0, x1, y1) => !!c && Math.min(x0, x1) + 0.1 < c[0] && c[0] < Math.max(x0, x1) - 0.1 && Math.min(y0, y1) - 0.05 < c[1] && c[1] < Math.max(y0, y1) + 0.05;
+    const bead = choke.mid.bead, line = 8.5 + 2 * (bead ? (9.5 - bead[0]) : 0); // (where on a straight slide from the cell ahead of it, 9, 8, to 8, 10, it'd be)
+    check(choke.gag.cheeks > choke.before.cheeks + 8 && between(bead, 8.5, 8.5, 9.5, 10.5) && bead[1] < line - 0.3 && !!choke.end.bead && Math.abs(choke.end.bead[0] - 8.5) < 0.12 && Math.abs(choke.end.bead[1] - 10.5) < 0.2,
+      'choking on its own bead, its cheeks puff out and it spits the bead aside, up in a little arc, to land where it went',
+      `its face just past its cheeks ${choke.before.cheeks} pixels, then ${choke.gag.cheeks} as it gags; the bead half way at ${bead} (a slide would be at y ${line.toFixed(2)}), then at ${choke.end.bead}`);
+    check(choke.before.mouth > 20 && choke.cough.mouth * 3 < choke.before.mouth && choke.after.mouth > 20 && choke.cough.puffs > 10 && choke.still.puffs > 10 && choke.after.puffs === 0, 'coughing, its mouth stays shut and puffs of breath come out past it (with reduced motion too)',
+      `Gobbler’s mouth, an apple right ahead: ${choke.before.mouth} pixels open, ${choke.cough.mouth} coughing, ${choke.after.mouth} after; puffs ${choke.cough.puffs}, with reduced motion ${choke.still.puffs}, after ${choke.after.puffs}`);
+    check(between(choke.mid.apple, 15.5, 12.5, 16.5, 13.5) && !!choke.end.apple && Math.abs(choke.end.apple[0] - 15.5) < 0.15 && between(choke.mid.beetle, 4.5, 12.5, 5.5, 12.5) && !!choke.end.beetle && Math.abs(choke.end.beetle[0] - 4.5) < 0.15,
+      'food a coughing head nudges rolls aside, and a beetle scurries', `the apple half way at ${choke.mid.apple}, then ${choke.end.apple}; the beetle ${choke.mid.beetle}, then ${choke.end.beetle}`);
 
     // The Field guide's pictures.
     const guide = await ev(`(() => {
