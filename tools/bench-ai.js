@@ -5,8 +5,9 @@
 // after a change, each as tools/simulate.js loads it), every position in turn
 // through both, so a busy machine slows both alike. Every position must come
 // out the same from both: the way it goes and everything it notes in its
-// memory, with the same random numbers. Needs only Node, and is gentle on the
-// machine: one core, at below-normal priority.
+// memory, with the same random numbers. (Each position is made over in each
+// copy's own context first, as that copy's engine would make it.) Needs only
+// Node, and is gentle on the machine: one core, at below-normal priority.
 //
 //   node tools/bench-ai.js [--base REV|DIR] [--root DIR] [--seed N] [--rounds N] [--every K] [--max N]
 //                          [--repeat R] [--only before|after] [--fresh]
@@ -26,7 +27,10 @@
 // time can't be read: the mean is the CPU counter's over every decision
 // (each tick lands on whichever decision is running), and the percentiles
 // are of each position's best wall-clock time of R (being kept waiting only
-// ever adds to one).
+// ever adds to one). Both are this thread's: the compiling V8 does on its
+// own threads (again, whenever compiled code meets something it wasn't
+// compiled for) isn't counted here, but a whole run of tools/simulate.js
+// pays for it.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
