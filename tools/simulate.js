@@ -25,7 +25,10 @@
 //             snakes are before the woodpecker comes and after, and the
 //             beads: how many were eaten (and how many by the snake they
 //             broke off), how often a snake choked on its own, and what it
-//             nudged aside coughing
+//             nudged aside coughing; and a table of it for each
+//             personality: its flashes and jumps a minute, golden power food
+//             picked up, golden leaps and dashes used, chokes, crashes
+//             survived, time alive, food and kills
 //   --signatures  also print each personality's trademark, measured on
 //             every snake so each has the field to stand against: Mason's
 //             straight runs and its body lying beside itself, Ouroboros's
@@ -204,6 +207,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt }, saved) {
     for (const s of g.snakes) {
       per[s.name] ||= {
         rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, beetles: 0, kills: 0, aliveMs: 0, deaths: {},
+        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, // (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, chokes, crashes survived)
         ...(signs ? { sig: Object.fromEntries(SIGNS.map(k => [k, 0])) } : {}),
       };
       per[s.name].rounds++;
@@ -230,7 +234,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt }, saved) {
       if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
       else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
       else if (e.type === 'flown') total.flown++;
-      else if (e.type === 'crash') total.crashes++;
+      else if (e.type === 'crash') { total.crashes++; per[e.snake.name].crashes++; }
       else if (e.type === 'alight') total.alight++;
       else if (e.type === 'cut') total.cuts++;
       else if (e.type === 'baked') total.baked++;
@@ -243,9 +247,9 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt }, saved) {
       else if (e.type === 'strike') c.strikes++;
       else if (e.type === 'peck') c.pecks++;
       else if (e.type === 'aim') { c.aims++; if (g.woodpecker.target.some(k => nearHead(g, k))) c.aimsNear++; }
-      else if (e.type === 'leap') { if (e.gold) c.goldLeaps++; else c.jumps++; }
-      else if (e.type === 'dash') { if (e.plain) c.flashes++; else c.dashes++; }
-      if (e.type === 'choke') { c.chokes++; seen.add('choke'); }
+      else if (e.type === 'leap') { if (e.gold) { c.goldLeaps++; per[e.snake.name].leaps++; } else { c.jumps++; per[e.snake.name].jumps++; } }
+      else if (e.type === 'dash') { if (e.plain) { c.flashes++; per[e.snake.name].flashes++; } else { c.dashes++; per[e.snake.name].dashes++; } }
+      if (e.type === 'choke') { c.chokes++; per[e.snake.name].chokes++; seen.add('choke'); }
       else if (e.type === 'nudge') { c.nudges++; if (e.kind === 'pellet') c.nudgedBeads++; }
       if (e.type === 'eat') {
         if (e.kind === 'pellet') { c.beads++; if (e.own) c.ownBeads++; }
@@ -281,6 +285,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt }, saved) {
     p.placeSum += place.get(s) || 1;
     p.eaten += s.eaten;
     p.pellets += s.pellets;
+    p.golden += picked[s.id];
     if (s.alive) p.aliveMs += g.time;
     if (signs) { p.sig.foodShare += s.eaten / Math.max(1, food); p.sig.beadShare += s.pellets / Math.max(1, beads); }
   }
@@ -359,6 +364,16 @@ function report({ per, total, suddenAt }, withCensus) {
     'self/wall%': pct((p.deaths.self || 0) + (p.deaths.wall || 0), p.rounds),
     'starved%': pct(p.deaths.starved || 0, p.rounds),
   })).sort((a, b) => b['win%'] - a['win%'] || a.place - b.place));
+}
+
+// --census, for each personality: a round's worth of each (or a minute alive's).
+function reportCensus(per) {
+  console.log('census, each personality (a round played; flashes and jumps a minute alive; golden: golden power food picked up)');
+  console.table(Object.keys(per).sort().map(name => {
+    const p = per[name], R = Math.max(1, p.rounds), minutes = Math.max(1e-9, p.aliveMs / 60000), f = (n, d = R) => +(n / d).toFixed(2);
+    return { name, rounds: p.rounds, alive: `${Math.round(p.aliveMs / R / 1000)}s`, food: f(p.eaten), kills: f(p.kills), crashes: f(p.crashes), chokes: f(p.chokes),
+      'flash/min': f(p.flashes, minutes), 'jump/min': f(p.jumps, minutes), golden: f(p.golden), leaps: f(p.leaps), dashes: f(p.dashes) };
+  }));
 }
 
 // --signatures: each trademark as a ratio of two sums (see SIGNS), for one
@@ -489,6 +504,7 @@ if (isMainThread) {
     if (json) console.log(JSON.stringify(merged));
     else {
       report(merged, flag('--census'));
+      if (flag('--census')) reportCensus(merged.per);
       if (flag('--signatures')) reportSignatures(merged.per);
     }
     if (flag('--check')) {
