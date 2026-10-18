@@ -287,6 +287,12 @@ window.SnakeAI = (() => {
   const BUG_AHEAD = 16;    // how many moves ahead I read a beetle's way...
   const BUG_HURRY = 2;     // ...and how much a move longer to catch one counts against it, as a step further counts for an apple (a beetle on the run is a meal only while I keep after it: at 1, chases dragged on)
   const BUG_WAYS = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }]; // (the order a beetle weighs its ways in: up, right, down, left)
+  // How much less a move counts the further on in the search it is: eating
+  // (a bonus for eating sooner), risk and turning, worked out once for the
+  // first STEPS_AHEAD steps (every move reads them).
+  const STEPS_AHEAD = 32;
+  const perStep = r => Float64Array.from({ length: STEPS_AHEAD }, (_, t) => Math.pow(r, t));
+  const SOONER = perStep(0.85), RISK_AHEAD = perStep(0.6), TURN_AHEAD = perStep(0.9);
 
   // Scratch buffers, reused between calls (grid size is fixed per page), so the
   // search allocates next to nothing however many positions it scores. Besides
@@ -432,10 +438,10 @@ window.SnakeAI = (() => {
     const stunLeft = o => Math.max(0, (o.stun || 0) - age);
     for (const o of others) {
       const L = o.body.length, still = stunLeft(o);
-      o.body.forEach((c, j) => {
-        const i = c.y * N + c.x;
+      for (let j = 0; j < L; j++) {
+        const c = o.body[j], i = c.y * N + c.x;
         otherFree[i] = Math.max(otherFree[i], L - j + still);
-      });
+      }
     }
     mineFree.set(otherFree);
 
@@ -979,15 +985,18 @@ window.SnakeAI = (() => {
     } else bugCell[0] = -1;
     // The beetle's crawl after my move s + 1 (the tick s from now), with my
     // head then at (hx, hy): from its state in slot `from` into slot `to`.
+    const bugRest = Math.min(TUNE.BEETLE_SCARED_EVERY, TUNE.BEETLE_EVERY); // (it never crawls sooner than this)
     function bugStep(from, to, s, hx, hy) {
       const c = bugCell[from], way = bugWay[from], movedAt = bugMoved[from];
       bugCell[to] = c; bugWay[to] = way; bugMoved[to] = movedAt;
       if (c < 0) return;
+      const since = view.tick + s - movedAt;
+      if (since < bugRest) return; // (too soon to crawl, scared or not)
       const x = c % N, y = (c - x) / N;
       let fear = Math.abs(x - hx) + Math.abs(y - hy), fx = hx, fy = hy;
-      for (const h of heads) { const d = Math.abs(x - h.x) + Math.abs(y - h.y); if (d < fear) { fear = d; fx = h.x; fy = h.y; } }
+      for (let k = 0; k < heads.length; k++) { const h = heads[k], d = Math.abs(x - h.x) + Math.abs(y - h.y); if (d < fear) { fear = d; fx = h.x; fy = h.y; } }
       const scared = fear <= TUNE.BEETLE_FEAR;
-      if (view.tick + s - movedAt < (scared ? TUNE.BEETLE_SCARED_EVERY : TUNE.BEETLE_EVERY)) return;
+      if (since < (scared ? TUNE.BEETLE_SCARED_EVERY : TUNE.BEETLE_EVERY)) return;
       let home = -1, homeGap = 7;
       if (scared) for (const b of burrows) { const g = Math.abs(b % N - x) + Math.abs((b - b % N) / N - y); if (g < homeGap) { homeGap = g; home = b; } }
       let best = -1, bestScore = -Infinity;
@@ -1328,8 +1337,9 @@ window.SnakeAI = (() => {
       if (!muted) foodValue[i] = 0; // (eaten, or spat aside)
       if (caught) bugCell[t + 1] = -1; else if (bugV > 0) bugStep(t, t + 1, t, nx, ny);
       if (choked) mute = t + TUNE.COUGH_TICKS;
-      let gain = v * (foodW * w.foodRange + eatW * Math.pow(0.85, t)) - risk[i] * Math.pow(0.6, t);
-      if (turning && w.turn) gain -= w.turn * Math.pow(0.9, t);
+      const ahead = t < STEPS_AHEAD;
+      let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t));
+      if (turning && w.turn) gain -= w.turn * (ahead ? TURN_AHEAD[t] : Math.pow(0.9, t));
       const score = depth <= 1
         ? evaluate(nb, nlen, g, t + 1) + bonus + gain
         : search(nb, nlen, g, depth - 1, t + 1, bonus + gain);
