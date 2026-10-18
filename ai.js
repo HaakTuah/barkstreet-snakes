@@ -1444,8 +1444,8 @@ window.SnakeAI = (() => {
           if (j <= span) { const c = path[span - j]; nb[j].x = c % N; nb[j].y = (c - nb[j].x) / N; }
           else { const b = me.body[j - span - 1]; nb[j].x = b.x; nb[j].y = b.y; }
         }
+        if (bugV > 0) bugStep(0, 1, 0, path[0] % N, (path[0] - path[0] % N) / N); // (a beetle runs from me in the air, and I come down where it is then)
         // (It eats where it lands, and a golden leap what it crawls over first.)
-        if (bugV > 0) bugStep(0, 1, 0, path[0] % N, (path[0] - path[0] % N) / N); // (it runs from me in the air, and I come down where it is then)
         eatOn(span === 2 && !hurdle(path[0]) ? path[0] : -1, land, -1, L, g, 0.85, 2);
         if (ateBug) bugCell[2] = -1; else if (bugV > 0) bugStep(1, 2, 1, land % N, (land - land % N) / N);
         endRisk = risk[land];
