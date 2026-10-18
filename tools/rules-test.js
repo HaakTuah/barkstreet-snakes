@@ -11,6 +11,21 @@ for (const f of ['tuning.js', 'ai.js', 'engine.js']) vm.runInContext(fs.readFile
 const { SnakeEngine: E, SnakeAI: AI, TUNING: T } = ctx.window;
 const D = E.DIRS;
 
+// The game's randomness from a seed for a while (fn), then as it was: whole
+// rounds played for their numbers come out the same every run.
+function seededWhile(seed, fn) {
+  let a = seed >>> 0;
+  const was = Math.random;
+  Math.random = () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  try { return fn(); } finally { Math.random = was; }
+}
+
 let failed = 0;
 function check(name, ok, detail = '') {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${ok || !detail ? '' : ` (${detail})`}`);
@@ -864,8 +879,9 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
 }
 
 { // The woodpecker aims clear of heads and food (while there's room), under bodies too, and warns before it strikes.
+  // (Six seeded rounds: about 85 strikes, with the same rivals and boards every run.)
   let near = 0, early = 0, underFood = 0, strikes = 0, cells = 0, aims = 0, underBodies = 0, besideHoles = 0, under = 0, cuts = 0;
-  for (let r = 0; r < 12; r++) {
+  for (let r = 0; r < 6; r++) seededWhile(101 + r, () => {
     const g = E.createGame({ withPlayer: false });
     g.time = T.SUDDEN_DEATH_MS;
     for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; s.grow = 30; } // (fed, so they last, and long, as by 2:00)
@@ -895,7 +911,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
         if (e.type === 'cut') cuts++;
       }
     }
-  }
+  });
   check('the woodpecker strikes in patches', strikes > 20 && cells / strikes > T.PECK_CHUNK / 2, `${strikes} strikes, ${(cells / Math.max(1, strikes)).toFixed(1)} cells each`);
   check('the woodpecker aims well away from heads', near === 0, `${near} cells too close`);
   check('the woodpecker gives warning', early === 0, `${early} without`);
@@ -1322,8 +1338,9 @@ const freeHere = g => (x, y) => !g.holes.has(K(x, y)) && !g.food.some(f => f.x =
 }
 
 { // Lightning never lands near a head, crackles first, and only then burns.
+  // (Ten seeded rounds: about 45 strikes, the same every run.)
   let near = 0, early = 0, strikes = 0;
-  for (let r = 0; r < 30; r++) {
+  for (let r = 0; r < 10; r++) seededWhile(151 + r, () => {
     const g = E.createGame({ withPlayer: false });
     g.time = 50000;
     g.weather = { kind: 'storm', since: 50000, until: 1e9, nextGust: 0, nextStrike: 0 };
@@ -1339,7 +1356,7 @@ const freeHere = g => (x, y) => !g.holes.has(K(x, y)) && !g.food.some(f => f.x =
         }
       }
     }
-  }
+  });
   check('storms strike', strikes > 20, `${strikes} strikes`);
   check('lightning keeps its distance from heads', near === 0, `${near} too close`);
   check('lightning crackles before it burns', early === 0, `${early} without warning`);

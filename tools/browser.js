@@ -103,7 +103,8 @@ async function launch() {
       await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile });
       await send('Emulation.setTouchEmulationEnabled', { enabled: mobile, maxTouchPoints: mobile ? 5 : 1 });
     },
-    async go(url) { const loaded = once('Page.loadEventFired'); await send('Page.navigate', { url }); await loaded; await sleep(400); },
+    // Loads a page, then lets it settle for a moment (settle: ms; 0 for a page that says itself when it's ready).
+    async go(url, { settle = 400 } = {}) { const loaded = once('Page.loadEventFired'); await send('Page.navigate', { url }); await loaded; if (settle) await sleep(settle); },
     async eval(expr) {
       const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true, userGesture: true });
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);
