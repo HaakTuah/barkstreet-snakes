@@ -6,7 +6,10 @@
 // comes first), one run at a time across the machine (a second run waits
 // its turn), and a seeded round already played with the same files and
 // options is read back from a cache instead of played again (round by
-// round: 600 rounds after 200 plays only the 400 new ones).
+// round: 600 rounds after 200 plays only the 400 new ones). The files are
+// read once its turn has come, and the cores play those very texts, so what
+// a round is stored under is always what played it, even if a file is edited
+// while the run waits or plays.
 //
 //   node tools/simulate.js [rounds] [--seed N] [--ahead] [--check] [--json] [--census] [--signatures] [--root DIR]
 //                          [--save-at MS [--save FILE]] [--from FILE] [--per-round] [--workers N] [--fresh] [--no-wait]
@@ -61,13 +64,25 @@ const vm = require('vm');
 const zlib = require('zlib');
 const crypto = require('crypto');
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
-const State = require('./snapshots/state.js');
 
 // (Workers don't see the command line, so the root travels with each job.)
 const argRoot = process.argv.indexOf('--root');
 const ROOT = isMainThread ? (argRoot > 0 ? path.resolve(process.argv[argRoot + 1]) : path.join(__dirname, '..')) : workerData.root;
 const MAX_TIME = 600000; // a round still going after 10 minutes counts as stalled
 const GAME_FILES = ['tuning.js', 'ai.js', 'engine.js'];
+
+// A CommonJS file run from its text, as if required from where it lies: how
+// a core runs this file and the state store, as they were read for the key.
+function fromText(text, file) {
+  const mod = { exports: {} };
+  vm.compileFunction(text.replace(/^#!.*/, ''), ['exports', 'require', 'module', '__filename', '__dirname'], { filename: file })
+    .call(mod.exports, mod.exports, require('module').createRequire(file), mod, file, path.dirname(file));
+  return mod.exports;
+}
+// What a core starts with: this file's text as the run began (not as the file
+// is by then), through fromText.
+const BOOT = `const vm = require('vm'), path = require('path'), { workerData } = require('worker_threads');
+(${fromText})(workerData.self, workerData.selfFile);`;
 
 // mulberry32: a small, fast seeded random number generator. (state(): where
 // it's got to; seeded(that) goes on from there.)
@@ -84,16 +99,15 @@ function seeded(seed) {
   return next;
 }
 
-// The game's files in a fresh context, with our own Math.random.
-// Math.random draws from `rng`, which can be reseeded for every round.
+// The game's files (texts, in GAME_FILES order) in a fresh context, with our
+// own Math.random. Math.random draws from `rng`, which can be reseeded for
+// every round.
 let rng = Math.random;
-function loadGame(files = GAME_FILES) {
+function loadGame(texts) {
   const M = Object.create(Math);
   M.random = () => rng();
   const ctx = vm.createContext({ window: {}, console, Math: M });
-  for (const f of files) {
-    vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
-  }
+  GAME_FILES.forEach((f, i) => vm.runInContext(texts[i], ctx, { filename: f }));
   return { E: ctx.window.SnakeEngine, T: ctx.window.TUNING, ctx };
 }
 
@@ -461,9 +475,18 @@ if (isMainThread && require.main === module) {
   try { os.setPriority(os.constants.priority.PRIORITY_BELOW_NORMAL); } catch {} // (the machine's own user comes first; the worker threads share this priority)
   const hash = (...parts) => crypto.createHash('sha1').update(parts.join('\u0000')).digest('hex');
   const read = f => fs.readFileSync(f, 'utf8');
-  // (What rounds are played with: the game's files, and this file and the
-  // state store too, since what a run counts can change.)
-  const filesKey = hash(...GAME_FILES.map(f => read(path.join(ROOT, f))), read(__filename), read(require.resolve('./snapshots/state.js')));
+  // What rounds are played with: the game's files, and this file and the
+  // state store too, since what a run counts can change; and their key. The
+  // cores are handed these very texts (this file's as the run began), so the
+  // key is always that of the code played. They're read again once the lock
+  // is taken: whatever was edited while the run waited is played, and
+  // stored, as it is now.
+  const SELF = { text: read(__filename), file: __filename }, STATE_FILE = require.resolve('./snapshots/state.js');
+  const snapshot = () => {
+    const game = GAME_FILES.map(f => read(path.join(ROOT, f))), state = read(STATE_FILE);
+    return { game, state, key: hash(...game, SELF.text, state) };
+  };
+  let files = snapshot();
   const CACHE = path.join(os.tmpdir(), 'barkbite-sim-cache');
 
   // --from: the stored rounds (the first line says how they were stored).
@@ -489,15 +512,20 @@ if (isMainThread && require.main === module) {
 
   // A seeded round is the same every time with the same files and options,
   // so each is cached (in the system's temp folder) and read back; stored
-  // states too, by the files and seed that played them.
-  const statesKey = saveAt == null ? null : hash(filesKey, JSON.stringify({ seed, signs, saveAt, v: 2 }));
-  const cached = seed == null ? null : saveAt != null ? path.join(CACHE, `states-${statesKey}.jsonl.gz`)
-    : path.join(CACHE, hash(filesKey, JSON.stringify({ seed, ahead, signs, from: fromKey, v: 2 })) + '.jsonl.gz');
-  const head = () => JSON.stringify({ states: 2, key: statesKey, seed, saveAt, signs, root: ROOT });
+  // states too, by the files and seed that played them. (look: the cache's
+  // file for the files read, and what it has.)
+  let statesKey, cached, have; // (have: round -> its line)
   const cachedLines = () => { const lines = readLines(cached); return saveAt != null ? lines.slice(1) : lines; };
   const fromCache = () => !cached || flag('--fresh') ? new Map() : linesByRound(cachedLines());
-  const have = fromCache(); // (round -> its line)
-  if (have.size) { try { fs.utimesSync(cached, new Date(), new Date()); } catch {} }
+  const look = () => {
+    statesKey = saveAt == null ? null : hash(files.key, JSON.stringify({ seed, signs, saveAt, v: 2 }));
+    cached = seed == null ? null : saveAt != null ? path.join(CACHE, `states-${statesKey}.jsonl.gz`)
+      : path.join(CACHE, hash(files.key, JSON.stringify({ seed, ahead, signs, from: fromKey, v: 2 })) + '.jsonl.gz');
+    have = fromCache();
+    if (have.size) { try { fs.utimesSync(cached, new Date(), new Date()); } catch {} }
+  };
+  look();
+  const head = () => JSON.stringify({ states: 2, key: statesKey, seed, saveAt, signs, root: ROOT });
   const missing = () => Array.from({ length: rounds }, (_, r) => r).filter(r => !have.has(r) && !(stored && ROUND.exec(stored.get(r))[2] === 'done'));
 
   const finish = merged => {
@@ -526,7 +554,7 @@ if (isMainThread && require.main === module) {
       return;
     }
     const results = Array.from({ length: rounds }, (_, r) => parsed(have.get(r) || stored.get(r)));
-    const T = (() => { const ctx = vm.createContext({ window: {} }); vm.runInContext(read(path.join(ROOT, 'tuning.js')), ctx); return ctx.window.TUNING; })();
+    const T = (() => { const ctx = vm.createContext({ window: {} }); vm.runInContext(files.game[GAME_FILES.indexOf('tuning.js')], ctx); return ctx.window.TUNING; })();
     const merged = merge(results, T.SUDDEN_DEATH_MS);
     if (json) { merged.played = played; if (flag('--per-round')) merged.rounds = results; }
     finish(merged);
@@ -552,14 +580,22 @@ if (isMainThread && require.main === module) {
     }
     process.on('exit', () => { try { if (fs.readFileSync(lock, 'utf8') === String(process.pid)) fs.unlinkSync(lock); } catch {} });
     for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => process.exit(130));
-    if (told) { for (const [r, line] of fromCache()) if (!have.has(r)) have.set(r, line); todo = missing(); } // (whoever went first may have played these very rounds)
+    // The files as they are now, our turn come, are what's played and stored
+    // under (and whoever went first may have played these very rounds).
+    const now = snapshot();
+    if (now.key !== files.key) {
+      files = now;
+      if (!json) console.error('(the files changed while this run waited: they play as they are now)');
+    }
+    if (told || files === now) { look(); todo = missing(); }
+    if (!todo.length) { done(); return; }
   }
   // The rounds go out one at a time to whichever core is free, so a long one
   // doesn't hold the rest up. (Each round has its own seed: it comes out the
   // same whichever core plays it, after whichever round.)
   const queue = [...todo], cores = Math.min(workers, todo.length), cpu = process.cpuUsage(), t0 = Date.now();
   Promise.all(Array.from({ length: cores }, () => new Promise((resolve, reject) => {
-    const w = new Worker(__filename, { workerData: { root: ROOT, seed, ahead, signs, saveAt } });
+    const w = new Worker(BOOT, { eval: true, workerData: { self: SELF.text, selfFile: SELF.file, game: files.game, state: files.state, stateFile: STATE_FILE, root: ROOT, seed, ahead, signs, saveAt } });
     const feed = () => { const r = queue.shift(); w.postMessage(r === undefined ? null : { r, saved: stored ? stored.get(r) : null }); };
     w.on('message', ({ r, line }) => { have.set(r, line); feed(); });
     w.once('error', reject);
@@ -582,8 +618,10 @@ if (isMainThread && require.main === module) {
     done({ rounds: todo.length, cpu: seconds });
   }).catch(err => { console.error(err); process.exit(1); });
 } else if (!isMainThread) {
-  // A core: plays the rounds it's handed (or goes on with them), one at a time.
-  const { E, T, ctx } = loadGame();
+  // A core: plays the rounds it's handed (or goes on with them), one at a
+  // time, with the files' texts it was handed (the ones in the key).
+  const State = fromText(workerData.state, workerData.stateFile);
+  const { E, T, ctx } = loadGame(workerData.game);
   const roots = { SnakeAI: ctx.window.SnakeAI, SnakeEngine: ctx.window.SnakeEngine, TUNING: ctx.window.TUNING };
   const known = State.known(roots), decode = State.decoder(ctx), pristine = State.fingerprint(roots);
   parentPort.on('message', job => {
