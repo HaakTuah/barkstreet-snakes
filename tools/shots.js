@@ -5,7 +5,9 @@
 //   node tools/shots.js [outDir]      (default: shots/)
 //
 // Your snake is steered by an autopilot (a rival's brain, through real key
-// events) until a lively moment, then crashed on purpose.
+// events) until a lively moment, then crashed on purpose. Moments too rare
+// to wait for (round six A's jumps, bridges, Star's gag, a choke, a pecked
+// flag) are staged on a still board, on the desktop and the phone.
 const path = require('path');
 const fs = require('fs');
 const { launch, serve, HELPERS } = require('./browser');
@@ -54,7 +56,91 @@ fs.mkdirSync(out, { recursive: true });
     await b.sleep(400);
     await shot(`${prefix}star-gold.jpg`);
   };
+  // Round six A's looks, staged on a still board (the page's own loop
+  // stopped, frames drawn by hand on a clock of their own, as render-test
+  // does): a jump at its top over a body (jump), bodies over holes and a
+  // tail hanging into one (bridge), Star half way through its mustache gag
+  // beside Copycat's stick-on one (star-gag), a choke and a cough (choke), a
+  // pecked colony's flag falling into its pit and Sovereign's banner carried
+  // to its new capital (flag). (The board only: the tags round it are the
+  // page's own round's.)
+  const stagedShots = async prefix => {
+    await b.go(URL);
+    await b.eval(`(() => {
+      window.__autoRaf = false;
+      window.E = SnakeEngine; window.R = SnakeRender;
+      window.__t = performance.now() + 1e6;
+      window.drawN = (n, alpha = 0.5, step = 33) => { for (let i = 0; i < n; i++) { __t += step; R.frame(alpha, __t); } return n; };
+      window.setBody = (s, cells, dir) => { s.body = cells.map(([x, y]) => ({ x, y })); s.prev = s.body.map(c => ({ ...c })); s.dir = E.DIRS[dir]; s.queue = []; s.planned = null; };
+      window.stage = personas => { const g = E.createGame({ withPlayer: true, personas }); g.food = []; g.time = 60000; g.tick = 500; g.weather.until = 1e12; g.snakes.forEach((s, i) => { setBody(s, [[2 + 4 * i, 23], [1 + 4 * i, 23], [4 * i, 23]], 'right'); s.nextStarve = 1e15; }); return g; };
+      window.show = g => { document.getElementById('overlay').classList.add('hidden'); R.setViewer(0); R.setGame(g); return g; };
+      window.doStep = g => { for (const s of g.snakes) s.prev = s.body.map(c => ({ ...c })); E.step(g); g.food.length = 0; R.onTick(g.events); };
+      return 'ok';
+    })()`);
+    const STAGED = {
+      jump: `(() => {
+        const g = stage(['gobbler', 'sniper', 'mason']), [you, gob, sn, ma] = g.snakes;
+        setBody(you, Array.from({ length: 9 }, (_, i) => [9 - i, 12]), 'right'); you.leapReadyAt = 0;
+        setBody(gob, Array.from({ length: 12 }, (_, i) => [10, 17 - i]), 'up');
+        setBody(sn, Array.from({ length: 10 }, (_, i) => [20, 3 + i]), 'up');
+        setBody(ma, Array.from({ length: 8 }, (_, i) => [15 - i, 20]), 'right');
+        show(g); drawN(10, 1);
+        E.leap(g, you);
+        for (const al of [0.25, 0.5, 0.75]) drawN(1, al, 30);
+        doStep(g);
+        for (const al of [0, 0.25, 0.5]) drawN(1, al, 30);
+      })()`,
+      bridge: `(() => {
+        const g = stage(['sniper', 'ghost', 'mason']), [you, sn, gh, ma] = g.snakes;
+        for (const y of [9, 10, 11, 12, 13]) for (const x of [11, 12]) g.holes.add(y * 24 + x);
+        g.holes.add(17 * 24 + 6); g.holes.add(17 * 24 + 7);
+        setBody(you, Array.from({ length: 10 }, (_, i) => [16 - i, 11]), 'right');
+        setBody(sn, Array.from({ length: 9 }, (_, i) => [8 + i, 13]), 'left');
+        setBody(gh, [[4, 17], [5, 17], [6, 17]], 'left');
+        setBody(ma, Array.from({ length: 8 }, (_, i) => [20, 4 + i]), 'up');
+        show(g); drawN(12, 0.5);
+      })()`,
+      'star-gag': `(() => {
+        const g = stage(['star', 'copycat', 'mason']), [you, st, cc, ma] = g.snakes;
+        setBody(st, Array.from({ length: 9 }, (_, i) => [9, 11 - i]), 'down'); st.flashReadyAt = g.time + 3000;
+        setBody(cc, Array.from({ length: 9 }, (_, i) => [14 - i, 15]), 'right'); cc.memory.modelId = st.id;
+        setBody(you, Array.from({ length: 6 }, (_, i) => [17, 6 + i]), 'up');
+        show(g); drawN(20);
+        R.flick(st, 0.5); R.flick(cc, 0.5); drawN(1, 0.5, 0.01);
+      })()`,
+      choke: `(() => {
+        const g = stage(['gobbler', 'mason', 'ghost']), [you, gob, ma, gh] = g.snakes;
+        setBody(you, Array.from({ length: 8 }, (_, i) => [11 - i, 9]), 'right');
+        setBody(gob, Array.from({ length: 8 }, (_, i) => [11 - i, 14]), 'right');
+        setBody(ma, Array.from({ length: 6 }, (_, i) => [18, 4 + i]), 'up');
+        g.food.push({ x: 11, y: 11, kind: 'pellet', color: you.color, owner: you.id, expires: g.tick + 900 });
+        g.food.push({ x: 13, y: 14, kind: 'food', expires: g.tick + 900 });
+        gob.coughUntil = g.tick + 30; // (Gobbler's been coughing a while, its mouth shut by an apple right ahead: a puff on its way out)
+        show(g); drawN(16, 0.5);
+        g.tick++; you.coughUntil = g.tick + 9;
+        R.onTick([{ type: 'choke', snake: you, x: 12, y: 9, tx: 11, ty: 11 }]); // (you gag and spit your bead aside)
+        drawN(2, 0.5, 40);
+      })()`,
+      flag: `(() => {
+        const g = stage(['colonist', 'sovereign', 'mason']), [you, col, sov, ma] = g.snakes;
+        setBody(col, Array.from({ length: 6 }, (_, i) => [2 + i, 2]), 'left');
+        setBody(sov, Array.from({ length: 6 }, (_, i) => [22 - i, 22]), 'right');
+        col.memory.colonies = [{ x: 5, y: 8, radius: 3, n: 1 }, { x: 12, y: 7, radius: 3, n: 2 }];
+        sov.memory.home = { x: 17, y: 15, radius: 4 };
+        show(g); drawN(30, 0.5, 60);
+        for (const k of [7 * 24 + 12, 7 * 24 + 13, 8 * 24 + 12, 15 * 24 + 17, 15 * 24 + 16, 16 * 24 + 17]) g.holes.add(k);
+        g.tick++; R.onTick([{ type: 'peck', x: 12, y: 7, cells: [7 * 24 + 12] }]);
+        drawN(2, 0.5, 60);
+        col.memory.colonies = [col.memory.colonies[0]]; sov.memory.home = { x: 12, y: 14, radius: 4 }; g.tick++;
+        drawN(5, 0.5, 60);
+      })()`,
+    };
+    for (const [name, code] of Object.entries(STAGED)) { await b.eval(code); await shot(`${prefix}${name}.jpg`); }
+    await b.eval(`window.__autoRaf = true; 'ok'`);
+  };
   try {
+    // A switch for the page's animation loop, for the staged shots (on, but for them).
+    await b.send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => { const raw = window.requestAnimationFrame.bind(window); window.__autoRaf = true; window.requestAnimationFrame = cb => raw(ts => { if (window.__autoRaf) cb(ts); }); })();` });
     // ---------------------------------------------------------------- desktop
     await b.viewport(800, 800);
     await b.go(URL);
@@ -140,6 +226,7 @@ fs.mkdirSync(out, { recursive: true });
     await b.go(URL);
     await b.eval(HELPERS);
     await starShots('');
+    await stagedShots('');
 
     // ----------------------------------------------------------------- a laptop
     await b.viewport(1280, 720);
@@ -165,6 +252,7 @@ fs.mkdirSync(out, { recursive: true });
     await b.go(URL);
     await b.eval(HELPERS);
     await starShots('mobile-');
+    await stagedShots('mobile-');
 
     // ------------------------------------------------------ a phone on its side
     await b.viewport(812, 375, { scale: 2, mobile: true });
