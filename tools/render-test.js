@@ -47,6 +47,14 @@
 //   puff and the bead is spat aside in an arc to where it went; coughing,
 //   the mouth stays shut and puffs of breath come out (with reduced motion
 //   too); nudged food rolls aside, and a beetle scurries.
+// - Beetles and the woodpecker's knock (staged from the engine's state and
+//   events): two beetles out at once, each drawn; a cornered one digs in
+//   (it sinks, a collar of sawdust round it, sawdust spraying, and a heap
+//   left where it went in, a few seconds; with reduced motion, still and no
+//   spray); through the aim, food in the mark trembles and a ring marks
+//   where it'll be knocked to; at the strike it flies there in an arc,
+//   rimmed so it reads over a body, and a beetle scurries there. Copycat
+//   copying Star keeps its own red head.
 // - A pecked flag is a lost colony: the flag tips and falls into the pit
 //   (the other colony's stands), its land shrinks away into the pit, and
 //   Sovereign's banner is carried to its new capital, not jumping there.
@@ -613,6 +621,7 @@ const STAGE = `(() => {
       out.copy = SEGS.map(i => seg(cc, i));
       out.star = SEGS.map(i => seg(st, i));
       out.tint = R.colorOf(cc);
+      { const [hx, hy] = at(cc); out.head = rgb(hx + 0.02, hy + 0.3); } // (its head, below its eye: its own red)
       // Star out: its shockwave, held still (reduced motion), a moment on.
       R.setReducedMotion(true);
       const g2 = stage(['star', 'ghost', 'mason']), s2 = g2.snakes[1];
@@ -632,6 +641,8 @@ const STAGE = `(() => {
     check(new Set(copyHues).size === 4 && copyHues.every((h, i) => dh(h, starHues[i]) < 14) && paler && bows.tint !== '#f3d577',
       'Copycat copying Star wears a pale copy of its rainbow, flowing with Star’s, not a pale gold',
       `hues of segments 2, 3, 4, 7: ${copyHues.join(', ')} (Star’s ${starHues.join(', ')}); ${JSON.stringify(bows.copy)} against ${JSON.stringify(bows.star)}; its colour ${bows.tint}`);
+    const [hr, hg, hb] = bows.head;
+    check(hr > 170 && hg < 90 && hb < 80, 'copying Star, Copycat’s cat-eared head keeps its own red, the flag’s', `its head ${bows.head.join(', ')} (its own #de2910 is 222, 41, 16)`);
     const ringWant = [32, 55, 130, 205]; // (orange, yellow, green, blue: the arcs at 0°, 60°, 120° and 180°)
     check(bows.ring.every((h, i) => dh(h, ringWant[i]) < 25), 'Star goes off in a ring of its rainbow, not its stand-in gold',
       `the ring’s hues at 0°, 60°, 120°, 180°: ${bows.ring.join(', ')} (want about ${ringWant.join(', ')})`);
@@ -838,6 +849,138 @@ const STAGE = `(() => {
     check(between(choke.mid.apple, 15.5, 12.5, 16.5, 13.5) && !!choke.end.apple && Math.abs(choke.end.apple[0] - 15.5) < 0.15 && between(choke.mid.beetle, 4.5, 12.5, 5.5, 12.5) && !!choke.end.beetle && Math.abs(choke.end.beetle[0] - 4.5) < 0.15,
       'food a coughing head nudges rolls aside, and a beetle scurries', `the apple half way at ${choke.mid.apple}, then ${choke.end.apple}; the beetle ${choke.mid.beetle}, then ${choke.end.beetle}`);
 
+    // Beetles and the woodpecker's knock (round six A), staged as the engine
+    // reports them: two beetles out at once; b.digUntil and the dig and dive
+    // events; the woodpecker's mark and the knock events, to where its
+    // knockTo says (the engine's own; a stand-in by the same rule where the
+    // engine here has none). Two beetles: one walks on, a cell every other
+    // tick, and both are drawn every frame; the other, cornered, digs in:
+    // smaller as it goes down, a collar of sawdust round it, sawdust spraying
+    // off it to the end; gone (its dive), a heap of sawdust where it went in,
+    // gone itself a few seconds later. With reduced motion: no spray, and it's
+    // drawn sunk part way, still. Through the aim, food in the mark trembles
+    // and food outside it doesn't, and a ring marks where the rule will knock
+    // it; at the strike it flies there, up in an arc, rimmed in ink and
+    // parchment over whatever it crosses, and a beetle knocked scurries
+    // there. Counts and centres are of pixels changed against the bare
+    // board, as the choke's are.
+    const dug = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const N = TUNING.GRID;
+      E.knockTo ||= (g, x, y, cells) => { // (the rule: the nearest free cell outside the patch, then nearest the log's middle, then the first)
+        const mark = new Set(cells), busy = new Set();
+        for (const s of g.snakes) if (s.alive) for (const c of s.body) busy.add(c.y * N + c.x);
+        for (const f of g.food) busy.add(f.y * N + f.x);
+        let best = null, bd = Infinity, bm = Infinity;
+        for (let k = 0; k < N * N; k++) {
+          const f = g.fires.get(k);
+          if (mark.has(k) || busy.has(k) || g.holes.has(k) || (f && g.tick >= f.from && g.tick < f.until)) continue;
+          const cx = k % N, cy = (k - cx) / N, d = Math.hypot(cx - x, cy - y), m = Math.abs(cx - (N - 1) / 2) + Math.abs(cy - (N - 1) / 2);
+          if (d < bd - 1e-9 || (Math.abs(d - bd) < 1e-9 && m < bm)) { best = { x: cx, y: cy }; bd = d; bm = m; }
+        }
+        return best;
+      };
+      const cv = document.getElementById('game'), W = cv.width, kk = W / (N * ${CELL});
+      let bare = null;
+      const bareNow = () => { bare = cv.getContext('2d').getImageData(0, 0, W, cv.height).data; };
+      const changed = (x, y, w, h, is, each) => {
+        const p = pixels(x, y, w, h), d = p.data, px = Math.round(x * ${CELL} * kk), py = Math.round(y * ${CELL} * kk);
+        for (let i = 0; i < d.length; i += 4) {
+          const col = (i / 4) % p.width, row = Math.floor(i / 4 / p.width), j = ((py + row) * W + px + col) * 4;
+          if (is(d[i], d[i + 1], d[i + 2]) && Math.abs(d[i] - bare[j]) + Math.abs(d[i + 1] - bare[j + 1]) + Math.abs(d[i + 2] - bare[j + 2]) > 24) each(col, row);
+        }
+        return p;
+      };
+      const count = (x, y, w, h, is) => { let n = 0; changed(x, y, w, h, is, () => n++); return n; };
+      const centre = (x, y, w, h, is) => { let n = 0, sx = 0, sy = 0; const p = changed(x, y, w, h, is, (c, r) => { n++; sx += c; sy += r; }); return n ? [+(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : null; };
+      const emerald = (r, g, b) => g > 110 && g > r + 60 && b > 80 && b < g, green = (r, g, b) => g > r + 25 && g > 50 && b < g, tan = (r, g, b) => r > 170 && g > 125 && b > 70 && b < 175 && r > b + 45;
+      const sky = (r, g, b) => b > 200 && g > 150 && r < 120, paler = (r, g, b) => r > 150 && g > 130 && b > 95, parch = (r, g, b) => Math.min(r, g, b) > 228;
+      const out = { a: [], b: [], drawn: [], collar: [], parts: [] };
+      // Two beetles, one digging in.
+      const g = stage(['mason', 'ghost', 'drab']);
+      show(g); R.setViewer(99); drawN(20, 0.5); bareNow();
+      const A = { x: 5, y: 6, kind: 'beetle', dir: E.DIRS.right, movedAt: g.tick - 50, expires: g.tick + 900 };
+      const B = { x: 15, y: 6, kind: 'beetle', dir: E.DIRS.up, movedAt: g.tick - 50, expires: g.tick + 900, scared: true, digUntil: g.tick + 8 };
+      g.food.push(A, B);
+      show(g); R.setViewer(99); drawN(8, 0.5, 30);
+      out.full = count(14, 5, 3, 3, emerald);
+      R.onTick([{ type: 'dig', x: 15, y: 6, until: B.digUntil }]);
+      for (let t = 0; t < 8; t++) {
+        if (t) { g.tick++; if (t % 2 === 0) { A.px = A.x; A.py = A.y; A.x++; A.movedAt = g.tick - 1; } R.onTick([]); }
+        for (const al of [0.25, 0.5, 0.75, 1]) {
+          __t += 30; R.frame(al, __t);
+          out.a.push(count(A.x - 1.5, 5, 3, 3, emerald)); out.b.push(count(14, 5, 3, 3, emerald)); out.drawn.push(count(14, 5, 3, 3, green)); out.collar.push(count(14, 5, 3, 3, tan)); out.parts.push(R.particles);
+        }
+      }
+      g.tick++; g.food.splice(g.food.indexOf(B), 1);
+      R.onTick([{ type: 'dive', x: 15, y: 6, dug: 1 }]);
+      drawN(12, 0.5, 40);
+      out.heap = count(14.5, 5.5, 2, 2, tan); out.bugGone = count(14, 5, 3, 3, emerald);
+      drawN(40, 0.5, 80);
+      out.heapAfter = count(14.5, 5.5, 2, 2, tan);
+      // With reduced motion: no spray, a still sink.
+      R.setReducedMotion(true);
+      const C = { x: 10, y: 15, kind: 'beetle', dir: E.DIRS.up, movedAt: g.tick - 50, expires: g.tick + 900, scared: true, digUntil: g.tick + 8 };
+      g.food.push(C); drawN(10, 0.5, 60); // (the sprays before it, settled)
+      out.calm = { parts: [], bug: [] };
+      R.onTick([{ type: 'dig', x: 10, y: 15, until: C.digUntil }]);
+      for (let t = 0; t < 7; t++) { g.tick++; R.onTick([]); drawN(2, 0.5, 60); out.calm.parts.push(R.particles); out.calm.bug.push(count(9, 14, 3, 3, emerald)); }
+      R.setReducedMotion(false);
+      // The knock: a bead and a beetle in the mark, another bead outside it.
+      const g2 = stage(['mason', 'ghost', 'drab']);
+      show(g2); R.setViewer(99); drawN(20, 0.5); bareNow();
+      const P = [];
+      for (let y = 11; y <= 13; y++) for (let x = 10; x <= 13; x++) P.push(y * N + x);
+      const bead = { x: 11, y: 12, kind: 'pellet', color: '#38bdf8', owner: 1, expires: g2.tick + 900 }, other = { x: 4, y: 4, kind: 'pellet', color: '#38bdf8', owner: 1, expires: g2.tick + 900 };
+      const bug = { x: 13, y: 11, kind: 'beetle', dir: E.DIRS.up, movedAt: g2.tick - 50, expires: g2.tick + 900 };
+      g2.food.push(bead, other, bug);
+      g2.time = 130000;
+      g2.woodpecker = { x: 11.5, y: 12, at: g2.time - 5000, target: P, strikeAt: g2.tick + 4, last: [], struckAt: -1, restUntil: 1e9, pecks: 1 };
+      show(g2); R.setViewer(99); drawN(25, 0.5, 30); // (the food popped in)
+      const spots = [[], []];
+      for (let i = 0; i < 8; i++) { drawN(1, 0.5, 23); spots[0].push(centre(10, 11, 3, 3, sky)); spots[1].push(centre(3, 3, 3, 3, sky)); }
+      const spread = list => list.every(Boolean) ? +(Math.max(...list.map(c => c[0])) - Math.min(...list.map(c => c[0]))).toFixed(3) : -1; // (across: a bead bobs up and down where it lies, in or out of the mark)
+      out.tremble = spread(spots[0]); out.steady = spread(spots[1]);
+      const cell = c => c && (typeof c === 'number' ? [c % N, Math.floor(c / N)] : Array.isArray(c) ? c : [c.x, c.y]);
+      const [tx, ty] = cell(E.knockTo(g2, 11, 12, P));
+      out.to = [tx, ty];
+      out.ring = count(tx - 0.2, ty - 0.2, 1.4, 1.05, paler); out.noRing = count(18, 18, 1.4, 1.05, paler); // (clear of the mark's own rim, a cell below)
+      for (const k of P) g2.holes.add(k);
+      g2.woodpecker.target = []; g2.woodpecker.struckAt = g2.tick;
+      bead.x = tx; bead.y = ty;
+      const [bx, by] = cell(E.knockTo(g2, 13, 11, P));
+      bug.px = 13; bug.py = 11; bug.x = bx; bug.y = by; bug.movedAt = g2.tick;
+      g2.tick++;
+      R.onTick([{ type: 'knock', kind: 'pellet', x: 11, y: 12, tx, ty }, { type: 'knock', kind: 'beetle', x: 13, y: 11, tx: bx, ty: by }]);
+      drawN(1, 0.05, 1);
+      drawN(1, 0.5, 225); // (about half way through its flight)
+      const mid = centre(9, 7, 5, 7, sky);
+      out.mid = { bead: mid, beetle: centre(12, 10, 4, 3, emerald), rim: mid ? count(mid[0] - 0.6, mid[1] - 0.6, 1.2, 1.2, parch) : 0 };
+      drawN(4, 0.5, 120); g2.tick++; drawN(2, 0.5, 60);
+      const end = centre(9, 7, 5, 7, sky);
+      out.end = { bead: end, beetle: centre(12, 10, 4, 3, emerald), rim: end ? count(end[0] - 0.6, end[1] - 0.6, 1.2, 1.2, parch) : 0, bug: [bx, by] };
+      SnakeDebug.pinQuality(2);
+      return out;
+    })()`);
+    {
+      const min = a => Math.min(...a), max = a => Math.max(...a), late = a => a.slice(-8), early = a => a.slice(0, 4);
+      check(min(dug.a) > 40 && min(dug.drawn) > 10, 'two beetles out at once, each drawn every frame (one walking on, one digging in)', `the walker’s emerald pixels ${min(dug.a)} to ${max(dug.a)}, the digger’s green ${min(dug.drawn)} to ${max(dug.drawn)}`);
+      check(max(late(dug.b)) < 0.6 * min(early(dug.b)) && min(late(dug.collar)) > max(early(dug.collar)) + 20 && min(late(dug.parts)) > 0,
+        'a cornered beetle digs in: it sinks into the bark, a collar of sawdust round it, sawdust spraying off it to the end',
+        `its emerald pixels ${early(dug.b).join(', ')} as it starts (${dug.full} before), ${late(dug.b).join(', ')} at the end; sawdust ${early(dug.collar).join(', ')}, then ${late(dug.collar).join(', ')}; particles in the air at the end ${late(dug.parts).join(', ')}`);
+      check(dug.heap > 40 && dug.bugGone === 0 && dug.heapAfter === 0, 'gone in, it leaves a heap of sawdust where it went in, a few seconds', `${dug.heap} sawdust pixels there just after (${dug.bugGone} of the beetle), ${dug.heapAfter} four seconds on`);
+      check(max(dug.calm.parts) === 0 && max(dug.calm.bug) - min(dug.calm.bug) <= 3 && max(dug.calm.bug) < 0.8 * dug.full && min(dug.calm.bug) > 10,
+        'with reduced motion, it’s drawn sunk part way, still, and no sawdust flies', `its emerald pixels ${dug.calm.bug.join(', ')} (${dug.full} up on the bark); particles ${max(dug.calm.parts)}`);
+      check(dug.tremble > 0.02 && dug.steady === 0 && dug.ring > 10 && dug.noRing === 0, 'through the woodpecker’s aim, food in its mark trembles, food outside it is still, and a ring marks where it’ll be knocked to',
+        `the bead in the mark moves ${dug.tremble} cells across, frame to frame, the one outside ${dug.steady}; ${dug.ring} ring pixels at ${dug.to} (the rule’s cell), ${dug.noRing} at a cell nothing lands on`);
+      const [tx, ty] = dug.to, b = dug.mid.bead, e = dug.end.bead;
+      check(!!b && b[1] < ty + 0.5 - 0.3 && Math.abs(b[0] - (tx + 0.5)) < 0.3 && dug.mid.rim > dug.end.rim + 15 && !!e && Math.abs(e[0] - (tx + 0.5)) < 0.15 && Math.abs(e[1] - (ty + 0.5)) < 0.2,
+        'at the strike, the food flies to where the rule said, up in an arc, rimmed so it reads over a body', `the bead half way at ${b} (it lands at ${tx + 0.5},${ty + 0.5}), then at ${e}; parchment round it ${dug.mid.rim} in the air, ${dug.end.rim} landed`);
+      const bm = dug.mid.beetle, be = dug.end.beetle, [bx, by] = dug.end.bug, d = (c, x, y) => Math.hypot(c[0] - x, c[1] - y);
+      check(!!bm && d(bm, 13.5, 11.5) > 0.25 && d(bm, bx + 0.5, by + 0.5) > 0.25 && d(bm, 13.5, 11.5) + d(bm, bx + 0.5, by + 0.5) < d([13.5, 11.5], bx + 0.5, by + 0.5) + 0.2 && !!be && d(be, bx + 0.5, by + 0.5) < 0.2,
+        'a beetle knocked out of the mark scurries there', `half way at ${bm}, then ${be} (from 13.5,11.5 to ${bx + 0.5},${by + 0.5})`);
+    }
+
     // A pecked flag is a lost colony (round six A). The woodpecker pecks out
     // the cell under Colonist's second colony's flag, and under Sovereign's
     // capital; a tick later Colonist forgets the colony and Sovereign's realm
@@ -940,7 +1083,7 @@ const STAGE = `(() => {
     // The Field guide's pictures.
     const guide = await ev(`(() => {
       const out = {};
-      for (const k of ['apple', 'golden', 'mushroom', 'goldcap', 'leaf', 'beetle', 'goldbeetle', 'pellet', 'roast', 'baked', 'jump', 'flash', 'wrap', 'held', 'rests', 'hole', 'fire', 'land', 'choke', 'lostflag']) {
+      for (const k of ['apple', 'golden', 'mushroom', 'goldcap', 'leaf', 'beetle', 'goldbeetle', 'pellet', 'roast', 'baked', 'jump', 'flash', 'wrap', 'held', 'rests', 'hole', 'fire', 'land', 'choke', 'lostflag', 'cough', 'dig', 'knock']) {
         const c = R.guideSprite(k, 72), d = c.getContext('2d').getImageData(0, 0, 72, 72).data;
         let ink = 0, sky = 0, ember = 0;
         for (let i = 0; i < d.length; i += 4) {

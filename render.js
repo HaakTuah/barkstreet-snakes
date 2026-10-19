@@ -777,7 +777,11 @@ window.SnakeRender = (() => {
   // beetle, goldbeetle, pellet, roast (a roasted bead), baked (a baked
   // apple), jump, flash, wrap, hole, fire, land, held (a snake holding
   // golden powers: its gold line and a pip of each kind), rests (you, your
-  // jump and flash resting: your two half-rings).
+  // jump and flash resting: your two half-rings), choke (you spitting your
+  // own bead aside), cough (you coughing: mouth shut, puffs of breath),
+  // lostflag (a colony's flag falling into its pit), dig (a beetle half
+  // sunk in sawdust, digging in), knock (an apple flying out of the
+  // woodpecker's mark to the ring where it lands).
   const guideSprites = new Map(); // kind and size -> canvas
   function guideSprite(kind, px) {
     px = Math.max(8, Math.round(px));
@@ -792,7 +796,9 @@ window.SnakeRender = (() => {
     guideSprites.set(key, c);
     return c;
   }
-  const GUIDE_TILE = { hole: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, choke: 1.15, lostflag: 1.2 }; // (on a tile of bark this many cells either side of the middle)
+  const GUIDE_TILE = { hole: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, choke: 1.15, lostflag: 1.2, cough: 1.15, dig: 0.9, knock: 1.35 }; // (on a tile of bark this many cells either side of the middle)
+  const COUGH_GUIDE = [[0.74, 0.02, 0.21, 1], [0.97, -0.46, 0.13, 0.75]]; // (the guide's puffs: x, y, radius in cells, and how faint)
+  const DIG_SPRAY = [[-0.62, -0.42, 0.045], [0.6, -0.5, 0.04], [0.66, 0.36, 0.05], [-0.5, 0.58, 0.04], [0.05, -0.7, 0.035], [-0.72, 0.1, 0.035]];
   const GUIDE = {
     apple: g => drawApple(g, 'fresh'),
     baked: g => drawApple(g, 'baked'),
@@ -829,6 +835,50 @@ window.SnakeRender = (() => {
       g.strokeStyle = 'rgba(58,38,20,0.6)'; g.lineWidth = c * 0.05; g.stroke();
       g.fillStyle = '#fbf7ec'; g.fill();
     }),
+    cough: g => guideSnake(g, '#4ade80', true, x => { // (coughing: its mouth shut, puffs of breath coming out past it)
+      const c = CELL;
+      g.strokeStyle = INK; g.lineWidth = c * 0.04; g.lineCap = 'round'; // (its mouth, shut)
+      g.beginPath(); g.moveTo(x + c * 0.3, c * 0.07); g.quadraticCurveTo(x + c * 0.4, c * 0.02, x + c * 0.47, c * 0.05); g.stroke();
+      for (const [px, py, r, a] of COUGH_GUIDE) {
+        g.globalAlpha = a;
+        g.beginPath();
+        for (let j = 0; j < COUGH_PUFF.length; j += 3) { const cx = x + c * px + COUGH_PUFF[j] * c * r, cy = c * py + COUGH_PUFF[j + 1] * c * r, cr = COUGH_PUFF[j + 2] * c * r; g.moveTo(cx + cr, cy); g.arc(cx, cy, cr, 0, TAU); }
+        g.strokeStyle = 'rgba(58,38,20,0.6)'; g.lineWidth = c * 0.05; g.stroke();
+        g.fillStyle = '#fbf7ec'; g.fill();
+      }
+      g.globalAlpha = 1;
+    }),
+    dig: g => { // (a cornered beetle digging in: half sunk in its bore, a collar of sawdust round it, sawdust flying off)
+      const c = CELL, was = ctx;
+      ctx = g;
+      try {
+        g.fillStyle = 'rgba(20,10,4,0.8)';
+        g.beginPath(); g.ellipse(0, 0, c * 0.36, c * 0.3, 0, 0, TAU); g.fill();
+        g.save(); g.scale(0.82, 0.82); drawGuideBeetle(g, false);
+        g.fillStyle = 'rgba(20,10,4,0.3)'; g.beginPath(); g.ellipse(0, 0, c * 0.3, c * 0.38, 0, 0, TAU); g.fill();
+        g.restore();
+        digCollar(0, 0, 0.5, 5);
+        g.fillStyle = '#e6cc96'; g.strokeStyle = 'rgba(92,60,28,0.8)'; g.lineWidth = c * 0.025; // (sawdust flying off it)
+        for (const [x, y, r] of DIG_SPRAY) { g.beginPath(); g.arc(c * x, c * y, c * r, 0, TAU); g.fill(); g.stroke(); }
+      } finally { ctx = was; }
+    },
+    knock: g => { // (an apple knocked out of the woodpecker's marked patch, flying in an arc to the ring where it lands)
+      const c = CELL, px = -1.2 * c, py = 0.05 * c, pw = 1.2 * c, ph = 1.05 * c;
+      g.save(); g.translate(px + pw / 2, py + ph / 2); g.scale(1.25, 1.1); drawMark(g); g.restore();
+      g.beginPath();
+      if (g.roundRect) g.roundRect(px, py, pw, ph, c * 0.32); else g.rect(px, py, pw, ph);
+      g.fillStyle = 'rgba(20,8,2,0.4)'; g.fill();
+      g.lineWidth = 5; g.strokeStyle = 'rgba(20,8,2,0.75)'; g.stroke();
+      g.lineWidth = 2.8; g.strokeStyle = '#fef3c7'; g.stroke();
+      const lx = 0.72 * c, ly = 0.62 * c; // (where it lands: a faint ring)
+      g.setLineDash(KNOCK_DASH); g.lineCap = 'butt';
+      for (const [col, w] of [['rgba(20,10,4,0.7)', 3.4], ['#fef3c7', 1.6]]) { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(lx, ly, c * 0.38, 0, TAU); g.stroke(); }
+      g.setLineDash([c * 0.07, c * 0.09]); g.lineCap = 'round'; // (its way through the air)
+      g.strokeStyle = 'rgba(255,251,234,0.8)'; g.lineWidth = c * 0.045;
+      g.beginPath(); g.moveTo(px + pw / 2, py + ph / 2); g.quadraticCurveTo(0, -1.25 * c, lx, ly - c * 0.1); g.stroke();
+      g.setLineDash(NO_DASH);
+      g.save(); g.translate(0.08 * c, -0.48 * c); g.rotate(0.35); g.scale(0.9, 0.9); drawApple(g, 'fresh'); g.restore();
+    },
     lostflag: g => { // (a colony lost to the woodpecker: its flag tipping into the pit pecked out under it)
       guideCells(GUIDE_PIT); g.save(); g.translate(-12.5 * CELL, -12.5 * CELL); drawPits(g, guideMask, 0, 0, GRID - 1, GRID - 1); g.restore();
       const was = ctx;
@@ -958,26 +1008,76 @@ window.SnakeRender = (() => {
   // moves (a beetle's walk: step, pause), legs scuttling, and turns smoothly.
   // Between steps it's never quite still: its feelers wave, it breathes, and
   // every few seconds it lifts its wing cases and buzzes, as if about to fly
-  // off. Scared, it trembles. It pops in when it comes out.
-  let beetleAng = null, beetleAt = 0, beetleGold = false; // (gold: the one last drawn, for its dive down a burrow)
+  // off. Scared, it trembles. It pops in when it comes out. Sent scurrying
+  // (nudged aside by a coughing head, knocked aside by the woodpecker), it
+  // scurries there. Cornered, it digs in (see digOf).
+  //
+  // Up to two are out at once, each with its own heading, pop and wing beat:
+  // each beetle's look is kept from frame to frame by where it is (where it
+  // came from, if it moved this tick), not by its object (a guest online
+  // gets fresh ones every tick). bugs: { x, y, ang, at (when it popped out,
+  // or 0), t0 (its wings' beat), gold, dig (how far it has sunk, as last
+  // drawn), spray (its next spray of sawdust), frame (last drawn) }.
+  const bugs = [], bugFor = new Map(); // (bugFor: this frame's beetles -> their looks)
+  const bugPops = [], scurries = []; // (this tick's: where one came out, { x, y, tick, at }; one sent scurrying, { x, y, tx, ty, tick })
+  let bugFrame = 0;
+  function scurryOf(f) {
+    for (const k of scurries) if (k.tick === game.tick && k.tx === f.x && k.ty === f.y) return k;
+    return null;
+  }
+  function bugAt(x, y) {
+    for (const b of bugs) if (b.frame !== bugFrame && b.x === x && b.y === y) return b;
+    return null;
+  }
+  function trackBugs(now) {
+    bugFrame++;
+    bugFor.clear();
+    for (let pass = 0; pass < 2; pass++) { // (those that moved this tick first, by where they came from; then the rest, by where they are)
+      for (const f of game.food) {
+        if (f.kind !== 'beetle' || bugFor.has(f)) continue;
+        let b = null;
+        if (!pass) {
+          const k = scurryOf(f);
+          if (k) b = bugAt(k.x, k.y);
+          else if (f.movedAt === game.tick - 1 && f.px != null) b = bugAt(f.px, f.py);
+          if (!b) continue;
+        } else {
+          b = bugAt(f.x, f.y);
+          if (!b) {
+            b = { x: f.x, y: f.y, ang: null, at: 0, t0: now - 1700 * bugs.length, gold: false, dig: 0, spray: 0, frame: 0 };
+            for (const p of bugPops) if (p.tick === game.tick && p.x === f.x && p.y === f.y) b.at = p.at;
+            bugs.push(b);
+          }
+        }
+        b.x = f.x; b.y = f.y; b.gold = !!f.gold; b.frame = bugFrame;
+        bugFor.set(f, b);
+      }
+    }
+    for (let i = bugs.length - 1; i >= 0; i--) if (bugs[i].frame !== bugFrame) bugs.splice(i, 1); // (caught, gone down a burrow or flown)
+  }
   function drawBeetle(f, alpha, now) {
-    beetleGold = !!f.gold;
-    const nudged = !!game && !!beetleNudge && beetleNudge.tick === game.tick && beetleNudge.tx === f.x && beetleNudge.ty === f.y; // (nudged aside by a coughing head: it scurries there)
-    const moved = game && (nudged || (f.movedAt === game.tick - 1 && f.px != null));
-    const e = moved ? alpha * alpha * (3 - 2 * alpha) : 1, fx = nudged ? beetleNudge.x : f.px, fy = nudged ? beetleNudge.y : f.py;
+    const st = bugFor.get(f);
+    if (!st) return;
+    const sc = scurryOf(f); // (sent scurrying this tick: it scurries there)
+    const moved = !!sc || (f.movedAt === game.tick - 1 && f.px != null);
+    const e = moved ? alpha * alpha * (3 - 2 * alpha) : 1, fx = sc ? sc.x : f.px, fy = sc ? sc.y : f.py;
     const gx = moved ? fx + (f.x - fx) * e : f.x, gy = moved ? fy + (f.y - fy) * e : f.y;
     let x = gx * CELL + CELL / 2, y = gy * CELL + CELL / 2;
     const c = CELL, lively = !reduced, t = now / 1000;
     const walking = moved && lively;
-    const pop = beetleAt ? popOf(now - beetleAt) : 1;
+    const pop = st.at ? popOf(now - st.at) : 1;
     if (pop <= 0) return;
     const heading = Math.atan2(f.dir.y, f.dir.x);
-    if (beetleAng === null || !lively) beetleAng = heading;
-    else beetleAng += Math.atan2(Math.sin(heading - beetleAng), Math.cos(heading - beetleAng)) * Math.min(1, frameDt / 60);
-    if (lively && f.scared && !moved) { x += Math.sin(now / 23) * 0.7; y += Math.cos(now / 31) * 0.7; } // trembling
-    const step = walking ? Math.sin(now / (f.scared ? 28 : 45)) : 0;
-    const cycle = ((now - beetleAt) / 1000) % 3.4; // the wing cases lift late in each cycle, if it's not walking
-    const lift = lively && !walking && cycle > 2.7 ? Math.sin((cycle - 2.7) / 0.7 * Math.PI) : 0;
+    if (st.ang === null || !lively) st.ang = heading;
+    else st.ang += Math.atan2(Math.sin(heading - st.ang), Math.cos(heading - st.ang)) * Math.min(1, frameDt / 60);
+    const dig = digOf(f, alpha); // (digging in: how far it has sunk)
+    st.dig = dig;
+    if (lively && (f.scared || dig) && !moved) { x += Math.sin(now / 23) * 0.7; y += Math.cos(now / 31) * 0.7; } // trembling (digging, it's frantic)
+    if (dig) { drawDig(st, x, y, dig, now); if (dig >= 1) return; }
+    const step = walking ? Math.sin(now / (f.scared ? 28 : 45)) : dig && lively ? Math.sin(now / 30) : 0;
+    const cycle = ((now - st.t0) / 1000) % 3.4; // the wing cases lift late in each cycle, if it's not walking (or digging)
+    const lift = lively && !walking && !dig && cycle > 2.7 ? Math.sin((cycle - 2.7) / 0.7 * Math.PI) : 0;
+    const sunk = 1 - DIG_SHRINK * dig; // (sinking into the bark: smaller, the lower it is)
     if (f.gold) { // a golden beetle glows, and glints now and then
       const w = SPRITE * CELL * pop * (1 + (lively ? 0.12 * Math.sin(t * 4) : 0));
       ctx.globalAlpha = lively ? 0.75 + 0.25 * Math.sin(t * 4) : 0.9;
@@ -985,14 +1085,16 @@ window.SnakeRender = (() => {
       ctx.globalAlpha = 1;
       if (lively && Math.random() < 0.06) mote(x + (Math.random() - 0.5) * c, y + (Math.random() - 0.5) * c, 0, -6, 650, 0.3 + Math.random() * 0.3, 1);
     }
-    ctx.fillStyle = 'rgba(0,0,0,0.3)'; // shadow
-    ctx.beginPath();
-    ctx.ellipse(x + 2, y + 3, c * 0.38 * pop, c * 0.3 * pop, 0, 0, TAU);
-    ctx.fill();
+    if (dig < 0.5) {
+      ctx.fillStyle = dig ? rgba('#000000', 0.3 * (1 - 2 * dig)) : 'rgba(0,0,0,0.3)'; // shadow (down in its bore, none)
+      ctx.beginPath();
+      ctx.ellipse(x + 2, y + 3, c * 0.38 * pop * sunk, c * 0.3 * pop * sunk, 0, 0, TAU);
+      ctx.fill();
+    }
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(beetleAng + step * 0.07);
-    const size = 1.35 * pop * (1 + (lively ? Math.sin(t * 3.1) * 0.02 : 0)); // about an apple's size, so it's easy to spot
+    ctx.rotate(st.ang + step * 0.07);
+    const size = 1.35 * pop * sunk * (1 + (lively ? Math.sin(t * 3.1) * 0.02 : 0)); // about an apple's size, so it's easy to spot
     ctx.scale(size, size);
     // Legs: three a side, alternate pairs swinging.
     ctx.strokeStyle = '#1c1917';
@@ -1053,7 +1155,90 @@ window.SnakeRender = (() => {
       ctx.moveTo(c * 0.18, 0); ctx.lineTo(-c * 0.23, 0);
       ctx.stroke();
     }
+    if (dig) { // (going down into the dark of its bore)
+      ctx.fillStyle = rgba('#140a04', 0.4 * dig);
+      ctx.beginPath(); ctx.ellipse(0, 0, c * 0.3, c * 0.24, 0, 0, TAU); ctx.fill();
+    }
     ctx.restore();
+    if (dig) digCollar(x, y, dig, st.x * 7 + st.y * 13);
+  }
+
+  // A cornered beetle digs in (round six A): it stops where it is and bores
+  // into the bark (BEETLE_DIG ticks), frantic, sawdust spraying off it, and
+  // sinks into the bark as its time runs out: smaller, darker, a collar of
+  // sawdust closing in round it. It can still be caught. Then it's gone,
+  // and its bore is plugged with its own sawdust (frass, as bark beetles
+  // pack their tunnels): a little heap is left for a few seconds, a plug,
+  // not a hole (see drawHeaps). With reduced motion: no spray, and it's
+  // drawn sunk part way, still, until it's gone.
+  const DIG_SHRINK = 0.45, DIG_STILL = 0.5, HEAP_MS = 3000;
+  const heaps = []; // { x, y, at }
+  // How far a digging beetle has sunk (0 if it isn't digging; up to 1).
+  function digOf(f, alpha) {
+    if (f.digUntil == null || !(f.digUntil >= game.tick)) return 0;
+    if (reduced) return DIG_STILL;
+    const D = T.BEETLE_DIG || 8, p = Math.max(0, Math.min(1, (game.tick - 1 + alpha - (f.digUntil - D)) / D));
+    return Math.max(0.04, Math.min(0.95, p * p * (3 - 2 * p)));
+  }
+  // Under it: the bore it's making, a dark hollow opening as it goes down;
+  // and sawdust spraying off it now and then.
+  function drawDig(st, x, y, dig, now) {
+    const c = CELL, r = c * (0.18 + 0.2 * Math.min(1, dig * 1.6));
+    ctx.fillStyle = 'rgba(20,10,4,0.8)';
+    ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.82, 0, 0, TAU); ctx.fill();
+    if (!reduced && now >= st.spray) {
+      st.spray = now + 60 + Math.random() * 70;
+      spawn(x, y, 2, 120, 360, 1.8, '#e6cc96', '#b07d48');
+    }
+  }
+  // Over it: a collar of the sawdust it's pushing out, heaped round its
+  // bore and over its edges, deeper as it sinks (seeded by where it is, so
+  // it holds still): lumps run together into a ring, in its shadow, then
+  // sawdust, then paler crumbs on top, lit from the upper left.
+  const COLLAR_N = 16;
+  function digCollar(x, y, dig, seed) {
+    const c = CELL, up = Math.min(1, dig * 2.5), ri = c * (0.3 - 0.1 * dig), ro = ri + c * (0.04 + 0.1 * up + 0.04 * dig), rm = (ri + ro) / 2, rl = (ro - ri) / 2;
+    for (let pass = 0; pass < 3; pass++) {
+      ctx.fillStyle = pass === 0 ? 'rgba(70,42,18,0.8)' : pass === 1 ? '#d7b47a' : '#efdcb0';
+      const dx = pass === 0 ? 1 : pass === 1 ? 0 : -0.7, dy = pass === 0 ? 1.3 : pass === 1 ? 0 : -0.9;
+      ctx.beginPath();
+      for (let i = 0; i < COLLAR_N; i++) {
+        if (pass === 2 && noise(seed, i, 43) < 0.45) continue; // (crumbs on top, here and there)
+        const a = (i + 0.5 * noise(seed, i, 41)) * TAU / COLLAR_N, r = rm + rl * 0.35 * (noise(seed, i, 44) - 0.5);
+        const cr = (pass === 2 ? 0.45 : 1) * (rl * (0.6 + 0.9 * noise(seed, i, 42)) + 0.6), px = x + Math.cos(a) * r + dx, py = y + Math.sin(a) * r * 0.9 + dy;
+        ctx.moveTo(px + cr, py); ctx.arc(px, py, cr, 0, TAU);
+      }
+      ctx.fill();
+    }
+  }
+  // Where one dug in, its plug of sawdust, a few seconds, fading at the end.
+  const heapSprite = () => sprite('heap', '', drawHeap);
+  const drawHeap = g => {
+    const c = CELL;
+    g.fillStyle = 'rgba(40,22,8,0.35)'; // (its shadow, down and to the right)
+    g.beginPath(); g.ellipse(c * 0.06, c * 0.09, c * 0.46, c * 0.36, 0, 0, TAU); g.fill();
+    g.fillStyle = '#b8894f';
+    g.beginPath();
+    for (const [x, y, r] of HEAP_LUMPS) { g.moveTo(c * (x + r), c * y); g.arc(c * x, c * y, c * r, 0, TAU); }
+    g.fill();
+    g.fillStyle = '#e2c38c';
+    g.beginPath();
+    for (const [x, y, r] of HEAP_LUMPS) { g.moveTo(c * (x - 0.03 + r * 0.7), c * (y - 0.04)); g.arc(c * (x - 0.03), c * (y - 0.04), c * r * 0.7, 0, TAU); }
+    g.fill();
+    g.fillStyle = 'rgba(92,60,28,0.8)'; // (chips kicked out round it)
+    for (const [x, y] of HEAP_CHIPS) { g.beginPath(); g.arc(c * x, c * y, c * 0.03, 0, TAU); g.fill(); }
+  };
+  const HEAP_LUMPS = [[0, 0, 0.26], [-0.18, 0.07, 0.17], [0.19, 0.05, 0.16], [0.02, -0.16, 0.16], [-0.08, 0.18, 0.13], [0.13, 0.19, 0.12], [-0.17, -0.12, 0.11]];
+  const HEAP_CHIPS = [[-0.46, -0.06], [0.44, -0.18], [0.38, 0.35], [-0.28, 0.42], [-0.12, -0.43], [0.5, 0.12]];
+  function drawHeaps(now) {
+    for (let i = heaps.length - 1; i >= 0; i--) {
+      const h = heaps[i], age = now - h.at;
+      if (age >= HEAP_MS || age < 0) { heaps.splice(i, 1); continue; }
+      const grow = reduced ? 1 : Math.min(1, age / 160), w = SPRITE * CELL * (0.6 + 0.4 * grow);
+      ctx.globalAlpha = Math.min(1, (HEAP_MS - age) / 900);
+      ctx.drawImage(heapSprite(), (h.x + 0.5) * CELL - w / 2, (h.y + 0.5) * CELL - w / 2, w, w);
+    }
+    ctx.globalAlpha = 1;
   }
   // A golden beetle's Honey, front to back: made once, in the shell's own
   // units, so it turns with the beetle (as its shine does).
@@ -5866,35 +6051,94 @@ window.SnakeRender = (() => {
     fresh = false;
   }
 
-  // Food moved aside by a head that can't eat it (see onTick): a bead its
-  // own snake choked on, spat from (x, y) to (tx, ty) in a little arc (or,
-  // with nowhere to go, tossed up where it was), or food a coughing head
-  // nudged, rolling there. Its look goes with it (a bead keeps its
-  // markings), and it's drawn going there (see drawFood); a beetle scurries
-  // there (see drawBeetle). With reduced motion it's simply there.
-  const SPAT_MS = 320, ROLL_MS = 280;
-  let beetleNudge = null; // { x, y, tx, ty, tick }
-  // A spat bead up in the air: over the snakes (it's spat over its own
-  // head), bigger the higher it is (its shadow's on the ground: see drawFood).
+  // Food moved aside (see onTick): a bead its own snake choked on, spat
+  // from (x, y) to (tx, ty) in a little arc (or, with nowhere to go, tossed
+  // up where it was); food a coughing head nudged, rolling there; or food
+  // the woodpecker's strike knocked out of its patch, flying there in an
+  // arc, higher and longer the further it goes. Its look goes with it (a
+  // bead keeps its markings), and it's drawn going there (see drawFood); a
+  // beetle scurries there (see drawBeetle). With reduced motion it's simply
+  // there.
+  const SPAT_MS = 320, ROLL_MS = 280, FLY_CELL_MS = 70, FLY_MAX_MS = 620;
+  // Up in the air: over the snakes (a bead's spat over its own head; food
+  // flies over whatever's in the way), bigger the higher it is (its shadow's
+  // on the ground: see drawFood). A bead is rimmed in ink and parchment in
+  // the air, so one in your own colour reads against your body under it.
   function drawTossed(now) {
+    if (reduced) return;
     for (let j = 0; j < game.food.length; j++) {
       const f = game.food[j];
-      if (f.kind !== 'pellet') continue;
+      if (f.kind === 'beetle') continue;
       const b = born.get(f.y * GRID + f.x);
       if (!b || !b.spat || !b.movedAt) continue;
-      const u = (now - b.movedAt) / SPAT_MS;
-      if (u <= 0 || u >= 1 || reduced) continue;
+      const u = (now - b.movedAt) / b.fly;
+      if (u <= 0 || u >= 1) continue;
       const e = 1 - (1 - u) * (1 - u), up = Math.sin(u * Math.PI), sz = 1 + 0.3 * up;
-      blitAbout(beadSprite(f.cooked ? ROAST : b.v), (b.fx + (f.x - b.fx) * e + 0.5) * CELL, (b.fy + (f.y - b.fy) * e + 0.5) * CELL - up * CELL * 0.6, 0, 0, sz, sz, 0);
+      const x = (b.fx + (f.x - b.fx) * e + 0.5) * CELL, y = (b.fy + (f.y - b.fy) * e + 0.5) * CELL - up * b.hop;
+      if (f.kind === 'pellet') {
+        ctx.fillStyle = 'rgba(28,16,6,0.85)'; circle(x, y, CELL * 0.43 * sz);
+        ctx.fillStyle = '#fffbea'; circle(x, y, CELL * 0.37 * sz);
+      }
+      blitAbout(flyingSprite(f, b), x, y, 0, 0, sz, sz, 0);
     }
   }
-  function moveFood(x, y, tx, ty, now, spat) {
+  // Food as it's drawn in the air (no glow, haze or fly: they don't come along).
+  function flyingSprite(f, b) {
+    if (f.kind === 'pellet') return beadSprite(f.cooked ? ROAST : b.v);
+    if (f.kind === 'golden') return goldenSprite();
+    if (f.kind === 'mushroom') return mushroomSprite();
+    if (f.kind === 'leaf') return goldLeafSprite();
+    if (f.kind === 'goldcap') return goldcapSprite();
+    const left = f.expires != null ? f.expires - game.tick : 999;
+    return appleSprite(f.cooked ? 'baked' : left > 50 ? 'fresh' : left > 22 ? 'bruised' : 'rotten');
+  }
+  function moveFood(x, y, tx, ty, now, spat, knocked = false) {
     const from = y * GRID + x, to = ty * GRID + tx, f = game.food.find(o => o.x === tx && o.y === ty && o.kind !== 'beetle');
     if (!f) return;
-    const b = born.get(from);
+    const b = born.get(from), d = Math.hypot(tx - x, ty - y);
     if (from !== to) born.delete(from);
-    born.set(to, { kind: f.kind, at: now - POP_MS, i: 0, next: 0, gen: bornGen, v: b && b.kind === f.kind ? b.v : (f.color || '#a16207') + '|', fell: false, fx: x, fy: y, movedAt: now, spat });
+    born.set(to, { kind: f.kind, at: now - POP_MS, i: 0, next: 0, gen: bornGen, v: b && b.kind === f.kind ? b.v : (f.color || '#a16207') + '|', fell: false, fx: x, fy: y, movedAt: now, spat,
+      fly: knocked ? Math.min(FLY_MAX_MS, SPAT_MS + FLY_CELL_MS * d) : SPAT_MS, hop: CELL * (knocked ? Math.min(1.5, 0.6 + 0.22 * d) : 0.6) });
   }
+
+  // Through the woodpecker's aim, the food in its mark trembles (see
+  // drawFood), and a faint ring marks where each piece will be knocked to at
+  // the strike: the engine's own rule (knockTo, the rivals' too), worked out
+  // once a tick.
+  const knockLand = []; // (cells, x and y, this tick's)
+  let knockFor = -1, knockGame = null;
+  function knockRings(w, prog, now) {
+    if (knockFor !== game.tick || knockGame !== game) {
+      knockFor = game.tick; knockGame = game; knockLand.length = 0;
+      const to = window.SnakeEngine?.knockTo;
+      if (to) for (const f of game.food) {
+        if (!patch[f.y * GRID + f.x]) continue;
+        const c = to(game, f.x, f.y, w.target);
+        if (c == null) continue;
+        if (typeof c === 'number') knockLand.push(c % GRID, (c - c % GRID) / GRID);
+        else if (Array.isArray(c)) knockLand.push(c[0], c[1]);
+        else knockLand.push(c.x, c.y);
+      }
+    }
+    if (!knockLand.length) return;
+    const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now / 160);
+    ctx.setLineDash(KNOCK_DASH);
+    ctx.lineCap = 'butt';
+    for (let pass = 0; pass < 2; pass++) {
+      ctx.globalAlpha = (0.35 + 0.4 * prog) * (pass ? 1 : 0.7);
+      ctx.strokeStyle = pass ? '#fef3c7' : '#140a04';
+      ctx.lineWidth = pass ? 1.6 : 3.4;
+      ctx.beginPath();
+      for (let i = 0; i < knockLand.length; i += 2) {
+        const x = (knockLand[i] + 0.5) * CELL, y = (knockLand[i + 1] + 0.5) * CELL, r = CELL * (0.36 + 0.04 * pulse);
+        ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, TAU);
+      }
+      ctx.stroke();
+    }
+    ctx.setLineDash(NO_DASH);
+    ctx.globalAlpha = 1;
+  }
+  const KNOCK_DASH = [5, 4];
 
   // A dead snake's beads: what each one looks like, and a ripple from head to
   // tail. A corpse leaves a bead on every other segment (see the engine's
@@ -6110,21 +6354,33 @@ window.SnakeRender = (() => {
     mLive = live;
   }
 
-  // A beetle diving into its burrow: it shrinks away into the hole.
+  // A beetle diving into its burrow: it shrinks away into the hole. One that
+  // dug itself in sinks the rest of the way, its collar of sawdust closing
+  // over it (then its plug is left: see drawHeaps).
+  const dives = []; // { x, y, at, ang, gold, dug (it dug in: how far it had sunk) }
   function drawDive(now) {
-    if (!dive) return;
-    const age = (now - dive.at) / 320;
-    if (age >= 1 || reduced) { dive = null; return; }
-    const c = CELL, s = 1.35 * (1 - age);
-    ctx.save();
-    ctx.translate(dive.x * c + c / 2, dive.y * c + c / 2);
-    ctx.rotate(dive.ang + age * 2);
-    ctx.scale(s, s);
-    ctx.fillStyle = dive.gold ? honeyShell() : '#059669';
-    ctx.strokeStyle = dive.gold ? '#047857' : '#fbbf24';
-    ctx.lineWidth = c * 0.03;
-    ctx.beginPath(); ctx.ellipse(-c * 0.02, 0, c * 0.22, c * 0.17, 0, 0, TAU); ctx.fill(); ctx.stroke();
-    ctx.restore();
+    for (let i = dives.length - 1; i >= 0; i--) {
+      const d = dives[i], age = (now - d.at) / (d.dug ? 220 : 320);
+      if (age >= 1 || age < 0 || reduced) { dives.splice(i, 1); continue; }
+      const c = CELL, x = d.x * c + c / 2, y = d.y * c + c / 2;
+      if (d.dug) {
+        const dig = d.dug + (1 - d.dug) * age;
+        ctx.fillStyle = 'rgba(20,10,4,0.8)';
+        ctx.beginPath(); ctx.ellipse(x, y, c * 0.38 * (1 - age), c * 0.31 * (1 - age), 0, 0, TAU); ctx.fill();
+        digCollar(x, y, dig, d.x * 7 + d.y * 13);
+        continue;
+      }
+      const s = 1.35 * (1 - age);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(d.ang + age * 2);
+      ctx.scale(s, s);
+      ctx.fillStyle = d.gold ? honeyShell() : '#059669';
+      ctx.strokeStyle = d.gold ? '#047857' : '#fbbf24';
+      ctx.lineWidth = c * 0.03;
+      ctx.beginPath(); ctx.ellipse(-c * 0.02, 0, c * 0.22, c * 0.17, 0, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
   }
 
   // A roast: a piece of snake that fell off in the flames, browned all over.
@@ -6157,24 +6413,27 @@ window.SnakeRender = (() => {
   // Every piece of food on the board, under the snakes.
   function drawFood(alpha, now) {
     trackFood(now);
-    const lively = !reduced;
+    trackBugs(now);
+    if (heaps.length) drawHeaps(now); // (where a beetle dug itself in: its plug, under the rest)
+    const lively = !reduced, prog = lively ? aimed(alpha) : -1; // (through the woodpecker's aim: what's in its mark trembles)
     for (const f of game.food) {
       if (f.kind === 'beetle') { drawBeetle(f, alpha, now); continue; }
       const key = f.y * GRID + f.x, b = born.get(key);
       if (f.kind === 'pellet' && heldCells[key]) { if (b) b.at = now + b.i * RIPPLE_MS; continue; } // (under a held corpse: not yet)
       const pop = b ? popOf(now - b.at) : 1;
       if (pop <= 0) continue;
-      let x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2, toss = 0;
-      if (b && b.movedAt) { // (spat or nudged aside: on its way from where it was, see moveFood)
-        const u = (now - b.movedAt) / (b.spat ? SPAT_MS : ROLL_MS);
+      let x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
+      if (b && b.movedAt) { // (spat, knocked or nudged aside: on its way from where it was, see moveFood)
+        const u = (now - b.movedAt) / (b.spat ? b.fly : ROLL_MS);
         if (u < 0 || u >= 1 || reduced) b.movedAt = 0;
         else {
           const e = 1 - (1 - u) * (1 - u);
           x = (b.fx + (f.x - b.fx) * e + 0.5) * CELL; y = (b.fy + (f.y - b.fy) * e + 0.5) * CELL;
-          toss = b.spat ? Math.sin(u * Math.PI) * CELL * 0.6 : Math.abs(Math.sin(u * Math.PI * 2)) * (1 - u) * CELL * 0.14; // (a spat bead flies in a little arc; nudged food rolls, bouncing a little)
-          if (!b.spat) { y -= toss; toss = 0; } // (rolling, it bounces along the bark, shadow and all)
+          if (b.spat) { shadowAt(x + 1, y + CELL * 0.32, pop * 0.85 * (1 - 0.35 * Math.sin(u * Math.PI))); continue; } // (up in the air: its shadow on the ground, and it over the snakes, see drawTossed)
+          y -= Math.abs(Math.sin(u * Math.PI * 2)) * (1 - u) * CELL * 0.14; // (rolling, it bounces along the bark, shadow and all)
         }
       }
+      if (prog >= 0 && patch[key]) { const a = 0.5 + 1.3 * prog; x += Math.sin(now / 19 + key) * a; y += Math.cos(now / 26 + key * 1.7) * a * 0.7; }
       const t = now / 1000 + ((f.x * 7 + f.y * 13) % 10) * 0.63; // each piece on its own beat
       if (f.kind === 'food') {
         const drop = b?.fell && !reduced ? Math.max(0, 1 - (now - b.at) / 380) : 0; // (a new apple drops from the tree above)
@@ -6200,11 +6459,10 @@ window.SnakeRender = (() => {
         const off = left < BEAD_OFF ? Math.min(1, (BEAD_OFF - left) / (BEAD_OFF - BEAD_GOING)) : 0, going = Math.max(0, Math.min(1, left / BEAD_GOING));
         const h = lively ? (0.5 - 0.5 * Math.cos(t * 3)) * (1 - 0.7 * off) : 0;
         ctx.globalAlpha = 0.5 + 0.5 * going;
-        const up = toss / (CELL * 0.6); // (spat: up in the air, over the snakes, see drawTossed; its shadow smaller on the ground)
-        shadowAt(x + 1, y + CELL * 0.3, pop * 0.85 * (1 - 0.2 * h) * (0.72 + 0.28 * going) * (1 - 0.3 * up));
+        shadowAt(x + 1, y + CELL * 0.3, pop * 0.85 * (1 - 0.2 * h) * (0.72 + 0.28 * going));
         const sz = pop * (0.72 + 0.28 * going) * (1 + (lively ? Math.sin(t * 6) * 0.03 * (1 - off) : 0));
-        if (!up) blitAbout(beadSprite(f.cooked ? ROAST : b ? b.v : (f.color || '#a16207') + '|'), x, y - h * 1.8, 0, 0, sz, sz, 0);
-        if (off > 0 && !up) { ctx.globalAlpha = (0.5 + 0.5 * going) * off; blitAbout(beadRotSprite(!f.cooked && lumaOf(beadFill(f)) < BEAD_DARK), x, y - h * 1.8, 0, 0, sz, sz, 0); }
+        blitAbout(beadSprite(f.cooked ? ROAST : b ? b.v : (f.color || '#a16207') + '|'), x, y - h * 1.8, 0, 0, sz, sz, 0);
+        if (off > 0) { ctx.globalAlpha = (0.5 + 0.5 * going) * off; blitAbout(beadRotSprite(!f.cooked && lumaOf(beadFill(f)) < BEAD_DARK), x, y - h * 1.8, 0, 0, sz, sz, 0); }
         ctx.globalAlpha = 1;
         if (f.cooked && !off) steam(b, x, y, now);
       } else if (f.kind === 'mushroom') {
@@ -6389,7 +6647,7 @@ window.SnakeRender = (() => {
   const fireSeen = new Map(); // cell -> it was burning
   const scorched = [];        // cells that burned (baked into the static layer)
   let scorchDrawn = 0, fireTick = -1;
-  let bolt = null, flashAt = -1e9, rainbow = null, dive = null;
+  let bolt = null, flashAt = -1e9, rainbow = null;
 
   function easeSky(dt) {
     const kind = game.weather?.kind || 'clear';
@@ -7113,6 +7371,7 @@ window.SnakeRender = (() => {
       for (let n = 0; n < dents; n++) { const d = dentOrder[n], rr = dentR[d], x = dentX[d] + rr * 0.45, y = dentY[d] + rr * 0.45; ctx.moveTo(x + rr * 0.4, y); ctx.arc(x, y, rr * 0.4, 0, TAU); }
       ctx.fill();
     }
+    knockRings(w, prog, now); // (and where the food in it will be knocked to)
   }
   // The patch's outline, traced once each time it changes (see traceCells),
   // kept as its corners, loop by loop (round the outside, and round any cell
@@ -7588,6 +7847,8 @@ window.SnakeRender = (() => {
       timeFrom = game.time > timeAt && game.time - timeAt < 1000 ? timeAt : game.time;
       timeAt = game.time;
     }
+    for (let i = scurries.length - 1; i >= 0; i--) if (scurries[i].tick < game.tick) scurries.splice(i, 1); // (a tick's own: see drawBeetle)
+    for (let i = bugPops.length - 1; i >= 0; i--) if (bugPops[i].tick < game.tick) bugPops.splice(i, 1);
     for (const e of events) {
       if (e.type === 'eat') {
         let x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
@@ -7616,8 +7877,13 @@ window.SnakeRender = (() => {
         animOf(e.snake, now).chokeAt = now;
         moveFood(e.x, e.y, e.tx ?? e.x, e.ty ?? e.y, now, true);
       } else if (e.type === 'nudge') { // food its coughing head reached, nudged aside: it rolls there, or a beetle scurries
-        if (e.kind === 'beetle') beetleNudge = { x: e.x, y: e.y, tx: e.tx ?? e.x, ty: e.ty ?? e.y, tick: game.tick };
+        if (e.kind === 'beetle') scurries.push({ x: e.x, y: e.y, tx: e.tx ?? e.x, ty: e.ty ?? e.y, tick: game.tick });
         else moveFood(e.x, e.y, e.tx ?? e.x, e.ty ?? e.y, now, false);
+      } else if (e.type === 'knock') { // the woodpecker's strike knocks food out of its patch: it flies to where the rule says, in an arc, and a beetle scurries there; with nowhere to go, the bird has it
+        const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
+        if (e.tx == null || e.ty == null) { eatenNow.add(e.y * GRID + e.x); spawn(x, y, 8, 160, 420, 2.2, e.kind === 'beetle' ? '#059669' : '#c08a4a', '#f6ecd2'); }
+        else if (e.kind === 'beetle') scurries.push({ x: e.x, y: e.y, tx: e.tx, ty: e.ty, tick: game.tick });
+        else moveFood(e.x, e.y, e.tx, e.ty, now, true);
       } else if (e.type === 'death') {
         deaths.push(e.snake); // bursts on the next frame, unless the moment is held
         noteRemains(e.snake, now);
@@ -7730,10 +7996,15 @@ window.SnakeRender = (() => {
         for (const k of e.cells || []) spawn((k % GRID) * CELL + CELL / 2, Math.floor(k / GRID) * CELL + CELL / 2, 4, 240, 520, 2.8, '#c08a4a', '#3b2412');
         if (e.cells?.length && !reduced) shake(5);
       } else if ((e.type === 'spawn' && e.kind === 'beetle') || e.type === 'emerge') {
-        beetleAt = now; // (it pops out of its burrow, kicking up a little sawdust)
+        bugPops.push({ x: e.x, y: e.y, tick: game.tick, at: now }); // (it pops out of its burrow, kicking up a little sawdust)
         if (e.x >= 0) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 110, 420, 2, '#d6b480', '#a16207');
-      } else if (e.type === 'dive') { // down its burrow
-        dive = { x: e.x, y: e.y, at: now, ang: beetleAng ?? 0, gold: beetleGold };
+      } else if (e.type === 'dig') { // a cornered beetle digs in: sawdust bursts off it (and sprays while it digs: see drawDig)
+        if (!reduced) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 8, 140, 420, 2, '#e6cc96', '#b07d48');
+      } else if (e.type === 'dive') { // down its burrow, or the bore it dug
+        let b = null;
+        for (const o of bugs) if (Math.abs(o.x - e.x) + Math.abs(o.y - e.y) <= (b ? 0 : 1)) b = o; // (where it went in, or beside it)
+        dives.push({ x: e.x, y: e.y, at: now, ang: b?.ang ?? 0, gold: b ? b.gold : !!e.gold, dug: e.dug ? Math.max(0.3, b?.dig || DIG_STILL) : 0 });
+        if (e.dug) heaps.push({ x: e.x, y: e.y, at: now });
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 110, 420, 2, '#d6b480', '#a16207');
       } else if (e.type === 'burrow') {
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 170, 520, 2.4, '#d6b480', '#3b2412');
@@ -8118,9 +8389,9 @@ window.SnakeRender = (() => {
     eatenNow.clear();
     bornTick = -1;
     fresh = true;
-    beetleAng = null;
-    beetleAt = 0;
-    beetleNudge = null;
+    bugs.length = bugPops.length = scurries.length = dives.length = heaps.length = 0;
+    bugFor.clear();
+    knockFor = -1;
     fallenFlags.length = 0;
     fallen.length = 0;
     nextLeaf = 0;
@@ -8132,7 +8403,7 @@ window.SnakeRender = (() => {
     scorchDrawn = 0;
     scorchMask.fill(0);
     fireTick = -1;
-    bolt = null; rainbow = null; dive = null; flashAt = -1e9;
+    bolt = null; rainbow = null; flashAt = -1e9;
     blasts.length = 0;
     streaks.length = 0;
     refusal.at = -1e9; refusal.tick = -1;

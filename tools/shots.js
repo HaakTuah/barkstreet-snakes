@@ -3,16 +3,23 @@
 // desktop window, a phone and a phone on its side.
 //
 //   node tools/shots.js [outDir]      (default: shots/)
+//   node tools/shots.js [outDir] --staged [jump,dig,...]
+//      (only the staged shots, at the sizes the looks are checked at: a
+//      desktop window at 2x, a phone both ways at 3x, and the desktop with
+//      reduced motion; all of them, or the ones named)
 //
 // Your snake is steered by an autopilot (a rival's brain, through real key
 // events) until a lively moment, then crashed on purpose. Moments too rare
 // to wait for (round six A's jumps, bridges, Star's gag, a choke, a pecked
-// flag) are staged on a still board, on the desktop and the phone.
+// flag, a beetle digging in, the woodpecker's knock) are staged on a still
+// board, on the desktop and the phone.
 const path = require('path');
 const fs = require('fs');
 const { launch, serve, HELPERS } = require('./browser');
 
-const out = path.resolve(process.argv[2] || 'shots');
+const argv = process.argv.slice(2), st = argv.indexOf('--staged'), STAGED_ONLY = st >= 0;
+const ONLY = STAGED_ONLY && argv[st + 1] && !argv[st + 1].startsWith('--') ? argv.splice(st, 2)[1].split(',') : (STAGED_ONLY && argv.splice(st, 1), null);
+const out = path.resolve(argv[0] || 'shots');
 fs.mkdirSync(out, { recursive: true });
 
 (async () => {
@@ -75,6 +82,36 @@ fs.mkdirSync(out, { recursive: true });
       window.stage = personas => { const g = E.createGame({ withPlayer: true, personas }); g.food = []; g.time = 60000; g.tick = 500; g.weather.until = 1e12; g.snakes.forEach((s, i) => { setBody(s, [[2 + 4 * i, 23], [1 + 4 * i, 23], [4 * i, 23]], 'right'); s.nextStarve = 1e15; }); return g; };
       window.show = g => { document.getElementById('overlay').classList.add('hidden'); R.setViewer(0); R.setGame(g); return g; };
       window.doStep = g => { for (const s of g.snakes) s.prev = s.body.map(c => ({ ...c })); E.step(g); g.food.length = 0; R.onTick(g.events); };
+      // (where the woodpecker's strike knocks food: the engine's own rule, or, where the engine here has none, a stand-in by it)
+      E.knockTo ||= (g, x, y, cells) => {
+        const N = TUNING.GRID, mark = new Set(cells), busy = new Set();
+        for (const s of g.snakes) if (s.alive) for (const c of s.body) busy.add(c.y * N + c.x);
+        for (const f of g.food) busy.add(f.y * N + f.x);
+        let best = null, bd = Infinity, bm = Infinity;
+        for (let k = 0; k < N * N; k++) {
+          const f = g.fires.get(k);
+          if (mark.has(k) || busy.has(k) || g.holes.has(k) || (f && g.tick >= f.from && g.tick < f.until)) continue;
+          const cx = k % N, cy = (k - cx) / N, d = Math.hypot(cx - x, cy - y), m = Math.abs(cx - (N - 1) / 2) + Math.abs(cy - (N - 1) / 2);
+          if (d < bd - 1e-9 || (Math.abs(d - bd) < 1e-9 && m < bm)) { best = { x: cx, y: cy }; bd = d; bm = m; }
+        }
+        return best;
+      };
+      // The woodpecker aiming at a patch with food in it (an apple, a golden apple, a beetle), in sudden death.
+      window.knockBoard = () => {
+        const g = stage(['gobbler', 'sniper', 'copycat']), [you, gob, sn, cc] = g.snakes;
+        setBody(you, Array.from({ length: 9 }, (_, i) => [5, 4 + i]), 'up');
+        setBody(gob, Array.from({ length: 9 }, (_, i) => [18, 18 - i]), 'down');
+        setBody(sn, Array.from({ length: 8 }, (_, i) => [15 - i, 20]), 'right');
+        setBody(cc, Array.from({ length: 8 }, (_, i) => [9 + i, 4]), 'left'); cc.memory.modelId = sn.id;
+        for (const [x, y] of [[3, 17], [4, 17], [3, 18], [20, 6], [21, 6], [21, 7]]) g.holes.add(y * 24 + x);
+        const P = [];
+        for (let y = 10; y <= 13; y++) for (let x = 10; x <= 13; x++) if (!(x === 13 && y === 13)) P.push(y * 24 + x);
+        g.food.push({ x: 11, y: 11, kind: 'food', expires: g.tick + 900 }, { x: 12, y: 13, kind: 'golden', expires: g.tick + 900 }, { x: 16, y: 9, kind: 'food', expires: g.tick + 900 });
+        g.food.push({ x: 13, y: 11, kind: 'beetle', dir: E.DIRS.up, movedAt: g.tick - 40, expires: g.tick + 900, scared: true });
+        g.time = 140000;
+        g.woodpecker = { x: 11.5, y: 11.5, at: g.time - 6000, target: P, strikeAt: g.tick + 5, last: [], struckAt: -1, restUntil: 1e9, pecks: 3 };
+        return g;
+      };
       return 'ok';
     })()`);
     const STAGED = {
@@ -121,6 +158,36 @@ fs.mkdirSync(out, { recursive: true });
         R.onTick([{ type: 'choke', snake: you, x: 12, y: 9, tx: 11, ty: 11 }]); // (you gag and spit your bead aside)
         drawN(2, 0.5, 40);
       })()`,
+      dig: `(() => {
+        const g = stage(['gobbler', 'sniper', 'mason']), [you, gob, sn, ma] = g.snakes;
+        setBody(you, Array.from({ length: 8 }, (_, i) => [9 - i, 12]), 'right');
+        setBody(gob, Array.from({ length: 8 }, (_, i) => [15, 21 - i]), 'up');
+        setBody(sn, Array.from({ length: 8 }, (_, i) => [20, 3 + i]), 'up');
+        setBody(ma, Array.from({ length: 6 }, (_, i) => [3 + i, 4]), 'left');
+        g.food.push({ x: 12, y: 12, kind: 'beetle', dir: E.DIRS.left, movedAt: g.tick - 6, expires: g.tick + 200, scared: true, digUntil: g.tick + 5 }); // (cornered right in front of you, half way in)
+        g.food.push({ x: 15, y: 9, kind: 'beetle', gold: 1, dir: E.DIRS.up, movedAt: g.tick - 3, expires: g.tick + 200, scared: true }); // (and a second, golden, running from Gobbler)
+        show(g); drawN(16, 0.5);
+        R.onTick([{ type: 'dive', x: 6, y: 18, dug: 1 }]); // (where another dug itself in a moment ago: its plug of sawdust)
+        drawN(12, 0.5, 40);
+      })()`,
+      knock: `(() => { show(knockBoard()); drawN(24, 0.6); })()`, // (through the aim: the food in the mark trembling, rings where it'll land)
+      'knock-flight': `(() => {
+        const g = knockBoard(), P = g.woodpecker.target;
+        show(g); drawN(24, 0.6);
+        const ev = [];
+        for (const f of g.food.slice()) {
+          if (!P.includes(f.y * 24 + f.x)) continue;
+          const to = E.knockTo(g, f.x, f.y, P);
+          ev.push({ type: 'knock', kind: f.kind, x: f.x, y: f.y, tx: to.x, ty: to.y });
+          if (f.kind === 'beetle') { f.px = f.x; f.py = f.y; f.movedAt = g.tick; }
+          f.x = to.x; f.y = to.y;
+        }
+        for (const k of P) g.holes.add(k);
+        g.woodpecker.target = []; g.woodpecker.struckAt = g.tick; g.woodpecker.last = P;
+        g.tick++;
+        R.onTick(ev);
+        drawN(1, 0.3, 1); drawN(1, 0.45, 200); // (part way through their flights)
+      })()`,
       flag: `(() => {
         const g = stage(['colonist', 'sovereign', 'mason']), [you, col, sov, ma] = g.snakes;
         setBody(col, Array.from({ length: 6 }, (_, i) => [2 + i, 2]), 'left');
@@ -135,12 +202,20 @@ fs.mkdirSync(out, { recursive: true });
         drawN(5, 0.5, 60);
       })()`,
     };
-    for (const [name, code] of Object.entries(STAGED)) { await b.eval(code); await shot(`${prefix}${name}.jpg`); }
+    for (const [name, code] of Object.entries(STAGED)) { if (ONLY && !ONLY.includes(name)) continue; await b.eval(code); await shot(`${prefix}${name}.jpg`); }
     await b.eval(`window.__autoRaf = true; 'ok'`);
   };
   try {
     // A switch for the page's animation loop, for the staged shots (on, but for them).
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => { const raw = window.requestAnimationFrame.bind(window); window.__autoRaf = true; window.requestAnimationFrame = cb => raw(ts => { if (window.__autoRaf) cb(ts); }); })();` });
+    if (STAGED_ONLY) {
+      for (const [prefix, w, h, scale, mobile, still] of [['desktop-', 800, 800, 2, false, false], ['phone-', 390, 844, 3, true, false], ['landscape-', 844, 390, 3, true, false], ['still-', 800, 800, 2, false, true]]) {
+        await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: still ? 'reduce' : 'no-preference' }] });
+        await b.viewport(w, h, { scale, mobile });
+        await stagedShots(prefix);
+      }
+      return;
+    }
     // ---------------------------------------------------------------- desktop
     await b.viewport(800, 800);
     await b.go(URL);
