@@ -1241,6 +1241,7 @@ window.SnakeRender = (() => {
         fix: new Float32Array(64), fixOn: false, fixFast: false, tdx: s.dir.x, tdy: s.dir.y, bx: 0, by: 0, drawnAt: -1,
         jc: false, fc: false, flashFx: -1e9, // (your rests: cooling last frame; when your flash came back)
         star: false, turn: 0, face: 0, hue: 0, hueAt: -1, glow: 1, brow: 1, flareAt: -1e9, shedAt: 0, // (Star: its head a star, turned so, its face upright; its rainbow (and Copycat's copy of it); its tell; its tail's twinkles)
+        flow: 0, flowW: 0, flowMv: 0, flowTick: -1, flowAt: -1, bursts: 0, burstAt: -1e9, // (how far it has gone, for its rainbow's stream: see flowOf; its flashes' bursts of it)
         // Up in the air and over holes (see liftOf and sinkOf): each segment's
         // lift (0..1, the top of a jump 1) and how far it hangs over a pit
         // (0..1) and sinks into it; its jumps, while their arch lasts; when it
@@ -1545,13 +1546,42 @@ window.SnakeRender = (() => {
     }
     return null;
   }
-  // Where its rainbow's hue is at its head: flowing on (a degree every 15 ms,
-  // held at 0 with reduced motion), or once it's out, where it stopped.
+  // Where its rainbow's hue is at its head. Its colours stream back along
+  // its body as it goes, by how far it has gone (its moves, and the frame's
+  // way through the next), at BOW_FLOW times its crawl: so over the log they
+  // stream backward behind it, like a trail (at its crawl they'd be painted
+  // on the log; slower, they'd creep forward with it), and each segment goes
+  // round the rainbow about once a second. Stopped or stunned, they settle
+  // with it; a flash bursts them on (BOW_BURST segments' worth, easing out
+  // over BOW_BURST_MS). With reduced motion they drift slowly where they are
+  // (BOW_DRIFT degrees a second). Copycat's pale copy goes by its model's,
+  // in step. Once it's out, they stay where they stopped.
+  const BOW_FLOW = 1.25, BOW_BURST = 6, BOW_BURST_MS = 360, BOW_DRIFT = 10;
   function bowHue(s, a, now) {
     if (!s.alive) { if (a.hueAt < 0) a.hueAt = a.hue; return a.hueAt; }
     a.hueAt = -1;
-    return a.hue = reduced ? 0 : Math.floor(now / 15) % 360;
+    if (reduced) return a.hue = Math.floor(now / 1000 * BOW_DRIFT) % 360;
+    let src = s, sa = a;
+    if (lookOf(s) !== 'star') { const m = findById(s.memory.modelId); if (m && m.alive) { src = m; sa = animOf(m, now); } } // (Copycat's copy: its model's)
+    const u = (now - sa.burstAt) / BOW_BURST_MS, burst = sa.bursts * BOW_BURST - (u >= 0 && u < 1 ? BOW_BURST * (1 - u) * (1 - u) : 0);
+    return a.hue = Math.floor((flowOf(src, sa) * BOW_FLOW + burst) * RAINBOW_STEP) % 360;
   }
+  // How far a snake has gone, in cells, as it's drawn this frame: its moves
+  // until this tick (a flash's cells and all), and its way through this
+  // one's and on toward the next (see prepare: flowK). Counted once a tick.
+  function flowOf(s, a) {
+    if (a.flowAt === lastNow && lastNow) return a.flow;
+    if (game.tick !== a.flowTick) {
+      if (a.flowTick >= 0 && game.tick > a.flowTick) a.flowW += a.flowMv * Math.min(4, game.tick - a.flowTick); // (the ticks between, if any were missed, as the last)
+      a.flowTick = game.tick;
+      const h = s.body[0], p = s.prev?.[0];
+      const d = p ? Math.abs(h.x - p.x) + Math.abs(h.y - p.y) : 0;
+      a.flowMv = d > GRID / 2 ? 1 : d; // (across a wrapped edge: a cell)
+    }
+    a.flowAt = lastNow;
+    return a.flow = a.flowW + a.flowMv * Math.min(1, flowK) + (a.mv ? Math.max(0, flowK - 1) : 0);
+  }
+  let flowK = 0; // (the frame's way through the tick, as drawn: see prepare)
   const lumas = new Map();
   function lumaOf(c) {
     let l = lumas.get(c);
@@ -1591,7 +1621,7 @@ window.SnakeRender = (() => {
       return;
     }
     const bow = bowOf(s);
-    if (bow) { // a rainbow trailing a sunflower star (its head is drawn apart: see drawStarHead), flowing down from the head (held still with reduced motion; out, it stops where it was), fading toward the bark at the tail; or Copycat's pale copy of it, head and all
+    if (bow) { // a rainbow trailing a sunflower star (its head is drawn apart: see drawStarHead), streaming back along it as it goes (see bowHue), fading toward the bark at the tail; or Copycat's pale copy of it, head and all
       const h0 = bowHue(s, a, now);
       for (let i = 0; i < n; i++) fills[i] = bow((h0 + 360 - (i * RAINBOW_STEP) % 360) % 360)[n > 1 ? Math.round(RAINBOW_FADE * i / (n - 1)) : 0];
       if (look === 'star') fills[0] = STAR_SUN;
@@ -1643,6 +1673,7 @@ window.SnakeRender = (() => {
     let at = alpha + leadNow;
     if (dead || !game || leadRest) at = Math.min(1, at);
     if (snap && !ran) at = Math.max(1, at);
+    flowK = at;
     if (dead || !game) { a.mv = 0; a.ml = 0; a.mf = 0; }
     const k1 = Math.min(1, at), k2 = a.mv ? at - k1 : 0;
     const m = k2 > 0 && a.mg ? n + 1 : n; // (growing: its tail stays where it is, a segment more)
@@ -7648,7 +7679,9 @@ window.SnakeRender = (() => {
         dustPuffs(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, e.snake.dir.x, e.snake.dir.y);
         if (e.gold) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 10, 120, 600, 1.8, '#d4a017', '#fffbea'); // (in Honey, a power's gold)
       } else if (e.type === 'dash') { // a streak along the way it went: a golden dash's in gold and ember, with flecks of both; a plain flash's in ember, lighter
-        animOf(e.snake, now).dashTick = game.tick;
+        const da = animOf(e.snake, now);
+        da.dashTick = game.tick;
+        da.bursts++; da.burstAt = now; // (a rainbow's colours burst on: see bowHue)
         if (e.plain && lookOf(e.snake) === 'star') animOf(e.snake, now).flareAt = now; // (Star's flash spent: its twinkles burst off its points as they go dim, see drawStarHead)
         const h = e.snake.body[0], seen = streaks.findIndex(k => k.s === e.snake && k.pre === game.tick - 1); // (seen coming: see prepare)
         if (seen >= 0 && streaks[seen].fx === e.x && streaks[seen].fy === e.y && streaks[seen].tx === h.x && streaks[seen].ty === h.y) { streaks[seen].pre = -1; sparksOf(streaks[seen]); } // (as it was seen: it stays, and now its flecks fly)

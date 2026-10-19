@@ -22,8 +22,10 @@
 //   middle), never on the head (none inside its face, where moving the arc
 //   in put them over its eyes), and stunned, the stars keep clear of them.
 // - Star: its head is a star (five points round it, one to the back), its
-//   rainbow flows down its body from the head (and holds still with reduced
-//   motion), its gold line runs round its points, and a dead Star's beads go
+//   rainbow streams back along it as it goes, faster than it crawls
+//   (backward over the log, each segment round the rainbow about once a
+//   second; still while it's stunned, a burst as it flashes; with reduced
+//   motion a slow drift where it is), its gold line runs round its points, and a dead Star's beads go
 //   round the rainbow from its head. Its tell is a countdown: its points go
 //   dim as it flashes and light one by one through its rest, its middle
 //   always lit (with reduced motion too: a point at a time, never a blink),
@@ -356,8 +358,11 @@ const STAGE = `(() => {
     }
 
     // Star: a star for a head (five points round it, where a round head has
-    // none), the old rainbow flowing down its body from the head (held still
-    // with reduced motion), the gold line round its points, and its beads in
+    // none), the old rainbow streaming back along its body as it goes (round
+    // the rainbow about once a second at a segment, at 1.25 times its crawl,
+    // so a colour goes back over the log at a quarter of it; still while it's
+    // stunned; a burst as it flashes; drifting slowly where it is with
+    // reduced motion), the gold line round its points, and its beads in
     // rainbow order. Two Stars heading right along rows 8 and 14, one
     // resting, one ready; Mason (a round head) beside them. (Its tell, its
     // face and its rainbow on others: below.)
@@ -377,18 +382,55 @@ const STAGE = `(() => {
       const g = stage(['star', 'star', 'mason']), [you, rest, ready] = g.snakes;
       setBody(rest, Array.from({ length: 16 }, (_, i) => [16 - i, 8]), 'right'); rest.flashReadyAt = g.time + 1e6;
       setBody(ready, Array.from({ length: 16 }, (_, i) => [16 - i, 14]), 'right'); ready.flashReadyAt = 0;
-      R.setReducedMotion(true); // (its rainbow held still: its neck isn't yellow, nor its points twinkling)
+      R.setReducedMotion(true); // (its rainbow drifting slowly where it is: its neck isn't yellow, nor its points twinkling)
       __t = 7e6; show(g); drawN(20);
       out.points = [0.66, 0.7].map(r => runs(ring(rest, r), yellow));
-      const still = SEGS.map(i => seg(rest, i));
+      const still = SEGS.map(i => hue(seg(rest, i)));
       drawN(15); // (half a second on)
-      out.still = { before: still, after: SEGS.map(i => seg(rest, i)) };
+      const still2 = SEGS.map(i => hue(seg(rest, i)));
+      drawN(60); // (two seconds more)
+      out.still = { a: still, b: still2, c: SEGS.map(i => hue(seg(rest, i))) };
       R.setReducedMotion(false);
       drawN(20);
-      const t0 = SEGS.map(i => hue(seg(rest, i)));
-      for (let i = 0; i < 28; i++) { __t += 15; R.frame(0.5, __t); } // (28 hues on, 15 ms each: a segment's worth)
-      const t1 = SEGS.map(i => hue(seg(rest, i)));
-      out.flow = { t0, t1 };
+      // Going: a tick every 120 ms, 8 frames a tick (as at the opening
+      // speed): segment 3's hue, and the hue on the log at a cell its body
+      // lies over all the while, every other frame, unwound (degrees
+      // turned). (Read off a copy of its row, not the board: read back that
+      // often, the board would be moved off the GPU, and every check after
+      // this one would see the CPU's drawing.)
+      const turned = list => { let sum = 0; for (let i = 1; i < list.length; i++) sum += ((list[i] - list[i - 1] + 540) % 360) - 180; return Math.round(sum); };
+      const board = document.getElementById('game'), copy = document.createElement('canvas'), cg = copy.getContext('2d', { willReadFrequently: true }), kk = board.width / (TUNING.GRID * ${CELL});
+      copy.width = board.width; copy.height = Math.ceil(${CELL} * kk);
+      const rowHue = (x, y) => { const d = cg.getImageData(Math.round(x * ${CELL} * kk), Math.round((y - 8) * ${CELL} * kk), 3, 3).data; let r = 0, gg = 0, bb = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; gg += d[i + 1]; bb += d[i + 2]; } return hue([r, gg, bb]); };
+      const move = (s, cells = 1, events = []) => { s.prev = s.body.map(c => ({ ...c })); for (let j = 0; j < cells; j++) { const h = s.body[0]; s.body.unshift({ x: h.x + 1, y: h.y }); s.body.pop(); } g.tick++; R.onTick(events); };
+      const play = (ticks, go) => {
+        const s3 = [], log = [];
+        for (let t = 0; t < ticks; t++) {
+          go(t);
+          for (let f = 1; f <= 8; f++) {
+            __t += 15; R.frame(f / 8, __t);
+            if (f % 2) continue;
+            cg.clearRect(0, 0, copy.width, copy.height); cg.drawImage(board, 0, Math.round(8 * ${CELL} * kk), copy.width, copy.height, 0, 0, copy.width, copy.height);
+            const [hx] = at(rest);
+            s3.push(rowHue(hx - 3 + 0.04, 8.54)); log.push(rowHue(8.54, 8.54));
+          }
+        }
+        return { seg: turned(s3), log: turned(log), ms: ticks * 120 };
+      };
+      setBody(rest, Array.from({ length: 16 }, (_, i) => [13 - i, 8]), 'right');
+      drawN(10);
+      out.going = play(6, () => move(rest)); // (13 to 19: cell 8 under segments 5 to 11)
+      rest.stunUntil = g.tick + 20; // (stunned, it stays where it is: from the tick after, once it's no longer drawn on ahead)
+      const stay = () => { rest.prev = rest.body.map(c => ({ ...c })); g.tick++; R.onTick([]); };
+      play(1, stay);
+      out.stunned = play(4, stay);
+      rest.stunUntil = -1;
+      setBody(rest, Array.from({ length: 16 }, (_, i) => [13 - i, 8]), 'right');
+      drawN(10);
+      out.normal = play(3, () => move(rest));
+      setBody(rest, Array.from({ length: 16 }, (_, i) => [13 - i, 8]), 'right');
+      drawN(10);
+      out.flash = play(3, t => t ? move(rest) : move(rest, 1 + TUNING.DASH_LENGTH, [{ type: 'dash', snake: rest, x: 13, y: 8, plain: true }])); // (a flash, then on)
       // Golden powers held: the gold line round its two front points.
       rest.leaps = 2; drawN(10);
       const gold = ring(rest, 0.875, 360);
@@ -409,11 +451,15 @@ const STAGE = `(() => {
     const dh = (a, b) => Math.abs(((a - b + 540) % 360) - 180), POINTS = [36, 108, 180, 252, 324]; // (heading right, a point to the back)
     check(stars.points.some(p => p.length === 5 && POINTS.every(d => p.some(m => dh(m, d) < 12))), 'Star’s head is a star: five points round it, one to the back',
       `yellow runs ${stars.points.map((p, i) => `${[0.66, 0.7][i]} cells out at ${p.join(', ')}°`).join('; ')} (a round head reaches 0.54)`);
-    const same = stars.still.before.every((c, i) => c.every((v, j) => Math.abs(v - stars.still.after[i][j]) <= 2));
-    check(same, 'Star’s rainbow holds still with reduced motion', `segments 2, 3, 4, 7: ${JSON.stringify(stars.still.before)} then ${JSON.stringify(stars.still.after)}`);
-    const { t0, t1 } = stars.flow;
-    check(new Set(t0).size === 4 && t0.every((h, i) => dh(h, t1[i]) > 15) && dh(t1[1], t0[0]) < 14 && dh(t1[2], t0[1]) < 14,
-      'Star’s rainbow flows down its body from the head', `hues of segments 2, 3, 4, 7: ${t0.join(', ')}, a segment’s worth later ${t1.join(', ')}`);
+    const { a: s0, b: s1, c: s2 } = stars.still, d1 = s0.map((h, i) => dh(h, s1[i])), d2 = s0.map((h, i) => dh(h, s2[i]));
+    check(new Set(s0).size === 4 && d1.every(d => d <= 10) && d2.every(d => d >= 12 && d <= 45) && Math.max(...d2) - Math.min(...d2) <= 8,
+      'with reduced motion, Star’s rainbow drifts slowly where it is', `hues of segments 2, 3, 4, 7: ${s0.join(', ')}, half a second on ${s1.join(', ')}, two seconds more ${s2.join(', ')}`);
+    const { going, stunned, normal, flash } = stars, perSec = v => Math.round(v / going.ms * 1000);
+    check(perSec(going.seg) >= 220 && perSec(going.seg) <= 420 && perSec(going.log) >= 25 && perSec(going.log) <= 100,
+      'Star’s rainbow streams back as it goes, faster than its crawl: backward over the log, each segment round the rainbow about once a second',
+      `going at 120 ms a tick: segment 3 turned ${going.seg}° (${perSec(going.seg)}° a second), the log under it ${going.log}° (${perSec(going.log)}° a second: a colour going back over it at ${(perSec(going.log) / 28 / (1000 / 120)).toFixed(2)} of its crawl)`);
+    check(Math.abs(stunned.seg) <= 4 && Math.abs(stunned.log) <= 4, 'stunned, it stays, and so does its rainbow', `segment 3 turned ${stunned.seg}°, the log under it ${stunned.log}°, in ${stunned.ms} ms`);
+    check(flash.seg >= 2 * normal.seg, 'a flash bursts its rainbow on', `segment 3 turned ${flash.seg}° in the three ticks from a flash, ${normal.seg}° in three going on`);
     check(stars.gold.every(Boolean), 'holding golden powers, Star’s gold line runs round its points', `Honey just past its two front points: ${stars.gold.join(', ')}`);
     const want = [0, 32, 55, 130, 205, 275, 0];
     check(stars.beads.every((h, i) => dh(h, want[i]) < 22), 'a dead Star’s beads go round the rainbow from its head', `hues ${stars.beads.join(', ')} (red, orange, yellow, green, blue, violet, red: ${want.join(', ')})`);
