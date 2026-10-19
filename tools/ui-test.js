@@ -288,6 +288,22 @@ const KEYS = {
     p = await P();
     check(!p.note && !p.noted && p.title.startsWith('Ready'), 'a new card brings its own words');
 
+    // A death whose row is below the fold (Fire, near the guide's end): the
+    // link still opens the guide at it, lit and in view (focus on the book's
+    // Close without scrolling it back up). A crash's row is always in view.
+    // (Held at 3 segments while it burns: the pilot eats, and a snake that eats as fast as it burns lives on.)
+    const fire = `(() => { const g = SnakeDebug.game(), m = me(); m.burnFrom = g.tick; m.burnUntil = g.tick + 400; const hold = setInterval(() => { if (!m.alive || SnakeDebug.game() !== g) return clearInterval(hold); m.body.length = Math.min(m.body.length, 3); m.grow = 0; }, 5); return 1; })()`;
+    await fresh(['ouroboros', 'metagamer', 'gobbler']);
+    await ev(fire);
+    await wait(`cardUp() && !me().alive`);
+    await b.sleep(900);
+    p = await P();
+    check(p.how === 'Field guide: Fire', 'burned up: your death’s card says Field guide: Fire', p.how);
+    await mouse(await at('#how'));
+    p = await P();
+    check(p.book && p.spot === 'fire' && p.spotIn && p.pageTop > 0 && p.focus === 'records-close', '...which opens the guide at Fire, far down it, lit and in view (focus on its Close)', `${p.spot} / in view: ${p.spotIn} / scrolled ${p.pageTop} / ${p.focus}`);
+    await key('Escape');
+
     // -------------------------------------------------------------- phones
     for (const [w, h] of [[390, 844], [320, 640]]) {
       await b.viewport(w, h, { scale: 2, mobile: true });
@@ -340,6 +356,13 @@ const KEYS = {
       await tap(await tagAt('Metagamer'));
       p = await P();
       check(p.kind === 'note' && p.toast.startsWith('Metagamer'), `phone ${w}: watching, a tap on a tag is a banner`, p.toast);
+      await fresh(['ouroboros', 'metagamer', 'gobbler']);
+      await ev(fire);
+      await wait(`cardUp() && !me().alive`);
+      await b.sleep(900);
+      await tap(await at('#how'));
+      p = await P();
+      check(p.book && p.spot === 'fire' && p.spotIn, `phone ${w}: burned up, the card’s link opens the guide at Fire, lit and in view`, `${p.spot} / in view: ${p.spotIn} / scrolled ${p.pageTop}`);
     }
     if (b.errors.length) { results.push(`FAIL page errors: ${b.errors.join(' | ')}`); failed++; }
   } catch (e) {

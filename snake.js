@@ -2045,7 +2045,7 @@
       page.scrollTop = Math.max(0, spot.getBoundingClientRect().top - page.getBoundingClientRect().top - page.clientHeight / 3);
       spot.classList.add('spot');
     }
-    $('records-close').focus();
+    $('records-close').focus({ preventScroll: true }); // (a plain focus scrolls the page back up to its Close: the lit row would be out of sight)
   }
 
   function closeRecords() {
