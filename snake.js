@@ -1504,6 +1504,7 @@
     document.documentElement.classList.toggle('playing', (state === 'running' || state === 'countdown') && playerAlive());
     document.documentElement.classList.toggle('in-round', state === 'running' || state === 'countdown');
     if (helpEl) updateHelp(); // (watching or playing: the help says what you can do)
+    fitColumn(); // (on its side, watching: the help may give the chatter its room)
     keepAwake();
   }
 
@@ -1927,6 +1928,7 @@
     chatterBtn.firstElementChild.textContent = on ? 'On' : 'Off'; // (the state is aria-checked: the word is for eyes)
     chatterBtn.setAttribute('aria-checked', String(on));
     chatlogEl.hidden = !on;
+    fitColumn();
   }
 
   // Renaming your Hall of Fame entry from the card. Saved when you're done
@@ -2620,28 +2622,60 @@
   window.addEventListener('resize', placeBoard, { passive: true });
   window.addEventListener('scroll', placeBoard, { passive: true });
   new ResizeObserver(placeBoard).observe(document.querySelector('main')); // (the page around the board changed: it may have moved)
-  // A full chatter on a phone on its side: its log is cut at its box, the
-  // oldest lines first. Where that would slice a row of words, the log ends
-  // at the last whole row instead (a clip, so nothing moves: the log's size
-  // is what it was). Worked out as lines come and go and the box changes.
+  // A full chatter on a phone on its side: its log is cut where it can be
+  // seen, the oldest lines first: at its own box, at the chatter's (inside
+  // its padding: the log keeps a line's height, so a squeezed chatter leaves
+  // it hanging past its bottom) or at the page's bottom (it's clipped
+  // there), whichever comes first. Where that would slice a row of words,
+  // the log ends at the last whole row instead, or shows none if none fits
+  // (a clip, so nothing moves: the log's size is what it was). Worked out
+  // as lines come and go and the boxes change.
+  const chatterEl = document.querySelector('.chatter'), chatterStyle = getComputedStyle(chatterEl);
+  const logEnd = () => Math.min(chatlogEl.getBoundingClientRect().bottom, mainEl.getBoundingClientRect().bottom,
+    chatterEl.getBoundingClientRect().bottom - parseFloat(chatterStyle.paddingBottom) - parseFloat(chatterStyle.borderBottomWidth));
   const rows = document.createRange();
   const fitLog = () => {
-    const box = chatlogEl.getBoundingClientRect();
+    const box = chatlogEl.getBoundingClientRect(), end = logEnd();
     let cut = 0;
     for (const li of chatlogEl.children) {
       const r = li.getBoundingClientRect();
-      if (r.bottom <= box.bottom + 0.5) continue;
+      if (r.bottom <= end + 0.5) continue;
       rows.selectNodeContents(li);
       let last = r.top;
-      for (const f of rows.getClientRects()) if (f.height && f.bottom <= box.bottom + 0.5) last = Math.max(last, f.bottom);
+      for (const f of rows.getClientRects()) if (f.height && f.bottom <= end + 0.5) last = Math.max(last, f.bottom);
       cut = box.bottom - Math.max(box.top, last);
       break;
     }
     chatlogEl.style.clipPath = cut > 0.5 ? `inset(0 0 ${cut.toFixed(1)}px -12px)` : ''; // (-12: a new line slides in from the side)
   };
   new ResizeObserver(fitLog).observe(chatlogEl);
+  new ResizeObserver(fitLog).observe(chatterEl);
   new MutationObserver(fitLog).observe(chatlogEl, { childList: true });
   document.fonts?.ready.then(fitLog);
+  // On its side, watching, the speed buttons take a row of the column. Where
+  // the chatter's log would then have no room for a whole row of words (a
+  // screen 320 px tall less a notch's home bar, 780×320 in Safari), the
+  // help, which only says what they do, gives the chatter its room; where
+  // a row fits beside it, it stays. Decided with the help shown (a row of
+  // words put first in the log for the moment, before anything's drawn:
+  // whether it would be whole where the log can be seen, whatever the log
+  // holds), as the window changes, the font arrives, the speed buttons come
+  // and go and the chatter's switched; never from inside a resize
+  // observer's call (the column's change would come round again).
+  const sideways = matchMedia('(min-aspect-ratio: 5/4) and (max-height: 500px) and (min-width: 480px)'); // (style.css: phones on their side)
+  const rowProbe = document.createElement('li');
+  rowProbe.textContent = 'Bark';
+  const fitColumn = () => {
+    mainEl.classList.remove('help-yields');
+    if (!sideways.matches || speedEl.hidden || chatlogEl.hidden) return;
+    chatlogEl.prepend(rowProbe);
+    rows.selectNodeContents(rowProbe);
+    const row = rows.getBoundingClientRect().bottom, end = logEnd();
+    rowProbe.remove();
+    if (row > end + 0.5) mainEl.classList.add('help-yields');
+  };
+  window.addEventListener('resize', fitColumn, { passive: true });
+  document.fonts?.addEventListener?.('loadingdone', fitColumn);
   Chatter.init({ boardEl, logEl: chatlogEl });
 
   const sizer = new ResizeObserver(entries => {

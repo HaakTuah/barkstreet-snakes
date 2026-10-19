@@ -978,6 +978,13 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .hud .stat { order: 0; }
   header::after { content: ''; order: 1; flex-basis: 100%; }
   .hud button { order: 2; }
+  /* Best at the end of the buttons' row, under Score: beside the title the
+     two ran out of room at 100 or 1000, and the header grew a row in the
+     middle of a round, the board shrinking under it. Its room is kept for
+     four digits, its words to the right, so the buttons never move as it
+     grows. (The narrowest phones keep it on the title's row.) */
+  .hud .stat + .stat { order: 3; min-width: 4.5em; text-align: right; }
+  .hud .stat + .stat strong { text-align: left; } /* (its digits under Score's) */
   h1 { white-space: nowrap; }
   /* The Hall of Fame as a trophy, so the header stays one row high. */
   .trophy { min-width: 34px; padding: 0 8px; justify-content: center; }
@@ -1026,6 +1033,12 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   h1 { font-size: 1.25rem; }
   .hud .stat { font-size: 0.8rem; }
   header { column-gap: 6px; }
+  .hud .stat + .stat { order: 0; min-width: 0; } /* (Best: four digits fit beside the title here) */
+}
+/* Touch, held upright: the buttons' row keeps room for Best's four digits
+   at 341 px (five 44 px buttons, 6 px apart at least, as on its side). */
+@media (pointer: coarse) and (max-width: 440px) {
+  header { column-gap: 6px; }
 }
 
 /* Short phones: no tagline, so the whole board fits the first screen. */
@@ -1052,7 +1065,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
 @media (max-width: 440px) {
   body { padding-left: var(--safe-l); padding-right: var(--safe-r); }
   main {
-    --head: 208px; /* (what's above the board on a short phone, until the page has measured it: the page's top, the header in three rows at 375 px, the tags in two, and their margins) */
+    --head: 180px; /* (what's above the board on a short phone, until the page has measured it: the page's top, the header in two rows, the tags in two, and their margins) */
     /* (--above: what's above the frame, measured, whatever the header's
        rows and font: snake.js placeBoard. The board is as big as fits the
        height under it; and in between, where it would run nearly edge to
@@ -1139,7 +1152,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
 
 /* Phones on their side: the board takes the full height less a thin rim
    (268 → 310 px with a phone's browser bars showing, about 380 in full
-   screen), and the column beside it gets compact enough to fit that height
+   screen), and the column beside it gets compact enough to fit the height
    too: no tagline, smaller words, the tags two by two, and the chatter
    taking what's left (its newest lines; the oldest are cut, and never
    into its padding). Nothing scrolls; the column keeps a hair off the
@@ -1150,8 +1163,13 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
 @media (min-aspect-ratio: 5/4) and (max-height: 500px) and (min-width: 480px) {
   body { padding-top: var(--safe-t); padding-bottom: var(--safe-b); }
   main {
-    --board: min(calc(100vh - var(--safe-t) - var(--safe-b)), calc(100vw - 268px - max(12px, var(--safe-l)) - max(12px, var(--safe-r))));
-    height: var(--board);
+    /* (--tall: the screen's height inside its safe area. The column takes
+       all of it, though the board, on a screen under about 600 px wide,
+       takes less: squeezed into the board's height, a full chatter had no
+       room for a row of words) */
+    --tall: calc(100vh - var(--safe-t) - var(--safe-b));
+    --board: min(var(--tall), calc(100vw - 268px - max(12px, var(--safe-l)) - max(12px, var(--safe-r))));
+    height: var(--tall);
     overflow: hidden; /* (before Safari 16) */
     overflow: visible clip; /* (clipped top and bottom only: a focus ring at the column's left edge stays whole) */
     grid-template-rows: auto auto auto minmax(0, max-content) auto 1fr;
@@ -1178,15 +1196,14 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .leaves.tl { left: -21px; top: 3px; }
   .leaves.bl { left: -21px; bottom: 3px; }
   @supports (height: 1dvh) {
-    main { --board: min(calc(100dvh - var(--safe-t) - var(--safe-b)), calc(100vw - 268px - max(12px, var(--safe-l)) - max(12px, var(--safe-r)))); }
+    main { --tall: calc(100dvh - var(--safe-t) - var(--safe-b)); }
   }
-}
-/* On its side and very short (320 px, less a notch's home bar), watching:
-   the speed buttons take a row, so the help (which only says what they do)
-   gives the chatter its room, rather than leave it no line at all. */
-@media (min-aspect-ratio: 5/4) and (max-height: 340px) and (min-width: 480px) {
-  .speed:not([hidden]) ~ .help { display: none; }
-  .speed:not([hidden]) ~ .chatter { max-height: calc(100% - 4px); } /* (still 4 px off the screen's bottom, as the help was) */
+  /* Watching, the speed buttons take a row; where the chatter's log would
+     then have no room for a whole row of words (a screen 320 px tall less a
+     notch's home bar, say), the help, which only says what they do, gives
+     the chatter its room (snake.js fitColumn decides, the help shown). */
+  main.help-yields .help { display: none; }
+  main.help-yields .chatter { max-height: calc(100% - 4px); } /* (still 4 px off the screen's bottom, as the help was) */
 }
 
 /* Touch: comfortable targets. */

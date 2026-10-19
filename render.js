@@ -6029,7 +6029,8 @@ window.SnakeRender = (() => {
     const deep = (BIRD_BOX[2] - BIRD_BOX[0]) * BU, tall = (BIRD_BOX[3] - BIRD_BOX[1]) * BU; // (back to beak tip; crown to tail)
     const least = sc ? Math.min(1, PERCH_MIN_PX / (tall * sc)) : 1, floor = sc ? Math.min(1, PERCH_FLOOR_PX / (tall * sc)) : 1; // (the smallest it perches; and on a phone held upright, where neither the ledge nor a gutter has room for that)
     const beside = r => Math.min(1, (r - 2 * gap) / (deep + 2 * BOX_EDGE * BU)); // (its outline and the gap, on both sides)
-    const fit = { left: beside(room.left), right: beside(room.right), top: room.top >= BU * 5 ? 1 : 0, bottom: room.bottom >= BU * 5 ? 1 : 0 };
+    const whole = r => (r - 2 * gap >= tall + (2 * BOX_EDGE + CROUCH) * BU ? 1 : 0); // (above or below the board: all of it, crouching too, and the gap. With less room, pushed back onto the screen, it hung over the board's edge rows, as on a phone on its side under 600 px wide, its board shorter than the screen)
+    const fit = { left: beside(room.left), right: beside(room.right), top: whole(room.top), bottom: whole(room.bottom) };
     const ledge = boardRect.ledge > 0 && sc ? Math.min(1, (room.bottom - 2 * gap) / (tall + (2 * BOX_EDGE + CROUCH) * BU)) : 0; // (how big it can stand there)
     const shrunk = k => Math.min(1, room[k] / (deep + 2 * BOX_EDGE * BU)); // (how big beside the board, its beak's tip touching it)
     const dist = { left: tx, right: SIZE - tx, top: ty, bottom: SIZE - ty };
@@ -6054,7 +6055,7 @@ window.SnakeRender = (() => {
       : side === 'right' ? { x: SIZE + BIRD_BOX[2] * s * BU + short, y: along(ty) + BU * 1.75 * s, flip: -1, s }
       : side === 'top' ? { x: along(tx) - face * BU * 1.6, y: -Math.min(BU * 3.3, Math.max(BU * 1.5, room.top - BU * 2.6)), flip: face, s }
       : side === 'ledge' ? { x: along(tx) + face * BU * 1.6 * s, y: SIZE + e - BIRD_BOX[1] * s * BU, flip: -face, s, up: LEDGE_LOOK }
-      : { x: along(tx) - face * BU * 1.6, y: SIZE + Math.min(BU * 2.6, Math.max(BU * 2.45, room.bottom - BU * 3.2)), flip: face, s };
+      : { x: along(tx) - face * BU * 1.6, y: SIZE + e - BIRD_BOX[1] * s * BU, flip: face, s, up: LEDGE_LOOK }; // (below the board, as on the ledge: its crown just under the board, and only looking up a little at its chunk)
     // (then all of it on the screen, off the furniture, its outline and its crouch too: its back first, if it can't all fit)
     const x0 = (p.flip > 0 ? BIRD_BOX[0] : -BIRD_BOX[2]) * s * BU - e, x1 = (p.flip > 0 ? BIRD_BOX[2] : -BIRD_BOX[0]) * s * BU + e;
     const lo = -room.left - x0, hi = SIZE + room.right - x1;
