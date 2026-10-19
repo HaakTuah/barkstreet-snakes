@@ -106,6 +106,7 @@
     youCoughing: 'No eating while you cough: food rolls aside.', // (true whenever it shows: a lesson may wait out the cough)
     youWoodpecker: 'The woodpecker knocks food aside, and never shuts you in.', // (your first sudden death, once its own banner has had its time)
     youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near your head)
+    digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log; past three the one unused longest closes over: the Field guide says so)
     lastApples: 'The last apples are falling.',
     // Your flash, ready and never used yet: the key, once a round (until you've flashed).
     flashKey: touchFirst ? 'Your flash is ready: swipe the way you’re going.' : 'Your flash is ready: E or Shift, two cells in a blink.',
@@ -785,6 +786,7 @@
       else if (e.type === 'strike') Audio.play('thunder', at(e.x));
       else if (e.type === 'gust') Audio.play('gust');
       else if (e.type === 'burrow' && !e.dug) Audio.play('burrow', at(e.x)); // (cracked open; one a dig left was bored, not cracked open: the bore said it)
+      else if (e.type === 'heal') Audio.play('heal', at(e.x)); // (one closing over: a muffled crumble)
       else if ((e.type === 'dive' && !e.dug) || e.type === 'emerge') Audio.play('scrabble', at(e.x)); // (down a burrow, or up out of one; one that dug in was heard boring in)
       else if (e.type === 'dig') Audio.play('dig', { rival: !isMe(cornering(e.x, e.y)), ...at(e.x) }); // (the bore: whose head it fled, yours, or a rival's, softer and further off)
       else if (e.type === 'knock' && e.tx != null && !knocked) { knocked = true; Audio.play('knock', { volume: 0.5, ...at(e.x) }); } // (food flying off the patch: the world's, quiet, once a strike, at the first piece that flies; none for what the bird ate)
@@ -936,6 +938,7 @@
       if (e.type === 'weather' && e.kind === 'storm') game.struck = false;
       if (e.type === 'weather' && FLAVOR.weather[e.kind]) { flashFrame(e.kind); return toast(pick((!playerAlive() && FLAVOR.weatherWatch[e.kind]) || FLAVOR.weather[e.kind]), 2800, e.kind); }
       if (e.type === 'rainbow') { flashFrame('gold', true); if (newsOnce('rainbow')) return toast(lineFor('rainbow'), 2800, 'gold'); }
+      if (e.type === 'burrow' && e.dug && teachable() && once('digBurrow')) return toast(FLAVOR.digBurrow, 2600, 'beetle', 'lesson'); // (its rule, the first time the banner's free for one: shown then, or the next one teaches it)
       if (e.type === 'burrow' && !e.dug && newsOnce('burrow') && !game.events.some(o => o.type === 'spawn' && o.kind === 'beetle')) return toast(pick(FLAVOR.burrow), 2200, 'beetle'); // (a beetle out of it this tick speaks for both; one a dig left wasn't cracked open)
       if (e.type === 'spawn' && e.kind === 'golden') { flashFrame('gold'); if (newsOnce('golden')) return toast(pick(FLAVOR.golden), 2800, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'beetle' && e.gold) { flashFrame('gold'); if (newsOnce('goldBeetle')) return toast(lineFor('goldBeetle'), 2600, 'gold'); }

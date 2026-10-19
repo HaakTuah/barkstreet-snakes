@@ -889,19 +889,23 @@ const KEYS = {
     // beetle digs in…" the first time the banner's free for it (it's over in a
     // second: never left waiting); one that dug in goes under unheard (it was
     // heard boring in), and the burrow its dig leaves (the engine's pair, on
-    // one tick) neither cracks open nor is news that one did; one down a
-    // burrow or up out of one scrabbles (a sound of its own, not the bore), and
-    // a burrow cracking open creaks; and food the woodpecker knocks aside is heard
+    // one tick) neither cracks open nor is news that one did: it teaches "A
+    // beetle that digs in leaves a burrow behind." the first time the banner's
+    // free for one, and only once a round; one closing over crumbles, softly;
+    // one down a burrow or up out of one scrabbles (a sound of its own, not the
+    // bore), and a burrow cracking open creaks; and food the woodpecker knocks aside is heard
     // once a strike, quietly, the world's, from where the first piece that
     // flies was (none for food it ate, even first in the strike's list).
     await ev(`(() => {
       const A = SnakeAudio, play = A.play;
       window.__cues = [];
-      A.play = (name, opts) => { if (name === 'dig' || name === 'knock' || name === 'scrabble' || name === 'burrow') __cues.push(name + (opts?.rival ? '~' : '') + (opts?.volume != null ? '@' + opts.volume : '') + (name === 'knock' ? ':' + (opts?.pan ?? 0).toFixed(2) : '')); return play(name, opts); };
+      A.play = (name, opts) => { if (name === 'dig' || name === 'knock' || name === 'scrabble' || name === 'burrow' || name === 'heal') __cues.push(name + (opts?.rival ? '~' : '') + (opts?.volume != null ? '@' + opts.volume : '') + (name === 'knock' ? ':' + (opts?.pan ?? 0).toFixed(2) : '')); return play(name, opts); };
       window.stageEvents = list => { window.__staged = g => { for (const e of list(g)) g.events.push(e); }; return 'ok'; };
       return 'ok';
     })()`);
     const DIG_LESSON = 'A cornered beetle digs in. Grab it before it’s gone!', FAIR_LESSON = 'The woodpecker knocks food aside, and never shuts you in.';
+    const BURROW_LESSON = 'A beetle that digs in leaves a burrow behind.';
+    const dugPairAt = (x, y, more = '') => ev(`stageEvents(() => [{ type: 'dive', x: ${x}, y: ${y}, dug: 1 }, { type: 'burrow', x: ${x}, y: ${y}, dug: 1 }${more}])`); // (a dig over: the engine's pair)
     const cues = () => ev('__cues.splice(0).join(" ")');
     const digNear = (dx, dy) => ev(`stageEvents(g => { const h = g.snakes[0].body[0]; return [{ type: 'dig', x: h.x + ${dx}, y: h.y + ${dy}, until: g.tick + 8 }]; })`);
     await ev('centre()');
@@ -922,10 +926,13 @@ const KEYS = {
     await digNear(-3, 2);
     await toTick();
     const nearDig = { toast: await ev('toastText()'), heard: await cues() };
+    await dugPairAt(3, 3); // (while the dig's lesson holds the banner)
+    await toTick();
+    const heldPair = { toast: await ev('toastText()'), heard: await cues() };
     await ev('vadvance(6000)'); // (the dig's lesson has had its time: the banner's free)
     await cues(); // (anything the round itself did meanwhile)
     await ev(`(() => { delete SnakeDebug.game().told.burrow; return 'ok'; })()`); // (a burrow cracking open would be news)
-    await ev(`stageEvents(() => [{ type: 'dive', x: 4, y: 4, dug: 1 }, { type: 'burrow', x: 4, y: 4, dug: 1 }])`); // (a dig over: the engine's pair)
+    await dugPairAt(4, 4);
     await toTick();
     const dugPair = { toast: await ev('toastText()'), heard: await cues() };
     await ev('vadvance(400)');
@@ -939,6 +946,10 @@ const KEYS = {
     await ev(`stageEvents(() => [{ type: 'burrow', x: 9, y: 9 }])`); // (one cracking open)
     await toTick();
     const dives = await cues();
+    await ev('vadvance(6000)'); // (the banner's free again)
+    await dugPairAt(6, 4, `, { type: 'heal', x: 9, y: 9 }`); // (another dig over, at three burrows: the one unused longest closes over)
+    await toTick();
+    const dugAgain = { toast: await ev('toastText()'), heard: await cues() };
     await ev(`stageEvents(() => [{ type: 'knock', kind: 'pellet', x: 2, y: 6, tx: null, ty: null, color: '#abc' }, { type: 'knock', kind: 'food', x: 5, y: 5, tx: 7, ty: 5 }, { type: 'knock', kind: 'beetle', x: 6, y: 5, tx: 6, ty: 8, gold: 1 }, { type: 'knock', kind: 'pellet', x: 5, y: 6, tx: null, ty: null }])`);
     await toTick();
     const knocked = await cues();
@@ -951,8 +962,11 @@ const KEYS = {
     check(/woodpecker|Rat-a-tat/.test(peckNews) && fair === FAIR_LESSON, 'the woodpecker’s coming: its news, then its rules once the news has had its time', `“${peckNews}”, then “${fair}”`);
     check(heldDig.toast === peckNews && heldDig.heard === 'dig' && nearDig.toast === DIG_LESSON && nearDig.heard === 'dig',
       'a beetle digging in near you: heard as yours; its lesson the first time the banner’s free for it', `held: “${heldDig.toast}”, heard ${heldDig.heard}; later “${nearDig.toast}”, heard ${nearDig.heard}`);
-    check(dugPair.heard === '' && !/cracked open|digging under the bark/.test(dugPair.toast), 'a beetle that dug in goes under unheard, and the burrow its dig leaves neither cracks open nor is news that one did',
-      `heard ${dugPair.heard || 'nothing'}; “${dugPair.toast}”`);
+    check(heldPair.heard === '' && dugPair.heard === '' && !/cracked open|digging under the bark/.test(dugPair.toast), 'a beetle that dug in goes under unheard, and the burrow its dig leaves neither cracks open nor is news that one did',
+      `heard ${heldPair.heard || 'nothing'}, then ${dugPair.heard || 'nothing'}; “${dugPair.toast}”`);
+    check(heldPair.toast === DIG_LESSON && dugPair.toast === BURROW_LESSON && dugAgain.toast !== BURROW_LESSON,
+      'the burrow a dig leaves teaches its rule the first time the banner’s free for one, and once a round', `held: “${heldPair.toast}”; then “${dugPair.toast}”; later “${dugAgain.toast}”`);
+    check(dugAgain.heard === 'heal', 'a burrow closing over crumbles (the dig that closed it, and its burrow, unheard)', `heard ${dugAgain.heard || 'nothing'}`);
     check(dives === 'scrabble scrabble burrow', 'one down a burrow, or up out of one, scrabbles (not the bore); a burrow cracking open creaks', `heard ${dives || 'nothing'}`);
     const pan5 = ((5 + 0.5) / 24 * 2 - 1) * 0.8;
     check(knocked === 'knock@0.5:' + pan5.toFixed(2) && ate === '', 'food the woodpecker knocks aside: heard once a strike, quietly, the world’s, where the first piece that flies was; none for food it ate', `heard ${knocked || 'nothing'} (from x 5: pan ${pan5.toFixed(2)}), then ${ate || 'nothing'}`);
