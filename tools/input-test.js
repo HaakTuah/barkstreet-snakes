@@ -34,8 +34,9 @@
 // a cough), and a rival's heard as a rival's.
 // And the beetles and the woodpecker as it tells them: a beetle digging in
 // near you teaches its lesson and is heard as yours (a rival's, as a
-// rival's), the woodpecker's coming its rules, and knocked food is heard
-// once a strike, quietly.
+// rival's), one that dug in goes under unheard while one down a burrow or up
+// out of one scrabbles, the woodpecker's coming its rules, and knocked food
+// is heard once a strike, quietly, where the first piece that flies was.
 // It prints what it measured: press-to-tick, tap-to-jump and swipe latencies.
 //
 //   node tools/input-test.js
@@ -887,13 +888,14 @@ const KEYS = {
     // in near you (8 cells at most) is heard as yours, and teaches "A cornered
     // beetle digs in…" the first time the banner's free for it (it's over in a
     // second: never left waiting); one that dug in goes under unheard (it was
-    // heard boring in), one down a burrow is heard; and food the woodpecker
-    // knocks aside is heard once a strike, quietly, the world's (none for food
-    // it ate).
+    // heard boring in), one down a burrow or up out of one scrabbles (a sound
+    // of its own, not the bore); and food the woodpecker knocks aside is heard
+    // once a strike, quietly, the world's, from where the first piece that
+    // flies was (none for food it ate, even first in the strike's list).
     await ev(`(() => {
       const A = SnakeAudio, play = A.play;
       window.__cues = [];
-      A.play = (name, opts) => { if (name === 'dig' || name === 'knock') __cues.push(name + (opts?.rival ? '~' : '') + (opts?.volume != null ? '@' + opts.volume : '')); return play(name, opts); };
+      A.play = (name, opts) => { if (name === 'dig' || name === 'knock' || name === 'scrabble') __cues.push(name + (opts?.rival ? '~' : '') + (opts?.volume != null ? '@' + opts.volume : '') + (name === 'knock' ? ':' + (opts?.pan ?? 0).toFixed(2) : '')); return play(name, opts); };
       window.stageEvents = list => { window.__staged = g => { for (const e of list(g)) g.events.push(e); }; return 'ok'; };
       return 'ok';
     })()`);
@@ -923,8 +925,11 @@ const KEYS = {
     await ev('vadvance(400)');
     await ev(`stageEvents(() => [{ type: 'dive', x: 4, y: 4 }])`);
     await toTick();
+    await ev('vadvance(400)');
+    await ev(`stageEvents(() => [{ type: 'emerge', x: 9, y: 4 }])`);
+    await toTick();
     const dives = await cues();
-    await ev(`stageEvents(() => [{ type: 'knock', kind: 'food', x: 5, y: 5, tx: 7, ty: 5 }, { type: 'knock', kind: 'beetle', x: 6, y: 5, tx: 6, ty: 8, gold: 1 }, { type: 'knock', kind: 'pellet', x: 5, y: 6, tx: null, ty: null }])`);
+    await ev(`stageEvents(() => [{ type: 'knock', kind: 'pellet', x: 2, y: 6, tx: null, ty: null, color: '#abc' }, { type: 'knock', kind: 'food', x: 5, y: 5, tx: 7, ty: 5 }, { type: 'knock', kind: 'beetle', x: 6, y: 5, tx: 6, ty: 8, gold: 1 }, { type: 'knock', kind: 'pellet', x: 5, y: 6, tx: null, ty: null }])`);
     await toTick();
     const knocked = await cues();
     await ev('vadvance(1000)');
@@ -936,8 +941,9 @@ const KEYS = {
     check(/woodpecker|Rat-a-tat/.test(peckNews) && fair === FAIR_LESSON, 'the woodpecker’s coming: its news, then its rules once the news has had its time', `“${peckNews}”, then “${fair}”`);
     check(heldDig.toast === peckNews && heldDig.heard === 'dig' && nearDig.toast === DIG_LESSON && nearDig.heard === 'dig',
       'a beetle digging in near you: heard as yours; its lesson the first time the banner’s free for it', `held: “${heldDig.toast}”, heard ${heldDig.heard}; later “${nearDig.toast}”, heard ${nearDig.heard}`);
-    check(dives === 'dig', 'a beetle that dug in goes under unheard; one down a burrow is heard', `heard ${dives || 'nothing'}`);
-    check(knocked === 'knock@0.5' && ate === '', 'food the woodpecker knocks aside: heard once a strike, quietly, the world’s; none for food it ate', `heard ${knocked || 'nothing'}, then ${ate || 'nothing'}`);
+    check(dives === 'scrabble scrabble', 'a beetle that dug in goes under unheard; one down a burrow, or up out of one, scrabbles (not the bore)', `heard ${dives || 'nothing'}`);
+    const pan5 = ((5 + 0.5) / 24 * 2 - 1) * 0.8;
+    check(knocked === 'knock@0.5:' + pan5.toFixed(2) && ate === '', 'food the woodpecker knocks aside: heard once a strike, quietly, the world’s, where the first piece that flies was; none for food it ate', `heard ${knocked || 'nothing'} (from x 5: pan ${pan5.toFixed(2)}), then ${ate || 'nothing'}`);
 
     // Your death's card: a thumb mashing jump as you crash, landing on its
     // Play again, never starts a round; a tap once it's settled does.

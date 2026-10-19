@@ -154,9 +154,6 @@ const ctx = vm.createContext({
 });
 for (const f of ['tuning.js', 'ai.js', 'engine.js', 'chatter.js']) {
   vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
-  // (A cornered beetle digging in is the engine's, in round six A: until its
-  // numbers are in tuning.js, they're staged here as the contract has them.)
-  if (f === 'tuning.js' && !('BEETLE_DIG_FEAR' in ctx.window.TUNING)) ctx.window.TUNING = Object.freeze({ ...ctx.window.TUNING, BEETLE_DIG: 8, BEETLE_DIG_FEAR: 6 });
 }
 const { SnakeEngine: E, SnakeChatter: C, TUNING: T } = ctx.window;
 C.init({ boardEl: new El(), logEl: new El() });
