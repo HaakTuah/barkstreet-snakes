@@ -11,8 +11,9 @@
 // Your snake is steered by an autopilot (a rival's brain, through real key
 // events) until a lively moment, then crashed on purpose. Moments too rare
 // to wait for (round six A's jumps, bridges, Star's gag, a choke, a pecked
-// flag, a beetle digging in, the woodpecker's knock) are staged on a still
-// board, on the desktop and the phone.
+// flag, a beetle digging in, a dug burrow and one closing over, the
+// woodpecker's knock) are staged on a still board, on the desktop and the
+// phone.
 const path = require('path');
 const fs = require('fs');
 const { launch, serve, HELPERS } = require('./browser');
@@ -82,20 +83,6 @@ fs.mkdirSync(out, { recursive: true });
       window.stage = personas => { const g = E.createGame({ withPlayer: true, personas }); g.food = []; g.time = 60000; g.tick = 500; g.weather.until = 1e12; g.snakes.forEach((s, i) => { setBody(s, [[2 + 4 * i, 23], [1 + 4 * i, 23], [4 * i, 23]], 'right'); s.nextStarve = 1e15; }); return g; };
       window.show = g => { document.getElementById('overlay').classList.add('hidden'); R.setViewer(0); R.setGame(g); return g; };
       window.doStep = g => { for (const s of g.snakes) s.prev = s.body.map(c => ({ ...c })); E.step(g); g.food.length = 0; R.onTick(g.events); };
-      // (where the woodpecker's strike knocks food: the engine's own rule, or, where the engine here has none, a stand-in by it)
-      E.knockTo ||= (g, x, y, cells) => {
-        const N = TUNING.GRID, mark = new Set(cells), busy = new Set();
-        for (const s of g.snakes) if (s.alive) for (const c of s.body) busy.add(c.y * N + c.x);
-        for (const f of g.food) busy.add(f.y * N + f.x);
-        let best = null, bd = Infinity, bm = Infinity;
-        for (let k = 0; k < N * N; k++) {
-          const f = g.fires.get(k);
-          if (mark.has(k) || busy.has(k) || g.holes.has(k) || (f && g.tick >= f.from && g.tick < f.until)) continue;
-          const cx = k % N, cy = (k - cx) / N, d = Math.hypot(cx - x, cy - y), m = Math.abs(cx - (N - 1) / 2) + Math.abs(cy - (N - 1) / 2);
-          if (d < bd - 1e-9 || (Math.abs(d - bd) < 1e-9 && m < bm)) { best = { x: cx, y: cy }; bd = d; bm = m; }
-        }
-        return best;
-      };
       // The woodpecker aiming at a patch with food in it (an apple, a golden apple, a beetle), in sudden death.
       window.knockBoard = () => {
         const g = stage(['gobbler', 'sniper', 'copycat']), [you, gob, sn, cc] = g.snakes;
@@ -166,18 +153,31 @@ fs.mkdirSync(out, { recursive: true });
         setBody(ma, Array.from({ length: 6 }, (_, i) => [3 + i, 4]), 'left');
         g.food.push({ x: 12, y: 12, kind: 'beetle', dir: E.DIRS.left, movedAt: g.tick - 6, expires: g.tick + 200, scared: true, digUntil: g.tick + 5 }); // (cornered right in front of you, half way in)
         g.food.push({ x: 15, y: 9, kind: 'beetle', gold: 1, dir: E.DIRS.up, movedAt: g.tick - 3, expires: g.tick + 200, scared: true }); // (and a second, golden, running from Gobbler)
+        g.burrows.push({ x: 19, y: 16, at: g.tick - 300, used: g.time }); // (an ordinary burrow)
         show(g); drawN(16, 0.5);
-        R.onTick([{ type: 'dive', x: 6, y: 18, dug: 1 }]); // (where another dug itself in a moment ago: its plug of sawdust)
+        g.burrows.push({ x: 6, y: 18, at: g.tick, used: g.time, dug: 1 }); // (where another dug itself in a moment ago: its bore, freshly bored)
+        R.onTick([{ type: 'dive', x: 6, y: 18, dug: 1 }, { type: 'burrow', x: 6, y: 18, dug: 1 }]);
         drawN(12, 0.5, 40);
+      })()`,
+      // Burrows: an ordinary one, one a dig has just left (freshly bored), and one closing over, half way.
+      heal: `(() => {
+        const g = stage(['gobbler', 'sniper', 'mason']), [you, gob, sn, ma] = g.snakes;
+        setBody(you, Array.from({ length: 8 }, (_, i) => [9 - i, 12]), 'right');
+        setBody(gob, Array.from({ length: 8 }, (_, i) => [15, 21 - i]), 'up');
+        setBody(sn, Array.from({ length: 8 }, (_, i) => [20, 3 + i]), 'up');
+        setBody(ma, Array.from({ length: 6 }, (_, i) => [3 + i, 4]), 'left');
+        g.burrows.push({ x: 12, y: 8, at: g.tick - 300, used: g.time }, { x: 17, y: 15, at: g.tick - 300, used: 0 });
+        show(g); drawN(16, 0.5);
+        g.burrows.splice(1, 1); g.burrows.push({ x: 7, y: 16, at: g.tick, used: g.time, dug: 1 }); g.tick++;
+        R.onTick([{ type: 'heal', x: 17, y: 15 }, { type: 'burrow', x: 7, y: 16, dug: 1 }]);
+        drawN(14, 0.5, 33);
       })()`,
       knock: `(() => { show(knockBoard()); drawN(24, 0.6); })()`, // (through the aim: the food in the mark trembling, rings where it'll land)
       'knock-flight': `(() => {
         const g = knockBoard(), P = g.woodpecker.target;
         show(g); drawN(24, 0.6);
         const ev = [];
-        for (const f of g.food.slice()) {
-          if (!P.includes(f.y * 24 + f.x)) continue;
-          const to = E.knockTo(g, f.x, f.y, P);
+        for (const { food: f, to } of E.knocks(g, P)) { // (the engine's own list, in the strike's order)
           ev.push({ type: 'knock', kind: f.kind, x: f.x, y: f.y, tx: to.x, ty: to.y });
           if (f.kind === 'beetle') { f.px = f.x; f.py = f.y; f.movedAt = g.tick; }
           f.x = to.x; f.y = to.y;
