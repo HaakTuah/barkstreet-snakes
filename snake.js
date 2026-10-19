@@ -1188,6 +1188,7 @@
       if (!nameRow.hidden && game.carveOffered && game.carveOffered !== card.title && document.activeElement !== nameInput) nameRow.hidden = true; // (offered once: the round-over card after your death card doesn't ask again)
       if (!nameRow.hidden) game.carveOffered = card.title;
       if (!nameRow.hidden && document.activeElement !== nameInput) nameInput.value = Records.hasName() ? Records.getName() : '';
+      if (document.activeElement !== nameInput) nameRow.classList.toggle('carved', Records.hasName()); // (a name's in: on the smallest boards the field gives the card's links their room back)
       if (!nameRow.hidden) namingEntry = game.entryId;
     }
 
@@ -2017,6 +2018,7 @@
     if (!namingEntry) return;
     Records.rename(namingEntry, nameInput.value);
     nameRank.textContent = `Carved: ${Records.getName()}.`; // (it took)
+    nameRow.classList.add('carved');
   });
 
   // Nap automatically when the tab is hidden, or when the window loses focus

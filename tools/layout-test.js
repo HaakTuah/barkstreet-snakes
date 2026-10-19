@@ -24,10 +24,19 @@
 //   with a mouse the header keeps its spacing.
 // - In a browser without svh and dvh (Safari before 15.4, Chrome before
 //   108), the board, its frame and the ledge are as they are with them.
-// - The header: its buttons on one row everywhere; at 320 px the title,
-//   Score and Best on one row, and the buttons on their own row (so a
-//   button there never crowds the title); wider, held upright, the title
-//   and Score on one row, the buttons and Best on the next. As Score and
+// - The header (with the playtest's Field guide door): its rows as designed
+//   for the screen. Held upright, the title with Score and Best, then the
+//   buttons on their own row (so a button there never crowds the title),
+//   but where only five share it (no full screen: an iPhone), wider than
+//   340 px, the title and Score, then the buttons and Best; over the board,
+//   one row, or the title with Score over Best and then the buttons; beside
+//   it, the title (the full-screen button at its corner on a phone on its
+//   side), Score and Best, the icons, and on a tall laptop's column the
+//   doors' own row. No button on a row of its own; the full-screen button
+//   ending a row; each door named wherever its row has room for its word,
+//   else its picture, named in its tooltip and for a screen reader; the
+//   guide's door costing the header no height (no taller than the phones
+//   work's). On 22 more screens too, from 360×640 to 1920×945. As Score and
 //   Best grow (0, 99, 100, 1000), the header keeps its rows and the board
 //   its size and place (at 390×545-600 and 412×604 the header grew a row
 //   at 100 or 1000, and the board shrank in the middle of a round).
@@ -73,7 +82,9 @@ const check = (ok, what, detail = '') => {
 
 // Each device: its size and density, touch or not, its safe area (a notch,
 // the home bar), and the board it should get at least (before: what it got
-// before this round's phone work). nowhere: no room for the woodpecker
+// before this round's phone work). head: the header's height in the phones
+// work, before the Field guide's door came: it's no taller now (but on a
+// laptop's tall column, where the doors have a row of their own). nowhere: no room for the woodpecker
 // beside the board, and no ledge (a tablet held upright): it perches in the
 // frame's gutter as small as it may be, as it always did there, its beak's
 // tip touching the board's edge (a pixel or three of it, softened). short:
@@ -82,30 +93,30 @@ const check = (ok, what, detail = '') => {
 // ledge below the fold, so the bird perches in the gutter, as nowhere.
 const notchUp = { top: 47, bottom: 34, left: 0, right: 0 }, notchSide = { top: 0, bottom: 21, left: 47, right: 47 };
 const DEVICES = [
-  { name: '320×640 (a small Android, the first iPhone SE)', w: 320, h: 640, dpr: 2, kind: 'upright', least: 308, before: 276 },
-  { name: '320×460 (the same, with its browser\'s bars)', w: 320, h: 460, dpr: 2, kind: 'upright', short: true, least: 270, before: 250 },
-  { name: '360×780', w: 360, h: 780, dpr: 3, kind: 'upright', least: 348, before: 316 },
-  { name: '375×667 (iPhone SE)', w: 375, h: 667, dpr: 2, kind: 'upright', least: 363, before: 331 },
-  { name: '375×548 (iPhone SE in Safari, its bars showing)', w: 375, h: 548, dpr: 2, kind: 'upright', short: true, nofs: true, least: 331, before: 331 },
-  { name: '375×635 (an iPhone 11 Pro in Safari)', w: 375, h: 635, dpr: 3, kind: 'upright', nofs: true, least: 363, before: 331 },
-  { name: '390×844 (iPhone 13, 14)', w: 390, h: 844, dpr: 3, kind: 'upright', least: 378, before: 346 }, // (the call: 346 → about 382)
-  { name: '412×915 (Pixel)', w: 412, h: 915, dpr: 2.625, kind: 'upright', least: 400, before: 368 },
-  { name: '430×932', w: 430, h: 932, dpr: 3, kind: 'upright', least: 418, before: 386 },
-  { name: '390×844 with a notch', w: 390, h: 844, dpr: 3, kind: 'upright', insets: notchUp, least: 378, before: 346 },
-  { name: '568×320 on its side (the first iPhone SE)', w: 568, h: 320, dpr: 2, kind: 'side', nofs: true, least: 266, before: 268, under: 2 }, // (under: the board narrower than before by that much, the call: the column keeps 244 px for five buttons in a row, and the bird its 24 px gap)
-  { name: '640×320 on its side', w: 640, h: 320, dpr: 2, kind: 'side', least: 300, before: 268 },
-  { name: '667×375 on its side', w: 667, h: 375, dpr: 2, kind: 'side', least: 355, before: 323 },
-  { name: '780×320 on its side, its browser bars showing', w: 780, h: 320, dpr: 3, kind: 'side', least: 300, before: 268 }, // (the call: 268 → about 310)
-  { name: '780×320 on its side with a notch (an iPhone in Safari)', w: 780, h: 320, dpr: 3, kind: 'side', insets: notchSide, nofs: true, least: 289, before: 268 },
-  { name: '844×390 on its side (or 780×320 in full screen)', w: 844, h: 390, dpr: 3, kind: 'side', least: 370, before: 338 }, // (the call: about 380 in full screen)
-  { name: '915×412 on its side', w: 915, h: 412, dpr: 2.625, kind: 'side', least: 392, before: 360 },
-  { name: '932×430 on its side', w: 932, h: 430, dpr: 3, kind: 'side', least: 410, before: 378 },
-  { name: '844×390 on its side with a notch', w: 844, h: 390, dpr: 3, kind: 'side', insets: notchSide, least: 349, before: 338 },
-  { name: '768×1024 (a tablet)', w: 768, h: 1024, dpr: 2, kind: 'tablet', least: 724, before: 724, nowhere: true },
-  { name: '1024×768 (a tablet on its side)', w: 1024, h: 768, dpr: 2, kind: 'tablet', least: 716, before: 716 },
-  { name: '1000×480 (a laptop\'s window, its DevTools docked below)', w: 1000, h: 480, dpr: 1, desktop: true, kind: 'side', least: 428, before: 428 },
-  { name: '1280×800 (a laptop)', w: 1280, h: 800, dpr: 1, desktop: true, kind: 'desktop', least: 748, before: 748 },
-  { name: '1920×1080', w: 1920, h: 1080, dpr: 1, desktop: true, kind: 'desktop', least: 800, before: 800 },
+  { name: '320×640 (a small Android, the first iPhone SE)', w: 320, h: 640, dpr: 2, kind: 'upright', least: 308, before: 276, head: 80 },
+  { name: '320×460 (the same, with its browser\'s bars)', w: 320, h: 460, dpr: 2, kind: 'upright', short: true, least: 270, before: 250, head: 80 },
+  { name: '360×780', w: 360, h: 780, dpr: 3, kind: 'upright', least: 348, before: 316, head: 103.2 },
+  { name: '375×667 (iPhone SE)', w: 375, h: 667, dpr: 2, kind: 'upright', least: 363, before: 331, head: 87.2 },
+  { name: '375×548 (iPhone SE in Safari, its bars showing)', w: 375, h: 548, dpr: 2, kind: 'upright', short: true, nofs: true, least: 331, before: 331, head: 87.2 },
+  { name: '375×635 (an iPhone 11 Pro in Safari)', w: 375, h: 635, dpr: 3, kind: 'upright', nofs: true, least: 363, before: 331, head: 87.2 },
+  { name: '390×844 (iPhone 13, 14)', w: 390, h: 844, dpr: 3, kind: 'upright', least: 378, before: 346, head: 107.2 }, // (the call: 346 → about 382)
+  { name: '412×915 (Pixel)', w: 412, h: 915, dpr: 2.625, kind: 'upright', least: 400, before: 368, head: 107.2 },
+  { name: '430×932', w: 430, h: 932, dpr: 3, kind: 'upright', least: 418, before: 386, head: 107.2 },
+  { name: '390×844 with a notch', w: 390, h: 844, dpr: 3, kind: 'upright', insets: notchUp, least: 378, before: 346, head: 107.2 },
+  { name: '568×320 on its side (the first iPhone SE)', w: 568, h: 320, dpr: 2, kind: 'side', nofs: true, least: 266, before: 268, under: 2, head: 95.4 }, // (under: the board narrower than before by that much, the call: the column keeps 244 px for five buttons in a row, and the bird its 24 px gap)
+  { name: '640×320 on its side', w: 640, h: 320, dpr: 2, kind: 'side', least: 300, before: 268, head: 95.4 },
+  { name: '667×375 on its side', w: 667, h: 375, dpr: 2, kind: 'side', least: 355, before: 323, head: 95.4 },
+  { name: '780×320 on its side, its browser bars showing', w: 780, h: 320, dpr: 3, kind: 'side', least: 300, before: 268, head: 95.4 }, // (the call: 268 → about 310)
+  { name: '780×320 on its side with a notch (an iPhone in Safari)', w: 780, h: 320, dpr: 3, kind: 'side', insets: notchSide, nofs: true, least: 289, before: 268, head: 95.4 },
+  { name: '844×390 on its side (or 780×320 in full screen)', w: 844, h: 390, dpr: 3, kind: 'side', least: 370, before: 338, head: 95.4 }, // (the call: about 380 in full screen)
+  { name: '915×412 on its side', w: 915, h: 412, dpr: 2.625, kind: 'side', least: 392, before: 360, head: 95.4 },
+  { name: '932×430 on its side', w: 932, h: 430, dpr: 3, kind: 'side', least: 410, before: 378, head: 95.4 },
+  { name: '844×390 on its side with a notch', w: 844, h: 390, dpr: 3, kind: 'side', insets: notchSide, least: 349, before: 338, head: 95.4 },
+  { name: '768×1024 (a tablet)', w: 768, h: 1024, dpr: 2, kind: 'tablet', least: 724, before: 724, nowhere: true, head: 52 },
+  { name: '1024×768 (a tablet on its side)', w: 1024, h: 768, dpr: 2, kind: 'tablet', least: 716, before: 716, head: 172 },
+  { name: '1000×480 (a laptop\'s window, its DevTools docked below)', w: 1000, h: 480, dpr: 1, desktop: true, kind: 'side', least: 428, before: 428, head: 85.4 },
+  { name: '1280×800 (a laptop)', w: 1280, h: 800, dpr: 1, desktop: true, kind: 'desktop', least: 748, before: 748, head: 130 },
+  { name: '1920×1080', w: 1920, h: 1080, dpr: 1, desktop: true, kind: 'desktop', least: 800, before: 800, head: 52 },
 ];
 
 // Before the page's own scripts: a switch for its animation loop (the board
@@ -288,6 +299,44 @@ const NO_SVH = `(async () => {
   return (css.match(/\\d[sd]vh\\b/g) || []).length;
 })()`;
 
+// The header, as rows: what's on each, left to right (the title, Score,
+// Best and each button shown, by its id), grouped by where each sits (a
+// button's margin box: one reaching past its row on negative margins, the
+// full-screen button at a phone's column corner, counts on the row it's
+// laid out in; Score over Best, beside the title, count as one); its
+// height; whether each door shows its word; and the Field guide's tooltip
+// and spoken name.
+const HEADER = `(() => {
+  const vis = el => !!el && !el.hidden && getComputedStyle(el).display !== 'none' && el.getBoundingClientRect().width > 0;
+  const hd = document.querySelector('header'), stats = document.querySelector('.stats');
+  const pair = stats && getComputedStyle(stats).display !== 'contents' ? stats : null;
+  const items = [['title', document.querySelector('h1')], ...[...hd.querySelectorAll('.hud .stat')].map((el, i) => [i ? 'Best' : 'Score', pair || el]), ...[...hd.querySelectorAll('.hud button')].filter(vis).map(el => [el.id, el])];
+  let rows = [];
+  for (const [n, el] of items) {
+    const r = el.getBoundingClientRect(), cs = getComputedStyle(el), top = r.top - parseFloat(cs.marginTop), bottom = r.bottom + parseFloat(cs.marginBottom);
+    let row = rows.find(q => Math.min(bottom, q.bottom) - Math.max(top, q.top) > 2);
+    if (!row) rows.push(row = { top, bottom, items: [] });
+    row.top = Math.min(row.top, top); row.bottom = Math.max(row.bottom, bottom);
+    row.items.push({ n, l: n === 'Best' && pair ? r.left + 0.5 : r.left });
+  }
+  for (let merged = true; merged;) { // (rows that grew into each other are one)
+    merged = false;
+    for (const a of rows) for (const b of rows) if (a !== b && !merged && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2) { a.items.push(...b.items); a.top = Math.min(a.top, b.top); a.bottom = Math.max(a.bottom, b.bottom); rows = rows.filter(q => q !== b); merged = true; }
+  }
+  rows.sort((a, b) => a.top - b.top);
+  const named = id => vis(document.querySelector('#' + id + ' .trophy-text')), g = document.getElementById('guide-open');
+  const col = matchMedia('(min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px)').matches;
+  return { height: hd.getBoundingClientRect().height, rows: rows.map(r => r.items.sort((a, b) => a.l - b.l).map(i => i.n).join(' ')), guide: named('guide-open'), trophy: named('records-open'),
+    tip: g.title, label: g.getAttribute('aria-label'), place: innerWidth <= 440 ? 'upright' : col ? (innerHeight <= 500 ? 'side' : 'column') : 'over' };
+})()`;
+// A door shown by its word instead of its picture, 5 px wider still (its
+// word with 5 px to spare), or hidden (the header without it).
+const DOOR = (id, how) => {
+  const css = how === 'hidden' ? `#${id} { display: none !important; }`
+    : `#${id} { width: auto !important; min-width: 0 !important; padding-inline: 12px !important; margin-right: 5px !important; } #${id} svg { display: none !important; } #${id} .trophy-text { display: inline !important; }`;
+  return `(() => { const st = document.createElement('style'); st.id = 'door-test'; st.textContent = ${JSON.stringify(css)}; document.head.append(st); return 'ok'; })()`;
+};
+
 const only = process.argv[2];
 const sized = (w, h) => DEVICES.find(d => d.w === w && d.h === h && !d.insets);
 const CALLS = sized(390, 844), CALLS_SIDE = sized(780, 320); // (the call's phone: upright, and on its side with its browser's bars)
@@ -330,6 +379,59 @@ const r1 = v => Math.round(v * 10) / 10;
       await b.sleep(120);
       await settle();
     };
+    // The header (DESIGN's "The header's rows"): its rows as designed for
+    // the screen (held upright: the title with Score and Best, then the
+    // buttons, Best ending their row where only five share it; over the
+    // board: one row, or the title with Score over Best and then the
+    // buttons; beside it: the title, Score and Best, the icons, and on a
+    // tall laptop's column the doors' own row); no button on a row of its
+    // own, the full-screen button ending a row; each door named wherever its
+    // row has room for its word (with 5 px to spare), else its picture with
+    // its name in its tooltip and for a screen reader; and the Field guide's
+    // door costs the header no height (no taller than the phones work's,
+    // where that's known), but where it's the doors' own row.
+    const headerChecks = async (tag, d) => {
+      const h = await ev(HEADER), say = h.rows.join(' / ');
+      const rowOf = n => h.rows.findIndex(r => r.split(' ').includes(n)), on = (i, n) => i >= 0 && h.rows[i].split(' ').includes(n);
+      const fs = rowOf('fullscreen') >= 0, icons = rowOf('pause'), doors = rowOf('guide-open');
+      const alone = h.rows.filter(r => !r.includes(' ') && !['title', 'Score', 'Best'].includes(r));
+      const doorsOwn = doors !== icons && h.rows[doors] === 'guide-open records-open';
+      const full = rowOf('fullscreen'), fullEnds = !fs || h.rows[full].endsWith('fullscreen');
+      check(!alone.length && on(icons, 'music') && on(icons, 'mute') && doors === rowOf('records-open') && (doors === icons || doorsOwn) && fullEnds,
+        `${tag}: no button on a row of its own; nap, music and mute on one row, the doors in it or in a row of their own${fs ? ', the full-screen button ending a row' : ''}`, say);
+      const B = fs ? ' fullscreen' : '';
+      const want = {
+        upright: fs ? [['title Score Best', 'pause music mute guide-open records-open fullscreen']]
+          : d.w <= 340 ? [['title Score Best', 'pause music mute guide-open records-open']] : [['title Score', 'pause music mute guide-open records-open Best']],
+        side: [[`title${B}`, 'Score Best', 'pause music mute guide-open records-open']],
+        over: [[`title Score Best pause music mute guide-open records-open${B}`], ['title Score Best', `pause music mute guide-open records-open${B}`]],
+        column: [[`title${B}`, 'Score Best', 'pause music mute guide-open records-open'], ['title', `Score Best${B}`, 'pause music mute guide-open records-open'],
+          ['title', 'Score Best', `pause music mute guide-open records-open${B}`], ['title', 'Score Best', `pause music mute${B}`, 'guide-open records-open']],
+      }[h.place];
+      check(want.some(w => w.join(' / ') === say), `${tag}: the header's rows, as designed ${{ upright: 'held upright', side: 'on its side', over: 'over the board', column: 'beside the board' }[h.place]}`, say);
+      if (doorsOwn) check(h.guide && h.trophy && d.h >= (d.desktop ? 700 : 780), `${tag}: the doors' own row, both named, only on a column tall enough`);
+      // Each door shown by its picture: its word, with 5 px to spare, has no room in its row.
+      for (const [id, n] of [['guide-open', 'Field guide'], ['records-open', 'Hall of Fame']]) {
+        if (id === 'guide-open' ? h.guide : h.trophy) continue;
+        await ev(DOOR(id, 'word'));
+        await settle();
+        const w = await ev(HEADER);
+        await ev(`document.getElementById('door-test').remove(); 'ok'`);
+        await settle();
+        const fits = w.rows.join(' / ') === say && Math.abs(w.height - h.height) < 0.5;
+        check(!fits, `${tag}: the ${n} is its picture only where its row has no room for its word (with 5 px to spare)`, fits ? `it would fit: ${w.rows.join(' / ')}` : `its word would make it ${w.rows.join(' / ')}, ${r1(w.height)} px tall`);
+      }
+      check(h.tip === 'Field guide (G)' && h.label === 'Field guide', `${tag}: the Field guide's door says its name in its tooltip and to a screen reader`, `${h.guide ? 'named' : 'its open book'}; "${h.tip}", "${h.label}"`);
+      await ev(DOOR('guide-open', 'hidden'));
+      await settle();
+      const without = await ev(HEADER);
+      await ev(`document.getElementById('door-test').remove(); 'ok'`);
+      await settle();
+      check(doorsOwn || without.height >= h.height - 0.5, `${tag}: the Field guide's door costs the header no height`, `${r1(h.height)} px, ${r1(without.height)} without it`);
+      if (d.head) check(h.height <= d.head + (doorsOwn ? 50 : 0) + 0.5, `${tag}: the header is no taller than the phones work's, ${d.head} px${doorsOwn ? ', but for the doors\' own row' : ''}`, `${r1(h.height)} px`);
+      return h;
+    };
+
     // On its side, the chatter full (five long lines, two rows each),
     // playing or watching: its log cut inside its box and the page, showing
     // a whole row at least and slicing none; and the column off the
@@ -380,38 +482,24 @@ const r1 = v => Math.round(v * 10) / 10;
       check(upright ? ready.ledge && ready.ledge.h >= 28 && ready.ledge.y >= ready.frame.b - 0.5 : !ready.ledge, `${tag}: ${upright ? 'a ledge under the board for the woodpecker' : 'no ledge (room enough beside the board)'}`, ready.ledge ? `${r1(ready.ledge.h)} px` : 'none');
       if (d.insets) check(ready.header.y >= d.insets.top - 0.5 && ready.board.x >= d.insets.left - 0.5 && ready.board.r <= ready.vw - d.insets.right + 0.5 && (!side || ready.frame.b <= ready.vh - d.insets.bottom + 0.5), `${tag}: the page keeps inside the safe area`);
 
-      // The header: its buttons on one row; on a phone held upright, the
-      // title with Score and Best on the row above them.
-      // (wider: the title made that much wider, as a livelier S might make it)
-      const ROWS = wider => `(() => {
-        const st = document.createElement('style');
-        st.textContent = 'h1 { padding-right: ${wider}px; }';
-        document.head.append(st);
-        const mid = el => { const b = el.getBoundingClientRect(); return b.top + b.height / 2; };
-        const shown = [...document.querySelectorAll('header .hud button')].filter(el => el.getBoundingClientRect().width);
-        const title = document.querySelector('h1'), stats = [...document.querySelectorAll('header .stat')];
-        const b = shown.map(mid), s = stats.map(mid);
-        const tb = title.getBoundingClientRect(), hd = document.querySelector('header');
-        const text = document.createRange();
-        text.selectNodeContents(title);
-        const used = text.getBoundingClientRect().width + ${wider} + stats.reduce((w, el) => w + el.getBoundingClientRect().width + parseFloat(getComputedStyle(hd).columnGap), 0);
-        const bt = shown.map(el => el.getBoundingClientRect()), lo = Math.min(...bt.map(r => r.top)), hi = Math.max(...bt.map(r => r.bottom));
-        const out = { buttons: shown.length, buttonRow: Math.max(...b) - Math.min(...b) < 4, titleRow: s.every(v => v > tb.top && v < tb.bottom), apart: Math.min(...b) > tb.bottom, slack: hd.getBoundingClientRect().width - used,
-          scoreBeside: s[0] > tb.top && s[0] < tb.bottom, bestBelow: s[1] > lo && s[1] < hi }; // (Score on the title's row; Best on the buttons')
-        st.remove();
-        return out;
-      })()`;
-      const rows = await ev(ROWS(0));
-      check(rows.buttonRow, `${tag}: the header's ${rows.buttons} buttons are on one row`);
+      // The header: its rows, its doors, the full-screen button, and what
+      // the doors cost (headerChecks, above). With a mouse its buttons keep
+      // their 10 px; at 320 px, with the title 8 px wider (as a livelier S
+      // might make it), the buttons still have their row.
+      await headerChecks(tag, d);
       if (d.desktop) {
         const gapNow = await ev(`getComputedStyle(document.querySelector('header')).columnGap`);
         check(gapNow === '10px', `${tag}: with a mouse, the header's buttons keep their 10 px apart`, gapNow);
       }
       if (d.w === 320) {
-        check(rows.titleRow && rows.apart, `${tag}: the title, Score and Best on one row, the buttons on their own row below`, `${r1(rows.slack)} px to spare on the title's row`);
-        const wider = await ev(ROWS(8));
-        check(wider.buttonRow && wider.apart && wider.buttons === rows.buttons, `${tag}: with the title 8 px wider, the buttons still have a row of their own`, wider.titleRow ? 'the title, Score and Best still on one row too' : 'Score and Best would wrap under the title (its own row: no button there)');
-      } else if (upright) check(rows.scoreBeside && rows.bestBelow && rows.apart, `${tag}: the title and Score on one row, the buttons and Best on the next`);
+        await ev(`(() => { const st = document.createElement('style'); st.id = 'wider-title'; st.textContent = 'h1 { padding-right: 8px; }'; document.head.append(st); return 'ok'; })()`);
+        await settle();
+        const wider = await ev(HEADER);
+        await ev(`document.getElementById('wider-title').remove(); 'ok'`);
+        await settle();
+        const buttons = wider.rows.find(r => r.includes('pause')) || '';
+        check(!buttons.includes('title') && buttons.split(' ').length >= 5 && wider.rows.filter(r => r.includes('pause') || r.includes('mute')).length === 1, `${tag}: with the title 8 px wider, the buttons still have a row of their own`, wider.rows.join(' / '));
+      }
 
       // Nothing cut off, and everything takes a tap: the header's buttons,
       // the name tags, the start card's buttons; and the chatter's switch
@@ -590,6 +678,30 @@ const r1 = v => Math.round(v * 10) / 10;
       await ev(`window.__autoRaf = true; 'ok'`);
     }
 
+    // ---------------------------------------------- the header on more screens
+    // The header's checks (above) on the screens between: a 1080p desktop's
+    // browser maximized (1920×945) and with a bookmarks bar (1920×920),
+    // laptops (1366×657, 1366×768, 1440×900, 1536×864), 4:3 windows and touch
+    // screens (800×600, 1000×800 and 1040×760 with touch), iPads upright
+    // (the mini, 744×1133; an Air, 820×1180), narrow windows (460×900, and
+    // 500×1000 with touch: an iPad's Split View; 600×900), and phones
+    // (360×640, 371×800, 384×854, 393×851, 414×896 and 428×926 without full
+    // screen, 440×900). And as Score and Best grow to 1000, the header keeps
+    // its rows and its height.
+    for (const [w, h, dpr, touch, nofs] of [[1920, 945, 1], [1920, 920, 1], [1366, 657, 1], [1366, 768, 1], [1440, 900, 1], [1536, 864, 1], [800, 600, 1], [800, 600, 2, true],
+      [1000, 800, 2, true], [1040, 760, 2, true], [744, 1133, 2, true], [820, 1180, 2, true], [460, 900, 1], [500, 1000, 2, true], [600, 900, 1], [360, 640, 3, true],
+      [371, 800, 3, true], [384, 854, 3, true], [393, 851, 3, true], [414, 896, 3, true, true], [428, 926, 3, true, true], [440, 900, 3, true]]) {
+      const tag = `${w}×${h}${touch ? ' (touch)' : ''}${nofs ? ' without full screen' : ''}`;
+      if (only && !tag.includes(only)) continue;
+      const d = { w, h, dpr, desktop: !touch, nofs };
+      await open(d);
+      const at0 = await headerChecks(tag, d);
+      await ev(`(() => { document.getElementById('score').textContent = '1000'; document.getElementById('best').textContent = '1000'; return 'ok'; })()`);
+      await settle();
+      const at1000 = await ev(HEADER);
+      check(at1000.rows.join(' / ') === at0.rows.join(' / ') && Math.abs(at1000.height - at0.height) < 0.5, `${tag}: with Score and Best at 1000, the header keeps its rows and its height`, `${at1000.rows.join(' / ')}, ${r1(at1000.height)} px`);
+    }
+
     // ------------------------------------ on its side, the help giving way
     // Watching, the chatter full, on more short screens on their side: where
     // a row of words fits beside the help, it stays (780×340, a notched
@@ -685,7 +797,7 @@ const r1 = v => Math.round(v * 10) / 10;
     await open(CALLS, '&nofs');
     const noFs = await ev(`(() => { const f = document.getElementById('fullscreen'); return f.hidden && !f.getBoundingClientRect().width; })()`);
     const buttonsNoFs = await ev(`[...document.querySelectorAll('header .hud button')].filter(el => el.getBoundingClientRect().width).length`);
-    check(noFs && buttonsNoFs === 4, 'where the browser has no full screen for a page (an iPhone), there\'s no button', `${buttonsNoFs} buttons in the header`);
+    check(noFs && buttonsNoFs === 5, 'where the browser has no full screen for a page (an iPhone), there\'s no button', `${buttonsNoFs} buttons in the header`);
 
     // ----------------------------------------------------- the screen awake
     // What the stand-in wake lock was asked, step by step: request, release,

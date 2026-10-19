@@ -34,8 +34,11 @@
         <p class="tagline">A snake game on a mossy log</p>
       </div>
       <div class="hud">
-        <span class="stat">Score <strong id="score">0</strong></span>
-        <span class="stat">Best <strong id="best">0</strong></span>
+        <!-- Score over Best beside the title on a desktop; on a phone and in the column beside the board, each takes its own place (style.css). -->
+        <span class="stats">
+          <span class="stat">Score <strong id="score">0</strong></span>
+          <span class="stat">Best <strong id="best">0</strong></span>
+        </span>
         <button id="pause" class="icon" aria-label="Nap (pause)" title="Nap (P)" disabled>
           <svg viewBox="0 0 20 20" aria-hidden="true"><rect class="bar" x="5" y="4" width="3.4" height="12" rx="1.2"/><rect class="bar" x="11.6" y="4" width="3.4" height="12" rx="1.2"/><path class="play" d="M6 4.2v11.6c0 .8.9 1.3 1.6.8l8.6-5.8c.6-.4.6-1.2 0-1.6L7.6 3.4C6.9 2.9 6 3.4 6 4.2z"/></svg>
         </button>

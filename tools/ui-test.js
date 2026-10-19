@@ -17,10 +17,18 @@
 //   lit). Each door opens the book on its own tab, and the book is named for
 //   what it shows; in the book, H and G go to their tabs, or close it from
 //   there. The basics have the renderer's pictures.
-// - The header on an upright phone keeps its buttons on one row, with room
-//   for one more (a full-screen button) at 320 px; on a 1920x1080 screen's
-//   maximized browser and an iPad held upright it's one row with the Field
-//   guide named, and stays one row with a sixth button.
+// - The header: held upright (390 and 320 px), the title with Score and
+//   Best, then the six buttons on a row of their own, the Field guide named
+//   at 390; over the board, one row, Score over Best and the full-screen
+//   button last, the guide named on a 1080p desktop's browser (maximized,
+//   with a bookmarks bar), an iPad mini and an iPad held upright, both on
+//   1920x1080, neither at 1920x860; a window 460 px wide (500 with touch)
+//   with the title, Score and Best and then every button, both named; and
+//   as Score and Best grow to 1000, nothing moves.
+// - The fullest death card (a real first good round's: the new best's
+//   badge, the carve, the Field guide's link), with the longest reason,
+//   fits phones' boards from 280 to 420 px (the smallest lets the link wait
+//   while you carve, and has it back once your name's in).
 //
 //   node tools/ui-test.js
 const { launch, serve, HELPERS } = require('./browser');
@@ -312,32 +320,62 @@ const KEYS = {
     check(p.book && p.spot === 'fire' && p.spotIn && p.pageTop > 0 && p.focus === 'records-close', '...which opens the guide at Fire, far down it, lit and in view (focus on its Close)', `${p.spot} / in view: ${p.spotIn} / scrolled ${p.pageTop} / ${p.focus}`);
     await key('Escape');
 
-    // ------------------------------------- a one-row header's tight range
-    // A 1920x1080 screen's maximized browser (a 685 px page) and an iPad held
-    // upright (744): the Field guide keeps its name beside its book, the
-    // trophy is an icon, and the header stays one row; with a sixth button
-    // (a stand-in for the phones work's full screen) the row still holds.
-    const doorsRow = `(() => {
-      const hdr = document.querySelector('header'), bs = [...hdr.querySelectorAll('button')].filter(vis);
-      const tops = new Set(bs.map(x => Math.round(x.getBoundingClientRect().top))), named = id => vis(document.querySelector('#' + id + ' .trophy-text'));
-      return { page: Math.round(document.querySelector('main').getBoundingClientRect().width), height: Math.round(hdr.getBoundingClientRect().height), rows: tops.size, guide: named('guide-open'), trophy: named('records-open'), book: vis(document.querySelector('#guide-open svg')) };
+    // ------------------------------------------ the header over the board
+    // Its rows (what's on each, left to right, grouped by where each sits;
+    // Score over Best beside the title count as one), whether each door
+    // shows its word, and whether the page scrolls sideways.
+    const headerRows = `(() => {
+      const hd = document.querySelector('header'), stats = document.querySelector('.stats'), pair = getComputedStyle(stats).display !== 'contents' ? stats : null;
+      const items = [['title', document.querySelector('h1')], ...[...hd.querySelectorAll('.hud .stat')].map((el, i) => [i ? 'Best' : 'Score', pair || el]), ...[...hd.querySelectorAll('.hud button')].filter(vis).map(el => [el.id, el])];
+      let rows = [];
+      for (const [n, el] of items) {
+        const r = el.getBoundingClientRect(), cs = getComputedStyle(el), top = r.top - parseFloat(cs.marginTop), bottom = r.bottom + parseFloat(cs.marginBottom);
+        let row = rows.find(q => Math.min(bottom, q.bottom) - Math.max(top, q.top) > 2);
+        if (!row) rows.push(row = { top, bottom, items: [] });
+        row.top = Math.min(row.top, top); row.bottom = Math.max(row.bottom, bottom);
+        row.items.push({ n, l: n === 'Best' && pair ? r.left + 0.5 : r.left });
+      }
+      for (let merged = true; merged;) {
+        merged = false;
+        for (const a of rows) for (const c of rows) if (a !== c && !merged && Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top) > 2) { a.items.push(...c.items); a.top = Math.min(a.top, c.top); a.bottom = Math.max(a.bottom, c.bottom); rows = rows.filter(q => q !== c); merged = true; }
+      }
+      rows.sort((a, c) => a.top - c.top);
+      const named = id => vis(document.querySelector('#' + id + ' .trophy-text'));
+      return { page: Math.round(document.querySelector('main').getBoundingClientRect().width), height: Math.round(hd.getBoundingClientRect().height * 10) / 10, rows: rows.map(r => r.items.sort((a, c) => a.l - c.l).map(i => i.n).join(' ')),
+        guide: named('guide-open'), trophy: named('records-open'), sideways: document.documentElement.scrollWidth > innerWidth };
     })()`;
-    const sixth = `(() => { const x = document.createElement('button'); x.className = 'icon'; x.innerHTML = '<svg viewBox="0 0 20 20"></svg>'; document.querySelector('.hud').appendChild(x); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(1)))); })()`;
-    for (const [w, h, touch, label] of [[1920, 945, false, '1920x945, a maximized browser'], [768, 1024, true, 'an iPad upright']]) {
+    const grow = `(() => { document.getElementById('score').textContent = '1000'; document.getElementById('best').textContent = '1000'; return new Promise(res => requestAnimationFrame(() => requestAnimationFrame(() => res(1)))); })()`;
+    // In one row, Score over Best beside the title and the full-screen
+    // button last, each door named where the row has room for its word: a
+    // 1920x1080 screen's maximized browser (a 685 px page), with a bookmarks
+    // bar (653), and an iPad mini held upright (720) name the Field guide,
+    // the trophy its picture (the guide was its book there with the full
+    // screen, and the 1080p browser with the bar showed two bare icons);
+    // 1920x1080 (820) names both; a 1000x860 window (a 600 px page) has
+    // both pictures. A window 460 px wide, or 500 with touch (an iPad's Split
+    // View), has the title with Score and Best, then all the buttons on the
+    // next row, both named (the trophy went alone onto a third). And as
+    // Score and Best grow to 1000, nothing moves.
+    for (const [w, h, touch, label, oneRow, guide, trophy] of [
+      [1920, 945, false, '1920x945, a maximized browser', true, true, false], [1920, 913, false, '1920x913, with a bookmarks bar', true, true, false],
+      [1920, 1080, false, '1920x1080', true, true, true], [1000, 860, false, 'a 1000x860 window', true, false, false], [744, 1133, true, 'an iPad mini upright', true, true, false],
+      [768, 1024, true, 'an iPad upright', true, true, false], [460, 900, false, 'a window 460 px wide', false, true, true], [500, 1000, true, 'a touch window 500 px wide', false, true, true]]) {
       await b.viewport(w, h, { scale: touch ? 2 : 1, mobile: touch });
       await load();
-      const r = await ev(doorsRow);
-      check(r.rows === 1 && r.guide && r.book && !r.trophy && r.height <= 56, `${label}: the header in one row, the Field guide named beside its book, the trophy an icon`, JSON.stringify(r));
-      await ev(sixth);
-      const r6 = await ev(doorsRow);
-      check(r6.rows === 1 && r6.height === r.height, `${label}: with a sixth button in the header, still one row`, JSON.stringify(r6));
+      const r = await ev(headerRows), want = oneRow ? 'title Score Best pause music mute guide-open records-open fullscreen' : 'title Score Best / pause music mute guide-open records-open fullscreen';
+      check(r.rows.join(' / ') === want && r.guide === guide && r.trophy === trophy && r.height <= (oneRow ? 56 : 108) && !r.sideways,
+        `${label}: ${oneRow ? 'the header in one row' : 'the title with Score and Best, then every button'}, the full-screen button last, the Field guide ${guide ? 'named' : 'its open book'}, the trophy ${trophy ? 'named' : 'its picture'}`, JSON.stringify(r));
+      await ev(grow);
+      const r1000 = await ev(headerRows);
+      check(r1000.rows.join(' / ') === want && r1000.height === r.height && r1000.guide === guide, `${label}: with Score and Best at 1000, nothing moves`, JSON.stringify(r1000));
     }
 
     // ------------------------------------------ the column beside the board
     // A 1366x768 laptop's browser (1366x657): the doors stay in the icons'
-    // row, the Field guide by name, and watching with the chatter's log full
-    // (five lines) the page doesn't scroll. 1280x800 has the height for the
-    // doors' own row, and keeps it with the log full.
+    // row, pictures beside the full-screen button (the six fill it), and
+    // watching with the chatter's log full (five lines) the page doesn't
+    // scroll. 1280x800 has the height for the doors' own row, both named,
+    // and keeps it with the log full.
     const column = `(() => {
       const cy = id => { const r = document.getElementById(id).getBoundingClientRect(); return r.top + r.height / 2; };
       const log = document.getElementById('chatlog'); log.textContent = '';
@@ -353,50 +391,79 @@ const KEYS = {
       await load();
       await fresh(['ouroboros', 'metagamer', 'gobbler'], true);
       const c = await ev(column);
-      check(c.inIconsRow === iconsRow && c.guide && c.trophy === trophy && c.scroll <= 0, `${w}x${h}, watching with the chatter full: ${iconsRow ? 'the doors in the icons’ row, the Field guide by name' : 'the doors’ own row, both named'}, and the page doesn’t scroll`, JSON.stringify(c));
+      check(c.inIconsRow === iconsRow && c.guide === !iconsRow && c.trophy === trophy && c.scroll <= 0, `${w}x${h}, watching with the chatter full: ${iconsRow ? 'the doors in the icons’ row, their pictures' : 'the doors’ own row, both named'}, and the page doesn’t scroll`, JSON.stringify(c));
     }
 
-    // ------------------------------- the fullest death card on a small board
-    // A first good round's: the new best's badge and the carve as well as the
-    // Field guide's link. It fits the board (nothing under the sticky
-    // buttons); with a rival's note up, the badge and the carve wait, and come
-    // back with the card's words. (At 360x640 the board is 316 px: the badge
-    // gives way to the carve; at 320x640, 276 px: the link does, while you carve.)
-    for (const [w, h, want] of [[360, 640, 'carve+link'], [320, 640, 'carve']]) {
+    // ------------------------------- the fullest death card on a phone's board
+    // A first good round's real card (a new best, the Hall of Fame's carve
+    // and the Field guide's link), its reason made the longest a round
+    // gives: it fits its board, nothing under the sticky buttons and no
+    // scroll. What it shows follows the board: the badge, the carve and the
+    // link from 331 px (on boards up to 403 the death's quip waits while the
+    // carve is offered: at 390x844, 382 px, the card scrolled 15 px), the
+    // carve and the link from 301, and on the smallest the carve alone,
+    // the link back once your name's in ("Carved: …", the field gone). With
+    // a rival's note up, the badge and the carve wait, and come back with
+    // the card's words.
+    const LONG = 'You crashed head-on into Capricious, the same length: both out · 4th place · score 128';
+    const fitNow = `(() => {
+      const $ = id => document.getElementById(id), card = document.querySelector('#overlay .card'), bt = document.querySelector('#overlay .buttons').getBoundingClientRect();
+      const shown = [['overlay-badge', 'badge'], ['name-row', 'carve'], ['how', 'link']].filter(([id]) => vis($(id))).map(([, n]) => n).join('+');
+      return { board: Math.round(document.querySelector('.board').getBoundingClientRect().height), over: card.scrollHeight - card.clientHeight, shown, rank: $('name-rank').textContent, field: vis($('name-input')), under: vis($('name-input')) ? Math.round(Math.max(0, $('name-input').getBoundingClientRect().bottom - bt.top)) : 0 };
+    })()`;
+    for (const [w, h, want] of [[390, 844, 'badge+carve+link'], [375, 667, 'badge+carve+link'], [428, 926, 'badge+carve+link'], [360, 640, 'badge+carve+link'], [320, 640, 'carve+link'], [320, 460, 'carve']]) {
       await b.viewport(w, h, { scale: 2, mobile: true });
       await load();
-      await fresh(['joker', 'capricious', 'vulture']);
-      await die();
-      const fitNow = `(() => {
-        const $ = id => document.getElementById(id), card = document.querySelector('#overlay .card'), bt = document.querySelector('#overlay .buttons').getBoundingClientRect();
-        const shown = [['overlay-badge', 'badge'], ['name-row', 'carve'], ['how', 'link']].filter(([id]) => vis($(id))).map(([, n]) => n).join('+');
-        return { over: card.scrollHeight - card.clientHeight, shown, under: vis($('name-input')) ? Math.round(Math.max(0, $('name-input').getBoundingClientRect().bottom - bt.top)) : 0 };
-      })()`;
-      await ev(`(() => { const $ = id => document.getElementById(id); $('overlay-badge').textContent = 'New best: 12!'; $('overlay-badge').hidden = false; $('name-rank').textContent = 'Hall of Fame #2. Carve your name:'; $('name-row').hidden = false; return 1; })()`);
-      await b.sleep(150);
+      await ev(`['snake-highscores', 'snake-stats', 'snake-name'].forEach(k => localStorage.removeItem(k)); localStorage.setItem('snake-best', '5'); 1`); // (a best to beat, an empty Hall of Fame, no name yet)
+      await load();
+      // (your death's card, not the round's end that can follow it: the rivals go on behind it)
+      const yourCard = `SnakeDebug.state() !== 'over' && document.getElementById('how').textContent.startsWith('Field guide:')`;
+      for (let tries = 0; tries < 3; tries++) {
+        await fresh(['joker', 'capricious', 'vulture']);
+        await ev(`me().eaten = 30; 1`);
+        await die();
+        if (await ev(yourCard)) break;
+      }
+      await ev(`document.getElementById('overlay-text').textContent = ${JSON.stringify(LONG)}; new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(1))))`);
       let f = await ev(fitNow);
-      check(f.over <= 0 && f.under === 0 && f.shown === want, `phone ${w}x${h}: the fullest death card fits its board (${want})`, JSON.stringify(f));
-      await tap(await tagAt('Joker'));
-      f = await ev(fitNow);
-      p = await P();
-      check(p.note.startsWith('Joker') && f.over <= 0 && !/badge|carve/.test(f.shown), `phone ${w}x${h}: with a note on it, the badge and the carve wait, and it still fits`, JSON.stringify(f));
-      await tap(await at('#note-close'));
-      f = await ev(fitNow);
-      check(f.shown === want && f.over <= 0, `phone ${w}x${h}: closing the note brings them back`, JSON.stringify(f));
+      check(f.over <= 0 && f.under === 0 && f.shown === want, `phone ${w}x${h}: the fullest death card, the longest reason, fits its ${f.board} px board (${want})`, JSON.stringify(f));
+      if (w === 390 || w === 320) {
+        await tap(await tagAt('Joker'));
+        f = await ev(fitNow);
+        p = await P();
+        check(p.note.startsWith('Joker') && f.over <= 0 && !/badge|carve/.test(f.shown), `phone ${w}x${h}: with a note on it, the badge and the carve wait, and it still fits`, JSON.stringify(f));
+        await tap(await at('#note-close'));
+        f = await ev(fitNow);
+        check(f.shown === want && f.over <= 0, `phone ${w}x${h}: closing the note brings them back`, JSON.stringify(f));
+      }
+      if (h === 460) {
+        await tap(await at('#name-input'));
+        await b.send('Input.insertText', { text: 'Perry' });
+        await key('Enter');
+        f = await ev(fitNow);
+        check(f.rank === 'Carved: Perry.' && !f.field && f.shown === 'carve+link' && f.over <= 0, `phone ${w}x${h}: once your name's carved, the field goes and the Field guide's link is back, and it still fits`, JSON.stringify(f));
+        await key('Escape'); // (keep watching)
+        await wait(`!cardUp()`);
+        await ev(`pilot.on = false; 1`);
+        await fresh(['joker', 'capricious', 'vulture']);
+        await ev(`me().eaten = 40; 1`);
+        await die();
+        f = await ev(fitNow);
+        check(/^Hall of Fame #\d+, as Perry\.$/.test(f.rank) && !f.field && f.shown === 'carve+link' && f.over <= 0, `phone ${w}x${h}: the next good round, with a name already carved, the link is there from the start`, JSON.stringify(f));
+      }
     }
 
     // -------------------------------------------------------------- phones
     for (const [w, h] of [[390, 844], [320, 640]]) {
       await b.viewport(w, h, { scale: 2, mobile: true });
       await load();
-      const row = await ev(`(() => {
-        const bs = [...document.querySelectorAll('header button')].filter(vis), r = bs.map(x => x.getBoundingClientRect());
-        const one = r.every(q => Math.abs(q.top - r[0].top) < 2), page = document.querySelector('header').getBoundingClientRect();
-        const used = r.reduce((s, q) => s + q.width, 0), room = page.width - used - (bs.length) * 6; // (room for one more 44 px button, with every gap at least 6 px)
-        return { n: bs.length, one, room: Math.round(room), sideways: document.documentElement.scrollWidth > innerWidth, ids: bs.map(x => x.id).join(' ') };
-      })()`);
-      check(row.one && row.ids === 'pause music mute guide-open records-open' && !row.sideways, `phone ${w}: the header’s buttons on one row, the guide’s door beside the trophy`, JSON.stringify(row));
-      check(row.room >= 44, `phone ${w}: room on that row for one more button (a full screen)`, `${row.room} px`);
+      const row = await ev(headerRows), named = w >= 371;
+      check(row.rows.join(' / ') === 'title Score Best / pause music mute guide-open records-open fullscreen' && row.guide === named && !row.trophy && !row.sideways,
+        `phone ${w}: the title with Score and Best, then the six buttons on a row of their own, the guide’s door beside the trophy (${named ? 'by its name' : 'its open book'}), the full screen last`, JSON.stringify(row));
+      await ev(grow);
+      const row1000 = await ev(headerRows);
+      check(row1000.rows.join(' / ') === row.rows.join(' / ') && row1000.height === row.height, `phone ${w}: with Score and Best at 1000, the header keeps its rows`, JSON.stringify(row1000));
+      await load();
       await tap(await at('#guide-open'));
       p = await P();
       check(p.book && p.tab === 'guide', `phone ${w}: a tap on the guide’s door opens the guide`, p.tab);
