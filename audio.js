@@ -600,7 +600,7 @@ window.SnakeAudio = (() => {
       for (let i = 0; i < 3; i++) noise(t + 0.16 + i * 0.05, 0.02, 0.05, 'lowpass', 1100, 0.8);
     },
 
-    // A burrow closing over: a muffled crumble, softer than any of these. Sawdust
+    // A burrow closing over: a muffled crumble, as soft as a beetle's scrabble. Sawdust
     // trickles into the hole (five grains, each lower and fainter), then a hushed
     // pat as the moss settles over it. About 350 ms.
     heal(t) {
