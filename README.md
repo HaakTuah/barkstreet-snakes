@@ -72,7 +72,9 @@ Press **Play with friends** on the start screen, then **Host a game** and send t
 | Flash | E or Shift | Swipe the way you're already going |
 | Nap (pause) | P or Esc | ⏸ button |
 | Start / start over | Enter or R (mid-round it asks first: press it again), or any arrow on the start screen | Play button |
-| Hall of Fame, Your story, Field guide | H | Hall of Fame button |
+| Field guide (how to play, and every food, power and danger) | G | Field guide button (an open book), or **How to play** on the start screen |
+| Hall of Fame, Your story | H | Hall of Fame button (a trophy) |
+| A rival's note (how it plays, what it holds) | Click its name tag, or Tab to it and press Enter; Esc closes it | Tap its name tag |
 | Sound / music | M / N | 🔈 / ♪ buttons |
 | Watching speed | 1, 2, 4 | 1× 2× 4× buttons |
 
@@ -92,7 +94,7 @@ Press **Watch AIs** on the start screen for a round between four AI snakes, with
 
 ## The rivals
 
-Each round, three of these eighteen are picked at random. The start screen tells you who you're up against and how each one plays. Only you have a real forked tongue: every few seconds each rival flicks out something of its own instead, such as Wildcard's dollar bill, Joker's party horn or Desperado's six-shooter.
+Each round, three of these eighteen are picked at random. The start screen tells you who you're up against and how each one plays. On any card (the start, a nap, your death's or the round's), click or tap a rival's name tag for its note: how it plays and what it holds now. It stays until you close it (its tag again, its ×, Esc, or a click anywhere else); while you're watching, it's a banner instead, up as long as it takes to read. Only you have a real forked tongue: every few seconds each rival flicks out something of its own instead, such as Wildcard's dollar bill, Joker's party horn or Desperado's six-shooter.
 
 | Snake | Look | Style |
 |-------|------|-------|
@@ -115,7 +117,7 @@ Each round, three of these eighteen are picked at random. The start screen tells
 | **Ouroboros** | a real snake: dark gold python diamonds, a wedge head, slit eyes, fangs | Chases its own tail: once it's long, it moves as a ring, and whatever's inside is in trouble. Now and then it bites its own tail. |
 | **Star** | a sunflower star with a big white walrus mustache, a rainbow streaming behind it | A power addict: jumps and flashes every chance it gets, and craves anything golden that feeds the habit. When it flashes, its star's points go dim and light back up one by one as its flash comes back: count them, and box it in while they're dim. |
 
-All of them share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move (or can chase their own tail), don't let themselves be pinned against the edge or a body (or shut in a pocket) where another snake could come round and close the way out, and avoid the space around other snakes' heads. On top of that, each one chases its own goal.
+All of them share the same sense of danger. They plan a few moves ahead, check that they'll still have room to move (or can chase their own tail), don't let themselves be pinned against the edge or a body (or shut in a pocket) where another snake could come round and close the way out, and avoid the space around other snakes' heads. Food by the edge, in a corner or beside a hole, fire or a body isn't a trap in itself, though: a snake that has just eaten there is gone on its next move, so only a head close enough to cut it off keeps them away. On top of that, each one chases its own goal.
 
 They're also fair. They see the other snakes as they were about a quarter of a second ago, like a human's reaction time, so they can't dodge your sudden turns any faster than you could dodge theirs. And they aren't told which snake is you: you're judged only by how you move, like everyone else.
 
@@ -125,7 +127,7 @@ Everything is saved in your browser only. If your browser won't keep anything (s
 
 - **Hall of Fame:** the top 10 rounds, ranked by finishing place (a win beats any 2nd place), then by how long the snake stayed alive, then by food eaten. The AI snakes get entries too, so you're competing against them on the list. Switch to **Only you** to see your own top 10. When a round makes the top three, or beats your best, you can carve your name on the end screen. Until you do, your rounds go in as Green (the game's name for you), and carving a name puts it on all of them.
 - **Your story:** rounds played, wins, average place and score, how often you finished in each place, and what killed you (including your nemesis, whatever gets you most often).
-- **Field guide:** every food, power and danger on the log, with its picture and its rule, and the keys for each power.
+- **Field guide:** how to play in four lines (The basics: winning, steering, crashes, hunger), then every food, power and danger on the log, with its picture and its rule, and the keys for each power. It has its own button (and G); **How to play** on the start screen and **Field guide** on the nap card open it, and your death's card names what got you (**Field guide: Crashes**, say), opening it at that row.
 
 ## Run locally
 
@@ -136,9 +138,10 @@ Serve the folder with any static server (for example `npx serve` or `python -m h
 - `node tools/records-test.js` checks that shared and played-together rounds land in each friend's Hall of Fame exactly once, and that a browser that won't keep records still has them until the tab closes.
 - `node tools/online-test.js` plays rounds through the online protocol and checks that a friend's screen matches the host's every tick, and that the plans a friend draws ahead from (where everyone goes next) are the host's.
 - `node tools/simulate.js 200` plays 200 AI-only rounds headlessly with the game's own rules and AI, and prints each personality's win rate, food, kills, how snakes die and so on. Add `--seed 1` to repeat a run exactly (on any machine), `--check` to fail on a stalled round, `--census` to count what a round holds (golden things, weather, lightning, the woodpecker, powers, and how hungry snakes are before the woodpecker comes and after), and `--root <dir>` to play another copy of the game, to compare versions.
-- `node tools/rules-test.js` checks the rules on hand-built boards: tails, head-ons, starving, the woodpecker's manners, what the AIs can see, and Star's habit (it flashes and jumps where nobody else would, round a body ahead rather than into it, and goes for a golden leaf over a nearer apple).
+- `node tools/rules-test.js` checks the rules on hand-built boards: tails, head-ons, starving, the woodpecker's manners, what the AIs can see, Star's habit (it flashes and jumps where nobody else would, round a body ahead rather than into it, and goes for a golden leaf over a nearer apple), and the owner's playtest: every rival takes food on the edge, a golden apple in a corner, and an apple beside holes, fire or another snake when nothing threatens it, and still refuses one where it would be pinned or cut off.
 - `node tools/chatter-test.js` checks that every line the rivals say has its Chinese, for Copycat, that no Chinese is left over from a line that's gone, and that every line marked as a punchline is one someone says; then it plays the chatter with the game's own engine through staged moments (pecked under, put out by the rain, food burning or rotting nearby, starving, cut by a golden flash, flashing, the last apples, and Star showing off at most every 10 seconds, even at its most addicted) and a few whole AI rounds. Last, it runs the sound (audio.js on a stand-in AudioContext) and checks that a rival's flash, jump, golden flash, catching fire or golden mushroom never silences yours, and that your own golden flashes or golden jumps in a row are each heard.
 - `node tools/input-test.js` checks the controls in headless Chrome with real key and touch events on a steady 60 Hz clock: Space or a tap jumps, E, Shift or a swipe ahead flashes, nothing else fires a power, a swipe never jumps, and a press reaches the next tick. A thumb resting before it swipes or while the other swipes, and a quick double flick, never fire a power; a tap that drifts as it lifts still jumps, a long slanted stroke still turns, and mashing jump over your death's card never starts a round.
+- `node tools/ui-test.js` checks the owner's playtest in headless Chrome, with a mouse, keys and touch on a desktop and two phones: a rival's note on the napping card, your death's card and the round's stays until you close it (and how), keeps up with the round, says nothing while you play and is a banner, up as long as it takes to read, while you watch; and the Field guide's doors (its button, G, How to play, the nap card's link, your death's card opening it at what got you), each opening the book on its own tab, with the header's buttons on one row on a phone and room for one more.
 - `node tools/render-test.js` checks the renderer's promises a picture can show, in headless Chrome: a flash drawn ahead and gliding on, a corpse's beads in its markings, power pips on the board at its edge, scorch as soot, every Field guide picture, and Star's look (a star for a head, its rainbow flowing back from it, its tell, its beads).
 - `node tools/shots.js [dir]` takes the screenshot tour in headless Chrome (title, play, a bite, the powers, a nap, a death, the cards, the Hall of Fame, Your story and the Field guide, a round with Star, a laptop, a phone both ways), with an autopilot at the wheel. `node tools/bench.js` measures frame times the same way, and what Sovereign's and Colonist's land, a woodpecker strike, fire burning out and Star's look cost. They need Chrome (or set `CHROME`); nothing to install.
 
