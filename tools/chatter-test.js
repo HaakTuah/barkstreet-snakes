@@ -396,6 +396,17 @@ console.log('ok   the rarer lines keep to their rests; land is radius + LAND_REA
   sniper.alive = false;
   check(tick(g, choke(sniper), 30000).length === 0, '...and a snake that\'s out says nothing');
 }
+{ // A choke is news: said even just after the crash that broke the bead off had its say (a crash's bonk, then the choke on its beads 1.9 s on), but never two lines in a tick.
+  const g = stage(['sniper', 'joker'], { 0: [3, 20], 1: [12, 12], 2: [12, 18] }), [, sniper, joker] = g.snakes;
+  const crash = s => ({ type: 'crash', snake: s, x: s.body[0].x + 1, y: s.body[0].y, killerId: null });
+  const choke = s => ({ type: 'choke', snake: s, x: s.body[0].x, y: s.body[0].y, tx: s.body[0].x, ty: s.body[0].y - 1 });
+  check(says(tick(g, [crash(sniper)]), sniper, VOICES.sniper.bonk), 'Sniper crashes: its bonk line');
+  let h = tick(g, [choke(sniper)], 1900);
+  check(says(h, sniper, VOICES.sniper.choke), `...and chokes on the beads it broke off 1.9 s later: its choke line too ("${lineOf(h, sniper)}")`);
+  check(tick(g, [crash(sniper)], 5000).length === 1 && tick(g, [choke(sniper)], 1900).length === 0, '...but it crashes and chokes again 7 s on: the bonk, and no choke line (20 s between)');
+  h = tick(g, [crash(joker), choke(joker)], 30000);
+  check(h.filter(x => x.s === joker).length === 1, `a crash and a choke in the same tick: one line (${h.filter(x => x.s === joker).map(x => `"${x.text}"`).join(', ')})`);
+}
 { // A windfall: what a choke spat or a cough nudged aside, eaten by a rival soon after (the same tick too): thanks, half the time, at most every 30 s.
   const g = stage(['vulture', 'gobbler'], { 0: [3, 20], 1: [12, 12], 2: [12, 18] }), [you, vul, gob] = g.snakes;
   const nudge = (s, x, y, tx, ty, kind = 'food') => ({ type: 'nudge', snake: s, kind, x, y, tx, ty });

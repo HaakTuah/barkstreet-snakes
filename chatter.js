@@ -1902,7 +1902,8 @@ window.SnakeChatter = (() => {
   // (one line at a time).
   const showsOff = s => s.personaKey === 'star';
   // (Clearing a snake's gap for news, unless its last line was this tick's.
-  // Star's own moments do; so does a colony or a capital the woodpecker took.)
+  // Star's own moments do; so do a choke, and a colony or a capital the
+  // woodpecker took.)
   const news = s => { if (s && lastSaid[s.id] < game.time) lastSaid[s.id] = -Infinity; };
   const ownMoment = s => { if (s && showsOff(s)) news(s); };
   // A line for showing off (key; who: a rival it beat to food or shot past),
@@ -2072,10 +2073,13 @@ window.SnakeChatter = (() => {
         say(e.snake, 'burning', null, true);
       } else if (e.type === 'choke' && e.snake.persona && e.snake.alive) {
         // Its head met its own bead (a crash's, or a cut's): it gags, spits
-        // it aside and coughs a moment. It says so, at most every CHOKE_REST.
+        // it aside and coughs a moment. It says so, at most every CHOKE_REST,
+        // even just after another line: it's news (the crash that broke the
+        // bead off has mostly had its say a second or two before, and a
+        // choke left to wait out the gap would mostly go unsaid).
         const s = e.snake, was = (seen[s.id] ||= {});
         if (!(game.time - (was.chokeAt ?? -Infinity) < CHOKE_REST)) {
-          ownMoment(s);
+          news(s);
           if (say(s, 'choke', null, true)) was.chokeAt = game.time;
         }
       } else if (e.type === 'cut') {
