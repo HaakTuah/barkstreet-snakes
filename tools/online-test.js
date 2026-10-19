@@ -376,11 +376,11 @@ O.apply(g, bad, E.DIRS);
 if (g.events.length !== 1 || g.events[0].tx !== 3 || g.events[0].ty !== 5 || g.snakes[1].coughUntil !== -1) { console.error('a malformed choke, nudge or cough got through', JSON.stringify(g.events.map(e => [e.type, e.x, e.y, e.tx, e.ty]))); process.exit(1); }
 // Nor digs, dives, knocks, burrows opening or closing over off the board or of a kind that doesn't exist (a
 // knock lands on the board, or nowhere: both or neither), a dig that isn't till a tick, a beetle underground that
-// came from no cell, a beetle digging in till no tick, or a burrow that isn't one.
+// came from no cell, a beetle digging in till no tick, or a burrow that isn't one (off the board, or not opened on a tick).
 bad.e = [['dig', 1, 1, 'soon'], ['dig', -1, 1, 5], ['dive', 1, E.GRID, 1], ['knock', 99, 1, 1, 2, 2, 0], ['knock', 0, 1, 1, E.GRID, 1, 0], ['knock', 0, 1, 1, 2, null, 0], ['knock', 0, 1, 1, -1, -1, 0],
   ['knock', 0, 1, 1, null, null, 0], ['dig', 2, 3, 40], ['dive', 2, 3, 1], ['knock', 4, 5, 6, 7, 8, 1], ['burrow', E.GRID, 1, 1], ['heal', 1, 'x'], ['burrow', 3, 4, 1], ['heal', 5, 6],
   ['knock', 3, 1, 2, 3, 4, 0, '#abc']];
-bad.bu = [[1, 2], [1, 2, 3, 'x', 0], [4, 5, 6, 700, 1], [7, 8, 9, -1, 0]];
+bad.bu = [[1, 2], [1, 2, 3, 'x', 0], [4, 5, 6, 700, 1], [999, -5, 1.5, 700, 1], [2.5, 3, 4, 700, 0], [5, E.GRID, 7, 700, 0], [5, 6, 7.5, 700, 0], [7, 8, 9, -1, 0]]; // (two short or not numbers, one off the board, one not on a cell, one past the edge, one not opened on a tick)
 bad.un = [['x'], [1, 2, -5, 0], [1, 2, E.GRID * E.GRID, 0], [5, 9, 30, 1]];
 bad.f = [[3, 3, 4, 100, 0, 0, -1, -1, 0, 0, 0, 'soon']];
 O.apply(g, bad, E.DIRS);
