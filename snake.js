@@ -1495,9 +1495,15 @@
     ghost: 'radial-gradient(circle at 35% 35%, #f8fafc, #b8c4d4)', // (pale, but not an empty ring)
     star: 'radial-gradient(circle at 50% 50%, #f9c22e 0 28%, transparent 30%), conic-gradient(#ef4444, #f97316, #facc15, #22c55e, #3b82f6, #6366f1, #a855f7, #ef4444)', // (a rainbow round its sunflower star)
   };
+  // Copycat's dot wears the flag's yellow star over whatever colour it has
+  // on, its party pin: it keeps it apart from the cast's other reds.
+  const PARTY_STAR = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1.5 14.5 8.6 22 8.7 16 13.3 18.2 20.5 12 16.2 5.8 20.5 8 13.3 2 8.7 9.5 8.6Z' fill='%23ffde00'/%3E%3C/svg%3E") 50% 50% / 82% no-repeat`;
+  const starred = new Map(); // (colour -> its dot with the star: made once each, the tags read them every frame)
+  const partyDot = colour => starred.get(colour) || starred.set(colour, `${PARTY_STAR}, ${colour}`).get(colour);
+  PERSONA_DOTS.copycat = partyDot(PERSONAS.copycat.color); // (in the Hall of Fame: its own red)
   function dotColor(s) {
     if (s.personaKey === 'mute') return R.colorOf(s); // (its mood, as it changes)
-    if (s.personaKey === 'copycat' && game?.snakes[s.memory.modelId]?.personaKey === 'star') return COPY_STAR_DOT; // (copying Star: a pale copy of its rainbow)
+    if (s.personaKey === 'copycat') return partyDot(game?.snakes[s.memory.modelId]?.personaKey === 'star' ? COPY_STAR_DOT : R.colorOf(s)); // (copying Star: a pale copy of its rainbow)
     return PERSONA_DOTS[s.personaKey] || s.persona?.ink || R.colorOf(s);
   }
   // The same dots in the Hall of Fame and Your story, by a rival's name.
