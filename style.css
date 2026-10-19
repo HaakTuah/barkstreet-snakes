@@ -957,13 +957,16 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .hint span:nth-of-type(2) .sep { display: none; }
   button { padding-block: 8px; }
   .card:has(.name-row:not([hidden])) .badge { display: none; } /* (the prompt is the celebration here; Best shows the number) */
-  /* The two buttons share one row (a stacked pair would cover the card). */
-  .buttons { gap: 8px; }
-  .buttons button:not(.text-button) { flex: 1 1 0; min-width: 0; padding: 7px 8px; font-size: 0.85rem; line-height: 1.15; }
-  #start { --call-x: 1.18; --call-y: 1.8; } /* (its ring as wide on a smaller button) */
   .name-row { font-size: 0.82rem; }
   .buttons .text-button { min-height: 30px; padding-block: 2px; }
   .card p { font-size: 0.85rem; margin-bottom: 6px; }
+}
+/* The two buttons share one row (a stacked pair would cover the card): on
+   the small boards, and on a phone's edge-to-edge one (310 px on its side). */
+@container (max-height: 330px) {
+  .buttons { gap: 8px; }
+  .buttons button:not(.text-button) { flex: 1 1 0; min-width: 0; padding: 7px 8px; font-size: 0.85rem; line-height: 1.15; }
+  #start { --call-x: 1.18; --call-y: 1.8; } /* (its ring as wide on a smaller button) */
 }
 
 @media (max-width: 440px) {
