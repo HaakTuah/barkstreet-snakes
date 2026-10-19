@@ -104,7 +104,7 @@
     youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
     youChoke: 'You choke on your own tail!', // (your own beads: spat aside, and a cough)
     youCoughing: 'No eating while you cough: food rolls aside.', // (true whenever it shows: a lesson may wait out the cough)
-    youWoodpecker: 'The woodpecker knocks food aside, and never shuts you in.', // (your first sudden death, once its own banner has had its time)
+    youWoodpecker: 'The woodpecker knocks food aside, and won’t shut you in if it can help it.', // (your first sudden death, once its own banner has had its time; "if it can help it": with nowhere else to aim, it may)
     youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near your head)
     digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log; past three the one unused longest closes over: the Field guide says so)
     lastApples: 'The last apples are falling.',
@@ -2104,7 +2104,7 @@
     ]],
     ['The log', [
       ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
-      ['knock', 'Woodpecker', 'From 2:00 it pecks out patches, never one that shuts you in or leaves crumbs of log. Food in its mark is knocked to the nearest free cell, where the ring is.'],
+      ['knock', 'Woodpecker', 'From 2:00 it pecks out patches, and won’t shut you in or leave crumbs of log if it can help it. Food in its mark is knocked to the nearest free cell, where the ring is.'],
       ['hole', 'Holes', 'The woodpecker’s, from 2:00. Bump one like the edge; a peck right under your head is the end.'],
       ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and it notices.'],
       ['lostflag', 'Lost flags', 'A flag the woodpecker pecks out is lost: the colony goes, and a capital moves.'],

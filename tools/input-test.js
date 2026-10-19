@@ -903,7 +903,7 @@ const KEYS = {
       window.stageEvents = list => { window.__staged = g => { for (const e of list(g)) g.events.push(e); }; return 'ok'; };
       return 'ok';
     })()`);
-    const DIG_LESSON = 'A cornered beetle digs in. Grab it before it’s gone!', FAIR_LESSON = 'The woodpecker knocks food aside, and never shuts you in.';
+    const DIG_LESSON = 'A cornered beetle digs in. Grab it before it’s gone!', FAIR_LESSON = 'The woodpecker knocks food aside, and won’t shut you in if it can help it.';
     const BURROW_LESSON = 'A beetle that digs in leaves a burrow behind.';
     const dugPairAt = (x, y, more = '') => ev(`stageEvents(() => [{ type: 'dive', x: ${x}, y: ${y}, dug: 1 }, { type: 'burrow', x: ${x}, y: ${y}, dug: 1 }${more}])`); // (a dig over: the engine's pair)
     const cues = () => ev('__cues.splice(0).join(" ")');
