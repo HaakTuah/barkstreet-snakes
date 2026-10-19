@@ -1,7 +1,8 @@
 # The game's own checks, on every push and pull request: the rules, online
 # play, the rivals' chatter and the records in Node, the same seeded rounds
-# with and without thinking ahead, and the renderer's and controls' promises
-# in headless Chrome (the runner has it). The two jobs run side by side.
+# with and without thinking ahead, and the renderer's, controls' and page's
+# promises in headless Chrome (the runner has it): the page on phones,
+# tablets and desktops too. The two jobs run side by side.
 name: tests
 
 on:
@@ -55,3 +56,5 @@ jobs:
         run: node tools/render-test.js
       - name: Controls
         run: node tools/input-test.js
+      - name: The page on every screen
+        run: node tools/layout-test.js
