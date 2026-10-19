@@ -40,7 +40,8 @@
 // and the burrow at once), the woodpecker's coming its rule, a flag or a
 // capital it pecks out theirs, and knocked food is heard once a strike,
 // quietly, where the first piece that flies was. Every lesson is 60
-// characters at most.
+// characters at most. And rivals chosen with SnakeDebug.setup are the ones
+// Watch AIs watches.
 // It prints what it measured: press-to-tick, tap-to-jump and swipe latencies.
 //
 //   node tools/input-test.js
@@ -1108,6 +1109,24 @@ const KEYS = {
     const focusedLater = await ev(`document.activeElement?.id === 'name-input'`);
     check(carveTaps > 0 && !focusedMash && carveState === 'running' && focusedLater,
       'mashing jump over a card offering the carve never focuses the name field; a tap once it’s settled does', `${carveTaps} taps on the field or its words, ${focusedMash ? 'focused' : 'not focused'}; then ${focusedLater ? 'focused' : 'not focused'}`);
+
+    // The testers' own way to choose the rivals (README): SnakeDebug.setup
+    // with three, then Watch AIs, watches those three and one more at random
+    // (an AI-only round has four); Play plays them; a page's own start card,
+    // nobody chosen, gives Watch AIs a random four.
+    const lineUp = async (chosen, button) => {
+      await ev(`window.__autoRaf = true; 'ok'`);
+      await b.go(site.url + '?debug', { settle: 0 });
+      await ev('new Promise(r => __raf(() => __raf(r)))');
+      if (chosen) await ev(`SnakeDebug.setup(${JSON.stringify(chosen)}); 'ok'`);
+      await ev(`document.getElementById('${button}').click(); 'ok'`);
+      return ev(`({ s: SnakeDebug.state(), keys: SnakeDebug.game().snakes.map(s => s.personaKey || 'you') })`);
+    };
+    const chosen = ['sovereign', 'colonist', 'gobbler'];
+    const watched = await lineUp(chosen, 'watch'), played = await lineUp(chosen, 'start'), random = await lineUp(null, 'watch');
+    check(watched.s === 'countdown' && watched.keys.length === 4 && chosen.every((k, i) => watched.keys[i] === k) && !watched.keys.includes('you') && new Set(watched.keys).size === 4
+      && played.keys.join() === ['you', ...chosen].join() && random.keys.length === 4 && !random.keys.includes('you'),
+    'rivals chosen with SnakeDebug.setup: Watch AIs watches them (and one more), Play plays them', `watched ${watched.keys.join(', ')}; played ${played.keys.join(', ')}; nobody chosen, watched ${random.keys.join(', ')}`);
 
     // Every lesson is one idea and 60 characters or fewer (DESIGN, "the
     // narrator speaks less"): a long one wraps to two lines on a phone, over

@@ -537,7 +537,7 @@
       if (hosting() && (state === 'lobby' || state === 'over')) startOnlineRound();
       return;
     }
-    if (state !== 'ready' || aiOnly !== !game.withPlayer) newGame({ aiOnly });
+    if (state !== 'ready' || aiOnly !== !game.withPlayer) newGame({ aiOnly, personas: state === 'ready' ? lineUp(aiOnly) : null });
     waking = false;
     speed = watchSpeed = 1; // every round starts at normal speed (watching, you can speed it up again)
     state = 'countdown';
@@ -2899,9 +2899,23 @@
     for (const s of game.snakes) if (s.persona) SnakeAI.decide(E.aiView(game, s), s.persona, {});
   }
 
-  // The start card shows this round's rivals.
+  // The rivals chosen for the start card, for a round of the other kind from
+  // it (Watch AIs from a card set up with you in it): the same ones, with a
+  // seat more filled at random (an AI-only round has one more), or none
+  // chosen, a random line-up (null).
+  function lineUp(aiOnly) {
+    if (!readyPersonas) return null;
+    const want = T.OPPONENTS + (aiOnly ? 1 : 0), keys = readyPersonas.filter(k => SnakeAI.POOL.includes(k)).slice(0, want);
+    const rest = SnakeAI.POOL.filter(k => !keys.includes(k));
+    while (keys.length < want && rest.length) keys.push(...rest.splice(Math.floor(Math.random() * rest.length), 1));
+    return keys;
+  }
+  // The start card shows this round's rivals. (personas: chosen ones, by
+  // key, SnakeDebug.setup's; kept for Watch AIs from this card: see lineUp.)
+  let readyPersonas = null;
   function ready(personas) {
     startBtn.disabled = false; // (a room that never opened left it disabled)
+    readyPersonas = personas || null;
     newGame({ personas });
     state = 'ready';
     showCard({ title: `Ready, ${localName()}?`, text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true });
