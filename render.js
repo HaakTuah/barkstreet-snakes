@@ -6432,11 +6432,16 @@ window.SnakeRender = (() => {
     mote(x + (Math.random() - 0.5) * CELL * 0.3, y - CELL * 0.3, (Math.random() - 0.5) * 6, -16 - Math.random() * 8, 1200, 2 + Math.random(), 4);
   }
 
-  // Every piece of food on the board, under the snakes.
+  // Every piece of food on the board, under the snakes. Food in the
+  // woodpecker's mark trembles through the aim, by CSS px, not the board's
+  // units, so it shows on a phone too (in units it was under a pixel there):
+  // 1 px each way as the aim starts, 2.5 by the strike.
+  const TREMBLE_PX = 1, TREMBLE_MORE = 1.5;
   function drawFood(alpha, now) {
     trackFood(now);
     trackBugs(now);
     const lively = !reduced, prog = lively ? aimed(alpha) : -1; // (through the woodpecker's aim: what's in its mark trembles)
+    const perPx = boardRect.w > 0 ? SIZE / boardRect.w : 1; // (the board's units a CSS px: the tremble is as big on any screen)
     for (const f of game.food) {
       if (f.kind === 'beetle') { drawBeetle(f, alpha, now); continue; }
       const key = f.y * GRID + f.x, b = born.get(key);
@@ -6455,7 +6460,7 @@ window.SnakeRender = (() => {
           y -= Math.abs(Math.sin(u * Math.PI * 2)) * (1 - u) * CELL * 0.14; // (rolling, it bounces along the bark, shadow and all)
         }
       }
-      if (prog >= 0 && patch[key]) { const a = 0.5 + 1.3 * prog; x += Math.sin(now / 19 + key) * a; y += Math.cos(now / 26 + key * 1.7) * a * 0.7; }
+      if (prog >= 0 && patch[key]) { const a = (TREMBLE_PX + TREMBLE_MORE * prog) * perPx; x += Math.sin(now / 19 + key) * a; y += Math.cos(now / 26 + key * 1.7) * a * 0.7; }
       const t = now / 1000 + ((f.x * 7 + f.y * 13) % 10) * 0.63; // each piece on its own beat
       if (f.kind === 'food') {
         const drop = b?.fell && !reduced ? Math.max(0, 1 - (now - b.at) / 380) : 0; // (a new apple drops from the tree above)

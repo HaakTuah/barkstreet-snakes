@@ -57,10 +57,11 @@
 //   in a few seconds; no heap is left where no burrow is; a burrow closing
 //   over fills with sawdust and moss and is gone into the bark in about a
 //   second (with reduced motion, filled at once, then fading); through the
-//   aim, food in the mark trembles and a ring marks where it'll be knocked
-//   to (the engine's own list: never two on one cell, never a burrow); at
-//   the strike it flies there in an arc, rimmed so it reads over a body,
-//   and a beetle scurries there. Copycat copying Star keeps its own red head.
+//   aim, food in the mark trembles (by CSS px: on a phone too) and a ring
+//   marks where it'll be knocked to (the engine's own list: never two on
+//   one cell, never a burrow); at the strike it flies there in an arc,
+//   rimmed so it reads over a body, and a beetle scurries there. Copycat
+//   copying Star keeps its own red head.
 // - A pecked flag is a lost colony: the flag tips and falls into the pit
 //   (the other colony's stands), its land shrinks away into the pit, and
 //   Sovereign's banner is carried to its new capital, not jumping there.
@@ -1384,6 +1385,24 @@ const STAGE = `(() => {
     await b.go(site.url + '?debug', { settle: 0 });
     await ev('__settle()');
     await ev(STAGE);
+    // On a phone, food in the woodpecker's mark trembles enough to see: it
+    // was under a pixel there, by the board's units. An apple in a marked
+    // patch, early in the aim and near the strike: how far it moves across,
+    // frame to frame, in CSS px.
+    const tremble = await ev(`(() => {
+      ${BIRD}
+      const lime = (r, g, b) => g > 150 && r > 100 && r < 170 && b < 60, css = document.getElementById('game').getBoundingClientRect().width / N;
+      const centre = () => { const p = pixels(9, 9, 3, 3); let n = 0, sx = 0; for (let i = 0; i < p.data.length; i += 4) if (lime(p.data[i], p.data[i + 1], p.data[i + 2])) { n++; sx += (i / 4) % p.width; } return n ? 9 + sx / n / p.width * 3 : null; };
+      const spread = left => { g.woodpecker.strikeAt = g.tick - 1 + left; const xs = []; for (let i = 0; i < 9; i++) { drawN(1, 0.5, 23); xs.push(centre()); } return xs.every(v => v != null) ? +((Math.max(...xs) - Math.min(...xs)) * css).toFixed(2) : -1; };
+      const P = []; for (let y = 9; y <= 11; y++) for (let x = 9; x <= 11; x++) P.push(y * N + x);
+      g.food = [{ x: 10, y: 10, kind: 'food', expires: g.tick + 900 }];
+      g.woodpecker = { x: 10, y: 10, at: g.time - 9000, target: P, strikeAt: g.tick + 17, last: [], struckAt: -1, restUntil: 1e9, pecks: 1 };
+      drawN(30, 0.5, 16);
+      const out = { early: spread(15), late: spread(1) };
+      g.woodpecker = null; g.food = []; drawN(2);
+      return out;
+    })()`);
+    check(tremble.early >= 1.5 && tremble.late >= 3, 'on a phone, food in the woodpecker’s mark trembles enough to see, more as the strike nears', `it moves ${tremble.early} CSS px across early in the aim, ${tremble.late} near the strike`);
     await ev(`(() => {
       ${BIRD}
       rest(23 * N + 12); drawN(5);
