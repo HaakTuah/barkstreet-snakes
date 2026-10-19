@@ -32,7 +32,7 @@ window.SnakeOnline = (() => {
   const KINDS = ['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap'];
   const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm', 'snow']; // (the engine's order)
   // Events that only say where something happened (and, for food, what).
-  const AT = ['burrow', 'emerge','gust', 'charge', 'strike', 'rainbow', 'aim', 'douse', 'lastApples'];
+  const AT = ['burrow', 'emerge', 'gust', 'charge', 'strike', 'rainbow', 'aim', 'douse', 'lastApples'];
   const FOOD_AT = ['baked', 'ash'];
   // Events about one snake.
   const SNAKE = ['starving', 'alight', 'singe'];

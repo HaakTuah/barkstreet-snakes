@@ -32,6 +32,10 @@
 // its place while that's clear. And choking as the page tells it: your first
 // choke's and nudge's lessons, a choke's gag and its cough a beat later (once
 // a cough), and a rival's heard as a rival's.
+// And the beetles and the woodpecker as it tells them: a beetle digging in
+// near you teaches its lesson and is heard as yours (a rival's, as a
+// rival's), the woodpecker's coming its rules, and knocked food is heard
+// once a strike, quietly.
 // It prints what it measured: press-to-tick, tap-to-jump and swipe latencies.
 //
 //   node tools/input-test.js
@@ -874,6 +878,66 @@ const KEYS = {
       'your first nudge while coughing: its lesson, once the choke’s has had its time', `“${nudgedAt}”, then “${nudged}”`);
     check(theirs.length === 2 && theirs.every(h => h.rival) && theirs[1].tick - theirs[0].tick === 2 && theirs[0].name === 'choke' && theirs[1].name === 'cough',
       'a rival’s choke and cough are heard as a rival’s', theirs.map(h => `${h.name}${h.rival ? '~' : ''}`).join(' '));
+
+    // Round six A's beetles and woodpecker, as the page tells them (digs,
+    // dives, knocks and the woodpecker's coming staged by hand, as the engine
+    // makes them): a beetle digging in far from your head teaches nothing,
+    // and one a rival cornered is heard as a rival's; the woodpecker's coming
+    // teaches its rules once its own banner has had its time; a beetle digging
+    // in near you (8 cells at most) is heard as yours, and teaches "A cornered
+    // beetle digs in…" the first time the banner's free for it (it's over in a
+    // second: never left waiting); one that dug in goes under unheard (it was
+    // heard boring in), one down a burrow is heard; and food the woodpecker
+    // knocks aside is heard once a strike, quietly, the world's (none for food
+    // it ate).
+    await ev(`(() => {
+      const A = SnakeAudio, play = A.play;
+      window.__cues = [];
+      A.play = (name, opts) => { if (name === 'dig' || name === 'knock') __cues.push(name + (opts?.rival ? '~' : '') + (opts?.volume != null ? '@' + opts.volume : '')); return play(name, opts); };
+      window.stageEvents = list => { window.__staged = g => { for (const e of list(g)) g.events.push(e); }; return 'ok'; };
+      return 'ok';
+    })()`);
+    const DIG_LESSON = 'A cornered beetle digs in. Grab it before it’s gone!', FAIR_LESSON = 'The woodpecker knocks food aside, and never shuts you in.';
+    const cues = () => ev('__cues.splice(0).join(" ")');
+    const digNear = (dx, dy) => ev(`stageEvents(g => { const h = g.snakes[0].body[0]; return [{ type: 'dig', x: h.x + ${dx}, y: h.y + ${dy}, until: g.tick + 8 }]; })`);
+    await ev('centre()');
+    await ev(`put(1, 2, 2, 'right')`); // (a rival's head far from yours)
+    await ev('vadvance(4000)');
+    await ev(`stageEvents(g => { const h = g.snakes[1].body[0]; return [{ type: 'dig', x: h.x + 1, y: h.y + 1, until: g.tick + 8 }]; })`);
+    await toTick();
+    const farDig = { toast: await ev('toastText()'), heard: await cues() };
+    await ev(`stageEvents(g => { g.woodpecker = { x: 12, y: 0, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: g.tick + 12 }; return [{ type: 'woodpecker' }]; })`);
+    await toTick();
+    const peckNews = await ev('toastText()');
+    await digNear(8, 0); // (while the woodpecker's news holds the banner)
+    await toTick();
+    const heldDig = { toast: await ev('toastText()'), heard: await cues() };
+    await ev('vadvance(2600)');
+    const fair = await ev('toastText()');
+    await ev('vadvance(6000)'); // (its time, and the time back if it faded under a head)
+    await digNear(-3, 2);
+    await toTick();
+    const nearDig = { toast: await ev('toastText()'), heard: await cues() };
+    await ev(`stageEvents(() => [{ type: 'dive', x: 4, y: 4, dug: 1 }])`);
+    await toTick();
+    await ev('vadvance(400)');
+    await ev(`stageEvents(() => [{ type: 'dive', x: 4, y: 4 }])`);
+    await toTick();
+    const dives = await cues();
+    await ev(`stageEvents(() => [{ type: 'knock', kind: 'food', x: 5, y: 5, tx: 7, ty: 5 }, { type: 'knock', kind: 'beetle', x: 6, y: 5, tx: 6, ty: 8, gold: 1 }, { type: 'knock', kind: 'pellet', x: 5, y: 6, tx: null, ty: null }])`);
+    await toTick();
+    const knocked = await cues();
+    await ev('vadvance(1000)');
+    await ev(`stageEvents(() => [{ type: 'knock', kind: 'food', x: 5, y: 5, tx: null, ty: null }])`);
+    await toTick();
+    const ate = await cues();
+    await ev(`SnakeDebug.game().woodpecker = null; 'ok'`);
+    check(farDig.toast !== DIG_LESSON && farDig.heard === 'dig~', 'a beetle a rival corners, far from you: heard as a rival’s, and no lesson', `“${farDig.toast}”; heard ${farDig.heard}`);
+    check(/woodpecker|Rat-a-tat/.test(peckNews) && fair === FAIR_LESSON, 'the woodpecker’s coming: its news, then its rules once the news has had its time', `“${peckNews}”, then “${fair}”`);
+    check(heldDig.toast === peckNews && heldDig.heard === 'dig' && nearDig.toast === DIG_LESSON && nearDig.heard === 'dig',
+      'a beetle digging in near you: heard as yours; its lesson the first time the banner’s free for it', `held: “${heldDig.toast}”, heard ${heldDig.heard}; later “${nearDig.toast}”, heard ${nearDig.heard}`);
+    check(dives === 'dig', 'a beetle that dug in goes under unheard; one down a burrow is heard', `heard ${dives || 'nothing'}`);
+    check(knocked === 'knock@0.5' && ate === '', 'food the woodpecker knocks aside: heard once a strike, quietly, the world’s; none for food it ate', `heard ${knocked || 'nothing'}, then ${ate || 'nothing'}`);
 
     // Your death's card: a thumb mashing jump as you crash, landing on its
     // Play again, never starts a round; a tap once it's settled does.
