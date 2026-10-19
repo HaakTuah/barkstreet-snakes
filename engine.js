@@ -310,10 +310,10 @@ window.SnakeEngine = (() => {
   // burrow (another, if there is one) a moment later. One cornered, a head
   // within BEETLE_DIG_FEAR and no burrow in reach, digs in where it is: it
   // stays put BEETLE_DIG ticks (b.digUntil: the tick it's gone; it can still
-  // be caught), then it's underground, as after a dive. It leaves no burrow:
-  // it packs its tunnel with its own sawdust behind it. (Two experiments, off:
-  // BURROW_FROM_DIG, a dig leaves a burrow; BURROW_HEAL_MS, a burrow no beetle
-  // has gone into or come out of for that long closes over.)
+  // be caught), then it's underground, as after a dive, and a burrow opens
+  // where it dug (BURROW_FROM_DIG; at BURROW_MAX the one unused longest
+  // closes over to make room), so the burrows follow the hunting. (Off unless
+  // BURROW_HEAL_MS is set: a burrow nobody has used for that long closes over.)
   function crawl(game) {
     if (T.BURROW_HEAL_MS > 0) for (const h of [...game.burrows]) {
       if (game.time - (h.used ?? 0) >= T.BURROW_HEAL_MS && !game.food.some(f => f.x === h.x && f.y === h.y)) closeBurrow(game, h);
