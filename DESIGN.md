@@ -412,7 +412,7 @@ Friends-only rooms, peer to peer, so it stays a static site with nothing to depl
 - **`audio.js`:** a tiny Web Audio synthesiser for the cues and the adaptive music.
 - **`snake.js`:** the game controller: the loop, input, overlays, HUD, records glue, the friends lobby and the dev frame-time overlay (`?perf`).
 - **`online.js` and `net.js`:** play with friends: the protocol (testable in Node) and the connections.
-- **`tools/simulate.js`:** the balance simulator, moved out of the page into Node. It runs on all cores, and with `--seed` it repeats a run exactly, which is how the engine split, the AI's think-ahead and the AI optimisation were proven to change no decision.
+- **`tools/simulate.js`:** the balance simulator, moved out of the page into Node. It runs on several cores (half of them, at low priority, since round six A), and with `--seed` it repeats a run exactly, which is how the engine split, the AI's think-ahead and the AI optimisations were proven to change no decision. (Round six A's tools beside it, `bench-ai.js`, `abtest.js` and `snapshots/state.js`, are in "The rivals think faster".)
 
 `ai.js`, `chatter.js` and `records.js` keep their roles. Plain `<script>` tags still work from `file://`, with no build step.
 
@@ -1006,6 +1006,30 @@ It's checked beside Sniper, Colonist and Wildcard, on the board and in the tags,
 - **The woodpecker's perch.** With the board edge to edge there's no gutter beside it. So in portrait the bird perches on a ledge between the board and the chatter, in the spare height, at a size you can see. In landscape it perches at the side, as before. Perched, it never covers a cell.
 
 **Controls anyone can guess** (the owner: their father wouldn't know WASD). The arrow keys always steered; now the words say them first: "Arrow keys steer (or WASD)". And a mouse works for the powers: the left button jumps, the right button flashes, with no menu popping up over the board. Local two-player comes later (PR D).
+
+## The rivals think faster (round six A's optimization)
+
+Every balance call in this file is checked by simulation, and CI plays seeded rounds on every push. Most of that time went on the rivals' thinking (`decide()` in `ai.js`). It now takes less than half as long, and no decision changed.
+
+**What changed in `ai.js`:**
+- **The framed board.** The territory search, my room's flood fill and each rival's reach run on the grid framed by a border of holes, so a cell's neighbours are just a row up or down and a cell either side, and no search tests for the edge. On the territory search's board (which my room's fill reads too), one Int32 a cell says everything a search asks of it: when the cell frees up for a rival (my body placed on it), or, once the territory search has claimed it, `CLAIMED` plus when, with whose it is in the lowest bits. That's three tables and two "is it free?" tests in one. Each search state starts from a copy of the board instead of undoing the last.
+- **Searches compiled once.** The searches over the framed board are functions of their own at the module's top level, outside `decide`, reading only typed arrays and plain numbers, so V8 compiles them once and they stay compiled. Before, a `decide` or `evaluate` that met something of a new shape (a persona, a kind of food) was compiled all over again, at 50–110 ms a time, and ran uncompiled meanwhile: in 8 rounds there were 1462 deoptimizations and 6.5 s of compiling, now about 140 and 3.0 s.
+- **One shape of weights.** The search reads every persona's weights through one shape: a copy of the persona's own over `WEIGHTS`, which lists every weight. **A new weight goes in `WEIGHTS`.** One left out still works, but every search that reads it is slower.
+- **The territory search stops early.** Once I claim nothing more, the rest is the rivals sharing out what's left among themselves, which counts only for an aggressive snake; so for anyone else it stops there, unless a rival could still claim food it can't eat (while it's coughing, or its own bead), which would still be mine to take.
+
+**Measured:**
+- a decision (bench-ai, the same positions through both copies side by side): 2.26 times faster on average, 2.10 times at the 99th percentile;
+- `simulate.js 60`: 520 → 215 s of CPU;
+- CI: about 1,275 → 108 s of CPU, with the test suites trimmed too (seeded rounds, waiting only for what's ready, rare events staged, four rounds for the determinism step).
+
+**No decision changed.** Every step had to pass bench-ai (every position going the same way and noting the same in memory), then the fingerprints, which are unchanged: 300 rounds of seeds 3, 11 and 29 give 139025481, 745200860 and 489503396, and `simulate.js 60 --seed 3` gives 353710037 with and without `--ahead`.
+
+**The tools it brought:**
+- **`tools/bench-ai.js`** times `decide()` on positions recorded from seeded rounds, through two copies of the game loaded side by side, each position through both in turn (so a busy machine slows both alike), and fails on any position that comes out different. It's the first check of any change to `ai.js`, before the fingerprints.
+- **`tools/simulate.js`** caches each seeded round by the files that played it, and hands the rounds out to whichever core is free. It reads the files once its turn on the machine comes and hands the cores those very texts, so a round is always stored under the files that played it, even when one is edited while the run waits. It fast-forwards too: `--save-at` stores the rounds part way, through `tools/snapshots/state.js` (which keeps what's shared, cycles, Maps, Sets, typed arrays, and the game's own objects by name), and `--from` goes on with them under any copy.
+- **`tools/abtest.js`** compares two copies on paired seeded rounds, in looks of 100 rounds a seed, and stops once the rows it waits for are decided. Its intervals hold all at once over the looks and the rows, so the chance that any verdict in its table is wrong is at most 5%. Measured on experiments where the two copies play alike but never the same round (both sides drawn at random from 1500 real rounds, 500 each of seeds 3, 11 and 29, two seeds of up to 600 rounds as it plays them): its first version, at 5% a row and with every row but the trademarks by default, ended 58 of 200 with at least one wrong row (0.43 a table) and never stopped early. Now, with those same 54 rows asked for, 1 of 100 ends with one (and none has every row decided, even at the last look: so many rows widen every interval); with the default rows (the median round and sudden death), 1 of 400 does (0.005 wrong rows a table), and half of the 400 stop before the last look. With sudden death really 5 s shorter, `--metrics sd` says so in all 200, after 2.7 looks on average (two or fewer in 87); with rounds really 3 s longer (the round's margin, as hard as it gets), the defaults say longer in 87% and never "the same".
+
+**Tried and not adopted: an approximate board split.** A rougher territory search was 1.38 times faster, but 6.7% of positions went another way, and play shifted. A checked version saved only 1.07–1.15 times.
 
 ## Skipped or adapted guidelines
 

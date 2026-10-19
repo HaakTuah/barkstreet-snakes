@@ -7,13 +7,18 @@
 // inside the margin that matters), or not known yet (?).
 //
 // It plays in looks, a batch of rounds on every seed at a time, and stops
-// as soon as every row asked for has a verdict, so a clear difference (or a
-// clear lack of one) costs a fraction of the full 2 x 600. It stays sound
-// however early it stops: the intervals are repeated confidence intervals,
-// each at 1 - alpha/K for K planned looks (Bonferroni over the looks), so
-// with 95% confidence every interval at every look holds at once, and a
-// verdict taken at any look is wrong at most 5% of the time for each row.
-// (Over many rows, expect about one in twenty to be wrong by chance.)
+// as soon as every row it waits for has a verdict, so a clear difference (or
+// a clear lack of one) costs a fraction of the full 2 x 600. It stays sound
+// however early it stops, and however many rows: the intervals are repeated
+// confidence intervals, each at 1 - alpha/(K R) for K planned looks and R
+// rows (Bonferroni over both), so with 95% confidence every interval of every
+// row at every look holds at once. The chance that any verdict in the table
+// is wrong is at most 5%, however many rows it has (and the wrong rows to
+// expect, at most 0.05); the price of a row is a slightly wider interval for
+// every other, so ask only for what the question is about. Each personality's
+// win rate and place (win, place) can't usually be pinned within a margin
+// that matters (a few hundred rounds each), so they're shown but don't hold
+// up the stop, unless they're all that's asked for.
 //
 // The rounds are played by tools/simulate.js (this copy's, with --root), so
 // it waits its turn, runs gently and reads back what's been played before:
@@ -24,34 +29,38 @@
 //                        [--alpha P] [--margin ROW=X ...] [--workers N] [--json]
 //
 //   A, B        the two copies (folders with tuning.js, ai.js and engine.js); A defaults to this one
-//   --seed N    a seed to play (repeat it for more; default 3 and 11)
+//   --seed N    a seed to play (repeat it for more; default 3 and 11, the screening's: confirm
+//               what they chose on seeds they haven't played, 29 and 41 say)
 //   --rounds N  at most this many rounds a seed (default 600)
 //   --batch N   rounds a seed in a look (default 100: six looks; with fewer than about 50 pairs a look, the intervals are rough)
-//   --metrics   the rows to print and decide on, by group (default all of them but trademarks):
+//   --metrics   the rows to print and decide on, by group (default length,sd: the ones a
+//               change to the game's pace is about, and they can decide early):
 //                 length    the median round
 //                 sd        sudden death: its median length (of the rounds that reached it), and how many did
 //                 deaths    what snakes died of (each cause's share of the deaths)
 //                 starving  the share of snake-time starving, before the woodpecker and after
 //                 powers    plain flashes a minute alive, plain jumps, golden leaps used, golden dashes and golden power food a round
-//                 win       each personality's win rate (of the rounds it played)
-//                 place     each personality's average place
+//                 win       each personality's win rate (of the rounds it played; shown, not waited for)
+//                 place     each personality's average place (shown, not waited for)
 //                 trademarks  each personality's trademark, as simulate.js --signatures measures it
 //                           (Mason's straight runs, Ghost's distance, Star's flashes...; played with --signatures)
 //   --at MS     fast-forward: store every round at game time MS as A plays it (simulate.js
 //               --save-at), and play both on from there; for questions about the late game
 //               (2:00, the woodpecker, is 120000). Only what happens after MS can differ
-//   --alpha P   1 - the confidence (default 0.05)
+//   --alpha P   1 - the confidence, for the whole table (default 0.05: any verdict wrong at most 5% of the time)
 //   --margin ROW=X  a difference smaller than X doesn't matter, for a row (sd, win.Star...) or a group (win=5)
 //   --workers N passed on to simulate.js
 //   --json      print the rows as JSON
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 
 const { TRADEMARKS } = require('./simulate.js');
 
 const GROUPS = ['length', 'sd', 'deaths', 'starving', 'powers', 'win', 'place', 'trademarks'];
-const USUAL = GROUPS.filter(g => g !== 'trademarks'); // (trademarks need rounds played with --signatures: asked for, not by default)
+const USUAL = ['length', 'sd']; // (the rest asked for: each row widens every interval a little, and trademarks need rounds played with --signatures)
+const SHOWN = ['win', 'place']; // (shown, not waited for, unless they're all that's asked)
 
 // What one round says, for the rows (from simulate.js --per-round).
 function valuesOf(res) {
@@ -143,21 +152,53 @@ function median(xs, n = xs.length) {
   return n % 2 ? kth(n >> 1) : (kth(n / 2 - 1) + kth(n / 2)) / 2;
 }
 
+// A side's values for a median row, put in order once: `xs` the values
+// there are, smallest first, and `rank` each round's place among them (-1:
+// none), so the median of rounds drawn again is a count, not a sort.
+function ranked(vals) {
+  const xs = [...new Set(vals.filter(v => v != null))].sort((x, y) => x - y), at = new Map(xs.map((v, i) => [v, i]));
+  return { xs, rank: Int32Array.from(vals, v => v == null ? -1 : at.get(v)), count: new Int32Array(xs.length) };
+}
+// The median of the rounds counted in `count` (m of them): as median() has it.
+function countedMedian({ xs, count }, m) {
+  if (!m) return NaN;
+  const lo = (m - 1) >> 1, hi = m >> 1; // (the middle one, or the middle two)
+  let seen = 0, r = 0;
+  while (seen + count[r] <= lo) seen += count[r++];
+  const first = xs[r];
+  if (hi === lo || seen + count[r] > hi) return first;
+  do r++; while (!count[r]);
+  return (first + xs[r]) / 2;
+}
+
 // One row on the paired rounds (As[i] and Bs[i] are the same round): A's
 // number, B's, B - A, and its interval at confidence 1 - level.
-function measure(row, As, Bs, level, draws = 4000) {
+function measure(row, As, Bs, level, draws) {
   const n = As.length;
   if (row.median) {
-    const a = As.map(row.median), b = Bs.map(row.median), xa = new Float64Array(n), xb = new Float64Array(n);
-    const med = (vals, idx, into) => { let m = 0; for (const i of idx) if (vals[i] != null) into[m++] = vals[i]; return median(into, m); };
-    const every = Array.from({ length: n }, (_, i) => i), A0 = med(a, every, xa), B0 = med(b, every, xb);
+    const a = ranked(As.map(row.median)), b = ranked(Bs.map(row.median));
+    const all = side => { side.count.fill(0); let m = 0; for (const r of side.rank) if (r >= 0) { side.count[r]++; m++; } return countedMedian(side, m); };
+    const A0 = all(a), B0 = all(b);
     if (Number.isNaN(A0) || Number.isNaN(B0)) return null;
-    // The paired bootstrap: the rounds drawn again, with replacement, both sides together.
-    const random = seeded(n * 7919 + 1), diffs = new Float64Array(draws), idx = new Int32Array(n);
+    // The paired bootstrap: the rounds drawn again, with replacement, both
+    // sides together, and the interval from the differences' own tails. A
+    // whole table's level is far out in them, so there are enough draws for
+    // 20 beyond each end (4000 at least, 100000 at most). (Measured on real
+    // rounds, 200 to 1200 a side, these tails held at every level down to
+    // 0.1%; an interval from the draws' standard error left the truth out 1.6
+    // to 3.6 times too often: the medians fall on the ticks, and jump.)
+    draws ??= Math.min(100000, Math.max(4000, Math.ceil(40 / level)));
+    const random = seeded(n * 7919 + 1), diffs = new Float64Array(draws);
     let k = 0;
     for (let d = 0; d < draws; d++) {
-      for (let i = 0; i < n; i++) idx[i] = Math.floor(random() * n);
-      const da = med(a, idx, xa), db = med(b, idx, xb);
+      a.count.fill(0); b.count.fill(0);
+      let ma = 0, mb = 0;
+      for (let i = 0; i < n; i++) {
+        const j = Math.floor(random() * n), ra = a.rank[j], rb = b.rank[j];
+        if (ra >= 0) { a.count[ra]++; ma++; }
+        if (rb >= 0) { b.count[rb]++; mb++; }
+      }
+      const da = countedMedian(a, ma), db = countedMedian(b, mb);
       if (!Number.isNaN(da) && !Number.isNaN(db)) diffs[k++] = db - da;
     }
     const sorted = diffs.subarray(0, k).sort();
@@ -181,7 +222,25 @@ function measure(row, As, Bs, level, draws = 4000) {
 }
 const verdictOf = (m, margin) => !m ? 'n/a' : m.lo > 0 ? 'higher' : m.hi < 0 ? 'lower' : margin != null && m.lo > -margin && m.hi < margin ? 'same' : '?';
 
-module.exports = { valuesOf, rowsFor, measure, verdictOf, median, zOf, tOf };
+// One look at the paired rounds: every row of the groups asked for, its
+// interval and its verdict. The intervals hold all at once with confidence
+// 1 - alpha over the `looks` planned and the rows (each at alpha / (looks x
+// rows): Bonferroni over both), so the chance that any verdict is wrong, at
+// whichever look it stops, is at most alpha, and so is the number of wrong
+// rows to expect. (A look with more rows, a cause of death first seen, has
+// each a little wider: each look's share of alpha stays alpha / looks.)
+// open: rows it waits for (all but win and place, unless they're all that's
+// asked) still undecided.
+function judge(As, Bs, { groups = USUAL, margins = new Map(), alpha = 0.05, looks = 1, draws } = {}) {
+  const rows = rowsFor(As, Bs, groups, margins), level = alpha / (looks * Math.max(1, rows.length));
+  const results = rows.map(row => { const m = measure(row, As, Bs, level, draws); return { row, m, verdict: verdictOf(m, row.margin) }; });
+  const waitsFor = groups.some(g => !SHOWN.includes(g)) ? x => !SHOWN.includes(x.row.group) : () => true;
+  for (const x of results) x.waited = waitsFor(x);
+  const waited = results.filter(x => x.waited);
+  return { results, level, waited: waited.length, open: waited.filter(x => x.verdict === '?').length };
+}
+
+module.exports = { valuesOf, rowsFor, measure, verdictOf, judge, median, zOf, tOf, USUAL, SHOWN, GROUPS };
 
 if (require.main === module) {
   const SIM = path.join(__dirname, 'simulate.js');
@@ -197,7 +256,7 @@ if (require.main === module) {
   const seeds = all('--seed').map(Number);
   if (!seeds.length) seeds.push(3, 11);
   const MAX = Number(one('--rounds')) || 600, BATCH = Math.min(MAX, Number(one('--batch')) || 100), LOOKS = Math.ceil(MAX / BATCH);
-  const ALPHA = Number(one('--alpha')) || 0.05, LEVEL = ALPHA / LOOKS; // (each look's intervals: Bonferroni over the looks)
+  const ALPHA = Number(one('--alpha')) || 0.05; // (for the whole table: see judge)
   const at = one('--at'), json = args.includes('--json'), workers = one('--workers');
   const groups = (one('--metrics') || USUAL.join(',')).split(',').map(g => g.trim()).filter(Boolean);
   for (const g of groups) if (!GROUPS.includes(g)) fail(`no metric ${g} (there are ${GROUPS.join(', ')})`);
@@ -221,8 +280,15 @@ if (require.main === module) {
     return simulate(side, String(n), '--from', states, '--per-round').rounds; // (with --signatures if they were stored with them)
   };
 
-  // The looks: a batch more on every seed, till every row has a verdict.
-  let As = [], Bs = [], results = [], look = 0, n = 0;
+  // Both copies' files, as the experiment began: its looks must all be of
+  // the same two (simulate.js would play an edited copy's rounds afresh, and
+  // they'd be another experiment's, under this one's plan of looks).
+  const filesOf = root => crypto.createHash('sha1').update(['tuning.js', 'ai.js', 'engine.js'].map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\u0000')).digest('hex');
+  const began = [filesOf(A), filesOf(B)];
+  const unchanged = () => [A, B].forEach((r, i) => { if (filesOf(r) !== began[i]) fail(`${'AB'[i]}'s files (${r}) changed during the experiment, so its looks would mix two copies: start it again`); });
+
+  // The looks: a batch more on every seed, till every row it waits for has a verdict.
+  let As = [], Bs = [], judged = null, look = 0, n = 0;
   while (look < LOOKS) {
     look++;
     n = Math.min(MAX, look * BATCH);
@@ -231,20 +297,25 @@ if (require.main === module) {
       As.push(...roundsOf('A', seed, n).map(valuesOf));
       Bs.push(...roundsOf('B', seed, n).map(valuesOf));
     }
-    results = rowsFor(As, Bs, groups, margins).map(row => { const m = measure(row, As, Bs, LEVEL); return { row, m, verdict: verdictOf(m, row.margin) }; });
-    const open = results.filter(x => x.verdict === '?').length;
-    console.error(`(look ${look} of ${LOOKS}: ${n} rounds a seed, ${As.length} pairs; ${results.length - open} of ${results.length} rows decided)`);
-    if (!open) break;
+    unchanged();
+    judged = judge(As, Bs, { groups, margins, alpha: ALPHA, looks: LOOKS });
+    const shown = judged.results.length - judged.waited;
+    console.error(`(look ${look} of ${LOOKS}: ${n} rounds a seed, ${As.length} pairs; ${judged.waited - judged.open} of ${judged.waited} rows decided${shown ? `, and ${shown} shown, not waited for` : ''})`);
+    if (!judged.open) break;
   }
 
-  const how = look < LOOKS || !results.some(x => x.verdict === '?') ? `stopped after ${n} of ${MAX} rounds a seed (look ${look} of ${LOOKS}): every row decided` : `all ${MAX} rounds a seed (${LOOKS} looks), some rows still undecided`;
+  const { results, level } = judged, shown = results.filter(x => !x.waited);
+  const how = !judged.open ? `stopped after ${n} of ${MAX} rounds a seed (look ${look} of ${LOOKS}): every row ${shown.length ? 'waited for ' : ''}decided` : `all ${MAX} rounds a seed (${LOOKS} looks), some rows still undecided`;
   if (json) {
-    console.log(JSON.stringify({ A, B, seeds, at: at == null ? null : Number(at), rounds: n, pairs: As.length, looks: look, plannedLooks: LOOKS, alpha: ALPHA, played: spent,
-      rows: results.map(({ row, m, verdict }) => ({ key: row.key, label: row.label, unit: row.unit, margin: row.margin, ...(m || {}), verdict })) }));
+    console.log(JSON.stringify({ A, B, seeds, at: at == null ? null : Number(at), rounds: n, pairs: As.length, looks: look, plannedLooks: LOOKS, alpha: ALPHA, level, played: spent,
+      rows: results.map(({ row, m, verdict, waited }) => ({ key: row.key, label: row.label, unit: row.unit, margin: row.margin, ...(m || {}), verdict, waited })) }));
   } else {
+    const pct = x => +(100 * x).toPrecision(4);
     console.log(`A: ${A}\nB: ${B}`);
     console.log(`seeds ${seeds.join(', ')}${at != null ? `, from ${at / 1000}s (stored as A played them)` : ''} · ${As.length} paired rounds · ${how}`);
-    console.log(`intervals: ${Math.round(100 * (1 - ALPHA))}% over all ${LOOKS} looks (each look's at ${(100 * (1 - LEVEL)).toFixed(2)}%) · same: the whole interval within ±margin · higher, lower: B against A`);
+    console.log(`intervals: ${pct(1 - ALPHA)}% for all ${results.length} rows over all ${LOOKS} looks at once (each at ${pct(1 - level)}%), so any verdict here is wrong at most ${pct(ALPHA)}% of the time`
+      + ` (wrong rows to expect: at most ${ALPHA}) · same: the whole interval within ±margin · higher, lower: B against A`);
+    if (shown.length) console.log(`(${[...new Set(shown.map(x => x.row.group))].join(' and ')}: shown, not waited for)`);
     const fmt = (x, unit) => x == null || Number.isNaN(x) ? '-' : (Math.abs(x) >= 100 ? x.toFixed(0) : Math.abs(x) >= 10 ? x.toFixed(1) : x.toFixed(2)) + unit;
     const signed = (x, unit) => (x > 0 ? '+' : '') + fmt(x, unit);
     const table = results.map(({ row, m, verdict }) => [row.label, m ? fmt(m.a, row.unit) : '-', m ? fmt(m.b, row.unit) : '-', m ? signed(m.diff, row.unit) : '-',

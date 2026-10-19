@@ -16,10 +16,13 @@
 // crossed: every kind of event the engine has (read from engine.js) and
 // everything each said, every field of a tick (a snake's whenever it
 // changed, the food's, the woodpecker's, fire's, the weather's), each at
-// least MIN times. What the rounds don't bring often enough is staged now
-// and then, as the engine makes it (a choke and its cough, a fire put out, a
-// beetle flown off, a snake alight...), so nothing goes unchecked, and a new
-// event or field fails here until it's sent and crosses.
+// least MIN times, and every way the engine says a snake was out (also read
+// from engine.js), once at least. What the rounds don't bring often enough
+// is staged now and then, as the engine makes it (a choke and its cough, a
+// fire put out, a beetle flown off, a snake alight...), and a way to be out
+// they didn't bring is staged after them, on a board of its own; so nothing
+// goes unchecked, and a new event, field or way to be out fails here until
+// it's sent and crosses.
 // Every message must fit PeerJS's 16 KB limit, and a guest must shrug off a
 // malformed one.
 //
@@ -55,8 +58,15 @@ for (const f of ['tuning.js', 'ai.js', 'engine.js', 'records.js', 'online.js']) 
   vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 }
 const { SnakeEngine: E, SnakeOnline: O, SnakeRecords: Rec, TUNING: T } = ctx.window;
+const ENGINE = fs.readFileSync(path.join(ROOT, 'engine.js'), 'utf8');
 // Every kind of event the engine makes (each must cross).
-const KINDS = [...new Set([...fs.readFileSync(path.join(ROOT, 'engine.js'), 'utf8').matchAll(/events\.push\(\{ type: '(\w+)'/g)].map(m => m[1]))].sort();
+const KINDS = [...new Set([...ENGINE.matchAll(/events\.push\(\{ type: '(\w+)'/g)].map(m => m[1]))].sort();
+// Every way the engine says a snake was out (s.fatal: each must cross, once
+// at least): what it sets it to, and why a crash was the end.
+const FATAL_SET = [...ENGINE.matchAll(/\.fatal = ([^;]+);/g)].flatMap(m => [...m[1].matchAll(/'(\w+)'/g)].map(q => q[1]));
+const FATAL_WHY = [...ENGINE.matchAll(/why\.set\(\w+, '(\w+)'\)/g)].map(m => m[1]);
+const FATAL = [...new Set([...FATAL_SET, ...FATAL_WHY])].sort();
+if (!FATAL_SET.length || !FATAL_WHY.length) { console.error(`the ways to be out read from engine.js (${FATAL.join(', ')}) miss what ${FATAL_SET.length ? 'why.set' : 's.fatal ='} says: the pattern lost them`); process.exit(1); }
 // What a person, the rivals and the brains at the other people's wheels are,
 // round by round (past these: two to four people, rivals at random, Drab
 // driving).
@@ -104,10 +114,15 @@ function counted(msg, last, events) {
   for (const e of events) {
     cross(e.type);
     for (const [k, v] of Object.entries(e)) if (k !== 'type' && !blank(v)) cross(`${e.type} ${k === 'snake' ? 'snake' : k}`);
-    if (e.type === 'death') for (const k of ['cause', 'killer', 'killerId', 'diedAt', 'fatal']) if (!blank(e.snake[k])) cross(`death ${k}`);
+    if (e.type === 'death') {
+      for (const k of ['cause', 'killer', 'killerId', 'diedAt', 'fatal']) if (!blank(e.snake[k])) cross(`death ${k}`);
+      if (!FATAL.includes(e.snake.fatal)) { console.error(`a snake out "${e.snake.fatal}", which isn't among the ways read from engine.js (${FATAL.join(', ')})`); process.exit(1); }
+      cross(`death fatal ${e.snake.fatal}`);
+    }
   }
 }
-// (Deaths come as they come, never staged: what one says, once at least.)
+// (A death, once at least: what it says, and each way to be out. They come
+// as they come in the rounds; a way they didn't bring is staged after them.)
 const short = key => (seen.get(key) || 0) < (key.startsWith('death') ? 1 : MIN);
 
 // An event as the guest has it, beside the host's: everything it says (its
@@ -123,6 +138,29 @@ const check = (round, tick, what, a, b) => {
   checks++;
   if (!same(a, b)) fail(round, tick, what, a, b);
 };
+// A tick as the guest has it, beside the host's: everything on the board, who
+// died and how, every event with all it says, and every look.
+function matched(r, host, guest, dyingHost, dyingGuest) {
+  const k = host.tick;
+  check(r, k, 'tick/time', [host.tick, host.time], [guest.tick, guest.time]);
+  check(r, k, 'bodies', host.snakes.map(s => s.alive ? s.body : null), guest.snakes.map(s => s.alive ? s.body : null));
+  check(r, k, 'alive', host.snakes.map(s => s.alive), guest.snakes.map(s => s.alive));
+  check(r, k, 'dirs', host.snakes.map(s => s.dir), guest.snakes.map(s => s.dir));
+  check(r, k, 'hunger', host.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve, s.mealMs]), guest.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve, s.mealMs]));
+  const powers = g => g.snakes.map(s => [s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed, s.dashes, s.leapReadyAt, s.wrapUntil, s.flight ? s.flight.dir : null, s.flashReadyAt, s.flashArmed, s.coughUntil ?? -1, !!s.autopilot]);
+  check(r, k, 'stuns, burns, powers and coughs', powers(host), powers(guest));
+  const food = g => g.food.map(f => [f.x, f.y, f.kind, f.expires, f.color, f.dir && f.kind === 'beetle' ? f.dir : null, f.px ?? null, f.py ?? null, f.movedAt ?? null, !!f.scared, f.heat || 0, !!f.cooked, !!f.gold, f.owner ?? null]);
+  check(r, k, 'food', food(host), food(guest));
+  check(r, k, 'holes', [...host.holes], [...guest.holes]);
+  check(r, k, 'woodpecker', host.woodpecker, guest.woodpecker);
+  check(r, k, 'burrows', host.burrows, guest.burrows);
+  check(r, k, 'fire', [...host.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]), [...guest.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]));
+  check(r, k, 'weather', [host.weather.kind, host.weather.since, host.weather.until], [guest.weather.kind, guest.weather.since, guest.weather.until]);
+  check(r, k, 'deaths', dyingHost.map(s => [s.id, s.cause, s.killer, s.killerId, s.diedAt, s.fatal || null]), dyingGuest.map(s => [s.id, s.cause, s.killer, s.killerId, s.diedAt, s.fatal || null]));
+  check(r, k, 'events', host.events.map(said), guest.events.map(said));
+  const look = g => g.snakes.map(s => LOOKS.map(f => s.memory[f] ?? null));
+  check(r, k, 'looks', look(host), look(guest));
+}
 
 // Staged now and then, as the engine makes them (what's still short of MIN,
 // once the rounds before have had their go): a choke (a snake's head on its
@@ -229,24 +267,7 @@ for (let r = 0; r < rounds; r++) {
     const dyingGuest = O.apply(guest, msg, E.DIRS);
     ticks++;
     const k = host.tick;
-    check(r, k, 'tick/time', [host.tick, host.time], [guest.tick, guest.time]);
-    check(r, k, 'bodies', host.snakes.map(s => s.alive ? s.body : null), guest.snakes.map(s => s.alive ? s.body : null));
-    check(r, k, 'alive', host.snakes.map(s => s.alive), guest.snakes.map(s => s.alive));
-    check(r, k, 'dirs', host.snakes.map(s => s.dir), guest.snakes.map(s => s.dir));
-    check(r, k, 'hunger', host.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve, s.mealMs]), guest.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve, s.mealMs]));
-    const powers = g => g.snakes.map(s => [s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed, s.dashes, s.leapReadyAt, s.wrapUntil, s.flight ? s.flight.dir : null, s.flashReadyAt, s.flashArmed, s.coughUntil ?? -1, !!s.autopilot]);
-    check(r, k, 'stuns, burns, powers and coughs', powers(host), powers(guest));
-    const food = g => g.food.map(f => [f.x, f.y, f.kind, f.expires, f.color, f.dir && f.kind === 'beetle' ? f.dir : null, f.px ?? null, f.py ?? null, f.movedAt ?? null, !!f.scared, f.heat || 0, !!f.cooked, !!f.gold, f.owner ?? null]);
-    check(r, k, 'food', food(host), food(guest));
-    check(r, k, 'holes', [...host.holes], [...guest.holes]);
-    check(r, k, 'woodpecker', host.woodpecker, guest.woodpecker);
-    check(r, k, 'burrows', host.burrows, guest.burrows);
-    check(r, k, 'fire', [...host.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]), [...guest.fires].map(([c, f]) => [c, f.from, f.until, f.strike, f.group, !!f.ember]));
-    check(r, k, 'weather', [host.weather.kind, host.weather.since, host.weather.until], [guest.weather.kind, guest.weather.since, guest.weather.until]);
-    check(r, k, 'deaths', dyingHost.map(s => [s.id, s.cause, s.killer, s.killerId, s.diedAt, s.fatal || null]), dyingGuest.map(s => [s.id, s.cause, s.killer, s.killerId, s.diedAt, s.fatal || null]));
-    check(r, k, 'events', host.events.map(said), guest.events.map(said));
-    const look = g => g.snakes.map(s => LOOKS.map(f => s.memory[f] ?? null));
-    check(r, k, 'looks', look(host), look(guest));
+    matched(r, host, guest, dyingHost, dyingGuest);
     counted(msg, last, host.events);
     eaten += host.events.filter(e => e.type === 'eat').length;
     last = msg;
@@ -273,13 +294,40 @@ for (let r = 0; r < rounds; r++) {
   }
 }
 
+// Every way to be out crosses: each the rounds didn't bring is staged after
+// them, on a board of its own a tick into a round, as the engine leaves a
+// snake that's out (not alive, its cause, killer and why, the tick it died,
+// and its death event), and the tick checked like any other. (The card, the
+// word that pops up and the records read it. A guest that dropped one, a
+// pit's 'hole' say, passed here while the rounds brought no such death.)
+const deathsStaged = [];
+for (const fatal of FATAL.filter(k => short(`death fatal ${k}`))) {
+  rng = seeded(SEED * 1000 + 99991 + 7919 * FATAL.indexOf(fatal));
+  const humans = [0, 1].map(i => ({ name: `Friend ${i}`, color: O.HUMAN_COLORS[i], peer: `p${i}` }));
+  const host = E.createGame({ humans });
+  const roundMsg = wire(O.round(host, humans, 'Up the tree with you:'));
+  const guest = E.createGame({ humans: roundMsg.humans, personas: roundMsg.personas });
+  O.apply(guest, roundMsg.first, E.DIRS);
+  const dyingHost = E.step(host);
+  const live = host.snakes.filter(s => s.alive), s = live[FATAL.indexOf(fatal) % live.length], by = live.find(o => o !== s);
+  Object.assign(s, { alive: false, cause: `out: ${fatal}`, killer: by.name, killerId: by.id, diedAt: host.tick, fatal });
+  host.events.push({ type: 'death', snake: s });
+  dyingHost.push(s);
+  const msg = wire(O.tick(host, { holesFrom: 0, tickLen: E.tickMs(host) }));
+  const dyingGuest = O.apply(guest, msg, E.DIRS);
+  ticks++;
+  matched(`staged '${fatal}'`, host, guest, dyingHost, dyingGuest);
+  counted(msg, roundMsg.first, host.events);
+  deathsStaged.push(fatal);
+}
+
 // Everything crossed, MIN times at least: every kind of event and all it
 // said, every field of a tick and every look.
 // (What each kind of event says, in all its ways of coming, as staged; the
 // ones that only say where, where; a death, what the snake does.)
 const ways = EVENTS({ id: 1, color: '#fff', name: 'S' }, { id: 2, color: '#000', name: 'O' }, { x: 1, y: 1 }, 1);
 const says = KINDS.filter(k => k !== 'death').flatMap(k => [...new Set((ways[k] || [{ x: 1, y: 1 }]).flatMap(w => Object.keys(w).filter(f => !blank(w[f]))))].map(f => `${k} ${f}`));
-const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fatal'].map(f => `death ${f}`), ...FIELDS.map(f => `snake ${f}`), ...LOOKS.map(f => `memory ${f}`), 'holes', 'burrows',
+const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fatal'].map(f => `death ${f}`), ...FATAL.map(k => `death fatal ${k}`), ...FIELDS.map(f => `snake ${f}`), ...LOOKS.map(f => `memory ${f}`), 'holes', 'burrows',
   ...['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap'].flatMap(k => [`food ${k}`, `food ${k} 3`]), // (each kind, and when it goes)
   'food food 5', 'food food 6', 'food pellet 4', 'food pellet 7', ...[5, 6, 7, 8, 9, 10].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden)
   ...FIRES.map(k => `fire ${k}`),
@@ -315,3 +363,4 @@ if (O.POWERS.includes('dash') || O.POWERS.includes(undefined) || O.DIR_NAMES.inc
 const n = key => seen.get(key) || 0, stagedAll = [...staged.values()].reduce((a, b) => a + b, 0);
 console.log(`ok: ${rounds} rounds (seed ${SEED}), ${ticks} ticks, ${checks} checks, guest matched the host every tick (${presses} power presses, ${n('dash plain')} plain flashes, ${plans} plans, ${n('choke')} chokes and ${n('nudge')} nudges, ${eaten} things eaten); biggest message ${biggest} bytes`);
 console.log(`ok: crossed, ${MIN} times at least: all ${KINDS.length} kinds of event and all they say, all ${FIELDS.length} fields of a snake, its ${LOOKS.length} looks, the food, the woodpecker, fire and weather (${seen.size} things in all; ${stagedAll} events staged: ${[...staged].map(([k, v]) => `${k} ${v}`).join(', ') || 'none'})`);
+console.log(`ok: crossed, once at least: all ${FATAL.length} ways to be out (${FATAL.map(k => `${k} ${n(`death fatal ${k}`)}`).join(', ')}; staged on boards of their own: ${deathsStaged.join(', ') || 'none'})`);
