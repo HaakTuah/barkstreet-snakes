@@ -17,7 +17,8 @@
 // translucent shape made of overlapping pieces (the shadows, a land's colour
 // round a rival on it) is drawn opaque into an offscreen veil and laid on
 // once. Sovereign's and Colonist's land are cached layers, made again only
-// when the land changes. The per-frame path
+// when the land changes (the land a woodpecker's strike will leave is made
+// ahead, a little a frame, while it aims: see prebuild). The per-frame path
 // builds no strings, closures or arrays (a body across a wrapped edge keeps
 // its offsets on its anim; a loop over both sides goes over SIDES2), only
 // the odd small record of something new (a leaf falling). The exceptions
@@ -776,7 +777,11 @@ window.SnakeRender = (() => {
   // beetle, goldbeetle, pellet, roast (a roasted bead), baked (a baked
   // apple), jump, flash, wrap, hole, fire, land, held (a snake holding
   // golden powers: its gold line and a pip of each kind), rests (you, your
-  // jump and flash resting: your two half-rings).
+  // jump and flash resting: your two half-rings), choke (you spitting your
+  // own bead aside), cough (you coughing: mouth shut, puffs of breath),
+  // lostflag (a colony's flag falling into its pit), dig (a beetle half
+  // sunk in sawdust, digging in), knock (an apple flying out of the
+  // woodpecker's mark to the ring where it lands).
   const guideSprites = new Map(); // kind and size -> canvas
   function guideSprite(kind, px) {
     px = Math.max(8, Math.round(px));
@@ -791,7 +796,9 @@ window.SnakeRender = (() => {
     guideSprites.set(key, c);
     return c;
   }
-  const GUIDE_TILE = { hole: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, choke: 1.15, lostflag: 1.2 }; // (on a tile of bark this many cells either side of the middle)
+  const GUIDE_TILE = { hole: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, choke: 1.15, lostflag: 1.2, cough: 1.15, dig: 0.9, knock: 1.35 }; // (on a tile of bark this many cells either side of the middle)
+  const COUGH_GUIDE = [[0.74, 0.02, 0.21, 1], [0.97, -0.46, 0.13, 0.75]]; // (the guide's puffs: x, y, radius in cells, and how faint)
+  const DIG_SPRAY = [[-0.62, -0.42, 0.045], [0.6, -0.5, 0.04], [0.66, 0.36, 0.05], [-0.5, 0.58, 0.04], [0.05, -0.7, 0.035], [-0.72, 0.1, 0.035]];
   const GUIDE = {
     apple: g => drawApple(g, 'fresh'),
     baked: g => drawApple(g, 'baked'),
@@ -828,6 +835,50 @@ window.SnakeRender = (() => {
       g.strokeStyle = 'rgba(58,38,20,0.6)'; g.lineWidth = c * 0.05; g.stroke();
       g.fillStyle = '#fbf7ec'; g.fill();
     }),
+    cough: g => guideSnake(g, '#4ade80', true, x => { // (coughing: its mouth shut, puffs of breath coming out past it)
+      const c = CELL;
+      g.strokeStyle = INK; g.lineWidth = c * 0.04; g.lineCap = 'round'; // (its mouth, shut)
+      g.beginPath(); g.moveTo(x + c * 0.3, c * 0.07); g.quadraticCurveTo(x + c * 0.4, c * 0.02, x + c * 0.47, c * 0.05); g.stroke();
+      for (const [px, py, r, a] of COUGH_GUIDE) {
+        g.globalAlpha = a;
+        g.beginPath();
+        for (let j = 0; j < COUGH_PUFF.length; j += 3) { const cx = x + c * px + COUGH_PUFF[j] * c * r, cy = c * py + COUGH_PUFF[j + 1] * c * r, cr = COUGH_PUFF[j + 2] * c * r; g.moveTo(cx + cr, cy); g.arc(cx, cy, cr, 0, TAU); }
+        g.strokeStyle = 'rgba(58,38,20,0.6)'; g.lineWidth = c * 0.05; g.stroke();
+        g.fillStyle = '#fbf7ec'; g.fill();
+      }
+      g.globalAlpha = 1;
+    }),
+    dig: g => { // (a cornered beetle digging in: half sunk in its bore, a collar of sawdust round it, sawdust flying off)
+      const c = CELL, was = ctx;
+      ctx = g;
+      try {
+        g.fillStyle = 'rgba(20,10,4,0.8)';
+        g.beginPath(); g.ellipse(0, 0, c * 0.36, c * 0.3, 0, 0, TAU); g.fill();
+        g.save(); g.scale(0.82, 0.82); drawGuideBeetle(g, false);
+        g.fillStyle = 'rgba(20,10,4,0.3)'; g.beginPath(); g.ellipse(0, 0, c * 0.3, c * 0.38, 0, 0, TAU); g.fill();
+        g.restore();
+        digCollar(0, 0, 0.5, 5);
+        g.fillStyle = '#e6cc96'; g.strokeStyle = 'rgba(92,60,28,0.8)'; g.lineWidth = c * 0.025; // (sawdust flying off it)
+        for (const [x, y, r] of DIG_SPRAY) { g.beginPath(); g.arc(c * x, c * y, c * r, 0, TAU); g.fill(); g.stroke(); }
+      } finally { ctx = was; }
+    },
+    knock: g => { // (an apple knocked out of the woodpecker's marked patch, flying in an arc to the ring where it lands)
+      const c = CELL, px = -1.2 * c, py = 0.05 * c, pw = 1.2 * c, ph = 1.05 * c;
+      g.save(); g.translate(px + pw / 2, py + ph / 2); g.scale(1.25, 1.1); drawMark(g); g.restore();
+      g.beginPath();
+      if (g.roundRect) g.roundRect(px, py, pw, ph, c * 0.32); else g.rect(px, py, pw, ph);
+      g.fillStyle = 'rgba(20,8,2,0.4)'; g.fill();
+      g.lineWidth = 5; g.strokeStyle = 'rgba(20,8,2,0.75)'; g.stroke();
+      g.lineWidth = 2.8; g.strokeStyle = '#fef3c7'; g.stroke();
+      const lx = 0.72 * c, ly = 0.62 * c; // (where it lands: a faint ring)
+      g.setLineDash(KNOCK_DASH); g.lineCap = 'butt';
+      for (const [col, w] of [['rgba(20,10,4,0.7)', 3.4], ['#fef3c7', 1.6]]) { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(lx, ly, c * 0.38, 0, TAU); g.stroke(); }
+      g.setLineDash([c * 0.07, c * 0.09]); g.lineCap = 'round'; // (its way through the air)
+      g.strokeStyle = 'rgba(255,251,234,0.8)'; g.lineWidth = c * 0.045;
+      g.beginPath(); g.moveTo(px + pw / 2, py + ph / 2); g.quadraticCurveTo(0, -1.25 * c, lx, ly - c * 0.1); g.stroke();
+      g.setLineDash(NO_DASH);
+      g.save(); g.translate(0.08 * c, -0.48 * c); g.rotate(0.35); g.scale(0.9, 0.9); drawApple(g, 'fresh'); g.restore();
+    },
     lostflag: g => { // (a colony lost to the woodpecker: its flag tipping into the pit pecked out under it)
       guideCells(GUIDE_PIT); g.save(); g.translate(-12.5 * CELL, -12.5 * CELL); drawPits(g, guideMask, 0, 0, GRID - 1, GRID - 1); g.restore();
       const was = ctx;
@@ -957,26 +1008,76 @@ window.SnakeRender = (() => {
   // moves (a beetle's walk: step, pause), legs scuttling, and turns smoothly.
   // Between steps it's never quite still: its feelers wave, it breathes, and
   // every few seconds it lifts its wing cases and buzzes, as if about to fly
-  // off. Scared, it trembles. It pops in when it comes out.
-  let beetleAng = null, beetleAt = 0, beetleGold = false; // (gold: the one last drawn, for its dive down a burrow)
+  // off. Scared, it trembles. It pops in when it comes out. Sent scurrying
+  // (nudged aside by a coughing head, knocked aside by the woodpecker), it
+  // scurries there. Cornered, it digs in (see digOf).
+  //
+  // Up to two are out at once, each with its own heading, pop and wing beat:
+  // each beetle's look is kept from frame to frame by where it is (where it
+  // came from, if it moved this tick), not by its object (a guest online
+  // gets fresh ones every tick). bugs: { x, y, ang, at (when it popped out,
+  // or 0), t0 (its wings' beat), gold, dig (how far it has sunk, as last
+  // drawn), spray (its next spray of sawdust), frame (last drawn) }.
+  const bugs = [], bugFor = new Map(); // (bugFor: this frame's beetles -> their looks)
+  const bugPops = [], scurries = []; // (this tick's: where one came out, { x, y, tick, at }; one sent scurrying, { x, y, tx, ty, tick })
+  let bugFrame = 0;
+  function scurryOf(f) {
+    for (const k of scurries) if (k.tick === game.tick && k.tx === f.x && k.ty === f.y) return k;
+    return null;
+  }
+  function bugAt(x, y) {
+    for (const b of bugs) if (b.frame !== bugFrame && b.x === x && b.y === y) return b;
+    return null;
+  }
+  function trackBugs(now) {
+    bugFrame++;
+    bugFor.clear();
+    for (let pass = 0; pass < 2; pass++) { // (those that moved this tick first, by where they came from; then the rest, by where they are)
+      for (const f of game.food) {
+        if (f.kind !== 'beetle' || bugFor.has(f)) continue;
+        let b = null;
+        if (!pass) {
+          const k = scurryOf(f);
+          if (k) b = bugAt(k.x, k.y);
+          else if (f.movedAt === game.tick - 1 && f.px != null) b = bugAt(f.px, f.py);
+          if (!b) continue;
+        } else {
+          b = bugAt(f.x, f.y);
+          if (!b) {
+            b = { x: f.x, y: f.y, ang: null, at: 0, t0: now - 1700 * bugs.length, gold: false, dig: 0, spray: 0, frame: 0 };
+            for (const p of bugPops) if (p.tick === game.tick && p.x === f.x && p.y === f.y) b.at = p.at;
+            bugs.push(b);
+          }
+        }
+        b.x = f.x; b.y = f.y; b.gold = !!f.gold; b.frame = bugFrame;
+        bugFor.set(f, b);
+      }
+    }
+    for (let i = bugs.length - 1; i >= 0; i--) if (bugs[i].frame !== bugFrame) bugs.splice(i, 1); // (caught, gone down a burrow or flown)
+  }
   function drawBeetle(f, alpha, now) {
-    beetleGold = !!f.gold;
-    const nudged = !!game && !!beetleNudge && beetleNudge.tick === game.tick && beetleNudge.tx === f.x && beetleNudge.ty === f.y; // (nudged aside by a coughing head: it scurries there)
-    const moved = game && (nudged || (f.movedAt === game.tick - 1 && f.px != null));
-    const e = moved ? alpha * alpha * (3 - 2 * alpha) : 1, fx = nudged ? beetleNudge.x : f.px, fy = nudged ? beetleNudge.y : f.py;
+    const st = bugFor.get(f);
+    if (!st) return;
+    const sc = scurryOf(f); // (sent scurrying this tick: it scurries there)
+    const moved = !!sc || (f.movedAt === game.tick - 1 && f.px != null);
+    const e = moved ? alpha * alpha * (3 - 2 * alpha) : 1, fx = sc ? sc.x : f.px, fy = sc ? sc.y : f.py;
     const gx = moved ? fx + (f.x - fx) * e : f.x, gy = moved ? fy + (f.y - fy) * e : f.y;
     let x = gx * CELL + CELL / 2, y = gy * CELL + CELL / 2;
     const c = CELL, lively = !reduced, t = now / 1000;
     const walking = moved && lively;
-    const pop = beetleAt ? popOf(now - beetleAt) : 1;
+    const pop = st.at ? popOf(now - st.at) : 1;
     if (pop <= 0) return;
     const heading = Math.atan2(f.dir.y, f.dir.x);
-    if (beetleAng === null || !lively) beetleAng = heading;
-    else beetleAng += Math.atan2(Math.sin(heading - beetleAng), Math.cos(heading - beetleAng)) * Math.min(1, frameDt / 60);
-    if (lively && f.scared && !moved) { x += Math.sin(now / 23) * 0.7; y += Math.cos(now / 31) * 0.7; } // trembling
-    const step = walking ? Math.sin(now / (f.scared ? 28 : 45)) : 0;
-    const cycle = ((now - beetleAt) / 1000) % 3.4; // the wing cases lift late in each cycle, if it's not walking
-    const lift = lively && !walking && cycle > 2.7 ? Math.sin((cycle - 2.7) / 0.7 * Math.PI) : 0;
+    if (st.ang === null || !lively) st.ang = heading;
+    else st.ang += Math.atan2(Math.sin(heading - st.ang), Math.cos(heading - st.ang)) * Math.min(1, frameDt / 60);
+    const dig = digOf(f, alpha); // (digging in: how far it has sunk)
+    st.dig = dig;
+    if (lively && (f.scared || dig) && !moved) { x += Math.sin(now / 23) * 0.7; y += Math.cos(now / 31) * 0.7; } // trembling (digging, it's frantic)
+    if (dig) { drawDig(st, x, y, dig, now); if (dig >= 1) return; }
+    const step = walking ? Math.sin(now / (f.scared ? 28 : 45)) : dig && lively ? Math.sin(now / 30) : 0;
+    const cycle = ((now - st.t0) / 1000) % 3.4; // the wing cases lift late in each cycle, if it's not walking (or digging)
+    const lift = lively && !walking && !dig && cycle > 2.7 ? Math.sin((cycle - 2.7) / 0.7 * Math.PI) : 0;
+    const sunk = 1 - DIG_SHRINK * dig; // (sinking into the bark: smaller, the lower it is)
     if (f.gold) { // a golden beetle glows, and glints now and then
       const w = SPRITE * CELL * pop * (1 + (lively ? 0.12 * Math.sin(t * 4) : 0));
       ctx.globalAlpha = lively ? 0.75 + 0.25 * Math.sin(t * 4) : 0.9;
@@ -984,14 +1085,16 @@ window.SnakeRender = (() => {
       ctx.globalAlpha = 1;
       if (lively && Math.random() < 0.06) mote(x + (Math.random() - 0.5) * c, y + (Math.random() - 0.5) * c, 0, -6, 650, 0.3 + Math.random() * 0.3, 1);
     }
-    ctx.fillStyle = 'rgba(0,0,0,0.3)'; // shadow
-    ctx.beginPath();
-    ctx.ellipse(x + 2, y + 3, c * 0.38 * pop, c * 0.3 * pop, 0, 0, TAU);
-    ctx.fill();
+    if (dig < 0.5) {
+      ctx.fillStyle = dig ? rgba('#000000', 0.3 * (1 - 2 * dig)) : 'rgba(0,0,0,0.3)'; // shadow (down in its bore, none)
+      ctx.beginPath();
+      ctx.ellipse(x + 2, y + 3, c * 0.38 * pop * sunk, c * 0.3 * pop * sunk, 0, 0, TAU);
+      ctx.fill();
+    }
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(beetleAng + step * 0.07);
-    const size = 1.35 * pop * (1 + (lively ? Math.sin(t * 3.1) * 0.02 : 0)); // about an apple's size, so it's easy to spot
+    ctx.rotate(st.ang + step * 0.07);
+    const size = 1.35 * pop * sunk * (1 + (lively ? Math.sin(t * 3.1) * 0.02 : 0)); // about an apple's size, so it's easy to spot
     ctx.scale(size, size);
     // Legs: three a side, alternate pairs swinging.
     ctx.strokeStyle = '#1c1917';
@@ -1052,7 +1155,90 @@ window.SnakeRender = (() => {
       ctx.moveTo(c * 0.18, 0); ctx.lineTo(-c * 0.23, 0);
       ctx.stroke();
     }
+    if (dig) { // (going down into the dark of its bore)
+      ctx.fillStyle = rgba('#140a04', 0.4 * dig);
+      ctx.beginPath(); ctx.ellipse(0, 0, c * 0.3, c * 0.24, 0, 0, TAU); ctx.fill();
+    }
     ctx.restore();
+    if (dig) digCollar(x, y, dig, st.x * 7 + st.y * 13);
+  }
+
+  // A cornered beetle digs in (round six A): it stops where it is and bores
+  // into the bark (BEETLE_DIG ticks), frantic, sawdust spraying off it, and
+  // sinks into the bark as its time runs out: smaller, darker, a collar of
+  // sawdust closing in round it. It can still be caught. Then it's gone,
+  // and its bore is plugged with its own sawdust (frass, as bark beetles
+  // pack their tunnels): a little heap is left for a few seconds, a plug,
+  // not a hole (see drawHeaps). With reduced motion: no spray, and it's
+  // drawn sunk part way, still, until it's gone.
+  const DIG_SHRINK = 0.45, DIG_STILL = 0.5, HEAP_MS = 3000;
+  const heaps = []; // { x, y, at }
+  // How far a digging beetle has sunk (0 if it isn't digging; up to 1).
+  function digOf(f, alpha) {
+    if (f.digUntil == null || !(f.digUntil >= game.tick)) return 0;
+    if (reduced) return DIG_STILL;
+    const D = T.BEETLE_DIG || 8, p = Math.max(0, Math.min(1, (game.tick - 1 + alpha - (f.digUntil - D)) / D));
+    return Math.max(0.04, Math.min(0.95, p * p * (3 - 2 * p)));
+  }
+  // Under it: the bore it's making, a dark hollow opening as it goes down;
+  // and sawdust spraying off it now and then.
+  function drawDig(st, x, y, dig, now) {
+    const c = CELL, r = c * (0.18 + 0.2 * Math.min(1, dig * 1.6));
+    ctx.fillStyle = 'rgba(20,10,4,0.8)';
+    ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.82, 0, 0, TAU); ctx.fill();
+    if (!reduced && now >= st.spray) {
+      st.spray = now + 60 + Math.random() * 70;
+      spawn(x, y, 2, 120, 360, 1.8, '#e6cc96', '#b07d48');
+    }
+  }
+  // Over it: a collar of the sawdust it's pushing out, heaped round its
+  // bore and over its edges, deeper as it sinks (seeded by where it is, so
+  // it holds still): lumps run together into a ring, in its shadow, then
+  // sawdust, then paler crumbs on top, lit from the upper left.
+  const COLLAR_N = 16;
+  function digCollar(x, y, dig, seed) {
+    const c = CELL, up = Math.min(1, dig * 2.5), ri = c * (0.3 - 0.1 * dig), ro = ri + c * (0.04 + 0.1 * up + 0.04 * dig), rm = (ri + ro) / 2, rl = (ro - ri) / 2;
+    for (let pass = 0; pass < 3; pass++) {
+      ctx.fillStyle = pass === 0 ? 'rgba(70,42,18,0.8)' : pass === 1 ? '#d7b47a' : '#efdcb0';
+      const dx = pass === 0 ? 1 : pass === 1 ? 0 : -0.7, dy = pass === 0 ? 1.3 : pass === 1 ? 0 : -0.9;
+      ctx.beginPath();
+      for (let i = 0; i < COLLAR_N; i++) {
+        if (pass === 2 && noise(seed, i, 43) < 0.45) continue; // (crumbs on top, here and there)
+        const a = (i + 0.5 * noise(seed, i, 41)) * TAU / COLLAR_N, r = rm + rl * 0.35 * (noise(seed, i, 44) - 0.5);
+        const cr = (pass === 2 ? 0.45 : 1) * (rl * (0.6 + 0.9 * noise(seed, i, 42)) + 0.6), px = x + Math.cos(a) * r + dx, py = y + Math.sin(a) * r * 0.9 + dy;
+        ctx.moveTo(px + cr, py); ctx.arc(px, py, cr, 0, TAU);
+      }
+      ctx.fill();
+    }
+  }
+  // Where one dug in, its plug of sawdust, a few seconds, fading at the end.
+  const heapSprite = () => sprite('heap', '', drawHeap);
+  const drawHeap = g => {
+    const c = CELL;
+    g.fillStyle = 'rgba(40,22,8,0.35)'; // (its shadow, down and to the right)
+    g.beginPath(); g.ellipse(c * 0.06, c * 0.09, c * 0.46, c * 0.36, 0, 0, TAU); g.fill();
+    g.fillStyle = '#b8894f';
+    g.beginPath();
+    for (const [x, y, r] of HEAP_LUMPS) { g.moveTo(c * (x + r), c * y); g.arc(c * x, c * y, c * r, 0, TAU); }
+    g.fill();
+    g.fillStyle = '#e2c38c';
+    g.beginPath();
+    for (const [x, y, r] of HEAP_LUMPS) { g.moveTo(c * (x - 0.03 + r * 0.7), c * (y - 0.04)); g.arc(c * (x - 0.03), c * (y - 0.04), c * r * 0.7, 0, TAU); }
+    g.fill();
+    g.fillStyle = 'rgba(92,60,28,0.8)'; // (chips kicked out round it)
+    for (const [x, y] of HEAP_CHIPS) { g.beginPath(); g.arc(c * x, c * y, c * 0.03, 0, TAU); g.fill(); }
+  };
+  const HEAP_LUMPS = [[0, 0, 0.26], [-0.18, 0.07, 0.17], [0.19, 0.05, 0.16], [0.02, -0.16, 0.16], [-0.08, 0.18, 0.13], [0.13, 0.19, 0.12], [-0.17, -0.12, 0.11]];
+  const HEAP_CHIPS = [[-0.46, -0.06], [0.44, -0.18], [0.38, 0.35], [-0.28, 0.42], [-0.12, -0.43], [0.5, 0.12]];
+  function drawHeaps(now) {
+    for (let i = heaps.length - 1; i >= 0; i--) {
+      const h = heaps[i], age = now - h.at;
+      if (age >= HEAP_MS || age < 0) { heaps.splice(i, 1); continue; }
+      const grow = reduced ? 1 : Math.min(1, age / 160), w = SPRITE * CELL * (0.6 + 0.4 * grow);
+      ctx.globalAlpha = Math.min(1, (HEAP_MS - age) / 900);
+      ctx.drawImage(heapSprite(), (h.x + 0.5) * CELL - w / 2, (h.y + 0.5) * CELL - w / 2, w, w);
+    }
+    ctx.globalAlpha = 1;
   }
   // A golden beetle's Honey, front to back: made once, in the shell's own
   // units, so it turns with the beetle (as its shine does).
@@ -1240,6 +1426,7 @@ window.SnakeRender = (() => {
         fix: new Float32Array(64), fixOn: false, fixFast: false, tdx: s.dir.x, tdy: s.dir.y, bx: 0, by: 0, drawnAt: -1,
         jc: false, fc: false, flashFx: -1e9, // (your rests: cooling last frame; when your flash came back)
         star: false, turn: 0, face: 0, hue: 0, hueAt: -1, glow: 1, brow: 1, flareAt: -1e9, shedAt: 0, // (Star: its head a star, turned so, its face upright; its rainbow (and Copycat's copy of it); its tell; its tail's twinkles)
+        flow: 0, flowW: 0, flowMv: 0, flowTick: -1, flowAt: -1, bursts: 0, burstAt: -1e9, // (how far it has gone, for its rainbow's stream: see flowOf; its flashes' bursts of it)
         // Up in the air and over holes (see liftOf and sinkOf): each segment's
         // lift (0..1, the top of a jump 1) and how far it hangs over a pit
         // (0..1) and sinks into it; its jumps, while their arch lasts; when it
@@ -1544,13 +1731,42 @@ window.SnakeRender = (() => {
     }
     return null;
   }
-  // Where its rainbow's hue is at its head: flowing on (a degree every 15 ms,
-  // held at 0 with reduced motion), or once it's out, where it stopped.
+  // Where its rainbow's hue is at its head. Its colours stream back along
+  // its body as it goes, by how far it has gone (its moves, and the frame's
+  // way through the next), at BOW_FLOW times its crawl: so over the log they
+  // stream backward behind it, like a trail (at its crawl they'd be painted
+  // on the log; slower, they'd creep forward with it), and each segment goes
+  // round the rainbow about once a second. Stopped or stunned, they settle
+  // with it; a flash bursts them on (BOW_BURST segments' worth, easing out
+  // over BOW_BURST_MS). With reduced motion they drift slowly where they are
+  // (BOW_DRIFT degrees a second). Copycat's pale copy goes by its model's,
+  // in step. Once it's out, they stay where they stopped.
+  const BOW_FLOW = 1.25, BOW_BURST = 6, BOW_BURST_MS = 360, BOW_DRIFT = 10;
   function bowHue(s, a, now) {
     if (!s.alive) { if (a.hueAt < 0) a.hueAt = a.hue; return a.hueAt; }
     a.hueAt = -1;
-    return a.hue = reduced ? 0 : Math.floor(now / 15) % 360;
+    if (reduced) return a.hue = Math.floor(now / 1000 * BOW_DRIFT) % 360;
+    let src = s, sa = a;
+    if (lookOf(s) !== 'star') { const m = findById(s.memory.modelId); if (m && m.alive) { src = m; sa = animOf(m, now); } } // (Copycat's copy: its model's)
+    const u = (now - sa.burstAt) / BOW_BURST_MS, burst = sa.bursts * BOW_BURST - (u >= 0 && u < 1 ? BOW_BURST * (1 - u) * (1 - u) : 0);
+    return a.hue = Math.floor((flowOf(src, sa) * BOW_FLOW + burst) * RAINBOW_STEP) % 360;
   }
+  // How far a snake has gone, in cells, as it's drawn this frame: its moves
+  // until this tick (a flash's cells and all), and its way through this
+  // one's and on toward the next (see prepare: flowK). Counted once a tick.
+  function flowOf(s, a) {
+    if (a.flowAt === lastNow && lastNow) return a.flow;
+    if (game.tick !== a.flowTick) {
+      if (a.flowTick >= 0 && game.tick > a.flowTick) a.flowW += a.flowMv * Math.min(4, game.tick - a.flowTick); // (the ticks between, if any were missed, as the last)
+      a.flowTick = game.tick;
+      const h = s.body[0], p = s.prev?.[0];
+      const d = p ? Math.abs(h.x - p.x) + Math.abs(h.y - p.y) : 0;
+      a.flowMv = d > GRID / 2 ? 1 : d; // (across a wrapped edge: a cell)
+    }
+    a.flowAt = lastNow;
+    return a.flow = a.flowW + a.flowMv * Math.min(1, flowK) + (a.mv ? Math.max(0, flowK - 1) : 0);
+  }
+  let flowK = 0; // (the frame's way through the tick, as drawn: see prepare)
   const lumas = new Map();
   function lumaOf(c) {
     let l = lumas.get(c);
@@ -1590,10 +1806,11 @@ window.SnakeRender = (() => {
       return;
     }
     const bow = bowOf(s);
-    if (bow) { // a rainbow trailing a sunflower star (its head is drawn apart: see drawStarHead), flowing down from the head (held still with reduced motion; out, it stops where it was), fading toward the bark at the tail; or Copycat's pale copy of it, head and all
+    if (bow) { // a rainbow trailing a sunflower star (its head is drawn apart: see drawStarHead), streaming back along it as it goes (see bowHue), fading toward the bark at the tail; or Copycat's pale copy of it
       const h0 = bowHue(s, a, now);
       for (let i = 0; i < n; i++) fills[i] = bow((h0 + 360 - (i * RAINBOW_STEP) % 360) % 360)[n > 1 ? Math.round(RAINBOW_FADE * i / (n - 1)) : 0];
       if (look === 'star') fills[0] = STAR_SUN;
+      else if (s.personaKey === 'copycat') fills[0] = s.color; // (its head stays its own: see below)
       return;
     }
     const ramp = rampOf(color);
@@ -1614,6 +1831,10 @@ window.SnakeRender = (() => {
     if (look === 'vulture') { fills[0] = '#f9a8d4'; if (n > 1) fills[1] = '#f5f5f4'; } // bald pink head, white neck ruff
     if (look === 'desperado') { if (n > 1) fills[1] = '#dc2626'; for (let i = 4; i < n; i += 4) fills[i] = '#ecdfc3'; } // bandana, poncho stripes (woven cream: Honey means a power)
     if (mime) fills[0] = '#f8fafc';
+    // Copycat copying someone: its body wears a pale copy of their colours
+    // (it can't help it), but its cat-eared head keeps the flag's red (and
+    // its yellow pin: see drawFace), so it always reads as red and gold.
+    if (s.personaKey === 'copycat') fills[0] = s.color;
   }
 
   // Once a frame per snake: where each segment is (between its last two
@@ -1642,6 +1863,7 @@ window.SnakeRender = (() => {
     let at = alpha + leadNow;
     if (dead || !game || leadRest) at = Math.min(1, at);
     if (snap && !ran) at = Math.max(1, at);
+    flowK = at;
     if (dead || !game) { a.mv = 0; a.ml = 0; a.mf = 0; }
     const k1 = Math.min(1, at), k2 = a.mv ? at - k1 : 0;
     const m = k2 > 0 && a.mg ? n + 1 : n; // (growing: its tail stays where it is, a segment more)
@@ -3473,11 +3695,15 @@ window.SnakeRender = (() => {
   // bow out over what it hopped; from where it took off to its head (once
   // it's down, to where it landed), fading as it lands. In
   // parchment, faint: a power's gold is for powers. None with reduced motion.
-  const TRAIL_MS = 260;
+  // (Points every TRAIL_STEP cells where it bows, one straight run over the
+  // top, where it doesn't, and mitred, not rounded, at every point: the same
+  // line, a little cheaper. Measured, the trail is a fifth of a millisecond
+  // a frame, a jump's air shadow most of the rest of what it adds.)
+  const TRAIL_MS = 260, TRAIL_STEP = 0.125;
   function drawTrails(from, to, now) {
     if (reduced) return;
     ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    ctx.lineJoin = 'miter';
     ctx.lineWidth = 1.6;
     ctx.strokeStyle = '#fffbea';
     for (let j = from; j < to; j++) {
@@ -3493,7 +3719,8 @@ window.SnakeRender = (() => {
         ctx.globalAlpha = 0.55 * fade;
         ctx.beginPath();
         for (const sg of SIDES2) {
-          for (let u = 0.3; ; u += 0.125) {
+          for (let u = 0.3; ; u += TRAIL_STEP) {
+            if (u > 1 && u < reach) u = reach; // (over the top, straight)
             if (u > end) u = end;
             const d = u < 1 ? 1 - u : u > reach ? u - reach : 0, w = CELL * 0.54 * (1 + sw * (d < 1 ? Math.cos(d * Math.PI / 2) : 0)) + 6;
             const x = tx + r.dx * u * CELL - r.dy * sg * w, y = ty + r.dy * u * CELL + r.dx * sg * w;
@@ -3504,6 +3731,7 @@ window.SnakeRender = (() => {
         ctx.stroke();
       }
     }
+    ctx.lineJoin = 'round'; // (as it found it)
     ctx.globalAlpha = 1;
   }
 
@@ -3622,6 +3850,7 @@ window.SnakeRender = (() => {
   const JESTER = [-0.1, 0.3, -0.55, 0.62, -0.32, 0.05];
   const HARLEQUIN = [-0.07, 0.2, 0.15, 0.08, 0.31, 0.2, 0.15, 0.32];
   const WHISKERS = [0.3, 0.45, 0.6];
+  const PARTY_YELLOW = '#ffde00'; // (Copycat's pin, the flag's yellow, on its head of the flag's red)
   // Colonist's tricorn: three corners (one forward), the brim wider than the head.
   const TRI_F = [0.1, 0], TRI_L = [-0.5, -0.6], TRI_R = [-0.5, 0.6], TRI_BOW = 0.1;
   function tricornSide(c, a, b) { // each side's middle pulled in toward the crown
@@ -4431,11 +4660,12 @@ window.SnakeRender = (() => {
         ctx.stroke();
         break;
       }
-      case 'copycat': { // cat ears (its head's colour: copying Star, a hue of its pale rainbow), cat eyes, whiskers, and a party pin
+      case 'copycat': { // cat ears (its head's colour, the flag's red, whoever it copies), cat eyes, whiskers, and a party pin
         poly(EAR, -1, a.fills[0]);
         poly(EAR, 1, a.fills[0]);
-        poly(EAR_IN, -1, '#f9a8d4');
-        poly(EAR_IN, 1, '#f9a8d4');
+        const inner = mix(a.fills[0][0] === '#' ? a.fills[0] : '#de2910', INK, 0.3); // (a deeper red inside: pink read as the pale old Copycat)
+        poly(EAR_IN, -1, inner);
+        poly(EAR_IN, 1, inner);
         mouth(open * 0.7, 0.4);
         if (blinking) lids(0.1);
         else {
@@ -4460,19 +4690,25 @@ window.SnakeRender = (() => {
         }
         ctx.stroke();
         // Party member: a little hammer and sickle on the back of the head,
-        // in the Party's red (in gold, beside its pips, it read as a power's).
+        // in the flag's yellow on its red, inked round so it reads as a pin
+        // (a power's gold is Honey, rounder and paler, and never on a head).
         ctx.save();
         ctx.translate(-c * 0.2, 0);
         ctx.rotate(Math.PI / 2);
-        ctx.strokeStyle = '#b91c1c';
-        ctx.fillStyle = '#b91c1c';
-        ctx.lineWidth = c * 0.05;
-        ctx.beginPath();
-        ctx.arc(0, 0, c * 0.15, -Math.PI * 0.25, Math.PI * 0.95);
-        ctx.stroke();
-        ctx.rotate(-Math.PI / 4);
-        ctx.fillRect(-c * 0.02, -c * 0.16, c * 0.04, c * 0.3); // handle
-        ctx.fillRect(-c * 0.09, -c * 0.18, c * 0.18, c * 0.06); // head
+        ctx.lineCap = 'butt';
+        for (let pass = 0; pass < 2; pass++) {
+          const w = pass ? 0 : c * 0.035;
+          ctx.strokeStyle = ctx.fillStyle = pass ? PARTY_YELLOW : INK;
+          ctx.lineWidth = c * 0.05 + 2 * w;
+          ctx.beginPath();
+          ctx.arc(0, 0, c * 0.15, -Math.PI * 0.25, Math.PI * 0.95);
+          ctx.stroke();
+          ctx.save();
+          ctx.rotate(-Math.PI / 4);
+          ctx.fillRect(-c * 0.02 - w, -c * 0.16 - w, c * 0.04 + 2 * w, c * 0.3 + 2 * w); // handle
+          ctx.fillRect(-c * 0.09 - w, -c * 0.18 - w, c * 0.18 + 2 * w, c * 0.06 + 2 * w); // head
+          ctx.restore();
+        }
         ctx.restore();
         break;
       }
@@ -4803,6 +5039,7 @@ window.SnakeRender = (() => {
       changedAt: -1e9, alertA: 0, pulses: [],
       fallen: [], // (its colonies lost to the woodpecker, a while: { x, y, radius, at }, see drawColonyFlags)
       banner: null, // (its banner as drawn, carried when its capital moves: see drawRealmBanner)
+      spare: null, // (its layers as a strike will leave them, made ahead: see prebuild)
     };
   }
   // An owner's fields, as one number (a guest online gets fresh ones every tick).
@@ -4963,42 +5200,54 @@ window.SnakeRender = (() => {
   // size of the cells it spans (and a margin, for the line and the glow),
   // landing on whole device pixels.
   const LAND_MARGIN = 10;
+  const shownOf = o => o.shown;
   function buildRealm(r) {
-    r.dirty = false; r.builtK = k; r.shared.length = r.sharedAt.length = r.sharedTo.length = 0;
-    r.any = r.bx1 >= 0;
-    if (!r.any) return;
+    r.dirty = false; r.builtK = k; landVer++; landBuilds++;
+    const p = prepRealm(r, r, r.shown, r, shownOf, game.holes);
+    if (p) for (let st = 0; st < LAND_STEPS; st++) paintLandStep(p, st, r.layer.getContext('2d'), r.glow.getContext('2d'), r.color);
+  }
+  // A realm's layers made ready for its land m (r's, or as it will be: see
+  // the strike's land, below), into `into` (r itself, or its spare): sized
+  // to the cells m spans (box: bx0..by1), cleared, and the land traced and
+  // planned (see planLand), against the other realms' land (maskOf) and the
+  // holes (lost); with its contested sides (dashed in their own layer: see
+  // buildDashes). Says the plan, to paint (null: no land left).
+  function prepRealm(into, r, m, box, maskOf, lost) {
+    into.shared.length = into.sharedAt.length = into.sharedTo.length = 0;
+    into.any = box.bx1 >= 0;
+    if (!into.any) return null;
     otherLand.fill(0);
-    for (const o of fieldSpecs) if (o !== r) for (let i = 0; i < N2; i++) if (o.shown[i]) otherLand[i] = 1;
-    const ux = r.bx0 * CELL - LAND_MARGIN, uy = r.by0 * CELL - LAND_MARGIN;
-    r.X = Math.floor(ux * k); r.Y = Math.floor(uy * k);
-    const pw = Math.ceil(((r.bx1 + 1) * CELL + LAND_MARGIN) * k) - r.X + 1, ph = Math.ceil(((r.by1 + 1) * CELL + LAND_MARGIN) * k) - r.Y + 1;
-    if (!r.layer) { r.layer = makeLayer(pw, ph); r.glow = makeLayer(pw / 2, ph / 2); }
-    for (const c of [r.layer, r.glow]) {
-      const s = c === r.glow ? 0.5 : 1, w = Math.ceil(pw * s), h = Math.ceil(ph * s); // (the glow at half the resolution: it's soft, and a quarter of the pixels to light up)
+    for (const o of fieldSpecs) if (o !== r) { const om = maskOf(o); for (let i = 0; i < N2; i++) if (om[i]) otherLand[i] = 1; }
+    const ux = box.bx0 * CELL - LAND_MARGIN, uy = box.by0 * CELL - LAND_MARGIN;
+    into.X = Math.floor(ux * k); into.Y = Math.floor(uy * k);
+    const pw = Math.ceil(((box.bx1 + 1) * CELL + LAND_MARGIN) * k) - into.X + 1, ph = Math.ceil(((box.by1 + 1) * CELL + LAND_MARGIN) * k) - into.Y + 1;
+    if (!into.layer) { into.layer = makeLayer(pw, ph); into.glow = makeLayer(pw / 2, ph / 2); }
+    for (let c = into.layer, j = 0; j < 2; c = into.glow, j++) {
+      const s = j ? 0.5 : 1, w = Math.ceil(pw * s), h = Math.ceil(ph * s); // (the glow at half the resolution: it's soft, and a quarter of the pixels to light up)
       if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
       const g = c.getContext('2d');
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.clearRect(0, 0, w, h);
-      g.setTransform(k * s, 0, 0, k * s, -r.X * s, -r.Y * s);
+      g.setTransform(k * s, 0, 0, k * s, -into.X * s, -into.Y * s);
       g.lineCap = g.lineJoin = 'round';
     }
-    paintLand(r.layer.getContext('2d'), r.glow.getContext('2d'), r.shown, otherLand, r.color, r.idx, game.holes);
-    // Its contested sides (dashed in their own layer: see buildDashes). Where its
-    // land runs into another's that also covers its own cell there, only
-    // this realm has the side, so it dashes both halves.
+    const p = planLand(m, otherLand, lost, r.idx);
+    // Where its land runs into another's that also covers its own cell
+    // there, only this realm has the side, so it dashes both halves.
     for (let l = 0; l < tLoops; l++) {
       const a = tAt[l], n = tAt[l + 1] - a;
       for (let j = 0; j < n; j++) {
         if (tKind[a + j] !== 1) continue;
-        r.sharedAt.push(r.shared.length);
-        sideLine(r.shared, a, n, j);
+        into.sharedAt.push(into.shared.length);
+        sideLine(into.shared, a, n, j);
         const e = tSide[a + j], i = e >> 2, across = i + NX[e & 3] + NY[e & 3] * GRID;
         let to = null;
-        for (const o of fieldSpecs) if (o !== r && o.shown[across]) { to = o.shown[i] ? o : null; break; }
-        r.sharedTo.push(to);
+        for (const o of fieldSpecs) { if (o === r) continue; const om = maskOf(o); if (om[across]) { to = om[i] ? o : null; break; } }
+        into.sharedTo.push(to);
       }
     }
-    r.sharedAt.push(r.shared.length);
+    into.sharedAt.push(into.shared.length);
+    return p;
   }
   // Side j of the loop at a (n points) as a line of points along the
   // rounded border (half of a rounded corner at either end is the side's),
@@ -5040,6 +5289,13 @@ window.SnakeRender = (() => {
   // ink does, for every eye. On gg, if given, its border's glow, for when it
   // lights up. other: the other owners' land; lost: the holes.
   function paintLand(g, gg, m, other, col, idx, lost) {
+    const p = planLand(m, other, lost, idx);
+    for (let st = 0; st < LAND_STEPS; st++) paintLandStep(p, st, g, gg, col);
+  }
+  // Land m, traced (see traceCells: its sides' kinds left in tKind) and laid
+  // out as paths: all of it, its edge (the border and its contested
+  // sides), its border, and where it's contested, the hatching's cells.
+  function planLand(m, other, lost, idx) {
     traceCells(m);
     for (let j = 0; j < tAt[tLoops]; j++) {
       const e = tSide[j], i = e >> 2, sd = e & 3, x = i % GRID + NX[sd], y = (i - i % GRID) / GRID + NY[sd];
@@ -5048,21 +5304,6 @@ window.SnakeRender = (() => {
     const land = new Path2D(), edge = new Path2D(), border = new Path2D();
     for (let l = 0; l < tLoops; l++) cornersPath(land, cornersOf(l, 0, RC, RC, 0));
     const anyBorder = runsPath(border, 0), anyEdge = runsPath(edge, 0) | runsPath(edge, 1);
-    g.fillStyle = rgba(col, 0.1);
-    g.fill(land, 'evenodd');
-    g.save();
-    g.clip(land, 'evenodd');
-    if (anyEdge) {
-      g.strokeStyle = col;
-      for (let n = 0; n < LAND_BAND.length; n += 2) { g.globalAlpha = LAND_BAND[n + 1]; g.lineWidth = LAND_BAND[n] * CELL; g.stroke(edge); }
-      g.globalAlpha = 0.55; g.lineWidth = 12; g.stroke(edge); // (half of it shows: 6 units inside the line)
-      g.globalAlpha = 1;
-    }
-    if (anyBorder) { // (the keyline: inside the land, from the ink's inner edge on; the ink goes over its outer part, below)
-      g.strokeStyle = KEYLINE;
-      g.lineWidth = 2 * (BORDER_INK / 2 + BORDER_KEY);
-      g.stroke(border);
-    }
     let x0 = GRID, y0 = GRID, x1 = -1, y1 = -1;
     const hatch = new Path2D();
     for (let i = 0; i < N2; i++) {
@@ -5071,27 +5312,63 @@ window.SnakeRender = (() => {
       hatch.rect(x * CELL, y * CELL, CELL, CELL);
       x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
     }
-    if (x1 >= 0) {
-      g.clip(hatch);
-      g.strokeStyle = rgba(col, 0.32);
-      g.lineWidth = 1.3;
-      g.beginPath();
-      const L = (x1 - x0 + y1 - y0 + 2) * CELL, X0 = x0 * CELL, Y0 = y0 * CELL, Y1 = (y1 + 1) * CELL;
-      for (let d = 0; d <= L; d += 14) { // (diagonals across the box, from its left edge)
-        if (idx % 2) { g.moveTo(X0 + d - (Y1 - Y0), Y0); g.lineTo(X0 + d, Y1); } else { g.moveTo(X0 + d - (Y1 - Y0), Y1); g.lineTo(X0 + d, Y0); }
-      }
-      g.stroke();
+    return { land, edge, border, hatch, anyBorder, anyEdge, idx, x0, y0, x1, y1 };
+  }
+  // The land planned (p) painted, a step at a time, in order: a light wash
+  // over all of it; inside it (clipped to it), the soft band deepening
+  // toward its border, a stroke a step; the keyline and the hatching; the
+  // inked line; its glow, on gg. All at once as it's made, or (the land a
+  // strike will leave) a step a frame (see prebuild). Each step clips anew,
+  // as all of them at once did, so either way it's the same pixels.
+  const LAND_STEPS = 8;
+  function paintLandStep(p, st, g, gg, col) {
+    if (st === 0) { g.fillStyle = rgba(col, 0.1); g.fill(p.land, 'evenodd'); return; }
+    if (st <= 4) {
+      if (!p.anyEdge) return;
+      g.save();
+      g.clip(p.land, 'evenodd');
+      g.strokeStyle = col;
+      if (st < 4) { g.globalAlpha = LAND_BAND[2 * st - 1]; g.lineWidth = LAND_BAND[2 * st - 2] * CELL; }
+      else { g.globalAlpha = 0.55; g.lineWidth = 12; } // (half of it shows: 6 units inside the line)
+      g.stroke(p.edge);
+      g.restore();
+      return;
     }
-    g.restore();
-    if (anyBorder) {
+    if (st === 5) {
+      if (!p.anyBorder && p.x1 < 0) return;
+      g.save();
+      g.clip(p.land, 'evenodd');
+      if (p.anyBorder) { // (the keyline: inside the land, from the ink's inner edge on; the ink goes over its outer part, below)
+        g.strokeStyle = KEYLINE;
+        g.lineWidth = 2 * (BORDER_INK / 2 + BORDER_KEY);
+        g.stroke(p.border);
+      }
+      if (p.x1 >= 0) {
+        const { x0, y0, x1, y1 } = p;
+        g.clip(p.hatch);
+        g.strokeStyle = rgba(col, 0.32);
+        g.lineWidth = 1.3;
+        g.beginPath();
+        const L = (x1 - x0 + y1 - y0 + 2) * CELL, X0 = x0 * CELL, Y0 = y0 * CELL, Y1 = (y1 + 1) * CELL;
+        for (let d = 0; d <= L; d += 14) { // (diagonals across the box, from its left edge)
+          if (p.idx % 2) { g.moveTo(X0 + d - (Y1 - Y0), Y0); g.lineTo(X0 + d, Y1); } else { g.moveTo(X0 + d - (Y1 - Y0), Y1); g.lineTo(X0 + d, Y0); }
+        }
+        g.stroke();
+      }
+      g.restore();
+      return;
+    }
+    if (st === 6) {
+      if (!p.anyBorder) return;
       g.strokeStyle = LAND_INK;
       g.lineWidth = BORDER_INK;
-      g.stroke(border);
+      g.stroke(p.border);
+      return;
     }
-    if (gg && anyEdge) {
+    if (gg && p.anyEdge) {
       gg.strokeStyle = col;
-      gg.globalAlpha = 0.5; gg.lineWidth = 9; gg.stroke(edge);
-      gg.globalAlpha = 1; gg.strokeStyle = mix(col, '#fff7e0', 0.45); gg.lineWidth = 2.5; gg.stroke(edge);
+      gg.globalAlpha = 0.5; gg.lineWidth = 9; gg.stroke(p.edge);
+      gg.globalAlpha = 1; gg.strokeStyle = mix(col, '#fff7e0', 0.45); gg.lineWidth = 2.5; gg.stroke(p.edge);
     }
   }
   // Every run of traced sides of one kind (0 border, 1 contested) as open
@@ -5154,13 +5431,23 @@ window.SnakeRender = (() => {
       const r = fieldSpecs[i];
       if (r.gone && r.step < 0 && r.bx1 < 0) { realms.delete(r.owner); fieldSpecs.splice(i, 1); }
     }
-    let built = fieldSpecs.length !== dashFor;
-    for (const r of fieldSpecs) if (r.dirty || r.builtK !== k) { buildRealm(r); built = true; }
-    if (built) buildDashes();
+    let built = fieldSpecs.length !== dash.for, ready = -1, swapped = 0, rebuilt = 0;
+    for (const r of fieldSpecs) {
+      if (!r.dirty && r.builtK === k) continue;
+      if (ready < 0) { ready = pre.ready && preStill() ? 1 : 0; if (!ready && game.woodpecker?.struckAt === game.tick - 1) { if (pre.ready) landStale++; else landUnready++; } } // (the land a strike leaves, made ahead: is it the land now? (if not, at a strike, why not: counted for the tests))
+      if (ready && pre.todo.includes(r)) { swapIn(r); swapped++; } else { buildRealm(r); rebuilt++; }
+      built = true;
+    }
+    if (built) {
+      if (ready > 0 && !rebuilt && swapped === pre.todo.length) swapDashes();
+      else buildDashes();
+      pre.ready = false;
+    }
+    if (prebuilding) prebuild();
     const lively = !reduced, t = now / 1000;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     for (const r of fieldSpecs) if (r.any) ctx.drawImage(r.layer, r.X + shakeX, r.Y + shakeY);
-    if (dashAny) ctx.drawImage(dashLayer, dashX + shakeX, dashY + shakeY);
+    if (dash.any) ctx.drawImage(dash.layer, dash.X + shakeX, dash.Y + shakeY);
     // Lit up: breathing softly, quicker and brighter, while a rival's head is
     // on the land; flaring as it changes, and in a lightning flash; and from
     // where a head crossed in, lighting up along itself (see drawFieldHues).
@@ -5203,52 +5490,202 @@ window.SnakeRender = (() => {
     if (fallenFlags.length) drawFallenFlags(now);
   }
 
+  // The land a strike will leave, made ahead. Made at the strike, the land's
+  // layers took that frame tens of milliseconds (painting them, mostly the
+  // GPU's), a hitch everyone saw. So while the woodpecker aims (17 ticks),
+  // the layers of every realm its patch will cut, or run beside (its
+  // contested sides change too), are made in spare canvases as they'll be
+  // once the patch is holes, and the dashes with them: a step a frame (the
+  // land planned, then each stroke of it: see paintLandStep), each sent to
+  // the GPU in its own frame (kick), so no frame takes much. At the strike,
+  // if that's the land then (every realm's land, the holes, the
+  // resolution, all as foreseen: see preStill), they're swapped in;
+  // otherwise (anything else changed meanwhile) it's made the old way.
+  const pre = {
+    ready: false, key: NaN, step: 0, steps: 0, k: 0, // (made, for the aim keyed so, in steps)
+    specs: [], post: [], colors: [], todo: [], // (the realms as they were then; each one's land after the strike; the realms to make again)
+    holes: new Uint8Array(N2), plan: null, dash: { layer: null, X: 0, Y: 0, any: false, for: 0 },
+  };
+  let tickEvery = 100, tickNow = 0; // (how long a tick is on the board's clock as it's played, eased: a few frames' worth, or none when it's watched fast; and the last's)
+  let landVer = 0, prebuilding = true; // (landVer: the land's changes, counted; prebuilding: off only for the tests, to compare)
+  const preLost = { has: i => pre.holes[i] === 1 };
+  const postOf = o => pre.post[pre.specs.indexOf(o)];
+  const spareSides = r => pre.todo.includes(r) ? r.spare : r;
+  let kickG = null;
+  // (Drawn from, a canvas's waiting work goes to the GPU now: unsent, it all
+  // went at the strike, and that frame cost more than making it then. The
+  // little canvas is cleared at once, so it holds on to nothing.)
+  function kick(c) { (kickG ||= makeLayer(1, 1).getContext('2d')).drawImage(c, 0, 0, 1, 1, 0, 0, 1, 1); kickG.clearRect(0, 0, 1, 1); }
+  function prebuild() {
+    const w = game.woodpecker;
+    if (!w || !w.target.length) { pre.key = NaN; return; }
+    let key = (w.target.length * 977 + game.holes.size * 31 + landVer * 7919 + Math.round(k * 1000)) | 0;
+    for (const c of w.target) key = (key * 31 + c) | 0;
+    for (const r of fieldSpecs) {
+      if (r.step >= 0 || r.dirty || r.gone || r.builtK !== k) { pre.key = NaN; return; } // (wait for the land to settle)
+      key = (key * 31 + r.idx) | 0;
+    }
+    let same = key === pre.key && pre.specs.length === fieldSpecs.length;
+    for (let j = 0; same && j < fieldSpecs.length; j++) same = fieldSpecs[j] === pre.specs[j];
+    if (!same) { pre.key = key; pre.step = 0; pre.ready = false; }
+    // A step a frame, or more when the strike's too near for that (watched
+    // fast, or the land only just settled): the frames left before it, from
+    // the ticks left and how long a tick is as it's played (see onTick).
+    const framesLeft = Math.max(1, (w.strikeAt - game.tick + 0.5) * tickEvery / Math.max(8, frameDt) - 1);
+    for (let n = pre.step ? Math.min(4, Math.ceil((pre.steps + 1 - pre.step) / framesLeft)) : 1; n > 0 && !pre.ready && pre.step <= pre.steps; n--) prebuildStep(w);
+  }
+  function prebuildStep(w) {
+    const st = pre.step++;
+    if (st === 0) { prePlan(w.target); return; }
+    const per = 1 + LAND_STEPS, n = st - 1, ri = Math.floor(n / per), sub = n % per;
+    if (ri < pre.todo.length) {
+      const r = pre.todo[ri], sp = r.spare;
+      if (!sub) { const m = postOf(r); pre.plan = prepRealm(sp, r, m, boxOf(m), postOf, preLost); return; }
+      if (!pre.plan) return;
+      paintLandStep(pre.plan, sub - 1, sp.layer.getContext('2d'), sp.glow.getContext('2d'), r.color);
+      kick(sub === LAND_STEPS ? sp.glow : sp.layer);
+      return;
+    }
+    buildDashes(pre.dash, spareSides);
+    if (pre.dash.any) kick(pre.dash.layer);
+    pre.ready = true;
+  }
+  // The first step: each realm's land after the strike (its land less the
+  // patch), and which realms will be made again then: those it cuts, and
+  // those beside a cell they lose (as markDirty will find them).
+  function prePlan(target) {
+    pre.k = k; pre.plan = null;
+    pre.specs.length = pre.post.length = pre.colors.length = pre.todo.length = 0;
+    pre.holes.fill(0);
+    for (const h of game.holes) pre.holes[h] = 1;
+    for (const c of target) pre.holes[c] = 1;
+    for (const r of fieldSpecs) {
+      r.spare ||= { layer: null, glow: null, X: 0, Y: 0, any: false, shared: [], sharedAt: [], sharedTo: [], post: new Uint8Array(N2) };
+      const m = r.spare.post;
+      m.set(r.shown);
+      for (const c of target) m[c] = 0;
+      pre.specs.push(r); pre.post.push(m); pre.colors.push(r.color);
+    }
+    for (const r of fieldSpecs) {
+      let cut = false;
+      for (const c of target) if (r.shown[c]) { cut = true; break; }
+      if (cut) pre.todo.push(r);
+    }
+    const cuts = pre.todo.length;
+    for (const o of fieldSpecs) {
+      if (pre.todo.includes(o)) continue;
+      let beside = false;
+      for (let j = 0; j < cuts && !beside; j++) {
+        const r = pre.todo[j];
+        for (const c of target) {
+          if (!r.shown[c]) continue;
+          const m = o.shown, x = c % GRID;
+          if (m[c] || (x > 0 && m[c - 1]) || (x < GRID - 1 && m[c + 1]) || (c >= GRID && m[c - GRID]) || (c < N2 - GRID && m[c + GRID])) { beside = true; break; }
+        }
+      }
+      if (beside) pre.todo.push(o);
+    }
+    pre.steps = pre.todo.length ? 1 + pre.todo.length * (1 + LAND_STEPS) : 0; // (none cut: nothing to make)
+    if (!pre.steps) pre.step = 1; // (and nothing to swap: it stays not ready)
+  }
+  const preBox = { bx0: 0, by0: 0, bx1: -1, by1: -1 };
+  function boxOf(m) {
+    preBox.bx0 = preBox.by0 = GRID; preBox.bx1 = preBox.by1 = -1;
+    for (let i = 0; i < N2; i++) {
+      if (!m[i]) continue;
+      const x = i % GRID, y = (i - x) / GRID;
+      if (x < preBox.bx0) preBox.bx0 = x;
+      if (x > preBox.bx1) preBox.bx1 = x;
+      if (y < preBox.by0) preBox.by0 = y;
+      if (y > preBox.by1) preBox.by1 = y;
+    }
+    return preBox;
+  }
+  // Is the land now what was made ahead: the same realms, each one's land
+  // as foreseen, the same holes, at the same resolution?
+  function preStill() {
+    if (pre.k !== k || pre.specs.length !== fieldSpecs.length) return false;
+    for (let j = 0; j < fieldSpecs.length; j++) {
+      const r = fieldSpecs[j], m = pre.post[j];
+      if (r !== pre.specs[j] || r.color !== pre.colors[j]) return false;
+      for (let i = 0; i < N2; i++) if (r.shown[i] !== m[i]) return false;
+    }
+    let n = 0;
+    for (let i = 0; i < N2; i++) n += pre.holes[i];
+    if (n !== game.holes.size) return false;
+    for (const h of game.holes) if (!pre.holes[h]) return false;
+    return true;
+  }
+  // A realm's layers, made ahead, swapped in (the old ones are its spares now).
+  function swapIn(r) {
+    const sp = r.spare;
+    let t = r.layer; r.layer = sp.layer; sp.layer = t;
+    t = r.glow; r.glow = sp.glow; sp.glow = t;
+    t = r.shared; r.shared = sp.shared; sp.shared = t;
+    t = r.sharedAt; r.sharedAt = sp.sharedAt; sp.sharedAt = t;
+    t = r.sharedTo; r.sharedTo = sp.sharedTo; sp.sharedTo = t;
+    r.X = sp.X; r.Y = sp.Y; r.any = sp.any;
+    r.dirty = false; r.builtK = k; landVer++; landSwaps++;
+  }
+  let landSwaps = 0, landBuilds = 0, landStale = 0, landUnready = 0; // (realms' layers swapped in at a strike, and made; strikes it was made the old way at, the land made ahead not as it is then, or not made yet: for the tests)
+  function swapDashes() {
+    const d = pre.dash;
+    const t = dash.layer; dash.layer = d.layer; d.layer = t;
+    dash.X = d.X; dash.Y = d.Y; dash.any = d.any; dash.for = d.for;
+  }
+
   // Where two owners' land meets: every contested side dashed half in one
   // owner's colour, half in the other's, over an ink line, in one cached
   // layer for every realm, made again whenever any land is (stroked every
   // frame, the dashes' many short pieces cost as much as the rest of the
   // land; marching, they cost that and more).
-  let dashLayer = null, dashX = 0, dashY = 0, dashAny = false, dashFor = 0; // (dashFor: how many realms it was made for)
-  function buildDashes() {
-    dashFor = fieldSpecs.length;
+  const dash = { layer: null, X: 0, Y: 0, any: false, for: 0 }; // (for: how many realms it was made for)
+  const ownSides = r => r;
+  // Into `into` (the dashes' layer, or its spare), from each realm's
+  // contested sides as sidesOf has them (its own, or as a strike will leave them).
+  function buildDashes(into = dash, sidesOf = ownSides) {
+    into.for = fieldSpecs.length;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const r of fieldSpecs) {
-      for (let i = 0; i < r.shared.length; i += 3) {
-        x0 = Math.min(x0, r.shared[i]); x1 = Math.max(x1, r.shared[i]);
-        y0 = Math.min(y0, r.shared[i + 1]); y1 = Math.max(y1, r.shared[i + 1]);
+      const sh = sidesOf(r).shared;
+      for (let i = 0; i < sh.length; i += 3) {
+        x0 = Math.min(x0, sh[i]); x1 = Math.max(x1, sh[i]);
+        y0 = Math.min(y0, sh[i + 1]); y1 = Math.max(y1, sh[i + 1]);
       }
     }
-    dashAny = x1 >= x0;
-    if (!dashAny) return;
-    dashX = Math.floor((x0 - 4) * k); dashY = Math.floor((y0 - 4) * k);
-    const w = Math.ceil((x1 + 4) * k) - dashX + 1, h = Math.ceil((y1 + 4) * k) - dashY + 1;
-    if (!dashLayer) dashLayer = makeLayer(w, h);
-    else if (dashLayer.width !== w || dashLayer.height !== h) { dashLayer.width = w; dashLayer.height = h; }
-    const g = dashLayer.getContext('2d');
+    into.any = x1 >= x0;
+    if (!into.any) return;
+    into.X = Math.floor((x0 - 4) * k); into.Y = Math.floor((y0 - 4) * k);
+    const w = Math.ceil((x1 + 4) * k) - into.X + 1, h = Math.ceil((y1 + 4) * k) - into.Y + 1;
+    if (!into.layer) into.layer = makeLayer(w, h);
+    else if (into.layer.width !== w || into.layer.height !== h) { into.layer.width = w; into.layer.height = h; }
+    const g = into.layer.getContext('2d');
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, w, h);
-    g.setTransform(k, 0, 0, k, -dashX, -dashY);
+    g.setTransform(k, 0, 0, k, -into.X, -into.Y);
     g.lineCap = 'butt';
     g.lineJoin = 'round';
     for (const r of fieldSpecs) {
-      if (!r.shared.length) continue;
+      const h = sidesOf(r);
+      if (!h.shared.length) continue;
       const s0 = r.idx % 2 ? 0.5 : 0;
-      dashes(g, r, s0, null);
-      for (const o of fieldSpecs) if (o !== r && r.sharedTo.includes(o)) dashes(g, r, 0.5 - s0, o); // (the other half, where only this realm has the side)
+      dashes(g, h, r.color, s0, null);
+      for (const o of fieldSpecs) if (o !== r && h.sharedTo.includes(o)) dashes(g, h, r.color, 0.5 - s0, o); // (the other half, where only this realm has the side)
     }
   }
-  // Half of each of r's contested sides, from s0 along it (to s0 + 0.5), on
-  // g in r's colour over an ink line; or with o, the halves of the sides
-  // only r has against o's land, in o's colour.
-  function dashes(g, r, s0, o) {
-    const sh = r.shared, at = r.sharedAt;
+  // Half of each of a realm's contested sides (h: its shared, sharedAt and
+  // sharedTo), from s0 along it (to s0 + 0.5), on g in its colour (col)
+  // over an ink line; or with o, the halves of the sides only it has
+  // against o's land, in o's colour.
+  function dashes(g, h, col, s0, o) {
+    const sh = h.shared, at = h.sharedAt;
     g.beginPath();
-    for (let n = 0; n < r.sharedTo.length; n++) {
-      if (o && r.sharedTo[n] !== o) continue;
+    for (let n = 0; n < h.sharedTo.length; n++) {
+      if (o && h.sharedTo[n] !== o) continue;
       const L = sh[at[n + 1] - 1];
       dashAlong(g, sh, at[n], at[n + 1], s0 * L, (s0 + 0.5) * L);
     }
-    const col = o ? o.color : r.color;
+    if (o) col = o.color;
     g.strokeStyle = LAND_INK;
     g.lineWidth = 5;
     g.stroke();
@@ -5631,35 +6068,94 @@ window.SnakeRender = (() => {
     fresh = false;
   }
 
-  // Food moved aside by a head that can't eat it (see onTick): a bead its
-  // own snake choked on, spat from (x, y) to (tx, ty) in a little arc (or,
-  // with nowhere to go, tossed up where it was), or food a coughing head
-  // nudged, rolling there. Its look goes with it (a bead keeps its
-  // markings), and it's drawn going there (see drawFood); a beetle scurries
-  // there (see drawBeetle). With reduced motion it's simply there.
-  const SPAT_MS = 320, ROLL_MS = 280;
-  let beetleNudge = null; // { x, y, tx, ty, tick }
-  // A spat bead up in the air: over the snakes (it's spat over its own
-  // head), bigger the higher it is (its shadow's on the ground: see drawFood).
+  // Food moved aside (see onTick): a bead its own snake choked on, spat
+  // from (x, y) to (tx, ty) in a little arc (or, with nowhere to go, tossed
+  // up where it was); food a coughing head nudged, rolling there; or food
+  // the woodpecker's strike knocked out of its patch, flying there in an
+  // arc, higher and longer the further it goes. Its look goes with it (a
+  // bead keeps its markings), and it's drawn going there (see drawFood); a
+  // beetle scurries there (see drawBeetle). With reduced motion it's simply
+  // there.
+  const SPAT_MS = 320, ROLL_MS = 280, FLY_CELL_MS = 70, FLY_MAX_MS = 620;
+  // Up in the air: over the snakes (a bead's spat over its own head; food
+  // flies over whatever's in the way), bigger the higher it is (its shadow's
+  // on the ground: see drawFood). A bead is rimmed in ink and parchment in
+  // the air, so one in your own colour reads against your body under it.
   function drawTossed(now) {
+    if (reduced) return;
     for (let j = 0; j < game.food.length; j++) {
       const f = game.food[j];
-      if (f.kind !== 'pellet') continue;
+      if (f.kind === 'beetle') continue;
       const b = born.get(f.y * GRID + f.x);
       if (!b || !b.spat || !b.movedAt) continue;
-      const u = (now - b.movedAt) / SPAT_MS;
-      if (u <= 0 || u >= 1 || reduced) continue;
+      const u = (now - b.movedAt) / b.fly;
+      if (u <= 0 || u >= 1) continue;
       const e = 1 - (1 - u) * (1 - u), up = Math.sin(u * Math.PI), sz = 1 + 0.3 * up;
-      blitAbout(beadSprite(f.cooked ? ROAST : b.v), (b.fx + (f.x - b.fx) * e + 0.5) * CELL, (b.fy + (f.y - b.fy) * e + 0.5) * CELL - up * CELL * 0.6, 0, 0, sz, sz, 0);
+      const x = (b.fx + (f.x - b.fx) * e + 0.5) * CELL, y = (b.fy + (f.y - b.fy) * e + 0.5) * CELL - up * b.hop;
+      if (f.kind === 'pellet') {
+        ctx.fillStyle = 'rgba(28,16,6,0.85)'; circle(x, y, CELL * 0.43 * sz);
+        ctx.fillStyle = '#fffbea'; circle(x, y, CELL * 0.37 * sz);
+      }
+      blitAbout(flyingSprite(f, b), x, y, 0, 0, sz, sz, 0);
     }
   }
-  function moveFood(x, y, tx, ty, now, spat) {
+  // Food as it's drawn in the air (no glow, haze or fly: they don't come along).
+  function flyingSprite(f, b) {
+    if (f.kind === 'pellet') return beadSprite(f.cooked ? ROAST : b.v);
+    if (f.kind === 'golden') return goldenSprite();
+    if (f.kind === 'mushroom') return mushroomSprite();
+    if (f.kind === 'leaf') return goldLeafSprite();
+    if (f.kind === 'goldcap') return goldcapSprite();
+    const left = f.expires != null ? f.expires - game.tick : 999;
+    return appleSprite(f.cooked ? 'baked' : left > 50 ? 'fresh' : left > 22 ? 'bruised' : 'rotten');
+  }
+  function moveFood(x, y, tx, ty, now, spat, knocked = false) {
     const from = y * GRID + x, to = ty * GRID + tx, f = game.food.find(o => o.x === tx && o.y === ty && o.kind !== 'beetle');
     if (!f) return;
-    const b = born.get(from);
+    const b = born.get(from), d = Math.hypot(tx - x, ty - y);
     if (from !== to) born.delete(from);
-    born.set(to, { kind: f.kind, at: now - POP_MS, i: 0, next: 0, gen: bornGen, v: b && b.kind === f.kind ? b.v : (f.color || '#a16207') + '|', fell: false, fx: x, fy: y, movedAt: now, spat });
+    born.set(to, { kind: f.kind, at: now - POP_MS, i: 0, next: 0, gen: bornGen, v: b && b.kind === f.kind ? b.v : (f.color || '#a16207') + '|', fell: false, fx: x, fy: y, movedAt: now, spat,
+      fly: knocked ? Math.min(FLY_MAX_MS, SPAT_MS + FLY_CELL_MS * d) : SPAT_MS, hop: CELL * (knocked ? Math.min(1.5, 0.6 + 0.22 * d) : 0.6) });
   }
+
+  // Through the woodpecker's aim, the food in its mark trembles (see
+  // drawFood), and a faint ring marks where each piece will be knocked to at
+  // the strike: the engine's own rule (knockTo, the rivals' too), worked out
+  // once a tick.
+  const knockLand = []; // (cells, x and y, this tick's)
+  let knockFor = -1, knockGame = null;
+  function knockRings(w, prog, now) {
+    if (knockFor !== game.tick || knockGame !== game) {
+      knockFor = game.tick; knockGame = game; knockLand.length = 0;
+      const to = window.SnakeEngine?.knockTo;
+      if (to) for (const f of game.food) {
+        if (!patch[f.y * GRID + f.x]) continue;
+        const c = to(game, f.x, f.y, w.target);
+        if (c == null) continue;
+        if (typeof c === 'number') knockLand.push(c % GRID, (c - c % GRID) / GRID);
+        else if (Array.isArray(c)) knockLand.push(c[0], c[1]);
+        else knockLand.push(c.x, c.y);
+      }
+    }
+    if (!knockLand.length) return;
+    const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now / 160);
+    ctx.setLineDash(KNOCK_DASH);
+    ctx.lineCap = 'butt';
+    for (let pass = 0; pass < 2; pass++) {
+      ctx.globalAlpha = (0.35 + 0.4 * prog) * (pass ? 1 : 0.7);
+      ctx.strokeStyle = pass ? '#fef3c7' : '#140a04';
+      ctx.lineWidth = pass ? 1.6 : 3.4;
+      ctx.beginPath();
+      for (let i = 0; i < knockLand.length; i += 2) {
+        const x = (knockLand[i] + 0.5) * CELL, y = (knockLand[i + 1] + 0.5) * CELL, r = CELL * (0.36 + 0.04 * pulse);
+        ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, TAU);
+      }
+      ctx.stroke();
+    }
+    ctx.setLineDash(NO_DASH);
+    ctx.globalAlpha = 1;
+  }
+  const KNOCK_DASH = [5, 4];
 
   // A dead snake's beads: what each one looks like, and a ripple from head to
   // tail. A corpse leaves a bead on every other segment (see the engine's
@@ -5875,21 +6371,33 @@ window.SnakeRender = (() => {
     mLive = live;
   }
 
-  // A beetle diving into its burrow: it shrinks away into the hole.
+  // A beetle diving into its burrow: it shrinks away into the hole. One that
+  // dug itself in sinks the rest of the way, its collar of sawdust closing
+  // over it (then its plug is left: see drawHeaps).
+  const dives = []; // { x, y, at, ang, gold, dug (it dug in: how far it had sunk) }
   function drawDive(now) {
-    if (!dive) return;
-    const age = (now - dive.at) / 320;
-    if (age >= 1 || reduced) { dive = null; return; }
-    const c = CELL, s = 1.35 * (1 - age);
-    ctx.save();
-    ctx.translate(dive.x * c + c / 2, dive.y * c + c / 2);
-    ctx.rotate(dive.ang + age * 2);
-    ctx.scale(s, s);
-    ctx.fillStyle = dive.gold ? honeyShell() : '#059669';
-    ctx.strokeStyle = dive.gold ? '#047857' : '#fbbf24';
-    ctx.lineWidth = c * 0.03;
-    ctx.beginPath(); ctx.ellipse(-c * 0.02, 0, c * 0.22, c * 0.17, 0, 0, TAU); ctx.fill(); ctx.stroke();
-    ctx.restore();
+    for (let i = dives.length - 1; i >= 0; i--) {
+      const d = dives[i], age = (now - d.at) / (d.dug ? 220 : 320);
+      if (age >= 1 || age < 0 || reduced) { dives.splice(i, 1); continue; }
+      const c = CELL, x = d.x * c + c / 2, y = d.y * c + c / 2;
+      if (d.dug) {
+        const dig = d.dug + (1 - d.dug) * age;
+        ctx.fillStyle = 'rgba(20,10,4,0.8)';
+        ctx.beginPath(); ctx.ellipse(x, y, c * 0.38 * (1 - age), c * 0.31 * (1 - age), 0, 0, TAU); ctx.fill();
+        digCollar(x, y, dig, d.x * 7 + d.y * 13);
+        continue;
+      }
+      const s = 1.35 * (1 - age);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(d.ang + age * 2);
+      ctx.scale(s, s);
+      ctx.fillStyle = d.gold ? honeyShell() : '#059669';
+      ctx.strokeStyle = d.gold ? '#047857' : '#fbbf24';
+      ctx.lineWidth = c * 0.03;
+      ctx.beginPath(); ctx.ellipse(-c * 0.02, 0, c * 0.22, c * 0.17, 0, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
   }
 
   // A roast: a piece of snake that fell off in the flames, browned all over.
@@ -5922,24 +6430,27 @@ window.SnakeRender = (() => {
   // Every piece of food on the board, under the snakes.
   function drawFood(alpha, now) {
     trackFood(now);
-    const lively = !reduced;
+    trackBugs(now);
+    if (heaps.length) drawHeaps(now); // (where a beetle dug itself in: its plug, under the rest)
+    const lively = !reduced, prog = lively ? aimed(alpha) : -1; // (through the woodpecker's aim: what's in its mark trembles)
     for (const f of game.food) {
       if (f.kind === 'beetle') { drawBeetle(f, alpha, now); continue; }
       const key = f.y * GRID + f.x, b = born.get(key);
       if (f.kind === 'pellet' && heldCells[key]) { if (b) b.at = now + b.i * RIPPLE_MS; continue; } // (under a held corpse: not yet)
       const pop = b ? popOf(now - b.at) : 1;
       if (pop <= 0) continue;
-      let x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2, toss = 0;
-      if (b && b.movedAt) { // (spat or nudged aside: on its way from where it was, see moveFood)
-        const u = (now - b.movedAt) / (b.spat ? SPAT_MS : ROLL_MS);
+      let x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
+      if (b && b.movedAt) { // (spat, knocked or nudged aside: on its way from where it was, see moveFood)
+        const u = (now - b.movedAt) / (b.spat ? b.fly : ROLL_MS);
         if (u < 0 || u >= 1 || reduced) b.movedAt = 0;
         else {
           const e = 1 - (1 - u) * (1 - u);
           x = (b.fx + (f.x - b.fx) * e + 0.5) * CELL; y = (b.fy + (f.y - b.fy) * e + 0.5) * CELL;
-          toss = b.spat ? Math.sin(u * Math.PI) * CELL * 0.6 : Math.abs(Math.sin(u * Math.PI * 2)) * (1 - u) * CELL * 0.14; // (a spat bead flies in a little arc; nudged food rolls, bouncing a little)
-          if (!b.spat) { y -= toss; toss = 0; } // (rolling, it bounces along the bark, shadow and all)
+          if (b.spat) { shadowAt(x + 1, y + CELL * 0.32, pop * 0.85 * (1 - 0.35 * Math.sin(u * Math.PI))); continue; } // (up in the air: its shadow on the ground, and it over the snakes, see drawTossed)
+          y -= Math.abs(Math.sin(u * Math.PI * 2)) * (1 - u) * CELL * 0.14; // (rolling, it bounces along the bark, shadow and all)
         }
       }
+      if (prog >= 0 && patch[key]) { const a = 0.5 + 1.3 * prog; x += Math.sin(now / 19 + key) * a; y += Math.cos(now / 26 + key * 1.7) * a * 0.7; }
       const t = now / 1000 + ((f.x * 7 + f.y * 13) % 10) * 0.63; // each piece on its own beat
       if (f.kind === 'food') {
         const drop = b?.fell && !reduced ? Math.max(0, 1 - (now - b.at) / 380) : 0; // (a new apple drops from the tree above)
@@ -5965,11 +6476,10 @@ window.SnakeRender = (() => {
         const off = left < BEAD_OFF ? Math.min(1, (BEAD_OFF - left) / (BEAD_OFF - BEAD_GOING)) : 0, going = Math.max(0, Math.min(1, left / BEAD_GOING));
         const h = lively ? (0.5 - 0.5 * Math.cos(t * 3)) * (1 - 0.7 * off) : 0;
         ctx.globalAlpha = 0.5 + 0.5 * going;
-        const up = toss / (CELL * 0.6); // (spat: up in the air, over the snakes, see drawTossed; its shadow smaller on the ground)
-        shadowAt(x + 1, y + CELL * 0.3, pop * 0.85 * (1 - 0.2 * h) * (0.72 + 0.28 * going) * (1 - 0.3 * up));
+        shadowAt(x + 1, y + CELL * 0.3, pop * 0.85 * (1 - 0.2 * h) * (0.72 + 0.28 * going));
         const sz = pop * (0.72 + 0.28 * going) * (1 + (lively ? Math.sin(t * 6) * 0.03 * (1 - off) : 0));
-        if (!up) blitAbout(beadSprite(f.cooked ? ROAST : b ? b.v : (f.color || '#a16207') + '|'), x, y - h * 1.8, 0, 0, sz, sz, 0);
-        if (off > 0 && !up) { ctx.globalAlpha = (0.5 + 0.5 * going) * off; blitAbout(beadRotSprite(!f.cooked && lumaOf(beadFill(f)) < BEAD_DARK), x, y - h * 1.8, 0, 0, sz, sz, 0); }
+        blitAbout(beadSprite(f.cooked ? ROAST : b ? b.v : (f.color || '#a16207') + '|'), x, y - h * 1.8, 0, 0, sz, sz, 0);
+        if (off > 0) { ctx.globalAlpha = (0.5 + 0.5 * going) * off; blitAbout(beadRotSprite(!f.cooked && lumaOf(beadFill(f)) < BEAD_DARK), x, y - h * 1.8, 0, 0, sz, sz, 0); }
         ctx.globalAlpha = 1;
         if (f.cooked && !off) steam(b, x, y, now);
       } else if (f.kind === 'mushroom') {
@@ -6154,7 +6664,7 @@ window.SnakeRender = (() => {
   const fireSeen = new Map(); // cell -> it was burning
   const scorched = [];        // cells that burned (baked into the static layer)
   let scorchDrawn = 0, fireTick = -1;
-  let bolt = null, flashAt = -1e9, rainbow = null, dive = null;
+  let bolt = null, flashAt = -1e9, rainbow = null;
 
   function easeSky(dt) {
     const kind = game.weather?.kind || 'clear';
@@ -6878,6 +7388,7 @@ window.SnakeRender = (() => {
       for (let n = 0; n < dents; n++) { const d = dentOrder[n], rr = dentR[d], x = dentX[d] + rr * 0.45, y = dentY[d] + rr * 0.45; ctx.moveTo(x + rr * 0.4, y); ctx.arc(x, y, rr * 0.4, 0, TAU); }
       ctx.fill();
     }
+    knockRings(w, prog, now); // (and where the food in it will be knocked to)
   }
   // The patch's outline, traced once each time it changes (see traceCells),
   // kept as its corners, loop by loop (round the outside, and round any cell
@@ -7353,6 +7864,10 @@ window.SnakeRender = (() => {
       timeFrom = game.time > timeAt && game.time - timeAt < 1000 ? timeAt : game.time;
       timeAt = game.time;
     }
+    if (tickNow) tickEvery += (Math.max(0, Math.min(1000, now - tickNow)) - tickEvery) * 0.3; // (see prebuild)
+    tickNow = now;
+    for (let i = scurries.length - 1; i >= 0; i--) if (scurries[i].tick < game.tick) scurries.splice(i, 1); // (a tick's own: see drawBeetle)
+    for (let i = bugPops.length - 1; i >= 0; i--) if (bugPops[i].tick < game.tick) bugPops.splice(i, 1);
     for (const e of events) {
       if (e.type === 'eat') {
         let x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
@@ -7381,8 +7896,13 @@ window.SnakeRender = (() => {
         animOf(e.snake, now).chokeAt = now;
         moveFood(e.x, e.y, e.tx ?? e.x, e.ty ?? e.y, now, true);
       } else if (e.type === 'nudge') { // food its coughing head reached, nudged aside: it rolls there, or a beetle scurries
-        if (e.kind === 'beetle') beetleNudge = { x: e.x, y: e.y, tx: e.tx ?? e.x, ty: e.ty ?? e.y, tick: game.tick };
+        if (e.kind === 'beetle') scurries.push({ x: e.x, y: e.y, tx: e.tx ?? e.x, ty: e.ty ?? e.y, tick: game.tick });
         else moveFood(e.x, e.y, e.tx ?? e.x, e.ty ?? e.y, now, false);
+      } else if (e.type === 'knock') { // the woodpecker's strike knocks food out of its patch: it flies to where the rule says, in an arc, and a beetle scurries there; with nowhere to go, the bird has it
+        const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
+        if (e.tx == null || e.ty == null) { eatenNow.add(e.y * GRID + e.x); spawn(x, y, 8, 160, 420, 2.2, e.kind === 'beetle' ? '#059669' : '#c08a4a', '#f6ecd2'); }
+        else if (e.kind === 'beetle') scurries.push({ x: e.x, y: e.y, tx: e.tx, ty: e.ty, tick: game.tick });
+        else moveFood(e.x, e.y, e.tx, e.ty, now, true);
       } else if (e.type === 'death') {
         deaths.push(e.snake); // bursts on the next frame, unless the moment is held
         noteRemains(e.snake, now);
@@ -7457,7 +7977,9 @@ window.SnakeRender = (() => {
         dustPuffs(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, e.snake.dir.x, e.snake.dir.y);
         if (e.gold) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 10, 120, 600, 1.8, '#d4a017', '#fffbea'); // (in Honey, a power's gold)
       } else if (e.type === 'dash') { // a streak along the way it went: a golden dash's in gold and ember, with flecks of both; a plain flash's in ember, lighter
-        animOf(e.snake, now).dashTick = game.tick;
+        const da = animOf(e.snake, now);
+        da.dashTick = game.tick;
+        da.bursts++; da.burstAt = now; // (a rainbow's colours burst on: see bowHue)
         if (e.plain && lookOf(e.snake) === 'star') animOf(e.snake, now).flareAt = now; // (Star's flash spent: its twinkles burst off its points as they go dim, see drawStarHead)
         const h = e.snake.body[0], seen = streaks.findIndex(k => k.s === e.snake && k.pre === game.tick - 1); // (seen coming: see prepare)
         if (seen >= 0 && streaks[seen].fx === e.x && streaks[seen].fy === e.y && streaks[seen].tx === h.x && streaks[seen].ty === h.y) { streaks[seen].pre = -1; sparksOf(streaks[seen]); } // (as it was seen: it stays, and now its flecks fly)
@@ -7493,10 +8015,15 @@ window.SnakeRender = (() => {
         for (const k of e.cells || []) spawn((k % GRID) * CELL + CELL / 2, Math.floor(k / GRID) * CELL + CELL / 2, 4, 240, 520, 2.8, '#c08a4a', '#3b2412');
         if (e.cells?.length && !reduced) shake(5);
       } else if ((e.type === 'spawn' && e.kind === 'beetle') || e.type === 'emerge') {
-        beetleAt = now; // (it pops out of its burrow, kicking up a little sawdust)
+        bugPops.push({ x: e.x, y: e.y, tick: game.tick, at: now }); // (it pops out of its burrow, kicking up a little sawdust)
         if (e.x >= 0) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 110, 420, 2, '#d6b480', '#a16207');
-      } else if (e.type === 'dive') { // down its burrow
-        dive = { x: e.x, y: e.y, at: now, ang: beetleAng ?? 0, gold: beetleGold };
+      } else if (e.type === 'dig') { // a cornered beetle digs in: sawdust bursts off it (and sprays while it digs: see drawDig)
+        if (!reduced) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 8, 140, 420, 2, '#e6cc96', '#b07d48');
+      } else if (e.type === 'dive') { // down its burrow, or the bore it dug
+        let b = null;
+        for (const o of bugs) if (Math.abs(o.x - e.x) + Math.abs(o.y - e.y) <= (b ? 0 : 1)) b = o; // (where it went in, or beside it)
+        dives.push({ x: e.x, y: e.y, at: now, ang: b?.ang ?? 0, gold: b ? b.gold : !!e.gold, dug: e.dug ? Math.max(0.3, b?.dig || DIG_STILL) : 0 });
+        if (e.dug) heaps.push({ x: e.x, y: e.y, at: now });
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 110, 420, 2, '#d6b480', '#a16207');
       } else if (e.type === 'burrow') {
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 170, 520, 2.4, '#d6b480', '#3b2412');
@@ -7881,9 +8408,9 @@ window.SnakeRender = (() => {
     eatenNow.clear();
     bornTick = -1;
     fresh = true;
-    beetleAng = null;
-    beetleAt = 0;
-    beetleNudge = null;
+    bugs.length = bugPops.length = scurries.length = dives.length = heaps.length = 0;
+    bugFor.clear();
+    knockFor = -1; tickNow = 0;
     fallenFlags.length = 0;
     fallen.length = 0;
     nextLeaf = 0;
@@ -7895,7 +8422,7 @@ window.SnakeRender = (() => {
     scorchDrawn = 0;
     scorchMask.fill(0);
     fireTick = -1;
-    bolt = null; rainbow = null; dive = null; flashAt = -1e9;
+    bolt = null; rainbow = null; flashAt = -1e9;
     blasts.length = 0;
     streaks.length = 0;
     refusal.at = -1e9; refusal.tick = -1;
@@ -7907,6 +8434,7 @@ window.SnakeRender = (() => {
     embers.length = 0;
     ripples.length = 0;
     realms.clear();
+    pre.ready = false; pre.key = NaN; pre.specs.length = pre.post.length = pre.todo.length = 0;
     inField.clear();
     fieldSpecs.length = 0;
     rgbaCache.clear(); // (bounded anyway: a backstop)
@@ -7936,6 +8464,17 @@ window.SnakeRender = (() => {
     streaked: () => streaks.map(k => ({ from: [k.fx, k.fy], to: [k.tx, k.ty], seen: k.pre >= 0 })), // (the dash streaks drawn: for the tests)
     hues(on) { huesOn = !!on; }, // (a land's colour round a rival on it, drawn or not: for the benchmark, which times it)
     landShown: (s, x, y) => !!realms.get(s)?.shown[y * GRID + x], // (whether a cell of s's land is drawn: for the tests)
+    prebuild(on) { prebuilding = !!on; if (!on) { pre.ready = false; pre.key = NaN; } }, // (the land a strike leaves made ahead, or not: for the tests, comparing the two)
+    get prebuilt() { return pre.ready; }, // (made ahead, and waiting for the strike: for the tests)
+    get landMade() { return { swapped: landSwaps, built: landBuilds, stale: landStale, unready: landUnready }; }, // (how often a realm's layers were swapped in, made ahead, and made; strikes made the old way, and why: for the tests)
+    // (s's land's layers and the dashes as drawn, as a hash of their pixels, where they land and how big: for the tests)
+    landPixels(s) {
+      const r = realms.get(s), out = {};
+      const hash = c => { if (!c || !c.width) return null; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let h = 2166136261; for (let i = 0; i < d.length; i++) h = Math.imul(h ^ d[i], 16777619); return `${c.width}x${c.height}:${h >>> 0}`; };
+      if (r) { out.any = r.any; out.at = [r.X, r.Y]; out.layer = r.any ? hash(r.layer) : null; out.glow = r.any ? hash(r.glow) : null; out.shared = r.shared.length; }
+      out.dash = dash.any ? [dash.X, dash.Y, hash(dash.layer)] : null;
+      return out;
+    },
     flick(s, p) { const a = animOf(s, lastNow), [, len] = FLICKS[lookOf(s)] || FLICKS.player; a.tongueMs = T.TONGUE_MS * len; a.tongueUntil = lastNow + (1 - p) * a.tongueMs; a.nextTongue = lastNow + 1e9; }, // (its tongue or gag p of the way through, and then no more: for the tests)
   };
 })();

@@ -22,8 +22,10 @@
 //   middle), never on the head (none inside its face, where moving the arc
 //   in put them over its eyes), and stunned, the stars keep clear of them.
 // - Star: its head is a star (five points round it, one to the back), its
-//   rainbow flows down its body from the head (and holds still with reduced
-//   motion), its gold line runs round its points, and a dead Star's beads go
+//   rainbow streams back along it as it goes, faster than it crawls
+//   (backward over the log, each segment round the rainbow about once a
+//   second; still while it's stunned, a burst as it flashes; with reduced
+//   motion a slow drift where it is), its gold line runs round its points, and a dead Star's beads go
 //   round the rainbow from its head. Its tell is a countdown: its points go
 //   dim as it flashes and light one by one through its rest, its middle
 //   always lit (with reduced motion too: a point at a time, never a blink),
@@ -45,9 +47,21 @@
 //   puff and the bead is spat aside in an arc to where it went; coughing,
 //   the mouth stays shut and puffs of breath come out (with reduced motion
 //   too); nudged food rolls aside, and a beetle scurries.
+// - Beetles and the woodpecker's knock (staged from the engine's state and
+//   events): two beetles out at once, each drawn; a cornered one digs in
+//   (it sinks, a collar of sawdust round it, sawdust spraying, and a heap
+//   left where it went in, a few seconds; with reduced motion, still and no
+//   spray); through the aim, food in the mark trembles and a ring marks
+//   where it'll be knocked to; at the strike it flies there in an arc,
+//   rimmed so it reads over a body, and a beetle scurries there. Copycat
+//   copying Star keeps its own red head.
 // - A pecked flag is a lost colony: the flag tips and falls into the pit
 //   (the other colony's stands), its land shrinks away into the pit, and
 //   Sovereign's banner is carried to its new capital, not jumping there.
+// - A strike that doesn't stutter: the land a strike leaves, made ahead
+//   while the woodpecker aims and swapped in, is the very land made at the
+//   strike, pixel for pixel; and with the land changing otherwise as it
+//   strikes, it's made the old way, and is still the same.
 // - Every Field guide picture draws (the mushroom on bark; a snake holding
 //   golden powers; your rests).
 // - The next round's stretch of log, made ahead in idle time, is the very
@@ -352,8 +366,11 @@ const STAGE = `(() => {
     }
 
     // Star: a star for a head (five points round it, where a round head has
-    // none), the old rainbow flowing down its body from the head (held still
-    // with reduced motion), the gold line round its points, and its beads in
+    // none), the old rainbow streaming back along its body as it goes (round
+    // the rainbow about once a second at a segment, at 1.25 times its crawl,
+    // so a colour goes back over the log at a quarter of it; still while it's
+    // stunned; a burst as it flashes; drifting slowly where it is with
+    // reduced motion), the gold line round its points, and its beads in
     // rainbow order. Two Stars heading right along rows 8 and 14, one
     // resting, one ready; Mason (a round head) beside them. (Its tell, its
     // face and its rainbow on others: below.)
@@ -373,18 +390,55 @@ const STAGE = `(() => {
       const g = stage(['star', 'star', 'mason']), [you, rest, ready] = g.snakes;
       setBody(rest, Array.from({ length: 16 }, (_, i) => [16 - i, 8]), 'right'); rest.flashReadyAt = g.time + 1e6;
       setBody(ready, Array.from({ length: 16 }, (_, i) => [16 - i, 14]), 'right'); ready.flashReadyAt = 0;
-      R.setReducedMotion(true); // (its rainbow held still: its neck isn't yellow, nor its points twinkling)
+      R.setReducedMotion(true); // (its rainbow drifting slowly where it is: its neck isn't yellow, nor its points twinkling)
       __t = 7e6; show(g); drawN(20);
       out.points = [0.66, 0.7].map(r => runs(ring(rest, r), yellow));
-      const still = SEGS.map(i => seg(rest, i));
+      const still = SEGS.map(i => hue(seg(rest, i)));
       drawN(15); // (half a second on)
-      out.still = { before: still, after: SEGS.map(i => seg(rest, i)) };
+      const still2 = SEGS.map(i => hue(seg(rest, i)));
+      drawN(60); // (two seconds more)
+      out.still = { a: still, b: still2, c: SEGS.map(i => hue(seg(rest, i))) };
       R.setReducedMotion(false);
       drawN(20);
-      const t0 = SEGS.map(i => hue(seg(rest, i)));
-      for (let i = 0; i < 28; i++) { __t += 15; R.frame(0.5, __t); } // (28 hues on, 15 ms each: a segment's worth)
-      const t1 = SEGS.map(i => hue(seg(rest, i)));
-      out.flow = { t0, t1 };
+      // Going: a tick every 120 ms, 8 frames a tick (as at the opening
+      // speed): segment 3's hue, and the hue on the log at a cell its body
+      // lies over all the while, every other frame, unwound (degrees
+      // turned). (Read off a copy of its row, not the board: read back that
+      // often, the board would be moved off the GPU, and every check after
+      // this one would see the CPU's drawing.)
+      const turned = list => { let sum = 0; for (let i = 1; i < list.length; i++) sum += ((list[i] - list[i - 1] + 540) % 360) - 180; return Math.round(sum); };
+      const board = document.getElementById('game'), copy = document.createElement('canvas'), cg = copy.getContext('2d', { willReadFrequently: true }), kk = board.width / (TUNING.GRID * ${CELL});
+      copy.width = board.width; copy.height = Math.ceil(${CELL} * kk);
+      const rowHue = (x, y) => { const d = cg.getImageData(Math.round(x * ${CELL} * kk), Math.round((y - 8) * ${CELL} * kk), 3, 3).data; let r = 0, gg = 0, bb = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; gg += d[i + 1]; bb += d[i + 2]; } return hue([r, gg, bb]); };
+      const move = (s, cells = 1, events = []) => { s.prev = s.body.map(c => ({ ...c })); for (let j = 0; j < cells; j++) { const h = s.body[0]; s.body.unshift({ x: h.x + 1, y: h.y }); s.body.pop(); } g.tick++; R.onTick(events); };
+      const play = (ticks, go) => {
+        const s3 = [], log = [];
+        for (let t = 0; t < ticks; t++) {
+          go(t);
+          for (let f = 1; f <= 8; f++) {
+            __t += 15; R.frame(f / 8, __t);
+            if (f % 2) continue;
+            cg.clearRect(0, 0, copy.width, copy.height); cg.drawImage(board, 0, Math.round(8 * ${CELL} * kk), copy.width, copy.height, 0, 0, copy.width, copy.height);
+            const [hx] = at(rest);
+            s3.push(rowHue(hx - 3 + 0.04, 8.54)); log.push(rowHue(8.54, 8.54));
+          }
+        }
+        return { seg: turned(s3), log: turned(log), ms: ticks * 120 };
+      };
+      setBody(rest, Array.from({ length: 16 }, (_, i) => [13 - i, 8]), 'right');
+      drawN(10);
+      out.going = play(6, () => move(rest)); // (13 to 19: cell 8 under segments 5 to 11)
+      rest.stunUntil = g.tick + 20; // (stunned, it stays where it is: from the tick after, once it's no longer drawn on ahead)
+      const stay = () => { rest.prev = rest.body.map(c => ({ ...c })); g.tick++; R.onTick([]); };
+      play(1, stay);
+      out.stunned = play(4, stay);
+      rest.stunUntil = -1;
+      setBody(rest, Array.from({ length: 16 }, (_, i) => [13 - i, 8]), 'right');
+      drawN(10);
+      out.normal = play(3, () => move(rest));
+      setBody(rest, Array.from({ length: 16 }, (_, i) => [13 - i, 8]), 'right');
+      drawN(10);
+      out.flash = play(3, t => t ? move(rest) : move(rest, 1 + TUNING.DASH_LENGTH, [{ type: 'dash', snake: rest, x: 13, y: 8, plain: true }])); // (a flash, then on)
       // Golden powers held: the gold line round its two front points.
       rest.leaps = 2; drawN(10);
       const gold = ring(rest, 0.875, 360);
@@ -405,11 +459,15 @@ const STAGE = `(() => {
     const dh = (a, b) => Math.abs(((a - b + 540) % 360) - 180), POINTS = [36, 108, 180, 252, 324]; // (heading right, a point to the back)
     check(stars.points.some(p => p.length === 5 && POINTS.every(d => p.some(m => dh(m, d) < 12))), 'Star’s head is a star: five points round it, one to the back',
       `yellow runs ${stars.points.map((p, i) => `${[0.66, 0.7][i]} cells out at ${p.join(', ')}°`).join('; ')} (a round head reaches 0.54)`);
-    const same = stars.still.before.every((c, i) => c.every((v, j) => Math.abs(v - stars.still.after[i][j]) <= 2));
-    check(same, 'Star’s rainbow holds still with reduced motion', `segments 2, 3, 4, 7: ${JSON.stringify(stars.still.before)} then ${JSON.stringify(stars.still.after)}`);
-    const { t0, t1 } = stars.flow;
-    check(new Set(t0).size === 4 && t0.every((h, i) => dh(h, t1[i]) > 15) && dh(t1[1], t0[0]) < 14 && dh(t1[2], t0[1]) < 14,
-      'Star’s rainbow flows down its body from the head', `hues of segments 2, 3, 4, 7: ${t0.join(', ')}, a segment’s worth later ${t1.join(', ')}`);
+    const { a: s0, b: s1, c: s2 } = stars.still, d1 = s0.map((h, i) => dh(h, s1[i])), d2 = s0.map((h, i) => dh(h, s2[i]));
+    check(new Set(s0).size === 4 && d1.every(d => d <= 10) && d2.every(d => d >= 12 && d <= 45) && Math.max(...d2) - Math.min(...d2) <= 8,
+      'with reduced motion, Star’s rainbow drifts slowly where it is', `hues of segments 2, 3, 4, 7: ${s0.join(', ')}, half a second on ${s1.join(', ')}, two seconds more ${s2.join(', ')}`);
+    const { going, stunned, normal, flash } = stars, perSec = v => Math.round(v / going.ms * 1000);
+    check(perSec(going.seg) >= 220 && perSec(going.seg) <= 420 && perSec(going.log) >= 25 && perSec(going.log) <= 100,
+      'Star’s rainbow streams back as it goes, faster than its crawl: backward over the log, each segment round the rainbow about once a second',
+      `going at 120 ms a tick: segment 3 turned ${going.seg}° (${perSec(going.seg)}° a second), the log under it ${going.log}° (${perSec(going.log)}° a second: a colour going back over it at ${(perSec(going.log) / 28 / (1000 / 120)).toFixed(2)} of its crawl)`);
+    check(Math.abs(stunned.seg) <= 4 && Math.abs(stunned.log) <= 4, 'stunned, it stays, and so does its rainbow', `segment 3 turned ${stunned.seg}°, the log under it ${stunned.log}°, in ${stunned.ms} ms`);
+    check(flash.seg >= 2 * normal.seg, 'a flash bursts its rainbow on', `segment 3 turned ${flash.seg}° in the three ticks from a flash, ${normal.seg}° in three going on`);
     check(stars.gold.every(Boolean), 'holding golden powers, Star’s gold line runs round its points', `Honey just past its two front points: ${stars.gold.join(', ')}`);
     const want = [0, 32, 55, 130, 205, 275, 0];
     check(stars.beads.every((h, i) => dh(h, want[i]) < 22), 'a dead Star’s beads go round the rainbow from its head', `hues ${stars.beads.join(', ')} (red, orange, yellow, green, blue, violet, red: ${want.join(', ')})`);
@@ -563,6 +621,7 @@ const STAGE = `(() => {
       out.copy = SEGS.map(i => seg(cc, i));
       out.star = SEGS.map(i => seg(st, i));
       out.tint = R.colorOf(cc);
+      { const [hx, hy] = at(cc); out.head = rgb(hx + 0.02, hy + 0.3); } // (its head, below its eye: its own red)
       // Star out: its shockwave, held still (reduced motion), a moment on.
       R.setReducedMotion(true);
       const g2 = stage(['star', 'ghost', 'mason']), s2 = g2.snakes[1];
@@ -582,6 +641,8 @@ const STAGE = `(() => {
     check(new Set(copyHues).size === 4 && copyHues.every((h, i) => dh(h, starHues[i]) < 14) && paler && bows.tint !== '#f3d577',
       'Copycat copying Star wears a pale copy of its rainbow, flowing with Star’s, not a pale gold',
       `hues of segments 2, 3, 4, 7: ${copyHues.join(', ')} (Star’s ${starHues.join(', ')}); ${JSON.stringify(bows.copy)} against ${JSON.stringify(bows.star)}; its colour ${bows.tint}`);
+    const [hr, hg, hb] = bows.head;
+    check(hr > 170 && hg < 90 && hb < 80, 'copying Star, Copycat’s cat-eared head keeps its own red, the flag’s', `its head ${bows.head.join(', ')} (its own #de2910 is 222, 41, 16)`);
     const ringWant = [32, 55, 130, 205]; // (orange, yellow, green, blue: the arcs at 0°, 60°, 120° and 180°)
     check(bows.ring.every((h, i) => dh(h, ringWant[i]) < 25), 'Star goes off in a ring of its rainbow, not its stand-in gold',
       `the ring’s hues at 0°, 60°, 120°, 180°: ${bows.ring.join(', ')} (want about ${ringWant.join(', ')})`);
@@ -788,6 +849,138 @@ const STAGE = `(() => {
     check(between(choke.mid.apple, 15.5, 12.5, 16.5, 13.5) && !!choke.end.apple && Math.abs(choke.end.apple[0] - 15.5) < 0.15 && between(choke.mid.beetle, 4.5, 12.5, 5.5, 12.5) && !!choke.end.beetle && Math.abs(choke.end.beetle[0] - 4.5) < 0.15,
       'food a coughing head nudges rolls aside, and a beetle scurries', `the apple half way at ${choke.mid.apple}, then ${choke.end.apple}; the beetle ${choke.mid.beetle}, then ${choke.end.beetle}`);
 
+    // Beetles and the woodpecker's knock (round six A), staged as the engine
+    // reports them: two beetles out at once; b.digUntil and the dig and dive
+    // events; the woodpecker's mark and the knock events, to where its
+    // knockTo says (the engine's own; a stand-in by the same rule where the
+    // engine here has none). Two beetles: one walks on, a cell every other
+    // tick, and both are drawn every frame; the other, cornered, digs in:
+    // smaller as it goes down, a collar of sawdust round it, sawdust spraying
+    // off it to the end; gone (its dive), a heap of sawdust where it went in,
+    // gone itself a few seconds later. With reduced motion: no spray, and it's
+    // drawn sunk part way, still. Through the aim, food in the mark trembles
+    // and food outside it doesn't, and a ring marks where the rule will knock
+    // it; at the strike it flies there, up in an arc, rimmed in ink and
+    // parchment over whatever it crosses, and a beetle knocked scurries
+    // there. Counts and centres are of pixels changed against the bare
+    // board, as the choke's are.
+    const dug = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const N = TUNING.GRID;
+      E.knockTo ||= (g, x, y, cells) => { // (the rule: the nearest free cell outside the patch, then nearest the log's middle, then the first)
+        const mark = new Set(cells), busy = new Set();
+        for (const s of g.snakes) if (s.alive) for (const c of s.body) busy.add(c.y * N + c.x);
+        for (const f of g.food) busy.add(f.y * N + f.x);
+        let best = null, bd = Infinity, bm = Infinity;
+        for (let k = 0; k < N * N; k++) {
+          const f = g.fires.get(k);
+          if (mark.has(k) || busy.has(k) || g.holes.has(k) || (f && g.tick >= f.from && g.tick < f.until)) continue;
+          const cx = k % N, cy = (k - cx) / N, d = Math.hypot(cx - x, cy - y), m = Math.abs(cx - (N - 1) / 2) + Math.abs(cy - (N - 1) / 2);
+          if (d < bd - 1e-9 || (Math.abs(d - bd) < 1e-9 && m < bm)) { best = { x: cx, y: cy }; bd = d; bm = m; }
+        }
+        return best;
+      };
+      const cv = document.getElementById('game'), W = cv.width, kk = W / (N * ${CELL});
+      let bare = null;
+      const bareNow = () => { bare = cv.getContext('2d').getImageData(0, 0, W, cv.height).data; };
+      const changed = (x, y, w, h, is, each) => {
+        const p = pixels(x, y, w, h), d = p.data, px = Math.round(x * ${CELL} * kk), py = Math.round(y * ${CELL} * kk);
+        for (let i = 0; i < d.length; i += 4) {
+          const col = (i / 4) % p.width, row = Math.floor(i / 4 / p.width), j = ((py + row) * W + px + col) * 4;
+          if (is(d[i], d[i + 1], d[i + 2]) && Math.abs(d[i] - bare[j]) + Math.abs(d[i + 1] - bare[j + 1]) + Math.abs(d[i + 2] - bare[j + 2]) > 24) each(col, row);
+        }
+        return p;
+      };
+      const count = (x, y, w, h, is) => { let n = 0; changed(x, y, w, h, is, () => n++); return n; };
+      const centre = (x, y, w, h, is) => { let n = 0, sx = 0, sy = 0; const p = changed(x, y, w, h, is, (c, r) => { n++; sx += c; sy += r; }); return n ? [+(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : null; };
+      const emerald = (r, g, b) => g > 110 && g > r + 60 && b > 80 && b < g, green = (r, g, b) => g > r + 25 && g > 50 && b < g, tan = (r, g, b) => r > 170 && g > 125 && b > 70 && b < 175 && r > b + 45;
+      const sky = (r, g, b) => b > 200 && g > 150 && r < 120, paler = (r, g, b) => r > 150 && g > 130 && b > 95, parch = (r, g, b) => Math.min(r, g, b) > 228;
+      const out = { a: [], b: [], drawn: [], collar: [], parts: [] };
+      // Two beetles, one digging in.
+      const g = stage(['mason', 'ghost', 'drab']);
+      show(g); R.setViewer(99); drawN(20, 0.5); bareNow();
+      const A = { x: 5, y: 6, kind: 'beetle', dir: E.DIRS.right, movedAt: g.tick - 50, expires: g.tick + 900 };
+      const B = { x: 15, y: 6, kind: 'beetle', dir: E.DIRS.up, movedAt: g.tick - 50, expires: g.tick + 900, scared: true, digUntil: g.tick + 8 };
+      g.food.push(A, B);
+      show(g); R.setViewer(99); drawN(8, 0.5, 30);
+      out.full = count(14, 5, 3, 3, emerald);
+      R.onTick([{ type: 'dig', x: 15, y: 6, until: B.digUntil }]);
+      for (let t = 0; t < 8; t++) {
+        if (t) { g.tick++; if (t % 2 === 0) { A.px = A.x; A.py = A.y; A.x++; A.movedAt = g.tick - 1; } R.onTick([]); }
+        for (const al of [0.25, 0.5, 0.75, 1]) {
+          __t += 30; R.frame(al, __t);
+          out.a.push(count(A.x - 1.5, 5, 3, 3, emerald)); out.b.push(count(14, 5, 3, 3, emerald)); out.drawn.push(count(14, 5, 3, 3, green)); out.collar.push(count(14, 5, 3, 3, tan)); out.parts.push(R.particles);
+        }
+      }
+      g.tick++; g.food.splice(g.food.indexOf(B), 1);
+      R.onTick([{ type: 'dive', x: 15, y: 6, dug: 1 }]);
+      drawN(12, 0.5, 40);
+      out.heap = count(14.5, 5.5, 2, 2, tan); out.bugGone = count(14, 5, 3, 3, emerald);
+      drawN(40, 0.5, 80);
+      out.heapAfter = count(14.5, 5.5, 2, 2, tan);
+      // With reduced motion: no spray, a still sink.
+      R.setReducedMotion(true);
+      const C = { x: 10, y: 15, kind: 'beetle', dir: E.DIRS.up, movedAt: g.tick - 50, expires: g.tick + 900, scared: true, digUntil: g.tick + 8 };
+      g.food.push(C); drawN(10, 0.5, 60); // (the sprays before it, settled)
+      out.calm = { parts: [], bug: [] };
+      R.onTick([{ type: 'dig', x: 10, y: 15, until: C.digUntil }]);
+      for (let t = 0; t < 7; t++) { g.tick++; R.onTick([]); drawN(2, 0.5, 60); out.calm.parts.push(R.particles); out.calm.bug.push(count(9, 14, 3, 3, emerald)); }
+      R.setReducedMotion(false);
+      // The knock: a bead and a beetle in the mark, another bead outside it.
+      const g2 = stage(['mason', 'ghost', 'drab']);
+      show(g2); R.setViewer(99); drawN(20, 0.5); bareNow();
+      const P = [];
+      for (let y = 11; y <= 13; y++) for (let x = 10; x <= 13; x++) P.push(y * N + x);
+      const bead = { x: 11, y: 12, kind: 'pellet', color: '#38bdf8', owner: 1, expires: g2.tick + 900 }, other = { x: 4, y: 4, kind: 'pellet', color: '#38bdf8', owner: 1, expires: g2.tick + 900 };
+      const bug = { x: 13, y: 11, kind: 'beetle', dir: E.DIRS.up, movedAt: g2.tick - 50, expires: g2.tick + 900 };
+      g2.food.push(bead, other, bug);
+      g2.time = 130000;
+      g2.woodpecker = { x: 11.5, y: 12, at: g2.time - 5000, target: P, strikeAt: g2.tick + 4, last: [], struckAt: -1, restUntil: 1e9, pecks: 1 };
+      show(g2); R.setViewer(99); drawN(25, 0.5, 30); // (the food popped in)
+      const spots = [[], []];
+      for (let i = 0; i < 8; i++) { drawN(1, 0.5, 23); spots[0].push(centre(10, 11, 3, 3, sky)); spots[1].push(centre(3, 3, 3, 3, sky)); }
+      const spread = list => list.every(Boolean) ? +(Math.max(...list.map(c => c[0])) - Math.min(...list.map(c => c[0]))).toFixed(3) : -1; // (across: a bead bobs up and down where it lies, in or out of the mark)
+      out.tremble = spread(spots[0]); out.steady = spread(spots[1]);
+      const cell = c => c && (typeof c === 'number' ? [c % N, Math.floor(c / N)] : Array.isArray(c) ? c : [c.x, c.y]);
+      const [tx, ty] = cell(E.knockTo(g2, 11, 12, P));
+      out.to = [tx, ty];
+      out.ring = count(tx - 0.2, ty - 0.2, 1.4, 1.05, paler); out.noRing = count(18, 18, 1.4, 1.05, paler); // (clear of the mark's own rim, a cell below)
+      for (const k of P) g2.holes.add(k);
+      g2.woodpecker.target = []; g2.woodpecker.struckAt = g2.tick;
+      bead.x = tx; bead.y = ty;
+      const [bx, by] = cell(E.knockTo(g2, 13, 11, P));
+      bug.px = 13; bug.py = 11; bug.x = bx; bug.y = by; bug.movedAt = g2.tick;
+      g2.tick++;
+      R.onTick([{ type: 'knock', kind: 'pellet', x: 11, y: 12, tx, ty }, { type: 'knock', kind: 'beetle', x: 13, y: 11, tx: bx, ty: by }]);
+      drawN(1, 0.05, 1);
+      drawN(1, 0.5, 225); // (about half way through its flight)
+      const mid = centre(9, 7, 5, 7, sky);
+      out.mid = { bead: mid, beetle: centre(12, 10, 4, 3, emerald), rim: mid ? count(mid[0] - 0.6, mid[1] - 0.6, 1.2, 1.2, parch) : 0 };
+      drawN(4, 0.5, 120); g2.tick++; drawN(2, 0.5, 60);
+      const end = centre(9, 7, 5, 7, sky);
+      out.end = { bead: end, beetle: centre(12, 10, 4, 3, emerald), rim: end ? count(end[0] - 0.6, end[1] - 0.6, 1.2, 1.2, parch) : 0, bug: [bx, by] };
+      SnakeDebug.pinQuality(2);
+      return out;
+    })()`);
+    {
+      const min = a => Math.min(...a), max = a => Math.max(...a), late = a => a.slice(-8), early = a => a.slice(0, 4);
+      check(min(dug.a) > 40 && min(dug.drawn) > 10, 'two beetles out at once, each drawn every frame (one walking on, one digging in)', `the walker’s emerald pixels ${min(dug.a)} to ${max(dug.a)}, the digger’s green ${min(dug.drawn)} to ${max(dug.drawn)}`);
+      check(max(late(dug.b)) < 0.6 * min(early(dug.b)) && min(late(dug.collar)) > max(early(dug.collar)) + 20 && min(late(dug.parts)) > 0,
+        'a cornered beetle digs in: it sinks into the bark, a collar of sawdust round it, sawdust spraying off it to the end',
+        `its emerald pixels ${early(dug.b).join(', ')} as it starts (${dug.full} before), ${late(dug.b).join(', ')} at the end; sawdust ${early(dug.collar).join(', ')}, then ${late(dug.collar).join(', ')}; particles in the air at the end ${late(dug.parts).join(', ')}`);
+      check(dug.heap > 40 && dug.bugGone === 0 && dug.heapAfter === 0, 'gone in, it leaves a heap of sawdust where it went in, a few seconds', `${dug.heap} sawdust pixels there just after (${dug.bugGone} of the beetle), ${dug.heapAfter} four seconds on`);
+      check(max(dug.calm.parts) === 0 && max(dug.calm.bug) - min(dug.calm.bug) <= 3 && max(dug.calm.bug) < 0.8 * dug.full && min(dug.calm.bug) > 10,
+        'with reduced motion, it’s drawn sunk part way, still, and no sawdust flies', `its emerald pixels ${dug.calm.bug.join(', ')} (${dug.full} up on the bark); particles ${max(dug.calm.parts)}`);
+      check(dug.tremble > 0.02 && dug.steady === 0 && dug.ring > 10 && dug.noRing === 0, 'through the woodpecker’s aim, food in its mark trembles, food outside it is still, and a ring marks where it’ll be knocked to',
+        `the bead in the mark moves ${dug.tremble} cells across, frame to frame, the one outside ${dug.steady}; ${dug.ring} ring pixels at ${dug.to} (the rule’s cell), ${dug.noRing} at a cell nothing lands on`);
+      const [tx, ty] = dug.to, b = dug.mid.bead, e = dug.end.bead;
+      check(!!b && b[1] < ty + 0.5 - 0.3 && Math.abs(b[0] - (tx + 0.5)) < 0.3 && dug.mid.rim > dug.end.rim + 15 && !!e && Math.abs(e[0] - (tx + 0.5)) < 0.15 && Math.abs(e[1] - (ty + 0.5)) < 0.2,
+        'at the strike, the food flies to where the rule said, up in an arc, rimmed so it reads over a body', `the bead half way at ${b} (it lands at ${tx + 0.5},${ty + 0.5}), then at ${e}; parchment round it ${dug.mid.rim} in the air, ${dug.end.rim} landed`);
+      const bm = dug.mid.beetle, be = dug.end.beetle, [bx, by] = dug.end.bug, d = (c, x, y) => Math.hypot(c[0] - x, c[1] - y);
+      check(!!bm && d(bm, 13.5, 11.5) > 0.25 && d(bm, bx + 0.5, by + 0.5) > 0.25 && d(bm, 13.5, 11.5) + d(bm, bx + 0.5, by + 0.5) < d([13.5, 11.5], bx + 0.5, by + 0.5) + 0.2 && !!be && d(be, bx + 0.5, by + 0.5) < 0.2,
+        'a beetle knocked out of the mark scurries there', `half way at ${bm}, then ${be} (from 13.5,11.5 to ${bx + 0.5},${by + 0.5})`);
+    }
+
     // A pecked flag is a lost colony (round six A). The woodpecker pecks out
     // the cell under Colonist's second colony's flag, and under Sovereign's
     // capital; a tick later Colonist forgets the colony and Sovereign's realm
@@ -835,10 +1028,62 @@ const STAGE = `(() => {
     check(lf.carried[0] > 10 && lf.carried[1] > 13.5 && lf.carried[1] < 16.8 && lf.after.banner[0] > 10 && Math.abs(lf.after.banner[1] - 12.9) < 0.6,
       'Sovereign’s banner is carried to its new capital', `its parchment part way at x ${lf.carried[1]} (${lf.carried[0]} pixels; from 17 to 12), then at ${lf.after.banner[1]}`);
 
+    // A strike that doesn't stutter (round six A): the land a strike will
+    // leave is made ahead while the woodpecker aims, and swapped in at the
+    // strike. Sovereign's realm and Colonist's colony meet (dashed sides
+    // between them), and the patch cuts both. Made ahead, the board just
+    // after the strike is the very one made at the strike (the old way, with
+    // making ahead switched off), pixel for pixel; and with the land changing
+    // otherwise as it strikes (Sovereign's realm growing a ring), it's made
+    // the old way then, and still the same. (The land's part of the board,
+    // clear of the snakes, whose blinks come when they will; with reduced
+    // motion, so nothing else moves between the two; each after one of its
+    // own first, so the flags are the same.)
+    const ahead = await ev(`(() => {
+      SnakeDebug.pinQuality(2);
+      R.setReducedMotion(true);
+      const g = stage(['colonist', 'sovereign', 'mason']), [you, col, sov, ma] = g.snakes;
+      setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
+      setBody(col, Array.from({ length: 6 }, (_, i) => [2 + i, 2]), 'left');
+      setBody(sov, Array.from({ length: 6 }, (_, i) => [22 - i, 21]), 'right');
+      setBody(ma, [[2, 18], [1, 18], [0, 18]], 'right');
+      col.memory.colonies = [{ x: 8, y: 10, radius: 3, n: 1 }];
+      sov.memory.home = { x: 14, y: 11, radius: 4 };
+      for (const k of [3 * 24 + 20, 4 * 24 + 20, 4 * 24 + 21]) g.holes.add(k);
+      show(g); drawN(10, 0.5, 60);
+      const P = [];
+      for (let y = 9; y <= 12; y++) for (let x = 10; x <= 12; x++) P.push(y * 24 + x); // (across the line where they meet)
+      const board = () => pixels(4, 5, 17, 13).data;
+      const strike = (on, grow) => {
+        R.prebuild(on);
+        g.woodpecker = { x: 11, y: 10, at: g.time, target: P.slice(), strikeAt: g.tick + 17, last: [], struckAt: -1, restUntil: 1e9, pecks: 1 };
+        drawN(30, 0.5, 60);
+        const ready = R.prebuilt;
+        for (const k of P) g.holes.add(k);
+        g.woodpecker = null;
+        if (grow) sov.memory.home = { x: 14, y: 11, radius: 5 };
+        g.tick++; drawN(1, 0.5, 60);
+        const out = { ready, px: board(), cut: R.landShown(sov, 12, 11) || R.landShown(col, 10, 10) };
+        for (const k of P) g.holes.delete(k);
+        sov.memory.home = { x: 14, y: 11, radius: 4 };
+        g.tick++; drawN(10, 0.5, 60);
+        return out;
+      };
+      const differ = (a, b) => { let n = 0; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) n++; return n; };
+      strike(true, false);
+      const made = strike(true, false), old = strike(false, false);
+      strike(true, true);
+      const madeGrow = strike(true, true), oldGrow = strike(false, true);
+      R.prebuild(true); R.setReducedMotion(false);
+      return { ready: made.ready, cut: made.cut, n: differ(made.px, old.px), growReady: madeGrow.ready, nGrow: differ(madeGrow.px, oldGrow.px), changed: differ(made.px, madeGrow.px), pixels: made.px.length / 4 };
+    })()`);
+    check(ahead.ready && !ahead.cut && ahead.n === 0, 'the land a strike leaves, made ahead while the woodpecker aims, is the very land made at the strike', `${ahead.ready ? 'made ahead' : 'not made ahead'}; ${ahead.cut ? 'the patch still shows as land' : 'the patch is no land'} after it; ${ahead.n} of ${ahead.pixels * 4} values differ from it made at the strike`);
+    check(ahead.growReady && ahead.changed > 0 && ahead.nGrow === 0, 'with the land changing otherwise as it strikes, it’s made the old way, and is the same', `${ahead.nGrow} values differ from it made at the strike (the realm grown: ${ahead.changed} from the board without)`);
+
     // The Field guide's pictures.
     const guide = await ev(`(() => {
       const out = {};
-      for (const k of ['apple', 'golden', 'mushroom', 'goldcap', 'leaf', 'beetle', 'goldbeetle', 'pellet', 'roast', 'baked', 'jump', 'flash', 'wrap', 'held', 'rests', 'hole', 'fire', 'land', 'choke', 'lostflag']) {
+      for (const k of ['apple', 'golden', 'mushroom', 'goldcap', 'leaf', 'beetle', 'goldbeetle', 'pellet', 'roast', 'baked', 'jump', 'flash', 'wrap', 'held', 'rests', 'hole', 'fire', 'land', 'choke', 'lostflag', 'cough', 'dig', 'knock']) {
         const c = R.guideSprite(k, 72), d = c.getContext('2d').getImageData(0, 0, 72, 72).data;
         let ink = 0, sky = 0, ember = 0;
         for (let i = 0; i < d.length; i += 4) {

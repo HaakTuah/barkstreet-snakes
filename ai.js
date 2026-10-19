@@ -193,7 +193,7 @@ window.SnakeAI = (() => {
       w: DRAB, // replaced by the current mood's weights
     },
     copycat: {
-      name: 'Copycat', color: '#fca5a5', look: 'copycat', driver: 'copycat',
+      name: 'Copycat', color: '#de2910', look: 'copycat', driver: 'copycat',
       blurb: 'Copies whoever seems to be winning. Party member.',
       kill: ['It learned that from someone.', 'Somebody taught it that. Maybe you.', 'The Party thanks you for your sacrifice.'],
       win: ['Imitation pays.', 'A victory for the collective.', 'It copied the winner until it was one.'],
