@@ -793,10 +793,14 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   check(!sounds('cough'), '...and another cough asked for as that one sounds waits (a cough never loops)');
   clock += again;
   check(sounds('choke') && sounds('cough', { delay: 0.3 }), '...but your next choke and cough, as soon as you can choke again, sound');
-  // A beetle digging in and the woodpecker knocking food aside are the
-  // world's: two beetles digging in together, or the pieces one strike knocks
-  // aside, are one sound; the next is heard as soon as it can come again.
-  for (const [cue, ms] of [['dig', digAgain], ['knock', strikeAgain]]) {
+  // A beetle digging in, the woodpecker knocking food aside and a burrow
+  // closing over are the world's: two beetles digging in together, the pieces
+  // one strike knocks aside, or two burrows closing over as two digs end
+  // together, are one sound; the next is heard as soon as it can come again
+  // (a burrow closes over only as a dig ends: the same beetle's next, after a
+  // spell under).
+  check(GAP.heal > 0 && GAP.heal < digAgain, `the 'heal' gap (${GAP.heal} ms) is under the soonest a beetle can dig in again and close another (${digAgain.toFixed(0)} ms)`);
+  for (const [cue, ms] of [['dig', digAgain], ['knock', strikeAgain], ['heal', digAgain]]) {
     clock += 5000;
     check(sounds(cue, { pan: -0.4 }) && !sounds(cue, { pan: 0.3 }), `a ${cue}, and another in the same moment: one sound`);
     clock += ms;
@@ -805,10 +809,10 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   clock += 5000;
   A.setMuted(true);
   check(!sounds('choke') && !sounds('cough', { delay: 0.3 }) && !sounds('choke', RIVAL), 'muted: no choke, no cough, yours or a rival\'s');
-  check(!sounds('dig') && !sounds('knock') && !sounds('knock', RIVAL), '...no dig, no knock');
+  check(!sounds('dig') && !sounds('knock') && !sounds('knock', RIVAL) && !sounds('heal'), '...no dig, no knock, no burrow closing over');
   A.setMuted(false);
-  check(sounds('choke') && sounds('cough', { delay: 0.3 }) && sounds('dig') && sounds('knock'), '...and with the sound back on, all of them');
-  console.log('ok   the sound: a rival\'s flash, dash, jump, catching fire, golden mushroom, choke or cough never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard, and your choke and cough each time you can choke; a beetle digging in and the woodpecker knocking food aside, one sound a moment and each time they can come again; muted, none');
+  check(sounds('choke') && sounds('cough', { delay: 0.3 }) && sounds('dig') && sounds('knock') && sounds('heal'), '...and with the sound back on, all of them');
+  console.log('ok   the sound: a rival\'s flash, dash, jump, catching fire, golden mushroom, choke or cough never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard, and your choke and cough each time you can choke; a beetle digging in, the woodpecker knocking food aside and a burrow closing over, one sound a moment and each time they can come again; muted, none');
 }
 
 if (fails) { console.error(`${fails} failed`); process.exit(1); }

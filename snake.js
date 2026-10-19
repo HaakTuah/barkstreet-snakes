@@ -104,11 +104,12 @@
     youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
     youChoke: 'You choke on your own tail!', // (your own beads: spat aside, and a cough)
     youCoughing: 'No eating while you cough: food rolls aside.', // (true whenever it shows: a lesson may wait out the cough)
-    youWoodpecker: 'The woodpecker knocks food aside, and never shuts you in.', // (your first sudden death, once its own banner has had its time)
+    youWoodpecker: 'The woodpecker knocks food aside, and won’t shut you in if it can help it.', // (your first sudden death, once its own banner has had its time; "if it can help it": with nowhere else to aim, it may)
     youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near your head)
+    digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log; past three the one unused longest closes over: the Field guide says so)
     lastApples: 'The last apples are falling.',
     // Your flash, ready and never used yet: the key, once a round (until you've flashed).
-    flashKey: touchFirst ? 'Your flash is ready: swipe the way you’re going.' : 'Your flash is ready: E or Shift, two cells in a blink.',
+    flashKey: touchFirst ? 'Your flash is ready: swipe the way you’re going.' : 'Your flash is ready: E, Shift or right-click. Two cells in a blink.',
     // Beside the YOU arrow, as a round starts (until you steer).
     steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
     leapNothing: 'Jumps hop over a snake, a hole or fire.',
@@ -121,12 +122,12 @@
     beetle: ['A beetle is out for a walk. It won’t get far.', 'A beetle is crawling about. Crunchy.'],
     goldBeetle: ['A golden beetle! Catch it for golden jumps.', 'A golden beetle: catch it, and jump far for free.'],
     goldBeetleWatch: ['A golden beetle! Whoever catches it jumps far.', 'A golden beetle is scuttling about.'],
-    youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space'} to jump.`,
+    youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space or a click'} to jump.`,
     youLeapFirst: 'Hup! A jump costs your tail tip, then a short rest.',
     youDashFirst: 'Golden flashes cut thin snakes in two.',
     leaf: ['A golden leaf on the wind. Eat it for golden flashes.', 'A golden leaf blew onto the log: golden flashes, for the taking.'],
     leafWatch: ['A golden leaf on the wind: golden flashes, for whoever eats it.'],
-    youLeaf: n => `${n} golden flash${n === 1 ? '' : 'es'}: ${touchFirst ? 'swipe ahead' : 'E or Shift'}. Never at an edge or hole.`, // (the danger first: the first one may be the one)
+    youLeaf: n => `${n} golden flash${n === 1 ? '' : 'es'}: ${touchFirst ? 'swipe ahead' : 'E, Shift or right-click'}. Never at an edge or hole.`, // (the danger first: the first one may be the one)
     goldcap: ['A golden mushroom: eat it and the edges wrap.', 'A golden mushroom came up. Eat it: no edges for a while.'],
     goldcapWatch: ['A golden mushroom: no edges, for whoever eats it.'],
     youGoldcap: s => `A golden mushroom: ${s} seconds with no edges.`,
@@ -784,7 +785,8 @@
       else if (e.type === 'charge') Audio.play('crackle', at(e.x));
       else if (e.type === 'strike') Audio.play('thunder', at(e.x));
       else if (e.type === 'gust') Audio.play('gust');
-      else if (e.type === 'burrow') Audio.play('burrow', at(e.x));
+      else if (e.type === 'burrow' && !e.dug) Audio.play('burrow', at(e.x)); // (cracked open; one a dig left was bored, not cracked open: the bore said it)
+      else if (e.type === 'heal') Audio.play('heal', at(e.x)); // (one closing over: a muffled crumble)
       else if ((e.type === 'dive' && !e.dug) || e.type === 'emerge') Audio.play('scrabble', at(e.x)); // (down a burrow, or up out of one; one that dug in was heard boring in)
       else if (e.type === 'dig') Audio.play('dig', { rival: !isMe(cornering(e.x, e.y)), ...at(e.x) }); // (the bore: whose head it fled, yours, or a rival's, softer and further off)
       else if (e.type === 'knock' && e.tx != null && !knocked) { knocked = true; Audio.play('knock', { volume: 0.5, ...at(e.x) }); } // (food flying off the patch: the world's, quiet, once a strike, at the first piece that flies; none for what the bird ate)
@@ -936,7 +938,8 @@
       if (e.type === 'weather' && e.kind === 'storm') game.struck = false;
       if (e.type === 'weather' && FLAVOR.weather[e.kind]) { flashFrame(e.kind); return toast(pick((!playerAlive() && FLAVOR.weatherWatch[e.kind]) || FLAVOR.weather[e.kind]), 2800, e.kind); }
       if (e.type === 'rainbow') { flashFrame('gold', true); if (newsOnce('rainbow')) return toast(lineFor('rainbow'), 2800, 'gold'); }
-      if (e.type === 'burrow' && newsOnce('burrow') && !game.events.some(o => o.type === 'spawn' && o.kind === 'beetle')) return toast(pick(FLAVOR.burrow), 2200, 'beetle'); // (a beetle out of it this tick speaks for both)
+      if (e.type === 'burrow' && e.dug && teachable() && once('digBurrow')) return toast(FLAVOR.digBurrow, 2600, 'beetle', 'lesson'); // (its rule, the first time the banner's free for one: shown then, or the next one teaches it)
+      if (e.type === 'burrow' && !e.dug && newsOnce('burrow') && !game.events.some(o => o.type === 'spawn' && o.kind === 'beetle')) return toast(pick(FLAVOR.burrow), 2200, 'beetle'); // (a beetle out of it this tick speaks for both; one a dig left wasn't cracked open)
       if (e.type === 'spawn' && e.kind === 'golden') { flashFrame('gold'); if (newsOnce('golden')) return toast(pick(FLAVOR.golden), 2800, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'beetle' && e.gold) { flashFrame('gold'); if (newsOnce('goldBeetle')) return toast(lineFor('goldBeetle'), 2600, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'beetle') { flashFrame('beetle'); if (newsOnce('beetle')) return toast(pick(FLAVOR.beetle), 2200, 'beetle'); }
@@ -1387,7 +1390,7 @@
   // What the chips mean, in words (phones have no tooltips).
   function yourPowerWords(s) {
     const how = (left, gold) => gold ? `${gold} golden` : left === 0 ? 'ready' : left === Infinity ? 'not at 3' : 'resting';
-    return `${touchFirst ? 'A tap' : 'Space'} jumps: ${how(E.leapIn(game, s), s.leaps)}. ${touchFirst ? 'A swipe ahead' : 'E or Shift'} flashes: ${how(E.flashIn(game, s), s.dashes)}.`;
+    return `${touchFirst ? 'A tap' : 'Space or a click'} jumps: ${how(E.leapIn(game, s), s.leaps)}. ${touchFirst ? 'A swipe ahead' : 'E, Shift or right-click'} flashes: ${how(E.flashIn(game, s), s.dashes)}.`;
   }
   // Golden powers held, as words: ['2 golden jumps', '1 golden flash'].
   const goldWords = s => [s.leaps > 0 && `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}`, s.dashes > 0 && `${s.dashes} golden flash${s.dashes === 1 ? '' : 'es'}`].filter(Boolean);
@@ -1497,7 +1500,7 @@
     el.classList.toggle('ready', now === 'ready');
     el.classList.toggle('small', now === 'small');
     if (typeof now === 'number') el.style.setProperty('--fill', `${now}%`);
-    if (!gold) el.title = `Your ${kind}${now === 'ready' ? ' is ready' : now === 'small' ? ': too small for it' : ' is resting'} (${kind === 'jump' ? (touchFirst ? 'tap' : 'Space') : touchFirst ? 'swipe ahead' : 'E or Shift'})`;
+    if (!gold) el.title = `Your ${kind}${now === 'ready' ? ' is ready' : now === 'small' ? ': too small for it' : ' is resting'} (${kind === 'jump' ? (touchFirst ? 'tap' : 'Space or a click') : touchFirst ? 'swipe ahead' : 'E, Shift or right-click'})`;
   }
 
   // The chips' icons: small inline drawings in ink (no fallback-font glyphs).
@@ -2101,7 +2104,7 @@
     ]],
     ['The log', [
       ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
-      ['knock', 'Woodpecker', 'From 2:00 it pecks out patches, never one that shuts you in or leaves crumbs of log. Food in its mark is knocked to the nearest free cell, where the ring is.'],
+      ['knock', 'Woodpecker', 'From 2:00 it pecks out patches, and won’t shut you in or leave crumbs of log if it can help it. Food in its mark is knocked to the nearest free cell, where the ring is.'],
       ['hole', 'Holes', 'The woodpecker’s, from 2:00. Bump one like the edge; a peck right under your head is the end.'],
       ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and it notices.'],
       ['lostflag', 'Lost flags', 'A flag the woodpecker pecks out is lost: the colony goes, and a capital moves.'],
@@ -2690,7 +2693,7 @@
     if (text !== helpText) { helpText = text; setHint(helpEl, text); }
   }
 
-  // Hints wrap only between items ("E or Shift flashes" never splits across lines).
+  // Hints wrap only between items ("E, Shift or right-click flashes" never splits across lines).
   // Items joined by " · ", each kept whole, a line breaking only after a dot
   // (the dot rides with the item before it); ⏸ drawn as the pause button's bars.
   function setHint(el, text) {

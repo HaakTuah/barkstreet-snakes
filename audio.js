@@ -25,7 +25,7 @@ window.SnakeAudio = (() => {
   // (weather, the woodpecker, beetles): each gives way sooner than the one before.
   const MAX_VOICES = { you: 7, rival: 6, world: 5 };
   const PRIORITY = { death: true, best: true, win: true, winBest: true, ko: true, stinger: true }; // these always play
-  const WORLD = { beetle: 1, crackle: 1, thunder: 1, gust: 1, burrow: 1, scrabble: 1, dig: 1, knock: 1, rainbow: 1, rain: 1, snow: 1, ember: 1, woodpecker: 1, call: 1, aim: 1, drum: 1, crash: 1, peck: 1, bake: 1, ash: 1, douse: 1, lastApples: 1 };
+  const WORLD = { beetle: 1, crackle: 1, thunder: 1, gust: 1, burrow: 1, heal: 1, scrabble: 1, dig: 1, knock: 1, rainbow: 1, rain: 1, snow: 1, ember: 1, woodpecker: 1, call: 1, aim: 1, drum: 1, crash: 1, peck: 1, bake: 1, ash: 1, douse: 1, lastApples: 1 };
   const RIVALS = { rivalDeath: 1, bonked: 1 };
   const RIVAL_VOLUME = 0.5;    // a rival's leap or dash, next to yours...
   const RIVAL_LOWPASS = 2600;  // ...and a little duller, as if further off
@@ -43,6 +43,7 @@ window.SnakeAudio = (() => {
     flash: 150, flashReady: 600, lastApples: 4000,
     choke: 300, cough: 600, // (your next choke can come as soon as your cough is over, COUGH_TICKS ticks on: both are heard again)
     dig: 300, knock: 400, // (a beetle digs in again only after a spell under, the woodpecker strikes again only after a rest and an aim: each is heard; beetles digging in together, or the pieces one strike knocks aside, are one sound)
+    heal: 400, // (a burrow closes over only for a dig's new one: two digs ending together, one crumble)
   };
   // A cue that stands for others for a while: a win that's also a best is one phrase.
   const COVERS = { winBest: { win: 6000, best: 6000 } };
@@ -597,6 +598,14 @@ window.SnakeAudio = (() => {
       const creak = tone(t + 0.05, 'triangle', 190, 0.28, 0.08, 0.02, 130, 700);
       vibrato(creak, t + 0.05, 0.28, 23, 9);
       for (let i = 0; i < 3; i++) noise(t + 0.16 + i * 0.05, 0.02, 0.05, 'lowpass', 1100, 0.8);
+    },
+
+    // A burrow closing over: a muffled crumble, as soft as a beetle's scrabble. Sawdust
+    // trickles into the hole (five grains, each lower and fainter), then a hushed
+    // pat as the moss settles over it. About 350 ms.
+    heal(t) {
+      for (let i = 0; i < 5; i++) noise(t + i * 0.05 + (i % 2) * 0.012, 0.03, 0.075 - i * 0.01, 'lowpass', 900 - i * 90, 0.8);
+      noise(t + 0.25, 0.1, 0.065, 'lowpass', 380, 0.7);
     },
 
     // A beetle scrabbling into (or out of) its burrow.

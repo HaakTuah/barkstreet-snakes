@@ -20,7 +20,7 @@
 //   { t: 'swipe', d }                       a fresh swipe: the way you're going flashes, any other way steers
 //   { t: 'pow', k }                         'leap' (Space, a tap) | 'flash' (E, Shift) | 'unleap' (a jump a finger held still asked for, taken back: it was a swipe)
 window.SnakeOnline = (() => {
-  const VERSION = 10; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over
+  const VERSION = 10; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over
   const POWERS = ['leap', 'flash', 'unleap'];
   const MAX_PEOPLE = 4;
   // Seat colors for people: the host is green; friends get colors no rival wears.
@@ -85,7 +85,8 @@ window.SnakeOnline = (() => {
       // The beetles underground: until (when one comes up), when it flies off, the burrow or dig it went down, golden.
       un: (game.unders || []).map(u => [u.until, u.expires, u.from, u.gold ? 1 : 0]),
       h: holes,
-      w: game.woodpecker ? [game.woodpecker.x, game.woodpecker.y, game.woodpecker.at, game.woodpecker.target, game.woodpecker.strikeAt, game.woodpecker.last, game.woodpecker.struckAt, game.woodpecker.restUntil, game.woodpecker.pecks || 0] : 0,
+      // The woodpecker, and on the tick before its strike, where it promised each piece in its mark would land.
+      w: game.woodpecker ? [game.woodpecker.x, game.woodpecker.y, game.woodpecker.at, game.woodpecker.target, game.woodpecker.strikeAt, game.woodpecker.last, game.woodpecker.struckAt, game.woodpecker.restUntil, game.woodpecker.pecks || 0, game.woodpecker.landings || 0] : 0,
       // Burrows (where, the tick it opened, the time a beetle last used it, a dig left it), fire (cell,
       // burning from, until, struck by lightning, which fire), the weather.
       bu: game.burrows.map(b => [b.x, b.y, b.at, b.used ?? -1, b.dug ? 1 : 0]),
@@ -252,8 +253,11 @@ window.SnakeOnline = (() => {
     });
     for (const k of msg.h) game.holes.add(k);
     const cellsOf = v => (Array.isArray(v) ? v : []).filter(k => Number.isInteger(k) && k >= 0 && k < 10000);
-    game.woodpecker = msg.w ? { x: msg.w[0], y: msg.w[1], at: msg.w[2], target: cellsOf(msg.w[3]), strikeAt: msg.w[4], last: cellsOf(msg.w[5]), struckAt: msg.w[6], restUntil: msg.w[7], ...(Number(msg.w[8]) > 0 ? { pecks: Number(msg.w[8]) } : {}) } : null;
-    game.burrows = (Array.isArray(msg.bu) ? msg.bu : []).filter(b => Array.isArray(b) && b.length >= 3 && b.every(num))
+    const cell = v => Number.isInteger(v) && v >= 0 && v < window.TUNING.GRID; // (an x or y on the board: the renderer draws or rolls a thing there)
+    const square = v => Number.isInteger(v) && v >= 0 && v < window.TUNING.GRID * window.TUNING.GRID; // (a cell on the board, as one number)
+    const landings = Array.isArray(msg.w?.[9]) ? msg.w[9].filter(p => Array.isArray(p) && p.length === 2 && square(p[0]) && (p[1] === -1 || square(p[1]))) : []; // ([from, to]; to -1: the bird eats it)
+    game.woodpecker = msg.w ? { x: msg.w[0], y: msg.w[1], at: msg.w[2], target: cellsOf(msg.w[3]), strikeAt: msg.w[4], last: cellsOf(msg.w[5]), struckAt: msg.w[6], restUntil: msg.w[7], ...(Number(msg.w[8]) > 0 ? { pecks: Number(msg.w[8]) } : {}), ...(landings.length ? { landings } : {}) } : null;
+    game.burrows = (Array.isArray(msg.bu) ? msg.bu : []).filter(b => Array.isArray(b) && b.length >= 3 && b.every(num) && cell(b[0]) && cell(b[1]) && Number.isInteger(b[2])) // (on the board, opened on a tick)
       .map(([x, y, at, used, dug]) => ({ x, y, at, ...(used >= 0 ? { used } : {}), ...(dug ? { dug: 1 } : {}) })); // (the renderer draws a dug one freshly bored)
     game.unders = (Array.isArray(msg.un) ? msg.un : []).filter(u => Array.isArray(u) && u.every(num) && Number.isInteger(u[2]) && u[2] >= 0 && u[2] < window.TUNING.GRID * window.TUNING.GRID)
       .map(([until, expires, from, gold]) => ({ until, expires, from, gold: !!gold }));
@@ -262,7 +266,6 @@ window.SnakeOnline = (() => {
     if (Array.isArray(msg.sky) && msg.sky.every(num)) game.weather = { kind: WEATHER[msg.sky[0]] || 'clear', since: msg.sky[1], until: msg.sky[2] };
 
     const dying = [];
-    const cell = v => Number.isInteger(v) && v >= 0 && v < window.TUNING.GRID; // (an x or y on the board: the renderer rolls a piece there)
     game.events = msg.e.map(e => {
       const snake = typeof e[1] === 'number' ? game.snakes[e[1]] : null;
       switch (e[0]) {

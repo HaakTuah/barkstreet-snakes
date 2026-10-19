@@ -6092,14 +6092,16 @@ window.SnakeRender = (() => {
   // drawFood), and a faint ring marks where each piece will be knocked to at
   // the strike: the engine's own list (knocks: every landing in the strike's
   // order, no two on one cell, never a burrow; the rivals read the same),
-  // worked out once a tick. Nothing for a piece the bird will eat.
+  // worked out once a tick; on the aim's last tick, the landings the engine
+  // has promised (w.landings, kept at the strike while their cells are
+  // free). Nothing for a piece the bird will eat.
   const knockLand = []; // (cells, x and y, this tick's)
   let knockFor = -1, knockGame = null;
   function knockRings(w, prog, now) {
     if (knockFor !== game.tick || knockGame !== game) {
       knockFor = game.tick; knockGame = game; knockLand.length = 0;
       const knocks = window.SnakeEngine?.knocks;
-      if (knocks) for (const { to } of knocks(game, w.target)) if (to) knockLand.push(to.x, to.y);
+      if (knocks) for (const { to } of knocks(game, w.target, w.landings)) if (to) knockLand.push(to.x, to.y);
     }
     if (!knockLand.length) return;
     const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now / 160);

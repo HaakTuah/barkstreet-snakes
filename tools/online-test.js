@@ -20,7 +20,8 @@
 // snake was out (also read from engine.js), once at least. What the rounds
 // don't bring often enough is staged now and then, as the engine makes it (a
 // choke and its cough, a fire put out, a beetle flown off, a beetle digging
-// in, beetles underground, food knocked aside, a snake alight...; a kind of
+// in, beetles underground, food knocked aside, an apple in the mark on the
+// aim's last tick and where the strike promises it, a snake alight...; a kind of
 // event the protocol carries before the engine makes it, too), and a way to be out
 // they didn't bring is staged after them, on a board of its own; so nothing
 // goes unchecked, and a new event, field or way to be out fails here until
@@ -217,6 +218,14 @@ function stage(game) {
   const nudges = ['nudge', 'nudge kind', 'nudge tx', 'nudge ty'];
   if (k % 41 === 0 && ['choke', 'choke tx', 'choke ty', 'snake coughUntil', ...nudges].some(short)) { add({ type: 'choke', snake: s, x: h.x, y: h.y, tx, ty: h.y }); s.coughUntil = k + T.COUGH_TICKS; return; } // (a nudge wants a cough first)
   if (k % 41 === 3 && cougher && nudges.some(short)) { const c = cougher.body[0]; add({ type: 'nudge', snake: cougher, kind: NUDGED[(k >> 3) % NUDGED.length], x: c.x, y: c.y, tx: Math.min(E.GRID - 1, c.x + 1), ty: c.y }); return; }
+  const w = game.woodpecker, at = c => !game.holes.has(c) && !game.food.some(f => f.y * E.GRID + f.x === c) && !game.snakes.some(q => q.alive && q.body.some(b => b.y * E.GRID + b.x === c));
+  const spot = w && w.target.length && k >= w.strikeAt && !w.landings && short('woodpecker 9') ? w.target.find(at) : undefined;
+  if (spot != null) { // (an apple in the mark on the aim's last tick, and where the strike promises it'll land, as the engine keeps it)
+    game.food.push({ x: spot % E.GRID, y: Math.floor(spot / E.GRID), kind: 'food', expires: k + 100 });
+    w.landings = E.knocks(game, w.target).map(({ food: f, to }) => [f.y * E.GRID + f.x, to ? to.y * E.GRID + to.x : -1]);
+    staged.set('landings', (staged.get('landings') || 0) + 1);
+    return;
+  }
   if (k % 7) return;
   if (short('snake leaps')) { s.leaps = Math.min(T.LEAP_MAX, s.leaps + T.LEAP_CHARGES); return; } // (as a golden beetle gives them)
   if (short('snake dashes')) { s.dashes = Math.min(T.DASH_MAX, s.dashes + T.DASH_CHARGES); return; } // (a golden leaf)
@@ -349,7 +358,7 @@ const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fata
   ...['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap'].flatMap(k => [`food ${k}`, `food ${k} 3`]), // (each kind, and when it goes)
   'food food 5', 'food food 6', 'food pellet 4', 'food pellet 7', ...[5, 6, 7, 8, 9, 10, 11].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden, digging in)
   ...FIRES.map(k => `fire ${k}`),
-  ...WEATHER.map((w, k) => `weather ${k}`), ...Array.from({ length: 9 }, (_, j) => `woodpecker ${j}`), ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
+  ...WEATHER.map((w, k) => `weather ${k}`), ...Array.from({ length: 10 }, (_, j) => `woodpecker ${j}`), ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
 const lacking = [...new Set(want)].filter(short).map(k => `${k} (${seen.get(k) || 0})`);
 if (process.env.ONLINE_SEEN) console.log([...seen].sort().map(([k, v]) => `${k}: ${v}`).join('\n'));
 if (lacking.length) { console.error(`seen too few times (fewer than ${MIN}; a death's, never), the test lost its point there: ${lacking.join(', ')}`); process.exit(1); }
@@ -376,11 +385,11 @@ O.apply(g, bad, E.DIRS);
 if (g.events.length !== 1 || g.events[0].tx !== 3 || g.events[0].ty !== 5 || g.snakes[1].coughUntil !== -1) { console.error('a malformed choke, nudge or cough got through', JSON.stringify(g.events.map(e => [e.type, e.x, e.y, e.tx, e.ty]))); process.exit(1); }
 // Nor digs, dives, knocks, burrows opening or closing over off the board or of a kind that doesn't exist (a
 // knock lands on the board, or nowhere: both or neither), a dig that isn't till a tick, a beetle underground that
-// came from no cell, a beetle digging in till no tick, or a burrow that isn't one.
+// came from no cell, a beetle digging in till no tick, or a burrow that isn't one (off the board, or not opened on a tick).
 bad.e = [['dig', 1, 1, 'soon'], ['dig', -1, 1, 5], ['dive', 1, E.GRID, 1], ['knock', 99, 1, 1, 2, 2, 0], ['knock', 0, 1, 1, E.GRID, 1, 0], ['knock', 0, 1, 1, 2, null, 0], ['knock', 0, 1, 1, -1, -1, 0],
   ['knock', 0, 1, 1, null, null, 0], ['dig', 2, 3, 40], ['dive', 2, 3, 1], ['knock', 4, 5, 6, 7, 8, 1], ['burrow', E.GRID, 1, 1], ['heal', 1, 'x'], ['burrow', 3, 4, 1], ['heal', 5, 6],
   ['knock', 3, 1, 2, 3, 4, 0, '#abc']];
-bad.bu = [[1, 2], [1, 2, 3, 'x', 0], [4, 5, 6, 700, 1], [7, 8, 9, -1, 0]];
+bad.bu = [[1, 2], [1, 2, 3, 'x', 0], [4, 5, 6, 700, 1], [999, -5, 1.5, 700, 1], [2.5, 3, 4, 700, 0], [5, E.GRID, 7, 700, 0], [5, 6, 7.5, 700, 0], [7, 8, 9, -1, 0]]; // (two short or not numbers, one off the board, one not on a cell, one past the edge, one not opened on a tick)
 bad.un = [['x'], [1, 2, -5, 0], [1, 2, E.GRID * E.GRID, 0], [5, 9, 30, 1]];
 bad.f = [[3, 3, 4, 100, 0, 0, -1, -1, 0, 0, 0, 'soon']];
 O.apply(g, bad, E.DIRS);
@@ -388,6 +397,14 @@ const kept = JSON.stringify(g.events.map(e => ({ ...e })));
 if (kept !== JSON.stringify([{ type: 'knock', kind: 'food', x: 1, y: 1, tx: null, ty: null }, { type: 'dig', x: 2, y: 3, until: 40 }, { type: 'dive', x: 2, y: 3, dug: 1 }, { type: 'knock', kind: 'beetle', x: 5, y: 6, tx: 7, ty: 8, gold: 1 }, { type: 'burrow', x: 3, y: 4, dug: 1 }, { type: 'heal', x: 5, y: 6 }, { type: 'knock', kind: 'pellet', x: 1, y: 2, tx: 3, ty: 4, color: '#abc' }])
   || JSON.stringify(g.burrows) !== JSON.stringify([{ x: 4, y: 5, at: 6, used: 700, dug: 1 }, { x: 7, y: 8, at: 9 }])
   || JSON.stringify(g.unders) !== JSON.stringify([{ until: 5, expires: 9, from: 30, gold: true }]) || 'digUntil' in g.food[0]) { console.error('a malformed dig, dive, knock, burrow, beetle underground or digging got through', kept, JSON.stringify(g.unders), JSON.stringify(g.food), JSON.stringify(g.burrows)); process.exit(1); }
+// Nor the woodpecker's promised landings off the board, or that aren't a cell and a cell (or nowhere, -1); none at all: no landings.
+bad.e = [];
+bad.w = [12, 0, 1000, [300, 301], 40, [], -1, 0, 0, [[300, 302], [301], [-5, 2], [301, E.GRID * E.GRID], 'x', [301, 1.5], [301, -1]]];
+O.apply(g, bad, E.DIRS);
+const promised = JSON.stringify(g.woodpecker?.landings);
+bad.w = [12, 0, 1000, [300, 301], 40, [], -1, 0, 0, [[-1, 4], 'x']];
+O.apply(g, bad, E.DIRS);
+if (promised !== JSON.stringify([[300, 302], [301, -1]]) || 'landings' in g.woodpecker) { console.error('malformed landings got through', promised, JSON.stringify(g.woodpecker)); process.exit(1); }
 
 // A guest's press the host can't use (an unknown power, a made-up direction) is refused.
 if (O.POWERS.includes('dash') || O.POWERS.includes(undefined) || O.DIR_NAMES.includes('ahead')) { console.error('a bad press got through'); process.exit(1); }
