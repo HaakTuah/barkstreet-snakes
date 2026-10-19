@@ -17,7 +17,8 @@
 // translucent shape made of overlapping pieces (the shadows, a land's colour
 // round a rival on it) is drawn opaque into an offscreen veil and laid on
 // once. Sovereign's and Colonist's land are cached layers, made again only
-// when the land changes. The per-frame path
+// when the land changes (the land a woodpecker's strike will leave is made
+// ahead, a little a frame, while it aims: see prebuild). The per-frame path
 // builds no strings, closures or arrays (a body across a wrapped edge keeps
 // its offsets on its anim; a loop over both sides goes over SIDES2), only
 // the odd small record of something new (a leaf falling). The exceptions
@@ -4803,6 +4804,7 @@ window.SnakeRender = (() => {
       changedAt: -1e9, alertA: 0, pulses: [],
       fallen: [], // (its colonies lost to the woodpecker, a while: { x, y, radius, at }, see drawColonyFlags)
       banner: null, // (its banner as drawn, carried when its capital moves: see drawRealmBanner)
+      spare: null, // (its layers as a strike will leave them, made ahead: see prebuild)
     };
   }
   // An owner's fields, as one number (a guest online gets fresh ones every tick).
@@ -4963,42 +4965,54 @@ window.SnakeRender = (() => {
   // size of the cells it spans (and a margin, for the line and the glow),
   // landing on whole device pixels.
   const LAND_MARGIN = 10;
+  const shownOf = o => o.shown;
   function buildRealm(r) {
-    r.dirty = false; r.builtK = k; r.shared.length = r.sharedAt.length = r.sharedTo.length = 0;
-    r.any = r.bx1 >= 0;
-    if (!r.any) return;
+    r.dirty = false; r.builtK = k; landVer++;
+    const p = prepRealm(r, r, r.shown, r, shownOf, game.holes);
+    if (p) for (let st = 0; st < LAND_STEPS; st++) paintLandStep(p, st, r.layer.getContext('2d'), r.glow.getContext('2d'), r.color);
+  }
+  // A realm's layers made ready for its land m (r's, or as it will be: see
+  // the strike's land, below), into `into` (r itself, or its spare): sized
+  // to the cells m spans (box: bx0..by1), cleared, and the land traced and
+  // planned (see planLand), against the other realms' land (maskOf) and the
+  // holes (lost); with its contested sides (dashed in their own layer: see
+  // buildDashes). Says the plan, to paint (null: no land left).
+  function prepRealm(into, r, m, box, maskOf, lost) {
+    into.shared.length = into.sharedAt.length = into.sharedTo.length = 0;
+    into.any = box.bx1 >= 0;
+    if (!into.any) return null;
     otherLand.fill(0);
-    for (const o of fieldSpecs) if (o !== r) for (let i = 0; i < N2; i++) if (o.shown[i]) otherLand[i] = 1;
-    const ux = r.bx0 * CELL - LAND_MARGIN, uy = r.by0 * CELL - LAND_MARGIN;
-    r.X = Math.floor(ux * k); r.Y = Math.floor(uy * k);
-    const pw = Math.ceil(((r.bx1 + 1) * CELL + LAND_MARGIN) * k) - r.X + 1, ph = Math.ceil(((r.by1 + 1) * CELL + LAND_MARGIN) * k) - r.Y + 1;
-    if (!r.layer) { r.layer = makeLayer(pw, ph); r.glow = makeLayer(pw / 2, ph / 2); }
-    for (const c of [r.layer, r.glow]) {
-      const s = c === r.glow ? 0.5 : 1, w = Math.ceil(pw * s), h = Math.ceil(ph * s); // (the glow at half the resolution: it's soft, and a quarter of the pixels to light up)
+    for (const o of fieldSpecs) if (o !== r) { const om = maskOf(o); for (let i = 0; i < N2; i++) if (om[i]) otherLand[i] = 1; }
+    const ux = box.bx0 * CELL - LAND_MARGIN, uy = box.by0 * CELL - LAND_MARGIN;
+    into.X = Math.floor(ux * k); into.Y = Math.floor(uy * k);
+    const pw = Math.ceil(((box.bx1 + 1) * CELL + LAND_MARGIN) * k) - into.X + 1, ph = Math.ceil(((box.by1 + 1) * CELL + LAND_MARGIN) * k) - into.Y + 1;
+    if (!into.layer) { into.layer = makeLayer(pw, ph); into.glow = makeLayer(pw / 2, ph / 2); }
+    for (let c = into.layer, j = 0; j < 2; c = into.glow, j++) {
+      const s = j ? 0.5 : 1, w = Math.ceil(pw * s), h = Math.ceil(ph * s); // (the glow at half the resolution: it's soft, and a quarter of the pixels to light up)
       if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
       const g = c.getContext('2d');
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.clearRect(0, 0, w, h);
-      g.setTransform(k * s, 0, 0, k * s, -r.X * s, -r.Y * s);
+      g.setTransform(k * s, 0, 0, k * s, -into.X * s, -into.Y * s);
       g.lineCap = g.lineJoin = 'round';
     }
-    paintLand(r.layer.getContext('2d'), r.glow.getContext('2d'), r.shown, otherLand, r.color, r.idx, game.holes);
-    // Its contested sides (dashed in their own layer: see buildDashes). Where its
-    // land runs into another's that also covers its own cell there, only
-    // this realm has the side, so it dashes both halves.
+    const p = planLand(m, otherLand, lost, r.idx);
+    // Where its land runs into another's that also covers its own cell
+    // there, only this realm has the side, so it dashes both halves.
     for (let l = 0; l < tLoops; l++) {
       const a = tAt[l], n = tAt[l + 1] - a;
       for (let j = 0; j < n; j++) {
         if (tKind[a + j] !== 1) continue;
-        r.sharedAt.push(r.shared.length);
-        sideLine(r.shared, a, n, j);
+        into.sharedAt.push(into.shared.length);
+        sideLine(into.shared, a, n, j);
         const e = tSide[a + j], i = e >> 2, across = i + NX[e & 3] + NY[e & 3] * GRID;
         let to = null;
-        for (const o of fieldSpecs) if (o !== r && o.shown[across]) { to = o.shown[i] ? o : null; break; }
-        r.sharedTo.push(to);
+        for (const o of fieldSpecs) { if (o === r) continue; const om = maskOf(o); if (om[across]) { to = om[i] ? o : null; break; } }
+        into.sharedTo.push(to);
       }
     }
-    r.sharedAt.push(r.shared.length);
+    into.sharedAt.push(into.shared.length);
+    return p;
   }
   // Side j of the loop at a (n points) as a line of points along the
   // rounded border (half of a rounded corner at either end is the side's),
@@ -5040,6 +5054,13 @@ window.SnakeRender = (() => {
   // ink does, for every eye. On gg, if given, its border's glow, for when it
   // lights up. other: the other owners' land; lost: the holes.
   function paintLand(g, gg, m, other, col, idx, lost) {
+    const p = planLand(m, other, lost, idx);
+    for (let st = 0; st < LAND_STEPS; st++) paintLandStep(p, st, g, gg, col);
+  }
+  // Land m, traced (see traceCells: its sides' kinds left in tKind) and laid
+  // out as paths: all of it, its edge (the border and its contested
+  // sides), its border, and where it's contested, the hatching's cells.
+  function planLand(m, other, lost, idx) {
     traceCells(m);
     for (let j = 0; j < tAt[tLoops]; j++) {
       const e = tSide[j], i = e >> 2, sd = e & 3, x = i % GRID + NX[sd], y = (i - i % GRID) / GRID + NY[sd];
@@ -5048,21 +5069,6 @@ window.SnakeRender = (() => {
     const land = new Path2D(), edge = new Path2D(), border = new Path2D();
     for (let l = 0; l < tLoops; l++) cornersPath(land, cornersOf(l, 0, RC, RC, 0));
     const anyBorder = runsPath(border, 0), anyEdge = runsPath(edge, 0) | runsPath(edge, 1);
-    g.fillStyle = rgba(col, 0.1);
-    g.fill(land, 'evenodd');
-    g.save();
-    g.clip(land, 'evenodd');
-    if (anyEdge) {
-      g.strokeStyle = col;
-      for (let n = 0; n < LAND_BAND.length; n += 2) { g.globalAlpha = LAND_BAND[n + 1]; g.lineWidth = LAND_BAND[n] * CELL; g.stroke(edge); }
-      g.globalAlpha = 0.55; g.lineWidth = 12; g.stroke(edge); // (half of it shows: 6 units inside the line)
-      g.globalAlpha = 1;
-    }
-    if (anyBorder) { // (the keyline: inside the land, from the ink's inner edge on; the ink goes over its outer part, below)
-      g.strokeStyle = KEYLINE;
-      g.lineWidth = 2 * (BORDER_INK / 2 + BORDER_KEY);
-      g.stroke(border);
-    }
     let x0 = GRID, y0 = GRID, x1 = -1, y1 = -1;
     const hatch = new Path2D();
     for (let i = 0; i < N2; i++) {
@@ -5071,27 +5077,63 @@ window.SnakeRender = (() => {
       hatch.rect(x * CELL, y * CELL, CELL, CELL);
       x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
     }
-    if (x1 >= 0) {
-      g.clip(hatch);
-      g.strokeStyle = rgba(col, 0.32);
-      g.lineWidth = 1.3;
-      g.beginPath();
-      const L = (x1 - x0 + y1 - y0 + 2) * CELL, X0 = x0 * CELL, Y0 = y0 * CELL, Y1 = (y1 + 1) * CELL;
-      for (let d = 0; d <= L; d += 14) { // (diagonals across the box, from its left edge)
-        if (idx % 2) { g.moveTo(X0 + d - (Y1 - Y0), Y0); g.lineTo(X0 + d, Y1); } else { g.moveTo(X0 + d - (Y1 - Y0), Y1); g.lineTo(X0 + d, Y0); }
-      }
-      g.stroke();
+    return { land, edge, border, hatch, anyBorder, anyEdge, idx, x0, y0, x1, y1 };
+  }
+  // The land planned (p) painted, a step at a time, in order: a light wash
+  // over all of it; inside it (clipped to it), the soft band deepening
+  // toward its border, a stroke a step; the keyline and the hatching; the
+  // inked line; its glow, on gg. All at once as it's made, or (the land a
+  // strike will leave) a step a frame (see prebuild). Each step clips anew,
+  // as all of them at once did, so either way it's the same pixels.
+  const LAND_STEPS = 8;
+  function paintLandStep(p, st, g, gg, col) {
+    if (st === 0) { g.fillStyle = rgba(col, 0.1); g.fill(p.land, 'evenodd'); return; }
+    if (st <= 4) {
+      if (!p.anyEdge) return;
+      g.save();
+      g.clip(p.land, 'evenodd');
+      g.strokeStyle = col;
+      if (st < 4) { g.globalAlpha = LAND_BAND[2 * st - 1]; g.lineWidth = LAND_BAND[2 * st - 2] * CELL; }
+      else { g.globalAlpha = 0.55; g.lineWidth = 12; } // (half of it shows: 6 units inside the line)
+      g.stroke(p.edge);
+      g.restore();
+      return;
     }
-    g.restore();
-    if (anyBorder) {
+    if (st === 5) {
+      if (!p.anyBorder && p.x1 < 0) return;
+      g.save();
+      g.clip(p.land, 'evenodd');
+      if (p.anyBorder) { // (the keyline: inside the land, from the ink's inner edge on; the ink goes over its outer part, below)
+        g.strokeStyle = KEYLINE;
+        g.lineWidth = 2 * (BORDER_INK / 2 + BORDER_KEY);
+        g.stroke(p.border);
+      }
+      if (p.x1 >= 0) {
+        const { x0, y0, x1, y1 } = p;
+        g.clip(p.hatch);
+        g.strokeStyle = rgba(col, 0.32);
+        g.lineWidth = 1.3;
+        g.beginPath();
+        const L = (x1 - x0 + y1 - y0 + 2) * CELL, X0 = x0 * CELL, Y0 = y0 * CELL, Y1 = (y1 + 1) * CELL;
+        for (let d = 0; d <= L; d += 14) { // (diagonals across the box, from its left edge)
+          if (p.idx % 2) { g.moveTo(X0 + d - (Y1 - Y0), Y0); g.lineTo(X0 + d, Y1); } else { g.moveTo(X0 + d - (Y1 - Y0), Y1); g.lineTo(X0 + d, Y0); }
+        }
+        g.stroke();
+      }
+      g.restore();
+      return;
+    }
+    if (st === 6) {
+      if (!p.anyBorder) return;
       g.strokeStyle = LAND_INK;
       g.lineWidth = BORDER_INK;
-      g.stroke(border);
+      g.stroke(p.border);
+      return;
     }
-    if (gg && anyEdge) {
+    if (gg && p.anyEdge) {
       gg.strokeStyle = col;
-      gg.globalAlpha = 0.5; gg.lineWidth = 9; gg.stroke(edge);
-      gg.globalAlpha = 1; gg.strokeStyle = mix(col, '#fff7e0', 0.45); gg.lineWidth = 2.5; gg.stroke(edge);
+      gg.globalAlpha = 0.5; gg.lineWidth = 9; gg.stroke(p.edge);
+      gg.globalAlpha = 1; gg.strokeStyle = mix(col, '#fff7e0', 0.45); gg.lineWidth = 2.5; gg.stroke(p.edge);
     }
   }
   // Every run of traced sides of one kind (0 border, 1 contested) as open
@@ -5154,13 +5196,23 @@ window.SnakeRender = (() => {
       const r = fieldSpecs[i];
       if (r.gone && r.step < 0 && r.bx1 < 0) { realms.delete(r.owner); fieldSpecs.splice(i, 1); }
     }
-    let built = fieldSpecs.length !== dashFor;
-    for (const r of fieldSpecs) if (r.dirty || r.builtK !== k) { buildRealm(r); built = true; }
-    if (built) buildDashes();
+    let built = fieldSpecs.length !== dash.for, ready = -1, swapped = 0, rebuilt = 0;
+    for (const r of fieldSpecs) {
+      if (!r.dirty && r.builtK === k) continue;
+      if (ready < 0) ready = pre.ready && preStill() ? 1 : 0; // (the land a strike leaves, made ahead: is it the land now?)
+      if (ready && pre.todo.includes(r)) { swapIn(r); swapped++; } else { buildRealm(r); rebuilt++; }
+      built = true;
+    }
+    if (built) {
+      if (ready > 0 && !rebuilt && swapped === pre.todo.length) swapDashes();
+      else buildDashes();
+      pre.ready = false;
+    }
+    if (prebuilding) prebuild();
     const lively = !reduced, t = now / 1000;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     for (const r of fieldSpecs) if (r.any) ctx.drawImage(r.layer, r.X + shakeX, r.Y + shakeY);
-    if (dashAny) ctx.drawImage(dashLayer, dashX + shakeX, dashY + shakeY);
+    if (dash.any) ctx.drawImage(dash.layer, dash.X + shakeX, dash.Y + shakeY);
     // Lit up: breathing softly, quicker and brighter, while a rival's head is
     // on the land; flaring as it changes, and in a lightning flash; and from
     // where a head crossed in, lighting up along itself (see drawFieldHues).
@@ -5203,52 +5255,191 @@ window.SnakeRender = (() => {
     if (fallenFlags.length) drawFallenFlags(now);
   }
 
+  // The land a strike will leave, made ahead. Made at the strike, the land's
+  // layers took that frame tens of milliseconds (painting them, mostly the
+  // GPU's), a hitch everyone saw. So while the woodpecker aims (17 ticks),
+  // the layers of every realm its patch will cut, or run beside (its
+  // contested sides change too), are made in spare canvases as they'll be
+  // once the patch is holes, and the dashes with them: a step a frame (the
+  // land planned, then each stroke of it: see paintLandStep), each sent to
+  // the GPU in its own frame (kick), so no frame takes much. At the strike,
+  // if that's the land then (every realm's land, the holes, the
+  // resolution, all as foreseen: see preStill), they're swapped in;
+  // otherwise (anything else changed meanwhile) it's made the old way.
+  const pre = {
+    ready: false, key: NaN, step: 0, steps: 0, k: 0, // (made, for the aim keyed so, in steps)
+    specs: [], post: [], colors: [], todo: [], // (the realms as they were then; each one's land after the strike; the realms to make again)
+    holes: new Uint8Array(N2), plan: null, dash: { layer: null, X: 0, Y: 0, any: false, for: 0 },
+  };
+  let landVer = 0, prebuilding = true; // (landVer: the land's changes, counted; prebuilding: off only for the tests, to compare)
+  const preLost = { has: i => pre.holes[i] === 1 };
+  const postOf = o => pre.post[pre.specs.indexOf(o)];
+  const spareSides = r => pre.todo.includes(r) ? r.spare : r;
+  let kickG = null;
+  function kick(c) { (kickG ||= makeLayer(1, 1).getContext('2d')).drawImage(c, 0, 0, 1, 1, 0, 0, 1, 1); } // (drawn from, a canvas's waiting work goes to the GPU now)
+  function prebuild() {
+    const w = game.woodpecker;
+    if (!w || !w.target.length) { pre.key = NaN; return; }
+    let key = (w.target.length * 977 + game.holes.size * 31 + landVer * 7919 + Math.round(k * 1000)) | 0;
+    for (const c of w.target) key = (key * 31 + c) | 0;
+    for (const r of fieldSpecs) {
+      if (r.step >= 0 || r.dirty || r.gone || r.builtK !== k) { pre.key = NaN; return; } // (wait for the land to settle)
+      key = (key * 31 + r.idx) | 0;
+    }
+    let same = key === pre.key && pre.specs.length === fieldSpecs.length;
+    for (let j = 0; same && j < fieldSpecs.length; j++) same = fieldSpecs[j] === pre.specs[j];
+    if (!same) { pre.key = key; pre.step = 0; pre.ready = false; }
+    if (pre.ready || pre.step > pre.steps) return;
+    const st = pre.step++;
+    if (st === 0) { prePlan(w.target); return; }
+    const per = 1 + LAND_STEPS, n = st - 1, ri = Math.floor(n / per), sub = n % per;
+    if (ri < pre.todo.length) {
+      const r = pre.todo[ri], sp = r.spare;
+      if (!sub) { const m = postOf(r); pre.plan = prepRealm(sp, r, m, boxOf(m), postOf, preLost); return; }
+      if (!pre.plan) return;
+      paintLandStep(pre.plan, sub - 1, sp.layer.getContext('2d'), sp.glow.getContext('2d'), r.color);
+      kick(sub === LAND_STEPS ? sp.glow : sp.layer);
+      return;
+    }
+    buildDashes(pre.dash, spareSides);
+    if (pre.dash.any) kick(pre.dash.layer);
+    pre.ready = true;
+  }
+  // The first step: each realm's land after the strike (its land less the
+  // patch), and which realms will be made again then: those it cuts, and
+  // those beside a cell they lose (as markDirty will find them).
+  function prePlan(target) {
+    pre.k = k; pre.plan = null;
+    pre.specs.length = pre.post.length = pre.colors.length = pre.todo.length = 0;
+    pre.holes.fill(0);
+    for (const h of game.holes) pre.holes[h] = 1;
+    for (const c of target) pre.holes[c] = 1;
+    for (const r of fieldSpecs) {
+      r.spare ||= { layer: null, glow: null, X: 0, Y: 0, any: false, shared: [], sharedAt: [], sharedTo: [], post: new Uint8Array(N2) };
+      const m = r.spare.post;
+      m.set(r.shown);
+      for (const c of target) m[c] = 0;
+      pre.specs.push(r); pre.post.push(m); pre.colors.push(r.color);
+    }
+    for (const r of fieldSpecs) {
+      let cut = false;
+      for (const c of target) if (r.shown[c]) { cut = true; break; }
+      if (cut) pre.todo.push(r);
+    }
+    const cuts = pre.todo.length;
+    for (const o of fieldSpecs) {
+      if (pre.todo.includes(o)) continue;
+      let beside = false;
+      for (let j = 0; j < cuts && !beside; j++) {
+        const r = pre.todo[j];
+        for (const c of target) {
+          if (!r.shown[c]) continue;
+          const m = o.shown, x = c % GRID;
+          if (m[c] || (x > 0 && m[c - 1]) || (x < GRID - 1 && m[c + 1]) || (c >= GRID && m[c - GRID]) || (c < N2 - GRID && m[c + GRID])) { beside = true; break; }
+        }
+      }
+      if (beside) pre.todo.push(o);
+    }
+    pre.steps = pre.todo.length ? 1 + pre.todo.length * (1 + LAND_STEPS) : 0; // (none cut: nothing to make)
+    if (!pre.steps) pre.step = 1; // (and nothing to swap: it stays not ready)
+  }
+  const preBox = { bx0: 0, by0: 0, bx1: -1, by1: -1 };
+  function boxOf(m) {
+    preBox.bx0 = preBox.by0 = GRID; preBox.bx1 = preBox.by1 = -1;
+    for (let i = 0; i < N2; i++) {
+      if (!m[i]) continue;
+      const x = i % GRID, y = (i - x) / GRID;
+      if (x < preBox.bx0) preBox.bx0 = x;
+      if (x > preBox.bx1) preBox.bx1 = x;
+      if (y < preBox.by0) preBox.by0 = y;
+      if (y > preBox.by1) preBox.by1 = y;
+    }
+    return preBox;
+  }
+  // Is the land now what was made ahead: the same realms, each one's land
+  // as foreseen, the same holes, at the same resolution?
+  function preStill() {
+    if (pre.k !== k || pre.specs.length !== fieldSpecs.length) return false;
+    for (let j = 0; j < fieldSpecs.length; j++) {
+      const r = fieldSpecs[j], m = pre.post[j];
+      if (r !== pre.specs[j] || r.color !== pre.colors[j]) return false;
+      for (let i = 0; i < N2; i++) if (r.shown[i] !== m[i]) return false;
+    }
+    let n = 0;
+    for (let i = 0; i < N2; i++) n += pre.holes[i];
+    if (n !== game.holes.size) return false;
+    for (const h of game.holes) if (!pre.holes[h]) return false;
+    return true;
+  }
+  // A realm's layers, made ahead, swapped in (the old ones are its spares now).
+  function swapIn(r) {
+    const sp = r.spare;
+    let t = r.layer; r.layer = sp.layer; sp.layer = t;
+    t = r.glow; r.glow = sp.glow; sp.glow = t;
+    t = r.shared; r.shared = sp.shared; sp.shared = t;
+    t = r.sharedAt; r.sharedAt = sp.sharedAt; sp.sharedAt = t;
+    t = r.sharedTo; r.sharedTo = sp.sharedTo; sp.sharedTo = t;
+    r.X = sp.X; r.Y = sp.Y; r.any = sp.any;
+    r.dirty = false; r.builtK = k; landVer++;
+  }
+  function swapDashes() {
+    const d = pre.dash;
+    const t = dash.layer; dash.layer = d.layer; d.layer = t;
+    dash.X = d.X; dash.Y = d.Y; dash.any = d.any; dash.for = d.for;
+  }
+
   // Where two owners' land meets: every contested side dashed half in one
   // owner's colour, half in the other's, over an ink line, in one cached
   // layer for every realm, made again whenever any land is (stroked every
   // frame, the dashes' many short pieces cost as much as the rest of the
   // land; marching, they cost that and more).
-  let dashLayer = null, dashX = 0, dashY = 0, dashAny = false, dashFor = 0; // (dashFor: how many realms it was made for)
-  function buildDashes() {
-    dashFor = fieldSpecs.length;
+  const dash = { layer: null, X: 0, Y: 0, any: false, for: 0 }; // (for: how many realms it was made for)
+  const ownSides = r => r;
+  // Into `into` (the dashes' layer, or its spare), from each realm's
+  // contested sides as sidesOf has them (its own, or as a strike will leave them).
+  function buildDashes(into = dash, sidesOf = ownSides) {
+    into.for = fieldSpecs.length;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const r of fieldSpecs) {
-      for (let i = 0; i < r.shared.length; i += 3) {
-        x0 = Math.min(x0, r.shared[i]); x1 = Math.max(x1, r.shared[i]);
-        y0 = Math.min(y0, r.shared[i + 1]); y1 = Math.max(y1, r.shared[i + 1]);
+      const sh = sidesOf(r).shared;
+      for (let i = 0; i < sh.length; i += 3) {
+        x0 = Math.min(x0, sh[i]); x1 = Math.max(x1, sh[i]);
+        y0 = Math.min(y0, sh[i + 1]); y1 = Math.max(y1, sh[i + 1]);
       }
     }
-    dashAny = x1 >= x0;
-    if (!dashAny) return;
-    dashX = Math.floor((x0 - 4) * k); dashY = Math.floor((y0 - 4) * k);
-    const w = Math.ceil((x1 + 4) * k) - dashX + 1, h = Math.ceil((y1 + 4) * k) - dashY + 1;
-    if (!dashLayer) dashLayer = makeLayer(w, h);
-    else if (dashLayer.width !== w || dashLayer.height !== h) { dashLayer.width = w; dashLayer.height = h; }
-    const g = dashLayer.getContext('2d');
+    into.any = x1 >= x0;
+    if (!into.any) return;
+    into.X = Math.floor((x0 - 4) * k); into.Y = Math.floor((y0 - 4) * k);
+    const w = Math.ceil((x1 + 4) * k) - into.X + 1, h = Math.ceil((y1 + 4) * k) - into.Y + 1;
+    if (!into.layer) into.layer = makeLayer(w, h);
+    else if (into.layer.width !== w || into.layer.height !== h) { into.layer.width = w; into.layer.height = h; }
+    const g = into.layer.getContext('2d');
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, w, h);
-    g.setTransform(k, 0, 0, k, -dashX, -dashY);
+    g.setTransform(k, 0, 0, k, -into.X, -into.Y);
     g.lineCap = 'butt';
     g.lineJoin = 'round';
     for (const r of fieldSpecs) {
-      if (!r.shared.length) continue;
+      const h = sidesOf(r);
+      if (!h.shared.length) continue;
       const s0 = r.idx % 2 ? 0.5 : 0;
-      dashes(g, r, s0, null);
-      for (const o of fieldSpecs) if (o !== r && r.sharedTo.includes(o)) dashes(g, r, 0.5 - s0, o); // (the other half, where only this realm has the side)
+      dashes(g, h, r.color, s0, null);
+      for (const o of fieldSpecs) if (o !== r && h.sharedTo.includes(o)) dashes(g, h, r.color, 0.5 - s0, o); // (the other half, where only this realm has the side)
     }
   }
-  // Half of each of r's contested sides, from s0 along it (to s0 + 0.5), on
-  // g in r's colour over an ink line; or with o, the halves of the sides
-  // only r has against o's land, in o's colour.
-  function dashes(g, r, s0, o) {
-    const sh = r.shared, at = r.sharedAt;
+  // Half of each of a realm's contested sides (h: its shared, sharedAt and
+  // sharedTo), from s0 along it (to s0 + 0.5), on g in its colour (col)
+  // over an ink line; or with o, the halves of the sides only it has
+  // against o's land, in o's colour.
+  function dashes(g, h, col, s0, o) {
+    const sh = h.shared, at = h.sharedAt;
     g.beginPath();
-    for (let n = 0; n < r.sharedTo.length; n++) {
-      if (o && r.sharedTo[n] !== o) continue;
+    for (let n = 0; n < h.sharedTo.length; n++) {
+      if (o && h.sharedTo[n] !== o) continue;
       const L = sh[at[n + 1] - 1];
       dashAlong(g, sh, at[n], at[n + 1], s0 * L, (s0 + 0.5) * L);
     }
-    const col = o ? o.color : r.color;
+    if (o) col = o.color;
     g.strokeStyle = LAND_INK;
     g.lineWidth = 5;
     g.stroke();
@@ -7907,6 +8098,7 @@ window.SnakeRender = (() => {
     embers.length = 0;
     ripples.length = 0;
     realms.clear();
+    pre.ready = false; pre.key = NaN; pre.specs.length = pre.post.length = pre.todo.length = 0;
     inField.clear();
     fieldSpecs.length = 0;
     rgbaCache.clear(); // (bounded anyway: a backstop)
@@ -7936,6 +8128,16 @@ window.SnakeRender = (() => {
     streaked: () => streaks.map(k => ({ from: [k.fx, k.fy], to: [k.tx, k.ty], seen: k.pre >= 0 })), // (the dash streaks drawn: for the tests)
     hues(on) { huesOn = !!on; }, // (a land's colour round a rival on it, drawn or not: for the benchmark, which times it)
     landShown: (s, x, y) => !!realms.get(s)?.shown[y * GRID + x], // (whether a cell of s's land is drawn: for the tests)
+    prebuild(on) { prebuilding = !!on; if (!on) { pre.ready = false; pre.key = NaN; } }, // (the land a strike leaves made ahead, or not: for the tests, comparing the two)
+    get prebuilt() { return pre.ready; }, // (made ahead, and waiting for the strike: for the tests)
+    // (s's land's layers and the dashes as drawn, as a hash of their pixels, where they land and how big: for the tests)
+    landPixels(s) {
+      const r = realms.get(s), out = {};
+      const hash = c => { if (!c || !c.width) return null; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let h = 2166136261; for (let i = 0; i < d.length; i++) h = Math.imul(h ^ d[i], 16777619); return `${c.width}x${c.height}:${h >>> 0}`; };
+      if (r) { out.any = r.any; out.at = [r.X, r.Y]; out.layer = r.any ? hash(r.layer) : null; out.glow = r.any ? hash(r.glow) : null; out.shared = r.shared.length; }
+      out.dash = dash.any ? [dash.X, dash.Y, hash(dash.layer)] : null;
+      return out;
+    },
     flick(s, p) { const a = animOf(s, lastNow), [, len] = FLICKS[lookOf(s)] || FLICKS.player; a.tongueMs = T.TONGUE_MS * len; a.tongueUntil = lastNow + (1 - p) * a.tongueMs; a.nextTongue = lastNow + 1e9; }, // (its tongue or gag p of the way through, and then no more: for the tests)
   };
 })();

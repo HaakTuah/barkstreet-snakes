@@ -48,6 +48,10 @@
 // - A pecked flag is a lost colony: the flag tips and falls into the pit
 //   (the other colony's stands), its land shrinks away into the pit, and
 //   Sovereign's banner is carried to its new capital, not jumping there.
+// - A strike that doesn't stutter: the land a strike leaves, made ahead
+//   while the woodpecker aims and swapped in, is the very land made at the
+//   strike, pixel for pixel; and with the land changing otherwise as it
+//   strikes, it's made the old way, and is still the same.
 // - Every Field guide picture draws (the mushroom on bark; a snake holding
 //   golden powers; your rests).
 // - The next round's stretch of log, made ahead in idle time, is the very
@@ -834,6 +838,58 @@ const STAGE = `(() => {
     check(!lf.shrinking.far && lf.shrinking.near && !lf.after.land, 'its land shrinks away into the pit', `three cells from the pit ${lf.shrinking.far ? 'still there' : 'gone'} while the cell beside it is ${lf.shrinking.near ? 'still there' : 'gone'}; ${lf.after.land ? 'some left' : 'all gone'} after`);
     check(lf.carried[0] > 10 && lf.carried[1] > 13.5 && lf.carried[1] < 16.8 && lf.after.banner[0] > 10 && Math.abs(lf.after.banner[1] - 12.9) < 0.6,
       'Sovereign’s banner is carried to its new capital', `its parchment part way at x ${lf.carried[1]} (${lf.carried[0]} pixels; from 17 to 12), then at ${lf.after.banner[1]}`);
+
+    // A strike that doesn't stutter (round six A): the land a strike will
+    // leave is made ahead while the woodpecker aims, and swapped in at the
+    // strike. Sovereign's realm and Colonist's colony meet (dashed sides
+    // between them), and the patch cuts both. Made ahead, the board just
+    // after the strike is the very one made at the strike (the old way, with
+    // making ahead switched off), pixel for pixel; and with the land changing
+    // otherwise as it strikes (Sovereign's realm growing a ring), it's made
+    // the old way then, and still the same. (The land's part of the board,
+    // clear of the snakes, whose blinks come when they will; with reduced
+    // motion, so nothing else moves between the two; each after one of its
+    // own first, so the flags are the same.)
+    const ahead = await ev(`(() => {
+      SnakeDebug.pinQuality(2);
+      R.setReducedMotion(true);
+      const g = stage(['colonist', 'sovereign', 'mason']), [you, col, sov, ma] = g.snakes;
+      setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
+      setBody(col, Array.from({ length: 6 }, (_, i) => [2 + i, 2]), 'left');
+      setBody(sov, Array.from({ length: 6 }, (_, i) => [22 - i, 21]), 'right');
+      setBody(ma, [[2, 18], [1, 18], [0, 18]], 'right');
+      col.memory.colonies = [{ x: 8, y: 10, radius: 3, n: 1 }];
+      sov.memory.home = { x: 14, y: 11, radius: 4 };
+      for (const k of [3 * 24 + 20, 4 * 24 + 20, 4 * 24 + 21]) g.holes.add(k);
+      show(g); drawN(10, 0.5, 60);
+      const P = [];
+      for (let y = 9; y <= 12; y++) for (let x = 10; x <= 12; x++) P.push(y * 24 + x); // (across the line where they meet)
+      const board = () => pixels(4, 5, 17, 13).data;
+      const strike = (on, grow) => {
+        R.prebuild(on);
+        g.woodpecker = { x: 11, y: 10, at: g.time, target: P.slice(), strikeAt: g.tick + 17, last: [], struckAt: -1, restUntil: 1e9, pecks: 1 };
+        drawN(30, 0.5, 60);
+        const ready = R.prebuilt;
+        for (const k of P) g.holes.add(k);
+        g.woodpecker = null;
+        if (grow) sov.memory.home = { x: 14, y: 11, radius: 5 };
+        g.tick++; drawN(1, 0.5, 60);
+        const out = { ready, px: board(), cut: R.landShown(sov, 12, 11) || R.landShown(col, 10, 10) };
+        for (const k of P) g.holes.delete(k);
+        sov.memory.home = { x: 14, y: 11, radius: 4 };
+        g.tick++; drawN(10, 0.5, 60);
+        return out;
+      };
+      const differ = (a, b) => { let n = 0; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) n++; return n; };
+      strike(true, false);
+      const made = strike(true, false), old = strike(false, false);
+      strike(true, true);
+      const madeGrow = strike(true, true), oldGrow = strike(false, true);
+      R.prebuild(true); R.setReducedMotion(false);
+      return { ready: made.ready, cut: made.cut, n: differ(made.px, old.px), growReady: madeGrow.ready, nGrow: differ(madeGrow.px, oldGrow.px), changed: differ(made.px, madeGrow.px), pixels: made.px.length / 4 };
+    })()`);
+    check(ahead.ready && !ahead.cut && ahead.n === 0, 'the land a strike leaves, made ahead while the woodpecker aims, is the very land made at the strike', `${ahead.ready ? 'made ahead' : 'not made ahead'}; ${ahead.cut ? 'the patch still shows as land' : 'the patch is no land'} after it; ${ahead.n} of ${ahead.pixels * 4} values differ from it made at the strike`);
+    check(ahead.growReady && ahead.changed > 0 && ahead.nGrow === 0, 'with the land changing otherwise as it strikes, it’s made the old way, and is the same', `${ahead.nGrow} values differ from it made at the strike (the realm grown: ${ahead.changed} from the board without)`);
 
     // The Field guide's pictures.
     const guide = await ev(`(() => {
