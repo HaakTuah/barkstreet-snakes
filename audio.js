@@ -25,7 +25,7 @@ window.SnakeAudio = (() => {
   // (weather, the woodpecker, beetles): each gives way sooner than the one before.
   const MAX_VOICES = { you: 7, rival: 6, world: 5 };
   const PRIORITY = { death: true, best: true, win: true, winBest: true, ko: true, stinger: true }; // these always play
-  const WORLD = { beetle: 1, crackle: 1, thunder: 1, gust: 1, burrow: 1, dig: 1, rainbow: 1, rain: 1, snow: 1, ember: 1, woodpecker: 1, call: 1, aim: 1, drum: 1, crash: 1, peck: 1, bake: 1, ash: 1, douse: 1, lastApples: 1 };
+  const WORLD = { beetle: 1, crackle: 1, thunder: 1, gust: 1, burrow: 1, scrabble: 1, dig: 1, knock: 1, rainbow: 1, rain: 1, snow: 1, ember: 1, woodpecker: 1, call: 1, aim: 1, drum: 1, crash: 1, peck: 1, bake: 1, ash: 1, douse: 1, lastApples: 1 };
   const RIVALS = { rivalDeath: 1, bonked: 1 };
   const RIVAL_VOLUME = 0.5;    // a rival's leap or dash, next to yours...
   const RIVAL_LOWPASS = 2600;  // ...and a little duller, as if further off
@@ -38,10 +38,11 @@ window.SnakeAudio = (() => {
     eat: 40, golden: 60, meat: 60, mushroom: 80, crunch: 80, beetle: 3000, leaf: 60,
     rivalDeath: 120, death: 250, best: 400, win: 600, winBest: 600,
     beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, hungerWarn: 1500, ui: 30, // peck: never more than 3 in any second
-    crackle: 300, thunder: 900, gust: 1500, burrow: 1000, dig: 250, rainbow: 1500, rain: 1500,
+    crackle: 300, thunder: 900, gust: 1500, burrow: 1000, scrabble: 250, rainbow: 1500, rain: 1500,
     ko: 200, close: 1400, field: 800, bonk: 150, bonked: 300, leap: 120, thunk: 250, dash: 50, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
     flash: 150, flashReady: 600, lastApples: 4000,
     choke: 300, cough: 600, // (your next choke can come as soon as your cough is over, COUGH_TICKS ticks on: both are heard again)
+    dig: 300, knock: 400, // (a beetle digs in again only after a spell under, the woodpecker strikes again only after a rest and an aim: each is heard; beetles digging in together, or the pieces one strike knocks aside, are one sound)
   };
   // A cue that stands for others for a while: a win that's also a best is one phrase.
   const COVERS = { winBest: { win: 6000, best: 6000 } };
@@ -599,8 +600,35 @@ window.SnakeAudio = (() => {
     },
 
     // A beetle scrabbling into (or out of) its burrow.
-    dig(t) {
+    scrabble(t) {
       for (let i = 0; i < 4; i++) noise(t + i * 0.045, 0.025, 0.08 - i * 0.012, 'lowpass', 1000, 0.8);
+    },
+
+    // A cornered beetle digs in: a quick scrabbling bore into the bark. Its
+    // legs scratch at the wood while its jaws rasp in, the rasp sinking as it
+    // goes down (over the wood's own low grind, which a phone hears), and a
+    // soft puff as its sawdust packs the hole shut behind it. About 450 ms.
+    dig(t) {
+      for (let i = 0; i < 6; i++) noise(t + i * 0.03 + Math.random() * 0.012, 0.014, 0.15 - i * 0.012, 'bandpass', 2800 + Math.random() * 1600, 1.6);
+      for (let i = 0; i < 9; i++) {
+        const k = i / 8;
+        noise(t + 0.05 + i * 0.032, 0.026, 0.19 * Math.sin(Math.PI * (0.2 + 0.7 * k)), 'bandpass', 1700 * Math.pow(0.5, k), 2.4);
+      }
+      body(t + 0.05, 160, 0.3, 0.12, 0.04, 100, 520, 1.4);
+      noise(t + 0.36, 0.09, 0.07, 'lowpass', 800, 0.7);
+    },
+
+    // The woodpecker knocks food aside as it strikes: a hollow tok as its beak
+    // flicks the piece out (a deep block with a hollow ring, under the drum's
+    // high knocks), a whoosh rising as it flies off and falling as it comes
+    // down, and a soft bump where it lands. About 400 ms.
+    knock(t) {
+      tone(t, 'sine', 620, 0.14, 0.42, 0.001, 520);
+      tone(t, 'triangle', 620 * 2.76, 0.04, 0.12, 0.001, null, 4000);
+      noise(t, 0.012, 0.24, 'bandpass', 1500, 2.5);
+      whoosh(t + 0.03, 0.22, 0.15, 500, 2600);
+      whoosh(t + 0.1, 0.26, 0.11, 2600, 700);
+      noise(t + 0.34, 0.035, 0.06, 'lowpass', 500, 0.7);
     },
 
     // A rainbow: a soft shimmer climbing up a major arpeggio.

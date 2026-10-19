@@ -6,12 +6,17 @@
 // Then it plays the chatter itself (chatter.js with the game's own engine, on
 // a stand-in page) through staged moments: every voice speaks up when it's
 // pecked under, put out by the rain, sees food burn or rot, starves, is cut
-// by a dash, chokes on its own bead, eats what your cough nudged aside, and
-// (where it has lines for them) flashes or hears the last apples fall;
-// Sovereign and Colonist mind rot on their land, by the one land rule, and
-// a capital or a colony the woodpecker takes; and the rarer lines keep to
-// their rests (a choke's 20 s, a windfall's thanks now and then, only for
-// what a choke or a cough knocked aside, soon after). Star, the power addict,
+// by a dash, chokes on its own bead, eats what your cough nudged aside, loses
+// a beetle it cornered that digs in and gets away, sees you eat what the
+// woodpecker knocked away from it, and (where it has lines for them) flashes
+// or hears the last apples fall; Sovereign and Colonist mind rot on their
+// land, by the one land rule, and a capital or a colony the woodpecker takes;
+// and the rarer lines keep to their rests (a choke's 20 s, a windfall's
+// thanks now and then, only for what a choke or a cough knocked aside, soon
+// after; a dug-in beetle's 30 s, only for its hunter, the nearest head as it
+// dug; a grumble at whoever ate what the woodpecker knocked aside, now and
+// then, every 40 s at most), and no rival announces the woodpecker's fair
+// play (the lesson does). Star, the power addict,
 // has a line for every moment anyone has, shows off its flashes and jumps at
 // most every 10 s (even flashing the moment its rest is over, when it doesn't
 // say its flash is back), grumbles while it rests, crows over golden things,
@@ -24,7 +29,8 @@
 // Capricious in its moods), one with Star and the rivals who answer it. Last, the sound (audio.js on a stand-in AudioContext): a rival's
 // flash, jump, choke or the like never silences yours, your own golden ones
 // in a row are each heard, your choke and its cough (a beat later) each time
-// you can choke, and nothing while muted.
+// you can choke, a beetle digging in and the woodpecker knocking food aside
+// once a moment and each time they can come again, and nothing while muted.
 //
 //   node tools/chatter-test.js
 const fs = require('fs');
@@ -72,7 +78,7 @@ for (const l of PUNCHLINES) ok(spoken.has(l), `punchline "${l}" is a line someon
 
 // Every voice has the moments anyone can have; the woodpecker cuts nothing
 // now, so no voice blames the bird for its tail.
-const EVERYONE = ['under', 'doused', 'ash', 'rot', 'desperate', 'cut', 'choke', 'windfall'];
+const EVERYONE = ['under', 'doused', 'ash', 'rot', 'desperate', 'cut', 'choke', 'windfall', 'dug', 'knocked'];
 for (const [who, voice] of Object.entries(VOICES)) {
   for (const k of EVERYONE) ok(voice[k]?.length, `${who} has '${k}' lines`);
   ok(!voice.snipped, `${who}: 'snipped' is gone (a dash's cut is 'cut' now)`);
@@ -84,6 +90,14 @@ ok(VOICES.colonist.colony?.rotten?.length, 'Colonist minds rot in its colonies')
 ok(VOICES.sovereign.realm?.capital?.length, 'Sovereign has lines for a capital the woodpecker took');
 ok(VOICES.colonist.colony?.lost?.length, 'Colonist has lines for a colony the woodpecker took');
 for (const [who, voice] of Object.entries(VOICES)) ok((voice.windfall || []).every(l => l.includes('{who}') || chinese(l)), `${who}: its 'windfall' lines thank the cougher by name`);
+// (A beetle that got away names nobody; food the woodpecker knocked to someone else names who ate it.)
+for (const [who, voice] of Object.entries(VOICES)) {
+  ok((voice.dug || []).every(l => !l.includes('{who}')), `${who}: its 'dug' lines name nobody`);
+  ok((voice.knocked || []).every(l => l.includes('{who}')), `${who}: its 'knocked' lines name who ate it`);
+}
+// The woodpecker's fair play (it knocks food aside by a rule, never shuts
+// anyone in) is the lesson's to say: no rival announces it.
+for (const [path, line] of lines) ok(!/shut (you|me|us|anyone) in|never shuts|plays fair/i.test(line), `${path}: "${line}" leaves the woodpecker's fair play to the lesson`);
 // Star, the newest, has lines for every moment anyone has lines for (but the
 // ones that are someone's own: Vulture's deaths, the land, Capricious's
 // moods, Gobbler's and Desperado's spawns and first strike, the answers to
@@ -138,7 +152,12 @@ const ctx = vm.createContext({
   document: { createElement: () => new El(), body: new El(), hidden: false },
   addEventListener() {}, ResizeObserver: class { observe() {} }, MutationObserver: class { observe() {} },
 });
-for (const f of ['tuning.js', 'ai.js', 'engine.js', 'chatter.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+for (const f of ['tuning.js', 'ai.js', 'engine.js', 'chatter.js']) {
+  vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+  // (A cornered beetle digging in is the engine's, in round six A: until its
+  // numbers are in tuning.js, they're staged here as the contract has them.)
+  if (f === 'tuning.js' && !('BEETLE_DIG_FEAR' in ctx.window.TUNING)) ctx.window.TUNING = Object.freeze({ ...ctx.window.TUNING, BEETLE_DIG: 8, BEETLE_DIG_FEAR: 6 });
+}
 const { SnakeEngine: E, SnakeChatter: C, TUNING: T } = ctx.window;
 C.init({ boardEl: new El(), logEl: new El() });
 let heard = [];
@@ -213,6 +232,16 @@ for (const k of keys) {
   h = tick(g, [{ type: 'eat', snake: ai, kind: 'food', x: 3, y: 19 }], 800);
   check(says(h, ai, v.windfall, you), `${k} says a 'windfall' line when it eats an apple your cough nudged aside (said: ${lineOf(h, ai)})`);
 
+  [g, you, ai] = fresh();
+  check(tick(g, [{ type: 'dig', x: 14, y: 12, until: g.tick + 9 }]).length === 0, `${k}: a beetle digs in by its head: nothing yet`);
+  h = tick(g, [{ type: 'dive', x: 14, y: 12, dug: 1 }], 800);
+  check(says(h, ai, v.dug), `${k} says a 'dug' line when a beetle it cornered digs in and gets away (said: ${lineOf(h, ai)})`);
+
+  [g, you, ai] = fresh();
+  check(tick(g, [{ type: 'knock', kind: 'food', x: 12, y: 14, tx: 12, ty: 16 }]).length === 0, `${k}: the woodpecker knocks aside the apple it was after: nothing yet`);
+  h = tick(g, [{ type: 'eat', snake: you, kind: 'food', x: 12, y: 16 }], 1000);
+  check(says(h, ai, v.knocked, you), `${k} says a 'knocked' line when you eat the apple the woodpecker knocked away from it (said: ${lineOf(h, ai)})`);
+
   if (v.flash?.first) {
     [g, you, ai] = fresh({ 0: [14, 14] });
     h = tick(g, [{ type: 'dash', snake: ai, x: 10, y: 12, n: 2, plain: 1 }, { type: 'eat', snake: ai, kind: 'food', x: 12, y: 12 }]);
@@ -229,7 +258,7 @@ for (const k of keys) {
     check(says(h, ai, v.last), `${k} says a 'last' line when the last apples start falling (said: ${lineOf(h, ai)})`);
   }
 }
-console.log('ok   every voice speaks up when pecked under, put out, starving, cut, choking on its own bead, eating food your cough knocked aside, and when food burns or rots by it (and flashes, and the last apples, where it has lines)');
+console.log('ok   every voice speaks up when pecked under, put out, starving, cut, choking on its own bead, eating food your cough knocked aside, when a beetle it cornered digs in and gets away, when you eat what the woodpecker knocked away from it, and when food burns or rots by it (and flashes, and the last apples, where it has lines)');
 
 { // The woodpecker under a body: at most every 12 s, and only for the living.
   const g = stage(['mason'], { 0: [3, 20], 1: [12, 12] }), [, mason] = g.snakes;
@@ -429,6 +458,77 @@ console.log('ok   the rarer lines keep to their rests; land is radius + LAND_REA
 }
 console.log('ok   choking: the choker\'s line at most every 20 s; a rival who eats what a choke spat or a cough nudged aside thanks the cougher, now and then; a colony or capital the woodpecker took is news, and its peck goes without the "pecked" line');
 
+// A cornered beetle digging in, and food the woodpecker knocks aside (round
+// six A, wave two): the hunter whose beetle got away says so, at most every
+// 30 s; the snake whose food was knocked to someone else grumbles at them,
+// half the time, at most every 40 s.
+{ // Dug in and gone: the snake that cornered it (the nearest head as it started, within BEETLE_DIG_FEAR) says so; nobody speaks for you.
+  const g = stage(['gobbler', 'mason', 'copycat'], { 0: [3, 22], 1: [12, 12], 2: [12, 4], 3: [20, 20] }), [you, gob, mason, cat] = g.snakes;
+  const dig = (x, y) => ({ type: 'dig', x, y, until: g.tick + 1 + T.BEETLE_DIG });
+  const dive = (x, y, dug = 1) => ({ type: 'dive', x, y, dug });
+  tick(g, [dig(14, 12)]); // (Gobbler's 2 cells off, Mason 10)
+  let h = tick(g, [dive(14, 12)], 800);
+  check(says(h, gob, VOICES.gobbler.dug) && h.length === 1, `a beetle Gobbler cornered digs in and gets away: "${lineOf(h, gob)}", and nobody else`);
+  tick(g, [dig(12, 7)], 5000); // (Mason's 3 cells off, Gobbler 5)
+  h = tick(g, [dive(12, 7)], 800);
+  check(says(h, mason, VOICES.mason.dug) && h.length === 1, `...one Mason cornered, nearer Mason than Gobbler: Mason, in Latin ("${lineOf(h, mason)}")`);
+  tick(g, [dig(13, 13)], 5000);
+  check(tick(g, [dive(13, 13)], 800).length === 0, '...another of Gobbler\'s 6.5 s after its last: nothing (30 s between)');
+  tick(g, [dig(12, 14)], 25000);
+  check(says(tick(g, [dive(12, 14)], 800), gob, VOICES.gobbler.dug), '...but 33 s after its last: a dug line');
+  tick(g, [dig(3, 19)], 5000); // (yours: 3 cells off)
+  check(tick(g, [dive(3, 19)], 800).length === 0, 'a beetle you cornered: nobody speaks for you');
+  tick(g, [dig(18, 12)], 40000); // (6 from Gobbler's head, 10 from Copycat's)
+  check(says(tick(g, [dive(18, 12)], 800), gob, VOICES.gobbler.dug), 'cornered from as far as BEETLE_DIG_FEAR (6 cells): its hunter\'s line');
+  tick(g, [dig(19, 12)], 40000); // (7 from Gobbler, 9 from Copycat: nobody cornered it)
+  check(tick(g, [dive(19, 12)], 800).length === 0, '...but one with no head within 6 as it started: nobody\'s');
+  tick(g, [dig(19, 20)], 40000);
+  check(says(tick(g, [dive(19, 20)], 800), cat, VOICES.copycat.dug), 'Copycat\'s: in Chinese');
+  check(tick(g, [dive(12, 13, 0)], 40000).length === 0, 'a scared beetle diving into a burrow by Gobbler (no digging): nothing');
+  tick(g, [dig(12, 13)], 1000);
+  h = tick(g, [{ type: 'eat', snake: gob, kind: 'beetle', x: 12, y: 13 }], 400);
+  check(says(h, gob, VOICES.gobbler.caught), 'one Gobbler catches as it digs: its catch line');
+  check(tick(g, [], 2000).length === 0, '...and no dug line after');
+  tick(g, [dig(12, 15)], 40000);
+  gob.alive = false;
+  check(tick(g, [dive(12, 15)], 800).length === 0, 'its hunter out of the round meanwhile: nothing');
+  void you;
+}
+{ // Knocked aside: whoever was after it (the nearest head at the strike, within 5) grumbles at whoever eats it where it landed, within 6 s.
+  const g = stage(['sovereign', 'gobbler'], { 0: [3, 22], 1: [12, 12], 2: [20, 4] }), [you, sov, gob] = g.snakes;
+  const knock = (x, y, tx, ty, kind = 'food') => ({ type: 'knock', kind, x, y, tx, ty });
+  const eat = (s, x, y, kind = 'food') => ({ type: 'eat', snake: s, kind, x, y });
+  const grumbles = (h, s, who) => says(h, s, VOICES[s.personaKey].knocked, who);
+  tick(g, [knock(12, 14, 12, 16)]);
+  let h = tick(g, [eat(you, 12, 16)], 1500);
+  check(grumbles(h, sov, you), `Sovereign's apple, knocked aside, and you eat it: "${lineOf(h, sov)}"`);
+  tick(g, [knock(12, 14, 12, 16)], 5000);
+  check(tick(g, [eat(you, 12, 16)], 1000).length === 0, '...and again 6 s later: nothing (40 s between)');
+  tick(g, [knock(12, 14, 12, 16)], 40000);
+  check(tick(g, [eat(gob, 12, 16)], 1000, 0.6).length === 0, '...40 s on, Gobbler eats it and the roll says no: nothing');
+  tick(g, [knock(12, 14, 12, 16)], 1000);
+  check(tick(g, [eat(sov, 12, 16)], 1000).length === 0 && tick(g, [eat(gob, 12, 16)], 500).length === 0, 'Sovereign gets there itself: nothing, and that settled it');
+  tick(g, [knock(12, 14, 12, 16)], 1000);
+  check(tick(g, [eat(you, 12, 16)], 7000).length === 0, 'one eaten 7 s after it was knocked: just an apple');
+  tick(g, [knock(12, 14, null, null)], 1000);
+  check(tick(g, [eat(you, 12, 14)], 1000).length === 0, 'one the bird ate (nowhere free to land): nothing');
+  tick(g, [knock(12, 14, 12, 16, 'mushroom')], 1000);
+  check(tick(g, [eat(you, 12, 16, 'mushroom')], 1000).length === 0, 'a mushroom knocked aside: nobody misses it');
+  tick(g, [knock(12, 18, 12, 20)], 1000);
+  check(tick(g, [eat(gob, 12, 20)], 1000).length === 0, 'knocked from 6 cells off Sovereign\'s head: nobody\'s');
+  you.body = at(4, 22);
+  tick(g, [knock(5, 21, 5, 19)], 1000);
+  check(tick(g, [eat(gob, 5, 19)], 1000).length === 0, 'yours, knocked aside and eaten by Gobbler: nobody speaks for you');
+  g.food.push({ x: 12, y: 16, kind: 'pellet', color: sov.color, owner: sov.id });
+  tick(g, [knock(12, 14, 12, 16, 'pellet')], 1000);
+  g.food.length = 0;
+  check(tick(g, [eat(gob, 12, 16, 'pellet')], 1000).length === 0, 'Sovereign\'s own bead, knocked aside and eaten by Gobbler: it was never Sovereign\'s meal');
+  tick(g, [knock(13, 12, 14, 10, 'beetle')], 1000);
+  h = tick(g, [eat(gob, 16, 9, 'beetle')], 1000);
+  check(grumbles(h, sov, gob) && says(h, gob, VOICES.gobbler.caught), `a beetle knocked off Sovereign's patch scurries on, and Gobbler catches it 3 cells from where it landed: Sovereign grumbles ("${lineOf(h, sov)}"), and Gobbler has its catch line too`);
+}
+console.log('ok   a beetle that digs in and gets away: its hunter (the nearest head as it dug, within 6) says so, at most every 30 s, and nobody for you; food the woodpecker knocked aside, eaten by someone else soon after: the snake that was after it grumbles at them, half the time, at most every 40 s');
+
 // Star shows off: any flash of its own, its jumps and golden dashes, and its
 // flash back from its rest, half the time and all together at most every 10 s
 // (a golden dash or jump, rarer, whenever it can).
@@ -573,11 +673,13 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
 {
   let total = 0, rounds = 0;
   const per = {};
-  // (Chokes and what coughs knocked aside, as the engine has them, and the lines for them.)
+  // (Chokes and what coughs knocked aside, beetles that dug in and got away, and food the woodpecker knocked aside, as the engine has them, and the lines for them.)
   const chokeLines = new Set(Object.values(VOICES).flatMap(v => v.choke || []));
   const esc = s => s.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
   const thanks = Object.values(VOICES).flatMap(v => v.windfall || []).map(l => new RegExp(`^${l.split('{who}').map(esc).join('.+')}$`));
-  let chokes = 0, knocked = 0, choked = 0, thanked = 0;
+  const dugLines = new Set(Object.values(VOICES).flatMap(v => v.dug || []));
+  const grumbles = Object.values(VOICES).flatMap(v => v.knocked || []).map(l => new RegExp(`^${l.split('{who}').map(esc).join('.+')}$`));
+  let chokes = 0, knocked = 0, choked = 0, thanked = 0, dugOut = 0, dug = 0, knocks = 0, grumbled = 0;
   for (let r = 0; r < 1; r++) {
     rng = seeded(31 + r * 7919);
     const g = E.createGame({ withPlayer: false, personas: ['sovereign', 'colonist', 'vulture', 'capricious'] });
@@ -588,14 +690,15 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
       C.update();
       total += heard.length;
       for (const x of heard) per[x.s.personaKey] = (per[x.s.personaKey] || 0) + 1;
-      for (const e of g.events) { if (e.type === 'choke') chokes++; if (e.type === 'choke' || e.type === 'nudge') knocked++; }
-      for (const x of heard) { if (chokeLines.has(x.text)) choked++; if (thanks.some(t => t.test(x.text))) thanked++; }
+      for (const e of g.events) { if (e.type === 'choke') chokes++; if (e.type === 'choke' || e.type === 'nudge') knocked++; if (e.type === 'dive' && e.dug) dugOut++; if (e.type === 'knock') knocks++; }
+      for (const x of heard) { if (chokeLines.has(x.text)) choked++; if (thanks.some(t => t.test(x.text))) thanked++; if (dugLines.has(x.text)) dug++; if (grumbles.some(t => t.test(x.text))) grumbled++; }
     }
     rounds++;
   }
   check(total > 20 * rounds, `whole rounds: the rivals talk (${total} lines in ${rounds} rounds)`);
   check(choked <= chokes && thanked <= knocked, `...a choke line only for a choke (${choked} of ${chokes}), thanks only for food knocked aside (${thanked} for ${knocked} pieces)`);
-  console.log(`ok   ${rounds} whole AI round${rounds > 1 ? 's' : ''} of Sovereign, Colonist, Vulture and Capricious with the chatter listening: ${total} lines, nothing thrown (${chokes} chokes, ${choked} remarked on; ${knocked} pieces spat or nudged aside, ${thanked} thanks)`);
+  check(dug <= dugOut && grumbled <= knocks, `...a dug line only for a beetle that dug in and got away (${dug} of ${dugOut}), a grumble only for food the woodpecker knocked aside (${grumbled} for ${knocks} pieces)`);
+  console.log(`ok   ${rounds} whole AI round${rounds > 1 ? 's' : ''} of Sovereign, Colonist, Vulture and Capricious with the chatter listening: ${total} lines, nothing thrown (${chokes} chokes, ${choked} remarked on; ${knocked} pieces spat or nudged aside, ${thanked} thanks; ${dugOut} beetles dug in and away, ${dug} remarked on; ${knocks} pieces the woodpecker knocked aside, ${grumbled} grumbles)`);
   // ...and one with Star, the rivals who answer it and Copycat (who repeats it in Chinese).
   let star = 0, zh = 0;
   for (let r = 0; r < 1; r++) {
@@ -632,6 +735,11 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   // (You can choke again as soon as your cough is over: both are heard again.)
   const again = T.COUGH_TICKS * T.MIN_TICK - FRAME;
   for (const cue of ['choke', 'cough']) check(GAP[cue] < again, `the '${cue}' gap (${GAP[cue]} ms) is under the soonest you can choke again (${again.toFixed(0)} ms)`);
+  // (A beetle digs in again only once it's been under and come out, and the
+  // woodpecker strikes again only after a rest and an aim: each is heard.)
+  const digAgain = (T.BEETLE_DIG + T.BEETLE_UNDER_MIN) * T.MIN_TICK - FRAME, strikeAgain = (T.PECK_REST_MIN + T.PECK_AIM_TICKS) * T.MIN_TICK - FRAME;
+  check(GAP.dig < digAgain, `the 'dig' gap (${GAP.dig} ms) is under the soonest a beetle can dig in again (${digAgain.toFixed(0)} ms)`);
+  check(GAP.knock < strikeAgain, `the 'knock' gap (${GAP.knock} ms) is under the soonest the woodpecker can strike again (${strikeAgain.toFixed(0)} ms)`);
   let clock = 0, gains = 0;
   const stub = () => new Proxy(function () { return stub(); }, {
     get: (f, k) => (k in f || typeof k === 'symbol' ? f[k] : (f[k] = stub())),
@@ -655,7 +763,7 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   const sounds = (name, opts) => { const before = gains; A.play(name, opts); return gains > before; };
   const RIVAL = { rival: true, pan: 0.4 };
   // (Each case starts well apart from the last, so nothing earlier is still sounding or resting.)
-  for (const cue of ['flash', 'dash', 'leap', 'alight', 'wrap', 'choke', 'cough']) {
+  for (const cue of ['flash', 'dash', 'leap', 'alight', 'wrap', 'choke', 'cough', 'dig', 'knock']) {
     const gap = GAP[cue];
     check(gap > 0, `'${cue}' has a gap`);
     clock += 5000;
@@ -688,12 +796,22 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   check(!sounds('cough'), '...and another cough asked for as that one sounds waits (a cough never loops)');
   clock += again;
   check(sounds('choke') && sounds('cough', { delay: 0.3 }), '...but your next choke and cough, as soon as you can choke again, sound');
+  // A beetle digging in and the woodpecker knocking food aside are the
+  // world's: two beetles digging in together, or the pieces one strike knocks
+  // aside, are one sound; the next is heard as soon as it can come again.
+  for (const [cue, ms] of [['dig', digAgain], ['knock', strikeAgain]]) {
+    clock += 5000;
+    check(sounds(cue, { pan: -0.4 }) && !sounds(cue, { pan: 0.3 }), `a ${cue}, and another in the same moment: one sound`);
+    clock += ms;
+    check(sounds(cue, { pan: 0.3 }), `...and the next, ${ms.toFixed(0)} ms on, sounds`);
+  }
   clock += 5000;
   A.setMuted(true);
   check(!sounds('choke') && !sounds('cough', { delay: 0.3 }) && !sounds('choke', RIVAL), 'muted: no choke, no cough, yours or a rival\'s');
+  check(!sounds('dig') && !sounds('knock') && !sounds('knock', RIVAL), '...no dig, no knock');
   A.setMuted(false);
-  check(sounds('choke') && sounds('cough', { delay: 0.3 }), '...and with the sound back on, both');
-  console.log('ok   the sound: a rival\'s flash, dash, jump, catching fire, golden mushroom, choke or cough never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard, and your choke and cough each time you can choke; muted, neither');
+  check(sounds('choke') && sounds('cough', { delay: 0.3 }) && sounds('dig') && sounds('knock'), '...and with the sound back on, all of them');
+  console.log('ok   the sound: a rival\'s flash, dash, jump, catching fire, golden mushroom, choke or cough never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard, and your choke and cough each time you can choke; a beetle digging in and the woodpecker knocking food aside, one sound a moment and each time they can come again; muted, none');
 }
 
 if (fails) { console.error(`${fails} failed`); process.exit(1); }
