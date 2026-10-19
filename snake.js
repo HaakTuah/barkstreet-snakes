@@ -109,7 +109,7 @@
     digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log; past three the one unused longest closes over: the Field guide says so)
     lastApples: 'The last apples are falling.',
     // Your flash, ready and never used yet: the key, once a round (until you've flashed).
-    flashKey: touchFirst ? 'Your flash is ready: swipe the way you’re going.' : 'Your flash is ready: E or Shift, two cells in a blink.',
+    flashKey: touchFirst ? 'Your flash is ready: swipe the way you’re going.' : 'Your flash is ready: E, Shift or right-click. Two cells in a blink.',
     // Beside the YOU arrow, as a round starts (until you steer).
     steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
     leapNothing: 'Jumps hop over a snake, a hole or fire.',
@@ -122,12 +122,12 @@
     beetle: ['A beetle is out for a walk. It won’t get far.', 'A beetle is crawling about. Crunchy.'],
     goldBeetle: ['A golden beetle! Catch it for golden jumps.', 'A golden beetle: catch it, and jump far for free.'],
     goldBeetleWatch: ['A golden beetle! Whoever catches it jumps far.', 'A golden beetle is scuttling about.'],
-    youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space'} to jump.`,
+    youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space or a click'} to jump.`,
     youLeapFirst: 'Hup! A jump costs your tail tip, then a short rest.',
     youDashFirst: 'Golden flashes cut thin snakes in two.',
     leaf: ['A golden leaf on the wind. Eat it for golden flashes.', 'A golden leaf blew onto the log: golden flashes, for the taking.'],
     leafWatch: ['A golden leaf on the wind: golden flashes, for whoever eats it.'],
-    youLeaf: n => `${n} golden flash${n === 1 ? '' : 'es'}: ${touchFirst ? 'swipe ahead' : 'E or Shift'}. Never at an edge or hole.`, // (the danger first: the first one may be the one)
+    youLeaf: n => `${n} golden flash${n === 1 ? '' : 'es'}: ${touchFirst ? 'swipe ahead' : 'E, Shift or right-click'}. Never at an edge or hole.`, // (the danger first: the first one may be the one)
     goldcap: ['A golden mushroom: eat it and the edges wrap.', 'A golden mushroom came up. Eat it: no edges for a while.'],
     goldcapWatch: ['A golden mushroom: no edges, for whoever eats it.'],
     youGoldcap: s => `A golden mushroom: ${s} seconds with no edges.`,
@@ -1390,7 +1390,7 @@
   // What the chips mean, in words (phones have no tooltips).
   function yourPowerWords(s) {
     const how = (left, gold) => gold ? `${gold} golden` : left === 0 ? 'ready' : left === Infinity ? 'not at 3' : 'resting';
-    return `${touchFirst ? 'A tap' : 'Space'} jumps: ${how(E.leapIn(game, s), s.leaps)}. ${touchFirst ? 'A swipe ahead' : 'E or Shift'} flashes: ${how(E.flashIn(game, s), s.dashes)}.`;
+    return `${touchFirst ? 'A tap' : 'Space or a click'} jumps: ${how(E.leapIn(game, s), s.leaps)}. ${touchFirst ? 'A swipe ahead' : 'E, Shift or right-click'} flashes: ${how(E.flashIn(game, s), s.dashes)}.`;
   }
   // Golden powers held, as words: ['2 golden jumps', '1 golden flash'].
   const goldWords = s => [s.leaps > 0 && `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}`, s.dashes > 0 && `${s.dashes} golden flash${s.dashes === 1 ? '' : 'es'}`].filter(Boolean);
@@ -1500,7 +1500,7 @@
     el.classList.toggle('ready', now === 'ready');
     el.classList.toggle('small', now === 'small');
     if (typeof now === 'number') el.style.setProperty('--fill', `${now}%`);
-    if (!gold) el.title = `Your ${kind}${now === 'ready' ? ' is ready' : now === 'small' ? ': too small for it' : ' is resting'} (${kind === 'jump' ? (touchFirst ? 'tap' : 'Space') : touchFirst ? 'swipe ahead' : 'E or Shift'})`;
+    if (!gold) el.title = `Your ${kind}${now === 'ready' ? ' is ready' : now === 'small' ? ': too small for it' : ' is resting'} (${kind === 'jump' ? (touchFirst ? 'tap' : 'Space or a click') : touchFirst ? 'swipe ahead' : 'E, Shift or right-click'})`;
   }
 
   // The chips' icons: small inline drawings in ink (no fallback-font glyphs).
@@ -2693,7 +2693,7 @@
     if (text !== helpText) { helpText = text; setHint(helpEl, text); }
   }
 
-  // Hints wrap only between items ("E or Shift flashes" never splits across lines).
+  // Hints wrap only between items ("E, Shift or right-click flashes" never splits across lines).
   // Items joined by " · ", each kept whole, a line breaking only after a dot
   // (the dot rides with the item before it); ⏸ drawn as the pause button's bars.
   function setHint(el, text) {
