@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Rule checks on hand-built boards: node tools/rules-test.js
+// Rule checks on hand-built boards: node tools/rules-test.js [--seed N]
 // Loads tuning.js, ai.js and engine.js unchanged, the way the game does.
+// (N: other randomness for the checks that don't seed their own.)
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -11,20 +12,35 @@ for (const f of ['tuning.js', 'ai.js', 'engine.js']) vm.runInContext(fs.readFile
 const { SnakeEngine: E, SnakeAI: AI, TUNING: T } = ctx.window;
 const D = E.DIRS;
 
-// The game's randomness from a seed for a while (fn), then as it was: whole
-// rounds played for their numbers come out the same every run.
-function seededWhile(seed, fn) {
+// mulberry32, as simulate.js has it: the game's randomness from a seed.
+const seeded = seed => {
   let a = seed >>> 0;
-  const was = Math.random;
-  Math.random = () => {
+  return () => {
     a = (a + 0x6d2b79f5) >>> 0;
     let t = a;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+};
+// The game's randomness from a seed for a while (fn), then as it was: whole
+// rounds played for their numbers come out the same every run, whatever
+// changes in the checks before them.
+function seededWhile(seed, fn) {
+  const was = Math.random;
+  Math.random = seeded(seed);
   try { return fn(); } finally { Math.random = was; }
 }
+// ...and from a seed for the whole run, so every check sees the same numbers
+// every run. Some count what comes at random, or set things where the game
+// happens to drop them, and with the run's own randomness one of them failed
+// now and then with nothing wrong: the winter apple dropped right in front
+// of a head and eaten before it could rot (one run in 300), three golden
+// apples in clear weather where four were wanted (one in 250), and those
+// seeded below on their own (Drab wandering off, a woodpecker's patch hemmed
+// in, Wildcard drawn fond of leaves): about one run in 25 in all.
+const SEED = process.argv.includes('--seed') ? Number(process.argv[process.argv.indexOf('--seed') + 1]) : 1;
+Math.random = seeded(SEED);
 
 let failed = 0;
 function check(name, ok, detail = '') {
@@ -356,10 +372,16 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
 }
 
 { // The woodpecker gets hungrier: each rest shorter than the last, each patch a cell bigger.
-  const g = board([[line(3, 2, 3), 'right'], [line(3, 21, 3), 'right']], { time: T.SUDDEN_DEATH_MS });
-  for (const o of g.snakes) o.stunUntil = 1e9;
-  const pecks = [];
-  for (let t = 0; t < 1200 && pecks.length < 6; t++) { feed(g); quiet(g); for (const e of g.events) if (e.type === 'peck') pecks.push({ at: g.tick, n: e.cells.length }); }
+  // (Seeded: a patch hemmed in by the holes before it can't grow its full
+  // size, and takes half or more; from about one start in 700 the sixth
+  // came out 7 or 8 cells, not 14, and the bigger patches failed.)
+  const pecks = seededWhile(191, () => {
+    const g = board([[line(3, 2, 3), 'right'], [line(3, 21, 3), 'right']], { time: T.SUDDEN_DEATH_MS });
+    for (const o of g.snakes) o.stunUntil = 1e9;
+    const pecks = [];
+    for (let t = 0; t < 1200 && pecks.length < 6; t++) { feed(g); quiet(g); for (const e of g.events) if (e.type === 'peck') pecks.push({ at: g.tick, n: e.cells.length }); }
+    return pecks;
+  });
   const rests = pecks.slice(1).map((p, i) => p.at - pecks[i].at);
   check('the woodpecker gets hungrier: shorter rests', pecks.length === 6 && rests.every((r, i) => !i || r <= rests[i - 1]) && rests[rests.length - 1] < rests[0], JSON.stringify(rests));
   check('...and bigger patches', pecks[pecks.length - 1].n > T.PECK_CHUNK && pecks[pecks.length - 1].n <= T.PECK_CHUNK_MAX, JSON.stringify(pecks.map(p => p.n)));
@@ -1801,7 +1823,10 @@ const dirOf = d => Object.keys(D).find(k => D[k] === d);
 { // In the game: a coughing rival (a person, going straight up) knocks an apple aside, to the left (a hole on its right);
   // Drab, coming along that row, takes it where it rolled (in its own time: it lets a rival's food be). (The same apple to a
   // rival that isn't coughing: the rival eats it.)
-  for (const cough of [true, false]) {
+  // (Seeded: Drab wanders at random in its own time, and from about one
+  // start in 250 it wandered off and didn't come for the apple, in these 24
+  // ticks or in 40: so about one run in 250 failed.)
+  for (const cough of [true, false]) seededWhile(181, () => {
     const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
     g.snakes = g.snakes.slice(0, 2);
     const [a, b] = g.snakes;
@@ -1819,7 +1844,7 @@ const dirOf = d => Object.keys(D).find(k => D[k] === d);
     }
     if (cough) check('in the game: a coughing rival knocks an apple aside, and Drab takes it where it rolled', rolled && at(rolled, 12, 12) && at(apple, 11, 12) && ate && ate.snake === a, JSON.stringify({ rolled: rolled && [rolled.tx, rolled.ty], by: ate && ate.snake.id }));
     else check('...where a rival that isn\'t coughing eats it', ate && ate.snake === b, JSON.stringify({ by: ate && ate.snake.id }));
-  }
+  });
 }
 
 { // A beetle runs for its burrow: one bound to get there first isn't worth the chase. Heading right, a beetle 3 on (scared,
