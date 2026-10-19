@@ -356,6 +356,35 @@ const KEYS = {
       check(c.inIconsRow === iconsRow && c.guide && c.trophy === trophy && c.scroll <= 0, `${w}x${h}, watching with the chatter full: ${iconsRow ? 'the doors in the icons’ row, the Field guide by name' : 'the doors’ own row, both named'}, and the page doesn’t scroll`, JSON.stringify(c));
     }
 
+    // ------------------------------- the fullest death card on a small board
+    // A first good round's: the new best's badge and the carve as well as the
+    // Field guide's link. It fits the board (nothing under the sticky
+    // buttons); with a rival's note up, the badge and the carve wait, and come
+    // back with the card's words. (At 360x640 the board is 316 px: the badge
+    // gives way to the carve; at 320x640, 276 px: the link does, while you carve.)
+    for (const [w, h, want] of [[360, 640, 'carve+link'], [320, 640, 'carve']]) {
+      await b.viewport(w, h, { scale: 2, mobile: true });
+      await load();
+      await fresh(['joker', 'capricious', 'vulture']);
+      await die();
+      const fitNow = `(() => {
+        const $ = id => document.getElementById(id), card = document.querySelector('#overlay .card'), bt = document.querySelector('#overlay .buttons').getBoundingClientRect();
+        const shown = [['overlay-badge', 'badge'], ['name-row', 'carve'], ['how', 'link']].filter(([id]) => vis($(id))).map(([, n]) => n).join('+');
+        return { over: card.scrollHeight - card.clientHeight, shown, under: vis($('name-input')) ? Math.round(Math.max(0, $('name-input').getBoundingClientRect().bottom - bt.top)) : 0 };
+      })()`;
+      await ev(`(() => { const $ = id => document.getElementById(id); $('overlay-badge').textContent = 'New best: 12!'; $('overlay-badge').hidden = false; $('name-rank').textContent = 'Hall of Fame #2. Carve your name:'; $('name-row').hidden = false; return 1; })()`);
+      await b.sleep(150);
+      let f = await ev(fitNow);
+      check(f.over <= 0 && f.under === 0 && f.shown === want, `phone ${w}x${h}: the fullest death card fits its board (${want})`, JSON.stringify(f));
+      await tap(await tagAt('Joker'));
+      f = await ev(fitNow);
+      p = await P();
+      check(p.note.startsWith('Joker') && f.over <= 0 && !/badge|carve/.test(f.shown), `phone ${w}x${h}: with a note on it, the badge and the carve wait, and it still fits`, JSON.stringify(f));
+      await tap(await at('#note-close'));
+      f = await ev(fitNow);
+      check(f.shown === want && f.over <= 0, `phone ${w}x${h}: closing the note brings them back`, JSON.stringify(f));
+    }
+
     // -------------------------------------------------------------- phones
     for (const [w, h] of [[390, 844], [320, 640]]) {
       await b.viewport(w, h, { scale: 2, mobile: true });

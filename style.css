@@ -979,6 +979,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .rival-note { margin-bottom: 8px; padding: 6px 10px 7px 12px; font-size: 0.92rem; } /* (as the card's words it stands in for) */
   .card .rival-note .now { margin-top: 2px; }
   .card.noting .opponents { display: none; } /* (here the roll-call is just names, the tags' names right above: the note stands in for it too) */
+  .card.noting .badge, .card.noting .name-row:not(:focus-within) { display: none; } /* (so do the new best's badge and the carve: they come back with the card's words; never while you're typing) */
   .hint span:nth-of-type(n+4) { display: none; } /* (a small card: how to steer, jump and flash; the rest is under the board) */
   .hint span:nth-of-type(3) .sep { display: none; }
   .card:has(.name-row:not([hidden])) .flavor { display: none; }
@@ -989,13 +990,15 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .buttons button { padding-inline: 18px; }
   .hint { margin-top: 6px !important; font-size: 0.74rem; } /* (the steering hint stays: phones need it most) */
 }
+@container (max-height: 330px) {
+  .card:has(.name-row:not([hidden])) .badge { display: none; } /* (the prompt is the celebration here; Best shows the number) */
+}
 @container (max-height: 300px) {
   .card-links .text-button { font-size: 0.92rem; } /* (the smallest card: both on one row, 216 px of 224) */
   .card h2 { font-size: 1.25rem; }
   .rival-note { font-size: 0.85rem; margin-bottom: 6px; }
   .card .rival-note .now { font-size: 0.92em; } /* (no smaller than 12.5px) */
-  .card.noting .name-row:not(:focus-within) { display: none; } /* (the carve waits under a note here, and comes back with the card's words; never while you're typing) */
-  .card.noting .card-links { display: none; } /* (and so do the card's quieter links: the Field guide's, and friends') */
+  .card.noting .card-links, .card:has(.name-row:not([hidden])) .card-links { display: none; } /* (the card's quieter links, the Field guide's and friends', wait under a note here, and while you carve your name) */
   .flavor { display: none !important; }
   .opponents .tap-tip { display: none !important; } /* (the hint needs the room: how to steer comes first) */
   /* Just the first two items of the hint ("Swipe to steer · Tap to jump"): a new player has to be told that much (the flash has its own lesson). */
@@ -1003,7 +1006,6 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .hint span:nth-of-type(n+3) { display: none; }
   .hint span:nth-of-type(2) .sep { display: none; }
   button { padding-block: 8px; }
-  .card:has(.name-row:not([hidden])) .badge { display: none; } /* (the prompt is the celebration here; Best shows the number) */
   /* The two buttons share one row (a stacked pair would cover the card). */
   .buttons { gap: 8px; }
   .buttons button:not(.text-button) { flex: 1 1 0; min-width: 0; padding: 7px 8px; font-size: 0.85rem; line-height: 1.15; }
