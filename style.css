@@ -1117,9 +1117,12 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
    (268 → 310 px with a phone's browser bars showing, about 380 in full
    screen), and the column beside it gets compact enough to fit that height
    too: no tagline, smaller words, the tags two by two, and the chatter
-   taking what's left (its newest lines; the oldest are cut). Nothing
-   scrolls. The woodpecker perches beside the board, in the gap or the
-   margin. */
+   taking what's left (its newest lines; the oldest are cut, and never
+   into its padding). Nothing scrolls; the column keeps a hair off the
+   screen's top and bottom. The woodpecker perches beside the board, in the
+   gap or the margin. The frame's rim meets the screen's top and bottom,
+   with no room for moss hanging off it, so the moss stays on the log, and
+   the leaves rest beside its corners in the gap, on the column's side. */
 @media (min-aspect-ratio: 5/4) and (max-height: 500px) and (min-width: 480px) {
   body { padding-top: var(--safe-t); padding-bottom: var(--safe-b); }
   main {
@@ -1127,15 +1130,16 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
     --board: min(calc(100dvh - var(--safe-t) - var(--safe-b)), calc(100vw - 268px - max(12px, var(--safe-l)) - max(12px, var(--safe-r))));
     height: var(--board);
     overflow: hidden; /* (before Safari 16) */
-    overflow: clip; /* (the moss and leaves run off the top and bottom) */
+    overflow: visible clip; /* (clipped top and bottom only: a focus ring at the column's left edge stays whole) */
     grid-template-rows: auto auto auto minmax(0, max-content) auto 1fr;
     gap: 0 24px; /* (the woodpecker's room, where the screen has no margin to spare: 24 px, and the column at least 244) */
   }
-  header { grid-row: 1; margin-bottom: 6px; row-gap: 4px; }
+  header { grid-row: 1; margin-top: 6px; margin-bottom: 6px; row-gap: 4px; }
   .scoreboard { grid-row: 2; margin-bottom: 6px; gap: 4px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .speed { grid-row: 3; margin-top: 0; margin-bottom: 6px; }
-  .chatter { grid-row: 4; margin-top: 0; max-height: 100%; overflow: hidden; padding: 4px 10px 6px; }
-  .help { grid-row: 5; margin-top: 6px; font-size: 0.74rem; }
+  .chatter { grid-row: 4; margin-top: 0; max-height: 100%; display: flex; flex-direction: column; padding: 4px 10px 6px; }
+  .chatlog { min-height: 0; overflow: hidden; overflow: visible clip; } /* (the chatter's height cuts its log, not its padding; a new line still slides in from the side) */
+  .help { grid-row: 5; margin-top: 6px; margin-bottom: 4px; font-size: 0.74rem; }
   .frame { grid-row: 1 / -1; padding: 5px; border-radius: 12px; }
   h1 { font-size: 1.4rem; white-space: nowrap; }
   .tagline { display: none; }
@@ -1143,11 +1147,10 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .scoreboard li { padding: 3px 7px 6px; gap: 4px; font-size: 0.84rem; }
   .scoreboard .hunger { left: 7px; right: 7px; bottom: 2px; }
   .chatlog { margin-top: 2px; font-size: 0.82rem; }
-  .moss.top { top: -12px; }
-  .moss.bottom { bottom: -12px; }
-  .leaves { width: 30px; height: 30px; }
-  .leaves.tl, .leaves.tr { top: -11px; }
-  .leaves.bl, .leaves.br { bottom: -11px; }
+  .moss.top, .moss.bottom, .leaves.tr, .leaves.br { display: none; }
+  .leaves { width: 24px; height: 24px; scale: -1 1; } /* (turned round: growing from the rim out into the gap) */
+  .leaves.tl { left: -21px; top: 3px; }
+  .leaves.bl { left: -21px; bottom: 3px; }
 }
 
 /* Touch: comfortable targets. */
