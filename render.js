@@ -5974,14 +5974,16 @@ window.SnakeRender = (() => {
   let birdLayer = null, birdG = null, birdShown = false;
   // The board on the page, in CSS px, and how far the free page runs round it
   // before the page's own furniture (the tags, the speed buttons, the chatter)
-  // and the screen's safe area, and how tall the ledge under it is (on a
-  // phone held upright; else 0): the game keeps them current.
-  const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0 };
+  // and the screen's safe area, how tall the ledge under it is (on a phone
+  // held upright; else 0), and where across the ledge the frame's moss and
+  // leaves hang into it ([left, right] each): the game keeps them current.
+  const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, hang: [] };
   function setBoardRect(x, y, w, free = null) {
     boardRect.x = x; boardRect.y = y; boardRect.w = w;
     boardRect.left = free ? free.left : 0; boardRect.top = free ? free.top : 0;
     boardRect.right = free ? free.right : innerWidth; boardRect.bottom = free ? free.bottom : innerHeight;
     boardRect.ledge = free?.ledge || 0;
+    boardRect.hang = free?.hang || [];
     perchNow = null; // (its perch is worked out again: the room round the board has changed)
   }
   const BU = CELL * 0.85; // the bird's unit
@@ -5989,7 +5991,7 @@ window.SnakeRender = (() => {
   const BIRD_BOX = [-1.15, -2.55, 2.65, 3.2]; // (all of it, round its feet, in units, facing right: its back, crown, beak tip, tail)
   const PERCH_NEAR = 0.65, PERCH_MIN_PX = 30; // (how small it may perch: on a nearer side; and, CSS px tall, where there's no room anywhere)
   const PERCH_GAP_PX = 1.5, BOX_EDGE = 0.1; // (how far, CSS px, it keeps off the cells, its ink's soft edge never touching one; and, units, how far its outline and its beak, turned to look, reach past its box)
-  const LEDGE_LOOK = 0.3, LEDGE_CROUCH = 0.25; // (on the ledge: how far it may look up at its chunk, radians, with its beak still under the board; how far its crouch lowers it, units)
+  const LEDGE_LOOK = 0.3, CROUCH = 0.25; // (on the ledge, how far it may look up at its chunk, radians, with its beak still under the board; and how far its crouch lowers it, units)
   const bird = { x: 0, y: 0, s: 1, rot: 0, flip: 1, placed: false, arrivedAt: -1e9, chipAt: 0, box: null };
   const BIRD_DRAWN = [0, 0, 0, 0]; // (bird.box when it's been drawn: where on its layer, device px, to clear next frame)
   // Where it perches to work on a spot (board px), and how big (s): beside
@@ -6000,17 +6002,20 @@ window.SnakeRender = (() => {
   // both. There it keeps its outline and a hair (PERCH_GAP_PX) off the
   // cells and off what's beside it, its beak turned to look too. On a phone
   // held upright the board runs edge to edge, with no room beside it, so it
-  // stands on the ledge under the board: just below the bottom edge, off to
-  // one side of the spot, as big as the ledge lets it be (about 53 px tall
+  // stands on the ledge under the board: just below the bottom edge, beside
+  // the spot on the middle's side, facing out to it (so it flies to drum it
+  // over the board, never past the screen's edge), clear of the moss and
+  // leaves hanging there, as big as the ledge lets it be (about 53 px tall
   // on a 390 px phone), and it only looks up a little at its chunk (its
-  // beak stays under the board). With room nowhere (a tablet held upright),
-  // as it always was: on the frame's left or right, whichever is nearer the
-  // spot, shrunk to fit, about 33 px tall in its gutter (it's taller than
-  // it's deep, so above or below the board it would be smaller still). Only
-  // where that would leave it under PERCH_MIN_PX tall does its beak reach
-  // over the board's edge; otherwise, like the corner leaves, it never
+  // beak stays under the board). With room nowhere (a tablet held upright,
+  // or a phone too short for its ledge), as it always was: on the frame's
+  // left or right, whichever is nearer the spot, shrunk to fit, its outline
+  // still on the screen, about 32 px tall in a tablet's gutter (it's taller
+  // than it's deep, so above or below the board it would be smaller still).
+  // Only where that would leave it under PERCH_MIN_PX tall does its beak
+  // reach over the board's edge; otherwise, like the corner leaves, it never
   // covers a cell. Its whole box stays on the screen and off the page's
-  // furniture. It always stands upright, facing the spot.
+  // furniture, crouching too. It always stands upright, facing the spot.
   function perchFor(tx, ty) {
     const sc = boardRect.w / SIZE, gap = sc ? PERCH_GAP_PX / sc : 0;
     const room = sc ? {
@@ -6021,7 +6026,7 @@ window.SnakeRender = (() => {
     const least = sc ? Math.min(1, PERCH_MIN_PX / (tall * sc)) : 1; // (the smallest it perches)
     const beside = r => Math.min(1, (r - 2 * gap) / (deep + 2 * BOX_EDGE * BU)); // (its outline and the gap, on both sides)
     const fit = { left: beside(room.left), right: beside(room.right), top: room.top >= BU * 5 ? 1 : 0, bottom: room.bottom >= BU * 5 ? 1 : 0 };
-    const ledge = boardRect.ledge > 0 && sc ? Math.min(1, (room.bottom - 2 * gap) / (tall + (2 * BOX_EDGE + LEDGE_CROUCH) * BU)) : 0; // (how big it can stand there)
+    const ledge = boardRect.ledge > 0 && sc ? Math.min(1, (room.bottom - 2 * gap) / (tall + (2 * BOX_EDGE + CROUCH) * BU)) : 0; // (how big it can stand there)
     const dist = { left: tx, right: SIZE - tx, top: ty, bottom: SIZE - ty };
     const nearer = (p, q) => dist[p] - dist[q] || fit[q] - fit[p];
     const side = ledge >= least ? 'ledge'
@@ -6029,20 +6034,38 @@ window.SnakeRender = (() => {
       || ['left', 'right'].filter(k => fit[k] >= least).sort(nearer)[0]
       || (nearer('left', 'right') <= 0 ? 'left' : 'right');
     const nowhere = (side === 'left' || side === 'right') && !(fit[side] >= least);
-    const s = side === 'ledge' ? ledge : nowhere ? Math.max(least, Math.min(1, room[side] / deep)) : Math.max(least, fit[side]);
-    const e = nowhere ? 0 : BOX_EDGE * s * BU + gap, short = nowhere ? 0.05 * s * BU : e; // (how far it keeps clear all round; and its beak, of the board)
+    const s = side === 'ledge' ? ledge : nowhere ? Math.max(least, Math.min(1, room[side] / (deep + 2 * BOX_EDGE * BU))) : Math.max(least, fit[side]);
+    const e = BOX_EDGE * s * BU + (nowhere ? 0 : gap), short = nowhere ? 0.05 * s * BU : e; // (how far it keeps clear all round, its outline at least; and its beak, of the board)
     const along = v => Math.max(BU * 2, Math.min(SIZE - BU * 2, v));
     const face = tx < SIZE / 2 ? 1 : -1; // (above or below the board, it stands off to one side of the spot)
     const p = side === 'left' ? { x: -(BIRD_BOX[2] * s * BU + short), y: along(ty) + BU * 1.75 * s, flip: 1, s }
       : side === 'right' ? { x: SIZE + BIRD_BOX[2] * s * BU + short, y: along(ty) + BU * 1.75 * s, flip: -1, s }
       : side === 'top' ? { x: along(tx) - face * BU * 1.6, y: -Math.min(BU * 3.3, Math.max(BU * 1.5, room.top - BU * 2.6)), flip: face, s }
-      : side === 'ledge' ? { x: along(tx) - face * BU * 1.6 * s, y: SIZE + e - BIRD_BOX[1] * s * BU, flip: face, s, up: LEDGE_LOOK }
+      : side === 'ledge' ? { x: along(tx) + face * BU * 1.6 * s, y: SIZE + e - BIRD_BOX[1] * s * BU, flip: -face, s, up: LEDGE_LOOK }
       : { x: along(tx) - face * BU * 1.6, y: SIZE + Math.min(BU * 2.6, Math.max(BU * 2.45, room.bottom - BU * 3.2)), flip: face, s };
-    // (then all of it on the screen, off the furniture, its outline too: its back first, if it can't all fit)
+    // (then all of it on the screen, off the furniture, its outline and its crouch too: its back first, if it can't all fit)
     const x0 = (p.flip > 0 ? BIRD_BOX[0] : -BIRD_BOX[2]) * s * BU - e, x1 = (p.flip > 0 ? BIRD_BOX[2] : -BIRD_BOX[0]) * s * BU + e;
-    if (p.flip > 0) p.x = Math.max(-room.left - x0, Math.min(SIZE + room.right - x1, p.x));
-    else p.x = Math.min(SIZE + room.right - x1, Math.max(-room.left - x0, p.x));
-    p.y = Math.max(-room.top - BIRD_BOX[1] * s * BU + e, Math.min(SIZE + room.bottom - BIRD_BOX[3] * s * BU - e, p.y));
+    const lo = -room.left - x0, hi = SIZE + room.right - x1;
+    if (p.flip > 0) p.x = Math.max(lo, Math.min(hi, p.x));
+    else p.x = Math.min(hi, Math.max(lo, p.x));
+    p.y = Math.max(-room.top - BIRD_BOX[1] * s * BU + e, Math.min(SIZE + room.bottom - (BIRD_BOX[3] + CROUCH) * s * BU - e, p.y));
+    // (on the ledge, clear of the moss and leaves hanging into it: where it
+    // stands if that's clear, else the nearest place beside one that is,
+    // still facing its spot, and still on the screen)
+    if (side === 'ledge' && boardRect.hang.length) {
+      const hang = boardRect.hang.map(([l, r]) => [(l - boardRect.x) / sc - gap, (r - boardRect.x) / sc + gap]);
+      const box = f => (f > 0 ? [BIRD_BOX[0] * s * BU - e, BIRD_BOX[2] * s * BU + e] : [-BIRD_BOX[2] * s * BU - e, -BIRD_BOX[0] * s * BU + e]);
+      const fits = (x, [a, b]) => x + a >= -room.left - 1e-6 && x + b <= SIZE + room.right + 1e-6 && hang.every(([l, r]) => x + b <= l || x + a >= r);
+      let best = null;
+      for (const f of [p.flip, -p.flip]) {
+        const [a, b] = box(f);
+        for (const x of [p.x, ...hang.flatMap(([l, r]) => [l - b, r - a])]) {
+          if ((tx - x) * f < 0 || !fits(x, [a, b])) continue; // (its spot behind it, or no room)
+          if (!best || Math.abs(x - p.x) < Math.abs(best.x - p.x) - 1e-6) best = { x, f };
+        }
+      }
+      if (best) { p.x = best.x; p.flip = best.f; }
+    }
     return p;
   }
   // Its perch for the spot it's working on: worked out when it moves on to

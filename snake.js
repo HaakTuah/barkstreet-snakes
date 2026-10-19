@@ -2557,14 +2557,17 @@
   // Where the board is on the page (the woodpecker perches beside it, on its own layer).
   // ...and how far the free page runs round it before the tags, the speed
   // buttons, the chatter or the header (no perching on those), inside the
-  // screen's safe area (not under a notch); and how tall the ledge under it
-  // is (a phone held upright: the bird perches there).
+  // screen's safe area (not under a notch); how tall the ledge under it is
+  // (a phone held upright: the bird perches there); and where the moss and
+  // the corner leaves hang off its bottom edge into the ledge (the bird
+  // stands clear of them: across, CSS px, a little wider for the leaves' sway).
   const furniture = ['header', '.scoreboard', '.speed', '.chatter'].map(q => document.querySelector(q)).filter(Boolean);
+  const hanging = [...document.querySelectorAll('.frame .moss.bottom, .frame .leaves.bl, .frame .leaves.br')];
   const ledgeEl = $('perch-ledge'), rootStyle = getComputedStyle(document.documentElement);
   const inset = name => parseFloat(rootStyle.getPropertyValue(name)) || 0;
   const placeBoard = () => {
     const b = canvas.getBoundingClientRect();
-    const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: ledgeEl ? ledgeEl.offsetHeight : 0 };
+    const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: ledgeEl ? ledgeEl.offsetHeight : 0, hang: [] };
     for (const el of furniture) {
       const f = el.getBoundingClientRect();
       if (!f.width || !f.height) continue; // (hidden)
@@ -2573,6 +2576,12 @@
       else if (across && f.top >= b.bottom - 1) free.bottom = Math.min(free.bottom, f.top);
       else if (along && f.right <= b.left + 1) free.left = Math.max(free.left, f.right);
       else if (along && f.left >= b.right - 1) free.right = Math.min(free.right, f.left);
+    }
+    if (free.ledge) {
+      for (const el of hanging) {
+        const f = el.getBoundingClientRect();
+        if (f.width && f.bottom > b.bottom) free.hang.push([f.left - 2, f.right + 2]);
+      }
     }
     R.setBoardRect(b.left, b.top, b.width, free);
   };
