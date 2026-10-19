@@ -32,6 +32,11 @@
         <button id="mute" class="icon" aria-label="Mute all sound" title="Sound (M)" aria-pressed="false">
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 7.5h2.8L10 4.3v11.4l-3.7-3.2H3.5z"/><path class="wave" d="M13 7.2c.9.8.9 4.8 0 5.6M15.2 5.4c1.9 1.8 1.9 7.4 0 9.2"/><path class="slash" d="M13 7.5l4.5 5M17.5 7.5l-4.5 5"/></svg>
         </button>
+        <!-- The Field guide's own door (it opens on its tab of the same book): an open book, and its name where the trophy says its own. -->
+        <button id="guide-open" class="small trophy" aria-label="Field guide" title="Field guide (G)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M9.3 5.2C7.8 4 5.7 3.5 3.2 3.6c-.5 0-.9.4-.9.9v10c0 .5.4.9.9.9 2.4-.1 4.4.4 6.1 1.5zM10.7 5.2c1.5-1.2 3.6-1.7 6.1-1.6.5 0 .9.4.9.9v10c0 .5-.4.9-.9.9-2.4-.1-4.4.4-6.1 1.5z"/></svg>
+          <span class="trophy-text">Field guide</span>
+        </button>
         <button id="records-open" class="small trophy" aria-label="Hall of Fame" title="Hall of Fame (H)">
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 3h8v1.5h2.6c.5 0 .9.4.8.9-.3 2.4-1.7 4-3.8 4.4A4.4 4.4 0 0 1 11 12.3V14h2.2c.5 0 .8.4.8.8V17H6v-2.2c0-.4.3-.8.8-.8H9v-1.7a4.4 4.4 0 0 1-2.6-2.5C4.3 9.4 2.9 7.8 2.6 5.4c-.1-.5.3-.9.8-.9H6zm-1.8 3c.3 1 .9 1.8 1.8 2.2V6zm11.6 0H14v2.2c.9-.4 1.5-1.2 1.8-2.2z"/></svg>
           <span class="trophy-text">Hall of Fame</span>
@@ -96,7 +101,11 @@
             <div class="buttons">
               <button id="start">Play</button>
               <button id="watch" class="secondary" hidden>Watch</button>
-              <button id="friends" class="text-button" type="button" hidden>Play with friends</button>
+              <!-- The card's quieter ways on: how to play (the Field guide), and playing with friends. -->
+              <div id="card-links" class="card-links" hidden>
+                <button id="how" class="text-button" type="button" hidden>How to play</button>
+                <button id="friends" class="text-button" type="button" hidden>Play with friends</button>
+              </div>
               <p id="hint" class="hint" hidden></p>
             </div>
           </div>

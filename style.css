@@ -512,6 +512,10 @@ canvas {
 
 /* The buttons stay in view when a card is taller than the board (they stick to its bottom edge). */
 .buttons .text-button { flex-basis: 100%; margin: 2px auto 0; }
+/* How to play and Play with friends share a row under the big buttons (each its own row only if they can't). */
+.card-links { flex-basis: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18px; }
+.card-links[hidden] { display: none; }
+.card-links .text-button { flex-basis: auto; margin: 2px 0 0; }
 .buttons .hint { flex-basis: 100%; margin-top: 0 !important; } /* (in the sticky row with the buttons: always in view, even on a card that scrolls) */
 /* The main button calls you: a ring ripples out from it, over and over. It's
    a pill of light just behind the button, growing out from under it about
@@ -911,6 +915,9 @@ canvas {
 .guide { margin: 0 0 12px; padding: 0; list-style: none; }
 .guide li { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--parchment-2); }
 .guide li:first-child { border-top: 0; }
+/* The row your death's card opened the guide at: lit in honey, fading to the page over 2.4 s. */
+.guide li.spot { margin-inline: -8px; padding-inline: 8px; border-radius: 10px; animation: spot 2.4s ease-out 0.2s both; }
+@keyframes spot { from { background: var(--honey); } to { background: transparent; } }
 .guide-pics { flex: none; display: flex; align-items: center; justify-content: center; width: 44px; }
 .guide-art { flex: none; width: 36px; height: 36px; }
 .guide-pics .guide-art:nth-child(2) { margin: 10px 0 0 -14px; } /* (two: the second a little in front, lower down) */
@@ -957,6 +964,8 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
    rivals as a row of names (tap a tag above the board for how one plays). */
 .board { container-type: size; }
 @container (max-height: 380px) {
+  .card-links { gap: 0 8px; } /* (How to play and Play with friends still share a row on a phone) */
+  .card-links .text-button { padding-inline: 4px; }
   .card { --pad-x: 14px; --pad-y: 12px; }
   .card h2 { font-size: 1.45rem; margin-bottom: 4px; }
   .card.beat h2 { font-size: 2.4rem; }
@@ -981,10 +990,12 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .hint { margin-top: 6px !important; font-size: 0.74rem; } /* (the steering hint stays: phones need it most) */
 }
 @container (max-height: 300px) {
+  .card-links .text-button { font-size: 0.92rem; } /* (the smallest card: both on one row, 216 px of 224) */
   .card h2 { font-size: 1.25rem; }
   .rival-note { font-size: 0.85rem; margin-bottom: 6px; }
   .card .rival-note .now { font-size: 0.92em; } /* (no smaller than 12.5px) */
   .card.noting .name-row:not(:focus-within) { display: none; } /* (the carve waits under a note here, and comes back with the card's words; never while you're typing) */
+  .card.noting .card-links { display: none; } /* (and so do the card's quieter links: the Field guide's, and friends') */
   .flavor { display: none !important; }
   .opponents .tap-tip { display: none !important; } /* (the hint needs the room: how to steer comes first) */
   /* Just the first two items of the hint ("Swipe to steer · Tap to jump"): a new player has to be told that much (the flash has its own lesson). */
@@ -1097,6 +1108,36 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .trophy .trophy-text { display: none; }
 }
 
+/* A header in one row (the title, Score and Best, then the buttons) has room
+   for the doors' names only from about 770 px wide (860 with a touch screen's
+   44 px buttons); narrower, down to where the buttons get a row of their own,
+   both doors are icons, so the guide's door never pushes the header onto a
+   second row (nor would a full-screen button beside them). */
+@container page (min-width: 600px) and (max-width: 769px) {
+  .hud .trophy { width: 34px; min-width: 34px; height: 34px; padding: 0; justify-content: center; } /* (round, as the icons beside them) */
+  .hud .trophy svg { display: block; }
+  .hud .trophy .trophy-text { display: none; }
+}
+@media (pointer: coarse) {
+  @container page (min-width: 600px) and (max-width: 859px) {
+    .hud .trophy { width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
+    .hud .trophy svg { display: block; }
+    .hud .trophy .trophy-text { display: none; }
+  }
+}
+
+/* A laptop's column beside the board has the room: the two doors, the Field
+   guide's and the Hall of Fame's, on a row of their own under the icons, each
+   with its picture and its name (an icon alone was easy to miss: the trophy
+   was the guide's only door). The board doesn't move; the chatter under them
+   gives up the row. (A phone on its side has no height to spare: there they
+   stay icons, in the icons' row.) */
+@media (min-aspect-ratio: 5/4) and (min-height: 501px) and (max-height: 900px) and (min-width: 480px) {
+  header::before { content: ''; order: 3; flex-basis: 100%; }
+  .hud .trophy { order: 4; gap: 5px; min-height: 34px; padding: 0 10px 0 8px; } /* (both fit a 236 px column; a narrower one gives each its own row) */
+  .trophy .trophy-text { display: inline; }
+}
+
 /* Touch: comfortable targets. */
 @media (pointer: coarse) {
   button, .text-button, button.link, input { min-height: 44px; }
@@ -1108,6 +1149,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
 /* Reduced motion: no pops, rises or rumbles; the information stays. */
 @media (prefers-reduced-motion: reduce) {
   .card, .overlay, .badge, .toast, .records-card, .rival-note, .scoreboard li.starving::after { animation: none !important; }
+  .guide li.spot { animation: none; background: rgba(253, 230, 138, 0.55); } /* (lit, and it stays lit) */
   h1 .amp, .leaves, .frame-sheen > i, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
   .scoreboard li.starving::after { opacity: 1; }
   button, button:active { transition: none; transform: none; }
