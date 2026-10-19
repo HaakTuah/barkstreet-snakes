@@ -851,7 +851,7 @@ html.playing .help.cut { visibility: hidden; } /* (cut in half by the screen's e
 .sep { font-style: normal; }
 .glyph { display: inline-block; width: 0.62em; height: 0.78em; vertical-align: -0.06em; fill: currentColor; } /* (the pause button's own bars, not a font's) */
 
-/* The woodpecker's layer: the whole window, under the dialogs, never in the way of a tap. */
+/* The woodpecker's layer: the board and the room round it, sized and moved by the renderer with a transform, under the dialogs, never in the way of a tap. */
 .bird-layer {
   position: fixed;
   top: 0;
