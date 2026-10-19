@@ -991,6 +991,11 @@ window.SnakeEngine = (() => {
       holes: blockedSeen(game, snap),
       fire: fireSeen(snap), // (among the holes: the cells that are only fire, which it can go through, at a price)
       pecks: snap.pecks.length ? (snap.peckSet ||= new Set(snap.pecks)) : NO_CELLS, // (among them too: the woodpecker's mark, not a hole yet: nothing to hop)
+      // (When its strike comes, as anyone sees the bird drum it (its last blow
+      // lands on the strike), and on the aim's last tick where it promised
+      // each piece in its mark would land: the rings show them to everyone.)
+      strikeAt: game.woodpecker?.target.length ? game.woodpecker.strikeAt : null,
+      landings: game.woodpecker?.landings || null,
       burrows: game.burrows, // (as they are: a person sees every burrow on the board, [{ x, y, at }])
       age: game.history.length - 1 - idx,
       tick: game.tick,
@@ -1836,12 +1841,12 @@ window.SnakeEngine = (() => {
     }
   }
   // Where food can roll to: on the board, not a hole, not burning, no food
-  // there, and no body that'll still be there next tick (a tail end moving
-  // on is free).
+  // or burrow there, and no body that'll still be there next tick (a tail
+  // end moving on is free).
   function foodRoom(game, x, y) {
     if (!inside(x, y)) return false;
     const k = key(x, y);
-    if (game.holes.has(k) || burning(game, k) || game.food.some(f => f.x === x && f.y === y)) return false;
+    if (game.holes.has(k) || burning(game, k) || game.food.some(f => f.x === x && f.y === y) || burrowAt(game, x, y)) return false;
     for (const o of game.snakes) {
       if (!o.alive) continue;
       const keep = o.grow === 0 && o.stunUntil <= game.tick + 1 ? o.body.length - 1 : o.body.length;
