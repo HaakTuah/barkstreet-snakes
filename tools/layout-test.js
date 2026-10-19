@@ -15,10 +15,14 @@
 //   a tap. While you play, the help under the board is either wholly on the
 //   screen or not shown (and then a short phone's first Go tells you about
 //   the powers). On its side, the column keeps off the screen's top and
-//   bottom, the chatter's log is cut inside its box, and the frame's moss
-//   and leaves aren't cut by the screen's edge. On a small board your
-//   death's card has its two buttons side by side. A focus ring at the
-//   column's edge is whole, and with a mouse the header keeps its spacing.
+//   bottom, the chatter's log is cut inside its box, never to less than a
+//   line and never through a row of words (very short, while watching, the
+//   help gives it its room), and the frame's moss and leaves aren't cut by
+//   the screen's edge. On a small board your death's card has its two
+//   buttons side by side. A focus ring at the column's edge is whole, and
+//   with a mouse the header keeps its spacing.
+// - In a browser without svh and dvh (Safari before 15.4, Chrome before
+//   108), the board, its frame and the ledge are as they are with them.
 // - The header: its buttons on one row everywhere; at 320 px the title,
 //   Score and Best on one row, and the buttons on their own row (so a
 //   button there never crowds the title).
@@ -29,9 +33,15 @@
 //   the board, at least 48 px tall (36 on a short phone, whose ledge is
 //   smaller), clear of the moss and leaves hanging there, and on its side
 //   it's beside the board. Flying out to a spot at the board's edge and
-//   drumming it, it isn't cut off by the screen's edge either (on its side,
-//   drumming the bottom rows still is: that's the drum's pose, for the
-//   woodpecker's own later work, and it's printed).
+//   drumming it, through its whole wingbeat, it isn't cut off by the
+//   screen's edge either (on its side, drumming the bottom rows still is,
+//   and flying in to the top corners: that's the flight's and the drum's
+//   pose, for the woodpecker's own later work, and it's printed).
+// - Held upright at every height in between (too tall for the board to
+//   leave a gutter, too short to show the ledge whole: 320, 375, 390 and
+//   414 px wide, every 5 px), the woodpecker perched still covers no cell
+//   (a beak's tip at most, as on a tablet), is 24 px tall or more, and is all
+//   on the screen, and the board is still bigger than before.
 // - Full screen: the button is there where the browser allows it (and not
 //   where it doesn't, as on an iPhone), goes in and out on a tap, and its
 //   label says which way it goes.
@@ -41,6 +51,8 @@
 //   coming back asks again when it's wanted; a refusal isn't asked again
 //   and again; and with no wake lock at all, nothing breaks.
 // - A real touch swipe on the board still turns, held upright and on its side.
+// - No error events on the page, playing, watching or resized (a resize
+//   observer's loop, which isn't an exception, among them).
 // It prints what it measured: each device's board, before and now.
 //
 //   node tools/layout-test.js [part of a screen's name, such as 390]
@@ -76,6 +88,7 @@ const DEVICES = [
   { name: '640×320 on its side', w: 640, h: 320, dpr: 2, kind: 'side', least: 300, before: 268 },
   { name: '667×375 on its side', w: 667, h: 375, dpr: 2, kind: 'side', least: 355, before: 323 },
   { name: '780×320 on its side, its browser bars showing', w: 780, h: 320, dpr: 3, kind: 'side', least: 300, before: 268 }, // (the call: 268 → about 310)
+  { name: '780×320 on its side with a notch (an iPhone in Safari)', w: 780, h: 320, dpr: 3, kind: 'side', insets: notchSide, nofs: true, least: 289, before: 268 },
   { name: '844×390 on its side (or 780×320 in full screen)', w: 844, h: 390, dpr: 3, kind: 'side', least: 370, before: 338 }, // (the call: about 380 in full screen)
   { name: '915×412 on its side', w: 915, h: 412, dpr: 2.625, kind: 'side', least: 392, before: 360 },
   { name: '932×430 on its side', w: 932, h: 430, dpr: 3, kind: 'side', least: 410, before: 378 },
@@ -92,8 +105,12 @@ const DEVICES = [
 // records what's asked of it (?nowake: none at all, as in an older browser);
 // a tab that can be hidden and shown (__setHidden); ?nofs: a browser without
 // full screen for a page, as on an iPhone; and the round's end on demand
-// (__kill: snakes that go out on the next tick, by seat).
+// (__kill: snakes that go out on the next tick, by seat); and the page's
+// error events, which aren't exceptions (__errs: a resize observer's loop,
+// say, when one's call changes what it observes).
 const PRE = `(() => {
+  window.__errs = [];
+  addEventListener('error', e => window.__errs.push(e.message || String(e)));
   const raw = window.requestAnimationFrame.bind(window);
   window.__autoRaf = true;
   window.requestAnimationFrame = cb => raw(function held(ts) { if (window.__autoRaf) cb(ts); else raw(held); }); // (held, not dropped: the loop goes on once it's let go)
@@ -146,7 +163,7 @@ const LAYOUT = `(() => {
     board, frame: box(q('.frame')), ledge: box(q('#perch-ledge')),
     header: box(q('header')), tags: box(q('#scoreboard')), speed: box(q('#speed')), chatter: box(q('.chatter')), chatlog: box(q('#chatlog')), help: box(q('#help')),
     helpShown: getComputedStyle(q('#help')).visibility !== 'hidden', decor,
-    hanging: decor.filter(f => /moss bottom|leaves b/.test(f.what) && f.b > board.b),
+    hanging: decor.filter(f => /moss bottom|leaves b/.test(f.what) && board && f.b > board.b),
   };
 })()`;
 
@@ -197,6 +214,71 @@ const PERCH = (x, y, pose, rects = {}) => `(() => {
 })()`;
 const SPOTS = [[1, 1], [12, 1], [22, 1], [1, 12], [12, 12], [22, 12], [1, 22], [6, 22], [12, 22], [17, 22], [22, 22]];
 
+// The woodpecker flying out to a spot and drumming it, through its whole
+// wingbeat: at points all along the flight out, from just off its perch to
+// the moment before the strike, and drumming, each drawn at eight moments of
+// the beat (it beats every 2π × 55 ms, and its head drives as it drums);
+// then which edges of the screen it's cut off at, flying and drumming (its
+// solid pixels in its layer's outermost rows or columns: the layer is the
+// screen). A wing that reaches past the screen at one moment of the beat
+// and not another is still caught.
+const FLIGHT = (x, y) => `(() => {
+  const g = SnakeDebug.game();
+  g.time = Math.max(g.time, TUNING.SUDDEN_DEATH_MS + 1000);
+  const L = document.getElementById('bird-layer'), G = L.getContext('2d'), W = L.width, H = L.height;
+  const solid = (a, b, c, d) => { const p = G.getImageData(a, b, c, d).data; for (let i = 3; i < p.length; i += 4) if (p[i] >= 200) return true; return false; };
+  const cut = { fly: new Set(), drum: new Set() };
+  g.woodpecker = null; SnakeDebug.draw();
+  const t0 = performance.now();
+  // (k, alpha: its strike k ticks off, drawn alpha through the tick: how far out it's flown, 0.1 to 0.99 of the way, or drumming)
+  for (const [k, a] of [[3, 0.75], [2, 0.25], [2, 0.75], [1, 0], [1, 0.5], [1, 0.875], [1, 0.975], [-1, 0.5]]) {
+    g.woodpecker = { x: ${x}, y: ${y}, at: g.time, target: [${y * 24 + x}], strikeAt: g.tick + k, last: [], struckAt: -1, restUntil: g.tick + 1e6 };
+    for (let i = 0; i < 8; i++) {
+      SnakeRender.frame(a, t0 + i * 43.2);
+      const at = k < 0 ? cut.drum : cut.fly;
+      if (solid(0, 0, 1, H)) at.add('left');
+      if (solid(0, 0, W, 1)) at.add('top');
+      if (solid(W - 1, 0, 1, H)) at.add('right');
+      if (solid(0, H - 1, W, 1)) at.add('bottom');
+    }
+  }
+  g.woodpecker = null; SnakeDebug.draw();
+  return { fly: [...cut.fly], drum: [...cut.drum] };
+})()`;
+const FLIGHT_SPOTS = [[0, 12], [23, 12], [12, 23], [1, 22], [3, 22], [4, 22], [19, 22], [0, 0], [23, 0]];
+
+// The chatter's log, cut at its box (and maybe ending at its last whole row,
+// by a clip: snake.js fitLog): whether it shows a whole row of words, and
+// whether any row is sliced through by where it ends.
+const LOG_ROWS = `(() => {
+  const log = document.getElementById('chatlog'), lb = log.getBoundingClientRect(), cp = log.style.clipPath;
+  const end = lb.bottom - (cp ? parseFloat(cp.replace('inset(', '').split(' ')[2]) : 0);
+  const range = document.createRange();
+  let whole = 0, sliced = 0;
+  for (const li of log.children) {
+    range.selectNodeContents(li);
+    for (const f of range.getClientRects()) if (f.height) { if (f.bottom <= end + 0.5) whole++; else if (f.top < end - 0.5) sliced++; }
+  }
+  return { whole, sliced, end, top: lb.top };
+})()`;
+
+// A browser without svh or dvh: the page's own stylesheet, those units made
+// unknown to the browser (and its tests for them false). A declaration with
+// one that has var() in it isn't checked until it's used, so a second one
+// can't fall back to a first: it would lose its property. Then the page is
+// laid out again.
+const NO_SVH = `(async () => {
+  const link = document.querySelector('link[href="style.css"]');
+  const css = await (await fetch(link.href)).text();
+  const st = document.createElement('style');
+  st.textContent = css.replace(/(\\d)([sd]vh)\\b/g, '$1zzh');
+  link.replaceWith(st);
+  await new Promise(r => setTimeout(r, 200));
+  dispatchEvent(new Event('resize'));
+  await new Promise(r => setTimeout(r, 200));
+  return (css.match(/\\d[sd]vh\\b/g) || []).length;
+})()`;
+
 const only = process.argv[2];
 const sized = (w, h) => DEVICES.find(d => d.w === w && d.h === h && !d.insets);
 const CALLS = sized(390, 844), CALLS_SIDE = sized(780, 320); // (the call's phone: upright, and on its side with its browser's bars)
@@ -211,6 +293,15 @@ const r1 = v => Math.round(v * 10) / 10;
   try {
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: PRE });
     let insetsByCdp = true;
+    // Until the page has been laid out and drawn since the last change, and
+    // its own resize observers have run (they place the board for the
+    // woodpecker, hide a help line the screen cuts, size the board's
+    // drawing): a new observer's first call comes in the same update, after
+    // theirs. Twice, for what their own calls change. (A fixed wait alone
+    // read the page too early now and then, on a busy machine.)
+    const settle = async () => {
+      for (let i = 0; i < 2; i++) await ev(`new Promise(done => { const o = new ResizeObserver(() => { o.disconnect(); done('ok'); }); o.observe(document.documentElement); })`);
+    };
     const open = async (d, query = '') => {
       await b.viewport(d.w, d.h, { scale: d.dpr, mobile: !d.desktop });
       if (insetsByCdp) {
@@ -222,11 +313,13 @@ const r1 = v => Math.round(v * 10) / 10;
         await ev(`(() => { const s = document.createElement('style'); s.textContent = ':root { --safe-t: ${i.top}px; --safe-r: ${i.right}px; --safe-b: ${i.bottom}px; --safe-l: ${i.left}px; } body { padding-top: max(12px, ${i.top}px) !important; padding-bottom: max(16px, ${i.bottom}px) !important; }'; document.head.append(s); dispatchEvent(new Event('resize')); return 'ok'; })()`);
         await b.sleep(100);
       }
+      await settle();
     };
     const toRound = async (button = 'start') => {
       await ev(`document.getElementById('${button}').click(); 'ok'`);
       await ev(`SnakeDebug.frames(80); window.__autoRaf = false; 'ok'`); // (through the countdown, then held still)
       await b.sleep(120);
+      await settle();
     };
 
     for (const d of DEVICES) {
@@ -337,7 +430,7 @@ const r1 = v => Math.round(v * 10) / 10;
       const tall = drawn.map(q => q.p.h), small = Math.min(...tall);
       if (upright && d.short) {
         const beside = drawn.every(q => q.p.r <= play.board.x + 2 || q.p.x >= play.board.r - 2);
-        check(beside && small >= 29.5, `${tag}: upright with the ledge below the fold, it perches in the gutter beside the board, at least 30 px tall`, `${r1(small)}-${r1(Math.max(...tall))} px tall`);
+        check(beside && small >= 23.5, `${tag}: upright with the ledge below the fold, it perches in the gutter beside the board, at least 24 px tall (the room the page leaves it)`, `${r1(small)}-${r1(Math.max(...tall))} px tall`);
       } else if (upright) {
         const onLedge = drawn.every(q => q.p.y >= play.board.b - 0.5 && q.p.b <= play.ledge.b + 16);
         const least = d.h >= 780 ? 48 : 36; // (a short phone has less height to spare: a smaller ledge, still bigger than the old gutter's 34 px)
@@ -348,23 +441,28 @@ const r1 = v => Math.round(v * 10) / 10;
       }
       d.bird = `${r1(small)}-${r1(Math.max(...tall))}`;
 
-      // Flying out to a spot at the board's edge (two moments of the
-      // flight) and drumming it: on the ledge, never cut off by the screen's
-      // edge (it stands on the middle's side of the spot); beside the board,
-      // its drum at the left and right edges isn't either. The rest is the
-      // flight's and the drum's own pose, not the perch's, and is printed:
-      // with the board meeting the screen's bottom, the drum at the bottom
-      // rows hangs past it, and from a perch near the screen's edge the
-      // wings beat past it as it takes off.
+      // Flying out to a spot at the board's edge or corner, or near the
+      // screen's edge on the bottom row, and drumming it, through its whole
+      // wingbeat: on the ledge, never cut off by the screen's edge (it
+      // stands on the middle's side of a spot near the screen's edge, so its
+      // wings beat over the board); beside the board, its drum away from
+      // the bottom rows isn't either. The rest is the flight's and the
+      // drum's own pose, not the perch's, and is printed: with the board
+      // meeting the screen's bottom, the drum at the bottom rows hangs past
+      // it; flying in to the top row at the corners, a wingbeat reaches past
+      // the screen's top; and from a perch near the screen's edge the wings
+      // beat past it as it takes off.
       if (upright || side) {
         const ledge = upright && !d.short;
         const flights = [];
-        for (const [x, y] of [[0, 12], [23, 12], [12, 23], [1, 22]]) for (const k of [2, 1, -1]) flights.push({ x, y, k, p: await ev(PERCH(x, y, k)) });
-        const owed = f => ledge || (!gutter && f.k < 0 && f.y < 20); // (what the perch answers for: from a gutter with no room, nothing more than before)
-        const cutOff = flights.filter(f => f.p && f.p.cut.length && owed(f));
-        check(flights.every(f => f.p) && !cutOff.length, `${tag}: ${ledge ? 'flying out to a spot at the board\'s edge and drumming it' : 'drumming a spot at the board\'s left or right edge'}, it isn't cut off by the screen`, cutOff.map(f => `${f.x},${f.y} ${f.k < 0 ? 'drumming' : 'flying'}: cut off at the ${f.p.cut.join(' and ')}`).join('; '));
-        const known = flights.filter(f => f.p && f.p.cut.length && !owed(f));
-        if (known.length) d.drumGap = known.map(f => `${f.x},${f.y} ${f.k < 0 ? 'drumming' : `flying (${f.k})`} (${f.p.cut.join(', ')})`).join('; ');
+        for (const [x, y] of FLIGHT_SPOTS) flights.push({ x, y, f: await ev(FLIGHT(x, y)) });
+        const cuts = f => [...f.f.fly.map(e => ({ what: 'flying', e })), ...f.f.drum.map(e => ({ what: 'drumming', e }))];
+        const owed = (f, c) => ledge || (!gutter && c.what === 'drumming' && f.y < 20); // (what the perch answers for: from a gutter with no room, nothing more than before)
+        const say = (f, list) => `${f.x},${f.y} ${[...new Set(list.map(c => c.what))].map(w => `${w} (${list.filter(c => c.what === w).map(c => c.e).join(', ')})`).join(', ')}`;
+        const cutOff = flights.map(f => ({ f, list: cuts(f).filter(c => owed(f, c)) })).filter(q => q.list.length);
+        check(!cutOff.length, `${tag}: ${ledge ? 'flying out to a spot at the board\'s edge and drumming it' : 'drumming a spot at the board\'s left or right edge, off the bottom rows'}, through the whole wingbeat, it isn't cut off by the screen`, cutOff.map(q => `cut off: ${say(q.f, q.list)}`).join('; ') || `${flights.length} spots`);
+        const known = flights.map(f => ({ f, list: cuts(f).filter(c => !owed(f, c)) })).filter(q => q.list.length);
+        if (known.length) d.drumGap = known.map(q => say(q.f, q.list)).join('; ');
       }
 
       // A nap: its card fits, and its buttons take a tap.
@@ -372,6 +470,7 @@ const r1 = v => Math.round(v * 10) / 10;
       await b.sleep(150);
       reach = await ev(REACH('#overlay .buttons button'));
       check(await ev('SnakeDebug.state()') === 'paused' && reach.length >= 1 && reach.every(r => r.on && r.taps), `${tag}: the nap's card and its buttons take a tap`, reach.map(r => `${r.what}${r.on && r.taps ? '' : ' (cut off)'}`).join(', '));
+      const errsPlaying = await ev(`__errs.join(' | ')`);
 
       // ---------------------------------------------- watching
       await open(d);
@@ -384,14 +483,73 @@ const r1 = v => Math.round(v * 10) / 10;
       for (const [x, y] of [[1, 22], [12, 22], [22, 22], [22, 1]]) wp.push(await ev(PERCH(x, y, true, furnitureOf(watch))));
       check(wp.every(p => p && p.over <= (gutter ? 4 : 0) && !Object.keys(p.on).length && !outside(p).length), `${tag}: watching, the perched woodpecker covers no cell, keeps off the speed buttons and the rest, and is all on the screen`, wp.map(p => (p ? `${p.over} px over cells${Object.keys(p.on).map(k => `, ${p.on[k]} over the ${k}`).join('')}${outside(p).length ? `, ${outside(p).join(', ')}` : ''}` : 'none')).join('; '));
       if (side) {
-        // The chatter full (five long lines): its log cut inside its box, and the column off the screen's top and bottom.
+        // The chatter full (five long lines, two rows each): its log cut
+        // inside its box, showing a whole row at least and slicing none; and
+        // the column off the screen's top and bottom (very short, the help
+        // gives the chatter its room while you watch).
         await ev(`(() => { const log = document.getElementById('chatlog'); for (let i = 0; i < 5; i++) log.insertAdjacentHTML('afterbegin', '<li><strong>Gobbler</strong> <span>Out of my way! I’m starving, and the bark is bare!</span></li>'); return 'ok'; })()`);
         await b.sleep(60);
-        const full = await ev(LAYOUT);
-        check(full.header.y >= 4 && full.help.b <= full.vh - 2 && full.scrollH <= full.vh, `${tag}: watching, the column keeps off the screen's top and bottom`, `header from ${r1(full.header.y)}, help down to ${r1(full.help.b)} of ${full.vh}`);
-        check(full.chatlog.b <= full.chatter.b - 5.5 && full.chatter.b <= full.help.y, `${tag}: watching, a full chatter's log is cut inside its box, clear of its edge`, `log down to ${r1(full.chatlog.b)}, its box to ${r1(full.chatter.b)}`);
+        await settle();
+        const full = await ev(LAYOUT), rows = await ev(LOG_ROWS), last = full.help || full.chatter;
+        check(full.header.y >= 4 && last.b <= full.vh - 2 && full.scrollH <= full.vh, `${tag}: watching, the column keeps off the screen's top and bottom`, `header from ${r1(full.header.y)}, ${full.help ? 'help' : 'chatter (the help giving way)'} down to ${r1(last.b)} of ${full.vh}`);
+        check(full.chatlog.b <= full.chatter.b - 5.5 && (!full.help || full.chatter.b <= full.help.y), `${tag}: watching, a full chatter's log is cut inside its box, clear of its edge`, `log down to ${r1(full.chatlog.b)}, its box to ${r1(full.chatter.b)}`);
+        check(rows.whole >= 1 && !rows.sliced, `${tag}: watching, a full chatter shows a whole row of words at least, and no row sliced through`, `log ${r1(full.chatlog.h)} px tall, showing to ${r1(rows.end - rows.top)}; ${rows.whole} pieces of rows whole, ${rows.sliced} sliced`);
       }
+      const errs = [errsPlaying, await ev(`__errs.join(' | ')`)].filter(Boolean).join(' | ');
+      check(!errs, `${tag}: no error events on the page, playing or watching (a resize observer's loop, say)`, errs);
       await ev(`window.__autoRaf = true; 'ok'`);
+    }
+
+    // ----------------------------------------- upright, heights in between
+    // A phone held upright too tall for its board to leave a gutter and too
+    // short to show the ledge whole (an iPhone 8 Plus in Safari, 414×622; an
+    // iPhone SE in an app's browser): every 5 px of height, the screen
+    // resized under a round held still (a fresh page at the first height, and
+    // at a few phones' own sizes). The woodpecker perched, resting and eyeing
+    // its chunk, covers no cell (a beak's tip at most, 4 px, as on a tablet),
+    // is 24 px tall or more (the page leaves it that much room, on the ledge
+    // or beside the board), and is all on the screen and off the page's
+    // furniture; and the board is wholly on the screen and bigger than before
+    // (6d478ed: the page 24 px narrower than the screen or 190 px shorter,
+    // less a 10 px rim each side), or as big as fits the height where that
+    // ran off the screen (at 375 px wide the header has three rows).
+    const between = [];
+    const atSize = async (w, h, dpr, fresh) => {
+      if (fresh) { await open({ w, h, dpr }); await toRound(); }
+      else { await b.viewport(w, h, { scale: dpr, mobile: true }); await b.sleep(150); await settle(); }
+      const l = await ev(LAYOUT), ps = [];
+      for (const [x, y] of [[1, 12], [22, 12], [12, 22], [1, 22], [22, 1]]) for (const aim of [false, true]) ps.push({ x, y, aim, p: await ev(PERCH(x, y, aim, furnitureOf(l))) });
+      const before = Math.min(w - 24, Math.max(240, h - 190)) - 20, drawn = ps.filter(q => q.p);
+      const why = q => !q.p ? ['not drawn'] : [q.p.over > 4 && `${q.p.over} px over the cells`, q.p.h < 23.5 && `${r1(q.p.h)} px tall`, ...q.p.cut.map(e => `cut off at the screen's ${e}`),
+        (q.p.x < -0.5 || q.p.r > l.vw + 0.5 || q.p.y < -0.5 || q.p.b > l.vh + 0.5) && 'off the screen', ...Object.keys(q.p.on).map(k => `${q.p.on[k]} px over the ${k}`)].filter(Boolean);
+      const bad = ps.filter(q => why(q).length).map(q => `${w}×${h} ${q.x},${q.y}${q.aim ? ' eyeing' : ''}: ${why(q).join(', ')}`);
+      const fits = l.vh - l.frame.y - (l.frame.h - l.board.h); // (as big as fits the height: where the old board ran off the screen, that's as big as it can be)
+      const errs = await ev(`__errs.splice(0).join(' | ')`);
+      if (errs) bad.push(`${w}×${h}: error events on the page: ${errs}`);
+      if (l.board.w < Math.min(before, fits) - 0.5 || l.board.b > l.vh + 0.5) bad.push(`${w}×${h}: the board ${r1(l.board.w)} px, down to ${r1(l.board.b)} (before: ${before}; as big as fits the height: ${r1(fits)})`);
+      between.push({ w, h, board: l.board.w, before, fits, bird: Math.min(...drawn.map(q => q.p.h)), over: Math.max(0, ...drawn.map(q => q.p.over)), bad });
+    };
+    for (const [w, h0, h1, dpr] of [[320, 460, 540, 2], [375, 545, 640, 2], [390, 545, 640, 3], [414, 545, 640, 3]]) {
+      if (only && !String(w).includes(only)) continue;
+      for (let h = h0; h <= h1; h += 5) await atSize(w, h, dpr, h === h0);
+    }
+    for (const [w, h, dpr] of [[414, 622, 3], [412, 604, 2.625], [375, 553, 2]]) if (!only || String(w).includes(only)) await atSize(w, h, dpr, true);
+    for (const w of [...new Set(between.map(s => s.w))]) {
+      const at = between.filter(s => s.w === w), bad = at.flatMap(s => s.bad);
+      check(!bad.length, `${w} px wide, upright, ${Math.min(...at.map(s => s.h))} to ${Math.max(...at.map(s => s.h))} px tall: perched, the woodpecker covers no cell (a beak's tip at most), is 24 px tall or more, all on the screen and off the page's furniture, and the board is bigger than before (or as big as fits the height)`,
+        bad.join('; ') || `${at.length} heights: the bird ${r1(Math.min(...at.map(s => s.bird)))} px tall or more, ${Math.max(...at.map(s => s.over))} px over the cells at most; the board ${r1(Math.min(...at.filter(s => s.board >= s.before - 0.5).map(s => s.board - s.before)))} px bigger than before or more${at.some(s => s.board < s.before - 0.5) ? `, but as big as fits the height at ${at.filter(s => s.board < s.before - 0.5).map(s => `${s.w}×${s.h} (${r1(s.board)}, before ${s.before} ran off the screen)`).join(', ')}` : ''}`);
+    }
+
+    // ------------------------------------------- a browser without svh or dvh
+    // (Safari before 15.4, Chrome before 108): the board, its frame and the
+    // ledge are as they are with them (here svh, dvh and vh are the same).
+    for (const d of [CALLS, sized(375, 548), CALLS_SIDE, DEVICES.find(x => x.kind === 'side' && x.insets && x.w === 844)]) {
+      if (only && !d.name.includes(only)) continue;
+      await open(d);
+      const was = await ev(LAYOUT), units = await ev(NO_SVH), now = await ev(LAYOUT);
+      const same = ['board', 'frame', 'ledge'].every(k => (!was[k] && !now[k]) || (was[k] && now[k] && ['x', 'y', 'w', 'h'].every(m => Math.abs(was[k][m] - now[k][m]) < 0.6)));
+      const say = q => (q ? `${r1(q.w)}×${r1(q.h)} at ${r1(q.x)},${r1(q.y)}` : 'none');
+      check(units > 0 && same, `${d.name}: in a browser without svh or dvh, the board, its frame and the ledge are as they are with them`, ['board', 'ledge'].map(k => `${k} ${say(now[k])} (with them: ${say(was[k])})`).join('; '));
     }
 
     // ------------------------------------------- the cards that come by themselves
@@ -529,6 +687,10 @@ const r1 = v => Math.round(v * 10) / 10;
     console.log(board.join('\n'));
     console.log('\nthe woodpecker perched, CSS px tall:');
     for (const d of DEVICES) if (d.bird) console.log(`  ${d.name.padEnd(48)} ${d.bird}`);
+    if (between.length) {
+      console.log('\nheld upright, heights in between (CSS px): the board (before) and the woodpecker perched, its smallest');
+      for (const s of between) console.log(`  ${`${s.w}×${s.h}`.padEnd(10)} ${r1(s.board)} (${s.before}), ${r1(s.bird)}`);
+    }
     const gaps = DEVICES.filter(d => d.drumGap);
     if (gaps.length) {
       console.log('\nknown, for the woodpecker\'s own later work (its flight and its drum, not its perch), cut off by the screen\'s edge:');
