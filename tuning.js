@@ -7,7 +7,7 @@ window.TUNING = Object.freeze({
   OPPONENTS: 3,             // AI rivals in a normal round (an AI-only round has one more)
 
   // ------------------------------------------------------------------ food
-  APPLES: 3,                // green apples on the board at all times (eaten or rotted, another drops somewhere; two after the opening was tried: rounds ran longer and more snakes starved at the end)
+  APPLES: 2,                // green apples on the board at all times (eaten or rotted, another drops somewhere): two since round six A, with beetles carrying more of the food (three was "a bit too plentiful")
   APPLE_TICKS: 110,         // an apple rots away after about this many ticks (give or take a quarter: about 8-16 s), and another drops somewhere
   MUSHROOMS: 2,             // red mushrooms on the board at all times
   MUSHROOM_TICKS: 180,      // a mushroom withers (and regrows elsewhere) after this many ticks
@@ -15,7 +15,8 @@ window.TUNING = Object.freeze({
   GOLDEN_TICKS: 120,        // a golden apple rots after this many ticks
   GOLDEN_GROWTH: 3,         // a golden apple is worth this much
   BEETLE_FIRST_MS: 15000,   // beetles start coming out after this long...
-  BEETLE_CHANCE: 0.006,     // ...with this chance per tick, while there is none (and no woodpecker)
+  BEETLE_CHANCE: 0.012,     // ...with this chance per tick, while fewer than BEETLE_MAX are out (and once the woodpecker's here too)...
+  BEETLE_MAX: 2,            // ...beetles out at once, above ground or under
   BEETLE_TICKS: 260,        // a beetle nobody catches flies off after this many ticks
   PELLET_TICKS: 150,        // body food (beads) rots after about this many ticks (give or take a quarter)...
   PELLET_COOKED: 1.5,       // ...roasted beads last this many times as long
@@ -24,6 +25,9 @@ window.TUNING = Object.freeze({
   BEETLE_EVERY: 3,          // it crawls one cell every this many ticks...
   BEETLE_SCARED_EVERY: 2,   // ...or every 2, scurrying away (half a snake's speed: a chase you can win)...
   BEETLE_FEAR: 4,           // ...from any head within this many cells
+  BEETLE_HOME_REACH: 7,     // a scared beetle runs for a burrow nearer than this...
+  BEETLE_DIG_FEAR: 6,       // ...and one with a head this near and no burrow in reach digs in where it is...
+  BEETLE_DIG: 8,            // ...taking this many ticks (it stays put, and can still be caught), then it's underground, as after a dive
   BEETLE_GROWTH: 2,         // a beetle is worth this much
   // Powers. Everyone can jump and flash, two separate presses (Space or a
   // tap; E, Shift or a swipe the way you're going). A jump hops one cell (a
@@ -36,7 +40,7 @@ window.TUNING = Object.freeze({
   FLASH_LENGTH: 2,          // a flash: this many cells in one tick, along the ground (it eats on the way; whatever's in the way, it runs into as a crawl would)...
   FLASH_COST: 0,            // ...for this many segments off the tail (free: a cost made rounds longer and starved snakes, in simulation)...
   FLASH_COOLDOWN_MS: 6000,  // ...and then it rests this long
-  GOLD_BEETLE_CHANCE: 0.4,  // a beetle coming out is a golden one this often: catch it for golden leaps (three cells in two ticks, hopping up to two; free)...
+  GOLD_BEETLE_CHANCE: 0.12, // a beetle coming out is a golden one this often (with beetles out more, golden leaps stay about three a round): catch it for golden leaps (three cells in two ticks, hopping up to two; free)...
   LEAP_CHARGES: 2,          // ...this many (up to LEAP_MAX held at once)
   LEAP_MAX: 3,
   LEAF_CHANCE: 0.25,        // wind: each gust might blow a golden leaf onto the log (one at a time): dashes...
@@ -93,15 +97,16 @@ window.TUNING = Object.freeze({
   MUSIC_MID_MS: 45000,      // the soundtrack picks up (shaker, faster) after this much game time
 
   // ---------------------------------------------------------- sudden death
-  SUDDEN_DEATH_MS: 120000,  // the woodpecker arrives after two minutes; nothing new grows after that but the last apples (SD_APPLE_GAP)
+  SUDDEN_DEATH_MS: 120000,  // the woodpecker arrives after two minutes; nothing new grows after that but the last apples (SD_APPLE_GAP), though beetles still come out
   PECK_ARRIVE_TICKS: 12,    // it lands, has a look round...
-  PECK_CHUNK: 9,            // ...then takes out a patch of this many cells somewhere on the log...
+  PECK_CHUNK: 12,           // ...then takes out a patch of this many cells somewhere on the log...
   PECK_AIM_TICKS: 17,       // ...eyeing it this long first (everyone sees where: about a second and a half)...
-  PECK_REST_TICKS: 36,      // ...and resting this long after its first strike (about 3.5 s)...
+  PECK_REST_TICKS: 30,      // ...and resting this long after its first strike (about 3 s)...
   PECK_HUNGRIER: 0.85,      // ...but it gets hungrier: each rest this much of the one before (down to PECK_REST_MIN)...
-  PECK_REST_MIN: 12,
-  PECK_CHUNK_MAX: 16,       // ...and each patch a cell bigger than the last (up to this)
-  PECK_CLEARANCE: 4,        // it aims clear of all food, and more than this far from every head (nobody can be in a fresh mark before they can see it), while there's such a spot
+  PECK_REST_MIN: 10,
+  PECK_CHUNK_MAX: 20,       // ...and each patch a cell bigger than the last (up to this): fewer, rounder holes fill the log as fast as the old 9 to 16 with longer rests
+  PECK_CLEARANCE: 4,        // it aims more than this far from every head (nobody can be in a fresh mark before they can see it), and never shuts anyone in, while there's such a spot; food in the mark is knocked aside at the strike
+  PECK_NO_ORPHANS: 2,       // a patch that would cut off an island of this many cells or fewer takes them too (unless a snake's on one: then another patch)
   PECK_UNDER_BODY: 0.33,    // this share of strikes starts under a body (a body lying over a fresh hole bridges it; only a head falls in)
   PECK_WIDEN: 0.5,          // this share widens an old hollow (fewer, bigger hollows)
   SD_APPLE_GAP: 20,         // sudden death: with no apple on the board, the next falls this many ticks after the last went, times its number (about 2 s, 4 s, 6 s...)
@@ -109,7 +114,7 @@ window.TUNING = Object.freeze({
   // --------------------------------------------------------------- burrows
   BURROW_MAX: 3,            // beetle burrows that crack open in the bark over a round (harmless to cross)
   BURROW_NEW_CHANCE: 0.5,   // a beetle coming out opens a new burrow this often (always, if none is free)
-  BEETLE_UNDER_MIN: 8,      // a scared beetle that reaches a burrow dives in, and comes out of one after this many ticks...
+  BEETLE_UNDER_MIN: 8,      // a scared beetle that reaches a burrow dives in (or one cornered digs in), and comes out of a burrow after this many ticks...
   BEETLE_UNDER_MAX: 16,     // ...up to this many
 
   // --------------------------------------------------------------- weather
