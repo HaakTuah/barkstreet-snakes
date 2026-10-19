@@ -587,7 +587,7 @@
     youHideAt = performance.now() + T.YOU_MS;
     Audio.play('go');
     if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
-    else if (touchFirst && game.withPlayer && !powersTold && helpEl.getBoundingClientRect().top > innerHeight - 8) { powersTold = true; toast(FLAVOR.powersFirst, 3000, 'you', 'lesson'); } // (a short phone: the help under the board is off the screen; how to steer is beside YOU. A lesson's banner, not Go!'s big one: it fits, and keeps out of the heads' way)
+    else if (touchFirst && game.withPlayer && !powersTold && helpEl.getBoundingClientRect().bottom > innerHeight + 0.5) { powersTold = true; toast(FLAVOR.powersFirst, 3000, 'you', 'lesson'); } // (a short phone: the help under the board isn't wholly on the screen, so it's off it or hidden; how to steer is beside YOU. A lesson's banner, not Go!'s big one: it fits, and keeps out of the heads' way)
     else toast(pick(game.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1300, 'go');
     flashFrame('go');
     acc = 0;
@@ -1221,6 +1221,7 @@
   function hideCard() {
     overlay.classList.add('hidden');
     shownCard = null;
+    keepAwake(); // (back to the board: a round going on keeps the screen on)
   }
 
   // The roll-call on the start and countdown cards: every rival, AIs with a
@@ -1503,6 +1504,8 @@
     document.documentElement.classList.toggle('playing', (state === 'running' || state === 'countdown') && playerAlive());
     document.documentElement.classList.toggle('in-round', state === 'running' || state === 'countdown');
     if (helpEl) updateHelp(); // (watching or playing: the help says what you can do)
+    fitColumn(); // (on its side, watching: the help may give the chatter its room)
+    keepAwake();
   }
 
   function setSpeed(n) {
@@ -1899,6 +1902,26 @@
   click(speedEl, e => { const b = e.target.closest('button'); if (b) setSpeed(Number(b.dataset.speed)); });
   click(chatterBtn, () => { Chatter.setEnabled(!Chatter.isEnabled()); showChatterState(); });
 
+  // Full screen, where the browser allows it (Android, desktops; an iPhone
+  // can't, and "Add to Home Screen" opens the game without Safari's bars
+  // instead). The button says which way it goes; Esc leaves too.
+  const fullBtn = $('fullscreen');
+  if (document.fullscreenEnabled) {
+    const showFull = () => {
+      const full = !!document.fullscreenElement;
+      fullBtn.dataset.full = String(full);
+      fullBtn.setAttribute('aria-label', full ? 'Leave full screen' : 'Full screen');
+      fullBtn.title = full ? 'Leave full screen (Esc)' : 'Full screen';
+    };
+    click(fullBtn, () => {
+      const asked = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+      asked?.catch?.(() => {}); // (refused: the button stays as it was)
+    });
+    document.addEventListener('fullscreenchange', showFull);
+    showFull();
+    fullBtn.hidden = false;
+  }
+
   function toggleMute() {
     Audio.toggleMuted();
     Audio.play('ui'); // (heard only when the sound's back on: muting is silent, unmuting taps once)
@@ -1916,6 +1939,7 @@
     chatterBtn.firstElementChild.textContent = on ? 'On' : 'Off'; // (the state is aria-checked: the word is for eyes)
     chatterBtn.setAttribute('aria-checked', String(on));
     chatlogEl.hidden = !on;
+    fitColumn();
   }
 
   // Renaming your Hall of Fame entry from the card. Saved when you're done
@@ -1935,6 +1959,33 @@
     if (!document.hidden) return;
     napNow();
   });
+
+  // The screen stays on while you play, through the countdown, and while
+  // you watch a round (a screen wake lock); a nap, a card or the Hall of
+  // Fame lets it go. A hidden tab loses it (the browser lets it go), so
+  // coming back asks again, if it's still wanted then (alone you'll be
+  // napping: waking asks). Where there's no wake lock, nothing changes; a
+  // refusal (a battery saver, say) isn't asked again until the next time
+  // it's wanted.
+  const awake = { lock: null, asking: false, refused: false };
+  function keepAwake() {
+    if (!navigator.wakeLock) return;
+    const want = !document.hidden && recordsEl.hidden && (state === 'countdown' || (state === 'running' && overlay.classList.contains('hidden')));
+    if (!want) {
+      awake.refused = false;
+      if (awake.lock) { const lock = awake.lock; awake.lock = null; lock.release().catch(() => {}); }
+      return;
+    }
+    if (awake.lock || awake.asking || awake.refused) return;
+    awake.asking = true;
+    navigator.wakeLock.request('screen').then(lock => {
+      awake.asking = false;
+      awake.lock = lock;
+      lock.addEventListener('release', () => { if (awake.lock === lock) awake.lock = null; }); // (the browser's doing: a hidden tab)
+      keepAwake(); // (let go at once if it's no longer wanted)
+    }, () => { awake.asking = false; awake.refused = true; });
+  }
+  document.addEventListener('visibilitychange', keepAwake); // (after the nap above)
 
   // Online the round goes on while your tab is hidden, so an AI steers your
   // snake until you're back and turn again. A friend's tab says so itself: a
@@ -1974,6 +2025,7 @@
     if (!online && (state === 'countdown' || (state === 'running' && playerAlive() && !pendingCard))) napNow();
     recordsOpener = document.activeElement;
     recordsEl.hidden = false;
+    keepAwake();
     mainEl.inert = true;
     renderRecordsSafely();
     $('records-close').focus();
@@ -1981,6 +2033,7 @@
 
   function closeRecords() {
     recordsEl.hidden = true;
+    keepAwake();
     mainEl.inert = false;
     const card = !overlay.classList.contains('hidden');
     const back = card && recordsOpener && overlay.contains(recordsOpener) ? recordsOpener : card ? (startBtn.hidden ? watchBtn : startBtn) : recordsOpener;
@@ -2516,10 +2569,49 @@
   R.init({ canvas, personas: PERSONAS, birdLayer: $('bird-layer') });
   // Where the board is on the page (the woodpecker perches beside it, on its own layer).
   // ...and how far the free page runs round it before the tags, the speed
-  // buttons, the chatter or the header (no perching on those).
+  // buttons, the chatter or the header (no perching on those), inside the
+  // screen's safe area (not under a notch); how tall the ledge under it is
+  // (a phone held upright: the bird perches there); and where the moss and
+  // the corner leaves hang off its bottom edge into the ledge (the bird
+  // stands clear of them: across, CSS px, a little wider for the leaves' sway).
   const furniture = ['header', '.scoreboard', '.speed', '.chatter'].map(q => document.querySelector(q)).filter(Boolean);
+  const hanging = [...document.querySelectorAll('.frame .moss.bottom, .frame .leaves.bl, .frame .leaves.br')];
+  const ledgeEl = $('perch-ledge'), rootStyle = getComputedStyle(document.documentElement);
+  const inset = name => parseFloat(rootStyle.getPropertyValue(name)) || 0;
+  // The help under the board, only partly on the screen (a short phone held
+  // upright, or the chatter grown above it): while you play, when the page
+  // can't scroll to it, it's hidden rather than cut in half by the screen's
+  // edge. (A short phone's first Go tells you about the powers instead.)
+  const fitHelp = () => {
+    const h = helpEl.getBoundingClientRect();
+    helpEl.classList.toggle('cut', h.height > 0 && h.top < innerHeight && h.bottom > innerHeight + 0.5);
+  };
+  // What's above the frame, measured (the page's top, the header and the
+  // tags, however many rows they wrap to in whatever font): on a phone held
+  // upright the board is as big as fits the height under it, and at a
+  // height in between leaves the bird room beside it or under it (style.css,
+  // --above). Set only when it changes: the board's own change, which moves
+  // nothing above it, doesn't come round again. Measured now, before the
+  // page is first drawn; as the window changes size and as the font
+  // arrives, before the board is placed; and if the header changes
+  // otherwise (a longer score), a moment later: set from inside a resize
+  // observer's call, the board's change would come round again in the same
+  // frame, which the browser reports as an error.
+  const frameEl = document.querySelector('.frame');
+  const frameTop = () => Math.round((frameEl.getBoundingClientRect().top + scrollY) * 10) / 10;
+  let above = -1, aboveSoon = 0;
+  const measureAbove = () => {
+    aboveSoon = 0;
+    const top = frameTop();
+    if (Math.abs(top - above) > 0.25) { above = top; mainEl.style.setProperty('--above', `${top}px`); }
+  };
+  measureAbove();
+  window.addEventListener('resize', measureAbove, { passive: true });
+  document.fonts?.addEventListener?.('loadingdone', measureAbove);
   const placeBoard = () => {
-    const b = canvas.getBoundingClientRect(), free = { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+    if (!aboveSoon && Math.abs(frameTop() - above) > 0.25) aboveSoon = setTimeout(measureAbove);
+    const b = canvas.getBoundingClientRect();
+    const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: ledgeEl ? ledgeEl.offsetHeight : 0, hang: [] };
     for (const el of furniture) {
       const f = el.getBoundingClientRect();
       if (!f.width || !f.height) continue; // (hidden)
@@ -2529,11 +2621,72 @@
       else if (along && f.right <= b.left + 1) free.left = Math.max(free.left, f.right);
       else if (along && f.left >= b.right - 1) free.right = Math.min(free.right, f.left);
     }
+    if (free.ledge) {
+      for (const el of hanging) {
+        const f = el.getBoundingClientRect();
+        if (f.width && f.bottom > b.bottom) free.hang.push([f.left - 2, f.right + 2]);
+      }
+    }
     R.setBoardRect(b.left, b.top, b.width, free);
+    fitHelp();
   };
   window.addEventListener('resize', placeBoard, { passive: true });
   window.addEventListener('scroll', placeBoard, { passive: true });
   new ResizeObserver(placeBoard).observe(document.querySelector('main')); // (the page around the board changed: it may have moved)
+  // A full chatter on a phone on its side: its log is cut where it can be
+  // seen, the oldest lines first: at its own box, at the chatter's (inside
+  // its padding: the log keeps a line's height, so a squeezed chatter leaves
+  // it hanging past its bottom) or at the page's bottom (it's clipped
+  // there), whichever comes first. Where that would slice a row of words,
+  // the log ends at the last whole row instead, or shows none if none fits
+  // (a clip, so nothing moves: the log's size is what it was). Worked out
+  // as lines come and go and the boxes change.
+  const chatterEl = document.querySelector('.chatter'), chatterStyle = getComputedStyle(chatterEl);
+  const logEnd = () => Math.min(chatlogEl.getBoundingClientRect().bottom, mainEl.getBoundingClientRect().bottom,
+    chatterEl.getBoundingClientRect().bottom - parseFloat(chatterStyle.paddingBottom) - parseFloat(chatterStyle.borderBottomWidth));
+  const rows = document.createRange();
+  const fitLog = () => {
+    const box = chatlogEl.getBoundingClientRect(), end = logEnd();
+    let cut = 0;
+    for (const li of chatlogEl.children) {
+      const r = li.getBoundingClientRect();
+      if (r.bottom <= end + 0.5) continue;
+      rows.selectNodeContents(li);
+      let last = r.top;
+      for (const f of rows.getClientRects()) if (f.height && f.bottom <= end + 0.5) last = Math.max(last, f.bottom);
+      cut = box.bottom - Math.max(box.top, last);
+      break;
+    }
+    chatlogEl.style.clipPath = cut > 0.5 ? `inset(0 0 ${cut.toFixed(1)}px -12px)` : ''; // (-12: a new line slides in from the side)
+  };
+  new ResizeObserver(fitLog).observe(chatlogEl);
+  new ResizeObserver(fitLog).observe(chatterEl);
+  new MutationObserver(fitLog).observe(chatlogEl, { childList: true });
+  document.fonts?.ready.then(fitLog);
+  // On its side, watching, the speed buttons take a row of the column. Where
+  // the chatter's log would then have no room for a whole row of words (a
+  // screen 320 px tall less a notch's home bar, 780×320 in Safari), the
+  // help, which only says what they do, gives the chatter its room; where
+  // a row fits beside it, it stays. Decided with the help shown (a row of
+  // words put first in the log for the moment, before anything's drawn:
+  // whether it would be whole where the log can be seen, whatever the log
+  // holds), as the window changes, the font arrives, the speed buttons come
+  // and go and the chatter's switched; never from inside a resize
+  // observer's call (the column's change would come round again).
+  const sideways = matchMedia('(min-aspect-ratio: 5/4) and (max-height: 500px) and (min-width: 480px)'); // (style.css: phones on their side)
+  const rowProbe = document.createElement('li');
+  rowProbe.textContent = 'Bark';
+  const fitColumn = () => {
+    mainEl.classList.remove('help-yields');
+    if (!sideways.matches || speedEl.hidden || chatlogEl.hidden) return;
+    chatlogEl.prepend(rowProbe);
+    rows.selectNodeContents(rowProbe);
+    const row = rows.getBoundingClientRect().bottom, end = logEnd();
+    rowProbe.remove();
+    if (row > end + 0.5) mainEl.classList.add('help-yields');
+  };
+  window.addEventListener('resize', fitColumn, { passive: true });
+  document.fonts?.addEventListener?.('loadingdone', fitColumn);
   Chatter.init({ boardEl, logEl: chatlogEl });
 
   const sizer = new ResizeObserver(entries => {
