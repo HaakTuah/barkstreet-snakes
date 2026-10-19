@@ -1110,7 +1110,9 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .trophy { min-width: 34px; padding: 0 8px; justify-content: center; }
   .trophy svg { display: block; }
   .trophy .trophy-text { display: none; }
-  header { column-gap: 6px; } /* (five buttons in a row, 44 px each on a touch screen, in a 244 px column) */
+}
+@media (pointer: coarse) and (min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px) {
+  header { column-gap: 6px; } /* (five buttons in a row, 44 px each on a touch screen, in a 244 px column; with a mouse they're 34 px, and keep their 10 px) */
 }
 
 /* Phones on their side: the board takes the full height less a thin rim
