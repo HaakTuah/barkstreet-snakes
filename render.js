@@ -3695,11 +3695,15 @@ window.SnakeRender = (() => {
   // bow out over what it hopped; from where it took off to its head (once
   // it's down, to where it landed), fading as it lands. In
   // parchment, faint: a power's gold is for powers. None with reduced motion.
-  const TRAIL_MS = 260;
+  // (Points every TRAIL_STEP cells where it bows, one straight run over the
+  // top, where it doesn't, and mitred, not rounded, at every point: the same
+  // line, a little cheaper. Measured, the trail is a fifth of a millisecond
+  // a frame, a jump's air shadow most of the rest of what it adds.)
+  const TRAIL_MS = 260, TRAIL_STEP = 0.125;
   function drawTrails(from, to, now) {
     if (reduced) return;
     ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    ctx.lineJoin = 'miter';
     ctx.lineWidth = 1.6;
     ctx.strokeStyle = '#fffbea';
     for (let j = from; j < to; j++) {
@@ -3715,7 +3719,8 @@ window.SnakeRender = (() => {
         ctx.globalAlpha = 0.55 * fade;
         ctx.beginPath();
         for (const sg of SIDES2) {
-          for (let u = 0.3; ; u += 0.125) {
+          for (let u = 0.3; ; u += TRAIL_STEP) {
+            if (u > 1 && u < reach) u = reach; // (over the top, straight)
             if (u > end) u = end;
             const d = u < 1 ? 1 - u : u > reach ? u - reach : 0, w = CELL * 0.54 * (1 + sw * (d < 1 ? Math.cos(d * Math.PI / 2) : 0)) + 6;
             const x = tx + r.dx * u * CELL - r.dy * sg * w, y = ty + r.dy * u * CELL + r.dx * sg * w;
@@ -3726,6 +3731,7 @@ window.SnakeRender = (() => {
         ctx.stroke();
       }
     }
+    ctx.lineJoin = 'round'; // (as it found it)
     ctx.globalAlpha = 1;
   }
 
