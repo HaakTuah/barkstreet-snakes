@@ -155,7 +155,7 @@ window.SnakeAI = (() => {
       kill: ['Mason had a spot picked out for you.', 'You were on the wrong side of the wall.', 'All roads led to Mason.'],
       win: ['Veni, vidi, Mason.', 'Winnus maximus.', 'Rome took longer.'],
       w: {
-        space: 1.3, territory: 1.8,
+        space: 1.3, territory: 1.6, // (1.8 until the owner's playtest: once a meal by the edge wasn't a pin, its walls along the edges fed it, and it won 30 / 36%, from 22 / 27)
         food: 3, eat: 40, pellet: 1, foodRange: 30,
         margin: 6, headRisk: 800, zoneRisk: 150, turn: 25, thick: 45,
       },
@@ -276,6 +276,14 @@ window.SnakeAI = (() => {
   // most of what the neck test catches (nine in ten), and its allowance is
   // the dial between fewer boxed-in deaths and longer rounds.
   const PINNED_DAWDLE = 8;
+  // But a meal isn't a pin. A line that has just eaten is against the edge, a
+  // hole or a body (or in a corner) only because the food was there, and it
+  // leaves on its next move. So for MEAL_PLIES steps after eating, any neck's
+  // allowance is MEAL_DAWDLE: only a rival that could get to the gap about as
+  // soon as I could (a head that could cut me off) makes it a trap. (With 8,
+  // any rival within a dozen cells did: food by the edge was refused half the
+  // time, and snakes circled it.)
+  const MEAL_DAWDLE = 2, MEAL_PLIES = 3;
   const HOLE = 1 << 30;    // "frees up" never
   const DEAD = -1e6;
   const EMPTY = new Set();
@@ -824,6 +832,7 @@ window.SnakeAI = (() => {
       return true;
     }
 
+    let ateAt = -HOLE; // (the step the line being scored last ate at)
     function evaluate(body, len, grow, t) {
       const L = len + grow;
       const head = body[0];
@@ -1026,9 +1035,10 @@ window.SnakeAI = (() => {
       // get to and shut before I'm through, leaving me only the pocket on my
       // side of it. (Necks nearest first; one I'd get through well before
       // any rival could get there is mine to pass, and a pocket with my own
-      // trail in it I can circle.)
+      // trail in it I can circle; and just after a meal, only a head that
+      // could cut me off shuts one.)
       for (let k = 0; k < neckCount; k += 4) {
-        const d = necks[k + 3], slack = d === 1 ? PINNED_DAWDLE : DAWDLE;
+        const d = necks[k + 3], slack = t - ateAt <= MEAL_PLIES ? MEAL_DAWDLE : d === 1 ? PINNED_DAWDLE : DAWDLE;
         if (trail < d) break;
         if (reach[necks[k]] > t + d + slack || reach[necks[k + 1]] > t + d + slack) continue;
         return score - Math.min(NECK + 50 * (need - necks[k + 2]), TRAPPED - 1); // (never worse than a sure trap, however long I am)
@@ -1067,11 +1077,14 @@ window.SnakeAI = (() => {
       nb[0].x = nx; nb[0].y = ny;
       for (let j = 1; j < nlen; j++) { nb[j].x = body[j - 1].x; nb[j].y = body[j - 1].y; }
       if (v) foodValue[i] = 0;
+      const ateBefore = ateAt;
+      if (v > 0) ateAt = t + 1;
       let gain = v * (foodW * w.foodRange + eatW * Math.pow(0.85, t)) - risk[i] * Math.pow(0.6, t);
       if (turning && w.turn) gain -= w.turn * Math.pow(0.9, t);
       const score = depth <= 1
         ? evaluate(nb, nlen, g, t + 1) + bonus + gain
         : search(nb, nlen, g, depth - 1, t + 1, bonus + gain);
+      ateAt = ateBefore;
       if (v) foodValue[i] = v;
       return score;
     }
@@ -1178,7 +1191,7 @@ window.SnakeAI = (() => {
       const hurdle = i => myCells[i] === stampM || (mineFree[i] > 1 && (mineFree[i] < HOLE || fire.has(i) || (pecks ? !pecks.has(i) : trapped)));
       const path = [0, 0, 0];
       const ate = [-1, -1, -1], ateV = [0, 0, 0];
-      let ateL = 0, ateG = 0, ateGain = 0, endRisk = 0, idle = false; // (endRisk: the risk where the last one weighed ends; idle: it was a golden dash just for speed)
+      let ateL = 0, ateG = 0, ateGain = 0, ateWas = -HOLE, endRisk = 0, idle = false; // (endRisk: the risk where the last one weighed ends; idle: it was a golden dash just for speed)
       let best = null;
       const consider = (d, flash, v, price, extra) => {
         const full = endRisk > safe || idle;
@@ -1245,7 +1258,7 @@ window.SnakeAI = (() => {
           else { const b = me.body[j - span - 1]; nb[j].x = b.x; nb[j].y = b.y; }
         }
         // (It eats where it lands, and a golden leap what it crawls over first.)
-        eatOn(span === 2 && !hurdle(path[0]) ? path[0] : -1, land, -1, L, g, 0.85);
+        eatOn(span === 2 && !hurdle(path[0]) ? path[0] : -1, land, -1, L, g, 0.85, 2);
         endRisk = risk[land];
         const gain = ateGain - 0.6 * risk[land];
         const score = depth > 2 ? search(nb, ateL, ateG, depth - 2, 2, gain) : evaluate(nb, ateL, ateG, 2) + gain;
@@ -1302,7 +1315,7 @@ window.SnakeAI = (() => {
           if (j < n) { const c = path[n - 1 - j]; nb[j].x = c % N; nb[j].y = (c - nb[j].x) / N; }
           else { const b = me.body[j - n]; nb[j].x = b.x; nb[j].y = b.y; }
         }
-        eatOn(path[0], path[1], n > 2 ? path[2] : -1, L, g, 1);
+        eatOn(path[0], path[1], n > 2 ? path[2] : -1, L, g, 1, 1);
         endRisk = risk[path[n - 1]];
         const gain = bonus + ateGain - risk[path[n - 1]];
         const score = depth > 1 ? search(nb, ateL, ateG, depth - 1, 1, gain) : evaluate(nb, ateL, ateG, 1) + gain;
@@ -1312,10 +1325,13 @@ window.SnakeAI = (() => {
 
       // Eating the cells a power passes (a, b, c; -1: none), as a move eats:
       // what it's worth (ateGain), and my length and growth after (ateL, ateG;
-      // a mushroom shrinks me). The food's off the board meanwhile: uneat puts it back.
-      function eatOn(a, b, c, L, g, soon) {
+      // a mushroom shrinks me). The food's off the board meanwhile, and a meal
+      // a power eats is as much a meal as a crawl's (ateAt: `at`, the step it
+      // puts me down at): uneat puts both back.
+      function eatOn(a, b, c, L, g, soon, at) {
         ate[0] = a; ate[1] = b; ate[2] = c;
         ateGain = 0;
+        ateWas = ateAt;
         for (let k = 0; k < 3; k++) {
           const i = ate[k];
           ateV[k] = 0;
@@ -1332,11 +1348,13 @@ window.SnakeAI = (() => {
           ateGain += v * (foodW * w.foodRange + eatW * soon);
           ateV[k] = v;
           foodValue[i] = 0;
+          if (v > 0) ateAt = at;
         }
         ateL = L; ateG = g;
       }
       function uneat() {
         for (let k = 0; k < 3; k++) if (ateV[k]) foodValue[ate[k]] = ateV[k];
+        ateAt = ateWas;
       }
     }
   }
