@@ -931,7 +931,6 @@ const KEYS = {
     const heldPair = { toast: await ev('toastText()'), heard: await cues() };
     await ev('vadvance(6000)'); // (the dig's lesson has had its time: the banner's free)
     await cues(); // (anything the round itself did meanwhile)
-    await ev(`(() => { delete SnakeDebug.game().told.burrow; return 'ok'; })()`); // (a burrow cracking open would be news)
     await dugPairAt(4, 4);
     await toTick();
     const dugPair = { toast: await ev('toastText()'), heard: await cues() };
@@ -942,7 +941,6 @@ const KEYS = {
     await ev(`stageEvents(() => [{ type: 'emerge', x: 9, y: 4 }])`);
     await toTick();
     await ev('vadvance(400)');
-    await ev(`(() => { SnakeDebug.game().told.burrow = true; return 'ok'; })()`);
     await ev(`stageEvents(() => [{ type: 'burrow', x: 9, y: 9 }])`); // (one cracking open)
     await toTick();
     const dives = await cues();

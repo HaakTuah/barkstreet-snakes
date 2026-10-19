@@ -87,7 +87,6 @@
     strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
     rainbow: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Follow it to the gold.'],
     rainbowWatch: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Gold at its foot.'],
-    burrow: ['A beetle burrow just cracked open.', 'A beetle’s been digging under the bark.'],
     win: ['King of the log.', 'Last snake wriggling.', 'You outlasted them all.', 'The whole log is yours. For now.'],
     draw: ['Nobody made it out.', 'Everyone loses. How fair.', 'A dead heat. Emphasis on dead.'],
     golden: ['A golden apple! Everyone pretends not to have seen it.', 'A golden apple just dropped onto the log.'],
@@ -939,7 +938,6 @@
       if (e.type === 'weather' && FLAVOR.weather[e.kind]) { flashFrame(e.kind); return toast(pick((!playerAlive() && FLAVOR.weatherWatch[e.kind]) || FLAVOR.weather[e.kind]), 2800, e.kind); }
       if (e.type === 'rainbow') { flashFrame('gold', true); if (newsOnce('rainbow')) return toast(lineFor('rainbow'), 2800, 'gold'); }
       if (e.type === 'burrow' && e.dug && teachable() && once('digBurrow')) return toast(FLAVOR.digBurrow, 2600, 'beetle', 'lesson'); // (its rule, the first time the banner's free for one: shown then, or the next one teaches it)
-      if (e.type === 'burrow' && !e.dug && newsOnce('burrow') && !game.events.some(o => o.type === 'spawn' && o.kind === 'beetle')) return toast(pick(FLAVOR.burrow), 2200, 'beetle'); // (a beetle out of it this tick speaks for both; one a dig left wasn't cracked open)
       if (e.type === 'spawn' && e.kind === 'golden') { flashFrame('gold'); if (newsOnce('golden')) return toast(pick(FLAVOR.golden), 2800, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'beetle' && e.gold) { flashFrame('gold'); if (newsOnce('goldBeetle')) return toast(lineFor('goldBeetle'), 2600, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'beetle') { flashFrame('beetle'); if (newsOnce('beetle')) return toast(pick(FLAVOR.beetle), 2200, 'beetle'); }

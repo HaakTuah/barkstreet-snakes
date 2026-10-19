@@ -2084,12 +2084,14 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
     !pecked.alive && pecked.fatal === 'pecked' && a.knock && a.knock.tx === 12 && a.knock.ty === 10 && at(a.g.food.find(f => f.kind === 'food'), 12, 10) && !a.kept,
     JSON.stringify({ knock: a.knock && [a.knock.tx, a.knock.ty], alive: pecked.alive, fatal: pecked.fatal }));
   check('...and its beads lie on its body, where they would', a.g.food.some(f => f.kind === 'pellet' && f.x === 12 && f.y === 11), JSON.stringify(a.g.food.map(f => [f.kind, f.x, f.y])));
-  // A head that comes onto the ring on the strike's tick: the piece goes by the rule, as the board stands then (the
-  // other cell beside it, and nobody's hurt).
+  // A head that comes onto the ring on the strike's tick: the piece lands as near its ring as it can, by the rule, as
+  // the board stands then (the free cell beside the ring nearest the middle, and nobody's hurt), never far from where
+  // the ring showed it.
   const b = strike([[[[12, 10], [12, 9], [12, 8], [12, 7]], 'down'], [line(5, 20, 4), 'right']], 0);
-  check('...a ring a head moves onto at the strike: that piece goes by the rule instead', b.promised === JSON.stringify([[K(12, 12), K(12, 11)]]) && b.knock && b.knock.tx === 11 && b.knock.ty === 12 && b.g.snakes[0].alive && at(b.g.snakes[0].body[0], 12, 11),
+  check('...a ring a head moves onto at the strike: that piece lands as near its ring as it can, by the rule', b.promised === JSON.stringify([[K(12, 12), K(12, 11)]]) && b.knock && b.knock.tx === 11 && b.knock.ty === 11 && b.g.snakes[0].alive && at(b.g.snakes[0].body[0], 12, 11),
     JSON.stringify({ promised: b.promised, knock: b.knock && [b.knock.tx, b.knock.ty], head: b.g.snakes[0].body[0] }));
-  // Two pieces: the first's ring taken by a head, it goes by the rule, but never onto the second's ring (still kept).
+  // Two pieces: the first's ring taken by a head, it lands as near that ring as it can, but never onto the second's
+  // ring (still kept).
   const g = board([[[[12, 10], [12, 9], [12, 8], [12, 7]], 'down'], [line(5, 20, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
   feed(g);
   g.food = [{ x: 12, y: 12, kind: 'food', expires: 9999 }, { x: 12, y: 13, kind: 'food', expires: 9999 }]; g.given = new Set([K(12, 12), K(12, 13)]);
