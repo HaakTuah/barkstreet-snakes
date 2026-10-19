@@ -23,6 +23,10 @@
 //   leaps:     the long scene with two snakes up in the air, held at the top of
 //              a jump, its tick never coming (round six A: the arch along the
 //              neck, its shadow laid over the bodies on the ground, the trail)
+//   woodpecker: the holes scene with the woodpecker perched beside the board,
+//              resting by its next patch (an ordinary frame of sudden death:
+//              it bobs, looks round, blinks); __scene.strike is that patch, for
+//              its drum and its strike (see birdStrikes)
 const fields = ({ land = true, intruder = false, strike = false } = {}) => `(() => {
     const E = SnakeEngine, g = E.createGame({ withPlayer: true, personas: ['sovereign', 'colonist', 'gobbler'] });
     const [you, sov, col, gob] = g.snakes;
@@ -123,6 +127,13 @@ const SCENES = {
     return g;
   })()`,
 };
+SCENES.woodpecker = `(() => {
+    const g = ${SCENES.holes}, P = g.strike;
+    let sx = 0, sy = 0;
+    for (const k of P) { sx += k % 24; sy += Math.floor(k / 24); }
+    g.woodpecker = { x: sx / P.length, y: sy / P.length, at: g.time - 55000, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: 1e9, pecks: 6 };
+    return g;
+  })()`;
 
 // Page-side source: window.__sync(), which waits for the GPU to finish the
 // board, by reading one pixel of it back through a one-pixel canvas of its
@@ -144,6 +155,8 @@ const setup = name => `(() => {
   R.setGame(g);
   if (window.__leaps) { R.onTick(__leaps); window.__leaps = null; } // (the leaps scene's jumps, as the game reports them)
   window.__scene = { game: g, f: 0, strike: g.strike || null, draw(alpha, now) { R.frame(alpha, now); } };
+  // (with the woodpecker out, the GPU's work on its own layer counts too: a readback of it as well as of the board)
+  window.__birdSync = g.woodpecker ? (() => { const c = document.getElementById('bird-layer'), p = document.createElement('canvas'); p.width = p.height = 1; const pg = p.getContext('2d', { willReadFrequently: true }); return () => { pg.drawImage(c, 0, 0, 1, 1, 0, 0, 1, 1); pg.getImageData(0, 0, 1, 1); }; })() : null;
   window.__t ||= performance.now(); // (one clock for every run in the page: it only goes forward)
   for (let i = 0; i < 100; i++) { __t += 16; R.frame(0.5, __t); }
   return 'ok';
@@ -155,12 +168,39 @@ const setup = name => `(() => {
 const throughput = (batches = 12, frames = 30) => `(async () => {
   ${SYNC}
   window.__t ||= performance.now(); // (one clock for every run in the page: it only goes forward)
-  const run = () => { const t0 = performance.now(); for (let i = 0; i < ${frames}; i++) { __t += 7; __scene.draw((__scene.f++ % 10) / 10, __t); } __sync(); return (performance.now() - t0) / ${frames}; };
+  const run = () => { const t0 = performance.now(); for (let i = 0; i < ${frames}; i++) { __t += 7; __scene.draw((__scene.f++ % 10) / 10, __t); } __sync(); window.__birdSync?.(); return (performance.now() - t0) / ${frames}; };
   run();
   const out = [];
   for (let b = 0; b < ${batches}; b++) { await new Promise(r => setTimeout(r, 20)); out.push(run()); }
   out.sort((a, b) => a - b);
   return +out[out.length >> 1].toFixed(2);
+})()`;
+
+// Page-side source: on the woodpecker scene, its drum and its strike. Each
+// round has it aim at the patch, then times a frame of its drum (on the
+// strike's tick, its head driving in) and the strike's frame (the patch
+// holes, painted into the board, the bird at the hole), each closed by a
+// readback of the board and of the bird's layer; then the patch grows back
+// and it rests again (untimed). Resolves to { drum, strike } summaries.
+const birdStrikes = (rounds = 16) => `(async () => {
+  const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return +s[Math.min(s.length - 1, Math.floor(s.length * p))].toFixed(2); };
+  const sum = a => ({ median: q(a, 0.5), p90: q(a, 0.9), worst: q(a, 1) });
+  ${SYNC}
+  const g = __scene.game, w = g.woodpecker, P = __scene.strike, drum = [], strike = [], sync = () => { __sync(); window.__birdSync?.(); };
+  for (let n = 0; n < ${rounds}; n++) {
+    await new Promise(r => setTimeout(r, 15));
+    Object.assign(w, { target: P.slice(), strikeAt: g.tick, last: [], struckAt: -1, restUntil: g.tick - 17 });
+    for (let f = 0; f < 6; f++) { __t += 16; __scene.draw(0.4 + f * 0.1, __t); }
+    sync();
+    let t0 = performance.now(); __t += 16; __scene.draw(0.95, __t); sync(); drum.push(performance.now() - t0);
+    for (const k of P) g.holes.add(k);
+    Object.assign(w, { target: [], struckAt: g.tick, last: P.slice(), restUntil: g.tick + 10 }); g.tick++;
+    t0 = performance.now(); __t += 16; __scene.draw(0.05, __t); sync(); strike.push(performance.now() - t0);
+    for (const k of P) g.holes.delete(k);
+    Object.assign(w, { target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: 1e9 });
+    for (let f = 0; f < 8; f++) { __t += 16; __scene.draw(0.5, __t); } // (the board painted again without them)
+  }
+  return { drum: sum(drum), strike: sum(strike) };
 })()`;
 
 // Page-side source: on the holes scene, the woodpecker's strike. Each round
@@ -242,4 +282,4 @@ const landStrikes = (rounds = 12, aim = 30) => `(async () => {
   return { aim: sum(aimed), steady: sum(steady), strike: sum(strike) };
 })()`;
 
-module.exports = { SCENES, setup, throughput, strikes, burnouts, landStrikes };
+module.exports = { SCENES, setup, throughput, strikes, burnouts, landStrikes, birdStrikes };
