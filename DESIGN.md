@@ -912,7 +912,7 @@ Three rules from the owner hold for all of them:
 - **This replaces** round four's "your own beads are length, not a meal", and its one mercy: a snake out of time that chokes or coughs on its last tick starves.
 - **As built:**
   - the cough is `COUGH_TICKS` (9) moves that eat nothing: the choke's own and the next 8, about a second at the opening speed;
-  - "free" for a rolling piece means on the board, not a hole, not burning, no food, and no body still there next tick (a tail end moving on is free);
+  - "free" for a rolling piece means on the board, not a hole, not burning, no food, and no body still there next tick (a tail end moving on is free); and since the rivals' pass (wave 2), no burrow either: nothing grows on one, and a roll could put a bead there (`foodRoom`, the room the roll is given, now leaves burrows out, and so does the rivals' picture of the roll);
   - a coughing head that reaches a beetle sends it scurrying aside;
   - the rule's last tie-break (to the snake's right) is written but never comes up on the 24-cell log: with no middle row or column, the middle always settles a tie;
   - (wave 2) a spat bead is ringed in ink and parchment while it's in the air, so yours reads over your own body on a phone, and the Field guide's Coughing row has its own picture (mouth shut, puffs).
@@ -922,9 +922,9 @@ Three rules from the owner hold for all of them:
 **Rivals see food as it is.** Rivals see other snakes a quarter of a second late, like a person's reaction, and DESIGN only ever promised that. By accident they saw food that late too. It didn't matter for apples, which don't move. For beetles it did: they chased where a beetle *was*, wiggled behind it and lost it ("self-sabotage", the owner said). Now:
 - food is seen as it is now;
 - the delay stays for snakes;
-- a rival aims where a fleeing beetle is heading, from the way it faces and its pace, which anyone can see: straight on, then fleeing the nearest head toward a burrow nearer than 7 (within 6), and diving in. Every move the search tries moves the beetle too, and from where each search ends the chase is played out;
+- a rival aims where a fleeing beetle is heading, from the way it faces and its pace, which anyone can see: straight on, then away from the nearest head toward a burrow nearer than `BEETLE_HOME_REACH` (7), and diving in. Since wave 2, a cornered one (a head within `BEETLE_DIG_FEAR` and no burrow in reach) digs in where it is and stays put until it's gone. Every move the search tries moves every beetle that's out (two at once since wave 2), and from where each search ends each chase is played out;
 - catching sooner counts twice what a step closer to an apple does (`BUG_HURRY`), so a catch in hand isn't dropped for an errand;
-- rivals learn the burrows by watching beetles come out of them, as a person does.
+- rivals see every burrow on the board, as a person does (`view.burrows`, since the rivals' pass in wave 2). Until then they learned the burrows by watching beetles come out of them: they missed a burrow a dig left until a beetle used it, and remembered ones that had closed over (about 2.5 close a round), so they expected scared beetles to dive into burrows that were gone.
 
 Escapes from a chase went from about half (51%) to 43% with live food alone, and to 12% with all three; the ticks of chase per catch from 18.5 to 8.7, and catches from 3.6 to 5.1 a round.
 
@@ -963,12 +963,19 @@ Escapes from a chase went from about half (51%) to 43% with live food alone, and
 - **It still comes at 2:00.** Arrival tied to how full the log is was tried; it moved the round's length around without making it fairer.
 - **The cue:** the mark covers the crumbs it will take; knocked food trembles, and a ring shows where it'll land; at the strike, the food flies there in an arc.
 - **The lesson:** at your first sudden death, "The woodpecker knocks food aside, and won't shut you in if it can help it." (It was "...and never shuts you in.": see above.)
-- **The rivals** see the same: they work out where knocked food lands (the engine's own rule, exported), and race for it when it pays. (That comes with the rivals' pass, next; until then they see food in the mark where it lies, out of reach behind the mark.)
+- **The rivals** see the same, and since their pass (wave 2) they use it:
+  - `aiView` gives the strike's tick while the bird aims (anyone sees it drum the patch, its last blow on the strike) and, on the aim's last tick, the promised landings (the rings show them to everyone);
+  - a rival works out each landing with the engine's own `E.knocks`, on the board as it sees it (the other snakes a moment late), and values the food there from the move after the strike's tick. Never where it lies: that's a hole by then, and the mark is no place to wait;
+  - knocked food is anyone's, as any food is: whoever would get to the landing first counts it as theirs. It pulls from when it lands, and every move a rival would be there before then counts a little more (`EARLY`, 0.1 a move), so it waits nearby and is on the food as it lands. A rival that's nearer makes it a race, which Gobbler and Vulture run by their weights, and so does anyone desperate;
+  - a beetle in the mark is knocked to its landing as the search moves it, and stops digging;
+  - (a first build counted knocked food as a rival's own only if no rival at all could be there as it landed: early in the aim that was nearly every rival on the log, so the even-tempered ones seldom went for it.)
+
+  *Measured* (600 rounds, seeds 3 / 11, against 303c4dd, the rivals as wave 1 left them): food knocked aside 5.5 / 5.8 a round; eaten by a snake where it landed, within 6 s, 2.10 / 2.06 (2.05 / 2.04), a median 17 / 18 ticks after the strike (18 / 18). Rivals always saw it the moment it landed, and it lands beside the mark, near whoever's there, so the pass changes who is waiting more than how much gets eaten.
 - *Crossing the mark* (a rival leaving a marked patch before the strike) is left for PR B, with powers that let you do it on purpose.
 - **As built** (wave 2):
   - *Not shutting you in:* room is a timed flood of the engine's own (tails leaving, stuns and growth counted) against the snake's length plus what it has still to grow; a snake already shut in doesn't count. It tries for a patch clear of heads that shuts nobody in, then one nearer a head that shuts nobody in, then the old three tries.
   - *Crumbs* are in the mark from the aim, in every try but the last. They may lie nearer a head than the clearance: walled in by the mark and holes, nobody can step into one.
-  - *The knock:* `E.knockTo` gives a piece's landing (as the crow flies, then nearest the middle, then the first by row), and `E.knocks` every landing in the strike's order, each taken before the next, so no two share a cell. The strike, the rings and (next) the rivals read that one list. Food with nowhere to go is the bird's. A knocked beetle scurries there, and stops digging (so does one a cough nudges); it may dig again where it lands.
+  - *The knock:* `E.knockTo` gives a piece's landing (as the crow flies, then nearest the middle, then the first by row), and `E.knocks` every landing in the strike's order, each taken before the next, so no two share a cell. The strike, the rings and (since their pass) the rivals read that one list. Food with nowhere to go is the bird's. A knocked beetle scurries there, and stops digging (so does one a cough nudges); it may dig again where it lands.
   - *The promise* (the verify pass): at the end of the tick before the strike, on the board the last rings showed, the woodpecker keeps each piece's landing (`w.landings`, [from, to] cells, to −1 for the bird's). At the strike, `E.knocks(game, cells, w.landings)` lands each piece on its kept cell while that cell is still free (on the board, out of the patch, no body, food, hole, fire or burrow); the rest go by the rule as the board stands then, never onto a cell kept for another piece. The rings draw from the same call, so on the aim's last tick they are the promise. The strike works its landings out before the heads in its patch are out, so a body it pecks under still lies where it lay, and its beads fall there, not under the food. Before, a piece knocked at the strike went by the board of that tick: the verifier's knockcheck (80 AI rounds, seeds 2 and 7) found 47 of 522 pieces off their last ring (9%), 22 of them on the body of the snake the strike killed, some 8 to 13 cells away. Now 8 of 511 (1.6%; 5 of 274 and 3 of 237), every one a ring a head moved onto on the strike's tick (7) or a beetle crawled onto (1), so that piece went by the rule; none landed on a body the strike freed.
   - *Rounder hollows:* two passes fill any cell with 3 or more of its 4 sides patch, hole or edge (never a head), then two drop one-cell spurs (at least 3 cells stay).
   - *The cue:* through the aim the food in the mark trembles, more as the strike nears, and a faint dashed ring, parchment over ink, marks each landing. At the strike it flies there over the snakes, 320 ms and 70 ms a cell (at most 620), up to 1.5 cells high; a bead in the air is ringed in ink and parchment; a beetle scurries; what the bird eats goes in crumbs. With reduced motion it's simply there, with no tremble, and the rings stay.
@@ -985,7 +992,7 @@ Escapes from a chase went from about half (51%) to 43% with live food alone, and
 - **a cornered beetle digs in:** with a head within 7 cells and no burrow nearer than 7 (within 6), it stops and bores into the bark for 5 ticks (about half a second). It can still be caught while it digs; then it's underground, comes out of a burrow later, as after a dive, and its bore is left a burrow (the burrow experiment, below). Without it, a beetle in open bark was nearly always caught once the rivals hunted well (escapes fell to about 11%); with it, escapes are 28%, inside the 20–35% that keeps a chase worth it. *Retuned after the rivals learned the dig* (wave 2): reading it, they reached most digging beetles in time and escapes fell to 13%; a dig of 8 ticks from a head within 6 became 5 ticks from a head within 7, and escapes are back to about 21% (19.9% and 21.7% on fresh seeds 41 and 29, 300 rounds each; the round as long). Digging earlier alone did little (a hunter covers a cell a tick, as many as the dig lasts); a shorter dig did it, and 5 was kept over 4 (22%) because the dig stays longer on the screen, where a player can see it.
   - *The cue:* it stops, sawdust sprays, it sinks into the bark as the time runs out, and the collar of sawdust closes over it; its bore is left a burrow, freshly bored (see As built). (First called as a plug: its hole filled with sawdust behind it and left a little heap, with no burrow. The experiment below replaced that.)
   - *The lesson:* the first time one digs in near you, "A cornered beetle digs in. Grab it before it's gone!" The burrow it leaves has its own (the verify pass: the burrow rule had its cue and its Field guide row, but no banner): the first one a dig leaves in a round, "A beetle that digs in leaves a burrow behind." The closing over is left to the Field guide.
-  - *The rivals* see a digging beetle stay put until it's gone, and race for it when they can get there in time. (With their pass, next.)
+  - *The rivals* (since their pass) see a digging beetle stay put until it's gone. They go for it when they can get there first and in time, and leave one they can't reach before it's under. They predict a cornered beetle's dig by the engine's rule as their search moves it, and the burrow it leaves, which a second beetle may run for.
   - *The burrow experiment* (the owner's idea, "just an idea"): a dig that leaves a burrow, and burrows that close over when nobody has used them for a while (sawdust and moss fill an old bore hole on dead wood), so the burrows follow the hunting instead of three fixed holes for the round. Each switch alone and both together, against the package without them, paired on fresh seeds 29 and 41 (600 rounds a seed; `abtest.js` for the round's length):
     - **A dig leaves a burrow: kept** (`BURROW_FROM_DIG`). Escapes from a chase 29.5% → 32.8%, inside the 20–35% (down a burrow 14.6 → 19.5%, dug in 14.7 → 12.9%; 2.5 dives a round into a burrow a dig left). Beetles caught (15.2 → 15.0 a round), the chase (10.3 → 10.6 ticks to a catch), room for apples (488 free cells), the round (168 → 167 s, the same within 3 s) and starving before the woodpecker (2.05 → 2.01% of snake-time) as they were; after it, 7.1 → 7.4%, undecided. No personality's win rate moved, within the test's ±12–14 points. Burrows open 2.21 → 2.29 on average: they still number three at most, and at three a dig's new burrow closes over the one unused longest. It's the one setting with escapes clearly inside the band and nothing else moved.
     - **Closing over when unused: tried, and off** (`BURROW_HEAL_MS` 0, kept as a switch). At 30 s it only left fewer burrows open (1.86; escapes 30.4%, undecided); at 60 s nothing at all. With digs leaving burrows it brought escapes nearer the ceiling: 33.7% at 30 s (its interval reaching 35.3%), 33.2% at 60 s. The cap already makes the burrows follow the hunting.
@@ -999,9 +1006,13 @@ Escapes from a chase went from about half (51%) to 43% with live food alone, and
   - *the burrow's lesson* (the verify pass) is for the first burrow a dig leaves in a round, anywhere on the log, when the banner is free for it (a lesson may take a news line's place), else the next dug burrow teaches it; once a round: "A beetle that digs in leaves a burrow behind.";
   - *the Field guide:* the Apple row says how many are on the log; the Beetle row is now Beetles (pictures of a beetle and one digging in): "Worth 2, up to two out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in, so be quick, and leaves a burrow; past three burrows, the one unused longest closes over.";
   - *the voice:* a beetle that digs in and gets away: the rival that cornered it (the nearest head as it started, within 6) says so as it goes under, at most every 30 s (Gobbler: "NO! My snack went DOWN!"; Mason: "Diggus escapus."; Desperado: "Varmint went to ground."; Mute *knocks on the bark, then shrugs*; Copycat: 深挖洞，广积粮！). One caught mid-dig is just a catch, and nobody speaks for you;
-  - *the rivals* still learn burrows by watching beetles come out of them, so for now they miss a dug burrow until a beetle does, and remember one that has closed over. Their pass reads the burrows as anyone sees them (`view.burrows`, there already).
+  - *the rivals* (since their pass) read the burrows as anyone sees them (`view.burrows`): a dug one the moment it's bored, a closed one the moment it closes. (Before, they learned burrows by watching beetles come out of them, so they missed a dug burrow until a beetle used it, and remembered one that had closed over.)
 - **Measured** (600 rounds, seeds 3 and 11, against 8d9cde2; the rivals as wave 1 left them): beetles caught 5.2 → 15.1 / 15.0 a round, after a median 6 ticks of chase as before; escapes from a chase 9% → 32.8% (down a burrow 19–20%, dug in 13%); 6.9 / 6.8 digs a round, 2.6 / 2.4 dives into a burrow a dig left; burrows open 1.7 → 2.3; cells free for an apple before the woodpecker 477 / 475 → 488; starving 2 / 3% → 2 / 2% of deaths; snake-time in the hunger warning before the woodpecker 7.5% → 9.8%, after it 24.7 / 24.0% → 18.5 / 17.5%; every personality wins 19–33 / 16–31% (was 18–32 / 18–30%). A simulated round costs 14% more CPU (more beetles to model). (The study's: meals mid-round 19.8 → 16.6 a minute, beetles caught 3.7 → 13 a round.)
-- **Gobbler** came out lowest (14.3% on seed 11) with fewer apples, so it's tuned: beetles are its food too. (As built it wins 19 / 16%; the package alone had it at 12 / 22%. Its tuning comes with the rivals' pass.)
+- **Gobbler** came out lowest (14.3% on seed 11) with fewer apples, so it's tuned: beetles are its food too. (As built it won 19 / 16%; the package alone had it at 12 / 22%; and 16 / 15% once the rivals read digs and knocked food.) Its tuning came with the rivals' pass: a new weight, `hurry`, how much a move longer to catch a beetle counts against it (`BUG_HURRY`, 2, for everyone else). At 1.5 Gobbler keeps after a running beetle longer than anyone. It won 20 / 26%, and its share of all food eaten was 28.8 / 27.8% against the field's 24.8 / 24.9% (28.4 / 26.4% before). Since the dig was shortened to 5 ticks (above) it's 16 / 24%, and 11 / 16% on fresh seeds 29 and 41: the lowest of the cast, near the band's floor (see "Round six A, measured").
+- **Three more were retuned in the rivals' pass**, to stay inside 15–35% (600 rounds, seeds 3 / 11, with the dig at 8 ticks):
+  - Ghost keeps a cell less distance (`distance` 6 → 5): 39 / 31% → 30 / 29%. It still keeps 11.0 cells from the nearest head, against the field's 9.7;
+  - Colonist claims a little less land (`territory` 1.4 → 1.3): 27 / 37% → 29 / 27%;
+  - Joker wants a little more room behind its lures (`margin` 4 → 6): 12 / 18% → 16 / 23%.
 
 **A strike that doesn't stutter** (the owner saw a big lag spike while the woodpecker was out). A strike that cuts Sovereign's or Colonist's land rebuilt the land's picture in the strike's frame: 34 to 67 ms, a visible hitch. Now the land after the strike is drawn during the 17-tick aim, a little each frame, and swapped in at the strike (if the land changes otherwise meanwhile, it's built the old way). The bird's own layer is cut down to the board and its perch, and isn't rebuilt when a phone's address bar moves.
 - **As built** (wave 2): the land is drawn ahead for every realm the patch cuts or runs beside (their contested sides change too), with the contested dashes, one step a frame: the plan, then each stroke (the wash, the three soft bands and the riband, the keyline and hatching, the ink, the glow), then the dashes. Each step goes to the GPU in its own frame; unsent, it all landed on the strike, and that frame cost more than the old way. Watched fast, it takes up to four steps a frame when the strike is nearer than its steps. It's swapped in only if every realm's land, the holes and the resolution are as predicted, otherwise the old rebuild runs, and it's the same pixel for pixel either way (render-test).
@@ -1036,6 +1047,87 @@ It's checked beside Sniper, Colonist and Wildcard, on the board and in the tags,
 - **Measured** (input-test, real mouse presses on a steady 60 Hz clock): each button went on the next tick 12 times of 12.
 
 **On a friend's screen** (protocol 10, wave 2): each beetle's dig (`digUntil`); the beetles underground (`game.unders`: when each comes up, when it would fly off, where it went down, golden or not); digs, dives (and whether one was a dig), and knocks (the kind, from where to where, or nowhere when the bird ate it; golden; a bead's colour); on the aim's last tick, where the strike promised each piece would land (`w.landings`, the verify pass: a friend's rings are the host's promise); the burrows as the engine keeps them (where, the tick each opened, when a beetle last used it, whether a dig left it), one a dig opened and one closing over. Each is checked before it's drawn: a kind that exists, cells on the board, a landing on the board or none, a burrow on the board and opened on a tick (until the verify pass a burrow row needed only to be numbers), a promised landing a cell and a cell or none. online-test crosses each, staging any the rounds bring too few of, and feeds the guest malformed ones; on seeds 1 and 4 the guest matched the host every tick (seed 1's three rounds held 21 digs, 31 knocks and 9 burrows closing over; since the verify pass's engine fixes, 18, 12 and 9, with the promised landings crossing on 4 ticks, and staged in the last round when the rounds bring fewer than 3).
+
+### Round six A, measured
+
+AI-only rounds as `tools/simulate.js` plays them, 600 a seed on seeds 3 and 11 ("seed 3 / seed 11"), every column played by the same `simulate.js` (the rivals' pass's, whose census also counts meals mid-round, knocked food eaten where it landed, and digs caught). The columns:
+- **main**: 2d95a2d, main before PR A (round five's final);
+- **wave 1**: 8d9cde2, round six A before wave 2;
+- **wave 2's rules**: 303c4dd, with wave 2's verify pass and the owner's playtest fix "a meal isn't a pin" carried over onto round six's AI (its account comes with the playtest's own PR), the rivals otherwise as wave 1 left them;
+- **the rivals' pass**: 855eaab, the dig still 8 ticks from a head within 6;
+- **now**: 554ebf4, the dig 5 ticks from a head within 7 (0c8e913). Nothing else since the pass changes a simulated round.
+
+The numbers under each call above were measured as each part was built, against the build before it; here every build is played the same way, so where the two differ (sealed deaths 2.8 / 2.3% above, 0.9 / 0.8% here; escapes about 33% above, 23% here), this table's is the like-for-like one.
+
+| | main | wave 1 | wave 2's rules | the rivals' pass | now |
+|---|---|---|---|---|---|
+| Median round | 172 / 172 s | 168 / 168 s | 164 / 165 s | 165 / 164 s | 165 / 165 s |
+| Sudden death, median | 52 / 52 s | 48 / 48 s | 44 / 45 s | 45 / 44 s | 45 / 45 s |
+| Deaths: body, self, hole, wall, head-on, pecked, starved | 43, 23, 20, 4, 3, 4, 2 / 41, 24, 20, 4, 3, 4, 3% | 46, 25, 18, 5, 2, 3, 2 / 45, 24, 18, 5, 3, 3, 3% | 45, 31, 11, 5, 4, 3, 1 / 45, 32, 11, 4, 4, 2, 1% | 47, 29, 11, 5, 3, 2, 1 / 48, 29, 11, 4, 3, 2, 1% | 47, 31, 10, 5, 3, 3, 1 / 49, 29, 11, 4, 3, 2, 1% |
+| Into holes, a woodpecker round | 0.60 / 0.59 | 0.55 / 0.53 | 0.34 / 0.34 | 0.35 / 0.34 | 0.32 / 0.34 |
+| Sudden-death deaths sealed in by a mark (out within 3 s) | 21.0 / 21.0% | 21.0 / 20.4% | 0.9 / 0.8% | 0.5 / 0.7% | 1.3 / 1.0% |
+| Marks shutting a snake in, a round | 0.89 / 0.97 | 0.88 / 0.90 | 0.02 / 0.02 | 0.02 / 0.02 | 0.04 / 0.03 |
+| Islands of 1–2 cells cut off, a woodpecker round | 3.32 / 3.23 | 2.91 / 2.93 | 0 / 0 | 0 / 0 | 0 / 0 |
+| Last snakes on islands of their own; the biggest island's wins (a blind pick) | 28 / 31%; 60.5 / 64.0% (48.4 / 48.8) | 25 / 25%; 65.8 / 60.5% (49.0 / 49.2) | 27 / 28%; 49.4 / 47.9% (49.6 / 49.4) | 29 / 24%; 44.5 / 47.9% (48.9 / 49.2) | 31 / 23%; 48.6 / 50.0% (49.2 / 49.1) |
+| Meals a snake-minute mid-round (0:45 to the woodpecker) | 22.2 / 22.3 | 23.7 / 23.5 | 21.9 / 21.8 | 21.8 / 21.7 | 21.5 / 21.6 |
+| Snake-time starving after the woodpecker | 14.8 / 15.2% | 12.1 / 11.7% | 5.4 / 5.6% | 5.9 / 5.8% | 6.3 / 5.9% |
+| Beetles caught, a round | 3.7 / 3.7 | 5.2 / 5.1 | 15.5 / 15.3 | 15.8 / 16.0 | 15.3 / 15.2 |
+| Chased beetles escaping (down a burrow; dug in) | 49.1 / 50.3% (47.2 / 48.4; –) | 9.0 / 8.9% (8.8 / 8.8; –) | 22.9 / 22.7% (14.4 / 14.3; 8.4 / 8.3) | 13.6 / 13.3% (8.7 / 8.3; 4.8 / 4.8) | 21.2 / 21.1% (10.1 / 10.1; 11.0 / 10.8) |
+| Digs a round (caught while digging) | – | – | 5.93 / 5.95 (3.67 / 3.75) | 6.12 / 6.40 (4.99 / 5.25) | 6.50 / 6.49 (2.84 / 2.79) |
+| Food knocked aside a round (eaten where it landed within 6 s) | – | – | 5.68 / 5.93 (2.05 / 2.04) | 5.47 / 5.79 (2.10 / 2.06) | 6.72 / 5.75 (2.42 / 1.95) |
+| Chokes a round | – | 1.21 / 1.16 | 1.09 / 1.26 | 1.20 / 1.13 | 1.18 / 1.09 |
+| Win rates, lowest–highest | 19–34 / 17–33% | 18–32 / 18–30% | 20–31 / 18–34% | 16–35 / 17–33% | 15–34 / 15–33% |
+| `decide()` a decision, CPU mean / p99 ms (against the pass, side by side) | 1.27 / 2.37 (pass 0.66 / 1.35: 1.93× / 1.76× faster) | 0.61 / 1.47 (pass 0.57 / 1.24: 1.07× / 1.19×) | 0.65 / 1.62 (pass 0.66 / 1.60: 0.98× / 1.01×; on a busier machine 0.78 / 1.93 against 0.75 / 1.87) | – | – (only the dig changed) |
+| Fingerprints | 324380661 / 626189426 | 884709721 / 728378271 | 458332195 / 792498017 | 942537634 / 115058735 | 726173739 / 778649782 |
+
+Beetles caught a round are those above ground times the share caught. `decide()`'s cost is bench-ai's, on 4000 positions from the base's seed-3 rounds, both copies in one process; its p99 the best of 3 wall-clock times. `simulate.js 60 --seed 3` gives 129285676 with and without `--ahead` for the pass, and 582354997 with and without it now.
+
+Win rates by personality, seed 3 / seed 11 (%):
+
+| | main | wave 1 | wave 2's rules | the rivals' pass | now |
+|---|---|---|---|---|---|
+| Capricious | 21 / 25 | 27 / 27 | 21 / 22 | 18 / 23 | 18 / 22 |
+| Colonist | 24 / 26 | 21 / 18 | 24 / 27 | 29 / 27 | 26 / 29 |
+| Copycat | 30 / 31 | 32 / 25 | 24 / 28 | 23 / 19 | 30 / 25 |
+| Creeper | 23 / 27 | 23 / 26 | 28 / 25 | 29 / 28 | 27 / 25 |
+| Desperado | 21 / 25 | 19 / 26 | 24 / 22 | 20 / 20 | 15 / 29 |
+| Drab | 19 / 32 | 31 / 23 | 24 / 22 | 17 / 20 | 26 / 26 |
+| Ghost | 34 / 21 | 27 / 24 | 28 / 33 | 30 / 29 | 31 / 33 |
+| Gobbler | 21 / 24 | 18 / 18 | 20 / 18 | 20 / 26 | 16 / 24 |
+| Joker | 23 / 18 | 21 / 25 | 24 / 18 | 16 / 23 | 24 / 15 |
+| Mason | 22 / 27 | 26 / 28 | 30 / 34 | 27 / 29 | 26 / 23 |
+| Metagamer | 25 / 30 | 18 / 27 | 22 / 30 | 26 / 25 | 30 / 30 |
+| Mute | 32 / 28 | 31 / 29 | 31 / 22 | 31 / 30 | 34 / 20 |
+| Ouroboros | 26 / 17 | 24 / 23 | 25 / 20 | 27 / 18 | 26 / 25 |
+| Sniper | 25 / 17 | 27 / 30 | 23 / 25 | 21 / 29 | 28 / 21 |
+| Sovereign | 29 / 26 | 32 / 30 | 28 / 23 | 23 / 23 | 24 / 29 |
+| Star | 31 / 33 | 23 / 22 | 27 / 23 | 28 / 33 | 22 / 23 |
+| Vulture | 21 / 18 | 29 / 25 | 26 / 23 | 35 / 30 | 27 / 25 |
+| Wildcard | 20 / 22 | 22 / 23 | 22 / 27 | 23 / 17 | 16 / 24 |
+
+Trademarks, seed 3 / seed 11 (the field, everyone else together, in brackets for the pass and now):
+
+| | main | wave 1 | wave 2's rules | the rivals' pass | now |
+|---|---|---|---|---|---|
+| Mason, straight run | 3.52 / 3.52 | 3.51 / 3.51 | 3.53 / 3.49 | 3.51 / 3.54 (1.91 / 1.90) | 3.49 / 3.50 (1.90 / 1.90) |
+| Mason, body beside itself | 25.7 / 26.1% | 26.9 / 27.5% | 26.9 / 28.2% | 28.1 / 28.0% (32.4 / 32.5%) | 27.7 / 26.7% (32.7 / 32.7%) |
+| Ouroboros, coiled | 42.1 / 41.6% | 40.7 / 39.4% | 41.0 / 41.0% | 41.0 / 40.7% (13.9 / 13.8%) | 41.9 / 40.8% (14.0 / 13.7%) |
+| Creeper, riding a tail | 3.7 / 3.7% | 3.9 / 4.1% | 3.9 / 4.0% | 4.1 / 4.1% (1.9%) | 4.0 / 4.1% (1.9%) |
+| Ghost, cells from the nearest head | 11.10 / 11.07 | 11.06 / 11.09 | 11.12 / 11.05 | 11.01 / 11.02 (9.66 / 9.69) | 11.01 / 11.02 (9.68 / 9.70) |
+| Gobbler, share of the food | 27.7 / 27.6% | 27.3 / 28.8% | 28.4 / 26.4% | 28.8 / 27.8% (24.8 / 24.9%) | 28.0 / 27.3% (24.8 / 24.9%) |
+| Vulture, share of the beads | 34.7 / 33.5% | 34.3 / 33.4% | 37.0 / 34.9% | 35.3 / 37.2% (24.4%) | 37.2 / 32.3% (24.3 / 24.6%) |
+| Sovereign, at home | 61.9 / 63.3% | 61.4 / 63.2% | 61.5 / 62.4% | 62.1 / 62.8% | 62.7 / 63.2% |
+| Mute, closing the box | 8.1 / 8.0% | 8.0 / 7.8% | 7.8 / 7.9% | 7.9 / 8.0% (7.8%) | 7.7 / 8.0% (7.9%) |
+| Joker, luring a rival on | 9.2 / 9.0% | 9.0 / 8.5% | 8.6 / 8.9% | 8.8 / 8.8% (8.3%) | 8.8 / 9.0% (8.3 / 8.2%) |
+| Desperado, skimming danger | 40.2 / 41.3% | 40.7 / 41.4% | 41.1 / 41.2% | 41.2 / 40.9% (36.5 / 36.6%) | 41.2 / 41.0% (36.7 / 36.5%) |
+| Star, flashes a minute | 9.73 / 9.67 | 9.75 / 9.76 | 9.80 / 9.69 | 9.73 / 9.74 (2.29 / 2.30) | 9.72 / 9.74 (2.31 / 2.28) |
+| Star, jumps a minute | 5.10 / 5.30 | 5.25 / 5.20 | 5.06 / 5.05 | 4.90 / 5.01 (0.73 / 0.72) | 4.95 / 5.11 (0.70 / 0.71) |
+
+- **The pass, confirmed on fresh seeds** 29 and 41 (abtest, 303c4dd against the pass, 1200 paired rounds). The same within the margin: the median round (165 → 164 s, ±3), sudden death (45.4 → 44.3 s, ±4), rounds reaching the woodpecker, starving before the woodpecker, deaths by a cut, head-on, pecked, starved and the wall, and the trademarks of Mason's runs, Creeper, Mute, Joker, Desperado and Star. Ghost's distance is lower by 0.14 cells (11.1 → 11.0), still well above the field's 9.7. Censuses of the same rounds: escapes 22.3 / 23.0% → 12.9 / 13.7%; fingerprints 646561781 / 21634490 (303c4dd 536698069 / 8270085).
+- **Now, on fresh seeds** 29 and 41 (300 rounds each): escapes 21.7 / 19.9%, the median round 165 / 164 s, sudden death 45 / 44 s; fingerprints 939850344 / 206663327.
+- **Open: the band.** The win rates were tuned into 15–35% in the rivals' pass, with the dig at 8; the dig at 5 is checked by these runs, not tuned for. On seeds 3 / 11 (about 130 rounds a rival) everyone is inside but Desperado on seed 3 (14.5%). On fresh seeds 29 / 41 (300 rounds, about 65 a rival, where ±11 points is noise) five are just out: Gobbler 10.9%, Ghost 36.6%, Mute 37.5% and Vulture 35.8% on seed 29, Mason 35.7% on seed 41. Over the four seeds together (about 400 rounds a rival) everyone is 17.5–31.0%.
+  - *Vulture and Mute*, out on fresh seeds after the pass (36% on seed 29 and 38% on seed 41, 33% and 31% over four seeds with the dig at 8): now 27 / 25 / 36 / 27% and 34 / 20 / 38 / 21% on seeds 3 / 11 / 29 / 41, 28% each over the four. Inside the band within the noise.
+  - *Gobbler*, 16 / 24 / 11 / 16%, 17.5% over the four (20 / 26% on seeds 3 / 11 with the dig at 8): the lowest of the cast, near the floor, with more beetles getting away (escapes 13 → 21%), and beetles are its food. The one to watch.
 
 ## The rivals think faster (round six A's optimization)
 
