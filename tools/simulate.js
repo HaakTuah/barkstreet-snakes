@@ -25,15 +25,18 @@
 //   --census  also print what a round holds: golden things, weather and
 //             lightning, the woodpecker (and any aim it had to make near a
 //             head), the powers used, how sudden death goes, and how hungry
-//             snakes are before the woodpecker comes and after, and the
+//             snakes are before the woodpecker comes and after (and how
+//             often a snake eats mid-round, from HUNGER_MID_FROM_MS to the
+//             woodpecker: meals a snake-minute), and the
 //             beads: how many were eaten (and how many by the snake they
 //             broke off), how often a snake choked on its own, and what it
 //             nudged aside coughing; the beetles: how each time one is above
 //             ground ends (caught, down a burrow, dug in, flown, eaten by the
 //             woodpecker), the same for those chased and how long a catch
-//             took, digs, dives into a burrow a dig left, burrows open and
+//             took, digs (and those caught digging), dives into a burrow a dig left, burrows open and
 //             cells free for an apple; the woodpecker's fairness: food it
-//             knocked aside, marks that shut a snake in and the deaths they
+//             knocked aside (and how much of it a snake ate where it landed,
+//             within 6 s, and how soon), marks that shut a snake in and the deaths they
 //             made (out within 3 s of the strike, of sudden death's), islands
 //             of one or two cells it cut off, and how often the snake on the
 //             biggest island won once the last ones were each on their own;
@@ -133,7 +136,8 @@ const census = () => ({
   pecks: 0, holes: 0, aims: 0, aimsNear: 0, flashes: 0, jumps: 0, goldLeaps: 0, goldGot: 0, dashes: 0, pickups: 0, greedy: 0,
   aliveEarly: 0, hungryEarly: 0, starvingEarly: 0, aliveLate: 0, hungryLate: 0, starvingLate: 0, // (snake-ticks before and after the woodpecker: alive, in the hunger warning, starving)
   beads: 0, ownBeads: 0, chokes: 0, chokeRounds: 0, nudges: 0, nudgedBeads: 0, // (beads eaten, and by the snake they broke off; chokes; food nudged aside coughing, and the beads among it)
-  knocks: 0, knockedEaten: 0, digs: 0, // (food the woodpecker's strike knocked aside, and of it what it ate, with nowhere to knock it; beetles digging in)
+  knocks: 0, knockedEaten: 0, knockedTaken: 0, knockedTicks: [], digs: 0, digsCaught: 0, // (food the woodpecker's strike knocked aside, of it what it ate, with nowhere to knock it, and what a snake ate where it landed within 6 s, how many ticks after the strike; beetles digging in, and caught while digging)
+  midMs: 0, mealsMid: 0, // (mid-round, from HUNGER_MID_FROM_MS to the woodpecker: snake-time alive, and meals then, a snake's in a tick counted once)
   // Each time a beetle is above ground (out of a burrow, to caught, down a
   // burrow, dug in, flown off or eaten by the bird; a round's end leaves it
   // out): all of them, and those chased (a head came within BEETLE_FEAR).
@@ -321,6 +325,7 @@ function beetleCensus(g, c, st, before) {
     }
     if (!how) continue;
     c.bugs++; c['bugs' + how]++;
+    if (how === 'Caught' && f.digUntil > 0) c.digsCaught++;
     if (b.near < 0) continue;
     c.chases++; c['chases' + how]++;
     if (how === 'Caught') c.chaseTicks.push(g.tick - 1 - b.near);
@@ -334,8 +339,14 @@ function beetleCensus(g, c, st, before) {
 
 // --census, after a tick: what the woodpecker did, fairly or not (see census).
 function woodpeckerCensus(g, c, st, dying, N) {
+  const landed = st.landed ||= new Map(); // (where each piece the strike knocked aside landed: the strike's tick; a beetle runs on, so it's left out)
   for (const e of g.events) {
-    if (e.type === 'knock') { c.knocks++; if (e.tx == null) c.knockedEaten++; }
+    if (e.type === 'knock') { c.knocks++; if (e.tx == null) c.knockedEaten++; else if (e.kind !== 'beetle') landed.set(e.ty * N + e.tx, g.tick - 1); }
+    else if ((e.type === 'eat' || e.type === 'rot') && landed.has(e.y * N + e.x)) {
+      const after = g.tick - 1 - landed.get(e.y * N + e.x);
+      if (e.type === 'eat' && after <= 60) { c.knockedTaken++; c.knockedTicks.push(after); }
+      landed.delete(e.y * N + e.x);
+    }
     else if (e.type === 'aim') {
       timedGrid(g, N);
       const mark = new Set(g.woodpecker.target);
@@ -420,6 +431,8 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt }, saved) {
     if (ahead) for (const s of g.snakes) { if (!s.alive) continue; if (!E.canThinkAhead(g, s)) break; E.thinkAhead(g, s); }
     const held = g.snakes.map(s => s.leaps), late = E.suddenDeath(g);
     for (const s of g.snakes) if (s.alive) { const left = E.hungerLeft(g, s); c[late ? 'aliveLate' : 'aliveEarly']++; if (left < T.HUNGER_WARN_MS) c[late ? 'hungryLate' : 'hungryEarly']++; if (left < 0) c[late ? 'starvingLate' : 'starvingEarly']++; }
+    const mid = !late && g.time >= T.HUNGER_MID_FROM_MS;
+    if (mid) c.midMs += E.tickMs(g) * g.snakes.filter(s => s.alive).length;
     c.ticks++;
     c.burrowTicks += g.burrows.length;
     if (!late) { c.ticksEarly++; c.freeEarly += freeCells(g, N); }
@@ -428,6 +441,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt }, saved) {
     const dying = E.step(g);
     beetleCensus(g, c, st, bugs);
     woodpeckerCensus(g, c, st, dying, N);
+    if (mid) c.mealsMid += new Set(g.events.filter(e => e.type === 'eat' && e.kind !== 'mushroom').map(e => e.snake)).size;
     if (signs) signatures(g, T, per, was);
     for (const e of g.events) {
       if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
@@ -553,13 +567,15 @@ function report({ per, total, suddenAt }, withCensus) {
     console.log(`powers: ${(c.flashes / Math.max(1, minutes)).toFixed(1)} plain flashes a minute alive, ${a(c.jumps)} plain jumps a round, golden leaps ${pct(c.goldLeaps, c.goldGot)}% used, ${a(c.dashes)} dashes`
       + ` · golden power food: ${(c.pickups / Math.max(1, snakeRounds)).toFixed(2)} a snake a round (more than 2: ${pct(c.greedy, snakeRounds)}%) · a starvation before 1:00 in ${of(c.starvedEarly)} of rounds`);
     const share = (n, d) => (100 * n / Math.max(1, d)).toFixed(1) + '%';
-    console.log(`hunger: before the woodpecker, ${share(c.hungryEarly, c.aliveEarly)} of snake-time in the hunger warning (${share(c.starvingEarly, c.aliveEarly)} starving); after, ${share(c.hungryLate, c.aliveLate)} (${share(c.starvingLate, c.aliveLate)})`);
+    console.log(`hunger: before the woodpecker, ${share(c.hungryEarly, c.aliveEarly)} of snake-time in the hunger warning (${share(c.starvingEarly, c.aliveEarly)} starving); after, ${share(c.hungryLate, c.aliveLate)} (${share(c.starvingLate, c.aliveLate)})`
+      + ` · meals a snake-minute mid-round (from HUNGER_MID_FROM_MS to the woodpecker) ${(c.mealsMid / Math.max(1e-9, c.midMs / 60000)).toFixed(1)}`);
     console.log(`beads: ${a(c.beads)} eaten a round, ${share(c.ownBeads, c.beads)} of them by the snake they broke off · chokes ${a(c.chokes)} a round (in ${of(c.chokeRounds)} of rounds), food nudged aside coughing ${a(c.nudges)} (beads ${a(c.nudgedBeads)})`);
     const chaseT = [...c.chaseTicks].sort((x, y) => x - y), escaped = c.chasesDived + c.chasesDug + c.chasesFlown;
     console.log(`beetles: above ground ${a(c.bugs)} times a round, and then caught ${share(c.bugsCaught, c.bugs)}, down a burrow ${share(c.bugsDived, c.bugs)}, dug in ${share(c.bugsDug, c.bugs)}, flew off ${share(c.bugsFlown, c.bugs)}, eaten by the woodpecker ${share(c.bugsPecked, c.bugs)}`
       + ` · chased (a head came within BEETLE_FEAR) ${a(c.chases)} a round: escaped ${share(escaped, c.chases)} (down a burrow ${share(c.chasesDived, c.chases)}, dug in ${share(c.chasesDug, c.chases)}, flew off ${share(c.chasesFlown, c.chases)}), caught ${share(c.chasesCaught, c.chases)} after a median ${chaseT.length ? chaseT[chaseT.length >> 1] : '-'} ticks`
-      + ` · digs ${a(c.digs)} a round · dives into a burrow a dig left ${a(c.divesDugBurrow)} a round · burrows open ${(c.burrowTicks / Math.max(1, c.ticks)).toFixed(2)} on average · cells free for an apple before the woodpecker ${Math.round(c.freeEarly / Math.max(1, c.ticksEarly))} on average`);
-    console.log(`the woodpecker's fairness: food knocked aside ${a(c.knocks)} a round (${a(c.knockedEaten)} eaten, with nowhere to knock it) · marks shutting a snake in ${a(c.seals)} a round; sealed deaths (out within 3 s of the strike) ${share(c.sealedOut, sdDeaths)} of sudden-death deaths`
+      + ` · digs ${a(c.digs)} a round (caught while digging ${a(c.digsCaught)}) · dives into a burrow a dig left ${a(c.divesDugBurrow)} a round · burrows open ${(c.burrowTicks / Math.max(1, c.ticks)).toFixed(2)} on average · cells free for an apple before the woodpecker ${Math.round(c.freeEarly / Math.max(1, c.ticksEarly))} on average`);
+    const knockT = [...c.knockedTicks].sort((x, y) => x - y);
+    console.log(`the woodpecker's fairness: food knocked aside ${a(c.knocks)} a round (${a(c.knockedEaten)} eaten, with nowhere to knock it; ${a(c.knockedTaken)} eaten by a snake where it landed, within 6 s: within 2 s ${a(knockT.filter(n => n <= 20).length)}, a median ${knockT.length ? knockT[knockT.length >> 1] : '-'} ticks after the strike) · marks shutting a snake in ${a(c.seals)} a round; sealed deaths (out within 3 s of the strike) ${share(c.sealedOut, sdDeaths)} of sudden-death deaths`
       + ` · islands of 1-2 cells cut off ${(c.crumbs / sd).toFixed(2)} a woodpecker round (food on ${(c.crumbsFood / sd).toFixed(2)}, a snake on ${(c.crumbsSnake / sd).toFixed(2)})`
       + ` · the last snakes split onto islands of their own in ${of(c.split)} of rounds; the biggest island's won ${share(c.splitBiggest, c.split)} of those (a blind pick: ${share(c.splitChance, c.split)})`);
   }
