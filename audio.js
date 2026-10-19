@@ -10,7 +10,10 @@
 //                                   streak: 0..7 (apples in a row: the pluck climbs a pentatonic scale),
 //                                   gold: true (a golden pickup: a sparkle over the cue),
 //                                   crest: seconds (the riser: how long it rises),
-//                                   delay: seconds, 0..1 (it sounds that much later, on the audio clock: the cough a beat after the choke) }
+//                                   delay: seconds, 0..1 (it sounds that much later, on the audio clock: the cough a beat after the choke),
+//                                   the drum: strike (which of the round's, from 0), from: ms (into it already), rate (watched faster),
+//                                   the call: settle: true (one "kik!", the bird back on its perch) }
+//   SnakeAudio.drumBlows(strike)  when each knock of the woodpecker's drum comes, ms from the first (each a blow you see)
 //   SnakeAudio.setMuted(b) / isMuted() / toggleMuted()   remembered in this browser
 //   SnakeAudio.music(stage, mood)  the adaptive track (see the music section below)
 //   SnakeAudio.weather(kind)       the weather you can hear: 'rain', 'wind', 'storm', 'snow' or anything else for none
@@ -385,7 +388,24 @@ window.SnakeAudio = (() => {
   // The woodpecker gets used to: its first few strikes are the full drum, then
   // they're shorter and softer, and its aim stops knocking (the patch shows it).
   let strikes = 0, aims = 0;
-  const strikeLevel = () => (strikes < 3 ? 1 : Math.max(0.5, 1 - 0.1 * (strikes - 2)));
+  const strikeLevel = (n = strikes) => (n < 3 ? 1 : Math.max(0.5, 1 - 0.1 * (n - 2)));
+  // Its drum, as a table: when each knock comes, in ms from the first, for the
+  // round's nth strike (from 0). A burst, fast then slowing as the real bird's
+  // (DRUM_GAP between the first two, each gap DRUM_SLOW longer than the last:
+  // 28 to 52 ms, about half a second for the whole drum), fewer knocks after
+  // its first three strikes. One table for the drum you hear and the blows you
+  // see: the renderer draws a blow on each knock, the last on the strike, and
+  // the game starts the drum on the first blow as it's drawn.
+  const DRUM_GAP = 28, DRUM_SLOW = 2, drums = [];
+  function drumBlows(strike = 0) {
+    const s = Math.max(0, Math.min(12, Math.floor(strike) || 0));
+    if (!drums[s]) {
+      const n = s < 3 ? 14 : Math.max(6, 14 - 2 * (s - 2)), out = [];
+      for (let i = 0, at = 0; i < n; at += DRUM_GAP + i * DRUM_SLOW, i++) out.push(at);
+      drums[s] = Object.freeze(out);
+    }
+    return drums[s];
+  }
 
   const CUES = {
     // Green apple: one bright marimba pluck, in tune with the music (E5, climbing the
@@ -793,12 +813,19 @@ window.SnakeAudio = (() => {
     },
 
     // The woodpecker drumming a patch out: a burst of knocks, fast then slowing, like the
-    // real thing. The first few strikes get the whole drum; later ones are shorter and softer.
-    drum(t) {
-      const level = strikeLevel(), n = strikes < 3 ? 14 : Math.max(6, 14 - 2 * (strikes - 2));
-      strikes++;
-      let at = t;
-      for (let i = 0; i < n; i++) { knock(at, 1250 + (i % 3) * 60, (0.2 - i * 0.008) * level); at += 0.034 + i * 0.003; }
+    // real thing, each one a blow of its beak (drumBlows), the last on the strike. The
+    // first few strikes get the whole drum; later ones are shorter and softer. Started
+    // late (o.from, ms into it), the knocks already past are left out; watched faster
+    // (o.rate), it's quicker, as the blows are.
+    drum(t, o) {
+      const strike = Number.isFinite(o.strike) ? Math.max(0, Math.floor(o.strike)) : strikes;
+      const level = strikeLevel(strike), blows = drumBlows(strike);
+      const rate = o.rate > 0 ? o.rate : 1, from = Number.isFinite(o.from) ? Math.max(0, o.from) : 0;
+      strikes = strike + 1;
+      for (let i = 0; i < blows.length; i++) {
+        if (blows[i] < from - 4) continue;
+        knock(t + Math.max(0, blows[i] - from) / 1000 / rate, 1250 + (i % 3) * 60, (0.2 - i * 0.008) * level);
+      }
     },
 
     // The patch giving way: a woody crunch over a low thud (as soft as the drum before it).
@@ -821,8 +848,14 @@ window.SnakeAudio = (() => {
       tone(t, 'sine', 70, 0.35, fresh ? 0.16 : 0.1, 0.02, 62);
     },
 
-    // It arrives: a woodpecker's sharp "kik! kik! kik!" and a beat of wings.
-    call(t) {
+    // It arrives: a woodpecker's sharp "kik! kik! kik!" and a beat of wings. Settling
+    // back on its perch after a strike (o.settle): one "kik!", a touch softer.
+    call(t, o) {
+      if (o.settle) {
+        tone(t, 'triangle', 2350, 0.07, 0.13, 0.002, 1900, 5000);
+        tone(t, 'sine', 4700, 0.04, 0.03, 0.002);
+        return;
+      }
       for (let i = 0; i < 3; i++) {
         tone(t + i * 0.13, 'triangle', 2350, 0.07, 0.16, 0.002, 1900, 5000);
         tone(t + i * 0.13, 'sine', 4700, 0.04, 0.04, 0.002);
@@ -1345,5 +1378,5 @@ window.SnakeAudio = (() => {
   const toggleMuted = () => setMuted(!muted);
 
   create();
-  return { unlock, play, setMuted, isMuted, toggleMuted, music, weather, setMusicOn, isMusicOn, toggleMusic };
+  return { unlock, play, setMuted, isMuted, toggleMuted, music, weather, setMusicOn, isMusicOn, toggleMusic, drumBlows };
 })();

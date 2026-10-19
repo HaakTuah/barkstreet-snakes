@@ -71,6 +71,15 @@
 // - The next round's stretch of log, made ahead in idle time, is the very
 //   bark and leaf shadows a round starting without it builds from the same
 //   seed.
+// - A woodpecker you can believe: resting, its eye follows a head moving
+//   near it (its pupil, read off its own layer); through the aim its head
+//   turns to its patch, tilting, its eye on it; it strikes a blow on each
+//   knock of the drum (one table for both), the last on the strike's tick,
+//   and in a round the game starts the drum so its last knock lands on the
+//   strike as drawn, and says "kik!" on the frame it lands back on its
+//   perch; its layer is the board and the room round it, and a phone's
+//   address bar coming and going never makes it again; with reduced
+//   motion, no wingbeats and no bob, and fewer, slower blows.
 //
 //   node tools/render-test.js [--seed N]   (N: other staged boards, other bark)
 const { launch, serve } = require('./browser');
@@ -1172,6 +1181,184 @@ const STAGE = `(() => {
     })()`);
     check(!!log && log.idle.n === 0 && log.other > log.pixels / 4, 'the next round’s log, made ahead in idle time, is the very bark and leaf shadows a round builds itself from the same seed',
       !log ? 'the renderer never asked for it in idle time' : `${log.idle.n} of ${log.pixels} pixels differ from it built directly${log.idle.n ? ` (cells ${log.idle.where})` : ''}; another seed’s, ${log.other}`);
+
+    // ------------------------------------------- a woodpecker you can believe
+    // Round six A's woodpecker, staged on a held board at a laptop's size
+    // (its own layer's pixels and the renderer's account of its pose):
+    // - resting, its eye follows what moves near it: its pupil, read off its
+    //   layer, turns toward your head moved above it, then below it;
+    // - through the aim its head turns to its marked patch (its beak toward
+    //   it, more than resting), its eye on it, and tilts this way and that;
+    // - it drums a blow on each knock of the drum (SnakeAudio.drumBlows, one
+    //   table), its beak on the spot at each and drawn back between, the
+    //   last on the strike's tick; and in a real round the game starts the
+    //   drum you hear so its last knock lands on the strike as drawn, and
+    //   says "kik!" as it lands back on its perch, as drawn;
+    // - its layer is the board and the room round it (not the page), and a
+    //   phone's address bar coming and going never makes it again;
+    // - with reduced motion, no wingbeats (its wings still through a flight,
+    //   one glide) and no bob, and fewer, slower blows, the last still on
+    //   the strike.
+    await b.viewport(1280, 800);
+    await b.go(site.url + '?debug', { settle: 0 });
+    await ev('__settle()');
+    await ev(STAGE);
+    const BIRD = `
+      const g = show(stage(['gobbler', 'ghost', 'mason'])), N = TUNING.GRID;
+      g.time = TUNING.SUDDEN_DEATH_MS + 5000; g.tick = 2000;
+      g.snakes.forEach((s, i) => setBody(s, [[4 + 4 * i, 23], [3 + 4 * i, 23], [2 + 4 * i, 23]], 'right'));
+      const ms = E.tickMs(g), L = document.getElementById('bird-layer');
+      // (drawn m ms before its strike, or with after, m ms after it: the tick and how far through it)
+      const at = (m, n = 1, step = 16) => { const K = Math.ceil(m / ms); g.woodpecker.strikeAt = g.tick - 1 + K; drawN(n, K - m / ms, step); return R.birdPose(); };
+      const after = (m, n = 1) => { const K = Math.floor(m / ms); Object.assign(g.woodpecker, { struckAt: g.tick - 1 - K, strikeAt: g.tick - 1 - K, restUntil: g.tick - 1 - K + TUNING.PECK_REST_MIN }); drawN(n, m / ms - K, 16); return R.birdPose(); };
+      const rest = spot => { g.woodpecker = { x: spot % N, y: Math.floor(spot / N), at: g.time - 9000, target: [], strikeAt: -1, last: [spot], struckAt: g.tick - 400, restUntil: g.tick + 1e6, pecks: 2 }; };
+      const aim = (spot, from, pecks = 1) => { g.woodpecker = { x: spot % N, y: Math.floor(spot / N), at: g.time - 9000, target: [spot], strikeAt: g.tick + 17, last: [from], struckAt: g.tick - 60, restUntil: g.tick, pecks }; drawN(1); return R.birdPlan(); };
+      const cellNear = (x, y) => [Math.max(0, Math.min(N - 1, Math.round(x / 32 - 0.5))), Math.max(0, Math.min(N - 1, Math.round(y / 32 - 0.5)))];
+    `;
+    const eye = await ev(`(() => {
+      ${BIRD}
+      R.setReducedMotion(false);
+      const home = 12 * N + 22; // (it rests by (22, 12), beside the board)
+      rest(home); drawN(30);
+      const p0 = R.birdPose(), out = [];
+      for (const dy of [-6, 6]) {
+        const [x, y] = cellNear(p0.eyeAt[0] + 32 * 4 * p0.flip, p0.eyeAt[1] + 32 * dy), you = g.snakes[0];
+        setBody(you, [[x, y], [x, Math.min(N - 1, y + 1)], [x, Math.min(N - 1, y + 2)]], 'up');
+        drawN(70, 0.5, 16);
+        const p = R.birdPose(), d = L.getContext('2d').getImageData(Math.round(p.eye[0] - p.eye[2]), Math.round(p.eye[1] - p.eye[2]), Math.round(2 * p.eye[2]), Math.round(2 * p.eye[2])).data, W = Math.round(2 * p.eye[2]);
+        let sx = 0, sy = 0, n = 0; // (the pupil: the dark pixels inside the eye's white)
+        for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) { const k = (j * W + i) * 4; if (d[k + 3] > 200 && d[k] + d[k + 1] + d[k + 2] < 120 && (i - W / 2) ** 2 + (j - W / 2) ** 2 < (W / 2 - 1) ** 2) { sx += i; sy += j; n++; } }
+        const ox = n ? sx / n - W / 2 + 0.5 : 0, oy = n ? sy / n - W / 2 + 0.5 : 0, tx = x * 32 + 16 - p.eyeAt[0], ty = y * 32 + 16 - p.eyeAt[1];
+        out.push({ dy, dark: n, off: [+ox.toFixed(2), +oy.toFixed(2)], cos: +((ox * tx + oy * ty) / (Math.hypot(ox, oy) * Math.hypot(tx, ty) || 1)).toFixed(2), r: +p.eye[2].toFixed(1) });
+      }
+      g.snakes[0].body = [[4, 23], [3, 23], [2, 23]].map(([x, y]) => ({ x, y }));
+      return out;
+    })()`);
+    check(eye.every(e => e.dark > 3 && e.cos > 0.7) && eye[0].off[1] < 0 && eye[1].off[1] > 0, 'resting, the woodpecker’s eye follows your head moving near it: its pupil turns up to it above, then down to it below',
+      eye.map(e => `${e.dy < 0 ? 'above' : 'below'}: pupil ${e.off.join(', ')} px off the middle (eye ${e.r} px), toward the head by cos ${e.cos}`).join('; '));
+
+    const look = await ev(`(() => {
+      ${BIRD}
+      const home = 12 * N + 22, spot = 4 * N + 6;
+      rest(home); drawN(40);
+      const tx = 6 * 32 + 16, ty = 4 * 32 + 16, toward = p => { const hx = p.eyeAt[0], hy = p.eyeAt[1], bx = p.beak[0] - hx, by = p.beak[1] - hy, dx = tx - hx, dy = ty - hy; return (bx * dx + by * dy) / (Math.hypot(bx, by) * Math.hypot(dx, dy)); };
+      const resting = toward(R.birdPose());
+      const plan = aim(spot, home), m = (plan.depart + 200 + plan.aim - plan.hop) / 2;
+      const turns = new Set(), seen = [];
+      for (let f = 0; f < 50; f++) { const p = at(m, 1, 16); turns.add(Math.round(p.turn * 20)); seen.push(p); }
+      const p = seen[seen.length - 1], gaze = (p.gaze[0] * (tx - p.eyeAt[0]) + p.gaze[1] * (ty - p.eyeAt[1])) / Math.hypot(tx - p.eyeAt[0], ty - p.eyeAt[1]);
+      return { resting: +resting.toFixed(2), aiming: +toward(p).toFixed(2), gaze: +gaze.toFixed(2), turns: turns.size, phase: p.phase };
+    })()`);
+    check(look.phase === 'eye' && look.aiming > 0.85 && look.gaze > 0.9 && look.turns >= 2, 'through the aim, the woodpecker’s head turns to its marked patch, tilting this way and that, its eye on it',
+      `its beak toward the patch by cos ${look.resting} resting, ${look.aiming} aiming (${look.phase}); its eye by cos ${look.gaze}; ${look.turns} head angles in 0.8 s`);
+
+    const blows = await ev(`(() => {
+      ${BIRD}
+      const spot = 10 * N + 9, tx = 9 * 32 + 16, ty = 10 * 32 + 16;
+      rest(spot); drawN(10);
+      const plan = aim(spot, spot), table = SnakeAudio.drumBlows(1), D = table[table.length - 1];
+      const dist = p => Math.hypot(p.beak[0] - tx, p.beak[1] - ty), out = { n: plan.times.length, table: table.length, same: plan.times.every((t, i) => t === table[i] - D), on: [], off: [] };
+      for (let i = 0; i < plan.times.length; i++) {
+        const p = at(-plan.times[i]); out.on.push(+dist(p).toFixed(1)); // (on a blow: its beak on the spot)
+        if (i) out.off.push(+dist(at(-(plan.times[i] + plan.times[i - 1]) / 2)).toFixed(1)); // (between: drawn back)
+      }
+      const before = at(4), last = at(0);
+      out.before = { blows: before.blows, d: +dist(before).toFixed(1) }; out.last = { blows: last.blows, phase: last.phase, d: +dist(last).toFixed(1), tp: last.tp, strikeAt: g.woodpecker.strikeAt };
+      // (the strike's tick: the patch a hole now, its head pulled out)
+      g.woodpecker.target = []; g.woodpecker.last = [spot];
+      const hole = after(0); out.hole = { phase: hole.phase, d: +dist(hole).toFixed(1) };
+      const pulled = after(60); out.pulled = { phase: pulled.phase, d: +dist(pulled).toFixed(1) };
+      return out;
+    })()`);
+    check(blows.n === blows.table && blows.same && blows.on.every(d => d < 3) && blows.off.every(d => d > 6), 'drumming, the woodpecker strikes a blow on each knock of the drum (one table for both), its beak on the spot at each and drawn back between',
+      `${blows.n} blows, ${blows.table} knocks; its beak ${Math.max(...blows.on)} units off the spot at most on a blow, ${Math.min(...blows.off)} at least between`);
+    check(blows.before.blows === blows.n - 1 && blows.last.blows === blows.n && blows.last.d < 3 && blows.last.tp === blows.last.strikeAt && blows.hole.phase === 'linger' && blows.hole.d < 3 && blows.pulled.d > 6,
+      'its last blow lands on the strike’s tick, as the patch gives way, and then it pulls its head out of the hole',
+      `4 ms before: blow ${blows.before.blows} of ${blows.n}; on the tick: blow ${blows.last.blows}, its beak ${blows.last.d} units off; the strike made: ${blows.hole.phase}, ${blows.hole.d} units off, 60 ms on ${blows.pulled.d}`);
+
+    // The sound, in a real round on a virtual 60 Hz clock: the drum the game
+    // starts (when, how late, how fast) and its last knock against the moment
+    // the drawing reaches the strike; the "kik!" against the bird's landing.
+    await round('TUNING.SUDDEN_DEATH_MS + 5000');
+    const heard = await ev(`(() => {
+      const g = SnakeDebug.game(), N = TUNING.GRID, me = g.snakes[0];
+      me.stunUntil = 1e9; me.body = [{ x: 3, y: 21 }, { x: 3, y: 22 }, { x: 3, y: 23 }]; me.prev = null;
+      const plays = [], play = SnakeAudio.play;
+      SnakeAudio.play = (name, o) => { if (name === 'drum' || name === 'call' || name === 'crash') plays.push({ name, o: { ...o }, f: __frames.length }); return play(name, o); };
+      g.woodpecker = { x: 15, y: 8, at: g.time, target: [8 * N + 15], strikeAt: g.tick + 17, last: [], struckAt: -1, restUntil: g.tick, pecks: 1 };
+      const S = g.woodpecker.strikeAt, tps = [];
+      for (let f = 0; f < 200; f++) { vf(1); tps.push(SnakeRender.birdPose().tp); if (g.woodpecker.struckAt === S && plays.some(p => p.name === 'call')) break; }
+      SnakeAudio.play = play;
+      const frame = 1000 / 60, T0 = __frames.length - tps.length; // (frame k of these at time k * frame)
+      const when = v => { for (let k = 1; k < tps.length; k++) if (tps[k - 1] < v && tps[k] >= v) return (k - 1 + (v - tps[k - 1]) / (tps[k] - tps[k - 1])) * frame; return null; };
+      const drum = plays.filter(p => p.name === 'drum'), kik = plays.filter(p => p.name === 'call'), crash = plays.filter(p => p.name === 'crash');
+      const D = SnakeAudio.drumBlows(1).slice(-1)[0], ms = SnakeEngine.tickMs(g);
+      const d = drum[0], first = d ? (d.f - T0) * frame + d.o.delay * 1000 - d.o.from / d.o.rate : null, last = d ? first + D / d.o.rate : null;
+      const home = SnakeRender.birdHome(), k = kik[0];
+      return { drums: drum.length, strike: when(S), first, last, from: d?.o.from, strikeN: d?.o.strike, crash: crash.length, kiks: kik.length, settle: k?.o.settle, kikAt: k ? (k.f - T0) * frame : null, lands: when(S + home / ms) };
+    })()`);
+    check(heard.drums === 1 && heard.strikeN === 1 && Math.abs(heard.last - heard.strike) < 1 && heard.crash === 1, 'in a round, the game starts the woodpecker’s drum on its first blow as drawn, so its last knock lands on the strike', heard.drums ? `the drum's last knock ${heard.last?.toFixed(1)} ms in, the strike drawn at ${heard.strike?.toFixed(1)}; ${heard.from} ms of it past as it started; ${heard.crash} crash` : 'no drum');
+    check(heard.kiks === 1 && heard.settle && heard.kikAt >= heard.lands - 0.5 && heard.kikAt - heard.lands < 17, 'and it says “kik!” as it settles back on its perch, on the frame it lands', `the call ${heard.kikAt?.toFixed(1)} ms in, landing at ${heard.lands?.toFixed(1)}`);
+
+    // Its layer: the board and the room round it, placed with CSS, not the
+    // page; and on a phone, the address bar coming and going (the page
+    // shorter, then as it was) never makes it again.
+    await b.go(site.url + '?debug', { settle: 0 });
+    await ev('__settle()');
+    await ev(STAGE);
+    const layer = await ev(`(() => {
+      ${BIRD}
+      rest(12 * N + 22); drawN(5);
+      const lb = L.getBoundingClientRect(), bd = document.getElementById('game').getBoundingClientRect(), reach = 6.5 * 32 * 0.85 * bd.width / (N * 32);
+      const shown = (Math.min(innerWidth, lb.right) - Math.max(0, lb.left)) * (Math.min(innerHeight, lb.bottom) - Math.max(0, lb.top));
+      return { inside: lb.left >= bd.left - reach - 3 && lb.right <= bd.right + reach + 3 && lb.top >= bd.top - reach - 3 && lb.bottom <= bd.bottom + reach + 3, share: +(shown / (innerWidth * innerHeight)).toFixed(2), was: (innerWidth * innerHeight) };
+    })()`);
+    await b.viewport(390, 844, { scale: 3, mobile: true });
+    await b.go(site.url + '?debug', { settle: 0 });
+    await ev('__settle()');
+    await ev(STAGE);
+    await ev(`(() => {
+      ${BIRD}
+      rest(23 * N + 12); drawN(5);
+      window.__sets = 0;
+      for (const k of ['width', 'height']) { const was = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, k); Object.defineProperty(L, k, { configurable: true, get() { return was.get.call(this); }, set(v) { __sets++; was.set.call(this, v); } }); }
+      window.__layerWas = [L.width, L.height];
+      return 'ok';
+    })()`);
+    for (const h of [790, 844, 760, 844]) { await b.viewport(390, h, { scale: 3, mobile: true }); await b.sleep(120); await ev(`(() => { window.dispatchEvent(new Event('resize')); drawN(3); return 'ok'; })()`); }
+    const bar = await ev(`({ sets: __sets, was: __layerWas, now: [document.getElementById('bird-layer').width, document.getElementById('bird-layer').height] })`);
+    check(layer.inside && layer.share < 0.8 && bar.sets === 0, 'the woodpecker’s layer is the board and the room round it, not the page, and a phone’s address bar coming and going never makes it again',
+      `${layer.inside ? 'within' : 'past'} its reach round the board, ${Math.round(layer.share * 100)}% of a 1280×800 window; on a phone the screen 844, 790, 760 px tall: made again ${bar.sets} times (${bar.was.join('×')} → ${bar.now.join('×')})`);
+
+    // With reduced motion: a flight is one glide (its wings still, no
+    // bounding), no bob resting, and fewer, slower blows, the last still on
+    // the strike.
+    await b.viewport(1280, 800);
+    await b.go(site.url + '?debug', { settle: 0 });
+    await ev('__settle()');
+    await ev(STAGE);
+    const calm = await ev(`(() => {
+      ${BIRD}
+      const run = reducedNow => {
+        R.setReducedMotion(reducedNow);
+        const spot = 6 * N + 4, home = 12 * N + 22, o = {};
+        rest(home); drawN(5);
+        const crouch = new Set();
+        for (let f = 0; f < 120; f++) { drawN(1, 0.5, 16); crouch.add(Math.round(R.birdPose().crouch * 1000)); }
+        o.bob = crouch.size;
+        const plan = aim(spot, home), strokes = [], ys = [];
+        for (let m = plan.depart - 10; m > plan.drum + plan.settle + 10; m -= 8) { const p = at(m); strokes.push(p.stroke); ys.push(p.wing); }
+        let turns = 0; for (let i = 2; i < strokes.length; i++) if ((strokes[i] - strokes[i - 1]) * (strokes[i - 1] - strokes[i - 2]) < 0) turns++;
+        o.beats = turns; o.blows = plan.times.length; o.gap = Math.min(...plan.times.slice(1).map((t, i) => t - plan.times[i])); o.last = plan.times[plan.times.length - 1];
+        return o;
+      };
+      const lively = run(false), calm = run(true);
+      R.setReducedMotion(false);
+      return { lively, calm };
+    })()`);
+    check(calm.lively.beats >= 3 && calm.calm.beats === 0 && calm.lively.bob > 3 && calm.calm.bob === 1 && calm.calm.blows < calm.lively.blows && calm.calm.gap > 2 * calm.lively.gap && calm.calm.last === 0,
+      'with reduced motion, the woodpecker glides with its wings still (no wingbeats) and doesn’t bob, and its blows are fewer and slower, the last still on the strike',
+      `wingbeats turning ${calm.lively.beats} times in a flight, ${calm.calm.beats} with reduced motion; ${calm.lively.bob} and ${calm.calm.bob} crouches resting; ${calm.lively.blows} blows ${calm.lively.gap} ms apart at the fastest, ${calm.calm.blows} at ${calm.calm.gap}`);
 
     console.log(results.join('\n'));
     if (b.errors.length) { console.log('page errors:', b.errors); failed++; }

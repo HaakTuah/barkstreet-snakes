@@ -314,6 +314,7 @@
     if (dirty && !document.hidden) {
       R.setLead(leadAt);
       R.frame(drawAlpha, boardClock);
+      birdSounds();
       Chatter.layout(drawAlpha, boardPx, player());
       if (steerHintOn) placeSteerHint();
       toastFade();
@@ -767,6 +768,33 @@
     }
     return near;
   }
+  // The woodpecker's own sounds, on the drawing's clock (the tick and how far
+  // through it the board is drawn, a friend's screen too, from the synced
+  // aim): its drum starts on its first blow, so each knock is a blow you see
+  // and the last lands on the strike (one table, Audio.drumBlows, for both;
+  // asked a moment ahead, so it's placed on the audio clock where the blow
+  // is drawn, and started late, the knocks already past are left out); and
+  // its "kik!" as it settles back on its perch after a strike, when the
+  // drawing has it land (R.birdHome). Watched faster, both come faster.
+  let drumAt = -1, drumGame = null, kikAt = -1, kikGame = null;
+  function birdSounds() {
+    const w = game?.woodpecker;
+    if (!w || state !== 'running') return;
+    const ms = E.tickMs(game), rate = ms / tickLen, tp = game.tick - 1 + drawAlpha;
+    if (w.target.length) {
+      if (drumAt === w.strikeAt && drumGame === game) return;
+      const blows = Audio.drumBlows(w.pecks || 0), long = blows[blows.length - 1];
+      const to = (w.strikeAt - tp) * ms - long; // (board ms to its first blow)
+      if (to > 40 * rate) return;
+      drumAt = w.strikeAt; drumGame = game;
+      if (-to < long) Audio.play('drum', { strike: w.pecks || 0, rate, delay: Math.max(0, to) / rate / 1000, from: Math.max(0, -to), ...at(w.x) });
+    } else if (w.struckAt >= 0 && !(kikAt === w.struckAt && kikGame === game)) {
+      const since = (tp - w.struckAt) * ms, home = R.birdHome();
+      if (since < home) return;
+      kikAt = w.struckAt; kikGame = game;
+      if (since - home < 250 * rate) Audio.play('call', { settle: true, ...at(w.x) });
+    }
+  }
   function sounds(dying, wasAlive) {
     const me = player();
     let knocked = false;
@@ -778,7 +806,7 @@
       } else if (e.type === 'eat' && e.kind === 'goldcap') Audio.play('wrap', { rival: true, ...at(e.x) }); // (someone else's golden mushroom: softer, further off)
       else if (e.type === 'woodpecker') { Audio.play('call'); Audio.play('riser'); }
       else if (e.type === 'aim') Audio.play('aim', at(e.x));
-      else if (e.type === 'peck' && e.cells?.length) { Audio.play('drum', at(e.x)); Audio.play('crash', at(e.x)); }
+      else if (e.type === 'peck' && e.cells?.length) Audio.play('crash', at(e.x)); // (its drum came first, blow by blow: see birdSounds)
       else if (e.type === 'spawn' && e.kind === 'beetle') Audio.play('beetle', at(e.x));
       else if (e.type === 'starving' && isMe(e.snake)) Audio.play('hungry');
       else if (e.type === 'charge') Audio.play('crackle', at(e.x));

@@ -11,6 +11,8 @@
 //      woodpecker's strike, a frame that paints 14 new holes, against a
 //      steady one, and its strike cutting the land (the land after it made
 //      ahead while it aims: the aim's frames, a steady one and the strike's);
+//      the woodpecker itself (the woodpecker scene: perched, resting, its
+//      own layer's work counted too; a frame of its drum and its strike's);
 //      and fire burning out, a frame that paints three cells' soot, against
 //      a steady one
 //   2. step(): whole ticks including every AI decision, over AI-only rounds
@@ -30,7 +32,7 @@ const os = require('os');
 const http = require('http');
 const { execFileSync } = require('child_process');
 const { launch, serve } = require('./browser');
-const { setup, throughput, strikes, burnouts, landStrikes } = require('./scenes');
+const { setup, throughput, strikes, burnouts, landStrikes, birdStrikes } = require('./scenes');
 const args = process.argv.slice(2);
 const at = args.indexOf('--root'), ROOT = at >= 0 ? path.resolve(args.splice(at, 2)[1]) : undefined;
 const land = args.indexOf('--land'), LAND_ONLY = land >= 0 && !!args.splice(land, 1).length;
@@ -87,9 +89,10 @@ const sum = a => ({ frames: a.length, median: q(a, 0.5), p95: q(a, 0.95), p99: q
 // ratio, after against before (the median of each pair's, and its
 // quartiles: a ratio inside them is noise). Then the woodpecker's strike
 // cutting the land (strike-land: the frame of the strike, and the worst of
-// the aim's frames before it), and its strike in late sudden death (holes),
-// each a round at a time in turn.
-const VERSUS_SCENES = ['long', 'long-star', 'fields', 'intruders', 'holes', 'bridges', 'leaps'];
+// the aim's frames before it), its strike in late sudden death (holes), and
+// the woodpecker drumming and striking (woodpecker: its own layer counted
+// too), each a round at a time in turn.
+const VERSUS_SCENES = ['long', 'long-star', 'fields', 'intruders', 'holes', 'bridges', 'leaps', 'woodpecker'];
 function copyOf(where) {
   if (fs.existsSync(where) && fs.statSync(where).isDirectory()) return path.resolve(where);
   const rev = execFileSync('git', ['rev-parse', '--short', where], { cwd: path.join(__dirname, '..'), encoding: 'utf8' }).trim();
@@ -143,7 +146,7 @@ async function versus() {
       const [r25, r50, r75] = quart(ratio);
       console.log(`${scene}: ${med(t.A).toFixed(2)} against ${med(t.B).toFixed(2)} ms, ${r50.toFixed(3)}x (quartiles ${r25.toFixed(3)} to ${r75.toFixed(3)})`);
     }
-    for (const [scene, run, what] of [['strike-land', landStrikes(2, 30), 'the strike cutting the land'], ['holes', strikes(4), 'the strike in late sudden death']]) {
+    for (const [scene, run, what] of [['strike-land', landStrikes(2, 30), 'the strike cutting the land'], ['holes', strikes(4), 'the strike in late sudden death'], ['woodpecker', birdStrikes(4), 'the woodpecker drumming and striking']]) {
       if (SCENE_LIST && !SCENE_LIST.includes(scene)) continue;
       for (const id of ['A', 'B']) await inFrame(id, setup(scene));
       const all = { A: [], B: [] };
@@ -173,7 +176,7 @@ async function versus() {
     if (LAND_ONLY) { await b.eval(`SnakeDebug.pinQuality?.(2); 'ok'`); await landTwins(b, PAIRS); return; }
 
     const full = {};
-    for (const scene of ['long', 'long-star', 'fields', 'nofields', 'intruders', 'intruders-bare', 'holes']) {
+    for (const scene of ['long', 'long-star', 'fields', 'nofields', 'intruders', 'intruders-bare', 'holes', 'woodpecker']) {
       await b.eval(setup(scene));
       const script = await b.eval(`(() => { ${SUMMARY}
         const times = [];
@@ -192,6 +195,8 @@ async function versus() {
     console.log("the woodpecker's strike, holes scene (full cost of a frame, ms)", await b.eval(strikes()));
     await b.eval(setup('strike-land'));
     console.log("the woodpecker's strike cutting Sovereign's and Colonist's land, and the aim's frames before it (full cost of a frame, ms)", await b.eval(landStrikes()));
+    await b.eval(setup('woodpecker'));
+    console.log('the woodpecker drumming, and its strike, woodpecker scene (full cost of a frame, ms, its own layer too)', await b.eval(birdStrikes()));
     await b.eval(setup('holes'));
     console.log('fire burning out in three cells, their soot painted in, holes scene (full cost of a frame, ms)', await b.eval(burnouts()));
     await b.eval(`SnakeRender.setGame(SnakeDebug.game()); 'ok'`);

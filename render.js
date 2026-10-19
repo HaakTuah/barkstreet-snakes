@@ -7135,10 +7135,17 @@ window.SnakeRender = (() => {
   // A great spotted woodpecker, big (about six cells tall), clinging to the
   // log just outside the board: on whichever side of the board has room on
   // this screen, as near as it can to where it's working. It flies in when
-  // sudden death starts; eyes its next chunk (which glows and cracks, faster
-  // and faster as the strike nears); flies at it, drums it out in a shower of
-  // chips; flies back; rests. It's drawn on its own layer over the whole page,
-  // so it can sit outside the board.
+  // sudden death starts, the way a woodpecker flies (a few wingbeats, wings
+  // tucked in a dip, beats again), and lands with a flare of its wings.
+  // Perched, it clings upright braced on its tail, bobs, shifts its grip, and
+  // its head moves as birds' do, in quick jerks, then still; its eye looks at
+  // whatever moves nearby, now and then at you, and blinks. It eyes its next
+  // chunk (which glows and cracks, faster and faster as the strike nears),
+  // its head turned and tilted to it; flies to it and drums it, a blow on
+  // every knock of the drum you hear, chips flying, the last blow on the
+  // strike; flies back, and says "kik!" as it settles. It's drawn on its own
+  // layer, the board and the room round it its perch and its flights need,
+  // from parts drawn once (see birdPart).
   let birdLayer = null, birdG = null, birdShown = false;
   // The board on the page, in CSS px, and how far the free page runs round it
   // before the page's own furniture (the tags, the speed buttons, the chatter)
@@ -7152,7 +7159,7 @@ window.SnakeRender = (() => {
     boardRect.right = free ? free.right : innerWidth; boardRect.bottom = free ? free.bottom : innerHeight;
     boardRect.ledge = free?.ledge || 0;
     boardRect.hang = free?.hang || [];
-    perchNow = null; // (its perch is worked out again: the room round the board has changed)
+    perches.clear(); drumAt.clear(); birdLayout++; // (its perches and where it drums are worked out again: the room round the board has changed)
   }
   const BU = CELL * 0.85; // the bird's unit
   const BILL = [2.55, -1.72]; // its beak tip, in units, before its head moves
@@ -7161,8 +7168,6 @@ window.SnakeRender = (() => {
   const PERCH_GAP_PX = 1.5, BOX_EDGE = 0.1; // (how far, CSS px, it keeps off the cells, its ink's soft edge never touching one; and, units, how far its outline and its beak, turned to look, reach past its box)
   const LEDGE_LOOK = 0.3, CROUCH = 0.25; // (on the ledge, how far it may look up at its chunk, radians, with its beak still under the board; and how far its crouch lowers it, units)
   const FLIGHT_BACK = 6; // (units: how far behind the spot it strikes its wings reach as it flies in, its beak's length and a wingbeat back)
-  const bird = { x: 0, y: 0, s: 1, rot: 0, flip: 1, placed: false, arrivedAt: -1e9, chipAt: 0, box: null };
-  const BIRD_DRAWN = [0, 0, 0, 0]; // (bird.box when it's been drawn: where on its layer, device px, to clear next frame)
   // Where it perches to work on a spot (board px), and how big (s): beside
   // the board on the nearest side with room for it on this screen (or with
   // room for it a little smaller), its beak just short of the board; with
@@ -7252,199 +7257,701 @@ window.SnakeRender = (() => {
       }
       if (best) { p.x = best.x; p.flip = best.f; }
     }
+    p.side = side;
     return p;
   }
-  // Its perch for the spot it's working on: worked out when it moves on to
-  // another spot, or the room round the board changes (see setBoardRect),
-  // not every frame of its stay.
-  let perchNow = null, perchTx = -1, perchTy = -1;
-  function perchOf(tx, ty) {
-    if (!perchNow || tx !== perchTx || ty !== perchTy) { perchNow = perchFor(tx, ty); perchTx = tx; perchTy = ty; }
-    return perchNow;
+  // Its perches, one for each spot it works on (worked out as it first needs
+  // one, and again only when the room round the board changes: see
+  // setBoardRect), and how it clings to drum each (see drumPoseAt).
+  const perches = new Map(), drumAt = new Map();
+  let birdLayout = 0;
+  function perchAt(spot) {
+    let p = perches.get(spot);
+    if (!p) {
+      const x = spot % GRID;
+      p = perchFor(x * CELL + CELL / 2, (spot - x) / GRID * CELL + CELL / 2);
+      p.rot = 0;
+      perches.set(spot, p);
+    }
+    return p;
   }
-  // Where it has to hover for its beak to reach a spot, facing `flip` (into one point, kept).
-  const hover = { x: 0, y: 0 };
-  function strikeAt(tx, ty, flip) {
-    hover.x = tx - flip * BILL[0] * BU; hover.y = ty - BILL[1] * BU;
-    return hover;
+  // The cell of a patch it works on: the one nearest the patch's middle (of
+  // those as near, the first by row), so it's always on the patch, round a
+  // bend too. Before its first patch it rests where the engine has it come
+  // to, the middle of the top row (ARRIVAL_SPOT).
+  function spotIn(cells) {
+    let sx = 0, sy = 0, best = -1, near = Infinity;
+    for (const k of cells) { sx += k % GRID; sy += (k - k % GRID) / GRID; }
+    sx /= cells.length; sy /= cells.length;
+    for (const k of cells) {
+      const x = k % GRID, y = (k - x) / GRID, d = (x - sx) * (x - sx) + (y - sy) * (y - sy);
+      if (d < near - 1e-9 || (d < near + 1e-9 && k < best)) { near = d; best = k; }
+    }
+    return best;
+  }
+  const ARRIVAL_SPOT = GRID / 2;
+  const restSpot = w => (w.last.length ? spotIn(w.last) : Math.max(0, Math.min(GRID - 1, Math.round(w.y))) * GRID + Math.max(0, Math.min(GRID - 1, Math.round(w.x))));
+
+  // Its layer: the board and the room round it the bird can use, not the
+  // whole page (that cost 2 to 3.5 ms of the GPU's time every frame of
+  // sudden death): on each side as far as the free page runs (to the tags,
+  // the header, a column beside the board, a notch), at least BIRD_ROOM
+  // units (a wingtip over the tags, as it drums the top row) and at most
+  // BIRD_REACH (perched on the ledge or in a margin, crouching too, or
+  // drumming an edge row), cut at the screen's left and right. Below the
+  // board always BIRD_REACH, whatever the screen's height, so a phone's
+  // address bar coming and going never makes it again, nor does the page
+  // scrolling: it's only moved (a transform).
+  const BIRD_REACH = 6.5, BIRD_ROOM = 1.2;
+  const lay = { x: 0, y: 0, w: 0, h: 0, W: 0, H: 0, dpr: 0, sc: 1, ox: 0, oy: 0 }; // (where it is and how big, CSS px; its pixels; and the board's units to them)
+  function placeLayer(dpr) {
+    const css = boardRect.w / SIZE, most = BIRD_REACH * BU * css, least = BIRD_ROOM * BU * css, m = v => Math.max(least, Math.min(most, v));
+    const left = Math.floor(boardRect.x - m(boardRect.x - boardRect.left)), right = Math.ceil(boardRect.x + boardRect.w + m(boardRect.right - boardRect.x - boardRect.w));
+    const top = m(boardRect.y - boardRect.top), x = Math.max(0, left), y = Math.floor(boardRect.y - top);
+    const w = Math.max(1, Math.min(innerWidth, right) - x), h = Math.ceil(top + boardRect.w + most) + 1;
+    let fresh = false;
+    if (w !== lay.w || h !== lay.h || dpr !== lay.dpr) {
+      lay.w = w; lay.h = h; lay.dpr = dpr;
+      lay.W = birdLayer.width = Math.max(1, Math.round(w * dpr)); lay.H = birdLayer.height = Math.max(1, Math.round(h * dpr));
+      birdLayer.style.width = `${w}px`; birdLayer.style.height = `${h}px`;
+      fresh = true;
+    }
+    if (fresh || x !== lay.x || y !== lay.y) { lay.x = x; lay.y = y; birdLayer.style.transform = `translate(${x}px, ${y}px)`; fresh = true; }
+    lay.sc = css * lay.W / w;
+    lay.ox = (boardRect.x - x) * lay.W / w; lay.oy = (boardRect.y - y) * lay.H / h;
+    return fresh;
+  }
+  // Where any of it may be drawn (board units): on the screen and its layer,
+  // a hair in. Flying and drumming, it keeps inside (see fitBird, drumPoseAt).
+  const room = { x0: 0, y0: 0, x1: 0, y1: 0 };
+  function birdRoom() {
+    const css = boardRect.w / SIZE, e = 1.5;
+    room.x0 = (Math.max(0, lay.x) + e - boardRect.x) / css; room.x1 = (Math.min(innerWidth, lay.x + lay.w) - e - boardRect.x) / css;
+    room.y0 = (Math.max(0, lay.y) + e - boardRect.y) / css; room.y1 = (Math.min(innerHeight, lay.y + lay.h) - e - boardRect.y) / css;
+  }
+  const useBase = g => g.setTransform(lay.sc, 0, 0, lay.sc, lay.ox, lay.oy);
+
+  // Its pose: where it is (its feet, board units), how big, which way it
+  // faces, how far it's tipped (rot), crouched, its wings (how far out, up
+  // or down in the beat (stroke), swept forward to land; near and far: how
+  // much of each the screen has room for), its feet out or tucked, its head
+  // turned (turn) and driven forward or drawn back (thrust; blurred when it
+  // drums too fast to see), its beak open (gape), how high in the air (for
+  // its shadow), and what it's doing (phase) and looking at (fx, fy).
+  const pose = { x: 0, y: 0, s: 1, flip: 1, rot: 0, crouch: 0, wing: 0, stroke: 1, sweep: 0, near: 1, far: 1, feet: 1, turn: 0, thrust: 0, blur: 0, gape: 0, alpha: 1, air: 0, blink: false,
+    phase: '', free: false, up: 1.2, fx: 0, fy: 0, drum: null, blows: 0, t: 0, tp: 0, u: 0 };
+  // What it keeps between frames: its head's jerks and tilts, what it's
+  // watching, its eye, its blinks, its grip; where it was drawn (to clear).
+  const bird = { turn: 0, turnTo: 0, hold: 0, cock: 0, cockAt: 0, gx: 1, gy: 0, focus: null, focusUntil: 0, spot: { x: 0, y: 0 },
+    nextBlink: 0, blinkUntil: 0, gripAt: 0, gripFrom: -1e9, box: [0, 0, 0, 0], drawn: false, clear: true, force: null };
+  function resetBird(now = 0) {
+    bird.turn = bird.turnTo = 0; bird.hold = 0; bird.cock = 0; bird.cockAt = 0; bird.gx = 1; bird.gy = 0; bird.focus = null; bird.focusUntil = 0;
+    bird.nextBlink = now + T.BLINK_MIN; bird.blinkUntil = 0; bird.gripAt = now + 1800; bird.gripFrom = -1e9; bird.clear = true;
   }
 
-  const ease = t => t * t * (3 - 2 * t);
+  // Its timings (ms on the board's clock): settling as it lands, crouching to
+  // take off, lingering after the strike, the least it looks at its chunk
+  // before it goes, coming in as sudden death starts, a wingbeat, chips in
+  // the air; and how far its head draws back between blows (units). A
+  // flight takes longer the further it goes (flightMs, hopMs).
+  const B_SETTLE = 120, B_TAKEOFF = 200, B_LINGER = 90, B_LOOK = 260, B_ARRIVE = 900, B_BEAT = 104, B_CHIPS = 340, B_BACK = 0.42;
+  const flightMs = d => Math.max(240, Math.min(540, 200 + 0.42 * d));
+  const hopMs = d => Math.max(180, Math.min(380, 140 + 0.35 * d));
+  const smooth = t => t * t * (3 - 2 * t), clamp01 = t => (t < 0 ? 0 : t > 1 ? 1 : t);
+  const tickMs = () => (window.SnakeEngine ? SnakeEngine.tickMs(game) : T.MIN_TICK);
+  // The drum, as the sound has it (SnakeAudio.drumBlows: one table for the
+  // knocks you hear and the blows you see); the same numbers if it isn't there.
+  const DRUM_OWN = [];
+  function drumTable(strike) {
+    if (window.SnakeAudio?.drumBlows) return SnakeAudio.drumBlows(strike);
+    const s = Math.max(0, Math.min(12, strike | 0));
+    if (!DRUM_OWN[s]) { const n = s < 3 ? 14 : Math.max(6, 14 - 2 * (s - 2)), out = []; for (let i = 0, at = 0; i < n; at += 28 + 2 * i, i++) out.push(at); DRUM_OWN[s] = out; }
+    return DRUM_OWN[s];
+  }
+
+  // Its plan for a patch, from the woodpecker's own state (the tick of its
+  // strike, the patch, the one before, how many it's struck) and the board,
+  // so every screen, a friend's too, draws the same bird at the same moment:
+  // from where it rests, a hop to the perch for this spot (along the ledge,
+  // or along its side of the board; to the board's other side it flies
+  // straight in from where it is instead), a look, the flight in, a
+  // landing, the drum (a blow on each knock, the last on the strike), timed
+  // back from the strike; the flights shortened to fit the aim, leaving it
+  // B_LOOK at least to look before it goes. With reduced motion, a blow on
+  // every third knock, the last on the strike.
+  const plan = { strikeAt: -1, spot: -1, prev: -1, pecks: -1, layout: -1, ms: 0, aim: 0, lively: true,
+    tx: 0, ty: 0, from: null, hop: null, drum: null, times: [], D: 0, F: 0, H: 0, aimMs: 0, depart: 0 };
+  function aimPlan(w, ms) {
+    const A = plan, spot = spotIn(w.target), prev = w.last.length ? spotIn(w.last) : ARRIVAL_SPOT, pecks = w.pecks || 0, lively = !reduced;
+    if (A.strikeAt === w.strikeAt && A.spot === spot && A.prev === prev && A.pecks === pecks && A.layout === birdLayout && A.ms === ms && A.aim === T.PECK_AIM_TICKS && A.lively === lively) return A;
+    A.strikeAt = w.strikeAt; A.spot = spot; A.prev = prev; A.pecks = pecks; A.layout = birdLayout; A.ms = ms; A.aim = T.PECK_AIM_TICKS; A.lively = lively;
+    A.tx = (spot % GRID) * CELL + CELL / 2; A.ty = Math.floor(spot / GRID) * CELL + CELL / 2;
+    const was = perchAt(prev), to = perchAt(spot), beside = k => k === 'left' || k === 'right';
+    A.from = beside(was.side) && beside(to.side) && was.side !== to.side ? was : to;
+    A.hop = A.from === to && Math.hypot(to.x - was.x, to.y - was.y) > 1 ? was : null;
+    A.drum = drumPoseAt(spot, A.from.flip);
+    const blows = drumTable(pecks), n = blows.length;
+    A.D = blows[n - 1];
+    A.times.length = 0;
+    for (let i = 0; i < n; i++) if (lively || (n - 1 - i) % 3 === 0) A.times.push(blows[i] - A.D);
+    A.aimMs = T.PECK_AIM_TICKS * ms;
+    const F = flightMs(Math.hypot(A.drum.x - A.from.x, A.drum.y - A.from.y)), H = A.hop ? hopMs(Math.hypot(to.x - was.x, to.y - was.y)) : 0;
+    const k = Math.max(0.4, Math.min(1, (A.aimMs - B_LOOK - B_TAKEOFF - B_SETTLE - A.D) / (F + H)));
+    A.F = F * k; A.depart = A.D + B_SETTLE + A.F;
+    A.H = Math.min(H * k, Math.max(0, A.aimMs - A.depart - 60));
+    return A;
+  }
+  // ...and after the strike: a moment at the hole, the flight back to the
+  // perch for the spot it struck, and settling there (its "kik!": the game
+  // asks birdHome when), all within its rest.
+  const home = { struckAt: -1, spot: -1, layout: -1, ms: 0, rest: 0, lively: true, drum: null, to: null, tx: 0, ty: 0, F: 0, total: Infinity };
+  function homePlan(w, ms) {
+    const H = home, spot = spotIn(w.last), rest = (w.restUntil - w.struckAt) * ms, lively = !reduced;
+    if (H.struckAt === w.struckAt && H.spot === spot && H.layout === birdLayout && H.ms === ms && H.rest === rest && H.lively === lively) return H;
+    H.struckAt = w.struckAt; H.spot = spot; H.layout = birdLayout; H.ms = ms; H.rest = rest; H.lively = lively;
+    H.tx = (spot % GRID) * CELL + CELL / 2; H.ty = Math.floor(spot / GRID) * CELL + CELL / 2;
+    H.to = perchAt(spot);
+    H.drum = plan.strikeAt === w.struckAt && plan.spot === spot && plan.layout === birdLayout ? plan.drum : drumPoseAt(spot, H.to.flip);
+    H.F = Math.max(160, Math.min(flightMs(Math.hypot(H.to.x - H.drum.x, H.to.y - H.drum.y)), rest - B_LINGER - B_SETTLE - 120));
+    H.total = B_LINGER + H.F + B_SETTLE;
+    return H;
+  }
+
+  // Its pose at this moment (tp: the tick, and how far through it, as drawn).
+  const ARRIVE_FROM = { x: 0, y: 0, s: 0.3, flip: 1, rot: 0 };
+  function posture(w, tp, now) {
+    const P = pose, ms = tickMs(), lively = !reduced;
+    P.alpha = 1; P.thrust = 0; P.blur = 0; P.gape = 0; P.air = 0; P.wing = 0; P.stroke = 1; P.sweep = 0; P.near = P.far = 1; P.feet = 1; P.crouch = 0; P.rot = 0;
+    P.free = false; P.up = 1.2; P.drum = null; P.blows = 0; P.blink = false;
+    if (w.target.length) {
+      const A = aimPlan(w, ms), to = (w.strikeAt - tp) * ms, into = A.aimMs - to;
+      P.fx = A.tx; P.fy = A.ty;
+      if (A.hop && into < A.H) flight(A.hop, perchAt(A.spot), Math.max(0, into) / A.H, A.H, P, 'hop', 0, 0);
+      else if (to > A.depart) { perched(A.from, P, 'eye'); if (lively) P.crouch = smooth(clamp01(1 - (to - A.depart) / B_TAKEOFF)); }
+      else if (to > A.D + B_SETTLE) flight(A.from, A.drum, (A.depart - to) / A.F, A.F, P, 'out', lively ? 1 : 0, 0);
+      else if (to > A.D + 1e-6) { landing(A.drum, (A.D + B_SETTLE - to) / B_SETTLE, P, 'land'); windUp(A, -to, P); }
+      else drumming(A, -to, P);
+      return;
+    }
+    if (w.struckAt >= 0 && w.last.length) {
+      const H = homePlan(w, ms), since = (tp - w.struckAt) * ms;
+      P.fx = H.to.x; P.fy = H.to.y - BU * 2;
+      if (since < B_LINGER) { P.fx = H.tx; P.fy = H.ty; lingering(H.drum, clamp01(since / B_LINGER), P); chipsAfter(w, since, P); return; }
+      if (since < B_LINGER + H.F) { flight(H.drum, H.to, (since - B_LINGER) / H.F, H.F, P, 'back', 0, 0.6); chipsAfter(w, since, P); return; }
+      if (since < H.total) { landing(H.to, (since - B_LINGER - H.F) / B_SETTLE, P, 'settle'); return; }
+      perched(H.to, P, 'rest');
+      const kik = since - H.total; // (its "kik!" as it settles: its beak opens)
+      if (kik < 110) P.gape = 0.3 * Math.sin(Math.PI * kik / 110);
+      return;
+    }
+    const to = perchAt(restSpot(w));
+    if (!w.last.length && w.struckAt < 0) {
+      // Coming in from far off, small, as sudden death starts ("kik! kik!
+      // kik!"), the moment the engine has it come (its first patch is
+      // PECK_ARRIVE_TICKS on).
+      const msA = (tp - (w.restUntil - T.PECK_ARRIVE_TICKS)) * ms;
+      if (msA >= 0 && msA < B_ARRIVE) {
+        if (!lively) { perched(to, P, 'rest'); P.alpha = clamp01(msA / 400); return; }
+        const F = B_ARRIVE - B_SETTLE;
+        ARRIVE_FROM.x = to.x + (SIZE / 2 - to.x) * 0.55; ARRIVE_FROM.y = SIZE * 0.1; ARRIVE_FROM.flip = to.x < ARRIVE_FROM.x ? -1 : 1;
+        P.fx = to.x; P.fy = to.y - BU * 2;
+        if (msA < F) { flight(ARRIVE_FROM, to, msA / F, F, P, 'arrive', 0, 0); P.alpha = clamp01(msA / (F * 0.25)); }
+        else landing(to, (msA - F) / B_SETTLE, P, 'settle');
+        if (msA < 390) P.gape = 0.3 * Math.sin(Math.PI * Math.min(1, (msA % 130) / 70)); // (its three calls: its beak opens on each)
+        return;
+      }
+    }
+    perched(to, P, 'rest');
+  }
+  function perched(p, P, phase) {
+    P.x = p.x; P.y = p.y; P.s = p.s; P.flip = p.flip; P.rot = 0; P.feet = 1; P.wing = 0; P.up = p.up ?? 1.2; P.phase = phase;
+  }
+  // A flight from a to b (u: how far through, 0 to 1; ms: how long it takes):
+  // bounding as a woodpecker does, a burst of wingbeats lifting it, its wings
+  // tucked as it dips, then beats again, the whole in a swoop; its body
+  // tipped the way it's going, upright as it takes off, and leaning back
+  // with its wings up and swept forward as it comes in to land. Off its
+  // perch crouched (crouch), or with its wings half open already (wing).
+  // With reduced motion, one smooth glide, its wings out and still.
+  let PX = 0, PY = 0;
+  function pathAt(a, b, u, ms, lively) {
+    const e = smooth(u), dx = b.x - a.x, dy = b.y - a.y, hump = Math.min(BU * 1.1, Math.hypot(dx, dy) * 0.12);
+    PX = a.x + dx * e; PY = a.y + dy * e - hump * Math.sin(Math.PI * u);
+    if (lively) {
+      const nb = Math.max(1, Math.round(ms / 240)), q = u * nb, p = q - Math.min(nb - 1, Math.floor(q));
+      PY -= BU * 0.32 * Math.min(1, ms / 300) * Math.sin(Math.PI * u) * Math.sin(Math.PI * p);
+    }
+  }
+  function flight(a, b, u, ms, P, phase, crouch, wing) {
+    u = clamp01(u);
+    const lively = !reduced, dx = b.x - a.x;
+    pathAt(a, b, u, ms, lively);
+    P.x = PX; P.y = PY;
+    P.flip = u > 0.86 ? b.flip : Math.abs(dx) > BU * 1.2 ? Math.sign(dx) : b.flip; // (it turns to land, if it must)
+    P.s = a.s + (b.s - a.s) * smooth(u);
+    const far = Math.hypot(dx, b.y - a.y) || 1;
+    let vx = dx / far, vy = (b.y - a.y) / far; // (the way it's going overall, swaying with each swoop and dip)
+    if (lively) { pathAt(a, b, Math.min(1, u + 0.02), ms, true); const x1 = PX, y1 = PY; pathAt(a, b, Math.max(0, u - 0.02), ms, true); const ix = x1 - PX, iy = y1 - PY, il = Math.hypot(ix, iy) || 1; vx += 0.6 * ix / il; vy += 0.6 * iy / il; }
+    const pitch = Math.max(-0.35, Math.min(1.15, (Math.atan2(vy, vx * P.flip) + Math.PI / 2) * 0.75)); // (0: going straight up; level at about 1.15, and no further nose down)
+    const k0 = smooth(clamp01(u / 0.16)), k1 = smooth(clamp01((1 - u) / 0.22));
+    P.rot = ((pitch * k0 + a.rot * a.flip * (1 - k0)) * k1 + (b.rot * b.flip - 0.3) * (1 - k1)) * P.flip;
+    P.feet = 0; P.air = smooth(clamp01(Math.min(u / 0.15, (1 - u) / 0.2)));
+    P.crouch = crouch * (1 - smooth(clamp01(u / 0.15)));
+    if (lively) {
+      const nb = Math.max(1, Math.round(ms / 240)), q = u * nb, j = Math.min(nb - 1, Math.floor(q)), p = q - j;
+      const beat = j < nb - 1 && p > 0.55 ? Math.max(0, 1 - (p - 0.55) / 0.07) : 1; // (tucked, dipping)
+      P.wing = Math.max(beat * Math.min(1, wing + u / 0.05), 1 - k1);
+      P.stroke = Math.cos(TAU * u * ms / B_BEAT) * k1 + (1 - k1);
+    } else {
+      P.wing = Math.min(1, wing + u / 0.1);
+      P.stroke = 0.55 * k1 + (1 - k1);
+    }
+    P.sweep = 0.45 * (1 - k1);
+    P.phase = phase; P.free = true; P.u = u;
+  }
+  // Landing (u, 0 to 1, over B_SETTLE): its wings folding from the flare, its
+  // body righting, a little settle onto its feet.
+  function landing(b, u, P, phase) {
+    u = clamp01(u);
+    const k = smooth(clamp01(u / 0.55));
+    P.x = b.x; P.y = b.y; P.s = b.s; P.flip = b.flip;
+    P.rot = (b.rot * b.flip - 0.3 * (1 - k)) * b.flip;
+    P.wing = 1 - k; P.stroke = 1; P.sweep = 0.45 * (1 - k);
+    P.feet = u > 0.2 ? 1 : 0;
+    P.crouch = reduced ? 0 : 0.8 * Math.sin(Math.PI * clamp01(u / 0.85));
+    P.air = 0.3 * (1 - k); P.up = b.up ?? 1.2;
+    P.phase = phase;
+  }
+  // As it lands on its chunk, it draws its head back for the first blow.
+  function windUp(A, t, P) {
+    const t0 = A.times[0];
+    if (t <= t0 - 100) return;
+    P.thrust = t < t0 - 30 ? -1.3 * B_BACK * smooth(clamp01((t - (t0 - 100)) / 70)) : -1.3 * B_BACK * (1 - ((t - (t0 - 30)) / 30) ** 2);
+  }
+  // Drumming (t: ms to the strike, as a negative): a blow on each of the
+  // drum's knocks (A.times), its head driving in and drawing back between
+  // them, a blur when they come too fast to see; the last on the strike.
+  function drumming(A, t, P) {
+    const d = A.drum, n = A.times.length;
+    P.x = d.x; P.y = d.y; P.s = d.s; P.flip = d.flip; P.rot = d.rot; P.feet = 1; P.phase = 'drum';
+    let i = 0;
+    while (i + 1 < n && A.times[i + 1] <= t) i++;
+    if (i < n - 1) {
+      const gap = A.times[i + 1] - A.times[i], p = clamp01((t - A.times[i]) / gap);
+      P.thrust = 0.06 - (B_BACK + 0.06) * Math.pow(Math.sin(Math.PI * p), 0.8);
+      P.blur = reduced ? 0 : clamp01((46 - gap) / 16);
+    } else P.thrust = 0.06;
+    P.drum = A; P.blows = i + 1; P.t = t;
+  }
+  // The strike made: its head pulled out of the hole, wings opening, a lean back.
+  function lingering(d, u, P) {
+    P.x = d.x; P.y = d.y; P.s = d.s; P.flip = d.flip; P.feet = 1; P.phase = 'linger';
+    P.rot = (d.rot * d.flip - 0.15 * smooth(u)) * d.flip;
+    P.thrust = -1.2 * B_BACK * smooth(u); P.wing = 0.6 * smooth(u); P.stroke = 1;
+  }
+  // The last blows' chips, still in the air after the strike.
+  function chipsAfter(w, since, P) {
+    if (plan.strikeAt === w.struckAt && since < B_CHIPS) { P.drum = plan; P.blows = -1; P.t = since; }
+  }
+
+  // How it clings to drum a spot: upright, facing the way it came (flip),
+  // its beak's tip on the spot, if all of it fits on the screen there (its
+  // head drawn back, its settle and its lean back as it lands too); else leaning, else facing the
+  // other way, else lying level, its beak down at the spot (the bottom
+  // rows, with the board's bottom at the screen's) or up; else smaller.
+  // (Upright on the bottom row, its tail hung four cells below the board,
+  // past the bottom of a phone on its side.)
+  const DRUM_TRIES = [0, 1, 0.45, 1, -0.45, 1, 0, -1, 0.45, -1, -0.45, -1, Math.PI / 2, 1, -Math.PI / 2, 1, Math.PI / 2, -1, -Math.PI / 2, -1], DRUM_SIZES = [1, 0.85, 0.72, 0.6];
+  const probe = { x: 0, y: 0, s: 1, flip: 1, rot: 0, crouch: 0, wing: 0, stroke: 1, sweep: 0, near: 1, far: 1, feet: 1, turn: 0, thrust: 0, air: 0 };
+  function drumPoseAt(spot, flip) {
+    const key = spot * 2 + (flip > 0 ? 1 : 0);
+    let d = drumAt.get(key);
+    if (d) return d;
+    const tx = (spot % GRID) * CELL + CELL / 2, ty = Math.floor(spot / GRID) * CELL + CELL / 2, Q = probe;
+    let best = null, least = Infinity;
+    for (const s of DRUM_SIZES) {
+      for (let i = 0; i < DRUM_TRIES.length && !d; i += 2) {
+        const f = flip * DRUM_TRIES[i + 1];
+        Q.s = s; Q.flip = f; Q.rot = DRUM_TRIES[i] * f; Q.x = Q.y = 0; Q.turn = 0; Q.thrust = 0; Q.crouch = 0;
+        birdMats(Q);
+        Q.x = tx - atX(HM, BILL[0], BILL[1]); Q.y = ty - atY(HM, BILL[0], BILL[1]);
+        Q.thrust = 0.06; birdBox(Q, true);
+        Q.thrust = -1.3 * B_BACK; Q.crouch = 0.8; birdBox(Q, false);
+        Q.crouch = 0; Q.rot = (DRUM_TRIES[i] - 0.3) * f; birdBox(Q, false); Q.rot = DRUM_TRIES[i] * f; // (and leaning back as it lands, or as it pulls out of the hole)
+        const over = Math.max(room.x0 - box.x0, room.y0 - box.y0, box.x1 - room.x1, box.y1 - room.y1);
+        if (over <= 0) d = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot };
+        else if (over < least) { least = over; best = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot }; }
+      }
+      if (d) break;
+    }
+    d ||= best;
+    drumAt.set(key, d);
+    return d;
+  }
+
+  // Its frame (2D matrices, as setTransform takes them, from its own units,
+  // 1 = BU, to the board's): its body (BM), its head (HM: turned at the
+  // neck, driven forward or drawn back), a wing (WM).
+  const BM = new Float64Array(6), HM = new Float64Array(6), WM = new Float64Array(6), TM = new Float64Array(6), UNIT = new Float64Array([1, 0, 0, 1, 0, 0]);
+  function mThen(out, m, x, y, rot, sx, sy) { // (out: m, then moved to x, y, turned and scaled; out may be m)
+    const c = Math.cos(rot), s = Math.sin(rot), a = c * sx, b = s * sx, cc = -s * sy, d = c * sy, m0 = m[0], m1 = m[1], m2 = m[2], m3 = m[3];
+    out[4] = m0 * x + m2 * y + m[4]; out[5] = m1 * x + m3 * y + m[5];
+    out[0] = m0 * a + m2 * b; out[1] = m1 * a + m3 * b; out[2] = m0 * cc + m2 * d; out[3] = m1 * cc + m3 * d;
+  }
+  const atX = (m, x, y) => m[0] * x + m[2] * y + m[4], atY = (m, x, y) => m[1] * x + m[3] * y + m[5]; // (where m takes a point)
+  const useM = (g, m) => g.setTransform(lay.sc * m[0], lay.sc * m[1], lay.sc * m[2], lay.sc * m[3], lay.sc * m[4] + lay.ox, lay.sc * m[5] + lay.oy);
+  function birdMats(P) {
+    const z = P.s * (1 + 0.08 * P.air) * BU; // (a touch bigger in the air: nearer to you)
+    mThen(BM, UNIT, P.x, P.y, P.rot, P.flip * z, z);
+    mThen(BM, BM, 0, P.crouch * CROUCH, 0, 1, 1);
+    mThen(HM, BM, 0.25, -1.15, P.turn, 1, 1);
+    mThen(HM, HM, P.thrust - 0.25, 1.15, 0, 1, 1);
+  }
+  // A wing: from its shoulder, up over its back at the top of the beat
+  // (stroke 1), down under its belly at the bottom (-1), short as it passes
+  // edge-on between; swept forward to land; the far one behind its body.
+  function wingMat(P, far) {
+    const a = Math.PI / 2 + Math.PI / 2 * P.stroke + P.sweep, len = P.wing * (0.35 + 0.65 * Math.abs(P.stroke)) * (far ? 0.9 * P.far : P.near);
+    mThen(WM, BM, far ? 0.05 : -0.1, far ? -0.55 : -0.4, a, len, 1);
+  }
+  // Where all of it is (board units, in box): round the points of its parts, each with its reach.
+  const box = { x0: 0, y0: 0, x1: 0, y1: 0 };
+  const PTS_BODY = [-0.1, -0.45, 1.13, -0.1, 1.05, 1.13, -0.15, 3.1, 0.2, -0.55, 1.1, 0.16, 0.3, 1.2, 0.16, 0.95, 0.55, 0.22, 0.95, 1.05, 0.22];
+  const PTS_HEAD = [0.45, -1.75, 0.84, -0.12, -1.95, 0.44, 2.55, -1.72, 0.15, 1.05, -2.0, 0.14, 1.05, -1.5, 0.14];
+  const PTS_WING = [1.5, 0, 0.64, 3.1, 0, 0.64];
+  const BOTH = [false, true];
+  function boxAdd(m, pts, k) {
+    for (let i = 0; i < pts.length; i += 3) {
+      const x = atX(m, pts[i], pts[i + 1]), y = atY(m, pts[i], pts[i + 1]), r = pts[i + 2] * k;
+      if (x - r < box.x0) box.x0 = x - r;
+      if (x + r > box.x1) box.x1 = x + r;
+      if (y - r < box.y0) box.y0 = y - r;
+      if (y + r > box.y1) box.y1 = y + r;
+    }
+  }
+  function birdBox(P, fresh = true) {
+    birdMats(P);
+    if (fresh) { box.x0 = box.y0 = Infinity; box.x1 = box.y1 = -Infinity; }
+    const k = Math.hypot(BM[0], BM[1]);
+    boxAdd(BM, PTS_BODY, k); boxAdd(HM, PTS_HEAD, k);
+    if (P.wing > 0.02) for (const far of BOTH) { wingMat(P, far); boxAdd(WM, PTS_WING, k); }
+  }
+  // All of it on the screen: a wing that would reach past its edge (or its
+  // layer's) beats short of it, folded a little; flying, the bird keeps in
+  // from the edge. Perched, landing or drumming, it's where it was placed
+  // to fit (perchFor, drumPoseAt).
+  function fitBird(P) {
+    if (P.wing > 0.02) {
+      birdMats(P);
+      const k = Math.hypot(BM[0], BM[1]);
+      for (const far of BOTH) {
+        if (wingFits(P, far, k)) continue;
+        let lo = 0.2, hi = 1;
+        for (let i = 0; i < 6; i++) { const mid = (lo + hi) / 2; if (far) P.far = mid; else P.near = mid; if (wingFits(P, far, k)) lo = mid; else hi = mid; }
+        if (far) P.far = lo; else P.near = lo;
+      }
+    }
+    if (!P.free) return;
+    birdBox(P);
+    P.x += box.x0 < room.x0 ? room.x0 - box.x0 : box.x1 > room.x1 ? room.x1 - box.x1 : 0;
+    P.y += box.y0 < room.y0 ? room.y0 - box.y0 : box.y1 > room.y1 ? room.y1 - box.y1 : 0;
+  }
+  function wingFits(P, far, k) {
+    wingMat(P, far);
+    for (let i = 0; i < PTS_WING.length; i += 3) {
+      const x = atX(WM, PTS_WING[i], 0), y = atY(WM, PTS_WING[i], 0), r = PTS_WING[i + 2] * k;
+      if (x - r < room.x0 || x + r > room.x1 || y - r < room.y0 || y + r > room.y1) return false;
+    }
+    return true;
+  }
+
+  // Its head and its eye. Resting, it watches whatever moves near it (a
+  // head, a beetle), now and then you, and blinks; its head jerks to each
+  // thing and holds still, as birds' heads do. Through the aim its head
+  // turns to its chunk and tilts this way and that, its eye on it; flying
+  // in, its eye stays on it. Its pupil turns as the snakes' do: eased toward
+  // what it looks at, the way it looks turned into its head's frame.
+  function headAndEye(P, now, dt) {
+    const lively = !reduced, ph = P.phase, perchedNow = ph === 'rest' || ph === 'eye';
+    let want = 0;
+    if (ph === 'rest') { birdWatch(P, now); P.fx = bird.spot.x; P.fy = bird.spot.y; }
+    if (perchedNow || ph === 'hop' || ph === 'out') {
+      const hx = P.x + P.flip * 0.45 * BU * P.s, hy = P.y - 1.75 * BU * P.s, up = perchedNow ? P.up : 0.6;
+      want = Math.atan2(P.fy - hy, (P.fx - hx) * P.flip) - P.rot * P.flip;
+      if (ph === 'eye' && lively) { // (tilting its head this way and that, to look at it)
+        if (now > bird.cockAt) { bird.cock = bird.cock ? 0 : 0.16; bird.cockAt = now + 380 + 320 * Math.random(); }
+        want += want > 0 ? -bird.cock : bird.cock;
+      }
+      want = Math.max(-up, Math.min(perchedNow ? 1.2 : 0.6, want));
+      if (ph === 'out') want *= 1 - smooth(clamp01((P.u - 0.6) / 0.4)); // (its beak coming round to strike as it comes in)
+      if (ph === 'rest') want = Math.max(-0.7, Math.min(1, want)); // (resting, it looks round, not straight up or down)
+    } else if (ph === 'drum' || ph === 'linger' || ph === 'land') bird.turn = bird.turnTo = 0;
+    if (lively && perchedNow) {
+      if (Math.abs(want - bird.turnTo) > 0.1 || now > bird.hold) { bird.turnTo = want + (ph === 'rest' ? (Math.random() - 0.5) * 0.3 : 0); bird.hold = now + 260 + 640 * Math.random(); }
+      bird.turn += (bird.turnTo - bird.turn) * (1 - Math.exp(-dt / 30));
+    } else bird.turn += (want - bird.turn) * (1 - Math.exp(-dt / (lively ? 45 : 200)));
+    if (perchedNow) bird.turn = Math.max(-P.up, Math.min(1.2, bird.turn));
+    P.turn = bird.force == null ? bird.turn : perchedNow ? Math.max(-P.up, Math.min(1.2, bird.force)) : bird.force; // (held so for the tests, as far as it may turn there)
+    // Resting, a small bob, and now and then it shifts its grip (a hitch down the log and back).
+    if (lively && perchedNow) {
+      let c = 0.18 * (0.5 - 0.5 * Math.cos(TAU * now / 1700));
+      if (now > bird.gripAt) { bird.gripFrom = now; bird.gripAt = now + 2600 + 2800 * Math.random(); }
+      const gp = (now - bird.gripFrom) / 420;
+      if (gp >= 0 && gp < 1) c += 0.75 * (gp < 0.25 ? smooth(gp / 0.25) : 1 - smooth((gp - 0.25) / 0.75));
+      P.crouch = Math.min(1, P.crouch + c);
+    }
+    // Its eye, from where it is to what it looks at.
+    birdMats(P);
+    const tx = P.fx - atX(HM, 0.75, -1.9), ty = P.fy - atY(HM, 0.75, -1.9), len = Math.hypot(tx, ty) || 1, k = 1 - Math.pow(1 - T.GLANCE_EASE, dt / 16.7);
+    bird.gx += (tx / len - bird.gx) * k; bird.gy += (ty / len - bird.gy) * k;
+    if (now > bird.nextBlink) { bird.blinkUntil = now + T.BLINK_MS; bird.nextBlink = now + T.BLINK_MIN + Math.random() * (T.BLINK_MAX - T.BLINK_MIN); }
+    P.blink = now < bird.blinkUntil && (perchedNow || ph === 'settle');
+  }
+  // What it watches, resting: you now and then (if you're on the log), else
+  // the nearest head or beetle within 9 cells of its head, else a look round;
+  // a new pick every second or so, or when that one's gone.
+  function birdWatch(P, now) {
+    let f = bird.focus;
+    if (f && (f.body ? !f.alive : f.kind ? !game.food.includes(f) : false)) f = null;
+    if (!f || now >= bird.focusUntil) {
+      bird.focusUntil = now + 600 + 1400 * Math.random();
+      const hx = P.x + P.flip * 0.45 * BU * P.s, hy = P.y - 1.75 * BU * P.s, you = findById(viewerId);
+      f = null;
+      if (you && you.alive && Math.random() < 0.25) f = you;
+      else {
+        let near = (9 * CELL) ** 2;
+        for (const s of game.snakes) if (s.alive) { const c = s.body[0], d = (c.x * CELL + CELL / 2 - hx) ** 2 + (c.y * CELL + CELL / 2 - hy) ** 2; if (d < near) { near = d; f = s; } }
+        for (const b of game.food) if (b.kind === 'beetle') { const d = (b.x * CELL + CELL / 2 - hx) ** 2 + (b.y * CELL + CELL / 2 - hy) ** 2; if (d < near) { near = d; f = b; } }
+      }
+      if (!f) { const a = (Math.random() - 0.5) * 1.1; f = { x: hx + P.flip * Math.cos(a) * 300, y: hy + Math.sin(a) * 300 }; }
+      bird.focus = f;
+    }
+    const c = f.body ? f.body[0] : f.kind ? f : null;
+    bird.spot.x = c ? c.x * CELL + CELL / 2 : f.x; bird.spot.y = c ? c.y * CELL + CELL / 2 : f.y;
+  }
+
+  // Its parts, each drawn once (at this screen's size, and at half that for
+  // a small perch) and laid on with its pose: its ink (every part a line's
+  // width bigger, laid under the lot, so parts overlapping show no line
+  // between them), then its colours. Its rim of light (along its upper
+  // left, whichever way it's tipped), its beak (it opens to call) and its
+  // eye are drawn as it stands. Each: its box in units, facing right, and
+  // how it's drawn. Inked like everything else on the board, and lit by a
+  // warm rim, so its black still reads on the dark page beside it.
+  const BIRD_INK = '#3a2614', BIRD_RIM = '#e8d9b0'; // (Ink, and Parchment-2)
+  const birdTail = g => { g.beginPath(); g.moveTo(-0.55, 1.1); g.lineTo(-0.15, 3.1); g.lineTo(0.3, 1.2); g.closePath(); };
+  const birdFeet = g => { g.beginPath(); g.moveTo(0.5, 0.7); g.lineTo(0.95, 0.55); g.moveTo(0.5, 0.95); g.lineTo(0.95, 1.05); };
+  const oval = (g, cx, cy, rx, ry, a = 0) => { g.beginPath(); g.ellipse(cx, cy, rx, ry, a, 0, TAU); };
+  function bodyInk(g, feet) {
+    g.strokeStyle = BIRD_INK; g.lineWidth = 0.24;
+    birdTail(g); g.stroke();
+    oval(g, -0.1, 0.3, 0.95, 1.55, 0.08); g.stroke();
+    oval(g, 0.38, 0.45, 0.52, 1.15, 0.12); g.stroke();
+    if (feet) { g.lineWidth = 0.36; birdFeet(g); g.stroke(); }
+  }
+  function bodyPart(g, folded, feet) { // (the stiff tail it props itself on, its body, its buff belly, the red under its tail; folded, its wing's white shoulder and bars)
+    g.fillStyle = '#18181b';
+    birdTail(g); g.fill();
+    oval(g, -0.1, 0.3, 0.95, 1.55, 0.08); g.fill();
+    g.fillStyle = '#efe9dc'; oval(g, 0.38, 0.45, 0.52, 1.15, 0.12); g.fill();
+    g.fillStyle = '#dc2626'; oval(g, 0.22, 1.42, 0.36, 0.3); g.fill();
+    if (folded) {
+      g.fillStyle = '#f5f5f4'; oval(g, -0.3, -0.5, 0.32, 0.52, 0.2); g.fill();
+      g.beginPath();
+      for (let row = 0; row < 3; row++) for (let i = 0; i < 3; i++) { g.moveTo(-0.62 + i * 0.22 + 0.075, 0.15 + row * 0.38); g.arc(-0.62 + i * 0.22, 0.15 + row * 0.38, 0.075, 0, TAU); }
+      g.fill();
+    }
+    if (feet) { g.strokeStyle = '#57534e'; g.lineWidth = 0.12; birdFeet(g); g.stroke(); } // (gripping the bark)
+  }
+  function headInk(g) { g.strokeStyle = BIRD_INK; g.lineWidth = 0.24; oval(g, 0.45, -1.75, 0.72, 0.7); g.stroke(); oval(g, -0.12, -1.95, 0.3, 0.28); g.stroke(); }
+  function headPart(g) { // (black, a red nape, a white cheek under a black moustache stripe)
+    g.fillStyle = '#18181b'; oval(g, 0.45, -1.75, 0.72, 0.7); g.fill();
+    g.fillStyle = '#dc2626'; oval(g, -0.12, -1.95, 0.3, 0.28); g.fill();
+    g.fillStyle = '#f5f5f4'; oval(g, 0.62, -1.58, 0.44, 0.33); g.fill();
+    g.strokeStyle = '#18181b'; g.lineWidth = 0.15;
+    g.beginPath(); g.moveTo(0.2, -1.25); g.quadraticCurveTo(0.6, -1.38, 1.0, -1.3); g.stroke();
+  }
+  function wingPart(g, far) { // (big and black, barred white; the far one darker)
+    g.strokeStyle = BIRD_INK; g.lineWidth = 0.24; oval(g, 1.5, 0, 1.6, 0.55); g.stroke();
+    g.fillStyle = far ? '#0c0c0e' : '#18181b'; g.fill();
+    g.fillStyle = far ? '#a8a29e' : '#f5f5f4';
+    g.beginPath();
+    for (let i = 0; i < 4; i++) { const x = 0.8 + i * 0.42, y = i % 2 ? 0.12 : -0.12; g.moveTo(x + 0.1, y); g.arc(x, y, 0.1, 0, TAU); }
+    g.fill();
+  }
+  const PARTS = {
+    inkPerch: [-1.3, -1.5, 1.3, 3.4, g => bodyInk(g, true)], inkFly: [-1.3, -1.5, 1.3, 3.4, g => bodyInk(g, false)], inkHead: [-0.6, -2.65, 1.35, -0.9, headInk],
+    perch: [-1.3, -1.5, 1.3, 3.4, g => bodyPart(g, true, true)], tuck: [-1.3, -1.5, 1.3, 3.4, g => bodyPart(g, true, false)], fly: [-1.3, -1.5, 1.3, 3.4, g => bodyPart(g, false, false)],
+    head: [-0.6, -2.65, 1.35, -0.9, headPart], wing: [-0.25, -0.75, 3.25, 0.75, g => wingPart(g, false)], farWing: [-0.25, -0.75, 3.25, 0.75, g => wingPart(g, true)],
+    shadow: [-1.2, -2.1, 1.2, 2.1, g => { g.fillStyle = '#000'; oval(g, 0, 0, 1.1, 2); g.fill(); }],
+  };
+  const partsFull = new Map(), partsHalf = new Map();
+  let partsK = 0; // (device px a unit they were drawn for: the bird at 1.12, a touch bigger than it ever flies)
+  function layPart(g, name, half) {
+    const cache = half ? partsHalf : partsFull, [x0, y0, x1, y1, draw] = PARTS[name];
+    let c = cache.get(name);
+    if (!c) {
+      const k = partsK * (half ? 0.5 : 1);
+      c = makeLayer((x1 - x0) * k, (y1 - y0) * k);
+      const pg = c.getContext('2d'), sx = c.width / (x1 - x0), sy = c.height / (y1 - y0);
+      pg.setTransform(sx, 0, 0, sy, -x0 * sx, -y0 * sy);
+      pg.lineJoin = pg.lineCap = 'round';
+      draw(pg);
+      cache.set(name, c);
+    }
+    g.drawImage(c, x0, y0, x1 - x0, y1 - y0);
+  }
+  // Its beak, a chisel (its lower half opening by gape), as a path.
+  function beakPath(g, gape) {
+    g.beginPath();
+    if (!gape) { g.moveTo(1.05, -2.0); g.lineTo(BILL[0], BILL[1]); g.lineTo(1.05, -1.5); g.closePath(); return; }
+    g.moveTo(1.05, -2.0); g.lineTo(BILL[0], BILL[1]); g.lineTo(1.05, -1.72); g.closePath();
+    const c = Math.cos(gape), s = Math.sin(gape), tx = BILL[0] - 1.05, ty = BILL[1] + 1.72;
+    g.moveTo(1.05, -1.72); g.lineTo(1.05 + tx * c - ty * s, -1.72 + tx * s + ty * c); g.lineTo(1.05 + 0.22 * s, -1.72 + 0.22 * c); g.closePath();
+  }
+  function birdRim(g, cx, cy, rx, ry, a, at) { g.beginPath(); g.ellipse(cx, cy, rx - 0.07, ry - 0.07, a, at - a - 0.7, at - a + 0.7); g.stroke(); } // (a rim inside an oval's edge, round angle at)
+  const ghostHead = P => { mThen(TM, BM, 0.25, -1.15, P.turn, 1, 1); mThen(TM, TM, -B_BACK - 0.25, 1.15, 0, 1, 1); }; // (its head drawn back, as it was a moment ago: the blur)
+  function drawBird(g, P, half) {
+    birdMats(P);
+    const sun = P.flip > 0 ? Math.PI * 1.25 - P.rot : Math.PI * 1.75 + P.rot; // (the screen's upper left, in its own frame)
+    // Its shadow, on the bark only (on the page beside the board it was a smudge).
+    g.save();
+    useBase(g); g.beginPath(); g.rect(0, 0, SIZE, SIZE); g.clip();
+    mThen(TM, BM, 0.35 + 0.6 * P.air, 0.6 + 0.9 * P.air, 0, 1, 1); useM(g, TM);
+    g.globalAlpha = P.alpha * (0.28 - 0.1 * P.air);
+    layPart(g, 'shadow', half);
+    g.restore();
+    g.globalAlpha = P.alpha;
+    g.lineJoin = g.lineCap = 'round';
+    if (P.wing > 0.02) { wingMat(P, true); useM(g, WM); layPart(g, 'farWing', half); }
+    // Its ink, then its colours.
+    useM(g, BM); layPart(g, P.feet ? 'inkPerch' : 'inkFly', half);
+    g.strokeStyle = BIRD_INK; g.lineWidth = 0.24;
+    if (P.blur > 0) { ghostHead(P); g.globalAlpha = P.alpha * 0.4 * P.blur; useM(g, TM); layPart(g, 'inkHead', half); beakPath(g, 0); g.stroke(); g.globalAlpha = P.alpha; }
+    useM(g, HM); layPart(g, 'inkHead', half); beakPath(g, P.gape); g.stroke();
+    useM(g, BM); layPart(g, P.wing > 0.5 ? 'fly' : P.feet ? 'perch' : 'tuck', half);
+    g.strokeStyle = BIRD_RIM; g.lineWidth = 0.11;
+    g.beginPath(); // (lit down its tail's sunny side, whichever way it faces)
+    if (P.flip > 0) { g.moveTo(-0.33, 1.84); g.lineTo(-0.16, 2.69); } else { g.moveTo(0.08, 1.83); g.lineTo(-0.13, 2.7); }
+    g.stroke();
+    birdRim(g, -0.1, 0.3, 0.95, 1.55, 0.08, sun);
+    if (P.blur > 0) { ghostHead(P); g.globalAlpha = P.alpha * 0.4 * P.blur; useM(g, TM); layPart(g, 'head', half); g.fillStyle = '#71717a'; beakPath(g, 0); g.fill(); g.globalAlpha = P.alpha; }
+    useM(g, HM); layPart(g, 'head', half);
+    g.strokeStyle = BIRD_RIM; g.lineWidth = 0.11;
+    birdRim(g, 0.45, -1.75, 0.72, 0.7, 0, sun - P.turn);
+    g.fillStyle = '#71717a'; beakPath(g, P.gape); g.fill(); // (the chisel beak, darker along its top)
+    g.fillStyle = '#3f3f46'; g.beginPath(); g.moveTo(1.05, -2.0); g.lineTo(BILL[0], BILL[1]); g.lineTo(1.05, -1.78); g.closePath(); g.fill();
+    // Its eye: a pupil turned to what it looks at (the way it looks, turned into its head's frame), with a glint; or shut.
+    const c = Math.cos(P.rot), s = Math.sin(P.rot), x1 = (bird.gx * c + bird.gy * s) * P.flip, y1 = -bird.gx * s + bird.gy * c;
+    const ct = Math.cos(P.turn), st = Math.sin(P.turn), ex = x1 * ct + y1 * st, ey = -x1 * st + y1 * ct;
+    g.fillStyle = '#fffbea';
+    if (P.blink) { oval(g, 0.75, -1.9, 0.21, 0.05); g.fill(); }
+    else {
+      oval(g, 0.75, -1.9, 0.21, 0.21); g.fill();
+      const px = 0.75 + ex * 0.094, py = -1.9 + ey * 0.094;
+      g.fillStyle = '#0a0a0a'; oval(g, px, py, 0.1, 0.1); g.fill();
+      g.fillStyle = '#ffffff'; oval(g, px + 0.035, py - 0.035, 0.035, 0.035); g.fill();
+    }
+    if (P.wing > 0.02) {
+      wingMat(P, false); useM(g, WM); layPart(g, 'wing', half);
+      g.strokeStyle = BIRD_RIM; g.lineWidth = 0.11;
+      birdRim(g, 1.5, 0, 1.6, 0.55, 0, sun - (Math.PI / 2 + Math.PI / 2 * P.stroke + P.sweep));
+    }
+    g.globalAlpha = 1;
+  }
+
+  // On its chunk, drumming: a dent where its beak strikes, deeper blow by
+  // blow, with splits running from it along the grain and across (the
+  // mark's own cracks are the board's: this is the bird's work), gone once
+  // the strike has made it a hole (the board draws the hole), and none over
+  // a body lying there; and chips flying off each blow and falling (not
+  // with reduced motion).
+  function drawDent(g, A, done) {
+    const sx = A.spot % GRID, sy = (A.spot - sx) / GRID;
+    for (const s of game.snakes) if (s.alive) for (const c of s.body) if (c.x === sx && c.y === sy) return;
+    const f = done / A.times.length, r = CELL * (0.07 + 0.15 * f);
+    useBase(g);
+    g.fillStyle = 'rgba(20,10,4,0.85)';
+    oval(g, A.tx, A.ty, r, r * 0.82); g.fill();
+    g.strokeStyle = 'rgba(20,10,4,0.8)'; g.lineWidth = 1.6; g.lineCap = 'round';
+    g.beginPath();
+    for (let m = 0; m < 4; m++) {
+      const a = (m === 0 ? -Math.PI / 2 : m === 1 ? Math.PI / 2 : m === 2 ? 0.4 : Math.PI + 0.4) + (hash01(A.spot * 13 + m) - 0.5) * 0.6, l = r * (1.1 + (m < 2 ? 1.6 : 0.8) * f);
+      g.moveTo(A.tx + Math.cos(a) * r * 0.7, A.ty + Math.sin(a) * r * 0.7); g.lineTo(A.tx + Math.cos(a) * l, A.ty + Math.sin(a) * l);
+    }
+    g.stroke();
+    g.fillStyle = 'rgba(254,243,199,0.65)'; // (a fleck of pale wood on its far side, where the light falls in)
+    oval(g, A.tx + r * 0.35, A.ty + r * 0.3, r * 0.35, r * 0.3); g.fill();
+  }
+  const CHIP_COLS = ['#e9cf9c', '#5a3b22'];
+  function drawChips(g, A, t) {
+    useBase(g);
+    const up = -Math.PI / 2 - 0.6 * A.drum.flip; // (up and back toward the bird, out of the hole)
+    for (let c = 0; c < 2; c++) {
+      g.fillStyle = CHIP_COLS[c];
+      for (let i = 0; i < A.times.length; i++) {
+        const age = t - A.times[i];
+        if (age < 0) break;
+        if (age >= B_CHIPS) continue;
+        g.globalAlpha = 1 - age / B_CHIPS;
+        for (let j = c; j < 4; j += 2) {
+          const h = A.strikeAt * 7919 + i * 31 + j * 7, a = up + (hash01(h) - 0.5) * 2.2, v = 0.16 + 0.26 * hash01(h + 1), sz = 2.6 + 3 * hash01(h + 2);
+          const x = A.tx + Math.cos(a) * v * age, y = A.ty + Math.sin(a) * v * age + 0.0011 * age * age;
+          if (x - sz < room.x0 || x + sz > room.x1 || y - sz < room.y0 || y + sz > room.y1) continue;
+          g.fillRect(x - sz / 2, y - sz / 2, sz, sz);
+        }
+      }
+    }
+    g.globalAlpha = 1;
+  }
+  function hash01(n) {
+    let h = Math.imul(n ^ (n >>> 16), 0x45d9f3b);
+    h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+
   function drawWoodpecker(alpha, now, dt) {
     const w = game.woodpecker;
     if (!w || !birdLayer) {
-      if (birdShown) { birdLayer.style.display = 'none'; birdShown = false; bird.placed = false; bird.box = null; }
+      if (birdShown) { birdLayer.style.display = 'none'; birdShown = false; }
       return;
     }
-    if (!birdShown) { birdLayer.style.display = 'block'; birdShown = true; }
+    if (!birdShown) { birdLayer.style.display = 'block'; birdShown = true; resetBird(now); }
+    if (!boardRect.w) return;
     const dpr = Math.min(window.devicePixelRatio || 1, quality === 2 ? 2 : quality === 1 ? 1.5 : 1);
-    const W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
-    if (birdLayer.width !== W || birdLayer.height !== H) { // (its CSS size from the same numbers: 100vh on a phone isn't the window you see)
-      birdLayer.width = W; birdLayer.height = H; bird.box = null;
-      birdLayer.style.width = `${innerWidth}px`; birdLayer.style.height = `${innerHeight}px`;
+    if (placeLayer(dpr)) bird.clear = true;
+    const g = birdG;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    if (bird.clear) g.clearRect(0, 0, lay.W, lay.H);
+    else if (bird.drawn) g.clearRect(bird.box[0], bird.box[1], bird.box[2], bird.box[3]);
+    bird.clear = bird.drawn = false;
+    const k = lay.sc * BU * 1.12;
+    if (Math.abs(k - partsK) > partsK * 0.01) { partsK = k; partsFull.clear(); partsHalf.clear(); }
+    birdRoom();
+    const P = pose;
+    P.tp = game.tick - 1 + alpha;
+    posture(w, P.tp, now);
+    headAndEye(P, now, dt);
+    fitBird(P);
+    // Where it's drawn, to clear next frame: all of it, its shadow, its chips.
+    birdBox(P);
+    const e = 3.6 * BU * P.s; // (its shadow, cast down and to the right of it, however it's tipped)
+    let x0 = box.x0 - e, y0 = box.y0 - e, x1 = box.x1 + e, y1 = box.y1 + e;
+    if (P.drum) {
+      const A = P.drum;
+      if (P.blows > 0) drawDent(g, A, P.blows);
+      if (!reduced) drawChips(g, A, P.t);
+      x0 = Math.min(x0, A.tx - 5 * CELL); x1 = Math.max(x1, A.tx + 5 * CELL); y0 = Math.min(y0, A.ty - 5 * CELL); y1 = Math.max(y1, A.ty + 5 * CELL); // (as far as its chips fly)
     }
-    birdG.setTransform(1, 0, 0, 1, 0, 0);
-    // (The layer is the whole page and the bird a small part of it: only
-    // where it was last drawn is cleared, not the whole page every frame.)
-    if (bird.box) birdG.clearRect(bird.box[0], bird.box[1], bird.box[2], bird.box[3]);
-    else birdG.clearRect(0, 0, W, H);
-    if (!boardRect.w) { bird.box = null; return; }
-    const sc = boardRect.w / SIZE * dpr;
-    birdG.setTransform(sc, 0, 0, sc, boardRect.x * dpr, boardRect.y * dpr);
-
-    const tp = game.tick - 1 + alpha, lively = !reduced;
-    const tx = w.x * CELL + CELL / 2, ty = w.y * CELL + CELL / 2;
-    const perch = perchOf(tx, ty), hit = strikeAt(tx, ty, perch.flip);
-    // The pose this moment calls for: perched, flying in or out, drumming
-    // (at full size over the board, however small it perches).
-    let gx = perch.x, gy = perch.y, gs = perch.s, fly = 0, drum = false;
-    const aiming = w.target.length > 0;
-    const out = aiming ? Math.max(0, Math.min(1, (tp - (w.strikeAt - 3.5)) / 2.5)) : 0; // flying at it...
-    const back = !aiming && w.struckAt >= 0 ? Math.max(0, Math.min(1, (tp - (w.struckAt + 1.5)) / 2.5)) : 1; // ...and home again
-    if (aiming && out > 0) {
-      const e = lively ? ease(out) : out < 0.5 ? 0 : 1; // (reduced motion: a cut, not a flight)
-      gx = perch.x + (hit.x - perch.x) * e; gy = perch.y + (hit.y - perch.y) * e; gs = perch.s + (1 - perch.s) * e;
-      fly = out < 1 ? 1 : 0; drum = out >= 1;
-    } else if (!aiming && back < 1) {
-      const e = lively ? ease(back) : back < 0.5 ? 0 : 1;
-      gx = hit.x + (perch.x - hit.x) * e; gy = hit.y + (perch.y - hit.y) * e; gs = 1 + (perch.s - 1) * e;
-      fly = back > 0 ? 1 : 0; drum = back === 0;
-    }
-    // Arriving: swooping down from high above.
-    const arrive = Math.min(1, (now - bird.arrivedAt) / 1100);
-    if (!lively) fly = 0;
-    else if (arrive < 1) { const e = ease(arrive); gy -= (1 - e) * SIZE * 0.9; gx -= (1 - e) * SIZE * 0.25 * perch.flip; fly = 1; }
-    // Moving between perches (its next chunk is elsewhere): a quick hop.
-    if (!bird.placed || !lively) { bird.x = gx; bird.y = gy; bird.s = gs; bird.placed = true; }
-    else if (fly || drum) { bird.x = gx; bird.y = gy; bird.s = gs; }
-    else {
-      const k2 = Math.min(1, dt / 160), dx = gx - bird.x, dy = gy - bird.y;
-      bird.x += dx * k2; bird.y += dy * k2; bird.s += (gs - bird.s) * k2;
-      if (Math.hypot(dx, dy) > BU * 0.8) fly = 1;
-    }
-    bird.flip = perch.flip;
-    // Eyeing its chunk: the head turns to it, and it crouches as the strike nears.
-    const crouch = aiming && out === 0 ? Math.max(0, 1 - (w.strikeAt - 3.5 - tp) / T.PECK_AIM_TICKS) : 0;
-    let look = 0;
-    if (aiming && out === 0) {
-      const hx = bird.x + bird.flip * BU * 0.45 * bird.s, hy = bird.y - BU * 1.75 * bird.s;
-      look = Math.max(-(perch.up ?? 1.2), Math.min(1.2, Math.atan2(ty - hy, (tx - hx) * bird.flip))); // (on the ledge, only a little way up: its beak stays under the board)
-    }
-    // Chips fly while it drums.
-    if (drum && lively && now - bird.chipAt > 70) {
-      bird.chipAt = now;
-      spawn(tx + (Math.random() - 0.5) * CELL, ty + (Math.random() - 0.5) * CELL, 3, 260, 420, 2.6, '#c08a4a', '#f6ecd2');
-    }
-    birdDoing.fly = fly; birdDoing.drum = drum; birdDoing.look = look; birdDoing.crouch = crouch; birdDoing.now = lively ? now : 0;
-    paintWoodpecker(birdG, bird.x, bird.y, 0, bird.flip, bird.s, birdDoing);
-    const bx = boardRect.x * dpr + (bird.x - 6 * BU) * sc, by = boardRect.y * dpr + (bird.y - 7 * BU) * sc;
-    BIRD_DRAWN[0] = Math.floor(bx) - 2; BIRD_DRAWN[1] = Math.floor(by) - 2; BIRD_DRAWN[2] = Math.ceil(12 * BU * sc) + 4; BIRD_DRAWN[3] = Math.ceil(13 * BU * sc) + 4;
-    bird.box = BIRD_DRAWN;
+    drawBird(g, P, lay.sc * BU * P.s < partsK * 0.55);
+    const bx = Math.max(0, Math.floor(lay.ox + x0 * lay.sc) - 2), by = Math.max(0, Math.floor(lay.oy + y0 * lay.sc) - 2);
+    bird.box[0] = bx; bird.box[1] = by;
+    bird.box[2] = Math.max(0, Math.min(lay.W, Math.ceil(lay.ox + x1 * lay.sc) + 2) - bx); bird.box[3] = Math.max(0, Math.min(lay.H, Math.ceil(lay.oy + y1 * lay.sc) + 2) - by);
+    bird.drawn = true;
   }
-  const birdDoing = { fly: 0, drum: false, look: 0, crouch: 0, now: 0 }; // (what it's doing this frame, for paintWoodpecker)
-
-  // The bird, in its own frame: beak towards +x, head up (-y), clinging by
-  // its feet at the origin, its stiff tail propped below. u = BU, s its
-  // scale. Inked like everything else on the board, and lit along its upper
-  // left by a warm rim, so its black still reads on the dark page beside it.
-  const BIRD_INK = '#3a2614', BIRD_RIM = '#e8d9b0', WINGS = [1, -1]; // (Ink, and Parchment-2)
-  // (Its shapes, drawn on bg as bp says: made once, not afresh every frame of its stay.)
-  let bg = null;
-  const bp = { x: 0, y: 0, rot: 0, flip: 1, z: 1, crouch: 0, flap: 0, thrust: 0, turn: 0 };
-  function birdFrame() { bg.translate(bp.x, bp.y); bg.rotate(bp.rot); bg.scale(bp.flip * bp.z, bp.z); bg.translate(0, bp.crouch * BU * 0.25); }
-  function birdOval(cx, cy, rx, ry, a) { bg.beginPath(); bg.ellipse(cx * BU, cy * BU, rx * BU, ry * BU, a, 0, TAU); }
-  function birdEll(cx, cy, rx, ry, a, col) { bg.fillStyle = col; birdOval(cx, cy, rx, ry, a); bg.fill(); }
-  function birdLit(cx, cy, rx, ry, a, at) { bg.beginPath(); bg.ellipse(cx * BU, cy * BU, (rx - 0.07) * BU, (ry - 0.07) * BU, a, at - a - 0.7, at - a + 0.7); bg.stroke(); } // (a rim inside an oval's edge, round angle at)
-  function birdToHead() { bg.translate(0.25 * BU, -1.15 * BU); bg.rotate(bp.turn); bg.translate(bp.thrust * BU - 0.25 * BU, 1.15 * BU); } // (it turns, and drives forward when it drums)
-  function birdToWing(sg) { bg.translate(-0.1 * BU, -0.4 * BU); bg.rotate(sg * (0.9 + 0.7 * bp.flap) + Math.PI); }
-  function birdTail() { bg.beginPath(); bg.moveTo(-0.55 * BU, 1.1 * BU); bg.lineTo(-0.15 * BU, 3.1 * BU); bg.lineTo(0.3 * BU, 1.2 * BU); bg.closePath(); }
-  function birdBeak() { bg.beginPath(); bg.moveTo(1.05 * BU, -2.0 * BU); bg.lineTo(BILL[0] * BU, BILL[1] * BU); bg.lineTo(1.05 * BU, -1.5 * BU); bg.closePath(); }
-  function birdFeet() { bg.beginPath(); bg.moveTo(0.5 * BU, 0.7 * BU); bg.lineTo(0.95 * BU, 0.55 * BU); bg.moveTo(0.5 * BU, 0.95 * BU); bg.lineTo(0.95 * BU, 1.05 * BU); }
-  function paintWoodpecker(g, x, y, rot, flip, s, { fly, drum, look, crouch, now }) {
-    const u = BU, flap = fly ? Math.sin(now / 55) : 0, z = s * (1 + fly * 0.08); // (a touch bigger in the air: nearer to you)
-    bg = g; bp.x = x; bp.y = y; bp.rot = rot; bp.flip = flip; bp.z = z; bp.crouch = crouch; bp.flap = flap;
-    // Its shadow, on the bark only (on the page beside the board it was a smudge).
-    g.save();
-    g.beginPath(); g.rect(0, 0, SIZE, SIZE); g.clip();
-    birdFrame();
-    g.globalAlpha = fly ? 0.18 : 0.28;
-    birdEll(0.35 + fly * 0.6, 0.6 + fly * 0.9, 1.1, 2, 0, '#000');
-    g.restore();
-    g.save();
-    birdFrame();
-    const sun = flip > 0 ? Math.PI * 1.25 : Math.PI * 1.75; // (the screen's upper left, in its own frame, whichever way it faces)
-    bp.thrust = drum ? (0.5 - 0.5 * Math.cos(now / 26)) * 0.42 : 0; bp.turn = look + (drum ? 0.05 : 0);
-    // Its ink first: every part a line's width bigger, under the lot.
-    g.lineJoin = g.lineCap = 'round';
-    g.strokeStyle = BIRD_INK;
-    g.lineWidth = 0.24 * u;
-    if (fly) for (const sg of WINGS) { g.save(); birdToWing(sg); birdOval(1.5, 0, 1.6, 0.55, 0); g.stroke(); g.restore(); }
-    birdTail(); g.stroke();
-    birdOval(-0.1, 0.3, 0.95, 1.55, 0.08); g.stroke();
-    birdOval(0.38, 0.45, 0.52, 1.15, 0.12); g.stroke();
-    g.lineWidth = 0.36 * u;
-    birdFeet(); g.stroke();
-    g.save();
-    birdToHead();
-    g.lineWidth = 0.24 * u;
-    birdOval(0.45, -1.75, 0.72, 0.7, 0); g.stroke();
-    birdOval(-0.12, -1.95, 0.3, 0.28, 0); g.stroke();
-    birdBeak(); g.stroke();
-    g.restore();
-    g.strokeStyle = BIRD_RIM;
-    g.lineWidth = 0.11 * u;
-    // Wings out when it flies: big, black, barred white, beating.
-    if (fly) {
-      for (const sg of WINGS) {
-        g.save();
-        birdToWing(sg);
-        birdEll(1.5, 0, 1.6, 0.55, 0, '#18181b');
-        birdLit(1.5, 0, 1.6, 0.55, 0, sun - (sg * (0.9 + 0.7 * flap) + Math.PI));
-        g.fillStyle = '#f5f5f4';
-        for (let i = 0; i < 4; i++) { g.beginPath(); g.arc((0.8 + i * 0.42) * u, (i % 2 ? 0.12 : -0.12) * u, 0.1 * u, 0, TAU); g.fill(); }
-        g.restore();
-      }
-    }
-    // The stiff tail it props itself on (lit down its sunny side), the body,
-    // its buff belly, the red under its tail.
-    g.fillStyle = '#18181b';
-    birdTail(); g.fill();
-    g.beginPath();
-    if (flip > 0) { g.moveTo(-0.33 * u, 1.84 * u); g.lineTo(-0.16 * u, 2.69 * u); } else { g.moveTo(0.08 * u, 1.83 * u); g.lineTo(-0.13 * u, 2.7 * u); }
-    g.stroke();
-    birdEll(-0.1, 0.3, 0.95, 1.55, 0.08, '#18181b');
-    birdLit(-0.1, 0.3, 0.95, 1.55, 0.08, sun);
-    birdEll(0.38, 0.45, 0.52, 1.15, 0.12, '#efe9dc');
-    birdEll(0.22, 1.42, 0.36, 0.3, 0, '#dc2626');
-    // The folded wing: a white shoulder patch and white bars.
-    if (!fly) {
-      birdEll(-0.3, -0.5, 0.32, 0.52, 0.2, '#f5f5f4');
-      g.fillStyle = '#f5f5f4';
-      for (let row = 0; row < 3; row++) for (let i = 0; i < 3; i++) { g.beginPath(); g.arc((-0.62 + i * 0.22) * u, (0.15 + row * 0.38) * u, 0.075 * u, 0, TAU); g.fill(); }
-    }
-    // Feet, gripping the bark.
-    g.strokeStyle = '#57534e';
-    g.lineWidth = 0.12 * u;
-    birdFeet(); g.stroke();
-    // The head.
-    birdToHead();
-    birdEll(0.45, -1.75, 0.72, 0.7, 0, '#18181b');
-    g.strokeStyle = BIRD_RIM;
-    g.lineWidth = 0.11 * u;
-    birdLit(0.45, -1.75, 0.72, 0.7, 0, sun - bp.turn);
-    birdEll(-0.12, -1.95, 0.3, 0.28, 0, '#dc2626'); // red nape
-    birdEll(0.62, -1.58, 0.44, 0.33, 0, '#f5f5f4'); // white cheek...
-    g.strokeStyle = '#18181b'; // ...under a black moustache stripe
-    g.lineWidth = 0.15 * u;
-    g.beginPath(); g.moveTo(0.2 * u, -1.25 * u); g.quadraticCurveTo(0.6 * u, -1.38 * u, 1.0 * u, -1.3 * u); g.stroke();
-    birdEll(0.75, -1.9, 0.14, 0.14, 0, '#0a0a0a'); // the eye, with a glint
-    birdEll(0.79, -1.94, 0.05, 0.05, 0, '#ffffff');
-    g.fillStyle = '#71717a'; // the chisel beak
-    birdBeak(); g.fill();
-    g.fillStyle = '#3f3f46';
-    g.beginPath(); g.moveTo(1.05 * u, -2.0 * u); g.lineTo(BILL[0] * u, BILL[1] * u); g.lineTo(1.05 * u, -1.78 * u); g.closePath(); g.fill();
-    g.restore();
-  }
+  // When it lands back on its perch after its last strike, ms after it, as
+  // drawn (the game says "kik!" then); Infinity if it isn't on its way back.
+  const birdHome = () => (game?.woodpecker && game.woodpecker.struckAt >= 0 && home.struckAt === game.woodpecker.struckAt ? home.total : Infinity);
 
   // On the board: the chunk it's eyeing glows and cracks, the pulse quickening
   // as the strike nears, and its pecks dent the rim. It's traced with the
@@ -8156,8 +8663,6 @@ window.SnakeRender = (() => {
         for (let i = 0; i < 3; i++) mote(x, y - CELL * 0.2, (Math.random() - 0.5) * 8, -16, 1400, 3, 2);
       } else if (e.type === 'rot') { // rotted away: a brown puff (a bead, in its own colour)
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 8, 110, 460, 2.2, e.kind === 'pellet' ? beadFill(e) : '#8a6a2a', '#57534e');
-      } else if (e.type === 'woodpecker') {
-        bird.arrivedAt = now;
       } else if (e.type === 'peck') { // a chunk comes out: chips flying from every cell, and a thump
         for (const k of e.cells || []) spawn((k % GRID) * CELL + CELL / 2, Math.floor(k / GRID) * CELL + CELL / 2, 4, 240, 520, 2.8, '#c08a4a', '#3b2412');
         if (e.cells?.length && !reduced) shake(5);
@@ -8580,7 +9085,7 @@ window.SnakeRender = (() => {
     refusal.at = -1e9; refusal.tick = -1;
     press.dir = null; press.stun = -1; press.tick = -1;
     timeFrom = timeAt = shownTime = g.time;
-    bird.placed = false; bird.arrivedAt = -1e9;
+    resetBird(); plan.strikeAt = home.struckAt = -1; // (the woodpecker starts afresh: it comes in as it arrives, from its state)
     for (const k in sky) sky[k] = 0;
     snowCover = 0;
     embers.length = 0;
@@ -8628,5 +9133,17 @@ window.SnakeRender = (() => {
       return out;
     },
     flick(s, p) { const a = animOf(s, lastNow), [, len] = FLICKS[lookOf(s)] || FLICKS.player; a.tongueMs = T.TONGUE_MS * len; a.tongueUntil = lastNow + (1 - p) * a.tongueMs; a.nextTongue = lastNow + 1e9; }, // (its tongue or gag p of the way through, and then no more: for the tests)
+    birdHome, // (when the woodpecker lands back on its perch after a strike, ms after it: the game's "kik!")
+    // (the woodpecker as last drawn: its pose, what it's doing, where its eye is and where it looks, its layer; and its plan's timings, ms: for the tests)
+    birdPose() {
+      birdMats(pose);
+      const k = lay.sc, u = Math.hypot(HM[0], HM[1]);
+      return { phase: pose.phase, tp: pose.tp, x: pose.x, y: pose.y, s: pose.s, flip: pose.flip, rot: pose.rot, turn: pose.turn, thrust: pose.thrust, wing: pose.wing, stroke: pose.stroke, crouch: pose.crouch, blur: pose.blur, blows: pose.blows, blink: pose.blink,
+        gaze: [bird.gx, bird.gy], looks: [pose.fx, pose.fy], eye: [lay.ox + k * atX(HM, 0.75, -1.9), lay.oy + k * atY(HM, 0.75, -1.9), k * u * 0.21], eyeAt: [atX(HM, 0.75, -1.9), atY(HM, 0.75, -1.9)], beak: [atX(HM, BILL[0], BILL[1]), atY(HM, BILL[0], BILL[1])],
+        layer: { x: lay.x, y: lay.y, w: lay.w, h: lay.h, W: lay.W, H: lay.H } };
+    },
+    birdPlan: () => ({ strikeAt: plan.strikeAt, spot: [plan.tx, plan.ty], aim: plan.aimMs, depart: plan.depart, settle: B_SETTLE, drum: plan.D, times: plan.times.slice(), flight: plan.F, hop: plan.hop ? plan.H : 0, home: home.total, back: home.F, linger: B_LINGER }),
+    birdLook(turn) { bird.force = turn ?? null; }, // (its head held turned so, or null: for the tests)
+    birdFrame(alpha, now) { if (game && sized) drawWoodpecker(alpha, now, 16); }, // (the woodpecker alone drawn, the board left as it is: for the tests, frame by frame through its flights)
   };
 })();
