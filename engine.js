@@ -1332,11 +1332,13 @@ window.SnakeEngine = (() => {
 
     // Dead snakes fall to beads (every other segment: see leavesBead), and
     // broken-off pieces too (all of them), never on food, living bodies,
-    // holes or fire. Each bead remembers whose it was (you choke on your
+    // holes, fire or a burrow (nothing grows on one, and food there would
+    // stop it up). Each bead remembers whose it was (you choke on your
     // own: see eat), and rots after a while, roasted ones later.
     if (dying.length || drops.length) {
       markBodies(game);
       for (const f of game.food) bodyStamp[key(f.x, f.y)] = stamp;
+      for (const b of game.burrows) bodyStamp[key(b.x, b.y)] = stamp;
       const meat = (x, y, color, owner, cooked) => {
         const k = key(x, y);
         if (bodyStamp[k] === stamp || game.holes.has(k) || game.fires.has(k)) return;

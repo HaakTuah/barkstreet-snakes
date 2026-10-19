@@ -2204,5 +2204,18 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   check('an AI sees the burrows as they are', E.aiView(g, g.snakes[1]).burrows === g.burrows && E.createGame().unders.length === 0);
 }
 
+{ // Nothing grows on a burrow, beads included: a snake out across one leaves no bead on it, and neither does a tail a crash
+  // knocks off (the beads elsewhere fall as ever).
+  const g = board([[line(23, 5, 3), 'right'], [line(23, 15, 8), 'right'], [line(5, 20, 4), 'right']]);
+  g.burrows = [{ x: 21, y: 5, at: 0, used: 0 }, { x: 16, y: 15, at: 0, used: 0 }];
+  g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }];
+  feed(g);
+  const dying = E.step(g), beads = g.food.filter(f => f.kind === 'pellet').map(f => [f.x, f.y]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const on = (x, y) => beads.some(([bx, by]) => bx === x && by === y);
+  check('beads never fall on a burrow: a snake out across one, a tail a crash knocks off across another',
+    dying.length === 1 && dying[0] === g.snakes[0] && !on(21, 5) && on(23, 5) && on(22, 5) && !on(16, 15) && on(17, 15) && on(18, 15) && g.snakes[1].alive,
+    JSON.stringify({ beads, out: dying.map(s => s.id) }));
+}
+
 console.log(failed ? `${failed} failed` : 'all good');
 process.exit(failed ? 1 : 0);
