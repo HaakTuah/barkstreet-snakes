@@ -2333,18 +2333,17 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
   check('...and never steps into the mark for it', !beside.right && (beside.up || 0) + (beside.down || 0) === 50, JSON.stringify(beside));
 }
 
-{ // Knocked food is there only from the strike on: getting to where it'll land first is no use if a rival can be there
-  // by the time it does. Heading right along row 11, 5 from where a golden apple in the mark will land, a rival's head
-  // 8 from it (as I see it, a moment ago); another golden apple 12 down. (Drab and Gobbler without their taste for the
-  // board, so it's the food that decides.) With the strike 1 tick off, the apple's there before the rival can be: Drab
-  // takes it. With the strike 6 off, I'd get there first but the rival could be there as it lands: Drab, which lets a
-  // rival's food be, takes the other; Gobbler, which counts a rival's food in full, races for it, and so does Drab desperate.
+{ // Knocked food goes to whoever's nearer where it lands, as any food does. Heading right along row 11, 5 from where a
+  // golden apple in the mark will land (the strike 6 ticks off); another golden apple 12 down. (Drab and Gobbler without
+  // their taste for the board, so it's the food that decides.) With a rival's head 10 from the landing, it's Drab's, and
+  // it heads there; with the rival 6 from it (as I see it, a moment ago), nearer than Drab, Drab, which lets a rival's
+  // food be, takes the other, while Gobbler, which counts a rival's food in full, races for it, and so does Drab desperate.
   const plain = key => ({ ...AI.PERSONAS[key], w: { ...AI.PERSONAS[key].w, territory: 0, aggression: 0 } });
-  const view = (strikeAt, hungerLeft = 99999) => marked({ strikeAt, me: aiMe(line(6, 11, 5), 'right', { hungerLeft, starveIn: hungerLeft }), others: [aiRival(1, line(11, 3, 5, 1), 'left')],
+  const view = (rivalY, hungerLeft = 99999) => marked({ strikeAt: 16, me: aiMe(line(6, 11, 5), 'right', { hungerLeft, starveIn: hungerLeft }), others: [aiRival(1, line(11, rivalY, 5, 1), 'left')],
     food: [{ x: 13, y: 11, kind: 'golden', expires: 9999 }, { x: 6, y: 23, kind: 'golden', expires: 9999 }] });
-  const go = (key, strikeAt, hungerLeft) => { const out = {}; for (let i = 0; i < 20; i++) { const d = dirOf(AI.decide(view(strikeAt, hungerLeft), plain(key), {})); out[d] = (out[d] || 0) + 1; } return out; };
-  const soon = go('drab', 11), drab = go('drab', 16), gobbler = go('gobbler', 16), starving = go('drab', 16, 1500);
-  check('knocked food is mine only if no rival can be there by the time it lands: Drab leaves it then', soon.right === 20 && drab.down === 20, JSON.stringify({ soon, drab }));
+  const go = (key, rivalY, hungerLeft) => { const out = {}; for (let i = 0; i < 20; i++) { const d = dirOf(AI.decide(view(rivalY, hungerLeft), plain(key), {})); out[d] = (out[d] || 0) + 1; } return out; };
+  const mine = go('drab', 1), drab = go('drab', 5), gobbler = go('gobbler', 5), starving = go('drab', 5, 1500);
+  check('knocked food is mine if I\'m nearer where it lands; a rival nearer, Drab leaves it', mine.right === 20 && drab.down === 20, JSON.stringify({ mine, drab }));
   check('...but Gobbler races for it, and so does a desperate rival', gobbler.right === 20 && starving.right === 20, JSON.stringify({ gobbler, starving }));
 }
 

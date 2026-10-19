@@ -1432,8 +1432,8 @@ window.SnakeAI = (() => {
       //    before it's over). (What I'd reach coughing, I'd only nudge: it's
       //    a meal once I'm over it, if no rival could get there before that.)
       //    Food the woodpecker will knock to a cell is there from the strike
-      //    on: mine if I'd get to it first and no rival could be there by
-      //    the time it lands (else it's a race, counted as the rest).
+      //    on: mine as any food is, if I'd get there first (whoever's nearer
+      //    is nearer as it lands, if both wait for it), from when it lands.
       let foodScore = 0;
       for (let k = 0; k < foodCount; k++) {
         const i = foodCells[k], v = foodValue[i], s = terr[framed[i]], from = foodFrom[i];
@@ -1447,7 +1447,7 @@ window.SnakeAI = (() => {
           when = Math.max(from, t + (seenF[framed[i]] === stampF ? distF[framed[i]] : Math.abs(i % N - head.x) + Math.abs((i - i % N) / N - head.y))); // (as the crow flies, past my room's count)
           if (when > can) continue;
         } else {
-          if (from > when) { if (reach[framed[i]] <= from) continue; early = EARLY * (from - when); when = from; } // (see latePull)
+          if (from > when) { early = EARLY * (from - when); when = from; } // (see latePull)
           if (when <= mute && reach[framed[i]] <= mute) continue;
         }
         foodScore = Math.max(foodScore, v * Math.max(0, w.foodRange - (Math.max(when, mute + 1) - t) + early));
