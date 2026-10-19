@@ -664,7 +664,7 @@ window.SnakeAI = (() => {
   // view = { grid, me: { id, body, dir, grow }, others: [{ id, body, dir }],
   //          food: [{ x, y, kind }], holes: Set of cell indexes, age, tick, timeMs,
   //          pecks: the woodpecker's mark (among the holes), strikeAt: its strike's tick,
-  //          landings: where it promised the food in its mark would land (its last tick's rings),
+  //          landings: where it promised the food in its mark would land (its rings in the last PECK_PROMISE_TICKS moves),
   //          burrows: [{ x, y }] }
   // memory: an object kept for this snake for the whole round.
   function decide(view, persona, memory = {}) {
@@ -1128,12 +1128,13 @@ window.SnakeAI = (() => {
     const engine = window.SnakeEngine || {}, rollSide = engine.rollSide;
     let rolls = null; // ([from, to] cells: food a rival will knock aside)
     if ((coughing || theirBeads) && rollSide) {
-      const roomFor = (x, y) => {
+      const pastFor = (x, y) => { // (it rolls over food or a burrow, where it can't stop)
         const i = y * N + x;
-        if (holes.has(i) || foodAt(i) || otherFree[i] > 1 || burrows.includes(i)) return false;
+        if (holes.has(i) || otherFree[i] > 1) return false;
         for (let j = 0, keep = me.grow > 0 ? me.body.length : me.body.length - 1; j < keep; j++) if (me.body[j].x === x && me.body[j].y === y) return false;
         return true;
       };
+      const roomFor = (x, y) => { const i = y * N + x; return !foodAt(i) && !burrows.includes(i) && pastFor(x, y); };
       others.forEach((o, k) => {
         let x = heads[k].x, y = heads[k].y;
         for (let j = 1; j <= 3; j++) { // (straight on, the way I read it)
@@ -1143,25 +1144,26 @@ window.SnakeAI = (() => {
           if (!foodAt(i) || (j > coughs[k] && marks[i] !== stampTheirs + k)) continue;
           if (j > coughs[k]) coughs[k] = j + TUNE.COUGH_TICKS - 1; // (it chokes)
           coughing = true;
-          const to = rollSide(null, { body: [at, before], dir: o.dir }, x, y, roomFor);
+          const to = rollSide(null, { body: [at, before], dir: o.dir }, x, y, roomFor, pastFor);
           if (to) { (rolls ||= []).push([i, to.y * N + to.x]); marks[to.y * N + to.x] = marks[i]; }
         }
       });
     }
     // The woodpecker's mark: at the strike, each piece of food in it is
     // knocked aside to where the engine's own rule puts it (E.knocks: what
-    // the rings show anyone through the aim, and on its last tick where the
-    // woodpecker promised), worked out on the board as I see it. It's there
-    // from the strike on: the first move that can eat it is the one after
-    // the strike's tick (`lands`). Never where it lies: that's a hole by
-    // then, and the mark's no place to wait. (A beetle in the mark is
+    // the rings show anyone through the aim, on the board as it will be at
+    // the strike, tails moved on; and in its last PECK_PROMISE_TICKS moves
+    // where the woodpecker promised), worked out on the board as I see it.
+    // It's there from the strike on: the first move that can eat it is the
+    // one after the strike's tick (`lands`). Never where it lies: that's a
+    // hole by then, and the mark's no place to wait. (A beetle in the mark is
     // knocked as the search moves it: see knockBug.)
     foodFrom.fill(0);
     const strikeAt = mark.size && view.strikeAt != null && view.strikeAt >= view.tick && engine.knocks ? view.strikeAt : -1;
     const lands = strikeAt - view.tick + 2;
     let knocked = null, peckGame = null; // (knocked: cell -> where it lands, -1: the bird eats it)
     if (strikeAt >= 0) {
-      peckGame = { snakes: [{ alive: true, body: me.body }, ...others.map(o => ({ alive: true, body: o.body }))], food, burrows: view.burrows || [], holes, fires: NO_FIRES, tick: view.tick };
+      peckGame = { snakes: [{ alive: true, body: me.body }, ...others.map(o => ({ alive: true, body: o.body, stunUntil: view.tick + Math.max(0, (o.stun || 0) - age) }))], food, burrows: view.burrows || [], holes, fires: NO_FIRES, tick: view.tick, woodpecker: { strikeAt } };
       knocked = new Map();
       for (const { food: f, to } of engine.knocks(peckGame, mark, view.landings)) {
         const from = f.y * N + f.x, i = to ? to.y * N + to.x : -1;
