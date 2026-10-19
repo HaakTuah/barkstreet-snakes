@@ -14,9 +14,10 @@
 // and the rarer lines keep to their rests (a choke's 20 s, a windfall's
 // thanks now and then, only for what a choke or a cough knocked aside, soon
 // after; a dug-in beetle's 30 s, only for its hunter, the nearest head as it
-// dug; a grumble at whoever ate what the woodpecker knocked aside, now and
-// then, every 40 s at most), and no rival announces the woodpecker's fair
-// play (the lesson does). Star, the power addict,
+// dug; a grumble at whoever ate what the woodpecker knocked aside, from the
+// nearest head to where it lay but the eater's, every 40 s at most), and no
+// rival announces the woodpecker's fair play (the lesson does). Star, the
+// power addict,
 // has a line for every moment anyone has, shows off its flashes and jumps at
 // most every 10 s (even flashing the moment its rest is over, when it doesn't
 // say its flash is back), grumbles while it rests, crows over golden things,
@@ -32,7 +33,9 @@
 // you can choke, a beetle digging in and the woodpecker knocking food aside
 // once a moment and each time they can come again, and nothing while muted.
 //
-//   node tools/chatter-test.js
+//   node tools/chatter-test.js [--rounds N]
+//   (--rounds N: N more whole AI rounds of four rivals at random, with the
+//   woodpecker's knocked food and its grumbles checked and counted.)
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -49,6 +52,8 @@ const slice = (head, tail, name) => {
 const table = name => slice(`  const ${name} = {`, '\n  };\n', name);
 const VOICES = table('VOICES'), ZH = table('ZH'), REPLIES = table('REPLIES');
 const PUNCHLINES = slice('  const PUNCHLINES = new Set([', '\n  ]);\n', 'PUNCHLINES');
+// (The chatter's reach for whoever was after food the woodpecker knocked aside: cells from where it lay.)
+const KNOCKED_NEAR = +/\bKNOCKED_NEAR = (\d+)/.exec(src)[1];
 let fails = 0;
 const ok = (cond, what) => { if (!cond) { console.error('FAIL:', what); fails++; } };
 
@@ -511,40 +516,83 @@ console.log('ok   choking: the choker\'s line at most every 20 s; a rival who ea
   [h, gob, off] = cornered(7 + F, 12);
   check(off === F + 1 && h.length === 0, `...but one with no head within ${F} as it started (the nearest ${off} off): nobody's (said: ${h.map(x => `"${x.text}"`).join(', ') || 'nothing'})`);
 }
-{ // Knocked aside: whoever was after it (the nearest head at the strike, within 5) grumbles at whoever eats it where it landed, within 6 s.
-  const g = stage(['sovereign', 'gobbler'], { 0: [3, 22], 1: [12, 12], 2: [20, 4] }), [you, sov, gob] = g.snakes;
+{ // Knocked aside: the snake that was after it (the nearest head to where it lay at the strike, the eater's aside, within the chatter's KNOCKED_NEAR) grumbles at whoever eats it where it landed, within 6 s; every time, at most every 40 s. (Each case in a fresh round, but the rest's own.)
+  const N = KNOCKED_NEAR;
+  // Sovereign at 12, 12; Gobbler and Mason far off unless asked; you at 3, 22.
+  const knockRound = (heads = {}) => { const g = stage(['sovereign', 'gobbler', 'mason'], { 0: [3, 22], 1: [12, 12], 2: [20, 4], 3: [4, 4], ...heads }); return [g, ...g.snakes]; };
   const knock = (x, y, tx, ty, kind = 'food') => ({ type: 'knock', kind, x, y, tx, ty });
   const eat = (s, x, y, kind = 'food') => ({ type: 'eat', snake: s, kind, x, y });
   const grumbles = (h, s, who) => says(h, s, VOICES[s.personaKey].knocked, who);
+  const heardAll = h => h.map(x => `${x.s.name}: "${x.text}"`).join(', ') || 'nothing';
+
+  let [g, you, sov, gob, mason] = knockRound();
   tick(g, [knock(12, 14, 12, 16)]);
   let h = tick(g, [eat(you, 12, 16)], 1500);
   check(grumbles(h, sov, you), `Sovereign's apple, knocked aside, and you eat it: "${lineOf(h, sov)}"`);
   tick(g, [knock(12, 14, 12, 16)], 5000);
   check(tick(g, [eat(you, 12, 16)], 1000).length === 0, '...and again 6 s later: nothing (40 s between)');
   tick(g, [knock(12, 14, 12, 16)], 40000);
-  check(tick(g, [eat(gob, 12, 16)], 1000, 0.6).length === 0, '...40 s on, Gobbler eats it and the roll says no: nothing');
-  tick(g, [knock(12, 14, 12, 16)], 1000);
+  h = tick(g, [eat(gob, 12, 16)], 1000, 0.99);
+  check(grumbles(h, sov, gob), `...40 s on, Gobbler eats it, whatever the roll: "${lineOf(h, sov)}" (every time, not now and then)`);
+
+  [g, you, sov, gob] = knockRound();
+  tick(g, [knock(12, 14, 12, 16)]);
   check(tick(g, [eat(sov, 12, 16)], 1000).length === 0 && tick(g, [eat(gob, 12, 16)], 500).length === 0, 'Sovereign gets there itself: nothing, and that settled it');
-  tick(g, [knock(12, 14, 12, 16)], 1000);
+  [g, you, sov] = knockRound();
+  tick(g, [knock(12, 14, 12, 16)]);
   check(tick(g, [eat(you, 12, 16)], 7000).length === 0, 'one eaten 7 s after it was knocked: just an apple');
-  tick(g, [knock(12, 14, null, null)], 1000);
+  [g, you, sov] = knockRound();
+  tick(g, [knock(12, 14, null, null)]);
   check(tick(g, [eat(you, 12, 14)], 1000).length === 0, 'one the bird ate (nowhere free to land): nothing');
-  tick(g, [knock(12, 14, 12, 16, 'mushroom')], 1000);
+  [g, you, sov] = knockRound();
+  tick(g, [knock(12, 14, 12, 16, 'mushroom')]);
   check(tick(g, [eat(you, 12, 16, 'mushroom')], 1000).length === 0, 'a mushroom knocked aside: nobody misses it');
-  tick(g, [knock(12, 18, 12, 20)], 1000);
-  check(tick(g, [eat(gob, 12, 20)], 1000).length === 0, 'knocked from 6 cells off Sovereign\'s head: nobody\'s');
-  you.body = at(4, 22);
-  tick(g, [knock(5, 21, 5, 19)], 1000);
-  check(tick(g, [eat(gob, 5, 19)], 1000).length === 0, 'yours, knocked aside and eaten by Gobbler: nobody speaks for you');
+
+  // How far "after it" reaches: KNOCKED_NEAR cells from where it lay, and no further.
+  const reach = d => {
+    [g, you, sov, gob] = knockRound({ 0: [3, 2], 1: [4, 12], 2: [22, 2] });
+    const x = 4 + d, off = Math.min(...g.snakes.map(s => Math.abs(s.body[0].x - x) + Math.abs(s.body[0].y - 12)));
+    tick(g, [knock(x, 12, x + 1, 12)]);
+    return [tick(g, [eat(gob, x + 1, 12)], 1000), off];
+  };
+  let [r, off] = reach(N);
+  check(off === N && grumbles(r, sov, gob), `knocked from ${N} cells off Sovereign's head (KNOCKED_NEAR; the nearest head ${off} off): Sovereign's, and it grumbles ("${lineOf(r, sov)}")`);
+  [r, off] = reach(N + 1);
+  check(off === N + 1 && r.length === 0, `...from ${N + 1} off every head (the nearest ${off} off): nobody's (${heardAll(r)})`);
+
+  // The nearest at the strike gets it: the next nearest, within reach, was after it too.
+  [g, you, sov, gob] = knockRound({ 2: [12, 17] });
+  tick(g, [knock(12, 15, 12, 16)]); // (Gobbler 2 off, Sovereign 3)
+  h = tick(g, [eat(gob, 12, 16)], 400);
+  check(grumbles(h, sov, gob), `Gobbler, nearest, gets it, with Sovereign a cell further: Sovereign grumbles at Gobbler ("${lineOf(h, sov)}")`);
+  [g, you, sov, gob] = knockRound({ 0: [12, 17], 2: [20, 14] });
+  tick(g, [knock(12, 15, 12, 16)]); // (you 2 off, Sovereign 3, Gobbler 9)
+  check(tick(g, [eat(gob, 12, 16)], 1000).length === 0, 'you were nearest and Gobbler eats it: it was yours, and nobody speaks for you (not even Sovereign, a cell further)');
+
+  // A bead was never its own snake's meal: whoever was after it is the next nearest.
+  [g, you, sov, gob, mason] = knockRound({ 3: [16, 14] });
   g.food.push({ x: 12, y: 16, kind: 'pellet', color: sov.color, owner: sov.id });
-  tick(g, [knock(12, 14, 12, 16, 'pellet')], 1000);
+  tick(g, [knock(12, 14, 12, 16, 'pellet')]); // (Sovereign 2 off, Mason 4)
   g.food.length = 0;
-  check(tick(g, [eat(gob, 12, 16, 'pellet')], 1000).length === 0, 'Sovereign\'s own bead, knocked aside and eaten by Gobbler: it was never Sovereign\'s meal');
-  tick(g, [knock(13, 12, 14, 10, 'beetle')], 1000);
+  h = tick(g, [eat(gob, 12, 16, 'pellet')], 1000);
+  check(!h.some(x => x.s === sov) && grumbles(h, mason, gob), `Sovereign's own bead, knocked aside and eaten by Gobbler: not Sovereign's meal, but Mason's, who grumbles ("${lineOf(h, mason)}")`);
+  [g, you, sov, gob] = knockRound();
+  g.food.push({ x: 12, y: 16, kind: 'pellet', color: sov.color, owner: sov.id });
+  tick(g, [knock(12, 14, 12, 16, 'pellet')]);
+  g.food.length = 0;
+  check(tick(g, [eat(gob, 12, 16, 'pellet')], 1000).length === 0, '...and with nobody else near: nothing');
+
+  [g, you, sov, gob] = knockRound();
+  tick(g, [knock(13, 12, 14, 10, 'beetle')]);
   h = tick(g, [eat(gob, 16, 9, 'beetle')], 1000);
   check(grumbles(h, sov, gob) && says(h, gob, VOICES.gobbler.caught), `a beetle knocked off Sovereign's patch scurries on, and Gobbler catches it 3 cells from where it landed: Sovereign grumbles ("${lineOf(h, sov)}"), and Gobbler has its catch line too`);
+  [g, you, sov, gob] = knockRound();
+  tick(g, [knock(12, 14, 12, 16)]);
+  sov.alive = false;
+  check(tick(g, [eat(gob, 12, 16)], 1000).length === 0, 'the snake that was after it out of the round meanwhile: nothing');
+  void mason;
 }
-console.log(`ok   a beetle that digs in and gets away: its hunter (the nearest head as it dug, within ${T.BEETLE_DIG_FEAR}) says so, at most every 30 s, and nobody for you; food the woodpecker knocked aside, eaten by someone else soon after: the snake that was after it grumbles at them, half the time, at most every 40 s`);
+console.log(`ok   a beetle that digs in and gets away: its hunter (the nearest head as it dug, within ${T.BEETLE_DIG_FEAR}) says so, at most every 30 s, and nobody for you; food the woodpecker knocked aside, eaten soon after: the snake that was after it (the nearest head to where it lay, the eater's aside, within ${KNOCKED_NEAR}) grumbles at the eater, every time, at most every 40 s`);
 
 // Star shows off: any flash of its own, its jumps and golden dashes, and its
 // flash back from its rest, half the time and all together at most every 10 s
@@ -697,14 +745,56 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   const dugLines = new Set(Object.values(VOICES).flatMap(v => v.dug || []));
   const grumbles = Object.values(VOICES).flatMap(v => v.knocked || []).map(l => new RegExp(`^${l.split('{who}').map(esc).join('.+')}$`));
   let chokes = 0, knocked = 0, choked = 0, thanked = 0, dugOut = 0, dug = 0, knocks = 0, grumbled = 0;
+  // The woodpecker's knocked food, by the rule (see "Knocked aside" above),
+  // as the engine has it: a grumble is only ever the rule's, from whoever was
+  // after a piece eaten this tick, at its eater; and every piece eaten where
+  // it landed, with a rival after it that's free to speak (no line in its
+  // gap or this tick, no grumble within the rests, a line of its own left to
+  // say), draws that rival's grumble.
+  const [KMS, KREST, GAP, LREST, ROAM] = ['KNOCKED_MS', 'KNOCKED_REST', 'SNAKE_GAP', 'LINE_REST', 'BEETLE_ROAM'].map(k => +new RegExp(`\\b${k} = (\\d+)`).exec(src)[1]);
+  const grumbleLines = Object.values(VOICES).flatMap(v => v.knocked || []).map(l => [l, new RegExp(`^${l.split('{who}').map(esc).join('.+')}$`)]);
+  const isGrumble = text => grumbleLines.find(([, re]) => re.test(text))?.[0];
+  const knockWatch = { picks: 0, free: 0, said: 0, missed: [], stray: [] };
+  const watchKnocks = () => {
+    const open = [], spoke = {}, grumbledAt = {}, told = new Set();
+    return (g, heardNow) => {
+      const now = g.time;
+      while (open.length && now - open[0].at > KMS) open.shift();
+      for (const e of g.events) if (e.type === 'knock' && e.tx != null && e.kind !== 'mushroom') {
+        const bead = e.kind === 'pellet' ? g.food.find(f => f.x === e.tx && f.y === e.ty && f.kind === 'pellet')?.owner : undefined;
+        const near = g.snakes.filter(o => o.alive && o.id !== bead).map(o => [o, Math.abs(o.body[0].x - e.x) + Math.abs(o.body[0].y - e.y)]).filter(([, k]) => k <= KNOCKED_NEAR).sort((a, b) => a[1] - b[1]).map(([o]) => o);
+        open.push({ x: e.tx, y: e.ty, beetle: e.kind === 'beetle', near, at: now });
+      }
+      const due = [];
+      for (const e of g.events) if (e.type === 'eat') {
+        const i = open.findIndex(r => r.beetle ? e.kind === 'beetle' && Math.abs(r.x - e.x) + Math.abs(r.y - e.y) <= ROAM : r.x === e.x && r.y === e.y);
+        if (i < 0) continue;
+        const pick = open.splice(i, 1)[0].near.find(o => o !== e.snake);
+        if (pick?.persona && pick.alive) due.push([pick, e.snake]);
+      }
+      const grumbles = heardNow.filter(x => isGrumble(x.text));
+      for (const x of grumbles) if (!due.some(([p, eater]) => p === x.s && x.text.includes(eater.name))) knockWatch.stray.push(`${x.s.name}: "${x.text}" at ${(now / 1000).toFixed(1)} s`);
+      for (const [p, eater] of due) {
+        knockWatch.picks++;
+        const said = grumbles.find(x => x.s === p && x.text.includes(eater.name));
+        const own = (VOICES[p.personaKey].knocked || []).filter(l => !(PUNCHLINES.includes(l) && told.has(l)));
+        const free = !said ? !(now - (spoke[p.id] ?? -Infinity) < GAP) && !heardNow.some(x => x.s === p) && !(now - (grumbledAt[p.id] ?? -Infinity) < Math.max(KREST, LREST)) && own.length && !(p.personaKey === 'capricious' && p.memory.mood) : true;
+        if (free) knockWatch.free++;
+        if (said) { knockWatch.said++; grumbledAt[p.id] = now; spoke[p.id] = now; } else if (free) knockWatch.missed.push(`${p.name}, after a piece ${eater.name} ate at ${(now / 1000).toFixed(1)} s`);
+      }
+      for (const x of heardNow) { spoke[x.s.id] = now; const l = isGrumble(x.text); if (l) told.add(l); }
+    };
+  };
   for (let r = 0; r < 1; r++) {
     rng = seeded(31 + r * 7919);
     const g = E.createGame({ withPlayer: false, personas: ['sovereign', 'colonist', 'vulture', 'capricious'] });
     C.reset(g);
+    const knocking = watchKnocks();
     while (g.snakes.filter(s => s.alive).length > 1 && g.time < 400000) {
       E.step(g);
       heard = [];
       C.update();
+      knocking(g, heard);
       total += heard.length;
       for (const x of heard) per[x.s.personaKey] = (per[x.s.personaKey] || 0) + 1;
       for (const e of g.events) { if (e.type === 'choke') chokes++; if (e.type === 'choke' || e.type === 'nudge') knocked++; if (e.type === 'dive' && e.dug) dugOut++; if (e.type === 'knock') knocks++; }
@@ -722,15 +812,42 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
     rng = seeded(97 + r * 7919);
     const g = E.createGame({ withPlayer: false, personas: ['star', 'wildcard', 'mason', 'copycat'] });
     C.reset(g);
+    const knocking = watchKnocks();
     while (g.snakes.filter(s => s.alive).length > 1 && g.time < 400000) {
       E.step(g);
       heard = [];
       C.update();
+      knocking(g, heard);
       for (const x of heard) { if (x.s.personaKey === 'star') star++; if (x.s.personaKey === 'copycat' && /[一-鿿]/.test(x.text) && !x.text.includes('{')) zh++; }
     }
   }
   check(star > 5, `a whole round with Star: it talks (${star} lines)`);
   console.log(`ok   a whole AI round with Star, Wildcard, Mason and Copycat: Star ${star} lines, Copycat ${zh} in Chinese, nothing thrown`);
+  // (--rounds N: N more whole rounds, of four rivals at random, to see the
+  // woodpecker's knocked food and the grumbles over many: they're rare, a
+  // round or two in ten.)
+  const more = process.argv.includes('--rounds') ? Number(process.argv[process.argv.indexOf('--rounds') + 1]) : 0;
+  let heardGrumbles = 0, minutes = 0;
+  for (let r = 0; r < more; r++) {
+    rng = seeded(7 * 100003 + r * 7919);
+    const pool = [...keys], cast = [];
+    while (cast.length < 4) cast.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]);
+    const g = E.createGame({ withPlayer: false, personas: cast });
+    C.reset(g);
+    const knocking = watchKnocks();
+    while (g.snakes.filter(s => s.alive).length > 1 && g.time < 400000) {
+      E.step(g);
+      heard = [];
+      C.update();
+      knocking(g, heard);
+      heardGrumbles += heard.filter(x => isGrumble(x.text)).length;
+    }
+    minutes += g.time / 60000;
+  }
+  if (more) console.log(`ok   ${more} more whole AI rounds of four rivals at random (${(minutes / more).toFixed(1)} min a round): ${heardGrumbles} grumbles at food the woodpecker knocked aside (${(heardGrumbles / more).toFixed(2)} a round)`);
+  check(!knockWatch.stray.length, `the whole rounds: a grumble only from whoever was after a piece the woodpecker knocked aside, at its eater (stray: ${knockWatch.stray.join('; ') || 'none'})`);
+  check(!knockWatch.missed.length, `...and one for every such piece eaten while that rival was free to speak (${knockWatch.free}; missed: ${knockWatch.missed.join('; ') || 'none'})`);
+  console.log(`ok   the whole rounds' knocked food: ${knockWatch.picks} pieces eaten with a rival after them (the nearest to where each lay, the eater aside, within ${KNOCKED_NEAR}), ${knockWatch.free} of those rivals free to speak, ${knockWatch.said} grumbles, none stray`);
 }
 
 // ------------------------------------------------------------ the sound's gaps

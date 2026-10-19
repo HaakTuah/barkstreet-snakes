@@ -1493,7 +1493,7 @@ window.SnakeChatter = (() => {
   let pendingAnswer = null, answeredAt = -Infinity; // (an answer to Star's showing off, on its way; the last one)
   const rolled = []; // food a choking or coughing snake knocked aside, oldest first: { x, y, beetle, by, at } (see windfall)
   const digs = [];   // beetles digging in: { x, y, until, hunter } (see gotAway)
-  const knocked = []; // food the woodpecker knocked aside, oldest first: { x, y, beetle, owner, at } (see served)
+  const knocked = []; // food the woodpecker knocked aside, oldest first: { x, y, beetle, near, at } (see served)
   const LINE_REST = 45000; // a snake doesn't say the same line again within this much game time
   const INTRUDER_REST = 25000; // nor call out intruders more often (heads skim in and out at a border)
   // Some moments come often in a long round, so each snake remarks on them at most this often:
@@ -1516,12 +1516,16 @@ window.SnakeChatter = (() => {
   // engine's BEETLE_DIG_FEAR): it says so, at most every DUG_REST.
   const DUG_REST = 30000;
   // Food the woodpecker knocks aside as it strikes lands in the open, where
-  // the engine's rule puts it. Whoever else eats it there within KNOCKED_MS,
-  // the snake that was after it (the nearest head at the strike, within
-  // NEAR_FOOD) grumbles at, now and then (KNOCKED_CHANCE), and at most every
-  // KNOCKED_REST. (A knocked beetle scurries off from where it lands, as a
-  // nudged one does: caught within BEETLE_ROAM cells of there counts.)
-  const KNOCKED_MS = 6000, KNOCKED_CHANCE = 0.5, KNOCKED_REST = 40000;
+  // the engine's rule puts it. Whoever eats it there within KNOCKED_MS, the
+  // snake that was after it grumbles at, at most every KNOCKED_REST: the
+  // nearest head to where it lay at the strike, the eater's aside, within
+  // KNOCKED_NEAR. (The bird aims more than PECK_CLEARANCE cells from every
+  // head, so a head within NEAR_FOOD of food in its mark is rare, and that
+  // one mostly ate it itself: whoever was after it is a little further
+  // off, and the nearest that didn't get it.) A knocked beetle scurries off
+  // from where it lands, as a nudged one does: caught within BEETLE_ROAM
+  // cells of there counts.
+  const KNOCKED_MS = 6000, KNOCKED_NEAR = 8, KNOCKED_REST = 40000;
   // Star lives for its powers (it flashes whenever it's rested and jumps every
   // hurdle), so it cheers them all: its flashes, jumps and golden dashes, and
   // its flash back from its rest. Half the time, and all of them together at
@@ -1955,15 +1959,17 @@ window.SnakeChatter = (() => {
     if (s?.persona && s.alive && !(game.time - (was.dugAt ?? -Infinity) < DUG_REST) && say(s, 'dug', null, true)) was.dugAt = game.time;
   }
 
-  // Food the woodpecker knocked aside (knocked), eaten where it landed: by
-  // anyone but the snake that was after it, that snake grumbles at them,
-  // now and then. Any eating there settles it.
+  // Food the woodpecker knocked aside (knocked), eaten where it landed: the
+  // snake that was after it, the nearest head at the strike but the
+  // eater's (near: within KNOCKED_NEAR, nearest first), grumbles at the
+  // eater, if it's a rival (nobody speaks for you). Any eating there
+  // settles it.
   function served(e) {
     const i = knocked.findIndex(r => landed(r, e));
     if (i < 0) return;
-    const { owner } = knocked.splice(i, 1)[0], was = (seen[owner.id] ||= {});
-    if (owner === e.snake || !owner.alive || game.time - (was.knockedAt ?? -Infinity) < KNOCKED_REST || !(Math.random() < KNOCKED_CHANCE)) return;
-    if (say(owner, 'knocked', e.snake, true)) was.knockedAt = game.time;
+    const s = knocked.splice(i, 1)[0].near.find(o => o !== e.snake), was = s && (seen[s.id] ||= {});
+    if (!s?.persona || !s.alive || game.time - (was.knockedAt ?? -Infinity) < KNOCKED_REST) return;
+    if (say(s, 'knocked', e.snake, true)) was.knockedAt = game.time;
   }
 
   // Called once per tick, after the engine moved everyone.
@@ -1986,6 +1992,9 @@ window.SnakeChatter = (() => {
       }
       return best;
     };
+    // ...and every head within near of it, nearest first (a tie, in the snakes' order, as above).
+    const nearest = (x, y, near) => game.snakes.filter(o => o.alive).map(o => [o, Math.abs(o.body[0].x - x) + Math.abs(o.body[0].y - y)])
+      .filter(([, k]) => k <= near).sort((a, b) => a[1] - b[1]).map(([o]) => o);
 
     // Hello, round. One or two snakes speak up in the first seconds.
     if (game.tick === 6 || game.tick === 20) {
@@ -1998,14 +2007,15 @@ window.SnakeChatter = (() => {
     while (rolled.length && game.time - rolled[0].at > WINDFALL_MS) rolled.shift();
     for (const e of game.events || []) if (e.type === 'choke' || e.type === 'nudge') knockedAside(e);
     // (Likewise beetles digging in, whose hunter is whoever cornered it, and
-    // food the woodpecker knocked aside, whose owner was after it.)
+    // food the woodpecker knocked aside, with the heads that were near it.)
     while (knocked.length && game.time - knocked[0].at > KNOCKED_MS) knocked.shift();
     for (let i = digs.length - 1; i >= 0; i--) if (game.tick > digs[i].until + 10) digs.splice(i, 1); // (caught as it dug: no dive)
     for (const e of game.events || []) {
       if (e.type === 'dig') digs.push({ x: e.x, y: e.y, until: e.until, hunter: after(e.x, e.y, window.TUNING.BEETLE_DIG_FEAR) });
       else if (e.type === 'knock' && e.tx != null && e.kind !== 'mushroom') { // (eaten by the bird, it's gone; nobody misses a mushroom)
-        const owner = after(e.x, e.y), own = game.food.some(f => f.x === e.tx && f.y === e.ty && f.kind === 'pellet' && f.owner === owner?.id);
-        if (owner?.persona && !own) knocked.push({ x: e.tx, y: e.ty, beetle: e.kind === 'beetle', owner, at: game.time }); // (its own bead was never its meal)
+        const bead = e.kind === 'pellet' ? game.food.find(f => f.x === e.tx && f.y === e.ty && f.kind === 'pellet')?.owner : undefined;
+        const near = nearest(e.x, e.y, KNOCKED_NEAR).filter(o => o.id !== bead); // (its own bead was never its meal)
+        if (near.length) knocked.push({ x: e.tx, y: e.ty, beetle: e.kind === 'beetle', near, at: game.time });
       }
     }
 
