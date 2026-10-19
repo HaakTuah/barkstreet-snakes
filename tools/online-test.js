@@ -20,7 +20,8 @@
 // snake was out (also read from engine.js), once at least. What the rounds
 // don't bring often enough is staged now and then, as the engine makes it (a
 // choke and its cough, a fire put out, a beetle flown off, a beetle digging
-// in, beetles underground, food knocked aside, a snake alight...; a kind of
+// in, beetles underground, food knocked aside, an apple in the mark on the
+// aim's last tick and where the strike promises it, a snake alight...; a kind of
 // event the protocol carries before the engine makes it, too), and a way to be out
 // they didn't bring is staged after them, on a board of its own; so nothing
 // goes unchecked, and a new event, field or way to be out fails here until
@@ -217,6 +218,14 @@ function stage(game) {
   const nudges = ['nudge', 'nudge kind', 'nudge tx', 'nudge ty'];
   if (k % 41 === 0 && ['choke', 'choke tx', 'choke ty', 'snake coughUntil', ...nudges].some(short)) { add({ type: 'choke', snake: s, x: h.x, y: h.y, tx, ty: h.y }); s.coughUntil = k + T.COUGH_TICKS; return; } // (a nudge wants a cough first)
   if (k % 41 === 3 && cougher && nudges.some(short)) { const c = cougher.body[0]; add({ type: 'nudge', snake: cougher, kind: NUDGED[(k >> 3) % NUDGED.length], x: c.x, y: c.y, tx: Math.min(E.GRID - 1, c.x + 1), ty: c.y }); return; }
+  const w = game.woodpecker, at = c => !game.holes.has(c) && !game.food.some(f => f.y * E.GRID + f.x === c) && !game.snakes.some(q => q.alive && q.body.some(b => b.y * E.GRID + b.x === c));
+  const spot = w && w.target.length && k >= w.strikeAt && !w.landings && short('woodpecker 9') ? w.target.find(at) : undefined;
+  if (spot != null) { // (an apple in the mark on the aim's last tick, and where the strike promises it'll land, as the engine keeps it)
+    game.food.push({ x: spot % E.GRID, y: Math.floor(spot / E.GRID), kind: 'food', expires: k + 100 });
+    w.landings = E.knocks(game, w.target).map(({ food: f, to }) => [f.y * E.GRID + f.x, to ? to.y * E.GRID + to.x : -1]);
+    staged.set('landings', (staged.get('landings') || 0) + 1);
+    return;
+  }
   if (k % 7) return;
   if (short('snake leaps')) { s.leaps = Math.min(T.LEAP_MAX, s.leaps + T.LEAP_CHARGES); return; } // (as a golden beetle gives them)
   if (short('snake dashes')) { s.dashes = Math.min(T.DASH_MAX, s.dashes + T.DASH_CHARGES); return; } // (a golden leaf)
