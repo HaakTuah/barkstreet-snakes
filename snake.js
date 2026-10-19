@@ -46,6 +46,7 @@
     lastPicked.set(list, line);
     return line;
   };
+  const inWords = n => ['none', 'one', 'two', 'three', 'four', 'five'][n] ?? String(n);
   const FLAVOR = {
     intro: 'Three rivals. One mossy log. Last snake wriggling wins.',
     // (The arrows first: anyone knows them. A click is the mouse's left button on the board.)
@@ -103,12 +104,16 @@
     youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
     youChoke: 'You choke on your own tail!', // (your own beads: spat aside, and a cough)
     youCoughing: 'No eating while you cough: food rolls aside.', // (true whenever it shows: a lesson may wait out the cough)
-    youWoodpecker: 'The woodpecker knocks food aside, and won’t shut you in if it can help it.', // (your first sudden death, once its own banner has had its time; "if it can help it": with nowhere else to aim, it may)
-    youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near your head)
-    digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log; past three the one unused longest closes over: the Field guide says so)
+    youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it comes, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
+    youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near enough your head to catch: see DIG_NEAR)
+    digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log, once the dig's own lesson is told)
+    digAndBurrow: 'A cornered beetle digs in, leaving a burrow.', // (the same, when the dig's lesson hasn't been told yet: most digs are far from you, so this one teaches both, the dig first)
+    burrowHeal: `Past ${inWords(T.BURROW_MAX)} burrows, the stalest one closes over.`, // (the stalest: the one unused longest, as the Field guide has it. The first one closing over in a round, once the burrow's lesson is told)
+    lostColony: 'The woodpecker took a flag: that colony’s lost.', // (a flag it pecks out, the first in a round; for watchers too)
+    lostCapital: 'The woodpecker took a capital: its realm moves.',
     lastApples: 'The last apples are falling.',
     // Your flash, ready and never used yet: the key, once a round (until you've flashed).
-    flashKey: touchFirst ? 'Your flash is ready: swipe the way you’re going.' : 'Your flash is ready: E, Shift or right-click. Two cells in a blink.',
+    flashKey: touchFirst ? 'Your flash is ready: swipe the way you’re going.' : 'Your flash is ready: E, Shift or right-click.', // (what it does is the Field guide's: a lesson is 60 characters at most)
     // Beside the YOU arrow, as a round starts (until you steer).
     steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
     leapNothing: 'Jumps hop over a snake, a hole or fire.',
@@ -126,7 +131,7 @@
     youDashFirst: 'Golden flashes cut thin snakes in two.',
     leaf: ['A golden leaf on the wind. Eat it for golden flashes.', 'A golden leaf blew onto the log: golden flashes, for the taking.'],
     leafWatch: ['A golden leaf on the wind: golden flashes, for whoever eats it.'],
-    youLeaf: n => `${n} golden flash${n === 1 ? '' : 'es'}: ${touchFirst ? 'swipe ahead' : 'E, Shift or right-click'}. Never at an edge or hole.`, // (the danger first: the first one may be the one)
+    youLeaf: n => `${n} golden flash${n === 1 ? '' : 'es'}: ${touchFirst ? 'swipe ahead' : 'E or right-click'}. Never at edges or holes.`, // (the danger in it: the first one may be the one. One key and the mouse, to keep it to 60 characters: the Field guide names Shift)
     goldcap: ['A golden mushroom: eat it and the edges wrap.', 'A golden mushroom came up. Eat it: no edges for a while.'],
     goldcapWatch: ['A golden mushroom: no edges, for whoever eats it.'],
     youGoldcap: s => `A golden mushroom: ${s} seconds with no edges.`,
@@ -906,6 +911,7 @@
   // first). Spawns are news once a round; what happens to you is a lesson
   // the first time; repeats are left to the board's own floaters.
   function announce(dying) {
+    for (const key of landLost()) if (!(game.lostLand ||= []).includes(key)) game.lostLand.push(key); // (its lesson, when news next gets to it)
     if (player() && dying.includes(player())) { // (your own death: its card is a moment away, and says it; nothing over the freeze-frame)
       if (!game.firstBlood) { game.firstBlood = true; Audio.play('stinger'); }
       return;
@@ -915,6 +921,24 @@
     // whatever this tick said, never cutting short the woodpecker's own banner
     // (or first blood, or the last two).
     if (game.events.some(e => e.type === 'lastApples')) toast(FLAVOR.lastApples, 2800, '', 'lesson');
+  }
+  // Land the woodpecker took this tick, as the chatter sees it (chatter.js):
+  // 'lostColony' for a colony gone from its snake's memory with a hole where
+  // its flag stood, 'lostCapital' for a realm moved off a centre that's now
+  // a hole. A snake's land changes as it thinks, a moment after the strike,
+  // so each tick's is kept to compare (on a friend's screen too: the memory
+  // comes with the host's ticks).
+  function landLost() {
+    const was = (game.landWas ||= new Map()), hole = c => game.holes.has(c.y * GRID + c.x), lost = [];
+    for (const s of game.snakes) {
+      const m = s.memory, before = was.get(s.id);
+      if (!m?.home && !m?.colonies && !before) continue;
+      const home = m.home ? { x: m.home.x, y: m.home.y } : null, cols = (m.colonies || []).map(c => ({ n: c.n, x: c.x, y: c.y }));
+      if (before?.home && home && (home.x !== before.home.x || home.y !== before.home.y) && hole(before.home) && !lost.includes('lostCapital')) lost.push('lostCapital');
+      if (before?.cols.some(c => hole(c) && !cols.some(k => k.n === c.n && k.x === c.x && k.y === c.y)) && !lost.includes('lostColony')) lost.push('lostColony');
+      was.set(s.id, { home, cols });
+    }
+    return lost;
   }
   function news(dying) {
     const alive = game.snakes.filter(s => s.alive);
@@ -959,13 +983,23 @@
       if (left > warnAt) game.warnedHunger = false;
       if (small && game.time > 1000 && once('atThree')) return toast(pick(FLAVOR.youAtThree), 2600, 'warn', 'lesson', { still: () => me.alive && me.body.length <= T.MIN_LENGTH });
     }
+    // A flag or a capital the woodpecker pecked out (see landLost): its rule,
+    // the first time each goes in a round, for everyone watching too (the
+    // chatter may be off, and the rival's line with it). It waits behind a
+    // lesson holding the banner; the flag's fall and the land shrinking stay
+    // on the board.
+    while (game.lostLand?.length) {
+      const key = game.lostLand.shift();
+      if (once(key)) return toast(FLAVOR[key], 2800, 'bird', 'lesson');
+    }
     for (const e of game.events) {
       if (e.type === 'strike') flashFrame('storm', true);
       if (e.type === 'strike' && !game.struck && game.weather?.kind === 'storm') { game.struck = true; return toast(pick(FLAVOR.strike), 2200, 'fire'); } // (a storm's last bolt, landing in the rain after it: the bolt, flash and thunder say it)
       if (e.type === 'weather' && e.kind === 'storm') game.struck = false;
       if (e.type === 'weather' && FLAVOR.weather[e.kind]) { flashFrame(e.kind); return toast(pick((!playerAlive() && FLAVOR.weatherWatch[e.kind]) || FLAVOR.weather[e.kind]), 2800, e.kind); }
       if (e.type === 'rainbow') { flashFrame('gold', true); if (newsOnce('rainbow')) return toast(lineFor('rainbow'), 2800, 'gold'); }
-      if (e.type === 'burrow' && e.dug && teachable() && once('digBurrow')) return toast(FLAVOR.digBurrow, 2600, 'beetle', 'lesson'); // (its rule, the first time the banner's free for one: shown then, or the next one teaches it)
+      if (e.type === 'heal' && game.told?.digBurrow && teachable() && once('burrowHeal')) return toast(FLAVOR.burrowHeal, 2600, 'beetle', 'lesson'); // (one closing over: once the burrow's lesson is told, the first time the banner's free for it; it's over in a second, so else the next one teaches it. A dig at the cap closes one over on its burrow's tick, the heal first: that tick teaches the burrow)
+      if (e.type === 'burrow' && e.dug && teachable() && once('digBurrow')) return toast(once('dig') ? FLAVOR.digAndBurrow : FLAVOR.digBurrow, 2600, 'beetle', 'lesson'); // (its rule, the first time the banner's free for one: shown then, or the next one teaches it. Not taught the dig yet (it was far from you, or the banner was busy), it teaches both, the dig first)
       if (e.type === 'spawn' && e.kind === 'golden') { flashFrame('gold'); if (newsOnce('golden')) return toast(pick(FLAVOR.golden), 2800, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'beetle' && e.gold) { flashFrame('gold'); if (newsOnce('goldBeetle')) return toast(lineFor('goldBeetle'), 2600, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'beetle') { flashFrame('beetle'); if (newsOnce('beetle')) return toast(pick(FLAVOR.beetle), 2200, 'beetle'); }
@@ -1019,7 +1053,7 @@
   const newsFree = () => overlay.classList.contains('hidden') && (toastEl.hidden || performance.now() >= toastHold);
   // Could a lesson show now, rather than wait its turn (only news, or nothing, holding the banner)?
   const teachable = () => newsFree() || (overlay.classList.contains('hidden') && toastLevel === 'news');
-  const DIG_NEAR = 8; // (a beetle digging in this near your head, in cells across and down: one you could have caught)
+  const DIG_NEAR = T.BEETLE_DIG + 1; // (a beetle digging in this near your head, in cells across and down: one you could still catch, a move a tick through its dig and one flash's extra cell)
 
   // A banner keeps out of the way of heads (and the woodpecker's mark, a
   // crackle, the steering hint). It comes up in the first of its three
@@ -2170,7 +2204,6 @@
   // the renderer, as it is on the log) and its rule in a line or two.
   const secs = ms => Math.round(ms / 1000);
   const coughFor = Math.max(1, secs(T.COUGH_TICKS * T.START_TICK)); // (a cough's ticks at the round's usual pace)
-  const inWords = n => ['none', 'one', 'two', 'three', 'four', 'five'][n] ?? String(n);
   const GUIDE = [
     ['Food', [
       ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(T.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time; leave one too long and it rots.`],
@@ -2926,6 +2959,7 @@
       state: () => state,
       online: () => online && { role: online.role, seat: online.seat, code: online.code, players: online.players, rtt: hosting() ? online.room.rtt() : null },
       setup: ready,
+      flavor: () => FLAVOR, // (the narrator's words: input-test holds the lessons to 60 characters)
       step: E.step,
       createGame: E.createGame,
       perf: () => perf.stats(),

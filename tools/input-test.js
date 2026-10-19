@@ -33,10 +33,14 @@
 // choke's and nudge's lessons, a choke's gag and its cough a beat later (once
 // a cough), and a rival's heard as a rival's.
 // And the beetles and the woodpecker as it tells them: a beetle digging in
-// near you teaches its lesson and is heard as yours (a rival's, as a
-// rival's), one that dug in goes under unheard while one down a burrow or up
-// out of one scrabbles, the woodpecker's coming its rules, and knocked food
-// is heard once a strike, quietly, where the first piece that flies was.
+// near enough to catch teaches its lesson and is heard as yours (a rival's,
+// as a rival's), one that dug in goes under unheard while one down a burrow
+// or up out of one scrabbles, the burrow a dig leaves and one closing over
+// teach theirs, in that order (a dig far from you, then its burrow: the dig
+// and the burrow at once), the woodpecker's coming its rule, a flag or a
+// capital it pecks out theirs, and knocked food is heard once a strike,
+// quietly, where the first piece that flies was. Every lesson is 60
+// characters at most.
 // It prints what it measured: press-to-tick, tap-to-jump and swipe latencies.
 //
 //   node tools/input-test.js
@@ -884,18 +888,25 @@ const KEYS = {
     // dives, knocks and the woodpecker's coming staged by hand, as the engine
     // makes them): a beetle digging in far from your head teaches nothing,
     // and one a rival cornered is heard as a rival's; the woodpecker's coming
-    // teaches its rules once its own banner has had its time; a beetle digging
-    // in near you (8 cells at most) is heard as yours, and teaches "A cornered
-    // beetle digs in…" the first time the banner's free for it (it's over in a
-    // second: never left waiting); one that dug in goes under unheard (it was
+    // teaches its rule once its own banner has had its time; a beetle digging
+    // in near enough to catch (BEETLE_DIG + 1 cells at most: a move a tick
+    // through its dig, and a flash's extra cell) is heard as yours, and
+    // teaches "A cornered beetle digs in…" the first time the banner's free
+    // for it (it's over in a second: never left waiting), and one a cell
+    // further off teaches nothing; one that dug in goes under unheard (it was
     // heard boring in), and the burrow its dig leaves (the engine's pair, on
     // one tick) neither cracks open nor is news that one did: it teaches "A
     // beetle that digs in leaves a burrow behind." the first time the banner's
-    // free for one, and only once a round; one closing over crumbles, softly;
-    // one down a burrow or up out of one scrabbles (a sound of its own, not the
-    // bore), and a burrow cracking open creaks; and food the woodpecker knocks aside is heard
-    // once a strike, quietly, the world's, from where the first piece that
-    // flies was (none for food it ate, even first in the strike's list).
+    // free for one, and only once a round; one closing over crumbles, softly,
+    // and once the burrow's lesson is told, teaches "Past three burrows…" the
+    // first time the banner's free for it, once a round; one down a burrow or
+    // up out of one scrabbles (a sound of its own, not the bore), and a burrow
+    // cracking open creaks; and food the woodpecker knocks aside is heard once
+    // a strike, quietly, the world's, from where the first piece that flies
+    // was (none for food it ate, even first in the strike's list). Then, with
+    // the dig and its burrow untold, as in a round where every dig was far
+    // from you: a dig's burrow (one closing over on its tick, as at the cap)
+    // teaches both at once, the dig first, and neither again.
     await ev(`(() => {
       const A = SnakeAudio, play = A.play;
       window.__cues = [];
@@ -903,29 +914,37 @@ const KEYS = {
       window.stageEvents = list => { window.__staged = g => { for (const e of list(g)) g.events.push(e); }; return 'ok'; };
       return 'ok';
     })()`);
-    const DIG_LESSON = 'A cornered beetle digs in. Grab it before it’s gone!', FAIR_LESSON = 'The woodpecker knocks food aside, and won’t shut you in if it can help it.';
-    const BURROW_LESSON = 'A beetle that digs in leaves a burrow behind.';
-    const dugPairAt = (x, y, more = '') => ev(`stageEvents(() => [{ type: 'dive', x: ${x}, y: ${y}, dug: 1 }, { type: 'burrow', x: ${x}, y: ${y}, dug: 1 }${more}])`); // (a dig over: the engine's pair)
+    const { BEETLE_DIG, BURROW_MAX } = await ev('({ BEETLE_DIG: TUNING.BEETLE_DIG, BURROW_MAX: TUNING.BURROW_MAX })');
+    const reach = BEETLE_DIG + 1;
+    const DIG_LESSON = 'A cornered beetle digs in. Grab it before it’s gone!', FAIR_LESSON = 'Food in the woodpecker’s mark flies to its ring.';
+    const BURROW_LESSON = 'A beetle that digs in leaves a burrow behind.', BOTH_LESSON = 'A cornered beetle digs in, leaving a burrow.';
+    const HEAL_LESSON = `Past ${['none', 'one', 'two', 'three', 'four', 'five'][BURROW_MAX]} burrows, the stalest one closes over.`;
+    const dugPairAt = (x, y, heal = '') => ev(`stageEvents(() => [{ type: 'dive', x: ${x}, y: ${y}, dug: 1 }${heal && `, { type: 'heal', ${heal} }`}, { type: 'burrow', x: ${x}, y: ${y}, dug: 1 }])`); // (a dig over: the engine's pair; at the cap, the one unused longest closing over between them)
     const cues = () => ev('__cues.splice(0).join(" ")');
-    const digNear = (dx, dy) => ev(`stageEvents(g => { const h = g.snakes[0].body[0]; return [{ type: 'dig', x: h.x + ${dx}, y: h.y + ${dy}, until: g.tick + 8 }]; })`);
+    const digNear = (dx, dy) => ev(`stageEvents(g => { const h = g.snakes[0].body[0]; return [{ type: 'dig', x: h.x + ${dx}, y: h.y + ${dy}, until: g.tick + ${BEETLE_DIG} }]; })`);
+    const rivalDig = () => ev(`stageEvents(g => { const h = g.snakes[1].body[0]; return [{ type: 'dig', x: h.x + 1, y: h.y + 1, until: g.tick + ${BEETLE_DIG} }]; })`);
     await ev('centre()');
     await ev(`put(1, 2, 2, 'right')`); // (a rival's head far from yours)
     await ev('vadvance(4000)');
-    await ev(`stageEvents(g => { const h = g.snakes[1].body[0]; return [{ type: 'dig', x: h.x + 1, y: h.y + 1, until: g.tick + 8 }]; })`);
+    await rivalDig();
     await toTick();
     const farDig = { toast: await ev('toastText()'), heard: await cues() };
     await ev(`stageEvents(g => { g.woodpecker = { x: 12, y: 0, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: g.tick + 12 }; return [{ type: 'woodpecker' }]; })`);
     await toTick();
     const peckNews = await ev('toastText()');
-    await digNear(8, 0); // (while the woodpecker's news holds the banner)
+    await digNear(reach - 1, 1); // (while the woodpecker's news holds the banner)
     await toTick();
     const heldDig = { toast: await ev('toastText()'), heard: await cues() };
     await ev('vadvance(2600)');
     const fair = await ev('toastText()');
     await ev('vadvance(6000)'); // (its time, and the time back if it faded under a head)
+    await digNear(reach, 1); // (a cell too far to catch)
+    await toTick();
+    const tooFar = { toast: await ev('toastText()'), heard: await cues() };
     await digNear(-3, 2);
     await toTick();
     const nearDig = { toast: await ev('toastText()'), heard: await cues() };
+    await ev('centre()'); // (back in the middle: the edge stays out of it)
     await dugPairAt(3, 3); // (while the dig's lesson holds the banner)
     await toTick();
     const heldPair = { toast: await ev('toastText()'), heard: await cues() };
@@ -945,9 +964,13 @@ const KEYS = {
     await toTick();
     const dives = await cues();
     await ev('vadvance(6000)'); // (the banner's free again)
-    await dugPairAt(6, 4, `, { type: 'heal', x: 9, y: 9 }`); // (another dig over, at three burrows: the one unused longest closes over)
+    await dugPairAt(6, 4, 'x: 9, y: 9'); // (another dig over, at three burrows: the one unused longest closes over)
     await toTick();
     const dugAgain = { toast: await ev('toastText()'), heard: await cues() };
+    await ev('vadvance(6000)');
+    await dugPairAt(7, 4, 'x: 3, y: 3'); // (and another)
+    await toTick();
+    const healAgain = { toast: await ev('toastText()'), heard: await cues() };
     await ev(`stageEvents(() => [{ type: 'knock', kind: 'pellet', x: 2, y: 6, tx: null, ty: null, color: '#abc' }, { type: 'knock', kind: 'food', x: 5, y: 5, tx: 7, ty: 5 }, { type: 'knock', kind: 'beetle', x: 6, y: 5, tx: 6, ty: 8, gold: 1 }, { type: 'knock', kind: 'pellet', x: 5, y: 6, tx: null, ty: null }])`);
     await toTick();
     const knocked = await cues();
@@ -956,18 +979,77 @@ const KEYS = {
     await toTick();
     const ate = await cues();
     await ev(`SnakeDebug.game().woodpecker = null; 'ok'`);
+    // (The dig and its burrow untold again.)
+    await ev(`(() => { const t = SnakeDebug.game().told; for (const k of ['dig', 'digBurrow', 'burrowHeal']) delete t[k]; return 'ok'; })()`);
+    await ev('centre()');
+    await ev('vadvance(6000)');
+    await rivalDig();
+    await toTick();
+    const farAgain = await ev('toastText()');
+    await ev(`(() => { const h = SnakeDebug.game().snakes[1].body[0]; window.__at = h.x + 1 + ', ' + (h.y + 1); return 'ok'; })()`);
+    await ev(`stageEvents(() => { const [x, y] = __at.split(', ').map(Number); return [{ type: 'dive', x, y, dug: 1 }, { type: 'heal', x: 6, y: 4 }, { type: 'burrow', x, y, dug: 1 }]; })`);
+    await toTick();
+    const both = await ev('toastText()');
+    await ev('vadvance(6000)');
+    await digNear(-2, 1);
+    await toTick();
+    const nearAfter = await ev('toastText()');
+    await ev('vadvance(6000)');
+    await dugPairAt(5, 5);
+    await toTick();
+    const pairAfter = await ev('toastText()');
+    await cues();
     check(farDig.toast !== DIG_LESSON && farDig.heard === 'dig~', 'a beetle a rival corners, far from you: heard as a rival’s, and no lesson', `“${farDig.toast}”; heard ${farDig.heard}`);
-    check(/woodpecker|Rat-a-tat/.test(peckNews) && fair === FAIR_LESSON, 'the woodpecker’s coming: its news, then its rules once the news has had its time', `“${peckNews}”, then “${fair}”`);
+    check(/woodpecker|Rat-a-tat/.test(peckNews) && fair === FAIR_LESSON, 'the woodpecker’s coming: its news, then its rule once the news has had its time', `“${peckNews}”, then “${fair}”`);
     check(heldDig.toast === peckNews && heldDig.heard === 'dig' && nearDig.toast === DIG_LESSON && nearDig.heard === 'dig',
       'a beetle digging in near you: heard as yours; its lesson the first time the banner’s free for it', `held: “${heldDig.toast}”, heard ${heldDig.heard}; later “${nearDig.toast}”, heard ${nearDig.heard}`);
+    check(tooFar.toast !== DIG_LESSON && tooFar.heard === 'dig', `a beetle digging in ${reach + 1} cells from your head, a cell further than you could get to in its dig (${BEETLE_DIG} ticks) with a flash: heard as yours, and no lesson`, `“${tooFar.toast}”; heard ${tooFar.heard}`);
     check(heldPair.heard === '' && dugPair.heard === '' && !/cracked open|digging under the bark/.test(dugPair.toast), 'a beetle that dug in goes under unheard, and the burrow its dig leaves neither cracks open nor is news that one did',
       `heard ${heldPair.heard || 'nothing'}, then ${dugPair.heard || 'nothing'}; “${dugPair.toast}”`);
     check(heldPair.toast === DIG_LESSON && dugPair.toast === BURROW_LESSON && dugAgain.toast !== BURROW_LESSON,
       'the burrow a dig leaves teaches its rule the first time the banner’s free for one, and once a round', `held: “${heldPair.toast}”; then “${dugPair.toast}”; later “${dugAgain.toast}”`);
-    check(dugAgain.heard === 'heal', 'a burrow closing over crumbles (the dig that closed it, and its burrow, unheard)', `heard ${dugAgain.heard || 'nothing'}`);
+    check(dugAgain.heard === 'heal' && healAgain.heard === 'heal', 'a burrow closing over crumbles (the dig that closed it, and its burrow, unheard)', `heard ${dugAgain.heard || 'nothing'}, then ${healAgain.heard || 'nothing'}`);
+    check(dugAgain.toast === HEAL_LESSON && healAgain.toast !== HEAL_LESSON, 'a burrow closing over, once the burrow’s lesson is told: its rule, once a round', `“${dugAgain.toast}”, then “${healAgain.toast}”`);
+    check(farAgain !== DIG_LESSON && both === BOTH_LESSON && nearAfter !== DIG_LESSON && pairAfter !== BURROW_LESSON && pairAfter !== BOTH_LESSON,
+      'a dig far from you, then its burrow (one closing over on its tick): the dig and the burrow taught at once, the dig first, and neither again', `“${farAgain}”, then “${both}”; a dig near you later “${nearAfter}”, its burrow “${pairAfter}”`);
     check(dives === 'scrabble scrabble burrow', 'one down a burrow, or up out of one, scrabbles (not the bore); a burrow cracking open creaks', `heard ${dives || 'nothing'}`);
     const pan5 = ((5 + 0.5) / 24 * 2 - 1) * 0.8;
     check(knocked === 'knock@0.5:' + pan5.toFixed(2) && ate === '', 'food the woodpecker knocks aside: heard once a strike, quietly, the world’s, where the first piece that flies was; none for food it ate', `heard ${knocked || 'nothing'} (from x 5: pan ${pan5.toFixed(2)}), then ${ate || 'nothing'}`);
+
+    // A flag or a capital the woodpecker pecks out (staged as the rivals'
+    // thinking leaves it, a moment after the strike: the land gone from its
+    // memory, a hole where it stood): "…that colony’s lost." the first time a
+    // flag goes in a round, "…its realm moves." the first time a capital
+    // does, waiting behind a lesson holding the banner, and neither again. A
+    // colony let go with no hole under its flag (one too many planted) says
+    // nothing. (Before, the only word was the rival's chatter, gone with the
+    // chatter off.)
+    const LOST_COLONY = 'The woodpecker took a flag: that colony’s lost.', LOST_CAPITAL = 'The woodpecker took a capital: its realm moves.';
+    await ev('centre()');
+    await ev(`(() => { const g = SnakeDebug.game(); g.snakes[2].memory.colonies = [{ x: 20, y: 5, radius: 3, n: 1 }, { x: 18, y: 17, radius: 3, n: 2 }, { x: 3, y: 10, radius: 3, n: 3 }]; g.snakes[3].memory.home = { x: 5, y: 7, radius: 3 }; return 'ok'; })()`);
+    await toTick(); // (seen standing)
+    await ev('vadvance(6000)');
+    await ev(`(() => { SnakeDebug.game().snakes[2].memory.colonies.pop(); return 'ok'; })()`); // (let go, its flag on whole bark)
+    await toTick();
+    const letGo = await ev('toastText()');
+    await ev(`(() => { const g = SnakeDebug.game(); g.holes.add(5 * 24 + 20); g.snakes[2].memory.colonies.shift(); return 'ok'; })()`);
+    await toTick();
+    const flagLost = await ev('toastText()');
+    await ev(`(() => { const g = SnakeDebug.game(); g.holes.add(7 * 24 + 5); g.snakes[3].memory.home = { x: 6, y: 8, radius: 3 }; return 'ok'; })()`); // (while the flag's lesson holds the banner)
+    await toTick();
+    const capitalHeld = await ev('toastText()');
+    const capitalLost = [];
+    for (let t = 0; t < 12000; t += 200) { // (the banners as they come, each held up to its time back)
+      await ev('vadvance(200)');
+      const now = await ev('toastText()');
+      if (now && now !== capitalLost[capitalLost.length - 1]) capitalLost.push(now);
+    }
+    await ev(`(() => { const g = SnakeDebug.game(); g.holes.add(17 * 24 + 18); g.snakes[2].memory.colonies.shift(); return 'ok'; })()`);
+    await toTick();
+    const flagAgain = await ev('toastText()');
+    await ev(`(() => { const g = SnakeDebug.game(); for (const k of [5 * 24 + 20, 7 * 24 + 5, 17 * 24 + 18]) g.holes.delete(k); delete g.snakes[2].memory.colonies; delete g.snakes[3].memory.home; return 'ok'; })()`);
+    check(letGo !== LOST_COLONY && flagLost === LOST_COLONY && capitalHeld === LOST_COLONY && capitalLost.join(' / ') === `${LOST_COLONY} / ${LOST_CAPITAL}` && flagAgain !== LOST_COLONY,
+      'a flag or a capital the woodpecker pecks out: its rule the first time each goes in a round (waiting behind a lesson), and not for a colony let go', `let go “${letGo}”; pecked “${flagLost}”; a capital “${capitalHeld}”, then “${capitalLost.join('”, “')}”; another flag “${flagAgain}”`);
 
     // Your death's card: a thumb mashing jump as you crash, landing on its
     // Play again, never starts a round; a tap once it's settled does.
@@ -1026,6 +1108,27 @@ const KEYS = {
     const focusedLater = await ev(`document.activeElement?.id === 'name-input'`);
     check(carveTaps > 0 && !focusedMash && carveState === 'running' && focusedLater,
       'mashing jump over a card offering the carve never focuses the name field; a tap once it’s settled does', `${carveTaps} taps on the field or its words, ${focusedMash ? 'focused' : 'not focused'}; then ${focusedLater ? 'focused' : 'not focused'}`);
+
+    // Every lesson is one idea and 60 characters or fewer (DESIGN, "the
+    // narrator speaks less"): a long one wraps to two lines on a phone, over
+    // the board. With the touch screen's words and the keyboard's, the counts
+    // and names at their longest.
+    const LESSON_LENGTHS = `(() => {
+      const F = SnakeDebug.flavor(), T = TUNING, out = [];
+      const add = (k, v) => { if (typeof v === 'string') out.push([k, v]); else if (Array.isArray(v)) v.forEach(x => add(k, x)); else if (v && typeof v === 'object') for (const x of Object.values(v)) add(k, x); };
+      for (const k of ['youCrash', 'youCrashToThree', 'youAtThree', 'youAlight', 'youPeckedUnder', 'youChoke', 'youCoughing', 'youWoodpecker', 'youDig', 'digBurrow', 'digAndBurrow', 'burrowHeal', 'lostColony', 'lostCapital', 'lastApples', 'flashKey', 'powersFirst', 'leapNothing', 'leapEarly', 'youLeapFirst', 'youDashFirst', 'youHungry', 'youStarvingSmall', 'fizzle', 'fizzleFlash']) add(k, F[k]);
+      for (const [k, arg] of [['youGoldBeetle', T.LEAP_MAX], ['youLeaf', T.DASH_MAX], ['youGoldcap', Math.round(T.WRAP_MAX_MS / 1000)], ['wrapEnding', Math.round(T.WRAP_WARN_MS / 1000)], ['youSnipped', 'Ouroboros']]) add(k, F[k](arg));
+      return { touch: matchMedia('(pointer: coarse)').matches, lines: out.map(([k, v]) => [k, v, v.length]) };
+    })()`;
+    const lengths = [];
+    for (const mobile of [true, false]) {
+      await b.viewport(mobile ? 390 : 1280, mobile ? 844 : 800, { mobile, scale: mobile ? 3 : 1 });
+      await b.go(site.url + '?debug', { settle: 0 });
+      lengths.push(await ev(LESSON_LENGTHS));
+    }
+    const tooLong = lengths.flatMap(l => l.lines.filter(x => x[2] > 60).map(([k, v, n]) => `${l.touch ? 'touch' : 'keys'} ${k} ${n}: “${v}”`));
+    check(lengths.map(l => l.touch).join() === 'true,false' && lengths.every(l => l.lines.length > 30) && !tooLong.length, 'every lesson is 60 characters or fewer, on a touch screen and with keys',
+      tooLong.join('; ') || lengths.map(l => `${l.touch ? 'touch' : 'keys'}: ${l.lines.length} lines, the longest ${Math.max(...l.lines.map(x => x[2]))}`).join('; '));
 
     console.log(results.join('\n'));
     console.log('\nmeasured (virtual 60 Hz, 120 ms ticks):');
