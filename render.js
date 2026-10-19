@@ -5202,7 +5202,7 @@ window.SnakeRender = (() => {
   const LAND_MARGIN = 10;
   const shownOf = o => o.shown;
   function buildRealm(r) {
-    r.dirty = false; r.builtK = k; landVer++;
+    r.dirty = false; r.builtK = k; landVer++; landBuilds++;
     const p = prepRealm(r, r, r.shown, r, shownOf, game.holes);
     if (p) for (let st = 0; st < LAND_STEPS; st++) paintLandStep(p, st, r.layer.getContext('2d'), r.glow.getContext('2d'), r.color);
   }
@@ -5434,7 +5434,7 @@ window.SnakeRender = (() => {
     let built = fieldSpecs.length !== dash.for, ready = -1, swapped = 0, rebuilt = 0;
     for (const r of fieldSpecs) {
       if (!r.dirty && r.builtK === k) continue;
-      if (ready < 0) ready = pre.ready && preStill() ? 1 : 0; // (the land a strike leaves, made ahead: is it the land now?)
+      if (ready < 0) { ready = pre.ready && preStill() ? 1 : 0; if (!ready && game.woodpecker?.struckAt === game.tick - 1) { if (pre.ready) landStale++; else landUnready++; } } // (the land a strike leaves, made ahead: is it the land now? (if not, at a strike, why not: counted for the tests))
       if (ready && pre.todo.includes(r)) { swapIn(r); swapped++; } else { buildRealm(r); rebuilt++; }
       built = true;
     }
@@ -5506,6 +5506,7 @@ window.SnakeRender = (() => {
     specs: [], post: [], colors: [], todo: [], // (the realms as they were then; each one's land after the strike; the realms to make again)
     holes: new Uint8Array(N2), plan: null, dash: { layer: null, X: 0, Y: 0, any: false, for: 0 },
   };
+  let tickEvery = 100, tickNow = 0; // (how long a tick is on the board's clock as it's played, eased: a few frames' worth, or none when it's watched fast; and the last's)
   let landVer = 0, prebuilding = true; // (landVer: the land's changes, counted; prebuilding: off only for the tests, to compare)
   const preLost = { has: i => pre.holes[i] === 1 };
   const postOf = o => pre.post[pre.specs.indexOf(o)];
@@ -5527,7 +5528,13 @@ window.SnakeRender = (() => {
     let same = key === pre.key && pre.specs.length === fieldSpecs.length;
     for (let j = 0; same && j < fieldSpecs.length; j++) same = fieldSpecs[j] === pre.specs[j];
     if (!same) { pre.key = key; pre.step = 0; pre.ready = false; }
-    if (pre.ready || pre.step > pre.steps) return;
+    // A step a frame, or more when the strike's too near for that (watched
+    // fast, or the land only just settled): the frames left before it, from
+    // the ticks left and how long a tick is as it's played (see onTick).
+    const framesLeft = Math.max(1, (w.strikeAt - game.tick + 0.5) * tickEvery / Math.max(8, frameDt) - 1);
+    for (let n = pre.step ? Math.min(4, Math.ceil((pre.steps + 1 - pre.step) / framesLeft)) : 1; n > 0 && !pre.ready && pre.step <= pre.steps; n--) prebuildStep(w);
+  }
+  function prebuildStep(w) {
     const st = pre.step++;
     if (st === 0) { prePlan(w.target); return; }
     const per = 1 + LAND_STEPS, n = st - 1, ri = Math.floor(n / per), sub = n % per;
@@ -5618,8 +5625,9 @@ window.SnakeRender = (() => {
     t = r.sharedAt; r.sharedAt = sp.sharedAt; sp.sharedAt = t;
     t = r.sharedTo; r.sharedTo = sp.sharedTo; sp.sharedTo = t;
     r.X = sp.X; r.Y = sp.Y; r.any = sp.any;
-    r.dirty = false; r.builtK = k; landVer++;
+    r.dirty = false; r.builtK = k; landVer++; landSwaps++;
   }
+  let landSwaps = 0, landBuilds = 0, landStale = 0, landUnready = 0; // (realms' layers swapped in at a strike, and made; strikes it was made the old way at, the land made ahead not as it is then, or not made yet: for the tests)
   function swapDashes() {
     const d = pre.dash;
     const t = dash.layer; dash.layer = d.layer; d.layer = t;
@@ -7856,6 +7864,8 @@ window.SnakeRender = (() => {
       timeFrom = game.time > timeAt && game.time - timeAt < 1000 ? timeAt : game.time;
       timeAt = game.time;
     }
+    if (tickNow) tickEvery += (Math.max(0, Math.min(1000, now - tickNow)) - tickEvery) * 0.3; // (see prebuild)
+    tickNow = now;
     for (let i = scurries.length - 1; i >= 0; i--) if (scurries[i].tick < game.tick) scurries.splice(i, 1); // (a tick's own: see drawBeetle)
     for (let i = bugPops.length - 1; i >= 0; i--) if (bugPops[i].tick < game.tick) bugPops.splice(i, 1);
     for (const e of events) {
@@ -8400,7 +8410,7 @@ window.SnakeRender = (() => {
     fresh = true;
     bugs.length = bugPops.length = scurries.length = dives.length = heaps.length = 0;
     bugFor.clear();
-    knockFor = -1;
+    knockFor = -1; tickNow = 0;
     fallenFlags.length = 0;
     fallen.length = 0;
     nextLeaf = 0;
@@ -8456,6 +8466,7 @@ window.SnakeRender = (() => {
     landShown: (s, x, y) => !!realms.get(s)?.shown[y * GRID + x], // (whether a cell of s's land is drawn: for the tests)
     prebuild(on) { prebuilding = !!on; if (!on) { pre.ready = false; pre.key = NaN; } }, // (the land a strike leaves made ahead, or not: for the tests, comparing the two)
     get prebuilt() { return pre.ready; }, // (made ahead, and waiting for the strike: for the tests)
+    get landMade() { return { swapped: landSwaps, built: landBuilds, stale: landStale, unready: landUnready }; }, // (how often a realm's layers were swapped in, made ahead, and made; strikes made the old way, and why: for the tests)
     // (s's land's layers and the dashes as drawn, as a hash of their pixels, where they land and how big: for the tests)
     landPixels(s) {
       const r = realms.get(s), out = {};
