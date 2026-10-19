@@ -18,7 +18,9 @@
 //   what it shows; in the book, H and G go to their tabs, or close it from
 //   there. The basics have the renderer's pictures.
 // - The header on an upright phone keeps its buttons on one row, with room
-//   for one more (a full-screen button) at 320 px.
+//   for one more (a full-screen button) at 320 px; on a 1920x1080 screen's
+//   maximized browser and an iPad held upright it's one row with the Field
+//   guide named, and stays one row with a sixth button.
 //
 //   node tools/ui-test.js
 const { launch, serve, HELPERS } = require('./browser');
@@ -309,6 +311,27 @@ const KEYS = {
     p = await P();
     check(p.book && p.spot === 'fire' && p.spotIn && p.pageTop > 0 && p.focus === 'records-close', '...which opens the guide at Fire, far down it, lit and in view (focus on its Close)', `${p.spot} / in view: ${p.spotIn} / scrolled ${p.pageTop} / ${p.focus}`);
     await key('Escape');
+
+    // ------------------------------------- a one-row header's tight range
+    // A 1920x1080 screen's maximized browser (a 685 px page) and an iPad held
+    // upright (744): the Field guide keeps its name beside its book, the
+    // trophy is an icon, and the header stays one row; with a sixth button
+    // (a stand-in for the phones work's full screen) the row still holds.
+    const doorsRow = `(() => {
+      const hdr = document.querySelector('header'), bs = [...hdr.querySelectorAll('button')].filter(vis);
+      const tops = new Set(bs.map(x => Math.round(x.getBoundingClientRect().top))), named = id => vis(document.querySelector('#' + id + ' .trophy-text'));
+      return { page: Math.round(document.querySelector('main').getBoundingClientRect().width), height: Math.round(hdr.getBoundingClientRect().height), rows: tops.size, guide: named('guide-open'), trophy: named('records-open'), book: vis(document.querySelector('#guide-open svg')) };
+    })()`;
+    const sixth = `(() => { const x = document.createElement('button'); x.className = 'icon'; x.innerHTML = '<svg viewBox="0 0 20 20"></svg>'; document.querySelector('.hud').appendChild(x); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(1)))); })()`;
+    for (const [w, h, touch, label] of [[1920, 945, false, '1920x945, a maximized browser'], [768, 1024, true, 'an iPad upright']]) {
+      await b.viewport(w, h, { scale: touch ? 2 : 1, mobile: touch });
+      await load();
+      const r = await ev(doorsRow);
+      check(r.rows === 1 && r.guide && r.book && !r.trophy && r.height <= 56, `${label}: the header in one row, the Field guide named beside its book, the trophy an icon`, JSON.stringify(r));
+      await ev(sixth);
+      const r6 = await ev(doorsRow);
+      check(r6.rows === 1 && r6.height === r.height, `${label}: with a sixth button in the header, still one row`, JSON.stringify(r6));
+    }
 
     // -------------------------------------------------------------- phones
     for (const [w, h] of [[390, 844], [320, 640]]) {

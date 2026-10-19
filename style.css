@@ -1109,20 +1109,46 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
 }
 
 /* A header in one row (the title, Score and Best, then the buttons) has room
-   for the doors' names only from about 770 px wide (860 with a touch screen's
-   44 px buttons); narrower, down to where the buttons get a row of their own,
-   both doors are icons, so the guide's door never pushes the header onto a
-   second row (nor would a full-screen button beside them). */
-@container page (min-width: 600px) and (max-width: 769px) {
+   for both doors' names from a 785 px page (860 with a touch screen's 44 px
+   buttons). Narrower, the Field guide keeps its name, beside its open book,
+   and the trophy is an icon, down to a 675 px page (730 with touch): a
+   1920×1080 screen's maximized browser, or an iPad held upright, still sees
+   the guide by name. Narrower still, down to where the buttons get a row of
+   their own, both doors are icons, so the header never takes a second row.
+   A sixth button in the header (the full screen the phones work adds) costs
+   the guide's name 40 px: then it keeps it from a 715 px page (772 with
+   touch), and both names from 785 (860) as they are. Each step leaves the
+   row 5 px or more to spare, for another system's fonts. */
+@container page (min-width: 600px) and (max-width: 784px) {
   .hud .trophy { width: 34px; min-width: 34px; height: 34px; padding: 0; justify-content: center; } /* (round, as the icons beside them) */
   .hud .trophy svg { display: block; }
   .hud .trophy .trophy-text { display: none; }
+}
+@media not all and (pointer: coarse) {
+  @container page (min-width: 675px) and (max-width: 784px) {
+    .hud { gap: 6px; } /* (the name's room: 2 px from each gap) */
+    .hud #guide-open { width: auto; padding: 0 9px 0 7px; gap: 4px; }
+    .hud #guide-open .trophy-text { display: inline; }
+  }
+  @container page (min-width: 675px) and (max-width: 714px) {
+    .hud:has(> button:nth-of-type(6):not([hidden])) #guide-open { width: 34px; padding: 0; }
+    .hud:has(> button:nth-of-type(6):not([hidden])) #guide-open .trophy-text { display: none; }
+  }
 }
 @media (pointer: coarse) {
   @container page (min-width: 600px) and (max-width: 859px) {
     .hud .trophy { width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
     .hud .trophy svg { display: block; }
     .hud .trophy .trophy-text { display: none; }
+  }
+  @container page (min-width: 730px) and (max-width: 859px) {
+    .hud { gap: 6px; }
+    .hud #guide-open { width: auto; padding: 0 12px 0 10px; gap: 5px; }
+    .hud #guide-open .trophy-text { display: inline; }
+  }
+  @container page (min-width: 730px) and (max-width: 771px) {
+    .hud:has(> button:nth-of-type(6):not([hidden])) #guide-open { width: 44px; padding: 0; }
+    .hud:has(> button:nth-of-type(6):not([hidden])) #guide-open .trophy-text { display: none; }
   }
 }
 
