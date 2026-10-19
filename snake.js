@@ -587,7 +587,7 @@
     youHideAt = performance.now() + T.YOU_MS;
     Audio.play('go');
     if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
-    else if (touchFirst && game.withPlayer && !powersTold && helpEl.getBoundingClientRect().top > innerHeight - 8) { powersTold = true; toast(FLAVOR.powersFirst, 3000, 'you', 'lesson'); } // (a short phone: the help under the board is off the screen; how to steer is beside YOU. A lesson's banner, not Go!'s big one: it fits, and keeps out of the heads' way)
+    else if (touchFirst && game.withPlayer && !powersTold && helpEl.getBoundingClientRect().bottom > innerHeight + 0.5) { powersTold = true; toast(FLAVOR.powersFirst, 3000, 'you', 'lesson'); } // (a short phone: the help under the board isn't wholly on the screen, so it's off it or hidden; how to steer is beside YOU. A lesson's banner, not Go!'s big one: it fits, and keeps out of the heads' way)
     else toast(pick(game.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1300, 'go');
     flashFrame('go');
     acc = 0;
@@ -2565,6 +2565,14 @@
   const hanging = [...document.querySelectorAll('.frame .moss.bottom, .frame .leaves.bl, .frame .leaves.br')];
   const ledgeEl = $('perch-ledge'), rootStyle = getComputedStyle(document.documentElement);
   const inset = name => parseFloat(rootStyle.getPropertyValue(name)) || 0;
+  // The help under the board, only partly on the screen (a short phone held
+  // upright, or the chatter grown above it): while you play, when the page
+  // can't scroll to it, it's hidden rather than cut in half by the screen's
+  // edge. (A short phone's first Go tells you about the powers instead.)
+  const fitHelp = () => {
+    const h = helpEl.getBoundingClientRect();
+    helpEl.classList.toggle('cut', h.height > 0 && h.top < innerHeight && h.bottom > innerHeight + 0.5);
+  };
   const placeBoard = () => {
     const b = canvas.getBoundingClientRect();
     const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: ledgeEl ? ledgeEl.offsetHeight : 0, hang: [] };
@@ -2584,6 +2592,7 @@
       }
     }
     R.setBoardRect(b.left, b.top, b.width, free);
+    fitHelp();
   };
   window.addEventListener('resize', placeBoard, { passive: true });
   window.addEventListener('scroll', placeBoard, { passive: true });

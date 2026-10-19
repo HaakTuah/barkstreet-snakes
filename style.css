@@ -788,6 +788,7 @@ canvas {
 .chatlog strong { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
 
 .help { margin: 12px 0 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
+html.playing .help.cut { visibility: hidden; } /* (cut in half by the screen's edge, where the page can't scroll to it: snake.js fitHelp) */
 .hint span, .help span, #overlay-text span.whole { white-space: nowrap; } /* (each item whole, a line breaking only after its dot; a long reason may wrap, rather than run off a phone's card) */
 .sep { font-style: normal; }
 .glyph { display: inline-block; width: 0.62em; height: 0.78em; vertical-align: -0.06em; fill: currentColor; } /* (the pause button's own bars, not a font's) */
