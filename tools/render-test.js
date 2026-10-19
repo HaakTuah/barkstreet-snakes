@@ -74,9 +74,11 @@
 // - A woodpecker you can believe: resting, its eye follows a head moving
 //   near it (its pupil, read off its own layer); through the aim its head
 //   turns to its patch, tilting, its eye on it; it strikes a blow on each
-//   knock of the drum (one table for both), the last on the strike's tick,
-//   and in a round the game starts the drum so its last knock lands on the
-//   strike as drawn, and says "kik!" on the frame it lands back on its
+//   knock of the drum (one table for both), the last on the strike's tick;
+//   drumming, it clings clear of the rings where food in its mark will
+//   land, if it can, and a ring or a piece in the air it still covers is
+//   drawn over it; in a round the game starts the drum so its last knock
+//   lands on the strike as drawn, and says "kik!" on the frame it lands back on its
 //   perch; its layer is the board and the room round it, and a phone's
 //   address bar coming and going never makes it again; with reduced
 //   motion, no wingbeats and no bob, and fewer, slower blows.
@@ -1275,6 +1277,59 @@ const STAGE = `(() => {
     check(blows.before.blows === blows.n - 1 && blows.last.blows === blows.n && blows.last.d < 3 && blows.last.tp === blows.last.strikeAt && blows.hole.phase === 'linger' && blows.hole.d < 3 && blows.pulled.d > 6,
       'its last blow lands on the strike’s tick, as the patch gives way, and then it pulls its head out of the hole',
       `4 ms before: blow ${blows.before.blows} of ${blows.n}; on the tick: blow ${blows.last.blows}, its beak ${blows.last.d} units off; the strike made: ${blows.hole.phase}, ${blows.hole.d} units off, 60 ms on ${blows.pulled.d}`);
+
+    // Drumming, it never hides where the food in its mark will land (the
+    // ring is a promise you plan by): a patch of 3 by 4 with the spot at
+    // (6, 10), the bird coming from the right. Nothing in the mark, it
+    // clings as it came, over (8, 11); with an apple whose ring is (8, 11),
+    // it clings the other way, the ring clear, its beak still on the spot.
+    // With apples both sides, every way covers a ring: the one it covers is
+    // drawn over it (its layer at the ring, with and without), and so is a
+    // piece in the air under it.
+    const promise = await ev(`(() => {
+      ${BIRD}
+      const lg = L.getContext('2d');
+      const px = (bx, by) => { const z = R.birdPose().layer, k = z.W / z.w, bd = document.getElementById('game').getBoundingClientRect(), c = bd.width / (N * 32); const x = Math.round((bd.left + bx * c - z.x) * k), y = Math.round((bd.top + by * c - z.y) * k); return x < 0 || y < 0 || x >= L.width || y >= L.height ? [0, 0, 0, 0] : Array.from(lg.getImageData(x, y, 1, 1).data); }; // (its layer's pixel at a board point)
+      const ringPts = (x, y, r) => Array.from({ length: 32 }, (_, q) => [(x + 0.5) * 32 + Math.cos(q * Math.PI / 16) * r, (y + 0.5) * 32 + Math.sin(q * Math.PI / 16) * r]);
+      const covered = (x, y) => ringPts(x, y, 12).filter(([bx, by]) => px(bx, by)[3] > 128).length;
+      const differ = (a, b) => a.filter((c, i) => c[3] > 128 && Math.abs(c[0] - b[i][0]) + Math.abs(c[1] - b[i][1]) + Math.abs(c[2] - b[i][2]) > 30).length;
+      const P = []; for (let y = 9; y <= 12; y++) for (let x = 5; x <= 7; x++) P.push(y * N + x);
+      const spot = 10 * N + 6, lands = () => E.knocks(g, P).filter(k => k.to).map(k => [k.to.x, k.to.y]);
+      const mark = foods => { g.tick++; g.food = foods.map(([x, y]) => ({ x, y, kind: 'food', expires: g.tick + 900 })); g.woodpecker = { x: 6, y: 10, at: g.time - 9000, target: P, strikeAt: g.tick + 17, last: [spot], struckAt: g.tick - 60, restUntil: g.tick, pecks: 1 }; drawN(3); return R.birdPlan(); };
+      const out = {};
+      let plan = mark([]), pose = at(-plan.times[3]);
+      out.came = { flip: pose.flip, phase: pose.phase, covered: covered(8, 11) };
+      plan = mark([[7, 11]]); out.lands1 = lands(); pose = at(-plan.times[3]);
+      out.one = { flip: pose.flip, phase: pose.phase, covered: covered(8, 11), beak: +Math.hypot(pose.beak[0] - 6.5 * 32, pose.beak[1] - 10.5 * 32).toFixed(1) };
+      plan = mark([[5, 11], [7, 11]]); out.lands2 = lands(); pose = at(-plan.times[3]);
+      const hid = out.lands2.map(([x, y]) => ({ x, y, n: covered(x, y) })).sort((a, b) => b.n - a.n)[0], t = __t;
+      const ring = () => ringPts(hid.x, hid.y, 12).concat(ringPts(hid.x, hid.y, 13)).map(([bx, by]) => px(bx, by));
+      R.birdOver(false); R.birdFrame(0.5, t); const off = ring();
+      R.birdOver(true); R.birdFrame(0.5, t); const on = ring();
+      out.two = { phase: R.birdPose().phase, hid, under: off.filter(c => c[3] > 128).length, over: differ(off, on) };
+      let cell = null; // (under its body, a piece's height clear of the rings)
+      for (let y = 6; y <= 17 && !cell; y++) for (let x = 0; x < N && !cell; x++) {
+        if (P.includes(y * N + x) || out.lands2.some(([lx, ly]) => Math.hypot(lx - x, ly + 0.6 - y) < 0.8)) continue;
+        if ([[0.5, 0.5], [0.5, -0.1], [0.2, -0.1], [0.8, -0.1]].every(([dx, dy]) => px((x + dx) * 32, (y + dy) * 32)[3] > 200)) cell = [x, y];
+      }
+      g.food.push({ x: cell[0], y: cell[1], kind: 'food', expires: g.tick + 900 });
+      R.onTick([{ type: 'knock', kind: 'food', x: cell[0], y: cell[1], tx: cell[0], ty: cell[1] }]); // (tossed up where it lies: half way, at the top of its hop)
+      const cx = (cell[0] + 0.5) * 32, cy = (cell[1] - 0.1) * 32, disc = () => { const o = []; for (let dy = -8; dy <= 8; dy += 2) for (let dx = -8; dx <= 8; dx += 2) if (dx * dx + dy * dy <= 64) o.push(px(cx + dx, cy + dy)); return o; };
+      R.birdOver(false); R.birdFrame(0.5, t + 160); const off2 = disc();
+      R.birdOver(true); R.birdFrame(0.5, t + 160); const on2 = disc();
+      out.air = { cell, under: off2.filter(c => c[3] > 128).length, of: off2.length, over: differ(off2, on2) };
+      g.food = [];
+      return out;
+    })()`);
+    {
+      const { came, one, two, air } = promise;
+      check(came.phase === 'drum' && came.covered > 24 && one.phase === 'drum' && JSON.stringify(promise.lands1) === '[[8,11]]' && one.covered === 0 && one.flip !== came.flip && one.beak < 3,
+        'drumming, the woodpecker clings clear of a ring where food in its mark will land, if it can',
+        `as it came (facing ${came.flip > 0 ? 'right' : 'left'}) it covers ${came.covered} of 32 points round the ring at 8,11; with an apple landing there it faces ${one.flip > 0 ? 'right' : 'left'}, covering ${one.covered}, its beak ${one.beak} units off the spot`);
+      check(two.phase === 'drum' && two.hid.n > 8 && two.over > 0.4 * two.under && air.under === air.of && air.over > 0.8 * air.of,
+        'and where it can’t, the ring it covers is drawn over it, as is a piece in the air under it',
+        `rings at ${JSON.stringify(promise.lands2)}: ${two.hid.n} of 32 points at ${two.hid.x},${two.hid.y} under it, ${two.over} of its ${two.under} pixels there drawn over; an apple up in the air over ${air.cell}: ${air.over} of ${air.of} pixels drawn over it`);
+    }
 
     // The sound, in a real round on a virtual 60 Hz clock: the drum the game
     // starts (when, how late, how fast) and its last knock against the moment

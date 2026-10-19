@@ -6094,32 +6094,37 @@ window.SnakeRender = (() => {
   // order, no two on one cell, never a burrow; the rivals read the same),
   // worked out once a tick; on the aim's last tick, the landings the engine
   // has promised (w.landings, kept at the strike while their cells are
-  // free). Nothing for a piece the bird will eat.
+  // free). Nothing for a piece the bird will eat. (The bird drumming beside
+  // the patch never hides one: it clings clear of them if it can, and any
+  // it still covers are drawn over it too: see drumChoice, drawWoodpecker.)
   const knockLand = []; // (cells, x and y, this tick's)
   let knockFor = -1, knockGame = null;
-  function knockRings(w, prog, now) {
+  function knockCells(w) {
     if (knockFor !== game.tick || knockGame !== game) {
       knockFor = game.tick; knockGame = game; knockLand.length = 0;
       const knocks = window.SnakeEngine?.knocks;
       if (knocks) for (const { to } of knocks(game, w.target, w.landings)) if (to) knockLand.push(to.x, to.y);
     }
-    if (!knockLand.length) return;
+    return knockLand;
+  }
+  function knockRings(w, prog, now, g = ctx) {
+    if (!knockCells(w).length) return;
     const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now / 160);
-    ctx.setLineDash(KNOCK_DASH);
-    ctx.lineCap = 'butt';
+    g.setLineDash(KNOCK_DASH);
+    g.lineCap = 'butt';
     for (let pass = 0; pass < 2; pass++) {
-      ctx.globalAlpha = (0.35 + 0.4 * prog) * (pass ? 1 : 0.7);
-      ctx.strokeStyle = pass ? '#fef3c7' : '#140a04';
-      ctx.lineWidth = pass ? 1.6 : 3.4;
-      ctx.beginPath();
+      g.globalAlpha = (0.35 + 0.4 * prog) * (pass ? 1 : 0.7);
+      g.strokeStyle = pass ? '#fef3c7' : '#140a04';
+      g.lineWidth = pass ? 1.6 : 3.4;
+      g.beginPath();
       for (let i = 0; i < knockLand.length; i += 2) {
         const x = (knockLand[i] + 0.5) * CELL, y = (knockLand[i + 1] + 0.5) * CELL, r = CELL * (0.36 + 0.04 * pulse);
-        ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, TAU);
+        g.moveTo(x + r, y); g.arc(x, y, r, 0, TAU);
       }
-      ctx.stroke();
+      g.stroke();
     }
-    ctx.setLineDash(NO_DASH);
-    ctx.globalAlpha = 1;
+    g.setLineDash(NO_DASH);
+    g.globalAlpha = 1;
   }
   const KNOCK_DASH = [5, 4];
 
@@ -7379,26 +7384,40 @@ window.SnakeRender = (() => {
   // back from the strike; the flights shortened to fit the aim, leaving it
   // B_LOOK at least to look before it goes. With reduced motion, a blow on
   // every third knock, the last on the strike.
+  // Where it clings to drum is chosen as the aim starts, and again each
+  // tick while it's still on its perch (its hop done, before it crouches to
+  // go): the way that hides least of what you need to see (see drumChoice),
+  // as the board stands that tick. Then it's kept.
   const plan = { strikeAt: -1, spot: -1, prev: -1, pecks: -1, layout: -1, ms: 0, aim: 0, lively: true,
-    tx: 0, ty: 0, from: null, hop: null, drum: null, times: [], D: 0, F: 0, H: 0, aimMs: 0, depart: 0 };
-  function aimPlan(w, ms) {
+    tx: 0, ty: 0, from: null, hop: null, drum: null, times: [], D: 0, F: 0, H: 0, H0: 0, aimMs: 0, depart: 0, chose: -1 };
+  function aimPlan(w, ms, to = Infinity) {
     const A = plan, spot = spotIn(w.target), prev = w.last.length ? spotIn(w.last) : ARRIVAL_SPOT, pecks = w.pecks || 0, lively = !reduced;
-    if (A.strikeAt === w.strikeAt && A.spot === spot && A.prev === prev && A.pecks === pecks && A.layout === birdLayout && A.ms === ms && A.aim === T.PECK_AIM_TICKS && A.lively === lively) return A;
+    if (A.strikeAt === w.strikeAt && A.spot === spot && A.prev === prev && A.pecks === pecks && A.layout === birdLayout && A.ms === ms && A.aim === T.PECK_AIM_TICKS && A.lively === lively) {
+      if (A.chose !== game.tick && A.aimMs - to >= A.H && to > A.depart + B_TAKEOFF) { // (still on its perch: look again)
+        A.chose = game.tick;
+        const d = drumChoice(w, spot, A.from.flip);
+        if (d !== A.drum) {
+          const F = flightMs(Math.hypot(d.x - A.from.x, d.y - A.from.y)), k = Math.max(0.4, Math.min(1, (A.aimMs - B_LOOK - B_TAKEOFF - B_SETTLE - A.D) / (F + A.H0)));
+          if (to > A.D + B_SETTLE + F * k + B_TAKEOFF) { A.drum = d; A.F = F * k; A.depart = A.D + B_SETTLE + A.F; } // (its hop kept as it was)
+        }
+      }
+      return A;
+    }
     A.strikeAt = w.strikeAt; A.spot = spot; A.prev = prev; A.pecks = pecks; A.layout = birdLayout; A.ms = ms; A.aim = T.PECK_AIM_TICKS; A.lively = lively;
     A.tx = (spot % GRID) * CELL + CELL / 2; A.ty = Math.floor(spot / GRID) * CELL + CELL / 2;
-    const was = perchAt(prev), to = perchAt(spot), beside = k => k === 'left' || k === 'right';
-    A.from = beside(was.side) && beside(to.side) && was.side !== to.side ? was : to;
-    A.hop = A.from === to && Math.hypot(to.x - was.x, to.y - was.y) > 1 ? was : null;
-    A.drum = drumPoseAt(spot, A.from.flip);
+    const was = perchAt(prev), at = perchAt(spot), beside = k => k === 'left' || k === 'right';
+    A.from = beside(was.side) && beside(at.side) && was.side !== at.side ? was : at;
+    A.hop = A.from === at && Math.hypot(at.x - was.x, at.y - was.y) > 1 ? was : null;
+    A.drum = drumChoice(w, spot, A.from.flip); A.chose = game.tick;
     const blows = drumTable(pecks), n = blows.length;
     A.D = blows[n - 1];
     A.times.length = 0;
     for (let i = 0; i < n; i++) if (lively || (n - 1 - i) % 3 === 0) A.times.push(blows[i] - A.D);
     A.aimMs = T.PECK_AIM_TICKS * ms;
-    const F = flightMs(Math.hypot(A.drum.x - A.from.x, A.drum.y - A.from.y)), H = A.hop ? hopMs(Math.hypot(to.x - was.x, to.y - was.y)) : 0;
+    const F = flightMs(Math.hypot(A.drum.x - A.from.x, A.drum.y - A.from.y)), H = A.hop ? hopMs(Math.hypot(at.x - was.x, at.y - was.y)) : 0;
     const k = Math.max(0.4, Math.min(1, (A.aimMs - B_LOOK - B_TAKEOFF - B_SETTLE - A.D) / (F + H)));
     A.F = F * k; A.depart = A.D + B_SETTLE + A.F;
-    A.H = Math.min(H * k, Math.max(0, A.aimMs - A.depart - 60));
+    A.H0 = H; A.H = Math.min(H * k, Math.max(0, A.aimMs - A.depart - 60));
     return A;
   }
   // ...and after the strike: a moment at the hole, the flight back to the
@@ -7424,7 +7443,7 @@ window.SnakeRender = (() => {
     P.alpha = 1; P.thrust = 0; P.blur = 0; P.gape = 0; P.air = 0; P.wing = 0; P.stroke = 1; P.sweep = 0; P.near = P.far = 1; P.feet = 1; P.crouch = 0; P.rot = 0;
     P.free = false; P.up = 1.2; P.drum = null; P.blows = 0; P.blink = false;
     if (w.target.length) {
-      const A = aimPlan(w, ms), to = (w.strikeAt - tp) * ms, into = A.aimMs - to;
+      const to = (w.strikeAt - tp) * ms, A = aimPlan(w, ms, to), into = A.aimMs - to;
       P.fx = A.tx; P.fy = A.ty;
       if (A.hop && into < A.H) flight(A.hop, perchAt(A.spot), Math.max(0, into) / A.H, A.H, P, 'hop', 0, 0);
       else if (to > A.depart) { perched(A.from, P, 'eye'); if (lively) P.crouch = smooth(clamp01(1 - (to - A.depart) / B_TAKEOFF)); }
@@ -7560,8 +7579,12 @@ window.SnakeRender = (() => {
   // other way, else lying level, its beak down at the spot (the bottom
   // rows, with the board's bottom at the screen's) or up; else smaller.
   // (Upright on the bottom row, its tail hung four cells below the board,
-  // past the bottom of a phone on its side.)
+  // past the bottom of a phone on its side.) With it, the other ways it
+  // could cling there as big (alts, the first this one): upright or
+  // leaning, facing either way (or, where it must lie level, lying level),
+  // for drumChoice.
   const DRUM_TRIES = [0, 1, 0.45, 1, -0.45, 1, 0, -1, 0.45, -1, -0.45, -1, Math.PI / 2, 1, -Math.PI / 2, 1, Math.PI / 2, -1, -Math.PI / 2, -1], DRUM_SIZES = [1, 0.85, 0.72, 0.6];
+  const DRUM_UPRIGHT = 12; // (the tries upright or leaning: the first six)
   const probe = { x: 0, y: 0, s: 1, flip: 1, rot: 0, crouch: 0, wing: 0, stroke: 1, sweep: 0, near: 1, far: 1, feet: 1, turn: 0, thrust: 0, air: 0 };
   function drumPoseAt(spot, flip) {
     const key = spot * 2 + (flip > 0 ? 1 : 0);
@@ -7570,7 +7593,8 @@ window.SnakeRender = (() => {
     const tx = (spot % GRID) * CELL + CELL / 2, ty = Math.floor(spot / GRID) * CELL + CELL / 2, Q = probe;
     let best = null, least = Infinity;
     for (const s of DRUM_SIZES) {
-      for (let i = 0; i < DRUM_TRIES.length && !d; i += 2) {
+      for (let i = 0; i < DRUM_TRIES.length; i += 2) {
+        if (d && (i < DRUM_UPRIGHT) !== d.upright) break; // (no lying level where it can stand)
         const f = flip * DRUM_TRIES[i + 1];
         Q.s = s; Q.flip = f; Q.rot = DRUM_TRIES[i] * f; Q.x = Q.y = 0; Q.turn = 0; Q.thrust = 0; Q.crouch = 0;
         birdMats(Q);
@@ -7579,14 +7603,72 @@ window.SnakeRender = (() => {
         Q.thrust = -1.3 * B_BACK; Q.crouch = 0.8; birdBox(Q, false);
         Q.crouch = 0; Q.rot = (DRUM_TRIES[i] - 0.3) * f; birdBox(Q, false); Q.rot = DRUM_TRIES[i] * f; // (and leaning back as it lands, or as it pulls out of the hole)
         const over = Math.max(room.x0 - box.x0, room.y0 - box.y0, box.x1 - room.x1, box.y1 - room.y1);
-        if (over <= 0) d = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot };
-        else if (over < least) { least = over; best = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot }; }
+        if (over <= 0) { const p = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot, upright: i < DRUM_UPRIGHT }; if (d) d.alts.push(p); else { d = p; d.alts = [p]; } }
+        else if (!d && over < least) { least = over; best = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot }; }
       }
       if (d) break;
     }
-    d ||= best;
+    if (!d) { d = best; d.alts = [best]; }
     drumAt.set(key, d);
     return d;
+  }
+  // Which of those ways it clings by, drumming: the one that hides least of
+  // what you need to see then, as the board stands: the rings where the
+  // food in its mark will land (the strike's promise; four times what the
+  // food itself counts), then that food, trembling. As it came, upright, if
+  // that's as clear. (What it still covers is drawn over it: see
+  // drawWoodpecker.)
+  const SEE_RING = 4, SEE_FOOD = 1;
+  let seeN = 0, seeX = new Float32Array(32), seeY = new Float32Array(32), seeW = new Float32Array(32);
+  function drumChoice(w, spot, flip) {
+    const d = drumPoseAt(spot, flip);
+    if (d.alts.length < 2) return d;
+    const lands = knockCells(w);
+    seeN = 0;
+    const see = (x, y, wt) => {
+      if (seeN === seeX.length) { const grow = a => { const b = new Float32Array(2 * a.length); b.set(a); return b; }; seeX = grow(seeX); seeY = grow(seeY); seeW = grow(seeW); }
+      seeX[seeN] = (x + 0.5) * CELL; seeY[seeN] = (y + 0.5) * CELL; seeW[seeN++] = wt;
+    };
+    for (let i = 0; i < lands.length; i += 2) see(lands[i], lands[i + 1], SEE_RING);
+    for (const f of game.food) if (w.target.includes(f.y * GRID + f.x)) see(f.x, f.y, SEE_FOOD);
+    if (!seeN) return d;
+    let pick = d, least = Infinity;
+    for (const p of d.alts) {
+      const c = hides(p);
+      if (c < least - 1e-6) { least = c; pick = p; }
+    }
+    return pick;
+  }
+  // How much of those (seeX, seeY: each a ring's round, its middle and eight
+  // points on it) the bird drumming in pose p covers: its body, its tail,
+  // its head and beak, ink and all.
+  const SEE_R = CELL * 0.4;
+  function hides(p) {
+    const Q = probe;
+    Q.x = p.x; Q.y = p.y; Q.s = p.s; Q.flip = p.flip; Q.rot = p.rot; Q.turn = 0; Q.thrust = 0.06; Q.crouch = 0;
+    birdMats(Q);
+    let sum = 0;
+    for (let j = 0; j < seeN; j++) {
+      let n = 0;
+      for (let q = 0; q < 9; q++) {
+        const a = q * TAU / 8, x = seeX[j] + (q < 8 ? Math.cos(a) * SEE_R : 0), y = seeY[j] + (q < 8 ? Math.sin(a) * SEE_R : 0);
+        if (covers(x, y)) n++;
+      }
+      sum += seeW[j] * n / 9;
+    }
+    return sum;
+  }
+  function covers(x, y) { // (is board point x, y under the bird as its frames BM and HM stand?)
+    let m = BM, det = m[0] * m[3] - m[1] * m[2], dx = x - m[4], dy = y - m[5];
+    let u = (m[3] * dx - m[2] * dy) / det, v = (m[0] * dy - m[1] * dx) / det;
+    if (((u + 0.1) / 1.07) ** 2 + ((v - 0.3) / 1.67) ** 2 <= 1 || inTri(u, v, -0.55, 1.1, -0.15, 3.1, 0.3, 1.2)) return true; // (its body; its tail)
+    m = HM; det = m[0] * m[3] - m[1] * m[2]; dx = x - m[4]; dy = y - m[5];
+    u = (m[3] * dx - m[2] * dy) / det; v = (m[0] * dy - m[1] * dx) / det;
+    return ((u - 0.45) / 0.84) ** 2 + ((v + 1.75) / 0.82) ** 2 <= 1 || (u + 0.12) ** 2 + (v + 1.95) ** 2 <= 0.42 ** 2 || inTri(u, v, 1.05, -2.0, BILL[0], BILL[1], 1.05, -1.5); // (its head, its nape, its beak)
+  }
+  function inTri(x, y, ax, ay, bx, by, cx, cy) {
+    const d1 = (x - bx) * (ay - by) - (ax - bx) * (y - by), d2 = (x - cx) * (by - cy) - (bx - cx) * (y - cy), d3 = (x - ax) * (cy - ay) - (cx - ax) * (y - ay);
+    return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
   }
 
   // Its frame (2D matrices, as setTransform takes them, from its own units,
@@ -7944,10 +8026,31 @@ window.SnakeRender = (() => {
       x0 = Math.min(x0, A.tx - 5 * CELL); x1 = Math.max(x1, A.tx + 5 * CELL); y0 = Math.min(y0, A.ty - 5 * CELL); y1 = Math.max(y1, A.ty + 5 * CELL); // (as far as its chips fly)
     }
     drawBird(g, P, lay.sc * BU * P.s < partsK * 0.55);
+    overBird(g, w, alpha, now);
     const bx = Math.max(0, Math.floor(lay.ox + x0 * lay.sc) - 2), by = Math.max(0, Math.floor(lay.oy + y0 * lay.sc) - 2);
     bird.box[0] = bx; bird.box[1] = by;
     bird.box[2] = Math.max(0, Math.min(lay.W, Math.ceil(lay.ox + x1 * lay.sc) + 2) - bx); bird.box[3] = Math.max(0, Math.min(lay.H, Math.ceil(lay.oy + y1 * lay.sc) + 2) - by);
     bird.drawn = true;
+  }
+  // A promise is never hidden by the bird: where it's over a ring (the food
+  // in its mark will land there) or over a piece in the air, knocked out of
+  // the patch or spat, that's drawn again over it, on its own pixels only
+  // (so nothing is drawn twice where it isn't), moved with the board as it
+  // shakes. The bird still covers the food in its mark, lying where its
+  // beak is at work: the rings say where that goes.
+  let overOn = true; // (off only for the tests, to see it against the bird without)
+  function overBird(g, w, alpha, now) {
+    if (!overOn) return;
+    const rings = w.target.length > 0 && knockCells(w).length > 0;
+    let flying = false;
+    if (!reduced) for (const f of game.food) { const b = f.kind !== 'beetle' && born.get(f.y * GRID + f.x); if (b && b.spat && b.movedAt && now - b.movedAt < b.fly) { flying = true; break; } }
+    if (!rings && !flying) return;
+    useBase(g);
+    g.translate(shakeX / k, shakeY / k);
+    g.globalCompositeOperation = 'source-atop';
+    if (rings) knockRings(w, aimed(alpha), now, g);
+    if (flying) { const was = ctx; ctx = g; try { drawTossed(now); } finally { ctx = was; } }
+    g.globalCompositeOperation = 'source-over';
   }
   // When it lands back on its perch after its last strike, ms after it, as
   // drawn (the game says "kik!" then); Infinity if it isn't on its way back.
@@ -9144,6 +9247,7 @@ window.SnakeRender = (() => {
     },
     birdPlan: () => ({ strikeAt: plan.strikeAt, spot: [plan.tx, plan.ty], aim: plan.aimMs, depart: plan.depart, settle: B_SETTLE, drum: plan.D, times: plan.times.slice(), flight: plan.F, hop: plan.hop ? plan.H : 0, home: home.total, back: home.F, linger: B_LINGER }),
     birdLook(turn) { bird.force = turn ?? null; }, // (its head held turned so, or null: for the tests)
+    birdOver(on) { overOn = !!on; }, // (the rings and pieces in the air it covers drawn over it, or not: for the tests)
     birdFrame(alpha, now) { if (game && sized) drawWoodpecker(alpha, now, 16); }, // (the woodpecker alone drawn, the board left as it is: for the tests, frame by frame through its flights)
   };
 })();
