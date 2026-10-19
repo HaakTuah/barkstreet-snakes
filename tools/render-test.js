@@ -906,13 +906,13 @@ const STAGE = `(() => {
       const g = stage(['mason', 'ghost', 'drab']);
       show(g); R.setViewer(99); drawN(20, 0.5); bareNow();
       const A = { x: 5, y: 6, kind: 'beetle', dir: E.DIRS.right, movedAt: g.tick - 50, expires: g.tick + 900 };
-      const B = { x: 15, y: 6, kind: 'beetle', dir: E.DIRS.up, movedAt: g.tick - 50, expires: g.tick + 900, scared: true, digUntil: g.tick + 8 };
+      const B = { x: 15, y: 6, kind: 'beetle', dir: E.DIRS.up, movedAt: g.tick - 50, expires: g.tick + 900, scared: true, digUntil: g.tick + TUNING.BEETLE_DIG };
       g.food.push(A, B);
       g.burrows.push({ x: 20, y: 10, at: g.tick, used: g.time }); // (an ordinary one, to hold the dug one up against)
       show(g); R.setViewer(99); drawN(8, 0.5, 30);
       out.full = count(14, 5, 3, 3, emerald);
       R.onTick([{ type: 'dig', x: 15, y: 6, until: B.digUntil }]);
-      for (let t = 0; t < 8; t++) {
+      for (let t = 0; t < TUNING.BEETLE_DIG; t++) { // (the whole dig, tick by tick)
         if (t) { g.tick++; if (t % 2 === 0) { A.px = A.x; A.py = A.y; A.x++; A.movedAt = g.tick - 1; } R.onTick([]); }
         for (const al of [0.25, 0.5, 0.75, 1]) {
           __t += 30; R.frame(al, __t);
@@ -928,11 +928,11 @@ const STAGE = `(() => {
       out.settled = { raw: count(14.85, 5.85, 1.3, 1.3, raw), hole: count(15.3, 6.3, 0.4, 0.4, dark), plain: count(19.85, 9.85, 1.3, 1.3, raw) };
       // With reduced motion: no spray, a still sink.
       R.setReducedMotion(true);
-      const C = { x: 10, y: 15, kind: 'beetle', dir: E.DIRS.up, movedAt: g.tick - 50, expires: g.tick + 900, scared: true, digUntil: g.tick + 8 };
+      const C = { x: 10, y: 15, kind: 'beetle', dir: E.DIRS.up, movedAt: g.tick - 50, expires: g.tick + 900, scared: true, digUntil: g.tick + TUNING.BEETLE_DIG };
       g.food.push(C); drawN(10, 0.5, 60); // (the sprays before it, settled)
       out.calm = { parts: [], bug: [] };
       R.onTick([{ type: 'dig', x: 10, y: 15, until: C.digUntil }]);
-      for (let t = 0; t < 7; t++) { g.tick++; R.onTick([]); drawN(2, 0.5, 60); out.calm.parts.push(R.particles); out.calm.bug.push(count(9, 14, 3, 3, emerald)); }
+      for (let t = 0; t < TUNING.BEETLE_DIG - 1; t++) { g.tick++; R.onTick([]); drawN(2, 0.5, 60); out.calm.parts.push(R.particles); out.calm.bug.push(count(9, 14, 3, 3, emerald)); }
       R.setReducedMotion(false);
       // The knock: a bead and a beetle in the mark, another bead outside it.
       const g2 = stage(['mason', 'ghost', 'drab']);
@@ -1004,7 +1004,7 @@ const STAGE = `(() => {
       return out;
     })()`);
     {
-      const min = a => Math.min(...a), max = a => Math.max(...a), late = a => a.slice(-8), early = a => a.slice(0, 4);
+      const min = a => Math.min(...a), max = a => Math.max(...a), late = a => a.slice(-4), early = a => a.slice(0, 4); // (the dig's first tick and its last: four frames each)
       check(min(dug.a) > 40 && min(dug.drawn) > 10, 'two beetles out at once, each drawn every frame (one walking on, one digging in)', `the walker’s emerald pixels ${min(dug.a)} to ${max(dug.a)}, the digger’s green ${min(dug.drawn)} to ${max(dug.drawn)}`);
       check(max(late(dug.b)) < 0.6 * min(early(dug.b)) && min(late(dug.collar)) > max(early(dug.collar)) + 20 && min(late(dug.parts)) > 0,
         'a cornered beetle digs in: it sinks into the bark, a collar of sawdust round it, sawdust spraying off it to the end',
