@@ -48,9 +48,10 @@
   };
   const FLAVOR = {
     intro: 'Three rivals. One mossy log. Last snake wriggling wins.',
-    hintStart: 'Arrows or WASD steer · Space jumps · E or Shift flashes · P naps · Enter starts · H opens the Hall of Fame',
-    hintKeys: 'Arrows or WASD steer · Space jumps · E or Shift flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · M mutes · N toggles the music',
-    hintOnline: 'Arrows or WASD steer · Space jumps · E or Shift flashes · M mutes · N toggles the music',
+    // (The arrows first: anyone knows them. A click is the mouse's left button on the board.)
+    hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P naps · Enter starts · H opens the Hall of Fame',
+    hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · M mutes · N toggles the music',
+    hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · M mutes · N toggles the music',
     hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash',
     hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash · Tap ⏸ to nap',
     // Watching (Watch AIs, or after you're out): nothing of yours to steer.
@@ -107,7 +108,7 @@
     // Your flash, ready and never used yet: the key, once a round (until you've flashed).
     flashKey: touchFirst ? 'Your flash is ready: swipe the way you’re going.' : 'Your flash is ready: E or Shift, two cells in a blink.',
     // Beside the YOU arrow, as a round starts (until you steer).
-    steerHint: touchFirst ? 'Swipe to steer' : 'Arrows or WASD to steer',
+    steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
     leapNothing: 'Jumps hop over a snake, a hole or fire.',
     leapEarly: 'A bit early: jump when it’s right in front.',
     powersFirst: 'Tap jumps. Swipe ahead flashes.', // (a short phone's first Go: steering is beside YOU. One line on a 320 px phone, so it fits between the heads)
@@ -1875,11 +1876,41 @@
   document.addEventListener('touchend', endSwipe, { passive: false });
   document.addEventListener('touchcancel', endSwipe);
 
+  // The mouse, over the board: the left button jumps and the right one
+  // flashes, as Space and E do (and no menu pops up over the board). Only a
+  // mouse's buttons: a finger's taps and swipes are above, and a pen is the
+  // browser's. A button pressed while another is held (both at once: the jump
+  // goes first, as with the keys) comes as a pointer move, and counts too. A
+  // card over the board is the card's: its buttons are buttons. A run of quick
+  // presses is kept, as touches' are, so mashing jump as your death's card
+  // comes up under the pointer never presses Play again (see cardSettled).
+  const MOUSE_POWER = { 0: 'leap', 2: 'flash' }, MOUSE_BIT = { 0: 1, 1: 4, 2: 2 }; // (button -> power; button -> its bit in e.buttons)
+  let mouseAt = -Infinity, mouseRun = -Infinity; // (the last mouse press, and when the run of quick presses it's in began)
+  function mousePress(e) {
+    if (e.pointerType !== 'mouse' || !(e.button in MOUSE_BIT)) return;
+    if (e.type === 'pointermove' && !(e.buttons & MOUSE_BIT[e.button])) return; // (a chord's button let go)
+    const now = performance.now();
+    if (now - mouseAt >= T.CARD_MASH_MS) mouseRun = now;
+    mouseAt = now;
+    Audio.unlock();
+    const kind = MOUSE_POWER[e.button];
+    if (kind && e.target === canvas && !e.ctrlKey && !e.metaKey && !e.altKey) power(kind); // (the board itself, no card over it; and no shortcut)
+  }
+  document.addEventListener('pointerdown', mousePress);
+  document.addEventListener('pointermove', e => { if (e.button >= 0) mousePress(e); }); // (only a chord's press or release says which button)
+  boardEl.addEventListener('contextmenu', e => { if (!e.target.closest?.('.card')) e.preventDefault(); }); // (a card's own text and fields keep theirs)
+  // A mouse press in a run begun as a card came up by itself (or this soon after): still mashing jump.
+  const mashedOnCard = e => !!e.target.closest?.('#overlay') && performance.now() - mouseAt < T.CARD_MASH_MS && mouseRun < cardShownAt + T.CARD_TAP_MS;
+  const keepField = e => { if (mashedOnCard(e) && e.target.closest('input, label')) e.preventDefault(); }; // (nor focuses the name field it offers, or its words: keys mashed next would carve them)
+  document.addEventListener('mousedown', keepField);
+  document.addEventListener('click', keepField, true);
+
   // Buttons. (ok: whether a click counts.)
   const click = (el, fn, ok = null) => el.addEventListener('click', e => { if (ok && !ok(e)) return; Audio.unlock(); Audio.play('ui'); fn(e); });
-  // A card that came up by itself takes no pointer's click for a moment
-  // (keys are fine: Space never presses its buttons unless you Tabbed to one).
-  const cardSettled = e => !(e.detail > 0 && performance.now() < cardShownAt + T.CARD_TAP_MS);
+  // A card that came up by itself takes no pointer's click for a moment, nor
+  // one of a run of mouse presses that began then (keys are fine: Space never
+  // presses its buttons unless you Tabbed to one).
+  const cardSettled = e => !(e.detail > 0 && (performance.now() < cardShownAt + T.CARD_TAP_MS || mashedOnCard(e)));
   // A button clicked with a mouse or a finger doesn't keep the keyboard, so
   // Space and Enter go back to jumping and starting over. Card and Hall of
   // Fame buttons keep focus: there, Enter on a focused button is expected.
@@ -2036,8 +2067,8 @@
       ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(T.WRAP_MS)} s a mushroom (up to ${secs(T.WRAP_MAX_MS)}).`],
     ]],
     ['Your powers', [
-      ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space'}: hop a snake, a hole or fire. It costs your tail’s tip, then rests ${secs(T.LEAP_COOLDOWN_MS)} s.`],
-      ['flash', 'Flash', `${touchFirst ? 'A swipe the way you’re going' : 'E or Shift'}: two cells in a blink, free. Then it rests ${secs(T.FLASH_COOLDOWN_MS)} s.`],
+      ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop a snake, a hole or fire. It costs your tail’s tip, then rests ${secs(T.LEAP_COOLDOWN_MS)} s.`],
+      ['flash', 'Flash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift or a right-click on the log'}: two cells in a blink, free. Then it rests ${secs(T.FLASH_COOLDOWN_MS)} s.`],
       ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden flashes.'],
       ['rests', 'Resting', 'Two half-rings round your head: your jump (left) and your flash (right) coming back.'],
     ]],
