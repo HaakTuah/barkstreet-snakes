@@ -33,7 +33,9 @@
 // flash, jump, choke or the like never silences yours, your own golden ones
 // in a row are each heard, your choke and its cough (a beat later) each time
 // you can choke, a beetle digging in and the woodpecker knocking food aside
-// once a moment and each time they can come again, and nothing while muted.
+// once a moment and each time they can come again, and nothing while muted;
+// and what carries over the music: a rival's dig keeps its legs' scratches,
+// and a burrow closing over its flecks of sawdust.
 //
 //   node tools/chatter-test.js [--rounds N]
 //   (--rounds N: N more whole AI rounds of four rivals at random, with the
@@ -990,6 +992,56 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   A.setMuted(false);
   check(sounds('choke') && sounds('cough', { delay: 0.3 }) && sounds('dig') && sounds('knock') && sounds('heal'), '...and with the sound back on, all of them');
   console.log('ok   the sound: a rival\'s flash, dash, jump, catching fire, golden mushroom, choke or cough never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard, and your choke and cough each time you can choke; a beetle digging in, the woodpecker knocking food aside and a burrow closing over, one sound a moment and each time they can come again; muted, none');
+}
+
+// ------------------------------------------------------------ the sound over the music
+// What carries over the music (measured offline, over the music as it's
+// written every frame: see DESIGN): a rival's dig keeps its legs' scratches
+// round its dulling (RIVAL_LOWPASS, which took them off), as soft as the rest
+// of it; and a burrow closing over has flecks of sawdust high enough to carry,
+// and a crumble louder than a beetle's scrabble (which the music buries). On a
+// stand-in context that records how each cue is wired.
+{
+  const asrc = fs.readFileSync(path.join(ROOT, 'audio.js'), 'utf8');
+  const [LOWPASS, RIVAL_VOLUME] = [+/\bRIVAL_LOWPASS = (\d+)/.exec(asrc)[1], +/\bRIVAL_VOLUME = ([\d.]+)/.exec(asrc)[1]];
+  let clock = 0;
+  const made = [];
+  const param = () => { const p = { value: 0, peak: 0 }; for (const m of ['setValueAtTime', 'exponentialRampToValueAtTime', 'setTargetAtTime', 'cancelScheduledValues']) p[m] = () => p; p.linearRampToValueAtTime = v => { p.peak = Math.max(p.peak, v); return p; }; return p; };
+  const node = kind => { const n = { kind, to: [], gain: param(), frequency: param(), Q: param(), pan: param(), threshold: param(), knee: param(), ratio: param(), attack: param(), release: param(), connect: t => { n.to.push(t); return t; }, disconnect() {}, start() {}, stop() {}, setPeriodicWave() {} }; made.push(n); return n; };
+  class Recorder {
+    constructor() { this.state = 'suspended'; this.sampleRate = 8000; this.destination = node('speakers'); }
+    get currentTime() { return clock / 1000; }
+    resume() { this.state = 'running'; this.onstatechange?.(); }
+    suspend() { this.state = 'suspended'; }
+    createBuffer(channels, length) { return { getChannelData: () => new Float32Array(length) }; }
+  }
+  for (const [m, kind] of [['createGain', 'gain'], ['createBiquadFilter', 'filter'], ['createOscillator', 'osc'], ['createBufferSource', 'noise'], ['createStereoPanner', 'panner'], ['createDynamicsCompressor', 'compressor'], ['createPeriodicWave', 'wave']]) Recorder.prototype[m] = () => node(kind);
+  const rctx = vm.createContext({ window: { AudioContext: Recorder, performance: { now: () => clock } }, document: { hidden: false, addEventListener() {} }, setTimeout: () => 0, clearTimeout() {} });
+  vm.runInContext(asrc, rctx, { filename: 'audio.js' });
+  const RA = rctx.window.SnakeAudio;
+  check(RA.unlock(), 'the sound unlocks on a recording stand-in');
+  // (A noise grain: its source, through its filter and its envelope, into where the cue goes.)
+  const grains = (name, opts) => {
+    clock += 5000;
+    const from = made.length;
+    RA.play(name, opts);
+    return made.slice(from).filter(n => n.kind === 'noise').map(src => { const f = src.to[0], g = f.to[0]; return { type: f.type, freq: f.frequency.value, peak: g.gain.peak, into: g.to[0] }; });
+  };
+  // (Does a grain go through a rival's dulling on its way to the speakers?)
+  const dulled = n => !!n && (n.kind === 'filter' && n.type === 'lowpass' && n.frequency.value === LOWPASS || n.to.some(dulled));
+  const yours = grains('dig', {}), theirs = grains('dig', { rival: true, pan: 0.4 });
+  const scratches = gs => gs.filter(x => x.type === 'bandpass' && x.freq > LOWPASS);
+  check(scratches(yours).length >= 4 && yours.every(x => !dulled(x.into)), `your dig: ${scratches(yours).length} scratches of its legs above ${LOWPASS} Hz, nothing dulled`);
+  check(scratches(theirs).length === scratches(yours).length && scratches(theirs).every(x => !dulled(x.into)), `a rival's dig: its ${scratches(theirs).length} scratches go round its dulling (the ${LOWPASS} Hz lowpass that took them off), so they carry over the music`);
+  check(theirs.filter(x => !(x.type === 'bandpass' && x.freq > LOWPASS)).every(x => dulled(x.into)), '...and the rest of it is dulled, as before');
+  const near = (a, b) => Math.abs(a - b) < 1e-9;
+  check(scratches(theirs).every((x, i) => near(x.peak, scratches(yours)[i].peak * RIVAL_VOLUME)), `...as soft as the rest of a rival's (${RIVAL_VOLUME} of yours)`);
+  const heal = grains('heal', {}), scrabble = grains('scrabble', {});
+  const flecks = heal.filter(x => (x.type === 'highpass' || x.type === 'bandpass') && x.freq >= 2000);
+  check(flecks.length >= 3, `a burrow closing over: ${flecks.length} flecks of sawdust above 2 kHz, where the music leaves room`);
+  const loudest = gs => Math.max(...gs.map(x => x.peak));
+  check(loudest(heal) >= 2 * loudest(scrabble), `...and its crumble louder than a beetle's scrabble (${loudest(heal).toFixed(2)} to ${loudest(scrabble).toFixed(2)}), which the music buries`);
+  console.log(`ok   the sound over the music: a rival's dig keeps its legs' scratches round its dulling, as soft as the rest; a burrow closing over has ${flecks.length} flecks of sawdust above 2 kHz and a crumble louder than the scrabble`);
 }
 
 if (fails) { console.error(`${fails} failed`); process.exit(1); }
