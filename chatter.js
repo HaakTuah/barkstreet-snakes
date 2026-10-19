@@ -1593,13 +1593,28 @@ window.SnakeChatter = (() => {
     if (zh) el.lang = 'zh-Hans';
   }
 
-  // The log sits on dark wood: lighten dark colors so names stay readable.
+  // The log sits on dark wood: a dark colour is lightened just enough for its
+  // name to read there (LOG_CONTRAST against LOG_WOOD, the log at its
+  // lightest: its rgba(63, 37, 16, 0.55) over the forest floor's lightest
+  // green under a shaft of light; where it sits it's darker, about 5.5:1),
+  // keeping its hue and saturation, so a name keeps its snake's colour.
+  // (Mixing it halfway to white turned the reds pink: Copycat's flag red,
+  // Sniper's, Colonist's and Wildcard's alike.)
+  const LOG_WOOD = [56, 50, 29], LOG_CONTRAST = 4.5;
+  const luminance = rgb => rgb.reduce((sum, v, i) => { v /= 255; return sum + [0.2126, 0.7152, 0.0722][i] * (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4); }, 0);
+  const onWood = rgb => (luminance(rgb) + 0.05) / (luminance(LOG_WOOD) + 0.05);
   function readable(hex) {
     const n = parseInt(hex.slice(1), 16);
-    const [r, g, b] = [n >> 16, (n >> 8) & 255, n & 255];
-    if (0.299 * r + 0.587 * g + 0.114 * b > 140) return hex;
-    const up = v => Math.round(v + (255 - v) * 0.5);
-    return `rgb(${up(r)},${up(g)},${up(b)})`;
+    const rgb = [n >> 16, (n >> 8) & 255, n & 255];
+    if (onWood(rgb) >= LOG_CONTRAST) return hex;
+    // (Its hue and saturation, in HSL; the least lightness that reads.)
+    const [r, g, b] = rgb.map(v => v / 255), hi = Math.max(r, g, b), lo = Math.min(r, g, b), d = hi - lo;
+    const h = !d ? 0 : hi === r ? ((g - b) / d + 6) % 6 : hi === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    const s = !d ? 0 : d / (1 - Math.abs(hi + lo - 1));
+    const at = l => { const c = (1 - Math.abs(2 * l - 1)) * s, f = k => { const t = (k + h) % 6; return l + c / 2 - c * Math.max(0, Math.min(1, Math.min(t, 4 - t))); }; return [f(5), f(3), f(1)].map(v => Math.round(v * 255)); };
+    let low = (hi + lo) / 2, high = 1;
+    for (let i = 0; i < 12; i++) { const mid = (low + high) / 2; if (onWood(at(mid)) >= LOG_CONTRAST) high = mid; else low = mid; }
+    return `rgb(${at(high).join(',')})`;
   }
 
   // Everyone by name: you're your Hall of Fame name (or "Green"), friends theirs.

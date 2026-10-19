@@ -23,7 +23,9 @@
 // say its flash is back), grumbles while it rests, crows over golden things,
 // greets a rainbow as family (its own moments aren't crowded out by its
 // showing off), and now and then Wildcard or Mason answers it; a golden dash
-// that cuts someone leaves the words to the snip or the kill. Then two
+// that cuts someone leaves the words to the snip or the kill. The names in
+// the log read on its dark wood in their snakes' own colours (Copycat's the
+// flag's red, not pink). Then two
 // whole AI rounds with the chatter listening, to see nothing throws: one with
 // the rivals who have the most to say about the board (Sovereign's realm and
 // Colonist's colonies, intruders and fire on them, Vulture at every death,
@@ -161,7 +163,8 @@ for (const f of ['tuning.js', 'ai.js', 'engine.js', 'chatter.js']) {
   vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 }
 const { SnakeEngine: E, SnakeChatter: C, TUNING: T } = ctx.window;
-C.init({ boardEl: new El(), logEl: new El() });
+const logEl = new El();
+C.init({ boardEl: new El(), logEl });
 let heard = [];
 C.onSpeak((s, text) => heard.push({ s, text }));
 
@@ -730,6 +733,43 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   check(answered >= 1 && answered <= 5, `...answered ${answered} times`);
   check(readied === 0, `...and its flash back, a tick before it flashes again: no ready line (${readied})`);
   console.log(`ok   Star at its most addicted (a flash every 6 s, a jump every 4): shows off ${showed.length} times in 3 minutes, never within 10 s (closest ${Math.min(...gaps) / 1000} s); ${said} lines in all; answered ${answered} times`);
+}
+
+// The names in the log: a colour too dark for the log's wood is lightened
+// just enough to read (LOG_CONTRAST against LOG_WOOD, read from the chatter),
+// keeping its hue and saturation, so every name keeps its snake's colour:
+// Copycat's is the flag's red, not the pink that mixing it toward white made
+// (as vivid as the old pink, #fca5a5, was pale: OKLCH chroma), and the
+// cast's reds stay apart. One that reads already is left as it is.
+{
+  const [wood, need] = [JSON.parse(/\bLOG_WOOD = (\[[\d, ]+\])/.exec(src)[1]), +/\bLOG_CONTRAST = ([\d.]+)/.exec(src)[1]];
+  const lin = v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const lum = c => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
+  const contrast = (a, b) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+  const rgbOf = css => css.startsWith('#') ? [1, 3, 5].map(i => parseInt(css.slice(i, i + 2), 16)) : css.match(/\d+/g).map(Number);
+  const hsl = c => { const [r, g, b] = c.map(v => v / 255), hi = Math.max(r, g, b), lo = Math.min(r, g, b), d = hi - lo; return [!d ? 0 : 60 * (hi === r ? ((g - b) / d + 6) % 6 : hi === g ? (b - r) / d + 2 : (r - g) / d + 4), !d ? 0 : d / (1 - Math.abs(hi + lo - 1))]; };
+  const chroma = c => { const [r, g, b] = c.map(lin), l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b), m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b), s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b); return Math.hypot(1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s); };
+  const g = stage(['copycat']);
+  const named = (name, color, persona) => { C.replay({ id: 90, name, color, persona, alive: false, body: [] }, 'Hm.'); return logEl.children[0].children[0].style.color; };
+  const shown = {};
+  for (const p of Object.values(E.PERSONAS)) {
+    const own = p.ink || p.color, out = named(p.name, p.color, p), [o, n] = [rgbOf(own), rgbOf(out)];
+    shown[p.name] = n;
+    check(contrast(n, wood) >= need - 0.05, `${p.name}'s name in the log reads on the wood: ${out} (${contrast(n, wood).toFixed(2)}:1, at least ${need})`);
+    if (contrast(o, wood) >= need) check(out === own, `${p.name}'s ${own} reads there already: left as it is (${out})`);
+    else {
+      const [[h0, s0], [h1, s1]] = [hsl(o), hsl(n)];
+      check(Math.abs(((h1 - h0 + 540) % 360) - 180) < 3 && Math.abs(s1 - s0) < 0.06, `${p.name}'s ${own}, lightened to ${out}, keeps its hue (${h0.toFixed(0)}° -> ${h1.toFixed(0)}°) and saturation (${s0.toFixed(2)} -> ${s1.toFixed(2)})`);
+    }
+  }
+  check(named('Green', E.PLAYER_COLOR, null) === E.PLAYER_COLOR, `your green reads on the wood as it is (${E.PLAYER_COLOR})`);
+  const friends = JSON.parse(/\bHUMAN_COLORS = (\[[^\]]+\])/.exec(fs.readFileSync(path.join(ROOT, 'online.js'), 'utf8'))[1].replaceAll("'", '"'));
+  for (const c of friends) check(named('Friend', c, null) === c, `a friend's ${c} online reads on the wood as it is`);
+  const cat = shown.Copycat, pink = rgbOf('#fca5a5');
+  check(chroma(cat) > 1.4 * chroma(pink), `Copycat's name is the flag's red, not pink: rgb(${cat}), OKLCH chroma ${chroma(cat).toFixed(3)} (the old pink ${chroma(pink).toFixed(3)})`);
+  for (const other of ['Sniper', 'Colonist', 'Wildcard']) check(Math.hypot(...cat.map((v, i) => v - shown[other][i])) > 20, `...and apart from ${other}'s rgb(${shown[other]}) in the log`);
+  void g;
+  console.log(`ok   names in the log read on its wood (${need}:1), keeping their colours' hue and saturation: Copycat rgb(${cat}), the flag's red; Sniper rgb(${shown.Sniper}), Colonist rgb(${shown.Colonist}), Wildcard rgb(${shown.Wildcard})`);
 }
 
 // Whole rounds of rivals with the chatter listening: nothing throws, and it talks.
