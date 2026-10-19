@@ -286,6 +286,7 @@ main { container: page / inline-size; }
 }
 .scoreboard li.starving .hunger i { background: var(--berry); }
 .scoreboard li[data-blurb] { cursor: help; } /* tap a rival's tag to hear how it plays */
+.scoreboard li.noted { outline: 2px solid var(--cream); outline-offset: 2px; } /* (its note is on the card: a parchment ring round its tag, on the dark page) */
 /* Friends' markings (see MARKS in render.js), in their dots too. */
 .dot[data-ring] { box-shadow: 0 0 0 2px #ec4899; } /* Capricious: a pink ring, whatever its mood */
 .dot[data-mark="spots"] { background-image: radial-gradient(circle at 32% 58%, rgba(58, 38, 20, 0.6) 0 15%, transparent 17%), radial-gradient(circle at 68% 42%, rgba(58, 38, 20, 0.6) 0 15%, transparent 17%) !important; }
@@ -452,7 +453,49 @@ canvas {
 .card p[hidden] { display: none; }
 .flavor { font-style: italic; color: var(--ink) !important; }
 .hint { margin: 12px 0 0 !important; font-size: 0.8rem; }
-.card p.said { color: var(--ink); font-style: italic; } /* a tapped rival's line, standing in for the card's words */
+/* A snake's note, asked for from its tag: it stands in for the card's words
+   (and its flavor line) until you're done with it. A slip of darker
+   parchment edged in the snake's colour, its dot and name on top, as on its
+   tag; what it holds now under how it plays. */
+.card.noting #overlay-text, .card.noting .flavor { display: none !important; }
+.rival-note {
+  position: relative;
+  max-width: 340px;
+  margin: 2px auto 12px;
+  padding: 8px 12px 9px 14px;
+  border-radius: var(--r-tag);
+  background: rgba(58, 38, 20, 0.07);
+  box-shadow: inset 4px 0 0 var(--edge, var(--ink-soft)), inset 0 0 0 1px rgba(58, 38, 20, 0.12);
+  text-align: left;
+  animation: note-in 0.18s ease-out;
+}
+.rival-note[hidden] { display: none; }
+@keyframes note-in { from { opacity: 0; transform: translateY(4px); } }
+.card .rival-note p { margin: 0; font-size: inherit; text-wrap: pretty; } /* (the note's own sizes: the card's "p" rules for small boards don't reach in) */
+.card .rival-note .who { display: flex; align-items: center; gap: 7px; padding-right: 26px; color: var(--heartwood); font-weight: 700; }
+.card .rival-note .how { margin-top: 3px; color: var(--ink); }
+.card .rival-note .now { margin-top: 4px; color: var(--ink-soft); font-size: 0.88em; }
+.rival-note .now[hidden] { display: none; }
+.note-close {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 28px;
+  min-width: 0;
+  height: 28px;
+  min-height: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  box-shadow: none;
+  color: var(--ink-soft);
+}
+.note-close:hover { background: rgba(58, 38, 20, 0.1); color: var(--ink); }
+.note-close:active { transform: none; box-shadow: none; }
+.note-close svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 
 /* The new-best moment: a honey seal on the card. */
 .badge {
@@ -638,6 +681,7 @@ canvas {
 @keyframes throb { to { background: #fecaca; } }
 .toast[data-kind="beetle"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #059669; }
 .toast[data-kind="bird"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #ea580c; }
+.toast[data-kind="note"] { max-width: min(calc(100% - 32px), 420px); font-weight: 500; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 4px 0 0 var(--edge, var(--ink-soft)), inset 0 0 0 2px var(--parchment-2); } /* (a rival's note while you watch: edged in its colour, as on a card) */
 .toast[data-kind="you"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #4ade80; } /* (yours: your snake's green, not a gold that isn't a power) */
 .toast[data-kind="gold"] { background: linear-gradient(180deg, #fffbea, #fde68a); box-shadow: 0 0 20px rgba(253, 230, 138, 0.65), inset 0 0 0 2px #d4a017; }
 .toast[data-kind="gold"]::after {
@@ -923,6 +967,9 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .opponents .tap-tip { display: block; flex-basis: 100%; font-size: 0.78rem; color: var(--ink-soft); }
   .buttons .text-button { margin-top: 0; min-height: 32px; }
   .buttons { gap: 6px 10px; }
+  .rival-note { margin-bottom: 8px; padding: 6px 10px 7px 12px; font-size: 0.92rem; } /* (as the card's words it stands in for) */
+  .card .rival-note .now { margin-top: 2px; }
+  .card.noting .opponents { display: none; } /* (here the roll-call is just names, the tags' names right above: the note stands in for it too) */
   .hint span:nth-of-type(n+4) { display: none; } /* (a small card: how to steer, jump and flash; the rest is under the board) */
   .hint span:nth-of-type(3) .sep { display: none; }
   .card:has(.name-row:not([hidden])) .flavor { display: none; }
@@ -935,6 +982,9 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
 }
 @container (max-height: 300px) {
   .card h2 { font-size: 1.25rem; }
+  .rival-note { font-size: 0.85rem; margin-bottom: 6px; }
+  .card .rival-note .now { font-size: 0.92em; } /* (no smaller than 12.5px) */
+  .card.noting .name-row:not(:focus-within) { display: none; } /* (the carve waits under a note here, and comes back with the card's words; never while you're typing) */
   .flavor { display: none !important; }
   .opponents .tap-tip { display: none !important; } /* (the hint needs the room: how to steer comes first) */
   /* Just the first two items of the hint ("Swipe to steer · Tap to jump"): a new player has to be told that much (the flash has its own lesson). */
@@ -1052,11 +1102,12 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   button, .text-button, button.link, input { min-height: 44px; }
   button.small, .speed button, .tab, .close, button.icon { min-width: 44px; }
   .speed { gap: 10px; }
+  .note-close { top: 0; right: 0; width: 36px; height: 36px; } /* (a fingertip's room, in the note's corner) */
 }
 
 /* Reduced motion: no pops, rises or rumbles; the information stays. */
 @media (prefers-reduced-motion: reduce) {
-  .card, .overlay, .badge, .toast, .records-card, .scoreboard li.starving::after { animation: none !important; }
+  .card, .overlay, .badge, .toast, .records-card, .rival-note, .scoreboard li.starving::after { animation: none !important; }
   h1 .amp, .leaves, .frame-sheen > i, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
   .scoreboard li.starving::after { opacity: 1; }
   button, button:active { transition: none; transform: none; }
