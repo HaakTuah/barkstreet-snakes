@@ -5511,7 +5511,10 @@ window.SnakeRender = (() => {
   const postOf = o => pre.post[pre.specs.indexOf(o)];
   const spareSides = r => pre.todo.includes(r) ? r.spare : r;
   let kickG = null;
-  function kick(c) { (kickG ||= makeLayer(1, 1).getContext('2d')).drawImage(c, 0, 0, 1, 1, 0, 0, 1, 1); } // (drawn from, a canvas's waiting work goes to the GPU now)
+  // (Drawn from, a canvas's waiting work goes to the GPU now: unsent, it all
+  // went at the strike, and that frame cost more than making it then. The
+  // little canvas is cleared at once, so it holds on to nothing.)
+  function kick(c) { (kickG ||= makeLayer(1, 1).getContext('2d')).drawImage(c, 0, 0, 1, 1, 0, 0, 1, 1); kickG.clearRect(0, 0, 1, 1); }
   function prebuild() {
     const w = game.woodpecker;
     if (!w || !w.target.length) { pre.key = NaN; return; }
