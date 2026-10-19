@@ -42,7 +42,8 @@
 //   two); dust puffs at take-off, rings the landing, and a faint trail
 //   marks the way; with reduced motion the lift and shadow, no dust or trail.
 // - Bridges you can see: a body over a pit is shaded underneath and sags,
-//   its shadow falls into the pit, and a tail end over a hole droops, darker.
+//   its shadow shows on the pit's floor (dark, in a floor lit round it),
+//   and a tail end over a hole droops, darker.
 // - Choking (staged from the engine's choke and nudge events): the cheeks
 //   puff with the bead in its mouth (none of it over the face), then it's
 //   spat aside out of its cheek, in an arc to where it went; coughing, the
@@ -755,9 +756,11 @@ const STAGE = `(() => {
     // bark; each against the same body with no hole there, and the hollow
     // against itself with nobody over it. Over the pit, the span is shaded
     // underneath (its lower edge darker, its upper half as it was) and sags
-    // (narrower), and its shadow falls down into the pit, further than on
-    // the bark (the pit below it darker); the tail hanging over the hole
-    // droops into it, darker.
+    // (narrower), and its shadow shows on the pit's floor, further off than
+    // on the bark: just below the span it's dark, in a floor lit round it
+    // (on the all but black floor, a shadow alone didn't show: the pit
+    // below it was barely darker); the tail hanging over the hole droops
+    // into it, darker.
     const bridge = await ev(`(() => {
       SnakeDebug.pinQuality(0);
       const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
@@ -766,7 +769,8 @@ const STAGE = `(() => {
       setBody(you, [[2, 22], [1, 22], [0, 22]], 'right'); you.stunUntil = 1e9;
       setBody(ma, [[2, 2], [1, 2], [0, 2]], 'right'); ma.stunUntil = 1e9;
       const HOLES = [11 * 24 + 10, 12 * 24 + 10, 13 * 24 + 10, 5 * 24 + 18];
-      const look = () => ({ width: count(10.4, 11.3, 0.2, 2.4, reddish), edge: lum(pixels(10.3, 12.7, 0.4, 0.14)), top: lum(pixels(10.3, 12.16, 0.4, 0.14)), pit: lum(pixels(10.2, 13.1, 0.6, 0.35)), tail: lum(pixels(18.3, 5.3, 0.4, 0.4)) });
+      const look = () => ({ width: count(10.4, 11.3, 0.2, 2.4, reddish), edge: lum(pixels(10.3, 12.7, 0.4, 0.14)), top: lum(pixels(10.3, 12.16, 0.4, 0.14)), shade: lum(pixels(10.3, 12.9, 0.4, 0.25)), lit: lum(pixels(10.3, 13.3, 0.4, 0.2)), tail: lum(pixels(18.3, 5.3, 0.4, 0.4)),
+        band: lum(pixels(9.95, 12.71, 0.15, 0.08)), bandTop: lum(pixels(9.95, 12.24, 0.15, 0.08)) }); // (shade: just below the span; lit: the floor a little further; band: the lower edge of the band into it, between the segments)
       const place = () => { setBody(sn, Array.from({ length: 8 }, (_, i) => [13 - i, 12]), 'right'); sn.stunUntil = 1e9; setBody(gob, [[15, 5], [16, 5], [17, 5], [18, 5]], 'left'); gob.stunUntil = 1e9; };
       for (const k of HOLES) g.holes.add(k);
       place(); show(g); drawN(10, 1);
@@ -781,9 +785,10 @@ const STAGE = `(() => {
       return { over, empty, bark };
     })()`);
     const { over, empty, bark } = bridge, f2 = v => v.toFixed(2);
-    check(over.edge / over.top < 0.85 * bark.edge / bark.top && over.width < 0.9 * bark.width, 'a body over a pit is shaded underneath and sags between the rims',
-      `its lower edge at ${f2(over.edge / over.top)} of its upper half's brightness (${f2(bark.edge / bark.top)} on the bark); ${over.width} pixels across, ${bark.width} on the bark`);
-    check(over.pit < 0.95 * empty.pit, 'its shadow falls down into the pit', `the pit below it at ${f2(over.pit / empty.pit)} of its brightness with nobody over it`);
+    check(over.edge / over.top < 0.85 * bark.edge / bark.top && over.band / over.bandTop < 0.92 * bark.band / bark.bandTop && over.width < 0.8 * bark.width, 'a body over a pit is shaded underneath, the bands between its segments too, and sags between the rims',
+      `its lower edge at ${f2(over.edge / over.top)} of its upper half's brightness (${f2(bark.edge / bark.top)} on the bark), the band's ${f2(over.band / over.bandTop)} (${f2(bark.band / bark.bandTop)}); ${over.width} pixels across, ${bark.width} on the bark`);
+    check(over.shade < 0.6 * over.lit && over.lit > 1.5 * empty.lit, 'its shadow shows on the pit’s floor: dark just below it, in a floor lit round it',
+      `just below it ${f2(over.shade)}, the floor a little further ${f2(over.lit)} (${f2(empty.lit)} with nobody over the pit)`);
     check(over.tail < 0.75 * bark.tail, 'a tail end over a hole droops into it, darker', `at ${f2(over.tail / bark.tail)} of its brightness on the bark`);
 
     // Choking and the cough (round six A), staged as the engine reports them
