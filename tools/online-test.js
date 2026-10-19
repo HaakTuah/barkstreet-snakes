@@ -349,7 +349,7 @@ const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fata
   ...['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap'].flatMap(k => [`food ${k}`, `food ${k} 3`]), // (each kind, and when it goes)
   'food food 5', 'food food 6', 'food pellet 4', 'food pellet 7', ...[5, 6, 7, 8, 9, 10, 11].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden, digging in)
   ...FIRES.map(k => `fire ${k}`),
-  ...WEATHER.map((w, k) => `weather ${k}`), ...Array.from({ length: 9 }, (_, j) => `woodpecker ${j}`), ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
+  ...WEATHER.map((w, k) => `weather ${k}`), ...Array.from({ length: 10 }, (_, j) => `woodpecker ${j}`), ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
 const lacking = [...new Set(want)].filter(short).map(k => `${k} (${seen.get(k) || 0})`);
 if (process.env.ONLINE_SEEN) console.log([...seen].sort().map(([k, v]) => `${k}: ${v}`).join('\n'));
 if (lacking.length) { console.error(`seen too few times (fewer than ${MIN}; a death's, never), the test lost its point there: ${lacking.join(', ')}`); process.exit(1); }
@@ -388,6 +388,14 @@ const kept = JSON.stringify(g.events.map(e => ({ ...e })));
 if (kept !== JSON.stringify([{ type: 'knock', kind: 'food', x: 1, y: 1, tx: null, ty: null }, { type: 'dig', x: 2, y: 3, until: 40 }, { type: 'dive', x: 2, y: 3, dug: 1 }, { type: 'knock', kind: 'beetle', x: 5, y: 6, tx: 7, ty: 8, gold: 1 }, { type: 'burrow', x: 3, y: 4, dug: 1 }, { type: 'heal', x: 5, y: 6 }, { type: 'knock', kind: 'pellet', x: 1, y: 2, tx: 3, ty: 4, color: '#abc' }])
   || JSON.stringify(g.burrows) !== JSON.stringify([{ x: 4, y: 5, at: 6, used: 700, dug: 1 }, { x: 7, y: 8, at: 9 }])
   || JSON.stringify(g.unders) !== JSON.stringify([{ until: 5, expires: 9, from: 30, gold: true }]) || 'digUntil' in g.food[0]) { console.error('a malformed dig, dive, knock, burrow, beetle underground or digging got through', kept, JSON.stringify(g.unders), JSON.stringify(g.food), JSON.stringify(g.burrows)); process.exit(1); }
+// Nor the woodpecker's promised landings off the board, or that aren't a cell and a cell (or nowhere, -1); none at all: no landings.
+bad.e = [];
+bad.w = [12, 0, 1000, [300, 301], 40, [], -1, 0, 0, [[300, 302], [301], [-5, 2], [301, E.GRID * E.GRID], 'x', [301, 1.5], [301, -1]]];
+O.apply(g, bad, E.DIRS);
+const promised = JSON.stringify(g.woodpecker?.landings);
+bad.w = [12, 0, 1000, [300, 301], 40, [], -1, 0, 0, [[-1, 4], 'x']];
+O.apply(g, bad, E.DIRS);
+if (promised !== JSON.stringify([[300, 302], [301, -1]]) || 'landings' in g.woodpecker) { console.error('malformed landings got through', promised, JSON.stringify(g.woodpecker)); process.exit(1); }
 
 // A guest's press the host can't use (an unknown power, a made-up direction) is refused.
 if (O.POWERS.includes('dash') || O.POWERS.includes(undefined) || O.DIR_NAMES.includes('ahead')) { console.error('a bad press got through'); process.exit(1); }

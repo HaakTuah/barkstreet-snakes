@@ -2057,6 +2057,51 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   check('...and with nowhere to knock it, the bird eats it', eaten && eaten.tx === null && eaten.ty === null && !t.food.includes(lone), JSON.stringify(eaten));
 }
 
+{ // The ring is a promise. At the end of the tick before the strike the woodpecker keeps where each piece in its mark will
+  // land (w.landings: the rings that tick shows), and the strike lands it there while that cell is still free.
+  // An apple in a 2x2 mark, a snake lying round it whose head goes into the mark on the strike's tick (stunned on the tick
+  // before, so it's there when the ring is drawn). Its body was in the way, so the ring is two cells up; the strike pecks
+  // its head, but the apple still lands on the ring: not on the body of the snake the strike kills (its beads lie there),
+  // nor in the cell its tail just left, nearer now.
+  const patch = [K(12, 12), K(13, 12), K(12, 13), K(13, 13)];
+  const strike = (bodies, stun) => {
+    const g = board(bodies, { time: T.SUDDEN_DEATH_MS });
+    feed(g);
+    g.food = [{ x: 12, y: 12, kind: 'food', expires: 9999 }]; g.given = new Set([K(12, 12)]);
+    g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }]; // (no beetles come out meanwhile)
+    g.woodpecker = { x: 12, y: 12, at: g.time, target: patch, strikeAt: g.tick + 1, last: [], struckAt: -1, restUntil: 1e9 };
+    g.snakes[stun].stunUntil = g.tick + 1;
+    E.step(g); feed(g);
+    const w = g.woodpecker, promised = JSON.stringify(w.landings), ring = E.knocks(g, w.target, w.landings).map(k => k.to);
+    E.step(g);
+    return { g, promised, ring, knock: g.events.find(e => e.type === 'knock'), kept: 'landings' in w };
+  };
+  const at = (c, x, y) => !!c && c.x === x && c.y === y;
+  const a = strike([[[[13, 11], [12, 11], [11, 11], [11, 12], [11, 13]], 'down'], [line(5, 20, 4), 'right']], 0);
+  const pecked = a.g.snakes[0];
+  check('the ring is a promise: kept at the end of the tick before the strike, where the rings show it', a.promised === JSON.stringify([[K(12, 12), K(12, 10)]]) && at(a.ring[0], 12, 10), JSON.stringify({ promised: a.promised, ring: a.ring }));
+  check('...food in the mark beside a snake the strike kills lands on its ring, not on that body (nor where its tail just left)',
+    !pecked.alive && pecked.fatal === 'pecked' && a.knock && a.knock.tx === 12 && a.knock.ty === 10 && at(a.g.food.find(f => f.kind === 'food'), 12, 10) && !a.kept,
+    JSON.stringify({ knock: a.knock && [a.knock.tx, a.knock.ty], alive: pecked.alive, fatal: pecked.fatal }));
+  check('...and its beads lie on its body, where they would', a.g.food.some(f => f.kind === 'pellet' && f.x === 12 && f.y === 11), JSON.stringify(a.g.food.map(f => [f.kind, f.x, f.y])));
+  // A head that comes onto the ring on the strike's tick: the piece goes by the rule, as the board stands then (the
+  // other cell beside it, and nobody's hurt).
+  const b = strike([[[[12, 10], [12, 9], [12, 8], [12, 7]], 'down'], [line(5, 20, 4), 'right']], 0);
+  check('...a ring a head moves onto at the strike: that piece goes by the rule instead', b.promised === JSON.stringify([[K(12, 12), K(12, 11)]]) && b.knock && b.knock.tx === 11 && b.knock.ty === 12 && b.g.snakes[0].alive && at(b.g.snakes[0].body[0], 12, 11),
+    JSON.stringify({ promised: b.promised, knock: b.knock && [b.knock.tx, b.knock.ty], head: b.g.snakes[0].body[0] }));
+  // Two pieces: the first's ring taken by a head, it goes by the rule, but never onto the second's ring (still kept).
+  const g = board([[[[12, 10], [12, 9], [12, 8], [12, 7]], 'down'], [line(5, 20, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
+  feed(g);
+  g.food = [{ x: 12, y: 12, kind: 'food', expires: 9999 }, { x: 12, y: 13, kind: 'food', expires: 9999 }]; g.given = new Set([K(12, 12), K(12, 13)]);
+  g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }];
+  g.snakes[0].stunUntil = g.tick + 1;
+  const twoRings = E.knocks(g, patch, [[K(12, 12), K(12, 11)], [K(12, 13), K(11, 12)]]).map(k => k.to);
+  g.snakes[0].body.unshift({ x: 12, y: 11 }); g.snakes[0].body.pop(); // (its head on the first ring)
+  const after = E.knocks(g, patch, [[K(12, 12), K(12, 11)], [K(12, 13), K(11, 12)]]).map(k => k.to);
+  check('...and never onto a ring still kept for another piece', at(twoRings[0], 12, 11) && at(twoRings[1], 11, 12) && at(after[1], 11, 12) && after[0] && !at(after[0], 11, 12) && !at(after[0], 12, 11) && at(after[0], 11, 11),
+    JSON.stringify({ twoRings, after }));
+}
+
 // ---------------------------------------------------------------- round six A: beetles
 { // A cornered beetle digs in: a head within BEETLE_DIG_FEAR and no burrow within reach. It stays put while it digs, and
   // can be caught. (Another beetle underground for good on each board, so no more come out meanwhile.)

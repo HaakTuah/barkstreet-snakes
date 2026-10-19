@@ -586,9 +586,12 @@ window.SnakeEngine = (() => {
   // nowhere to knock it; fire and a burrow there go. A head on the ground
   // there, and that snake's out; a body lying across it bridges the new hole
   // (it isn't cut, and drops nothing), and the cell is a hole like any other
-  // once its tail has passed.
+  // once its tail has passed. Where knocked food lands is a promise: the
+  // rings through the aim's last tick (see promiseLandings) are kept while
+  // their cells are still free.
   // game.woodpecker: { at (time it came), target: [cells it's aiming at],
-  //   strikeAt (tick), last: [cells it took out last], struckAt (tick), restUntil (tick), x, y (where it's busy) }
+  //   strikeAt (tick), last: [cells it took out last], struckAt (tick), restUntil (tick), x, y (where it's busy),
+  //   pecks (strikes so far), landings (from the end of the tick before a strike: [[from, to], ...] cells, to -1 for none) }
   function peck(game, dying) {
     if (!suddenDeath(game)) return;
     let w = game.woodpecker;
@@ -599,6 +602,11 @@ window.SnakeEngine = (() => {
     }
     if (w.target.length && game.tick >= w.strikeAt) {
       const zone = new Set(w.target.filter(k => !game.holes.has(k)));
+      // Where its food goes: the landings its rings promised, each while its
+      // cell's still free, else the rule as the board stands; worked out
+      // before anyone's head in it is out, so a body it pecks under still
+      // lies where it lay (its beads go there, never under the food).
+      const flying = knocks(game, zone, w.landings);
       const under = []; // (whose bodies lay across it: they're fine)
       for (const s of game.snakes) {
         if (!s.alive) continue;
@@ -611,7 +619,7 @@ window.SnakeEngine = (() => {
         if (s.body.some((c, i) => i && zone.has(key(c.x, c.y)))) under.push(s.id);
       }
       for (const k of zone) { game.holes.add(k); if (game.fires.has(k)) putOut(game, k); } // (a burning cell pecked out: the fire there's gone too)
-      for (const { food: f, to } of knocks(game, zone)) {
+      for (const { food: f, to } of flying) {
         game.events.push({ type: 'knock', kind: f.kind, x: f.x, y: f.y, tx: to ? to.x : null, ty: to ? to.y : null, ...(f.gold ? { gold: 1 } : {}), ...(f.color ? { color: f.color } : {}) });
         if (!to) { game.food.splice(game.food.indexOf(f), 1); continue; } // (nowhere to go: the bird eats it)
         if (f.kind === 'beetle') { // (a beetle scurries there, and isn't digging any more)
@@ -625,6 +633,7 @@ window.SnakeEngine = (() => {
       const hit = [...zone];
       game.events.push({ type: 'peck', x: w.x, y: w.y, cells: hit, under });
       w.pecks = (w.pecks || 0) + 1; // (it gets hungrier: shorter rests, bigger patches)
+      delete w.landings;
       w.last = hit; w.struckAt = game.tick; w.target = []; w.restUntil = game.tick + Math.max(T.PECK_REST_MIN, Math.round(T.PECK_REST_TICKS * Math.pow(T.PECK_HUNGRIER, w.pecks)));
       return;
     }
@@ -872,17 +881,39 @@ window.SnakeEngine = (() => {
   // Where everything in the patch (cells) would be knocked, as the board
   // stands: [{ food, to }] (to null: eaten), in the order the strike does
   // them, each landing taken before the next is knocked. The strike's own
-  // list, and what anyone can work out through the aim.
-  function knocks(game, cells) {
+  // list, and what anyone can work out through the aim. promised: the
+  // woodpecker's landings (see promiseLandings), or none: a piece promised a
+  // cell that's still free (on the board, out of the patch, as knockRoom
+  // says) lands there, wherever else has come free since; the rest go by the
+  // rule, never onto a promised cell. So knocks(game, w.target, w.landings)
+  // is what the rings show and the strike does.
+  function knocks(game, cells, promised = null) {
     const patch = cells instanceof Set ? cells : new Set(cells), room = knockRoom(game), landed = new Set(), out = [];
     const free = (x, y) => room(x, y) && !landed.has(key(x, y));
+    const kept = new Map(); // (food: the cell it was promised, still free)
+    if (promised) for (const [from, to] of promised) {
+      if (!(to >= 0) || landed.has(to) || patch.has(to) || !patch.has(from) || !room(to % GRID, (to - to % GRID) / GRID)) continue;
+      const f = game.food.find(o => key(o.x, o.y) === from);
+      if (!f || kept.has(f)) continue;
+      kept.set(f, to); landed.add(to);
+    }
     for (const f of game.food) {
       if (!patch.has(key(f.x, f.y))) continue;
-      const to = knockTo(game, f.x, f.y, patch, free);
-      if (to) landed.add(key(to.x, to.y));
+      const k = kept.get(f), to = k != null ? { x: k % GRID, y: (k - k % GRID) / GRID } : knockTo(game, f.x, f.y, patch, free);
+      if (to && k == null) landed.add(key(to.x, to.y));
       out.push({ food: f, to });
     }
     return out;
+  }
+  // The woodpecker's promise: at the end of the tick before its strike (the
+  // board its rings last showed), where each piece in its mark will land.
+  // The strike keeps each while that cell is still free (see knocks): a
+  // head or a beetle that moves onto one sends that piece by the rule.
+  function promiseLandings(game) {
+    const w = game.woodpecker;
+    if (!w || !w.target.length || game.tick < w.strikeAt || w.landings) return;
+    const out = knocks(game, w.target);
+    if (out.length) w.landings = out.map(({ food: f, to }) => [key(f.x, f.y), to ? key(to.x, to.y) : -1]);
   }
 
   function snapshot(game) {
@@ -1325,6 +1356,7 @@ window.SnakeEngine = (() => {
     weather(game);
     game.time += tickMs(game);
     game.tick++;
+    promiseLandings(game);
     snapshot(game);
     return dying;
   }
