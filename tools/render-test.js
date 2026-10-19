@@ -44,9 +44,11 @@
 // - Bridges you can see: a body over a pit is shaded underneath and sags,
 //   its shadow falls into the pit, and a tail end over a hole droops, darker.
 // - Choking (staged from the engine's choke and nudge events): the cheeks
-//   puff and the bead is spat aside in an arc to where it went; coughing,
-//   the mouth stays shut and puffs of breath come out (with reduced motion
-//   too); nudged food rolls aside, and a beetle scurries.
+//   puff with the bead in its mouth (none of it over the face), then it's
+//   spat aside out of its cheek, in an arc to where it went; coughing, the
+//   mouth stays shut and puffs of breath come out, big enough to see on a
+//   phone, the head jolting (with reduced motion, the puffs still, no
+//   jolt); nudged food rolls aside, and a beetle scurries.
 // - Beetles and the woodpecker's knock (staged from the engine's state and
 //   events): two beetles out at once, each drawn; a cornered one digs in
 //   (it sinks, a collar of sawdust round it, sawdust spraying; with reduced
@@ -786,8 +788,10 @@ const STAGE = `(() => {
     // Choking and the cough (round six A), staged as the engine reports them
     // (the choke and nudge events, s.coughUntil). Joker chokes on its own
     // bead right in front of it and spits it aside: its cheeks puff out for
-    // a moment (its white face wider across), and the bead flies up over its
-    // head (purple over its white face half way) and lands where it went.
+    // a moment (its white face wider across) with the bead in its mouth,
+    // none of it drawn (over its face, on a phone, the bead was the whole
+    // head); then it's spat out of its cheek on the side it lands, never
+    // over its face, up off its shadow on the ground, and lands where it went.
     // Gobbler coughs with an apple right ahead: its mouth stays shut (it
     // gapes at food otherwise) and puffs of breath come out past it, with
     // reduced motion too. Food a coughing head nudges rolls there (half way,
@@ -812,7 +816,7 @@ const STAGE = `(() => {
       };
       const count = (x, y, w, h, is) => { let n = 0; changed(x, y, w, h, is, () => n++); return n; };
       const centre = (x, y, w, h, is) => { let n = 0, sx = 0, sy = 0; const p = changed(x, y, w, h, is, (c, r) => { n++; sx += c; sy += r; }); return n ? [+(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : null; };
-      const sky = (r, g, b) => b > 200 && g > 150 && r < 120, face = (r, g, b) => Math.min(r, g, b) > 215 || Math.max(r, g, b) < 40, mouth = (r, g, b) => r > 40 && r < 90 && g < 30 && b < 30;
+      const sky = (r, g, b) => b > 200 && g > 150 && r < 120, face = (r, g, b) => Math.min(r, g, b) > 215 || Math.max(r, g, b) < 40, mouth = (r, g, b) => r > 40 && r < 90 && g < 30 && b < 30, darker = (r, g, b) => r + g + b < 160;
       const lime = (r, g, b) => g > 150 && r > 100 && r < 170 && b < 60, emerald = (r, g, b) => g > 110 && g > r + 60 && b > 80 && b < g;
       const pale = (r, g, b) => Math.min(r, g, b) > 200 && b > 180;
       const out = {};
@@ -833,34 +837,42 @@ const STAGE = `(() => {
       }
       // (each measured from where its head's drawn that frame, as it eases out of the move the drawing guessed it'd make)
       const cheeks = () => { const [x, y] = at(jo); return count(x + 0.05, y - 0.8, 0.6, 0.24, face); }; // (white or ink, just past its face, on the side the bead doesn't fly over)
-      const shut = () => { const [x, y] = at(gob); return count(x, y - 0.4, 0.8, 0.8, mouth); }, puffed = () => { const [x, y] = at(gob); return count(x + 0.55, y - 0.45, 0.8, 0.9, pale); };
+      const shut = () => { const [x, y] = at(gob); return count(x, y - 0.4, 0.8, 0.8, mouth); }, puffed = () => { const [x, y] = at(gob); return count(x + 0.45, y - 0.6, 1.2, 1.2, pale); };
+      const orange = (r, g, b) => r > 200 && g > 100 && g < 190 && b < 110, front = () => { const [x, y] = at(gob); let m = -1; const p = changed(x - 0.5, y - 0.6, 1.4, 1.2, orange, c => { m = Math.max(m, c); }); return m < 0 ? null : x - 0.5 + (m + 1) / p.width * 1.4; }; // (how far its head reaches ahead, cells)
       out.before = { cheeks: cheeks(), mouth: shut() };
       g.tick++;
       jo.coughUntil = g.tick + 9; gob.coughUntil = g.tick + 9;
       R.onTick([{ type: 'choke', snake: jo, x: 9, y: 8, tx: 8, ty: 10 }, { type: 'nudge', snake: ma, kind: 'food', x: 16, y: 13, tx: 15, ty: 12 }, { type: 'nudge', snake: ma, kind: 'beetle', x: 5, y: 12, tx: 4, ty: 12 }]);
+      const [hx, hy] = at(jo), onFace = () => count(hx - 0.35, hy - 0.35, 0.7, 0.7, sky); // (its eyes and snout)
       drawN(1, 0.05, 80);
-      out.gag = { cheeks: cheeks() };
+      out.gag = { cheeks: cheeks(), bead: count(6.5, 6.5, 4, 5, sky) };
       drawN(1, 0.5, 80); // (half way: 160 ms)
-      out.mid = { bead: centre(7.5, 7.5, 3, 4, sky), apple: centre(14.2, 11.2, 3, 3, lime), beetle: centre(3, 11, 3, 2, emerald) };
+      const bead = centre(7.5, 7.5, 3, 4, sky);
+      out.mid = { bead, face: onFace(), shadow: bead && centre(bead[0] - 0.5, bead[1] + 0.5, 1, 0.8, darker), apple: centre(14.2, 11.2, 3, 3, lime), beetle: centre(3, 11, 3, 2, emerald) }; // (its shadow on the ground: below where its ink rim reaches)
       g.tick++; drawN(4, 0.5, 80); // (the next tick: all of it there)
       out.end = { bead: centre(7.5, 7.5, 3, 4, sky), apple: centre(14.2, 11.2, 3, 3, lime), beetle: centre(3, 11, 3, 2, emerald) };
-      const puffs = () => { let n = 0; for (let i = 0; i < 10; i++) { drawN(1, 0.5, 30); n = Math.max(n, puffed()); } return n; };
-      out.cough = { mouth: shut(), puffs: puffs() };
+      let reach = 0;
+      const puffs = () => { let n = 0; reach = 0; for (let i = 0; i < 10; i++) { drawN(1, 0.5, 30); n = Math.max(n, puffed()); reach = Math.max(reach, front()); } return n; };
+      out.cough = { mouth: shut(), puffs: puffs(), reach };
       R.setReducedMotion(true);
-      out.still = { puffs: puffs() };
+      out.still = { puffs: puffs(), reach };
       R.setReducedMotion(false);
       gob.coughUntil = -1; g.tick++; drawN(10, 0.5, 30);
-      out.after = { mouth: shut(), puffs: puffed() };
+      out.after = { mouth: shut(), puffs: puffed(), reach: front() };
+      out.cellPx = Math.round((W / TUNING.GRID) ** 2);
       SnakeDebug.pinQuality(2);
       return out;
     })()`);
     const between = (c, x0, y0, x1, y1) => !!c && Math.min(x0, x1) + 0.1 < c[0] && c[0] < Math.max(x0, x1) - 0.1 && Math.min(y0, y1) - 0.05 < c[1] && c[1] < Math.max(y0, y1) + 0.05;
-    const bead = choke.mid.bead, line = 8.5 + 2 * (bead ? (9.5 - bead[0]) : 0); // (where on a straight slide from the cell ahead of it, 9, 8, to 8, 10, it'd be)
-    check(choke.gag.cheeks > choke.before.cheeks + 8 && between(bead, 8.5, 8.5, 9.5, 10.5) && bead[1] < line - 0.3 && !!choke.end.bead && Math.abs(choke.end.bead[0] - 8.5) < 0.12 && Math.abs(choke.end.bead[1] - 10.5) < 0.2,
-      'choking on its own bead, its cheeks puff out and it spits the bead aside, up in a little arc, to land where it went',
-      `its face just past its cheeks ${choke.before.cheeks} pixels, then ${choke.gag.cheeks} as it gags; the bead half way at ${bead} (a slide would be at y ${line.toFixed(2)}), then at ${choke.end.bead}`);
+    const bead = choke.mid.bead, shade = choke.mid.shadow;
+    check(choke.gag.cheeks > choke.before.cheeks + 8 && choke.gag.bead === 0 && between(bead, 8.3, 8.9, 9.6, 10.5) && choke.mid.face === 0 && !!shade && shade[1] - bead[1] > 0.45 && !!choke.end.bead && Math.abs(choke.end.bead[0] - 8.5) < 0.12 && Math.abs(choke.end.bead[1] - 10.5) < 0.2,
+      'choking on its own bead, its cheeks puff out with the bead in its mouth, then it spits it aside out of its cheek, never over its face, up in a little arc, to land where it went',
+      `its face just past its cheeks ${choke.before.cheeks} pixels, then ${choke.gag.cheeks} as it gags, the bead's ${choke.gag.bead} pixels drawn then; half way at ${bead?.slice(0, 2)}, ${choke.mid.face} over its face, its shadow on the ground at y ${shade?.[1]}; then at ${choke.end.bead}`);
     check(choke.before.mouth > 20 && choke.cough.mouth * 3 < choke.before.mouth && choke.after.mouth > 20 && choke.cough.puffs > 10 && choke.still.puffs > 10 && choke.after.puffs === 0, 'coughing, its mouth stays shut and puffs of breath come out past it (with reduced motion too)',
       `Gobbler’s mouth, an apple right ahead: ${choke.before.mouth} pixels open, ${choke.cough.mouth} coughing, ${choke.after.mouth} after; puffs ${choke.cough.puffs}, with reduced motion ${choke.still.puffs}, after ${choke.after.puffs}`);
+    const jolt = choke.cough.reach - choke.after.reach, calmJolt = choke.still.reach - choke.after.reach;
+    check(choke.cough.puffs > 0.1 * choke.cellPx && choke.still.puffs > 0.1 * choke.cellPx && jolt > 0.09 && Math.abs(calmJolt) < 0.03, 'a cough reads at a phone’s size: a puff a good part of a cell, the head jolting forward with it (with reduced motion, no jolt)',
+      `the puff at its biggest ${(choke.cough.puffs / choke.cellPx).toFixed(2)} of a cell (${(choke.still.puffs / choke.cellPx).toFixed(2)} with reduced motion); the head’s front ${jolt.toFixed(2)} cells further forward at a cough (${calmJolt.toFixed(2)} with reduced motion)`);
     check(between(choke.mid.apple, 15.5, 12.5, 16.5, 13.5) && !!choke.end.apple && Math.abs(choke.end.apple[0] - 15.5) < 0.15 && between(choke.mid.beetle, 4.5, 12.5, 5.5, 12.5) && !!choke.end.beetle && Math.abs(choke.end.beetle[0] - 4.5) < 0.15,
       'food a coughing head nudges rolls aside, and a beetle scurries', `the apple half way at ${choke.mid.apple}, then ${choke.end.apple}; the beetle ${choke.mid.beetle}, then ${choke.end.beetle}`);
 

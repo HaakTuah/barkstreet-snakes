@@ -1594,7 +1594,11 @@ window.SnakeRender = (() => {
   // drifts off (with reduced motion, staying put as it fades), its head
   // jolting (see prepare). The bead it spat flies off in a little arc (see
   // moveFood). How far through its cough's beat it is (-1 before the first).
-  const GAG_MS = 280, COUGH_FIRST = 160, COUGH_BEAT = 300;
+  // (Made to read at arm's length on a phone, where the first puff was a
+  // speck of 3 to 6 px and the jolt under a pixel: the puff 0.14 to 0.28 of
+  // a cell, holding its white longer; the head swelling 15% and lurching a
+  // tenth of a cell forward over the first third of each beat.)
+  const GAG_MS = 280, COUGH_FIRST = 160, COUGH_BEAT = 300, COUGH_JOLT = 0.3, COUGH_SWELL = 0.15, COUGH_LURCH = 0.1;
   function coughPhase(a, now) {
     const t = now - a.coughFrom - COUGH_FIRST;
     return t < 0 ? -1 : (t % COUGH_BEAT) / COUGH_BEAT;
@@ -1621,8 +1625,8 @@ window.SnakeRender = (() => {
   function drawCough(a, now) {
     const ph = coughPhase(a, now);
     if (ph < 0) return;
-    const c = CELL, x = c * (0.64 + (reduced ? 0 : 0.36 * ph)), r = c * (0.08 + 0.09 * ph), was = ctx.globalAlpha;
-    ctx.globalAlpha = was * (1 - ph * ph);
+    const c = CELL, x = c * (0.64 + (reduced ? 0 : 0.36 * ph)), r = c * (0.14 + 0.14 * ph), was = ctx.globalAlpha;
+    ctx.globalAlpha = was * (1 - ph * ph * ph);
     ctx.beginPath();
     for (let j = 0; j < COUGH_PUFF.length; j += 3) { const px = x + COUGH_PUFF[j] * r, py = COUGH_PUFF[j + 1] * r, pr = COUGH_PUFF[j + 2] * r; ctx.moveTo(px + pr, py); ctx.arc(px, py, pr, 0, TAU); }
     ctx.strokeStyle = 'rgba(58,38,20,0.55)';
@@ -1924,7 +1928,10 @@ window.SnakeRender = (() => {
     const cough = !dead && coughing(s);
     if (cough && !a.coughing) a.coughFrom = now - a.chokeAt < 500 ? a.chokeAt : now;
     a.coughing = cough;
-    if (cough && !reduced) { const ph = coughPhase(a, now); if (ph >= 0 && ph < 0.3) a.bump += 0.08 * Math.sin(ph / 0.3 * Math.PI); }
+    if (cough && !reduced) { // (a jolt: its head swells and lurches forward with each cough)
+      const ph = coughPhase(a, now);
+      if (ph >= 0 && ph < COUGH_JOLT) { const j = Math.sin(ph / COUGH_JOLT * Math.PI); a.bump += COUGH_SWELL * j; pts[0] += a.hc * CELL * COUGH_LURCH * j; pts[1] += a.hs * CELL * COUGH_LURCH * j; }
+    }
     for (let i = 0; i < m; i++) a.rad[i] = radius(i, m, a, a.tickPos);
     // Seen from above, up is toward you: what's in the air swells (its head
     // the most at the top of a jump, its neck after it, in an arch), and
@@ -4312,6 +4319,10 @@ window.SnakeRender = (() => {
     const open = mouthOpen(s, a);
     tongue(a, now, coughing(s) ? 1 : open, 'player', true); // (coughing, its mouth is shut)
     mouth(open, 0.44);
+    if (!deadNow && coughing(s)) { // (coughing, a mouth shut tight, as the Field guide shows it: there's nothing else on your face to shut)
+      ctx.strokeStyle = INK; ctx.lineWidth = c * 0.06; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(c * 0.3, c * 0.07); ctx.quadraticCurveTo(c * 0.4, c * 0.02, c * 0.47, c * 0.05); ctx.stroke();
+    }
 
     if (blinking) return lids(0.11);
     ctx.fillStyle = '#fffbea';
@@ -6046,7 +6057,30 @@ window.SnakeRender = (() => {
   // bead keeps its markings), and it's drawn going there (see drawFood); a
   // beetle scurries there (see drawBeetle). With reduced motion it's simply
   // there.
-  const SPAT_MS = 320, ROLL_MS = 280, FLY_CELL_MS = 70, FLY_MAX_MS = 620;
+  // A bead its own snake choked on is in its mouth while its cheeks puff (so
+  // the face shows the gag: on a phone a bead over it was the whole head),
+  // and it's spat out on the "ptoo" (SPIT_WAIT), out of its cheek on the
+  // side it lands (its head has gone on by then, and the bead lands beside
+  // its neck: from the front of its mouth it flew back over its face),
+  // small at first, full size as it clears the head, landing on the tok
+  // (SPAT_MS from the choke, as the sound has it).
+  const SPAT_MS = 320, ROLL_MS = 280, FLY_CELL_MS = 70, FLY_MAX_MS = 620, SPIT_WAIT = 120, SPIT_SIDE = 0.7, SPIT_AHEAD = 0.25;
+  // How far on its way a piece moved aside is (0..1; -1 while it's still in
+  // the mouth that spat it), and, as it leaves, where from.
+  function movedU(b, now) {
+    const t = now - b.movedAt - b.wait;
+    if (t < 0) return -1;
+    if (b.by) { // (its cheek on that side, as drawn: or, landing straight ahead or behind, the front of its mouth)
+      const a = anim.get(b.by);
+      if (a && a.n) {
+        const hx = a.pts[0], hy = a.pts[1], c = a.hc, s = a.hs, side = Math.sign(Math.round(c * ((b.ty + 0.5) * CELL - hy) - s * ((b.tx + 0.5) * CELL - hx)));
+        const ox = side ? SPIT_AHEAD * c - SPIT_SIDE * side * s : SPIT_SIDE * c, oy = side ? SPIT_AHEAD * s + SPIT_SIDE * side * c : SPIT_SIDE * s;
+        b.fx = hx / CELL + ox - 0.5; b.fy = hy / CELL + oy - 0.5;
+      }
+      b.by = null;
+    }
+    return t / ((b.spat ? b.fly : ROLL_MS) - b.wait);
+  }
   // Up in the air: over the snakes (a bead's spat over its own head; food
   // flies over whatever's in the way), bigger the higher it is (its shadow's
   // on the ground: see drawFood). A bead is rimmed in ink and parchment in
@@ -6058,9 +6092,9 @@ window.SnakeRender = (() => {
       if (f.kind === 'beetle') continue;
       const b = born.get(f.y * GRID + f.x);
       if (!b || !b.spat || !b.movedAt) continue;
-      const u = (now - b.movedAt) / b.fly;
+      const u = movedU(b, now);
       if (u <= 0 || u >= 1) continue;
-      const e = 1 - (1 - u) * (1 - u), up = Math.sin(u * Math.PI), sz = 1 + 0.3 * up;
+      const e = 1 - (1 - u) * (1 - u), up = Math.sin(u * Math.PI), sz = (1 + 0.3 * up) * (b.wait ? Math.min(1, 0.5 + 2 * u) : 1);
       const x = (b.fx + (f.x - b.fx) * e + 0.5) * CELL, y = (b.fy + (f.y - b.fy) * e + 0.5) * CELL - up * b.hop;
       if (f.kind === 'pellet') {
         ctx.fillStyle = 'rgba(28,16,6,0.85)'; circle(x, y, CELL * 0.43 * sz);
@@ -6079,13 +6113,13 @@ window.SnakeRender = (() => {
     const left = f.expires != null ? f.expires - game.tick : 999;
     return appleSprite(f.cooked ? 'baked' : left > 50 ? 'fresh' : left > 22 ? 'bruised' : 'rotten');
   }
-  function moveFood(x, y, tx, ty, now, spat, knocked = false) {
+  function moveFood(x, y, tx, ty, now, spat, knocked = false, by = null) {
     const from = y * GRID + x, to = ty * GRID + tx, f = game.food.find(o => o.x === tx && o.y === ty && o.kind !== 'beetle');
     if (!f) return;
     const b = born.get(from), d = Math.hypot(tx - x, ty - y);
     if (from !== to) born.delete(from);
     born.set(to, { kind: f.kind, at: now - POP_MS, i: 0, next: 0, gen: bornGen, v: b && b.kind === f.kind ? b.v : (f.color || '#a16207') + '|', fell: false, fx: x, fy: y, movedAt: now, spat,
-      fly: knocked ? Math.min(FLY_MAX_MS, SPAT_MS + FLY_CELL_MS * d) : SPAT_MS, hop: CELL * (knocked ? Math.min(1.5, 0.6 + 0.22 * d) : 0.6) });
+      fly: knocked ? Math.min(FLY_MAX_MS, SPAT_MS + FLY_CELL_MS * d) : SPAT_MS, hop: CELL * (knocked ? Math.min(1.5, 0.6 + 0.22 * d) : 0.6), by, wait: by ? SPIT_WAIT : 0, tx, ty }); // (by: the snake that spat it)
   }
 
   // Through the woodpecker's aim, the food in its mark trembles (see
@@ -6411,8 +6445,9 @@ window.SnakeRender = (() => {
       if (pop <= 0) continue;
       let x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
       if (b && b.movedAt) { // (spat, knocked or nudged aside: on its way from where it was, see moveFood)
-        const u = (now - b.movedAt) / (b.spat ? b.fly : ROLL_MS);
-        if (u < 0 || u >= 1 || reduced) b.movedAt = 0;
+        const u = reduced ? 1 : movedU(b, now);
+        if (u < 0) continue; // (still in the mouth that spat it)
+        if (u >= 1) b.movedAt = 0;
         else {
           const e = 1 - (1 - u) * (1 - u);
           x = (b.fx + (f.x - b.fx) * e + 0.5) * CELL; y = (b.fy + (f.y - b.fy) * e + 0.5) * CELL;
@@ -8651,7 +8686,7 @@ window.SnakeRender = (() => {
         if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.6), GROWN[e.kind === 'golden' ? T.GOLDEN_GROWTH : e.kind === 'beetle' ? T.BEETLE_GROWTH : e.cooked ? T.COOKED_GROWTH : 1] || '+1');
       } else if (e.type === 'choke') { // gagged on its own bead: a quick puff of its cheeks, and the bead spat aside (then it coughs: see drawCough)
         animOf(e.snake, now).chokeAt = now;
-        moveFood(e.x, e.y, e.tx ?? e.x, e.ty ?? e.y, now, true);
+        moveFood(e.x, e.y, e.tx ?? e.x, e.ty ?? e.y, now, true, false, e.snake);
       } else if (e.type === 'nudge') { // food its coughing head reached, nudged aside: it rolls there, or a beetle scurries
         if (e.kind === 'beetle') scurries.push({ x: e.x, y: e.y, tx: e.tx ?? e.x, ty: e.ty ?? e.y, tick: game.tick });
         else moveFood(e.x, e.y, e.tx ?? e.x, e.ty ?? e.y, now, false);
