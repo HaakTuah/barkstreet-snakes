@@ -48,9 +48,10 @@
   };
   const FLAVOR = {
     intro: 'Three rivals. One mossy log. Last snake wriggling wins.',
-    hintStart: 'Arrows or WASD steer · Space jumps · E or Shift flashes · P naps · Enter starts · H opens the Hall of Fame',
-    hintKeys: 'Arrows or WASD steer · Space jumps · E or Shift flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · M mutes · N toggles the music',
-    hintOnline: 'Arrows or WASD steer · Space jumps · E or Shift flashes · M mutes · N toggles the music',
+    // (The arrows first: anyone knows them. A click is the mouse's left button on the board.)
+    hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P naps · Enter starts · H opens the Hall of Fame',
+    hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · M mutes · N toggles the music',
+    hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · M mutes · N toggles the music',
     hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash',
     hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash · Tap ⏸ to nap',
     // Watching (Watch AIs, or after you're out): nothing of yours to steer.
@@ -103,11 +104,13 @@
     youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
     youChoke: 'You choke on your own tail!', // (your own beads: spat aside, and a cough)
     youCoughing: 'No eating while you cough: food rolls aside.', // (true whenever it shows: a lesson may wait out the cough)
+    youWoodpecker: 'The woodpecker knocks food aside, and never shuts you in.', // (your first sudden death, once its own banner has had its time)
+    youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near your head)
     lastApples: 'The last apples are falling.',
     // Your flash, ready and never used yet: the key, once a round (until you've flashed).
     flashKey: touchFirst ? 'Your flash is ready: swipe the way you’re going.' : 'Your flash is ready: E or Shift, two cells in a blink.',
     // Beside the YOU arrow, as a round starts (until you steer).
-    steerHint: touchFirst ? 'Swipe to steer' : 'Arrows or WASD to steer',
+    steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
     leapNothing: 'Jumps hop over a snake, a hole or fire.',
     leapEarly: 'A bit early: jump when it’s right in front.',
     powersFirst: 'Tap jumps. Swipe ahead flashes.', // (a short phone's first Go: steering is beside YOU. One line on a 320 px phone, so it fits between the heads)
@@ -754,8 +757,19 @@
   // Apples eaten in quick succession climb a scale: a streak you can hear.
   let streak = 0, streakAt = -1e9;
   const COUGH_BEAT = 2; // ticks from a choke's gag to its cough
+  // The snake whose head is nearest a cell (the one a beetle there is fleeing, as the engine reckons it).
+  function cornering(x, y) {
+    let near = null, gap = Infinity;
+    for (const s of game.snakes) {
+      if (!s.alive) continue;
+      const d = Math.abs(s.body[0].x - x) + Math.abs(s.body[0].y - y);
+      if (d < gap) { gap = d; near = s; }
+    }
+    return near;
+  }
   function sounds(dying, wasAlive) {
     const me = player();
+    let knocked = false;
     for (const e of game.events) {
       if (e.type === 'eat' && isMe(e.snake)) {
         if (e.kind !== 'mushroom') { streak = game.time - streakAt < 2600 ? Math.min(streak + 1, 7) : 0; streakAt = game.time; }
@@ -771,7 +785,9 @@
       else if (e.type === 'strike') Audio.play('thunder', at(e.x));
       else if (e.type === 'gust') Audio.play('gust');
       else if (e.type === 'burrow') Audio.play('burrow', at(e.x));
-      else if (e.type === 'dive' || e.type === 'emerge') Audio.play('dig', at(e.x));
+      else if ((e.type === 'dive' && !e.dug) || e.type === 'emerge') Audio.play('dig', at(e.x)); // (one that dug in was heard boring in)
+      else if (e.type === 'dig') Audio.play('dig', { rival: !isMe(cornering(e.x, e.y)), ...at(e.x) }); // (whose head it fled: yours, or a rival's, softer and further off)
+      else if (e.type === 'knock' && e.tx != null && !knocked) { knocked = true; Audio.play('knock', { volume: 0.5, ...at(e.x) }); } // (food flying off the patch: the world's, quiet, once a strike)
       else if (e.type === 'rainbow') Audio.play('rainbow', at(e.x));
       else if (e.type === 'weather' && e.kind === 'rain') Audio.play('rain');
       else if (e.type === 'weather' && e.kind === 'snow') Audio.play('snow');
@@ -884,14 +900,19 @@
         return toast(dying.length > 1 ? `First out: ${all}.` : killer && killer.alive ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : killer ? `First out: ${who(v, true)} and ${who(killer, true)}, head-on.` : `First out: ${who(v, true)} ${causeFor(v)}.`, 2800, 'kill', 'round');
       }
     }
-    for (const e of game.events) if (e.type === 'woodpecker') { flashFrame('bird', true); return toast(lineFor('woodpecker'), 2800, 'bird', 'round'); }
+    const me = player();
+    const once = key => !game.told?.[key] && ((game.told ||= {})[key] = true); // (the first time this round)
+    for (const e of game.events) if (e.type === 'woodpecker') {
+      flashFrame('bird', true);
+      toast(lineFor('woodpecker'), 2800, 'bird', 'round');
+      if (me?.alive && once('fairPecks')) toast(FLAVOR.youWoodpecker, 3000, 'bird', 'lesson', { still: () => me.alive }); // (its rules: it waits for the banner's hold)
+      return;
+    }
     if (dying.length && alive.length === 2) {
       const [a, b] = isMe(alive[0]) ? [alive[1], alive[0]] : alive;
       Audio.play('riser');
       return toast(`It’s down to ${who(a)} and ${who(b, true)}.`, 2800, 'kill', 'round');
     }
-    const me = player();
-    const once = key => !game.told?.[key] && ((game.told ||= {})[key] = true); // (the first time this round)
     const newsOnce = key => newsFree() && once(key); // (news that can't show now waits for its next chance, not spent on nothing)
     if (me?.alive) {
       const small = me.body.length <= T.MIN_LENGTH;
@@ -922,6 +943,7 @@
       if (e.type === 'spawn' && e.kind === 'leaf') { flashFrame('gold'); if (newsOnce('leaf')) return toast(lineFor('leaf'), 2400, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'goldcap') { flashFrame('gold'); if (newsOnce('goldcap')) return toast(lineFor('goldcap'), 2400, 'gold'); }
       if (e.type === 'peck' && me?.alive && e.under?.includes(me.id) && once('peckedUnder')) return toast(FLAVOR.youPeckedUnder, 2800, 'bird', 'lesson'); // (struck under your body: a bridge, not a cut)
+      if (e.type === 'dig' && me?.alive && Math.abs(me.body[0].x - e.x) + Math.abs(me.body[0].y - e.y) <= DIG_NEAR && teachable() && once('dig')) return toast(FLAVOR.youDig, 2600, 'beetle', 'lesson'); // (it's over in a second: shown now or kept for the next one, never left waiting)
       if (!me || !isMe(e.snake || {}) && e.by !== me.id) continue; // (the rest is about you)
       if (e.type === 'choke' && once('choke')) return toast(FLAVOR.youChoke, 2600, 'you', 'lesson');
       if (e.type === 'nudge' && once('nudge')) return toast(FLAVOR.youCoughing, 2600, 'you', 'lesson');
@@ -966,6 +988,9 @@
 
   // Could a routine banner show now (no card up, nothing holding the banner)?
   const newsFree = () => overlay.classList.contains('hidden') && (toastEl.hidden || performance.now() >= toastHold);
+  // Could a lesson show now, rather than wait its turn (only news, or nothing, holding the banner)?
+  const teachable = () => newsFree() || (overlay.classList.contains('hidden') && toastLevel === 'news');
+  const DIG_NEAR = 8; // (a beetle digging in this near your head, in cells across and down: one you could have caught)
 
   // A banner keeps out of the way of heads (and the woodpecker's mark, a
   // crackle, the steering hint). It comes up in the first of its three
@@ -1494,9 +1519,15 @@
     ghost: 'radial-gradient(circle at 35% 35%, #f8fafc, #b8c4d4)', // (pale, but not an empty ring)
     star: 'radial-gradient(circle at 50% 50%, #f9c22e 0 28%, transparent 30%), conic-gradient(#ef4444, #f97316, #facc15, #22c55e, #3b82f6, #6366f1, #a855f7, #ef4444)', // (a rainbow round its sunflower star)
   };
+  // Copycat's dot wears the flag's yellow star over whatever colour it has
+  // on, its party pin: it keeps it apart from the cast's other reds.
+  const PARTY_STAR = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1.5 14.5 8.6 22 8.7 16 13.3 18.2 20.5 12 16.2 5.8 20.5 8 13.3 2 8.7 9.5 8.6Z' fill='%23ffde00'/%3E%3C/svg%3E") 50% 50% / 82% no-repeat`;
+  const starred = new Map(); // (colour -> its dot with the star: made once each, the tags read them every frame)
+  const partyDot = colour => starred.get(colour) || starred.set(colour, `${PARTY_STAR}, ${colour}`).get(colour);
+  PERSONA_DOTS.copycat = partyDot(PERSONAS.copycat.color); // (in the Hall of Fame: its own red)
   function dotColor(s) {
     if (s.personaKey === 'mute') return R.colorOf(s); // (its mood, as it changes)
-    if (s.personaKey === 'copycat' && game?.snakes[s.memory.modelId]?.personaKey === 'star') return COPY_STAR_DOT; // (copying Star: a pale copy of its rainbow)
+    if (s.personaKey === 'copycat') return partyDot(game?.snakes[s.memory.modelId]?.personaKey === 'star' ? COPY_STAR_DOT : R.colorOf(s)); // (copying Star: a pale copy of its rainbow)
     return PERSONA_DOTS[s.personaKey] || s.persona?.ink || R.colorOf(s);
   }
   // The same dots in the Hall of Fame and Your story, by a rival's name.
@@ -1875,11 +1906,41 @@
   document.addEventListener('touchend', endSwipe, { passive: false });
   document.addEventListener('touchcancel', endSwipe);
 
+  // The mouse, over the board: the left button jumps and the right one
+  // flashes, as Space and E do (and no menu pops up over the board). Only a
+  // mouse's buttons: a finger's taps and swipes are above, and a pen is the
+  // browser's. A button pressed while another is held (both at once: the jump
+  // goes first, as with the keys) comes as a pointer move, and counts too. A
+  // card over the board is the card's: its buttons are buttons. A run of quick
+  // presses is kept, as touches' are, so mashing jump as your death's card
+  // comes up under the pointer never presses Play again (see cardSettled).
+  const MOUSE_POWER = { 0: 'leap', 2: 'flash' }, MOUSE_BIT = { 0: 1, 1: 4, 2: 2 }; // (button -> power; button -> its bit in e.buttons)
+  let mouseAt = -Infinity, mouseRun = -Infinity; // (the last mouse press, and when the run of quick presses it's in began)
+  function mousePress(e) {
+    if (e.pointerType !== 'mouse' || !(e.button in MOUSE_BIT)) return;
+    if (e.type === 'pointermove' && !(e.buttons & MOUSE_BIT[e.button])) return; // (a chord's button let go)
+    const now = performance.now();
+    if (now - mouseAt >= T.CARD_MASH_MS) mouseRun = now;
+    mouseAt = now;
+    Audio.unlock();
+    const kind = MOUSE_POWER[e.button];
+    if (kind && e.target === canvas && !e.ctrlKey && !e.metaKey && !e.altKey) power(kind); // (the board itself, no card over it; and no shortcut)
+  }
+  document.addEventListener('pointerdown', mousePress);
+  document.addEventListener('pointermove', e => { if (e.button >= 0) mousePress(e); }); // (only a chord's press or release says which button)
+  boardEl.addEventListener('contextmenu', e => { if (!e.target.closest?.('.card')) e.preventDefault(); }); // (a card's own text and fields keep theirs)
+  // A mouse press in a run begun as a card came up by itself (or this soon after): still mashing jump.
+  const mashedOnCard = e => !!e.target.closest?.('#overlay') && performance.now() - mouseAt < T.CARD_MASH_MS && mouseRun < cardShownAt + T.CARD_TAP_MS;
+  const keepField = e => { if (mashedOnCard(e) && e.target.closest('input, label')) e.preventDefault(); }; // (nor focuses the name field it offers, or its words: keys mashed next would carve them)
+  document.addEventListener('mousedown', keepField);
+  document.addEventListener('click', keepField, true);
+
   // Buttons. (ok: whether a click counts.)
   const click = (el, fn, ok = null) => el.addEventListener('click', e => { if (ok && !ok(e)) return; Audio.unlock(); Audio.play('ui'); fn(e); });
-  // A card that came up by itself takes no pointer's click for a moment
-  // (keys are fine: Space never presses its buttons unless you Tabbed to one).
-  const cardSettled = e => !(e.detail > 0 && performance.now() < cardShownAt + T.CARD_TAP_MS);
+  // A card that came up by itself takes no pointer's click for a moment, nor
+  // one of a run of mouse presses that began then (keys are fine: Space never
+  // presses its buttons unless you Tabbed to one).
+  const cardSettled = e => !(e.detail > 0 && (performance.now() < cardShownAt + T.CARD_TAP_MS || mashedOnCard(e)));
   // A button clicked with a mouse or a finger doesn't keep the keyboard, so
   // Space and Enter go back to jumping and starting over. Card and Hall of
   // Fame buttons keep focus: there, Enter on a focused button is expected.
@@ -2020,11 +2081,12 @@
   // the renderer, as it is on the log) and its rule in a line or two.
   const secs = ms => Math.round(ms / 1000);
   const coughFor = Math.max(1, secs(T.COUGH_TICKS * T.START_TICK)); // (a cough's ticks at the round's usual pace)
+  const inWords = n => ['none', 'one', 'two', 'three', 'four', 'five'][n] ?? String(n);
   const GUIDE = [
     ['Food', [
-      ['apple', 'Apple', 'Worth 1, and a full tummy. Leave it too long and it rots.'],
+      ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(T.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time; leave one too long and it rots.`],
       ['golden', 'Golden apple', `Worth ${T.GOLDEN_GROWTH}, and everyone saw it land.`],
-      ['beetle', 'Beetle', `Worth ${T.BEETLE_GROWTH}. It scurries from heads, at half your speed.`],
+      [['beetle', 'dig'], 'Beetles', `Worth ${T.BEETLE_GROWTH}, up to ${inWords(T.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed; a cornered one digs in, so be quick.`],
       ['pellet', 'Beads', `What a crash knocks off, and what a dead snake leaves (${T.CORPSE_EVERY === 2 ? 'every other segment' : T.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${T.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own make you choke: you spit them aside.`],
       ['cough', 'Coughing', `After a choke you cough for ${coughFor === 1 ? 'about a second' : `about ${coughFor} seconds`} (puffs, mouth shut) and can’t eat. Food you reach rolls aside: out of a turn, or to the side with more open log.`],
       [['baked', 'roast'], 'Baked and roast', `Food left in a fire bakes: worth ${T.COOKED_GROWTH}, if you can take the heat. Then it’s ash.`],
@@ -2036,22 +2098,24 @@
       ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(T.WRAP_MS)} s a mushroom (up to ${secs(T.WRAP_MAX_MS)}).`],
     ]],
     ['Your powers', [
-      ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space'}: hop a snake, a hole or fire. It costs your tail’s tip, then rests ${secs(T.LEAP_COOLDOWN_MS)} s.`],
-      ['flash', 'Flash', `${touchFirst ? 'A swipe the way you’re going' : 'E or Shift'}: two cells in a blink, free. Then it rests ${secs(T.FLASH_COOLDOWN_MS)} s.`],
+      ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop a snake, a hole or fire. It costs your tail’s tip, then rests ${secs(T.LEAP_COOLDOWN_MS)} s.`],
+      ['flash', 'Flash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift or a right-click on the log'}: two cells in a blink, free. Then it rests ${secs(T.FLASH_COOLDOWN_MS)} s.`],
       ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden flashes.'],
       ['rests', 'Resting', 'Two half-rings round your head: your jump (left) and your flash (right) coming back.'],
     ]],
     ['The log', [
       ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
+      ['knock', 'Woodpecker', 'From 2:00 it pecks out patches, never one that shuts you in or leaves crumbs of log. Food in its mark is knocked to the nearest free cell, where the ring is.'],
       ['hole', 'Holes', 'The woodpecker’s, from 2:00. Bump one like the edge; a peck right under your head is the end.'],
       ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and it notices.'],
+      ['lostflag', 'Lost flags', 'A flag the woodpecker pecks out is lost: the colony goes, and a capital moves.'],
     ]],
   ];
   // (Until the renderer can draw a picture, a stand-in. It draws a kind it
   // doesn't know as an apple, so the kinds it has no picture for yet are
-  // named here.)
-  const GUIDE_STAND_IN = { apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', pellet: '🟢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', hole: '🕳️', land: '🚩' };
-  const GUIDE_UNDRAWN = new Set(['cough']);
+  // named here: none now.)
+  const GUIDE_STAND_IN = { apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', land: '🚩', lostflag: '🚩' };
+  const GUIDE_UNDRAWN = new Set();
   function renderGuide() {
     const px = Math.round(36 * (window.devicePixelRatio || 1));
     for (const [title, rows] of GUIDE) {

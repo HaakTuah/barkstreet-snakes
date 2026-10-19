@@ -26,8 +26,8 @@ A snake game on a mossy log: you against three AI rivals on a fallen log in the 
 
 Everyone has two powers, each with its own press:
 
-- **Jump** (Space; on a phone, tap): with a body, a hole or fire right in front of you and room beyond, you hop over it, two cells in two ticks. It costs the tip of your tail and needs 4 seconds before the next.
-- **Flash** (E or Shift; on a phone, swipe the way you're already going): two cells in one tick, along the ground. It's free, then rests 6 seconds. It eats what it passes but cuts nothing: whatever's in the way, you run into.
+- **Jump** (Space, or a click on the board; on a phone, tap): with a body, a hole or fire right in front of you and room beyond, you hop over it, two cells in two ticks. It costs the tip of your tail and needs 4 seconds before the next.
+- **Flash** (E or Shift, or a right-click on the board; on a phone, swipe the way you're already going): two cells in one tick, along the ground. It's free, then rests 6 seconds. It eats what it passes but cuts nothing: whatever's in the way, you run into.
 
 Press both and the jump goes first if there's something to hop; the flash follows once you're down. A flash pressed in the air goes once you land. Pressed while you're stunned, a power that can't get anywhere just says so, and you turn clear.
 
@@ -65,11 +65,11 @@ Press **Play with friends** on the start screen, then **Host a game** and send t
 
 ## Controls
 
-| Action | Keyboard | Touch |
+| Action | Keyboard and mouse | Touch |
 |--------|----------|-------|
-| Steer | Arrow keys or WASD (turns are queued, so quick double turns work) | Swipe (anywhere on the screen during a round) |
-| Jump | Space | Tap |
-| Flash | E or Shift | Swipe the way you're already going |
+| Steer | Arrow keys (or WASD); turns are queued, so quick double turns work | Swipe (anywhere on the screen during a round) |
+| Jump | Space, or click the board | Tap |
+| Flash | E or Shift, or right-click the board | Swipe the way you're already going |
 | Nap (pause) | P or Esc | ⏸ button |
 | Start / start over | Enter or R (mid-round it asks first: press it again), or any arrow on the start screen | Play button |
 | Hall of Fame, Your story, Field guide | H | Hall of Fame button |
