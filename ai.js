@@ -276,6 +276,14 @@ window.SnakeAI = (() => {
   // most of what the neck test catches (nine in ten), and its allowance is
   // the dial between fewer boxed-in deaths and longer rounds.
   const PINNED_DAWDLE = 8;
+  // But a meal isn't a pin. A line that has just eaten is against the edge, a
+  // hole or a body (or in a corner) only because the food was there, and it
+  // leaves on its next move. So for MEAL_PLIES steps after eating, any neck's
+  // allowance is MEAL_DAWDLE: only a rival that could get to the gap about as
+  // soon as I could (a head that could cut me off) makes it a trap. (With 8,
+  // any rival within a dozen cells did: food by the edge was refused half the
+  // time, and snakes circled it.)
+  const MEAL_DAWDLE = 2, MEAL_PLIES = 3;
   const HOLE = 1 << 30;    // "frees up" never
   const DEAD = -1e6;
   const EMPTY = new Set();
@@ -1233,6 +1241,7 @@ window.SnakeAI = (() => {
       return true;
     }
 
+    let ateAt = -HOLE; // (the step the line being scored last ate at)
     function evaluate(body, len, grow, t) {
       const L = len + grow;
       const head = body[0];
@@ -1418,7 +1427,7 @@ window.SnakeAI = (() => {
       // any rival could get there is mine to pass, and a pocket with my own
       // trail in it I can circle.)
       for (let k = 0; k < neckCount; k += 4) {
-        const d = necks[k + 3], slack = d === 1 ? PINNED_DAWDLE : DAWDLE;
+        const d = necks[k + 3], slack = t - ateAt <= MEAL_PLIES ? MEAL_DAWDLE : d === 1 ? PINNED_DAWDLE : DAWDLE;
         if (trail < d) break;
         if (reach[necks[k]] > t + d + slack || reach[necks[k + 1]] > t + d + slack) continue;
         return score - Math.min(NECK + 50 * (need - necks[k + 2]), TRAPPED - 1); // (never worse than a sure trap, however long I am)
@@ -1464,6 +1473,8 @@ window.SnakeAI = (() => {
       if (!muted) foodValue[i] = 0; // (eaten, or spat aside)
       if (caught) bugCell[t + 1] = -1; else if (bugV > 0) bugStep(t, t + 1, t, nx, ny);
       if (choked) mute = t + TUNE.COUGH_TICKS;
+      const ateBefore = ateAt;
+      if (v > 0) ateAt = t + 1;
       const ahead = t < STEPS_AHEAD;
       let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t));
       if (turning && w.turn) gain -= w.turn * (ahead ? TURN_AHEAD[t] : Math.pow(0.9, t));
@@ -1472,6 +1483,7 @@ window.SnakeAI = (() => {
         : search(nb, nlen, g, depth - 1, t + 1, bonus + gain);
       foodValue[i] = was;
       mute = muteWas;
+      ateAt = ateBefore;
       return score;
     }
 
@@ -1576,7 +1588,7 @@ window.SnakeAI = (() => {
       const hurdle = i => myCells[i] === stampM || (mineFree[i] > 1 && (mineFree[i] < HOLE || fire.has(i) || (pecks ? !pecks.has(i) : trapped)));
       const path = [0, 0, 0];
       const ate = [-1, -1, -1], ateV = [0, 0, 0];
-      let ateL = 0, ateG = 0, ateGain = 0, endRisk = 0, idle = false, muteWas = 0, ateBug = false; // (endRisk: the risk where the last one weighed ends; idle: it was a golden dash just for speed; muteWas, ateBug: for uneat)
+      let ateL = 0, ateG = 0, ateGain = 0, endRisk = 0, idle = false, muteWas = 0, ateBug = false, ateWas = -HOLE; // (endRisk: the risk where the last one weighed ends; idle: it was a golden dash just for speed; muteWas, ateBug: for uneat)
       let best = null;
       const consider = (d, flash, v, price, extra) => {
         const full = endRisk > safe || idle;
@@ -1718,7 +1730,7 @@ window.SnakeAI = (() => {
       // board meanwhile: uneat puts it back.
       function eatOn(a, b, c, L, g, soon, step) {
         ate[0] = a; ate[1] = b; ate[2] = c;
-        ateGain = 0; muteWas = mute; ateBug = false;
+        ateGain = 0; muteWas = mute; ateBug = false; ateWas = ateAt;
         for (let k = 0; k < 3; k++) {
           const i = ate[k];
           ateV[k] = 0;
@@ -1738,12 +1750,14 @@ window.SnakeAI = (() => {
           ateGain += v * (foodW * w.foodRange + eatW * soon);
           ateV[k] = foodValue[i];
           foodValue[i] = 0;
+          if (v > 0) ateAt = step;
         }
         ateL = L; ateG = g;
       }
       function uneat() {
         for (let k = 0; k < 3; k++) if (ateV[k]) foodValue[ate[k]] = ateV[k];
         mute = muteWas;
+        ateAt = ateWas;
       }
     }
   }
