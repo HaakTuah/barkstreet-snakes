@@ -706,7 +706,7 @@
         : { title, flavor, text: yours, reward: !!me, primary: null, secondary: 'Leave room', lobby: { status: FLAVOR.waiting(online.hostName, true) },
           actions: { secondary: leaveRoom } };
     } else pendingCard = game.withPlayer
-      ? { title, flavor, reward: true, primary: 'Play again', secondary: 'Watch AIs', text: yours }
+      ? { title, flavor, reward: true, primary: 'Play again', secondary: 'Watch AIs', text: yours, ...(how && guideFor(me)) } // (it says how you died, so it names what got you too: when your death ended the round, it's your death's card)
       : { title, flavor, primary: 'Play', secondary: 'Watch again' };
     cardAt = lastFrame + T.ROUND_END_PAUSE;
     updateControls();
@@ -1193,6 +1193,7 @@
     }
 
     overlay.querySelector('.card').classList.toggle('beat', !!card.beat); // the countdown: a big number
+    overlay.querySelector('.card').classList.toggle('ended', state === 'over'); // the round's card: its words say more than your death's (style.css: how long you lasted), so more gives way to fit
     overlay.classList.remove('hidden');
     overlay.querySelector('.card').scrollTop = 0;
     if (!card.quiet) say(announcement(card));

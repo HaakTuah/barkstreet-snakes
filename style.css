@@ -233,18 +233,22 @@ html.in-round h1 .snake-s * { animation: none; } /* (it rests during a round, to
 header { min-width: 0; }
 .hud { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; color: var(--muted); }
 .hud .stat { white-space: nowrap; }
-/* Score over Best, beside the title (its two lines, the title and the
-   tagline, beside their two): the pair takes the width of one, which gives
-   the buttons their room and the Field guide its name. Their words to the
-   right, their digits in a column, with room kept for four, so nothing
-   moves as they grow. On a phone and in the column beside the board each
-   takes its own place (.stats has no box there). */
-.stats { display: grid; justify-items: end; line-height: 1.15; }
-.stats .stat strong { min-width: 4ch; }
 .trophy { display: inline-flex; align-items: center; gap: 6px; }
 .trophy svg { display: none; }
 .hud .stat strong { display: inline-block; min-width: 2ch; color: var(--cream); font-variant-numeric: tabular-nums; } /* room for two digits, so a growing score never reflows the header */
 .hud .stat strong { transform-origin: left center; } /* its pop (snake.js bump) grows away from the label */
+/* Score over Best, beside the title (its two lines, the title and the
+   tagline, beside their two): the pair takes the width of one, which gives
+   the buttons their room and the Field guide its name. Their words to the
+   right, their digits in a column, with room kept for four, so nothing
+   moves as they grow (after the rule above, which would otherwise win: it
+   kept two, and at 100 the row wrapped at each step's page), in 0.9rem, as
+   on a phone, so four cost the row 10 px, not 18. On a phone and in the
+   column beside the board each takes its own place (.stats has no box
+   there), at its own size, with its own room. */
+.stats { display: grid; justify-items: end; line-height: 1.15; }
+.stats .stat { font-size: 0.9rem; }
+.stats .stat strong { min-width: 4ch; }
 
 /* -------------------------------------------- the snakes' name tags */
 
@@ -945,7 +949,12 @@ html.playing .help.cut { visibility: hidden; } /* (cut in half by the screen's e
   animation: rise 0.25s ease-out;
 }
 
-.records-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+/* The book's tabs and its × stay at the top of its page as it scrolls,
+   inside its ring (a death card's link opens it scrolled to its row: the ×
+   went up with the page, 460 to 990 px off a phone's screen, and with it
+   the focus ring). At rest it's where it was: 16 px in, 12 over the page.
+   (Stuck, it's 3 px from the page's top, past its 16 px padding: -13.) */
+.records-head { position: sticky; top: -13px; z-index: 1; display: flex; align-items: center; justify-content: space-between; margin: -13px -13px 4px; padding: 13px 13px 8px; border-radius: 13px 13px 0 0; background: var(--parchment); }
 
 .tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--parchment-2); }
 .tab { padding: 6px 14px; font-size: 0.9rem; background: transparent; color: var(--ink); box-shadow: none; }
@@ -1040,20 +1049,33 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
 
 /* ------------------------------------------------------ small screens */
 
-/* Cards on small boards (the board is a size container): tighter, and the
-   rivals as a row of names (tap a tag above the board for how one plays). */
+/* Cards by the board's size (the board is a size container), whatever the
+   screen. Up to 490 px, a phone's card: tighter, and the rivals as a row of
+   names (tap a tag above the board for how one plays). That's every board
+   a phone gives, held upright (up to 432 px) or on its side (up to 490 in
+   full screen), and a short or narrow window's. (It went by the screen's
+   width, 440 px or less: on its side, and in a window 441 to 520 px wide,
+   a board of 381 to 470 px had the desktop's card, which scrolled: the
+   start card 50 px at 381, 14 at 397 in a 441 px window; with a note 69 at
+   404, 37 at 416, 3 at 470; the fullest death card 15 at 404, where the
+   same board held upright fits.) The steps below were set on phones held
+   upright, and hold on their sides with the same card. */
 .board { container-type: size; }
+@container (max-height: 490px) {
+  .card { --pad-x: 14px; --pad-y: 12px; }
+  .card h2 { font-size: 1.5rem; }
+  .opponents { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; }
+  .opponents li { margin: 2px 0; }
+  .opponents .blurb { display: none; } /* (they live in the tags' tooltips, and the notes) */
+  .opponents .tap-tip { display: block; flex-basis: 100%; font-size: 0.78rem; color: var(--ink-soft); }
+}
 @container (max-height: 380px) {
   .card-links { gap: 0 8px; } /* (How to play and Play with friends still share a row on a phone) */
   .card-links .text-button { padding-inline: 4px; }
-  .card { --pad-x: 14px; --pad-y: 12px; }
   .card h2 { font-size: 1.45rem; margin-bottom: 4px; }
   .card.beat h2 { font-size: 2.4rem; }
   .card p { margin-bottom: 8px; font-size: 0.92rem; }
-  .opponents { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; margin-bottom: 8px; }
-  .opponents li { margin: 2px 0; }
-  .opponents .blurb { display: none; }
-  .opponents .tap-tip { display: block; flex-basis: 100%; font-size: 0.78rem; color: var(--ink-soft); }
+  .opponents { margin-bottom: 8px; }
   .buttons .text-button { margin-top: 0; min-height: 32px; }
   .buttons { gap: 6px 10px; }
   .rival-note { margin-bottom: 8px; padding: 6px 10px 7px 12px; font-size: 0.92rem; } /* (as the card's words it stands in for) */
@@ -1071,26 +1093,43 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .hint { margin-top: 6px !important; font-size: 0.74rem; } /* (the steering hint stays: phones need it most) */
 }
 /* A phone's edge-to-edge board a little over that (382 px on a 390 px
-   phone, 404 on a 412): the fullest card, a first good round's with the new
-   best's badge, the carve and the Field guide's link, lets the death's quip
-   go while the carve is offered, up to 403 px (with it the card scrolled 15
-   px at 382), and a rival's note on it stands in for the badge and the
-   carve, as on a small board, up to 419 (it scrolled 27 px at 382, 5 at
-   404), and up to 403 for the start card's roll-call. */
+   phone, 404 on a 412, either way up): the fullest card, a first good
+   round's with the new best's badge, the carve and the Field guide's link,
+   lets the death's quip go while the carve is offered, up to 403 px (with
+   it the card scrolled 15 px at 382), and a rival's note on it stands in
+   for the badge and the carve, as on a small board, up to 455 (it scrolled
+   27 px at 382, 5 at 404, and the round's card, below, 25 at 422), and up
+   to 403 for the start card's roll-call. */
 @container (max-height: 403px) {
   .card:has(.name-row:not([hidden])) .flavor { display: none; }
   .card.noting .opponents { display: none; } /* (the start card's roll-call too: with a note it scrolled 2 px at 382) */
 }
-@container (max-height: 419px) {
+@container (max-height: 455px) {
   .card.noting .badge, .card.noting .name-row:not(:focus-within) { display: none; }
 }
-@container (max-height: 330px) {
-  .card:has(.name-row:not([hidden])) .badge { display: none; } /* (the prompt is the celebration here; Best shows the number) */
+/* The round's card, when your death ended it (it's your death's card then:
+   the carve, the badge and the Field guide's link are on it), says a little
+   more ("· lasted 2:41"), a line more with the longest reason: while the
+   carve is offered its quip waits up to 419 px (with it the card scrolled
+   13 px at 404), and the new best's badge up to 390 (5 px at 382), and a
+   note stands in for the badge and the carve up to 455 (25 px at 422, 7 at
+   440; your death's card fit from 420). On the smallest board, 266 px on
+   its side (568×320), it still scrolls 10 px, past nothing but its bottom
+   edge: everything left on it is wanted. */
+@container (max-height: 419px) {
+  .card.ended:has(.name-row:not([hidden])) .flavor { display: none; }
+}
+@container (max-height: 390px) {
+  .card.ended:has(.name-row:not([hidden])) .badge { display: none; }
+}
+@container (max-height: 340px) {
+  .card:has(.name-row:not([hidden])) .badge { display: none; } /* (the prompt is the celebration here; Best shows the number. Up to 340: a Galaxy Fold's cover screen, 336 px, scrolled 6 px) */
 }
 @container (max-height: 300px) {
-  .card-links .text-button { font-size: 0.92rem; } /* (the smallest card: both on one row, 216 px of 224) */
+  .card-links { gap: 0 6px; }
+  .card-links .text-button { font-size: 0.92rem; padding-inline: 2px; } /* (the smallest card: both on one row, 205 px of 214 on 568×320's 266 px board; at 4 px and 8 apart, 215, the roll-call went under Play) */
   .card h2 { font-size: 1.25rem; }
-  .rival-note { font-size: 0.85rem; margin-bottom: 6px; }
+  .rival-note { font-size: 0.85rem; margin-bottom: 4px; } /* (the longest note on a nap at 266 px scrolled 1 px at 6) */
   .card .rival-note .now { font-size: 0.92em; } /* (no smaller than 12.5px) */
   .card.noting .card-links, .card:has(.name-row:not([hidden]):not(.carved)) .card-links { display: none; } /* (the card's quieter links, the Field guide's and friends', wait under a note here, and while you carve your name) */
   .name-row.carved:not(:focus-within) input { display: none; } /* (once a name's in, the row is one line: "Carved: …", or "…, as …" if you had one, and the links are back) */
@@ -1108,6 +1147,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
 /* The two buttons share one row (a stacked pair would cover the card): on
    the small boards, and on a phone's edge-to-edge one (310 px on its side). */
 @container (max-height: 330px) {
+  .opponents li { margin: 1px 0; } /* (the start card with the longest names scrolled 2 to 3 px at 310 and 312 px) */
   .buttons { gap: 8px; }
   .buttons button:not(.text-button) { flex: 1 1 0; min-width: 0; padding: 7px 8px; font-size: 0.85rem; line-height: 1.15; }
   #start { --call-x: 1.18; --call-y: 1.8; } /* (its ring as wide on a smaller button) */
@@ -1119,6 +1159,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   header { align-items: center; }
   .brand { flex: 1; }
   .hud, .stats { display: contents; }
+  .stats .stat { font-size: 1rem; }
   .stats .stat strong { min-width: 2ch; }
   .hud .stat { order: 0; }
   header::after { content: ''; order: 1; flex-basis: 100%; }
@@ -1142,13 +1183,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .records-head .tab-icon { display: inline-block; }
   .records-head .tab-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .card { --pad-x: 14px; --pad-y: 12px; }
-  .card h2 { font-size: 1.5rem; }
-  /* Rivals as a row of names; the blurbs live in the tags' tooltips. */
-  .opponents { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; }
-  .opponents li { margin: 2px 0; }
-  .opponents .blurb { display: none; }
-  .opponents .tap-tip { display: block; flex-basis: 100%; font-size: 0.78rem; color: var(--ink-soft); }
+  .card h2 { font-size: 1.5rem; } /* (the phone's card is by the board's size, above; held upright its title stays 1.5rem on the small boards too) */
   .scores-table .date { display: none; }
   .scores-table { table-layout: fixed; } /* long names get an ellipsis instead of pushing the table wide */
   /* The room goes to the names: Result fits "Won" or "4th" ("Shared 1st" takes two lines),
@@ -1169,6 +1204,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .hud .stat { font-size: 0.9rem; }
   .records { padding: 8px; }
   .records-card { padding: 12px; }
+  .records-head { top: -9px; margin: -9px -9px 4px; padding: 9px 9px 8px; }
   .records-head .tab { padding-inline: 8px; white-space: nowrap; }
   .scores-table td, .scores-table th { padding-inline: 4px; }
 }
@@ -1197,18 +1233,20 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   header:has(#fullscreen:not([hidden])) .hud .stat + .stat { order: 0; min-width: 0; }
 }
 @media (min-width: 341px) and (max-width: 440px) {
-  header:has(#fullscreen:not([hidden])) h1 { font-size: min(1.7rem, calc((100vw - 183px) / 8.25)); line-height: 1.7rem; }
+  header:has(#fullscreen:not([hidden])) h1 { font-size: min(1.7rem, calc((100cqw - 183px) / 8.25)); line-height: 1.7rem; }
+  header:has(#fullscreen:not([hidden])) .tagline { font-size: min(0.85rem, calc((100cqw - 183px) / 13.17)); } /* (on a phone taller than 720 px, where it shows: no wider than the title, so four digits fit beside it too; under 354 px it was wider, and at 1000 Score and Best went onto a row of their own) */
   header:has(#fullscreen:not([hidden])) .hud .stat { font-size: 0.9rem; }
 }
 @media (pointer: coarse) and (min-width: 341px) and (max-width: 440px) {
-  header:has(#fullscreen:not([hidden])) h1 { font-size: min(1.7rem, calc((100vw - 175px) / 8.25)); } /* (the gaps 6 px, not 10) */
+  header:has(#fullscreen:not([hidden])) h1 { font-size: min(1.7rem, calc((100cqw - 175px) / 8.25)); } /* (the gaps 6 px, not 10) */
+  header:has(#fullscreen:not([hidden])) .tagline { font-size: min(0.85rem, calc((100cqw - 175px) / 13.17)); }
 }
 @media (min-width: 341px) and (max-width: 360px) {
   header:has(#fullscreen:not([hidden])) h1 { line-height: 1.45rem; }
 }
 /* Where the buttons' row has room, the Field guide is named: its word
    beside the trophy (from a 371 px phone with six buttons; with five, Best
-   at the row's end, from 399, an iPhone Plus or Pro Max), and from 427 with
+   at the row's end, from 399, an iPhone Plus or Pro Max), and from 428 with
    six the Hall of Fame too. Narrower, each is its picture. */
 @media (min-width: 371px) and (max-width: 440px) {
   header:has(#fullscreen:not([hidden])) #guide-open { padding: 5px 12px; }
@@ -1220,7 +1258,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   #guide-open svg { display: none; }
   #guide-open .trophy-text { display: inline; }
 }
-@media (min-width: 427px) and (max-width: 440px) {
+@media (min-width: 428px) and (max-width: 440px) {
   header:has(#fullscreen:not([hidden])) #records-open { padding: 5px 12px; }
   header:has(#fullscreen:not([hidden])) #records-open svg { display: none; }
   header:has(#fullscreen:not([hidden])) #records-open .trophy-text { display: inline; }
@@ -1318,6 +1356,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   header { flex-wrap: wrap; align-items: center; justify-content: flex-start; }
   .brand { flex-basis: 100%; }
   .hud, .stats { display: contents; }
+  .stats .stat { font-size: 1rem; }
   .stats .stat strong { min-width: 2ch; }
   .hud .stat { order: 0; }
   header::after { content: ''; order: 1; flex-basis: 100%; }
@@ -1393,69 +1432,165 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
 }
 
 /* The header over the board (wider than a phone, not beside the board):
-   the title, Score over Best, and the buttons, in one row from a 582 px
-   page (642 with a touch screen's 44 px buttons). Narrower, the title and
-   the scores keep the first row and the buttons have the next to
-   themselves, both doors named. In one row, a door is named where the row
-   has room for its word, else it's its picture, round like the icons
-   beside it (its name in its tooltip, and for a screen reader): the Field
-   guide by name from a 639 px page (689 with touch: a 1920×1080 screen's
-   maximized browser is 685, an iPad mini held upright 720), both from 706
-   (746), the buttons 6 px apart up to 717 (757) and 8 from there. Each step
-   leaves the row 5 px or more to spare, Score and Best at four digits, for
-   another system's fonts. (Without the full-screen button, where the
-   browser can't, there's just more room.) */
+   the title, Score over Best, and the buttons, in one row where they fit
+   with 5 px to spare (Score and Best at four digits, for another system's
+   fonts); narrower, the title with Score over Best has the first row and
+   the buttons the next. A door is named where its row has room for its
+   word, else it's its picture, round like the icons beside it (its name in
+   its tooltip, and for a screen reader). The steps are the page's width,
+   which is the window's less 24 px, or less on a short window, where the
+   page narrows with the board (a 460×612 window's page is 352 px): with six
+   buttons (full screen, where the browser allows it) and with five (an
+   older Safari, a page in a frame without full screen, which had the
+   doors' pictures where their words fit), a mouse's 34 px buttons and a
+   touch screen's 44 px:
+
+   | Page from (px)               | Mouse, six | five | Touch, six | five |
+   | One row, both doors pictures | 592        | 552  | 652        | 602  |
+   | ...the Field guide named     | 649        | 609  | 699        | 649  |
+   | ...both named                | 716        | 676  | 756        | 706  |
+   | ...the buttons 8 px apart    | 728        | 686  | 768        | 716  |
+   | Two rows, both named         | 384        | 340  | 404        | 354  |
+   | ...the Field guide named     | 317        | any  | 347        | 297  |
+   | ...the title 2rem            | 352        | 352  | 348        | 348  |
+
+   (A 1920×1080 screen's maximized browser is a 685 px page, 653 with a
+   bookmarks bar; an iPad mini held upright 720, an iPad 744. In two rows
+   the doors' words had the buttons' row from 280 px up, and narrower than
+   384 px the full-screen button went onto a row of its own; under 352 the
+   title went onto two lines beside Score and Best, 32 px. Under that the
+   title is as big as leaves them their room, and under 299 px a touch
+   screen's six buttons are 40 px, 4 apart, as in a narrow column.) */
 @media (min-width: 441px) {
-  @container page (max-width: 581px) {
-    header { justify-content: flex-start; row-gap: 0; }
-    .brand { flex: 1; }
-    .hud { display: contents; }
-    header::after { content: ''; order: 1; flex-basis: 100%; } /* (the row's break: a line of its own, so no gap round it) */
-    .hud button { order: 2; margin-top: 8px; }
-  }
-  @container page (min-width: 582px) and (max-width: 717px) {
-    .hud { gap: 6px; }
-  }
-  @container page (min-width: 582px) and (max-width: 705px) {
-    .hud #records-open { width: 34px; min-width: 34px; height: 34px; padding: 0; justify-content: center; }
-    .hud #records-open svg { display: block; }
-    .hud #records-open .trophy-text { display: none; }
-  }
-  @container page (min-width: 582px) and (max-width: 638px) {
-    .hud #guide-open { width: 34px; min-width: 34px; height: 34px; padding: 0; justify-content: center; }
-    .hud #guide-open svg { display: block; }
-    .hud #guide-open .trophy-text { display: none; }
+  @media not all and (pointer: coarse) {
+    @container page (max-width: 551px) { /* two rows */
+      header { justify-content: flex-start; row-gap: 0; }
+      .brand { flex: 1; }
+      .hud { display: contents; }
+      header::after { content: ''; order: 1; flex-basis: 100%; } /* (the row's break: a line of its own, so no gap round it) */
+      .hud button { order: 2; margin-top: 8px; }
+    }
+    @container page (min-width: 552px) and (max-width: 591px) {
+      header:has(#fullscreen:not([hidden])) { justify-content: flex-start; row-gap: 0; }
+      header:has(#fullscreen:not([hidden])) .brand { flex: 1; }
+      header:has(#fullscreen:not([hidden])) .hud { display: contents; }
+      header:has(#fullscreen:not([hidden]))::after { content: ''; order: 1; flex-basis: 100%; }
+      header:has(#fullscreen:not([hidden])) .hud button { order: 2; margin-top: 8px; }
+    }
+    @container page (max-width: 351px) {
+      h1 { font-size: min(2rem, calc((100cqw - 88px) / 8.25)); } /* (the title, 10 px, Score over Best's 72.75 and 5 to spare) */
+    }
+    @container page (max-width: 383px) {
+      header:has(#fullscreen:not([hidden])) .hud #records-open { width: 34px; min-width: 34px; height: 34px; padding: 0; justify-content: center; }
+      header:has(#fullscreen:not([hidden])) .hud #records-open svg { display: block; }
+      header:has(#fullscreen:not([hidden])) .hud #records-open .trophy-text { display: none; }
+    }
+    @container page (max-width: 339px) {
+      header:has(#fullscreen[hidden]) .hud #records-open { width: 34px; min-width: 34px; height: 34px; padding: 0; justify-content: center; }
+      header:has(#fullscreen[hidden]) .hud #records-open svg { display: block; }
+      header:has(#fullscreen[hidden]) .hud #records-open .trophy-text { display: none; }
+    }
+    @container page (max-width: 316px) {
+      header:has(#fullscreen:not([hidden])) .hud #guide-open { width: 34px; min-width: 34px; height: 34px; padding: 0; justify-content: center; }
+      header:has(#fullscreen:not([hidden])) .hud #guide-open svg { display: block; }
+      header:has(#fullscreen:not([hidden])) .hud #guide-open .trophy-text { display: none; }
+    }
+    @container page (min-width: 592px) and (max-width: 727px) { /* one row */
+      header:has(#fullscreen:not([hidden])) .hud { gap: 6px; }
+    }
+    @container page (min-width: 552px) and (max-width: 685px) {
+      header:has(#fullscreen[hidden]) .hud { gap: 6px; }
+    }
+    @container page (min-width: 592px) and (max-width: 715px) {
+      header:has(#fullscreen:not([hidden])) .hud #records-open { width: 34px; min-width: 34px; height: 34px; padding: 0; justify-content: center; }
+      header:has(#fullscreen:not([hidden])) .hud #records-open svg { display: block; }
+      header:has(#fullscreen:not([hidden])) .hud #records-open .trophy-text { display: none; }
+    }
+    @container page (min-width: 552px) and (max-width: 675px) {
+      header:has(#fullscreen[hidden]) .hud #records-open { width: 34px; min-width: 34px; height: 34px; padding: 0; justify-content: center; }
+      header:has(#fullscreen[hidden]) .hud #records-open svg { display: block; }
+      header:has(#fullscreen[hidden]) .hud #records-open .trophy-text { display: none; }
+    }
+    @container page (min-width: 592px) and (max-width: 648px) {
+      header:has(#fullscreen:not([hidden])) .hud #guide-open { width: 34px; min-width: 34px; height: 34px; padding: 0; justify-content: center; }
+      header:has(#fullscreen:not([hidden])) .hud #guide-open svg { display: block; }
+      header:has(#fullscreen:not([hidden])) .hud #guide-open .trophy-text { display: none; }
+    }
+    @container page (min-width: 552px) and (max-width: 608px) {
+      header:has(#fullscreen[hidden]) .hud #guide-open { width: 34px; min-width: 34px; height: 34px; padding: 0; justify-content: center; }
+      header:has(#fullscreen[hidden]) .hud #guide-open svg { display: block; }
+      header:has(#fullscreen[hidden]) .hud #guide-open .trophy-text { display: none; }
+    }
   }
 }
 @media (pointer: coarse) and (min-width: 441px) {
-  @container page (max-width: 641px) {
-    header { column-gap: 6px; } /* (the buttons' own row, both doors named: from a 417 px page, 441 px window) */
-  }
-  @container page (min-width: 582px) and (max-width: 641px) {
-    header { justify-content: flex-start; row-gap: 0; }
+  @container page (max-width: 601px) { /* two rows */
+    header { justify-content: flex-start; row-gap: 0; column-gap: 6px; }
     .brand { flex: 1; }
     .hud { display: contents; }
     header::after { content: ''; order: 1; flex-basis: 100%; }
     .hud button { order: 2; margin-top: 8px; }
-    .hud #guide-open, .hud #records-open { width: auto; height: auto; padding: 5px 12px; }
-    .hud #guide-open svg, .hud #records-open svg { display: none; }
-    .hud #guide-open .trophy-text, .hud #records-open .trophy-text { display: inline; }
   }
-  @container page (min-width: 642px) and (max-width: 757px) {
-    .hud { gap: 6px; }
-    .hud #guide-open { width: auto; height: auto; padding: 5px 12px; }
-    .hud #guide-open svg { display: none; }
-    .hud #guide-open .trophy-text { display: inline; }
+  @container page (min-width: 602px) and (max-width: 651px) {
+    header:has(#fullscreen:not([hidden])) { justify-content: flex-start; row-gap: 0; }
+    header:has(#fullscreen:not([hidden])) .brand { flex: 1; }
+    header:has(#fullscreen:not([hidden])) .hud { display: contents; }
+    header:has(#fullscreen:not([hidden]))::after { content: ''; order: 1; flex-basis: 100%; }
+    header:has(#fullscreen:not([hidden])) .hud button { order: 2; margin-top: 8px; }
+    header:has(#fullscreen:not([hidden])) { column-gap: 6px; }
   }
-  @container page (min-width: 642px) and (max-width: 745px) {
-    .hud #records-open { width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
-    .hud #records-open svg { display: block; }
-    .hud #records-open .trophy-text { display: none; }
+  @container page (max-width: 347px) {
+    h1 { font-size: min(2rem, calc((100cqw - 84px) / 8.25)); } /* (the gap 6 px, not 10) */
   }
-  @container page (min-width: 642px) and (max-width: 688px) {
-    .hud #guide-open { width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
-    .hud #guide-open svg { display: block; }
-    .hud #guide-open .trophy-text { display: none; }
+  @container page (max-width: 403px) {
+    header:has(#fullscreen:not([hidden])) .hud #records-open { width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
+    header:has(#fullscreen:not([hidden])) .hud #records-open svg { display: block; }
+    header:has(#fullscreen:not([hidden])) .hud #records-open .trophy-text { display: none; }
+  }
+  @container page (max-width: 353px) {
+    header:has(#fullscreen[hidden]) .hud #records-open { width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
+    header:has(#fullscreen[hidden]) .hud #records-open svg { display: block; }
+    header:has(#fullscreen[hidden]) .hud #records-open .trophy-text { display: none; }
+  }
+  @container page (max-width: 346px) {
+    header:has(#fullscreen:not([hidden])) .hud #guide-open { width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
+    header:has(#fullscreen:not([hidden])) .hud #guide-open svg { display: block; }
+    header:has(#fullscreen:not([hidden])) .hud #guide-open .trophy-text { display: none; }
+  }
+  @container page (max-width: 296px) {
+    header:has(#fullscreen[hidden]) .hud #guide-open { width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
+    header:has(#fullscreen[hidden]) .hud #guide-open svg { display: block; }
+    header:has(#fullscreen[hidden]) .hud #guide-open .trophy-text { display: none; }
+  }
+  @container page (max-width: 298px) {
+    header:has(#fullscreen:not([hidden])) { column-gap: 4px; }
+    header:has(#fullscreen:not([hidden])) .hud :is(button, #guide-open, #records-open) { width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 0; } /* (after the doors' pictures, which it takes in) */
+  }
+  @container page (min-width: 652px) and (max-width: 767px) { /* one row */
+    header:has(#fullscreen:not([hidden])) .hud { gap: 6px; }
+  }
+  @container page (min-width: 602px) and (max-width: 715px) {
+    header:has(#fullscreen[hidden]) .hud { gap: 6px; }
+  }
+  @container page (min-width: 652px) and (max-width: 755px) {
+    header:has(#fullscreen:not([hidden])) .hud #records-open { width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
+    header:has(#fullscreen:not([hidden])) .hud #records-open svg { display: block; }
+    header:has(#fullscreen:not([hidden])) .hud #records-open .trophy-text { display: none; }
+  }
+  @container page (min-width: 602px) and (max-width: 705px) {
+    header:has(#fullscreen[hidden]) .hud #records-open { width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
+    header:has(#fullscreen[hidden]) .hud #records-open svg { display: block; }
+    header:has(#fullscreen[hidden]) .hud #records-open .trophy-text { display: none; }
+  }
+  @container page (min-width: 652px) and (max-width: 698px) {
+    header:has(#fullscreen:not([hidden])) .hud #guide-open { width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
+    header:has(#fullscreen:not([hidden])) .hud #guide-open svg { display: block; }
+    header:has(#fullscreen:not([hidden])) .hud #guide-open .trophy-text { display: none; }
+  }
+  @container page (min-width: 602px) and (max-width: 648px) {
+    header:has(#fullscreen[hidden]) .hud #guide-open { width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
+    header:has(#fullscreen[hidden]) .hud #guide-open svg { display: block; }
+    header:has(#fullscreen[hidden]) .hud #guide-open .trophy-text { display: none; }
   }
 }
 
@@ -1492,26 +1627,28 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
     .hud .trophy .trophy-text { display: inline; }
   }
 }
-/* Shorter, the doors stay in the icons' row. Where six icons don't fit, the
-   full-screen button takes the column's top corner, beside the title: in a
-   column that narrow (a 4:3 window's 216 px, 800×600; a tablet on its side
-   in full screen, 244) the title is two lines already, and the button fits
-   beside them; its row had cost 42 px (50 with touch). A touch column of
-   264 to 293 px, where the title is one line, has it end Score and Best's
-   row instead (25 px taller, not 50). */
+/* Shorter, the doors stay in the icons' row. Where six icons don't fit at
+   34 px with a mouse (a column under 254 px: a 4:3 or 5:4 window's 216 px,
+   800×600 or 900×720; a window 230 to 250 px wider than tall, 920×690),
+   they're 32 px, 4 px apart: 212 px, in the narrowest column's 216. (The
+   full-screen button took the column's top corner there, beside the title,
+   two lines in that column: the header was 176 px, 14 more than the phones
+   work's 162 with five icons in a row, and at 920×690, watching, a full
+   chatter scrolled the page 45 px.) With a touch screen's 44 px, where six
+   don't fit, the full-screen button takes the corner: in a column that
+   narrow (a tablet on its side in full screen, 244) the title is two lines
+   already, and the button fits beside them; its row had cost 50 px. A touch
+   column of 264 to 293 px, where the title is one line, has it end Score
+   and Best's row instead (25 px taller, not 50). */
 @media not all and (pointer: coarse) {
   @media (min-aspect-ratio: 5/4) and (min-height: 501px) and (max-height: 900px) and (min-width: 480px) {
     @container column (max-width: 235px) {
-      header:has(#fullscreen:not([hidden])) .brand { flex-basis: calc(100% - 44px); }
-      .hud .stat { order: 1; }
-      #fullscreen { order: 0; align-self: flex-start; }
+      header:has(#fullscreen:not([hidden])) .hud button { width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0; margin-right: -6px; } /* (4 px apart: the header's 10 less 6) */
     }
   }
   @media (min-aspect-ratio: 5/4) and (min-height: 501px) and (max-height: 699px) and (min-width: 480px) {
     @container column (max-width: 253px) {
-      header:has(#fullscreen:not([hidden])) .brand { flex-basis: calc(100% - 44px); }
-      .hud .stat { order: 1; }
-      #fullscreen { order: 0; align-self: flex-start; }
+      header:has(#fullscreen:not([hidden])) .hud button { width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0; margin-right: -6px; }
     }
   }
 }
@@ -1555,6 +1692,26 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
     .hud #guide-open { padding: 0; }
     .hud #guide-open svg { display: block; }
     .hud #guide-open .trophy-text { display: none; }
+  }
+}
+/* A laptop's column with five icons (no full screen: an older Safari, a
+   page in a frame) has the sixth's room for the Field guide's word, as on
+   a phone on its side: from a 273 px column with a mouse (1366×657's is
+   300), 297 with touch. (It was its book there, the row 90 px short of full.) */
+@media not all and (pointer: coarse) {
+  @media (min-aspect-ratio: 5/4) and (min-height: 501px) and (max-height: 699px) and (min-width: 480px) {
+    @container column (min-width: 273px) {
+      header:has(#fullscreen[hidden]) .hud #guide-open { padding: 0 12px; }
+      header:has(#fullscreen[hidden]) .hud #guide-open svg { display: none; }
+      header:has(#fullscreen[hidden]) .hud #guide-open .trophy-text { display: inline; }
+    }
+  }
+}
+@media (pointer: coarse) and (min-aspect-ratio: 5/4) and (min-height: 501px) and (max-height: 779px) and (min-width: 480px) {
+  @container column (min-width: 297px) {
+    header:has(#fullscreen[hidden]) .hud #guide-open { padding: 0 12px; }
+    header:has(#fullscreen[hidden]) .hud #guide-open svg { display: none; }
+    header:has(#fullscreen[hidden]) .hud #guide-open .trophy-text { display: inline; }
   }
 }
 /* (On a touch screen, five 44 px buttons share a 244 px column's row: 6 px

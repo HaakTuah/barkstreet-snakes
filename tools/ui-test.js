@@ -14,9 +14,11 @@
 // - The Field guide's doors: its own button in the header (named on a
 //   desktop), G, How to play on the start card, Field guide on the nap card,
 //   and your death's card naming what got you (the guide opens at that row,
-//   lit). Each door opens the book on its own tab, and the book is named for
-//   what it shows; in the book, H and G go to their tabs, or close it from
-//   there. The basics have the renderer's pictures.
+//   lit, under the book's tabs and its ×, which stay on the screen and close
+//   it), and the round's card too when your death ends it. Each door opens
+//   the book on its own tab, and the book is named for what it shows; in
+//   the book, H and G go to their tabs, or close it from there. The basics
+//   have the renderer's pictures.
 // - The header: held upright (390 and 320 px), the title with Score and
 //   Best, then the six buttons on a row of their own, the Field guide named
 //   at 390; over the board, one row, Score over Best and the full-screen
@@ -24,11 +26,20 @@
 //   with a bookmarks bar), an iPad mini and an iPad held upright, both on
 //   1920x1080, neither at 1920x860; a window 460 px wide (500 with touch)
 //   with the title, Score and Best and then every button, both named; and
-//   as Score and Best grow to 1000, nothing moves.
-// - The fullest death card (a real first good round's: the new best's
-//   badge, the carve, the Field guide's link), with the longest reason,
-//   fits phones' boards from 280 to 420 px (the smallest lets the link wait
-//   while you carve, and has it back once your name's in).
+//   as Score and Best grow to 1000, nothing moves. At every step over the
+//   board (one row, each door's word, two rows on a short window's narrower
+//   page), with six buttons and five, a mouse and touch: the step's page
+//   and a pixel under it, and at 100 and 1000 nothing moves. Beside the
+//   board: a laptop's column watching with the chatter full (the doors in
+//   its own row or the icons', the guide named without full screen), and a
+//   narrow column's six icons in a row.
+// - The cards on phones' boards, upright and on their sides, from 280 to
+//   440 px: the start card (the longest blurbs, a note or not), and the
+//   fullest death card (a real first good round's: the new best's badge,
+//   the carve, the Field guide's link), with the longest reason and quip, a
+//   note or not (the smallest lets the link wait while you carve, and has it
+//   back once your name's in); and the round's card when your death ends
+//   it, with its longest words. At 568x320 the start card's links share a row.
 //
 //   node tools/ui-test.js
 const { launch, serve, HELPERS } = require('./browser');
@@ -56,7 +67,8 @@ const PROBE = `(() => {
     book: !rec.hidden, label: rec.getAttribute('aria-label'), tab: rec.querySelector('.tab[aria-pressed="true"]')?.dataset.tab,
     pageTop: rec.querySelector('.records-card').scrollTop, firstHead: rec.querySelector('.guide-head')?.textContent || '',
     spot: rec.querySelector('.guide li.spot')?.dataset.kind || '',
-    spotIn: (() => { const s = rec.querySelector('.guide li.spot'), p = rec.querySelector('.records-card'); if (!s) return false; const a = s.getBoundingClientRect(), b = p.getBoundingClientRect(); return a.top >= b.top && a.bottom <= b.bottom; })(),
+    spotIn: (() => { const s = rec.querySelector('.guide li.spot'), p = rec.querySelector('.records-card'), h = rec.querySelector('.records-head'); if (!s) return false; const a = s.getBoundingClientRect(), b = p.getBoundingClientRect(); return a.top >= h.getBoundingClientRect().bottom - 0.5 && a.bottom <= b.bottom; })(), // (under the book's head, which stays at the top of its page)
+    closeOn: (() => { const x = $('records-close'), r = x.getBoundingClientRect(), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !rec.hidden && r.top >= 0 && r.bottom <= innerHeight && (hit === x || x.contains(hit)); })(), // (its ×, on the screen and on top where it shows)
     focus: document.activeElement === document.body ? 'body' : document.activeElement.id || document.activeElement.className,
   });
   return 'ok';
@@ -70,6 +82,8 @@ const KEYS = {
 (async () => {
   const site = await serve();
   const b = await launch();
+  // ?nofs: a browser without full screen for a page (an older Safari, a page in a frame), as layout-test does
+  await b.send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => { if (new URLSearchParams(location.search).has('nofs')) Object.defineProperty(Document.prototype, 'fullscreenEnabled', { configurable: true, get: () => false }); })();` });
   const ev = expr => b.eval(expr);
   const P = () => ev('__probe()');
   const wait = (cond, ms = 30000) => ev(`waitFor(() => ${cond}, ${ms}).then(() => 1)`);
@@ -96,8 +110,8 @@ const KEYS = {
   const nameAt = name => ev(`(() => { const r = ${tag(name)}.querySelector('.name').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
   const tagAt = name => ev(`(() => { const r = ${tag(name)}.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
   const powers = (name, leaps, dashes, wrap) => ev(`(() => { const g = SnakeDebug.game(), s = g.snakes.find(o => o.name === ${JSON.stringify(name)}); s.leaps = ${leaps}; s.dashes = ${dashes}; s.wrapUntil = ${wrap ? 'g.time + 60000' : 0}; return 1; })()`);
-  const load = async () => {
-    await b.go(site.url + '?debug');
+  const load = async (q = '') => {
+    await b.go(site.url + '?debug' + q);
     await ev(HELPERS);
     await wait(`window.SnakeDebug && SnakeDebug.state() === 'ready'`, 15000);
     await ev(PROBE);
@@ -264,7 +278,7 @@ const KEYS = {
     await mouse(await at('#how'));
     p = await P();
     const row = { 'Field guide: Crashes': 'basic-crash', 'Field guide: Hunger': 'basic-hunger', 'Field guide: Fire': 'fire', 'Field guide: Holes': 'hole', 'Field guide: Golden leaf': 'leaf' }[death.how];
-    check(p.book && p.tab === 'guide' && p.spot === row && p.spotIn, 'its link opens the guide at that row, lit and in view', `${p.spot} / in view: ${p.spotIn}`);
+    check(p.book && p.tab === 'guide' && p.spot === row && p.spotIn && p.closeOn, 'its link opens the guide at that row, lit and in view, the book’s × on the screen', `${p.spot} / in view: ${p.spotIn} / ×: ${p.closeOn}`);
     await key('Escape');
     await key('Escape');
     p = await P();
@@ -291,11 +305,22 @@ const KEYS = {
     p = await P();
     check(!(p.kind === 'note' && p.toast.startsWith('Metagamer')), '...and its tag again takes it away');
 
-    // The round's card.
+    // The round's card. Your death ends this one (one rival): its card says
+    // how you died, so it names what got you too, as your death's card does
+    // (it had no link: a third of losing rounds end on your death).
     await fresh(['ouroboros']);
     await ev(`pilot.crash = true; 'ok'`);
     await wait(`SnakeDebug.state() === 'over' && cardUp()`);
     await b.sleep(1000);
+    const ended = await P();
+    const endRow = { 'Field guide: Crashes': 'basic-crash', 'Field guide: Hunger': 'basic-hunger', 'Field guide: Fire': 'fire', 'Field guide: Holes': 'hole', 'Field guide: Golden leaf': 'leaf' }[ended.how];
+    check(ended.title === 'Ouroboros wins' && /^You /.test(ended.text) && !!endRow, 'your death ended the round: its card says how, and names what got you, in the Field guide', `${ended.title} / ${ended.text} / ${ended.how}`);
+    await mouse(await at('#how'));
+    p = await P();
+    check(p.book && p.tab === 'guide' && p.spot === endRow && p.spotIn && p.closeOn, '...which opens the guide at that row, lit and in view', `${p.spot} / in view: ${p.spotIn}`);
+    await key('Escape');
+    p = await P();
+    check(!p.book && p.card && p.title === 'Ouroboros wins', '...and Esc brings the round’s card back');
     await mouse(await nameAt('Ouroboros'));
     p = await P();
     check(p.note.startsWith('Ouroboros') && p.title === 'Ouroboros wins', 'the round’s card takes a note too', p.note.slice(0, 30));
@@ -317,8 +342,10 @@ const KEYS = {
     check(p.how === 'Field guide: Fire', 'burned up: your death’s card says Field guide: Fire', p.how);
     await mouse(await at('#how'));
     p = await P();
-    check(p.book && p.spot === 'fire' && p.spotIn && p.pageTop > 0 && p.focus === 'records-close', '...which opens the guide at Fire, far down it, lit and in view (focus on its Close)', `${p.spot} / in view: ${p.spotIn} / scrolled ${p.pageTop} / ${p.focus}`);
-    await key('Escape');
+    check(p.book && p.spot === 'fire' && p.spotIn && p.pageTop > 0 && p.focus === 'records-close' && p.closeOn, '...which opens the guide at Fire, far down it, lit and in view under the book’s head, focus on its × and the × on the screen (it scrolled away with the page)', `${p.spot} / in view: ${p.spotIn} / scrolled ${p.pageTop} / ${p.focus} / ×: ${p.closeOn}`);
+    await mouse(await at('#records-close'));
+    p = await P();
+    check(!p.book, '...and a click on its × closes the book');
 
     // ------------------------------------------ the header over the board
     // Its rows (what's on each, left to right, grouped by where each sits;
@@ -342,7 +369,8 @@ const KEYS = {
       rows.sort((a, c) => a.top - c.top);
       const named = id => vis(document.querySelector('#' + id + ' .trophy-text'));
       return { page: Math.round(document.querySelector('main').getBoundingClientRect().width), height: Math.round(hd.getBoundingClientRect().height * 10) / 10, rows: rows.map(r => r.items.sort((a, c) => a.l - c.l).map(i => i.n).join(' ')),
-        guide: named('guide-open'), trophy: named('records-open'), sideways: document.documentElement.scrollWidth > innerWidth };
+        guide: named('guide-open'), trophy: named('records-open'), sideways: document.documentElement.scrollWidth > innerWidth,
+        titleLines: (() => { const h1 = document.querySelector('h1'), cs = getComputedStyle(h1); return Math.round(h1.getBoundingClientRect().height / (parseFloat(cs.lineHeight) || parseFloat(cs.fontSize))); })() };
     })()`;
     const grow = `(() => { document.getElementById('score').textContent = '1000'; document.getElementById('best').textContent = '1000'; return new Promise(res => requestAnimationFrame(() => requestAnimationFrame(() => res(1)))); })()`;
     // In one row, Score over Best beside the title and the full-screen
@@ -370,6 +398,42 @@ const KEYS = {
       check(r1000.rows.join(' / ') === want && r1000.height === r.height && r1000.guide === guide, `${label}: with Score and Best at 1000, nothing moves`, JSON.stringify(r1000));
     }
 
+    // ---------------------------- the header over the board, at its steps
+    // At each step's page, and a pixel under it (a tall window 24 px wider;
+    // under 417 px, a window 470 px wide and short, whose page narrows with
+    // the board): one row from where it fits, each door named from where
+    // its word does, with six buttons and with five (no full screen: the
+    // steps were six's, and five showed both doors' pictures where their
+    // words fit), with a mouse and with touch; narrower, two rows, the title
+    // on one line and no button on a row of its own (under 384 px the
+    // full-screen button went onto a third, and under 352 the title took
+    // two lines). And at each step, with Score and Best at 100 and at 1000,
+    // nothing moves (they kept room for two digits: at 100 the row wrapped
+    // at each step's page, the board 45 px lower).
+    const STEPS = [ // [touch, five, one row from, the guide named from, both from; in two rows, both named from, the guide from]
+      [false, false, 592, 649, 716, 384, 317], [false, true, 552, 609, 676, 340, 280],
+      [true, false, 652, 699, 756, 404, 347], [true, true, 602, 649, 706, 354, 297]];
+    const digits = n => `(() => { document.getElementById('score').textContent = '${n}'; document.getElementById('best').textContent = '${n}'; return new Promise(res => requestAnimationFrame(() => requestAnimationFrame(() => res(1)))); })()`;
+    for (const [touch, five, one, guide, both, twoBoth, twoGuide] of STEPS) {
+      const kind = `${touch ? 'touch' : 'a mouse'}, ${five ? 'five buttons' : 'six'}`, btns = `pause music mute guide-open records-open${five ? '' : ' fullscreen'}`;
+      await b.viewport(1000, 1400, { scale: 1, mobile: touch });
+      await load(five ? '&nofs' : '');
+      const steps = [one, guide, both, twoBoth, twoGuide];
+      for (const P of steps.flatMap(q => [q, q - 1]).filter(q => q >= 280)) {
+        if (P >= 417) await b.viewport(P + 24, 1400, { scale: 1, mobile: touch }); else await b.viewport(470, P + 260, { scale: 1, mobile: touch });
+        await ev(digits(0));
+        const r = await ev(headerRows), oneRow = P >= one, g = oneRow ? P >= guide : P >= twoGuide, t = oneRow ? P >= both : P >= twoBoth;
+        check(r.page === P && r.rows.join(' / ') === (oneRow ? `title Score Best ${btns}` : `title Score Best / ${btns}`) && r.guide === g && r.trophy === t && r.titleLines === 1 && !r.sideways,
+          `${kind}, a ${P} px page: ${oneRow ? 'one row' : 'the title with Score and Best, then the buttons'}, the Field guide ${g ? 'named' : 'its book'}, the trophy ${t ? 'named' : 'its picture'}`, JSON.stringify(r));
+        if (!steps.includes(P)) continue;
+        for (const n of [100, 1000]) {
+          await ev(digits(n));
+          const m = await ev(headerRows);
+          check(m.rows.join(' / ') === r.rows.join(' / ') && m.height === r.height && m.guide === r.guide && m.trophy === r.trophy, `${kind}, a ${P} px page: with Score and Best at ${n}, nothing moves`, JSON.stringify(m));
+        }
+      }
+    }
+
     // ------------------------------------------ the column beside the board
     // A 1366x768 laptop's browser (1366x657): the doors stay in the icons'
     // row, pictures beside the full-screen button (the six fill it), and
@@ -386,12 +450,22 @@ const KEYS = {
         scroll: document.documentElement.scrollHeight - innerHeight,
       }))));
     })()`;
-    for (const [w, h, iconsRow, trophy] of [[1366, 657, true, false], [1280, 800, false, true]]) {
+    for (const [w, h, iconsRow, guideNamed, trophy, q] of [[1366, 657, true, false, false, ''], [1280, 800, false, true, true, ''], [1366, 657, true, true, false, '&nofs']]) {
       await b.viewport(w, h);
-      await load();
+      await load(q);
       await fresh(['ouroboros', 'metagamer', 'gobbler'], true);
       const c = await ev(column);
-      check(c.inIconsRow === iconsRow && c.guide === !iconsRow && c.trophy === trophy && c.scroll <= 0, `${w}x${h}, watching with the chatter full: ${iconsRow ? 'the doors in the icons’ row, their pictures' : 'the doors’ own row, both named'}, and the page doesn’t scroll`, JSON.stringify(c));
+      check(c.inIconsRow === iconsRow && c.guide === guideNamed && c.trophy === trophy && c.scroll <= 0, `${w}x${h}${q ? ' without full screen' : ''}, watching with the chatter full: ${iconsRow ? `the doors in the icons’ row, ${guideNamed ? 'the Field guide by name (the sixth icon’s room)' : 'their pictures'}` : 'the doors’ own row, both named'}, and the page doesn’t scroll`, JSON.stringify(c));
+    }
+    // A 4:3 or 5:4 window's narrow column (216 to 253 px with a mouse): the
+    // six icons share their row, 32 px, and the header is no taller than the
+    // phones work's (162 px: the full-screen button took the corner beside
+    // the title, 176).
+    for (const [w, h] of [[920, 690], [800, 600]]) {
+      await b.viewport(w, h);
+      await load();
+      const r = await ev(headerRows), icon = await ev(`document.getElementById('pause').getBoundingClientRect().width`);
+      check(r.rows.join(' / ') === 'title / Score Best / pause music mute guide-open records-open fullscreen' && r.height <= 162 && icon === 32, `${w}x${h}: the column's six icons in one row, 32 px, the header no taller than the phones work's`, `${JSON.stringify(r)}, icons ${icon} px`);
     }
 
     // ------------------------------- the fullest death card on a phone's board
@@ -404,18 +478,39 @@ const KEYS = {
     // carve and the link from 301, and on the smallest the carve alone,
     // the link back once your name's in ("Carved: …", the field gone). With
     // a rival's note up, the badge and the carve wait, and come back with
-    // the card's words.
+    // the card's words. The same on a phone on its side, whose board (381
+    // to 440 px here) had the desktop's card and scrolled (15 px at
+    // 896x414, a note on the start card 69), and on a Galaxy Fold's cover
+    // screen (336 px: the badge gives way to the carve up to 340; it scrolled
+    // 6 px). Before your round, the start card fits, with the longest blurbs
+    // and with a note. And where your death ends the round (one rival), its
+    // card says how you died with more words ("· lasted 2:41"): with the
+    // longest, and the longest win line, it fits too (the badge waits up to
+    // 390 px, the quip up to 419).
     const LONG = 'You crashed head-on into Capricious, the same length: both out · 4th place · score 128';
+    const LONG_ROUND = 'You crashed head-on into Capricious, the same length: both out · shared 1st · lasted 2:41 · score 128';
+    const QUIP = 'Gobbler was thinking about apples. It always is.', WIN = 'It copied the winner until it was one.';
+    const words = (text, flavor) => `(() => { document.getElementById('overlay-text').textContent = ${JSON.stringify(text)}; const f = document.getElementById('overlay-flavor'); f.textContent = ${JSON.stringify(flavor)}; f.hidden = false; return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(1)))); })()`;
+    const over = `(() => { const c = document.querySelector('#overlay .card'); return c.scrollHeight - c.clientHeight; })()`;
     const fitNow = `(() => {
       const $ = id => document.getElementById(id), card = document.querySelector('#overlay .card'), bt = document.querySelector('#overlay .buttons').getBoundingClientRect();
       const shown = [['overlay-badge', 'badge'], ['name-row', 'carve'], ['how', 'link']].filter(([id]) => vis($(id))).map(([, n]) => n).join('+');
       return { board: Math.round(document.querySelector('.board').getBoundingClientRect().height), over: card.scrollHeight - card.clientHeight, shown, rank: $('name-rank').textContent, field: vis($('name-input')), under: vis($('name-input')) ? Math.round(Math.max(0, $('name-input').getBoundingClientRect().bottom - bt.top)) : 0 };
     })()`;
-    for (const [w, h, want] of [[390, 844, 'badge+carve+link'], [375, 667, 'badge+carve+link'], [428, 926, 'badge+carve+link'], [360, 640, 'badge+carve+link'], [320, 640, 'carve+link'], [320, 460, 'carve']]) {
+    for (const [w, h, want, round] of [[390, 844, 'badge+carve+link', 'carve+link'], [375, 667, 'badge+carve+link'], [428, 926, 'badge+carve+link'], [360, 640, 'badge+carve+link'], [320, 640, 'carve+link'], [320, 460, 'carve'],
+      [344, 882, 'carve+link'], [844, 391, 'badge+carve+link', 'carve+link'], [896, 414, 'badge+carve+link', 'badge+carve+link'], [929, 430, 'badge+carve+link'], [972, 450, 'badge+carve+link']]) {
       await b.viewport(w, h, { scale: 2, mobile: true });
       await load();
       await ev(`['snake-highscores', 'snake-stats', 'snake-name'].forEach(k => localStorage.removeItem(k)); localStorage.setItem('snake-best', '5'); 1`); // (a best to beat, an empty Hall of Fame, no name yet)
       await load();
+      await ev(`SnakeDebug.setup(['joker', 'capricious', 'vulture']); 'ok'`); // (the longest blurbs)
+      await b.sleep(300);
+      const start = await ev(over);
+      await tap(await tagAt('Joker'));
+      const startNote = await ev(over);
+      p = await P();
+      check(start <= 0 && startNote <= 0 && p.note.startsWith('Joker'), `phone ${w}x${h}: the start card fits, and with a rival's note on it`, `${start} / ${startNote} px over`);
+      await tap(await at('#note-close'));
       // (your death's card, not the round's end that can follow it: the rivals go on behind it)
       const yourCard = `SnakeDebug.state() !== 'over' && document.getElementById('how').textContent.startsWith('Field guide:')`;
       for (let tries = 0; tries < 3; tries++) {
@@ -424,10 +519,10 @@ const KEYS = {
         await die();
         if (await ev(yourCard)) break;
       }
-      await ev(`document.getElementById('overlay-text').textContent = ${JSON.stringify(LONG)}; new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(1))))`);
+      await ev(words(LONG, QUIP));
       let f = await ev(fitNow);
-      check(f.over <= 0 && f.under === 0 && f.shown === want, `phone ${w}x${h}: the fullest death card, the longest reason, fits its ${f.board} px board (${want})`, JSON.stringify(f));
-      if (w === 390 || w === 320) {
+      check(f.over <= 0 && f.under === 0 && f.shown === want, `phone ${w}x${h}: the fullest death card, the longest reason and quip, fits its ${f.board} px board (${want})`, JSON.stringify(f));
+      { // (a rival's note, on every screen)
         await tap(await tagAt('Joker'));
         f = await ev(fitNow);
         p = await P();
@@ -451,7 +546,27 @@ const KEYS = {
         f = await ev(fitNow);
         check(/^Hall of Fame #\d+, as Perry\.$/.test(f.rank) && !f.field && f.shown === 'carve+link' && f.over <= 0, `phone ${w}x${h}: the next good round, with a name already carved, the link is there from the start`, JSON.stringify(f));
       }
+      if (round) {
+        await key('Escape'); // (keep watching)
+        await wait(`!cardUp()`);
+        await ev(`pilot.on = false; 1`);
+        await fresh(['copycat']);
+        await ev(`me().eaten = 40; pilot.crash = true; 1`); // (a new best: the carve offered again, no name yet)
+        await wait(`SnakeDebug.state() === 'over' && cardUp()`);
+        await b.sleep(1000);
+        await ev(words(LONG_ROUND, WIN));
+        f = await ev(fitNow);
+        check(f.over <= 0 && f.under === 0 && f.shown === round, `phone ${w}x${h}: your death ends the round, and its fullest card, the longest words, fits (${round})`, JSON.stringify(f));
+      }
     }
+
+    // On a 568x320 board (266 px), the start card's two links share a row
+    // (at 215 px of its 214 they took two, and the rivals' names went under
+    // Play).
+    await b.viewport(568, 320, { scale: 2, mobile: true });
+    await load();
+    const linkRows = await ev(`new Set([...document.querySelectorAll('#overlay .card-links > *')].filter(e => vis(e)).map(e => Math.round(e.getBoundingClientRect().top))).size`);
+    check(linkRows === 1, 'a phone on its side at 568x320: the start card’s How to play and Play with friends share a row', `${linkRows} rows`);
 
     // -------------------------------------------------------------- phones
     for (const [w, h] of [[390, 844], [320, 640]]) {
@@ -510,7 +625,10 @@ const KEYS = {
       await b.sleep(900);
       await tap(await at('#how'));
       p = await P();
-      check(p.book && p.spot === 'fire' && p.spotIn, `phone ${w}: burned up, the card’s link opens the guide at Fire, lit and in view`, `${p.spot} / in view: ${p.spotIn} / scrolled ${p.pageTop}`);
+      check(p.book && p.spot === 'fire' && p.spotIn && p.closeOn, `phone ${w}: burned up, the card’s link opens the guide at Fire, lit and in view, its × on the screen`, `${p.spot} / in view: ${p.spotIn} / scrolled ${p.pageTop} / ×: ${p.closeOn}`);
+      await tap(await at('#records-close'));
+      p = await P();
+      check(!p.book, `phone ${w}: a tap on the book’s × closes it`);
     }
     if (b.errors.length) { results.push(`FAIL page errors: ${b.errors.join(' | ')}`); failed++; }
   } catch (e) {

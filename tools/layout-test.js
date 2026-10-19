@@ -36,7 +36,8 @@
 //   ending a row; each door named wherever its row has room for its word,
 //   else its picture, named in its tooltip and for a screen reader; the
 //   guide's door costing the header no height (no taller than the phones
-//   work's). On 22 more screens too, from 360×640 to 1920×945. As Score and
+//   work's). On 33 more screens too, from 360×640 to 1920×945, short narrow
+//   windows and five buttons (no full screen) among them. As Score and
 //   Best grow (0, 99, 100, 1000), the header keeps its rows and the board
 //   its size and place (at 390×545-600 and 412×604 the header grew a row
 //   at 100 or 1000, and the board shrank in the middle of a round).
@@ -686,14 +687,24 @@ const r1 = v => Math.round(v * 10) / 10;
     // (the mini, 744×1133; an Air, 820×1180), narrow windows (460×900, and
     // 500×1000 with touch: an iPad's Split View; 600×900), and phones
     // (360×640, 371×800, 384×854, 393×851, 414×896 and 428×926 without full
-    // screen, 440×900). And as Score and Best grow to 1000, the header keeps
-    // its rows and its height.
-    for (const [w, h, dpr, touch, nofs] of [[1920, 945, 1], [1920, 920, 1], [1366, 657, 1], [1366, 768, 1], [1440, 900, 1], [1536, 864, 1], [800, 600, 1], [800, 600, 2, true],
+    // screen, 440×900); narrow windows that aren't tall, whose page narrows
+    // with the board (460×612, 480×638 and 470×376, with a mouse and with
+    // touch: the full-screen button went onto a row of its own, and at
+    // 470×376 the title onto two lines, 32 px over the phones work's), and a
+    // window 230 px wider than tall (920×690: its column's six icons in a
+    // row); and without full screen (an older Safari, a page in a frame),
+    // where the doors' words have the sixth button's room: 1366×657, 1920×945,
+    // an iPad mini and an iPad upright. And as Score and Best grow to 1000,
+    // the header keeps its rows and its height. (head: the phones work's,
+    // where it's no taller.)
+    for (const [w, h, dpr, touch, nofs, head] of [[1920, 945, 1], [1920, 920, 1], [1366, 657, 1], [1366, 768, 1], [1440, 900, 1], [1536, 864, 1], [800, 600, 1, false, false, 204], [800, 600, 2, true],
       [1000, 800, 2, true], [1040, 760, 2, true], [744, 1133, 2, true], [820, 1180, 2, true], [460, 900, 1], [500, 1000, 2, true], [600, 900, 1], [360, 640, 3, true],
-      [371, 800, 3, true], [384, 854, 3, true], [393, 851, 3, true], [414, 896, 3, true, true], [428, 926, 3, true, true], [440, 900, 3, true]]) {
+      [371, 800, 3, true], [384, 854, 3, true], [393, 851, 3, true], [414, 896, 3, true, true], [428, 926, 3, true, true], [440, 900, 3, true],
+      [460, 612, 1, false, false, 136], [480, 638, 1, false, false, 136], [470, 376, 1, false, false, 136], [460, 612, 2, true, false, 156], [490, 652, 2, true, false, 156], [470, 376, 2, true, false, 156],
+      [920, 690, 1, false, false, 162], [1366, 657, 1, false, true], [1920, 945, 1, false, true], [744, 1133, 2, true, true], [768, 1024, 2, true, true]]) {
       const tag = `${w}×${h}${touch ? ' (touch)' : ''}${nofs ? ' without full screen' : ''}`;
       if (only && !tag.includes(only)) continue;
-      const d = { w, h, dpr, desktop: !touch, nofs };
+      const d = { w, h, dpr, desktop: !touch, nofs, head };
       await open(d);
       const at0 = await headerChecks(tag, d);
       await ev(`(() => { document.getElementById('score').textContent = '1000'; document.getElementById('best').textContent = '1000'; return 'ok'; })()`);
