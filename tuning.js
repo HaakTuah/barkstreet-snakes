@@ -114,6 +114,8 @@ window.TUNING = Object.freeze({
   // --------------------------------------------------------------- burrows
   BURROW_MAX: 3,            // beetle burrows that crack open in the bark over a round (harmless to cross)
   BURROW_NEW_CHANCE: 0.5,   // a beetle coming out opens a new burrow this often (always, if none is free)
+  BURROW_FROM_DIG: false,   // (an experiment, off) a beetle's dig leaves a burrow where it dug, counting toward BURROW_MAX (at the most, the one unused longest closes over to make room)...
+  BURROW_HEAL_MS: 0,        // ...and (off at 0) a burrow no beetle has gone into or come out of for this long closes over: sawdust and moss fill it
   BEETLE_UNDER_MIN: 8,      // a scared beetle that reaches a burrow dives in (or one cornered digs in), and comes out of a burrow after this many ticks...
   BEETLE_UNDER_MAX: 16,     // ...up to this many
 

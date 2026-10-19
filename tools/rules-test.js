@@ -2111,6 +2111,36 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   check('...and they still come out once the woodpecker\'s here', sd.emerge >= 1 && sd.spawn >= 1, JSON.stringify(sd));
 }
 
+{ // Two experiments, off in the game (round six A): a dig that leaves a burrow, and burrows that close over unused. Played
+  // in a copy of the game with them on.
+  let text = fs.readFileSync(path.join(ROOT, 'tuning.js'), 'utf8');
+  text = text.replace(/BURROW_FROM_DIG: false/, 'BURROW_FROM_DIG: true').replace(/BURROW_HEAL_MS: 0,/, 'BURROW_HEAL_MS: 30000,');
+  const on = vm.createContext({ window: {}, console, Math });
+  vm.runInContext(text, on, { filename: 'tuning.js' });
+  for (const f of ['ai.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), on, { filename: f });
+  const E2 = on.window.SnakeEngine, T2 = on.window.TUNING;
+  const staged = () => {
+    const g = E2.createGame({ humans: [{ name: 'P0' }, { name: 'P1' }], personas: [] });
+    g.snakes[0].body = cellsOf(line(5, 10, 4)); g.snakes[1].body = cellsOf(line(20, 22, 4));
+    g.time = 30000;
+    for (const o of g.snakes) { o.stunUntil = 1e9; o.lastAte = g.time; o.nextStarve = g.time + T2.HUNGER_MS; }
+    g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }]; // (no more come out meanwhile)
+    return g;
+  };
+  const g = staged();
+  g.burrows = [{ x: 20, y: 2, at: 0, used: 25000 }, { x: 22, y: 4, at: 0, used: 20000 }, { x: 18, y: 2, at: 0, used: 29000 }];
+  g.food = [{ x: 10, y: 10, kind: 'beetle', expires: 9999, dir: D.up, movedAt: -10 }];
+  const seen = [];
+  for (let t = 0; t <= T2.BEETLE_DIG; t++) { E2.step(g); g.food = g.food.filter(f => f.kind === 'beetle'); for (const e of g.events) if (['burrow', 'heal'].includes(e.type)) seen.push(e); }
+  check('(an experiment) a dig leaves a burrow, and at the most the one unused longest closes over', JSON.stringify(seen) === JSON.stringify([{ type: 'heal', x: 22, y: 4 }, { type: 'burrow', x: 10, y: 10, dug: 1 }])
+    && g.burrows.length === T2.BURROW_MAX && g.burrows.some(b => b.x === 10 && b.y === 10 && b.dug === 1), JSON.stringify(seen));
+  const h = staged();
+  h.burrows = [{ x: 20, y: 2, at: 0, used: 0 }, { x: 22, y: 4, at: 0, used: 0 }, { x: 18, y: 2, at: 0, used: 25000 }];
+  h.food = [{ x: 22, y: 4, kind: 'beetle', expires: 9999, dir: D.up, movedAt: 1e9 }];
+  E2.step(h);
+  check('(an experiment) a burrow unused for BURROW_HEAL_MS closes over, but not with a beetle on it', JSON.stringify(h.events.filter(e => e.type === 'heal')) === JSON.stringify([{ type: 'heal', x: 20, y: 2 }]) && h.burrows.length === 2, JSON.stringify(h.burrows));
+}
+
 { // Everyone sees every burrow on the board, as it is.
   const g = board([[line(5, 10, 4), 'right'], [line(20, 22, 4), 'right']]);
   g.burrows = [{ x: 3, y: 3, at: 0 }];

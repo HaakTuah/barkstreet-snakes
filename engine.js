@@ -92,7 +92,7 @@ window.SnakeEngine = (() => {
     const game = {
       snakes, food: [], tick: 0, time: 0, history: [], withPlayer: people.length > 0, events: [],
       holes: new Set(), woodpecker: null,
-      // Beetle burrows ({ x, y, at: the tick it cracked open }), the beetles
+      // Beetle burrows ({ x, y, at: the tick it cracked open, used, dug: see openBurrow }), the beetles
       // underground (unders: [{ until: the tick it may come up, expires,
       // from: the cell it went down, gold }]), fire (cell -> { from, until, group, strike }:
       // it burns (setting alight any head that enters) from tick `from` to `until`; before that it's
@@ -206,17 +206,34 @@ window.SnakeEngine = (() => {
     let b = freeBurrow(game, -1);
     if (game.burrows.length < T.BURROW_MAX && (!b || Math.random() < T.BURROW_NEW_CHANCE)) {
       const at = place(null, true);
-      if (at) {
-        b = { x: at.x, y: at.y, at: game.tick };
-        game.burrows.push(b);
-        game.events.push({ type: 'burrow', x: b.x, y: b.y });
-      }
+      if (at) b = openBurrow(game, at.x, at.y);
     }
     if (b) {
       const gold = Math.random() < T.GOLD_BEETLE_CHANCE;
+      b.used = game.time;
       game.food.push({ x: b.x, y: b.y, kind: 'beetle', expires: game.tick + T.BEETLE_TICKS, dir: CRAWL[Math.floor(Math.random() * 4)], movedAt: game.tick, ...(gold ? { gold: 1 } : {}) });
       game.events.push({ type: 'spawn', kind: 'beetle', x: b.x, y: b.y, gold });
     }
+  }
+  // A burrow cracks open at (x, y): { x, y, at: the tick it opened, used:
+  // the game time a beetle last went into or came out of it (or it opened),
+  // dug: 1 if a beetle's dig left it (see BURROW_FROM_DIG) }. At BURROW_MAX,
+  // the one unused longest closes over to make room.
+  function openBurrow(game, x, y, dug = false) {
+    if (game.burrows.length >= T.BURROW_MAX) {
+      let old = game.burrows[0];
+      for (const h of game.burrows) if ((h.used ?? 0) < (old.used ?? 0)) old = h;
+      closeBurrow(game, old);
+    }
+    const b = { x, y, at: game.tick, used: game.time, ...(dug ? { dug: 1 } : {}) };
+    game.burrows.push(b);
+    game.events.push({ type: 'burrow', x, y, ...(dug ? { dug: 1 } : {}) });
+    return b;
+  }
+  // A burrow closes over: sawdust and moss fill it.
+  function closeBurrow(game, b) {
+    game.burrows.splice(game.burrows.indexOf(b), 1);
+    game.events.push({ type: 'heal', x: b.x, y: b.y });
   }
 
   // Picks free cells (no bodies, holes, food, burrows, fire or the
@@ -294,14 +311,20 @@ window.SnakeEngine = (() => {
   // within BEETLE_DIG_FEAR and no burrow in reach, digs in where it is: it
   // stays put BEETLE_DIG ticks (b.digUntil: the tick it's gone; it can still
   // be caught), then it's underground, as after a dive. It leaves no burrow:
-  // it packs its tunnel with its own sawdust behind it.
+  // it packs its tunnel with its own sawdust behind it. (Two experiments, off:
+  // BURROW_FROM_DIG, a dig leaves a burrow; BURROW_HEAL_MS, a burrow no beetle
+  // has gone into or come out of for that long closes over.)
   function crawl(game) {
+    if (T.BURROW_HEAL_MS > 0) for (const h of [...game.burrows]) {
+      if (game.time - (h.used ?? 0) >= T.BURROW_HEAL_MS && !game.food.some(f => f.x === h.x && f.y === h.y)) closeBurrow(game, h);
+    }
     for (let i = 0; i < game.unders.length; i++) {
       const u = game.unders[i];
       if (game.tick < u.until) continue;
       if (game.tick >= u.expires) { game.unders.splice(i--, 1); continue; } // (it stays home)
       const b = freeBurrow(game, u.from);
       if (!b) continue;
+      b.used = game.time;
       game.food.push({ x: b.x, y: b.y, kind: 'beetle', expires: u.expires, dir: CRAWL[Math.floor(Math.random() * 4)], movedAt: game.tick, ...(u.gold ? { gold: 1 } : {}) });
       game.events.push({ type: 'emerge', x: b.x, y: b.y });
       game.unders.splice(i--, 1);
@@ -325,6 +348,7 @@ window.SnakeEngine = (() => {
         game.food.splice(game.food.indexOf(b), 1);
         goUnder(game, b);
         game.events.push({ type: 'dive', x: b.x, y: b.y, dug: 1 });
+        if (T.BURROW_FROM_DIG) openBurrow(game, b.x, b.y, true);
         continue;
       }
       if (game.tick - b.movedAt < (scared ? T.BEETLE_SCARED_EVERY : T.BEETLE_EVERY)) continue;
@@ -362,6 +386,7 @@ window.SnakeEngine = (() => {
       bodyStamp[key(b.x, b.y)] = stamp;
       if (scared && burrowAt(game, b.x, b.y)) { // home: down it goes
         game.food.splice(game.food.indexOf(b), 1);
+        game.burrows.find(h => h.x === b.x && h.y === b.y).used = game.time;
         goUnder(game, b);
         game.events.push({ type: 'dive', x: b.x, y: b.y });
       }
@@ -991,7 +1016,8 @@ window.SnakeEngine = (() => {
   // | { type: 'rot', x, y, kind, color } (an apple (kind 'apple') or a bead ('pellet', in its color) rotted away)
   // | { type: 'lastApples', x, y } (sudden death's first apple fell: the last apples come one at a time)
   // | { type: 'baked', x, y, kind } | { type: 'ash', x, y, kind } (food in the fire)
-  // | { type: 'burrow', x, y } (one cracked open) | { type: 'dive', x, y, dug } | { type: 'emerge', x, y } (a beetle went down one,
+  // | { type: 'burrow', x, y, dug } (one cracked open; dug: 1, left by a dig) | { type: 'heal', x, y } (one closed over: sawdust and moss)
+  // | { type: 'dive', x, y, dug } | { type: 'emerge', x, y } (a beetle went down one,
   //   or down where it dug in (dug: 1), came out of one) | { type: 'dig', x, y, until } (a cornered beetle digs in: gone at tick until)
   // | { type: 'weather', kind } | { type: 'gust', x, y } (x -1 if no apple fell) | { type: 'charge', x, y } (lightning on its way)
   // | { type: 'strike', x, y } | { type: 'rainbow', x, y } (and a golden apple there) | { type: 'ember', x, y, fx, fy } (a burning leaf blown)
