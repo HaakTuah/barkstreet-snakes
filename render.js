@@ -7556,7 +7556,7 @@ window.SnakeRender = (() => {
 
   // How it clings to drum a spot: upright, facing the way it came (flip),
   // its beak's tip on the spot, if all of it fits on the screen there (its
-  // head drawn back and its settle too); else leaning, else facing the
+  // head drawn back, its settle and its lean back as it lands too); else leaning, else facing the
   // other way, else lying level, its beak down at the spot (the bottom
   // rows, with the board's bottom at the screen's) or up; else smaller.
   // (Upright on the bottom row, its tail hung four cells below the board,
@@ -7577,6 +7577,7 @@ window.SnakeRender = (() => {
         Q.x = tx - atX(HM, BILL[0], BILL[1]); Q.y = ty - atY(HM, BILL[0], BILL[1]);
         Q.thrust = 0.06; birdBox(Q, true);
         Q.thrust = -1.3 * B_BACK; Q.crouch = 0.8; birdBox(Q, false);
+        Q.crouch = 0; Q.rot = (DRUM_TRIES[i] - 0.3) * f; birdBox(Q, false); Q.rot = DRUM_TRIES[i] * f; // (and leaning back as it lands, or as it pulls out of the hole)
         const over = Math.max(room.x0 - box.x0, room.y0 - box.y0, box.x1 - room.x1, box.y1 - room.y1);
         if (over <= 0) d = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot };
         else if (over < least) { least = over; best = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot }; }
