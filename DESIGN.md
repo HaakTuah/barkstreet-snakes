@@ -990,6 +990,12 @@ Escapes from a chase went from about half (51%) to 43% with live food alone, and
 - **With reduced motion:** no wingbeats or bobbing, and it moves between perch and patch in one smooth glide; the eye still looks, and the blows still show, slower and fewer.
 - **Cheap:** its layer is only as big as the board and its perch, and its parts are drawn from cached shapes.
 
+**Copycat in the flag's red** (the owner: Copycat is a parody of the Chinese Communist Party, "but it has a pink color. Should its natural color be closer to that of the red in the flag? it already has the yellow symbol."). Its own colour was a pale red, `#fca5a5`, read by everyone as pink. Now it's the red of the flag, `#de2910`, and its party pin the flag's yellow, `#ffde00`. Two things keep it apart from the cast's other reds (Sniper's dark red, Colonist's redcoat crimson, Wildcard's Old Glory):
+- **Its head stays its own.** Copying someone, its body still wears a pale copy of their colours (that's the joke: it can't help copying), but its cat-eared head keeps the flag's red and the yellow pin, so it always reads as red-and-gold at a glance.
+- **A yellow star on its tag's dot**, where the others have plain dots, and its beads keep their dashed rings.
+
+It's checked beside Sniper, Colonist and Wildcard, on the board and in the tags, and through red-green colour-blind filters.
+
 **Star's rainbow streams.** The owner asked whether the rainbow still changes colour as it did for Wildcard and Mute, since it no longer looked animated. It did change, but its colours flowed back along the body at about a quarter of the crawl, so over the log they crept forward with the snake and looked painted on. (The old one flowed toward the head, which added up to an obvious shimmer.) Now the flow is tied to the distance Star travels, about 1.25 times its crawl, so the colours stream backward over the log behind it like a trail. Each segment changes hue about once a second. It settles when Star is stunned or stops, and bursts on a flash. With reduced motion the colours drift slowly in place instead. Copycat's pale copy stays in step.
 
 **Phones.**
