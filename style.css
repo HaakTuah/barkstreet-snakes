@@ -975,7 +975,6 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   header::after { content: ''; order: 1; flex-basis: 100%; }
   .hud button { order: 2; }
   h1 { white-space: nowrap; }
-  main { max-width: min(760px, max(240px, calc(100vh - 190px))); max-width: min(760px, max(240px, calc(100dvh - 190px))); }
   /* The Hall of Fame as a trophy, so the header stays one row high. */
   .trophy { min-width: 34px; padding: 0 8px; justify-content: center; }
   .scoreboard li { padding-inline: 7px; gap: 4px; } /* (two tags a row: every letter of a name counts) */
@@ -1035,20 +1034,32 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
 /* Phones held upright: the board runs edge to edge (346 → 382 px on a
    390 px phone), its frame a thin rim, the moss and the corner leaves
    running off the screen's edges (clipped there, so nothing scrolls
-   sideways); everything else keeps its margin. Under the board, a ledge
-   for the woodpecker in the height to spare (it stands there, about 53 px
-   tall, instead of in a gutter beside the board that's gone): about 11% of
-   the width, less on a short screen, and the board shrinks only where even
-   a small ledge wouldn't fit below it. */
+   sideways); everything else keeps its 12 px margin from the screen's
+   edge. Only on a screen too short for that (an iPhone SE with Safari's
+   bars showing) is the board narrower, as big as fits the height, centred,
+   never smaller than it was. Under the board, a ledge for the woodpecker in
+   the height to spare (it stands there, about 53 px tall, instead of in a
+   gutter beside the board that's gone): about 11% of the width, less on a
+   short screen. Where even that doesn't fit, it's below the fold and the
+   bird perches in the gutter. Both are laid out for the screen with the
+   browser's bars showing (svh), so nothing moves as they come and go. */
 @media (max-width: 440px) {
   body { padding-left: var(--safe-l); padding-right: var(--safe-r); }
   main {
+    /* (100vw: the board; 300 px: the header, the tags and the chatter's
+       head, kept on the first screen; never under 28 px, so the bird still
+       stands about 38 px tall there) */
     --ledge: clamp(28px, calc(100vh - 100vw - 300px), 11vw);
-    --ledge: clamp(28px, calc(100dvh - 100vw - 300px), 11vw);
-    max-width: min(760px, max(240px, calc(100vh - 190px - var(--ledge) - max(0px, var(--safe-t) - 12px))));
-    max-width: min(760px, max(240px, calc(100dvh - 190px - var(--ledge) - max(0px, var(--safe-t) - 12px))));
+    --ledge: clamp(28px, calc(100svh - 100vw - 300px), 11vw);
+    --head: 208px; /* (what's above the board on a short phone: the page's top, the header in three rows at 375 px, the tags in two, and their margins) */
+    max-width: none;
     overflow-x: hidden; /* (before Safari 16) */
     overflow-x: clip;
+  }
+  .frame {
+    max-width: min(760px, max(240px, calc(100vh - var(--head) - max(0px, var(--safe-t) - 12px))));
+    max-width: min(760px, max(240px, calc(100svh - var(--head) - max(0px, var(--safe-t) - 12px))));
+    margin-inline: auto;
   }
   header, .scoreboard, .speed, .chatter, .help { margin-inline: 12px; }
   .frame { padding: 4px; border-radius: 9px; }
@@ -1060,6 +1071,13 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .leaves.bl { left: -10px; bottom: -10px; }
   .leaves.br { right: -10px; bottom: -10px; }
   .perch-ledge { display: block; height: var(--ledge); }
+  /* Watching, the speed buttons come between the ledge and the chatter: a
+     smaller gap under them, so more of the chatter's newest lines stay on
+     the screen (the one over them is the bird's room, as when you play). */
+  .speed:not([hidden]) + .chatter { margin-top: 6px; }
+}
+@media (max-width: 340px) {
+  main { --head: 178px; } /* (the narrowest phones: the header in two rows, its title smaller) */
 }
 
 /* Wide, short screens (laptops, short windows, phones on their side): the
