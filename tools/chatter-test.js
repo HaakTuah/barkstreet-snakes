@@ -486,10 +486,6 @@ console.log('ok   choking: the choker\'s line at most every 20 s; a rival who ea
   check(says(tick(g, [dive(12, 14)], 800), gob, VOICES.gobbler.dug), '...but 33 s after its last: a dug line');
   tick(g, [dig(3, 19)], 5000); // (yours: 3 cells off)
   check(tick(g, [dive(3, 19)], 800).length === 0, 'a beetle you cornered: nobody speaks for you');
-  tick(g, [dig(18, 12)], 40000); // (6 from Gobbler's head, 10 from Copycat's)
-  check(says(tick(g, [dive(18, 12)], 800), gob, VOICES.gobbler.dug), 'cornered from as far as BEETLE_DIG_FEAR (6 cells): its hunter\'s line');
-  tick(g, [dig(19, 12)], 40000); // (7 from Gobbler, 9 from Copycat: nobody cornered it)
-  check(tick(g, [dive(19, 12)], 800).length === 0, '...but one with no head within 6 as it started: nobody\'s');
   tick(g, [dig(19, 20)], 40000);
   check(says(tick(g, [dive(19, 20)], 800), cat, VOICES.copycat.dug), 'Copycat\'s: in Chinese');
   check(tick(g, [dive(12, 13, 0)], 40000).length === 0, 'a scared beetle diving into a burrow by Gobbler (no digging): nothing');
@@ -501,6 +497,19 @@ console.log('ok   choking: the choker\'s line at most every 20 s; a rival who ea
   gob.alive = false;
   check(tick(g, [dive(12, 15)], 800).length === 0, 'its hunter out of the round meanwhile: nothing');
   void you;
+}
+{ // The hunter's reach is the engine's: a beetle digs in with a head within BEETLE_DIG_FEAR, and that head is its hunter, as far off as that; one further from every head is nobody's. (Each in a fresh round, so the hunter has a line to say.)
+  const F = T.BEETLE_DIG_FEAR;
+  const cornered = (x, y) => {
+    const g = stage(['gobbler', 'mason', 'copycat'], { 0: [3, 22], 1: [6, 12], 2: [12, 2], 3: [22, 22] }), [, gob] = g.snakes;
+    const off = Math.min(...g.snakes.map(s => Math.abs(s.body[0].x - x) + Math.abs(s.body[0].y - y)));
+    tick(g, [{ type: 'dig', x, y, until: g.tick + 1 + T.BEETLE_DIG }]);
+    return [tick(g, [{ type: 'dive', x, y, dug: 1 }], 800), gob, off];
+  };
+  let [h, gob, off] = cornered(6 + F, 12);
+  check(off === F && says(h, gob, VOICES.gobbler.dug), `cornered from as far as BEETLE_DIG_FEAR (${F} cells; the nearest head ${off} off): its hunter's line ("${lineOf(h, gob)}")`);
+  [h, gob, off] = cornered(7 + F, 12);
+  check(off === F + 1 && h.length === 0, `...but one with no head within ${F} as it started (the nearest ${off} off): nobody's (said: ${h.map(x => `"${x.text}"`).join(', ') || 'nothing'})`);
 }
 { // Knocked aside: whoever was after it (the nearest head at the strike, within 5) grumbles at whoever eats it where it landed, within 6 s.
   const g = stage(['sovereign', 'gobbler'], { 0: [3, 22], 1: [12, 12], 2: [20, 4] }), [you, sov, gob] = g.snakes;
@@ -535,7 +544,7 @@ console.log('ok   choking: the choker\'s line at most every 20 s; a rival who ea
   h = tick(g, [eat(gob, 16, 9, 'beetle')], 1000);
   check(grumbles(h, sov, gob) && says(h, gob, VOICES.gobbler.caught), `a beetle knocked off Sovereign's patch scurries on, and Gobbler catches it 3 cells from where it landed: Sovereign grumbles ("${lineOf(h, sov)}"), and Gobbler has its catch line too`);
 }
-console.log('ok   a beetle that digs in and gets away: its hunter (the nearest head as it dug, within 6) says so, at most every 30 s, and nobody for you; food the woodpecker knocked aside, eaten by someone else soon after: the snake that was after it grumbles at them, half the time, at most every 40 s');
+console.log(`ok   a beetle that digs in and gets away: its hunter (the nearest head as it dug, within ${T.BEETLE_DIG_FEAR}) says so, at most every 30 s, and nobody for you; food the woodpecker knocked aside, eaten by someone else soon after: the snake that was after it grumbles at them, half the time, at most every 40 s`);
 
 // Star shows off: any flash of its own, its jumps and golden dashes, and its
 // flash back from its rest, half the time and all together at most every 10 s
