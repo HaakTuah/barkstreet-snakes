@@ -2319,7 +2319,8 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
 { // Food in the woodpecker's mark is knocked aside at the strike, to where the rule puts it (what the rings show anyone):
   // an AI values it there, from the strike on. Heading right along row 11, the mark 4 ahead with a golden apple in its
   // middle (knocked to (11, 11), the free cell beside the mark nearest the middle), an apple far off down the left: it
-  // heads for where the golden one will land. (Shown the mark with no strike to come, it can't tell, and goes for the other.)
+  // heads for where the golden one will land. (Shown the mark with no strike to come, the golden apple is out of reach
+  // behind it, and nothing draws it on more than down toward the other: it goes either way.)
   const g = board([[line(5, 11, 5), 'right'], [line(20, 22, 5), 'right']]);
   g.food = [{ x: 13, y: 11, kind: 'golden', expires: 9999 }];
   const ring = E.knocks(g, MARK)[0].to;
