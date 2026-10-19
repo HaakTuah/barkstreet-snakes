@@ -24,7 +24,8 @@
 // Capricious in its moods), one with Star and the rivals who answer it. Last, the sound (audio.js on a stand-in AudioContext): a rival's
 // flash, jump, choke or the like never silences yours, your own golden ones
 // in a row are each heard, your choke and its cough (a beat later) each time
-// you can choke, and nothing while muted.
+// you can choke, a beetle digging in and the woodpecker knocking food aside
+// once a moment and each time they can come again, and nothing while muted.
 //
 //   node tools/chatter-test.js
 const fs = require('fs');
@@ -138,7 +139,12 @@ const ctx = vm.createContext({
   document: { createElement: () => new El(), body: new El(), hidden: false },
   addEventListener() {}, ResizeObserver: class { observe() {} }, MutationObserver: class { observe() {} },
 });
-for (const f of ['tuning.js', 'ai.js', 'engine.js', 'chatter.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+for (const f of ['tuning.js', 'ai.js', 'engine.js', 'chatter.js']) {
+  vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+  // (A cornered beetle digging in is the engine's, in round six A: until its
+  // numbers are in tuning.js, they're staged here as the contract has them.)
+  if (f === 'tuning.js' && !('BEETLE_DIG_FEAR' in ctx.window.TUNING)) ctx.window.TUNING = Object.freeze({ ...ctx.window.TUNING, BEETLE_DIG: 8, BEETLE_DIG_FEAR: 6 });
+}
 const { SnakeEngine: E, SnakeChatter: C, TUNING: T } = ctx.window;
 C.init({ boardEl: new El(), logEl: new El() });
 let heard = [];
@@ -632,6 +638,11 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   // (You can choke again as soon as your cough is over: both are heard again.)
   const again = T.COUGH_TICKS * T.MIN_TICK - FRAME;
   for (const cue of ['choke', 'cough']) check(GAP[cue] < again, `the '${cue}' gap (${GAP[cue]} ms) is under the soonest you can choke again (${again.toFixed(0)} ms)`);
+  // (A beetle digs in again only once it's been under and come out, and the
+  // woodpecker strikes again only after a rest and an aim: each is heard.)
+  const digAgain = (T.BEETLE_DIG + T.BEETLE_UNDER_MIN) * T.MIN_TICK - FRAME, strikeAgain = (T.PECK_REST_MIN + T.PECK_AIM_TICKS) * T.MIN_TICK - FRAME;
+  check(GAP.dig < digAgain, `the 'dig' gap (${GAP.dig} ms) is under the soonest a beetle can dig in again (${digAgain.toFixed(0)} ms)`);
+  check(GAP.knock < strikeAgain, `the 'knock' gap (${GAP.knock} ms) is under the soonest the woodpecker can strike again (${strikeAgain.toFixed(0)} ms)`);
   let clock = 0, gains = 0;
   const stub = () => new Proxy(function () { return stub(); }, {
     get: (f, k) => (k in f || typeof k === 'symbol' ? f[k] : (f[k] = stub())),
@@ -655,7 +666,7 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   const sounds = (name, opts) => { const before = gains; A.play(name, opts); return gains > before; };
   const RIVAL = { rival: true, pan: 0.4 };
   // (Each case starts well apart from the last, so nothing earlier is still sounding or resting.)
-  for (const cue of ['flash', 'dash', 'leap', 'alight', 'wrap', 'choke', 'cough']) {
+  for (const cue of ['flash', 'dash', 'leap', 'alight', 'wrap', 'choke', 'cough', 'dig', 'knock']) {
     const gap = GAP[cue];
     check(gap > 0, `'${cue}' has a gap`);
     clock += 5000;
@@ -688,12 +699,22 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
   check(!sounds('cough'), '...and another cough asked for as that one sounds waits (a cough never loops)');
   clock += again;
   check(sounds('choke') && sounds('cough', { delay: 0.3 }), '...but your next choke and cough, as soon as you can choke again, sound');
+  // A beetle digging in and the woodpecker knocking food aside are the
+  // world's: two beetles digging in together, or the pieces one strike knocks
+  // aside, are one sound; the next is heard as soon as it can come again.
+  for (const [cue, ms] of [['dig', digAgain], ['knock', strikeAgain]]) {
+    clock += 5000;
+    check(sounds(cue, { pan: -0.4 }) && !sounds(cue, { pan: 0.3 }), `a ${cue}, and another in the same moment: one sound`);
+    clock += ms;
+    check(sounds(cue, { pan: 0.3 }), `...and the next, ${ms.toFixed(0)} ms on, sounds`);
+  }
   clock += 5000;
   A.setMuted(true);
   check(!sounds('choke') && !sounds('cough', { delay: 0.3 }) && !sounds('choke', RIVAL), 'muted: no choke, no cough, yours or a rival\'s');
+  check(!sounds('dig') && !sounds('knock') && !sounds('knock', RIVAL), '...no dig, no knock');
   A.setMuted(false);
-  check(sounds('choke') && sounds('cough', { delay: 0.3 }), '...and with the sound back on, both');
-  console.log('ok   the sound: a rival\'s flash, dash, jump, catching fire, golden mushroom, choke or cough never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard, and your choke and cough each time you can choke; muted, neither');
+  check(sounds('choke') && sounds('cough', { delay: 0.3 }) && sounds('dig') && sounds('knock'), '...and with the sound back on, all of them');
+  console.log('ok   the sound: a rival\'s flash, dash, jump, catching fire, golden mushroom, choke or cough never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard, and your choke and cough each time you can choke; a beetle digging in and the woodpecker knocking food aside, one sound a moment and each time they can come again; muted, none');
 }
 
 if (fails) { console.error(`${fails} failed`); process.exit(1); }
