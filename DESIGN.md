@@ -16,7 +16,7 @@ A storybook diorama of a mossy log on the forest floor, seen from above. Four ca
 
 ### Palette: the 8 interface colors
 
-Everything in the UI uses only these.
+Everything in the UI uses only these. (The drawn characters bring their own colours: the cast on the board, and the title's snake S, whose shadow side is a caramel, `#d19a45`, so that no gold on a snake ever means anything but a power.)
 
 | Name | Hex | Used for |
 |---|---|---|
@@ -121,7 +121,7 @@ The board and the page around it are never still for long, and the big moments a
 
 | Moment | Copy |
 |---|---|
-| Title / subtitle | **Barkstreet Snakes** (called *Bark & Bite* until 2026-10-18). The S of Snakes is a honey snake, one of the board's: inked, lit from the upper left with a glint on every segment, a caramel shadow side (no power gold), its head at the top with two big eyes and a little smile looking along the word, its tail tapering to a curl at the foot. It wriggles, tastes the air and blinks (see Grabbing attention); in a round and with reduced motion it rests, tongue in and eyes open, and in forced colours it's the plain letter. The letter stays as text under the drawing, so the heading is read out and copied as "Barkstreet Snakes" (`tools/title-s.js` draws it) / *A snake game on a mossy log* |
+| Title / subtitle | **Barkstreet Snakes** (called *Bark & Bite* until 2026-10-18). The S of Snakes is a honey snake, one of the board's: inked, lit from the upper left with a glint on every segment, a caramel shadow side (no power gold), its head at the top with two big eyes and a little smile looking along the word, its tail tapering to a curl at the foot. It wriggles, tastes the air and blinks (see Grabbing attention); in a round and with reduced motion it rests, tongue in and eyes open, and in forced colours it's the plain letter. The letter stays as text under the drawing, so the heading is read out as "Barkstreet Snakes"; the drawing never goes into a selection, and a copy that takes in the title is just its words, so even a rich paste (into an email) reads "Barkstreet Snakes" (`tools/title-s.js` draws it). It fits Fredoka's S; in a wider stand-in font (offline, where the font never arrives: Arial-like faces) there's a hair more room before the n / *A snake game on a mossy log* |
 | Start prompt | **"Ready, Green?"** (your Hall of Fame name, once you have one: the header already says *Barkstreet Snakes*), then "Three rivals. One mossy log. Last snake wriggling wins." The control hint below adapts to keyboard or touch. |
 | Countdown | Rotating roll-calls ("Up on the log with you:", "Sharing your bark:") above the rival list |
 | Go | "Slither!" when you're playing; "And they're off." when you're watching (the narrator never talks to "you" in a round you're not in) |
