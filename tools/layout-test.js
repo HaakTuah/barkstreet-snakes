@@ -15,24 +15,30 @@
 //   a tap. While you play, the help under the board is either wholly on the
 //   screen or not shown (and then a short phone's first Go tells you about
 //   the powers). On its side, the column keeps off the screen's top and
-//   bottom, the chatter's log is cut inside its box, never to less than a
-//   line and never through a row of words (very short, while watching, the
-//   help gives it its room), and the frame's moss and leaves aren't cut by
-//   the screen's edge. On a small board your death's card has its two
+//   bottom; a full chatter's log, playing and watching, is cut inside its
+//   box and the page, never to less than a row of words and never through
+//   one (while watching, the help gives it its room only where, with the
+//   help, it couldn't show a row); and the frame's moss and leaves aren't
+//   cut by the screen's edge. On a small board your death's card has its two
 //   buttons side by side. A focus ring at the column's edge is whole, and
 //   with a mouse the header keeps its spacing.
 // - In a browser without svh and dvh (Safari before 15.4, Chrome before
 //   108), the board, its frame and the ledge are as they are with them.
 // - The header: its buttons on one row everywhere; at 320 px the title,
 //   Score and Best on one row, and the buttons on their own row (so a
-//   button there never crowds the title).
+//   button there never crowds the title); wider, held upright, the title
+//   and Score on one row, the buttons and Best on the next. As Score and
+//   Best grow (0, 99, 100, 1000), the header keeps its rows and the board
+//   its size and place (at 390×545-600 and 412×604 the header grew a row
+//   at 100 or 1000, and the board shrank in the middle of a round).
 // - The woodpecker, perched (resting, and eyeing its chunk) for spots all
 //   over the board: never over a cell (its drawn pixels, read back from its
 //   layer), on the screen and inside its safe area (not under a notch), off
 //   the page's furniture; upright on a phone it stands on the ledge under
 //   the board, at least 48 px tall (36 on a short phone, whose ledge is
 //   smaller), clear of the moss and leaves hanging there, and on its side
-//   it's beside the board. Flying out to a spot at the board's edge and
+//   it's beside the board (under 600 px wide, or under it, where all of it
+//   fits there, looking up only a little). Flying out to a spot at the board's edge and
 //   drumming it, through its whole wingbeat, it isn't cut off by the
 //   screen's edge either (on its side, drumming the bottom rows still is,
 //   and flying in to the top corners: that's the flight's and the drum's
@@ -81,10 +87,12 @@ const DEVICES = [
   { name: '360×780', w: 360, h: 780, dpr: 3, kind: 'upright', least: 348, before: 316 },
   { name: '375×667 (iPhone SE)', w: 375, h: 667, dpr: 2, kind: 'upright', least: 363, before: 331 },
   { name: '375×548 (iPhone SE in Safari, its bars showing)', w: 375, h: 548, dpr: 2, kind: 'upright', short: true, nofs: true, least: 331, before: 331 },
+  { name: '375×635 (an iPhone 11 Pro in Safari)', w: 375, h: 635, dpr: 3, kind: 'upright', nofs: true, least: 363, before: 331 },
   { name: '390×844 (iPhone 13, 14)', w: 390, h: 844, dpr: 3, kind: 'upright', least: 378, before: 346 }, // (the call: 346 → about 382)
   { name: '412×915 (Pixel)', w: 412, h: 915, dpr: 2.625, kind: 'upright', least: 400, before: 368 },
   { name: '430×932', w: 430, h: 932, dpr: 3, kind: 'upright', least: 418, before: 386 },
   { name: '390×844 with a notch', w: 390, h: 844, dpr: 3, kind: 'upright', insets: notchUp, least: 378, before: 346 },
+  { name: '568×320 on its side (the first iPhone SE)', w: 568, h: 320, dpr: 2, kind: 'side', nofs: true, least: 266, before: 268, under: 2 }, // (under: the board narrower than before by that much, the call: the column keeps 244 px for five buttons in a row, and the bird its 24 px gap)
   { name: '640×320 on its side', w: 640, h: 320, dpr: 2, kind: 'side', least: 300, before: 268 },
   { name: '667×375 on its side', w: 667, h: 375, dpr: 2, kind: 'side', least: 355, before: 323 },
   { name: '780×320 on its side, its browser bars showing', w: 780, h: 320, dpr: 3, kind: 'side', least: 300, before: 268 }, // (the call: 268 → about 310)
@@ -248,11 +256,12 @@ const FLIGHT = (x, y) => `(() => {
 const FLIGHT_SPOTS = [[0, 12], [23, 12], [12, 23], [1, 22], [3, 22], [4, 22], [19, 22], [0, 0], [23, 0]];
 
 // The chatter's log, cut at its box (and maybe ending at its last whole row,
-// by a clip: snake.js fitLog): whether it shows a whole row of words, and
-// whether any row is sliced through by where it ends.
+// by a clip: snake.js fitLog), and at the page's bottom (it's clipped
+// there): where it ends as drawn, whether it shows a whole row of words,
+// and whether any row is sliced through by where it ends.
 const LOG_ROWS = `(() => {
   const log = document.getElementById('chatlog'), lb = log.getBoundingClientRect(), cp = log.style.clipPath;
-  const end = lb.bottom - (cp ? parseFloat(cp.replace('inset(', '').split(' ')[2]) : 0);
+  const end = Math.min(lb.bottom - (cp ? parseFloat(cp.replace('inset(', '').split(' ')[2]) : 0), document.querySelector('main').getBoundingClientRect().bottom);
   const range = document.createRange();
   let whole = 0, sliced = 0;
   for (const li of log.children) {
@@ -321,6 +330,30 @@ const r1 = v => Math.round(v * 10) / 10;
       await b.sleep(120);
       await settle();
     };
+    // On its side, the chatter full (five long lines, two rows each),
+    // playing or watching: its log cut inside its box and the page, showing
+    // a whole row at least and slicing none; and the column off the
+    // screen's top and bottom. Watching, the help gives the chatter its room
+    // only where the log couldn't show a whole row beside it: the help made
+    // to show (and the chatter as tall as with it), the log shows none.
+    const chatterFull = async (tag, watching, si = { bottom: 0 }) => {
+      const what = watching ? 'watching' : 'playing';
+      await ev(`(() => { const log = document.getElementById('chatlog'); for (let i = 0; i < 5; i++) log.insertAdjacentHTML('afterbegin', '<li><strong>Gobbler</strong> <span>Out of my way! I’m starving, and the bark is bare!</span></li>'); return 'ok'; })()`);
+      await b.sleep(60);
+      await settle();
+      const full = await ev(LAYOUT), rows = await ev(LOG_ROWS), last = full.help || full.chatter;
+      check(full.header.y >= 4 && last.b <= full.vh - Math.max(2, si.bottom) && full.scrollH <= full.vh, `${tag}: ${what}, the column keeps off the screen's top and bottom`, `header from ${r1(full.header.y)}, ${full.help ? 'help' : 'chatter (the help giving way)'} down to ${r1(last.b)} of ${full.vh}`);
+      check(rows.end <= full.chatter.b - 5.5 && (!full.help || full.chatter.b <= full.help.y), `${tag}: ${what}, a full chatter's log is cut inside its box, clear of its edge`, `log drawn down to ${r1(rows.end)} (its own box to ${r1(full.chatlog.b)}), the chatter's box to ${r1(full.chatter.b)}`);
+      check(rows.whole >= 1 && !rows.sliced, `${tag}: ${what}, a full chatter shows a whole row of words at least, and no row sliced through`, `log ${r1(full.chatlog.h)} px tall, showing to ${r1(rows.end - rows.top)}; ${rows.whole} pieces of rows whole, ${rows.sliced} sliced`);
+      if (!watching) return;
+      await ev(`(() => { const st = document.createElement('style'); st.id = 'help-made-to-show'; st.textContent = 'main #help { display: block !important; } main .chatter { max-height: 100% !important; }'; document.head.append(st); return 'ok'; })()`);
+      await settle();
+      const shown = await ev(LOG_ROWS);
+      await ev(`document.getElementById('help-made-to-show').remove(); 'ok'`);
+      await settle();
+      const gone = !full.help, room = shown.whole >= 1;
+      check(gone === !room, `${tag}: watching, the help gives the chatter its room only where, beside it, the log couldn't show a whole row of words`, `the help ${gone ? 'gone' : 'shown'}; beside it, the log would show to ${r1(shown.end - shown.top)} px, ${shown.whole ? 'a row' : 'no row'}`);
+    };
 
     for (const d of DEVICES) {
       if (only && !d.name.includes(only)) continue;
@@ -330,14 +363,14 @@ const r1 = v => Math.round(v * 10) / 10;
       const ready = await ev(LAYOUT);
       const upright = d.kind === 'upright', side = d.kind === 'side';
       board.push(`  ${d.name.padEnd(48)} ${String(d.before).padStart(4)} → ${r1(ready.board.w)}`);
-      check(ready.board.w >= d.least && ready.board.w >= d.before, `${tag}: the board is at least ${d.least} px`, `${r1(ready.board.w)} px, before ${d.before}`);
+      check(ready.board.w >= d.least && ready.board.w >= d.before - (d.under || 0), `${tag}: the board is at least ${d.least} px${d.under ? `, ${d.under} px under the ${d.before} before at most (the column's 244 px and the bird's gap)` : ''}`, `${r1(ready.board.w)} px, before ${d.before}`);
       check(ready.scrollW <= ready.vw, `${tag}: nothing scrolls sideways`, `${ready.scrollW} of ${ready.vw}`);
       if (side) check(ready.scrollH <= ready.vh, `${tag}: nothing scrolls at all, the column beside the board as tall as the screen`, `${ready.scrollH} of ${ready.vh}`);
       if (upright && !d.short) check(ready.frame.x <= 0.5 && ready.frame.r >= ready.vw - 0.5 && ready.board.x <= 6 && ready.board.r >= ready.vw - 6, `${tag}: the board runs edge to edge, its frame a thin rim`, `frame ${r1(ready.frame.x)}-${r1(ready.frame.r)}, board ${r1(ready.board.x)}-${r1(ready.board.r)} of ${ready.vw}`);
-      if (d.short) check(Math.abs(ready.frame.x + ready.frame.r - ready.vw) < 1 && ready.frame.b <= ready.vh + 0.5 && ready.frame.b >= ready.vh - 12, `${tag}: too short for edge to edge, the board is as big as fits the height, centred, its frame wholly on the screen`, `frame ${r1(ready.frame.x)}-${r1(ready.frame.r)}, down to ${r1(ready.frame.b)} of ${ready.vh}`);
+      if (d.short) check(Math.abs(ready.frame.x + ready.frame.r - ready.vw) < 1 && ready.frame.b <= ready.vh + 0.5 && (ready.frame.b >= ready.vh - 12 || Math.abs(ready.frame.x - 13) < 0.6 || Math.abs(ready.vh - ready.frame.b - 25) < 0.6), `${tag}: too short for edge to edge, the board is as big as fits the height (or leaves the woodpecker its 13 px beside the frame, or 25 under it), centred, its frame wholly on the screen`, `frame ${r1(ready.frame.x)}-${r1(ready.frame.r)}, down to ${r1(ready.frame.b)} of ${ready.vh}`);
       if (upright) check(ready.board.b <= ready.vh - (d.insets ? d.insets.bottom : 0) + 0.5, `${tag}: the whole board is on the first screen`, `down to ${r1(ready.board.b)} of ${ready.vh}`);
       if (upright) check(['header', 'tags'].every(k => Math.abs(ready[k].x - 12) < 0.5 && Math.abs(ready.vw - ready[k].r - 12) < 0.5), `${tag}: the header and the tags keep 12 px from the screen's edges`, ['header', 'tags'].map(k => `${k} ${r1(ready[k].x)}-${r1(ready[k].r)}`).join(', '));
-      if (side) check(ready.frame.h >= ready.vh - (d.insets ? d.insets.top + d.insets.bottom : 0) - 0.5 && ready.board.h >= ready.frame.h - 12, `${tag}: the board takes the full height less a thin rim`, `frame ${r1(ready.frame.h)}, board ${r1(ready.board.h)} of ${ready.vh}`);
+      if (side) check((ready.frame.h >= ready.vh - (d.insets ? d.insets.top + d.insets.bottom : 0) - 0.5 || Math.abs(ready.frame.r - ready.vw + Math.max(12, d.insets ? d.insets.right : 0)) < 0.6) && ready.board.h >= ready.frame.h - 12, `${tag}: the board takes the full height less a thin rim (or, on a narrow screen, the width the column leaves it)`, `frame ${r1(ready.frame.h)} to ${r1(ready.frame.r)}, board ${r1(ready.board.h)} of ${ready.vw}×${ready.vh}`);
       if (side) {
         const cutDecor = ready.decor.filter(f => f.y < -0.5 || f.b > ready.vh + 0.5 || f.x < -0.5 || f.r > ready.vw + 0.5);
         check(!cutDecor.length, `${tag}: on its side, none of the frame's moss and leaves is cut off by the screen's edge`, cutDecor.map(f => `${f.what} ${r1(f.x)},${r1(f.y)}-${r1(f.r)},${r1(f.b)}`).join('; ') || `${ready.decor.length} shown`);
@@ -362,7 +395,9 @@ const r1 = v => Math.round(v * 10) / 10;
         const text = document.createRange();
         text.selectNodeContents(title);
         const used = text.getBoundingClientRect().width + ${wider} + stats.reduce((w, el) => w + el.getBoundingClientRect().width + parseFloat(getComputedStyle(hd).columnGap), 0);
-        const out = { buttons: shown.length, buttonRow: Math.max(...b) - Math.min(...b) < 4, titleRow: s.every(v => v > tb.top && v < tb.bottom), apart: Math.min(...b) > tb.bottom, slack: hd.getBoundingClientRect().width - used };
+        const bt = shown.map(el => el.getBoundingClientRect()), lo = Math.min(...bt.map(r => r.top)), hi = Math.max(...bt.map(r => r.bottom));
+        const out = { buttons: shown.length, buttonRow: Math.max(...b) - Math.min(...b) < 4, titleRow: s.every(v => v > tb.top && v < tb.bottom), apart: Math.min(...b) > tb.bottom, slack: hd.getBoundingClientRect().width - used,
+          scoreBeside: s[0] > tb.top && s[0] < tb.bottom, bestBelow: s[1] > lo && s[1] < hi }; // (Score on the title's row; Best on the buttons')
         st.remove();
         return out;
       })()`;
@@ -376,7 +411,7 @@ const r1 = v => Math.round(v * 10) / 10;
         check(rows.titleRow && rows.apart, `${tag}: the title, Score and Best on one row, the buttons on their own row below`, `${r1(rows.slack)} px to spare on the title's row`);
         const wider = await ev(ROWS(8));
         check(wider.buttonRow && wider.apart && wider.buttons === rows.buttons, `${tag}: with the title 8 px wider, the buttons still have a row of their own`, wider.titleRow ? 'the title, Score and Best still on one row too' : 'Score and Best would wrap under the title (its own row: no button there)');
-      }
+      } else if (upright) check(rows.scoreBeside && rows.bestBelow && rows.apart, `${tag}: the title and Score on one row, the buttons and Best on the next`);
 
       // Nothing cut off, and everything takes a tap: the header's buttons,
       // the name tags, the start card's buttons; and the chatter's switch
@@ -465,6 +500,8 @@ const r1 = v => Math.round(v * 10) / 10;
         if (known.length) d.drumGap = known.map(q => say(q.f, q.list)).join('; ');
       }
 
+      if (side) await chatterFull(tag, false, d.insets);
+
       // A nap: its card fits, and its buttons take a tap.
       await ev(`window.__autoRaf = true; document.getElementById('pause').click(); 'ok'`);
       await b.sleep(150);
@@ -482,19 +519,7 @@ const r1 = v => Math.round(v * 10) / 10;
       const wp = [];
       for (const [x, y] of [[1, 22], [12, 22], [22, 22], [22, 1]]) wp.push(await ev(PERCH(x, y, true, furnitureOf(watch))));
       check(wp.every(p => p && p.over <= (gutter ? 4 : 0) && !Object.keys(p.on).length && !outside(p).length), `${tag}: watching, the perched woodpecker covers no cell, keeps off the speed buttons and the rest, and is all on the screen`, wp.map(p => (p ? `${p.over} px over cells${Object.keys(p.on).map(k => `, ${p.on[k]} over the ${k}`).join('')}${outside(p).length ? `, ${outside(p).join(', ')}` : ''}` : 'none')).join('; '));
-      if (side) {
-        // The chatter full (five long lines, two rows each): its log cut
-        // inside its box, showing a whole row at least and slicing none; and
-        // the column off the screen's top and bottom (very short, the help
-        // gives the chatter its room while you watch).
-        await ev(`(() => { const log = document.getElementById('chatlog'); for (let i = 0; i < 5; i++) log.insertAdjacentHTML('afterbegin', '<li><strong>Gobbler</strong> <span>Out of my way! I’m starving, and the bark is bare!</span></li>'); return 'ok'; })()`);
-        await b.sleep(60);
-        await settle();
-        const full = await ev(LAYOUT), rows = await ev(LOG_ROWS), last = full.help || full.chatter;
-        check(full.header.y >= 4 && last.b <= full.vh - 2 && full.scrollH <= full.vh, `${tag}: watching, the column keeps off the screen's top and bottom`, `header from ${r1(full.header.y)}, ${full.help ? 'help' : 'chatter (the help giving way)'} down to ${r1(last.b)} of ${full.vh}`);
-        check(full.chatlog.b <= full.chatter.b - 5.5 && (!full.help || full.chatter.b <= full.help.y), `${tag}: watching, a full chatter's log is cut inside its box, clear of its edge`, `log down to ${r1(full.chatlog.b)}, its box to ${r1(full.chatter.b)}`);
-        check(rows.whole >= 1 && !rows.sliced, `${tag}: watching, a full chatter shows a whole row of words at least, and no row sliced through`, `log ${r1(full.chatlog.h)} px tall, showing to ${r1(rows.end - rows.top)}; ${rows.whole} pieces of rows whole, ${rows.sliced} sliced`);
-      }
+      if (side) await chatterFull(tag, true, d.insets);
       const errs = [errsPlaying, await ev(`__errs.join(' | ')`)].filter(Boolean).join(' | ');
       check(!errs, `${tag}: no error events on the page, playing or watching (a resize observer's loop, say)`, errs);
       await ev(`window.__autoRaf = true; 'ok'`);
@@ -512,7 +537,7 @@ const r1 = v => Math.round(v * 10) / 10;
     // furniture; and the board is wholly on the screen and bigger than before
     // (6d478ed: the page 24 px narrower than the screen or 190 px shorter,
     // less a 10 px rim each side), or as big as fits the height where that
-    // ran off the screen (at 375 px wide the header has three rows).
+    // ran off the screen.
     const between = [];
     const atSize = async (w, h, dpr, fresh) => {
       if (fresh) { await open({ w, h, dpr }); await toRound(); }
@@ -538,6 +563,68 @@ const r1 = v => Math.round(v * 10) / 10;
       const at = between.filter(s => s.w === w), bad = at.flatMap(s => s.bad);
       check(!bad.length, `${w} px wide, upright, ${Math.min(...at.map(s => s.h))} to ${Math.max(...at.map(s => s.h))} px tall: perched, the woodpecker covers no cell (a beak's tip at most), is 24 px tall or more, all on the screen and off the page's furniture, and the board is bigger than before (or as big as fits the height)`,
         bad.join('; ') || `${at.length} heights: the bird ${r1(Math.min(...at.map(s => s.bird)))} px tall or more, ${Math.max(...at.map(s => s.over))} px over the cells at most; the board ${r1(Math.min(...at.filter(s => s.board >= s.before - 0.5).map(s => s.board - s.before)))} px bigger than before or more${at.some(s => s.board < s.before - 0.5) ? `, but as big as fits the height at ${at.filter(s => s.board < s.before - 0.5).map(s => `${s.w}×${s.h} (${r1(s.board)}, before ${s.before} ran off the screen)`).join(', ')}` : ''}`);
+    }
+
+    // ------------------------------------------------ Score and Best growing
+    // Held upright, Score and Best growing from 0 to 99, 100 and 1000 in a
+    // round held still (Best following Score past it): the header keeps its
+    // rows, and the board its size and place. (At 390×545-600 and 412×604
+    // the header grew a row at 100 or 1000, the page measured it again, and
+    // the board shrank in the middle of a round; taller, it moved down.)
+    for (const [w, h, dpr] of [[390, 545, 3], [390, 560, 3], [390, 575, 3], [390, 590, 3], [390, 600, 3], [412, 604, 2.625], [414, 622, 3], [428, 640, 3], [390, 844, 3], [375, 548, 2], [360, 640, 3], [344, 600, 3], [320, 460, 2]]) {
+      if (only && !String(w).includes(only)) continue;
+      await open({ w, h, dpr });
+      await ev(`localStorage.setItem('snake-best', '0'); 'ok'`); // (your Best from the rounds before: none)
+      await open({ w, h, dpr });
+      await toRound();
+      const at = [];
+      for (const n of [0, 99, 100, 1000]) {
+        await ev(`(() => { for (let i = 0; i < 60 && document.getElementById('score').textContent !== '${n}'; i++) { SnakeDebug.game().snakes[0].eaten = ${n}; SnakeDebug.frames(1); } return 'ok'; })()`); // (shown after the next tick)
+        await settle(); await b.sleep(60); await settle(); // (the page measures what's above the board a moment after the header changes)
+        at.push({ n, ...(await ev(`(() => { const g = document.getElementById('game').getBoundingClientRect(), hd = document.querySelector('header').getBoundingClientRect(); return { w: g.width, x: g.x, y: g.y, head: hd.height, score: document.getElementById('score').textContent, best: document.getElementById('best').textContent }; })()`)) });
+      }
+      const moved = at.filter(q => ['w', 'x', 'y', 'head'].some(k => Math.abs(q[k] - at[0][k]) > 0.25));
+      const shown = at.every(q => q.score === String(q.n) && q.best === String(q.n));
+      check(shown && !moved.length, `${w}×${h}: as Score and Best grow (0, 99, 100, 1000), the header keeps its rows and the board its size and place`,
+        moved.length ? moved.map(q => `at ${q.n}: the header ${r1(q.head)} px (from ${r1(at[0].head)}), the board ${r1(q.w)} at ${r1(q.x)},${r1(q.y)} (from ${r1(at[0].w)} at ${r1(at[0].x)},${r1(at[0].y)})`).join('; ') : `the board ${r1(at[0].w)} at ${r1(at[0].x)},${r1(at[0].y)}, the header ${r1(at[0].head)} px${shown ? '' : '; Score and Best not shown as set'}`);
+      await ev(`window.__autoRaf = true; 'ok'`);
+    }
+
+    // ------------------------------------ on its side, the help giving way
+    // Watching, the chatter full, on more short screens on their side: where
+    // a row of words fits beside the help, it stays (780×340, a notched
+    // 844×340: it gave way on every screen up to 340 px tall); where none
+    // does (a notched 780×330), it gives the chatter its room.
+    for (const [w, h, dpr, insets] of [[780, 340, 3], [844, 340, 3, notchSide], [780, 330, 3, notchSide]]) {
+      const name = `${w}×${h} on its side${insets ? ' with a notch' : ''}`;
+      if (only && !name.includes(only)) continue;
+      await open({ w, h, dpr, insets, nofs: !!insets });
+      await toRound('watch');
+      await chatterFull(name, true, insets);
+      await ev(`window.__autoRaf = true; 'ok'`);
+    }
+
+    // ------------------------------- on its side, a board narrower than tall
+    // On a screen under about 600 px wide on its side the board is as wide as
+    // the column leaves it, shorter than the screen, so there's room under
+    // it. Perched (resting and eyeing its chunk) for spots all over the board,
+    // the woodpecker never covers a cell and is all on the screen: below the
+    // board it stands as on the ledge, its crown just under the board,
+    // looking up only a little. (With a little less room than all of it
+    // needed, pushed back onto the screen, it hung over the bottom row; and
+    // eyeing a chunk from under the board its head turned up over it.)
+    for (const [w, h, dpr] of [[480, 320, 2], [540, 320, 2], [600, 360, 2]]) {
+      const name = `${w}×${h} on its side`;
+      if (only && !name.includes(only)) continue;
+      await open({ w, h, dpr, nofs: true });
+      await toRound();
+      const l = await ev(LAYOUT), ps = [];
+      for (const [x, y] of SPOTS) for (const aim of [false, true]) ps.push({ x, y, aim, p: await ev(PERCH(x, y, aim, furnitureOf(l))) });
+      const bad = ps.filter(q => !q.p || q.p.over || q.p.cut.length || Object.keys(q.p.on).length || q.p.x < -0.5 || q.p.r > l.vw + 0.5 || q.p.y < -0.5 || q.p.b > l.vh + 0.5);
+      const under = ps.filter(q => q.p && q.p.y >= l.board.b - 0.5).length;
+      check(!bad.length, `${name}: perched, resting or eyeing its chunk, the woodpecker never covers a cell, and is all on the screen and off the column`,
+        bad.map(q => `${q.x},${q.y}${q.aim ? ' eyeing' : ''}: ${q.p ? `${q.p.over} px over the cells${q.p.cut.length ? ', cut off' : ''}${Object.keys(q.p.on).map(k => `, over the ${k}`).join('')}` : 'not drawn'}`).join('; ') || `${ps.length} perches, ${under} of them under the board`);
+      await ev(`window.__autoRaf = true; 'ok'`);
     }
 
     // ------------------------------------------- a browser without svh or dvh
