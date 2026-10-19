@@ -1045,25 +1045,38 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
    the height to spare (it stands there, about 53 px tall, instead of in a
    gutter beside the board that's gone): about 11% of the width, less on a
    short screen. Where even that doesn't fit, it's below the fold and the
-   bird perches in the gutter. Both are laid out for the screen with the
-   browser's bars showing (svh), so nothing moves as they come and go. */
+   bird perches in the gutter. At a height in between, the board leaves the
+   bird room for 24 px tall, beside it or under it, whichever leaves the
+   bigger board. All of it is laid out for the screen with the browser's
+   bars showing (svh), so nothing moves as they come and go. */
 @media (max-width: 440px) {
   body { padding-left: var(--safe-l); padding-right: var(--safe-r); }
   main {
-    /* (100vw: the board; 300 px: the header, the tags and the chatter's
-       head, kept on the first screen; never under 28 px, so the bird still
-       stands about 38 px tall there) */
-    --ledge: clamp(28px, calc(100vh - 100vw - 300px), 11vw);
-    --ledge: clamp(28px, calc(100svh - 100vw - 300px), 11vw);
-    --head: 208px; /* (what's above the board on a short phone: the page's top, the header in three rows at 375 px, the tags in two, and their margins) */
+    --head: 208px; /* (what's above the board on a short phone, until the page has measured it: the page's top, the header in three rows at 375 px, the tags in two, and their margins) */
+    /* (--above: what's above the frame, measured, whatever the header's
+       rows and font: snake.js placeBoard. The board is as big as fits the
+       height under it; and in between, where it would run nearly edge to
+       edge with the ledge below the fold, it leaves the woodpecker room for
+       24 px tall: 13 px beside the frame each side, or 25 px under it, on
+       the screen) */
+    --gutter: 13px;
+    --sill: 25px;
     max-width: none;
     overflow-x: hidden; /* (before Safari 16) */
     overflow-x: clip;
   }
   .frame {
-    max-width: min(760px, max(240px, calc(100vh - var(--head) - max(0px, var(--safe-t) - 12px))));
-    max-width: min(760px, max(240px, calc(100svh - var(--head) - max(0px, var(--safe-t) - 12px))));
+    /* (as big as fits the height, and as the width allows; then, in between,
+       no bigger than leaves the bird its gutter or its sill, whichever is
+       the bigger board) */
+    max-width: min(760px, max(240px, min(calc(100vh - var(--above, calc(var(--head) + max(0px, var(--safe-t) - 12px)))), max(calc(100% - 2 * var(--gutter)), calc(100vh - var(--above, 0px) - var(--sill) - var(--safe-b))))));
     margin-inline: auto;
+  }
+  /* (svh in a test of its own: a value with var() in it is only checked as
+     it's used, so a browser without svh wouldn't drop a second declaration,
+     it would lose the property) */
+  @supports (height: 1svh) {
+    .frame { max-width: min(760px, max(240px, min(calc(100svh - var(--above, calc(var(--head) + max(0px, var(--safe-t) - 12px)))), max(calc(100% - 2 * var(--gutter)), calc(100svh - var(--above, 0px) - var(--sill) - var(--safe-b)))))); }
   }
   header, .scoreboard, .speed, .chatter, .help { margin-inline: 12px; }
   .frame { padding: 4px; border-radius: 9px; }
@@ -1074,7 +1087,11 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .leaves.tr { right: -10px; top: -10px; }
   .leaves.bl { left: -10px; bottom: -10px; }
   .leaves.br { right: -10px; bottom: -10px; }
-  .perch-ledge { display: block; height: var(--ledge); }
+  /* (100vw: the board; 300 px: the header, the tags and the chatter's head,
+     kept on the first screen; never under 28 px, so the bird still stands
+     about 38 px tall there. The pair on the property itself: a browser
+     without svh drops the second and keeps the first.) */
+  .perch-ledge { display: block; height: clamp(28px, calc(100vh - 100vw - 300px), 11vw); height: clamp(28px, calc(100svh - 100vw - 300px), 11vw); }
   /* Watching, the speed buttons come between the ledge and the chatter: a
      smaller gap under them, so more of the chatter's newest lines stay on
      the screen (the one over them is the bird's room, as when you play). */
@@ -1090,7 +1107,6 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   main {
     container-type: normal; /* (sized by its content here: a size container would collapse it) */
     --board: min(900px, calc(100vh - 32px), calc(100vw - 260px));
-    --board: min(900px, calc(100dvh - 32px), calc(100vw - 260px));
     width: auto;
     max-width: none;
     display: grid;
@@ -1110,6 +1126,12 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .trophy { min-width: 34px; padding: 0 8px; justify-content: center; }
   .trophy svg { display: block; }
   .trophy .trophy-text { display: none; }
+  /* (dvh in a test of its own: a custom property takes any value, so a
+     browser without dvh wouldn't drop a second declaration, it would lose
+     the board's size) */
+  @supports (height: 1dvh) {
+    main { --board: min(900px, calc(100dvh - 32px), calc(100vw - 260px)); }
+  }
 }
 @media (pointer: coarse) and (min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px) {
   header { column-gap: 6px; } /* (five buttons in a row, 44 px each on a touch screen, in a 244 px column; with a mouse they're 34 px, and keep their 10 px) */
@@ -1129,7 +1151,6 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   body { padding-top: var(--safe-t); padding-bottom: var(--safe-b); }
   main {
     --board: min(calc(100vh - var(--safe-t) - var(--safe-b)), calc(100vw - 268px - max(12px, var(--safe-l)) - max(12px, var(--safe-r))));
-    --board: min(calc(100dvh - var(--safe-t) - var(--safe-b)), calc(100vw - 268px - max(12px, var(--safe-l)) - max(12px, var(--safe-r))));
     height: var(--board);
     overflow: hidden; /* (before Safari 16) */
     overflow: visible clip; /* (clipped top and bottom only: a focus ring at the column's left edge stays whole) */
@@ -1140,7 +1161,10 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .scoreboard { grid-row: 2; margin-bottom: 6px; gap: 4px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .speed { grid-row: 3; margin-top: 0; margin-bottom: 6px; }
   .chatter { grid-row: 4; margin-top: 0; max-height: 100%; display: flex; flex-direction: column; padding: 4px 10px 6px; }
-  .chatlog { min-height: 0; overflow: hidden; overflow: visible clip; } /* (the chatter's height cuts its log, not its padding; a new line still slides in from the side) */
+  /* (the chatter's height cuts its log, not its padding, and never to less
+     than a line; a new line still slides in from the side. Where a line is
+     cut, the log ends at its last whole row: snake.js fitLog) */
+  .chatlog { min-height: 1.6em; overflow: hidden; overflow: visible clip; }
   .help { grid-row: 5; margin-top: 6px; margin-bottom: 4px; font-size: 0.74rem; }
   .frame { grid-row: 1 / -1; padding: 5px; border-radius: 12px; }
   h1 { font-size: 1.4rem; white-space: nowrap; }
@@ -1153,6 +1177,16 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .leaves { width: 24px; height: 24px; scale: -1 1; } /* (turned round: growing from the rim out into the gap) */
   .leaves.tl { left: -21px; top: 3px; }
   .leaves.bl { left: -21px; bottom: 3px; }
+  @supports (height: 1dvh) {
+    main { --board: min(calc(100dvh - var(--safe-t) - var(--safe-b)), calc(100vw - 268px - max(12px, var(--safe-l)) - max(12px, var(--safe-r)))); }
+  }
+}
+/* On its side and very short (320 px, less a notch's home bar), watching:
+   the speed buttons take a row, so the help (which only says what they do)
+   gives the chatter its room, rather than leave it no line at all. */
+@media (min-aspect-ratio: 5/4) and (max-height: 340px) and (min-width: 480px) {
+  .speed:not([hidden]) ~ .help { display: none; }
+  .speed:not([hidden]) ~ .chatter { max-height: calc(100% - 4px); } /* (still 4 px off the screen's bottom, as the help was) */
 }
 
 /* Touch: comfortable targets. */

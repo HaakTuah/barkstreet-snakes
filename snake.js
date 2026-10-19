@@ -2573,7 +2573,30 @@
     const h = helpEl.getBoundingClientRect();
     helpEl.classList.toggle('cut', h.height > 0 && h.top < innerHeight && h.bottom > innerHeight + 0.5);
   };
+  // What's above the frame, measured (the page's top, the header and the
+  // tags, however many rows they wrap to in whatever font): on a phone held
+  // upright the board is as big as fits the height under it, and at a
+  // height in between leaves the bird room beside it or under it (style.css,
+  // --above). Set only when it changes: the board's own change, which moves
+  // nothing above it, doesn't come round again. Measured now, before the
+  // page is first drawn; as the window changes size and as the font
+  // arrives, before the board is placed; and if the header changes
+  // otherwise (a longer score), a moment later: set from inside a resize
+  // observer's call, the board's change would come round again in the same
+  // frame, which the browser reports as an error.
+  const frameEl = document.querySelector('.frame');
+  const frameTop = () => Math.round((frameEl.getBoundingClientRect().top + scrollY) * 10) / 10;
+  let above = -1, aboveSoon = 0;
+  const measureAbove = () => {
+    aboveSoon = 0;
+    const top = frameTop();
+    if (Math.abs(top - above) > 0.25) { above = top; mainEl.style.setProperty('--above', `${top}px`); }
+  };
+  measureAbove();
+  window.addEventListener('resize', measureAbove, { passive: true });
+  document.fonts?.addEventListener?.('loadingdone', measureAbove);
   const placeBoard = () => {
+    if (!aboveSoon && Math.abs(frameTop() - above) > 0.25) aboveSoon = setTimeout(measureAbove);
     const b = canvas.getBoundingClientRect();
     const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: ledgeEl ? ledgeEl.offsetHeight : 0, hang: [] };
     for (const el of furniture) {
@@ -2597,6 +2620,28 @@
   window.addEventListener('resize', placeBoard, { passive: true });
   window.addEventListener('scroll', placeBoard, { passive: true });
   new ResizeObserver(placeBoard).observe(document.querySelector('main')); // (the page around the board changed: it may have moved)
+  // A full chatter on a phone on its side: its log is cut at its box, the
+  // oldest lines first. Where that would slice a row of words, the log ends
+  // at the last whole row instead (a clip, so nothing moves: the log's size
+  // is what it was). Worked out as lines come and go and the box changes.
+  const rows = document.createRange();
+  const fitLog = () => {
+    const box = chatlogEl.getBoundingClientRect();
+    let cut = 0;
+    for (const li of chatlogEl.children) {
+      const r = li.getBoundingClientRect();
+      if (r.bottom <= box.bottom + 0.5) continue;
+      rows.selectNodeContents(li);
+      let last = r.top;
+      for (const f of rows.getClientRects()) if (f.height && f.bottom <= box.bottom + 0.5) last = Math.max(last, f.bottom);
+      cut = box.bottom - Math.max(box.top, last);
+      break;
+    }
+    chatlogEl.style.clipPath = cut > 0.5 ? `inset(0 0 ${cut.toFixed(1)}px -12px)` : ''; // (-12: a new line slides in from the side)
+  };
+  new ResizeObserver(fitLog).observe(chatlogEl);
+  new MutationObserver(fitLog).observe(chatlogEl, { childList: true });
+  document.fonts?.ready.then(fitLog);
   Chatter.init({ boardEl, logEl: chatlogEl });
 
   const sizer = new ResizeObserver(entries => {
