@@ -42,11 +42,14 @@
 //   two); dust puffs at take-off, rings the landing, and a faint trail
 //   marks the way; with reduced motion the lift and shadow, no dust or trail.
 // - Bridges you can see: a body over a pit is shaded underneath and sags,
-//   its shadow falls into the pit, and a tail end over a hole droops, darker.
+//   its shadow shows on the pit's floor (dark, in a floor lit round it),
+//   and a tail end over a hole droops, darker.
 // - Choking (staged from the engine's choke and nudge events): the cheeks
-//   puff and the bead is spat aside in an arc to where it went; coughing,
-//   the mouth stays shut and puffs of breath come out (with reduced motion
-//   too); nudged food rolls aside, and a beetle scurries.
+//   puff with the bead in its mouth (none of it over the face), then it's
+//   spat aside out of its cheek, in an arc to where it went; coughing, the
+//   mouth stays shut and puffs of breath come out, big enough to see on a
+//   phone, the head jolting (with reduced motion, the puffs still, no
+//   jolt); nudged food rolls aside, and a beetle scurries.
 // - Beetles and the woodpecker's knock (staged from the engine's state and
 //   events): two beetles out at once, each drawn; a cornered one digs in
 //   (it sinks, a collar of sawdust round it, sawdust spraying; with reduced
@@ -55,10 +58,11 @@
 //   in a few seconds; no heap is left where no burrow is; a burrow closing
 //   over fills with sawdust and moss and is gone into the bark in about a
 //   second (with reduced motion, filled at once, then fading); through the
-//   aim, food in the mark trembles and a ring marks where it'll be knocked
-//   to (the engine's own list: never two on one cell, never a burrow); at
-//   the strike it flies there in an arc, rimmed so it reads over a body,
-//   and a beetle scurries there. Copycat copying Star keeps its own red head.
+//   aim, food in the mark trembles (by CSS px: on a phone too) and a ring
+//   marks where it'll be knocked to (the engine's own list: never two on
+//   one cell, never a burrow); at the strike it flies there in an arc,
+//   rimmed so it reads over a body, and a beetle scurries there. Copycat
+//   copying Star keeps its own red head.
 // - A pecked flag is a lost colony: the flag tips and falls into the pit
 //   (the other colony's stands), its land shrinks away into the pit, and
 //   Sovereign's banner is carried to its new capital, not jumping there.
@@ -74,9 +78,11 @@
 // - A woodpecker you can believe: resting, its eye follows a head moving
 //   near it (its pupil, read off its own layer); through the aim its head
 //   turns to its patch, tilting, its eye on it; it strikes a blow on each
-//   knock of the drum (one table for both), the last on the strike's tick,
-//   and in a round the game starts the drum so its last knock lands on the
-//   strike as drawn, and says "kik!" on the frame it lands back on its
+//   knock of the drum (one table for both), the last on the strike's tick;
+//   drumming, it clings clear of the rings where food in its mark will
+//   land, if it can, and a ring or a piece in the air it still covers is
+//   drawn over it; in a round the game starts the drum so its last knock
+//   lands on the strike as drawn, and says "kik!" on the frame it lands back on its
 //   perch; its layer is the board and the room round it, and a phone's
 //   address bar coming and going never makes it again; with reduced
 //   motion, no wingbeats and no bob, and fewer, slower blows.
@@ -750,9 +756,11 @@ const STAGE = `(() => {
     // bark; each against the same body with no hole there, and the hollow
     // against itself with nobody over it. Over the pit, the span is shaded
     // underneath (its lower edge darker, its upper half as it was) and sags
-    // (narrower), and its shadow falls down into the pit, further than on
-    // the bark (the pit below it darker); the tail hanging over the hole
-    // droops into it, darker.
+    // (narrower), and its shadow shows on the pit's floor, further off than
+    // on the bark: just below the span it's dark, in a floor lit round it
+    // (on the all but black floor, a shadow alone didn't show: the pit
+    // below it was barely darker); the tail hanging over the hole droops
+    // into it, darker.
     const bridge = await ev(`(() => {
       SnakeDebug.pinQuality(0);
       const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
@@ -761,7 +769,8 @@ const STAGE = `(() => {
       setBody(you, [[2, 22], [1, 22], [0, 22]], 'right'); you.stunUntil = 1e9;
       setBody(ma, [[2, 2], [1, 2], [0, 2]], 'right'); ma.stunUntil = 1e9;
       const HOLES = [11 * 24 + 10, 12 * 24 + 10, 13 * 24 + 10, 5 * 24 + 18];
-      const look = () => ({ width: count(10.4, 11.3, 0.2, 2.4, reddish), edge: lum(pixels(10.3, 12.7, 0.4, 0.14)), top: lum(pixels(10.3, 12.16, 0.4, 0.14)), pit: lum(pixels(10.2, 13.1, 0.6, 0.35)), tail: lum(pixels(18.3, 5.3, 0.4, 0.4)) });
+      const look = () => ({ width: count(10.4, 11.3, 0.2, 2.4, reddish), edge: lum(pixels(10.3, 12.7, 0.4, 0.14)), top: lum(pixels(10.3, 12.16, 0.4, 0.14)), shade: lum(pixels(10.3, 12.9, 0.4, 0.25)), lit: lum(pixels(10.3, 13.3, 0.4, 0.2)), tail: lum(pixels(18.3, 5.3, 0.4, 0.4)),
+        band: lum(pixels(9.95, 12.71, 0.15, 0.08)), bandTop: lum(pixels(9.95, 12.24, 0.15, 0.08)) }); // (shade: just below the span; lit: the floor a little further; band: the lower edge of the band into it, between the segments)
       const place = () => { setBody(sn, Array.from({ length: 8 }, (_, i) => [13 - i, 12]), 'right'); sn.stunUntil = 1e9; setBody(gob, [[15, 5], [16, 5], [17, 5], [18, 5]], 'left'); gob.stunUntil = 1e9; };
       for (const k of HOLES) g.holes.add(k);
       place(); show(g); drawN(10, 1);
@@ -776,16 +785,19 @@ const STAGE = `(() => {
       return { over, empty, bark };
     })()`);
     const { over, empty, bark } = bridge, f2 = v => v.toFixed(2);
-    check(over.edge / over.top < 0.85 * bark.edge / bark.top && over.width < 0.9 * bark.width, 'a body over a pit is shaded underneath and sags between the rims',
-      `its lower edge at ${f2(over.edge / over.top)} of its upper half's brightness (${f2(bark.edge / bark.top)} on the bark); ${over.width} pixels across, ${bark.width} on the bark`);
-    check(over.pit < 0.95 * empty.pit, 'its shadow falls down into the pit', `the pit below it at ${f2(over.pit / empty.pit)} of its brightness with nobody over it`);
+    check(over.edge / over.top < 0.85 * bark.edge / bark.top && over.band / over.bandTop < 0.92 * bark.band / bark.bandTop && over.width < 0.8 * bark.width, 'a body over a pit is shaded underneath, the bands between its segments too, and sags between the rims',
+      `its lower edge at ${f2(over.edge / over.top)} of its upper half's brightness (${f2(bark.edge / bark.top)} on the bark), the band's ${f2(over.band / over.bandTop)} (${f2(bark.band / bark.bandTop)}); ${over.width} pixels across, ${bark.width} on the bark`);
+    check(over.shade < 0.6 * over.lit && over.lit > 1.5 * empty.lit, 'its shadow shows on the pit’s floor: dark just below it, in a floor lit round it',
+      `just below it ${f2(over.shade)}, the floor a little further ${f2(over.lit)} (${f2(empty.lit)} with nobody over the pit)`);
     check(over.tail < 0.75 * bark.tail, 'a tail end over a hole droops into it, darker', `at ${f2(over.tail / bark.tail)} of its brightness on the bark`);
 
     // Choking and the cough (round six A), staged as the engine reports them
     // (the choke and nudge events, s.coughUntil). Joker chokes on its own
     // bead right in front of it and spits it aside: its cheeks puff out for
-    // a moment (its white face wider across), and the bead flies up over its
-    // head (purple over its white face half way) and lands where it went.
+    // a moment (its white face wider across) with the bead in its mouth,
+    // none of it drawn (over its face, on a phone, the bead was the whole
+    // head); then it's spat out of its cheek on the side it lands, never
+    // over its face, up off its shadow on the ground, and lands where it went.
     // Gobbler coughs with an apple right ahead: its mouth stays shut (it
     // gapes at food otherwise) and puffs of breath come out past it, with
     // reduced motion too. Food a coughing head nudges rolls there (half way,
@@ -810,7 +822,7 @@ const STAGE = `(() => {
       };
       const count = (x, y, w, h, is) => { let n = 0; changed(x, y, w, h, is, () => n++); return n; };
       const centre = (x, y, w, h, is) => { let n = 0, sx = 0, sy = 0; const p = changed(x, y, w, h, is, (c, r) => { n++; sx += c; sy += r; }); return n ? [+(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : null; };
-      const sky = (r, g, b) => b > 200 && g > 150 && r < 120, face = (r, g, b) => Math.min(r, g, b) > 215 || Math.max(r, g, b) < 40, mouth = (r, g, b) => r > 40 && r < 90 && g < 30 && b < 30;
+      const sky = (r, g, b) => b > 200 && g > 150 && r < 120, face = (r, g, b) => Math.min(r, g, b) > 215 || Math.max(r, g, b) < 40, mouth = (r, g, b) => r > 40 && r < 90 && g < 30 && b < 30, darker = (r, g, b) => r + g + b < 160;
       const lime = (r, g, b) => g > 150 && r > 100 && r < 170 && b < 60, emerald = (r, g, b) => g > 110 && g > r + 60 && b > 80 && b < g;
       const pale = (r, g, b) => Math.min(r, g, b) > 200 && b > 180;
       const out = {};
@@ -831,34 +843,42 @@ const STAGE = `(() => {
       }
       // (each measured from where its head's drawn that frame, as it eases out of the move the drawing guessed it'd make)
       const cheeks = () => { const [x, y] = at(jo); return count(x + 0.05, y - 0.8, 0.6, 0.24, face); }; // (white or ink, just past its face, on the side the bead doesn't fly over)
-      const shut = () => { const [x, y] = at(gob); return count(x, y - 0.4, 0.8, 0.8, mouth); }, puffed = () => { const [x, y] = at(gob); return count(x + 0.55, y - 0.45, 0.8, 0.9, pale); };
+      const shut = () => { const [x, y] = at(gob); return count(x, y - 0.4, 0.8, 0.8, mouth); }, puffed = () => { const [x, y] = at(gob); return count(x + 0.45, y - 0.6, 1.2, 1.2, pale); };
+      const orange = (r, g, b) => r > 200 && g > 100 && g < 190 && b < 110, front = () => { const [x, y] = at(gob); let m = -1; const p = changed(x - 0.5, y - 0.6, 1.4, 1.2, orange, c => { m = Math.max(m, c); }); return m < 0 ? null : x - 0.5 + (m + 1) / p.width * 1.4; }; // (how far its head reaches ahead, cells)
       out.before = { cheeks: cheeks(), mouth: shut() };
       g.tick++;
       jo.coughUntil = g.tick + 9; gob.coughUntil = g.tick + 9;
       R.onTick([{ type: 'choke', snake: jo, x: 9, y: 8, tx: 8, ty: 10 }, { type: 'nudge', snake: ma, kind: 'food', x: 16, y: 13, tx: 15, ty: 12 }, { type: 'nudge', snake: ma, kind: 'beetle', x: 5, y: 12, tx: 4, ty: 12 }]);
+      const [hx, hy] = at(jo), onFace = () => count(hx - 0.35, hy - 0.35, 0.7, 0.7, sky); // (its eyes and snout)
       drawN(1, 0.05, 80);
-      out.gag = { cheeks: cheeks() };
+      out.gag = { cheeks: cheeks(), bead: count(6.5, 6.5, 4, 5, sky) };
       drawN(1, 0.5, 80); // (half way: 160 ms)
-      out.mid = { bead: centre(7.5, 7.5, 3, 4, sky), apple: centre(14.2, 11.2, 3, 3, lime), beetle: centre(3, 11, 3, 2, emerald) };
+      const bead = centre(7.5, 7.5, 3, 4, sky);
+      out.mid = { bead, face: onFace(), shadow: bead && centre(bead[0] - 0.5, bead[1] + 0.5, 1, 0.8, darker), apple: centre(14.2, 11.2, 3, 3, lime), beetle: centre(3, 11, 3, 2, emerald) }; // (its shadow on the ground: below where its ink rim reaches)
       g.tick++; drawN(4, 0.5, 80); // (the next tick: all of it there)
       out.end = { bead: centre(7.5, 7.5, 3, 4, sky), apple: centre(14.2, 11.2, 3, 3, lime), beetle: centre(3, 11, 3, 2, emerald) };
-      const puffs = () => { let n = 0; for (let i = 0; i < 10; i++) { drawN(1, 0.5, 30); n = Math.max(n, puffed()); } return n; };
-      out.cough = { mouth: shut(), puffs: puffs() };
+      let reach = 0;
+      const puffs = () => { let n = 0; reach = 0; for (let i = 0; i < 10; i++) { drawN(1, 0.5, 30); n = Math.max(n, puffed()); reach = Math.max(reach, front()); } return n; };
+      out.cough = { mouth: shut(), puffs: puffs(), reach };
       R.setReducedMotion(true);
-      out.still = { puffs: puffs() };
+      out.still = { puffs: puffs(), reach };
       R.setReducedMotion(false);
       gob.coughUntil = -1; g.tick++; drawN(10, 0.5, 30);
-      out.after = { mouth: shut(), puffs: puffed() };
+      out.after = { mouth: shut(), puffs: puffed(), reach: front() };
+      out.cellPx = Math.round((W / TUNING.GRID) ** 2);
       SnakeDebug.pinQuality(2);
       return out;
     })()`);
     const between = (c, x0, y0, x1, y1) => !!c && Math.min(x0, x1) + 0.1 < c[0] && c[0] < Math.max(x0, x1) - 0.1 && Math.min(y0, y1) - 0.05 < c[1] && c[1] < Math.max(y0, y1) + 0.05;
-    const bead = choke.mid.bead, line = 8.5 + 2 * (bead ? (9.5 - bead[0]) : 0); // (where on a straight slide from the cell ahead of it, 9, 8, to 8, 10, it'd be)
-    check(choke.gag.cheeks > choke.before.cheeks + 8 && between(bead, 8.5, 8.5, 9.5, 10.5) && bead[1] < line - 0.3 && !!choke.end.bead && Math.abs(choke.end.bead[0] - 8.5) < 0.12 && Math.abs(choke.end.bead[1] - 10.5) < 0.2,
-      'choking on its own bead, its cheeks puff out and it spits the bead aside, up in a little arc, to land where it went',
-      `its face just past its cheeks ${choke.before.cheeks} pixels, then ${choke.gag.cheeks} as it gags; the bead half way at ${bead} (a slide would be at y ${line.toFixed(2)}), then at ${choke.end.bead}`);
+    const bead = choke.mid.bead, shade = choke.mid.shadow;
+    check(choke.gag.cheeks > choke.before.cheeks + 8 && choke.gag.bead === 0 && between(bead, 8.3, 8.9, 9.6, 10.5) && choke.mid.face === 0 && !!shade && shade[1] - bead[1] > 0.45 && !!choke.end.bead && Math.abs(choke.end.bead[0] - 8.5) < 0.12 && Math.abs(choke.end.bead[1] - 10.5) < 0.2,
+      'choking on its own bead, its cheeks puff out with the bead in its mouth, then it spits it aside out of its cheek, never over its face, up in a little arc, to land where it went',
+      `its face just past its cheeks ${choke.before.cheeks} pixels, then ${choke.gag.cheeks} as it gags, the bead's ${choke.gag.bead} pixels drawn then; half way at ${bead?.slice(0, 2)}, ${choke.mid.face} over its face, its shadow on the ground at y ${shade?.[1]}; then at ${choke.end.bead}`);
     check(choke.before.mouth > 20 && choke.cough.mouth * 3 < choke.before.mouth && choke.after.mouth > 20 && choke.cough.puffs > 10 && choke.still.puffs > 10 && choke.after.puffs === 0, 'coughing, its mouth stays shut and puffs of breath come out past it (with reduced motion too)',
       `Gobbler’s mouth, an apple right ahead: ${choke.before.mouth} pixels open, ${choke.cough.mouth} coughing, ${choke.after.mouth} after; puffs ${choke.cough.puffs}, with reduced motion ${choke.still.puffs}, after ${choke.after.puffs}`);
+    const jolt = choke.cough.reach - choke.after.reach, calmJolt = choke.still.reach - choke.after.reach;
+    check(choke.cough.puffs > 0.1 * choke.cellPx && choke.still.puffs > 0.1 * choke.cellPx && jolt > 0.09 && Math.abs(calmJolt) < 0.03, 'a cough reads at a phone’s size: a puff a good part of a cell, the head jolting forward with it (with reduced motion, no jolt)',
+      `the puff at its biggest ${(choke.cough.puffs / choke.cellPx).toFixed(2)} of a cell (${(choke.still.puffs / choke.cellPx).toFixed(2)} with reduced motion); the head’s front ${jolt.toFixed(2)} cells further forward at a cough (${calmJolt.toFixed(2)} with reduced motion)`);
     check(between(choke.mid.apple, 15.5, 12.5, 16.5, 13.5) && !!choke.end.apple && Math.abs(choke.end.apple[0] - 15.5) < 0.15 && between(choke.mid.beetle, 4.5, 12.5, 5.5, 12.5) && !!choke.end.beetle && Math.abs(choke.end.beetle[0] - 4.5) < 0.15,
       'food a coughing head nudges rolls aside, and a beetle scurries', `the apple half way at ${choke.mid.apple}, then ${choke.end.apple}; the beetle ${choke.mid.beetle}, then ${choke.end.beetle}`);
 
@@ -1276,6 +1296,59 @@ const STAGE = `(() => {
       'its last blow lands on the strike’s tick, as the patch gives way, and then it pulls its head out of the hole',
       `4 ms before: blow ${blows.before.blows} of ${blows.n}; on the tick: blow ${blows.last.blows}, its beak ${blows.last.d} units off; the strike made: ${blows.hole.phase}, ${blows.hole.d} units off, 60 ms on ${blows.pulled.d}`);
 
+    // Drumming, it never hides where the food in its mark will land (the
+    // ring is a promise you plan by): a patch of 3 by 4 with the spot at
+    // (6, 10), the bird coming from the right. Nothing in the mark, it
+    // clings as it came, over (8, 11); with an apple whose ring is (8, 11),
+    // it clings the other way, the ring clear, its beak still on the spot.
+    // With apples both sides, every way covers a ring: the one it covers is
+    // drawn over it (its layer at the ring, with and without), and so is a
+    // piece in the air under it.
+    const promise = await ev(`(() => {
+      ${BIRD}
+      const lg = L.getContext('2d');
+      const px = (bx, by) => { const z = R.birdPose().layer, k = z.W / z.w, bd = document.getElementById('game').getBoundingClientRect(), c = bd.width / (N * 32); const x = Math.round((bd.left + bx * c - z.x) * k), y = Math.round((bd.top + by * c - z.y) * k); return x < 0 || y < 0 || x >= L.width || y >= L.height ? [0, 0, 0, 0] : Array.from(lg.getImageData(x, y, 1, 1).data); }; // (its layer's pixel at a board point)
+      const ringPts = (x, y, r) => Array.from({ length: 32 }, (_, q) => [(x + 0.5) * 32 + Math.cos(q * Math.PI / 16) * r, (y + 0.5) * 32 + Math.sin(q * Math.PI / 16) * r]);
+      const covered = (x, y) => ringPts(x, y, 12).filter(([bx, by]) => px(bx, by)[3] > 128).length;
+      const differ = (a, b) => a.filter((c, i) => c[3] > 128 && Math.abs(c[0] - b[i][0]) + Math.abs(c[1] - b[i][1]) + Math.abs(c[2] - b[i][2]) > 30).length;
+      const P = []; for (let y = 9; y <= 12; y++) for (let x = 5; x <= 7; x++) P.push(y * N + x);
+      const spot = 10 * N + 6, lands = () => E.knocks(g, P).filter(k => k.to).map(k => [k.to.x, k.to.y]);
+      const mark = foods => { g.tick++; g.food = foods.map(([x, y]) => ({ x, y, kind: 'food', expires: g.tick + 900 })); g.woodpecker = { x: 6, y: 10, at: g.time - 9000, target: P, strikeAt: g.tick + 17, last: [spot], struckAt: g.tick - 60, restUntil: g.tick, pecks: 1 }; drawN(3); return R.birdPlan(); };
+      const out = {};
+      let plan = mark([]), pose = at(-plan.times[3]);
+      out.came = { flip: pose.flip, phase: pose.phase, covered: covered(8, 11) };
+      plan = mark([[7, 11]]); out.lands1 = lands(); pose = at(-plan.times[3]);
+      out.one = { flip: pose.flip, phase: pose.phase, covered: covered(8, 11), beak: +Math.hypot(pose.beak[0] - 6.5 * 32, pose.beak[1] - 10.5 * 32).toFixed(1) };
+      plan = mark([[5, 11], [7, 11]]); out.lands2 = lands(); pose = at(-plan.times[3]);
+      const hid = out.lands2.map(([x, y]) => ({ x, y, n: covered(x, y) })).sort((a, b) => b.n - a.n)[0], t = __t;
+      const ring = () => ringPts(hid.x, hid.y, 12).concat(ringPts(hid.x, hid.y, 13)).map(([bx, by]) => px(bx, by));
+      R.birdOver(false); R.birdFrame(0.5, t); const off = ring();
+      R.birdOver(true); R.birdFrame(0.5, t); const on = ring();
+      out.two = { phase: R.birdPose().phase, hid, under: off.filter(c => c[3] > 128).length, over: differ(off, on) };
+      let cell = null; // (under its body, a piece's height clear of the rings)
+      for (let y = 6; y <= 17 && !cell; y++) for (let x = 0; x < N && !cell; x++) {
+        if (P.includes(y * N + x) || out.lands2.some(([lx, ly]) => Math.hypot(lx - x, ly + 0.6 - y) < 0.8)) continue;
+        if ([[0.5, 0.5], [0.5, -0.1], [0.2, -0.1], [0.8, -0.1]].every(([dx, dy]) => px((x + dx) * 32, (y + dy) * 32)[3] > 200)) cell = [x, y];
+      }
+      g.food.push({ x: cell[0], y: cell[1], kind: 'food', expires: g.tick + 900 });
+      R.onTick([{ type: 'knock', kind: 'food', x: cell[0], y: cell[1], tx: cell[0], ty: cell[1] }]); // (tossed up where it lies: half way, at the top of its hop)
+      const cx = (cell[0] + 0.5) * 32, cy = (cell[1] - 0.1) * 32, disc = () => { const o = []; for (let dy = -8; dy <= 8; dy += 2) for (let dx = -8; dx <= 8; dx += 2) if (dx * dx + dy * dy <= 64) o.push(px(cx + dx, cy + dy)); return o; };
+      R.birdOver(false); R.birdFrame(0.5, t + 160); const off2 = disc();
+      R.birdOver(true); R.birdFrame(0.5, t + 160); const on2 = disc();
+      out.air = { cell, under: off2.filter(c => c[3] > 128).length, of: off2.length, over: differ(off2, on2) };
+      g.food = [];
+      return out;
+    })()`);
+    {
+      const { came, one, two, air } = promise;
+      check(came.phase === 'drum' && came.covered > 24 && one.phase === 'drum' && JSON.stringify(promise.lands1) === '[[8,11]]' && one.covered === 0 && one.flip !== came.flip && one.beak < 3,
+        'drumming, the woodpecker clings clear of a ring where food in its mark will land, if it can',
+        `as it came (facing ${came.flip > 0 ? 'right' : 'left'}) it covers ${came.covered} of 32 points round the ring at 8,11; with an apple landing there it faces ${one.flip > 0 ? 'right' : 'left'}, covering ${one.covered}, its beak ${one.beak} units off the spot`);
+      check(two.phase === 'drum' && two.hid.n > 8 && two.over > 0.4 * two.under && air.under === air.of && air.over > 0.8 * air.of,
+        'and where it can’t, the ring it covers is drawn over it, as is a piece in the air under it',
+        `rings at ${JSON.stringify(promise.lands2)}: ${two.hid.n} of 32 points at ${two.hid.x},${two.hid.y} under it, ${two.over} of its ${two.under} pixels there drawn over; an apple up in the air over ${air.cell}: ${air.over} of ${air.of} pixels drawn over it`);
+    }
+
     // The sound, in a real round on a virtual 60 Hz clock: the drum the game
     // starts (when, how late, how fast) and its last knock against the moment
     // the drawing reaches the strike; the "kik!" against the bird's landing.
@@ -1317,6 +1390,24 @@ const STAGE = `(() => {
     await b.go(site.url + '?debug', { settle: 0 });
     await ev('__settle()');
     await ev(STAGE);
+    // On a phone, food in the woodpecker's mark trembles enough to see: it
+    // was under a pixel there, by the board's units. An apple in a marked
+    // patch, early in the aim and near the strike: how far it moves across,
+    // frame to frame, in CSS px.
+    const tremble = await ev(`(() => {
+      ${BIRD}
+      const lime = (r, g, b) => g > 150 && r > 100 && r < 170 && b < 60, css = document.getElementById('game').getBoundingClientRect().width / N;
+      const centre = () => { const p = pixels(9, 9, 3, 3); let n = 0, sx = 0; for (let i = 0; i < p.data.length; i += 4) if (lime(p.data[i], p.data[i + 1], p.data[i + 2])) { n++; sx += (i / 4) % p.width; } return n ? 9 + sx / n / p.width * 3 : null; };
+      const spread = left => { g.woodpecker.strikeAt = g.tick - 1 + left; const xs = []; for (let i = 0; i < 9; i++) { drawN(1, 0.5, 23); xs.push(centre()); } return xs.every(v => v != null) ? +((Math.max(...xs) - Math.min(...xs)) * css).toFixed(2) : -1; };
+      const P = []; for (let y = 9; y <= 11; y++) for (let x = 9; x <= 11; x++) P.push(y * N + x);
+      g.food = [{ x: 10, y: 10, kind: 'food', expires: g.tick + 900 }];
+      g.woodpecker = { x: 10, y: 10, at: g.time - 9000, target: P, strikeAt: g.tick + 17, last: [], struckAt: -1, restUntil: 1e9, pecks: 1 };
+      drawN(30, 0.5, 16);
+      const out = { early: spread(15), late: spread(1) };
+      g.woodpecker = null; g.food = []; drawN(2);
+      return out;
+    })()`);
+    check(tremble.early >= 1.5 && tremble.late >= 3, 'on a phone, food in the woodpecker’s mark trembles enough to see, more as the strike nears', `it moves ${tremble.early} CSS px across early in the aim, ${tremble.late} near the strike`);
     await ev(`(() => {
       ${BIRD}
       rest(23 * N + 12); drawN(5);

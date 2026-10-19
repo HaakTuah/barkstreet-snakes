@@ -1594,7 +1594,11 @@ window.SnakeRender = (() => {
   // drifts off (with reduced motion, staying put as it fades), its head
   // jolting (see prepare). The bead it spat flies off in a little arc (see
   // moveFood). How far through its cough's beat it is (-1 before the first).
-  const GAG_MS = 280, COUGH_FIRST = 160, COUGH_BEAT = 300;
+  // (Made to read at arm's length on a phone, where the first puff was a
+  // speck of 3 to 6 px and the jolt under a pixel: the puff 0.14 to 0.28 of
+  // a cell, holding its white longer; the head swelling 15% and lurching a
+  // tenth of a cell forward over the first third of each beat.)
+  const GAG_MS = 280, COUGH_FIRST = 160, COUGH_BEAT = 300, COUGH_JOLT = 0.3, COUGH_SWELL = 0.15, COUGH_LURCH = 0.1;
   function coughPhase(a, now) {
     const t = now - a.coughFrom - COUGH_FIRST;
     return t < 0 ? -1 : (t % COUGH_BEAT) / COUGH_BEAT;
@@ -1621,8 +1625,8 @@ window.SnakeRender = (() => {
   function drawCough(a, now) {
     const ph = coughPhase(a, now);
     if (ph < 0) return;
-    const c = CELL, x = c * (0.64 + (reduced ? 0 : 0.36 * ph)), r = c * (0.08 + 0.09 * ph), was = ctx.globalAlpha;
-    ctx.globalAlpha = was * (1 - ph * ph);
+    const c = CELL, x = c * (0.64 + (reduced ? 0 : 0.36 * ph)), r = c * (0.14 + 0.14 * ph), was = ctx.globalAlpha;
+    ctx.globalAlpha = was * (1 - ph * ph * ph);
     ctx.beginPath();
     for (let j = 0; j < COUGH_PUFF.length; j += 3) { const px = x + COUGH_PUFF[j] * r, py = COUGH_PUFF[j + 1] * r, pr = COUGH_PUFF[j + 2] * r; ctx.moveTo(px + pr, py); ctx.arc(px, py, pr, 0, TAU); }
     ctx.strokeStyle = 'rgba(58,38,20,0.55)';
@@ -1924,7 +1928,10 @@ window.SnakeRender = (() => {
     const cough = !dead && coughing(s);
     if (cough && !a.coughing) a.coughFrom = now - a.chokeAt < 500 ? a.chokeAt : now;
     a.coughing = cough;
-    if (cough && !reduced) { const ph = coughPhase(a, now); if (ph >= 0 && ph < 0.3) a.bump += 0.08 * Math.sin(ph / 0.3 * Math.PI); }
+    if (cough && !reduced) { // (a jolt: its head swells and lurches forward with each cough)
+      const ph = coughPhase(a, now);
+      if (ph >= 0 && ph < COUGH_JOLT) { const j = Math.sin(ph / COUGH_JOLT * Math.PI); a.bump += COUGH_SWELL * j; pts[0] += a.hc * CELL * COUGH_LURCH * j; pts[1] += a.hs * CELL * COUGH_LURCH * j; }
+    }
     for (let i = 0; i < m; i++) a.rad[i] = radius(i, m, a, a.tickPos);
     // Seen from above, up is toward you: what's in the air swells (its head
     // the most at the top of a jump, its neck after it, in an arch), and
@@ -1934,7 +1941,7 @@ window.SnakeRender = (() => {
     if (a.lifted) for (let i = 0; i < m; i++) if (a.lift[i]) a.rad[i] *= 1 + a.lift[i] * a.liftSw;
     if (!dead && game) sinkOf(s, a);
     else if (a.bridging) { a.hang.fill(0); a.sink.fill(0); a.bridging = false; }
-    if (a.bridging) for (let i = 0; i < m; i++) if (a.sink[i]) a.rad[i] *= 1 - SINK_SHRINK * a.sink[i];
+    if (a.bridging) for (let i = 0; i < m; i++) if (a.sink[i]) a.rad[i] *= 1 - sunk(a.sink[i]);
     // Come down from a jump: a squash (its head a touch wider, its face
     // flattened along the way it's going: see drawBody), and a ring of dust (see liftOf).
     const sq = (now - a.landAt) / LAND_MS;
@@ -2029,13 +2036,19 @@ window.SnakeRender = (() => {
 
   // A body over a hole, seen from above: nothing under it, so it's shaded
   // underneath (away from the light: see shadeUnder), its shadow falls deeper,
-  // onto the pit's floor and far wall, softer and further off (see
-  // drawShadows), and it's a little smaller the lower it is. Each segment
+  // onto the pit's floor and far wall, softer and further off, with the
+  // floor round it catching a little light (see drawShadows, pitLight), and
+  // it's a little smaller the lower it is. Each segment
   // hangs over the pit by how far in from its rim it's drawn (hang, 0..1);
   // between rims, a span sags a little, most in its middle; a tail end with
   // nothing under it beyond the rim droops down into the pit (smaller and
   // darker) until it's out of the cell. What's up in the air doesn't sag.
   const HANG_RIM = 0.1, SINK_SHRINK = 0.3, SAG = 0.5; // (where the pit's rim is, in from a hole cell's edge, in cells; how much smaller a segment as low as it goes is; how low a span sags)
+  // How much smaller a segment hanging so low is: a span sags up to 22.5%
+  // smaller in its middle (at 15% it was under a pixel on a phone), a tail
+  // end hanging into the pit up to 30%, smoothly between (a tail end
+  // passes through a span's depths as it goes over the rim).
+  const SPAN_SHRINK = 0.45, sunk = s => SPAN_SHRINK * Math.min(s, SAG) + (SINK_SHRINK - SPAN_SHRINK * SAG) / (1 - SAG) * Math.max(0, s - SAG);
   let supH = new Float32Array(64), supT = new Float32Array(64);
   function sinkOf(s, a) {
     const m = a.n, hang = a.hang, sink = a.sink, pts = a.pts;
@@ -2547,6 +2560,7 @@ window.SnakeRender = (() => {
     }
     if (x0 > x1) return;
     veilOn(2, 4, x0 - CELL * 2, y0 - CELL * 2, x1 + CELL * 2, y1 + CELL * 2);
+    pitLight(); // (first, the light on a pit's floor round where a span's shadow falls)
     ctx.fillStyle = '#000000';
     for (let j = 0; j < live.length; j++) {
       const a = anim.get(live[j]), offs = a.offs || OFFS, air = j >= up && a.lifted ? 1 : 0;
@@ -2562,6 +2576,137 @@ window.SnakeRender = (() => {
       }
     }
     veilOff(0.3);
+  }
+  // A body well over a pit: the pit's floor is all but black, so a shadow
+  // on it didn't show, and on a phone the span read as two darker beads,
+  // not a body over a gap. So the floor round where its shadow falls
+  // catches a little light, fading out from it, and its shadow lies dark
+  // in that, further off down and to the right than on the bark: the gap
+  // under it, seen. Drawn in the shadows' veil before them (it's laid on
+  // every frame anyway: a layer of its own, laid on too, cost a frame 0.3
+  // ms to the GPU and up to 2 ms of waiting on it in the script, with four
+  // snakes across ditches), in the shapes a shadow is (what's well over the
+  // pit, HANG_DRY, and the bands either side, grown: each straight run one
+  // rectangle), in faint steps, each cut to the hole cells near it, short
+  // of the rim where the bark is (as rectangles, worked out: a mask over
+  // the veil cost a frame 0.7 ms); the shadows go on over it. Where the
+  // shadow falls on the far wall, it darkens it, as on the bark.
+  const PIT_LIT = '#c17d41', PIT_GLOW = [16, 12, 8, 4], PIT_STEP = 0.3; // (the light, laid on at the veil's 0.3; its steps, how far round the shadow, units; each one's)
+  const PIT_REACH = CELL * 0.54 + 18; // (round a segment's shadow well over a pit: a head's radius and the light round it; a band to the next is in its own cell, or the next's, or on the bark)
+  const pitNear = new Uint8Array(GRID * GRID), pitCells = [];
+  let pitRuns = new Float32Array(5 * 32), pitRunN = 0; // (the straight runs well over a pit: x0, y0, x1, y1 along the spine, and half the widest segment)
+  const pitAreas = new Float32Array(4 * GRID * GRID); let pitAreaN = 0; // (the hole cells near them, merged: x0, y0, x1, y1, where the veil draws them)
+  const pitPend = new Float32Array(5 * 4 * GRID); // (pitCellAreas's runs open from one row to the next)
+  function pitLight() {
+    pitCells.length = 0;
+    for (const s of live) { // (the hole cells near each segment well over one)
+      const a = anim.get(s);
+      if (!a.bridging || a.offs) continue;
+      for (let i = 0; i < a.n; i++) {
+        if (a.hang[i] < HANG_DRY) continue;
+        const x = a.pts[2 * i] + DEEP_DX + 2, y = a.pts[2 * i + 1] + DEEP_DY + 4; // (its shadow)
+        const gx0 = Math.max(0, Math.floor((x - PIT_REACH) / CELL)), gx1 = Math.min(GRID - 1, Math.floor((x + PIT_REACH) / CELL));
+        const gy0 = Math.max(0, Math.floor((y - PIT_REACH) / CELL)), gy1 = Math.min(GRID - 1, Math.floor((y + PIT_REACH) / CELL));
+        for (let gy = gy0; gy <= gy1; gy++) {
+          for (let gx = gx0; gx <= gx1; gx++) {
+            const key = gy * GRID + gx;
+            if (!holeMask[key] || pitNear[key]) continue;
+            pitNear[key] = 1; pitCells.push(key);
+          }
+        }
+      }
+    }
+    if (!pitCells.length) return;
+    pitRunN = 0;
+    for (const s of live) {
+      const a = anim.get(s);
+      if (!a.bridging || a.offs) continue;
+      shadowShape(a, true);
+      gatherRuns(a);
+      unshadow(a);
+    }
+    pitCellAreas();
+    ctx.fillStyle = PIT_LIT;
+    ctx.globalAlpha = PIT_STEP;
+    for (const grow of PIT_GLOW) {
+      for (let r = 0; r < pitRunN; r++) {
+        const g = pitRuns[5 * r + 4] + grow, x0 = pitRuns[5 * r] - g, y0 = pitRuns[5 * r + 1] - g, x1 = pitRuns[5 * r + 2] + g, y1 = pitRuns[5 * r + 3] + g;
+        for (let q = 0; q < pitAreaN; q++) {
+          const ax = Math.max(x0, pitAreas[4 * q]), ay = Math.max(y0, pitAreas[4 * q + 1]), bx = Math.min(x1, pitAreas[4 * q + 2]), by = Math.min(y1, pitAreas[4 * q + 3]);
+          if (bx > ax && by > ay) ctx.fillRect(ax, ay, bx - ax, by - ay);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  // (The hole cells marked near a span, as rectangles into pitAreas, short
+  // of the pit's edge, its ink and all, where the bark is, where the veil
+  // draws them (it lands 2 and 4 units off): each row's run of them with
+  // the same rims above and below, and a run going on down the next row,
+  // the same across and the hole open between, with it: a ditch crossed is
+  // one. Their marks cleared.)
+  function pitCellAreas() {
+    const PIT_IN = PIT_RIM + 1, hole = key => holeMask[key] === 1;
+    let cx0 = GRID, cy0 = GRID, cx1 = -1, cy1 = -1;
+    for (const key of pitCells) { const x = key % GRID, y = (key - x) / GRID; if (x < cx0) cx0 = x; if (x > cx1) cx1 = x; if (y < cy0) cy0 = y; if (y > cy1) cy1 = y; }
+    pitAreaN = 0;
+    let open = 0; // (the runs open from the row before: pitPend[0..open), each x, w, y, h, open below)
+    for (let cy = cy0; cy <= cy1 + 1; cy++) {
+      let now1 = open;
+      for (let cx = cx0; cy <= cy1 && cx <= cx1; cx++) {
+        let key = cy * GRID + cx;
+        if (!pitNear[key]) continue;
+        const t = cy > 0 && hole(key - GRID) ? 0 : PIT_IN, b = cy < GRID - 1 && hole(key + GRID) ? 0 : PIT_IN, l = cx > 0 && hole(key - 1) ? 0 : PIT_IN;
+        let ex = cx;
+        while (ex < cx1 && pitNear[key + 1] && (cy > 0 && hole(key + 1 - GRID) ? 0 : PIT_IN) === t && (cy < GRID - 1 && hole(key + 1 + GRID) ? 0 : PIT_IN) === b) { ex++; key++; }
+        const r = ex < GRID - 1 && hole(key + 1) ? 0 : PIT_IN, x = cx * CELL + l, w = (ex + 1) * CELL - r - x;
+        let j = 0;
+        while (j < open && !(pitPend[5 * j + 4] === 1 && !t && pitPend[5 * j] === x && pitPend[5 * j + 1] === w)) j++;
+        if (j < open) { pitPend[5 * j + 3] += CELL - b; pitPend[5 * j + 4] = (b ? 0 : 1) + 2; } // (it goes on down: carried on)
+        else { pitPend[5 * now1] = x; pitPend[5 * now1 + 1] = w; pitPend[5 * now1 + 2] = cy * CELL + t; pitPend[5 * now1 + 3] = CELL - t - b; pitPend[5 * now1 + 4] = (b ? 0 : 1) + 2; now1++; }
+        cx = ex;
+      }
+      let n1 = 0; // (the row before's runs that didn't go on: done; those that did, and this row's, open for the next)
+      for (let j = 0; j < now1; j++) {
+        const o = pitPend[5 * j + 4];
+        if (o >= 2) { pitPend[5 * n1] = pitPend[5 * j]; pitPend[5 * n1 + 1] = pitPend[5 * j + 1]; pitPend[5 * n1 + 2] = pitPend[5 * j + 2]; pitPend[5 * n1 + 3] = pitPend[5 * j + 3]; pitPend[5 * n1 + 4] = o - 2; n1++; continue; }
+        const q = 4 * pitAreaN++;
+        pitAreas[q] = pitPend[5 * j] - 2; pitAreas[q + 1] = pitPend[5 * j + 2] - 4; pitAreas[q + 2] = pitPend[5 * j] + pitPend[5 * j + 1] - 2; pitAreas[q + 3] = pitPend[5 * j + 2] + pitPend[5 * j + 3] - 4;
+      }
+      open = n1;
+    }
+    for (const key of pitCells) pitNear[key] = 0;
+  }
+  // (What's well over a pit and the bands either side, as straight runs
+  // into pitRuns: each run along its spine, and as wide as its widest
+  // segment; grown, each is one rectangle. A rectangle a piece, circles
+  // and all, was 0.3 ms a frame for four snakes across ditches, in the
+  // calls alone.)
+  let runAX = 0, runAY = 0, runBX = 0, runBY = 0, runH = 0, runFlat = false, runOpen = false; // (the run being gathered)
+  function gatherRuns(a) {
+    const p = a.pts, c = a.cor, rad = a.rad, n = a.n;
+    runOpen = false;
+    for (let i = 0; i < n - 1; i++) {
+      if (leftOut(a, i, i + 1, 2, 0)) { runFlush(); continue; }
+      const h = Math.max(rad[i], rad[i + 1]);
+      runPiece(p[2 * i], p[2 * i + 1], c[2 * i], c[2 * i + 1], h);
+      runPiece(c[2 * i], c[2 * i + 1], p[2 * i + 2], p[2 * i + 3], h);
+    }
+    runFlush();
+  }
+  function runPiece(x1, y1, x2, y2, h) {
+    if (near(x1, x2) && near(y1, y2)) return;
+    const flat = near(y1, y2);
+    if (runOpen && flat === runFlat && near(x1, runBX) && near(y1, runBY)) { runBX = x2; runBY = y2; if (h > runH) runH = h; return; }
+    runFlush();
+    runAX = x1; runAY = y1; runBX = x2; runBY = y2; runH = h; runFlat = flat; runOpen = true;
+  }
+  function runFlush() {
+    if (!runOpen) return;
+    runOpen = false;
+    if (5 * (pitRunN + 1) > pitRuns.length) { const more = new Float32Array(2 * pitRuns.length); more.set(pitRuns); pitRuns = more; }
+    const q = 5 * pitRunN++;
+    pitRuns[q] = Math.min(runAX, runBX); pitRuns[q + 1] = Math.min(runAY, runBY); pitRuns[q + 2] = Math.max(runAX, runBX); pitRuns[q + 3] = Math.max(runAY, runBY); pitRuns[q + 4] = runH;
   }
   // The shadows of what of live[up..] is up in the air (and on firm ground
   // or by a pit's rim: what's over one has its shadow in the pit already),
@@ -2617,7 +2762,7 @@ window.SnakeRender = (() => {
       const l = up ? lift[i] : 0;
       shP[2 * i] = a.pts[2 * i] + l * LIFT_DX + dx;
       shP[2 * i + 1] = a.pts[2 * i + 1] + l * LIFT_DY + dy;
-      shR[i] = a.rad[i] / (1 + l * sw) / (1 - SINK_SHRINK * sink[i]) * (1 - LIFT_SHRINK * l);
+      shR[i] = a.rad[i] / (1 + l * sw) / (1 - sunk(sink[i])) * (1 - LIFT_SHRINK * l);
       if (i < m - 1) {
         const l2 = up ? (l + lift[i + 1]) / 2 : 0;
         shC[2 * i] = a.cor[2 * i] + l2 * LIFT_DX + dx;
@@ -2762,6 +2907,7 @@ window.SnakeRender = (() => {
     // (Bands as rectangles, fillRect's fast path; folding them into each
     // segment's circle as one shape measured slower.)
     for (let i = n - 2; i >= 0; i--) { ctx.fillStyle = fills[i + 1]; band(a, i, rad[i + 1] * PINCH); }
+    if (a.bridging && !dead) shadeBands(a); // (over a pit: shaded underneath, along the bands too)
     for (let i = n - 1; i >= 0; i--) {
       if (i < n - 1 && bends(a, i)) { ctx.fillStyle = fills[i + 1]; circle(a.cor[2 * i], a.cor[2 * i + 1], rad[i + 1] * PINCH); }
       if (i === 0 && a.star) break; // (a star's head is drawn with its face)
@@ -2943,12 +3089,30 @@ window.SnakeRender = (() => {
   // pit darkens the deeper it hangs. Drawn over its segments as they are,
   // before their sheen and markings: each one over the pit again in a darker
   // step of its own colour, then in its own colour a little up and to the
-  // left and smaller, leaving a crescent of shade along its lower right.
-  // (Two circles each, the GPU's quickest shape, and no clip: a clip to a
-  // body's shape costs it dearly. Each step of shade is a cached colour,
-  // four of them.)
+  // left and smaller, leaving a crescent of shade along its lower right; and
+  // a strip of shade as wide along the bands between them (shadeBands), so
+  // it runs on along its underside (crescents on the segments alone read as
+  // darker beads on a phone). (Two circles a segment and a rectangle a
+  // band, the GPU's quickest shapes, and no clip: a clip to a body's shape
+  // costs it dearly. Each step of shade is a cached colour, four of them.)
   const UNDER = '#140a04', UNDER_DARK = 0.42, UNDER_IN = 0.11; // (the shade at its darkest; how far its lit part moves in, in radii)
   const shadeOf = (c, o) => mix(c, UNDER, Math.ceil(o * 4) / 4 * UNDER_DARK);
+  function shadeBands(a) { // (the bands: after the bands are drawn, before the segments, which cover their ends; a strip of shade along each one's lower side, or its right one going down, as wide as a segment's crescent at its lowest)
+    const { n, rad, fills, hang, pts: p, cor: c } = a;
+    for (let i = n - 2; i >= 0; i--) {
+      const o = (hang[i] + hang[i + 1]) / 2;
+      if (o < 0.02) continue;
+      const h = rad[i + 1] * PINCH, s = rad[i + 1] * UNDER_IN * (1 + Math.SQRT2);
+      ctx.fillStyle = shadeOf(fills[i + 1], o);
+      const x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+      if ((near(x1, qx) && near(qx, x2)) || (near(y1, qy) && near(qy, y2))) shadeStrip(x1, y1, x2, y2, h, s); // (straight: one piece)
+      else { shadeStrip(x1, y1, qx, qy, h, s); shadeStrip(qx, qy, x2, y2, h, s); }
+    }
+  }
+  function shadeStrip(x1, y1, x2, y2, h, s) {
+    if (near(y1, y2)) { if (!near(x1, x2)) ctx.fillRect(Math.min(x1, x2), y1 + h - s, Math.abs(x2 - x1), s); }
+    else if (near(x1, x2)) ctx.fillRect(x1 + h - s, Math.min(y1, y2), s, Math.abs(y2 - y1));
+  }
   function shadeUnder(a) {
     const { n, pts, rad, fills, hang, sink } = a;
     for (let i = n - 1; i >= 0; i--) {
@@ -4312,6 +4476,10 @@ window.SnakeRender = (() => {
     const open = mouthOpen(s, a);
     tongue(a, now, coughing(s) ? 1 : open, 'player', true); // (coughing, its mouth is shut)
     mouth(open, 0.44);
+    if (!deadNow && coughing(s)) { // (coughing, a mouth shut tight, as the Field guide shows it: there's nothing else on your face to shut)
+      ctx.strokeStyle = INK; ctx.lineWidth = c * 0.06; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(c * 0.3, c * 0.07); ctx.quadraticCurveTo(c * 0.4, c * 0.02, c * 0.47, c * 0.05); ctx.stroke();
+    }
 
     if (blinking) return lids(0.11);
     ctx.fillStyle = '#fffbea';
@@ -6046,7 +6214,30 @@ window.SnakeRender = (() => {
   // bead keeps its markings), and it's drawn going there (see drawFood); a
   // beetle scurries there (see drawBeetle). With reduced motion it's simply
   // there.
-  const SPAT_MS = 320, ROLL_MS = 280, FLY_CELL_MS = 70, FLY_MAX_MS = 620;
+  // A bead its own snake choked on is in its mouth while its cheeks puff (so
+  // the face shows the gag: on a phone a bead over it was the whole head),
+  // and it's spat out on the "ptoo" (SPIT_WAIT), out of its cheek on the
+  // side it lands (its head has gone on by then, and the bead lands beside
+  // its neck: from the front of its mouth it flew back over its face),
+  // small at first, full size as it clears the head, landing on the tok
+  // (SPAT_MS from the choke, as the sound has it).
+  const SPAT_MS = 320, ROLL_MS = 280, FLY_CELL_MS = 70, FLY_MAX_MS = 620, SPIT_WAIT = 120, SPIT_SIDE = 0.7, SPIT_AHEAD = 0.25;
+  // How far on its way a piece moved aside is (0..1; -1 while it's still in
+  // the mouth that spat it), and, as it leaves, where from.
+  function movedU(b, now) {
+    const t = now - b.movedAt - b.wait;
+    if (t < 0) return -1;
+    if (b.by) { // (its cheek on that side, as drawn: or, landing straight ahead or behind, the front of its mouth)
+      const a = anim.get(b.by);
+      if (a && a.n) {
+        const hx = a.pts[0], hy = a.pts[1], c = a.hc, s = a.hs, side = Math.sign(Math.round(c * ((b.ty + 0.5) * CELL - hy) - s * ((b.tx + 0.5) * CELL - hx)));
+        const ox = side ? SPIT_AHEAD * c - SPIT_SIDE * side * s : SPIT_SIDE * c, oy = side ? SPIT_AHEAD * s + SPIT_SIDE * side * c : SPIT_SIDE * s;
+        b.fx = hx / CELL + ox - 0.5; b.fy = hy / CELL + oy - 0.5;
+      }
+      b.by = null;
+    }
+    return t / ((b.spat ? b.fly : ROLL_MS) - b.wait);
+  }
   // Up in the air: over the snakes (a bead's spat over its own head; food
   // flies over whatever's in the way), bigger the higher it is (its shadow's
   // on the ground: see drawFood). A bead is rimmed in ink and parchment in
@@ -6058,9 +6249,9 @@ window.SnakeRender = (() => {
       if (f.kind === 'beetle') continue;
       const b = born.get(f.y * GRID + f.x);
       if (!b || !b.spat || !b.movedAt) continue;
-      const u = (now - b.movedAt) / b.fly;
+      const u = movedU(b, now);
       if (u <= 0 || u >= 1) continue;
-      const e = 1 - (1 - u) * (1 - u), up = Math.sin(u * Math.PI), sz = 1 + 0.3 * up;
+      const e = 1 - (1 - u) * (1 - u), up = Math.sin(u * Math.PI), sz = (1 + 0.3 * up) * (b.wait ? Math.min(1, 0.5 + 2 * u) : 1);
       const x = (b.fx + (f.x - b.fx) * e + 0.5) * CELL, y = (b.fy + (f.y - b.fy) * e + 0.5) * CELL - up * b.hop;
       if (f.kind === 'pellet') {
         ctx.fillStyle = 'rgba(28,16,6,0.85)'; circle(x, y, CELL * 0.43 * sz);
@@ -6079,13 +6270,13 @@ window.SnakeRender = (() => {
     const left = f.expires != null ? f.expires - game.tick : 999;
     return appleSprite(f.cooked ? 'baked' : left > 50 ? 'fresh' : left > 22 ? 'bruised' : 'rotten');
   }
-  function moveFood(x, y, tx, ty, now, spat, knocked = false) {
+  function moveFood(x, y, tx, ty, now, spat, knocked = false, by = null) {
     const from = y * GRID + x, to = ty * GRID + tx, f = game.food.find(o => o.x === tx && o.y === ty && o.kind !== 'beetle');
     if (!f) return;
     const b = born.get(from), d = Math.hypot(tx - x, ty - y);
     if (from !== to) born.delete(from);
     born.set(to, { kind: f.kind, at: now - POP_MS, i: 0, next: 0, gen: bornGen, v: b && b.kind === f.kind ? b.v : (f.color || '#a16207') + '|', fell: false, fx: x, fy: y, movedAt: now, spat,
-      fly: knocked ? Math.min(FLY_MAX_MS, SPAT_MS + FLY_CELL_MS * d) : SPAT_MS, hop: CELL * (knocked ? Math.min(1.5, 0.6 + 0.22 * d) : 0.6) });
+      fly: knocked ? Math.min(FLY_MAX_MS, SPAT_MS + FLY_CELL_MS * d) : SPAT_MS, hop: CELL * (knocked ? Math.min(1.5, 0.6 + 0.22 * d) : 0.6), by, wait: by ? SPIT_WAIT : 0, tx, ty }); // (by: the snake that spat it)
   }
 
   // Through the woodpecker's aim, the food in its mark trembles (see
@@ -6094,32 +6285,37 @@ window.SnakeRender = (() => {
   // order, no two on one cell, never a burrow; the rivals read the same),
   // worked out once a tick; on the aim's last tick, the landings the engine
   // has promised (w.landings, kept at the strike while their cells are
-  // free). Nothing for a piece the bird will eat.
+  // free). Nothing for a piece the bird will eat. (The bird drumming beside
+  // the patch never hides one: it clings clear of them if it can, and any
+  // it still covers are drawn over it too: see drumChoice, drawWoodpecker.)
   const knockLand = []; // (cells, x and y, this tick's)
   let knockFor = -1, knockGame = null;
-  function knockRings(w, prog, now) {
+  function knockCells(w) {
     if (knockFor !== game.tick || knockGame !== game) {
       knockFor = game.tick; knockGame = game; knockLand.length = 0;
       const knocks = window.SnakeEngine?.knocks;
       if (knocks) for (const { to } of knocks(game, w.target, w.landings)) if (to) knockLand.push(to.x, to.y);
     }
-    if (!knockLand.length) return;
+    return knockLand;
+  }
+  function knockRings(w, prog, now, g = ctx) {
+    if (!knockCells(w).length) return;
     const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now / 160);
-    ctx.setLineDash(KNOCK_DASH);
-    ctx.lineCap = 'butt';
+    g.setLineDash(KNOCK_DASH);
+    g.lineCap = 'butt';
     for (let pass = 0; pass < 2; pass++) {
-      ctx.globalAlpha = (0.35 + 0.4 * prog) * (pass ? 1 : 0.7);
-      ctx.strokeStyle = pass ? '#fef3c7' : '#140a04';
-      ctx.lineWidth = pass ? 1.6 : 3.4;
-      ctx.beginPath();
+      g.globalAlpha = (0.35 + 0.4 * prog) * (pass ? 1 : 0.7);
+      g.strokeStyle = pass ? '#fef3c7' : '#140a04';
+      g.lineWidth = pass ? 1.6 : 3.4;
+      g.beginPath();
       for (let i = 0; i < knockLand.length; i += 2) {
         const x = (knockLand[i] + 0.5) * CELL, y = (knockLand[i + 1] + 0.5) * CELL, r = CELL * (0.36 + 0.04 * pulse);
-        ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, TAU);
+        g.moveTo(x + r, y); g.arc(x, y, r, 0, TAU);
       }
-      ctx.stroke();
+      g.stroke();
     }
-    ctx.setLineDash(NO_DASH);
-    ctx.globalAlpha = 1;
+    g.setLineDash(NO_DASH);
+    g.globalAlpha = 1;
   }
   const KNOCK_DASH = [5, 4];
 
@@ -6393,11 +6589,16 @@ window.SnakeRender = (() => {
     mote(x + (Math.random() - 0.5) * CELL * 0.3, y - CELL * 0.3, (Math.random() - 0.5) * 6, -16 - Math.random() * 8, 1200, 2 + Math.random(), 4);
   }
 
-  // Every piece of food on the board, under the snakes.
+  // Every piece of food on the board, under the snakes. Food in the
+  // woodpecker's mark trembles through the aim, by CSS px, not the board's
+  // units, so it shows on a phone too (in units it was under a pixel there):
+  // 1 px each way as the aim starts, 2.5 by the strike.
+  const TREMBLE_PX = 1, TREMBLE_MORE = 1.5;
   function drawFood(alpha, now) {
     trackFood(now);
     trackBugs(now);
     const lively = !reduced, prog = lively ? aimed(alpha) : -1; // (through the woodpecker's aim: what's in its mark trembles)
+    const perPx = boardRect.w > 0 ? SIZE / boardRect.w : 1; // (the board's units a CSS px: the tremble is as big on any screen)
     for (const f of game.food) {
       if (f.kind === 'beetle') { drawBeetle(f, alpha, now); continue; }
       const key = f.y * GRID + f.x, b = born.get(key);
@@ -6406,8 +6607,9 @@ window.SnakeRender = (() => {
       if (pop <= 0) continue;
       let x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
       if (b && b.movedAt) { // (spat, knocked or nudged aside: on its way from where it was, see moveFood)
-        const u = (now - b.movedAt) / (b.spat ? b.fly : ROLL_MS);
-        if (u < 0 || u >= 1 || reduced) b.movedAt = 0;
+        const u = reduced ? 1 : movedU(b, now);
+        if (u < 0) continue; // (still in the mouth that spat it)
+        if (u >= 1) b.movedAt = 0;
         else {
           const e = 1 - (1 - u) * (1 - u);
           x = (b.fx + (f.x - b.fx) * e + 0.5) * CELL; y = (b.fy + (f.y - b.fy) * e + 0.5) * CELL;
@@ -6415,7 +6617,7 @@ window.SnakeRender = (() => {
           y -= Math.abs(Math.sin(u * Math.PI * 2)) * (1 - u) * CELL * 0.14; // (rolling, it bounces along the bark, shadow and all)
         }
       }
-      if (prog >= 0 && patch[key]) { const a = 0.5 + 1.3 * prog; x += Math.sin(now / 19 + key) * a; y += Math.cos(now / 26 + key * 1.7) * a * 0.7; }
+      if (prog >= 0 && patch[key]) { const a = (TREMBLE_PX + TREMBLE_MORE * prog) * perPx; x += Math.sin(now / 19 + key) * a; y += Math.cos(now / 26 + key * 1.7) * a * 0.7; }
       const t = now / 1000 + ((f.x * 7 + f.y * 13) % 10) * 0.63; // each piece on its own beat
       if (f.kind === 'food') {
         const drop = b?.fell && !reduced ? Math.max(0, 1 - (now - b.at) / 380) : 0; // (a new apple drops from the tree above)
@@ -7379,26 +7581,40 @@ window.SnakeRender = (() => {
   // back from the strike; the flights shortened to fit the aim, leaving it
   // B_LOOK at least to look before it goes. With reduced motion, a blow on
   // every third knock, the last on the strike.
+  // Where it clings to drum is chosen as the aim starts, and again each
+  // tick while it's still on its perch (its hop done, before it crouches to
+  // go): the way that hides least of what you need to see (see drumChoice),
+  // as the board stands that tick. Then it's kept.
   const plan = { strikeAt: -1, spot: -1, prev: -1, pecks: -1, layout: -1, ms: 0, aim: 0, lively: true,
-    tx: 0, ty: 0, from: null, hop: null, drum: null, times: [], D: 0, F: 0, H: 0, aimMs: 0, depart: 0 };
-  function aimPlan(w, ms) {
+    tx: 0, ty: 0, from: null, hop: null, drum: null, times: [], D: 0, F: 0, H: 0, H0: 0, aimMs: 0, depart: 0, chose: -1 };
+  function aimPlan(w, ms, to = Infinity) {
     const A = plan, spot = spotIn(w.target), prev = w.last.length ? spotIn(w.last) : ARRIVAL_SPOT, pecks = w.pecks || 0, lively = !reduced;
-    if (A.strikeAt === w.strikeAt && A.spot === spot && A.prev === prev && A.pecks === pecks && A.layout === birdLayout && A.ms === ms && A.aim === T.PECK_AIM_TICKS && A.lively === lively) return A;
+    if (A.strikeAt === w.strikeAt && A.spot === spot && A.prev === prev && A.pecks === pecks && A.layout === birdLayout && A.ms === ms && A.aim === T.PECK_AIM_TICKS && A.lively === lively) {
+      if (A.chose !== game.tick && A.aimMs - to >= A.H && to > A.depart + B_TAKEOFF) { // (still on its perch: look again)
+        A.chose = game.tick;
+        const d = drumChoice(w, spot, A.from.flip);
+        if (d !== A.drum) {
+          const F = flightMs(Math.hypot(d.x - A.from.x, d.y - A.from.y)), k = Math.max(0.4, Math.min(1, (A.aimMs - B_LOOK - B_TAKEOFF - B_SETTLE - A.D) / (F + A.H0)));
+          if (to > A.D + B_SETTLE + F * k + B_TAKEOFF) { A.drum = d; A.F = F * k; A.depart = A.D + B_SETTLE + A.F; } // (its hop kept as it was)
+        }
+      }
+      return A;
+    }
     A.strikeAt = w.strikeAt; A.spot = spot; A.prev = prev; A.pecks = pecks; A.layout = birdLayout; A.ms = ms; A.aim = T.PECK_AIM_TICKS; A.lively = lively;
     A.tx = (spot % GRID) * CELL + CELL / 2; A.ty = Math.floor(spot / GRID) * CELL + CELL / 2;
-    const was = perchAt(prev), to = perchAt(spot), beside = k => k === 'left' || k === 'right';
-    A.from = beside(was.side) && beside(to.side) && was.side !== to.side ? was : to;
-    A.hop = A.from === to && Math.hypot(to.x - was.x, to.y - was.y) > 1 ? was : null;
-    A.drum = drumPoseAt(spot, A.from.flip);
+    const was = perchAt(prev), at = perchAt(spot), beside = k => k === 'left' || k === 'right';
+    A.from = beside(was.side) && beside(at.side) && was.side !== at.side ? was : at;
+    A.hop = A.from === at && Math.hypot(at.x - was.x, at.y - was.y) > 1 ? was : null;
+    A.drum = drumChoice(w, spot, A.from.flip); A.chose = game.tick;
     const blows = drumTable(pecks), n = blows.length;
     A.D = blows[n - 1];
     A.times.length = 0;
     for (let i = 0; i < n; i++) if (lively || (n - 1 - i) % 3 === 0) A.times.push(blows[i] - A.D);
     A.aimMs = T.PECK_AIM_TICKS * ms;
-    const F = flightMs(Math.hypot(A.drum.x - A.from.x, A.drum.y - A.from.y)), H = A.hop ? hopMs(Math.hypot(to.x - was.x, to.y - was.y)) : 0;
+    const F = flightMs(Math.hypot(A.drum.x - A.from.x, A.drum.y - A.from.y)), H = A.hop ? hopMs(Math.hypot(at.x - was.x, at.y - was.y)) : 0;
     const k = Math.max(0.4, Math.min(1, (A.aimMs - B_LOOK - B_TAKEOFF - B_SETTLE - A.D) / (F + H)));
     A.F = F * k; A.depart = A.D + B_SETTLE + A.F;
-    A.H = Math.min(H * k, Math.max(0, A.aimMs - A.depart - 60));
+    A.H0 = H; A.H = Math.min(H * k, Math.max(0, A.aimMs - A.depart - 60));
     return A;
   }
   // ...and after the strike: a moment at the hole, the flight back to the
@@ -7424,7 +7640,7 @@ window.SnakeRender = (() => {
     P.alpha = 1; P.thrust = 0; P.blur = 0; P.gape = 0; P.air = 0; P.wing = 0; P.stroke = 1; P.sweep = 0; P.near = P.far = 1; P.feet = 1; P.crouch = 0; P.rot = 0;
     P.free = false; P.up = 1.2; P.drum = null; P.blows = 0; P.blink = false;
     if (w.target.length) {
-      const A = aimPlan(w, ms), to = (w.strikeAt - tp) * ms, into = A.aimMs - to;
+      const to = (w.strikeAt - tp) * ms, A = aimPlan(w, ms, to), into = A.aimMs - to;
       P.fx = A.tx; P.fy = A.ty;
       if (A.hop && into < A.H) flight(A.hop, perchAt(A.spot), Math.max(0, into) / A.H, A.H, P, 'hop', 0, 0);
       else if (to > A.depart) { perched(A.from, P, 'eye'); if (lively) P.crouch = smooth(clamp01(1 - (to - A.depart) / B_TAKEOFF)); }
@@ -7560,8 +7776,12 @@ window.SnakeRender = (() => {
   // other way, else lying level, its beak down at the spot (the bottom
   // rows, with the board's bottom at the screen's) or up; else smaller.
   // (Upright on the bottom row, its tail hung four cells below the board,
-  // past the bottom of a phone on its side.)
+  // past the bottom of a phone on its side.) With it, the other ways it
+  // could cling there as big (alts, the first this one): upright or
+  // leaning, facing either way (or, where it must lie level, lying level),
+  // for drumChoice.
   const DRUM_TRIES = [0, 1, 0.45, 1, -0.45, 1, 0, -1, 0.45, -1, -0.45, -1, Math.PI / 2, 1, -Math.PI / 2, 1, Math.PI / 2, -1, -Math.PI / 2, -1], DRUM_SIZES = [1, 0.85, 0.72, 0.6];
+  const DRUM_UPRIGHT = 12; // (the tries upright or leaning: the first six)
   const probe = { x: 0, y: 0, s: 1, flip: 1, rot: 0, crouch: 0, wing: 0, stroke: 1, sweep: 0, near: 1, far: 1, feet: 1, turn: 0, thrust: 0, air: 0 };
   function drumPoseAt(spot, flip) {
     const key = spot * 2 + (flip > 0 ? 1 : 0);
@@ -7570,7 +7790,8 @@ window.SnakeRender = (() => {
     const tx = (spot % GRID) * CELL + CELL / 2, ty = Math.floor(spot / GRID) * CELL + CELL / 2, Q = probe;
     let best = null, least = Infinity;
     for (const s of DRUM_SIZES) {
-      for (let i = 0; i < DRUM_TRIES.length && !d; i += 2) {
+      for (let i = 0; i < DRUM_TRIES.length; i += 2) {
+        if (d && (i < DRUM_UPRIGHT) !== d.upright) break; // (no lying level where it can stand)
         const f = flip * DRUM_TRIES[i + 1];
         Q.s = s; Q.flip = f; Q.rot = DRUM_TRIES[i] * f; Q.x = Q.y = 0; Q.turn = 0; Q.thrust = 0; Q.crouch = 0;
         birdMats(Q);
@@ -7579,14 +7800,72 @@ window.SnakeRender = (() => {
         Q.thrust = -1.3 * B_BACK; Q.crouch = 0.8; birdBox(Q, false);
         Q.crouch = 0; Q.rot = (DRUM_TRIES[i] - 0.3) * f; birdBox(Q, false); Q.rot = DRUM_TRIES[i] * f; // (and leaning back as it lands, or as it pulls out of the hole)
         const over = Math.max(room.x0 - box.x0, room.y0 - box.y0, box.x1 - room.x1, box.y1 - room.y1);
-        if (over <= 0) d = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot };
-        else if (over < least) { least = over; best = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot }; }
+        if (over <= 0) { const p = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot, upright: i < DRUM_UPRIGHT }; if (d) d.alts.push(p); else { d = p; d.alts = [p]; } }
+        else if (!d && over < least) { least = over; best = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot }; }
       }
       if (d) break;
     }
-    d ||= best;
+    if (!d) { d = best; d.alts = [best]; }
     drumAt.set(key, d);
     return d;
+  }
+  // Which of those ways it clings by, drumming: the one that hides least of
+  // what you need to see then, as the board stands: the rings where the
+  // food in its mark will land (the strike's promise; four times what the
+  // food itself counts), then that food, trembling. As it came, upright, if
+  // that's as clear. (What it still covers is drawn over it: see
+  // drawWoodpecker.)
+  const SEE_RING = 4, SEE_FOOD = 1;
+  let seeN = 0, seeX = new Float32Array(32), seeY = new Float32Array(32), seeW = new Float32Array(32);
+  function drumChoice(w, spot, flip) {
+    const d = drumPoseAt(spot, flip);
+    if (d.alts.length < 2) return d;
+    const lands = knockCells(w);
+    seeN = 0;
+    const see = (x, y, wt) => {
+      if (seeN === seeX.length) { const grow = a => { const b = new Float32Array(2 * a.length); b.set(a); return b; }; seeX = grow(seeX); seeY = grow(seeY); seeW = grow(seeW); }
+      seeX[seeN] = (x + 0.5) * CELL; seeY[seeN] = (y + 0.5) * CELL; seeW[seeN++] = wt;
+    };
+    for (let i = 0; i < lands.length; i += 2) see(lands[i], lands[i + 1], SEE_RING);
+    for (const f of game.food) if (w.target.includes(f.y * GRID + f.x)) see(f.x, f.y, SEE_FOOD);
+    if (!seeN) return d;
+    let pick = d, least = Infinity;
+    for (const p of d.alts) {
+      const c = hides(p);
+      if (c < least - 1e-6) { least = c; pick = p; }
+    }
+    return pick;
+  }
+  // How much of those (seeX, seeY: each a ring's round, its middle and eight
+  // points on it) the bird drumming in pose p covers: its body, its tail,
+  // its head and beak, ink and all.
+  const SEE_R = CELL * 0.4;
+  function hides(p) {
+    const Q = probe;
+    Q.x = p.x; Q.y = p.y; Q.s = p.s; Q.flip = p.flip; Q.rot = p.rot; Q.turn = 0; Q.thrust = 0.06; Q.crouch = 0;
+    birdMats(Q);
+    let sum = 0;
+    for (let j = 0; j < seeN; j++) {
+      let n = 0;
+      for (let q = 0; q < 9; q++) {
+        const a = q * TAU / 8, x = seeX[j] + (q < 8 ? Math.cos(a) * SEE_R : 0), y = seeY[j] + (q < 8 ? Math.sin(a) * SEE_R : 0);
+        if (covers(x, y)) n++;
+      }
+      sum += seeW[j] * n / 9;
+    }
+    return sum;
+  }
+  function covers(x, y) { // (is board point x, y under the bird as its frames BM and HM stand?)
+    let m = BM, det = m[0] * m[3] - m[1] * m[2], dx = x - m[4], dy = y - m[5];
+    let u = (m[3] * dx - m[2] * dy) / det, v = (m[0] * dy - m[1] * dx) / det;
+    if (((u + 0.1) / 1.07) ** 2 + ((v - 0.3) / 1.67) ** 2 <= 1 || inTri(u, v, -0.55, 1.1, -0.15, 3.1, 0.3, 1.2)) return true; // (its body; its tail)
+    m = HM; det = m[0] * m[3] - m[1] * m[2]; dx = x - m[4]; dy = y - m[5];
+    u = (m[3] * dx - m[2] * dy) / det; v = (m[0] * dy - m[1] * dx) / det;
+    return ((u - 0.45) / 0.84) ** 2 + ((v + 1.75) / 0.82) ** 2 <= 1 || (u + 0.12) ** 2 + (v + 1.95) ** 2 <= 0.42 ** 2 || inTri(u, v, 1.05, -2.0, BILL[0], BILL[1], 1.05, -1.5); // (its head, its nape, its beak)
+  }
+  function inTri(x, y, ax, ay, bx, by, cx, cy) {
+    const d1 = (x - bx) * (ay - by) - (ax - bx) * (y - by), d2 = (x - cx) * (by - cy) - (bx - cx) * (y - cy), d3 = (x - ax) * (cy - ay) - (cx - ax) * (y - ay);
+    return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
   }
 
   // Its frame (2D matrices, as setTransform takes them, from its own units,
@@ -7944,10 +8223,31 @@ window.SnakeRender = (() => {
       x0 = Math.min(x0, A.tx - 5 * CELL); x1 = Math.max(x1, A.tx + 5 * CELL); y0 = Math.min(y0, A.ty - 5 * CELL); y1 = Math.max(y1, A.ty + 5 * CELL); // (as far as its chips fly)
     }
     drawBird(g, P, lay.sc * BU * P.s < partsK * 0.55);
+    overBird(g, w, alpha, now);
     const bx = Math.max(0, Math.floor(lay.ox + x0 * lay.sc) - 2), by = Math.max(0, Math.floor(lay.oy + y0 * lay.sc) - 2);
     bird.box[0] = bx; bird.box[1] = by;
     bird.box[2] = Math.max(0, Math.min(lay.W, Math.ceil(lay.ox + x1 * lay.sc) + 2) - bx); bird.box[3] = Math.max(0, Math.min(lay.H, Math.ceil(lay.oy + y1 * lay.sc) + 2) - by);
     bird.drawn = true;
+  }
+  // A promise is never hidden by the bird: where it's over a ring (the food
+  // in its mark will land there) or over a piece in the air, knocked out of
+  // the patch or spat, that's drawn again over it, on its own pixels only
+  // (so nothing is drawn twice where it isn't), moved with the board as it
+  // shakes. The bird still covers the food in its mark, lying where its
+  // beak is at work: the rings say where that goes.
+  let overOn = true; // (off only for the tests, to see it against the bird without)
+  function overBird(g, w, alpha, now) {
+    if (!overOn) return;
+    const rings = w.target.length > 0 && knockCells(w).length > 0;
+    let flying = false;
+    if (!reduced) for (const f of game.food) { const b = f.kind !== 'beetle' && born.get(f.y * GRID + f.x); if (b && b.spat && b.movedAt && now - b.movedAt < b.fly) { flying = true; break; } }
+    if (!rings && !flying) return;
+    useBase(g);
+    g.translate(shakeX / k, shakeY / k);
+    g.globalCompositeOperation = 'source-atop';
+    if (rings) knockRings(w, aimed(alpha), now, g);
+    if (flying) { const was = ctx; ctx = g; try { drawTossed(now); } finally { ctx = was; } }
+    g.globalCompositeOperation = 'source-over';
   }
   // When it lands back on its perch after its last strike, ms after it, as
   // drawn (the game says "kik!" then); Infinity if it isn't on its way back.
@@ -8548,7 +8848,7 @@ window.SnakeRender = (() => {
         if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.6), GROWN[e.kind === 'golden' ? T.GOLDEN_GROWTH : e.kind === 'beetle' ? T.BEETLE_GROWTH : e.cooked ? T.COOKED_GROWTH : 1] || '+1');
       } else if (e.type === 'choke') { // gagged on its own bead: a quick puff of its cheeks, and the bead spat aside (then it coughs: see drawCough)
         animOf(e.snake, now).chokeAt = now;
-        moveFood(e.x, e.y, e.tx ?? e.x, e.ty ?? e.y, now, true);
+        moveFood(e.x, e.y, e.tx ?? e.x, e.ty ?? e.y, now, true, false, e.snake);
       } else if (e.type === 'nudge') { // food its coughing head reached, nudged aside: it rolls there, or a beetle scurries
         if (e.kind === 'beetle') scurries.push({ x: e.x, y: e.y, tx: e.tx ?? e.x, ty: e.ty ?? e.y, tick: game.tick });
         else moveFood(e.x, e.y, e.tx ?? e.x, e.ty ?? e.y, now, false);
@@ -9144,6 +9444,7 @@ window.SnakeRender = (() => {
     },
     birdPlan: () => ({ strikeAt: plan.strikeAt, spot: [plan.tx, plan.ty], aim: plan.aimMs, depart: plan.depart, settle: B_SETTLE, drum: plan.D, times: plan.times.slice(), flight: plan.F, hop: plan.hop ? plan.H : 0, home: home.total, back: home.F, linger: B_LINGER }),
     birdLook(turn) { bird.force = turn ?? null; }, // (its head held turned so, or null: for the tests)
+    birdOver(on) { overOn = !!on; }, // (the rings and pieces in the air it covers drawn over it, or not: for the tests)
     birdFrame(alpha, now) { if (game && sized) drawWoodpecker(alpha, now, 16); }, // (the woodpecker alone drawn, the board left as it is: for the tests, frame by frame through its flights)
   };
 })();

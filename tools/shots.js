@@ -183,6 +183,7 @@ fs.mkdirSync(out, { recursive: true });
           f.x = to.x; f.y = to.y;
         }
         for (const k of P) g.holes.add(k);
+        g.tick = g.woodpecker.strikeAt; // (on its own tick, as the engine strikes: the bird stays where it drummed)
         g.woodpecker.target = []; g.woodpecker.struckAt = g.tick; g.woodpecker.last = P;
         g.tick++;
         R.onTick(ev);
