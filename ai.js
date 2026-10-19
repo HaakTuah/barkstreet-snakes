@@ -61,6 +61,8 @@ window.SnakeAI = (() => {
   //                                   golden mushrooms) worth this many times what it's worth to anyone
   //                                   else, and a golden apple this many; contested: how much golden power
   //                                   food a rival reaches first still counts (0-1)
+  //   hurry                         how much a move longer to catch a beetle counts against it (default
+  //                                   BUG_HURRY: lower, it keeps after a beetle on the run longer)
   const DRAB = {
     space: 1.2, territory: 1.5, aggression: 0.3,
     food: 5, eat: 80, pellet: 1.2, foodRange: 60,
@@ -92,6 +94,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1.6, territory: 0.2,
         food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 1, mushroom: -6, // (twice what a mushroom costs anyone else: it hates them)
+        hurry: 1.5, // (beetles are its food too: it keeps after one on the run longer than anyone. With two apples on the log, and rivals that read a beetle's dig, it won 16 / 15% at the usual 2; at 1.5, 20 / 26%)
         margin: 10, headRisk: 2200, zoneRisk: 700, // greedy (a rival's apple too), but it flinches from heads and wants room (it used to win only 8%; at 1500 and 500, 12-17%)
       },
     },
@@ -103,7 +106,7 @@ window.SnakeAI = (() => {
       w: {
         space: 2, territory: 0.6,
         food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 18, fedFactor: 0.4,
-        margin: 6, headRisk: 900, zoneRisk: 150, distance: 6,
+        margin: 6, headRisk: 900, zoneRisk: 150, distance: 5, // (at 6, once the rivals read knocked food and digging beetles, it won 39 / 31%)
       },
     },
     sovereign: {
@@ -124,7 +127,7 @@ window.SnakeAI = (() => {
       kill: ['Another patch of bark for the Crown.', 'You were annexed. Politely.', 'All very civilised, of course.'],
       win: ['The final flag is planted.', 'An empire of one log.', 'Victory, then tea.'],
       w: {
-        space: 1.2, territory: 1.4, aggression: 0.2,
+        space: 1.2, territory: 1.3, aggression: 0.2, // (at 1.4, once the rivals read knocked food and digging beetles, it won 27 / 37%)
         food: 5, eat: 70, pellet: 1.2, foodRange: 30,
         margin: 5, headRisk: 700, zoneRisk: 120,
         colony: { radius: 4, max: 3, every: 12000 }, goal: 4,
@@ -242,7 +245,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1, territory: 0.6,
         food: 5, eat: 70, pellet: 1.2, foodRange: 40,
-        margin: 4, headRisk: 600, zoneRisk: 40, turn: -12,
+        margin: 6, headRisk: 600, zoneRisk: 40, turn: -12, // (at 4, once the rivals read knocked food and digging beetles, it won 12 / 18%: it wants a little more room behind its lures)
         lure: { weight: 6, dist: 3 }, hunt: { squeeze: 3, chase: 0, lead: 2 },
       },
     },
@@ -638,7 +641,7 @@ window.SnakeAI = (() => {
     contested: undefined, hungryBelow: undefined, fedFactor: undefined,
     margin: undefined, headRisk: undefined, zoneRisk: undefined, distance: undefined,
     hunt: undefined, home: undefined, lure: undefined, turn: undefined, tail: undefined, mimic: undefined,
-    colony: undefined, goal: undefined, thrill: undefined, coil: undefined, thick: undefined, powers: undefined, golden: undefined,
+    colony: undefined, goal: undefined, thrill: undefined, coil: undefined, thick: undefined, powers: undefined, golden: undefined, hurry: undefined,
   };
   const weighed = w => Object.assign({ ...WEIGHTS }, w);
 
@@ -1452,13 +1455,14 @@ window.SnakeAI = (() => {
       //    The beetles: how soon I'd catch each from here, playing the chase
       //    out (it runs, or digs in), or too far to tell, how far it is;
       //    nothing if it's away first. Mine if it's where I'd get to first
-      //    now. A longer chase counts BUG_HURRY times a step further.
+      //    now. A longer chase counts BUG_HURRY times a step further (or
+      //    w.hurry: a beetle-eater keeps after one longer).
       for (let b = 0; b < bugs; b++) {
         const c = bugCell[b * SLOTS + t];
         if (c < 0) continue;
         const m = bugCatch(b, t, head.x, head.y, otherBug(b, t));
         if (m <= 0) continue;
-        const pull = bugV[b] * Math.max(0, w.foodRange - BUG_HURRY * (m - t));
+        const pull = bugV[b] * Math.max(0, w.foodRange - (w.hurry ?? BUG_HURRY) * (m - t));
         if (terr[framed[c]] >= CLAIMED && (terr[framed[c]] & tags) === 1) foodScore = Math.max(foodScore, pull);
         else anyFood = Math.max(anyFood, pull);
         if (bugGold[b]) foodScore = Math.max(foodScore, craving.contested * pull);
