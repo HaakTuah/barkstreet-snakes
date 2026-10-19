@@ -1858,7 +1858,7 @@ window.SnakeEngine = (() => {
         if (coughing) {
           game.events.push({ type: 'nudge', snake: s, kind: f.kind, x: c.x, y: c.y, tx: to.x, ty: to.y });
           if (f.kind === 'beetle' && to !== c) { // (a beetle scurries off, out of any hole it was digging)
-            f.px = c.x; f.py = c.y; f.dir = CRAWL.find(d => d.x === to.x - c.x && d.y === to.y - c.y); f.movedAt = game.tick; f.scared = true;
+            f.px = c.x; f.py = c.y; f.dir = CRAWL.find(d => d.x === Math.sign(to.x - c.x) && d.y === Math.sign(to.y - c.y)); f.movedAt = game.tick; f.scared = true; // (the way it ran, a cell or, rolled on over food, a few)
             delete f.digUntil;
           }
         } else {

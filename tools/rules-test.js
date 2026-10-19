@@ -1323,6 +1323,17 @@ const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x
   kept(g);
   const e = g.events.find(e => e.type === 'nudge');
   check('a coughing head sends a beetle scurrying aside', e && e.kind === 'beetle' && at(bug, 6, 6) && bug.px === 6 && bug.py === 5 && bug.dir === D.down && bug.movedAt === g.tick - 1 && bug.scared && g.food.includes(bug) && !g.events.some(e => e.type === 'eat'), JSON.stringify(bug));
+  // Apples on both sides: it scurries on over one, facing the way it ran, and crawls on from there.
+  const h = board([[line(5, 5, 5), 'right'], far]);
+  h.snakes[0].coughUntil = 99;
+  h.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }];
+  h.burrows = [{ x: 10, y: 9, at: 0, used: 0 }]; // (one in reach, so it runs for it rather than digging in)
+  const [b2] = lay(h, { x: 6, y: 5, kind: 'beetle', expires: 9999, dir: D.left, movedAt: -10 }, { x: 6, y: 4, kind: 'food', expires: 9999 }, { x: 6, y: 6, kind: 'food', expires: 9999 });
+  kept(h);
+  const ran = { x: b2.x, y: b2.y, dir: b2.dir };
+  let crawled = true;
+  try { for (let t = 0; t < 8; t++) kept(h); } catch (err) { crawled = String(err); }
+  check('...over food on both sides, it scurries on over it, facing the way it ran, and crawls on from there', at(ran, 6, 7) && ran.dir === D.down && crawled === true, JSON.stringify({ ran, crawled }));
 }
 
 { // An AI sees how many of its moves will eat nothing (as a person sees the puffs), a rival's cough as it saw it, and the food as it is now.
@@ -2173,7 +2184,7 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   lay(h, bug());
   for (const o of h.snakes) o.stunUntil = 1e9;
   const seen = [];
-  for (let t = 0; t < T.BEETLE_DIG + T.BEETLE_UNDER_MAX + 4; t++) { feed(h); kept(h); for (const e of h.events) if (['dig', 'dive', 'emerge'].includes(e.type)) seen.push({ ...e, at: h.tick - 1, unders: h.unders.length }); }
+  for (let t = 0; t < T.BEETLE_DIG + T.BEETLE_UNDER_MAX + 4 && !seen.some(e => e.type === 'emerge'); t++) { feed(h); kept(h); for (const e of h.events) if (['dig', 'dive', 'emerge'].includes(e.type)) seen.push({ ...e, at: h.tick - 1, unders: h.unders.length }); } // (up to its coming out: the step after takes it off the board, which lets another come out, and open a burrow, now and then)
   const [d0, d1, d2] = seen;
   const dugBurrow = h.burrows.some(b => b.x === 10 && b.y === 10 && b.dug === 1);
   check(`...done digging, it goes underground (${T.BURROW_FROM_DIG ? 'leaving a burrow where it dug' : 'and makes no burrow'})`, d0?.type === 'dig' && d1?.type === 'dive' && d1.dug === 1 && d1.at === d0.until && d1.unders === 2
