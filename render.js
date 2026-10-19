@@ -1621,10 +1621,11 @@ window.SnakeRender = (() => {
       return;
     }
     const bow = bowOf(s);
-    if (bow) { // a rainbow trailing a sunflower star (its head is drawn apart: see drawStarHead), streaming back along it as it goes (see bowHue), fading toward the bark at the tail; or Copycat's pale copy of it, head and all
+    if (bow) { // a rainbow trailing a sunflower star (its head is drawn apart: see drawStarHead), streaming back along it as it goes (see bowHue), fading toward the bark at the tail; or Copycat's pale copy of it
       const h0 = bowHue(s, a, now);
       for (let i = 0; i < n; i++) fills[i] = bow((h0 + 360 - (i * RAINBOW_STEP) % 360) % 360)[n > 1 ? Math.round(RAINBOW_FADE * i / (n - 1)) : 0];
       if (look === 'star') fills[0] = STAR_SUN;
+      else if (s.personaKey === 'copycat') fills[0] = s.color; // (its head stays its own: see below)
       return;
     }
     const ramp = rampOf(color);
@@ -1645,6 +1646,10 @@ window.SnakeRender = (() => {
     if (look === 'vulture') { fills[0] = '#f9a8d4'; if (n > 1) fills[1] = '#f5f5f4'; } // bald pink head, white neck ruff
     if (look === 'desperado') { if (n > 1) fills[1] = '#dc2626'; for (let i = 4; i < n; i += 4) fills[i] = '#ecdfc3'; } // bandana, poncho stripes (woven cream: Honey means a power)
     if (mime) fills[0] = '#f8fafc';
+    // Copycat copying someone: its body wears a pale copy of their colours
+    // (it can't help it), but its cat-eared head keeps the flag's red (and
+    // its yellow pin: see drawFace), so it always reads as red and gold.
+    if (s.personaKey === 'copycat') fills[0] = s.color;
   }
 
   // Once a frame per snake: where each segment is (between its last two
@@ -3654,6 +3659,7 @@ window.SnakeRender = (() => {
   const JESTER = [-0.1, 0.3, -0.55, 0.62, -0.32, 0.05];
   const HARLEQUIN = [-0.07, 0.2, 0.15, 0.08, 0.31, 0.2, 0.15, 0.32];
   const WHISKERS = [0.3, 0.45, 0.6];
+  const PARTY_YELLOW = '#ffde00'; // (Copycat's pin, the flag's yellow, on its head of the flag's red)
   // Colonist's tricorn: three corners (one forward), the brim wider than the head.
   const TRI_F = [0.1, 0], TRI_L = [-0.5, -0.6], TRI_R = [-0.5, 0.6], TRI_BOW = 0.1;
   function tricornSide(c, a, b) { // each side's middle pulled in toward the crown
@@ -4463,11 +4469,12 @@ window.SnakeRender = (() => {
         ctx.stroke();
         break;
       }
-      case 'copycat': { // cat ears (its head's colour: copying Star, a hue of its pale rainbow), cat eyes, whiskers, and a party pin
+      case 'copycat': { // cat ears (its head's colour, the flag's red, whoever it copies), cat eyes, whiskers, and a party pin
         poly(EAR, -1, a.fills[0]);
         poly(EAR, 1, a.fills[0]);
-        poly(EAR_IN, -1, '#f9a8d4');
-        poly(EAR_IN, 1, '#f9a8d4');
+        const inner = mix(a.fills[0][0] === '#' ? a.fills[0] : '#de2910', INK, 0.3); // (a deeper red inside: pink read as the pale old Copycat)
+        poly(EAR_IN, -1, inner);
+        poly(EAR_IN, 1, inner);
         mouth(open * 0.7, 0.4);
         if (blinking) lids(0.1);
         else {
@@ -4492,19 +4499,25 @@ window.SnakeRender = (() => {
         }
         ctx.stroke();
         // Party member: a little hammer and sickle on the back of the head,
-        // in the Party's red (in gold, beside its pips, it read as a power's).
+        // in the flag's yellow on its red, inked round so it reads as a pin
+        // (a power's gold is Honey, rounder and paler, and never on a head).
         ctx.save();
         ctx.translate(-c * 0.2, 0);
         ctx.rotate(Math.PI / 2);
-        ctx.strokeStyle = '#b91c1c';
-        ctx.fillStyle = '#b91c1c';
-        ctx.lineWidth = c * 0.05;
-        ctx.beginPath();
-        ctx.arc(0, 0, c * 0.15, -Math.PI * 0.25, Math.PI * 0.95);
-        ctx.stroke();
-        ctx.rotate(-Math.PI / 4);
-        ctx.fillRect(-c * 0.02, -c * 0.16, c * 0.04, c * 0.3); // handle
-        ctx.fillRect(-c * 0.09, -c * 0.18, c * 0.18, c * 0.06); // head
+        ctx.lineCap = 'butt';
+        for (let pass = 0; pass < 2; pass++) {
+          const w = pass ? 0 : c * 0.035;
+          ctx.strokeStyle = ctx.fillStyle = pass ? PARTY_YELLOW : INK;
+          ctx.lineWidth = c * 0.05 + 2 * w;
+          ctx.beginPath();
+          ctx.arc(0, 0, c * 0.15, -Math.PI * 0.25, Math.PI * 0.95);
+          ctx.stroke();
+          ctx.save();
+          ctx.rotate(-Math.PI / 4);
+          ctx.fillRect(-c * 0.02 - w, -c * 0.16 - w, c * 0.04 + 2 * w, c * 0.3 + 2 * w); // handle
+          ctx.fillRect(-c * 0.09 - w, -c * 0.18 - w, c * 0.18 + 2 * w, c * 0.06 + 2 * w); // head
+          ctx.restore();
+        }
         ctx.restore();
         break;
       }
