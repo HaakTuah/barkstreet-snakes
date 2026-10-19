@@ -1152,16 +1152,55 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   }
 }
 
-/* A laptop's column beside the board has the room: the two doors, the Field
-   guide's and the Hall of Fame's, on a row of their own under the icons, each
-   with its picture and its name (an icon alone was easy to miss: the trophy
-   was the guide's only door). The board doesn't move; the chatter under them
-   gives up the row. (A phone on its side has no height to spare: there they
-   stay icons, in the icons' row.) */
-@media (min-aspect-ratio: 5/4) and (min-height: 501px) and (max-height: 900px) and (min-width: 480px) {
-  header::before { content: ''; order: 3; flex-basis: 100%; }
-  .hud .trophy { order: 4; gap: 5px; min-height: 34px; padding: 0 10px 0 8px; } /* (both fit a 236 px column; a narrower one gives each its own row) */
-  .trophy .trophy-text { display: inline; }
+/* Beside the board (a laptop, a short window, a phone on its side), the
+   column's width decides how the doors show: the header is its container. */
+@media (min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px) {
+  header { container: column / inline-size; }
+  .hud .trophy { min-height: 34px; padding: 0 8px; } /* (as icons, round like the others beside them: five share a 216 px column's row) */
+}
+/* A column tall enough gives the two doors, the Field guide's and the Hall
+   of Fame's, a row of their own under the icons, each with its picture and
+   its name (an icon alone was easy to miss: the trophy was the guide's only
+   door). The row costs 50 px, so it's there only where the column still
+   ends above the board's bottom with the chatter's log full (five lines): a
+   window 700 px tall or more with a mouse, 780 with touch, and a column of
+   236 px or more, where both names share the row. */
+@media not all and (pointer: coarse) {
+  @media (min-aspect-ratio: 5/4) and (min-height: 700px) and (max-height: 900px) and (min-width: 480px) {
+    @container column (min-width: 236px) {
+      .hud::before { content: ''; order: 3; flex-basis: 100%; } /* (the row's break: .hud has no box here, so its ::before is one of the header's items) */
+      .hud .trophy { order: 4; gap: 5px; min-height: 34px; padding: 0 10px 0 8px; }
+      .hud .trophy .trophy-text { display: inline; }
+    }
+  }
+}
+@media (pointer: coarse) and (min-aspect-ratio: 5/4) and (min-height: 780px) and (max-height: 900px) and (min-width: 480px) {
+  @container column (min-width: 236px) {
+    .hud::before { content: ''; order: 3; flex-basis: 100%; }
+    .hud .trophy { order: 4; gap: 5px; min-height: 44px; padding: 0 12px 0 10px; }
+    .hud .trophy .trophy-text { display: inline; }
+  }
+}
+/* Shorter, or narrower, the doors stay in the icons' row, where the trophy
+   always was, and the column is as tall as it was. With a mouse, a column of
+   290 px or more has room there for the Field guide's name, beside its book
+   (a 1366×768 laptop's browser); with a sixth button in the row (the phones
+   work's full screen) it's an icon again. A phone on its side has no row to
+   spare: they're icons there. */
+@media not all and (pointer: coarse) {
+  @media (min-aspect-ratio: 5/4) and (min-height: 501px) and (max-height: 699px) and (min-width: 480px) {
+    @container column (min-width: 290px) {
+      .hud #guide-open { padding: 0 9px 0 7px; gap: 4px; }
+      .hud #guide-open .trophy-text { display: inline; }
+      .hud:has(> button:nth-of-type(6):not([hidden])) #guide-open { padding: 0 8px; }
+      .hud:has(> button:nth-of-type(6):not([hidden])) #guide-open .trophy-text { display: none; }
+    }
+  }
+}
+/* (On a touch screen, five 44 px buttons share a 244 px column's row: 6 px apart; the doors are a fingertip's 44 px too.) */
+@media (pointer: coarse) and (min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px) {
+  header { column-gap: 6px; }
+  .hud .trophy { min-height: 44px; }
 }
 
 /* Touch: comfortable targets. */

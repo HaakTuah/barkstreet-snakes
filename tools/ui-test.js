@@ -333,6 +333,29 @@ const KEYS = {
       check(r6.rows === 1 && r6.height === r.height, `${label}: with a sixth button in the header, still one row`, JSON.stringify(r6));
     }
 
+    // ------------------------------------------ the column beside the board
+    // A 1366x768 laptop's browser (1366x657): the doors stay in the icons'
+    // row, the Field guide by name, and watching with the chatter's log full
+    // (five lines) the page doesn't scroll. 1280x800 has the height for the
+    // doors' own row, and keeps it with the log full.
+    const column = `(() => {
+      const cy = id => { const r = document.getElementById(id).getBoundingClientRect(); return r.top + r.height / 2; };
+      const log = document.getElementById('chatlog'); log.textContent = '';
+      for (const [n, t] of [['Ouroboros', 'Round and round I go, and so do you.'], ['Gobbler', 'Is that an apple? Mine, all mine!'], ['Metagamer', 'I saw that coming two moves ago.'], ['Copycat', 'Anything you can do, I can do too.'], ['Mason', 'Brick by brick, row by row, wall by wall.']]) { const li = document.createElement('li'); li.innerHTML = '<strong></strong> <span></span>'; li.firstChild.textContent = n; li.lastChild.textContent = t; log.append(li); }
+      return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({
+        inIconsRow: Math.abs(cy('guide-open') - cy('mute')) < 4 && Math.abs(cy('records-open') - cy('mute')) < 4,
+        guide: vis(document.querySelector('#guide-open .trophy-text')), trophy: vis(document.querySelector('#records-open .trophy-text')),
+        scroll: document.documentElement.scrollHeight - innerHeight,
+      }))));
+    })()`;
+    for (const [w, h, iconsRow, trophy] of [[1366, 657, true, false], [1280, 800, false, true]]) {
+      await b.viewport(w, h);
+      await load();
+      await fresh(['ouroboros', 'metagamer', 'gobbler'], true);
+      const c = await ev(column);
+      check(c.inIconsRow === iconsRow && c.guide && c.trophy === trophy && c.scroll <= 0, `${w}x${h}, watching with the chatter full: ${iconsRow ? 'the doors in the icons’ row, the Field guide by name' : 'the doors’ own row, both named'}, and the page doesn’t scroll`, JSON.stringify(c));
+    }
+
     // -------------------------------------------------------------- phones
     for (const [w, h] of [[390, 844], [320, 640]]) {
       await b.viewport(w, h, { scale: 2, mobile: true });
