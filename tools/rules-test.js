@@ -1148,8 +1148,10 @@ const kept = g => { g.food = g.food.filter(f => g.mine.has(f)); return E.step(g)
 const bead = (o, x, y) => ({ x, y, kind: 'pellet', color: o.color, owner: o.id, expires: 9999 });
 const far = [line(20, 22, 3, 1), 'left']; // (a second snake, out of the way)
 const at = (c, x, y) => !!c && c.x === x && c.y === y;
-// What a person (or a rival) can work out before the move: where it'll roll, on this board as it stands.
-const freeHere = g => (x, y) => !g.holes.has(K(x, y)) && !g.food.some(f => f.x === x && f.y === y) && !g.snakes.some(o => o.alive && o.body.some(c => c.x === x && c.y === y));
+// What a person (or a rival) can work out before the move: where it'll roll, on this board as it stands (where it
+// may stop, and what it may roll on over: food lying there, but not a hole or a body).
+const passHere = g => (x, y) => !g.holes.has(K(x, y)) && !g.snakes.some(o => o.alive && o.body.some(c => c.x === x && c.y === y));
+const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x && f.y === y);
 
 { // Your own bead: you choke on it, spit it aside (it stays food), and cough. You lose nothing, but you get nothing back. Anyone else's is a meal.
   const g = board([[line(5, 5, 5), 'right'], [line(5, 15, 5), 'right']], { time: 5000 });
@@ -1165,28 +1167,35 @@ const freeHere = g => (x, y) => !g.holes.has(K(x, y)) && !g.food.some(f => f.x =
 }
 
 { // Where a spat bead goes is a rule, never chance, and anyone can work it out before the move.
-  // P0 heads right along row y (or turns down at (5,5)); holes block cells; returns the choke and what was predicted.
-  const spit = ({ y = 5, turn = false, holes = [], wrap = false, n = 3 }) => {
+  // P0 heads right along row y (or turns down at (5,5)); holes block cells, and more of its own beads lie at `beads`;
+  // returns the choke and what was predicted.
+  const spit = ({ y = 5, turn = false, holes = [], beads = [], wrap = false, n = 3 }) => {
     const g = board([[line(5, y, n), 'right'], far]);
     const [a] = g.snakes;
     if (wrap) a.wrapUntil = 1e9;
     for (const [x, hy] of holes) g.holes.add(K(x, hy));
     const next = turn ? { x: 5, y: y + 1 } : { x: 6, y };
     if (turn) a.queue = [D.down];
-    const [b] = lay(g, bead(a, next.x, next.y));
-    const guess = E.rollSide(g, a, next.x, next.y, freeHere(g)); // (before the move: the cell it's about to go into)
+    const [b] = lay(g, bead(a, next.x, next.y), ...beads.map(([x, by]) => bead(a, x, by)));
+    const guess = E.rollSide(g, a, next.x, next.y, freeHere(g), passHere(g)); // (before the move: the cell it's about to go into)
     kept(g);
     const e = g.events.find(e => e.type === 'choke' && e.snake === a);
     return { e, b, guess, to: e && { x: e.tx, y: e.ty } };
   };
   const cases = [
-    ['a turn knocks it to the outside of the turn', { turn: true }, [6, 6]],
-    ['...the inside, if the outside is taken', { turn: true, holes: [[6, 6]] }, [4, 6]],
-    ['...and if both are taken, it stays', { turn: true, holes: [[6, 6], [4, 6]] }, [5, 6]],
+    ['a turn knocks it to the inside of the turn, beside the neck', { turn: true }, [4, 6]],
+    ['...the outside, if the inside is taken', { turn: true, holes: [[4, 6]] }, [6, 6]],
+    ['...both taken, it rolls on the inside way, over food lying there, to the first free cell', { turn: true, holes: [[6, 6]], beads: [[4, 6]] }, [3, 6]],
+    ['...the outside way, if the inside way is shut', { turn: true, holes: [[3, 6]], beads: [[4, 6], [6, 6]] }, [7, 6]],
+    ['...and only with both ways shut, it stays (never straight ahead, where the head goes next)', { turn: true, holes: [[4, 6], [6, 6]] }, [5, 6]],
     ['going straight, it rolls to the side with more open log', { holes: [[6, 7]] }, [6, 4]], // (down: one free cell, then a hole; up: open; the middle and the right are both down)
     ['...a tie goes toward the middle of the board', { y: 18 }, [6, 17]], // (heading right, its right is down: the middle is up)
     ['...the other side, if that one is taken', { y: 18, holes: [[6, 17]] }, [6, 19]],
-    ['...and if both are taken, it stays', { holes: [[6, 4], [6, 6]] }, [6, 5]],
+    ['...food on both sides: it rolls on over it, the way it would have gone first', { beads: [[6, 4], [6, 6]] }, [6, 7]], // (a tie: down, toward the middle)
+    ['...as far as 4 cells', { beads: [[6, 4], [6, 6], [6, 7], [6, 8]] }, [6, 9]], // (down, toward the middle: three beads, then a free cell)
+    ['...not past that: then the other way', { beads: [[6, 4], [6, 6], [6, 7], [6, 8], [6, 9]] }, [6, 3]],
+    ['...and only with both ways shut, it stays', { holes: [[6, 4], [6, 6]] }, [6, 5]],
+    ['...past food, too: a hole beyond it on each side', { beads: [[6, 4], [6, 6]], holes: [[6, 3], [6, 7]] }, [6, 5]],
     ['...the edge is an edge, even when the edges wrap for it', { y: 0, wrap: true, holes: [[6, 1]] }, [6, 0]],
   ];
   for (const [name, opts, [x, y]] of cases) {
@@ -1224,6 +1233,22 @@ const freeHere = g => (x, y) => !g.holes.has(K(x, y)) && !g.food.some(f => f.x =
   check('the cough: COUGH_TICKS moves eat nothing, and then it eats', nudged.length === T.COUGH_TICKS - 1 && ateAt === T.COUGH_TICKS && a.eaten === 1, `${nudged.length} nudged, ate on move ${ateAt}`);
   check('...what the coughing head reached was nudged aside, by the rule, and is still there', nudged.every(({ e, apple }) => e.kind === 'food' && e.y === 5 && at(apple, e.x, 6) && e.tx === e.x && e.ty === 6 && g.food.includes(apple)), JSON.stringify(nudged.map(({ e }) => [e.x, e.y, e.tx, e.ty])));
   check('...and nothing was eaten meanwhile', !g.events.some(e => e.type === 'choke') && a.grow === 1 && a.body.length === 5, `${a.body.length} long, grow ${a.grow}`);
+}
+
+{ // No dribbling: going round a staircase (up, right, up, right) coughing, the food a turn reaches goes beside the neck,
+  // out in the open, and the next step leaves it there. (On the outside of the turn it lay just where the next step
+  // went, and was nudged along under the head all through the cough, to be eaten as it ended.)
+  const g = board([[[[10, 14], [10, 15], [10, 16], [10, 17], [10, 18]], 'up'], far]);
+  const [a] = g.snakes;
+  a.coughUntil = 99;
+  const [apple] = lay(g, { x: 11, y: 14, kind: 'food', expires: 9999 });
+  const nudges = [];
+  for (const d of [D.right, D.up, D.right, D.up, D.right, D.up]) {
+    a.queue = [d];
+    kept(g);
+    for (const e of g.events) if (e.type === 'nudge' && e.snake === a) nudges.push([e.x, e.y, e.tx, e.ty]);
+  }
+  check('no dribbling: coughing round a staircase, the food a turn reaches goes beside the neck, and stays there', JSON.stringify(nudges) === JSON.stringify([[11, 14, 11, 15]]) && at(apple, 11, 15) && at(a.body[0], 13, 11), JSON.stringify({ nudges, apple, head: a.body[0] }));
 }
 
 { // A cough never chains: more of your own beads met while coughing are nudged aside, and the cough ends when it would have.
@@ -1269,14 +1294,14 @@ const freeHere = g => (x, y) => !g.holes.has(K(x, y)) && !g.food.some(f => f.x =
   kept(g);
   const ev = g.events.filter(e => e.snake === a && ['choke', 'nudge', 'eat'].includes(e.type)).map(e => [e.type, e.x, e.y, e.tx, e.ty]);
   check('a dash over your own beads: a choke on the first, the next nudged', JSON.stringify(ev) === JSON.stringify([['choke', 6, 5, 6, 6], ['nudge', 7, 5, 7, 6]]) && at(first, 6, 6) && at(second, 7, 6) && at(a.body[0], 5 + T.DASH_LENGTH, 5), JSON.stringify(ev));
-  // Turning into a dash, at its smallest (the cells it set off from are gone from its body by the end): the first cell's a turn, the outside is the way it was going.
+  // Turning into a dash, at its smallest (the cells it set off from are gone from its body by the end): the first cell's a turn, the inside is back against the way it was going.
   const g2 = board([[line(5, 5, T.MIN_LENGTH), 'right'], far]);
   const [s] = g2.snakes;
   s.dashes = 1; s.queue = [D.down];
   const [b] = lay(g2, bead(s, 5, 6));
   E.flash(g2, s);
   kept(g2);
-  check('...turning into a dash, its own bead goes to the outside of the turn', at(b, 6, 6) && g2.events.some(e => e.type === 'choke' && at(e, 5, 6)) && at(s.body[0], 5, 5 + T.DASH_LENGTH), JSON.stringify(b));
+  check('...turning into a dash, its own bead goes to the inside of the turn', at(b, 4, 6) && g2.events.some(e => e.type === 'choke' && at(e, 5, 6)) && at(s.body[0], 5, 5 + T.DASH_LENGTH), JSON.stringify(b));
 }
 
 { // A head that stays put (a crash, a stun) finds nothing new under it, but a jump whose landing was taken comes down on what it hopped: food cooking in the fire there is eaten.

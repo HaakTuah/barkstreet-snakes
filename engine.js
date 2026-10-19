@@ -1814,7 +1814,7 @@ window.SnakeEngine = (() => {
   // starving snake that chokes, or coughs, on the tick it runs out isn't
   // saved: it ate nothing.)
   function eat(game) {
-    const room = (x, y) => foodRoom(game, x, y);
+    const room = (x, y) => foodRoom(game, x, y), past = (x, y) => foodPast(game, x, y);
     for (const s of game.snakes) {
       if (!s.alive) continue;
       const moved = s.stunUntil <= game.tick || s.landing; // (a crash, or a stun: its head is where it was, and found nothing new; but a jump whose landing was taken came down on what it hopped)
@@ -1825,7 +1825,7 @@ window.SnakeEngine = (() => {
         const f = game.food[i], coughing = game.tick < s.coughUntil;
         if (!coughing && !(f.kind === 'pellet' && f.owner === s.id)) { consume(game, s, game.food.splice(i, 1)[0], c.x, c.y); continue; }
         // (where its head came from: a power's way across the board this tick, or its body)
-        const to = rollSide(game, s.from ? { body: [...cells.slice(0, n + 1).reverse(), ...s.from], dir: s.dir } : s, c.x, c.y, room) || c;
+        const to = rollSide(game, s.from ? { body: [...cells.slice(0, n + 1).reverse(), ...s.from], dir: s.dir } : s, c.x, c.y, room, past) || c;
         if (coughing) {
           game.events.push({ type: 'nudge', snake: s, kind: f.kind, x: c.x, y: c.y, tx: to.x, ty: to.y });
           if (f.kind === 'beetle' && to !== c) { // (a beetle scurries off, out of any hole it was digging)
@@ -1844,9 +1844,15 @@ window.SnakeEngine = (() => {
   // or burrow there, and no body that'll still be there next tick (a tail
   // end moving on is free).
   function foodRoom(game, x, y) {
+    return foodPast(game, x, y) && !game.food.some(f => f.x === x && f.y === y) && !burrowAt(game, x, y);
+  }
+  // What food can roll past (see rollSide): on the board, not a hole, not
+  // burning, and no body that'll still be there next tick. (Food or a
+  // burrow lying there it rolls over; it just can't stop there.)
+  function foodPast(game, x, y) {
     if (!inside(x, y)) return false;
     const k = key(x, y);
-    if (game.holes.has(k) || burning(game, k) || game.food.some(f => f.x === x && f.y === y) || burrowAt(game, x, y)) return false;
+    if (game.holes.has(k) || burning(game, k)) return false;
     for (const o of game.snakes) {
       if (!o.alive) continue;
       const keep = o.grow === 0 && o.stunUntil <= game.tick + 1 ? o.body.length - 1 : o.body.length;
@@ -1866,33 +1872,55 @@ window.SnakeEngine = (() => {
   // go anywhere (it stays where it is). A rule, never chance, so anyone can
   // see where it'll go. With d the move that brought the head there and p
   // the move before it:
-  //   1. a turn (d isn't p): to the outside of the turn, a cell on in p;
-  //      if that's taken, the inside (a cell back, against p);
+  //   1. a turn (d isn't p): to the inside of the turn, a cell back against
+  //      p, beside the neck (on the outside, a cell on in p, it lay just
+  //      where a head going on round, up, right, up, right, came next, and
+  //      it was nudged along under the head all through a cough); if that's
+  //      taken, the outside;
   //   2. straight on: to the side with more open log (free cells in a row
   //      going out that way, up to 4); a tie goes to the side nearer the
   //      middle of the board, then to the snake's right; if that side's
-  //      taken, the other.
+  //      taken, the other;
+  //   3. both taken: it rolls on the way it would have gone first, over
+  //      whatever lies on the log there (food, a burrow), to the first free
+  //      cell within ROLL_ON; failing that, the other way. Only with both
+  //      ways shut (the edge, a hole, fire or a body in the way) does it stay
+  //      under the head. (Without this, a bead met crossing a line of beads
+  //      stayed under the head, and then the body, hidden from everyone:
+  //      about 4 chokes in 10. Rolling straight ahead as well was tried: it
+  //      lay where the head went next, and the cougher pushed it along.)
   // s: the snake, or anything with its body (the head at (x, y), or (x, y)
   // the cell the head's about to move into) and dir. isFree(x, y): may food
-  // go there? (The engine's is foodRoom; an AI passes its own.) The wrapped
-  // edge is an edge here: nothing rolls through it. (game: unused for now.)
-  function rollSide(game, s, x, y, isFree) {
+  // stop there? canPass(x, y): may it roll past there (where it can't stop:
+  // food or a burrow there)? (The engine's are foodRoom and foodPast; an AI
+  // passes its own. Without canPass, nothing rolls on past the next cell.)
+  // The wrapped edge is an edge here: nothing rolls through it. (game:
+  // unused for now.)
+  const ROLL_ON = 4;
+  function rollSide(game, s, x, y, isFree, canPass = null) {
     const b = s.body, here = !!b[0] && b[0].x === x && b[0].y === y;
     const prev = here ? b[1] : b[0], before = here ? b[2] : b[1];
     const d = (prev && stepWay(prev, { x, y })) || s.dir;
     const p = (prev && before && stepWay(before, prev)) || d;
     const ok = (dx, dy) => inside(x + dx, y + dy) && isFree(x + dx, y + dy);
-    if (d.x !== p.x || d.y !== p.y) {
-      if (ok(p.x, p.y)) return { x: x + p.x, y: y + p.y };
-      return ok(-p.x, -p.y) ? { x: x - p.x, y: y - p.y } : null;
+    let ways;
+    if (d.x !== p.x || d.y !== p.y) ways = [{ x: -p.x, y: -p.y }, p];
+    else {
+      const right = { x: -d.y, y: d.x }, left = { x: d.y, y: -d.x }, mid = (GRID - 1) / 2;
+      const open = w => { let n = 0; while (n < 4 && ok(w.x * (n + 1), w.y * (n + 1))) n++; return n; };
+      const toMid = w => Math.abs(x + w.x - mid) + Math.abs(y + w.y - mid);
+      const r = open(right), l = open(left);
+      ways = (r !== l ? r > l : toMid(left) >= toMid(right)) ? [right, left] : [left, right];
     }
-    const right = { x: -d.y, y: d.x }, left = { x: d.y, y: -d.x }, mid = (GRID - 1) / 2;
-    const open = w => { let n = 0; while (n < 4 && ok(w.x * (n + 1), w.y * (n + 1))) n++; return n; };
-    const toMid = w => Math.abs(x + w.x - mid) + Math.abs(y + w.y - mid);
-    const r = open(right), l = open(left);
-    const first = r !== l ? (r > l ? right : left) : toMid(left) < toMid(right) ? left : right;
-    for (const w of first === right ? [right, left] : [left, right]) if (ok(w.x, w.y)) return { x: x + w.x, y: y + w.y };
-    return null;
+    for (const w of ways) if (ok(w.x, w.y)) return { x: x + w.x, y: y + w.y };
+    const on = w => { // (rolling on, over what lies there)
+      if (canPass) for (let n = 1; n < ROLL_ON; n++) {
+        if (!inside(x + w.x * n, y + w.y * n) || !canPass(x + w.x * n, y + w.y * n)) break;
+        if (ok(w.x * (n + 1), w.y * (n + 1))) return { x: x + w.x * (n + 1), y: y + w.y * (n + 1) };
+      }
+      return null;
+    };
+    return on(ways[0]) || on(ways[1]);
   }
   // A head eats food.
   function consume(game, s, f, x, y) {

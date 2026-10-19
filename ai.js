@@ -1128,12 +1128,13 @@ window.SnakeAI = (() => {
     const engine = window.SnakeEngine || {}, rollSide = engine.rollSide;
     let rolls = null; // ([from, to] cells: food a rival will knock aside)
     if ((coughing || theirBeads) && rollSide) {
-      const roomFor = (x, y) => {
+      const pastFor = (x, y) => { // (it rolls over food or a burrow, where it can't stop)
         const i = y * N + x;
-        if (holes.has(i) || foodAt(i) || otherFree[i] > 1 || burrows.includes(i)) return false;
+        if (holes.has(i) || otherFree[i] > 1) return false;
         for (let j = 0, keep = me.grow > 0 ? me.body.length : me.body.length - 1; j < keep; j++) if (me.body[j].x === x && me.body[j].y === y) return false;
         return true;
       };
+      const roomFor = (x, y) => { const i = y * N + x; return !foodAt(i) && !burrows.includes(i) && pastFor(x, y); };
       others.forEach((o, k) => {
         let x = heads[k].x, y = heads[k].y;
         for (let j = 1; j <= 3; j++) { // (straight on, the way I read it)
@@ -1143,7 +1144,7 @@ window.SnakeAI = (() => {
           if (!foodAt(i) || (j > coughs[k] && marks[i] !== stampTheirs + k)) continue;
           if (j > coughs[k]) coughs[k] = j + TUNE.COUGH_TICKS - 1; // (it chokes)
           coughing = true;
-          const to = rollSide(null, { body: [at, before], dir: o.dir }, x, y, roomFor);
+          const to = rollSide(null, { body: [at, before], dir: o.dir }, x, y, roomFor, pastFor);
           if (to) { (rolls ||= []).push([i, to.y * N + to.x]); marks[to.y * N + to.x] = marks[i]; }
         }
       });
