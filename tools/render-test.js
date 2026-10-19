@@ -49,12 +49,16 @@
 //   too); nudged food rolls aside, and a beetle scurries.
 // - Beetles and the woodpecker's knock (staged from the engine's state and
 //   events): two beetles out at once, each drawn; a cornered one digs in
-//   (it sinks, a collar of sawdust round it, sawdust spraying, and a heap
-//   left where it went in, a few seconds; with reduced motion, still and no
-//   spray); through the aim, food in the mark trembles and a ring marks
-//   where it'll be knocked to; at the strike it flies there in an arc,
-//   rimmed so it reads over a body, and a beetle scurries there. Copycat
-//   copying Star keeps its own red head.
+//   (it sinks, a collar of sawdust round it, sawdust spraying; with reduced
+//   motion, still and no spray), and its bore is left a burrow, freshly
+//   bored (raw splinters, sawdust round it), settling into an ordinary one
+//   in a few seconds; no heap is left where no burrow is; a burrow closing
+//   over fills with sawdust and moss and is gone into the bark in about a
+//   second (with reduced motion, filled at once, then fading); through the
+//   aim, food in the mark trembles and a ring marks where it'll be knocked
+//   to (the engine's own list: never two on one cell, never a burrow); at
+//   the strike it flies there in an arc, rimmed so it reads over a body,
+//   and a beetle scurries there. Copycat copying Star keeps its own red head.
 // - A pecked flag is a lost colony: the flag tips and falls into the pit
 //   (the other colony's stands), its land shrinks away into the pit, and
 //   Sovereign's banner is carried to its new capital, not jumping there.
@@ -851,35 +855,27 @@ const STAGE = `(() => {
 
     // Beetles and the woodpecker's knock (round six A), staged as the engine
     // reports them: two beetles out at once; b.digUntil and the dig and dive
-    // events; the woodpecker's mark and the knock events, to where its
-    // knockTo says (the engine's own; a stand-in by the same rule where the
-    // engine here has none). Two beetles: one walks on, a cell every other
+    // events; the woodpecker's mark and the knock events, to where the
+    // engine's knocks says (the strike's own list). Two beetles: one walks on, a cell every other
     // tick, and both are drawn every frame; the other, cornered, digs in:
     // smaller as it goes down, a collar of sawdust round it, sawdust spraying
-    // off it to the end; gone (its dive), a heap of sawdust where it went in,
-    // gone itself a few seconds later. With reduced motion: no spray, and it's
-    // drawn sunk part way, still. Through the aim, food in the mark trembles
+    // off it to the end; gone (its dive), its bore is left a burrow, as the
+    // engine leaves it (BURROW_FROM_DIG): freshly bored at first (raw pale
+    // wood and sawdust round its hole, far more than an ordinary burrow has),
+    // and a few seconds later as an ordinary one, its hole open all along.
+    // With reduced motion: no spray, and it's drawn sunk part way, still. A
+    // dug dive that leaves no burrow leaves nothing (no heap without a
+    // burrow). A burrow closing over: half way, its hole is stopped up with
+    // sawdust and moss is over it; a second on, the bark is as it was (with
+    // reduced motion, filled and mossed at once). Through the aim, food in the mark trembles
     // and food outside it doesn't, and a ring marks where the rule will knock
-    // it; at the strike it flies there, up in an arc, rimmed in ink and
+    // each piece (one for each); at the strike it flies there, up in an arc, rimmed in ink and
     // parchment over whatever it crosses, and a beetle knocked scurries
     // there. Counts and centres are of pixels changed against the bare
     // board, as the choke's are.
     const dug = await ev(`(() => {
       SnakeDebug.pinQuality(0);
       const N = TUNING.GRID;
-      E.knockTo ||= (g, x, y, cells) => { // (the rule: the nearest free cell outside the patch, then nearest the log's middle, then the first)
-        const mark = new Set(cells), busy = new Set();
-        for (const s of g.snakes) if (s.alive) for (const c of s.body) busy.add(c.y * N + c.x);
-        for (const f of g.food) busy.add(f.y * N + f.x);
-        let best = null, bd = Infinity, bm = Infinity;
-        for (let k = 0; k < N * N; k++) {
-          const f = g.fires.get(k);
-          if (mark.has(k) || busy.has(k) || g.holes.has(k) || (f && g.tick >= f.from && g.tick < f.until)) continue;
-          const cx = k % N, cy = (k - cx) / N, d = Math.hypot(cx - x, cy - y), m = Math.abs(cx - (N - 1) / 2) + Math.abs(cy - (N - 1) / 2);
-          if (d < bd - 1e-9 || (Math.abs(d - bd) < 1e-9 && m < bm)) { best = { x: cx, y: cy }; bd = d; bm = m; }
-        }
-        return best;
-      };
       const cv = document.getElementById('game'), W = cv.width, kk = W / (N * ${CELL});
       let bare = null;
       const bareNow = () => { bare = cv.getContext('2d').getImageData(0, 0, W, cv.height).data; };
@@ -895,13 +891,15 @@ const STAGE = `(() => {
       const centre = (x, y, w, h, is) => { let n = 0, sx = 0, sy = 0; const p = changed(x, y, w, h, is, (c, r) => { n++; sx += c; sy += r; }); return n ? [+(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : null; };
       const emerald = (r, g, b) => g > 110 && g > r + 60 && b > 80 && b < g, green = (r, g, b) => g > r + 25 && g > 50 && b < g, tan = (r, g, b) => r > 170 && g > 125 && b > 70 && b < 175 && r > b + 45;
       const sky = (r, g, b) => b > 200 && g > 150 && r < 120, paler = (r, g, b) => r > 150 && g > 130 && b > 95, parch = (r, g, b) => Math.min(r, g, b) > 228;
-      const out = { a: [], b: [], drawn: [], collar: [], parts: [] };
+      const raw = (r, g, b) => r > 165 && g > 130 && r > b + 25, dark = (r, g, b) => r + g + b < 90, olive = (r, g, b) => g > r + 12 && g > b + 25 && r < 120, any = () => true;
+      const out = { a: [], b: [], drawn: [], collar: [], parts: [], cellPx: Math.round((W / N) * (W / N)) };
       // Two beetles, one digging in.
       const g = stage(['mason', 'ghost', 'drab']);
       show(g); R.setViewer(99); drawN(20, 0.5); bareNow();
       const A = { x: 5, y: 6, kind: 'beetle', dir: E.DIRS.right, movedAt: g.tick - 50, expires: g.tick + 900 };
       const B = { x: 15, y: 6, kind: 'beetle', dir: E.DIRS.up, movedAt: g.tick - 50, expires: g.tick + 900, scared: true, digUntil: g.tick + 8 };
       g.food.push(A, B);
+      g.burrows.push({ x: 20, y: 10, at: g.tick, used: g.time }); // (an ordinary one, to hold the dug one up against)
       show(g); R.setViewer(99); drawN(8, 0.5, 30);
       out.full = count(14, 5, 3, 3, emerald);
       R.onTick([{ type: 'dig', x: 15, y: 6, until: B.digUntil }]);
@@ -913,11 +911,12 @@ const STAGE = `(() => {
         }
       }
       g.tick++; g.food.splice(g.food.indexOf(B), 1);
-      R.onTick([{ type: 'dive', x: 15, y: 6, dug: 1 }]);
+      g.burrows.push({ x: 15, y: 6, at: g.tick, used: g.time, dug: 1 }); // (its bore, left a burrow, as the engine does)
+      R.onTick([{ type: 'dive', x: 15, y: 6, dug: 1 }, { type: 'burrow', x: 15, y: 6, dug: 1 }]);
       drawN(12, 0.5, 40);
-      out.heap = count(14.5, 5.5, 2, 2, tan); out.bugGone = count(14, 5, 3, 3, emerald);
-      drawN(40, 0.5, 80);
-      out.heapAfter = count(14.5, 5.5, 2, 2, tan);
+      out.fresh = { raw: count(14.85, 5.85, 1.3, 1.3, raw), hole: count(15.3, 6.3, 0.4, 0.4, dark), plain: count(19.85, 9.85, 1.3, 1.3, raw), bugGone: count(14, 5, 3, 3, emerald) };
+      drawN(60, 0.5, 80); // (4.8 s on)
+      out.settled = { raw: count(14.85, 5.85, 1.3, 1.3, raw), hole: count(15.3, 6.3, 0.4, 0.4, dark), plain: count(19.85, 9.85, 1.3, 1.3, raw) };
       // With reduced motion: no spray, a still sink.
       R.setReducedMotion(true);
       const C = { x: 10, y: 15, kind: 'beetle', dir: E.DIRS.up, movedAt: g.tick - 50, expires: g.tick + 900, scared: true, digUntil: g.tick + 8 };
@@ -945,6 +944,7 @@ const STAGE = `(() => {
       const [tx, ty] = cell(E.knockTo(g2, 11, 12, P));
       out.to = [tx, ty];
       out.ring = count(tx - 0.2, ty - 0.2, 1.4, 1.05, paler); out.noRing = count(18, 18, 1.4, 1.05, paler); // (clear of the mark's own rim, a cell below)
+      out.rings = E.knocks(g2, P).filter(({ to }) => to && count(to.x - 0.2, to.y - 0.2, 1.4, 1.05, paler) > 10).length; // (one for each piece in the mark)
       for (const k of P) g2.holes.add(k);
       g2.woodpecker.target = []; g2.woodpecker.struckAt = g2.tick;
       bead.x = tx; bead.y = ty;
@@ -959,6 +959,28 @@ const STAGE = `(() => {
       drawN(4, 0.5, 120); g2.tick++; drawN(2, 0.5, 60);
       const end = centre(9, 7, 5, 7, sky);
       out.end = { bead: end, beetle: centre(12, 10, 4, 3, emerald), rim: end ? count(end[0] - 0.6, end[1] - 0.6, 1.2, 1.2, parch) : 0, bug: [bx, by] };
+      // No heap without a burrow: a dug dive that leaves none (BURROW_FROM_DIG off) leaves nothing, once the collar's closed.
+      // Then a burrow closing over, and one with reduced motion.
+      const g3 = stage(['mason', 'ghost', 'drab']);
+      show(g3); R.setViewer(99); drawN(20, 0.5); bareNow();
+      R.onTick([{ type: 'dive', x: 10, y: 15, dug: 1 }]);
+      drawN(3, 0.5, 40); out.noHeap = { during: count(9, 14, 3, 3, any) };
+      drawN(15, 0.5, 40); out.noHeap.after = count(9, 14, 3, 3, any);
+      const H = { x: 6, y: 15, at: g3.tick - 400, used: 0 }, H2 = { x: 17, y: 15, at: g3.tick - 400, used: 0 };
+      g3.burrows.push(H, H2); drawN(25, 0.5, 40);
+      const healAt = (x, y) => ({ hole: count(x - 0.2, y - 0.2, 0.4, 0.4, dark), plug: count(x - 0.5, y - 0.5, 1, 1, tan), moss: count(x - 0.5, y - 0.5, 1, 1, olive), all: count(x - 1.5, y - 1.5, 3, 3, any) });
+      out.heal = { before: healAt(6.5, 15.5) };
+      g3.burrows.splice(0, 1); g3.tick++;
+      R.onTick([{ type: 'heal', x: 6, y: 15 }]);
+      drawN(1, 0.5, 33); out.heal.start = healAt(6.5, 15.5);
+      drawN(13, 0.5, 33); out.heal.mid = healAt(6.5, 15.5); // (about 0.46 s)
+      drawN(30, 0.5, 33); out.heal.end = healAt(6.5, 15.5); // (about 1.45 s)
+      R.setReducedMotion(true);
+      g3.burrows.splice(0, 1); g3.tick++;
+      R.onTick([{ type: 'heal', x: 17, y: 15 }]);
+      drawN(1, 0.5, 60); out.heal.calm = healAt(17.5, 15.5);
+      drawN(30, 0.5, 50); out.heal.calmEnd = healAt(17.5, 15.5);
+      R.setReducedMotion(false);
       SnakeDebug.pinQuality(2);
       return out;
     })()`);
@@ -968,11 +990,21 @@ const STAGE = `(() => {
       check(max(late(dug.b)) < 0.6 * min(early(dug.b)) && min(late(dug.collar)) > max(early(dug.collar)) + 20 && min(late(dug.parts)) > 0,
         'a cornered beetle digs in: it sinks into the bark, a collar of sawdust round it, sawdust spraying off it to the end',
         `its emerald pixels ${early(dug.b).join(', ')} as it starts (${dug.full} before), ${late(dug.b).join(', ')} at the end; sawdust ${early(dug.collar).join(', ')}, then ${late(dug.collar).join(', ')}; particles in the air at the end ${late(dug.parts).join(', ')}`);
-      check(dug.heap > 40 && dug.bugGone === 0 && dug.heapAfter === 0, 'gone in, it leaves a heap of sawdust where it went in, a few seconds', `${dug.heap} sawdust pixels there just after (${dug.bugGone} of the beetle), ${dug.heapAfter} four seconds on`);
+      const fr = dug.fresh, se = dug.settled;
+      check(fr.bugGone === 0 && fr.hole > 10 && se.hole > 10 && fr.raw > 2 * fr.plain + 0.12 * dug.cellPx && se.raw <= se.plain + 0.03 * dug.cellPx,
+        'gone in, its bore is left a burrow: freshly bored (raw wood and sawdust round it), an ordinary burrow a few seconds on',
+        `raw wood and sawdust ${fr.raw} pixels just after, ${se.raw} 4.8 s on (an ordinary burrow ${fr.plain}, ${se.plain}); its hole ${fr.hole}, then ${se.hole} dark pixels; ${fr.bugGone} of the beetle (a cell ${dug.cellPx})`);
+      check(dug.noHeap.during > 20 && dug.noHeap.after === 0, 'no heap without a burrow: a dig that leaves none leaves nothing once its collar has closed', `${dug.noHeap.during} pixels changed as it closes, ${dug.noHeap.after} after`);
+      const hl = dug.heal;
+      check(hl.before.hole > 10 && hl.start.hole > 5 && hl.mid.hole * 4 < hl.before.hole && hl.mid.plug + hl.mid.moss > 0.08 * dug.cellPx && hl.mid.moss > 0.025 * dug.cellPx && hl.end.all === 0,
+        'a burrow closing over fills with sawdust, moss over it, and is gone into the bark in about a second',
+        `its hole ${hl.before.hole} dark pixels, ${hl.start.hole} as it starts, ${hl.mid.hole} half way, with ${hl.mid.plug} of sawdust and ${hl.mid.moss} of moss; ${hl.end.all} pixels changed 1.45 s on (a cell ${dug.cellPx})`);
+      check(hl.calm.hole * 4 < hl.before.hole && hl.calm.plug + hl.calm.moss > 0.08 * dug.cellPx && hl.calm.moss > 0.025 * dug.cellPx && hl.calmEnd.all === 0,
+        'with reduced motion, it’s filled and mossed at once, then fades', `its hole ${hl.calm.hole}, sawdust ${hl.calm.plug}, moss ${hl.calm.moss} at once; ${hl.calmEnd.all} pixels changed after`);
       check(max(dug.calm.parts) === 0 && max(dug.calm.bug) - min(dug.calm.bug) <= 3 && max(dug.calm.bug) < 0.8 * dug.full && min(dug.calm.bug) > 10,
         'with reduced motion, it’s drawn sunk part way, still, and no sawdust flies', `its emerald pixels ${dug.calm.bug.join(', ')} (${dug.full} up on the bark); particles ${max(dug.calm.parts)}`);
-      check(dug.tremble > 0.02 && dug.steady === 0 && dug.ring > 10 && dug.noRing === 0, 'through the woodpecker’s aim, food in its mark trembles, food outside it is still, and a ring marks where it’ll be knocked to',
-        `the bead in the mark moves ${dug.tremble} cells across, frame to frame, the one outside ${dug.steady}; ${dug.ring} ring pixels at ${dug.to} (the rule’s cell), ${dug.noRing} at a cell nothing lands on`);
+      check(dug.tremble > 0.02 && dug.steady === 0 && dug.ring > 10 && dug.noRing === 0 && dug.rings === 2, 'through the woodpecker’s aim, food in its mark trembles, food outside it is still, and a ring marks where it’ll be knocked to (the engine’s list: one for each piece)',
+        `the bead in the mark moves ${dug.tremble} cells across, frame to frame, the one outside ${dug.steady}; ${dug.ring} ring pixels at ${dug.to} (the rule’s cell), ${dug.noRing} at a cell nothing lands on; rings at ${dug.rings} of the 2 landings`);
       const [tx, ty] = dug.to, b = dug.mid.bead, e = dug.end.bead;
       check(!!b && b[1] < ty + 0.5 - 0.3 && Math.abs(b[0] - (tx + 0.5)) < 0.3 && dug.mid.rim > dug.end.rim + 15 && !!e && Math.abs(e[0] - (tx + 0.5)) < 0.15 && Math.abs(e[1] - (ty + 0.5)) < 0.2,
         'at the strike, the food flies to where the rule said, up in an arc, rimmed so it reads over a body', `the bead half way at ${b} (it lands at ${tx + 0.5},${ty + 0.5}), then at ${e}; parchment round it ${dug.mid.rim} in the air, ${dug.end.rim} landed`);

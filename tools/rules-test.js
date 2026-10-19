@@ -2018,6 +2018,14 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   g.fires.set(K(10, 9), { from: g.tick, until: g.tick + 50, group: 1, strike: false });
   g.snakes[0].body = [{ x: 9, y: 10 }, { x: 8, y: 10 }, { x: 7, y: 10 }];
   check('...(so with all four sides taken, a diagonal)', at(E.knockTo(g, 10, 10, [K(10, 10)]), 11, 11), JSON.stringify(E.knockTo(g, 10, 10, [K(10, 10)])));
+  // Never onto a burrow: nothing grows on one, and food there would stop it up. (The strike's own list, and the rings
+  // and the rivals that read it, go by the same rule.)
+  g.burrows.push({ x: 11, y: 11, at: 0, used: 0 });
+  g.food.push({ x: 10, y: 10, kind: 'food' });
+  const offHole = E.knocks(g, [K(10, 10)]);
+  check('...nor onto a burrow (the next diagonal, by the same ties), in the strike\'s own list too', at(E.knockTo(g, 10, 10, [K(10, 10)]), 11, 9) && offHole.length === 1 && at(offHole[0].to, 11, 9),
+    JSON.stringify({ to: E.knockTo(g, 10, 10, [K(10, 10)]), all: offHole.map(k => k.to) }));
+  g.food.pop(); g.burrows.length = 0;
   const all = []; for (let k = 0; k < CELLS; k++) all.push(k);
   check('...and nowhere: null', E.knockTo(g, 10, 10, all) === null);
   // At the strike: each piece in the patch knocked, by the same rule, one after another (none lands where another did); a beetle

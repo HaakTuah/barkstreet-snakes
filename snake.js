@@ -785,9 +785,9 @@
       else if (e.type === 'strike') Audio.play('thunder', at(e.x));
       else if (e.type === 'gust') Audio.play('gust');
       else if (e.type === 'burrow') Audio.play('burrow', at(e.x));
-      else if ((e.type === 'dive' && !e.dug) || e.type === 'emerge') Audio.play('dig', at(e.x)); // (one that dug in was heard boring in)
-      else if (e.type === 'dig') Audio.play('dig', { rival: !isMe(cornering(e.x, e.y)), ...at(e.x) }); // (whose head it fled: yours, or a rival's, softer and further off)
-      else if (e.type === 'knock' && e.tx != null && !knocked) { knocked = true; Audio.play('knock', { volume: 0.5, ...at(e.x) }); } // (food flying off the patch: the world's, quiet, once a strike)
+      else if ((e.type === 'dive' && !e.dug) || e.type === 'emerge') Audio.play('scrabble', at(e.x)); // (down a burrow, or up out of one; one that dug in was heard boring in)
+      else if (e.type === 'dig') Audio.play('dig', { rival: !isMe(cornering(e.x, e.y)), ...at(e.x) }); // (the bore: whose head it fled, yours, or a rival's, softer and further off)
+      else if (e.type === 'knock' && e.tx != null && !knocked) { knocked = true; Audio.play('knock', { volume: 0.5, ...at(e.x) }); } // (food flying off the patch: the world's, quiet, once a strike, at the first piece that flies; none for what the bird ate)
       else if (e.type === 'rainbow') Audio.play('rainbow', at(e.x));
       else if (e.type === 'weather' && e.kind === 'rain') Audio.play('rain');
       else if (e.type === 'weather' && e.kind === 'snow') Audio.play('snow');
@@ -1510,8 +1510,7 @@
 
   // The scoreboard dot: the snake's current color,
   // the flag for Wildcard, two-tone for Joker, veined marble for Mason, Mute's
-  // mood, and Vulture's pink head (black would vanish).
-  const COPY_STAR_DOT = 'radial-gradient(circle at 50% 50%, #d19df7 0 28%, transparent 30%), conic-gradient(#f7b4b4, #fbc9a0, #fbe6a0, #a8e6b8, #a8c6f9, #b9b6f4, #dcb6f9, #f7b4b4)';
+  // mood, Vulture's pink head (black would vanish), and Copycat's party pin.
   const PERSONA_DOTS = {
     wildcard: 'linear-gradient(135deg, #3c3b6e 0 42%, #b22234 42% 56%, #fff 56% 70%, #b22234 70% 84%, #fff 84%)',
     joker: 'linear-gradient(90deg, #a21caf 50%, #f59e0b 50%)',
@@ -1519,15 +1518,12 @@
     ghost: 'radial-gradient(circle at 35% 35%, #f8fafc, #b8c4d4)', // (pale, but not an empty ring)
     star: 'radial-gradient(circle at 50% 50%, #f9c22e 0 28%, transparent 30%), conic-gradient(#ef4444, #f97316, #facc15, #22c55e, #3b82f6, #6366f1, #a855f7, #ef4444)', // (a rainbow round its sunflower star)
   };
-  // Copycat's dot wears the flag's yellow star over whatever colour it has
-  // on, its party pin: it keeps it apart from the cast's other reds.
-  const PARTY_STAR = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1.5 14.5 8.6 22 8.7 16 13.3 18.2 20.5 12 16.2 5.8 20.5 8 13.3 2 8.7 9.5 8.6Z' fill='%23ffde00'/%3E%3C/svg%3E") 50% 50% / 82% no-repeat`;
-  const starred = new Map(); // (colour -> its dot with the star: made once each, the tags read them every frame)
-  const partyDot = colour => starred.get(colour) || starred.set(colour, `${PARTY_STAR}, ${colour}`).get(colour);
-  PERSONA_DOTS.copycat = partyDot(PERSONAS.copycat.color); // (in the Hall of Fame: its own red)
+  // Copycat's dot is the flag's red with a small yellow star, its party pin,
+  // whoever it's copying (its head keeps the red and the pin too): it keeps
+  // it apart from the cast's other reds, Sniper's, Colonist's and Wildcard's.
+  PERSONA_DOTS.copycat = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 10 10\'%3E%3Cpath d=\'M5 1.5L5.82 3.87L8.33 3.92L6.33 5.43L7.06 7.83L5 6.4L2.94 7.83L3.67 5.43L1.67 3.92L4.18 3.87z\' fill=\'%23ffde00\'/%3E%3C/svg%3E") center / 100% no-repeat, #de2910';
   function dotColor(s) {
     if (s.personaKey === 'mute') return R.colorOf(s); // (its mood, as it changes)
-    if (s.personaKey === 'copycat') return partyDot(game?.snakes[s.memory.modelId]?.personaKey === 'star' ? COPY_STAR_DOT : R.colorOf(s)); // (copying Star: a pale copy of its rainbow)
     return PERSONA_DOTS[s.personaKey] || s.persona?.ink || R.colorOf(s);
   }
   // The same dots in the Hall of Fame and Your story, by a rival's name.
@@ -2086,7 +2082,7 @@
     ['Food', [
       ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(T.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time; leave one too long and it rots.`],
       ['golden', 'Golden apple', `Worth ${T.GOLDEN_GROWTH}, and everyone saw it land.`],
-      [['beetle', 'dig'], 'Beetles', `Worth ${T.BEETLE_GROWTH}, up to ${inWords(T.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed; a cornered one digs in, so be quick.`],
+      [['beetle', 'dig'], 'Beetles', `Worth ${T.BEETLE_GROWTH}, up to ${inWords(T.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in, so be quick${T.BURROW_FROM_DIG ? `, and leaves a burrow; past ${inWords(T.BURROW_MAX)} burrows, the one unused longest closes over` : ''}.`],
       ['pellet', 'Beads', `What a crash knocks off, and what a dead snake leaves (${T.CORPSE_EVERY === 2 ? 'every other segment' : T.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${T.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own make you choke: you spit them aside.`],
       ['cough', 'Coughing', `After a choke you cough for ${coughFor === 1 ? 'about a second' : `about ${coughFor} seconds`} (puffs, mouth shut) and can’t eat. Food you reach rolls aside: out of a turn, or to the side with more open log.`],
       [['baked', 'roast'], 'Baked and roast', `Food left in a fire bakes: worth ${T.COOKED_GROWTH}, if you can take the heat. Then it’s ash.`],

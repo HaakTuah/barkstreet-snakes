@@ -844,7 +844,8 @@ window.SnakeEngine = (() => {
   // knocked to when it strikes: the nearest free cell outside the patch, as
   // the crow flies; of those as near, the one nearest the middle of the log;
   // then the first by row. Null if there's none (the bird eats it). Free: on
-  // the board, not a hole, not in the patch, no body, no food, not burning.
+  // the board, not a hole, not in the patch, no body, no food, no burrow
+  // (nothing grows on one, and food there would stop it up), not burning.
   // A rule, never chance, so anyone can see where it'll land. isFree(x, y):
   // may it land there? (The engine's: see knockRoom; an AI may pass its own,
   // as for rollSide. The patch and the board's edge hold whatever it says.)
@@ -865,6 +866,7 @@ window.SnakeEngine = (() => {
     const taken = new Uint8Array(CELLS);
     for (const s of game.snakes) if (s.alive) for (const c of s.body) taken[key(c.x, c.y)] = 1;
     for (const f of game.food) taken[key(f.x, f.y)] = 1;
+    for (const b of game.burrows) taken[key(b.x, b.y)] = 1;
     return (x, y) => inside(x, y) && !taken[key(x, y)] && !game.holes.has(key(x, y)) && !burning(game, key(x, y));
   }
   // Where everything in the patch (cells) would be knocked, as the board

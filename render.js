@@ -1167,12 +1167,11 @@ window.SnakeRender = (() => {
   // into the bark (BEETLE_DIG ticks), frantic, sawdust spraying off it, and
   // sinks into the bark as its time runs out: smaller, darker, a collar of
   // sawdust closing in round it. It can still be caught. Then it's gone,
-  // and its bore is plugged with its own sawdust (frass, as bark beetles
-  // pack their tunnels): a little heap is left for a few seconds, a plug,
-  // not a hole (see drawHeaps). With reduced motion: no spray, and it's
-  // drawn sunk part way, still, until it's gone.
-  const DIG_SHRINK = 0.45, DIG_STILL = 0.5, HEAP_MS = 3000;
-  const heaps = []; // { x, y, at }
+  // its collar closing over it (see drawDive), and its bore is left a
+  // burrow (BURROW_FROM_DIG), freshly bored for a few seconds (see
+  // drawFresh): no heap without a burrow. With reduced motion: no spray,
+  // and it's drawn sunk part way, still, until it's gone.
+  const DIG_SHRINK = 0.45, DIG_STILL = 0.5;
   // How far a digging beetle has sunk (0 if it isn't digging; up to 1).
   function digOf(f, alpha) {
     if (f.digUntil == null || !(f.digUntil >= game.tick)) return 0;
@@ -1210,35 +1209,6 @@ window.SnakeRender = (() => {
       }
       ctx.fill();
     }
-  }
-  // Where one dug in, its plug of sawdust, a few seconds, fading at the end.
-  const heapSprite = () => sprite('heap', '', drawHeap);
-  const drawHeap = g => {
-    const c = CELL;
-    g.fillStyle = 'rgba(40,22,8,0.35)'; // (its shadow, down and to the right)
-    g.beginPath(); g.ellipse(c * 0.06, c * 0.09, c * 0.46, c * 0.36, 0, 0, TAU); g.fill();
-    g.fillStyle = '#b8894f';
-    g.beginPath();
-    for (const [x, y, r] of HEAP_LUMPS) { g.moveTo(c * (x + r), c * y); g.arc(c * x, c * y, c * r, 0, TAU); }
-    g.fill();
-    g.fillStyle = '#e2c38c';
-    g.beginPath();
-    for (const [x, y, r] of HEAP_LUMPS) { g.moveTo(c * (x - 0.03 + r * 0.7), c * (y - 0.04)); g.arc(c * (x - 0.03), c * (y - 0.04), c * r * 0.7, 0, TAU); }
-    g.fill();
-    g.fillStyle = 'rgba(92,60,28,0.8)'; // (chips kicked out round it)
-    for (const [x, y] of HEAP_CHIPS) { g.beginPath(); g.arc(c * x, c * y, c * 0.03, 0, TAU); g.fill(); }
-  };
-  const HEAP_LUMPS = [[0, 0, 0.26], [-0.18, 0.07, 0.17], [0.19, 0.05, 0.16], [0.02, -0.16, 0.16], [-0.08, 0.18, 0.13], [0.13, 0.19, 0.12], [-0.17, -0.12, 0.11]];
-  const HEAP_CHIPS = [[-0.46, -0.06], [0.44, -0.18], [0.38, 0.35], [-0.28, 0.42], [-0.12, -0.43], [0.5, 0.12]];
-  function drawHeaps(now) {
-    for (let i = heaps.length - 1; i >= 0; i--) {
-      const h = heaps[i], age = now - h.at;
-      if (age >= HEAP_MS || age < 0) { heaps.splice(i, 1); continue; }
-      const grow = reduced ? 1 : Math.min(1, age / 160), w = SPRITE * CELL * (0.6 + 0.4 * grow);
-      ctx.globalAlpha = Math.min(1, (HEAP_MS - age) / 900);
-      ctx.drawImage(heapSprite(), (h.x + 0.5) * CELL - w / 2, (h.y + 0.5) * CELL - w / 2, w, w);
-    }
-    ctx.globalAlpha = 1;
   }
   // A golden beetle's Honey, front to back: made once, in the shell's own
   // units, so it turns with the beetle (as its shine does).
@@ -6120,22 +6090,16 @@ window.SnakeRender = (() => {
 
   // Through the woodpecker's aim, the food in its mark trembles (see
   // drawFood), and a faint ring marks where each piece will be knocked to at
-  // the strike: the engine's own rule (knockTo, the rivals' too), worked out
-  // once a tick.
+  // the strike: the engine's own list (knocks: every landing in the strike's
+  // order, no two on one cell, never a burrow; the rivals read the same),
+  // worked out once a tick. Nothing for a piece the bird will eat.
   const knockLand = []; // (cells, x and y, this tick's)
   let knockFor = -1, knockGame = null;
   function knockRings(w, prog, now) {
     if (knockFor !== game.tick || knockGame !== game) {
       knockFor = game.tick; knockGame = game; knockLand.length = 0;
-      const to = window.SnakeEngine?.knockTo;
-      if (to) for (const f of game.food) {
-        if (!patch[f.y * GRID + f.x]) continue;
-        const c = to(game, f.x, f.y, w.target);
-        if (c == null) continue;
-        if (typeof c === 'number') knockLand.push(c % GRID, (c - c % GRID) / GRID);
-        else if (Array.isArray(c)) knockLand.push(c[0], c[1]);
-        else knockLand.push(c.x, c.y);
-      }
+      const knocks = window.SnakeEngine?.knocks;
+      if (knocks) for (const { to } of knocks(game, w.target)) if (to) knockLand.push(to.x, to.y);
     }
     if (!knockLand.length) return;
     const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now / 160);
@@ -6373,7 +6337,7 @@ window.SnakeRender = (() => {
 
   // A beetle diving into its burrow: it shrinks away into the hole. One that
   // dug itself in sinks the rest of the way, its collar of sawdust closing
-  // over it (then its plug is left: see drawHeaps).
+  // over it (then its bore is a burrow, freshly bored: see drawFresh).
   const dives = []; // { x, y, at, ang, gold, dug (it dug in: how far it had sunk) }
   function drawDive(now) {
     for (let i = dives.length - 1; i >= 0; i--) {
@@ -6431,7 +6395,6 @@ window.SnakeRender = (() => {
   function drawFood(alpha, now) {
     trackFood(now);
     trackBugs(now);
-    if (heaps.length) drawHeaps(now); // (where a beetle dug itself in: its plug, under the rest)
     const lively = !reduced, prog = lively ? aimed(alpha) : -1; // (through the woodpecker's aim: what's in its mark trembles)
     for (const f of game.food) {
       if (f.kind === 'beetle') { drawBeetle(f, alpha, now); continue; }
@@ -6544,7 +6507,17 @@ window.SnakeRender = (() => {
   // tapering, now and then forking. Each burrow's cracks
   // are its own (seeded by where it is) and grow to full length over about
   // half a minute. It opens with a pop.
-  const CRACK_GROW_TICKS = 260;
+  //
+  // One a cornered beetle's dig left (dug: 1, round six A) doesn't pop: the
+  // beetle's collar closes over it (see drawDive) and it's there, freshly
+  // bored, its rim raw pale wood with splinters sticking out of it and its
+  // sawdust kicked out round it; over FRESH_MS it settles into an ordinary
+  // burrow (see drawFresh). One closing over (a 'heal': at the most, the one
+  // unused longest, to make room) fills with sawdust, moss creeps over it,
+  // and it fades into the bark over HEAL_MS (see drawHeals); with reduced
+  // motion, filled and mossed at once, then fading.
+  const CRACK_GROW_TICKS = 260, FRESH_MS = 4000, FRESH_HOLD = 1200, HEAL_MS = 1100;
+  const heals = []; // { x, y, at, v (its look), cs (its cracks' sprite, as last drawn) }
   const crackCache = new Map(); // cell -> branches of [x, y] points (cells)
   const burrowSeen = new Map(); // cell -> when it first showed (for its pop)
   function cracksOf(b) {
@@ -6577,13 +6550,14 @@ window.SnakeRender = (() => {
     return br;
   }
   function drawBurrows(now) {
+    if (heals.length) drawHeals(now);
     if (!game.burrows?.length) return;
     const c = CELL;
     ctx.lineCap = ctx.lineJoin = 'round'; // (as it always left them)
     for (const b of game.burrows) {
       const key = b.y * GRID + b.x, x = b.x * c + c / 2, y = b.y * c + c / 2;
       if (!burrowSeen.has(key)) burrowSeen.set(key, now);
-      const pop = popOf(now - burrowSeen.get(key));
+      const age = now - burrowSeen.get(key), pop = b.dug ? 1 : popOf(age); // (a dug one is there as the collar closes over it)
       const grow = Math.min(1, Math.max(0.15, (game.tick - b.at) / CRACK_GROW_TICKS));
       // The cracks, from their sprite, on whole device pixels.
       const cs = crackSprite(b, key, grow);
@@ -6593,9 +6567,117 @@ window.SnakeRender = (() => {
       // The opening (a cached sprite, one of four).
       const w = SPRITE * CELL * pop;
       ctx.drawImage(burrowSprite(BURROW_LOOKS[key % 4]), x - w / 2, y - w / 2, w, w);
+      if (b.dug && age < FRESH_MS) drawFresh(x, y, key, age);
     }
   }
   const BURROW_LOOKS = ['0', '1', '2', '3'];
+  // A dug burrow's fresh look, over the ordinary one: full for FRESH_HOLD,
+  // then settling away.
+  function drawFresh(x, y, key, age) {
+    const f = age < FRESH_HOLD ? 1 : 1 - (age - FRESH_HOLD) / (FRESH_MS - FRESH_HOLD), a = f * f * (3 - 2 * f), w = SPRITE * CELL;
+    if (a <= 0) return;
+    ctx.globalAlpha = a;
+    ctx.drawImage(freshSprite(BURROW_LOOKS[key % 4]), x - w / 2, y - w / 2, w, w);
+    ctx.globalAlpha = 1;
+  }
+  // Freshly bored: sawdust kicked out round the hole (a pale bed, lumps lit
+  // from the upper left, specks further out), its rim raw pale wood, and
+  // splinters of it sticking out, inked so they read on the bark. Never over
+  // the hole itself: it's a burrow, open.
+  const freshSprite = v => sprite('burrowFresh', v, drawFreshBore);
+  const drawFreshBore = (g, v) => {
+    const c = CELL, seed = Number(v) * 17 + 3, rot = 0.4, cs = Math.cos(rot), sn = Math.sin(rot);
+    const on = (t, rx, ry) => { const ex = Math.cos(t) * rx, ey = Math.sin(t) * ry; return [ex * cs - ey * sn, ex * sn + ey * cs]; }; // (a point on the hole's tilted oval)
+    const rnd = i => { const h = Math.sin((seed + i) * 12.9898) * 43758.5453; return h - Math.floor(h); };
+    g.fillStyle = 'rgba(236,212,160,0.3)'; // (a bed of it round the hole, not over it)
+    g.beginPath(); g.ellipse(0, 0, c * 0.5, c * 0.42, rot, 0, TAU); g.ellipse(0, 0, c * 0.25, c * 0.17, rot, 0, TAU); g.fill('evenodd');
+    for (let pass = 0; pass < 3; pass++) { // the lumps: their shadow, the sawdust, its lit tops
+      g.fillStyle = pass === 0 ? 'rgba(70,42,18,0.5)' : pass === 1 ? '#d9b77c' : '#f2e2bb';
+      const dx = pass === 0 ? 0.9 : pass === 1 ? 0 : -0.6, dy = pass === 0 ? 1.2 : pass === 1 ? 0 : -0.8;
+      g.beginPath();
+      for (let i = 0; i < 14; i++) {
+        if (pass === 2 && rnd(i * 5 + 4) < 0.4) continue;
+        const [px, py] = on(i * TAU / 14 + rnd(i * 5) * 0.4, c * (0.34 + 0.1 * rnd(i * 5 + 1)), c * (0.27 + 0.1 * rnd(i * 5 + 1)));
+        const r = c * (0.045 + 0.04 * rnd(i * 5 + 2)) * (pass === 2 ? 0.5 : 1);
+        g.moveTo(px + dx + r, py + dy); g.arc(px + dx, py + dy, r, 0, TAU);
+      }
+      g.fill();
+    }
+    g.fillStyle = '#e6cc96'; // (specks thrown further)
+    for (let i = 0; i < 12; i++) { const [px, py] = on(rnd(i * 3 + 80) * TAU, c * (0.5 + 0.14 * rnd(i * 3 + 81)), c * (0.44 + 0.14 * rnd(i * 3 + 81))); g.beginPath(); g.arc(px, py, c * (0.018 + 0.016 * rnd(i * 3 + 82)), 0, TAU); g.fill(); }
+    g.strokeStyle = '#f3dfb0'; g.lineWidth = c * 0.06; // the raw rim
+    g.beginPath(); g.ellipse(0, 0, c * 0.275, c * 0.195, rot, 0, TAU); g.stroke();
+    g.lineJoin = 'round';
+    for (let i = 0; i < 6; i++) { // splinters of raw wood, torn out from the rim past the sawdust, each with its grain
+      const t = i * TAU / 6 + rnd(i * 7 + 40) * 0.7, len = c * (0.3 + 0.14 * rnd(i * 7 + 41)), half = c * (0.03 + 0.012 * rnd(i * 7 + 42));
+      const [bx, by] = on(t, c * 0.28, c * 0.2), [tx, ty] = on(t + (rnd(i * 7 + 43) - 0.5) * 0.4, c * 0.28 + len, c * 0.2 + len * 0.85);
+      const nx = -(ty - by), ny = tx - bx, n = Math.hypot(nx, ny) || 1;
+      g.beginPath(); g.moveTo(bx + nx / n * half, by + ny / n * half); g.lineTo(tx, ty); g.lineTo(bx - nx / n * half, by - ny / n * half); g.closePath();
+      g.fillStyle = '#f6e6c0'; g.fill();
+      g.strokeStyle = 'rgba(64,38,16,0.9)'; g.lineWidth = c * 0.024; g.stroke();
+      g.strokeStyle = 'rgba(176,125,72,0.8)'; g.lineWidth = c * 0.012; // (its grain)
+      g.beginPath(); g.moveTo(bx, by); g.lineTo(bx + (tx - bx) * 0.7, by + (ty - by) * 0.7); g.stroke();
+    }
+  };
+  // A burrow closing over: its cracks and hole fading, a plug of sawdust
+  // filling it from the middle out, then moss creeping over it, all fading
+  // into the bark at the end.
+  function drawHeals(now) {
+    const c = CELL, w = SPRITE * c;
+    for (let i = heals.length - 1; i >= 0; i--) {
+      const h = heals[i], p = (now - h.at) / HEAL_MS;
+      if (p >= 1 || p < 0) { heals.splice(i, 1); continue; }
+      const x = h.x * c + c / 2, y = h.y * c + c / 2;
+      const f = p < 0.55 ? 1 : 1 - (p - 0.55) / 0.45, a = f * f * (3 - 2 * f);
+      const fill = reduced ? 1 : Math.min(1, p / 0.4), moss = reduced ? 1 : Math.max(0, Math.min(1, (p - 0.2) / 0.4));
+      if (h.cs?.c && h.cs.k === k) { // (its cracks, as last drawn, closing with it)
+        ctx.globalAlpha = a * (1 - p);
+        ctx.setTransform(1, 0, 0, 1, shakeX, shakeY);
+        ctx.drawImage(h.cs.c, h.cs.X, h.cs.Y);
+        ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
+      }
+      ctx.globalAlpha = a;
+      ctx.drawImage(burrowSprite(h.v), x - w / 2, y - w / 2, w, w);
+      const sf = 0.3 + 0.7 * fill * (2 - fill); // (eased out)
+      ctx.drawImage(healPlugSprite(), x - w * sf / 2, y - w * sf / 2, w * sf, w * sf);
+      if (moss > 0) { const sm = 0.35 + 0.65 * moss * (2 - moss); ctx.globalAlpha = a * Math.min(1, moss * 2); ctx.drawImage(healMossSprite(h.v), x - w * sm / 2, y - w * sm / 2, w * sm, w * sm); }
+      ctx.globalAlpha = 1;
+    }
+  }
+  // The plug: sawdust packed into the hole, heaped a little over its rim.
+  const healPlugSprite = () => sprite('healPlug', '', drawHealPlug);
+  const drawHealPlug = g => {
+    const c = CELL;
+    g.fillStyle = 'rgba(60,36,14,0.4)'; g.beginPath(); g.ellipse(c * 0.03, c * 0.05, c * 0.3, c * 0.22, 0.4, 0, TAU); g.fill();
+    g.fillStyle = '#c9a46a'; g.beginPath(); g.ellipse(0, 0, c * 0.29, c * 0.21, 0.4, 0, TAU); g.fill();
+    g.fillStyle = '#e4c890';
+    g.beginPath();
+    for (const [px, py, r] of [[-0.08, -0.05, 0.1], [0.08, -0.02, 0.09], [0, 0.07, 0.08], [-0.15, 0.06, 0.06], [0.16, 0.08, 0.05]]) { g.moveTo(c * (px + r), c * py); g.arc(c * px, c * py, c * r, 0, TAU); }
+    g.fill();
+  };
+  // Moss over it: a little cushion of the log's own moss (dark olive, never
+  // the apples' lime), its tufts run together, a shadow under it, each tuft
+  // lit on its upper left, and fuzz.
+  const healMossSprite = v => sprite('healMoss', v, drawHealMoss);
+  const drawHealMoss = (g, v) => {
+    const c = CELL, n = Number(v) + 1, rnd = i => { const h = Math.sin((n * 31 + i) * 12.9898) * 43758.5453; return h - Math.floor(h); };
+    const tufts = [[0, 0, 0.11]];
+    for (let i = 0; i < 9; i++) { const a = i * TAU / 9 + rnd(i) * 0.6, d = 0.09 + 0.08 * rnd(i + 20); tufts.push([Math.cos(a) * d * 1.15, Math.sin(a) * d * 0.85, 0.06 + 0.035 * rnd(i + 40)]); }
+    tufts.sort((p, q) => p[1] - q[1]); // (back to front)
+    const clump = (dx, dy, grow) => { g.beginPath(); for (const [x, y, r] of tufts) { g.moveTo(c * (x + dx + r + grow), c * (y + dy)); g.arc(c * (x + dx), c * (y + dy), c * (r + grow), 0, TAU); } };
+    g.fillStyle = 'rgba(14,8,2,0.32)'; clump(0.02, 0.035, 0.01); g.fill();
+    g.fillStyle = '#3a5520'; clump(0, 0, 0); g.fill();
+    for (const [x, y, r] of tufts) {
+      const lit = g.createRadialGradient(c * (x - r * 0.35), c * (y - r * 0.4), c * r * 0.1, c * x, c * y, c * r);
+      lit.addColorStop(0, 'rgba(128,156,78,0.5)'); lit.addColorStop(0.55, 'rgba(90,120,48,0.12)'); lit.addColorStop(1, 'rgba(18,30,8,0.25)');
+      g.fillStyle = lit; g.beginPath(); g.arc(c * x, c * y, c * r, 0, TAU); g.fill();
+    }
+    for (let i = 0; i < 26; i++) { // fuzz: tiny fronds, light and dark
+      const [x, y, r] = tufts[i % tufts.length], a = rnd(i + 60) * TAU, d = r * (0.2 + 0.8 * rnd(i + 90));
+      g.fillStyle = i % 2 ? 'rgba(126,154,76,0.5)' : 'rgba(24,40,12,0.45)';
+      g.beginPath(); g.arc(c * (x + Math.cos(a) * d), c * (y + Math.sin(a) * d), c * (0.012 + 0.012 * rnd(i + 120)), 0, TAU); g.fill();
+    }
+  };
   // A burrow's cracks in a sprite of their own, made again only when they've
   // grown (they grow a little each tick for about half a minute, then never):
   // dark, with a lit lip along one side, thinning out.
@@ -8023,10 +8105,15 @@ window.SnakeRender = (() => {
         let b = null;
         for (const o of bugs) if (Math.abs(o.x - e.x) + Math.abs(o.y - e.y) <= (b ? 0 : 1)) b = o; // (where it went in, or beside it)
         dives.push({ x: e.x, y: e.y, at: now, ang: b?.ang ?? 0, gold: b ? b.gold : !!e.gold, dug: e.dug ? Math.max(0.3, b?.dig || DIG_STILL) : 0 });
-        if (e.dug) heaps.push({ x: e.x, y: e.y, at: now });
         spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 110, 420, 2, '#d6b480', '#a16207');
-      } else if (e.type === 'burrow') {
-        spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 170, 520, 2.4, '#d6b480', '#3b2412');
+      } else if (e.type === 'burrow') { // cracked open (bark chips), or left by a dig (pale sawdust: it's freshly bored, see drawFresh)
+        if (e.dug) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 10, 150, 520, 2.2, '#f2e2bb', '#d9b77c');
+        else spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 170, 520, 2.4, '#d6b480', '#3b2412');
+      } else if (e.type === 'heal') { // one closing over: sawdust and moss fill it, and it fades into the bark (see drawHeals)
+        const key = e.y * GRID + e.x;
+        heals.push({ x: e.x, y: e.y, at: now, v: BURROW_LOOKS[key % 4], cs: crackSprites.get(key) || null });
+        crackSprites.delete(key); burrowSeen.delete(key); // (a burrow opening there again cracks and pops anew)
+        if (!reduced) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 80, 420, 1.8, '#e6cc96', '#3a5520');
       } else if (e.type === 'gust' && e.x >= 0) { // an apple knocked loose: it drops in
         born.set(e.y * GRID + e.x, { kind: 'food', at: now, i: 0, next: 0, gen: bornGen, v: '', fell: true });
       } else if (e.type === 'strike') {
@@ -8408,7 +8495,7 @@ window.SnakeRender = (() => {
     eatenNow.clear();
     bornTick = -1;
     fresh = true;
-    bugs.length = bugPops.length = scurries.length = dives.length = heaps.length = 0;
+    bugs.length = bugPops.length = scurries.length = dives.length = heals.length = 0;
     bugFor.clear();
     knockFor = -1; tickNow = 0;
     fallenFlags.length = 0;
