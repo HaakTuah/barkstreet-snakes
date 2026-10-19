@@ -61,9 +61,10 @@ for (const f of ['tuning.js', 'ai.js', 'engine.js', 'records.js', 'online.js']) 
 }
 const { SnakeEngine: E, SnakeOnline: O, SnakeRecords: Rec, TUNING: T } = ctx.window;
 const ENGINE = fs.readFileSync(path.join(ROOT, 'engine.js'), 'utf8');
-// Every kind of event the engine makes (each must cross), and the ones the
-// protocol carries that it may not make yet (staged till it does).
-const KINDS = [...new Set([...[...ENGINE.matchAll(/events\.push\(\{ type: '(\w+)'/g)].map(m => m[1]), 'dig', 'knock'])].sort();
+// Every kind of event the engine makes (each must cross). (A kind the
+// protocol carries before the engine makes it would go in here too, staged
+// till it does: none now.)
+const KINDS = [...new Set([...ENGINE.matchAll(/events\.push\(\{ type: '(\w+)'/g)].map(m => m[1]))].sort();
 // Every way the engine says a snake was out (s.fatal: each must cross, once
 // at least): what it sets it to, and why a crash was the end.
 const FATAL_SET = [...ENGINE.matchAll(/\.fatal = ([^;]+);/g)].flatMap(m => [...m[1].matchAll(/'(\w+)'/g)].map(q => q[1]));
@@ -112,6 +113,7 @@ function counted(msg, last, events) {
   if (msg.h.length) cross('holes');
   if (msg.w) msg.w.forEach((v, j) => { if (!blank(v)) cross(`woodpecker ${j}`); });
   if (!same(msg.bu, last?.bu)) cross('burrows');
+  if (msg.bu.some(b => b[4])) cross('burrows dug');
   if (!same(msg.un, last?.un)) cross('unders');
   if (msg.un.some(u => u[3])) cross('unders gold');
   for (const f of msg.fi) cross(`fire ${FIRES[f[3]]}`);
@@ -192,7 +194,8 @@ const EVENTS = (s, o, h, k) => {
     baked: [{ ...at, kind: 'food' }], ash: [{ ...at, kind: 'pellet' }],
     choke: [{ snake: s, ...at, tx: Math.max(0, h.x - 1), ty: h.y }], nudge: [{ snake: s, kind: 'food', ...at, tx: Math.min(E.GRID - 1, h.x + 1), ty: h.y }],
     dig: [{ ...at, until: k + 8 }], dive: [{ ...at }, { ...at, dug: 1 }],
-    knock: [{ kind: 'food', ...at, tx: Math.min(E.GRID - 1, h.x + 2), ty: h.y }, { kind: 'beetle', ...at, tx: h.x, ty: Math.max(0, h.y - 2), gold: 1 }, { kind: 'pellet', ...at, tx: null, ty: null }], // (knocked aside, a golden beetle scurrying, and one with nowhere to go)
+    knock: [{ kind: 'food', ...at, tx: Math.min(E.GRID - 1, h.x + 2), ty: h.y }, { kind: 'beetle', ...at, tx: h.x, ty: Math.max(0, h.y - 2), gold: 1 }, { kind: 'pellet', ...at, tx: null, ty: null, color: o.color }], // (knocked aside, a golden beetle scurrying, and a bead in its colour with nowhere to go)
+    burrow: [{ ...at }, { ...at, dug: 1 }], heal: [{ ...at }], // (one cracked open, or left by a dig; one closing over)
   };
 };
 const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm', 'snow'], FIRES = ['burning', 'struck', 'ember']; // (online.js's orders)
@@ -228,6 +231,7 @@ function stage(game) {
   if (bug && short('food beetle 9')) { bug.scared = true; return; } // (a scared one)
   const digger = game.food.find(f => f.kind === 'beetle' && f.digUntil == null);
   if (digger && short('food beetle 11')) { digger.digUntil = k + 8; return; } // (one digging in, cornered)
+  if (game.burrows.length && short('burrows dug')) { game.burrows[0].dug = 1; return; } // (one a dig left)
   const hatch = game.burrows[0] || free(game);
   if (hatch && (short('unders') || short('unders gold'))) { const u = { until: k + 12 + (k % 5), expires: k + 200, from: hatch.y * E.GRID + hatch.x, gold: short('unders gold') }; (game.unders ||= []).push(u); buried.add(u); return; } // (one gone down a burrow, or where it dug)
   if (short('snake burnUntil') || short('snake burnFrom')) { s.burnFrom = k; s.burnUntil = k + 6; return; } // (as fire sets it alight)
@@ -341,7 +345,7 @@ for (const fatal of FATAL.filter(k => short(`death fatal ${k}`))) {
 // ones that only say where, where; a death, what the snake does.)
 const ways = EVENTS({ id: 1, color: '#fff', name: 'S' }, { id: 2, color: '#000', name: 'O' }, { x: 1, y: 1 }, 1);
 const says = KINDS.filter(k => k !== 'death').flatMap(k => [...new Set((ways[k] || [{ x: 1, y: 1 }]).flatMap(w => Object.keys(w).filter(f => !blank(w[f]))))].map(f => `${k} ${f}`));
-const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fatal'].map(f => `death ${f}`), ...FATAL.map(k => `death fatal ${k}`), ...FIELDS.map(f => `snake ${f}`), ...LOOKS.map(f => `memory ${f}`), 'holes', 'burrows', 'unders', 'unders gold',
+const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fatal'].map(f => `death ${f}`), ...FATAL.map(k => `death fatal ${k}`), ...FIELDS.map(f => `snake ${f}`), ...LOOKS.map(f => `memory ${f}`), 'holes', 'burrows', 'burrows dug', 'unders', 'unders gold',
   ...['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap'].flatMap(k => [`food ${k}`, `food ${k} 3`]), // (each kind, and when it goes)
   'food food 5', 'food food 6', 'food pellet 4', 'food pellet 7', ...[5, 6, 7, 8, 9, 10, 11].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden, digging in)
   ...FIRES.map(k => `fire ${k}`),
@@ -370,22 +374,25 @@ bad.s[1][20] = 'soon';
 bad.e = [['choke', 'x', 1, 1, 2, 1], ['choke', 1, 1, 1, -1, 1], ['nudge', 1, 99, 1, 1, 2, 1], ['nudge', 1, 0, 1, 1, E.GRID, 1], ['nudge', 9, 0, 1, 1, 2, 1], ['choke', 1, 3, 4, 3, 5]];
 O.apply(g, bad, E.DIRS);
 if (g.events.length !== 1 || g.events[0].tx !== 3 || g.events[0].ty !== 5 || g.snakes[1].coughUntil !== -1) { console.error('a malformed choke, nudge or cough got through', JSON.stringify(g.events.map(e => [e.type, e.x, e.y, e.tx, e.ty]))); process.exit(1); }
-// Nor digs, dives or knocks off the board or of a kind that doesn't exist (a knock lands on the board,
-// or nowhere: both or neither), a dig that isn't till a tick, a beetle underground that came from no cell,
-// or a beetle digging in till no tick.
+// Nor digs, dives, knocks, burrows opening or closing over off the board or of a kind that doesn't exist (a
+// knock lands on the board, or nowhere: both or neither), a dig that isn't till a tick, a beetle underground that
+// came from no cell, a beetle digging in till no tick, or a burrow that isn't one.
 bad.e = [['dig', 1, 1, 'soon'], ['dig', -1, 1, 5], ['dive', 1, E.GRID, 1], ['knock', 99, 1, 1, 2, 2, 0], ['knock', 0, 1, 1, E.GRID, 1, 0], ['knock', 0, 1, 1, 2, null, 0], ['knock', 0, 1, 1, -1, -1, 0],
-  ['knock', 0, 1, 1, null, null, 0], ['dig', 2, 3, 40], ['dive', 2, 3, 1], ['knock', 4, 5, 6, 7, 8, 1]];
+  ['knock', 0, 1, 1, null, null, 0], ['dig', 2, 3, 40], ['dive', 2, 3, 1], ['knock', 4, 5, 6, 7, 8, 1], ['burrow', E.GRID, 1, 1], ['heal', 1, 'x'], ['burrow', 3, 4, 1], ['heal', 5, 6],
+  ['knock', 3, 1, 2, 3, 4, 0, '#abc']];
+bad.bu = [[1, 2], [1, 2, 3, 'x', 0], [4, 5, 6, 700, 1], [7, 8, 9, -1, 0]];
 bad.un = [['x'], [1, 2, -5, 0], [1, 2, E.GRID * E.GRID, 0], [5, 9, 30, 1]];
 bad.f = [[3, 3, 4, 100, 0, 0, -1, -1, 0, 0, 0, 'soon']];
 O.apply(g, bad, E.DIRS);
 const kept = JSON.stringify(g.events.map(e => ({ ...e })));
-if (kept !== JSON.stringify([{ type: 'knock', kind: 'food', x: 1, y: 1, tx: null, ty: null }, { type: 'dig', x: 2, y: 3, until: 40 }, { type: 'dive', x: 2, y: 3, dug: 1 }, { type: 'knock', kind: 'beetle', x: 5, y: 6, tx: 7, ty: 8, gold: 1 }])
-  || JSON.stringify(g.unders) !== JSON.stringify([{ until: 5, expires: 9, from: 30, gold: true }]) || 'digUntil' in g.food[0]) { console.error('a malformed dig, dive, knock, beetle underground or digging got through', kept, JSON.stringify(g.unders), JSON.stringify(g.food)); process.exit(1); }
+if (kept !== JSON.stringify([{ type: 'knock', kind: 'food', x: 1, y: 1, tx: null, ty: null }, { type: 'dig', x: 2, y: 3, until: 40 }, { type: 'dive', x: 2, y: 3, dug: 1 }, { type: 'knock', kind: 'beetle', x: 5, y: 6, tx: 7, ty: 8, gold: 1 }, { type: 'burrow', x: 3, y: 4, dug: 1 }, { type: 'heal', x: 5, y: 6 }, { type: 'knock', kind: 'pellet', x: 1, y: 2, tx: 3, ty: 4, color: '#abc' }])
+  || JSON.stringify(g.burrows) !== JSON.stringify([{ x: 4, y: 5, at: 6, used: 700, dug: 1 }, { x: 7, y: 8, at: 9 }])
+  || JSON.stringify(g.unders) !== JSON.stringify([{ until: 5, expires: 9, from: 30, gold: true }]) || 'digUntil' in g.food[0]) { console.error('a malformed dig, dive, knock, burrow, beetle underground or digging got through', kept, JSON.stringify(g.unders), JSON.stringify(g.food), JSON.stringify(g.burrows)); process.exit(1); }
 
 // A guest's press the host can't use (an unknown power, a made-up direction) is refused.
 if (O.POWERS.includes('dash') || O.POWERS.includes(undefined) || O.DIR_NAMES.includes('ahead')) { console.error('a bad press got through'); process.exit(1); }
 
 const n = key => seen.get(key) || 0, stagedAll = [...staged.values()].reduce((a, b) => a + b, 0);
-console.log(`ok: ${rounds} rounds (seed ${SEED}), ${ticks} ticks, ${checks} checks, guest matched the host every tick (${presses} power presses, ${n('dash plain')} plain flashes, ${plans} plans, ${n('choke')} chokes and ${n('nudge')} nudges, ${n('dig')} digs, ${n('knock')} knocks, ${eaten} things eaten); biggest message ${biggest} bytes`);
+console.log(`ok: ${rounds} rounds (seed ${SEED}), ${ticks} ticks, ${checks} checks, guest matched the host every tick (${presses} power presses, ${n('dash plain')} plain flashes, ${plans} plans, ${n('choke')} chokes and ${n('nudge')} nudges, ${n('dig')} digs, ${n('knock')} knocks, ${n('heal')} burrows closing over, ${eaten} things eaten); biggest message ${biggest} bytes`);
 console.log(`ok: crossed, ${MIN} times at least: all ${KINDS.length} kinds of event and all they say, all ${FIELDS.length} fields of a snake, its ${LOOKS.length} looks, the food, the woodpecker, fire and weather (${seen.size} things in all; ${stagedAll} events staged: ${[...staged].map(([k, v]) => `${k} ${v}`).join(', ') || 'none'})`);
 console.log(`ok: crossed, once at least: all ${FATAL.length} ways to be out (${FATAL.map(k => `${k} ${n(`death fatal ${k}`)}`).join(', ')}; staged on boards of their own: ${deathsStaged.join(', ') || 'none'})`);
