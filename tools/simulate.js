@@ -565,19 +565,39 @@ if (isMainThread && require.main === module) {
     done();
     return;
   }
-  // One run at a time on the machine: a lock file, taken over if its owner's gone.
-  const lock = path.join(os.tmpdir(), 'barkbite-sim.lock');
+  // One run at a time on the machine: a lock file, taken over if its owner's
+  // gone. Runs waiting for it queue, first come first served: each leaves a
+  // ticket (when it came, its pid), and only the oldest live ticket may take
+  // the lock. (Without the queue, a run started the moment the last one ended,
+  // as abtest's are, usually got in ahead of one that had been waiting, and a
+  // waiting run could wait for many minutes.)
+  const lock = path.join(os.tmpdir(), 'barkbite-sim.lock'), queueDir = path.join(os.tmpdir(), 'barkbite-sim-queue');
   const alive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
   const take = () => { try { fs.writeFileSync(lock, String(process.pid), { flag: 'wx' }); return true; } catch { return false; } };
   if (!flag('--no-wait')) {
+    const ticket = path.join(queueDir, `${String(Date.now()).padStart(15, '0')}-${process.pid}`);
+    try { fs.mkdirSync(queueDir, { recursive: true }); fs.writeFileSync(ticket, ''); } catch {}
+    const drop = () => { try { fs.unlinkSync(ticket); } catch {} };
+    process.on('exit', drop);
+    const first = () => { // (is ours the oldest ticket of a run still going? the dead ones are cleared on the way)
+      let names = [];
+      try { names = fs.readdirSync(queueDir).sort(); } catch { return true; }
+      for (const n of names) {
+        if (path.join(queueDir, n) === ticket) return true;
+        if (alive(Number(n.split('-')[1]))) return false;
+        try { fs.unlinkSync(path.join(queueDir, n)); } catch {}
+      }
+      return true; // (our ticket couldn't be written: wait as before, by the lock alone)
+    };
     let told = false;
-    while (!take()) {
+    while (!(first() && take())) {
       let owner = 0;
       try { owner = Number(fs.readFileSync(lock, 'utf8')); } catch {}
-      if (!owner || !alive(owner)) { try { fs.unlinkSync(lock); } catch {} continue; }
-      if (!told) { console.error(`(waiting for another simulation on this machine, pid ${owner}; --no-wait runs at once)`); told = true; }
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2000);
+      if (owner && !alive(owner)) { try { fs.unlinkSync(lock); } catch {} continue; }
+      if (!told) { console.error(`(waiting for ${owner ? `another simulation on this machine, pid ${owner}` : 'the simulations queued before this one'}; --no-wait runs at once)`); told = true; }
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250);
     }
+    drop();
     process.on('exit', () => { try { if (fs.readFileSync(lock, 'utf8') === String(process.pid)) fs.unlinkSync(lock); } catch {} });
     for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => process.exit(130));
     // The files as they are now, our turn come, are what's played and stored

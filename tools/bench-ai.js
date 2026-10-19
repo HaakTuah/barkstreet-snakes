@@ -303,4 +303,5 @@ const ms = x => x.toFixed(3);
   }
   const handled = changed[0] ? `which both changed alike, in ${changed[0]} (${pct(changed[0])})` : 'which neither changed';
   console.log(`all ${P} positions came out the same in both: the way it went, its memory, the random numbers it drew, and the view it was handed (${handled}); ${unchecked.length ? `but not every persona` : `every one of the ${cast.length} personas`}`);
+  if (unchecked.length) process.exit(2); // (a run that left a persona out isn't a pass: more --rounds, or a persona only the after copy has)
 })();
