@@ -909,7 +909,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   // way any such rounds catch it, about a dozen times. Its rests are checked
   // above. A crumb it takes, cut off by the patch and old holes, may be
   // nearer a head: nobody can step into one without crossing the mark.)
-  let near = 0, early = 0, underFood = 0, knocked = 0, badKnocks = 0, strikes = 0, cells = 0, aims = 0, underBodies = 0, besideHoles = 0, under = 0, cuts = 0;
+  let near = 0, nearAims = 0, early = 0, underFood = 0, knocked = 0, badKnocks = 0, strikes = 0, cells = 0, aims = 0, underBodies = 0, besideHoles = 0, under = 0, cuts = 0;
   for (let r = 0; r < 8; r++) seededWhile(101 + r, () => {
     const g = E.createGame({ withPlayer: false });
     g.time = T.SUDDEN_DEATH_MS;
@@ -928,10 +928,12 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
           aims++;
           const mark = new Set(g.woodpecker.target);
           const open = k => [[0, -1], [1, 0], [0, 1], [-1, 0]].some(([dx, dy]) => { const x = k % T.GRID + dx, y = Math.floor(k / T.GRID) + dy; return x >= 0 && y >= 0 && x < T.GRID && y < T.GRID && !mark.has(K(x, y)) && !holes.has(K(x, y)); });
+          const nearBefore = near;
           for (const k of g.woodpecker.target) {
             if (open(k) && heads.some(h => Math.abs(h.x - k % T.GRID) + Math.abs(h.y - Math.floor(k / T.GRID)) <= T.PECK_CLEARANCE)) near++;
             if (foodCells.has(k)) underFood++;
           }
+          if (near > nearBefore) nearAims++;
           if (g.woodpecker.target.some(k => bodies.has(k))) underBodies++;
           if (g.woodpecker.target.some(k => [-1, 1, -T.GRID, T.GRID].some(d => holes.has(k + d)))) besideHoles++;
         }
@@ -953,7 +955,10 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
     }
   });
   check('the woodpecker strikes in patches', strikes > 20 && cells / strikes > T.PECK_CHUNK / 2, `${strikes} strikes, ${(cells / Math.max(1, strikes)).toFixed(1)} cells each`);
-  check('the woodpecker aims well away from heads', near === 0, `${near} cells too close`);
+  // (A patch nearer a head is its fallback when every spot clear of them would shut a snake in, or none of its tries
+  // found one: late in these restless rounds, a couple of aims in about 160 at most, depending on how the rounds went.
+  // With the clearance ignored, 86 of them were near a head.)
+  check('the woodpecker aims well away from heads', nearAims <= 3, `${nearAims} of ${aims} aims near a head (${near} cells too close)`);
   check('the woodpecker gives warning', early === 0, `${early} without`);
   check('the woodpecker\'s patches cover food now, and knock it out of the way', underFood > 10 && knocked >= underFood / 2 && badKnocks === 0, `${underFood} food under marks, ${knocked} knocked, ${badKnocks} landed wrong`);
   check('...but under bodies, often', underBodies > aims * T.PECK_UNDER_BODY && under > 0, `${underBodies} of ${aims} aims, ${under} snakes under strikes`);
@@ -2176,6 +2181,21 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   let caught = null;
   for (let t = 0; t < T.BEETLE_DIG && !caught; t++) { feed(g); kept(g); if (!(b.x === 10 && b.y === 10)) break; caught = g.events.find(e => e.type === 'eat' && e.kind === 'beetle'); }
   check('...stays put while it digs, and can still be caught', caught && caught.x === 10 && caught.y === 10, JSON.stringify(b));
+  // A race you can win: coming straight at it from outside BEETLE_DIG_FEAR, the dig starts as your head comes within it,
+  // and you get there on the dig's last tick. (Dug in for 5 ticks from a head within 7, nobody coming at one ever
+  // caught it: 0 of 65 digs started 7 cells off, in AI rounds, though the lesson said "Grab it before it's gone!")
+  const race = board([[line(5, 12, 4), 'right'], [line(20, 22, 4), 'right']], { time: 30000 });
+  race.burrows = [];
+  race.unders = away();
+  const [rb] = lay(race, { x: 5 + T.BEETLE_DIG_FEAR + 1, y: 12, kind: 'beetle', expires: 9999, dir: D.up, movedAt: race.tick }); // (it's just crawled: it rests a moment)
+  let raceDig = null, raceAte = null;
+  for (let t = 0; t < 20 && !raceAte && race.food.includes(rb); t++) {
+    feed(race); kept(race);
+    raceDig ||= race.events.find(e => e.type === 'dig') && { at: race.tick - 1, gap: Math.abs(race.snakes[0].body[0].x - rb.x) + Math.abs(race.snakes[0].body[0].y - rb.y), until: rb.digUntil };
+    raceAte = race.events.find(e => e.type === 'eat' && e.kind === 'beetle');
+  }
+  check(`...a race you can win: coming straight at it from outside BEETLE_DIG_FEAR, you get there ${T.BEETLE_DIG === T.BEETLE_DIG_FEAR ? 'on its last tick' : 'in time'}`, raceDig && raceDig.gap === T.BEETLE_DIG_FEAR && raceAte && raceAte.x === 5 + T.BEETLE_DIG_FEAR + 1 && race.tick - 1 === raceDig.at + T.BEETLE_DIG_FEAR && race.tick - 1 <= raceDig.until,
+    JSON.stringify({ dig: raceDig, ate: raceAte && [raceAte.x, raceAte.y, race.tick - 1], DIG: T.BEETLE_DIG, FEAR: T.BEETLE_DIG_FEAR }));
   // Nobody comes for it: when it's done it's underground, a burrow opens where it dug (BURROW_FROM_DIG), and it comes out
   // of a burrow later (another, if there is one).
   const h = board([[line(5, 10, 4), 'right'], [line(20, 22, 4), 'right']], { time: 30000 });
@@ -2457,13 +2477,14 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
   check('two beetles out: the second is read as the first (bound for its burrow, it isn\'t chased)', got.up === 20, JSON.stringify(got));
 }
 
-{ // In the game: a beetle in open bark, no burrow near, Gobbler coming at it: cornered, it digs in where it is (as the AI
-  // worked out it would), and Gobbler catches it before it's gone.
+{ // In the game: a beetle in open bark, no burrow near, Gobbler coming at it from outside BEETLE_DIG_FEAR: cornered as
+  // Gobbler comes within it, it digs in where it is (as the AI worked out it would), and Gobbler catches it before it's
+  // gone. (It used to start 4 cells off, where no head coming at one ever is when it starts to dig.)
   const g = E.createGame({ withPlayer: false, personas: ['gobbler', 'drab'] });
   g.snakes = g.snakes.slice(0, 2);
   const [a, b] = g.snakes;
   g.time = 30000;
-  a.body = cellsOf(line(9, 12, 5)); a.dir = D.right; // (4 cells off: close enough to make it in the dig's BEETLE_DIG ticks)
+  a.body = cellsOf(line(13 - T.BEETLE_DIG_FEAR - 2, 12, 5)); a.dir = D.right;
   b.body = cellsOf(line(20, 22, 4)); b.dir = D.right; b.isPlayer = true; b.persona = null; b.queue = []; b.stunUntil = 1e9;
   g.burrows = [{ x: 22, y: 2, at: 0, used: 0 }];
   g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }];
