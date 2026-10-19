@@ -1667,6 +1667,17 @@
   document.addEventListener('focusin', e => { tabbed = tabbing ? e.target : null; tabbing = false; });
   document.addEventListener('keyup', e => { if (e.key === 'Tab') tabbing = false; }); // (a Tab that took focus out of the page: the game's next focus isn't yours)
 
+  // Copying the title: its S is a drawing over a see-through letter, so a
+  // rich paste (into an email, say) would read "Barkstreet  nakes". A copy
+  // that takes in the title is the words it says, and nothing else.
+  document.addEventListener('copy', e => {
+    const sel = getSelection(), s = document.querySelector('h1 .snake-s');
+    if (!s || !e.clipboardData || !sel || sel.isCollapsed || !sel.containsNode(s, true)) return;
+    const text = sel.toString();
+    e.clipboardData.setData('text/plain', text);
+    e.clipboardData.setData('text/html', text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]));
+    e.preventDefault();
+  });
   document.addEventListener('keydown', e => {
     Audio.unlock();
     tabbing = e.key === 'Tab';
