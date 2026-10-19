@@ -89,6 +89,7 @@ window.SnakeAudio = (() => {
   let pitchMul = 1;
   let volMul = 1;
   let out = null; // where the cue being built goes: its own little chain into the master
+  let edgeOut = null; // ...and, for a rival's, where its edge goes (round its dulling: see edge)
 
   const NO_OPTS = {};
   const now = () => (window.performance && window.performance.now ? window.performance.now() : Date.now());
@@ -326,6 +327,16 @@ window.SnakeAudio = (() => {
   function knock(t, freq, peak) {
     tone(t, 'triangle', freq * 1.4, 0.07, peak, 0.001, freq, freq * 3);
     noise(t, 0.02, peak * 0.45, 'bandpass', freq * 2.2, 4);
+  }
+
+  // A cue's edge: the few high grains it's known by. In a rival's cue they go
+  // round its dulling (as soft as the rest of it), so the cue keeps a little
+  // bite that carries over the music, as a sound far off still does; in yours
+  // they go with the rest.
+  function edge(fn) {
+    const was = out;
+    if (edgeOut) out = edgeOut;
+    try { fn(); } finally { out = was; }
   }
 
   // A muffled drum (a hand on the skin keeps it short): a low skin that sags in pitch,
@@ -620,12 +631,18 @@ window.SnakeAudio = (() => {
       for (let i = 0; i < 3; i++) noise(t + 0.16 + i * 0.05, 0.02, 0.05, 'lowpass', 1100, 0.8);
     },
 
-    // A burrow closing over: a muffled crumble, as soft as a beetle's scrabble. Sawdust
-    // trickles into the hole (five grains, each lower and fainter), then a hushed
-    // pat as the moss settles over it. About 350 ms.
+    // A burrow closing over: a muffled crumble. Sawdust trickles into the hole
+    // (five grains, each lower and fainter, a fleck of it ticking in over each),
+    // then a hushed pat as the moss settles over it. About 350 ms. (It was as
+    // soft as a beetle's scrabble, which the music buries; the flecks sit high,
+    // where the music leaves room, as the skitter of a beetle coming out does.)
     heal(t) {
-      for (let i = 0; i < 5; i++) noise(t + i * 0.05 + (i % 2) * 0.012, 0.03, 0.075 - i * 0.01, 'lowpass', 900 - i * 90, 0.8);
-      noise(t + 0.25, 0.1, 0.065, 'lowpass', 380, 0.7);
+      for (let i = 0; i < 5; i++) {
+        const at = t + i * 0.05 + (i % 2) * 0.012;
+        noise(at, 0.03, 0.22 - i * 0.03, 'lowpass', 900 - i * 90, 0.8);
+        noise(at + 0.004, 0.008, 0.06 - i * 0.008, 'highpass', 3600, 0.8);
+      }
+      noise(t + 0.25, 0.1, 0.19, 'lowpass', 380, 0.7);
     },
 
     // A beetle scrabbling into (or out of) its burrow.
@@ -637,8 +654,9 @@ window.SnakeAudio = (() => {
     // legs scratch at the wood while its jaws rasp in, the rasp sinking as it
     // goes down (over the wood's own low grind, which a phone hears), and a
     // soft puff as its sawdust packs the hole shut behind it. About 450 ms.
+    // (The legs' scratches are its edge: a rival's keeps them, softly, over the music.)
     dig(t) {
-      for (let i = 0; i < 6; i++) noise(t + i * 0.03 + Math.random() * 0.012, 0.014, 0.15 - i * 0.012, 'bandpass', 2800 + Math.random() * 1600, 1.6);
+      edge(() => { for (let i = 0; i < 6; i++) noise(t + i * 0.03 + Math.random() * 0.012, 0.014, 0.15 - i * 0.012, 'bandpass', 2800 + Math.random() * 1600, 1.6); });
       for (let i = 0; i < 9; i++) {
         const k = i / 8;
         noise(t + 0.05 + i * 0.032, 0.026, 0.19 * Math.sin(Math.PI * (0.2 + 0.7 * k)), 'bandpass', 1700 * Math.pow(0.5, k), 2.4);
@@ -954,16 +972,19 @@ window.SnakeAudio = (() => {
     voices++;
     try {
       // The cue's own little chain: a gain (so it can be cut short), a rival's dulled, and placed left or right.
+      // (A rival's goes through its dulling into the gain; the few high grains a cue gives as its edge go
+      // round it, as soft as the rest, so a rival's dig keeps a scratch the music can't bury: see edge.)
       const voice = ctx.createGain();
       voice.gain.value = 1;
       building.nodes.push(voice);
-      let tail = voice;
+      let tail = voice, into = voice;
       if (o.rival) {
         const f = ctx.createBiquadFilter();
         f.type = 'lowpass';
         f.frequency.value = RIVAL_LOWPASS;
-        tail.connect(f);
-        building.nodes.push(tail = f);
+        f.connect(voice);
+        building.nodes.push(into = f);
+        edgeOut = voice;
       }
       if (Number.isFinite(o.pan) && ctx.createStereoPanner) {
         try {
@@ -974,7 +995,7 @@ window.SnakeAudio = (() => {
         } catch { /* stays in the middle */ }
       }
       tail.connect(master);
-      out = voice;
+      out = into;
       const cut = sounding[CUTS_SHORT[name]];
       if (cut && cut.end > t) cut.voice.gain.setTargetAtTime(0, t, 0.03);
       if (DUCKS[name]) duckMusic(t, DUCKS[name]);
@@ -990,6 +1011,7 @@ window.SnakeAudio = (() => {
       }
       building = null;
       out = master;
+      edgeOut = null;
     }
   }
 
