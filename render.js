@@ -781,7 +781,8 @@ window.SnakeRender = (() => {
   // own bead aside), cough (you coughing: mouth shut, puffs of breath),
   // lostflag (a colony's flag falling into its pit), dig (a beetle half
   // sunk in sawdust, digging in), knock (an apple flying out of the
-  // woodpecker's mark to the ring where it lands).
+  // woodpecker's mark to the ring where it lands), and the basics (How to
+  // play's first rows): basic-win, basic-steer, basic-crash, basic-hunger.
   const guideSprites = new Map(); // kind and size -> canvas
   function guideSprite(kind, px) {
     px = Math.max(8, Math.round(px));
@@ -796,7 +797,7 @@ window.SnakeRender = (() => {
     guideSprites.set(key, c);
     return c;
   }
-  const GUIDE_TILE = { hole: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, choke: 1.15, lostflag: 1.2, cough: 1.15, dig: 0.9, knock: 1.35 }; // (on a tile of bark this many cells either side of the middle)
+  const GUIDE_TILE = { hole: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, choke: 1.15, lostflag: 1.2, cough: 1.15, dig: 0.9, knock: 1.35, 'basic-win': 1.1, 'basic-steer': 1.1, 'basic-crash': 1.1 }; // (on a tile of bark this many cells either side of the middle)
   const COUGH_GUIDE = [[0.74, 0.02, 0.21, 1], [0.97, -0.46, 0.13, 0.75]]; // (the guide's puffs: x, y, radius in cells, and how faint)
   const DIG_SPRAY = [[-0.62, -0.42, 0.045], [0.6, -0.5, 0.04], [0.66, 0.36, 0.05], [-0.5, 0.58, 0.04], [0.05, -0.7, 0.035], [-0.72, 0.1, 0.035]];
   const GUIDE = {
@@ -884,6 +885,60 @@ window.SnakeRender = (() => {
       const was = ctx;
       ctx = g;
       try { g.translate(-CELL * 0.2, CELL * 0.25); g.rotate(0.5); g.scale(0.8, 0.8); g.translate(0, -CELL * 0.6); flagPole(0, 0); drawFlag(1.5, -CELL * 0.92, 0, 0, 'blue'); } finally { ctx = was; }
+    },
+    // The basics (How to play's first rows): your snake, the last one
+    // wriggling, in the win's confetti; your head with a turn ahead of it;
+    // your head dazed by a crash, its stars going round, as on the log; and
+    // a tag's hunger bar, running low.
+    'basic-win': g => guideSnake(g, '#4ade80', true, (x, y) => {
+      for (let i = 0; i < 7; i++) {
+        const a = -2.75 + i * 0.78, r = CELL * (0.74 + (i % 2) * 0.2);
+        g.save();
+        g.translate(x - CELL * 0.15 + Math.cos(a) * r, y + Math.sin(a) * r * 0.95);
+        g.rotate(i * 1.3);
+        g.fillStyle = CONFETTI[i % CONFETTI.length];
+        g.fillRect(-CELL * 0.1, -CELL * 0.055, CELL * 0.2, CELL * 0.11);
+        g.restore();
+      }
+    }),
+    'basic-steer': g => guideSnake(g, '#4ade80', true, (x, y) => {
+      const ax = x + CELL * 0.78, top = y - CELL * 0.62;
+      g.lineCap = 'round';
+      g.lineJoin = 'round';
+      for (const [w, ink] of [[CELL * 0.22, INK], [CELL * 0.11, '#fffbea']]) { // (inked, then cream: the turn it's about to take)
+        g.strokeStyle = ink;
+        g.lineWidth = w;
+        g.beginPath(); g.moveTo(x + CELL * 0.5, y); g.quadraticCurveTo(ax, y, ax, top); g.stroke();
+        g.fillStyle = ink;
+        const h = w * 1.45;
+        g.beginPath(); g.moveTo(ax, top - h * 0.9); g.lineTo(ax - h, top + h * 0.35); g.lineTo(ax + h, top + h * 0.35); g.closePath(); g.fill();
+      }
+    }),
+    'basic-crash': g => guideSnake(g, '#4ade80', true, (x, y) => {
+      ctx.fillStyle = '#fffbea';
+      ctx.strokeStyle = 'rgba(58,38,20,0.85)';
+      ctx.lineWidth = 1.3;
+      for (let i = 0; i < 3; i++) {
+        const a2 = 0.5 + i * TAU / 3;
+        star(x + Math.cos(a2) * CELL * 0.55, y - CELL * 0.72 + Math.sin(a2) * CELL * 0.18, CELL * 0.22);
+        ctx.stroke();
+      }
+    }),
+    'basic-hunger': g => { // (a name tag, in parchment on the dark page: your dot, your name, and its bar along the bottom)
+      const w = CELL * 1.12, h = CELL * 0.6, r = CELL * 0.14;
+      const pill = () => { g.beginPath(); if (g.roundRect) g.roundRect(-w / 2, -h / 2, w, h, r); else g.rect(-w / 2, -h / 2, w, h); };
+      g.fillStyle = '#2b1c10';
+      pill(); g.fill();
+      g.save(); g.translate(0, -CELL * 0.03); g.scale(0.94, 0.88); g.fillStyle = '#f6ecd2'; pill(); g.fill(); g.restore();
+      g.fillStyle = '#4ade80';
+      g.beginPath(); g.arc(-w / 2 + CELL * 0.2, -CELL * 0.07, CELL * 0.1, 0, TAU); g.fill();
+      g.fillStyle = 'rgba(58,38,20,0.55)';
+      g.beginPath(); if (g.roundRect) g.roundRect(-w / 2 + CELL * 0.37, -CELL * 0.12, CELL * 0.52, CELL * 0.1, CELL * 0.05); else g.rect(-w / 2 + CELL * 0.37, -CELL * 0.12, CELL * 0.52, CELL * 0.1); g.fill();
+      const bx = -w / 2 + CELL * 0.14, bw = w - CELL * 0.28, by = CELL * 0.1, bh = CELL * 0.09;
+      g.fillStyle = 'rgba(58,38,20,0.18)';
+      g.beginPath(); if (g.roundRect) g.roundRect(bx, by, bw, bh, bh / 2); else g.rect(bx, by, bw, bh); g.fill();
+      g.fillStyle = '#4d7c0f';
+      g.beginPath(); if (g.roundRect) g.roundRect(bx, by, bw * 0.3, bh, bh / 2); else g.rect(bx, by, bw * 0.3, bh); g.fill();
     },
   };
   // A guide's snake: its head and neck heading right on the tile, in the

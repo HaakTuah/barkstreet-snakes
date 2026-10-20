@@ -25,7 +25,7 @@
   const recordsEl = $('records'), recordsBody = $('records-body'), resetBtn = $('records-reset');
   const recordsTabs = [...document.querySelectorAll('#records .tab[data-tab]')];
   const filterEl = $('scores-filter'), filterTabs = [...filterEl.querySelectorAll('.tab')];
-  const friendsBtn = $('friends'), lobbyEl = $('lobby'), lobbyName = $('lobby-name'), lobbyShare = $('lobby-share');
+  const howBtn = $('how'), cardLinks = $('card-links'), friendsBtn = $('friends'), lobbyEl = $('lobby'), lobbyName = $('lobby-name'), lobbyShare = $('lobby-share');
   const lobbyLink = $('lobby-link'), lobbyCopy = $('lobby-copy'), lobbyPlayers = $('lobby-players');
   const lobbyJoin = $('lobby-join'), lobbyCode = $('lobby-code'), lobbyStatus = $('lobby-status');
 
@@ -49,14 +49,15 @@
   const inWords = n => ['none', 'one', 'two', 'three', 'four', 'five'][n] ?? String(n);
   const FLAVOR = {
     intro: 'Three rivals. One mossy log. Last snake wriggling wins.',
-    // (The arrows first: anyone knows them. A click is the mouse's left button on the board.)
-    hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P naps · Enter starts · H opens the Hall of Fame',
-    hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · M mutes · N toggles the music',
+    // (The arrows first: anyone knows them. A click is the mouse's left button on the board. A first-timer's
+    // Hall of Fame is empty: the Field guide's key, G, is in its place before a first round, both under the board.)
+    hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P naps · Enter starts · G opens the Field guide',
+    hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music',
     hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · M mutes · N toggles the music',
     hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash',
     hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash · Tap ⏸ to nap',
     // Watching (Watch AIs, or after you're out): nothing of yours to steer.
-    hintWatch: '1, 2, 4 set the speed · P naps · Enter plays · H opens the Hall of Fame · M mutes · N toggles the music',
+    hintWatch: '1, 2, 4 set the speed · P naps · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music',
     hintWatchTouch: 'The speed buttons set 1×, 2× or 4× · Tap ⏸ to nap',
     rivals: ['Your rivals today:', 'Up on the log with you:', 'Sharing your bark:'],
     spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
@@ -617,7 +618,7 @@
     Chatter.clearBubbles();
     showCard({
       title: 'Napping', text: `${pick(FLAVOR.pause)} ${FLAVOR.wake}`,
-      primary: 'Wake up', secondary: touchFirst ? 'Start over' : null, focusCard: true,
+      primary: 'Wake up', secondary: touchFirst ? 'Start over' : null, focusCard: true, how: 'Field guide',
     });
     updateControls();
   }
@@ -678,9 +679,19 @@
       title,
       text: `${howYouDied(p)} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
       flavor: killLine(p), primary: 'Play again', secondary: 'Keep watching', reward: true,
+      ...(!online && guideFor(p)), // (what got you, in the Field guide)
       ...(online && { primary: 'Keep watching', secondary: hosting() ? 'Close room' : 'Leave room', actions: { primary: hideCard, secondary: leaveRoom } }),
     };
     updateControls();
+  }
+
+  // A death card's way into the Field guide: the row about what got you.
+  function guideFor(p) {
+    const [howRow, name] = p.killer === 'hunger' ? ['basic-hunger', 'Hunger']
+      : p.fatal === 'boom' || /blew up/.test(p.cause) || p.fatal === 'cut' ? ['leaf', 'Golden leaf']
+      : p.fatal === 'pecked' || /woodpecker hole/.test(p.cause) ? ['hole', 'Holes']
+      : p.killer === 'fire' ? ['fire', 'Fire'] : ['basic-crash', 'Crashes'];
+    return { how: `Field guide: ${name}`, howRow };
   }
 
   function endRound() {
@@ -707,7 +718,7 @@
         : { title, flavor, text: yours, reward: !!me, primary: null, secondary: 'Leave room', lobby: { status: FLAVOR.waiting(online.hostName, true) },
           actions: { secondary: leaveRoom } };
     } else pendingCard = game.withPlayer
-      ? { title, flavor, reward: true, primary: 'Play again', secondary: 'Watch AIs', text: yours }
+      ? { title, flavor, reward: true, primary: 'Play again', secondary: 'Watch AIs', text: yours, ...(how && guideFor(me)) } // (it says how you died, so it names what got you too: when your death ended the round, it's your death's card)
       : { title, flavor, primary: 'Play', secondary: 'Watch again' };
     cardAt = lastFrame + T.ROUND_END_PAUSE;
     updateControls();
@@ -1132,11 +1143,11 @@
   // (a lesson that waits is shown only if this still holds).
   let toastLevel = 'news', toastHold = 0;
   const waiting = []; // lessons waiting for the one showing: [text, ms, kind, opts]
-  const LEVELS = { news: 0, lesson: 1, round: 2 };
+  const LEVELS = { news: 0, lesson: 1, asked: 2, round: 3 };
   function toast(text, ms = 2800, kind = '', level = 'news', opts = {}) {
     const now = performance.now();
     if (level !== 'round' && !overlay.classList.contains('hidden')) return; // (a card's up)
-    if (!toastEl.hidden && now < toastHold && LEVELS[level] <= LEVELS[toastLevel] && level !== 'round') {
+    if (!toastEl.hidden && now < toastHold && LEVELS[level] <= LEVELS[toastLevel] && level !== 'round' && level !== 'asked') {
       if (level === 'lesson' && waiting.length < 3) { // (it waits for the hold to end, not the whole banner)
         waiting.push([text, ms, kind, opts]);
         clearTimeout(toastTimer);
@@ -1145,7 +1156,7 @@
       return;
     }
     toastLevel = level;
-    toastHold = now + Math.min(ms, level === 'news' ? T.NEWS_HOLD_MS : T.LESSON_HOLD_MS);
+    toastHold = now + (level === 'asked' ? ms : Math.min(ms, level === 'news' ? T.NEWS_HOLD_MS : T.LESSON_HOLD_MS)); // (a note you asked for: its whole time)
     toastEl.classList.remove('settled', 'leaving'); // (a new banner slams in)
     toastEl.dataset.kind = kind;
     toastEl.textContent = text;
@@ -1233,7 +1244,7 @@
   // card = { title, text, flavor, primary, secondary, opponents, reward, quiet,
   //   friends (show "Play with friends"), lobby (which lobby parts, see renderLobby),
   //   actions: { primary, secondary } (what the buttons do, instead of the usual) }
-  let cardActions = null;
+  let cardActions = null, howRow = null;
   function showCard(card) {
     hideToast();
     shownCard = card;
@@ -1244,14 +1255,17 @@
     flavorEl.hidden = !card.flavor;
     opponentsEl.hidden = !card.opponents;
     hintEl.hidden = state !== 'ready';
-    clearTimeout(blurbTimer);
-    cardText.classList.remove('said');
+    closeNote(); // (a new card: its own words)
     helpEl.hidden = state === 'ready'; // the start card already shows the controls
     startBtn.hidden = !card.primary;
     if (card.primary) startBtn.textContent = card.primary;
     watchBtn.hidden = !card.secondary;
     if (card.secondary) watchBtn.textContent = card.secondary;
     friendsBtn.hidden = !card.friends;
+    howBtn.hidden = !card.how; // (the Field guide, from the start card, the nap and your death's card)
+    if (card.how) howBtn.textContent = card.how;
+    howRow = card.howRow || null; // (your death's card: the guide opens at what got you)
+    cardLinks.hidden = friendsBtn.hidden && howBtn.hidden;
     // In the lobby the tags would show the solo round behind the card, not who's playing.
     tagsEl.style.visibility = state === 'lobby' ? 'hidden' : '';
     cardActions = card.actions || null;
@@ -1280,10 +1294,12 @@
       if (!nameRow.hidden && game.carveOffered && game.carveOffered !== card.title && document.activeElement !== nameInput) nameRow.hidden = true; // (offered once: the round-over card after your death card doesn't ask again)
       if (!nameRow.hidden) game.carveOffered = card.title;
       if (!nameRow.hidden && document.activeElement !== nameInput) nameInput.value = Records.hasName() ? Records.getName() : '';
+      if (document.activeElement !== nameInput) nameRow.classList.toggle('carved', Records.hasName()); // (a name's in: on the smallest boards the field gives the card's links their room back)
       if (!nameRow.hidden) namingEntry = game.entryId;
     }
 
     overlay.querySelector('.card').classList.toggle('beat', !!card.beat); // the countdown: a big number
+    overlay.querySelector('.card').classList.toggle('ended', state === 'over' && !!player() && !player().alive); // the round's card when your death ended it: its words say more than your death's (style.css: how long you lasted), so more gives way to fit (a win keeps its badge)
     overlay.classList.remove('hidden');
     overlay.querySelector('.card').scrollTop = 0;
     if (!card.quiet) say(announcement(card));
@@ -1324,6 +1340,7 @@
   }
 
   function hideCard() {
+    closeNote();
     overlay.classList.add('hidden');
     shownCard = null;
     keepAwake(); // (back to the board: a round going on keeps the screen on)
@@ -1426,6 +1443,8 @@
       li.querySelector('.name').textContent = isMe(s) ? 'You' : s.name;
       li.title = s.persona ? `${s.name}: ${s.persona.blurb}` : isMe(s) ? 'You' : `${s.name}, a friend`;
       if (s.persona) li.dataset.blurb = `${s.name}: ${s.persona.blurb}`; // tapped (phones have no tooltips), or its name pressed with a key, it says how it plays
+      const nameBtn = li.querySelector('button.name');
+      if (nameBtn) { nameBtn.setAttribute('aria-expanded', 'false'); nameBtn.setAttribute('aria-controls', 'rival-note'); } // (its note, on the card)
       if (s.personaKey === 'capricious') li.querySelector('.dot').dataset.ring = ''; // its pink ring, as on the board
       const mark = R.markOf(s.color);
       if (s.isPlayer && mark) li.querySelector('.dot').dataset.mark = mark;
@@ -1434,20 +1453,75 @@
     }
   }
 
-  let blurbTimer = 0;
+  // A snake's note, asked for from its tag (a click, a tap, or Enter on its
+  // name): how a rival plays and what it holds now, or your own powers. On a
+  // card (napping, your death's, the round's end, the start) it stands in
+  // for the card's words, under the rival's dot and name, until you're done
+  // with it: its tag again, its ×, Esc, a click or tap anywhere but a
+  // button, or the card going; another tag swaps it. Watching a round (no card up),
+  // it's a banner, up as long as it takes to read. While you're playing, or
+  // in a countdown, a tag says nothing (your eyes belong on the log; on a
+  // desktop, its tooltip still does).
+  const noteEl = $('rival-note'), noteDot = noteEl.querySelector('.dot'), noteWho = noteEl.querySelector('strong');
+  const noteHow = noteEl.querySelector('.how'), noteNow = noteEl.querySelector('.now'), cardEl = overlay.querySelector('.card');
+  let noted = null, bannered = null; // (whose note is on the card; whose is the banner)
   tagsEl.addEventListener('click', e => {
     const li = e.target.closest?.('li'), s = li && game.snakes.find(o => o.tag?.li === li);
-    if (!s || state === 'running') return;
-    const blurb = isMe(s) ? yourPowerWords(s) : li.dataset.blurb ? li.dataset.blurb + powerWords(s) : '';
-    if (!blurb) return;
-    if (overlay.classList.contains('hidden')) return toast(blurb, 3200);
-    clearTimeout(blurbTimer);
-    cardText.textContent = blurb;
-    cardText.hidden = false;
-    cardText.classList.add('said');
-    say(blurb);
-    blurbTimer = setTimeout(restoreText, 3200);
+    if (!s || !(s.persona || isMe(s)) || state === 'countdown' || state === 'lobby') return;
+    if (overlay.classList.contains('hidden')) {
+      if (state !== 'running' || playerAlive()) return; // (playing: nothing)
+      if (bannered === s && !toastEl.hidden && toastEl.dataset.kind === 'note') { bannered = null; return hideToast(true); } // (its tag again)
+      const line = noteLine(s);
+      bannered = s;
+      toastEl.style.setProperty('--edge', isMe(s) ? R.colorOf(s) : s.persona.ink || s.color);
+      return toast(line, Math.min(T.NOTE_MAX_MS, Math.max(T.NOTE_MIN_MS, T.NOTE_FIND_MS + line.length * T.NOTE_CHAR_MS)), 'note', 'asked');
+    }
+    if (noted === s) return closeNote();
+    openNote(s);
   });
+  // The note in a line (a banner, and what a screen reader hears).
+  const youWords = s => s.alive ? yourPowerWords(s) : 'You’re out of this round.'; // (your powers, while you have a round to use them in)
+  const noteLine = s => isMe(s) ? youWords(s) : `${s.name}: ${s.persona.blurb}${powerWords(s)}`;
+  function openNote(s) {
+    closeNote();
+    noted = s;
+    noteEl.style.setProperty('--edge', isMe(s) ? R.colorOf(s) : s.persona.ink || s.color);
+    noteDot.style.background = dotColor(s);
+    noteWho.textContent = isMe(s) ? 'You' : s.name;
+    noteHow.textContent = isMe(s) ? youWords(s) : s.persona.blurb;
+    noteNowFor(s);
+    noteEl.hidden = false;
+    cardEl.classList.add('noting');
+    s.tag.li.classList.add('noted');
+    s.tag.li.querySelector('button.name')?.setAttribute('aria-expanded', 'true');
+    say(noteLine(s));
+  }
+  // What it holds now (kept up to date while the note's up: on your death's
+  // card the round goes on).
+  function noteNowFor(s) {
+    const now = isMe(s) ? '' : !s.alive ? 'Out of this round.' : powerWords(s).trim();
+    if (noteNow.textContent !== now) noteNow.textContent = now;
+    if (noteNow.hidden !== !now) noteNow.hidden = !now; // (written only when it changes: this runs with the HUD)
+    if (isMe(s)) { const how = youWords(s); if (noteHow.textContent !== how) noteHow.textContent = how; }
+  }
+  // The card's own words again. Focus on its × isn't lost with it: from the
+  // keyboard (byKey) it goes back to the name the note was asked for from,
+  // else to the card.
+  function closeNote(byKey = false) {
+    if (!noted) return;
+    const name = noted.tag?.li.querySelector('button.name'), inside = noteEl.contains(document.activeElement);
+    noted.tag?.li.classList.remove('noted');
+    name?.setAttribute('aria-expanded', 'false');
+    noted = null;
+    noteEl.hidden = true;
+    cardEl.classList.remove('noting');
+    if (!inside) return;
+    const to = byKey && name || cardEl;
+    to.focus({ preventScroll: true });
+    if (to === name) tabbed = name; // (back as if Tabbed to: Enter there opens it again, rather than asking to start over)
+  }
+  $('note-close').addEventListener('click', e => closeNote(e.detail === 0));
+  document.addEventListener('pointerdown', e => { if (noted && !e.target.closest?.('#scoreboard, button, input, label, a, #records')) closeNote(); });
   // What the chips mean, in words (phones have no tooltips).
   function yourPowerWords(s) {
     const how = (left, gold) => gold ? `${gold} golden` : left === 0 ? 'ready' : left === Infinity ? 'not at 3' : 'resting';
@@ -1456,14 +1530,6 @@
   // Golden powers held, as words: ['2 golden jumps', '1 golden flash'].
   const goldWords = s => [s.leaps > 0 && `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}`, s.dashes > 0 && `${s.dashes} golden flash${s.dashes === 1 ? '' : 'es'}`].filter(Boolean);
   const powerWords = s => { const held = goldWords(s); return (held.length ? ` Holding ${held.join(' and ')}.` : '') + (s.wrapUntil > game.time ? ' The edges wrap for it.' : ''); };
-
-  // The card's own words again, after a rival's line stood in for them.
-  function restoreText() {
-    clearTimeout(blurbTimer);
-    cardText.classList.remove('said');
-    setText(cardText, shownCard?.text || '');
-    cardText.hidden = !shownCard?.text;
-  }
 
   function updateHud(force = false) {
     const score = player()?.eaten ?? 0;
@@ -1540,6 +1606,7 @@
       if (!force && flashBack && last.flashBack === false && !s.dashes) { R.ready(s, 'flash'); Audio.play('flashReady'); }
       last.jumpBack = jumpBack; last.flashBack = flashBack;
     }
+    if (noted) noteNowFor(noted); // (a note on the card keeps up: your death's card has the round going on behind it)
   }
 
   // A power's chip (jump, flash or wrap): its icon and a count (golden ones
@@ -1806,7 +1873,9 @@
       return;
     }
     if (!recordsEl.hidden) {
-      if (e.key === 'Escape' || e.key === 'h' || e.key === 'H') { e.preventDefault(); closeRecords(); }
+      if (e.key === 'Escape') { e.preventDefault(); closeRecords(); }
+      else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); recordsKey('scores'); }
+      else if (e.key === 'g' || e.key === 'G') { e.preventDefault(); recordsKey('guide'); }
       return;
     }
     const dir = KEYS[e.key] || CODES[e.code];
@@ -1821,6 +1890,7 @@
       if (e.target.closest('#overlay, #records') || !(state === 'running' || state === 'countdown' || state === 'paused') || e.target === tabbed) return; // (Tabbed to: the button's own keys)
       e.target.blur();
     }
+    if (e.key === 'Escape' && noted) { e.preventDefault(); closeNote(true); return; } // (a note you asked for goes first; Esc again wakes, or keeps watching, as ever)
     if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') { e.preventDefault(); napKey(); } // (Escape on your death card keeps watching)
     else if (e.key === 'Enter' || e.key === 'r' || e.key === 'R') {
       e.preventDefault();
@@ -1831,7 +1901,8 @@
       else if ((state === 'running' || state === 'paused') && playerAlive() && !online) askStartOver(key); // (R sits next to D: a slip shouldn't throw a round away, napping or not)
       else start({ aiOnly: false });
     }
-    else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); openRecords(); }
+    else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); openRecords('scores'); }
+    else if (e.key === 'g' || e.key === 'G') { e.preventDefault(); openRecords('guide'); }
     else if (e.key === 'm' || e.key === 'M') toggleMute();
     else if (e.key === 'n' || e.key === 'N') toggleMusic();
     else if (SPEED_KEYS[e.key] && !speedEl.hidden) setSpeed(SPEED_KEYS[e.key]);
@@ -2086,6 +2157,7 @@
     if (!namingEntry) return;
     Records.rename(namingEntry, nameInput.value);
     nameRank.textContent = `Carved: ${Records.getName()}.`; // (it took)
+    nameRow.classList.add('carved');
   });
 
   // Nap automatically when the tab is hidden, or when the window loses focus
@@ -2151,13 +2223,19 @@
 
   // ------------------------------------------------------ Hall of Fame
 
-  let recordsTab = 'scores', scoresFilter = 'all', recordsOpener = null;
+  // One book, two doors: the trophy (or H) opens it on the Hall of Fame (or
+  // Your story, if that's where you were), the Field guide's book (or G) on
+  // the guide. In the book, a door's key goes to its tab, or closes it from there.
+  let recordsTab = 'scores', storyTab = 'scores', scoresFilter = 'all', recordsOpener = null;
+  const TAB_NAMES = { scores: 'Hall of Fame', stats: 'Your story', guide: 'Field guide' };
 
-  function openRecords() {
+  // (row: a guide row's kind, to open the guide at it, lit for a moment: your death card's "what got you")
+  function openRecords(tab = 'scores', row = null) {
     if (online && playerAlive() && (state === 'countdown' || state === 'running')) {
-      toast('The Hall of Fame can wait. Eyes on the bark.', 1800, '', 'round'); // the round wouldn't (and over the countdown's card)
+      toast(`The ${tab === 'guide' ? 'Field guide' : 'Hall of Fame'} can wait. Eyes on the bark.`, 1800, '', 'round'); // the round wouldn't (and over the countdown's card)
       return;
     }
+    recordsTab = tab === 'guide' ? 'guide' : storyTab;
     // Napping, if you're playing alone (online, or only watching, the round goes on behind the dialog, and its card stays).
     if (!online && (state === 'countdown' || (state === 'running' && playerAlive() && !pendingCard))) napNow();
     recordsOpener = document.activeElement;
@@ -2165,7 +2243,13 @@
     keepAwake();
     mainEl.inert = true;
     renderRecordsSafely();
-    $('records-close').focus();
+    const page = recordsEl.querySelector('.records-card'), spot = row && recordsTab === 'guide' && recordsBody.querySelector(`li[data-kind="${row}"]`);
+    page.scrollTop = 0; // (a door opens its page at the top)
+    if (spot) {
+      page.scrollTop = Math.max(0, spot.getBoundingClientRect().top - page.getBoundingClientRect().top - page.clientHeight / 3);
+      spot.classList.add('spot');
+    }
+    $('records-close').focus({ preventScroll: true }); // (a plain focus scrolls the page back up to its Close: the lit row would be out of sight)
   }
 
   function closeRecords() {
@@ -2183,6 +2267,8 @@
   }
 
   function renderRecords() {
+    if (recordsTab !== 'guide') storyTab = recordsTab;
+    recordsEl.setAttribute('aria-label', TAB_NAMES[recordsTab]); // (the dialog is named for what it shows)
     recordsTabs.forEach(t => t.setAttribute('aria-pressed', String(t.dataset.tab === recordsTab)));
     filterTabs.forEach(t => t.setAttribute('aria-pressed', String(t.dataset.filter === scoresFilter)));
     filterEl.hidden = recordsTab !== 'scores';
@@ -2205,6 +2291,13 @@
   const secs = ms => Math.round(ms / 1000);
   const coughFor = Math.max(1, secs(T.COUGH_TICKS * T.START_TICK)); // (a cough's ticks at the round's usual pace)
   const GUIDE = [
+    // (How to play opens here: the round in four lines, before the things on the log.)
+    ['The basics', [
+      ['basic-win', 'Winning', 'Last snake wriggling wins. Score counts what you eat.'],
+      ['basic-steer', 'Steering', `${touchFirst ? 'Swipe the way to go' : 'The arrow keys (or WASD)'}. You never stop, so look ahead.`],
+      ['basic-crash', 'Crashes', `An edge, a snake or your own tail costs you tail. At ${T.MIN_LENGTH}, or boxed in, a crash ends you.`],
+      ['basic-hunger', 'Hunger', `The bar under your name. Let it run dry and you shrink; at ${T.MIN_LENGTH} you starve.`],
+    ]],
     ['Food', [
       ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(T.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time; leave one too long and it rots.`],
       ['golden', 'Golden apple', `Worth ${T.GOLDEN_GROWTH}, and everyone saw it land.`],
@@ -2236,7 +2329,7 @@
   // (Until the renderer can draw a picture, a stand-in. It draws a kind it
   // doesn't know as an apple, so the kinds it has no picture for yet are
   // named here: none now.)
-  const GUIDE_STAND_IN = { apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', choke: '🤢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', land: '🚩', lostflag: '🚩' };
+  const GUIDE_STAND_IN = { 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', choke: '🤢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', land: '🚩', lostflag: '🚩' };
   const GUIDE_UNDRAWN = new Set();
   function renderGuide() {
     const px = Math.round(36 * (window.devicePixelRatio || 1));
@@ -2248,6 +2341,7 @@
       list.className = 'guide';
       for (const [kinds, name, rule] of rows) {
         const li = document.createElement('li');
+        li.dataset.kind = [].concat(kinds)[0]; // (your death's card opens the guide at its row)
         const pics = document.createElement('span');
         pics.className = 'guide-pics';
         pics.setAttribute('aria-hidden', 'true');
@@ -2285,7 +2379,15 @@
 
   recordsTabs.forEach(t => click(t, () => { recordsTab = t.dataset.tab; renderRecordsSafely(); }));
   filterTabs.forEach(t => click(t, () => { scoresFilter = t.dataset.filter; renderRecordsSafely(); }));
-  click($('records-open'), openRecords);
+  click($('records-open'), () => openRecords('scores'));
+  click($('guide-open'), () => openRecords('guide'));
+  click(howBtn, () => openRecords('guide', howRow));
+  // A door's key in the book: its tab, or out again from there.
+  function recordsKey(tab) {
+    if ((tab === 'guide') === (recordsTab === 'guide')) return closeRecords();
+    recordsTab = tab === 'guide' ? 'guide' : storyTab;
+    renderRecordsSafely();
+  }
   click($('records-close'), closeRecords);
   recordsEl.addEventListener('click', e => { if (e.target === recordsEl) closeRecords(); });
   click($('records-reset'), () => {
@@ -2918,7 +3020,7 @@
     readyPersonas = personas || null;
     newGame({ personas });
     state = 'ready';
-    showCard({ title: `Ready, ${localName()}?`, text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true });
+    showCard({ title: `Ready, ${localName()}?`, text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true, how: 'How to play' });
     setTimeout(warmUp, 400);
   }
 
