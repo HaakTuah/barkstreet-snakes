@@ -1247,7 +1247,7 @@ Every balance call in this file is checked by simulation, and CI plays seeded ro
 
 The owner's notes after Star turned the powers into moves you plan with: hopping between islands, flying a golden jump, flashing through a thin body (yours too), and a wrap you can see. Round six A's rules hold: every new rule has a visible cue and a lesson; every rival uses each move when it pays and sees it used against it (the owner's core premise: no ability that only people use); every rival keeps its trademark; no move may become a way to be safe.
 
-**Teaching.** The owner found round six A's banners too quick to read in a fast game, and in the way on a phone, and asked whether the game could show rather than tell: your own snake speaking in a bubble when it does something it shouldn't, and pictures in play of what you can do (a jump you could make, a bridge on someone's back, where a flash would cut). So every move here is taught that way, through the teaching system being designed now: the lesson lines below are the words, said by your snake or drawn as a hint, and a banner only where a rule has no better place.
+**Teaching.** The owner found round six A's banners too quick to read in a fast game, and in the way on a phone, and asked whether the game could show rather than tell: your own snake speaking in a bubble when it does something it shouldn't, and pictures in play of what you can do (a jump you could make, a bridge on someone's back, where a flash would cut). So every move here is taught that way, through the teaching system (see "Teaching by showing" below): the lesson lines below are the words, said by your snake or drawn as a hint, and a banner only where a rule has no better place.
 
 **Why.** In sudden death, 40–45% of deaths are in a pocket smaller than the snake, and once the woodpecker's holes are rounder, a one-cell hop rarely reaches anywhere. The owner's screenshot: Gobbler, 59 long, folded on a strip, an open island across a hollow, and no way to get there. A 3-cell hop reaches the next island for about a quarter of boxed snakes, 4 cells for about two in five, and a quarter sit 5 or more away (round six A's study).
 
@@ -1326,6 +1326,96 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 **Balance targets** (simulation, paired seeds): powers on clearly beat powers off in the seat-split A/B (today they're even, 2.499 against 2.497); every persona wins 15–35% of rounds; rounds about 160–180 s; starving at most 8%; failed flashes rare enough to be a risk you take on purpose. The chosen numbers (the jump's rest, the flash's rest, a failed flash's cost) go here, for the owner's playtest.
 
 **Effects:** take-off and landing dust; the flight's shadow on the ground; the landing ring; bumps in the air; cuts and spilled beads; dropped tails; fire put out.
+
+## Teaching by showing
+
+The owner (2026-10-20): the lessons "flash before you, too quick to really register", sometimes "in your face in the middle of the screen" on a phone, and the woodpecker is very small on a phone. Their idea: your own snake's speech bubbles, and pictures in play of what you can do.
+
+**Measured first** (18 real rounds in headless Chrome as a new player, on a 390×844 phone, a 360×640 phone and a 1920×945 desktop):
+- Banners were up for 39–50% of play.
+- Most lessons were held 2.6–3.2 s, and the first 0.46 s of each is the slam. A text of 9–14 words needs about twice its plain reading time when you can only glance away from your head.
+- Hunger's lesson came 3.4 times a round, often over your own body.
+- Round news replaces a waiting lesson at once, and the lesson is lost.
+- The new player's jump presses nearly all ran out: 35 "nothing to hop" or "too early" lessons against 2 "Hup!".
+- On an upright phone the perched woodpecker was 7–8.5 mm tall.
+
+Three directions were built as prototypes: your snake talks; pictures drawn on the log; and a first round that teaches. Three judges scored them, and all three chose one system made of the best of each.
+
+**1. Banners carry only round news everyone shares:** the woodpecker (and PR C's acts), first blood, the last two, weather, spawns, lost land and the last apples.
+- Each is held for its reading time (1 s plus 0.4 s a word, at most 4.5 s), queued with a 0.5 s breather, and never cut short except by a card. Nothing is dropped, so weather that carries a rule ("Winter. Less food…") always gets its turn.
+- No middle slot. On an upright phone they sit above the board, over the header's title row, never over your own tag or the pause button, and taps pass through. Elsewhere they go at the board's top or foot.
+- They settle in with a short drop and a fade: no slam, no red throb, no shine.
+- The weather gets one-line phone versions of its two-line texts.
+
+**2. Your snake's voice.** Every lesson about you becomes a line your own snake says, in a bubble at its head, with the rivals' bubble rules.
+- *Where:* it keeps off your head, the 3 cells ahead, a turn you've pressed, the banner and the thing the line is about. It stays put while it can; when it must move it fades across in about 0.1 s, never gliding over your head. Its first place is chosen from the head's next tick, so it doesn't jump in its first half second. Rival bubbles make way for it.
+- *The words:* first person, one idea, at most 32 characters (a test checks every line), each mirroring the rivals' line for the same moment. Where the prototypes differ, the shorter line wins. Exclamation marks are rationed: pain and surprise get one, and everything else ends in a full stop or an ellipsis. The narrator (the banners) stays calm. The owner judges the tone.
+- *The cue:* a line that asks for a press carries a key cap ([Space], [E], [↓]) or a drawn fingertip tapping or swiping. Its key is named only until you've used it.
+- *How long:* its reading time, 1.2 s plus 0.45 s a word, 2.4–4.2 s. One line at a time. What just hurt you, or what you just got, takes over. The cough's line waits for the choke's. A line that can't show yet isn't used up.
+- *How often,* counted per device in one new key, 'snake-taught':
+  - each rule's line comes in the first 2 rounds you meet it;
+  - the last-life lines (a crash that leaves you at 3, at 3, starving at 3) come every round;
+  - after round 2, hunger has only its tag's bar and its rumble.
+
+  Not once ever, because a line missed in a busy moment would be gone for good.
+- It goes in the log under your name and to the screen reader, as the rivals' lines do, and it shows with the chatter off.
+
+**3. The move coach** teaches steering, the jump and the flash, in that order.
+- Each prompt waits for a calm moment (no rival head within 5 cells, the way ahead clear) and for you to do the move.
+- It comes back no sooner than 12 s later, at most 4 times a round, until you've done the move 3 times. A move you never did comes back next round.
+- A jump is offered only over a hurdle that will still be there when you arrive (a tail that will have passed doesn't count).
+- The flash isn't taught at "6 s in" any more, but at its first calm moment.
+- Steering gets taught too ("[↓], and I'll turn!"), with a dashed turn arrow. For someone who doesn't know WASD, that's the most useful line of all.
+- The first round keeps its full field of rivals. A first round with one rival fewer was rejected, because it would be an easier game for people only, and its wins count in the Hall of Fame.
+- powersFirst, flashKey, leapNothing, leapEarly and youLeapFirst stop being banners. They become the coach and short lines: "Nothing to hop!", "Too soon!", "Hup! That cost my tail tip."
+
+**4. Pictures on the log,** for the moves you're learning, drawn in two passes (under the snakes and over them), so the pips and faces stay clear.
+- *The jump:* a dotted arc to the landing ring. It's faint from 5 cells away, then bright with a breathing ring once a press would go. An × marks where there's nowhere to land, and dots run out for a press with nothing in reach. A -1 shows at your tail tip on your first jumps.
+- *The flash:* two ember chevrons and a ghost head two cells on, and an × where it would bump.
+- *The golden flash:* Honey chevrons along its path, the cut line with "Snip!", and a starburst with "Boom!" at an edge or hole. A picture says "never at an edge" better than words.
+- *How long:* these predictive pictures show only while you're learning (until you've used the move 3 times). After that, only the cues drawn for every snake's moves stay, such as PR B's ring once a jump is pressed, so you read the rivals' moves as they read yours. Danger predictions left on for good were rejected: they'd be an aid only you have, and they'd trim the timing skill the moves are meant to need.
+- *One source of truth:* the pictures come from one pure engine query ("what would a press do now, given this view"), not from rules re-derived in render.js. PR B's islands, flights and bridges then change one place, and a test checks that the picture matches the outcome on staged boards. The shapes are worked out once a tick, and the renderer hands their box to the bubble layout, so your bubble never sits over what's drawn.
+- Line widths have a floor in CSS px, so they read on a 360 px phone. With reduced motion they only fade.
+- No "hints off" switch: it would only bring the old banners back. Instead the Field guide gets "Tell me again", which clears 'snake-taught', and new rows for crashes and hunger. The Field guide stays the full reference.
+
+**The bird.** All three designs reached the same answer. On an upright phone the woodpecker perches at full size (4.9 cells, about 13 mm), standing down into the empty middle of the chatter panel's header row under the ledge, between "Bark chatter" and the On switch.
+- It never covers a cell, the label or the switch.
+- It's the same size perched, flying and drumming, so it doesn't grow as it takes off.
+- Taps pass through its layer.
+- It goes there only when that row starts within 24 px of the ledge and a clear spot exists; otherwise it stays on the ledge. The prototype measured 0 overlaps in 120 cases.
+- While watching it stays on the ledge, small, because the speed buttons sit there.
+- Phones on their side and desktops are unchanged. It's built on the one-screen layout (#34), which reshapes exactly this area.
+- Even at full size its eye is 5–6 px, so PR C draws act 1's gaze on the board for everyone (and in the rivals' view): a warm wash that deepens where it looks longest.
+
+**Build order.** It's its own PR on main, before PR B's moves, so every new move is taught through it from the start:
+1. the banner queue and placement, and the phone weather texts;
+2. the full-size bird, with layout-test's perch checks rewritten as "full size, never over a cell, off the label and switch";
+3. your snake's voice, with every lesson banner mapped to a line;
+4. the coach and the pictures for today's jump, flash and golden flash, with the engine query;
+5. the Field guide rows and "Tell me again";
+6. tests:
+   - input-test reads your bubble;
+   - every line is 32 characters or fewer;
+   - each picture matches its outcome;
+   - your bubble never sits over your head or the 3 cells ahead;
+   - a real-play run on the three screens against the measured numbers.
+
+The aim is banners up for about 20% of play, and every lesson where your eyes already are.
+
+**With PR B,** every new move goes through the same coach, voice and query, with its own cue as the picture, and no new banners:
+- *island hops:* the arc stretched to the ring up to 3 cells on, offered the first time you're in a pocket with a jumpable gap ("Tap! I can hop to that island.");
+- *the golden flight:* a gold ring that slides as you steer, with a dotted trail to its limit, turning to an × over a hole or a body ("Hold, and I'll fly! Steer me.");
+- *bridges:* planks on a body over a pit, its last cells sagging and creaking, and a walkway to a ring on the far rim ("Off before its tail goes!"), with lines for rivals both riding and ridden;
+- *cuts:* a snip line across a thin body with the beads-to-be ghosted; the same across your own body for dropping your tail; an × with -5 where a flash would fail, until learned; steam on fire it puts out;
+- *bumps in the air:* a spark and a puff;
+- *portals:* the exit left open and shrinking for about a second, for everyone.
+
+**With PR C:**
+- one calm banner per act, with act 3's folding in the last apples ("Frenzy! The last apples are falling.");
+- the gaze drawn on the board;
+- combo patches numbered 1-2-3 in strike order, steady, not flashing;
+- your lines "Eep. That bird's watching me." and "Two marks at once?!";
+- the Woodpecker row with the three acts, and "where it looks longest, it pecks first".
 
 ## Phones
 
