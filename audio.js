@@ -12,6 +12,7 @@
 //                                   crest: seconds (the riser: how long it rises),
 //                                   delay: seconds, 0..1 (it sounds that much later, on the audio clock: the cough a beat after the choke),
 //                                   the drum: strike (which of the round's, from 0), from: ms (into it already), rate (watched faster),
+//                                   the knock: land: seconds (how long the piece it's for is in the air, as drawn),
 //                                   the call: settle: true (one "kik!", the bird back on its perch) }
 //   SnakeAudio.drumBlows(strike)  when each knock of the woodpecker's drum comes, ms from the first (each a blow you see)
 //   SnakeAudio.setMuted(b) / isMuted() / toggleMuted()   remembered in this browser
@@ -668,14 +669,17 @@ window.SnakeAudio = (() => {
     // The woodpecker knocks food aside as it strikes: a hollow tok as its beak
     // flicks the piece out (a deep block with a hollow ring, under the drum's
     // high knocks), a whoosh rising as it flies off and falling as it comes
-    // down, and a soft bump where it lands. About 400 ms.
-    knock(t) {
+    // down, and a soft bump where it lands. About 400 ms; the further the
+    // piece is flung, the longer it's in the air (o.land, seconds, as drawn:
+    // 0.32 to 0.62), and the whoosh stretches with it to land its bump.
+    knock(t, o) {
+      const land = Number.isFinite(o.land) ? Math.max(0.32, Math.min(0.62, o.land)) : 0.32, k = land / 0.32;
       tone(t, 'sine', 620, 0.14, 0.42, 0.001, 520);
       tone(t, 'triangle', 620 * 2.76, 0.04, 0.12, 0.001, null, 4000);
       noise(t, 0.012, 0.24, 'bandpass', 1500, 2.5);
-      whoosh(t + 0.03, 0.22, 0.15, 500, 2600);
-      whoosh(t + 0.1, 0.26, 0.11, 2600, 700);
-      noise(t + 0.34, 0.035, 0.06, 'lowpass', 500, 0.7);
+      whoosh(t + 0.03, 0.22 * k, 0.15, 500, 2600);
+      whoosh(t + 0.1 * k, 0.26 * k, 0.11, 2600, 700);
+      noise(t + land + 0.02, 0.035, 0.06, 'lowpass', 500, 0.7);
     },
 
     // A rainbow: a soft shimmer climbing up a major arpeggio.

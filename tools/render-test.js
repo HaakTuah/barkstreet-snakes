@@ -899,7 +899,7 @@ const STAGE = `(() => {
     // reduced motion, filled and mossed at once). Through the aim, food in the mark trembles
     // and food outside it doesn't, and a ring marks where the rule will knock
     // each piece (one for each); at the strike it flies there, up in an arc, rimmed in ink and
-    // parchment over whatever it crosses, and a beetle knocked scurries
+    // parchment over whatever it crosses (a longer throw higher, and longer in the air), and a beetle knocked scurries
     // there. Counts and centres are of pixels changed against the bare
     // board, as the choke's are.
     const dug = await ev(`(() => {
@@ -998,6 +998,21 @@ const STAGE = `(() => {
       drawN(4, 0.5, 120); g2.tick++; drawN(2, 0.5, 60);
       const end = centre(9, 7, 5, 7, sky);
       out.end = { bead: end, beetle: centre(12, 10, 4, 3, emerald), rim: end ? count(end[0] - 0.6, end[1] - 0.6, 1.2, 1.2, parch) : 0, bug: [bx, by] };
+      // A longer throw is in the air longer and flies higher: a bead knocked a cell, then one knocked 4, each
+      // followed through its flight (its centre every 30 ms; up is less y).
+      out.throws = [];
+      for (const D of [1, 4]) {
+        drawN(10, 0.5, 60); bareNow();
+        const f = { x: 3 + D, y: 17, kind: 'pellet', color: '#38bdf8', owner: 1, expires: g2.tick + 900 };
+        g2.food.push(f); g2.tick++;
+        R.onTick([{ type: 'knock', kind: 'pellet', x: 3, y: 17, tx: f.x, ty: f.y }]);
+        const path = [];
+        for (let i = 0; i < 26; i++) { drawN(1, 0.5, 30); path.push(centre(2, 14, 9, 4.5, sky)); }
+        const at = c => !!c && Math.abs(c[0] - (f.x + 0.5)) < 0.15 && Math.abs(c[1] - 17.5) < 0.15;
+        let landed = path.length; while (landed > 0 && at(path[landed - 1])) landed--;
+        out.throws.push({ D, top: Math.min(...path.filter(Boolean).map(c => c[1])), landsBy: 30 * (landed + 1), down: at(path[path.length - 1]) });
+        g2.food.splice(g2.food.indexOf(f), 1); g2.tick++; R.onTick([]);
+      }
       // No heap without a burrow: a dug dive that leaves none (BURROW_FROM_DIG off) leaves nothing, once the collar's closed.
       // Then a burrow closing over, and one with reduced motion.
       const g3 = stage(['mason', 'ghost', 'drab']);
@@ -1050,6 +1065,10 @@ const STAGE = `(() => {
       const [tx, ty] = dug.to, b = dug.mid.bead, e = dug.end.bead;
       check(!!b && b[1] < ty + 0.5 - 0.3 && Math.abs(b[0] - (tx + 0.5)) < 0.3 && dug.mid.rim > dug.end.rim + 15 && !!e && Math.abs(e[0] - (tx + 0.5)) < 0.15 && Math.abs(e[1] - (ty + 0.5)) < 0.2,
         'at the strike, the food flies to where the rule said, up in an arc, rimmed so it reads over a body', `the bead half way at ${b} (it lands at ${tx + 0.5},${ty + 0.5}), then at ${e}; parchment round it ${dug.mid.rim} in the air, ${dug.end.rim} landed`);
+      const [near, far] = dug.throws;
+      check(near.down && far.down && far.landsBy >= near.landsBy + 120 && far.top < near.top - 0.3 && near.top < 17.5 - 0.4,
+        'a longer throw is in the air longer and flies higher (the knock’s arc grows with the way it goes)',
+        `knocked 1 cell, up to y ${near.top} (it lies at 17.5), down by ${near.landsBy} ms; knocked 4 cells, up to y ${far.top}, down by ${far.landsBy} ms`);
       const bm = dug.mid.beetle, be = dug.end.beetle, [bx, by] = dug.end.bug, d = (c, x, y) => Math.hypot(c[0] - x, c[1] - y);
       check(!!bm && d(bm, 13.5, 11.5) > 0.25 && d(bm, bx + 0.5, by + 0.5) > 0.25 && d(bm, 13.5, 11.5) + d(bm, bx + 0.5, by + 0.5) < d([13.5, 11.5], bx + 0.5, by + 0.5) + 0.2 && !!be && d(be, bx + 0.5, by + 0.5) < 0.2,
         'a beetle knocked out of the mark scurries there', `half way at ${bm}, then ${be} (from 13.5,11.5 to ${bx + 0.5},${by + 0.5})`);

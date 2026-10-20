@@ -821,7 +821,7 @@
       else if (e.type === 'heal') Audio.play('heal', at(e.x)); // (one closing over: a muffled crumble)
       else if ((e.type === 'dive' && !e.dug) || e.type === 'emerge') Audio.play('scrabble', at(e.x)); // (down a burrow, or up out of one; one that dug in was heard boring in)
       else if (e.type === 'dig') Audio.play('dig', { rival: !isMe(cornering(e.x, e.y)), ...at(e.x) }); // (the bore: whose head it fled, yours, or a rival's, softer and further off)
-      else if (e.type === 'knock' && e.tx != null && !knocked) { knocked = true; Audio.play('knock', { volume: 0.5, ...at(e.x) }); } // (food flying off the patch: the world's, quiet, once a strike, at the first piece that flies; none for what the bird ate)
+      else if (e.type === 'knock' && e.tx != null && !knocked) { knocked = true; Audio.play('knock', { volume: 0.5, land: (R.knockFlight?.(e.x, e.y, e.tx, e.ty) ?? 320) / 1000, ...at(e.x) }); } // (food flying off the patch: the world's, quiet, once a strike, at the first piece that flies, landing as it's drawn landing; none for what the bird ate)
       else if (e.type === 'rainbow') Audio.play('rainbow', at(e.x));
       else if (e.type === 'weather' && e.kind === 'rain') Audio.play('rain');
       else if (e.type === 'weather' && e.kind === 'snow') Audio.play('snow');
