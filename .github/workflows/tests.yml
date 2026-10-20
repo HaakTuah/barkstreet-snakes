@@ -2,7 +2,7 @@
 # play, the rivals' chatter and the records in Node, the same seeded rounds
 # with and without thinking ahead, and the renderer's, controls' and page's
 # promises in headless Chrome (the runner has it): the page on phones,
-# tablets and desktops too. The two jobs run side by side.
+# tablets and desktops too. The three jobs run side by side.
 name: tests
 
 on:
@@ -56,5 +56,16 @@ jobs:
         run: node tools/render-test.js
       - name: Controls
         run: node tools/input-test.js
+
+  # The page on every screen has a job of its own: about ten minutes of
+  # screens, sizes and states, beside the other two.
+  layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: The page on every screen
         run: node tools/layout-test.js
