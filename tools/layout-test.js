@@ -10,6 +10,16 @@
 //   Safari's bars showing), it's as big as fits over the row under it (or
 //   leaves the woodpecker its 13 px beside the frame), wholly on the
 //   screen, and the header and tags keep their 12 px from the screen's edge.
+//   On a phone, and wherever the header is over the board, the board is
+//   never smaller than on main before the page was one screen tall (the
+//   owner's call: the board first, the help and the chatter give way),
+//   main's measured once and pinned: the upright phones below, 12 screens
+//   over the board (STACKED: near-square and narrow windows with a mouse
+//   and with touch, a Surface Duo, iPads), held upright at every 10 px of
+//   height from 440 to 940 at seven widths, and over the board at five
+//   widths every 80 px of height from 560 to 1120, with a mouse and touch.
+//   Nothing needed the no-scroll checks relaxed for that: they hold on
+//   every one of those screens too, in every state.
 // - One screen (DESIGN's "One screen"): nothing scrolls, down or sideways,
 //   on any screen, in any state: the start card, the countdown, playing,
 //   playing with the chatter full, a nap, your death's card, the round's
@@ -105,19 +115,23 @@ const check = (ok, what, detail = '') => {
 // a phone held upright too short for the board to run edge to edge (the
 // browser's bars showing): the board as big as fits over the row under it,
 // or leaving the bird its gutter, and no ledge to speak of, so the bird
-// perches in the gutter, as nowhere.
+// perches in the gutter, as nowhere. main: the board on main before the page
+// was one screen tall (2ba41f9, measured once and pinned): on a phone, and
+// wherever the header is over the board, it's never smaller (the owner: "on
+// the phone, I really don't like that you make the gameplay screen
+// smaller"); the help and the chatter give way instead.
 const notchUp = { top: 47, bottom: 34, left: 0, right: 0 }, notchSide = { top: 0, bottom: 21, left: 47, right: 47 };
 const DEVICES = [
-  { name: '320×640 (a small Android, the first iPhone SE)', w: 320, h: 640, dpr: 2, kind: 'upright', least: 308, before: 276, head: 80 },
-  { name: '320×460 (the same, with its browser\'s bars)', w: 320, h: 460, dpr: 2, kind: 'upright', short: true, least: 270, before: 250, head: 80 },
-  { name: '360×780', w: 360, h: 780, dpr: 3, kind: 'upright', least: 348, before: 316, head: 103.2 },
-  { name: '375×667 (iPhone SE)', w: 375, h: 667, dpr: 2, kind: 'upright', least: 363, before: 331, head: 87.2 },
-  { name: '375×548 (iPhone SE in Safari, its bars showing)', w: 375, h: 548, dpr: 2, kind: 'upright', short: true, nofs: true, least: 331, before: 331, head: 87.2 },
-  { name: '375×635 (an iPhone 11 Pro in Safari)', w: 375, h: 635, dpr: 3, kind: 'upright', nofs: true, least: 363, before: 331, head: 87.2 },
-  { name: '390×844 (iPhone 13, 14)', w: 390, h: 844, dpr: 3, kind: 'upright', least: 378, before: 346, head: 107.2 }, // (the call: 346 → about 382)
-  { name: '412×915 (Pixel)', w: 412, h: 915, dpr: 2.625, kind: 'upright', least: 400, before: 368, head: 107.2 },
-  { name: '430×932', w: 430, h: 932, dpr: 3, kind: 'upright', least: 418, before: 386, head: 107.2 },
-  { name: '390×844 with a notch', w: 390, h: 844, dpr: 3, kind: 'upright', insets: notchUp, least: 378, before: 346, head: 107.2 },
+  { name: '320×640 (a small Android, the first iPhone SE)', w: 320, h: 640, dpr: 2, kind: 'upright', least: 308, main: 312, before: 276, head: 80 },
+  { name: '320×460 (the same, with its browser\'s bars)', w: 320, h: 460, dpr: 2, kind: 'upright', short: true, least: 270, main: 280, before: 250, head: 80 },
+  { name: '360×780', w: 360, h: 780, dpr: 3, kind: 'upright', least: 348, main: 352, before: 316, head: 103.2 },
+  { name: '375×667 (iPhone SE)', w: 375, h: 667, dpr: 2, kind: 'upright', least: 363, main: 367, before: 331, head: 87.2 },
+  { name: '375×548 (iPhone SE in Safari, its bars showing)', w: 375, h: 548, dpr: 2, kind: 'upright', short: true, nofs: true, least: 331, main: 341, before: 331, head: 87.2 },
+  { name: '375×635 (an iPhone 11 Pro in Safari)', w: 375, h: 635, dpr: 3, kind: 'upright', nofs: true, least: 363, main: 367, before: 331, head: 87.2 },
+  { name: '390×844 (iPhone 13, 14)', w: 390, h: 844, dpr: 3, kind: 'upright', least: 378, main: 382, before: 346, head: 107.2 }, // (the call: 346 → about 382)
+  { name: '412×915 (Pixel)', w: 412, h: 915, dpr: 2.625, kind: 'upright', least: 400, main: 404, before: 368, head: 107.2 },
+  { name: '430×932', w: 430, h: 932, dpr: 3, kind: 'upright', least: 418, main: 422, before: 386, head: 107.2 },
+  { name: '390×844 with a notch', w: 390, h: 844, dpr: 3, kind: 'upright', insets: notchUp, least: 378, main: 382, before: 346, head: 107.2 },
   { name: '568×320 on its side (the first iPhone SE)', w: 568, h: 320, dpr: 2, kind: 'side', nofs: true, least: 266, before: 268, under: 2, head: 95.4 }, // (under: the board narrower than before by that much, the call: the column keeps 244 px for five buttons in a row, and the bird its 24 px gap)
   { name: '640×320 on its side', w: 640, h: 320, dpr: 2, kind: 'side', least: 300, before: 268, head: 95.4 },
   { name: '667×375 on its side', w: 667, h: 375, dpr: 2, kind: 'side', least: 355, before: 323, head: 95.4 },
@@ -127,7 +141,7 @@ const DEVICES = [
   { name: '915×412 on its side', w: 915, h: 412, dpr: 2.625, kind: 'side', least: 392, before: 360, head: 95.4 },
   { name: '932×430 on its side', w: 932, h: 430, dpr: 3, kind: 'side', least: 410, before: 378, head: 95.4 },
   { name: '844×390 on its side with a notch', w: 844, h: 390, dpr: 3, kind: 'side', insets: notchSide, least: 349, before: 338, head: 95.4 },
-  { name: '768×1024 (a tablet)', w: 768, h: 1024, dpr: 2, kind: 'tablet', least: 724, before: 724, nowhere: true, head: 52 },
+  { name: '768×1024 (a tablet)', w: 768, h: 1024, dpr: 2, kind: 'tablet', least: 724, main: 724, before: 724, nowhere: true, head: 52 },
   { name: '1024×768 (a tablet on its side)', w: 1024, h: 768, dpr: 2, kind: 'tablet', least: 716, before: 716, head: 172 },
   { name: '1000×480 (a laptop\'s window, its DevTools docked below)', w: 1000, h: 480, dpr: 1, desktop: true, kind: 'side', least: 428, before: 428, head: 85.4 },
   { name: '1280×800 (a laptop)', w: 1280, h: 800, dpr: 1, desktop: true, kind: 'desktop', least: 748, before: 748, head: 130 },
@@ -151,6 +165,44 @@ const DESKTOPS = [
   { name: '2560×1305 (a 1440p screen\'s Chrome: over the board)', w: 2560, h: 1305, dpr: 1, desktop: true, least: 880 },
   { name: '960×945 (half a 1080p screen: over the board)', w: 960, h: 945, dpr: 1, desktop: true, least: 665 },
 ];
+
+// Over the board, not a phone: near-square and narrow windows, touch
+// screens held upright (a Surface Duo, iPads), each with main's board
+// before the page was one screen tall (2ba41f9, measured once and pinned;
+// the board took the window's height less 260 px). The board is never
+// smaller (the owner's call: the board first, the chatter and the help give
+// way), and still nothing scrolls in any state. (On the one-screen work's
+// first build the board here took room for the chatter's two lines: 800×800
+// 520 → 452, the Surface Duo 440 → 348.)
+const STACKED = [
+  { name: '800×800 (a near-square window)', w: 800, h: 800, dpr: 1, desktop: true, main: 520 },
+  { name: '800×800 with touch', w: 800, h: 800, dpr: 2, main: 520 },
+  { name: '1000×860 (a window)', w: 1000, h: 860, dpr: 1, desktop: true, main: 580 },
+  { name: '720×860 (a window)', w: 720, h: 860, dpr: 1, desktop: true, main: 580 },
+  { name: '460×612 (a narrow window)', w: 460, h: 612, dpr: 1, desktop: true, main: 332 },
+  { name: '460×612 with touch', w: 460, h: 612, dpr: 2, main: 332 },
+  { name: '540×720 (a Surface Duo)', w: 540, h: 720, dpr: 2.5, main: 440 },
+  { name: '600×700 with touch', w: 600, h: 700, dpr: 2, main: 420 },
+  { name: '600×900 (a narrow window)', w: 600, h: 900, dpr: 1, desktop: true, main: 556 },
+  { name: '500×1000 (an iPad\'s Split View)', w: 500, h: 1000, dpr: 2, main: 456 },
+  { name: '744×1133 (an iPad mini)', w: 744, h: 1133, dpr: 2, main: 700 },
+  { name: '820×1106 (an iPad in Safari)', w: 820, h: 1106, dpr: 2, main: 776 },
+];
+// main's boards (2ba41f9, pinned) at the sizes the sweeps below go through:
+// held upright, every 10 px of height from 440 to 940 at seven widths (touch,
+// the screen resized under the page); and over the board, windows 460 to
+// 1040 px wide, every 80 px of height from 560 to 1120 narrower than 5:4
+// (main's were the same with a mouse and with touch).
+const MAIN_UP = {
+  320: [260, 270, 280, 286, 286, 286, 295, 305, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312, 312],
+  360: [256.8, 266.8, 276.8, 286.8, 296.8, 306.8, 316.8, 326, 326, 326, 331.8, 341.8, 351.8, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352],
+  375: [252.8, 262.8, 272.8, 282.8, 292.8, 302.8, 312.8, 322.8, 332.8, 341, 341, 341, 347.8, 357.8, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367, 367],
+  390: [252.8, 262.8, 272.8, 282.8, 292.8, 302.8, 312.8, 322.8, 332.8, 342.8, 352.8, 356, 356, 357.8, 367.8, 377.8, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382, 382],
+  412: [252.8, 262.8, 272.8, 282.8, 292.8, 302.8, 312.8, 322.8, 332.8, 342.8, 352.8, 362.8, 372.8, 378, 378, 378, 387.8, 397.8, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404],
+  414: [252.8, 262.8, 272.8, 282.8, 292.8, 302.8, 312.8, 322.8, 332.8, 342.8, 352.8, 362.8, 372.8, 380, 380, 380, 387.8, 397.8, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406, 406],
+  430: [252.8, 262.8, 272.8, 282.8, 292.8, 302.8, 312.8, 322.8, 332.8, 342.8, 352.8, 362.8, 372.8, 382.8, 392.8, 396, 396, 397.8, 407.8, 417.8, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422, 422],
+};
+const MAIN_OVER = {'460x560': 280, '460x640': 360, '460x720': 416, '460x800': 416, '460x880': 416, '460x960': 416, '460x1040': 416, '460x1120': 416, '600x560': 280, '600x640': 360, '600x720': 440, '600x800': 520, '600x880': 556, '600x960': 556, '600x1040': 556, '600x1120': 556, '760x640': 360, '760x720': 440, '760x800': 520, '760x880': 600, '760x960': 680, '760x1040': 716, '760x1120': 716, '900x800': 520, '900x880': 600, '900x960': 680, '900x1040': 760, '900x1120': 840, '1040x880': 600, '1040x960': 680, '1040x1040': 760, '1040x1120': 840};
 
 // Before the page's own scripts: a switch for its animation loop (the board
 // held still for the woodpecker's portrait); a stand-in wake lock that
@@ -201,6 +253,13 @@ const PRE = `(() => {
     };
   });
 })();`;
+
+// Whether the help, shown, fits the row under the board: an item squeezed
+// past its box (the speed buttons and the switch beside it), or its lines
+// making the row taller than it is and taking it off the screen. Where it
+// doesn't, it gives way (snake.js fitColumn).
+const HELP_FITS = `(() => { const h = document.getElementById('help'), f = document.querySelector('.foot'); if (!h.getClientRects().length) return { squeezed: false, pushes: false };
+  return { squeezed: h.scrollWidth > h.clientWidth + 1, pushes: h.getBoundingClientRect().height > parseFloat(getComputedStyle(f).minHeight) + 0.5 && f.getBoundingClientRect().bottom + scrollY > innerHeight + 0.5 }; })()`;
 
 // The page's layout, as the test reads it. (hanging: the frame's moss and
 // leaves that hang below the board's bottom edge, into the ledge; decor:
@@ -548,11 +607,11 @@ const r1 = v => Math.round(v * 10) / 10;
       if (!watching || upright) return;
       await ev(`(() => { const st = document.createElement('style'); st.id = 'help-made-to-show'; st.textContent = 'main #help { display: block !important; }'; document.head.append(st); return 'ok'; })()`);
       await settle();
-      const shown = await ev(`document.querySelector('.chatter').dataset.fit`);
+      const shown = await ev(`document.querySelector('.chatter').dataset.fit`), crowded = await ev(HELP_FITS);
       await ev(`document.getElementById('help-made-to-show').remove(); 'ok'`);
       await settle();
       const gone = !full.help, room = shown !== 'none';
-      check(gone === !room, `${tag}: watching, the help gives the chatter its room only where, beside it, the log couldn't show a row of words`, `the help ${gone ? 'gone' : 'shown'}; beside it, the chatter would show ${shown}`);
+      check(gone === (!room || crowded.squeezed || crowded.pushes), `${tag}: watching, the help gives the chatter its room only where, beside it, the log couldn't show a row of words (or where it doesn't fit its row)`, `the help ${gone ? 'gone' : 'shown'}; beside it, the chatter would show ${shown}${crowded.squeezed ? ', the help squeezed past its box' : ''}${crowded.pushes ? ', the help taking the row off the screen' : ''}`);
     };
     // One screen (DESIGN's "One screen"): in every state, the page is the
     // screen's height and width, never more: the start card, the countdown,
@@ -617,6 +676,7 @@ const r1 = v => Math.round(v * 10) / 10;
       const upright = d.kind === 'upright', side = d.kind === 'side';
       board.push(`  ${d.name.padEnd(48)} ${String(d.before).padStart(4)} → ${r1(ready.board.w)}`);
       check(ready.board.w >= d.least && ready.board.w >= d.before - (d.under || 0), `${tag}: the board is at least ${d.least} px${d.under ? `, ${d.under} px under the ${d.before} before at most (the column's 244 px and the bird's gap)` : ''}`, `${r1(ready.board.w)} px, before ${d.before}`);
+      if (d.main) check(ready.board.w >= d.main - 0.5, `${tag}: the board is no smaller than on main before the page was one screen tall, ${d.main} px (the owner's call: the help and the chatter give way instead)`, `${r1(ready.board.w)} px`);
       check(ready.scrollW <= ready.vw, `${tag}: nothing scrolls sideways`, `${ready.scrollW} of ${ready.vw}`);
       check(ready.scrollH <= ready.vh, `${tag}: nothing scrolls at all, the page one screen tall${side ? ', the column beside the board as tall as the screen' : ''}`, `${ready.scrollH} of ${ready.vh}`);
       if (upright && !d.short) check(ready.frame.x <= 0.5 && ready.frame.r >= ready.vw - 0.5 && ready.board.x <= 6 && ready.board.r >= ready.vw - 6, `${tag}: the board runs edge to edge, its frame a thin rim`, `frame ${r1(ready.frame.x)}-${r1(ready.frame.r)}, board ${r1(ready.board.x)}-${r1(ready.board.r)} of ${ready.vw}`);
@@ -837,12 +897,16 @@ const r1 = v => Math.round(v * 10) / 10;
     // screen's Chrome, 1305 px, has it over the board, as does a half
     // screen's window, narrower than 5:4).
     const oneBoards = [];
-    for (const d of [...DEVICES, ...DESKTOPS]) {
+    for (const d of [...DEVICES, ...DESKTOPS, ...STACKED]) {
       if (only && !d.name.includes(only)) continue;
       const w = await oneScreen(d.name, d);
       if (DESKTOPS.includes(d)) {
         oneBoards.push(`  ${d.name.padEnd(64)} ${r1(w)}`);
         check(w >= d.least - 0.5, `${d.name}: the board is at least ${d.least} px`, `${r1(w)} px`);
+      }
+      if (STACKED.includes(d)) {
+        oneBoards.push(`  ${d.name.padEnd(64)} ${r1(w)} (main ${d.main})`);
+        check(w >= d.main - 0.5, `${d.name}: over the board, the board is no smaller than on main before the page was one screen tall, ${d.main} px`, `${r1(w)} px`);
       }
     }
     const side1080 = DESKTOPS.filter(d => !/^2560|^960/.test(d.name) && (!only || d.name.includes(only)));
@@ -857,21 +921,58 @@ const r1 = v => Math.round(v * 10) / 10;
       check(l.frame.y >= l.tags.b && l.foot.y >= l.frame.b && l.chatter.y >= l.foot.b - 0.5, `${d.name}: over the board, the header and tags above it, the row under the board and the chatter under it`, `the frame ${r1(l.frame.y)}-${r1(l.frame.b)}, the row ${r1(l.foot.y)}-${r1(l.foot.b)}, the chatter from ${r1(l.chatter.y)}`);
     }
 
+    // ---------------------------------- over the board, the board first
+    // Near-square and narrow windows and touch screens held upright, the
+    // header over the board (STACKED): playing and watching with the
+    // chatter full, the board as big as on main (pinned), nothing scrolls,
+    // the chatter's lines whole or none (its switch there), the help in the
+    // row under the board and never squeezed past its box or the screen's
+    // edge (watching on a touch screen it ran under the switch and off the
+    // screen, and a narrow window's keys took four to six lines, scrolling
+    // the page: now it gives way), and the speed buttons in the row, taking
+    // a tap.
+    for (const d of STACKED) {
+      if (only && !d.name.includes(only)) continue;
+      const tag = d.name;
+      await open(d);
+      await toRound();
+      const play = await ev(LAYOUT);
+      check(play.board.w >= d.main - 0.5, `${tag}: playing, the board is no smaller than on main, ${d.main} px`, `${r1(play.board.w)} px`);
+      check(!play.help || (play.help.y >= play.foot.y - 0.5 && play.help.b <= Math.min(play.foot.b, play.vh) + 0.5 && play.help.r <= play.vw + 0.5), `${tag}: playing, the help is in the row under the board and on the screen, or gives way`, play.help ? `${r1(play.help.y)}-${r1(play.help.b)}, the row ${r1(play.foot.y)}-${r1(play.foot.b)} of ${play.vh}` : 'given way');
+      check(await ev(`(() => { const h = document.getElementById('help'); return h.scrollWidth <= h.clientWidth + 1; })()`), `${tag}: playing, the help line isn't cut off at the side`);
+      await chatterFull(tag, false);
+      await ev(`window.__autoRaf = true; 'ok'`);
+      await open(d);
+      await toRound('watch');
+      const watch = await ev(LAYOUT);
+      const reach = await ev(REACH('#speed button, #chatter-toggle'));
+      check(reach.length === 4 && reach.every(r => r.on && r.taps) && watch.speed.y >= watch.foot.y - 0.5 && watch.speed.b <= watch.foot.b + 0.5, `${tag}: watching, the speed buttons and the chatter's switch are in the row under the board, on the screen, and take a tap`, reach.filter(r => !r.on || !r.taps).map(r => r.what).join(', ') || 'all four');
+      const squeezed = await ev(`(() => { const h = document.getElementById('help'); return !!h.getClientRects().length && (h.scrollWidth > h.clientWidth + 1 || h.getBoundingClientRect().right > innerWidth + 0.5); })()`);
+      check(!squeezed && watch.scrollW <= watch.vw, `${tag}: watching, the help isn't squeezed past its box or the screen's edge (it gives way), and nothing scrolls sideways`, `${watch.scrollW} of ${watch.vw}${watch.help ? `, the help ${r1(watch.help.x)}-${r1(watch.help.r)}` : ', the help given way'}`);
+      await chatterFull(tag, true);
+      await ev(`window.__autoRaf = true; 'ok'`);
+    }
+
     // ------------------------------------- held upright, every 10 px of height
     // Phones held upright from 320 to 430 px wide, every 10 px of height
     // from 440 to 940, the screen resized under the page: the start card,
     // playing with the chatter full, and watching with it full. The page is
     // one screen tall at every one (it used to scroll on every phone with
-    // its browser's bars showing, even at the start card).
+    // its browser's bars showing, even at the start card), and the board is
+    // never smaller than on main before the page was one screen tall
+    // (MAIN_UP, pinned: the owner's call, the board first; the help and the
+    // chatter give way, to a strip or none, its lines in bubbles).
+    const BOARD_W = `document.getElementById('game').getBoundingClientRect().width`;
     for (const w of [320, 360, 375, 390, 412, 414, 430]) {
       if (only && !String(w).includes(only)) continue;
-      const bad = { 'the start card': [], 'playing, the chatter full': [], 'watching, the chatter full': [] };
+      const bad = { 'the start card': [], 'playing, the chatter full': [], 'watching, the chatter full': [] }, small = [];
       const sweep = async state => {
         for (let h = 440; h <= 940; h += 10) {
           await b.viewport(w, h, { scale: 3, mobile: true });
           await settle();
-          const s = await ev(SCROLL);
+          const s = await ev(SCROLL), bw = await ev(BOARD_W), want = MAIN_UP[w][(h - 440) / 10];
           if (s.h > s.vh || s.w > s.vw) bad[state].push(`${h} (${s.w}×${s.h})`);
+          if (bw < want - 0.5) small.push(`${h} ${state}: ${r1(bw)} (main ${want})`);
         }
       };
       await open({ w, h: 440, dpr: 3 });
@@ -886,6 +987,49 @@ const r1 = v => Math.round(v * 10) / 10;
       await sweep('watching, the chatter full');
       await ev(`window.__autoRaf = true; 'ok'`);
       for (const [state, list] of Object.entries(bad)) check(!list.length, `${w} px wide, upright, 440 to 940 px tall, every 10: ${state}, nothing scrolls`, list.length ? `scrolls at ${list.join(', ')}` : '51 heights');
+      check(!small.length, `${w} px wide, upright, 440 to 940 px tall, every 10: the board is never smaller than on main before the page was one screen tall`, small.join('; ') || `${MAIN_UP[w][0]} to ${Math.max(...MAIN_UP[w])} px on main, each height`);
+    }
+
+    // ------------------------------- over the board, every 80 px of height
+    // Windows over the board, narrower than 5:4, 460 to 1040 px wide, every
+    // 80 px of height from 560 to 1120, with a mouse and with touch, the
+    // window resized under the page: the board is never smaller than on main
+    // before the page was one screen tall (MAIN_OVER, pinned: the window's
+    // height less 260 px; the one-screen work's first build took up to 92 px
+    // off it here, for the chatter's two lines), and nothing scrolls, down or
+    // sideways, at the start card, or playing or watching with the chatter
+    // full (the chatter and the help give way: to a strip or none, and where
+    // the help doesn't fit its row).
+    for (const touch of [false, true]) {
+      for (const w of [460, 600, 760, 900, 1040]) {
+        const tag = `${w} px wide${touch ? ' with touch' : ''}, over the board`;
+        if (only && !tag.includes(only)) continue;
+        const hs = Object.keys(MAIN_OVER).filter(k => k.startsWith(`${w}x`)).map(k => Number(k.split('x')[1]));
+        const bad = { 'the start card': [], 'playing, the chatter full': [], 'watching, the chatter full': [] }, small = [];
+        const sweep = async state => {
+          for (const h of hs) {
+            await b.viewport(w, h, { scale: touch ? 2 : 1, mobile: touch });
+            await settle();
+            const s = await ev(SCROLL), bw = await ev(BOARD_W), want = MAIN_OVER[`${w}x${h}`];
+            if (s.h > s.vh || s.w > s.vw) bad[state].push(`${h} (${s.w}×${s.h})`);
+            if (bw < want - 0.5) small.push(`${h} ${state}: ${r1(bw)} (main ${want})`);
+          }
+        };
+        const d = { w, h: hs[0], dpr: touch ? 2 : 1, desktop: !touch };
+        await open(d);
+        await sweep('the start card');
+        await toRound();
+        await ev(FILL);
+        await sweep('playing, the chatter full');
+        await ev(`window.__autoRaf = true; 'ok'`);
+        await open(d);
+        await toRound('watch');
+        await ev(FILL);
+        await sweep('watching, the chatter full');
+        await ev(`window.__autoRaf = true; 'ok'`);
+        for (const [state, list] of Object.entries(bad)) check(!list.length, `${tag}, ${hs[0]} to ${hs[hs.length - 1]} px tall, every 80: ${state}, nothing scrolls`, list.length ? `scrolls at ${list.join(', ')}` : `${hs.length} heights`);
+        check(!small.length, `${tag}, ${hs[0]} to ${hs[hs.length - 1]} px tall, every 80: the board is never smaller than on main before the page was one screen tall`, small.join('; ') || hs.map(h => `${h}: ${MAIN_OVER[`${w}x${h}`]}`).join(', '));
+      }
     }
 
     // ----------------------------------------------- the chatter streaming in

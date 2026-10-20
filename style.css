@@ -71,16 +71,21 @@ body {
    above it for the header and the tags as they are (--above, measured:
    snake.js placeBoard), and under it for the row under the board and a
    chatter of its caption and two lines (--below), so it never changes size
-   between playing and watching. */
+   between playing and watching; and never smaller than it was before the
+   page was one screen tall (the screen's height less 260 px: the owner's
+   call, the board first), where the chatter and the help give way instead:
+   the chatter to a strip or none, its lines in bubbles on the board, and
+   the help where it doesn't fit its row (snake.js fitColumn). */
 main {
   --foot: 30px; /* (the row under the board: its height, kept; 44 on a touch screen) */
   --chat-room: 84px; /* (the chatter's caption and two lines of words) */
   --below: calc(10px + var(--foot) + var(--chat-room) + var(--pad-b));
   width: 100%;
-  /* The board grows with the screen but always fits its height. (115 px:
+  /* The board grows with the screen but always fits its height. (260 px:
+     the floor, as before "One screen". 115 px:
      what's above it, until the page has measured it: the page's top, the
      header in one row, the tags in one, and their margins.) */
-  max-width: min(900px, max(280px, calc(100vh - var(--above, 115px) - var(--below))));
+  max-width: min(900px, max(280px, calc(100vh - 260px), calc(100vh - var(--above, 115px) - var(--below))));
   height: calc(100vh - var(--pad-t) - var(--pad-b));
   display: flex;
   flex-direction: column;
@@ -90,7 +95,7 @@ main {
    it would lose the property) */
 @supports (height: 1dvh) {
   main {
-    max-width: min(900px, max(280px, calc(100dvh - var(--above, 115px) - var(--below))));
+    max-width: min(900px, max(280px, calc(100dvh - 260px), calc(100dvh - var(--above, 115px) - var(--below))));
     height: calc(100dvh - var(--pad-t) - var(--pad-b));
   }
 }
@@ -984,8 +989,8 @@ canvas {
   line-height: 1.25; /* (no less than the font's own, so a row's words never reach into the row above: a line cut to its rows ends cleanly) */
 }
 .chatter[data-fit="strip"] .chatter-head { display: none; }
-.chatter[data-fit="strip"] .chatlog { margin-top: 8px; padding: 2px 10px 3px; border-top: 1px solid var(--panel-edge); border-radius: 12px; }
-.chatter[data-fit="strip"] .chatlog li { padding-block: 1px; }
+.chatter[data-fit="strip"] .chatlog { margin-top: 4px; padding: 1px 10px 2px; border-top: 1px solid var(--panel-edge); border-radius: 12px; }
+.chatter[data-fit="strip"] .chatlog li { padding-block: 0; } /* (slim: a phone's line of two rows whole in about 40 px, 360×640 and 375×635) */
 .chatter[data-fit="none"] > *, .chatter[data-fit="off"] > * { display: none; }
 .chatlog[hidden] { display: none; }
 .chatlog:empty::before { content: 'Quiet on the bark… for now.'; color: var(--muted); font-style: italic; }
@@ -999,7 +1004,7 @@ canvas {
 
 .help { flex: 1 1 0; min-width: 0; margin: 0; text-align: center; font-size: 0.8rem; line-height: 1.2; color: var(--muted); }
 .help[hidden] { display: none; }
-main.help-yields .help { display: none; } /* (watching, where it would leave the chatter no row: it only says what the speed buttons do) */
+main.help-yields .help { display: none; } /* (where it doesn't fit the row, its items squeezed past its box or its lines past the page's bottom; and watching, where it would leave the chatter no row: it only says what the speed buttons do. snake.js fitColumn) */
 .hint span, .help span, #overlay-text span.whole { white-space: nowrap; } /* (each item whole, a line breaking only after its dot; a long reason may wrap, rather than run off a phone's card) */
 .sep { font-style: normal; }
 .glyph { display: inline-block; width: 0.62em; height: 0.78em; vertical-align: -0.06em; fill: currentColor; } /* (the pause button's own bars, not a font's) */
@@ -1415,7 +1420,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
      under it and under the tags, the tags 25 px a row, as on its side) */
   header { row-gap: 0; margin-bottom: 6px; }
   header::after { height: 6px; } /* (the break between the rows is a row of its own: the gap, once) */
-  .scoreboard { margin-bottom: 6px; gap: 4px; }
+  .scoreboard { margin-bottom: 6px; gap: 4px; position: relative; z-index: 5; } /* (over the frame's top moss and corner leaves, which reach 12 px up into its 6 px gap: they hung over the second row's rims and hunger bars) */
   .scoreboard li { padding: 3px 7px 6px; font-size: 0.86rem; }
   .scoreboard .hunger { left: 7px; right: 7px; bottom: 2px; }
   .frame { padding: 4px; border-radius: 9px; }
@@ -1438,10 +1443,13 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
      they do, and how to nap: the nap button's in the header). */
   .speed:not([hidden]) + .help { display: none; }
   .chatter-head { margin-top: 6px; }
-  .chatter[data-fit="strip"] .chatlog { margin-top: 4px; }
+  .chatter[data-fit="strip"] .chatlog { margin-top: 0; }
 }
 @media (max-width: 340px) {
   main { --head: 150px; } /* (the narrowest phones: the header in two rows, its title smaller) */
+}
+@media (max-width: 300px) {
+  .speed > span { display: none; } /* (a Galaxy Fold folded, 280 px: the word, three buttons and the switch don't fit the row; the group's name, "Watching speed", says it) */
 }
 /* Phones less than 1.7 times as tall as wide (an iPhone SE or mini with
    Safari's bars showing, 375×548 to 635; a small Android with its browser's
@@ -1578,7 +1586,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
    word, else it's its picture, round like the icons beside it (its name in
    its tooltip, and for a screen reader). The steps are the page's width,
    which is the window's less 24 px, or less on a short window, where the
-   page narrows with the board (a 460×612 window's page is 292 px): with six
+   page narrows with the board (a 460×612 window's page is 352 px): with six
    buttons (full screen, where the browser allows it) and with five (an
    older Safari, a page in a frame without full screen, which had the
    doors' pictures where their words fit), a mouse's 34 px buttons and a

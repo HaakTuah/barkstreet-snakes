@@ -23,9 +23,9 @@
 //   Best, then the six buttons on a row of their own, the Field guide named
 //   at 390; over the board, one row, Score over Best and the full-screen
 //   button last, the guide named on half a 1080p screen's window, an iPad
-//   mini and an iPad held upright, both on a 1440p screen's browser; a
-//   window 460 px wide (500 with touch), and a 1000x860 window, with the
-//   title, Score and Best and then every button, both named; and as Score
+//   mini and an iPad held upright, both on a 1440p screen's browser,
+//   neither on a 1000x860 window; a window 460 px wide (500 with touch)
+//   with the title, Score and Best and then every button, both named; and as Score
 //   and Best grow to 1000, nothing moves. At every step over the board (one
 //   row, each door's word, two rows on a short window's narrower page),
 //   with six buttons and five, a mouse and touch: the step's page and a
@@ -380,18 +380,18 @@ const KEYS = {
     // iPad mini held upright (a 720 px page) and half a 1080p screen's
     // window (960x945, 694) name the Field guide, the trophy its picture (the
     // guide was its book there with the full screen); a 1440p screen's
-    // browser (2560x1305, 900) names both. A window 460 px wide, or 500 with
+    // browser (2560x1305, 900) names both; a 1000x860 window (a 600 px page:
+    // its board as big as before "One screen", the owner's call, the chatter
+    // giving way) has both pictures. A window 460 px wide, or 500 with
     // touch (an iPad's Split View), has the title with Score and Best, then
     // all the buttons on the next row, both named (the trophy went alone
-    // onto a third), and so does a 1000x860 window: its page, as one screen
-    // holds the board, the row under it and two lines of chatter, is 530 px
-    // (600 before, its chatter full and its help under the fold). And as
+    // onto a third). And as
     // Score and Best grow to 1000, nothing moves. (A 1080p screen's browser,
     // 1920x945 and 1920x913, and 1920x1080 had the header over the board, its
     // one row: they're beside it now, below.)
     for (const [w, h, touch, label, oneRow, guide, trophy] of [
       [2560, 1305, false, '2560x1305, a 1440p screen\'s browser', true, true, true], [960, 945, false, 'half a 1080p screen, 960x945', true, true, false],
-      [1000, 860, false, 'a 1000x860 window', false, true, true], [744, 1133, true, 'an iPad mini upright', true, true, false],
+      [1000, 860, false, 'a 1000x860 window', true, false, false], [744, 1133, true, 'an iPad mini upright', true, true, false],
       [768, 1024, true, 'an iPad upright', true, true, false], [460, 900, false, 'a window 460 px wide', false, true, true], [500, 1000, true, 'a touch window 500 px wide', false, true, true]]) {
       await b.viewport(w, h, { scale: touch ? 2 : 1, mobile: touch });
       await load();

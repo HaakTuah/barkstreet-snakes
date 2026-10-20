@@ -2941,13 +2941,27 @@
   // side less a notch's home bar, 780×320 in Safari), the help, which only
   // says what they do, gives the chatter its room; where a row fits beside
   // it, it stays. (Held upright on a phone they take the help's place:
-  // style.css.) Decided with the help shown, as the window changes, the font
-  // arrives, the speed buttons come and go and the chatter's switched; never
-  // from inside a resize observer's call (the column's change would come
-  // round again).
+  // style.css.) And in any state, the help gives way where it doesn't fit
+  // the row: an item running past its box (the speed buttons and the switch
+  // squeezing it, watching on a narrow touch screen), or its lines pushing
+  // the row past the page's bottom (a narrow window with a mouse, the keys'
+  // help on four to six lines), where the board keeps its size (the owner's
+  // call: the board never smaller than before, the help and the chatter
+  // give way); the start card, the nap's and How to play have the keys, and
+  // on a touch screen the first Go says how to jump and flash. Decided with
+  // the help shown, as the window changes, the font arrives, the help's
+  // words change, the speed buttons come and go and the chatter's switched;
+  // never from inside a resize observer's call (the column's change would
+  // come round again).
   const fitColumn = () => {
     mainEl.classList.remove('help-yields');
     fitChatter();
+    const h = helpEl.getClientRects().length && helpEl.getBoundingClientRect();
+    if (h && (helpEl.scrollWidth > helpEl.clientWidth + 1 || (h.height > parseFloat(getComputedStyle(footEl).minHeight) + 0.5 && footEl.getBoundingClientRect().bottom + scrollY > innerHeight + 0.5))) { // (squeezed, or taller than the row and taking it off the screen)
+      mainEl.classList.add('help-yields');
+      fitChatter();
+      return;
+    }
     if (speedEl.hidden || chatlogEl.hidden || chatFit !== 'none') return;
     mainEl.classList.add('help-yields');
     fitChatter();
