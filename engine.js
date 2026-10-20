@@ -205,7 +205,7 @@ window.SnakeEngine = (() => {
     if (beetles + game.unders.length >= T.BEETLE_MAX || game.time < T.BEETLE_FIRST_MS || Math.random() >= T.BEETLE_CHANCE) return;
     let b = freeBurrow(game, -1);
     if (game.burrows.length < T.BURROW_MAX && (!b || Math.random() < T.BURROW_NEW_CHANCE)) {
-      const at = place(null, true);
+      const at = place(null, true, -1, T.BURROW_SPACING); // (quiet, and apart from the other burrows: burrows keep apart)
       if (at) b = openBurrow(game, at.x, at.y);
     }
     if (b) {
@@ -217,9 +217,11 @@ window.SnakeEngine = (() => {
   }
   // A burrow cracks open at (x, y): { x, y, at: the tick it opened, used:
   // the game time a beetle last went into or came out of it (or it opened),
-  // dug: 1 if a beetle's dig left it (see BURROW_FROM_DIG) }. At BURROW_MAX,
-  // the one unused longest closes over to make room.
+  // dug: 1 if a beetle's dig left it (see BURROW_FROM_DIG) }. A dug one
+  // takes the place of any burrow nearer than BURROW_SPACING (it closes
+  // over); then, at BURROW_MAX, the one unused longest closes over to make room.
   function openBurrow(game, x, y, dug = false) {
+    if (dug) for (const h of [...game.burrows]) if (Math.abs(h.x - x) + Math.abs(h.y - y) < T.BURROW_SPACING) closeBurrow(game, h); // (a dig by a burrow takes its place: that one closes over, so burrows keep apart)
     if (game.burrows.length >= T.BURROW_MAX) {
       let old = game.burrows[0];
       for (const h of game.burrows) if ((h.used ?? 0) < (old.used ?? 0)) old = h;
@@ -238,12 +240,13 @@ window.SnakeEngine = (() => {
 
   // Picks free cells (no bodies, holes, food, burrows, fire or the
   // woodpecker's next patch), worked out only when something actually needs
-  // placing. place(props, quiet, gap): puts food there (props: null to only
+  // placing. place(props, quiet, gap, apart): puts food there (props: null to only
   // pick a cell), and returns the cell. quiet: pick the spot farthest from
-  // any head, of a few tries; gap: never this close to a head, or nearer.
+  // any head, of a few tries; gap: never this close to a head, or nearer;
+  // apart: only a cell at least this far from every burrow, while there's one.
   function placer(game) {
     let free = null;
-    return (props, quiet = false, gap = -1) => {
+    return (props, quiet = false, gap = -1, apart = 0) => {
       if (!free) {
         markBodies(game);
         for (const f of game.food) bodyStamp[key(f.x, f.y)] = stamp;
@@ -256,7 +259,14 @@ window.SnakeEngine = (() => {
         for (let k = 0; k < CELLS; k++) if (bodyStamp[k] !== stamp) free.push(k);
       }
       if (!free.length) return null; // a full board: nothing grows, and that's fine
-      let at = Math.floor(Math.random() * free.length);
+      let pool = null; // (the places in free it may pick from, if not all of them)
+      if (apart > 0 && game.burrows.length) {
+        pool = [];
+        for (let i = 0; i < free.length; i++) { const x = free[i] % GRID, y = Math.floor(free[i] / GRID); if (game.burrows.every(h => Math.abs(h.x - x) + Math.abs(h.y - y) >= apart)) pool.push(i); }
+        if (!pool.length) pool = null; // (nowhere that far from them: anywhere, as before)
+      }
+      const any = () => pool ? pool[Math.floor(Math.random() * pool.length)] : Math.floor(Math.random() * free.length);
+      let at = any();
       if (gap >= 0 && headGap(game, free[at] % GRID, Math.floor(free[at] / GRID)) <= gap) { // (too close: another, from the cells far enough away)
         const far = [];
         for (let i = 0; i < free.length; i++) if (headGap(game, free[i] % GRID, Math.floor(free[i] / GRID)) > gap) far.push(i);
@@ -266,7 +276,7 @@ window.SnakeEngine = (() => {
       if (quiet) {
         let best = -1;
         for (let t = 0; t < 8; t++) {
-          const i = Math.floor(Math.random() * free.length), c = free[i];
+          const i = any(), c = free[i];
           const gap = headGap(game, c % GRID, Math.floor(c / GRID));
           if (gap > best) { best = gap; at = i; }
         }

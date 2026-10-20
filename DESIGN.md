@@ -1007,6 +1007,15 @@ Escapes from a chase went from about half (51%) to 43% with live food alone, and
   - *The burrow experiment* (the owner's idea, "just an idea"): a dig that leaves a burrow, and burrows that close over when nobody has used them for a while (sawdust and moss fill an old bore hole on dead wood), so the burrows follow the hunting instead of three fixed holes for the round. Each switch alone and both together, against the package without them, paired on fresh seeds 29 and 41 (600 rounds a seed; `abtest.js` for the round's length):
     - **A dig leaves a burrow: kept** (`BURROW_FROM_DIG`). Escapes from a chase 29.5% → 32.8%, inside the 20–35% (down a burrow 14.6 → 19.5%, dug in 14.7 → 12.9%; 2.5 dives a round into a burrow a dig left). Beetles caught (15.2 → 15.0 a round), the chase (10.3 → 10.6 ticks to a catch), room for apples (488 free cells), the round (168 → 167 s, the same within 3 s) and starving before the woodpecker (2.05 → 2.01% of snake-time) as they were; after it, 7.1 → 7.4%, undecided. No personality's win rate moved, within the test's ±12–14 points. Burrows open 2.21 → 2.29 on average: they still number three at most, and at three a dig's new burrow closes over the one unused longest. It's the one setting with escapes clearly inside the band and nothing else moved.
     - **Closing over when unused: tried, and off** (`BURROW_HEAL_MS` 0, kept as a switch). At 30 s it only left fewer burrows open (1.86; escapes 30.4%, undecided); at 60 s nothing at all. With digs leaving burrows it brought escapes nearer the ceiling: 33.7% at 30 s (its interval reaching 35.3%), 33.2% at 60 s. The cap already makes the burrows follow the hunting.
+    - **Burrows keep apart** (`BURROW_SPACING` 10; the owner: "2 or all 3 of the burrows end up clustered really close"). Two causes:
+      - a dig comes only where no burrow is within 7, so a dug burrow opened about 7 from the next;
+      - a beetle coming out opened a new burrow where it's quiet, with no thought for the others, and round six A opens twice as many.
+
+      In 100 AI rounds the nearest two were a median 9 cells apart (15 before round six A), and a quarter of rounds had two within 4. Now:
+      - a new burrow opens at least 10 from the others whenever there's room (the quietest of a few such spots);
+      - a dig nearer than 10 to a burrow takes its place: that one closes over, with its own lesson the first time in a round ("A beetle that digs in by a burrow takes its place.").
+
+      The nearest two are now a median 16 apart, and none within 6.
 - **As built** (wave 2, and the critique's numbers):
   - two apples (`APPLES`); up to two beetles at once, above ground or under (`BEETLE_MAX`; `game.unders` holds the ones underground, replacing `game.underground`), coming out at 0.008 a tick (`BEETLE_CHANCE`) in sudden death too, and coming up there too; one in six golden (`GOLD_BEETLE_CHANCE` 0.16);
   - a beetle scurries from a head within 6 (`BEETLE_FEAR`; 4 until the critique), running for a burrow nearer than 7 (`BEETLE_HOME_REACH`);

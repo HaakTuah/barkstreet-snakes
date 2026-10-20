@@ -125,6 +125,7 @@ window.TUNING = Object.freeze({
   BURROW_MAX: 3,            // beetle burrows that crack open in the bark over a round (harmless to cross)
   BURROW_NEW_CHANCE: 0.5,   // a beetle coming out opens a new burrow this often (always, if none is free)
   BURROW_FROM_DIG: true,    // a beetle's dig leaves a burrow where it dug, counting toward BURROW_MAX (at the most, the one unused longest closes over to make room): the burrows follow the hunting (escapes from a chase 29.5% to 32.8%, inside the 20-35% that keeps a chase worth it; rounds as long)...
+  BURROW_SPACING: 10,       // burrows keep this far apart (across and down): a new one cracks open at least this far from the others whenever there is room (the quietest of a few such spots), and a dig nearer than this to a burrow takes its place (that one closes over). Without it, two or three bunched up: a pair 4 cells or less apart in 24% of rounds (10% before round six A)
   BURROW_HEAL_MS: 0,        // ...and (off at 0) a burrow no beetle has gone into or come out of for this long closes over: sawdust and moss fill it (tried at 30 and 60 s: fewer burrows open, nothing else, and with digs leaving burrows, escapes nearer the 35% ceiling)
   BEETLE_UNDER_MIN: 8,      // a scared beetle that reaches a burrow dives in (or one cornered digs in), and comes out of a burrow after this many ticks...
   BEETLE_UNDER_MAX: 16,     // ...up to this many

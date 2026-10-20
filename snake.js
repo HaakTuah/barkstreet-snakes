@@ -109,6 +109,7 @@
     youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near enough your head to catch: see DIG_NEAR)
     digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log, once the dig's own lesson is told)
     digAndBurrow: 'A cornered beetle digs in, leaving a burrow.', // (the same, when the dig's lesson hasn't been told yet: most digs are far from you, so this one teaches both, the dig first)
+    burrowTaken: 'A beetle that digs in by a burrow takes its place.', // (the first burrow in a round that a dig near it closes over, once the burrow's lesson is told: burrows keep BURROW_SPACING apart)
     burrowHeal: `Past ${inWords(T.BURROW_MAX)} burrows, the stalest one closes over.`, // (the stalest: the one unused longest, as the Field guide has it. The first one closing over in a round, once the burrow's lesson is told)
     lostColony: 'The woodpecker took a flag: that colony’s lost.', // (a flag it pecks out, the first in a round; for watchers too)
     lostCapital: 'The woodpecker took a capital: its realm moves.',
@@ -1032,7 +1033,7 @@
       if (e.type === 'weather' && e.kind === 'storm') game.struck = false;
       if (e.type === 'weather' && FLAVOR.weather[e.kind]) { flashFrame(e.kind); return toast(pick((!playerAlive() && FLAVOR.weatherWatch[e.kind]) || FLAVOR.weather[e.kind]), 2800, e.kind); }
       if (e.type === 'rainbow') { flashFrame('gold', true); if (newsOnce('rainbow')) return toast(lineFor('rainbow'), 2800, 'gold'); }
-      if (e.type === 'heal' && game.told?.digBurrow && newsFree() && once('burrowHeal')) return toast(FLAVOR.burrowHeal, 2600, 'beetle', 'lesson'); // (one closing over: once the burrow's lesson is told, the first time the banner's free for it; it's over in a second, so else the next one teaches it. A dig at the cap closes one over on its burrow's tick, the heal first: that tick teaches the burrow)
+      if (e.type === 'heal' && game.told?.digBurrow && newsFree()) { const took = game.events.some(o => o.type === 'burrow' && o.dug && Math.abs(o.x - e.x) + Math.abs(o.y - e.y) < T.BURROW_SPACING); if (once(took ? 'burrowTaken' : 'burrowHeal')) return toast(took ? FLAVOR.burrowTaken : FLAVOR.burrowHeal, 2600, 'beetle', 'lesson'); } // (a dig by a burrow takes its place: the heal and the dug burrow come in the same tick) // (one closing over: once the burrow's lesson is told, the first time the banner's free for it; it's over in a second, so else the next one teaches it. A dig at the cap closes one over on its burrow's tick, the heal first: that tick teaches the burrow)
       if (e.type === 'burrow' && e.dug && newsFree() && once('digBurrow')) return toast(once('dig') ? FLAVOR.digAndBurrow : FLAVOR.digBurrow, 2600, 'beetle', 'lesson'); // (its rule, the first time the banner's free for one: shown then, or the next one teaches it. Not taught the dig yet (it was far from you, or the banner was busy), it teaches both, the dig first)
       if (e.type === 'spawn' && e.kind === 'golden') { flashFrame('gold'); if (newsOnce('golden')) return toast(pick(FLAVOR.golden), 2800, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'beetle' && e.gold) { flashFrame('gold'); if (newsOnce('goldBeetle')) return toast(lineFor('goldBeetle'), 2600, 'gold'); }
@@ -2414,7 +2415,7 @@
     ['Food', [
       ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(T.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time; leave one too long and it rots.`],
       ['golden', 'Golden apple', `Worth ${T.GOLDEN_GROWTH}, and everyone saw it land.`],
-      [['beetle', 'dig'], 'Beetles', `Worth ${T.BEETLE_GROWTH}, up to ${inWords(T.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in, so be quick${T.BURROW_FROM_DIG ? `, and leaves a burrow; past ${inWords(T.BURROW_MAX)} burrows, the one unused longest closes over` : ''}.`],
+      [['beetle', 'dig'], 'Beetles', `Worth ${T.BEETLE_GROWTH}, up to ${inWords(T.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in, so be quick${T.BURROW_FROM_DIG ? `, and leaves a burrow, taking the place of any burrow near it (burrows keep apart); past ${inWords(T.BURROW_MAX)} burrows, the one unused longest closes over` : ''}.`],
       [['pellet', 'choke'], 'Beads', `What a crash knocks off, and what a dead snake leaves (${T.CORPSE_EVERY === 2 ? 'every other segment' : T.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${T.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own make you choke: you spit them aside.`],
       ['cough', 'Coughing', `After a choke you cough for ${coughFor === 1 ? 'about a second' : `about ${coughFor} seconds`} (puffs, mouth shut) and can’t eat. Food you reach rolls aside: into a turn, or to the more open side, over food.`],
       [['baked', 'roast'], 'Baked and roast', `Food left in a fire bakes: worth ${T.COOKED_GROWTH}, if you can take the heat. Then it’s ash.`],

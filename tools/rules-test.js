@@ -2277,6 +2277,52 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   check('(off in the game) a burrow unused for BURROW_HEAL_MS closes over, but not with a beetle on it', JSON.stringify(h.events.filter(e => e.type === 'heal')) === JSON.stringify([{ type: 'heal', x: 20, y: 2 }]) && h.burrows.length === 2, JSON.stringify(h.burrows));
 }
 
+{ // Burrows keep apart (the owner: "2 or all 3 of the burrows end up clustered really close"): a dig nearer than
+  // BURROW_SPACING to a burrow takes its place, and a beetle coming out cracks a new one open that far from the others.
+  const M = Object.create(Math); let a = 7;
+  M.random = () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const text = fs.readFileSync(path.join(ROOT, 'tuning.js'), 'utf8');
+  const play = changes => {
+    const c = vm.createContext({ window: {}, console, Math: M });
+    vm.runInContext(Object.entries(changes).reduce((s, [k, v]) => s.replace(new RegExp(`${k}: *[\\w.]+,`), `${k}: ${v},`), text), c, { filename: 'tuning.js' });
+    for (const f of ['ai.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), c, { filename: f });
+    return [c.window.SnakeEngine, c.window.TUNING];
+  };
+  const [E3, T3] = play({});
+  const staged = () => {
+    const g = E3.createGame({ humans: [{ name: 'P0' }, { name: 'P1' }], personas: [] });
+    g.snakes[0].body = cellsOf(line(5, 10, 4)); g.snakes[1].body = cellsOf(line(20, 22, 4));
+    g.time = 30000;
+    for (const o of g.snakes) { o.stunUntil = 1e9; o.lastAte = g.time; o.nextStarve = g.time + T3.HUNGER_MS; }
+    g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }];
+    return g;
+  };
+  const g = staged();
+  g.burrows = [{ x: 17, y: 12, at: 0, used: 29000 }, { x: 22, y: 4, at: 0, used: 20000 }, { x: 2, y: 2, at: 0, used: 29500 }]; // (9 from the beetle: past the 7 it runs for a burrow, so it digs in; inside BURROW_SPACING)
+  g.food = [{ x: 10, y: 10, kind: 'beetle', expires: 9999, dir: D.up, movedAt: -10 }];
+  const seen = [];
+  for (let t = 0; t <= T3.BEETLE_DIG; t++) { E3.step(g); g.food = g.food.filter(f => f.kind === 'beetle'); for (const e of g.events) if (['burrow', 'heal'].includes(e.type)) seen.push(e); }
+  check('a dig nearer than BURROW_SPACING to a burrow takes its place (that one closes over, not the one unused longest)', T3.BURROW_SPACING > T3.BEETLE_HOME_REACH
+    && JSON.stringify(seen) === JSON.stringify([{ type: 'heal', x: 17, y: 12 }, { type: 'burrow', x: 10, y: 10, dug: 1 }])
+    && g.burrows.length === 3 && g.burrows.some(b => b.x === 22 && b.y === 4), JSON.stringify(seen));
+  // A beetle coming out, again and again (a new burrow each time, at the most three): each new one opens BURROW_SPACING
+  // or more from every other, on a log with room for that.
+  const [E4, T4] = play({ BEETLE_CHANCE: 1, BURROW_NEW_CHANCE: 1, BEETLE_FIRST_MS: 0 });
+  let near = 99, opened = 0;
+  for (let round = 0; round < 12; round++) {
+    const h = E4.createGame({ humans: [{ name: 'P0' }, { name: 'P1' }], personas: [] });
+    h.snakes[0].body = cellsOf(line(5, 20, 4)); h.snakes[1].body = cellsOf(line(20, 3, 4));
+    h.time = 30000;
+    for (const o of h.snakes) { o.stunUntil = 1e9; o.lastAte = h.time; o.nextStarve = h.time + T4.HUNGER_MS; }
+    for (let t = 0; t < 40; t++) {
+      h.food = []; h.unders = []; // (room for the next beetle to come out, every tick)
+      E4.step(h);
+      for (const e of h.events) if (e.type === 'burrow') { opened++; for (const b of h.burrows) if (b.x !== e.x || b.y !== e.y) near = Math.min(near, Math.abs(b.x - e.x) + Math.abs(b.y - e.y)); }
+    }
+  }
+  check('a new burrow cracks open at least BURROW_SPACING from the others, where there is room', opened >= 24 && near >= T4.BURROW_SPACING, `${opened} opened, the nearest ${near}`);
+}
+
 { // Everyone sees every burrow on the board, as it is.
   const g = board([[line(5, 10, 4), 'right'], [line(20, 22, 4), 'right']]);
   g.burrows = [{ x: 3, y: 3, at: 0 }];
