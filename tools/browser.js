@@ -44,12 +44,21 @@ function serve(root = ROOT) {
 
 async function launch() {
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'barkbite-chrome-'));
+  // Chrome runs at below-normal priority, so whoever's using the computer
+  // comes first (its processes take it from here as they start: lowered for
+  // the spawn, then set back). BARKBITE_PRIORITY=normal for timing runs.
+  const pr = os.constants.priority, low = process.env.BARKBITE_PRIORITY !== 'normal';
+  let was = null;
+  if (low) try { was = os.getPriority(); os.setPriority(pr.PRIORITY_BELOW_NORMAL); } catch {}
   const proc = spawn(findChrome(), [
     '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
     '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--mute-audio',
     '--autoplay-policy=no-user-gesture-required', '--disable-renderer-backgrounding',
-    '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', 'about:blank',
+    '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows',
+    ...(process.env.CI ? ['--no-sandbox'] : []), // (a CI runner's Linux can't give Chrome its sandbox)
+    'about:blank',
   ], { stdio: ['ignore', 'ignore', 'pipe'] });
+  if (was != null) try { os.setPriority(was); } catch {}
   // Chrome says where its DevTools endpoint is on stderr.
   const port = await new Promise((resolve, reject) => {
     let text = '';
@@ -94,7 +103,8 @@ async function launch() {
       await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile });
       await send('Emulation.setTouchEmulationEnabled', { enabled: mobile, maxTouchPoints: mobile ? 5 : 1 });
     },
-    async go(url) { const loaded = once('Page.loadEventFired'); await send('Page.navigate', { url }); await loaded; await sleep(400); },
+    // Loads a page, then lets it settle for a moment (settle: ms; 0 for a page that says itself when it's ready).
+    async go(url, { settle = 400 } = {}) { const loaded = once('Page.loadEventFired'); await send('Page.navigate', { url }); await loaded; if (settle) await sleep(settle); },
     async eval(expr) {
       const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true, userGesture: true });
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);

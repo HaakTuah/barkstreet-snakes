@@ -9,7 +9,12 @@
 //                                   rival: true (a rival's: softer, further off, and it gives way to yours),
 //                                   streak: 0..7 (apples in a row: the pluck climbs a pentatonic scale),
 //                                   gold: true (a golden pickup: a sparkle over the cue),
-//                                   crest: seconds (the riser: how long it rises) }
+//                                   crest: seconds (the riser: how long it rises),
+//                                   delay: seconds, 0..1 (it sounds that much later, on the audio clock: the cough a beat after the choke),
+//                                   the drum: strike (which of the round's, from 0), from: ms (into it already), rate (watched faster),
+//                                   the knock: land: seconds (how long the piece it's for is in the air, as drawn),
+//                                   the call: settle: true (one "kik!", the bird back on its perch) }
+//   SnakeAudio.drumBlows(strike)  when each knock of the woodpecker's drum comes, ms from the first (each a blow you see)
 //   SnakeAudio.setMuted(b) / isMuted() / toggleMuted()   remembered in this browser
 //   SnakeAudio.music(stage, mood)  the adaptive track (see the music section below)
 //   SnakeAudio.weather(kind)       the weather you can hear: 'rain', 'wind', 'storm', 'snow' or anything else for none
@@ -24,7 +29,7 @@ window.SnakeAudio = (() => {
   // (weather, the woodpecker, beetles): each gives way sooner than the one before.
   const MAX_VOICES = { you: 7, rival: 6, world: 5 };
   const PRIORITY = { death: true, best: true, win: true, winBest: true, ko: true, stinger: true }; // these always play
-  const WORLD = { beetle: 1, crackle: 1, thunder: 1, gust: 1, burrow: 1, dig: 1, rainbow: 1, rain: 1, snow: 1, ember: 1, woodpecker: 1, call: 1, aim: 1, drum: 1, crash: 1, peck: 1, bake: 1, ash: 1, douse: 1, lastApples: 1 };
+  const WORLD = { beetle: 1, crackle: 1, thunder: 1, gust: 1, burrow: 1, heal: 1, scrabble: 1, dig: 1, knock: 1, rainbow: 1, rain: 1, snow: 1, ember: 1, woodpecker: 1, call: 1, aim: 1, drum: 1, crash: 1, peck: 1, bake: 1, ash: 1, douse: 1, lastApples: 1 };
   const RIVALS = { rivalDeath: 1, bonked: 1 };
   const RIVAL_VOLUME = 0.5;    // a rival's leap or dash, next to yours...
   const RIVAL_LOWPASS = 2600;  // ...and a little duller, as if further off
@@ -37,14 +42,17 @@ window.SnakeAudio = (() => {
     eat: 40, golden: 60, meat: 60, mushroom: 80, crunch: 80, beetle: 3000, leaf: 60,
     rivalDeath: 120, death: 250, best: 400, win: 600, winBest: 600,
     beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, hungerWarn: 1500, ui: 30, // peck: never more than 3 in any second
-    crackle: 300, thunder: 900, gust: 1500, burrow: 1000, dig: 250, rainbow: 1500, rain: 1500,
+    crackle: 300, thunder: 900, gust: 1500, burrow: 1000, scrabble: 250, rainbow: 1500, rain: 1500,
     ko: 200, close: 1400, field: 800, bonk: 150, bonked: 300, leap: 120, thunk: 250, dash: 50, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
     flash: 150, flashReady: 600, lastApples: 4000,
+    choke: 300, cough: 600, // (your next choke can come as soon as your cough is over, COUGH_TICKS ticks on: both are heard again)
+    dig: 300, knock: 400, // (a beetle digs in again only after a spell under, the woodpecker strikes again only after a rest and an aim: each is heard; beetles digging in together, or the pieces one strike knocks aside, are one sound)
+    heal: 400, // (a burrow closes over only for a dig's new one: two digs ending together, one crumble)
   };
   // A cue that stands for others for a while: a win that's also a best is one phrase.
   const COVERS = { winBest: { win: 6000, best: 6000 } };
-  const CHOKES = { go: 'riser' };            // a cue that cuts another short (the riser lands on Go)
-  const CHOKED = { riser: true };
+  const CUTS_SHORT = { go: 'riser' };        // a cue that cuts another short (the riser lands on Go)
+  const CUT_SHORT = { riser: true };
   const DUCKS = { win: 1.2, best: 0.8, winBest: 1.6 }; // the music steps back under a fanfare (seconds)
   const RESUME_GRACE = 500;    // ms in which cues asked for while the context wakes still play once it runs
   const LEAD = 0.005;          // seconds from asking to sounding
@@ -76,12 +84,13 @@ window.SnakeAudio = (() => {
   let building = null;         // the cue being scheduled right now: { pending, gen, nodes, end }
   const lastPlayed = {};       // cue name (a rival's play: name + '~') -> ms timestamp (see MIN_INTERVAL)
   const coveredUntil = {};     // cue name -> ms timestamp (see COVERS)
-  const sounding = {};         // cue name -> { voice, end } of its latest play (see CHOKES)
+  const sounding = {};         // cue name -> { voice, end } of its latest play (see CUTS_SHORT)
 
   // The pitch and volume of the cue being built; tone() and noise() apply them.
   let pitchMul = 1;
   let volMul = 1;
   let out = null; // where the cue being built goes: its own little chain into the master
+  let edgeOut = null; // ...and, for a rival's, where its edge goes (round its dulling: see edge)
 
   const NO_OPTS = {};
   const now = () => (window.performance && window.performance.now ? window.performance.now() : Date.now());
@@ -321,6 +330,16 @@ window.SnakeAudio = (() => {
     noise(t, 0.02, peak * 0.45, 'bandpass', freq * 2.2, 4);
   }
 
+  // A cue's edge: the few high grains it's known by. In a rival's cue they go
+  // round its dulling (as soft as the rest of it), so the cue keeps a little
+  // bite that carries over the music, as a sound far off still does; in yours
+  // they go with the rest.
+  function edge(fn) {
+    const was = out;
+    if (edgeOut) out = edgeOut;
+    try { fn(); } finally { out = was; }
+  }
+
   // A muffled drum (a hand on the skin keeps it short): a low skin that sags in pitch,
   // its thud of air, and the skin's hollow middle, which is what a phone hears.
   function tom(t, freq, peak) {
@@ -381,7 +400,24 @@ window.SnakeAudio = (() => {
   // The woodpecker gets used to: its first few strikes are the full drum, then
   // they're shorter and softer, and its aim stops knocking (the patch shows it).
   let strikes = 0, aims = 0;
-  const strikeLevel = () => (strikes < 3 ? 1 : Math.max(0.5, 1 - 0.1 * (strikes - 2)));
+  const strikeLevel = (n = strikes) => (n < 3 ? 1 : Math.max(0.5, 1 - 0.1 * (n - 2)));
+  // Its drum, as a table: when each knock comes, in ms from the first, for the
+  // round's nth strike (from 0). A burst, fast then slowing as the real bird's
+  // (DRUM_GAP between the first two, each gap DRUM_SLOW longer than the last:
+  // 28 to 52 ms, about half a second for the whole drum), fewer knocks after
+  // its first three strikes. One table for the drum you hear and the blows you
+  // see: the renderer draws a blow on each knock, the last on the strike, and
+  // the game starts the drum on the first blow as it's drawn.
+  const DRUM_GAP = 28, DRUM_SLOW = 2, drums = [];
+  function drumBlows(strike = 0) {
+    const s = Math.max(0, Math.min(12, Math.floor(strike) || 0));
+    if (!drums[s]) {
+      const n = s < 3 ? 14 : Math.max(6, 14 - 2 * (s - 2)), out = [];
+      for (let i = 0, at = 0; i < n; at += DRUM_GAP + i * DRUM_SLOW, i++) out.push(at);
+      drums[s] = Object.freeze(out);
+    }
+    return drums[s];
+  }
 
   const CUES = {
     // Green apple: one bright marimba pluck, in tune with the music (E5, climbing the
@@ -537,6 +573,31 @@ window.SnakeAudio = (() => {
       tone(t + 0.24, 'sine', 340, 0.06, 0.08, 0.004, 600);
     },
 
+    // Choking on your own bead: a gag (a strangled gulp that rattles in the
+    // throat), then a spit, "ptoo" (the lips popping, a hollow "oo"), and the
+    // bead landing aside on the bark with a little tok. About 400 ms.
+    choke(t) {
+      const gag = tone(t, 'triangle', 170, 0.11, 0.26, 0.004, 250, 900);
+      vibrato(gag, t, 0.11, 38, 30);
+      body(t, 170, 0.1, 0.34, 0.004, 250, 720, 1.6);
+      noise(t, 0.09, 0.16, 'bandpass', 1100, 2.4);
+      tone(t + 0.14, 'sine', 190, 0.03, 0.22, 0.002, 90);
+      noise(t + 0.14, 0.014, 0.26, 'bandpass', 3600, 1.2);
+      body(t + 0.15, 300, 0.13, 0.36, 0.006, 210, 620, 1.2);
+      noise(t + 0.15, 0.1, 0.1, 'bandpass', 1500, 1);
+      knock(t + 0.32, 1250, 0.1);
+    },
+
+    // The cough after it: a small one, two dry hacks, the second softer (each
+    // a burst of breath through the throat over a short voiced thump).
+    cough(t) {
+      for (const [at, k] of [[0, 1], [0.15, 0.7]]) {
+        noise(t + at, 0.08, 0.24 * k, 'bandpass', 760, 1.1);
+        noise(t + at, 0.05, 0.06 * k, 'highpass', 2600, 0.7);
+        body(t + at, 190, 0.07, 0.26 * k, 0.003, 140, 560, 1.2);
+      }
+    },
+
     // Lightning on its way: a dry, irregular crackle, high and quiet.
     crackle(t) {
       for (let i = 0; i < 9; i++) noise(t + i * 0.035 + Math.random() * 0.02, 0.012, 0.09, 'bandpass', 3200 + Math.random() * 2400, 2);
@@ -571,9 +632,54 @@ window.SnakeAudio = (() => {
       for (let i = 0; i < 3; i++) noise(t + 0.16 + i * 0.05, 0.02, 0.05, 'lowpass', 1100, 0.8);
     },
 
+    // A burrow closing over: a muffled crumble. Sawdust trickles into the hole
+    // (five grains, each lower and fainter, a fleck of it ticking in over each),
+    // then a hushed pat as the moss settles over it. About 350 ms. (It was as
+    // soft as a beetle's scrabble, which the music buries; the flecks sit high,
+    // where the music leaves room, as the skitter of a beetle coming out does.)
+    heal(t) {
+      for (let i = 0; i < 5; i++) {
+        const at = t + i * 0.05 + (i % 2) * 0.012;
+        noise(at, 0.03, 0.22 - i * 0.03, 'lowpass', 900 - i * 90, 0.8);
+        noise(at + 0.004, 0.008, 0.06 - i * 0.008, 'highpass', 3600, 0.8);
+      }
+      noise(t + 0.25, 0.1, 0.19, 'lowpass', 380, 0.7);
+    },
+
     // A beetle scrabbling into (or out of) its burrow.
-    dig(t) {
+    scrabble(t) {
       for (let i = 0; i < 4; i++) noise(t + i * 0.045, 0.025, 0.08 - i * 0.012, 'lowpass', 1000, 0.8);
+    },
+
+    // A cornered beetle digs in: a quick scrabbling bore into the bark. Its
+    // legs scratch at the wood while its jaws rasp in, the rasp sinking as it
+    // goes down (over the wood's own low grind, which a phone hears), and a
+    // soft puff as its sawdust packs the hole shut behind it. About 450 ms.
+    // (The legs' scratches are its edge: a rival's keeps them, softly, over the music.)
+    dig(t) {
+      edge(() => { for (let i = 0; i < 6; i++) noise(t + i * 0.03 + Math.random() * 0.012, 0.014, 0.15 - i * 0.012, 'bandpass', 2800 + Math.random() * 1600, 1.6); });
+      for (let i = 0; i < 9; i++) {
+        const k = i / 8;
+        noise(t + 0.05 + i * 0.032, 0.026, 0.19 * Math.sin(Math.PI * (0.2 + 0.7 * k)), 'bandpass', 1700 * Math.pow(0.5, k), 2.4);
+      }
+      body(t + 0.05, 160, 0.3, 0.12, 0.04, 100, 520, 1.4);
+      noise(t + 0.36, 0.09, 0.07, 'lowpass', 800, 0.7);
+    },
+
+    // The woodpecker knocks food aside as it strikes: a hollow tok as its beak
+    // flicks the piece out (a deep block with a hollow ring, under the drum's
+    // high knocks), a whoosh rising as it flies off and falling as it comes
+    // down, and a soft bump where it lands. About 400 ms; the further the
+    // piece is flung, the longer it's in the air (o.land, seconds, as drawn:
+    // 0.32 to 0.62), and the whoosh stretches with it to land its bump.
+    knock(t, o) {
+      const land = Number.isFinite(o.land) ? Math.max(0.32, Math.min(0.62, o.land)) : 0.32, k = land / 0.32;
+      tone(t, 'sine', 620, 0.14, 0.42, 0.001, 520);
+      tone(t, 'triangle', 620 * 2.76, 0.04, 0.12, 0.001, null, 4000);
+      noise(t, 0.012, 0.24, 'bandpass', 1500, 2.5);
+      whoosh(t + 0.03, 0.22 * k, 0.15, 500, 2600);
+      whoosh(t + 0.1 * k, 0.26 * k, 0.11, 2600, 700);
+      noise(t + land + 0.02, 0.035, 0.06, 'lowpass', 500, 0.7);
     },
 
     // A rainbow: a soft shimmer climbing up a major arpeggio.
@@ -729,12 +835,19 @@ window.SnakeAudio = (() => {
     },
 
     // The woodpecker drumming a patch out: a burst of knocks, fast then slowing, like the
-    // real thing. The first few strikes get the whole drum; later ones are shorter and softer.
-    drum(t) {
-      const level = strikeLevel(), n = strikes < 3 ? 14 : Math.max(6, 14 - 2 * (strikes - 2));
-      strikes++;
-      let at = t;
-      for (let i = 0; i < n; i++) { knock(at, 1250 + (i % 3) * 60, (0.2 - i * 0.008) * level); at += 0.034 + i * 0.003; }
+    // real thing, each one a blow of its beak (drumBlows), the last on the strike. The
+    // first few strikes get the whole drum; later ones are shorter and softer. Started
+    // late (o.from, ms into it), the knocks already past are left out; watched faster
+    // (o.rate), it's quicker, as the blows are.
+    drum(t, o) {
+      const strike = Number.isFinite(o.strike) ? Math.max(0, Math.floor(o.strike)) : strikes;
+      const level = strikeLevel(strike), blows = drumBlows(strike);
+      const rate = o.rate > 0 ? o.rate : 1, from = Number.isFinite(o.from) ? Math.max(0, o.from) : 0;
+      strikes = strike + 1;
+      for (let i = 0; i < blows.length; i++) {
+        if (blows[i] < from - 4) continue;
+        knock(t + Math.max(0, blows[i] - from) / 1000 / rate, 1250 + (i % 3) * 60, (0.2 - i * 0.008) * level);
+      }
     },
 
     // The patch giving way: a woody crunch over a low thud (as soft as the drum before it).
@@ -757,8 +870,14 @@ window.SnakeAudio = (() => {
       tone(t, 'sine', 70, 0.35, fresh ? 0.16 : 0.1, 0.02, 62);
     },
 
-    // It arrives: a woodpecker's sharp "kik! kik! kik!" and a beat of wings.
-    call(t) {
+    // It arrives: a woodpecker's sharp "kik! kik! kik!" and a beat of wings. Settling
+    // back on its perch after a strike (o.settle): one "kik!", a touch softer.
+    call(t, o) {
+      if (o.settle) {
+        tone(t, 'triangle', 2350, 0.07, 0.13, 0.002, 1900, 5000);
+        tone(t, 'sine', 4700, 0.04, 0.03, 0.002);
+        return;
+      }
       for (let i = 0; i < 3; i++) {
         tone(t + i * 0.13, 'triangle', 2350, 0.07, 0.16, 0.002, 1900, 5000);
         tone(t + i * 0.13, 'sine', 4700, 0.04, 0.04, 0.002);
@@ -846,26 +965,30 @@ window.SnakeAudio = (() => {
     const pitch = Number.isFinite(o.pitch) ? Math.max(-24, Math.min(24, o.pitch)) : 0;
     const volume = Number.isFinite(o.volume) ? Math.min(1, Math.max(0, o.volume)) : 1;
     if (volume <= 0) return;
+    const delay = Number.isFinite(o.delay) ? Math.max(0, Math.min(1, o.delay)) : 0;
 
     lastPlayed[key] = ms;
     for (const k in COVERS[name]) coveredUntil[k] = ms + COVERS[name][k];
     pitchMul = Math.pow(2, pitch / 12);
     volMul = volume * (o.rival ? RIVAL_VOLUME : 1);
-    const t = ctx.currentTime + LEAD;
+    const t = ctx.currentTime + LEAD + delay;
     building = { pending: 0, gen: generation, nodes: [], end: t };
     voices++;
     try {
       // The cue's own little chain: a gain (so it can be cut short), a rival's dulled, and placed left or right.
+      // (A rival's goes through its dulling into the gain; the few high grains a cue gives as its edge go
+      // round it, as soft as the rest, so a rival's dig keeps a scratch the music can't bury: see edge.)
       const voice = ctx.createGain();
       voice.gain.value = 1;
       building.nodes.push(voice);
-      let tail = voice;
+      let tail = voice, into = voice;
       if (o.rival) {
         const f = ctx.createBiquadFilter();
         f.type = 'lowpass';
         f.frequency.value = RIVAL_LOWPASS;
-        tail.connect(f);
-        building.nodes.push(tail = f);
+        f.connect(voice);
+        building.nodes.push(into = f);
+        edgeOut = voice;
       }
       if (Number.isFinite(o.pan) && ctx.createStereoPanner) {
         try {
@@ -876,13 +999,13 @@ window.SnakeAudio = (() => {
         } catch { /* stays in the middle */ }
       }
       tail.connect(master);
-      out = voice;
-      const choke = sounding[CHOKES[name]];
-      if (choke && choke.end > t) choke.voice.gain.setTargetAtTime(0, t, 0.03);
+      out = into;
+      const cut = sounding[CUTS_SHORT[name]];
+      if (cut && cut.end > t) cut.voice.gain.setTargetAtTime(0, t, 0.03);
       if (DUCKS[name]) duckMusic(t, DUCKS[name]);
       cue(t, o);
       if (o.gold && name !== 'golden' && name !== 'leaf' && name !== 'wrap') sparkle(t + 0.05, 0.8);
-      if (CHOKED[name]) sounding[name] = { voice, end: building.end };
+      if (CUT_SHORT[name]) sounding[name] = { voice, end: building.end };
     } catch {
       /* a half-built cue just plays what it managed to schedule */
     } finally {
@@ -892,6 +1015,7 @@ window.SnakeAudio = (() => {
       }
       building = null;
       out = master;
+      edgeOut = null;
     }
   }
 
@@ -1280,5 +1404,5 @@ window.SnakeAudio = (() => {
   const toggleMuted = () => setMuted(!muted);
 
   create();
-  return { unlock, play, setMuted, isMuted, toggleMuted, music, weather, setMusicOn, isMusicOn, toggleMusic };
+  return { unlock, play, setMuted, isMuted, toggleMuted, music, weather, setMusicOn, isMusicOn, toggleMusic, drumBlows };
 })();

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Rule checks on hand-built boards: node tools/rules-test.js
+// Rule checks on hand-built boards: node tools/rules-test.js [--seed N]
 // Loads tuning.js, ai.js and engine.js unchanged, the way the game does.
+// (N: other randomness for the checks that don't seed their own.)
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -10,6 +11,36 @@ const ctx = vm.createContext({ window: {}, console, Math });
 for (const f of ['tuning.js', 'ai.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 const { SnakeEngine: E, SnakeAI: AI, TUNING: T } = ctx.window;
 const D = E.DIRS;
+
+// mulberry32, as simulate.js has it: the game's randomness from a seed.
+const seeded = seed => {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+// The game's randomness from a seed for a while (fn), then as it was: whole
+// rounds played for their numbers come out the same every run, whatever
+// changes in the checks before them.
+function seededWhile(seed, fn) {
+  const was = Math.random;
+  Math.random = seeded(seed);
+  try { return fn(); } finally { Math.random = was; }
+}
+// ...and from a seed for the whole run, so every check sees the same numbers
+// every run. Some count what comes at random, or set things where the game
+// happens to drop them, and with the run's own randomness one of them failed
+// now and then with nothing wrong: the winter apple dropped right in front
+// of a head and eaten before it could rot (one run in 300), three golden
+// apples in clear weather where four were wanted (one in 250), and those
+// seeded below on their own (Drab wandering off, a woodpecker's patch hemmed
+// in, Wildcard drawn fond of leaves): about one run in 25 in all.
+const SEED = process.argv.includes('--seed') ? Number(process.argv[process.argv.indexOf('--seed') + 1]) : 1;
+Math.random = seeded(SEED);
 
 let failed = 0;
 function check(name, ok, detail = '') {
@@ -341,10 +372,16 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
 }
 
 { // The woodpecker gets hungrier: each rest shorter than the last, each patch a cell bigger.
-  const g = board([[line(3, 2, 3), 'right'], [line(3, 21, 3), 'right']], { time: T.SUDDEN_DEATH_MS });
-  for (const o of g.snakes) o.stunUntil = 1e9;
-  const pecks = [];
-  for (let t = 0; t < 1200 && pecks.length < 6; t++) { feed(g); quiet(g); for (const e of g.events) if (e.type === 'peck') pecks.push({ at: g.tick, n: e.cells.length }); }
+  // (Seeded: a patch hemmed in by the holes before it can't grow its full
+  // size, and takes half or more; from about one start in 700 the sixth
+  // came out 7 or 8 cells, not 14, and the bigger patches failed.)
+  const pecks = seededWhile(191, () => {
+    const g = board([[line(3, 2, 3), 'right'], [line(3, 21, 3), 'right']], { time: T.SUDDEN_DEATH_MS });
+    for (const o of g.snakes) o.stunUntil = 1e9;
+    const pecks = [];
+    for (let t = 0; t < 1200 && pecks.length < 6; t++) { feed(g); quiet(g); for (const e of g.events) if (e.type === 'peck') pecks.push({ at: g.tick, n: e.cells.length }); }
+    return pecks;
+  });
   const rests = pecks.slice(1).map((p, i) => p.at - pecks[i].at);
   check('the woodpecker gets hungrier: shorter rests', pecks.length === 6 && rests.every((r, i) => !i || r <= rests[i - 1]) && rests[rests.length - 1] < rests[0], JSON.stringify(rests));
   check('...and bigger patches', pecks[pecks.length - 1].n > T.PECK_CHUNK && pecks[pecks.length - 1].n <= T.PECK_CHUNK_MAX, JSON.stringify(pecks.map(p => p.n)));
@@ -863,14 +900,24 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('unknown and inherited persona keys are ignored', E.createGame({ personas: ['constructor', 'toString', 'drab'], withPlayer: false }).snakes.every(s => s.color));
 }
 
-{ // The woodpecker aims clear of heads and food (while there's room), under bodies too, and warns before it strikes.
-  let near = 0, early = 0, underFood = 0, strikes = 0, cells = 0, aims = 0, underBodies = 0, besideHoles = 0, under = 0, cuts = 0;
-  for (let r = 0; r < 12; r++) {
+{ // The woodpecker aims clear of heads (while there's room), under bodies too, and warns before it strikes; food in the mark is knocked aside.
+  // (Eight seeded rounds, with the same rivals and boards every run, and no
+  // rests: it takes aim again the moment it has struck, so they bring about
+  // 160 aims and 155 strikes. With its rests, six rounds brought 85, and
+  // caught a clearance kept for all but one cell in 13 only two or three
+  // times in some of them, as a change to the engine re-rolls them all. This
+  // way any such rounds catch it, about a dozen times. Its rests are checked
+  // above. A crumb it takes, cut off by the patch and old holes, may be
+  // nearer a head: nobody can step into one without crossing the mark.)
+  let near = 0, nearAims = 0, early = 0, underFood = 0, knocked = 0, badKnocks = 0, strikes = 0, cells = 0, aims = 0, underBodies = 0, besideHoles = 0, under = 0, cuts = 0;
+  for (let r = 0; r < 8; r++) seededWhile(101 + r, () => {
     const g = E.createGame({ withPlayer: false });
     g.time = T.SUDDEN_DEATH_MS;
     for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; s.grow = 30; } // (fed, so they last, and long, as by 2:00)
     let aimedAt = -1;
     for (let t = 0; t < 500 && g.snakes.filter(s => s.alive).length > 1; t++) {
+      const w = g.woodpecker;
+      if (w && !w.target.length) w.restUntil = Math.min(w.restUntil, g.tick + 1); // (no rest: it aims this tick)
       const foodCells = new Set(g.food.map(f => f.y * T.GRID + f.x)), holes = new Set(g.holes);
       E.step(g);
       const heads = g.snakes.filter(s => s.alive).map(s => s.body[0]); // (as they were when it took aim)
@@ -879,10 +926,14 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
         if (e.type === 'aim') {
           aimedAt = g.tick;
           aims++;
+          const mark = new Set(g.woodpecker.target);
+          const open = k => [[0, -1], [1, 0], [0, 1], [-1, 0]].some(([dx, dy]) => { const x = k % T.GRID + dx, y = Math.floor(k / T.GRID) + dy; return x >= 0 && y >= 0 && x < T.GRID && y < T.GRID && !mark.has(K(x, y)) && !holes.has(K(x, y)); });
+          const nearBefore = near;
           for (const k of g.woodpecker.target) {
-            if (heads.some(h => Math.abs(h.x - k % T.GRID) + Math.abs(h.y - Math.floor(k / T.GRID)) <= T.PECK_CLEARANCE)) near++;
+            if (open(k) && heads.some(h => Math.abs(h.x - k % T.GRID) + Math.abs(h.y - Math.floor(k / T.GRID)) <= T.PECK_CLEARANCE)) near++;
             if (foodCells.has(k)) underFood++;
           }
+          if (near > nearBefore) nearAims++;
           if (g.woodpecker.target.some(k => bodies.has(k))) underBodies++;
           if (g.woodpecker.target.some(k => [-1, 1, -T.GRID, T.GRID].some(d => holes.has(k + d)))) besideHoles++;
         }
@@ -891,15 +942,25 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
           cells += e.cells.length;
           under += e.under.length;
           if (g.tick - aimedAt < T.PECK_AIM_TICKS) early++;
+          // (what was in the patch: knocked to a free cell outside it, there now (or rotted away there this very tick), or eaten)
+          const zone = new Set(e.cells);
+          for (const n of g.events) if (n.type === 'knock') {
+            knocked++;
+            if (n.tx == null) continue;
+            if (zone.has(K(n.tx, n.ty)) || g.holes.has(K(n.tx, n.ty)) || !zone.has(K(n.x, n.y)) || !g.food.some(f => f.x === n.tx && f.y === n.ty && f.kind === n.kind) && !g.events.some(o => o.type === 'rot' && o.x === n.tx && o.y === n.ty)) badKnocks++;
+          }
         }
         if (e.type === 'cut') cuts++;
       }
     }
-  }
+  });
   check('the woodpecker strikes in patches', strikes > 20 && cells / strikes > T.PECK_CHUNK / 2, `${strikes} strikes, ${(cells / Math.max(1, strikes)).toFixed(1)} cells each`);
-  check('the woodpecker aims well away from heads', near === 0, `${near} cells too close`);
+  // (A patch nearer a head is its fallback when every spot clear of them would shut a snake in, or none of its tries
+  // found one: late in these restless rounds, a couple of aims in about 160 at most, depending on how the rounds went.
+  // With the clearance ignored, 86 of them were near a head.)
+  check('the woodpecker aims well away from heads', nearAims <= 3, `${nearAims} of ${aims} aims near a head (${near} cells too close)`);
   check('the woodpecker gives warning', early === 0, `${early} without`);
-  check('the woodpecker aims clear of food', underFood === 0, `${underFood} food`);
+  check('the woodpecker\'s patches cover food now, and knock it out of the way', underFood > 10 && knocked >= underFood / 2 && badKnocks === 0, `${underFood} food under marks, ${knocked} knocked, ${badKnocks} landed wrong`);
   check('...but under bodies, often', underBodies > aims * T.PECK_UNDER_BODY && under > 0, `${underBodies} of ${aims} aims, ${under} snakes under strikes`);
   check('...widens old hollows', besideHoles > aims * T.PECK_WIDEN, `${besideHoles} of ${aims} aims beside an old hole`);
   check('...and never cuts', cuts === 0, `${cuts} cuts`);
@@ -1085,23 +1146,211 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('...and at least MIN_LENGTH of them', three.out && three.at.join() === '0,1,2' && four.out && four.at.join() === '0,2,3', JSON.stringify([three, four]));
 }
 
-{ // Your own beads give the length back, but they aren't a meal: the hunger clock runs on. Anyone else's are.
+// ---------------------------------------------------------------- choking on your own tail
+// (A step with only the food a test laid, wherever it has rolled to since: nothing that grows mid-test gets in the way.)
+const lay = (g, ...food) => { g.food = food; g.mine = new Set(food); return food; };
+const kept = g => { g.food = g.food.filter(f => g.mine.has(f)); return E.step(g); };
+const bead = (o, x, y) => ({ x, y, kind: 'pellet', color: o.color, owner: o.id, expires: 9999 });
+const far = [line(20, 22, 3, 1), 'left']; // (a second snake, out of the way)
+const at = (c, x, y) => !!c && c.x === x && c.y === y;
+// What a person (or a rival) can work out before the move: where it'll roll, on this board as it stands (where it
+// may stop, and what it may roll on over: food lying there, but not a hole or a body).
+const passHere = g => (x, y) => !g.holes.has(K(x, y)) && !g.snakes.some(o => o.alive && o.body.some(c => c.x === x && c.y === y));
+const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x && f.y === y);
+
+{ // Your own bead: you choke on it, spit it aside (it stays food), and cough. You lose nothing, but you get nothing back. Anyone else's is a meal.
   const g = board([[line(5, 5, 5), 'right'], [line(5, 15, 5), 'right']], { time: 5000 });
   const [a, b] = g.snakes;
   a.lastAte = 1000; a.nextStarve = 1000 + T.HUNGER_MS; b.lastAte = 1000; b.nextStarve = 1000 + T.HUNGER_MS;
-  g.food = [{ x: 6, y: 5, kind: 'pellet', color: a.color, owner: a.id, expires: 999 }, { x: 6, y: 15, kind: 'pellet', color: a.color, owner: a.id, expires: 999 }];
-  g.given = new Set(g.food.map(f => f.y * T.GRID + f.x));
-  quiet(g);
-  const eats = g.events.filter(e => e.type === 'eat');
-  check('your own bead: the length back, and the score', a.eaten === 1 && a.grow === 1, `${a.eaten} eaten, grow ${a.grow}`);
-  check('...but not a meal', a.lastAte === 1000 && a.nextStarve === 1000 + T.HUNGER_MS && eats.some(e => e.snake === a && e.own === 1), JSON.stringify([a.lastAte, a.nextStarve]));
-  check('...someone else\'s is', b.eaten === 1 && b.lastAte === 5000 && eats.some(e => e.snake === b && !e.own), b.lastAte);
-  // Out of time at its smallest, its own bead still saves it this tick (it grows instead of starving).
-  const g2 = board([[[[5, 5], [4, 5], [3, 5]], 'right'], [[[15, 15], [14, 15], [13, 15]], 'right']]);
-  const s = g2.snakes[0];
-  s.nextStarve = 0; s.lastAte = -T.HUNGER_MS;
-  g2.food = [{ x: 6, y: 5, kind: 'pellet', color: s.color, owner: s.id, expires: 999 }];
-  check('...though it does save a snake out of time, this once', !E.step(g2).includes(s) && s.alive && s.lastAte === -T.HUNGER_MS);
+  const [mine, theirs] = lay(g, bead(a, 6, 5), bead(a, 6, 15));
+  kept(g);
+  const choke = g.events.find(e => e.type === 'choke');
+  check('your own bead: you choke on it, and spit it aside, still food', choke && choke.snake === a && at(choke, 6, 5) && g.food.includes(mine) && !at(mine, 6, 5) && at(mine, choke.tx, choke.ty), JSON.stringify(choke && { x: choke.x, y: choke.y, tx: choke.tx, ty: choke.ty }));
+  check('...no length, no score, no meal', a.body.length === 5 && a.grow === 0 && a.eaten === 0 && a.pellets === 0 && a.lastAte === 1000 && a.nextStarve === 1000 + T.HUNGER_MS && !g.events.some(e => e.type === 'eat' && e.snake === a), JSON.stringify({ length: a.body.length, grow: a.grow, eaten: a.eaten, lastAte: a.lastAte }));
+  check('...and you cough for COUGH_TICKS', a.coughUntil === g.tick - 1 + T.COUGH_TICKS, a.coughUntil);
+  check("...someone else's bead is a meal", b.eaten === 1 && b.lastAte === 5000 && !g.food.includes(theirs) && g.events.some(e => e.type === 'eat' && e.snake === b && e.kind === 'pellet'), b.lastAte);
+}
+
+{ // Where a spat bead goes is a rule, never chance, and anyone can work it out before the move.
+  // P0 heads right along row y (or turns down at (5,5)); holes block cells, and more of its own beads lie at `beads`;
+  // returns the choke and what was predicted.
+  const spit = ({ y = 5, turn = false, holes = [], beads = [], wrap = false, n = 3 }) => {
+    const g = board([[line(5, y, n), 'right'], far]);
+    const [a] = g.snakes;
+    if (wrap) a.wrapUntil = 1e9;
+    for (const [x, hy] of holes) g.holes.add(K(x, hy));
+    const next = turn ? { x: 5, y: y + 1 } : { x: 6, y };
+    if (turn) a.queue = [D.down];
+    const [b] = lay(g, bead(a, next.x, next.y), ...beads.map(([x, by]) => bead(a, x, by)));
+    const guess = E.rollSide(g, a, next.x, next.y, freeHere(g), passHere(g)); // (before the move: the cell it's about to go into)
+    kept(g);
+    const e = g.events.find(e => e.type === 'choke' && e.snake === a);
+    return { e, b, guess, to: e && { x: e.tx, y: e.ty } };
+  };
+  const cases = [
+    ['a turn knocks it to the inside of the turn, beside the neck', { turn: true }, [4, 6]],
+    ['...the outside, if the inside is taken', { turn: true, holes: [[4, 6]] }, [6, 6]],
+    ['...both taken, it rolls on the inside way, over food lying there, to the first free cell', { turn: true, holes: [[6, 6]], beads: [[4, 6]] }, [3, 6]],
+    ['...the outside way, if the inside way is shut', { turn: true, holes: [[3, 6]], beads: [[4, 6], [6, 6]] }, [7, 6]],
+    ['...and only with both ways shut, it stays (never straight ahead, where the head goes next)', { turn: true, holes: [[4, 6], [6, 6]] }, [5, 6]],
+    ['going straight, it rolls to the side with more open log', { holes: [[6, 7]] }, [6, 4]], // (down: one free cell, then a hole; up: open; the middle and the right are both down)
+    ['...a tie goes toward the middle of the board', { y: 18 }, [6, 17]], // (heading right, its right is down: the middle is up)
+    ['...the other side, if that one is taken', { y: 18, holes: [[6, 17]] }, [6, 19]],
+    ['...food on both sides: it rolls on over it, the way it would have gone first', { beads: [[6, 4], [6, 6]] }, [6, 7]], // (a tie: down, toward the middle)
+    ['...as far as 4 cells', { beads: [[6, 4], [6, 6], [6, 7], [6, 8]] }, [6, 9]], // (down, toward the middle: three beads, then a free cell)
+    ['...not past that: then the other way', { beads: [[6, 4], [6, 6], [6, 7], [6, 8], [6, 9]] }, [6, 3]],
+    ['...and only with both ways shut, it stays', { holes: [[6, 4], [6, 6]] }, [6, 5]],
+    ['...past food, too: a hole beyond it on each side', { beads: [[6, 4], [6, 6]], holes: [[6, 3], [6, 7]] }, [6, 5]],
+    ['...the edge is an edge, even when the edges wrap for it', { y: 0, wrap: true, holes: [[6, 1]] }, [6, 0]],
+  ];
+  for (const [name, opts, [x, y]] of cases) {
+    const { e, b, guess, to } = spit(opts);
+    check(`a spat bead: ${name}`, at(to, x, y) && at(b, x, y), JSON.stringify(to));
+    check('...as worked out before the move', at(guess || { x: e?.x, y: e?.y }, x, y), JSON.stringify(guess));
+  }
+  // A tie both ways (no nearer side) goes to the snake's right. On the 24-cell log there's no middle column or
+  // row, so the middle always settles a tie: only an odd-sized board has one.
+  const c = vm.createContext({ window: {}, console, Math });
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'tuning.js'), 'utf8'), c, { filename: 'tuning.js' });
+  c.window.TUNING = Object.freeze({ ...c.window.TUNING, GRID: 25 });
+  for (const f of ['ai.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), c, { filename: f });
+  const E25 = c.window.SnakeEngine, D25 = E25.DIRS, all = () => true;
+  const up = E25.rollSide(null, { body: [{ x: 12, y: 10 }, { x: 12, y: 11 }, { x: 12, y: 12 }], dir: D25.up }, 12, 10, all);
+  const down = E25.rollSide(null, { body: [{ x: 12, y: 14 }, { x: 12, y: 13 }, { x: 12, y: 12 }], dir: D25.down }, 12, 14, all);
+  check("...a tie with no nearer side goes to the snake's right (a 25-cell board)", at(up, 13, 10) && at(down, 11, 14), JSON.stringify([up, down]));
+}
+
+{ // The cough: COUGH_TICKS moves that eat nothing (the choke's and the rest); food the coughing head reaches is nudged aside by the same rule.
+  const g = board([[line(5, 5, 5), 'right'], far]);
+  const [a] = g.snakes;
+  lay(g, bead(a, 6, 5));
+  kept(g);
+  const nudged = [];
+  let ateAt = -1;
+  for (let k = 1; k <= T.COUGH_TICKS && ateAt < 0; k++) {
+    const apple = { x: a.body[0].x + 1, y: 5, kind: 'food', expires: 9999 };
+    g.food.push(apple); g.mine.add(apple);
+    kept(g);
+    const e = g.events.find(e => e.snake === a && (e.type === 'nudge' || e.type === 'eat'));
+    if (e?.type === 'eat') ateAt = k;
+    else if (e) nudged.push({ e, apple });
+  }
+  check('the cough: COUGH_TICKS moves eat nothing, and then it eats', nudged.length === T.COUGH_TICKS - 1 && ateAt === T.COUGH_TICKS && a.eaten === 1, `${nudged.length} nudged, ate on move ${ateAt}`);
+  check('...what the coughing head reached was nudged aside, by the rule, and is still there', nudged.every(({ e, apple }) => e.kind === 'food' && e.y === 5 && at(apple, e.x, 6) && e.tx === e.x && e.ty === 6 && g.food.includes(apple)), JSON.stringify(nudged.map(({ e }) => [e.x, e.y, e.tx, e.ty])));
+  check('...and nothing was eaten meanwhile', !g.events.some(e => e.type === 'choke') && a.grow === 1 && a.body.length === 5, `${a.body.length} long, grow ${a.grow}`);
+}
+
+{ // No dribbling: going round a staircase (up, right, up, right) coughing, the food a turn reaches goes beside the neck,
+  // out in the open, and the next step leaves it there. (On the outside of the turn it lay just where the next step
+  // went, and was nudged along under the head all through the cough, to be eaten as it ended.)
+  const g = board([[[[10, 14], [10, 15], [10, 16], [10, 17], [10, 18]], 'up'], far]);
+  const [a] = g.snakes;
+  a.coughUntil = 99;
+  const [apple] = lay(g, { x: 11, y: 14, kind: 'food', expires: 9999 });
+  const nudges = [];
+  for (const d of [D.right, D.up, D.right, D.up, D.right, D.up]) {
+    a.queue = [d];
+    kept(g);
+    for (const e of g.events) if (e.type === 'nudge' && e.snake === a) nudges.push([e.x, e.y, e.tx, e.ty]);
+  }
+  check('no dribbling: coughing round a staircase, the food a turn reaches goes beside the neck, and stays there', JSON.stringify(nudges) === JSON.stringify([[11, 14, 11, 15]]) && at(apple, 11, 15) && at(a.body[0], 13, 11), JSON.stringify({ nudges, apple, head: a.body[0] }));
+}
+
+{ // A cough never chains: more of your own beads met while coughing are nudged aside, and the cough ends when it would have.
+  const g = board([[line(5, 5, 5), 'right'], far]);
+  const [a] = g.snakes;
+  const [, second] = lay(g, bead(a, 6, 5), bead(a, 8, 5));
+  kept(g); kept(g); kept(g);
+  const e = g.events.find(e => e.snake === a && (e.type === 'nudge' || e.type === 'choke'));
+  check('a cough never chains: your own bead met while coughing is only nudged', e?.type === 'nudge' && e.kind === 'pellet' && at(e, 8, 5) && at(second, e.tx, e.ty) && a.coughUntil === T.COUGH_TICKS, JSON.stringify(e && { type: e.type, coughUntil: a.coughUntil }));
+}
+
+{ // What's spat or nudged aside stays food for anyone else: a rival comes along and eats it.
+  for (const [what, food] of [['a spat bead', a => bead(a, 6, 5)], ['food nudged aside', () => ({ x: 6, y: 5, kind: 'food', expires: 9999 })]]) {
+    const g = board([[line(5, 5, 5), 'right'], [line(9, 6, 3, 1), 'left']]); // (the rival comes along row 6, to (6,6) on its third move)
+    const [a, b] = g.snakes;
+    if (what !== 'a spat bead') a.coughUntil = 99;
+    const [f] = lay(g, food(a));
+    kept(g);
+    const rolled = at(f, 6, 6);
+    kept(g); kept(g);
+    const e = g.events.find(e => e.type === 'eat' && e.snake === b);
+    check(`${what} is food for anyone else`, rolled && e && at(e, 6, 6) && !g.food.includes(f) && b.eaten === 1, JSON.stringify({ rolled, f, eaten: b.eaten }));
+  }
+}
+
+{ // A snake out of time at its smallest, reaching food: it eats instead of starving. Not if it chokes or coughs: it ate nothing.
+  for (const [what, setup] of [['chokes on its own bead', (g, s) => lay(g, bead(s, 6, 5))], ['is coughing', (g, s) => { s.coughUntil = 99; lay(g, { x: 6, y: 5, kind: 'food', expires: 9999 }); }]]) {
+    const g = board([[[[5, 5], [4, 5], [3, 5]], 'right'], [[[15, 15], [14, 15], [13, 15]], 'right']]);
+    const s = g.snakes[0];
+    s.nextStarve = 0; s.lastAte = -T.HUNGER_MS;
+    setup(g, s);
+    const dying = kept(g);
+    check(`a snake out of time that ${what} isn't saved by it`, dying.includes(s) && s.killer === 'hunger' && g.events.some(e => (e.type === 'choke' || e.type === 'nudge') && e.snake === s), s.alive ? 'alive' : s.cause);
+  }
+}
+
+{ // A golden dash over two of its own beads: it chokes on the first, and the second is nudged (a cough never chains), each aside by the rule.
+  const g = board([[line(5, 5, 5), 'right'], far]);
+  const [a] = g.snakes;
+  a.dashes = 1;
+  const [first, second] = lay(g, bead(a, 6, 5), bead(a, 7, 5));
+  E.flash(g, a);
+  kept(g);
+  const ev = g.events.filter(e => e.snake === a && ['choke', 'nudge', 'eat'].includes(e.type)).map(e => [e.type, e.x, e.y, e.tx, e.ty]);
+  check('a dash over your own beads: a choke on the first, the next nudged', JSON.stringify(ev) === JSON.stringify([['choke', 6, 5, 6, 6], ['nudge', 7, 5, 7, 6]]) && at(first, 6, 6) && at(second, 7, 6) && at(a.body[0], 5 + T.DASH_LENGTH, 5), JSON.stringify(ev));
+  // Turning into a dash, at its smallest (the cells it set off from are gone from its body by the end): the first cell's a turn, the inside is back against the way it was going.
+  const g2 = board([[line(5, 5, T.MIN_LENGTH), 'right'], far]);
+  const [s] = g2.snakes;
+  s.dashes = 1; s.queue = [D.down];
+  const [b] = lay(g2, bead(s, 5, 6));
+  E.flash(g2, s);
+  kept(g2);
+  check('...turning into a dash, its own bead goes to the inside of the turn', at(b, 4, 6) && g2.events.some(e => e.type === 'choke' && at(e, 5, 6)) && at(s.body[0], 5, 5 + T.DASH_LENGTH), JSON.stringify(b));
+}
+
+{ // A head that stays put (a crash, a stun) finds nothing new under it, but a jump whose landing was taken comes down on what it hopped: food cooking in the fire there is eaten.
+  const g = board([[line(5, 10, 6), 'right'], far, [[[7, 12], [7, 13], [7, 14], [7, 15]], 'up']]);
+  const [me, , q] = g.snakes; // (q comes up column 7 into the landing, (7,10), as me comes down)
+  g.fires.set(K(6, 10), { from: 0, until: 999, group: 1, strike: false }); g.fireGroups.set(1, 1); g.fireTotals.set(1, 1);
+  lay(g, { x: 6, y: 10, kind: 'food', expires: 9999 });
+  E.leap(g, me);
+  kept(g); kept(g);
+  const ate = g.events.find(e => e.type === 'eat' && e.snake === me);
+  check('a jump whose landing is taken comes down on food in the fire it hopped, and eats it', me.alive && at(me.body[0], 6, 10) && ate && at(ate, 6, 10) && g.events.some(e => e.type === 'crash' && e.snake === me) && q.alive, JSON.stringify({ head: me.body[0], ate: !!ate }));
+}
+
+{ // A coughing head that reaches a beetle sends it scurrying aside, by the same rule (it doesn't get eaten).
+  const g = board([[line(5, 5, 5), 'right'], far]);
+  const [a] = g.snakes;
+  a.coughUntil = 99;
+  const [bug] = lay(g, { x: 6, y: 5, kind: 'beetle', expires: 9999, dir: D.left, movedAt: -10 });
+  kept(g);
+  const e = g.events.find(e => e.type === 'nudge');
+  check('a coughing head sends a beetle scurrying aside', e && e.kind === 'beetle' && at(bug, 6, 6) && bug.px === 6 && bug.py === 5 && bug.dir === D.down && bug.movedAt === g.tick - 1 && bug.scared && g.food.includes(bug) && !g.events.some(e => e.type === 'eat'), JSON.stringify(bug));
+  // Apples on both sides: it scurries on over one, facing the way it ran, and crawls on from there.
+  const h = board([[line(5, 5, 5), 'right'], far]);
+  h.snakes[0].coughUntil = 99;
+  h.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }];
+  h.burrows = [{ x: 10, y: 9, at: 0, used: 0 }]; // (one in reach, so it runs for it rather than digging in)
+  const [b2] = lay(h, { x: 6, y: 5, kind: 'beetle', expires: 9999, dir: D.left, movedAt: -10 }, { x: 6, y: 4, kind: 'food', expires: 9999 }, { x: 6, y: 6, kind: 'food', expires: 9999 });
+  kept(h);
+  const ran = { x: b2.x, y: b2.y, dir: b2.dir };
+  let crawled = true;
+  try { for (let t = 0; t < 8; t++) kept(h); } catch (err) { crawled = String(err); }
+  check('...over food on both sides, it scurries on over it, facing the way it ran, and crawls on from there', at(ran, 6, 7) && ran.dir === D.down && crawled === true, JSON.stringify({ ran, crawled }));
+}
+
+{ // An AI sees how many of its moves will eat nothing (as a person sees the puffs), a rival's cough as it saw it, and the food as it is now.
+  const g = board([[line(5, 5, 5), 'right'], far]);
+  const [a, b] = g.snakes;
+  lay(g, bead(a, 6, 5));
+  kept(g);
+  const snap = g.history[g.history.length - 1].snakes.find(o => o.id === a.id);
+  check('an AI sees how long it coughs, and a rival does too', E.aiView(g, a).me.coughIn === T.COUGH_TICKS - 1 && E.aiView(g, b).me.coughIn === 0 && snap.cough === T.COUGH_TICKS - 1, JSON.stringify([E.aiView(g, a).me.coughIn, snap.cough]));
+  check('...and the food as it is, not as it was', E.aiView(g, b).food === g.food && E.aiView(g, a).food === g.food);
+  const fresh = E.createGame({ withPlayer: false });
+  check('...no one coughs at the start', fresh.snakes.every(o => o.coughUntil < 0 && E.aiView(fresh, o).me.coughIn === 0));
 }
 
 { // A meal keeps you HUNGER_MS in the opening and once the woodpecker's here, but only HUNGER_MID_MS in between, when food is everywhere.
@@ -1128,7 +1377,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('...and a meal just after HUNGER_MID_FROM_MS never shortens what an earlier one left', s.ateTick === g.tick - 1 && before > T.HUNGER_MID_MS && Math.abs(s.nextStarve - first) < 1e-6 && Math.abs(s.mealMs - before) < 1e-6, JSON.stringify({ first, now: s.nextStarve, before, mealMs: s.mealMs }));
 }
 
-{ // Sudden death: the last apples fall one at a time, each wait longer than the last; the first is announced; nothing else grows.
+{ // Sudden death: the last apples fall one at a time, each wait longer than the last; the first is announced; nothing else grows (beetles still come out).
   const g = board([[line(3, 2, 3), 'right'], [line(3, 21, 3), 'right']], { time: T.SUDDEN_DEATH_MS });
   for (const o of g.snakes) o.stunUntil = 1e9;
   g.food = [];
@@ -1137,12 +1386,12 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   for (let t = 0; t < 300 && falls.length < 3; t++) {
     feed(g); E.step(g);
     told += g.events.filter(e => e.type === 'lastApples').length;
-    other += g.food.filter(f => f.kind !== 'food').length;
-    if (g.food.some(f => f.kind === 'food')) { falls.push(g.tick - gone); g.food = []; gone = g.tick; }
+    other += g.food.filter(f => f.kind !== 'food' && f.kind !== 'beetle').length;
+    if (g.food.some(f => f.kind === 'food')) { falls.push(g.tick - gone); g.food = g.food.filter(f => f.kind === 'beetle'); gone = g.tick; }
   }
   check('sudden death: the last apples fall one at a time, each later than the last', falls.length === 3 && falls.every((n, i) => Math.abs(n - T.SD_APPLE_GAP * (i + 1)) <= 2), JSON.stringify(falls));
   check('...the first is announced, once', told === 1, told);
-  check('...and nothing else grows', other === 0, other);
+  check('...and nothing else grows (beetles still come out)', other === 0, other);
 }
 
 { // Golden apples and golden leaves land somewhere quiet; mushrooms never sprout right by a head.
@@ -1170,12 +1419,18 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
 }
 
 { // Lightning never lands near a head, crackles first, and only then burns.
+  // (Ten seeded rounds, the same every run, in a storm that strikes every
+  // tick: 1,200 strikes. At its own pace, every 2-4 s, they brought about 45,
+  // and a clearance kept for all but one cell in 13 was caught by one strike
+  // of them, or none, as a change to the engine re-rolled them. This way any
+  // such rounds catch it, about twenty times.)
   let near = 0, early = 0, strikes = 0;
-  for (let r = 0; r < 30; r++) {
+  for (let r = 0; r < 10; r++) seededWhile(151 + r, () => {
     const g = E.createGame({ withPlayer: false });
     g.time = 50000;
     g.weather = { kind: 'storm', since: 50000, until: 1e9, nextGust: 0, nextStrike: 0 };
     for (let t = 0; t < 120 && g.snakes.some(s => s.alive); t++) {
+      g.weather.nextStrike = 0; // (it strikes this tick)
       E.step(g);
       const heads = g.snakes.filter(s => s.alive).map(s => s.body[0]); // (where they were when the lightning chose its spot)
       for (const e of g.events) {
@@ -1187,8 +1442,8 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
         }
       }
     }
-  }
-  check('storms strike', strikes > 20, `${strikes} strikes`);
+  });
+  check('storms strike', strikes > 1000, `${strikes} strikes`);
   check('lightning keeps its distance from heads', near === 0, `${near} too close`);
   check('lightning crackles before it burns', early === 0, `${early} without warning`);
 }
@@ -1540,16 +1795,506 @@ const powered = (got, mark) => Object.entries(got).filter(([, out]) => Object.ke
 }
 
 { // Star craves golden things: a golden leaf four to the right, an apple three to the left. Star goes for the leaf; anyone who likes apples takes the apple first.
+  // (Seeded: Wildcard draws its weights at random, afresh each time here, and
+  // about one draw in 200 goes for the leaf: so one run in 50 failed.)
   const view = () => aiView({
     me: aiMe([[12, 12], [12, 13], [12, 14], [12, 15]], 'up'),
     others: [aiRival(1, line(22, 22, 5), 'right')],
     food: [{ x: 16, y: 12, kind: 'leaf', expires: 999 }, { x: 9, y: 12, kind: 'food', expires: 999 }],
   });
-  const star = habits(view, ['star']).star;
-  const fond = rest.filter(k => (AI.PERSONAS[k].w.normalFood ?? 1) >= 1), got = habits(view, fond, 4);
+  const fond = rest.filter(k => (AI.PERSONAS[k].w.normalFood ?? 1) >= 1);
+  const [star, got] = seededWhile(171, () => [habits(view, ['star']).star, habits(view, fond, 4)]);
   const leafFirst = fond.filter(k => got[k].left !== 4);
   check('Star chases a golden leaf over an apple', star.right === 10, JSON.stringify(star));
   check('...where everyone else who likes apples takes the apple first', !leafFirst.length, leafFirst.join(', '));
+}
+
+// ---------------------------------------------------------------- round six A: the rivals
+// What an AI sees of a hand-built game, as it stands, coughs included.
+const lookNow = g => {
+  look(g);
+  g.history[0].snakes.forEach(o => { o.cough = Math.max(0, g.snakes[o.id].coughUntil - g.tick); });
+};
+const ownBead = (x, y, owner = 0) => ({ x, y, kind: 'pellet', owner, color: '#000', expires: 999 });
+const dirOf = d => Object.keys(D).find(k => D[k] === d);
+
+{ // Its own bead is no food: it would choke on it and cough. Hungry or fed, it goes round one to the apple beyond.
+  const view = hungerLeft => () => aiView({ me: aiMe(line(8, 12, 6), 'right', { hungerLeft, starveIn: hungerLeft }), others: [aiRival(1, line(20, 2, 5), 'right')], food: [ownBead(9, 12), { x: 11, y: 12, kind: 'food', expires: 999 }] });
+  const choked = [];
+  for (const key of Object.keys(AI.PERSONAS)) {
+    for (const hungerLeft of [3000, 99999]) {
+      if (hungerLeft > 9999 && AI.PERSONAS[key].w.turn > 0) continue; // (fed, a rival that hates turning may take the cough instead)
+      if (picks(view(hungerLeft), key, 10).right) choked.push(`${key}${hungerLeft < 9999 ? ' (hungry)' : ''}`);
+    }
+  }
+  check('nobody steers into its own bead: it goes round to the apple beyond, hungry or fed', !choked.length, choked.join(', '));
+  // ...a rival's bead is a meal: straight on.
+  const theirs = picks(() => aiView({ me: aiMe(line(8, 12, 6), 'right', { hungerLeft: 3000, starveIn: 3000 }), others: [aiRival(1, line(20, 2, 5), 'right')], food: [ownBead(9, 12, 1), { x: 11, y: 12, kind: 'food', expires: 999 }] }));
+  check("...but a rival's bead in the same place it eats", theirs.right === 50, JSON.stringify(theirs));
+}
+
+{ // Coughing, nothing is food: what its head reaches is only nudged aside. A mushroom in its way costs it nothing then,
+  // where it would rather turn (at two apples a turn) than eat one; and it doesn't turn for an apple it would only nudge.
+  const w = AI.PERSONAS.drab.w, fussy = { ...AI.PERSONAS.drab, w: { ...w, turn: 2 * (w.food * w.foodRange + w.eat) } };
+  const view = coughIn => () => aiView({ me: aiMe(line(8, 12, 6), 'right', { coughIn }), others: [aiRival(1, line(20, 2, 5), 'right')], food: [{ x: 9, y: 12, kind: 'mushroom', expires: 999 }] });
+  const ate = coughIn => { let n = 0; for (let i = 0; i < 20; i++) if (AI.decide(view(coughIn)(), fussy, {}) === D.right) n++; return n; };
+  check('coughing, it goes straight over a mushroom it would turn from otherwise (it only nudges it aside)', ate(0) === 0 && ate(T.COUGH_TICKS - 1) === 20, `${ate(0)} and ${ate(T.COUGH_TICKS - 1)} of 20 went on`);
+  // An apple 3 on, a rival's head 5 from it (as I see it, coming up): mine. Coughing, I'd get there with nothing to eat it
+  // with, and the rival could be there before I'm over it: I leave it. (With the rival far off, it waits for me.)
+  const race = (coughIn, rival) => () => aiView({ me: aiMe(line(8, 12, 6), 'right', { coughIn }), others: [aiRival(1, rival, 'up')], food: [{ x: 11, y: 12, kind: 'food', expires: 999 }] });
+  const near = [[11, 19], [11, 20], [11, 21], [11, 22]];
+  const fed = picks(race(0, near)), coughing = picks(race(T.COUGH_TICKS - 1, near));
+  check("...and coughing, it leaves an apple a rival could take before it's over", fed.right === 50 && !coughing.right, JSON.stringify({ fed, coughing }));
+}
+
+{ // A rival coughing can't eat till it's over: food it gets to first meanwhile is anyone's. Heading down the middle,
+  // a golden apple 6 below (a rival's head 3 below it as I see it, coming up), another 9 to the left: the rival's,
+  // and I take the other; but coughing a while yet, it would only nudge it aside (to the left, by the rule), and I go for it.
+  const split = cough => () => aiView({
+    me: aiMe([[12, 4], [12, 3], [12, 2], [12, 1], [11, 1], [10, 1], [9, 1], [8, 1], [7, 1], [6, 1], [5, 1], [4, 1]], 'down'),
+    others: [{ ...aiRival(1, [[12, 15], [12, 16], [12, 17], [12, 18]], 'up'), cough }],
+    food: [{ x: 12, y: 10, kind: 'golden', expires: 999 }, { x: 3, y: 4, kind: 'golden', expires: 999 }],
+  });
+  const none = picks(split(0)), short = picks(split(4)), long = picks(split(14));
+  check('a rival coughing a while yet: an AI takes the food the rival can\'t eat in time', none.left === 50 && long.down === 50, JSON.stringify({ none, long }));
+  check('...but not if the cough is over before it gets there', short.left === 50, JSON.stringify(short));
+}
+
+{ // A rival can't eat its own beads either: Sniper, heading down the middle, takes a bead the rival dropped though the
+  // rival gets there first (and would choke on it), where the same bead dropped by anyone else is the rival's, and it goes left.
+  const split = owner => () => aiView({
+    me: aiMe([[12, 4], [12, 3], [12, 2], [12, 1], [11, 1], [10, 1], [9, 1], [8, 1], [7, 1], [6, 1], [5, 1], [4, 1]], 'down'),
+    others: [aiRival(1, [[12, 15], [12, 16], [12, 17], [12, 18]], 'up')],
+    food: [{ ...ownBead(12, 10, owner), cooked: 1 }, { ...ownBead(8, 4, 9), cooked: 1 }], // (roast beads)
+  });
+  const its = picks(split(1), 'sniper'), anyones = picks(split(9), 'sniper');
+  check("a rival's own bead is anyone's but its: an AI takes one the rival gets to first", its.down === 50 && anyones.left === 50, JSON.stringify({ its, anyones }));
+}
+
+{ // In the game: a coughing rival (a person, going straight up) knocks an apple aside, to the left (a hole on its right);
+  // Drab, coming along that row, takes it where it rolled (in its own time: it lets a rival's food be). (The same apple to a
+  // rival that isn't coughing: the rival eats it.)
+  // (Seeded: Drab wanders at random in its own time, and from about one
+  // start in 250 it wandered off and didn't come for the apple, in these 24
+  // ticks or in 40: so about one run in 250 failed.)
+  for (const cough of [true, false]) seededWhile(181, () => {
+    const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
+    g.snakes = g.snakes.slice(0, 2);
+    const [a, b] = g.snakes;
+    a.body = line(6, 12, 4).map(([x, y]) => ({ x, y })); a.dir = D.right;
+    b.body = [[12, 16], [12, 17], [12, 18], [12, 19]].map(([x, y]) => ({ x, y })); b.dir = D.up; b.isPlayer = true; b.persona = null; b.queue = [];
+    g.holes.add(K(13, 12));
+    if (cough) b.coughUntil = 999;
+    const [apple] = lay(g, { x: 12, y: 12, kind: 'food', expires: 999 }, { x: 3, y: 21, kind: 'food', expires: 999 });
+    lookNow(g);
+    let rolled = null, ate = null;
+    for (let t = 0; t < 24 && !ate; t++) {
+      feed(g); kept(g);
+      rolled ||= g.events.find(e => e.type === 'nudge' && e.snake === b);
+      ate = g.events.find(e => e.type === 'eat' && e.x === apple.x && e.y === apple.y);
+    }
+    if (cough) check('in the game: a coughing rival knocks an apple aside, and Drab takes it where it rolled', rolled && at(rolled, 12, 12) && at(apple, 11, 12) && ate && ate.snake === a, JSON.stringify({ rolled: rolled && [rolled.tx, rolled.ty], by: ate && ate.snake.id }));
+    else check('...where a rival that isn\'t coughing eats it', ate && ate.snake === b, JSON.stringify({ by: ate && ate.snake.id }));
+  });
+}
+
+{ // A beetle runs for its burrow: one bound to get there first isn't worth the chase. Heading right, a beetle 3 on (scared,
+  // making for its burrow two beyond), an apple 4 up: with the burrow there, it takes the apple; with none there (closed
+  // over), the beetle, cornered, digs in where it is and stays put, and it takes that. It sees the burrows as they are
+  // (view.burrows: every burrow on the board, as anyone sees them), not as it last saw a beetle use one.
+  const view = burrows => () => aiView({ me: aiMe(line(10, 12, 5), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], tick: 10, burrows,
+    food: [{ x: 13, y: 12, kind: 'beetle', expires: 999, dir: D.right, movedAt: 0, px: 12, py: 12, scared: true }, { x: 10, y: 8, kind: 'food', expires: 999 }] });
+  const there = picks(view([{ x: 15, y: 12, at: 0 }]), 'drab', 20), gone = picks(view([]), 'drab', 20);
+  check("an AI doesn't chase a beetle bound to dive into its burrow first", there.up === 20, JSON.stringify(there));
+  check('...but with no burrow there (it sees the burrows as they are), the beetle digs in, and it takes that', gone.right === 20, JSON.stringify(gone));
+}
+
+{ // In the game: a beetle crawling along the edge of the log, and running once it's near: Gobbler goes where it's heading and catches it.
+  const g = E.createGame({ withPlayer: false, personas: ['gobbler', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  a.body = line(6, 19, 5).map(([x, y]) => ({ x, y })); a.dir = D.right;
+  b.body = line(20, 2, 4).map(([x, y]) => ({ x, y })); b.dir = D.right; b.isPlayer = true; b.persona = null; b.queue = [];
+  lay(g, { x: 9, y: 22, kind: 'beetle', expires: 999, dir: D.right, movedAt: -10, px: 8, py: 22 });
+  lookNow(g);
+  let caught = -1;
+  for (let t = 0; t < 30 && caught < 0; t++) {
+    feed(g); kept(g);
+    if (g.events.some(e => e.type === 'eat' && e.kind === 'beetle' && e.snake === a)) caught = t + 1;
+  }
+  check('in the game: it catches a beetle running from it along the edge', caught > 0 && caught <= 12, `caught on move ${caught}`);
+}
+
+{ // A flag the woodpecker pecks out is a lost colony: Colonist drops it at once, land and all, and sets off to plant another.
+  // A fire on a flag, or the woodpecker's mark (not a hole yet), loses nothing.
+  const colonies = () => [{ x: 6, y: 6, radius: 4, n: 1 }, { x: 14, y: 8, radius: 4, n: 2 }, { x: 18, y: 18, radius: 4, n: 3 }];
+  const view = (holes, fire = [], pecks = []) => aiView({ me: aiMe(line(10, 12, 6), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], timeMs: 30000,
+    holes: new Set([...holes, ...fire, ...pecks]), fire: new Set(fire), pecks: new Set(pecks) });
+  const memory = { colonies: colonies(), planted: 2, nextSiteAt: 99999 };
+  AI.decide(view([K(14, 8), K(13, 8)]), AI.PERSONAS.colonist, memory);
+  check('Colonist loses a colony whose flag is pecked out, at once', JSON.stringify(memory.colonies.map(c => c.n)) === '[1,3]', JSON.stringify(memory.colonies));
+  check('...and sets off to plant another', !!memory.site && !(memory.site.x === 14 && memory.site.y === 8), JSON.stringify(memory.site));
+  const kept6 = { colonies: colonies(), planted: 2, nextSiteAt: 99999 };
+  AI.decide(view([], [K(6, 6)], [K(14, 8)]), AI.PERSONAS.colonist, kept6);
+  check('...but a fire on a flag, or the woodpecker\'s mark, loses nothing', kept6.colonies.length === 3 && !kept6.site, JSON.stringify(kept6.colonies.map(c => c.n)));
+  // On its way to plant one, the spot is pecked out: it picks another.
+  const going = { colonies: colonies(), planted: 2, nextSiteAt: 99999, site: { x: 4, y: 18 } };
+  AI.decide(view([K(4, 18)]), AI.PERSONAS.colonist, going);
+  check('...and a spot it was going to plant on, pecked out, it trades for another', !!going.site && !(going.site.x === 4 && going.site.y === 18), JSON.stringify(going.site));
+}
+
+{ // Sovereign's capital pecked out: the realm moves at once (not when it next drifts) to the nearest good land, banner and all.
+  const patch = []; for (let y = 9; y <= 11; y++) for (let x = 9; x <= 11; x++) patch.push(K(x, y));
+  const memory = { home: { x: 10, y: 10, radius: 4 }, driftAt: 99999 };
+  AI.decide(aiView({ me: aiMe(line(16, 16, 5), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], holes: new Set(patch) }), AI.PERSONAS.sovereign, memory);
+  const h = memory.home;
+  check("Sovereign's capital pecked out: the realm moves at once to the nearest good land", !patch.includes(K(h.x, h.y)) && Math.abs(h.x - 10) + Math.abs(h.y - 10) === 2 && h.radius === 4, JSON.stringify(h));
+  const still = { home: { x: 10, y: 10, radius: 4 }, driftAt: 99999 };
+  AI.decide(aiView({ me: aiMe(line(16, 16, 5), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], holes: new Set([K(12, 10)]) }), AI.PERSONAS.sovereign, still);
+  check('...but a hole elsewhere in the realm moves nothing till it next drifts', still.home.x === 10 && still.home.y === 10, JSON.stringify(still.home));
+}
+
+// ---------------------------------------------------------------- round six A: the woodpecker plays fair
+// A board in sudden death whose only land is `land` (cells: [x, y]) and the
+// snakes on it, each stunned for good (they stay put) and fed; more: grow.
+const CELLS = T.GRID * T.GRID;
+function island(bodies, land, { grow = 0 } = {}) {
+  const g = board(bodies, { time: T.SUDDEN_DEATH_MS });
+  const keep = new Set([...land.map(([x, y]) => K(x, y)), ...g.snakes.flatMap(s => s.body.map(c => K(c.x, c.y)))]);
+  for (let k = 0; k < CELLS; k++) if (!keep.has(k)) g.holes.add(k);
+  for (const s of g.snakes) { s.stunUntil = 1e9; s.grow = grow; }
+  return g;
+}
+// The woodpecker's marks, one a tick: it aims, and instead of striking, aims
+// afresh the next tick (pecks: as hungry as after that many strikes).
+function marks(g, n, pecks = 0) {
+  const out = [];
+  g.woodpecker = { x: 12, y: 0, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: g.tick, pecks };
+  for (let t = 0; t < n * 3 && out.length < n; t++) {
+    feed(g); quiet(g);
+    if (g.events.some(e => e.type === 'aim')) out.push(new Set(g.woodpecker.target));
+    g.woodpecker.target = []; g.woodpecker.restUntil = g.tick;
+  }
+  return out;
+}
+const rect = (x0, y0, x1, y1) => { const out = []; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) out.push([x, y]); return out; };
+const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x, s.body[0].y)));
+
+{ // It never shuts you in while it has another patch to pick. A snake at the mouth of a winding corridor, 36 cells long and a
+  // dead end, with growth to come that needs 35 of them (so any patch in it shuts the snake in), and a field far off.
+  const corridor = [...rect(4, 12, 23, 12), ...rect(23, 13, 23, 20), ...rect(15, 20, 22, 20)], field = rect(0, 0, 11, 8);
+  const snake = [[[3, 12], [2, 12], [1, 12], [0, 12]], 'right'];
+  const inCorridor = m => corridor.some(([x, y]) => m.has(K(x, y)));
+  const fair = seededWhile(601, () => marks(island([snake], [...corridor, ...field], { grow: 31 }), 30));
+  check('the woodpecker never shuts a snake in while it has another patch: every mark is in the field', fair.length === 30 && !fair.some(inCorridor), `${fair.filter(inCorridor).length} of ${fair.length} in the corridor`);
+  const only = seededWhile(602, () => marks(island([snake], corridor, { grow: 31 }), 10));
+  check('...and with no other, it still takes one (the old tiers)', only.length === 10 && only.every(inCorridor), `${only.length} marks`);
+}
+
+{ // No crumbs: a patch that would cut off an island of one or two cells takes it too, in the mark from the aim. A field, with a
+  // one-cell bay and a two-cell bay on its left; a snake's head just within the clearance of each (they're never part of a
+  // patch's own growth), on land of its own.
+  const field = rect(10, 6, 21, 17), bay1 = [[9, 11]], bay2 = [[9, 14], [8, 14]];
+  const a = [[[5, 11], [4, 11], [3, 11], [2, 11]], 'right'], c = [[[5, 14], [4, 14], [3, 14], [2, 14]], 'right'];
+  const g = island([a, c], [...field, ...bay1, ...bay2]);
+  const got = seededWhile(611, () => marks(g, 200));
+  const has = (m, cells) => cells.every(([x, y]) => m.has(K(x, y)));
+  const cut1 = got.filter(m => m.has(K(10, 11))), cut2 = got.filter(m => m.has(K(10, 14)));
+  check('a patch that cuts off a one-cell island takes it too, in the mark from the aim', cut1.length > 0 && cut1.every(m => has(m, bay1)) && !got.some(m => !m.has(K(10, 11)) && has(m, bay1)), `${cut1.length} of ${got.length} marks cut it off`);
+  check('...and a two-cell one', cut2.length > 0 && cut2.every(m => has(m, bay2)), `${cut2.length} of ${got.length} marks cut it off`);
+  // (No mark leaves an island of one or two cells beside it: the land less holes and mark, in islands.)
+  const crumbsLeft = m => {
+    let n = 0;
+    for (const k0 of m) for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+      const x0 = k0 % T.GRID + dx, y0 = Math.floor(k0 / T.GRID) + dy, s0 = K(x0, y0);
+      if (x0 < 0 || y0 < 0 || x0 >= T.GRID || y0 >= T.GRID || m.has(s0) || g.holes.has(s0)) continue;
+      const isle = [s0], seen = new Set(isle);
+      for (let i = 0; i < isle.length && isle.length <= 2; i++) for (const [ex, ey] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+        const x = isle[i] % T.GRID + ex, y = Math.floor(isle[i] / T.GRID) + ey, k = K(x, y);
+        if (x < 0 || y < 0 || x >= T.GRID || y >= T.GRID || m.has(k) || g.holes.has(k) || seen.has(k)) continue;
+        seen.add(k); isle.push(k);
+      }
+      if (isle.length <= 2) n++;
+    }
+    return n;
+  };
+  check('...so no mark leaves a crumb beside it', got.every(m => !crumbsLeft(m)), `${got.filter(m => crumbsLeft(m)).length} of ${got.length}`);
+  // A snake lying through the bay's mouth with its tail in the bay: a patch there would cut it off with the snake on it, so
+  // none is picked. Its tail one cell short of the bay, the mouth is taken now and then, bay and all.
+  const through = n => [[[16, 11], ...Array.from({ length: n }, (_, i) => [15 - i, 11])], 'right'];
+  const on = seededWhile(612, () => marks(island([a, through(7), c], [...field, ...bay1, ...bay2]), 200));
+  const off = seededWhile(612, () => marks(island([a, through(6), c], [...field, ...bay1, ...bay2]), 200));
+  check('...but a patch that would cut off a snake on one isn\'t picked', on.length === 200 && !on.some(m => m.has(K(10, 11))) && off.some(m => m.has(K(10, 11)) && m.has(K(9, 11))),
+    `${on.filter(m => m.has(K(10, 11))).length} with the snake on it, ${off.filter(m => m.has(K(10, 11))).length} without`);
+}
+
+{ // Rounder hollows. A 3x4 field with a one-cell bay off its side: the patch grows 12 of the 13 cells, and the one it left
+  // out, with three or more sides closed (the patch, old holes or the edge), is filled in: all 13, every time.
+  const g = island([[[[20, 20], [21, 20], [22, 20], [23, 20]], 'left']], [...rect(9, 1, 11, 4), [12, 2]]);
+  const got = seededWhile(621, () => marks(g, 20));
+  check('a patch fills in a notch it left (12 grown, and the 13th filled)', got.length === 20 && got.every(m => m.size === 13 && rect(9, 1, 11, 4).every(([x, y]) => m.has(K(x, y))) && m.has(K(12, 2))), JSON.stringify(got.map(m => m.size)));
+  // A 3x3 field with a cell sticking out at the top edge, between two heads (two snakes lying down its sides, stunned): the
+  // spur (only one side in the patch: the edge and the heads are open) is dropped; the heads, with three sides closed,
+  // are never filled in. (Every first try is too near them; the heads go in only in the last, anywhere-left one.)
+  const s1 = [[[9, 0], [9, 1], [9, 2], [9, 3]], 'up'], s2 = [[[11, 0], [11, 1], [11, 2], [11, 3]], 'up'];
+  const h = island([s1, s2], [...rect(9, 1, 11, 3), [10, 0]], { grow: 100 });
+  const spurs = seededWhile(622, () => marks(h, 20)).filter(m => !m.has(K(9, 0)) && !m.has(K(11, 0)));
+  check('...drops a one-cell spur', spurs.length >= 10 && spurs.every(m => m.size === 9 && rect(9, 1, 11, 3).every(([x, y]) => m.has(K(x, y))) && !m.has(K(10, 0))), `${spurs.length} marks: ${JSON.stringify(spurs.map(m => m.size))}`);
+}
+
+{ // Knocked aside: the nearest free cell outside the patch as the crow flies, then nearest the middle of the log, then the
+  // first by row; null with none. A rule, never chance.
+  const g = board([[line(5, 3, 4), 'right'], [line(20, 22, 4), 'right']]);
+  const at = (c, x, y) => !!c && c.x === x && c.y === y;
+  check('knocked: to the nearest free cell; of those, nearest the middle; then the first by row', at(E.knockTo(g, 10, 10, [K(10, 10)]), 11, 10), JSON.stringify(E.knockTo(g, 10, 10, [K(10, 10)])));
+  const diamond = (x0, y0, r) => { const out = []; for (let y = y0 - r; y <= y0 + r; y++) for (let x = x0 - r; x <= x0 + r; x++) if (x >= 0 && y >= 0 && x < T.GRID && y < T.GRID && Math.abs(x - x0) + Math.abs(y - y0) <= r) out.push(K(x, y)); return out; };
+  check('...as the crow flies: two over and one down before three over, though three over is nearer the middle', at(E.knockTo(g, 2, 11, diamond(2, 11, 2)), 4, 12), JSON.stringify(E.knockTo(g, 2, 11, diamond(2, 11, 2))));
+  g.holes.add(K(11, 10)); g.food.push({ x: 10, y: 11, kind: 'food' });
+  check('...never into a hole, onto food or a body, or into fire', at(E.knockTo(g, 10, 10, [K(10, 10)]), 10, 9), JSON.stringify(E.knockTo(g, 10, 10, [K(10, 10)])));
+  g.fires.set(K(10, 9), { from: g.tick, until: g.tick + 50, group: 1, strike: false });
+  g.snakes[0].body = [{ x: 9, y: 10 }, { x: 8, y: 10 }, { x: 7, y: 10 }];
+  check('...(so with all four sides taken, a diagonal)', at(E.knockTo(g, 10, 10, [K(10, 10)]), 11, 11), JSON.stringify(E.knockTo(g, 10, 10, [K(10, 10)])));
+  // Never onto a burrow: nothing grows on one, and food there would stop it up. (The strike's own list, and the rings
+  // and the rivals that read it, go by the same rule.)
+  g.burrows.push({ x: 11, y: 11, at: 0, used: 0 });
+  g.food.push({ x: 10, y: 10, kind: 'food' });
+  const offHole = E.knocks(g, [K(10, 10)]);
+  check('...nor onto a burrow (the next diagonal, by the same ties), in the strike\'s own list too', at(E.knockTo(g, 10, 10, [K(10, 10)]), 11, 9) && offHole.length === 1 && at(offHole[0].to, 11, 9),
+    JSON.stringify({ to: E.knockTo(g, 10, 10, [K(10, 10)]), all: offHole.map(k => k.to) }));
+  g.food.pop(); g.burrows.length = 0;
+  const all = []; for (let k = 0; k < CELLS; k++) all.push(k);
+  check('...and nowhere: null', E.knockTo(g, 10, 10, all) === null);
+  // At the strike: each piece in the patch knocked, by the same rule, one after another (none lands where another did); a beetle
+  // scurries there (and isn't digging any more); with nowhere to go, the bird eats it. Each says so.
+  const s = board([[line(3, 3, 4), 'right'], [line(20, 22, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
+  feed(s);
+  const apple = { x: 12, y: 12, kind: 'food', expires: 9999 }, bead = { x: 12, y: 13, kind: 'pellet', color: '#abc', owner: 1, expires: 9999 };
+  const bug = { x: 13, y: 12, kind: 'beetle', gold: 1, expires: 9999, dir: D.up, movedAt: 0, digUntil: 50 };
+  s.food = [apple, bead, bug]; s.given = new Set(s.food.map(f => K(f.x, f.y)));
+  const patch = [K(12, 12), K(12, 13), K(13, 12), K(13, 13)];
+  const ahead = E.knocks(s, patch).map(({ food, to }) => [food.kind, to.x, to.y]);
+  s.woodpecker = { x: 12, y: 12, at: s.time, target: patch, strikeAt: s.tick, last: [], struckAt: -1, restUntil: 0 };
+  E.step(s);
+  const ks = s.events.filter(e => e.type === 'knock');
+  const where = ks.map(e => [e.kind, e.tx, e.ty]);
+  check('at the strike, food in the patch is knocked aside by the rule, as anyone could work it out through the aim', JSON.stringify(where) === JSON.stringify(ahead) && new Set(where.map(([, x, y]) => K(x, y))).size === 3 && where.every(([, x, y]) => !patch.includes(K(x, y))),
+    JSON.stringify({ where, ahead }));
+  check('...each says what, from where to where (a golden beetle, a bead in its colour)', ks.length === 3 && ks.every(e => typeof e.x === 'number' && typeof e.tx === 'number') && ks.find(e => e.kind === 'beetle').gold === 1 && ks.find(e => e.kind === 'pellet').color === '#abc', JSON.stringify(ks));
+  check('...a knocked beetle scurries there (and digs no more)', at(bug, ks[2].tx, ks[2].ty) && bug.px === 13 && bug.py === 12 && bug.scared && bug.movedAt === s.tick - 1 && !('digUntil' in bug) && s.food.includes(apple) && at(apple, ks[0].tx, ks[0].ty), JSON.stringify(bug));
+  const t = board([[line(3, 3, 4), 'right'], [line(20, 22, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
+  feed(t);
+  const lone = { x: 12, y: 12, kind: 'food', expires: 9999 };
+  t.food = [lone];
+  for (let k = 0; k < CELLS; k++) if (k !== K(12, 12) && !t.snakes.some(o => o.body.some(c => K(c.x, c.y) === k))) t.holes.add(k);
+  t.woodpecker = { x: 12, y: 12, at: t.time, target: [K(12, 12)], strikeAt: t.tick, last: [], struckAt: -1, restUntil: 1e9 };
+  for (const o of t.snakes) o.stunUntil = 1e9;
+  E.step(t);
+  const eaten = t.events.find(e => e.type === 'knock');
+  check('...and with nowhere to knock it, the bird eats it', eaten && eaten.tx === null && eaten.ty === null && !t.food.includes(lone), JSON.stringify(eaten));
+}
+
+{ // The ring is a promise. PECK_PROMISE_TICKS moves before the strike the woodpecker keeps where each piece in its mark
+  // will land (w.landings: the rings shown then), and the strike lands it there while that cell is still free. Through
+  // the aim the rings are worked out on the board as it will be at the strike: a body's cell its tail will have left by
+  // then is free.
+  // An apple in a 2x2 mark, a snake lying round it whose head goes into the mark on the strike's tick (stunned on the tick
+  // before). Its body is in the way but for its tail end, which will have moved on by the strike: the ring is there,
+  // beside the apple. The strike pecks its head, and the apple lands on the ring: not on the body of the snake the strike
+  // kills (its beads lie there).
+  const patch = [K(12, 12), K(13, 12), K(12, 13), K(13, 13)];
+  const strike = (bodies, stun) => {
+    const g = board(bodies, { time: T.SUDDEN_DEATH_MS });
+    feed(g);
+    g.food = [{ x: 12, y: 12, kind: 'food', expires: 9999 }]; g.given = new Set([K(12, 12)]);
+    g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }]; // (no beetles come out meanwhile)
+    g.woodpecker = { x: 12, y: 12, at: g.time, target: patch, strikeAt: g.tick + 1, last: [], struckAt: -1, restUntil: 1e9 };
+    g.snakes[stun].stunUntil = g.tick + 1;
+    E.step(g); feed(g);
+    const w = g.woodpecker, promised = JSON.stringify(w.landings), ring = E.knocks(g, w.target, w.landings).map(k => k.to);
+    E.step(g);
+    return { g, promised, ring, knock: g.events.find(e => e.type === 'knock'), kept: 'landings' in w };
+  };
+  const at = (c, x, y) => !!c && c.x === x && c.y === y;
+  const a = strike([[[[13, 11], [12, 11], [11, 11], [11, 12], [11, 13]], 'down'], [line(5, 20, 4), 'right']], 0);
+  const pecked = a.g.snakes[0];
+  check('the ring is a promise: kept before the strike, where the rings show it (on a tail end that will have moved on by then)', a.promised === JSON.stringify([[K(12, 12), K(11, 13)]]) && at(a.ring[0], 11, 13), JSON.stringify({ promised: a.promised, ring: a.ring }));
+  check('...food in the mark beside a snake the strike kills lands on its ring, not on that body',
+    !pecked.alive && pecked.fatal === 'pecked' && a.knock && a.knock.tx === 11 && a.knock.ty === 13 && at(a.g.food.find(f => f.kind === 'food'), 11, 13) && !a.kept,
+    JSON.stringify({ knock: a.knock && [a.knock.tx, a.knock.ty], alive: pecked.alive, fatal: pecked.fatal }));
+  check('...and its beads lie on its body, where they would', a.g.food.some(f => f.kind === 'pellet' && f.x === 12 && f.y === 11), JSON.stringify(a.g.food.map(f => [f.kind, f.x, f.y])));
+  // Through a whole aim: a snake crawling away from the mark, its tail on the cell beside the apple (the other beside it a
+  // hole). From the first tick the ring is on that cell, where the tail will have left by the strike, and it never moves
+  // as the body passes (worked out on the board as it stood, it showed two cells off, then hopped as the tail left); the
+  // promise is made PECK_PROMISE_TICKS moves before the strike, on that cell, and the apple lands there.
+  {
+    const g = board([[[[8, 12], [9, 12], [10, 12], [11, 12]], 'left'], [line(5, 20, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
+    feed(g);
+    g.food = [{ x: 12, y: 12, kind: 'food', expires: 9999 }]; g.given = new Set([K(12, 12)]);
+    g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }];
+    g.holes.add(K(12, 11));
+    g.woodpecker = { x: 12, y: 12, at: g.time, target: patch, strikeAt: g.tick + 10, last: [], struckAt: -1, restUntil: 1e9 };
+    const rings = [], promisedAt = [], standing = E.knocks(g, patch, null, 0)[0].to; // (standing: as the board stands, the tail there)
+    for (let t = 0; t <= 10; t++) {
+      if (g.woodpecker.target.length) {
+        const [k] = E.knocks(g, g.woodpecker.target, g.woodpecker.landings);
+        rings.push(k.to && [k.to.x, k.to.y]);
+        if (g.woodpecker.landings && !promisedAt.length) promisedAt.push(g.woodpecker.strikeAt - g.tick + 1, JSON.stringify(g.woodpecker.landings));
+      }
+      feed(g); E.step(g);
+    }
+    const knock = g.events.find(e => e.type === 'knock');
+    check('...through the aim the ring stays on a cell a tail will have left by the strike, as the body passes (as the board stood, it was off at ' + (standing && [standing.x, standing.y]) + ')',
+      rings.length === 11 && rings.every(r => r && r[0] === 11 && r[1] === 12) && standing && !at(standing, 11, 12), JSON.stringify(rings));
+    check(`...promised ${T.PECK_PROMISE_TICKS} moves before the strike, and kept`, promisedAt[0] === T.PECK_PROMISE_TICKS && promisedAt[1] === JSON.stringify([[K(12, 12), K(11, 12)]]) && knock && knock.tx === 11 && knock.ty === 12, JSON.stringify({ promisedAt, knock: knock && [knock.tx, knock.ty] }));
+  }
+  // A head that comes onto the ring on the strike's tick: the piece lands as near its ring as it can, by the rule, as
+  // the board stands then (the free cell beside the ring nearest the middle, and nobody's hurt), never far from where
+  // the ring showed it.
+  const b = strike([[[[12, 10], [12, 9], [12, 8], [12, 7]], 'down'], [line(5, 20, 4), 'right']], 0);
+  check('...a ring a head moves onto at the strike: that piece lands as near its ring as it can, by the rule', b.promised === JSON.stringify([[K(12, 12), K(12, 11)]]) && b.knock && b.knock.tx === 11 && b.knock.ty === 11 && b.g.snakes[0].alive && at(b.g.snakes[0].body[0], 12, 11),
+    JSON.stringify({ promised: b.promised, knock: b.knock && [b.knock.tx, b.knock.ty], head: b.g.snakes[0].body[0] }));
+  // Two pieces: the first's ring taken by a head, it lands as near that ring as it can, but never onto the second's
+  // ring (still kept).
+  const g = board([[[[12, 10], [12, 9], [12, 8], [12, 7]], 'down'], [line(5, 20, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
+  feed(g);
+  g.food = [{ x: 12, y: 12, kind: 'food', expires: 9999 }, { x: 12, y: 13, kind: 'food', expires: 9999 }]; g.given = new Set([K(12, 12), K(12, 13)]);
+  g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }];
+  g.snakes[0].stunUntil = g.tick + 1;
+  const twoRings = E.knocks(g, patch, [[K(12, 12), K(12, 11)], [K(12, 13), K(11, 12)]]).map(k => k.to);
+  g.snakes[0].body.unshift({ x: 12, y: 11 }); g.snakes[0].body.pop(); // (its head on the first ring)
+  const after = E.knocks(g, patch, [[K(12, 12), K(12, 11)], [K(12, 13), K(11, 12)]]).map(k => k.to);
+  check('...and never onto a ring still kept for another piece', at(twoRings[0], 12, 11) && at(twoRings[1], 11, 12) && at(after[1], 11, 12) && after[0] && !at(after[0], 11, 12) && !at(after[0], 12, 11) && at(after[0], 11, 11),
+    JSON.stringify({ twoRings, after }));
+}
+
+// ---------------------------------------------------------------- round six A: beetles
+{ // A cornered beetle digs in: a head within BEETLE_DIG_FEAR and no burrow within reach. It stays put while it digs, and
+  // can be caught. (Another beetle underground for good on each board, so no more come out meanwhile.)
+  const bug = () => ({ x: 10, y: 10, kind: 'beetle', expires: 9999, dir: D.up, movedAt: -10 });
+  const away = () => [{ until: 1e9, expires: 1e9, from: -1, gold: false }];
+  const g = board([[line(5, 10, 4), 'right'], [line(20, 22, 4), 'right']], { time: 30000 });
+  const [b] = lay(g, bug());
+  g.unders = away();
+  feed(g); kept(g);
+  const dig = g.events.find(e => e.type === 'dig');
+  check('a cornered beetle digs in', dig && dig.x === 10 && dig.y === 10 && dig.until === g.tick - 1 + T.BEETLE_DIG && b.digUntil === dig.until, JSON.stringify(dig));
+  let caught = null;
+  for (let t = 0; t < T.BEETLE_DIG && !caught; t++) { feed(g); kept(g); if (!(b.x === 10 && b.y === 10)) break; caught = g.events.find(e => e.type === 'eat' && e.kind === 'beetle'); }
+  check('...stays put while it digs, and can still be caught', caught && caught.x === 10 && caught.y === 10, JSON.stringify(b));
+  // A race you can win: coming straight at it from outside BEETLE_DIG_FEAR, the dig starts as your head comes within it,
+  // and you get there on the dig's last tick. (Dug in for 5 ticks from a head within 7, nobody coming at one ever
+  // caught it: 0 of 65 digs started 7 cells off, in AI rounds, though the lesson said "Grab it before it's gone!")
+  const race = board([[line(5, 12, 4), 'right'], [line(20, 22, 4), 'right']], { time: 30000 });
+  race.burrows = [];
+  race.unders = away();
+  const [rb] = lay(race, { x: 5 + T.BEETLE_DIG_FEAR + 1, y: 12, kind: 'beetle', expires: 9999, dir: D.up, movedAt: race.tick }); // (it's just crawled: it rests a moment)
+  let raceDig = null, raceAte = null;
+  for (let t = 0; t < 20 && !raceAte && race.food.includes(rb); t++) {
+    feed(race); kept(race);
+    raceDig ||= race.events.find(e => e.type === 'dig') && { at: race.tick - 1, gap: Math.abs(race.snakes[0].body[0].x - rb.x) + Math.abs(race.snakes[0].body[0].y - rb.y), until: rb.digUntil };
+    raceAte = race.events.find(e => e.type === 'eat' && e.kind === 'beetle');
+  }
+  check(`...a race you can win: coming straight at it from outside BEETLE_DIG_FEAR, you get there ${T.BEETLE_DIG === T.BEETLE_DIG_FEAR ? 'on its last tick' : 'in time'}`, raceDig && raceDig.gap === T.BEETLE_DIG_FEAR && raceAte && raceAte.x === 5 + T.BEETLE_DIG_FEAR + 1 && race.tick - 1 === raceDig.at + T.BEETLE_DIG_FEAR && race.tick - 1 <= raceDig.until,
+    JSON.stringify({ dig: raceDig, ate: raceAte && [raceAte.x, raceAte.y, race.tick - 1], DIG: T.BEETLE_DIG, FEAR: T.BEETLE_DIG_FEAR }));
+  // Nobody comes for it: when it's done it's underground, a burrow opens where it dug (BURROW_FROM_DIG), and it comes out
+  // of a burrow later (another, if there is one).
+  const h = board([[line(5, 10, 4), 'right'], [line(20, 22, 4), 'right']], { time: 30000 });
+  h.burrows = [{ x: 20, y: 4, at: 0 }];
+  h.unders = away();
+  lay(h, bug());
+  for (const o of h.snakes) o.stunUntil = 1e9;
+  const seen = [];
+  for (let t = 0; t < T.BEETLE_DIG + T.BEETLE_UNDER_MAX + 4 && !seen.some(e => e.type === 'emerge'); t++) { feed(h); kept(h); for (const e of h.events) if (['dig', 'dive', 'emerge'].includes(e.type)) seen.push({ ...e, at: h.tick - 1, unders: h.unders.length }); } // (up to its coming out: the step after takes it off the board, which lets another come out, and open a burrow, now and then)
+  const [d0, d1, d2] = seen;
+  const dugBurrow = h.burrows.some(b => b.x === 10 && b.y === 10 && b.dug === 1);
+  check(`...done digging, it goes underground (${T.BURROW_FROM_DIG ? 'leaving a burrow where it dug' : 'and makes no burrow'})`, d0?.type === 'dig' && d1?.type === 'dive' && d1.dug === 1 && d1.at === d0.until && d1.unders === 2
+    && h.burrows.length === (T.BURROW_FROM_DIG ? 2 : 1) && dugBurrow === !!T.BURROW_FROM_DIG, JSON.stringify({ seen, burrows: h.burrows }));
+  check('...and comes out of a burrow a while later', d2?.type === 'emerge' && d2.x === 20 && d2.y === 4 && d2.at - d1.at >= T.BEETLE_UNDER_MIN && d2.unders === 1, JSON.stringify(seen));
+  // Not cornered: with a burrow in reach it runs for it and dives in, as before.
+  const r = board([[line(7, 10, 4), 'right'], [line(20, 22, 4), 'right']], { time: 30000 });
+  r.burrows = [{ x: 12, y: 10, at: 0 }];
+  r.unders = away();
+  lay(r, { ...bug(), dir: D.right });
+  r.snakes[1].stunUntil = 1e9;
+  const ran = [];
+  for (let t = 0; t < 4; t++) { feed(r); kept(r); for (const e of r.events) if (['dig', 'dive'].includes(e.type)) ran.push(e); }
+  check('...but one with a burrow in reach runs for it instead, and dives in', ran.length === 1 && ran[0].type === 'dive' && !ran[0].dug && ran[0].x === 12 && ran[0].y === 10, JSON.stringify(ran));
+}
+
+{ // Up to BEETLE_MAX beetles out at once (above ground or under), and they still come out once the woodpecker's here.
+  const most = seededWhile(631, () => {
+    const g = board([[line(3, 2, 4), 'right'], [line(3, 21, 4), 'right']], { time: 30000 });
+    for (const o of g.snakes) o.stunUntil = 1e9;
+    let most = 0, two = 0;
+    for (let t = 0; t < 3000; t++) {
+      feed(g); E.step(g);
+      const n = g.food.filter(f => f.kind === 'beetle').length;
+      most = Math.max(most, n + g.unders.length);
+      if (n === 2) two++;
+    }
+    return { most, two };
+  });
+  check(`up to ${T.BEETLE_MAX} beetles out at once, never more`, most.most === T.BEETLE_MAX && most.two > 50, JSON.stringify(most));
+  const sd = seededWhile(632, () => {
+    const g = board([[line(3, 2, 4), 'right'], [line(3, 21, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
+    for (const o of g.snakes) o.stunUntil = 1e9;
+    g.burrows = [{ x: 12, y: 12, at: 0 }];
+    g.unders = [{ until: 1, expires: 9999, from: -1, gold: false }];
+    const seen = { emerge: 0, spawn: 0 };
+    for (let t = 0; t < 400; t++) { feed(g); E.step(g); for (const e of g.events) { if (e.type === 'emerge') seen.emerge++; if (e.type === 'spawn' && e.kind === 'beetle') seen.spawn++; } }
+    return seen;
+  });
+  check('...and they still come out once the woodpecker\'s here', sd.emerge >= 1 && sd.spawn >= 1, JSON.stringify(sd));
+}
+
+{ // Round six A's experiment, the owner's idea: a dig that leaves a burrow (kept: BURROW_FROM_DIG), and burrows that close
+  // over unused (off: BURROW_HEAL_MS 0). Played in a copy of the game with both on.
+  let text = fs.readFileSync(path.join(ROOT, 'tuning.js'), 'utf8');
+  text = text.replace(/BURROW_FROM_DIG: *\w+,/, 'BURROW_FROM_DIG: true,').replace(/BURROW_HEAL_MS: *\d+,/, 'BURROW_HEAL_MS: 30000,');
+  const on = vm.createContext({ window: {}, console, Math });
+  vm.runInContext(text, on, { filename: 'tuning.js' });
+  for (const f of ['ai.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), on, { filename: f });
+  const E2 = on.window.SnakeEngine, T2 = on.window.TUNING;
+  const staged = () => {
+    const g = E2.createGame({ humans: [{ name: 'P0' }, { name: 'P1' }], personas: [] });
+    g.snakes[0].body = cellsOf(line(5, 10, 4)); g.snakes[1].body = cellsOf(line(20, 22, 4));
+    g.time = 30000;
+    for (const o of g.snakes) { o.stunUntil = 1e9; o.lastAte = g.time; o.nextStarve = g.time + T2.HUNGER_MS; }
+    g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }]; // (no more come out meanwhile)
+    return g;
+  };
+  const g = staged();
+  g.burrows = [{ x: 20, y: 2, at: 0, used: 25000 }, { x: 22, y: 4, at: 0, used: 20000 }, { x: 18, y: 2, at: 0, used: 29000 }];
+  g.food = [{ x: 10, y: 10, kind: 'beetle', expires: 9999, dir: D.up, movedAt: -10 }];
+  const seen = [];
+  for (let t = 0; t <= T2.BEETLE_DIG; t++) { E2.step(g); g.food = g.food.filter(f => f.kind === 'beetle'); for (const e of g.events) if (['burrow', 'heal'].includes(e.type)) seen.push(e); }
+  check('a dig leaves a burrow, and at the most the one unused longest closes over', JSON.stringify(seen) === JSON.stringify([{ type: 'heal', x: 22, y: 4 }, { type: 'burrow', x: 10, y: 10, dug: 1 }])
+    && g.burrows.length === T2.BURROW_MAX && g.burrows.some(b => b.x === 10 && b.y === 10 && b.dug === 1), JSON.stringify(seen));
+  const h = staged();
+  h.burrows = [{ x: 20, y: 2, at: 0, used: 0 }, { x: 22, y: 4, at: 0, used: 0 }, { x: 18, y: 2, at: 0, used: 25000 }];
+  h.food = [{ x: 22, y: 4, kind: 'beetle', expires: 9999, dir: D.up, movedAt: 1e9 }];
+  E2.step(h);
+  check('(off in the game) a burrow unused for BURROW_HEAL_MS closes over, but not with a beetle on it', JSON.stringify(h.events.filter(e => e.type === 'heal')) === JSON.stringify([{ type: 'heal', x: 20, y: 2 }]) && h.burrows.length === 2, JSON.stringify(h.burrows));
+}
+
+{ // Everyone sees every burrow on the board, as it is.
+  const g = board([[line(5, 10, 4), 'right'], [line(20, 22, 4), 'right']]);
+  g.burrows = [{ x: 3, y: 3, at: 0 }];
+  E.step(g);
+  check('an AI sees the burrows as they are', E.aiView(g, g.snakes[1]).burrows === g.burrows && E.createGame().unders.length === 0);
+}
+
+{ // Nothing grows on a burrow, beads included: a snake out across one leaves no bead on it, and neither does a tail a crash
+  // knocks off (the beads elsewhere fall as ever).
+  const g = board([[line(23, 5, 3), 'right'], [line(23, 15, 8), 'right'], [line(5, 20, 4), 'right']]);
+  g.burrows = [{ x: 21, y: 5, at: 0, used: 0 }, { x: 16, y: 15, at: 0, used: 0 }];
+  g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }];
+  feed(g);
+  const dying = E.step(g), beads = g.food.filter(f => f.kind === 'pellet').map(f => [f.x, f.y]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const on = (x, y) => beads.some(([bx, by]) => bx === x && by === y);
+  check('beads never fall on a burrow: a snake out across one, a tail a crash knocks off across another',
+    dying.length === 1 && dying[0] === g.snakes[0] && !on(21, 5) && on(23, 5) && on(22, 5) && !on(16, 15) && on(17, 15) && on(18, 15) && g.snakes[1].alive,
+    JSON.stringify({ beads, out: dying.map(s => s.id) }));
 }
 
 // ---------------------------------------------------------------- the owner's playtest: a meal isn't a pin
@@ -1647,6 +2392,128 @@ const powered = (got, mark) => Object.entries(got).filter(([, out]) => Object.ke
   } finally {
     Math.random = was;
   }
+}
+
+// ---------------------------------------------------------------- round six A: the rivals' pass (knocked food, beetles that dig in)
+// A mark of 3x3 at (12..14, 10..12), and where the strike knocks what's in it: as the rings show it, by the engine's rule.
+const MARK = rect(12, 10, 14, 12).map(([x, y]) => K(x, y));
+const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK), strikeAt: 13, timeMs: T.SUDDEN_DEATH_MS + 5000, ...more });
+
+{ // Food in the woodpecker's mark is knocked aside at the strike, to where the rule puts it (what the rings show anyone):
+  // an AI values it there, from the strike on. Heading right along row 11, the mark 4 ahead with a golden apple in its
+  // middle (knocked to (11, 11), the free cell beside the mark nearest the middle), an apple far off down the left: it
+  // heads for where the golden one will land. (Shown the mark with no strike to come, the golden apple is out of reach
+  // behind it, and nothing draws it on more than down toward the other: it goes either way.)
+  const g = board([[line(5, 11, 5), 'right'], [line(20, 22, 5), 'right']]);
+  g.food = [{ x: 13, y: 11, kind: 'golden', expires: 9999 }];
+  const ring = E.knocks(g, MARK)[0].to;
+  const view = strikeAt => () => marked({ strikeAt, me: aiMe(line(5, 11, 5), 'right'), others: [aiRival(1, line(20, 22, 5), 'right')],
+    food: [{ x: 13, y: 11, kind: 'golden', expires: 9999 }, { x: 2, y: 20, kind: 'food', expires: 9999 }] });
+  const knocked = picks(view(13)), blind = picks(view(null));
+  check('an AI values food in the mark where the strike will knock it (the rings), and heads there', ring.x === 11 && ring.y === 11 && knocked.right === 50 && blind.right < 40, JSON.stringify({ ring, knocked, blind }));
+  // ...and never into the mark for it: right beside the mark with the apple in front of its head, it doesn't wait in the
+  // mark for the strike (it's a hole by then), nor go for the apple where it lies.
+  const beside = picks(() => marked({ me: aiMe(line(11, 11, 5), 'right'), others: [aiRival(1, line(20, 22, 5), 'right')], food: [{ x: 12, y: 11, kind: 'food', expires: 9999 }] }));
+  check('...and never steps into the mark for it', !beside.right && (beside.up || 0) + (beside.down || 0) === 50, JSON.stringify(beside));
+}
+
+{ // Knocked food goes to whoever's nearer where it lands, as any food does. Heading right along row 11, 5 from where a
+  // golden apple in the mark will land (the strike 6 ticks off); another golden apple 12 down. (Drab and Gobbler without
+  // their taste for the board, so it's the food that decides.) With a rival's head 10 from the landing, it's Drab's, and
+  // it heads there; with the rival 6 from it (as I see it, a moment ago), nearer than Drab, Drab, which lets a rival's
+  // food be, takes the other, while Gobbler, which counts a rival's food in full, races for it, and so does Drab desperate.
+  const plain = key => ({ ...AI.PERSONAS[key], w: { ...AI.PERSONAS[key].w, territory: 0, aggression: 0 } });
+  const view = (rivalY, hungerLeft = 99999) => marked({ strikeAt: 16, me: aiMe(line(6, 11, 5), 'right', { hungerLeft, starveIn: hungerLeft }), others: [aiRival(1, line(11, rivalY, 5, 1), 'left')],
+    food: [{ x: 13, y: 11, kind: 'golden', expires: 9999 }, { x: 6, y: 23, kind: 'golden', expires: 9999 }] });
+  const go = (key, rivalY, hungerLeft) => { const out = {}; for (let i = 0; i < 20; i++) { const d = dirOf(AI.decide(view(rivalY, hungerLeft), plain(key), {})); out[d] = (out[d] || 0) + 1; } return out; };
+  const mine = go('drab', 1), drab = go('drab', 5), gobbler = go('gobbler', 5), starving = go('drab', 5, 1500);
+  check('knocked food is mine if I\'m nearer where it lands; a rival nearer, Drab leaves it', mine.right === 20 && drab.down === 20, JSON.stringify({ mine, drab }));
+  check('...but Gobbler races for it, and so does a desperate rival', gobbler.right === 20 && starving.right === 20, JSON.stringify({ gobbler, starving }));
+}
+
+{ // In the game: an apple in the mark, Gobbler heading along its row toward it. It doesn't go into the mark (it would be
+  // pecked), and once the strike knocks the apple aside it takes it where it landed.
+  const g = E.createGame({ withPlayer: false, personas: ['gobbler', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  g.time = T.SUDDEN_DEATH_MS + 5000;
+  a.body = cellsOf(line(5, 11, 5)); a.dir = D.right;
+  b.body = cellsOf(line(20, 22, 4)); b.dir = D.right; b.isPlayer = true; b.persona = null; b.queue = []; b.stunUntil = 1e9;
+  const [apple] = lay(g, { x: 13, y: 11, kind: 'food', expires: 9999 });
+  g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }]; // (no beetles come out meanwhile)
+  g.woodpecker = { x: 13, y: 11, at: g.time, target: [...MARK], strikeAt: g.tick + 5, last: [], struckAt: -1, restUntil: 1e9 };
+  lookNow(g);
+  g.history[0].pecks = [...MARK];
+  let knock = null, ate = null, inMark = false, promise = null;
+  for (let t = 0; t < 20 && !ate && a.alive; t++) {
+    if (g.woodpecker.landings) promise ||= { seen: E.aiView(g, a), kept: g.woodpecker.landings, strikeAt: g.woodpecker.strikeAt };
+    feed(g); kept(g);
+    if (g.woodpecker.target.length && MARK.includes(K(a.body[0].x, a.body[0].y))) inMark = true;
+    knock ||= g.events.find(e => e.type === 'knock');
+    ate = g.events.find(e => e.type === 'eat' && e.snake === a && e.kind === 'food');
+  }
+  check('in the game: Gobbler keeps out of the mark, and takes the apple where the strike knocked it', a.alive && !inMark && knock && ate && ate.x === knock.tx && ate.y === knock.ty, JSON.stringify({ alive: a.alive, inMark, knock: knock && [knock.tx, knock.ty], ate: ate && [ate.x, ate.y], head: a.body[0] }));
+  check(`...seeing when the strike comes and, in the aim's last ${T.PECK_PROMISE_TICKS} moves, where the woodpecker promised it (as the rings show anyone)`, promise && promise.seen.strikeAt === promise.strikeAt && promise.seen.landings === promise.kept, JSON.stringify(promise && { strikeAt: promise.seen.strikeAt, landings: promise.seen.landings }));
+}
+
+{ // A beetle digging in stays put till it's gone: an AI that can get there in time takes it, and one that can't doesn't
+  // chase it. Heading right, a beetle digging in 4 ahead (an apple 5 up): gone after the tick 3 on, it's caught on the
+  // 4th move, as it goes; gone a tick sooner, the AI takes the apple. (In sudden death, as before it.)
+  for (const timeMs of [30000, T.SUDDEN_DEATH_MS + 5000]) {
+    const view = dig => () => aiView({ me: aiMe(line(10, 12, 5), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], tick: 10, timeMs,
+      food: [{ x: 14, y: 12, kind: 'beetle', expires: 999, dir: D.up, movedAt: 5, digUntil: 10 + dig }, { x: 10, y: 7, kind: 'food', expires: 999 }] });
+    const inTime = picks(view(3), 'drab', 20), late = picks(view(2), 'drab', 20);
+    check(`an AI goes for a beetle digging in that it can reach before it's gone${timeMs > T.SUDDEN_DEATH_MS ? ' (in sudden death too)' : ''}`, inTime.right === 20, JSON.stringify(inTime));
+    check(`...and doesn't chase one it can't${timeMs > T.SUDDEN_DEATH_MS ? ' (in sudden death too)' : ''}`, late.up === 20, JSON.stringify(late));
+  }
+}
+
+{ // Two beetles out at once, each read the same way: the second, scurrying for its burrow two beyond (bound to dive in
+  // first), isn't worth the chase any more than the first would be; an AI takes the apple up the board.
+  const view = () => aiView({ me: aiMe(line(10, 12, 5), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], tick: 10, burrows: [{ x: 15, y: 12, at: 0 }],
+    food: [{ x: 2, y: 21, kind: 'beetle', expires: 999, dir: D.up, movedAt: 9 },
+      { x: 13, y: 12, kind: 'beetle', expires: 999, dir: D.right, movedAt: 0, px: 12, py: 12, scared: true }, { x: 10, y: 8, kind: 'food', expires: 999 }] });
+  const got = picks(view, 'drab', 20);
+  check('two beetles out: the second is read as the first (bound for its burrow, it isn\'t chased)', got.up === 20, JSON.stringify(got));
+}
+
+{ // In the game: a beetle in open bark, no burrow near, Gobbler coming at it from outside BEETLE_DIG_FEAR: cornered as
+  // Gobbler comes within it, it digs in where it is (as the AI worked out it would), and Gobbler catches it before it's
+  // gone. (It used to start 4 cells off, where no head coming at one ever is when it starts to dig.)
+  const g = E.createGame({ withPlayer: false, personas: ['gobbler', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  g.time = 30000;
+  a.body = cellsOf(line(13 - T.BEETLE_DIG_FEAR - 2, 12, 5)); a.dir = D.right;
+  b.body = cellsOf(line(20, 22, 4)); b.dir = D.right; b.isPlayer = true; b.persona = null; b.queue = []; b.stunUntil = 1e9;
+  g.burrows = [{ x: 22, y: 2, at: 0, used: 0 }];
+  g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }];
+  const [bug] = lay(g, { x: 13, y: 12, kind: 'beetle', expires: 999, dir: D.up, movedAt: -10 });
+  lookNow(g);
+  let dug = null, caught = null;
+  for (let t = 0; t < 20 && !caught; t++) {
+    feed(g); kept(g);
+    dug ||= g.events.find(e => e.type === 'dig');
+    caught = g.events.find(e => e.type === 'eat' && e.kind === 'beetle' && e.snake === a);
+    if (g.events.some(e => e.type === 'dive')) break;
+  }
+  check('in the game: a cornered beetle digs in, and Gobbler catches it before it\'s gone', dug && caught && caught.x === dug.x && caught.y === dug.y && g.tick - 1 <= dug.until, JSON.stringify({ dug, caught: caught && [caught.x, caught.y, g.tick - 1], bug }));
+}
+
+{ // Nothing rolls onto a burrow: a coughing head knocks an apple to the side with more open log, else toward the middle,
+  // never onto a burrow (nothing grows on one): there, the other side. (The rivals' picture of the roll has the same check.)
+  const roll = burrow => {
+    const g = board([[[[12, 13], [12, 14], [12, 15], [12, 16]], 'up'], [line(20, 22, 4), 'right']]);
+    feed(g);
+    g.snakes[0].coughUntil = 999;
+    if (burrow) g.burrows = [{ x: 11, y: 12, at: 0, used: 0 }];
+    g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }];
+    const [apple] = lay(g, { x: 12, y: 12, kind: 'food', expires: 999 });
+    kept(g);
+    return [apple.x, apple.y];
+  };
+  const open = roll(false), beside = roll(true);
+  check('a cough\'s roll never puts food on a burrow: it goes to the other side', JSON.stringify(open) === '[11,12]' && JSON.stringify(beside) === '[13,12]', JSON.stringify({ open, beside }));
 }
 
 console.log(failed ? `${failed} failed` : 'all good');
