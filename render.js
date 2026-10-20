@@ -6283,11 +6283,13 @@ window.SnakeRender = (() => {
   // drawFood), and a faint ring marks where each piece will be knocked to at
   // the strike: the engine's own list (knocks: every landing in the strike's
   // order, no two on one cell, never a burrow; the rivals read the same),
-  // worked out once a tick; on the aim's last tick, the landings the engine
-  // has promised (w.landings, kept at the strike while their cells are
-  // free). Nothing for a piece the bird will eat. (The bird drumming beside
-  // the patch never hides one: it clings clear of them if it can, and any
-  // it still covers are drawn over it too: see drumChoice, drawWoodpecker.)
+  // worked out once a tick; in the aim's last PECK_PROMISE_TICKS moves, the
+  // landings the engine has promised (w.landings, kept at the strike while
+  // their cells are free; food that comes into the mark later is promised
+  // where its ring is then). Nothing for a piece the bird will eat. (The
+  // bird drumming beside the patch never hides one: it clings clear of them
+  // if it can, and any it still covers are drawn over it too: see
+  // drumChoice, drawWoodpecker.)
   const knockLand = []; // (cells, x and y, this tick's)
   let knockFor = -1, knockGame = null;
   function knockCells(w) {

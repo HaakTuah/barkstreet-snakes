@@ -85,7 +85,9 @@ window.SnakeOnline = (() => {
       // The beetles underground: until (when one comes up), when it flies off, the burrow or dig it went down, golden.
       un: (game.unders || []).map(u => [u.until, u.expires, u.from, u.gold ? 1 : 0]),
       h: holes,
-      // The woodpecker, and on the tick before its strike, where it promised each piece in its mark would land.
+      // The woodpecker, and in the last PECK_PROMISE_TICKS moves before its strike, where it promised each piece
+      // in its mark would land (a list that can grow as food comes into the mark; sent whole every tick, so
+      // protocol 10 carries it unchanged).
       w: game.woodpecker ? [game.woodpecker.x, game.woodpecker.y, game.woodpecker.at, game.woodpecker.target, game.woodpecker.strikeAt, game.woodpecker.last, game.woodpecker.struckAt, game.woodpecker.restUntil, game.woodpecker.pecks || 0, game.woodpecker.landings || 0] : 0,
       // Burrows (where, the tick it opened, the time a beetle last used it, a dig left it), fire (cell,
       // burning from, until, struck by lightning, which fire), the weather.
