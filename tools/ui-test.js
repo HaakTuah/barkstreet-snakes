@@ -22,17 +22,19 @@
 // - The header: held upright (390 and 320 px), the title with Score and
 //   Best, then the six buttons on a row of their own, the Field guide named
 //   at 390; over the board, one row, Score over Best and the full-screen
-//   button last, the guide named on a 1080p desktop's browser (maximized,
-//   with a bookmarks bar), an iPad mini and an iPad held upright, both on
-//   1920x1080, neither at 1920x860; a window 460 px wide (500 with touch)
-//   with the title, Score and Best and then every button, both named; and
-//   as Score and Best grow to 1000, nothing moves. At every step over the
-//   board (one row, each door's word, two rows on a short window's narrower
-//   page), with six buttons and five, a mouse and touch: the step's page
-//   and a pixel under it, and at 100 and 1000 nothing moves. Beside the
-//   board: a laptop's column watching with the chatter full (the doors in
-//   its own row or the icons', the guide named without full screen), and a
-//   narrow column's six icons in a row.
+//   button last, the guide named on half a 1080p screen's window, an iPad
+//   mini and an iPad held upright, both on a 1440p screen's browser,
+//   neither on a 1000x860 window; a window 460 px wide (500 with touch)
+//   with the title, Score and Best and then every button, both named; and as Score
+//   and Best grow to 1000, nothing moves. At every step over the board (one
+//   row, each door's word, two rows on a short window's narrower page),
+//   with six buttons and five, a mouse and touch: the step's page and a
+//   pixel under it, and at 100 and 1000 nothing moves. Beside the board: a
+//   1080p desktop's browser (maximized, with a bookmarks bar, and 1920x1080),
+//   the doors' own row, both named; a laptop's column and a 1080p browser's,
+//   watching with the chatter full, not scrolling (the doors in its own row
+//   or the icons', the guide named without full screen), and a narrow
+//   column's six icons in a row.
 // - The cards on phones' boards, upright and on their sides, from 280 to
 //   440 px: the start card (the longest blurbs, a note or not), and the
 //   fullest death card (a real first good round's: the new best's badge,
@@ -368,25 +370,28 @@ const KEYS = {
       }
       rows.sort((a, c) => a.top - c.top);
       const named = id => vis(document.querySelector('#' + id + ' .trophy-text'));
-      return { page: Math.round(document.querySelector('main').getBoundingClientRect().width), height: Math.round(hd.getBoundingClientRect().height * 10) / 10, rows: rows.map(r => r.items.sort((a, c) => a.l - c.l).map(i => i.n).join(' ')),
+      return { page: Math.round(document.querySelector('main').getBoundingClientRect().width * 100) / 100, height: Math.round(hd.getBoundingClientRect().height * 10) / 10, rows: rows.map(r => r.items.sort((a, c) => a.l - c.l).map(i => i.n).join(' ')),
         guide: named('guide-open'), trophy: named('records-open'), sideways: document.documentElement.scrollWidth > innerWidth,
         titleLines: (() => { const h1 = document.querySelector('h1'), cs = getComputedStyle(h1); return Math.round(h1.getBoundingClientRect().height / (parseFloat(cs.lineHeight) || parseFloat(cs.fontSize))); })() };
     })()`;
     const grow = `(() => { document.getElementById('score').textContent = '1000'; document.getElementById('best').textContent = '1000'; return new Promise(res => requestAnimationFrame(() => requestAnimationFrame(() => res(1)))); })()`;
     // In one row, Score over Best beside the title and the full-screen
-    // button last, each door named where the row has room for its word: a
-    // 1920x1080 screen's maximized browser (a 685 px page), with a bookmarks
-    // bar (653), and an iPad mini held upright (720) name the Field guide,
-    // the trophy its picture (the guide was its book there with the full
-    // screen, and the 1080p browser with the bar showed two bare icons);
-    // 1920x1080 (820) names both; a 1000x860 window (a 600 px page) has
-    // both pictures. A window 460 px wide, or 500 with touch (an iPad's Split
-    // View), has the title with Score and Best, then all the buttons on the
-    // next row, both named (the trophy went alone onto a third). And as
-    // Score and Best grow to 1000, nothing moves.
+    // button last, each door named where the row has room for its word: an
+    // iPad mini held upright (a 720 px page) and half a 1080p screen's
+    // window (960x945, 694) name the Field guide, the trophy its picture (the
+    // guide was its book there with the full screen); a 1440p screen's
+    // browser (2560x1305, 900) names both; a 1000x860 window (a 600 px page:
+    // its board as big as before "One screen", the owner's call, the chatter
+    // giving way) has both pictures. A window 460 px wide, or 500 with
+    // touch (an iPad's Split View), has the title with Score and Best, then
+    // all the buttons on the next row, both named (the trophy went alone
+    // onto a third). And as
+    // Score and Best grow to 1000, nothing moves. (A 1080p screen's browser,
+    // 1920x945 and 1920x913, and 1920x1080 had the header over the board, its
+    // one row: they're beside it now, below.)
     for (const [w, h, touch, label, oneRow, guide, trophy] of [
-      [1920, 945, false, '1920x945, a maximized browser', true, true, false], [1920, 913, false, '1920x913, with a bookmarks bar', true, true, false],
-      [1920, 1080, false, '1920x1080', true, true, true], [1000, 860, false, 'a 1000x860 window', true, false, false], [744, 1133, true, 'an iPad mini upright', true, true, false],
+      [2560, 1305, false, '2560x1305, a 1440p screen\'s browser', true, true, true], [960, 945, false, 'half a 1080p screen, 960x945', true, true, false],
+      [1000, 860, false, 'a 1000x860 window', true, false, false], [744, 1133, true, 'an iPad mini upright', true, true, false],
       [768, 1024, true, 'an iPad upright', true, true, false], [460, 900, false, 'a window 460 px wide', false, true, true], [500, 1000, true, 'a touch window 500 px wide', false, true, true]]) {
       await b.viewport(w, h, { scale: touch ? 2 : 1, mobile: touch });
       await load();
@@ -401,7 +406,7 @@ const KEYS = {
     // ---------------------------- the header over the board, at its steps
     // At each step's page, and a pixel under it (a tall window 24 px wider;
     // under 417 px, a window 470 px wide and short, whose page narrows with
-    // the board): one row from where it fits, each door named from where
+    // the board, as tall as gives that page): one row from where it fits, each door named from where
     // its word does, with six buttons and with five (no full screen: the
     // steps were six's, and five showed both doors' pictures where their
     // words fit), with a mouse and with touch; narrower, two rows, the title
@@ -420,10 +425,20 @@ const KEYS = {
       await load(five ? '&nofs' : '');
       const steps = [one, guide, both, twoBoth, twoGuide];
       for (const P of steps.flatMap(q => [q, q - 1]).filter(q => q >= 280)) {
-        if (P >= 417) await b.viewport(P + 24, 1400, { scale: 1, mobile: touch }); else await b.viewport(470, P + 260, { scale: 1, mobile: touch });
+        if (P >= 417) await b.viewport(P + 24, 1400, { scale: 1, mobile: touch });
+        else { // (the window as tall as gives a page of P: the board leaves room above it for the header and the tags as they are, and under it for the row under the board and the chatter's two lines)
+          let h = P + 330; // (the page is the window's height less what's above and under the board, which needn't be whole pixels: as tall as gives a page of P, or a fraction under it)
+          for (let i = 0; i < 4; i++) {
+            await b.viewport(470, h, { scale: 1, mobile: touch });
+            await ev(`new Promise(res => requestAnimationFrame(() => requestAnimationFrame(() => res(1))))`);
+            const page = await ev(`document.querySelector('main').getBoundingClientRect().width`);
+            if (page > P - 1 && page <= P + 0.01) break;
+            h = Math.floor(P + h - page + 0.01);
+          }
+        }
         await ev(digits(0));
         const r = await ev(headerRows), oneRow = P >= one, g = oneRow ? P >= guide : P >= twoGuide, t = oneRow ? P >= both : P >= twoBoth;
-        check(r.page === P && r.rows.join(' / ') === (oneRow ? `title Score Best ${btns}` : `title Score Best / ${btns}`) && r.guide === g && r.trophy === t && r.titleLines === 1 && !r.sideways,
+        check(r.page > P - 1 && r.page <= P + 0.01 && r.rows.join(' / ') === (oneRow ? `title Score Best ${btns}` : `title Score Best / ${btns}`) && r.guide === g && r.trophy === t && r.titleLines === 1 && !r.sideways,
           `${kind}, a ${P} px page: ${oneRow ? 'one row' : 'the title with Score and Best, then the buttons'}, the Field guide ${g ? 'named' : 'its book'}, the trophy ${t ? 'named' : 'its picture'}`, JSON.stringify(r));
         if (!steps.includes(P)) continue;
         for (const n of [100, 1000]) {
@@ -450,7 +465,20 @@ const KEYS = {
         scroll: document.documentElement.scrollHeight - innerHeight,
       }))));
     })()`;
-    for (const [w, h, iconsRow, guideNamed, trophy, q] of [[1366, 657, true, false, false, ''], [1280, 800, false, true, true, ''], [1366, 657, true, true, false, '&nofs']]) {
+    // A 1080p screen's browser (1920x945 with its bookmarks bar, 1920x913,
+    // and 1920x1080) has the column too, now that it goes up to 1180 px
+    // tall, and the height for the doors' own row: its rows, both doors
+    // named, and with Score and Best at 1000 nothing moves.
+    for (const [w, h] of [[1920, 945], [1920, 913], [1920, 1080]]) {
+      await b.viewport(w, h);
+      await load();
+      const r = await ev(headerRows), want = 'title / Score Best / pause music mute fullscreen / guide-open records-open';
+      check(r.rows.join(' / ') === want && r.guide && r.trophy && !r.sideways, `${w}x${h}: beside the board, the title, Score and Best, the icons, and the doors' own row, both named`, JSON.stringify(r));
+      await ev(grow);
+      const r1000 = await ev(headerRows);
+      check(r1000.rows.join(' / ') === want && r1000.height === r.height, `${w}x${h}: with Score and Best at 1000, nothing moves`, JSON.stringify(r1000));
+    }
+    for (const [w, h, iconsRow, guideNamed, trophy, q] of [[1366, 657, true, false, false, ''], [1280, 800, false, true, true, ''], [1366, 657, true, true, false, '&nofs'], [1920, 945, false, true, true, '']]) {
       await b.viewport(w, h);
       await load(q);
       await fresh(['ouroboros', 'metagamer', 'gobbler'], true);

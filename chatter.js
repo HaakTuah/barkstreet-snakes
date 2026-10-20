@@ -1641,13 +1641,16 @@ window.SnakeChatter = (() => {
 
   function init(opts) {
     ({ boardEl, logEl } = opts);
-    // Is the log on screen? On a short screen it's below the fold, and in a
-    // round the page doesn't scroll, so a line put in the log alone would be
-    // lost. (Measured as the page changes size or scrolls, never per frame.)
-    const placeLog = () => { const r = logEl.getBoundingClientRect(); logShown = r.height > 0 && r.top >= 0 && r.top + 20 <= innerHeight; };
+    // Is the log on screen, with room for a whole line? Where the chatter
+    // has room for no row, or for a strip of one (snake.js fitChatter), a
+    // line put in the log alone would be lost or cut. (Measured as the page
+    // changes size or scrolls, and as the chatter's fit changes, never per
+    // frame.)
+    const placeLog = () => { const r = logEl.getBoundingClientRect(); logShown = r.height > 0 && r.top >= 0 && r.top + 20 <= innerHeight && !logEl.closest('[data-fit="strip"]'); };
     addEventListener('resize', placeLog, { passive: true });
     addEventListener('scroll', placeLog, { passive: true });
     new ResizeObserver(placeLog).observe(logEl.closest('main') || document.body);
+    if (logEl.parentElement) new MutationObserver(placeLog).observe(logEl.parentElement, { attributes: true, attributeFilter: ['data-fit'] });
     // The banner over the board: bubbles keep out of its way. Its box is read
     // only after it changes (a new banner, moved to the foot, gone).
     bannerEl = boardEl.querySelector('.toast');
