@@ -599,7 +599,7 @@
     youHideAt = performance.now() + T.YOU_MS;
     Audio.play('go');
     if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
-    else if (touchFirst && game.withPlayer && !powersTold && helpEl.getBoundingClientRect().bottom > innerHeight + 0.5) { powersTold = true; toast(FLAVOR.powersFirst, 3000, 'you', 'lesson'); } // (a short phone: the help under the board isn't wholly on the screen, so it's off it or hidden; how to steer is beside YOU. A lesson's banner, not Go!'s big one: it fits, and keeps out of the heads' way)
+    else if (touchFirst && game.withPlayer && !powersTold && (!helpEl.getClientRects().length || helpEl.getBoundingClientRect().bottom > innerHeight + 0.5)) { powersTold = true; toast(FLAVOR.powersFirst, 3000, 'you', 'lesson'); } // (the help under the board isn't shown, or isn't wholly on the screen; how to steer is beside YOU. A lesson's banner, not Go!'s big one: it fits, and keeps out of the heads' way)
     else toast(pick(game.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1300, 'go');
     flashFrame('go');
     acc = 0;
@@ -2820,36 +2820,40 @@
   // (a phone held upright: the bird perches there); and where the moss and
   // the corner leaves hang off its bottom edge into the ledge (the bird
   // stands clear of them: across, CSS px, a little wider for the leaves' sway).
-  const furniture = ['header', '.scoreboard', '.speed', '.chatter'].map(q => document.querySelector(q)).filter(Boolean);
+  const furniture = ['header', '.scoreboard', '.foot', '.chatter'].map(q => document.querySelector(q)).filter(Boolean);
   const hanging = [...document.querySelectorAll('.frame .moss.bottom, .frame .leaves.bl, .frame .leaves.br')];
   const ledgeEl = $('perch-ledge'), rootStyle = getComputedStyle(document.documentElement);
   const inset = name => parseFloat(rootStyle.getPropertyValue(name)) || 0;
-  // The help under the board, only partly on the screen (a short phone held
-  // upright, or the chatter grown above it): while you play, when the page
-  // can't scroll to it, it's hidden rather than cut in half by the screen's
-  // edge. (A short phone's first Go tells you about the powers instead.)
-  const fitHelp = () => {
-    const h = helpEl.getBoundingClientRect();
-    helpEl.classList.toggle('cut', h.height > 0 && h.top < innerHeight && h.bottom > innerHeight + 0.5);
-  };
   // What's above the frame, measured (the page's top, the header and the
-  // tags, however many rows they wrap to in whatever font): on a phone held
-  // upright the board is as big as fits the height under it, and at a
-  // height in between leaves the bird room beside it or under it (style.css,
+  // tags, however many rows they wrap to in whatever font): the board is as
+  // big as leaves room for it, and on a phone held upright, at a height in
+  // between, leaves the bird room beside it or under it (style.css,
   // --above). Set only when it changes: the board's own change, which moves
-  // nothing above it, doesn't come round again. Measured now, before the
-  // page is first drawn; as the window changes size and as the font
-  // arrives, before the board is placed; and if the header changes
-  // otherwise (a longer score), a moment later: set from inside a resize
-  // observer's call, the board's change would come round again in the same
-  // frame, which the browser reports as an error.
-  const frameEl = document.querySelector('.frame');
+  // nothing above it on a phone, doesn't come round again. Over the board
+  // (a tablet, a near-square window) the page is as wide as the board, and
+  // the header's and the tags' rows follow its width: a smaller board can
+  // take them onto more rows. So it's worked out from the page's own guess
+  // (one row of each, the least it could need) up, until it holds, which is
+  // the biggest board that does, whatever the page was before (from where
+  // it was, a window made taller could keep a smaller board's extra row).
+  // Measured now, before the page is first drawn; as the window changes size
+  // and as the font arrives, before the board is placed; and if the header
+  // changes otherwise (a longer score), a moment later: set from inside a
+  // resize observer's call, the board's change would come round again in
+  // the same frame, which the browser reports as an error.
+  const frameEl = document.querySelector('.frame'), footEl = document.querySelector('.foot');
   const frameTop = () => Math.round((frameEl.getBoundingClientRect().top + scrollY) * 10) / 10;
   let above = -1, aboveSoon = 0;
   const measureAbove = () => {
     aboveSoon = 0;
-    const top = frameTop();
-    if (Math.abs(top - above) > 0.25) { above = top; mainEl.style.setProperty('--above', `${top}px`); }
+    mainEl.style.removeProperty('--above');
+    above = -1;
+    for (let i = 0; i < 4; i++) { // (each pass only adds rows: it stops at the first that holds)
+      const top = frameTop();
+      if (Math.abs(top - above) <= 0.25) break;
+      above = top;
+      mainEl.style.setProperty('--above', `${top}px`);
+    }
   };
   measureAbove();
   window.addEventListener('resize', measureAbove, { passive: true });
@@ -2857,7 +2861,11 @@
   const placeBoard = () => {
     if (!aboveSoon && Math.abs(frameTop() - above) > 0.25) aboveSoon = setTimeout(measureAbove);
     const b = canvas.getBoundingClientRect();
-    const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: ledgeEl ? ledgeEl.offsetHeight : 0, hang: [] };
+    const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: ledgeEl ? ledgeEl.offsetHeight : 0, upright: !!ledgeEl?.offsetParent, hang: [] }; // (upright: a phone held upright, the ledge laid out, though it's 0 px tall where the board leaves the bird a gutter instead)
+    // (held upright, where the row under the board is closer than the moss
+    // and the leaves hang off the frame's bottom, 12 px, they're left off:
+    // style.css .snug)
+    frameEl.classList.toggle('snug', free.upright && footEl.getBoundingClientRect().top - frameEl.getBoundingClientRect().bottom < 12);
     for (const el of furniture) {
       const f = el.getBoundingClientRect();
       if (!f.width || !f.height) continue; // (hidden)
@@ -2874,62 +2882,89 @@
       }
     }
     R.setBoardRect(b.left, b.top, b.width, free);
-    fitHelp();
   };
   window.addEventListener('resize', placeBoard, { passive: true });
   window.addEventListener('scroll', placeBoard, { passive: true });
-  new ResizeObserver(placeBoard).observe(document.querySelector('main')); // (the page around the board changed: it may have moved)
-  // A full chatter on a phone on its side: its log is cut where it can be
-  // seen, the oldest lines first: at its own box, at the chatter's (inside
-  // its padding: the log keeps a line's height, so a squeezed chatter leaves
-  // it hanging past its bottom) or at the page's bottom (it's clipped
-  // there), whichever comes first. Where that would slice a row of words,
-  // the log ends at the last whole row instead, or shows none if none fits
-  // (a clip, so nothing moves: the log's size is what it was). Worked out
-  // as lines come and go and the boxes change.
-  const chatterEl = document.querySelector('.chatter'), chatterStyle = getComputedStyle(chatterEl);
-  const logEnd = () => Math.min(chatlogEl.getBoundingClientRect().bottom, mainEl.getBoundingClientRect().bottom,
-    chatterEl.getBoundingClientRect().bottom - parseFloat(chatterStyle.paddingBottom) - parseFloat(chatterStyle.borderBottomWidth));
-  const rows = document.createRange();
-  const fitLog = () => {
-    const box = chatlogEl.getBoundingClientRect(), end = logEnd();
-    let cut = 0;
-    for (const li of chatlogEl.children) {
-      const r = li.getBoundingClientRect();
-      if (r.bottom <= end + 0.5) continue;
-      rows.selectNodeContents(li);
-      let last = r.top;
-      for (const f of rows.getClientRects()) if (f.height && f.bottom <= end + 0.5) last = Math.max(last, f.bottom);
-      cut = box.bottom - Math.max(box.top, last);
-      break;
+  // (the page around the board changed: it may have moved, or what's under
+  // it. The page is one screen tall whatever it holds, so its own size says
+  // little: the header, the tags, the ledge, the row under the board and the
+  // chatter are watched too, a change in any of them moving the board or
+  // what's round it)
+  const placer = new ResizeObserver(placeBoard);
+  for (const el of [mainEl, ledgeEl, ...furniture]) if (el) placer.observe(el);
+  // The chatter takes what's left of the screen: its box is the column's
+  // rest (style.css), whatever it holds, so the page is one screen tall in
+  // every state. What shows in it is worked out here, as lines come and go
+  // and the box changes (data-fit): the caption and as many whole lines as
+  // fit, newest first (full), where the box has room for the caption and two
+  // rows of words; with less, the lines alone (strip), and where not even
+  // the newest fits whole, it cut to the rows that do; with no room for a
+  // row, no panel at all (none: the switch is still in the row above, and
+  // the rivals' long lines go to their bubbles on the board, as they do in
+  // a strip: chatter.js). A line is never sliced through, and an older line
+  // is shown whole or not at all. Decided from the box, never from the
+  // panel: the box's size doesn't depend on what's in it, so nothing here
+  // comes round again, and nothing comes and goes as lines of one row or
+  // two arrive.
+  const chatterEl = document.querySelector('.chatter'), chatterHead = chatterEl.querySelector('.chatter-head');
+  let chatFit = '';
+  const fitChatter = () => {
+    const lines = [...chatlogEl.children];
+    for (const li of lines) li.classList.remove('gone', 'cut');
+    let fit = 'off';
+    if (!chatlogEl.hidden) {
+      const box = chatterEl.getBoundingClientRect(), end = Math.min(box.bottom, innerHeight) + 0.5;
+      chatterEl.dataset.fit = 'full';
+      const ls = getComputedStyle(chatlogEl), row = parseFloat(ls.lineHeight) || 17, li = 4; // (a row of words, and a line's own padding)
+      const pad = parseFloat(ls.paddingTop) + parseFloat(ls.paddingBottom) + parseFloat(ls.borderBottomWidth);
+      fit = box.height && chatterHead.getBoundingClientRect().bottom + pad + 2 * (row + li) <= end ? 'full' : 'strip';
+      chatterEl.dataset.fit = fit;
+      const fits = () => chatlogEl.getBoundingClientRect().bottom <= end;
+      let n = lines.length;
+      while (n > 1 && !fits()) lines[--n].classList.add('gone');
+      if (n && !fits()) { // (the newest, as many of its rows as fit: from its words' top, less its own padding under them and the log's)
+        const ns = getComputedStyle(lines[0]), top = lines[0].getBoundingClientRect().top + parseFloat(ns.paddingTop);
+        const rows = Math.floor((end - 0.5 - top - parseFloat(ns.paddingBottom) - parseFloat(ls.paddingBottom) - parseFloat(ls.borderBottomWidth)) / row);
+        if (rows >= 1) { lines[0].style.setProperty('--rows', rows); lines[0].classList.add('cut'); }
+      }
+      if (!box.height || !fits()) fit = 'none';
     }
-    chatlogEl.style.clipPath = cut > 0.5 ? `inset(0 0 ${cut.toFixed(1)}px -12px)` : ''; // (-12: a new line slides in from the side)
+    if (fit === 'none' || fit === 'off') for (const li of lines) li.classList.remove('gone', 'cut');
+    chatterEl.dataset.fit = chatFit = fit;
   };
-  new ResizeObserver(fitLog).observe(chatlogEl);
-  new ResizeObserver(fitLog).observe(chatterEl);
-  new MutationObserver(fitLog).observe(chatlogEl, { childList: true });
-  document.fonts?.ready.then(fitLog);
-  // On its side, watching, the speed buttons take a row of the column. Where
-  // the chatter's log would then have no room for a whole row of words (a
-  // screen 320 px tall less a notch's home bar, 780×320 in Safari), the
-  // help, which only says what they do, gives the chatter its room; where
-  // a row fits beside it, it stays. Decided with the help shown (a row of
-  // words put first in the log for the moment, before anything's drawn:
-  // whether it would be whole where the log can be seen, whatever the log
-  // holds), as the window changes, the font arrives, the speed buttons come
-  // and go and the chatter's switched; never from inside a resize
-  // observer's call (the column's change would come round again).
-  const sideways = matchMedia('(min-aspect-ratio: 5/4) and (max-height: 500px) and (min-width: 480px)'); // (style.css: phones on their side)
-  const rowProbe = document.createElement('li');
-  rowProbe.textContent = 'Bark';
+  new ResizeObserver(() => fitChatter()).observe(chatterEl);
+  new MutationObserver(() => fitChatter()).observe(chatlogEl, { childList: true });
+  document.fonts?.ready.then(fitChatter);
+  // Watching, the speed buttons take a row of the row under the board (in
+  // the column beside the board, and on a phone on its side); where, with
+  // them, the chatter would have no room for a row of words (a phone on its
+  // side less a notch's home bar, 780×320 in Safari), the help, which only
+  // says what they do, gives the chatter its room; where a row fits beside
+  // it, it stays. (Held upright on a phone they take the help's place:
+  // style.css.) And in any state, the help gives way where it doesn't fit
+  // the row: an item running past its box (the speed buttons and the switch
+  // squeezing it, watching on a narrow touch screen), or its lines pushing
+  // the row past the page's bottom (a narrow window with a mouse, the keys'
+  // help on four to six lines), where the board keeps its size (the owner's
+  // call: the board never smaller than before, the help and the chatter
+  // give way); the start card, the nap's and How to play have the keys, and
+  // on a touch screen the first Go says how to jump and flash. Decided with
+  // the help shown, as the window changes, the font arrives, the help's
+  // words change, the speed buttons come and go and the chatter's switched;
+  // never from inside a resize observer's call (the column's change would
+  // come round again).
   const fitColumn = () => {
     mainEl.classList.remove('help-yields');
-    if (!sideways.matches || speedEl.hidden || chatlogEl.hidden) return;
-    chatlogEl.prepend(rowProbe);
-    rows.selectNodeContents(rowProbe);
-    const row = rows.getBoundingClientRect().bottom, end = logEnd();
-    rowProbe.remove();
-    if (row > end + 0.5) mainEl.classList.add('help-yields');
+    fitChatter();
+    const h = helpEl.getClientRects().length && helpEl.getBoundingClientRect();
+    if (h && (helpEl.scrollWidth > helpEl.clientWidth + 1 || (h.height > parseFloat(getComputedStyle(footEl).minHeight) + 0.5 && footEl.getBoundingClientRect().bottom + scrollY > innerHeight + 0.5))) { // (squeezed, or taller than the row and taking it off the screen)
+      mainEl.classList.add('help-yields');
+      fitChatter();
+      return;
+    }
+    if (speedEl.hidden || chatlogEl.hidden || chatFit !== 'none') return;
+    mainEl.classList.add('help-yields');
+    fitChatter();
   };
   window.addEventListener('resize', fitColumn, { passive: true });
   document.fonts?.addEventListener?.('loadingdone', fitColumn);

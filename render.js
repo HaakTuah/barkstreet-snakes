@@ -7418,12 +7418,13 @@ window.SnakeRender = (() => {
   // and the screen's safe area, how tall the ledge under it is (on a phone
   // held upright; else 0), and where across the ledge the frame's moss and
   // leaves hang into it ([left, right] each): the game keeps them current.
-  const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, hang: [] };
+  const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, upright: false, hang: [] };
   function setBoardRect(x, y, w, free = null) {
     boardRect.x = x; boardRect.y = y; boardRect.w = w;
     boardRect.left = free ? free.left : 0; boardRect.top = free ? free.top : 0;
     boardRect.right = free ? free.right : innerWidth; boardRect.bottom = free ? free.bottom : innerHeight;
     boardRect.ledge = free?.ledge || 0;
+    boardRect.upright = !!free?.upright || boardRect.ledge > 0; // (a phone held upright: with no ledge, its board leaves the bird a gutter of 13 px at least)
     boardRect.hang = free?.hang || [];
     perches.clear(); drumAt.clear(); birdLayout++; // (its perches and where it drums are worked out again: the room round the board has changed)
   }
@@ -7483,7 +7484,7 @@ window.SnakeRender = (() => {
     // smaller rather than over the cells, on the ledge or beside the board,
     // whichever lets it be the bigger, down to PERCH_FLOOR_PX tall; the page
     // leaves it room for that much, see style.css)
-    const between = boardRect.ledge > 0 && (side === 'left' || side === 'right') && !(fit[side] >= least) && shrunk(side) < least;
+    const between = boardRect.upright && (side === 'left' || side === 'right') && !(fit[side] >= least) && shrunk(side) < least;
     if (between && ledge >= floor && ledge >= shrunk(side)) side = 'ledge';
     const nowhere = (side === 'left' || side === 'right') && !(fit[side] >= least);
     const s = side === 'ledge' ? ledge : nowhere ? Math.max(between ? floor : least, shrunk(side)) : Math.max(least, fit[side]);
