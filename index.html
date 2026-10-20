@@ -138,22 +138,29 @@
     <!-- A ledge under the board for the woodpecker, on a phone held upright (the board runs edge to edge there, with no room beside it). -->
     <div id="perch-ledge" class="perch-ledge" aria-hidden="true"></div>
 
-    <div id="speed" class="speed" role="group" aria-label="Watching speed" hidden>
-      <span>Speed</span>
-      <button data-speed="1" aria-label="Normal speed" title="Normal speed (1)">1×</button>
-      <button data-speed="2" aria-label="Double speed" title="Double speed (2)">2×</button>
-      <button data-speed="4" aria-label="Four times speed" title="Four times speed (4)">4×</button>
+    <!-- The row under the board: the speed buttons (watching), the help, and the chatter's switch. The page is one
+         screen tall, so it's always on the screen; it keeps its height whatever it holds, so the board never changes
+         size between playing and watching. -->
+    <div class="foot">
+      <div id="speed" class="speed" role="group" aria-label="Watching speed" hidden>
+        <span>Speed</span>
+        <button data-speed="1" aria-label="Normal speed" title="Normal speed (1)">1×</button>
+        <button data-speed="2" aria-label="Double speed" title="Double speed (2)">2×</button>
+        <button data-speed="4" aria-label="Four times speed" title="Four times speed (4)">4×</button>
+      </div>
+      <p id="help" class="help"></p>
+      <button id="chatter-toggle" class="small" role="switch" aria-checked="true" aria-labelledby="chatter-label" title="Bark chatter"><span aria-hidden="true">On</span></button>
     </div>
 
+    <!-- The chatter takes what's left of the screen: as many whole lines as fit, newest first; with less room its
+         caption goes first, then all but the newest line (cut to its rows), then the panel (its switch stays in the
+         row above). snake.js fitChatter. -->
     <section class="chatter" aria-label="Bark chatter">
       <div class="chatter-head">
         <span id="chatter-label">Bark chatter</span>
-        <button id="chatter-toggle" class="small" role="switch" aria-checked="true" aria-labelledby="chatter-label"><span aria-hidden="true">On</span></button>
       </div>
       <ul id="chatlog" class="chatlog"></ul>
     </section>
-
-    <p id="help" class="help"></p>
   </main>
   <div id="announcer" class="sr-only" role="status" aria-live="polite"></div>
   <!-- The woodpecker's layer: over the whole page, so it can perch outside the board. -->

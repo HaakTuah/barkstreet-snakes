@@ -32,6 +32,10 @@
   --safe-r: env(safe-area-inset-right, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-l: env(safe-area-inset-left, 0px);
+  /* The page's own margin above and below (inside the safe area): the page
+     is exactly the screen's height less these. */
+  --pad-t: max(12px, var(--safe-t));
+  --pad-b: max(12px, var(--safe-b));
 }
 
 * { box-sizing: border-box; }
@@ -55,16 +59,42 @@ html.playing, html.playing body { touch-action: none; }
 body {
   display: flex;
   justify-content: center;
-  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  padding: var(--pad-t) max(12px, var(--safe-r)) var(--pad-b) max(12px, var(--safe-l));
   -webkit-tap-highlight-color: transparent;
 }
 
+/* The page is one screen tall, never more, in every state: the header, the
+   tags, the board and the row under it keep their size, and the chatter
+   takes what's left (snake.js fitChatter shows its whole lines, down to
+   none). Here (a tablet held upright, a near-square window, a screen too
+   tall for the column beside the board) the board is as big as leaves room
+   above it for the header and the tags as they are (--above, measured:
+   snake.js placeBoard), and under it for the row under the board and a
+   chatter of its caption and two lines (--below), so it never changes size
+   between playing and watching. */
 main {
+  --foot: 30px; /* (the row under the board: its height, kept; 44 on a touch screen) */
+  --chat-room: 84px; /* (the chatter's caption and two lines of words) */
+  --below: calc(10px + var(--foot) + var(--chat-room) + var(--pad-b));
   width: 100%;
-  /* The board grows with the screen but always fits its height. */
-  max-width: min(900px, max(280px, calc(100vh - 260px)));
-  max-width: min(900px, max(280px, calc(100dvh - 260px)));
+  /* The board grows with the screen but always fits its height. (115 px:
+     what's above it, until the page has measured it: the page's top, the
+     header in one row, the tags in one, and their margins.) */
+  max-width: min(900px, max(280px, calc(100vh - var(--above, 115px) - var(--below))));
+  height: calc(100vh - var(--pad-t) - var(--pad-b));
+  display: flex;
+  flex-direction: column;
 }
+/* (dvh in a test of its own: a value with var() in it is only checked as
+   it's used, so a browser without dvh wouldn't drop a second declaration,
+   it would lose the property) */
+@supports (height: 1dvh) {
+  main {
+    max-width: min(900px, max(280px, calc(100dvh - var(--above, 115px) - var(--below))));
+    height: calc(100dvh - var(--pad-t) - var(--pad-b));
+  }
+}
+main > * { flex: none; }
 
 .sr-only {
   position: absolute;
@@ -874,39 +904,102 @@ canvas {
    phone held upright (see the small screens). */
 .perch-ledge { display: none; pointer-events: none; }
 
+/* The row under the board: the speed buttons while you watch, the help (the
+   keys, or the taps), and the chatter's switch. Its height is kept (--foot:
+   the help's two lines, or a fingertip's switch), whatever it holds. */
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  min-height: var(--foot);
+  margin-top: 10px;
+}
 .speed {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  margin-top: 12px;
   color: var(--muted);
   font-size: 0.85rem;
 }
 .speed[hidden] { display: none; }
 .speed button[aria-pressed="true"] { background: var(--leaf-dark); box-shadow: 0 2px 0 #1c3007; }
 
-.chatter {
-  margin-top: 12px;
-  padding: 8px 12px;
-  border-radius: var(--r-card);
-  background: rgba(63, 37, 16, 0.55);
-  box-shadow: inset 0 0 0 1px rgba(246, 236, 210, 0.08);
+/* The chatter's switch: a speech bubble and its state. It sits in the row
+   under the board, apart from the chatter's caption, so the bubble says what
+   it's for, and its tooltip and spoken name say "Bark chatter"; the word is
+   for eyes, the state is aria-checked. Off, it's an outline, as before. */
+#chatter-toggle { flex: none; margin-left: auto; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding-inline: 10px 12px; }
+#chatter-toggle::before {
+  content: '';
+  flex: none;
+  width: 15px;
+  height: 14px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 14'%3E%3Cpath d='M2.6 1h9.8A1.6 1.6 0 0 1 14 2.6v6a1.6 1.6 0 0 1-1.6 1.6H7.2L3.8 13v-2.8H2.6A1.6 1.6 0 0 1 1 8.6v-6A1.6 1.6 0 0 1 2.6 1z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 14'%3E%3Cpath d='M2.6 1h9.8A1.6 1.6 0 0 1 14 2.6v6a1.6 1.6 0 0 1-1.6 1.6H7.2L3.8 13v-2.8H2.6A1.6 1.6 0 0 1 1 8.6v-6A1.6 1.6 0 0 1 2.6 1z'/%3E%3C/svg%3E") center / contain no-repeat;
 }
-.chatter-head { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 0.85rem; }
-.chatter-head button[aria-checked="false"] { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--muted); }
+#chatter-toggle[aria-checked="false"] { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--muted); }
+.foot:has(> .help[hidden]):has(> .speed[hidden]) #chatter-toggle { margin-inline: auto; } /* (alone in its row, at the start card, where the card has the keys: in the middle, so the row doesn't look as if something's missing) */
 
-.chatlog { list-style: none; margin: 6px 0 0; padding: 0; min-height: 1.4em; font-size: 0.88rem; }
+/* The chatter: its box is what's left of the screen (it never sizes the
+   page), and the panel in it, the caption and the log, as tall as its
+   lines, up to that. snake.js fitChatter decides what shows (data-fit):
+   full, the caption and as many whole lines as fit, newest first; strip,
+   the lines alone (the caption goes first), and where not even the newest
+   fits whole, it cut to the rows that do; none, no panel (the switch is
+   still in the row above); off, the chatter's switched off. */
+.chatter {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  --panel: rgba(63, 37, 16, 0.55);
+  --panel-edge: rgba(246, 236, 210, 0.08);
+}
+.chatter-head {
+  flex: none;
+  margin-top: 8px;
+  padding: 5px 12px 0;
+  border: 1px solid var(--panel-edge);
+  border-bottom: 0;
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+.chatlog {
+  flex: none;
+  list-style: none;
+  margin: 0;
+  padding: 3px 12px 6px;
+  border: 1px solid var(--panel-edge);
+  border-top: 0;
+  border-radius: 0 0 var(--r-card) var(--r-card);
+  background: var(--panel);
+  font-size: 0.88rem;
+  line-height: 1.25; /* (no less than the font's own, so a row's words never reach into the row above: a line cut to its rows ends cleanly) */
+}
+.chatter[data-fit="strip"] .chatter-head { display: none; }
+.chatter[data-fit="strip"] .chatlog { margin-top: 8px; padding: 2px 10px 3px; border-top: 1px solid var(--panel-edge); border-radius: 12px; }
+.chatter[data-fit="strip"] .chatlog li { padding-block: 1px; }
+.chatter[data-fit="none"] > *, .chatter[data-fit="off"] > * { display: none; }
 .chatlog[hidden] { display: none; }
 .chatlog:empty::before { content: 'Quiet on the bark… for now.'; color: var(--muted); font-style: italic; }
 .chatlog li { padding: 2px 0; animation: log-in 0.4s ease-out; }
+.chatlog li.gone { display: none; } /* (an older line with no room for all of it) */
+.chatlog li.cut { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--rows, 1); line-clamp: var(--rows, 1); overflow: hidden; } /* (the newest, with room for only some of its rows: its last ends in an ellipsis) */
 @keyframes log-in { from { transform: translateX(-12px); opacity: 0; } }
 .chatlog li:nth-child(2) span { color: #e4d8ba; }
 .chatlog li:nth-child(n+3) span { color: var(--muted); }
 .chatlog strong { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
 
-.help { margin: 12px 0 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
-html.playing .help.cut { visibility: hidden; } /* (cut in half by the screen's edge, where the page can't scroll to it: snake.js fitHelp) */
+.help { flex: 1 1 0; min-width: 0; margin: 0; text-align: center; font-size: 0.8rem; line-height: 1.2; color: var(--muted); }
+.help[hidden] { display: none; }
+main.help-yields .help { display: none; } /* (watching, where it would leave the chatter no row: it only says what the speed buttons do) */
 .hint span, .help span, #overlay-text span.whole { white-space: nowrap; } /* (each item whole, a line breaking only after its dot; a long reason may wrap, rather than run off a phone's card) */
 .sep { font-style: normal; }
 .glyph { display: inline-block; width: 0.62em; height: 0.78em; vertical-align: -0.06em; fill: currentColor; } /* (the pause button's own bars, not a font's) */
@@ -1264,57 +1357,67 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   header:has(#fullscreen:not([hidden])) #records-open .trophy-text { display: inline; }
 }
 
-/* Short phones: no tagline, so the whole board fits the first screen. */
-@media (max-width: 440px) and (max-height: 720px) {
+/* Phones held upright under 800 px tall: no tagline (the chatter has its
+   room; 390×844 and taller keep it). */
+@media (max-width: 440px) and (max-height: 800px) {
   .tagline { display: none; }
-  header { margin-bottom: 8px; }
-  .scoreboard { margin-bottom: 8px; }
 }
 
 /* Phones held upright: the board runs edge to edge (346 → 382 px on a
    390 px phone), its frame a thin rim, the moss and the corner leaves
    running off the screen's edges (clipped there, so nothing scrolls
    sideways); everything else keeps its 12 px margin from the screen's
-   edge. Only on a screen too short for that (an iPhone SE with Safari's
-   bars showing) is the board narrower, as big as fits the height, centred,
-   never smaller than it was. Under the board, a ledge for the woodpecker in
-   the height to spare (it stands there, about 53 px tall, instead of in a
-   gutter beside the board that's gone): about 11% of the width, less on a
-   short screen. Where even that doesn't fit, it's below the fold and the
-   bird perches in the gutter. At a height in between, the board leaves the
-   bird room for 24 px tall, beside it or under it, whichever leaves the
+   edge. The page is one screen tall: under the board come a ledge for the
+   woodpecker, the row under the board (the help, or the speed buttons, and
+   the chatter's switch) and the chatter, which takes what's left, down to
+   none. Where the screen is too short for the board edge to edge with its
+   ledge and that row (an iPhone SE with Safari's bars showing), the board
+   is as big as fits over the row, centred, and the bird perches in the
+   gutter beside it; in between, it leaves the bird room for 24 px tall,
+   13 px beside the frame each side or a ledge under it, whichever is the
    bigger board. All of it is laid out for the screen with the browser's
-   bars showing (svh), so nothing moves as they come and go. */
+   bars showing (svh), so the board doesn't change as they come and go (the
+   chatter does: it's what's left). */
 @media (max-width: 440px) {
+  :root { --pad-t: max(8px, var(--safe-t)); --pad-b: max(8px, var(--safe-b)); }
   body { padding-left: var(--safe-l); padding-right: var(--safe-r); }
   main {
-    --head: 180px; /* (what's above the board on a short phone, until the page has measured it: the page's top, the header in two rows, the tags in two, and their margins) */
+    --head: 160px; /* (what's above the board, until the page has measured it: the page's top, the header in two rows, the tags in two, and their margins) */
     /* (--above: what's above the frame, measured, whatever the header's
-       rows and font: snake.js placeBoard. The board is as big as fits the
-       height under it; and in between, where it would run nearly edge to
-       edge with the ledge below the fold, it leaves the woodpecker room for
-       24 px tall: 13 px beside the frame each side, or 25 px under it, on
-       the screen) */
+       rows and font: snake.js placeBoard. --room: the height for the board,
+       its ledge and the chatter, under that and over the row under the
+       board. The board: as big as leaves the bird 25 px under it, with the
+       gap over the row (its sill), up to edge to edge; or, where that's
+       smaller, as big as fits with no ledge, the bird in a gutter of 13 px
+       at least; whichever is the bigger. Edge to edge, the ledge takes up
+       to 34 px before the chatter has any room) */
     --gutter: 13px;
-    --sill: 25px;
+    --ledge: calc(40px - var(--over-foot)); /* (with the gap over the row, the bird's 40 px: 34 px over a 6 px gap) */
+    --sill: calc(25px - var(--over-foot));
+    --want: 96px; /* (the chatter's caption and about three lines: the ledge grows past its 34 px only once the chatter has those) */
+    --over-foot: 6px; /* (the gap over the row under the board) */
+    --wide: calc(100vw - var(--safe-l) - var(--safe-r));
+    --room: calc(100vh - var(--above, calc(var(--head) + max(0px, var(--safe-t) - 8px))) - var(--over-foot) - var(--foot) - var(--pad-b));
+    --board: min(760px, max(240px, min(var(--wide), calc(var(--room) - var(--sill))), min(calc(var(--wide) - 2 * var(--gutter)), var(--room))));
     max-width: none;
     overflow-x: hidden; /* (before Safari 16) */
     overflow-x: clip;
-  }
-  .frame {
-    /* (as big as fits the height, and as the width allows; then, in between,
-       no bigger than leaves the bird its gutter or its sill, whichever is
-       the bigger board) */
-    max-width: min(760px, max(240px, min(calc(100vh - var(--above, calc(var(--head) + max(0px, var(--safe-t) - 12px)))), max(calc(100% - 2 * var(--gutter)), calc(100vh - var(--above, 0px) - var(--sill) - var(--safe-b))))));
-    margin-inline: auto;
   }
   /* (svh in a test of its own: a value with var() in it is only checked as
      it's used, so a browser without svh wouldn't drop a second declaration,
      it would lose the property) */
   @supports (height: 1svh) {
-    .frame { max-width: min(760px, max(240px, min(calc(100svh - var(--above, calc(var(--head) + max(0px, var(--safe-t) - 12px)))), max(calc(100% - 2 * var(--gutter)), calc(100svh - var(--above, 0px) - var(--sill) - var(--safe-b)))))); }
+    main { --room: calc(100svh - var(--above, calc(var(--head) + max(0px, var(--safe-t) - 8px))) - var(--over-foot) - var(--foot) - var(--pad-b)); }
   }
-  header, .scoreboard, .speed, .chatter, .help { margin-inline: 12px; }
+  .frame { width: var(--board); margin-inline: auto; }
+  header, .scoreboard, .foot, .chatter { margin-inline: 12px; }
+  /* (slimmer than on a desktop: the header's two rows 4 px apart, 6 px
+     under it and under the tags, the tags 25 px a row, as on its side) */
+  header { row-gap: 0; margin-bottom: 6px; }
+  header::after { height: 6px; } /* (the break between the rows is a row of its own: the gap, once) */
+  .scoreboard { margin-bottom: 6px; gap: 4px; }
+  .scoreboard li { padding: 3px 7px 6px; font-size: 0.86rem; }
+  .scoreboard .hunger { left: 7px; right: 7px; bottom: 2px; }
   .frame { padding: 4px; border-radius: 9px; }
   .moss.top { top: -12px; }
   .moss.bottom { bottom: -12px; }
@@ -1323,35 +1426,77 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .leaves.tr { right: -10px; top: -10px; }
   .leaves.bl { left: -10px; bottom: -10px; }
   .leaves.br { right: -10px; bottom: -10px; }
-  /* (100vw: the board; 300 px: the header, the tags and the chatter's head,
-     kept on the first screen; never under 28 px, so the bird still stands
-     about 38 px tall there. The pair on the property itself: a browser
-     without svh drops the second and keeps the first.) */
-  .perch-ledge { display: block; height: clamp(28px, calc(100vh - 100vw - 300px), 11vw); height: clamp(28px, calc(100svh - 100vw - 300px), 11vw); }
-  /* Watching, the speed buttons come between the ledge and the chatter: a
-     smaller gap under them, so more of the chatter's newest lines stay on
-     the screen (the one over them is the bird's room, as when you play). */
-  .speed:not([hidden]) + .chatter { margin-top: 6px; }
+  /* (the ledge: what's left under the board, up to 34 px (38 over a short
+     phone's 2 px gap) before the chatter has any room, so the bird stands
+     about 38 px tall, and up to 11% of the width and 6 px, 49 px on a 390 px
+     phone, the bird 53 tall, once the chatter has its room; at a height in
+     between, the sill, so the bird stands about 24 px tall; under a board
+     with a gutter beside it, none, or what the gutter's board leaves) */
+  .perch-ledge { display: block; height: max(0px, min(var(--ledge), calc(var(--room) - var(--board))), min(calc(11vw + 6px), calc(var(--room) - var(--board) - var(--want)))); }
+  .foot { margin-top: var(--over-foot); }
+  /* Watching, the speed buttons take the help's place (it only says what
+     they do, and how to nap: the nap button's in the header). */
+  .speed:not([hidden]) + .help { display: none; }
+  .chatter-head { margin-top: 6px; }
+  .chatter[data-fit="strip"] .chatlog { margin-top: 4px; }
 }
 @media (max-width: 340px) {
-  main { --head: 178px; } /* (the narrowest phones: the header in two rows, its title smaller) */
+  main { --head: 150px; } /* (the narrowest phones: the header in two rows, its title smaller) */
 }
+/* Phones less than 1.7 times as tall as wide (an iPhone SE or mini with
+   Safari's bars showing, 375×548 to 635; a small Android with its browser's
+   bars, 320×460; 390 and 414 px wide under about 660 and 700 tall): the
+   row under the board is slimmer, its buttons 30 px tall (a fingertip's
+   44 elsewhere) and the help's two lines closer, 2 px under the board and
+   2 off the screen's bottom, and the page 4 px off its top, so the board is
+   as big as the phones work made it on the shortest (280 at 320×460, 341
+   at 375×548), and never smaller than it was before that (where the old
+   page ran the row and the chatter off the screen: 320×460 by 254 px while
+   you watched, 375×553 by 347), and an iPhone in Safari has a strip of
+   chatter (375×635). */
+@media (max-width: 440px) and (min-aspect-ratio: 10/17) {
+  :root { --pad-t: max(4px, var(--safe-t)); --pad-b: max(2px, var(--safe-b)); }
+  main { --over-foot: 2px; }
+  header::after { height: 4px; }
+  .foot .help { line-height: 1.15; }
+}
+@media (max-width: 440px) and (min-aspect-ratio: 10/17) and (pointer: coarse) {
+  html main { --foot: 30px; } /* (over the touch screens' 44, below) */
+  .foot button { min-height: 30px; }
+}
+/* (where the row under the board is closer than the moss and the corner
+   leaves hang off the frame's bottom, a short phone's board with a gutter
+   beside it and no ledge, they're left off, as on its side: over the help
+   and the switch they were clutter. snake.js placeBoard: .snug) */
+.frame.snug .moss.bottom, .frame.snug .leaves.bl, .frame.snug .leaves.br { display: none; }
 
-/* Wide, short screens (laptops, short windows, phones on their side): the
-   header and tags sit beside the board, which takes the full height. */
-@media (min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px) {
+/* Wide screens up to 1180 px tall (laptops, a 1080p or 1200p desktop's
+   browser, short windows, phones on their side): the header and tags sit
+   beside the board, which takes the full height (up to 900 px), and the
+   column beside it is as tall as the board: the header, the tags, the help
+   on a row of its own, then the speed buttons and the chatter's switch, and
+   the chatter in what's left (its whole lines, its caption first to go).
+   (It went up to 900 px tall: a 1080p desktop's browser, 945 or 969 px,
+   had the board over the chatter, 665 px, and with the chatter full the
+   page ran 78 to 116 px past the screen.) */
+@media (min-aspect-ratio: 5/4) and (max-height: 1180px) and (min-width: 480px) {
   main {
     container-type: normal; /* (sized by its content here: a size container would collapse it) */
     --board: min(900px, calc(100vh - 32px), calc(100vw - 260px));
     width: auto;
     max-width: none;
+    height: var(--board);
     display: grid;
     grid-template-columns: minmax(180px, 300px) var(--board);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
     gap: 0 20px;
     align-items: start;
   }
-  header, .scoreboard, .speed, .chatter, .help { grid-column: 1; }
-  .frame { grid-column: 2; grid-row: 1 / span 6; }
+  header, .scoreboard, .foot, .chatter { grid-column: 1; }
+  .frame { grid-column: 2; grid-row: 1 / -1; }
+  .foot { grid-row: 3; margin-top: 0; flex-wrap: wrap; }
+  .foot .help { order: -1; flex: 1 1 100%; } /* (a row of its own, the column's width; under it the speed buttons and the switch, which is then just over the chatter it switches) */
+  .chatter { grid-row: 4; align-self: stretch; }
   .scoreboard { grid-template-columns: 1fr; }
   header { flex-wrap: wrap; align-items: center; justify-content: flex-start; }
   .brand { flex-basis: 100%; }
@@ -1371,7 +1516,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
     main { --board: min(900px, calc(100dvh - 32px), calc(100vw - 260px)); }
   }
 }
-@media (pointer: coarse) and (min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px) {
+@media (pointer: coarse) and (min-aspect-ratio: 5/4) and (max-height: 1180px) and (min-width: 480px) {
   header { column-gap: 6px; } /* (five buttons in a row, 44 px each on a touch screen, in a 244 px column; with a mouse they're 34 px, and keep their 10 px) */
 }
 
@@ -1386,7 +1531,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
    with no room for moss hanging off it, so the moss stays on the log, and
    the leaves rest beside its corners in the gap, on the column's side. */
 @media (min-aspect-ratio: 5/4) and (max-height: 500px) and (min-width: 480px) {
-  body { padding-top: var(--safe-t); padding-bottom: var(--safe-b); }
+  :root { --pad-t: var(--safe-t); --pad-b: var(--safe-b); }
   main {
     /* (--tall: the screen's height inside its safe area. The column takes
        all of it, though the board, on a screen under about 600 px wide,
@@ -1397,25 +1542,25 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
     height: var(--tall);
     overflow: hidden; /* (before Safari 16) */
     overflow: visible clip; /* (clipped top and bottom only: a focus ring at the column's left edge stays whole) */
-    grid-template-rows: auto auto auto minmax(0, max-content) auto 1fr;
     gap: 0 24px; /* (the woodpecker's room, where the screen has no margin to spare: 24 px, and the column at least 244) */
   }
   header { grid-row: 1; margin-top: 6px; margin-bottom: 6px; row-gap: 4px; }
   .scoreboard { grid-row: 2; margin-bottom: 6px; gap: 4px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .speed { grid-row: 3; margin-top: 0; margin-bottom: 6px; }
-  .chatter { grid-row: 4; margin-top: 0; max-height: 100%; display: flex; flex-direction: column; padding: 4px 10px 6px; }
-  /* (the chatter's height cuts its log, not its padding, and never to less
-     than a line; a new line still slides in from the side. Where a line is
-     cut, the log ends at its last whole row: snake.js fitLog) */
-  .chatlog { min-height: 1.6em; overflow: hidden; overflow: visible clip; }
-  .help { grid-row: 5; margin-top: 6px; margin-bottom: 4px; font-size: 0.74rem; }
+  /* (the column's short: the help beside the switch, in smaller words;
+     watching, the speed buttons have the row over them) */
+  .foot { gap: 4px 8px; }
+  .foot .help { order: 0; flex: 1 1 140px; font-size: 0.74rem; }
+  main.help-yields .speed > span { display: none; } /* (where the help gives way, the switch has room beside the buttons without the word: the group's name says it) */
+  .chatter { margin-bottom: 4px; } /* (4 px off the screen's bottom) */
+  .chatter-head { margin-top: 4px; padding: 3px 10px 0; font-size: 0.8rem; }
+  .chatlog { padding: 2px 10px 5px; font-size: 0.82rem; }
+  .chatter[data-fit="strip"] .chatlog { margin-top: 4px; padding-top: 3px; }
   .frame { grid-row: 1 / -1; padding: 5px; border-radius: 12px; }
   h1 { font-size: 1.4rem; white-space: nowrap; }
   .tagline { display: none; }
   .hud .stat { font-size: 0.9rem; }
   .scoreboard li { padding: 3px 7px 6px; gap: 4px; font-size: 0.84rem; }
   .scoreboard .hunger { left: 7px; right: 7px; bottom: 2px; }
-  .chatlog { margin-top: 2px; font-size: 0.82rem; }
   .moss.top, .moss.bottom, .leaves.tr, .leaves.br { display: none; }
   .leaves { width: 24px; height: 24px; scale: -1 1; } /* (turned round: growing from the rim out into the gap) */
   .leaves.tl { left: -21px; top: 3px; }
@@ -1423,12 +1568,6 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   @supports (height: 1dvh) {
     main { --tall: calc(100dvh - var(--safe-t) - var(--safe-b)); }
   }
-  /* Watching, the speed buttons take a row; where the chatter's log would
-     then have no room for a whole row of words (a screen 320 px tall less a
-     notch's home bar, say), the help, which only says what they do, gives
-     the chatter its room (snake.js fitColumn decides, the help shown). */
-  main.help-yields .help { display: none; }
-  main.help-yields .chatter { max-height: calc(100% - 4px); } /* (still 4 px off the screen's bottom, as the help was) */
 }
 
 /* The header over the board (wider than a phone, not beside the board):
@@ -1439,7 +1578,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
    word, else it's its picture, round like the icons beside it (its name in
    its tooltip, and for a screen reader). The steps are the page's width,
    which is the window's less 24 px, or less on a short window, where the
-   page narrows with the board (a 460×612 window's page is 352 px): with six
+   page narrows with the board (a 460×612 window's page is 292 px): with six
    buttons (full screen, where the browser allows it) and with five (an
    older Safari, a page in a frame without full screen, which had the
    doors' pictures where their words fit), a mouse's 34 px buttons and a
@@ -1454,8 +1593,10 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
    | ...the Field guide named     | 317        | any  | 347        | 297  |
    | ...the title 2rem            | 352        | 352  | 348        | 348  |
 
-   (A 1920×1080 screen's maximized browser is a 685 px page, 653 with a
-   bookmarks bar; an iPad mini held upright 720, an iPad 744. In two rows
+   (Half a 1920×1080 screen, 960×945, is a 694 px page, and a 2560×1440
+   screen's maximized browser a 900 px one; an iPad mini held upright 720,
+   an iPad 744. A 1080p screen's maximized browser, 685 px and 653 with a
+   bookmarks bar here, has the column beside the board now. In two rows
    the doors' words had the buttons' row from 280 px up, and narrower than
    384 px the full-screen button went onto a row of its own; under 352 the
    title went onto two lines beside Score and Best, 32 px. Under that the
@@ -1600,7 +1741,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
    where the trophy always was. Six icons in a row need 254 px with a mouse,
    294 with touch; where they don't fit (the full-screen button wrapped onto
    a row of its own), it goes up a row (below). */
-@media (min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px) {
+@media (min-aspect-ratio: 5/4) and (max-height: 1180px) and (min-width: 480px) {
   header { container: column / inline-size; }
   .hud .trophy { min-height: 34px; padding: 0 8px; } /* (as icons, round like the others beside them) */
 }
@@ -1610,9 +1751,11 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
    door). The row costs 50 px, so it's there only where the column still
    ends above the board's bottom with the chatter's log full (five lines): a
    window 700 px tall or more with a mouse, 780 with touch, and a column of
-   236 px or more, where both names share the row. */
+   236 px or more, where both names share the row. (The column is the
+   board's height now, the chatter what's left of it: where it's short, the
+   row costs the chatter a line, never a scroll.) */
 @media not all and (pointer: coarse) {
-  @media (min-aspect-ratio: 5/4) and (min-height: 700px) and (max-height: 900px) and (min-width: 480px) {
+  @media (min-aspect-ratio: 5/4) and (min-height: 700px) and (max-height: 1180px) and (min-width: 480px) {
     @container column (min-width: 236px) {
       .hud::before { content: ''; order: 3; flex-basis: 100%; } /* (the row's break: .hud has no box here, so its ::before is one of the header's items) */
       .hud .trophy { order: 4; gap: 5px; min-height: 34px; padding: 0 10px 0 8px; }
@@ -1620,7 +1763,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
     }
   }
 }
-@media (pointer: coarse) and (min-aspect-ratio: 5/4) and (min-height: 780px) and (max-height: 900px) and (min-width: 480px) {
+@media (pointer: coarse) and (min-aspect-ratio: 5/4) and (min-height: 780px) and (max-height: 1180px) and (min-width: 480px) {
   @container column (min-width: 236px) {
     .hud::before { content: ''; order: 3; flex-basis: 100%; }
     .hud .trophy { order: 4; gap: 5px; min-height: 44px; padding: 0 12px 0 10px; }
@@ -1641,7 +1784,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
    column of 264 to 293 px, where the title is one line, has it end Score
    and Best's row instead (25 px taller, not 50). */
 @media not all and (pointer: coarse) {
-  @media (min-aspect-ratio: 5/4) and (min-height: 501px) and (max-height: 900px) and (min-width: 480px) {
+  @media (min-aspect-ratio: 5/4) and (min-height: 501px) and (max-height: 1180px) and (min-width: 480px) {
     @container column (max-width: 235px) {
       header:has(#fullscreen:not([hidden])) .hud button { width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0; margin-right: -6px; } /* (4 px apart: the header's 10 less 6) */
     }
@@ -1652,7 +1795,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
     }
   }
 }
-@media (pointer: coarse) and (min-aspect-ratio: 5/4) and (min-height: 501px) and (max-height: 900px) and (min-width: 480px) {
+@media (pointer: coarse) and (min-aspect-ratio: 5/4) and (min-height: 501px) and (max-height: 1180px) and (min-width: 480px) {
   @container column (max-width: 235px) {
     header:has(#fullscreen:not([hidden])) .brand { flex-basis: calc(100% - 50px); }
     .hud .stat { order: 1; }
@@ -1718,7 +1861,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
    apart; the doors are a fingertip's 44 px too. A narrower column, 216 to
    243 px, a 4:3 or 5:4 touch screen in full screen, has them 40 px, 4 px
    apart: at 44 the trophy wrapped onto a row of its own.) */
-@media (pointer: coarse) and (min-aspect-ratio: 5/4) and (max-height: 900px) and (min-width: 480px) {
+@media (pointer: coarse) and (min-aspect-ratio: 5/4) and (max-height: 1180px) and (min-width: 480px) {
   header { column-gap: 6px; }
   .hud .trophy { min-height: 44px; }
   @container column (max-width: 243px) {
@@ -1728,6 +1871,7 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
 
 /* Touch: comfortable targets. */
 @media (pointer: coarse) {
+  main { --foot: 44px; } /* (the row under the board: the switch and the speed buttons a fingertip's height) */
   button, .text-button, button.link, input { min-height: 44px; }
   button.small, .speed button, .tab, .close, button.icon { min-width: 44px; }
   .speed { gap: 10px; }
@@ -1752,5 +1896,6 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
   .name-row input, .lobby input { border: 1px solid FieldText; }
   .name-row input:focus-visible, .lobby input:focus-visible { outline: 2px solid Highlight; }
   h1 .snake-s { color: inherit; } /* (the plain letter: the drawing keeps its own colours, so it goes) */
+  #chatter-toggle::before { forced-color-adjust: none; background: ButtonText; } /* (the switch's bubble in the button's own text colour) */
   h1 .snake-s > i { display: none; }
 }
