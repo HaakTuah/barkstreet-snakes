@@ -184,71 +184,108 @@ const REACH = sels => `(() => [...document.querySelectorAll(${JSON.stringify(sel
 }))()`;
 
 // The woodpecker for a spot (cells), drawn on the held board: perched,
-// resting (pose false) or eyeing its chunk (true: crouched, its head turned
-// to it), or, a number k, its strike due k ticks from now (2, 1: flying out
-// to it; -1: drumming it). Then its own layer's pixels read back: where it
-// is (CSS px), how many of them lie over the board's cells and over each of
-// the page's furniture (rects, CSS px), and the edges of the screen it's cut
-// off at (the layer is the screen: its pixels in the layer's outermost rows
-// or columns run on past it).
+// resting (pose false: its head turned as far up and down as it looks
+// round, and level) or eyeing its chunk (true: its head turned and tilted
+// to it, crouched as it's about to take off). Then its own layer's pixels
+// read back: where it is (CSS px), how many of them lie over the board's
+// cells and over each of the page's furniture (rects, CSS px), and the
+// edges of the screen it's cut off at (its solid pixels on the screen's
+// outermost rows or columns, which run on past it; or on its layer's, where
+// that ends inside the screen: cut off by its layer). Its layer is the board
+// and the room round it, placed with CSS, not the screen.
 const PERCH = (x, y, pose, rects = {}) => `(() => {
-  const g = SnakeDebug.game();
+  const g = SnakeDebug.game(), R = SnakeRender, E = SnakeEngine, cell = ${y * 24 + x};
   g.time = Math.max(g.time, TUNING.SUDDEN_DEATH_MS + 1000);
-  g.woodpecker = null; SnakeDebug.draw(); // (gone a moment, so it's placed afresh rather than hopping over)
-  const aim = ${pose !== false}, k = ${typeof pose === 'number' ? pose : 4};
-  g.woodpecker = { x: ${x}, y: ${y}, at: g.time, target: aim ? [${y * 24 + x}] : [], strikeAt: aim ? g.tick + k : -1, last: [], struckAt: -1, restUntil: g.tick + 1e6 };
-  SnakeDebug.draw();
+  g.woodpecker = null; SnakeDebug.draw(); // (gone a moment, so it's placed afresh rather than flying over)
+  const aim = ${pose !== false}, ms = E.tickMs(g);
+  let now = performance.now();
+  g.woodpecker = { x: ${x}, y: ${y}, at: g.time, target: aim ? [cell] : [], strikeAt: aim ? g.tick + 17 : -1, last: aim ? [cell] : [], struckAt: aim ? g.tick - 60 : -1, restUntil: aim ? g.tick : g.tick + 1e6, pecks: aim ? 1 : 0 };
+  R.frame(0.5, now += 16);
   const L = document.getElementById('bird-layer');
   if (!L || L.style.display === 'none') return null;
-  const sx = L.width / innerWidth, sy = L.height / innerHeight;
-  const data = L.getContext('2d').getImageData(0, 0, L.width, L.height).data;
-  const b = document.getElementById('game').getBoundingClientRect();
-  const bx0 = Math.floor(b.left * sx), bx1 = Math.ceil(b.right * sx), by0 = Math.floor(b.top * sy), by1 = Math.ceil(b.bottom * sy);
-  const R = Object.entries(${JSON.stringify(rects)}).map(([k, f]) => [k, Math.floor(f.x * sx), Math.ceil(f.r * sx), Math.floor(f.y * sy), Math.ceil(f.b * sy)]), on = {};
-  let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, over = 0;
-  for (let j = 0; j < L.height; j++) for (let i = 0; i < L.width; i++) {
-    if (data[(j * L.width + i) * 4 + 3] < 24) continue; // (not its faint shadow's edge)
-    if (i < x0) x0 = i; if (i > x1) x1 = i; if (j < y0) y0 = j; if (j > y1) y1 = j;
-    if (i >= bx0 && i < bx1 && j >= by0 && j < by1) over++;
-    for (const [k, l, r, t, bt] of R) if (i >= l && i < r && j >= t && j < bt) on[k] = (on[k] || 0) + 1;
+  const read = () => {
+    const lb = L.getBoundingClientRect(), sx = L.width / lb.width, sy = L.height / lb.height, W = L.width, H = L.height;
+    const data = L.getContext('2d').getImageData(0, 0, W, H).data;
+    const b = document.getElementById('game').getBoundingClientRect();
+    const bx0 = Math.floor((b.left - lb.left) * sx), bx1 = Math.ceil((b.right - lb.left) * sx), by0 = Math.floor((b.top - lb.top) * sy), by1 = Math.ceil((b.bottom - lb.top) * sy);
+    const Rs = Object.entries(${JSON.stringify(rects)}).map(([k, f]) => [k, Math.floor((f.x - lb.left) * sx), Math.ceil((f.r - lb.left) * sx), Math.floor((f.y - lb.top) * sy), Math.ceil((f.b - lb.top) * sy)]), on = {};
+    const el = Math.max(0, Math.floor(-lb.left * sx)), er = Math.min(W - 1, Math.ceil((innerWidth - lb.left) * sx) - 1), et = Math.max(0, Math.floor(-lb.top * sy)), eb = Math.min(H - 1, Math.ceil((innerHeight - lb.top) * sy) - 1); // (the screen's edges, or its layer's inside them)
+    let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, over = 0, cl = false, cr = false, ct = false, cb = false;
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const a = data[(j * W + i) * 4 + 3];
+      if (a < 24) continue; // (not its faint shadow's edge)
+      if (i < x0) x0 = i; if (i > x1) x1 = i; if (j < y0) y0 = j; if (j > y1) y1 = j;
+      if (i >= bx0 && i < bx1 && j >= by0 && j < by1) over++;
+      for (const [k, l, r, t, bt] of Rs) if (i >= l && i < r && j >= t && j < bt) on[k] = (on[k] || 0) + 1;
+      if (a >= 200) { cl ||= i <= el; cr ||= i >= er; ct ||= j <= et; cb ||= j >= eb; } // (not the soft edge of a line ending a hair inside the screen)
+    }
+    if (x1 < 0) return null;
+    return { over, on, cut: [cl && 'left', ct && 'top', cr && 'right', cb && 'bottom'].filter(Boolean), x: lb.left + x0 / sx, y: lb.top + y0 / sy, r: lb.left + (x1 + 1) / sx, b: lb.top + (y1 + 1) / sy };
+  };
+  const all = [];
+  if (aim) { // (its head turned and tilted to its chunk, crouched to take off)
+    const depart = R.birdPlan().depart + 2, K = Math.ceil(depart / ms);
+    g.woodpecker.strikeAt = g.tick - 1 + K;
+    for (let i = 0; i < 12; i++) R.frame(K - depart / ms, now += 16);
+    all.push(read());
+  } else {
+    for (const turn of [-1.2, 1.2, 0]) { R.birdLook(turn); for (let i = 0; i < 3; i++) R.frame(0.5, now += 16); all.push(read()); }
+    R.birdLook(null);
   }
-  if (x1 < 0) return null;
-  const solid = (i, j) => data[(j * L.width + i) * 4 + 3] >= 200; // (not the soft edge of a line ending a hair inside the screen)
-  let cl = false, cr = false, ct = false, cb = false;
-  for (let j = 0; j < L.height; j++) { cl = cl || solid(0, j); cr = cr || solid(L.width - 1, j); }
-  for (let i = 0; i < L.width; i++) { ct = ct || solid(i, 0); cb = cb || solid(i, L.height - 1); }
-  const cut = [cl && 'left', ct && 'top', cr && 'right', cb && 'bottom'].filter(Boolean);
-  return { over, on, cut, x: x0 / sx, y: y0 / sy, r: (x1 + 1) / sx, b: (y1 + 1) / sy, h: (y1 - y0 + 1) / sy };
+  if (all.some(q => !q)) return null;
+  const on = {};
+  for (const q of all) for (const k in q.on) on[k] = Math.max(on[k] || 0, q.on[k]);
+  const p = { over: Math.max(...all.map(q => q.over)), on, cut: [...new Set(all.flatMap(q => q.cut))], x: Math.min(...all.map(q => q.x)), y: Math.min(...all.map(q => q.y)), r: Math.max(...all.map(q => q.r)), b: Math.max(...all.map(q => q.b)) };
+  p.h = p.b - p.y;
+  return p;
 })()`;
 const SPOTS = [[1, 1], [12, 1], [22, 1], [1, 12], [12, 12], [22, 12], [1, 22], [6, 22], [12, 22], [17, 22], [22, 22]];
 
-// The woodpecker flying out to a spot and drumming it, through its whole
-// wingbeat: at points all along the flight out, from just off its perch to
-// the moment before the strike, and drumming, each drawn at eight moments of
-// the beat (it beats every 2π × 55 ms, and its head drives as it drums);
-// then which edges of the screen it's cut off at, flying and drumming (its
-// solid pixels in its layer's outermost rows or columns: the layer is the
-// screen). A wing that reaches past the screen at one moment of the beat
-// and not another is still caught.
-const FLIGHT = (x, y) => `(() => {
-  const g = SnakeDebug.game();
+// The woodpecker working a spot, from (another spot it rested at before,
+// the same by default) through its whole aim and its rest after: the hop
+// to its perch, the flight out, landing, drumming, lingering at the hole,
+// the flight home and settling, drawn every 10 ms of its plan (a wingbeat
+// is 104 ms: each beat seen at ten moments, its bounds and dips too);
+// then which edges of the screen it's cut off at, flying (to the spot and
+// home) and drumming (its solid pixels on the screen's outermost rows or
+// columns, or on its layer's where that ends inside the screen). A wing
+// that reaches past the screen at one moment of the beat and not another
+// is still caught.
+const FLIGHT = (x, y, from = [x, y]) => `(() => {
+  const g = SnakeDebug.game(), R = SnakeRender, E = SnakeEngine, cell = ${y * 24 + x}, prev = ${from[1] * 24 + from[0]};
   g.time = Math.max(g.time, TUNING.SUDDEN_DEATH_MS + 1000);
-  const L = document.getElementById('bird-layer'), G = L.getContext('2d'), W = L.width, H = L.height;
-  const solid = (a, b, c, d) => { const p = G.getImageData(a, b, c, d).data; for (let i = 3; i < p.length; i += 4) if (p[i] >= 200) return true; return false; };
+  const L = document.getElementById('bird-layer'), G = L.getContext('2d'), ms = E.tickMs(g);
   const cut = { fly: new Set(), drum: new Set() };
+  let now = performance.now();
   g.woodpecker = null; SnakeDebug.draw();
-  const t0 = performance.now();
-  // (k, alpha: its strike k ticks off, drawn alpha through the tick: how far out it's flown, 0.1 to 0.99 of the way, or drumming)
-  for (const [k, a] of [[3, 0.75], [2, 0.25], [2, 0.75], [1, 0], [1, 0.5], [1, 0.875], [1, 0.975], [-1, 0.5]]) {
-    g.woodpecker = { x: ${x}, y: ${y}, at: g.time, target: [${y * 24 + x}], strikeAt: g.tick + k, last: [], struckAt: -1, restUntil: g.tick + 1e6 };
-    for (let i = 0; i < 8; i++) {
-      SnakeRender.frame(a, t0 + i * 43.2);
-      const at = k < 0 ? cut.drum : cut.fly;
-      if (solid(0, 0, 1, H)) at.add('left');
-      if (solid(0, 0, W, 1)) at.add('top');
-      if (solid(W - 1, 0, 1, H)) at.add('right');
-      if (solid(0, H - 1, W, 1)) at.add('bottom');
-    }
+  g.woodpecker = { x: ${x}, y: ${y}, at: g.time, target: [cell], strikeAt: g.tick + 17, last: [prev], struckAt: g.tick - 60, restUntil: g.tick, pecks: 1 };
+  R.frame(0.5, now += 16);
+  const plan = R.birdPlan(), lb = L.getBoundingClientRect(), sx = L.width / lb.width, sy = L.height / lb.height, W = L.width, H = L.height;
+  const el = Math.max(0, Math.floor(-lb.left * sx)), er = Math.min(W - 1, Math.ceil((innerWidth - lb.left) * sx) - 1), et = Math.max(0, Math.floor(-lb.top * sy)), eb = Math.min(H - 1, Math.ceil((innerHeight - lb.top) * sy) - 1);
+  // (the four edges laid end to end in one row, read back once a frame: the top, the bottom, the left and the right)
+  const S = document.createElement('canvas'); S.width = 2 * W + 2 * H; S.height = 1;
+  const sg = S.getContext('2d', { willReadFrequently: true }); sg.imageSmoothingEnabled = false;
+  const look = at => {
+    sg.setTransform(1, 0, 0, 1, 0, 0); sg.clearRect(0, 0, S.width, 1);
+    sg.drawImage(L, 0, et, W, 1, 0, 0, W, 1); sg.drawImage(L, 0, eb, W, 1, W, 0, W, 1);
+    sg.setTransform(0, 1, 1, 0, 2 * W, 0); sg.drawImage(L, el, 0, 1, H, 0, 0, 1, H);
+    sg.setTransform(0, 1, 1, 0, 2 * W + H, 0); sg.drawImage(L, er, 0, 1, H, 0, 0, 1, H);
+    const p = sg.getImageData(0, 0, S.width, 1).data;
+    for (let i = 0; i < S.width; i++) if (p[i * 4 + 3] >= 200) at.add(i < W ? 'top' : i < 2 * W ? 'bottom' : i < 2 * W + H ? 'left' : 'right');
+  };
+  for (let m = prev === cell ? plan.depart + 10 : plan.aim; m >= 0; m -= 10) { // (m ms to the strike: its hop, if it has one, then off its perch)
+    const K = Math.ceil(m / ms);
+    g.woodpecker.strikeAt = g.tick - 1 + K;
+    R.birdFrame(K - m / ms, now += 10); // (the bird alone: the board stays as it is)
+    look(m > plan.drum ? cut.fly : cut.drum);
+  }
+  g.woodpecker = { x: ${x}, y: ${y}, at: g.time, target: [], strikeAt: -1, last: [cell], struckAt: -1, restUntil: -1, pecks: 2 };
+  for (let m = 0; m <= 1200; m += 10) { // (m ms after it)
+    const K = Math.floor(m / ms);
+    g.woodpecker.struckAt = g.woodpecker.strikeAt = g.tick - 1 - K; g.woodpecker.restUntil = g.woodpecker.struckAt + TUNING.PECK_REST_MIN;
+    R.birdFrame(m / ms - K, now += 10);
+    if (m > R.birdHome() + 40) break;
+    look(m < plan.linger ? cut.drum : cut.fly);
   }
   g.woodpecker = null; SnakeDebug.draw();
   return { fly: [...cut.fly], drum: [...cut.drum] };
@@ -476,28 +513,20 @@ const r1 = v => Math.round(v * 10) / 10;
       }
       d.bird = `${r1(small)}-${r1(Math.max(...tall))}`;
 
-      // Flying out to a spot at the board's edge or corner, or near the
-      // screen's edge on the bottom row, and drumming it, through its whole
-      // wingbeat: on the ledge, never cut off by the screen's edge (it
-      // stands on the middle's side of a spot near the screen's edge, so its
-      // wings beat over the board); beside the board, its drum away from
-      // the bottom rows isn't either. The rest is the flight's and the
-      // drum's own pose, not the perch's, and is printed: with the board
-      // meeting the screen's bottom, the drum at the bottom rows hangs past
-      // it; flying in to the top row at the corners, a wingbeat reaches past
-      // the screen's top; and from a perch near the screen's edge the wings
-      // beat past it as it takes off.
-      if (upright || side) {
-        const ledge = upright && !d.short;
+      // Flying out to a spot at the board's edges and corners (from its own
+      // perch, and from the far corner's), drumming it, lingering and flying
+      // home, through its whole wingbeat: never cut off by the screen's edge
+      // (nor by its own layer). To drum at the screen's edge it leans, turns
+      // round or lies level, beak down (the bottom rows, with the board's
+      // bottom at the screen's), and flying near the edge it keeps in from
+      // it, a wing beating short of it.
+      {
         const flights = [];
-        for (const [x, y] of FLIGHT_SPOTS) flights.push({ x, y, f: await ev(FLIGHT(x, y)) });
+        for (const [x, y] of FLIGHT_SPOTS) for (const from of [[x, y], [23 - x, 23 - y]]) flights.push({ x, y, from, f: await ev(FLIGHT(x, y, from)) });
         const cuts = f => [...f.f.fly.map(e => ({ what: 'flying', e })), ...f.f.drum.map(e => ({ what: 'drumming', e }))];
-        const owed = (f, c) => ledge || (!gutter && c.what === 'drumming' && f.y < 20); // (what the perch answers for: from a gutter with no room, nothing more than before)
-        const say = (f, list) => `${f.x},${f.y} ${[...new Set(list.map(c => c.what))].map(w => `${w} (${list.filter(c => c.what === w).map(c => c.e).join(', ')})`).join(', ')}`;
-        const cutOff = flights.map(f => ({ f, list: cuts(f).filter(c => owed(f, c)) })).filter(q => q.list.length);
-        check(!cutOff.length, `${tag}: ${ledge ? 'flying out to a spot at the board\'s edge and drumming it' : 'drumming a spot at the board\'s left or right edge, off the bottom rows'}, through the whole wingbeat, it isn't cut off by the screen`, cutOff.map(q => `cut off: ${say(q.f, q.list)}`).join('; ') || `${flights.length} spots`);
-        const known = flights.map(f => ({ f, list: cuts(f).filter(c => !owed(f, c)) })).filter(q => q.list.length);
-        if (known.length) d.drumGap = known.map(q => say(q.f, q.list)).join('; ');
+        const say = (f, list) => `${f.x},${f.y} from ${f.from} ${[...new Set(list.map(c => c.what))].map(w => `${w} (${list.filter(c => c.what === w).map(c => c.e).join(', ')})`).join(', ')}`;
+        const cutOff = flights.filter(f => cuts(f).length);
+        check(!cutOff.length, `${tag}: flying out to a spot at the board's edges and corners, drumming it and flying home, through the whole wingbeat, it isn't cut off by the screen's edge`, cutOff.map(f => `cut off: ${say(f, cuts(f))}`).join('; ') || `${flights.length} flights`);
       }
 
       if (side) await chatterFull(tag, false, d.insets);
@@ -777,11 +806,6 @@ const r1 = v => Math.round(v * 10) / 10;
     if (between.length) {
       console.log('\nheld upright, heights in between (CSS px): the board (before) and the woodpecker perched, its smallest');
       for (const s of between) console.log(`  ${`${s.w}×${s.h}`.padEnd(10)} ${r1(s.board)} (${s.before}), ${r1(s.bird)}`);
-    }
-    const gaps = DEVICES.filter(d => d.drumGap);
-    if (gaps.length) {
-      console.log('\nknown, for the woodpecker\'s own later work (its flight and its drum, not its perch), cut off by the screen\'s edge:');
-      for (const d of gaps) console.log(`  ${d.name.padEnd(48)} ${d.drumGap}`);
     }
     if (b.errors.length) { console.log('page errors:', b.errors); failed++; }
   } finally {

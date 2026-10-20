@@ -1,9 +1,18 @@
 #!/usr/bin/env node
 // Headless balance check. Plays AI-only rounds with the game's own rules and
 // AI (tuning.js, ai.js and engine.js, loaded unchanged) and prints how each
-// personality did. Runs on all cores; needs only Node.
+// personality did. Needs only Node. It's gentle on the machine by default:
+// half the cores, at below-normal priority (whoever's using the computer
+// comes first), one run at a time across the machine (a second run waits
+// its turn), and a seeded round already played with the same files and
+// options is read back from a cache instead of played again (round by
+// round: 600 rounds after 200 plays only the 400 new ones). The files are
+// read once its turn has come, and the cores play those very texts, so what
+// a round is stored under is always what played it, even if a file is edited
+// while the run waits or plays.
 //
-//   node tools/simulate.js [rounds] [--seed N] [--ahead] [--check] [--json] [--census] [--root DIR]
+//   node tools/simulate.js [rounds] [--seed N] [--ahead] [--check] [--json] [--census] [--signatures] [--root DIR]
+//                          [--save-at MS [--save FILE]] [--from FILE] [--per-round] [--workers N] [--fresh] [--no-wait]
 //
 //   rounds    how many rounds (default 200)
 //   --seed N  a fixed random seed, so a run can be repeated exactly (each round
@@ -16,42 +25,102 @@
 //   --census  also print what a round holds: golden things, weather and
 //             lightning, the woodpecker (and any aim it had to make near a
 //             head), the powers used, how sudden death goes, and how hungry
-//             snakes are before the woodpecker comes and after
+//             snakes are before the woodpecker comes and after (and how
+//             often a snake eats mid-round, from HUNGER_MID_FROM_MS to the
+//             woodpecker: meals a snake-minute), and the
+//             beads: how many were eaten (and how many by the snake they
+//             broke off), how often a snake choked on its own, and what it
+//             nudged aside coughing; the beetles: how each time one is above
+//             ground ends (caught, down a burrow, dug in, flown, eaten by the
+//             woodpecker), the same for those chased and how long a catch
+//             took, digs (and those caught digging), dives into a burrow a dig left, burrows open and
+//             cells free for an apple; the woodpecker's fairness: food it
+//             knocked aside (and how much of it a snake ate where it landed,
+//             within 6 s, and how soon), marks that shut a snake in and the deaths they
+//             made (out within 3 s of the strike, of sudden death's), islands
+//             of one or two cells it cut off, and how often the snake on the
+//             biggest island won once the last ones were each on their own;
+//             and a table of it for each
+//             personality: its flashes and jumps a minute, golden power food
+//             picked up, golden leaps and dashes used, chokes, crashes
+//             survived, time alive, food and kills
+//   --signatures  also print each personality's trademark, measured on
+//             every snake so each has the field to stand against: Mason's
+//             straight runs and its body lying beside itself, Ouroboros's
+//             coils, Creeper riding tails, Ghost's distance, Gobbler's share
+//             of the food and Vulture's of the beads, Sovereign at home,
+//             Mute boxing its target, Joker's lures, Desperado's skims and
+//             Star's powers (see SIGNS)
 //   --root    play another copy of the game (to compare versions)
+//   --save-at MS  fast-forward: play each round only to game time MS (2:00,
+//             when the woodpecker comes, is 120000) and store it as it stands
+//             then, the game and where its random numbers had got to (a round
+//             over before then is stored whole). Needs --seed. The rounds are
+//             kept with the cache (its file is printed; again with the same
+//             files only new rounds are played); --save FILE copies them there
+//   --from FILE  go on with the rounds stored in FILE (all of them, or the
+//             first `rounds`), under this copy's files (--root): with the
+//             files that stored them, every round comes out exactly as played
+//             straight through; with others, they play the rest of the round
+//             their way. The numbers are the whole round's (the part before
+//             the save is the same for every copy). A study of the late game
+//             (sudden death, say) needn't play the openings again
+//   --per-round  with --json, each round's own numbers too (rounds, in order: what tools/abtest.js pairs)
+//   --workers N  how many cores to use (default: half of them; or SIM_WORKERS)
+//   --fresh   play it even if the cache has it
+//   --no-wait don't wait for another run on the machine to finish
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const vm = require('vm');
+const zlib = require('zlib');
+const crypto = require('crypto');
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 
 // (Workers don't see the command line, so the root travels with each job.)
 const argRoot = process.argv.indexOf('--root');
 const ROOT = isMainThread ? (argRoot > 0 ? path.resolve(process.argv[argRoot + 1]) : path.join(__dirname, '..')) : workerData.root;
 const MAX_TIME = 600000; // a round still going after 10 minutes counts as stalled
+const GAME_FILES = ['tuning.js', 'ai.js', 'engine.js'];
 
-// mulberry32: a small, fast seeded random number generator.
+// A CommonJS file run from its text, as if required from where it lies: how
+// a core runs this file and the state store, as they were read for the key.
+function fromText(text, file) {
+  const mod = { exports: {} };
+  vm.compileFunction(text.replace(/^#!.*/, ''), ['exports', 'require', 'module', '__filename', '__dirname'], { filename: file })
+    .call(mod.exports, mod.exports, require('module').createRequire(file), mod, file, path.dirname(file));
+  return mod.exports;
+}
+// What a core starts with: this file's text as the run began (not as the file
+// is by then), through fromText.
+const BOOT = `const vm = require('vm'), path = require('path'), { workerData } = require('worker_threads');
+(${fromText})(workerData.self, workerData.selfFile);`;
+
+// mulberry32: a small, fast seeded random number generator. (state(): where
+// it's got to; seeded(that) goes on from there.)
 function seeded(seed) {
   let a = seed >>> 0;
-  return () => {
+  const next = () => {
     a = (a + 0x6d2b79f5) >>> 0;
     let t = a;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+  next.state = () => a;
+  return next;
 }
 
-// The game's files in a fresh context, with our own Math.random.
-// Math.random draws from `rng`, which can be reseeded for every round.
+// The game's files (texts, in GAME_FILES order) in a fresh context, with our
+// own Math.random. Math.random draws from `rng`, which can be reseeded for
+// every round.
 let rng = Math.random;
-function loadGame() {
+function loadGame(texts) {
   const M = Object.create(Math);
   M.random = () => rng();
   const ctx = vm.createContext({ window: {}, console, Math: M });
-  for (const f of ['tuning.js', 'ai.js', 'engine.js']) {
-    vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
-  }
-  return { E: ctx.window.SnakeEngine, T: ctx.window.TUNING };
+  GAME_FILES.forEach((f, i) => vm.runInContext(texts[i], ctx, { filename: f }));
+  return { E: ctx.window.SnakeEngine, T: ctx.window.TUNING, ctx };
 }
 
 // How a snake died, finer than the game's killer field.
@@ -59,125 +128,419 @@ const causeOf = s => s.fatal === 'pecked' ? 'pecked' : s.fatal === 'boom' ? 'boo
   : /woodpecker hole/.test(s.cause) ? 'hole' : s.killer === 'wall' ? 'wall' : /cut in two/.test(s.cause) ? 'cut'
   : s.cause.startsWith('crashed') ? 'head-on' : 'body';
 
-// What --census counts (summed over rounds; rounds: how many rounds had any).
+// What --census counts (summed over rounds; rounds: how many rounds had any;
+// an array: every round's, put together).
 const census = () => ({
   golden: 0, goldBeetles: 0, leaves: 0, goldcaps: 0, mushrooms: 0, strikes: 0, sun: 0, wind: 0, rain: 0, storm: 0, snow: 0,
   goldBeetleRounds: 0, leafRounds: 0, goldcapRounds: 0, stormRounds: 0, starvedEarly: 0,
   pecks: 0, holes: 0, aims: 0, aimsNear: 0, flashes: 0, jumps: 0, goldLeaps: 0, goldGot: 0, dashes: 0, pickups: 0, greedy: 0,
   aliveEarly: 0, hungryEarly: 0, starvingEarly: 0, aliveLate: 0, hungryLate: 0, starvingLate: 0, // (snake-ticks before and after the woodpecker: alive, in the hunger warning, starving)
+  beads: 0, ownBeads: 0, chokes: 0, chokeRounds: 0, nudges: 0, nudgedBeads: 0, // (beads eaten, and by the snake they broke off; chokes; food nudged aside coughing, and the beads among it)
+  knocks: 0, knockedEaten: 0, knockedTaken: 0, knockedTicks: [], digs: 0, digsCaught: 0, // (food the woodpecker's strike knocked aside, of it what it ate, with nowhere to knock it, and what a snake ate where it landed within 6 s, how many ticks after the strike; beetles digging in, and caught while digging)
+  midMs: 0, mealsMid: 0, // (mid-round, from HUNGER_MID_FROM_MS to the woodpecker: snake-time alive, and meals then, a snake's in a tick counted once)
+  // Each time a beetle is above ground (out of a burrow, to caught, down a
+  // burrow, dug in, flown off or eaten by the bird; a round's end leaves it
+  // out): all of them, and those chased (a head came within BEETLE_FEAR).
+  bugs: 0, bugsCaught: 0, bugsDived: 0, bugsDug: 0, bugsFlown: 0, bugsPecked: 0,
+  chases: 0, chasesCaught: 0, chasesDived: 0, chasesDug: 0, chasesFlown: 0, chasesPecked: 0, chaseTicks: [], // (chaseTicks: from a head first near to the catch)
+  divesDugBurrow: 0, // (dives into a burrow a dig left)
+  ticks: 0, burrowTicks: 0, ticksEarly: 0, freeEarly: 0, // (ticks, and burrows open summed over them; before the woodpecker, cells free for an apple summed over them)
+  // The woodpecker's fairness: aims whose mark left a snake less room than
+  // its length (timed: tails leaving), and of them, the snake out by 3 s
+  // (30 ticks) after the strike; islands of one or two cells a strike cut
+  // off (with food on them, a snake on them); and the rounds whose last
+  // snakes ended up on islands of their own, of them how often the one on
+  // the biggest won (chance: what a blind pick would get).
+  seals: 0, sealedOut: 0, crumbs: 0, crumbsFood: 0, crumbsSnake: 0, split: 0, splitBiggest: 0, splitChance: 0,
   causesSD: {}, sdTimes: [],
 });
 
-// Plays rounds [from, to) of the run, each from its own seed.
-function play({ from, to, seed, ahead }) {
-  const { E, T } = loadGame();
-  const per = {};
-  const total = { rounds: to - from, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {}, crashes: 0, alight: 0, cuts: 0, baked: 0, ash: 0, rot: 0, rotBeads: 0, census: census() };
-  const c = total.census;
-  // (Is any living head within the woodpecker's clearance of cell k?)
-  const nearHead = (g, k) => g.snakes.some(s => s.alive && Math.abs(s.body[0].x - k % T.GRID) + Math.abs(s.body[0].y - Math.floor(k / T.GRID)) <= T.PECK_CLEARANCE);
-  for (let r = from; r < to; r++) {
-    rng = seed == null ? Math.random : seeded(seed + r * 7919);
-    let trace = 0;
-    const g = E.createGame({ withPlayer: false });
-    for (const s of g.snakes) {
-      per[s.name] ||= { rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, beetles: 0, kills: 0, aliveMs: 0, deaths: {} };
-      per[s.name].rounds++;
-    }
-    const place = new Map();
-    const seen = new Set(), picked = g.snakes.map(() => 0); // (what this round had; golden power food each snake ate)
-    while (g.snakes.some(s => s.alive) && g.snakes.filter(s => s.alive).length > 1 && g.time < MAX_TIME) {
-      // In order, stopping at the first snake that must decide in the tick, so
-      // the random numbers are drawn in the same order as without --ahead.
-      if (ahead) for (const s of g.snakes) { if (!s.alive) continue; if (!E.canThinkAhead(g, s)) break; E.thinkAhead(g, s); }
-      const held = g.snakes.map(s => s.leaps), late = E.suddenDeath(g);
-      for (const s of g.snakes) if (s.alive) { const left = E.hungerLeft(g, s); c[late ? 'aliveLate' : 'aliveEarly']++; if (left < T.HUNGER_WARN_MS) c[late ? 'hungryLate' : 'hungryEarly']++; if (left < 0) c[late ? 'starvingLate' : 'starvingEarly']++; }
-      const dying = E.step(g);
-      for (const e of g.events) {
-        if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
-        else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
-        else if (e.type === 'flown') total.flown++;
-        else if (e.type === 'crash') total.crashes++;
-        else if (e.type === 'alight') total.alight++;
-        else if (e.type === 'cut') total.cuts++;
-        else if (e.type === 'baked') total.baked++;
-        else if (e.type === 'ash') total.ash++;
-        else if (e.type === 'rot') { if (e.kind === 'pellet') total.rotBeads++; else total.rot++; }
-        // (the rest only for --census)
-        else if ((e.type === 'spawn' && e.kind === 'golden') || e.type === 'rainbow') c.golden++;
-        else if (e.type === 'spawn') { c[e.kind === 'leaf' ? 'leaves' : 'goldcaps']++; seen.add(e.kind); }
-        else if (e.type === 'weather' && e.kind !== 'clear') { c[e.kind]++; seen.add(e.kind); }
-        else if (e.type === 'strike') c.strikes++;
-        else if (e.type === 'peck') c.pecks++;
-        else if (e.type === 'aim') { c.aims++; if (g.woodpecker.target.some(k => nearHead(g, k))) c.aimsNear++; }
-        else if (e.type === 'leap') { if (e.gold) c.goldLeaps++; else c.jumps++; }
-        else if (e.type === 'dash') { if (e.plain) c.flashes++; else c.dashes++; }
-        if (e.type === 'eat') {
-          if (e.kind === 'mushroom') c.mushrooms++;
-          if (e.gold || e.kind === 'leaf' || e.kind === 'goldcap') picked[e.snake.id]++;
-        }
+// The land in sudden death, for the census: 4-connected islands of cells
+// that aren't holes (comp: each cell's island, -1 a hole; sizes: each
+// island's), and a snake's timed room (as the woodpecker counts it).
+const land = { comp: null, q: null, sizes: [], holes: -1, free: null, seen: null, stamp: 0 };
+function landArrays(N) {
+  const C = N * N;
+  if (!land.comp) { land.comp = new Int32Array(C); land.q = new Int32Array(C); land.free = new Int32Array(C); land.seen = new Int32Array(C); }
+}
+function labelLand(g, N) {
+  const C = N * N;
+  landArrays(N);
+  const { comp, q } = land, sizes = [];
+  comp.fill(-1);
+  for (let k = 0; k < C; k++) {
+    if (comp[k] >= 0 || g.holes.has(k)) continue;
+    const id = sizes.length;
+    let r = 0, w = 0;
+    q[w++] = k; comp[k] = id;
+    while (r < w) {
+      const i = q[r++], x = i % N, y = (i - x) / N;
+      for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+        const nx = x + dx, ny = y + dy, ni = ny * N + nx;
+        if (nx < 0 || ny < 0 || nx >= N || ny >= N || comp[ni] >= 0 || g.holes.has(ni)) continue;
+        comp[ni] = id; q[w++] = ni;
       }
-      // (golden leaps got: what's held now, and spent this tick, over what was held)
-      for (const s of g.snakes) c.goldGot += Math.max(0, s.leaps + g.events.filter(e => e.type === 'leap' && e.gold && e.snake === s).length - held[s.id]);
-      const left = g.snakes.filter(s => s.alive).length;
-      for (const s of dying) {
-        place.set(s, left + 1);
-        per[s.name].aliveMs += g.time;
-        const cause = causeOf(s);
-        per[s.name].deaths[cause] = (per[s.name].deaths[cause] || 0) + 1;
-        total.causes[cause] = (total.causes[cause] || 0) + 1;
-        if (E.suddenDeath(g)) c.causesSD[cause] = (c.causesSD[cause] || 0) + 1;
-        if (cause === 'starved' && g.time < 60000) seen.add('starvedEarly');
-        const killer = g.snakes.find(o => o.name === s.killer && o !== s);
-        if (killer) per[killer.name].kills++;
-      }
-      // A cheap fingerprint of every move, to compare runs exactly.
-      for (const s of g.snakes) if (s.alive) trace = (trace * 31 + s.body[0].x * 24 + s.body[0].y + g.tick) % 1000000007;
     }
-    total.trace.push([r, trace]);
-    const alive = g.snakes.filter(s => s.alive);
-    if (g.time >= MAX_TIME) total.stalled++;
-    else if (alive.length === 1) { per[alive[0].name].wins++; place.set(alive[0], 1); }
-    else total.draws++;
-    for (const s of g.snakes) {
-      const p = per[s.name];
-      p.placeSum += place.get(s) || 1;
-      p.eaten += s.eaten;
-      p.pellets += s.pellets;
-      if (s.alive) p.aliveMs += g.time;
-    }
-    total.timeSum += g.time;
-    total.times.push(g.time);
-    if (E.suddenDeath(g)) { total.sudden++; c.sdTimes.push(g.time - T.SUDDEN_DEATH_MS); c.holes += g.holes.size; }
-    for (const k of ['goldBeetle', 'leaf', 'goldcap', 'storm', 'starvedEarly']) if (seen.has(k)) c[k === 'starvedEarly' ? k : k + 'Rounds']++;
-    for (const n of picked) { c.pickups += n; if (n > 2) c.greedy++; }
+    sizes.push(w);
   }
-  return { per, total, suddenAt: T.SUDDEN_DEATH_MS };
+  land.sizes = sizes;
+  land.holes = g.holes.size;
+}
+function timedRoom(g, N, s, shut, need) {
+  landArrays(N);
+  const { free, seen, q } = land, st = ++land.stamp, h0 = s.body[0].y * N + s.body[0].x;
+  seen[h0] = st; q[0] = h0;
+  let r = 0, w = 1, n = 0;
+  for (let d = 1; r < w && n < need; d++) {
+    const end = w;
+    while (r < end) {
+      const i = q[r++], x = i % N, y = (i - x) / N;
+      for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+        const nx = x + dx, ny = y + dy, ni = ny * N + nx;
+        if (nx < 0 || ny < 0 || nx >= N || ny >= N || seen[ni] === st || free[ni] > d || (shut && shut.has(ni))) continue;
+        seen[ni] = st; n++; q[w++] = ni;
+      }
+    }
+  }
+  return n;
+}
+// Cells an apple could drop on: no body, hole, food, burrow, fire or the woodpecker's mark.
+function freeCells(g, N) {
+  landArrays(N);
+  const { seen } = land, st = ++land.stamp;
+  let used = 0;
+  const take = k => { if (seen[k] !== st) { seen[k] = st; used++; } };
+  for (const s of g.snakes) if (s.alive) for (const c of s.body) take(c.y * N + c.x);
+  for (const k of g.holes) take(k);
+  for (const f of g.food) take(f.y * N + f.x);
+  for (const b of g.burrows) take(b.y * N + b.x);
+  for (const k of g.fires.keys()) take(k);
+  if (g.woodpecker) for (const k of g.woodpecker.target) take(k);
+  return N * N - used;
+}
+function timedGrid(g, N) {
+  landArrays(N);
+  const { free } = land;
+  free.fill(0);
+  for (const k of g.holes) free[k] = 1 << 30;
+  for (const s of g.snakes) {
+    if (!s.alive) continue;
+    const L = s.body.length, extra = Math.max(0, s.stunUntil - g.tick) + Math.max(0, s.grow);
+    s.body.forEach((c, j) => { const k = c.y * N + c.x; free[k] = Math.max(free[k], L - j + extra); });
+  }
+}
+const totals = () => ({ rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {}, crashes: 0, alight: 0, cuts: 0, baked: 0, ash: 0, rot: 0, rotBeads: 0, census: census() });
+
+// What --signatures measures, per snake (summed over its ticks and rounds;
+// each trademark is read against everyone else's, the field):
+//   moves, runs        moves made, and runs of them the same way (Mason: long straight runs)
+//   cells, beside      body cells, and those lying beside another part of the same body (Mason's thick walls)
+//   long, coiled       ticks 10 or more long, and of those, with the head within 3 of its own tail (Ouroboros)
+//   riding             ticks with the head within 2 of the tail end of a rival 8 or longer (Creeper)
+//   apart              distance from the nearest rival head, summed over ticks (capped at 14: Ghost)
+//   foodShare, beadShare  its share of the round's food eaten, and of the beads (summed over rounds: Gobbler, Vulture)
+//   homeTicks, atHome  ticks with a realm, and of those, the head on it (Sovereign)
+//   hunting, boxing    ticks with a target, and of those, closing the box: the target's head within 4 of its own (Mute: the rule its mood ring shows)
+//   luring             ticks with a rival head 2 to 4 away: just out of its reach, close enough to follow (Joker)
+//   skims              ticks with the head beside the edge, a hole or a body (not its own neck), or a rival head within 2 (Desperado)
+//   flashes, jumps     plain and golden flashes, and jumps of both kinds (Star: a minute alive)
+const SIGNS = ['moves', 'runs', 'cells', 'beside', 'long', 'coiled', 'riding', 'apart', 'foodShare', 'beadShare', 'homeTicks', 'atHome', 'hunting', 'boxing', 'luring', 'skims', 'flashes', 'jumps', 'ticks'];
+
+// Takes one tick's signatures, after the step (was: each snake's head and
+// heading before it, and whether it has moved yet this round; brought up to date).
+function signatures(g, T, per, was) {
+  const N = T.GRID, mark = signatures.mark ||= new Int32Array(N * N);
+  const stampOf = () => (signatures.stamp = (signatures.stamp || 0) + 1);
+  const alive = g.snakes.filter(s => s.alive);
+  const all = stampOf(); // (every living body's cells, for the skims)
+  for (const s of alive) for (const c of s.body) mark[c.y * N + c.x] = all;
+  const bodyAt = (x, y) => x >= 0 && y >= 0 && x < N && y < N && mark[y * N + x] === all;
+  for (const s of alive) {
+    const p = per[s.name].sig, h = s.body[0], L = s.body.length;
+    const w = was[s.id];
+    p.ticks++;
+    if (h.x !== w.x || h.y !== w.y) { p.moves++; if (s.dir !== w.dir || !w.moved) p.runs++; w.moved = true; }
+    w.x = h.x; w.y = h.y; w.dir = s.dir;
+    // Lying beside itself: a cell with another of its own (not the one before or after it) beside it.
+    const index = signatures.index ||= new Int32Array(N * N), own = stampOf();
+    s.body.forEach((c, j) => { mark[c.y * N + c.x] = own; index[c.y * N + c.x] = j; });
+    s.body.forEach((c, j) => {
+      p.cells++;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const x = c.x + dx, y = c.y + dy, i = y * N + x;
+        if (x >= 0 && y >= 0 && x < N && y < N && mark[i] === own && Math.abs(index[i] - j) > 1) { p.beside++; break; }
+      }
+    });
+    for (const c of s.body) mark[c.y * N + c.x] = all; // (back to everyone's)
+    if (L >= 10) { p.long++; if (Math.abs(h.x - s.body[L - 1].x) + Math.abs(h.y - s.body[L - 1].y) <= 3) p.coiled++; }
+    let nearest = 14, lure = false, ride = false;
+    for (const o of alive) {
+      if (o === s) continue;
+      const oh = o.body[0], d = Math.abs(oh.x - h.x) + Math.abs(oh.y - h.y), t = o.body[o.body.length - 1];
+      nearest = Math.min(nearest, d);
+      if (d >= 2 && d <= 4) lure = true;
+      if (o.body.length >= 8 && Math.abs(t.x - h.x) + Math.abs(t.y - h.y) <= 2) ride = true;
+    }
+    p.apart += nearest;
+    if (lure) p.luring++;
+    if (ride) p.riding++;
+    let skim = nearest <= 2;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const x = h.x + dx, y = h.y + dy;
+      if (L > 1 && x === s.body[1].x && y === s.body[1].y) continue;
+      if (x < 0 || y < 0 || x >= N || y >= N || g.holes.has(y * N + x) || bodyAt(x, y)) skim = true;
+    }
+    if (skim) p.skims++;
+    const home = s.memory.home;
+    if (home) { p.homeTicks++; if (Math.hypot(h.x - home.x, h.y - home.y) <= home.radius + T.LAND_REACH) p.atHome++; }
+    const victim = s.memory.victimId != null && g.snakes.find(o => o.id === s.memory.victimId);
+    if (victim && victim.alive) {
+      p.hunting++;
+      const vh = victim.body[0];
+      if (Math.abs(vh.x - h.x) + Math.abs(vh.y - h.y) <= 4) p.boxing++;
+    }
+  }
+  for (const e of g.events) {
+    if (e.type === 'dash') per[e.snake.name].sig.flashes++;
+    else if (e.type === 'leap') per[e.snake.name].sig.jumps++;
+  }
 }
 
-function merge(results) {
-  const per = {}, total = { rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, stalled: 0, trace: [], beetles: 0, caught: 0, flown: 0, causes: {}, crashes: 0, alight: 0, cuts: 0, baked: 0, ash: 0, rot: 0, rotBeads: 0, census: census() };
+// --census, after a tick: how each beetle that was above ground (before:
+// those there before the tick) left it, and the ones come up.
+function beetleCensus(g, c, st, before) {
+  const at = (e, f) => e.x === f.x && e.y === f.y;
+  for (const f of before) {
+    if (g.food.includes(f)) continue;
+    const b = st.bugs.get(f);
+    st.bugs.delete(f);
+    if (!b) continue;
+    let how = null;
+    for (const e of g.events) {
+      if (e.type === 'eat' && e.kind === 'beetle' && at(e, f)) how = 'Caught';
+      else if (e.type === 'dive' && at(e, f)) how = e.dug ? 'Dug' : 'Dived';
+      else if (e.type === 'flown' && at(e, f)) how = 'Flown';
+      else if (e.type === 'knock' && e.kind === 'beetle' && e.tx == null && at(e, f)) how = 'Pecked';
+      if (how) break;
+    }
+    if (!how) continue;
+    c.bugs++; c['bugs' + how]++;
+    if (how === 'Caught' && f.digUntil > 0) c.digsCaught++;
+    if (b.near < 0) continue;
+    c.chases++; c['chases' + how]++;
+    if (how === 'Caught') c.chaseTicks.push(g.tick - 1 - b.near);
+  }
+  for (const f of g.food) if (f.kind === 'beetle' && !st.bugs.has(f)) st.bugs.set(f, { near: -1 });
+  for (const e of g.events) {
+    if (e.type === 'dig') c.digs++;
+    else if (e.type === 'dive' && !e.dug && g.burrows.some(h => at(e, h) && h.dug)) c.divesDugBurrow++;
+  }
+}
+
+// --census, after a tick: what the woodpecker did, fairly or not (see census).
+function woodpeckerCensus(g, c, st, dying, N) {
+  const landed = st.landed ||= new Map(); // (where each piece the strike knocked aside landed: the strike's tick; a beetle runs on, so it's left out)
+  for (const e of g.events) {
+    if (e.type === 'knock') { c.knocks++; if (e.tx == null) c.knockedEaten++; else if (e.kind !== 'beetle') landed.set(e.ty * N + e.tx, g.tick - 1); }
+    else if ((e.type === 'eat' || e.type === 'rot') && landed.has(e.y * N + e.x)) {
+      const after = g.tick - 1 - landed.get(e.y * N + e.x);
+      if (e.type === 'eat' && after <= 60) { c.knockedTaken++; c.knockedTicks.push(after); }
+      landed.delete(e.y * N + e.x);
+    }
+    else if (e.type === 'aim') {
+      timedGrid(g, N);
+      const mark = new Set(g.woodpecker.target);
+      for (const s of g.snakes) {
+        if (!s.alive) continue;
+        const need = s.body.length + Math.max(0, s.grow);
+        if (timedRoom(g, N, s, null, need) < need) continue; // (shut in already: not the mark's doing)
+        if (timedRoom(g, N, s, mark, need) < need) { c.seals++; st.sealed.push([s.id, g.woodpecker.strikeAt]); }
+      }
+    } else if (e.type === 'peck') {
+      labelLand(g, N);
+      const { comp, sizes } = land, foodAt = new Set(g.food.map(f => f.y * N + f.x)), bodyAt = new Set(g.snakes.filter(s => s.alive).flatMap(s => s.body.map(b => b.y * N + b.x)));
+      const crumbs = new Set();
+      for (const k of e.cells) for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+        const x = k % N + dx, y = Math.floor(k / N) + dy;
+        if (x < 0 || y < 0 || x >= N || y >= N || comp[y * N + x] < 0 || sizes[comp[y * N + x]] > 2) continue;
+        crumbs.add(comp[y * N + x]);
+      }
+      for (const id of crumbs) {
+        const cells = []; for (let k = 0; k < N * N; k++) if (comp[k] === id) cells.push(k);
+        c.crumbs++;
+        if (cells.some(k => foodAt.has(k))) c.crumbsFood++;
+        if (cells.some(k => bodyAt.has(k))) c.crumbsSnake++;
+      }
+    }
+  }
+  for (const s of dying) { // (shut in by a mark, and out by 3 s after its strike)
+    if (!st.sealed.some(([id, at]) => id === s.id && g.tick - 1 <= at + 30)) continue;
+    c.sealedOut++;
+    st.sealed = st.sealed.filter(([id]) => id !== s.id);
+  }
+  // The last snakes, each on an island of its own: the first time it's so.
+  const alive = g.snakes.filter(s => s.alive);
+  if (!st.split && g.woodpecker && alive.length >= 2) {
+    if (land.holes !== g.holes.size) labelLand(g, N);
+    const ids = alive.map(s => land.comp[s.body[0].y * N + s.body[0].x]);
+    if (ids.every(i => i >= 0) && new Set(ids).size === ids.length) st.split = { n: alive.length, size: Object.fromEntries(alive.map((s, i) => [s.id, land.sizes[ids[i]]])) };
+  }
+}
+
+// Plays round r of the run, from its own seed, to its end; or goes on with
+// one stored part way (saved: see --save-at). With saveAt, it stops at that
+// game time instead and hands back the round as it stands (st, its own
+// numbers so far among it, and where the random numbers had got to).
+// A round's numbers are { per, total }, as merge() adds them up.
+function playRound(E, T, r, { seed, ahead, signs, saveAt }, saved) {
+  // (Is any living head within the woodpecker's clearance of cell k?)
+  const nearHead = (g, k) => g.snakes.some(s => s.alive && Math.abs(s.body[0].x - k % T.GRID) + Math.abs(s.body[0].y - Math.floor(k / T.GRID)) <= T.PECK_CLEARANCE);
+  let st;
+  if (saved) {
+    st = saved.st;
+    rng = seeded(saved.rng);
+  } else {
+    rng = seed == null ? Math.random : seeded(seed + r * 7919);
+    const g = E.createGame({ withPlayer: false }), per = {}, total = totals();
+    total.rounds = 1;
+    for (const s of g.snakes) {
+      per[s.name] ||= {
+        rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, beetles: 0, kills: 0, aliveMs: 0, deaths: {},
+        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, // (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, chokes, crashes survived)
+        ...(signs ? { sig: Object.fromEntries(SIGNS.map(k => [k, 0])) } : {}),
+      };
+      per[s.name].rounds++;
+    }
+    st = {
+      g, per, total, trace: 0,
+      was: g.snakes.map(s => ({ x: s.body[0].x, y: s.body[0].y, dir: s.dir, moved: false })), // (for --signatures)
+      place: new Map(),
+      seen: new Set(), picked: g.snakes.map(() => 0), // (what this round had; golden power food each snake ate)
+      bugs: new Map(), sealed: [], split: null, // (for --census: each beetle above ground (the tick a head first came near it, or -1); [id, the strike's tick] of each snake a mark shut in; the last snakes' islands, once each has its own)
+    };
+  }
+  const { g, per, total, was, place, seen, picked } = st, c = total.census, N = T.GRID;
+  st.bugs ||= new Map(); st.sealed ||= []; // (a round stored before these were counted)
+  for (const [k, v] of Object.entries(census())) if (!(k in c)) c[k] = v;
+  land.holes = -1; // (the islands are worked out afresh for this round)
+  let trace = st.trace;
+  while (g.snakes.some(s => s.alive) && g.snakes.filter(s => s.alive).length > 1 && g.time < MAX_TIME) {
+    if (saveAt != null && g.time >= saveAt) { st.trace = trace; return { r, state: { rng: rng.state(), st } }; }
+    // In order, stopping at the first snake that must decide in the tick, so
+    // the random numbers are drawn in the same order as without --ahead.
+    if (ahead) for (const s of g.snakes) { if (!s.alive) continue; if (!E.canThinkAhead(g, s)) break; E.thinkAhead(g, s); }
+    const held = g.snakes.map(s => s.leaps), late = E.suddenDeath(g);
+    for (const s of g.snakes) if (s.alive) { const left = E.hungerLeft(g, s); c[late ? 'aliveLate' : 'aliveEarly']++; if (left < T.HUNGER_WARN_MS) c[late ? 'hungryLate' : 'hungryEarly']++; if (left < 0) c[late ? 'starvingLate' : 'starvingEarly']++; }
+    const mid = !late && g.time >= T.HUNGER_MID_FROM_MS;
+    if (mid) c.midMs += E.tickMs(g) * g.snakes.filter(s => s.alive).length;
+    c.ticks++;
+    c.burrowTicks += g.burrows.length;
+    if (!late) { c.ticksEarly++; c.freeEarly += freeCells(g, N); }
+    const bugs = g.food.filter(f => f.kind === 'beetle');
+    for (const f of bugs) { const b = st.bugs.get(f); if (b && b.near < 0 && g.snakes.some(s => s.alive && Math.abs(s.body[0].x - f.x) + Math.abs(s.body[0].y - f.y) <= T.BEETLE_FEAR)) b.near = g.tick; }
+    const dying = E.step(g);
+    beetleCensus(g, c, st, bugs);
+    woodpeckerCensus(g, c, st, dying, N);
+    if (mid) c.mealsMid += new Set(g.events.filter(e => e.type === 'eat' && e.kind !== 'mushroom').map(e => e.snake)).size;
+    if (signs) signatures(g, T, per, was);
+    for (const e of g.events) {
+      if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
+      else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
+      else if (e.type === 'flown') total.flown++;
+      else if (e.type === 'crash') { total.crashes++; per[e.snake.name].crashes++; }
+      else if (e.type === 'alight') total.alight++;
+      else if (e.type === 'cut') total.cuts++;
+      else if (e.type === 'baked') total.baked++;
+      else if (e.type === 'ash') total.ash++;
+      else if (e.type === 'rot') { if (e.kind === 'pellet') total.rotBeads++; else total.rot++; }
+      // (the rest only for --census)
+      else if ((e.type === 'spawn' && e.kind === 'golden') || e.type === 'rainbow') c.golden++;
+      else if (e.type === 'spawn') { c[e.kind === 'leaf' ? 'leaves' : 'goldcaps']++; seen.add(e.kind); }
+      else if (e.type === 'weather' && e.kind !== 'clear') { c[e.kind]++; seen.add(e.kind); }
+      else if (e.type === 'strike') c.strikes++;
+      else if (e.type === 'peck') c.pecks++;
+      else if (e.type === 'aim') { c.aims++; if (g.woodpecker.target.some(k => nearHead(g, k))) c.aimsNear++; }
+      else if (e.type === 'leap') { if (e.gold) { c.goldLeaps++; per[e.snake.name].leaps++; } else { c.jumps++; per[e.snake.name].jumps++; } }
+      else if (e.type === 'dash') { if (e.plain) { c.flashes++; per[e.snake.name].flashes++; } else { c.dashes++; per[e.snake.name].dashes++; } }
+      if (e.type === 'choke') { c.chokes++; per[e.snake.name].chokes++; seen.add('choke'); }
+      else if (e.type === 'nudge') { c.nudges++; if (e.kind === 'pellet') c.nudgedBeads++; }
+      if (e.type === 'eat') {
+        if (e.kind === 'pellet') { c.beads++; if (e.own) c.ownBeads++; }
+        if (e.kind === 'mushroom') c.mushrooms++;
+        if (e.gold || e.kind === 'leaf' || e.kind === 'goldcap') picked[e.snake.id]++;
+      }
+    }
+    // (golden leaps got: what's held now, and spent this tick, over what was held)
+    for (const s of g.snakes) c.goldGot += Math.max(0, s.leaps + g.events.filter(e => e.type === 'leap' && e.gold && e.snake === s).length - held[s.id]);
+    const left = g.snakes.filter(s => s.alive).length;
+    for (const s of dying) {
+      place.set(s, left + 1);
+      per[s.name].aliveMs += g.time;
+      const cause = causeOf(s);
+      per[s.name].deaths[cause] = (per[s.name].deaths[cause] || 0) + 1;
+      total.causes[cause] = (total.causes[cause] || 0) + 1;
+      if (E.suddenDeath(g)) c.causesSD[cause] = (c.causesSD[cause] || 0) + 1;
+      if (cause === 'starved' && g.time < 60000) seen.add('starvedEarly');
+      const killer = g.snakes.find(o => o.name === s.killer && o !== s);
+      if (killer) per[killer.name].kills++;
+    }
+    // A cheap fingerprint of every move, to compare runs exactly.
+    for (const s of g.snakes) if (s.alive) trace = (trace * 31 + s.body[0].x * 24 + s.body[0].y + g.tick) % 1000000007;
+  }
+  total.trace.push([r, trace]);
+  const alive = g.snakes.filter(s => s.alive);
+  if (g.time >= MAX_TIME) total.stalled++;
+  else if (alive.length === 1) { per[alive[0].name].wins++; place.set(alive[0], 1); }
+  else total.draws++;
+  const food = g.snakes.reduce((n, s) => n + s.eaten, 0), beads = g.snakes.reduce((n, s) => n + s.pellets, 0);
+  for (const s of g.snakes) {
+    const p = per[s.name];
+    p.placeSum += place.get(s) || 1;
+    p.eaten += s.eaten;
+    p.pellets += s.pellets;
+    p.golden += picked[s.id];
+    if (s.alive) p.aliveMs += g.time;
+    if (signs) { p.sig.foodShare += s.eaten / Math.max(1, food); p.sig.beadShare += s.pellets / Math.max(1, beads); }
+  }
+  total.timeSum += g.time;
+  total.times.push(g.time);
+  if (E.suddenDeath(g)) { total.sudden++; c.sdTimes.push(g.time - T.SUDDEN_DEATH_MS); c.holes += g.holes.size; }
+  if (st.split && alive.length === 1 && g.time < MAX_TIME) { // (the last snakes on islands of their own: did the biggest island's win?)
+    const sizes = Object.entries(st.split.size), most = Math.max(...sizes.map(([, n]) => n)), top = sizes.filter(([, n]) => n === most).map(([id]) => +id);
+    c.split++;
+    c.splitChance += 1 / st.split.n;
+    if (top.includes(alive[0].id)) c.splitBiggest += 1 / top.length;
+  }
+  for (const k of ['goldBeetle', 'leaf', 'goldcap', 'storm', 'starvedEarly', 'choke']) if (seen.has(k)) c[k === 'starvedEarly' ? k : k + 'Rounds']++;
+  for (const n of picked) { c.pickups += n; if (n > 2) c.greedy++; }
+  return { r, result: { per, total } };
+}
+
+// Adds rounds' numbers up (in round order, so the table's order and the
+// fingerprint are the same whatever the cores, or the cache, did).
+function merge(results, suddenAt) {
+  const per = {}, total = totals();
   for (const r of results) {
     for (const k of ['rounds', 'timeSum', 'sudden', 'draws', 'stalled', 'beetles', 'caught', 'flown', 'crashes', 'alight', 'cuts', 'baked', 'ash', 'rot', 'rotBeads']) total[k] += r.total[k];
     total.times.push(...r.total.times);
     total.trace.push(...r.total.trace);
     for (const [c, n] of Object.entries(r.total.causes)) total.causes[c] = (total.causes[c] || 0) + n;
     for (const [k, v] of Object.entries(r.total.census)) {
-      if (k === 'sdTimes') total.census.sdTimes.push(...v);
+      if (Array.isArray(v)) total.census[k].push(...v);
       else if (k === 'causesSD') for (const [c, n] of Object.entries(v)) total.census.causesSD[c] = (total.census.causesSD[c] || 0) + n;
       else total.census[k] += v;
     }
     for (const [name, p] of Object.entries(r.per)) {
       const t = (per[name] ||= { deaths: {} });
       for (const [k, v] of Object.entries(p)) {
-        if (k === 'deaths') for (const [d, n] of Object.entries(v)) t.deaths[d] = (t.deaths[d] || 0) + n;
+        if (k === 'deaths' || k === 'sig') for (const [d, n] of Object.entries(v)) (t[k] ||= {})[d] = (t[k][d] || 0) + n;
         else t[k] = (t[k] || 0) + v;
       }
     }
   }
-  // One fingerprint for the whole run, in round order (whatever the number of workers).
+  // One fingerprint for the whole run, in round order.
   total.trace = total.trace.sort((a, b) => a[0] - b[0]).reduce((h, [, t]) => (h * 131 + t) % 1000000007, 7);
-  return { per, total, suddenAt: results[0].suddenAt };
+  return { per, total, suddenAt };
 }
 
 function report({ per, total, suddenAt }, withCensus) {
@@ -204,7 +567,17 @@ function report({ per, total, suddenAt }, withCensus) {
     console.log(`powers: ${(c.flashes / Math.max(1, minutes)).toFixed(1)} plain flashes a minute alive, ${a(c.jumps)} plain jumps a round, golden leaps ${pct(c.goldLeaps, c.goldGot)}% used, ${a(c.dashes)} dashes`
       + ` · golden power food: ${(c.pickups / Math.max(1, snakeRounds)).toFixed(2)} a snake a round (more than 2: ${pct(c.greedy, snakeRounds)}%) · a starvation before 1:00 in ${of(c.starvedEarly)} of rounds`);
     const share = (n, d) => (100 * n / Math.max(1, d)).toFixed(1) + '%';
-    console.log(`hunger: before the woodpecker, ${share(c.hungryEarly, c.aliveEarly)} of snake-time in the hunger warning (${share(c.starvingEarly, c.aliveEarly)} starving); after, ${share(c.hungryLate, c.aliveLate)} (${share(c.starvingLate, c.aliveLate)})`);
+    console.log(`hunger: before the woodpecker, ${share(c.hungryEarly, c.aliveEarly)} of snake-time in the hunger warning (${share(c.starvingEarly, c.aliveEarly)} starving); after, ${share(c.hungryLate, c.aliveLate)} (${share(c.starvingLate, c.aliveLate)})`
+      + ` · meals a snake-minute mid-round (from HUNGER_MID_FROM_MS to the woodpecker) ${(c.mealsMid / Math.max(1e-9, c.midMs / 60000)).toFixed(1)}`);
+    console.log(`beads: ${a(c.beads)} eaten a round, ${share(c.ownBeads, c.beads)} of them by the snake they broke off · chokes ${a(c.chokes)} a round (in ${of(c.chokeRounds)} of rounds), food nudged aside coughing ${a(c.nudges)} (beads ${a(c.nudgedBeads)})`);
+    const chaseT = [...c.chaseTicks].sort((x, y) => x - y), escaped = c.chasesDived + c.chasesDug + c.chasesFlown;
+    console.log(`beetles: above ground ${a(c.bugs)} times a round, and then caught ${share(c.bugsCaught, c.bugs)}, down a burrow ${share(c.bugsDived, c.bugs)}, dug in ${share(c.bugsDug, c.bugs)}, flew off ${share(c.bugsFlown, c.bugs)}, eaten by the woodpecker ${share(c.bugsPecked, c.bugs)}`
+      + ` · chased (a head came within BEETLE_FEAR) ${a(c.chases)} a round: escaped ${share(escaped, c.chases)} (down a burrow ${share(c.chasesDived, c.chases)}, dug in ${share(c.chasesDug, c.chases)}, flew off ${share(c.chasesFlown, c.chases)}), caught ${share(c.chasesCaught, c.chases)} after a median ${chaseT.length ? chaseT[chaseT.length >> 1] : '-'} ticks`
+      + ` · digs ${a(c.digs)} a round (caught while digging ${a(c.digsCaught)}) · dives into a burrow a dig left ${a(c.divesDugBurrow)} a round · burrows open ${(c.burrowTicks / Math.max(1, c.ticks)).toFixed(2)} on average · cells free for an apple before the woodpecker ${Math.round(c.freeEarly / Math.max(1, c.ticksEarly))} on average`);
+    const knockT = [...c.knockedTicks].sort((x, y) => x - y);
+    console.log(`the woodpecker's fairness: food knocked aside ${a(c.knocks)} a round (${a(c.knockedEaten)} eaten, with nowhere to knock it; ${a(c.knockedTaken)} eaten by a snake where it landed, within 6 s: within 2 s ${a(knockT.filter(n => n <= 20).length)}, a median ${knockT.length ? knockT[knockT.length >> 1] : '-'} ticks after the strike) · marks shutting a snake in ${a(c.seals)} a round; sealed deaths (out within 3 s of the strike) ${share(c.sealedOut, sdDeaths)} of sudden-death deaths`
+      + ` · islands of 1-2 cells cut off ${(c.crumbs / sd).toFixed(2)} a woodpecker round (food on ${(c.crumbsFood / sd).toFixed(2)}, a snake on ${(c.crumbsSnake / sd).toFixed(2)})`
+      + ` · the last snakes split onto islands of their own in ${of(c.split)} of rounds; the biggest island's won ${share(c.splitBiggest, c.split)} of those (a blind pick: ${share(c.splitChance, c.split)})`);
   }
   console.table(Object.entries(per).map(([name, p]) => ({
     name,
@@ -221,36 +594,278 @@ function report({ per, total, suddenAt }, withCensus) {
   })).sort((a, b) => b['win%'] - a['win%'] || a.place - b.place));
 }
 
-if (isMainThread) {
+// --census, for each personality: a round's worth of each (or a minute alive's).
+function reportCensus(per) {
+  console.log('census, each personality (a round played; flashes and jumps a minute alive; golden: golden power food picked up)');
+  console.table(Object.keys(per).sort().map(name => {
+    const p = per[name], R = Math.max(1, p.rounds), minutes = Math.max(1e-9, p.aliveMs / 60000), f = (n, d = R) => +(n / d).toFixed(2);
+    return { name, rounds: p.rounds, alive: `${Math.round(p.aliveMs / R / 1000)}s`, food: f(p.eaten), kills: f(p.kills), crashes: f(p.crashes), chokes: f(p.chokes),
+      'flash/min': f(p.flashes, minutes), 'jump/min': f(p.jumps, minutes), golden: f(p.golden), leaps: f(p.leaps), dashes: f(p.dashes) };
+  }));
+}
+
+// --signatures: each trademark as a ratio of two sums (see SIGNS), for one
+// personality and for the field (everyone else together).
+const TRADEMARKS = [
+  ['Mason', 'straight run', 'moves', 'runs', 1], ['Mason', 'body beside itself', 'beside', 'cells', '%'],
+  ['Ouroboros', 'coiled (10 long or more)', 'coiled', 'long', '%'], ['Creeper', 'riding a tail', 'riding', 'ticks', '%'],
+  ['Ghost', 'cells from the nearest head', 'apart', 'ticks', 1], ['Gobbler', 'share of the food', 'foodShare', 'rounds', '%'],
+  ['Vulture', 'share of the beads', 'beadShare', 'rounds', '%'], ['Sovereign', 'at home', 'atHome', 'homeTicks', '%'],
+  ['Mute', 'closing the box (its target within 4, of ticks hunting)', 'boxing', 'hunting', '%'], ['Joker', 'luring a rival on', 'luring', 'ticks', '%'],
+  ['Desperado', 'skimming danger', 'skims', 'ticks', '%'], ['Star', 'flashes a minute', 'flashes', 'minutes', 1], ['Star', 'jumps a minute', 'jumps', 'minutes', 1],
+];
+function reportSignatures(per) {
+  const sum = (names, k) => names.reduce((n, name) => n + (k === 'rounds' ? per[name].rounds : k === 'minutes' ? per[name].aliveMs / 60000 : per[name].sig[k]), 0);
+  const ratio = (names, a, b, unit) => { const v = sum(names, a) / Math.max(1e-9, sum(names, b)); return unit === '%' ? (100 * v).toFixed(1) + '%' : v.toFixed(2); };
+  const names = Object.keys(per);
+  console.log('trademarks (each against the field: everyone else together)');
+  for (const [who, what, a, b, unit] of TRADEMARKS) {
+    if (!per[who]) continue;
+    const field = names.filter(n => n !== who && sum([n], b) > 0);
+    console.log(`  ${who}, ${what}: ${ratio([who], a, b, unit)} · field ${field.length ? ratio(field, a, b, unit) : 'none'}`);
+  }
+  console.table(names.sort().map(name => {
+    const one = [name], r = (a, b, unit) => sum(one, b) > 0 ? ratio(one, a, b, unit) : '';
+    return { name, run: r('moves', 'runs', 1), beside: r('beside', 'cells', '%'), coiled: r('coiled', 'long', '%'), riding: r('riding', 'ticks', '%'), apart: r('apart', 'ticks', 1),
+      food: r('foodShare', 'rounds', '%'), beads: r('beadShare', 'rounds', '%'), home: r('atHome', 'homeTicks', '%'), boxing: r('boxing', 'hunting', '%'), luring: r('luring', 'ticks', '%'),
+      skims: r('skims', 'ticks', '%'), 'flash/min': r('flashes', 'minutes', 1), 'jump/min': r('jumps', 'minutes', 1) };
+  }));
+}
+
+// Files of rounds, one JSON line each, { "r": round, ... }: the cache's
+// played rounds ({ r, result }), and stored states ({ r, state } or, for a
+// round over before then, { r, done }: its numbers) after a first line
+// saying how they were stored. Written whole to a side file and renamed into
+// place, so a reader never sees half of one. (.gz: gzipped.)
+function readLines(file) {
+  let data;
+  try { data = fs.readFileSync(file); } catch { return []; }
+  try { if (file.endsWith('.gz')) data = zlib.gunzipSync(data); } catch { return []; }
+  return data.toString('utf8').split('\n').filter(Boolean);
+}
+function writeLines(file, lines) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const side = `${file}.${process.pid}.tmp`, data = lines.join('\n') + '\n';
+  fs.writeFileSync(side, file.endsWith('.gz') ? zlib.gzipSync(data, { level: 6 }) : data);
+  fs.renameSync(side, file);
+}
+// The cache keeps what's been used in the last fortnight (a file read is
+// touched, so it counts as used).
+const KEEP_MS = 14 * 24 * 3600 * 1000;
+function tidy(dir) {
+  try {
+    for (const f of fs.readdirSync(dir)) {
+      const file = path.join(dir, f);
+      try { if (Date.now() - fs.statSync(file).mtimeMs > KEEP_MS) fs.unlinkSync(file); } catch {}
+    }
+  } catch {}
+}
+// Each round's line, by round (the last for a round wins; one cut short is
+// left out, so it's played again). A line is read only as far as its round.
+const ROUND = /^\{"r":(\d+),"(result|state|done)":/;
+function linesByRound(lines) {
+  const out = new Map();
+  for (const line of lines) {
+    const m = ROUND.exec(line);
+    if (m && line.endsWith('}')) out.set(Number(m[1]), line);
+  }
+  return out;
+}
+const lineOf = (r, kind, value) => `{"r":${r},"${kind}":${JSON.stringify(value)}}`;
+const parsed = line => JSON.parse(line)[ROUND.exec(line)[2]];
+
+if (isMainThread && require.main === module) {
   const args = process.argv.slice(2);
   const flag = name => args.includes(name);
-  const value = name => { const i = args.indexOf(name); return i >= 0 ? Number(args[i + 1]) : null; };
-  const rounds = Number(args.find((a, i) => /^\d+$/.test(a) && args[i - 1] !== '--seed')) || 200;
-  const seed = value('--seed');
-  const ahead = flag('--ahead');
-  const workers = Math.max(1, Math.min(rounds, os.cpus().length - 1));
-  const jobs = Array.from({ length: workers }, (_, i) => ({
-    from: Math.floor(rounds * i / workers),
-    to: Math.floor(rounds * (i + 1) / workers),
-    seed,
-    ahead,
-    root: ROOT,
-  }));
-  Promise.all(jobs.map(job => new Promise((resolve, reject) => {
-    const w = new Worker(__filename, { workerData: job });
-    w.once('message', resolve);
-    w.once('error', reject);
-  }))).then(results => {
-    const merged = merge(results);
-    if (flag('--json')) console.log(JSON.stringify(merged));
-    else report(merged, flag('--census'));
+  const WITH_VALUE = ['--seed', '--root', '--workers', '--save-at', '--save', '--from'];
+  const text = name => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : null; };
+  const value = name => { const v = text(name); return v == null ? null : Number(v); };
+  const fail = why => { console.error(why); process.exit(1); };
+  const given = Number(args.find((a, i) => /^\d+$/.test(a) && !WITH_VALUE.includes(args[i - 1]))) || null;
+  const ahead = flag('--ahead'), json = flag('--json'), saveAt = value('--save-at'), fromFile = text('--from') && path.resolve(text('--from'));
+  let seed = value('--seed'), signs = flag('--signatures'), rounds = given || 200;
+  if (saveAt != null && seed == null) fail('--save-at needs --seed (a round must play the same way again to be worth storing)');
+  if (saveAt != null && fromFile) fail("--save-at and --from don't go together");
+  try { os.setPriority(os.constants.priority.PRIORITY_BELOW_NORMAL); } catch {} // (the machine's own user comes first; the worker threads share this priority)
+  const hash = (...parts) => crypto.createHash('sha1').update(parts.join('\u0000')).digest('hex');
+  const read = f => fs.readFileSync(f, 'utf8');
+  // What rounds are played with: the game's files, and this file and the
+  // state store too, since what a run counts can change; and their key. The
+  // cores are handed these very texts (this file's as the run began), so the
+  // key is always that of the code played. They're read again once the lock
+  // is taken: whatever was edited while the run waited is played, and
+  // stored, as it is now.
+  const SELF = { text: read(__filename), file: __filename }, STATE_FILE = require.resolve('./snapshots/state.js');
+  const snapshot = () => {
+    const game = GAME_FILES.map(f => read(path.join(ROOT, f))), state = read(STATE_FILE);
+    return { game, state, key: hash(...game, SELF.text, state) };
+  };
+  let files = snapshot();
+  const CACHE = path.join(os.tmpdir(), 'barkbite-sim-cache');
+
+  // --from: the stored rounds (the first line says how they were stored).
+  let stored = null, fromKey = null;
+  if (fromFile) {
+    const lines = readLines(fromFile);
+    let how = null;
+    try { how = JSON.parse(lines[0]); } catch {}
+    if (!how || how.states !== 2) fail(`${fromFile} isn't a file of rounds stored by this simulate.js (see --save-at)`);
+    if (seed != null && seed !== how.seed) fail(`${fromFile} holds rounds of seed ${how.seed}, not ${seed}`);
+    if (signs && !how.signs) fail(`${fromFile} was stored without --signatures, so they can't be counted for the part before ${how.saveAt / 1000}s`);
+    seed = how.seed;
+    signs = how.signs; // (counted on whether printed or not, so its rounds' numbers stay whole)
+    fromKey = how.key;
+    stored = linesByRound(lines.slice(1));
+    let n = 0;
+    while (stored.has(n)) n++;
+    if (given > n) fail(`${fromFile} holds ${n} rounds, not ${given} (store more with --save-at)`);
+    rounds = given || n;
+    if (!json) console.log(`(going on with ${rounds} of the rounds of seed ${seed} stored at ${how.saveAt / 1000}s)`);
+  }
+  const workers = Math.max(1, Math.min(rounds, value('--workers') || Number(process.env.SIM_WORKERS) || Math.floor(os.cpus().length / 2)));
+
+  // A seeded round is the same every time with the same files and options,
+  // so each is cached (in the system's temp folder) and read back; stored
+  // states too, by the files and seed that played them. (look: the cache's
+  // file for the files read, and what it has.)
+  let statesKey, cached, have; // (have: round -> its line)
+  const cachedLines = () => { const lines = readLines(cached); return saveAt != null ? lines.slice(1) : lines; };
+  const fromCache = () => !cached || flag('--fresh') ? new Map() : linesByRound(cachedLines());
+  const look = () => {
+    statesKey = saveAt == null ? null : hash(files.key, JSON.stringify({ seed, signs, saveAt, v: 2 }));
+    cached = seed == null ? null : saveAt != null ? path.join(CACHE, `states-${statesKey}.jsonl.gz`)
+      : path.join(CACHE, hash(files.key, JSON.stringify({ seed, ahead, signs, from: fromKey, v: 2 })) + '.jsonl.gz');
+    have = fromCache();
+    if (have.size) { try { fs.utimesSync(cached, new Date(), new Date()); } catch {} }
+  };
+  look();
+  const head = () => JSON.stringify({ states: 2, key: statesKey, seed, saveAt, signs, root: ROOT });
+  const missing = () => Array.from({ length: rounds }, (_, r) => r).filter(r => !have.has(r) && !(stored && ROUND.exec(stored.get(r))[2] === 'done'));
+
+  const finish = merged => {
+    if (json) console.log(JSON.stringify(merged));
+    else {
+      report(merged, flag('--census'));
+      if (flag('--census')) reportCensus(merged.per);
+      if (flag('--signatures')) reportSignatures(merged.per);
+    }
     if (flag('--check')) {
       const never = Object.entries(merged.per).filter(([, p]) => p.rounds >= 20 && !p.wins).map(([n]) => n);
       const problems = [merged.total.stalled && `${merged.total.stalled} stalled`, never.length && `never won: ${never.join(', ')}`].filter(Boolean);
       if (problems.length) { console.error('check failed: ' + problems.join('; ')); process.exit(1); }
       console.log('check ok');
     }
-  }, err => { console.error(err); process.exit(1); });
-} else {
-  parentPort.postMessage(play(workerData));
+  };
+  // (played: what this run played, and the CPU it took, for --json.)
+  const done = (played = { rounds: 0, cpu: 0 }) => {
+    if (saveAt != null) {
+      const lines = Array.from({ length: rounds }, (_, r) => have.get(r)), going = lines.filter(l => ROUND.exec(l)[2] === 'state').length;
+      const out = text('--save') && path.resolve(text('--save'));
+      if (out) writeLines(out, [head()].concat(lines));
+      const file = out || cached;
+      if (json) console.log(JSON.stringify({ states: file, rounds, going, played }));
+      else console.log(`${rounds} rounds stored at ${saveAt / 1000}s (${going} still going then, ${rounds - going} over before) in ${file}\n  go on with them: node tools/simulate.js --from ${JSON.stringify(file)} [--root DIR]`);
+      return;
+    }
+    const results = Array.from({ length: rounds }, (_, r) => parsed(have.get(r) || stored.get(r)));
+    const T = (() => { const ctx = vm.createContext({ window: {} }); vm.runInContext(files.game[GAME_FILES.indexOf('tuning.js')], ctx); return ctx.window.TUNING; })();
+    const merged = merge(results, T.SUDDEN_DEATH_MS);
+    if (json) { merged.played = played; if (flag('--per-round')) merged.rounds = results; }
+    finish(merged);
+  };
+  let todo = missing();
+  if (!todo.length) {
+    if (!json && saveAt == null && have.size) console.log('(played before with these files and options: read from the cache; --fresh plays it again)');
+    done();
+    return;
+  }
+  // One run at a time on the machine: a lock file, taken over if its owner's
+  // gone. Runs waiting for it queue, first come first served: each leaves a
+  // ticket (when it came, its pid), and only the oldest live ticket may take
+  // the lock. (Without the queue, a run started the moment the last one ended,
+  // as abtest's are, usually got in ahead of one that had been waiting, and a
+  // waiting run could wait for many minutes.)
+  const lock = path.join(os.tmpdir(), 'barkbite-sim.lock'), queueDir = path.join(os.tmpdir(), 'barkbite-sim-queue');
+  const alive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
+  const take = () => { try { fs.writeFileSync(lock, String(process.pid), { flag: 'wx' }); return true; } catch { return false; } };
+  if (!flag('--no-wait')) {
+    const ticket = path.join(queueDir, `${String(Date.now()).padStart(15, '0')}-${process.pid}`);
+    try { fs.mkdirSync(queueDir, { recursive: true }); fs.writeFileSync(ticket, ''); } catch {}
+    const drop = () => { try { fs.unlinkSync(ticket); } catch {} };
+    process.on('exit', drop);
+    const first = () => { // (is ours the oldest ticket of a run still going? the dead ones are cleared on the way)
+      let names = [];
+      try { names = fs.readdirSync(queueDir).sort(); } catch { return true; }
+      for (const n of names) {
+        if (path.join(queueDir, n) === ticket) return true;
+        if (alive(Number(n.split('-')[1]))) return false;
+        try { fs.unlinkSync(path.join(queueDir, n)); } catch {}
+      }
+      return true; // (our ticket couldn't be written: wait as before, by the lock alone)
+    };
+    let told = false;
+    while (!(first() && take())) {
+      let owner = 0;
+      try { owner = Number(fs.readFileSync(lock, 'utf8')); } catch {}
+      if (owner && !alive(owner)) { try { fs.unlinkSync(lock); } catch {} continue; }
+      if (!told) { console.error(`(waiting for ${owner ? `another simulation on this machine, pid ${owner}` : 'the simulations queued before this one'}; --no-wait runs at once)`); told = true; }
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250);
+    }
+    drop();
+    process.on('exit', () => { try { if (fs.readFileSync(lock, 'utf8') === String(process.pid)) fs.unlinkSync(lock); } catch {} });
+    for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => process.exit(130));
+    // The files as they are now, our turn come, are what's played and stored
+    // under (and whoever went first may have played these very rounds).
+    const now = snapshot();
+    if (now.key !== files.key) {
+      files = now;
+      if (!json) console.error('(the files changed while this run waited: they play as they are now)');
+    }
+    if (told || files === now) { look(); todo = missing(); }
+    if (!todo.length) { done(); return; }
+  }
+  // The rounds go out one at a time to whichever core is free, so a long one
+  // doesn't hold the rest up. (Each round has its own seed: it comes out the
+  // same whichever core plays it, after whichever round.)
+  const queue = [...todo], cores = Math.min(workers, todo.length), cpu = process.cpuUsage(), t0 = Date.now();
+  Promise.all(Array.from({ length: cores }, () => new Promise((resolve, reject) => {
+    const w = new Worker(BOOT, { eval: true, workerData: { self: SELF.text, selfFile: SELF.file, game: files.game, state: files.state, stateFile: STATE_FILE, root: ROOT, seed, ahead, signs, saveAt } });
+    const feed = () => { const r = queue.shift(); w.postMessage(r === undefined ? null : { r, saved: stored ? stored.get(r) : null }); };
+    w.on('message', ({ r, line }) => { have.set(r, line); feed(); });
+    w.once('error', reject);
+    w.once('exit', resolve);
+    feed();
+  }))).then(() => {
+    const used = process.cpuUsage(cpu), seconds = (used.user + used.system) / 1e6, rest = rounds - todo.length;
+    if (!json) console.error(`(played ${todo.length} round${todo.length === 1 ? '' : 's'}${saveAt != null ? ` to ${saveAt / 1000}s` : ''} on ${cores} core${cores === 1 ? '' : 's'}: ${Math.round(seconds)} s of CPU in ${Math.round((Date.now() - t0) / 1000)} s`
+      + `${rest ? `; ${rest} ${stored ? 'over before the save or ' : ''}read from the cache` : ''})`);
+    // (Into the cache, with whatever another run has put there meanwhile.)
+    if (cached) {
+      try {
+        const now = linesByRound(cachedLines());
+        for (const r of todo) now.set(r, have.get(r));
+        const lines = [...now.keys()].sort((a, b) => a - b).map(r => now.get(r));
+        writeLines(cached, saveAt != null ? [head()].concat(lines) : lines);
+      } catch (e) { console.error(`(couldn't write the cache: ${e.message})`); }
+      tidy(CACHE);
+    }
+    done({ rounds: todo.length, cpu: seconds });
+  }).catch(err => { console.error(err); process.exit(1); });
+} else if (!isMainThread) {
+  // A core: plays the rounds it's handed (or goes on with them), one at a
+  // time, with the files' texts it was handed (the ones in the key).
+  const State = fromText(workerData.state, workerData.stateFile);
+  const { E, T, ctx } = loadGame(workerData.game);
+  const roots = { SnakeAI: ctx.window.SnakeAI, SnakeEngine: ctx.window.SnakeEngine, TUNING: ctx.window.TUNING };
+  const known = State.known(roots), decode = State.decoder(ctx), pristine = State.fingerprint(roots);
+  parentPort.on('message', job => {
+    if (!job) { parentPort.close(); return; }
+    const saved = job.saved && decode(parsed(job.saved), known);
+    const out = playRound(E, T, job.r, workerData, saved);
+    if (out.state && State.fingerprint(roots) !== pristine) throw new Error("the game changed its own objects (its personalities, DIRS or TUNING) while playing, so a stored round wouldn't go on exactly");
+    parentPort.postMessage({ r: out.r, line: out.state ? lineOf(out.r, 'state', State.encode(out.state, known)) : lineOf(out.r, workerData.saveAt != null ? 'done' : 'result', out.result) });
+  });
 }
+
+// (For tools/abtest.js: the trademarks, measured the same way.)
+module.exports = { TRADEMARKS };
