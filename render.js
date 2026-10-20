@@ -6270,24 +6270,33 @@ window.SnakeRender = (() => {
     const left = f.expires != null ? f.expires - game.tick : 999;
     return appleSprite(f.cooked ? 'baked' : left > 50 ? 'fresh' : left > 22 ? 'bruised' : 'rotten');
   }
+  // A piece the woodpecker knocks d cells is flung: the further it goes, the
+  // longer it's in the air and the higher it flies (ms, and cells high), so
+  // a long throw clears the bodies it crosses and reads all the way to its
+  // ring. (A spat bead's arc, 320 ms and 0.6 of a cell high whatever the
+  // way, made a throw over two bodies a flat zip, and one beside the patch
+  // a slow toss.) The game's knock sound lands with it (knockFlight).
+  const knockFly = d => Math.min(FLY_MAX_MS, SPAT_MS + FLY_CELL_MS * d), knockHop = d => Math.min(1.5, 0.6 + 0.22 * d);
   function moveFood(x, y, tx, ty, now, spat, knocked = false, by = null) {
     const from = y * GRID + x, to = ty * GRID + tx, f = game.food.find(o => o.x === tx && o.y === ty && o.kind !== 'beetle');
     if (!f) return;
     const b = born.get(from), d = Math.hypot(tx - x, ty - y);
     if (from !== to) born.delete(from);
     born.set(to, { kind: f.kind, at: now - POP_MS, i: 0, next: 0, gen: bornGen, v: b && b.kind === f.kind ? b.v : (f.color || '#a16207') + '|', fell: false, fx: x, fy: y, movedAt: now, spat,
-      fly: knocked ? Math.min(FLY_MAX_MS, SPAT_MS + FLY_CELL_MS * d) : SPAT_MS, hop: CELL * (knocked ? Math.min(1.5, 0.6 + 0.22 * d) : 0.6), by, wait: by ? SPIT_WAIT : 0, tx, ty }); // (by: the snake that spat it)
+      fly: knocked ? knockFly(d) : SPAT_MS, hop: CELL * (knocked ? knockHop(d) : 0.6), by, wait: by ? SPIT_WAIT : 0, tx, ty }); // (by: the snake that spat it)
   }
 
   // Through the woodpecker's aim, the food in its mark trembles (see
   // drawFood), and a faint ring marks where each piece will be knocked to at
   // the strike: the engine's own list (knocks: every landing in the strike's
   // order, no two on one cell, never a burrow; the rivals read the same),
-  // worked out once a tick; on the aim's last tick, the landings the engine
-  // has promised (w.landings, kept at the strike while their cells are
-  // free). Nothing for a piece the bird will eat. (The bird drumming beside
-  // the patch never hides one: it clings clear of them if it can, and any
-  // it still covers are drawn over it too: see drumChoice, drawWoodpecker.)
+  // worked out once a tick; in the aim's last PECK_PROMISE_TICKS moves, the
+  // landings the engine has promised (w.landings, kept at the strike while
+  // their cells are free; food that comes into the mark later is promised
+  // where its ring is then). Nothing for a piece the bird will eat. (The
+  // bird drumming beside the patch never hides one: it clings clear of them
+  // if it can, and any it still covers are drawn over it too: see
+  // drumChoice, drawWoodpecker.)
   const knockLand = []; // (cells, x and y, this tick's)
   let knockFor = -1, knockGame = null;
   function knockCells(w) {
@@ -8852,11 +8861,11 @@ window.SnakeRender = (() => {
       } else if (e.type === 'nudge') { // food its coughing head reached, nudged aside: it rolls there, or a beetle scurries
         if (e.kind === 'beetle') scurries.push({ x: e.x, y: e.y, tx: e.tx ?? e.x, ty: e.ty ?? e.y, tick: game.tick });
         else moveFood(e.x, e.y, e.tx ?? e.x, e.ty ?? e.y, now, false);
-      } else if (e.type === 'knock') { // the woodpecker's strike knocks food out of its patch: it flies to where the rule says, in an arc, and a beetle scurries there; with nowhere to go, the bird has it
+      } else if (e.type === 'knock') { // the woodpecker's strike knocks food out of its patch: it flies to where the rule says, in an arc as high and long as the throw (see knockFly), and a beetle scurries there; with nowhere to go, the bird has it
         const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
         if (e.tx == null || e.ty == null) { eatenNow.add(e.y * GRID + e.x); spawn(x, y, 8, 160, 420, 2.2, e.kind === 'beetle' ? '#059669' : '#c08a4a', '#f6ecd2'); }
         else if (e.kind === 'beetle') scurries.push({ x: e.x, y: e.y, tx: e.tx, ty: e.ty, tick: game.tick });
-        else moveFood(e.x, e.y, e.tx, e.ty, now, true);
+        else moveFood(e.x, e.y, e.tx, e.ty, now, true, true);
       } else if (e.type === 'death') {
         deaths.push(e.snake); // bursts on the next frame, unless the moment is held
         noteRemains(e.snake, now);
@@ -9434,6 +9443,7 @@ window.SnakeRender = (() => {
     },
     flick(s, p) { const a = animOf(s, lastNow), [, len] = FLICKS[lookOf(s)] || FLICKS.player; a.tongueMs = T.TONGUE_MS * len; a.tongueUntil = lastNow + (1 - p) * a.tongueMs; a.nextTongue = lastNow + 1e9; }, // (its tongue or gag p of the way through, and then no more: for the tests)
     birdHome, // (when the woodpecker lands back on its perch after a strike, ms after it: the game's "kik!")
+    knockFlight: (x, y, tx, ty) => knockFly(Math.hypot(tx - x, ty - y)), // (how long a piece the strike knocks from (x, y) to (tx, ty) is in the air, ms: the knock sound's landing)
     // (the woodpecker as last drawn: its pose, what it's doing, where its eye is and where it looks, its layer; and its plan's timings, ms: for the tests)
     birdPose() {
       birdMats(pose);
