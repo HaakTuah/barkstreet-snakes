@@ -9,11 +9,17 @@ window.SnakeChatter = (() => {
   // rain or snow put its fire out; ash and rot, food it was nearest burnt or
   // rotted; desperate, starving soon, it drops its errands for food; flash,
   // a plain flash that beat {who} to food (first) or shot past {who} (past);
-  // last, the last apples are falling. Star's own: zoom, any flash of its
-  // own; ready, its flash back from its rest; resting, small talk while it
-  // rests; stash, a golden beetle it ate (a golden leaf's flashes, it spends
-  // at once: a dash line). showoff: an answer to Star's showing off ({who}
-  // is Star).)
+  // last, the last apples are falling; choke, its head met its own bead (it
+  // spits it aside and coughs); windfall, it ate food that a choking or
+  // coughing snake knocked aside ({who} coughed); dug, a beetle it cornered
+  // dug in and got away under the bark; knocked, food it was after, the
+  // woodpecker knocked aside, and {who} ate it. Star's own: zoom, any
+  // flash of its own; ready, its flash back from its rest; resting, small
+  // talk while it rests; stash, a golden beetle it ate (a golden leaf's
+  // flashes, it spends at once: a dash line). showoff: an answer to Star's
+  // showing off ({who} is Star). The land's: realm.capital, the woodpecker
+  // pecked Sovereign's capital and the realm moved; colony.lost, it pecked a
+  // colony's flag cell and the colony's gone.)
   const VOICES = {
     sniper: {
       hungry: ["Hungry. Someone will do."],
@@ -35,6 +41,10 @@ window.SnakeChatter = (() => {
       doused: ['Fire’s out. Back on target.'],
       under: ['Hole under me. Holding position.'],
       cut: ['Lost my rear guard.'],
+      choke: ['Friendly fire. Spat it out.', 'Own round. Ejected.'],
+      windfall: ['Thanks for the assist, {who}.'],
+      dug: ['Target went to ground.', 'Dug in. Lost the shot.'],
+      knocked: ['That bird’s spotting for {who} now.'],
       gloat: ['Bounced off me, {who}? Cute.', 'Wrong lane, {who}.', 'Marked, {who}.'],
       dies: ['Counter-sniped by {who}?', 'Should have relocated.', 'Impossible.'],
       dash: ['Repositioning. Fast.'],
@@ -63,6 +73,10 @@ window.SnakeChatter = (() => {
       doused: ['Aw, put out. I was nearly crispy.'],
       under: ['A hole under me! Is there food down there?'],
       cut: ['My tail! That was full of food!'],
+      choke: ['Ptooey! That one’s ME!', 'Blech! The one food I won’t eat.'],
+      windfall: ['Don’t mind if I do, {who}!', 'You gonna eat that, {who}? No? Mine!'],
+      dug: ['NO! My snack went DOWN!', 'It dug in?! Snacks aren’t allowed to dig!'],
+      knocked: ['HEY! That bird gave {who} MY snack!', 'Pass it to ME, bird! Not {who}!'],
       baked: ['BAKED APPLES! Hot hot hot, worth it!'],
       ash: ['NOOO! My snack’s just ash now!'],
       rot: ['It went off before I got there!', 'Nooo, it rotted! Such a waste!'],
@@ -91,6 +105,10 @@ window.SnakeChatter = (() => {
       doused: ['…hiss.'],
       under: ['…hollow.'],
       cut: ['…lighter.'],
+      choke: ['…ack.'],
+      windfall: ['…thank you, {who}.'],
+      dug: ['…gone under.'],
+      knocked: ['…the bird gave it to {who}.'],
       flash: { past: ['…whoosh.'] },
       dies: ['…'],
     },
@@ -106,7 +124,8 @@ window.SnakeChatter = (() => {
       woodpecker: ['Who invited that bird?', 'We did not authorise this pecking.'],
       last: ['The last apples belong to the Crown.'],
       rainbow: ['The heavens salute us.'],
-      realm: { grow: ['Our realm expands!', 'A greater sovereign needs a greater realm.', 'Behold: more kingdom.'], shrink: ['Our realm… contracts. Temporarily.', 'A strategic retreat. A royal one.'], move: ['The court relocates.', 'We have moved to better lands.'], burning: ['Our realm is ablaze! Fetch the royal bucket!', 'Who set fire to the royal grounds?'], pecked: ['That bird is pecking holes in OUR land!', 'Our realm, full of holes. Unacceptable.'], rotten: ['Something is rotten in our realm.', 'Rotting fruit on royal bark? Clear it at once!'], invaded: ['A colony? On OUR land, {who}?!', '{who} dares plant a flag in our realm!'] },
+      realm: { grow: ['Our realm expands!', 'A greater sovereign needs a greater realm.', 'Behold: more kingdom.'], shrink: ['Our realm… contracts. Temporarily.', 'A strategic retreat. A royal one.'], move: ['The court relocates.', 'We have moved to better lands.'], burning: ['Our realm is ablaze! Fetch the royal bucket!', 'Who set fire to the royal grounds?'], pecked: ['That bird is pecking holes in OUR land!', 'Our realm, full of holes. Unacceptable.'], rotten: ['Something is rotten in our realm.', 'Rotting fruit on royal bark? Clear it at once!'], invaded: ['A colony? On OUR land, {who}?!', '{who} dares plant a flag in our realm!'],
+        capital: ['The capital has fallen. Into a hole.', 'A hole where our throne stood? The court moves at once.'] },
       bonk: ['We meant to do that.', 'Who put that there?', 'We shall have it executed.'],
       edge: ['Move the edge. We command it.'],
       burning: ['Fetch the royal bucket!'],
@@ -115,6 +134,10 @@ window.SnakeChatter = (() => {
       rot: ['Rotted before the Crown could dine. Disgraceful.'],
       under: ['That bird has committed treason.', 'A hole beneath the royal person? We do not stoop.'],
       cut: ['Treason, {who}! That was the royal tail.'],
+      choke: ['We do not dine on Ourself.', 'Ptah! The royal tail is not on the menu.'],
+      windfall: ['A tribute from {who}. How fitting.'],
+      dug: ['The beetle has fled the realm. Downwards.', 'Come back at once, beetle. That is a royal command.'],
+      knocked: ['That bird served {who} from the royal table. Unthinkable.'],
       gloat: ['Bow, {who}. Do not bump.', 'We felt that, {who}. We disapprove.', 'Mind the royal person, {who}.'],
       leap: ['We rise above it all.'],
       dies: ['The king is dead…', 'Long live… someone else.'],
@@ -141,11 +164,16 @@ window.SnakeChatter = (() => {
       doused: ['Put out by the weather. How very British.'],
       under: ['Mind the gap!'],
       cut: ['Dash it, my tail!'],
+      choke: ['Good heavens, that’s my own tail!', 'Ahem! Not cricket, eating oneself.'],
+      windfall: ['Terribly kind of you, {who}.'],
+      dug: ['Blast! It’s gone to ground.', 'I say, come back! Digging in is frightfully bad form.'],
+      knocked: ['I say! That bird just served {who} my lunch.'],
       gloat: ['Mind the Empire, {who}.', 'I say, {who}! There’s a queue.', 'Do mind the paintwork, {who}.'],
       baked: ['Roast dinner! Splendid.'],
       ash: ['Burnt to a cinder. Like Sunday lunch.'],
       rot: ['Gone off. Frightfully wasteful.'],
-      colony: { burning: ['I say, the colony’s on fire!', 'Fire in the colony! Form a bucket chain!'], pecked: ['That bird’s pecking up my colony!', 'Blast! Holes all over the colony.'], rotten: ['I say, something’s gone off in the colony.', 'Rotten fruit in the colony? Most unsanitary.'] },
+      colony: { burning: ['I say, the colony’s on fire!', 'Fire in the colony! Form a bucket chain!'], pecked: ['That bird’s pecking up my colony!', 'Blast! Holes all over the colony.'], rotten: ['I say, something’s gone off in the colony.', 'Rotten fruit in the colony? Most unsanitary.'],
+        lost: ['The flag’s gone down the hole! Abandon colony!', 'Blast! That bird’s pecked out a whole colony.'] },
       flash: { first: ['Snapped that up, {who}. Cheerio!'], past: ['Pardon me, {who}! Coming through!'] },
       dies: ['Stiff upper lip…'],
     },
@@ -168,6 +196,10 @@ window.SnakeChatter = (() => {
       doused: ['Not on fire now. Good.'],
       under: ['There’s a hole under me.'],
       cut: ['Hm. Shorter.'],
+      choke: ['That was me. Not food.'],
+      windfall: ['Thanks, {who}.'],
+      dug: ['It dug in. Okay.'],
+      knocked: ['The bird gave my food to {who}. Hm.'],
       flash: { first: ['Got it first.'], past: ['Fast.'] },
       dies: ['Well. That happened.'],
     },
@@ -189,6 +221,10 @@ window.SnakeChatter = (() => {
       doused: ['Put out. I’m nobody’s roast.'],
       under: ['A hole under me. Not my grave yet.'],
       cut: ['Leftovers… of me?'],
+      choke: ['Ptoo. I’m not dead enough.'],
+      windfall: ['Coughed it up for me, {who}? Thoughtful.'],
+      dug: ['Buried itself. I can wait.', 'Gone to ground. It’ll come up again.'],
+      knocked: ['Even the bird feeds {who} before me.'],
       gloat: ['Keep bumping, {who}. I’ll wait.', 'That looked expensive, {who}.', 'Smaller every time, {who}.'],
       flash: { first: ['Patience is overrated, {who}.'] },
       dies: ['Who’s… eating… whom…'],
@@ -214,6 +250,10 @@ window.SnakeChatter = (() => {
       doused: ['Roma salva est!'],
       under: ['Pons sum!', 'Pontem aedificavi!'],
       cut: ['Caudam meam!'],
+      choke: ['Tussis maximus!', 'Non edibilis!'],
+      windfall: ['Gratias, {who}!'],
+      dug: ['Scarabaeus fugit!', 'Diggus escapus.'],
+      knocked: ['Prandium meum, {who}?! Et tu, picus?'],
       gloat: ['Murum vidisti, {who}?', 'Murus sum, {who}.', 'Ecce murus, {who}.'],
       flash: { first: ['Veni, vidi, edi.'], past: ['Celerissimus!'] },
       dies: ['Et tu, {who}?', 'Alea iacta… estus.', 'Murus… meus… finis.'],
@@ -242,6 +282,10 @@ window.SnakeChatter = (() => {
       rot: ['Rotten food. Who’s responsible? Not me.'],
       under: ['A hole under me? Fake hole. Didn’t even feel it.'],
       cut: ['{who} stole my tail! Total theft. Sad!'],
+      choke: ['My own tail? Fake food! Sad!', 'Very unfair. Somebody put that there.'],
+      windfall: ['Thank you, {who}. Very generous. Tremendous.'],
+      dug: ['An illegal tunnel! Very unfair.', 'It dug a tunnel. Somebody build a wall!'],
+      knocked: ['That bird works for {who}. Sad!'],
       gloat: ['{who}? Bounced right off me. Sad!', 'Low energy, {who}. Very low energy.', 'Nobody bumps me, {who}. Believe me.'],
       goldbug: ['A golden beetle! I love gold. Gold loves me.'],
       leap: ['Nobody jumps better than me.'],
@@ -268,6 +312,10 @@ window.SnakeChatter = (() => {
       doused: ['fizzle. hehe.'],
       under: ['shh. there’s a hole under me.'],
       cut: ['…my tail.'],
+      choke: ['hck. that’s my tail.', 'blegh. tastes like me.'],
+      windfall: ['hehe. dropped this, {who}.'],
+      dug: ['aww. it hid.', 'i’ll find you, little bug.'],
+      knocked: ['that was mine, {who}. hehe.'],
       gloat: ['hehe. bonk, {who}.', 'peekaboo, {who}.', 'i was right here, {who}.'],
       flash: { first: ['hehe. mine, {who}.'], past: ['zip. right past you, {who}.'] },
       dies: ['…aww.'],
@@ -290,6 +338,10 @@ window.SnakeChatter = (() => {
       doused: ['Burn status: cleared by weather.'],
       under: ['Terrain under me: compromised. Bridging.'],
       cut: ['Length reduced. Recomputing.'],
+      choke: ['Own drop: no pickup. Cough debuff.', 'Self-pickup disabled. Noted.'],
+      windfall: ['Free loot. Thanks, {who}.'],
+      dug: ['Target burrowed. Chase: failed.', 'Dig-in escape. Noted.'],
+      knocked: ['Knockback rule favoured {who}. Should have pathed it.'],
       gloat: ['Predicted that, {who}.', 'Pathing error, {who}.', 'Input lag, {who}?'],
       goldbug: ['Golden beetle: mobility upgrade.'],
       leap: ['Leap executed.'],
@@ -321,6 +373,10 @@ window.SnakeChatter = (() => {
       rot: ['It rotted! I didn’t want it anyway! I did.'],
       under: ['A hole! I love holes! Not under me.'],
       cut: ['My tail! I liked that tail!'],
+      choke: ['Ooh, my tail! Yum! No! Yuck!'],
+      windfall: ['A present from {who}! I love presents! Today.'],
+      dug: ['It dug in! Clever bug! Rotten bug!'],
+      knocked: ['The bird gave {who} my lunch! Nice bird! Mean bird!'],
       leap: ['I can fly! For a second!'],
       dies: ['Changed my mind about living.'],
       dash: ['Zoom! I felt like it!'],
@@ -343,6 +399,10 @@ window.SnakeChatter = (() => {
       doused: ['火灭了，同志们！'],
       under: ['脚下有洞，同志们，不要怕！'],
       cut: ['尾巴没了，同志们！'],
+      choke: ['咳咳！同志们，这是自己的尾巴！', '自己人不吃自己人！'],
+      windfall: ['共同富裕，同志们！'],
+      dug: ['深挖洞，广积粮！', '地道战！虫子跑了，同志们！'],
+      knocked: ['粮食重新分配给{who}同志了！'],
       flash: { first: ['抢先一步，同志们！'], past: ['快马加鞭！'] },
       dies: ['同志们，再见……'],
     },
@@ -366,6 +426,10 @@ window.SnakeChatter = (() => {
       doused: ['Fire’s out? Shucks. Was just warming up.'],
       under: ['Hole under my boots! Yeehaw!'],
       cut: ['Shot my tail clean off!'],
+      choke: ['Ptoo! Ate my own dust.', 'Hack! Bit off more than I can chew.'],
+      windfall: ['Much obliged, {who}.'],
+      dug: ['Varmint went to ground.', 'Dang critter dug itself a hidey-hole.'],
+      knocked: ['That bird just dealt {who} my supper. Crooked dealer.'],
       gloat: ['Close one, {who}! Do it again.', 'Now that’s a rush, {who}!'],
       baked: ['Campfire grub!'],
       ash: ['Burnt the beans again.'],
@@ -396,6 +460,10 @@ window.SnakeChatter = (() => {
       doused: ['*wrings out its beret*'],
       under: ['*tightrope-walks over the hole*'],
       cut: ['*looks for its tail*'],
+      choke: ['*clutches its throat, then spits*', '*coughs without a sound*'],
+      windfall: ['*pats {who} on the back, mouth full*'],
+      dug: ['*knocks on the bark, then shrugs*', '*digs with an invisible spade, then gives up*'],
+      knocked: ['*points at the bird, then at {who}, aghast*'],
       gloat: ['*mimes {who} bouncing off*', '*holds up an invisible scorecard: 3*', '*dusts itself off, smugly*'],
       leap: ['*bows mid-air*'],
       dies: ['*mimes being squashed*', '*…*'],
@@ -424,6 +492,10 @@ window.SnakeChatter = (() => {
       doused: ['Out again. It always goes out.'],
       under: ['The ground gives way. I’ve crossed this before.'],
       cut: ['My tail! I was saving that.'],
+      choke: ['The one thing I’m known for. And I choke.', 'Tail in mouth. It looked easier in the drawings.'],
+      windfall: ['What you lose comes round to me, {who}.'],
+      dug: ['Back into the wood. It will come round again.', 'Down it goes. Up it comes, in time.'],
+      knocked: ['It came round to {who} this time. Next time, me.'],
       gloat: ['Around you go, {who}.', 'You’ll be back, {who}.', 'Again, {who}? Always again.'],
       weather: { snow: ['Winter returns. It always does.'], rain: ['The rain comes round again.'] },
       dies: ['…and begin again.', 'See you next time around.'],
@@ -450,6 +522,10 @@ window.SnakeChatter = (() => {
       doused: ['Fire’s out! What a wet blanket.'],
       under: ['Ha! The bird’s got jokes.', 'Hole-y moly!'],
       cut: ['Hey! Sawing in half is MY trick, {who}!'],
+      choke: ['Hack! That joke went down the wrong way.'],
+      windfall: ['Gesundheit, {who}! Thanks for lunch.'],
+      dug: ['Ha! The old trapdoor trick.', 'Where’d the bug go? Hole in one!'],
+      knocked: ['Knock knock! Who’s there? {who}, with my lunch.'],
       gloat: ['Knock knock, {who}! …Bonk!', 'Boing! Do it again, {who}!', 'Classic {who}. Never gets old.'],
       leap: ['Hup! Ta-daaa!'],
       dies: ['Tough crowd…'],
@@ -494,6 +570,10 @@ window.SnakeChatter = (() => {
       doused: ['Phew! Back to twinkling.'],
       under: ['A hole under me? Pfft. I’ve hopped bigger.'],
       cut: ['My rainbow! Who snipped my rainbow?', 'Hey, {who}! That was my best stripe!'],
+      choke: ['Hack! In my day, tails went down easy.', 'Ptoo! Got my own sparkle stuck in my throat.'],
+      windfall: ['Bless you, {who}! I’ll take that.'],
+      dug: ['Hmph! Beetles were slower in my day.', 'Dug in? Cheeky little bug!'],
+      knocked: ['Hey! That bird passed my lunch to {who}!'],
       snip: ['Snip! Sorry, {who}, can’t stop!'],
       gloat: ['Easy, {who}! Mind my points.', 'Careful, {who}! Old, not slow.'],
       baked: ['Baked apples! Smells like the old days.'],
@@ -1284,7 +1364,107 @@ window.SnakeChatter = (() => {
     "Showoffus maximus.": "超级爱炫耀。",
     "Stella celerrima!": "最快的星星！",
     "Showing off, {who}? I show off better.": "炫耀，{who}？我炫耀得更好。",
-    "Fast? I invented fast, {who}.": "快？快是我发明的，{who}。"
+    "Fast? I invented fast, {who}.": "快？快是我发明的，{who}。",
+    "Friendly fire. Spat it out.": "误伤友军。吐出来了。",
+    "Own round. Ejected.": "自己的弹壳。退膛。",
+    "Thanks for the assist, {who}.": "谢谢助攻，{who}。",
+    "Ptooey! That one’s ME!": "呸！那是我自己！",
+    "Blech! The one food I won’t eat.": "呕！唯一我不吃的东西。",
+    "Don’t mind if I do, {who}!": "那我就不客气了，{who}！",
+    "You gonna eat that, {who}? No? Mine!": "你还吃不吃，{who}？不吃？归我了！",
+    "…ack.": "……呃。",
+    "…thank you, {who}.": "……谢谢你，{who}。",
+    "We do not dine on Ourself.": "朕不吃朕自己。",
+    "Ptah! The royal tail is not on the menu.": "呸！御尾不在菜单上。",
+    "A tribute from {who}. How fitting.": "{who}的贡品。理所应当。",
+    "Good heavens, that’s my own tail!": "天哪，那是我自己的尾巴！",
+    "Ahem! Not cricket, eating oneself.": "咳咳！吃自己，太不像话了。",
+    "Terribly kind of you, {who}.": "你真是太客气了，{who}。",
+    "That was me. Not food.": "那是我。不是食物。",
+    "Thanks, {who}.": "谢谢，{who}。",
+    "Ptoo. I’m not dead enough.": "呸。我还没死透呢。",
+    "Coughed it up for me, {who}? Thoughtful.": "特意为我咳出来的，{who}？真体贴。",
+    "Tussis maximus!": "超级咳嗽！",
+    "Non edibilis!": "不可食用！",
+    "Gratias, {who}!": "谢啦，{who}！",
+    "My own tail? Fake food! Sad!": "我自己的尾巴？假食物！可悲！",
+    "Very unfair. Somebody put that there.": "非常不公平。有人故意放在那儿的。",
+    "Thank you, {who}. Very generous. Tremendous.": "谢谢你，{who}。非常慷慨。了不起。",
+    "hck. that’s my tail.": "咳。那是我的尾巴。",
+    "blegh. tastes like me.": "呕。一股我自己的味道。",
+    "hehe. dropped this, {who}.": "嘿嘿。你掉东西了，{who}。",
+    "Own drop: no pickup. Cough debuff.": "自己的掉落物：无法拾取。咳嗽减益。",
+    "Self-pickup disabled. Noted.": "自我拾取：已禁用。已记录。",
+    "Free loot. Thanks, {who}.": "白捡的战利品。谢了，{who}。",
+    "Ooh, my tail! Yum! No! Yuck!": "哦，我的尾巴！好吃！不！好恶心！",
+    "A present from {who}! I love presents! Today.": "{who}送的礼物！我爱礼物！今天爱。",
+    "Ptoo! Ate my own dust.": "呸！吃了自己的灰。",
+    "Hack! Bit off more than I can chew.": "咳！贪多嚼不烂。",
+    "Much obliged, {who}.": "承蒙关照，{who}。",
+    "*clutches its throat, then spits*": "*捂住喉咙，然后吐出来*",
+    "*coughs without a sound*": "*无声地咳嗽*",
+    "*pats {who} on the back, mouth full*": "*满嘴食物，拍拍{who}的背*",
+    "The one thing I’m known for. And I choke.": "我就以这个出名。结果噎住了。",
+    "Tail in mouth. It looked easier in the drawings.": "尾巴进嘴。画上看着容易多了。",
+    "What you lose comes round to me, {who}.": "你失去的，终会转到我这里，{who}。",
+    "Hack! That joke went down the wrong way.": "咳！这个笑话呛到我了。",
+    "Gesundheit, {who}! Thanks for lunch.": "长命百岁，{who}！谢谢你的午饭。",
+    "Hack! In my day, tails went down easy.": "咳！想当年，尾巴一口就吞下去了。",
+    "Ptoo! Got my own sparkle stuck in my throat.": "呸！自己的星光卡在喉咙里了。",
+    "Bless you, {who}! I’ll take that.": "保重，{who}！这个我收下了。",
+    "The flag’s gone down the hole! Abandon colony!": "旗子掉进洞里了！放弃殖民地！",
+    "Blast! That bird’s pecked out a whole colony.": "该死！那只鸟啄掉了一整块殖民地。",
+    "The capital has fallen. Into a hole.": "都城陷落了。陷进洞里了。",
+    "A hole where our throne stood? The court moves at once.": "朕的王座处成了洞？朝廷即刻迁都。",
+    "Target went to ground.": "目标钻进地下了。",
+    "Dug in. Lost the shot.": "钻进去了。没打着。",
+    "That bird’s spotting for {who} now.": "那只鸟现在给{who}当观察手了。",
+    "NO! My snack went DOWN!": "不！我的零食钻下去了！",
+    "It dug in?! Snacks aren’t allowed to dig!": "它钻进去了？！零食不许打洞！",
+    "HEY! That bird gave {who} MY snack!": "喂！那只鸟把我的零食给了{who}！",
+    "Pass it to ME, bird! Not {who}!": "传给我，鸟！别传给{who}！",
+    "…gone under.": "……钻下去了。",
+    "…the bird gave it to {who}.": "……鸟把它给了{who}。",
+    "The beetle has fled the realm. Downwards.": "甲虫逃离了朕的疆土。往下逃的。",
+    "Come back at once, beetle. That is a royal command.": "立刻回来，甲虫。这是圣旨。",
+    "That bird served {who} from the royal table. Unthinkable.": "那只鸟把御膳端给了{who}。岂有此理。",
+    "Blast! It’s gone to ground.": "该死！它钻到地下去了。",
+    "I say, come back! Digging in is frightfully bad form.": "我说，回来！打洞可太失礼了。",
+    "I say! That bird just served {who} my lunch.": "我说！那只鸟刚把我的午饭端给了{who}。",
+    "It dug in. Okay.": "它钻进去了。好吧。",
+    "The bird gave my food to {who}. Hm.": "鸟把我的食物给了{who}。嗯。",
+    "Buried itself. I can wait.": "它把自己埋了。我等得起。",
+    "Gone to ground. It’ll come up again.": "钻地下了。它还会上来的。",
+    "Even the bird feeds {who} before me.": "连那只鸟都先喂{who}。",
+    "Scarabaeus fugit!": "甲虫逃走了！",
+    "Diggus escapus.": "挖洞逃之夭夭。",
+    "Prandium meum, {who}?! Et tu, picus?": "我的午饭，{who}？！还有你吗，啄木鸟？",
+    "An illegal tunnel! Very unfair.": "非法地道！非常不公平。",
+    "It dug a tunnel. Somebody build a wall!": "它挖了条地道。快来人修墙！",
+    "That bird works for {who}. Sad!": "那只鸟是替{who}干活的。可悲！",
+    "aww. it hid.": "哎。它躲起来了。",
+    "i’ll find you, little bug.": "我会找到你的，小虫子。",
+    "that was mine, {who}. hehe.": "那是我的，{who}。嘿嘿。",
+    "Target burrowed. Chase: failed.": "目标钻地。追击：失败。",
+    "Dig-in escape. Noted.": "钻地逃脱。已记录。",
+    "Knockback rule favoured {who}. Should have pathed it.": "击飞规则对{who}有利。我该算好路线的。",
+    "It dug in! Clever bug! Rotten bug!": "它钻进去了！聪明的虫子！可恶的虫子！",
+    "The bird gave {who} my lunch! Nice bird! Mean bird!": "鸟把我的午饭给了{who}！好鸟！坏鸟！",
+    "Varmint went to ground.": "那小东西钻地下去了。",
+    "Dang critter dug itself a hidey-hole.": "该死的小东西给自己挖了个藏身洞。",
+    "That bird just dealt {who} my supper. Crooked dealer.": "那只鸟把我的晚饭发给了{who}。黑心荷官。",
+    "*knocks on the bark, then shrugs*": "*敲敲树皮，然后耸耸肩*",
+    "*digs with an invisible spade, then gives up*": "*用看不见的铲子挖了挖，然后放弃了*",
+    "*points at the bird, then at {who}, aghast*": "*指指那只鸟，又指指{who}，目瞪口呆*",
+    "Back into the wood. It will come round again.": "回到木头里去了。它还会转回来的。",
+    "Down it goes. Up it comes, in time.": "下去了。总有一天会上来。",
+    "It came round to {who} this time. Next time, me.": "这次转到{who}那儿了。下次就轮到我。",
+    "Ha! The old trapdoor trick.": "哈！老掉牙的活板门戏法。",
+    "Where’d the bug go? Hole in one!": "虫子去哪儿了？一杆进洞！",
+    "Knock knock! Who’s there? {who}, with my lunch.": "咚咚！谁呀？{who}，拿着我的午饭。",
+    "Hmph! Beetles were slower in my day.": "哼！我那个年代的甲虫可没这么快。",
+    "Dug in? Cheeky little bug!": "钻进去了？调皮的小虫子！",
+    "Hey! That bird passed my lunch to {who}!": "嘿！那只鸟把我的午饭传给了{who}！"
   };
 
   const SNAKE_GAP = 4500;  // ms of game time between lines from the same snake
@@ -1311,6 +1491,9 @@ window.SnakeChatter = (() => {
   let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null, pendingReply = null, saidAt = {};
   let struck = false; // (lightning has struck in this storm: one remark is enough)
   let pendingAnswer = null, answeredAt = -Infinity; // (an answer to Star's showing off, on its way; the last one)
+  const rolled = []; // food a choking or coughing snake knocked aside, oldest first: { x, y, beetle, by, at } (see windfall)
+  const digs = [];   // beetles digging in: { x, y, until, hunter } (see gotAway)
+  const knocked = []; // food the woodpecker knocked aside, oldest first: { x, y, beetle, near, at } (see served)
   const LINE_REST = 45000; // a snake doesn't say the same line again within this much game time
   const INTRUDER_REST = 25000; // nor call out intruders more often (heads skim in and out at a border)
   // Some moments come often in a long round, so each snake remarks on them at most this often:
@@ -1320,6 +1503,29 @@ window.SnakeChatter = (() => {
   const DESPERATE_REST = 30000; // starving soon (it can come and go as it eats a little)
   const FLASH_REST = 30000;     // its own plain flashes (everyone flashes, about four times a minute)
   const NEAR_FOOD = 5;          // food that rots or burns this near its head (cells, and nearer than anyone's) was food it was after
+  const CHOKE_REST = 20000;     // choking on its own bead (it can come again as soon as the cough's over)
+  // Food a choking or coughing snake knocks aside lies in the open, for
+  // anyone: whoever else eats it within WINDFALL_MS thanks the cougher,
+  // cheekily, now and then (WINDFALL_CHANCE), and at most every WINDFALL_REST.
+  // (A beetle nudged aside scurries off, so one caught within BEETLE_ROAM
+  // cells of where it went counts.)
+  const WINDFALL_MS = 6000, WINDFALL_CHANCE = 0.5, WINDFALL_REST = 30000, BEETLE_ROAM = 4;
+  // A cornered beetle digs in where it is, and is gone under the bark a
+  // moment later unless someone catches it first. One that gets away was
+  // the snake's that cornered it (the nearest head as it started, within the
+  // engine's BEETLE_DIG_FEAR): it says so, at most every DUG_REST.
+  const DUG_REST = 30000;
+  // Food the woodpecker knocks aside as it strikes lands in the open, where
+  // the engine's rule puts it. Whoever eats it there within KNOCKED_MS, the
+  // snake that was after it grumbles at, at most every KNOCKED_REST: the
+  // nearest head to where it lay at the strike, the eater's aside, within
+  // KNOCKED_NEAR. (The bird aims more than PECK_CLEARANCE cells from every
+  // head, so a head within NEAR_FOOD of food in its mark is rare, and that
+  // one mostly ate it itself: whoever was after it is a little further
+  // off, and the nearest that didn't get it.) A knocked beetle scurries off
+  // from where it lands, as a nudged one does: caught within BEETLE_ROAM
+  // cells of there counts.
+  const KNOCKED_MS = 6000, KNOCKED_NEAR = 8, KNOCKED_REST = 40000;
   // Star lives for its powers (it flashes whenever it's rested and jumps every
   // hurdle), so it cheers them all: its flashes, jumps and golden dashes, and
   // its flash back from its rest. Half the time, and all of them together at
@@ -1340,30 +1546,30 @@ window.SnakeChatter = (() => {
   // (Each voice's on rows of their own, in the order above.)
   const PUNCHLINES = new Set([
     'Run. It helps.', 'Big fan of your stream, {who}.', 'Moving target. Still a headshot.', 'Taking fire. Literally.', 'Bounced off me, {who}? Cute.', 'Quick scope, {who}.',
-    'Am I… cooking? Smells good, actually.', 'Oops. Is that meat?', 'My tail! That was full of food!', 'Who hid a mushroom in the snacks?!', 'Six legs, six times the flavour!', 'Ow! Is the edge edible?', 'Wheee! Lunch from above!', 'A hole under me! Is there food down there?',
+    'Am I… cooking? Smells good, actually.', 'Oops. Is that meat?', 'My tail! That was full of food!', 'Who hid a mushroom in the snacks?!', 'Six legs, six times the flavour!', 'Ow! Is the edge edible?', 'Wheee! Lunch from above!', 'A hole under me! Is there food down there?', 'Blech! The one food I won’t eat.', 'You gonna eat that, {who}? No? Mine!', 'It dug in?! Snacks aren’t allowed to dig!',
     'boo.',
-    'Trespasser! Guards! …We are the guards.', 'The Crown is merciful. Usually.', 'A strategic retreat. A royal one.', 'We shall have it executed.', 'Move the edge. We command it.', 'One day all this will be ours. Today, in fact.', 'That bird has committed treason.', 'Treason, {who}! That was the royal tail.', 'We are put out. In every sense.', 'Something is rotten in our realm.', 'A hole beneath the royal person? We do not stoop.',
-    'Mine now. Terribly sorry.', 'I claim this for the Crown. Which crown? Mine.', 'Do you have a flag, {who}? No flag, no colony.', 'Papers, {who}? No? Off you pop.', 'A minor diplomatic incident.', 'I say, {who}! There’s a queue.', 'I appear to be on fire. How awkward.', 'Rain? Just like home.', 'Put out by the weather. How very British.', 'Burnt to a cinder. Like Sunday lunch.', 'Mind the gap!', 'The last apples? Ration them, chaps.',
+    'Trespasser! Guards! …We are the guards.', 'The Crown is merciful. Usually.', 'A strategic retreat. A royal one.', 'We shall have it executed.', 'Move the edge. We command it.', 'One day all this will be ours. Today, in fact.', 'That bird has committed treason.', 'Treason, {who}! That was the royal tail.', 'We are put out. In every sense.', 'Something is rotten in our realm.', 'A hole beneath the royal person? We do not stoop.', 'We do not dine on Ourself.', 'The capital has fallen. Into a hole.', 'The beetle has fled the realm. Downwards.',
+    'Mine now. Terribly sorry.', 'I claim this for the Crown. Which crown? Mine.', 'Do you have a flag, {who}? No flag, no colony.', 'Papers, {who}? No? Off you pop.', 'A minor diplomatic incident.', 'I say, {who}! There’s a queue.', 'I appear to be on fire. How awkward.', 'Rain? Just like home.', 'Put out by the weather. How very British.', 'Burnt to a cinder. Like Sunday lunch.', 'Mind the gap!', 'The last apples? Ration them, chaps.', 'Ahem! Not cricket, eating oneself.', 'I say, come back! Digging in is frightfully bad form.',
     'I like beige.', 'This is a log.', 'Tastes like food.', 'That was a bump.',
-    'Rest in pieces, {who}.', 'I’m not on the menu.', 'Leftovers… of me?', 'Gone already? I like them ripe.', 'No more waiting. I’ll make my own leftovers.',
-    'Vidi, vici, veni.', 'Divide et imperium-ium.', 'Murus maximus. Very bigus.', 'Wallus erectus.', 'Bonkus interruptus.', 'Murus sum, {who}.', 'Pons sum!', 'Veni, vidi, edi.', 'Rottus maximus.', 'Festina lente, {who}!', 'Showoffus maximus.',
-    '{who}? Total loser. Sad!', 'Global warming? Total hoax. Look at all this snow!', 'Fake news! That never happened.', 'Who moved that? Fake wall!', 'I’m bigger than ever. Ask anyone.', 'Low energy, {who}. Very low energy.', 'Nobody bumps me, {who}. Believe me.', '{who} stole my tail! Total theft. Sad!', 'A hole under me? Fake hole. Didn’t even feel it.', 'Fire’s out. Nobody puts out fires like me.', 'Rotten food. Who’s responsible? Not me.', 'So fast. Faster than {who}. Everyone saw it.', 'Showing off, {who}? I show off better.', 'Fast? I invented fast, {who}.',
-    'nice tail, {who}.', 'we should hang out, {who}.', 'peekaboo, {who}.', 'shh. nobody saw that.',
+    'Rest in pieces, {who}.', 'I’m not on the menu.', 'Leftovers… of me?', 'Gone already? I like them ripe.', 'No more waiting. I’ll make my own leftovers.', 'Ptoo. I’m not dead enough.', 'Coughed it up for me, {who}? Thoughtful.',
+    'Vidi, vici, veni.', 'Divide et imperium-ium.', 'Murus maximus. Very bigus.', 'Wallus erectus.', 'Bonkus interruptus.', 'Murus sum, {who}.', 'Pons sum!', 'Veni, vidi, edi.', 'Rottus maximus.', 'Festina lente, {who}!', 'Showoffus maximus.', 'Diggus escapus.', 'Prandium meum, {who}?! Et tu, picus?',
+    '{who}? Total loser. Sad!', 'Global warming? Total hoax. Look at all this snow!', 'Fake news! That never happened.', 'Who moved that? Fake wall!', 'I’m bigger than ever. Ask anyone.', 'Low energy, {who}. Very low energy.', 'Nobody bumps me, {who}. Believe me.', '{who} stole my tail! Total theft. Sad!', 'A hole under me? Fake hole. Didn’t even feel it.', 'Fire’s out. Nobody puts out fires like me.', 'Rotten food. Who’s responsible? Not me.', 'So fast. Faster than {who}. Everyone saw it.', 'Showing off, {who}? I show off better.', 'Fast? I invented fast, {who}.', 'Very unfair. Somebody put that there.', 'It dug a tunnel. Somebody build a wall!', 'That bird works for {who}. Sad!',
+    'nice tail, {who}.', 'we should hang out, {who}.', 'peekaboo, {who}.', 'shh. nobody saw that.', 'blegh. tastes like me.',
     'Your eat rate is suboptimal, {who}.', 'Input lag, {who}?', 'Frame-perfect, {who}.',
     'Taking position. …Ooh, I like being Sniper.', 'Headshot! …Is that how Sniper says it?', 'Pew pew! …Sniper doesn’t say pew pew, does it?', 'FOOD. NOW. …Is Gobbler always this hungry?', 'Snacks! All the snacks! …How does Gobbler stop?',
     '…boo. …Am I doing Ghost right?', 'Shh. I’m being Ghost.', 'Aedificamus! …Ooh, I speak Latin now!', 'Veni, vidi, aedificavi! …Did I say that right?', 'Wallus maximus! …Is that Latin? It feels Latin.',
     'Sunshine! I love sunshine! Today.', 'Rain! I love rain! For now.', 'Snow! I love snow! For a bit.', 'A bird! I love birds! Not this one.', 'Ouch! I hate edges! Today.', 'Fire! I love fire! Ow, no I don’t!',
-    'Ouch! Never doing that again! Probably.', 'Ow! That was fun! No it wasn’t.', 'I can fly! For a second!', 'Oops, {who}! Was that rude?', 'Now I’m hungry! Out of nowhere!', 'Didn’t plan that. Love it.', 'New mood: STARVING.', 'The fire’s out! I miss it already! No I don’t.', 'Ash! I love ash! No, I wanted that!', 'It rotted! I didn’t want it anyway! I did.', 'A hole! I love holes! Not under me.', 'Zip! Mine! Sorry, {who}! Not sorry!',
-    'Is that the edge? Let’s go see.', 'Yep. That’s the edge, all right.', 'Who wants to play chicken?', 'Cold enough to freeze a cactus.', 'What doesn’t kill me… shrinks me.', 'Fire’s out? Shucks. Was just warming up.', 'Burnt the beans again.',
-    '*walks into a wall. A real one, this time*', '*plays a tiny invisible violin*', '*holds up an invisible scorecard: 3*', '*tightrope-walks over the hole*', '*wrings out its beret*',
-    'Even I must eat. Usually myself.', 'My tail! I was saving that.', 'Haven’t we met before, {who}?', 'Ah. This bit again.', 'Even the log has an end.', 'The last apples. Until the first ones, next time.',
+    'Ouch! Never doing that again! Probably.', 'Ow! That was fun! No it wasn’t.', 'I can fly! For a second!', 'Oops, {who}! Was that rude?', 'Now I’m hungry! Out of nowhere!', 'Didn’t plan that. Love it.', 'New mood: STARVING.', 'The fire’s out! I miss it already! No I don’t.', 'Ash! I love ash! No, I wanted that!', 'It rotted! I didn’t want it anyway! I did.', 'A hole! I love holes! Not under me.', 'Zip! Mine! Sorry, {who}! Not sorry!', 'Ooh, my tail! Yum! No! Yuck!', 'A present from {who}! I love presents! Today.', 'It dug in! Clever bug! Rotten bug!', 'The bird gave {who} my lunch! Nice bird! Mean bird!',
+    'Is that the edge? Let’s go see.', 'Yep. That’s the edge, all right.', 'Who wants to play chicken?', 'Cold enough to freeze a cactus.', 'What doesn’t kill me… shrinks me.', 'Fire’s out? Shucks. Was just warming up.', 'Burnt the beans again.', 'Hack! Bit off more than I can chew.', 'That bird just dealt {who} my supper. Crooked dealer.',
+    '*walks into a wall. A real one, this time*', '*plays a tiny invisible violin*', '*holds up an invisible scorecard: 3*', '*tightrope-walks over the hole*', '*wrings out its beret*', '*pats {who} on the back, mouth full*', '*digs with an invisible spade, then gives up*',
+    'Even I must eat. Usually myself.', 'My tail! I was saving that.', 'Haven’t we met before, {who}?', 'Ah. This bit again.', 'Even the log has an end.', 'The last apples. Until the first ones, next time.', 'The one thing I’m known for. And I choke.', 'Tail in mouth. It looked easier in the drawings.', 'It came round to {who} this time. Next time, me.',
     'Why did the snake cross the bark? It was starving.', 'Knock knock! Who’s there? Lunch, I hope.', 'Knock knock! Oh. It’s the woodpecker.', 'Somewhere over the… oh, there it is.', 'Knock knock, {who}! …Bonk!',
-    'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!', 'Hey! Sawing in half is MY trick, {who}!', 'Fire’s out! What a wet blanket.', 'Ashes to ashes, snack to dust!', 'Rotten luck!', 'Hole-y moly!', 'Now you see it, {who}. Now you don’t!', 'Beep beep, {who}!',
+    'Ha! The bird’s got jokes.', 'Follow me, it’s a shortcut!', 'Fungi! Fun guy! …No?', 'Not so funny now.', 'Mushroom? I hardly know ’em!', 'Classic {who}. Never gets old.', 'Pull my tail!', 'Wanna hear a joke, {who}?', 'Ta-da! {who}, sawn in half!', 'Hey! Sawing in half is MY trick, {who}!', 'Fire’s out! What a wet blanket.', 'Ashes to ashes, snack to dust!', 'Rotten luck!', 'Hole-y moly!', 'Now you see it, {who}. Now you don’t!', 'Beep beep, {who}!', 'Hack! That joke went down the wrong way.', 'Gesundheit, {who}! Thanks for lunch.', 'Ha! The old trapdoor trick.', 'Where’d the bug go? Hole in one!', 'Knock knock! Who’s there? {who}, with my lunch.',
     'In my day we flashed uphill both ways!', 'Did I tell you I once jumped the whole log, {who}?', 'This mustache has seen things, {who}.', 'I was fast before fast was cool.',
     'Rest, rest, rest. I’ll rest when I’m old!', 'Come on, come on… I’m not getting any younger.', 'Hmph. In my day, a flash came right back.', 'Rested! Well, rested enough.',
     'Look, no legs!', 'Did you see that? Want to see it again?', 'They don’t make flashes like that anymore.', 'Hup! Old star, new tricks!', 'Early star gets the apple, {who}!', 'Feel that breeze, {who}? That was me.', 'A golden bug! Come to Grandpa!',
     'Sorry, {who}! I don’t do brakes.', 'Lightning! Now there’s a flash I respect.', 'Rain! You know what comes after rain…', 'Family!', 'Oh, look at you! You’ve grown!', 'There’s my trail! I wondered where it went.',
-    'Oof! Tripped on my own mustache.', 'Ow! That wasn’t there in my day.', 'Whoa! The log used to be bigger.', 'Hot! Hot! I’m a star, not a comet!', 'Careful, {who}! Old, not slow.', 'Rotted? I must be slowing down.',
+    'Oof! Tripped on my own mustache.', 'Ow! That wasn’t there in my day.', 'Whoa! The log used to be bigger.', 'Hot! Hot! I’m a star, not a comet!', 'Careful, {who}! Old, not slow.', 'Rotted? I must be slowing down.', 'Hack! In my day, tails went down easy.', 'Hmph! Beetles were slower in my day.',
   ]);
   const toldThisRound = new Set();
   const bubbles = new Map(); // snake id -> { el, snake, until, at, w, h, side, x, y, ... }, oldest first
@@ -1387,13 +1593,28 @@ window.SnakeChatter = (() => {
     if (zh) el.lang = 'zh-Hans';
   }
 
-  // The log sits on dark wood: lighten dark colors so names stay readable.
+  // The log sits on dark wood: a dark colour is lightened just enough for its
+  // name to read there (LOG_CONTRAST against LOG_WOOD, the log at its
+  // lightest: its rgba(63, 37, 16, 0.55) over the forest floor's lightest
+  // green under a shaft of light; where it sits it's darker, about 5.5:1),
+  // keeping its hue and saturation, so a name keeps its snake's colour.
+  // (Mixing it halfway to white turned the reds pink: Copycat's flag red,
+  // Sniper's, Colonist's and Wildcard's alike.)
+  const LOG_WOOD = [56, 50, 29], LOG_CONTRAST = 4.5;
+  const luminance = rgb => rgb.reduce((sum, v, i) => { v /= 255; return sum + [0.2126, 0.7152, 0.0722][i] * (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4); }, 0);
+  const onWood = rgb => (luminance(rgb) + 0.05) / (luminance(LOG_WOOD) + 0.05);
   function readable(hex) {
     const n = parseInt(hex.slice(1), 16);
-    const [r, g, b] = [n >> 16, (n >> 8) & 255, n & 255];
-    if (0.299 * r + 0.587 * g + 0.114 * b > 140) return hex;
-    const up = v => Math.round(v + (255 - v) * 0.5);
-    return `rgb(${up(r)},${up(g)},${up(b)})`;
+    const rgb = [n >> 16, (n >> 8) & 255, n & 255];
+    if (onWood(rgb) >= LOG_CONTRAST) return hex;
+    // (Its hue and saturation, in HSL; the least lightness that reads.)
+    const [r, g, b] = rgb.map(v => v / 255), hi = Math.max(r, g, b), lo = Math.min(r, g, b), d = hi - lo;
+    const h = !d ? 0 : hi === r ? ((g - b) / d + 6) % 6 : hi === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    const s = !d ? 0 : d / (1 - Math.abs(hi + lo - 1));
+    const at = l => { const c = (1 - Math.abs(2 * l - 1)) * s, f = k => { const t = (k + h) % 6; return l + c / 2 - c * Math.max(0, Math.min(1, Math.min(t, 4 - t))); }; return [f(5), f(3), f(1)].map(v => Math.round(v * 255)); };
+    let low = (hi + lo) / 2, high = 1;
+    for (let i = 0; i < 12; i++) { const mid = (low + high) / 2; if (onWood(at(mid)) >= LOG_CONTRAST) high = mid; else low = mid; }
+    return `rgb(${at(high).join(',')})`;
   }
 
   // Everyone by name: you're your Hall of Fame name (or "Green"), friends theirs.
@@ -1404,6 +1625,11 @@ window.SnakeChatter = (() => {
   const onLand = (x, y, f) => Math.hypot(x - f.x, y - f.y) <= f.radius + window.TUNING.LAND_REACH;
   // The fields a snake holds: Sovereign's realm, or Colonist's colonies (or none).
   const landsOf = m => m.home ? [m.home] : m.colonies?.length ? m.colonies : null;
+  // Is cell x, y a hole (the woodpecker's)?
+  const holeAt = (x, y) => !!game.holes?.has(y * window.TUNING.GRID + x);
+  // Colonist's colonies as the chatter last saw them, and now (n: which flag it is).
+  const NONE = [];
+  const sameColonies = (a, b) => !!b && a.length === b.length && a.every((c, i) => c.n === b[i].n && c.x === b[i].x && c.y === b[i].y);
   // Do two fields share a cell of land? (Where they do, the map hatches it.)
   function sharesLand(a, b) {
     const N = window.TUNING.GRID, r = Math.ceil(a.radius + window.TUNING.LAND_REACH);
@@ -1432,6 +1658,7 @@ window.SnakeChatter = (() => {
     game = g;
     lastAny = -Infinity; lastSaid = {}; seen = {}; lastLine = null; pendingReply = null; saidAt = {}; struck = false;
     pendingAnswer = null; answeredAt = -Infinity;
+    rolled.length = 0; digs.length = 0; knocked.length = 0;
     toldThisRound.clear();
     clearBubbles();
     logEl.textContent = '';
@@ -1693,7 +1920,11 @@ window.SnakeChatter = (() => {
   // last line: those clear it (ownMoment), unless that line was this tick's
   // (one line at a time).
   const showsOff = s => s.personaKey === 'star';
-  const ownMoment = s => { if (s && showsOff(s) && lastSaid[s.id] < game.time) lastSaid[s.id] = -Infinity; };
+  // (Clearing a snake's gap for news, unless its last line was this tick's.
+  // Star's own moments do; so do a choke, and a colony or a capital the
+  // woodpecker took.)
+  const news = s => { if (s && lastSaid[s.id] < game.time) lastSaid[s.id] = -Infinity; };
+  const ownMoment = s => { if (s && showsOff(s)) news(s); };
   // A line for showing off (key; who: a rival it beat to food or shot past),
   // half the time and at most every SHOW_OFF_REST (sure: a golden dash or
   // jump, a round has one or two of each, so whenever it can); whether it
@@ -1709,6 +1940,53 @@ window.SnakeChatter = (() => {
     return true;
   }
 
+  // A choking snake spits its bead aside, and a coughing one nudges aside
+  // any food its head reaches: where each piece went (rolled), for a while.
+  // A piece someone else eats there was a windfall: a rival who ate it
+  // thanks the cougher now and then ({who}), cheekily (windfall: whether it
+  // did). Any eating there (the cougher's own, once its cough is over, or
+  // yours) settles it.
+  function knockedAside(e) {
+    for (let i = rolled.length - 1; i >= 0; i--) if (rolled[i].x === e.x && rolled[i].y === e.y) rolled.splice(i, 1); // (a piece knocked on again)
+    rolled.push({ x: e.tx ?? e.x, y: e.ty ?? e.y, beetle: e.kind === 'beetle', by: e.snake, at: game.time });
+  }
+  // (Is what e ate the piece that landed at r? A beetle runs on from there.)
+  const landed = (r, e) => r.beetle ? e.kind === 'beetle' && Math.abs(r.x - e.x) + Math.abs(r.y - e.y) <= BEETLE_ROAM : r.x === e.x && r.y === e.y;
+  function windfall(e) {
+    const i = rolled.findIndex(r => landed(r, e));
+    if (i < 0) return false;
+    const { by } = rolled.splice(i, 1)[0], s = e.snake;
+    if (by === s || !s.persona) return false;
+    const was = (seen[s.id] ||= {});
+    if (game.time - (was.windfallAt ?? -Infinity) < WINDFALL_REST || !(Math.random() < WINDFALL_CHANCE)) return false;
+    if (!say(s, 'windfall', by, true)) return false;
+    was.windfallAt = game.time;
+    return true;
+  }
+
+  // A beetle that dug in has gone under (a dive, dug): it got away from the
+  // snake that cornered it (digs, from its dig), which says so if it's a
+  // rival. (One caught as it dug is just a catch: no dive.)
+  function gotAway(e) {
+    const i = digs.findIndex(d => d.x === e.x && d.y === e.y);
+    if (i < 0) return;
+    const s = digs.splice(i, 1)[0].hunter, was = s && (seen[s.id] ||= {});
+    if (s?.persona && s.alive && !(game.time - (was.dugAt ?? -Infinity) < DUG_REST) && say(s, 'dug', null, true)) was.dugAt = game.time;
+  }
+
+  // Food the woodpecker knocked aside (knocked), eaten where it landed: the
+  // snake that was after it, the nearest head at the strike but the
+  // eater's (near: within KNOCKED_NEAR, nearest first), grumbles at the
+  // eater, if it's a rival (nobody speaks for you). Any eating there
+  // settles it.
+  function served(e) {
+    const i = knocked.findIndex(r => landed(r, e));
+    if (i < 0) return;
+    const s = knocked.splice(i, 1)[0].near.find(o => o !== e.snake), was = s && (seen[s.id] ||= {});
+    if (!s?.persona || !s.alive || game.time - (was.knockedAt ?? -Infinity) < KNOCKED_REST) return;
+    if (say(s, 'knocked', e.snake, true)) was.knockedAt = game.time;
+  }
+
   // Called once per tick, after the engine moved everyone.
   function update() {
     if (!game || !enabled) return;
@@ -1720,8 +1998,8 @@ window.SnakeChatter = (() => {
     const byId = id => game.snakes.find(o => o.id === id);
     // Whose head was nearest food that's just gone (anyone's: you can beat a
     // rival to it), if it was near: that snake was after it.
-    const after = (x, y) => {
-      let best = null, d = NEAR_FOOD + 1;
+    const after = (x, y, near = NEAR_FOOD) => {
+      let best = null, d = near + 1;
       for (const o of game.snakes) {
         if (!o.alive) continue;
         const k = Math.abs(o.body[0].x - x) + Math.abs(o.body[0].y - y);
@@ -1729,6 +2007,9 @@ window.SnakeChatter = (() => {
       }
       return best;
     };
+    // ...and every head within near of it, nearest first (a tie, in the snakes' order, as above).
+    const nearest = (x, y, near) => game.snakes.filter(o => o.alive).map(o => [o, Math.abs(o.body[0].x - x) + Math.abs(o.body[0].y - y)])
+      .filter(([, k]) => k <= near).sort((a, b) => a[1] - b[1]).map(([o]) => o);
 
     // Hello, round. One or two snakes speak up in the first seconds.
     if (game.tick === 6 || game.tick === 20) {
@@ -1736,8 +2017,26 @@ window.SnakeChatter = (() => {
       if (s) say(s, 'start', anyone(s));
     }
 
+    // (Where this tick's spat and nudged food went, before anyone's eating is
+    // looked at: a head can reach it in the same tick.)
+    while (rolled.length && game.time - rolled[0].at > WINDFALL_MS) rolled.shift();
+    for (const e of game.events || []) if (e.type === 'choke' || e.type === 'nudge') knockedAside(e);
+    // (Likewise beetles digging in, whose hunter is whoever cornered it, and
+    // food the woodpecker knocked aside, with the heads that were near it.)
+    while (knocked.length && game.time - knocked[0].at > KNOCKED_MS) knocked.shift();
+    for (let i = digs.length - 1; i >= 0; i--) if (game.tick > digs[i].until + 10) digs.splice(i, 1); // (caught as it dug: no dive)
+    for (const e of game.events || []) {
+      if (e.type === 'dig') digs.push({ x: e.x, y: e.y, until: e.until, hunter: after(e.x, e.y, window.TUNING.BEETLE_DIG_FEAR) });
+      else if (e.type === 'knock' && e.tx != null && e.kind !== 'mushroom') { // (eaten by the bird, it's gone; nobody misses a mushroom)
+        const bead = e.kind === 'pellet' ? game.food.find(f => f.x === e.tx && f.y === e.ty && f.kind === 'pellet')?.owner : undefined;
+        const near = nearest(e.x, e.y, KNOCKED_NEAR).filter(o => o.id !== bead); // (its own bead was never its meal)
+        if (near.length) knocked.push({ x: e.tx, y: e.ty, beetle: e.kind === 'beetle', near, at: game.time });
+      }
+    }
+
     const dashed = []; // (the rivals who made a golden dash: their lines wait for its cuts, below)
     for (const e of game.events || []) {
+      if (e.type === 'eat') served(e); // (the snake it was knocked away from has its word first: the eater's own lines follow)
       if (e.type === 'death') {
         const victim = e.snake;
         const killer = byName(victim.killer);
@@ -1750,6 +2049,8 @@ window.SnakeChatter = (() => {
           say(victim, 'dies', killer && killer !== victim ? killer : null, true);
         }
         for (const v of alive) if (v.personaKey === 'vulture' && Math.random() < 0.6) say(v, 'death', victim);
+      } else if (e.type === 'eat' && windfall(e)) {
+        // (food a choking or coughing snake knocked its way: it's said its thanks)
       } else if (e.type === 'eat' && e.snake.persona && e.kind !== 'goldcap') { // (a golden mushroom has its own lines: below)
         if (e.kind === 'golden') say(e.snake, 'golden', null, true);
         else if ((e.gold || e.kind === 'leaf') && showsOff(e.snake)) {
@@ -1795,6 +2096,17 @@ window.SnakeChatter = (() => {
         say(e.snake, 'wrap', null, true);
       } else if (e.type === 'alight' && e.snake.persona) {
         say(e.snake, 'burning', null, true);
+      } else if (e.type === 'choke' && e.snake.persona && e.snake.alive) {
+        // Its head met its own bead (a crash's, or a cut's): it gags, spits
+        // it aside and coughs a moment. It says so, at most every CHOKE_REST,
+        // even just after another line: it's news (the crash that broke the
+        // bead off has mostly had its say a second or two before, and a
+        // choke left to wait out the gap would mostly go unsaid).
+        const s = e.snake, was = (seen[s.id] ||= {});
+        if (!(game.time - (was.chokeAt ?? -Infinity) < CHOKE_REST)) {
+          news(s);
+          if (say(s, 'choke', null, true)) was.chokeAt = game.time;
+        }
       } else if (e.type === 'cut') {
         // A golden dash cut it (the woodpecker cuts nothing now): the dasher
         // crows, and the one cut has words for whoever it was, you included.
@@ -1802,6 +2114,8 @@ window.SnakeChatter = (() => {
         ownMoment(dasher); ownMoment(e.snake);
         if (dasher?.persona) say(dasher, 'snip', e.snake, true);
         if (e.snake.persona) say(e.snake, 'cut', dasher, true);
+      } else if (e.type === 'dive' && e.dug) {
+        gotAway(e); // (a beetle that dug in, gone under the bark)
       } else if (e.type === 'peck' && e.under?.length) {
         // The woodpecker pecked under a body, which bridges the hole (only a
         // head falls in). Now and then it says so.
@@ -1857,13 +2171,16 @@ window.SnakeChatter = (() => {
         if (sov) say(sov, 'realm.invaded', s, true);
       }
       // Sovereign and Colonist: their land on fire, pecked full of holes, or
-      // food rotting on it.
+      // food rotting on it. (A peck on a field's own centre, a colony's flag
+      // or the capital, loses the colony or moves the realm: that news has
+      // its own line, below, so the peck itself goes without one.)
       const lands = landsOf(m);
       if (lands) {
         const N = window.TUNING.GRID, tag = m.home ? 'realm' : 'colony';
         const inLand = k => lands.some(f => onLand(k % N, Math.floor(k / N), f));
+        const flagAt = k => lands.some(f => k === f.y * N + f.x);
         for (const e of game.events) {
-          if (e.type === 'peck' && (e.cells || []).some(inLand)) say(s, tag + '.pecked', null, true);
+          if (e.type === 'peck' && (e.cells || []).some(inLand) && !e.cells.some(flagAt)) say(s, tag + '.pecked', null, true);
           else if (e.type === 'rot' && inLand(e.y * N + e.x) && !(game.time - (was.landRotAt ?? -Infinity) < LAND_ROT_REST) && say(s, tag + '.rotten', null, true)) was.landRotAt = game.time;
         }
         if (game.tick % 10 === 0 && game.fires?.size && game.time - (was.fireAt ?? -1e9) > 12000) {
@@ -1883,12 +2200,25 @@ window.SnakeChatter = (() => {
         was.desperate = true;
         was.desperateAt = game.time;
       }
-      // Sovereign's realm grew, shrank or moved.
+      // Sovereign's realm grew, shrank or moved. A move off a capital the
+      // woodpecker pecked out (the old centre's a hole) is news.
       if (m.home && was.realm) {
-        if (m.home.radius !== was.realm.radius) say(s, m.home.radius > was.realm.radius ? 'realm.grow' : 'realm.shrink', null, true);
-        else if (m.home.x !== was.realm.x || m.home.y !== was.realm.y) say(s, 'realm.move');
+        const moved = m.home.x !== was.realm.x || m.home.y !== was.realm.y;
+        if (moved && holeAt(was.realm.x, was.realm.y)) { news(s); say(s, 'realm.capital', null, true); }
+        else if (m.home.radius !== was.realm.radius) say(s, m.home.radius > was.realm.radius ? 'realm.grow' : 'realm.shrink', null, true);
+        else if (moved) say(s, 'realm.move');
       }
       was.realm = m.home && { x: m.home.x, y: m.home.y, radius: m.home.radius };
+      // Colonist: a colony whose flag cell the woodpecker pecked out is lost
+      // (its flag falls in, and it's gone from its memory at once): news.
+      // (Planting one too many lets the oldest go: no loss.)
+      if (m.colonies || was.colonies) {
+        const cols = m.colonies || NONE, before = was.colonies;
+        if (!sameColonies(cols, before)) {
+          if (before?.some(c => holeAt(c.x, c.y) && !cols.some(k => k.n === c.n && k.x === c.x && k.y === c.y))) { news(s); say(s, 'colony.lost', null, true); }
+          was.colonies = cols.map(c => ({ n: c.n, x: c.x, y: c.y }));
+        }
+      }
       if (m.moodChangedAt != null && m.moodChangedAt !== was.mood && m.mood) say(s, `mood.${m.mood}`, null, true);
       // Star's flash back from its rest: raring to go, once it's been back a
       // moment (if it flashes or jumps by then, it's resting again: no word).

@@ -225,7 +225,7 @@ const KEYS = {
     await powers('Ouroboros', 0, 0, false);
     await mouse(await tagAt('You'));
     p = await P();
-    check(p.note.startsWith('You') && p.note.includes('Space jumps'), 'your own tag: your powers, as your note', p.note);
+    check(p.note.startsWith('You') && p.note.includes('Space or a click jumps'), 'your own tag: your powers, as your note', p.note);
     // Keys: Tab to a name, Enter opens it (focus stays on the name), Enter closes; Esc closes it first.
     await ev(`document.querySelector('#overlay .card').focus(); 'ok'`);
     for (let i = 0; i < 24 && !(await ev(`document.activeElement.textContent === 'Metagamer'`)); i++) await key('Tab');
