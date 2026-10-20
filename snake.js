@@ -1193,7 +1193,7 @@
     }
 
     overlay.querySelector('.card').classList.toggle('beat', !!card.beat); // the countdown: a big number
-    overlay.querySelector('.card').classList.toggle('ended', state === 'over'); // the round's card: its words say more than your death's (style.css: how long you lasted), so more gives way to fit
+    overlay.querySelector('.card').classList.toggle('ended', state === 'over' && !!player() && !player().alive); // the round's card when your death ended it: its words say more than your death's (style.css: how long you lasted), so more gives way to fit (a win keeps its badge)
     overlay.classList.remove('hidden');
     overlay.querySelector('.card').scrollTop = 0;
     if (!card.quiet) say(announcement(card));

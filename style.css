@@ -954,7 +954,7 @@ html.playing .help.cut { visibility: hidden; } /* (cut in half by the screen's e
    went up with the page, 460 to 990 px off a phone's screen, and with it
    the focus ring). At rest it's where it was: 16 px in, 12 over the page.
    (Stuck, it's 3 px from the page's top, past its 16 px padding: -13.) */
-.records-head { position: sticky; top: -13px; z-index: 1; display: flex; align-items: center; justify-content: space-between; margin: -13px -13px 4px; padding: 13px 13px 8px; border-radius: 13px 13px 0 0; background: var(--parchment); }
+.records-head { position: sticky; top: -13px; z-index: 1; box-shadow: 0 -3px 0 var(--parchment-2); /* (covers the ring's band above it, where scrolled words would show) */ display: flex; align-items: center; justify-content: space-between; margin: -13px -13px 4px; padding: 13px 13px 8px; border-radius: 13px 13px 0 0; background: var(--parchment); }
 
 .tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--parchment-2); }
 .tab { padding: 6px 14px; font-size: 0.9rem; background: transparent; color: var(--ink); box-shadow: none; }

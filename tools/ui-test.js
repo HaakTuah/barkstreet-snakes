@@ -557,6 +557,15 @@ const KEYS = {
         await ev(words(LONG_ROUND, WIN));
         f = await ev(fitNow);
         check(f.over <= 0 && f.under === 0 && f.shown === round, `phone ${w}x${h}: your death ends the round, and its fullest card, the longest words, fits (${round})`, JSON.stringify(f));
+        if (w === 390) { // (a win's round card keeps its badge: what gives way is for the card your death ended)
+          await ev(`pilot.on = false; 1`);
+          await fresh(['copycat']);
+          await ev(`me().eaten = 99; pilot.on = false; const r = SnakeDebug.game().snakes.find(s => s !== me()); r.alive = false; r.diedAt = SnakeDebug.game().time; 1`);
+          await wait(`SnakeDebug.state() === 'over' && cardUp()`);
+          await b.sleep(1000);
+          f = await ev(fitNow);
+          check(/badge/.test(f.shown) && f.over <= 0, `phone ${w}x${h}: a win with a new best keeps its badge on the round's card`, JSON.stringify(f));
+        }
       }
     }
 
