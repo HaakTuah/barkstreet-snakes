@@ -1877,12 +1877,13 @@ window.SnakeChatter = (() => {
 
   // The banner's box on the board (it's centred by a transform, which the
   // offsets leave out). While it's faded for a head under it, the board
-  // comes first and bubbles may cross it.
+  // comes first and bubbles may cross it; above the board (a phone held
+  // upright: snake.js placeToast), it's in nobody's way.
   let banner = null, bannerStale = true, bannerPx = 0;
   function readBanner(boardPx) {
     bannerStale = false;
     bannerPx = boardPx;
-    if (!bannerEl || bannerEl.hidden || bannerEl.classList.contains('under')) { banner = null; return; }
+    if (!bannerEl || bannerEl.hidden || bannerEl.classList.contains('under') || bannerEl.classList.contains('above')) { banner = null; return; }
     const w = bannerEl.offsetWidth;
     banner = { x: bannerEl.offsetLeft - w / 2, y: bannerEl.offsetTop, w, h: bannerEl.offsetHeight };
   }

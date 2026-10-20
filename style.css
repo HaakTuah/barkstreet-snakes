@@ -759,7 +759,8 @@ canvas {
 .card:focus { outline: none; } /* focused only so keys reach it; buttons show the ring */
 .text-button:hover { color: var(--leaf-dark); background: none; text-decoration-thickness: 2px; }
 
-/* A banner over the board for the big moments (under the cards). */
+/* A banner for the round's news, on the board at its top or foot (under the
+   cards), or on a phone held upright above it (.above, below). */
 .toast {
   position: absolute;
   z-index: 2; /* under the cards */
@@ -778,39 +779,27 @@ canvas {
   text-wrap: balance; /* (two even lines, not a long one and a word) */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 0 0 2px var(--parchment-2);
   pointer-events: none;
-  animation: slam 0.46s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  animation: settle 0.36s ease-out;
   transition: opacity 0.2s;
   overflow: hidden;
 }
 .toast[hidden] { display: none; }
-@keyframes slam {
-  0% { transform: translateX(-50%) scale(1.9); opacity: 0; }
-  55% { transform: translateX(-50%) scale(0.92); opacity: 1; }
-  78% { transform: translateX(-50%) scale(1.05); }
-  100% { transform: translateX(-50%) scale(1); }
-}
+/* (It settles in, a short drop and a fade, and fades out rising a little:
+   no slam from 1.9x, no throb, no shine. With reduced motion, a fade.) */
+@keyframes settle { from { transform: translateX(-50%) translateY(-6px); opacity: 0; } }
 .toast.leaving, .toast.settled.leaving { animation: toast-out 0.24s ease-in forwards; }
-@keyframes toast-out { to { transform: translateX(-50%) translateY(-8px) scale(0.9); opacity: 0; } }
-/* Each kind of moment has its own dress: a ring in its colour, gold with a
-   shine running across it, a leafy Go!. */
+@keyframes toast-out { to { transform: translateX(-50%) translateY(-4px); opacity: 0; } }
+@keyframes toast-fade-in { from { opacity: 0; } }
+@keyframes toast-fade-out { to { opacity: 0; } }
+/* Each kind of moment has its own dress: a ring in its colour, gold, a
+   leafy Go!. */
 .toast[data-kind="kill"] { color: #7f1d1d; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #dc2626; }
 .toast[data-kind="warn"] { color: #7f1d1d; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #dc2626; }
-.toast[data-kind="warn"]:not(.settled) { animation: slam 0.46s cubic-bezier(0.2, 0.9, 0.3, 1.2), throb 0.5s 0.46s ease-in-out 3 alternate; }
-@keyframes throb { to { background: #fecaca; } }
 .toast[data-kind="beetle"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #059669; }
 .toast[data-kind="bird"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #ea580c; }
 .toast[data-kind="note"] { max-width: min(calc(100% - 32px), 420px); font-weight: 500; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 4px 0 0 var(--edge, var(--ink-soft)), inset 0 0 0 2px var(--parchment-2); } /* (a rival's note while you watch: edged in its colour, as on a card) */
 .toast[data-kind="you"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #4ade80; } /* (yours: your snake's green, not a gold that isn't a power) */
 .toast[data-kind="gold"] { background: linear-gradient(180deg, #fffbea, #fde68a); box-shadow: 0 0 20px rgba(253, 230, 138, 0.65), inset 0 0 0 2px #d4a017; }
-.toast[data-kind="gold"]::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.85) 50%, transparent 70%);
-  transform: translateX(-120%);
-  animation: shine 1.5s 0.35s ease-in-out infinite;
-}
-@keyframes shine { 55%, 100% { transform: translateX(120%); } }
 /* The weather, as it turns: gold sun, rain blue, a storm's violet night, fire. */
 .toast[data-kind="sun"] { background: linear-gradient(180deg, #fff7d1, #fde68a); box-shadow: 0 0 18px rgba(251, 191, 36, 0.5), inset 0 0 0 2px #f59e0b; }
 .toast[data-kind="wind"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #16a34a; }
@@ -819,13 +808,19 @@ canvas {
 .toast[data-kind="snow"] { background: #f0f9ff; color: #0c4a6e; box-shadow: 0 0 18px rgba(186, 230, 253, 0.6), inset 0 0 0 2px #7dd3fc; }
 .toast[data-kind="fire"] { background: linear-gradient(180deg, #ffedd5, #fdba74); color: #7c2d12; box-shadow: 0 0 18px rgba(249, 115, 22, 0.55), inset 0 0 0 2px #ea580c; }
 .toast[data-kind="go"] { padding: 8px 24px; font-size: 1.3rem; background: var(--leaf); color: #fffbea; box-shadow: 0 4px 0 var(--leaf-dark), 0 8px 20px rgba(0, 0, 0, 0.45); }
-/* A head coming into the banner's place: it moves to the board's foot or
-   its middle, whichever's clear, and stays there while that is (with heads
-   everywhere, it fades where it is), so it never hides the board. */
+/* A head coming into the banner's place: it moves to the board's foot, if
+   that's clear, and stays there while it is (with heads in both, it fades
+   where it is). Never the middle of the board, where the play is. */
 .toast.low { top: auto; bottom: 12px; }
-.toast.mid { top: calc(50% - var(--toast-h, 0px) / 2); }
-.toast.settled { animation: none; } /* (dropped in once; moving it doesn't replay that) */
+.toast.settled { animation: none; } /* (settled in once; moving it doesn't replay that) */
 .toast.under { opacity: 0.3; }
+/* On a phone held upright the banner is off the board altogether: in the
+   header, over its title row, level with the title (snake.js placeToast),
+   one line whose words shrink to fit it, never over the row of buttons
+   under it (the pause button), the name tags or the board. */
+header { position: relative; } /* (the banner's room, on a phone held upright) */
+.toast.above { top: var(--toast-y, 0px); z-index: 6; width: var(--toast-max, 100%); max-width: none; padding: 4px 12px; font-size: var(--toast-fs, 0.86rem); white-space: nowrap; text-overflow: ellipsis; }
+.toast.above[data-kind="go"] { padding: 3px 18px; font-size: var(--toast-fs, 1.1rem); } /* (Go!, as big as the row lets it be) */
 
 /* How to steer, level with the YOU arrow as a round starts: positioned by
    transform each frame (it rides along with your head), never in a finger's
@@ -1888,9 +1883,12 @@ button.link[hidden] { display: none; } /* (its display would otherwise win over 
 
 /* Reduced motion: no pops, rises or rumbles; the information stays. */
 @media (prefers-reduced-motion: reduce) {
-  .card, .overlay, .badge, .toast, .records-card, .rival-note, .scoreboard li.starving::after { animation: none !important; }
+  .card, .overlay, .badge, .records-card, .rival-note, .scoreboard li.starving::after { animation: none !important; }
+  .toast { animation: toast-fade-in 0.2s ease-out; } /* (a banner only fades, in and out) */
+  .toast.leaving, .toast.settled.leaving { animation: toast-fade-out 0.24s ease-in forwards; }
+  .toast.settled { animation: none; }
   .guide li.spot { animation: none; background: rgba(253, 230, 138, 0.55); } /* (lit, and it stays lit) */
-  h1 .snake-s *, .leaves, .frame-sheen > i, #start::after, .toast::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
+  h1 .snake-s *, .leaves, .frame-sheen > i, #start::after, .chatlog li, .bubble > span, .scoreboard li.leader .len::before { animation: none !important; }
   .scoreboard li.starving::after { opacity: 1; }
   button, button:active { transition: none; transform: none; }
   .toast, .steer-hint { transition: none; }

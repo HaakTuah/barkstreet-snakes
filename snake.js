@@ -168,6 +168,28 @@
     takeBack: 'An AI kept your snake going. Steer to take it back.',
     watchingFirst: 'This round’s already going. You’re in from the next one.',
     rivals0: 'Just friends today. No mercy:',
+    // On a phone held upright a banner has one line, over the header's title
+    // row (DESIGN "Teaching by showing"): the longest round news, in fewer
+    // words there; the full words everywhere else, and for a screen reader.
+    // (input-test checks every banner fits a line on a 360 px phone, at its
+    // own size or a little under.)
+    phone: {
+      'Thunder on the bark. Lightning strikes where it crackles.': 'Thunder! Lightning strikes where it crackles.',
+      'Winter. Less food, and you’ll get hungry faster.': 'Winter. Less food, and hunger comes faster.',
+      'Snow on the bark. Lean times: eat while you can.': 'Snow. Lean times: eat while you can.',
+      'Winter. Less food, and everyone gets hungry faster.': 'Winter. Less food, and hunger comes faster.',
+      'The woodpecker is here. Keep out of wherever it’s looking.': 'The woodpecker is here. Keep out of its sight.',
+      'Rat-a-tat. The woodpecker has come for the log, a patch at a time.': 'Rat-a-tat. The woodpecker has come for the log.',
+      'The woodpecker is here. Everyone, keep clear of its mark.': 'The woodpecker is here. Everyone, mind its mark.',
+      'A golden leaf blew onto the log: golden flashes, for the taking.': 'A golden leaf blew in: golden flashes to take.',
+      'A golden leaf on the wind: golden flashes, for whoever eats it.': 'A golden leaf: golden flashes, for whoever eats it.',
+      'A golden mushroom came up. Eat it: no edges for a while.': 'A golden mushroom came up: no edges for a while.',
+      'This round’s already going. You’re in from the next one.': 'This round’s going. You’re in from the next one.',
+      'You went quiet for a moment, so an AI steered for you.': 'You went quiet, so an AI steered for you.',
+    },
+    friendLeftPhone: name => `${name} left. An AI steers their snake.`,
+    friendJoinedPhone: name => `${name} is here, and joins your Hall of Fame.`,
+    friendAwayPhone: name => `${name} went quiet. An AI steers for now.`,
   };
 
   // A line from FLAVOR[key], or from its watching version (key + 'Watch') when you're not in the round.
@@ -180,6 +202,8 @@
     const k = s.killerId != null && s.killer !== 'self' ? game.snakes[s.killerId] : null;
     return k && isMe(k) && s.cause.endsWith(k.name) ? s.cause.slice(0, -k.name.length) + 'you' : s.cause;
   }
+  // A cause in fewer words, for a banner's one line on a phone.
+  const shortCause = c => c.replace(/^flashed into (the edge|a woodpecker hole) and blew up$/, 'blew up').replace(/^got pecked by the woodpecker$/, 'got pecked').replace(/^(fell into|hit) a woodpecker hole$/, '$1 a hole').replace(/^got cut in two by /, 'was cut by ').replace(/^crashed head-on into (.+)$/, 'hit $1 head-on');
   // Your death, in the second person.
   const yourCause = p => p.killer === 'self' ? 'bit yourself' : causeFor(p);
   // Why a crash was the end (the engine's verdict): length is armour, so a
@@ -584,7 +608,7 @@
       state = 'running';
       hideCard();
       hideToast(true);
-      if (napToast) { const [text, kind, level, rest] = napToast; napToast = null; toast(text, 2600, kind, level); waiting.push(...rest); }
+      if (napToast) { const { text, kind, level, opts, rest } = napToast; napToast = null; if (text) toast(text, 2800, kind, level, opts); for (const w of rest) toast(w.text, w.ms, w.kind, w.level, w.opts); } // (in turn, after the beat's fade and a breather)
       lastFrame = 0; // (acc as it was: the board carries on from the very moment it stopped)
       updateControls();
       return;
@@ -613,7 +637,7 @@
     if (pendingCard && !playerAlive()) return; // (your death's card is on its way: it comes up as it would, not under a nap)
     state = 'paused';
     waking = false;
-    napToast = !toastEl.hidden && toastLevel !== 'news' ? [toastEl.textContent, toastEl.dataset.kind, toastLevel, waiting.slice()] : null; // (a lesson or round news, back on waking)
+    napToast = { text: !toastEl.hidden && !toastEl.classList.contains('leaving') && toastKind !== 'go' && toastLevel !== 'asked' ? toastText : '', kind: toastKind, level: toastLevel, opts: toastOpts, rest: waiting.slice() }; // (the banner showing and those waiting, back on waking, each for its whole time)
     napOver = !overlay.classList.contains('hidden') && shownCard?.reward ? shownCard : null; // your death card: back on waking
     Chatter.clearBubbles();
     showCard({
@@ -928,10 +952,9 @@
       return;
     }
     news(dying);
-    // Sudden death's trickle (once a round): news that waits its turn, after
-    // whatever this tick said, never cutting short the woodpecker's own banner
-    // (or first blood, or the last two).
-    if (game.events.some(e => e.type === 'lastApples')) toast(FLAVOR.lastApples, 2800, '', 'lesson');
+    // Sudden death's trickle (once a round): round news that waits its turn,
+    // after whatever this tick said.
+    if (game.events.some(e => e.type === 'lastApples')) toast(FLAVOR.lastApples, 2800, '', 'round');
   }
   // Land the woodpecker took this tick, as the chatter sees it (chatter.js):
   // 'lostColony' for a colony gone from its snake's memory with a hole where
@@ -961,7 +984,8 @@
         const killer = game.snakes.find(o => o.name === v.killer && o !== v);
         const names = dying.map(d => who(d, true));
         const all = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
-        return toast(dying.length > 1 ? `First out: ${all}.` : killer && killer.alive ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : killer ? `First out: ${who(v, true)} and ${who(killer, true)}, head-on.` : `First out: ${who(v, true)} ${causeFor(v)}.`, 2800, 'kill', 'round');
+        return toast(dying.length > 1 ? `First out: ${all}.` : killer && killer.alive ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : killer ? `First out: ${who(v, true)} and ${who(killer, true)}, head-on.` : `First out: ${who(v, true)} ${causeFor(v)}.`, 2800, 'kill', 'round',
+          { phone: dying.length === 1 && !killer ? `First out: ${who(v, true)} ${shortCause(causeFor(v))}.` : '' }); // (one line on a phone: the cause in fewer words)
       }
     }
     const me = player();
@@ -969,7 +993,7 @@
     for (const e of game.events) if (e.type === 'woodpecker') {
       flashFrame('bird', true);
       toast(lineFor('woodpecker'), 2800, 'bird', 'round');
-      if (me?.alive && once('fairPecks')) toast(FLAVOR.youWoodpecker, 3000, 'bird', 'lesson', { still: () => me.alive }); // (its rules: it waits for the banner's hold)
+      if (me?.alive && once('fairPecks')) toast(FLAVOR.youWoodpecker, 3000, 'bird', 'lesson', { still: () => me.alive, follows: true }); // (its rule: it waits its turn, after the news, its moment the news's)
       return;
     }
     if (dying.length && alive.length === 2) {
@@ -996,12 +1020,11 @@
     }
     // A flag or a capital the woodpecker pecked out (see landLost): its rule,
     // the first time each goes in a round, for everyone watching too (the
-    // chatter may be off, and the rival's line with it). It waits behind a
-    // lesson holding the banner; the flag's fall and the land shrinking stay
-    // on the board.
+    // chatter may be off, and the rival's line with it): round news, that
+    // waits its turn; the flag's fall and the land shrinking stay on the board.
     while (game.lostLand?.length) {
       const key = game.lostLand.shift();
-      if (once(key)) return toast(FLAVOR[key], 2800, 'bird', 'lesson');
+      if (once(key)) return toast(FLAVOR[key], 2800, 'bird', 'round');
     }
     for (const e of game.events) {
       if (e.type === 'strike') flashFrame('storm', true);
@@ -1009,15 +1032,15 @@
       if (e.type === 'weather' && e.kind === 'storm') game.struck = false;
       if (e.type === 'weather' && FLAVOR.weather[e.kind]) { flashFrame(e.kind); return toast(pick((!playerAlive() && FLAVOR.weatherWatch[e.kind]) || FLAVOR.weather[e.kind]), 2800, e.kind); }
       if (e.type === 'rainbow') { flashFrame('gold', true); if (newsOnce('rainbow')) return toast(lineFor('rainbow'), 2800, 'gold'); }
-      if (e.type === 'heal' && game.told?.digBurrow && teachable() && once('burrowHeal')) return toast(FLAVOR.burrowHeal, 2600, 'beetle', 'lesson'); // (one closing over: once the burrow's lesson is told, the first time the banner's free for it; it's over in a second, so else the next one teaches it. A dig at the cap closes one over on its burrow's tick, the heal first: that tick teaches the burrow)
-      if (e.type === 'burrow' && e.dug && teachable() && once('digBurrow')) return toast(once('dig') ? FLAVOR.digAndBurrow : FLAVOR.digBurrow, 2600, 'beetle', 'lesson'); // (its rule, the first time the banner's free for one: shown then, or the next one teaches it. Not taught the dig yet (it was far from you, or the banner was busy), it teaches both, the dig first)
+      if (e.type === 'heal' && game.told?.digBurrow && newsFree() && once('burrowHeal')) return toast(FLAVOR.burrowHeal, 2600, 'beetle', 'lesson'); // (one closing over: once the burrow's lesson is told, the first time the banner's free for it; it's over in a second, so else the next one teaches it. A dig at the cap closes one over on its burrow's tick, the heal first: that tick teaches the burrow)
+      if (e.type === 'burrow' && e.dug && newsFree() && once('digBurrow')) return toast(once('dig') ? FLAVOR.digAndBurrow : FLAVOR.digBurrow, 2600, 'beetle', 'lesson'); // (its rule, the first time the banner's free for one: shown then, or the next one teaches it. Not taught the dig yet (it was far from you, or the banner was busy), it teaches both, the dig first)
       if (e.type === 'spawn' && e.kind === 'golden') { flashFrame('gold'); if (newsOnce('golden')) return toast(pick(FLAVOR.golden), 2800, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'beetle' && e.gold) { flashFrame('gold'); if (newsOnce('goldBeetle')) return toast(lineFor('goldBeetle'), 2600, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'beetle') { flashFrame('beetle'); if (newsOnce('beetle')) return toast(pick(FLAVOR.beetle), 2200, 'beetle'); }
       if (e.type === 'spawn' && e.kind === 'leaf') { flashFrame('gold'); if (newsOnce('leaf')) return toast(lineFor('leaf'), 2400, 'gold'); }
       if (e.type === 'spawn' && e.kind === 'goldcap') { flashFrame('gold'); if (newsOnce('goldcap')) return toast(lineFor('goldcap'), 2400, 'gold'); }
       if (e.type === 'peck' && me?.alive && e.under?.includes(me.id) && once('peckedUnder')) return toast(FLAVOR.youPeckedUnder, 2800, 'bird', 'lesson'); // (struck under your body: a bridge, not a cut)
-      if (e.type === 'dig' && me?.alive && Math.abs(me.body[0].x - e.x) + Math.abs(me.body[0].y - e.y) <= DIG_NEAR && teachable() && once('dig')) return toast(FLAVOR.youDig, 2600, 'beetle', 'lesson'); // (it's over in a second: shown now or kept for the next one, never left waiting)
+      if (e.type === 'dig' && me?.alive && Math.abs(me.body[0].x - e.x) + Math.abs(me.body[0].y - e.y) <= DIG_NEAR && newsFree() && once('dig')) return toast(FLAVOR.youDig, 2600, 'beetle', 'lesson'); // (it's over in a second: shown now or kept for the next one, never left waiting)
       if (!me || !isMe(e.snake || {}) && e.by !== me.id) continue; // (the rest is about you)
       if (e.type === 'choke' && once('choke')) return toast(FLAVOR.youChoke, 2600, 'you', 'lesson');
       if (e.type === 'nudge' && once('nudge')) return toast(FLAVOR.youCoughing, 2600, 'you', 'lesson');
@@ -1060,38 +1083,49 @@
     return false;
   }
 
-  // Could a routine banner show now (no card up, nothing holding the banner)?
-  const newsFree = () => overlay.classList.contains('hidden') && (toastEl.hidden || performance.now() >= toastHold);
-  // Could a lesson show now, rather than wait its turn (only news, or nothing, holding the banner)?
-  const teachable = () => newsFree() || (overlay.classList.contains('hidden') && toastLevel === 'news');
+  // Could a routine banner show now (no card up, none showing, fading or
+  // taking its breather, none waiting)? News and lessons that are over in a
+  // moment (a spawn, a dig) show only then, and aren't spent otherwise: the
+  // next one tells it.
+  const newsFree = () => overlay.classList.contains('hidden') && !waiting.length && performance.now() >= freeAt;
   const DIG_NEAR = T.BEETLE_DIG + 1; // (a beetle digging in this near your head, in cells across and down: one you could still catch, a move a tick through its dig and one flash's extra cell)
 
-  // A banner keeps out of the way of heads (and the woodpecker's mark, a
-  // crackle, the steering hint). It comes up in the first of its three
-  // places that's clear (the top, the foot, the middle of the board), and
-  // stays there while that place is clear: only something coming into it
-  // moves it on, to the first place that's clear and looks to stay so (the
-  // heads a couple of cells on, the way they're going), else the first
-  // that's clear; with none clear, it fades where it is while they pass.
-  // (Picked afresh every frame, a banner on a short phone hopped about three
-  // times in its three seconds, half its stays under 0.4 s.) Its size is
-  // measured once a banner, so this reads no layout. A lesson's time runs
-  // while you can read it: faded, it stays that much longer (once, up to its
-  // hold again).
-  let toastTimer, toastW = 0, toastH = 0, toastSlot = '', toastUnder = false, toastFresh = true; // (where it is: '' the top, 'low' the foot, 'mid' the middle; whether it's faded there; whether it's a new banner, still to place)
+  // Where a banner goes (DESIGN "Teaching by showing"). On a phone held
+  // upright it's off the board altogether: above it, over the header's
+  // title row, between the screen's safe top and the header's row of
+  // buttons, so it never covers the board, the name tags (yours, with its
+  // hunger bar) or the pause button; on one line, its words as big as fit
+  // the row (the phone's own shorter words for the longest, FLAVOR.phone),
+  // and taps pass through it. Elsewhere it's on the board, at its top or
+  // its foot: never the middle, where the play is. (A rival's note, asked
+  // for from its tag while you watch, is too long for a line: it stays on
+  // the board.)
+  //
+  // On the board it keeps out of the way of heads (and the woodpecker's
+  // mark, a crackle, the steering hint). It comes up in the first of its
+  // two places that's clear (the top, the foot), and stays there while
+  // that place is clear: only something coming into it moves it on, to the
+  // other if that's clear; with both taken, it fades where it is while they
+  // pass. (Picked afresh every frame, a banner on a short phone hopped about
+  // three times in its three seconds, half its stays under 0.4 s.) Its size
+  // is measured once a banner, so this reads no layout. Its time runs while
+  // you can read it: faded, it stays that much longer (once, up to its hold
+  // again).
+  let toastTimer = 0, leaveTimer = 0, toastW = 0, toastH = 0, toastSlot = '', toastUnder = false, toastFresh = true; // (where it is on the board: '' the top, 'low' the foot; whether it's faded there; whether it's a new banner, still to place)
   let toastFaded = 0, toastFadedAt = 0, toastLonger = false; // (how long this banner has been faded, since when, and whether it's had its time back)
-  const SLOTS = ['', 'low', 'mid'], SHIFT = [{ opacity: 0 }, { opacity: 1 }];
+  let toastText = '', toastAbove = false, aboveBand = null; // (the banner's words; whether it's above the board; where it may go there, measured in placeBoard: null where it's on the board)
+  const SLOTS = ['', 'low'], SHIFT = [{ opacity: 0 }, { opacity: 1 }];
+  const headerEl = document.querySelector('header');
   function toastFade() {
-    if (toastEl.hidden || toastEl.classList.contains('leaving')) return; // (going: it goes from where it is)
-    const busy = { '': false, low: false, mid: false }, soon = { '': false, low: false, mid: false };
+    if (toastAbove || toastEl.hidden || toastEl.classList.contains('leaving')) return; // (above the board, nothing comes under it; going, it goes from where it is)
+    const busy = { '': false, low: false }, soon = { '': false, low: false };
     if (boardPx && game) {
       const cell = boardPx / GRID;
-      const rows = Math.ceil((toastH + 12) / cell), half = toastW / 2 / cell, midHalf = (toastH / 2 + 6) / cell; // (its real size: a long banner on a phone wraps to several lines)
+      const rows = Math.ceil((toastH + 12) / cell), half = toastW / 2 / cell; // (its real size: a long banner on a phone wraps to several lines)
       const under = (x, y, into = busy) => { // (a cell the banner would hide, if it's one that matters)
         if (Math.abs(x + 0.5 - GRID / 2) >= half + 0.5 || y < 0 || y >= GRID) return;
         if (y < rows) into[''] = true;
         if (y >= GRID - rows) into.low = true;
-        if (y + 1 > GRID / 2 - midHalf && y < GRID / 2 + midHalf) into.mid = true;
       };
       for (const s of game.snakes) {
         if (!s.alive) continue;
@@ -1100,10 +1134,9 @@
         if (d) for (let i = 1; i <= 2; i++) under(h.x + d.x * i, h.y + d.y * i, soon); // (where it's going)
       }
       if (steerHintOn && Math.abs(hintBox.x + hintBox.w / 2 - boardPx / 2) < (toastW + hintBox.w) / 2) { // (the steering hint, by YOU: the banner makes way)
-        const y0 = hintBox.y, y1 = hintBox.y + hintBox.h, m = (boardPx - toastH) / 2;
+        const y0 = hintBox.y, y1 = hintBox.y + hintBox.h;
         if (y0 < toastH + 16) busy[''] = true;
         if (y1 > boardPx - toastH - 16) busy.low = true;
-        if (y1 > m - 4 && y0 < m + toastH + 4) busy.mid = true;
       }
       for (const k of game.woodpecker?.target || []) under(k % GRID, Math.floor(k / GRID)); // (the patch it's warning about)
       if (game.fires) for (const [k, f] of game.fires) if (f.strike && f.from > game.tick) under(k % GRID, Math.floor(k / GRID)); // (a crackle about to strike)
@@ -1125,84 +1158,164 @@
     }
     if (slot === toastSlot) return;
     toastEl.classList.toggle('low', slot === 'low');
-    toastEl.classList.toggle('mid', slot === 'mid');
     toastSlot = slot;
     if (moved && !reducedMQ.matches) toastEl.animate?.(SHIFT, { duration: 140, easing: 'ease-out' }); // (it comes up in its new place, rather than blinking there)
   }
+  // The banner showing, put where it goes (and moved, if the screen's turned
+  // since): above the board, its words on one line as big as fit the title
+  // row across (no smaller than BANNER_MIN_FONT of its own size, then cut
+  // short with an ellipsis: no words of the game's need that, and a test
+  // checks it) and never taller than the row, level with the title; or on
+  // the board.
+  function placeToast() {
+    const above = !!aboveBand && toastEl.dataset.kind !== 'note';
+    if (above !== toastAbove) {
+      toastAbove = above;
+      (above ? headerEl : boardEl).appendChild(toastEl);
+      toastEl.classList.toggle('above', above);
+      toastEl.classList.remove('low', 'under');
+      toastSlot = ''; toastUnder = false; toastFresh = true;
+    }
+    const words = above && (toastOpts.phone || FLAVOR.phone[toastText]) || toastText;
+    if (toastEl.textContent !== words) toastEl.textContent = words;
+    toastEl.style.removeProperty('--toast-fs');
+    if (!above) return;
+    const band = aboveBand, room = band.bottom - band.top;
+    toastEl.style.setProperty('--toast-max', `${band.width}px`);
+    const cs = getComputedStyle(toastEl), size = parseFloat(cs.fontSize), floor = size * T.BANNER_MIN_FONT;
+    const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight), padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    let fs = size;
+    for (let i = 0; i < 3; i++) { // (a size, measured: once or twice)
+      const wide = toastEl.scrollWidth, tall = toastEl.offsetHeight;
+      let next = fs;
+      if (wide > toastEl.clientWidth + 0.5 && fs > floor) next = Math.max(floor, fs * (toastEl.clientWidth - padX) / (wide - padX)); // (its words on one line, down to the floor; past it, an ellipsis)
+      if (tall > room + 0.5) next = Math.min(next, fs * (room - padY) / (tall - padY)); // (and never taller than the row, whatever it takes: any taller, and it's over the pause button)
+      next = Math.floor(next * 10) / 10;
+      if (next >= fs) break;
+      fs = next;
+      toastEl.style.setProperty('--toast-fs', `${fs}px`);
+    }
+    const h = toastEl.offsetHeight;
+    toastEl.style.setProperty('--toast-y', `${Math.round(Math.max(band.top, Math.min(band.bottom - h, band.mid - h / 2)))}px`);
+  }
   // kind styles the banner for its moment: kill, gold, beetle, bird (the
-  // woodpecker), warn, fire, you (a lesson about your own powers, or your own tail), go, and the
-  // weather's own (sun, wind, rain, storm, snow). level says how much it
-  // matters: 'round' (what changes the round: first blood, the last two, the
-  // woodpecker, friends coming and going) always shows; a 'lesson' (a rule,
-  // the first time it happens to you) holds for LESSON_HOLD_MS before
-  // anything but round news may replace it, and one waiting lesson shows
-  // (up to three lessons wait, each shown when the hold ends, if it still holds); 'news' (the weather, a spawn) is dropped while a lesson
-  // holds. While a card is up, only round news. Screen readers hear round
-  // news and lessons (and the weather), not the chatter of spawns.
-  // opts: { quiet } (shown, not said: something else says it), { still }
-  // (a lesson that waits is shown only if this still holds).
-  let toastLevel = 'news', toastHold = 0;
-  const waiting = []; // lessons waiting for the one showing: [text, ms, kind, opts]
-  const LEVELS = { news: 0, lesson: 1, asked: 2, round: 3 };
+  // woodpecker), warn, fire, you (a lesson about your own powers, or your
+  // own tail), go, note (a rival's, asked for), and the weather's own (sun,
+  // wind, rain, storm, snow). level: 'round' (what changes the round: first
+  // blood, the last two, the woodpecker, the last apples, land it took,
+  // friends coming and going), 'lesson' (a rule, the first time it happens
+  // to you), 'news' (the weather, a spawn), 'asked' (a rival's note, asked
+  // for from its tag).
+  // Every banner is held for its reading time, read in glances while you
+  // steer: BANNER_BASE_MS and BANNER_WORD_MS a word, up to BANNER_MAX_MS (Go!
+  // and the wake's "Ready…" are beats of the countdown, held their own
+  // time; a note you asked for, its own reading time). Nothing cuts one
+  // short but a card: the next waits its turn, in the order they came, and
+  // shows a breather (BANNER_BREATHE_MS) after the last one's gone. Round
+  // news and the weather wait as long as it takes; a lesson waits at most
+  // LESSON_WAIT_MS of the round (behind one banner, never two: its moment
+  // has passed), and not if it no longer holds (opts.still), and up to
+  // three lessons wait. Only Go!, the countdown's last beat, and a note you
+  // asked for come up at once (what a note interrupts goes back to the
+  // front of the line). While a card is up, only round news. Screen readers
+  // hear round news and lessons (and the weather), not the chatter of
+  // spawns. opts: { quiet } (shown, not said: something else says it),
+  // { still } (a lesson that waits is shown only if this still holds),
+  // { follows } (a lesson that goes with the banner just before it: it
+  // waits from when that one comes up), { phone } (its words on a phone
+  // held upright, one line).
+  let toastLevel = 'news', toastKind = '', toastOpts = {}, toastHold = 0, freeAt = 0;
+  const waiting = []; // banners waiting their turn: { text, ms, kind, level, opts, at (the round's time it came) }
+  const bannerLog = params.has('debug') ? [] : null; // (?debug: every banner and what became of it, for the tests and the audit)
+  const logBanner = (text, level, fate) => { if (bannerLog && bannerLog.length < 2000) bannerLog.push({ t: Math.round(performance.now()), gt: game?.time ?? 0, text, level, fate }); };
+  const readMs = text => Math.min(T.BANNER_MAX_MS, T.BANNER_BASE_MS + T.BANNER_WORD_MS * text.trim().split(/\s+/).length);
   function toast(text, ms = 2800, kind = '', level = 'news', opts = {}) {
     const now = performance.now();
-    if (level !== 'round' && !overlay.classList.contains('hidden')) return; // (a card's up)
-    if (!toastEl.hidden && now < toastHold && LEVELS[level] <= LEVELS[toastLevel] && level !== 'round' && level !== 'asked') {
-      if (level === 'lesson' && waiting.length < 3) { // (it waits for the hold to end, not the whole banner)
-        waiting.push([text, ms, kind, opts]);
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(nextToast, toastHold - now);
-      }
+    if (level !== 'round' && !overlay.classList.contains('hidden')) return logBanner(text, level, 'card'); // (a card's up)
+    if (kind === 'go' || level === 'asked') { // (at once)
+      if (level === 'asked' && !toastEl.hidden && !toastEl.classList.contains('leaving') && toastKind !== 'go' && toastLevel !== 'asked')
+        waiting.unshift({ text: toastText, ms: 0, kind: toastKind, level: toastLevel, opts: toastOpts, at: game?.time ?? 0 }); // (what the note interrupts goes back to the front of the line)
+      return showToast(text, ms, kind, level, opts);
+    }
+    if (now < freeAt || waiting.length) { // (one showing, going, or taking its breather: this one waits its turn)
+      if (level === 'lesson' && waiting.filter(w => w.level === 'lesson').length >= 3) return logBanner(text, level, 'dropped');
+      waiting.push({ text, ms, kind, level, opts, at: game?.time ?? 0 });
+      logBanner(text, level, 'queued');
+      if (!toastTimer) toastTimer = setTimeout(nextToast, Math.max(0, freeAt - now));
       return;
     }
-    toastLevel = level;
-    toastHold = now + (level === 'asked' ? ms : Math.min(ms, level === 'news' ? T.NEWS_HOLD_MS : T.LESSON_HOLD_MS)); // (a note you asked for: its whole time)
-    toastEl.classList.remove('settled', 'leaving'); // (a new banner slams in)
+    showToast(text, ms, kind, level, opts);
+  }
+  function showToast(text, ms, kind, level, opts) {
+    const now = performance.now(), hold = kind === 'go' || level === 'asked' ? ms : readMs(text);
+    clearTimeout(toastTimer); clearTimeout(leaveTimer); leaveTimer = 0;
+    toastLevel = level; toastKind = kind; toastOpts = opts; toastText = text;
+    toastHold = now + hold;
+    freeAt = toastHold + T.BANNER_FADE_MS + T.BANNER_BREATHE_MS;
+    toastEl.classList.remove('settled', 'leaving'); // (a new banner settles in)
     toastEl.dataset.kind = kind;
-    toastEl.textContent = text;
     toastEl.hidden = false;
-    toastW = toastEl.offsetWidth; toastH = toastEl.offsetHeight; // (measured once a banner, unscaled by its slam)
-    toastEl.style.setProperty('--toast-h', `${toastH}px`); // (in the middle: centred by its top, so its slam keeps the transform)
+    placeToast();
+    toastW = toastEl.offsetWidth; toastH = toastEl.offsetHeight; // (measured once a banner)
     toastFaded = 0; toastFadedAt = now; toastLonger = false;
     toastFresh = true;
     toastFade(); // (placed before it's first drawn: a new banner doesn't start where the last one was)
     if (!opts.quiet && (level !== 'news' || kind in FLAVOR.weather)) say(text);
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(nextToast, ms);
+    logBanner(text, level, 'shown');
+    if (waiting[0]?.opts.follows) waiting[0].at = game?.time ?? 0; // (a lesson that goes with this banner, next in line: its moment is this one's)
+    toastTimer = setTimeout(endToast, hold);
   }
-  // The next lesson that still holds, or the banner fades. (A lesson that
-  // spent a while faded under the heads first gets that time back, once.)
-  function nextToast() {
+  // Its time is up: it fades, and the next waiting takes its turn after a
+  // breather. (A banner that spent a while faded under the heads first gets
+  // that time back, once.)
+  function endToast() {
+    toastTimer = 0;
     const now = performance.now(), faded = toastFaded + (toastUnder ? now - toastFadedAt : 0);
-    if (toastLevel === 'lesson' && !toastLonger && !toastEl.hidden && faded >= 300) {
+    if (toastKind !== 'go' && toastLevel !== 'asked' && !toastLonger && !toastEl.hidden && faded >= 300) {
       toastLonger = true;
-      const more = Math.min(faded, T.LESSON_HOLD_MS);
-      toastHold = Math.max(toastHold, now + more);
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(nextToast, more);
+      const more = Math.min(faded, readMs(toastText));
+      toastHold = now + more;
+      freeAt = toastHold + T.BANNER_FADE_MS + T.BANNER_BREATHE_MS;
+      toastTimer = setTimeout(endToast, more);
       return;
-    }
-    toastHold = 0;
-    while (waiting.length) {
-      const [t, m, k, o] = waiting.shift();
-      if (!o.still || o.still()) return toast(t, m, k, 'lesson', o);
     }
     hideToast(true);
   }
-  // Gone at once (a card is coming up), or, when its time is up, faded out.
-  function hideToast(fade = false) {
-    clearTimeout(toastTimer);
-    toastHold = 0;
-    if (!fade) waiting.length = 0;
-    if (fade && !reducedMQ.matches && !toastEl.hidden) {
-      toastEl.classList.add('leaving');
-      toastTimer = setTimeout(() => { toastEl.hidden = true; toastEl.classList.remove('leaving'); }, 240);
-    } else {
-      toastEl.hidden = true;
-      toastEl.classList.remove('leaving');
+  // The first waiting banner that may still show: a lesson whose moment has
+  // passed, or that no longer holds, is let go.
+  function nextToast() {
+    toastTimer = 0;
+    while (waiting.length) {
+      const w = waiting.shift();
+      if (w.level === 'lesson' && game && game.time - w.at > T.LESSON_WAIT_MS) { logBanner(w.text, w.level, 'stale'); continue; }
+      if (w.opts.still && !w.opts.still()) { logBanner(w.text, w.level, 'skipped'); continue; }
+      return showToast(w.text, w.ms, w.kind, w.level, w.opts);
     }
   }
-  toastEl.addEventListener('animationend', e => { if (e.animationName === 'slam') toastEl.classList.add('settled'); });
+  // Gone at once (a card is coming up: the banners waiting go with it), or
+  // faded out (its time is up, or its tag tapped again), the next waiting
+  // after a breather. It settles in with a short drop and fades out, and
+  // with reduced motion only fades (style.css).
+  function hideToast(fade = false) {
+    clearTimeout(toastTimer); toastTimer = 0;
+    if (!fade && !toastEl.hidden && !toastEl.classList.contains('leaving') && performance.now() < toastHold) logBanner(toastText, toastLevel, 'cut');
+    toastHold = 0;
+    if (!fade) {
+      for (const w of waiting) logBanner(w.text, w.level, 'card');
+      waiting.length = 0;
+      freeAt = 0;
+      clearTimeout(leaveTimer); leaveTimer = 0;
+      toastEl.hidden = true;
+      toastEl.classList.remove('leaving');
+      return;
+    }
+    freeAt = performance.now() + T.BANNER_FADE_MS + T.BANNER_BREATHE_MS;
+    if (waiting.length) toastTimer = setTimeout(nextToast, T.BANNER_FADE_MS + T.BANNER_BREATHE_MS);
+    if (toastEl.hidden || toastEl.classList.contains('leaving')) return;
+    toastEl.classList.add('leaving');
+    leaveTimer = setTimeout(() => { leaveTimer = 0; toastEl.hidden = true; toastEl.classList.remove('leaving'); }, T.BANNER_FADE_MS);
+  }
+  toastEl.addEventListener('animationend', e => { if (e.animationName === 'settle' || e.animationName === 'toast-fade-in') toastEl.classList.add('settled'); });
 
   // Screen reader announcements (a permanently rendered, visually hidden region).
   function say(text) { announcer.textContent = text; }
@@ -2555,7 +2668,7 @@
       online.room.send(id, { t: 'scores', from: [...online.shared.values()] });
       for (const p of online.players) if (p.id !== 'host' && p.id !== id) online.room.send(p.id, { t: 'scores', from: [{ color, entries }] });
       if (state === 'lobby') setStatus(FLAVOR.friendJoined(name));
-      else toast(FLAVOR.friendJoined(name), 1800, '', 'round');
+      else toast(FLAVOR.friendJoined(name), 1800, '', 'round', { phone: FLAVOR.friendJoinedPhone(name) });
       // A round under way: they watch this one and play from the next.
       if (state === 'countdown' || state === 'running') {
         online.room.send(id, Online.round(game, game.humans, game.rivalsLine, game.roundId));
@@ -2595,7 +2708,7 @@
       } else if (quiet <= T.AWAY_MS && s.autopilot && !s.awayPilot) handBack(s);
       if (s.autopilot && quiet > T.AWAY_TOAST_MS && !s.awayToast) {
         s.awayToast = true;
-        toast(FLAVOR.friendAway(s.name), 2200, '', 'round');
+        toast(FLAVOR.friendAway(s.name), 2200, '', 'round', { phone: FLAVOR.friendAwayPhone(s.name) });
       }
     }
   }
@@ -2620,7 +2733,7 @@
       s.autopilot = PERSONAS.drab;
       s.queue.length = 0;
       thinkQueue.push(s);
-      toast(FLAVOR.friendLeft(p.name), 2400, '', 'round');
+      toast(FLAVOR.friendLeft(p.name), 2400, '', 'round', { phone: FLAVOR.friendLeftPhone(p.name) });
     } else if (state === 'lobby') setStatus(`${p.name} left.`);
     sendLobby();
   }
@@ -2841,7 +2954,7 @@
   // changes otherwise (a longer score), a moment later: set from inside a
   // resize observer's call, the board's change would come round again in
   // the same frame, which the browser reports as an error.
-  const frameEl = document.querySelector('.frame'), footEl = document.querySelector('.foot');
+  const frameEl = document.querySelector('.frame'), footEl = document.querySelector('.foot'), titleEl = document.querySelector('h1');
   const frameTop = () => Math.round((frameEl.getBoundingClientRect().top + scrollY) * 10) / 10;
   let above = -1, aboveSoon = 0;
   const measureAbove = () => {
@@ -2881,6 +2994,20 @@
         if (f.width && f.bottom > b.bottom) free.hang.push([f.left - 2, f.right + 2]);
       }
     }
+    // (A banner, held upright: above the board, over the header's title row,
+    // from just inside the screen's safe top down to just over the header's
+    // buttons, the pause button first among them, across the header and 4 px
+    // past it each side; level with the title. In the header's own px: see
+    // placeToast. Where that row has no room for a line, on the board.)
+    aboveBand = null;
+    if (free.upright) {
+      const hd = headerEl.getBoundingClientRect(), title = titleEl.getBoundingClientRect();
+      let row = Infinity;
+      for (const btn of headerEl.querySelectorAll('button')) { const r = btn.getBoundingClientRect(); if (r.height) row = Math.min(row, r.top); }
+      const top = Math.max(0, inset('--safe-t')) + 2 - hd.top, bottom = row - 3 - hd.top;
+      if (bottom - top >= 22) aboveBand = { top, bottom, mid: (title.top + title.bottom) / 2 - hd.top, width: hd.width + 8 };
+    }
+    if (!toastEl.hidden) { placeToast(); toastW = toastEl.offsetWidth; toastH = toastEl.offsetHeight; }
     R.setBoardRect(b.left, b.top, b.width, free);
   };
   window.addEventListener('resize', placeBoard, { passive: true });
@@ -3111,6 +3238,8 @@
       online: () => online && { role: online.role, seat: online.seat, code: online.code, players: online.players, rtt: hosting() ? online.room.rtt() : null },
       setup: ready,
       flavor: () => FLAVOR, // (the narrator's words: input-test holds the lessons to 60 characters)
+      banners: () => bannerLog, // (every banner, and what became of it: shown, queued, stale, skipped, dropped, card)
+      banner: (text, kind = '', level = 'round', opts = {}) => { hideToast(); toast(text, 2800, kind, level, opts); }, // (one put up by hand, at once, as the round would: the tests' phones)
       step: E.step,
       createGame: E.createGame,
       perf: () => perf.stats(),

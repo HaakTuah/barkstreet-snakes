@@ -40,8 +40,14 @@
 // and the burrow at once), the woodpecker's coming its rule, a flag or a
 // capital it pecks out theirs, and knocked food is heard once a strike,
 // quietly, where the first piece that flies was. Every lesson is 60
-// characters at most. And rivals chosen with SnakeDebug.setup are the ones
-// Watch AIs watches.
+// characters at most. And the banners (DESIGN "Teaching by showing"): each
+// held for its reading time, the next a breather after the last one's fade,
+// round news waiting behind a waiting lesson (not cutting in and losing
+// it), a lesson whose moment has passed let go; at the board's top or foot,
+// never its middle, and on a phone held upright above the board, every one
+// of the game's on one line over the title row, its words whole, at 360 and
+// 320 px. And rivals chosen with SnakeDebug.setup are the ones Watch AIs
+// watches.
 // It prints what it measured: press-to-tick, tap-to-jump and swipe latencies.
 //
 //   node tools/input-test.js
@@ -810,37 +816,54 @@ const KEYS = {
     check(jumps === 0, 'swipes never jump', `${jumps} of ${swipes} swipes; ${none} slanted 40° never registered (a way must be half again the other), ${wrong} went another way`);
     const regStats = Object.fromEntries(Object.entries(reg).map(([v, l]) => [v, stats(l).median]));
 
-    // A banner stays where it is while its place is clear: a head coming into
-    // it moves it to the first place that's clear (the top, the foot, the
-    // middle), and with heads in all three it fades where it is. (Picked
-    // afresh every frame, it went back to the top the moment that cleared,
-    // and hopped about three times in its three seconds on a short phone.)
+    // Where a banner goes (DESIGN "Teaching by showing"). On a phone held
+    // upright, above the board, over the header's title row, whatever's on
+    // the board. Elsewhere it stays where it is on the board while its place
+    // is clear: a head coming into it moves it to the other place (the top,
+    // the foot) if that's clear, and with heads in both it fades where it
+    // is; never the middle of the board. (Picked afresh every frame, it went
+    // back to the top the moment that cleared, and hopped about three times
+    // in its three seconds on a short phone.)
     await ev('centre()');
     await ev(`(() => {
       const E = SnakeEngine;
       window.put = (id, x, y, dir = 'right') => { const s = SnakeDebug.game().snakes[id], d = E.DIRS[dir]; s.body = s.body.map((c, i) => ({ x: x - d.x * i, y: y - d.y * i })); s.prev = null; s.dir = d; s.queue.length = 0; return 'ok'; };
-      window.slot = () => { const t = document.getElementById('toast'); return t.hidden ? 'hidden' : (t.classList.contains('low') ? 'foot' : t.classList.contains('mid') ? 'middle' : 'top') + (t.classList.contains('under') ? ' faded' : ''); };
+      window.slot = () => { const t = document.getElementById('toast'); return t.hidden ? 'hidden' : (t.classList.contains('above') ? 'above' : t.classList.contains('low') ? 'foot' : t.classList.contains('mid') ? 'middle' : 'top') + (t.classList.contains('under') ? ' faded' : ''); };
+      // (its middle, from the board's top, in boards: the top or the foot is under a quarter in from its edge)
+      window.slotAt = () => { const t = document.getElementById('toast').getBoundingClientRect(), g = document.getElementById('game').getBoundingClientRect(); return ((t.top + t.bottom) / 2 - g.top) / g.height; };
       const step = E.step; E.step = g => { const out = step(g); if (window.__news) { g.events.push(window.__news); window.__news = null; } return out; }; // (news, on the next tick)
       return 'ok';
     })()`);
+    const golden = async () => { await ev('vadvance(6000)'); await ev(`(() => { delete SnakeDebug.game().told?.golden; window.__news = { type: 'spawn', kind: 'golden' }; return 'ok'; })()`); await toTick(); }; // (the banner free: news)
     await ev(`put(1, 12, 22, 'down')`); // (a rival's head at the foot)
-    await ev('put(0, 12, 6)'); // (yours in none of the three)
-    await ev(`(() => { delete SnakeDebug.game().told?.golden; window.__news = { type: 'spawn', kind: 'golden' }; return 'ok'; })()`);
-    await toTick();
-    const slots = [await ev('slot()')];
+    await ev('put(0, 12, 2)'); // (yours at the top)
+    await golden();
+    const upright = [await ev('slot()')];
+    await ev('put(0, 12, 21)'); await ev('vf(1)');
+    upright.push(await ev('slot()'));
+    check(upright.join(', ') === 'above, above', 'on a phone held upright, a banner is above the board, whatever heads are at its top or foot', upright.join(', '));
+    await b.viewport(1280, 800);
+    await ev('new Promise(r => __raf(() => __raf(() => __raf(r))))');
+    await ev('put(0, 12, 6)'); // (yours in neither place)
+    await golden();
+    const slots = [await ev('slot()')], at = [await ev('slotAt()')];
     for (const [moves, why] of [
-      [['put(0, 12, 2)'], 'yours at the top'],
+      [['put(0, 12, 1)'], 'yours at the top, a rival at the foot'],
+      [[`put(1, 0, 12, 'down')`], 'the rival away'],
       [['put(0, 12, 6)'], 'yours out again'],
-      [[`put(2, 12, 1, 'up')`, 'put(0, 12, 12)'], 'a rival at the top, yours in the middle'],
-      [['put(0, 12, 6)'], 'yours out again'],
-      [[`put(2, 4, 21, 'down')`, 'put(0, 12, 12)'], 'the rival away, yours in the middle'],
+      [[`put(2, 12, 22, 'down')`], 'another rival at the foot'],
+      [['put(0, 12, 1)'], 'yours at the top too'],
     ]) {
       for (const m of moves) await ev(m);
       await ev('vf(1)');
       slots.push(`${why}: ${await ev('slot()')}`);
+      at.push(await ev('slotAt()'));
     }
-    check(slots.map(s => s.replace(/^.*: /, '')).join(', ') === 'top, middle, middle, middle faded, middle, top',
-      'a banner stays put while its place is clear, moves only when a head comes into it, and fades where it is with heads everywhere', slots.join('; '));
+    check(slots.map(s => s.replace(/^.*: /, '')).join(', ') === 'top, top faded, foot, foot, top, top faded',
+      'a banner stays put while its place is clear, moves only when a head comes into it, and fades where it is with heads in both places', slots.join('; '));
+    check(at.every(f => f < 0.25 || f > 0.75) && !slots.some(s => s.includes('middle')), 'a banner is never in the middle of the board: at its top or its foot', at.map(f => f.toFixed(2)).join(', '));
+    await b.viewport(390, 844, { scale: 3, mobile: true });
+    await ev('new Promise(r => __raf(() => __raf(() => __raf(r))))');
 
     // Choking, as the page tells it (the engine's chokes and nudges staged by
     // hand, as it makes them): your first choke's lesson, and its gag at once
@@ -860,7 +883,7 @@ const KEYS = {
       window.toastText = () => { const t = document.getElementById('toast'); return t.hidden ? '' : t.textContent; };
       return 'ok';
     })()`);
-    await ev('vadvance(4000)'); // (the banner before has had its time)
+    await ev('vadvance(5300)'); // (the banner before has had its time: its reading time, its fade and a breather)
     await ev('stageChoke(0)');
     await toTick();
     const choked = await ev(`({ tick: SnakeDebug.game().tick, toast: toastText() })`);
@@ -870,7 +893,7 @@ const KEYS = {
     await ev(`stageNudge(0, 'food')`);
     await toTick();
     const nudgedAt = await ev('toastText()');
-    await ev('vadvance(3000)');
+    await ev('vadvance(4200)'); // (the choke's 6 words: 1 s and 0.4 s a word, its fade and a breather)
     const nudged = await ev('toastText()');
     const mine = await ev('__heard.splice(0)');
     await ev('stageChoke(1)');
@@ -926,7 +949,7 @@ const KEYS = {
     const rivalDig = () => ev(`stageEvents(g => { const h = g.snakes[1].body[0]; return [{ type: 'dig', x: h.x + 1, y: h.y + 1, until: g.tick + ${BEETLE_DIG} }]; })`);
     await ev('centre()');
     await ev(`put(1, 2, 2, 'right')`); // (a rival's head far from yours)
-    await ev('vadvance(4000)');
+    await ev('vadvance(6000)'); // (the nudge's lesson has had its time)
     await rivalDig();
     await toTick();
     const farDig = { toast: await ev('toastText()'), heard: await cues() };
@@ -936,7 +959,7 @@ const KEYS = {
     await digNear(reach - 1, 1); // (while the woodpecker's news holds the banner)
     await toTick();
     const heldDig = { toast: await ev('toastText()'), heard: await cues() };
-    await ev('vadvance(2600)');
+    await ev('vadvance(5300)'); // (the news's reading time, 4.5 s at most, its fade and a breather)
     const fair = await ev('toastText()');
     await ev('vadvance(6000)'); // (its time, and the time back if it faded under a head)
     await digNear(reach, 1); // (a cell too far to catch)
@@ -1052,6 +1075,69 @@ const KEYS = {
     check(letGo !== LOST_COLONY && flagLost === LOST_COLONY && capitalHeld === LOST_COLONY && capitalLost.join(' / ') === `${LOST_COLONY} / ${LOST_CAPITAL}` && flagAgain !== LOST_COLONY,
       'a flag or a capital the woodpecker pecks out: its rule the first time each goes in a round (waiting behind a lesson), and not for a colony let go', `let go “${letGo}”; pecked “${flagLost}”; a capital “${capitalHeld}”, then “${capitalLost.join('”, “')}”; another flag “${flagAgain}”`);
 
+    // Banners in turn (DESIGN "Teaching by showing"): each is held for its
+    // reading time (1 s and 0.4 s a word, 4.5 s at most), then fades, and the
+    // next waiting comes up a breather (0.5 s) after. The weather showing, a
+    // lesson waits its turn (no longer cutting the news short), and round
+    // news coming while the lesson waits waits behind it (no longer cutting
+    // in and losing the lesson). A lesson whose moment has passed (6 s of the
+    // round) is let go, but round news behind it never is. (The banners' own
+    // log says what each was and when it came up, in full words: on a phone
+    // held upright the weather shows its shorter ones. When each started to
+    // go is read off the page every 50 ms.)
+    const readMs = t => Math.min(4500, 1000 + 400 * t.trim().split(/\s+/).length);
+    const inTurn = async (stage, ms) => {
+      await ev('vadvance(10000)');
+      await ev('SnakeDebug.banners().length = 0; window.__gone = []; window.__was = ""; "ok"');
+      await stage();
+      for (let t = 0; t < ms; t += 50) {
+        await ev(`(() => { const el = document.getElementById('toast'), up = !el.hidden && !el.classList.contains('leaving') ? el.textContent : '';
+          if (__was && up !== __was) __gone.push(performance.now());
+          __was = up; return 'ok'; })()`);
+        await ev('vadvance(50)');
+      }
+      const { gone, log } = await ev('({ gone: __gone, log: SnakeDebug.banners().slice() })');
+      const shown = log.filter(l => l.fate === 'shown');
+      return { log, shown, held: shown.map((s, i) => ({ text: s.text, held: gone[i] - s.t, read: readMs(s.text), next: shown[i + 1] ? shown[i + 1].t - gone[i] : null })) };
+    };
+    const SNOW = await ev('SnakeDebug.flavor().weather.snow'), CHOKE = 'You choke on your own tail!', LOST = 'The woodpecker took a flag: that colony’s lost.';
+    await ev('centre()');
+    const inOrder = await inTurn(async () => {
+      await ev(`stageEvents(() => [{ type: 'weather', kind: 'snow' }])`);
+      await toTick();
+      await ev(`(() => { delete SnakeDebug.game().told.choke; return 'ok'; })()`);
+      await ev('stageChoke(0)'); // (a lesson, a tick into the weather)
+      await toTick();
+      await ev(`stageEvents(g => { g.woodpecker = { x: 12, y: 0, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: g.tick + 12 }; return [{ type: 'woodpecker' }]; })`);
+      await toTick(); // (round news, a tick later)
+    }, 16000);
+    await ev(`(() => { const g = SnakeDebug.game(); g.woodpecker = null; for (const s of g.snakes) s.coughUntil = -1; return 'ok'; })()`);
+    const order = inOrder.shown.map(s => s.text);
+    check(order.length === 3 && SNOW.includes(order[0]) && order[1] === CHOKE && /woodpecker/i.test(order[2]),
+      'the weather showing, a lesson waits its turn, and the woodpecker’s coming (round news) waits behind it: nothing cut short, nothing lost', order.join(' / '));
+    check(inOrder.held.length === 3 && inOrder.held.every(h => h.held >= h.read - 1 && h.held <= h.read + 60), 'each banner is held for its reading time, 1 s and 0.4 s a word, 4.5 s at most',
+      inOrder.held.map(h => `${Math.round(h.held)} ms for ${h.read} (“${h.text}”)`).join('; '));
+    const gaps = inOrder.held.filter(h => h.next != null).map(h => h.next);
+    check(gaps.length === 2 && gaps.every(g => g >= 240 + 500 - 50 && g <= 240 + 500 + 10), 'the next comes up after the last one’s fade and a breather (0.24 s and 0.5 s)', gaps.map(Math.round).join(', ') + ' ms');
+    const lost = inOrder.log.filter(l => ['dropped', 'stale', 'skipped', 'cut'].includes(l.fate));
+    check(!lost.length && inOrder.log.filter(l => l.text === CHOKE).map(l => l.fate).join(' ') === 'queued shown', 'the lesson was queued, then shown (the banners’ own log)', inOrder.log.map(l => `${l.fate}: ${l.text}`).join('; '));
+    // (and a lesson whose moment has passed: the round's clock, held at 1 s
+    // here, moved on 6 s while it waited)
+    const stale = await inTurn(async () => {
+      await ev(`stageEvents(() => [{ type: 'weather', kind: 'snow' }])`);
+      await toTick();
+      await ev(`(() => { const g = SnakeDebug.game(); delete g.told.choke; delete g.told.lostColony; g.snakes[2].memory.colonies = [{ x: 20, y: 5, radius: 3, n: 1 }]; return 'ok'; })()`);
+      await ev('stageChoke(0)');
+      await toTick(); // (the lesson, waiting; and the flag, seen standing)
+      await ev(`(() => { const g = SnakeDebug.game(); g.holes.add(5 * 24 + 20); g.snakes[2].memory.colonies = []; return 'ok'; })()`);
+      await toTick(); // (pecked out: round news, behind the lesson)
+      await ev(`(() => { SnakeDebug.game().time += 6001; return 'ok'; })()`); // (between ticks: the round's clock on)
+    }, 11000);
+    await ev(`(() => { const g = SnakeDebug.game(); g.holes.delete(5 * 24 + 20); delete g.snakes[2].memory.colonies; for (const s of g.snakes) s.coughUntil = -1; return 'ok'; })()`);
+    const staleOrder = stale.shown.map(s => s.text), staleFates = stale.log.filter(l => l.text === CHOKE).map(l => l.fate).join(' ');
+    check(staleOrder.length === 2 && SNOW.includes(staleOrder[0]) && staleOrder[1] === LOST && staleFates === 'queued stale',
+      'a lesson whose moment has passed while it waited (6 s of the round) is let go; the round news behind it still comes', `${staleOrder.join(' / ')}; the lesson: ${staleFates}`);
+
     // Your death's card: a thumb mashing jump as you crash, landing on its
     // Play again, never starts a round; a tap once it's settled does.
     await ev('centre()');
@@ -1129,9 +1215,10 @@ const KEYS = {
     'rivals chosen with SnakeDebug.setup: Watch AIs watches them (and one more), Play plays them', `watched ${watched.keys.join(', ')}; played ${played.keys.join(', ')}; nobody chosen, watched ${random.keys.join(', ')}`);
 
     // Every lesson is one idea and 60 characters or fewer (DESIGN, "the
-    // narrator speaks less"): a long one wraps to two lines on a phone, over
-    // the board. With the touch screen's words and the keyboard's, the counts
-    // and names at their longest.
+    // narrator speaks less"): a long one wrapped to two lines on a phone, over
+    // the board (on a phone held upright it's now one line over the title
+    // row: below). With the touch screen's words and the keyboard's, the
+    // counts and names at their longest.
     const LESSON_LENGTHS = `(() => {
       const F = SnakeDebug.flavor(), T = TUNING, out = [];
       const add = (k, v) => { if (typeof v === 'string') out.push([k, v]); else if (Array.isArray(v)) v.forEach(x => add(k, x)); else if (v && typeof v === 'object') for (const x of Object.values(v)) add(k, x); };
@@ -1149,6 +1236,43 @@ const KEYS = {
     check(lengths.map(l => l.touch).join() === 'true,false' && lengths.every(l => l.lines.length > 30) && !tooLong.length, 'every lesson is 60 characters or fewer, on a touch screen and with keys',
       tooLong.join('; ') || lengths.map(l => `${l.touch ? 'touch' : 'keys'}: ${l.lines.length} lines, the longest ${Math.max(...l.lines.map(x => x[2]))}`).join('; '));
 
+
+    // On a phone held upright a banner is one line, over the header's title
+    // row (DESIGN "Teaching by showing"): every banner of the game's, round
+    // news, the weather, spawns and lessons, fits its line on a 360 px phone
+    // at its own size or a little under (0.9 of it at the least), with the
+    // phone's shorter words for the longest (FLAVOR.phone); and on a 320 px
+    // one it's whole on its line, at the least size it may shrink to. With
+    // the longest rival's name, and a friend's of 16 characters.
+    const BANNERS_FIT = `(() => {
+      const F = SnakeDebug.flavor(), T = TUNING, rival = 'Capricious', friend = 'Bartholomew Lark', out = [];
+      const add = (v, opts = {}, kind = '') => { if (typeof v === 'string') out.push([v, opts, kind]); else if (Array.isArray(v)) v.forEach(x => add(x, opts, kind)); else if (v && typeof v === 'object') Object.values(v).forEach(x => add(x, opts, kind)); };
+      for (const k of ['go', 'goWatch', 'wakeBeat']) add(F[k], {}, 'go');
+      for (const k of ['weather', 'weatherWatch', 'strike', 'rainbow', 'rainbowWatch', 'golden', 'woodpecker', 'woodpeckerWatch', 'beetle', 'goldBeetle', 'goldBeetleWatch', 'leaf', 'leafWatch', 'goldcap', 'goldcapWatch', 'baked', 'bakedWatch', 'youMushroom', 'watchingFirst', 'youAway', 'takeBack',
+        'youCrash', 'youCrashToThree', 'youAtThree', 'youAlight', 'youPeckedUnder', 'youChoke', 'youCoughing', 'youWoodpecker', 'youDig', 'digBurrow', 'digAndBurrow', 'burrowHeal', 'lostColony', 'lostCapital', 'lastApples', 'flashKey', 'powersFirst', 'leapNothing', 'leapEarly', 'youLeapFirst', 'youDashFirst', 'youHungry', 'youStarvingSmall', 'fizzle', 'fizzleFlash']) add(F[k]);
+      for (const [k, arg] of [['youGoldBeetle', T.LEAP_MAX], ['youLeaf', T.DASH_MAX], ['youGoldcap', Math.round(T.WRAP_MAX_MS / 1000)], ['wrapEnding', Math.round(T.WRAP_WARN_MS / 1000)], ['youSnipped', rival], ['youSnip', rival], ['friendBack', friend]]) add(F[k](arg));
+      add(F.field.home(rival)); add(F.field.colony(rival));
+      for (const k of ['friendJoined', 'friendLeft', 'friendAway']) add(F[k](friend), { phone: F[k + 'Phone'](friend) });
+      const t = document.getElementById('toast'), rows = [];
+      for (const [text, opts, kind] of out) {
+        SnakeDebug.banner(text, kind, 'round', opts);
+        const cs = getComputedStyle(t), fs = parseFloat(cs.fontSize), line = fs * 1.4, base = (kind === 'go' ? 1.1 : 0.86) * 16;
+        rows.push({ text, shown: t.textContent, above: t.classList.contains('above'), size: fs / base, lines: t.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) > line ? 2 : 1, whole: t.scrollWidth <= t.clientWidth + 1 });
+      }
+      return rows;
+    })()`;
+    const fits = {};
+    for (const w of [360, 320]) {
+      await b.viewport(w, 640, { mobile: true, scale: 3 });
+      await b.go(site.url + '?debug', { settle: 0 });
+      await ev('document.fonts.ready.then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))');
+      fits[w] = await ev(BANNERS_FIT);
+    }
+    const unfit = w => fits[w].filter(r => !r.above || r.lines !== 1 || !r.whole || (w === 360 && r.size < 0.9 - 1e-6));
+    const say = r => `“${r.shown}” ${r.above ? '' : 'on the board, '}${r.lines} line${r.lines > 1 ? 's' : ''}, ${r.whole ? 'whole' : 'cut'}, at ${(r.size * 100).toFixed(0)}%`;
+    check(fits[360].length > 80 && !unfit(360).length, 'on a 360 px phone held upright, every banner is one line over the title row, its words whole, at 90% of its size or more (the phone’s shorter words for the longest)',
+      unfit(360).map(say).join('; ') || `${fits[360].length} banners, the smallest at ${(Math.min(...fits[360].map(r => r.size)) * 100).toFixed(0)}%, ${fits[360].filter(r => r.shown !== r.text).length} in the phone’s words`);
+    check(fits[320].length === fits[360].length && !unfit(320).length, 'on a 320 px phone, every banner is one line, its words whole', unfit(320).map(say).join('; ') || `the smallest at ${(Math.min(...fits[320].map(r => r.size)) * 100).toFixed(0)}%`);
     console.log(results.join('\n'));
     console.log('\nmeasured (virtual 60 Hz, 120 ms ticks):');
     console.log('  press to tick, turns:', JSON.stringify(stats(turnLat)));

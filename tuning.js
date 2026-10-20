@@ -78,8 +78,13 @@ window.TUNING = Object.freeze({
   COUGH_TICKS: 9,           // choking on your own bead: you spit it aside and cough this many ticks, eating nothing (food your coughing head reaches is nudged aside)
   STARVE_EVERY_MS: 1500,    // ...one segment this often, starving at MIN_LENGTH
   HUNGER_WARN_MS: 6000,     // warn you when this much time is left (half again as early at your smallest)
-  NEWS_HOLD_MS: 1200,       // a routine banner shows at least this long before another routine one may replace it
-  LESSON_HOLD_MS: 2500,     // a banner that teaches a rule holds at least this long before routine news may replace it
+  BANNER_BASE_MS: 1000,     // a banner is held for its reading time, read in glances while you steer: this...
+  BANNER_WORD_MS: 400,      // ...and this a word...
+  BANNER_MAX_MS: 4500,      // ...up to this (9 words or more); nothing cuts it short but a card
+  BANNER_FADE_MS: 240,      // its time up, it fades out over this long...
+  BANNER_BREATHE_MS: 500,   // ...and the next one waiting comes up this long after that
+  LESSON_WAIT_MS: 6000,     // a lesson waits its turn this long at most, in the round's time (behind one banner, never two: by then its moment has passed); round news and the weather wait as long as it takes
+  BANNER_MIN_FONT: 0.8,     // on a phone held upright a banner is one line over the title row: its words shrink to fit, to this much of their size at the least
   NOTE_FIND_MS: 1000,       // a rival's note as a banner (asked for from its tag while you watch): up as long as it takes to find and read,
   NOTE_CHAR_MS: 55,         // ...this much a character (about 200 words a minute)...
   NOTE_MIN_MS: 3500,        // ...but no less than this

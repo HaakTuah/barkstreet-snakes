@@ -107,9 +107,9 @@ One treatment, used everywhere:
 
 ## Grabbing attention
 
-The board and the page around it are never still for long, and the big moments are loud. All of it is drawing and styling only, animates only transform or opacity (except a banner's warning throb), and holds still with reduced motion.
+The board and the page around it are never still for long, and the big moments are loud. All of it is drawing and styling only, animates only transform or opacity, and holds still with reduced motion.
 - **The countdown** slams each number down, and the main button calls you with a ring rippling out from it.
-- **Banners slam in** (from big, overshooting, settling) and fade away instead of vanishing, each dressed for its moment: a red ring for a knockout or the last two, gold with a shine running across it for a golden apple, emerald for a beetle, orange for the woodpecker, a throbbing red ring when you're starving, and a big leaf-green **Go!**.
+- **Banners settle in** (a short drop and a fade; with reduced motion, only the fade) and fade away instead of vanishing, each dressed for its moment: a red ring for a knockout or the last two, gold for a golden apple, emerald for a beetle, orange for the woodpecker, a red ring for a warning, and a big leaf-green **Go!**. (Until "Teaching by showing" they slammed in from 1.9 times their size, a warning throbbed red three times and gold had a shine running across it: loud, and in the way of reading them.)
 - **On the board:** **Bonk!** for a knock a snake survives; where one goes out, a comic-book **KO!** if another snake did it, **Fwoosh!** in the fire, **Boom!** for a golden flash with nowhere to go and **Crunch!** for the rest; **confetti** for a win or a new best (all over the board), or from the winner's head when you're watching: paper scraps that flutter and tumble as they fall, not dots. **The woodpecker's next chunk** glows red from within, cell by cell, and cracks along the grain, under the snakes (a body over it bridges the hole), pulsing faster as the strike nears. Its rim is the pit's torn lip to come: it wobbles as the lip will, its corners a little rounder, and the bird's pecks are nicks bitten in from outside it, each its own size and unevenly spaced, coming first and closer together where it's striking (it used to be marked with dashed boxes, the one thing on the board that looked like a computer's; round four traced it with the pits' own outline, but its dents, evenly spaced dots on the rim, still read as a dotted selection box until the critique made them nicks). The lightning's closing ring has a soft glow round it.
 - **The name tags:** a length pops when it changes, a snake knocked out of the round shakes its tag (flushing red), and the leader (the longest snake, if one is longest) wears a gold ring and a bobbing crown.
 - **Chatter:** each new line slides into the log; bubbles pop out of their tail (see below).
@@ -177,9 +177,9 @@ The plain leap's cooldown was a thin arc round your own head that filled and clo
 
 **Reduced motion removes movement, never information.** Being in the air is a rule, so a leap keeps a still airborne pose. The woodpecker cuts between perches instead of swooping. Rain holds still rather than vanishing (it puts fire out), a burning leaf appears where it lands instead of flying, and a death is a still starburst that fades.
 
-**The narrator speaks less, and better.** Banners go through a small queue:
-- **Lessons** (the first crash, the first leap, a power's first pickup, dropping to your smallest) hold for 2.5 s.
-- **Routine news** waits for a lesson, or is dropped.
+**The narrator speaks less, and better.** Banners go through a small queue (since "Teaching by showing", step 1, each waits its turn and is held for its reading time: see there):
+- **Lessons** (the first crash, the first leap, a power's first pickup, dropping to your smallest) wait 6 s of the round at most.
+- **Round news and the weather** wait as long as it takes; a spawn's news shows only when the banner is free, else the next one tells it.
 - **Repeats** don't get banners: only the first golden apple and the first beetle of a round are announced, and a repeat crash or a pickup's "+3" is left to the board's own floaters.
 - **While a card is up,** only what changes the round gets through.
 
@@ -910,7 +910,7 @@ Three rules from the owner hold for all of them:
   A spat bead goes by the same rule. Rivals predict it, and so can you.
   - *Changed by the critique.* As first built, rule 1 sent it to the outside of the turn, and rule 4 said "if both are blocked, it stays". The outside is just where a head going round (up, right, up, right) goes next, so a cougher could nudge its food along under its head all through the cough and eat it as the cough ended. And with both sides taken (a bead met crossing a line of beads), about 4 chokes in 10 left the bead under the head, hidden from everyone. Rolling straight ahead was tried too, and dropped: the piece lay where the head went next, and the cougher pushed it along.
 - **The cue:** a 280 ms cheek puff as it gags, with the bead held in its mouth; on the "ptoo" (120 ms) it's spat out of the cheek on the side it lands, small at first and full size as it clears the head, and lands on the tok at 320 ms. While it coughs the mouth stays shut (no tongue, gag or gape; your own face too, as the Field guide's Coughing picture has it), and every 300 ms a little cloud puffs past it (0.14 to 0.28 of a cell) as the head swells 15% and lurches a tenth of a cell forward; with reduced motion the bead is simply beside you and the puffs stay put as they fade, with no jolt. Nudged food rolls (280 ms); a nudged beetle scurries. (As first built the bead flew from the front of the mouth over the head, and on a phone it sat over the face for the first 100 to 170 ms, the eyes gone; the cough was a 3 to 6 px puff and a 0.7 px jolt at 390. The critique made both read on a phone.)
-- **The lessons:** "You choke on your own tail!", and on your first nudge "No eating while you cough: food rolls aside." (The choke's banner holds 2.5 s, longer than the cough, so this one usually shows once the cough is over; it stays true whenever it shows.) The Field guide's Beads row ends "Your own make you choke: you spit them aside.", with the choke's picture beside the bead's (since the critique: it was drawn in wave 1 and never used), and a new Coughing row follows it: "After a choke you cough for about a second (puffs, mouth shut) and can't eat. Food you reach rolls aside: into a turn, or to the more open side, over food." (Until round six A's finish it said "out of a turn, or to the side with more open log", the first build's rule.)
+- **The lessons:** "You choke on your own tail!", and on your first nudge "No eating while you cough: food rolls aside." (The choke's banner is held for its reading time, 3.4 s, longer than the cough, so this one shows once the cough is over; it stays true whenever it shows.) The Field guide's Beads row ends "Your own make you choke: you spit them aside.", with the choke's picture beside the bead's (since the critique: it was drawn in wave 1 and never used), and a new Coughing row follows it: "After a choke you cough for about a second (puffs, mouth shut) and can't eat. Food you reach rolls aside: into a turn, or to the more open side, over food." (Until round six A's finish it said "out of a turn, or to the side with more open log", the first build's rule.)
 - **The sound:** a strangled gulp and a spit ("ptoo"), the bead landing aside with a tok, and two dry hacks a beat later (2 ticks), once a cough. A rival's is softer and further off and never silences yours. Gaps of 300 ms (choke) and 600 ms (cough), under the soonest you can choke again, so each one is heard.
 - **The voice:** every rival has a line when it chokes, at most every 20 s, even just after another line (Ouroboros: "The one thing I'm known for. And I choke."; Sovereign: "We do not dine on Ourself."; Mute *clutches its throat, then spits*; Copycat in Chinese). A choke is news, as a lost colony is: the crash that broke the bead off has mostly just had its bonk line (a median 1.9 s before), and until the critique that line's rest held the choke's back, so only 22 of 82 rival chokes were said in 80 AI rounds; now 55 of 70 are (0.7 a round). A rival that eats what a choke spat or a cough nudged aside (within 6 s; a nudged beetle caught within 4 cells of where it ran) thanks the cougher by name, half the time, at most every 30 s ("Coughed it up for me, Green? Thoughtful."; Mute *pats Green on the back, mouth full*). Starving mid-cough has its own death-card line: "Food right there, and you mid-cough."
 - **This replaces** round four's "your own beads are length, not a meal", and its one mercy: a snake out of time that chokes or coughs on its last tick starves.
@@ -1015,7 +1015,7 @@ Escapes from a chase went from about half (51%) to 43% with live food alone, and
   - *a burrow closing over* (at the cap) fills with a plug of sawdust from the middle out, a cushion of the log's own dark olive moss creeps over it, and it fades into the bark with its cracks in about 1.1 s, throwing a few specks of sawdust and moss; with reduced motion it's filled and mossed at once, then fades. It crumbles (see the sound; it was silent until the verify pass, and under the music until the critique). Both looks are timed on the page's clock from when it first drew the burrow, so watched at 4× they last a quarter as long in game time;
   - *the sound:* the dig is a quick scrabbling bore (about 450 ms: legs scratching, a rasp sinking into the wood, a low grind a phone can hear, a puff of sawdust), heard as yours when your head is the nearest, otherwise as a rival's; the dug dive is silent, since the bore said it, and so is the burrow it leaves (no creak: it was bored, not cracked open; until the verify pass it played the crack-open `burrow` cue. The old news line for a burrow cracking open is gone: a burrow only ever opens with a beetle coming out of it, which speaks for both). Rendered offline after a silent lead-in (see "Sound"), it's −32.7 dBFS at its loudest 50 ms (a rival's −38.4), about 8 dB under an apple (−24.7) and 4 under a burrow cracking open (−28.6), over a beetle's skitter (−41.6) by 9. (First rendered at the start of a render, which under-reads a sharp attack, it seemed level with an apple, −34.0 against −34.3.) A rival's dig is dulled like any rival's cue (softer, its top cut off), but since the critique its legs' scratches skip the dulling, at the rival's softer volume, so it's heard over the sudden-death music: at 3–6 kHz it lifts that music 9.9 dB (5.9 before), still about 6 dB under yours. A beetle going down a burrow or coming up keeps its quiet scrabble (`scrabble`, which was `dig`). A burrow closing over is a muffled crumble (`heal`, about 350 ms: five grains of sawdust trickling in, each lower and fainter, with a fleck of sawdust ticking in high over each, then a hushed pat as the moss settles), the world's: −40.3 dBFS at its loudest rendered offline the same way, about level with a beetle's skitter (−41.6), 9 dB over a beetle's scrabble (−49.8) and 8 under your dig. Until the critique it was 12 dB softer (−52.9, under even the scrabble), and the music hid it: now it lifts the sudden-death music 8.8 dB at 3–6 kHz and 7.8 above 6 kHz, where it lifted nothing. Its gap (400 ms) makes two digs ending together, closing two, one crumble;
   - *the lesson* is for a dig within `BEETLE_DIG` + 1 cells (7, across and down) of your head, one you could still catch: a move a tick through its 6-tick dig, and a flash's extra cell (it was 8, from when a dig lasted 8 ticks, so it taught digs nobody could reach). It shows only when the banner is free: a dig is over in half a second, so the next one teaches it;
-  - *the burrow's lesson* (the verify pass) is for the first burrow a dig leaves in a round, anywhere on the log, when the banner is free for it (a lesson may take a news line's place), else the next dug burrow teaches it; once a round: "A beetle that digs in leaves a burrow behind." Since the critique, with the dig's lesson not told yet, that burrow teaches both, "A cornered beetle digs in, leaving a burrow.", and neither comes again that round;
+  - *the burrow's lesson* (the verify pass) is for the first burrow a dig leaves in a round, anywhere on the log, when the banner is free for it (nothing showing or waiting, since "Teaching by showing"), else the next dug burrow teaches it; once a round: "A beetle that digs in leaves a burrow behind." Since the critique, with the dig's lesson not told yet, that burrow teaches both, "A cornered beetle digs in, leaving a burrow.", and neither comes again that round;
   - *the closing over's lesson* (the critique) is for the first burrow closing over once the burrow's lesson is told, when the banner is free for it, once a round, for watchers too: "Past three burrows, the stalest one closes over." (the stalest is the Field guide's "the one unused longest"). A dig at the cap closes the old burrow on its new burrow's tick, the closing first, so that tick teaches the burrow and a later one the closing over;
   - *the Field guide:* the Apple row says how many are on the log; the Beetle row is now Beetles (pictures of a beetle and one digging in): "Worth 2, up to two out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in, so be quick, and leaves a burrow; past three burrows, the one unused longest closes over.";
   - *the voice:* a beetle that digs in and gets away: the rival that cornered it (the nearest head as it started, within 6, `BEETLE_DIG_FEAR`) says so as it goes under, at most every 30 s (Gobbler: "NO! My snack went DOWN!"; Mason: "Diggus escapus."; Desperado: "Varmint went to ground."; Mute *knocks on the bark, then shrugs*; Copycat: 深挖洞，广积粮！). One caught mid-dig is just a catch, and nobody speaks for you;
@@ -1243,6 +1243,189 @@ Every balance call in this file is checked by simulation, and CI plays seeded ro
 
 **Tried and not adopted: an approximate board split.** A rougher territory search was 1.38 times faster, but 6.7% of positions went another way, and play shifted. A checked version saved only 1.07–1.15 times.
 
+## Round six B: the new moves
+
+The owner's notes after Star turned the powers into moves you plan with: hopping between islands, flying a golden jump, flashing through a thin body (yours too), and a wrap you can see. Round six A's rules hold: every new rule has a visible cue and a lesson; every rival uses each move when it pays and sees it used against it (the owner's core premise: no ability that only people use); every rival keeps its trademark; no move may become a way to be safe.
+
+**Teaching.** The owner found round six A's banners too quick to read in a fast game, and in the way on a phone, and asked whether the game could show rather than tell: your own snake speaking in a bubble when it does something it shouldn't, and pictures in play of what you can do (a jump you could make, a bridge on someone's back, where a flash would cut). So every move here is taught that way, through the teaching system (see "Teaching by showing" below): the lesson lines below are the words, said by your snake or drawn as a hint, and a banner only where a rule has no better place.
+
+**Why.** In sudden death, 40–45% of deaths are in a pocket smaller than the snake, and once the woodpecker's holes are rounder, a one-cell hop rarely reaches anywhere. The owner's screenshot: Gobbler, 59 long, folded on a strip, an open island across a hollow, and no way to get there. A 3-cell hop reaches the next island for about a quarter of boxed snakes, 4 cells for about two in five, and a quarter sit 5 or more away (round six A's study).
+
+**The plain jump hops islands.**
+- It goes over up to 3 cells of anything a jump goes over (bodies, holes, fire), landing on the first free cell beyond. It used to go over one.
+- It flies at a snake's pace, a cell a tick: over three cells, the head is in the air for three ticks and lands on the fourth. The body follows the head's path, bridging what it crosses.
+- It waits up to `LEAP_WINDOW` ticks for something to hop, as now, and only goes if there's somewhere to land within reach. It never goes off the board.
+- It still costs the tip of your tail and needs more than 3 to go. Its rest is set by simulation (4 s now; longer, since it does more).
+- It hops fire and never puts it out. Only a flash puts fire out.
+- *The cue:* the landing cell gets a ring while the jump waits; the flight is the arch, shadow and dust round six A drew, longer.
+- *The lesson:* the first time you're boxed in with a jumpable gap, "Space hops up to three cells. Find an island!" (a tap on phones).
+
+**The golden jump flies** (the owner: "you can essentially fly, like a mario jump, choosing exact landing site"):
+- Hold the jump to keep flying, up to 5 cells; let go and you come down on the next cell. A quick press is a plain-length hop, free.
+- Steer in the air: turns work in flight as on the ground, one a tick, and the body follows the bend.
+- Wherever you come down counts: bark, and you're fine; a hole, and you fall in; a body, and it's a bump (below).
+- *The cue:* a gold ring marks where you'd land if you let go now, and moves as you fly.
+- *The lesson:* on your first golden jump, "Hold to fly farther. Steer in the air!"
+- Free, as now: 2 per golden beetle, up to 3 held.
+
+**A snake across a pit is a bridge** (the owner: "if you are a shorter snake, jumping on a longer snake, and it is crossing a pit, and you manage to cross in time, before the end of its tail [goes]"):
+- A body lying over a pit already holds (only a head falls in). Now the part of it over the pit is a bridge for anyone: a head may move onto it there, crawling along its back, or land on it from a jump. Everywhere else a body is still a wall, as snake needs it to be.
+- The bridge lasts as long as the body does: once its tail has passed, the cell is open pit again, and a head over it falls in. A body's cells free up on a schedule anyone can see (the tail end leaves one a move), so the timing is a rule you can plan by, not luck: get your head to solid ground before the tail end reaches you.
+- Your own body over a pit stays as safe as now; it's only your head that needs the bridge.
+- Head to head on a bridge is the usual head-on; cutting the bridge (a golden flash) drops whatever head is on the cut-off part.
+- *The cue:* a body over a pit is already drawn as a bridge (round six A); a head on another's back rides on top of it, with its shadow on the back below. The tail end's last cells over the pit get a creak and a sag as it nears.
+- *The lesson:* the first time a snake lies across a pit near you, "A snake across a pit is a bridge, until its tail passes!"
+- *The rivals* plan across bridges with the time each cell frees up (which the AI already keeps for every body cell), use them to reach an island, and never start across one they can't leave in time. A rival lying across a pit sees others using its back.
+- *Why:* it's island-hopping with no power at all, and it makes the end, when the log is islands, a little less of a lottery: a long snake crossing between islands opens a way for a moment, for anyone quick enough. Measured like every rule here; kept only if sudden death stays as long and as fair.
+- **Never a way to be safe** (the owner: it mustn't be "a technique that can make you invulnerable, that you can constantly jump on peoples back and avoid danger"; it must "take some timing and skill to pull it off"). Built in:
+  - only over a pit: on bark, a body is a wall, so riding is never a way out of a crash, a trap or a box on solid ground;
+  - you're over a pit the whole time, with a deadline: the bridge shrinks from its tail end a cell a move, and you can't stop (snakes always move) or turn back;
+  - getting off takes aim: the bridge snake's body becomes a wall again where it reaches the far rim, so you must step off sideways onto bark at the rim, at the right moment; riding toward its tail end leaves you half the time;
+  - you're still in reach: a head-on on the bridge is a head-on, a cut bridge drops you, and your own body on the bridge is just another body over a pit (a bridge for someone else);
+  - no free landings: a jump may land on a bridge only where the bridge will still be there when you land.
+- **Checked before it's kept:** in simulation, how often snakes ride, how often a ride ends in a fall, and whether riders outlive everyone else. Any snake that spends a large share of its time on backs, or dies less often while riding than off it, means it's a refuge, and it gets tightened (for example, a ride may only start from the rim, not from a jump) or dropped.
+- **The rivals use it too** (the owner's core premise: no ability that only people use). Every rival weighs a crossing the way it weighs a jump, by its own style (Desperado for the thrill, Ghost to slip away, Gobbler for food on the far side, Drab rarely). It sees others ride: a pit with a bridge over it is no barrier to them while the bridge lasts. Rules tests prove both: a rival crosses a bridge to reach an island when it pays and only when it can get off in time; a rival doesn't count on a pit to keep away a snake that can ride across. If the rivals can't learn it well, the rule doesn't go in.
+
+**Bumps in the air** (the owner: colliding mid-air "costs you the same as a usual collision, and you fall"):
+- In the air are: each flying head, and the part of its body lifted over what it hops. Flying into another snake's air is a bump; two flying heads in one cell both bump. Something on the ground passes under a flight, and a flight passes over the ground.
+- A bump costs what a crash does (3 segments, the stun), and you drop where you are:
+  - over bark, you're stunned there;
+  - over a hole, you fall in and you're out;
+  - onto a body, you slide off it to a free cell beside, by the same rule food rolls by (the outside of the turn; else the side with more open log; a tie toward the middle); with no free side, you're out.
+- Coming down on a body at the end of a flight is the same bump. So a fast golden flash through a landing cell steals the landing.
+- *The cue:* a spark and a puff of dust in the air, then the drop (or the slide).
+- *The lesson:* the first time you bump in the air, "Bumped in mid-air! Down you go."
+
+**The plain flash cuts.**
+- It still goes 2 cells along the ground. Now, through a body one cell thick, with a free cell beyond, it cuts that body: the part behind the cut falls to beads, food for anyone (its owner chokes on them).
+- It puts out one cell of fire it passes, if it lands clear.
+- **A failed flash hurts more** (the owner kept this on purpose: without a risk, everyone flashes all the time, cautious play loses, and Star crushes everyone). A flash that runs into what it can't get through (the edge, a hole, a body two thick, a head) costs 5 segments and a longer stun (both set by simulation; 3 and 4 ticks for a crash).
+- **Its rest is longer:** 10 to 12 s (6 now), set by simulation.
+- *The cue:* the cut is a snip of light across the body and the beads spill; a failed flash is a bigger bonk, with the stars staying longer.
+- *The lessons:* your first cut, "A flash cuts through a thin body."; your first failed flash, "Too thick! A failed flash costs five."
+
+**The golden flash cuts deeper.** Three cells, as now. It cuts through a body up to two thick (one cut, nearest the flasher's head), puts out every fire cell on its way, and still blows up at the edge or a hole.
+
+**Dropping your tail** (the owner: "now maybe you can cut yourself smaller"). A flash can cut your own body, by the same rules: the plain one through one thick, the golden one through two. The part behind the cut becomes beads, which others can eat and you choke on. It goes only if at least 3 segments stay in front of the cut. It's how a long snake gets out of a pocket too small for it, at the price of the length. *The lesson:* the first time you're in a pocket smaller than you with your own body one thick in front, "Flash through your own tail to drop it."
+
+**Gold portals for the wrap** (the owner: the edge-passing power had no effect at all):
+- Going off an edge while wrapping opens a pair of gold portals, one on each side, trimmed in your colour. The entry swirls in and the exit spills out. The frame is gilded while you wrap. Gold, not blue and orange: on this board sky blue means jump and ember means flash.
+- Others may follow you through while your body passes and for about 1 s after. Coming out onto your body is a crash.
+- *The lesson:* the first time someone follows, "Anyone can follow you through a portal, for a moment."
+
+**Mason builds double walls.** A plain flash cuts a wall one thick, so Mason, who lives by straight walls ("Keep watch!"), lays them two thick where it can, running back alongside. Its straight runs are measured before and after.
+
+**Every rival has a power style.** Each persona uses jumps and flashes its own way, through the same engine calls as a person:
+- Sniper cuts off its target; Mute seals boxes; Gobbler races for food; Vulture flashes to beads; Ghost keeps a flash ready to escape.
+- Sovereign and Colonist chase intruders off their land; Mason finishes walls; Creeper flashes in behind tails; Desperado for the thrill; Joker springs its lures; Ouroboros jumps its own coils and drops its own tail.
+- Star is the addict; Wildcard is random; Capricious and Copycat borrow; Metagamer reads its rivals; Drab is the baseline.
+- All of them: a ready flash is worth keeping (a reserve value); length is worth trading for room when boxed in (jump to an island, or drop the tail); keep a jumpable way out; cross the woodpecker's mark when they'll be out of it before the strike.
+- *The test case:* the owner's screenshot (Gobbler folded on a strip, an island across a hollow). The rival must find the hop, the flight or the tail drop.
+- **Gobbler's endgame.** Round six A left Gobbler the lowest (18% over five seeds): it grows longest and most of its deaths come late (78% after 2:00, at about 53 cells), in pockets too small for it, and no weight change held up. Its style here is the cure, not a number: it hops to the next island for food, and drops its tail when a pocket is too small. Measured: Gobbler comfortably inside 15–35%, its food share still the field's biggest.
+
+**Balance targets** (simulation, paired seeds): powers on clearly beat powers off in the seat-split A/B (today they're even, 2.499 against 2.497); every persona wins 15–35% of rounds; rounds about 160–180 s; starving at most 8%; failed flashes rare enough to be a risk you take on purpose. The chosen numbers (the jump's rest, the flash's rest, a failed flash's cost) go here, for the owner's playtest.
+
+**Effects:** take-off and landing dust; the flight's shadow on the ground; the landing ring; bumps in the air; cuts and spilled beads; dropped tails; fire put out.
+
+## Teaching by showing
+
+The owner (2026-10-20): the lessons "flash before you, too quick to really register", sometimes "in your face in the middle of the screen" on a phone, and the woodpecker is very small on a phone. Their idea: your own snake's speech bubbles, and pictures in play of what you can do.
+
+**Measured first** (18 real rounds in headless Chrome as a new player, on a 390×844 phone, a 360×640 phone and a 1920×945 desktop):
+- Banners were up for 39–50% of play.
+- Most lessons were held 2.6–3.2 s, and the first 0.46 s of each is the slam. A text of 9–14 words needs about twice its plain reading time when you can only glance away from your head.
+- Hunger's lesson came 3.4 times a round, often over your own body.
+- Round news replaces a waiting lesson at once, and the lesson is lost.
+- The new player's jump presses nearly all ran out: 35 "nothing to hop" or "too early" lessons against 2 "Hup!".
+- On an upright phone the perched woodpecker was 7–8.5 mm tall.
+
+Three directions were built as prototypes: your snake talks; pictures drawn on the log; and a first round that teaches. Three judges scored them, and all three chose one system made of the best of each.
+
+**1. Banners carry only round news everyone shares:** the woodpecker (and PR C's acts), first blood, the last two, weather, spawns, lost land and the last apples.
+- Each is held for its reading time (1 s plus 0.4 s a word, at most 4.5 s), queued with a 0.5 s breather, and never cut short except by a card. Nothing is dropped, so weather that carries a rule ("Winter. Less food…") always gets its turn.
+- No middle slot. On an upright phone they sit above the board, over the header's title row, never over your own tag or the pause button, and taps pass through. Elsewhere they go at the board's top or foot.
+- They settle in with a short drop and a fade: no slam, no red throb, no shine.
+- The weather gets one-line phone versions of its two-line texts.
+
+**2. Your snake's voice.** Every lesson about you becomes a line your own snake says, in a bubble at its head, with the rivals' bubble rules.
+- *Where:* it keeps off your head, the 3 cells ahead, a turn you've pressed, the banner and the thing the line is about. It stays put while it can; when it must move it fades across in about 0.1 s, never gliding over your head. Its first place is chosen from the head's next tick, so it doesn't jump in its first half second. Rival bubbles make way for it.
+- *The words:* first person, one idea, at most 32 characters (a test checks every line), each mirroring the rivals' line for the same moment. Where the prototypes differ, the shorter line wins. Exclamation marks are rationed: pain and surprise get one, and everything else ends in a full stop or an ellipsis. The narrator (the banners) stays calm. The owner judges the tone.
+- *The cue:* a line that asks for a press carries a key cap ([Space], [E], [↓]) or a drawn fingertip tapping or swiping. Its key is named only until you've used it.
+- *How long:* its reading time, 1.2 s plus 0.45 s a word, 2.4–4.2 s. One line at a time. What just hurt you, or what you just got, takes over. The cough's line waits for the choke's. A line that can't show yet isn't used up.
+- *How often,* counted per device in one new key, 'snake-taught':
+  - each rule's line comes in the first 2 rounds you meet it;
+  - the last-life lines (a crash that leaves you at 3, at 3, starving at 3) come every round;
+  - after round 2, hunger has only its tag's bar and its rumble.
+
+  Not once ever, because a line missed in a busy moment would be gone for good.
+- It goes in the log under your name and to the screen reader, as the rivals' lines do, and it shows with the chatter off.
+
+**3. The move coach** teaches steering, the jump and the flash, in that order.
+- Each prompt waits for a calm moment (no rival head within 5 cells, the way ahead clear) and for you to do the move.
+- It comes back no sooner than 12 s later, at most 4 times a round, until you've done the move 3 times. A move you never did comes back next round.
+- A jump is offered only over a hurdle that will still be there when you arrive (a tail that will have passed doesn't count).
+- The flash isn't taught at "6 s in" any more, but at its first calm moment.
+- Steering gets taught too ("[↓], and I'll turn!"), with a dashed turn arrow. For someone who doesn't know WASD, that's the most useful line of all.
+- The first round keeps its full field of rivals. A first round with one rival fewer was rejected, because it would be an easier game for people only, and its wins count in the Hall of Fame.
+- powersFirst, flashKey, leapNothing, leapEarly and youLeapFirst stop being banners. They become the coach and short lines: "Nothing to hop!", "Too soon!", "Hup! That cost my tail tip."
+
+**4. Pictures on the log,** for the moves you're learning, drawn in two passes (under the snakes and over them), so the pips and faces stay clear.
+- *The jump:* a dotted arc to the landing ring. It's faint from 5 cells away, then bright with a breathing ring once a press would go. An × marks where there's nowhere to land, and dots run out for a press with nothing in reach. A -1 shows at your tail tip on your first jumps.
+- *The flash:* two ember chevrons and a ghost head two cells on, and an × where it would bump.
+- *The golden flash:* Honey chevrons along its path, the cut line with "Snip!", and a starburst with "Boom!" at an edge or hole. A picture says "never at an edge" better than words.
+- *How long:* these predictive pictures show only while you're learning (until you've used the move 3 times). After that, only the cues drawn for every snake's moves stay, such as PR B's ring once a jump is pressed, so you read the rivals' moves as they read yours. Danger predictions left on for good were rejected: they'd be an aid only you have, and they'd trim the timing skill the moves are meant to need.
+- *One source of truth:* the pictures come from one pure engine query ("what would a press do now, given this view"), not from rules re-derived in render.js. PR B's islands, flights and bridges then change one place, and a test checks that the picture matches the outcome on staged boards. The shapes are worked out once a tick, and the renderer hands their box to the bubble layout, so your bubble never sits over what's drawn.
+- Line widths have a floor in CSS px, so they read on a 360 px phone. With reduced motion they only fade.
+- No "hints off" switch: it would only bring the old banners back. Instead the Field guide gets "Tell me again", which clears 'snake-taught', and new rows for crashes and hunger. The Field guide stays the full reference.
+
+**The bird.** All three designs reached the same answer. On an upright phone the woodpecker perches at full size (4.9 cells, about 13 mm), standing down into the empty middle of the chatter panel's header row under the ledge, between "Bark chatter" and the On switch.
+- It never covers a cell, the label or the switch.
+- It's the same size perched, flying and drumming, so it doesn't grow as it takes off.
+- Taps pass through its layer.
+- It goes there only when that row starts within 24 px of the ledge and a clear spot exists; otherwise it stays on the ledge. The prototype measured 0 overlaps in 120 cases.
+- While watching it stays on the ledge, small, because the speed buttons sit there.
+- Phones on their side and desktops are unchanged. It's built on the one-screen layout (#34), which reshapes exactly this area.
+- Even at full size its eye is 5–6 px, so PR C draws act 1's gaze on the board for everyone (and in the rivals' view): a warm wash that deepens where it looks longest.
+
+**Build order.** It's its own PR on main, before PR B's moves, so every new move is taught through it from the start:
+1. the banner queue and placement, and the phone weather texts;
+2. the full-size bird, with layout-test's perch checks rewritten as "full size, never over a cell, off the label and switch";
+3. your snake's voice, with every lesson banner mapped to a line;
+4. the coach and the pictures for today's jump, flash and golden flash, with the engine query;
+5. the Field guide rows and "Tell me again";
+6. tests:
+   - input-test reads your bubble;
+   - every line is 32 characters or fewer;
+   - each picture matches its outcome;
+   - your bubble never sits over your head or the 3 cells ahead;
+   - a real-play run on the three screens against the measured numbers.
+
+The aim is banners up for about 20% of play, and every lesson where your eyes already are.
+
+**With PR B,** every new move goes through the same coach, voice and query, with its own cue as the picture, and no new banners:
+- *island hops:* the arc stretched to the ring up to 3 cells on, offered the first time you're in a pocket with a jumpable gap ("Tap! I can hop to that island.");
+- *the golden flight:* a gold ring that slides as you steer, with a dotted trail to its limit, turning to an × over a hole or a body ("Hold, and I'll fly! Steer me.");
+- *bridges:* planks on a body over a pit, its last cells sagging and creaking, and a walkway to a ring on the far rim ("Off before its tail goes!"), with lines for rivals both riding and ridden;
+- *cuts:* a snip line across a thin body with the beads-to-be ghosted; the same across your own body for dropping your tail; an × with -5 where a flash would fail, until learned; steam on fire it puts out;
+- *bumps in the air:* a spark and a puff;
+- *portals:* the exit left open and shrinking for about a second, for everyone.
+
+**With PR C:**
+- one calm banner per act, with act 3's folding in the last apples ("Frenzy! The last apples are falling.");
+- the gaze drawn on the board;
+- combo patches numbered 1-2-3 in strike order, steady, not flashing;
+- your lines "Eep. That bird's watching me." and "Two marks at once?!";
+- the Woodpecker row with the three acts, and "where it looks longest, it pecks first".
+
+**As built, step 1: the banner queue and placement, and the phone texts.** The lessons are still banners until step 3, so every banner, lessons too, keeps the new rules.
+- *Hold:* every banner is held for its reading time, 1 s and 0.4 s a word, 4.5 s at most (`BANNER_BASE_MS`, `BANNER_WORD_MS`, `BANNER_MAX_MS`). The lessons use the same rule, not the voice's 1.2 s and 0.45 s a word, 2.4–4.2 s: one rule for every banner, and the lessons still banners run 6 to 14 words, where the banners' rule is the longer (4.5 s from 9 words, against the voice's 4.2 s, a cap made for lines of 32 characters); the voice's would add 0.2–0.4 s only to the few short ones. Go! and the wake's "Ready…" keep their beat, and a rival's note you ask for keeps its own reading time. A banner that spent 0.3 s or more faded under the heads gets that time back once (all banners now, not only lessons). On a phone the hold is the full words', a little more than the phone's shorter ones need.
+- *Queue:* in the order they came, each a breather (`BANNER_BREATHE_MS`, 0.5 s) after the last one's 0.24 s fade. Only a card cuts one short (and clears those waiting; a nap brings them back on waking). Go!, the countdown's last beat, and a note you ask for come up at once; what a note interrupts goes back to the front of the line. Round news and the weather wait as long as it takes. A lesson waits at most 6 s of the round (`LESSON_WAIT_MS`): one banner ahead of it takes 5.24 s at most (4.5 s, the fade and the breather), so it can wait out one but not two. Up to three lessons wait; the `still` predicates are kept. The woodpecker's rule waits from when its news comes up (`opts.follows`), since its moment is the news's: waiting from its own arrival, it was let go 3 times in 3 rounds at 360 px, behind the news behind another banner. The last apples and the land the woodpecker took are round news now (the code had them as lessons). Spawns and the lessons over in a moment (a dig, a burrow) still show only when the banner is free (`newsFree`: nothing showing, fading, breathing or waiting), and aren't spent otherwise. A debug log (`SnakeDebug.banners()`) says what became of each.
+- *Placement,* measured on #34's layout: at 390×844 the header's title row runs from y 8 to 55 (the title 8–35, the tagline under it), its buttons from 61, the tags 111–165 and the board from 175; at 360×640, the title 8–31, the buttons from 37, the tags 87–141, the board from 151. On a phone held upright (the ledge laid out) the banner moves into the header: across it and 4 px past each side, level with the title, between 2 px inside the screen's safe top and 3 px above the header's buttons (`placeBoard` measures it, `placeToast` fits it), so it's at y 10–34 at 390×844, 8–32 at 360×640, 2–25 at 320×460 and 49–73 under a notch. One line at 0.86rem, shrinking to fit across down to 80% of that (`BANNER_MIN_FONT`, then an ellipsis no words of the game's need), and never taller than the row; under 22 px of row it would go on the board, which no screen tested needs. Taps pass through it, and bubbles no longer make way for it. A rival's note, three lines long, stays on the board. Elsewhere the banner is at the board's top or foot, never its middle: with heads in both it fades where it is.
+- *Motion:* it settles in, a 6 px drop and a fade over 0.36 s, and fades out rising 4 px; with reduced motion it only fades. No slam, no throb, no shine.
+- *Phone words* (`FLAVOR.phone`, and `opts.phone` for lines with names), one line on a 360 px phone: the weather's four that took two lines there ("Thunder! Lightning strikes where it crackles.", "Winter. Less food, and hunger comes faster." for both winters, "Snow. Lean times: eat while you can."), the woodpecker's three, the long golden leaf and golden mushroom news, the watcher's and the away lines, the friends' lines, and a first out's cause in fewer words (`shortCause`: "First out: Capricious was cut by Metagamer."). A screen reader hears the full words. The smallest a banner gets is 94% of its size at 360 px and 82% at 320.
+- *Measured,* the audit's real rounds again (3 rounds each, seed 11, a new player), before and after: a banner up 48%, 49%, 48% of play → 61%, 55%, 60% (390×844, 360×640, 1920×945: the holds are longer, and the lessons are still banners until step 3); the median hold 2.6 s against a median reading time of 4.2–4.5 s, 0–2% of banners held their reading time → 4.2 s, all of them (100%); banners straight after another with no fade or breather 22, 22, 17 → 0, and cut short by another within 1.5 s 3, 3, 4 → 0; news never shown (the weather, dropped behind a lesson) 3, 3, 2 → 0; lessons never shown 0 → 2 of 32, 0 of 23, 4 of 24, each let go after waiting 6 s (four "hungry" lines, whose tag's bar and rumble say it too, a choke, a "pecking under you"), where before every lesson was shown and cut to about 2.6 s; time in the board's middle 28.2, 23.4, 1.1 s → 0; on the phones, time over the board 189 and 132 s → 0, and over your tag or the pause button 0 → 0.
+- *Tests:* input-test (the banners in turn, held for their reading time with a breather, round news waiting behind a waiting lesson, a lesson let go after 6 s with the round news behind it still shown; the slots, top and foot, never the middle; above the board on a phone; every banner one line over the title row at 360 and 320 px), layout-test (every phone held upright, and every height of the upright sweep, put up and as the screen changes: one line, words whole, inside the safe area, never over the board, your tag or the pause button; elsewhere top or foot), ui-test (a note you ask for, nothing cutting it short).
+
 ## Phones
 
 The owner, on a phone: playable, but not optimal, with space wasted on the border; on its side, "the play area becomes miniscule"; where would the woodpecker go with a bigger board, since it perches outside it; and could the screen stay awake while you play or watch. These are the calls, as built. Every number is CSS px, measured in headless Chrome by `tools/layout-test.js`, which checks all of this on 24 screens and at every height in between held upright.
@@ -1366,7 +1549,7 @@ The owner played the live game (6d478ed) on a desktop and sent three findings, f
 - On any card that's up (napping, your death's, the round's end, the start), a click, a tap or Enter on a rival's name opens its note in place of the card's words: a slip of darker parchment edged in its colour, its dot and name, how it plays, and what it holds now in smaller type, kept live (the round goes on behind your death's card; "Out of this round." once it's out). Your own tag gives your powers, or "You’re out of this round."
 - It stays until you act: its tag again, another tag (which swaps it), its ×, Esc (before anything else Esc does: Esc again wakes, or keeps watching, as ever), a click or tap anywhere but a button, a field or a tag, or the card going. A new card brings its own words.
 - Its tag wears a cream ring while its note is up, its name tells a screen reader so (`aria-expanded`), and the note is read out as it opens. Esc or its × give focus back to the name, where Enter opens it again rather than asking to start over.
-- Watching with no card up (after you're out, or Watch AIs): a banner edged in the rival's colour, up as long as it takes to find and read: 1 s and 55 ms a character (about 200 words a minute), 3.5 to 9 s. Its level, `asked`, sits between lessons and round news: routine news and lessons can't push it off, round news can.
+- Watching with no card up (after you're out, or Watch AIs): a banner edged in the rival's colour, up as long as it takes to find and read: 1 s and 55 ms a character (about 200 words a minute), 3.5 to 9 s. Its level, `asked`, comes up at once (you asked for it): every other banner waits its turn behind it, and the one it interrupted goes back to the front of the line (until "Teaching by showing", round news pushed it off). It stays on the board on a phone held upright too: three lines of it over the title row would cover the tags.
 - While you play, in the countdown and in the lobby, a tag shows nothing (your eyes belong on the log); a desktop's tooltip still does.
 - On a small board (380 px or less: a phone on its side, a laptop's short window) the note also stands in for the start card's row of names, the new best's badge and the carve (unless you're typing in it), and on the smallest (300 px) for the card's links too; they come back with its words. (At first only the smallest let the badge and the carve go: on a 316 px board a note on a first good round's card slid the carve under Play again, and a finger dragging the card to reach it closed the note.) The phones work's edge-to-edge boards are a little bigger than 380 on most phones, so there the note stands in for the start card's roll-call up to 403 px (2 px), and for the badge and the carve up to 455 (on a 390 px phone's 382 px board a note on your death's card made it scroll 27 px, on a 412's 404, 5; on the round's card, whose words say more, 25 at 422 and 7 at 440), held upright or on its side (see "The cards, by the board" below).
 - *Turned down:* a longer timer, or one by the line's length (the game's napping: any timer takes the words from someone still reading; the banner has one only because the round moves on); a popover by the tag (on a desktop it covers the other tags and the chatter, on a phone the board and the card); closing it on any key (P, Enter, R, H, M and N all mean something already); notes while you play or in the countdown.
@@ -1482,7 +1665,7 @@ Each line gives the guideline, what was done, and why.
 - **"Particles in the palette's colors":** *adapted.* Particles use the palette plus the color of what was eaten (golden for golden apples, the snake's colour for its beads), so the burst says what happened.
 - **"High score in localStorage":** *kept and extended.* There's Best plus the existing Hall of Fame and stats, every access in try/catch. Watched AI-only rounds now count in the Hall of Fame (your request), but never in your personal stats.
 - **"Pause automatically on blur/visibility":** *applied to hidden tabs, and to window blur only while you're playing.* A watched AI round keeps running when you click elsewhere on the same screen, but pauses when hidden.
-- **"Speech bubbles"** *(not in the brief, but they affect readability):* kept and toned down. They're smaller, slightly translucent, follow the gliding head, never outlive their round, and long lines go to the log only on small boards. They sit beside a snake going up or down (never over its path or its body) and above one going sideways. **They don't jump about as a snake turns:** a bubble moves to another side only once that side has been the right one for 0.45 s (or its own has run out of room), and then glides there. Measured over 45 s of watching, a bubble used to jump up to 106 px in a single frame, 61 times; now nothing moves more than 6 px a frame. They fade while your head is near one, and a snake doesn't repeat a line within 45 s of game time; Mason's *Life of Brian* routines come once per visit. Banners move to the board's foot while a head passes under them, or, with heads at the foot too, to the middle of the board; only with heads everywhere do they fade, and a lesson that spent a while faded gets that time back, once (round four's critique: on a 320 px phone the first Go's powers lesson was faded for most of its life). With no card up, bubbles sit over the woodpecker's layer (it covered the rivals' "pecked under" lines); with a card up they stay under it.
+- **"Speech bubbles"** *(not in the brief, but they affect readability):* kept and toned down. They're smaller, slightly translucent, follow the gliding head, never outlive their round, and long lines go to the log only on small boards. They sit beside a snake going up or down (never over its path or its body) and above one going sideways. **They don't jump about as a snake turns:** a bubble moves to another side only once that side has been the right one for 0.45 s (or its own has run out of room), and then glides there. Measured over 45 s of watching, a bubble used to jump up to 106 px in a single frame, 61 times; now nothing moves more than 6 px a frame. They fade while your head is near one, and a snake doesn't repeat a line within 45 s of game time; Mason's *Life of Brian* routines come once per visit. Banners move to the board's foot while a head passes under them, and with heads at the foot too they fade where they are (until "Teaching by showing" they went to the middle of the board, where the play is; on a phone held upright they're now above the board, over the header's title row), and a banner that spent a while faded gets that time back, once (round four's critique: on a 320 px phone the first Go's powers lesson was faded for most of its life). With no card up, bubbles sit over the woodpecker's layer (it covered the rivals' "pecked under" lines); with a card up they stay under it.
 
 ### Third pass
 
