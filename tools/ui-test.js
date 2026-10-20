@@ -286,21 +286,18 @@ const KEYS = {
     p = await P();
     check(!p.card && !p.book, 'Esc closes the book; Esc again keeps watching, as before');
 
-    // Watching (no card): a banner, up as long as it takes to read. Round
-    // news (a rival out, the woodpecker) may take its place, as it should:
-    // then it's timed again, up to three times.
-    let up = 0, by = '', want = 0;
-    for (let tries = 0; tries < 3; tries++) {
-      await ev(`(() => { const t = document.getElementById('toast'); window.__banner?.obs.disconnect(); const B = window.__banner = { shown: 0, gone: 0, by: '' }; B.obs = new MutationObserver(() => { const on = !t.hidden && t.dataset.kind === 'note' && t.textContent.startsWith('Ouroboros'); if (on && !B.shown) B.shown = performance.now(); if (!on && B.shown && !B.gone) { B.gone = performance.now(); B.by = t.hidden ? '' : t.dataset.kind + ': ' + t.textContent; } }); B.obs.observe(t, { attributes: true, childList: true, characterData: true, subtree: true }); return 1; })()`);
-      await mouse(await nameAt('Ouroboros'));
-      p = await P();
-      if (!tries) check(p.kind === 'note' && p.toast.startsWith('Ouroboros: Chases') && p.sr.startsWith('Ouroboros'), 'watching: a click on a tag shows its note as a banner, and a screen reader hears it', p.toast);
-      want = Math.min(9000, Math.max(3500, 1000 + 55 * p.toast.length));
-      await wait(`__banner.gone || (SnakeDebug.state() !== 'running')`, 15000).catch(() => 0);
-      ({ up, by } = await ev(`({ up: __banner.gone && __banner.shown ? Math.round(__banner.gone - __banner.shown) : 0, by: __banner.by })`));
-      if (!/^(kill|bird):/.test(by) || await ev(`SnakeDebug.state() !== 'running' || cardUp()`)) break;
-    }
-    check(up >= want - 50 && up <= want + 700, `...up as long as it takes to read (${p.toast.length} characters: ${want} ms, then its fade)`, `up ${up} ms${by ? `, then ${by}` : ''}`);
+    // Watching (no card): a banner, up at once and as long as it takes to
+    // read. Nothing cuts it short now: round news (a rival out, the
+    // woodpecker) waits its turn behind it (DESIGN "Teaching by showing";
+    // it used to take its place).
+    await ev(`(() => { const t = document.getElementById('toast'); window.__banner?.obs.disconnect(); const B = window.__banner = { shown: 0, gone: 0, by: '' }; B.obs = new MutationObserver(() => { const on = !t.hidden && t.dataset.kind === 'note' && t.textContent.startsWith('Ouroboros'); if (on && !B.shown) B.shown = performance.now(); if (!on && B.shown && !B.gone) { B.gone = performance.now(); B.by = t.hidden ? '' : t.dataset.kind + ': ' + t.textContent; } }); B.obs.observe(t, { attributes: true, childList: true, characterData: true, subtree: true }); return 1; })()`);
+    await mouse(await nameAt('Ouroboros'));
+    p = await P();
+    check(p.kind === 'note' && p.toast.startsWith('Ouroboros: Chases') && p.sr.startsWith('Ouroboros'), 'watching: a click on a tag shows its note as a banner, and a screen reader hears it', p.toast);
+    const want = Math.min(9000, Math.max(3500, 1000 + 55 * p.toast.length));
+    await wait(`__banner.gone || (SnakeDebug.state() !== 'running')`, 15000).catch(() => 0);
+    const { up, by } = await ev(`({ up: __banner.gone && __banner.shown ? Math.round(__banner.gone - __banner.shown) : 0, by: __banner.by })`);
+    check(up >= want - 50 && up <= want + 700, `...up as long as it takes to read (${p.toast.length} characters: ${want} ms, then its fade), nothing cutting it short`, `up ${up} ms${by ? `, then ${by}` : ''}`);
     await mouse(await nameAt('Metagamer'));
     await mouse(await nameAt('Metagamer'));
     await b.sleep(300);

@@ -90,6 +90,12 @@
 //   coming back asks again when it's wanted; a refusal isn't asked again
 //   and again; and with no wake lock at all, nothing breaks.
 // - A real touch swipe on the board still turns, held upright and on its side.
+// - A banner while you play (DESIGN "Teaching by showing"): held upright, on
+//   every phone here and at every height of the upright sweep (put up, and
+//   the one up as the screen changes), one line over the header's title
+//   row, its words whole, inside the safe area, never over the board, your
+//   own tag or the pause button; elsewhere at the board's top or foot, never
+//   its middle.
 // - No error events on the page, playing, watching or resized (a resize
 //   observer's loop, which isn't an exception, among them).
 // It prints what it measured: each device's board, before and now.
@@ -277,6 +283,37 @@ const LAYOUT = `(() => {
     hanging: decor.filter(f => /moss bottom|leaves b/.test(f.what) && board && f.b > board.b),
   };
 })()`;
+
+// A banner, put up as the round would (with these words; or the one up now,
+// show false), and where it is (DESIGN "Teaching by showing"): above the
+// board or on it; over the board, your own name tag or the pause button;
+// its middle against the board's, in boards from its top; inside the
+// screen's safe top; its lines, and whether its words are whole. (Its
+// settling in finished first: it drops 6 px as it comes.)
+const BANNERS = [ // (the widest a phone shows: a lesson with no shorter words, round news in its phone words, Go!)
+  ['On fire: 3 bites of tail, and at 3 it ends you. Rain helps.', '', 'lesson'],
+  ['Rat-a-tat. The woodpecker has come for the log, a patch at a time.', 'bird', 'round'],
+  ['First out: Capricious got cut in two by Metagamer.', 'kill', 'round', { phone: 'First out: Capricious was cut by Metagamer.' }],
+  ['Let the wriggling begin.', 'go', 'round'],
+];
+const BANNER = ([text, kind, level, opts] = [], show = true) => `(() => {
+  const t = document.getElementById('toast');
+  if (${show}) SnakeDebug.banner(${JSON.stringify(text)}, ${JSON.stringify(kind)}, ${JSON.stringify(level)}, ${JSON.stringify(opts || {})});
+  if (t.hidden) return null;
+  for (const a of t.getAnimations()) a.finish();
+  const box = el => { const r = el.getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom }; };
+  const hit = (a, c) => a.x < c.r - 0.5 && c.x < a.r - 0.5 && a.y < c.b - 0.5 && c.y < a.b - 0.5;
+  const me = SnakeDebug.game().snakes.find(s => s.isPlayer), cs = getComputedStyle(t);
+  const tb = box(t), board = box(document.getElementById('game')), tag = me?.tag?.li ? box(me.tag.li) : null, pause = box(document.getElementById('pause'));
+  return { text: t.textContent, above: t.classList.contains('above'), box: tb, onBoard: hit(tb, board), onTag: !!tag && hit(tb, tag), onPause: hit(tb, pause),
+    mid: ((tb.y + tb.b) / 2 - board.y) / (board.b - board.y), safeTop: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-t')) || 0, vw: innerWidth,
+    lines: t.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) > parseFloat(cs.fontSize) * 1.4 ? 2 : 1, whole: t.scrollWidth <= t.clientWidth + 1 };
+})()`;
+// What's wrong with a banner's place, held upright or not (an empty list: nothing).
+const bannerWrong = (p, upright) => !p ? ['not shown'] : upright
+  ? [!p.above && 'on the board, not above it', p.onBoard && 'over the board', p.onTag && 'over your tag', p.onPause && 'over the pause button', p.box.y < p.safeTop - 0.5 && 'over the screen\'s safe top',
+    (p.box.x < -0.5 || p.box.r > p.vw + 0.5) && 'off the screen\'s side', p.lines > 1 && 'two lines', !p.whole && 'its words cut'].filter(Boolean)
+  : [p.above && 'above the board', p.mid > 0.25 && p.mid < 0.75 && `in the board's middle (${p.mid.toFixed(2)})`].filter(Boolean);
 
 // Whether each element takes a tap where it is (the topmost thing at its
 // middle is it, or inside it), and is on the screen.
@@ -753,6 +790,18 @@ const r1 = v => Math.round(v * 10) / 10;
           `${r1(play.help.y)}-${r1(play.help.b)} of ${play.vh}${play.helpShown ? '' : ', hidden'}; Go said "${lesson}"`);
       }
 
+      // A banner while you play (DESIGN "Teaching by showing"): held upright,
+      // one line over the header's title row, its words whole, never over the
+      // board, your own tag or the pause button, inside the safe area;
+      // elsewhere at the board's top or foot, never its middle.
+      {
+        const shown = [];
+        for (const bn of BANNERS) shown.push({ text: bn[0], p: await ev(BANNER(bn)) });
+        const wrong = shown.map(x => ({ ...x, why: bannerWrong(x.p, upright) })).filter(x => x.why.length);
+        check(!wrong.length, upright ? `${tag}: playing, a banner is one line over the header's title row, its words whole, never over the board, your tag or the pause button` : `${tag}: playing, a banner is at the board's top or foot, never its middle`,
+          wrong.map(x => `“${x.text}”: ${x.why.join(', ')}`).join('; ') || shown.map(x => `${x.p.above ? 'above' : x.p.mid < 0.5 ? 'top' : 'foot'} ${r1(x.p.box.y)}-${r1(x.p.box.b)}`).join(', '));
+      }
+
       // The woodpecker perched, resting and eyeing its chunk, for spots all over the board.
       const perches = [];
       const rects = { ...furnitureOf(play), ...(play.ledge && !d.short ? Object.fromEntries(play.hanging.map((f, i) => [`hanging ${f.what} (${i})`, f])) : {}) }; // (on the ledge: the moss and leaves hanging into it too)
@@ -965,7 +1014,7 @@ const r1 = v => Math.round(v * 10) / 10;
     const BOARD_W = `document.getElementById('game').getBoundingClientRect().width`;
     for (const w of [320, 360, 375, 390, 412, 414, 430]) {
       if (only && !String(w).includes(only)) continue;
-      const bad = { 'the start card': [], 'playing, the chatter full': [], 'watching, the chatter full': [] }, small = [];
+      const bad = { 'the start card': [], 'playing, the chatter full': [], 'watching, the chatter full': [] }, small = [], bannerBad = [];
       const sweep = async state => {
         for (let h = 440; h <= 940; h += 10) {
           await b.viewport(w, h, { scale: 3, mobile: true });
@@ -973,6 +1022,10 @@ const r1 = v => Math.round(v * 10) / 10;
           const s = await ev(SCROLL), bw = await ev(BOARD_W), want = MAIN_UP[w][(h - 440) / 10];
           if (s.h > s.vh || s.w > s.vw) bad[state].push(`${h} (${s.w}×${s.h})`);
           if (bw < want - 0.5) small.push(`${h} ${state}: ${r1(bw)} (main ${want})`);
+          if (state.startsWith('playing')) { // (a banner: the one up as the screen changed, and one put up now)
+            const moved = await ev(BANNER(undefined, false)), fresh = await ev(BANNER(BANNERS[(h / 10) % BANNERS.length]));
+            for (const [what, p] of [['as the screen changed', moved], ['put up', fresh]]) if (p && bannerWrong(p, true).length) bannerBad.push(`${h} ${what}: “${p.text}” ${bannerWrong(p, true).join(', ')}`);
+          }
         }
       };
       await open({ w, h: 440, dpr: 3 });
@@ -988,6 +1041,7 @@ const r1 = v => Math.round(v * 10) / 10;
       await ev(`window.__autoRaf = true; 'ok'`);
       for (const [state, list] of Object.entries(bad)) check(!list.length, `${w} px wide, upright, 440 to 940 px tall, every 10: ${state}, nothing scrolls`, list.length ? `scrolls at ${list.join(', ')}` : '51 heights');
       check(!small.length, `${w} px wide, upright, 440 to 940 px tall, every 10: the board is never smaller than on main before the page was one screen tall`, small.join('; ') || `${MAIN_UP[w][0]} to ${Math.max(...MAIN_UP[w])} px on main, each height`);
+      check(!bannerBad.length, `${w} px wide, upright, 440 to 940 px tall, every 10: playing, a banner is one line over the header's title row, its words whole, never over the board, your tag or the pause button, put up there and as the screen changes`, bannerBad.join('; ') || '51 heights');
     }
 
     // ------------------------------- over the board, every 80 px of height
