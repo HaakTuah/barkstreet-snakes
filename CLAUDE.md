@@ -51,16 +51,9 @@ How to keep to them:
 - **Print little.** Run the suites with `scripts/test.sh` and simulations with `scripts/sim.sh`: both print a summary
   and the failures and keep the full log in a file. Run long ones in the background (the Bash tool's background mode)
   and wait for the completion notice. Never paste a full log into the conversation.
-- **Helpers, at most two at a time.** You do the task yourself. A subagent only to search widely (pass
-  `model: "haiku"`; ask for file:line and conclusions, not file contents), or as the one reviewer of a task that
-  changes the game (the main model; give it the diff and the task's words). Docs, READMEs, small fixes and config get
-  no reviewer. Sessions started from a Claude Code Project don't load `.claude/agents/`, so pass the model in the
-  call. No workflows and no ultracode unless Haakon asks. Never message an agent a workflow started: stop the workflow
-  and relaunch from what is committed.
-- **Effort** is set when a session starts: medium by default, high for the AI's planning, the engine's rules and online
-  sync. If a problem defeats you twice, write it up in the PR and `docs/PROGRESS.md` so Haakon can rerun it with more.
+- **Helpers, effort and escalation:** see "Models, effort and helpers" below.
 - **Edit in place,** and **don't loop:** if the same approach fails twice, stop, write down what you tried, and change
-  course or mark the item blocked in `docs/PROGRESS.md` and go on to the next.
+  course, hand it to the escalation helper, or mark the item blocked in `docs/PROGRESS.md` and go on to the next.
 - **One fact, one place.** Link instead of copying. A design call goes into its topic file in `docs/design/`.
 - **Haakon's words are kept.** Quote a new instruction word for word in the PR. If it is a standing one, also add it,
   dated, to "Standing instructions" below, with the quote in `docs/archive/instructions.md`.
@@ -68,6 +61,27 @@ How to keep to them:
   project's repository or folders, such as Amarna Letters'.
 - **Sessions.** When sessions are started for you task by task (a Claude Code Project does this), stop when your task
   is merged and say what is next; otherwise carry on with the next task in the same session.
+
+## Models, effort and helpers
+
+The same in both of Haakon's games; only the list of hard work differs.
+
+| Who | Model | Effort | For |
+| --- | --- | --- | --- |
+| You, the builder | Opus | medium; high for the AI's planning, the engine's rules, online sync and the big-file splits | the task itself |
+| Search helper | Haiku (`model: "haiku"`) | as it comes | finding where things are across many files; it returns file:line and one-line conclusions |
+| Reviewer | Opus (`model: "opus"`, `effort: "high"`) | high | every task that changes the game, once, before it is merged; docs, READMEs, small fixes and config get none: give it the diff and the task's text, nothing else |
+| Escalation | Opus (`model: "opus"`, `effort: "high"`, or `"xhigh"` if you already run at high) | high or extra high | one problem that has defeated you twice: give it a self-contained brief (the problem, what you tried, the files and lines), then apply and check its answer yourself |
+
+- **Never more than two helpers at a time,** and only these four uses. No workflows and no ultracode. No agent kept
+  alive to wait for a run: long runs go in the background (the Bash tool's background mode).
+- **Effort is set when the session starts** and you can't raise your own. If the escalation helper fails too, write the
+  problem up in the PR and `docs/PROGRESS.md` as blocked, go on with the next task, and say in your update that it needs a
+  session at higher effort.
+- Sessions started from a Claude Code Project don't load `.claude/agents/`, so always pass `model` (and `effort`) in
+  the call. Never max effort: it costs the most and tends to overthink.
+- **Keep files small and organised:** split code where it naturally belongs, by responsibility, and keep each file under
+  about 50 KB. Split a file that grows past that in its own PR, with behaviour proven unchanged.
 
 ## Rules that stand
 
