@@ -30,6 +30,13 @@ The owner's words are in `docs/handoff/next-tasks-verbatim.md`, with their two a
   - say exactly which Pages setting the owner must change.
 - Sizes before and after, in the PR.
 
+### 1b. The other big files, split the same way (recommended by Claude, 26 October 2026)
+
+After render.js, split the other game files over about 100 KB into modules by responsibility, one PR each, by the
+same rule as render.js: only with identical simulation results and the suites passing, and only the parts that split
+cleanly. In order: snake.js (196 KB), chatter.js (154 KB), engine.js (113 KB), ai.js (109 KB), style.css (101 KB). Every
+later task then reads a few small files instead of these. Haakon may veto it.
+
 ### 2. Types for the multiplayer messages: a small PR
 
 Also in `next-tasks-verbatim.md`:
