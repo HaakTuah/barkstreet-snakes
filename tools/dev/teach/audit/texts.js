@@ -1,0 +1,48 @@
+// Each lesson's words (both variants where it has two; touch / keys), counted, and reading time at 200-250 wpm.
+const L = [
+ ['powersFirst', 3000, 'Tap jumps. Swipe ahead flashes.'],
+ ['flashKey (touch)', 3200, 'Your flash is ready: swipe the way you’re going.'],
+ ['flashKey (keys, p2)', 3200, 'Your flash is ready: E, Shift or right-click. Two cells in a blink.'],
+ ['flashKey (keys, main)', 3200, 'Your flash is ready: E or Shift, two cells in a blink.'],
+ ['leapNothing', 2600, 'Jumps hop over a snake, a hole or fire.'],
+ ['leapEarly', 2600, 'A bit early: jump when it’s right in front.'],
+ ['youLeapFirst', 3000, 'Hup! A jump costs your tail tip, then a short rest.'],
+ ['fizzle resting', 1800, 'Your jump needs a moment.'],
+ ['fizzle small', 1800, 'Too small to jump: it costs tail.'],
+ ['fizzle landing', 1800, 'Nowhere to land.'],
+ ['fizzleFlash resting', 1800, 'Your flash needs a moment.'],
+ ['fizzleFlash landing', 1800, 'Nowhere to flash.'],
+ ['youCrash a', 3000, 'Crashes cost tail. At 3, or boxed in, a crash ends you.'],
+ ['youCrash b', 3000, 'That crash cost tail. At 3, or boxed in, you’re out.'],
+ ['youCrashToThree', 3000, 'Crashes cost tail. You’re at 3: the next one ends you.'],
+ ['youAtThree a', 2600, 'Down to 3. One more crash and you’re out.'],
+ ['youAtThree b', 2600, 'At 3 now. The next crash is the last.'],
+ ['youHungry a', 2800, 'Your tummy is rumbling. Time for a snack.'],
+ ['youHungry b', 2800, 'Getting peckish… find food soon.'],
+ ['youStarvingSmall', 2800, 'Starving at 3, with nothing to spare. Eat now.'],
+ ['youAlight a', 2600, 'On fire: 3 bites of tail, and at 3 it ends you. Rain helps.'],
+ ['youAlight b', 2600, 'Burning, and losing bits of you. At 3 it ends you.'],
+ ['youGoldBeetle (touch)', 3000, 'Golden: 2 long jumps, free. Tap to jump.'],
+ ['youGoldBeetle (keys, p2)', 3000, 'Golden: 2 long jumps, free. Space or a click to jump.'],
+ ['youLeaf (touch)', 3200, '2 golden flashes: swipe ahead. Never at an edge or hole.'],
+ ['youLeaf (keys, p2)', 3200, '2 golden flashes: E, Shift or right-click. Never at an edge or hole.'],
+ ['youDashFirst', 2800, 'Golden flashes cut thin snakes in two.'],
+ ['youGoldcap', 3000, 'A golden mushroom: 12 seconds with no edges.'],
+ ['wrapEnding a', 1800, 'The edges are back in 2 seconds.'],
+ ['wrapEnding b', 1800, 'Edges back in 2 seconds.'],
+ ['youSnipped', 2200, 'Snip. Sniper flashed right through you.'],
+ ['youPeckedUnder', 2800, 'Pecking under you! Only your head can fall in.'],
+ ['youOwnBead (main)', 2600, 'Your own tail won’t feed you.'],
+ ['youChoke (p2)', 2600, 'You choke on your own tail!'],
+ ['youCoughing (p2)', 2600, 'No eating while you cough: food rolls aside.'],
+ ['youWoodpecker (p2)', 3000, 'The woodpecker knocks food aside, and won’t shut you in if it can help it.'],
+ ['youDig (p2)', 2600, 'A cornered beetle digs in. Grab it before it’s gone!'],
+ ['digBurrow (p2)', 2600, 'A beetle that digs in leaves a burrow behind.'],
+ ['lastApples', 2800, 'The last apples are falling.'],
+ ['(news) woodpecker came', 2800, 'The woodpecker is here. Keep out of wherever it’s looking.'],
+];
+const words = t => t.split(/\s+/).filter(w => /[\w\d]/.test(w)).length;
+for (const [k, ms, t] of L) {
+  const w = words(t), lo = w / 250 * 60, hi = w / 200 * 60;
+  console.log(`${k.padEnd(26)} ${String(ms).padStart(4)} ms  ${String(w).padStart(2)} words ${String(t.length).padStart(3)} chars  read ${lo.toFixed(1)}-${hi.toFixed(1)} s | ${t}`);
+}

@@ -1,0 +1,3256 @@
+// The game controller: the loop, input, the cards and the HUD. The rules live
+// in engine.js, the drawing in render.js, and every feel number in tuning.js.
+(() => {
+  const T = window.TUNING;
+  const E = window.SnakeEngine;
+  const { GRID, PLAYER_COLOR, PERSONAS, DIRS } = E;
+  const R = window.SnakeRender;
+  const Records = window.SnakeRecords;
+  const Chatter = window.SnakeChatter;
+  const Audio = window.SnakeAudio;
+  const Online = window.SnakeOnline;
+  const Net = window.SnakeNet;
+
+  // --------------------------------------------------------------- the DOM
+
+  const $ = id => document.getElementById(id);
+  const canvas = $('game'), boardEl = document.querySelector('.board'), mainEl = document.querySelector('main'), glowEl = $('frame-glow');
+  const scoreEl = $('score'), bestEl = $('best'), tagsEl = $('scoreboard');
+  const overlay = $('overlay'), cardTitle = $('overlay-title'), cardText = $('overlay-text');
+  const flavorEl = $('overlay-flavor'), badgeEl = $('overlay-badge'), opponentsEl = $('opponents');
+  const nameRow = $('name-row'), nameRank = $('name-rank'), nameInput = $('name-input');
+  const startBtn = $('start'), watchBtn = $('watch');
+  const toastEl = $('toast'), speedEl = $('speed'), announcer = $('announcer'), hintEl = $('hint'), helpEl = $('help');
+  const pauseBtn = $('pause'), muteBtn = $('mute'), musicBtn = $('music'), chatterBtn = $('chatter-toggle'), chatlogEl = $('chatlog');
+  const recordsEl = $('records'), recordsBody = $('records-body'), resetBtn = $('records-reset');
+  const recordsTabs = [...document.querySelectorAll('#records .tab[data-tab]')];
+  const filterEl = $('scores-filter'), filterTabs = [...filterEl.querySelectorAll('.tab')];
+  const howBtn = $('how'), cardLinks = $('card-links'), friendsBtn = $('friends'), lobbyEl = $('lobby'), lobbyName = $('lobby-name'), lobbyShare = $('lobby-share');
+  const lobbyLink = $('lobby-link'), lobbyCopy = $('lobby-copy'), lobbyPlayers = $('lobby-players');
+  const lobbyJoin = $('lobby-join'), lobbyCode = $('lobby-code'), lobbyStatus = $('lobby-status');
+
+  const touchFirst = matchMedia('(pointer: coarse)').matches;
+  const reducedMQ = matchMedia('(prefers-reduced-motion: reduce)');
+  const params = new URLSearchParams(location.search);
+  const DEV = params.has('debug') || params.has('perf');
+
+  // ----------------------------------------------------------------- words
+
+  // A line from a list, never the one it gave last time (a single line is just itself).
+  const lastPicked = new WeakMap();
+  const pick = list => {
+    if (!Array.isArray(list)) return list;
+    if (list.length < 2) return list[0];
+    let line;
+    do line = list[Math.floor(Math.random() * list.length)]; while (line === lastPicked.get(list));
+    lastPicked.set(list, line);
+    return line;
+  };
+  const inWords = n => ['none', 'one', 'two', 'three', 'four', 'five'][n] ?? String(n);
+  const FLAVOR = {
+    intro: 'Three rivals. One mossy log. Last snake wriggling wins.',
+    // (The arrows first: anyone knows them. A click is the mouse's left button on the board. A first-timer's
+    // Hall of Fame is empty: the Field guide's key, G, is in its place before a first round, both under the board.)
+    hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P naps · Enter starts · G opens the Field guide',
+    hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music',
+    hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · M mutes · N toggles the music',
+    hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash',
+    hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash · Tap ⏸ to nap',
+    // Watching (Watch AIs, or after you're out): nothing of yours to steer.
+    hintWatch: '1, 2, 4 set the speed · P naps · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music',
+    hintWatchTouch: 'The speed buttons set 1×, 2× or 4× · Tap ⏸ to nap',
+    rivals: ['Your rivals today:', 'Up on the log with you:', 'Sharing your bark:'],
+    spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
+    go: ['Slither!', 'Off you go.', 'Mind the edges.'],
+    goWatch: ['And they’re off.', 'Off they slither.', 'Let the wriggling begin.'],
+    pause: ['Snakes need rest too.', 'Curled up in a warm patch of bark.', 'The log will wait.'],
+    wake: touchFirst ? 'Tap Wake up when you’re ready.' : 'P or Esc to wake up.',
+    // (Bonk! is for a knock you survive, Snip! for a cut you survive: a
+    // death's title is a word that means out.)
+    deathTitle: { boom: ['Kaboom!', 'Ka-blam!'], wall: ['Flattened!', 'Splintered!'], self: ['Tangled!', 'Knotted!'], rival: ['Squashed!', 'Splat!'], headOn: ['Out cold!', 'Lights out!'], fire: ['Toasted!', 'Scorched!'], cut: ['Sliced!', 'Chopped!'], pecked: ['Pecked!', 'Drilled!'] }, // (never the card's own verb again: "Head-on! You crashed head-on…")
+    wall: ['The log goes on. You don’t.', 'That edge came out of nowhere.', 'Even logs have edges.'],
+    self: ['Of all the snakes to bite.', 'You were in your own way.', 'You can’t outrun yourself.'],
+    boom: ['A golden flash needs somewhere to go.', 'Full speed, no brakes.', 'Golden, briefly.'],
+    hole: ['The woodpecker sends its regards.', 'Mind the gap.', 'The woodpecker missed you. Its hole didn’t.'],
+    pecked: ['The woodpecker didn’t miss.', 'Rat-a-tat. That was you.'],
+    starved: ['Should have eaten something.', 'Hunger always wins in the end.', 'All slither, no snacks.'],
+    starvedCoughing: ['Food right there, and you mid-cough.', 'Choked on your own tail, then starved. Rough day.'], // (out of time while coughing: what you reached rolled aside)
+    fire: ['Too hot to handle.', 'You found the fire. The hard way.', 'Lightning never strikes twice. It didn’t need to.', 'Burned to a crisp. A small crisp.'],
+    // The weather, as it turns (no banner when it clears).
+    weather: {
+      sun: ['Golden hour: golden apples are ripening.', 'The sun’s out. Golden apples love it.'],
+      wind: ['The wind’s up. Apples are falling.', 'A blustery spell: windfall apples.'],
+      rain: ['Rain. The mushrooms are sprouting.', 'Here comes the rain. Mushrooms love it.'],
+      storm: ['A storm’s brewing. Watch for the crackle.', 'Thunder on the bark. Lightning strikes where it crackles.'],
+      snow: ['Winter. Less food, and you’ll get hungry faster.', 'Snow on the bark. Lean times: eat while you can.'],
+    },
+    // (A line that talks to "you", when you're not in the round: the same news, for everyone.)
+    weatherWatch: { snow: ['Winter. Less food, and everyone gets hungry faster.', 'Snow on the bark. Lean times for everyone.'] },
+    strike: ['Lightning! The bark’s on fire.', 'Crack! Fire on the bark.'],
+    rainbow: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Follow it to the gold.'],
+    rainbowWatch: ['A rainbow! And at its foot, something golden.', 'After the rain, a rainbow. Gold at its foot.'],
+    win: ['King of the log.', 'Last snake wriggling.', 'You outlasted them all.', 'The whole log is yours. For now.'],
+    draw: ['Nobody made it out.', 'Everyone loses. How fair.', 'A dead heat. Emphasis on dead.'],
+    golden: ['A golden apple! Everyone pretends not to have seen it.', 'A golden apple just dropped onto the log.'],
+    // The first time in a round you cross a rival's border.
+    field: { home: name => `You’re in ${name}’s realm now. It noticed.`, colony: name => `That’s one of ${name}’s colonies. It noticed.` },
+    woodpecker: ['The woodpecker is here. Keep out of wherever it’s looking.', 'Rat-a-tat. The woodpecker has come for the log, a patch at a time.'],
+    woodpeckerWatch: ['The woodpecker is here. Everyone, keep clear of its mark.', 'Rat-a-tat. The woodpecker has come for the log, a patch at a time.'],
+    // The new rules, as they first happen to you in a round: one idea each, short.
+    // (A no-break space keeps "At 3" together: split, it reads as two statements.)
+    youCrash: ['Crashes cost tail. At\u00a03, or boxed in, a crash ends you.', 'That crash cost tail. At\u00a03, or boxed in, you’re out.'],
+    youCrashToThree: 'Crashes cost tail. You’re at\u00a03: the next one ends you.',
+    youAtThree: ['Down to\u00a03. One more crash and you’re out.', 'At\u00a03 now. The next crash is the last.'],
+    youAlight: ['On fire: 3 bites of tail, and at\u00a03 it ends you. Rain helps.', 'Burning, and losing bits of you. At\u00a03 it ends you.'],
+    youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
+    youChoke: 'You choke on your own tail!', // (your own beads: spat aside, and a cough)
+    youCoughing: 'No eating while you cough: food rolls aside.', // (true whenever it shows: a lesson may wait out the cough)
+    youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it comes, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
+    youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near enough your head to catch: see DIG_NEAR)
+    digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log, once the dig's own lesson is told)
+    digAndBurrow: 'A cornered beetle digs in, leaving a burrow.', // (the same, when the dig's lesson hasn't been told yet: most digs are far from you, so this one teaches both, the dig first)
+    burrowTaken: 'A beetle that digs in by a burrow takes its place.', // (the first burrow in a round that a dig near it closes over, once the burrow's lesson is told: burrows keep BURROW_SPACING apart)
+    burrowHeal: `Past ${inWords(T.BURROW_MAX)} burrows, the stalest one closes over.`, // (the stalest: the one unused longest, as the Field guide has it. The first one closing over in a round, once the burrow's lesson is told)
+    lostColony: 'The woodpecker took a flag: that colony’s lost.', // (a flag it pecks out, the first in a round; for watchers too)
+    lostCapital: 'The woodpecker took a capital: its realm moves.',
+    lastApples: 'The last apples are falling.',
+    // Your flash, ready and never used yet: the key, once a round (until you've flashed).
+    flashKey: touchFirst ? 'Your flash is ready: swipe the way you’re going.' : 'Your flash is ready: E, Shift or right-click.', // (what it does is the Field guide's: a lesson is 60 characters at most)
+    // Beside the YOU arrow, as a round starts (until you steer).
+    steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
+    leapNothing: 'Jumps hop over a snake, a hole or fire.',
+    leapEarly: 'A bit early: jump when it’s right in front.',
+    powersFirst: 'Tap jumps. Swipe ahead flashes.', // (a short phone's first Go: steering is beside YOU. One line on a 320 px phone, so it fits between the heads)
+    bothOut: ['Nobody walked away from that one.', 'A draw, of sorts.', 'Both of you. At once.'],
+    wakeBeat: 'Ready…',
+    baked: ['Baking in the fire: worth 2, if you can take the heat.', 'Baked: hot food is worth 2, if you can take the heat.'],
+    bakedWatch: ['Baking in the fire: worth 2, to whoever takes the heat.'],
+    beetle: ['A beetle is out for a walk. It won’t get far.', 'A beetle is crawling about. Crunchy.'],
+    goldBeetle: ['A golden beetle! Catch it for golden jumps.', 'A golden beetle: catch it, and jump far for free.'],
+    goldBeetleWatch: ['A golden beetle! Whoever catches it jumps far.', 'A golden beetle is scuttling about.'],
+    youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space or a click'} to jump.`,
+    youLeapFirst: 'Hup! A jump costs your tail tip, then a short rest.',
+    youDashFirst: 'Golden flashes cut thin snakes in two.',
+    leaf: ['A golden leaf on the wind. Eat it for golden flashes.', 'A golden leaf blew onto the log: golden flashes, for the taking.'],
+    leafWatch: ['A golden leaf on the wind: golden flashes, for whoever eats it.'],
+    youLeaf: n => `${n} golden flash${n === 1 ? '' : 'es'}: ${touchFirst ? 'swipe ahead' : 'E or right-click'}. Never at edges or holes.`, // (the danger in it: the first one may be the one. One key and the mouse, to keep it to 60 characters: the Field guide names Shift)
+    goldcap: ['A golden mushroom: eat it and the edges wrap.', 'A golden mushroom came up. Eat it: no edges for a while.'],
+    goldcapWatch: ['A golden mushroom: no edges, for whoever eats it.'],
+    youGoldcap: s => `A golden mushroom: ${s} seconds with no edges.`,
+    wrapEnding: s => [`The edges are back in ${s} seconds.`, `Edges back in ${s} seconds.`],
+    youSnip: name => `Snip! You cut ${name} in two.`,
+    youSnipped: name => `Snip. ${name} flashed right through you.`,
+    youMushroom: ['You feel smaller. And somehow wiser.', 'A little less of you. Sneaky.'],
+    youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
+    youStarvingSmall: 'Starving at\u00a03, with nothing to spare. Eat now.',
+    // A press that couldn't go (the first time each way, in a round): a jump, or a flash.
+    // (A flash is free, FLASH_COST 0, so it's never too small; it has nowhere
+    // to go only over a crash: straight back in, or blown up at the edge or a hole.)
+    fizzle: { resting: 'Your jump needs a moment.', small: 'Too small to jump: it costs tail.', landing: 'Nowhere to land.' },
+    fizzleFlash: { resting: 'Your flash needs a moment.', landing: 'Nowhere to flash.' },
+    newBest: n => `New best: ${n}!`,
+    startOver: 'Start over?',
+    startOverText: key => key ? `${key} again starts over. P, Esc or an arrow keeps going.` : 'This round’s gone if you do.',
+    awake: 'Awake.',
+    friendWin: ['Bragging rights, for now.', 'Rematch?', 'Fair and square. Probably.'],
+    friendKill: ['No hard feelings. Well, a few.', 'Friendship is complicated.', 'That calls for a rematch.'],
+    friendsIntro: 'Host a game and send your friends the link, or join theirs. Empty seats get AI rivals.',
+    hostIntro: location.protocol === 'file:' ? 'Send this code to up to three friends. Empty seats get AI rivals.' : 'Send this link to up to three friends. Empty seats get AI rivals.',
+    joining: code => `Knocking on room ${code}…`,
+    waiting: (name, next) => `Waiting for ${name} to start the ${next ? 'next ' : ''}round.`,
+    roomGone: name => `${name} closed the room.`,
+    roomLost: 'Lost the connection to the room.',
+    friendLeft: name => `${name} left. An AI takes over their snake.`,
+    friendJoined: name => `${name} is here. Their best rounds join your Hall of Fame.`,
+    friendAway: name => `${name} went quiet. An AI steers until they’re back.`,
+    friendBack: name => `${name} is back.`,
+    youAway: 'You went quiet for a moment, so an AI steered for you.',
+    tapTip: touchFirst ? 'Tap a rival’s name tag to see how it plays.' : 'Click a rival’s name tag to see how it plays.', // (no "above": on a phone on its side the tags are beside the log)
+    takeBack: 'An AI kept your snake going. Steer to take it back.',
+    watchingFirst: 'This round’s already going. You’re in from the next one.',
+    rivals0: 'Just friends today. No mercy:',
+    // On a phone held upright a banner has one line, over the header's title
+    // row (DESIGN "Teaching by showing"): the longest round news, in fewer
+    // words there; the full words everywhere else, and for a screen reader.
+    // (input-test checks every banner fits a line on a 360 px phone, at its
+    // own size or a little under.)
+    phone: {
+      'Thunder on the bark. Lightning strikes where it crackles.': 'Thunder! Lightning strikes where it crackles.',
+      'Winter. Less food, and you’ll get hungry faster.': 'Winter. Less food, and hunger comes faster.',
+      'Snow on the bark. Lean times: eat while you can.': 'Snow. Lean times: eat while you can.',
+      'Winter. Less food, and everyone gets hungry faster.': 'Winter. Less food, and hunger comes faster.',
+      'The woodpecker is here. Keep out of wherever it’s looking.': 'The woodpecker is here. Keep out of its sight.',
+      'Rat-a-tat. The woodpecker has come for the log, a patch at a time.': 'Rat-a-tat. The woodpecker has come for the log.',
+      'The woodpecker is here. Everyone, keep clear of its mark.': 'The woodpecker is here. Everyone, mind its mark.',
+      'A golden leaf blew onto the log: golden flashes, for the taking.': 'A golden leaf blew in: golden flashes to take.',
+      'A golden leaf on the wind: golden flashes, for whoever eats it.': 'A golden leaf: golden flashes, for whoever eats it.',
+      'A golden mushroom came up. Eat it: no edges for a while.': 'A golden mushroom came up: no edges for a while.',
+      'This round’s already going. You’re in from the next one.': 'This round’s going. You’re in from the next one.',
+      'You went quiet for a moment, so an AI steered for you.': 'You went quiet, so an AI steered for you.',
+    },
+    friendLeftPhone: name => `${name} left. An AI steers their snake.`,
+    friendJoinedPhone: name => `${name} is here, and joins your Hall of Fame.`,
+    friendAwayPhone: name => `${name} went quiet. An AI steers for now.`,
+  };
+
+  // A line from FLAVOR[key], or from its watching version (key + 'Watch') when you're not in the round.
+  const lineFor = key => pick((!playerAlive() && FLAVOR[key + 'Watch']) || FLAVOR[key]);
+
+  // "you" for your own snake, the name for everyone else.
+  const who = (s, object = false) => isMe(s) ? (object ? 'you' : 'You') : s.name;
+  // A death as you see it: causes name names, and yours becomes "you".
+  function causeFor(s) {
+    const k = s.killerId != null && s.killer !== 'self' ? game.snakes[s.killerId] : null;
+    return k && isMe(k) && s.cause.endsWith(k.name) ? s.cause.slice(0, -k.name.length) + 'you' : s.cause;
+  }
+  // A cause in fewer words, for a banner's one line on a phone.
+  const shortCause = c => c.replace(/^flashed into (the edge|a woodpecker hole) and blew up$/, 'blew up').replace(/^got pecked by the woodpecker$/, 'got pecked').replace(/^(fell into|hit) a woodpecker hole$/, '$1 a hole').replace(/^got cut in two by /, 'was cut by ').replace(/^crashed head-on into (.+)$/, 'hit $1 head-on');
+  // Your death, in the second person.
+  const yourCause = p => p.killer === 'self' ? 'bit yourself' : causeFor(p);
+  // Why a crash was the end (the engine's verdict): length is armour, so a
+  // crash at 40 needs a reason. Other deaths say it in the cause itself.
+  const WHY_OUT = { tiny: ' at your smallest', boxed: ' with nowhere to turn', shorter: ', and it was longer', even: ', the same length: both out' };
+  const howYouDied = p => {
+    if (p.fatal === 'hunger') return 'You ran out of food at your smallest'; // (under "Starved!": not "You starved" again)
+    if (p.fatal === 'pecked') return 'The woodpecker struck right under your head'; // (only a head in the patch is out: a body over it bridges it)
+    if (p.fatal === 'fire') return 'The flames got you at your smallest';
+    if (p.fatal === 'cut') return `${game.snakes[p.killerId]?.name || 'A'}’s golden flash cut you right behind the head`;
+    const k = p.killerId != null ? game.snakes[p.killerId] : null;
+    const why = p.fatal === 'shorter' && k && !k.persona ? ', and they were longer' : WHY_OUT[p.fatal] || ''; // (a friend is "they")
+    return `You ${yourCause(p)}${why}`;
+  };
+
+  // ---------------------------------------------------------- game state
+
+  // state: 'ready' (start card) | 'lobby' (play with friends) | 'countdown' | 'running' | 'paused' | 'over'
+  let game, state = 'ready', speed = 1, watchSpeed = 1;
+  // Which snake is yours: an arrow and YOU over its head from the countdown
+  // until a few seconds into the round (or just after you first steer).
+  let youHideAt = 0;
+  // Online play, or null when playing alone:
+  // { role: 'host' | 'guest', room, code, seat (yours in this round, -1 if watching),
+  //   players: [{ id, name, color }] (host: everyone in the room, seat order),
+  //   hostName, lastTickAt, holesSent }
+  let online = null;
+  const hosting = () => online?.role === 'host';
+  const guesting = () => online?.role === 'guest';
+  let acc = 0, tickLen = T.OPENING_TICK, lastFrame = 0, drawAlpha = 1, dirty = true;
+  // The clock the board's own effects run on (tongues, beetles, particles,
+  // weather): the frame clock, but at 2x or 4x when you're watching that fast.
+  let boardClock = performance.now();
+  let helpText = ''; // (the help under the board, as last written)
+  let powersTold = false; // (the first Go on a short phone has said how to jump and flash)
+  let flashedEver = false; // (you've flashed, or pressed to: the flash's key needn't be told again this visit)
+  let beatsLeft = 0, beatTimer = 0, waking = false; // (waking: the one beat back from a nap)
+  let freezeUntil = 0, pendingCard = null, cardAt = 0; // times on the frame clock (rAF timestamps)
+  let shownCard = null, napOver = null; // the card on screen, and the one a nap covered
+  let firstCard = true; // (focus on page load goes to the card, not silently to Play)
+  let thinkQueue = [];
+  let best = Records.getBest();
+  let boardPx = 0; // the board's CSS width, kept by a ResizeObserver (no layout reads in the loop)
+
+  // Your snake: the first seat alone, your seat online (none if you're watching).
+  const player = () => {
+    const s = game.snakes[online ? online.seat : 0];
+    return s?.isPlayer ? s : null;
+  };
+  const isMe = s => !!s && s === player();
+  const playerAlive = () => !!player()?.alive;
+  const localName = () => (Records.hasName() ? Records.getName() : 'Green');
+  const spectating = () => !playerAlive();
+
+  // Which part of the soundtrack fits this moment (see SnakeAudio.music).
+  const mood = { intensity: 0, watching: false, paused: false, danger: 0 };
+  let dangerNow = 0; // (worked out once a tick)
+  function musicStage() {
+    if (state !== 'running' && state !== 'paused' && !waking) return 'title'; // (the beat back from a nap is still the round)
+    let alive = 0;
+    for (const s of game.snakes) if (s.alive) alive++;
+    mood.intensity = Math.min(1, game.time / T.RAMP_MS);
+    mood.danger = state === 'running' ? dangerNow : 0;
+    mood.watching = spectating();
+    mood.paused = state === 'paused' || waking;
+    return alive <= 2 ? 'duel' : E.suddenDeath(game) ? 'sudden' : game.time > T.MUSIC_MID_MS ? 'mid' : 'early';
+  }
+
+  // -------------------------------------------------------------- the loop
+
+  // One requestAnimationFrame loop drives everything. The simulation runs on a
+  // fixed timestep from an accumulator, and the renderer interpolates between
+  // ticks, so motion is smooth at any refresh rate and ticks never drift.
+  function loop(now) {
+    requestAnimationFrame(loop);
+    frame(now);
+  }
+
+  function frame(now) {
+    const dt = lastFrame ? Math.max(0, Math.min(T.MAX_FRAME_MS, now - lastFrame)) : 16;
+    lastFrame = now;
+    boardClock += dt * (state === 'running' && spectating() && !online ? speed : 1);
+    govern(dt);
+    const t0 = performance.now();
+    let tickCost = 0;
+
+    if (state === 'countdown' && !guesting()) {
+      beatTimer -= dt;
+      if (beatTimer <= 0) beat();
+      dirty = true;
+    }
+
+    if (state === 'running' && guesting()) {
+      // A friend's screen doesn't simulate: it glides between the host's ticks.
+      showPending(now >= freezeUntil);
+      drawAlpha = Math.min(1, (performance.now() - online.lastTickAt) / tickLen);
+      easeLead(dt);
+      dirty = true;
+    } else if (state === 'running') {
+      // Alone, your death stops the round for a moment. Online it never stops:
+      // the round is everyone's, and only your card waits.
+      const frozen = () => !online && now < freezeUntil;
+      let busy = false; // a frame that ticks or shows a card has done enough: thinking waits a frame
+      if (showPending(now >= freezeUntil)) busy = true;
+      easeLead(dt, frozen());
+      if (!frozen()) {
+        acc += dt;
+        let steps = 0;
+        const most = online || spectating() ? T.MAX_CATCHUP : T.SOLO_CATCHUP; // (alone, a hitch is a moment's slow-down, not a jump)
+        while (acc >= tickLen && steps < most && state === 'running' && !frozen()) {
+          acc -= tickLen;
+          const ts = performance.now();
+          tick();
+          tickCost += performance.now() - ts;
+          steps++;
+        }
+        if (steps === most) acc = Math.min(acc, tickLen); // after a long stall, don't race to catch up
+        if (!busy) think(dt, steps > 0);
+        if (hosting() && !planSent && !thinkQueue.length && state === 'running') sendPlan(); // (the rivals have thought: friends draw them ahead the way they're going)
+      }
+      // Between the last two cells. While frozen, `acc` stands still, so the
+      // board holds the very moment of the crash, with nothing jumping ahead.
+      drawAlpha = Math.min(1, acc / tickLen);
+      dirty = true;
+    } else if (state === 'over') {
+      showPending(now >= cardAt);
+      // The last move glides like any other, then the board rests.
+      if (drawAlpha < 1) {
+        drawAlpha = guesting() ? Math.min(1, (performance.now() - online.lastTickAt) / tickLen) : Math.min(1, (acc += dt) / tickLen);
+        dirty = true;
+      }
+      if (R.particles > 0 || R.holding() || pendingCard) dirty = true;
+    }
+
+    Audio.music(musicStage(), mood);
+
+    if (youHideAt && (performance.now() > youHideAt || !playerAlive())) { youHideAt = 0; showYou(false); }
+    if (dirty && !document.hidden) {
+      R.setLead(leadAt);
+      R.frame(drawAlpha, boardClock);
+      birdSounds();
+      Chatter.layout(drawAlpha, boardPx, player());
+      if (steerHintOn) placeSteerHint();
+      toastFade();
+      dirty = state === 'running' || state === 'countdown' || R.particles > 0 || R.holding();
+    }
+    perf.record(performance.now() - t0, tickCost);
+  }
+
+  // Keep it playable everywhere: if this device keeps dropping frames during
+  // a round (over 12% of frames late, two windows of about three seconds in a
+  // row), the board draws less, for good: first no canopy shadows and a lower
+  // resolution, then the lowest. (Late means half again the shortest frame
+  // seen in the window, so 60, 120 and 144 Hz screens are judged alike.)
+  const governor = { frames: 0, late: 0, best: Infinity, dts: [], strikes: 0, pinned: false };
+  function govern(dt) {
+    if (governor.pinned || state !== 'running' || document.hidden || R.quality === 0 || !game || game.time < 1500 || dt <= 0) return;
+    governor.dts.push(dt);
+    governor.best = Math.min(governor.best, dt);
+    if (governor.dts.length < 180) return;
+    const late = governor.dts.filter(d => d > Math.max(governor.best * 1.6, 12)).length / governor.dts.length;
+    governor.dts.length = 0;
+    governor.best = Infinity;
+    governor.strikes = late > 0.12 ? governor.strikes + 1 : 0;
+    if (governor.strikes < 2) return;
+    governor.strikes = 0;
+    R.setQuality(R.quality - 1);
+    dirty = true;
+  }
+
+  // A card waiting for its moment (after the death freeze, or the round's last
+  // breath) comes up once `due`. Returns whether it did. It came up by
+  // itself, maybe under a finger mashing jump: for a moment, its buttons take
+  // no touch that began before (see the touches).
+  let cardShownAt = -Infinity;
+  function showPending(due) {
+    if (!pendingCard || !due) return false;
+    const c = pendingCard;
+    pendingCard = null;
+    showCard(c);
+    cardShownAt = performance.now();
+    return true;
+  }
+
+  // A host's hidden tab still has to run the round for everyone, but browsers
+  // stop animation frames there (and slow timers down). A worker's clock keeps
+  // ticking, so it stands in while the host's tab is hidden.
+  let hiddenClock = null;
+  function keepTimeWhileHidden(on) {
+    if (on && !hiddenClock) {
+      try {
+        const url = URL.createObjectURL(new Blob(['setInterval(() => postMessage(0), 20);'], { type: 'text/javascript' }));
+        hiddenClock = new Worker(url);
+        URL.revokeObjectURL(url);
+        hiddenClock.onmessage = () => { if (document.hidden && hosting()) frame(performance.now()); };
+      } catch { hiddenClock = null; /* the round just waits while the tab is hidden */ }
+    } else if (!on && hiddenClock) {
+      hiddenClock.terminate();
+      hiddenClock = null;
+    }
+  }
+
+  // How far ahead the board is drawn, in ticks (DRAW_LEAD_MS, but at most
+  // half a tick: 60 ms at 120 ms ticks, 45 at full speed; any more, and late
+  // in a tick your head was drawn in the next cell while a press still turned
+  // it at this one): only while someone's playing on this screen. Watching
+  // alone (Watch AIs, or after you're out) there's no press to keep up
+  // with, so the board is drawn on its ticks and the rivals have the whole
+  // tick to think in (see think). Going away after your death, the lead
+  // eases out (the board a touch slower for a moment, never while it's held
+  // still): nothing jumps back.
+  let leadAt = 0;
+  const leadWanted = () => (spectating() && !online ? 0 : Math.min(T.DRAW_LEAD_MAX, T.DRAW_LEAD_MS / tickLen));
+  function easeLead(dt, held = false) {
+    const want = leadWanted();
+    if (want >= leadAt) leadAt = want;
+    else if (!held) leadAt = Math.max(want, leadAt - 0.5 * dt / tickLen);
+  }
+  // Let the AIs think about the next tick in the frames before it (same
+  // information, same decisions), before the board is drawn into their next
+  // move (see R.setLead; the frame that draws it thinks first). Spread over
+  // the frames that are left, one a frame, two when they're few (at full
+  // speed, playing, there are about two); not in a frame that ticked, which
+  // has done enough, unless those can't fit them all. The frame that draws
+  // it thinks everyone still to: on a 30 Hz screen (a phone saving power)
+  // that may be the only one after the tick, and a rival left out was drawn
+  // heading on, then pulled round when it turned.
+  function think(dt, ticked = false) {
+    if (!thinkQueue.length) return;
+    const left = Math.max(0, Math.ceil((tickLen * (1 - leadAt) - acc) / Math.max(4, dt))); // (frames after this one, up to the one that draws the next move)
+    let quota = !left ? thinkQueue.length : ticked ? thinkQueue.length - 2 * left : Math.min(2, Math.ceil(thinkQueue.length / (left + 1)));
+    while (thinkQueue.length && quota > 0) {
+      const s = thinkQueue.shift();
+      if (E.canThinkAhead(game, s)) { E.thinkAhead(game, s); quota--; }
+    }
+  }
+
+  // Hosting: where everyone goes next, for friends' screens, once a tick when
+  // the rivals have thought, and again when a person's press changes it.
+  let planSent = false;
+  function sendPlan() {
+    planSent = true;
+    online.room.broadcast(Online.plan(game));
+  }
+
+  // One tick of the rules (alone, or as the host: friends get a copy).
+  function tick() {
+    const wasAlive = playerAlive();
+    for (const s of game.snakes) rememberPrev(s);
+    if (hosting()) checkAway();
+    const dying = E.step(game);
+    tickLen = E.tickMs(game) / (spectating() && !online ? speed : 1);
+    if (hosting()) {
+      online.room.broadcast(Online.tick(game, { holesFrom: online.holesSent, tickLen }));
+      online.holesSent = game.holes.size;
+      planSent = false;
+    }
+    Chatter.update();
+    afterTick(dying, wasAlive);
+  }
+
+  // A tick from the host, on a friend's screen.
+  function hostTick(msg) {
+    if (!game || (state !== 'running' && state !== 'countdown')) return;
+    if (state === 'countdown') go();
+    const wasAlive = playerAlive();
+    for (const s of game.snakes) rememberPrev(s);
+    const wasPiloted = !!player()?.autopilot;
+    const dying = Online.apply(game, msg, DIRS);
+    // If the host had an AI steer for you for a while (your connection
+    // hiccupped), say so once you're back.
+    const piloted = !!player()?.autopilot;
+    if (piloted && !wasPiloted) online.pilotedAt = performance.now();
+    if (wasPiloted && !piloted && player() && performance.now() - online.pilotedAt > 2000 && !online.toldAway) toast(FLAVOR.youAway, 2200);
+    if (!piloted) online.toldAway = false;
+    tickLen = msg.len || E.tickMs(game);
+    online.lastTickAt = performance.now();
+    afterTick(dying, wasAlive);
+  }
+
+  // What follows a tick on every screen: effects, sounds, the HUD, banners, placements.
+  function afterTick(dying, wasAlive) {
+    dangerNow = dangerOf();
+    R.onTick(game.events);
+    sounds(dying, wasAlive);
+    updateHud();
+    announce(dying);
+
+    // Everyone still alive finished ahead of the snakes that just died; if
+    // nobody is, they share first place (a draw).
+    const alive = game.snakes.filter(s => s.alive);
+    for (const s of dying) finishSnake(s, { place: alive.length + 1, draw: alive.length === 0 });
+    thinkQueue = guesting() ? [] : alive.filter(s => !s.isPlayer || s.autopilot);
+    const youJustDied = wasAlive && !playerAlive();
+    if (youJustDied) deathMoment();
+    if (alive.length <= 1) {
+      if (alive.length) finishSnake(alive[0], { place: 1, won: true });
+      return endRound();
+    }
+    if (youJustDied) youDied();
+  }
+
+  // The moment you die: the board holds still (alone), your snake holds its
+  // pose with its eyes screwed shut, then bursts. Also when it ends the round.
+  function deathMoment() {
+    freezeUntil = lastFrame + (reducedMQ.matches ? T.DEATH_FREEZE / 2 : T.DEATH_FREEZE);
+    R.hold(boardClock + (freezeUntil - lastFrame)); // (on the board's clock)
+    R.shake(T.SHAKE_PX);
+    flashFrame('kill', true);
+  }
+
+  // Each segment's previous cell, for interpolation. Reuses the same objects.
+  function rememberPrev(s) {
+    if (!s.alive) { s.prev = null; return; }
+    const prev = s.prev || (s.prev = []);
+    prev.length = s.body.length;
+    for (let i = 0; i < s.body.length; i++) {
+      const c = s.body[i];
+      if (prev[i]) { prev[i].x = c.x; prev[i].y = c.y; } else prev[i] = { x: c.x, y: c.y };
+    }
+  }
+
+  // ---------------------------------------------------------- the round
+
+  // humans: the people in this round, [{ name, color }] (online); alone it's you,
+  // or nobody when watching the AIs.
+  function newGame({ personas, aiOnly = false, humans = null } = {}) {
+    game = E.createGame({ personas, humans: humans || (aiOnly ? [] : [{ name: localName(), color: PLAYER_COLOR }]) });
+    showYou(false);
+    youHideAt = 0;
+    acc = 0;
+    tickLen = E.tickMs(game);
+    drawAlpha = 1;
+    thinkQueue = guesting() ? [] : game.snakes.filter(s => s.persona);
+    freezeUntil = 0;
+    pendingCard = null;
+    R.setGame(game);
+    R.setViewer(player()?.id ?? -1); // your snake gets the bright outline
+    leadAt = leadWanted();
+    Audio.weather('none');
+    streak = 0;
+    Chatter.reset(game);
+    hideToast();
+    buildTags();
+    buildOpponents();
+    updateHud(true);
+    dirty = true;
+  }
+
+  // Start a round in the given mode. The round on the start card is used as-is;
+  // anything else gets a fresh one.
+  function start({ aiOnly = !game.withPlayer, going = false } = {}) {
+    if (state === 'lobby' && !hosting()) return; // the lobby's own buttons decide
+    if (online) {
+      // Online, the host starts every round; friends wait for it.
+      if (hosting() && (state === 'lobby' || state === 'over')) startOnlineRound();
+      return;
+    }
+    if (state !== 'ready' || aiOnly !== !game.withPlayer) newGame({ aiOnly, personas: state === 'ready' ? lineUp(aiOnly) : null });
+    waking = false;
+    speed = watchSpeed = 1; // every round starts at normal speed (watching, you can speed it up again)
+    state = 'countdown';
+    beatsLeft = 3;
+    beatTimer = 0;
+    game.rivalsLine = pick(game.withPlayer ? FLAVOR.rivals : FLAVOR.spectators);
+    askingStartOver = false;
+    updateControls();
+    if (!going) beat(); // (going: an arrow on the start card, straight to Go, no '3' knocked over it)
+  }
+
+  function beat() {
+    if (beatsLeft === 0) return go();
+    if (hosting()) online.room.broadcast({ t: 'phase', s: 'countdown', beat: beatsLeft });
+    showBeat(beatsLeft);
+    beatsLeft--;
+    beatTimer = T.COUNTDOWN_BEAT;
+  }
+
+  // Online the countdown can't be skipped (everyone starts together).
+  const BEAT = [
+    { transform: 'scale(2.6) rotate(-8deg)', opacity: 0 },
+    { transform: 'scale(0.86) rotate(3deg)', opacity: 1, offset: 0.55 },
+    { transform: 'scale(1.08) rotate(-1deg)', offset: 0.8 },
+    { transform: 'scale(1) rotate(0)' },
+  ];
+  function showBeat(n) {
+    if (waking) { // (back from a nap: the board in view, undimmed, and a word at the top)
+      hideCard();
+      Audio.play('beat');
+      return toast(FLAVOR.wakeBeat, T.COUNTDOWN_BEAT + 120, 'go', 'round', { quiet: true });
+    }
+    showYou(playerAlive());
+    Audio.play('beat');
+    if (n === 1 && !waking) Audio.play('riser', { crest: T.COUNTDOWN_BEAT / 1000 }); // (rising into Go!, and topping out on it; waking is no fanfare)
+    showCard({ title: String(n), text: waking ? '' : game.rivalsLine, primary: online ? null : 'Go!', opponents: !waking, quiet: true, beat: true });
+    if (!reducedMQ.matches) cardTitle.animate?.(BEAT, { duration: 480, easing: 'ease-out' }); // each number slams down
+  }
+
+  function go() {
+    if (waking) { // (back from a nap: no fanfare, just going again)
+      waking = false;
+      state = 'running';
+      hideCard();
+      hideToast(true);
+      if (napToast) { const { text, kind, level, opts, rest } = napToast; napToast = null; if (text) toast(text, 2800, kind, level, opts); for (const w of rest) toast(w.text, w.ms, w.kind, w.level, w.opts); } // (in turn, after the beat's fade and a breather)
+      lastFrame = 0; // (acc as it was: the board carries on from the very moment it stopped)
+      updateControls();
+      return;
+    }
+    if (hosting()) online.room.broadcast({ t: 'phase', s: 'go' });
+    if (guesting()) online.lastTickAt = performance.now();
+    game.went = true; // (the round has had its Go: a nap from here on wakes through one quiet beat)
+    if (document.activeElement?.closest?.('button') && !document.activeElement.closest('#overlay, #records')) document.activeElement.blur(); // (Space jumps again: a header button Tabbed to last round lets go)
+    state = 'running';
+    hideCard();
+    showYou(playerAlive());
+    youHideAt = performance.now() + T.YOU_MS;
+    Audio.play('go');
+    if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
+    else if (touchFirst && game.withPlayer && !powersTold && (!helpEl.getClientRects().length || helpEl.getBoundingClientRect().bottom > innerHeight + 0.5)) { powersTold = true; toast(FLAVOR.powersFirst, 3000, 'you', 'lesson'); } // (the help under the board isn't shown, or isn't wholly on the screen; how to steer is beside YOU. A lesson's banner, not Go!'s big one: it fits, and keeps out of the heads' way)
+    else toast(pick(game.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1300, 'go');
+    flashFrame('go');
+    acc = 0;
+    lastFrame = 0;
+    updateControls();
+    say(game.withPlayer ? 'Go.' : 'And they’re off.');
+  }
+
+  function pause() {
+    if (state !== 'running' || online) return; // no napping online: the round goes on for everyone
+    if (pendingCard && !playerAlive()) return; // (your death's card is on its way: it comes up as it would, not under a nap)
+    state = 'paused';
+    waking = false;
+    napToast = { text: !toastEl.hidden && !toastEl.classList.contains('leaving') && toastKind !== 'go' && toastLevel !== 'asked' ? toastText : '', kind: toastKind, level: toastLevel, opts: toastOpts, rest: waiting.slice() }; // (the banner showing and those waiting, back on waking, each for its whole time)
+    napOver = !overlay.classList.contains('hidden') && shownCard?.reward ? shownCard : null; // your death card: back on waking
+    Chatter.clearBubbles();
+    showCard({
+      title: 'Napping', text: `${pick(FLAVOR.pause)} ${FLAVOR.wake}`,
+      primary: 'Wake up', secondary: touchFirst ? 'Start over' : null, focusCard: true, how: 'Field guide',
+    });
+    updateControls();
+  }
+
+  // Start over? (Enter or R while you're alive in a round): napping, with the
+  // card itself focused (not a button), so the same key again confirms; P,
+  // Escape or an arrow keeps going, at once (you were playing a moment ago).
+  let askingStartOver = false, napToast = null;
+  let startOverFromNap = false;
+  function askStartOver(key) {
+    startOverFromNap = state === 'paused';
+    if (state === 'running') pause();
+    if (state !== 'paused') return;
+    askingStartOver = true;
+    showCard({ title: FLAVOR.startOver, text: FLAVOR.startOverText(key), primary: 'Start over', secondary: 'Keep going', actions: { primary: () => start(), secondary: () => resume() } });
+    overlay.querySelector('.card').focus({ preventScroll: true });
+  }
+
+  // Waking: back through one countdown beat (a direction key skips it, and
+  // steers), so your hand has time to get back to the keys. Over your death
+  // card, straight back to it.
+  function resume() {
+    if (state !== 'paused') return;
+    const quick = (askingStartOver && !startOverFromNap) || !playerAlive(); // (keeping going after a "Start over?" that interrupted play, or only watching: no beat)
+    askingStartOver = false;
+    say(FLAVOR.awake);
+    if (napOver) {
+      state = 'running';
+      showCard({ ...napOver, quiet: true });
+      napOver = null;
+      lastFrame = 0;
+      updateControls();
+      return;
+    }
+    if (quick && game.went) {
+      state = 'running';
+      hideCard();
+      lastFrame = 0;
+      updateControls();
+      return;
+    }
+    state = 'countdown';
+    beatsLeft = 1;
+    beatTimer = 0;
+    waking = !!game.went; // (napped before its Go: the countdown's last beat, then the real Go, chime, banner and all)
+    lastFrame = 0;
+    updateControls();
+    beat();
+  }
+
+  function youDied() {
+    const p = player();
+    const titles = FLAVOR.deathTitle;
+    const title = p.killer === 'hunger' ? 'Starved!' : p.fatal === 'boom' || /blew up/.test(p.cause) ? pick(titles.boom)
+      : p.fatal === 'pecked' ? pick(titles.pecked) : p.fatal === 'cut' ? pick(titles.cut) : p.cause === 'fell into a woodpecker hole' ? 'Down the hole!'
+      : pick(p.killer === 'fire' ? titles.fire : p.killer === 'wall' ? titles.wall : p.killer === 'self' ? titles.self : p.cause.startsWith('crashed') ? titles.headOn : titles.rival);
+    pendingCard = {
+      title,
+      text: `${howYouDied(p)} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
+      flavor: killLine(p), primary: 'Play again', secondary: 'Keep watching', reward: true,
+      ...(!online && guideFor(p)), // (what got you, in the Field guide)
+      ...(online && { primary: 'Keep watching', secondary: hosting() ? 'Close room' : 'Leave room', actions: { primary: hideCard, secondary: leaveRoom } }),
+    };
+    updateControls();
+  }
+
+  // A death card's way into the Field guide: the row about what got you.
+  function guideFor(p) {
+    const [howRow, name] = p.killer === 'hunger' ? ['basic-hunger', 'Hunger']
+      : p.fatal === 'boom' || /blew up/.test(p.cause) || p.fatal === 'cut' ? ['leaf', 'Golden leaf']
+      : p.fatal === 'pecked' || /woodpecker hole/.test(p.cause) ? ['hole', 'Holes']
+      : p.killer === 'fire' ? ['fire', 'Fire'] : ['basic-crash', 'Crashes'];
+    return { how: `Field guide: ${name}`, howRow };
+  }
+
+  function endRound() {
+    state = 'over';
+    Chatter.clearBubbles();
+    flushAiResults();
+    const survivors = game.snakes.filter(s => s.alive);
+    const winner = survivors[0];
+    const title = !winner ? 'Draw' : isMe(winner) ? 'You win!' : `${winner.name} wins`;
+    const flavor = !winner ? pick(FLAVOR.draw) : isMe(winner) ? pick(FLAVOR.win) : winner.persona ? pick(winner.persona.win) : pick(FLAVOR.friendWin);
+    if (isMe(winner)) Audio.play(game.newBest ? 'winBest' : 'win'); // (a win that's a new best: one fanfare, not two on top of each other)
+    if (winner) { R.celebrate(isMe(winner) ? null : winner); flashFrame('win', isMe(winner)); } // confetti: all over for you, from its head for anyone else
+    const me = player();
+    const r = game.result;
+    const how = me && !me.alive && me.cause ? howYouDied(me) : '';
+    const yours = !me || !r ? ''
+      : r.won ? `Won in ${Records.clock(r.survived)} · score ${me.eaten}`
+      : r.draw ? `${how ? `${how} · shared 1st` : 'You shared 1st'} · lasted ${Records.clock(r.survived)} · score ${me.eaten}`
+      : `${how ? `${how} · ${Records.ordinal(r.place)} place` : `You finished ${Records.ordinal(r.place)}`} · lasted ${Records.clock(r.survived)} · score ${me.eaten}`;
+    if (online) {
+      pendingCard = hosting()
+        ? { title, flavor, text: yours, reward: !!me, primary: 'Play again', secondary: 'Close room', lobby: { players: true },
+          actions: { primary: startOnlineRound, secondary: leaveRoom } }
+        : { title, flavor, text: yours, reward: !!me, primary: null, secondary: 'Leave room', lobby: { status: FLAVOR.waiting(online.hostName, true) },
+          actions: { secondary: leaveRoom } };
+    } else pendingCard = game.withPlayer
+      ? { title, flavor, reward: true, primary: 'Play again', secondary: 'Watch AIs', text: yours, ...(how && guideFor(me)) } // (it says how you died, so it names what got you too: when your death ended the round, it's your death's card)
+      : { title, flavor, primary: 'Play', secondary: 'Watch again' };
+    cardAt = lastFrame + T.ROUND_END_PAUSE;
+    updateControls();
+  }
+
+  // A snake's result is known as soon as its placement is. Yours is saved at
+  // once; the AIs' are saved when the round actually finishes, so a round you
+  // abandon leaves no trace. Watched rounds count too, marked as watched.
+  function finishSnake(s, { place, won = false, draw = false }) {
+    if (s.result) return;
+    s.result = { place, won, draw, eaten: s.eaten, survived: game.time };
+    // Online, everyone's result goes in everyone's Hall of Fame (the round id keeps it once).
+    if (online && s.isPlayer && !isMe(s) && s.owner) Records.recordFriend(s.result, { name: s.name, color: s.color, owner: s.owner, round: game.roundId });
+    if (!isMe(s)) return;
+    const before = best;
+    game.result = s.result;
+    game.entryId = Records.recordPlayer({ ...s.result, killer: s.alive ? null : s.fatal === 'pecked' ? 'woodpecker' : s.killer, round: game.roundId });
+    if (s.eaten > best) { best = s.eaten; Records.setBest(best); bestEl.textContent = best; }
+    game.newBest = s.eaten > before && before > 0; // (a first round's score is a best by default: nothing to celebrate yet)
+  }
+
+  // (Online, only your own result is kept: the rivals' places are the host's game.)
+  function flushAiResults() {
+    if (online) return;
+    for (const s of game.snakes) {
+      if (s.isPlayer || !s.result || s.result.saved) continue;
+      Records.addScore({ ...s.result, name: s.name, color: s.color, ai: true, watched: !game.withPlayer });
+      s.result.saved = true;
+    }
+  }
+
+  // Flavor for the death card: the killer's own line, if an AI got you (the
+  // card's fact line already says why).
+  function killLine(p) {
+    const killer = game.snakes.find(s => s !== p && s.name === p.killer);
+    if (killer && !killer.alive) return pick(FLAVOR.bothOut); // (out in the same crash: no gloating from the pieces)
+    if (killer?.persona) return pick(killer.persona.kill);
+    if (killer) return pick(FLAVOR.friendKill);
+    if (p.fatal === 'boom' || /blew up/.test(p.cause)) return pick(FLAVOR.boom);
+    if (p.fatal === 'pecked') return pick(FLAVOR.pecked);
+    if (/woodpecker hole/.test(p.cause)) return pick(FLAVOR.hole);
+    if (p.killer === 'hunger') return pick(p.diedAt < p.coughUntil ? FLAVOR.starvedCoughing : FLAVOR.starved);
+    if (p.killer === 'fire') return pick(FLAVOR.fire);
+    return pick(p.killer === 'self' ? FLAVOR.self : FLAVOR.wall); // (the card's fact line already says why: boxed in, or at your smallest)
+  }
+
+  // ------------------------------------------------------- sounds, banners
+
+  // Sounds come from where they happen on the board, a little left or right.
+  const at = x => ({ pan: ((x + 0.5) / GRID * 2 - 1) * 0.8 });
+  // The sound of each thing you eat (anything else is an apple).
+  const EAT_CUES = { goldcap: 'wrap', golden: 'golden', leaf: 'leaf', pellet: 'meat', mushroom: 'mushroom', beetle: 'crunch' };
+  // Apples eaten in quick succession climb a scale: a streak you can hear.
+  let streak = 0, streakAt = -1e9;
+  const COUGH_BEAT = 2; // ticks from a choke's gag to its cough
+  // The snake whose head is nearest a cell (the one a beetle there is fleeing, as the engine reckons it).
+  function cornering(x, y) {
+    let near = null, gap = Infinity;
+    for (const s of game.snakes) {
+      if (!s.alive) continue;
+      const d = Math.abs(s.body[0].x - x) + Math.abs(s.body[0].y - y);
+      if (d < gap) { gap = d; near = s; }
+    }
+    return near;
+  }
+  // The woodpecker's own sounds, on the drawing's clock (the tick and how far
+  // through it the board is drawn, a friend's screen too, from the synced
+  // aim): its drum starts on its first blow, so each knock is a blow you see
+  // and the last lands on the strike (one table, Audio.drumBlows, for both;
+  // asked a moment ahead, so it's placed on the audio clock where the blow
+  // is drawn, and started late, the knocks already past are left out); and
+  // its "kik!" as it settles back on its perch after a strike, when the
+  // drawing has it land (R.birdHome). Watched faster, both come faster.
+  let drumAt = -1, drumGame = null, kikAt = -1, kikGame = null;
+  function birdSounds() {
+    const w = game?.woodpecker;
+    if (!w || state !== 'running') return;
+    const ms = E.tickMs(game), rate = ms / tickLen, tp = game.tick - 1 + drawAlpha;
+    if (w.target.length) {
+      if (drumAt === w.strikeAt && drumGame === game) return;
+      const blows = Audio.drumBlows(w.pecks || 0), long = blows[blows.length - 1];
+      const to = (w.strikeAt - tp) * ms - long; // (board ms to its first blow)
+      if (to > 40 * rate) return;
+      drumAt = w.strikeAt; drumGame = game;
+      if (-to < long) Audio.play('drum', { strike: w.pecks || 0, rate, delay: Math.max(0, to) / rate / 1000, from: Math.max(0, -to), ...at(w.x) });
+    } else if (w.struckAt >= 0 && !(kikAt === w.struckAt && kikGame === game)) {
+      const since = (tp - w.struckAt) * ms, home = R.birdHome();
+      if (since < home) return;
+      kikAt = w.struckAt; kikGame = game;
+      if (since - home < 250 * rate) Audio.play('call', { settle: true, ...at(w.x) });
+    }
+  }
+  function sounds(dying, wasAlive) {
+    const me = player();
+    let knocked = false;
+    for (const e of game.events) {
+      if (e.type === 'eat' && isMe(e.snake)) {
+        if (e.kind !== 'mushroom') { streak = game.time - streakAt < 2600 ? Math.min(streak + 1, 7) : 0; streakAt = game.time; }
+        Audio.play(EAT_CUES[e.kind] || 'eat', { streak: e.kind === 'mushroom' ? 0 : streak, gold: !!e.gold, ...at(e.x) });
+        bump(scoreEl);
+      } else if (e.type === 'eat' && e.kind === 'goldcap') Audio.play('wrap', { rival: true, ...at(e.x) }); // (someone else's golden mushroom: softer, further off)
+      else if (e.type === 'woodpecker') { Audio.play('call'); Audio.play('riser'); }
+      else if (e.type === 'aim') Audio.play('aim', at(e.x));
+      else if (e.type === 'peck' && e.cells?.length) Audio.play('crash', at(e.x)); // (its drum came first, blow by blow: see birdSounds)
+      else if (e.type === 'spawn' && e.kind === 'beetle') Audio.play('beetle', at(e.x));
+      else if (e.type === 'starving' && isMe(e.snake)) Audio.play('hungry');
+      else if (e.type === 'charge') Audio.play('crackle', at(e.x));
+      else if (e.type === 'strike') Audio.play('thunder', at(e.x));
+      else if (e.type === 'gust') Audio.play('gust');
+      else if (e.type === 'burrow' && !e.dug) Audio.play('burrow', at(e.x)); // (cracked open; one a dig left was bored, not cracked open: the bore said it)
+      else if (e.type === 'heal') Audio.play('heal', at(e.x)); // (one closing over: a muffled crumble)
+      else if ((e.type === 'dive' && !e.dug) || e.type === 'emerge') Audio.play('scrabble', at(e.x)); // (down a burrow, or up out of one; one that dug in was heard boring in)
+      else if (e.type === 'dig') Audio.play('dig', { rival: !isMe(cornering(e.x, e.y)), ...at(e.x) }); // (the bore: whose head it fled, yours, or a rival's, softer and further off)
+      else if (e.type === 'knock' && e.tx != null && !knocked) { knocked = true; Audio.play('knock', { volume: 0.5, land: (R.knockFlight?.(e.x, e.y, e.tx, e.ty) ?? 320) / 1000, ...at(e.x) }); } // (food flying off the patch: the world's, quiet, once a strike, at the first piece that flies, landing as it's drawn landing; none for what the bird ate)
+      else if (e.type === 'rainbow') Audio.play('rainbow', at(e.x));
+      else if (e.type === 'weather' && e.kind === 'rain') Audio.play('rain');
+      else if (e.type === 'weather' && e.kind === 'snow') Audio.play('snow');
+      else if (e.type === 'ember') Audio.play('ember', at(e.x));
+      else if (e.type === 'crash') { Audio.play(isMe(e.snake) ? 'bonk' : 'bonked', at(e.x)); if (isMe(e.snake) && youHideAt) { youHideAt = 0; showYou(false); } } // (YOU makes room for the -1 and the stars)
+      else if (e.type === 'alight') Audio.play('alight', { rival: !isMe(e.snake), ...at(e.snake.body[0].x) });
+      else if (e.type === 'singe' && isMe(e.snake)) Audio.play('singe');
+      else if (e.type === 'baked') Audio.play('bake', at(e.x));
+      else if (e.type === 'ash') Audio.play('ash', at(e.x));
+      else if (e.type === 'cut') Audio.play('snip', at(e.x));
+      else if (e.type === 'choke') { // (a gag and a spit; its cough follows, below)
+        Audio.play('choke', { rival: !isMe(e.snake), ...at(e.x) });
+        const heard = (game.coughs ||= new Map()), c = heard.get(e.snake.id);
+        if (!c || c.until !== e.snake.coughUntil) heard.set(e.snake.id, { at: game.tick + COUGH_BEAT, until: e.snake.coughUntil }); // (once a cough: a bead spat while it coughs doesn't start another)
+        if (isMe(e.snake)) streakAt = -1e9; // (no meal: the apples' scale starts again)
+      }
+      else if (e.type === 'leap') Audio.play('leap', { rival: !isMe(e.snake), gold: !!e.gold, ...at(e.x) });
+      else if (e.type === 'dash') Audio.play(e.plain ? 'flash' : 'dash', { rival: !isMe(e.snake), ...at(e.x) }); // (a plain flash, or a golden one)
+      else if (e.type === 'lastApples') Audio.play('lastApples');
+      else if (e.type === 'douse') Audio.play('douse', at(e.x));
+      else if (e.type === 'fizzle' && isMe(e.snake)) { Audio.play('thunk', at(e.snake.body[0].x)); (e.flash ? e.snake.tag?.flash : e.snake.tag?.jump)?.animate?.(reducedMQ.matches ? REFUSED : NUDGE, { duration: reducedMQ.matches ? 420 : 260, easing: 'ease-out' }); } // (pressed, and it couldn't go: you hear it, and its chip shakes its head; with reduced motion it flashes)
+    }
+    // A choke's cough, a beat after its gag.
+    if (game.coughs) for (const [id, c] of game.coughs) {
+      if (c.at == null || game.tick < c.at) continue;
+      c.at = null;
+      const s = game.snakes[id];
+      if (s?.alive) Audio.play('cough', { rival: !isMe(s), ...at(s.body[0].x) });
+    }
+    for (const s of dying) if (/blew up/.test(s.cause)) Audio.play('boom', at(s.body[0].x));
+    for (const s of dying) {
+      if (isMe(s)) continue;
+      // You took them out: a knockout punch. Anyone else: a far-off thud.
+      Audio.play(me && s.killerId === me.id && s.killer !== 'self' ? 'ko' : 'rivalDeath', at(s.body[0].x));
+      flashFrame('kill');
+    }
+    if (wasAlive && !playerAlive()) Audio.play('death');
+    // A near miss: your head right next to a rival's.
+    if (me?.alive) {
+      const h = me.body[0];
+      for (const o of game.snakes) if (o !== me && o.alive && Math.abs(o.body[0].x - h.x) <= 1 && Math.abs(o.body[0].y - h.y) <= 1) { Audio.play('close', at(o.body[0].x)); break; }
+    }
+    // Crossing a rival's border (into Sovereign's realm, a colony): a drum
+    // knock, and the first time in a round, a word on whose land it is.
+    // (Land is one rule everywhere: within radius + LAND_REACH of the middle.)
+    if (me?.alive) {
+      const h = me.body[0];
+      const onLand = f => Math.hypot(h.x - f.x, h.y - f.y) <= f.radius + T.LAND_REACH;
+      let inside = null;
+      for (const o of game.snakes) {
+        if (o === me || !o.alive) continue;
+        if (o.memory.home && onLand(o.memory.home)) inside = { o, home: true };
+        for (const c of o.memory.colonies || []) if (onLand(c)) inside ||= { o, home: false };
+      }
+      if (inside && !inField) {
+        Audio.play('field', at(h.x));
+        if (!game.toldField && state === 'running') { game.toldField = true; toast(FLAVOR.field[inside.home ? 'home' : 'colony'](inside.o.name), 2400, 'warn'); }
+      }
+      inField = !!inside;
+    }
+    Audio.weather(state === 'running' ? game.weather?.kind : 'none');
+  }
+  let inField = false;
+
+  // How much danger you're in, for the music: a rival's head close to yours,
+  // or little room ahead. 0..1.
+  function dangerOf() {
+    const me = player();
+    if (!me?.alive || !game) return 0;
+    const h = me.body[0];
+    let near = 99;
+    for (const o of game.snakes) if (o !== me && o.alive) near = Math.min(near, Math.abs(o.body[0].x - h.x) + Math.abs(o.body[0].y - h.y));
+    let danger = near <= 1 ? 1 : near <= 4 ? (5 - near) / 4 : 0;
+    // Room ahead: how many of the next three cells straight on are open.
+    let open = 0;
+    for (let i = 1; i <= 3; i++) {
+      const x = h.x + me.dir.x * i, y = h.y + me.dir.y * i;
+      if (x < 0 || y < 0 || x >= GRID || y >= GRID || game.holes.has(y * GRID + x)) break;
+      if (game.snakes.some(o => o.alive && o.body.some(c => c.x === x && c.y === y))) break;
+      open++;
+    }
+    if (open === 0) danger = Math.max(danger, 0.85); else if (open === 1) danger = Math.max(danger, 0.5);
+    return danger;
+  }
+
+  // Banners for the big moments of a round (one per tick, most important
+  // first). Spawns are news once a round; what happens to you is a lesson
+  // the first time; repeats are left to the board's own floaters.
+  function announce(dying) {
+    for (const key of landLost()) if (!(game.lostLand ||= []).includes(key)) game.lostLand.push(key); // (its lesson, when news next gets to it)
+    if (player() && dying.includes(player())) { // (your own death: its card is a moment away, and says it; nothing over the freeze-frame)
+      if (!game.firstBlood) { game.firstBlood = true; Audio.play('stinger'); }
+      return;
+    }
+    news(dying);
+    // Sudden death's trickle (once a round): round news that waits its turn,
+    // after whatever this tick said.
+    if (game.events.some(e => e.type === 'lastApples')) toast(FLAVOR.lastApples, 2800, '', 'round');
+  }
+  // Land the woodpecker took this tick, as the chatter sees it (chatter.js):
+  // 'lostColony' for a colony gone from its snake's memory with a hole where
+  // its flag stood, 'lostCapital' for a realm moved off a centre that's now
+  // a hole. A snake's land changes as it thinks, a moment after the strike,
+  // so each tick's is kept to compare (on a friend's screen too: the memory
+  // comes with the host's ticks).
+  function landLost() {
+    const was = (game.landWas ||= new Map()), hole = c => game.holes.has(c.y * GRID + c.x), lost = [];
+    for (const s of game.snakes) {
+      const m = s.memory, before = was.get(s.id);
+      if (!m?.home && !m?.colonies && !before) continue;
+      const home = m.home ? { x: m.home.x, y: m.home.y } : null, cols = (m.colonies || []).map(c => ({ n: c.n, x: c.x, y: c.y }));
+      if (before?.home && home && (home.x !== before.home.x || home.y !== before.home.y) && hole(before.home) && !lost.includes('lostCapital')) lost.push('lostCapital');
+      if (before?.cols.some(c => hole(c) && !cols.some(k => k.n === c.n && k.x === c.x && k.y === c.y)) && !lost.includes('lostColony')) lost.push('lostColony');
+      was.set(s.id, { home, cols });
+    }
+    return lost;
+  }
+  function news(dying) {
+    const alive = game.snakes.filter(s => s.alive);
+    if (dying.length && !game.firstBlood) {
+      game.firstBlood = true;
+      Audio.play('stinger');
+      if (alive.length !== 2) { // (down to two: that's the bigger news, below)
+        const v = dying[0];
+        const killer = game.snakes.find(o => o.name === v.killer && o !== v);
+        const names = dying.map(d => who(d, true));
+        const all = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
+        return toast(dying.length > 1 ? `First out: ${all}.` : killer && killer.alive ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : killer ? `First out: ${who(v, true)} and ${who(killer, true)}, head-on.` : `First out: ${who(v, true)} ${causeFor(v)}.`, 2800, 'kill', 'round',
+          { phone: dying.length === 1 && !killer ? `First out: ${who(v, true)} ${shortCause(causeFor(v))}.` : '' }); // (one line on a phone: the cause in fewer words)
+      }
+    }
+    const me = player();
+    const once = key => !game.told?.[key] && ((game.told ||= {})[key] = true); // (the first time this round)
+    for (const e of game.events) if (e.type === 'woodpecker') {
+      flashFrame('bird', true);
+      toast(lineFor('woodpecker'), 2800, 'bird', 'round');
+      if (me?.alive && once('fairPecks')) toast(FLAVOR.youWoodpecker, 3000, 'bird', 'lesson', { still: () => me.alive, follows: true }); // (its rule: it waits its turn, after the news, its moment the news's)
+      return;
+    }
+    if (dying.length && alive.length === 2) {
+      const [a, b] = isMe(alive[0]) ? [alive[1], alive[0]] : alive;
+      Audio.play('riser');
+      return toast(`It’s down to ${who(a)} and ${who(b, true)}.`, 2800, 'kill', 'round');
+    }
+    const newsOnce = key => newsFree() && once(key); // (news that can't show now waits for its next chance, not spent on nothing)
+    if (me?.alive) {
+      const small = me.body.length <= T.MIN_LENGTH;
+      // Your first crash: the rule, first (landing at 3, the lesson says so too).
+      if (game.events.some(e => e.type === 'crash' && e.snake === me) && once('crash')) {
+        if (small) once('atThree');
+        return toast(small ? FLAVOR.youCrashToThree : pick(FLAVOR.youCrash), 3000, 'warn', 'lesson');
+      }
+      const wrapLeft = me.wrapUntil - game.time;
+      if (wrapLeft > 0 && wrapLeft <= T.WRAP_WARN_MS && !game.toldWrapEnd) { game.toldWrapEnd = true; return toast(pick(FLAVOR.wrapEnding(Math.round(T.WRAP_WARN_MS / 1000))), 1800, 'warn', 'lesson', { still: () => me.alive && me.wrapUntil > game.time }); }
+      if (wrapLeft > T.WRAP_WARN_MS) game.toldWrapEnd = false;
+      const left = E.hungerLeft(game, me);
+      const warnAt = T.HUNGER_WARN_MS * (small ? 1.5 : 1); // (at your smallest, starving is the end: a little earlier, and sharper)
+      if (left < warnAt && !game.warnedHunger) { game.warnedHunger = true; Audio.play('hungerWarn'); return toast(small ? FLAVOR.youStarvingSmall : pick(FLAVOR.youHungry), 2800, 'warn', 'lesson'); }
+      if (left > warnAt) game.warnedHunger = false;
+      if (small && game.time > 1000 && once('atThree')) return toast(pick(FLAVOR.youAtThree), 2600, 'warn', 'lesson', { still: () => me.alive && me.body.length <= T.MIN_LENGTH });
+    }
+    // A flag or a capital the woodpecker pecked out (see landLost): its rule,
+    // the first time each goes in a round, for everyone watching too (the
+    // chatter may be off, and the rival's line with it): round news, that
+    // waits its turn; the flag's fall and the land shrinking stay on the board.
+    while (game.lostLand?.length) {
+      const key = game.lostLand.shift();
+      if (once(key)) return toast(FLAVOR[key], 2800, 'bird', 'round');
+    }
+    for (const e of game.events) {
+      if (e.type === 'strike') flashFrame('storm', true);
+      if (e.type === 'strike' && !game.struck && game.weather?.kind === 'storm') { game.struck = true; return toast(pick(FLAVOR.strike), 2200, 'fire'); } // (a storm's last bolt, landing in the rain after it: the bolt, flash and thunder say it)
+      if (e.type === 'weather' && e.kind === 'storm') game.struck = false;
+      if (e.type === 'weather' && FLAVOR.weather[e.kind]) { flashFrame(e.kind); return toast(pick((!playerAlive() && FLAVOR.weatherWatch[e.kind]) || FLAVOR.weather[e.kind]), 2800, e.kind); }
+      if (e.type === 'rainbow') { flashFrame('gold', true); if (newsOnce('rainbow')) return toast(lineFor('rainbow'), 2800, 'gold'); }
+      if (e.type === 'heal' && game.told?.digBurrow && newsFree()) { const took = game.events.some(o => o.type === 'burrow' && o.dug && Math.abs(o.x - e.x) + Math.abs(o.y - e.y) < T.BURROW_SPACING); if (once(took ? 'burrowTaken' : 'burrowHeal')) return toast(took ? FLAVOR.burrowTaken : FLAVOR.burrowHeal, 2600, 'beetle', 'lesson'); } // (a dig by a burrow takes its place: the heal and the dug burrow come in the same tick) // (one closing over: once the burrow's lesson is told, the first time the banner's free for it; it's over in a second, so else the next one teaches it. A dig at the cap closes one over on its burrow's tick, the heal first: that tick teaches the burrow)
+      if (e.type === 'burrow' && e.dug && newsFree() && once('digBurrow')) return toast(once('dig') ? FLAVOR.digAndBurrow : FLAVOR.digBurrow, 2600, 'beetle', 'lesson'); // (its rule, the first time the banner's free for one: shown then, or the next one teaches it. Not taught the dig yet (it was far from you, or the banner was busy), it teaches both, the dig first)
+      if (e.type === 'spawn' && e.kind === 'golden') { flashFrame('gold'); if (newsOnce('golden')) return toast(pick(FLAVOR.golden), 2800, 'gold'); }
+      if (e.type === 'spawn' && e.kind === 'beetle' && e.gold) { flashFrame('gold'); if (newsOnce('goldBeetle')) return toast(lineFor('goldBeetle'), 2600, 'gold'); }
+      if (e.type === 'spawn' && e.kind === 'beetle') { flashFrame('beetle'); if (newsOnce('beetle')) return toast(pick(FLAVOR.beetle), 2200, 'beetle'); }
+      if (e.type === 'spawn' && e.kind === 'leaf') { flashFrame('gold'); if (newsOnce('leaf')) return toast(lineFor('leaf'), 2400, 'gold'); }
+      if (e.type === 'spawn' && e.kind === 'goldcap') { flashFrame('gold'); if (newsOnce('goldcap')) return toast(lineFor('goldcap'), 2400, 'gold'); }
+      if (e.type === 'peck' && me?.alive && e.under?.includes(me.id) && once('peckedUnder')) return toast(FLAVOR.youPeckedUnder, 2800, 'bird', 'lesson'); // (struck under your body: a bridge, not a cut)
+      if (e.type === 'dig' && me?.alive && Math.abs(me.body[0].x - e.x) + Math.abs(me.body[0].y - e.y) <= DIG_NEAR && newsFree() && once('dig')) return toast(FLAVOR.youDig, 2600, 'beetle', 'lesson'); // (it's over in a second: shown now or kept for the next one, never left waiting)
+      if (!me || !isMe(e.snake || {}) && e.by !== me.id) continue; // (the rest is about you)
+      if (e.type === 'choke' && once('choke')) return toast(FLAVOR.youChoke, 2600, 'you', 'lesson');
+      if (e.type === 'nudge' && once('nudge')) return toast(FLAVOR.youCoughing, 2600, 'you', 'lesson');
+      if (e.type === 'eat' && e.gold) { flashFrame('gold', true); return toast(FLAVOR.youGoldBeetle(e.snake.leaps), 3000, 'gold', 'lesson'); }
+      if (e.type === 'eat' && e.kind === 'leaf') { flashFrame('gold', true); return toast(FLAVOR.youLeaf(e.snake.dashes), 3200, 'gold', 'lesson'); }
+      if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round((me.wrapUntil - game.time) / 1000)), 3000, 'gold', 'lesson'); } // (a second one adds to the first: the real total)
+      if (e.type === 'eat' && e.kind === 'beetle') flashFrame('beetle');
+      if (e.type === 'eat' && e.kind === 'golden') flashFrame('gold', true);
+      if (e.type === 'eat' && e.kind === 'mushroom' && once('mushroom')) return toast(pick(FLAVOR.youMushroom), 1800, 'warn');
+      if (e.type === 'leap' && !e.gold && once('leap')) return toast(FLAVOR.youLeapFirst, 3000, 'you', 'lesson');
+      if (e.type === 'dash' && e.snake === me) flashedEver = true; // (you know the key: no more telling)
+      if (e.type === 'dash' && !e.plain && once('dash')) return toast(FLAVOR.youDashFirst, 2800, 'gold', 'lesson');
+      const refused = e.type === 'fizzle' && (e.flash ? FLAVOR.fizzleFlash : FLAVOR.fizzle)[e.why];
+      if (refused && once((e.flash ? 'fizzleFlash' : 'fizzle') + e.why)) return toast(refused, 1800, 'warn', 'lesson');
+      if (e.type === 'cut' && e.by === me.id) return toast(FLAVOR.youSnip(who(e.snake, true)), 1800, 'gold');
+      if (e.type === 'cut' && e.by != null) return toast(FLAVOR.youSnipped(game.snakes[e.by]?.name || 'Someone'), 2200, 'warn', 'lesson');
+      if (e.type === 'alight') { flashFrame('kill'); if (once('alight')) return toast(pick(FLAVOR.youAlight), 2600, 'fire', 'lesson'); } // (later burns: the flames and the -1s say it)
+    }
+    // A few seconds in, your flash ready and never used yet (this visit): its key, once a round.
+    if (me?.alive && !flashedEver && game.time >= 6000 && E.flashIn(game, me) === 0 && newsFree() && once('flashKey')) return toast(FLAVOR.flashKey, 3200, 'you', 'lesson');
+    if (me?.alive && me.leapArmed >= 0 && me.leapArmed === game.tick - 1 && !game.events.some(e => e.snake === me && (e.type === 'leap' || e.type === 'dash' || e.type === 'fizzle')) ) { // (it ran out: too early, with a hurdle on the line, or nothing to hop at all)
+      const early = hurdleAhead(me, 4);
+      if (once(early ? 'leapEarly' : 'leapNothing')) return toast(early ? FLAVOR.leapEarly : FLAVOR.leapNothing, 2600, 'you', 'lesson');
+    }
+    for (const e of game.events) if (e.type === 'baked' && newsOnce('baked')) return toast(lineFor('baked'), 2600, 'fire');
+  }
+
+  // Is there something to hop on your line, within n cells (a body, a hole, fire)?
+  // (next: on the way it goes next, a turn queued included.)
+  function hurdleAhead(s, n, next = false) {
+    const d = next && s.queue.length ? s.queue[0] : s.dir, wrap = s.wrapUntil > game.time;
+    for (let i = 1, x = s.body[0].x, y = s.body[0].y; i <= n; i++) {
+      x += d.x; y += d.y;
+      if (wrap) { x = (x + GRID) % GRID; y = (y + GRID) % GRID; } // (the edges wrapping: on round)
+      else if (x < 0 || y < 0 || x >= GRID || y >= GRID) return false;
+      const k = y * GRID + x;
+      if (game.holes.has(k) || game.fires?.has(k)) return true;
+      for (const o of game.snakes) if (o.alive && o.body.some(c => c.x === x && c.y === y)) return true;
+    }
+    return false;
+  }
+
+  // Could a routine banner show now (no card up, none showing, fading or
+  // taking its breather, none waiting)? News and lessons that are over in a
+  // moment (a spawn, a dig) show only then, and aren't spent otherwise: the
+  // next one tells it.
+  const newsFree = () => overlay.classList.contains('hidden') && !waiting.length && performance.now() >= freeAt;
+  const DIG_NEAR = T.BEETLE_DIG + 1; // (a beetle digging in this near your head, in cells across and down: one you could still catch, a move a tick through its dig and one flash's extra cell)
+
+  // Where a banner goes (DESIGN "Teaching by showing"). On a phone held
+  // upright it's off the board altogether: above it, over the header's
+  // title row, between the screen's safe top and the header's row of
+  // buttons, so it never covers the board, the name tags (yours, with its
+  // hunger bar) or the pause button; on one line, its words as big as fit
+  // the row (the phone's own shorter words for the longest, FLAVOR.phone),
+  // and taps pass through it. Elsewhere it's on the board, at its top or
+  // its foot: never the middle, where the play is. (A rival's note, asked
+  // for from its tag while you watch, is too long for a line: it stays on
+  // the board.)
+  //
+  // On the board it keeps out of the way of heads (and the woodpecker's
+  // mark, a crackle, the steering hint). It comes up in the first of its
+  // two places that's clear (the top, the foot), and stays there while
+  // that place is clear: only something coming into it moves it on, to the
+  // other if that's clear; with both taken, it fades where it is while they
+  // pass. (Picked afresh every frame, a banner on a short phone hopped about
+  // three times in its three seconds, half its stays under 0.4 s.) Its size
+  // is measured once a banner, so this reads no layout. Its time runs while
+  // you can read it: faded, it stays that much longer (once, up to its hold
+  // again).
+  let toastTimer = 0, leaveTimer = 0, toastW = 0, toastH = 0, toastSlot = '', toastUnder = false, toastFresh = true; // (where it is on the board: '' the top, 'low' the foot; whether it's faded there; whether it's a new banner, still to place)
+  let toastFaded = 0, toastFadedAt = 0, toastLonger = false; // (how long this banner has been faded, since when, and whether it's had its time back)
+  let toastText = '', toastAbove = false, aboveBand = null; // (the banner's words; whether it's above the board; where it may go there, measured in placeBoard: null where it's on the board)
+  const SLOTS = ['', 'low'], SHIFT = [{ opacity: 0 }, { opacity: 1 }];
+  const headerEl = document.querySelector('header');
+  function toastFade() {
+    if (toastAbove || toastEl.hidden || toastEl.classList.contains('leaving')) return; // (above the board, nothing comes under it; going, it goes from where it is)
+    const busy = { '': false, low: false }, soon = { '': false, low: false };
+    if (boardPx && game) {
+      const cell = boardPx / GRID;
+      const rows = Math.ceil((toastH + 12) / cell), half = toastW / 2 / cell; // (its real size: a long banner on a phone wraps to several lines)
+      const under = (x, y, into = busy) => { // (a cell the banner would hide, if it's one that matters)
+        if (Math.abs(x + 0.5 - GRID / 2) >= half + 0.5 || y < 0 || y >= GRID) return;
+        if (y < rows) into[''] = true;
+        if (y >= GRID - rows) into.low = true;
+      };
+      for (const s of game.snakes) {
+        if (!s.alive) continue;
+        const h = s.body[0], d = s.queue?.[0] || s.dir;
+        under(h.x, h.y);
+        if (d) for (let i = 1; i <= 2; i++) under(h.x + d.x * i, h.y + d.y * i, soon); // (where it's going)
+      }
+      if (steerHintOn && Math.abs(hintBox.x + hintBox.w / 2 - boardPx / 2) < (toastW + hintBox.w) / 2) { // (the steering hint, by YOU: the banner makes way)
+        const y0 = hintBox.y, y1 = hintBox.y + hintBox.h;
+        if (y0 < toastH + 16) busy[''] = true;
+        if (y1 > boardPx - toastH - 16) busy.low = true;
+      }
+      for (const k of game.woodpecker?.target || []) under(k % GRID, Math.floor(k / GRID)); // (the patch it's warning about)
+      if (game.fires) for (const [k, f] of game.fires) if (f.strike && f.from > game.tick) under(k % GRID, Math.floor(k / GRID)); // (a crackle about to strike)
+    }
+    let slot = toastFresh ? '' : toastSlot, faded = false;
+    if (toastFresh || busy[slot]) { // (new, or something's come into its place)
+      const clear = SLOTS.filter(k => !busy[k]);
+      if (clear.length) slot = clear.find(k => !soon[k]) ?? clear[0];
+      else faded = true;
+    }
+    const moved = !toastFresh && slot !== toastSlot;
+    toastFresh = false;
+    if (faded !== toastUnder) {
+      const now = performance.now();
+      if (toastUnder) toastFaded += now - toastFadedAt;
+      else toastFadedAt = now;
+      toastEl.classList.toggle('under', faded);
+      toastUnder = faded;
+    }
+    if (slot === toastSlot) return;
+    toastEl.classList.toggle('low', slot === 'low');
+    toastSlot = slot;
+    if (moved && !reducedMQ.matches) toastEl.animate?.(SHIFT, { duration: 140, easing: 'ease-out' }); // (it comes up in its new place, rather than blinking there)
+  }
+  // The banner showing, put where it goes (and moved, if the screen's turned
+  // since): above the board, its words on one line as big as fit the title
+  // row across (no smaller than BANNER_MIN_FONT of its own size, then cut
+  // short with an ellipsis: no words of the game's need that, and a test
+  // checks it) and never taller than the row, level with the title; or on
+  // the board.
+  function placeToast() {
+    const above = !!aboveBand && toastEl.dataset.kind !== 'note';
+    if (above !== toastAbove) {
+      toastAbove = above;
+      (above ? headerEl : boardEl).appendChild(toastEl);
+      toastEl.classList.toggle('above', above);
+      toastEl.classList.remove('low', 'under');
+      toastSlot = ''; toastUnder = false; toastFresh = true;
+    }
+    const words = above && (toastOpts.phone || FLAVOR.phone[toastText]) || toastText;
+    if (toastEl.textContent !== words) toastEl.textContent = words;
+    toastEl.style.removeProperty('--toast-fs');
+    if (!above) return;
+    const band = aboveBand, room = band.bottom - band.top;
+    toastEl.style.setProperty('--toast-max', `${band.width}px`);
+    const cs = getComputedStyle(toastEl), size = parseFloat(cs.fontSize), floor = size * T.BANNER_MIN_FONT;
+    const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight), padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    let fs = size;
+    for (let i = 0; i < 3; i++) { // (a size, measured: once or twice)
+      const wide = toastEl.scrollWidth, tall = toastEl.offsetHeight;
+      let next = fs;
+      if (wide > toastEl.clientWidth + 0.5 && fs > floor) next = Math.max(floor, fs * (toastEl.clientWidth - padX) / (wide - padX)); // (its words on one line, down to the floor; past it, an ellipsis)
+      if (tall > room + 0.5) next = Math.min(next, fs * (room - padY) / (tall - padY)); // (and never taller than the row, whatever it takes: any taller, and it's over the pause button)
+      next = Math.floor(next * 10) / 10;
+      if (next >= fs) break;
+      fs = next;
+      toastEl.style.setProperty('--toast-fs', `${fs}px`);
+    }
+    const h = toastEl.offsetHeight;
+    toastEl.style.setProperty('--toast-y', `${Math.round(Math.max(band.top, Math.min(band.bottom - h, band.mid - h / 2)))}px`);
+  }
+  // kind styles the banner for its moment: kill, gold, beetle, bird (the
+  // woodpecker), warn, fire, you (a lesson about your own powers, or your
+  // own tail), go, note (a rival's, asked for), and the weather's own (sun,
+  // wind, rain, storm, snow). level: 'round' (what changes the round: first
+  // blood, the last two, the woodpecker, the last apples, land it took,
+  // friends coming and going), 'lesson' (a rule, the first time it happens
+  // to you), 'news' (the weather, a spawn), 'asked' (a rival's note, asked
+  // for from its tag).
+  // Every banner is held for its reading time, read in glances while you
+  // steer: BANNER_BASE_MS and BANNER_WORD_MS a word, up to BANNER_MAX_MS (Go!
+  // and the wake's "Ready…" are beats of the countdown, held their own
+  // time; a note you asked for, its own reading time). Nothing cuts one
+  // short but a card: the next waits its turn, in the order they came, and
+  // shows a breather (BANNER_BREATHE_MS) after the last one's gone. Round
+  // news and the weather wait as long as it takes; a lesson waits at most
+  // LESSON_WAIT_MS of the round (behind one banner, never two: its moment
+  // has passed), and not if it no longer holds (opts.still), and up to
+  // three lessons wait. Only Go!, the countdown's last beat, and a note you
+  // asked for come up at once (what a note interrupts goes back to the
+  // front of the line). While a card is up, only round news. Screen readers
+  // hear round news and lessons (and the weather), not the chatter of
+  // spawns. opts: { quiet } (shown, not said: something else says it),
+  // { still } (a lesson that waits is shown only if this still holds),
+  // { follows } (a lesson that goes with the banner just before it: it
+  // waits from when that one comes up), { phone } (its words on a phone
+  // held upright, one line).
+  let toastLevel = 'news', toastKind = '', toastOpts = {}, toastHold = 0, freeAt = 0;
+  const waiting = []; // banners waiting their turn: { text, ms, kind, level, opts, at (the round's time it came) }
+  const bannerLog = params.has('debug') ? [] : null; // (?debug: every banner and what became of it, for the tests and the audit)
+  const logBanner = (text, level, fate) => { if (bannerLog && bannerLog.length < 2000) bannerLog.push({ t: Math.round(performance.now()), gt: game?.time ?? 0, text, level, fate }); };
+  const readMs = text => Math.min(T.BANNER_MAX_MS, T.BANNER_BASE_MS + T.BANNER_WORD_MS * text.trim().split(/\s+/).length);
+  function toast(text, ms = 2800, kind = '', level = 'news', opts = {}) {
+    const now = performance.now();
+    if (level !== 'round' && !overlay.classList.contains('hidden')) return logBanner(text, level, 'card'); // (a card's up)
+    if (kind === 'go' || level === 'asked') { // (at once)
+      if (level === 'asked' && !toastEl.hidden && !toastEl.classList.contains('leaving') && toastKind !== 'go' && toastLevel !== 'asked')
+        waiting.unshift({ text: toastText, ms: 0, kind: toastKind, level: toastLevel, opts: toastOpts, at: game?.time ?? 0 }); // (what the note interrupts goes back to the front of the line)
+      return showToast(text, ms, kind, level, opts);
+    }
+    if (now < freeAt || waiting.length) { // (one showing, going, or taking its breather: this one waits its turn)
+      if (level === 'lesson' && waiting.filter(w => w.level === 'lesson').length >= 3) return logBanner(text, level, 'dropped');
+      waiting.push({ text, ms, kind, level, opts, at: game?.time ?? 0 });
+      logBanner(text, level, 'queued');
+      if (!toastTimer) toastTimer = setTimeout(nextToast, Math.max(0, freeAt - now));
+      return;
+    }
+    showToast(text, ms, kind, level, opts);
+  }
+  function showToast(text, ms, kind, level, opts) {
+    const now = performance.now(), hold = kind === 'go' || level === 'asked' ? ms : readMs(text);
+    clearTimeout(toastTimer); clearTimeout(leaveTimer); leaveTimer = 0;
+    toastLevel = level; toastKind = kind; toastOpts = opts; toastText = text;
+    toastHold = now + hold;
+    freeAt = toastHold + T.BANNER_FADE_MS + T.BANNER_BREATHE_MS;
+    toastEl.classList.remove('settled', 'leaving'); // (a new banner settles in)
+    toastEl.dataset.kind = kind;
+    toastEl.hidden = false;
+    placeToast();
+    toastW = toastEl.offsetWidth; toastH = toastEl.offsetHeight; // (measured once a banner)
+    toastFaded = 0; toastFadedAt = now; toastLonger = false;
+    toastFresh = true;
+    toastFade(); // (placed before it's first drawn: a new banner doesn't start where the last one was)
+    if (!opts.quiet && (level !== 'news' || kind in FLAVOR.weather)) say(text);
+    logBanner(text, level, 'shown');
+    if (waiting[0]?.opts.follows) waiting[0].at = game?.time ?? 0; // (a lesson that goes with this banner, next in line: its moment is this one's)
+    toastTimer = setTimeout(endToast, hold);
+  }
+  // Its time is up: it fades, and the next waiting takes its turn after a
+  // breather. (A banner that spent a while faded under the heads first gets
+  // that time back, once.)
+  function endToast() {
+    toastTimer = 0;
+    const now = performance.now(), faded = toastFaded + (toastUnder ? now - toastFadedAt : 0);
+    if (toastKind !== 'go' && toastLevel !== 'asked' && !toastLonger && !toastEl.hidden && faded >= 300) {
+      toastLonger = true;
+      const more = Math.min(faded, readMs(toastText));
+      toastHold = now + more;
+      freeAt = toastHold + T.BANNER_FADE_MS + T.BANNER_BREATHE_MS;
+      toastTimer = setTimeout(endToast, more);
+      return;
+    }
+    hideToast(true);
+  }
+  // The first waiting banner that may still show: a lesson whose moment has
+  // passed, or that no longer holds, is let go.
+  function nextToast() {
+    toastTimer = 0;
+    while (waiting.length) {
+      const w = waiting.shift();
+      if (w.level === 'lesson' && game && game.time - w.at > T.LESSON_WAIT_MS) { logBanner(w.text, w.level, 'stale'); continue; }
+      if (w.opts.still && !w.opts.still()) { logBanner(w.text, w.level, 'skipped'); continue; }
+      return showToast(w.text, w.ms, w.kind, w.level, w.opts);
+    }
+  }
+  // Gone at once (a card is coming up: the banners waiting go with it), or
+  // faded out (its time is up, or its tag tapped again), the next waiting
+  // after a breather. It settles in with a short drop and fades out, and
+  // with reduced motion only fades (style.css).
+  function hideToast(fade = false) {
+    clearTimeout(toastTimer); toastTimer = 0;
+    if (!fade && !toastEl.hidden && !toastEl.classList.contains('leaving') && performance.now() < toastHold) logBanner(toastText, toastLevel, 'cut');
+    toastHold = 0;
+    if (!fade) {
+      for (const w of waiting) logBanner(w.text, w.level, 'card');
+      waiting.length = 0;
+      freeAt = 0;
+      clearTimeout(leaveTimer); leaveTimer = 0;
+      toastEl.hidden = true;
+      toastEl.classList.remove('leaving');
+      return;
+    }
+    freeAt = performance.now() + T.BANNER_FADE_MS + T.BANNER_BREATHE_MS;
+    if (waiting.length) toastTimer = setTimeout(nextToast, T.BANNER_FADE_MS + T.BANNER_BREATHE_MS);
+    if (toastEl.hidden || toastEl.classList.contains('leaving')) return;
+    toastEl.classList.add('leaving');
+    leaveTimer = setTimeout(() => { leaveTimer = 0; toastEl.hidden = true; toastEl.classList.remove('leaving'); }, T.BANNER_FADE_MS);
+  }
+  toastEl.addEventListener('animationend', e => { if (e.animationName === 'settle' || e.animationName === 'toast-fade-in') toastEl.classList.add('settled'); });
+
+  // Screen reader announcements (a permanently rendered, visually hidden region).
+  function say(text) { announcer.textContent = text; }
+
+  // (Pops only scale, so the compositor runs them: no repaint, even on a bite.)
+  const BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.35)', offset: 0.4 }, { transform: 'scale(1)' }];
+  const BUMP_TIMING = { duration: 280, easing: 'ease-out' };
+  function bump(el, frames = BUMP) {
+    if (!reducedMQ.matches) el.animate?.(frames, BUMP_TIMING);
+  }
+  // A tag's length when it changes, a tag
+  // knocked out of the round, and a tag taking the lead.
+  const TAG_BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.45)', offset: 0.35 }, { transform: 'scale(1)' }];
+  const KNOCK = [
+    { transform: 'translateX(0) rotate(0)', backgroundColor: '#fca5a5' },
+    { transform: 'translateX(-6px) rotate(-2deg)', offset: 0.18 },
+    { transform: 'translateX(5px) rotate(2deg)', offset: 0.4 },
+    { transform: 'translateX(-3px) rotate(-1deg)', offset: 0.65 },
+    { transform: 'translateX(0) rotate(0)', backgroundColor: 'rgba(246, 236, 210, 0.66)' },
+  ];
+  const REFUSED = [{ boxShadow: 'inset 0 0 0 2px #be123c' }, { boxShadow: 'inset 0 0 0 2px #be123c', offset: 0.6 }, { boxShadow: 'inset 0 0 0 0 rgba(190,18,60,0)' }];
+  const NUDGE = [{ transform: 'translateX(0)' }, { transform: 'translateX(-3px)', offset: 0.25 }, { transform: 'translateX(3px)', offset: 0.6 }, { transform: 'translateX(0)' }];
+  const CROWNED = [{ transform: 'scale(1)' }, { transform: 'scale(1.06)', offset: 0.4 }, { transform: 'scale(1)' }];
+  function knock(el) {
+    if (!reducedMQ.matches) el.animate?.(KNOCK, { duration: 480, easing: 'ease-out' });
+  }
+
+  // The frame lights up round its edge for the big moments, in the moment's
+  // colour (only its opacity animates, so it's cheap).
+  const GLOW = { gold: '#fde68a', beetle: '#34d399', kill: '#ef4444', bird: '#f97316', go: '#a3e635', win: '#fde68a', sun: '#fbbf24', wind: '#86efac', rain: '#60a5fa', storm: '#c4b5fd', snow: '#e0f2fe' };
+  function flashFrame(kind, strong = false) {
+    if (reducedMQ.matches || !glowEl?.animate) return;
+    glowEl.style.setProperty('--glow', GLOW[kind]);
+    glowEl.animate([{ opacity: 0 }, { opacity: strong ? 1 : 0.75, offset: 0.12 }, { opacity: 0 }], { duration: strong ? 1500 : 800, easing: 'ease-out' });
+  }
+
+  // ----------------------------------------------------------- the cards
+
+  // card = { title, text, flavor, primary, secondary, opponents, reward, quiet,
+  //   friends (show "Play with friends"), lobby (which lobby parts, see renderLobby),
+  //   actions: { primary, secondary } (what the buttons do, instead of the usual) }
+  let cardActions = null, howRow = null;
+  function showCard(card) {
+    hideToast();
+    shownCard = card;
+    cardTitle.textContent = card.title;
+    setText(cardText, card.text || '');
+    cardText.hidden = !card.text;
+    flavorEl.textContent = (card.flavor || '').replace(/^\*(.+)\*$/, '$1');
+    flavorEl.hidden = !card.flavor;
+    opponentsEl.hidden = !card.opponents;
+    hintEl.hidden = state !== 'ready';
+    closeNote(); // (a new card: its own words)
+    helpEl.hidden = state === 'ready'; // the start card already shows the controls
+    startBtn.hidden = !card.primary;
+    if (card.primary) startBtn.textContent = card.primary;
+    watchBtn.hidden = !card.secondary;
+    if (card.secondary) watchBtn.textContent = card.secondary;
+    friendsBtn.hidden = !card.friends;
+    howBtn.hidden = !card.how; // (the Field guide, from the start card, the nap and your death's card)
+    if (card.how) howBtn.textContent = card.how;
+    howRow = card.howRow || null; // (your death's card: the guide opens at what got you)
+    cardLinks.hidden = friendsBtn.hidden && howBtn.hidden;
+    // In the lobby the tags would show the solo round behind the card, not who's playing.
+    tagsEl.style.visibility = state === 'lobby' ? 'hidden' : '';
+    cardActions = card.actions || null;
+    renderLobby(card.lobby);
+
+    // The reward: a new best gets its own moment; the Hall of Fame asks for a
+    // name only when the round really earned a place there.
+    badgeEl.hidden = true;
+    nameRow.hidden = true;
+    if (card.reward && game.entryId) {
+      if (game.newBest && !game.celebrated) {
+        game.celebrated = true;
+        Audio.play('best');
+        R.celebrate();
+        flashFrame('win', true);
+      }
+      if (game.newBest) { badgeEl.textContent = FLAVOR.newBest(best); badgeEl.hidden = false; }
+      const rank = yourRank();
+      if (rank.overall && (rank.overall <= 3 || game.newBest)) {
+        nameRank.textContent = Records.hasName() ? `Hall of Fame #${rank.overall}, as ${Records.getName()}.` : `Hall of Fame #${rank.overall}. ${CARVE}`;
+        nameRow.hidden = false;
+      } else if (rank.personal === 1 && game.newBest) {
+        nameRank.textContent = Records.hasName() ? `Top of your own list, as ${Records.getName()}.` : `Top of your own list. ${CARVE}`;
+        nameRow.hidden = false;
+      }
+      if (!nameRow.hidden && game.carveOffered && game.carveOffered !== card.title && document.activeElement !== nameInput) nameRow.hidden = true; // (offered once: the round-over card after your death card doesn't ask again)
+      if (!nameRow.hidden) game.carveOffered = card.title;
+      if (!nameRow.hidden && document.activeElement !== nameInput) nameInput.value = Records.hasName() ? Records.getName() : '';
+      if (document.activeElement !== nameInput) nameRow.classList.toggle('carved', Records.hasName()); // (a name's in: on the smallest boards the field gives the card's links their room back)
+      if (!nameRow.hidden) namingEntry = game.entryId;
+    }
+
+    overlay.querySelector('.card').classList.toggle('beat', !!card.beat); // the countdown: a big number
+    overlay.querySelector('.card').classList.toggle('ended', state === 'over' && !!player() && !player().alive); // the round's card when your death ended it: its words say more than your death's (style.css: how long you lasted), so more gives way to fit (a win keeps its badge)
+    overlay.classList.remove('hidden');
+    overlay.querySelector('.card').scrollTop = 0;
+    if (!card.quiet) say(announcement(card));
+    // Focus: the card itself on the first card, on a countdown (a focused Go!
+    // mustn't take a key meant for the round) and when the carve is offered
+    // (Tab goes to the name field); otherwise its main button.
+    if (document.activeElement !== nameInput) {
+      const cardEl = overlay.querySelector('.card');
+      (firstCard || card.beat || card.focusCard || !nameRow.hidden ? cardEl : card.primary ? startBtn : card.secondary ? watchBtn : cardEl).focus({ preventScroll: true });
+      firstCard = false;
+    }
+    updateControls();
+  }
+
+  // The carve is offered, never pressed on you: on a keyboard the card keeps
+  // focus (R, Enter and Space mean what they always do) and Tab reaches the field.
+  const CARVE = touchFirst ? 'Carve your name:' : 'Tab to carve your name:';
+
+  // Your Hall of Fame rank. Before the round is over, the snakes still alive
+  // haven't been saved, but they'll all finish ahead of you, so they count.
+  function yourRank() {
+    const rank = Records.rankOf(game.entryId);
+    if (state === 'over' || !rank.overall) return rank;
+    let ahead = 0;
+    for (const s of game.snakes) if (s.alive && (!online || (s.isPlayer && s.owner))) ahead++;
+    const overall = rank.overall + ahead;
+    return { overall: overall <= Records.MAX_SCORES ? overall : 0, personal: rank.personal };
+  }
+
+  // A card as a screen reader hears it: whole sentences (" · " would be read
+  // as "dot"), plus the new-best badge and the name prompt.
+  function announcement(card) {
+    const sentence = t => (/[.!?…:]$/.test(t) ? t : `${t}.`);
+    const unstar = t => t && t.replace(/^\*(.+)\*$/, 'Mimed: $1'); // (Mute's lines are stage directions: "star" isn't a word)
+    const parts = [card.title, card.text && card.text.replaceAll(' · ', ', '), unstar(card.flavor),
+      !badgeEl.hidden && badgeEl.textContent, !nameRow.hidden && nameRank.textContent];
+    return parts.filter(Boolean).map(sentence).join(' ');
+  }
+
+  function hideCard() {
+    closeNote();
+    overlay.classList.add('hidden');
+    shownCard = null;
+    keepAwake(); // (back to the board: a round going on keeps the screen on)
+  }
+
+  // The roll-call on the start and countdown cards: every rival, AIs with a
+  // word on how they play, friends tagged as friends.
+  function buildOpponents() {
+    opponentsEl.textContent = '';
+    for (const s of game.snakes) {
+      if (isMe(s) || (!s.persona && !online)) continue;
+      const li = document.createElement('li');
+      const dot = document.createElement('span');
+      dot.className = 'dot';
+      dot.style.background = dotColor(s);
+      const name = document.createElement('strong');
+      name.textContent = s.name;
+      const blurb = document.createElement('span');
+      blurb.className = 'blurb';
+      blurb.textContent = s.persona ? s.persona.blurb : 'Your friend. For now.';
+      li.append(dot, name, ' ', blurb);
+      opponentsEl.append(li);
+    }
+    const tip = document.createElement('li'); // (shown only where the blurbs are hidden: a small board)
+    tip.className = 'tap-tip';
+    tip.textContent = FLAVOR.tapTip;
+    opponentsEl.append(tip);
+  }
+
+  // YOU over your snake, from the countdown till a few seconds in (or just
+  // after you steer), and beside its arrow how to steer, until you do.
+  function showYou(on) {
+    R.showYou(on);
+    if (on && !game.steered && player()) showSteerHint(); else hideSteerHint();
+  }
+  const steerHintEl = $('steer-hint'), hintAt = { x: 0, y: 0 }, hintBox = { x: 0, y: 0, w: 0, h: 0 };
+  let steerHintOn = false;
+  function showSteerHint() {
+    if (steerHintOn) return;
+    steerHintEl.textContent = FLAVOR.steerHint;
+    steerHintEl.classList.add('on');
+    hintBox.w = steerHintEl.offsetWidth; hintBox.h = steerHintEl.offsetHeight; // (measured once a round: no layout reads in the loop)
+    steerHintOn = true;
+    hintSpot = 0;
+    placeSteerHint();
+  }
+  function hideSteerHint() {
+    if (!steerHintOn) return;
+    steerHintOn = false;
+    steerHintEl.classList.remove('on');
+  }
+  // Level with the YOU label: over your head (under it heading down, or by
+  // the top edge, as the arrow goes), on whichever side has room and no
+  // rival's speech bubble (else the other side, else level with your head's
+  // other side: a line a rival's just started saying stays readable). It
+  // rides along with your head (a transform: the compositor's work).
+  const bubbles = [], bubbleSize = new WeakMap(); // (the bubbles' boxes this frame; each one's size, measured once, as the chatter does)
+  let hintSpot = 0;
+  function placeSteerHint() {
+    const me = player();
+    if (!me?.alive || !boardPx) return hideSteerHint();
+    R.headPx(me, drawAlpha, boardPx, hintAt);
+    const c = boardPx / GRID, w = hintBox.w, h = hintBox.h;
+    let sgn = me.dir.y > 0 ? 1 : -1;
+    if (sgn < 0 ? hintAt.y < c * 2.6 : hintAt.y > boardPx - c * 2.6) sgn = -sgn;
+    const right = hintAt.x + c * 1.3, left = hintAt.x - c * 1.3 - w;
+    const sides = right + w <= boardPx - 4 ? [right, left] : [Math.max(4, left), right];
+    const spots = [];
+    for (const s of [sgn, -sgn]) for (const x of sides) if (x >= 4 && x + w <= boardPx - 4) spots.push({ x, y: Math.min(boardPx - h - 4, Math.max(4, hintAt.y + s * c * 2.5 - h / 2)) });
+    bubbleBoxes();
+    const clear = p => bubbles.every(b => p.x >= b.x + b.w + 4 || b.x >= p.x + w + 4 || p.y >= b.y + b.h + 4 || b.y >= p.y + h + 4);
+    if (!(spots[hintSpot] && clear(spots[hintSpot]))) hintSpot = Math.max(0, spots.findIndex(clear)); // (it stays put while it can: no hopping to and fro)
+    const spot = spots[hintSpot] || { x: sides[0], y: hintAt.y + sgn * c * 2.5 - h / 2 }; // (no spot clear: where it'd be anyway)
+    hintBox.x = Math.round(spot.x);
+    hintBox.y = Math.round(spot.y);
+    steerHintEl.style.transform = `translate(${hintBox.x}px, ${hintBox.y}px)`;
+  }
+  // The rivals' speech bubbles on the board, as the chatter placed them (its
+  // transforms: no layout read but a new bubble's size, once).
+  function bubbleBoxes() {
+    bubbles.length = 0;
+    for (const el of boardEl.querySelectorAll('.bubble')) {
+      const m = /translate\((-?[\d.]+)px, (-?[\d.]+)px\)/.exec(el.style.transform);
+      if (!m) continue;
+      let size = bubbleSize.get(el);
+      if (!size) bubbleSize.set(el, size = { w: el.offsetWidth, h: el.offsetHeight });
+      bubbles.push({ x: Number(m[1]), y: Number(m[2]), w: size.w, h: size.h });
+    }
+  }
+
+  // ------------------------------------------------------------- the HUD
+
+  // Each snake's tag (dot, name, length, hunger bar). Values are written only
+  // when they change.
+  function buildTags() {
+    tagsEl.textContent = '';
+    for (const s of game.snakes) {
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="dot"></span>${s.persona ? '<button class="name" type="button"></button>' : '<span class="name"></span>'}<span class="sr-only"></span><span class="pow" aria-hidden="true" hidden></span><span class="len"></span><span class="hunger"><i></i></span>`;
+      li.querySelector('.name').textContent = isMe(s) ? 'You' : s.name;
+      li.title = s.persona ? `${s.name}: ${s.persona.blurb}` : isMe(s) ? 'You' : `${s.name}, a friend`;
+      if (s.persona) li.dataset.blurb = `${s.name}: ${s.persona.blurb}`; // tapped (phones have no tooltips), or its name pressed with a key, it says how it plays
+      const nameBtn = li.querySelector('button.name');
+      if (nameBtn) { nameBtn.setAttribute('aria-expanded', 'false'); nameBtn.setAttribute('aria-controls', 'rival-note'); } // (its note, on the card)
+      if (s.personaKey === 'capricious') li.querySelector('.dot').dataset.ring = ''; // its pink ring, as on the board
+      const mark = R.markOf(s.color);
+      if (s.isPlayer && mark) li.querySelector('.dot').dataset.mark = mark;
+      tagsEl.append(li);
+      s.tag = { li, dot: li.querySelector('.dot'), state: li.querySelector('.sr-only'), len: li.querySelector('.len'), bar: li.querySelector('.hunger i'), pow: li.querySelector('.pow'), last: {} };
+    }
+  }
+
+  // A snake's note, asked for from its tag (a click, a tap, or Enter on its
+  // name): how a rival plays and what it holds now, or your own powers. On a
+  // card (napping, your death's, the round's end, the start) it stands in
+  // for the card's words, under the rival's dot and name, until you're done
+  // with it: its tag again, its ×, Esc, a click or tap anywhere but a
+  // button, or the card going; another tag swaps it. Watching a round (no card up),
+  // it's a banner, up as long as it takes to read. While you're playing, or
+  // in a countdown, a tag says nothing (your eyes belong on the log; on a
+  // desktop, its tooltip still does).
+  const noteEl = $('rival-note'), noteDot = noteEl.querySelector('.dot'), noteWho = noteEl.querySelector('strong');
+  const noteHow = noteEl.querySelector('.how'), noteNow = noteEl.querySelector('.now'), cardEl = overlay.querySelector('.card');
+  let noted = null, bannered = null; // (whose note is on the card; whose is the banner)
+  tagsEl.addEventListener('click', e => {
+    const li = e.target.closest?.('li'), s = li && game.snakes.find(o => o.tag?.li === li);
+    if (!s || !(s.persona || isMe(s)) || state === 'countdown' || state === 'lobby') return;
+    if (overlay.classList.contains('hidden')) {
+      if (state !== 'running' || playerAlive()) return; // (playing: nothing)
+      if (bannered === s && !toastEl.hidden && toastEl.dataset.kind === 'note') { bannered = null; return hideToast(true); } // (its tag again)
+      const line = noteLine(s);
+      bannered = s;
+      toastEl.style.setProperty('--edge', isMe(s) ? R.colorOf(s) : s.persona.ink || s.color);
+      return toast(line, Math.min(T.NOTE_MAX_MS, Math.max(T.NOTE_MIN_MS, T.NOTE_FIND_MS + line.length * T.NOTE_CHAR_MS)), 'note', 'asked');
+    }
+    if (noted === s) return closeNote();
+    openNote(s);
+  });
+  // The note in a line (a banner, and what a screen reader hears).
+  const youWords = s => s.alive ? yourPowerWords(s) : 'You’re out of this round.'; // (your powers, while you have a round to use them in)
+  const noteLine = s => isMe(s) ? youWords(s) : `${s.name}: ${s.persona.blurb}${powerWords(s)}`;
+  function openNote(s) {
+    closeNote();
+    noted = s;
+    noteEl.style.setProperty('--edge', isMe(s) ? R.colorOf(s) : s.persona.ink || s.color);
+    noteDot.style.background = dotColor(s);
+    noteWho.textContent = isMe(s) ? 'You' : s.name;
+    noteHow.textContent = isMe(s) ? youWords(s) : s.persona.blurb;
+    noteNowFor(s);
+    noteEl.hidden = false;
+    cardEl.classList.add('noting');
+    s.tag.li.classList.add('noted');
+    s.tag.li.querySelector('button.name')?.setAttribute('aria-expanded', 'true');
+    say(noteLine(s));
+  }
+  // What it holds now (kept up to date while the note's up: on your death's
+  // card the round goes on).
+  function noteNowFor(s) {
+    const now = isMe(s) ? '' : !s.alive ? 'Out of this round.' : powerWords(s).trim();
+    if (noteNow.textContent !== now) noteNow.textContent = now;
+    if (noteNow.hidden !== !now) noteNow.hidden = !now; // (written only when it changes: this runs with the HUD)
+    if (isMe(s)) { const how = youWords(s); if (noteHow.textContent !== how) noteHow.textContent = how; }
+  }
+  // The card's own words again. Focus on its × isn't lost with it: from the
+  // keyboard (byKey) it goes back to the name the note was asked for from,
+  // else to the card.
+  function closeNote(byKey = false) {
+    if (!noted) return;
+    const name = noted.tag?.li.querySelector('button.name'), inside = noteEl.contains(document.activeElement);
+    noted.tag?.li.classList.remove('noted');
+    name?.setAttribute('aria-expanded', 'false');
+    noted = null;
+    noteEl.hidden = true;
+    cardEl.classList.remove('noting');
+    if (!inside) return;
+    const to = byKey && name || cardEl;
+    to.focus({ preventScroll: true });
+    if (to === name) tabbed = name; // (back as if Tabbed to: Enter there opens it again, rather than asking to start over)
+  }
+  $('note-close').addEventListener('click', e => closeNote(e.detail === 0));
+  document.addEventListener('pointerdown', e => { if (noted && !e.target.closest?.('#scoreboard, button, input, label, a, #records')) closeNote(); });
+  // What the chips mean, in words (phones have no tooltips).
+  function yourPowerWords(s) {
+    const how = (left, gold) => gold ? `${gold} golden` : left === 0 ? 'ready' : left === Infinity ? 'not at 3' : 'resting';
+    return `${touchFirst ? 'A tap' : 'Space or a click'} jumps: ${how(E.leapIn(game, s), s.leaps)}. ${touchFirst ? 'A swipe ahead' : 'E, Shift or right-click'} flashes: ${how(E.flashIn(game, s), s.dashes)}.`;
+  }
+  // Golden powers held, as words: ['2 golden jumps', '1 golden flash'].
+  const goldWords = s => [s.leaps > 0 && `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}`, s.dashes > 0 && `${s.dashes} golden flash${s.dashes === 1 ? '' : 'es'}`].filter(Boolean);
+  const powerWords = s => { const held = goldWords(s); return (held.length ? ` Holding ${held.join(' and ')}.` : '') + (s.wrapUntil > game.time ? ' The edges wrap for it.' : ''); };
+
+  function updateHud(force = false) {
+    const score = player()?.eaten ?? 0;
+    if (force || scoreEl.textContent !== String(score)) scoreEl.textContent = score;
+    // Best follows your score live once you pass it (it's saved when your round ends).
+    const shownBest = Math.max(best, score);
+    if (force || bestEl.textContent !== String(shownBest)) {
+      if (!force && score > best && !game.passedBest) { game.passedBest = true; bump(bestEl); }
+      bestEl.textContent = shownBest;
+    }
+    // The leader (the longest snake, if one is longest) wears a crown.
+    let lead = null, top = 0;
+    for (const s of game.snakes) {
+      if (!s.alive) continue;
+      if (s.body.length > top) { top = s.body.length; lead = s; } else if (s.body.length === top) lead = null;
+    }
+    for (const s of game.snakes) {
+      const t = s.tag, last = t.last;
+      const dot = dotColor(s);
+      const leading = s === lead;
+      const len = s.alive ? String(s.body.length) : 'out';
+      const left = s.alive ? E.hungerLeft(game, s) : 0;
+      const full = s.alive ? Math.max(0, Math.min(1, left / (s.mealMs || T.HUNGER_MS))) : 0; // (against the last meal: full after any, though one mid-round lasts less)
+      const bar = Math.round(full * 100);
+      const starving = s.alive && left < T.HUNGER_WARN_MS;
+      if (force || last.dot !== dot) { t.dot.style.background = dot; last.dot = dot; }
+      if (force || last.len !== len) {
+        t.len.textContent = len;
+        if (!force && s.alive && last.len !== undefined) bump(t.len, TAG_BUMP);
+        last.len = len;
+      }
+      // Powers, in words for screen readers (the chips themselves are hidden from them).
+      const holds = !s.alive ? '' : goldWords(s).map(w => `, ${w}`).join('');
+      const said = !s.alive ? ', ' : `${starving ? ', starving' : ''}${leading ? ', in the lead' : ''}${holds}${s.wrapUntil > game.time ? `, the edges wrap for ${isMe(s) ? 'you' : s.persona ? 'it' : 'them'}` : ''}, length `; // (for screen readers)
+      if (force || last.said !== said) { t.state.textContent = said; last.said = said; }
+      if (force || last.bar !== bar) { t.bar.style.transform = `scaleX(${bar / 100})`; last.bar = bar; }
+      if (force || last.alive !== s.alive) {
+        t.li.classList.toggle('dead', !s.alive);
+        if (!force && !s.alive) knock(t.li);
+        last.alive = s.alive;
+      }
+      if (force || last.leading !== leading) {
+        t.li.classList.toggle('leader', leading);
+        if (!force && leading) bump(t.li, CROWNED);
+        last.leading = leading;
+      }
+      if (force || last.starving !== starving) { t.li.classList.toggle('starving', starving); last.starving = starving; }
+      // Powers: a chip each, an ink icon and a count. Golden jumps (sky) and
+      // golden flashes (ember) are Honey chips with the count held; the edges
+      // wrapping, a loop and the seconds left in a Honey line. Your own tag
+      // always shows your jump and your flash, each filling in its colour as
+      // it rests and solid when it's ready.
+      const mine = isMe(s) && s.alive;
+      const wrapS = s.alive && s.wrapUntil > game.time ? Math.ceil((s.wrapUntil - game.time) / 1000) : 0;
+      const jump = s.alive && (mine || s.leaps > 0), flash = s.alive && (mine || s.dashes > 0);
+      const pow = jump || flash || wrapS ? `${jump ? s.leaps : '-'}|${flash ? s.dashes : '-'}|${wrapS}` : '';
+      if (force || last.pow !== pow) {
+        t.pow.innerHTML = (jump ? chip('jump', s.leaps, s) : '') + (flash ? chip('flash', s.dashes, s) : '') + (wrapS ? chip('wrap', wrapS, s) : '');
+        t.pow.hidden = !pow;
+        t.jump = t.pow.querySelector('.jump');
+        t.flash = t.pow.querySelector('.flash');
+        last.pow = pow;
+        last.jump = last.flash = null; // (new chips: their rests are written afresh)
+      }
+      if (mine) {
+        rest(t, 'jump', E.leapIn(game, s), T.LEAP_COOLDOWN_MS, s.leaps);
+        rest(t, 'flash', E.flashIn(game, s), T.FLASH_COOLDOWN_MS, s.dashes);
+      }
+      // Your plain powers back from their rest: a flick round your head and a
+      // tick (the jump's, or the flash's), unless you're holding golden ones.
+      const jumpBack = mine && s.body.length > T.MIN_LENGTH && game.time >= s.leapReadyAt;
+      const flashBack = mine && !(T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH) && game.time >= s.flashReadyAt;
+      if (!force && jumpBack && last.jumpBack === false && !s.leaps) { R.ready(s, 'jump'); Audio.play('ready'); }
+      if (!force && flashBack && last.flashBack === false && !s.dashes) { R.ready(s, 'flash'); Audio.play('flashReady'); }
+      last.jumpBack = jumpBack; last.flashBack = flashBack;
+    }
+    if (noted) noteNowFor(noted); // (a note on the card keeps up: your death's card has the round going on behind it)
+  }
+
+  // A power's chip (jump, flash or wrap): its icon and a count (golden ones
+  // held; the wrap's seconds left).
+  function chip(kind, n, s) {
+    const gold = kind !== 'wrap' && n > 0;
+    const title = kind === 'wrap' ? `The edges wrap round for ${isMe(s) ? 'you' : s.persona ? 'it' : 'them'}`
+      : gold ? (kind === 'jump' ? 'Golden jumps: long ones, free' : 'Golden flashes: three cells at once') : '';
+    return `<span class="chip ${kind}${gold ? ' gold' : ''}${isMe(s) ? ' mine' : ''}"${title ? ` title="${title}"` : ''}>${POW_ICON[kind]}${n ? `<b>${n}</b>` : ''}</span>`;
+  }
+  // Your own chip's rest: filling in tenths (a write a few times a second, not
+  // every frame), solid when ready, greyed when you're too small for it.
+  function rest(t, kind, left, full, gold) {
+    const el = t[kind];
+    if (!el) return;
+    const now = gold ? 'gold' : left === 0 ? 'ready' : left === Infinity ? 'small' : Math.floor((1 - left / full) * 10) * 10;
+    if (t.last[kind] === now) return;
+    t.last[kind] = now;
+    el.classList.toggle('ready', now === 'ready');
+    el.classList.toggle('small', now === 'small');
+    if (typeof now === 'number') el.style.setProperty('--fill', `${now}%`);
+    if (!gold) el.title = `Your ${kind}${now === 'ready' ? ' is ready' : now === 'small' ? ': too small for it' : ' is resting'} (${kind === 'jump' ? (touchFirst ? 'tap' : 'Space or a click') : touchFirst ? 'swipe ahead' : 'E, Shift or right-click'})`;
+  }
+
+  // The chips' icons: small inline drawings in ink (no fallback-font glyphs).
+  // A jump arcs over; a flash is a streak with chevrons; the wrap, a loop.
+  const POW_ICON = {
+    jump: '<svg viewBox="0 0 12 12"><path d="M1.5 10.5C2.5 3 9 2.5 10.5 9.5"/><path d="M8.2 8.4l2.3 1.4.8-2.5"/></svg>',
+    flash: '<svg viewBox="0 0 12 12"><path d="M2 2.5 5.5 6 2 9.5M6.5 2.5 10 6l-3.5 3.5"/></svg>',
+    wrap: '<svg viewBox="0 0 12 12"><path d="M10 6.5a4 4 0 1 1-1.4-3"/><path d="M9.2 1.4l-.4 2.3-2.3-.3"/></svg>',
+  };
+
+  // The scoreboard dot: the snake's current color,
+  // the flag for Wildcard, two-tone for Joker, veined marble for Mason, Mute's
+  // mood, Vulture's pink head (black would vanish), and Copycat's party pin.
+  const PERSONA_DOTS = {
+    wildcard: 'linear-gradient(135deg, #3c3b6e 0 42%, #b22234 42% 56%, #fff 56% 70%, #b22234 70% 84%, #fff 84%)',
+    joker: 'linear-gradient(90deg, #a21caf 50%, #f59e0b 50%)',
+    mason: 'radial-gradient(circle at 68% 30%, #c9a227 0 14%, transparent 15%), radial-gradient(circle at 10% 115%, transparent 0 55%, #8a94a6 56% 66%, transparent 67%), #f1ece2', // (marble: a curl of grey vein and a gold fleck, no stripe straight across)
+    ghost: 'radial-gradient(circle at 35% 35%, #f8fafc, #b8c4d4)', // (pale, but not an empty ring)
+    star: 'radial-gradient(circle at 50% 50%, #f9c22e 0 28%, transparent 30%), conic-gradient(#ef4444, #f97316, #facc15, #22c55e, #3b82f6, #6366f1, #a855f7, #ef4444)', // (a rainbow round its sunflower star)
+  };
+  // Copycat's dot is the flag's red with a small yellow star, its party pin,
+  // whoever it's copying (its head keeps the red and the pin too): it keeps
+  // it apart from the cast's other reds, Sniper's, Colonist's and Wildcard's.
+  PERSONA_DOTS.copycat = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 10 10\'%3E%3Cpath d=\'M5 1.5L5.82 3.87L8.33 3.92L6.33 5.43L7.06 7.83L5 6.4L2.94 7.83L3.67 5.43L1.67 3.92L4.18 3.87z\' fill=\'%23ffde00\'/%3E%3C/svg%3E") center / 100% no-repeat, #de2910';
+  function dotColor(s) {
+    if (s.personaKey === 'mute') return R.colorOf(s); // (its mood, as it changes)
+    return PERSONA_DOTS[s.personaKey] || s.persona?.ink || R.colorOf(s);
+  }
+  // The same dots in the Hall of Fame and Your story, by a rival's name.
+  const dotByName = name => { for (const k in PERSONAS) if (PERSONAS[k].name === name) return PERSONA_DOTS[k] || null; return null; };
+
+  // Pause, mute and speed controls: shown and labelled for the current state.
+  function updateControls() {
+    const canPause = !online && (state === 'running' || state === 'paused' || state === 'countdown');
+    pauseBtn.disabled = !canPause;
+    pauseBtn.setAttribute('aria-label', state === 'paused' ? 'Wake up' : 'Nap (pause)');
+    pauseBtn.title = state === 'paused' ? 'Wake up (P)' : 'Nap (P)';
+    pauseBtn.dataset.paused = String(state === 'paused');
+    // (Watching, the speed can be set during the countdown too.)
+    speedEl.hidden = !(spectating() && !online && (canPause || state === 'countdown'));
+    for (const b of speedEl.querySelectorAll('button')) b.setAttribute('aria-pressed', String(Number(b.dataset.speed) === speed));
+    // Pressed means off (the icon gets its slash); the names stay put.
+    muteBtn.setAttribute('aria-pressed', String(Audio.isMuted()));
+    musicBtn.setAttribute('aria-pressed', String(!Audio.isMusicOn()));
+    musicBtn.disabled = Audio.isMuted();
+    // During a round the page holds still under your fingers (see the swipes).
+    document.documentElement.classList.toggle('playing', (state === 'running' || state === 'countdown') && playerAlive());
+    document.documentElement.classList.toggle('in-round', state === 'running' || state === 'countdown');
+    if (helpEl) updateHelp(); // (watching or playing: the help says what you can do)
+    fitColumn(); // (on its side, watching: the help may give the chatter its room)
+    keepAwake();
+  }
+
+  function setSpeed(n) {
+    speed = n;
+    if (!game.withPlayer) watchSpeed = n;
+    const was = tickLen;
+    tickLen = E.tickMs(game) / (spectating() ? speed : 1);
+    acc *= tickLen / was; // (the same point between ticks: nothing jumps)
+    updateControls();
+  }
+
+  // ------------------------------------------------------------- input
+
+  const KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+  const SPEED_KEYS = { 1: 1, 2: 2, 3: 4, 4: 4 }; // (watching: 1, 2 and 4 for 1x, 2x and 4x; 3 for the third button)
+  const CODES = { KeyW: 'up', KeyS: 'down', KeyA: 'left', KeyD: 'right' }; // physical keys, so AZERTY works
+
+  // Queue a turn (up to T.QUEUE ahead), checked against the last queued
+  // direction so no combo of quick presses can reverse into the neck.
+  // - Pressing the way you're already going does nothing: steering only
+  //   steers (the powers have presses of their own).
+  // - Reversing a turn that hasn't happened yet changes your mind: it takes
+  //   that turn's place, if it's a legal way from the one before it.
+  // - Stunned, the latest press wins (checked against your neck), so you get
+  //   more than one guess while the stars go round.
+  // - A reversal is checked against your neck: the way your head last moved
+  //   (after a crash you haven't moved, so the way you were facing may not be it).
+  // - A reversal pressed a hair before the turn it needs (keys rolled together
+  //   for a U-turn) is held a moment, and goes after that turn if it comes.
+  function turn(name, p = player()) {
+    const next = DIRS[name], now = performance.now(), back = moved(p);
+    const reverse = (a, b) => a.x === -b.x && a.y === -b.y;
+    if (p.stunUntil > game.tick) {
+      if (next === p.dir && !p.queue.length) return; // (at what you hit: nothing to change)
+      if (reverse(next, back)) { // (into your neck: unless it's a U-turn's second key, after a turn)
+        if (p.queue.length === 1 && p.queue[0] !== next && !reverse(next, p.queue[0])) p.queue.push(next);
+        else p.heldReverse = { dir: next, at: now, tick: game.tick };
+        return;
+      }
+      p.queue.length = 0;
+      if (next !== p.dir) {
+        p.queue.push(next);
+        p.turnedAt = { dir: next, at: now };
+        const held = p.heldReverse;
+        p.heldReverse = null;
+        if (held && (held.tick === game.tick || now - held.at < T.CHORD_MS) && held.dir !== next && !reverse(held.dir, next)) p.queue.push(held.dir); // (the U-turn, reverse key first)
+      }
+      return;
+    }
+    const lastQ = p.queue.length ? p.queue[p.queue.length - 1] : null;
+    if (next === (lastQ || p.dir)) return; // (the way you're already going: nothing)
+    const last = lastQ || back;
+    if (reverse(next, last)) {
+      if (!p.queue.length) { p.heldReverse = { dir: next, at: now, tick: game.tick }; return; } // (maybe a U-turn's second key, early: see below)
+      const before = p.queue.length > 1 ? p.queue[p.queue.length - 2] : back;
+      if (next === before || reverse(next, before)) return;
+      p.queue[p.queue.length - 1] = next;
+      p.turnedAt = { dir: next, at: now };
+      return;
+    }
+    if (p.queue.length < T.QUEUE) {
+      p.queue.push(next);
+      p.turnedAt = { dir: next, at: now };
+      const held = p.heldReverse;
+      p.heldReverse = null;
+      if (held && (held.tick === game.tick || now - held.at < T.CHORD_MS) && held.dir !== next && !reverse(held.dir, next) && p.queue.length < T.QUEUE) p.queue.push(held.dir); // (the U-turn, both keys, any time before the snake moves)
+    }
+  }
+  // A fresh swipe: the way you're already going flashes, any other way steers.
+  // (A swipe the way you turned a moment ago is that turn swiped twice, not a
+  // flash: two quick swipes up mean up.)
+  function swipeTo(name, p = player()) {
+    const next = DIRS[name], ahead = p.queue.length ? p.queue[p.queue.length - 1] : p.dir;
+    if (next !== ahead) return turn(name, p);
+    if (p.turnedAt?.dir === next && performance.now() - p.turnedAt.at < T.POWER_AFTER_TURN_MS) return;
+    E.flash(game, p);
+  }
+  // The way a snake's head last moved: from its neck to its head.
+  function moved(p) {
+    const h = p.body[0], n = p.body[1];
+    if (!n) return p.dir;
+    let dx = h.x - n.x, dy = h.y - n.y;
+    if (dx > 1) dx = -1; else if (dx < -1) dx = 1; // (across a wrapped edge)
+    if (dy > 1) dy = -1; else if (dy < -1) dy = 1;
+    return dx > 0 ? DIRS.right : dx < 0 ? DIRS.left : dy > 0 ? DIRS.down : dy < 0 ? DIRS.up : p.dir;
+  }
+
+  // A direction: steers, and on the start card or during the countdown also
+  // gets the round going (already turning). swipe: a fresh swipe, which
+  // flashes the way you're already going once the round's going (a swipe
+  // that starts or wakes the round only steers).
+  function steer(name, swipe = false) {
+    if (!playerAlive()) return;
+    const press = swipe && state === 'running' ? swipeTo : turn;
+    if (state === 'running' || state === 'countdown') { game.steered = true; hideSteerHint(); } // (you've found the controls)
+    if (state === 'running' && youHideAt) youHideAt = Math.min(youHideAt, performance.now() + T.YOU_AFTER_STEER_MS); // (you've found yourself)
+    const heard = () => R.pressed?.(DIRS[name]); // (your press shows at once: your head leans that way and is drawn ahead from it, online too, before the host's game takes it; stunned, the chevron by your head. pressed() takes it as the game does: never into the neck, and the way you face is nothing)
+    if (online) {
+      // Online the countdown runs its course; presses go to the host's game.
+      if (state !== 'countdown' && state !== 'running') return;
+      heard();
+      if (guesting()) online.room.send({ t: press === swipeTo ? 'swipe' : 'turn', d: name });
+      else hostPress(me => press(name, me));
+      return;
+    }
+    if (state === 'ready') start({ going: true });
+    if (state === 'paused' && askingStartOver) resume(); // (steering: you meant to keep going)
+    if (state === 'countdown') { heard(); turn(name); go(); youHideAt = Math.min(youHideAt, performance.now() + T.YOU_AFTER_STEER_MS); }
+    else if (state === 'running') { heard(); press(name, player()); }
+  }
+
+  // A power: Space or a tap jumps; E, Shift or a fresh swipe ahead flashes.
+  // Only while you're playing a round that's going (asked for while you're
+  // stunned, it goes when the stun's over): they never start, wake or
+  // dismiss anything. Online it goes to the host's game, as your turns do.
+  function power(kind) {
+    if (state !== 'running' || !playerAlive()) return;
+    if (kind === 'flash') flashedEver = true;
+    if (guesting()) return online.room.send({ t: 'pow', k: kind });
+    if (hosting()) return hostPress(me => powerOf(me, kind));
+    powerOf(player(), kind);
+  }
+  const powerOf = (s, kind) => (kind === 'unleap' ? unleap : kind === 'flash' ? E.flash : E.leap)(game, s);
+  // A jump asked for and not gone yet, taken back (a finger held still that
+  // turned out to be a swipe: see the touches).
+  const unleap = (g, s) => { if (s?.alive && s.leapArmed >= g.tick) s.leapArmed = -1; };
+
+  // A friend sees each tick half a round trip late, and their presses take
+  // the other half to arrive. So the host's own presses (turns and powers)
+  // wait a whole round trip, in the order they were made: no one gets a head start.
+  let hostPressAt = 0;
+  function hostPress(fn) {
+    const me = player();
+    if (me.autopilot) me.autopilot = null; // back from a hidden tab: your hands again
+    const now = performance.now();
+    const at = Math.max(now + Math.min(T.HOST_DELAY_MAX, online.room.rtt()), hostPressAt);
+    hostPressAt = at;
+    const press = () => { fn(me); if (planSent && state === 'running' && online) sendPlan(); }; // (friends see it coming)
+    if (at - now < 4) return press();
+    setTimeout(() => { if (me.alive && game.snakes[me.id] === me) press(); }, at - now);
+  }
+
+  // A result is on its way (your death's card in the freeze, or the round's
+  // card in its pause): keys wait for it, never throw it away.
+  const cardComing = () => !!pendingCard && (state === 'over' || (state === 'running' && !playerAlive()));
+  // P and Esc nap and wake (and only that: starting is Enter, R or an arrow).
+  function napKey() {
+    if (online || cardComing()) return; // no napping online
+    if (state === 'running' && !playerAlive() && shownCard?.reward && !overlay.classList.contains('hidden')) return hideCard(); // (your death card: napping it would hide why you died; keep watching instead)
+    if (state === 'running') pause();
+    else if (state === 'paused') resume();
+    else if (state === 'countdown') napNow(); // (the phone rang: nap, don't go; Go is the Go! button, Enter, R or an arrow)
+  }
+
+  // Space acts on a button only when you Tabbed to it (as buttons do). A
+  // button handed focus by the game (a card's Play again) or clicked lets
+  // Space be a jump, so mashing jump just after you die can't start a round.
+  let tabbing = false, tabbed = null;
+  document.addEventListener('focusin', e => { tabbed = tabbing ? e.target : null; tabbing = false; });
+  document.addEventListener('keyup', e => { if (e.key === 'Tab') tabbing = false; }); // (a Tab that took focus out of the page: the game's next focus isn't yours)
+
+  // Copying the title: its S is a drawing over a see-through letter, so a
+  // rich paste (into an email, say) would read "Barkstreet  nakes". A copy
+  // that takes in the title is the words it says, and nothing else.
+  document.addEventListener('copy', e => {
+    const sel = getSelection(), s = document.querySelector('h1 .snake-s');
+    if (!s || !e.clipboardData || !sel || sel.isCollapsed || !sel.containsNode(s, true)) return;
+    const text = sel.toString();
+    e.clipboardData.setData('text/plain', text);
+    e.clipboardData.setData('text/html', text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]));
+    e.preventDefault();
+  });
+  document.addEventListener('keydown', e => {
+    Audio.unlock();
+    tabbing = e.key === 'Tab';
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target === nameInput) {
+      if (e.key === 'Enter') { e.preventDefault(); nameInput.blur(); startBtn.focus({ preventScroll: true }); }
+      return;
+    }
+    if (e.key === 'Escape' && state === 'lobby' && !online) { backToStart(); return; } // (even from the name or code field)
+    if (e.target.closest?.('input, textarea')) return; // typing a name or a room code
+    // The powers: Space jumps; E (by where it sits, like WASD) or either Shift
+    // flashes. They're the keys you mash in a fight: a held one fires once,
+    // and they never start, wake or dismiss anything.
+    const pow = e.key === ' ' ? 'leap' : e.code === 'KeyE' || e.key === 'Shift' ? 'flash' : null;
+    if (pow) {
+      if (e.key === ' ' && e.target === tabbed && e.target.closest?.('button')) return; // (Tabbed to: the button's own key)
+      e.preventDefault();
+      if (!e.repeat && recordsEl.hidden) power(pow);
+      return;
+    }
+    if (!recordsEl.hidden) {
+      if (e.key === 'Escape') { e.preventDefault(); closeRecords(); }
+      else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); recordsKey('scores'); }
+      else if (e.key === 'g' || e.key === 'G') { e.preventDefault(); recordsKey('guide'); }
+      return;
+    }
+    const dir = KEYS[e.key] || CODES[e.code];
+    if (dir) { e.preventDefault(); if (!e.repeat) steer(dir); return; } // (a held key's repeats steer nothing: its first press did)
+    // A held key repeats nothing, not even a focused button (holding Enter on
+    // Play would otherwise start the round and then skip its countdown).
+    if (e.repeat) { if (e.key === 'Enter') e.preventDefault(); return; }
+    // Enter on a focused button belongs to the button.
+    if (e.key === 'Enter' && e.target.closest?.('button')) {
+      // A card's or a dialog's button keeps its keys. Elsewhere (the header's,
+      // the speed buttons, a tag), in a round, they're the game's keys again.
+      if (e.target.closest('#overlay, #records') || !(state === 'running' || state === 'countdown' || state === 'paused') || e.target === tabbed) return; // (Tabbed to: the button's own keys)
+      e.target.blur();
+    }
+    if (e.key === 'Escape' && noted) { e.preventDefault(); closeNote(true); return; } // (a note you asked for goes first; Esc again wakes, or keeps watching, as ever)
+    if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') { e.preventDefault(); napKey(); } // (Escape on your death card keeps watching)
+    else if (e.key === 'Enter' || e.key === 'r' || e.key === 'R') {
+      e.preventDefault();
+      const key = e.key === 'Enter' ? 'Enter' : 'R';
+      if (cardComing()) return; // (the result's card first)
+      if (state === 'countdown') { if (!online) go(); } // (online the countdown runs its course: everyone starts together)
+      else if (state === 'paused' && askingStartOver) start();
+      else if ((state === 'running' || state === 'paused') && playerAlive() && !online) askStartOver(key); // (R sits next to D: a slip shouldn't throw a round away, napping or not)
+      else start({ aiOnly: false });
+    }
+    else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); openRecords('scores'); }
+    else if (e.key === 'g' || e.key === 'G') { e.preventDefault(); openRecords('guide'); }
+    else if (e.key === 'm' || e.key === 'M') toggleMute();
+    else if (e.key === 'n' || e.key === 'N') toggleMusic();
+    else if (SPEED_KEYS[e.key] && !speedEl.hidden) setSpeed(SPEED_KEYS[e.key]);
+    else if (e.key === '`' && DEV) perf.toggle();
+  });
+
+  // Swipes and taps, on the board always, and during a round anywhere on the
+  // screen (over the countdown card too); the page never scrolls.
+  // - A swipe steers: a turn registers once the finger has travelled half a
+  //   cell (at least SWIPE_MIN_PX), without lifting, its way clearly the
+  //   finger's (half again the other: a slant waits, until the finger has
+  //   gone SWIPE_SURE times that far, when its main way counts). One touch
+  //   chains turns, each after SWIPE_CHAIN_PX more, counted from where the
+  //   finger turned. A fresh swipe the way you're going flashes; a finger
+  //   that keeps going that way doesn't, nor does a second swipe the way the
+  //   last one turned you, just after it lifted (POWER_AFTER_TURN_MS: the
+  //   turn swiped twice, to make sure).
+  // - A tap jumps: a touch that lifts without travelling (TAP_STILL_PX), or
+  //   quickly (TAP_QUICK_MS) without travelling as far as a swipe (a finger
+  //   rolls as it lifts), anywhere but a working button or a name tag. Held
+  //   still for TAP_JUMP_MS, it jumps without waiting for the lift, but only
+  //   with something to hop on the way: a thumb resting on the glass, ready
+  //   to steer, isn't a jump. A touch that becomes a swipe never jumps (a
+  //   jump its hold asked for that hasn't gone yet is taken back), and nor
+  //   does a thumb that was resting while another one swiped (its jump is
+  //   taken back too, if it's still resting). One that lifted first was a
+  //   tap: a swipe after it leaves its jump be.
+  // Every finger on the glass is its own: a thumb left resting doesn't block
+  // the other, and can still steer once the other lifts. Buttons stay
+  // buttons: during a round a swipe may start on one (the Go! in the middle
+  // of the board, the header's), and once it's travelled it steers and the
+  // button's click is swallowed; a short tap is still a click. But a card
+  // that comes up by itself (your death's, the round's end) takes no touch
+  // that began as it came up, nor one of a run of quick touches that did
+  // (CARD_TAP_MS, CARD_MASH_MS): mashing jump never plays again, nor
+  // focuses the name field it offers (the phone's keyboard over the round).
+  const swipes = new Map(); // touch id -> { x, y (the anchor), x0, y0 (where it touched), at, far (furthest from there), run (when its run of touches began), last, button, tapOnly, moved, tap, timer, held (when its hold asked for a jump that may not have gone yet) }
+  const swiping = () => (state === 'running' || state === 'countdown') && playerAlive();
+  const swipeMin = () => Math.max(T.SWIPE_MIN_PX, (boardPx || 320) / GRID * T.SWIPE_CELLS); // (how far a fresh swipe goes before it counts)
+  let touchAt = -Infinity, runFrom = -Infinity; // (the last touch, and when the run of quick touches it's in began)
+  let lastSwipe = null; // the last swipe to register: { dir, sw (its touch), up (when it lifted; 0 while it's down), turn (it turned, not flashed) }
+  document.addEventListener('touchstart', e => {
+    Audio.unlock();
+    const now = performance.now();
+    if (now - touchAt >= T.CARD_MASH_MS) runFrom = now;
+    touchAt = now;
+    if (!swiping() && runFrom < cardShownAt + T.CARD_TAP_MS && e.target.closest?.('#overlay input, #overlay label, #overlay a')) { e.preventDefault(); return; } // (a card that came up by itself under a run of quick touches: its name field takes none of them either, no focus and no phone keyboard over the round)
+    if (e.target.closest?.('input, a, #records')) return;
+    const button = e.target.closest?.('button:not(:disabled), [role="switch"]');
+    if (!button && !swiping() && !canvas.contains(e.target)) return;
+    const tapOnly = !!button && !swiping(); // (outside a round a button touch is a tap or a scroll, never a swipe)
+    const taps = !button && !e.target.closest?.('#scoreboard') && state === 'running' && playerAlive(); // (a tap here would be a jump)
+    for (const t of e.changedTouches) {
+      const sw = { x: t.clientX, y: t.clientY, x0: t.clientX, y0: t.clientY, at: now, far: 0, run: runFrom, last: null, button, tapOnly, moved: false, tap: taps, timer: 0, held: 0 };
+      if (taps) sw.timer = setTimeout(() => held(sw), T.TAP_JUMP_MS);
+      swipes.set(t.identifier, sw);
+    }
+    if (swiping() && !button) e.preventDefault(); // (not on a button: its tap must still be a click)
+  }, { passive: false });
+  // A tap: one jump (unless the finger travelled, or swiped, first).
+  function tapped(sw) {
+    if (!sw.tap) return;
+    sw.tap = false;
+    clearTimeout(sw.timer);
+    for (const o of swipes.values()) o.held = 0; // (a jump meant: nothing to take back)
+    power('leap');
+  }
+  // Held still: a jump now, if there's something to hop on the way (it waits
+  // a few ticks for it); else the lift says whether it was a tap. The jump
+  // is this touch's to take back while it's on the glass (see swiped); once
+  // it lifts without swiping, it was a tap, and the jump stays.
+  function held(sw) {
+    sw.timer = 0;
+    const me = player();
+    if (!sw.tap || !me?.alive || !hurdleAhead(me, T.LEAP_WINDOW + 1, true)) return;
+    tapped(sw);
+    sw.held = performance.now();
+  }
+  // A swipe registered: a jump asked for by a finger held still, not gone
+  // yet, is taken back if that finger is the one swiping, or is still
+  // resting on the glass while another swipes (it was a thumb about to
+  // steer); and a thumb that's been resting meanwhile isn't tapping.
+  function swiped(by) {
+    const now = performance.now();
+    let heldAt = 0;
+    for (const sw of swipes.values()) {
+      if (sw !== by && sw.tap && now - sw.at >= T.TAP_JUMP_MS) { sw.tap = false; clearTimeout(sw.timer); }
+      heldAt = Math.max(heldAt, sw.held);
+      sw.held = 0;
+    }
+    if (!heldAt || now - heldAt > (T.LEAP_WINDOW + 1) * tickLen) return;
+    if (state !== 'running' || !playerAlive()) return;
+    if (guesting()) online.room.send({ t: 'pow', k: 'unleap' });
+    else if (hosting()) hostPress(s => unleap(game, s));
+    else unleap(game, player());
+  }
+  document.addEventListener('touchmove', e => {
+    for (const t of e.changedTouches) {
+      const sw = swipes.get(t.identifier);
+      if (!sw) continue;
+      const from0 = Math.hypot(t.clientX - sw.x0, t.clientY - sw.y0);
+      sw.far = Math.max(sw.far, from0);
+      if (sw.timer && from0 > T.TAP_STILL_PX) { clearTimeout(sw.timer); sw.timer = 0; } // (moving: no jump before the lift)
+      if (sw.tap && sw.far >= swipeMin()) sw.tap = false; // (travelling: not a tap)
+      const dx = t.clientX - sw.x, dy = t.clientY - sw.y, ax = Math.abs(dx), ay = Math.abs(dy);
+      if (sw.tapOnly) { if (ax + ay > 12) sw.moved = true; continue; } // (a card scrolling: let it)
+      e.preventDefault();
+      const dir = ax > ay ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+      if (dir === sw.last) { sw.x = t.clientX; sw.y = t.clientY; continue; } // (still going the way it registered: the anchor keeps up, so a turn counts from where the finger turns)
+      const threshold = sw.last ? T.SWIPE_CHAIN_PX : swipeMin(), most = Math.max(ax, ay);
+      if (most < threshold || (most < T.SWIPE_AXIS * Math.min(ax, ay) && Math.hypot(dx, dy) < threshold * T.SWIPE_SURE)) continue; // (too short, or a slant not yet far enough to be sure)
+      sw.tap = false; // (a swipe is never a jump)
+      clearTimeout(sw.timer);
+      sw.timer = 0;
+      const now = performance.now(), me = player(), ahead = me && (me.queue.length ? me.queue[me.queue.length - 1] : me.dir);
+      const twice = !sw.last && lastSwipe?.turn && lastSwipe.sw !== sw && lastSwipe.dir === dir && (!lastSwipe.up || now - lastSwipe.up < T.POWER_AFTER_TURN_MS); // (the last turn swiped again, to make sure: it steers, never flashes)
+      steer(dir, !twice);
+      swiped(sw);
+      lastSwipe = { dir, sw, up: 0, turn: !!me && DIRS[dir] !== ahead };
+      sw.last = dir;
+      sw.x = t.clientX;
+      sw.y = t.clientY;
+    }
+  }, { passive: false });
+  // A touch lifting: a tap if it hadn't travelled. One that began on a
+  // button: a swipe cancels its click; a tap presses it here (with another
+  // finger resting on the glass the browser wouldn't).
+  const endSwipe = e => {
+    const now = performance.now();
+    for (const c of e.changedTouches) {
+      const sw = swipes.get(c.identifier);
+      swipes.delete(c.identifier);
+      if (!sw) continue;
+      clearTimeout(sw.timer);
+      if (lastSwipe?.sw === sw) lastSwipe.up = now;
+      const far = Math.max(sw.far, Math.hypot(c.clientX - sw.x0, c.clientY - sw.y0));
+      if (sw.tap && e.type === 'touchend' && (far <= T.TAP_STILL_PX || (far < swipeMin() && now - sw.at < T.TAP_QUICK_MS))) tapped(sw);
+      sw.tap = false;
+      if (e.type === 'touchend' && sw.run < cardShownAt + T.CARD_TAP_MS && (!sw.button || overlay.contains(sw.button))) { e.preventDefault(); continue; } // (begun as a card came up by itself, or in a run of touches that was: no click, the browser's or ours)
+      if (!sw.button || e.type !== 'touchend' || sw.moved) continue; // (a scroll: the browser's own business)
+      e.preventDefault(); // (no click of the browser's own: never twice, never a swipe's)
+      if (!sw.last && sw.button.contains(document.elementFromPoint(c.clientX, c.clientY))) sw.button.click();
+    }
+  };
+  document.addEventListener('touchend', endSwipe, { passive: false });
+  document.addEventListener('touchcancel', endSwipe);
+
+  // The mouse, over the board: the left button jumps and the right one
+  // flashes, as Space and E do (and no menu pops up over the board). Only a
+  // mouse's buttons: a finger's taps and swipes are above, and a pen is the
+  // browser's. A button pressed while another is held (both at once: the jump
+  // goes first, as with the keys) comes as a pointer move, and counts too. A
+  // card over the board is the card's: its buttons are buttons. A run of quick
+  // presses is kept, as touches' are, so mashing jump as your death's card
+  // comes up under the pointer never presses Play again (see cardSettled).
+  const MOUSE_POWER = { 0: 'leap', 2: 'flash' }, MOUSE_BIT = { 0: 1, 1: 4, 2: 2 }; // (button -> power; button -> its bit in e.buttons)
+  let mouseAt = -Infinity, mouseRun = -Infinity; // (the last mouse press, and when the run of quick presses it's in began)
+  function mousePress(e) {
+    if (e.pointerType !== 'mouse' || !(e.button in MOUSE_BIT)) return;
+    if (e.type === 'pointermove' && !(e.buttons & MOUSE_BIT[e.button])) return; // (a chord's button let go)
+    const now = performance.now();
+    if (now - mouseAt >= T.CARD_MASH_MS) mouseRun = now;
+    mouseAt = now;
+    Audio.unlock();
+    const kind = MOUSE_POWER[e.button];
+    if (kind && e.target === canvas && !e.ctrlKey && !e.metaKey && !e.altKey) power(kind); // (the board itself, no card over it; and no shortcut)
+  }
+  document.addEventListener('pointerdown', mousePress);
+  document.addEventListener('pointermove', e => { if (e.button >= 0) mousePress(e); }); // (only a chord's press or release says which button)
+  boardEl.addEventListener('contextmenu', e => { if (!e.target.closest?.('.card')) e.preventDefault(); }); // (a card's own text and fields keep theirs)
+  // A mouse press in a run begun as a card came up by itself (or this soon after): still mashing jump.
+  const mashedOnCard = e => !!e.target.closest?.('#overlay') && performance.now() - mouseAt < T.CARD_MASH_MS && mouseRun < cardShownAt + T.CARD_TAP_MS;
+  const keepField = e => { if (mashedOnCard(e) && e.target.closest('input, label')) e.preventDefault(); }; // (nor focuses the name field it offers, or its words: keys mashed next would carve them)
+  document.addEventListener('mousedown', keepField);
+  document.addEventListener('click', keepField, true);
+
+  // Buttons. (ok: whether a click counts.)
+  const click = (el, fn, ok = null) => el.addEventListener('click', e => { if (ok && !ok(e)) return; Audio.unlock(); Audio.play('ui'); fn(e); });
+  // A card that came up by itself takes no pointer's click for a moment, nor
+  // one of a run of mouse presses that began then (keys are fine: Space never
+  // presses its buttons unless you Tabbed to one).
+  const cardSettled = e => !(e.detail > 0 && (performance.now() < cardShownAt + T.CARD_TAP_MS || mashedOnCard(e)));
+  // A button clicked with a mouse or a finger doesn't keep the keyboard, so
+  // Space and Enter go back to jumping and starting over. Card and Hall of
+  // Fame buttons keep focus: there, Enter on a focused button is expected.
+  document.addEventListener('click', e => {
+    const b = e.target.closest?.('button');
+    if (b && e.detail > 0 && !b.closest('#overlay, #records')) b.blur();
+  });
+  click(startBtn, () => {
+    if (cardActions?.primary) cardActions.primary();
+    else if (state === 'paused') resume();
+    else if (state === 'countdown') go();
+    else start({ aiOnly: false });
+  }, cardSettled);
+  click(watchBtn, () => {
+    if (cardActions?.secondary) cardActions.secondary();
+    else if (state === 'running') hideCard();        // keep watching after you died
+    else if (state === 'paused') { if (playerAlive()) askStartOver(null); else start(); } // "Start over" on touch: it asks first, too (out already, there's nothing to lose)
+    else start({ aiOnly: true });
+  }, cardSettled);
+  click(pauseBtn, () => (state === 'paused' ? resume() : state === 'running' && !playerAlive() && shownCard?.reward && !overlay.classList.contains('hidden') ? hideCard() : napNow()));
+  muteBtn.addEventListener('click', () => { Audio.unlock(); toggleMute(); }); // (its tap comes after the toggle: see toggleMute)
+  click(musicBtn, () => toggleMusic());
+  click(speedEl, e => { const b = e.target.closest('button'); if (b) setSpeed(Number(b.dataset.speed)); });
+  click(chatterBtn, () => { Chatter.setEnabled(!Chatter.isEnabled()); showChatterState(); });
+
+  // Full screen, where the browser allows it (Android, desktops; an iPhone
+  // can't, and "Add to Home Screen" opens the game without Safari's bars
+  // instead). The button says which way it goes; Esc leaves too.
+  const fullBtn = $('fullscreen');
+  if (document.fullscreenEnabled) {
+    const showFull = () => {
+      const full = !!document.fullscreenElement;
+      fullBtn.dataset.full = String(full);
+      fullBtn.setAttribute('aria-label', full ? 'Leave full screen' : 'Full screen');
+      fullBtn.title = full ? 'Leave full screen (Esc)' : 'Full screen';
+    };
+    click(fullBtn, () => {
+      const asked = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+      asked?.catch?.(() => {}); // (refused: the button stays as it was)
+    });
+    document.addEventListener('fullscreenchange', showFull);
+    showFull();
+    fullBtn.hidden = false;
+  }
+
+  function toggleMute() {
+    Audio.toggleMuted();
+    Audio.play('ui'); // (heard only when the sound's back on: muting is silent, unmuting taps once)
+    updateControls();
+  }
+
+  function toggleMusic() {
+    Audio.unlock();
+    Audio.toggleMusic();
+    updateControls();
+  }
+
+  function showChatterState() {
+    const on = Chatter.isEnabled();
+    chatterBtn.firstElementChild.textContent = on ? 'On' : 'Off'; // (the state is aria-checked: the word is for eyes)
+    chatterBtn.setAttribute('aria-checked', String(on));
+    chatlogEl.hidden = !on;
+    fitColumn();
+  }
+
+  // Renaming your Hall of Fame entry from the card. Saved when you're done
+  // (rivals use the new name from the next round).
+  let namingEntry = null; // the round the name field is for (the next may start while you type)
+  nameInput.addEventListener('change', () => {
+    if (!namingEntry) return;
+    Records.rename(namingEntry, nameInput.value);
+    nameRank.textContent = `Carved: ${Records.getName()}.`; // (it took)
+    nameRow.classList.add('carved');
+  });
+
+  // Nap automatically when the tab is hidden, or when the window loses focus
+  // while you're playing (a watched round can keep going on screen). Online the
+  // round goes on regardless.
+  document.addEventListener('visibilitychange', () => {
+    if (online) return awayOnline();
+    if (!document.hidden) return;
+    napNow();
+  });
+
+  // The screen stays on while you play, through the countdown, and while
+  // you watch a round (a screen wake lock); a nap, a card or the Hall of
+  // Fame lets it go. A hidden tab loses it (the browser lets it go), so
+  // coming back asks again, if it's still wanted then (alone you'll be
+  // napping: waking asks). Where there's no wake lock, nothing changes; a
+  // refusal (a battery saver, say) isn't asked again until the next time
+  // it's wanted.
+  const awake = { lock: null, asking: false, refused: false };
+  function keepAwake() {
+    if (!navigator.wakeLock) return;
+    const want = !document.hidden && recordsEl.hidden && (state === 'countdown' || (state === 'running' && overlay.classList.contains('hidden')));
+    if (!want) {
+      awake.refused = false;
+      if (awake.lock) { const lock = awake.lock; awake.lock = null; lock.release().catch(() => {}); }
+      return;
+    }
+    if (awake.lock || awake.asking || awake.refused) return;
+    awake.asking = true;
+    navigator.wakeLock.request('screen').then(lock => {
+      awake.asking = false;
+      awake.lock = lock;
+      lock.addEventListener('release', () => { if (awake.lock === lock) awake.lock = null; }); // (the browser's doing: a hidden tab)
+      keepAwake(); // (let go at once if it's no longer wanted)
+    }, () => { awake.asking = false; awake.refused = true; });
+  }
+  document.addEventListener('visibilitychange', keepAwake); // (after the nap above)
+
+  // Online the round goes on while your tab is hidden, so an AI steers your
+  // snake until you're back and turn again. A friend's tab says so itself: a
+  // hidden tab's "still here" slows to once a second, which looks like a
+  // flickering connection.
+  function awayOnline() {
+    if (guesting()) online.room.send({ t: document.hidden ? 'away' : 'back' });
+    const me = player();
+    if (!me?.alive || (state !== 'countdown' && state !== 'running')) return;
+    if (hosting() && document.hidden) { me.autopilot = PERSONAS.drab; me.queue.length = 0; }
+    if (!document.hidden && (hosting() ? me.autopilot : true)) {
+      toast(FLAVOR.takeBack, 2400);
+      if (guesting()) online.toldAway = true; // (then no "you went quiet" when you do)
+    }
+  }
+  window.addEventListener('blur', () => {
+    if (online || !playerAlive() || pendingCard) return;
+    napNow();
+  });
+
+  // Nap right away; from the countdown, the round starts napping.
+  function napNow() {
+    if (state === 'countdown') state = 'running';
+    if (state === 'running') pause();
+  }
+
+  // ------------------------------------------------------ Hall of Fame
+
+  // One book, two doors: the trophy (or H) opens it on the Hall of Fame (or
+  // Your story, if that's where you were), the Field guide's book (or G) on
+  // the guide. In the book, a door's key goes to its tab, or closes it from there.
+  let recordsTab = 'scores', storyTab = 'scores', scoresFilter = 'all', recordsOpener = null;
+  const TAB_NAMES = { scores: 'Hall of Fame', stats: 'Your story', guide: 'Field guide' };
+
+  // (row: a guide row's kind, to open the guide at it, lit for a moment: your death card's "what got you")
+  function openRecords(tab = 'scores', row = null) {
+    if (online && playerAlive() && (state === 'countdown' || state === 'running')) {
+      toast(`The ${tab === 'guide' ? 'Field guide' : 'Hall of Fame'} can wait. Eyes on the bark.`, 1800, '', 'round'); // the round wouldn't (and over the countdown's card)
+      return;
+    }
+    recordsTab = tab === 'guide' ? 'guide' : storyTab;
+    // Napping, if you're playing alone (online, or only watching, the round goes on behind the dialog, and its card stays).
+    if (!online && (state === 'countdown' || (state === 'running' && playerAlive() && !pendingCard))) napNow();
+    recordsOpener = document.activeElement;
+    recordsEl.hidden = false;
+    keepAwake();
+    mainEl.inert = true;
+    renderRecordsSafely();
+    const page = recordsEl.querySelector('.records-card'), spot = row && recordsTab === 'guide' && recordsBody.querySelector(`li[data-kind="${row}"]`);
+    page.scrollTop = 0; // (a door opens its page at the top)
+    if (spot) {
+      page.scrollTop = Math.max(0, spot.getBoundingClientRect().top - page.getBoundingClientRect().top - page.clientHeight / 3);
+      spot.classList.add('spot');
+    }
+    $('records-close').focus({ preventScroll: true }); // (a plain focus scrolls the page back up to its Close: the lit row would be out of sight)
+  }
+
+  function closeRecords() {
+    recordsEl.hidden = true;
+    keepAwake();
+    mainEl.inert = false;
+    const card = !overlay.classList.contains('hidden');
+    const back = card && recordsOpener && overlay.contains(recordsOpener) ? recordsOpener : card ? (startBtn.hidden ? watchBtn : startBtn) : recordsOpener;
+    back?.focus?.({ preventScroll: true });
+  }
+
+  function renderRecordsSafely() {
+    recordsBody.textContent = '';
+    try { renderRecords(); } catch { recordsBody.textContent = 'The Hall of Fame got scrambled. Clear it below to start afresh.'; }
+  }
+
+  function renderRecords() {
+    if (recordsTab !== 'guide') storyTab = recordsTab;
+    recordsEl.setAttribute('aria-label', TAB_NAMES[recordsTab]); // (the dialog is named for what it shows)
+    recordsTabs.forEach(t => t.setAttribute('aria-pressed', String(t.dataset.tab === recordsTab)));
+    filterTabs.forEach(t => t.setAttribute('aria-pressed', String(t.dataset.filter === scoresFilter)));
+    filterEl.hidden = recordsTab !== 'scores';
+    resetBtn.hidden = recordsTab === 'guide'; // (nothing there to clear)
+    recordsBody.textContent = '';
+    if (recordsTab === 'scores') {
+      Records.renderScores(recordsBody, game.entryId, scoresFilter, PLAYER_COLOR, dotByName);
+    } else if (recordsTab === 'guide') {
+      renderGuide();
+    } else {
+      // Every persona's color, not just this round's, plus old names (Viper, Warden).
+      const colors = { self: PLAYER_COLOR, Viper: '#c084fc', Warden: '#3b82f6', hunger: '#dc2626', wall: '#7a4a24', fire: '#f97316', woodpecker: '#27272a' }; // (hunger in Berry, the edge in Heartwood, fire in flame, the woodpecker in its black)
+      for (const p of Object.values(PERSONAS)) colors[p.name] = p.ink || p.color;
+      Records.renderStats(recordsBody, colors, dotByName);
+    }
+  }
+
+  // The Field guide: every food, power and danger, with its picture (drawn by
+  // the renderer, as it is on the log) and its rule in a line or two.
+  const secs = ms => Math.round(ms / 1000);
+  const coughFor = Math.max(1, secs(T.COUGH_TICKS * T.START_TICK)); // (a cough's ticks at the round's usual pace)
+  const GUIDE = [
+    // (How to play opens here: the round in four lines, before the things on the log.)
+    ['The basics', [
+      ['basic-win', 'Winning', 'Last snake wriggling wins. Score counts what you eat.'],
+      ['basic-steer', 'Steering', `${touchFirst ? 'Swipe the way to go' : 'The arrow keys (or WASD)'}. You never stop, so look ahead.`],
+      ['basic-crash', 'Crashes', `An edge, a snake or your own tail costs you tail. At ${T.MIN_LENGTH}, or boxed in, a crash ends you.`],
+      ['basic-hunger', 'Hunger', `The bar under your name. Let it run dry and you shrink; at ${T.MIN_LENGTH} you starve.`],
+    ]],
+    ['Food', [
+      ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(T.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time; leave one too long and it rots.`],
+      ['golden', 'Golden apple', `Worth ${T.GOLDEN_GROWTH}, and everyone saw it land.`],
+      [['beetle', 'dig'], 'Beetles', `Worth ${T.BEETLE_GROWTH}, up to ${inWords(T.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in, so be quick${T.BURROW_FROM_DIG ? `, and leaves a burrow, taking the place of any burrow near it (burrows keep apart); past ${inWords(T.BURROW_MAX)} burrows, the one unused longest closes over` : ''}.`],
+      [['pellet', 'choke'], 'Beads', `What a crash knocks off, and what a dead snake leaves (${T.CORPSE_EVERY === 2 ? 'every other segment' : T.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${T.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own make you choke: you spit them aside.`],
+      ['cough', 'Coughing', `After a choke you cough for ${coughFor === 1 ? 'about a second' : `about ${coughFor} seconds`} (puffs, mouth shut) and can’t eat. Food you reach rolls aside: into a turn, or to the more open side, over food.`],
+      [['baked', 'roast'], 'Baked and roast', `Food left in a fire bakes: worth ${T.COOKED_GROWTH}, if you can take the heat. Then it’s ash.`],
+      ['mushroom', 'Mushroom', `Poison: ${T.SHRINK} off your tail (never below ${T.MIN_LENGTH}). Mind the purple haze.`],
+    ]],
+    ['Golden things', [
+      ['goldbeetle', 'Golden beetle', `${T.LEAP_CHARGES} golden jumps: long, free, no rest. Hold up to ${T.LEAP_MAX}.`],
+      ['leaf', 'Golden leaf', `${T.DASH_CHARGES} golden flashes: three cells at once, slicing thin snakes. Never at an edge or a hole.`],
+      ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(T.WRAP_MS)} s a mushroom (up to ${secs(T.WRAP_MAX_MS)}).`],
+    ]],
+    ['Your powers', [
+      ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop a snake, a hole or fire. It costs your tail’s tip, then rests ${secs(T.LEAP_COOLDOWN_MS)} s.`],
+      ['flash', 'Flash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift or a right-click on the log'}: two cells in a blink, free. Then it rests ${secs(T.FLASH_COOLDOWN_MS)} s.`],
+      ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden flashes.'],
+      ['rests', 'Resting', 'Two half-rings round your head: your jump (left) and your flash (right) coming back.'],
+    ]],
+    ['The log', [
+      ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
+      ['knock', 'Woodpecker', 'From 2:00 it pecks out patches, and won’t shut you in or leave crumbs of log if it can help it. Food in its mark is knocked to the nearest free cell, where the ring is.'],
+      ['hole', 'Holes', 'The woodpecker’s, from 2:00. Bump one like the edge; a peck right under your head is the end.'],
+      ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and it notices.'],
+      ['lostflag', 'Lost flags', 'A flag the woodpecker pecks out is lost: the colony goes, and a capital moves.'],
+    ]],
+  ];
+  // (Until the renderer can draw a picture, a stand-in. It draws a kind it
+  // doesn't know as an apple, so the kinds it has no picture for yet are
+  // named here: none now.)
+  const GUIDE_STAND_IN = { 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', choke: '🤢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', land: '🚩', lostflag: '🚩' };
+  const GUIDE_UNDRAWN = new Set();
+  function renderGuide() {
+    const px = Math.round(36 * (window.devicePixelRatio || 1));
+    for (const [title, rows] of GUIDE) {
+      const head = document.createElement('h3');
+      head.className = 'guide-head';
+      head.textContent = title;
+      const list = document.createElement('ul');
+      list.className = 'guide';
+      for (const [kinds, name, rule] of rows) {
+        const li = document.createElement('li');
+        li.dataset.kind = [].concat(kinds)[0]; // (your death's card opens the guide at its row)
+        const pics = document.createElement('span');
+        pics.className = 'guide-pics';
+        pics.setAttribute('aria-hidden', 'true');
+        for (const kind of [].concat(kinds)) pics.append(guidePic(kind, px));
+        const text = document.createElement('p');
+        const strong = document.createElement('strong');
+        strong.textContent = name;
+        const pause = document.createElement('span'); // (a screen reader hears the name, then the rule: not "Golden beetle 2 golden jumps")
+        pause.className = 'sr-only';
+        pause.textContent = '.';
+        text.append(strong, pause, ' ', rule);
+        li.append(pics, text);
+        list.append(li);
+      }
+      recordsBody.append(head, list);
+    }
+  }
+  // One thing's picture, a copy of the renderer's own (36 px, sharp at any density).
+  function guidePic(kind, px) {
+    let art = null;
+    try { if (!GUIDE_UNDRAWN.has(kind)) art = R.guideSprite?.(kind, px); } catch { /* the stand-in, below */ }
+    if (art?.width) {
+      const c = document.createElement('canvas');
+      c.width = art.width;
+      c.height = art.height;
+      c.getContext('2d').drawImage(art, 0, 0);
+      c.className = 'guide-art';
+      return c;
+    }
+    const span = document.createElement('span');
+    span.className = 'guide-art stand-in';
+    span.textContent = GUIDE_STAND_IN[kind] || '•';
+    return span;
+  }
+
+  recordsTabs.forEach(t => click(t, () => { recordsTab = t.dataset.tab; renderRecordsSafely(); }));
+  filterTabs.forEach(t => click(t, () => { scoresFilter = t.dataset.filter; renderRecordsSafely(); }));
+  click($('records-open'), () => openRecords('scores'));
+  click($('guide-open'), () => openRecords('guide'));
+  click(howBtn, () => openRecords('guide', howRow));
+  // A door's key in the book: its tab, or out again from there.
+  function recordsKey(tab) {
+    if ((tab === 'guide') === (recordsTab === 'guide')) return closeRecords();
+    recordsTab = tab === 'guide' ? 'guide' : storyTab;
+    renderRecordsSafely();
+  }
+  click($('records-close'), closeRecords);
+  recordsEl.addEventListener('click', e => { if (e.target === recordsEl) closeRecords(); });
+  click($('records-reset'), () => {
+    if (!confirm('Clear every Hall of Fame row, your story and your Best? There’s no undo.')) return;
+    Records.reset();
+    best = 0;
+    bestEl.textContent = 0;
+    nameRow.hidden = true;
+    renderRecords();
+  });
+
+  // -------------------------------------------------- play with friends
+
+  // One browser hosts: it runs the round exactly as when playing alone, sends
+  // every tick to the others (online.js) and takes their turns. Friends' screens
+  // only draw what the host sends. Connections live in net.js.
+
+  // Which parts of the lobby a card shows: { name, share, players, join, status, trouble }.
+  function renderLobby(parts) {
+    lobbyEl.hidden = !parts;
+    if (!parts) return;
+    lobbyName.closest('.lobby-row').hidden = !parts.name;
+    lobbyShare.hidden = !parts.share;
+    lobbyJoin.hidden = !parts.join;
+    lobbyPlayers.hidden = !parts.players;
+    if (parts.players) renderPlayers();
+    setStatus(parts.status || '', parts.trouble);
+  }
+
+  function setStatus(text, trouble = false) {
+    lobbyStatus.textContent = text;
+    lobbyStatus.classList.toggle('trouble', trouble);
+  }
+
+  // Four seats: the people in the room, then the seats AI rivals will take.
+  function renderPlayers() {
+    lobbyPlayers.textContent = '';
+    const people = online?.players || [];
+    for (let i = 0; i < Online.MAX_PEOPLE; i++) {
+      const p = people[i];
+      const li = document.createElement('li');
+      const dot = document.createElement('span');
+      dot.className = 'dot';
+      const label = document.createElement('span');
+      if (p) {
+        dot.style.background = p.color;
+        if (R.markOf(p.color)) dot.dataset.mark = R.markOf(p.color);
+        label.textContent = p.name;
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = [p.host && 'host', p.id === myId() && 'you'].filter(Boolean).join(', ');
+        li.append(dot, label, tag);
+      } else {
+        dot.style.background = 'var(--parchment-2)';
+        label.className = 'open-seat';
+        label.textContent = 'An AI rival, unless a friend joins';
+        li.append(dot, label);
+      }
+      lobbyPlayers.append(li);
+    }
+  }
+
+  const myId = () => (hosting() ? 'host' : online?.room.id);
+  const roomLink = code => (location.protocol === 'file:' ? code : `${location.origin}${location.pathname}?join=${code}`);
+
+  // Keep ?join=CODE in the address while you're in a room (a reload rejoins).
+  function setUrlCode(code) {
+    const p = new URLSearchParams(location.search);
+    if (code) p.set('join', code); else p.delete('join');
+    const q = p.toString();
+    try { history.replaceState(null, '', location.pathname + (q ? `?${q}` : '')); } catch { /* file:// */ }
+  }
+
+  function saveLobbyName() {
+    const name = Online.cleanName(lobbyName.value);
+    if (name) Records.setName(name);
+    lobbyName.value = name || '';
+  }
+
+  let joinAttempt = 0; // a newer attempt (or Back) makes an older one moot
+
+  function openFriends() {
+    joinAttempt++;
+    state = 'lobby';
+    lobbyName.value = Records.hasName() ? Records.getName() : '';
+    lobbyCode.value = '';
+    updateControls();
+    showCard({
+      title: 'Play with friends', text: FLAVOR.friendsIntro, primary: 'Host a game', secondary: 'Back',
+      lobby: { name: true, join: true }, actions: { primary: hostRoom, secondary: backToStart },
+    });
+  }
+
+  function backToStart() {
+    joinAttempt++;
+    if (online) endOnline();
+    ready();
+  }
+
+  // ------------- hosting
+
+  async function hostRoom() {
+    saveLobbyName();
+    const attempt = ++joinAttempt;
+    startBtn.disabled = true;
+    setStatus('Opening a room…');
+    try {
+      const room = await Net.host({ newCode: Online.newCode, onLeave: friendLeft, onMessage: fromFriend });
+      if (attempt !== joinAttempt) { room.close(); return; }
+      online = {
+        role: 'host', room, code: room.code, seat: 0, hostName: localName(), holesSent: 0,
+        players: [{ id: 'host', name: localName(), color: Online.HUMAN_COLORS[0], host: true, owner: Records.playerId() }],
+        shared: new Map([[Records.playerId(), { color: Online.HUMAN_COLORS[0], entries: Records.shareable(localName()) }]]), // owner -> their best rounds
+      };
+      keepTimeWhileHidden(true);
+      setUrlCode(null);
+      updateHelp();
+      showRoom();
+    } catch (err) {
+      if (attempt === joinAttempt) setStatus(Net.explain(err), true);
+    } finally {
+      startBtn.disabled = false;
+    }
+  }
+
+  function showRoom() {
+    lobbyLink.value = roomLink(online.code);
+    showCard({
+      title: `Room ${online.code}`, text: FLAVOR.hostIntro, primary: 'Start', secondary: 'Close room',
+      lobby: { share: true, players: true }, actions: { primary: startOnlineRound, secondary: leaveRoom },
+    });
+  }
+
+  function sendLobby() {
+    online.room.broadcast({ t: 'lobby', players: online.players.map(({ id, name, color, host }) => ({ id, name, color, host: !!host })) });
+    if (!lobbyPlayers.hidden) renderPlayers();
+  }
+
+  function fromFriend(id, msg) {
+    if (!hosting()) return;
+    if (msg.t === 'hello') {
+      const why = msg.v !== Online.VERSION ? 'version' : online.players.length >= Online.MAX_PEOPLE ? 'full' : null;
+      if (why) {
+        online.room.send(id, { t: 'reject', why });
+        setTimeout(() => online?.room.drop(id), 500);
+        return;
+      }
+      if (online.players.some(p => p.id === id)) return;
+      const owner = typeof msg.owner === 'string' ? msg.owner.replace(/[^a-z0-9]/g, '').slice(0, 40) : '';
+      online.room.admit(id);
+      const taken = new Set(online.players.map(p => p.name));
+      const base = Online.cleanName(msg.name) || 'Friend';
+      let name = base;
+      for (let n = 2; taken.has(name); n++) name = `${base} ${n}`;
+      const color = Online.HUMAN_COLORS.find(c => !online.players.some(p => p.color === c));
+      online.players.push({ id, name, color, owner });
+      online.room.send(id, { t: 'welcome', name });
+      sendLobby();
+      // Everyone's best rounds go into everyone's Hall of Fame: kept once per
+      // person (a rejoin replaces them), the newcomer gets everyone's, and
+      // everyone else just the newcomer's, so messages stay small.
+      const entries = owner ? Records.cleanShared(msg.scores, owner) : [];
+      if (owner) online.shared.set(owner, { color, entries });
+      Records.importShared(entries, color);
+      online.room.send(id, { t: 'scores', from: [...online.shared.values()] });
+      for (const p of online.players) if (p.id !== 'host' && p.id !== id) online.room.send(p.id, { t: 'scores', from: [{ color, entries }] });
+      if (state === 'lobby') setStatus(FLAVOR.friendJoined(name));
+      else toast(FLAVOR.friendJoined(name), 1800, '', 'round', { phone: FLAVOR.friendJoinedPhone(name) });
+      // A round under way: they watch this one and play from the next.
+      if (state === 'countdown' || state === 'running') {
+        online.room.send(id, Online.round(game, game.humans, game.rivalsLine, game.roundId));
+        if (state === 'running') online.room.send(id, { t: 'phase', s: 'go' });
+      }
+    } else if (msg.t === 'away' || msg.t === 'back') {
+      const p = online.players.find(o => o.id === id);
+      if (p) p.away = msg.t === 'away';
+    } else if (msg.t === 'turn' || msg.t === 'swipe' || msg.t === 'pow') {
+      // A friend's press: a turn, a fresh swipe (the way they're going, a
+      // flash), or a power (only once the round's going), by the same rules as yours.
+      const s = game.snakes.find(o => o.peer === id);
+      if (!s?.alive || s.left || (state !== 'countdown' && state !== 'running')) return;
+      if (msg.t === 'pow' ? !Online.POWERS.includes(msg.k) || state !== 'running' : !Online.DIR_NAMES.includes(msg.d)) return;
+      if (s.autopilot) handBack(s);
+      if (msg.t === 'pow') powerOf(s, msg.k);
+      else if (msg.t === 'swipe' && state === 'running') swipeTo(msg.d, s);
+      else turn(msg.d, s);
+      if (planSent && state === 'running') sendPlan(); // (the others see it coming)
+    }
+  }
+
+  // A friend whose connection goes quiet gets an AI at the wheel until they're
+  // back, so a hiccup never drives them into a wall. Their browser says "still
+  // here" four times a second, so a quiet spell shows within a moment; any turn
+  // they send hands the wheel straight back. Short blips pass without a banner.
+  // A friend who switched tabs said so: the AI stays at the wheel until they turn.
+  function checkAway() {
+    for (const s of game.snakes) {
+      if (!s.peer || s.peer === 'host' || !s.alive || s.left) continue;
+      const away = online.players.find(p => p.id === s.peer)?.away;
+      const quiet = away ? Infinity : online.room.quietFor(s.peer);
+      if (quiet > T.AWAY_MS && !s.autopilot) {
+        s.autopilot = PERSONAS.drab;
+        s.queue.length = 0;
+        s.awayPilot = !!away;
+      } else if (quiet <= T.AWAY_MS && s.autopilot && !s.awayPilot) handBack(s);
+      if (s.autopilot && quiet > T.AWAY_TOAST_MS && !s.awayToast) {
+        s.awayToast = true;
+        toast(FLAVOR.friendAway(s.name), 2200, '', 'round', { phone: FLAVOR.friendAwayPhone(s.name) });
+      }
+    }
+  }
+
+  function handBack(s) {
+    s.autopilot = null;
+    s.awayPilot = false;
+    if (s.awayToast) toast(FLAVOR.friendBack(s.name), 1500, '', 'round');
+    s.awayToast = false;
+  }
+
+  // A friend left: their seat opens up, and an AI finishes their round for them.
+  function friendLeft(id) {
+    if (!hosting()) return;
+    const i = online.players.findIndex(p => p.id === id);
+    if (i < 0) return;
+    const [p] = online.players.splice(i, 1);
+    if (p.owner) online.shared.delete(p.owner);
+    const s = game.snakes.find(o => o.peer === id);
+    if (s) s.left = true;
+    if (s?.alive && (state === 'countdown' || state === 'running')) {
+      s.autopilot = PERSONAS.drab;
+      s.queue.length = 0;
+      thinkQueue.push(s);
+      toast(FLAVOR.friendLeft(p.name), 2400, '', 'round', { phone: FLAVOR.friendLeftPhone(p.name) });
+    } else if (state === 'lobby') setStatus(`${p.name} left.`);
+    sendLobby();
+  }
+
+  function startOnlineRound() {
+    if (!hosting()) return;
+    const humans = online.players.map(p => ({ name: p.name, color: p.color, peer: p.id, owner: p.owner }));
+    newGame({ humans });
+    game.humans = humans;
+    game.roundId = Online.newCode() + Date.now().toString(36);
+    game.snakes.forEach((s, i) => { if (humans[i]) { s.peer = humans[i].peer; s.owner = humans[i].owner; } });
+    game.rivalsLine = game.snakes.some(s => s.persona) ? pick(FLAVOR.rivals) : FLAVOR.rivals0;
+    online.holesSent = game.holes.size;
+    online.room.broadcast(Online.round(game, humans, game.rivalsLine, game.roundId));
+    state = 'countdown';
+    beatsLeft = 3;
+    beatTimer = 0;
+    updateControls();
+    beat();
+  }
+
+  // ------------- joining
+
+  // (A pasted invite link works too: its ?join= code is used.)
+  const codeIn = text => Online.cleanCode(/join=([a-z0-9]{5})/i.exec(String(text))?.[1] ?? text);
+  async function joinRoom(text) {
+    const code = codeIn(text);
+    if (!Online.isCode(code)) {
+      if (state !== 'lobby') openFriends(); // (a bad ?join= link: show where the problem is)
+      return setStatus('Room codes are five characters, like K7QXM.', true);
+    }
+    saveLobbyName();
+    const attempt = ++joinAttempt;
+    state = 'lobby';
+    updateControls();
+    showCard({
+      title: 'Play with friends', text: FLAVOR.joining(code), secondary: 'Cancel',
+      lobby: { status: '' }, actions: { secondary: backToStart },
+    });
+    try {
+      const room = await Net.join(code, { onMessage: fromHost, onLost: hostLost });
+      if (attempt !== joinAttempt) { room.close(); return; }
+      online = { role: 'guest', room, code, seat: -1, hostName: 'the host', players: [], lastTickAt: 0 };
+      room.send({ t: 'hello', v: Online.VERSION, name: localName(), owner: Records.playerId(), scores: Records.shareable(localName()) });
+      setUrlCode(code);
+      updateHelp();
+    } catch (err) {
+      if (attempt !== joinAttempt) return;
+      showCard({
+        title: 'Play with friends', text: err.message, primary: 'Try again', secondary: 'Back',
+        lobby: { name: true, join: true }, actions: { primary: () => joinRoom(code), secondary: backToStart },
+      });
+      lobbyName.value = Records.hasName() ? Records.getName() : '';
+      lobbyCode.value = code;
+    }
+  }
+
+  function showGuestLobby() {
+    showCard({
+      title: `Room ${online.code}`, text: FLAVOR.waiting(online.hostName), secondary: 'Leave room',
+      lobby: { players: true }, actions: { secondary: leaveRoom },
+    });
+  }
+
+  function fromHost(msg) {
+    if (!guesting()) return;
+    try { handleHost(msg); } catch { /* a message we can't use (a newer or modified host): ignore it */ }
+  }
+  function handleHost(msg) {
+    switch (msg.t) {
+      case 'welcome':
+        if (state === 'lobby') showGuestLobby();
+        break;
+      case 'reject':
+        endOnline();
+        state = 'lobby';
+        showCard({
+          title: 'Play with friends', primary: 'Back', actions: { primary: backToStart },
+          text: msg.why === 'full' ? 'That room is full: four people already.' : 'That room runs a different version of the game. Reload both pages and try again.',
+        });
+        break;
+      case 'lobby':
+        if (!Array.isArray(msg.players)) break;
+        online.players = msg.players.slice(0, Online.MAX_PEOPLE).filter(p => p && typeof p.name === 'string');
+        online.hostName = msg.players.find(p => p.host)?.name || 'the host';
+        if (state === 'lobby') showGuestLobby();
+        else if (!lobbyPlayers.hidden) renderPlayers();
+        break;
+      case 'round': guestRound(msg); break;
+      case 'scores':
+        for (const f of Array.isArray(msg.from) ? msg.from : []) Records.importShared(f?.entries, f?.color);
+        break;
+      case 'phase':
+        if (msg.s === 'countdown' && state === 'countdown') showBeat(msg.beat);
+        else if (msg.s === 'go' && state === 'countdown') go();
+        break;
+      case 'tick': hostTick(msg); break;
+      case 'plan': if (state === 'running' && game) Online.applyPlan(game, msg, DIRS, online.seat); break; // (drawing ahead: where everyone goes next)
+      case 'say': // (the host's last line can arrive after the round ended here)
+        if ((state === 'countdown' || state === 'running') && game.snakes[msg.id] && typeof msg.text === 'string') Chatter.replay(game.snakes[msg.id], msg.text.slice(0, 200), msg.reply === true);
+        break;
+      case 'closed': hostLost('closed'); break;
+    }
+  }
+
+  // The host's new round, laid out on a friend's screen.
+  function guestRound(msg) {
+    online.seat = msg.humans.findIndex(h => h.peer === online.room.id);
+    newGame({ humans: msg.humans, personas: msg.personas });
+    game.roundId = typeof msg.id === 'string' ? msg.id : '';
+    game.snakes.forEach((s, i) => { if (msg.humans[i]) s.owner = msg.humans[i].owner; });
+    Online.apply(game, msg.first, DIRS);
+    for (const s of game.snakes) rememberPrev(s);
+    updateHud(true);
+    game.rivalsLine = online.seat < 0 ? pick(FLAVOR.spectators) : msg.rivals;
+    state = 'countdown';
+    updateControls();
+    showCard({ title: '…', text: game.rivalsLine, opponents: true, quiet: true, beat: true });
+    showYou(playerAlive());
+  }
+
+  function hostLost(reason) {
+    if (!guesting()) return;
+    const { hostName: name, code } = online;
+    endOnline();
+    state = 'lobby';
+    updateControls();
+    if (reason === 'closed') showCard({ title: 'Room closed', text: FLAVOR.roomGone(name), primary: 'Back', actions: { primary: backToStart } });
+    else showCard({ title: 'Connection lost', text: FLAVOR.roomLost, primary: 'Rejoin', secondary: 'Back', actions: { primary: () => joinRoom(code), secondary: backToStart } });
+  }
+
+  // ------------- leaving
+
+  function leaveRoom() {
+    if (hosting()) online.room.broadcast({ t: 'closed' });
+    endOnline();
+    ready();
+  }
+
+  function endOnline() {
+    const { room } = online;
+    online = null;
+    keepTimeWhileHidden(false);
+    setUrlCode(null);
+    updateHelp();
+    setTimeout(() => room.close(), 300); // let a goodbye get out first
+  }
+
+  click(friendsBtn, openFriends);
+  click(lobbyCopy, async () => {
+    const link = lobbyLink.value;
+    if (navigator.share && touchFirst && link.startsWith('http')) {
+      try { await navigator.share({ title: 'Barkstreet Snakes', text: 'Come and play snake on a mossy log with me:', url: link }); return; } catch { /* cancelled: copy instead */ }
+    }
+    try {
+      await navigator.clipboard.writeText(link);
+      setStatus('Link copied. Send it to your friends.');
+    } catch {
+      lobbyLink.select();
+      setStatus('Select the link and copy it.');
+    }
+  });
+  lobbyCopy.textContent = navigator.share && touchFirst ? 'Share link' : 'Copy link';
+  lobbyLink.addEventListener('focus', () => lobbyLink.select());
+  lobbyCode.addEventListener('input', () => {
+    if (/join=/i.test(lobbyCode.value)) lobbyCode.value = codeIn(lobbyCode.value);
+  });
+  lobbyJoin.addEventListener('submit', e => {
+    e.preventDefault();
+    Audio.unlock();
+    joinRoom(lobbyCode.value);
+  });
+  lobbyName.addEventListener('change', saveLobbyName);
+  // The host passes the chatter on, so every screen has the same lines.
+  Chatter.onSpeak((s, text, reply) => {
+    if (hosting() && (state === 'countdown' || state === 'running')) online.room.broadcast({ t: 'say', id: s.id, text, reply });
+  });
+  // Back from the back/forward cache, a room that was closed on the way out is gone.
+  window.addEventListener('pageshow', e => {
+    if (!e.persisted || !online) return;
+    if (guesting()) hostLost('silent');
+    else { endOnline(); ready(); }
+  });
+  // Closing the tab says goodbye, so friends aren't left waiting.
+  window.addEventListener('pagehide', () => {
+    if (hosting()) online.room.broadcast({ t: 'closed' });
+    if (online) online.room.close();
+  });
+
+  // ------------------------------------------------- size and motion
+
+  R.init({ canvas, personas: PERSONAS, birdLayer: $('bird-layer') });
+  // Where the board is on the page (the woodpecker perches beside it, on its own layer).
+  // ...and how far the free page runs round it before the tags, the speed
+  // buttons, the chatter or the header (no perching on those), inside the
+  // screen's safe area (not under a notch); how tall the ledge under it is
+  // (a phone held upright: the bird perches there); and where the moss and
+  // the corner leaves hang off its bottom edge into the ledge (the bird
+  // stands clear of them: across, CSS px, a little wider for the leaves' sway).
+  const furniture = ['header', '.scoreboard', '.foot', '.chatter'].map(q => document.querySelector(q)).filter(Boolean);
+  const hanging = [...document.querySelectorAll('.frame .moss.bottom, .frame .leaves.bl, .frame .leaves.br')];
+  const ledgeEl = $('perch-ledge'), rootStyle = getComputedStyle(document.documentElement);
+  const inset = name => parseFloat(rootStyle.getPropertyValue(name)) || 0;
+  // What's above the frame, measured (the page's top, the header and the
+  // tags, however many rows they wrap to in whatever font): the board is as
+  // big as leaves room for it, and on a phone held upright, at a height in
+  // between, leaves the bird room beside it or under it (style.css,
+  // --above). Set only when it changes: the board's own change, which moves
+  // nothing above it on a phone, doesn't come round again. Over the board
+  // (a tablet, a near-square window) the page is as wide as the board, and
+  // the header's and the tags' rows follow its width: a smaller board can
+  // take them onto more rows. So it's worked out from the page's own guess
+  // (one row of each, the least it could need) up, until it holds, which is
+  // the biggest board that does, whatever the page was before (from where
+  // it was, a window made taller could keep a smaller board's extra row).
+  // Measured now, before the page is first drawn; as the window changes size
+  // and as the font arrives, before the board is placed; and if the header
+  // changes otherwise (a longer score), a moment later: set from inside a
+  // resize observer's call, the board's change would come round again in
+  // the same frame, which the browser reports as an error.
+  const frameEl = document.querySelector('.frame'), footEl = document.querySelector('.foot'), titleEl = document.querySelector('h1');
+  const frameTop = () => Math.round((frameEl.getBoundingClientRect().top + scrollY) * 10) / 10;
+  let above = -1, aboveSoon = 0;
+  const measureAbove = () => {
+    aboveSoon = 0;
+    mainEl.style.removeProperty('--above');
+    above = -1;
+    for (let i = 0; i < 4; i++) { // (each pass only adds rows: it stops at the first that holds)
+      const top = frameTop();
+      if (Math.abs(top - above) <= 0.25) break;
+      above = top;
+      mainEl.style.setProperty('--above', `${top}px`);
+    }
+  };
+  measureAbove();
+  window.addEventListener('resize', measureAbove, { passive: true });
+  document.fonts?.addEventListener?.('loadingdone', measureAbove);
+  const placeBoard = () => {
+    if (!aboveSoon && Math.abs(frameTop() - above) > 0.25) aboveSoon = setTimeout(measureAbove);
+    const b = canvas.getBoundingClientRect();
+    const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: ledgeEl ? ledgeEl.offsetHeight : 0, upright: !!ledgeEl?.offsetParent, hang: [] }; // (upright: a phone held upright, the ledge laid out, though it's 0 px tall where the board leaves the bird a gutter instead)
+    // (held upright, where the row under the board is closer than the moss
+    // and the leaves hang off the frame's bottom, 12 px, they're left off:
+    // style.css .snug)
+    frameEl.classList.toggle('snug', free.upright && footEl.getBoundingClientRect().top - frameEl.getBoundingClientRect().bottom < 12);
+    for (const el of furniture) {
+      const f = el.getBoundingClientRect();
+      if (!f.width || !f.height) continue; // (hidden)
+      const across = f.left < b.right && f.right > b.left, along = f.top < b.bottom && f.bottom > b.top;
+      if (across && f.bottom <= b.top + 1) free.top = Math.max(free.top, f.bottom);
+      else if (across && f.top >= b.bottom - 1) free.bottom = Math.min(free.bottom, f.top);
+      else if (along && f.right <= b.left + 1) free.left = Math.max(free.left, f.right);
+      else if (along && f.left >= b.right - 1) free.right = Math.min(free.right, f.left);
+    }
+    if (free.ledge) {
+      for (const el of hanging) {
+        const f = el.getBoundingClientRect();
+        if (f.width && f.bottom > b.bottom) free.hang.push([f.left - 2, f.right + 2]);
+      }
+    }
+    // (A banner, held upright: above the board, over the header's title row,
+    // from just inside the screen's safe top down to just over the header's
+    // buttons, the pause button first among them, across the header and 4 px
+    // past it each side; level with the title. In the header's own px: see
+    // placeToast. Where that row has no room for a line, on the board.)
+    aboveBand = null;
+    if (free.upright) {
+      const hd = headerEl.getBoundingClientRect(), title = titleEl.getBoundingClientRect();
+      let row = Infinity;
+      for (const btn of headerEl.querySelectorAll('button')) { const r = btn.getBoundingClientRect(); if (r.height) row = Math.min(row, r.top); }
+      const top = Math.max(0, inset('--safe-t')) + 2 - hd.top, bottom = row - 3 - hd.top;
+      if (bottom - top >= 22) aboveBand = { top, bottom, mid: (title.top + title.bottom) / 2 - hd.top, width: hd.width + 8 };
+    }
+    if (!toastEl.hidden) { placeToast(); toastW = toastEl.offsetWidth; toastH = toastEl.offsetHeight; }
+    R.setBoardRect(b.left, b.top, b.width, free);
+  };
+  window.addEventListener('resize', placeBoard, { passive: true });
+  window.addEventListener('scroll', placeBoard, { passive: true });
+  // (the page around the board changed: it may have moved, or what's under
+  // it. The page is one screen tall whatever it holds, so its own size says
+  // little: the header, the tags, the ledge, the row under the board and the
+  // chatter are watched too, a change in any of them moving the board or
+  // what's round it)
+  const placer = new ResizeObserver(placeBoard);
+  for (const el of [mainEl, ledgeEl, ...furniture]) if (el) placer.observe(el);
+  // The chatter takes what's left of the screen: its box is the column's
+  // rest (style.css), whatever it holds, so the page is one screen tall in
+  // every state. What shows in it is worked out here, as lines come and go
+  // and the box changes (data-fit): the caption and as many whole lines as
+  // fit, newest first (full), where the box has room for the caption and two
+  // rows of words; with less, the lines alone (strip), and where not even
+  // the newest fits whole, it cut to the rows that do; with no room for a
+  // row, no panel at all (none: the switch is still in the row above, and
+  // the rivals' long lines go to their bubbles on the board, as they do in
+  // a strip: chatter.js). A line is never sliced through, and an older line
+  // is shown whole or not at all. Decided from the box, never from the
+  // panel: the box's size doesn't depend on what's in it, so nothing here
+  // comes round again, and nothing comes and goes as lines of one row or
+  // two arrive.
+  const chatterEl = document.querySelector('.chatter'), chatterHead = chatterEl.querySelector('.chatter-head');
+  let chatFit = '';
+  const fitChatter = () => {
+    const lines = [...chatlogEl.children];
+    for (const li of lines) li.classList.remove('gone', 'cut');
+    let fit = 'off';
+    if (!chatlogEl.hidden) {
+      const box = chatterEl.getBoundingClientRect(), end = Math.min(box.bottom, innerHeight) + 0.5;
+      chatterEl.dataset.fit = 'full';
+      const ls = getComputedStyle(chatlogEl), row = parseFloat(ls.lineHeight) || 17, li = 4; // (a row of words, and a line's own padding)
+      const pad = parseFloat(ls.paddingTop) + parseFloat(ls.paddingBottom) + parseFloat(ls.borderBottomWidth);
+      fit = box.height && chatterHead.getBoundingClientRect().bottom + pad + 2 * (row + li) <= end ? 'full' : 'strip';
+      chatterEl.dataset.fit = fit;
+      const fits = () => chatlogEl.getBoundingClientRect().bottom <= end;
+      let n = lines.length;
+      while (n > 1 && !fits()) lines[--n].classList.add('gone');
+      if (n && !fits()) { // (the newest, as many of its rows as fit: from its words' top, less its own padding under them and the log's)
+        const ns = getComputedStyle(lines[0]), top = lines[0].getBoundingClientRect().top + parseFloat(ns.paddingTop);
+        const rows = Math.floor((end - 0.5 - top - parseFloat(ns.paddingBottom) - parseFloat(ls.paddingBottom) - parseFloat(ls.borderBottomWidth)) / row);
+        if (rows >= 1) { lines[0].style.setProperty('--rows', rows); lines[0].classList.add('cut'); }
+      }
+      if (!box.height || !fits()) fit = 'none';
+    }
+    if (fit === 'none' || fit === 'off') for (const li of lines) li.classList.remove('gone', 'cut');
+    chatterEl.dataset.fit = chatFit = fit;
+  };
+  new ResizeObserver(() => fitChatter()).observe(chatterEl);
+  new MutationObserver(() => fitChatter()).observe(chatlogEl, { childList: true });
+  document.fonts?.ready.then(fitChatter);
+  // Watching, the speed buttons take a row of the row under the board (in
+  // the column beside the board, and on a phone on its side); where, with
+  // them, the chatter would have no room for a row of words (a phone on its
+  // side less a notch's home bar, 780×320 in Safari), the help, which only
+  // says what they do, gives the chatter its room; where a row fits beside
+  // it, it stays. (Held upright on a phone they take the help's place:
+  // style.css.) And in any state, the help gives way where it doesn't fit
+  // the row: an item running past its box (the speed buttons and the switch
+  // squeezing it, watching on a narrow touch screen), or its lines pushing
+  // the row past the page's bottom (a narrow window with a mouse, the keys'
+  // help on four to six lines), where the board keeps its size (the owner's
+  // call: the board never smaller than before, the help and the chatter
+  // give way); the start card, the nap's and How to play have the keys, and
+  // on a touch screen the first Go says how to jump and flash. Decided with
+  // the help shown, as the window changes, the font arrives, the help's
+  // words change, the speed buttons come and go and the chatter's switched;
+  // never from inside a resize observer's call (the column's change would
+  // come round again).
+  const fitColumn = () => {
+    mainEl.classList.remove('help-yields');
+    fitChatter();
+    const h = helpEl.getClientRects().length && helpEl.getBoundingClientRect();
+    if (h && (helpEl.scrollWidth > helpEl.clientWidth + 1 || (h.height > parseFloat(getComputedStyle(footEl).minHeight) + 0.5 && footEl.getBoundingClientRect().bottom + scrollY > innerHeight + 0.5))) { // (squeezed, or taller than the row and taking it off the screen)
+      mainEl.classList.add('help-yields');
+      fitChatter();
+      return;
+    }
+    if (speedEl.hidden || chatlogEl.hidden || chatFit !== 'none') return;
+    mainEl.classList.add('help-yields');
+    fitChatter();
+  };
+  window.addEventListener('resize', fitColumn, { passive: true });
+  document.fonts?.addEventListener?.('loadingdone', fitColumn);
+  Chatter.init({ boardEl, logEl: chatlogEl });
+
+  const sizer = new ResizeObserver(entries => {
+    const e = entries[0];
+    const w = e.contentRect.width;
+    if (!w) return;
+    boardPx = w;
+    R.resize(w, e.devicePixelContentBoxSize?.[0]?.inlineSize);
+    placeBoard();
+    Chatter.setCompact(w < 420);
+    dirty = true;
+  });
+  // The device-pixel box also reports browser zoom; older browsers get the CSS box.
+  try { sizer.observe(canvas, { box: 'device-pixel-content-box' }); } catch { sizer.observe(canvas); }
+  // (Browsers without the device-pixel box don't report a density change on
+  // its own, say moving to another monitor, so listen for that too.)
+  (function watchDensity() {
+    const mq = matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`);
+    mq.addEventListener?.('change', () => { if (boardPx) { R.resize(boardPx); dirty = true; } watchDensity(); }, { once: true });
+  })();
+
+  const applyMotion = () => R.setReducedMotion(reducedMQ.matches);
+  reducedMQ.addEventListener?.('change', applyMotion);
+  applyMotion();
+
+  // ------------------------------------------- dev: frame-time overlay
+
+  // Behind ?perf or ?debug, toggled with the ` key: average and worst frame
+  // time (script + canvas) and tick cost over the last 120 frames.
+  const perf = (() => {
+    const N = 120;
+    const frames = new Float32Array(N), ticks = new Float32Array(N);
+    let i = 0, n = 0, el = null, shown = params.has('perf'), lastPaint = 0;
+    return {
+      record(ms, tickMs) {
+        frames[i] = ms; ticks[i] = tickMs; i = (i + 1) % N; n = Math.min(N, n + 1);
+        if (!shown) return;
+        const now = performance.now();
+        if (now - lastPaint < 250) return;
+        lastPaint = now;
+        let sum = 0, worst = 0, tsum = 0, tworst = 0;
+        for (let j = 0; j < n; j++) { sum += frames[j]; worst = Math.max(worst, frames[j]); tsum += ticks[j]; tworst = Math.max(tworst, ticks[j]); }
+        el.textContent = `frame ${(sum / n).toFixed(2)} ms avg · ${worst.toFixed(2)} worst\ntick  ${(tsum / n).toFixed(2)} ms avg · ${tworst.toFixed(2)} worst\nparticles ${R.particles}`;
+      },
+      toggle() {
+        shown = !shown;
+        if (!el) { el = document.createElement('pre'); el.className = 'perf'; document.body.append(el); }
+        el.hidden = !shown;
+      },
+      stats() {
+        const list = Array.from(frames.slice(0, n)).sort((a, b) => a - b);
+        return { avg: list.reduce((a, b) => a + b, 0) / (n || 1), p95: list[Math.floor(n * 0.95)] || 0, worst: list[n - 1] || 0 };
+      },
+      init() { if (shown) { shown = false; this.toggle(); } },
+    };
+  })();
+  perf.init();
+
+  // ---------------------------------------------------------- start
+
+  // The first decision a brain makes runs cold (the JIT hasn't seen its
+  // paths yet), so each rival makes one practice decision, on a scratch
+  // memory, while the start card is up.
+  function warmUp() {
+    if (state !== 'ready' || !game) return;
+    for (const s of game.snakes) if (s.persona) SnakeAI.decide(E.aiView(game, s), s.persona, {});
+  }
+
+  // The rivals chosen for the start card, for a round of the other kind from
+  // it (Watch AIs from a card set up with you in it): the same ones, with a
+  // seat more filled at random (an AI-only round has one more), or none
+  // chosen, a random line-up (null).
+  function lineUp(aiOnly) {
+    if (!readyPersonas) return null;
+    const want = T.OPPONENTS + (aiOnly ? 1 : 0), keys = readyPersonas.filter(k => SnakeAI.POOL.includes(k)).slice(0, want);
+    const rest = SnakeAI.POOL.filter(k => !keys.includes(k));
+    while (keys.length < want && rest.length) keys.push(...rest.splice(Math.floor(Math.random() * rest.length), 1));
+    return keys;
+  }
+  // The start card shows this round's rivals. (personas: chosen ones, by
+  // key, SnakeDebug.setup's; kept for Watch AIs from this card: see lineUp.)
+  let readyPersonas = null;
+  function ready(personas) {
+    startBtn.disabled = false; // (a room that never opened left it disabled)
+    readyPersonas = personas || null;
+    newGame({ personas });
+    state = 'ready';
+    showCard({ title: `Ready, ${localName()}?`, text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true, how: 'How to play' });
+    setTimeout(warmUp, 400);
+  }
+
+  // The controls under the board (online there's no napping or starting over).
+  // The help under the board, for what you can do now (written only when it changes).
+  function updateHelp() {
+    const watching = !online && (state === 'running' || state === 'countdown' || state === 'paused') && !playerAlive();
+    const text = online ? (touchFirst ? FLAVOR.hintOnlineTouch : FLAVOR.hintOnline) : watching ? (touchFirst ? FLAVOR.hintWatchTouch : FLAVOR.hintWatch) : (touchFirst ? FLAVOR.hintTouch : FLAVOR.hintKeys);
+    if (text !== helpText) { helpText = text; setHint(helpEl, text); }
+  }
+
+  // Hints wrap only between items ("E, Shift or right-click flashes" never splits across lines).
+  // Items joined by " · ", each kept whole, a line breaking only after a dot
+  // (the dot rides with the item before it); ⏸ drawn as the pause button's bars.
+  function setHint(el, text) {
+    el.textContent = '';
+    const items = text.split(' · ');
+    items.forEach((item, i) => {
+      if (i) el.append(' ');
+      const span = document.createElement('span');
+      if (item.length <= 24) span.className = 'whole';
+      item.split('⏸').forEach((part, j) => { if (j) span.append(pauseGlyph()); if (part) span.append(part); });
+      if (i < items.length - 1) {
+        const sep = document.createElement('i'); sep.className = 'sep'; sep.textContent = '\u00a0·'; sep.setAttribute('aria-hidden', 'true');
+        const pause = document.createElement('span'); pause.className = 'sr-only'; pause.textContent = ', '; // (heard as a list, not "dot")
+        span.append(sep, pause);
+      }
+      el.append(span);
+    });
+  }
+  const setText = (el, text) => (text.includes(' · ') ? setHint(el, text) : (el.textContent = text));
+  function pauseGlyph() {
+    const t = document.createElement('template');
+    t.innerHTML = '<svg class="glyph" viewBox="0 0 10 12" role="img" aria-label="pause"><rect x="1" y="1" width="3" height="10" rx="1.5"/><rect x="6" y="1" width="3" height="10" rx="1.5"/></svg>';
+    return t.content.firstChild;
+  }
+  setHint(hintEl, touchFirst ? FLAVOR.hintTouch : FLAVOR.hintStart);
+  updateHelp();
+  showChatterState();
+  ready();
+  updateControls();
+  requestAnimationFrame(loop);
+  // A friend's link (?join=CODE) goes straight to their room.
+  if (params.get('join')) joinRoom(params.get('join'));
+
+  // Test hooks, only with ?debug. The test pane runs hidden, where browsers
+  // pause requestAnimationFrame, so frames(n) drives the loop by hand.
+  if (params.has('debug')) {
+    let fake = performance.now();
+    window.SnakeDebug = {
+      game: () => game,
+      state: () => state,
+      online: () => online && { role: online.role, seat: online.seat, code: online.code, players: online.players, rtt: hosting() ? online.room.rtt() : null },
+      setup: ready,
+      flavor: () => FLAVOR, // (the narrator's words: input-test holds the lessons to 60 characters)
+      banners: () => bannerLog, // (every banner, and what became of it: shown, queued, stale, skipped, dropped, card)
+      banner: (text, kind = '', level = 'round', opts = {}) => { hideToast(); toast(text, 2800, kind, level, opts); }, // (one put up by hand, at once, as the round would: the tests' phones)
+      step: E.step,
+      createGame: E.createGame,
+      perf: () => perf.stats(),
+      frames(count, ms = 1000 / 60) {
+        fake = Math.max(fake, lastFrame); // real frames may have run ahead meanwhile
+        for (let j = 0; j < count; j++) { fake += ms; frame(fake); }
+        return state;
+      },
+      draw: () => R.frame(drawAlpha, boardClock),
+      pinQuality(q) { governor.pinned = true; R.setQuality(q); dirty = true; }, // (benchmarks: the governor stays out of it)
+    };
+  }
+})();
