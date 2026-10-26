@@ -1,5 +1,5 @@
 # The game's own checks, on every push and pull request: the rules, online
-# play, the rivals' chatter and the records in Node, the same seeded rounds
+# play, the rivals' chatter, the records and the service worker in Node, the same seeded rounds
 # with and without thinking ahead, and the renderer's, controls' and page's
 # promises in headless Chrome (the runner has it): the page on phones,
 # tablets and desktops too. The three jobs run side by side.
@@ -27,6 +27,8 @@ jobs:
         run: node tools/chatter-test.js
       - name: Records
         run: node tools/records-test.js
+      - name: Service worker
+        run: node tools/sw-test.js
       # Four of seed 3's rounds, each played on its own seed (round r of a run
       # with --seed S is round 0 of one with --seed S + 7919 r): 29, 37 and
       # 38, and 47. Between them they cross every kind of event the engine

@@ -4,7 +4,7 @@ description: Read-only search of this repository. Use it to find where something
 model: haiku
 tools: Read, Grep, Glob, Bash
 ---
-You find things in this repository and say where they are. The game files are large (`render.js` is over 500 KB):
+You find things in this repository and say where they are. The game files are large (`snake.js` is about 200 KB):
 never read one whole. Use `scripts/codemap.sh <file>` (its functions with line numbers) and grep first, then read only
 the lines you need. The design is in `docs/design/`, one file per topic.
 

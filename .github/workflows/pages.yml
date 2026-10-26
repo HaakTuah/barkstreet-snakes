@@ -1,0 +1,94 @@
+# The site on GitHub Pages, served from the gh-pages branch: main at its root,
+# exactly as main has it, and every open pull request playable beside it at
+# pr-<number>/ (https://haaktuah.github.io/barkstreet-snakes/pr-<number>/).
+# A push to main brings the root up to date (the previews stay); a pull
+# request's push brings its preview up to date and puts the link in it; a
+# closed one has its preview taken down. Pages must serve the gh-pages branch
+# (Settings, Pages, "Deploy from a branch": gh-pages, / (root)). The first run
+# of any of these makes the branch if it isn't there yet.
+# sw.js keeps main's offline copy and each preview's apart.
+name: pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# (one at a time: each run commits to gh-pages on top of the last)
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # (a fork's pull request gets a read-only token: no preview for it)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      GONE: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # (a pull request's own head, not the merge GitHub makes of it; closed, main)
+          ref: ${{ github.event_name != 'pull_request' && github.sha || github.event.action == 'closed' && 'main' || github.event.pull_request.head.sha }}
+
+      - name: Update gh-pages
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          src=$(git rev-parse HEAD)
+          site=$(mktemp -d)
+          if git fetch -q origin gh-pages; then
+            git worktree add -q "$site" FETCH_HEAD
+          else
+            git worktree add -q --detach "$site" && (cd "$site" && git checkout -q --orphan gh-pages && git rm -rqf .)
+          fi
+          cd "$site"
+          # Main at the root, exactly as main has it (everything but the previews is
+          # replaced), on every run: GitHub drops a run still waiting its turn when a
+          # newer one comes, so whichever runs brings main's latest.
+          find . -mindepth 1 -maxdepth 1 ! -name .git ! -name 'pr-[0-9]*' -exec rm -rf {} +
+          git -C "$GITHUB_WORKSPACE" fetch -q origin main
+          git -C "$GITHUB_WORKSPACE" archive FETCH_HEAD | tar -x
+          # (and for the same reason, any closed pull request's preview still up goes)
+          open=" $(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" --paginate --jq '.[].number' | tr '\n' ' ') "
+          for d in pr-[0-9]*; do [ -d "$d" ] && [[ "$open" != *" ${d#pr-} "* ]] && rm -rf "$d"; done
+          # A preview: the game's own files, without the tools and the notes.
+          if [ -n "$PR" ]; then
+            rm -rf "pr-$PR"
+            if [ "$GONE" != true ]; then
+              mkdir "pr-$PR"
+              git -C "$GITHUB_WORKSPACE" archive "$src" | tar -x -C "pr-$PR" --exclude=tools --exclude=docs --exclude=scripts --exclude=.claude --exclude=.github --exclude='*.md'
+            fi
+          fi
+          touch .nojekyll # (served as is: no Jekyll build)
+          git add -A
+          if git diff --cached --quiet; then echo "nothing changed"; exit 0; fi
+          if [ -z "$PR" ]; then msg="main ${src:0:7}"; elif [ "$GONE" = true ]; then msg="pr-$PR: taken down"; else msg="pr-$PR: ${src:0:7}"; fi
+          git commit -q -m "$msg"
+          git push -q origin HEAD:refs/heads/gh-pages
+
+      - name: Link the preview in the pull request
+        if: github.event_name == 'pull_request' && github.event.action != 'closed'
+        run: |
+          set -euo pipefail
+          owner=${GITHUB_REPOSITORY%%/*}
+          url="https://${owner,,}.github.io/${GITHUB_REPOSITORY#*/}/pr-$PR/"
+          body="<!-- pages-preview -->
+          **Play this pull request:** $url
+          (its latest push, ${{ github.event.pull_request.head.sha }}; Pages takes a minute or two to update)"
+          ids=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate --jq '.[] | select(.body | startswith("<!-- pages-preview -->")) | .id')
+          id=${ids%%$'\n'*}
+          if [ -n "$id" ]; then gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -f body="$body" >/dev/null
+          else gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -f body="$body" >/dev/null; fi
