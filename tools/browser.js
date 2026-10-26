@@ -43,32 +43,47 @@ function serve(root = ROOT) {
 }
 
 async function launch() {
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'barkbite-chrome-'));
-  // Chrome runs at below-normal priority, so whoever's using the computer
-  // comes first (its processes take it from here as they start: lowered for
-  // the spawn, then set back). BARKBITE_PRIORITY=normal for timing runs.
-  const pr = os.constants.priority, low = process.env.BARKBITE_PRIORITY !== 'normal';
-  let was = null;
-  if (low) try { was = os.getPriority(); os.setPriority(pr.PRIORITY_BELOW_NORMAL); } catch {}
-  const proc = spawn(findChrome(), [
-    '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
-    '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--mute-audio',
-    '--autoplay-policy=no-user-gesture-required', '--disable-renderer-backgrounding',
-    '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows',
-    ...(process.env.CI ? ['--no-sandbox'] : []), // (a CI runner's Linux can't give Chrome its sandbox)
-    'about:blank',
-  ], { stdio: ['ignore', 'ignore', 'pipe'] });
-  if (was != null) try { os.setPriority(was); } catch {}
-  // Chrome says where its DevTools endpoint is on stderr.
-  const port = await new Promise((resolve, reject) => {
-    let text = '';
-    const timer = setTimeout(() => reject(new Error('Chrome did not start')), 15000);
-    proc.stderr.on('data', d => {
-      text += d;
-      const m = text.match(/DevTools listening on ws:\/\/[^:]+:(\d+)\//);
-      if (m) { clearTimeout(timer); resolve(Number(m[1])); }
-    });
-  });
+  // Chrome says where its DevTools endpoint is on stderr. A cold start on a
+  // fresh CI runner can take longer than the 15 s that's plenty here (the
+  // layout job's first Chrome missed it twice in a row), so on CI it waits
+  // longer; and anywhere, a Chrome that never says goes, and a fresh one gets
+  // one more try.
+  const wait = process.env.CI ? 45000 : 15000;
+  let profile, proc, port;
+  for (let attempt = 1; ; attempt++) {
+    profile = fs.mkdtempSync(path.join(os.tmpdir(), 'barkbite-chrome-'));
+    // Chrome runs at below-normal priority, so whoever's using the computer
+    // comes first (its processes take it from here as they start: lowered for
+    // the spawn, then set back). BARKBITE_PRIORITY=normal for timing runs.
+    const pr = os.constants.priority, low = process.env.BARKBITE_PRIORITY !== 'normal';
+    let was = null;
+    if (low) try { was = os.getPriority(); os.setPriority(pr.PRIORITY_BELOW_NORMAL); } catch {}
+    proc = spawn(findChrome(), [
+      '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
+      '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--mute-audio',
+      '--autoplay-policy=no-user-gesture-required', '--disable-renderer-backgrounding',
+      '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows',
+      ...(process.env.CI ? ['--no-sandbox'] : []), // (a CI runner's Linux can't give Chrome its sandbox)
+      'about:blank',
+    ], { stdio: ['ignore', 'ignore', 'pipe'] });
+    if (was != null) try { os.setPriority(was); } catch {}
+    try {
+      port = await new Promise((resolve, reject) => {
+        let text = '';
+        const timer = setTimeout(() => reject(new Error(`Chrome did not start (try ${attempt}, ${wait / 1000} s)${text.trim() ? ': ' + text.trim().split('\n').slice(-3).join(' | ') : ''}`)), wait);
+        proc.stderr.on('data', d => {
+          text += d;
+          const m = text.match(/DevTools listening on ws:\/\/[^:]+:(\d+)\//);
+          if (m) { clearTimeout(timer); resolve(Number(m[1])); }
+        });
+      });
+      break;
+    } catch (e) {
+      try { proc.kill('SIGKILL'); } catch {}
+      try { fs.rmSync(profile, { recursive: true, force: true }); } catch {}
+      if (attempt >= 2) throw e;
+    }
+  }
   let targets = [];
   for (let i = 0; i < 50 && !targets.some(t => t.type === 'page'); i++) {
     try { targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json(); } catch { /* not yet */ }

@@ -876,6 +876,7 @@ const KEYS = {
       window.__heard = [];
       A.play = (name, opts) => { if (name === 'choke' || name === 'cough') __heard.push({ name, rival: !!opts?.rival, tick: SnakeDebug.game().tick }); return play(name, opts); };
       Object.assign(g.told ||= {}, { beetle: true, goldBeetle: true, leaf: true, goldcap: true, burrow: true, rainbow: true, baked: true }); // (no news on the tick to speak first)
+      g.toldField = true; g.weather.until = Infinity; // (nor a rival's land or a change of weather taking the banner: the round's rivals and sky are random, and either held the lessons below out of their turn on CI)
       const step = E.step; E.step = g => { const out = step(g); const f = window.__staged; window.__staged = null; if (f) f(g); return out; };
       // A choke on the next tick (fresh: a cough from it; again: a bead spat mid-cough), or a nudge.
       window.stageChoke = (id, fresh = true) => { window.__staged = g => { const s = g.snakes[id], h = s.body[0]; g.events.push({ type: 'choke', snake: s, x: h.x, y: h.y, tx: h.x, ty: h.y - 1 }); if (fresh) s.coughUntil = g.tick - 1 + TUNING.COUGH_TICKS; }; return 'ok'; };
@@ -943,6 +944,7 @@ const KEYS = {
     const DIG_LESSON = 'A cornered beetle digs in. Grab it before it’s gone!', FAIR_LESSON = 'Food in the woodpecker’s mark flies to its ring.';
     const BURROW_LESSON = 'A beetle that digs in leaves a burrow behind.', BOTH_LESSON = 'A cornered beetle digs in, leaving a burrow.';
     const HEAL_LESSON = `Past ${['none', 'one', 'two', 'three', 'four', 'five'][BURROW_MAX]} burrows, the stalest one closes over.`;
+    const TAKEN_LESSON = 'A beetle that digs in by a burrow takes its place.';
     const dugPairAt = (x, y, heal = '') => ev(`stageEvents(() => [{ type: 'dive', x: ${x}, y: ${y}, dug: 1 }${heal && `, { type: 'heal', ${heal} }`}, { type: 'burrow', x: ${x}, y: ${y}, dug: 1 }])`); // (a dig over: the engine's pair; at the cap, the one unused longest closing over between them)
     const cues = () => ev('__cues.splice(0).join(" ")');
     const digNear = (dx, dy) => ev(`stageEvents(g => { const h = g.snakes[0].body[0]; return [{ type: 'dig', x: h.x + ${dx}, y: h.y + ${dy}, until: g.tick + ${BEETLE_DIG} }]; })`);
@@ -984,17 +986,26 @@ const KEYS = {
     await ev(`stageEvents(() => [{ type: 'emerge', x: 9, y: 4 }])`);
     await toTick();
     await ev('vadvance(400)');
-    await ev(`stageEvents(() => [{ type: 'burrow', x: 9, y: 9 }])`); // (one cracking open)
+    await ev(`stageEvents(() => [{ type: 'burrow', x: 20, y: 20 }])`); // (one cracking open, far from the digs below: BURROW_SPACING)
     await toTick();
     const dives = await cues();
     await ev('vadvance(6000)'); // (the banner's free again)
-    await dugPairAt(6, 4, 'x: 9, y: 9'); // (another dig over, at three burrows: the one unused longest closes over)
+    await dugPairAt(6, 4, 'x: 20, y: 20'); // (another dig over, at three burrows: the one unused longest closes over)
     await toTick();
     const dugAgain = { toast: await ev('toastText()'), heard: await cues() };
     await ev('vadvance(6000)');
-    await dugPairAt(7, 4, 'x: 3, y: 3'); // (and another)
+    await dugPairAt(15, 4, 'x: 3, y: 3'); // (and another)
     await toTick();
     const healAgain = { toast: await ev('toastText()'), heard: await cues() };
+    await ev('vadvance(6000)');
+    await dugPairAt(16, 5, 'x: 15, y: 4'); // (a dig by a burrow, nearer than BURROW_SPACING: it takes that one's place)
+    await toTick();
+    const taken = await ev('toastText()');
+    await ev('vadvance(6000)');
+    await dugPairAt(17, 6, 'x: 16, y: 5'); // (and another)
+    await toTick();
+    const takenAgain = await ev('toastText()');
+    await cues();
     await ev(`stageEvents(() => [{ type: 'knock', kind: 'pellet', x: 2, y: 6, tx: null, ty: null, color: '#abc' }, { type: 'knock', kind: 'food', x: 5, y: 5, tx: 7, ty: 5 }, { type: 'knock', kind: 'beetle', x: 6, y: 5, tx: 6, ty: 8, gold: 1 }, { type: 'knock', kind: 'pellet', x: 5, y: 6, tx: null, ty: null }])`);
     await toTick();
     const knocked = await cues();
@@ -1034,6 +1045,7 @@ const KEYS = {
       'the burrow a dig leaves teaches its rule the first time the banner’s free for one, and once a round', `held: “${heldPair.toast}”; then “${dugPair.toast}”; later “${dugAgain.toast}”`);
     check(dugAgain.heard === 'heal' && healAgain.heard === 'heal', 'a burrow closing over crumbles (the dig that closed it, and its burrow, unheard)', `heard ${dugAgain.heard || 'nothing'}, then ${healAgain.heard || 'nothing'}`);
     check(dugAgain.toast === HEAL_LESSON && healAgain.toast !== HEAL_LESSON, 'a burrow closing over, once the burrow’s lesson is told: its rule, once a round', `“${dugAgain.toast}”, then “${healAgain.toast}”`);
+    check(taken === TAKEN_LESSON && takenAgain !== TAKEN_LESSON, 'a dig by a burrow takes its place: its own rule, once a round', `“${taken}”, then “${takenAgain}”`);
     check(farAgain !== DIG_LESSON && both === BOTH_LESSON && nearAfter !== DIG_LESSON && pairAfter !== BURROW_LESSON && pairAfter !== BOTH_LESSON,
       'a dig far from you, then its burrow (one closing over on its tick): the dig and the burrow taught at once, the dig first, and neither again', `“${farAgain}”, then “${both}”; a dig near you later “${nearAfter}”, its burrow “${pairAfter}”`);
     check(dives === 'scrabble scrabble burrow', 'one down a burrow, or up out of one, scrabbles (not the bore); a burrow cracking open creaks', `heard ${dives || 'nothing'}`);

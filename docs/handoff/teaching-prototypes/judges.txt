@@ -1,0 +1,284 @@
+##### JUDGE 0
+[{"name":"Your snake talks","learnable":8,"unobtrusive":8,"fair":9,"charm":8,"buildable":8,"notes":"As the new player, this is the one I'd read without trying: the words sit at my head, are short, and stay up long enough (2.8-3.9 s against today's 2.6 s, with the first 0.46 s blurred). Counting the first 2 rounds per device is the best of the three: you get a second chance, and it stops nagging (hunger went from 5 a round to never after round 2). It covers all 31 current lessons, and the bubble keeps off the event (the spat bead, the pit, the mark). Its banner rules are the right ones: reading-time holds, a queue with a 0.5 s breather, nothing cut short but a card, never mid-board, off the board on upright phones, no slam, throb or shine. That fixes the lost-lesson and lost-weather bugs by design. Weak spots: (1) It never teaches steering; I still get only the 1-2 s 'Arrow keys to steer (or WASD)' tag, which on a laptop is the thing I don't know. (2) The flash prompt fires at 6 s whether or not it's calm, and doesn't wait for me to try it. (3) In two shots (p390-hop-now, shot 7) the bubble was caught mid fade-over, and it can sit over a rival's head or an apple; the first placement should use the head's next tick. (4) The hop arc and ring are thin on a 390 phone. Fair: pure UI, mirrors rival lines, and the AI never reads it. Buildable: the most complete patch (30 lines, placement, banner queue, bird); only expected test rewrites (input-test x8, the layout bird checks)."},{"name":"Drawn on the log","learnable":6,"unobtrusive":6,"fair":8,"charm":6,"buildable":6,"notes":"The best pictures of the three. The faint, then half-bright, then solid ring is the real cure for the audit's 35 'nothing/early' presses against 2 'Hup!'. The x past a hurdle with nowhere to land, the dots running out for a press with nothing in reach, the starburst where a golden flash would blow up, and the cut line with 'Snip!' all show a rule without a word. The craft is right: the marks sit under the snakes so pips and faces stay clear, line widths have a floor in CSS px so they read at 360, and reduced motion is handled. But as the father, a 21 px parchment pin with a fingertip or 'E' beside a dashed circle doesn't tell me what will happen; with no words I'd have to guess what the chevrons mean. The lines that would carry the rules that can't be drawn (crash, at 3, choke, cough) are only designed, not built. As prototyped, only 8 banners go: hunger still nags as a banner, and the other banners still slam in mid-board with the old chaining, so the owner's main complaint is only half fixed. The always-on landing ring is a lasting aid for the human and a prediction that can be wrong for a tick. That's fair under the rule (the AI isn't changed, and it sees the board exactly anyway), but it's more ink on the board for good. Buildable: about 330 lines of render-side prediction (tail schedules, fire from/until) that PR B's islands, flights and bridges would have to mirror. Drift from the engine is a standing risk unless it calls the engine's own pure functions. layout-test was not run."},{"name":"A first round that teaches","learnable":9,"unobtrusive":7,"fair":6,"charm":8,"buildable":7,"notes":"The only design that teaches me by having me do it. Steer, then jump, then flash, each waiting for a calm moment and for my press. The bubble shows the actual key cap ([↓], [Space], [E]) or a drawn fingertip, and a picture sits on the very cells involved (the dashed turn arrow, sky dots arching to a ring, a ghost head two cells on). For someone who doesn't know WASD on a laptop, '[↓] and I'll turn!' is the single most useful thing in all three designs. blockedFor (only teaching a jump over something still there when you arrive) and repeating until done (no sooner than 12 s, at most 4 a round, back next round) are both right. In real play it measured 19% banner time against 39-50%. Against it: (1) One rival fewer in a first round is a rule change for humans only. It isn't AI logic, so it doesn't strictly break the fairness memo, but it means a different game for newcomers, and the first round's records count against a smaller field; leave it out. (2) Within 6 s of the last banner, routine news is dropped rather than queued, so rule-carrying weather ('Winter. Less food...') is lost, and round news still cuts news short (seen at 0.5 s). (3) Remarks come once ever, so a remark missed in a busy moment is gone for good; only the last-life lines repeat. (4) Its bubble is the biggest and boldest, and prompts can hold up to 8 s. (5) The jump moment depends on luck (26-36 s in the run) and has a ~360 ms bright window at 120 ms ticks. Charm is high: the fingertip, the key caps, 'Zip! Two cells in a blink.' Buildable: the largest patch (928 lines; a coach with momentOf and blockedFor), with expected test rewrites (input x9, layout x19)."}]
+BUILD ONE SYSTEM, TAKING THE BEST OF EACH
+
+Base it on "Your snake talks": its placement, its line set, its counts and its banner rules. Add "A first round that teaches"'s coach for the three moves, with key caps and the fingertip shown in the bubble. Draw the pictures with "Drawn on the log"'s render layer, shown only while you're learning.
+
+1. Banners (from Your snake talks, as built)
+- Round news only: the woodpecker and its acts, first blood, the last two, weather, spawns, lost land, the last apples.
+- Each is held for its reading time (1 s + 0.4 s a word, up to 4.5 s) and queued with a 0.5 s breather. Only a card cuts one short.
+- No middle slot. On an upright phone they sit above the board; elsewhere at the board's top or foot.
+- They settle in with a short drop and fade: no slam, no red throb, no shine.
+- Not First's BANNER_GAP_MS drop rule, which loses weather lines that carry a rule.
+- Write one-line phone versions of the 2-line weather texts for the 360 phone.
+
+2. Your snake's voice (Your snake talks' Chatter.own / mineSide and voice())
+- One idea per line, at most 32 characters, in the first person, mirroring the rival line for the same moment.
+- Held for its reading time (1.2 s + 0.45 s a word, 2.4-4.2 s), one line at a time. A line that can't show yet isn't used up.
+- It keeps off your head, the 3 cells ahead, the cells of a pressed turn, the banner and the event itself. Rival bubbles make way for it.
+- It goes in the log under your name, and to the screen reader.
+- Counted per device: the first 2 rounds you meet each rule (Your snake talks). The last-life lines (youCrashToThree, youAtThree, youStarvingSmall) come every round (First).
+- Fix its one flaw: choose the first place from the head's next tick, so it doesn't fade over to a new side in its first half second.
+- Wording: take whichever is shorter and closer to the rival line. For example "Ptooey! That's me!" (First) over "Pthoo!", "Ow! My tail!" style for crashes.
+- Add a DESIGN Voice note: your snake may exclaim, the narrator stays calm. The owner should judge the tone.
+
+3. The move coach (First, minus the smaller field)
+- Steer, jump, flash, taught in that order. Each waits for a calm moment and for you to do it.
+- The bubble leads with the cue: [↓]/[Space]/[E] key caps, or the drawn fingertip tapping or swiping.
+- Each move has its picture on the cells:
+  - steer: the dashed turn arrow;
+  - jump: an arc to the ring, faint until a press would go, then bright (blockedFor, so only over something still there when you arrive);
+  - flash: chevrons and the ghost head.
+- A prompt comes back no sooner than 12 s later, at most 4 a round, until you've done the move twice. A move you never did comes back next round.
+- Keep the first round's full field. Keep Go!, made calm, above the board on phones.
+- Retire powersFirst, flashKey, leapNothing, leapEarly and youLeapFirst as banners. They become the coach, plus short lines ("Nothing to hop!", "Too soon!", "Hup! That cost my tail tip.").
+
+4. Pictures (Drawn on the log's drawHints, two passes, CSS-px floors, reduced-motion handling)
+- Keep: the x where a jump has nowhere to land or a flash would bump, the dots running out for a press with nothing in reach, and the -1 at the tail tip on your first jumps.
+- Keep the golden flash's marks: Honey chevrons, the cut line with "Snip!", and the starburst with "Boom!" at an edge or hole. A picture says "never at edges" better than words.
+- Show all of these during the learning period (2 uses, or 2 golden pickups), not always on. After that, only the truthful cues stay: PR B's landing ring once a jump is pressed, and the board's own pictures.
+- Drop the parchment pins: the key now rides in the bubble.
+- No hints switch is needed. Instead, the Field guide gets "Tell me again", which clears the counts, plus Crashes and Hunger rows. The Field guide stays the full reference.
+
+THE BIRD
+All three reached the same answer. On an upright phone it perches at full size, 4.9 cells (about 13 mm on the phone instead of 7-8.5 mm), standing down over the empty middle of the chatter panel's header row, under the ledge, and covering no cell.
+- Build it from Drawn on the log's deep perch (perchFor with free.deep and free.keep). It applies only when the header row is right under the ledge and a clear place exists, and falls back to the ledge perch otherwise. It measured 0 overlap with the label, switch, log or help line in 120 measurements.
+- Add from Your snake talks: the same scale perched, flying and drumming, so it doesn't grow as it takes off.
+- Add from First: taps pass through its layer.
+- While watching it stays on the ledge, small, because the speed buttons sit there.
+- Rewrite the layout-test checks as "off the chatter's label and switch, no cell covered".
+- For PR C, even full size its eye is only 5-6 px, so the gaze must also be drawn on the board, for everyone: a faint dotted sight line from its eye to the patch (First), and a warm wash that deepens where it lingers (Your snake talks / Drawn on the log). It steps instead of drifting under reduced motion.
+- No second, portrait bird.
+
+BUILD ORDER
+Now, as its own PR on round six A, before PR B's moves land:
+- the banner rewrite (1);
+- the voice with all current lessons mapped (2);
+- the steer/jump/flash coach (3);
+- the pictures for today's jump, flash and golden flash (4);
+- the bird;
+- the Field guide rows and "Tell me again";
+- the test rewrites (input-test reading .bubble.mine; layout-test's bird and short-phone Go checks).
+This alone takes banners from 39-50% of play to about 20%, and puts every lesson where the eyes already are.
+
+With PR B: every new move goes through the same coach and voice, with its own cue as the picture. No new banners.
+- Island hop: the arc stretched over up to 3 cells to the ring, offered the first time you're in a pocket with a jumpable gap. Line: "Tap: I'll hop to that island!"
+- Golden flight: the gold ring that slides as you hold, with a dotted trail to the limit. Line: "Hold, and I'll fly! Steer me!"
+- Bridge: planks over the pit, the tail end creaking and sagging, a walkway to a ring on the far rim. Lines: "A bridge, till its tail passes!", then "Off before its tail goes!"
+- Mid-air bump: a spark and a puff. Line: "Oof! Bumped mid-air!"
+- Plain flash cut: a dashed snip preview, with the part behind faded as beads. Line: "Swipe ahead: I'll cut it!"
+- Failed flash: an x with -5 until learned. Line: "Ouch! Too thick."
+- Tail drop: the same snip on your own body, the tail ghosted.
+- Douse: steam.
+- Portals: the exit keeps spinning while others may follow.
+- Rivals get the mirror lines both ways.
+- Hard requirement: the hint code calls the engine's own pure functions for landing, reach and bridge state, so the pictures can't drift from the rules.
+
+With PR C:
+- One calm banner per act. Act 3 folds in the last apples: "Frenzy! The last apples are falling."
+- The gaze sight line and the deepening wash.
+- Combo patches numbered 1-2-3 in strike order.
+- Your lines: "Eep. That bird's watching me." and "Two marks at once?!". "Its mark! I'll keep off that." is already built.
+- The Field guide's Woodpecker row gets the acts and "where it looks longest, it pecks first".
+##### JUDGE 1
+[{"name":"Your snake talks","learnable":8,"unobtrusive":8,"fair":9,"charm":8,"buildable":8,"notes":"The strongest base, and it answers the owner's request most directly. Every lesson about you moves to your own snake's bubble at its head, and every one of the 31 rules is mapped to something. Each line is held for its reading time (1.2 s plus 0.45 s a word), and it measured right: 0.15% of frames over your head and 3 frames over the cells ahead. Rules are taught in your first 2 rounds per device, so hunger stops nagging, but it needs the 'Tell me again' button it proposes.\n\nIt has the best banner rules of the three:\n- shared news only, held for reading time;\n- queued with a 0.5 s breather;\n- never cut except by a card;\n- no slam, throb or shine;\n- off the board on upright phones (14 of 14).\nThe cost is that it covers the lower tag row for 3-4.5 s, which is better than covering the board.\n\nThe jump arc and the flash chevrons are good but thinner than the pictures in Drawn on the log. Your lines go in the log and to screen readers, mirroring the rivals, which is the fairest choice.\n\nWeak spots:\n- The voice leans on exclamation marks. As the snake's own voice it's allowed, but it should be rationed.\n- A bubble can be up to 62% of the board's width.\n- Its first placement sometimes jumps once in the first half second.\n\nThe patch is the cleanest and best measured (+380/-76). chatter, rules and render tests pass. The input-test failures are the expected lesson assertions."},{"name":"Drawn on the log","learnable":7,"unobtrusive":7,"fair":8,"charm":7,"buildable":6,"notes":"This has the best pictures, and it scales best to PR B, whose moves are all spatial. It draws:\n- the landing ring and the arc over the hurdle;\n- an × where a press would fail or crash;\n- ember chevrons for the flash;\n- a cut line with Snip!;\n- a starburst with Boom! where a golden flash would blow up.\nThey sit two passes deep, under the snakes and over them, so the pips and faces are never covered. Line widths are floored in CSS px, so they read on a 360 phone. The 'learned' state thins out well (sheet-learned-off-p390).\n\nWeaker on everything that can't be drawn:\n- Your snake's lines, the banner rules and the PR B and C pictures are designed but not built.\n- The parchment pins are about 21 px icons, and a fingertip glyph alone is hard for a newcomer to decode.\n- 'Hints off' brings back the 8 old, too-fast banners. There should be no road back to them.\n\nAlways-on predictions (an × where you'd crash, rings forever) are a permanent aid for you alone. That's allowed, since the UI may single you out, but it trims the timing skill the owner wants moves to need. A dashed ring that doesn't come true can feel like a broken promise.\n\nBuildability: jumpHint, flashHint and hurdleBy re-derive the engine's rules inside render.js. That will drift once PR B changes jumps (islands, flights, bridges). layout-test was not run."},{"name":"A first round that teaches","learnable":8,"unobtrusive":6,"fair":5,"charm":8,"buildable":6,"notes":"It has the best teaching of the three moves themselves:\n- each prompt waits for you to do the move, and comes back next round if you don't;\n- the flash is taught only at a calm moment (no rival head within 5 cells, the next 3 cells clear);\n- blockedFor makes sure the hurdle will still be there when you arrive;\n- the bubble shows key caps ([Space], [E]) or a drawn fingertip, the clearest way yet to say which key or gesture.\nThe start card stays warm, and banners fell to 19-20% of play.\n\nFairness problems:\n- The first round has one rival fewer. That's an easy mode for people that the owner never asked for, and a first win counts in the Hall of Fame. It goes against 'players and rivals treated alike' in spirit, though not in the AI's code.\n- Your lines are kept out of the log, while the rivals' go in it.\n\nUnobtrusive problems:\n- Routine news within 6 s of a banner is dropped, so weather lines that carry a rule ('Winter. Less food…') are lost again.\n- Banners still sit on the board's top and foot on upright phones.\n- Prompts can hold 3.5-8 s and repeat up to 4 times a round.\n\nOnce-ever remarks are easy to miss. The coach state machine (momentOf, the pacing constants) was tuned on a single phone run. It is the newest base (3a6e6ad), and layout-test was run (19 failures, all by design)."}]
+THE COMBINED DESIGN: your snake teaches you by voice and by pictures at its head; banners carry only news everyone shares.
+
+Base: "Your snake talks" (C:/Users/Perry/source/repos/snake-game/.git/perry-tools/teach/voice/design.patch). It already has the placement engine (Chatter.own and mineSide), the voice() scheduler and the calm banner queue. Graft on the best of the other two:
+
+1. YOUR SNAKE'S VOICE (from the base)
+- Where the bubble goes:
+  - at your head, with the rivals' bubble rules;
+  - it keeps off your head, the 3 cells ahead, a turn you've pressed, the banner and the thing the line is about;
+  - it stays put while it can and fades over in 0.11 s when it must move;
+  - it never fades for your own head, and rival bubbles make way for it.
+- The lines:
+  - first person, one idea, at most 32 characters (a test checks every FLAVOR.mine line);
+  - each mirrors the rivals' line for the same moment, e.g. "Ptooey! My own tail." against "Ptooey! That one's ME!";
+  - they also go in the log under your name and to the screen reader, and show with the chatter off.
+- How long: each line is held for its reading time (1.2 s plus 0.45 s a word, 2.4-4.2 s).
+- When:
+  - each rule's line comes in the first 2 rounds you meet it on this device ('snake-voice');
+  - the last-life lines (crashed to 3, at 3, starving at 3) come every round, as in A first round that teaches;
+  - hunger has no line after round 2: the tag's bar and the rumble carry it.
+- Order: one line at a time; urgent lines replace; the cough's line waits for the choke's.
+- Tone: rationed exclamation marks. Pain and surprise get one; everything else ends in a full stop or an ellipsis. The owner judges the tone.
+- From A first round that teaches: a line that asks for a press carries a cue chip, a key cap ([Space], [E]) or the drawn fingertip tapping or swiping. Its key is named only until you've used it.
+
+2. PICTURES FOR TODAY'S TWO MOVES
+- Use Drawn on the log's drawing kit (C:/Users/Perry/source/repos/snake-game/.git/perry-tools/teach/show/design.patch), without its parchment pins (the chip in the bubble does that job):
+  - the dotted sky arc and landing ring: faint from 5 cells, bright with a breathing ring once a press would go;
+  - an × where it can't land;
+  - ember chevrons when the flash is ready;
+  - the two-pass layering;
+  - CSS-px floors on line widths.
+- Take two gates from A first round that teaches:
+  - blockedFor: a jump is taught only over a hurdle that will still be there when you arrive;
+  - the flash is shown only at a calm moment.
+- These predictive pictures teach until you've done the move 3 times. After that, only the cues PR B draws for every snake stay (a pressed jump's landing ring, a flier's gold ring), so you read the rivals' moves the same way.
+- Drop the 'Hints off brings back 8 banners' path.
+- Field guide: one 'Tell me again' button that resets the voice and the pictures.
+- Engineering: the prediction must come from one pure engine query (what a press would do now, given a view), not from re-derived rules in render.js. PR B's islands, flights and bridges then update one place, and a test asserts the picture matches the outcome on staged boards.
+
+3. BANNERS (from the base)
+- Shared news only: the woodpecker, weather, spawns, first blood, the last two, the last apples, lost land.
+- Held for their reading time (1 s plus 0.4 s a word, up to 4.5 s), queued with a 0.5 s breather, never chained, never cut except by a card. Not 'dropped within 6 s' (A first round that teaches), which loses the weather lines that carry a rule.
+- Never mid-board. On upright phones they go above the board: over the header's title row where it fits, else the lower tag row, never over the pause button, and taps pass through.
+- No slam, no red throb, no gold shine.
+- Write one-line phone texts for the weather.
+- Retire powersFirst, flashKey and every 'you' lesson banner.
+- The YOU arrow and its steering tag stay as they are; they already work.
+
+4. REJECTED
+- One rival fewer in the first round (fairness and records).
+- Once-ever remarks.
+- Always-on danger predictions after learning.
+- A boss portrait of the bird.
+- Re-deriving the rules inside render.js.
+
+THE BIRD
+All three designs reached the same answer, so it's settled. On a phone held upright, the woodpecker perches at scale 1 (4.9 cells, a fifth of the board), clinging below the ledge over the chatter panel's head row:
+- in the empty middle between 'Bark chatter' and the On switch, keeping off both;
+- in front of the moss;
+- never over a cell;
+- the same size perched, flying and drumming.
+
+Sizes: 52 to 78 px at 390x844, 38 to 72 px at 360x640, about 13 mm tall, its eye about 1 mm. Phones on their side and desktops are unchanged.
+- Implementation: Drawn on the log's conditional 'deep' perch. It goes there only when the head row starts within 24 px and a clear spot exists, falls back to the ledge, and measured 0 overlaps in 120 cases. Add the base's keep-out spans for the title and the switch.
+- While watching, it stays on the ledge, because of the speed buttons.
+- Dependency: #34 (one screen, the owner wants the help and chatter to give way on phones) reshapes exactly this area. So build the bird on #34's layout. Make a folded chatter keep its head row (title and switch) directly under the ledge as the bird's stand, and write it into the layout contract. layout-test's perch checks become: full scale on upright phones, never over a cell, never over the chatter's title, switch or log text.
+- For PR C: even at full size the eye is 5-6 px, so act 1's gaze must also be drawn on the board (see PR C below).
+
+BUILD ORDER
+
+NOW (one teaching PR on round six A's code, before PR B's moves; the bird part rebased onto #34 once it merges):
+- (a) The banner queue and placement, no slam, phone weather texts.
+- (b) Your snake's voice:
+  - Chatter.own and mineSide;
+  - voice() and 'snake-voice';
+  - the cue chips;
+  - the 30 lines from the base's mapping, entries 2-31, with the at-3 line from A first round that teaches.
+- (c) The jump and flash pictures, with the engine-side preview query.
+- (d) The Field guide: Crashes and Hunger rows, and 'Tell me again'.
+- (e) The full-size bird.
+- (f) Tests:
+  - input-test reads .bubble.mine;
+  - line lengths of 32 characters or fewer;
+  - preview equals outcome;
+  - a frame tracker check: your bubble never over your head or the 3 cells ahead;
+  - layout-test's bird checks;
+  - one real-play run on the 390, 360 and desktop screens against the audit's numbers (banner and line share of play, reading time).
+
+WITH PR B (each move ships with its cue, its picture, its line and its Field guide row; no new banner at all):
+- Island hop: the arc stretched up to 3 cells to the ring on the first free cell. "Tap! I can hop to that island." when boxed.
+- Golden flight: the gold ring under where you'd come down, sliding as you steer, a dotted trail to the 5-cell limit, turning to an × over a hole or a body. "Hold, and I'll fly! Steer me."
+- Bridge:
+  - planks drawn on any body over a pit, its last cells sagging and creaking;
+  - a walkway and ring when a ride is in reach; "Off before its tail goes!";
+  - rivals get lines both for riding and for being ridden.
+- Cut:
+  - a snip line across a thin body, with the beads-to-be ghosted;
+  - the same on your own body for dropping your tail;
+  - an × with -5 where a flash would fail, until learned;
+  - steam on fire cells.
+- Mid-air bump: spark and dust.
+- Portals: a twin left open and shrinking for about 1 s, for everyone.
+- Mason's double walls and each rival's power style: their own lines and cards, no lessons.
+- Every cue drawn for everyone's moves is drawn the same for rivals, and reaches the AI's view.
+
+WITH PR C (one calm banner per act, the frenzy folding in the last apples):
+- Act 1:
+  - the gaze as a warm wash on the bark that deepens where it lingers;
+  - it's in aiView too, so rivals can heed the tell;
+  - reduced motion steps it instead of drifting;
+  - "Eep. That bird's watching me." when it settles near you.
+- Act 2: the mark, the knock rings, and the existing lines ("Its mark! I'll keep off that.", the knock, the bridge).
+- Act 3: red eyes and a dimmed sky; combo patches numbered 1-2-3 in strike order, steady, not flashing.
+- The Field guide's Woodpecker row gets the three acts and 'where it looks longest, it pecks first'.
+##### JUDGE 2
+[{"name":"Your snake talks","learnable":7,"unobtrusive":8,"fair":9,"charm":8,"buildable":7,"notes":"What I checked: I read all 746 lines of the patch and the shots. Its code applies cleanly to feature/powers-3 at f338275. It does not stack with the other two patches, so combining them means merging by hand.\n\nStrengths:\n- Cheap per frame. R.hint draws 8 dots and a ring, or 2 chevrons. hopAhead runs once a tick and checks 5 cells against every body. mineSide tries up to 8 places against about 6 boxes.\n- The best bubble placement of the three. It keeps clear of your head, the 3 cells ahead, a turn you've pressed, the banner and the thing the line is about. When it must move it fades across instead of gliding over your head. Measured over 4,793 frames: 0 over your path, 7 over your head.\n- The best banner rework of the three: holds set by reading time, a queue with a 0.5 s pause, round news waits instead of cutting a banner short, no 'mid' slot, no slam, throb or shine.\n- Online it is local only, with no protocol change. With reduced motion the dots, ring and chevrons hold still.\n\nWeaknesses:\n- The hop predictor is naive. It ignores a body's tail schedule, so it offers a hop over a tail that will be gone before you get there (the bug Design 3 found and fixed). It ignores the edge wrap and a queued turn. It repeats work that render.js's hurdleAt, wayOf and syncStays already do.\n- snake.js works out which cells the bubble must avoid (hopCells) separately from the cells the renderer draws on, so the two can disagree.\n- On an upright phone the banner is moved into the frame above the board, over the lower row of tags. A two-line banner on a 360 px phone covers your own tag too, and its hunger bar is the hunger cue this design relies on.\n- The bird fix empties free.hang, dropping the corner-leaves keep-out.\n- input-test (8) and layout-test fail, as designed."},{"name":"Drawn on the log","learnable":8,"unobtrusive":6,"fair":9,"charm":7,"buildable":8,"notes":"What I checked: I read all 609 lines of the patch and the sheets. Its code applies cleanly to f338275.\n\nStrengths:\n- The cleanest fit with the code. Its predictions use render.js's own rules: the per-tick stays grid (syncStays), wayOf (a turn you've pressed), the edge wrap, cutsAt, burningAt, and the tail schedule, growth and stun in hurdleBy. Its rings promise only what the engine will do, and the same functions stretch to PR B's moves.\n- Drawn in two passes, so the golden pips stay uncovered (render-test caught that and it was fixed). Lines and pins have a CSS-px minimum, so they read on a 360 px phone.\n- Reduced motion leaves only fades. It reads only this screen's state, with no protocol change. Note that `grow` isn't sent to guests, so a guest's ring can be wrong for one tick, which is harmless.\n- Per frame: jumpHint and flashHint scan at most 6 cells and run findIndex over the bodies. That is cheap, but it should be cached per tick, as syncStays is. The pins call measureText every frame.\n- The bird fix is the most careful of the three. A separate deep placement falls back to the ledge, keeps clear of the corner leaves, label and switch, and only applies when the header row is within 24 px. It measured 0 overlaps in 120 cases.\n- input-, records-, chatter- and render-test pass.\n\nWeaknesses:\n- As built it fixes only the moves. Crash, hunger, choke, cough, the woodpecker's lessons and the rest are still banners that slam in, throb and go mid-board, so the owner's main complaint stands. Your snake's lines are designed but not built.\n- The rings are always on, and parchment pins sit on the board. That is more ink by your head, and the switch adds a setting.\n- layout-test was not run on the bird change."},{"name":"A first round that teaches","learnable":9,"unobtrusive":8,"fair":6,"charm":9,"buildable":6,"notes":"What I checked: I read all 928 lines of the patch and the play log. Its code applies to f338275, but its DESIGN.md does not.\n\nStrengths:\n- The best teaching flow: one thing at a time, each move waits for you to do it, and a move you skip comes back next round.\n- Key caps and a drawn fingertip inside the bubble put what to press where your eyes already are.\n- blockedFor fixes the receding-tail bug. R.teachBoxes hands the picture's box from the renderer to the bubble layout, so the picture and the bubble never disagree. That is the right pattern to keep.\n- Cheap per frame. coachTick runs once a tick. Chatter.voice returns early on the same prompt, though it stringifies the cue every tick.\n- layout-test was run: 744 ok, and 19 fail as designed.\n\nWeaknesses:\n- The coach is a state machine with ten hand-tuned timers, tuned on one run.\n- Remarks are replaced after REMARK_MIN 1.8 s, so the log shows lines held for 1.2 to 1.9 s. That repeats the 'too quick' complaint.\n- A remark is marked as met even when the queue is full and it is dropped. Since remarks are once ever, a dropped one is never said.\n- BANNER_GAP_MS throws away news that comes within 6 s of the last banner, including weather that carries a rule. Round news still cuts other news short ('The sun's out' was up 0.5 s).\n- Your bubble uses the rivals' placement, gliding and SIDE_DELAY 450 ms, and never fades. After a turn it can sit over your path for about 4 moves.\n- The lost-land banners are removed for watchers too.\n\nFairness: the first round has one rival fewer, for people only. That makes the round easier and puts it in the Hall of Fame and Best. It breaks 'rivals and players are treated alike' in spirit, even though the AI itself is untouched."}]
+THE COMBINED DESIGN: your snake speaks, the log shows, banners carry only news
+
+1) Your snake's voice
+- **Bubble:** use Voice's Chatter.own and its placement (mineSide): your bubble goes first and keeps clear of your head, the 3 cells ahead, a turn you've pressed, the banner and the thing the line is about. When it must move it fades across (110 ms), never gliding. Choose its first place from the head's next tick, so it doesn't jump in its first half second.
+- **Cue:** add First's cue element inside the bubble (key caps, or a drawn fingertip tapping or swiping). This replaces Show's parchment pins on the board, so the words and the key are in one place.
+- **Lines:** one idea each, at most 32 characters, mirroring the rivals' lines for the same moment. Merge the two lists (FLAVOR.mine), taking the shorter line where they differ ("Ptooey! That's me!", "Ow! Crashes cost me tail.", "Hack! Can't eat mid-cough!"). input-test enforces the 32 characters, as it enforces today's 60.
+- **Holds:** Voice's reading time, 1.2 s plus 0.45 s a word, 2.4 to 4.2 s. Lines come one at a time. What just hurt you, or what you just got, takes over. The cough waits for the choke's line. A line that can't show yet isn't used up.
+- **How often:** counted per device in one key, 'snake-taught', which holds Voice's per-rule counts, First's moves done, and Show's jump and flash counts.
+  - Each rule: the first 2 rounds you meet it. Voice's way, not once ever, because once-ever lines get missed.
+  - At 3, a crash that leaves you at 3, and starving at 3: every round (First's call).
+  - A move's prompt: comes back next round until you've done the move (First).
+  - Hunger: the first 2 rounds, then only the tag's bar and the sound.
+- **Field guide:** gets "Tell me again", which clears 'snake-taught'. It stays the full reference, with the new rows for crashes and hunger.
+- **Chatter and screen readers:** the line shows with the chatter off, goes in the log when it's on, and is read out (say()).
+
+2) Pictures on the log
+- **Renderer:** use Show's drawHints as the base, because its predictions come from render.js's own rules: syncStays and its stays grid, wayOf, the edge wrap, cutsAt, burningAt, and the tail schedule in hurdleBy. The picture never offers a hop that won't go. Drop Voice's hopAhead.
+- **Caching:** compute the hint shapes once a tick, cached like syncStays, and only ease and draw each frame.
+- **One source of truth:** the renderer hands the picture's bounding box to the bubble layout (First's R.teachBoxes), so the bubble always keeps off what is drawn.
+- **Always on (hints switch on, the default):**
+  - the landing ring once a press now would go, solid once you've pressed;
+  - the × when there's nowhere to land;
+  - a golden flash's path, cut line and starburst while you hold it.
+- **Until learned (3 uses):**
+  - the faint arc seen coming, and the -1 at your tail tip;
+  - the plain flash's two ember chevrons and its ×;
+  - "Snip!" and "Boom!" beside the golden flash's marks.
+- **Prompts:** "Tap, and I'll hop that!" comes with the picture, at its moment. The flash prompt waits for a calm moment (First's calmFor and a clear way), not just "6 s in".
+- **Switch:** Show's "Hints on the log" switch in the Field guide.
+- **Reduced motion:** fades only, as all three already do.
+
+3) Banners: round news only
+- Use Voice's toast rework:
+  - held for reading time (1 s plus 0.4 s a word, at most 4.5 s);
+  - a queue with a 0.5 s pause between banners;
+  - round news waits its turn instead of cutting a banner short;
+  - never the middle slot; no slam, throb or shine.
+- Change two things:
+  - Weather that carries a rule waits in the queue instead of being dropped. Reject First's BANNER_GAP drop.
+  - On an upright phone the banner sits above the board, and its text must fit one line (short phone versions for the weather), so it never covers your own tag's row.
+
+4) Rejected
+- First's one-rival-fewer first round. It is easier for people only and goes into the records, which breaks "treated alike".
+- Remarks replaced after 1.8 s.
+- Once-ever remarks.
+- Pins on the board.
+- A second portrait of the bird.
+
+THE BIRD
+
+All three designs agree. On a phone held upright it stands down into the empty middle of the chatter panel's header row, at full size: 78 px at 390x844 (was 52), 72 at 360x640 (was 38), 4.9 cells. It never covers a cell, the "Bark chatter" label or the On switch. Phones on their side and desktops are unchanged.
+- **Code:** Show's version. Its deep placement in perchFor falls back to the ledge, keeps clear of the corner leaves, and only applies when the header row is within 24 px.
+- **Tests:** the layout-test checks First found (19) are rewritten to "full size, never over a cell, off the label and switch".
+- **For PR C:** the eye is still only 5 to 6 px, so the gaze must also be drawn on the board, for everyone.
+
+BUILD ORDER
+
+Now: one teaching PR on round six A's tip, before PR B's moves. It targets main.
+1. The banner rework: it fixes "flashes in your face" at once.
+2. The bird's full-size perch, with layout-test updated.
+3. Your snake's voice, with every one of the ~26 lesson banners rewired.
+   - input-test assertions move to the bubble.
+   - New chatter-test checks: your bubble is never over your head or path, and never fades.
+4. The hint layer for today's jump and flash, the hints switch, "Tell me again", and the Crashes and Hunger rows in the Field guide.
+   - New render-test check: pips are never covered.
+   - A per-frame cost check on the hint layer.
+
+With PR B, each move gets its picture from the same predictor, plus a line of at most 32 characters, and no new banners:
+- island hops (the ring up to 3 cells on);
+- the golden flight (a gold ring that slides as you hold, and a dotted trail to the 5-cell limit);
+- the plain flash's cut line, and the × with "-5" for a failed flash;
+- steam on the fire cells in a flash's path;
+- dropping your tail (the cut across your own body, with the part behind it ghosted as beads);
+- bridges (planks, and the last cells before the tail sagging), with a walkway ring for riding a back;
+- open portals;
+- Mason's two-thick wall shown as an ×, not a cut.
+Rivals get mirrored lines for being ridden and followed.
+
+With PR C:
+- one banner per act through the queue, with act 3's folding in the last apples;
+- the gaze drawn on the board as a warm wash that deepens where the bird looks longest (it steps instead of drifting with reduced motion);
+- combo patches numbered and pulsing in strike order;
+- your lines: "Eep. That bird's watching me.", "Its mark! I'll keep off that." and "Two marks at once?!";
+- the Field guide's Woodpecker row gets the three acts and the gaze as the tell.
+designs keys [ '0', '1', '2' ]
