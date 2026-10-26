@@ -164,7 +164,6 @@ setInterval(() => {
     d = SnakeAI.decide(SnakeEngine.aiView(g, me), SnakeAI.PERSONAS[pilot.persona], me.pilotMemory);
   }
   const name = Object.keys(SnakeEngine.DIRS).find(k => SnakeEngine.DIRS[k] === d);
-  // (window's press: the renderer has one of its own in the page's shared scope)
   if (d !== me.dir) window.press({ up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' }[name]);
 }, 4);
 window.waitFor = (cond, ms = 60000) => new Promise((res, rej) => {
