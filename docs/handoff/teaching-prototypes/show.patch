@@ -1,0 +1,609 @@
+diff --git a/render.js b/render.js
+index 6f0f662..fa94758 100644
+--- a/render.js
++++ b/render.js
+@@ -7354,13 +7354,14 @@ window.SnakeRender = (() => {
+   // and the screen's safe area, how tall the ledge under it is (on a phone
+   // held upright; else 0), and where across the ledge the frame's moss and
+   // leaves hang into it ([left, right] each): the game keeps them current.
+-  const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, hang: [] };
++  const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, hang: [], deep: 0, keep: [] };
+   function setBoardRect(x, y, w, free = null) {
+     boardRect.x = x; boardRect.y = y; boardRect.w = w;
+     boardRect.left = free ? free.left : 0; boardRect.top = free ? free.top : 0;
+     boardRect.right = free ? free.right : innerWidth; boardRect.bottom = free ? free.bottom : innerHeight;
+     boardRect.ledge = free?.ledge || 0;
+     boardRect.hang = free?.hang || [];
++    boardRect.deep = free?.deep || 0; boardRect.keep = free?.keep || []; // (on a phone held upright, how far past the free page's foot it may stand, CSS px: the chatter's head row, between its name and its switch, the across of which it keeps clear)
+     perches.clear(); drumAt.clear(); birdLayout++; // (its perches and where it drums are worked out again: the room round the board has changed)
+   }
+   const BU = CELL * 0.85; // the bird's unit
+@@ -7406,7 +7407,13 @@ window.SnakeRender = (() => {
+     const beside = r => Math.min(1, (r - 2 * gap) / (deep + 2 * BOX_EDGE * BU)); // (its outline and the gap, on both sides)
+     const whole = r => (r - 2 * gap >= tall + (2 * BOX_EDGE + CROUCH) * BU ? 1 : 0); // (above or below the board: all of it, crouching too, and the gap. With less room, pushed back onto the screen, it hung over the board's edge rows, as on a phone on its side under 600 px wide, its board shorter than the screen)
+     const fit = { left: beside(room.left), right: beside(room.right), top: whole(room.top), bottom: whole(room.bottom) };
+-    const ledge = boardRect.ledge > 0 && sc ? Math.min(1, (room.bottom - 2 * gap) / (tall + (2 * BOX_EDGE + CROUCH) * BU)) : 0; // (how big it can stand there)
++    const ledgeIn = r => boardRect.ledge > 0 && sc ? Math.min(1, (r - 2 * gap) / (tall + (2 * BOX_EDGE + CROUCH) * BU)) : 0;
++    const ledge = ledgeIn(room.bottom); // (how big it can stand there)
++    // (and, round six's teaching pass, how big standing down into the
++    // chatter's head row too, in the empty stretch between its name and its
++    // switch: on a 390 px phone full size, 78 px tall, where the ledge alone
++    // gives 52; it never covers a cell, and keeps off the words and the switch)
++    const deepR = sc && boardRect.deep > 0 ? room.bottom + boardRect.deep / sc : 0, big = deepR ? ledgeIn(deepR) : 0;
+     const shrunk = k => Math.min(1, room[k] / (deep + 2 * BOX_EDGE * BU)); // (how big beside the board, its beak's tip touching it)
+     const dist = { left: tx, right: SIZE - tx, top: ty, bottom: SIZE - ty };
+     const nearer = (p, q) => dist[p] - dist[q] || fit[q] - fit[p];
+@@ -7422,7 +7429,9 @@ window.SnakeRender = (() => {
+     const between = boardRect.ledge > 0 && (side === 'left' || side === 'right') && !(fit[side] >= least) && shrunk(side) < least;
+     if (between && ledge >= floor && ledge >= shrunk(side)) side = 'ledge';
+     const nowhere = (side === 'left' || side === 'right') && !(fit[side] >= least);
+-    const s = side === 'ledge' ? ledge : nowhere ? Math.max(between ? floor : least, shrunk(side)) : Math.max(least, fit[side]);
++    if (side === 'ledge' && big > ledge + 0.02) { const p = place(big, deepR, true); if (p) return p; }
++    return place(side === 'ledge' ? ledge : nowhere ? Math.max(between ? floor : least, shrunk(side)) : Math.max(least, fit[side]), room.bottom, false);
++    function place(s, bottom, deepOn) {
+     const e = BOX_EDGE * s * BU + (nowhere ? 0 : gap), short = nowhere ? 0.05 * s * BU : e; // (how far it keeps clear all round, its outline at least; and its beak, of the board)
+     const along = v => Math.max(BU * 2, Math.min(SIZE - BU * 2, v));
+     const face = tx < SIZE / 2 ? 1 : -1; // (above or below the board, it stands off to one side of the spot)
+@@ -7436,17 +7445,17 @@ window.SnakeRender = (() => {
+     const lo = -room.left - x0, hi = SIZE + room.right - x1;
+     if (p.flip > 0) p.x = Math.max(lo, Math.min(hi, p.x));
+     else p.x = Math.min(hi, Math.max(lo, p.x));
+-    p.y = Math.max(-room.top - BIRD_BOX[1] * s * BU + e, Math.min(SIZE + room.bottom - (BIRD_BOX[3] + CROUCH) * s * BU - e, p.y));
++    p.y = Math.max(-room.top - BIRD_BOX[1] * s * BU + e, Math.min(SIZE + bottom - (BIRD_BOX[3] + CROUCH) * s * BU - e, p.y));
+     // (on the ledge, clear of the moss and leaves hanging into it: where it
+     // stands if that's clear, else the nearest place beside one that is,
+     // still facing its spot, and still on the screen. Not on the outer side
+     // of a spot near the screen's edge, if there's any such place on the
+     // middle's side, though further off: flying in from the outer side to
+     // strike there, its wings would beat past the screen's edge)
+-    if (side === 'ledge' && boardRect.hang.length) {
+-      const hang = boardRect.hang.map(([l, r]) => [(l - boardRect.x) / sc - gap, (r - boardRect.x) / sc + gap]);
++    if (side === 'ledge' && (boardRect.hang.length || deepOn)) {
++      const hang = (deepOn ? boardRect.keep : boardRect.hang).map(([l, r]) => [(l - boardRect.x) / sc - gap, (r - boardRect.x) / sc + gap]);
+       const box = f => (f > 0 ? [BIRD_BOX[0] * s * BU - e, BIRD_BOX[2] * s * BU + e] : [-BIRD_BOX[2] * s * BU - e, -BIRD_BOX[0] * s * BU + e]);
+-      const fits = (x, [a, b]) => x + a >= -room.left - 1e-6 && x + b <= SIZE + room.right + 1e-6 && hang.every(([l, r]) => x + b <= l || x + a >= r);
++      const fits = (x, [a, b]) => x + a >= -room.left - 1e-6 && x + b <= SIZE + room.right + 1e-6 && hang.every(([l, r]) => x + b <= l + 1e-6 || x + a >= r - 1e-6); // (a hair either way: a place found beside one, l - b or r - a, comes back a rounding short of it)
+       const onScreen = f => (f > 0 ? tx - FLIGHT_BACK * BU >= -room.left : tx + FLIGHT_BACK * BU <= SIZE + room.right); // (its wings, flying in to strike facing that way)
+       let best = null;
+       for (const f of [p.flip, -p.flip]) {
+@@ -7458,9 +7467,12 @@ window.SnakeRender = (() => {
+         }
+       }
+       if (best) { p.x = best.x; p.flip = best.f; }
++      else if (deepOn) return null; // (no room down there clear of the chatter's words: on the ledge alone)
+     }
+     p.side = side;
++    if (deepOn) p.deep = 1;
+     return p;
++    }
+   }
+   // Its perches, one for each spot it works on (worked out as it first needs
+   // one, and again only when the room round the board changes: see
+@@ -8667,7 +8679,9 @@ window.SnakeRender = (() => {
+     if (corpses.length) drawCorpses(alpha, now);
+     drawWrapEdges(now);
+     if (streaks.length) drawStreaks(now); // (under the snakes: beside the dasher, never through it)
++    drawHints(now, false); // (what your jump and flash would do, where: see hints. Under the snakes, so never over a head's pips or face)
+     drawSnakes(alpha, now); // (and the fields' light round any rival in them, under its body)
++    drawHints(now, true); // (and over them, the marks on a body: a cut line, Snip!, Boom!, the pins)
+     drawTossed(now); // (a bead spat over a head)
+     drawRipples(now);
+     drawRefusal(now);
+@@ -8810,6 +8824,330 @@ window.SnakeRender = (() => {
+     ctx.globalAlpha = 1;
+   }
+ 
++  // ------------------------------------------------- hints on the log
++  // Round six's teaching pass ("show it in the board"): what your jump and
++  // your flash would do, drawn where they would do it, in the log's own ink
++  // (the knock rings' dashed parchment over ink, the half-rings' sky and
++  // ember, Honey for golden), so you learn a move by seeing it offered,
++  // not by reading a banner. Yours only, as the half-rings are: a picture of
++  // a press you could make, worked out from what this screen already knows
++  // (see predict), never deciding anything; the rivals read the same board
++  // through their view.
++  //   Always (while hints are on):
++  // - a jump that would go: a dashed ring on its landing, once the hurdle is
++  //   near enough that a press now takes it (LEAP_WINDOW + 1 cells: the jump
++  //   waits that long for something to hop); asked for, the ring goes solid
++  //   and the arc shows (the cue of a jump that waits), or, with nothing in
++  //   reach, dots along the cells it still waits over, going as they run
++  //   out; with a hurdle in reach and nowhere to land, an inked × there;
++  // - golden flashes held: their way, in Honey chevrons, a cut line where
++  //   they'd slice a thin body, a starburst where they'd blow up (the edge or
++  //   a hole), an × where they'd crash.
++  //   Until learned (HINT_LEARN jumps, or flashes, that went, ever, on this
++  //   browser):
++  // - the jump's arc over the hurdle before you ask, its ring seen coming a
++  //   little further off, and a pin by the ring with the key (Space) or a tap;
++  // - the plain flash's way, two ember chevrons ahead whenever it's rested,
++  //   an × where it would run into something, and a pin with the key (E) or a
++  //   swipe; the Snip! and Boom! pins on a golden flash's marks.
++  // With reduced motion nothing pulses; they fade in and out as they come.
++  const hints = { on: true, touch: false, jump: 0, flash: 0, dash: 0 };
++  const HINT_LEARN = 3;
++  const HINT_SEE = 2; // (cells further than a press reaches that a hurdle is seen coming, until learned)
++  const HINT_INK = '#140a04';
++  const hintFx = { j: { a: 0, geo: null }, f: { a: 0, geo: null } };
++  // (their lines and marks are sized in CSS px where a cell is small, so they
++  // read on a phone as on a desktop: hp is the board's units to a CSS px)
++  let hp = 1;
++  const hz = (cell, css) => Math.max(CELL * cell, css * hp);
++  function setHints(o) { Object.assign(hints, o); }
++  // Is (x, y) something to hop once a head i cells back is right in front of
++  // it (i - 1 moves from now)? A hole, fire burning then, or a body still
++  // there after i moves (its tail leaving a cell a move; a growing or
++  // stunned snake's stays longer).
++  function hurdleBy(x, y, i) {
++    const k = y * GRID + x;
++    if (game.holes.has(k)) return true;
++    const f = game.fires.get(k), at = game.tick + i - 1;
++    if (f && at >= f.from && at < f.until) return true;
++    for (const o of game.snakes) {
++      if (!o.alive) continue;
++      const j = o.body.findIndex(c => c.x === x && c.y === y);
++      if (j < 0) continue;
++      const stay = o.body.length - 1 - j + Math.max(0, o.grow | 0) + Math.max(0, o.stunUntil - game.tick);
++      return stay >= i;
++    }
++    return false;
++  }
++  // Your jump, as it would go: { x, y (the hurdle), lx, ly (the landing, or
++  // none), i (cells to the hurdle), gold, armed, left (cells a press still
++  // reaches) }, or null.
++  function jumpHint(s) {
++    const gold = s.leaps > 0;
++    if (!gold && (shownTime < s.leapReadyAt || s.body.length <= T.MIN_LENGTH)) return null;
++    const armed = s.leapArmed >= game.tick, left = armed ? s.leapArmed - game.tick + 1 : T.LEAP_WINDOW + 1;
++    const see = left + (armed || hints.jump >= HINT_LEARN ? 0 : HINT_SEE);
++    const d = wayOf(s), h = s.body[0];
++    let x = h.x, y = h.y;
++    for (let i = 1; i <= see; i++) {
++      x = wrapX(s, x + d.x); y = wrapX(s, y + d.y);
++      if (offBoard(x, y)) break; // (never off the board)
++      if (!hurdleBy(x, y, i)) continue;
++      const g = { x, y, lx: -1, ly: -1, i, gold, armed, left, dx: d.x, dy: d.y, key: 0 };
++      for (let r = 1, lx = x, ly = y; r <= (gold ? 2 : 1); r++) {
++        lx = wrapX(s, lx + d.x); ly = wrapX(s, ly + d.y);
++        if (offBoard(lx, ly)) break;
++        if (!hurdleBy(lx, ly, i + r)) { g.lx = lx; g.ly = ly; break; }
++      }
++      g.key = (g.lx < 0 ? 1e4 : g.ly * GRID + g.lx + 1) + (gold ? 2e4 : 0);
++      return g;
++    }
++    return armed ? { x: -1, y: -1, lx: -1, ly: -1, i: 0, gold, armed, left, dx: d.x, dy: d.y, key: -1, hx: h.x, hy: h.y } : null;
++  }
++  // Your flash, as it would go: { cells (it gets to), end: 'bump' | 'boom' |
++  // null, ex, ey (where), cuts: [x, y], gold }, or null. As the game moves
++  // it (see flashReach): a plain one stops short of a body, a hole or the
++  // edge (into fire it goes); a golden one cuts a body one thick, puts fire
++  // out, crashes into a head or a body two thick, blows up at the edge or a hole.
++  function flashHint(s) {
++    const gold = s.dashes > 0;
++    if (!gold && (shownTime < s.flashReadyAt || (T.FLASH_COST > 0 && s.body.length <= T.MIN_LENGTH))) return null;
++    const d = wayOf(s), len = gold ? T.DASH_LENGTH : T.FLASH_LENGTH, h = s.body[0];
++    const g = { cells: [], end: null, ex: 0, ey: 0, cuts: [], gold, dx: d.x, dy: d.y, key: 0 };
++    let x = h.x, y = h.y;
++    for (let i = 1; i <= len; i++) {
++      const px = x, py = y;
++      x = wrapX(s, x + d.x); y = wrapX(s, y + d.y);
++      const k = y * GRID + x;
++      if (offBoard(x, y)) { g.end = gold ? 'boom' : 'bump'; g.ex = px + d.x * 0.5; g.ey = py + d.y * 0.5; break; }
++      if (gold) {
++        if (stays[k] && !cutsAt(s, x, y, d)) { g.end = 'bump'; g.ex = px + d.x * 0.5; g.ey = py + d.y * 0.5; break; }
++        if (stays[k]) g.cuts.push(x, y);
++        if (game.holes.has(k)) { g.end = 'boom'; g.ex = x; g.ey = y; break; }
++      } else if (game.holes.has(k) || stays[k]) { g.end = 'bump'; g.ex = px + d.x * 0.5; g.ey = py + d.y * 0.5; break; }
++      g.cells.push(x, y);
++      if (!gold && burningAt(x, y)) break;
++    }
++    g.key = (d.x + 1) * 3 + (d.y + 1) + (gold ? 10 : 0); // (the same hint as it goes on: it fades only as it comes and goes, or turns)
++    return g;
++  }
++  // A hint's opacity, eased toward what it should be now; a new one starts
++  // from nothing, and one that's gone fades as it was last drawn.
++  function hintEase(fx, geo, want) {
++    if (geo && (!fx.geo || fx.geo.key !== geo.key)) { fx.geo = geo; fx.a = Math.min(fx.a, 0.15); }
++    else if (geo) fx.geo = geo;
++    const to = geo ? want : 0;
++    fx.a += (to - fx.a) * Math.min(1, frameDt / (to > fx.a ? 90 : 160));
++    if (!geo && fx.a < 0.02) fx.geo = null;
++    return fx.a;
++  }
++  let hintNow = null; // (this frame's hints: worked out under the snakes, the marks on a body drawn over them)
++  function drawHints(now, over) {
++    if (!hints.on || !game) return;
++    if (over) {
++      if (!hintNow) return;
++      const h = hintNow; hintNow = null;
++      if (h.fa > 0.02) drawFlashHint(hintFx.f.geo, h.fa, now, h.fLearned, true);
++      if (h.ja > 0.02) drawJumpHint(hintFx.j.geo, h.ja, h.pulse, h.jLearned, true);
++      ctx.globalAlpha = 1;
++      ctx.setLineDash(NO_DASH);
++      return;
++    }
++    hp = Math.max(0.5, devPerCss / k);
++    const s = findById(viewerId);
++    const live = s && s.alive && !s.flight && !s.landing && s.stunUntil <= game.tick && youA < 0.05;
++    syncStays();
++    const jg = live ? jumpHint(s) : null;
++    const jLearned = hints.jump >= HINT_LEARN;
++    // (asked for: solid and bright; in reach: half; seen coming, until learned: faint)
++    const jWant = !jg ? 0 : jg.armed ? 1 : jg.lx < 0 ? 0 : jg.i <= T.LEAP_WINDOW + 1 ? 0.7 : 0.35;
++    const ja = hintEase(hintFx.j, jWant ? jg : null, jWant);
++    const fg = live ? flashHint(s) : null;
++    const fLearned = hints.flash >= HINT_LEARN;
++    const fWant = !fg ? 0 : fg.gold ? 0.9 : fLearned || jWant >= 0.7 ? 0 : 0.6; // (a jump in reach is the answer to what's ahead: the plain flash's way, a lesson, waits)
++    const fa = hintEase(hintFx.f, fWant ? fg : null, fWant);
++    const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now / 150);
++    hintNow = { fa, ja, pulse, fLearned, jLearned };
++    if (fa > 0.02) drawFlashHint(hintFx.f.geo, fa, now, fLearned, false);
++    if (ja > 0.02) drawJumpHint(hintFx.j.geo, ja, pulse, jLearned, false);
++    ctx.globalAlpha = 1;
++    ctx.setLineDash(NO_DASH);
++  }
++  function drawJumpHint(g, a, pulse, learned, over) {
++    const col = g.gold ? HONEY : SKY, c = CELL;
++    if (over) { // (until learned, a pin by the ring: the key, or a tap)
++      if (g.x >= 0 && g.lx >= 0 && !learned && !g.armed) hintPin((g.lx + 0.5) * c, (g.ly + 0.5) * c, c * 0.4, g, hints.touch ? 'tap' : 'Space', a);
++      return;
++    }
++    if (g.x < 0) { // (asked for, nothing in reach: the cells it still waits over)
++      for (let i = 1; i <= g.left; i++) {
++        const x = (g.hx + g.dx * i + 0.5) * c, y = (g.hy + g.dy * i + 0.5) * c;
++        if (x < 0 || y < 0 || x > SIZE || y > SIZE) break;
++        ctx.globalAlpha = a * (1 - (i - 1) / (T.LEAP_WINDOW + 2)) * 0.9;
++        ctx.fillStyle = HINT_INK; circle(x, y, hz(0.13, 3.4));
++        ctx.fillStyle = col; circle(x, y, hz(0.085, 2.2));
++      }
++      return;
++    }
++    const tx = (g.x - g.dx + 0.5) * c, ty = (g.y - g.dy + 0.5) * c; // (where it takes off: right in front of the hurdle)
++    if (g.lx < 0) { // (asked for, a hurdle in reach and nowhere to land: an × past it)
++      const x = (g.x + g.dx + 0.5) * c, y = (g.y + g.dy + 0.5) * c, m = c * 0.3;
++      const cx = Math.min(SIZE - m, Math.max(m, x)), cy = Math.min(SIZE - m, Math.max(m, y)), dd = hz(0.2, 4);
++      ctx.globalAlpha = a * 0.85;
++      ctx.lineCap = 'round';
++      ctx.beginPath(); ctx.moveTo(cx - dd, cy - dd); ctx.lineTo(cx + dd, cy + dd); ctx.moveTo(cx + dd, cy - dd); ctx.lineTo(cx - dd, cy + dd);
++      ctx.strokeStyle = HINT_INK; ctx.lineWidth = hz(0.19, 5); ctx.stroke();
++      ctx.strokeStyle = col; ctx.lineWidth = hz(0.09, 2.4); ctx.stroke();
++      return;
++    }
++    const lx = (g.lx + 0.5) * c, ly = (g.ly + 0.5) * c, r = c * (0.4 + (g.armed ? 0.04 * pulse : 0));
++    // The landing ring: dashed while it's on offer, solid once asked for.
++    ctx.lineCap = 'butt';
++    if (!g.armed) { HINT_DASH[0] = 4.5 * hp; HINT_DASH[1] = 3.5 * hp; ctx.setLineDash(HINT_DASH); }
++    else { ctx.globalAlpha = a * 0.22; ctx.fillStyle = col; circle(lx, ly, r); }
++    ctx.beginPath(); ctx.arc(lx, ly, r, 0, TAU);
++    ctx.globalAlpha = a * 0.8; ctx.strokeStyle = HINT_INK; ctx.lineWidth = hz(0.12, 4.2); ctx.stroke();
++    ctx.globalAlpha = a; ctx.strokeStyle = col; ctx.lineWidth = hz(0.065, 2.2); ctx.stroke();
++    ctx.setLineDash(NO_DASH);
++    // The arc over the hurdle: always once asked for, and until learned while it's on offer.
++    if (g.armed || !learned) {
++      const ux = g.dx, uy = g.dy, span = Math.hypot(lx - tx, ly - ty) || c;
++      const bx = -Math.abs(uy), by = -Math.abs(ux); // (up the screen for a jump across it, to the left for one up or down, as the press's hop mark)
++      const x0 = tx + ux * c * 0.3, y0 = ty + uy * c * 0.3, x1 = lx - ux * r * 1.05, y1 = ly - uy * r * 1.05;
++      const kx = (x0 + x1) / 2 + bx * span * 0.62, ky = (y0 + y1) / 2 + by * span * 0.62;
++      ctx.lineCap = 'round';
++      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(kx, ky, x1, y1);
++      const ax = x1 - kx, ay = y1 - ky, al = Math.hypot(ax, ay) || 1, ah = hz(0.2, 4.5);
++      for (const sg of SIDES2) {
++        const cs = Math.cos(2.55 * sg), sn = Math.sin(2.55 * sg), px = (ax * cs - ay * sn) / al, py = (ax * sn + ay * cs) / al;
++        ctx.moveTo(x1 + px * ah, y1 + py * ah); ctx.lineTo(x1, y1);
++      }
++      ctx.globalAlpha = a * 0.75; ctx.strokeStyle = HINT_INK; ctx.lineWidth = hz(0.11, 3.8); ctx.stroke();
++      ctx.globalAlpha = a; ctx.strokeStyle = g.armed ? col : GLINT; ctx.lineWidth = hz(0.055, 1.8);
++      if (!g.armed) { TRAIL_DOTS[0] = 3 * hp; TRAIL_DOTS[1] = 3 * hp; ctx.setLineDash(TRAIL_DOTS); }
++      ctx.stroke();
++      ctx.setLineDash(NO_DASH);
++    }
++  }
++  const TRAIL_DOTS = [4, 4], HINT_DASH = [5, 4];
++  function drawFlashHint(g, a, now, learned, over) {
++    const col = g.gold ? HONEY : EMBER, c = CELL, w = hz(0.17, 3.6);
++    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
++    if (over) return flashMarks(g, a);
++    ctx.beginPath();
++    for (let i = 0; i < g.cells.length; i += 2) {
++      if (g.cuts.length && g.cells[i] === g.cuts[0] && g.cells[i + 1] === g.cuts[1]) continue; // (the cut line says it there)
++      const x = (g.cells[i] + 0.5) * c + g.dx * c * 0.12, y = (g.cells[i + 1] + 0.5) * c + g.dy * c * 0.12;
++      for (let n = 0; n < 2; n++) {
++        const tx = x - g.dx * w * 0.95 * n, ty = y - g.dy * w * 0.95 * n;
++        ctx.moveTo(tx - g.dx * w + g.dy * w, ty - g.dy * w + g.dx * w);
++        ctx.lineTo(tx, ty);
++        ctx.lineTo(tx - g.dx * w - g.dy * w, ty - g.dy * w - g.dx * w);
++      }
++    }
++    ctx.globalAlpha = a * 0.7; ctx.strokeStyle = HINT_INK; ctx.lineWidth = hz(0.15, 3.8); ctx.stroke();
++    ctx.globalAlpha = a; ctx.strokeStyle = col; ctx.lineWidth = hz(0.07, 1.9); ctx.stroke();
++    if (g.end === 'bump' && (g.gold || !learned)) { // (an × where it would run into something)
++      const m = c * 0.3, x = Math.min(SIZE - m, Math.max(m, (g.ex + 0.5) * c)), y = Math.min(SIZE - m, Math.max(m, (g.ey + 0.5) * c)), dd = hz(0.17, 3.6);
++      ctx.beginPath(); ctx.moveTo(x - dd, y - dd); ctx.lineTo(x + dd, y + dd); ctx.moveTo(x + dd, y - dd); ctx.lineTo(x - dd, y + dd);
++      ctx.globalAlpha = a * 0.85; ctx.strokeStyle = HINT_INK; ctx.lineWidth = hz(0.17, 4.8); ctx.stroke();
++      ctx.globalAlpha = a; ctx.strokeStyle = col; ctx.lineWidth = hz(0.08, 2.3); ctx.stroke();
++    }
++    if (g.end === 'boom') { // (a starburst where a golden flash would blow up)
++      const m = c * 0.45, x = Math.min(SIZE - m, Math.max(m, (g.ex + 0.5) * c)), y = Math.min(SIZE - m, Math.max(m, (g.ey + 0.5) * c));
++      const r1 = hz(0.44, 9) * (1 + (reduced ? 0 : 0.06 * Math.sin(now / 140))), r0 = r1 * 0.45;
++      ctx.beginPath();
++      for (let i = 0; i < 16; i++) { const ang = i * Math.PI / 8 + 0.2, rr = i % 2 ? r0 : r1; i ? ctx.lineTo(x + Math.cos(ang) * rr, y + Math.sin(ang) * rr) : ctx.moveTo(x + Math.cos(ang) * rr, y + Math.sin(ang) * rr); }
++      ctx.closePath();
++      ctx.globalAlpha = a * 0.85; ctx.fillStyle = EMBER; ctx.fill();
++      ctx.strokeStyle = HINT_INK; ctx.lineWidth = hz(0.07, 1.8); ctx.stroke();
++      ctx.globalAlpha = a; ctx.fillStyle = HONEY; circle(x, y, r0 * 0.9);
++    }
++  }
++  // Over the snakes: where a golden flash would slice a thin body, a dashed
++  // cut line across it; until learned, Snip! and Boom! by their marks, and a
++  // pin past the way it goes with the key, or a swipe.
++  function flashMarks(g, a) {
++    const c = CELL;
++    for (let i = 0; i < g.cuts.length; i += 2) {
++      const x = (g.cuts[i] + 0.5) * c, y = (g.cuts[i + 1] + 0.5) * c, px = -g.dy, py = g.dx, L = c * 0.78;
++      ctx.beginPath(); ctx.moveTo(x - px * L, y - py * L); ctx.lineTo(x + px * L, y + py * L);
++      ctx.globalAlpha = a * 0.85; ctx.strokeStyle = HINT_INK; ctx.lineWidth = hz(0.13, 4.4); ctx.stroke();
++      SNIP_DASH[0] = 4 * hp; SNIP_DASH[1] = 3 * hp;
++      ctx.setLineDash(SNIP_DASH); ctx.globalAlpha = a; ctx.strokeStyle = HONEY; ctx.lineWidth = hz(0.07, 2.3); ctx.stroke(); ctx.setLineDash(NO_DASH);
++      if (hints.dash < HINT_LEARN) hintWord(x, y, 'Snip!', g, a);
++    }
++    if (g.end === 'boom' && hints.dash < HINT_LEARN) {
++      const m = c * 0.45;
++      hintWord(Math.min(SIZE - m, Math.max(m, (g.ex + 0.5) * c)), Math.min(SIZE - m, Math.max(m, (g.ey + 0.5) * c)), 'Boom!', g, a);
++    }
++    if (hints.flash + hints.dash < HINT_LEARN && g.cells.length && !g.end && !g.cuts.length) { // (only where it would go clear: never a key beside an ×)
++      const n = g.cells.length - 2;
++      hintPin((g.cells[n] + 0.5) * c, (g.cells[n + 1] + 0.5) * c, c * 0.3, g, hints.touch ? 'swipe' : 'E', a);
++    }
++  }
++  const SNIP_DASH = [4, 3];
++  // Which side of a mark its pin goes (across the way it's going, toward the
++  // log's middle), and how far.
++  function pinAt(x, y, g, reach) {
++    let ox = 0, oy = 0;
++    if (g.dx) oy = y < SIZE / 2 ? 1 : -1; else ox = x < SIZE / 2 ? 1 : -1;
++    return [x + ox * reach, y + oy * reach, ox, oy];
++  }
++  // A pin: a little parchment note on a thread, beside the mark it's about,
++  // with a key on it, or a fingertip tapping or swiping (on touch).
++  function hintPin(x, y, r, g, what, a) {
++    const h = hz(0.86, 21), fs = hz(0.5, 12), u = h / 0.86; // (u: the note's own cell, for its drawing)
++    ctx.font = markerFont(Math.round(fs));
++    const tw = what === 'tap' || what === 'swipe' ? u * 0.95 : ctx.measureText(what).width + fs;
++    let [px, py, ox, oy] = pinAt(x, y, g, r + hz(0.3, 6) + (g.dx ? h / 2 : tw / 2));
++    px = Math.min(SIZE - tw / 2 - 2, Math.max(tw / 2 + 2, px)); py = Math.min(SIZE - h / 2 - 2, Math.max(h / 2 + 2, py));
++    // (the thread)
++    ctx.globalAlpha = a * 0.8; ctx.strokeStyle = HINT_INK; ctx.lineWidth = 1.4 * hp; ctx.lineCap = 'round';
++    ctx.beginPath(); ctx.moveTo(x + ox * r, y + oy * r); ctx.lineTo(px - ox * tw / 2, py - oy * h / 2); ctx.stroke();
++    // (the note: a key's cap, lipped like the game's buttons)
++    const x0 = px - tw / 2, y0 = py - h / 2;
++    ctx.globalAlpha = a;
++    const lip = 2.5 * hp, rr = 6 * hp;
++    ctx.fillStyle = '#d9c79d'; roundRect(x0, y0 + lip, tw, h, rr); ctx.fill();
++    ctx.fillStyle = '#f6ecd2'; roundRect(x0, y0, tw, h, rr); ctx.fill();
++    ctx.strokeStyle = HINT_INK; ctx.lineWidth = 1.5 * hp; roundRect(x0, y0, tw, h + lip, rr); ctx.stroke();
++    ctx.fillStyle = '#3a2614'; ctx.strokeStyle = '#3a2614';
++    if (what === 'tap' || what === 'swipe') {
++      // (a fingertip, its finger up from the note's foot: tapping, ripples
++      // over it; swiping, it's a little along the way you're going, lines
++      // trailing behind it)
++      const sw = what === 'swipe', tx = px + (sw ? (g.dx || 0) * u * 0.16 : 0), ty = py - u * 0.04 + (sw ? g.dy * u * 0.1 : 0), fw = u * 0.1;
++      ctx.save();
++      ctx.beginPath(); ctx.rect(px - tw / 2, py - h / 2, tw, h); ctx.clip(); // (the finger runs off the note's foot)
++      ctx.beginPath();
++      ctx.moveTo(tx - fw, py + h); ctx.lineTo(tx - fw, ty); ctx.arc(tx, ty, fw, Math.PI, 0); ctx.lineTo(tx + fw, py + h); ctx.closePath();
++      ctx.fillStyle = '#f6ecd2'; ctx.fill();
++      ctx.lineWidth = 1.5 * hp; ctx.strokeStyle = '#3a2614'; ctx.stroke();
++      ctx.beginPath(); ctx.ellipse(tx, ty - fw * 0.15, fw * 0.55, fw * 0.4, 0, Math.PI, TAU); ctx.lineWidth = 1 * hp; ctx.stroke(); // (its nail)
++      ctx.restore();
++      ctx.lineWidth = 1.5 * hp; ctx.lineCap = 'round'; ctx.beginPath();
++      if (!sw) for (const rr of [0.2, 0.31]) { ctx.moveTo(tx + Math.cos(-Math.PI * 0.82) * u * rr, ty + Math.sin(-Math.PI * 0.82) * u * rr); ctx.arc(tx, ty, u * rr, -Math.PI * 0.82, -Math.PI * 0.18); }
++      else if (g.dx) for (let i = 0; i < 3; i++) { const yy = ty + (i - 0.6) * u * 0.11, bx = tx - g.dx * u * 0.17, L = u * (i === 1 ? 0.18 : 0.12); ctx.moveTo(bx, yy); ctx.lineTo(bx - g.dx * L, yy); }
++      else for (const sg of SIDES2) { const xx = tx + sg * u * 0.2, by = ty + u * 0.06; ctx.moveTo(xx, by); ctx.lineTo(xx, by - g.dy * u * 0.22); }
++      ctx.stroke();
++    } else {
++      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
++      ctx.fillText(what, px, py + 0.5);
++    }
++  }
++  // One of the board's own words (Snip!, Boom!) pinned beside a mark, until learned.
++  function hintWord(x, y, text, g, a) {
++    const half = floatHalfOf(text);
++    let [px, py] = pinAt(x + g.dx * CELL * 1.25, y + g.dy * CELL * 1.25, g, CELL * 0.75); // (past the mark and to its side: off the body it's about)
++    px = Math.min(SIZE - half, Math.max(half, px)); py = Math.min(SIZE - CELL * 0.4, Math.max(CELL * 0.4, py));
++    blitCrisp(floatSprite(text), px, py, a * 0.95);
++  }
++  function roundRect(x, y, w, h, r) {
++    ctx.beginPath();
++    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
++  }
++
+   // Call after every tick, with that tick's events: sets off pops, gulps and puffs.
+   function onTick(events) {
+     if (!game) return;
+@@ -8930,6 +9268,11 @@ window.SnakeRender = (() => {
+         spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 8, 140, 420, 2.2, '#d6b480', '#c08a4a'); // (bark dust: the plain leap's no power)
+         dustPuffs(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, e.snake.dir.x, e.snake.dir.y);
+         if (e.gold) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 10, 120, 600, 1.8, '#d4a017', '#fffbea'); // (in Honey, a power's gold)
++        if (hints.on && e.snake.id === viewerId && !e.gold && hints.jump < HINT_LEARN) { // (until learned, what it cost: its tail's tip, a -1 where it fell off)
++          const tl = e.snake.body[e.snake.body.length - 1];
++          spawn(tl.x * CELL + CELL / 2, tl.y * CELL + CELL / 2, 5, 90, 380, 2, '#d6b480', '#c08a4a');
++          floater(tl.x * CELL + CELL / 2, Math.max(CELL * 1.3, tl.y * CELL - CELL * 0.2), '-1');
++        }
+       } else if (e.type === 'dash') { // a streak along the way it went: a golden dash's in gold and ember, with flecks of both; a plain flash's in ember, lighter
+         const da = animOf(e.snake, now);
+         da.dashTick = game.tick;
+@@ -9409,6 +9752,7 @@ window.SnakeRender = (() => {
+     showYou,
+     // (your jump's back, or with 'flash' your flash: its half-ring's flick; the renderer sees both itself, so this only makes sure)
+     ready: (s, kind) => { const a = animOf(s, lastNow || performance.now()), now = lastNow || performance.now(); if (kind === 'flash') { if (!(now - a.flashFx < 600)) a.flashFx = now; } else if (!(now - a.readyAt < 600)) a.readyAt = now; },
++    setHints, // (hints on the log: on or off, touch or keys, and how many jumps and flashes you've made: see hints)
+     init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, markOf, celebrate, setQuality, setBoardRect, pressed,
+     get quality() { return quality; },
+     holding: () => deaths.length > 0 || corpses.length > 0,
+@@ -9443,6 +9787,7 @@ window.SnakeRender = (() => {
+         layer: { x: lay.x, y: lay.y, w: lay.w, h: lay.h, W: lay.W, H: lay.H } };
+     },
+     birdPlan: () => ({ strikeAt: plan.strikeAt, spot: [plan.tx, plan.ty], aim: plan.aimMs, depart: plan.depart, settle: B_SETTLE, drum: plan.D, times: plan.times.slice(), flight: plan.F, hop: plan.hop ? plan.H : 0, home: home.total, back: home.F, linger: B_LINGER }),
++    birdPerch: (x, y) => ({ ...perchFor(x * CELL + CELL / 2, y * CELL + CELL / 2), room: { ...boardRect } }), // (where it perches to work on cell x, y, and the room it was given: for the tests)
+     birdLook(turn) { bird.force = turn ?? null; }, // (its head held turned so, or null: for the tests)
+     birdOver(on) { overOn = !!on; }, // (the rings and pieces in the air it covers drawn over it, or not: for the tests)
+     birdFrame(alpha, now) { if (game && sized) drawWoodpecker(alpha, now, 16); }, // (the woodpecker alone drawn, the board left as it is: for the tests, frame by frame through its flights)
+diff --git a/snake.js b/snake.js
+index 649e12d..8df0a61 100644
+--- a/snake.js
++++ b/snake.js
+@@ -34,6 +34,34 @@
+   const params = new URLSearchParams(location.search);
+   const DEV = params.has('debug') || params.has('perf');
+ 
++  // Hints on the log (round six's teaching pass, "show it in the board"):
++  // pictures of what your jump and flash would do, where they'd do it (see
++  // render.js, hints). On unless you switch them off in the Field guide (or
++  // ?hints=0, for this visit). How many jumps and flashes you've made, ever,
++  // on this browser, so the keys, the arc and the -1 go once you know them
++  // (?taught=j,f,d sets them, for the tools).
++  const HINTS_KEY = 'snake-hints', TAUGHT_KEY = 'snake-taught', HINT_LEARN = 3;
++  const stored = (key, fallback) => { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } };
++  const keep = (key, v) => { try { localStorage.setItem(key, v); } catch { /* not kept: this visit only */ } };
++  let hintsOn = params.get('hints') === '0' ? false : stored(HINTS_KEY, 'on') !== 'off';
++  const taught = { jump: 0, flash: 0, dash: 0 };
++  try { Object.assign(taught, JSON.parse(stored(TAUGHT_KEY, '{}')) || {}); } catch { /* afresh */ }
++  if (params.has('taught')) { const [j, f, d] = params.get('taught').split(',').map(Number); Object.assign(taught, { jump: j || 0, flash: f || 0, dash: d || 0 }); }
++  const sendHints = () => window.SnakeRender?.setHints?.({ on: hintsOn, touch: touchFirst, ...taught });
++  // (a picture teaches it: no banner)
++  const shown = key => hintsOn && ({ powersFirst: 1, flashKey: 1, leapNothing: 1, leapEarly: 1, youLeapFirst: 1, youDashFirst: 1, youLeaf: 1, youGoldBeetle: 1 })[key] === 1;
++  function countTaught(events) {
++    const me = player();
++    if (!me) return;
++    let changed = false;
++    for (const e of events) {
++      if (e.snake !== me) continue;
++      if (e.type === 'leap') { taught.jump++; changed = true; }
++      else if (e.type === 'dash') { taught[e.plain ? 'flash' : 'dash']++; changed = true; }
++    }
++    if (changed) { keep(TAUGHT_KEY, JSON.stringify(taught)); sendHints(); }
++  }
++
+   // ----------------------------------------------------------------- words
+ 
+   // A line from a list, never the one it gave last time (a single line is just itself).
+@@ -463,6 +491,7 @@
+   function afterTick(dying, wasAlive) {
+     dangerNow = dangerOf();
+     R.onTick(game.events);
++    countTaught(game.events);
+     sounds(dying, wasAlive);
+     updateHud();
+     announce(dying);
+@@ -517,6 +546,7 @@
+     pendingCard = null;
+     R.setGame(game);
+     R.setViewer(player()?.id ?? -1); // your snake gets the bright outline
++    sendHints();
+     leadAt = leadWanted();
+     Audio.weather('none');
+     streak = 0;
+@@ -598,7 +628,7 @@
+     youHideAt = performance.now() + T.YOU_MS;
+     Audio.play('go');
+     if (guesting() && online.seat < 0) toast(FLAVOR.watchingFirst, 3000);
+-    else if (touchFirst && game.withPlayer && !powersTold && helpEl.getBoundingClientRect().bottom > innerHeight + 0.5) { powersTold = true; toast(FLAVOR.powersFirst, 3000, 'you', 'lesson'); } // (a short phone: the help under the board isn't wholly on the screen, so it's off it or hidden; how to steer is beside YOU. A lesson's banner, not Go!'s big one: it fits, and keeps out of the heads' way)
++    else if (touchFirst && game.withPlayer && !powersTold && !shown('powersFirst') && helpEl.getBoundingClientRect().bottom > innerHeight + 0.5) { powersTold = true; toast(FLAVOR.powersFirst, 3000, 'you', 'lesson'); } // (a short phone: the help under the board isn't wholly on the screen, so it's off it or hidden; how to steer is beside YOU. A lesson's banner, not Go!'s big one: it fits, and keeps out of the heads' way)
+     else toast(pick(game.withPlayer && online?.seat !== -1 ? FLAVOR.go : FLAVOR.goWatch), 1300, 'go');
+     flashFrame('go');
+     acc = 0;
+@@ -1010,15 +1040,15 @@
+       if (!me || !isMe(e.snake || {}) && e.by !== me.id) continue; // (the rest is about you)
+       if (e.type === 'choke' && once('choke')) return toast(FLAVOR.youChoke, 2600, 'you', 'lesson');
+       if (e.type === 'nudge' && once('nudge')) return toast(FLAVOR.youCoughing, 2600, 'you', 'lesson');
+-      if (e.type === 'eat' && e.gold) { flashFrame('gold', true); return toast(FLAVOR.youGoldBeetle(e.snake.leaps), 3000, 'gold', 'lesson'); }
+-      if (e.type === 'eat' && e.kind === 'leaf') { flashFrame('gold', true); return toast(FLAVOR.youLeaf(e.snake.dashes), 3200, 'gold', 'lesson'); }
++      if (e.type === 'eat' && e.gold) { flashFrame('gold', true); if (!shown('youGoldBeetle')) return toast(FLAVOR.youGoldBeetle(e.snake.leaps), 3000, 'gold', 'lesson'); continue; }
++      if (e.type === 'eat' && e.kind === 'leaf') { flashFrame('gold', true); if (!shown('youLeaf')) return toast(FLAVOR.youLeaf(e.snake.dashes), 3200, 'gold', 'lesson'); continue; }
+       if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round((me.wrapUntil - game.time) / 1000)), 3000, 'gold', 'lesson'); } // (a second one adds to the first: the real total)
+       if (e.type === 'eat' && e.kind === 'beetle') flashFrame('beetle');
+       if (e.type === 'eat' && e.kind === 'golden') flashFrame('gold', true);
+       if (e.type === 'eat' && e.kind === 'mushroom' && once('mushroom')) return toast(pick(FLAVOR.youMushroom), 1800, 'warn');
+-      if (e.type === 'leap' && !e.gold && once('leap')) return toast(FLAVOR.youLeapFirst, 3000, 'you', 'lesson');
++      if (e.type === 'leap' && !e.gold && !shown('youLeapFirst') && once('leap')) return toast(FLAVOR.youLeapFirst, 3000, 'you', 'lesson');
+       if (e.type === 'dash' && e.snake === me) flashedEver = true; // (you know the key: no more telling)
+-      if (e.type === 'dash' && !e.plain && once('dash')) return toast(FLAVOR.youDashFirst, 2800, 'gold', 'lesson');
++      if (e.type === 'dash' && !e.plain && !shown('youDashFirst') && once('dash')) return toast(FLAVOR.youDashFirst, 2800, 'gold', 'lesson');
+       const refused = e.type === 'fizzle' && (e.flash ? FLAVOR.fizzleFlash : FLAVOR.fizzle)[e.why];
+       if (refused && once((e.flash ? 'fizzleFlash' : 'fizzle') + e.why)) return toast(refused, 1800, 'warn', 'lesson');
+       if (e.type === 'cut' && e.by === me.id) return toast(FLAVOR.youSnip(who(e.snake, true)), 1800, 'gold');
+@@ -1026,10 +1056,10 @@
+       if (e.type === 'alight') { flashFrame('kill'); if (once('alight')) return toast(pick(FLAVOR.youAlight), 2600, 'fire', 'lesson'); } // (later burns: the flames and the -1s say it)
+     }
+     // A few seconds in, your flash ready and never used yet (this visit): its key, once a round.
+-    if (me?.alive && !flashedEver && game.time >= 6000 && E.flashIn(game, me) === 0 && newsFree() && once('flashKey')) return toast(FLAVOR.flashKey, 3200, 'you', 'lesson');
++    if (me?.alive && !flashedEver && game.time >= 6000 && E.flashIn(game, me) === 0 && !shown('flashKey') && newsFree() && once('flashKey')) return toast(FLAVOR.flashKey, 3200, 'you', 'lesson');
+     if (me?.alive && me.leapArmed >= 0 && me.leapArmed === game.tick - 1 && !game.events.some(e => e.snake === me && (e.type === 'leap' || e.type === 'dash' || e.type === 'fizzle')) ) { // (it ran out: too early, with a hurdle on the line, or nothing to hop at all)
+       const early = hurdleAhead(me, 4);
+-      if (once(early ? 'leapEarly' : 'leapNothing')) return toast(early ? FLAVOR.leapEarly : FLAVOR.leapNothing, 2600, 'you', 'lesson');
++      if (!shown('leapEarly') && once(early ? 'leapEarly' : 'leapNothing')) return toast(early ? FLAVOR.leapEarly : FLAVOR.leapNothing, 2600, 'you', 'lesson');
+     }
+     for (const e of game.events) if (e.type === 'baked' && newsOnce('baked')) return toast(lineFor('baked'), 2600, 'fire');
+   }
+@@ -2240,6 +2270,23 @@
+   const GUIDE_UNDRAWN = new Set();
+   function renderGuide() {
+     const px = Math.round(36 * (window.devicePixelRatio || 1));
++    // (first, the switch for the hints on the log: see hints)
++    const sw = document.createElement('div');
++    sw.className = 'guide-hints';
++    const words = document.createElement('p');
++    words.id = 'hints-label';
++    const strong = document.createElement('strong');
++    strong.textContent = 'Hints on the log';
++    words.append(strong, ' Rings where a jump would land, the way a flash would go, and what it would cut.');
++    const btn = document.createElement('button');
++    btn.className = 'small';
++    btn.setAttribute('role', 'switch');
++    btn.setAttribute('aria-checked', String(hintsOn));
++    btn.setAttribute('aria-labelledby', 'hints-label');
++    btn.innerHTML = `<span aria-hidden="true">${hintsOn ? 'On' : 'Off'}</span>`;
++    click(btn, () => { hintsOn = !hintsOn; keep(HINTS_KEY, hintsOn ? 'on' : 'off'); sendHints(); renderRecordsSafely(); });
++    sw.append(words, btn);
++    recordsBody.append(sw);
+     for (const [title, rows] of GUIDE) {
+       const head = document.createElement('h3');
+       head.className = 'guide-head';
+@@ -2721,6 +2768,7 @@
+   const furniture = ['header', '.scoreboard', '.speed', '.chatter'].map(q => document.querySelector(q)).filter(Boolean);
+   const hanging = [...document.querySelectorAll('.frame .moss.bottom, .frame .leaves.bl, .frame .leaves.br')];
+   const ledgeEl = $('perch-ledge'), rootStyle = getComputedStyle(document.documentElement);
++  const chatHead = document.querySelector('.chatter-head'), chatLabel = $('chatter-label'), chatToggle = $('chatter-toggle');
+   const inset = name => parseFloat(rootStyle.getPropertyValue(name)) || 0;
+   // The help under the board, only partly on the screen (a short phone held
+   // upright, or the chatter grown above it): while you play, when the page
+@@ -2770,6 +2818,14 @@
+         const f = el.getBoundingClientRect();
+         if (f.width && f.bottom > b.bottom) free.hang.push([f.left - 2, f.right + 2]);
+       }
++      // (round six's teaching pass: the chatter's head row, right under the
++      // ledge, is the bird's too, between the chatter's name and its switch,
++      // so it can perch full size; not with the speed buttons between)
++      const hb = chatHead.getBoundingClientRect();
++      if (hb.height && hb.top >= free.bottom - 1 && hb.top - free.bottom < 24) {
++        free.deep = Math.min(innerHeight - inset('--safe-b'), hb.bottom) - free.bottom;
++        free.keep = [...hanging.filter(el => el.classList.contains('leaves')), chatLabel, chatToggle].map(el => el.getBoundingClientRect()).filter(f => f.width && f.bottom > b.bottom).map(f => [f.left - 6, f.right + 6]); // (standing tall it's in front of the frame's moss, as it clings to the log, but clear of the corner leaves, the chatter's name and its switch)
++      }
+     }
+     R.setBoardRect(b.left, b.top, b.width, free);
+     fitHelp();
+diff --git a/style.css b/style.css
+index ca9e2c3..e40b353 100644
+--- a/style.css
++++ b/style.css
+@@ -835,6 +835,10 @@ canvas {
+ }
+ .chatter-head { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 0.85rem; }
+ .chatter-head button[aria-checked="false"] { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--muted); }
++.guide-hints { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; box-shadow: inset 0 0 0 2px #e6d6ae; }
++.guide-hints p { margin: 0; font-size: 0.85rem; }
++.guide-hints button { flex: none; }
++.guide-hints button[aria-checked="false"] { background: transparent; color: var(--ink, #3a2614); box-shadow: inset 0 0 0 1px currentColor; }
+ 
+ .chatlog { list-style: none; margin: 6px 0 0; padding: 0; min-height: 1.4em; font-size: 0.88rem; }
+ .chatlog[hidden] { display: none; }
