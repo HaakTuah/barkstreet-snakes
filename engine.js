@@ -19,6 +19,14 @@ window.SnakeEngine = (() => {
   // needs clearing between ticks.
   const bodyStamp = new Int32Array(CELLS), bodyOwner = new Int16Array(CELLS);
   const headStamp = new Int32Array(CELLS), headCount = new Uint8Array(CELLS), headFirst = new Int16Array(CELLS);
+  // (In a tick: cells two segments share, a body on the ground and one in
+  // the air over it, or a rider's body on a bridge (see ownersAt); the cells
+  // a snake's air takes, lifted segments over what they hopped (see airAt),
+  // and whose; and how many heads in the air, flying on or coming down,
+  // arrive in each.)
+  const overlapStamp = new Int32Array(CELLS), groundStamp = new Int32Array(CELLS);
+  const airStamp = new Int32Array(CELLS), airOwner = new Int16Array(CELLS);
+  const flyStamp = new Int32Array(CELLS), flyCount = new Uint8Array(CELLS);
   let stamp = 0;
 
   const key = (x, y) => y * GRID + x;
@@ -46,10 +54,19 @@ window.SnakeEngine = (() => {
       // flashes held (golden leaves); both can be held at once. leapReadyAt,
       // flashReadyAt: when it can next jump, or flash, plainly (game time);
       // wrapUntil: the edges wrap round for it till then (a golden mushroom);
-      // flight: { dir } while it's in the air (it lands next tick); leapArmed:
-      // the last tick a jump it asked for waits; flashArmed: the tick a flash
-      // it asked for goes (the next one it moves).
-      leaps: 0, dashes: 0, leapReadyAt: 0, flashReadyAt: 0, wrapUntil: -1, flight: null, leapArmed: -1, flashArmed: -1,
+      // flight: while its head is in the air (see hopPlan and step), { dir,
+      // gold: 1 for a golden jump, air: cells it has flown over so far, min:
+      // the cells its hop goes over (it flies at least that far), over: [the
+      // cells it still flies over before it may come down], land: { x, y }
+      // where it comes down when it does (null: straight on, a held golden
+      // jump having flown past its hop) }; leapArmed: the last tick a jump it
+      // asked for waits; flashArmed: the tick a flash it asked for goes (the
+      // next one it moves); jumpHeld: the jump is held down (a person's key
+      // or finger, a rival's say: see holdJump), read each tick by a golden
+      // jump in the air.
+      // A body segment the head flew over in the air is { x, y, up: 1 }:
+      // lifted over what it hopped (see airAt), until the tail passes it.
+      leaps: 0, dashes: 0, leapReadyAt: 0, flashReadyAt: 0, wrapUntil: -1, flight: null, leapArmed: -1, flashArmed: -1, jumpHeld: false,
       queue: [], cause: null, killer: null, killerId: null, diedAt: null, memory: {}, planned: null, plannedTick: -1, ...props,
     };
   }
