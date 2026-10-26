@@ -227,7 +227,7 @@ const strikes = (rounds = 24) => `(async () => {
 // Page-side source: on the holes scene, fire burning out. Each round sets
 // three cells burning (a frame, untimed), times a steady frame, then the
 // frame where they burn out and their soot is painted into the board (see
-// render.js's drawScorch), each closed by a readback. Resolves to { steady,
+// render/weather.js's drawScorch), each closed by a readback. Resolves to { steady,
 // burnout } summaries.
 const burnouts = (rounds = 24) => `(async () => {
   const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return +s[Math.min(s.length - 1, Math.floor(s.length * p))].toFixed(2); };

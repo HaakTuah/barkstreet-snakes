@@ -41,3 +41,4 @@ the file of its topic; a new round or topic gets its own file and a line here.
 | [`docs/design/32-the-owners-playtest.md`](docs/design/32-the-owners-playtest.md) | The owner's playtest: A meal isn't a pin; A rival's note; The Field guide's own door; The cards, by the board; The header's rows |
 | [`docs/design/33-one-screen.md`](docs/design/33-one-screen.md) | One screen |
 | [`docs/design/34-skipped-or-adapted-guidelines.md`](docs/design/34-skipped-or-adapted-guidelines.md) | Skipped or adapted guidelines |
+| [`docs/design/35-capricious-copycat-and-wildcard.md`](docs/design/35-capricious-copycat-and-wildcard.md) | Capricious, Copycat and Wildcard: every rival by turns, copying the winner's play, a few strong traits a round |

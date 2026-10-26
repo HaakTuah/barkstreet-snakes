@@ -5,7 +5,8 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 
 ## State (26 October 2026)
 
-Nothing is in progress. Every PR up to #36 is merged into `main` (#33 playtest, #34 one screen, #35 teaching step 1:
+Nothing is in progress. Queue item 1 is done (PR #41: render.js split into `render/`, and PR previews on Pages, waiting on
+Haakon to switch Pages to the gh-pages branch). Every PR up to #36 is merged into `main` (#33 playtest, #34 one screen, #35 teaching step 1:
 banners you can read, #36 burrows keep apart). PR #38 (the handoff, the files from the old computer and an input-test
 fix) is merged into `develop`, which was made from `main` on 26 October; `main` takes it when Haakon merges `develop`.
 input-test failed 4 checks in 1 of 5 runs after #35's build; #38's fix of the lessons block is probably that flake. Watch
@@ -21,20 +22,18 @@ The owner's words are in `docs/handoff/next-tasks-verbatim.md`, with their two a
 
 - CLAUDE.md's "How to work". *Done on 26 October 2026 (PR #39).*
 - DESIGN.md split into `docs/design/`, moved as it is. *Done on 26 October 2026 (PR #39).*
-- render.js split into modules:
-  - fully, if it can be done cleanly with identical simulation results;
-  - otherwise only the clean parts, saying in the PR what was left.
-- PR previews on Pages at `/pr-<n>/`:
-  - every push to main updates the site root;
-  - `sw.js` must not mix main's and the previews' caches;
-  - say exactly which Pages setting the owner must change.
-- Sizes before and after, in the PR.
+- render.js split into modules, fully: the seventeen files of `render/`, sharing one scope. *Done on 26 October 2026 (PR #41).*
+- PR previews on Pages at `/pr-<n>/` (`.github/workflows/pages.yml`, from the gh-pages branch), with main at the root and `sw.js`
+  keeping their caches apart. *Done on 26 October 2026 (PR #41).* Haakon must switch Pages to "Deploy from a branch:
+  gh-pages, / (root)" (the PR says how).
+- Sizes before and after, in the PR. *Done (PR #41).*
 
 ### 1b. The other big files, split the same way (recommended by Claude, 26 October 2026)
 
 After render.js, split the other game files over about 100 KB into modules by responsibility, one PR each, by the
 same rule as render.js: only with identical simulation results and the suites passing, and only the parts that split
-cleanly. In order: snake.js (196 KB), chatter.js (154 KB), engine.js (113 KB), ai.js (109 KB), style.css (101 KB). Every
+cleanly. render.js's way may suit them too (see the top of `render/core.js`: plain scripts sharing one scope, loaded in
+order; engine.js and ai.js are also loaded by the Node tools, which would need the new list). In order: snake.js (196 KB), chatter.js (154 KB), engine.js (113 KB), ai.js (109 KB), style.css (101 KB). Every
 later task then reads a few small files instead of these. Haakon may veto it.
 
 ### 2. Types for the multiplayer messages: a small PR
@@ -82,6 +81,20 @@ Also in `next-tasks-verbatim.md`:
     - Online, the host chooses.
     - Hall of Fame entries from chosen line-ups are marked "chosen".
 - **Long names.** The 16-character cap already exists. When the "first out" banner doesn't fit, it drops the cause ("Gran is first out."), and the chatter keeps the full line.
+- **Hunters miss easy pins.** Haakon (26 October 2026): "it seems they try to box you, but often don't on really easy
+  opportunities where they got you squeezed against the wall."
+  - Stage pins: a snake against the edge with one way out and a hunter beside it. Every hunter should close it, unless
+    closing it would kill the hunter.
+  - Suspects: the hunter's own fear of being pinned against the edge (it has to go to the wall to close one), its
+    safety margin, and how far ahead the squeeze looks.
+  - A rules test per hunter. Trademarks and win bands kept, and the rivals close pins on anyone, never on you in
+    particular.
+
+### 3b. The rivals who change: Capricious, Copycat and Wildcard
+
+As `docs/design/35-capricious-copycat-and-wildcard.md` describes: Capricious does impressions of every other rival from
+a shuffled deck, each with its costume and an opening line; Copycat plays as the leader plays, copying a person by what
+they do; Wildcard draws a few strong traits a round and shows them. One PR, or one per rival if that is cleaner.
 
 ### 4. The teaching system, steps 2–6 (DESIGN "Teaching by showing")
 
@@ -135,6 +148,7 @@ As planned: up to 4 players, key sets, gamepads, and local and online play toget
 ## Noted, not yet queued
 
 Small things found on the way, for Haakon to place in the queue:
+- A longer, funnier kill line for Sniper, in its own voice, beside "One shot." (Haakon to choose the words).
 - From #34: on phones with no chatter panel, the round-ending snake's last words are lost; at 390x664 the strip's line
   is cut with an ellipsis (`docs/archive/plan-history.md`).
 - A head-to-head mode in `tools/abtest.js`, old and new AI mixed in the same rounds on paired seats, which the
