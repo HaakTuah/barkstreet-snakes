@@ -1,6 +1,6 @@
 # Instructions from the owner's message log
 
-The owner's instructions, decisions and open questions about this project that weren't yet recorded in the repo's docs or docs/from-local/, copied word for word from the message log (owner-messages-log.md, which stays out of the repo), with their dates (UTC). Everything else in the log is already recorded in DESIGN.md, docs/from-local/claude-memory/ or docs/HANDOFF.md.
+The owner's instructions, decisions and open questions about this project that weren't yet recorded in the repo's docs or docs/from-local/, copied word for word from the message log (owner-messages-log.md, which stays out of the repo), with their dates (UTC). Everything else in the log is already recorded in DESIGN.md, docs/from-local/claude-memory/ or docs/HANDOFF.md (all three folded into the repository on 2026-10-26: see `README.md` here).
 
 ## 2026-10-11 21:21
 

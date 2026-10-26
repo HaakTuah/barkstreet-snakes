@@ -1,8 +1,7 @@
 # Progress
 
-What is done and what comes next, in order. The builder works down the queue continuously, one item per session,
-until weekly usage nears 90% (`CLAUDE.md`, "Usage"). Mark an item done here, with its PR, when it is merged into
-`develop`; add the owner's new tasks where he places them, his words kept in `docs/handoff/` or quoted in the item.
+What is done and what comes next, in order (how to work through it: `CLAUDE.md`). Mark an item done here, with its PR,
+when it is merged into `develop`; add Haakon's new tasks where he places them, with his words quoted.
 
 ## State (26 October 2026)
 
@@ -12,9 +11,7 @@ fix) is merged into `develop`, which was made from `main` on 26 October; `main` 
 input-test failed 4 checks in 1 of 5 runs after #35's build; #38's fix of the lessons block is probably that flake. Watch
 for it.
 
-The materials the queue points to are in `docs/handoff/` (the owner's saved tasks word for word, the teaching
-prototypes and judges, the woodpecker acts draft, the bridge-glitch repro, the unverified jumps start, the Sniper
-screenshot). The plan and history that led here are in `docs/archive/plan-history.md`.
+The plan and history that led here are in `docs/archive/plan-history.md`.
 
 ## The queue, in order
 
@@ -94,6 +91,9 @@ The prototypes and the judges' verdicts are in `docs/handoff/teaching-prototypes
 - `first.patch` has the coach, `blockedFor` and `R.teachBoxes`.
 
 Banner time rose to 55–61% of play in step 1, because lessons are still banners; step 3 should bring it to about 20%.
+The teaching audits in `tools/dev/teach/audit` and `tools/dev/teach-build/audit` play rounds as a new player and measure
+every banner: use them to measure it. The patches were made before DESIGN.md was split: their DESIGN.md hunks now belong
+in `docs/design/29-round-six-b-the-new-moves.md` and `docs/design/30-teaching-by-showing.md`.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
@@ -119,7 +119,16 @@ The draft is in `docs/handoff/woodpecker-acts-draft.md`.
 - Also: an A/B test of food knocked aside against food falling into the hole, with a `?food=fall` knob for the owner's playtests.
 - If the knock stays, it gets bark chips spraying out and a little bounce where it lands.
 - Ghost's memorial: the planned smoke wisp, or the owner's idea of a broken shackle with a few chain links. Ghost's tongue stays smoke.
+- The earlier "the bird eats the food" variant for that A/B is in `tools/dev/r6-study-tools/patch-flex3.js` (PECK_FOOD).
 
 ### 7. Then: local multiplayer (PR D)
 
 As planned: up to 4 players, key sets, gamepads, and local and online play together.
+
+## Noted, not yet queued
+
+Small things found on the way, for Haakon to place in the queue:
+- From #34: on phones with no chatter panel, the round-ending snake's last words are lost; at 390x664 the strip's line
+  is cut with an ellipsis (`docs/archive/plan-history.md`).
+- A head-to-head mode in `tools/abtest.js`, old and new AI mixed in the same rounds on paired seats, which the
+  optimization bar in `CLAUDE.md` calls for (the assistant's note of 2026-10-18).
