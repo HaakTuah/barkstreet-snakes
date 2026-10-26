@@ -21,20 +21,18 @@ The owner's words are in `docs/handoff/next-tasks-verbatim.md`, with their two a
 
 - CLAUDE.md's "How to work". *Done on 26 October 2026 (PR #39).*
 - DESIGN.md split into `docs/design/`, moved as it is. *Done on 26 October 2026 (PR #39).*
-- render.js split into modules:
-  - fully, if it can be done cleanly with identical simulation results;
-  - otherwise only the clean parts, saying in the PR what was left.
-- PR previews on Pages at `/pr-<n>/`:
-  - every push to main updates the site root;
-  - `sw.js` must not mix main's and the previews' caches;
-  - say exactly which Pages setting the owner must change.
-- Sizes before and after, in the PR.
+- render.js split into modules, fully: the seventeen files of `render/`, sharing one scope. *Done on 26 October 2026 (PR #PRN).*
+- PR previews on Pages at `/pr-<n>/` (`.github/workflows/pages.yml`, from the gh-pages branch), with main at the root and `sw.js`
+  keeping their caches apart. *Done on 26 October 2026 (PR #PRN).* Haakon must switch Pages to "Deploy from a branch:
+  gh-pages, / (root)" (the PR says how).
+- Sizes before and after, in the PR. *Done (PR #PRN).*
 
 ### 1b. The other big files, split the same way (recommended by Claude, 26 October 2026)
 
 After render.js, split the other game files over about 100 KB into modules by responsibility, one PR each, by the
 same rule as render.js: only with identical simulation results and the suites passing, and only the parts that split
-cleanly. In order: snake.js (196 KB), chatter.js (154 KB), engine.js (113 KB), ai.js (109 KB), style.css (101 KB). Every
+cleanly. render.js's way may suit them too (see the top of `render/core.js`: plain scripts sharing one scope, loaded in
+order; engine.js and ai.js are also loaded by the Node tools, which would need the new list). In order: snake.js (196 KB), chatter.js (154 KB), engine.js (113 KB), ai.js (109 KB), style.css (101 KB). Every
 later task then reads a few small files instead of these. Haakon may veto it.
 
 ### 2. Types for the multiplayer messages: a small PR

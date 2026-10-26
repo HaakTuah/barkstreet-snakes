@@ -99,8 +99,8 @@ function copyOf(where) {
   const dir = path.join(os.tmpdir(), `barkbite-base-${rev}`);
   if (!fs.existsSync(path.join(dir, 'index.html'))) {
     fs.mkdirSync(dir, { recursive: true });
-    const names = execFileSync('git', ['ls-tree', '--name-only', rev], { cwd: path.join(__dirname, '..'), encoding: 'utf8' }).split('\n').filter(f => /\.(html|css|js)$/.test(f));
-    for (const f of names) fs.writeFileSync(path.join(dir, f), execFileSync('git', ['show', `${rev}:${f}`], { cwd: path.join(__dirname, '..'), maxBuffer: 1 << 26 }));
+    const names = execFileSync('git', ['ls-tree', '-r', '--name-only', rev], { cwd: path.join(__dirname, '..'), encoding: 'utf8' }).split('\n').filter(f => /\.(html|css|js)$/.test(f) && !/^(tools|docs|scripts)\//.test(f)); // (the game's own files: render/'s too)
+    for (const f of names) { fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), execFileSync('git', ['show', `${rev}:${f}`], { cwd: path.join(__dirname, '..'), maxBuffer: 1 << 26 })); }
   }
   return dir;
 }

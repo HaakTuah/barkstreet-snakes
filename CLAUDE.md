@@ -12,7 +12,7 @@ https://haaktuah.github.io/barkstreet-snakes/.
 | What is done and the queue, in order | `docs/PROGRESS.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
 | Materials the queue points to: the owner's saved tasks word for word, the teaching prototypes and judges, the woodpecker acts draft, the bridge-glitch repro, the unverified jumps start, the Sniper screenshot | `docs/handoff/` |
-| The game | `index.html`, `style.css`, `engine.js`, `ai.js`, `render.js`, `snake.js`, `chatter.js`, `audio.js`, `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
+| The game | `index.html`, `style.css`, `engine.js`, `ai.js`, `render/` (seventeen files, listed in `render/core.js`), `snake.js`, `chatter.js`, `audio.js`, `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
 | Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, `simulate.js`, `abtest.js`, `bench-ai.js`, `browser.js`) |
 | Study and measuring tools from earlier rounds | `tools/dev/` (teaching audits, burrow spacing, board sizes, the woodpecker and food study, PR pictures) |
 | History: the old polish audit, the plan as it grew, Haakon's instructions word for word | `AUDIT.md`, `docs/archive/` |
@@ -45,7 +45,7 @@ Haakon's rules, word for word (21 October 2026):
 
 How to keep to them:
 
-- **Read little.** The game files are large (`render.js` alone is over 500 KB): never read one whole. Find what you
+- **Read little.** The game files are large (`snake.js` alone is about 200 KB): never read one whole. Find what you
   need with `scripts/codemap.sh <file>` (its functions with line numbers; pipe it through grep) or grep, then read that
   line range. Don't re-read what you just edited.
 - **Print little.** Run the suites with `scripts/test.sh` and simulations with `scripts/sim.sh`: both print a summary
@@ -147,9 +147,9 @@ that may be deleted. `tools/dev/crop.js` and `tools/dev/montage.js` make them.
 
 ```bash
 scripts/cloud-setup.sh                 # cloud machines: Chromium for the browser suites, if missing
-scripts/test.sh                        # all eight suites, quiet; or name some: scripts/test.sh rules render
+scripts/test.sh                        # all nine suites, quiet; or name some: scripts/test.sh rules render
 scripts/sim.sh 200 --seed 3 --census   # tools/simulate.js, quiet: fingerprint, check and tables (also seed 11)
-scripts/codemap.sh render.js           # the functions of a game file, with line numbers
+scripts/codemap.sh snake.js            # the functions of a game file, with line numbers (render/*.js too)
 scripts/usage.sh                       # weekly usage, if this session can read it
 ```
 

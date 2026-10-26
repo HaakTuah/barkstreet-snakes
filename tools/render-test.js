@@ -91,7 +91,7 @@
 const { launch, serve } = require('./browser');
 
 const SEED = process.argv.includes('--seed') ? Number(process.argv[process.argv.indexOf('--seed') + 1]) : 1;
-const CELL = 32; // (the board's units a cell, as render.js draws them)
+const CELL = 32; // (the board's units a cell, as render/ draws them)
 const results = [];
 let failed = 0;
 const check = (ok, what, detail = '') => {
