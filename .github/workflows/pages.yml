@@ -5,7 +5,7 @@
 # request's push brings its preview up to date and puts the link in it; a
 # closed one has its preview taken down. Pages must serve the gh-pages branch
 # (Settings, Pages, "Deploy from a branch": gh-pages, / (root)). The first run
-# of any of these makes the branch, its root from main, if it isn't there yet.
+# of any of these makes the branch if it isn't there yet.
 # sw.js keeps main's offline copy and each preview's apart.
 name: pages
 
@@ -55,12 +55,15 @@ jobs:
             git worktree add -q --detach "$site" && (cd "$site" && git checkout -q --orphan gh-pages && git rm -rqf .)
           fi
           cd "$site"
-          # Main at the root, exactly as main has it (everything but the previews is replaced).
-          if [ "$GITHUB_EVENT_NAME" != pull_request ] || [ ! -f index.html ]; then
-            find . -mindepth 1 -maxdepth 1 ! -name .git ! -name 'pr-[0-9]*' -exec rm -rf {} +
-            git -C "$GITHUB_WORKSPACE" fetch -q origin main
-            git -C "$GITHUB_WORKSPACE" archive FETCH_HEAD | tar -x
-          fi
+          # Main at the root, exactly as main has it (everything but the previews is
+          # replaced), on every run: GitHub drops a run still waiting its turn when a
+          # newer one comes, so whichever runs brings main's latest.
+          find . -mindepth 1 -maxdepth 1 ! -name .git ! -name 'pr-[0-9]*' -exec rm -rf {} +
+          git -C "$GITHUB_WORKSPACE" fetch -q origin main
+          git -C "$GITHUB_WORKSPACE" archive FETCH_HEAD | tar -x
+          # (and for the same reason, any closed pull request's preview still up goes)
+          open=" $(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" --paginate --jq '.[].number' | tr '\n' ' ') "
+          for d in pr-[0-9]*; do [ -d "$d" ] && [[ "$open" != *" ${d#pr-} "* ]] && rm -rf "$d"; done
           # A preview: the game's own files, without the tools and the notes.
           if [ -n "$PR" ]; then
             rm -rf "pr-$PR"
@@ -85,6 +88,7 @@ jobs:
           body="<!-- pages-preview -->
           **Play this pull request:** $url
           (its latest push, ${{ github.event.pull_request.head.sha }}; Pages takes a minute or two to update)"
-          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate --jq '.[] | select(.body | startswith("<!-- pages-preview -->")) | .id' | head -1)
+          ids=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate --jq '.[] | select(.body | startswith("<!-- pages-preview -->")) | .id')
+          id=${ids%%$'\n'*}
           if [ -n "$id" ]; then gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -f body="$body" >/dev/null
           else gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -f body="$body" >/dev/null; fi
