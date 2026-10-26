@@ -1,0 +1,9 @@
+## The first seconds
+
+**Who you are, and a first knock you survive.** Watching a new player, the round could end before they'd found their snake: they didn't know which one was theirs, and at length 3 the first bump was the end. Two changes:
+
+- **YOU.** From the countdown until a few seconds into the round (or just after you first steer), your snake is marked: a big bouncing arrow over your head (under it, near the top edge) with YOU in your colour, a ring pulsing round your head, and chevrons marching the way you're heading. Online, every screen marks its own snake, and friends' snakes carry their names. It's drawn over the board, under the floaters, and fades out softly.
+- **Everyone starts at 4** (`START_LENGTH`), one more than the least. A crash never takes you below 3, so your first crash costs one segment, not the round; the second, at 3, is the end. (6 was considered; 4 gives the same one-knock grace with a smaller change to the opening: shorter snakes, a less crowded start.) Over 600 seeded rounds, the median round is the same (94 s) and draws fell from 23 to 14.
+
+**Looks.** Joker's tongue is a real party horn now (it read as a striped straw): a white mouthpiece and a flat paper tube, striped pink, yellow and purple, outlined, that unrolls from a visible curl; at full stretch its fringed tip flutters and a puff of confetti flies off it, and then it rolls back up. Mute's glove is gone: its painted lips part wide and a second, inner jaw shoots out on a ribbed, glossy stalk, its little silver teeth snapping, and back in (a mime with a secret; drawn big from the mouth so it reads at play size). Mushrooms look poisonous, now that length is armour and a mushroom only costs you: a violet haze that breathes, two wavy stink lines rising, and violet spores; eat one and you go queasy green for a moment.
+

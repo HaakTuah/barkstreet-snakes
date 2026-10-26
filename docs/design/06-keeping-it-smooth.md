@@ -1,0 +1,6 @@
+## Keeping it smooth
+
+Eating could drop frames on slower machines, so the third pass went after everything a frame or a bite costs. The corner leaves swayed by animating the SVG's insides, which made the page lay out and repaint on every frame; they now turn as a whole, on the compositor. The score and tag pops only scale (a colour change forces a repaint). Each snake's shadow and outline are one path, filled once, instead of dozens of shapes (an even shade, too). The words that pop up are drawn before the first bite. Over 20 s of play the main thread went from 9.5 s to 6.7 s of work, frame drawing from 3.8 s to 2.4 s, layouts from 4,711 to 720 and paints from 5,712 to 2,105. **A quality governor** keeps it playable anywhere: if a device keeps dropping frames in a round (over 12% of frames late, two windows of about three seconds running), the board draws less, for good: first no canopy shadows and at most 1.5 device pixels per CSS pixel, then 1 and no falling leaves.
+
+Watching at 2× or 4×, the board's own effects (tongues, beetles, particles, weather) run on a clock that speeds up with it; every round starts at 1×. (Bodies were made smooth tubes here, one highlight down their length; they went back to segments later, see "The snake as a character".)
+
