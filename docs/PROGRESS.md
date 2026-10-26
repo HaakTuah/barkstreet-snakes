@@ -19,8 +19,8 @@ The plan and history that led here are in `docs/archive/plan-history.md`.
 
 The owner's words are in `docs/handoff/next-tasks-verbatim.md`, with their two additions and one correction:
 
-- CLAUDE.md's "How to work". *Done on 26 October 2026 (the cloud setup PR).*
-- DESIGN.md split into `docs/design/`, moved as it is. *Done on 26 October 2026 (the cloud setup PR).*
+- CLAUDE.md's "How to work". *Done on 26 October 2026 (PR #39).*
+- DESIGN.md split into `docs/design/`, moved as it is. *Done on 26 October 2026 (PR #39).*
 - render.js split into modules:
   - fully, if it can be done cleanly with identical simulation results;
   - otherwise only the clean parts, saying in the PR what was left.
