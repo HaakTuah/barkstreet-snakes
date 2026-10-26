@@ -1027,11 +1027,11 @@
   // (a lesson that waits is shown only if this still holds).
   let toastLevel = 'news', toastHold = 0;
   const waiting = []; // lessons waiting for the one showing: [text, ms, kind, opts]
-  const LEVELS = { news: 0, lesson: 1, round: 2 };
+  const LEVELS = { news: 0, lesson: 1, asked: 2, round: 3 };
   function toast(text, ms = 2800, kind = '', level = 'news', opts = {}) {
     const now = performance.now();
     if (level !== 'round' && !overlay.classList.contains('hidden')) return; // (a card's up)
-    if (!toastEl.hidden && now < toastHold && LEVELS[level] <= LEVELS[toastLevel] && level !== 'round') {
+    if (!toastEl.hidden && now < toastHold && LEVELS[level] <= LEVELS[toastLevel] && level !== 'round' && level !== 'asked') {
       if (level === 'lesson' && waiting.length < 3) { // (it waits for the hold to end, not the whole banner)
         waiting.push([text, ms, kind, opts]);
         clearTimeout(toastTimer);
@@ -1040,7 +1040,7 @@
       return;
     }
     toastLevel = level;
-    toastHold = now + Math.min(ms, level === 'news' ? T.NEWS_HOLD_MS : T.LESSON_HOLD_MS);
+    toastHold = now + (level === 'asked' ? ms : Math.min(ms, level === 'news' ? T.NEWS_HOLD_MS : T.LESSON_HOLD_MS)); // (a note you asked for: its whole time)
     toastEl.classList.remove('settled', 'leaving'); // (a new banner slams in)
     toastEl.dataset.kind = kind;
     toastEl.textContent = text;
@@ -1139,8 +1139,7 @@
     flavorEl.hidden = !card.flavor;
     opponentsEl.hidden = !card.opponents;
     hintEl.hidden = state !== 'ready';
-    clearTimeout(blurbTimer);
-    cardText.classList.remove('said');
+    closeNote(); // (a new card: its own words)
     helpEl.hidden = state === 'ready'; // the start card already shows the controls
     startBtn.hidden = !card.primary;
     if (card.primary) startBtn.textContent = card.primary;
@@ -1219,6 +1218,7 @@
   }
 
   function hideCard() {
+    closeNote();
     overlay.classList.add('hidden');
     shownCard = null;
   }
@@ -1320,6 +1320,8 @@
       li.querySelector('.name').textContent = isMe(s) ? 'You' : s.name;
       li.title = s.persona ? `${s.name}: ${s.persona.blurb}` : isMe(s) ? 'You' : `${s.name}, a friend`;
       if (s.persona) li.dataset.blurb = `${s.name}: ${s.persona.blurb}`; // tapped (phones have no tooltips), or its name pressed with a key, it says how it plays
+      const nameBtn = li.querySelector('button.name');
+      if (nameBtn) { nameBtn.setAttribute('aria-expanded', 'false'); nameBtn.setAttribute('aria-controls', 'rival-note'); } // (its note, on the card)
       if (s.personaKey === 'capricious') li.querySelector('.dot').dataset.ring = ''; // its pink ring, as on the board
       const mark = R.markOf(s.color);
       if (s.isPlayer && mark) li.querySelector('.dot').dataset.mark = mark;
@@ -1328,20 +1330,75 @@
     }
   }
 
-  let blurbTimer = 0;
+  // A snake's note, asked for from its tag (a click, a tap, or Enter on its
+  // name): how a rival plays and what it holds now, or your own powers. On a
+  // card (napping, your death's, the round's end, the start) it stands in
+  // for the card's words, under the rival's dot and name, until you're done
+  // with it: its tag again, its ×, Esc, a click or tap anywhere but a
+  // button, or the card going; another tag swaps it. Watching a round (no card up),
+  // it's a banner, up as long as it takes to read. While you're playing, or
+  // in a countdown, a tag says nothing (your eyes belong on the log; on a
+  // desktop, its tooltip still does).
+  const noteEl = $('rival-note'), noteDot = noteEl.querySelector('.dot'), noteWho = noteEl.querySelector('strong');
+  const noteHow = noteEl.querySelector('.how'), noteNow = noteEl.querySelector('.now'), cardEl = overlay.querySelector('.card');
+  let noted = null, bannered = null; // (whose note is on the card; whose is the banner)
   tagsEl.addEventListener('click', e => {
     const li = e.target.closest?.('li'), s = li && game.snakes.find(o => o.tag?.li === li);
-    if (!s || state === 'running') return;
-    const blurb = isMe(s) ? yourPowerWords(s) : li.dataset.blurb ? li.dataset.blurb + powerWords(s) : '';
-    if (!blurb) return;
-    if (overlay.classList.contains('hidden')) return toast(blurb, 3200);
-    clearTimeout(blurbTimer);
-    cardText.textContent = blurb;
-    cardText.hidden = false;
-    cardText.classList.add('said');
-    say(blurb);
-    blurbTimer = setTimeout(restoreText, 3200);
+    if (!s || !(s.persona || isMe(s)) || state === 'countdown' || state === 'lobby') return;
+    if (overlay.classList.contains('hidden')) {
+      if (state !== 'running' || playerAlive()) return; // (playing: nothing)
+      if (bannered === s && !toastEl.hidden && toastEl.dataset.kind === 'note') { bannered = null; return hideToast(true); } // (its tag again)
+      const line = noteLine(s);
+      bannered = s;
+      toastEl.style.setProperty('--edge', isMe(s) ? R.colorOf(s) : s.persona.ink || s.color);
+      return toast(line, Math.min(T.NOTE_MAX_MS, Math.max(T.NOTE_MIN_MS, T.NOTE_FIND_MS + line.length * T.NOTE_CHAR_MS)), 'note', 'asked');
+    }
+    if (noted === s) return closeNote();
+    openNote(s);
   });
+  // The note in a line (a banner, and what a screen reader hears).
+  const youWords = s => s.alive ? yourPowerWords(s) : 'You’re out of this round.'; // (your powers, while you have a round to use them in)
+  const noteLine = s => isMe(s) ? youWords(s) : `${s.name}: ${s.persona.blurb}${powerWords(s)}`;
+  function openNote(s) {
+    closeNote();
+    noted = s;
+    noteEl.style.setProperty('--edge', isMe(s) ? R.colorOf(s) : s.persona.ink || s.color);
+    noteDot.style.background = dotColor(s);
+    noteWho.textContent = isMe(s) ? 'You' : s.name;
+    noteHow.textContent = isMe(s) ? youWords(s) : s.persona.blurb;
+    noteNowFor(s);
+    noteEl.hidden = false;
+    cardEl.classList.add('noting');
+    s.tag.li.classList.add('noted');
+    s.tag.li.querySelector('button.name')?.setAttribute('aria-expanded', 'true');
+    say(noteLine(s));
+  }
+  // What it holds now (kept up to date while the note's up: on your death's
+  // card the round goes on).
+  function noteNowFor(s) {
+    const now = isMe(s) ? '' : !s.alive ? 'Out of this round.' : powerWords(s).trim();
+    if (noteNow.textContent !== now) noteNow.textContent = now;
+    if (noteNow.hidden !== !now) noteNow.hidden = !now; // (written only when it changes: this runs with the HUD)
+    if (isMe(s)) { const how = youWords(s); if (noteHow.textContent !== how) noteHow.textContent = how; }
+  }
+  // The card's own words again. Focus on its × isn't lost with it: from the
+  // keyboard (byKey) it goes back to the name the note was asked for from,
+  // else to the card.
+  function closeNote(byKey = false) {
+    if (!noted) return;
+    const name = noted.tag?.li.querySelector('button.name'), inside = noteEl.contains(document.activeElement);
+    noted.tag?.li.classList.remove('noted');
+    name?.setAttribute('aria-expanded', 'false');
+    noted = null;
+    noteEl.hidden = true;
+    cardEl.classList.remove('noting');
+    if (!inside) return;
+    const to = byKey && name || cardEl;
+    to.focus({ preventScroll: true });
+    if (to === name) tabbed = name; // (back as if Tabbed to: Enter there opens it again, rather than asking to start over)
+  }
+  $('note-close').addEventListener('click', e => closeNote(e.detail === 0));
+  document.addEventListener('pointerdown', e => { if (noted && !e.target.closest?.('#scoreboard, button, input, label, a, #records')) closeNote(); });
   // What the chips mean, in words (phones have no tooltips).
   function yourPowerWords(s) {
     const how = (left, gold) => gold ? `${gold} golden` : left === 0 ? 'ready' : left === Infinity ? 'not at 3' : 'resting';
@@ -1350,14 +1407,6 @@
   // Golden powers held, as words: ['2 golden jumps', '1 golden flash'].
   const goldWords = s => [s.leaps > 0 && `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}`, s.dashes > 0 && `${s.dashes} golden flash${s.dashes === 1 ? '' : 'es'}`].filter(Boolean);
   const powerWords = s => { const held = goldWords(s); return (held.length ? ` Holding ${held.join(' and ')}.` : '') + (s.wrapUntil > game.time ? ' The edges wrap for it.' : ''); };
-
-  // The card's own words again, after a rival's line stood in for them.
-  function restoreText() {
-    clearTimeout(blurbTimer);
-    cardText.classList.remove('said');
-    setText(cardText, shownCard?.text || '');
-    cardText.hidden = !shownCard?.text;
-  }
 
   function updateHud(force = false) {
     const score = player()?.eaten ?? 0;
@@ -1434,6 +1483,7 @@
       if (!force && flashBack && last.flashBack === false && !s.dashes) { R.ready(s, 'flash'); Audio.play('flashReady'); }
       last.jumpBack = jumpBack; last.flashBack = flashBack;
     }
+    if (noted) noteNowFor(noted); // (a note on the card keeps up: your death's card has the round going on behind it)
   }
 
   // A power's chip (jump, flash or wrap): its icon and a count (golden ones
@@ -1700,6 +1750,7 @@
       if (e.target.closest('#overlay, #records') || !(state === 'running' || state === 'countdown' || state === 'paused') || e.target === tabbed) return; // (Tabbed to: the button's own keys)
       e.target.blur();
     }
+    if (e.key === 'Escape' && noted) { e.preventDefault(); closeNote(true); return; } // (a note you asked for goes first; Esc again wakes, or keeps watching, as ever)
     if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') { e.preventDefault(); napKey(); } // (Escape on your death card keeps watching)
     else if (e.key === 'Enter' || e.key === 'r' || e.key === 'R') {
       e.preventDefault();
