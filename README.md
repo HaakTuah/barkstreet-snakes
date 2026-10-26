@@ -184,7 +184,7 @@ Every seeded round is cached by the files that played it, round by round, so ask
 | `tuning.js` | Every number that shapes how the game plays and feels, in one place. |
 | `engine.js` | The rules: moving, eating, dying, hunger, the woodpecker. No drawing, so it also runs in Node. |
 | `ai.js` | The rivals' brains and personalities. |
-| `render.js` | Draws the board on a canvas, with smooth movement between ticks. |
+| `render/` | Draws the board on a canvas, with smooth movement between ticks: seventeen files by what they draw, sharing one scope (the list is at the top of `render/core.js`). |
 | `audio.js` | Sound effects and the adaptive music, synthesised live. |
 | `chatter.js` | The rivals' speech bubbles and chat log. |
 | `records.js` | The Hall of Fame and your stats. |

@@ -1,5 +1,5 @@
 // The game controller: the loop, input, the cards and the HUD. The rules live
-// in engine.js, the drawing in render.js, and every feel number in tuning.js.
+// in engine.js, the drawing in render/, and every feel number in tuning.js.
 (() => {
   const T = window.TUNING;
   const E = window.SnakeEngine;
