@@ -18,7 +18,7 @@
 
 const TUNE = window.TUNING;
 const Engine = window.SnakeEngine;
-const { GRID_SIZE, PLAYER_COLOR, CAST, DIRS } = Engine;
+const { GRID: GRID_SIZE, PLAYER_COLOR, PERSONAS: CAST, DIRS } = Engine;
 const Render = window.SnakeRender;
 const Records = window.SnakeRecords;
 const Chatter = window.SnakeChatter;
