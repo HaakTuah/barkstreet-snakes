@@ -1,1 +1,6 @@
-.claude/
+# Claude Code: only these stay local; .claude/settings.json, agents and launch.json are shared
+.claude/settings.local.json
+.claude/worktrees/
+# Output of the study tools in tools/dev
+tools/dev/**/out/
+tools/dev/**/runs/
