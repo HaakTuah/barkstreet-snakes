@@ -68,7 +68,7 @@ The same in both of Haakon's games; only the list of hard work differs.
 
 | Who | Model | Effort | For |
 | --- | --- | --- | --- |
-| You, the builder | Opus | medium; high for the AI's planning, the engine's rules, online sync and the big-file splits | the task itself |
+| You, the builder | Opus | medium; high for the AI's planning, the engine's rules and online sync (a big-file split is checked by its fingerprints and suites, so medium is enough) | the task itself |
 | Search helper | Haiku (`model: "haiku"`) | as it comes | finding where things are across many files; it returns file:line and one-line conclusions |
 | Reviewer | Opus (`model: "opus"`, `effort: "high"`) | high | every task that changes the game, once, before it is merged; docs, READMEs, small fixes and config get none: give it the diff and the task's text, nothing else |
 | Escalation | Opus (`model: "opus"`, `effort: "high"`, or `"xhigh"` if you already run at high) | high or extra high | one problem that has defeated you twice: give it a self-contained brief (the problem, what you tried, the files and lines), then apply and check its answer yourself |
