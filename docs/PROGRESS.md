@@ -82,6 +82,20 @@ Also in `next-tasks-verbatim.md`:
     - Online, the host chooses.
     - Hall of Fame entries from chosen line-ups are marked "chosen".
 - **Long names.** The 16-character cap already exists. When the "first out" banner doesn't fit, it drops the cause ("Gran is first out."), and the chatter keeps the full line.
+- **Hunters miss easy pins.** Haakon (26 October 2026): "it seems they try to box you, but often don't on really easy
+  opportunities where they got you squeezed against the wall."
+  - Stage pins: a snake against the edge with one way out and a hunter beside it. Every hunter should close it, unless
+    closing it would kill the hunter.
+  - Suspects: the hunter's own fear of being pinned against the edge (it has to go to the wall to close one), its
+    safety margin, and how far ahead the squeeze looks.
+  - A rules test per hunter. Trademarks and win bands kept, and the rivals close pins on anyone, never on you in
+    particular.
+
+### 3b. The rivals who change: Capricious, Copycat and Wildcard
+
+As `docs/design/35-capricious-copycat-and-wildcard.md` describes: Capricious does impressions of every other rival from
+a shuffled deck, each with its costume and an opening line; Copycat plays as the leader plays, copying a person by what
+they do; Wildcard draws a few strong traits a round and shows them. One PR, or one per rival if that is cleaner.
 
 ### 4. The teaching system, steps 2–6 (DESIGN "Teaching by showing")
 
@@ -135,6 +149,7 @@ As planned: up to 4 players, key sets, gamepads, and local and online play toget
 ## Noted, not yet queued
 
 Small things found on the way, for Haakon to place in the queue:
+- A longer, funnier kill line for Sniper, in its own voice, beside "One shot." (Haakon to choose the words).
 - From #34: on phones with no chatter panel, the round-ending snake's last words are lost; at 390x664 the strip's line
   is cut with an ellipsis (`docs/archive/plan-history.md`).
 - A head-to-head mode in `tools/abtest.js`, old and new AI mixed in the same rounds on paired seats, which the
