@@ -25,7 +25,7 @@
   const recordsEl = $('records'), recordsBody = $('records-body'), resetBtn = $('records-reset');
   const recordsTabs = [...document.querySelectorAll('#records .tab[data-tab]')];
   const filterEl = $('scores-filter'), filterTabs = [...filterEl.querySelectorAll('.tab')];
-  const friendsBtn = $('friends'), lobbyEl = $('lobby'), lobbyName = $('lobby-name'), lobbyShare = $('lobby-share');
+  const howBtn = $('how'), cardLinks = $('card-links'), friendsBtn = $('friends'), lobbyEl = $('lobby'), lobbyName = $('lobby-name'), lobbyShare = $('lobby-share');
   const lobbyLink = $('lobby-link'), lobbyCopy = $('lobby-copy'), lobbyPlayers = $('lobby-players');
   const lobbyJoin = $('lobby-join'), lobbyCode = $('lobby-code'), lobbyStatus = $('lobby-status');
 
@@ -48,13 +48,13 @@
   };
   const FLAVOR = {
     intro: 'Three rivals. One mossy log. Last snake wriggling wins.',
-    hintStart: 'Arrows or WASD steer · Space jumps · E or Shift flashes · P naps · Enter starts · H opens the Hall of Fame',
-    hintKeys: 'Arrows or WASD steer · Space jumps · E or Shift flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · M mutes · N toggles the music',
+    hintStart: 'Arrows or WASD steer · Space jumps · E or Shift flashes · P naps · Enter starts · G opens the Field guide', // (a first-timer's Hall of Fame is empty: the guide's key here, both under the board)
+    hintKeys: 'Arrows or WASD steer · Space jumps · E or Shift flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music',
     hintOnline: 'Arrows or WASD steer · Space jumps · E or Shift flashes · M mutes · N toggles the music',
     hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash',
     hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash · Tap ⏸ to nap',
     // Watching (Watch AIs, or after you're out): nothing of yours to steer.
-    hintWatch: '1, 2, 4 set the speed · P naps · Enter plays · H opens the Hall of Fame · M mutes · N toggles the music',
+    hintWatch: '1, 2, 4 set the speed · P naps · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music',
     hintWatchTouch: 'The speed buttons set 1×, 2× or 4× · Tap ⏸ to nap',
     rivals: ['Your rivals today:', 'Up on the log with you:', 'Sharing your bark:'],
     spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
@@ -606,7 +606,7 @@
     Chatter.clearBubbles();
     showCard({
       title: 'Napping', text: `${pick(FLAVOR.pause)} ${FLAVOR.wake}`,
-      primary: 'Wake up', secondary: touchFirst ? 'Start over' : null, focusCard: true,
+      primary: 'Wake up', secondary: touchFirst ? 'Start over' : null, focusCard: true, how: 'Field guide',
     });
     updateControls();
   }
@@ -667,9 +667,19 @@
       title,
       text: `${howYouDied(p)} · ${Records.ordinal(game.result.place)} place · score ${p.eaten}`,
       flavor: killLine(p), primary: 'Play again', secondary: 'Keep watching', reward: true,
+      ...(!online && guideFor(p)), // (what got you, in the Field guide)
       ...(online && { primary: 'Keep watching', secondary: hosting() ? 'Close room' : 'Leave room', actions: { primary: hideCard, secondary: leaveRoom } }),
     };
     updateControls();
+  }
+
+  // A death card's way into the Field guide: the row about what got you.
+  function guideFor(p) {
+    const [howRow, name] = p.killer === 'hunger' ? ['basic-hunger', 'Hunger']
+      : p.fatal === 'boom' || /blew up/.test(p.cause) || p.fatal === 'cut' ? ['leaf', 'Golden leaf']
+      : p.fatal === 'pecked' || /woodpecker hole/.test(p.cause) ? ['hole', 'Holes']
+      : p.killer === 'fire' ? ['fire', 'Fire'] : ['basic-crash', 'Crashes'];
+    return { how: `Field guide: ${name}`, howRow };
   }
 
   function endRound() {
@@ -1128,7 +1138,7 @@
   // card = { title, text, flavor, primary, secondary, opponents, reward, quiet,
   //   friends (show "Play with friends"), lobby (which lobby parts, see renderLobby),
   //   actions: { primary, secondary } (what the buttons do, instead of the usual) }
-  let cardActions = null;
+  let cardActions = null, howRow = null;
   function showCard(card) {
     hideToast();
     shownCard = card;
@@ -1147,6 +1157,10 @@
     watchBtn.hidden = !card.secondary;
     if (card.secondary) watchBtn.textContent = card.secondary;
     friendsBtn.hidden = !card.friends;
+    howBtn.hidden = !card.how; // (the Field guide, from the start card, the nap and a death card)
+    if (card.how) howBtn.textContent = card.how;
+    howRow = card.howRow || null; // (a death card: the guide opens at what got you)
+    cardLinks.hidden = friendsBtn.hidden && howBtn.hidden;
     // In the lobby the tags would show the solo round behind the card, not who's playing.
     tagsEl.style.visibility = state === 'lobby' ? 'hidden' : '';
     cardActions = card.actions || null;
@@ -1687,7 +1701,9 @@
       return;
     }
     if (!recordsEl.hidden) {
-      if (e.key === 'Escape' || e.key === 'h' || e.key === 'H') { e.preventDefault(); closeRecords(); }
+      if (e.key === 'Escape') { e.preventDefault(); closeRecords(); }
+      else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); recordsKey('scores'); }
+      else if (e.key === 'g' || e.key === 'G') { e.preventDefault(); recordsKey('guide'); }
       return;
     }
     const dir = KEYS[e.key] || CODES[e.code];
@@ -1712,7 +1728,8 @@
       else if ((state === 'running' || state === 'paused') && playerAlive() && !online) askStartOver(key); // (R sits next to D: a slip shouldn't throw a round away, napping or not)
       else start({ aiOnly: false });
     }
-    else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); openRecords(); }
+    else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); openRecords('scores'); }
+    else if (e.key === 'g' || e.key === 'G') { e.preventDefault(); openRecords('guide'); }
     else if (e.key === 'm' || e.key === 'M') toggleMute();
     else if (e.key === 'n' || e.key === 'N') toggleMusic();
     else if (SPEED_KEYS[e.key] && !speedEl.hidden) setSpeed(SPEED_KEYS[e.key]);
@@ -2001,13 +2018,19 @@
 
   // ------------------------------------------------------ Hall of Fame
 
-  let recordsTab = 'scores', scoresFilter = 'all', recordsOpener = null;
+  // One book, two doors: the trophy (or H) opens it on the Hall of Fame (or
+  // Your story, if that's where you were), the Field guide's book (or G) on
+  // the guide. In the book, a door's key goes to its tab, or closes it from there.
+  let recordsTab = 'scores', storyTab = 'scores', scoresFilter = 'all', recordsOpener = null;
+  const TAB_NAMES = { scores: 'Hall of Fame', stats: 'Your story', guide: 'Field guide' };
 
-  function openRecords() {
+  // (row: a guide row's kind, to open the guide at it, lit for a moment: a death card's "what got you")
+  function openRecords(tab = 'scores', row = null) {
     if (online && playerAlive() && (state === 'countdown' || state === 'running')) {
-      toast('The Hall of Fame can wait. Eyes on the bark.', 1800, '', 'round'); // the round wouldn't (and over the countdown's card)
+      toast(`The ${tab === 'guide' ? 'Field guide' : 'Hall of Fame'} can wait. Eyes on the bark.`, 1800, '', 'round'); // the round wouldn't (and over the countdown's card)
       return;
     }
+    recordsTab = tab === 'guide' ? 'guide' : storyTab;
     // Napping, if you're playing alone (online, or only watching, the round goes on behind the dialog, and its card stays).
     if (!online && (state === 'countdown' || (state === 'running' && playerAlive() && !pendingCard))) napNow();
     recordsOpener = document.activeElement;
@@ -2015,6 +2038,12 @@
     keepAwake();
     mainEl.inert = true;
     renderRecordsSafely();
+    const page = recordsEl.querySelector('.records-card'), spot = row && recordsBody.querySelector(`li[data-kind="${row}"]`);
+    page.scrollTop = 0; // (a door opens its page at the top)
+    if (spot) {
+      page.scrollTop = Math.max(0, spot.getBoundingClientRect().top - page.getBoundingClientRect().top - page.clientHeight / 3);
+      spot.classList.add('spot');
+    }
     $('records-close').focus();
   }
 
@@ -2033,6 +2062,8 @@
   }
 
   function renderRecords() {
+    if (recordsTab !== 'guide') storyTab = recordsTab;
+    recordsEl.setAttribute('aria-label', TAB_NAMES[recordsTab]); // (the dialog is named for what it shows)
     recordsTabs.forEach(t => t.setAttribute('aria-pressed', String(t.dataset.tab === recordsTab)));
     filterTabs.forEach(t => t.setAttribute('aria-pressed', String(t.dataset.filter === scoresFilter)));
     filterEl.hidden = recordsTab !== 'scores';
@@ -2054,6 +2085,13 @@
   // the renderer, as it is on the log) and its rule in a line or two.
   const secs = ms => Math.round(ms / 1000);
   const GUIDE = [
+    // (How to play opens here: the round in four lines, before the things on the log. Prototype: stand-in pictures.)
+    ['The basics', [
+      ['basic-win', 'Winning', 'Last snake wriggling wins. Score counts what you eat.'],
+      ['basic-steer', 'Steering', `${touchFirst ? 'Swipe the way to go' : 'Arrows or WASD'}. You never stop, so look ahead.`],
+      ['basic-crash', 'Crashes', `An edge, a snake or your own tail costs you tail. At ${T.MIN_LENGTH}, or boxed in, a crash ends you.`],
+      ['basic-hunger', 'Hunger', `The bar under your name. Let it run dry and you shrink; at ${T.MIN_LENGTH} you starve.`],
+    ]],
     ['Food', [
       ['apple', 'Apple', 'Worth 1, and a full tummy. Leave it too long and it rots.'],
       ['golden', 'Golden apple', `Worth ${T.GOLDEN_GROWTH}, and everyone saw it land.`],
@@ -2080,7 +2118,7 @@
     ]],
   ];
   // (Until the renderer can draw a picture, a stand-in.)
-  const GUIDE_STAND_IN = { apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', pellet: '🟢', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', hole: '🕳️', land: '🚩' };
+  const GUIDE_STAND_IN = { 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', pellet: '🟢', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', hole: '🕳️', land: '🚩' };
   function renderGuide() {
     const px = Math.round(36 * (window.devicePixelRatio || 1));
     for (const [title, rows] of GUIDE) {
@@ -2091,6 +2129,7 @@
       list.className = 'guide';
       for (const [kinds, name, rule] of rows) {
         const li = document.createElement('li');
+        li.dataset.kind = [].concat(kinds)[0]; // (a death card opens the guide at its row)
         const pics = document.createElement('span');
         pics.className = 'guide-pics';
         pics.setAttribute('aria-hidden', 'true');
@@ -2111,7 +2150,7 @@
   // One thing's picture, a copy of the renderer's own (36 px, sharp at any density).
   function guidePic(kind, px) {
     let art = null;
-    try { art = R.guideSprite?.(kind, px); } catch { /* the stand-in, below */ }
+    if (!kind.startsWith('basic-')) try { art = R.guideSprite?.(kind, px); } catch { /* the stand-in, below */ } // (the basics have no pictures yet in the prototype: stand-ins)
     if (art?.width) {
       const c = document.createElement('canvas');
       c.width = art.width;
@@ -2128,7 +2167,15 @@
 
   recordsTabs.forEach(t => click(t, () => { recordsTab = t.dataset.tab; renderRecordsSafely(); }));
   filterTabs.forEach(t => click(t, () => { scoresFilter = t.dataset.filter; renderRecordsSafely(); }));
-  click($('records-open'), openRecords);
+  click($('records-open'), () => openRecords('scores'));
+  click($('guide-open'), () => openRecords('guide'));
+  click(howBtn, () => openRecords('guide', howRow));
+  // A door's key in the book: its tab, or out again from there.
+  function recordsKey(tab) {
+    if ((tab === 'guide') === (recordsTab === 'guide')) return closeRecords();
+    recordsTab = tab === 'guide' ? 'guide' : storyTab;
+    renderRecordsSafely();
+  }
   click($('records-close'), closeRecords);
   recordsEl.addEventListener('click', e => { if (e.target === recordsEl) closeRecords(); });
   click($('records-reset'), () => {
@@ -2652,7 +2699,7 @@
     startBtn.disabled = false; // (a room that never opened left it disabled)
     newGame({ personas });
     state = 'ready';
-    showCard({ title: `Ready, ${localName()}?`, text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true });
+    showCard({ title: `Ready, ${localName()}?`, text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true, how: 'How to play' });
     setTimeout(warmUp, 400);
   }
 
