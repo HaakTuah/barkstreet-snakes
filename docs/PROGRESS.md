@@ -5,7 +5,8 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 
 ## State (26 October 2026)
 
-Nothing is in progress. Every PR up to #36 is merged into `main` (#33 playtest, #34 one screen, #35 teaching step 1:
+Nothing is in progress. Queue item 1 is done (PR #41: render.js split into `render/`, and PR previews on Pages, waiting on
+Haakon to switch Pages to the gh-pages branch). Every PR up to #36 is merged into `main` (#33 playtest, #34 one screen, #35 teaching step 1:
 banners you can read, #36 burrows keep apart). PR #38 (the handoff, the files from the old computer and an input-test
 fix) is merged into `develop`, which was made from `main` on 26 October; `main` takes it when Haakon merges `develop`.
 input-test failed 4 checks in 1 of 5 runs after #35's build; #38's fix of the lessons block is probably that flake. Watch
@@ -21,11 +22,11 @@ The owner's words are in `docs/handoff/next-tasks-verbatim.md`, with their two a
 
 - CLAUDE.md's "How to work". *Done on 26 October 2026 (PR #39).*
 - DESIGN.md split into `docs/design/`, moved as it is. *Done on 26 October 2026 (PR #39).*
-- render.js split into modules, fully: the seventeen files of `render/`, sharing one scope. *Done on 26 October 2026 (PR #PRN).*
+- render.js split into modules, fully: the seventeen files of `render/`, sharing one scope. *Done on 26 October 2026 (PR #41).*
 - PR previews on Pages at `/pr-<n>/` (`.github/workflows/pages.yml`, from the gh-pages branch), with main at the root and `sw.js`
-  keeping their caches apart. *Done on 26 October 2026 (PR #PRN).* Haakon must switch Pages to "Deploy from a branch:
+  keeping their caches apart. *Done on 26 October 2026 (PR #41).* Haakon must switch Pages to "Deploy from a branch:
   gh-pages, / (root)" (the PR says how).
-- Sizes before and after, in the PR. *Done (PR #PRN).*
+- Sizes before and after, in the PR. *Done (PR #41).*
 
 ### 1b. The other big files, split the same way (recommended by Claude, 26 October 2026)
 
