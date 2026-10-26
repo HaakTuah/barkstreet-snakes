@@ -1,1 +1,3 @@
-.claude/
+# Claude Code: only these stay local; .claude/settings.json, agents and launch.json are shared
+.claude/settings.local.json
+.claude/worktrees/
