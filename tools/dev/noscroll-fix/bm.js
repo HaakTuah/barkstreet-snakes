@@ -1,8 +1,10 @@
 // Board sizes, main against the branch: node bm.js <mode> [out.json]
 // mode: named | sweep-up | sweep-over
-const fs = require('fs');
-const WT = 'C:/Users/Perry/source/repos/snake-game/.git/perry-tools/noscroll-build/build/wt';
-const MAIN = 'C:/Users/Perry/source/repos/snake-game/.git/perry-tools/noscroll-fix/main';
+// BM_WT and BM_MAIN are the two checkouts to compare (the branch's and main's); by default this
+// repository and a worktree of main beside it (git worktree add ../main-wt origin/main).
+const fs = require('fs'), path = require('path');
+const WT = process.env.BM_WT || path.join(__dirname, '..', '..');
+const MAIN = process.env.BM_MAIN || path.join(__dirname, '..', '..', '..', 'main-wt');
 const { launch, serve } = require(WT + '/tools/browser.js');
 const mode = process.argv[2] || 'named', out = process.argv[3];
 const builds = (process.env.BUILDS || 'main,wt').split(',');

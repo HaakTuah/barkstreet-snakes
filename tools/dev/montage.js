@@ -1,8 +1,8 @@
 // Puts images side by side (scaled to one height), each with a caption
 // above it, on the page's dark ground, through headless Chrome's canvas.
 //   node montage.js <out.jpg> <height> <caption>=<image> [<caption>=<image> ...]
-const fs = require('fs');
-const { launch } = require('C:/Users/Perry/source/repos/snake-game/tools/browser.js');
+const fs = require('fs'), path = require('path');
+const { launch } = require(path.join(__dirname, '..', 'browser.js'));
 (async () => {
   const [out, height, ...pairs] = process.argv.slice(2);
   const items = pairs.map(p => { const i = p.indexOf('='); const file = p.slice(i + 1); return { cap: p.slice(0, i), src: 'data:' + (/\.png$/i.test(file) ? 'image/png' : 'image/jpeg') + ';base64,' + fs.readFileSync(file).toString('base64') }; });

@@ -1,7 +1,7 @@
 // Crops an image (and optionally scales it) through headless Chrome's canvas.
 //   node crop.js <in> <out.jpg|.png> <x> <y> <w> <h> [scale] [quality]
 const fs = require('fs'), path = require('path');
-const { launch } = require('C:/Users/Perry/source/repos/snake-game/tools/browser.js');
+const { launch } = require(path.join(__dirname, '..', 'browser.js'));
 (async () => {
   const [inp, out, x, y, w, h, scale = '1', quality = '0.9'] = process.argv.slice(2);
   const type = /\.png$/i.test(out) ? 'image/png' : 'image/jpeg';

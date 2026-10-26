@@ -190,3 +190,21 @@ On 2026-10-14 06:58 it came with:
 >   - the before/after performance numbers
 >   - which guidelines you skipped or adapted, and why
 >   - the tuning constants I might want to tweak by hand
+
+## 2026-10-26 (the design chat with Claude, while the repositories were set up for building in the cloud)
+
+### 2026-10-26 20:34
+
+On a suggested stop for the builders ("these 2" are this game's builder and Amarna Letters'):
+
+> I don't agree with that break. I want these 2 continually working until they reach about 90% usage, at that point I don't want them taking on any bigger task, as I want the bulk of that remaining usage for myself.
+
+It replaces the 95% line of the usage plan. Written into `CLAUDE.md` as "Usage". The same evening the builders were given
+a `develop` branch to merge their PRs into, so that work can go on while Haakon is away; `main` stays his to merge.
+
+### 2026-10-26 20:45
+
+On the setup itself:
+
+> Go, do it all, expertly! Just make sure you don't lose anything important along the way, or duplicate unessecarily, which creates drift!
+

@@ -1,61 +1,20 @@
-# Handoff (2026-10-26)
+# Progress
 
-## State
+What is done and what comes next, in order. The builder works down the queue continuously, one item per session,
+until weekly usage nears 90% (`CLAUDE.md`, "Usage"). Mark an item done here, with its PR, when it is merged into
+`develop`; add the owner's new tasks where he places them, his words kept in `docs/handoff/` or quoted in the item.
 
-Nothing is in progress. Every PR is merged: #33 (playtest), #34 (one screen), #35 (teaching step 1: banners you can read) and #36 (burrows keep apart). main is at 8b1eccd.
+## State (26 October 2026)
 
-This branch holds only this note and the files in `docs/handoff/`. Until now they lived only in the conversation and in local files outside the repo (`.git/perry-tools`, the assistant's memory). Nothing here changes the game.
+Nothing is in progress. Every PR up to #36 is merged into `main` (#33 playtest, #34 one screen, #35 teaching step 1:
+banners you can read, #36 burrows keep apart). PR #38 (the handoff, the files from the old computer and an input-test
+fix) is merged into `develop`, which was made from `main` on 26 October; `main` takes it when Haakon merges `develop`.
+input-test failed 4 checks in 1 of 5 runs after #35's build; #38's fix of the lessons block is probably that flake. Watch
+for it.
 
-## How to check
-
-- The suites, one at a time:
-  - `node tools/rules-test.js`
-  - `online-test`
-  - `chatter-test`
-  - `records-test`
-  - `render-test`
-  - `input-test`
-  - `layout-test`
-  - `ui-test`
-
-  All are under `tools/`; CI runs them in three jobs (node, browser, layout).
-- Balance: `node tools/simulate.js 200 --seed 3 --census` (and seed 11). A change that should keep behaviour must keep the fingerprints; `--root DIR` runs another copy of the game files.
-- input-test failed 4 checks in 1 of 5 runs after #35's build. It may be a flaky timing check. Find it.
-
-## How the owner wants the work done
-
-- A question is a question: answer it, and don't act on it unless asked.
-- Match effort to the task. Docs, READMEs, small fixes and config get one pass and no subagents.
-- Use at most 2 agents unless the owner asks. Never stop to ask about this: pick the cheaper way, and say in the PR what you chose.
-- Usage is limited: take the cheapest approach that does the job well.
-- Read only the parts of large files a task needs.
-- Run long simulations in the background and wait for the completion notice.
-- At each milestone, open a PR the owner can play, say what to try, and carry on without waiting for review.
-- Never push to main, never force-push, never merge. PRs target main.
-- Check weekly usage after every commit, and wrap up as it approaches 95%.
-- Commits end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`, and PR bodies end with the Claude Code line.
-- Rules that stand:
-  - the rivals never treat a person differently: no `isPlayer` in AI logic, and no ability only people use;
-  - every new rule needs a visible cue and a lesson;
-  - every rival keeps its trademark;
-  - never rename the storage keys (`snake-*`, `barkbite-muted`/`music`) or `net.js`'s PREFIX `'barkbite-'`.
-
-## Files from the old computer (docs/from-local/)
-
-Work now runs in cloud sessions that see only git, so what lived outside it is copied here word for word:
-- `claude-memory/`: the assistant's project memory. `next-round-ideas.md` is the full plan and history; the rest are standing rules. Paths in it that point into `.git/perry-tools` mean `docs/from-local/perry-tools` or `docs/handoff` now.
-- `dot-claude/`: the repo's gitignored `.claude/` files. `launch.json` is the local dev server on port 5173; `settings.local.json` allows one Windows command.
-- `perry-tools/`: the reusable tools from `.git/perry-tools`.
-  - `teach/audit` and `teach-build/audit` play real rounds as a new player and measure every banner. Use them to judge the teaching steps.
-  - `burrow-cluster/measure.js` measures how far apart burrows open.
-  - `noscroll-fix/bm.js` compares board sizes between two builds.
-  - `r6-study-tools` is the woodpecker and food study; `patch-flex3.js` has the "the bird eats the food" variant for round six C's A/B.
-  - `crop.js` and `montage.js` make PR pictures.
-  - Some hard-code `C:/Users/Perry/source/repos/snake-game`: point them at the repo root.
-- In the cloud the browser suites need Chrome or Chromium at a standard path, or `CHROME=/path/to/chrome`. Set `CI=1` to run it without its sandbox (needed when running as root). Optional:
-  - `SIM_WORKERS` sets the simulation's cores;
-  - `BARKBITE_PRIORITY=normal` for timing runs;
-  - `ONLINE_SEEN=1` makes online-test print what it saw.
+The materials the queue points to are in `docs/handoff/` (the owner's saved tasks word for word, the teaching
+prototypes and judges, the woodpecker acts draft, the bridge-glitch repro, the unverified jumps start, the Sniper
+screenshot). The plan and history that led here are in `docs/archive/plan-history.md`.
 
 ## The queue, in order
 
@@ -63,8 +22,8 @@ Work now runs in cloud sessions that see only git, so what lived outside it is c
 
 The owner's words are in `docs/handoff/next-tasks-verbatim.md`, with their two additions and one correction:
 
-- CLAUDE.md's "How to work".
-- DESIGN.md split into `docs/design/`, moved as it is.
+- CLAUDE.md's "How to work". *Done on 26 October 2026 (the cloud setup PR).*
+- DESIGN.md split into `docs/design/`, moved as it is. *Done on 26 October 2026 (the cloud setup PR).*
 - render.js split into modules:
   - fully, if it can be done cleanly with identical simulation results;
   - otherwise only the clean parts, saying in the PR what was left.
