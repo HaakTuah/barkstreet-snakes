@@ -40,6 +40,23 @@ This branch holds only this note and the files in `docs/handoff/`. Until now the
   - every rival keeps its trademark;
   - never rename the storage keys (`snake-*`, `barkbite-muted`/`music`) or `net.js`'s PREFIX `'barkbite-'`.
 
+## Files from the old computer (docs/from-local/)
+
+Work now runs in cloud sessions that see only git, so what lived outside it is copied here word for word:
+- `claude-memory/`: the assistant's project memory. `next-round-ideas.md` is the full plan and history; the rest are standing rules. Paths in it that point into `.git/perry-tools` mean `docs/from-local/perry-tools` or `docs/handoff` now.
+- `dot-claude/`: the repo's gitignored `.claude/` files. `launch.json` is the local dev server on port 5173; `settings.local.json` allows one Windows command.
+- `perry-tools/`: the reusable tools from `.git/perry-tools`.
+  - `teach/audit` and `teach-build/audit` play real rounds as a new player and measure every banner. Use them to judge the teaching steps.
+  - `burrow-cluster/measure.js` measures how far apart burrows open.
+  - `noscroll-fix/bm.js` compares board sizes between two builds.
+  - `r6-study-tools` is the woodpecker and food study; `patch-flex3.js` has the "the bird eats the food" variant for round six C's A/B.
+  - `crop.js` and `montage.js` make PR pictures.
+  - Some hard-code `C:/Users/Perry/source/repos/snake-game`: point them at the repo root.
+- In the cloud the browser suites need Chrome or Chromium at a standard path, or `CHROME=/path/to/chrome`. Set `CI=1` to run it without its sandbox (needed when running as root). Optional:
+  - `SIM_WORKERS` sets the simulation's cores;
+  - `BARKBITE_PRIORITY=normal` for timing runs;
+  - `ONLINE_SEEN=1` makes online-test print what it saw.
+
 ## The queue, in order
 
 ### 1. Cheaper development and playable previews: one PR, no subagents
@@ -123,7 +140,7 @@ Banner time rose to 55–61% of play in step 1, because lessons are still banner
 
 - **The island hop comes first.** The owner: "jumping is pretty critical to making this game more tense and skill based, rather than RNG". There are two test cases:
   - Gobbler folded on a strip;
-  - `docs/handoff/owner-sniper-islands.webp`: Sniper won coiled on a strip, beside islands of beads across gaps of 1 to 3 cells.
+  - `docs/handoff/owner-sniper-islands.jpg`: Sniper won coiled on a strip, beside islands of beads across gaps of 1 to 3 cells.
 - **No auto-jump** (the owner agreed). A press stays armed until a hurdle 4–5 cells ahead is reached (`LEAP_WINDOW` is 3 ticks today), for rivals too. The landing ring shows where you'd land, and it gives no trap warnings.
 - **One pricing model for every power:**
   - gain is searched from where the power ends, plus a tempo credit for flashes and the island reached for jumps;
