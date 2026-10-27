@@ -261,7 +261,7 @@ document.addEventListener('touchstart', e => {
   touchAt = now;
   if (!swiping() && runFrom < cardShownAt + TUNE.CARD_TAP_MS && e.target.closest?.('#overlay input, #overlay label, #overlay a')) { e.preventDefault(); return; } // (a card that came up by itself under a run of quick touches: its name field takes none of them either, no focus and no phone keyboard over the round)
   if (e.target.closest?.('input, a, #records')) return;
-  const button = e.target.closest?.('button:not(:disabled), [role="switch"]');
+  const button = e.target.closest?.('button:not(:disabled), [role="switch"], .chatter[aria-expanded] > :is(.chatlog, .chatter-head)'); // (the chatter's panel, held upright on a phone: a tap opens or folds it; its box's empty rest under the panel is the board's, a tap there a jump)
   if (!button && !swiping() && !canvasEl.contains(e.target)) return;
   const tapOnly = !!button && !swiping(); // (outside a round a button touch is a tap or a scroll, never a swipe)
   const taps = !button && !e.target.closest?.('#scoreboard') && state === 'running' && playerAlive(); // (a tap here would be a jump)
