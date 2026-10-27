@@ -273,6 +273,49 @@ function drawCough(a, now) {
   ctx.fill();
   ctx.globalAlpha = was;
 }
+// Hunger where your eyes are (on a wide screen the tag's bar goes unseen:
+// the owner starved): every snake shows it on its body, from the clock its
+// tag reads. Its body slims as its last meal runs out (by the share of it
+// gone, slowly at first, up to HUNGER_SLIM thinner; its head keeps its
+// size); in the warning's seconds (the toast's: 6 s left, 9 at its
+// smallest) its head shakes and growl lines rumble out either side of it
+// (drawGrowl), stronger toward the end; starving (shrinking), it pales
+// (a parchment wash: see drawPasses). With reduced motion the lines stay
+// still and the head doesn't shake.
+const HUNGER_SLIM = 0.22, GROWL_BEAT = 520, GROWL_ARC = 0.42, HUNGER_PALE = '#f6eedb';
+function hungerLook(s, a, dead) {
+  if (dead || !game || !s.alive) { a.slim = 0; a.growl = 0; a.pale = 0; return; }
+  const left = s.lastAte + T.HUNGER_MS - shownTime, gone = Math.min(1, Math.max(0, 1 - left / (s.mealMs || T.HUNGER_MS)));
+  const warn = T.HUNGER_WARN_MS * (s.body.length <= T.MIN_LENGTH ? 1.5 : 1);
+  a.slim = HUNGER_SLIM * gone * Math.sqrt(gone);
+  a.growl = left < warn ? Math.min(1, 1.4 - 0.9 * Math.max(0, left) / warn) : 0;
+  a.pale = left < 0 ? Math.min(1, -left / T.STARVE_EVERY_MS) : 0;
+}
+// (In the face's frame, after its face: two short arcs either side of its
+// head, a cream line under an ink one so they read on the bark and on any
+// body, swelling out and fading with each rumble.)
+function drawGrowl(a, now) {
+  const c = CELL, ph = reduced ? 0.4 : (now % GROWL_BEAT) / GROWL_BEAT, was = ctx.globalAlpha, cap = ctx.lineCap;
+  ctx.globalAlpha = was * a.growl * (reduced ? 0.85 : 1 - ph * ph);
+  ctx.beginPath();
+  for (const sg of SIDES2) {
+    const mid = sg * Math.PI / 2;
+    for (let k = 0; k < 2; k++) {
+      const r = c * (0.66 + 0.18 * k + 0.16 * ph);
+      ctx.moveTo(Math.cos(mid - GROWL_ARC) * r, Math.sin(mid - GROWL_ARC) * r);
+      ctx.arc(0, 0, r, mid - GROWL_ARC, mid + GROWL_ARC);
+    }
+  }
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#fffbea';
+  ctx.lineWidth = c * 0.12;
+  ctx.stroke();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = c * 0.06;
+  ctx.stroke();
+  ctx.globalAlpha = was;
+  ctx.lineCap = cap;
+}
 function mouthOpen(s, a) {
   if (deadNow || coughing(s)) return 0;
   const t = (lastNow - a.ateAt) / T.CHEW_MS;
@@ -541,7 +584,8 @@ function prepare(s, alpha, now, dead, impact = 0) {
   // wobble. (Out, it stays as it was: a corpse never drawn alive takes the
   // way it went.)
   if (!dead || a.hc === undefined) steer(s, a, now);
-  const wobble = !dead && game && s.stunUntil >= game.tick && !reduced ? Math.sin(now / 45) * 0.16 : 0;
+  hungerLook(s, a, dead);
+  const wobble = reduced || dead || !game ? 0 : s.stunUntil >= game.tick ? Math.sin(now / 45) * 0.16 : a.growl ? Math.sin(now / 62) * 0.11 * a.growl : 0;
   a.turn = Math.atan2(a.hs, a.hc) + wobble;
   if (a.star) a.face = starFace(a) + wobble; // (a star's points turn with it; its face stays upright: see starFace)
   // A held corpse presses its head a little into whatever it hit.
@@ -570,6 +614,7 @@ function prepare(s, alpha, now, dead, impact = 0) {
     if (ph >= 0 && ph < COUGH_JOLT) { const j = Math.sin(ph / COUGH_JOLT * Math.PI); a.bump += COUGH_SWELL * j; pts[0] += a.hc * CELL * COUGH_LURCH * j; pts[1] += a.hs * CELL * COUGH_LURCH * j; }
   }
   for (let i = 0; i < m; i++) a.rad[i] = radius(i, m, a, a.tickPos);
+  if (a.slim) for (let i = 1; i < m; i++) a.rad[i] *= 1 - a.slim; // (hungry: its body slims, its head as it was: see hungerLook)
   // Seen from above, up is toward you: what's in the air swells (its head
   // the most at the top of a jump, its neck after it, in an arch), and
   // what hangs into a pit is smaller (see sinkOf). (A lift up the screen
