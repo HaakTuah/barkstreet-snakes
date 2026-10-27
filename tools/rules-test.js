@@ -2326,7 +2326,7 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
 { // Burrows grow shut, not instantly (the owner's playtest): at BURROW_MAX open, a new one starts the stalest growing shut
   // over BURROW_SHUT_MIN_MS to BURROW_SHUT_MAX_MS; meanwhile a scared beetle still dives into it, but none comes out of it,
   // and once its time is up it closes over. The rivals read it by the same rule: a beetle bound for one growing shut
-  // still goes in, unless it's all but shut.
+  // still goes in.
   const staged = () => {
     const g = board([[line(5, 20, 4), 'right'], [line(20, 22, 4), 'right']]);
     for (const o of g.snakes) { o.stunUntil = 1e9; o.lastAte = g.time; o.nextStarve = g.time + 1e9; }
@@ -2370,12 +2370,11 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   const healed = [];
   for (let t = 0; t < 3; t++) { E.step(c); healed.push(...c.events.filter(e => e.type === 'heal')); }
   check('...and once its time is up, it closes over', JSON.stringify(healed) === JSON.stringify([{ type: 'heal', x: 3, y: 3 }]) && c.burrows.length === 1, JSON.stringify(c.burrows));
-  // The rivals: a beetle bound for a burrow growing shut still goes in (not worth the chase), unless it's all but shut.
+  // The rivals: a beetle bound for a burrow growing shut still goes in (not worth the chase), all but shut too.
   const view = burrows => () => aiView({ me: aiMe(line(10, 12, 5), 'right'), others: [aiRival(1, line(20, 2, 5), 'right')], tick: 10, timeMs: 30000, burrows,
     food: [{ x: 13, y: 12, kind: 'beetle', expires: 999, dir: D.right, movedAt: 0, px: 12, py: 12, scared: true }, { x: 10, y: 8, kind: 'food', expires: 999 }] });
   const shutting = picks(view([{ x: 15, y: 12, at: 0, shutFrom: 25000, shutAt: 36000 }]), 'drab', 20), allBut = picks(view([{ x: 15, y: 12, at: 0, shutFrom: 25000, shutAt: 30500 }]), 'drab', 20);
-  check("an AI reads a beetle bound for a burrow growing shut as going in, as it does", shutting.up === 20, JSON.stringify(shutting));
-  check('...but one all but shut as gone, so the beetle digs in, and it takes that', allBut.right === 20, JSON.stringify(allBut));
+  check("an AI reads a beetle bound for a burrow growing shut as going in, as it does, all but shut too (it can dive in till it closes)", shutting.up === 20 && allBut.up === 20, JSON.stringify({ shutting, allBut }));
 }
 
 { // Everyone sees every burrow on the board, as it is.
