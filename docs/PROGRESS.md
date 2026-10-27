@@ -71,6 +71,7 @@ Also in `next-tasks-verbatim.md`:
   - Repro: `node docs/handoff/stage-bridge-glitch.js <repo> p390 390x844@3t bridge`, with shots in a `shots/` folder beside the script.
   - Suspect: render.js's bridging shrinks the radius (`sunk()`) in the two-pass `bodyFills`, but the bands and beads (`shadeBands`, `shadeUnder`) and the rim don't follow.
   - Add a render-test check.
+  - *Done on 27 October 2026 (PR #52)*: see "A body over a pit, smooth" in `docs/design/32-the-owners-playtest.md`.
 - **Rainbows upside down.** `drawRainbow` deliberately hangs the arch downward from an apple in the log's upper half.
   - Fix: always upright. For an apple in the upper half, use a great circle centred below the log (cy about 1.15 × the board, its top about 0.06 × the board from the top edge). It rises out of the apple, over, and down off the far side, with red outermost.
 - **Hunger where your eyes are.** On a wide desktop the tag's hunger bar goes unseen, and the owner starved.
