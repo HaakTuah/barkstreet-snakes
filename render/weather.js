@@ -367,15 +367,15 @@ function drawRainbow(now) {
     bow.R = Math.min(SIZE * 0.95, Math.max(SIZE * 0.45, y - SIZE * 0.1));
     bow.cx = x + side * bow.R; bow.cy = y; bow.a0 = fromLeft ? Math.PI : 0;
     full = Math.PI;
-  } else { // round a centre below the log, its top 0.06 of the board from the top, as far as it leaves the board's bottom on the far side
-    bow.cy = SIZE * 1.15; bow.R = SIZE * 1.09;
+  } else { // round a centre below the log, its top 0.06 of the board from the top (or at an apple higher still), on round till it's well off the far side
+    bow.cy = SIZE * 1.15; bow.R = Math.max(SIZE * 1.09, bow.cy - y);
     const dx = Math.sqrt(Math.max(0, bow.R * bow.R - (bow.cy - y) ** 2)), a = Math.atan2(y - bow.cy, -dx); // (the apple's angle, on the left)
     bow.cx = x + side * dx; bow.a0 = fromLeft ? a : -Math.PI - a;
     full = Math.asin((SIZE - bow.cy) / bow.R) - a;
   }
   bow.dir = side; bow.fade = fade;
   // From the apple's foot round over the top, as far as it has grown.
-  const span = full * grow, end = Math.min(span / 2, 0.32);
+  const span = full * grow, end = Math.min(span / 2, 0.32 * Math.min(1, SIZE * 0.45 / bow.R)); // (its ends fade over about the same length on either circle)
   ctx.save();
   ctx.beginPath(); ctx.rect(0, 0, SIZE, SIZE); ctx.clip();
   ctx.lineCap = 'butt';
