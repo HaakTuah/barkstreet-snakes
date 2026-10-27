@@ -186,7 +186,7 @@ function leanOf(s, a, q) {
 function queuedOf(s, a) {
   if (s.id !== viewerId || !game) return null;
   if (s.stunUntil >= game.tick) {
-    if (press.stun === s.stunUntil) return press.dir || (s.leapArmed >= s.stunUntil || s.flashArmed >= s.stunUntil ? s.dir : null);
+    if (pressSeen.stun === s.stunUntil) return pressSeen.dir || (s.leapArmed >= s.stunUntil || s.flashArmed >= s.stunUntil ? s.dir : null);
     if (s.queue?.length) return s.queue[0];
     return s.leapArmed >= s.stunUntil || s.flashArmed >= s.stunUntil ? s.dir : null;
   }
@@ -195,7 +195,7 @@ function queuedOf(s, a) {
     for (let i = 0; i < q.length; i++) if (q[i].x !== a.tdx || q[i].y !== a.tdy) return intoNeck(s, q[i]) ? null : q[i];
     return null;
   }
-  return heardOf(s) && (press.dir.x !== a.tdx || press.dir.y !== a.tdy) ? press.dir : null;
+  return heardOf(s) && (pressSeen.dir.x !== a.tdx || pressSeen.dir.y !== a.tdy) ? pressSeen.dir : null;
 }
 // A press, as this screen saw it (the game says as it takes one: online
 // the queue is the host's, so a friend's screen never has it, and the
@@ -203,21 +203,21 @@ function queuedOf(s, a) {
 // into the neck, and the way you're already going is nothing; the latest
 // wins. Stunned, a press is for this stun only, and the way you were going
 // after a turn changes your mind back. A crash forgets one on the move.
-const press = { dir: null, stun: -1, tick: -1 };
+const pressSeen = { dir: null, stun: -1, tick: -1 };
 function pressed(dir) {
   const s = game && findById(viewerId);
-  if (!dir || !s || !s.alive) { press.dir = null; press.stun = -1; press.tick = -1; return; }
+  if (!dir || !s || !s.alive) { pressSeen.dir = null; pressSeen.stun = -1; pressSeen.tick = -1; return; }
   if (intoNeck(s, dir)) return; // (into its neck: nothing)
   const ahead = dir.x === s.dir.x && dir.y === s.dir.y;
   if (s.stunUntil < game.tick) { // (on the move)
     if (ahead) return;
-    press.dir = dir; press.stun = -1; press.tick = game.tick;
+    pressSeen.dir = dir; pressSeen.stun = -1; pressSeen.tick = game.tick;
     return;
   }
-  const turned = press.stun === s.stunUntil ? !!press.dir && !(press.dir.x === s.dir.x && press.dir.y === s.dir.y) : s.queue?.length > 0;
+  const turned = pressSeen.stun === s.stunUntil ? !!pressSeen.dir && !(pressSeen.dir.x === s.dir.x && pressSeen.dir.y === s.dir.y) : s.queue?.length > 0;
   if (ahead && !turned) return;
-  press.dir = ahead ? null : dir;
-  press.stun = s.stunUntil; press.tick = game.tick;
+  pressSeen.dir = ahead ? null : dir;
+  pressSeen.stun = s.stunUntil; pressSeen.tick = game.tick;
 }
 // Stunned, with a turn pressed: a small inked chevron on that side of your
 // head (past the stars, if they're there; on the board, even pointing off

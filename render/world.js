@@ -264,7 +264,7 @@ function onTick(events) {
     } else if (e.type === 'crash') { // a bonk where it hit, the head's lunge, and its tail breaking off as beads
       const s = e.snake, a = animOf(s, now), h = s.body[0];
       a.crashAt = now; a.crashDx = s.dir.x; a.crashDy = s.dir.y;
-      if (s.id === viewerId && press.stun < 0) press.dir = null; // (what you'd pressed was for a board that's gone, as the game says)
+      if (s.id === viewerId && pressSeen.stun < 0) pressSeen.dir = null; // (what you'd pressed was for a board that's gone, as the game says)
       // (its tail breaks off as beads in its own markings, last segment last)
       const prev = s.prev || [];
       for (let i = s.body.length; i < s.body.length + e.lost && i < prev.length; i++) {
@@ -405,7 +405,7 @@ const deaths = [], corpses = [];
 const FADE_MS = T.CORPSE_FADE_MS;
 const heldCells = new Uint8Array(GRID * GRID);
 
-function hold(until) {
+function holdFor(until) {
   for (const s of deaths) corpses.push({ s, until, fade: false });
   deaths.length = 0;
 }
@@ -777,7 +777,7 @@ function setGame(g) {
   blasts.length = 0;
   streaks.length = 0;
   refusal.at = -1e9; refusal.tick = -1;
-  press.dir = null; press.stun = -1; press.tick = -1;
+  pressSeen.dir = null; pressSeen.stun = -1; pressSeen.tick = -1;
   timeFrom = timeAt = shownTime = g.time;
   resetBird(); plan.strikeAt = home.struckAt = -1; // (the woodpecker starts afresh: it comes in as it arrives, from its state)
   for (const k in sky) sky[k] = 0;
@@ -803,7 +803,7 @@ window.SnakeRender = {
   showYou,
   // (your jump's back, or with 'flash' your flash: its half-ring's flick; the renderer sees both itself, so this only makes sure)
   ready: (s, kind) => { const a = animOf(s, lastNow || performance.now()), now = lastNow || performance.now(); if (kind === 'flash') { if (!(now - a.flashFx < 600)) a.flashFx = now; } else if (!(now - a.readyAt < 600)) a.readyAt = now; },
-  init, setGame, resize, frame, onTick, shake, hold, headPx, colorOf, markOf, celebrate, setQuality, setBoardRect, pressed,
+  init, setGame, resize, frame, onTick, shake, hold: holdFor, headPx, colorOf, markOf, celebrate, setQuality, setBoardRect, pressed,
   get quality() { return quality; },
   holding: () => deaths.length > 0 || corpses.length > 0,
   setViewer(id) { viewerId = id; },

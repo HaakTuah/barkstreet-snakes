@@ -36,6 +36,9 @@ cleanly. render.js's way may suit them too (see the top of `render/core.js`: pla
 order; engine.js and ai.js are also loaded by the Node tools, which would need the new list). In order: snake.js (196 KB), chatter.js (154 KB), engine.js (113 KB), ai.js (109 KB), style.css (101 KB). Every
 later task then reads a few small files instead of these. Haakon may veto it.
 
+- snake.js into the seven files of `game/` (renames where its names met render/'s; `tools/scope-test.js` guards the shared
+  scope). *Done on 27 October 2026 (PR #43).*
+
 ### 2. Types for the multiplayer messages: a small PR
 
 Also in `next-tasks-verbatim.md`:

@@ -1,4 +1,4 @@
-// The rules of Barkstreet Snakes: no DOM, no drawing. The game (snake.js) and the
+// The rules of Barkstreet Snakes: no DOM, no drawing. The game (game/) and the
 // headless simulator both run this file unchanged. Tuning lives in tuning.js.
 window.SnakeEngine = (() => {
   const T = window.TUNING;

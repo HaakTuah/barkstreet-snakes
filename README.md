@@ -190,4 +190,4 @@ Every seeded round is cached by the files that played it, round by round, so ask
 | `records.js` | The Hall of Fame and your stats. |
 | `online.js` | Play with friends: the messages between host and friends. |
 | `net.js` | Play with friends: the connections (PeerJS, loaded only when used). |
-| `snake.js` | Ties it together: the game loop, input, the cards, the controls and the lobby. |
+| `game/` | Ties it together: the game loop, input, the cards, the controls and the lobby: seven files by what they do (the list is at the top of `game/core.js`). |

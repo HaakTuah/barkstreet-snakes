@@ -33,9 +33,9 @@
 // last, world.js, makes window.SnakeRender. So a file may call anything from
 // inside its functions, but what runs as it loads (a table, a constant
 // worked out from another) may use only names from itself or the files
-// before it. Their names are all the renderer's own: none is a browser
-// global, and nothing else in the game uses them (the other files keep theirs
-// in a closure each).
+// before it. The scope is the page's: game/'s files share it too, so every
+// name at a file's top must be unique across them all and no browser global
+// (tools/scope-test.js checks both).
 //
 //   core.js       setup, colours, the bark (the static layer, snow, embers, leaves)
 //   sprites.js    cached sprites, the Field guide's pictures, beetles, particles
