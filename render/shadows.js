@@ -245,10 +245,10 @@ function airPath(a) {
   ctx.beginPath();
   for (let i = n - 2; i >= 0; i--) {
     if (leftOut(a, i, i + 1, pit, 2)) continue;
-    const h = rad[i + 1] * PINCH, x1 = p[2 * i], y1 = p[2 * i + 1], cx = c[2 * i], cy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+    const h = bandR(a, i), x1 = p[2 * i], y1 = p[2 * i + 1], cx = c[2 * i], cy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
     pieceRect(x1, y1, cx, cy, h);
     pieceRect(cx, cy, x2, y2, h);
-    if (bends(a, i)) { const r = rad[i + 1] * PINCH; ctx.moveTo(cx + r, cy); ctx.arc(cx, cy, r, 0, TAU); }
+    if (bends(a, i)) { const r = bandR(a, i); ctx.moveTo(cx + r, cy); ctx.arc(cx, cy, r, 0, TAU); }
   }
   for (let i = n - 1; i >= 0; i--) {
     if (leftOut(a, i, i, pit, 2)) continue;
