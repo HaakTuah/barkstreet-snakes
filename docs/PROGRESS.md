@@ -68,7 +68,7 @@ Also in `next-tasks-verbatim.md`:
   - Escapes must stay at 20–35%.
   - *Done on 27 October 2026 (PR #49)*: see "Burrows grow shut" in `docs/design/32-the-owners-playtest.md`.
 - **Burrows grow shut, evened out.** Haakon (27 October 2026): "Yes, you can try that and see if it adds to the game! Review it afterwards and make an expert call." ("That": the change spread evenly over its 6–14 s, bolder moss at phone size, a slightly stronger scar, and the Field guide line weighed.)
-  - *Done on 27 October 2026 (PR #54)*: see "The cue, evened out" in `docs/design/32-the-owners-playtest.md`.
+  - *Done on 27 October 2026 (PR #55)*: see "The cue, evened out" in `docs/design/32-the-owners-playtest.md`.
 - **The outline glitch over a hole.** Over a pit, the body's round segments bulge above its line and its pale rim disappears.
   - Repro: `node docs/handoff/stage-bridge-glitch.js <repo> p390 390x844@3t bridge`, with shots in a `shots/` folder beside the script.
   - Suspect: render.js's bridging shrinks the radius (`sunk()`) in the two-pass `bodyFills`, but the bands and beads (`shadeBands`, `shadeUnder`) and the rim don't follow.
