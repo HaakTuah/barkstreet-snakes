@@ -105,20 +105,11 @@ Also in `next-tasks-verbatim.md`:
   - *Done on 27 October 2026 (PR #70)*: see "The phone gap" in `docs/design/32-the-owners-playtest.md`.
 - **Desktop chatter.** Fill the column down to the board's bottom edge with as many whole lines as fit (today it stops at about 5). Older lines fade at the top, and you can scroll back.
   - *Done on 27 October 2026 (PR #72)*: see "Desktop chatter" in `docs/design/33-one-screen.md`.
-- **Wildcard's hair.** Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side. It must read at phone size.
-  - *Done on 27 October 2026 (PR #74)*: see "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
-- **Copycat's face.**
-  - While copying, the head mixes the copied colour about half and half with its red.
-  - A thin red rim and the yellow star pin keep it Copycat. Uncopied, it stays full flag red.
-- **Rival line-up.**
-  - The pick isn't biased (3 uniformly from 18, with no memory between rounds).
-  - Approved: a per-device shuffle deck, dealing all 18 before any repeat. Online, the host's deck decides.
-  - Planned: choose your rivals. Each seat on the start card gets a swap button opening a picker of all 18 plus "Any".
-    - "Any" seats come from the deck.
-    - The choice is remembered under a NEW storage key.
-    - Online, the host chooses.
-    - Hall of Fame entries from chosen line-ups are marked "chosen".
-- **Long names.** The 16-character cap already exists. When the "first out" banner doesn't fit, it drops the cause ("Gran is first out."), and the chatter keeps the full line.
+- **A head-to-head mode in `tools/abtest.js`.** Haakon (27 October 2026): "Yes to all, expertly!" Old and new AI mixed in
+  the same rounds on paired seats, which the optimization bar in `CLAUDE.md` calls for (the assistant's note of
+  2026-10-18), and which the standing instruction "every new move is tested both ways" uses: rivals with a move and
+  rivals without it on the same board. Before item 5, whose new moves need it.
+
 - **Hunters miss easy pins.** Haakon (26 October 2026): "it seems they try to box you, but often don't on really easy
   opportunities where they got you squeezed against the wall."
   - Stage pins: a snake against the edge with one way out and a hunter beside it. Every hunter should close it, unless
@@ -130,6 +121,9 @@ Also in `next-tasks-verbatim.md`:
 - **Rivals too shy of heads.** Haakon (27 October 2026): "it seems to me the rival snakes might be a bit too adverse to
   have their heads next to each other, even if the other snake can't cut you off, or if the would see and have time to
   react ahead of time. Can this be investigated, expertly?"
+  Then (27 October 2026): "the snake game bug should be addressed, as it makes it so they seemingly always chicken out
+  when competiting with you for resources. And also is just needlessly sub-optimal play, regardless of playstyle". So
+  it comes first in the queue, with "Hunters miss easy pins" and, before both, the head-to-head mode their tests need.
   - Where to look: `ai.js`, the risk map around line 1020. Every cell beside a rival's head gets the full `headRisk`
     (500-2200 by persona), and the cells its dash, leap or flash could reach get half. That includes its own neck, cells
     where it would crash too (a head-on bounces both and costs each 3 segments: "Crashes, not deaths"), and cells I
@@ -146,6 +140,20 @@ Also in `next-tasks-verbatim.md`:
   - Kept: every trademark, the win bands, and head-on crashes no more common than noise; `tools/abtest.js` on fresh
     seeds, old against new. It may share a root with "Hunters miss easy pins" above (fear near walls and heads), so look
     at both together.
+- **Wildcard's hair.** Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side. It must read at phone size.
+  - *Done on 27 October 2026 (PR #74)*: see "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
+- **Copycat's face.**
+  - While copying, the head mixes the copied colour about half and half with its red.
+  - A thin red rim and the yellow star pin keep it Copycat. Uncopied, it stays full flag red.
+- **Rival line-up.**
+  - The pick isn't biased (3 uniformly from 18, with no memory between rounds).
+  - Approved: a per-device shuffle deck, dealing all 18 before any repeat. Online, the host's deck decides.
+  - Planned: choose your rivals. Each seat on the start card gets a swap button opening a picker of all 18 plus "Any".
+    - "Any" seats come from the deck.
+    - The choice is remembered under a NEW storage key.
+    - Online, the host chooses.
+    - Hall of Fame entries from chosen line-ups are marked "chosen".
+- **Long names.** The 16-character cap already exists. When the "first out" banner doesn't fit, it drops the cause ("Gran is first out."), and the chatter keeps the full line.
 - **Sniper's longer kill line.** Haakon's words (27 October 2026): "One shot, one whoppertunity". Add it to Sniper's
   kill lines in `chatter/voices.js` beside "One shot.", with its translation in each language file (as `chatter/zh.js`
   has "One shot."), keeping the pun where the language allows. It must fit the banner and the chatter strip on a phone.
@@ -166,11 +174,6 @@ Also in `next-tasks-verbatim.md`:
 - **Last words on phones.** Haakon (27 October 2026): "Yes to all, expertly!" On phones with no chatter panel, the
   round-ending snake's last words are lost, and at 390x664 the strip's line is cut with an ellipsis (from #34;
   `docs/archive/plan-history.md`). Show the last words whole where a phone player sees them, without crowding the board.
-- **A head-to-head mode in `tools/abtest.js`.** Haakon (27 October 2026): "Yes to all, expertly!" Old and new AI mixed in
-  the same rounds on paired seats, which the optimization bar in `CLAUDE.md` calls for (the assistant's note of
-  2026-10-18), and which the standing instruction "every new move is tested both ways" uses: rivals with a move and
-  rivals without it on the same board. Before item 5, whose new moves need it.
-
 ### 3b. The rivals who change: Capricious, Copycat and Wildcard
 
 As `docs/design/35-capricious-copycat-and-wildcard.md` describes: Capricious does impressions of every other rival from
