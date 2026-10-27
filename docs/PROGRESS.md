@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| Sniper's kill line | Which words, beside "One shot."? Claude's suggestions: "One shot. I brought a spare. Didn't need it." · "Windage, elevation, lunch." · "One shot. The rest are for my memoirs." · "I never miss. My therapist says it's my only personality." | None taken: the words are Haakon's to choose | Open |
+| Sniper's kill line | Which words, beside "One shot."? | Haakon (27 October 2026): "One shot, one whoppertunity" (queued under item 3) | Answered |
 
 ## The queue, in order
 
@@ -122,6 +122,23 @@ Also in `next-tasks-verbatim.md`:
     safety margin, and how far ahead the squeeze looks.
   - A rules test per hunter. Trademarks and win bands kept, and the rivals close pins on anyone, never on you in
     particular.
+- **Sniper's longer kill line.** Haakon's words (27 October 2026): "One shot, one whoppertunity". Add it to Sniper's
+  kill lines in `chatter/voices.js` beside "One shot.", with its translation in each language file (as `chatter/zh.js`
+  has "One shot."), keeping the pun where the language allows. It must fit the banner and the chatter strip on a phone.
+- **Mason's Caesar, the punchline and "Et tu" for everything.** Haakon (27 October 2026), on Claude's suggestion: "Yes,
+  that would be quiet cool! Then it would show if they died from the edge, falling, or a mushroom also. Or lightning."
+  - *The joke as his kill line.* Mason's kill line becomes "Vidi, vici, veni." (he saw, he conquered, then he came), and
+    "Veni, vidi, vici." leaves his lines, so the proper version never spoils the punchline. "Veni, vidi, aedificavi."
+    and "Veni, vidi, edi." stay.
+  - *Last words that know what killed him.* Today a snake's last words know only a killer that is a snake ("Et tu,
+    {who}?"); a death by anything else gets his plain lines. Give the last words the cause the engine already records
+    (`cause` and `killer` on the crash), so Mason says "Et tu, …?" to whatever killed him: the edge ("Et tu, margo?"),
+    a fall into a hole ("Et tu, fovea?"), fire ("Et tu, ignis?"), hunger ("Et tu, fames?"), the woodpecker ("Et tu,
+    picus?"), a mushroom ("Et tu, fungus?"), lightning ("Et tu, Iuppiter?") and his own tail ("Et tu, cauda mea?"),
+    for whichever of these the game has.
+  - *Every rival, the same way.* The cause is there for all eighteen, so each gets last words for the deaths it can
+    have, in its own voice, where they are funny, and the chatter shows how they died. Translations in each language
+    file; the lines fit the banner and the chatter strip on a phone.
 - **Last words on phones.** Haakon (27 October 2026): "Yes to all, expertly!" On phones with no chatter panel, the
   round-ending snake's last words are lost, and at 390x664 the strip's line is cut with an ellipsis (from #34;
   `docs/archive/plan-history.md`). Show the last words whole where a phone player sees them, without crowding the board.
