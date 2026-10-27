@@ -256,6 +256,7 @@ function drawBody(s, a, now, dead) {
   if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
   else drawFace(s, look, color, blinking, a);
   if (!dead && a.coughing) drawCough(a, now); // (and then its cough)
+  if (!dead && a.growl) drawGrowl(a, now); // (hungry, in the warning's seconds: its growl)
   ctx.restore();
 
   // Golden powers held: a pip for each on a short arc behind the head,
