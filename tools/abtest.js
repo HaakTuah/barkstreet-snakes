@@ -25,8 +25,24 @@
 // the A side of one experiment is free in the next, and so is a plain
 // simulate.js run of the same rounds afterwards.
 //
+// Head to head (--head-to-head): A's AI and B's in the same rounds, under
+// A's rules (A and B must have the same tuning.js and engine.js: it compares
+// two AIs, or rivals with a move against rivals without it, on one set of
+// rules). Every round is played twice, as duplicate bridge is: once with B's
+// AI steering the snakes with even ids and A's the odd, once the other way
+// round (simulate.js --versus). So every personality on every spawn plays
+// once for each side, and the rows set A's snakes against B's over the
+// pair: who wins, places better, lives longer, eats more, kills more. Since
+// they meet on the same board, it measures skill against each other, where
+// the plain mode measures what each does in a field of its own kind. Given
+// the same AI twice, the two plays of a round are the same game with the
+// sides swapped, so every row comes out exactly even (an identity check);
+// two copies that differ only in which random numbers they draw come out
+// even within noise.
+//
 //   node tools/abtest.js [A] B [--seed N ...] [--rounds N] [--batch N] [--metrics LIST] [--at MS]
 //                        [--alpha P] [--margin ROW=X ...] [--workers N] [--json]
+//   node tools/abtest.js [A] B --head-to-head [--seed N ...] [--rounds N] [--batch N] [--metrics LIST] [--alpha P] ...
 //
 //   A, B        the two copies (folders with tuning.js, ai.js and engine.js); A defaults to this one
 //   --seed N    a seed to play (repeat it for more; default 3 and 11, the screening's: confirm
@@ -44,6 +60,13 @@
 //                 place     each personality's average place (shown, not waited for)
 //                 trademarks  each personality's trademark, as simulate.js --signatures measures it
 //                           (Mason's straight runs, Ghost's distance, Star's flashes...; played with --signatures)
+//   --head-to-head  A's AI and B's in the same rounds (above); its rows, by group (default side):
+//                 side      each side's snakes: win%, average place, time alive, food and kills a snake
+//                 deaths    each side's snakes: the share that died of each cause
+//                 powers    each side's snakes: plain flashes a minute alive, plain jumps, golden leaps and
+//                           dashes and golden power food a snake (how often a side used a move)
+//                 win, place, trademarks  each personality's, when it played for A and for B
+//                 (win and place shown, not waited for, as above). Not with --at
 //   --at MS     fast-forward: store every round at game time MS as A plays it (simulate.js
 //               --save-at), and play both on from there; for questions about the late game
 //               (2:00, the woodpecker, is 120000). Only what happens after MS can differ
@@ -59,6 +82,7 @@ const { execFileSync } = require('child_process');
 const { TRADEMARKS } = require('./simulate.js');
 
 const GROUPS = ['length', 'sd', 'deaths', 'starving', 'powers', 'win', 'place', 'trademarks'];
+const H2H = ['side', 'deaths', 'powers', 'win', 'place', 'trademarks']; // (--head-to-head's)
 const USUAL = ['length', 'sd']; // (the rest asked for: each row widens every interval a little, and trademarks need rounds played with --signatures)
 const SHOWN = ['win', 'place']; // (shown, not waited for, unless they're all that's asked)
 
@@ -75,11 +99,46 @@ function valuesOf(res) {
   };
 }
 
+// Head to head: the two plays of a round (simulate.js --versus, B on the
+// even seats, then the odd), as A's snakes' values and B's, each with its
+// snakes' numbers added up (per: by personality, as in a plain round).
+function sidesOf(...plays) {
+  const side = () => ({ h2h: true, per: {}, snakes: 0, wins: 0, placeSum: 0, minutes: 0, eaten: 0, kills: 0, causes: {}, flashes: 0, jumps: 0, leaps: 0, dashes: 0, golden: 0 });
+  const out = { A: side(), B: side() };
+  for (const res of plays) {
+    for (const [name, p] of Object.entries(res.per)) {
+      const v = out[p.versus ? 'B' : 'A'], t = (v.per[name] ||= { deaths: {} });
+      for (const [k, x] of Object.entries(p)) {
+        if (k === 'deaths' || k === 'sig') for (const [d, n] of Object.entries(x)) (t[k] ||= {})[d] = (t[k][d] || 0) + n;
+        else t[k] = (t[k] || 0) + x;
+      }
+      v.snakes += p.rounds; v.minutes += p.aliveMs / 60000;
+      for (const k of ['wins', 'placeSum', 'eaten', 'kills', 'flashes', 'jumps', 'leaps', 'dashes', 'golden']) v[k] += p[k];
+      for (const [c, n] of Object.entries(p.deaths)) v.causes[c] = (v.causes[c] || 0) + n;
+    }
+  }
+  return out;
+}
+
 // The rows of the groups asked for. A ratio row is a sum over the rounds
 // over another (num / den), times scale; a median row, the median of a value
 // over the rounds that have one. margin: a difference that doesn't matter.
 function rowsFor(As, Bs, groups = USUAL, margins = new Map()) {
   const rows = [], add = (group, key, label, unit, spec, margin) => groups.includes(group) && rows.push({ group, key, label, unit, margin: margins.get(key) ?? margins.get(group) ?? margin, ...spec });
+  if (As[0]?.h2h) { // (head to head: each side's snakes, a snake at a time)
+    const snakes = v => v.snakes;
+    add('side', 'side.win', 'win% a snake', '%', { num: v => v.wins, den: snakes, scale: 100 }, 3);
+    add('side', 'side.place', 'place a snake', '', { num: v => v.placeSum, den: snakes }, 0.1);
+    add('side', 'side.alive', 'time alive a snake', 's', { num: v => v.minutes, den: snakes, scale: 60 }, 3);
+    add('side', 'side.food', 'food a snake', '', { num: v => v.eaten, den: snakes }, 0.5);
+    add('side', 'side.kills', 'kills a snake', '', { num: v => v.kills, den: snakes }, 0.05);
+    for (const k of [...new Set([...As, ...Bs].flatMap(v => Object.keys(v.causes)))].sort()) add('deaths', 'deaths.' + k, `died: ${k}`, '%', { num: v => v.causes[k] || 0, den: snakes, scale: 100 }, 3);
+    add('powers', 'flashes', 'plain flashes a minute alive', '', { num: v => v.flashes, den: v => v.minutes }, 0.2);
+    add('powers', 'jumps', 'plain jumps a snake', '', { num: v => v.jumps, den: snakes }, 0.2);
+    add('powers', 'leaps', 'golden leaps a snake', '', { num: v => v.leaps, den: snakes }, 0.05);
+    add('powers', 'dashes', 'golden dashes a snake', '', { num: v => v.dashes, den: snakes }, 0.05);
+    add('powers', 'golden', 'golden power food a snake', '', { num: v => v.golden, den: snakes }, 0.05);
+  } else {
   add('length', 'length', 'round length, median', 's', { median: v => v.length }, 3);
   add('sd', 'sd', 'sudden death length, median', 's', { median: v => v.sd }, 4);
   add('sd', 'reached', 'rounds reaching the woodpecker', '%', { num: v => v.reached, den: () => 1, scale: 100 }, 2);
@@ -92,6 +151,7 @@ function rowsFor(As, Bs, groups = USUAL, margins = new Map()) {
   add('powers', 'leapsUsed', 'golden leaps used', '%', { num: v => v.goldLeaps, den: v => v.goldGot, scale: 100 }, 3);
   add('powers', 'dashes', 'golden dashes a round', '', { num: v => v.dashes, den: () => 1 }, 0.2);
   add('powers', 'golden', 'golden power food a snake a round', '', { num: v => v.pickups, den: v => v.snakes }, 0.05);
+  }
   const names = [...new Set([...As, ...Bs].flatMap(v => Object.keys(v.per)))].sort();
   const of = (v, name, k) => v.per[name]?.[k] || 0;
   for (const n of names) add('win', 'win.' + n, `win%: ${n}`, '%', { num: v => of(v, n, 'wins'), den: v => of(v, n, 'rounds'), scale: 100 }, 3);
@@ -240,7 +300,7 @@ function judge(As, Bs, { groups = USUAL, margins = new Map(), alpha = 0.05, look
   return { results, level, waited: waited.length, open: waited.filter(x => x.verdict === '?').length };
 }
 
-module.exports = { valuesOf, rowsFor, measure, verdictOf, judge, median, zOf, tOf, USUAL, SHOWN, GROUPS };
+module.exports = { valuesOf, sidesOf, rowsFor, measure, verdictOf, judge, median, zOf, tOf, USUAL, SHOWN, GROUPS, H2H };
 
 if (require.main === module) {
   const SIM = path.join(__dirname, 'simulate.js');
@@ -250,16 +310,19 @@ if (require.main === module) {
   const one = name => all(name).pop() ?? null;
   const fail = why => { console.error(why); process.exit(1); };
   const roots = args.filter((a, i) => !a.startsWith('--') && !WITH_VALUE.includes(args[i - 1]));
-  if (!roots.length || roots.length > 2) fail('usage: node tools/abtest.js [A] B [--seed N ...] [--rounds N] [--batch N] [--metrics LIST] [--at MS] [--alpha P] [--margin ROW=X ...] [--workers N] [--json]');
+  if (!roots.length || roots.length > 2) fail('usage: node tools/abtest.js [A] B [--seed N ...] [--rounds N] [--batch N] [--metrics LIST] [--at MS] [--alpha P] [--margin ROW=X ...] [--workers N] [--json] [--head-to-head]');
   const [A, B] = (roots.length === 1 ? [path.join(__dirname, '..'), roots[0]] : roots).map(r => path.resolve(r));
   for (const r of [A, B]) if (!['tuning.js', 'ai.js', 'engine.js'].every(f => fs.existsSync(path.join(r, f)))) fail(`${r} isn't a copy of the game (no tuning.js, ai.js and engine.js)`);
   const seeds = all('--seed').map(Number);
   if (!seeds.length) seeds.push(3, 11);
   const MAX = Number(one('--rounds')) || 600, BATCH = Math.min(MAX, Number(one('--batch')) || 100), LOOKS = Math.ceil(MAX / BATCH);
   const ALPHA = Number(one('--alpha')) || 0.05; // (for the whole table: see judge)
-  const at = one('--at'), json = args.includes('--json'), workers = one('--workers');
-  const groups = (one('--metrics') || USUAL.join(',')).split(',').map(g => g.trim()).filter(Boolean);
-  for (const g of groups) if (!GROUPS.includes(g)) fail(`no metric ${g} (there are ${GROUPS.join(', ')})`);
+  const at = one('--at'), json = args.includes('--json'), workers = one('--workers'), h2h = args.includes('--head-to-head');
+  const groups = (one('--metrics') || (h2h ? 'side' : USUAL.join(','))).split(',').map(g => g.trim()).filter(Boolean), known = h2h ? H2H : GROUPS;
+  for (const g of groups) if (!known.includes(g)) fail(`no metric ${g}${h2h ? ' head to head' : ''} (there are ${known.join(', ')})`);
+  if (h2h && at != null) fail("--head-to-head doesn't go with --at");
+  for (const f of h2h ? ['tuning.js', 'engine.js'] : []) if (fs.readFileSync(path.join(A, f), 'utf8') !== fs.readFileSync(path.join(B, f), 'utf8'))
+    fail(`head to head plays under one set of rules, and A's ${f} and B's differ: give both the same ${f} (a new rule on both sides, its use in B's ai.js only)`);
   const signs = groups.includes('trademarks') ? ['--signatures'] : [];
   const margins = new Map(all('--margin').map(m => { const [k, v] = m.split('='); return [k, Number(v)]; }));
 
@@ -274,7 +337,17 @@ if (require.main === module) {
     return result;
   };
   // The first n rounds of a seed under one side, each round's own numbers.
+  // Head to head: both plays of each round under A's rules, B's AI on the
+  // even seats then the odd, as each side's numbers (sidesOf).
+  const sides = new Map();
   const roundsOf = (side, seed, n) => {
+    if (h2h) {
+      if (!sides.has(`${seed}:${n}`)) {
+        const [even, odd] = ['even', 'odd'].map(half => simulate('A', String(n), '--seed', String(seed), '--per-round', '--versus', B, '--seats', half, ...signs).rounds);
+        sides.set(`${seed}:${n}`, even.map((r, i) => sidesOf(r, odd[i])));
+      }
+      return sides.get(`${seed}:${n}`).map(x => x[side]);
+    }
     if (at == null) return simulate(side, String(n), '--seed', String(seed), '--per-round', ...signs).rounds;
     const { states } = simulate('A', String(n), '--seed', String(seed), '--save-at', String(at), ...signs); // (stored as A plays them; cached, so a look plays only its new rounds' openings)
     return simulate(side, String(n), '--from', states, '--per-round').rounds; // (with --signatures if they were stored with them)
@@ -294,8 +367,8 @@ if (require.main === module) {
     n = Math.min(MAX, look * BATCH);
     As = []; Bs = [];
     for (const seed of seeds) {
-      As.push(...roundsOf('A', seed, n).map(valuesOf));
-      Bs.push(...roundsOf('B', seed, n).map(valuesOf));
+      As.push(...(h2h ? roundsOf('A', seed, n) : roundsOf('A', seed, n).map(valuesOf)));
+      Bs.push(...(h2h ? roundsOf('B', seed, n) : roundsOf('B', seed, n).map(valuesOf)));
     }
     unchanged();
     judged = judge(As, Bs, { groups, margins, alpha: ALPHA, looks: LOOKS });
@@ -307,12 +380,12 @@ if (require.main === module) {
   const { results, level } = judged, shown = results.filter(x => !x.waited);
   const how = !judged.open ? `stopped after ${n} of ${MAX} rounds a seed (look ${look} of ${LOOKS}): every row ${shown.length ? 'waited for ' : ''}decided` : `all ${MAX} rounds a seed (${LOOKS} looks), some rows still undecided`;
   if (json) {
-    console.log(JSON.stringify({ A, B, seeds, at: at == null ? null : Number(at), rounds: n, pairs: As.length, looks: look, plannedLooks: LOOKS, alpha: ALPHA, level, played: spent,
+    console.log(JSON.stringify({ A, B, headToHead: h2h, seeds, at: at == null ? null : Number(at), rounds: n, pairs: As.length, looks: look, plannedLooks: LOOKS, alpha: ALPHA, level, played: spent,
       rows: results.map(({ row, m, verdict, waited }) => ({ key: row.key, label: row.label, unit: row.unit, margin: row.margin, ...(m || {}), verdict, waited })) }));
   } else {
     const pct = x => +(100 * x).toPrecision(4);
     console.log(`A: ${A}\nB: ${B}`);
-    console.log(`seeds ${seeds.join(', ')}${at != null ? `, from ${at / 1000}s (stored as A played them)` : ''} · ${As.length} paired rounds · ${how}`);
+    console.log(`seeds ${seeds.join(', ')}${at != null ? `, from ${at / 1000}s (stored as A played them)` : ''} · ${As.length} paired rounds${h2h ? ' (head to head: each round played twice, sides swapped; A, B: each side\'s snakes)' : ''} · ${how}`);
     console.log(`intervals: ${pct(1 - ALPHA)}% for all ${results.length} rows over all ${LOOKS} looks at once (each at ${pct(1 - level)}%), so any verdict here is wrong at most ${pct(ALPHA)}% of the time`
       + ` (wrong rows to expect: at most ${ALPHA}) · same: the whole interval within ±margin · higher, lower: B against A`);
     if (shown.length) console.log(`(${[...new Set(shown.map(x => x.row.group))].join(' and ')}: shown, not waited for)`);
@@ -323,6 +396,7 @@ if (require.main === module) {
     const head = ['', 'A', 'B', 'B-A', 'interval', 'verdict'], width = head.map((h, i) => Math.max(h.length, ...table.map(r => r[i].length)));
     for (const r of [head, ...table]) console.log(r.map((c, i) => i === 0 || i === 5 ? c.padEnd(width[i]) : c.padStart(width[i])).join('  ').trimEnd());
     const cpu = s => `${spent[s].rounds} rounds, ${Math.round(spent[s].cpu)} s of CPU`;
-    console.log(`played: A ${cpu('A')}${at != null ? ' (openings included)' : ''}; B ${cpu('B')}; the rest read back from the cache`);
+    console.log(h2h ? `played: ${cpu('A')} (both plays of each round); the rest read back from the cache`
+      : `played: A ${cpu('A')}${at != null ? ' (openings included)' : ''}; B ${cpu('B')}; the rest read back from the cache`);
   }
 }

@@ -52,6 +52,16 @@
 //             Mute boxing its target, Joker's lures, Desperado's skims and
 //             Star's powers (see SIGNS)
 //   --root    play another copy of the game (to compare versions)
+//   --versus DIR  head to head: DIR's ai.js steers half the snakes of every
+//             round, this copy's (--root's) the other half, under this copy's
+//             rules (its tuning.js and engine.js). DIR's AI gets its own
+//             personalities' weights, by key. --seats even|odd says which
+//             half is DIR's: the snakes with even ids (the default) or odd.
+//             Each snake DIR steered has versus: 1 in its numbers (summed:
+//             the rounds it played for DIR). tools/abtest.js --head-to-head
+//             plays both halves; given this very copy, the rounds come out
+//             exactly as without it (the same fingerprint). Not with
+//             --save-at or --from
 //   --save-at MS  fast-forward: play each round only to game time MS (2:00,
 //             when the woodpecker comes, is 120000) and store it as it stands
 //             then, the game and where its random numbers had got to (a round
@@ -113,13 +123,27 @@ function seeded(seed) {
 
 // The game's files (texts, in GAME_FILES order) in a fresh context, with our
 // own Math.random. Math.random draws from `rng`, which can be reseeded for
-// every round.
+// every round. versus: another ai.js's text (--versus), loaded beside this
+// one's in the same context; the snakes whose memory is in `theirs` decide
+// with it, the rest with this one's.
 let rng = Math.random;
-function loadGame(texts) {
+const theirs = new WeakSet();
+let theirKeys = null; // (the other ai.js's personality keys)
+function loadGame(texts, versus = null) {
   const M = Object.create(Math);
   M.random = () => rng();
   const ctx = vm.createContext({ window: {}, console, Math: M });
-  GAME_FILES.forEach((f, i) => vm.runInContext(texts[i], ctx, { filename: f }));
+  const run = f => vm.runInContext(texts[GAME_FILES.indexOf(f)], ctx, { filename: f });
+  run('tuning.js');
+  let other = null;
+  if (versus) { vm.runInContext(versus, ctx, { filename: 'versus/ai.js' }); other = ctx.window.SnakeAI; }
+  run('ai.js');
+  if (other) {
+    const mine = ctx.window.SnakeAI, keyOf = new Map(Object.entries(mine.PERSONAS).map(([k, p]) => [p, k]));
+    ctx.window.SnakeAI = { ...mine, decide: (view, brain, memory) => theirs.has(memory) ? other.decide(view, other.PERSONAS[keyOf.get(brain)], memory) : mine.decide(view, brain, memory) };
+    theirKeys = new Set(Object.keys(other.PERSONAS));
+  }
+  run('engine.js');
   return { E: ctx.window.SnakeEngine, T: ctx.window.TUNING, ctx };
 }
 
@@ -392,7 +416,7 @@ function woodpeckerCensus(g, c, st, dying, N) {
 // game time instead and hands back the round as it stands (st, its own
 // numbers so far among it, and where the random numbers had got to).
 // A round's numbers are { per, total }, as merge() adds them up.
-function playRound(E, T, r, { seed, ahead, signs, saveAt }, saved) {
+function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
   // (Is any living head within the woodpecker's clearance of cell k?)
   const nearHead = (g, k) => g.snakes.some(s => s.alive && Math.abs(s.body[0].x - k % T.GRID) + Math.abs(s.body[0].y - Math.floor(k / T.GRID)) <= T.PECK_CLEARANCE);
   let st;
@@ -410,6 +434,11 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt }, saved) {
         ...(signs ? { sig: Object.fromEntries(SIGNS.map(k => [k, 0])) } : {}),
       };
       per[s.name].rounds++;
+      if (seats != null && s.id % 2 === seats) { // (--versus: this snake is the other AI's)
+        if (!theirKeys.has(s.personaKey)) throw new Error(`the --versus copy's ai.js has no personality ${s.personaKey}`);
+        theirs.add(s.memory);
+        per[s.name].versus = 1;
+      }
     }
     st = {
       g, per, total, trace: 0,
@@ -500,6 +529,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt }, saved) {
     p.pellets += s.pellets;
     p.golden += picked[s.id];
     if (s.alive) p.aliveMs += g.time;
+    if (p.versus) p.versusWins = p.wins;
     if (signs) { p.sig.foodShare += s.eaten / Math.max(1, food); p.sig.beadShare += s.pellets / Math.max(1, beads); }
   }
   total.timeSum += g.time;
@@ -556,6 +586,10 @@ function report({ per, total, suddenAt }, withCensus) {
   console.log('deaths: ' + Object.entries(total.causes).sort((a, b) => b[1] - a[1]).map(([c, n]) => `${c} ${pct(n, deaths)}%`).join(', ')
     + ` · into holes: ${((total.causes.hole || 0) / Math.max(1, total.sudden)).toFixed(2)} per woodpecker round`);
   console.log(`fingerprint ${total.trace}`);
+  if (Object.values(per).some(p => p.versus)) { // (--versus: how each AI's snakes did)
+    const sum = k => Object.values(per).reduce((n, p) => n + (p[k] || 0), 0), theirs = [sum('versusWins'), sum('versus')], mine = [sum('wins') - theirs[0], sum('rounds') - theirs[1]];
+    console.log(`head to head: the --versus AI's snakes won ${theirs[0]} of ${theirs[1]} (${pct(...theirs)}%), this copy's ${mine[0]} of ${mine[1]} (${pct(...mine)}%)`);
+  }
   if (withCensus) {
     const c = total.census, R = Math.max(1, total.rounds), sd = Math.max(1, total.sudden), a = n => (n / R).toFixed(2), of = n => `${pct(n, R)}%`;
     const snakeRounds = Object.values(per).reduce((n, p) => n + p.rounds, 0), minutes = Object.values(per).reduce((n, p) => n + p.aliveMs, 0) / 60000;
@@ -677,7 +711,7 @@ const parsed = line => JSON.parse(line)[ROUND.exec(line)[2]];
 if (isMainThread && require.main === module) {
   const args = process.argv.slice(2);
   const flag = name => args.includes(name);
-  const WITH_VALUE = ['--seed', '--root', '--workers', '--save-at', '--save', '--from'];
+  const WITH_VALUE = ['--seed', '--root', '--workers', '--save-at', '--save', '--from', '--versus', '--seats'];
   const text = name => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : null; };
   const value = name => { const v = text(name); return v == null ? null : Number(v); };
   const fail = why => { console.error(why); process.exit(1); };
@@ -686,6 +720,10 @@ if (isMainThread && require.main === module) {
   let seed = value('--seed'), signs = flag('--signatures'), rounds = given || 200;
   if (saveAt != null && seed == null) fail('--save-at needs --seed (a round must play the same way again to be worth storing)');
   if (saveAt != null && fromFile) fail("--save-at and --from don't go together");
+  const versus = text('--versus') && path.resolve(text('--versus')), seats = versus ? ['even', 'odd'].indexOf(text('--seats') || 'even') : null;
+  if (versus && (saveAt != null || fromFile)) fail("--versus doesn't go with --save-at or --from");
+  if (seats < 0) fail('--seats is even or odd');
+  if (versus && !fs.existsSync(path.join(versus, 'ai.js'))) fail(`${versus} has no ai.js`);
   try { os.setPriority(os.constants.priority.PRIORITY_BELOW_NORMAL); } catch {} // (the machine's own user comes first; the worker threads share this priority)
   const hash = (...parts) => crypto.createHash('sha1').update(parts.join('\u0000')).digest('hex');
   const read = f => fs.readFileSync(f, 'utf8');
@@ -697,8 +735,8 @@ if (isMainThread && require.main === module) {
   // stored, as it is now.
   const SELF = { text: read(__filename), file: __filename }, STATE_FILE = require.resolve('./snapshots/state.js');
   const snapshot = () => {
-    const game = GAME_FILES.map(f => read(path.join(ROOT, f))), state = read(STATE_FILE);
-    return { game, state, key: hash(...game, SELF.text, state) };
+    const game = GAME_FILES.map(f => read(path.join(ROOT, f))), state = read(STATE_FILE), other = versus ? read(path.join(versus, 'ai.js')) : null;
+    return { game, state, other, key: hash(...game, SELF.text, state, ...(versus ? [other, seats] : [])) };
   };
   let files = snapshot();
   const CACHE = path.join(os.tmpdir(), 'barkbite-sim-cache');
@@ -829,7 +867,7 @@ if (isMainThread && require.main === module) {
   // same whichever core plays it, after whichever round.)
   const queue = [...todo], cores = Math.min(workers, todo.length), cpu = process.cpuUsage(), t0 = Date.now();
   Promise.all(Array.from({ length: cores }, () => new Promise((resolve, reject) => {
-    const w = new Worker(BOOT, { eval: true, workerData: { self: SELF.text, selfFile: SELF.file, game: files.game, state: files.state, stateFile: STATE_FILE, root: ROOT, seed, ahead, signs, saveAt } });
+    const w = new Worker(BOOT, { eval: true, workerData: { self: SELF.text, selfFile: SELF.file, game: files.game, other: files.other, seats, state: files.state, stateFile: STATE_FILE, root: ROOT, seed, ahead, signs, saveAt } });
     const feed = () => { const r = queue.shift(); w.postMessage(r === undefined ? null : { r, saved: stored ? stored.get(r) : null }); };
     w.on('message', ({ r, line }) => { have.set(r, line); feed(); });
     w.once('error', reject);
@@ -855,7 +893,7 @@ if (isMainThread && require.main === module) {
   // A core: plays the rounds it's handed (or goes on with them), one at a
   // time, with the files' texts it was handed (the ones in the key).
   const State = fromText(workerData.state, workerData.stateFile);
-  const { E, T, ctx } = loadGame(workerData.game);
+  const { E, T, ctx } = loadGame(workerData.game, workerData.other);
   const roots = { SnakeAI: ctx.window.SnakeAI, SnakeEngine: ctx.window.SnakeEngine, TUNING: ctx.window.TUNING };
   const known = State.known(roots), decode = State.decoder(ctx), pristine = State.fingerprint(roots);
   parentPort.on('message', job => {
