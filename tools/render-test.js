@@ -36,6 +36,10 @@
 //   comes out past its chin; Copycat copying it holds up a stick-on one.
 // - Scorch marks are soot, not holes: a burned cell is no more than a little
 //   darker, and not darkest in its middle.
+// - A rainbow is upright wherever its golden apple is in the log's upper
+//   half (left, middle or right, high or low): it rises out of the apple to
+//   its top on the board, between the apple and the far side, and comes
+//   down toward the far side, red outermost.
 // - Jumps you can see: at the top the neck arches up behind the head and
 //   the shadow, left on the ground, falls across the body hopped; after, the
 //   body still arches over what it crossed (both, for a golden jump over
@@ -685,6 +689,47 @@ const STAGE = `(() => {
     })()`);
     check(soot.every(s => s.cell >= 0.78), 'a burned cell is no more than a little darker', soot.map(s => s.cell).join(', '));
     check(soot.every(s => s.mid >= 0.8 * s.cell), 'and not darkest in its middle (no dark disc)', soot.map(s => `${s.mid}/${s.cell}`).join(', '));
+
+    // A rainbow, upright from any apple in the upper half (the arch hung
+    // upside down there once, and then showed only its rising side from an
+    // apple near the middle). Each apple's rainbow grown and glowing, and the
+    // same frame drawn again without it: in each column of cells from the
+    // apple to the far edge, the highest pixel it changed (its glow's outer
+    // edge) traces the arch. That's highest on the board (not cut off by the
+    // top edge), between the apple and the far edge, and lower on either
+    // side; and at its top, the reddest band is above the bluest.
+    const bows2 = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const out = [], c = document.getElementById('game'), k = c.width / (TUNING.GRID * ${CELL}), W = c.width;
+      for (const [ax, ay] of [[1, 6], [6, 6], [11, 6], [12, 6], [17, 6], [22, 6], [6, 3], [17, 3], [3, 10], [20, 10]]) {
+        const g = stage(['gobbler', 'ghost', 'mason']);
+        show(g); drawN(5);
+        R.onTick([{ type: 'rainbow', x: ax, y: ay }]); drawN(80); // (grown, and not fading yet)
+        const on = c.getContext('2d').getImageData(0, 0, W, c.height).data;
+        rainbow = null; __t -= 33; drawN(1);
+        const off = c.getContext('2d').getImageData(0, 0, W, c.height).data;
+        const d = (px, py, ch) => on[(py * W + px) * 4 + ch] - off[(py * W + px) * 4 + ch];
+        const side = ax < TUNING.GRID / 2 ? 1 : -1, cols = [], tops = [];
+        for (let cx = ax + side; cx >= 0 && cx < TUNING.GRID; cx += side) {
+          const px = Math.round((cx + 0.5) * ${CELL} * k);
+          let top = -1;
+          for (let py = 0; py < c.height && top < 0; py++) if (Math.abs(d(px, py, 0)) + Math.abs(d(px, py, 1)) + Math.abs(d(px, py, 2)) > 30) top = py;
+          if (top >= 0) { cols.push(cx); tops.push(+(top / (${CELL} * k)).toFixed(2)); }
+        }
+        const i = tops.indexOf(Math.min(...tops)), apex = cols[i], px = Math.round((apex + 0.5) * ${CELL} * k);
+        let red = -1, blue = -1, rb = -1e9, br = -1e9;
+        for (let py = Math.round(tops[i] * ${CELL} * k); py < Math.round((tops[i] + 3) * ${CELL} * k); py++) {
+          const v = d(px, py, 0) - d(px, py, 2);
+          if (v > rb) { rb = v; red = py; }
+          if (-v > br) { br = -v; blue = py; }
+        }
+        out.push({ ax, ay, cols, tops, apex, top: tops[i], rises: tops.length > 2 && tops[0] > tops[i] + 0.3, falls: tops.length > 2 && tops[tops.length - 1] > tops[i] + 0.3, between: i > 0 && i < tops.length - 1, onBoard: tops[i] > 0, redOut: red >= 0 && red < blue });
+      }
+      SnakeDebug.pinQuality(2);
+      return out;
+    })()`);
+    const bowSays = r => `apple ${r.ax},${r.ay}: top ${r.top} cells down at column ${r.apex}; from the apple, ${r.tops.join(' ')}`;
+    for (const r of bows2) check(r.onBoard && r.between && r.rises && r.falls && r.redOut, `a rainbow from an apple at ${r.ax},${r.ay} rises from it to its top on the board and down toward the far side, upright, red outermost`, bowSays(r) + (r.redOut ? '' : '; not red outermost'));
 
     // Jumps you can see (round six A: a jump was mostly the head swelling).
     // Your snake jumps Gobbler's body, lying one thick across its way, and
