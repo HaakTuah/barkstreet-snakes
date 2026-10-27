@@ -351,7 +351,7 @@ const RAINBOW = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#3b82f6', '#6366f1
 // board farther from the apple), from anywhere on the log. Always upright,
 // red outermost. Its top is half way from the apple to the far edge, and it
 // comes back down to the apple's height at that edge and on off the board.
-// Each is the same round arch, its centre below the top by twice the arch's
+// Each is the same round arch, its centre below the apple by half the arch's
 // half-width, so from an apple by the middle it rises about four cells: a
 // centre far below the log made one over a short stretch rise only a cell.
 // Where its top would be nearer the top edge than 0.06 of the board (or half

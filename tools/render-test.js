@@ -747,7 +747,7 @@ const STAGE = `(() => {
     })()`);
     const bowSays = r => `apple ${r.ax},${r.ay}: top ${r.top} cells down at column ${r.apex}; from the apple, ${r.tops.join(' ')}`;
     for (const r of bows2) check(r.onBoard && r.between && r.rises && r.falls && r.redOut, `a rainbow from an apple at ${r.ax},${r.ay} rises from it to its top on the board and down toward the far side, upright, red outermost`, bowSays(r) + (r.redOut ? '' : '; not red outermost'));
-    const mids = bows2.filter(r => r.ax === 11 || r.ax === 12), rise = r => +(r.ay + 0.5 - r.top).toFixed(2); // (to its glow's top, about 1.3 cells over its red band: 2.25 when its centre was 1.15 boards down)
+    const mids = bows2.filter(r => r.ax === 11 || r.ax === 12), rise = r => +(r.ay + 0.5 - r.top).toFixed(2); // (to its glow's top, about 1.35 cells over the arch's middle: 2.25 when its centre was 1.15 boards down)
     check(mids.every(r => rise(r) > 4.5), 'from an apple by the middle, high or low, a rainbow rises clearly before it comes down', mids.map(r => `${r.ax},${r.ay}: ${rise(r)} cells`).join(', '));
 
     // Jumps you can see (round six A: a jump was mostly the head swelling).
