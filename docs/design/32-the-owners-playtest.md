@@ -106,12 +106,12 @@ The owner played the live game (6d478ed) on a desktop and sent three findings, f
 **The call** (27 October 2026):
 - **The rule.** A new burrow that opens while three are open (`BURROW_MAX`) starts the stalest growing shut. It takes a random time between `BURROW_SHUT_MIN_MS` and `BURROW_SHUT_MAX_MS` (6 and 14 s of game time; the engine's seeded randomness) and then closes over. The cap counts only open burrows, so there are three most of the time and briefly four. A dig nearer than `BURROW_SPACING` to a burrow also starts that one growing shut, instead of closing it at once. While it grows shut, a scared beetle can still run for it and dive in, but none comes out of it: `freeBurrow` skips it, so a beetle below comes up out of an open one, or waits.
 - **The rivals** read it by the same rule, from `view.burrows` (each one carries `shutFrom` and `shutAt`): a burrow growing shut is a home a scared beetle runs to and dives into until it closes, as in the engine. A beetle doesn't come up out of it, and the AI never predicts where one comes up anyway. (A first build dropped a burrow from the AI's homes in its last second. The review caught that the engine has no such rule, so it was removed.)
-- **The cue** (`drawShutting` in `render/food.js`), eased out so it shows from the start:
-  - the opening shrinks to 40% as sawdust comes in from the rim;
+- **The cue** (`drawShutting` in `render/food.js`), evenly over its time (it was eased out at first, which looked done by a third; see "The cue, evened out" below):
+  - the opening's area shrinks evenly to a tenth (`SHUT_HOLE`), keeping its dark rim, as sawdust fills in from the rim, lumps of it creeping over the opening's edge; its pale rim and specks round it stay;
   - the bark's grain grows across it, along the log;
-  - tufts of the log's moss creep in over the rim;
+  - four cushions of the log's moss grow in over the rim one after another, each to about a third of a cell across;
   - its cracks fade to half.
-  At the end comes today's closing over (`drawHeals`): it starts from the shrunken opening with the plug already packed, then the moss and the fade. Then a faint scar (a greyed oval of sawdust with the grain across it) stays where it was, fading over `SCAR_MS` (20 s).
+  At the end comes today's closing over (`drawHeals`): it starts from the look it had grown to, packs the plug in under its moss, then the big cushion and the fade. Then a faint scar (a greyed oval of sawdust with the grain across it) stays where it was, fading over `SCAR_MS` (20 s).
 - **The sound:** silent while it grows shut, then today's crumble (`heal`) as it closes over.
 - **The lesson** (once a round, once the burrow's lesson is told, the first time the banner is free for one starting to grow shut): "Old burrows grow shut: beetles go in, none come out." It replaces "Past three burrows, the stalest one closes over.", and the wording with "Past three" didn't fit on one line on a 320 px phone.
 - **The Field guide** (Beetles): "A burrow left unused grows shut (past three, the one unused longest): beetles still go in, but none come out."
@@ -128,6 +128,8 @@ The owner played the live game (6d478ed) on a desktop and sent three findings, f
 - `tools/online-test.js` crosses the rows and the event, and feeds the guest malformed ones.
 - `tools/render-test.js` checks the opening shrinking with sawdust and moss coming in, the closing over from there, and the scar gone after 22 s.
 - `tools/input-test.js` checks the lesson and the sound.
+
+**The cue, evened out** (27 October 2026, PR #53). Haakon: "Yes, you can try that and see if it adds to the game! Review it afterwards and make an expert call." Staged frames at 0, 1/3, 2/3 and 0.95 of its time had shown it all but done by a third (the plug drawn at full width early, the opening's rim and specks covered) and two thirds and nearly shut alike, the moss only small flecks. Now it goes evenly (above), the moss in cushions that read at phone size, and the scar a little stronger (0.45, was 0.3). With reduced motion nothing changes in it: it is a slow change of look, not motion, and the closing over keeps its calm version. The Field guide keeps its longer line over the spec's "A burrow left unused grows shut.": that alone reads as a timer, and the longer line says which one (past three, the one unused longest) and what it means for play (beetles still go in, none come out). `tools/render-test.js` checks the opening's dark pixels and the sawdust and moss in it changing by like steps each third, and the moss over a good part of a cell by the end. `tools/dev/burrow-shut/frames.js` stages the frames.
 
 **Measured** (600 rounds each, seeds 3 and 11, against e55855a):
 
