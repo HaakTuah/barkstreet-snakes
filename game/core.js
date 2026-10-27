@@ -124,8 +124,8 @@ const FLAVOR = {
   youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near enough your head to catch: see DIG_NEAR)
   digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log, once the dig's own lesson is told)
   digAndBurrow: 'A cornered beetle digs in, leaving a burrow.', // (the same, when the dig's lesson hasn't been told yet: most digs are far from you, so this one teaches both, the dig first)
-  burrowTaken: 'A beetle that digs in by a burrow takes its place.', // (the first burrow in a round that a dig near it closes over, once the burrow's lesson is told: burrows keep BURROW_SPACING apart)
-  burrowHeal: `Past ${inWords(TUNE.BURROW_MAX)} burrows, the stalest one closes over.`, // (the stalest: the one unused longest, as the Field guide has it. The first one closing over in a round, once the burrow's lesson is told)
+  burrowTaken: 'A beetle that digs in by a burrow takes its place.', // (the first burrow in a round that a dig near it starts growing shut, once the burrow's lesson is told: burrows keep BURROW_SPACING apart)
+  burrowHeal: 'Old burrows grow shut: beetles go in, none come out.', // (the stalest: the one unused longest, as the Field guide has it. The first one starting to grow shut in a round, once the burrow's lesson is told)
   lostColony: 'The woodpecker took a flag: that colony’s lost.', // (a flag it pecks out, the first in a round; for watchers too)
   lostCapital: 'The woodpecker took a capital: its realm moves.',
   lastApples: 'The last apples are falling.',

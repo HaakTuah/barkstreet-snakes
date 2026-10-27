@@ -204,7 +204,7 @@ window.SnakeEngine = (() => {
   function beetleOut(game, place, beetles) {
     if (beetles + game.unders.length >= T.BEETLE_MAX || game.time < T.BEETLE_FIRST_MS || Math.random() >= T.BEETLE_CHANCE) return;
     let b = freeBurrow(game, -1);
-    if (game.burrows.length < T.BURROW_MAX && (!b || Math.random() < T.BURROW_NEW_CHANCE)) {
+    if (openBurrows(game) < T.BURROW_MAX && (!b || Math.random() < T.BURROW_NEW_CHANCE)) {
       const at = place(null, true, -1, T.BURROW_SPACING); // (quiet, and apart from the other burrows: burrows keep apart)
       if (at) b = openBurrow(game, at.x, at.y);
     }
@@ -217,22 +217,35 @@ window.SnakeEngine = (() => {
   }
   // A burrow cracks open at (x, y): { x, y, at: the tick it opened, used:
   // the game time a beetle last went into or came out of it (or it opened),
-  // dug: 1 if a beetle's dig left it (see BURROW_FROM_DIG) }. A dug one
-  // takes the place of any burrow nearer than BURROW_SPACING (it closes
-  // over); then, at BURROW_MAX, the one unused longest closes over to make room.
+  // dug: 1 if a beetle's dig left it (see BURROW_FROM_DIG), and once it's
+  // growing shut, shutFrom and shutAt: the game times it started and will
+  // close }. A dug one takes the place of any burrow nearer than
+  // BURROW_SPACING (that one grows shut); then, at BURROW_MAX open, the one
+  // unused longest grows shut to make room.
   function openBurrow(game, x, y, dug = false) {
-    if (dug) for (const h of [...game.burrows]) if (Math.abs(h.x - x) + Math.abs(h.y - y) < T.BURROW_SPACING) closeBurrow(game, h); // (a dig by a burrow takes its place: that one closes over, so burrows keep apart)
-    if (game.burrows.length >= T.BURROW_MAX) {
-      let old = game.burrows[0];
-      for (const h of game.burrows) if ((h.used ?? 0) < (old.used ?? 0)) old = h;
-      closeBurrow(game, old);
+    if (dug) for (const h of game.burrows) if (Math.abs(h.x - x) + Math.abs(h.y - y) < T.BURROW_SPACING) shutBurrow(game, h); // (a dig by a burrow takes its place: that one grows shut, so burrows keep apart)
+    if (openBurrows(game) >= T.BURROW_MAX) {
+      let old = null;
+      for (const h of game.burrows) if (!h.shutAt && (!old || (h.used ?? 0) < (old.used ?? 0))) old = h;
+      shutBurrow(game, old);
     }
     const b = { x, y, at: game.tick, used: game.time, ...(dug ? { dug: 1 } : {}) };
     game.burrows.push(b);
     game.events.push({ type: 'burrow', x, y, ...(dug ? { dug: 1 } : {}) });
     return b;
   }
-  // A burrow closes over: sawdust and moss fill it.
+  // The burrows not growing shut (a beetle can come out of those).
+  const openBurrows = game => { let n = 0; for (const h of game.burrows) if (!h.shutAt) n++; return n; };
+  // A burrow starts growing shut, over BURROW_SHUT_MIN_MS to BURROW_SHUT_MAX_MS:
+  // sawdust creeps in from its rim and moss grows over it. A beetle can still
+  // dive into it meanwhile, but none comes out of it.
+  function shutBurrow(game, b) {
+    if (b.shutAt) return;
+    b.shutFrom = game.time;
+    b.shutAt = game.time + Math.round(between(T.BURROW_SHUT_MIN_MS, T.BURROW_SHUT_MAX_MS));
+    game.events.push({ type: 'shut', x: b.x, y: b.y, at: b.shutAt });
+  }
+  // A burrow closes over: the last of the sawdust and moss fill it.
   function closeBurrow(game, b) {
     game.burrows.splice(game.burrows.indexOf(b), 1);
     game.events.push({ type: 'heal', x: b.x, y: b.y });
@@ -295,7 +308,7 @@ window.SnakeEngine = (() => {
     return gap;
   }
 
-  // A burrow a beetle can come out of: nothing on it (not `not`, if
+  // A burrow a beetle can come out of: open, nothing on it (not `not`, if
   // there's another), the one farthest from any head.
   function freeBurrow(game, not) {
     markBodies(game);
@@ -303,7 +316,7 @@ window.SnakeEngine = (() => {
     let best = null, gap = -1, fallback = null;
     for (const b of game.burrows) {
       const k = key(b.x, b.y);
-      if (bodyStamp[k] === stamp || game.fires.has(k) || game.holes.has(k)) continue;
+      if (bodyStamp[k] === stamp || game.fires.has(k) || game.holes.has(k) || b.shutAt) continue; // (none comes out of one growing shut)
       if (k === not) { fallback = b; continue; }
       const g = headGap(game, b.x, b.y);
       if (g > gap) { gap = g; best = b; }
@@ -323,11 +336,13 @@ window.SnakeEngine = (() => {
   // stays put BEETLE_DIG ticks (b.digUntil: the tick it's gone; it can still
   // be caught), then it's underground, as after a dive, and a burrow opens
   // where it dug (BURROW_FROM_DIG; at BURROW_MAX the one unused longest
-  // closes over to make room), so the burrows follow the hunting. (Off unless
-  // BURROW_HEAL_MS is set: a burrow nobody has used for that long closes over.)
+  // grows shut to make room), so the burrows follow the hunting. (Off unless
+  // BURROW_HEAL_MS is set: a burrow nobody has used for that long grows shut.)
+  // A burrow grown shut closes over.
   function crawl(game) {
-    if (T.BURROW_HEAL_MS > 0) for (const h of [...game.burrows]) {
-      if (game.time - (h.used ?? 0) >= T.BURROW_HEAL_MS && !game.food.some(f => f.x === h.x && f.y === h.y)) closeBurrow(game, h);
+    for (const h of [...game.burrows]) if (h.shutAt && game.time >= h.shutAt) closeBurrow(game, h);
+    if (T.BURROW_HEAL_MS > 0) for (const h of game.burrows) {
+      if (game.time - (h.used ?? 0) >= T.BURROW_HEAL_MS && !game.food.some(f => f.x === h.x && f.y === h.y)) shutBurrow(game, h);
     }
     for (let i = 0; i < game.unders.length; i++) {
       const u = game.unders[i];
@@ -1097,7 +1112,7 @@ window.SnakeEngine = (() => {
   // | { type: 'rot', x, y, kind, color } (an apple (kind 'apple') or a bead ('pellet', in its color) rotted away)
   // | { type: 'lastApples', x, y } (sudden death's first apple fell: the last apples come one at a time)
   // | { type: 'baked', x, y, kind } | { type: 'ash', x, y, kind } (food in the fire)
-  // | { type: 'burrow', x, y, dug } (one cracked open; dug: 1, left by a dig) | { type: 'heal', x, y } (one closed over: sawdust and moss)
+  // | { type: 'burrow', x, y, dug } (one cracked open; dug: 1, left by a dig) | { type: 'shut', x, y, at } (one starts growing shut, closing over at game time `at`) | { type: 'heal', x, y } (one closed over: sawdust and moss)
   // | { type: 'dive', x, y, dug } | { type: 'emerge', x, y } (a beetle went down one,
   //   or down where it dug in (dug: 1), came out of one) | { type: 'dig', x, y, until } (a cornered beetle digs in: gone at tick until)
   // | { type: 'weather', kind } | { type: 'gust', x, y } (x -1 if no apple fell) | { type: 'charge', x, y } (lightning on its way)

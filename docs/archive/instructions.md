@@ -208,3 +208,6 @@ On the setup itself:
 
 > Go, do it all, expertly! Just make sure you don't lose anything important along the way, or duplicate unessecarily, which creates drift!
 
+On the milestone PR from `develop` into `main` (27 October 2026), after being told Haakon would merge it:
+
+> You merge it. Always.

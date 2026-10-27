@@ -1,6 +1,6 @@
 {
-  "version": 10,
-  "fingerprint": "7c0906f891a1483c",
+  "version": 11,
+  "fingerprint": "e0733b695644e298",
   "kinds": {
     "away": "{1} t: string",
     "back": "{1} t: string",
@@ -25,7 +25,7 @@
     "scores from": "{2} color: string, entries: array<object(date,draw,eaten,id,name,owner,place,round,survived,won)>",
     "swipe": "{2} d: string, t: string",
     "tick": "{13} bu: array<array<number>>, e: array<array<string>>, f: array<array<number>>, fi: array<array<number>>, h: array<number>, k: number, len: number, ms: number, s: array<array<number>>, sky: array<number>, t: string, un: array<array<number>>, w: array<number>",
-    "tick bu": "[5] number number number number number",
+    "tick bu": "[7] number number number number number number number",
     "tick e aim": "[3] string number number",
     "tick e alight": "[2] string number",
     "tick e ash": "[4] string number number number",
@@ -54,6 +54,7 @@
     "tick e peck": "[5] string number number array<number> array<number>",
     "tick e rainbow": "[3] string number number",
     "tick e rot": "[5] string number number number string",
+    "tick e shut": "[4] string number number number",
     "tick e singe": "[2] string number",
     "tick e spawn": "[5] string string number number number",
     "tick e starving": "[2] string number",

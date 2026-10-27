@@ -126,7 +126,7 @@ building sessions share the limit: this game's and Amarna Letters'.
 `main` is Haakon's and is what the live site plays: never push to it, never force-push. Work on a branch from `develop`,
 one per task, with a PR into `develop`; merge it yourself when the suites pass (and, for a task that changes the game,
 one reviewer has found nothing blocking). At each milestone make sure a PR from `develop` to `main` carries the new
-work, saying what to try; Haakon merges it. Before pushing to a branch whose PR you opened earlier, check whether that
+work, saying what to try, and merge it yourself once its CI is green (see "Standing instructions"). Before pushing to a branch whose PR you opened earlier, check whether that
 PR was merged; if it was, start a new branch and PR. Don't stack PRs on each other's branches.
 
 Cloud sessions can't use GitHub's GraphQL API, so `gh pr create` and `gh pr view` fail. Use the REST API:
@@ -164,4 +164,8 @@ port 5173.
 
 ## Standing instructions
 
-Haakon's standing instructions given since this file was last revised, dated, newest last. (None yet.)
+Haakon's standing instructions given since this file was last revised, dated, newest last.
+
+- **27 October 2026:** "You merge it. Always." Merge the milestone PR from `develop` into `main` yourself, once its CI
+  is green, instead of leaving it for Haakon. Still never push to `main` directly or force-push: it changes by that
+  merge only.
