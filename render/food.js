@@ -665,7 +665,7 @@ function shutBase(x, y, key, w, shut, a) {
   ctx.restore();
   const g = Math.max(0, (shut - 0.1) / 0.9); // the bark's grain, growing across it along the log, as its cracks run
   if (g > 0) {
-    ctx.strokeStyle = `rgba(74,44,18,${(0.8 * a * Math.min(1, g * 1.5)).toFixed(3)})`; ctx.lineWidth = Math.max(1, c * 0.05);
+    ctx.strokeStyle = `rgba(74,44,18,${(0.8 * Math.min(1, g * 1.5)).toFixed(3)})`; // (under globalAlpha a) ctx.lineWidth = Math.max(1, c * 0.05);
     ctx.beginPath();
     for (const [dx, len] of [[-0.11, 0.3], [0.01, 0.42], [0.12, 0.28]]) { const l = c * len * g / 2; ctx.moveTo(x + c * dx, y - l); ctx.lineTo(x + c * dx + c * 0.02, y + l); }
     ctx.stroke();
@@ -753,7 +753,7 @@ function drawHeals(now) {
     const f = p < 0.55 ? 1 : 1 - (p - 0.55) / 0.45, a = f * f * (3 - 2 * f);
     const fill = reduced ? 1 : Math.min(1, p / 0.4), moss = reduced ? 1 : Math.max(0, Math.min(1, (p - 0.2) / 0.4));
     if (h.cs?.c && h.cs.k === k) { // (its cracks, as last drawn, closing with it)
-      ctx.globalAlpha = a * (1 - p);
+      ctx.globalAlpha = a * (1 - p) * (1 - 0.5 * (h.grown || 0)); // (from where they'd faded to as it grew shut)
       ctx.setTransform(1, 0, 0, 1, shakeX, shakeY);
       ctx.drawImage(h.cs.c, h.cs.X, h.cs.Y);
       ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
@@ -761,7 +761,7 @@ function drawHeals(now) {
     ctx.globalAlpha = a;
     if (h.grown) shutBase(x, y, h.key, w, h.grown, a); // (as far as it had grown shut)
     else ctx.drawImage(burrowSprite(h.v), x - w / 2, y - w / 2, w, w);
-    ctx.globalAlpha = a;
+    ctx.globalAlpha = h.grown ? a * fill : a; // (grown shut, the plug comes in over its last opening)
     const sf = h.grown ? 1 : 0.3 + 0.7 * fill * (2 - fill); // (eased out; grown shut, it's packed already)
     ctx.drawImage(healPlugSprite(), x - w * sf / 2, y - w * sf / 2, w * sf, w * sf);
     if (h.grown) { shutMoss(x, y, h.key, w, h.grown, a); ctx.globalAlpha = a; } // (its moss on top of the plug)
