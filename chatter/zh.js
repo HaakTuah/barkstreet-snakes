@@ -1,7 +1,7 @@
 // The chatter (see chatter/voices.js): every line in Chinese, for Copycat,
 // who repeats what it hears.
 
-// Chinese for every line above: Copycat repeats what it hears, in Chinese.
+// Chinese for every line in voices.js: Copycat repeats what it hears, in Chinese.
 // The Metagamer's labels for how a snake plays, for Copycat's Chinese.
 const ZH_LABELS = { aggressive: '好斗', greedy: '贪吃', evasive: '爱躲', unclear: '看不透' };
 const ZH = {
