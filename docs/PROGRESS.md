@@ -16,6 +16,15 @@ lessons block is probably that flake. Watch for it.
 
 The plan and history that led here are in `docs/archive/plan-history.md`.
 
+## For Haakon
+
+Every open question for Haakon, until he answers it ("Questions come back to Haakon directly" under "Standing
+instructions" in `CLAUDE.md`). Each task's last message and each milestone PR open with the same list.
+
+| Task | Question | Reading taken or suggested | State |
+|---|---|---|---|
+| Sniper's kill line | Which words, beside "One shot."? Claude's suggestions: "One shot. I brought a spare. Didn't need it." · "Windage, elevation, lunch." · "One shot. The rest are for my memoirs." · "I never miss. My therapist says it's my only personality." | None taken: the words are Haakon's to choose | Open |
+
 ## The queue, in order
 
 ### 1. Cheaper development and playable previews: one PR, no subagents
@@ -113,6 +122,13 @@ Also in `next-tasks-verbatim.md`:
     safety margin, and how far ahead the squeeze looks.
   - A rules test per hunter. Trademarks and win bands kept, and the rivals close pins on anyone, never on you in
     particular.
+- **Last words on phones.** Haakon (27 October 2026): "Yes to all, expertly!" On phones with no chatter panel, the
+  round-ending snake's last words are lost, and at 390x664 the strip's line is cut with an ellipsis (from #34;
+  `docs/archive/plan-history.md`). Show the last words whole where a phone player sees them, without crowding the board.
+- **A head-to-head mode in `tools/abtest.js`.** Haakon (27 October 2026): "Yes to all, expertly!" Old and new AI mixed in
+  the same rounds on paired seats, which the optimization bar in `CLAUDE.md` calls for (the assistant's note of
+  2026-10-18), and which the standing instruction "every new move is tested both ways" uses: rivals with a move and
+  rivals without it on the same board. Before item 5, whose new moves need it.
 
 ### 3b. The rivals who change: Capricious, Copycat and Wildcard
 
@@ -172,8 +188,4 @@ As planned: up to 4 players, key sets, gamepads, and local and online play toget
 ## Noted, not yet queued
 
 Small things found on the way, for Haakon to place in the queue:
-- A longer, funnier kill line for Sniper, in its own voice, beside "One shot." (Haakon to choose the words).
-- From #34: on phones with no chatter panel, the round-ending snake's last words are lost; at 390x664 the strip's line
-  is cut with an ellipsis (`docs/archive/plan-history.md`).
-- A head-to-head mode in `tools/abtest.js`, old and new AI mixed in the same rounds on paired seats, which the
-  optimization bar in `CLAUDE.md` calls for (the assistant's note of 2026-10-18).
+- (None now: the last ones were queued on 27 October, and Sniper's kill line waits under "For Haakon".)
