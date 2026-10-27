@@ -9,5 +9,5 @@
 - **`online.js` and `net.js`:** play with friends: the protocol (testable in Node) and the connections.
 - **`tools/simulate.js`:** the balance simulator, moved out of the page into Node. It runs on several cores (half of them, at low priority, since round six A), and with `--seed` it repeats a run exactly, which is how the engine split, the AI's think-ahead and the AI optimisations were proven to change no decision. (Round six A's tools beside it, `bench-ai.js`, `abtest.js` and `snapshots/state.js`, are in "The rivals think faster".)
 
-`ai.js`, `chatter.js` and `records.js` keep their roles. Plain `<script>` tags still work from `file://`, with no build step.
+`ai.js`, `chatter.js` (now `chatter/`, split on 27 October 2026) and `records.js` keep their roles. Plain `<script>` tags still work from `file://`, with no build step.
 

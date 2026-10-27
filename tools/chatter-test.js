@@ -3,7 +3,7 @@
 // repeats what it hears, in Chinese), every {who} line names someone the
 // same way in both, no voice has an empty list, no Chinese is left over from
 // a line that's gone, and every punchline is a line someone says.
-// Then it plays the chatter itself (chatter.js with the game's own engine, on
+// Then it plays the chatter itself (chatter/ with the game's own engine, on
 // a stand-in page) through staged moments: every voice speaks up when it's
 // pecked under, put out by the rain, sees food burn or rot, starves, is cut
 // by a dash, chokes on its own bead, eats what your cough nudged aside, loses
@@ -44,18 +44,19 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const ROOT = path.join(__dirname, '..');
-const src = fs.readFileSync(path.join(ROOT, 'chatter.js'), 'utf8');
-// (The tables are private to the chatter, so they're read from the source:
-// from the opening bracket to the closing one, at the start of a line.)
+const CHATTER = ['voices', 'zh', 'talk', 'moments'].map(n => `chatter/${n}.js`); // (index.html's order)
+const src = CHATTER.map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
+// (The tables are read from the source, as they were when they were private
+// to the chatter: from the opening bracket to the closing one, at the start of a line.)
 const slice = (head, tail, name) => {
   const start = src.indexOf(head);
   const end = src.indexOf(tail, start);
   if (start < 0 || end < 0) throw new Error('no table ' + name);
-  return new Function(`return ${src.slice(start + head.length - 1, end + '\n  }'.length)}`)();
+  return new Function(`return ${src.slice(start + head.length - 1, end + '\n}'.length)}`)();
 };
-const table = name => slice(`  const ${name} = {`, '\n  };\n', name);
+const table = name => slice(`\nconst ${name} = {`, '\n};\n', name);
 const VOICES = table('VOICES'), ZH = table('ZH'), REPLIES = table('REPLIES');
-const PUNCHLINES = slice('  const PUNCHLINES = new Set([', '\n  ]);\n', 'PUNCHLINES');
+const PUNCHLINES = slice('\nconst PUNCHLINES = new Set([', '\n]);\n', 'PUNCHLINES');
 // (The chatter's reach for whoever was after food the woodpecker knocked aside: cells from where it lay.)
 const KNOCKED_NEAR = +/\bKNOCKED_NEAR = (\d+)/.exec(src)[1];
 let fails = 0;
@@ -161,7 +162,7 @@ const ctx = vm.createContext({
   document: { createElement: () => new El(), body: new El(), hidden: false },
   addEventListener() {}, ResizeObserver: class { observe() {} }, MutationObserver: class { observe() {} },
 });
-for (const f of ['tuning.js', 'ai.js', 'engine.js', 'chatter.js']) {
+for (const f of ['tuning.js', 'ai.js', 'engine.js', ...CHATTER]) {
   vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 }
 const { SnakeEngine: E, SnakeChatter: C, TUNING: T } = ctx.window;
@@ -775,7 +776,7 @@ console.log('ok   Star shows off its flashes, jumps, golden dashes and flash bac
 }
 
 // Whole rounds of rivals with the chatter listening: nothing throws, and it talks.
-// (These two, with what's staged above, run every line of chatter.js that six
+// (These two, with what's staged above, run every line of chatter/ that six
 // rounds did, four of them with rivals at random.)
 {
   let total = 0, rounds = 0;

@@ -3,9 +3,9 @@
 What is done and what comes next, in order (how to work through it: `CLAUDE.md`). Mark an item done here, with its PR,
 when it is merged into `develop`; add Haakon's new tasks where he places them, with his words quoted.
 
-## State (26 October 2026)
+## State (27 October 2026)
 
-Nothing is in progress. Queue item 1 is done (PR #41: render.js split into `render/`, and PR previews on Pages, waiting on
+Nothing is in progress. Queue items 1, 1b and 2 are done (2: PR #48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages, waiting on
 Haakon to switch Pages to the gh-pages branch). Every PR up to #36 is merged into `main` (#33 playtest, #34 one screen, #35 teaching step 1:
 banners you can read, #36 burrows keep apart). PR #38 (the handoff, the files from the old computer and an input-test
 fix) is merged into `develop`, which was made from `main` on 26 October; `main` takes it when Haakon merges `develop`.
@@ -38,6 +38,13 @@ later task then reads a few small files instead of these. Haakon may veto it.
 
 - snake.js into the seven files of `game/` (renames where its names met render/'s; `tools/scope-test.js` guards the shared
   scope). *Done on 27 October 2026 (PR #43).*
+- chatter.js into the four files of `chatter/` (its lines, in English and Chinese, and the talk). *Done on 27 October 2026
+  (PR #45).*
+- engine.js and ai.js stay whole (decided 27 October 2026). ai.js's `decide()` alone is one 68 KB function: splitting it
+  means restructuring its inner closures, not a clean split. The engine's internals in the page's shared scope could be
+  reached by name from the AI's code, against "what the AI is shown (`aiView()` only)"; kept in its closure, they can't.
+- style.css into the three stylesheets of `style/`, linked in the same order. *Done on 27 October 2026 (PR #46).* With it,
+  item 1b is done.
 
 ### 2. Types for the multiplayer messages: a small PR
 
@@ -48,6 +55,8 @@ Also in `next-tasks-verbatim.md`:
 - A hand-written typedef of the engine fields online.js reads.
 - A round-trip test for every message kind.
 - A pinned fingerprint of the message shapes together with the protocol version. It fails when the shapes change without a version bump.
+
+*Done on 27 October 2026 (PR #48)*: see "The messages, typed" in `docs/design/22-play-with-friends-online.md`.
 
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
