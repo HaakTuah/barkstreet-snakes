@@ -79,6 +79,11 @@ Also in `next-tasks-verbatim.md`:
 - **Rainbows upside down.** `drawRainbow` deliberately hangs the arch downward from an apple in the log's upper half.
   - Fix: always upright. For an apple in the upper half, use a great circle centred below the log (cy about 1.15 × the board, its top about 0.06 × the board from the top edge). It rises out of the apple, over, and down off the far side, with red outermost.
   - *Done on 27 October 2026 (PR #57; its top on the board from every apple, over and down to the far side, in the PR after it)*: see "Rainbows upright" in `docs/design/32-the-owners-playtest.md`.
+- **Rainbows, the follow-ups** (left open by PR #61). Haakon (27 October 2026), on Claude's three recommendations: "And I agree, queue!" One PR, render only:
+  - *Rounder over the middle.* From an apple near the middle the arch rises only about a cell, which barely reads as a rainbow. Move the circle's centre higher (today 1.15 boards below the top edge) so the arch from a mid-board apple rises clearly before it comes down; keep its top on the board and red outermost. This changes the numbers of "Rainbows upright": record the new ones there, with before/after pictures.
+  - *The lower half, mirrored.* An apple low on the board near the middle can still show only the rising side. Give the lower half the same rule as the top: up out of the apple, over, and down toward the far side, with the render check's 12 apples extended to cover it.
+  - *A render check that doesn't depend on order.* The choking check in `tools/render-test.js` passes or fails by how many boards earlier checks set up, since each moves the random seed along. Give each check its own seed so adding one can't break another.
+  - Accepted as it is: for an apple in the top two rows, the outer red band runs partly off the top edge. A rainbow clipped by the edge looks natural.
 - **Hunger where your eyes are.** On a wide desktop the tag's hunger bar goes unseen, and the owner starved.
   - Show hunger on every snake: the body slims as hunger grows, the head wobbles with growl lines in the last seconds, and a starving snake pales.
   - Measure a new player's starving rate before and after.
