@@ -1,24 +1,87 @@
+// @ts-check
 // Online play between friends: the messages. One browser (the host) runs the
 // game exactly as it does alone; every tick it sends the others a compact
 // picture of the board, and they send back nothing but their turns. This file
 // is the protocol only (no networking: that's net.js), so it runs in Node too.
 //
+// The messages, as JSON over PeerJS (net.js adds 'ping', 'pong' and 'k'), are
+// typed below; `tsc --noEmit -p jsconfig.json` checks this file and net.js
+// against them. Many are positional arrays, narrowed on their first element.
+// A change to any shape needs VERSION bumped: tools/online-test.js pins the
+// shapes with the version (node tools/online-test.js --pin records a new pair).
+//
 // Host -> guest
-//   { t: 'welcome' }                        you're in the room
-//   { t: 'reject', why }                    'full' | 'version'
-//   { t: 'lobby', players: [{ name, color, host }], playing }
-//   { t: 'round', id, humans, personas, rivals, first }  a new round's line-up, plus its first tick
-//   { t: 'scores', from: [{ color, entries }] }  everyone's best rounds, for each other's Halls of Fame
-//   { t: 'phase', s: 'countdown', beat } | { t: 'phase', s: 'go' }
-//   { t: 'tick', ... }                      see tick() below
-//   { t: 'plan', k, s }                     where each snake goes next, once the rivals have thought (see plan())
-//   { t: 'say', id, text }                  a line of chatter
-//   { t: 'closed' }                         the host closed the room
+/**
+ * @typedef {WelcomeMsg | RejectMsg | LobbyMsg | RoundMsg | ScoresMsg | PhaseMsg | TickMsg | PlanMsg | SayMsg | ClosedMsg} HostMessage
+ * @typedef {{ t: 'welcome', name: string }} WelcomeMsg  you're in the room, as name
+ * @typedef {{ t: 'reject', why: 'full' | 'version' }} RejectMsg
+ * @typedef {{ t: 'lobby', players: { id: string, name: string, color: string, host: boolean }[] }} LobbyMsg
+ * @typedef {{ t: 'round', v: number, id: string, humans: Human[], rivals: string, personas: string[], first: TickMsg }} RoundMsg
+ *   a new round's line-up, plus its first tick (see round())
+ * @typedef {{ name: string, color: string, peer?: string, owner?: string }} Human  a seat: peer tells each guest which is theirs
+ * @typedef {{ t: 'scores', from: { color: string, entries: ScoreRow[] }[] }} ScoresMsg  everyone's best rounds, for each other's Halls of Fame
+ * @typedef {{ id: string, name: string, place: number, won: boolean, draw: boolean, eaten: number, survived: number, date: number, round: string, owner: string }} ScoreRow
+ *   (records.js: shareable, cleanShared)
+ * @typedef {{ t: 'phase', s: 'countdown', beat: number } | { t: 'phase', s: 'go' }} PhaseMsg
+ * @typedef {{ t: 'say', id: number, text: string, reply?: boolean }} SayMsg  a line of chatter (reply: answering another)
+ * @typedef {{ t: 'closed' }} ClosedMsg  the host closed the room
+ *
+ * @typedef {{ t: 'tick', k: number, ms: number, len: number, s: SnakeRow[], f: FoodRow[], un: UnderRow[], h: number[],
+ *   w: WoodpeckerRow | 0, bu: BurrowRow[], fi: FireRow[], sky: [kind: number, since: number, until: number], e: EventRow[] }} TickMsg
+ *   one tick as the host saw it (see tick())
+ * @typedef {0 | 1} Flag
+ * @typedef {[alive: Flag, dir: number, eaten: number, lastAte: number, nextStarve: number, cells: number[], memory: Engine.Memory | 0,
+ *   autopilot: Flag, stunUntil: number, burnUntil: number, burnFrom: number, leaps: number, leapArmed: number, dashes: number,
+ *   leapReadyAt: number, wrapUntil: number, flight: number, flashReadyAt: number, flashArmed: number, mealMs: number, coughUntil: number]} SnakeRow
+ * @typedef {[x: number, y: number, kind: number, expires: number, zero: 0, dir: number, px: number, py: number, movedAt: number,
+ *   scared: Flag, gold: Flag, digUntil: number]} BeetleRow
+ * @typedef {[x: number, y: number, kind: number, expires: number, color: string | 0, heat: number, cooked: Flag, owner: number]} MealRow
+ * @typedef {BeetleRow | MealRow} FoodRow
+ * @typedef {[until: number, expires: number, from: number, gold: Flag]} UnderRow
+ * @typedef {[x: number, y: number, at: number, target: number[], strikeAt: number, last: number[], struckAt: number, restUntil: number,
+ *   pecks: number, landings: [from: number, to: number][] | 0]} WoodpeckerRow
+ * @typedef {[x: number, y: number, at: number, used: number, dug: Flag]} BurrowRow
+ * @typedef {[cell: number, from: number, until: number, how: 0 | 1 | 2, group: number]} FireRow  how: 1 struck by lightning, 2 an ember
+ *
+ * An event (see encodeEvent()): snake is a snake's id; kind KINDS's index (a string for spawn).
+ * @typedef {['eat', snake: number, kind: number, x: number, y: number, color: string | 0, cooked: Flag, gold: Flag]
+ *   | ['leap', snake: number, x: number, y: number, gold: Flag, reach: number]
+ *   | ['dash', snake: number, x: number, y: number, n: number, plain: Flag]
+ *   | ['death', snake: number, cause: string, killer: string | null, killerId: number | null, diedAt: number, fatal: string | 0]
+ *   | ['fizzle', snake: number, why: string, x: number, y: number, flash: Flag]
+ *   | ['crash', snake: number, x: number, y: number, cause: string, killer: string | null, killerId: number | null, lost: number]
+ *   | ['cut', snake: number, x: number, y: number, lost: number, by: number]
+ *   | ['choke', snake: number, x: number, y: number, tx: number, ty: number]
+ *   | ['nudge', snake: number, kind: number, x: number, y: number, tx: number, ty: number]
+ *   | ['dig', x: number, y: number, until: number]
+ *   | ['dive', x: number, y: number, dug: Flag]
+ *   | ['knock', kind: number, x: number, y: number, tx: number | null, ty: number | null, gold: Flag, color: string | 0]
+ *   | ['burrow', x: number, y: number, dug: Flag]
+ *   | ['heal', x: number, y: number]
+ *   | ['spawn', kind: string, x: number, y: number, gold: Flag]
+ *   | ['weather', kind: number]
+ *   | ['ember', x: number, y: number, fx: number, fy: number]
+ *   | ['woodpecker']
+ *   | ['peck', x: number, y: number, cells: number[], under: number[]]
+ *   | ['rot', x: number, y: number, bead: Flag, color: string | 0]
+ *   | ['flown', x: number, y: number]
+ *   | [type: 'starving' | 'alight' | 'singe', snake: number]
+ *   | [type: 'baked' | 'ash', x: number, y: number, kind: number]
+ *   | [type: 'emerge' | 'gust' | 'charge' | 'strike' | 'rainbow' | 'aim' | 'douse' | 'lastApples', x: number, y: number]} EventRow
+ *
+ * @typedef {{ t: 'plan', k: number, s: ([way: number, jump: Flag, flash: Flag] | 0)[] }} PlanMsg
+ *   where each snake goes next, once the rivals have thought (see plan())
+ */
 // Guest -> host
-//   { t: 'hello', v, name, owner, scores }  v: VERSION; owner: a player id; scores: your best rounds
-//   { t: 'turn', d }                        'up' | 'down' | 'left' | 'right' (a key: it only steers)
-//   { t: 'swipe', d }                       a fresh swipe: the way you're going flashes, any other way steers
-//   { t: 'pow', k }                         'leap' (Space, a tap) | 'flash' (E, Shift) | 'unleap' (a jump a finger held still asked for, taken back: it was a swipe)
+/**
+ * @typedef {HelloMsg | TurnMsg | PowMsg | AwayMsg} GuestMessage
+ * @typedef {{ t: 'hello', v: number, name: string, owner: string, scores: ScoreRow[] }} HelloMsg  v: VERSION; owner: a player id; scores: your best rounds
+ * @typedef {'up' | 'down' | 'left' | 'right'} DirName
+ * @typedef {{ t: 'turn' | 'swipe', d: DirName }} TurnMsg  turn: a key (it only steers); swipe: a fresh swipe (the way you're going flashes, any other way steers)
+ * @typedef {{ t: 'pow', k: 'leap' | 'flash' | 'unleap' }} PowMsg
+ *   'leap' (Space, a tap) | 'flash' (E, Shift) | 'unleap' (a jump a finger held still asked for, taken back: it was a swipe)
+ * @typedef {{ t: 'away' | 'back' }} AwayMsg  the page went out of sight, and came back
+ */
 window.SnakeOnline = (() => {
   const VERSION = 10; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over
   const POWERS = ['leap', 'flash', 'unleap'];
@@ -37,18 +100,23 @@ window.SnakeOnline = (() => {
   // Events about one snake.
   const SNAKE = ['starving', 'alight', 'singe'];
 
+  /** @type {() => string} */
   const newCode = () => Array.from({ length: CODE_LENGTH }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
+  /** @param {unknown} text */
   const cleanCode = text => String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CODE_LENGTH);
+  /** @param {unknown} text */
   const isCode = text => cleanCode(text).length === CODE_LENGTH && [...cleanCode(text)].every(c => CODE_CHARS.includes(c));
+  /** @param {unknown} text */
   const cleanName = text => window.SnakeRecords.cleanName(text); // (one cleaner for every name)
 
   // A new round's line-up: everything a guest needs to lay out the same board.
   // humans: [{ name, color, peer, owner }] in seat order; peer tells each guest which seat is
   // theirs. id names the round, so everyone's Hall of Fame records it once.
+  /** @param {Engine.Game} game @param {Human[]} humans @param {string} rivals @param {string} id @returns {RoundMsg} */
   function round(game, humans, rivals, id) {
     return {
       t: 'round', v: VERSION, id, humans, rivals,
-      personas: game.snakes.filter(s => s.persona).map(s => s.personaKey),
+      personas: game.snakes.filter(s => s.persona).map(s => /** @type {string} */ (s.personaKey)),
       first: tick(game, { holesFrom: 0, tickLen: 0 }),
     };
   }
@@ -59,7 +127,9 @@ window.SnakeOnline = (() => {
 
   // One tick as the host saw it. holesFrom: how many holes the guest already has
   // (holes only ever get added, in order).
+  /** @param {Engine.Game} game @param {{ holesFrom: number, tickLen: number }} at @returns {TickMsg} */
   function tick(game, { holesFrom, tickLen }) {
+    /** @param {Engine.Snake} s */
     const cells = s => {
       const out = new Array(s.body.length);
       for (let i = 0; i < s.body.length; i++) out[i] = s.body[i].y * 1000 + s.body[i].x;
@@ -94,7 +164,7 @@ window.SnakeOnline = (() => {
       bu: game.burrows.map(b => [b.x, b.y, b.at, b.used ?? -1, b.dug ? 1 : 0]),
       fi: [...game.fires].map(([k, f]) => [k, f.from, f.until, f.strike ? 1 : f.ember ? 2 : 0, f.group]),
       sky: [WEATHER.indexOf(game.weather.kind), game.weather.since, game.weather.until],
-      e: game.events.map(encodeEvent).filter(Boolean),
+      e: /** @type {EventRow[]} */ (game.events.map(encodeEvent).filter(Boolean)),
     };
   }
 
@@ -105,6 +175,7 @@ window.SnakeOnline = (() => {
   // for. Per snake: [way (DIR_NAMES index; -1: not known, on as it's going),
   // jump, flash], or 0 for the dead. Drawing only: the next tick says what
   // really happened.
+  /** @param {Engine.Game} game @returns {PlanMsg} */
   function plan(game) {
     return {
       t: 'plan', k: game.tick,
@@ -121,6 +192,7 @@ window.SnakeOnline = (() => {
 
   // A plan from the host, on a friend's screen (only for the tick it's for;
   // mine: this screen's own seat, whose presses it shows itself).
+  /** @param {Engine.Game} game @param {PlanMsg} msg @param {Engine.Dirs} DIRS */
   function applyPlan(game, msg, DIRS, mine = -1) {
     if (!msg || msg.k !== game.tick || !Array.isArray(msg.s)) return false;
     msg.s.forEach((p, id) => {
@@ -142,16 +214,20 @@ window.SnakeOnline = (() => {
     return true;
   }
 
+  /** @param {Engine.Snake} s @returns {Engine.Memory | 0} */
   function memoryOf(s) {
+    /** @type {Engine.Memory | 0} */
     let m = 0;
     for (const k of MEMORY) if (s.memory[k] != null) (m ||= {})[k] = s.memory[k];
     return m;
   }
 
+  /** @param {Engine.Dir} d */
   function dirName(d) {
     return d.y < 0 ? 'up' : d.y > 0 ? 'down' : d.x < 0 ? 'left' : 'right';
   }
 
+  /** @param {Engine.Event} e @returns {EventRow | null} */
   function encodeEvent(e) {
     switch (e.type) {
       case 'eat': return ['eat', e.snake.id, KINDS.indexOf(e.kind), e.x, e.y, e.color || 0, e.cooked ? 1 : 0, e.gold ? 1 : 0];
@@ -179,14 +255,17 @@ window.SnakeOnline = (() => {
       case 'peck': return ['peck', e.x, e.y, e.cells || [], e.under || []];
       case 'rot': return ['rot', e.x, e.y, e.kind === 'pellet' ? 1 : 0, e.color || 0]; // (an apple, or a bead in its colour)
       case 'flown': return ['flown', e.x, e.y];
-      default:
-        if (SNAKE.includes(e.type)) return [e.type, e.snake.id];
-        if (FOOD_AT.includes(e.type)) return [e.type, e.x, e.y, KINDS.indexOf(e.kind)];
-        return AT.includes(e.type) ? [e.type, e.x, e.y] : null;
+      default: { // (the kinds SNAKE, FOOD_AT and AT list)
+        const g = /** @type {any} */ (e);
+        if (SNAKE.includes(e.type)) return [g.type, g.snake.id];
+        if (FOOD_AT.includes(e.type)) return [g.type, g.x, g.y, KINDS.indexOf(g.kind)];
+        return AT.includes(e.type) ? [g.type, g.x, g.y] : null;
+      }
     }
   }
 
   // The renderer reads these every frame, so a malformed one could break every frame.
+  /** @param {string} k @param {any} v (from outside) */
   function saneMemory(k, v) {
     if (k === 'mood') return typeof v === 'string' && Object.prototype.hasOwnProperty.call(window.SnakeAI.PERSONAS, v);
     if (k === 'colonies') return Array.isArray(v) && v.length <= 64 && v.every(c => c && Number.isFinite(c.x) && Number.isFinite(c.y));
@@ -197,9 +276,11 @@ window.SnakeOnline = (() => {
 
   // Bring a guest's game up to the host's tick. Returns the snakes that died in it.
   // DIRS: the engine's direction objects (shared, so `s.dir === DIRS.up` holds).
+  /** @param {Engine.Game} game @param {TickMsg} msg @param {Engine.Dirs} DIRS @returns {Engine.Snake[]} */
   function apply(game, msg, DIRS) {
     game.tick = msg.k;
     game.time = msg.ms;
+    /** @param {unknown} v */
     const num = v => Number.isFinite(v);
     msg.s.forEach(([alive, dir, eaten, lastAte, nextStarve, cells, memory, autopilot, stunUntil, burnUntil, burnFrom, leaps, leapArmed, dashes, leapReadyAt, wrapUntil, flight, flashReadyAt, flashArmed, mealMs, coughUntil], id) => {
       const s = game.snakes[id];
@@ -236,11 +317,11 @@ window.SnakeOnline = (() => {
       }
     });
     game.food = msg.f.map(([x, y, kind, expires, color, ...more]) => {
-      const f = { x, y, kind: KINDS[kind] };
+      const f = /** @type {any} */ ({ x, y, kind: KINDS[kind] }); // (built up as it's checked)
       if (expires >= 0) f.expires = expires;
       if (color) f.color = color;
       if (f.kind === 'beetle') {
-        const [dir, px, py, movedAt, scared, gold, digUntil] = more;
+        const [dir, px, py, movedAt, scared, gold, digUntil] = /** @type {any[]} */ (more);
         Object.assign(f, { dir: DIRS[DIR_NAMES[dir]] || DIRS.right, movedAt, scared: !!scared });
         if (gold) f.gold = 1;
         if (px >= 0) { f.px = px; f.py = py; }
@@ -254,11 +335,15 @@ window.SnakeOnline = (() => {
       return f;
     });
     for (const k of msg.h) game.holes.add(k);
+    /** @param {unknown} v */
     const cellsOf = v => (Array.isArray(v) ? v : []).filter(k => Number.isInteger(k) && k >= 0 && k < 10000);
+    /** @param {any} v */
     const cell = v => Number.isInteger(v) && v >= 0 && v < window.TUNING.GRID; // (an x or y on the board: the renderer draws or rolls a thing there)
+    /** @param {any} v */
     const square = v => Number.isInteger(v) && v >= 0 && v < window.TUNING.GRID * window.TUNING.GRID; // (a cell on the board, as one number)
-    const landings = Array.isArray(msg.w?.[9]) ? msg.w[9].filter(p => Array.isArray(p) && p.length === 2 && square(p[0]) && (p[1] === -1 || square(p[1]))) : []; // ([from, to]; to -1: the bird eats it)
-    game.woodpecker = msg.w ? { x: msg.w[0], y: msg.w[1], at: msg.w[2], target: cellsOf(msg.w[3]), strikeAt: msg.w[4], last: cellsOf(msg.w[5]), struckAt: msg.w[6], restUntil: msg.w[7], ...(Number(msg.w[8]) > 0 ? { pecks: Number(msg.w[8]) } : {}), ...(landings.length ? { landings } : {}) } : null;
+    const w = /** @type {any} */ (msg.w); // (from outside: checked here)
+    const landings = Array.isArray(w?.[9]) ? w[9].filter(p => Array.isArray(p) && p.length === 2 && square(p[0]) && (p[1] === -1 || square(p[1]))) : []; // ([from, to]; to -1: the bird eats it)
+    game.woodpecker = msg.w ? { x: w[0], y: w[1], at: w[2], target: cellsOf(w[3]), strikeAt: w[4], last: cellsOf(w[5]), struckAt: w[6], restUntil: w[7], ...(Number(w[8]) > 0 ? { pecks: Number(w[8]) } : {}), ...(landings.length ? { landings } : {}) } : null;
     game.burrows = (Array.isArray(msg.bu) ? msg.bu : []).filter(b => Array.isArray(b) && b.length >= 3 && b.every(num) && cell(b[0]) && cell(b[1]) && Number.isInteger(b[2])) // (on the board, opened on a tick)
       .map(([x, y, at, used, dug]) => ({ x, y, at, ...(used >= 0 ? { used } : {}), ...(dug ? { dug: 1 } : {}) })); // (the renderer draws a dug one freshly bored)
     game.unders = (Array.isArray(msg.un) ? msg.un : []).filter(u => Array.isArray(u) && u.every(num) && Number.isInteger(u[2]) && u[2] >= 0 && u[2] < window.TUNING.GRID * window.TUNING.GRID)
@@ -267,18 +352,20 @@ window.SnakeOnline = (() => {
       .map(([k, from, until, strike, group]) => [k, strike === 2 ? { from, until, group, strike: false, ember: true } : { from, until, strike: !!strike, group }]));
     if (Array.isArray(msg.sky) && msg.sky.every(num)) game.weather = { kind: WEATHER[msg.sky[0]] || 'clear', since: msg.sky[1], until: msg.sky[2] };
 
+    /** @type {Engine.Snake[]} */
     const dying = [];
-    game.events = msg.e.map(e => {
+    game.events = /** @type {Engine.Event[]} */ (msg.e.map(/** @returns {Engine.Event | null} */ e => {
       const snake = typeof e[1] === 'number' ? game.snakes[e[1]] : null;
       switch (e[0]) {
-        case 'eat': return { type: 'eat', snake, kind: KINDS[e[2]], x: e[3], y: e[4], color: e[5] || undefined, cooked: !!e[6], gold: !!e[7] };
+        case 'eat': return { type: 'eat', snake: /** @type {Engine.Snake} */ (snake), kind: KINDS[e[2]], x: e[3], y: e[4], color: e[5] || undefined, cooked: !!e[6], gold: !!e[7] };
         case 'leap': return snake ? { type: 'leap', snake, x: e[2], y: e[3], gold: e[4] ? 1 : 0, reach: Number(e[5]) || 1 } : null;
         case 'dash': return snake ? { type: 'dash', snake, x: e[2], y: e[3], n: Number(e[4]) || 1, ...(e[5] ? { plain: 1 } : {}) } : null;
         case 'death':
+          if (!snake) throw new Error('death'); // (the tick can't be used: the guest waits for the next)
           Object.assign(snake, { alive: false, cause: e[2], killer: e[3], killerId: e[4], diedAt: e[5], fatal: typeof e[6] === 'string' ? e[6] : null });
           dying.push(snake);
           return { type: 'death', snake };
-        case 'crash': return { type: 'crash', snake, x: e[2], y: e[3], cause: String(e[4] || ''), killer: e[5], killerId: Number.isInteger(e[6]) ? e[6] : null, lost: Number(e[7]) || 0 };
+        case 'crash': return { type: 'crash', snake: /** @type {Engine.Snake} */ (snake), x: e[2], y: e[3], cause: String(e[4] || ''), killer: e[5], killerId: Number.isInteger(e[6]) ? e[6] : null, lost: Number(e[7]) || 0 };
         case 'fizzle': return snake ? { type: 'fizzle', snake, why: String(e[2] || ''), x: Number(e[3]) || 0, y: Number(e[4]) || 0, flash: e[5] ? 1 : 0 } : null;
         case 'cut': return snake ? { type: 'cut', snake, x: e[2], y: e[3], lost: Number(e[4]) || 0, by: Number.isInteger(e[5]) && e[5] >= 0 ? e[5] : null } : null;
         case 'choke': return snake && e.slice(2, 6).every(cell) ? { type: 'choke', snake, x: e[2], y: e[3], tx: e[4], ty: e[5] } : null;
@@ -298,12 +385,14 @@ window.SnakeOnline = (() => {
         case 'peck': return { type: 'peck', x: e[1], y: e[2], cells: Array.isArray(e[3]) ? e[3].filter(Number.isInteger) : [], under: Array.isArray(e[4]) ? e[4].filter(Number.isInteger) : [] };
         case 'rot': return { type: 'rot', x: e[1], y: e[2], kind: e[3] ? 'pellet' : 'apple', ...(typeof e[4] === 'string' ? { color: e[4] } : {}) };
         case 'flown': return { type: 'flown', x: e[1], y: e[2] };
-        default:
-          if (SNAKE.includes(e[0])) return snake ? { type: e[0], snake } : null;
-          if (FOOD_AT.includes(e[0])) return { type: e[0], x: e[1], y: e[2], kind: KINDS[e[3]] };
-          return AT.includes(e[0]) ? { type: e[0], x: e[1], y: e[2] } : null;
+        default: { // (the kinds SNAKE, FOOD_AT and AT list)
+          const g = /** @type {any} */ (e);
+          if (SNAKE.includes(e[0])) return snake ? { type: g[0], snake } : null;
+          if (FOOD_AT.includes(e[0])) return { type: g[0], x: g[1], y: g[2], kind: KINDS[g[3]] };
+          return AT.includes(e[0]) ? { type: g[0], x: g[1], y: g[2] } : null;
+        }
       }
-    }).filter(Boolean);
+    }).filter(Boolean));
     return dying;
   }
 
