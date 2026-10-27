@@ -127,6 +127,25 @@ Also in `next-tasks-verbatim.md`:
     safety margin, and how far ahead the squeeze looks.
   - A rules test per hunter. Trademarks and win bands kept, and the rivals close pins on anyone, never on you in
     particular.
+- **Rivals too shy of heads.** Haakon (27 October 2026): "it seems to me the rival snakes might be a bit too adverse to
+  have their heads next to each other, even if the other snake can't cut you off, or if the would see and have time to
+  react ahead of time. Can this be investigated, expertly?"
+  - Where to look: `ai.js`, the risk map around line 1020. Every cell beside a rival's head gets the full `headRisk`
+    (500-2200 by persona), and the cells its dash, leap or flash could reach get half. That includes its own neck, cells
+    where it would crash too (a head-on bounces both and costs each 3 segments: "Crashes, not deaths"), and cells I
+    leave before it could get there. A rival in the next lane, running parallel, makes my straight-ahead cell look as
+    dangerous as a real head-on.
+  - Find out first, by staged boards and the census: how often rivals swerve away from a cell that was in fact safe
+    (the rival couldn't, or wouldn't, take it), what that costs them (food lost, worse lines, boxing themselves in),
+    and how often a real head-on happens.
+  - Fix it by reading the rival better, not by lowering the weights ("Clever rivals, human reactions"):
+    - risk only for cells it can enter;
+    - less for a move that would crash it too, unless it is longer or reckless by persona;
+    - none for a cell I'll have left before its reaction time lets it arrive;
+    - each persona keeps its own nerve (Gobbler flinches, Desperado doesn't).
+  - Kept: every trademark, the win bands, and head-on crashes no more common than noise; `tools/abtest.js` on fresh
+    seeds, old against new. It may share a root with "Hunters miss easy pins" above (fear near walls and heads), so look
+    at both together.
 - **Sniper's longer kill line.** Haakon's words (27 October 2026): "One shot, one whoppertunity". Add it to Sniper's
   kill lines in `chatter/voices.js` beside "One shot.", with its translation in each language file (as `chatter/zh.js`
   has "One shot."), keeping the pun where the language allows. It must fit the banner and the chatter strip on a phone.
