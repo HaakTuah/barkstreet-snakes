@@ -665,7 +665,7 @@ function shutBase(x, y, key, w, shut, a) {
   ctx.restore();
   const g = Math.max(0, (shut - 0.1) / 0.9); // the bark's grain, growing across it along the log, as its cracks run
   if (g > 0) {
-    ctx.strokeStyle = `rgba(74,44,18,${(0.8 * Math.min(1, g * 1.5)).toFixed(3)})`; // (under globalAlpha a) ctx.lineWidth = Math.max(1, c * 0.05);
+    ctx.strokeStyle = `rgba(74,44,18,${(0.8 * Math.min(1, g * 1.5)).toFixed(3)})`; ctx.lineWidth = Math.max(1, c * 0.05); // (its alpha under globalAlpha a)
     ctx.beginPath();
     for (const [dx, len] of [[-0.11, 0.3], [0.01, 0.42], [0.12, 0.28]]) { const l = c * len * g / 2; ctx.moveTo(x + c * dx, y - l); ctx.lineTo(x + c * dx + c * 0.02, y + l); }
     ctx.stroke();
