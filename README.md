@@ -186,7 +186,7 @@ Every seeded round is cached by the files that played it, round by round, so ask
 | `ai.js` | The rivals' brains and personalities. |
 | `render/` | Draws the board on a canvas, with smooth movement between ticks: seventeen files by what they draw, sharing one scope (the list is at the top of `render/core.js`). |
 | `audio.js` | Sound effects and the adaptive music, synthesised live. |
-| `chatter.js` | The rivals' speech bubbles and chat log. |
+| `chatter/` | The rivals' speech bubbles and chat log: their lines, in English and Chinese, and the talk (the list is at the top of `chatter/voices.js`). |
 | `records.js` | The Hall of Fame and your stats. |
 | `online.js` | Play with friends: the messages between host and friends. |
 | `net.js` | Play with friends: the connections (PeerJS, loaded only when used). |
