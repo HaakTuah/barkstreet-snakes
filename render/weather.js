@@ -352,10 +352,12 @@ const RAINBOW = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#3b82f6', '#6366f1
 // upright, red outermost. From an apple in the log's upper half there's no
 // room for an arch on its own height (it was a stub off the top edge, and
 // then hung upside down), so there it's part of a greater circle centred
-// below the log, its top just under the top edge: it rises out of the apple,
-// over, and down off the far side. It draws itself out from the apple, glows
-// a moment, and fades. Both its ends fade, so it never ends in a flat cut
-// (its far foot can be on the board, and its tip is as it grows).
+// below the log, its top on the board half way from the apple to the far
+// edge (or nearer the apple, where that would take it off the top): it
+// rises out of the apple, over, and down off the far side. It draws itself
+// out from the apple, glows a moment, and fades. Both its ends fade, so it
+// never ends in a flat cut (its far foot can be on the board, and its tip is
+// as it grows).
 function drawRainbow(now) {
   if (!rainbow) return;
   const age = now - rainbow.at, life = 9000;
@@ -367,9 +369,11 @@ function drawRainbow(now) {
     bow.R = Math.min(SIZE * 0.95, Math.max(SIZE * 0.45, y - SIZE * 0.1));
     bow.cx = x + side * bow.R; bow.cy = y; bow.a0 = fromLeft ? Math.PI : 0;
     full = Math.PI;
-  } else { // round a centre below the log, its top 0.06 of the board from the top (or at an apple higher still), on round till it's well off the far side
-    bow.cy = SIZE * 1.15; bow.R = Math.max(SIZE * 1.09, bow.cy - y);
-    const dx = Math.sqrt(Math.max(0, bow.R * bow.R - (bow.cy - y) ** 2)), a = Math.atan2(y - bow.cy, -dx); // (the apple's angle, on the left)
+  } else { // round a centre below the log, its top half way from the apple to the far edge, but no nearer the top edge than 0.06 of the board (or half the apple's height, for one higher still), on round till it's well off the far side
+    bow.cy = SIZE * 1.15;
+    const h = bow.cy - y, m = Math.min(SIZE * 0.06, y / 2), far = fromLeft ? SIZE - x : x;
+    const dx = Math.min(far / 2, Math.sqrt((bow.cy - m) ** 2 - h * h)), a = Math.atan2(-h, -dx); // (the apple's angle, on the left)
+    bow.R = Math.hypot(dx, h);
     bow.cx = x + side * dx; bow.a0 = fromLeft ? a : -Math.PI - a;
     full = Math.asin((SIZE - bow.cy) / bow.R) - a;
   }

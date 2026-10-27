@@ -78,7 +78,7 @@ Also in `next-tasks-verbatim.md`:
   - *Done on 27 October 2026 (PR #52)*: see "A body over a pit, smooth" in `docs/design/32-the-owners-playtest.md`.
 - **Rainbows upside down.** `drawRainbow` deliberately hangs the arch downward from an apple in the log's upper half.
   - Fix: always upright. For an apple in the upper half, use a great circle centred below the log (cy about 1.15 × the board, its top about 0.06 × the board from the top edge). It rises out of the apple, over, and down off the far side, with red outermost.
-  - *Done on 27 October 2026 (PR #57)*: see "Rainbows upright" in `docs/design/32-the-owners-playtest.md`.
+  - *Done on 27 October 2026 (PR #57; its top on the board from every apple, over and down to the far side, in the PR after it)*: see "Rainbows upright" in `docs/design/32-the-owners-playtest.md`.
 - **Hunger where your eyes are.** On a wide desktop the tag's hunger bar goes unseen, and the owner starved.
   - Show hunger on every snake: the body slims as hunger grows, the head wobbles with growl lines in the last seconds, and a starving snake pales.
   - Measure a new player's starving rate before and after.
