@@ -630,6 +630,35 @@ const r1 = v => Math.round(v * 10) / 10;
     // (Before the page was one screen tall, this ran only on its side, where
     // the column was the screen's height: the log was cut at its last whole
     // row, by a clip, at its box, the chatter's or the page's bottom.)
+    // Beside the board on a desktop (style/screens.css, game/screen.js
+    // fadeChatter), a round's 40 lines: the panel runs down to the board's
+    // bottom edge, the newest at its bottom, whole; a line cut by the log's
+    // top edge doesn't show (faded to nothing), the ones under the fade
+    // whole; the wheel reads back to the oldest, whole and unfaded; and it
+    // scrolls the log, never the page. Elsewhere the log doesn't scroll.
+    const chatterScroll = async (tag, desk) => {
+      const scrolls = await ev(`getComputedStyle(document.getElementById('chatlog')).overflowY === 'auto'`);
+      if (!desk) { check(!scrolls, `${tag}: the chatter's log doesn't scroll here (only beside the board on a desktop)`); return; }
+      check(scrolls, `${tag}: beside the board on a desktop, the chatter's log scrolls`);
+      if (!scrolls) return;
+      await ev(`(() => { const log = document.getElementById('chatlog'); log.textContent = ''; for (let i = 0; i < 40; i++) log.insertAdjacentHTML('afterbegin', '<li data-i="' + i + '"><strong>Gobbler</strong> <span>' + (i % 2 ? 'Mine!' : 'Out of my way! I’m starving, and the bark is bare!') + '</span></li>'); return 'ok'; })()`);
+      await b.sleep(500); // (past the lines' entrance, their opacity from nothing)
+      await settle();
+      const SEEN = `(() => { const log = document.getElementById('chatlog'), lb = log.getBoundingClientRect(), edge = lb.top + log.clientTop, foot = lb.bottom - log.clientTop; const ls = [...log.children].map(li => { const r = li.getBoundingClientRect(); return { i: +li.dataset.i, t: r.top, b: r.bottom, o: +getComputedStyle(li).opacity }; }); return { edge, foot, ls, scrollY, fit: document.querySelector('.chatter').dataset.fit }; })()`;
+      const L = await ev(LAYOUT), at = await ev(SEEN);
+      const shown = at.ls.filter(l => l.b > at.edge + 0.5 && l.t < at.foot - 0.5), cut = shown.filter(l => l.t < at.edge - 0.5), whole = shown.filter(l => l.t >= at.edge - 0.5 && l.b <= at.foot + 0.5);
+      const bottom = shown.reduce((m, l) => l.b > m.b ? l : m, shown[0] || { i: -1 });
+      check(at.fit === 'full' && Math.abs(L.chatlog.b - L.frame.b) <= 1.5 && L.chatlog.b <= L.chatter.b + 0.5, `${tag}: with a round's lines, the chatter's panel runs down to the board's bottom edge`, `the panel to ${r1(L.chatlog.b)}, the board's frame to ${r1(L.frame.b)}, ${at.fit}`);
+      check(bottom.i === 39 && bottom.o === 1 && whole.length >= 5, `${tag}: the newest line at the panel's bottom, whole, under the older lines (${whole.length} whole)`, `the bottom line #${bottom.i}, opacity ${bottom.o}`);
+      check(cut.every(l => l.o === 0) && whole.filter(l => l.t - at.edge > 40).every(l => l.o === 1) && whole.some(l => l.o < 1), `${tag}: the older lines fade at the log's top, a line cut by its edge not shown at all`, cut.map(l => `#${l.i} cut, opacity ${l.o}`).join(', ') || 'none cut');
+      await b.send('Input.dispatchMouseEvent', { type: 'mouseWheel', x: L.chatlog.x + L.chatlog.w / 2, y: L.chatlog.y + L.chatlog.h / 2, deltaX: 0, deltaY: -20000 });
+      await b.sleep(400);
+      await settle();
+      const back = await ev(SEEN), oldest = back.ls.find(l => l.i === 0);
+      check(back.scrollY === at.scrollY && oldest.t >= back.edge - 0.5 && oldest.o === 1, `${tag}: the wheel reads back to the oldest line, whole and unfaded, scrolling the log, not the page`, `the oldest from ${r1(oldest.t)} (the log's edge ${r1(back.edge)}), opacity ${oldest.o}`);
+      await ev(`(() => { const log = document.getElementById('chatlog'); log.scrollTop = 0; while (log.children.length > 5) log.lastElementChild.remove(); return 'ok'; })()`);
+      await b.sleep(60);
+    };
     const chatterFull = async (tag, watching, si = { bottom: 0 }, side = false, upright = false) => {
       const what = watching ? 'watching' : 'playing';
       await ev(`(() => { const log = document.getElementById('chatlog'); for (let i = 0; i < 5; i++) log.insertAdjacentHTML('afterbegin', '<li><strong>Gobbler</strong> <span>Out of my way! I’m starving, and the bark is bare!</span></li>'); return 'ok'; })()`);
@@ -878,6 +907,7 @@ const r1 = v => Math.round(v * 10) / 10;
       }
 
       await chatterFull(tag, false, d.insets, side, upright);
+      await chatterScroll(tag, d.w / d.h >= 1.25 && d.h > 500 && d.h <= 1180 && d.w >= 480); // (style/screens.css: beside the board, not on a phone on its side)
 
       // A nap: its card fits, and its buttons take a tap.
       await ev(`window.__autoRaf = true; document.getElementById('pause').click(); 'ok'`);
