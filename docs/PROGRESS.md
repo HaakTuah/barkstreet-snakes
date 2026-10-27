@@ -6,7 +6,7 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 ## State (27 October 2026)
 
 Queue item 3, the fixes and polish from the owner's playtest, is under way: "Burrows grow shut" (PR #49), "The
-outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57), "Hunger where your eyes are" (PR #66), "Rainbows, the follow-ups" (PR #68), "The phone gap" (PR #70) "Desktop chatter" (PR #72) and "Wildcard's hair" (PR #74) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
+outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57), "Hunger where your eyes are" (PR #66), "Rainbows, the follow-ups" (PR #68), "The phone gap" (PR #70) "Desktop chatter" (PR #72), "Wildcard's hair" (PR #74) and "Copycat's face" (PR #78) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
 #48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages). The previews wait
 on one setting: Pages still serves `main` (every "pages build and deployment" run so far has built `main`), so the
 preview links in PRs do not open until Haakon switches Pages to "Deploy from a branch: gh-pages, / (root)". Everything
@@ -145,6 +145,7 @@ Also in `next-tasks-verbatim.md`:
 - **Copycat's face.**
   - While copying, the head mixes the copied colour about half and half with its red.
   - A thin red rim and the yellow star pin keep it Copycat. Uncopied, it stays full flag red.
+  - *Done on 27 October 2026 (PR #78):* see "Copycat's face" in `docs/design/32-the-owners-playtest.md`.
 - **Rival line-up.**
   - The pick isn't biased (3 uniformly from 18, with no memory between rounds).
   - Approved: a per-device shuffle deck, dealing all 18 before any repeat. Online, the host's deck decides.
