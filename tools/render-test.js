@@ -133,6 +133,11 @@ const STAGE = `(() => {
   window.drawN = (n, alpha = 0.5, step = 33) => { for (let i = 0; i < n; i++) { __t += step; R.frame(alpha, __t); } return n; };
   window.setBody = (s, cells, dir) => { s.body = cells.map(([x, y]) => ({ x, y })); s.prev = s.body.map(c => ({ ...c })); s.dir = E.DIRS[dir]; s.queue = []; s.planned = null; };
   let boards = 0;
+  // Each check starts with seeds(n), its own: its boards are numbered on from
+  // n, and their seeds come from those numbers, so a check added or moved
+  // elsewhere can't change another's boards (each n is where the count of
+  // boards had reached there, when the seeds came from that count).
+  window.seeds = n => { boards = n; };
   window.stage = personas => { __reseed(${SEED} * 1000 + ++boards); const g = E.createGame({ withPlayer: true, personas }); g.food = []; g.time = 60000; g.tick = 500; g.weather.until = 1e12; g.snakes.forEach((s, i) => { setBody(s, [[2 + 4 * i, 23], [1 + 4 * i, 23], [4 * i, 23]], 'right'); s.lastAte = g.time; }); return g; }; // (each just fed: hungry, a body slims, growls and pales)
   window.show = g => { document.getElementById('overlay').classList.add('hidden'); R.setViewer(0); __reseed(${SEED} * 1000 + 500 + boards); R.setGame(g); return g; };
   // The board's pixels in a box of cells (x0, y0, w, h in cells), as an ImageData.
@@ -296,6 +301,7 @@ const STAGE = `(() => {
 
     // A dead snake's beads: every other segment, in its own markings.
     const beads = await ev(`(() => {
+      seeds(0);
       const g = stage(['joker', 'wildcard', 'colonist']), [you, joker, wild] = g.snakes;
       setBody(joker, Array.from({ length: 16 }, (_, i) => [20 - i, 4]), 'right');
       setBody(wild, Array.from({ length: 16 }, (_, i) => [20 - i, 10]), 'right');
@@ -318,6 +324,7 @@ const STAGE = `(() => {
     // mark is the jump's hop, in sky, not the flash's chevrons, in ember.
     // Two thick, there's nowhere to land: the flash's.
     const marks = await ev(`(() => {
+      seeds(1);
       const out = {};
       for (const thick of [1, 2]) {
         const g = stage(['creeper', 'ghost', 'mason']), [you, o] = g.snakes;
@@ -352,6 +359,7 @@ const STAGE = `(() => {
     await b.viewport(1600, 1600);
     await ev('__settle()');
     const pips = await ev(`(() => {
+      seeds(3);
       SnakeDebug.pinQuality(0);
       const look = (body, dir, leaps, dashes, middle, stun) => {
         const g = stage(['creeper', 'vulture', 'mason']), you = g.snakes[0], [hx, hy] = body[0], dx = middle ? 11 - hx : 0, dy = middle ? 11 - hy : 0;
@@ -399,6 +407,7 @@ const STAGE = `(() => {
     // resting, one ready; Mason (a round head) beside them. (Its tell, its
     // face and its rainbow on others: below.)
     const stars = await ev(`(() => {
+      seeds(21);
       SnakeDebug.pinQuality(0);
       const hue = ([r, g, b]) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn || 1; const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return Math.round((h * 60 + 360) % 360); };
       const yellow = ([r, g, b]) => r > 150 && g > 100 && b < 120 && r - b > 70 && r >= g, honey = ([r, g, b]) => r > 225 && g > 195 && b > 95 && b < 185;
@@ -511,6 +520,7 @@ const STAGE = `(() => {
     // just its sunflower or its dim mustard (an inked edge over sunflower
     // passes for mustard).
     const tell = await ev(`(() => {
+      seeds(23);
       SnakeDebug.pinQuality(0);
       const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
       const SUN = [249, 194, 46], DIM = [176, 137, 58], d2 = (p, q) => (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2;
@@ -576,6 +586,7 @@ const STAGE = `(() => {
     await b.viewport(800, 800, { scale: 2 });
     await ev('__settle()');
     const face = await ev(`(() => {
+      seeds(28);
       SnakeDebug.pinQuality(2);
       R.setReducedMotion(true);
       const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
@@ -606,6 +617,7 @@ const STAGE = `(() => {
     // copying it holds up a stick-on mustache under its nose instead. Star
     // heading down (its face upright, its chin down), Copycat heading right.
     const gag = await ev(`(() => {
+      seeds(29);
       SnakeDebug.pinQuality(2);
       R.setReducedMotion(false);
       const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
@@ -632,6 +644,7 @@ const STAGE = `(() => {
     // reduced motion, the ring's there at once: read round its lower half,
     // clear of the word over its head).
     const bows = await ev(`(() => {
+      seeds(30);
       SnakeDebug.pinQuality(0);
       const hue = ([r, g, b]) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn || 1; const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return Math.round((h * 60 + 360) % 360); };
       const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
@@ -675,6 +688,7 @@ const STAGE = `(() => {
 
     // Scorch: soot, not holes (no canopy or falling leaves: SnakeDebug.pinQuality(0)).
     const soot = await ev(`(() => {
+      seeds(32);
       SnakeDebug.pinQuality(0);
       const g = stage(['gobbler', 'ghost', 'mason']);
       const cells = [[10, 5], [11, 5], [12, 5], [10, 6], [11, 6], [12, 6], [11, 7], [5, 12]];
@@ -699,9 +713,10 @@ const STAGE = `(() => {
     // top edge), between the apple and the far edge, and lower on either
     // side; and at its top, the reddest band is above the bluest.
     const bows2 = await ev(`(() => {
+      seeds(33);
       SnakeDebug.pinQuality(0);
       const out = [], c = document.getElementById('game'), k = c.width / (TUNING.GRID * ${CELL}), W = c.width;
-      show(stage(['gobbler', 'ghost', 'mason'])); // (one board for them all: the boards staged after keep their seeds)
+      show(stage(['gobbler', 'ghost', 'mason'])); // (one board for them all)
       for (const [ax, ay] of [[1, 6], [6, 6], [11, 6], [12, 6], [17, 6], [22, 6], [6, 3], [17, 3], [1, 3], [22, 3], [3, 10], [20, 10]]) {
         drawN(5);
         R.onTick([{ type: 'rainbow', x: ax, y: ay }]); drawN(80); // (grown, and not fading yet)
@@ -747,6 +762,7 @@ const STAGE = `(() => {
     await b.viewport(800, 800, { scale: 2 });
     await ev('__settle()');
     const jumps = await ev(`(() => {
+      seeds(34);
       SnakeDebug.pinQuality(0);
       const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
       const green = (r, g, b) => g > 150 && g > r + 40 && g > b + 30, trail = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b > 140 && b > 110 && !green(r, g, b);
@@ -808,6 +824,7 @@ const STAGE = `(() => {
     // below it was barely darker); the tail hanging over the hole droops
     // into it, darker.
     const bridge = await ev(`(() => {
+      seeds(38);
       SnakeDebug.pinQuality(0);
       const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
       const reddish = (r, g, b) => r > 120 && r > g + 50 && r > b + 40, body = (r, g, b) => r > 60 && r > g + 50 && r > b + 40; // (its red, lit; or in shade too, but not the pit's floor lit round it)
@@ -845,6 +862,7 @@ const STAGE = `(() => {
     // level (no segment standing above the bands between), and your cream
     // rim runs unbroken over it, as thick as on the bark.
     const line = await ev(`(() => {
+      seeds(39);
       SnakeDebug.pinQuality(0);
       const g = stage(['sniper', 'gobbler', 'mason']), [you, ...rest] = g.snakes;
       rest.forEach((s, i) => { setBody(s, [[2, 2 + 3 * i], [1, 2 + 3 * i], [0, 2 + 3 * i]], 'right'); s.stunUntil = 1e9; });
@@ -893,6 +911,7 @@ const STAGE = `(() => {
     // nobody near and nothing on it (the same log under it), so none depends
     // on the bark (a knot's ink beside Joker's face passed for its cheeks).
     const choke = await ev(`(() => {
+      seeds(40);
       SnakeDebug.pinQuality(0);
       const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
       const g = stage(['joker', 'gobbler', 'mason']), [you, jo, gob, ma] = g.snakes;
@@ -990,6 +1009,7 @@ const STAGE = `(() => {
     // there. Counts and centres are of pixels changed against the bare
     // board, as the choke's are.
     const dug = await ev(`(() => {
+      seeds(41);
       SnakeDebug.pinQuality(0);
       const N = TUNING.GRID;
       const cv = document.getElementById('game'), W = cv.width, kk = W / (N * ${CELL});
@@ -1190,6 +1210,7 @@ const STAGE = `(() => {
     // one); and the banner is carried from the old capital (between the two,
     // part way) to the new one, not jumping there.
     const lost = await ev(`(() => {
+      seeds(44);
       SnakeDebug.pinQuality(0);
       const centre = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0, sx = 0, sy = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) { n++; sx += (i / 4) % p.width; sy += Math.floor(i / 4 / p.width); } return n ? [n, +(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : [0]; };
       const navy = (r, g, b) => b > 80 && r < 40 && g < 60, cream = (r, g, b) => r > 225 && g > 215 && b > 180;
@@ -1239,6 +1260,7 @@ const STAGE = `(() => {
     // motion, so nothing else moves between the two; each after one of its
     // own first, so the flags are the same.)
     const ahead = await ev(`(() => {
+      seeds(45);
       SnakeDebug.pinQuality(2);
       R.setReducedMotion(true);
       const g = stage(['colonist', 'sovereign', 'mason']), [you, col, sov, ma] = g.snakes;
@@ -1281,6 +1303,7 @@ const STAGE = `(() => {
 
     // The Field guide's pictures.
     const guide = await ev(`(() => {
+      seeds(46);
       const out = {};
       for (const k of ['apple', 'golden', 'mushroom', 'goldcap', 'leaf', 'beetle', 'goldbeetle', 'pellet', 'roast', 'baked', 'jump', 'flash', 'wrap', 'held', 'rests', 'hole', 'fire', 'land', 'choke', 'lostflag', 'cough', 'dig', 'knock', 'basic-win', 'basic-steer', 'basic-crash', 'basic-hunger']) {
         const c = R.guideSprite(k, 72), d = c.getContext('2d').getImageData(0, 0, 72, 72).data;
@@ -1307,14 +1330,13 @@ const STAGE = `(() => {
     // shadows (lively, at full quality), and not another seed's. Each round
     // is started and drawn the same way, after another: the same board
     // afresh, as stage() makes one (new snakes, so their blinks and eyes start
-    // again), its first frame a second after the last. (Last of the staged
-    // boards, so the others keep their seeds.)
+    // again), its first frame a second after the last.
     const START = `const S = ${SEED} * 1000 + 901, start = seed => {
       __reseed(S + 5);
       const g = E.createGame({ withPlayer: true, personas: ['gobbler', 'ghost', 'mason'] }); g.food = []; g.time = 60000; g.tick = 500; g.weather.until = 1e12; g.snakes.forEach((s, i) => setBody(s, [[2 + 4 * i, 23], [1 + 4 * i, 23], [4 * i, 23]], 'right'));
       const c = document.getElementById('game'); __t = 9e6 - 1000; R.frame(0.5, __t); R.setViewer(0); __reseed(seed); R.setGame(g); __reseed(S + 2); __t = 9e6; drawN(5);
       return c.getContext('2d').getImageData(0, 0, c.width, c.height).data; };`;
-    await ev(`(() => { SnakeDebug.pinQuality(2); show(stage(['gobbler', 'ghost', 'mason'])); ${START} start(S + 4); window.__nextLog = null; return 'ok'; })()`);
+    await ev(`(() => { seeds(46); SnakeDebug.pinQuality(2); show(stage(['gobbler', 'ghost', 'mason'])); ${START} start(S + 4); window.__nextLog = null; return 'ok'; })()`);
     const asked = await ev(`new Promise(r => { const t0 = performance.now(); (function f() { if (window.__nextLog || performance.now() - t0 > 8000) r(!!window.__nextLog); else setTimeout(f, 50); })(); })`);
     const log = !asked ? null : await ev(`(() => {
       ${START}
@@ -1348,7 +1370,8 @@ const STAGE = `(() => {
     await b.go(site.url + '?debug', { settle: 0 });
     await ev('__settle()');
     await ev(STAGE);
-    const BIRD = `
+    const BIRD = n => `
+      seeds(${n});
       const g = show(stage(['gobbler', 'ghost', 'mason'])), N = TUNING.GRID;
       g.time = TUNING.SUDDEN_DEATH_MS + 5000; g.tick = 2000;
       g.snakes.forEach((s, i) => setBody(s, [[4 + 4 * i, 23], [3 + 4 * i, 23], [2 + 4 * i, 23]], 'right'));
@@ -1361,7 +1384,7 @@ const STAGE = `(() => {
       const cellNear = (x, y) => [Math.max(0, Math.min(N - 1, Math.round(x / 32 - 0.5))), Math.max(0, Math.min(N - 1, Math.round(y / 32 - 0.5)))];
     `;
     const eye = await ev(`(() => {
-      ${BIRD}
+      ${BIRD(0)}
       R.setReducedMotion(false);
       const home = 12 * N + 22; // (it rests by (22, 12), beside the board)
       rest(home); drawN(30);
@@ -1383,7 +1406,7 @@ const STAGE = `(() => {
       eye.map(e => `${e.dy < 0 ? 'above' : 'below'}: pupil ${e.off.join(', ')} px off the middle (eye ${e.r} px), toward the head by cos ${e.cos}`).join('; '));
 
     const look = await ev(`(() => {
-      ${BIRD}
+      ${BIRD(1)}
       const home = 12 * N + 22, spot = 4 * N + 6;
       rest(home); drawN(40);
       const tx = 6 * 32 + 16, ty = 4 * 32 + 16, toward = p => { const hx = p.eyeAt[0], hy = p.eyeAt[1], bx = p.beak[0] - hx, by = p.beak[1] - hy, dx = tx - hx, dy = ty - hy; return (bx * dx + by * dy) / (Math.hypot(bx, by) * Math.hypot(dx, dy)); };
@@ -1398,7 +1421,7 @@ const STAGE = `(() => {
       `its beak toward the patch by cos ${look.resting} resting, ${look.aiming} aiming (${look.phase}); its eye by cos ${look.gaze}; ${look.turns} head angles in 0.8 s`);
 
     const blows = await ev(`(() => {
-      ${BIRD}
+      ${BIRD(2)}
       const spot = 10 * N + 9, tx = 9 * 32 + 16, ty = 10 * 32 + 16;
       rest(spot); drawN(10);
       const plan = aim(spot, spot), table = SnakeAudio.drumBlows(1), D = table[table.length - 1];
@@ -1430,7 +1453,7 @@ const STAGE = `(() => {
     // drawn over it (its layer at the ring, with and without), and so is a
     // piece in the air under it.
     const promise = await ev(`(() => {
-      ${BIRD}
+      ${BIRD(3)}
       const lg = L.getContext('2d');
       const px = (bx, by) => { const z = R.birdPose().layer, k = z.W / z.w, bd = document.getElementById('game').getBoundingClientRect(), c = bd.width / (N * 32); const x = Math.round((bd.left + bx * c - z.x) * k), y = Math.round((bd.top + by * c - z.y) * k); return x < 0 || y < 0 || x >= L.width || y >= L.height ? [0, 0, 0, 0] : Array.from(lg.getImageData(x, y, 1, 1).data); }; // (its layer's pixel at a board point)
       const ringPts = (x, y, r) => Array.from({ length: 32 }, (_, q) => [(x + 0.5) * 32 + Math.cos(q * Math.PI / 16) * r, (y + 0.5) * 32 + Math.sin(q * Math.PI / 16) * r]);
@@ -1505,7 +1528,7 @@ const STAGE = `(() => {
     await ev('__settle()');
     await ev(STAGE);
     const layer = await ev(`(() => {
-      ${BIRD}
+      ${BIRD(0)}
       rest(12 * N + 22); drawN(5);
       const lb = L.getBoundingClientRect(), bd = document.getElementById('game').getBoundingClientRect(), reach = 6.5 * 32 * 0.85 * bd.width / (N * 32);
       const shown = (Math.min(innerWidth, lb.right) - Math.max(0, lb.left)) * (Math.min(innerHeight, lb.bottom) - Math.max(0, lb.top));
@@ -1520,7 +1543,7 @@ const STAGE = `(() => {
     // patch, early in the aim and near the strike: how far it moves across,
     // frame to frame, in CSS px.
     const tremble = await ev(`(() => {
-      ${BIRD}
+      ${BIRD(0)}
       const lime = (r, g, b) => g > 150 && r > 100 && r < 170 && b < 60, css = document.getElementById('game').getBoundingClientRect().width / N;
       const centre = () => { const p = pixels(9, 9, 3, 3); let n = 0, sx = 0; for (let i = 0; i < p.data.length; i += 4) if (lime(p.data[i], p.data[i + 1], p.data[i + 2])) { n++; sx += (i / 4) % p.width; } return n ? 9 + sx / n / p.width * 3 : null; };
       const spread = left => { g.woodpecker.strikeAt = g.tick - 1 + left; const xs = []; for (let i = 0; i < 9; i++) { drawN(1, 0.5, 23); xs.push(centre()); } return xs.every(v => v != null) ? +((Math.max(...xs) - Math.min(...xs)) * css).toFixed(2) : -1; };
@@ -1534,7 +1557,7 @@ const STAGE = `(() => {
     })()`);
     check(tremble.early >= 1.5 && tremble.late >= 3, 'on a phone, food in the woodpecker’s mark trembles enough to see, more as the strike nears', `it moves ${tremble.early} CSS px across early in the aim, ${tremble.late} near the strike`);
     await ev(`(() => {
-      ${BIRD}
+      ${BIRD(1)}
       rest(23 * N + 12); drawN(5);
       window.__sets = 0;
       for (const k of ['width', 'height']) { const was = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, k); Object.defineProperty(L, k, { configurable: true, get() { return was.get.call(this); }, set(v) { __sets++; was.set.call(this, v); } }); }
@@ -1554,7 +1577,7 @@ const STAGE = `(() => {
     await ev('__settle()');
     await ev(STAGE);
     const calm = await ev(`(() => {
-      ${BIRD}
+      ${BIRD(0)}
       const run = reducedNow => {
         R.setReducedMotion(reducedNow);
         const spot = 6 * N + 4, home = 12 * N + 22, o = {};
@@ -1583,6 +1606,7 @@ const STAGE = `(() => {
     // and below its head (read over a few frames: they swell and fade);
     // starving, it's paler too.
     const hunger = await ev(`(() => {
+      seeds(1);
       SnakeDebug.pinQuality(0);
       const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
       const body = (r, g, b) => r > 60 && r > g + 30 && r > b + 25;
