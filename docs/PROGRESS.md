@@ -5,8 +5,8 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 
 ## State (27 October 2026)
 
-Queue item 3, the fixes and polish from the owner's playtest, is under way: "Burrows grow shut" (PR #49) and "The
-outline glitch over a hole" (PR #52) are done, and "Rainbows upside down" is next. Queue items 1, 1b and 2 are done (2: PR
+Queue item 3, the fixes and polish from the owner's playtest, is under way: "Burrows grow shut" (PR #49), "The
+outline glitch over a hole" (PR #52) and "Rainbows upside down" (PR #57) are done, and "Hunger where your eyes are" is next. Queue items 1, 1b and 2 are done (2: PR
 #48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages). The previews wait
 on one setting: Pages still serves `main` (every "pages build and deployment" run so far has built `main`), so the
 preview links in PRs do not open until Haakon switches Pages to "Deploy from a branch: gh-pages, / (root)". Everything
@@ -78,6 +78,7 @@ Also in `next-tasks-verbatim.md`:
   - *Done on 27 October 2026 (PR #52)*: see "A body over a pit, smooth" in `docs/design/32-the-owners-playtest.md`.
 - **Rainbows upside down.** `drawRainbow` deliberately hangs the arch downward from an apple in the log's upper half.
   - Fix: always upright. For an apple in the upper half, use a great circle centred below the log (cy about 1.15 × the board, its top about 0.06 × the board from the top edge). It rises out of the apple, over, and down off the far side, with red outermost.
+  - *Done on 27 October 2026 (PR #57)*: see "Rainbows upright" in `docs/design/32-the-owners-playtest.md`.
 - **Hunger where your eyes are.** On a wide desktop the tag's hunger bar goes unseen, and the owner starved.
   - Show hunger on every snake: the body slims as hunger grows, the head wobbles with growl lines in the last seconds, and a starving snake pales.
   - Measure a new player's starving rate before and after.

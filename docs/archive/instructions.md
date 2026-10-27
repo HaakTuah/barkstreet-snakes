@@ -211,3 +211,9 @@ On the setup itself:
 On the milestone PR from `develop` into `main` (27 October 2026), after being told Haakon would merge it:
 
 > You merge it. Always.
+
+In the design chat (27 October 2026, 09:00 UTC), after Claude found no pushes from either builder for over an hour.
+Haakon had asked "And shouldn't they push regularly so they don't risk losing anything?", and Claude asked "Shall I add
+a 'push at every checkpoint, at least hourly' rule to both projects' instructions?":
+
+> Yes to all, expertly!
