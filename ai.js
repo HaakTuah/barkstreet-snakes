@@ -312,7 +312,7 @@ window.SnakeAI = (() => {
   // (-1 off the board), and `queue` holds a breadth-first search, one distance
   // after another. No search visits a cell twice, so N * N is always enough.
   let bufN = 0, mineFree, otherFree, ownFree, risk, seen;
-  let foodValue, foodGrow, foodFrom, foodCells, goldCells, beadCells, queue, nbr, necks, reach, myCells, marks, leave, leaveStamp, chase, chaseKey;
+  let foodValue, foodGrow, foodFrom, foodCells, goldCells, beadCells, queue, nbr, necks, reach, lineAt, lineSeen, lineMark, lineIn, lineOut, myCells, marks, leave, leaveStamp, chase, chaseKey;
   let nearStamp, nearHead, nearWho, nearHome, nearGap;
   let stamp = 0;
   // The board the searches of a search state run on (see evaluate), framed
@@ -392,6 +392,8 @@ window.SnakeAI = (() => {
     seenF = new Int32Array(W * W);
     seenH = new Int32Array(W * W);
     reach = new Int32Array(W * W);      // the soonest any rival could be in a cell (ticks from now)
+    lineAt = new Int32Array(W * W);     // ...on a line of mine (see decide's lineOn), and the line's cells
+    lineSeen = new Int32Array(W * W); lineMark = new Int32Array(W * W); lineIn = new Int32Array(W * W); lineOut = new Int32Array(W * W);
     reachBlock = new Int32Array(W * W).fill(HOLE);
     distF = new Int32Array(W * W);
   }
@@ -1351,6 +1353,56 @@ window.SnakeAI = (() => {
       return true;
     }
 
+    // The board as a line of mine leaves it for the rivals, for the neck
+    // test: my body is the first `len` cells of `body`, t moves on. Unlike
+    // `reach`, which reads the board as it is now, the cells my line has
+    // moved into since are mine from when I got there, so a rival my line has
+    // sealed off (the one I've pinned against the edge, say) can't come round
+    // through me. (lineOn marks those cells, in lineMark with lineStamp, and
+    // when I'm in each, lineIn to lineOut; lineFree: whether a cell is free
+    // for a rival at s, ticks from now.)
+    let lineStamp = 0;
+    function lineOn(body, len, grow, t) {
+      lineStamp = ++stamp;
+      for (let j = 0, n = Math.min(t, len); j < n; j++) { const p = framed[body[j].y * N + body[j].x]; lineMark[p] = lineStamp; lineIn[p] = t - j; lineOut[p] = len - j + grow + t; }
+    }
+    const lineFree = (q, s) => reachBlock[q] <= s && (lineMark[q] !== lineStamp || s < lineIn[q] || s >= lineOut[q]);
+    // A timed flood fill over that board from rival k's head (every rival's,
+    // k < 0), from when it moves again, to `by` at the latest: into lineAt,
+    // the soonest it's in each cell it gets to (marked in seenH with the stamp
+    // it returns), or with cap > 0, only how many cells, up to cap (marked in
+    // lineSeen: what it found for the neck test is kept).
+    function lineFill(k, by, cap) {
+      const stampL = ++stamp, Q = queue, S = cap > 0 ? lineSeen : seenH, A = lineAt, Wd = W;
+      let read = 0, write = 0, count = 0, first = HOLE, last = -HOLE;
+      for (let o = 0; o < others.length; o++) if (k < 0 || o === k) { const s0 = (others[o].stun || 0) - age; first = Math.min(first, s0); last = Math.max(last, s0); }
+      for (let s = first; s <= by; s++) {
+        const levelEnd = write;
+        while (read < levelEnd) {
+          const p = Q[read++];
+          let q = p - Wd;
+          if (S[q] !== stampL && lineFree(q, s)) { S[q] = stampL; A[q] = s; Q[write++] = q; count++; }
+          q = p + Wd;
+          if (S[q] !== stampL && lineFree(q, s)) { S[q] = stampL; A[q] = s; Q[write++] = q; count++; }
+          q = p - 1;
+          if (S[q] !== stampL && lineFree(q, s)) { S[q] = stampL; A[q] = s; Q[write++] = q; count++; }
+          q = p + 1;
+          if (S[q] !== stampL && lineFree(q, s)) { S[q] = stampL; A[q] = s; Q[write++] = q; count++; }
+        }
+        for (let o = 0; o < others.length; o++) { // (a rival moves again from here: where I saw it, as `reach` has it)
+          const h = others[o].body[0], p = framed[h.y * N + h.x];
+          if ((k < 0 || o === k) && (others[o].stun || 0) - age === s && S[p] !== stampL) { S[p] = stampL; A[p] = s; Q[write++] = p; }
+        }
+        if ((cap > 0 && count >= cap) || (read === write && s >= last)) break;
+      }
+      return cap > 0 ? Math.min(count, cap) : stampL;
+    }
+    // The rival I'm hunting: whether it's sealed in already, with less room
+    // than its length, whatever I do (then closing it in is nothing new).
+    const victimLen = ctx.victim >= 0 ? others[ctx.victim].body.length : 0;
+    lineStamp = -1; // (no line: the board as it is)
+    const victimShut = ctx.victim >= 0 && lineFill(ctx.victim, HOLE, victimLen) < victimLen;
+
     let ateAt = -HOLE; // (the step the line being scored last ate at)
     function evaluate(body, len, grow, t) {
       const L = len + grow;
@@ -1546,11 +1598,31 @@ window.SnakeAI = (() => {
       // get to and shut before I'm through, leaving me only the pocket on my
       // side of it. (Necks nearest first; one I'd get through well before
       // any rival could get there is mine to pass, and a pocket with my own
-      // trail in it I can circle.)
+      // trail in it I can circle. Where the board as it is now says a rival
+      // could, I look again with my line on it: see lineOn.)
+      let filled = 0, closes = -1;
       for (let k = 0; k < neckCount; k += 4) {
-        const d = necks[k + 3], slack = t - ateAt <= MEAL_PLIES ? MEAL_DAWDLE : d === 1 ? PINNED_DAWDLE : DAWDLE;
+        const d = necks[k + 3], slack = t - ateAt <= MEAL_PLIES ? MEAL_DAWDLE : d === 1 ? PINNED_DAWDLE : DAWDLE, by = t + d + slack;
         if (trail < d) break;
-        if (reach[necks[k]] > t + d + slack || reach[necks[k + 1]] > t + d + slack) continue;
+        const a = necks[k], b = necks[k + 1];
+        if (reach[a] > by || reach[b] > by) continue;
+        if (!filled) { // (once, as far on as any neck needs)
+          let far = 0;
+          for (let n = k; n < neckCount; n += 4) far = Math.max(far, necks[n + 3]);
+          lineOn(body, len, grow, t);
+          filled = lineFill(-1, t + far + Math.max(PINNED_DAWDLE, DAWDLE), 0);
+        }
+        const shut = seenH[a] === filled && seenH[b] === filled ? Math.max(lineAt[a], lineAt[b]) : HOLE;
+        if (shut > by) continue;
+        // A pin I close isn't a pin on me either: like a meal, the rival I
+        // hunt is against the edge (or a body) only because it was there,
+        // and I leave on my next move. So on a line that seals it in (less
+        // room than its length, where it had that room), only a rival that
+        // could get to the gap about as soon as I could makes it a trap.
+        if (shut > t + d + MEAL_DAWDLE && ctx.victim >= 0 && !victimShut) {
+          if (closes < 0) closes = lineFill(ctx.victim, HOLE, victimLen) < victimLen ? 1 : 0;
+          if (closes) continue;
+        }
         return score - Math.min(NECK + 50 * (need - necks[k + 2]), TRAPPED - 1); // (never worse than a sure trap, however long I am)
       }
       return score;
