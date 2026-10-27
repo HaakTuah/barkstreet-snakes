@@ -44,6 +44,14 @@
 // --rounds 20 --batch 20` must give B-A = 0 on every row.) Two trademarks
 // read the AI's own memory (Sovereign's home, Mute's victimId): if B's
 // ai.js renames those, its snakes measure as 0 there, a false difference.
+// How fine it sees (27 October 2026, seeds 3 and 11, 600 rounds each, the
+// default side rows): two copies that differ only in their random draws
+// came out with every interval around 0 (win% a snake +0.7 points, within
+// [-3.0, +4.4]), too wide to call them "same" within the 3 points win% is
+// allowed; a fifth of decisions made a tick late was found at the first
+// look (win% a snake -19 points, [-28, -10]). So to show two AIs even, play
+// more seeds (four instead of two make the intervals about 0.7 as wide) or widen a
+// margin (--margin side.win=5).
 //
 //   node tools/abtest.js [A] B [--seed N ...] [--rounds N] [--batch N] [--metrics LIST] [--at MS]
 //                        [--alpha P] [--margin ROW=X ...] [--workers N] [--json]
@@ -108,7 +116,7 @@ function valuesOf(res) {
 // even seats, then the odd), as A's snakes' values and B's, each with its
 // snakes' numbers added up (per: by personality, as in a plain round).
 function sidesOf(...plays) {
-  const side = () => ({ h2h: true, per: {}, snakes: 0, wins: 0, placeSum: 0, minutes: 0, eaten: 0, kills: 0, causes: {}, flashes: 0, jumps: 0, leaps: 0, dashes: 0, golden: 0 });
+  const side = () => ({ h2h: true, per: {}, snakes: 0, wins: 0, placeSum: 0, aliveMs: 0, eaten: 0, kills: 0, causes: {}, flashes: 0, jumps: 0, leaps: 0, dashes: 0, golden: 0 });
   const out = { A: side(), B: side() };
   for (const res of plays) {
     for (const [name, p] of Object.entries(res.per)) {
@@ -117,7 +125,7 @@ function sidesOf(...plays) {
         if (k === 'deaths' || k === 'sig') for (const [d, n] of Object.entries(x)) (t[k] ||= {})[d] = (t[k][d] || 0) + n;
         else t[k] = (t[k] || 0) + x;
       }
-      v.snakes += p.rounds; v.minutes += p.aliveMs / 60000;
+      v.snakes += p.rounds; v.aliveMs += p.aliveMs; // (whole ms: the same AI on both sides sums to exactly the same)
       for (const k of ['wins', 'placeSum', 'eaten', 'kills', 'flashes', 'jumps', 'leaps', 'dashes', 'golden']) v[k] += p[k];
       for (const [c, n] of Object.entries(p.deaths)) v.causes[c] = (v.causes[c] || 0) + n;
     }
@@ -134,11 +142,11 @@ function rowsFor(As, Bs, groups = USUAL, margins = new Map()) {
     const snakes = v => v.snakes;
     add('side', 'side.win', 'win% a snake', '%', { num: v => v.wins, den: snakes, scale: 100 }, 3);
     add('side', 'side.place', 'place a snake', '', { num: v => v.placeSum, den: snakes }, 0.1);
-    add('side', 'side.alive', 'time alive a snake', 's', { num: v => v.minutes, den: snakes, scale: 60 }, 3);
+    add('side', 'side.alive', 'time alive a snake', 's', { num: v => v.aliveMs, den: snakes, scale: 0.001 }, 3);
     add('side', 'side.food', 'food a snake', '', { num: v => v.eaten, den: snakes }, 0.5);
     add('side', 'side.kills', 'kills a snake', '', { num: v => v.kills, den: snakes }, 0.05);
     for (const k of [...new Set([...As, ...Bs].flatMap(v => Object.keys(v.causes)))].sort()) add('deaths', 'deaths.' + k, `died: ${k}`, '%', { num: v => v.causes[k] || 0, den: snakes, scale: 100 }, 3);
-    add('powers', 'flashes', 'plain flashes a minute alive', '', { num: v => v.flashes, den: v => v.minutes }, 0.2);
+    add('powers', 'flashes', 'plain flashes a minute alive', '', { num: v => v.flashes, den: v => v.aliveMs, scale: 60000 }, 0.2);
     add('powers', 'jumps', 'plain jumps a snake', '', { num: v => v.jumps, den: snakes }, 0.2);
     add('powers', 'leaps', 'golden leaps a snake', '', { num: v => v.leaps, den: snakes }, 0.05);
     add('powers', 'dashes', 'golden dashes a snake', '', { num: v => v.dashes, den: snakes }, 0.05);

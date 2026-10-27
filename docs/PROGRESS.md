@@ -6,7 +6,7 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 ## State (27 October 2026)
 
 Queue item 3, the fixes and polish from the owner's playtest, is under way: "Burrows grow shut" (PR #49), "The
-outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57), "Hunger where your eyes are" (PR #66), "Rainbows, the follow-ups" (PR #68), "The phone gap" (PR #70) "Desktop chatter" (PR #72), "Wildcard's hair" (PR #74) and "Copycat's face" (PR #78) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
+outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57), "Hunger where your eyes are" (PR #66), "Rainbows, the follow-ups" (PR #68), "The phone gap" (PR #70) "Desktop chatter" (PR #72), "Wildcard's hair" (PR #74) and "Copycat's face" (PR #78) and the head-to-head mode in `tools/abtest.js` (PR #PRNUM) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
 #48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages). The previews wait
 on one setting: Pages still serves `main` (every "pages build and deployment" run so far has built `main`), so the
 preview links in PRs do not open until Haakon switches Pages to "Deploy from a branch: gh-pages, / (root)". Everything
@@ -109,6 +109,9 @@ Also in `next-tasks-verbatim.md`:
   the same rounds on paired seats, which the optimization bar in `CLAUDE.md` calls for (the assistant's note of
   2026-10-18), and which the standing instruction "every new move is tested both ways" uses: rivals with a move and
   rivals without it on the same board. Before item 5, whose new moves need it.
+  - *Done on 27 October 2026 (PR #PRNUM)*: `node tools/abtest.js [A] B --head-to-head` (built on `simulate.js --versus`;
+    how it works, its rows and how fine it sees are in `tools/abtest.js`'s header). Given the same AI twice it comes out
+    exactly even on every row; the A/A and known-difference runs are in the PR.
 
 - **Hunters miss easy pins.** Haakon (26 October 2026): "it seems they try to box you, but often don't on really easy
   opportunities where they got you squeezed against the wall."
