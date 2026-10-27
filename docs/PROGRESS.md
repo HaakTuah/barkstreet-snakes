@@ -134,7 +134,7 @@ Also in `next-tasks-verbatim.md`:
     {who}?"); a death by anything else gets his plain lines. Give the last words the cause the engine already records
     (`cause` and `killer` on the crash), so Mason says "Et tu, …?" to whatever killed him: the edge ("Et tu, margo?"),
     a fall into a hole ("Et tu, fovea?"), fire ("Et tu, ignis?"), hunger ("Et tu, fames?"), the woodpecker ("Et tu,
-    picus?"), a mushroom ("Et tu, fungus?"), lightning ("Et tu, Iuppiter?") and his own tail ("Et tu, cauda mea?"),
+    picus?"), a mushroom ("Et tu, fungus?"), lightning ("Et tu, Iuppiter?") and his own body ("Et… ego?", Haakon's pause, in Latin: "ego" is both "I" and what kills a wall-builder who bites himself),
     for whichever of these the game has.
   - *Every rival, the same way.* The cause is there for all eighteen, so each gets last words for the deaths it can
     have, in its own voice, where they are funny, and the chatter shows how they died. Translations in each language
