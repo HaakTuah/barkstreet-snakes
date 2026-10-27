@@ -665,7 +665,7 @@ window.SnakeAI = (() => {
   //          food: [{ x, y, kind }], holes: Set of cell indexes, age, tick, timeMs,
   //          pecks: the woodpecker's mark (among the holes), strikeAt: its strike's tick,
   //          landings: where it promised the food in its mark would land (its rings in the last PECK_PROMISE_TICKS moves),
-  //          burrows: [{ x, y }] }
+  //          burrows: [{ x, y, shutAt (once it grows shut: the game time it closes over) }] }
   // memory: an object kept for this snake for the whole round.
   function decide(view, persona, memory = {}) {
     const N = view.grid;
@@ -1120,7 +1120,8 @@ window.SnakeAI = (() => {
     // bead there, it coughs from then on. coughs[k]: how many of rival k's
     // next moves eat nothing, as I read it.
     // (The burrows, as anyone sees them: nothing rolls or is knocked onto
-    // one, and a scared beetle runs for one.)
+    // one, and a scared beetle runs for one, one growing shut too: it can
+    // still dive in until it closes over.)
     const burrows = [];
     if (view.burrows) for (const b of view.burrows) burrows.push(b.y * N + b.x);
     let coughing = false;

@@ -118,6 +118,7 @@ function counted(msg, last, events) {
   if (msg.w) msg.w.forEach((v, j) => { if (!blank(v)) cross(`woodpecker ${j}`); });
   if (!same(msg.bu, last?.bu)) cross('burrows');
   if (msg.bu.some(b => b[4])) cross('burrows dug');
+  if (msg.bu.some(b => b[6] > 0)) cross('burrows shut');
   if (!same(msg.un, last?.un)) cross('unders');
   if (msg.un.some(u => u[3])) cross('unders gold');
   for (const f of msg.fi) cross(`fire ${FIRES[f[3]]}`);
@@ -199,7 +200,7 @@ const EVENTS = (s, o, h, k) => {
     choke: [{ snake: s, ...at, tx: Math.max(0, h.x - 1), ty: h.y }], nudge: [{ snake: s, kind: 'food', ...at, tx: Math.min(E.GRID - 1, h.x + 1), ty: h.y }],
     dig: [{ ...at, until: k + 8 }], dive: [{ ...at }, { ...at, dug: 1 }],
     knock: [{ kind: 'food', ...at, tx: Math.min(E.GRID - 1, h.x + 2), ty: h.y }, { kind: 'beetle', ...at, tx: h.x, ty: Math.max(0, h.y - 2), gold: 1 }, { kind: 'pellet', ...at, tx: null, ty: null, color: o.color }], // (knocked aside, a golden beetle scurrying, and a bead in its colour with nowhere to go)
-    burrow: [{ ...at }, { ...at, dug: 1 }], heal: [{ ...at }], // (one cracked open, or left by a dig; one closing over)
+    burrow: [{ ...at }, { ...at, dug: 1 }], shut: [{ ...at, at: 9000 + k }], heal: [{ ...at }], // (one cracked open, or left by a dig; one starting to grow shut; one closing over)
   };
 };
 const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm', 'snow'], FIRES = ['burning', 'struck', 'ember']; // (online.js's orders)
@@ -244,6 +245,7 @@ function stage(game) {
   const digger = game.food.find(f => f.kind === 'beetle' && f.digUntil == null);
   if (digger && short('food beetle 11')) { digger.digUntil = k + 8; return; } // (one digging in, cornered)
   if (game.burrows.length && short('burrows dug')) { game.burrows[0].dug = 1; return; } // (one a dig left)
+  if (game.burrows.length && !game.burrows[0].shutAt && short('burrows shut')) { game.burrows[0].shutFrom = game.time; game.burrows[0].shutAt = game.time + 9000; return; } // (one growing shut)
   const hatch = game.burrows[0] || free(game);
   if (hatch && (short('unders') || short('unders gold'))) { const u = { until: k + 12 + (k % 5), expires: k + 200, from: hatch.y * E.GRID + hatch.x, gold: short('unders gold') }; (game.unders ||= []).push(u); buried.add(u); return; } // (one gone down a burrow, or where it dug)
   if (short('snake burnUntil') || short('snake burnFrom')) { s.burnFrom = k; s.burnUntil = k + 6; return; } // (as fire sets it alight)
@@ -357,7 +359,7 @@ for (const fatal of FATAL.filter(k => short(`death fatal ${k}`))) {
 // ones that only say where, where; a death, what the snake does.)
 const ways = EVENTS({ id: 1, color: '#fff', name: 'S' }, { id: 2, color: '#000', name: 'O' }, { x: 1, y: 1 }, 1);
 const says = KINDS.filter(k => k !== 'death').flatMap(k => [...new Set((ways[k] || [{ x: 1, y: 1 }]).flatMap(w => Object.keys(w).filter(f => !blank(w[f]))))].map(f => `${k} ${f}`));
-const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fatal'].map(f => `death ${f}`), ...FATAL.map(k => `death fatal ${k}`), ...FIELDS.map(f => `snake ${f}`), ...LOOKS.map(f => `memory ${f}`), 'holes', 'burrows', 'burrows dug', 'unders', 'unders gold',
+const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fatal'].map(f => `death ${f}`), ...FATAL.map(k => `death fatal ${k}`), ...FIELDS.map(f => `snake ${f}`), ...LOOKS.map(f => `memory ${f}`), 'holes', 'burrows', 'burrows dug', 'burrows shut', 'unders', 'unders gold',
   ...['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap'].flatMap(k => [`food ${k}`, `food ${k} 3`]), // (each kind, and when it goes)
   'food food 5', 'food food 6', 'food pellet 4', 'food pellet 7', ...[5, 6, 7, 8, 9, 10, 11].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden, digging in)
   ...FIRES.map(k => `fire ${k}`),
@@ -390,7 +392,7 @@ function protocolSamples() {
   host.unders = [{ until: 50, expires: 90, from: 41, gold: true }];
   host.holes.add(123);
   host.woodpecker = { x: 1, y: 2, at: 3, target: [10, 11], strikeAt: 20, last: [9], struckAt: 4, restUntil: 5, pecks: 2, landings: [[10, 12], [11, -1]] };
-  host.burrows = [{ x: 2, y: 3, at: 4, used: 8, dug: 1 }];
+  host.burrows = [{ x: 2, y: 3, at: 4, used: 8, dug: 1, shutFrom: 900, shutAt: 9900 }];
   host.fires = new Map([[44, { from: 1, until: 9, strike: true, group: 1 }]]);
   host.weather = { kind: 'rain', since: 1, until: 99 };
   const at = { x: 2, y: 3 };
@@ -400,7 +402,7 @@ function protocolSamples() {
     { type: 'crash', snake: a, ...at, cause: 'hit B', killer: 'B', killerId: 1, lost: 2 }, { type: 'cut', snake: a, ...at, lost: 3, by: 1 },
     { type: 'choke', snake: a, ...at, tx: 3, ty: 3 }, { type: 'nudge', snake: a, kind: 'food', ...at, tx: 3, ty: 3 }, { type: 'dig', ...at, until: 30 },
     { type: 'dive', ...at, dug: 1 }, { type: 'knock', kind: 'pellet', ...at, tx: 4, ty: 4, gold: 0, color: '#f00' }, { type: 'burrow', ...at, dug: 1 },
-    { type: 'heal', ...at }, { type: 'spawn', kind: 'food', ...at, gold: 0 }, { type: 'weather', kind: 'rain' }, { type: 'ember', ...at, fx: 4, fy: 4 },
+    { type: 'shut', ...at, at: 9900 }, { type: 'heal', ...at }, { type: 'spawn', kind: 'food', ...at, gold: 0 }, { type: 'weather', kind: 'rain' }, { type: 'ember', ...at, fx: 4, fy: 4 },
     { type: 'woodpecker' }, { type: 'peck', ...at, cells: [10, 11], under: [0] }, { type: 'rot', ...at, kind: 'pellet', color: '#f00' }, { type: 'flown', ...at },
     { type: 'starving', snake: a }, { type: 'alight', snake: a }, { type: 'singe', snake: a }, { type: 'baked', ...at, kind: 'food' }, { type: 'ash', ...at, kind: 'food' },
     ...['emerge', 'gust', 'charge', 'strike', 'rainbow', 'aim', 'douse', 'lastApples'].map(type => ({ type, ...at })),
@@ -554,14 +556,15 @@ if (g.events.length !== 1 || g.events[0].tx !== 3 || g.events[0].ty !== 5 || g.s
 // came from no cell, a beetle digging in till no tick, or a burrow that isn't one (off the board, or not opened on a tick).
 bad.e = [['dig', 1, 1, 'soon'], ['dig', -1, 1, 5], ['dive', 1, E.GRID, 1], ['knock', 99, 1, 1, 2, 2, 0], ['knock', 0, 1, 1, E.GRID, 1, 0], ['knock', 0, 1, 1, 2, null, 0], ['knock', 0, 1, 1, -1, -1, 0],
   ['knock', 0, 1, 1, null, null, 0], ['dig', 2, 3, 40], ['dive', 2, 3, 1], ['knock', 4, 5, 6, 7, 8, 1], ['burrow', E.GRID, 1, 1], ['heal', 1, 'x'], ['burrow', 3, 4, 1], ['heal', 5, 6],
+  ['shut', 1, E.GRID, 50], ['shut', 1, 2, 'soon'], ['shut', 6, 7, 8000],
   ['knock', 3, 1, 2, 3, 4, 0, '#abc']];
-bad.bu = [[1, 2], [1, 2, 3, 'x', 0], [4, 5, 6, 700, 1], [999, -5, 1.5, 700, 1], [2.5, 3, 4, 700, 0], [5, E.GRID, 7, 700, 0], [5, 6, 7.5, 700, 0], [7, 8, 9, -1, 0]]; // (two short or not numbers, one off the board, one not on a cell, one past the edge, one not opened on a tick)
+bad.bu = [[1, 2], [1, 2, 3, 'x', 0], [4, 5, 6, 700, 1], [999, -5, 1.5, 700, 1], [2.5, 3, 4, 700, 0], [5, E.GRID, 7, 700, 0], [5, 6, 7.5, 700, 0], [7, 8, 9, -1, 0], [9, 9, 9, 700, 0, 800, 9800], [10, 10, 9, 700, 0, 900, 800]]; // (two short or not numbers, one off the board, one not on a cell, one past the edge, one not opened on a tick; one growing shut, one shutting before it started: open)
 bad.un = [['x'], [1, 2, -5, 0], [1, 2, E.GRID * E.GRID, 0], [5, 9, 30, 1]];
 bad.f = [[3, 3, 4, 100, 0, 0, -1, -1, 0, 0, 0, 'soon']];
 O.apply(g, bad, E.DIRS);
 const kept = JSON.stringify(g.events.map(e => ({ ...e })));
-if (kept !== JSON.stringify([{ type: 'knock', kind: 'food', x: 1, y: 1, tx: null, ty: null }, { type: 'dig', x: 2, y: 3, until: 40 }, { type: 'dive', x: 2, y: 3, dug: 1 }, { type: 'knock', kind: 'beetle', x: 5, y: 6, tx: 7, ty: 8, gold: 1 }, { type: 'burrow', x: 3, y: 4, dug: 1 }, { type: 'heal', x: 5, y: 6 }, { type: 'knock', kind: 'pellet', x: 1, y: 2, tx: 3, ty: 4, color: '#abc' }])
-  || JSON.stringify(g.burrows) !== JSON.stringify([{ x: 4, y: 5, at: 6, used: 700, dug: 1 }, { x: 7, y: 8, at: 9 }])
+if (kept !== JSON.stringify([{ type: 'knock', kind: 'food', x: 1, y: 1, tx: null, ty: null }, { type: 'dig', x: 2, y: 3, until: 40 }, { type: 'dive', x: 2, y: 3, dug: 1 }, { type: 'knock', kind: 'beetle', x: 5, y: 6, tx: 7, ty: 8, gold: 1 }, { type: 'burrow', x: 3, y: 4, dug: 1 }, { type: 'heal', x: 5, y: 6 }, { type: 'shut', x: 6, y: 7, at: 8000 }, { type: 'knock', kind: 'pellet', x: 1, y: 2, tx: 3, ty: 4, color: '#abc' }])
+  || JSON.stringify(g.burrows) !== JSON.stringify([{ x: 4, y: 5, at: 6, used: 700, dug: 1 }, { x: 7, y: 8, at: 9 }, { x: 9, y: 9, at: 9, used: 700, shutFrom: 800, shutAt: 9800 }, { x: 10, y: 10, at: 9, used: 700 }])
   || JSON.stringify(g.unders) !== JSON.stringify([{ until: 5, expires: 9, from: 30, gold: true }]) || 'digUntil' in g.food[0]) { console.error('a malformed dig, dive, knock, burrow, beetle underground or digging got through', kept, JSON.stringify(g.unders), JSON.stringify(g.food), JSON.stringify(g.burrows)); process.exit(1); }
 // Nor the woodpecker's promised landings off the board, or that aren't a cell and a cell (or nowhere, -1); none at all: no landings.
 bad.e = [];
@@ -576,7 +579,7 @@ if (promised !== JSON.stringify([[300, 302], [301, -1]]) || 'landings' in g.wood
 if (O.POWERS.includes('dash') || O.POWERS.includes(undefined) || O.DIR_NAMES.includes('ahead')) { console.error('a bad press got through'); process.exit(1); }
 
 const n = key => seen.get(key) || 0, stagedAll = [...staged.values()].reduce((a, b) => a + b, 0);
-console.log(`ok: ${rounds} rounds (seed ${SEED}), ${ticks} ticks, ${checks} checks, guest matched the host every tick (${presses} power presses, ${n('dash plain')} plain flashes, ${plans} plans, ${n('choke')} chokes and ${n('nudge')} nudges, ${n('dig')} digs, ${n('knock')} knocks, ${n('heal')} burrows closing over, ${eaten} things eaten); biggest message ${biggest} bytes`);
+console.log(`ok: ${rounds} rounds (seed ${SEED}), ${ticks} ticks, ${checks} checks, guest matched the host every tick (${presses} power presses, ${n('dash plain')} plain flashes, ${plans} plans, ${n('choke')} chokes and ${n('nudge')} nudges, ${n('dig')} digs, ${n('knock')} knocks, ${n('shut')} burrows growing shut, ${n('heal')} closing over, ${eaten} things eaten); biggest message ${biggest} bytes`);
 console.log(`ok: crossed, ${MIN} times at least: all ${KINDS.length} kinds of event and all they say, all ${FIELDS.length} fields of a snake, its ${LOOKS.length} looks, the food, the woodpecker, fire and weather (${seen.size} things in all; ${stagedAll} events staged: ${[...staged].map(([k, v]) => `${k} ${v}`).join(', ') || 'none'})`);
 console.log(`ok: all ${SAMPLES.length} kinds of message round-trip unchanged, as typed; their shapes match the pin (protocol ${O.VERSION}, shapes ${FINGERPRINT}, ${kindsNow.length} kinds)`);
 console.log(`ok: crossed, once at least: all ${FATAL.length} ways to be out (${FATAL.map(k => `${k} ${n(`death fatal ${k}`)}`).join(', ')}; staged on boards of their own: ${deathsStaged.join(', ') || 'none'})`);
