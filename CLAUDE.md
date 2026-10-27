@@ -173,3 +173,11 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   `docs/archive/instructions.md`). Push the task's branch at every passed step, and at least once an hour while work is
   under way, even before its PR opens (a draft PR if it is not ready), so nothing is lost if a session dies or its
   machine is reclaimed.
+- **27 October 2026: every new move is tested both ways.** "If your expert opinion is that we should, then go ahead,
+  expertly!" (to adding Amarna Letters' test here; the words are in `docs/archive/instructions.md`). For every new move
+  or rule a snake can choose to use, run `tools/abtest.js` on fresh seeds: rivals that use it, against a copy where it
+  is taken from the play of some rivals only (the others keep it, so the rule itself is unchanged). Its users should come
+  out ahead in wins or survival. If they don't, the PR says why: either the move doesn't matter (a design finding for
+  Haakon) or the rivals play it badly, which is fixed before it merges. The PR shows the table, with how often each rival
+  used the move and how often it worked. Today's rules still stand: "No ability only people use", "No refuges" and every
+  trademark kept.

@@ -217,3 +217,9 @@ Haakon had asked "And shouldn't they push regularly so they don't risk losing an
 a 'push at every checkpoint, at least hourly' rule to both projects' instructions?":
 
 > Yes to all, expertly!
+
+In the design chat (27 October 2026, 09:35 UTC). Claude had pointed out that Amarna Letters tests each new feature by
+playing scripts that use it against scripts that ignore it on the same seeds, which this game's rules don't ask for,
+and asked "Should I add it as a rule there?":
+
+> If your expert opinion is that we should, then go ahead, expertly!
