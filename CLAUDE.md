@@ -169,3 +169,7 @@ Haakon's standing instructions given since this file was last revised, dated, ne
 - **27 October 2026:** "You merge it. Always." Merge the milestone PR from `develop` into `main` yourself, once its CI
   is green, instead of leaving it for Haakon. Still never push to `main` directly or force-push: it changes by that
   merge only.
+- **27 October 2026: push as you go.** "Yes to all, expertly!" (to adding the rule; the words are in
+  `docs/archive/instructions.md`). Push the task's branch at every passed step, and at least once an hour while work is
+  under way, even before its PR opens (a draft PR if it is not ready), so nothing is lost if a session dies or its
+  machine is reclaimed.
