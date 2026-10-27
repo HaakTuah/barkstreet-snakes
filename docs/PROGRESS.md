@@ -6,7 +6,7 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 ## State (27 October 2026)
 
 Queue item 3, the fixes and polish from the owner's playtest, is under way: "Burrows grow shut" (PR #49), "The
-outline glitch over a hole" (PR #52) "Rainbows upside down" (PR #57) and "Hunger where your eyes are" (PR #66) are done, and "The phone gap" is next. Queue items 1, 1b and 2 are done (2: PR
+outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57) and "Hunger where your eyes are" (PR #66) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
 #48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages). The previews wait
 on one setting: Pages still serves `main` (every "pages build and deployment" run so far has built `main`), so the
 preview links in PRs do not open until Haakon switches Pages to "Deploy from a branch: gh-pages, / (root)". Everything
