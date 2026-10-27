@@ -67,8 +67,9 @@
 //   aim, food in the mark trembles (by CSS px: on a phone too) and a ring
 //   marks where it'll be knocked to (the engine's own list: never two on
 //   one cell, never a burrow); at the strike it flies there in an arc,
-//   rimmed so it reads over a body, and a beetle scurries there. Copycat
-//   copying Star keeps its own red head.
+//   rimmed so it reads over a body, and a beetle scurries there. Copycat's
+//   head, copying, is half its model's colour and half its red, in a thin
+//   red rim; copying no one, all red.
 // - A pecked flag is a lost colony: the flag tips and falls into the pit
 //   (the other colony's stands), its land shrinks away into the pit, and
 //   Sovereign's banner is carried to its new capital, not jumping there.
@@ -659,7 +660,19 @@ const STAGE = `(() => {
       out.copy = SEGS.map(i => seg(cc, i));
       out.star = SEGS.map(i => seg(st, i));
       out.tint = R.colorOf(cc);
-      { const [hx, hy] = at(cc); out.head = rgb(hx + 0.02, hy + 0.3); } // (its head, below its eye: its own red)
+      { const [hx, hy] = at(cc); out.head = rgb(hx + 0.02, hy + 0.3); } // (its head, below its eye: half the rainbow's hue there, half its own red)
+      // Copying a plain colour (Metagamer's cyan), its head is half that, half its
+      // red, in a thin red rim; copying no one, all red.
+      const g3 = stage(['copycat', 'metagamer', 'mason']), [, c3, mg] = g3.snakes;
+      setBody(mg, Array.from({ length: 8 }, (_, i) => [16 - i, 8]), 'right');
+      setBody(c3, Array.from({ length: 8 }, (_, i) => [16 - i, 14]), 'right'); c3.memory.modelId = mg.id;
+      show(g3); drawN(5);
+      const scan = (s) => { const [hx, hy] = at(s); return Array.from({ length: 12 }, (_, k) => rgb(hx + 0.02, hy + 0.3 + k * 0.02)); };
+      { const [hx, hy] = at(c3); out.mixed = rgb(hx + 0.02, hy + 0.3); }
+      out.rimScan = scan(c3);
+      out.model = mg.color;
+      c3.memory.modelId = null; drawN(2);
+      { const [hx, hy] = at(c3); out.alone = rgb(hx + 0.02, hy + 0.3); }
       // Star out: its shockwave, held still (reduced motion), a moment on.
       R.setReducedMotion(true);
       const g2 = stage(['star', 'ghost', 'mason']), s2 = g2.snakes[1];
@@ -680,7 +693,16 @@ const STAGE = `(() => {
       'Copycat copying Star wears a pale copy of its rainbow, flowing with Star’s, not a pale gold',
       `hues of segments 2, 3, 4, 7: ${copyHues.join(', ')} (Star’s ${starHues.join(', ')}); ${JSON.stringify(bows.copy)} against ${JSON.stringify(bows.star)}; its colour ${bows.tint}`);
     const [hr, hg, hb] = bows.head;
-    check(hr > 170 && hg < 90 && hb < 80, 'copying Star, Copycat’s cat-eared head keeps its own red, the flag’s', `its head ${bows.head.join(', ')} (its own #de2910 is 222, 41, 16)`);
+    const far = (c, w) => Math.hypot(c[0] - w[0], c[1] - w[1], c[2] - w[2]);
+    const FLAG = [222, 41, 16], hex = h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16));
+    const halfModel = hex(bows.model).map((v, k) => Math.round((v + FLAG[k]) / 2));
+    const other = bows.head.map((v, k) => 2 * v - FLAG[k]); // (what's mixed with its red: a hue of Star's rainbow, hsl(h, 85%, 62%), 240 at most and 76 at least)
+    check(Math.abs(Math.max(...other) - 240) < 30 && Math.abs(Math.min(...other) - 76) < 30, 'copying Star, Copycat’s head is half the rainbow, half its own red',
+      `its head ${bows.head.join(', ')}, so mixed with ${other.join(', ')} (its own #de2910 is 222, 41, 16)`);
+    check(far(bows.mixed, halfModel) < 40 && far(bows.mixed, FLAG) > 40, 'copying Metagamer, Copycat’s head is half its cyan, half its red',
+      `its head ${bows.mixed.join(', ')}; half and half ${halfModel.join(', ')} (Metagamer ${bows.model})`);
+    check(bows.rimScan.some(c => far(c, FLAG) < 30), 'copying, a thin red rim keeps Copycat’s head its own', `down its chin: ${JSON.stringify(bows.rimScan)}`);
+    check(far(bows.alone, FLAG) < 40, 'copying no one, Copycat’s head is all the flag’s red', `its head ${bows.alone.join(', ')}`);
     const ringWant = [32, 55, 130, 205]; // (orange, yellow, green, blue: the arcs at 0°, 60°, 120° and 180°)
     check(bows.ring.every((h, i) => dh(h, ringWant[i]) < 25), 'Star goes off in a ring of its rainbow, not its stand-in gold',
       `the ring’s hues at 0°, 60°, 120°, 180°: ${bows.ring.join(', ')} (want about ${ringWant.join(', ')})`);

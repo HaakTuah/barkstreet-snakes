@@ -204,6 +204,13 @@ function drawBody(s, a, now, dead) {
     ctx.stroke();
   }
   if (s.personaKey === 'copycat') { // dashed rings: a copy of someone
+    if (copying(s)) { // (and copying, its head's thin rim of its own red: see fillsOf)
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(pts[0], pts[1], rad[0] - 0.75, 0, TAU);
+      ctx.stroke();
+    }
     ctx.strokeStyle = 'rgba(255,255,255,0.75)';
     ctx.lineWidth = 1.5;
     ctx.setLineDash(DASH);
