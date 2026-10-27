@@ -375,8 +375,8 @@ function onTick(events) {
       else spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 170, 520, 2.4, '#d6b480', '#3b2412');
     } else if (e.type === 'heal') { // one closing over: sawdust and moss fill it, and it fades into the bark (see drawHeals)
       const key = e.y * GRID + e.x;
-      heals.push({ x: e.x, y: e.y, at: now, v: BURROW_LOOKS[key % 4], cs: crackSprites.get(key) || null });
-      crackSprites.delete(key); burrowSeen.delete(key); // (a burrow opening there again cracks and pops anew)
+      heals.push({ x: e.x, y: e.y, at: now, v: BURROW_LOOKS[key % 4], cs: crackSprites.get(key) || null, grown: shutSeen.get(key) || 0 });
+      crackSprites.delete(key); burrowSeen.delete(key); shutSeen.delete(key); // (a burrow opening there again cracks and pops anew)
       if (!reduced) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 80, 420, 1.8, '#e6cc96', '#3a5520');
     } else if (e.type === 'gust' && e.x >= 0) { // an apple knocked loose: it drops in
       born.set(e.y * GRID + e.x, { kind: 'food', at: now, i: 0, next: 0, gen: bornGen, v: '', fell: true });
@@ -760,7 +760,7 @@ function setGame(g) {
   bornTick = -1;
   fresh = true;
   bugs.length = bugPops.length = scurries.length = dives.length = heals.length = 0;
-  bugFor.clear();
+  bugFor.clear(); shutSeen.clear();
   knockFor = -1; tickNow = 0;
   fallenFlags.length = 0;
   fallen.length = 0;

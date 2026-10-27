@@ -40,7 +40,7 @@
  * @typedef {[until: number, expires: number, from: number, gold: Flag]} UnderRow
  * @typedef {[x: number, y: number, at: number, target: number[], strikeAt: number, last: number[], struckAt: number, restUntil: number,
  *   pecks: number, landings: [from: number, to: number][] | 0]} WoodpeckerRow
- * @typedef {[x: number, y: number, at: number, used: number, dug: Flag]} BurrowRow
+ * @typedef {[x: number, y: number, at: number, used: number, dug: Flag, shutFrom: number, shutAt: number]} BurrowRow
  * @typedef {[cell: number, from: number, until: number, how: 0 | 1 | 2, group: number]} FireRow  how: 1 struck by lightning, 2 an ember
  *
  * An event (see encodeEvent()): snake is a snake's id; kind KINDS's index (a string for spawn).
@@ -57,6 +57,7 @@
  *   | ['dive', x: number, y: number, dug: Flag]
  *   | ['knock', kind: number, x: number, y: number, tx: number | null, ty: number | null, gold: Flag, color: string | 0]
  *   | ['burrow', x: number, y: number, dug: Flag]
+ *   | ['shut', x: number, y: number, at: number]
  *   | ['heal', x: number, y: number]
  *   | ['spawn', kind: string, x: number, y: number, gold: Flag]
  *   | ['weather', kind: number]
@@ -83,7 +84,7 @@
  * @typedef {{ t: 'away' | 'back' }} AwayMsg  the page went out of sight, and came back
  */
 window.SnakeOnline = (() => {
-  const VERSION = 10; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over
+  const VERSION = 11; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to)
   const POWERS = ['leap', 'flash', 'unleap'];
   const MAX_PEOPLE = 4;
   // Seat colors for people: the host is green; friends get colors no rival wears.
@@ -159,9 +160,10 @@ window.SnakeOnline = (() => {
       // in its mark would land (a list that can grow as food comes into the mark; sent whole every tick, so
       // protocol 10 carries it unchanged).
       w: game.woodpecker ? [game.woodpecker.x, game.woodpecker.y, game.woodpecker.at, game.woodpecker.target, game.woodpecker.strikeAt, game.woodpecker.last, game.woodpecker.struckAt, game.woodpecker.restUntil, game.woodpecker.pecks || 0, game.woodpecker.landings || 0] : 0,
-      // Burrows (where, the tick it opened, the time a beetle last used it, a dig left it), fire (cell,
+      // Burrows (where, the tick it opened, the time a beetle last used it, a dig left it, and once it grows
+      // shut, the times it started and will close over, else -1), fire (cell,
       // burning from, until, struck by lightning, which fire), the weather.
-      bu: game.burrows.map(b => [b.x, b.y, b.at, b.used ?? -1, b.dug ? 1 : 0]),
+      bu: game.burrows.map(b => [b.x, b.y, b.at, b.used ?? -1, b.dug ? 1 : 0, b.shutFrom ?? -1, b.shutAt ?? -1]),
       fi: [...game.fires].map(([k, f]) => [k, f.from, f.until, f.strike ? 1 : f.ember ? 2 : 0, f.group]),
       sky: [WEATHER.indexOf(game.weather.kind), game.weather.since, game.weather.until],
       e: /** @type {EventRow[]} */ (game.events.map(encodeEvent).filter(Boolean)),
@@ -245,8 +247,10 @@ window.SnakeOnline = (() => {
       case 'dig': return ['dig', e.x, e.y, e.until];
       case 'dive': return ['dive', e.x, e.y, e.dug ? 1 : 0];
       case 'knock': return ['knock', KINDS.indexOf(e.kind), e.x, e.y, e.tx ?? null, e.ty ?? null, e.gold ? 1 : 0, e.color || 0];
-      // A burrow cracking open (dug: a dig left it), and one closing over (sawdust and moss fill it).
+      // A burrow cracking open (dug: a dig left it), one starting to grow shut (closing over at game time `at`),
+      // and one closing over (sawdust and moss fill it).
       case 'burrow': return ['burrow', e.x, e.y, e.dug ? 1 : 0];
+      case 'shut': return ['shut', e.x, e.y, e.at];
       case 'heal': return ['heal', e.x, e.y];
       case 'spawn': return ['spawn', e.kind, e.x ?? -1, e.y ?? -1, e.gold ? 1 : 0];
       case 'weather': return ['weather', WEATHER.indexOf(e.kind)];
@@ -345,7 +349,7 @@ window.SnakeOnline = (() => {
     const landings = Array.isArray(w?.[9]) ? w[9].filter(p => Array.isArray(p) && p.length === 2 && square(p[0]) && (p[1] === -1 || square(p[1]))) : []; // ([from, to]; to -1: the bird eats it)
     game.woodpecker = msg.w ? { x: w[0], y: w[1], at: w[2], target: cellsOf(w[3]), strikeAt: w[4], last: cellsOf(w[5]), struckAt: w[6], restUntil: w[7], ...(Number(w[8]) > 0 ? { pecks: Number(w[8]) } : {}), ...(landings.length ? { landings } : {}) } : null;
     game.burrows = (Array.isArray(msg.bu) ? msg.bu : []).filter(b => Array.isArray(b) && b.length >= 3 && b.every(num) && cell(b[0]) && cell(b[1]) && Number.isInteger(b[2])) // (on the board, opened on a tick)
-      .map(([x, y, at, used, dug]) => ({ x, y, at, ...(used >= 0 ? { used } : {}), ...(dug ? { dug: 1 } : {}) })); // (the renderer draws a dug one freshly bored)
+      .map(([x, y, at, used, dug, shutFrom, shutAt]) => ({ x, y, at, ...(used >= 0 ? { used } : {}), ...(dug ? { dug: 1 } : {}), ...(shutAt > 0 && shutFrom >= 0 && shutFrom < shutAt ? { shutFrom, shutAt } : {}) })); // (the renderer draws a dug one freshly bored, and one growing shut closing)
     game.unders = (Array.isArray(msg.un) ? msg.un : []).filter(u => Array.isArray(u) && u.every(num) && Number.isInteger(u[2]) && u[2] >= 0 && u[2] < window.TUNING.GRID * window.TUNING.GRID)
       .map(([until, expires, from, gold]) => ({ until, expires, from, gold: !!gold }));
     game.fires = new Map((Array.isArray(msg.fi) ? msg.fi : []).filter(f => Array.isArray(f) && f.every(num))
@@ -377,6 +381,7 @@ window.SnakeOnline = (() => {
           return KINDS[e[1]] && cell(e[2]) && cell(e[3]) && (eaten || (cell(e[4]) && cell(e[5]))) ? { type: 'knock', kind: KINDS[e[1]], x: e[2], y: e[3], tx: eaten ? null : e[4], ty: eaten ? null : e[5], ...(e[6] ? { gold: 1 } : {}), ...(typeof e[7] === 'string' ? { color: e[7] } : {}) } : null;
         }
         case 'burrow': return cell(e[1]) && cell(e[2]) ? { type: 'burrow', x: e[1], y: e[2], ...(e[3] ? { dug: 1 } : {}) } : null;
+        case 'shut': return cell(e[1]) && cell(e[2]) && num(e[3]) ? { type: 'shut', x: e[1], y: e[2], at: e[3] } : null;
         case 'heal': return cell(e[1]) && cell(e[2]) ? { type: 'heal', x: e[1], y: e[2] } : null;
         case 'spawn': return { type: 'spawn', kind: e[1], x: e[2], y: e[3], gold: !!e[4] };
         case 'weather': return { type: 'weather', kind: WEATHER[e[1]] || 'clear' };
