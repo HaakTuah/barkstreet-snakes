@@ -346,40 +346,34 @@ function drawFlash(now) {
   ctx.globalAlpha = 1;
 }
 const RAINBOW = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#3b82f6', '#6366f1', '#a855f7'];
-// A rainbow after the rain: one great arch right across the log, rising out
-// of the golden apple (its foot fading into it) and over, its top on the
-// board where there's room, its other foot beyond the far edge. Always
-// upright, red outermost. From an apple in the log's upper half there's no
-// room for an arch on its own height (it was a stub off the top edge, and
-// then hung upside down), so there it's part of a greater circle centred
-// below the log, its top on the board half way from the apple to the far
-// edge (or nearer the apple, where that would take it off the top): it
-// rises out of the apple, over, and down off the far side. It draws itself
-// out from the apple, glows a moment, and fades. Both its ends fade, so it
-// never ends in a flat cut (its far foot can be on the board, and its tip is
-// as it grows).
+// A rainbow after the rain: an arch rising out of the golden apple (its
+// foot fading into it), over, and down toward the far side (the side of the
+// board farther from the apple), from anywhere on the log. Always upright,
+// red outermost. Its top is half way from the apple to the far edge, and it
+// comes back down to the apple's height at that edge and on off the board.
+// Each is the same round arch, its centre below the top by twice the arch's
+// half-width, so from an apple by the middle it rises about four cells: a
+// centre far below the log made one over a short stretch rise only a cell.
+// Where its top would be nearer the top edge than 0.06 of the board (or half
+// the apple's height, for one higher still), it's flatter, its centre lower,
+// so its top is just that. It draws itself out from the apple, glows a
+// moment, and fades. Both its ends fade, so it never ends in a flat cut.
 function drawRainbow(now) {
   if (!rainbow) return;
   const age = now - rainbow.at, life = 9000;
   if (age > life) { rainbow = null; return; }
   const fade = Math.min(1, age / 600, (life - age) / 1600), grow = reduced ? 1 : Math.min(1, age / 1400), c = CELL;
   const x = rainbow.x * c + c / 2, y = rainbow.y * c + c / 2, fromLeft = rainbow.x < GRID / 2, side = fromLeft ? 1 : -1;
-  let full;
-  if (y >= SIZE / 2) { // round on the apple's height, over the top: half a circle
-    bow.R = Math.min(SIZE * 0.95, Math.max(SIZE * 0.45, y - SIZE * 0.1));
-    bow.cx = x + side * bow.R; bow.cy = y; bow.a0 = fromLeft ? Math.PI : 0;
-    full = Math.PI;
-  } else { // round a centre below the log, its top half way from the apple to the far edge, but no nearer the top edge than 0.06 of the board (or half the apple's height, for one higher still), on round till it's well off the far side
-    bow.cy = SIZE * 1.15;
-    const h = bow.cy - y, m = Math.min(SIZE * 0.06, y / 2), far = fromLeft ? SIZE - x : x;
-    const dx = Math.min(far / 2, Math.sqrt((bow.cy - m) ** 2 - h * h)), a = Math.atan2(-h, -dx); // (the apple's angle, on the left)
-    bow.R = Math.hypot(dx, h);
-    bow.cx = x + side * dx; bow.a0 = fromLeft ? a : -Math.PI - a;
-    full = Math.asin((SIZE - bow.cy) / bow.R) - a;
-  }
+  const dx = (fromLeft ? SIZE - x : x) / 2, room = y - Math.min(SIZE * 0.06, y / 2); // (its half-width; how far its top may rise above the apple)
+  let h = dx / 2; // (the centre's depth below the apple)
+  if (Math.hypot(dx, h) - h > room) h = (dx * dx - room * room) / (2 * room);
+  bow.R = Math.hypot(dx, h); bow.cx = x + side * dx; bow.cy = y + h;
+  const a = Math.atan2(-h, -dx), ends = 0.32 * Math.min(1, SIZE * 0.45 / bow.R); // (the apple's angle, on the left; how long its ends fade over)
+  bow.a0 = fromLeft ? a : -Math.PI - a;
+  const full = -2 * a - Math.PI + ends; // (round to the apple's height at the far edge, and on, fading off the board)
   bow.dir = side; bow.fade = fade;
   // From the apple's foot round over the top, as far as it has grown.
-  const span = full * grow, end = Math.min(span / 2, 0.32 * Math.min(1, SIZE * 0.45 / bow.R)); // (its ends fade over about the same length on either circle)
+  const span = full * grow, end = Math.min(span / 2, ends); // (its ends fade over about the same length on any circle)
   ctx.save();
   ctx.beginPath(); ctx.rect(0, 0, SIZE, SIZE); ctx.clip();
   ctx.lineCap = 'butt';

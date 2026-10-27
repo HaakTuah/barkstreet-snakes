@@ -36,10 +36,11 @@
 //   comes out past its chin; Copycat copying it holds up a stick-on one.
 // - Scorch marks are soot, not holes: a burned cell is no more than a little
 //   darker, and not darkest in its middle.
-// - A rainbow is upright wherever its golden apple is in the log's upper
-//   half (left, middle or right, high or low): it rises out of the apple to
-//   its top on the board, between the apple and the far side, and comes
-//   down toward the far side, red outermost.
+// - A rainbow is upright wherever its golden apple is on the log (left,
+//   middle or right, in either half, high or low): it rises out of the
+//   apple to its top on the board, between the apple and the far side, and
+//   comes down toward the far side, red outermost; from an apple by the
+//   middle it rises clearly.
 // - Jumps you can see: at the top the neck arches up behind the head and
 //   the shadow, left on the ground, falls across the body hopped; after, the
 //   body still arches over what it crossed (both, for a golden jump over
@@ -704,9 +705,10 @@ const STAGE = `(() => {
     check(soot.every(s => s.cell >= 0.78), 'a burned cell is no more than a little darker', soot.map(s => s.cell).join(', '));
     check(soot.every(s => s.mid >= 0.8 * s.cell), 'and not darkest in its middle (no dark disc)', soot.map(s => `${s.mid}/${s.cell}`).join(', '));
 
-    // A rainbow, upright from any apple in the upper half (the arch hung
-    // upside down there once, and then showed only its rising side from an
-    // apple near the middle). Each apple's rainbow grown and glowing, and the
+    // A rainbow, upright from any apple, high or low (the arch hung upside
+    // down in the upper half once, then showed only its rising side from an
+    // apple near the middle, and rose only about a cell from one by the
+    // middle). Each apple's rainbow grown and glowing, and the
     // same frame drawn again without it: in each column of cells from the
     // apple to the far edge, the highest pixel it changed (its glow's outer
     // edge) traces the arch. That's highest on the board (not cut off by the
@@ -717,7 +719,7 @@ const STAGE = `(() => {
       SnakeDebug.pinQuality(0);
       const out = [], c = document.getElementById('game'), k = c.width / (TUNING.GRID * ${CELL}), W = c.width;
       show(stage(['gobbler', 'ghost', 'mason'])); // (one board for them all)
-      for (const [ax, ay] of [[1, 6], [6, 6], [11, 6], [12, 6], [17, 6], [22, 6], [6, 3], [17, 3], [1, 3], [22, 3], [3, 10], [20, 10]]) {
+      for (const [ax, ay] of [[1, 6], [6, 6], [11, 6], [12, 6], [17, 6], [22, 6], [6, 3], [17, 3], [1, 3], [22, 3], [3, 10], [20, 10], [1, 14], [11, 14], [12, 18], [6, 20], [17, 20], [3, 19], [11, 22], [22, 22]]) {
         drawN(5);
         R.onTick([{ type: 'rainbow', x: ax, y: ay }]); drawN(80); // (grown, and not fading yet)
         const on = c.getContext('2d').getImageData(0, 0, W, c.height).data;
@@ -745,6 +747,8 @@ const STAGE = `(() => {
     })()`);
     const bowSays = r => `apple ${r.ax},${r.ay}: top ${r.top} cells down at column ${r.apex}; from the apple, ${r.tops.join(' ')}`;
     for (const r of bows2) check(r.onBoard && r.between && r.rises && r.falls && r.redOut, `a rainbow from an apple at ${r.ax},${r.ay} rises from it to its top on the board and down toward the far side, upright, red outermost`, bowSays(r) + (r.redOut ? '' : '; not red outermost'));
+    const mids = bows2.filter(r => r.ax === 11 || r.ax === 12), rise = r => +(r.ay + 0.5 - r.top).toFixed(2); // (to its glow's top, about 1.3 cells over its red band: 2.25 when its centre was 1.15 boards down)
+    check(mids.every(r => rise(r) > 4.5), 'from an apple by the middle, high or low, a rainbow rises clearly before it comes down', mids.map(r => `${r.ax},${r.ay}: ${rise(r)} cells`).join(', '));
 
     // Jumps you can see (round six A: a jump was mostly the head swelling).
     // Your snake jumps Gobbler's body, lying one thick across its way, and
