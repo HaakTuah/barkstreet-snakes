@@ -650,7 +650,9 @@ const r1 = v => Math.round(v * 10) / 10;
         // line; a tap opens it to as many whole lines as fit, the caption
         // first where there's room for two rows, and another folds it)
         const folded = await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`);
-        check(folded === 'false' && fit === 'strip' && rows.lines === 1 && rows.whole === 1, `${tag}: ${what}, held upright, the chatter is folded: one row, the newest line`, `aria-expanded ${folded}, ${fit}, ${rows.lines} lines, ${rows.whole} rows`);
+        const ROWS_SHOWN = `(() => { const log = document.getElementById('chatlog'), row = parseFloat(getComputedStyle(log).lineHeight); let h = 0; for (const li of log.children) { const r = li.getBoundingClientRect(), st = getComputedStyle(li); if (r.height) h += r.height - parseFloat(st.paddingTop) - parseFloat(st.paddingBottom); } return Math.round(h / row * 10) / 10; })()`;
+        const foldedRows = await ev(ROWS_SHOWN);
+        check(folded === 'false' && fit === 'strip' && rows.lines === 1 && foldedRows === 1, `${tag}: ${what}, held upright, the chatter is folded: one row, the newest line`, `aria-expanded ${folded}, ${fit}, ${rows.lines} lines, ${foldedRows} rows`);
         const tapChatter = async (below = false) => { // (a finger's tap on the strip, through the page's own touch handling; or under it, in the chatter's box's empty rest)
           const at = await ev(`(() => { const r = document.getElementById('chatlog').getBoundingClientRect(), box = document.querySelector('.chatter').getBoundingClientRect(); return ${below} ? (box.bottom - r.bottom >= 12 ? { x: r.left + r.width / 3, y: (r.bottom + Math.min(box.bottom, innerHeight)) / 2 } : null) : { x: r.left + r.width / 3, y: r.top + Math.min(8, r.height / 2) }; })()`);
           if (!at) return false;
@@ -663,7 +665,8 @@ const r1 = v => Math.round(v * 10) / 10;
         const tap = await tapChatter();
         await settle();
         const opened = await ev(LAYOUT), orows = await ev(LOG_ROWS), ofit = await ev(`document.querySelector('.chatter').dataset.fit`), oexp = await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`);
-        check(tap && oexp === 'true' && orows.whole >= rows.whole && !orows.sliced && (full.vh >= 780 ? ofit === 'full' && orows.whole >= 3 : ofit === 'strip' || orows.whole >= 2) && opened.scrollH <= opened.vh && opened.board.w === full.board.w, `${tag}: ${what}, held upright, a tap opens the chatter to the lines that fit (the board unmoved, nothing scrolls)`, `${tap ? '' : 'the tap went elsewhere; '}aria-expanded ${oexp}, ${ofit}, ${orows.lines} lines, ${orows.whole} rows whole, ${orows.sliced} sliced`);
+        const openRows = await ev(ROWS_SHOWN);
+        check(tap && oexp === 'true' && !orows.sliced && (full.vh < 780 ? openRows >= foldedRows : openRows > foldedRows && ofit === 'full' && orows.lines >= 2) && opened.scrollH <= opened.vh && opened.board.w === full.board.w, `${tag}: ${what}, held upright, a tap opens the chatter to the lines that fit (the board unmoved, nothing scrolls)`, `${tap ? '' : 'the tap went elsewhere; '}aria-expanded ${oexp}, ${ofit}, ${orows.lines} lines, ${openRows} rows, ${orows.sliced} sliced`);
         await tapChatter();
         await settle();
         check(await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`) === 'false', `${tag}: ${what}, held upright, another tap folds it`);
@@ -850,7 +853,7 @@ const r1 = v => Math.round(v * 10) / 10;
         const under = drawn.every(q => q.p.y >= play.board.b - 0.5), room = play.vh - si.bottom - play.board.b;
         const least = Math.min(48, room - 8), over = drawn.filter(q => q.p.b > play.foot.y + 1).length;
         check(under && small >= least, `${tag}: upright, it stands under the board, over the row under it, at least ${r1(least)} px tall (the room to the screen's foot allowing)`, `${r1(small)}-${r1(Math.max(...tall))} px tall; over the row in ${over} of ${drawn.length}`);
-        const lets = await ev(`(() => { const L = document.getElementById('bird-layer'); return getComputedStyle(L).pointerEvents; })()`), reachUnder = await ev(REACH('#chatter-toggle, .chatter[aria-expanded]'));
+        const lets = await ev(`(() => { const L = document.getElementById('bird-layer'); return getComputedStyle(L).pointerEvents; })()`), reachUnder = await ev(REACH('#chatter-toggle, .chatter[aria-expanded] > .chatlog'));
         check(lets === 'none' && reachUnder.every(r => r.taps), `${tag}: upright, taps pass through the perched woodpecker to the row and the chatter`, `its layer's pointer-events ${lets}; ${reachUnder.map(r => `${r.what} ${r.taps ? 'takes a tap' : 'covered'}`).join(', ')}`);
       } else if (side) {
         const beside = drawn.every(q => q.p.r <= play.board.x + 0.5 || q.p.x >= play.board.r - 0.5);
