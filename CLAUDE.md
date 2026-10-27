@@ -181,3 +181,14 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   Haakon) or the rivals play it badly, which is fixed before it merges. The PR shows the table, with how often each rival
   used the move and how often it worked. Today's rules still stand: "No ability only people use", "No refuges" and every
   trademark kept.
+- **27 October 2026: questions come back to Haakon directly.** "And we need that all these questions get directly back
+  to me from both projects. Having to hunt them down like this isn't good." (the words are in
+  `docs/archive/instructions.md`). Every question, choice or "left unsolved" point Haakon should answer reaches him three
+  ways:
+  1. **The session's last message,** which the session that started it reads and relays, opens with "Questions for
+     Haakon". It lists each one, numbered, as a question he can answer from his phone, with the reading taken or
+     suggested. If there are none, it says "Questions for Haakon: none".
+  2. **The milestone PR's description** opens with the same list.
+  3. **The "For Haakon" table** in `docs/PROGRESS.md` keeps it until he answers.
+
+  A session that starts builder sessions passes each list on to Haakon word for word in its next update.
