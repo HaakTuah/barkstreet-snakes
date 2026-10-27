@@ -137,9 +137,10 @@ chatterEl.addEventListener('keydown', e => { if (e.target === chatterEl && (e.ke
 // bottom), and its older lines fade at its top: a line's opacity runs from
 // nothing at the log's top edge to whole a fade's height under it (two
 // rows, a third of the log at most), so a line cut by the edge never shows
-// sliced, only the whole ones under it. Scrolled back to the oldest, with
+// sliced, only the whole ones under it; the newest never fades. Scrolled back to the oldest, with
 // nothing above, nothing fades. Set as lines come, the box changes and
 // the log scrolls; elsewhere every line is whole.
+const CHAT_SHOWN = 5;
 const chatScrolls = () => !chatlogEl.hidden && getComputedStyle(chatlogEl).overflowY === 'auto';
 const fadeChatter = () => {
   const lines = chatlogEl.children;
@@ -147,10 +148,8 @@ const fadeChatter = () => {
   const edge = chatlogEl.getBoundingClientRect().top + chatlogEl.clientTop, oldest = lines[lines.length - 1];
   const above = oldest ? edge - oldest.getBoundingClientRect().top + parseFloat(getComputedStyle(chatlogEl).paddingTop) : 0; // (how far the log's content runs above its edge)
   const fade = Math.min(2 * (parseFloat(getComputedStyle(chatlogEl).lineHeight) || 17), chatlogEl.clientHeight / 3, Math.max(0, above));
-  for (const li of lines) {
-    const d = li.getBoundingClientRect().top - edge;
-    li.style.opacity = fade < 1 || d >= fade ? '' : String(Math.max(0, Math.round(d / fade * 100) / 100));
-  }
+  const tops = [...lines].map(li => li.getBoundingClientRect().top - edge); // (all read, then all set: one layout)
+  tops.forEach((d, i) => { lines[i].style.opacity = !i || fade < 1 || d >= fade ? '' : String(Math.max(0, Math.round(d / fade * 100) / 100)); }); // (the newest never fades)
 };
 chatlogEl.addEventListener('scroll', fadeChatter, { passive: true });
 const fitChatter = () => {
@@ -175,8 +174,7 @@ const fitChatter = () => {
     if (chatScrolls()) { // (beside the board on a desktop: every line, the log scrolling, or none where not a row of it shows)
       if (chatlogEl.clientHeight + 0.5 < Math.min(chatlogEl.scrollHeight, parseFloat(ls.paddingTop) + parseFloat(ls.paddingBottom) + row)) fit = 'none';
       n = 0;
-    }
-    while (n > 1 && lines[n - 1].getBoundingClientRect().top >= end) lines[--n].classList.add('gone'); // (those wholly past the end, at once: hiding them moves none before them)
+    } else for (; n > CHAT_SHOWN; ) lines[--n].classList.add('gone'); // (elsewhere the newest 5 at most, as ever: the log keeps more for the scroll)
     while (n > 1 && !fits()) lines[--n].classList.add('gone');
     if (n && !fits()) { // (the newest, as many of its rows as fit: from its words' top, less its own padding under them and the log's)
       const ns = getComputedStyle(lines[0]), top = lines[0].getBoundingClientRect().top + parseFloat(ns.paddingTop);

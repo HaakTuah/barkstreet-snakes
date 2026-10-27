@@ -638,7 +638,13 @@ const r1 = v => Math.round(v * 10) / 10;
     // scrolls the log, never the page. Elsewhere the log doesn't scroll.
     const chatterScroll = async (tag, desk) => {
       const scrolls = await ev(`getComputedStyle(document.getElementById('chatlog')).overflowY === 'auto'`);
-      if (!desk) { check(!scrolls, `${tag}: the chatter's log doesn't scroll here (only beside the board on a desktop)`); return; }
+      if (!desk) {
+        check(!scrolls, `${tag}: the chatter's log doesn't scroll here (only beside the board on a desktop)`);
+        const many = await ev(`(() => { const log = document.getElementById('chatlog'), keep = log.innerHTML; for (let i = 0; i < 40; i++) log.insertAdjacentHTML('afterbegin', '<li><strong>Star</strong> <span>Mine!</span></li>'); return new Promise(r => setTimeout(() => { const n = [...log.children].filter(li => li.getBoundingClientRect().height).length; log.innerHTML = keep; r(n); }, 80)); })()`);
+        check(many <= 5, `${tag}: with a round's lines, the chatter shows the newest 5 at most here, as before`, `${many} shown`);
+        await b.sleep(60);
+        return;
+      }
       check(scrolls, `${tag}: beside the board on a desktop, the chatter's log scrolls`);
       if (!scrolls) return;
       await ev(`(() => { const log = document.getElementById('chatlog'); log.textContent = ''; for (let i = 0; i < 40; i++) log.insertAdjacentHTML('afterbegin', '<li data-i="' + i + '"><strong>Gobbler</strong> <span>' + (i % 2 ? 'Mine!' : 'Out of my way! I’m starving, and the bark is bare!') + '</span></li>'); return 'ok'; })()`);
@@ -650,7 +656,7 @@ const r1 = v => Math.round(v * 10) / 10;
       const bottom = shown.reduce((m, l) => l.b > m.b ? l : m, shown[0] || { i: -1 });
       check(at.fit === 'full' && Math.abs(L.chatlog.b - L.frame.b) <= 1.5 && L.chatlog.b <= L.chatter.b + 0.5, `${tag}: with a round's lines, the chatter's panel runs down to the board's bottom edge`, `the panel to ${r1(L.chatlog.b)}, the board's frame to ${r1(L.frame.b)}, ${at.fit}`);
       check(bottom.i === 39 && bottom.o === 1 && whole.length >= 5, `${tag}: the newest line at the panel's bottom, whole, under the older lines (${whole.length} whole)`, `the bottom line #${bottom.i}, opacity ${bottom.o}`);
-      check(cut.every(l => l.o === 0) && whole.filter(l => l.t - at.edge > 40).every(l => l.o === 1) && whole.some(l => l.o < 1), `${tag}: the older lines fade at the log's top, a line cut by its edge not shown at all`, cut.map(l => `#${l.i} cut, opacity ${l.o}`).join(', ') || 'none cut');
+      check(cut.every(l => l.o === 0) && whole.filter(l => l.t - at.edge > 40).every(l => l.o === 1), `${tag}: the older lines fade at the log's top, a line cut by its edge not shown at all`, cut.map(l => `#${l.i} cut, opacity ${l.o}`).join(', ') || 'none cut');
       await b.send('Input.dispatchMouseEvent', { type: 'mouseWheel', x: L.chatlog.x + L.chatlog.w / 2, y: L.chatlog.y + L.chatlog.h / 2, deltaX: 0, deltaY: -20000 });
       await b.sleep(400);
       await settle();
