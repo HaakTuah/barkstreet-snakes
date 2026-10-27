@@ -98,3 +98,44 @@ The owner played the live game (6d478ed) on a desktop and sent three findings, f
 
 **Tests:** `tools/ui-test.js` (new) checks the note's ways in and out and every door to the guide, with a mouse, keys and touch, on a desktop and on phones at 390 and 320 px, and the phones' header. Since the fixes it also burns you up (Fire's row, far down the guide, lit and in view, on a desktop and both phones), checks the header over the board at 1920×945, 1920×913, 1920×1080, a 1000×860 window, an iPad mini and an iPad upright (one row, the guide named where designed; since "One screen" the three 1920s have the column beside the board and the doors' own row, and the 1000×860 window two rows) and in windows 460 px wide and 500 with touch (two rows, both named), and as Score and Best grow to 1000; the phones' header at 390 and 320 px; the column at 1366×657 and 1280×800 watching with the chatter full (no scroll); and a real first good round's death card, with the longest reason, on phones from 320×460 to 428×926, with a note and without, and at 320×460 carving your name and the next good round. Since the last check: the book's × on the screen when a death's link opens it far down, and a real click or tap on it closing the book; the round's card naming what got you when your death ends it, and opening the guide there; the header at every step over the board (above); 920×690's and 800×600's column, its six icons in a row and no taller than the phones work's, and 1366×657 without full screen, the guide named; the start card and the fullest death card, with the longest reason and quip, a note or not, on phones on their sides (844×391, 896×414, 929×430, 972×450) and on a Galaxy Fold's cover screen (344×882), and the round's card when your death ends it at 390×844, 844×391 and 896×414; and the start card's two links on one row at 568×320: 233 checks. A rival's banner is timed again when round news takes its place, as it may.
 
+
+### Burrows grow shut
+
+**The finding** (the playtest of 20 October, queue item 3): past three burrows the stalest one closed over at once, in about a second, which looked abrupt.
+
+**The call** (27 October 2026):
+- **The rule.** A new burrow that opens while three are open (`BURROW_MAX`) starts the stalest growing shut. It takes a random time between `BURROW_SHUT_MIN_MS` and `BURROW_SHUT_MAX_MS` (6 and 14 s of game time; the engine's seeded randomness) and then closes over. The cap counts only open burrows, so there are three most of the time and briefly four. A dig nearer than `BURROW_SPACING` to a burrow also starts that one growing shut, instead of closing it at once. While it grows shut, a scared beetle can still run for it and dive in, but none comes out of it: `freeBurrow` skips it, so a beetle below comes up out of an open one, or waits.
+- **The rivals** read it by the same rule, from `view.burrows` (each one carries `shutFrom` and `shutAt`): a burrow growing shut is a home a scared beetle runs to and dives into until it closes, as in the engine. A beetle doesn't come up out of it, and the AI never predicts where one comes up anyway. (A first build dropped a burrow from the AI's homes in its last second. The review caught that the engine has no such rule, so it was removed.)
+- **The cue** (`drawShutting` in `render/food.js`), eased out so it shows from the start:
+  - the opening shrinks to 40% as sawdust comes in from the rim;
+  - the bark's grain grows across it, along the log;
+  - tufts of the log's moss creep in over the rim;
+  - its cracks fade to half.
+  At the end comes today's closing over (`drawHeals`): it starts from the shrunken opening with the plug already packed, then the moss and the fade. Then a faint scar (a greyed oval of sawdust with the grain across it) stays where it was, fading over `SCAR_MS` (20 s).
+- **The sound:** silent while it grows shut, then today's crumble (`heal`) as it closes over.
+- **The lesson** (once a round, once the burrow's lesson is told, the first time the banner is free for one starting to grow shut): "Old burrows grow shut: beetles go in, none come out." It replaces "Past three burrows, the stalest one closes over.", and the wording with "Past three" didn't fit on one line on a 320 px phone.
+- **The Field guide** (Beetles): "A burrow left unused grows shut (past three, the one unused longest): beetles still go in, but none come out."
+- **Online** (protocol 11): each burrow row carries `shutFrom` and `shutAt` (−1 while it's open), checked before it's drawn (a row that shuts before it started counts as open). There is a new event, `['shut', x, y, at]`, for one starting to grow shut.
+
+**Tested:**
+- `tools/rules-test.js`:
+  - the stalest starts growing shut within 6 to 14 s, and stays meanwhile;
+  - none comes out of it;
+  - a scared beetle still dives in;
+  - it closes over on time;
+  - a rival reads a beetle bound for one as going in;
+  - the cap's tests, now with growing shut.
+- `tools/online-test.js` crosses the rows and the event, and feeds the guest malformed ones.
+- `tools/render-test.js` checks the opening shrinking with sawdust and moss coming in, the closing over from there, and the scar gone after 22 s.
+- `tools/input-test.js` checks the lesson and the sound.
+
+**Measured** (600 rounds each, seeds 3 and 11, against e55855a):
+
+| | Before (seed 3 / 11) | After (seed 3 / 11) |
+| --- | --- | --- |
+| Chased beetles escaping | 25.4 / 25.5% | 24.8 / 25.9% |
+| Burrows open, on average | 2.02 / 1.98 | 2.07 / 2.04 |
+| Round, median | 166 / 166 s | 165 / 166 s |
+| Deaths by cause | as they were, within a point or three | |
+
+Escapes stay inside the 20–35%. The simulation's check passed on both seeds.
