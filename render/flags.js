@@ -504,16 +504,16 @@ function onShown(r, px, py) {
 // the land's colour round a rival costs 0.1 to 0.3 ms a frame less, most
 // of what its keyline costs: see tools/bench.js --land.)
 function bodyFillsOn(a, grow, r, soft) {
-  const p = a.pts, c = a.cor, rad = a.rad, n = a.n, pinch = soft ? 1 : PINCH;
+  const p = a.pts, c = a.cor, rad = a.rad, n = a.n;
   for (let i = n - 2; i >= 0; i--) {
     if (!onShown(r, p[2 * i], p[2 * i + 1]) && !onShown(r, p[2 * i + 2], p[2 * i + 3])) continue;
-    const h = rad[i + 1] * pinch + grow, x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+    const h = (soft ? rad[i + 1] : bandR(a, i)) + grow, x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
     if ((near(x1, qx) && near(qx, x2)) || (near(y1, qy) && near(qy, y2))) rectPiece(x1, y1, x2, y2, h);
     else { rectPiece(x1, y1, qx, qy, h); rectPiece(qx, qy, x2, y2, h); }
   }
   for (let i = n - 1; i >= 0; i--) {
     if (!onShown(r, p[2 * i], p[2 * i + 1])) continue;
-    if (i < n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * pinch + grow);
+    if (i < n - 1 && bends(a, i)) circle(c[2 * i], c[2 * i + 1], (soft ? rad[i + 1] : bandR(a, i)) + grow);
     if (i === 0 && a.star) { ctx.beginPath(); starPath(a, grow); ctx.fill(); }
     else if (!soft || !straightAt(a, i)) circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
   }

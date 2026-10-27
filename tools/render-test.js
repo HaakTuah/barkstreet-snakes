@@ -43,7 +43,8 @@
 //   marks the way; with reduced motion the lift and shadow, no dust or trail.
 // - Bridges you can see: a body over a pit is shaded underneath and sags,
 //   its shadow shows on the pit's floor (dark, in a floor lit round it),
-//   and a tail end over a hole droops, darker.
+//   and a tail end over a hole droops, darker; its outline stays as smooth
+//   as on the bark (no segment bulging above its line, the rim unbroken).
 // - Choking (staged from the engine's choke and nudge events): the cheeks
 //   puff with the bead in its mouth (none of it over the face), then it's
 //   spat aside out of its cheek, in an arc to where it went; coughing, the
@@ -764,13 +765,13 @@ const STAGE = `(() => {
     const bridge = await ev(`(() => {
       SnakeDebug.pinQuality(0);
       const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
-      const reddish = (r, g, b) => r > 120 && r > g + 50 && r > b + 40;
+      const reddish = (r, g, b) => r > 120 && r > g + 50 && r > b + 40, body = (r, g, b) => r > 60 && r > g + 30 && r > b + 20; // (its red, lit; or in shade too)
       const g = stage(['sniper', 'gobbler', 'mason']), [you, sn, gob, ma] = g.snakes;
       setBody(you, [[2, 22], [1, 22], [0, 22]], 'right'); you.stunUntil = 1e9;
       setBody(ma, [[2, 2], [1, 2], [0, 2]], 'right'); ma.stunUntil = 1e9;
       const HOLES = [11 * 24 + 10, 12 * 24 + 10, 13 * 24 + 10, 5 * 24 + 18];
-      const look = () => ({ width: count(10.4, 11.3, 0.2, 2.4, reddish), edge: lum(pixels(10.3, 12.7, 0.4, 0.14)), top: lum(pixels(10.3, 12.16, 0.4, 0.14)), shade: lum(pixels(10.3, 12.9, 0.4, 0.25)), lit: lum(pixels(10.3, 13.3, 0.4, 0.2)), tail: lum(pixels(18.3, 5.3, 0.4, 0.4)),
-        band: lum(pixels(9.95, 12.71, 0.15, 0.08)), bandTop: lum(pixels(9.95, 12.24, 0.15, 0.08)) }); // (shade: just below the span; lit: the floor a little further; band: the lower edge of the band into it, between the segments)
+      const look = () => ({ width: count(10.45, 11.3, 0.1, 2.4, body), edge: lum(pixels(10.3, 12.7, 0.4, 0.14)), top: lum(pixels(10.3, 12.16, 0.4, 0.14)), shade: lum(pixels(10.3, 12.9, 0.4, 0.25)), lit: lum(pixels(10.3, 13.3, 0.4, 0.2)), tail: lum(pixels(18.3, 5.3, 0.4, 0.4)),
+        band: lum(pixels(9.95, 12.75, 0.15, 0.06)), bandTop: lum(pixels(9.95, 12.24, 0.15, 0.08)) }); // (shade: just below the span; lit: the floor a little further; band: the lower edge of the band into it, between the segments)
       const place = () => { setBody(sn, Array.from({ length: 8 }, (_, i) => [13 - i, 12]), 'right'); sn.stunUntil = 1e9; setBody(gob, [[15, 5], [16, 5], [17, 5], [18, 5]], 'left'); gob.stunUntil = 1e9; };
       for (const k of HOLES) g.holes.add(k);
       place(); show(g); drawN(10, 1);
@@ -785,11 +786,48 @@ const STAGE = `(() => {
       return { over, empty, bark };
     })()`);
     const { over, empty, bark } = bridge, f2 = v => v.toFixed(2);
-    check(over.edge / over.top < 0.85 * bark.edge / bark.top && over.band / over.bandTop < 0.92 * bark.band / bark.bandTop && over.width < 0.8 * bark.width, 'a body over a pit is shaded underneath, the bands between its segments too, and sags between the rims',
+    check(over.edge / over.top < 0.85 * bark.edge / bark.top && over.band / over.bandTop < 0.92 * bark.band / bark.bandTop && over.width < 0.93 * bark.width, 'a body over a pit is shaded underneath, the bands between its segments too, and sags between the rims',
       `its lower edge at ${f2(over.edge / over.top)} of its upper half's brightness (${f2(bark.edge / bark.top)} on the bark), the band's ${f2(over.band / over.bandTop)} (${f2(bark.band / bark.bandTop)}); ${over.width} pixels across, ${bark.width} on the bark`);
     check(over.shade < 0.6 * over.lit && over.lit > 1.5 * empty.lit, 'its shadow shows on the pit’s floor: dark just below it, in a floor lit round it',
       `just below it ${f2(over.shade)}, the floor a little further ${f2(over.lit)} (${f2(empty.lit)} with nobody over the pit)`);
     check(over.tail < 0.75 * bark.tail, 'a tail end over a hole droops into it, darker', `at ${f2(over.tail / bark.tail)} of its brightness on the bark`);
+
+    // ...and its outline as smooth over the pit as on the bark (the owner,
+    // 20 October: "The part of you that is over the hole gets a really odd
+    // outline": slimmer there, its round segments bulged above its line, a
+    // bead on a rod, and its cream rim seemed to go). You across a hollow
+    // three cells wide: along the middle of it, the top of your body is
+    // level (no segment standing above the bands between), and your cream
+    // rim runs unbroken over it, as thick as on the bark.
+    const line = await ev(`(() => {
+      SnakeDebug.pinQuality(0);
+      const g = stage(['sniper', 'gobbler', 'mason']), [you, ...rest] = g.snakes;
+      rest.forEach((s, i) => { setBody(s, [[2, 2 + 3 * i], [1, 2 + 3 * i], [0, 2 + 3 * i]], 'right'); s.stunUntil = 1e9; });
+      const HOLES = []; for (let y = 16; y <= 18; y++) for (let x = 9; x <= 11; x++) HOLES.push(y * 24 + x);
+      const green = (d, i) => d[i + 1] > d[i] + 40 && d[i + 1] > d[i + 2] + 30, cream = (d, i) => d[i] > 235 && d[i + 1] > 230 && d[i + 2] > 215;
+      const look = () => { // (along x 9.6 to 11.4: the spread of the body's top edge, and the thinnest cream above it, in cells)
+        const p = pixels(9.6, 16.6, 1.8, 0.9), d = p.data, ppc = p.width / 1.8;
+        let lo = Infinity, hi = -Infinity, rim = Infinity;
+        for (let x = 0; x < p.width; x++) {
+          let top = -1, c = 0;
+          for (let y = 0; y < p.height; y++) { const i = 4 * (y * p.width + x); if (green(d, i)) { top = y; break; } if (cream(d, i)) c++; }
+          if (top < 0) return null;
+          lo = Math.min(lo, top); hi = Math.max(hi, top); rim = Math.min(rim, c);
+        }
+        return { spread: (hi - lo) / ppc, rim: rim / ppc };
+      };
+      const place = () => { setBody(you, Array.from({ length: 9 }, (_, i) => [14 - i, 17]), 'right'); you.stunUntil = 1e9; };
+      for (const k of HOLES) g.holes.add(k);
+      place(); show(g); drawN(10, 1);
+      const over = look();
+      for (const k of HOLES) g.holes.delete(k);
+      place(); g.tick++; drawN(4, 1);
+      const bark = look();
+      SnakeDebug.pinQuality(2);
+      return { over, bark };
+    })()`);
+    check(line.over && line.bark && line.over.spread <= 0.02 + 0.25 * line.bark.spread && line.over.rim >= 0.75 * line.bark.rim, 'over a pit your outline stays smooth: no segment bulging above the body’s line, the cream rim unbroken',
+      line.over && line.bark ? `its top edge varies ${f2(line.over.spread)} cells over the pit (${f2(line.bark.spread)} on the bark); its cream rim at least ${f2(line.over.rim)} cells (${f2(line.bark.rim)})` : `no body found ${JSON.stringify(line)}`);
 
     // Choking and the cough (round six A), staged as the engine reports them
     // (the choke and nudge events, s.coughUntil). Joker chokes on its own

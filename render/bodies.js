@@ -124,15 +124,14 @@ function drawBody(s, a, now, dead) {
   // Segments: narrower bands joining them, then a round one per cell.
   // (Bands as rectangles, fillRect's fast path; folding them into each
   // segment's circle as one shape measured slower.)
-  for (let i = n - 2; i >= 0; i--) { ctx.fillStyle = fills[i + 1]; band(a, i, rad[i + 1] * PINCH); }
-  if (a.bridging && !dead) shadeBands(a); // (over a pit: shaded underneath, along the bands too)
+  for (let i = n - 2; i >= 0; i--) { ctx.fillStyle = fills[i + 1]; band(a, i, bandR(a, i)); }
   for (let i = n - 1; i >= 0; i--) {
-    if (i < n - 1 && bends(a, i)) { ctx.fillStyle = fills[i + 1]; circle(a.cor[2 * i], a.cor[2 * i + 1], rad[i + 1] * PINCH); }
+    if (i < n - 1 && bends(a, i)) { ctx.fillStyle = fills[i + 1]; circle(a.cor[2 * i], a.cor[2 * i + 1], bandR(a, i)); }
     if (i === 0 && a.star) break; // (a star's head is drawn with its face)
     ctx.fillStyle = fills[i];
     circle(pts[2 * i], pts[2 * i + 1], rad[i]);
   }
-  if (a.bridging && !dead) shadeUnder(a); // (over a pit: shaded underneath, a hanging tail darker)
+  if (a.bridging && !dead) shadeUnder(a); // (over a pit: shaded underneath, along its bands and through its segments, a hanging tail darker)
 
   // A little roundness on every segment (light from the top left): separate
   // circles, which never touch (a tail that's just grown sits on the segment
@@ -305,26 +304,31 @@ const DASH = [3, 3], NO_DASH = [], MOOD_DASH = [5, 7];
 // below, its side away from the light (down and to the right) is in shade,
 // the more the further over the pit it is; and a tail end hanging into the
 // pit darkens the deeper it hangs. Drawn over its segments as they are,
-// before their sheen and markings: each one over the pit again in a darker
-// step of its own colour, then in its own colour a little up and to the
-// left and smaller, leaving a crescent of shade along its lower right; and
-// a strip of shade as wide along the bands between them (shadeBands), so
-// it runs on along its underside (crescents on the segments alone read as
-// darker beads on a phone). (Two circles a segment and a rectangle a
-// band, the GPU's quickest shapes, and no clip: a clip to a body's shape
-// costs it dearly. Each step of shade is a cached colour, four of them.)
+// before their sheen and markings. Over the pit its bands are as wide as
+// its segments (see bandR), so a straight run is shaded like one: a strip
+// of shade along its lower side (or its right one going down), each half
+// of a band's in a darker step of the colour of the segment it's nearer,
+// by how far over the pit that is, running on through the segments
+// (shadeBands). A segment at an end or a turn is round: it's drawn again
+// in its darker step, then in its own colour a little up and to the left
+// and smaller, leaving a crescent of shade along its lower right, as wide
+// as the strip. (A crescent on every segment read as a row of beads over
+// the pit, and the bands' narrower strips as a rod between them: the
+// outline glitch.) (Two circles a segment and rectangles a band, the GPU's
+// quickest shapes, and no clip: a clip to a body's shape costs it dearly.
+// Each step of shade is a cached colour, four of them.)
 const UNDER = '#140a04', UNDER_DARK = 0.42, UNDER_IN = 0.11; // (the shade at its darkest; how far its lit part moves in, in radii)
 const shadeOf = (c, o) => mix(c, UNDER, Math.ceil(o * 4) / 4 * UNDER_DARK);
-function shadeBands(a) { // (the bands: after the bands are drawn, before the segments, which cover their ends; a strip of shade along each one's lower side, or its right one going down, as wide as a segment's crescent at its lowest)
+function shadeBands(a) { // (after the segments: a strip along each band's lower side, as wide as a segment's crescent at its lowest, each half by its own segment)
   const { n, rad, fills, hang, pts: p, cor: c } = a;
   for (let i = n - 2; i >= 0; i--) {
-    const o = (hang[i] + hang[i + 1]) / 2;
-    if (o < 0.02) continue;
-    const h = rad[i + 1] * PINCH, s = rad[i + 1] * UNDER_IN * (1 + Math.SQRT2);
-    ctx.fillStyle = shadeOf(fills[i + 1], o);
-    const x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
-    if ((near(x1, qx) && near(qx, x2)) || (near(y1, qy) && near(qy, y2))) shadeStrip(x1, y1, x2, y2, h, s); // (straight: one piece)
-    else { shadeStrip(x1, y1, qx, qy, h, s); shadeStrip(qx, qy, x2, y2, h, s); }
+    if (hang[i] < 0.02 && hang[i + 1] < 0.02) continue;
+    const h = bandR(a, i), s = rad[i + 1] * UNDER_IN * (1 + Math.SQRT2);
+    const x1 = p[2 * i], y1 = p[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+    let qx = c[2 * i], qy = c[2 * i + 1];
+    if ((near(x1, qx) && near(qx, x2)) || (near(y1, qy) && near(qy, y2))) { qx = (x1 + x2) / 2; qy = (y1 + y2) / 2; } // (straight: halved in the middle)
+    if (hang[i] >= 0.02) { ctx.fillStyle = shadeOf(fills[i], hang[i]); shadeStrip(x1, y1, qx, qy, h, s); }
+    if (hang[i + 1] >= 0.02) { ctx.fillStyle = shadeOf(fills[i + 1], hang[i + 1]); shadeStrip(qx, qy, x2, y2, h, s); }
   }
 }
 function shadeStrip(x1, y1, x2, y2, h, s) {
@@ -335,13 +339,14 @@ function shadeUnder(a) {
   const { n, pts, rad, fills, hang, sink } = a;
   for (let i = n - 1; i >= 0; i--) {
     const o = hang[i];
-    if (o < 0.02 || (i === 0 && a.star)) continue; // (a star's head is drawn with its face)
+    if (o < 0.02 || (i === 0 && a.star) || straightAt(a, i)) continue; // (a star's head is drawn with its face; a straight run's segment, by its bands' strips)
     const x = pts[2 * i], y = pts[2 * i + 1], r = rad[i], d = r * UNDER_IN;
     ctx.fillStyle = shadeOf(fills[i], o);
     circle(x, y, r);
     ctx.fillStyle = fills[i];
     circle(x - d, y - d, r - d * Math.SQRT2);
   }
+  shadeBands(a);
   ctx.fillStyle = UNDER;
   for (let i = 0; i < n; i++) {
     if (sink[i] <= SAG) continue;
