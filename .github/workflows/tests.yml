@@ -54,6 +54,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: The page's shared scope
+        run: node tools/scope-test.js
       - name: Render
         run: node tools/render-test.js
       - name: Controls

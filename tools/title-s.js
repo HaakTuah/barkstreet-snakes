@@ -251,7 +251,7 @@ const css = `/* title-s: the S of Snakes, a honey snake. (Drawn and written by t
    so its top left is the drawing's in any font; negative margins keep them
    all from taking room or raising the title's line. */
 h1 .snake-s { color: transparent; text-shadow: none; white-space: nowrap; } /* (inline: a box round it would split the word, "S nakes", for a screen reader; nowrap: where the title wraps, the snake goes with its letter) */
-h1 .snake-s > i { user-select: none; -webkit-user-select: none; } /* (the drawing never goes into a selection: a copy is the words; see snake.js) */
+h1 .snake-s > i { user-select: none; -webkit-user-select: none; } /* (the drawing never goes into a selection: a copy is the words; see game/input.js) */
 h1 .snake-s :is(i, span) { display: inline-block; width: 0; height: 0; }
 h1 .snake-s :is(b, span) { line-height: 0; }
 h1 .snake-s b { display: inline-block; ${box}; margin: -0.5em ${right} -0.2em ${left}; filter: drop-shadow(0 2px 0 var(--leaf-dark)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)); } /* (the title's own drop; the tongue goes under it, so it casts none) */

@@ -263,7 +263,7 @@ const PRE = `(() => {
 // Whether the help, shown, fits the row under the board: an item squeezed
 // past its box (the speed buttons and the switch beside it), or its lines
 // making the row taller than it is and taking it off the screen. Where it
-// doesn't, it gives way (snake.js fitColumn).
+// doesn't, it gives way (game/screen.js fitColumn).
 const HELP_FITS = `(() => { const h = document.getElementById('help'), f = document.querySelector('.foot'); if (!h.getClientRects().length) return { squeezed: false, pushes: false };
   return { squeezed: h.scrollWidth > h.clientWidth + 1, pushes: h.getBoundingClientRect().height > parseFloat(getComputedStyle(f).minHeight) + 0.5 && f.getBoundingClientRect().bottom + scrollY > innerHeight + 0.5 }; })()`;
 
@@ -432,7 +432,7 @@ const FLIGHT = (x, y, from = [x, y]) => `(() => {
 })()`;
 const FLIGHT_SPOTS = [[0, 12], [23, 12], [12, 23], [1, 22], [3, 22], [4, 22], [19, 22], [0, 0], [23, 0]];
 
-// The chatter's log as it shows (snake.js fitChatter: an older line with no
+// The chatter's log as it shows (game/screen.js fitChatter: an older line with no
 // room for all of it isn't shown, and the newest, where it alone doesn't
 // fit, is cut to the rows that do, its own box ending there), and the
 // page's bottom: where its words end, how many lines show (and whether the
