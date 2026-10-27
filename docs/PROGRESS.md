@@ -5,12 +5,14 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 
 ## State (27 October 2026)
 
-Nothing is in progress. Queue items 1, 1b and 2 are done (2: PR #48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages, waiting on
-Haakon to switch Pages to the gh-pages branch). Every PR up to #36 is merged into `main` (#33 playtest, #34 one screen, #35 teaching step 1:
-banners you can read, #36 burrows keep apart). PR #38 (the handoff, the files from the old computer and an input-test
-fix) is merged into `develop`, which was made from `main` on 26 October; `main` takes it when Haakon merges `develop`.
-input-test failed 4 checks in 1 of 5 runs after #35's build; #38's fix of the lessons block is probably that flake. Watch
-for it.
+Queue item 3, the fixes and polish from the owner's playtest, is under way: "Burrows grow shut" (PR #49) and "The
+outline glitch over a hole" (PR #52) are done, and "Rainbows upside down" is next. Queue items 1, 1b and 2 are done (2: PR
+#48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages). The previews wait
+on one setting: Pages still serves `main` (every "pages build and deployment" run so far has built `main`), so the
+preview links in PRs do not open until Haakon switches Pages to "Deploy from a branch: gh-pages, / (root)". Everything
+through PR #52 is in `main` (milestone #53); since 27 October the builder merges the develop-to-main PR itself
+("Standing instructions" in `CLAUDE.md`). input-test failed 4 checks in 1 of 5 runs after #35's build; #38's fix of the
+lessons block is probably that flake. Watch for it.
 
 The plan and history that led here are in `docs/archive/plan-history.md`.
 
@@ -67,6 +69,8 @@ Also in `next-tasks-verbatim.md`:
   - It needs online sync (a protocol bump), the rivals reading it through the same rule, a rules test, and a Field guide line ("A burrow left unused grows shut.").
   - Escapes must stay at 20–35%.
   - *Done on 27 October 2026 (PR #49)*: see "Burrows grow shut" in `docs/design/32-the-owners-playtest.md`.
+- **Burrows grow shut, evened out.** Haakon (27 October 2026): "Yes, you can try that and see if it adds to the game! Review it afterwards and make an expert call." ("That": the change spread evenly over its 6–14 s, bolder moss at phone size, a slightly stronger scar, and the Field guide line weighed.)
+  - *Done on 27 October 2026 (PR #55)*: see "The cue, evened out" in `docs/design/32-the-owners-playtest.md`.
 - **The outline glitch over a hole.** Over a pit, the body's round segments bulge above its line and its pale rim disappears.
   - Repro: `node docs/handoff/stage-bridge-glitch.js <repo> p390 390x844@3t bridge`, with shots in a `shots/` folder beside the script.
   - Suspect: render.js's bridging shrinks the radius (`sunk()`) in the two-pass `bodyFills`, but the bands and beads (`shadeBands`, `shadeUnder`) and the rim don't follow.
