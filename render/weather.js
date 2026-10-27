@@ -348,23 +348,34 @@ function drawFlash(now) {
 const RAINBOW = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#3b82f6', '#6366f1', '#a855f7'];
 // A rainbow after the rain: one great arch right across the log, rising out
 // of the golden apple (its foot fading into it) and over, its top on the
-// board where there's room, its other foot beyond the far edge. From an
-// apple in the log's upper half there's no room over it (it was a stub
-// off the top edge), so there it hangs the other way, down over the middle
-// of the log. It draws itself out from the apple, glows a moment, and
-// fades. Both its ends fade, so it never ends in a flat cut (its far foot
-// can be on the board, and its tip is as it grows).
+// board where there's room, its other foot beyond the far edge. Always
+// upright, red outermost. From an apple in the log's upper half there's no
+// room for an arch on its own height (it was a stub off the top edge, and
+// then hung upside down), so there it's part of a greater circle centred
+// below the log, its top just under the top edge: it rises out of the apple,
+// over, and down off the far side. It draws itself out from the apple, glows
+// a moment, and fades. Both its ends fade, so it never ends in a flat cut
+// (its far foot can be on the board, and its tip is as it grows).
 function drawRainbow(now) {
   if (!rainbow) return;
   const age = now - rainbow.at, life = 9000;
   if (age > life) { rainbow = null; return; }
   const fade = Math.min(1, age / 600, (life - age) / 1600), grow = reduced ? 1 : Math.min(1, age / 1400), c = CELL;
-  const x = rainbow.x * c + c / 2, y = rainbow.y * c + c / 2, fromLeft = rainbow.x < GRID / 2, up = y >= SIZE / 2;
-  const R = Math.min(SIZE * 0.95, Math.max(SIZE * 0.45, (up ? y : SIZE - y) - SIZE * 0.1));
-  // From the apple's foot round over the top (or under the bottom), as far as it has grown.
-  const span = Math.PI * grow, end = Math.min(span / 2, 0.32);
-  bow.cx = fromLeft ? x + R : x - R; bow.y = y; bow.R = R; bow.fade = fade;
-  bow.a0 = fromLeft ? Math.PI : 0; bow.dir = fromLeft === up ? 1 : -1;
+  const x = rainbow.x * c + c / 2, y = rainbow.y * c + c / 2, fromLeft = rainbow.x < GRID / 2, side = fromLeft ? 1 : -1;
+  let full;
+  if (y >= SIZE / 2) { // round on the apple's height, over the top: half a circle
+    bow.R = Math.min(SIZE * 0.95, Math.max(SIZE * 0.45, y - SIZE * 0.1));
+    bow.cx = x + side * bow.R; bow.cy = y; bow.a0 = fromLeft ? Math.PI : 0;
+    full = Math.PI;
+  } else { // round a centre below the log, its top 0.06 of the board from the top, as far as it leaves the board's bottom on the far side
+    bow.cy = SIZE * 1.15; bow.R = SIZE * 1.09;
+    const dx = Math.sqrt(Math.max(0, bow.R * bow.R - (bow.cy - y) ** 2)), a = Math.atan2(y - bow.cy, -dx); // (the apple's angle, on the left)
+    bow.cx = x + side * dx; bow.a0 = fromLeft ? a : -Math.PI - a;
+    full = Math.asin((SIZE - bow.cy) / bow.R) - a;
+  }
+  bow.dir = side; bow.fade = fade;
+  // From the apple's foot round over the top, as far as it has grown.
+  const span = full * grow, end = Math.min(span / 2, 0.32);
   ctx.save();
   ctx.beginPath(); ctx.rect(0, 0, SIZE, SIZE); ctx.clip();
   ctx.lineCap = 'butt';
@@ -377,7 +388,7 @@ function drawRainbow(now) {
   ctx.globalAlpha = 1;
 }
 // The rainbow's bands (and the glow under them) from `from` to `to` along it, at `alpha`.
-const bow = { cx: 0, y: 0, R: 0, fade: 0, a0: 0, dir: 1 };
+const bow = { cx: 0, cy: 0, R: 0, fade: 0, a0: 0, dir: 1 };
 function bowBands(alpha, from, to) {
   const bw = CELL * 0.3;
   ctx.globalAlpha = 0.14 * bow.fade * alpha; // a soft glow under it
@@ -390,6 +401,6 @@ function bowBands(alpha, from, to) {
 }
 function bowArc(rad, from, to) {
   ctx.beginPath();
-  ctx.arc(bow.cx, bow.y, rad, bow.a0 + bow.dir * from, bow.a0 + bow.dir * to, bow.dir < 0);
+  ctx.arc(bow.cx, bow.cy, rad, bow.a0 + bow.dir * from, bow.a0 + bow.dir * to, bow.dir < 0);
   ctx.stroke();
 }
