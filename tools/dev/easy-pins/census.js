@@ -24,7 +24,8 @@ const ctx = vm.createContext({ window: {}, console, Math: M });
 const run = f => vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 run('tuning.js'); run('ai.js');
 const AI = ctx.window.SnakeAI, keyOf = new Map(Object.entries(AI.PERSONAS).map(([k, p]) => [p, k]));
-const per = {}, row = k => (per[k] ||= { decisions: 0, chances: 0, closed: 0, other: {} });
+const per = {}, row = k => (per[k] ||= { decisions: 0, chances: 0, closed: 0, episodes: 0, episodesClosed: 0 });
+const episode = new Map(); // row -> memory -> { tick, closed } of the pin it last had a chance at
 const mineKey = new WeakMap(); // memory -> persona key (Wildcard's and Capricious's brains change their weights, not their persona)
 const SHUT = 3;
 function pinOf(view) {
@@ -73,23 +74,28 @@ function pinOf(view) {
     if (h.x > 0 && h.y > 0 && h.x < N - 1 && h.y < N - 1) continue; // (easy: against the edge)
     const near = Math.abs(h.x - h0.x) + Math.abs(h.y - h0.y) <= age + 6, L = view.others[k].body.length;
     const close = moves.filter(m => m.safe && m.hunted[k] <= SHUT + age);
-    if (near && close.length && moves.some(m => m.hunted[k] >= L)) return close.map(m => m.d);
+    if (near && close.length && moves.some(m => m.hunted[k] >= L)) return Object.assign(close.map(m => m.d), { id: view.others[k].id });
   }
   return null;
 }
 const DUMP = arg('--dump', null), missed = [];
 const decide = AI.decide;
 ctx.window.SnakeAI = { ...AI, decide: (view, brain, memory) => {
-  const d = decide(view, brain, memory), k = keyOf.get(brain) || mineKey.get(memory) || '?', r = row(k);
-  r.decisions++;
-  const pin = pinOf(view);
-  if (pin) {
-    r.chances++;
-    if (pin.some(p => d.x === p.x && d.y === p.y)) r.closed++;
-    else if (DUMP) missed.push({ key: k, did: d, pin, victimId: memory.victimId, view: JSON.parse(JSON.stringify({ ...view, holes: [...view.holes], fire: [...(view.fire || [])], pecks: [...(view.pecks || [])] })) });
-  }
+  const d = decide(view, brain, memory), pin = pinOf(view);
+  for (const k of [keyOf.get(brain) || mineKey.get(memory) || '?', ...(pin && memory.victimId === pin.id ? ['(its victim)'] : [])]) count(row(k), k, view, memory, d, pin);
   return d;
 } };
+function count(r, k, view, memory, d, pin) {
+  r.decisions++;
+  if (pin) {
+    r.chances++;
+    const did = pin.some(p => d.x === p.x && d.y === p.y), m = episode.get(k) || episode.set(k, new WeakMap()).get(k), e = m.get(memory);
+    if (!e || e.tick < view.tick - 1) { r.episodes++; m.set(memory, { tick: view.tick, closed: did }); if (did) r.episodesClosed++; }
+    else { e.tick = view.tick; if (did && !e.closed) { e.closed = true; r.episodesClosed++; } }
+    if (did) r.closed++;
+    else if (DUMP && !k.startsWith('(')) missed.push({ key: k, did: d, pin, victimId: memory.victimId, view: JSON.parse(JSON.stringify({ ...view, holes: [...view.holes], fire: [...(view.fire || [])], pecks: [...(view.pecks || [])] })) });
+  }
+}
 run('engine.js');
 const E = ctx.window.SnakeEngine;
 for (let r = 0; r < ROUNDS; r++) {
@@ -98,10 +104,11 @@ for (let r = 0; r < ROUNDS; r++) {
   for (const s of g.snakes) mineKey.set(s.memory, s.personaKey);
   while (g.snakes.filter(s => s.alive).length > 1 && g.time < 600000) E.step(g);
 }
+// ('(its victim)': the chances a snake had at the very rival it was hunting.)
 // (keyOf finds the persona of the brain decide was given: a mood's or a desperate snake's weights still come under its own key via memory)
 const rows = Object.entries(per).sort((a, b) => b[1].chances - a[1].chances);
-let C = 0, K = 0;
-console.log('persona       chances  closed   share  per 1000 decisions');
-for (const [k, r] of rows) { C += r.chances; K += r.closed; console.log(`${k.padEnd(12)} ${String(r.chances).padStart(8)} ${String(r.closed).padStart(7)} ${(100 * r.closed / Math.max(1, r.chances)).toFixed(0).padStart(6)}%  ${(1000 * r.chances / r.decisions).toFixed(1)}`); }
-console.log(`${'all'.padEnd(12)} ${String(C).padStart(8)} ${String(K).padStart(7)} ${(100 * K / Math.max(1, C)).toFixed(0).padStart(6)}%`);
+let C = 0, K = 0, P = 0, Q = 0;
+console.log('persona       chances  closed   share  per 1000 decisions  pins (a run of chances in a row)  closed');
+for (const [k, r] of rows) { if (!k.startsWith('(')) { C += r.chances; K += r.closed; P += r.episodes; Q += r.episodesClosed; } console.log(`${k.padEnd(12)} ${String(r.chances).padStart(8)} ${String(r.closed).padStart(7)} ${(100 * r.closed / Math.max(1, r.chances)).toFixed(0).padStart(6)}%  ${(1000 * r.chances / r.decisions).toFixed(1).padStart(6)}  ${String(r.episodes).padStart(14)} ${String(r.episodesClosed).padStart(8)} ${(100 * r.episodesClosed / Math.max(1, r.episodes)).toFixed(0).padStart(4)}%`); }
+console.log(`${'all'.padEnd(12)} ${String(C).padStart(8)} ${String(K).padStart(7)} ${(100 * K / Math.max(1, C)).toFixed(0).padStart(6)}%  ${''.padStart(6)}  ${String(P).padStart(14)} ${String(Q).padStart(8)} ${(100 * Q / Math.max(1, P)).toFixed(0).padStart(4)}%`);
 if (DUMP) fs.writeFileSync(DUMP, JSON.stringify(missed));
