@@ -153,3 +153,9 @@ Escapes stay inside the 20–35%. The simulation's check passed on both seeds.
 - **Shaded as one body** (`shadeUnder`, `shadeBands` in `render/bodies.js`): a straight run over the pit is shaded by a strip along its lower side (its right one going down), drawn after the segments so it runs on through them, each half of a band in the darker step of the segment it's nearer. A round segment (`roundAt`: an end, a turn, or one more than a unit wider than its bands, like a head or a gulp) keeps its crescent, and the strips by it and round a turn go down before the segments, which cover their ends.
 
 **Tested:** `tools/render-test.js`: you across a hollow three cells wide, its top edge level along the middle of it and the cream rim as thick as on the bark; then your head over it and your neck on the bark, no band wider than either of its segments. The bridge check's band sample moved to the wider band's lower edge, and its sag is measured on the whole body, shaded part included (32 pixels across before and after, against 36 on the bark).
+
+### Rainbows upright
+
+**The cause:** `drawRainbow` (`render/weather.js`) drew the arch round a centre level with the golden apple. From an apple in the log's upper half there was no room over it, so it deliberately hung the arch downward, red outermost at the bottom: a rainbow upside down.
+
+**The call** (27 October 2026): always upright, red outermost. An apple in the lower half keeps its arch. For one in the upper half the arch is part of a great circle centred below the log (its centre 1.15 boards down, its radius 1.09 boards, so its top is 0.06 of the board from the top edge), passing through the apple: it rises out of the apple, over, and down off the far side, ending where the circle leaves the board's bottom (well beyond the far edge). The nearer the apple is to the top, the more of the top of the arch is on the board; one at the middle of the log shows its rising side.
