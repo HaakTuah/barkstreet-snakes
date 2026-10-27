@@ -33,6 +33,7 @@ function animOf(s, now) {
       fix: new Float32Array(64), fixOn: false, fixFast: false, tdx: s.dir.x, tdy: s.dir.y, bx: 0, by: 0, drawnAt: -1,
       jc: false, fc: false, flashFx: -1e9, // (your rests: cooling last frame; when your flash came back)
       star: false, turn: 0, face: 0, hue: 0, hueAt: -1, glow: 1, brow: 1, flareAt: -1e9, shedAt: 0, // (Star: its head a star, turned so, its face upright; its rainbow (and Copycat's copy of it); its tell; its tail's twinkles)
+      slim: 0, growl: 0, pale: 0, // (hungry: how much slimmer, how hard it growls, how pale: see hungerLook)
       flow: 0, flowW: 0, flowMv: 0, flowTick: -1, flowAt: -1, bursts: 0, burstAt: -1e9, // (how far it has gone, for its rainbow's stream: see flowOf; its flashes' bursts of it)
       // Up in the air and over holes (see liftOf and sinkOf): each segment's
       // lift (0..1, the top of a jump 1) and how far it hangs over a pit
@@ -279,16 +280,17 @@ function drawCough(a, now) {
 // gone, slowly at first, up to HUNGER_SLIM thinner; its head keeps its
 // size); in the warning's seconds (the toast's: 6 s left, 9 at its
 // smallest) its head shakes and growl lines rumble out either side of it
-// (drawGrowl), stronger toward the end; starving (shrinking), it pales
-// (a parchment wash: see drawPasses). With reduced motion the lines stay
-// still and the head doesn't shake.
+// (drawGrowl), stronger toward the end (not once the round's over);
+// starving (shrinking), it pales (a parchment wash: see drawPasses), and
+// starved, its corpse stays thin. With reduced motion the lines stay still
+// and the head doesn't shake.
 const HUNGER_SLIM = 0.22, GROWL_BEAT = 520, GROWL_ARC = 0.42, HUNGER_PALE = '#f6eedb';
 function hungerLook(s, a, dead) {
-  if (dead || !game || !s.alive) { a.slim = 0; a.growl = 0; a.pale = 0; return; }
+  if (dead || !game || !s.alive) { a.slim = dead && s.killer === 'hunger' ? HUNGER_SLIM : 0; a.growl = 0; a.pale = 0; return; } // (starved, it stays thin)
   const left = s.lastAte + T.HUNGER_MS - shownTime, gone = Math.min(1, Math.max(0, 1 - left / (s.mealMs || T.HUNGER_MS)));
   const warn = T.HUNGER_WARN_MS * (s.body.length <= T.MIN_LENGTH ? 1.5 : 1);
   a.slim = HUNGER_SLIM * gone * Math.sqrt(gone);
-  a.growl = left < warn ? Math.min(1, 1.4 - 0.9 * Math.max(0, left) / warn) : 0;
+  a.growl = left < warn && !leadRest ? Math.min(1, 1.4 - 0.9 * Math.max(0, left) / warn) : 0;
   a.pale = left < 0 ? Math.min(1, -left / T.STARVE_EVERY_MS) : 0;
 }
 // (In the face's frame, after its face: two short arcs either side of its
