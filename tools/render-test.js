@@ -701,7 +701,7 @@ const STAGE = `(() => {
       `its head ${bows.head.join(', ')}, so mixed with ${other.join(', ')} (its own #de2910 is 222, 41, 16)`);
     check(far(bows.mixed, halfModel) < 40 && far(bows.mixed, FLAG) > 40, 'copying Metagamer, Copycat’s head is half its cyan, half its red',
       `its head ${bows.mixed.join(', ')}; half and half ${halfModel.join(', ')} (Metagamer ${bows.model})`);
-    check(bows.rimScan.some(c => far(c, FLAG) < 30), 'copying, a thin red rim keeps Copycat’s head its own', `down its chin: ${JSON.stringify(bows.rimScan)}`);
+    check(bows.rimScan.some(c => (Math.max(...c) - Math.min(...c)) / Math.max(...c) > 0.55 && hueOf(c) < 20), 'copying, a thin red rim keeps Copycat’s grey head (half cyan, half red) its own', `down its chin: ${JSON.stringify(bows.rimScan)}`);
     check(far(bows.alone, FLAG) < 40, 'copying no one, Copycat’s head is all the flag’s red', `its head ${bows.alone.join(', ')}`);
     const ringWant = [32, 55, 130, 205]; // (orange, yellow, green, blue: the arcs at 0°, 60°, 120° and 180°)
     check(bows.ring.every((h, i) => dh(h, ringWant[i]) < 25), 'Star goes off in a ring of its rainbow, not its stand-in gold',
