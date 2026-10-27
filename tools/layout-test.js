@@ -66,9 +66,10 @@
 // - The woodpecker, perched (resting, and eyeing its chunk) for spots all
 //   over the board: never over a cell (its drawn pixels, read back from its
 //   layer), on the screen and inside its safe area (not under a notch), off
-//   the page's furniture; upright on a phone it stands on the ledge under
-//   the board, at least 48 px tall (36 on a short phone, whose ledge is
-//   smaller), clear of the moss and leaves hanging there, and on its side
+//   the page's furniture; upright on a phone it stands under the board,
+//   over the row under it and the chatter (taps passing through to them),
+//   at least 48 px tall where the screen's foot allows ("The phone gap":
+//   on a ledge of its own before, between the board and the row), and on its side
 //   it's beside the board (under 600 px wide, or under it, where all of it
 //   fits there, looking up only a little). Flying out to a spot at the board's edge and
 //   drumming it, through its whole wingbeat, it isn't cut off by the
@@ -516,7 +517,7 @@ const DOOR = (id, how) => {
 const only = process.argv[2];
 const sized = (w, h) => DEVICES.find(d => d.w === w && d.h === h && !d.insets);
 const CALLS = sized(390, 844), CALLS_SIDE = sized(780, 320); // (the call's phone: upright, and on its side with its browser's bars)
-const furnitureOf = l => Object.fromEntries(['header', 'tags', 'foot', 'chatter'].filter(k => l[k]).map(k => [k, l[k]]));
+const furnitureOf = (l, under = false) => Object.fromEntries(['header', 'tags', ...(under ? [] : ['foot', 'chatter'])].filter(k => l[k]).map(k => [k, l[k]])); // (under: held upright on a phone, the bird stands over the row under the board and the chatter)
 // Five lines from the rivals, the most the log keeps: long ones, two rows
 // each on a phone. And the page's scroll, down and across.
 const FILL = `(() => { const log = document.getElementById('chatlog'), g = SnakeDebug.game(), names = (g ? g.snakes.filter(s => !s.isPlayer).map(s => s.name) : []).concat(['Gobbler', 'Star', 'Mason']);
@@ -644,6 +645,27 @@ const r1 = v => Math.round(v * 10) / 10;
         check(full.chatlog.b <= full.chatter.b + 0.5 && rows.end <= full.chatlog.b - 2.5 && full.foot.b <= full.chatter.y + 0.5, `${tag}: ${what}, a full chatter's lines end inside its panel, and the panel inside its box, under the row under the board`, `words down to ${r1(rows.end)}, the panel to ${r1(full.chatlog.b)}, its box to ${r1(full.chatter.b)}`);
         check(rows.whole >= 1 && !rows.sliced && rows.lines >= 1 && (rows.parts === 0 || rows.lines === 1), `${tag}: ${what}, a full chatter shows whole lines, the newest at least (cut to its rows only where it alone doesn't fit), and no row sliced through`, `${rows.lines} lines${rows.parts ? ', the newest cut' : ''}, ${rows.whole} rows whole, ${rows.sliced} sliced`);
       }
+      if (upright && fit !== 'none') {
+        // (held upright, the chatter folded: a strip of one row, the newest
+        // line; a tap opens it to as many whole lines as fit, the caption
+        // first where there's room for two rows, and another folds it)
+        const folded = await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`);
+        check(folded === 'false' && fit === 'strip' && rows.lines === 1 && rows.whole === 1, `${tag}: ${what}, held upright, the chatter is folded: one row, the newest line`, `aria-expanded ${folded}, ${fit}, ${rows.lines} lines, ${rows.whole} rows`);
+        const tapChatter = async () => { // (a finger's tap on the strip, through the page's own touch handling)
+          const at = await ev(`(() => { const r = document.getElementById('chatlog').getBoundingClientRect(); return { x: r.left + r.width / 3, y: r.top + Math.min(8, r.height / 2) }; })()`);
+          await b.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...at, id: 1 }] });
+          await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+          await b.sleep(60);
+          return true;
+        };
+        const tap = await tapChatter();
+        await settle();
+        const opened = await ev(LAYOUT), orows = await ev(LOG_ROWS), ofit = await ev(`document.querySelector('.chatter').dataset.fit`), oexp = await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`);
+        check(tap && oexp === 'true' && orows.whole >= rows.whole && !orows.sliced && (ofit === 'strip' || orows.whole >= 2) && opened.scrollH <= opened.vh && opened.board.w === full.board.w, `${tag}: ${what}, held upright, a tap opens the chatter to the lines that fit (the board unmoved, nothing scrolls)`, `${tap ? '' : 'the tap went elsewhere; '}aria-expanded ${oexp}, ${ofit}, ${orows.lines} lines, ${orows.whole} rows whole, ${orows.sliced} sliced`);
+        await tapChatter();
+        await settle();
+        check(await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`) === 'false', `${tag}: ${what}, held upright, another tap folds it`);
+      }
       if (!watching || upright) return;
       await ev(`(() => { const st = document.createElement('style'); st.id = 'help-made-to-show'; st.textContent = 'main #help { display: block !important; }'; document.head.append(st); return 'ok'; })()`);
       await settle();
@@ -735,12 +757,11 @@ const r1 = v => Math.round(v * 10) / 10;
         const ring = await ev(`(() => { const m = getComputedStyle(document.querySelector('main')), p = document.getElementById('pause').getBoundingClientRect(), mb = document.querySelector('main').getBoundingClientRect(); return m.overflowX === 'visible' || p.left - 5 >= mb.left; })()`);
         check(ring, `${tag}: the nap button's focus ring isn't clipped at the column's edge`);
       }
-      // (the ledge: 34 px at least where the board's edge to edge (28 before
-      // the page was one screen tall, 12 px over the speed buttons or the
-      // chatter, 6 now over the row under the board: the bird's room is the
-      // same); on a short phone the bird's in the gutter, and the ledge is
-      // what the board leaves, or none)
-      check(upright && !d.short ? ready.ledge && ready.ledge.h >= 33.5 && ready.ledge.y >= ready.frame.b - 0.5 : upright ? !ready.ledge || ready.ledge.y >= ready.frame.b - 0.5 : !ready.ledge, `${tag}: ${upright && !d.short ? 'a ledge under the board for the woodpecker' : upright ? 'no ledge to speak of (the woodpecker in the gutter beside the board)' : 'no ledge (room enough beside the board)'}`, ready.ledge ? `${r1(ready.ledge.h)} px` : 'none');
+      // (held upright, the row under the board right under it, 6 px (2 on a
+      // short phone; the owner's playtest, "The phone gap": a ledge of 34 to
+      // 49 px was between them, the bird's), the ledge laid out but 0 px
+      // tall; elsewhere, no ledge)
+      check(upright ? ready.ledge && ready.ledge.h < 0.5 && ready.foot.y - ready.frame.b <= 6.5 : !ready.ledge, `${tag}: ${upright ? 'the row under the board right under it, no ledge between them' : 'no ledge (room enough beside the board)'}`, upright ? `the row ${r1(ready.foot.y - ready.frame.b)} px under the frame, the ledge ${ready.ledge ? r1(ready.ledge.h) : 'not laid out'}` : ready.ledge ? `${r1(ready.ledge.h)} px` : 'none');
       if (d.insets) check(ready.header.y >= d.insets.top - 0.5 && ready.board.x >= d.insets.left - 0.5 && ready.board.r <= ready.vw - d.insets.right + 0.5 && (!side || ready.frame.b <= ready.vh - d.insets.bottom + 0.5), `${tag}: the page keeps inside the safe area`);
 
       // The header: its rows, its doors, the full-screen button, and what
@@ -807,7 +828,7 @@ const r1 = v => Math.round(v * 10) / 10;
 
       // The woodpecker perched, resting and eyeing its chunk, for spots all over the board.
       const perches = [];
-      const rects = { ...furnitureOf(play), ...(play.ledge && !d.short ? Object.fromEntries(play.hanging.map((f, i) => [`hanging ${f.what} (${i})`, f])) : {}) }; // (on the ledge: the moss and leaves hanging into it too)
+      const rects = upright ? furnitureOf(play, true) : furnitureOf(play); // (held upright it stands over the row under the board and the chatter, its layer taking no taps; the moss and leaves that hung under the board are left off there)
       for (const [x, y] of SPOTS) for (const aim of [false, true]) perches.push({ x, y, aim, p: await ev(PERCH(x, y, aim, rects)) });
       const drawn = perches.filter(q => q.p);
       check(drawn.length === perches.length, `${tag}: the woodpecker is drawn for every spot`, `${drawn.length} of ${perches.length}`);
@@ -818,15 +839,17 @@ const r1 = v => Math.round(v * 10) / 10;
       const outside = p => [...p.cut.map(e => `cut off at the screen's ${e}`), p.x < si.left - 0.5 && 'left', p.r > play.vw - si.right + 0.5 && 'right', p.y < si.top - 0.5 && 'top', p.b > play.vh - si.bottom + 0.5 && 'bottom'].filter(Boolean);
       const offWhy = q => [...outside(q.p), ...Object.keys(q.p.on).map(k => `${q.p.on[k]} px over the ${k}`)];
       const off = drawn.filter(q => offWhy(q).length);
-      check(!off.length, `${tag}: perched, all of it is on the screen, inside its safe area, and off the tags, the chatter, the header${upright ? ' and the moss and leaves hanging under the board' : ''}`, off.map(q => `${q.x},${q.y}${q.aim ? ' eyeing' : ''}: ${offWhy(q).join(', ')} (${r1(q.p.x)},${r1(q.p.y)}-${r1(q.p.r)},${r1(q.p.b)})`).join('; '));
+      check(!off.length, `${tag}: perched, all of it is on the screen, inside its safe area, and off ${upright ? 'the tags and the header (it stands over the row under the board and the chatter)' : 'the tags, the chatter and the header'}`, off.map(q => `${q.x},${q.y}${q.aim ? ' eyeing' : ''}: ${offWhy(q).join(', ')} (${r1(q.p.x)},${r1(q.p.y)}-${r1(q.p.r)},${r1(q.p.b)})`).join('; '));
       const tall = drawn.map(q => q.p.h), small = Math.min(...tall);
-      if (upright && d.short) {
-        const beside = drawn.every(q => q.p.r <= play.board.x + 2 || q.p.x >= play.board.r - 2);
-        check(beside && small >= 23.5, `${tag}: upright with the ledge below the fold, it perches in the gutter beside the board, at least 24 px tall (the room the page leaves it)`, `${r1(small)}-${r1(Math.max(...tall))} px tall`);
-      } else if (upright) {
-        const onLedge = drawn.every(q => q.p.y >= play.board.b - 0.5 && q.p.b <= play.ledge.b + 16);
-        const least = d.h >= 780 ? 48 : 36; // (a short phone has less height to spare: a smaller ledge, still bigger than the old gutter's 34 px)
-        check(onLedge && small >= least, `${tag}: upright, it stands on the ledge under the board, at least ${least} px tall`, `${r1(small)}-${r1(Math.max(...tall))} px tall`);
+      if (upright) {
+        // (at full size, standing over the row under the board: the room
+        // from the board down to the screen's foot, less its outline and
+        // crouch, about 6 px; 53 px on a 390 px phone)
+        const under = drawn.every(q => q.p.y >= play.board.b - 0.5), room = play.vh - si.bottom - play.board.b;
+        const least = Math.min(48, room - 8), over = drawn.filter(q => q.p.b > play.foot.y + 1).length;
+        check(under && small >= least, `${tag}: upright, it stands under the board, over the row under it, at least ${r1(least)} px tall (the room to the screen's foot allowing)`, `${r1(small)}-${r1(Math.max(...tall))} px tall; over the row in ${over} of ${drawn.length}`);
+        const lets = await ev(`(() => { const L = document.getElementById('bird-layer'); return getComputedStyle(L).pointerEvents; })()`), reachUnder = await ev(REACH('#chatter-toggle, .chatter[aria-expanded]'));
+        check(lets === 'none' && reachUnder.every(r => r.taps), `${tag}: upright, taps pass through the perched woodpecker to the row and the chatter`, `its layer's pointer-events ${lets}; ${reachUnder.map(r => `${r.what} ${r.taps ? 'takes a tap' : 'covered'}`).join(', ')}`);
       } else if (side) {
         const beside = drawn.every(q => q.p.r <= play.board.x + 0.5 || q.p.x >= play.board.r - 0.5);
         check(beside && small >= 30, `${tag}: on its side, it perches beside the board, at least 30 px tall`, `${r1(small)}-${r1(Math.max(...tall))} px tall`);
@@ -866,8 +889,8 @@ const r1 = v => Math.round(v * 10) / 10;
       reach = await ev(REACH('#speed button'));
       check(reach.length === 3 && reach.every(r => r.on && r.taps) && watch.speed.y >= watch.foot.y - 0.5 && watch.speed.b <= watch.foot.b + 0.5, `${tag}: watching, the speed buttons are there, in the row under the board, on the screen, and take a tap`);
       const wp = [];
-      for (const [x, y] of [[1, 22], [12, 22], [22, 22], [22, 1]]) wp.push(await ev(PERCH(x, y, true, furnitureOf(watch))));
-      check(wp.every(p => p && p.over <= (gutter ? 4 : 0) && !Object.keys(p.on).length && !outside(p).length), `${tag}: watching, the perched woodpecker covers no cell, keeps off the speed buttons and the rest, and is all on the screen`, wp.map(p => (p ? `${p.over} px over cells${Object.keys(p.on).map(k => `, ${p.on[k]} over the ${k}`).join('')}${outside(p).length ? `, ${outside(p).join(', ')}` : ''}` : 'none')).join('; '));
+      for (const [x, y] of [[1, 22], [12, 22], [22, 22], [22, 1]]) wp.push(await ev(PERCH(x, y, true, furnitureOf(watch, upright))));
+      check(wp.every(p => p && p.over <= (gutter ? 4 : 0) && !Object.keys(p.on).length && !outside(p).length), `${tag}: watching, the perched woodpecker covers no cell, keeps off ${upright ? 'the header and the tags (held upright it stands over the speed buttons, taps passing through)' : 'the speed buttons and the rest'}, and is all on the screen`, wp.map(p => (p ? `${p.over} px over cells${Object.keys(p.on).map(k => `, ${p.on[k]} over the ${k}`).join('')}${outside(p).length ? `, ${outside(p).join(', ')}` : ''}` : 'none')).join('; '));
       await chatterFull(tag, true, d.insets, side, upright);
       const errs = [errsPlaying, await ev(`__errs.join(' | ')`)].filter(Boolean).join(' | ');
       check(!errs, `${tag}: no error events on the page, playing or watching (a resize observer's loop, say)`, errs);
@@ -892,7 +915,7 @@ const r1 = v => Math.round(v * 10) / 10;
       if (fresh) { await open({ w, h, dpr }); await toRound(); await ev(FILL); }
       else { await b.viewport(w, h, { scale: dpr, mobile: true }); await b.sleep(150); await settle(); }
       const l = await ev(LAYOUT), ps = [];
-      for (const [x, y] of [[1, 12], [22, 12], [12, 22], [1, 22], [22, 1]]) for (const aim of [false, true]) ps.push({ x, y, aim, p: await ev(PERCH(x, y, aim, furnitureOf(l))) });
+      for (const [x, y] of [[1, 12], [22, 12], [12, 22], [1, 22], [22, 1]]) for (const aim of [false, true]) ps.push({ x, y, aim, p: await ev(PERCH(x, y, aim, furnitureOf(l, true))) });
       const before = Math.min(w - 24, Math.max(240, h - 190)) - 20, drawn = ps.filter(q => q.p);
       const why = q => !q.p ? ['not drawn'] : [q.p.over > 4 && `${q.p.over} px over the cells`, q.p.h < 23.5 && `${r1(q.p.h)} px tall`, ...q.p.cut.map(e => `cut off at the screen's ${e}`),
         (q.p.x < -0.5 || q.p.r > l.vw + 0.5 || q.p.y < -0.5 || q.p.b > l.vh + 0.5) && 'off the screen', ...Object.keys(q.p.on).map(k => `${q.p.on[k]} px over the ${k}`)].filter(Boolean);
@@ -1183,7 +1206,7 @@ const r1 = v => Math.round(v * 10) / 10;
       await open({ w, h, dpr, nofs: true });
       await toRound();
       const l = await ev(LAYOUT), ps = [];
-      for (const [x, y] of SPOTS) for (const aim of [false, true]) ps.push({ x, y, aim, p: await ev(PERCH(x, y, aim, furnitureOf(l))) });
+      for (const [x, y] of SPOTS) for (const aim of [false, true]) ps.push({ x, y, aim, p: await ev(PERCH(x, y, aim, furnitureOf(l, true))) });
       const bad = ps.filter(q => !q.p || q.p.over || q.p.cut.length || Object.keys(q.p.on).length || q.p.x < -0.5 || q.p.r > l.vw + 0.5 || q.p.y < -0.5 || q.p.b > l.vh + 0.5);
       const under = ps.filter(q => q.p && q.p.y >= l.board.b - 0.5).length;
       check(!bad.length, `${name}: perched, resting or eyeing its chunk, the woodpecker never covers a cell, and is all on the screen and off the column`,
