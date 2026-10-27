@@ -354,9 +354,10 @@ const RAINBOW = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#3b82f6', '#6366f1
 // then hung upside down), so there it's part of a greater circle centred
 // below the log, its top on the board half way from the apple to the far
 // edge (or nearer the apple, where that would take it off the top): it
-// rises out of the apple, over, and down off the far side. It draws itself out from the apple, glows
-// a moment, and fades. Both its ends fade, so it never ends in a flat cut
-// (its far foot can be on the board, and its tip is as it grows).
+// rises out of the apple, over, and down off the far side. It draws itself
+// out from the apple, glows a moment, and fades. Both its ends fade, so it
+// never ends in a flat cut (its far foot can be on the board, and its tip is
+// as it grows).
 function drawRainbow(now) {
   if (!rainbow) return;
   const age = now - rainbow.at, life = 9000;

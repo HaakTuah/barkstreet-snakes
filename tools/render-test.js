@@ -701,9 +701,9 @@ const STAGE = `(() => {
     const bows2 = await ev(`(() => {
       SnakeDebug.pinQuality(0);
       const out = [], c = document.getElementById('game'), k = c.width / (TUNING.GRID * ${CELL}), W = c.width;
-      for (const [ax, ay] of [[1, 6], [6, 6], [11, 6], [12, 6], [17, 6], [22, 6], [6, 3], [17, 3], [3, 10], [20, 10]]) {
-        const g = stage(['gobbler', 'ghost', 'mason']);
-        show(g); drawN(5);
+      show(stage(['gobbler', 'ghost', 'mason'])); // (one board for them all: the boards staged after keep their seeds)
+      for (const [ax, ay] of [[1, 6], [6, 6], [11, 6], [12, 6], [17, 6], [22, 6], [6, 3], [17, 3], [1, 3], [22, 3], [3, 10], [20, 10]]) {
+        drawN(5);
         R.onTick([{ type: 'rainbow', x: ax, y: ay }]); drawN(80); // (grown, and not fading yet)
         const on = c.getContext('2d').getImageData(0, 0, W, c.height).data;
         rainbow = null; __t -= 33; drawN(1);
