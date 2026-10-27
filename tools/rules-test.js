@@ -2494,6 +2494,66 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   }
 }
 
+// ---------------------------------------------------------------- the owner's playtest: hunters close easy pins
+{ // A rival 6 long heading right along the top edge, its only way on straight ahead: the hunter, 9 long, runs
+  // along the row below it, 4 cells ahead of its head as last seen (a moment ago: age 1). Moving up closes it: the
+  // rival has three cells left, then nowhere. Every hunter closes it, on every edge, a third snake or not (it's far
+  // off, heading away). (The neck test used to read the board as it is now, so the very rival it was pinning
+  // looked as if it could come round through its body and shut it in; and against the edge itself, any rival
+  // within a dozen cells made the hunter's own spot a trap. No hunter closed one.) But where closing it would be
+  // the hunter's end too (a hole right beyond the cell, against the edge), every hunter leaves it.
+  const N = T.GRID, rot = (k, [x, y]) => { for (let i = 0; i < k; i++) [x, y] = [N - 1 - y, x]; return [x, y]; };
+  const turn = (k, d) => { const order = ['right', 'down', 'left', 'up']; return order[(order.indexOf(d) + k) % 4]; };
+  const HUNTERS = ['sniper', 'mute', 'sovereign', 'colonist', 'metagamer', 'joker'];
+  // (Each with its own weights, hunting the pinned rival: Sniper's and Mute's way of picking a victim, Joker's own.)
+  const hunting = key => ({ ...AI.PERSONAS[key], driver: key === 'joker' ? 'joker' : 'sniper' });
+  const pin = ({ k, third, hole }) => {
+    const v = line(9, 0, 6), h = line(13, 1, 9), at = c => rot(k, c);
+    const others = [aiRival(1, v.map(at), turn(k, 'right'))];
+    if (third) others.push(aiRival(2, line(20, 14, 6).map(at), turn(k, 'right')));
+    const holes = new Set(hole ? [at([14, 0])].map(([x, y]) => y * N + x) : []);
+    return { view: aiView({ age: 1, me: aiMe(h.map(at), turn(k, 'right')), others, holes }), close: at([13, 0]) };
+  };
+  const closes = (key, scene) => {
+    let n = 0;
+    for (let k = 0; k < 4; k++) for (let i = 0; i < 3; i++) {
+      const { view, close } = pin({ k, ...scene }), d = AI.decide(view, hunting(key), { victimId: 1 }), h = view.me.body[0];
+      if (h.x + d.x === close[0] && h.y + d.y === close[1]) n++;
+    }
+    return n;
+  };
+  for (const third of [false, true]) {
+    const got = Object.fromEntries(HUNTERS.map(key => [key, closes(key, { third })]));
+    check(`every hunter closes an easy pin against the edge, on every edge${third ? ', a third snake far off' : ''}`, HUNTERS.every(key => got[key] === 12), JSON.stringify(got));
+  }
+  const fatal = Object.fromEntries(HUNTERS.map(key => [key, closes(key, { third: true, hole: true })]));
+  check('...but not where closing it would be its own end (a hole just beyond)', HUNTERS.every(key => fatal[key] === 0), JSON.stringify(fatal));
+}
+
+{ // ...on anyone: in the game, Sniper closes the same pin on a person as on a rival (what it sees of them is the
+  // same), and the pin costs the pinned snake: segments lost crashing into the hunter, or one to jump it.
+  const outcome = person => {
+    const g = E.createGame({ withPlayer: false, personas: ['sniper', 'drab'] });
+    g.snakes = g.snakes.slice(0, 2);
+    const [a, b] = g.snakes;
+    g.time = 30000;
+    a.body = line(13, 1, 9).map(([x, y]) => ({ x, y })); a.dir = D.right;
+    b.body = line(9, 0, 6).map(([x, y]) => ({ x, y })); b.dir = D.right;
+    for (const s of [a, b]) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; } // (fed: it's the hunt that decides)
+    if (person) { b.isPlayer = true; b.persona = null; b.queue = []; }
+    a.memory.victimId = b.id;
+    g.food = [{ x: 20, y: 20, kind: 'food', expires: 9999 }];
+    g.given = new Set([20 * T.GRID + 20]);
+    look(g);
+    quiet(g);
+    const closed = a.body[0].x === 13 && a.body[0].y === 0;
+    for (let t = 0; t < 4; t++) quiet(g);
+    return { closed, cost: b.body.length < 6 || !b.alive, hunterAlive: a.alive };
+  };
+  const onPerson = outcome(true), onRival = outcome(false);
+  check('Sniper closes the pin on a person as on a rival, and it costs the pinned snake', onPerson.closed && onRival.closed && onPerson.cost && onRival.cost && onPerson.hunterAlive && onRival.hunterAlive, JSON.stringify({ onPerson, onRival }));
+}
+
 // ---------------------------------------------------------------- round six A: the rivals' pass (knocked food, beetles that dig in)
 // A mark of 3x3 at (12..14, 10..12), and where the strike knocks what's in it: as the rings show it, by the engine's rule.
 const MARK = rect(12, 10, 14, 12).map(([x, y]) => K(x, y));

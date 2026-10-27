@@ -33,3 +33,37 @@
 
 The trade-off every approach ran into: a snake that dodges traps lives into sudden death, and then mostly starves, so rounds run longer and most reach the woodpecker (you said you hadn't seen an AI-only round get there any more; now most do). Boxed-in deaths before the woodpecker roughly halved. The slowest steps (p99) cost 2.3× what they did, because longer rounds grow longer snakes; 3.3 ms is still well inside a frame, and the AI thinks between ticks. The personalities moved: the hunters gained (Metagamer 34%, Sniper and Colonist 33%), Ouroboros came down from the top (38% to 32%), and Ghost (13%; 9% on another seed) and Desperado (15%; it likes to skim walls and heads, which the neck test discourages) are at the bottom. Ghost is the one to watch: it's built to stay small, and length is armour now.
 
+
+### Hunters close easy pins (the owner's playtest, 27 October 2026)
+
+Haakon (26 October 2026): "it seems they try to box you, but often don't on really easy opportunities where they got you squeezed against the wall."
+
+**The cause** was the neck test again, in two ways. A hunter has to go to the edge to close a pin, and then every line ends with its head against the edge or its own body, with one or two ways on: a neck right by the head.
+- The test asked whether a rival could get to that gap, reading `reach`, which is worked out once on the board as it is now. The rival being pinned could get there on that board: along the edge, through the cell the hunter's line had just moved into. So the very snake it was sealing in looked as if it could come round through its body and shut it in. On a staged pin (a rival heading along the top edge with its only way on straight ahead, the hunter running along the row below, 2 to 5 cells ahead), no hunter closed it, on any edge, at any reaction delay: 0 of 48 tries each, for Sniper, Mute, Sovereign, Colonist, Metagamer and Joker.
+- With that fixed, any third rival within about a dozen cells still made the closing line a trap, through `PINNED_DAWDLE` (8: "I don't always leave a pocket straight away"). That allowance is the boxed-in dial and stays.
+
+**The calls:**
+- **The neck test reads the rivals on the line's own board.** Where `reach` says a rival could shut a gap, the AI looks again with a timed flood fill from every rival (`lineFill`, from where it was last seen, from when it moves again) on the board as the line leaves it: the cells the line moved into are the snake's from when its head got there to when its tail leaves (`lineOn`). It's done only when `reach` says there's a threat, once per scored line. It makes the AI about 10% slower a decision (0.36 to 0.40 ms in `tools/bench-ai.js` on seed 3; a tick is about 110 ms). The first cut, with a fill for each neck, was 15–20% slower.
+- **A pin I close isn't a pin on me,** as with a meal ("A meal isn't a pin" in `32-the-owners-playtest.md`). On a line that seals in the rival it's hunting (its timed room on that line is less than its length, where it had that room before), the hunter is against the edge only because the pin was there, and it leaves on its next move. So only a rival that could get to the gap about as soon as the hunter makes it a trap (`MEAL_DAWDLE`). Like the meal rule, this holds for a gap any rival could shut. The deaths by cause below say it costs the hunters nothing.
+- Unchanged: the risk beside a rival's head. A hunter still won't close where the pinned snake, as last seen, could flash or dash into the same cell (a head-on), so it closes a cell later. The weights and reaction times are as they were. The rivals see nobody differently, so they close pins on a person exactly as on a rival.
+
+**Measured** (`tools/dev/easy-pins/census.js`, 200 AI-only rounds, seed 5). A pin is a move after which a rival against the edge, near the snake's head, has 3 cells left at most, where another move would leave it room, and the snake still has room itself.
+- An easy pin came up about once a round. Runs of ticks with a pin open fell from 116 to 92 (pins are closed sooner).
+- Missed pins fell from 35 to 14: 70% of them closed before, 85% after.
+- At a hunter's own victim, 65% were closed before and 75% after.
+
+Old against new AI with `tools/abtest.js` on fresh seeds:
+- **Head to head** (seeds 53, 67, 71, 89; 2,400 paired rounds):
+  - win% a snake 23.9 → 26.0 (+2.1, interval [−0.6, +4.7]);
+  - food a snake 54.9 → 56.0 and kills 0.34 → 0.40 (both higher);
+  - time alive the same.
+  - No persona's win rate moved beyond noise; Sniper's −3.3 is within [−13, +6].
+  - Every trademark is the same or a little stronger: Mason's body beside itself +1.6 points, Desperado's skims +1.1.
+  - Deaths by cause were all the same within ±3 points, except crashes into bodies (−2.5, still open).
+- **Feel** (seeds 53, 67; 1,200 paired rounds, each AI in a field of its own kind):
+  - median round 166 → 164 s ([−3.5, +0.3]);
+  - sudden death 46 → 44 s (same);
+  - head-on deaths 3.7% → 2.7% (same).
+  - Every other cause of death and starving moved by less than 1.6 points.
+
+**The shared cause with "Rivals too shy of heads":** both come from fear read off the board as it is now, not off the line being played. Here, it was a gap a sealed-off rival "could" shut. There, it is `headRisk` beside every rival head, including cells the rival can't or wouldn't enter, and cells the snake will have left before the rival could get there. `lineOn` and `lineFill` give that task what it needs: a rival's timed reach on the line's own board. The cell beside a pinned rival's head is the same overlap, and it's left to that task.

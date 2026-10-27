@@ -6,7 +6,7 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 ## State (27 October 2026)
 
 Queue item 3, the fixes and polish from the owner's playtest, is under way: "Burrows grow shut" (PR #49), "The
-outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57), "Hunger where your eyes are" (PR #66), "Rainbows, the follow-ups" (PR #68), "The phone gap" (PR #70) "Desktop chatter" (PR #72), "Wildcard's hair" (PR #74) and "Copycat's face" (PR #78) and the head-to-head mode in `tools/abtest.js` (PR #80) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
+outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57), "Hunger where your eyes are" (PR #66), "Rainbows, the follow-ups" (PR #68), "The phone gap" (PR #70) "Desktop chatter" (PR #72), "Wildcard's hair" (PR #74) and "Copycat's face" (PR #78) the head-to-head mode in `tools/abtest.js` (PR #80) and "Hunters miss easy pins" (PR #81) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
 #48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages). The previews wait
 on one setting: Pages still serves `main` (every "pages build and deployment" run so far has built `main`), so the
 preview links in PRs do not open until Haakon switches Pages to "Deploy from a branch: gh-pages, / (root)". Everything
@@ -121,6 +121,10 @@ Also in `next-tasks-verbatim.md`:
     safety margin, and how far ahead the squeeze looks.
   - A rules test per hunter. Trademarks and win bands kept, and the rivals close pins on anyone, never on you in
     particular.
+  - *Done on 27 October 2026 (PR #81)*: see "Hunters close easy pins" in
+    `docs/design/15-the-rivals-look-further-ahead.md` (the neck test reads the rivals on the line's own board; a pin
+    the hunter closes isn't a pin on it). Missed easy pins 35 → 14 in 200 rounds. It found the root shared with the next
+    entry: fear read off the board as it is now, not off the line played.
 - **Rivals too shy of heads.** Haakon (27 October 2026): "it seems to me the rival snakes might be a bit too adverse to
   have their heads next to each other, even if the other snake can't cut you off, or if the would see and have time to
   react ahead of time. Can this be investigated, expertly?"
