@@ -5,7 +5,7 @@ const SNAKE_GAP = 4500;  // ms of game time between lines from the same snake
 const ANY_GAP = 1200;    // ms between any two lines
 const BUBBLE_MS = 2600;  // how long a bubble stays up (real time)
 const LAST_WORDS_MS = 2000; // (and a snake's last words, where it went out, when the log can't show them)
-const LOG_SIZE = 5;
+const LOG_SIZE = 50; // (the lines a round keeps: beside the board on a desktop you can scroll back through them; elsewhere the newest that fit show)
 const COMPACT_CHARS = 32; // on small boards, longer lines go to the log only (while it's on screen)
 // Mason's Life of Brian moments get an answer: [line, who answers, what they say,
 // and the voices' own lines for it, where they have some].
