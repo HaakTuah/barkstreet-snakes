@@ -228,3 +228,8 @@ In the design chat (27 October 2026, 11:01 UTC), after finding open questions in
 reached him:
 
 > Yes to all, expertly! And we need that all these questions get directly back to me from both projects. Having to hunt them down like this isn't good.
+
+In the design chat (27 October 2026, 16:56 UTC), on Claude's proposal that builders check for changes again before
+opening their pull request, after two Amarna Letters items had begun before Haakon's answers reached them:
+
+> Yes, why not? If you don't object.

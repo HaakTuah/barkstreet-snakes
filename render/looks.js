@@ -466,7 +466,7 @@ function fillsOf(s, a, now) {
     const h0 = bowHue(s, a, now);
     for (let i = 0; i < n; i++) fills[i] = bow((h0 + 360 - (i * RAINBOW_STEP) % 360) % 360)[n > 1 ? Math.round(RAINBOW_FADE * i / (n - 1)) : 0];
     if (look === 'star') fills[0] = STAR_SUN;
-    else if (s.personaKey === 'copycat') fills[0] = s.color; // (its head stays its own: see below)
+    else if (s.personaKey === 'copycat') fills[0] = mix(rainbowOf(h0)[0], s.color, COPY_HEAD); // (its head half its own: see below)
     return;
   }
   const ramp = rampOf(color);
@@ -488,9 +488,19 @@ function fillsOf(s, a, now) {
   if (look === 'desperado') { if (n > 1) fills[1] = '#dc2626'; for (let i = 4; i < n; i += 4) fills[i] = '#ecdfc3'; } // bandana, poncho stripes (woven cream: Honey means a power)
   if (mime) fills[0] = '#f8fafc';
   // Copycat copying someone: its body wears a pale copy of their colours
-  // (it can't help it), but its cat-eared head keeps the flag's red (and
-  // its yellow pin: see drawFace), so it always reads as red and gold.
-  if (s.personaKey === 'copycat') fills[0] = s.color;
+  // (it can't help it), and its cat-eared head is half theirs, half the
+  // flag's red; a thin red rim (see drawBody) and its yellow pin (see
+  // drawFace) keep it Copycat. Copying no one, its head is all red.
+  if (s.personaKey === 'copycat') fills[0] = copying(s) ? mix(colorOf(findById(s.memory.modelId)), s.color, COPY_HEAD) : s.color;
+}
+// How much of Copycat's head stays its own red while it copies (the rest
+// is its model's own colour, full, not the body's pale copy).
+const COPY_HEAD = 0.5;
+// Whether Copycat is copying anyone now (a model, alive).
+function copying(s) {
+  if (!game) return false;
+  const m = findById(s.memory.modelId);
+  return !!(m && m.alive);
 }
 
 // Once a frame per snake: where each segment is (between its last two

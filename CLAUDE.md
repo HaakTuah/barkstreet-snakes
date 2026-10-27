@@ -192,3 +192,7 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   3. **The "For Haakon" table** in `docs/PROGRESS.md` keeps it until he answers.
 
   A session that starts builder sessions passes each list on to Haakon word for word in its next update.
+- **27 October 2026: re-read the task before the PR.** "Yes, why not? If you don't object." (to Claude's proposal; the
+  words are in `docs/archive/instructions.md`). Before opening the task's PR, read its entry in `docs/PROGRESS.md` on
+  `develop` again, with the "For Haakon" table, since Haakon's answers can change it while you work. Build what changed,
+  or, if that is large, say so in the PR and add it as its own entry right after the task.
