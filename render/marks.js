@@ -655,7 +655,7 @@ function drawSnakes(alpha, now) {
   if (leaping) while (up > 0 && overOf(live[up - 1])) up--;
   drawShadows(up);
   if (fieldSpecs.length && huesOn) drawFieldHues(now); // (a land's colour round a rival on it, under every outline and body)
-  // Then outlines, bodies, flames and queasy washes, each pass for every
+  // Then outlines, bodies, flames and queasy (or starving) washes, each pass for every
   // snake on the ground, then the same for any up in the air, the shadow
   // of what of it's in the air first, over the bodies on the ground (the
   // hurdle passes under it with the shadow across it), and its trail: a
@@ -682,9 +682,10 @@ function drawPasses(from, to, now, halos) {
         if (pass === 0) { if (i >= to) drawHalo(s, a); else drawOutline(s, a, !!halos); }
         else if (pass === 1) drawBody(s, a, now, false);
         else if (pass === 2) { if (s.burnUntil > game.tick) drawBurning(s, a, now); }
-        else { // queasy after a mushroom: a sickly green wash, fading
+        else { // queasy after a mushroom: a sickly green wash, fading; starving, a pale one
           const q = a.queasyAt ? 1 - (now - a.queasyAt) / 1400 : 0;
           if (q > 0 && q <= 1) { ctx.fillStyle = rgba('#65a30d', 0.38 * q); silhouette(a, 0.5); }
+          if (a.pale) { ctx.fillStyle = rgba(HUNGER_PALE, 0.5 * a.pale); silhouette(a, 0); } // (starving: it pales, see hungerLook)
         }
         if (ox || oy) ctx.translate(-ox, -oy);
       }
