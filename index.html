@@ -15,13 +15,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- The font loads without blocking; until (or unless) it arrives, a system rounded font stands in. -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style/base.css">
+  <link rel="stylesheet" href="style/panels.css">
+  <link rel="stylesheet" href="style/screens.css">
 </head>
 <body>
   <main>
     <header>
       <div class="brand">
-        <!-- The S of Snakes is a honey snake (drawn by tools/title-s.js; style.css: title-s). The letter stays as text
+        <!-- The S of Snakes is a honey snake (drawn by tools/title-s.js; style/base.css: title-s). The letter stays as text
              for reading and copying; the drawing over it is hidden from screen readers. -->
         <h1>Barkstreet <span class="snake-s"><i aria-hidden="true"><svg
           class="s-tongue" viewBox="-10 -90 84 100"><path fill="none" stroke="#e11d48" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M51.4 -60.7L62.9 -61.1L67.1 -64.7M62.9 -61.1L67.3 -57.8"/></svg><b><svg
@@ -34,7 +36,7 @@
         <p class="tagline">A snake game on a mossy log</p>
       </div>
       <div class="hud">
-        <!-- Score over Best beside the title on a desktop; on a phone and in the column beside the board, each takes its own place (style.css). -->
+        <!-- Score over Best beside the title on a desktop; on a phone and in the column beside the board, each takes its own place (style/). -->
         <span class="stats">
           <span class="stat">Score <strong id="score">0</strong></span>
           <span class="stat">Best <strong id="best">0</strong></span>
@@ -216,7 +218,10 @@
   <script src="ai.js"></script>
   <script src="engine.js"></script>
   <script src="records.js"></script>
-  <script src="chatter.js"></script>
+  <script src="chatter/voices.js"></script>
+  <script src="chatter/zh.js"></script>
+  <script src="chatter/talk.js"></script>
+  <script src="chatter/moments.js"></script>
   <script src="audio.js"></script>
   <script src="render/core.js"></script>
   <script src="render/sprites.js"></script>

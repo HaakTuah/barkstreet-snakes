@@ -15,7 +15,7 @@ function announce(dying) {
   // after whatever this tick said.
   if (theGame.events.some(e => e.type === 'lastApples')) toast(FLAVOR.lastApples, 2800, '', 'round');
 }
-// Land the woodpecker took this tick, as the chatter sees it (chatter.js):
+// Land the woodpecker took this tick, as the chatter sees it (chatter/moments.js):
 // 'lostColony' for a colony gone from its snake's memory with a hole where
 // its flag stood, 'lostCapital' for a realm moved off a centre that's now
 // a hole. A snake's land changes as it thinks, a moment after the strike,
@@ -354,7 +354,7 @@ function nextToast() {
 // Gone at once (a card is coming up: the banners waiting go with it), or
 // faded out (its time is up, or its tag tapped again), the next waiting
 // after a breather. It settles in with a short drop and fades out, and
-// with reduced motion only fades (style.css).
+// with reduced motion only fades (style/).
 function hideToast(fade = false) {
   clearTimeout(toastTimer); toastTimer = 0;
   if (!fade && !toastEl.hidden && !toastEl.classList.contains('leaving') && performance.now() < toastHold) logBanner(bannerText, toastLevel, 'cut');
@@ -471,7 +471,7 @@ function showCard(card) {
   }
 
   overlay.querySelector('.card').classList.toggle('beat', !!card.beat); // the countdown: a big number
-  overlay.querySelector('.card').classList.toggle('ended', state === 'over' && !!player() && !player().alive); // the round's card when your death ended it: its words say more than your death's (style.css: how long you lasted), so more gives way to fit (a win keeps its badge)
+  overlay.querySelector('.card').classList.toggle('ended', state === 'over' && !!player() && !player().alive); // the round's card when your death ended it: its words say more than your death's (style/: how long you lasted), so more gives way to fit (a win keeps its badge)
   overlay.classList.remove('hidden');
   overlay.querySelector('.card').scrollTop = 0;
   if (!card.quiet) say(announcement(card));

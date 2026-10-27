@@ -1,5 +1,5 @@
 // The S of Snakes: draws the title's honey snake and writes it into
-// index.html (the h1's drawing) and style.css (the block between its two
+// index.html (the h1's drawing) and style/base.css (the block between its two
 // "title-s" marker comments), so the shape is changed here, never by hand.
 //   node tools/title-s.js                  writes both files
 //   node tools/title-s.js --preview=f.html also writes a big still of it, over Fredoka's S
@@ -286,7 +286,7 @@ ${waveKeys('tail', P.angles.tail)}
 /* (end of title-s) */`;
 
 // ---- writing it -------------------------------------------------------------
-const comment = `<!-- The S of Snakes is a honey snake (drawn by tools/title-s.js; style.css: title-s). The letter stays as text
+const comment = `<!-- The S of Snakes is a honey snake (drawn by tools/title-s.js; style/base.css: title-s). The letter stays as text
              for reading and copying; the drawing over it is hidden from screen readers. -->`;
 const h1 = `<h1>Barkstreet <span class="snake-s">${drawing}S</span>nakes</h1>`;
 const idx = path.join(ROOT, 'index.html');
@@ -294,9 +294,9 @@ let html = fs.readFileSync(idx, 'utf8');
 const html2 = html.replace(/(<!-- The S of Snakes[\s\S]*?-->\s*)?<h1>[\s\S]*?<\/h1>/, `${comment}\n        ${h1}`);
 if (html2 === html && !html.includes(h1)) throw new Error('no h1 in index.html');
 fs.writeFileSync(idx, html2);
-const cssFile = path.join(ROOT, 'style.css');
+const cssFile = path.join(ROOT, 'style', 'base.css');
 const style = fs.readFileSync(cssFile, 'utf8');
-if (!/\/\* title-s:[\s\S]*?\/\* \(end of title-s\) \*\//.test(style)) throw new Error('no title-s block in style.css');
+if (!/\/\* title-s:[\s\S]*?\/\* \(end of title-s\) \*\//.test(style)) throw new Error('no title-s block in style/base.css');
 fs.writeFileSync(cssFile, style.replace(/\/\* title-s:[\s\S]*?\/\* \(end of title-s\) \*\//, () => css));
 console.log(`the S: ${h1.length} bytes of markup; body ${fmt(L)} long, ${Math.round(L / P.pitch)} segments; joints at ${JP.map(pt).join(', ')}`);
 
