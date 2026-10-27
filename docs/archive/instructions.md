@@ -223,3 +223,8 @@ playing scripts that use it against scripts that ignore it on the same seeds, wh
 and asked "Should I add it as a rule there?":
 
 > If your expert opinion is that we should, then go ahead, expertly!
+
+In the design chat (27 October 2026, 11:01 UTC), after finding open questions in PRs and progress files that had not
+reached him:
+
+> Yes to all, expertly! And we need that all these questions get directly back to me from both projects. Having to hunt them down like this isn't good.
