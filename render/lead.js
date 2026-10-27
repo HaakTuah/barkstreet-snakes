@@ -315,6 +315,22 @@ function bends(a, i) {
 // narrower band joining it to the next: a caterpillar, so you can count
 // how long a snake is at a glance.
 const PINCH = 0.8;
+// A band's half-width (i to i + 1): PINCH of the segment's radius behind
+// it. Over a pit a span is slimmer (see sinkOf), but its segments are still
+// a cell apart, so they'd part: round beads bulging above a thin rod, their
+// outline scalloped round each, and its shade in a crescent on each bead.
+// So there its bands fill out to the narrower of its two segments, the
+// further over the pit the more (never past either: a head, or a gulp, is
+// still round, its band no square shoulder): a slimmer body, its line and
+// rim as smooth as on the bark, shaded along its underside (see
+// shadeUnder). What's up in the air doesn't sag, and keeps its pinch.
+function bandR(a, i) {
+  const r = a.rad[i + 1] * PINCH;
+  if (!a.bridging) return r;
+  let t = Math.max(a.hang[i], a.hang[i + 1]);
+  if (a.lifted) t *= 1 - Math.min(1, 3 * Math.max(a.lift[i], a.lift[i + 1]));
+  return t > 0 ? r + (Math.min(a.rad[i], a.rad[i + 1]) - r) * t : r;
+}
 // The body's outline shape, `grow` units bigger all round, as separate
 // fills in the current fill: bands as rectangles, joints as circles, the
 // same shapes the body is drawn with (they batch into one GPU operation).
@@ -329,13 +345,13 @@ function bodyFills(a, grow, cx = 0, cy = 0, reach = 0, pit = 0, air = 0) {
   for (let i = n - 2; i >= 0; i--) {
     if (reach && far(p, i, cx, cy, reach) && far(p, i + 1, cx, cy, reach)) continue;
     if (some && leftOut(a, i, i + 1, pit, air)) continue;
-    const h = rad[i + 1] * PINCH + grow, x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+    const h = bandR(a, i) + grow, x1 = p[2 * i], y1 = p[2 * i + 1], qx = c[2 * i], qy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
     if ((near(x1, qx) && near(qx, x2)) || (near(y1, qy) && near(qy, y2))) rectPiece(x1, y1, x2, y2, h); // (straight: one piece, no seam)
     else { rectPiece(x1, y1, qx, qy, h); rectPiece(qx, qy, x2, y2, h); }
   }
   for (let i = n - 1; i >= 0; i--) {
     if (reach && far(p, i, cx, cy, reach) && (i === n - 1 || far(p, i + 1, cx, cy, reach))) continue;
-    if (i < n - 1 && bends(a, i) && !(some && leftOut(a, i, i + 1, pit, air))) circle(c[2 * i], c[2 * i + 1], rad[i + 1] * PINCH + grow);
+    if (i < n - 1 && bends(a, i) && !(some && leftOut(a, i, i + 1, pit, air))) circle(c[2 * i], c[2 * i + 1], bandR(a, i) + grow);
     if (some && leftOut(a, i, i, pit, air)) continue;
     if (i === 0 && a.star) { ctx.beginPath(); starPath(a, grow); ctx.fill(); }
     else circle(p[2 * i], p[2 * i + 1], rad[i] + grow);
@@ -357,12 +373,12 @@ function shape(a, grow, i0 = 0, i1 = a.n - 1) {
   ctx.beginPath();
   const p = a.pts, c = a.cor;
   for (let i = i1 - 1; i >= i0; i--) {
-    const h = a.rad[i + 1] * PINCH + grow, x1 = p[2 * i], y1 = p[2 * i + 1], cx = c[2 * i], cy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
+    const h = bandR(a, i) + grow, x1 = p[2 * i], y1 = p[2 * i + 1], cx = c[2 * i], cy = c[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
     pieceRect(x1, y1, cx, cy, h);
     pieceRect(cx, cy, x2, y2, h);
   }
   for (let i = i1; i >= i0; i--) {
-    if (i < i1 && bends(a, i)) { const r = a.rad[i + 1] * PINCH + grow; ctx.moveTo(a.cor[2 * i] + r, a.cor[2 * i + 1]); ctx.arc(a.cor[2 * i], a.cor[2 * i + 1], r, 0, TAU); }
+    if (i < i1 && bends(a, i)) { const r = bandR(a, i) + grow; ctx.moveTo(a.cor[2 * i] + r, a.cor[2 * i + 1]); ctx.arc(a.cor[2 * i], a.cor[2 * i + 1], r, 0, TAU); }
     if (i === 0 && a.star) { starPath(a, grow); continue; }
     const r = a.rad[i] + grow;
     ctx.moveTo(p[2 * i] + r, p[2 * i + 1]);
