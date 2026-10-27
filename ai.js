@@ -665,7 +665,7 @@ window.SnakeAI = (() => {
   //          food: [{ x, y, kind }], holes: Set of cell indexes, age, tick, timeMs,
   //          pecks: the woodpecker's mark (among the holes), strikeAt: its strike's tick,
   //          landings: where it promised the food in its mark would land (its rings in the last PECK_PROMISE_TICKS moves),
-  //          burrows: [{ x, y }] }
+  //          burrows: [{ x, y, shutAt (once it grows shut: the game time it closes over) }] }
   // memory: an object kept for this snake for the whole round.
   function decide(view, persona, memory = {}) {
     const N = view.grid;
@@ -1120,9 +1120,13 @@ window.SnakeAI = (() => {
     // bead there, it coughs from then on. coughs[k]: how many of rival k's
     // next moves eat nothing, as I read it.
     // (The burrows, as anyone sees them: nothing rolls or is knocked onto
-    // one, and a scared beetle runs for one.)
-    const burrows = [];
-    if (view.burrows) for (const b of view.burrows) burrows.push(b.y * N + b.x);
+    // one, and a scared beetle runs for one, one growing shut too, unless
+    // it's all but shut: it closes within the second.)
+    const burrows = [], homes = [];
+    if (view.burrows) for (const b of view.burrows) {
+      burrows.push(b.y * N + b.x);
+      if (!(b.shutAt && b.shutAt - view.timeMs < 1000)) homes.push(b.y * N + b.x);
+    }
     let coughing = false;
     for (let k = 0; k < others.length; k++) { coughs[k] = Math.max(0, (others[k].cough || 0) - age); coughing ||= coughs[k] > 0; }
     const engine = window.SnakeEngine || {}, rollSide = engine.rollSide;
@@ -1241,7 +1245,7 @@ window.SnakeAI = (() => {
     function bugNear(c, x, y) {
       let d = HOLE, who = -1, home = -1, gap = TUNE.BEETLE_HOME_REACH;
       for (let k = 0; k < others.length; k++) { const e = Math.abs(x - headX[k]) + Math.abs(y - headY[k]); if (e < d) { d = e; who = k; } }
-      for (let k = 0; k < burrows.length; k++) { const h = burrows[k], g = Math.abs(h % N - x) + Math.abs((h - h % N) / N - y); if (g < gap) { gap = g; home = h; } }
+      for (let k = 0; k < homes.length; k++) { const h = homes[k], g = Math.abs(h % N - x) + Math.abs((h - h % N) / N - y); if (g < gap) { gap = g; home = h; } }
       nearStamp[c] = stampN; nearHead[c] = d; nearWho[c] = who; nearHome[c] = home; nearGap[c] = gap;
     }
     // (The other beetle's state in slot s, for beetle b: where it's dug in
@@ -1289,7 +1293,7 @@ window.SnakeAI = (() => {
       }
       if (best < 0) return;
       const ni = c + BUG_WAYS[best].y * N + BUG_WAYS[best].x;
-      bugCell[n] = scared && (ni === dug || burrows.includes(ni)) ? -1 : ni; bugWay[n] = best; bugMoved[n] = now;
+      bugCell[n] = scared && (ni === dug || homes.includes(ni)) ? -1 : ni; bugWay[n] = best; bugMoved[n] = now;
     }
     // The strike knocks a beetle in the mark to where the rule puts it: it
     // scurries there (the way it flew) and digs no more; with nowhere to go,

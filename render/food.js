@@ -560,12 +560,17 @@ function drawFood(alpha, now) {
 // beetle's collar closes over it (see drawDive) and it's there, freshly
 // bored, its rim raw pale wood with splinters sticking out of it and its
 // sawdust kicked out round it; over FRESH_MS it settles into an ordinary
-// burrow (see drawFresh). One closing over (a 'heal': at the most, the one
-// unused longest, to make room) fills with sawdust, moss creeps over it,
-// and it fades into the bark over HEAL_MS (see drawHeals); with reduced
-// motion, filled and mossed at once, then fading.
-const CRACK_GROW_TICKS = 260, FRESH_MS = 4000, FRESH_HOLD = 1200, HEAL_MS = 1100;
-const heals = []; // { x, y, at, v (its look), cs (its cracks' sprite, as last drawn) }
+// burrow (see drawFresh). One growing shut (shutFrom..shutAt: at the most,
+// the one unused longest, to make room) closes up over those 6 to 14 s of
+// game time: sawdust creeps in from its rim as the opening shrinks, moss
+// creeps over the rim and the bark's grain grows across it (see
+// drawShutting). Closing over at the end (a 'heal') the plug fills it, the
+// moss covers it, and it fades into the bark over HEAL_MS (see drawHeals);
+// with reduced motion, filled and mossed at once, then fading. A faint
+// scar stays a while (SCAR_MS) where it was.
+const CRACK_GROW_TICKS = 260, FRESH_MS = 4000, FRESH_HOLD = 1200, HEAL_MS = 1100, SCAR_MS = 20000, SHUT_HOLE = 0.6;
+const heals = []; // { x, y, at, v (its look), cs (its cracks' sprite, as last drawn), grown (how far it had grown shut, 0..1) }
+const shutSeen = new Map(); // cell -> how far a burrow there has grown shut, as last drawn (0..1)
 const crackCache = new Map(); // cell -> branches of [x, y] points (cells)
 const burrowSeen = new Map(); // cell -> when it first showed (for its pop)
 function cracksOf(b) {
@@ -609,13 +614,45 @@ function drawBurrows(now) {
     const grow = Math.min(1, Math.max(0.15, (game.tick - b.at) / CRACK_GROW_TICKS));
     // The cracks, from their sprite, on whole device pixels.
     const cs = crackSprite(b, key, grow);
+    const sp = b.shutAt > b.shutFrom ? Math.min(1, Math.max(0, (shownTime - b.shutFrom) / (b.shutAt - b.shutFrom))) : 0, shut = sp * (2 - sp); // (eased out: it shows from the start)
+    if (shut > 0) shutSeen.set(key, shut);
     ctx.setTransform(1, 0, 0, 1, shakeX, shakeY);
+    if (shut > 0) ctx.globalAlpha = 1 - 0.5 * shut; // (its cracks fading as it grows shut)
     ctx.drawImage(cs.c, cs.X, cs.Y);
+    ctx.globalAlpha = 1;
     ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
     // The opening (a cached sprite, one of four).
     const w = SPRITE * CELL * pop;
+    if (shut > 0) { drawShutting(x, y, key, w, shut); continue; }
     ctx.drawImage(burrowSprite(BURROW_LOOKS[key % 4]), x - w / 2, y - w / 2, w, w);
     if (b.dug && age < FRESH_MS) drawFresh(x, y, key, age);
+  }
+}
+// A burrow growing shut, `shut` of the way (0..1): sawdust packed in under
+// its rim, the opening shrinking into it, tufts of the log's moss creeping
+// in over the rim, and the bark's grain growing across.
+function drawShutting(x, y, key, w, shut) {
+  const v = BURROW_LOOKS[key % 4], c = CELL;
+  ctx.globalAlpha = Math.min(1, shut * 2.5);
+  ctx.drawImage(healPlugSprite(), x - w / 2, y - w / 2, w, w);
+  ctx.globalAlpha = 1;
+  const sh = w * (1 - SHUT_HOLE * shut);
+  ctx.drawImage(burrowSprite(v), x - sh / 2, y - sh / 2, sh, sh);
+  const g = Math.max(0, (shut - 0.25) / 0.75); // (the grain, once the sawdust is in)
+  if (g > 0) {
+    ctx.strokeStyle = `rgba(74,44,18,${(0.75 * g).toFixed(3)})`; ctx.lineWidth = Math.max(1, c * 0.045);
+    ctx.beginPath();
+    for (const [dx, len] of [[-0.11, 0.3], [0.01, 0.42], [0.12, 0.28]]) { const l = c * len * g / 2; ctx.moveTo(x + c * dx, y - l); ctx.lineTo(x + c * dx + c * 0.02, y + l); } // (along the log, as its cracks run)
+    ctx.stroke();
+  }
+  const m = Math.max(0, (shut - 0.35) / 0.65), ms = w * (0.16 + 0.22 * m);
+  if (m > 0) {
+    ctx.globalAlpha = 0.85 * Math.min(1, m * 1.5);
+    for (let i = 0; i < 3; i++) { // (tufts on its rim, each burrow's own)
+      const a = i * TAU / 3 + (key % 7) * 0.5, px = x + Math.cos(a) * c * 0.26 * (1 - 0.3 * m), py = y + Math.sin(a) * c * 0.19 * (1 - 0.3 * m);
+      ctx.drawImage(healMossSprite(v), px - ms / 2, py - ms / 2, ms, ms);
+    }
+    ctx.globalAlpha = 1;
   }
 }
 const BURROW_LOOKS = ['0', '1', '2', '3'];
@@ -674,8 +711,15 @@ function drawHeals(now) {
   const c = CELL, w = SPRITE * c;
   for (let i = heals.length - 1; i >= 0; i--) {
     const h = heals[i], p = (now - h.at) / HEAL_MS;
-    if (p >= 1 || p < 0) { heals.splice(i, 1); continue; }
     const x = h.x * c + c / 2, y = h.y * c + c / 2;
+    if (p >= 1 && p < 1 + SCAR_MS / HEAL_MS && !game.burrows?.some(b => b.x === h.x && b.y === h.y)) { // (its faint scar, fading)
+      const f = 1 - (p - 1) * HEAL_MS / SCAR_MS;
+      ctx.globalAlpha = 0.3 * f * Math.min(1, (p - 1) * 4);
+      ctx.drawImage(healScarSprite(h.v), x - w / 2, y - w / 2, w, w);
+      ctx.globalAlpha = 1;
+      continue;
+    }
+    if (p >= 1 || p < 0) { heals.splice(i, 1); continue; }
     const f = p < 0.55 ? 1 : 1 - (p - 0.55) / 0.45, a = f * f * (3 - 2 * f);
     const fill = reduced ? 1 : Math.min(1, p / 0.4), moss = reduced ? 1 : Math.max(0, Math.min(1, (p - 0.2) / 0.4));
     if (h.cs?.c && h.cs.k === k) { // (its cracks, as last drawn, closing with it)
@@ -685,8 +729,9 @@ function drawHeals(now) {
       ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
     }
     ctx.globalAlpha = a;
-    ctx.drawImage(burrowSprite(h.v), x - w / 2, y - w / 2, w, w);
-    const sf = 0.3 + 0.7 * fill * (2 - fill); // (eased out)
+    const hw = w * (1 - SHUT_HOLE * (h.grown || 0)); // (as far as it had grown shut)
+    ctx.drawImage(burrowSprite(h.v), x - hw / 2, y - hw / 2, hw, hw);
+    const sf = h.grown ? 1 : 0.3 + 0.7 * fill * (2 - fill); // (eased out; grown shut, it's packed already)
     ctx.drawImage(healPlugSprite(), x - w * sf / 2, y - w * sf / 2, w * sf, w * sf);
     if (moss > 0) { const sm = 0.35 + 0.65 * moss * (2 - moss); ctx.globalAlpha = a * Math.min(1, moss * 2); ctx.drawImage(healMossSprite(h.v), x - w * sm / 2, y - w * sm / 2, w * sm, w * sm); }
     ctx.globalAlpha = 1;
@@ -702,6 +747,18 @@ const drawHealPlug = g => {
   g.beginPath();
   for (const [px, py, r] of [[-0.08, -0.05, 0.1], [0.08, -0.02, 0.09], [0, 0.07, 0.08], [-0.15, 0.06, 0.06], [0.16, 0.08, 0.05]]) { g.moveTo(c * (px + r), c * py); g.arc(c * px, c * py, c * r, 0, TAU); }
   g.fill();
+};
+// The scar it leaves: a pale oval of packed sawdust gone grey, the grain
+// healed across it.
+const healScarSprite = v => sprite('healScar', v, drawHealScar);
+const drawHealScar = (g, v) => {
+  const c = CELL, rot = 0.4 + Number(v) * 0.15;
+  g.fillStyle = 'rgba(206,180,136,0.55)'; g.beginPath(); g.ellipse(0, 0, c * 0.27, c * 0.19, rot, 0, TAU); g.fill();
+  g.strokeStyle = 'rgba(52,30,12,0.6)'; g.lineWidth = Math.max(1, c * 0.03);
+  g.beginPath(); g.ellipse(0, 0, c * 0.27, c * 0.19, rot, 0, TAU); g.stroke();
+  g.beginPath();
+  for (const dx of [-0.1, 0.02, 0.12]) { g.moveTo(c * dx, -c * 0.17); g.lineTo(c * (dx + 0.02), c * 0.17); }
+  g.stroke();
 };
 // Moss over it: a little cushion of the log's own moss (dark olive, never
 // the apples' lime), its tufts run together, a shadow under it, each tuft
