@@ -200,3 +200,17 @@ So what starves a new player is not seeing hunger at all: unseen, 8.0% of rounds
 - Everywhere else (a tablet, a desktop, a phone on its side) nothing changes.
 
 **Tested:** `tools/layout-test.js` on its upright phones: the row at most 6 px under the frame and the ledge 0 px tall; the bird perched under the board, over the row, at least 48 px tall where the screen's foot allows (the room to it less 8 px elsewhere), and the switch and the chatter taking a tap under it (its layer's `pointer-events: none`); playing and watching with the chatter full, folded to one row of the newest line, a finger's tap opening it to whole lines with the board unmoved and nothing scrolling, and another tap folding it. Pictures: `tools/dev/phone-gap-shots.js`.
+
+### Wildcard's hair
+
+Haakon: "Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side.
+It must read at phone size."
+
+- *Before:* a flat golden patch combed across the back of the head to a small curl over one eye, the same size as the
+  head; at phone size it read as a yellow cap.
+- *Now* (`render/faces.js`, `hairBack()` and `pompadour()`): two shapes, each with an amber outline so they read at phone
+  size. Behind, a fluffy mass puffed out past the head on three sides, its long strands swept back. In front, a lighter
+  roll across the brow just behind the eyes, with a shine along its crest, swooping forward along one side to a flick
+  past that eye; its strands sweep the same way. The eyes, pout and squint are as they were.
+- Drawn in the head's own frame, so it is the same at every heading, and still: nothing in it moves, with reduced motion
+  or without. Capricious's Wildcard mood wears it too. Drawing only.
