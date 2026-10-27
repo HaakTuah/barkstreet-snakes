@@ -88,7 +88,7 @@ function perchFor(tx, ty) {
   // leave it a gutter and too tall to show the ledge whole: there it's
   // smaller rather than over the cells, on the ledge or beside the board,
   // whichever lets it be the bigger, down to PERCH_FLOOR_PX tall; the page
-  // leaves it room for that much, see style.css)
+  // leaves it room for that much, see style/)
   const between = boardRect.upright && (side === 'left' || side === 'right') && !(fit[side] >= least) && shrunk(side) < least;
   if (between && ledge >= floor && ledge >= shrunk(side)) side = 'ledge';
   const nowhere = (side === 'left' || side === 'right') && !(fit[side] >= least);

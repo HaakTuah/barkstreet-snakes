@@ -354,7 +354,7 @@ function nextToast() {
 // Gone at once (a card is coming up: the banners waiting go with it), or
 // faded out (its time is up, or its tag tapped again), the next waiting
 // after a breather. It settles in with a short drop and fades out, and
-// with reduced motion only fades (style.css).
+// with reduced motion only fades (style/).
 function hideToast(fade = false) {
   clearTimeout(toastTimer); toastTimer = 0;
   if (!fade && !toastEl.hidden && !toastEl.classList.contains('leaving') && performance.now() < toastHold) logBanner(bannerText, toastLevel, 'cut');
@@ -471,7 +471,7 @@ function showCard(card) {
   }
 
   overlay.querySelector('.card').classList.toggle('beat', !!card.beat); // the countdown: a big number
-  overlay.querySelector('.card').classList.toggle('ended', state === 'over' && !!player() && !player().alive); // the round's card when your death ended it: its words say more than your death's (style.css: how long you lasted), so more gives way to fit (a win keeps its badge)
+  overlay.querySelector('.card').classList.toggle('ended', state === 'over' && !!player() && !player().alive); // the round's card when your death ended it: its words say more than your death's (style/: how long you lasted), so more gives way to fit (a win keeps its badge)
   overlay.classList.remove('hidden');
   overlay.querySelector('.card').scrollTop = 0;
   if (!card.quiet) say(announcement(card));

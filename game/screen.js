@@ -18,7 +18,7 @@ const inset = name => parseFloat(rootStyle.getPropertyValue(name)) || 0;
 // What's above the frame, measured (the page's top, the header and the
 // tags, however many rows they wrap to in whatever font): the board is as
 // big as leaves room for it, and on a phone held upright, at a height in
-// between, leaves the bird room beside it or under it (style.css,
+// between, leaves the bird room beside it or under it (style/,
 // --above). Set only when it changes: the board's own change, which moves
 // nothing above it on a phone, doesn't come round again. Over the board
 // (a tablet, a near-square window) the page is as wide as the board, and
@@ -55,7 +55,7 @@ const placeBoard = () => {
   const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: ledgeEl ? ledgeEl.offsetHeight : 0, upright: !!ledgeEl?.offsetParent, hang: [] }; // (upright: a phone held upright, the ledge laid out, though it's 0 px tall where the board leaves the bird a gutter instead)
   // (held upright, where the row under the board is closer than the moss
   // and the leaves hang off the frame's bottom, 12 px, they're left off:
-  // style.css .snug)
+  // style/ .snug)
   frameEl.classList.toggle('snug', free.upright && footEl.getBoundingClientRect().top - frameEl.getBoundingClientRect().bottom < 12);
   for (const el of furniture) {
     const f = el.getBoundingClientRect();
@@ -98,7 +98,7 @@ window.addEventListener('scroll', placeBoard, { passive: true });
 const placer = new ResizeObserver(placeBoard);
 for (const el of [mainEl, ledgeEl, ...furniture]) if (el) placer.observe(el);
 // The chatter takes what's left of the screen: its box is the column's
-// rest (style.css), whatever it holds, so the page is one screen tall in
+// rest (style/), whatever it holds, so the page is one screen tall in
 // every state. What shows in it is worked out here, as lines come and go
 // and the box changes (data-fit): the caption and as many whole lines as
 // fit, newest first (full), where the box has room for the caption and two
@@ -146,7 +146,7 @@ document.fonts?.ready.then(fitChatter);
 // side less a notch's home bar, 780×320 in Safari), the help, which only
 // says what they do, gives the chatter its room; where a row fits beside
 // it, it stays. (Held upright on a phone they take the help's place:
-// style.css.) And in any state, the help gives way where it doesn't fit
+// style/.) And in any state, the help gives way where it doesn't fit
 // the row: an item running past its box (the speed buttons and the switch
 // squeezing it, watching on a narrow touch screen), or its lines pushing
 // the row past the page's bottom (a narrow window with a mouse, the keys'

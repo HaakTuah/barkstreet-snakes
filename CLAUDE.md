@@ -12,7 +12,7 @@ https://haaktuah.github.io/barkstreet-snakes/.
 | What is done and the queue, in order | `docs/PROGRESS.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
 | Materials the queue points to: the owner's saved tasks word for word, the teaching prototypes and judges, the woodpecker acts draft, the bridge-glitch repro, the unverified jumps start, the Sniper screenshot | `docs/handoff/` |
-| The game | `index.html`, `style.css`, `engine.js`, `ai.js`, `render/` (seventeen files, listed in `render/core.js`), `game/` (seven, listed in `game/core.js`), `chatter/` (four, listed in `chatter/voices.js`), `audio.js`, `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
+| The game | `index.html`, `style/` (three stylesheets, listed in `style/base.css`), `engine.js`, `ai.js`, `render/` (seventeen files, listed in `render/core.js`), `game/` (seven, listed in `game/core.js`), `chatter/` (four, listed in `chatter/voices.js`), `audio.js`, `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
 | Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, `simulate.js`, `abtest.js`, `bench-ai.js`, `browser.js`) |
 | Study and measuring tools from earlier rounds | `tools/dev/` (teaching audits, burrow spacing, board sizes, the woodpecker and food study, PR pictures) |
 | History: the old polish audit, the plan as it grew, Haakon's instructions word for word | `AUDIT.md`, `docs/archive/` |

@@ -455,21 +455,24 @@ const LOG_ROWS = `(() => {
   return { whole, sliced, end, top: lb.top, lines, parts };
 })()`;
 
-// A browser without svh or dvh: the page's own stylesheet, those units made
+// A browser without svh or dvh: the page's own stylesheets, those units made
 // unknown to the browser (and its tests for them false). A declaration with
 // one that has var() in it isn't checked until it's used, so a second one
 // can't fall back to a first: it would lose its property. Then the page is
 // laid out again.
 const NO_SVH = `(async () => {
-  const link = document.querySelector('link[href="style.css"]');
-  const css = await (await fetch(link.href)).text();
-  const st = document.createElement('style');
-  st.textContent = css.replace(/(\\d)([sd]vh)\\b/g, '$1zzh');
-  link.replaceWith(st);
+  let n = 0;
+  for (const link of document.querySelectorAll('link[rel="stylesheet"][href^="style/"]')) {
+    const css = await (await fetch(link.href)).text();
+    const st = document.createElement('style');
+    st.textContent = css.replace(/(\\d)([sd]vh)\\b/g, '$1zzh');
+    link.replaceWith(st);
+    n += (css.match(/\\d[sd]vh\\b/g) || []).length;
+  }
   await new Promise(r => setTimeout(r, 200));
   dispatchEvent(new Event('resize'));
   await new Promise(r => setTimeout(r, 200));
-  return (css.match(/\\d[sd]vh\\b/g) || []).length;
+  return n;
 })()`;
 
 // The header, as rows: what's on each, left to right (the title, Score,
