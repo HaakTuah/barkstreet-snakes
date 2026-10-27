@@ -43,6 +43,8 @@ later task then reads a few small files instead of these. Haakon may veto it.
 - engine.js and ai.js stay whole (decided 27 October 2026). ai.js's `decide()` alone is one 68 KB function: splitting it
   means restructuring its inner closures, not a clean split. The engine's internals in the page's shared scope could be
   reached by name from the AI's code, against "what the AI is shown (`aiView()` only)"; kept in its closure, they can't.
+- style.css into the three stylesheets of `style/`, linked in the same order. *Done on 27 October 2026 (PR #46).* With it,
+  item 1b is done.
 
 ### 2. Types for the multiplayer messages: a small PR
 
