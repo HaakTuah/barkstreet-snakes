@@ -154,7 +154,7 @@
 
     <!-- The chatter takes what's left of the screen: as many whole lines as fit, newest first; with less room its
          caption goes first, then all but the newest line (cut to its rows), then the panel (its switch stays in the
-         row above). snake.js fitChatter. -->
+         row above). game/screen.js fitChatter. -->
     <section class="chatter" aria-label="Bark chatter">
       <div class="chatter-head">
         <span id="chatter-label">Bark chatter</span>
@@ -237,7 +237,13 @@
   <script src="render/world.js"></script>
   <script src="online.js"></script>
   <script src="net.js"></script>
-  <script src="snake.js"></script>
+  <script src="game/core.js"></script>
+  <script src="game/round.js"></script>
+  <script src="game/banners.js"></script>
+  <script src="game/hud.js"></script>
+  <script src="game/input.js"></script>
+  <script src="game/friends.js"></script>
+  <script src="game/screen.js"></script>
   <script>
     // Offline play once it's served (see sw.js); never from a file, where there's nothing to cache.
     if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

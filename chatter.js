@@ -1642,7 +1642,7 @@ window.SnakeChatter = (() => {
   function init(opts) {
     ({ boardEl, logEl } = opts);
     // Is the log on screen, with room for a whole line? Where the chatter
-    // has room for no row, or for a strip of one (snake.js fitChatter), a
+    // has room for no row, or for a strip of one (game/screen.js fitChatter), a
     // line put in the log alone would be lost or cut. (Measured as the page
     // changes size or scrolls, and as the chatter's fit changes, never per
     // frame.)
@@ -1878,7 +1878,7 @@ window.SnakeChatter = (() => {
   // The banner's box on the board (it's centred by a transform, which the
   // offsets leave out). While it's faded for a head under it, the board
   // comes first and bubbles may cross it; above the board (a phone held
-  // upright: snake.js placeToast), it's in nobody's way.
+  // upright: game/banners.js placeToast), it's in nobody's way.
   let banner = null, bannerStale = true, bannerPx = 0;
   function readBanner(boardPx) {
     bannerStale = false;

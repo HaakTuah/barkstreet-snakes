@@ -45,14 +45,14 @@ function intoNeck(s, d) {
 // the host's (a friend's screen never has it, and the host's own press
 // waits a round trip), so it shows from the press. For a few ticks at most.
 const PRESS_TICKS = 3;
-const heardOf = s => press.stun < 0 && !!press.dir && press.tick >= game.tick - PRESS_TICKS && !(press.dir.x === s.dir.x && press.dir.y === s.dir.y) && !intoNeck(s, press.dir);
+const heardOf = s => pressSeen.stun < 0 && !!pressSeen.dir && pressSeen.tick >= game.tick - PRESS_TICKS && !(pressSeen.dir.x === s.dir.x && pressSeen.dir.y === s.dir.y) && !intoNeck(s, pressSeen.dir);
 // The way a snake goes next: a person's first queued turn (as the game
 // takes it: never into its own neck), or your press as this screen saw it;
 // a rival's plan made ahead of the tick; else on as it's going.
 function wayOf(s) {
   if (s.isPlayer && !s.autopilot) {
     for (let i = 0; i < s.queue.length; i++) if (!intoNeck(s, s.queue[i])) return s.queue[i];
-    return s.id === viewerId && heardOf(s) ? press.dir : s.dir;
+    return s.id === viewerId && heardOf(s) ? pressSeen.dir : s.dir;
   }
   return s.plannedTick === game.tick && s.planned ? s.planned : s.dir;
 }
