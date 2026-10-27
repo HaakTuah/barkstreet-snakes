@@ -9,6 +9,7 @@
  * @typedef {{ t: 'ping', at: number }} PingMsg  host -> guest, every PING_MS: at, the host's clock
  * @typedef {{ t: 'pong', at: number }} PongMsg  guest -> host: the ping's at, back
  * @typedef {{ t: 'k' }} KeepaliveMsg  guest -> host, every KEEPALIVE_MS: still here
+ * @typedef {PingMsg | PongMsg | KeepaliveMsg} NetMessage
  */
 window.SnakeNet = (() => {
   const PEERJS = 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js';
