@@ -174,4 +174,15 @@ Escapes stay inside the 20–35%. The simulation's check passed on both seeds.
 
 The rivals are shown nothing new (their own clock was always in `aiView()`, as a person sees their bar); online, the tag already carries `lastAte` and `mealMs` (protocol 8), so a guest sees the same. **Tested:** `tools/render-test.js`, Sniper just fed, with 2 s left and starving: slimmer in its own colour, growl lines beside its head, and starving paler.
 
-**A new player's starving rate** (`tools/dev/hunger-seen/measure.js`): there is no model of a person, so a stand-in. AI rounds with the game's own rules, seat 0 standing in for a new player (a rival plays it), with its view of its own hunger hidden until it would notice it, then a second late: never (the owner on a wide desktop), at the warning toast (before this change), once its body is visibly thinner (5%, at 37% of its meal gone: after), or always (a rival, or someone watching the bar). MEASURED_TABLE
+**A new player's starving rate** (`tools/dev/hunger-seen/measure.js`): there is no model of a person, so a stand-in. AI rounds with the game's own rules, seat 0 standing in for a new player (a rival plays it), with its view of its own hunger hidden until it would notice it, then a second late: never (the owner on a wide desktop), at the warning toast (before this change), once its body is visibly thinner (5%, at 37% of its meal gone: after), or always (a rival, or someone watching the bar). 
+
+*Measured*, 300 rounds a seed on fresh seeds 61 / 73:
+
+| Seat 0 notices its hunger | Rounds it starved in | Its deaths by starving | Snake-time in the warning (starving) | Wins |
+| --- | --- | --- | --- | --- |
+| never (the bar unseen) | 6.7 / 9.3% | 9.0 / 12.3% | 14.7 / 16.1% (5.0 / 5.7) | 25.7 / 24.0% |
+| at the toast (before) | 1.3 / 1.3% | 1.9 / 1.8% | 13.6 / 13.4% (3.7 / 3.5) | 29.0 / 24.7% |
+| from its body (after) | 0.3 / 2.3% | 0.4 / 3.1% | 12.4 / 14.0% (3.0 / 4.4) | 24.3 / 24.7% |
+| always | 1.3 / 1.3% | 1.8 / 1.8% | 12.2 / 12.6% (3.4 / 3.5) | 24.3 / 26.0% |
+
+So what starves a new player is not seeing hunger at all: unseen, 8.0% of rounds end in starving (48 of 600); seen in any of the three ways, 1.3% (8 of 600 each). Seeing it earlier on the body adds nothing over a toast acted on at once, by this measure; the stand-in reads 6 s as plenty, as the rivals do. The change is where it shows: the toast is easy to miss, as the owner did on a wide desktop, and your body is where you are looking. A person's real rate needs a person: the owner's next desktop rounds will say.
