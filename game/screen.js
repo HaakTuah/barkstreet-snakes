@@ -106,7 +106,7 @@ for (const el of [mainEl, ledgeEl, ...furniture]) if (el) placer.observe(el);
 // the newest fits whole, it cut to the rows that do; with no room for a
 // row, no panel at all (none: the switch is still in the row above, and
 // the rivals' long lines go to their bubbles on the board, as they do in
-// a strip: chatter.js). A line is never sliced through, and an older line
+// a strip: chatter/talk.js). A line is never sliced through, and an older line
 // is shown whole or not at all. Decided from the box, never from the
 // panel: the box's size doesn't depend on what's in it, so nothing here
 // comes round again, and nothing comes and goes as lines of one row or

@@ -4,7 +4,7 @@ description: Read-only search of this repository. Use it to find where something
 model: haiku
 tools: Read, Grep, Glob, Bash
 ---
-You find things in this repository and say where they are. Some game files are large (`chatter.js` is about 150 KB):
+You find things in this repository and say where they are. Some game files are large (`engine.js` and `ai.js` are over 100 KB):
 never read one whole. Use `scripts/codemap.sh <file>` (its functions with line numbers) and grep first, then read only
 the lines you need. The design is in `docs/design/`, one file per topic.
 

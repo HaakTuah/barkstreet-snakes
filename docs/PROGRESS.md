@@ -38,6 +38,11 @@ later task then reads a few small files instead of these. Haakon may veto it.
 
 - snake.js into the seven files of `game/` (renames where its names met render/'s; `tools/scope-test.js` guards the shared
   scope). *Done on 27 October 2026 (PR #43).*
+- chatter.js into the four files of `chatter/` (its lines, in English and Chinese, and the talk). *Done on 27 October 2026
+  (PR #45).*
+- engine.js and ai.js stay whole (decided 27 October 2026). ai.js's `decide()` alone is one 68 KB function: splitting it
+  means restructuring its inner closures, not a clean split. The engine's internals in the page's shared scope could be
+  reached by name from the AI's code, against "what the AI is shown (`aiView()` only)"; kept in its closure, they can't.
 
 ### 2. Types for the multiplayer messages: a small PR
 

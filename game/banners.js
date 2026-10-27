@@ -15,7 +15,7 @@ function announce(dying) {
   // after whatever this tick said.
   if (theGame.events.some(e => e.type === 'lastApples')) toast(FLAVOR.lastApples, 2800, '', 'round');
 }
-// Land the woodpecker took this tick, as the chatter sees it (chatter.js):
+// Land the woodpecker took this tick, as the chatter sees it (chatter/moments.js):
 // 'lostColony' for a colony gone from its snake's memory with a hole where
 // its flag stood, 'lostCapital' for a realm moved off a centre that's now
 // a hole. A snake's land changes as it thinks, a moment after the strike,
