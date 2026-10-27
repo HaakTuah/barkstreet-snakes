@@ -10,7 +10,7 @@ dir="${TMPDIR:-/tmp}/barkbite-tests"; mkdir -p "$dir"; fail=0
 for s in "${suites[@]}"; do
   log="$dir/$s.log"; start=$(date +%s)
   if [ "$s" = types ]; then # (TypeScript, a check only: the one installed, or fetched as CI does)
-    if command -v tsc >/dev/null; then tsc --noEmit -p jsconfig.json; else npx -y -p typescript@6.0.2 tsc --noEmit -p jsconfig.json; fi >"$log" 2>&1; rc=$?
+    if [ "$(tsc -v 2>/dev/null)" = "Version 6.0.2" ]; then tsc --noEmit -p jsconfig.json; else npx -y -p typescript@6.0.2 tsc --noEmit -p jsconfig.json; fi >"$log" 2>&1; rc=$?
   else node "tools/$s-test.js" >"$log" 2>&1; rc=$?; fi
   t=$(( $(date +%s) - start ))
   if [ $rc -eq 0 ]; then echo "PASS $s (${t}s)"; else

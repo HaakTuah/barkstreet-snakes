@@ -438,8 +438,9 @@ for (const msg of SAMPLES) {
   }
   if (!same(back, msg)) { console.error(`a ${msg.t} message changed on the way:\n  sent ${JSON.stringify(msg)}\n  came ${JSON.stringify(back)}`); process.exit(1); }
 }
-// Shapes: each message's fields, and each row a message carries (a tick's events by name), each field's type.
-const typeOf = v => v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v === 'object' ? `object(${Object.keys(v).sort().join(',')})` : typeof v;
+// Shapes: each message's fields, and each row a message carries (a tick's events by name), each field's type
+// (a list's, with its first item's).
+const typeOf = v => v === null ? 'null' : Array.isArray(v) ? `array<${v.length ? typeOf(v[0]) : ''}>` : typeof v === 'object' ? `object(${Object.keys(v).sort().join(',')})` : typeof v;
 const shapeOf = v => Array.isArray(v) ? `[${v.length}] ${v.map(typeOf).join(' ')}` : `{${Object.keys(v).length}} ${Object.keys(v).sort().map(k => `${k}: ${typeOf(v[k])}`).join(', ')}`;
 const SHAPES = {};
 for (const msg of SAMPLES) {
@@ -465,7 +466,22 @@ const quoted = (text, re) => new Set([...text.matchAll(re)].flatMap(m => words(m
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const ONLINE = read('online.js'), NET = read('net.js');
 const docs = text => [...text.matchAll(/\/\*\*[\s\S]*?\*\//g)].map(m => m[0]).join('\n');
-const typedT = quoted(docs(ONLINE) + docs(NET), /\bt: ((?:'\w+'(?: \| )?)+)/g);
+// (the t's of the typedefs the unions HostMessage, GuestMessage and NetMessage name, followed through)
+const TYPEDEFS = new Map();
+for (const chunk of (docs(ONLINE) + docs(NET)).split('@typedef ').slice(1)) {
+  let depth = 0, end = 0;
+  for (; end < chunk.length; end++) { if (chunk[end] === '{') depth++; if (chunk[end] === '}' && !--depth) break; }
+  const name = chunk.slice(end + 1).match(/^\s*(\w+)/);
+  if (name) TYPEDEFS.set(name[1], chunk.slice(1, end));
+}
+const typedT = new Set();
+const follow = name => {
+  const body = TYPEDEFS.get(name);
+  if (body == null) { console.error(`the message type ${name} isn't a @typedef`); process.exit(1); }
+  if (/^\s*\w+(\s*\|\s*\w+)*\s*$/.test(body)) body.split('|').forEach(n => follow(n.trim()));
+  else for (const t of quoted(body, /\bt: ((?:'\w+'(?: \| )?)+)/g)) typedT.add(t);
+};
+['HostMessage', 'GuestMessage', 'NetMessage'].forEach(follow);
 const eventDoc = ONLINE.slice(ONLINE.indexOf('@typedef {[\'eat\''), ONLINE.indexOf('} EventRow'));
 const typedE = new Set([...quoted(eventDoc, /\[((?:'\w+'))/g), ...quoted(eventDoc, /type: ((?:'\w+'(?: \| )?)+)/g)]);
 const GAME_CODE = ['net.js', 'online.js', ...fs.readdirSync(path.join(ROOT, 'game')).map(f => `game/${f}`)].map(read).join('\n').replace(/\/\*\*[\s\S]*?\*\//g, '');

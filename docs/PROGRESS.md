@@ -5,7 +5,7 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 
 ## State (27 October 2026)
 
-Nothing is in progress. Queue items 1, 1b and 2 are done (2: PR #PRNUM, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages, waiting on
+Nothing is in progress. Queue items 1, 1b and 2 are done (2: PR #48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages, waiting on
 Haakon to switch Pages to the gh-pages branch). Every PR up to #36 is merged into `main` (#33 playtest, #34 one screen, #35 teaching step 1:
 banners you can read, #36 burrows keep apart). PR #38 (the handoff, the files from the old computer and an input-test
 fix) is merged into `develop`, which was made from `main` on 26 October; `main` takes it when Haakon merges `develop`.
@@ -56,7 +56,7 @@ Also in `next-tasks-verbatim.md`:
 - A round-trip test for every message kind.
 - A pinned fingerprint of the message shapes together with the protocol version. It fails when the shapes change without a version bump.
 
-*Done on 27 October 2026 (PR #PRNUM)*: see "The messages, typed" in `docs/design/22-play-with-friends-online.md`.
+*Done on 27 October 2026 (PR #48)*: see "The messages, typed" in `docs/design/22-play-with-friends-online.md`.
 
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
