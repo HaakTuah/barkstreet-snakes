@@ -208,7 +208,7 @@ It must read at phone size."
 
 - *Before:* a flat golden patch combed across the back of the head to a small curl over one eye, the same size as the
   head; at phone size it read as a yellow cap.
-- *Now* (`render/faces.js`, `hairBack()` and `pompadour()`): two shapes, each with an amber outline so they read at phone
+- *Now* (`render/faces.js`, `hairBack()` and `pompadour()`): two shapes, each with a dark amber outline so they read at phone
   size. Behind, a fluffy mass puffed out past the head on three sides, its long strands swept back. In front, a lighter
   roll across the brow just behind the eyes, with a shine along its crest, swooping forward along one side to a flick
   past that eye; its strands sweep the same way. The eyes, pout and squint are as they were.

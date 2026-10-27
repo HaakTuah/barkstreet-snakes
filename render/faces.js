@@ -390,7 +390,7 @@ function drawFace(s, look, color, blinking, a) {
       hairBack(); ctx.fillStyle = 'rgba(120,53,15,0.35)'; ctx.fill(); // its shadow on the head
       pompadour(); ctx.fill();
       ctx.restore();
-      ctx.strokeStyle = '#92400e'; // an amber outline, so the shape reads at phone size
+      ctx.strokeStyle = '#92400e'; // a dark amber outline, so the shape reads at phone size
       ctx.lineWidth = c * 0.07;
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
@@ -420,7 +420,7 @@ function drawFace(s, look, color, blinking, a) {
       ctx.moveTo(-c * 0.06, -c * 0.4); ctx.bezierCurveTo(c * 0.04, -c * 0.3, -c * 0.02, c * 0.12, c * 0.08, c * 0.3);
       ctx.stroke();
       ctx.strokeStyle = '#d97706'; // combed strands, sweeping forward to the flick
-      ctx.lineWidth = c * 0.024;
+      ctx.lineWidth = c * 0.032;
       ctx.beginPath();
       ctx.moveTo(-c * 0.12, -c * 0.2); ctx.bezierCurveTo(-c * 0.08, c * 0.08, -c * 0.02, c * 0.32, c * 0.22, c * 0.42);
       ctx.moveTo(-c * 0.16, c * 0.08); ctx.bezierCurveTo(-c * 0.12, c * 0.3, c * 0.02, c * 0.46, c * 0.3, c * 0.46);
