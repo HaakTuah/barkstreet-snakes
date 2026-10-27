@@ -319,15 +319,17 @@ const PINCH = 0.8;
 // it. Over a pit a span is slimmer (see sinkOf), but its segments are still
 // a cell apart, so they'd part: round beads bulging above a thin rod, their
 // outline scalloped round each, and its shade in a crescent on each bead.
-// So there its bands fill out to its segments' width (to the one further
-// over the pit, if one's on the bark), the further over it the more: a
-// slimmer body, its line and rim as smooth as on the bark, shaded along
-// its underside (see shadeUnder).
+// So there its bands fill out to the narrower of its two segments, the
+// further over the pit the more (never past either: a head, or a gulp, is
+// still round, its band no square shoulder): a slimmer body, its line and
+// rim as smooth as on the bark, shaded along its underside (see
+// shadeUnder). What's up in the air doesn't sag, and keeps its pinch.
 function bandR(a, i) {
   const r = a.rad[i + 1] * PINCH;
   if (!a.bridging) return r;
-  const h0 = a.hang[i], h1 = a.hang[i + 1], t = Math.max(h0, h1);
-  return t ? r + ((h0 * a.rad[i] + h1 * a.rad[i + 1]) / (h0 + h1) - r) * t : r;
+  let t = Math.max(a.hang[i], a.hang[i + 1]);
+  if (a.lifted) t *= 1 - Math.min(1, 3 * Math.max(a.lift[i], a.lift[i + 1]));
+  return t > 0 ? r + (Math.min(a.rad[i], a.rad[i + 1]) - r) * t : r;
 }
 // The body's outline shape, `grow` units bigger all round, as separate
 // fills in the current fill: bands as rectangles, joints as circles, the

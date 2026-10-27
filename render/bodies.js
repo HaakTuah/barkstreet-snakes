@@ -125,6 +125,7 @@ function drawBody(s, a, now, dead) {
   // (Bands as rectangles, fillRect's fast path; folding them into each
   // segment's circle as one shape measured slower.)
   for (let i = n - 2; i >= 0; i--) { ctx.fillStyle = fills[i + 1]; band(a, i, bandR(a, i)); }
+  if (a.bridging && !dead) shadeBands(a, true); // (over a pit: the shade along the bands by its round segments, which cover their ends)
   for (let i = n - 1; i >= 0; i--) {
     if (i < n - 1 && bends(a, i)) { ctx.fillStyle = fills[i + 1]; circle(a.cor[2 * i], a.cor[2 * i + 1], bandR(a, i)); }
     if (i === 0 && a.star) break; // (a star's head is drawn with its face)
@@ -309,7 +310,8 @@ const DASH = [3, 3], NO_DASH = [], MOOD_DASH = [5, 7];
 // of shade along its lower side (or its right one going down), each half
 // of a band's in a darker step of the colour of the segment it's nearer,
 // by how far over the pit that is, running on through the segments
-// (shadeBands). A segment at an end or a turn is round: it's drawn again
+// (shadeBands). A round segment (an end, a turn, or a head or a gulp wider
+// than its bands: roundAt) covers the strips' ends by it, and is drawn again
 // in its darker step, then in its own colour a little up and to the left
 // and smaller, leaving a crescent of shade along its lower right, as wide
 // as the strip. (A crescent on every segment read as a row of beads over
@@ -319,16 +321,23 @@ const DASH = [3, 3], NO_DASH = [], MOOD_DASH = [5, 7];
 // Each step of shade is a cached colour, four of them.)
 const UNDER = '#140a04', UNDER_DARK = 0.42, UNDER_IN = 0.11; // (the shade at its darkest; how far its lit part moves in, in radii)
 const shadeOf = (c, o) => mix(c, UNDER, Math.ceil(o * 4) / 4 * UNDER_DARK);
-function shadeBands(a) { // (after the segments: a strip along each band's lower side, as wide as a segment's crescent at its lowest, each half by its own segment)
+// Is segment i round over the pit (shaded with a crescent: an end, a turn,
+// or wider than the bands either side, like a head or a gulp), or part of
+// a straight run as wide as it (shaded by its bands' strips)?
+const ROUND_GAP = 1; // (units wider than its bands)
+const roundAt = (a, i) => i === 0 || i >= a.n - 1 || !straightAt(a, i) || a.rad[i] > Math.max(bandR(a, i - 1), bandR(a, i)) + ROUND_GAP;
+function shadeBands(a, round) { // (a strip along each band's lower side, as wide as a segment's crescent at its lowest, each half by its own segment: with round, the halves by a round segment, before the segments, which cover their ends; else the rest, after them, running on through them)
   const { n, rad, fills, hang, pts: p, cor: c } = a;
   for (let i = n - 2; i >= 0; i--) {
     if (hang[i] < 0.02 && hang[i + 1] < 0.02) continue;
     const h = bandR(a, i), s = rad[i + 1] * UNDER_IN * (1 + Math.SQRT2);
     const x1 = p[2 * i], y1 = p[2 * i + 1], x2 = p[2 * i + 2], y2 = p[2 * i + 3];
     let qx = c[2 * i], qy = c[2 * i + 1];
-    if ((near(x1, qx) && near(qx, x2)) || (near(y1, qy) && near(qy, y2))) { qx = (x1 + x2) / 2; qy = (y1 + y2) / 2; } // (straight: halved in the middle)
-    if (hang[i] >= 0.02) { ctx.fillStyle = shadeOf(fills[i], hang[i]); shadeStrip(x1, y1, qx, qy, h, s); }
-    if (hang[i + 1] >= 0.02) { ctx.fillStyle = shadeOf(fills[i + 1], hang[i + 1]); shadeStrip(qx, qy, x2, y2, h, s); }
+    const straight = (near(x1, qx) && near(qx, x2)) || (near(y1, qy) && near(qy, y2));
+    if (straight) { qx = (x1 + x2) / 2; qy = (y1 + y2) / 2; } // (straight: halved in the middle; turning, its corner's round covers the ends there)
+    if (!straight && !round) continue;
+    if (hang[i] >= 0.02 && (!straight || roundAt(a, i) === round)) { ctx.fillStyle = shadeOf(fills[i], hang[i]); shadeStrip(x1, y1, qx, qy, h, s); }
+    if (hang[i + 1] >= 0.02 && (!straight || roundAt(a, i + 1) === round)) { ctx.fillStyle = shadeOf(fills[i + 1], hang[i + 1]); shadeStrip(qx, qy, x2, y2, h, s); }
   }
 }
 function shadeStrip(x1, y1, x2, y2, h, s) {
@@ -339,14 +348,14 @@ function shadeUnder(a) {
   const { n, pts, rad, fills, hang, sink } = a;
   for (let i = n - 1; i >= 0; i--) {
     const o = hang[i];
-    if (o < 0.02 || (i === 0 && a.star) || straightAt(a, i)) continue; // (a star's head is drawn with its face; a straight run's segment, by its bands' strips)
+    if (o < 0.02 || (i === 0 && a.star) || !roundAt(a, i)) continue; // (a star's head is drawn with its face; a straight run's segment, by its bands' strips)
     const x = pts[2 * i], y = pts[2 * i + 1], r = rad[i], d = r * UNDER_IN;
     ctx.fillStyle = shadeOf(fills[i], o);
     circle(x, y, r);
     ctx.fillStyle = fills[i];
     circle(x - d, y - d, r - d * Math.SQRT2);
   }
-  shadeBands(a);
+  shadeBands(a, false);
   ctx.fillStyle = UNDER;
   for (let i = 0; i < n; i++) {
     if (sink[i] <= SAG) continue;

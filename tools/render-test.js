@@ -765,13 +765,13 @@ const STAGE = `(() => {
     const bridge = await ev(`(() => {
       SnakeDebug.pinQuality(0);
       const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
-      const reddish = (r, g, b) => r > 120 && r > g + 50 && r > b + 40, body = (r, g, b) => r > 60 && r > g + 30 && r > b + 20; // (its red, lit; or in shade too)
+      const reddish = (r, g, b) => r > 120 && r > g + 50 && r > b + 40, body = (r, g, b) => r > 60 && r > g + 50 && r > b + 40; // (its red, lit; or in shade too, but not the pit's floor lit round it)
       const g = stage(['sniper', 'gobbler', 'mason']), [you, sn, gob, ma] = g.snakes;
       setBody(you, [[2, 22], [1, 22], [0, 22]], 'right'); you.stunUntil = 1e9;
       setBody(ma, [[2, 2], [1, 2], [0, 2]], 'right'); ma.stunUntil = 1e9;
       const HOLES = [11 * 24 + 10, 12 * 24 + 10, 13 * 24 + 10, 5 * 24 + 18];
       const look = () => ({ width: count(10.45, 11.3, 0.1, 2.4, body), edge: lum(pixels(10.3, 12.7, 0.4, 0.14)), top: lum(pixels(10.3, 12.16, 0.4, 0.14)), shade: lum(pixels(10.3, 12.9, 0.4, 0.25)), lit: lum(pixels(10.3, 13.3, 0.4, 0.2)), tail: lum(pixels(18.3, 5.3, 0.4, 0.4)),
-        band: lum(pixels(9.95, 12.75, 0.15, 0.06)), bandTop: lum(pixels(9.95, 12.24, 0.15, 0.08)) }); // (shade: just below the span; lit: the floor a little further; band: the lower edge of the band into it, between the segments)
+        band: lum(pixels(10.12, 12.75, 0.15, 0.06)), bandTop: lum(pixels(10.12, 12.24, 0.15, 0.08)) }); // (shade: just below the span; lit: the floor a little further; band: the lower edge of the band into it, between the segments)
       const place = () => { setBody(sn, Array.from({ length: 8 }, (_, i) => [13 - i, 12]), 'right'); sn.stunUntil = 1e9; setBody(gob, [[15, 5], [16, 5], [17, 5], [18, 5]], 'left'); gob.stunUntil = 1e9; };
       for (const k of HOLES) g.holes.add(k);
       place(); show(g); drawN(10, 1);
@@ -820,14 +820,18 @@ const STAGE = `(() => {
       for (const k of HOLES) g.holes.add(k);
       place(); show(g); drawN(10, 1);
       const over = look();
+      // (your head over the pit, your neck on the bark: no band wider than either of its segments, so no square shoulder by a round head)
+      setBody(you, Array.from({ length: 9 }, (_, i) => [10 - i, 17]), 'right'); g.tick++; drawN(4, 1);
+      const a = anim.get(you); let wide = 0; for (let i = 0; i < a.n - 1; i++) wide = Math.max(wide, bandR(a, i) - Math.min(a.rad[i], a.rad[i + 1]));
+      over.wide = a.bridging ? wide : NaN;
       for (const k of HOLES) g.holes.delete(k);
       place(); g.tick++; drawN(4, 1);
       const bark = look();
       SnakeDebug.pinQuality(2);
       return { over, bark };
     })()`);
-    check(line.over && line.bark && line.over.spread <= 0.02 + 0.25 * line.bark.spread && line.over.rim >= 0.75 * line.bark.rim, 'over a pit your outline stays smooth: no segment bulging above the body’s line, the cream rim unbroken',
-      line.over && line.bark ? `its top edge varies ${f2(line.over.spread)} cells over the pit (${f2(line.bark.spread)} on the bark); its cream rim at least ${f2(line.over.rim)} cells (${f2(line.bark.rim)})` : `no body found ${JSON.stringify(line)}`);
+    check(line.over && line.bark && line.over.spread <= 0.02 + 0.25 * line.bark.spread && line.over.rim >= 0.75 * line.bark.rim && line.over.wide <= 1e-3, 'over a pit your outline stays smooth: no segment bulging above the body’s line, the cream rim unbroken, and no band wider than its segments (a head over it stays round)',
+      line.over && line.bark ? `its top edge varies ${f2(line.over.spread)} cells over the pit (${f2(line.bark.spread)} on the bark); its cream rim at least ${f2(line.over.rim)} cells (${f2(line.bark.rim)}); bands at most ${f2(line.over.wide)} units wider than a segment, head over the pit` : `no body found ${JSON.stringify(line)}`);
 
     // Choking and the cough (round six A), staged as the engine reports them
     // (the choke and nudge events, s.coughUntil). Joker chokes on its own
