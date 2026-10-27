@@ -291,13 +291,13 @@
   /* (folded, a tap opens it: a caret at the strip's end says so; open, at
      its caption's) */
   .chatter[aria-expanded] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  .chatter.folded .chatlog { position: relative; padding-right: 26px; }
-  .chatter.folded .chatlog::after, .chatter[aria-expanded="true"] .chatter-head::after {
+  .chatter[aria-expanded] .chatlog { position: relative; padding-right: 26px; }
+  .chatter.folded .chatlog::after, .chatter[aria-expanded="true"] .chatter-head::after, .chatter[aria-expanded="true"][data-fit="strip"] .chatlog::after {
     content: ''; position: absolute; right: 10px; top: 50%; width: 7px; height: 7px; margin-top: -6px;
     border: solid var(--muted); border-width: 0 2px 2px 0; transform: rotate(45deg);
   }
   .chatter[aria-expanded="true"] .chatter-head { position: relative; }
-  .chatter[aria-expanded="true"] .chatter-head::after { margin-top: -2px; transform: rotate(-135deg); }
+  .chatter[aria-expanded="true"] .chatter-head::after, .chatter[aria-expanded="true"][data-fit="strip"] .chatlog::after { margin-top: -2px; transform: rotate(-135deg); } /* (open: up, at its caption, or at the strip's end where it has no room for the caption) */
 }
 @media (max-width: 340px) {
   main { --head: 150px; } /* (the narrowest phones: the header in two rows, its title smaller) */
@@ -327,9 +327,10 @@
   .foot button { min-height: 30px; }
 }
 /* (where the row under the board is closer than the moss and the corner
-   leaves hang off the frame's bottom, a short phone's board with a gutter
-   beside it and no ledge, they're left off, as on its side: over the help
-   and the switch they were clutter. snake.js placeBoard: .snug) */
+   leaves hang off the frame's bottom, any phone held upright ("The phone
+   gap": the row right under the board), they're left off, as on its side:
+   over the help and the switch they were clutter. game/screen.js
+   placeBoard: .snug) */
 .frame.snug .moss.bottom, .frame.snug .leaves.bl, .frame.snug .leaves.br { display: none; }
 
 /* Wide screens up to 1180 px tall (laptops, a 1080p or 1200p desktop's

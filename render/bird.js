@@ -48,7 +48,10 @@ const FLIGHT_BACK = 6; // (units: how far behind the spot it strikes its wings r
 // both. There it keeps its outline and a hair (PERCH_GAP_PX) off the
 // cells and off what's beside it, its beak turned to look too. On a phone
 // held upright the board runs edge to edge, with no room beside it, so it
-// stands on the ledge under the board: just below the bottom edge, beside
+// stands on the ledge under the board (0 px tall since "The phone gap": it
+// stands over the row under the board and the chatter, its room running to
+// the screen's foot, and taps pass through its layer to them): just below
+// the bottom edge, beside
 // the spot on the middle's side, facing out to it (so it flies to drum it
 // over the board, never past the screen's edge), clear of the moss and
 // leaves hanging there, as big as the ledge lets it be (about 53 px tall

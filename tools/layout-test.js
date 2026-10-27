@@ -651,17 +651,19 @@ const r1 = v => Math.round(v * 10) / 10;
         // first where there's room for two rows, and another folds it)
         const folded = await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`);
         check(folded === 'false' && fit === 'strip' && rows.lines === 1 && rows.whole === 1, `${tag}: ${what}, held upright, the chatter is folded: one row, the newest line`, `aria-expanded ${folded}, ${fit}, ${rows.lines} lines, ${rows.whole} rows`);
-        const tapChatter = async () => { // (a finger's tap on the strip, through the page's own touch handling)
-          const at = await ev(`(() => { const r = document.getElementById('chatlog').getBoundingClientRect(); return { x: r.left + r.width / 3, y: r.top + Math.min(8, r.height / 2) }; })()`);
+        const tapChatter = async (below = false) => { // (a finger's tap on the strip, through the page's own touch handling; or under it, in the chatter's box's empty rest)
+          const at = await ev(`(() => { const r = document.getElementById('chatlog').getBoundingClientRect(), box = document.querySelector('.chatter').getBoundingClientRect(); return ${below} ? (box.bottom - r.bottom >= 12 ? { x: r.left + r.width / 3, y: (r.bottom + Math.min(box.bottom, innerHeight)) / 2 } : null) : { x: r.left + r.width / 3, y: r.top + Math.min(8, r.height / 2) }; })()`);
+          if (!at) return false;
           await b.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...at, id: 1 }] });
           await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
           await b.sleep(60);
           return true;
         };
+        if (await tapChatter(true)) check(await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`) === 'false', `${tag}: ${what}, held upright, a tap under the folded strip, in the chatter's empty rest, leaves it folded (it's the board's: a jump)`);
         const tap = await tapChatter();
         await settle();
         const opened = await ev(LAYOUT), orows = await ev(LOG_ROWS), ofit = await ev(`document.querySelector('.chatter').dataset.fit`), oexp = await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`);
-        check(tap && oexp === 'true' && orows.whole >= rows.whole && !orows.sliced && (ofit === 'strip' || orows.whole >= 2) && opened.scrollH <= opened.vh && opened.board.w === full.board.w, `${tag}: ${what}, held upright, a tap opens the chatter to the lines that fit (the board unmoved, nothing scrolls)`, `${tap ? '' : 'the tap went elsewhere; '}aria-expanded ${oexp}, ${ofit}, ${orows.lines} lines, ${orows.whole} rows whole, ${orows.sliced} sliced`);
+        check(tap && oexp === 'true' && orows.whole >= rows.whole && !orows.sliced && (full.vh >= 780 ? ofit === 'full' && orows.whole >= 3 : ofit === 'strip' || orows.whole >= 2) && opened.scrollH <= opened.vh && opened.board.w === full.board.w, `${tag}: ${what}, held upright, a tap opens the chatter to the lines that fit (the board unmoved, nothing scrolls)`, `${tap ? '' : 'the tap went elsewhere; '}aria-expanded ${oexp}, ${ofit}, ${orows.lines} lines, ${orows.whole} rows whole, ${orows.sliced} sliced`);
         await tapChatter();
         await settle();
         check(await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`) === 'false', `${tag}: ${what}, held upright, another tap folds it`);
@@ -1206,7 +1208,7 @@ const r1 = v => Math.round(v * 10) / 10;
       await open({ w, h, dpr, nofs: true });
       await toRound();
       const l = await ev(LAYOUT), ps = [];
-      for (const [x, y] of SPOTS) for (const aim of [false, true]) ps.push({ x, y, aim, p: await ev(PERCH(x, y, aim, furnitureOf(l, true))) });
+      for (const [x, y] of SPOTS) for (const aim of [false, true]) ps.push({ x, y, aim, p: await ev(PERCH(x, y, aim, furnitureOf(l))) });
       const bad = ps.filter(q => !q.p || q.p.over || q.p.cut.length || Object.keys(q.p.on).length || q.p.x < -0.5 || q.p.r > l.vw + 0.5 || q.p.y < -0.5 || q.p.b > l.vh + 0.5);
       const under = ps.filter(q => q.p && q.p.y >= l.board.b - 0.5).length;
       check(!bad.length, `${name}: perched, resting or eyeing its chunk, the woodpecker never covers a cell, and is all on the screen and off the column`,

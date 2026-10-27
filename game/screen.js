@@ -126,18 +126,20 @@ for (const el of [mainEl, ledgeEl, ...furniture]) if (el) placer.observe(el);
 const chatterEl = document.querySelector('.chatter'), chatterHead = chatterEl.querySelector('.chatter-head');
 let chatFit = '', chatOpen = false;
 const chatFolds = () => !!ledgeEl?.offsetParent;
-chatterEl.addEventListener('click', () => {
+const foldChatter = () => {
   if (!chatFolds() || chatlogEl.hidden) return;
   chatOpen = !chatOpen;
   fitColumn();
-});
+};
+chatterEl.addEventListener('click', e => { if (e.target !== chatterEl) foldChatter(); }); // (on the panel, never its box's empty rest)
+chatterEl.addEventListener('keydown', e => { if (e.target === chatterEl && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); foldChatter(); } });
 const fitChatter = () => {
   const lines = [...chatlogEl.children];
   for (const li of lines) li.classList.remove('gone', 'cut');
   let fit = 'off';
   const folds = chatFolds() && !chatlogEl.hidden, folded = folds && !chatOpen;
-  if (folds) chatterEl.setAttribute('aria-expanded', String(!folded));
-  else chatterEl.removeAttribute('aria-expanded');
+  if (folds) { chatterEl.setAttribute('aria-expanded', String(!folded)); chatterEl.setAttribute('role', 'button'); chatterEl.tabIndex = 0; }
+  else { chatterEl.removeAttribute('aria-expanded'); chatterEl.removeAttribute('role'); chatterEl.removeAttribute('tabindex'); }
   chatterEl.classList.toggle('folded', folded);
   if (!chatlogEl.hidden) {
     const box = chatterEl.getBoundingClientRect();
