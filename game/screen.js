@@ -8,9 +8,12 @@ Render.init({ canvas: canvasEl, personas: CAST, birdLayer: $('bird-layer') });
 // ...and how far the free page runs round it before the tags, the speed
 // buttons, the chatter or the header (no perching on those), inside the
 // screen's safe area (not under a notch); how tall the ledge under it is
-// (a phone held upright: the bird perches there); and where the moss and
-// the corner leaves hang off its bottom edge into the ledge (the bird
-// stands clear of them: across, CSS px, a little wider for the leaves' sway).
+// (a phone held upright: the bird perches there, at full size, standing
+// over the row under the board and the chatter, which are right under the
+// board; its layer takes no taps, so they pass through it to the buttons);
+// and where the moss and the corner leaves hang off its bottom edge into
+// the ledge (the bird stands clear of them: across, CSS px, a little wider
+// for the leaves' sway).
 const furniture = ['header', '.scoreboard', '.foot', '.chatter'].map(q => document.querySelector(q)).filter(Boolean);
 const hanging = [...document.querySelectorAll('.frame .moss.bottom, .frame .leaves.bl, .frame .leaves.br')];
 const ledgeEl = $('perch-ledge'), rootStyle = getComputedStyle(document.documentElement);
@@ -52,12 +55,13 @@ document.fonts?.addEventListener?.('loadingdone', measureAbove);
 const placeBoard = () => {
   if (!aboveSoon && Math.abs(frameTop() - above) > 0.25) aboveSoon = setTimeout(measureAbove);
   const b = canvasEl.getBoundingClientRect();
-  const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: ledgeEl ? ledgeEl.offsetHeight : 0, upright: !!ledgeEl?.offsetParent, hang: [] }; // (upright: a phone held upright, the ledge laid out, though it's 0 px tall where the board leaves the bird a gutter instead)
+  const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: 0, upright: !!ledgeEl?.offsetParent, hang: [] }; // (upright: a phone held upright, the ledge laid out, 0 px tall: the row and the chatter are right under the board)
   // (held upright, where the row under the board is closer than the moss
   // and the leaves hang off the frame's bottom, 12 px, they're left off:
   // style/ .snug)
   frameEl.classList.toggle('snug', free.upright && footEl.getBoundingClientRect().top - frameEl.getBoundingClientRect().bottom < 12);
   for (const el of furniture) {
+    if (free.upright && el.matches('.foot, .chatter')) continue; // (held upright, the bird stands over them)
     const f = el.getBoundingClientRect();
     if (!f.width || !f.height) continue; // (hidden)
     const across = f.left < b.right && f.right > b.left, along = f.top < b.bottom && f.bottom > b.top;
@@ -66,6 +70,7 @@ const placeBoard = () => {
     else if (along && f.right <= b.left + 1) free.left = Math.max(free.left, f.right);
     else if (along && f.left >= b.right - 1) free.right = Math.min(free.right, f.left);
   }
+  if (free.upright) free.ledge = Math.max(0, free.bottom - b.bottom); // (the ledge the bird stands on: from the board down to the screen's foot)
   if (free.ledge) {
     for (const el of hanging) {
       const f = el.getBoundingClientRect();
@@ -111,19 +116,38 @@ for (const el of [mainEl, ledgeEl, ...furniture]) if (el) placer.observe(el);
 // panel: the box's size doesn't depend on what's in it, so nothing here
 // comes round again, and nothing comes and goes as lines of one row or
 // two arrive.
+// Held upright on a phone, the chatter is folded unless you open it: a
+// strip of one row, the newest line cut to it, so the row under the board
+// and the chatter sit right under the board, the rest of the screen left
+// to the open chatter. A tap opens it to as many whole lines as fit, and
+// another folds it (aria-expanded; game/input.js lets the tap through
+// mid-round, a swipe from it still steering). Folded, the rivals' long
+// lines go to their bubbles on the board, as in any strip.
 const chatterEl = document.querySelector('.chatter'), chatterHead = chatterEl.querySelector('.chatter-head');
-let chatFit = '';
+let chatFit = '', chatOpen = false;
+const chatFolds = () => !!ledgeEl?.offsetParent;
+chatterEl.addEventListener('click', () => {
+  if (!chatFolds() || chatlogEl.hidden) return;
+  chatOpen = !chatOpen;
+  fitColumn();
+});
 const fitChatter = () => {
   const lines = [...chatlogEl.children];
   for (const li of lines) li.classList.remove('gone', 'cut');
   let fit = 'off';
+  const folds = chatFolds() && !chatlogEl.hidden, folded = folds && !chatOpen;
+  if (folds) chatterEl.setAttribute('aria-expanded', String(!folded));
+  else chatterEl.removeAttribute('aria-expanded');
+  chatterEl.classList.toggle('folded', folded);
   if (!chatlogEl.hidden) {
-    const box = chatterEl.getBoundingClientRect(), end = Math.min(box.bottom, innerHeight) + 0.5;
+    const box = chatterEl.getBoundingClientRect();
+    let end = Math.min(box.bottom, innerHeight) + 0.5;
     chatterEl.dataset.fit = 'full';
     const ls = getComputedStyle(chatlogEl), row = parseFloat(ls.lineHeight) || 17, li = 4; // (a row of words, and a line's own padding)
     const pad = parseFloat(ls.paddingTop) + parseFloat(ls.paddingBottom) + parseFloat(ls.borderBottomWidth);
-    fit = box.height && chatterHead.getBoundingClientRect().bottom + pad + 2 * (row + li) <= end ? 'full' : 'strip';
+    fit = box.height && !folded && chatterHead.getBoundingClientRect().bottom + pad + 2 * (row + li) <= end ? 'full' : 'strip';
     chatterEl.dataset.fit = fit;
+    if (folded) end = Math.min(end, chatlogEl.getBoundingClientRect().top + pad + parseFloat(ls.borderTopWidth) + row + 0.5); // (one row)
     const fits = () => chatlogEl.getBoundingClientRect().bottom <= end;
     let n = lines.length;
     while (n > 1 && !fits()) lines[--n].classList.add('gone');
