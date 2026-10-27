@@ -14,7 +14,7 @@ rounds they average out into a muddled Drab. Each should be a clear character wi
   home and guards it, Colonist lays a small claim, Metagamer counters whoever it watched during the mood, Ouroboros
   coils, Copycat shadows the leader, Wildcard draws a mix for the mood, Star spends its powers the moment it can.
 - **The tell:** for each mood its head wears the rival's signature mark as a costume over its own colours (Sovereign's
-  crown, Star's mustache, Copycat's ears, Wildcard's combover, and so on), and it opens the mood with one of that
+  crown, Star's mustache, Copycat's ears, Wildcard's pompadour, and so on), and it opens the mood with one of that
   rival's lines, marked as an impression (*does its best Sovereign*: "..."). Field guide: "Capricious does
   impressions of the others."
 - **Measured:** while a mood lasts, the rival's trademark shows at a rate near the rival's own; Capricious stays in
