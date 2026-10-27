@@ -1064,7 +1064,7 @@ const STAGE = `(() => {
       drawN(15, 0.5, 40); out.noHeap.after = count(9, 14, 3, 3, any);
       const H = { x: 6, y: 15, at: g3.tick - 400, used: 0 }, H2 = { x: 17, y: 15, at: g3.tick - 400, used: 0 };
       g3.burrows.push(H, H2); drawN(25, 0.5, 40);
-      const healAt = (x, y) => ({ hole: count(x - 0.2, y - 0.2, 0.4, 0.4, dark), plug: count(x - 0.5, y - 0.5, 1, 1, tan), moss: count(x - 0.5, y - 0.5, 1, 1, olive), all: count(x - 1.5, y - 1.5, 3, 3, any) });
+      const healAt = (x, y) => ({ hole: count(x - 0.2, y - 0.2, 0.4, 0.4, dark), dust: count(x - 0.25, y - 0.2, 0.5, 0.4, (r, g, b) => tan(r, g, b) || olive(r, g, b)), plug: count(x - 0.5, y - 0.5, 1, 1, tan), moss: count(x - 0.5, y - 0.5, 1, 1, olive), all: count(x - 1.5, y - 1.5, 3, 3, any) });
       out.heal = { before: healAt(6.5, 15.5) };
       g3.burrows.splice(0, 1); g3.tick++;
       R.onTick([{ type: 'heal', x: 6, y: 15 }]);
@@ -1076,7 +1076,7 @@ const STAGE = `(() => {
       const H3 = { x: 12, y: 15, at: g3.tick - 400, used: 0 };
       g3.burrows.push(H3); g3.tick++; R.onTick([]); drawN(25, 0.5, 40);
       out.shut = { open: healAt(12.5, 15.5) };
-      for (const [name, done] of [['third', 0.33], ['twoThirds', 0.67], ['nearly', 0.95]]) {
+      for (const [name, done] of [['third', 1 / 3], ['twoThirds', 2 / 3], ['nearly', 0.95]]) {
         H3.shutFrom = g3.time - 10000 * done; H3.shutAt = H3.shutFrom + 10000; g3.tick++; R.onTick([]);
         drawN(3, 0.5, 33); out.shut[name] = healAt(12.5, 15.5);
       }
@@ -1108,9 +1108,12 @@ const STAGE = `(() => {
         'a burrow closing over fills with sawdust, moss over it, and is gone into the bark in about a second, leaving a faint scar a while',
         `its hole ${hl.before.hole} dark pixels, ${hl.start.hole} as it starts, ${hl.mid.hole} half way, with ${hl.mid.plug} of sawdust and ${hl.mid.moss} of moss; ${hl.end.all} pixels changed 1.45 s on (its scar), ${hl.gone.all} 22 s on (a cell ${dug.cellPx})`);
       const sh = dug.shut;
-      check(sh.open.hole > 10 && sh.third.hole < sh.open.hole && sh.twoThirds.hole < 0.7 * sh.open.hole && sh.nearly.hole < 0.45 * sh.open.hole && sh.twoThirds.plug > sh.open.plug && sh.nearly.moss > 0.02 * dug.cellPx && sh.closing.hole <= sh.nearly.hole + 2,
-        'a burrow growing shut: its opening shrinks as sawdust comes in from the rim and moss grows over it, and it closes over from there',
-        `its hole ${sh.open.hole} dark pixels open, ${sh.third.hole} a third of the way, ${sh.twoThirds.hole} two thirds, ${sh.nearly.hole} nearly shut, ${sh.closing.hole} closing over; sawdust ${sh.open.plug}, ${sh.twoThirds.plug}; moss nearly shut ${sh.nearly.moss}`);
+      const steps = k => [sh.open[k], sh.third[k], sh.twoThirds[k]].map((v, i, a) => i ? v - a[i - 1] : 0).slice(1), even = ([p, q]) => Math.min(p, q) > 0 && Math.max(p, q) < 2 * Math.min(p, q);
+      const holeSteps = steps('hole').map(v => -v), dustSteps = steps('dust');
+      check(sh.open.hole > 10 && even(holeSteps) && even(dustSteps) && sh.nearly.hole < 0.3 * sh.open.hole && sh.nearly.hole > 0
+        && sh.third.moss > 0 && sh.twoThirds.moss > sh.third.moss && sh.nearly.moss > sh.twoThirds.moss && sh.nearly.moss > 0.12 * dug.cellPx && sh.closing.hole <= sh.nearly.hole + 2,
+        'a burrow growing shut, evenly over its time: its opening shrinks and sawdust comes in from the rim by like steps each third, moss grows over it (a good part of a cell by the end), and it closes over from there',
+        `its hole ${sh.open.hole} dark pixels open, ${sh.third.hole} a third of the way, ${sh.twoThirds.hole} two thirds, ${sh.nearly.hole} nearly shut, ${sh.closing.hole} closing over (steps ${holeSteps}); sawdust and moss in its opening ${sh.open.dust}, ${sh.third.dust}, ${sh.twoThirds.dust} (steps ${dustSteps}); moss ${sh.third.moss}, ${sh.twoThirds.moss}, ${sh.nearly.moss} (a cell ${dug.cellPx})`);
       check(hl.calm.hole * 4 < hl.before.hole && hl.calm.plug + hl.calm.moss > 0.08 * dug.cellPx && hl.calm.moss > 0.025 * dug.cellPx && hl.calmEnd.hole === 0 && hl.calmEnd.moss === 0,
         'with reduced motion, it’s filled and mossed at once, then fades', `its hole ${hl.calm.hole}, sawdust ${hl.calm.plug}, moss ${hl.calm.moss} at once; ${hl.calmEnd.all} pixels changed after`);
       check(max(dug.calm.parts) === 0 && max(dug.calm.bug) - min(dug.calm.bug) <= 3 && max(dug.calm.bug) < 0.8 * dug.full && min(dug.calm.bug) > 10,

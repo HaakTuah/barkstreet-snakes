@@ -375,7 +375,7 @@ function onTick(events) {
       else spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 170, 520, 2.4, '#d6b480', '#3b2412');
     } else if (e.type === 'heal') { // one closing over: sawdust and moss fill it, and it fades into the bark (see drawHeals)
       const key = e.y * GRID + e.x;
-      heals.push({ x: e.x, y: e.y, at: now, v: BURROW_LOOKS[key % 4], cs: crackSprites.get(key) || null, grown: shutSeen.get(key) || 0 });
+      heals.push({ x: e.x, y: e.y, at: now, key, v: BURROW_LOOKS[key % 4], cs: crackSprites.get(key) || null, grown: shutSeen.get(key) || 0 });
       crackSprites.delete(key); burrowSeen.delete(key); shutSeen.delete(key); // (a burrow opening there again cracks and pops anew)
       if (!reduced) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 80, 420, 1.8, '#e6cc96', '#3a5520');
     } else if (e.type === 'gust' && e.x >= 0) { // an apple knocked loose: it drops in
