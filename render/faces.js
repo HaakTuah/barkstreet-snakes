@@ -455,7 +455,7 @@ function drawFace(s, look, color, blinking, a) {
       ctx.stroke();
       break;
     }
-    case 'copycat': { // cat ears (its head's colour, the flag's red, whoever it copies), cat eyes, whiskers, and a party pin
+    case 'copycat': { // cat ears (its head's colour: the flag's red, half its model's while it copies), cat eyes, whiskers, and a party pin
       poly(EAR, -1, a.fills[0]);
       poly(EAR, 1, a.fills[0]);
       const inner = mix(a.fills[0][0] === '#' ? a.fills[0] : '#de2910', INK, 0.3); // (a deeper red inside: pink read as the pale old Copycat)

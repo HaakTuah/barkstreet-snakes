@@ -219,7 +219,7 @@ const PERSONA_DOTS = {
   star: 'radial-gradient(circle at 50% 50%, #f9c22e 0 28%, transparent 30%), conic-gradient(#ef4444, #f97316, #facc15, #22c55e, #3b82f6, #6366f1, #a855f7, #ef4444)', // (a rainbow round its sunflower star)
 };
 // Copycat's dot is the flag's red with a small yellow star, its party pin,
-// whoever it's copying (its head keeps the red and the pin too): it keeps
+// whoever it's copying (its head keeps the pin, and a red rim round half its red): it keeps
 // it apart from the cast's other reds, Sniper's, Colonist's and Wildcard's.
 PERSONA_DOTS.copycat = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 10 10\'%3E%3Cpath d=\'M5 1.5L5.82 3.87L8.33 3.92L6.33 5.43L7.06 7.83L5 6.4L2.94 7.83L3.67 5.43L1.67 3.92L4.18 3.87z\' fill=\'%23ffde00\'/%3E%3C/svg%3E") center / 100% no-repeat, #de2910';
 function dotColor(s) {
