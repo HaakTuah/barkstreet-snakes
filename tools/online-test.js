@@ -29,7 +29,10 @@
 // Every message must fit PeerJS's 16 KB limit, and a guest must shrug off a
 // malformed one.
 //
-//   node tools/online-test.js [rounds] [--seed N]
+// Every kind of message also goes once through the wire on its own, and must come
+// back unchanged; their shapes are pinned with the protocol version (see below).
+//
+//   node tools/online-test.js [rounds] [--seed N] [--pin]
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -363,6 +366,153 @@ const lacking = [...new Set(want)].filter(short).map(k => `${k} (${seen.get(k) |
 if (process.env.ONLINE_SEEN) console.log([...seen].sort().map(([k, v]) => `${k}: ${v}`).join('\n'));
 if (lacking.length) { console.error(`seen too few times (fewer than ${MIN}; a death's, never), the test lost its point there: ${lacking.join(', ')}`); process.exit(1); }
 
+// Every kind of message, once each, through the real encoders (a board set by
+// hand, so it's the same whatever the engine does): each must survive the
+// wire unchanged (a tick, plan or round: encoded, decoded on a guest and
+// encoded again, the same), and their shapes are pinned with the protocol
+// version in tools/protocol-shapes.json. Shapes changed and VERSION not
+// bumped fails, naming the kinds; VERSION bumped and the pin not refreshed
+// (--pin) fails too. The kinds must be the ones online.js and net.js type,
+// every kind the game sends, and every kind of event the engine makes.
+const PIN_FILE = path.join(__dirname, 'protocol-shapes.json');
+function protocolSamples() {
+  rng = seeded(424242);
+  const humans = [{ name: 'A', color: O.HUMAN_COLORS[0], peer: 'p0', owner: 'o0' }, { name: 'B', color: O.HUMAN_COLORS[1], peer: 'p1', owner: 'o1' }];
+  const personas = ['sniper', 'vulture'];
+  const host = E.createGame({ humans, personas });
+  const [a, b, c, d] = host.snakes, D = E.DIRS;
+  host.tick = 12; host.time = 1440;
+  Object.assign(c.memory, { home: { x: 1, y: 2 }, colonies: [{ x: 3, y: 4 }], mood: 'sniper', moodChangedAt: 5, modelId: 1, victimId: 0, lureId: 0, site: { x: 5, y: 6 }, desperate: true });
+  Object.assign(b, { autopilot: E.PERSONAS.drab, flight: { dir: D.up }, coughUntil: 14 });
+  Object.assign(d, { alive: false, cause: 'starved', killer: 'hunger', killerId: null, diedAt: 1400, fatal: 'hunger' });
+  host.food = [{ x: 3, y: 4, kind: 'beetle', expires: 500, dir: D.left, px: 4, py: 4, movedAt: 7, scared: true, gold: 1, digUntil: 30 },
+    { x: 5, y: 6, kind: 'pellet', expires: 400, color: '#f00', heat: 2, cooked: 1, owner: 1 }];
+  host.unders = [{ until: 50, expires: 90, from: 41, gold: true }];
+  host.holes.add(123);
+  host.woodpecker = { x: 1, y: 2, at: 3, target: [10, 11], strikeAt: 20, last: [9], struckAt: 4, restUntil: 5, pecks: 2, landings: [[10, 12], [11, -1]] };
+  host.burrows = [{ x: 2, y: 3, at: 4, used: 8, dug: 1 }];
+  host.fires = new Map([[44, { from: 1, until: 9, strike: true, group: 1 }]]);
+  host.weather = { kind: 'rain', since: 1, until: 99 };
+  const at = { x: 2, y: 3 };
+  host.events = [
+    { type: 'eat', snake: a, kind: 'pellet', ...at, color: '#f00', cooked: true, gold: false }, { type: 'leap', snake: a, ...at, gold: 1, reach: 2 },
+    { type: 'dash', snake: a, ...at, n: 3, plain: 1 }, { type: 'death', snake: d }, { type: 'fizzle', snake: a, why: 'resting', ...at, flash: 1 },
+    { type: 'crash', snake: a, ...at, cause: 'hit B', killer: 'B', killerId: 1, lost: 2 }, { type: 'cut', snake: a, ...at, lost: 3, by: 1 },
+    { type: 'choke', snake: a, ...at, tx: 3, ty: 3 }, { type: 'nudge', snake: a, kind: 'food', ...at, tx: 3, ty: 3 }, { type: 'dig', ...at, until: 30 },
+    { type: 'dive', ...at, dug: 1 }, { type: 'knock', kind: 'pellet', ...at, tx: 4, ty: 4, gold: 0, color: '#f00' }, { type: 'burrow', ...at, dug: 1 },
+    { type: 'heal', ...at }, { type: 'spawn', kind: 'food', ...at, gold: 0 }, { type: 'weather', kind: 'rain' }, { type: 'ember', ...at, fx: 4, fy: 4 },
+    { type: 'woodpecker' }, { type: 'peck', ...at, cells: [10, 11], under: [0] }, { type: 'rot', ...at, kind: 'pellet', color: '#f00' }, { type: 'flown', ...at },
+    { type: 'starving', snake: a }, { type: 'alight', snake: a }, { type: 'singe', snake: a }, { type: 'baked', ...at, kind: 'food' }, { type: 'ash', ...at, kind: 'food' },
+    ...['emerge', 'gust', 'charge', 'strike', 'rainbow', 'aim', 'douse', 'lastApples'].map(type => ({ type, ...at })),
+  ];
+  // Plans: a rival that has thought (to jump), a person with a turn queued (and a flash asked for).
+  Object.assign(c, { planned: D.down, plannedTick: host.tick }); c.memory.power = host.tick;
+  a.queue.push(D.left); a.flashArmed = host.tick;
+  const row = { id: 'r1', name: 'A', place: 1, won: true, draw: false, eaten: 9, survived: 60000, date: 1767225600000, round: 'R1', owner: 'o0' };
+  return {
+    host, humans, personas, messages: [
+      { t: 'welcome', name: 'B' }, { t: 'reject', why: 'version' }, { t: 'lobby', players: [{ id: 'host', name: 'A', color: O.HUMAN_COLORS[0], host: true }] },
+      O.round(host, humans, 'Up the tree with you:', 'R1'), { t: 'scores', from: [{ color: O.HUMAN_COLORS[1], entries: [row] }] },
+      { t: 'phase', s: 'countdown', beat: 2 }, { t: 'phase', s: 'go' }, O.tick(host, { holesFrom: 0, tickLen: 120 }), O.plan(host),
+      { t: 'say', id: 2, text: 'Hello.', reply: false }, { t: 'closed' },
+      { t: 'hello', v: O.VERSION, name: 'B', owner: 'o1', scores: [row] }, { t: 'turn', d: 'up' }, { t: 'swipe', d: 'left' }, { t: 'pow', k: 'leap' },
+      { t: 'away' }, { t: 'back' }, { t: 'ping', at: 1000 }, { t: 'pong', at: 1000 }, { t: 'k' },
+    ],
+  };
+}
+const { host: sampleHost, humans: sampleHumans, personas: samplePersonas, messages: SAMPLES } = protocolSamples();
+// Round trips.
+for (const msg of SAMPLES) {
+  const sent = wire(msg);
+  let back = sent;
+  if (msg.t === 'tick' || msg.t === 'plan' || msg.t === 'round') {
+    const guest = E.createGame({ humans: sampleHumans, personas: samplePersonas });
+    if (msg.t === 'round') {
+      O.apply(guest, sent.first, E.DIRS);
+      back = O.round(guest, sent.humans, sent.rivals, sent.id);
+    } else {
+      O.apply(guest, wire(O.tick(sampleHost, { holesFrom: 0, tickLen: 120 })), E.DIRS);
+      if (msg.t === 'plan') O.applyPlan(guest, sent, E.DIRS);
+      back = msg.t === 'plan' ? O.plan(guest) : O.tick(guest, { holesFrom: 0, tickLen: 120 });
+    }
+  }
+  if (!same(back, msg)) { console.error(`a ${msg.t} message changed on the way:\n  sent ${JSON.stringify(msg)}\n  came ${JSON.stringify(back)}`); process.exit(1); }
+}
+// Shapes: each message's fields, and each row a message carries (a tick's events by name), each field's type.
+const typeOf = v => v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v === 'object' ? `object(${Object.keys(v).sort().join(',')})` : typeof v;
+const shapeOf = v => Array.isArray(v) ? `[${v.length}] ${v.map(typeOf).join(' ')}` : `{${Object.keys(v).length}} ${Object.keys(v).sort().map(k => `${k}: ${typeOf(v[k])}`).join(', ')}`;
+const SHAPES = {};
+for (const msg of SAMPLES) {
+  const name = msg.t === 'phase' ? `phase ${msg.s}` : msg.t;
+  SHAPES[name] = shapeOf(msg);
+  if (msg.t === 'tick') {
+    SHAPES['tick s'] = shapeOf(msg.s[2]); // (a rival's: its memory says all it can)
+    SHAPES['tick f beetle'] = shapeOf(msg.f[0]); SHAPES['tick f meal'] = shapeOf(msg.f[1]);
+    for (const k of ['un', 'bu', 'fi']) SHAPES[`tick ${k}`] = shapeOf(msg[k][0]);
+    SHAPES['tick w'] = shapeOf(msg.w); SHAPES['tick sky'] = shapeOf(msg.sky);
+    for (const e of msg.e) SHAPES[`tick e ${e[0]}`] = shapeOf(e);
+  }
+  if (msg.t === 'plan') SHAPES['plan s'] = shapeOf(msg.s[2]);
+  if (msg.t === 'round') SHAPES['round humans'] = shapeOf(msg.humans[0]);
+  if (msg.t === 'lobby') SHAPES['lobby players'] = shapeOf(msg.players[0]);
+  if (msg.t === 'scores') { SHAPES['scores from'] = shapeOf(msg.from[0]); SHAPES['score row'] = shapeOf(msg.from[0].entries[0]); }
+}
+const kindsNow = Object.keys(SHAPES).sort();
+const FINGERPRINT = require('crypto').createHash('sha256').update(JSON.stringify(kindsNow.map(k => [k, SHAPES[k]]))).digest('hex').slice(0, 16);
+// The kinds against the types, the game's code and the engine.
+const words = list => [...list.matchAll(/'(\w+)'/g)].map(m => m[1]);
+const quoted = (text, re) => new Set([...text.matchAll(re)].flatMap(m => words(m[1])));
+const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
+const ONLINE = read('online.js'), NET = read('net.js');
+const docs = text => [...text.matchAll(/\/\*\*[\s\S]*?\*\//g)].map(m => m[0]).join('\n');
+const typedT = quoted(docs(ONLINE) + docs(NET), /\bt: ((?:'\w+'(?: \| )?)+)/g);
+const eventDoc = ONLINE.slice(ONLINE.indexOf('@typedef {[\'eat\''), ONLINE.indexOf('} EventRow'));
+const typedE = new Set([...quoted(eventDoc, /\[((?:'\w+'))/g), ...quoted(eventDoc, /type: ((?:'\w+'(?: \| )?)+)/g)]);
+const GAME_CODE = ['net.js', 'online.js', ...fs.readdirSync(path.join(ROOT, 'game')).map(f => `game/${f}`)].map(read).join('\n').replace(/\/\*\*[\s\S]*?\*\//g, '');
+const sentT = quoted(GAME_CODE, /[{,]\s*t: ([^,}]+)/g);
+// The messages the game builds by hand (not tick, plan and round: online.js's encoders make those, and the
+// samples are theirs): each one's fields, read from its object literal in the code, must be a sample's.
+const ENCODED = ['tick', 'plan', 'round'];
+const topLevel = body => { // (the keys of an object literal's body: commas at depth 0)
+  const keys = [];
+  let depth = 0, part = '';
+  for (const ch of body + ',') {
+    if ('([{'.includes(ch)) depth++;
+    if (')]}'.includes(ch)) depth--;
+    if (ch === ',' && !depth) { const m = part.match(/^\s*(\w+)\s*(?::|$)/); if (m) keys.push(m[1]); part = ''; } else part += ch;
+  }
+  return keys.sort().join(',');
+};
+for (const m of GAME_CODE.matchAll(/\{ t: ([^,}]+)((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}/g)) {
+  const keys = topLevel('t' + m[2]);
+  for (const t of words(m[1])) {
+    if (ENCODED.includes(t)) continue;
+    if (!SAMPLES.some(x => x.t === t && Object.keys(x).sort().join(',') === keys)) { console.error(`the game sends a ${t} message with ${keys}, and no sample here has those fields: update protocolSamples`); process.exit(1); }
+  }
+}
+const sampledT = new Set(SAMPLES.map(m => m.t)), sampledE = new Set(SAMPLES.find(m => m.t === 'tick').e.map(e => e[0]));
+const differ = (what, x, y) => { const d = [...x].filter(k => !y.has(k)); if (d.length) { console.error(`${what}: ${d.join(', ')}`); process.exit(1); } };
+differ('messages sent but not sampled here (add one to protocolSamples)', sentT, sampledT);
+differ('messages sampled but not typed in online.js or net.js (add a @typedef)', sampledT, typedT);
+differ('messages typed but not sampled here (add one to protocolSamples)', typedT, sampledT);
+differ('events the engine makes but not sampled here (add one to protocolSamples)', new Set(KINDS), sampledE);
+differ('events sampled but not in online.js\'s EventRow type', sampledE, typedE);
+differ('events in online.js\'s EventRow type but not sampled here', typedE, sampledE);
+// The pin.
+const pinned = fs.existsSync(PIN_FILE) ? JSON.parse(fs.readFileSync(PIN_FILE, 'utf8')) : null;
+const changed = pinned ? [...new Set([...Object.keys(pinned.kinds), ...kindsNow])].filter(k => pinned.kinds[k] !== SHAPES[k]).sort() : kindsNow;
+if (pinned && pinned.version === O.VERSION && changed.length) {
+  console.error(`the message shapes changed, but online.js's VERSION is still ${O.VERSION}: bump it (an old friend's browser would misread these), then refresh the pin with node tools/online-test.js --pin. Changed: ${changed.map(k => `${k} (was ${pinned.kinds[k] ?? 'none'}, now ${SHAPES[k] ?? 'gone'})`).join('; ')}`);
+  process.exit(1);
+}
+if (args.includes('--pin')) {
+  fs.writeFileSync(PIN_FILE, JSON.stringify({ version: O.VERSION, fingerprint: FINGERPRINT, kinds: Object.fromEntries(kindsNow.map(k => [k, SHAPES[k]])) }, null, 2) + '\n');
+  console.log(`pinned: protocol ${O.VERSION}, shapes ${FINGERPRINT} (${kindsNow.length} kinds${pinned ? `; changed: ${changed.join(', ') || 'none'}` : ''})`);
+} else if (!pinned || pinned.version !== O.VERSION || pinned.fingerprint !== FINGERPRINT) {
+  console.error(`the pin (tools/protocol-shapes.json) records protocol ${pinned?.version ?? 'none'}, and online.js's VERSION is ${O.VERSION}: refresh it with node tools/online-test.js --pin`);
+  process.exit(1);
+}
+
 // The biggest scores message: four people, each with ten rounds under long names.
 const owner = i => 'owner' + i + 'abcdefghijklmnopqrstuvwxyz0123456789'.slice(0, 28);
 const rows = i => Array.from({ length: 12 }, (_, n) => ({
@@ -412,4 +562,5 @@ if (O.POWERS.includes('dash') || O.POWERS.includes(undefined) || O.DIR_NAMES.inc
 const n = key => seen.get(key) || 0, stagedAll = [...staged.values()].reduce((a, b) => a + b, 0);
 console.log(`ok: ${rounds} rounds (seed ${SEED}), ${ticks} ticks, ${checks} checks, guest matched the host every tick (${presses} power presses, ${n('dash plain')} plain flashes, ${plans} plans, ${n('choke')} chokes and ${n('nudge')} nudges, ${n('dig')} digs, ${n('knock')} knocks, ${n('heal')} burrows closing over, ${eaten} things eaten); biggest message ${biggest} bytes`);
 console.log(`ok: crossed, ${MIN} times at least: all ${KINDS.length} kinds of event and all they say, all ${FIELDS.length} fields of a snake, its ${LOOKS.length} looks, the food, the woodpecker, fire and weather (${seen.size} things in all; ${stagedAll} events staged: ${[...staged].map(([k, v]) => `${k} ${v}`).join(', ') || 'none'})`);
+console.log(`ok: all ${SAMPLES.length} kinds of message round-trip unchanged, as typed; their shapes match the pin (protocol ${O.VERSION}, shapes ${FINGERPRINT}, ${kindsNow.length} kinds)`);
 console.log(`ok: crossed, once at least: all ${FATAL.length} ways to be out (${FATAL.map(k => `${k} ${n(`death fatal ${k}`)}`).join(', ')}; staged on boards of their own: ${deathsStaged.join(', ') || 'none'})`);

@@ -13,7 +13,8 @@ https://haaktuah.github.io/barkstreet-snakes/.
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
 | Materials the queue points to: the owner's saved tasks word for word, the teaching prototypes and judges, the woodpecker acts draft, the bridge-glitch repro, the unverified jumps start, the Sniper screenshot | `docs/handoff/` |
 | The game | `index.html`, `style/` (three stylesheets, listed in `style/base.css`), `engine.js`, `ai.js`, `render/` (seventeen files, listed in `render/core.js`), `game/` (seven, listed in `game/core.js`), `chatter/` (four, listed in `chatter/voices.js`), `audio.js`, `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
-| Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, `simulate.js`, `abtest.js`, `bench-ai.js`, `browser.js`) |
+| Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, `simulate.js`, `abtest.js`, `bench-ai.js`, `browser.js`; `protocol-shapes.json`, the online messages' pinned shapes) |
+| The online messages' types (checked by `tsc`, never shipped) | `jsconfig.json`, `types/globals.d.ts`, and the JSDoc in `net.js` and `online.js` |
 | Study and measuring tools from earlier rounds | `tools/dev/` (teaching audits, burrow spacing, board sizes, the woodpecker and food study, PR pictures) |
 | History: the old polish audit, the plan as it grew, Haakon's instructions word for word | `AUDIT.md`, `docs/archive/` |
 
@@ -147,7 +148,7 @@ that may be deleted. `tools/dev/crop.js` and `tools/dev/montage.js` make them.
 
 ```bash
 scripts/cloud-setup.sh                 # cloud machines: Chromium for the browser suites, if missing
-scripts/test.sh                        # all ten suites, quiet; or name some: scripts/test.sh rules render
+scripts/test.sh                        # the types (tsc) and all ten suites, quiet; or name some: scripts/test.sh rules render
 scripts/sim.sh 200 --seed 3 --census   # tools/simulate.js, quiet: fingerprint, check and tables (also seed 11)
 scripts/codemap.sh engine.js           # the functions of a game file, with line numbers (render/*.js, game/*.js too)
 scripts/usage.sh                       # weekly usage, if this session can read it

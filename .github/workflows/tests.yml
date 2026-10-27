@@ -1,6 +1,7 @@
 # The game's own checks, on every push and pull request: the rules, online
-# play, the rivals' chatter, the records and the service worker in Node, the same seeded rounds
-# with and without thinking ahead, and the renderer's, controls' and page's
+# play and the types of its messages, the rivals' chatter, the records and
+# the service worker in Node, the same seeded rounds with and without
+# thinking ahead, and the renderer's, controls' and page's
 # promises in headless Chrome (the runner has it): the page on phones,
 # tablets and desktops too. The three jobs run side by side.
 name: tests
@@ -23,6 +24,10 @@ jobs:
         run: node tools/rules-test.js
       - name: Online
         run: node tools/online-test.js
+      # The online messages' types (net.js and online.js, see jsconfig.json): a
+      # check only, with TypeScript fetched for this step. Nothing is built or shipped.
+      - name: Types
+        run: npx -y -p typescript@6.0.2 tsc --noEmit -p jsconfig.json
       - name: Chatter
         run: node tools/chatter-test.js
       - name: Records
