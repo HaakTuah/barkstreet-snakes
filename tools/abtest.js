@@ -39,6 +39,11 @@
 // sides swapped, so every row comes out exactly even (an identity check);
 // two copies that differ only in which random numbers they draw come out
 // even within noise.
+// (Check it after a change to this mode or to simulate.js: `node
+// tools/abtest.js . . --head-to-head --metrics side,deaths,powers,trademarks
+// --rounds 20 --batch 20` must give B-A = 0 on every row.) Two trademarks
+// read the AI's own memory (Sovereign's home, Mute's victimId): if B's
+// ai.js renames those, its snakes measure as 0 there, a false difference.
 //
 //   node tools/abtest.js [A] B [--seed N ...] [--rounds N] [--batch N] [--metrics LIST] [--at MS]
 //                        [--alpha P] [--margin ROW=X ...] [--workers N] [--json]

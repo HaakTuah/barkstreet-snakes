@@ -283,7 +283,7 @@ function signatures(g, T, per, was) {
     const p = per[s.name].sig, h = s.body[0], L = s.body.length;
     const w = was[s.id];
     p.ticks++;
-    if (h.x !== w.x || h.y !== w.y) { p.moves++; if (s.dir !== w.dir || !w.moved) p.runs++; w.moved = true; }
+    if (h.x !== w.x || h.y !== w.y) { p.moves++; if (s.dir.x !== w.dir.x || s.dir.y !== w.dir.y || !w.moved) p.runs++; w.moved = true; }
     w.x = h.x; w.y = h.y; w.dir = s.dir;
     // Lying beside itself: a cell with another of its own (not the one before or after it) beside it.
     const index = signatures.index ||= new Int32Array(N * N), own = stampOf();
