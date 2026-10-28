@@ -295,3 +295,9 @@ file trimmed under its 20 KB mark; faster checks for Amarna Letters):
 > Yes, do all expertly 1-5 except codex since we don't have it yet.
 
 (here: `CLAUDE.md` trimmed, the full text of "pipeline, don't wait" and "as many lanes" moved to `docs/orchestrating.md`)
+
+In the design chat (28 October 2026, 23:57 UTC), on a new rival:
+
+> add Charmer to the queue, exactly as I have prescribed, with his clingy unique playstyle.
+
+(queued as 3c in `docs/PROGRESS.md`; his look and death mark are left for Haakon to give)
