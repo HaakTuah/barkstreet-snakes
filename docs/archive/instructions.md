@@ -233,3 +233,7 @@ In the design chat (27 October 2026, 16:56 UTC), on Claude's proposal that build
 opening their pull request, after two Amarna Letters items had begun before Haakon's answers reached them:
 
 > Yes, why not? If you don't object.
+
+In the design chat (28 October 2026, 06:33 UTC), after naming the principles that answer most builders' questions:
+
+> Code's should probably note where it has made an assumption, like it does now with questions, so we can check it afterwards.
