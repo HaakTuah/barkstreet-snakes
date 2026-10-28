@@ -252,3 +252,8 @@ In the design chat (28 October 2026, 14:23 and 14:26 UTC), on how builders spend
 
 > Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns.
 
+In the design chat (28 October 2026, 14:48 UTC), after Claude proposed a second builder for independent work (Wildcard's
+hair while an AI task ran) and asked for a yes, since it overrides the limit of two agents:
+
+> Yes, allow for as many lanes as can be parallelized, expert.
+

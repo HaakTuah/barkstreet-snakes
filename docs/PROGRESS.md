@@ -47,6 +47,30 @@ entry's, not the drawing's. What it should be, seen from above (the head points 
 - Shown in the PR as before and after crops, on a light and a dark board, at the sizes of a phone and a desktop.
 - Art only, no rule changes: the render suite and its looks checks pass; no reviewer needed beyond the pictures.
 
+### 1b++. The phone's bottom: the chatter, the controls and the woodpecker (small, next, a UI lane beside the AI work)
+
+Haakon (28 October 2026), with two screenshots from his phone ([the chatter open](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/3a098b38f41f596834c3bd0fefc5c453eede2b1f/owner-2026-10-28-chat-open.jpg),
+[the chatter shrunk](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/3a098b38f41f596834c3bd0fefc5c453eede2b1f/owner-2026-10-28-chat-shrunk.jpg)): "See how the chat display overlaps with the buttons when it
+is shrunk? Also, it defaults to shrunk at start, even though the space below is used for nothing else. And the
+woodpecker is still too small when it is down there." Then, on whether it may cover things down there: "Really, I don't
+mine if it covers stuff up down there. It isn't important. But it is important that it is big. Rather now it is big when
+it enters the game screen, and shrinks to a miniature when it goes down there. It should stay much more consistent. And
+it it purches on and interact with us elements down there, then that just looks cool really."
+- **The page's own parts never overlap.** The shrunk chatter bar sits clear below the speed row, with the gap the other
+  rows have; no button, row or line of chatter is laid over another. The woodpecker is the exception (below).
+- **Open by default where there is room.** At the start, and on a resize or turn of the phone, the chatter opens to fill
+  the space below the controls with as many whole lines as fit, down to the screen's bottom edge (its safe area kept),
+  as the desktop chatter fills its column (PR #72). It starts shrunk only where fewer than three lines fit. A player who
+  shrinks or opens it keeps that choice (in storage, read and written in try/catch).
+- **The woodpecker keeps one size.** Below the board it is the size it is on the board, scaled with the board's cell,
+  never shrunk to a miniature as today. It moves freely down there and may perch on, and play with, the controls and
+  the chatter: landing on a button's rim, pecking at the chatter's edge, hopping between rows. Covering them is fine
+  (taps pass through it, as decided on 20 October); what matters is that it is big and consistent, and alive there.
+- **Proved by the layout suite** at phone sizes (390x844, 360x780, 412x915 and a short 375x667), with the chatter open
+  and shrunk: no control's box meets another's or the chatter's text (the woodpecker not counted), taps reach a control
+  under the woodpecker, the bird's size below matches its size on the board, and the chatter opens where three lines fit. Before and after crops at a phone's size in the PR.
+- UI only, no rules changed; it runs as its own lane beside the AI work ("as many lanes as can run in parallel").
+
 ### 1c. Done: the big test files split (PRs #95, #96, #97, #100, #102, #103, #104); in `docs/archive/progress-done.md`.
 
 ### 2. Done: types for the multiplayer messages (PR #48); in `docs/archive/progress-done.md`.
