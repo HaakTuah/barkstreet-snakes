@@ -43,11 +43,8 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
-Its done entries (PRs #49 to #118) are in `docs/archive/progress-done.md`, "Item 3, done".
+Its done entries (PRs #49 to #120) are in `docs/archive/progress-done.md`, "Item 3, done".
 
-- **Sniper's longer kill line.** Haakon's words (27 October 2026): "One shot, one whoppertunity". Add it to Sniper's
-  kill lines in `chatter/voices.js` beside "One shot.", with its translation in each language file (as `chatter/zh.js`
-  has "One shot."), keeping the pun where the language allows. It must fit the banner and the chatter strip on a phone.
 - **Mason's Caesar, the punchline and "Et tu" for everything.** Haakon (27 October 2026), on Claude's suggestion: "Yes,
   that would be quiet cool! Then it would show if they died from the edge, falling, or a mushroom also. Or lightning."
   - *The joke as his kill line.* Mason's kill line becomes "Vidi, vici, veni." (he saw, he conquered, then he came), and
@@ -123,4 +120,4 @@ As planned: up to 4 players, key sets, gamepads, and local and online play toget
 ## Noted, not yet queued
 
 Small things found on the way, for Haakon to place in the queue:
-- (None now: the last ones were queued on 27 October, and Sniper's kill line waits under "For Haakon".)
+- (None now.)
