@@ -111,7 +111,7 @@ function headAndEye(P, now, dt) {
     const q = (now - bird.peckFrom) / RIM_PECK_MS;
     if (q >= 0 && q < 1) {
       bird.turn *= Math.exp(-dt / 25); bird.turnTo = bird.turn; P.turn = bird.turn;
-      P.thrust = -B_BACK * Math.sin(Math.PI * q) * (0.5 + 0.5 * Math.cos(4 * Math.PI * q));
+      P.thrust = -B_BACK * Math.sin(Math.PI * q) * (0.5 - 0.5 * Math.cos(4 * Math.PI * q));
     }
   }
   // Resting, a small bob, and now and then it shifts its grip (a hitch down the log and back).
