@@ -119,7 +119,7 @@ const { launch, serve, HELPERS } = require('./browser');
 // CI's jobs, by the time each part took (of about 1150 s on a cloud machine): 03 every device
 // 308 s, 04 154, 05 44, 06 one screen in every state 354, 07 43, 08 87, 09 50, 10 46, 11 19, 12 45.
 // '03/1' is the first of two shares of part 03's screens (share() in the part), '03/2' the second.
-const JOBS = { 1: ['03/1', '07', '09'], 2: ['03/2', '05'], 3: ['06/1', '10'], 4: ['06/2', '11', '12'], 5: ['04', '08'] };
+const JOBS = { 1: ['03/1', '07', '09'], 2: ['03/2', '05', '13'], 3: ['06/1', '10'], 4: ['06/2', '11', '12'], 5: ['04', '08'] };
 const ALWAYS = ['00', '01', '02', '99'];
 const DIR = path.join(__dirname, 'layout');
 const job = process.env.LAYOUT_JOB;
