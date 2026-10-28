@@ -267,3 +267,9 @@ In the design chat (28 October 2026, 15:50 to 15:54 UTC), on PR #107's pictures 
 
 (the last to sending it back with Trump's hair named as the reference and three versions to pick from; queued as 1b+++
 in `docs/PROGRESS.md`)
+
+In the design chat (28 October 2026, 18:29 UTC), on PR #110's three versions of Wildcard's hair:
+
+> Agree to all, expertly. Though a bit hard to decide on b or c. I feel maybe the bottom bit of b being smaller looks better, while the overall shape of c is better. So maybe we'll go for c, but it is hard to pick. Not the biggest fan of any of them, to be honest. Doesn't scream trump hair.
+
+(added to 1b+++ in `docs/PROGRESS.md`: C's shape with B's smaller back, then one more pass)

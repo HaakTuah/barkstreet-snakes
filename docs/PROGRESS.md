@@ -25,7 +25,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 |---|---|---|---|
 | Nerve at a contested apple | Gobbler takes the gamble only once it's hungry (about 4 s left), which is rare, so in play its share of contested apples didn't move (17% both). Should a fed Gobbler gamble too? | Taken: no, as built ("the more the hungrier it is"); a fed Gobbler would need a nerve of about 0.9, near fearless (PR #92) | Open |
 | The woodpecker's size under the board (1b++) | Measured, it was already its board size under the board: 78 to 80 px tall on a 390 px phone, drumming on the board 78 to 85 ([PR #112](https://github.com/HaakTuah/barkstreet-snakes/pull/112)); what looks small is likely its slim side view beside the 44 px buttons, while on the board its wings are open. Should it be bigger, on the board and under it alike (say 1.3 times, so it covers more of the board as it drums), or bigger only under the board (then not one size)? | Taken: one size, as the entry says, so unchanged; it now clings to the buttons and pecks them. Suggested, if bigger: 1.3 times everywhere | Open |
-| Wildcard's hair (1b+++) | Which one: A, B or C? ([PR #110](https://github.com/HaakTuah/barkstreet-snakes/pull/110), pictures side by side; A a small wave and short swirl, B a middle wave with the swirl carried round to the far side, C a big wave swept well out to the side) | Suggested: B; the draft waits for the pick | Open |
+| Wildcard's hair (1b+++) | Which one: A, B or C? ([PR #110](https://github.com/HaakTuah/barkstreet-snakes/pull/110), pictures side by side; A a small wave and short swirl, B a middle wave with the swirl carried round to the far side, C a big wave swept well out to the side) | Suggested: B; the draft waits for the pick | Answered 28 October: C's overall shape with B's smaller back, then one more pass so it reads as Trump's hair (1b+++ below) |
 
 ## The queue, in order
 
@@ -62,6 +62,25 @@ stars-and-stripes body and the red tie): draw that, as seen from straight above 
   and the lane goes on with other work meanwhile. Only the chosen one ships: no option in the game, the others deleted.
 - Art only, no rule changes: the render suite and its looks checks pass; reduced motion unchanged; no reviewer needed
   beyond the pictures and Haakon's pick.
+- **Haakon's pick, and one more pass** (28 October 2026, on PR #110): "Agree to all, expertly. Though a bit hard to
+  decide on b or c. I feel maybe the bottom bit of b being smaller looks better, while the overall shape of c is better.
+  So maybe we'll go for c, but it is hard to pick. Not the biggest fan of any of them, to be honest. Doesn't scream trump
+  hair." So: **C's overall shape, with B's smaller back** (the part behind the head no bigger than B's). Then one more
+  pass in the same PR, because all three read as a golden bun or a bread roll rather than hair. What makes them bread:
+  the dark outline round the whole mass, a few deep grooves that look like the scoring on a loaf, a smooth closed oval
+  edge, and a warm baked colour. What makes it hair, and his:
+  - **Paler,** straw to pale gold, lighter than now, with near-white highlights; the orange only in the shadows.
+  - **No dark outline.** The edge is set off by a soft shadow on the head beneath it, not by a stroke round the hair.
+  - **A feathered edge:** fine wisps breaking out at the back and sides (never in front of the brow), so the outline is
+    soft and uneven, not a clean oval.
+  - **Many fine strands,** not a few deep grooves, all combed the same way.
+  - **The front ledge:** the wave overhangs the forehead a little, with its shadow falling on the brow just behind the
+    eyes (the eyes stay clear).
+  - **A parting on one side,** from which the hair is combed across the crown to the other side: the comb-over, seen
+    from above.
+  The PR shows C as it is beside the new pass, at the same sizes and boards, and asks Haakon again. If the new pass
+  still does not read as his hair, Haakon chooses between them; the costume (the stars-and-stripes body, the red tie,
+  the orange face) carries the rest.
 
 ### 1b++. Done: the phone's bottom (PR #112); in `docs/archive/progress-done.md`.
 
