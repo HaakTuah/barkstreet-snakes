@@ -24,6 +24,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
 | Sniper's kill line | Which words, beside "One shot."? | Haakon (27 October 2026): "One shot, one whoppertunity" (queued under item 3) | Answered |
+| Rivals too shy of heads | Right at a contested apple, with the other head beside it, rivals still usually back off: about 1 in 8 of those cells would be a head-on, which costs about what the apple is worth. Should some personas (Desperado, Gobbler when starving, the hunters) take that gamble more often, as their own nerve? | Suggested: leave it; it's earned fear, not a misreading. If yes, it's a per-persona nerve change, measured like any other | Open |
 
 ## The queue, in order
 
@@ -147,6 +148,12 @@ Also in `next-tasks-verbatim.md`:
   - Kept: every trademark, the win bands, and head-on crashes no more common than noise; `tools/abtest.js` on fresh
     seeds, old against new. It may share a root with "Hunters miss easy pins" above (fear near walls and heads), so look
     at both together.
+  - *Done on 28 October 2026 (PR #83)*: see "Rivals read heads better" in
+    `docs/design/15-the-rivals-look-further-ahead.md`. Most swerves (56%) were from a rival's flash cells, which it
+    almost never flashes into without food on its line; now feared only then (or with gold, or a hurdle to hop).
+    Swerves 8.0 → 2.9 per 1,000 decisions, apples given up in one halved; head-on crashes, wins and trademarks within
+    noise. Fearing the cells right beside a head less, in any of five ways tried, raised head-on crashes 10–30%, so
+    that fear stays as each persona has it.
 - **Wildcard's hair.** Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side. It must read at phone size.
   - *Done on 27 October 2026 (PR #74)*: see "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
 - **Copycat's face.**
