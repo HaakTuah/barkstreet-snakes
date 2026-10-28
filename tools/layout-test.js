@@ -108,25 +108,38 @@
 // 08-09 every 10 and 80 px of height, 10 the chatter streaming and the header on more screens, 11 on
 // its side and old browsers, 12 the cards, full screen, the screen awake and swipes, 99 what it
 // measured. A new check goes in its area's file, or a new one, and a new file into one of JOBS.
-//   LAYOUT_JOB=N node tools/layout-test.js: only the parts of job N of JOBS, as CI runs them side
-//   by side; the screens, the probes, the helpers and the summary (00-02, 99) run in every job.
+//   LAYOUT_JOB=N node tools/layout-test.js: only the parts of job N of JOBS (or its share of a
+//   part's screens), as CI runs them side by side; the screens, the probes, the helpers and the
+//   summary (00-02, 99) run in every job.
 const path = require('path');
 const fs = require('fs');
 const runParts = require('./parts.js');
 const { launch, serve, HELPERS } = require('./browser');
 
-// CI's jobs, by the time each part took (of about 1150 s on a cloud machine): 03 308 s and 09 50;
-// 06 354; 04 154 and 08 87; 05 44, 07 43 and 10-12 113.
-const JOBS = { 1: ['03', '09'], 2: ['06'], 3: ['04', '08'], 4: ['05', '07', '10', '11', '12'] };
+// CI's jobs, by the time each part took (of about 1150 s on a cloud machine): 03 every device
+// 308 s, 04 154, 05 44, 06 one screen in every state 354, 07 43, 08 87, 09 50, 10 46, 11 19, 12 45.
+// '03/1' is the first of two shares of part 03's screens (share() in the part), '03/2' the second.
+const JOBS = { 1: ['03/1', '07', '09'], 2: ['03/2', '05'], 3: ['06/1', '10'], 4: ['06/2', '11', '12'], 5: ['04', '08'] };
 const ALWAYS = ['00', '01', '02', '99'];
 const DIR = path.join(__dirname, 'layout');
 const job = process.env.LAYOUT_JOB;
-{ // (every part in exactly one job, or always run: none left out of CI)
-  const named = [...ALWAYS, ...Object.values(JOBS).flat()];
-  const loose = fs.readdirSync(DIR).filter(f => f.endsWith('.js')).map(f => f.slice(0, 2)).filter(n => named.filter(m => m === n).length !== 1);
-  if (loose.length) { console.error(`parts in no job of JOBS, or in two: ${loose.join(', ')}`); process.exit(1); }
+const mine = job ? JOBS[job] || [] : null; // (null: every part, whole)
+{ // (every part always run, or in one job whole, or in shares 1 to n of n: none left out of CI)
+  const entries = [...ALWAYS, ...Object.values(JOBS).flat()];
+  const loose = fs.readdirSync(DIR).filter(f => f.endsWith('.js')).map(f => f.slice(0, 2)).filter(n => {
+    const of = entries.filter(e => e.split('/')[0] === n), n2 = of.length;
+    return !(n2 === 1 && of[0] === n || n2 > 1 && Array.from({ length: n2 }, (_, i) => `${n}/${i + 1}`).every(e => of.includes(e)));
+  });
+  if (loose.length) { console.error(`parts not in JOBS once, or in shares 1 to n: ${loose.join(', ')}`); process.exit(1); }
   if (job && !JOBS[job]) { console.error(`no job ${job} in JOBS`); process.exit(1); }
 }
+// A part's share of a list of screens in this job: all of it but where JOBS splits that part.
+const share = (part, list) => {
+  const e = mine && mine.find(x => x.startsWith(part + '/'));
+  if (!e) return list;
+  const n = Object.values(JOBS).flat().filter(x => x.startsWith(part + '/')).length, i = Number(e.split('/')[1]) - 1;
+  return list.slice(Math.floor(list.length * i / n), Math.floor(list.length * (i + 1) / n));
+};
 
 const results = [];
 let failed = 0;
@@ -141,8 +154,8 @@ const check = (ok, what, detail = '') => {
   const ev = expr => b.eval(expr);
   const board = [];
   try {
-    await runParts.inside(DIR, { HELPERS, results, check, site, b, ev, board },
-      file => !job || [...ALWAYS, ...JOBS[job]].includes(path.basename(file).slice(0, 2)));
+    await runParts.inside(DIR, { HELPERS, results, check, share, site, b, ev, board },
+      file => !mine || [...ALWAYS, ...mine.map(e => e.split('/')[0])].includes(path.basename(file).slice(0, 2)));
     if (b.errors.length) { console.log('page errors:', b.errors); failed++; }
   } finally {
     await b.close();

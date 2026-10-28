@@ -106,9 +106,9 @@ jobs:
         run: node tools/input-test.js
 
   # The page on every screen has jobs of its own, beside the other two: about
-  # thirteen minutes of screens, sizes and states in all, run as four jobs side
-  # by side, each a part of the whole (JOBS in tools/layout-test.js says which
-  # of tools/layout/ each runs, and fails if a part is in none).
+  # thirteen minutes of screens, sizes and states in all, run as five jobs side
+  # by side, each about a fifth of the whole (JOBS in tools/layout-test.js says
+  # which of tools/layout/ each runs, and fails if a part is in none).
   layout:
     needs: changes
     if: needs.changes.outputs.page == 'true'
@@ -120,13 +120,15 @@ jobs:
       matrix:
         include:
           - job: 1
-            what: every device, every 80 px over the board
+            what: the first devices, over the board, every 80 px
           - job: 2
-            what: one screen in every state
+            what: the other devices, Score and Best growing
           - job: 3
-            what: upright heights, every 10 px held upright
+            what: one screen on the first screens, the chatter and the header
           - job: 4
-            what: over the board, the header, cards and the rest
+            what: one screen on the other screens, on its side, cards and the rest
+          - job: 5
+            what: upright heights, every 10 px held upright
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

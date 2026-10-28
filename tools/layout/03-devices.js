@@ -1,4 +1,4 @@
-for (const d of DEVICES) {
+for (const d of share('03', DEVICES)) {
   if (only && !d.name.includes(only)) continue;
   const tag = d.name;
   // ---------------------------------------------- the start card
