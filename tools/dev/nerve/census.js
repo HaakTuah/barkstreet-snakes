@@ -7,8 +7,8 @@
 //
 // A contested apple: an apple (green or golden) I could reach
 // while I still can't see where a rival went (within 1 + `age` cells), next
-// to a rival's head as I see it or two straight ahead of it (its flash's
-// reach), so a head-on if we both go for it. Counted
+// to a rival's head as I read it now (seen `age` ticks ago, gone straight
+// on since, as the AI reads it), so a head-on if we both go for it. Counted
 // once per snake and apple. Within the ticks it takes me to get there and
 // one more, I ate it (won), or crashed head-on (a bounce, segments lost and
 // a stun), or a rival ate it, or none of these; and within 20 ticks, who ate
@@ -34,8 +34,8 @@ ctx.window.SnakeAI = { ...AI, decide: (view, brain, memory) => {
   const h = view.me.body[0], dist = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
   for (const f of view.food) {
     if ((f.kind !== 'food' && f.kind !== 'golden') || dist(f, h) > 1 + (view.age || 0)) continue;
-    const flashAt = o => o.body[0].x + 2 * o.dir.x === f.x && o.body[0].y + 2 * o.dir.y === f.y; // (its flash: the apple on its line)
-    if (!view.others.some(o => (dist(o.body[0], f) === 1 || flashAt(o)) && !(o.stun > 1))) continue;
+    const now = o => ({ x: o.body[0].x + (view.age || 0) * o.dir.x, y: o.body[0].y + (view.age || 0) * o.dir.y }); // (as I read it: gone straight on since)
+    if (!view.others.some(o => dist(now(o), f) === 1 && !(o.stun > 1))) continue;
     const id = `${view.me.id} ${f.x} ${f.y}`;
     if (seen.has(id)) continue;
     seen.add(id); r.apples++;
