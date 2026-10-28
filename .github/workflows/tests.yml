@@ -4,6 +4,13 @@
 # thinking ahead, and the renderer's, controls' and page's
 # promises in headless Chrome (the runner has it): the page on phones,
 # tablets and desktops too. The three jobs run side by side.
+# Each job runs only where it can be affected (Haakon, 28 October 2026: "tests
+# should only run where they impact something"): nothing for notes alone
+# (docs/, tools/dev/, .claude/, any .md), the Node checks and the browser's
+# three for any change to the game or its tools, and the page on every screen
+# for a change to what the page shows (index.html, style/, render/, game/,
+# chatter/, audio.js, online.js, net.js, records.js, sw.js, the layout test,
+# the browser driver or this file). A skipped job counts as passed.
 name: tests
 
 on:
@@ -12,7 +19,36 @@ on:
   pull_request:
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.what.outputs.code }}
+      page: ${{ steps.what.outputs.page }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: What changed
+        id: what
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          # (no base to compare with, such as a new branch: run everything)
+          if [ -z "$BASE" ] || [ "$BASE" = 0000000000000000000000000000000000000000 ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "code=true" >> "$GITHUB_OUTPUT"; echo "page=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          files=$(git diff --name-only "$BASE" HEAD)
+          echo "$files"
+          code=$(echo "$files" | grep -v -E '^(docs/|tools/dev/|\.claude/)|\.md$' | grep -c . || true)
+          page=$(echo "$files" | grep -E '^(index\.html|style/|render/|game/|chatter/|audio\.js|online\.js|net\.js|records\.js|sw\.js|tools/layout-test\.js|tools/browser\.js|\.github/workflows/tests\.yml)' | grep -c . || true)
+          echo "code=$([ "$code" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "page=$([ "$page" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
   node:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -52,6 +88,8 @@ jobs:
           done
 
   browser:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -69,6 +107,8 @@ jobs:
   # The page on every screen has a job of its own: about ten minutes of
   # screens, sizes and states, beside the other two.
   layout:
+    needs: changes
+    if: needs.changes.outputs.page == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

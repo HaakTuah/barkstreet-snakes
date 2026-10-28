@@ -24,8 +24,9 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
 | Sniper's kill line | Which words, beside "One shot."? | Haakon (27 October 2026): "One shot, one whoppertunity" (queued under item 3) | Answered |
-| Rival line-up | Online, the host's choice from the start card is used, but the lobby doesn't show it and can't change it. Should the lobby show the line-up, with the same seats to choose (the host only)? | Suggested: yes, as a small follow-up, if you'd use it; today, choose on the start card before hosting | Open |
+| Rival line-up | Online, the host's choice from the start card is used, but the lobby doesn't show it and can't change it. Should the lobby show the line-up, with the same seats to choose (the host only)? | Haakon (28 October 2026): "You figure all this out, expert. You know me by now." Claude decided yes, since online stays in step with local play: queued as "The lobby shows the line-up" | Answered |
 | Rivals too shy of heads | Right at a contested apple, with the other head beside it, rivals still usually back off: about 1 in 8 of those cells would be a head-on, which costs about what the apple is worth. Should some personas (Desperado, Gobbler when starving, the hunters) take that gamble more often, as their own nerve? | Haakon (28 October 2026): "gobbler and Desperados should take the gamble more, that fits their playstyle, no?" Claude agreed: queued as "Nerve at a contested apple" | Answered |
+| Nerve at a contested apple | Gobbler takes the gamble only once it's hungry (about 4 s left), which is rare, so in play its share of contested apples didn't move (17% both). Should a fed Gobbler gamble too? | Taken: no, as built ("the more the hungrier it is"); a fed Gobbler would need a nerve of about 0.9, near fearless (PR #92) | Open |
 
 ## The queue, in order
 
@@ -58,6 +59,23 @@ later task then reads a few small files instead of these. Haakon may veto it.
   reached by name from the AI's code, against "what the AI is shown (`aiView()` only)"; kept in its closure, they can't.
 - style.css into the three stylesheets of `style/`, linked in the same order. *Done on 27 October 2026 (PR #46).* With it,
   item 1b is done.
+
+### 1c. The big test files, split (Haakon, 28 October 2026, the workshop check: next, before item 3's remaining entries)
+
+Haakon (28 October 2026): "Yes please, sound good! Do it expertly for both!", to Claude's proposal that included moving
+the big-file split up the queue. The suites have grown past the 50 KB mark many times over: `tools/rules-test.js`
+(199 KB), `render-test.js` (139 KB), `layout-test.js` (120 KB), `input-test.js` (90 KB), `chatter-test.js` (81 KB),
+`simulate.js` (59 KB) and `ui-test.js` (52 KB), so every task that adds a test reads and searches far more than it
+needs, and the layout suite alone takes about 16 minutes on CI.
+- Split each suite by area into a folder of small files with one runner (`tools/rules/`, `tools/render/`, ...), one PR
+  per suite, the same checks passing in the same number before and after (the runner prints the count), and
+  `scripts/test.sh` and the CI names unchanged.
+- The layout suite's screens split across parallel CI jobs (phones, tablets, desktops, or as its states fall), so its
+  wall time drops to a third or less; each job still gated by "what the page shows" in `tests.yml`.
+- `audio.js` (67 KB) split by responsibility if it splits cleanly, as `render/` did; `chatter/zh.js` (57 KB) is data and
+  stays whole. `engine.js` and `ai.js` stay whole as decided in 1b; the workshop check notes them each time, and a clean
+  split, if one appears, gets its own PR.
+- Config and tests only: no game change, so no reviewer; the simulation's fingerprints unchanged.
 
 ### 2. Types for the multiplayer messages: a small PR
 
@@ -163,6 +181,9 @@ Also in `next-tasks-verbatim.md`:
   reading; the hunters and the rest unchanged. Measured head to head (`tools/abtest.js --head-to-head`, fresh seeds):
   their apples won and head-ons taken, Desperado's skims and Gobbler's food share up or held, every other trademark,
   the win bands and head-on crashes overall within noise. AI planning, so high effort.
+  - *Done on 28 October 2026 (PR #92):* `nerve` (Desperado 0.7; Gobbler 0.3 + 0.7 of its hunger; at most 0.85), over
+    both the head-on and the zone fear where they are read for a food cell; see "Nerve at a contested apple" in
+    `docs/design/15-the-rivals-look-further-ahead.md`.
 - **Wildcard's hair.** Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side. It must read at phone size.
   - *Done on 27 October 2026 (PR #74)*: see "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
 - **Copycat's face.**
@@ -179,6 +200,10 @@ Also in `next-tasks-verbatim.md`:
     - Hall of Fame entries from chosen line-ups are marked "chosen".
   - *Done on 28 October 2026 (PR #86):* the deck (`snake-deck`) and the picker (`snake-lineup`), protocol 12; design in
     `docs/design/32-the-owners-playtest.md`, "The rival line-up".
+- **The lobby shows the line-up.** The answer to the rival line-up's question (28 October 2026): online, the lobby
+  shows the host's line-up from the start card, and the host (only) can change it there with the same seats to choose,
+  so online play stays in step with local play ("Online stays in step", with a protocol bump if a message changes).
+  A small follow-up; the guests see the line-up as it stands.
 - **Long names.** The 16-character cap already exists. When the "first out" banner doesn't fit, it drops the cause ("Gran is first out."), and the chatter keeps the full line.
 - **Sniper's longer kill line.** Haakon's words (27 October 2026): "One shot, one whoppertunity". Add it to Sniper's
   kill lines in `chatter/voices.js` beside "One shot.", with its translation in each language file (as `chatter/zh.js`
