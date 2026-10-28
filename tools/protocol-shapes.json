@@ -1,13 +1,14 @@
 {
-  "version": 12,
-  "fingerprint": "7c9e4a14278a21cb",
+  "version": 13,
+  "fingerprint": "6820d1c1f61b54d3",
   "kinds": {
     "away": "{1} t: string",
     "back": "{1} t: string",
     "closed": "{1} t: string",
     "hello": "{5} name: string, owner: string, scores: array<object(chosen,date,draw,eaten,id,name,owner,place,round,survived,won)>, t: string, v: number",
     "k": "{1} t: string",
-    "lobby": "{2} players: array<object(color,host,id,name)>, t: string",
+    "lobby": "{3} lineup: array<object(chosen,key)>, players: array<object(color,host,id,name)>, t: string",
+    "lobby lineup": "{2} chosen: boolean, key: string",
     "lobby players": "{4} color: string, host: boolean, id: string, name: string",
     "phase countdown": "{3} beat: number, s: string, t: string",
     "phase go": "{2} s: string, t: string",

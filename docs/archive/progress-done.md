@@ -291,3 +291,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
     - Hall of Fame entries from chosen line-ups are marked "chosen".
   - *Done on 28 October 2026 (PR #86):* the deck (`snake-deck`) and the picker (`snake-lineup`), protocol 12; design in
     `docs/design/32-the-owners-playtest.md`, "The rival line-up".
+- **The lobby shows the line-up.** The answer to the rival line-up's question (28 October 2026): online, the lobby
+  shows the host's line-up from the start card, and the host (only) can change it there with the same seats to choose.
+  - *Done on 28 October 2026 (PR #116):* protocol 13; design in `docs/design/32-the-owners-playtest.md`, "The rival
+    line-up", *Online*.
