@@ -24,7 +24,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
 | Sniper's kill line | Which words, beside "One shot."? | Haakon (27 October 2026): "One shot, one whoppertunity" (queued under item 3) | Answered |
-| Rivals too shy of heads | Right at a contested apple, with the other head beside it, rivals still usually back off: about 1 in 8 of those cells would be a head-on, which costs about what the apple is worth. Should some personas (Desperado, Gobbler when starving, the hunters) take that gamble more often, as their own nerve? | Suggested: leave it; it's earned fear, not a misreading. If yes, it's a per-persona nerve change, measured like any other | Open |
+| Rivals too shy of heads | Right at a contested apple, with the other head beside it, rivals still usually back off: about 1 in 8 of those cells would be a head-on, which costs about what the apple is worth. Should some personas (Desperado, Gobbler when starving, the hunters) take that gamble more often, as their own nerve? | Haakon (28 October 2026): "gobbler and Desperados should take the gamble more, that fits their playstyle, no?" Claude agreed: queued as "Nerve at a contested apple" | Answered |
 
 ## The queue, in order
 
@@ -154,6 +154,14 @@ Also in `next-tasks-verbatim.md`:
     Swerves 8.0 → 2.9 per 1,000 decisions, apples given up in one halved; head-on crashes, wins and trademarks within
     noise. Fearing the cells right beside a head less, in any of five ways tried, raised head-on crashes 10–30%, so
     that fear stays as each persona has it.
+- **Nerve at a contested apple.** Haakon (28 October 2026), answering PR #83's question: "gobbler and Desperados
+  should take the gamble more, that fits their playstyle, no?" Claude agreed: Desperado lives by skims and Gobbler by
+  its food share, so at a contested apple with the other head beside it (a head-on about 1 time in 8, costing about
+  what the apple is worth) both take the gamble more often: Desperado always more, Gobbler the more the hungrier it is.
+  Each persona's own nerve, set where `headRisk` is read for the contested cell, never by lowering the risk map's
+  reading; the hunters and the rest unchanged. Measured head to head (`tools/abtest.js --head-to-head`, fresh seeds):
+  their apples won and head-ons taken, Desperado's skims and Gobbler's food share up or held, every other trademark,
+  the win bands and head-on crashes overall within noise. AI planning, so high effort.
 - **Wildcard's hair.** Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side. It must read at phone size.
   - *Done on 27 October 2026 (PR #74)*: see "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
 - **Copycat's face.**
