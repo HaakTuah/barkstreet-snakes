@@ -56,6 +56,14 @@ for (const [who, voice] of Object.entries(VOICES)) {
   ok(!(voice.cut || []).some(l => /bird|woodpecker/i.test(l)), `${who}: no 'cut' line blames the woodpecker`);
   for (const k of Object.keys(voice.flash || {})) ok(k === 'first' || k === 'past', `${who}: flash.${k} is first or past`);
 }
+// Last words know what killed them, whatever it was (diesBy, by the cause the engine records), and name no snake.
+for (const [who, voice] of Object.entries(VOICES)) {
+  for (const k of ['edge', 'hole', 'woodpecker', 'hunger', 'fire', 'self']) ok(voice.diesBy?.[k]?.length, `${who} has last words for dying by '${k}'`);
+  ok(Object.values(voice.diesBy || {}).flat().every(l => !l.includes('{who}')), `${who}: its 'diesBy' lines name no snake`);
+}
+// Mason's punchline is his kill line, and the proper version never spoils it.
+ok(VOICES.mason.kill.includes('Vidi, vici, veni.') && !VOICES.mason.idle.includes('Vidi, vici, veni.'), 'Mason crows "Vidi, vici, veni." at a kill');
+ok(!lines.some(([, l]) => l === 'Veni, vidi, vici.'), '"Veni, vidi, vici." is nobody\'s line');
 ok(VOICES.sovereign.realm?.rotten?.length, 'Sovereign minds rot in its realm');
 ok(VOICES.colonist.colony?.rotten?.length, 'Colonist minds rot in its colonies');
 ok(VOICES.sovereign.realm?.capital?.length, 'Sovereign has lines for a capital the woodpecker took');

@@ -28,3 +28,9 @@
 - A rival's name says how it plays. Hunter became **Sniper**: it picks the snake it has the best shot at and cuts in front of its head, and "Hunter" could describe half the cast. Old Hall of Fame rows and kill counts carry over to the new name.
 - Kill lines fit any way of dying to that rival (you ran into it, it ran into you, head-on), and win lines follow the "{Name} wins" title instead of repeating it.
 
+- Last words know what killed them. Killed by a snake, a rival names it ("Et tu, {who}?"); killed by anything else, it
+  names that, in its own voice, from the cause the engine records: the edge, a hole, the woodpecker, hunger, fire (every
+  fire is lightning's, so Mason's "Et tu, ignis?" and "Et tu, Iuppiter?" share it) or its own body (`diesBy` in
+  `chatter/voices.js`). A cause with no line, or a killer no longer on the board, falls back to its plain last words.
+  Mushrooms only shrink, so none dies of one. Mason's kill line is the punchline "Vidi, vici, veni." (he saw, he
+  conquered, then he came), and "Veni, vidi, vici." is nobody's line, so the proper version never spoils it.
