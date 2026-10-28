@@ -148,7 +148,7 @@ Also in `next-tasks-verbatim.md`:
   - Kept: every trademark, the win bands, and head-on crashes no more common than noise; `tools/abtest.js` on fresh
     seeds, old against new. It may share a root with "Hunters miss easy pins" above (fear near walls and heads), so look
     at both together.
-  - *Done on 28 October 2026 (PR #PRNUM)*: see "Rivals read heads better" in
+  - *Done on 28 October 2026 (PR #83)*: see "Rivals read heads better" in
     `docs/design/15-the-rivals-look-further-ahead.md`. Most swerves (56%) were from a rival's flash cells, which it
     almost never flashes into without food on its line; now feared only then (or with gold, or a hurdle to hop).
     Swerves 8.0 → 2.9 per 1,000 decisions, apples given up in one halved; head-on crashes, wins and trademarks within
