@@ -79,6 +79,30 @@ As `docs/design/35-capricious-copycat-and-wildcard.md` describes: Capricious doe
 a shuffled deck, each with its costume and an opening line; Copycat plays as the leader plays, copying a person by what
 they do; Wildcard draws a few strong traits a round and shows them. One PR, or one per rival if that is cleaner.
 
+### 3c. A new rival: the Charmer (Haakon, 29 October 2026; an AI entry, after 2b and 3b)
+
+Haakon (29 October 2026): "add Charmer to the queue, exactly as I have prescribed, with his clingy unique playstyle."
+A vain show-off, named **Charmer**. His look, and the mark he leaves on the map when he dies, are Haakon's to give: this
+entry doesn't specify them, and the art waits for his description. Everything else:
+- **The trademark: courting.** He picks the biggest snake on the board, whoever it is (by length, never by who plays
+  it: "The rivals never treat a person differently"), sidles up and slithers alongside it, two or three cells off its
+  flank, matching its turns. Nobody else in the cast runs beside a rival: Creeper rides tails, Sniper cuts snakes off.
+- **Why it pays:** riding alongside, he sees where his "date" is heading and beats it to the apple, stealing its meal at
+  the last moment.
+- **Rejected:** when the courted snake turns toward him, he backs off, and that dodge can leave him exposed to a third
+  snake, so anyone who reads him can beat him ("No refuges").
+- **Vain:** he loves the open middle of the board, where everyone can see him, and hates coiling into corners; he goes
+  for golden food (the spotlight) and shuns mushrooms (shrinking ruins the look); overconfident in open space, so easy
+  to bait into a Sniper's line.
+- **His tongue is a hairspray can:** a little spritz when he flicks it.
+- **Lines** in his own voice for kills, wins and chatter, as every rival has (`chatter/`), and a blurb for the start
+  screen.
+- **Built from the one template** (`ai.js`: his weights, and a driver for courting), measured like every rival: his
+  trademark (time spent alongside a rival's head, and apples stolen from the snake he courts) and an `abtest.js` run on
+  fresh seeds showing courting pays against a Charmer who doesn't court; every other rival's trademark within noise.
+- **The cast grows to nineteen:** the start screen, the Field guide's row for him, the lobby's line-up, `CLAUDE.md`'s
+  "a cast of eighteen", and Capricious's deck of impressions (3b) gain him; online play gets a protocol bump.
+
 ### 4. The teaching system, steps 2–6 (DESIGN "Teaching by showing")
 
 Step 1 is merged (#35):
