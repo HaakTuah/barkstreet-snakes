@@ -345,7 +345,7 @@ function onFrame(now) {
     drawAlpha = Math.min(1, acc / tickLen);
     dirty = true;
   } else if (state === 'over') {
-    if (showPending(now >= cardAt && !Chatter.lastWordsUp())) Chatter.clearBubbles(); // (a phone's last words, read on the board where they went out, before the card covers it)
+    if (showPending(now >= cardAt && (!Chatter.lastWordsUp() || !overlay.classList.contains('hidden')))) Chatter.clearBubbles(); // (a phone's last words, read on the board where they went out, before the card covers it; under your death's card, no wait)
     // The last move glides like any other, then the board rests.
     if (drawAlpha < 1) {
       drawAlpha = guesting() ? Math.min(1, (performance.now() - online.lastTickAt) / tickLen) : Math.min(1, (acc += dt) / tickLen);
