@@ -16,11 +16,11 @@
  * @typedef {{ t: 'welcome', name: string }} WelcomeMsg  you're in the room, as name
  * @typedef {{ t: 'reject', why: 'full' | 'version' }} RejectMsg
  * @typedef {{ t: 'lobby', players: { id: string, name: string, color: string, host: boolean }[] }} LobbyMsg
- * @typedef {{ t: 'round', v: number, id: string, humans: Human[], rivals: string, personas: string[], first: TickMsg }} RoundMsg
- *   a new round's line-up, plus its first tick (see round())
+ * @typedef {{ t: 'round', v: number, id: string, humans: Human[], rivals: string, personas: string[], chosen: boolean, first: TickMsg }} RoundMsg
+ *   a new round's line-up (chosen: the host chose some of them), plus its first tick (see round())
  * @typedef {{ name: string, color: string, peer?: string, owner?: string }} Human  a seat: peer tells each guest which is theirs
  * @typedef {{ t: 'scores', from: { color: string, entries: ScoreRow[] }[] }} ScoresMsg  everyone's best rounds, for each other's Halls of Fame
- * @typedef {{ id: string, name: string, place: number, won: boolean, draw: boolean, eaten: number, survived: number, date: number, round: string, owner: string }} ScoreRow
+ * @typedef {{ id: string, name: string, place: number, won: boolean, draw: boolean, eaten: number, survived: number, date: number, round: string, owner: string, chosen: boolean }} ScoreRow
  *   (records.js: shareable, cleanShared)
  * @typedef {{ t: 'phase', s: 'countdown', beat: number } | { t: 'phase', s: 'go' }} PhaseMsg
  * @typedef {{ t: 'say', id: number, text: string, reply?: boolean }} SayMsg  a line of chatter (reply: answering another)
@@ -84,7 +84,7 @@
  * @typedef {{ t: 'away' | 'back' }} AwayMsg  the page went out of sight, and came back
  */
 window.SnakeOnline = (() => {
-  const VERSION = 11; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to)
+  const VERSION = 12; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag)
   const POWERS = ['leap', 'flash', 'unleap'];
   const MAX_PEOPLE = 4;
   // Seat colors for people: the host is green; friends get colors no rival wears.
@@ -118,6 +118,7 @@ window.SnakeOnline = (() => {
     return {
       t: 'round', v: VERSION, id, humans, rivals,
       personas: game.snakes.filter(s => s.persona).map(s => /** @type {string} */ (s.personaKey)),
+      chosen: !!game.chosen,
       first: tick(game, { holesFrom: 0, tickLen: 0 }),
     };
   }

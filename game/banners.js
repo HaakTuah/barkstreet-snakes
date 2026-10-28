@@ -519,9 +519,12 @@ function hideCard() {
 }
 
 // The roll-call on the start and countdown cards: every rival, AIs with a
-// word on how they play, friends tagged as friends.
+// word on how they play, friends tagged as friends. On the start card each
+// rival's seat is a button: who sits there is yours to choose (openPicker).
 function buildOpponents() {
   opponentsEl.textContent = '';
+  const seats = state === 'ready' && !online ? Records.seats(SnakeAI.POOL) : null;
+  let seat = 0;
   for (const s of theGame.snakes) {
     if (isMe(s) || (!s.persona && !online)) continue;
     const li = document.createElement('li');
@@ -533,7 +536,21 @@ function buildOpponents() {
     const blurb = document.createElement('span');
     blurb.className = 'blurb';
     blurb.textContent = s.persona ? s.persona.blurb : 'Your friend. For now.';
-    li.append(dot, name, ' ', blurb);
+    if (seats && s.persona && seat < Records.SEATS) {
+      const i = seat++, button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'seat' + (seats[i] ? ' chosen' : '');
+      button.dataset.seat = i;
+      button.setAttribute('aria-haspopup', 'dialog');
+      button.setAttribute('aria-label', `${s.name}, ${seats[i] ? 'chosen' : 'dealt'}. Choose who sits here`);
+      button.title = 'Choose who sits here';
+      const swap = document.createElement('span');
+      swap.className = 'swap';
+      swap.setAttribute('aria-hidden', 'true');
+      swap.innerHTML = '<svg viewBox="0 0 12 12"><path d="M2 4h8M7.5 1.5 10 4 7.5 6.5M10 8H2M4.5 5.5 2 8l2.5 2.5"/></svg>';
+      button.append(dot, name, swap);
+      li.append(button, ' ', blurb);
+    } else li.append(dot, name, ' ', blurb);
     opponentsEl.append(li);
   }
   const tip = document.createElement('li'); // (shown only where the blurbs are hidden: a small board)

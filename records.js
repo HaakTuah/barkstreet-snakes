@@ -8,6 +8,8 @@ window.SnakeRecords = (() => {
   const BEST_KEY = 'snake-best';
   const PLAYER_KEY = 'snake-player';
   const PROBE_KEY = 'snake-probe';
+  const LINEUP_KEY = 'snake-lineup'; // (the rivals you chose, seat by seat)
+  const DECK_KEY = 'snake-deck';     // (the rivals still to be dealt before any comes round again)
   const MAX_SCORES = 10;
   const MAX_NAME = 16;
   const DEFAULT_NAME = 'Green'; // (what the game calls you until you carve a name)
@@ -78,6 +80,7 @@ window.SnakeRecords = (() => {
       friend: !!e.friend && !e.ai,
       owner: typeof e.owner === 'string' ? cleanId(e.owner) : (e.ai || e.friend ? '' : playerId()),
       round: typeof e.round === 'string' ? cleanId(e.round) : '',
+      chosen: !!e.chosen, // (a round whose rivals were chosen, not dealt)
     };
   }
 
@@ -172,7 +175,7 @@ window.SnakeRecords = (() => {
   function shareable(playingAs) {
     return topPlayer(scores()).map(e => ({
       id: e.id, name: e.name === DEFAULT_NAME ? playingAs : e.name, place: e.place, won: e.won, draw: e.draw,
-      eaten: e.eaten, survived: e.survived, date: e.date, round: e.round, owner: e.owner,
+      eaten: e.eaten, survived: e.survived, date: e.date, round: e.round, owner: e.owner, chosen: e.chosen,
     }));
   }
 
@@ -181,7 +184,7 @@ window.SnakeRecords = (() => {
   function cleanShared(entries, owner) {
     if (!Array.isArray(entries)) return [];
     return entries.filter(e => e && typeof e === 'object' && e.owner === owner && Number.isFinite(e.place) && isDate(e.date)).slice(0, MAX_SCORES)
-      .map(e => { const c = cleanEntry(e); return { id: c.id, name: c.name, place: c.place, won: c.won, draw: c.draw, eaten: c.eaten, survived: c.survived, date: c.date, round: c.round, owner: c.owner }; });
+      .map(e => { const c = cleanEntry(e); return { id: c.id, name: c.name, place: c.place, won: c.won, draw: c.draw, eaten: c.eaten, survived: c.survived, date: c.date, round: c.round, owner: c.owner, chosen: c.chosen }; });
   }
 
   // A friend's shared rounds, in their seat color. Checked like anything else
@@ -228,6 +231,63 @@ window.SnakeRecords = (() => {
     wiped = true;
   }
 
+  // ---------------------------------------------------------------- the line-up
+
+  // The rivals you chose for the start card's seats: a persona's key, or null
+  // for "Any" (dealt). pool: the keys there are, so a stored one that's gone
+  // (or a seat chosen twice) comes back as "Any".
+  const SEATS = 3;
+  function seats(pool) {
+    const raw = load(LINEUP_KEY, []), out = [];
+    for (let i = 0; i < SEATS; i++) {
+      const k = Array.isArray(raw) ? raw[i] : null;
+      out.push(typeof k === 'string' && pool.includes(k) && !out.includes(k) ? k : null);
+    }
+    return out;
+  }
+  // Seat i gets key (null: "Any"). One already in another seat swaps with it.
+  function setSeat(pool, i, key) {
+    const list = seats(pool);
+    if (!(i >= 0 && i < SEATS)) return list;
+    key = typeof key === 'string' && pool.includes(key) ? key : null;
+    const other = key ? list.indexOf(key) : -1;
+    if (other >= 0 && other !== i) list[other] = list[i];
+    list[i] = key;
+    save(LINEUP_KEY, list);
+    return list;
+  }
+
+  // n rivals from this browser's deck: every one of pool is dealt before any
+  // comes round again. skip: keys not to deal (chosen ones; they stay in the
+  // deck for later). The deck is shuffled afresh when it runs out, after
+  // whatever it still holds.
+  function deal(pool, n, skip = []) {
+    const raw = load(DECK_KEY, []);
+    let deck = Array.isArray(raw) ? raw.filter((k, i) => pool.includes(k) && raw.indexOf(k) === i) : [];
+    const out = [];
+    for (let fresh = 0; out.length < n && fresh < 2; fresh++) {
+      deck = deck.filter(k => {
+        if (out.length >= n || skip.includes(k) || out.includes(k)) return true;
+        out.push(k);
+        return false;
+      });
+      if (out.length < n) {
+        const more = pool.filter(k => !deck.includes(k));
+        for (let i = more.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [more[i], more[j]] = [more[j], more[i]]; }
+        deck.push(...more);
+      }
+    }
+    save(DECK_KEY, deck);
+    return out;
+  }
+
+  // Rivals dealt but never met go back on the top of the deck, so they're next.
+  function undeal(pool, keys) {
+    if (!keys.length) return;
+    const raw = load(DECK_KEY, []), deck = Array.isArray(raw) ? raw.filter(k => pool.includes(k)) : [];
+    save(DECK_KEY, [...keys.filter((k, i) => pool.includes(k) && !deck.includes(k) && keys.indexOf(k) === i), ...deck]);
+  }
+
   // ---------------------------------------------------------------- rendering
 
   const ordinal = n => n + (['th', 'st', 'nd', 'rd'][n] || 'th');
@@ -266,9 +326,9 @@ window.SnakeRecords = (() => {
     const fmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
     const rows = list.map((e, i) => el('tr', { ...(e.id === highlightId && { ariaCurrent: 'true' }), className: [e.id === highlightId && 'highlight', e.ai && 'ai', e.friend && 'friend'].filter(Boolean).join(' ') },
       el('td', { className: 'num', textContent: i + 1 }),
-      el('td', { className: 'name', title: e.watched ? `${e.name} (a watched round)` : e.friend ? `${e.name} (a friend)` : e.name },
+      el('td', { className: 'name', title: (e.watched ? `${e.name} (a watched round)` : e.friend ? `${e.name} (a friend)` : e.name) + (e.chosen ? ', rivals chosen' : '') },
         dot(e.ai || e.friend ? e.color : playerColor, e.ai && paint ? paint(e.name) : null), e.name, ...(e.friend ? tag('friend') : []),
-        ...(e.id === highlightId ? tag('this round') : [])),
+        ...(e.id === highlightId ? tag('this round') : []), ...(e.chosen ? tag('chosen') : [])),
       el('td', { className: e.won ? 'won' : '', textContent: placeLabel(e) }),
       el('td', { className: 'num', textContent: e.survived ? clock(e.survived) : '–' }),
       el('td', { className: 'num', textContent: e.eaten }),
@@ -356,7 +416,7 @@ window.SnakeRecords = (() => {
   }
 
   return {
-    MAX_SCORES, cleanName, cleanShared, scores, stats, addScore, recordPlayer, recordFriend, shareable, importShared, playerId, rankOf, rename, setName, reset, getName, hasName, getBest, setBest,
+    MAX_SCORES, SEATS, seats, setSeat, deal, undeal, cleanName, cleanShared, scores, stats, addScore, recordPlayer, recordFriend, shareable, importShared, playerId, rankOf, rename, setName, reset, getName, hasName, getBest, setBest,
     renderScores, renderStats, ordinal, clock,
   };
 })();
