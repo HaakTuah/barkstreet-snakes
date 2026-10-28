@@ -1032,7 +1032,7 @@ window.SnakeAI = (() => {
       for (const d of DIR_LIST) {
         if (d.x === -o.dir.x && d.y === -o.dir.y) continue; // (its neck)
         const nx = at(heads[k].x + d.x), ny = at(heads[k].y + d.y);
-        if (inside(nx, ny) && otherFree[ny * N + nx] <= 1) strikes[ny * N + nx] += strike;
+        if (inside(nx, ny) && otherFree[ny * N + nx] - age <= 1) strikes[ny * N + nx] += strike; // (a body as seen, `age` ago)
       }
       // (Its powers reach further straight on: a dash three cells, a golden
       // leap three; anyone's flash two, and anyone's leap if there's
@@ -1043,7 +1043,7 @@ window.SnakeAI = (() => {
       const fx = at(heads[k].x + o.dir.x), fy = at(heads[k].y + o.dir.y);
       const gold = o.dashes > 0 || o.leaps > 0, hop = inside(fx, fy) && otherFree[fy * N + fx] > 1;
       const far = gold ? 3 : Math.max(TUNE.FLASH_LENGTH, hop ? 2 : 1);
-      const on = f => { const n = (f.x - heads[k].x) * o.dir.x + (f.y - heads[k].y) * o.dir.y; return n >= 1 && n <= far + 1 && f.x - heads[k].x === o.dir.x * n && f.y - heads[k].y === o.dir.y * n; };
+      const on = f => { for (let n = 1; n <= far + 1; n++) if (at(heads[k].x + o.dir.x * n) === f.x && at(heads[k].y + o.dir.y * n) === f.y) return true; return false; };
       if (gold || hop || food.some(f => f.kind !== 'mushroom' && on(f))) for (let i = 2; i <= far; i++) {
         const nx = at(heads[k].x + o.dir.x * i), ny = at(heads[k].y + o.dir.y * i);
         if (inside(nx, ny)) strikes[ny * N + nx] += strike * 0.5;

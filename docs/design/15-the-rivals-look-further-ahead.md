@@ -95,6 +95,6 @@ Haakon (27 October 2026): "it seems to me the rival snakes might be a bit too ad
   - every trademark the same, Mason's straight runs a little longer (3.52 → 3.59).
 - **Feel** (the same seeds, each AI in a field of its own kind): the median round 165 s both; sudden death 44.8 s both; head-on deaths 2.55% → 2.58%; every other cause and starving within noise.
 - Decision speed the same (`tools/bench-ai.js`, seed 3: 1.00×).
-- Easy pins (`tools/dev/easy-pins/census.js`, 100 rounds, seed 5): 70% → 75% closed (the overlap #81 left: a pinned snake's flash is now feared only with food on its line).
+- Easy pins (`tools/dev/easy-pins/census.js`, 100 rounds, seed 5): chances taken 70% → 87%, and pins closed in the end 84% → 91%. That was the overlap #81 left: a pinned snake's flash is now feared only with food on its line.
 
 **Left as it is:** right at a contested apple the rivals still back off when the other head is next to it. That fear is earned (about 1 in 8 of those cells would be a crash, which costs about what the apple is worth). How much a rival risks there is its persona's nerve, not a misreading.
