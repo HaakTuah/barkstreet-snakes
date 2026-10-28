@@ -289,7 +289,73 @@ window.SnakeAI = (() => {
     ouroboros: { ...PERSONAS.ouroboros.w, coil: { ...PERSONAS.ouroboros.w.coil, from: 7 } },
   };
   // What a driver remembers that's only its own: a new mood starts without it.
-  const MOOD_MEMORY = ['home', 'colonies', 'site', 'nextSiteAt', 'planted', 'driftAt', 'victimId', 'lureId', 'obs', 'labels', 'w', 'modelId'];
+  const MOOD_MEMORY = ['home', 'colonies', 'site', 'nextSiteAt', 'planted', 'driftAt', 'victimId', 'lureId', 'obs', 'labels', 'w', 'modelId', 'style', 'watch'];
+  // Copycat's copies: its model's style's habits (the short forms, as
+  // Capricious's), shadowing it as it goes: less pull to move the way it
+  // moves than plain Copycat's, so the habits show.
+  const COPY_MEMORY = MOOD_MEMORY.filter(k => k !== 'modelId' && k !== 'style' && k !== 'watch');
+  const COPY_MIMIC = 40;
+  const COPIES = {};
+
+  // Copycat's eye for how a snake plays: only what anyone can see it do
+  // (no names: a person is read the same way as a rival). Over the ticks it
+  // watches, each snake's
+  //   run     moves per turn (long straight runs: Mason)
+  //   coiled  of its time 10 long or more, the share with its head within 3 of its tail (Ouroboros)
+  //   riding  the share of its time with its head within 2 of the tail end of a snake 8 or longer (Creeper)
+  //   apart   cells from the nearest other head, capped at 14 (Ghost)
+  //   near    the share of its time with another head within 4 (the aggressive: Sniper, Mute, Joker...)
+  //   eat     segments grown, a hundred ticks (Gobbler)
+  //   power   moves of more than one cell (jumps and flashes), a hundred ticks (Star)
+  //   spread  how far its head strays from where it mostly is (a home: Sovereign)
+  // and the style it's nearest to (STYLES: each rival's own, as measured by
+  // tools/dev/copycat-styles.js, in units of each trait's spread there).
+  const STYLE_TRAITS = ['run', 'coiled', 'riding', 'apart', 'near', 'eat', 'power', 'spread'];
+  const STYLE_MIN = 60; // (ticks watched before it judges a style)
+  function watchStyles(obs, snakes, tick) {
+    for (const o of snakes) {
+      const ob = (obs[o.id] ||= { tick: -1, n: 0, moves: 0, turns: 0, long: 0, coiled: 0, riding: 0, apart: 0, near: 0, grown: 0, power: 0, sx: 0, sy: 0, sxx: 0, syy: 0, len: o.body.length, hx: o.body[0].x, hy: o.body[0].y, dx: o.dir.x, dy: o.dir.y });
+      if (ob.tick === tick) continue;
+      ob.tick = tick;
+      const h = o.body[0], L = o.body.length, t = o.body[L - 1];
+      const step = Math.abs(h.x - ob.hx) + Math.abs(h.y - ob.hy);
+      if (step > 0) { ob.moves++; if (o.dir.x !== ob.dx || o.dir.y !== ob.dy) ob.turns++; }
+      if (step > 1 && step < 4) ob.power++; // (not the edges wrapping round)
+      if (L > ob.len) ob.grown += L - ob.len;
+      ob.n++;
+      if (L >= 10) { ob.long++; if (manhattan(h, t) <= 3) ob.coiled++; }
+      let apart = 14, ride = false;
+      for (const p of snakes) {
+        if (p === o) continue;
+        apart = Math.min(apart, manhattan(h, p.body[0]));
+        if (p.body.length >= 8 && manhattan(h, p.body[p.body.length - 1]) <= 2) ride = true;
+      }
+      ob.apart += apart;
+      if (apart <= 4) ob.near++;
+      if (ride) ob.riding++;
+      ob.sx += h.x; ob.sy += h.y; ob.sxx += h.x * h.x; ob.syy += h.y * h.y;
+      ob.len = L; ob.hx = h.x; ob.hy = h.y; ob.dx = o.dir.x; ob.dy = o.dir.y;
+    }
+  }
+  function traitsOf(ob) {
+    const n = Math.max(1, ob.n), mx = ob.sx / n, my = ob.sy / n;
+    return [ob.moves / Math.max(1, ob.turns), ob.coiled / Math.max(1, ob.long), ob.riding / n, ob.apart / n, ob.near / n,
+      100 * ob.grown / n, 100 * ob.power / n, Math.sqrt(Math.max(0, ob.sxx / n - mx * mx + ob.syy / n - my * my))];
+  }
+  const STYLES = {}; // (filled in below, once measured)
+  const STYLE_SCALE = STYLE_TRAITS.map(() => 1);
+  function styleOf(ob) {
+    if (!ob || ob.n < STYLE_MIN) return null;
+    const f = traitsOf(ob);
+    let best = null, bestD = Infinity;
+    for (const key in STYLES) {
+      const c = STYLES[key];
+      let d = 0;
+      for (let i = 0; i < f.length; i++) d += ((f[i] - c[i]) / STYLE_SCALE[i]) ** 2;
+      if (d < bestD) { bestD = d; best = key; }
+    }
+    return best;
+  }
 
   const TUNE = window.TUNING; // (the rules' numbers, so the AI's picture of them stays true)
   const TRAPPED = 5000;
@@ -1000,15 +1066,29 @@ window.SnakeAI = (() => {
         if (grown) pickVictim(all.filter(k => labels[others[k].id] === 'evasive'), ctx.w.hunt);
       },
 
-      // Copy the longest snake: move the way it moves, a few cells away.
+      // Copy whoever leads: the longest snake (changing model only when
+      // another leads it by 3 or more). It shadows its model a few cells
+      // away, moving the way it moves, and plays as it has seen it play:
+      // the style it's nearest to (styleOf), with that rival's habits, its
+      // weights and its driver. Watching everyone the same way, it copies a
+      // person by what they do, never for being one.
       copycat() {
+        watchStyles(memory.watch ||= {}, [me, ...others], view.tick - age); // (as it saw them: its eyes are as slow as anyone's)
         let best = -1;
         for (const k of all) if (best < 0 || others[k].body.length > others[best].body.length) best = k;
         const current = indexOf(memory.modelId);
         const k = current >= 0 && others[current].body.length + 3 > others[best].body.length ? current : best;
-        memory.modelId = k >= 0 ? others[k].id : null;
         if (k < 0) return;
-        ctx.lure = k;
+        const style = styleOf(memory.watch[others[k].id]);
+        if (others[k].id !== memory.modelId || style !== memory.style) for (const key of COPY_MEMORY) memory[key] = null; // (a new model, or a new read of it: what the last copy kept is gone)
+        memory.modelId = others[k].id;
+        memory.style = style;
+        if (style) {
+          const copy = PERSONAS[style];
+          ctx.w = COPIES[style] ||= { ...(MOOD_FORMS[style] || copy.w), mimic: COPY_MIMIC, lure: copy.w.lure || PERSONAS.copycat.w.lure };
+          if (copy.driver) drivers[copy.driver]();
+        }
+        if (ctx.lure < 0) ctx.lure = k; // (shadowing it, unless the copy has its own lure: Vulture's, Joker's)
         ctx.mimicDir = others[k].dir;
       },
     };
@@ -2014,5 +2094,5 @@ window.SnakeAI = (() => {
     }
   }
 
-  return { DIRS, PERSONAS, POOL, decide };
+  return { DIRS, PERSONAS, POOL, decide, watchStyles, traitsOf, styleOf, STYLE_TRAITS };
 })();
