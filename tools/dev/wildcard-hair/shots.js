@@ -1,11 +1,12 @@
 // Pictures of Wildcard's hair: four Wildcards heading right, left, up and
 // down on a staged board, the same on any copy of the game (for a before and
 // after), the page's loop stopped, cropped round the four heads.
-//   node shots.js <root> <out.jpg> [<w>x<h>[@dpr]] [reduced]
+//   node shots.js <root> <out.jpg> [<w>x<h>[@dpr]] [reduced|still] [weather]
+// (weather: clear by default; snow for a light board, storm for a dark one)
 const path = require('path');
 const root = path.resolve(process.argv[2]), out = process.argv[3];
 const m = /^(\d+)x(\d+)(?:@([\d.]+))?$/.exec(process.argv[4] || '800x800');
-const reduced = process.argv[5] === 'reduced';
+const reduced = process.argv[5] === 'reduced', kind = process.argv[6] || 'clear';
 const { launch, serve, sleep } = require(path.join(root, 'tools', 'browser.js'));
 (async () => {
   const site = await serve(root); const b = await launch();
@@ -20,7 +21,7 @@ const { launch, serve, sleep } = require(path.join(root, 'tools', 'browser.js'))
       const E = SnakeEngine, R = SnakeRender;
       const set = (s, cells, dir) => { s.body = cells.map(([x, y]) => ({ x, y })); s.prev = s.body.map(c => ({ ...c })); s.dir = E.DIRS[dir]; s.queue = []; s.planned = null; };
       const g = E.createGame({ withPlayer: false, personas: ['wildcard', 'wildcard', 'wildcard', 'wildcard'] });
-      g.food = []; g.time = 60000; g.tick = 500; g.weather.until = 1e12;
+      g.food = []; g.time = 60000; g.tick = 500; g.weather.until = 1e12; g.weather.kind = ${JSON.stringify(kind)}; g.weather.since = 0;
       const run = (x, y, dx, dy) => Array.from({ length: 4 }, (_, j) => [x - dx * j, y - dy * j]);
       const plan = [[run(5, 4, 1, 0), 'right'], [run(7, 4, -1, 0), 'left'], [run(12, 3, 0, -1), 'up'], [run(15, 6, 0, 1), 'down']];
       g.snakes.forEach((s, i) => { s.personaKey = 'wildcard'; set(s, plan[i][0], plan[i][1]); s.lastAte = g.time; });

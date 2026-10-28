@@ -245,3 +245,25 @@ In the design chat (28 October 2026, 07:12 UTC), on the tests running their 16-m
 (the CI change of PR #89). Then (08:03 UTC), on Claude's proposal of a check for what slows the work down as the game grows:
 
 > Yes please, sound good! Do it expertly for both!
+
+In the design chat (28 October 2026, 14:23 and 14:26 UTC), on how builders spend their time:
+
+> Could we then have it so claude does something, pushes it uo to review. Starts on something new. And if the review comes back, a different session addresses it? Be more agile and efficient. Not just sit and wait for stuff?
+
+> Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns.
+
+In the design chat (28 October 2026, 14:48 UTC), after Claude proposed a second builder for independent work (Wildcard's
+hair while an AI task ran) and asked for a yes, since it overrides the limit of two agents:
+
+> Yes, allow for as many lanes as can be parallelized, expert.
+
+In the design chat (28 October 2026, 15:50 to 15:54 UTC), on PR #107's pictures of Wildcard's hair:
+
+> Also, looks like it is messing up wildcards hair again. But now by just making it look like 2 weird yellow blobs instead. You can take a look and see how it is making it now. Hope that isn't what it ends up going with.
+
+> Can't you just describe who's hair it is making? Is it that difficult to make trump's hair?
+
+> Yes please, expertly!
+
+(the last to sending it back with Trump's hair named as the reference and three versions to pick from; queued as 1b+++
+in `docs/PROGRESS.md`)
