@@ -410,7 +410,7 @@ function protocolSamples() {
   // Plans: a rival that has thought (to jump), a person with a turn queued (and a flash asked for).
   Object.assign(c, { planned: D.down, plannedTick: host.tick }); c.memory.power = host.tick;
   a.queue.push(D.left); a.flashArmed = host.tick;
-  const row = { id: 'r1', name: 'A', place: 1, won: true, draw: false, eaten: 9, survived: 60000, date: 1767225600000, round: 'R1', owner: 'o0' };
+  const row = { id: 'r1', name: 'A', place: 1, won: true, draw: false, eaten: 9, survived: 60000, date: 1767225600000, round: 'R1', owner: 'o0', chosen: false };
   return {
     host, humans, personas, messages: [
       { t: 'welcome', name: 'B' }, { t: 'reject', why: 'version' }, { t: 'lobby', players: [{ id: 'host', name: 'A', color: O.HUMAN_COLORS[0], host: true }] },

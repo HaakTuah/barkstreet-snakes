@@ -231,3 +231,25 @@ pin keep it Copycat. Uncopied, it stays full flag red.
   black a dark red. The rim and pin keep these Copycat; it's the honest half and half.
 - Drawn from what both screens know (its model, synced online as `memory.modelId`, and the model's colour), so host and
   guest show the same head. Drawing only.
+
+### The rival line-up
+
+Who you meet is dealt from a deck, and you may choose instead, seat by seat.
+
+- *Before:* three rivals drawn uniformly from the eighteen each round, with no memory, so a favourite could go a dozen
+  rounds unseen and another come three times running.
+- *The deck* (`records.js`, `deal()`, under the new key `snake-deck`): this browser keeps a shuffled deck of the
+  eighteen and deals from it, every rival once before any comes round again, across rounds and reloads. When it runs
+  out, a fresh shuffle goes in behind whatever it still holds. Watching (four rivals) deals the same way. The
+  simulator and tools keep the engine's own uniform pick (`pickOpponents`), so fingerprints are unchanged.
+- *Choosing* (`game/hud.js`, `openPicker()`; the seats in `game/banners.js`, `buildOpponents()`): on the start card
+  each rival is a button with a swap mark; it opens a picker of "Any" and all eighteen, each with its dot and blurb,
+  over the page like the Hall of Fame (Escape or × closes it). A chosen seat wears a ring. The choice is kept per seat
+  under the new key `snake-lineup` (`seats()`, `setSeat()`) for every round after, until changed; "Any" seats are
+  dealt from the deck, which skips the chosen rivals (they stay in it for later). Choosing a rival already in another
+  seat swaps the two. Watching from the start card keeps its three and deals the fourth.
+- *Online* the host's choice and deck decide: the host's `newGame` deals the line-up, and the round message carries
+  it as before. A guest's own choice and deck are untouched. With more people, fewer seats are dealt: the first
+  seats' choices count.
+- *The Hall of Fame:* every entry of a round with any chosen rival (yours, the rivals', a friend's) is marked "chosen"
+  after its name. Protocol 12 carries the round's `chosen` flag and a shared best round's.
