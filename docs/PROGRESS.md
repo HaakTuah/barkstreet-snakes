@@ -6,7 +6,7 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 ## State (27 October 2026)
 
 Queue item 3, the fixes and polish from the owner's playtest, is under way: "Burrows grow shut" (PR #49), "The
-outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57), "Hunger where your eyes are" (PR #66), "Rainbows, the follow-ups" (PR #68), "The phone gap" (PR #70) "Desktop chatter" (PR #72), "Wildcard's hair" (PR #74) and "Copycat's face" (PR #78) the head-to-head mode in `tools/abtest.js` (PR #80) and "Hunters miss easy pins" (PR #81) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
+outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57), "Hunger where your eyes are" (PR #66), "Rainbows, the follow-ups" (PR #68), "The phone gap" (PR #70) "Desktop chatter" (PR #72), "Wildcard's hair" (PR #74) and "Copycat's face" (PR #78), "Rival line-up" (PR #86), the head-to-head mode in `tools/abtest.js` (PR #80) and "Hunters miss easy pins" (PR #81) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
 #48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages). The previews wait
 on one setting: Pages still serves `main` (every "pages build and deployment" run so far has built `main`), so the
 preview links in PRs do not open until Haakon switches Pages to "Deploy from a branch: gh-pages, / (root)". Everything
@@ -24,6 +24,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
 | Sniper's kill line | Which words, beside "One shot."? | Haakon (27 October 2026): "One shot, one whoppertunity" (queued under item 3) | Answered |
+| Rival line-up | Online, the host's choice from the start card is used, but the lobby doesn't show it and can't change it. Should the lobby show the line-up, with the same seats to choose (the host only)? | Suggested: yes, as a small follow-up, if you'd use it; today, choose on the start card before hosting | Open |
 | Rivals too shy of heads | Right at a contested apple, with the other head beside it, rivals still usually back off: about 1 in 8 of those cells would be a head-on, which costs about what the apple is worth. Should some personas (Desperado, Gobbler when starving, the hunters) take that gamble more often, as their own nerve? | Suggested: leave it; it's earned fear, not a misreading. If yes, it's a per-persona nerve change, measured like any other | Open |
 
 ## The queue, in order
@@ -168,6 +169,8 @@ Also in `next-tasks-verbatim.md`:
     - The choice is remembered under a NEW storage key.
     - Online, the host chooses.
     - Hall of Fame entries from chosen line-ups are marked "chosen".
+  - *Done on 28 October 2026 (PR #86):* the deck (`snake-deck`) and the picker (`snake-lineup`), protocol 12; design in
+    `docs/design/32-the-owners-playtest.md`, "The rival line-up".
 - **Long names.** The 16-character cap already exists. When the "first out" banner doesn't fit, it drops the cause ("Gran is first out."), and the chatter keeps the full line.
 - **Sniper's longer kill line.** Haakon's words (27 October 2026): "One shot, one whoppertunity". Add it to Sniper's
   kill lines in `chatter/voices.js` beside "One shot.", with its translation in each language file (as `chatter/zh.js`
