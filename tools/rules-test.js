@@ -2677,27 +2677,28 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
 }
 
 // ---------------------------------------------------------------- the owner's playtest: rivals too shy of heads
-{ // Every rival 8 long heading right along a row, an apple 3 cells on in its lane, a rival 6 long beside it in
-  // the next row heading the same way, its head level with mine as last seen (a moment ago: age 2). It could
-  // turn into my lane ahead of me, but it goes one way, not three: a turn into my way is feared half as much as a
-  // head straight at me. So more rivals race it for the apple than did (4 of 18 before; with no fear at all,
-  // 16). But a rival crossing my lane straight at the cell in front of me, short or long, still turns every
-  // rival away.
-  const run = (rival, food) => {
-    const view = aiView({ me: aiMe(line(10, 10, 8), 'right'), others: [rival, aiRival(2, [[25, 25], [25, 24], [25, 23], [25, 22], [25, 21]], 'down')], food: [{ kind: 'food', expires: 999, ...food }] });
+{ // Every rival 8 long heading right along a row, an apple 3 cells on in its lane; a rival 6 long heading up at
+  // the lane, 4 cells below it as last seen (a moment ago: age 2), so 2 below it by now, and the cell in front of
+  // me is 2 straight ahead of it. It could get there only by a flash, and a plain flash costs its rest: a snake
+  // spends one racing for food on its line, not to cross a cell it can't crawl to. So every rival but the
+  // flinchiest crosses in front of it to the apple (none did: the flash cell was feared as if it would). But the
+  // same rival holding a golden dash, or with an apple on its line (it may well flash for it), still turns
+  // nearly every rival away.
+  const run = (more, food) => {
+    const rival = { ...aiRival(1, Array.from({ length: 6 }, (_, i) => [11, 14 + i]), 'up'), ...more };
+    const view = aiView({ me: aiMe(line(10, 10, 8), 'right'), others: [rival, aiRival(2, [[25, 25], [25, 24], [25, 23], [25, 22], [25, 21]], 'down')], food: food.map(f => ({ kind: 'food', expires: 999, ...f })) });
     return Object.keys(AI.PERSONAS).filter(key => {
       let on = 0;
-      for (let i = 0; i < 6; i++) { const d = AI.decide(view, AI.PERSONAS[key], {}); if (d.x === 1 && d.y === 0) on++; }
-      return on >= 4;
+      for (let i = 0; i < 4; i++) { const d = AI.decide(view, AI.PERSONAS[key], {}); if (d.x === 1 && d.y === 0) on++; }
+      return on >= 3;
     });
   };
   seededWhile(81, () => {
-    const beside = run(aiRival(1, line(10, 9, 6), 'right'), { x: 13, y: 10 });
-    check('a rival beside the lane (it would have to turn into my way): at least 6 of 18 race it for the apple', beside.length >= 6, beside.join(' '));
-    const crossing = [4, 12].flatMap(n => run(aiRival(1, Array.from({ length: n }, (_, i) => [11, 7 - i]), 'down'), { x: 12, y: 10 }));
-    check('...but a rival crossing straight at the cell in front of me, short or long: nobody goes on', !crossing.length, crossing.join(' '));
+    const plain = run({}, [{ x: 13, y: 10 }]);
+    check('a rival 2 cells off, which only a flash would bring into my way: at least 15 of 18 cross in front of it', plain.length >= 15, `${plain.length}: ${plain.join(' ')}`);
+    const dash = run({ dashes: 1 }, [{ x: 13, y: 10 }]), meal = run({}, [{ x: 13, y: 10 }, { x: 11, y: 9 }]);
+    check('...but holding a golden dash, or with an apple on its line, it still turns nearly every rival away (3 at most cross)', dash.length <= 3 && meal.length <= 3, `dash: ${dash.join(' ')}; apple on its line: ${meal.join(' ')}`);
   });
 }
-
 console.log(failed ? `${failed} failed` : 'all good');
 process.exit(failed ? 1 : 0);
