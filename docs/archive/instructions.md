@@ -273,3 +273,9 @@ In the design chat (28 October 2026, 18:29 UTC), on PR #110's three versions of 
 > Agree to all, expertly. Though a bit hard to decide on b or c. I feel maybe the bottom bit of b being smaller looks better, while the overall shape of c is better. So maybe we'll go for c, but it is hard to pick. Not the biggest fan of any of them, to be honest. Doesn't scream trump hair.
 
 (added to 1b+++ in `docs/PROGRESS.md`: C's shape with B's smaller back, then one more pass)
+
+In the design chat (28 October 2026, 23:30 UTC), on the "For Haakon" questions about Gobbler's nerve and the woodpecker's size:
+
+> Agreed to all, expertly! Shouldn't the others contest apples more if they're hungry? They're worth more than, because usually apples just gove you plus 1, but if you are starving, they give you 1 and save you 1, so become plus 2? But yes, gobbler should contest it regardless. And Desperados being an adrenalin junkie, should generally be less risk averse?
+
+(queued as 2b and 2c in `docs/PROGRESS.md`)

@@ -23,8 +23,6 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| Nerve at a contested apple | Gobbler takes the gamble only once it's hungry (about 4 s left), which is rare, so in play its share of contested apples didn't move (17% both). Should a fed Gobbler gamble too? | Taken: no, as built ("the more the hungrier it is"); a fed Gobbler would need a nerve of about 0.9, near fearless (PR #92) | Open |
-| The woodpecker's size under the board (1b++) | Measured, it was already its board size under the board: 78 to 80 px tall on a 390 px phone, drumming on the board 78 to 85 ([PR #112](https://github.com/HaakTuah/barkstreet-snakes/pull/112)); what looks small is likely its slim side view beside the 44 px buttons, while on the board its wings are open. Should it be bigger, on the board and under it alike (say 1.3 times, so it covers more of the board as it drums), or bigger only under the board (then not one size)? | Taken: one size, as the entry says, so unchanged; it now clings to the buttons and pecks them. Suggested, if bigger: 1.3 times everywhere | Open |
 
 ## The queue, in order
 
@@ -39,6 +37,37 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 ### 1c. Done: the big test files split (PRs #95, #96, #97, #100, #102, #103, #104); in `docs/archive/progress-done.md`.
 
 ### 2. Done: types for the multiplayer messages (PR #48); in `docs/archive/progress-done.md`.
+
+### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
+
+Haakon (29 October 2026), on the "For Haakon" question whether a fed Gobbler should gamble too: "Agreed to all,
+expertly! Shouldn't the others contest apples more if they're hungry? They're worth more than, because usually apples
+just gove you plus 1, but if you are starving, they give you 1 and save you 1, so become plus 2? But yes, gobbler should
+contest it regardless. And Desperados being an adrenalin junkie, should generally be less risk averse?"
+
+Today hunger already makes every rival look for food harder (`foodW0`, `eatW0` in `decide()`), but only Gobbler and
+Desperado set aside any of a rival's threat at a contested apple (`w.nerve`), so a starving rival still backs off an
+apple it needs. Build it from the cause, in the one template every rival shares:
+- **An apple is worth what it saves.** For every rival, a contested apple's worth counts the length it adds and, when
+  the rival is starving or close to it, the length it stops it losing: about one more, as Haakon says, and more as the
+  hunger clock runs down. The planner weighs that against the head-on risk as it reads it, so a starving rival contests
+  because the apple is worth more, not because of a special rule. Each rival's own weights still shape it: the cautious
+  ones (Ghost) still give way sooner than the bold.
+- **Gobbler contests even when fed:** a moderate nerve at any hunger, rising with it to the cap (today's 0.85), since
+  "eats everything, even a rival's apple" is its character.
+- **Desperado is less risk-averse everywhere,** not only at food: a lower fear of rivals' heads and of where they might
+  be, as an adrenaline junkie's; its skims stay its trademark.
+- **Measured** with `tools/abtest.js` on fresh seeds, against today's AI: per rival, the share of contested apples won,
+  deaths head-on, starving deaths and length lost to hunger, and wins; every trademark within noise, except the two
+  meant to move (Gobbler's food share up; Desperado's skims and risks up, its survival not collapsing). "No refuges" and
+  "Clever rivals, human reactions" stand: better choices, never faster reactions.
+
+### 2c. The woodpecker, 1.3 times (Haakon, 29 October 2026; a layout lane)
+
+Haakon (29 October 2026), "Agreed to all, expertly!", to the "For Haakon" question on its size and the design session's
+take: **1.3 times its size, on the board and under it alike** (one size). Under the board it still clings to and pecks
+the buttons. Since it covers more of the board as it drums, check with the simulation that round length, deaths by
+cause and per-rival wins stay within noise; pictures at a 390-pixel phone and desktop, as for PR #112.
 
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
