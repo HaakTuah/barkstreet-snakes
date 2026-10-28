@@ -144,7 +144,7 @@ function closePicker() {
   if (pickerEl.hidden) return;
   pickerEl.hidden = true;
   mainEl.inert = false;
-  seatEl(pickerSeat)?.focus({ preventScroll: true });
+  (seatEl(pickerSeat) || startBtn).focus({ preventScroll: true });
 }
 // The seat takes its rival, or one dealt for "Any"; the other seats keep theirs.
 // dealt: the ones the deck dealt to these seats (they go back if never met).
@@ -164,7 +164,7 @@ function pickRival(key) {
     sendLobby();
   } else {
     const up = reseat(seatsNow(), theGame.dealt || [], seat, key);
-    theGame.dealt = up.kept;
+    theGame.dealt = [...up.kept, ...up.fill]; // (newGame keeps the ones seated)
     ready(up.keys, up.chosen);
   }
   pickerEl.hidden = true;
