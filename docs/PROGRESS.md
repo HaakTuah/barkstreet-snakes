@@ -29,6 +29,24 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 ### 1 and 1b. Done: cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46); in `docs/archive/progress-done.md`.
 
+### 1b+. Wildcard's hair, again (small, next)
+
+Haakon (28 October 2026): "Wildcard's hair still looks really weird. It flips to the front side, you know like a blond
+emo/goth haircut. Don't know what claud code insists on that, trump's hear doesn't go to the front and side like that."
+The earlier entry asked for hair "swept back, then forward and to one side", and `pompadour()` in `render/faces.js` does
+just that: it swoops forward along one side to a flick past the eye, a fringe over the face. The wrong part was the
+entry's, not the drawing's. What it should be, seen from above (the head points +x):
+- **Nothing in front of the brow.** The hair's front edge is a raised roll at the hairline, just behind the eyes, its
+  forward-most point no further forward than today's brow line (about x = 0.12 of a cell); no flick, no fringe, no point
+  past or over an eye.
+- **Up and back, then round to the side.** From that roll the mass sweeps back over the crown and round to the far side,
+  combed back over where the ear would be, so the far side is fuller than the near one; the swoop's tip ends at the back
+  or the far side, never at the front.
+- **Big and fluffy, swept back.** Golden-blond, puffed out past the head at the back and far side (as `hairBack()` has
+  it), with a few strands drawn in the direction of the sweep, backwards, so the comb direction reads.
+- Shown in the PR as before and after crops, on a light and a dark board, at the sizes of a phone and a desktop.
+- Art only, no rule changes: the render suite and its looks checks pass; no reviewer needed beyond the pictures.
+
 ### 1c. The big test files, split (Haakon, 28 October 2026, the workshop check: next, before item 3's remaining entries)
 
 Haakon (28 October 2026): "Yes please, sound good! Do it expertly for both!", to Claude's proposal that included moving
