@@ -2676,5 +2676,28 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
   check('a cough\'s roll never puts food on a burrow: it goes to the other side', JSON.stringify(open) === '[11,12]' && JSON.stringify(beside) === '[13,12]', JSON.stringify({ open, beside }));
 }
 
+// ---------------------------------------------------------------- the owner's playtest: rivals too shy of heads
+{ // Every rival 8 long heading right along a row, an apple 3 cells on in its lane, a rival 6 long beside it in
+  // the next row heading the same way, its head level with mine as last seen (a moment ago: age 2). It could
+  // turn into my lane ahead of me, but it goes one way, not three: a turn into my way is feared half as much as a
+  // head straight at me. So more rivals race it for the apple than did (4 of 18 before; with no fear at all,
+  // 16). But a rival crossing my lane straight at the cell in front of me, short or long, still turns every
+  // rival away.
+  const run = (rival, food) => {
+    const view = aiView({ me: aiMe(line(10, 10, 8), 'right'), others: [rival, aiRival(2, [[25, 25], [25, 24], [25, 23], [25, 22], [25, 21]], 'down')], food: [{ kind: 'food', expires: 999, ...food }] });
+    return Object.keys(AI.PERSONAS).filter(key => {
+      let on = 0;
+      for (let i = 0; i < 6; i++) { const d = AI.decide(view, AI.PERSONAS[key], {}); if (d.x === 1 && d.y === 0) on++; }
+      return on >= 4;
+    });
+  };
+  seededWhile(81, () => {
+    const beside = run(aiRival(1, line(10, 9, 6), 'right'), { x: 13, y: 10 });
+    check('a rival beside the lane (it would have to turn into my way): at least 6 of 18 race it for the apple', beside.length >= 6, beside.join(' '));
+    const crossing = [4, 12].flatMap(n => run(aiRival(1, Array.from({ length: n }, (_, i) => [11, 7 - i]), 'down'), { x: 12, y: 10 }));
+    check('...but a rival crossing straight at the cell in front of me, short or long: nobody goes on', !crossing.length, crossing.join(' '));
+  });
+}
+
 console.log(failed ? `${failed} failed` : 'all good');
 process.exit(failed ? 1 : 0);
