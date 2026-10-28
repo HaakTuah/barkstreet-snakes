@@ -3,14 +3,15 @@
 # the service worker in Node, the same seeded rounds with and without
 # thinking ahead, and the renderer's, controls' and page's
 # promises in headless Chrome (the runner has it): the page on phones,
-# tablets and desktops too. The three jobs run side by side.
+# tablets and desktops too. The jobs run side by side.
 # Each job runs only where it can be affected (Haakon, 28 October 2026: "tests
 # should only run where they impact something"): nothing for notes alone
 # (docs/, tools/dev/, .claude/, any .md), the Node checks and the browser's
 # three for any change to the game or its tools, and the page on every screen
 # for a change to what the page shows (index.html, style/, render/, game/,
-# chatter/, audio.js, online.js, net.js, records.js, sw.js, the layout test,
-# the browser driver or this file). A skipped job counts as passed.
+# chatter/, audio.js, online.js, net.js, records.js, sw.js, the layout test
+# and its parts, the parts' loader, the browser driver or this file). A
+# skipped job counts as passed.
 name: tests
 
 on:
@@ -42,7 +43,7 @@ jobs:
           files=$(git diff --name-only "$BASE" HEAD)
           echo "$files"
           code=$(echo "$files" | grep -v -E '^(docs/|tools/dev/|\.claude/)|\.md$' | grep -c . || true)
-          page=$(echo "$files" | grep -E '^(index\.html|style/|render/|game/|chatter/|audio\.js|online\.js|net\.js|records\.js|sw\.js|tools/layout-test\.js|tools/browser\.js|\.github/workflows/tests\.yml)' | grep -c . || true)
+          page=$(echo "$files" | grep -E '^(index\.html|style/|render/|game/|chatter/|audio\.js|online\.js|net\.js|records\.js|sw\.js|tools/layout-test\.js|tools/layout/|tools/parts\.js|tools/browser\.js|\.github/workflows/tests\.yml)' | grep -c . || true)
           echo "code=$([ "$code" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
           echo "page=$([ "$page" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
@@ -104,17 +105,36 @@ jobs:
       - name: Controls
         run: node tools/input-test.js
 
-  # The page on every screen has a job of its own: about ten minutes of
-  # screens, sizes and states, beside the other two.
+  # The page on every screen has jobs of its own, beside the other two: about
+  # thirteen minutes of screens, sizes and states in all, run as five jobs side
+  # by side, each about a fifth of the whole (JOBS in tools/layout-test.js says
+  # which of tools/layout/ each runs, and fails if a part is in none).
   layout:
     needs: changes
     if: needs.changes.outputs.page == 'true'
+    name: layout (${{ matrix.what }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - job: 1
+            what: the first devices, over the board, every 80 px
+          - job: 2
+            what: the other devices, Score and Best growing
+          - job: 3
+            what: one screen on the first screens, the chatter and the header
+          - job: 4
+            what: one screen on the other screens, on its side, cards and the rest
+          - job: 5
+            what: upright heights, every 10 px held upright
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: The page on every screen
+        env:
+          LAYOUT_JOB: ${{ matrix.job }}
         run: node tools/layout-test.js

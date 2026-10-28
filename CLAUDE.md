@@ -13,7 +13,7 @@ https://haaktuah.github.io/barkstreet-snakes/.
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
 | Materials the queue points to: the owner's saved tasks word for word, the teaching prototypes and judges, the woodpecker acts draft, the bridge-glitch repro, the unverified jumps start, the Sniper screenshot | `docs/handoff/` |
 | The game | `index.html`, `style/` (three stylesheets, listed in `style/base.css`), `engine.js`, `ai.js`, `render/` (seventeen files, listed in `render/core.js`), `game/` (seven, listed in `game/core.js`), `chatter/` (four, listed in `chatter/voices.js`), `audio.js`, `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
-| Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, each a runner of its folder of parts by area, such as `tools/rules/` (`tools/parts.js`), `simulate.js`, `abtest.js`, `bench-ai.js`, `browser.js`; `protocol-shapes.json`, the online messages' pinned shapes) |
+| Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, each a runner of its folder of parts by area, such as `tools/rules/` (`tools/parts.js`), `simulate.js` (its parts in `tools/sim/`), `abtest.js`, `bench-ai.js`, `browser.js`; `protocol-shapes.json`, the online messages' pinned shapes) |
 | The online messages' types (checked by `tsc`, never shipped) | `jsconfig.json`, `types/globals.d.ts`, and the JSDoc in `net.js` and `online.js` |
 | Study and measuring tools from earlier rounds | `tools/dev/` (teaching audits, burrow spacing, board sizes, the woodpecker and food study, PR pictures) |
 | History: the old polish audit, the plan as it grew, Haakon's instructions word for word | `AUDIT.md`, `docs/archive/` |
@@ -159,7 +159,7 @@ change that should keep behaviour must keep the fingerprints; `--root DIR` runs 
 browser suites (scope, render, input, layout, ui) drive a headless Chrome through `tools/browser.js`: it looks in the usual
 places, or set `CHROME=/path/to/chrome`; `CI=1` runs it without its sandbox, which is needed as root (`scripts/test.sh`
 sets it). Optional: `SIM_WORKERS` sets the simulation's cores, `BARKBITE_PRIORITY=normal` for timing runs,
-`ONLINE_SEEN=1` makes online-test print what it saw. To play it locally, `.claude/launch.json` serves the folder on
+`ONLINE_SEEN=1` makes online-test print what it saw, `LAYOUT_JOB=N` runs one of the layout suite's five CI jobs. To play it locally, `.claude/launch.json` serves the folder on
 port 5173.
 
 ## Standing instructions
