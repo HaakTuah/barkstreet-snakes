@@ -18,6 +18,7 @@ const BOTTOM = `(() => {
   for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) { const a = all[i], c = all[j]; if (a.x < c.r - 0.5 && c.x < a.r - 0.5 && a.y < c.b - 0.5 && c.y < a.b - 0.5) meet.push(a.what + ' / ' + c.what); }
   return { meet, over: foot.top - frame.bottom, under: log ? log.y - Math.max(...parts.map(p => p.b)) : null, open: q('.chatter').getAttribute('aria-expanded'), fit: q('.chatter').dataset.fit };
 })()`;
+const GRID_PX = 24 * 32; // (the board, in its own px: GRID cells of CELL)
 const ONE_ROW = `(() => { const log = document.getElementById('chatlog'); for (const t of ['Hm.', 'Mine!', 'Mind the bark.', 'Not you again.', 'Ha!']) log.insertAdjacentHTML('afterbegin', '<li><strong>Gobbler</strong> <span>' + t + '</span></li>'); return 'ok'; })()`;
 const tapAt = async at => {
   await b.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...at, id: 1 }] });
@@ -68,8 +69,8 @@ for (const d of [CALLS, sized(360, 780), sized(412, 915), sized(375, 667)]) {
     check(reached && reached.pressed === 'true', `${d.name}: a tap on a speed button under the perched woodpecker reaches it`, reached ? `${reached.id} pressed ${reached.pressed}` : 'the bird over no speed button');
     // (one size: perched under the board, flying, and drumming on it)
     const sizes = await ev(`(() => { const g = SnakeDebug.game(), R = SnakeRender, seen = {}; g.woodpecker = null; g.time = TUNING.SUDDEN_DEATH_MS - 500; // (the staged bird gone: the engine's own comes in, works and rests)
-      for (let i = 0; i < 2400; i++) { SnakeDebug.frames(1); if (!g.woodpecker) continue; const p = R.birdPose(); if (p.phase === 'arrive') continue; const k = p.phase + (p.y > ${768} ? ' below' : ' on'); (seen[k] ||= new Set()).add(Math.round(p.s * 100) / 100); }
-      return Object.fromEntries(Object.entries(seen).map(([k, v]) => [k, [...v]])); })()`);
+      for (let i = 0; i < 9000 && !(seen['drum on'] && seen['back below'] && seen.rested); i++) { SnakeDebug.frames(1); if (!g.woodpecker) continue; const p = R.birdPose(); if (p.phase === 'arrive') continue; const k = p.phase + (p.y > ${GRID_PX} ? ' below' : ' on'); (seen[k] ||= new Set()).add(Math.round(p.s * 100) / 100); if (k === 'rest below' && seen['back below']) seen.rested = new Set([Math.round(p.s * 100) / 100]); }
+      delete seen.rested; seen['(the round: ' + SnakeDebug.state() + ')'] = []; return Object.fromEntries(Object.entries(seen).map(([k, v]) => [k, [...v]])); })()`); // (until it's drummed, flown back and rested again)
     const all = [...new Set(Object.values(sizes).flat())];
     check(all.length === 1 && sizes['rest below'] && sizes['drum on'], `${d.name}: the woodpecker is one size, perched under the board and drumming on it`, Object.entries(sizes).map(([k, v]) => `${k} ${v.join('/')}`).join(', '));
     await ev(`window.__autoRaf = true; 'ok'`);
