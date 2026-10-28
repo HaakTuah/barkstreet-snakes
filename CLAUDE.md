@@ -192,6 +192,12 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   3. **The "For Haakon" table** in `docs/PROGRESS.md` keeps it until he answers.
 
   A session that starts builder sessions passes each list on to Haakon word for word in its next update.
+- **28 October 2026: every assumption is noted.** "Code's should probably note where it has made an assumption, like it
+  does now with questions, so we can check it afterwards." (the words are in `docs/archive/instructions.md`). Every
+  reading a task takes, where its entry or the design left something open, goes into its PR under "Readings taken",
+  each with the rule it rests on ("Rules that stand" above, or the design section). Most questions are answered that
+  way first, by reasoning from the rules; only what no rule settles, or a matter of taste, goes to Haakon. The design
+  session checks the readings at each milestone.
 - **27 October 2026: re-read the task before the PR.** "Yes, why not? If you don't object." (to Claude's proposal; the
   words are in `docs/archive/instructions.md`). Before opening the task's PR, read its entry in `docs/PROGRESS.md` on
   `develop` again, with the "For Haakon" table, since Haakon's answers can change it while you work. Build what changed,
