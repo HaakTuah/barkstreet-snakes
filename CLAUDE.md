@@ -244,3 +244,10 @@ Haakon's standing instructions given since this file was last revised, dated, ne
      brief and check-in, and passes on every lane's "Questions for Haakon" word for word.
   5. **The brake closes lanes first.** From about 85% of the weekly usage, no new side lane opens and open ones finish;
      from about 90%, as "Usage" says, only small things in the main lane.
+- **29 October 2026: the smallest setup that tests the rule.** "Yes, make it expertly so!" (to Claude's proposal, for
+  this game and Amarna Letters alike; the words are in `docs/archive/instructions.md`). Every test sets up the smallest
+  scene that still tests its rule: a scripted board with only the snakes and food it needs, for a few ticks, rather
+  than full rounds. Full rounds and many-round runs only in the few tests that guard the whole (the simulation's
+  fingerprint and `--check`, the online round trip), and long measurements (`tools/abtest.js`, censuses) in
+  `scripts/sim.sh`, never in CI. When the game grows (rivals, moves, board sizes), the tests' default does not grow
+  with it; the workshop check's check times are the measure.
