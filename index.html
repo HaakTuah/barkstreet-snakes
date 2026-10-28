@@ -187,6 +187,17 @@
     </div>
   </div>
 
+  <!-- Who sits in a seat of the start card: any of the rivals, or "Any" (dealt from the deck). -->
+  <div id="picker" class="records picker" role="dialog" aria-modal="true" aria-labelledby="picker-title" hidden>
+    <div class="records-card picker-card">
+      <div class="records-head">
+        <h2 id="picker-title">Who sits here?</h2>
+        <button id="picker-close" class="close" aria-label="Close">&times;</button>
+      </div>
+      <ul id="picker-list" class="picker-list"></ul>
+    </div>
+  </div>
+
   <!-- One leaf cluster, reused on all four corners. -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <!-- A strip of moss, the log's own moss: dark olive tufts, each lit on its upper left, fine fuzz, a spore stalk or two. -->

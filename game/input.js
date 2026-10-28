@@ -179,7 +179,11 @@ document.addEventListener('keydown', e => {
   if (pow) {
     if (e.key === ' ' && e.target === tabbed && e.target.closest?.('button')) return; // (Tabbed to: the button's own key)
     e.preventDefault();
-    if (!e.repeat && recordsEl.hidden) power(pow);
+    if (!e.repeat && recordsEl.hidden && pickerEl.hidden) power(pow);
+    return;
+  }
+  if (!pickerEl.hidden) {
+    if (e.key === 'Escape') { e.preventDefault(); closePicker(); }
     return;
   }
   if (!recordsEl.hidden) {
@@ -197,7 +201,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.closest?.('button')) {
     // A card's or a dialog's button keeps its keys. Elsewhere (the header's,
     // the speed buttons, a tag), in a round, they're the game's keys again.
-    if (e.target.closest('#overlay, #records') || !(state === 'running' || state === 'countdown' || state === 'paused') || e.target === tabbed) return; // (Tabbed to: the button's own keys)
+    if (e.target.closest('#overlay, #records, #picker') || !(state === 'running' || state === 'countdown' || state === 'paused') || e.target === tabbed) return; // (Tabbed to: the button's own keys)
     e.target.blur();
   }
   if (e.key === 'Escape' && noted) { e.preventDefault(); closeNote(true); return; } // (a note you asked for goes first; Esc again wakes, or keeps watching, as ever)
@@ -260,7 +264,7 @@ document.addEventListener('touchstart', e => {
   if (now - touchAt >= TUNE.CARD_MASH_MS) runFrom = now;
   touchAt = now;
   if (!swiping() && runFrom < cardShownAt + TUNE.CARD_TAP_MS && e.target.closest?.('#overlay input, #overlay label, #overlay a')) { e.preventDefault(); return; } // (a card that came up by itself under a run of quick touches: its name field takes none of them either, no focus and no phone keyboard over the round)
-  if (e.target.closest?.('input, a, #records')) return;
+  if (e.target.closest?.('input, a, #records, #picker')) return;
   const button = e.target.closest?.('button:not(:disabled), [role="switch"], .chatter[aria-expanded] > :is(.chatlog, .chatter-head)'); // (the chatter's panel, held upright on a phone: a tap opens or folds it; its box's empty rest under the panel is the board's, a tap there a jump)
   if (!button && !swiping() && !canvasEl.contains(e.target)) return;
   const tapOnly = !!button && !swiping(); // (outside a round a button touch is a tap or a scroll, never a swipe)
@@ -400,7 +404,7 @@ const cardSettled = e => !(e.detail > 0 && (performance.now() < cardShownAt + TU
 // Fame buttons keep focus: there, Enter on a focused button is expected.
 document.addEventListener('click', e => {
   const b = e.target.closest?.('button');
-  if (b && e.detail > 0 && !b.closest('#overlay, #records')) b.blur();
+  if (b && e.detail > 0 && !b.closest('#overlay, #records, #picker')) b.blur();
 });
 click(startBtn, () => {
   if (cardActions?.primary) cardActions.primary();
@@ -489,7 +493,7 @@ document.addEventListener('visibilitychange', () => {
 const awake = { lock: null, asking: false, refused: false };
 function keepAwake() {
   if (!navigator.wakeLock) return;
-  const want = !document.hidden && recordsEl.hidden && (state === 'countdown' || (state === 'running' && overlay.classList.contains('hidden')));
+  const want = !document.hidden && recordsEl.hidden && pickerEl.hidden && (state === 'countdown' || (state === 'running' && overlay.classList.contains('hidden')));
   if (!want) {
     awake.refused = false;
     if (awake.lock) { const lock = awake.lock; awake.lock = null; lock.release().catch(() => {}); }

@@ -5,8 +5,20 @@
 
 // humans: the people in this round, [{ name, color }] (online); alone it's you,
 // or nobody when watching the AIs.
-function newGame({ personas, aiOnly = false, humans = null } = {}) {
-  theGame = Engine.createGame({ personas, humans: humans || (aiOnly ? [] : [{ name: localName(), color: PLAYER_COLOR }]) });
+// personas: the rivals by key (else dealt: see dealLineUp; a friend's are
+// the host's); chosen: whether any of them were chosen, not dealt.
+function newGame({ personas, aiOnly = false, humans = null, chosen = false } = {}) {
+  const people = humans || (aiOnly ? [] : [{ name: localName(), color: PLAYER_COLOR }]);
+  // Rivals dealt to a round nobody played (a start card left for friends, say)
+  // go back on top of the deck: dealing again, they're the ones dealt.
+  const unplayed = theGame && !theGame.spent ? theGame.dealt || [] : [];
+  if (!personas) Records.undeal(SnakeAI.POOL, unplayed);
+  const dealt = personas ? null : dealLineUp(Math.max(0, TUNE.OPPONENTS + 1 - people.length));
+  theGame = Engine.createGame({ personas: personas || dealt.keys, humans: people });
+  theGame.chosen = dealt ? dealt.chosen : !!chosen;
+  const keys = theGame.snakes.filter(s => s.persona).map(s => s.personaKey);
+  if (personas) Records.undeal(SnakeAI.POOL, unplayed.filter(k => !keys.includes(k)));
+  theGame.dealt = dealt ? dealt.fresh : unplayed.filter(k => keys.includes(k));
   markYou(false);
   youHideAt = 0;
   acc = 0;
@@ -28,6 +40,19 @@ function newGame({ personas, aiOnly = false, humans = null } = {}) {
   dirty = true;
 }
 
+// A round's rivals, seat by seat: the ones you chose on the start card (see
+// openPicker), and the "Any" seats dealt from this browser's deck, every
+// rival before any comes round again (Records.deal). Online, it's the host's
+// choice and deck.
+function dealLineUp(want) {
+  const pool = SnakeAI.POOL, seats = Records.seats(pool).slice(0, want), mine = seats.filter(Boolean);
+  const fresh = Records.deal(pool, want - mine.length, mine), next = [...fresh];
+  return { keys: Array.from({ length: want }, (_, i) => seats[i] || next.shift()), fresh, chosen: mine.length > 0 };
+}
+
+// Closing the page on a start card: its rivals weren't met, so they're next.
+window.addEventListener('pagehide', () => { if (theGame && !theGame.spent) Records.undeal(SnakeAI.POOL, theGame.dealt || []); });
+
 // Start a round in the given mode. The round on the start card is used as-is;
 // anything else gets a fresh one.
 function start({ aiOnly = !theGame.withPlayer, going = false } = {}) {
@@ -37,15 +62,17 @@ function start({ aiOnly = !theGame.withPlayer, going = false } = {}) {
     if (hosting() && (state === 'lobby' || state === 'over')) startOnlineRound();
     return;
   }
-  if (state !== 'ready' || aiOnly !== !theGame.withPlayer) newGame({ aiOnly, personas: state === 'ready' ? lineUp(aiOnly) : null });
+  if (state !== 'ready' || aiOnly !== !theGame.withPlayer) newGame({ aiOnly, personas: state === 'ready' ? lineUp(aiOnly) : null, chosen: state === 'ready' && theGame.chosen });
   waking = false;
   speed = watchSpeed = 1; // every round starts at normal speed (watching, you can speed it up again)
   state = 'countdown';
+  theGame.spent = true; // (its rivals were met: see newGame)
   beatsLeft = 3;
   beatTimer = 0;
   theGame.rivalsLine = pick(theGame.withPlayer ? FLAVOR.rivals : FLAVOR.spectators);
   askingStartOver = false;
   updateControls();
+  buildOpponents(); // (the start card's seats are buttons no longer)
   if (!going) beat(); // (going: an arrow on the start card, straight to Go, no '3' knocked over it)
 }
 
@@ -91,7 +118,7 @@ function go() {
   if (hosting()) online.room.broadcast({ t: 'phase', s: 'go' });
   if (guesting()) online.lastTickAt = performance.now();
   theGame.went = true; // (the round has had its Go: a nap from here on wakes through one quiet beat)
-  if (document.activeElement?.closest?.('button') && !document.activeElement.closest('#overlay, #records')) document.activeElement.blur(); // (Space jumps again: a header button Tabbed to last round lets go)
+  if (document.activeElement?.closest?.('button') && !document.activeElement.closest('#overlay, #records, #picker')) document.activeElement.blur(); // (Space jumps again: a header button Tabbed to last round lets go)
   state = 'running';
   hideCard();
   markYou(playerAlive());
@@ -230,11 +257,11 @@ function finishSnake(s, { place, won = false, draw = false }) {
   if (s.result) return;
   s.result = { place, won, draw, eaten: s.eaten, survived: theGame.time };
   // Online, everyone's result goes in everyone's Hall of Fame (the round id keeps it once).
-  if (online && s.isPlayer && !isMe(s) && s.owner) Records.recordFriend(s.result, { name: s.name, color: s.color, owner: s.owner, round: theGame.roundId });
+  if (online && s.isPlayer && !isMe(s) && s.owner) Records.recordFriend({ ...s.result, chosen: theGame.chosen }, { name: s.name, color: s.color, owner: s.owner, round: theGame.roundId });
   if (!isMe(s)) return;
   const before = best;
   theGame.result = s.result;
-  theGame.entryId = Records.recordPlayer({ ...s.result, killer: s.alive ? null : s.fatal === 'pecked' ? 'woodpecker' : s.killer, round: theGame.roundId });
+  theGame.entryId = Records.recordPlayer({ ...s.result, chosen: theGame.chosen, killer: s.alive ? null : s.fatal === 'pecked' ? 'woodpecker' : s.killer, round: theGame.roundId });
   if (s.eaten > best) { best = s.eaten; Records.setBest(best); bestEl.textContent = best; }
   theGame.newBest = s.eaten > before && before > 0; // (a first round's score is a best by default: nothing to celebrate yet)
 }
@@ -244,7 +271,7 @@ function flushAiResults() {
   if (online) return;
   for (const s of theGame.snakes) {
     if (s.isPlayer || !s.result || s.result.saved) continue;
-    Records.addScore({ ...s.result, name: s.name, color: s.color, ai: true, watched: !theGame.withPlayer });
+    Records.addScore({ ...s.result, name: s.name, color: s.color, ai: true, watched: !theGame.withPlayer, chosen: theGame.chosen });
     s.result.saved = true;
   }
 }

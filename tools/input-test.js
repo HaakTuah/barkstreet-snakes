@@ -224,6 +224,9 @@ const KEYS = {
     for (const k of [' ', 'e', 'ShiftLeft', 'ShiftRight']) await key(k);
     await b.sleep(100);
     check(await state() === 'ready', 'the start card: Space, E and Shift start nothing');
+    const seatsFirst = [];
+    for (let i = 0; i < 3; i++) { await key('Tab'); seatsFirst.push(await ev(`document.activeElement?.dataset?.seat ?? ''`)); }
+    check(seatsFirst.join() === '0,1,2', "the start card: Tab goes through the rivals' seats first, then Play", `seats ${seatsFirst.join()}`);
     await key('Tab');
     const focused = await ev(`document.activeElement?.id || document.activeElement?.className`);
     await key(' ');

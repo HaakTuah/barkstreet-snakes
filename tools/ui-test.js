@@ -135,6 +135,27 @@ const KEYS = {
     // ------------------------------------------------------------ desktop
     await b.viewport(1280, 800);
     await load();
+    // Choosing your rivals: a seat opens the picker; a rival chosen sits there, remembered; "Any" deals again.
+    const seated = () => ev(`SnakeDebug.game().snakes.filter(s => s.persona).map(s => s.personaKey).join()`);
+    const before = (await seated()).split(',');
+    await ev(`document.querySelector('.seat[data-seat="1"]').click(); 'ok'`);
+    let pk = await ev(`({ open: !document.getElementById('picker').hidden, n: document.querySelectorAll('#picker .pick').length, any: document.querySelector('#picker .pick').textContent, focus: document.activeElement?.dataset?.key ?? document.activeElement?.id })`);
+    check(pk.open && pk.n === 19 && pk.any.startsWith('Any') && pk.focus === '', 'a seat on the start card opens the picker: "Any" and all eighteen, focus on the seat’s choice ("Any")', JSON.stringify(pk));
+    await key('Escape');
+    pk = await ev(`({ open: !document.getElementById('picker').hidden, focus: document.activeElement?.dataset?.seat })`);
+    check(!pk.open && pk.focus === '1' && await seated() === before.join(), '...Esc closes it, nothing changed, focus back on the seat', JSON.stringify(pk));
+    const pickKey = ['mason', 'star', 'ghost', 'joker'].find(k => !before.includes(k));
+    await ev(`document.querySelector('.seat[data-seat="1"]').click(); document.querySelector('#picker .pick[data-key="${pickKey}"]').click(); 'ok'`);
+    let now = (await seated()).split(',');
+    pk = await ev(`({ chosen: document.querySelector('.seat[data-seat="1"]').classList.contains('chosen'), open: !document.getElementById('picker').hidden, kept: localStorage.getItem('snake-lineup'), game: SnakeDebug.game().chosen })`);
+    check(now[1] === pickKey && now[0] === before[0] && now[2] === before[2] && pk.chosen && !pk.open && pk.game, 'picking a rival seats it there (the others stay), marked chosen, and the round counts as chosen', `${now} ${JSON.stringify(pk)}`);
+    await load();
+    now = (await seated()).split(',');
+    check(now[1] === pickKey && !now.slice(0, 1).concat(now[2]).includes(pickKey), '...and it is kept after a reload', now.join());
+    await ev(`document.querySelector('.seat[data-seat="1"]').click(); document.querySelector('#picker .pick[data-key=""]').click(); 'ok'`);
+    pk = await ev(`({ kept: localStorage.getItem('snake-lineup'), game: SnakeDebug.game().chosen, ring: document.querySelectorAll('.seat.chosen').length })`);
+    check(pk.kept === '[null,null,null]' && !pk.game && !pk.ring, '"Any" undoes it: dealt again, not chosen', JSON.stringify(pk));
+    await load();
     let p = await P();
     check(p.how === 'How to play', 'the start card has How to play', p.how);
     check(/G opens the Field guide/.test(p.hint), 'the start card’s keys say G opens the Field guide', p.hint);

@@ -90,7 +90,75 @@ function closeNote(byKey = false) {
   if (to === name) tabbed = name; // (back as if Tabbed to: Enter there opens it again, rather than asking to start over)
 }
 $('note-close').addEventListener('click', e => closeNote(e.detail === 0));
-document.addEventListener('pointerdown', e => { if (noted && !e.target.closest?.('#scoreboard, button, input, label, a, #records')) closeNote(); });
+document.addEventListener('pointerdown', e => { if (noted && !e.target.closest?.('#scoreboard, button, input, label, a, #records, #picker')) closeNote(); });
+// Choosing your rivals: a start card's seat opens the picker, every rival
+// and "Any" (dealt from the deck). The choice is kept in this browser
+// (Records.setSeat) for every round after, until you change it; online it's
+// the host's that counts. A rival already in another seat swaps with this
+// one's.
+const pickerEl = $('picker'), pickerList = $('picker-list'), pickerTitle = $('picker-title');
+let pickerSeat = -1;
+function openPicker(seat) {
+  if (state !== 'ready' || online) return;
+  closeNote();
+  pickerSeat = seat;
+  const seats = Records.seats(SnakeAI.POOL), here = theGame.snakes.filter(s => s.persona)[seat];
+  pickerTitle.textContent = `Who sits here, instead of ${here ? here.name : 'them'}?`;
+  pickerList.textContent = '';
+  for (const key of [null, ...SnakeAI.POOL]) {
+    const li = document.createElement('li'), button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'pick' + (key ? '' : ' any');
+    button.dataset.key = key || '';
+    button.setAttribute('aria-pressed', String(seats[seat] === key));
+    const dot = document.createElement('span');
+    dot.className = 'dot';
+    if (key) dot.style.background = PERSONA_DOTS[key] || CAST[key].ink || CAST[key].color;
+    const name = document.createElement('strong');
+    name.textContent = key ? CAST[key].name : 'Any';
+    const blurb = document.createElement('span');
+    blurb.className = 'blurb';
+    blurb.textContent = key ? CAST[key].blurb : 'Dealt: you meet them all before anyone twice.';
+    button.append(dot, name, blurb);
+    const other = key ? seats.indexOf(key) : -1;
+    if (other >= 0 && other !== seat) {
+      const tag = document.createElement('span');
+      tag.className = 'who';
+      tag.textContent = 'in another seat: swaps';
+      button.append(tag);
+    }
+    li.append(button);
+    pickerList.append(li);
+  }
+  pickerEl.hidden = false;
+  mainEl.inert = true;
+  pickerEl.querySelector('.picker-card').scrollTop = 0;
+  (pickerList.querySelector('[aria-pressed="true"]') || $('picker-close')).focus({ preventScroll: false });
+}
+function closePicker() {
+  if (pickerEl.hidden) return;
+  pickerEl.hidden = true;
+  mainEl.inert = false;
+  opponentsEl.querySelector(`.seat[data-seat="${pickerSeat}"]`)?.focus({ preventScroll: true });
+}
+// The seat takes its rival, or one dealt for "Any"; the other seats keep theirs.
+function pickRival(key) {
+  const pool = SnakeAI.POOL, seat = pickerSeat, was = theGame.snakes.filter(s => s.persona).map(s => s.personaKey);
+  const seats = Records.setSeat(pool, seat, key || null);
+  // (The rival picked from another seat leaves it this seat's old one: they swap.)
+  const keys = was.map((k, i) => seats[i] || (i !== seat && k === key ? was[seat] : i === seat || seats.includes(k) ? null : k));
+  theGame.dealt = (theGame.dealt || []).filter(k => keys.includes(k)); // (one you sent away counts as met)
+  const fill = Records.deal(pool, keys.filter(k => !k).length, keys.filter(Boolean));
+  ready(keys.map(k => k || fill.shift()), seats.some(Boolean));
+  pickerEl.hidden = true;
+  mainEl.inert = false;
+  opponentsEl.querySelector(`.seat[data-seat="${seat}"]`)?.focus({ preventScroll: true });
+}
+opponentsEl.addEventListener('click', e => { const b = e.target.closest?.('.seat'); if (b && cardSettled(e)) { Sound.play('ui'); openPicker(Number(b.dataset.seat)); } });
+pickerList.addEventListener('click', e => { const b = e.target.closest?.('.pick'); if (b) { Sound.play('ui'); pickRival(b.dataset.key); } });
+$('picker-close').addEventListener('click', closePicker);
+pickerEl.addEventListener('click', e => { if (e.target === pickerEl) closePicker(); });
+
 // What the chips mean, in words (phones have no tooltips).
 function yourPowerWords(s) {
   const how = (left, gold) => gold ? `${gold} golden` : left === 0 ? 'ready' : left === Infinity ? 'not at 3' : 'resting';
