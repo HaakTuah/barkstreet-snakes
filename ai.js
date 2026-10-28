@@ -342,8 +342,25 @@ window.SnakeAI = (() => {
     return [ob.moves / Math.max(1, ob.turns), ob.coiled / Math.max(1, ob.long), ob.riding / n, ob.apart / n, ob.near / n,
       100 * ob.grown / n, 100 * ob.power / n, Math.sqrt(Math.max(0, ob.sxx / n - mx * mx + ob.syy / n - my * my))];
   }
-  const STYLES = {}; // (filled in below, once measured)
-  const STYLE_SCALE = STYLE_TRAITS.map(() => 1);
+  // (Measured on 200 rounds, seed 17, and read back: Star 100% as itself,
+  // Joker 99, Mason 98, Gobbler 88, Ouroboros 87, Ghost 86, Creeper 74,
+  // Vulture 73, Desperado 61, Sovereign 58, Sniper 43, Drab 29. Colonist,
+  // whose mark is its flags, plays like the field from outside: not a style.)
+  const STYLES = {
+    creeper: [2.014, 0.111, 0.041, 9.118, 0.105, 3.648, 0.24, 7.41], // (317)
+    desperado: [1.978, 0.111, 0.01, 9.968, 0.086, 4.039, 0.32, 8.038], // (411)
+    drab: [2.029, 0.151, 0.012, 9.513, 0.079, 4.044, 0.212, 6.916], // (421)
+    ghost: [1.99, 0.148, 0.01, 11.157, 0.039, 3.722, 0.226, 8.12], // (438)
+    gobbler: [2.388, 0.112, 0.021, 8.398, 0.153, 4.932, 0.421, 8.006], // (377)
+    joker: [1.151, 0.125, 0.012, 8.947, 0.09, 3.761, 0.212, 6.975], // (413)
+    mason: [3.923, 0.162, 0.011, 10.117, 0.063, 3.478, 0.198, 7.585], // (503)
+    ouroboros: [1.919, 0.489, 0.008, 9.813, 0.07, 3.864, 0.219, 6.993], // (319)
+    sniper: [1.891, 0.121, 0.012, 8.983, 0.096, 3.858, 0.256, 7.053], // (413)
+    sovereign: [1.857, 0.185, 0.012, 9.526, 0.082, 3.702, 0.227, 5.237], // (424)
+    star: [2.074, 0.136, 0.014, 9.594, 0.085, 4.44, 1.824, 7.222], // (394)
+    vulture: [1.919, 0.123, 0.022, 8.207, 0.096, 2.523, 0.268, 6.696], // (331)
+  };
+  const STYLE_SCALE = [0.202, 0.087, 0.01, 0.652, 0.035, 1.035, 0.212, 1.457];
   function styleOf(ob) {
     if (!ob || ob.n < STYLE_MIN) return null;
     const f = traitsOf(ob);

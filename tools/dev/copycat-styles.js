@@ -28,7 +28,7 @@ for (let r = 0; r < rounds; r++) {
 }
 // (The styles it copies: not the rivals that are a mix of others (Capricious, Copycat, Wildcard), nor
 // those that look like another from outside (Mute plays as Sniper does; Metagamer, as Drab).)
-const STYLE_SET = ['colonist', 'creeper', 'desperado', 'drab', 'ghost', 'gobbler', 'joker', 'mason', 'ouroboros', 'sniper', 'sovereign', 'star', 'vulture'];
+const STYLE_SET = ['creeper', 'desperado', 'drab', 'ghost', 'gobbler', 'joker', 'mason', 'ouroboros', 'sniper', 'sovereign', 'star', 'vulture'];
 const all = Object.keys(samples).sort(), keys = all.filter(k => STYLE_SET.includes(k)), T = AI.STYLE_TRAITS.length;
 const mean = xs => xs.reduce((p, x) => p.map((v, i) => v + x[i] / xs.length), Array(T).fill(0));
 const centre = Object.fromEntries(keys.map(k => [k, mean(samples[k])]));
