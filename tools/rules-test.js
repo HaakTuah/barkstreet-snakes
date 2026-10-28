@@ -2700,5 +2700,24 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
     check('...but holding a golden dash, or with an apple on its line, it still turns nearly every rival away (3 at most cross)', dash.length <= 3 && meal.length <= 3, `dash: ${dash.join(' ')}; apple on its line: ${meal.join(' ')}`);
   });
 }
+// ---------------------------------------------------------------- the owner's playtest: nerve at a contested apple
+{ // Heading right, an apple straight in front of me; a rival heading left at it, seen 3 cells off a moment ago
+  // (age 1), so 2 off by now: the apple is a step for each of us, a head-on if we both go. Every persona backs
+  // off, as it should, but Desperado takes the gamble always, and Gobbler the hungrier it is (a persona's nerve,
+  // read where the risk is weighed for the apple's cell: the risk maps stay as they are).
+  const takers = hungerLeft => Object.keys(AI.PERSONAS).filter(key => {
+    const view = aiView({
+      age: 1, food: [{ x: 11, y: 10, kind: 'food', expires: 999 }],
+      me: aiMe(line(10, 10, 6), 'right', { hungerLeft, starveIn: hungerLeft + 5000 }),
+      others: [aiRival(1, line(13, 10, 5, 1), 'left'), aiRival(2, [[20, 20], [20, 19], [20, 18], [20, 17]], 'down')],
+    });
+    let on = 0;
+    for (let i = 0; i < 4; i++) { const d = AI.decide(view, AI.PERSONAS[key], {}); if (d.x === 1 && d.y === 0) on++; }
+    return on >= 3;
+  });
+  const fed = takers(99999), half = takers(8000), hungry = takers(4000);
+  check('at a contested apple, fed, only Desperado takes the gamble', fed.join() === 'desperado', fed.join(' '));
+  check('...Gobbler too once it is hungry (4 s left), not half-way (8 s); nobody else', half.join() === 'desperado' && hungry.sort().join() === 'desperado,gobbler', `8 s: ${half.join(' ')}; 4 s: ${hungry.join(' ')}`);
+}
 console.log(failed ? `${failed} failed` : 'all good');
 process.exit(failed ? 1 : 0);

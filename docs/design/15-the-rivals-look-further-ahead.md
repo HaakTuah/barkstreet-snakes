@@ -98,3 +98,34 @@ Haakon (27 October 2026): "it seems to me the rival snakes might be a bit too ad
 - Easy pins (`tools/dev/easy-pins/census.js`, 100 rounds, seed 5): chances taken 70% → 87%, and pins closed in the end 84% → 91%. That was the overlap #81 left: a pinned snake's flash is now feared only with food on its line.
 
 **Left as it is:** right at a contested apple the rivals still back off when the other head is next to it. That fear is earned (about 1 in 8 of those cells would be a crash, which costs about what the apple is worth). How much a rival risks there is its persona's nerve, not a misreading.
+
+### Nerve at a contested apple (28 October 2026)
+
+Haakon (28 October 2026), answering PR #83's question: "gobbler and Desperados should take the gamble more, that fits their playstyle, no?"
+
+**Measured first** (`tools/dev/nerve/census.js`; a staged duel in `tools/rules-test.js`):
+- An apple a step from me and a step from a rival's head as I read it now (seen `age` ticks ago, gone straight on since): no persona went for it.
+- With the head-on fear (`strikes`) gone, still none did. The fear that holds them back there is the zone fear (`risk`: where the rival may be by now), read at the same cell.
+- So a nerve over the head-on fear alone changed nothing measurable.
+
+**The call:**
+- **A persona's nerve:** `nerve: { base, hungry }`, the share of a rival's threat set aside at a cell with food on it.
+  - It covers both the head-on fear and the zone fear, as they are read for that cell in the search. The maps themselves are not changed, so every other cell, and the risk where a power lands, reads as before.
+  - `hungry` adds that much more for every share of the hunger clock (`HUNGER_MS`) gone since the last meal.
+  - The nerve is never more than 0.85: the odds still count, even starving.
+- **Desperado:** 0.7, always. In the staged duel it takes the apple at every hunger.
+- **Gobbler:** 0.3, plus 0.7 of its hunger. Its head-on fear is the highest of all, so it takes the gamble only once it's hungry: with 4 s left, not with 8.
+- **Everyone else:** no nerve, the hunters included. Capricious borrows Gobbler's or Desperado's whole weights with its mood, nerve and all.
+
+**Measured, old against new** (fresh seeds):
+- **Contested apples** (the census, seeds 601 to 604, 400 rounds):
+  - Desperado won 18% of them (29 of 163) before and 25% (39 of 156) after, with 4 head-ons against 5.
+  - Gobbler won 17% before and after (78 of 450, 76 of 435), with 2 head-ons against 4. It is rarely hungry enough for its nerve to tip the choice.
+  - Everyone else is unchanged.
+- **Head to head** (seeds 911 to 914, 2,400 paired rounds):
+  - win% a snake 24.8 → 25.0; food 55.2 both; head-on deaths 2.05% → 1.93%.
+  - Desperado 23.8 → 24.0%; Gobbler 15.3 → 17.7% (within noise).
+  - Every trademark the same: Desperado's skims 41.3 → 41.2%, Gobbler's food share 27.0% both.
+- **Feel** (seeds 921 to 924, 1,200 rounds, each AI in a field of its own kind): the median round 164 s both; head-on deaths 2.69% → 2.44%; every cause, sudden death and starving within noise.
+- Personas without a nerve play exactly as before: with the nerve weights taken out, the fingerprint is develop's.
+- The cap at 0.85 came after these runs (from the review). It changes only a Gobbler with under 4.3 s of its hunger clock left.
