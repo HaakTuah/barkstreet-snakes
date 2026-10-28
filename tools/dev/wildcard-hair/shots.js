@@ -2,8 +2,7 @@
 // down on a staged board, the same on any copy of the game (for a before and
 // after), the page's loop stopped, cropped round the four heads.
 //   node shots.js <root> <out.jpg> [<w>x<h>[@dpr]] [reduced|still] [weather]
-// (weather: clear by default; snow for a light board, storm for a dark one;
-// WILD_HAIR=A|B|C picks one of the versions while they are up for choosing)
+// (weather: clear by default; snow for a light board, storm for a dark one)
 const path = require('path');
 const root = path.resolve(process.argv[2]), out = process.argv[3];
 const m = /^(\d+)x(\d+)(?:@([\d.]+))?$/.exec(process.argv[4] || '800x800');
@@ -27,7 +26,6 @@ const { launch, serve, sleep } = require(path.join(root, 'tools', 'browser.js'))
       const plan = [[run(4, 4, 1, 0), 'right'], [run(6, 4, -1, 0), 'left'], [run(10, 3, 0, -1), 'up'], [run(12, 6, 0, 1), 'down']];
       g.snakes.forEach((s, i) => { s.personaKey = 'wildcard'; set(s, plan[i][0], plan[i][1]); s.lastAte = g.time; });
       document.getElementById('overlay').classList.add('hidden');
-      ${process.env.WILD_HAIR ? `wildHairPick = ${JSON.stringify(process.env.WILD_HAIR)};` : ''}
       R.setViewer(-1); R.setGame(g);
       let t = performance.now() + 1e6; for (let i = 0; i < 8; i++) { t += 33; R.frame(1, t); }
       const cv = document.querySelector('canvas').getBoundingClientRect(), cell = cv.width / TUNING.GRID;
