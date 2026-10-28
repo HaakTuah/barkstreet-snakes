@@ -38,7 +38,7 @@ for (const d of [CALLS, sized(360, 780), sized(412, 915), sized(375, 667)]) {
     const first = await ev(BOTTOM);
     if (first.open !== 'true') { await tapLog(); await settle(); }
     const shown = await ev(ROWS_OPEN), opened = await ev(BOTTOM);
-    check((first.open === 'true') === (shown >= 3) && opened.open === 'true', `${what}: the chatter starts ${first.open === 'true' ? 'open' : 'folded'}, as three lines ${shown >= 3 ? 'fit' : 'don’t fit'} open`, `${shown} lines open`);
+    check((first.open === 'true') === (shown >= 3) && opened.open === 'true' && (d.h < 700 || first.open === 'true'), `${what}: the chatter starts ${first.open === 'true' ? 'open' : 'folded'}, as three lines ${shown >= 3 ? 'fit' : 'don’t fit'} open`, `${shown} lines open`);
     await tapLog();
     await settle();
     const folded = await ev(BOTTOM);

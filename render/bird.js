@@ -149,7 +149,7 @@ function perchFor(tx, ty) {
       if (r.face !== p.flip || feet < r.top || feet > r.bottom) continue;
       const x = (r.x - boardRect.x) / sc - p.flip * RIM_GRIP * s * BU;
       if (Math.abs(x - p.x) > reach || (tx - x) * p.flip < 0 || !fits(x, ab)) continue;
-      if (!near || Math.abs(x - p.x) < Math.abs(near - p.x)) near = x;
+      if (near == null || Math.abs(x - p.x) < Math.abs(near - p.x)) near = x;
     }
     if (near != null) { p.x = near; p.rim = true; }
   }

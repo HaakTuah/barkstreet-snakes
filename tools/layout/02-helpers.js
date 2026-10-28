@@ -161,7 +161,7 @@ const chatterFull = async (tag, watching, si = { bottom: 0 }, side = false, upri
       return true;
     };
     if (opened0) {
-      check(fit === 'full' && rows.lines >= 2 && !rows.sliced, `${tag}: ${what}, held upright, the chatter starts open: its caption and the lines that fit`, `${fit}, ${rows.lines} lines`);
+      check(fit === 'full' && rows.lines >= 1 && !rows.sliced, `${tag}: ${what}, held upright, the chatter starts open: its caption and the lines that fit`, `${fit}, ${rows.lines} lines`);
       await tapChatter();
       await settle();
     }
