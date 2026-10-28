@@ -272,7 +272,6 @@ window.SnakeAI = (() => {
 
   const TUNE = window.TUNING; // (the rules' numbers, so the AI's picture of them stays true)
   const YIELDS = 0.5;      // how much I fear a head-on with a rival no longer than me, which it has as much to lose by or more (see decide's risk)
-  const TURNS_ON = 0;
   const TURNS = 0.5;       // how often a snake turns a given way, for every time it goes on (each way about a quarter of its moves, straight on half, in AI-only rounds)
   const TRAPPED = 5000;
   const NECK = 2000;       // the room I need is through a gap a rival could get to and shut...
@@ -1696,7 +1695,7 @@ window.SnakeAI = (() => {
       // (A rival's head beside a cell: a head-on on my first move; on my
       // next `age`, its body, if it went there, which I can't see yet; after
       // that I'd see where it went in time to turn.)
-      let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t)) - (t === 0 ? meet[i] - (turning ? 0 : (1 - TURNS) * meetSides[i]) : t <= age ? (strikes[i] - (turning || !TURNS_ON ? 0 : (1 - TURNS) * sides[i])) * RISK_AHEAD[t] : 0);
+      let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t)) - (t === 0 ? meet[i] - (turning ? 0 : (1 - TURNS) * meetSides[i]) : t <= age ? (strikes[i] - (1 - TURNS) * sides[i]) * RISK_AHEAD[t] : 0);
       if (turning && w.turn) gain -= w.turn * (ahead ? TURN_AHEAD[t] : Math.pow(0.9, t));
       const score = depth <= 1
         ? evaluate(nb, nlen, g, t + 1) + bonus + gain
