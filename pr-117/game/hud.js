@@ -94,16 +94,21 @@ document.addEventListener('pointerdown', e => { if (noted && !e.target.closest?.
 // Choosing your rivals: a start card's seat opens the picker, every rival
 // and "Any" (dealt from the deck). The choice is kept in this browser
 // (Records.setSeat) for every round after, until you change it; online it's
-// the host's that counts. A rival already in another seat swaps with this
-// one's.
+// the host's that counts, chosen in the lobby's seats (hostLineUp). A rival
+// already in another seat swaps with this one's.
 const pickerEl = $('picker'), pickerList = $('picker-list'), pickerTitle = $('picker-title');
 let pickerSeat = -1;
+const keyDot = key => PERSONA_DOTS[key] || CAST[key].ink || CAST[key].color;
+// Where the seats are: the start card's, or (hosting) the lobby's.
+const choosing = () => (online ? hosting() && !lobbyEl.hidden && !lobbyPlayers.hidden && (state === 'lobby' || state === 'over') : state === 'ready');
+const seatsNow = () => (online ? hostLineUp().keys : theGame.snakes.filter(s => s.persona).map(s => s.personaKey));
+const seatEl = seat => (online ? lobbyPlayers : opponentsEl).querySelector(`.seat[data-seat="${seat}"]`);
 function openPicker(seat) {
-  if (state !== 'ready' || online) return;
+  if (!choosing()) return;
   closeNote();
   pickerSeat = seat;
-  const seats = Records.seats(SnakeAI.POOL), here = theGame.snakes.filter(s => s.persona)[seat];
-  pickerTitle.textContent = `Who sits here, instead of ${here ? here.name : 'them'}?`;
+  const seats = Records.seats(SnakeAI.POOL), here = seatsNow()[seat];
+  pickerTitle.textContent = `Who sits here, instead of ${here ? CAST[here].name : 'them'}?`;
   pickerList.textContent = '';
   for (const key of [null, ...SnakeAI.POOL]) {
     const li = document.createElement('li'), button = document.createElement('button');
@@ -113,7 +118,7 @@ function openPicker(seat) {
     button.setAttribute('aria-pressed', String(seats[seat] === key));
     const dot = document.createElement('span');
     dot.className = 'dot';
-    if (key) dot.style.background = PERSONA_DOTS[key] || CAST[key].ink || CAST[key].color;
+    if (key) dot.style.background = keyDot(key);
     const name = document.createElement('strong');
     name.textContent = key ? CAST[key].name : 'Any';
     const blurb = document.createElement('span');
@@ -139,22 +144,35 @@ function closePicker() {
   if (pickerEl.hidden) return;
   pickerEl.hidden = true;
   mainEl.inert = false;
-  opponentsEl.querySelector(`.seat[data-seat="${pickerSeat}"]`)?.focus({ preventScroll: true });
+  (seatEl(pickerSeat) || startBtn).focus({ preventScroll: true });
 }
 // The seat takes its rival, or one dealt for "Any"; the other seats keep theirs.
-function pickRival(key) {
-  const pool = SnakeAI.POOL, seat = pickerSeat, was = theGame.snakes.filter(s => s.persona).map(s => s.personaKey);
-  const seats = Records.setSeat(pool, seat, key || null);
+// dealt: the ones the deck dealt to these seats (they go back if never met).
+function reseat(was, dealt, seat, key) {
+  const pool = SnakeAI.POOL, seats = Records.setSeat(pool, seat, key || null);
   // (The rival picked from another seat leaves it this seat's old one: they swap.)
   const keys = was.map((k, i) => seats[i] || (i !== seat && k === key ? was[seat] : i === seat || seats.includes(k) ? null : k));
-  theGame.dealt = (theGame.dealt || []).filter(k => keys.includes(k)); // (one you sent away counts as met)
-  const fill = Records.deal(pool, keys.filter(k => !k).length, keys.filter(Boolean));
-  ready(keys.map(k => k || fill.shift()), seats.some(Boolean));
+  const kept = dealt.filter(k => keys.includes(k)); // (one you sent away counts as met)
+  const fill = Records.deal(pool, keys.filter(k => !k).length, keys.filter(Boolean)), next = [...fill];
+  return { keys: keys.map(k => k || next.shift()), kept, fill, chosen: seats.some(Boolean) };
+}
+function pickRival(key) {
+  const seat = pickerSeat;
+  if (online) {
+    const up = reseat(hostLineUp().keys, hostLineUp().fresh, seat, key);
+    online.lineup = { keys: up.keys, fresh: [...up.kept, ...up.fill] };
+    sendLobby();
+  } else {
+    const up = reseat(seatsNow(), theGame.dealt || [], seat, key);
+    theGame.dealt = [...up.kept, ...up.fill]; // (newGame keeps the ones seated)
+    ready(up.keys, up.chosen);
+  }
   pickerEl.hidden = true;
   mainEl.inert = false;
-  opponentsEl.querySelector(`.seat[data-seat="${seat}"]`)?.focus({ preventScroll: true });
+  seatEl(seat)?.focus({ preventScroll: true });
 }
 opponentsEl.addEventListener('click', e => { const b = e.target.closest?.('.seat'); if (b && cardSettled(e)) { Sound.play('ui'); openPicker(Number(b.dataset.seat)); } });
+lobbyPlayers.addEventListener('click', e => { const b = e.target.closest?.('.seat'); if (b && cardSettled(e)) { Sound.play('ui'); openPicker(Number(b.dataset.seat)); } });
 pickerList.addEventListener('click', e => { const b = e.target.closest?.('.pick'); if (b) { Sound.play('ui'); pickRival(b.dataset.key); } });
 $('picker-close').addEventListener('click', closePicker);
 pickerEl.addEventListener('click', e => { if (e.target === pickerEl) closePicker(); });
