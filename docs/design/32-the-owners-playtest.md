@@ -208,10 +208,14 @@ It must read at phone size."
 
 - *Before:* a flat golden patch combed across the back of the head to a small curl over one eye, the same size as the
   head; at phone size it read as a yellow cap.
-- *Now* (`render/faces.js`, `hairBack()` and `pompadour()`): two shapes, each with a dark amber outline so they read at phone
-  size. Behind, a fluffy mass puffed out past the head on three sides, its long strands swept back. In front, a lighter
-  roll across the brow just behind the eyes, with a shine along its crest, swooping forward along one side to a flick
-  past that eye; its strands sweep the same way. The eyes, pout and squint are as they were.
+- *Then* (PR #74, `pompadour()`): the roll swooped forward along one side to a flick past that eye. Haakon (28
+  October): "It flips to the front side, you know like a blond emo/goth haircut"; heading up, it read like a turban.
+- *Now* (PR #107, `render/faces.js`, `hairBack()` and `hairRoll()`), seen from above with the head pointing +x and -y the
+  far side: two shapes, each with a dark amber outline so they read at phone size. Nothing is in front of the brow: a
+  lighter raised roll runs along the hairline just behind the eyes (its front edge at x = 0.12 of a cell, no further),
+  with a shine along its crest, fuller at the far end. Behind it, the fluffy golden mass puffs out past the head, most
+  at the back and the far side; its strands run straight back over the crown and turn to the far side at their ends, so
+  the comb reads up, back and round. The eyes, pout and squint are as they were.
 - Drawn in the head's own frame, so it is the same at every heading, and still: nothing in it moves, with reduced motion
   or without. Capricious's Wildcard mood wears it too. Drawing only.
 
