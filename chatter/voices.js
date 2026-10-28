@@ -36,7 +36,7 @@ const VOICES = {
     desperate: ['Out of rations. Going in.'],
     start: ['Taking position.', 'Scoping the lobby.', 'Run. It helps.'],
     idle: ['I see you, {who}.', 'In my sights, {who}.', 'Steady…', 'Nowhere to hide.', 'Big fan of your stream, {who}.'],
-    kill: ['Headshot.', 'Next.', 'Too slow, {who}.', 'One shot.'],
+    kill: ['Headshot.', 'Next.', 'Too slow, {who}.', 'One shot.', 'One shot, one whoppertunity.'],
     golden: ['Bonus collected.'],
     caught: ['Moving target. Still a headshot.', 'Target acquired.', 'Clean catch.'],
     ash: ['Target lost. Burnt.'],
