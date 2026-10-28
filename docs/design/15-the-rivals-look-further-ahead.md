@@ -67,3 +67,34 @@ Old against new AI with `tools/abtest.js` on fresh seeds:
   - Every other cause of death and starving moved by less than 1.6 points.
 
 **The shared cause with "Rivals too shy of heads":** both come from fear read off the board as it is now, not off the line being played. Here, it was a gap a sealed-off rival "could" shut. There, it is `headRisk` beside every rival head, including cells the rival can't or wouldn't enter, and cells the snake will have left before the rival could get there. `lineOn` and `lineFill` give that task what it needs: a rival's timed reach on the line's own board. The cell beside a pinned rival's head is the same overlap, and it's left to that task.
+
+### Rivals read heads better (the owner's playtest, 27 October 2026)
+
+Haakon (27 October 2026): "it seems to me the rival snakes might be a bit too adverse to have their heads next to each other, even if the other snake can't cut you off, or if the would see and have time to react ahead of time." And: "they seemingly always chicken out when competiting with you for resources."
+
+**Measured first** (`tools/dev/shy-heads/census.js`: at every decision the same view also goes to a copy of the AI with no fear of heads; where their first moves differ, the snake swerved, and since a rival's next move was decided on a view at least a tick old, whether the fearless move would have met a head is known exactly):
+- About 8 swerves per 1,000 decisions. 99% of them avoided a cell that was safe on the next tick; of the swerves that gave up an apple, a rival ate it 55% of the time.
+- 56% of all swerves were from a rival's **flash** cells, two straight ahead of its head. Without food on its line, about 1 in 4,300 of those would have been a head-on. The cells right beside a head were really dangerous: about 8% to the side, 15–20% straight ahead, 11–17% beside an apple.
+- A copy with no head fear at all comes out even with the real AI in wins and food, head to head. But every way of fearing the cells beside a head less (half for a side cell, which a snake turns into about a quarter of the time; half for a rival no longer than me; half only when I go straight on; half for the cut-in risk) raised head-on crashes by 10–30% (1.93 a round before; 2.1–2.6). Those cells are dangerous enough that a discount trades swerves for crashes, so none of them went in.
+- A staged board can mislead. A rival seen level with me is read as `age` cells (two or three) ahead by now, so swerving from its side is right; with the rival placed where it really is, all 18 personas already go on.
+
+**The calls:**
+- **A rival's flash I fear only when it has a reason to flash.** A plain flash costs its rest: a snake spends one racing for food on its line, not to cross a cell it can't crawl to. So its flash cells count as before (half a head's risk) only with food straight ahead of it within the flash's reach and one cell more, or when it holds a golden leap or dash, or faces something it could hop. A rule test: a rival heading up at my lane, two cells below it by now, its flash the only way into my next cell: 16 or 17 of 18 personas cross in front of it to the apple (none did). The same rival with a golden dash, or with an apple on its line, still turns nearly every one away.
+- **Only cells it can step into:** not back into its neck, a hole or a body still there.
+- **Fear by when I'd get there.** A cell beside a rival's head is a head-on on my first move, and, for the next `age` moves, its body if it went there (I can't see that yet). After that, I'd see where it went in time to turn, so it counts nothing. (The search is three moves deep, so this changes little.)
+- Unchanged: each persona's `headRisk`, the zone fear, twice the berth after a head-on, reaction times. The rivals see nobody differently.
+
+**Measured, old against new** (fresh seeds):
+- Swerves 8.0 → 2.9 per 1,000 decisions (−64%; 100 rounds, seed 5). Apples given up in a swerve: 1,357 → 658. The swerves left are the ones that matter: the cell avoided was really hit 7% of the time, against 1.5% before.
+- Head-on crashes a round (300 rounds a seed): 1.93 → 2.21, 2.13 → 2.06, 2.08 → 2.10 (seeds 211, 307, 401). Over all three, 2.05 → 2.12: within noise.
+- **Head to head** (seeds 127 and 131, 2,400 paired rounds):
+  - win% a snake 25.2 → 24.8 ([−4.3, +3.4]); food 54.5 → 55.0; time alive the same;
+  - head-on deaths 2.0% → 1.5% (the same);
+  - no persona's win rate moved beyond noise;
+  - powers used the same, Star's flashes and jumps the same;
+  - every trademark the same, Mason's straight runs a little longer (3.52 → 3.59).
+- **Feel** (the same seeds, each AI in a field of its own kind): the median round 165 s both; sudden death 44.8 s both; head-on deaths 2.55% → 2.58%; every other cause and starving within noise.
+- Decision speed the same (`tools/bench-ai.js`, seed 3: 1.00×).
+- Easy pins (`tools/dev/easy-pins/census.js`, 100 rounds, seed 5): 70% → 75% closed (the overlap #81 left: a pinned snake's flash is now feared only with food on its line).
+
+**Left as it is:** right at a contested apple the rivals still back off when the other head is next to it. That fear is earned (about 1 in 8 of those cells would be a crash, which costs about what the apple is worth). How much a rival risks there is its persona's nerve, not a misreading.

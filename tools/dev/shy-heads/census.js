@@ -3,7 +3,9 @@
 // snake swerves away from a cell because a rival's head is near, and whether
 // that cell was in fact dangerous.
 //
-//   node tools/dev/shy-heads/census.js [rounds] [--seed N] [--root DIR]
+//   node tools/dev/shy-heads/census.js [rounds] [--seed N] [--root DIR] [--show N]
+//
+// --show N draws the first N swerves round the snake's head.
 //
 // At every decision the same view is also given to a copy of the AI with no
 // fear of heads (`headRisk` 0; its zone fear stays), with the same memory and
