@@ -101,7 +101,7 @@ window.SnakeAI = (() => {
         food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 1, mushroom: -6, // (twice what a mushroom costs anyone else: it hates them)
         hurry: 1.5, // (beetles are its food too: it keeps after one on the run longer than anyone. With two apples on the log, and rivals that read a beetle's dig, it won 16 / 15% at the usual 2; at 1.5, 20 / 26%)
         margin: 10, headRisk: 2200, zoneRisk: 700, // greedy (a rival's apple too), but it flinches from heads and wants room (it used to win only 8%; at 1500 and 500, 12-17%)
-        nerve: { base: 0.2, hungry: 0.7 }, // (...except over an apple, the less the longer since its last meal)
+        nerve: { base: 0.3, hungry: 0.7 }, // (...except over an apple, the less the longer since its last meal)
       },
     },
     ghost: {
