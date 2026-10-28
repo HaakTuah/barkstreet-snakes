@@ -345,7 +345,7 @@ function onFrame(now) {
     drawAlpha = Math.min(1, acc / tickLen);
     dirty = true;
   } else if (state === 'over') {
-    showPending(now >= cardAt);
+    if (showPending(now >= cardAt && !Chatter.lastWordsUp())) Chatter.clearBubbles(); // (a phone's last words, read on the board where they went out, before the card covers it)
     // The last move glides like any other, then the board rests.
     if (drawAlpha < 1) {
       drawAlpha = guesting() ? Math.min(1, (performance.now() - online.lastTickAt) / tickLen) : Math.min(1, (acc += dt) / tickLen);
@@ -361,7 +361,7 @@ function onFrame(now) {
     Render.setLead(leadAt);
     Render.frame(drawAlpha, boardClock);
     birdSounds();
-    Chatter.layout(drawAlpha, boardPx, player());
+    Chatter.layout(drawAlpha, boardPx, state === 'over' ? null : player()); // (the round over, nothing to steer: last words never fade near your snake)
     if (steerHintOn) placeSteerHint();
     toastFade();
     dirty = state === 'running' || state === 'countdown' || Render.particles > 0 || Render.holding();

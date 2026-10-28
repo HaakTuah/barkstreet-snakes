@@ -47,7 +47,7 @@
 // The checks are in tools/ui/, one file per area, run in name order as the body of this one
 // (tools/parts.js): 01 on a desktop, the rivals' picker, the cards and their notes, 02 the death and
 // round cards, 03 the header over the board, at its steps too, 04 the column beside it, 05 the
-// fullest death card on a phone's board, 06 phones. A new check goes in its area's file, or a new one.
+// fullest death card on a phone's board, 06 phones, 07 last words on phones. A new check goes in its area's file, or a new one.
 const path = require('path');
 const runParts = require('./parts.js');
 const { launch, serve, HELPERS } = require('./browser');
