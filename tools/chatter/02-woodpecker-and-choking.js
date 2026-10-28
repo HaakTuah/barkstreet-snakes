@@ -98,6 +98,20 @@
   Object.assign(you, { alive: false, killer: 'wall' });
   h = tick(g, [{ type: 'death', snake: you }], 5000);
   check(says(h, vul, VOICES.vulture.death, you), `Vulture marks a death (said: ${lineOf(h, vul)})`);
+  // Last words know what killed them when no snake did: Mason says "Et tu" to it.
+  for (const [cause, killer, fatal, by] of [['hit the edge', 'wall', 'boxed', 'edge'], ['bit itself', 'self', 'boxed', 'self'], ['fell into a woodpecker hole', 'wall', 'hole', 'hole'],
+    ['got pecked by the woodpecker', 'wall', 'pecked', 'woodpecker'], ['starved', 'hunger', 'hunger', 'hunger'], ['burned up', 'fire', 'fire', 'fire']]) {
+    const gm = stage(['mason'], { 1: [12, 12] }), mason = gm.snakes[1];
+    Object.assign(mason, { alive: false, cause, killer, killerId: killer === 'self' ? mason.id : null, fatal });
+    const hm = tick(gm, [{ type: 'death', snake: mason }]);
+    check(says(hm, mason, VOICES.mason.diesBy[by]), `Mason's last words, dying by ${by}: ${lineOf(hm, mason)}`);
+  }
+  { // (A hole's rim it crashed into is no fall: its plain last words.)
+    const gm = stage(['mason'], { 1: [12, 12] }), mason = gm.snakes[1];
+    Object.assign(mason, { alive: false, cause: 'hit a woodpecker hole', killer: 'wall', killerId: null, fatal: 'boxed' });
+    const hm = tick(gm, [{ type: 'death', snake: mason }]);
+    check(says(hm, mason, VOICES.mason.dies.filter(l => !l.includes('{who}'))), `Mason's last words at a hole's rim are his plain ones: ${lineOf(hm, mason)}`);
+  }
   g = stage(['gobbler'], { 1: [12, 12] });
   h = tick(g, [{ type: 'eat', snake: g.snakes[1], kind: 'mushroom', x: 12, y: 12 }]);
   check(says(h, g.snakes[1], VOICES.gobbler.mushroom), `a rival that eats a mushroom grimaces (said: ${lineOf(h, g.snakes[1])})`);
