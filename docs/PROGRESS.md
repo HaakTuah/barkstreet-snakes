@@ -47,22 +47,7 @@ entry's, not the drawing's. What it should be, seen from above (the head points 
 - Shown in the PR as before and after crops, on a light and a dark board, at the sizes of a phone and a desktop.
 - Art only, no rule changes: the render suite and its looks checks pass; no reviewer needed beyond the pictures.
 
-### 1c. The big test files, split (Haakon, 28 October 2026, the workshop check: next, before item 3's remaining entries)
-
-Haakon (28 October 2026): "Yes please, sound good! Do it expertly for both!", to Claude's proposal that included moving
-the big-file split up the queue. The suites have grown past the 50 KB mark many times over: `tools/rules-test.js`
-(199 KB), `render-test.js` (139 KB), `layout-test.js` (120 KB), `input-test.js` (90 KB), `chatter-test.js` (81 KB),
-`simulate.js` (59 KB) and `ui-test.js` (52 KB), so every task that adds a test reads and searches far more than it
-needs, and the layout suite alone takes about 16 minutes on CI.
-- Split each suite by area into a folder of small files with one runner (`tools/rules/`, `tools/render/`, ...), one PR
-  per suite, the same checks passing in the same number before and after (the runner prints the count), and
-  `scripts/test.sh` and the CI names unchanged.
-- The layout suite's screens split across parallel CI jobs (phones, tablets, desktops, or as its states fall), so its
-  wall time drops to a third or less; each job still gated by "what the page shows" in `tests.yml`.
-- `audio.js` (67 KB) split by responsibility if it splits cleanly, as `render/` did; `chatter/zh.js` (57 KB) is data and
-  stays whole. `engine.js` and `ai.js` stay whole as decided in 1b; the workshop check notes them each time, and a clean
-  split, if one appears, gets its own PR.
-- Config and tests only: no game change, so no reviewer; the simulation's fingerprints unchanged.
+### 1c. Done: the big test files split (PRs #95, #96, #97, #100, #102, #103, #104); in `docs/archive/progress-done.md`.
 
 ### 2. Done: types for the multiplayer messages (PR #48); in `docs/archive/progress-done.md`.
 

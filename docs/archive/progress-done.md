@@ -43,6 +43,35 @@ later task then reads a few small files instead of these. Haakon may veto it.
 - style.css into the three stylesheets of `style/`, linked in the same order. *Done on 27 October 2026 (PR #46).* With it,
   item 1b is done.
 
+### 1c. The big test files, split (Haakon, 28 October 2026, the workshop check: next, before item 3's remaining entries)
+
+Haakon (28 October 2026): "Yes please, sound good! Do it expertly for both!", to Claude's proposal that included moving
+the big-file split up the queue. The suites have grown past the 50 KB mark many times over: `tools/rules-test.js`
+(199 KB), `render-test.js` (139 KB), `layout-test.js` (120 KB), `input-test.js` (90 KB), `chatter-test.js` (81 KB),
+`simulate.js` (59 KB) and `ui-test.js` (52 KB), so every task that adds a test reads and searches far more than it
+needs, and the layout suite alone takes about 16 minutes on CI.
+- Split each suite by area into a folder of small files with one runner (`tools/rules/`, `tools/render/`, ...), one PR
+  per suite, the same checks passing in the same number before and after (the runner prints the count), and
+  `scripts/test.sh` and the CI names unchanged.
+- The layout suite's screens split across parallel CI jobs (phones, tablets, desktops, or as its states fall), so its
+  wall time drops to a third or less; each job still gated by "what the page shows" in `tests.yml`.
+- `audio.js` (67 KB) split by responsibility if it splits cleanly, as `render/` did; `chatter/zh.js` (57 KB) is data and
+  stays whole. `engine.js` and `ai.js` stay whole as decided in 1b; the workshop check notes them each time, and a clean
+  split, if one appears, gets its own PR.
+- Config and tests only: no game change, so no reviewer; the simulation's fingerprints unchanged.
+
+- `tools/rules-test.js` into the fourteen parts of `tools/rules/` (PR #95), `render-test.js` into `tools/render/` (#96),
+  `chatter-test.js` into `tools/chatter/` (#97), `input-test.js` into `tools/input/` (#100), `ui-test.js` into
+  `tools/ui/` (#102), `simulate.js` into `tools/sim/` (#103) and `layout-test.js` into `tools/layout/` (#104): each
+  file now a runner of its folder through `tools/parts.js` (plain parts share one scope, as the page's scripts do;
+  parts that await run as one async function's body), the same checks passing in the same number (rules 389, render
+  134, chatter 4433, input 72, ui 244, layout 2211), the simulation's fingerprints and reports unchanged. *Done on 28
+  October 2026.*
+- The layout suite runs as five CI jobs side by side (`LAYOUT_JOB`, `JOBS` in its runner, which fails if a part is in
+  none): the longest 4 min, the whole run about 4 min 15 s, against 13 min 30 s before.
+- `audio.js` stays whole: one closure with 34 shared `let`s; split as `render/` was, names such as `step`, `ctx`, `out`
+  and `body` would meet the page's shared scope. The workshop check notes it, with engine.js and ai.js.
+
 ### 2. Types for the multiplayer messages: a small PR
 
 Also in `next-tasks-verbatim.md`:
