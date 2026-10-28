@@ -158,4 +158,33 @@ I.renderScores(page, null, 'all', '#4ade80');
 I.renderStats(page, {});
 ok(!find(page, 'records-note').length, 'storage that works says nothing about it');
 
+// The line-up: the deck deals every rival once before any comes round again,
+// in this browser and across reloads; chosen seats are kept, swap, and are skipped by the deck.
+const POOL = Array.from({ length: 18 }, (_, i) => 'r' + i);
+const L = player();
+const seen = [];
+for (let n = 0; n < 6; n++) seen.push(...L.deal(POOL, 3));
+ok(new Set(seen).size === 18, 'six deals of three: all eighteen, none twice');
+const next = [...L.deal(POOL, 3), ...L.deal(POOL, 3)];
+ok(new Set(next).size === 6, 'then a fresh deck, without repeats inside it');
+const M = player(), longRun = [];
+for (let n = 0; n < 9; n++) longRun.push(...M.deal(POOL, 4));
+ok(new Set(longRun.slice(0, 18)).size === 18 && new Set(longRun.slice(18)).size === 18, 'deals of four (watching) still go through the deck whole, twice');
+ok(M.seats(POOL).every(k => k === null), 'no rival chosen: every seat is "Any"');
+M.setSeat(POOL, 0, 'r5');
+M.setSeat(POOL, 2, 'r9');
+ok(M.seats(POOL).join() === 'r5,,r9', 'a chosen rival is remembered in its seat');
+M.setSeat(POOL, 1, 'r5');
+ok(M.seats(POOL).join() === ',r5,r9', 'one chosen for a seat it was already in elsewhere swaps');
+M.setSeat(POOL, 2, null);
+ok(M.seats(POOL).join() === ',r5,', '"Any" undoes a choice');
+ok(M.seats(POOL.filter(k => k !== 'r5')).every(k => k === null), 'a rival that no longer exists comes back as "Any"');
+const skip = ['r1', 'r2'], dealt = [];
+for (let n = 0; n < 16; n++) dealt.push(...M.deal(POOL, 1, skip));
+ok(!dealt.some(k => skip.includes(k)), 'the deck never deals a chosen rival to another seat');
+M.recordPlayer({ place: 2, eaten: 7, survived: 50000, chosen: true });
+page = document.createElement('div');
+M.renderScores(page, null, 'me', '#4ade80');
+ok(M.scores()[0].chosen && text(page).includes('chosen') && M.shareable('Green')[0].chosen === true, 'a round with chosen rivals is marked "chosen", and shared that way');
+
 console.log('all good');

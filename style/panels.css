@@ -159,6 +159,14 @@
 .opponents li { display: flex; align-items: baseline; gap: 7px; margin: 7px 0; }
 .opponents .dot { transform: translateY(1px); }
 .opponents .blurb { color: var(--ink-soft); }
+/* A start card's seat: who sits there is yours to choose (the picker). Chosen, it wears a ring. */
+.opponents .seat { display: inline-flex; align-items: center; gap: 6px; flex: none; margin: -2px 0; padding: 2px 7px 2px 5px; border-radius: 999px; font-weight: inherit; color: inherit; background: rgba(58, 38, 20, 0.07); box-shadow: none; }
+.opponents .seat:not(:disabled):hover { background: rgba(58, 38, 20, 0.14); }
+.opponents .seat:active { transform: none; box-shadow: none; }
+.opponents .seat.chosen { box-shadow: inset 0 0 0 1.5px var(--heartwood); }
+.opponents .seat .dot { transform: none; }
+.opponents .swap svg { display: block; width: 11px; height: 11px; fill: none; stroke: var(--ink-soft); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.card.beat .opponents .swap { display: none; }
 
 .name-row {
   display: flex;
@@ -487,6 +495,20 @@ main.help-yields .help { display: none; } /* (where it doesn't fit the row, its 
   display: none;
   pointer-events: none;
 }
+
+/* ------------------------------------------------- the rival picker */
+
+/* Over the page like the Hall of Fame (.records), every rival and "Any". */
+.picker-card { max-width: 620px; }
+.picker-card h2 { margin: 0; font-size: 1.15rem; color: var(--heartwood); }
+.picker-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
+.picker-list .pick { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 1px 8px; width: 100%; height: 100%; padding: 7px 10px; border-radius: var(--r-tag); text-align: left; font-weight: inherit; font-size: 0.85rem; color: var(--ink); background: var(--parchment-2); box-shadow: none; }
+.picker-list .pick:not(:disabled):hover { background: #dfcd9f; }
+.picker-list .pick:active { transform: none; box-shadow: none; }
+.picker-list .pick[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--heartwood); }
+.picker-list .pick .blurb, .picker-list .pick .who { grid-column: 2; color: var(--ink-soft); font-size: 0.92em; }
+.picker-list .pick .who { font-size: 0.8em; font-style: italic; }
+.picker-list .any .dot { background: conic-gradient(#d97706 0 25%, #4d7c0f 0 50%, #64748b 0 75%, #b91c1c 0); }
 
 /* ------------------------------------------------- Hall of Fame dialog */
 

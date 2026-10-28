@@ -105,6 +105,8 @@ declare namespace Engine {
     fires: Map<number, Fire>;
     weather: Weather;
     events: Event[];
+    /** Whether any rival was chosen, not dealt (set by the game, not the engine). */
+    chosen?: boolean;
   }
 }
 

@@ -291,25 +291,25 @@ function warmUpGame() {
   for (const s of theGame.snakes) if (s.persona) SnakeAI.decide(Engine.aiView(theGame, s), s.persona, {});
 }
 
-// The rivals chosen for the start card, for a round of the other kind from
-// it (Watch AIs from a card set up with you in it): the same ones, with a
-// seat more filled at random (an AI-only round has one more), or none
-// chosen, a random line-up (null).
+// The start card's rivals, for a round of the other kind from it (Watch AIs
+// from a card set up with you in it): the same ones, with a seat more dealt
+// (an AI-only round has one more).
 function lineUp(aiOnly) {
   if (!readyPersonas) return null;
   const want = TUNE.OPPONENTS + (aiOnly ? 1 : 0), keys = readyPersonas.filter(k => SnakeAI.POOL.includes(k)).slice(0, want);
-  const rest = SnakeAI.POOL.filter(k => !keys.includes(k));
-  while (keys.length < want && rest.length) keys.push(...rest.splice(Math.floor(Math.random() * rest.length), 1));
-  return keys;
+  return keys.concat(Records.deal(SnakeAI.POOL, want - keys.length, keys));
 }
-// The start card shows this round's rivals. (personas: chosen ones, by
-// key, SnakeDebug.setup's; kept for Watch AIs from this card: see lineUp.)
+// The start card shows this round's rivals, each seat a button to choose
+// who sits there (openPicker). personas: by key (a seat just chosen, or
+// SnakeDebug.setup's), else dealt; chosen: whether any were chosen. They're
+// kept for Watch AIs from this card: see lineUp.
 let readyPersonas = null;
-function ready(personas) {
+function ready(personas, chosen = false) {
   startBtn.disabled = false; // (a room that never opened left it disabled)
-  readyPersonas = personas || null;
-  newGame({ personas });
+  newGame({ personas, chosen });
+  readyPersonas = theGame.snakes.filter(s => s.persona).map(s => s.personaKey);
   state = 'ready';
+  buildOpponents(); // (now with its seats to choose)
   showCard({ title: `Ready, ${localName()}?`, text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true, how: 'How to play' });
   setTimeout(warmUpGame, 400);
 }

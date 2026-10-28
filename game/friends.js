@@ -509,7 +509,7 @@ function handleHost(msg) {
 // The host's new round, laid out on a friend's screen.
 function guestRound(msg) {
   online.seat = msg.humans.findIndex(h => h.peer === online.room.id);
-  newGame({ humans: msg.humans, personas: msg.personas });
+  newGame({ humans: msg.humans, personas: msg.personas, chosen: msg.chosen === true });
   theGame.roundId = typeof msg.id === 'string' ? msg.id : '';
   theGame.snakes.forEach((s, i) => { if (msg.humans[i]) s.owner = msg.humans[i].owner; });
   Online.apply(theGame, msg.first, DIRS);
