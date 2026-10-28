@@ -31,6 +31,36 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 ### 1b+. Done: Wildcard's hair, again (PR #107); in `docs/archive/progress-done.md`.
 
+### 1b+++. Wildcard's hair: Trump's hair, seen from above (Haakon, 28 October 2026; small, next, a UI lane beside the AI work)
+
+Haakon (28 October 2026), on PR #107's pictures: "Also, looks like it is messing up wildcards hair again. But now by just
+making it look like 2 weird yellow blobs instead. You can take a look and see how it is making it now. Hope that isn't
+what it ends up going with." Then: "Can't you just describe who's hair it is making? Is it that difficult to make trump's
+hair?" And, to sending it back with three versions for him to pick from: "Yes please, expertly!"
+
+[PR #107's after](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/32e97b81e878686f4951b3b21f27a411b3bc18e7/pr107-desk-clear.jpg)
+draws a roll and a back mass as two shapes with a dark seam between them: two yellow halves, not a head of hair, and
+heading up or down it covers most of the head. 1b+'s entry asked for a roll and a back mass, and #107 drew exactly that;
+the wrong part was again the entry's. The reference is simply **Trump's hair**, which Wildcard caricatures (with the
+stars-and-stripes body and the red tie): draw that, as seen from straight above (the head points +x).
+- **One shape.** A single golden mass with no seam, gap or dark line inside it; it replaces `hairRoll()` and
+  `hairBack()` as two shapes.
+- **Front: a high wave.** Just behind the brow, swept up and back, its front edge at the hairline (about x = 0.12 of a
+  cell, as now), with a lighter crest along it. Nothing over the eyes: both eyes show in all four headings.
+- **Crown: the comb-over.** From the wave the hair is combed back and over to one side, the strands curving the same
+  way, so the top of the head reads as one swirl to that side.
+- **Sides and back fuller,** over where the ears would be and at the back, puffed a little past the head's outline, but
+  not over the face.
+- **Colour:** straw-gold, darker orange in the grooves between strands, one or two light strands for the shine.
+- **Judged at real size.** The outline has to read on its own on a 390-pixel phone at its true size, not only in a
+  zoomed crop.
+- **Three versions for Haakon to pick:** A, B and C, differing in the size of the front wave and how far the swirl goes
+  to the side. The PR shows them side by side, all four headings, on the clear and storm boards, at phone size (true
+  size and 3x) and desktop 2x, and asks Haakon in "Questions for Haakon" which one; it stays a draft until he answers,
+  and the lane goes on with other work meanwhile. Only the chosen one ships: no option in the game, the others deleted.
+- Art only, no rule changes: the render suite and its looks checks pass; reduced motion unchanged; no reviewer needed
+  beyond the pictures and Haakon's pick.
+
 ### 1b++. The phone's bottom: the chatter, the controls and the woodpecker (small, next, a UI lane beside the AI work)
 
 Haakon (28 October 2026), with two screenshots from his phone ([the chatter open](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/3a098b38f41f596834c3bd0fefc5c453eede2b1f/owner-2026-10-28-chat-open.jpg),

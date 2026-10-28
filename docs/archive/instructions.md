@@ -257,3 +257,13 @@ hair while an AI task ran) and asked for a yes, since it overrides the limit of 
 
 > Yes, allow for as many lanes as can be parallelized, expert.
 
+In the design chat (28 October 2026, 15:50 to 15:54 UTC), on PR #107's pictures of Wildcard's hair:
+
+> Also, looks like it is messing up wildcards hair again. But now by just making it look like 2 weird yellow blobs instead. You can take a look and see how it is making it now. Hope that isn't what it ends up going with.
+
+> Can't you just describe who's hair it is making? Is it that difficult to make trump's hair?
+
+> Yes please, expertly!
+
+(the last to sending it back with Trump's hair named as the reference and three versions to pick from; queued as 1b+++
+in `docs/PROGRESS.md`)
