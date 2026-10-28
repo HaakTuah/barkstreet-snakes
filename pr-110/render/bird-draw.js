@@ -104,6 +104,16 @@ function headAndEye(P, now, dt) {
   } else bird.turn += (want - bird.turn) * (1 - Math.exp(-dt / (lively ? 45 : 200)));
   if (perchedNow) bird.turn = Math.max(-P.up, Math.min(1.2, bird.turn));
   P.turn = bird.force == null ? bird.turn : perchedNow ? Math.max(-P.up, Math.min(1.2, bird.force)) : bird.force; // (held so for the tests, as far as it may turn there)
+  // Resting on a button's rim under the board, now and then it pecks at
+  // it: its head brought level to it, two quick taps.
+  if (lively && ph === 'rest' && P.rim && bird.force == null) {
+    if (now > bird.peckAt) { bird.peckFrom = now; bird.peckAt = now + 3200 + 3600 * Math.random(); }
+    const q = (now - bird.peckFrom) / RIM_PECK_MS;
+    if (q >= 0 && q < 1) {
+      bird.turn *= Math.exp(-dt / 25); bird.turnTo = bird.turn; P.turn = bird.turn;
+      P.thrust = -B_BACK * Math.sin(Math.PI * q) * (0.5 - 0.5 * Math.cos(4 * Math.PI * q));
+    }
+  }
   // Resting, a small bob, and now and then it shifts its grip (a hitch down the log and back).
   if (lively && perchedNow) {
     let c = 0.18 * (0.5 - 0.5 * Math.cos(TAU * now / 1700));

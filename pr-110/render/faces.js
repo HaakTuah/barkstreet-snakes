@@ -635,81 +635,75 @@ function lens3d(sg, tint) {
   ctx.fillStyle = tint;
   ctx.fill();
 }
-// Wildcard's hair (Trump's), seen from above: the head points +x, and -y
-// is the far side, the one it is combed over to. One golden shape, no seam:
-// a high wave just behind the brow (its front at the hairline, clear of the
-// eyes) with a lighter crest, then combed back and over to the far side in
-// one swirl, fuller over the ears and at the back. wave: how deep the front
-// wave reads; swirl: how far the comb-over carries to the side.
-// (Three versions for Haakon to pick from; only the chosen one ships.)
-const WILD_HAIRS = { A: { wave: 0.1, swirl: 0.2 }, B: { wave: 0.18, swirl: 0.7 }, C: { wave: 0.28, swirl: 1.3 } };
-let wildHairPick = 'B';
-// The outline: a smooth loop through the midpoints of these corners. The
-// front edge sits at the hairline (x <= 0.1, behind the eyes); the wave
-// turns over at the far front corner, the far side is fuller with the swirl
-// and its ends flick out at the back corner; puffed over the ears and behind.
-function wildHairCorners(wave, swirl) {
-  return [[0.06, 0.4], [0.1, 0], [0.08, -0.4 - 0.3 * wave], [-0.22, -0.58 - 0.1 * swirl],
-    [-0.66 - 0.16 * swirl, -0.56 - 0.24 * swirl], [-1.02, -0.1], [-0.8, 0.46], [-0.32, 0.6]];
-}
-function smoothLoop(pts) {
-  const c = CELL, n = pts.length, mid = i => [(pts[i % n][0] + pts[(i + 1) % n][0]) / 2, (pts[i % n][1] + pts[(i + 1) % n][1]) / 2];
+// Wildcard's hair (Trump's), seen from above: the head points +x, and -y is
+// the far side. Parted on the near side, it's combed from the parting across
+// the crown in long strands that overhang the far side, their ends feathered
+// into wisps; at the front a wave stands up over the brow (clear of the
+// eyes), its shadow on the forehead. Pale straw with near-white shine, orange
+// only in the shadows, and no outline: its shadow on the head sets it off.
+function wildHairEdge() {
+  const c = CELL, q = (cx, cy, x, y) => ctx.quadraticCurveTo(c * cx, c * cy, c * x, c * y);
   ctx.beginPath();
-  ctx.moveTo(c * mid(0)[0], c * mid(0)[1]);
-  for (let i = 1; i <= n; i++) { const [x, y] = pts[i % n], [mx, my] = mid(i); ctx.quadraticCurveTo(c * x, c * y, c * mx, c * my); }
+  ctx.moveTo(-c * 0.02, c * 0.3); // the parting's front end
+  ctx.bezierCurveTo(c * 0.06, c * 0.26, c * 0.1, c * 0.08, c * 0.08, -c * 0.1); // the wave, along the brow
+  ctx.bezierCurveTo(c * 0.07, -c * 0.32, c * 0.0, -c * 0.5, -c * 0.12, -c * 0.74); // swept round, overhanging the far side
+  q(-0.18, -0.68, -0.24, -0.66); // (each lock's end, then the dip behind it)
+  q(-0.3, -0.8, -0.44, -0.84);
+  q(-0.46, -0.72, -0.52, -0.68);
+  q(-0.6, -0.76, -0.68, -0.7);
+  q(-0.66, -0.58, -0.7, -0.5);
+  q(-0.8, -0.4, -0.84, -0.22); // round the back, a wisp or two
+  q(-0.74, -0.14, -0.76, -0.04);
+  q(-0.86, 0.06, -0.82, 0.14);
+  q(-0.72, 0.16, -0.7, 0.26);
+  q(-0.66, 0.4, -0.52, 0.42); // the near side, short below the parting
+  ctx.bezierCurveTo(-c * 0.34, c * 0.46, -c * 0.12, c * 0.42, -c * 0.02, c * 0.3);
   ctx.closePath();
 }
 function wildHair() {
-  const c = CELL, { wave, swirl } = WILD_HAIRS[wildHairPick], edge = wildHairCorners(wave, swirl);
+  const c = CELL;
   ctx.save();
-  ctx.translate(-c * 0.03, c * 0.05); // its shadow on the head
-  smoothLoop(edge); ctx.fillStyle = 'rgba(120,53,15,0.35)'; ctx.fill();
+  ctx.translate(-c * 0.07, 0); // (set back, so most of the face shows)
+  ctx.save();
+  ctx.translate(c * 0.05, c * 0.02); // its shadow on the head, falling on the brow in front of the wave
+  wildHairEdge(); ctx.fillStyle = 'rgba(120,53,15,0.3)'; ctx.fill();
   ctx.restore();
   ctx.save();
-  smoothLoop(edge);
-  ctx.fillStyle = '#f2bf3a'; // straw-gold
+  wildHairEdge();
+  const straw = ctx.createLinearGradient(0, c * 0.4, 0, -c * 0.8); // lit from the parting, deeper where it overhangs
+  straw.addColorStop(0, '#fbe7a1'); straw.addColorStop(0.55, '#f6d57a'); straw.addColorStop(1, '#e9b94e');
+  ctx.fillStyle = straw;
   ctx.fill();
   ctx.clip();
   ctx.lineCap = 'round';
-  // The wave: a lighter crest along the front, swept up and back and
-  // widest where it turns over to the far side; the trough behind it.
-  const crest = d => { // (d: how far back of the front edge)
-    ctx.moveTo(c * (0.0 - d), c * 0.56);
-    ctx.quadraticCurveTo(c * (0.1 - d), c * 0.1, c * (0.08 - d * 1.2), -c * (0.2 + d * 0.3));
-    ctx.quadraticCurveTo(c * (0.04 - d * 1.5), -c * (0.6 + wave), c * (-0.3 - d), -c * (0.8 + wave));
-  };
-  const lit = ctx.createLinearGradient(c * 0.1, 0, c * (0.1 - wave * 3), 0); // lit along its crest
-  lit.addColorStop(0, '#fef3c7'); lit.addColorStop(0.35, '#fde68a'); lit.addColorStop(1, 'rgba(253,230,138,0)');
-  ctx.fillStyle = lit;
-  ctx.beginPath(); crest(wave * 2); ctx.lineTo(c * 0.4, -c * 1.2); ctx.lineTo(c * 0.4, c * 0.8); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = '#fef3c7'; // its shine
-  ctx.lineWidth = c * 0.035;
-  ctx.beginPath(); crest(wave * 0.45); ctx.stroke();
-  ctx.strokeStyle = '#e39a2c'; // the trough behind it
-  ctx.lineWidth = c * 0.05;
-  ctx.beginPath(); crest(wave + 0.03); ctx.stroke();
-  // The comb-over: strands from behind the wave over the crown, all
-  // curving round the same way to the far back corner, in one swirl.
-  const qx = -0.5 - 0.06 * swirl, qy = -0.5 - 0.14 * swirl;
-  const strands = (ys, back) => {
+  // Fine strands, all combed one way: from the parting across the crown and
+  // out past the far side (the wave's run round from the brow, the same way).
+  const comb = (shift, width, colour, every, from) => {
+    ctx.strokeStyle = colour; ctx.lineWidth = c * width;
     ctx.beginPath();
-    for (const y0 of ys) {
-      const x0 = 0.0 - wave - back - y0 * y0 * 0.3;
-      ctx.moveTo(c * x0, c * y0);
-      ctx.quadraticCurveTo(c * (qx + 0.05 + y0 * 0.2), c * (y0 + 0.08), c * (qx - 0.2 + y0 * 0.25), c * (qy + y0 * 0.55));
+    for (let i = from; i < 20; i += every) {
+      const t = i / 19, wob = Math.sin(i * 2.3) * 0.025, x0 = 0.04 - t * 0.7 + shift + wob;
+      ctx.moveTo(c * x0, c * 0.36); // (the front ones swept round further, after the wave)
+      ctx.bezierCurveTo(c * (x0 + 0.03 - 0.03 * t), c * 0.05, c * (x0 - 0.1 - 0.06 * (1 - t)), -c * 0.45, c * (x0 - 0.3 + 0.1 * t + wob), -c * 0.95);
     }
     ctx.stroke();
   };
-  ctx.strokeStyle = '#d97706';
-  ctx.lineWidth = c * 0.028;
-  strands([0.5, 0.26, 0.02, -0.22], 0.06);
-  ctx.strokeStyle = '#fde68a'; // a light strand or two, catching the light
-  strands([0.38, -0.1], 0.1);
+  comb(0, 0.018, 'rgba(201,124,32,0.4)', 1, 0); // the shadows between strands
+  comb(0.018, 0.014, 'rgba(255,251,235,0.5)', 1, 0);
+  comb(0.02, 0.016, 'rgba(255,255,255,0.85)', 5, 2); // a few near-white ones for the shine
+  // The wave's crest, catching the light, and the hollow behind it.
+  ctx.lineWidth = c * 0.05;
+  ctx.strokeStyle = 'rgba(201,124,32,0.5)';
+  ctx.beginPath(); ctx.moveTo(-c * 0.1, c * 0.32); ctx.bezierCurveTo(-c * 0.02, c * 0.1, -c * 0.02, -c * 0.3, -c * 0.16, -c * 0.62); ctx.stroke();
+  ctx.lineWidth = c * 0.045;
+  ctx.strokeStyle = '#fffbeb';
+  ctx.beginPath(); ctx.moveTo(-c * 0.02, c * 0.28); ctx.bezierCurveTo(c * 0.06, c * 0.1, c * 0.06, -c * 0.3, -c * 0.08, -c * 0.66); ctx.stroke();
+  // The parting, and the short hair below it combed down and back.
+  ctx.strokeStyle = 'rgba(180,98,20,0.7)';
+  ctx.lineWidth = c * 0.025;
+  ctx.beginPath(); ctx.moveTo(-c * 0.04, c * 0.31); ctx.quadraticCurveTo(-c * 0.3, c * 0.3, -c * 0.6, c * 0.36); ctx.stroke();
   ctx.restore();
-  ctx.strokeStyle = '#92400e'; // a dark amber outline, so the shape reads at phone size
-  ctx.lineWidth = c * 0.06;
-  ctx.lineJoin = 'round';
-  smoothLoop(edge); ctx.stroke();
+  ctx.restore();
 }
 // One of undecided Capricious's eyes (at y: the white's radius w, the pupil's r), turned to what it's watching.
 function oddEye(y, w, r) {
