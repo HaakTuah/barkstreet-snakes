@@ -281,6 +281,13 @@ window.SnakeRecords = (() => {
     return out;
   }
 
+  // Rivals dealt but never met go back on the top of the deck, so they're next.
+  function undeal(pool, keys) {
+    if (!keys.length) return;
+    const raw = load(DECK_KEY, []), deck = Array.isArray(raw) ? raw.filter(k => pool.includes(k)) : [];
+    save(DECK_KEY, [...keys.filter((k, i) => pool.includes(k) && !deck.includes(k) && keys.indexOf(k) === i), ...deck]);
+  }
+
   // ---------------------------------------------------------------- rendering
 
   const ordinal = n => n + (['th', 'st', 'nd', 'rd'][n] || 'th');
@@ -320,8 +327,8 @@ window.SnakeRecords = (() => {
     const rows = list.map((e, i) => el('tr', { ...(e.id === highlightId && { ariaCurrent: 'true' }), className: [e.id === highlightId && 'highlight', e.ai && 'ai', e.friend && 'friend'].filter(Boolean).join(' ') },
       el('td', { className: 'num', textContent: i + 1 }),
       el('td', { className: 'name', title: (e.watched ? `${e.name} (a watched round)` : e.friend ? `${e.name} (a friend)` : e.name) + (e.chosen ? ', rivals chosen' : '') },
-        dot(e.ai || e.friend ? e.color : playerColor, e.ai && paint ? paint(e.name) : null), e.name, ...(e.friend ? tag('friend') : []), ...(e.chosen ? tag('chosen') : []),
-        ...(e.id === highlightId ? tag('this round') : [])),
+        dot(e.ai || e.friend ? e.color : playerColor, e.ai && paint ? paint(e.name) : null), e.name, ...(e.friend ? tag('friend') : []),
+        ...(e.id === highlightId ? tag('this round') : []), ...(e.chosen ? tag('chosen') : [])),
       el('td', { className: e.won ? 'won' : '', textContent: placeLabel(e) }),
       el('td', { className: 'num', textContent: e.survived ? clock(e.survived) : '–' }),
       el('td', { className: 'num', textContent: e.eaten }),
@@ -409,7 +416,7 @@ window.SnakeRecords = (() => {
   }
 
   return {
-    MAX_SCORES, SEATS, seats, setSeat, deal, cleanName, cleanShared, scores, stats, addScore, recordPlayer, recordFriend, shareable, importShared, playerId, rankOf, rename, setName, reset, getName, hasName, getBest, setBest,
+    MAX_SCORES, SEATS, seats, setSeat, deal, undeal, cleanName, cleanShared, scores, stats, addScore, recordPlayer, recordFriend, shareable, importShared, playerId, rankOf, rename, setName, reset, getName, hasName, getBest, setBest,
     renderScores, renderStats, ordinal, clock,
   };
 })();

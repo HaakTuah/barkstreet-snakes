@@ -416,6 +416,7 @@ function startOnlineRound() {
   online.holesSent = theGame.holes.size;
   online.room.broadcast(Online.round(theGame, humans, theGame.rivalsLine, theGame.roundId));
   state = 'countdown';
+  theGame.spent = true;
   beatsLeft = 3;
   beatTimer = 0;
   updateControls();

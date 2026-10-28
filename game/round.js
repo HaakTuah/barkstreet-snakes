@@ -9,9 +9,16 @@
 // the host's); chosen: whether any of them were chosen, not dealt.
 function newGame({ personas, aiOnly = false, humans = null, chosen = false } = {}) {
   const people = humans || (aiOnly ? [] : [{ name: localName(), color: PLAYER_COLOR }]);
+  // Rivals dealt to a round nobody played (a start card left for friends, say)
+  // go back on top of the deck: dealing again, they're the ones dealt.
+  const unplayed = theGame && !theGame.spent ? theGame.dealt || [] : [];
+  if (!personas) Records.undeal(SnakeAI.POOL, unplayed);
   const dealt = personas ? null : dealLineUp(Math.max(0, TUNE.OPPONENTS + 1 - people.length));
   theGame = Engine.createGame({ personas: personas || dealt.keys, humans: people });
   theGame.chosen = dealt ? dealt.chosen : !!chosen;
+  const keys = theGame.snakes.filter(s => s.persona).map(s => s.personaKey);
+  if (personas) Records.undeal(SnakeAI.POOL, unplayed.filter(k => !keys.includes(k)));
+  theGame.dealt = dealt ? dealt.fresh : unplayed.filter(k => keys.includes(k));
   markYou(false);
   youHideAt = 0;
   acc = 0;
@@ -39,9 +46,12 @@ function newGame({ personas, aiOnly = false, humans = null, chosen = false } = {
 // choice and deck.
 function dealLineUp(want) {
   const pool = SnakeAI.POOL, seats = Records.seats(pool).slice(0, want), mine = seats.filter(Boolean);
-  const dealt = Records.deal(pool, want - mine.length, mine);
-  return { keys: Array.from({ length: want }, (_, i) => seats[i] || dealt.shift()), chosen: mine.length > 0 };
+  const fresh = Records.deal(pool, want - mine.length, mine), next = [...fresh];
+  return { keys: Array.from({ length: want }, (_, i) => seats[i] || next.shift()), fresh, chosen: mine.length > 0 };
 }
+
+// Closing the page on a start card: its rivals weren't met, so they're next.
+window.addEventListener('pagehide', () => { if (theGame && !theGame.spent) Records.undeal(SnakeAI.POOL, theGame.dealt || []); });
 
 // Start a round in the given mode. The round on the start card is used as-is;
 // anything else gets a fresh one.
@@ -56,6 +66,7 @@ function start({ aiOnly = !theGame.withPlayer, going = false } = {}) {
   waking = false;
   speed = watchSpeed = 1; // every round starts at normal speed (watching, you can speed it up again)
   state = 'countdown';
+  theGame.spent = true; // (its rivals were met: see newGame)
   beatsLeft = 3;
   beatTimer = 0;
   theGame.rivalsLine = pick(theGame.withPlayer ? FLAVOR.rivals : FLAVOR.spectators);

@@ -182,6 +182,9 @@ ok(M.seats(POOL.filter(k => k !== 'r5')).every(k => k === null), 'a rival that n
 const skip = ['r1', 'r2'], dealt = [];
 for (let n = 0; n < 16; n++) dealt.push(...M.deal(POOL, 1, skip));
 ok(!dealt.some(k => skip.includes(k)), 'the deck never deals a chosen rival to another seat');
+const U = player(), first = U.deal(POOL, 3);
+U.undeal(POOL, first);
+ok(U.deal(POOL, 3).join() === first.join(), 'rivals dealt to a round nobody played go back on the top of the deck');
 M.recordPlayer({ place: 2, eaten: 7, survived: 50000, chosen: true });
 page = document.createElement('div');
 M.renderScores(page, null, 'me', '#4ade80');

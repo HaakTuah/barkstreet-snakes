@@ -145,7 +145,9 @@ function closePicker() {
 function pickRival(key) {
   const pool = SnakeAI.POOL, seat = pickerSeat, was = theGame.snakes.filter(s => s.persona).map(s => s.personaKey);
   const seats = Records.setSeat(pool, seat, key || null);
-  const keys = was.map((k, i) => seats[i] || (i === seat || seats.includes(k) ? null : k));
+  // (The rival picked from another seat leaves it this seat's old one: they swap.)
+  const keys = was.map((k, i) => seats[i] || (i !== seat && k === key ? was[seat] : i === seat || seats.includes(k) ? null : k));
+  theGame.dealt = (theGame.dealt || []).filter(k => keys.includes(k)); // (one you sent away counts as met)
   const fill = Records.deal(pool, keys.filter(k => !k).length, keys.filter(Boolean));
   ready(keys.map(k => k || fill.shift()), seats.some(Boolean));
   pickerEl.hidden = true;
