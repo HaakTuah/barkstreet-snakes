@@ -294,8 +294,8 @@
   /* Watching, the speed buttons take the help's place (it only says what
      they do, and how to nap: the nap button's in the header). */
   .speed:not([hidden]) + .help { display: none; }
-  .chatter-head { margin-top: 6px; }
-  .chatter[data-fit="strip"] .chatlog { margin-top: 0; }
+  .chatter-head { margin-top: var(--over-foot); }
+  .chatter[data-fit="strip"] .chatlog { margin-top: var(--over-foot); } /* (open or folded, the chatter keeps the row's own gap under the row: the buttons' rims never meet its panel) */
   /* (folded, a tap opens it: a caret at the strip's end says so; open, at
      its caption's) */
   .chatter[aria-expanded] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
