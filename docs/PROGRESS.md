@@ -24,6 +24,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
 | Nerve at a contested apple | Gobbler takes the gamble only once it's hungry (about 4 s left), which is rare, so in play its share of contested apples didn't move (17% both). Should a fed Gobbler gamble too? | Taken: no, as built ("the more the hungrier it is"); a fed Gobbler would need a nerve of about 0.9, near fearless (PR #92) | Open |
+| The woodpecker's size under the board (1b++) | Measured, it was already its board size under the board: 78 to 80 px tall on a 390 px phone, drumming on the board 78 to 85 ([PR #112](https://github.com/HaakTuah/barkstreet-snakes/pull/112)); what looks small is likely its slim side view beside the 44 px buttons, while on the board its wings are open. Should it be bigger, on the board and under it alike (say 1.3 times, so it covers more of the board as it drums), or bigger only under the board (then not one size)? | Taken: one size, as the entry says, so unchanged; it now clings to the buttons and pecks them. Suggested, if bigger: 1.3 times everywhere | Open |
 | Wildcard's hair (1b+++) | Which one: A, B or C? ([PR #110](https://github.com/HaakTuah/barkstreet-snakes/pull/110), pictures side by side; A a small wave and short swirl, B a middle wave with the swirl carried round to the far side, C a big wave swept well out to the side) | Suggested: B; the draft waits for the pick | Open |
 
 ## The queue, in order
@@ -62,29 +63,7 @@ stars-and-stripes body and the red tie): draw that, as seen from straight above 
 - Art only, no rule changes: the render suite and its looks checks pass; reduced motion unchanged; no reviewer needed
   beyond the pictures and Haakon's pick.
 
-### 1b++. The phone's bottom: the chatter, the controls and the woodpecker (small, next, a UI lane beside the AI work)
-
-Haakon (28 October 2026), with two screenshots from his phone ([the chatter open](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/3a098b38f41f596834c3bd0fefc5c453eede2b1f/owner-2026-10-28-chat-open.jpg),
-[the chatter shrunk](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/3a098b38f41f596834c3bd0fefc5c453eede2b1f/owner-2026-10-28-chat-shrunk.jpg)): "See how the chat display overlaps with the buttons when it
-is shrunk? Also, it defaults to shrunk at start, even though the space below is used for nothing else. And the
-woodpecker is still too small when it is down there." Then, on whether it may cover things down there: "Really, I don't
-mine if it covers stuff up down there. It isn't important. But it is important that it is big. Rather now it is big when
-it enters the game screen, and shrinks to a miniature when it goes down there. It should stay much more consistent. And
-it it purches on and interact with us elements down there, then that just looks cool really."
-- **The page's own parts never overlap.** The shrunk chatter bar sits clear below the speed row, with the gap the other
-  rows have; no button, row or line of chatter is laid over another. The woodpecker is the exception (below).
-- **Open by default where there is room.** At the start, and on a resize or turn of the phone, the chatter opens to fill
-  the space below the controls with as many whole lines as fit, down to the screen's bottom edge (its safe area kept),
-  as the desktop chatter fills its column (PR #72). It starts shrunk only where fewer than three lines fit. A player who
-  shrinks or opens it keeps that choice (in storage, read and written in try/catch).
-- **The woodpecker keeps one size.** Below the board it is the size it is on the board, scaled with the board's cell,
-  never shrunk to a miniature as today. It moves freely down there and may perch on, and play with, the controls and
-  the chatter: landing on a button's rim, pecking at the chatter's edge, hopping between rows. Covering them is fine
-  (taps pass through it, as decided on 20 October); what matters is that it is big and consistent, and alive there.
-- **Proved by the layout suite** at phone sizes (390x844, 360x780, 412x915 and a short 375x667), with the chatter open
-  and shrunk: no control's box meets another's or the chatter's text (the woodpecker not counted), taps reach a control
-  under the woodpecker, the bird's size below matches its size on the board, and the chatter opens where three lines fit. Before and after crops at a phone's size in the PR.
-- UI only, no rules changed; it runs as its own lane beside the AI work ("as many lanes as can run in parallel").
+### 1b++. Done: the phone's bottom (PR #112); in `docs/archive/progress-done.md`.
 
 ### 1c. Done: the big test files split (PRs #95, #96, #97, #100, #102, #103, #104); in `docs/archive/progress-done.md`.
 
