@@ -196,10 +196,41 @@ So what starves a new player is not seeing hunger at all: unseen, 8.0% of rounds
 **The call** (27 October 2026, the queue's words: "Put the speed/help row and the chatter right under the board. The woodpecker perches at full size over that row, and taps pass through it. The chatter is folded by default to a one-line strip of the newest line, and a tap opens it."):
 - *The row under the board* (the help, or the speed buttons while you watch, and the chatter's switch) is right under the board, 6 px under its frame (2 on a phone less than 1.7 times as tall as wide), and the chatter right under that. The ledge (`#perch-ledge`) is still laid out, 0 px tall: it tells the page and the bird that the phone is upright. The board is as big as fits over the row, up to edge to edge: with no sill, a phone of a height in between has a board up to 25 px bigger. The frame's bottom moss and corner leaves, which hung 12 px into the ledge, are left off there (`.snug`, as on a short phone before): over the help and the switch they're clutter.
 - *The woodpecker* perches at full size over that row, its crown just under the board: 80 px of drawn bird on a 390 px phone (73 to 88 from 360 to 430 px wide; on the old ledge it was shrunk to fit, at least 48). Its room runs from the board's bottom to the screen's, inside the safe area; the row and the chatter don't stop it (game/screen.js `placeBoard`), so on the shortest phones, where the row is slim, it stands down over the chatter's strip too, and only where the screen's foot is near (320×460, 375×548: 33 px) is it smaller. Its layer takes no taps, so a tap on the help, a speed button or the switch under it goes through.
-- *The chatter* is folded by default: a strip of one row, the newest line cut to it, with a down caret at its end. A tap anywhere on it opens it to as many whole lines as the screen leaves (with its caption and an up caret, where there's room for two rows); another tap folds it. Mid-round the tap opens it (game/input.js treats the chatter as a button there), and a swipe started on it still steers. Folded, the rivals' long lines also show in their bubbles on the board, as in any strip. Folded or open isn't remembered: each visit starts folded. With no room for a row, no panel, as before.
+- *The chatter* was folded by default (open where there is room since "The phone's bottom", below): a strip of one row, the newest line cut to it, with a down caret at its end. A tap anywhere on it opens it to as many whole lines as the screen leaves (with its caption and an up caret, where there's room for two rows); another tap folds it. Mid-round the tap opens it (game/input.js treats the chatter as a button there), and a swipe started on it still steers. Folded, the rivals' long lines also show in their bubbles on the board, as in any strip. Folded or open isn't remembered: each visit starts folded. With no room for a row, no panel, as before.
 - Everywhere else (a tablet, a desktop, a phone on its side) nothing changes.
 
 **Tested:** `tools/layout-test.js` on its upright phones: the row at most 6 px under the frame and the ledge 0 px tall; the bird perched under the board, over the row, at least 48 px tall where the screen's foot allows (the room to it less 8 px elsewhere), and the switch and the chatter taking a tap under it (its layer's `pointer-events: none`); playing and watching with the chatter full, folded to one row of the newest line, a finger's tap opening it to whole lines with the board unmoved and nothing scrolling, and another tap folding it. Pictures: `tools/dev/phone-gap-shots.js`.
+
+### The phone's bottom
+
+**The finding** (Haakon, 28 October 2026, queue item 1b++, with two screenshots): on an upright phone, watching, the
+folded chatter's strip touched the speed buttons' rims; it started folded though nothing else used the screen under it;
+and the woodpecker looked too small down there. "It is important that it is big ... It should stay much more
+consistent. And it it purches on and interact with us elements down there, then that just looks cool really."
+
+**The call, as built** (it replaces "folded by default" in "The phone gap" above):
+- *The chatter keeps the row's gap.* Open or folded, its panel starts 6 px under the row under the board (`--over-foot`,
+  the gap the row keeps under the board); before, the folded strip sat flush against the row, 0 px.
+- *Open where there is room.* At the start, and as the phone turns or changes size, the chatter opens (its caption and as
+  many whole lines as fit, down to the screen's foot, its safe area kept) wherever three lines of a row fit open; only
+  where they don't (375×667, with its 83 px) does it start folded. A tap folds or opens it, and that choice is kept
+  (`snake-chatter-open`, `open` or `folded`, read and written in try/catch; game/screen.js `fitChatter`).
+- *The woodpecker, one size.* Measured before the change: perched under the board it was already the size it is on the
+  board (scale 1 in every phase, 78 to 80 px of drawn bird on a 390×844 phone, drumming 78 to 85), at all four phones;
+  only on a phone under about 600 px tall did it shrink (to 0.51 at 375×560), which is outside this entry. So its size
+  is unchanged, and what looked small is its slim perched profile beside the 44 px buttons (see "For Haakon").
+- *It plays with the controls.* Under the board it clings to a button's rim where one is near (2.5 of its units, about
+  34 px on a 390 px phone): its toes on the side of a speed button or the chatter's switch, facing the button and its
+  spot, as it clings to the log; resting there, every 3 to 7 s it pecks at the button, two quick taps (render/bird.js
+  `perchFor`, render/bird-draw.js `headAndEye`). Going from one spot to the next it hops from rim to rim. It still
+  never covers a cell, stays on the screen and clear of the frame's moss and leaves, and taps pass through it (its
+  layer's `pointer-events: none`, as decided on 20 October). With reduced motion it clings but doesn't peck.
+
+**Tested:** `tools/layout/13-the-phones-bottom.js` (layout job 2), at 390×844, 360×780, 412×915 and 375×667, playing and
+watching, the chatter open and folded: no button, the help or the chatter's panel meets another; the chatter's gap under
+the row at least the row's under the board; the chatter starts open exactly where three lines fit open; a tap's choice
+kept on the next visit; a real tap on a speed button under the perched bird presses it; and the bird's scale the same
+perched under the board, flying and drumming on it.
 
 ### Wildcard's hair
 
