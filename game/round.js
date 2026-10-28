@@ -225,7 +225,7 @@ function guideFor(p) {
 
 function endRound() {
   state = 'over';
-  Chatter.clearBubbles();
+  Chatter.clearBubbles(true); // (the last words of the snake that ended it stay, where the log can't show them: the card waits for them)
   flushAiResults();
   const survivors = theGame.snakes.filter(s => s.alive);
   const winner = survivors[0];
