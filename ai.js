@@ -171,7 +171,7 @@ window.SnakeAI = (() => {
     },
     wildcard: {
       name: 'Wildcard', color: '#b22234', look: 'wildcard', driver: 'wildcard', // (red, white and blue)
-      blurb: 'A random mix of habits, new every round. Great hair.',
+      blurb: 'Two or three wild habits, new every round, on its tag. Great hair.',
       kill: ['Nobody knows how, least of all Wildcard.', 'A total accident. It’s calling it genius.'],
       win: ['Tremendous. Nobody wins like this.', 'A landslide. The biggest ever.', 'Four more rounds!'],
       w: DRAB, // replaced by a random set on its first move
@@ -289,7 +289,7 @@ window.SnakeAI = (() => {
     ouroboros: { ...PERSONAS.ouroboros.w, coil: { ...PERSONAS.ouroboros.w.coil, from: 7 } },
   };
   // What a driver remembers that's only its own: a new mood starts without it.
-  const MOOD_MEMORY = ['home', 'colonies', 'site', 'nextSiteAt', 'planted', 'driftAt', 'victimId', 'lureId', 'obs', 'labels', 'w', 'modelId', 'style', 'watch'];
+  const MOOD_MEMORY = ['home', 'colonies', 'site', 'nextSiteAt', 'planted', 'driftAt', 'victimId', 'lureId', 'obs', 'labels', 'w', 'mix', 'modelId', 'style', 'watch'];
   // Copycat's copies: its model's style's habits (the short forms, as
   // Capricious's), shadowing it as it goes: less pull to move the way it
   // moves than plain Copycat's, so the habits show.
@@ -753,21 +753,32 @@ window.SnakeAI = (() => {
   };
   const weighed = w => Object.assign({ ...WEIGHTS }, w);
 
-  // Wildcard: a random but sensible set of weights, drawn once per round.
-  function randomWeights() {
-    const chance = p => Math.random() < p;
-    const w = {
-      space: rand(0.8, 2), territory: rand(0.2, 1.8), aggression: rand(0, 0.5),
-      food: rand(2, 12), eat: rand(30, 300), pellet: rand(1, 3), foodRange: Math.round(rand(15, 60)),
-      contested: chance(0.4), margin: Math.round(rand(2, 10)),
-      headRisk: rand(500, 1200), zoneRisk: rand(30, 400),
-    };
-    if (chance(0.4)) w.distance = rand(5, 25);
-    if (chance(0.3)) w.turn = rand(5, 30);
-    if (chance(0.3)) w.tail = rand(10, 40);
-    if (chance(0.4)) w.hunt = HUNT;
-    return w;
+  // Wildcard: two or three strong traits a round, each pushed to an
+  // extreme, everything else plain (Drab's). Traits that pull against each
+  // other aren't drawn together (a coward is no hunter, nor reckless).
+  // TRAITS: each one's weights over the plain ones; its words are on the
+  // name tag's note ("This round: hungry, reckless, hunts").
+  const TRAITS = {
+    hungry: { food: 12, eat: 300, pellet: 3, foodRange: 60, contested: 1, hurry: 1.5, nerve: { base: 0.3, hungry: 0.7 } },
+    reckless: { margin: 2, headRisk: 350, zoneRisk: 30, nerve: { base: 0.8 } },
+    hunter: { aggression: 0.6, hunt: { squeeze: 3, chase: 7, lead: 4 } },
+    coward: { margin: 10, headRisk: 1500, zoneRisk: 400, distance: 8 },
+    wallHugger: { thrill: 20 },
+    territorial: { territory: 1.8, home: { radius: 4, leave: 30, grow: 8, max: 6, drift: 15 }, hunt: { squeeze: 2.5, chase: 6, lead: 3 } },
+    tailRider: { tail: 45 },
+    showOff: { powers: { price: 0, risk: 350, everyWay: true, jumpAny: true, dashSpend: true }, golden: { power: 6, apple: 1.5, contested: 0.5 } },
+  };
+  const CLASHES = [['coward', 'reckless'], ['coward', 'hunter'], ['coward', 'tailRider'], ['territorial', 'tailRider']];
+  function drawMix() {
+    const n = Math.random() < 0.5 ? 2 : 3, mix = [];
+    const keys = Object.keys(TRAITS);
+    while (mix.length < n) {
+      const t = keys[Math.floor(Math.random() * keys.length)];
+      if (!mix.includes(t) && !CLASHES.some(([a, b]) => (a === t && mix.includes(b)) || (b === t && mix.includes(a)))) mix.push(t);
+    }
+    return mix;
   }
+  const weightsOf = mix => Object.assign({ ...DRAB }, ...mix.map(t => TRAITS[t]));
 
   // view = { grid, me: { id, body, dir, grow }, others: [{ id, body, dir }],
   //          food: [{ x, y, kind }], holes: Set of cell indexes, age, tick, timeMs,
@@ -1025,10 +1036,13 @@ window.SnakeAI = (() => {
         memory.lureId = ctx.lure >= 0 ? others[ctx.lure].id : null;
       },
 
+      // This round's mix (drawn on its first move), and the drivers its
+      // traits need: a home to guard (territorial), or a victim (a hunter).
       wildcard() {
-        memory.w ||= randomWeights();
-        ctx.w = memory.w;
-        if (ctx.w.hunt) pickVictim(all, ctx.w.hunt);
+        memory.mix ||= drawMix();
+        ctx.w = memory.w ||= weightsOf(memory.mix);
+        if (ctx.w.home) drivers.sovereign();
+        else if (ctx.w.hunt) pickVictim(all, ctx.w.hunt);
       },
 
       // Mood swings. It starts each round undecided (its own self, playing it
@@ -2111,5 +2125,5 @@ window.SnakeAI = (() => {
     }
   }
 
-  return { DIRS, PERSONAS, POOL, decide, watchStyles, traitsOf, styleOf, STYLE_TRAITS };
+  return { DIRS, PERSONAS, POOL, TRAITS, decide, watchStyles, traitsOf, styleOf, STYLE_TRAITS };
 })();

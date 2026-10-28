@@ -344,6 +344,7 @@ function update() {
       }
     }
     if (m.moodChangedAt != null && m.moodChangedAt !== was.mood && m.mood) chatSay(s, `mood.${m.mood}`, null, true);
+    if (m.mix?.length && !was.mix) { was.mix = true; chatSay(s, `mix.${m.mix[0]}`, null, true); } // (Wildcard brags about its round's mix)
     // Star's flash back from its rest: raring to go, once it's been back a
     // moment (if it flashes or jumps by then, it's resting again: no word).
     if (showsOff(s)) {

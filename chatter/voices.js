@@ -283,6 +283,17 @@ const VOICES = {
     hungry: ["Very hungry. The hungriest. Nobody has ever been this hungry."],
     desperate: ['I’m taking all the food. All of it. Believe me.'],
     start: ['Hello, everybody. Tremendous crowd today.', 'I’m going to win. Bigly.'],
+    // Its first line of a round brags about the round's mix (its first trait's).
+    mix: {
+      hungry: ['This round I eat everything. All of it. Bigly.'],
+      reckless: ['No fear this round. None. Zero. Very brave.'],
+      hunter: ['This round I’m hunting. The best hunter. Ask anyone.'],
+      coward: ['Very careful this round. The most careful. Smart!'],
+      wallHugger: ['Edges this round. I love edges. Beautiful edges.'],
+      territorial: ['I’m building a home. A beautiful home. Keep out!'],
+      tailRider: ['I’ll be right behind you. Tremendous tails.'],
+      showOff: ['Jumps, flashes, all of it. The best show ever.'],
+    },
     idle: ['Nobody slithers better than me, believe me.', 'I have the best scales. Everybody says so.',
       'Many snakes are saying it.', 'Sad!', 'Fake apples!', '{who}? Total loser. Sad!'],
     eat: ['Tremendous snack. The best snack.', 'I only eat the best food. Everybody knows it.', 'Nobody eats like me. Nobody.'],

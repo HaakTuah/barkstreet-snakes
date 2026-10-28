@@ -5,6 +5,14 @@
 // The Metagamer's labels for how a snake plays, for Copycat's Chinese.
 const ZH_LABELS = { aggressive: '好斗', greedy: '贪吃', evasive: '爱躲', unclear: '看不透' };
 const ZH = {
+  "This round I eat everything. All of it. Bigly.": "这一局我什么都吃。全部。超级多。",
+  "No fear this round. None. Zero. Very brave.": "这一局毫不害怕。一点也不。零。非常勇敢。",
+  "This round I’m hunting. The best hunter. Ask anyone.": "这一局我来狩猎。最好的猎手。随便问谁。",
+  "Very careful this round. The most careful. Smart!": "这一局非常小心。最小心的。聪明！",
+  "Edges this round. I love edges. Beautiful edges.": "这一局走边上。我爱边缘。美丽的边缘。",
+  "I’m building a home. A beautiful home. Keep out!": "我在建一个家。美丽的家。不许进来！",
+  "I’ll be right behind you. Tremendous tails.": "我就在你后面。了不起的尾巴。",
+  "Jumps, flashes, all of it. The best show ever.": "跳跃，闪现，全都要。史上最好的表演。",
   "*waves silently*": "*默默挥手*",
   "*takes a deep, silent bow*": "*深深地、无声地鞠躬*",
   "*pulls an invisible rope*": "*拉一根看不见的绳子*",
