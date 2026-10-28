@@ -413,7 +413,7 @@ function protocolSamples() {
   const row = { id: 'r1', name: 'A', place: 1, won: true, draw: false, eaten: 9, survived: 60000, date: 1767225600000, round: 'R1', owner: 'o0', chosen: false };
   return {
     host, humans, personas, messages: [
-      { t: 'welcome', name: 'B' }, { t: 'reject', why: 'version' }, { t: 'lobby', players: [{ id: 'host', name: 'A', color: O.HUMAN_COLORS[0], host: true }] },
+      { t: 'welcome', name: 'B' }, { t: 'reject', why: 'version' }, { t: 'lobby', players: [{ id: 'host', name: 'A', color: O.HUMAN_COLORS[0], host: true }], lineup: [{ key: personas[0], chosen: true }] },
       O.round(host, humans, 'Up the tree with you:', 'R1'), { t: 'scores', from: [{ color: O.HUMAN_COLORS[1], entries: [row] }] },
       { t: 'phase', s: 'countdown', beat: 2 }, { t: 'phase', s: 'go' }, O.tick(host, { holesFrom: 0, tickLen: 120 }), O.plan(host),
       { t: 'say', id: 2, text: 'Hello.', reply: false }, { t: 'closed' },
@@ -457,7 +457,7 @@ for (const msg of SAMPLES) {
   }
   if (msg.t === 'plan') SHAPES['plan s'] = shapeOf(msg.s[2]);
   if (msg.t === 'round') SHAPES['round humans'] = shapeOf(msg.humans[0]);
-  if (msg.t === 'lobby') SHAPES['lobby players'] = shapeOf(msg.players[0]);
+  if (msg.t === 'lobby') { SHAPES['lobby players'] = shapeOf(msg.players[0]); SHAPES['lobby lineup'] = shapeOf(msg.lineup[0]); }
   if (msg.t === 'scores') { SHAPES['scores from'] = shapeOf(msg.from[0]); SHAPES['score row'] = shapeOf(msg.from[0].entries[0]); }
 }
 const kindsNow = Object.keys(SHAPES).sort();

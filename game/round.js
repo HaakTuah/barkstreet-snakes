@@ -51,7 +51,10 @@ function dealLineUp(want) {
 }
 
 // Closing the page on a start card: its rivals weren't met, so they're next.
-window.addEventListener('pagehide', () => { if (theGame && !theGame.spent) Records.undeal(SnakeAI.POOL, theGame.dealt || []); });
+window.addEventListener('pagehide', () => {
+  if (theGame && !theGame.spent) Records.undeal(SnakeAI.POOL, theGame.dealt || []);
+  if (hosting() && online.lineup) Records.undeal(SnakeAI.POOL, online.lineup.fresh); // (the lobby's, likewise)
+});
 
 // Start a round in the given mode. The round on the start card is used as-is;
 // anything else gets a fresh one.
@@ -238,10 +241,11 @@ function endRound() {
     : r.draw ? `${how ? `${how} · shared 1st` : 'You shared 1st'} · lasted ${Records.clock(r.survived)} · score ${me.eaten}`
     : `${how ? `${how} · ${Records.ordinal(r.place)} place` : `You finished ${Records.ordinal(r.place)}`} · lasted ${Records.clock(r.survived)} · score ${me.eaten}`;
   if (online) {
+    if (hosting()) sendLobby(); // (the next round's line-up, for everyone's card)
     pendingCard = hosting()
       ? { title, flavor, text: yours, reward: !!me, primary: 'Play again', secondary: 'Close room', lobby: { players: true },
         actions: { primary: startOnlineRound, secondary: leaveRoom } }
-      : { title, flavor, text: yours, reward: !!me, primary: null, secondary: 'Leave room', lobby: { status: FLAVOR.waiting(online.hostName, true) },
+      : { title, flavor, text: yours, reward: !!me, primary: null, secondary: 'Leave room', lobby: { players: true, status: FLAVOR.waiting(online.hostName, true) },
         actions: { secondary: leaveRoom } };
   } else pendingCard = theGame.withPlayer
     ? { title, flavor, reward: true, primary: 'Play again', secondary: 'Watch AIs', text: yours, ...(how && guideFor(me)) } // (it says how you died, so it names what got you too: when your death ended the round, it's your death's card)

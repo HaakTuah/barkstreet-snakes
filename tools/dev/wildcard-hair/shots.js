@@ -23,13 +23,13 @@ const { launch, serve, sleep } = require(path.join(root, 'tools', 'browser.js'))
       const g = E.createGame({ withPlayer: false, personas: ['wildcard', 'wildcard', 'wildcard', 'wildcard'] });
       g.food = []; g.time = 60000; g.tick = 500; g.weather.until = 1e12; g.weather.kind = ${JSON.stringify(kind)}; g.weather.since = 0;
       const run = (x, y, dx, dy) => Array.from({ length: 4 }, (_, j) => [x - dx * j, y - dy * j]);
-      const plan = [[run(5, 4, 1, 0), 'right'], [run(7, 4, -1, 0), 'left'], [run(12, 3, 0, -1), 'up'], [run(15, 6, 0, 1), 'down']];
+      const plan = [[run(4, 4, 1, 0), 'right'], [run(6, 4, -1, 0), 'left'], [run(10, 3, 0, -1), 'up'], [run(12, 6, 0, 1), 'down']];
       g.snakes.forEach((s, i) => { s.personaKey = 'wildcard'; set(s, plan[i][0], plan[i][1]); s.lastAte = g.time; });
       document.getElementById('overlay').classList.add('hidden');
       R.setViewer(-1); R.setGame(g);
       let t = performance.now() + 1e6; for (let i = 0; i < 8; i++) { t += 33; R.frame(1, t); }
       const cv = document.querySelector('canvas').getBoundingClientRect(), cell = cv.width / TUNING.GRID;
-      return { x: cv.left + 2.5 * cell, y: cv.top + 1.5 * cell, w: 15 * cell, h: 7 * cell, cell };
+      return { x: cv.left + 2.6 * cell, y: cv.top + 2.2 * cell, w: 10.8 * cell, h: 5.6 * cell, cell };
     })()`);
     await sleep(150);
     const raw = out.replace(/\.jpg$/, '-full.jpg');

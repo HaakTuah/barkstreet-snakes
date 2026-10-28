@@ -10,6 +10,7 @@ it under the workshop check's 20 KB. New ones are added here as they are done or
 | Sniper's kill line | Which words, beside "One shot."? | Haakon (27 October 2026): "One shot, one whoppertunity" (queued under item 3) | Answered |
 | Rival line-up | Online, the host's choice from the start card is used, but the lobby doesn't show it and can't change it. Should the lobby show the line-up, with the same seats to choose (the host only)? | Haakon (28 October 2026): "You figure all this out, expert. You know me by now." Claude decided yes, since online stays in step with local play: queued as "The lobby shows the line-up" | Answered |
 | Rivals too shy of heads | Right at a contested apple, with the other head beside it, rivals still usually back off: about 1 in 8 of those cells would be a head-on, which costs about what the apple is worth. Should some personas (Desperado, Gobbler when starving, the hunters) take that gamble more often, as their own nerve? | Haakon (28 October 2026): "gobbler and Desperados should take the gamble more, that fits their playstyle, no?" Claude agreed: queued as "Nerve at a contested apple" | Answered |
+| Wildcard's hair (1b+++) | Which one: A, B or C? ([PR #110](https://github.com/HaakTuah/barkstreet-snakes/pull/110), pictures side by side; A a small wave and short swirl, B a middle wave with the swirl carried round to the far side, C a big wave swept well out to the side) | Suggested: B; the draft waits for the pick | Answered 28 October: C's overall shape with B's smaller back, then one more pass so it reads as Trump's hair (1b+++ below) |
 
 ## The queue, done
 
@@ -61,6 +62,56 @@ entry's, not the drawing's. What it should be, seen from above (the head points 
 - Shown in the PR as before and after crops, on a light and a dark board, at the sizes of a phone and a desktop.
 - Art only, no rule changes: the render suite and its looks checks pass; no reviewer needed beyond the pictures.
 - *Done on 28 October 2026 (PR #107):* see "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
+
+### 1b+++. Wildcard's hair: Trump's hair, seen from above (Haakon, 28 October 2026; small, next, a UI lane beside the AI work)
+
+Haakon (28 October 2026), on PR #107's pictures: "Also, looks like it is messing up wildcards hair again. But now by just
+making it look like 2 weird yellow blobs instead. You can take a look and see how it is making it now. Hope that isn't
+what it ends up going with." Then: "Can't you just describe who's hair it is making? Is it that difficult to make trump's
+hair?" And, to sending it back with three versions for him to pick from: "Yes please, expertly!"
+
+[PR #107's after](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/32e97b81e878686f4951b3b21f27a411b3bc18e7/pr107-desk-clear.jpg)
+draws a roll and a back mass as two shapes with a dark seam between them: two yellow halves, not a head of hair, and
+heading up or down it covers most of the head. 1b+'s entry asked for a roll and a back mass, and #107 drew exactly that;
+the wrong part was again the entry's. The reference is simply **Trump's hair**, which Wildcard caricatures (with the
+stars-and-stripes body and the red tie): draw that, as seen from straight above (the head points +x).
+- **One shape.** A single golden mass with no seam, gap or dark line inside it; it replaces `hairRoll()` and
+  `hairBack()` as two shapes.
+- **Front: a high wave.** Just behind the brow, swept up and back, its front edge at the hairline (about x = 0.12 of a
+  cell, as now), with a lighter crest along it. Nothing over the eyes: both eyes show in all four headings.
+- **Crown: the comb-over.** From the wave the hair is combed back and over to one side, the strands curving the same
+  way, so the top of the head reads as one swirl to that side.
+- **Sides and back fuller,** over where the ears would be and at the back, puffed a little past the head's outline, but
+  not over the face.
+- **Colour:** straw-gold, darker orange in the grooves between strands, one or two light strands for the shine.
+- **Judged at real size.** The outline has to read on its own on a 390-pixel phone at its true size, not only in a
+  zoomed crop.
+- **Three versions for Haakon to pick:** A, B and C, differing in the size of the front wave and how far the swirl goes
+  to the side. The PR shows them side by side, all four headings, on the clear and storm boards, at phone size (true
+  size and 3x) and desktop 2x, and asks Haakon in "Questions for Haakon" which one; it stays a draft until he answers,
+  and the lane goes on with other work meanwhile. Only the chosen one ships: no option in the game, the others deleted.
+- Art only, no rule changes: the render suite and its looks checks pass; reduced motion unchanged; no reviewer needed
+  beyond the pictures and Haakon's pick.
+- **Haakon's pick, and one more pass** (28 October 2026, on PR #110): "Agree to all, expertly. Though a bit hard to
+  decide on b or c. I feel maybe the bottom bit of b being smaller looks better, while the overall shape of c is better.
+  So maybe we'll go for c, but it is hard to pick. Not the biggest fan of any of them, to be honest. Doesn't scream trump
+  hair." So: **C's overall shape, with B's smaller back** (the part behind the head no bigger than B's). Then one more
+  pass in the same PR, because all three read as a golden bun or a bread roll rather than hair. What makes them bread:
+  the dark outline round the whole mass, a few deep grooves that look like the scoring on a loaf, a smooth closed oval
+  edge, and a warm baked colour. What makes it hair, and his:
+  - **Paler,** straw to pale gold, lighter than now, with near-white highlights; the orange only in the shadows.
+  - **No dark outline.** The edge is set off by a soft shadow on the head beneath it, not by a stroke round the hair.
+  - **A feathered edge:** fine wisps breaking out at the back and sides (never in front of the brow), so the outline is
+    soft and uneven, not a clean oval.
+  - **Many fine strands,** not a few deep grooves, all combed the same way.
+  - **The front ledge:** the wave overhangs the forehead a little, with its shadow falling on the brow just behind the
+    eyes (the eyes stay clear).
+  - **A parting on one side,** from which the hair is combed across the crown to the other side: the comb-over, seen
+    from above.
+  The PR shows C as it is beside the new pass, at the same sizes and boards, and asks Haakon again. If the new pass
+  still does not read as his hair, Haakon chooses between them; the costume (the stars-and-stripes body, the red tie,
+  the orange face) carries the rest.
+  *Done on 28 October 2026 (PR #110): C's shape with B's smaller back, then the pass above; Haakon is asked again.*
 
 ### 1b++. The phone's bottom: the chatter, the controls and the woodpecker (Haakon, 28 October 2026)
 
@@ -240,3 +291,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
     - Hall of Fame entries from chosen line-ups are marked "chosen".
   - *Done on 28 October 2026 (PR #86):* the deck (`snake-deck`) and the picker (`snake-lineup`), protocol 12; design in
     `docs/design/32-the-owners-playtest.md`, "The rival line-up".
+- **The lobby shows the line-up.** The answer to the rival line-up's question (28 October 2026): online, the lobby
+  shows the host's line-up from the start card, and the host (only) can change it there with the same seats to choose.
+  - *Done on 28 October 2026 (PR #116):* protocol 13; design in `docs/design/32-the-owners-playtest.md`, "The rival
+    line-up", *Online*.
