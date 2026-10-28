@@ -26,6 +26,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 | Sniper's kill line | Which words, beside "One shot."? | Haakon (27 October 2026): "One shot, one whoppertunity" (queued under item 3) | Answered |
 | Rival line-up | Online, the host's choice from the start card is used, but the lobby doesn't show it and can't change it. Should the lobby show the line-up, with the same seats to choose (the host only)? | Haakon (28 October 2026): "You figure all this out, expert. You know me by now." Claude decided yes, since online stays in step with local play: queued as "The lobby shows the line-up" | Answered |
 | Rivals too shy of heads | Right at a contested apple, with the other head beside it, rivals still usually back off: about 1 in 8 of those cells would be a head-on, which costs about what the apple is worth. Should some personas (Desperado, Gobbler when starving, the hunters) take that gamble more often, as their own nerve? | Haakon (28 October 2026): "gobbler and Desperados should take the gamble more, that fits their playstyle, no?" Claude agreed: queued as "Nerve at a contested apple" | Answered |
+| Nerve at a contested apple | Gobbler takes the gamble only once it's hungry (about 4 s left), which is rare, so in play its share of contested apples didn't move (17% both). Should a fed Gobbler gamble too? | Taken: no, as built ("the more the hungrier it is"); a fed Gobbler would need a nerve of about 0.9, near fearless (PR #92) | Open |
 
 ## The queue, in order
 
@@ -180,6 +181,9 @@ Also in `next-tasks-verbatim.md`:
   reading; the hunters and the rest unchanged. Measured head to head (`tools/abtest.js --head-to-head`, fresh seeds):
   their apples won and head-ons taken, Desperado's skims and Gobbler's food share up or held, every other trademark,
   the win bands and head-on crashes overall within noise. AI planning, so high effort.
+  - *Done on 28 October 2026 (PR #92):* `nerve` (Desperado 0.7; Gobbler 0.3 + 0.7 of its hunger; at most 0.85), over
+    both the head-on and the zone fear where they are read for a food cell; see "Nerve at a contested apple" in
+    `docs/design/15-the-rivals-look-further-ahead.md`.
 - **Wildcard's hair.** Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side. It must read at phone size.
   - *Done on 27 October 2026 (PR #74)*: see "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
 - **Copycat's face.**
