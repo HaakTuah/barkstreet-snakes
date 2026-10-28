@@ -295,3 +295,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
   shows the host's line-up from the start card, and the host (only) can change it there with the same seats to choose.
   - *Done on 28 October 2026 (PR #116):* protocol 13; design in `docs/design/32-the-owners-playtest.md`, "The rival
     line-up", *Online*.
+- **Long names.** The 16-character cap already exists. When the "first out" banner doesn't fit, it drops the cause
+  ("Gran is first out."), and the chatter keeps the full line.
+  - *Done on 28 October 2026 (PR #118):* `opts.short`, used only on a phone held upright when the line is still cut
+    at its smallest; design in `docs/design/30-teaching-by-showing.md`, *Phone words*.
