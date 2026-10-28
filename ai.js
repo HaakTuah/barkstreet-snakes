@@ -271,6 +271,7 @@ window.SnakeAI = (() => {
   const MOODS = ['sniper', 'gobbler', 'ghost', 'mason'];
 
   const TUNE = window.TUNING; // (the rules' numbers, so the AI's picture of them stays true)
+  const YIELDS = 0.5;      // how much I fear a head-on with a rival shorter than me, which it has more to lose by (see decide's risk)
   const TRAPPED = 5000;
   const NECK = 2000;       // the room I need is through a gap a rival could get to and shut...
   const DAWDLE = 8;        // ...even this many ticks after me (I don't always leave a pocket straight away)...
@@ -311,7 +312,7 @@ window.SnakeAI = (() => {
   // the per-cell grids: `nbr` lists each cell's neighbours in DIR_LIST order
   // (-1 off the board), and `queue` holds a breadth-first search, one distance
   // after another. No search visits a cell twice, so N * N is always enough.
-  let bufN = 0, mineFree, otherFree, ownFree, risk, seen;
+  let bufN = 0, mineFree, otherFree, ownFree, risk, strikes, meet, seen;
   let foodValue, foodGrow, foodFrom, foodCells, goldCells, beadCells, queue, nbr, necks, reach, lineAt, lineSeen, lineMark, lineIn, lineOut, myCells, marks, leave, leaveStamp, chase, chaseKey;
   let nearStamp, nearHead, nearWho, nearHome, nearGap;
   let stamp = 0;
@@ -351,6 +352,8 @@ window.SnakeAI = (() => {
     otherFree = new Int32Array(size);
     ownFree = new Int32Array(size);
     risk = new Float32Array(size);
+    strikes = new Float32Array(size); // (a rival's head next tick, and its body after: see decide)
+    meet = new Float32Array(size);
     seen = new Int32Array(size);
     foodValue = new Float64Array(size); // what eating a cell is worth
     foodGrow = new Int8Array(size);     // what eating a cell does to my length
@@ -678,7 +681,7 @@ window.SnakeAI = (() => {
     ensureOwners(others.length + 1);
     const steps = Math.max(1, depth); // even a depth-0 search makes one move
     ensureBodies(Math.max(2, steps), me.body.length + steps + 4); // a body grows at most one cell a step (a power moves up to three at once, eating)
-    mineFree.fill(0); otherFree.fill(0); risk.fill(0);
+    mineFree.fill(0); otherFree.fill(0); risk.fill(0); strikes.fill(0); meet.fill(0);
 
     const inside = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
     const myHead = me.body[0];
@@ -1018,16 +1021,24 @@ window.SnakeAI = (() => {
     }
     const w = weighed(ctx.w);
 
-    // Risk: cells each rival could step into next tick (head-on), and its
-    // wider reach since I last saw it (soft zone).
+    // Risk: cells each rival could step into next tick (head-on: `strike`,
+    // read with the time I'd get there, see evaluate), and its wider reach
+    // since I last saw it (soft zone, `risk`).
     // (A rival still stunned next tick can't strike; one I just met head-on,
     // I give twice the berth for a while, so we don't go for the same cell again.)
+    // Only a cell it can step into: not back into its neck, a hole or a body
+    // still there. In a head-on it crashes too, and of two boxed in, the
+    // shorter goes out: one shorter than me has more to lose, so I fear it
+    // meeting me there half as much (`meet`), unless it has met me head-on
+    // lately. Its body, if it went there, crashes only me: that I fear fully.
     others.forEach((o, k) => {
       const strike = stunLeft(o) > 1 ? 0 : w.headRisk * (o.id === me.bumped ? 2 : 1);
+      const yields = o.id !== me.bumped && o.body.length < me.body.length ? YIELDS : 1;
       const wrapO = o.wrap > 0, at = v => wrapO ? (v + N) % N : v; // (the edges wrap for it a while)
       for (const d of DIR_LIST) {
+        if (d.x === -o.dir.x && d.y === -o.dir.y) continue; // (its neck)
         const nx = at(heads[k].x + d.x), ny = at(heads[k].y + d.y);
-        if (inside(nx, ny)) risk[ny * N + nx] += strike;
+        if (inside(nx, ny) && otherFree[ny * N + nx] <= 1) { strikes[ny * N + nx] += strike; meet[ny * N + nx] += strike * yields; }
       }
       // (Its powers reach further straight on: a dash three cells, a golden
       // leap three; anyone's flash two, and anyone's leap if there's
@@ -1036,7 +1047,7 @@ window.SnakeAI = (() => {
       const far = o.dashes > 0 || o.leaps > 0 ? 3 : Math.max(TUNE.FLASH_LENGTH, inside(fx, fy) && otherFree[fy * N + fx] > 1 ? 2 : 1);
       for (let i = 2; i <= far; i++) {
         const nx = at(heads[k].x + o.dir.x * i), ny = at(heads[k].y + o.dir.y * i);
-        if (inside(nx, ny)) risk[ny * N + nx] += strike * 0.5;
+        if (inside(nx, ny)) { strikes[ny * N + nx] += strike * 0.5; meet[ny * N + nx] += strike * 0.5 * yields; }
       }
       const stampZ = ++stamp;
       queue[0] = o.body[0].y * N + o.body[0].x;
@@ -1673,7 +1684,10 @@ window.SnakeAI = (() => {
       const ateBefore = ateAt;
       if (v > 0) ateAt = t + 1;
       const ahead = t < STEPS_AHEAD;
-      let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t));
+      // (A rival's head beside a cell: a head-on on my first move; on my
+      // next `age`, its body, if it went there, which I can't see yet; after
+      // that I'd see where it went in time to turn.)
+      let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t)) - (t === 0 ? meet[i] : t <= age ? strikes[i] * RISK_AHEAD[t] : 0);
       if (turning && w.turn) gain -= w.turn * (ahead ? TURN_AHEAD[t] : Math.pow(0.9, t));
       const score = depth <= 1
         ? evaluate(nb, nlen, g, t + 1) + bonus + gain
@@ -1859,8 +1873,8 @@ window.SnakeAI = (() => {
         // (It eats where it lands, and a golden leap what it crawls over first.)
         eatOn(span === 2 && !hurdle(path[0]) ? path[0] : -1, land, -1, L, g, 0.85, 2);
         bugsOn(1, land % N, (land - land % N) / N);
-        endRisk = risk[land];
-        const gain = ateGain - 0.6 * risk[land];
+        endRisk = risk[land] + strikes[land];
+        const gain = ateGain - 0.6 * endRisk;
         const score = depth > 2 ? search(nb, ateL, ateG, depth - 2, 2, gain) : evaluate(nb, ateL, ateG, 2) + gain;
         uneat();
         return score;
@@ -1917,8 +1931,8 @@ window.SnakeAI = (() => {
         }
         eatOn(path[0], path[1], n > 2 ? path[2] : -1, L, g, 1, 1);
         bugsOn(0, path[n - 1] % N, (path[n - 1] - path[n - 1] % N) / N);
-        endRisk = risk[path[n - 1]];
-        const gain = bonus + ateGain - risk[path[n - 1]];
+        endRisk = risk[path[n - 1]] + meet[path[n - 1]];
+        const gain = bonus + ateGain - endRisk;
         const score = depth > 1 ? search(nb, ateL, ateG, depth - 1, 1, gain) : evaluate(nb, ateL, ateG, 1) + gain;
         uneat();
         return score;
