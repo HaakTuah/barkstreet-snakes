@@ -167,7 +167,7 @@ const FIRST_OUT = `(() => {
     const cs = getComputedStyle(t);
     rows.push({ text, short: opts.short, shown: t.textContent, said: document.getElementById('announcer').textContent, above: t.classList.contains('above'), lines: t.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) > parseFloat(cs.fontSize) * 1.4 ? 2 : 1, whole: t.scrollWidth <= t.clientWidth + 1 });
   }
-  for (const k of keep) Object.assign(k.s, k);
+  for (const { s, ...was } of keep) Object.assign(s, was);
   return rows;
 })()`;
 const outs = {};
@@ -183,7 +183,7 @@ for (const w of [360, 320]) {
     bad.map(r => `“${r.shown}” (for “${r.text}”)${r.lines > 1 ? ', two lines' : ''}${r.whole ? '' : ', cut'}${r.said !== r.text ? `, said “${r.said}”` : ''}`).join('; ') || outs[w].map(r => `“${r.shown}”`).join(', '));
 }
 const dropped = outs[320].filter(r => r.shown === r.short);
-check(dropped.some(r => r.short === 'Wilhelmina Grant is first out.') && outs[360].concat(outs[320]).every(r => r.shown !== r.short || r.short && !r.shown.includes(':')), 'where the first out’s words don’t fit even so, it drops the cause (“Wilhelmina Grant is first out.”)',
+check(dropped.some(r => r.short === 'Wilhelmina Grant is first out.') && !outs[360].some(r => r.shown === r.short) && outs[320].filter(r => r.shown !== r.short).length >= 8, 'where the first out’s words don’t fit even so (at 320 px), it drops the cause (“Wilhelmina Grant is first out.”); where they fit, it keeps it (all at 360 px)',
   dropped.map(r => `“${r.shown}”`).join(', ') || 'none dropped at 320 px');
 console.log(results.join('\n'));
 console.log('\nmeasured (virtual 60 Hz, 120 ms ticks):');
