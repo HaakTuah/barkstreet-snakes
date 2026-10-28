@@ -245,3 +245,10 @@ In the design chat (28 October 2026, 07:12 UTC), on the tests running their 16-m
 (the CI change of PR #89). Then (08:03 UTC), on Claude's proposal of a check for what slows the work down as the game grows:
 
 > Yes please, sound good! Do it expertly for both!
+
+In the design chat (28 October 2026, 14:23 and 14:26 UTC), on how builders spend their time:
+
+> Could we then have it so claude does something, pushes it uo to review. Starts on something new. And if the review comes back, a different session addresses it? Be more agile and efficient. Not just sit and wait for stuff?
+
+> Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns.
+
