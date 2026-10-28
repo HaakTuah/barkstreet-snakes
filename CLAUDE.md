@@ -198,6 +198,14 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   each with the rule it rests on ("Rules that stand" above, or the design section). Most questions are answered that
   way first, by reasoning from the rules; only what no rule settles, or a matter of taste, goes to Haakon. The design
   session checks the readings at each milestone.
+- **28 October 2026: the workshop check.** "Yes please, sound good! Do it expertly for both!" (to Claude's proposal;
+  the words are in `docs/archive/instructions.md`). At every milestone, say in one line of the milestone PR what slows
+  the work down as the game grows, and fix what passes its mark: (1) how long the checks take for a docs-only and a
+  code PR, finding out why if either grew by more than a fifth since the last check; (2) the files every session reads,
+  this one and `docs/PROGRESS.md`, each kept under about 20 KB, with done entries and answered questions moved to
+  `docs/archive/` and a line pointing to them; (3) files over about 50 KB, split in a PR of their own with behaviour
+  proven unchanged (fingerprints and suites), the tests included; (4) merged branches, deleted from GitHub (their history
+  stays in `develop`); (5) leftovers nobody uses, archived or removed.
 - **27 October 2026: re-read the task before the PR.** "Yes, why not? If you don't object." (to Claude's proposal; the
   words are in `docs/archive/instructions.md`). Before opening the task's PR, read its entry in `docs/PROGRESS.md` on
   `develop` again, with the "For Haakon" table, since Haakon's answers can change it while you work. Build what changed,
