@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Shy of heads ("Rivals too shy of heads", docs/PROGRESS.md): how often a
+// Shy of heads ("Rivals too shy of heads", docs/archive/progress-done.md): how often a
 // snake swerves away from a cell because a rival's head is near, and whether
 // that cell was in fact dangerous.
 //
