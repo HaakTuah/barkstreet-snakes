@@ -67,7 +67,7 @@ for (const d of [CALLS, sized(360, 780), sized(412, 915), sized(375, 667)]) {
     }
     check(reached && reached.pressed === 'true', `${d.name}: a tap on a speed button under the perched woodpecker reaches it`, reached ? `${reached.id} pressed ${reached.pressed}` : 'the bird over no speed button');
     // (one size: perched under the board, flying, and drumming on it)
-    const sizes = await ev(`(() => { const g = SnakeDebug.game(), R = SnakeRender, seen = {}; g.time = Math.max(g.time, TUNING.SUDDEN_DEATH_MS - 500);
+    const sizes = await ev(`(() => { const g = SnakeDebug.game(), R = SnakeRender, seen = {}; g.woodpecker = null; g.time = TUNING.SUDDEN_DEATH_MS - 500; // (the staged bird gone: the engine's own comes in, works and rests)
       for (let i = 0; i < 2400; i++) { SnakeDebug.frames(1); if (!g.woodpecker) continue; const p = R.birdPose(); if (p.phase === 'arrive') continue; const k = p.phase + (p.y > ${768} ? ' below' : ' on'); (seen[k] ||= new Set()).add(Math.round(p.s * 100) / 100); }
       return Object.fromEntries(Object.entries(seen).map(([k, v]) => [k, [...v]])); })()`);
     const all = [...new Set(Object.values(sizes).flat())];
