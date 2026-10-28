@@ -94,14 +94,14 @@ document.addEventListener('pointerdown', e => { if (noted && !e.target.closest?.
 // Choosing your rivals: a start card's seat opens the picker, every rival
 // and "Any" (dealt from the deck). The choice is kept in this browser
 // (Records.setSeat) for every round after, until you change it; online it's
-// the host's that counts, chosen in the lobby's seats (lineUp). A rival
+// the host's that counts, chosen in the lobby's seats (hostLineUp). A rival
 // already in another seat swaps with this one's.
 const pickerEl = $('picker'), pickerList = $('picker-list'), pickerTitle = $('picker-title');
 let pickerSeat = -1;
 const keyDot = key => PERSONA_DOTS[key] || CAST[key].ink || CAST[key].color;
 // Where the seats are: the start card's, or (hosting) the lobby's.
 const choosing = () => (online ? hosting() && !lobbyEl.hidden && !lobbyPlayers.hidden && (state === 'lobby' || state === 'over') : state === 'ready');
-const seatsNow = () => (online ? lineUp().keys : theGame.snakes.filter(s => s.persona).map(s => s.personaKey));
+const seatsNow = () => (online ? hostLineUp().keys : theGame.snakes.filter(s => s.persona).map(s => s.personaKey));
 const seatEl = seat => (online ? lobbyPlayers : opponentsEl).querySelector(`.seat[data-seat="${seat}"]`);
 function openPicker(seat) {
   if (!choosing()) return;
@@ -159,7 +159,7 @@ function reseat(was, dealt, seat, key) {
 function pickRival(key) {
   const seat = pickerSeat;
   if (online) {
-    const up = reseat(lineUp().keys, lineUp().fresh, seat, key);
+    const up = reseat(hostLineUp().keys, hostLineUp().fresh, seat, key);
     online.lineup = { keys: up.keys, fresh: [...up.kept, ...up.fill] };
     sendLobby();
   } else {

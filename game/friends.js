@@ -230,7 +230,7 @@ function renderPlayers() {
       const tag = document.createElement('span');
       tag.className = 'tag';
       tag.textContent = r.chosen ? 'chosen' : '';
-      if (hosting()) li.append(seatButton(i - people.length, dot, name, r.chosen), label, tag);
+      if (hosting()) li.append(seatButton(i - people.length, dot, name, r.chosen), label); // (chosen: its ring says so)
       else li.append(dot, name, label, tag);
     } else {
       dot.style.background = 'var(--parchment-2)';
@@ -246,7 +246,7 @@ function renderPlayers() {
 // start card's when the room opens, dealt afresh after each round, chosen in
 // the lobby's seats (pickRival). fresh: the ones the deck dealt, which go back
 // on it if they're never met. With more people, fewer seats: the first ones.
-function lineUp() {
+function hostLineUp() {
   if (!online.lineup) {
     const d = dealLineUp(TUNE.OPPONENTS);
     online.lineup = { keys: d.keys, fresh: d.fresh };
@@ -258,7 +258,7 @@ function lobbyRivals() {
   if (!online) return [];
   if (!hosting()) return online.rivals || [];
   const seats = Records.seats(SnakeAI.POOL), want = Math.max(0, TUNE.OPPONENTS + 1 - online.players.length);
-  return lineUp().keys.slice(0, want).map((key, i) => ({ key, chosen: seats[i] === key }));
+  return hostLineUp().keys.slice(0, want).map((key, i) => ({ key, chosen: seats[i] === key }));
 }
 
 const myId = () => (hosting() ? 'host' : online?.room.id);
@@ -442,7 +442,7 @@ function friendLeft(id) {
 function startOnlineRound() {
   if (!hosting()) return;
   const humans = online.players.map(p => ({ name: p.name, color: p.color, peer: p.id, owner: p.owner }));
-  const want = Math.max(0, TUNE.OPPONENTS + 1 - humans.length), up = lineUp(), personas = up.keys.slice(0, want);
+  const want = Math.max(0, TUNE.OPPONENTS + 1 - humans.length), up = hostLineUp(), personas = up.keys.slice(0, want);
   Records.undeal(SnakeAI.POOL, up.fresh.filter(k => !personas.includes(k))); // (a seat a friend took: its rival is next)
   online.lineup = null; // (the next round's is dealt when it's next shown)
   newGame({ humans, personas, chosen: Records.seats(SnakeAI.POOL).slice(0, want).some(Boolean) });
