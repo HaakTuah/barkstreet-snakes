@@ -50,22 +50,25 @@ function animOf(s, now) {
 
 // ------------------------------------------------------------ looks
 
-// The look a snake is drawn with right now (Capricious borrows its mood's).
+// The look a snake is drawn with right now (Capricious borrows its mood's:
+// its face, as a costume over its own colours).
 function lookOf(s) {
   if (!s.persona) return 'player';
   if (s.persona.look === 'capricious' && s.memory.mood) return PERSONAS[s.memory.mood].look;
   return s.persona.look;
 }
+// The look its body is drawn with (its colours and markings, its beads):
+// Capricious keeps its own, whatever the mood.
+const coatOf = s => s.personaKey === 'capricious' ? 'capricious' : lookOf(s);
 
 // Current body color, for personas whose color changes during a round.
 function colorOf(s) {
   if (!s.persona) return s.color;
   if (s.personaKey === 'mute') return muteShown.get(s) || s.color;
-  if (s.personaKey === 'capricious' && s.memory.mood) return PERSONAS[s.memory.mood].color;
   if (s.personaKey === 'copycat' && game) {
     const model = findById(s.memory.modelId);
-    if (model && model.alive && lookOf(model) === 'star') return COPY_STAR; // (its body's a pale rainbow: see fillsOf)
-    if (model && model.alive) return mix(model.personaKey === 'capricious' ? colorOf(model) : model.color, '#ffffff', 0.45);
+    if (model && model.alive && coatOf(model) === 'star') return COPY_STAR; // (its body's a pale rainbow: see fillsOf)
+    if (model && model.alive) return mix(model.color, '#ffffff', 0.45);
   }
   return s.color;
 }
@@ -380,10 +383,10 @@ function bowRamp(h, pale) {
 // The rainbow a snake wears, if any (its ramps, by hue): Star's own, or
 // Copycat's pale copy while its model is Star; null for anyone else.
 function bowOf(s) {
-  if (lookOf(s) === 'star') return rainbowOf;
+  if (coatOf(s) === 'star') return rainbowOf;
   if (s.personaKey === 'copycat' && game) {
     const m = findById(s.memory.modelId);
-    if (m && m.alive && lookOf(m) === 'star') return paleRainbowOf;
+    if (m && m.alive && coatOf(m) === 'star') return paleRainbowOf;
   }
   return null;
 }
@@ -403,7 +406,7 @@ function bowHue(s, a, now) {
   a.hueAt = -1;
   if (reduced) return a.hue = Math.floor(now / 1000 * BOW_DRIFT) % 360;
   let src = s, sa = a;
-  if (lookOf(s) !== 'star') { const m = findById(s.memory.modelId); if (m && m.alive) { src = m; sa = animOf(m, now); } } // (Copycat's copy: its model's)
+  if (coatOf(s) !== 'star') { const m = findById(s.memory.modelId); if (m && m.alive) { src = m; sa = animOf(m, now); } } // (Copycat's copy: its model's)
   const u = (now - sa.burstAt) / BOW_BURST_MS, burst = sa.bursts * BOW_BURST - (u >= 0 && u < 1 ? BOW_BURST * (1 - u) * (1 - u) : 0);
   return a.hue = Math.floor((flowOf(src, sa) * BOW_FLOW + burst) * RAINBOW_STEP) % 360;
 }
@@ -451,7 +454,7 @@ const WILD = i => i === 0 ? '#f59a52' : i === 1 ? '#f8fafc' : i < 4 ? '#3c3b6e' 
 
 // Every segment's fill: the look's pattern, fading toward the bark at the tail.
 function fillsOf(s, a, now) {
-  const { look, color, n, fills } = a;
+  const { color, n, fills } = a, look = coatOf(s);
   if (s.personaKey === 'wildcard') { // the Stars and Stripes, behind an orange tan and a white collar
     for (let i = 0; i < n; i++) fills[i] = WILD(i);
     return;
@@ -510,7 +513,7 @@ function prepare(s, alpha, now, dead, impact = 0) {
   const a = animOf(s, now);
   const n = s.body.length;
   a.look = lookOf(s);
-  a.star = a.look === 'star'; // (a star for a head, not a circle: its shadow and outlines follow its points)
+  a.star = coatOf(s) === 'star'; // (a star for a head, not a circle: its shadow and outlines follow its points)
   if (s.personaKey === 'mute' && !dead) updateMute(s, now);
   a.color = colorOf(s);
   a.isPlayer = !s.persona;

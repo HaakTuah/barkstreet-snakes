@@ -595,6 +595,7 @@ function drawFace(s, look, color, blinking, a) {
         for (const sg of SIDES2) { ctx.beginPath(); ctx.ellipse(-c * 0.02 + ox, sg * c * 0.105 + oy, c * 0.135, c * 0.072, 0, 0, TAU); ctx.fill(); }
         catchlights(-c * 0.05 + ox, c * 0.105, oy, c * 0.1);
       }
+      if (!a.star) blitAbout(stacheSprite(stacheStep(s, a, lastNow)), 0, 0, 0, 0, a.rad[0] / STAR_R / 1.1, a.rad[0] / STAR_R / 1.1, 0); // (Capricious doing Star: the mustache, on its own round head)
       // Bushy white brows, a puffy tuft over each eye: knitted (grumpy) as
       // it flashes, raised again through the first part of its rest (see
       // drawStarHead). (Each puff a circle of its own: the GPU's quickest shape.)

@@ -110,6 +110,20 @@ function reportSignatures(per) {
     const field = names.filter(n => n !== who && sum([n], b) > 0);
     console.log(`  ${who}, ${what}: ${ratio([who], a, b, unit)} · field ${field.length ? ratio(field, a, b, unit) : 'none'}`);
   }
+  // Capricious's impressions: each mood's trademark (its ticks in that mood;
+  // a minute of them as long as its own minutes ran), against the rival's own.
+  const cap = per.Capricious?.sig;
+  if (cap) {
+    const minute = cap.ticks / Math.max(1e-9, per.Capricious.aliveMs / 60000);
+    const moodSum = (mood, k) => k === 'minutes' ? (cap[`${mood}.ticks`] || 0) / minute : k === 'rounds' ? NaN : cap[`${mood}.${k}`] || 0;
+    console.log('Capricious\'s impressions (each mood\'s trademark, against the rival\'s own; shares of food and beads are a round\'s, so not shown)');
+    for (const [who, what, a, b, unit] of [...TRADEMARKS, ['Gobbler', 'food a minute', 'eats', 'minutes', 1], ['Vulture', 'beads a minute', 'beadsEaten', 'minutes', 1]]) {
+      const mood = who.toLowerCase(), d = moodSum(mood, b);
+      if (!(d > 0)) continue;
+      const v = moodSum(mood, a) / d;
+      console.log(`  Capricious as ${who}, ${what}: ${unit === '%' ? (100 * v).toFixed(1) + '%' : v.toFixed(2)} · ${who} ${per[who] && sum([who], b) > 0 ? ratio([who], a, b, unit) : 'not played'}`);
+    }
+  }
   console.table(names.sort().map(name => {
     const one = [name], r = (a, b, unit) => sum(one, b) > 0 ? ratio(one, a, b, unit) : '';
     return { name, run: r('moves', 'runs', 1), beside: r('beside', 'cells', '%'), coiled: r('coiled', 'long', '%'), riding: r('riding', 'ticks', '%'), apart: r('apart', 'ticks', 1),

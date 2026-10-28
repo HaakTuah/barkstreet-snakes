@@ -105,11 +105,14 @@ const GUIDE_ROWS = [
     ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and it notices.'],
     ['lostflag', 'Lost flags', 'A flag the woodpecker pecks out is lost: the colony goes, and a capital moves.'],
   ]],
+  ['Rivals who change', [
+    ['capricious', 'Capricious', 'Does impressions of the others, every one before any again: their mark on its pink head, their line, their play.'],
+  ]],
 ];
 // (Until the renderer can draw a picture, a stand-in. It draws a kind it
 // doesn't know as an apple, so the kinds it has no picture for yet are
 // named here: none now.)
-const GUIDE_STAND_IN = { 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', choke: '🤢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', land: '🚩', lostflag: '🚩' };
+const GUIDE_STAND_IN = { capricious: '🎭', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', choke: '🤢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', land: '🚩', lostflag: '🚩' };
 const GUIDE_UNDRAWN = new Set();
 function renderGuide() {
   const px = Math.round(36 * (window.devicePixelRatio || 1));

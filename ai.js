@@ -196,7 +196,7 @@ window.SnakeAI = (() => {
     },
     capricious: {
       name: 'Capricious', color: '#ec4899', look: 'capricious', driver: 'capricious',
-      blurb: 'Does impressions of Sniper, Gobbler, Ghost and Mason, by turns.',
+      blurb: 'Does impressions of all the others, by turns, in costume.',
       kill: ['Capricious felt like it. Just then.', 'A moment later, it wouldn’t have bothered.', 'Wrong place, wrong mood.'],
       win: ['And already wants something else.', 'It loves winning! For now.'],
       w: DRAB, // replaced by the current mood's weights
@@ -275,7 +275,21 @@ window.SnakeAI = (() => {
     },
   };
   const POOL = Object.keys(PERSONAS);
-  const MOODS = ['sniper', 'gobbler', 'ghost', 'mason'];
+  // Capricious's deck: every other rival (its own undecided self, Drab's
+  // habits, is the dithering in between, not a card). A rival whose style
+  // needs long memory gets the short form of it for a mood's length (the
+  // rest play as themselves): Sovereign claims a small home and guards it,
+  // Colonist lays one small claim, Ouroboros coils from shorter. (Metagamer
+  // counters whoever it watched during the mood, Copycat shadows the leader,
+  // Wildcard draws a mix for the mood: each mood starts its memory afresh.)
+  const MOODS = POOL.filter(k => k !== 'capricious' && k !== 'drab');
+  const MOOD_FORMS = {
+    sovereign: { ...PERSONAS.sovereign.w, home: { ...PERSONAS.sovereign.w.home, radius: 3, max: 4 } },
+    colonist: { ...PERSONAS.colonist.w, colony: { ...PERSONAS.colonist.w.colony, radius: 3, max: 1, every: Infinity } },
+    ouroboros: { ...PERSONAS.ouroboros.w, coil: { ...PERSONAS.ouroboros.w.coil, from: 7 } },
+  };
+  // What a driver remembers that's only its own: a new mood starts without it.
+  const MOOD_MEMORY = ['home', 'colonies', 'site', 'nextSiteAt', 'planted', 'driftAt', 'victimId', 'lureId', 'obs', 'labels', 'w', 'modelId'];
 
   const TUNE = window.TUNING; // (the rules' numbers, so the AI's picture of them stays true)
   const TRAPPED = 5000;
@@ -935,25 +949,32 @@ window.SnakeAI = (() => {
       },
 
       // Mood swings. It starts each round undecided (its own self, playing it
-      // safe) for a few seconds, then every 8-15 s takes up another persona's
-      // weights, dithering for a moment in between.
+      // safe) for a few seconds, then every 8-15 s does an impression of
+      // another rival, dealt from a shuffled deck of all of them (each once
+      // before any comes back, never the same twice running), dithering for
+      // a moment in between.
       capricious() {
         memory.moodUntil ??= view.timeMs + rand(3500, 5500);
         if (view.timeMs >= memory.moodUntil) {
+          for (const k of MOOD_MEMORY) memory[k] = null; // (whatever the last mood kept is gone: its realm, its flag, who it hunted)
           if (memory.mood) { // over it: a moment of not knowing what next
             memory.lastMood = memory.mood;
             memory.mood = null;
             memory.moodUntil = view.timeMs + rand(1200, 2000);
           } else {
-            const options = MOODS.filter(m => m !== memory.lastMood);
-            memory.mood = options[Math.floor(Math.random() * options.length)];
+            if (!memory.deck?.length) {
+              const deck = memory.deck = [...MOODS];
+              for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+              if (deck[deck.length - 1] === memory.lastMood) [deck[0], deck[deck.length - 1]] = [deck[deck.length - 1], deck[0]]; // (dealt from the end)
+            }
+            memory.mood = memory.deck.pop();
             memory.moodUntil = view.timeMs + rand(8000, 15000);
           }
           memory.moodChangedAt = view.timeMs;
         }
         if (!memory.mood) return; // (undecided: its own, safe weights)
         const mood = PERSONAS[memory.mood];
-        ctx.w = mood.w;
+        ctx.w = MOOD_FORMS[memory.mood] || mood.w;
         if (mood.driver) drivers[mood.driver]();
       },
 

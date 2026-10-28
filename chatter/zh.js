@@ -23,14 +23,7 @@ const ZH = {
   "*shivers, silently*": "*无声地发抖*",
   "*mimes being squashed*": "*比划被压扁*",
   "*…*": "*……*",
-  "Taking position. …Ooh, I like being Sniper.": "就位。……哦，我喜欢当狙击手。",
-  "Headshot! …Is that how Sniper says it?": "爆头！……狙击手是这么说的吗？",
-  "FOOD. NOW. …Is Gobbler always this hungry?": "食物。现在。……贪吃蛇一直这么饿吗？",
-  "Nom nom nom! I’m Gobbler now!": "吧唧吧唧！我现在是贪吃蛇！",
-  "…boo. …Am I doing Ghost right?": "……嘘。……我演鬼魂演得对吗？",
   "…": "……",
-  "Aedificamus! …Ooh, I speak Latin now!": "我们建造！……哦，我现在会说拉丁语了！",
-  "Veni, vidi, aedificavi! …Did I say that right?": "我来，我见，我建！……我说对了吗？",
   "Cold barrel. Steady hands.": "枪管冰冷。手要稳。",
   "Winter? But what will I EAT?": "冬天？那我吃什么？",
   "…brr.": "……好冷。",
@@ -525,10 +518,6 @@ const ZH = {
   "Map edge: confirmed.": "地图边缘：已确认。",
   "Pathing error, {who}.": "寻路错误，{who}。",
   "Input lag, {who}?": "输入延迟，{who}？",
-  "Pew pew! …Sniper doesn’t say pew pew, does it?": "砰砰！……狙击手不说砰砰的，对吧？",
-  "Snacks! All the snacks! …How does Gobbler stop?": "零食！所有的零食！……贪吃蛇是怎么停下来的？",
-  "Shh. I’m being Ghost.": "嘘。我在演鬼魂。",
-  "Wallus maximus! …Is that Latin? It feels Latin.": "超级大墙！……这是拉丁语吗？感觉像拉丁语。",
   "Ouch! Never doing that again! Probably.": "哎哟！再也不这样了！大概吧。",
   "Ow! That was fun! No it wasn’t.": "哎哟！真好玩！不，一点也不好玩。",
   "Let’s make this interesting.": "来点刺激的吧。",
@@ -985,3 +974,8 @@ const ZH = {
   "Burnt out… like a real star.": "燃尽了……像真正的星星。",
   "Tripped on my own tail…": "被自己的尾巴绊倒了……",
 };
+// (Capricious's impressions, as Copycat echoes them: the rival's line in its Chinese.)
+for (const [text, [name, line]] of IMPRESSIONS) {
+  const zh = ZH[line] ?? line, mime = /^\*(.+)\*$/.exec(zh);
+  ZH[text] = mime ? `*模仿${name}：${mime[1]}*` : `*模仿${name}*: “${zh}”`;
+}
