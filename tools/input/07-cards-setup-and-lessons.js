@@ -133,6 +133,58 @@ const say = r => `“${r.shown}” ${r.above ? '' : 'on the board, '}${r.lines} 
 check(fits[360].length > 80 && !unfit(360).length, 'on a 360 px phone held upright, every banner is one line over the title row, its words whole, at 90% of its size or more (the phone’s shorter words for the longest)',
   unfit(360).map(say).join('; ') || `${fits[360].length} banners, the smallest at ${(Math.min(...fits[360].map(r => r.size)) * 100).toFixed(0)}%, ${fits[360].filter(r => r.shown !== r.text).length} in the phone’s words`);
 check(fits[320].length === fits[360].length && !unfit(320).length, 'on a 320 px phone, every banner is one line, its words whole', unfit(320).map(say).join('; ') || `the smallest at ${(Math.min(...fits[320].map(r => r.size)) * 100).toFixed(0)}%`);
+
+// Long names (16 characters, the cap): the first out's banner, held
+// upright, is one line, its words whole, at 360 and 320 px. Where its
+// shorter words still don't fit, it drops the cause ("Gran is first
+// out."); a screen reader keeps the full line. Built as the round builds
+// it (SnakeDebug.firstOut), for every way a first out reads, and a wide
+// name, the widest one there is.
+const FIRST_OUT = `(() => {
+  const g = SnakeDebug.game(), [a, b, c] = g.snakes.filter(s => !s.isPlayer), me = g.snakes.find(s => s.isPlayer), t = document.getElementById('toast');
+  const keep = [a, b, c, me].map(s => ({ s, name: s.name, alive: s.alive, cause: s.cause, killer: s.killer, killerId: s.killerId }));
+  a.name = 'Wilhelmina Grant'; b.name = 'Bartholomew Lark'; c.name = 'WWWWWWWWWWWWWWWW'; me.name = 'Gwendolyn Marsh';
+  const dead = (s, cause, by) => Object.assign(s, { alive: false, cause, killer: by ? by.name : 'wall', killerId: by ? by.id : null });
+  const cases = [
+    () => [dead(a, 'flashed into a woodpecker hole and blew up')],
+    () => [dead(a, 'got pecked by the woodpecker')],
+    () => [dead(a, 'starved')],
+    () => [Object.assign(dead(a, 'bit itself'), { killer: 'self', killerId: a.id })],
+    () => [dead(a, 'got cut in two by ' + b.name, b)],
+    () => [dead(a, 'ran into ' + b.name, b)],
+    () => [dead(a, 'crashed head-on into ' + b.name, b)],
+    () => (dead(b, 'hit the edge'), [dead(a, 'crashed head-on into ' + b.name, b)]),
+    () => [dead(a, 'crashed head-on into ' + b.name, b), dead(b, 'crashed head-on into ' + a.name, a)],
+    () => [dead(a, 'got cut in two by ' + c.name, c)],
+    () => [dead(me, 'got cut in two by ' + b.name, b)],
+    () => [dead(a, 'got cut in two by ' + me.name, me)],
+  ];
+  const rows = [];
+  for (const make of cases) {
+    for (const k of keep) Object.assign(k.s, { alive: true, cause: null, killer: null, killerId: null });
+    const [text, opts] = SnakeDebug.firstOut(make());
+    SnakeDebug.banner(text, 'kill', 'round', opts);
+    const cs = getComputedStyle(t);
+    rows.push({ text, short: opts.short, shown: t.textContent, said: document.getElementById('announcer').textContent, above: t.classList.contains('above'), lines: t.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) > parseFloat(cs.fontSize) * 1.4 ? 2 : 1, whole: t.scrollWidth <= t.clientWidth + 1 });
+  }
+  for (const { s, ...was } of keep) Object.assign(s, was);
+  return rows;
+})()`;
+const outs = {};
+for (const w of [360, 320]) {
+  await b.viewport(w, 640, { mobile: true, scale: 3 });
+  await b.go(site.url + '?debug', { settle: 0 });
+  await ev('document.fonts.ready.then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))');
+  outs[w] = await ev(FIRST_OUT);
+}
+for (const w of [360, 320]) {
+  const bad = outs[w].filter(r => !r.above || r.lines !== 1 || !r.whole || r.said !== r.text);
+  check(outs[w].length === 12 && !bad.length, `on a ${w} px phone, with 16-character names, the first out's banner is one line, its words whole, and a screen reader hears the full line`,
+    bad.map(r => `“${r.shown}” (for “${r.text}”)${r.lines > 1 ? ', two lines' : ''}${r.whole ? '' : ', cut'}${r.said !== r.text ? `, said “${r.said}”` : ''}`).join('; ') || outs[w].map(r => `“${r.shown}”`).join(', '));
+}
+const dropped = outs[320].filter(r => r.shown === r.short);
+check(dropped.some(r => r.short === 'Wilhelmina Grant is first out.') && !outs[360].some(r => r.shown === r.short && !r.text.includes('WWWW')) && outs[320].filter(r => r.shown !== r.short).length >= 8, 'where the first out’s words don’t fit even so (at 320 px), it drops the cause (“Wilhelmina Grant is first out.”); where they fit, it keeps it (at 360 px, all but the widest name)',
+  dropped.map(r => `“${r.shown}”`).join(', ') || 'none dropped at 320 px');
 console.log(results.join('\n'));
 console.log('\nmeasured (virtual 60 Hz, 120 ms ticks):');
 console.log('  press to tick, turns:', JSON.stringify(stats(turnLat)));

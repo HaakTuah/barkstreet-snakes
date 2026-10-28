@@ -33,19 +33,24 @@ function landLost() {
   }
   return lost;
 }
+// The first out's banner: its words, and its fewer words on a phone held
+// upright (the cause shorter, and where long names don't fit even so, no
+// cause at all: "Gran is first out.").
+function firstOut(dying) {
+  const v = dying[0];
+  const killer = theGame.snakes.find(o => o.name === v.killer && o !== v);
+  const names = dying.map(d => who(d, true));
+  const all = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
+  return [dying.length > 1 ? `First out: ${all}.` : killer && killer.alive ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : killer ? `First out: ${who(v, true)} and ${who(killer, true)}, head-on.` : `First out: ${who(v, true)} ${causeFor(v)}.`,
+    { phone: dying.length === 1 && !killer ? `First out: ${who(v, true)} ${shortCause(causeFor(v))}.` : '', // (one line on a phone: the cause in fewer words)
+      short: dying.length > 1 ? '' : killer && !killer.alive ? `${who(v)} and ${who(killer, true)} are first out.` : isMe(v) ? 'You’re first out.' : `${v.name} is first out.` }];
+}
 function news(dying) {
   const alive = theGame.snakes.filter(s => s.alive);
   if (dying.length && !theGame.firstBlood) {
     theGame.firstBlood = true;
     Sound.play('stinger');
-    if (alive.length !== 2) { // (down to two: that's the bigger news, below)
-      const v = dying[0];
-      const killer = theGame.snakes.find(o => o.name === v.killer && o !== v);
-      const names = dying.map(d => who(d, true));
-      const all = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
-      return toast(dying.length > 1 ? `First out: ${all}.` : killer && killer.alive ? `First blood: ${who(killer, true)} got ${who(v, true)}.` : killer ? `First out: ${who(v, true)} and ${who(killer, true)}, head-on.` : `First out: ${who(v, true)} ${causeFor(v)}.`, 2800, 'kill', 'round',
-        { phone: dying.length === 1 && !killer ? `First out: ${who(v, true)} ${shortCause(causeFor(v))}.` : '' }); // (one line on a phone: the cause in fewer words)
-    }
+    if (alive.length !== 2) { const [text, opts] = firstOut(dying); return toast(text, 2800, 'kill', 'round', opts); } // (down to two: that's the bigger news, below)
   }
   const me = player();
   const once = key => !theGame.told?.[key] && ((theGame.told ||= {})[key] = true); // (the first time this round)
@@ -243,16 +248,24 @@ function placeToast() {
   toastEl.style.setProperty('--toast-max', `${band.width}px`);
   const cs = getComputedStyle(toastEl), size = parseFloat(cs.fontSize), floor = size * TUNE.BANNER_MIN_FONT;
   const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight), padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
-  let fs = size;
-  for (let i = 0; i < 3; i++) { // (a size, measured: once or twice)
-    const wide = toastEl.scrollWidth, tall = toastEl.offsetHeight;
-    let next = fs;
-    if (wide > toastEl.clientWidth + 0.5 && fs > floor) next = Math.max(floor, fs * (toastEl.clientWidth - padX) / (wide - padX)); // (its words on one line, down to the floor; past it, an ellipsis)
-    if (tall > room + 0.5) next = Math.min(next, fs * (room - padY) / (tall - padY)); // (and never taller than the row, whatever it takes: any taller, and it's over the pause button)
-    next = Math.floor(next * 10) / 10;
-    if (next >= fs) break;
-    fs = next;
-    toastEl.style.setProperty('--toast-fs', `${fs}px`);
+  const fit = () => {
+    let fs = size;
+    for (let i = 0; i < 3; i++) { // (a size, measured: once or twice)
+      const wide = toastEl.scrollWidth, tall = toastEl.offsetHeight;
+      let next = fs;
+      if (wide > toastEl.clientWidth + 0.5 && fs > floor) next = Math.max(floor, fs * (toastEl.clientWidth - padX) / (wide - padX)); // (its words on one line, down to the floor; past it, an ellipsis)
+      if (tall > room + 0.5) next = Math.min(next, fs * (room - padY) / (tall - padY)); // (and never taller than the row, whatever it takes: any taller, and it's over the pause button)
+      next = Math.floor(next * 10) / 10;
+      if (next >= fs) break;
+      fs = next;
+      toastEl.style.setProperty('--toast-fs', `${fs}px`);
+    }
+  };
+  fit();
+  if (toastOpts.short && toastEl.scrollWidth > toastEl.clientWidth + 0.5) { // (still cut at the floor: long names. Its shortest words, the cause dropped ("Gran is first out."); a screen reader and the chatter keep the full line)
+    toastEl.textContent = toastOpts.short;
+    toastEl.style.removeProperty('--toast-fs');
+    fit();
   }
   const h = toastEl.offsetHeight;
   toastEl.style.setProperty('--toast-y', `${Math.round(Math.max(band.top, Math.min(band.bottom - h, band.mid - h / 2)))}px`);
@@ -282,7 +295,8 @@ function placeToast() {
 // { still } (a lesson that waits is shown only if this still holds),
 // { follows } (a lesson that goes with the banner just before it: it
 // waits from when that one comes up), { phone } (its words on a phone
-// held upright, one line).
+// held upright, one line), { short } (its fewest words there, for when
+// long names still don't fit a line: the first out without its cause).
 let toastLevel = 'news', toastKind = '', toastOpts = {}, toastHold = 0, freeAt = 0;
 const waiting = []; // banners waiting their turn: { text, ms, kind, level, opts, at (the round's time it came) }
 const bannerLog = params.has('debug') ? [] : null; // (?debug: every banner and what became of it, for the tests and the audit)
