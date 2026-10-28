@@ -237,3 +237,11 @@ opening their pull request, after two Amarna Letters items had begun before Haak
 In the design chat (28 October 2026, 06:33 UTC), after naming the principles that answer most builders' questions:
 
 > Code's should probably note where it has made an assumption, like it does now with questions, so we can check it afterwards.
+
+In the design chat (28 October 2026, 07:12 UTC), on the tests running their 16-minute layout suite on every docs change:
+
+> Yes, I think tests should only run where they impact something. To speed up development, and so the session don't lose cache and we pay for all of the tokens again?
+
+(the CI change of PR #89). Then (08:03 UTC), on Claude's proposal of a check for what slows the work down as the game grows:
+
+> Yes please, sound good! Do it expertly for both!
