@@ -10,6 +10,7 @@ https://haaktuah.github.io/barkstreet-snakes/.
 | What | Where |
 | --- | --- |
 | What is done and the queue, in order | `docs/PROGRESS.md` |
+| How builder sessions and lanes are run (for the orchestrator) | `docs/orchestrating.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
 | Materials the queue points to: the owner's saved tasks word for word, the teaching prototypes and judges, the woodpecker acts draft, the bridge-glitch repro, the unverified jumps start, the Sniper screenshot | `docs/handoff/` |
 | The game | `index.html`, `style/` (three stylesheets, listed in `style/base.css`), `engine.js`, `ai.js`, `render/` (seventeen files, listed in `render/core.js`), `game/` (seven, listed in `game/core.js`), `chatter/` (four, listed in `chatter/voices.js`), `audio.js`, `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
@@ -173,17 +174,14 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   `docs/archive/instructions.md`). Push the task's branch at every passed step, and at least once an hour while work is
   under way, even before its PR opens (a draft PR if it is not ready), so nothing is lost if a session dies or its
   machine is reclaimed.
-- **27 October 2026: every new move is tested both ways.** "If your expert opinion is that we should, then go ahead,
-  expertly!" (to adding Amarna Letters' test here; the words are in `docs/archive/instructions.md`). For every new move
+- **27 October 2026: every new move is tested both ways.** (the words are in `docs/archive/instructions.md`). For every new move
   or rule a snake can choose to use, run `tools/abtest.js` on fresh seeds: rivals that use it, against a copy where it
   is taken from the play of some rivals only (the others keep it, so the rule itself is unchanged). Its users should come
   out ahead in wins or survival. If they don't, the PR says why: either the move doesn't matter (a design finding for
   Haakon) or the rivals play it badly, which is fixed before it merges. The PR shows the table, with how often each rival
   used the move and how often it worked. Today's rules still stand: "No ability only people use", "No refuges" and every
   trademark kept.
-- **27 October 2026: questions come back to Haakon directly.** "And we need that all these questions get directly back
-  to me from both projects. Having to hunt them down like this isn't good." (the words are in
-  `docs/archive/instructions.md`). Every question, choice or "left unsolved" point Haakon should answer reaches him three
+- **27 October 2026: questions come back to Haakon directly.** (the words are in `docs/archive/instructions.md`). Every question, choice or "left unsolved" point Haakon should answer reaches him three
   ways:
   1. **The session's last message,** which the session that started it reads and relays, opens with "Questions for
      Haakon". It lists each one, numbered, as a question he can answer from his phone, with the reading taken or
@@ -192,8 +190,7 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   3. **The "For Haakon" table** in `docs/PROGRESS.md` keeps it until he answers.
 
   A session that starts builder sessions passes each list on to Haakon word for word in its next update.
-- **28 October 2026: every assumption is noted.** "Code's should probably note where it has made an assumption, like it
-  does now with questions, so we can check it afterwards." (the words are in `docs/archive/instructions.md`). Every
+- **28 October 2026: every assumption is noted.** (the words are in `docs/archive/instructions.md`). Every
   reading a task takes, where its entry or the design left something open, goes into its PR under "Readings taken",
   each with the rule it rests on ("Rules that stand" above, or the design section). Most questions are answered that
   way first, by reasoning from the rules; only what no rule settles, or a matter of taste, goes to Haakon. The design
@@ -210,40 +207,19 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   words are in `docs/archive/instructions.md`). Before opening the task's PR, read its entry in `docs/PROGRESS.md` on
   `develop` again, with the "For Haakon" table, since Haakon's answers can change it while you work. Build what changed,
   or, if that is large, say so in the PR and add it as its own entry right after the task.
-- **28 October 2026: pipeline, don't wait.** "Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns." (to Claude's proposal; the words are in
-  `docs/archive/instructions.md`). Waiting is lost time and, past an hour, a lost cache, so:
-  1. **Review in the background.** Open the PR, start its reviewer as a background agent (or `@codex review`, once Codex
-     is connected), and go on meanwhile with what comes next: the next entry's text, its sections, the check for
-     changes. Fix what the review finds when it returns, then merge.
-  2. **The next entry beside it.** Entries are mostly independent: take the next one from `develop`, never stacked on
-     an open PR's branch ("Don't stack PRs"). Two AI changes are never measured at once: an AI entry waits for the
-     last AI change to merge, so each head-to-head compares against a settled AI.
-  3. **Bigger review fixes in a session of their own.** If a review asks for more than about an hour's work, the
-     orchestrator starts a fresh session for it with the PR, the review and nothing else, at the task's effort; the
-     builder goes on.
-  4. **Keep the cache warm.** One session per task, continued for its review fixes and its milestone while its context
-     is under an hour old, rather than a fresh session reading everything again; a fresh session for a new task, or when a
-     session's context has grown large. Long runs and checks go in the background; no turn sits idle waiting. Files every
-     session reads stay small (the workshop check), since they are the start of every call.
-  5. **Hand over at once.** The last message says what merged and what is next. The orchestrator starts the next session
-     as soon as a task merges, woken by the PR's merge rather than a clock, with an hourly check as the fallback.
-  6. **The same helpers, used better.** Pipelining spends the same tokens sooner and adds no agents beyond "Models,
-     effort and helpers": a reviewer or search helper may run in the background while the builder works, and the Haiku
-     search helper, not the builder reading large files itself, is the cheap way to look across many files.
-- **28 October 2026: as many lanes as can run in parallel.** "Yes, allow for as many lanes as can be parallelized, expert." (the words are in `docs/archive/instructions.md`).
-  This replaces the limit of two agents in "How to work" for builders; each builder keeps its own limit of helpers.
-  1. **A lane is independent work:** it touches different files from every other open lane (or parts of one file
-     nobody else touches), shares no measurement with another, and does not wait on another's result. Here, changes to the AI or the engine's rules run one at a time, since each is measured head to head against a settled AI, and so do changes to the online messages, since each bumps the protocol; beside them run independent entries: art, chatter lines, interface and layout fixes, docs and test-file splits.
-  2. **Claim it on GitHub first.** Before starting, open a draft PR from a fresh branch off `develop`, its title naming
-     the entry, and push; that PR is the claim. Look at the open PRs before choosing, and take only what nobody has
-     claimed. The progress file is changed only when the work merges, so lanes never fight over it.
-  3. **Each lane on its own.** It merges `develop` into its branch before asking for review, is reviewed and merged by
-     the usual rules, and is not stacked on another lane's branch. A lane that finds it needs another's work waits,
-     says so in its PR, or folds into that lane.
-  4. **The orchestrator opens a lane for every independent entry it can see,** each a builder session with its own
-     brief and check-in, and passes on every lane's "Questions for Haakon" word for word.
-  5. **The brake closes lanes first.** From about 85% of the weekly usage, no new side lane opens and open ones finish;
-     from about 90%, as "Usage" says, only small things in the main lane.
+- **28 October 2026: pipeline, don't wait** (full text, with the orchestrator's part, in `docs/orchestrating.md`).
+  Open the PR, start its reviewer in the background, and go on with what comes next; fix what the review finds when it
+  returns, then merge. Take the next entry from `develop`, never stacked on an open PR's branch; an AI entry waits for
+  the last AI change to merge, so each head-to-head compares against a settled AI. Long runs and checks go in the
+  background, and no turn sits idle. The last message says what merged and what is next.
+- **28 October 2026: as many lanes as can run in parallel** (full text in `docs/orchestrating.md`; for builders it
+  replaces the limit of two agents in "How to work", each builder keeping its own limit of helpers). A lane is
+  independent work: different files from every other open lane, no shared measurement, no waiting on another's result.
+  Changes to the AI or the engine's rules run one at a time, and so do changes to the online messages; art, chatter
+  lines, interface and layout fixes, docs and test-file splits run beside them. Claim a lane first with a draft PR from
+  a fresh branch off `develop`, after checking the open PRs; change the progress file only when the work merges; merge
+  `develop` into the branch before review. From about 85% of the weekly usage no new side lane opens; from about 90%,
+  only small things in the main lane.
 - **29 October 2026: the smallest setup that tests the rule.** "Yes, make it expertly so!" (to Claude's proposal, for
   this game and Amarna Letters alike; the words are in `docs/archive/instructions.md`). Every test sets up the smallest
   scene that still tests its rule: a scripted board with only the snakes and food it needs, for a few ticks, rather
