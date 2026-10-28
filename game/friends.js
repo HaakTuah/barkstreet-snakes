@@ -539,8 +539,8 @@ function handleHost(msg) {
       break;
     case 'tick': hostTick(msg); break;
     case 'plan': if (state === 'running' && theGame) Online.applyPlan(theGame, msg, DIRS, online.seat); break; // (drawing ahead: where everyone goes next)
-    case 'say': // (the host's last line can arrive after the round ended here)
-      if ((state === 'countdown' || state === 'running') && theGame.snakes[msg.id] && typeof msg.text === 'string') Chatter.replay(theGame.snakes[msg.id], msg.text.slice(0, 200), msg.reply === true);
+    case 'say': // (the host's last line can arrive after the round ended here: only the last words of a snake out, while the round's card waits for them)
+      if ((state === 'countdown' || state === 'running' || (state === 'over' && pendingCard && theGame.snakes[msg.id] && !theGame.snakes[msg.id].alive)) && theGame.snakes[msg.id] && typeof msg.text === 'string') Chatter.replay(theGame.snakes[msg.id], msg.text.slice(0, 200), msg.reply === true);
       break;
     case 'closed': hostLost('closed'); break;
   }
