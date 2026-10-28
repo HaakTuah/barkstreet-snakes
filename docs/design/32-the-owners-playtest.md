@@ -283,8 +283,14 @@ Who you meet is dealt from a deck, and you may choose instead, seat by seat.
   under the new key `snake-lineup` (`seats()`, `setSeat()`) for every round after, until changed; "Any" seats are
   dealt from the deck, which skips the chosen rivals (they stay in it for later). Choosing a rival already in another
   seat swaps the two. Watching from the start card keeps its three and deals the fourth.
-- *Online* the host's choice and deck decide: the host's `newGame` deals the line-up, and the round message carries
-  it as before. A guest's own choice and deck are untouched. With more people, fewer seats are dealt: the first
-  seats' choices count.
+- *Online* the host's choice and deck decide. A guest's own choice and deck are untouched. With more people, fewer
+  seats are dealt: the first seats' choices count.
+  - *In the lobby* (`game/friends.js`, `hostLineUp()`, `renderPlayers()`): the empty seats show the rivals who'll take
+    them, "unless a friend joins". The room opens with the start card's line-up (and what the deck dealt for it); after
+    each round the next is dealt, shown on the round's card. The host's seats are the start card's buttons, opening the
+    same picker (a chosen one wears its ring); the guests see each seat's rival, and "chosen", as it stands. A seat a
+    friend takes sends its rival back to the top of the deck, as does closing the room or the page.
+  - Protocol 13: the lobby message carries the line-up (`lineup`: each seat's rival and whether the host chose it),
+    sent whenever it changes; the round message carries the round's as before.
 - *The Hall of Fame:* every entry of a round with any chosen rival (yours, the rivals', a friend's) is marked "chosen"
   after its name. Protocol 12 carries the round's `chosen` flag and a shared best round's.

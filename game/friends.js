@@ -240,6 +240,7 @@ function renderPlayers() {
     }
     lobbyPlayers.append(li);
   }
+  if (!pickerEl.hidden && online && !seatEl(pickerSeat)) closePicker(); // (a friend took the seat being chosen)
 }
 
 // The host's line-up for the next round, seat by seat (TUNE.OPPONENTS): the
