@@ -24,7 +24,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
 | Sniper's kill line | Which words, beside "One shot."? | Haakon (27 October 2026): "One shot, one whoppertunity" (queued under item 3) | Answered |
-| Rival line-up | Online, the host's choice from the start card is used, but the lobby doesn't show it and can't change it. Should the lobby show the line-up, with the same seats to choose (the host only)? | Suggested: yes, as a small follow-up, if you'd use it; today, choose on the start card before hosting | Open |
+| Rival line-up | Online, the host's choice from the start card is used, but the lobby doesn't show it and can't change it. Should the lobby show the line-up, with the same seats to choose (the host only)? | Haakon (28 October 2026): "You figure all this out, expert. You know me by now." Claude decided yes, since online stays in step with local play: queued as "The lobby shows the line-up" | Answered |
 | Rivals too shy of heads | Right at a contested apple, with the other head beside it, rivals still usually back off: about 1 in 8 of those cells would be a head-on, which costs about what the apple is worth. Should some personas (Desperado, Gobbler when starving, the hunters) take that gamble more often, as their own nerve? | Haakon (28 October 2026): "gobbler and Desperados should take the gamble more, that fits their playstyle, no?" Claude agreed: queued as "Nerve at a contested apple" | Answered |
 
 ## The queue, in order
@@ -196,6 +196,10 @@ Also in `next-tasks-verbatim.md`:
     - Hall of Fame entries from chosen line-ups are marked "chosen".
   - *Done on 28 October 2026 (PR #86):* the deck (`snake-deck`) and the picker (`snake-lineup`), protocol 12; design in
     `docs/design/32-the-owners-playtest.md`, "The rival line-up".
+- **The lobby shows the line-up.** The answer to the rival line-up's question (28 October 2026): online, the lobby
+  shows the host's line-up from the start card, and the host (only) can change it there with the same seats to choose,
+  so online play stays in step with local play ("Online stays in step", with a protocol bump if a message changes).
+  A small follow-up; the guests see the line-up as it stands.
 - **Long names.** The 16-character cap already exists. When the "first out" banner doesn't fit, it drops the cause ("Gran is first out."), and the chatter keeps the full line.
 - **Sniper's longer kill line.** Haakon's words (27 October 2026): "One shot, one whoppertunity". Add it to Sniper's
   kill lines in `chatter/voices.js` beside "One shot.", with its translation in each language file (as `chatter/zh.js`
