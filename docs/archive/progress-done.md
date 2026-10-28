@@ -322,3 +322,10 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
     the edge, a hole, the woodpecker, hunger, fire and a snake's own body, for all eighteen, with their Chinese.
     Mushrooms only shrink, so none dies of one; every fire is lightning's, so Mason's fire lines are "Et tu, ignis?"
     and "Et tu, Iuppiter?". Design in `docs/design/09-voice-and-copy.md`, "Last words know what killed them".
+- **Last words on phones.** Haakon (27 October 2026): "Yes to all, expertly!" On phones with no chatter panel, the
+  round-ending snake's last words are lost, and at 390x664 the strip's line is cut with an ellipsis (from #34;
+  `docs/archive/plan-history.md`). Show the last words whole where a phone player sees them, without crowding the board.
+  - *Done on 28 October 2026 (PR #124):* where the log can't show them whole (no panel, or a folded strip), the round-ending
+    snake's last words stay in their bubble where it went out, whole and unfaded, and the round's card waits their 2 s;
+    a guest keeps them as they arrive after the round's end. Design in `docs/design/33-one-screen.md`, "Last words on
+    phones"; checked by `tools/ui/07-last-words-on-phones.js`.
