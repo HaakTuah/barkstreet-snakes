@@ -172,10 +172,13 @@ function reset(g) {
   logEl.textContent = '';
 }
 
-function clearBubbles() {
-  for (const b of chatBubbles.values()) b.el.remove();
-  chatBubbles.clear();
+// keepLastWords: as a round ends, the last words of the snake that ended it
+// stay where it went out, for their time (the round's card waits for them:
+// lastWordsUp), where the log can't show them.
+function clearBubbles(keepLastWords = false) {
+  for (const [id, b] of chatBubbles) if (!(keepLastWords && b.at)) { b.el.remove(); chatBubbles.delete(id); }
 }
+const lastWordsUp = () => { const now = performance.now(); for (const b of chatBubbles.values()) if (b.at && now <= b.until) return true; return false; };
 
 function setEnabled(on) {
   enabled = on;
