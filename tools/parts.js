@@ -3,8 +3,9 @@
 // the part that first needs them: grep the folder), and the checks run in the same order, drawing
 // the same seeded randomness, as when the suite was one file.
 // - runParts(dir): plain parts, run as scripts in one shared scope, the way the page runs its own.
-// - runParts.inside(dir, scope): parts that await, run as the body of one async function, with the
-//   runner's own names (scope: the browser, check(), ...) in reach; an error names its part's line.
+// - runParts.inside(dir, scope, pick): parts that await, run as the body of one async function, with
+//   the runner's own names (scope: the browser, check(), ...) in reach; an error names its part's
+//   line. pick(file), if given, keeps only some of the parts (the layout suite's CI jobs).
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -17,8 +18,8 @@ function runParts(dir) {
   return name => vm.runInThisContext(name); // (reads what the parts left, such as their count)
 }
 
-runParts.inside = async (dir, scope) => {
-  const files = list(dir), starts = [];
+runParts.inside = async (dir, scope, pick = () => true) => {
+  const files = list(dir).filter(pick), starts = [];
   let body = '', line = 2; // (the function's own line comes first)
   for (const file of files) {
     const text = fs.readFileSync(file, 'utf8').replace(/\n?$/, '\n');
