@@ -14,6 +14,7 @@ const open = async (d, query = '') => {
   if (insetsByCdp) {
     try { await b.send('Emulation.setSafeAreaInsetsOverride', { insets: d.insets || {} }); } catch { insetsByCdp = false; }
   }
+  await ev(`(() => { try { localStorage.removeItem('snake-chatter-open'); } catch {} return 'ok'; })()`).catch(() => {}); // (the chatter as the room has it, not as a tap left it)
   await b.go(`${site.url}index.html?debug${d.nofs ? '&nofs' : ''}${query}`);
   if (d.insets && !insetsByCdp) { // (an older Chrome: the padded variant, the safe area set by hand)
     const i = d.insets;
@@ -148,10 +149,9 @@ const chatterFull = async (tag, watching, si = { bottom: 0 }, side = false, upri
     // (held upright, the chatter folded: a strip of one row, the newest
     // line; a tap opens it to as many whole lines as fit, the caption
     // first where there's room for two rows, and another folds it)
-    const folded = await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`);
-    const ROWS_SHOWN = `(() => { const log = document.getElementById('chatlog'), row = parseFloat(getComputedStyle(log).lineHeight); let h = 0; for (const li of log.children) { const r = li.getBoundingClientRect(), st = getComputedStyle(li); if (r.height) h += r.height - parseFloat(st.paddingTop) - parseFloat(st.paddingBottom); } return Math.round(h / row * 10) / 10; })()`;
-    const foldedRows = await ev(ROWS_SHOWN);
-    check(folded === 'false' && fit === 'strip' && rows.lines === 1 && foldedRows === 1, `${tag}: ${what}, held upright, the chatter is folded: one row, the newest line`, `aria-expanded ${folded}, ${fit}, ${rows.lines} lines, ${foldedRows} rows`);
+    // (open at the start where three lines fit, "The phone's bottom": a tap
+    // folds it first, the choice then kept, so it's cleared after)
+    const opened0 = await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`) === 'true';
     const tapChatter = async (below = false) => { // (a finger's tap on the strip, through the page's own touch handling; or under it, in the chatter's box's empty rest)
       const at = await ev(`(() => { const r = document.getElementById('chatlog').getBoundingClientRect(), box = document.querySelector('.chatter').getBoundingClientRect(); return ${below} ? (box.bottom - r.bottom >= 12 ? { x: r.left + r.width / 3, y: (r.bottom + Math.min(box.bottom, innerHeight)) / 2 } : null) : { x: r.left + r.width / 3, y: r.top + Math.min(8, r.height / 2) }; })()`);
       if (!at) return false;
@@ -160,6 +160,16 @@ const chatterFull = async (tag, watching, si = { bottom: 0 }, side = false, upri
       await b.sleep(60);
       return true;
     };
+    if (opened0) {
+      check(fit === 'full' && rows.lines >= 2 && !rows.sliced, `${tag}: ${what}, held upright, the chatter starts open: its caption and the lines that fit`, `${fit}, ${rows.lines} lines`);
+      await tapChatter();
+      await settle();
+    }
+    const fit1 = await ev(`document.querySelector('.chatter').dataset.fit`), rows1 = await ev(LOG_ROWS);
+    const folded = await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`);
+    const ROWS_SHOWN = `(() => { const log = document.getElementById('chatlog'), row = parseFloat(getComputedStyle(log).lineHeight); let h = 0; for (const li of log.children) { const r = li.getBoundingClientRect(), st = getComputedStyle(li); if (r.height) h += r.height - parseFloat(st.paddingTop) - parseFloat(st.paddingBottom); } return Math.round(h / row * 10) / 10; })()`;
+    const foldedRows = await ev(ROWS_SHOWN);
+    check(folded === 'false' && fit1 === 'strip' && rows1.lines === 1 && foldedRows === 1, `${tag}: ${what}, held upright, the chatter ${opened0 ? 'folded by a tap' : 'starts folded'}: one row, the newest line`, `aria-expanded ${folded}, ${fit1}, ${rows1.lines} lines, ${foldedRows} rows`);
     if (await tapChatter(true)) check(await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`) === 'false', `${tag}: ${what}, held upright, a tap under the folded strip, in the chatter's empty rest, leaves it folded (it's the board's: a jump)`);
     const tap = await tapChatter();
     await settle();
@@ -169,6 +179,7 @@ const chatterFull = async (tag, watching, si = { bottom: 0 }, side = false, upri
     await tapChatter();
     await settle();
     check(await ev(`document.querySelector('.chatter').getAttribute('aria-expanded')`) === 'false', `${tag}: ${what}, held upright, another tap folds it`);
+    await ev(`(() => { try { localStorage.removeItem('snake-chatter-open'); } catch {} return 'ok'; })()`);
   }
   if (!watching || upright) return;
   await ev(`(() => { const st = document.createElement('style'); st.id = 'help-made-to-show'; st.textContent = 'main #help { display: block !important; }'; document.head.append(st); return 'ok'; })()`);

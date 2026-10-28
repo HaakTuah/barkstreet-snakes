@@ -55,7 +55,7 @@ document.fonts?.addEventListener?.('loadingdone', measureAbove);
 const placeBoard = () => {
   if (!aboveSoon && Math.abs(frameTop() - above) > 0.25) aboveSoon = setTimeout(measureAbove);
   const b = canvasEl.getBoundingClientRect();
-  const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: 0, upright: !!ledgeEl?.offsetParent, hang: [] }; // (upright: a phone held upright, the ledge laid out, 0 px tall: the row and the chatter are right under the board)
+  const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: 0, upright: !!ledgeEl?.offsetParent, hang: [], rims: [] }; // (upright: a phone held upright, the ledge laid out, 0 px tall: the row and the chatter are right under the board)
   // (held upright, where the row under the board is closer than the moss
   // and the leaves hang off the frame's bottom, 12 px, they're left off:
   // style/ .snug)
@@ -75,6 +75,13 @@ const placeBoard = () => {
     for (const el of hanging) {
       const f = el.getBoundingClientRect();
       if (f.width && f.bottom > b.bottom) free.hang.push([f.left - 2, f.right + 2]);
+    }
+    // (and the rims it may cling to there: the sides of the buttons in the
+    // row under the board, the speed buttons and the chatter's switch,
+    // each with the way the bird faces to grip it, toward the button)
+    for (const btn of footEl.querySelectorAll('button')) {
+      const f = btn.getBoundingClientRect();
+      if (f.width && f.height) free.rims.push({ x: f.left, top: f.top, bottom: f.bottom, face: 1 }, { x: f.right, top: f.top, bottom: f.bottom, face: -1 });
     }
   }
   // (A banner, held upright: above the board, over the header's title row,
@@ -101,7 +108,7 @@ window.addEventListener('scroll', placeBoard, { passive: true });
 // chatter are watched too, a change in any of them moving the board or
 // what's round it)
 const placer = new ResizeObserver(placeBoard);
-for (const el of [mainEl, ledgeEl, ...furniture]) if (el) placer.observe(el);
+for (const el of [mainEl, ledgeEl, $('speed'), ...furniture]) if (el) placer.observe(el); // (the speed buttons too: as they come and go, the rims under the board change)
 // The chatter takes what's left of the screen: its box is the column's
 // rest (style/), whatever it holds, so the page is one screen tall in
 // every state. What shows in it is worked out here, as lines come and go
@@ -116,19 +123,24 @@ for (const el of [mainEl, ledgeEl, ...furniture]) if (el) placer.observe(el);
 // panel: the box's size doesn't depend on what's in it, so nothing here
 // comes round again, and nothing comes and goes as lines of one row or
 // two arrive.
-// Held upright on a phone, the chatter is folded unless you open it: a
-// strip of one row, the newest line cut to it, so the row under the board
-// and the chatter sit right under the board, the rest of the screen left
-// to the open chatter. A tap opens it to as many whole lines as fit, and
-// another folds it (aria-expanded; game/input.js lets the tap through
-// mid-round, a swipe from it still steering). Folded, the rivals' long
-// lines go to their bubbles on the board, as in any strip.
+// Held upright on a phone, the chatter opens to the rest of the screen,
+// as many whole lines as fit, down to its foot (as the desktop's fills its
+// column), at the start and as the screen turns or changes size; only
+// where fewer than three rows of words would fit is it folded: a strip of
+// one row, the newest line cut to it. A tap folds or opens it
+// (aria-expanded; game/input.js lets the tap through mid-round, a swipe
+// from it still steering), and that choice is kept, from round to round
+// and visit to visit (snake-chatter-open). Folded, the rivals' long lines
+// go to their bubbles on the board, as in any strip.
 const chatterEl = document.querySelector('.chatter'), chatterHead = chatterEl.querySelector('.chatter-head');
-let chatFit = '', chatOpen = false;
+const CHAT_OPEN_KEY = 'snake-chatter-open', CHAT_OPEN_ROWS = 3;
+let chatFit = '', chatOpen = false, chatChoice = null; // (chatChoice: the player's own choice, open or folded, or null: by the room)
+try { const v = localStorage.getItem(CHAT_OPEN_KEY); chatChoice = v === 'open' ? true : v === 'folded' ? false : null; } catch { /* storage unavailable */ }
 const chatFolds = () => !!ledgeEl?.offsetParent;
 const foldChatter = () => {
   if (!chatFolds() || chatlogEl.hidden) return;
-  chatOpen = !chatOpen;
+  chatOpen = chatChoice = !chatOpen;
+  try { localStorage.setItem(CHAT_OPEN_KEY, chatChoice ? 'open' : 'folded'); } catch { /* storage unavailable */ }
   fitColumn();
 };
 chatterEl.addEventListener('click', e => { if (e.target !== chatterEl) foldChatter(); }); // (on the panel, never its box's empty rest)
@@ -156,7 +168,14 @@ const fitChatter = () => {
   const lines = [...chatlogEl.children];
   for (const li of lines) li.classList.remove('gone', 'cut');
   let fit = 'off';
-  const folds = chatFolds() && !chatlogEl.hidden, folded = folds && !chatOpen;
+  const folds = chatFolds() && !chatlogEl.hidden;
+  if (folds && chatChoice === null) { // (by the room: open, its caption shown, if three lines of a row each fit under it, with their padding)
+    const box = chatterEl.getBoundingClientRect(), ls = getComputedStyle(chatlogEl), row = parseFloat(ls.lineHeight) || 17;
+    chatterEl.classList.remove('folded'); chatterEl.dataset.fit = 'full';
+    const pad = parseFloat(ls.paddingTop) + parseFloat(ls.paddingBottom) + parseFloat(ls.borderBottomWidth);
+    chatOpen = box.height > 0 && chatterHead.getBoundingClientRect().bottom + pad + CHAT_OPEN_ROWS * (row + 4) <= Math.min(box.bottom, innerHeight) + 0.5;
+  } else if (folds) chatOpen = chatChoice;
+  const folded = folds && !chatOpen;
   if (folds) { chatterEl.setAttribute('aria-expanded', String(!folded)); chatterEl.setAttribute('role', 'button'); chatterEl.tabIndex = 0; }
   else { chatterEl.removeAttribute('aria-expanded'); chatterEl.removeAttribute('role'); chatterEl.removeAttribute('tabindex'); }
   chatterEl.classList.toggle('folded', folded);
