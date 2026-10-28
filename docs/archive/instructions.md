@@ -287,3 +287,11 @@ game that still tests its rule:
 > Yes, make it expertly so! Are there more optimizations we can aplly to the development of the 2 games, maestro?
 
 (a standing instruction in `CLAUDE.md`, "the smallest setup that tests the rule")
+
+In the design chat (28 October 2026, 23:47 UTC), to Claude's five optimizations to the development of both games (a fresh
+design chat each day from a handover note; Codex for reviews; builders settling settled questions themselves; this
+file trimmed under its 20 KB mark; faster checks for Amarna Letters):
+
+> Yes, do all expertly 1-5 except codex since we don't have it yet.
+
+(here: `CLAUDE.md` trimmed, the full text of "pipeline, don't wait" and "as many lanes" moved to `docs/orchestrating.md`)
