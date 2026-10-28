@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Nerve at a contested apple (docs/PROGRESS.md): how often each persona
+// Nerve at a contested apple (docs/archive/progress-done.md): how often each persona
 // wins an apple that a rival's head is right beside, and how often going
 // for it ends in a head-on.
 //

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Easy pins in AI-only rounds ("Hunters miss easy pins", docs/PROGRESS.md):
+// Easy pins in AI-only rounds ("Hunters miss easy pins", docs/archive/progress-done.md):
 // how often a snake could close one, as it sees the board, and how often it does.
 //
 //   node tools/dev/easy-pins/census.js [rounds] [--seed N] [--root DIR] [--dump FILE]
