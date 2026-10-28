@@ -127,6 +127,7 @@ const ZH = {
   "Big fan of your stream, {who}.": "{who}，我是你直播的忠实粉丝。",
   "Headshot.": "爆头。",
   "One shot.": "一枪。",
+  "One shot, one whoppertunity.": "一枪，一次粮机。",
   "Counter-sniped by {who}?": "被{who}反狙了？",
   "Should have relocated.": "早该换位置的。",
   "Murum non vidisti, {who}?": "你没看见墙吗，{who}？",

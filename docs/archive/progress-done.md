@@ -299,3 +299,8 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
   ("Gran is first out."), and the chatter keeps the full line.
   - *Done on 28 October 2026 (PR #118):* `opts.short`, used only on a phone held upright when the line is still cut
     at its smallest; design in `docs/design/30-teaching-by-showing.md`, *Phone words*.
+- **Sniper's longer kill line.** Haakon's words (27 October 2026): "One shot, one whoppertunity". Add it to Sniper's
+  kill lines in `chatter/voices.js` beside "One shot.", with its translation in each language file (as `chatter/zh.js`
+  has "One shot."), keeping the pun where the language allows. It must fit the banner and the chatter strip on a phone.
+  - *Done on 28 October 2026 (PR #120):* the Chinese is "一枪，一次粮机。", 粮 (food) slipped into 良机 (a golden
+    opportunity), as "whopper" into "opportunity".
