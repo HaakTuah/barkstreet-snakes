@@ -537,19 +537,8 @@ function buildOpponents() {
     blurb.className = 'blurb';
     blurb.textContent = s.persona ? s.persona.blurb : 'Your friend. For now.';
     if (seats && s.persona && seat < Records.SEATS) {
-      const i = seat++, button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'seat' + (seats[i] ? ' chosen' : '');
-      button.dataset.seat = i;
-      button.setAttribute('aria-haspopup', 'dialog');
-      button.setAttribute('aria-label', `${s.name}, ${seats[i] ? 'chosen' : 'dealt'}. Choose who sits here`);
-      button.title = 'Choose who sits here';
-      const swap = document.createElement('span');
-      swap.className = 'swap';
-      swap.setAttribute('aria-hidden', 'true');
-      swap.innerHTML = '<svg viewBox="0 0 12 12"><path d="M2 4h8M7.5 1.5 10 4 7.5 6.5M10 8H2M4.5 5.5 2 8l2.5 2.5"/></svg>';
-      button.append(dot, name, swap);
-      li.append(button, ' ', blurb);
+      const i = seat++;
+      li.append(seatButton(i, dot, name, !!seats[i]), ' ', blurb);
     } else li.append(dot, name, ' ', blurb);
     opponentsEl.append(li);
   }
@@ -557,6 +546,24 @@ function buildOpponents() {
   tip.className = 'tap-tip';
   tip.textContent = FLAVOR.tapTip;
   opponentsEl.append(tip);
+}
+
+// A rival's seat as a button that opens the picker: on the start card, and
+// in the lobby for the host. A chosen one wears a ring.
+function seatButton(i, dot, name, chosen) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'seat' + (chosen ? ' chosen' : '');
+  button.dataset.seat = i;
+  button.setAttribute('aria-haspopup', 'dialog');
+  button.setAttribute('aria-label', `${name.textContent}, ${chosen ? 'chosen' : 'dealt'}. Choose who sits here`);
+  button.title = 'Choose who sits here';
+  const swap = document.createElement('span');
+  swap.className = 'swap';
+  swap.setAttribute('aria-hidden', 'true');
+  swap.innerHTML = '<svg viewBox="0 0 12 12"><path d="M2 4h8M7.5 1.5 10 4 7.5 6.5M10 8H2M4.5 5.5 2 8l2.5 2.5"/></svg>';
+  button.append(dot, name, swap);
+  return button;
 }
 
 // YOU over your snake, from the countdown till a few seconds in (or just

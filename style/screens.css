@@ -768,7 +768,7 @@
   button.small, .speed button, .tab, .close, button.icon { min-width: 44px; }
   .speed { gap: 10px; }
   .note-close { top: 0; right: 0; width: 36px; height: 36px; } /* (a fingertip's room, in the note's corner) */
-  .opponents .seat { min-height: 30px; } /* (the start card's seats: a fingertip's room, without the card outgrowing a phone's board) */
+  .opponents .seat, .lobby-players .seat { min-height: 30px; } /* (the start card's seats: a fingertip's room, without the card outgrowing a phone's board) */
 }
 
 /* Reduced motion: no pops, rises or rumbles; the information stays. */

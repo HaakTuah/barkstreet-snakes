@@ -202,12 +202,13 @@ function setStatus(text, trouble = false) {
   lobbyStatus.classList.toggle('trouble', trouble);
 }
 
-// Four seats: the people in the room, then the seats AI rivals will take.
+// Four seats: the people in the room, then the rivals who'll take the rest
+// (the host's line-up; the host chooses them here, as on the start card).
 function renderPlayers() {
   lobbyPlayers.textContent = '';
-  const people = online?.players || [];
+  const people = online?.players || [], rivals = lobbyRivals();
   for (let i = 0; i < Online.MAX_PEOPLE; i++) {
-    const p = people[i];
+    const p = people[i], r = !p && rivals[i - people.length];
     const li = document.createElement('li');
     const dot = document.createElement('span');
     dot.className = 'dot';
@@ -220,6 +221,17 @@ function renderPlayers() {
       tag.className = 'tag';
       tag.textContent = [p.host && 'host', p.id === myId() && 'you'].filter(Boolean).join(', ');
       li.append(dot, label, tag);
+    } else if (r) {
+      dot.style.background = keyDot(r.key);
+      const name = document.createElement('strong');
+      name.textContent = CAST[r.key].name;
+      label.className = 'open-seat';
+      label.textContent = 'unless a friend joins';
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.textContent = r.chosen ? 'chosen' : '';
+      if (hosting()) li.append(seatButton(i - people.length, dot, name, r.chosen), label, tag);
+      else li.append(dot, name, label, tag);
     } else {
       dot.style.background = 'var(--parchment-2)';
       label.className = 'open-seat';
@@ -228,6 +240,25 @@ function renderPlayers() {
     }
     lobbyPlayers.append(li);
   }
+}
+
+// The host's line-up for the next round, seat by seat (TUNE.OPPONENTS): the
+// start card's when the room opens, dealt afresh after each round, chosen in
+// the lobby's seats (pickRival). fresh: the ones the deck dealt, which go back
+// on it if they're never met. With more people, fewer seats: the first ones.
+function lineUp() {
+  if (!online.lineup) {
+    const d = dealLineUp(TUNE.OPPONENTS);
+    online.lineup = { keys: d.keys, fresh: d.fresh };
+  }
+  return online.lineup;
+}
+// The rivals the lobby shows: the host's line-up, or what the host last sent.
+function lobbyRivals() {
+  if (!online) return [];
+  if (!hosting()) return online.rivals || [];
+  const seats = Records.seats(SnakeAI.POOL), want = Math.max(0, TUNE.OPPONENTS + 1 - online.players.length);
+  return lineUp().keys.slice(0, want).map((key, i) => ({ key, chosen: seats[i] === key }));
 }
 
 const myId = () => (hosting() ? 'host' : online?.room.id);
@@ -281,7 +312,10 @@ async function hostRoom() {
       role: 'host', room, code: room.code, seat: 0, hostName: localName(), holesSent: 0,
       players: [{ id: 'host', name: localName(), color: Online.HUMAN_COLORS[0], host: true, owner: Records.playerId() }],
       shared: new Map([[Records.playerId(), { color: Online.HUMAN_COLORS[0], entries: Records.shareable(localName()) }]]), // owner -> their best rounds
+      // (the start card's rivals: the line-up takes them over, and with them what the deck dealt)
+      lineup: theGame.spent ? null : { keys: theGame.snakes.filter(s => s.persona).map(s => s.personaKey), fresh: theGame.dealt || [] },
     };
+    theGame.dealt = [];
     keepTimeWhileHidden(true);
     setUrlCode(null);
     updateHelp();
@@ -302,7 +336,7 @@ function showRoom() {
 }
 
 function sendLobby() {
-  online.room.broadcast({ t: 'lobby', players: online.players.map(({ id, name, color, host }) => ({ id, name, color, host: !!host })) });
+  online.room.broadcast({ t: 'lobby', players: online.players.map(({ id, name, color, host }) => ({ id, name, color, host: !!host })), lineup: lobbyRivals() });
   if (!lobbyPlayers.hidden) renderPlayers();
 }
 
@@ -408,7 +442,10 @@ function friendLeft(id) {
 function startOnlineRound() {
   if (!hosting()) return;
   const humans = online.players.map(p => ({ name: p.name, color: p.color, peer: p.id, owner: p.owner }));
-  newGame({ humans });
+  const want = Math.max(0, TUNE.OPPONENTS + 1 - humans.length), up = lineUp(), personas = up.keys.slice(0, want);
+  Records.undeal(SnakeAI.POOL, up.fresh.filter(k => !personas.includes(k))); // (a seat a friend took: its rival is next)
+  online.lineup = null; // (the next round's is dealt when it's next shown)
+  newGame({ humans, personas, chosen: Records.seats(SnakeAI.POOL).slice(0, want).some(Boolean) });
   theGame.humans = humans;
   theGame.roundId = Online.newCode() + Date.now().toString(36);
   theGame.snakes.forEach((s, i) => { if (humans[i]) { s.peer = humans[i].peer; s.owner = humans[i].owner; } });
@@ -487,6 +524,7 @@ function handleHost(msg) {
       if (!Array.isArray(msg.players)) break;
       online.players = msg.players.slice(0, Online.MAX_PEOPLE).filter(p => p && typeof p.name === 'string');
       online.hostName = msg.players.find(p => p.host)?.name || 'the host';
+      online.rivals = (Array.isArray(msg.lineup) ? msg.lineup : []).filter(r => SnakeAI.POOL.includes(r?.key)).map(r => ({ key: r.key, chosen: r.chosen === true }));
       if (state === 'lobby') showGuestLobby();
       else if (!lobbyPlayers.hidden) renderPlayers();
       break;
@@ -543,6 +581,7 @@ function leaveRoom() {
 
 function endOnline() {
   const { room } = online;
+  if (hosting() && online.lineup) Records.undeal(SnakeAI.POOL, online.lineup.fresh); // (never met: the start card deals them again)
   online = null;
   keepTimeWhileHidden(false);
   setUrlCode(null);

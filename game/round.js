@@ -51,7 +51,10 @@ function dealLineUp(want) {
 }
 
 // Closing the page on a start card: its rivals weren't met, so they're next.
-window.addEventListener('pagehide', () => { if (theGame && !theGame.spent) Records.undeal(SnakeAI.POOL, theGame.dealt || []); });
+window.addEventListener('pagehide', () => {
+  if (theGame && !theGame.spent) Records.undeal(SnakeAI.POOL, theGame.dealt || []);
+  if (hosting() && online.lineup) Records.undeal(SnakeAI.POOL, online.lineup.fresh); // (the lobby's, likewise)
+});
 
 // Start a round in the given mode. The round on the start card is used as-is;
 // anything else gets a fresh one.

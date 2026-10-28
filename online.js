@@ -15,7 +15,8 @@
  * @typedef {WelcomeMsg | RejectMsg | LobbyMsg | RoundMsg | ScoresMsg | PhaseMsg | TickMsg | PlanMsg | SayMsg | ClosedMsg} HostMessage
  * @typedef {{ t: 'welcome', name: string }} WelcomeMsg  you're in the room, as name
  * @typedef {{ t: 'reject', why: 'full' | 'version' }} RejectMsg
- * @typedef {{ t: 'lobby', players: { id: string, name: string, color: string, host: boolean }[] }} LobbyMsg
+ * @typedef {{ t: 'lobby', players: { id: string, name: string, color: string, host: boolean }[], lineup: { key: string, chosen: boolean }[] }} LobbyMsg
+ *   who's in the room, and the rivals who'll take the seats left (lineup: the host's line-up, seat by seat; chosen: the host chose that one)
  * @typedef {{ t: 'round', v: number, id: string, humans: Human[], rivals: string, personas: string[], chosen: boolean, first: TickMsg }} RoundMsg
  *   a new round's line-up (chosen: the host chose some of them), plus its first tick (see round())
  * @typedef {{ name: string, color: string, peer?: string, owner?: string }} Human  a seat: peer tells each guest which is theirs
@@ -84,7 +85,7 @@
  * @typedef {{ t: 'away' | 'back' }} AwayMsg  the page went out of sight, and came back
  */
 window.SnakeOnline = (() => {
-  const VERSION = 12; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag)
+  const VERSION = 13; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen)
   const POWERS = ['leap', 'flash', 'unleap'];
   const MAX_PEOPLE = 4;
   // Seat colors for people: the host is green; friends get colors no rival wears.
