@@ -13,7 +13,7 @@ https://haaktuah.github.io/barkstreet-snakes/.
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
 | Materials the queue points to: the owner's saved tasks word for word, the teaching prototypes and judges, the woodpecker acts draft, the bridge-glitch repro, the unverified jumps start, the Sniper screenshot | `docs/handoff/` |
 | The game | `index.html`, `style/` (three stylesheets, listed in `style/base.css`), `engine.js`, `ai.js`, `render/` (seventeen files, listed in `render/core.js`), `game/` (seven, listed in `game/core.js`), `chatter/` (four, listed in `chatter/voices.js`), `audio.js`, `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
-| Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, `simulate.js`, `abtest.js`, `bench-ai.js`, `browser.js`; `protocol-shapes.json`, the online messages' pinned shapes) |
+| Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, each a runner of its folder of parts by area, such as `tools/rules/` (`tools/parts.js`), `simulate.js` (its parts in `tools/sim/`), `abtest.js`, `bench-ai.js`, `browser.js`; `protocol-shapes.json`, the online messages' pinned shapes) |
 | The online messages' types (checked by `tsc`, never shipped) | `jsconfig.json`, `types/globals.d.ts`, and the JSDoc in `net.js` and `online.js` |
 | Study and measuring tools from earlier rounds | `tools/dev/` (teaching audits, burrow spacing, board sizes, the woodpecker and food study, PR pictures) |
 | History: the old polish audit, the plan as it grew, Haakon's instructions word for word | `AUDIT.md`, `docs/archive/` |
@@ -159,7 +159,7 @@ change that should keep behaviour must keep the fingerprints; `--root DIR` runs 
 browser suites (scope, render, input, layout, ui) drive a headless Chrome through `tools/browser.js`: it looks in the usual
 places, or set `CHROME=/path/to/chrome`; `CI=1` runs it without its sandbox, which is needed as root (`scripts/test.sh`
 sets it). Optional: `SIM_WORKERS` sets the simulation's cores, `BARKBITE_PRIORITY=normal` for timing runs,
-`ONLINE_SEEN=1` makes online-test print what it saw. To play it locally, `.claude/launch.json` serves the folder on
+`ONLINE_SEEN=1` makes online-test print what it saw, `LAYOUT_JOB=N` runs one of the layout suite's five CI jobs. To play it locally, `.claude/launch.json` serves the folder on
 port 5173.
 
 ## Standing instructions
@@ -210,3 +210,37 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   words are in `docs/archive/instructions.md`). Before opening the task's PR, read its entry in `docs/PROGRESS.md` on
   `develop` again, with the "For Haakon" table, since Haakon's answers can change it while you work. Build what changed,
   or, if that is large, say so in the PR and add it as its own entry right after the task.
+- **28 October 2026: pipeline, don't wait.** "Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns." (to Claude's proposal; the words are in
+  `docs/archive/instructions.md`). Waiting is lost time and, past an hour, a lost cache, so:
+  1. **Review in the background.** Open the PR, start its reviewer as a background agent (or `@codex review`, once Codex
+     is connected), and go on meanwhile with what comes next: the next entry's text, its sections, the check for
+     changes. Fix what the review finds when it returns, then merge.
+  2. **The next entry beside it.** Entries are mostly independent: take the next one from `develop`, never stacked on
+     an open PR's branch ("Don't stack PRs"). Two AI changes are never measured at once: an AI entry waits for the
+     last AI change to merge, so each head-to-head compares against a settled AI.
+  3. **Bigger review fixes in a session of their own.** If a review asks for more than about an hour's work, the
+     orchestrator starts a fresh session for it with the PR, the review and nothing else, at the task's effort; the
+     builder goes on.
+  4. **Keep the cache warm.** One session per task, continued for its review fixes and its milestone while its context
+     is under an hour old, rather than a fresh session reading everything again; a fresh session for a new task, or when a
+     session's context has grown large. Long runs and checks go in the background; no turn sits idle waiting. Files every
+     session reads stay small (the workshop check), since they are the start of every call.
+  5. **Hand over at once.** The last message says what merged and what is next. The orchestrator starts the next session
+     as soon as a task merges, woken by the PR's merge rather than a clock, with an hourly check as the fallback.
+  6. **The same helpers, used better.** Pipelining spends the same tokens sooner and adds no agents beyond "Models,
+     effort and helpers": a reviewer or search helper may run in the background while the builder works, and the Haiku
+     search helper, not the builder reading large files itself, is the cheap way to look across many files.
+- **28 October 2026: as many lanes as can run in parallel.** "Yes, allow for as many lanes as can be parallelized, expert." (the words are in `docs/archive/instructions.md`).
+  This replaces the limit of two agents in "How to work" for builders; each builder keeps its own limit of helpers.
+  1. **A lane is independent work:** it touches different files from every other open lane (or parts of one file
+     nobody else touches), shares no measurement with another, and does not wait on another's result. Here, changes to the AI or the engine's rules run one at a time, since each is measured head to head against a settled AI, and so do changes to the online messages, since each bumps the protocol; beside them run independent entries: art, chatter lines, interface and layout fixes, docs and test-file splits.
+  2. **Claim it on GitHub first.** Before starting, open a draft PR from a fresh branch off `develop`, its title naming
+     the entry, and push; that PR is the claim. Look at the open PRs before choosing, and take only what nobody has
+     claimed. The progress file is changed only when the work merges, so lanes never fight over it.
+  3. **Each lane on its own.** It merges `develop` into its branch before asking for review, is reviewed and merged by
+     the usual rules, and is not stacked on another lane's branch. A lane that finds it needs another's work waits,
+     says so in its PR, or folds into that lane.
+  4. **The orchestrator opens a lane for every independent entry it can see,** each a builder session with its own
+     brief and check-in, and passes on every lane's "Questions for Haakon" word for word.
+  5. **The brake closes lanes first.** From about 85% of the weekly usage, no new side lane opens and open ones finish;
+     from about 90%, as "Usage" says, only small things in the main lane.
