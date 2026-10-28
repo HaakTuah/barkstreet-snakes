@@ -2,7 +2,8 @@
 // The snake whose death ends the round has its last words read whole
 // where a phone's player sees them: where the log can't show them (a
 // folded strip of one row at 390x664 and 375x553, no panel at 320x460),
-// they stay in their bubble where it went out, whole, on the board and
+// they stay in their bubble where it went out, whole (its words inside
+// the bubble you see, as it pops in too), on the board and
 // unfaded by your snake beside it, and the round's card waits for them
 // (it came up 600 ms after the death, clearing them, the strip's line cut
 // and the panel none). Beside the board on a desktop the log shows them:
@@ -16,7 +17,7 @@ const LAST = `(() => new Promise(res => {
     if (SnakeDebug.state() !== 'over') return;
     over ||= performance.now();
     const bd = document.querySelector('.board').getBoundingClientRect(), bu = document.querySelector('.board .bubble');
-    if (bu) { const r = bu.getBoundingClientRect(), sp = bu.querySelector('span'); seen.push({ text: bu.textContent, inside: r.left >= bd.left && r.right <= bd.right && r.top >= bd.top && r.bottom <= bd.bottom, near: bu.classList.contains('near'), cut: (() => { const g = document.createRange(); g.selectNodeContents(sp); const t = g.getBoundingClientRect(); return t.left < r.left - 0.5 || t.right > r.right + 0.5 || t.top < r.top - 0.5 || t.bottom > r.bottom + 0.5; })(), card: cardUp() }); }
+    if (bu) { const r = bu.getBoundingClientRect(), sp = bu.querySelector('span'); seen.push({ text: bu.textContent, inside: r.left >= bd.left && r.right <= bd.right && r.top >= bd.top && r.bottom <= bd.bottom, near: bu.classList.contains('near'), cut: (() => { const g = document.createRange(); g.selectNodeContents(sp); const t = g.getBoundingClientRect(), v = sp.getBoundingClientRect(); return t.left < v.left - 0.5 || t.right > v.right + 0.5 || t.top < v.top - 0.5 || t.bottom > v.bottom + 0.5; })(), card: cardUp() }); }
     if (cardUp()) {
       clearInterval(t);
       const log = document.querySelector('#chatlog li');
