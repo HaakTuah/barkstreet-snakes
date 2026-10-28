@@ -43,9 +43,8 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
-Its done entries (PRs #49 to #92) are in `docs/archive/progress-done.md`, "Item 3, done".
+Its done entries (PRs #49 to #118) are in `docs/archive/progress-done.md`, "Item 3, done".
 
-- **Long names.** The 16-character cap already exists. When the "first out" banner doesn't fit, it drops the cause ("Gran is first out."), and the chatter keeps the full line.
 - **Sniper's longer kill line.** Haakon's words (27 October 2026): "One shot, one whoppertunity". Add it to Sniper's
   kill lines in `chatter/voices.js` beside "One shot.", with its translation in each language file (as `chatter/zh.js`
   has "One shot."), keeping the pun where the language allows. It must fit the banner and the chatter strip on a phone.
