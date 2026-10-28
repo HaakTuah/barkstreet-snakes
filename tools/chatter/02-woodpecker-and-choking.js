@@ -106,6 +106,12 @@
     const hm = tick(gm, [{ type: 'death', snake: mason }]);
     check(says(hm, mason, VOICES.mason.diesBy[by]), `Mason's last words, dying by ${by}: ${lineOf(hm, mason)}`);
   }
+  { // (A hole's rim it crashed into is no fall: its plain last words.)
+    const gm = stage(['mason'], { 1: [12, 12] }), mason = gm.snakes[1];
+    Object.assign(mason, { alive: false, cause: 'hit a woodpecker hole', killer: 'wall', killerId: null, fatal: 'boxed' });
+    const hm = tick(gm, [{ type: 'death', snake: mason }]);
+    check(says(hm, mason, VOICES.mason.dies.filter(l => !l.includes('{who}'))), `Mason's last words at a hole's rim are his plain ones: ${lineOf(hm, mason)}`);
+  }
   g = stage(['gobbler'], { 1: [12, 12] });
   h = tick(g, [{ type: 'eat', snake: g.snakes[1], kind: 'mushroom', x: 12, y: 12 }]);
   check(says(h, g.snakes[1], VOICES.gobbler.mushroom), `a rival that eats a mushroom grimaces (said: ${lineOf(h, g.snakes[1])})`);
