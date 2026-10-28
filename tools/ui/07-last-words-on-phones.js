@@ -16,7 +16,7 @@ const LAST = `(() => new Promise(res => {
     if (SnakeDebug.state() !== 'over') return;
     over ||= performance.now();
     const bd = document.querySelector('.board').getBoundingClientRect(), bu = document.querySelector('.board .bubble');
-    if (bu) { const r = bu.getBoundingClientRect(), sp = bu.querySelector('span'); seen.push({ text: bu.textContent, inside: r.left >= bd.left && r.right <= bd.right && r.top >= bd.top && r.bottom <= bd.bottom, near: bu.classList.contains('near'), cut: sp.scrollHeight > sp.clientHeight + 1 || sp.scrollWidth > sp.clientWidth + 1, card: cardUp() }); }
+    if (bu) { const r = bu.getBoundingClientRect(), sp = bu.querySelector('span'); seen.push({ text: bu.textContent, inside: r.left >= bd.left && r.right <= bd.right && r.top >= bd.top && r.bottom <= bd.bottom, near: bu.classList.contains('near'), cut: (() => { const g = document.createRange(); g.selectNodeContents(sp); const t = g.getBoundingClientRect(); return t.left < r.left - 0.5 || t.right > r.right + 0.5 || t.top < r.top - 0.5 || t.bottom > r.bottom + 0.5; })(), card: cardUp() }); }
     if (cardUp()) {
       clearInterval(t);
       const log = document.querySelector('#chatlog li');

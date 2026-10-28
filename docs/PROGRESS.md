@@ -6,7 +6,7 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 ## State (27 October 2026)
 
 Queue item 3, the fixes and polish from the owner's playtest, is under way: "Burrows grow shut" (PR #49), "The
-outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57), "Hunger where your eyes are" (PR #66), "Rainbows, the follow-ups" (PR #68), "The phone gap" (PR #70) "Desktop chatter" (PR #72), "Wildcard's hair" (PR #74) and "Copycat's face" (PR #78), "Rival line-up" (PR #86), "The lobby shows the line-up" (PR #116), the head-to-head mode in `tools/abtest.js` (PR #80) and "Hunters miss easy pins" (PR #81) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
+outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57), "Hunger where your eyes are" (PR #66), "Rainbows, the follow-ups" (PR #68), "The phone gap" (PR #70) "Desktop chatter" (PR #72), "Wildcard's hair" (PR #74) and "Copycat's face" (PR #78), "Rival line-up" (PR #86), "The lobby shows the line-up" (PR #116), "Last words on phones" (PR #124), the head-to-head mode in `tools/abtest.js` (PR #80) and "Hunters miss easy pins" (PR #81) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
 #48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages). The previews wait
 on one setting: Pages still serves `main` (every "pages build and deployment" run so far has built `main`), so the
 preview links in PRs do not open until Haakon switches Pages to "Deploy from a branch: gh-pages, / (root)". Everything
@@ -43,11 +43,8 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
-Its done entries (PRs #49 to #122) are in `docs/archive/progress-done.md`, "Item 3, done".
+Its done entries (PRs #49 to #124) are in `docs/archive/progress-done.md`, "Item 3, done".
 
-- **Last words on phones.** Haakon (27 October 2026): "Yes to all, expertly!" On phones with no chatter panel, the
-  round-ending snake's last words are lost, and at 390x664 the strip's line is cut with an ellipsis (from #34;
-  `docs/archive/plan-history.md`). Show the last words whole where a phone player sees them, without crowding the board.
 ### 3b. The rivals who change: Capricious, Copycat and Wildcard
 
 As `docs/design/35-capricious-copycat-and-wildcard.md` describes: Capricious does impressions of every other rival from
