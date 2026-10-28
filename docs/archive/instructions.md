@@ -279,3 +279,11 @@ In the design chat (28 October 2026, 23:30 UTC), on the "For Haakon" questions a
 > Agreed to all, expertly! Shouldn't the others contest apples more if they're hungry? They're worth more than, because usually apples just gove you plus 1, but if you are starving, they give you 1 and save you 1, so become plus 2? But yes, gobbler should contest it regardless. And Desperados being an adrenalin junkie, should generally be less risk averse?
 
 (queued as 2b and 2c in `docs/PROGRESS.md`)
+
+In the design chat (28 October 2026, 23:43 UTC), after Amarna Letters' code-PR checks grew from about 6.5 to 10 minutes
+because its test games had grown, and Claude proposed a standing rule for both games that every test uses the smallest
+game that still tests its rule:
+
+> Yes, make it expertly so! Are there more optimizations we can aplly to the development of the 2 games, maestro?
+
+(a standing instruction in `CLAUDE.md`, "the smallest setup that tests the rule")
