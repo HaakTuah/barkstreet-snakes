@@ -34,6 +34,11 @@ window.SnakeAI = (() => {
   //   contested                     how much food a rival reaches first still counts (0-1, true = 1; hunger raises it)
   //   hungryBelow, fedFactor        at this length or more, food matters only fedFactor as much
   //   margin, headRisk, zoneRisk    spare room wanted / fear of a rival's next move / of where it might be (required)
+  //   nerve                         { base, hungry }: at a cell with food on it, how much of a rival's
+  //                                   threat (headRisk and zoneRisk as read there) I set aside (0-1):
+  //                                   base, and hungry more for every share of my hunger clock gone
+  //                                   since I last ate (the maps stay as they are; only what I'd
+  //                                   stake on the apple changes)
   //   distance                      reward per step of distance from the nearest rival head
   //   hunt                          { squeeze, chase, lead }: shrink the victim's room, get in front of it
   //   home                          { radius, leave, grow, max, drift }: stay near a home circle (radius
@@ -96,6 +101,7 @@ window.SnakeAI = (() => {
         food: 10, eat: 300, pellet: 3, foodRange: 60, contested: 1, mushroom: -6, // (twice what a mushroom costs anyone else: it hates them)
         hurry: 1.5, // (beetles are its food too: it keeps after one on the run longer than anyone. With two apples on the log, and rivals that read a beetle's dig, it won 16 / 15% at the usual 2; at 1.5, 20 / 26%)
         margin: 10, headRisk: 2200, zoneRisk: 700, // greedy (a rival's apple too), but it flinches from heads and wants room (it used to win only 8%; at 1500 and 500, 12-17%)
+        nerve: { base: 0.3, hungry: 0.7 }, // (...except over an apple, the less the longer since its last meal)
       },
     },
     ghost: {
@@ -211,6 +217,7 @@ window.SnakeAI = (() => {
         space: 1, territory: 0.6,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40,
         margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25,
+        nerve: { base: 0.7 }, // (it'll stare down a rival's head for an apple)
       },
     },
     mute: {
@@ -303,6 +310,7 @@ window.SnakeAI = (() => {
   // (a bonus for eating sooner), risk and turning, worked out once for the
   // first STEPS_AHEAD steps (every move reads them).
   const STEPS_AHEAD = 32;
+  const NERVE_MAX = 0.85; // (a persona's nerve never sets aside a threat whole: the odds still count)
   const perStep = r => Float64Array.from({ length: STEPS_AHEAD }, (_, t) => Math.pow(r, t));
   const SOONER = perStep(0.85), RISK_AHEAD = perStep(0.6), TURN_AHEAD = perStep(0.9);
 
@@ -642,7 +650,7 @@ window.SnakeAI = (() => {
     space: undefined, territory: undefined, aggression: undefined,
     food: undefined, eat: undefined, pellet: undefined, foodRange: undefined, normalFood: undefined, mushroom: undefined,
     contested: undefined, hungryBelow: undefined, fedFactor: undefined,
-    margin: undefined, headRisk: undefined, zoneRisk: undefined, distance: undefined,
+    margin: undefined, headRisk: undefined, zoneRisk: undefined, nerve: undefined, distance: undefined,
     hunt: undefined, home: undefined, lure: undefined, turn: undefined, tail: undefined, mimic: undefined,
     colony: undefined, goal: undefined, thrill: undefined, coil: undefined, thick: undefined, powers: undefined, golden: undefined, hurry: undefined,
   };
@@ -1091,6 +1099,11 @@ window.SnakeAI = (() => {
     const eatW0 = fed ? w.eat * w.fedFactor : Math.max(w.eat, 150 * hunger) * (1 + 2 * hunger);
     const foodW = desperate ? Math.max(60, foodW0) : foodW0, eatW = desperate ? Math.max(600, eatW0) : eatW0;
     const contested = Math.max(Number(w.contested || 0), hunger);
+    // Nerve: over food, the share of a rival's threat still counted, both its
+    // head-on and where it may be by now (my persona's gamble at a contested
+    // apple, not a reading of the risk: the maps stay as they are).
+    const starved = me.hungerLeft == null ? 0 : Math.min(1, Math.max(0, 1 - me.hungerLeft / TUNE.HUNGER_MS));
+    const nerveKeep = w.nerve ? 1 - Math.min(NERVE_MAX, (w.nerve.base || 0) + (w.nerve.hungry || 0) * starved) : 1;
 
     // How many ticks something I saw has left before it rots, withers or
     // flies off (in winter an apple rots twice as fast, and has done since I saw it).
@@ -1686,7 +1699,8 @@ window.SnakeAI = (() => {
       // (A rival's head beside a cell: a head-on on my first move; on my
       // next `age`, its body, if it went there, which I can't see yet; after
       // that I'd see where it went in time to turn.)
-      let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t)) - (t <= age ? strikes[i] * RISK_AHEAD[t] : 0);
+      const keep = v > 0 ? nerveKeep : 1; // (my nerve over food; times 1, the very same numbers)
+      let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * keep * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t)) - (t <= age ? strikes[i] * keep * RISK_AHEAD[t] : 0);
       if (turning && w.turn) gain -= w.turn * (ahead ? TURN_AHEAD[t] : Math.pow(0.9, t));
       const score = depth <= 1
         ? evaluate(nb, nlen, g, t + 1) + bonus + gain
