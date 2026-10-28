@@ -21,9 +21,11 @@ let birdLayer = null, birdG = null, birdShown = false;
 // The board on the page, in CSS px, and how far the free page runs round it
 // before the page's own furniture (the tags, the speed buttons, the chatter)
 // and the screen's safe area, how tall the ledge under it is (on a phone
-// held upright; else 0), and where across the ledge the frame's moss and
-// leaves hang into it ([left, right] each): the game keeps them current.
-const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, upright: false, hang: [] };
+// held upright; else 0), where across the ledge the frame's moss and
+// leaves hang into it ([left, right] each), and the buttons' rims under
+// the board it may cling to ({ x, top, bottom, face }): the game keeps
+// them current.
+const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, upright: false, hang: [], rims: [] };
 function setBoardRect(x, y, w, free = null) {
   boardRect.x = x; boardRect.y = y; boardRect.w = w;
   boardRect.left = free ? free.left : 0; boardRect.top = free ? free.top : 0;
@@ -31,6 +33,7 @@ function setBoardRect(x, y, w, free = null) {
   boardRect.ledge = free?.ledge || 0;
   boardRect.upright = !!free?.upright || boardRect.ledge > 0; // (a phone held upright: with no ledge, its board leaves the bird a gutter of 13 px at least)
   boardRect.hang = free?.hang || [];
+  boardRect.rims = free?.rims || [];
   perches.clear(); drumAt.clear(); birdLayout++; // (its perches and where it drums are worked out again: the room round the board has changed)
 }
 const BU = CELL * 0.85; // the bird's unit
@@ -39,6 +42,7 @@ const BIRD_BOX = [-1.15, -2.55, 2.65, 3.2]; // (all of it, round its feet, in un
 const PERCH_NEAR = 0.65, PERCH_MIN_PX = 30, PERCH_FLOOR_PX = 22; // (how small it may perch: on a nearer side; and, CSS px tall, where there's no room anywhere; and on a phone held upright of a height in between, where the page leaves it room for 24)
 const PERCH_GAP_PX = 1.5, BOX_EDGE = 0.1; // (how far, CSS px, it keeps off the cells, its ink's soft edge never touching one; and, units, how far its outline and its beak, turned to look, reach past its box)
 const LEDGE_LOOK = 0.3, CROUCH = 0.25; // (on the ledge, how far it may look up at its chunk, radians, with its beak still under the board; and how far its crouch lowers it, units)
+const RIM_GRIP = 0.95, RIM_FEET = 0.8, RIM_REACH = 2.5, RIM_PECK_MS = 360; // (on a button's rim: how far ahead of it its toes grip, and how far under its feet' middle, units; how far along the ledge it goes to one, units; and how long its two pecks at it take)
 const FLIGHT_BACK = 6; // (units: how far behind the spot it strikes its wings reach as it flies in, its beak's length and a wingbeat back)
 // Where it perches to work on a spot (board px), and how big (s): beside
 // the board on the nearest side with room for it on this screen (or with
@@ -116,10 +120,10 @@ function perchFor(tx, ty) {
   // of a spot near the screen's edge, if there's any such place on the
   // middle's side, though further off: flying in from the outer side to
   // strike there, its wings would beat past the screen's edge)
-  if (side === 'ledge' && boardRect.hang.length) {
-    const hang = boardRect.hang.map(([l, r]) => [(l - boardRect.x) / sc - gap, (r - boardRect.x) / sc + gap]);
-    const box = f => (f > 0 ? [BIRD_BOX[0] * s * BU - e, BIRD_BOX[2] * s * BU + e] : [-BIRD_BOX[2] * s * BU - e, -BIRD_BOX[0] * s * BU + e]);
-    const fits = (x, [a, b]) => x + a >= -room.left - 1e-6 && x + b <= SIZE + room.right + 1e-6 && hang.every(([l, r]) => x + b <= l || x + a >= r);
+  const hang = side === 'ledge' ? boardRect.hang.map(([l, r]) => [(l - boardRect.x) / sc - gap, (r - boardRect.x) / sc + gap]) : [];
+  const box = f => (f > 0 ? [BIRD_BOX[0] * s * BU - e, BIRD_BOX[2] * s * BU + e] : [-BIRD_BOX[2] * s * BU - e, -BIRD_BOX[0] * s * BU + e]);
+  const fits = (x, [a, b]) => x + a >= -room.left - 1e-6 && x + b <= SIZE + room.right + 1e-6 && hang.every(([l, r]) => x + b <= l || x + a >= r);
+  if (hang.length) {
     const onScreen = f => (f > 0 ? tx - FLIGHT_BACK * BU >= -room.left : tx + FLIGHT_BACK * BU <= SIZE + room.right); // (its wings, flying in to strike facing that way)
     let best = null;
     for (const f of [p.flip, -p.flip]) {
@@ -131,6 +135,23 @@ function perchFor(tx, ty) {
       }
     }
     if (best) { p.x = best.x; p.flip = best.f; }
+  }
+  // (on the ledge, it clings to a button's rim where one's near, as it
+  // clings to the log: its toes on the button's side, facing it and its
+  // spot, its feet's height on the button. Still on the screen, clear of
+  // the moss and leaves, and over the row and the chatter, never the
+  // cells. Resting there, now and then it pecks at the button: see
+  // headAndEye)
+  if (side === 'ledge' && boardRect.rims.length) {
+    const feet = boardRect.y + (p.y + RIM_FEET * s * BU) * sc, reach = RIM_REACH * s * BU, ab = box(p.flip);
+    let near = null;
+    for (const r of boardRect.rims) {
+      if (r.face !== p.flip || feet < r.top || feet > r.bottom) continue;
+      const x = (r.x - boardRect.x) / sc - p.flip * RIM_GRIP * s * BU;
+      if (Math.abs(x - p.x) > reach || (tx - x) * p.flip < 0 || !fits(x, ab)) continue;
+      if (near == null || Math.abs(x - p.x) < Math.abs(near - p.x)) near = x;
+    }
+    if (near != null) { p.x = near; p.rim = true; }
   }
   p.side = side;
   return p;
@@ -218,10 +239,10 @@ const pose = { x: 0, y: 0, s: 1, flip: 1, rot: 0, crouch: 0, wing: 0, stroke: 1,
 // What it keeps between frames: its head's jerks and tilts, what it's
 // watching, its eye, its blinks, its grip; where it was drawn (to clear).
 const bird = { turn: 0, turnTo: 0, hold: 0, cock: 0, cockAt: 0, gx: 1, gy: 0, focus: null, focusUntil: 0, spot: { x: 0, y: 0 },
-  nextBlink: 0, blinkUntil: 0, gripAt: 0, gripFrom: -1e9, box: [0, 0, 0, 0], drawn: false, clear: true, force: null };
+  nextBlink: 0, blinkUntil: 0, gripAt: 0, gripFrom: -1e9, peckAt: 0, peckFrom: -1e9, box: [0, 0, 0, 0], drawn: false, clear: true, force: null };
 function resetBird(now = 0) {
   bird.turn = bird.turnTo = 0; bird.hold = 0; bird.cock = 0; bird.cockAt = 0; bird.gx = 1; bird.gy = 0; bird.focus = null; bird.focusUntil = 0;
-  bird.nextBlink = now + T.BLINK_MIN; bird.blinkUntil = 0; bird.gripAt = now + 1800; bird.gripFrom = -1e9; bird.clear = true;
+  bird.nextBlink = now + T.BLINK_MIN; bird.blinkUntil = 0; bird.gripAt = now + 1800; bird.gripFrom = -1e9; bird.peckAt = now + 2400; bird.peckFrom = -1e9; bird.clear = true;
 }
 
 // Its timings (ms on the board's clock): settling as it lands, crouching to
@@ -311,7 +332,7 @@ const ARRIVE_FROM = { x: 0, y: 0, s: 0.3, flip: 1, rot: 0 };
 function posture(w, tp, now) {
   const P = pose, ms = tickMs(), lively = !reduced;
   P.alpha = 1; P.thrust = 0; P.blur = 0; P.gape = 0; P.air = 0; P.wing = 0; P.stroke = 1; P.sweep = 0; P.near = P.far = 1; P.feet = 1; P.crouch = 0; P.rot = 0;
-  P.free = false; P.up = 1.2; P.drum = null; P.blows = 0; P.blink = false;
+  P.free = false; P.up = 1.2; P.drum = null; P.blows = 0; P.blink = false; P.rim = false;
   if (w.target.length) {
     const to = (w.strikeAt - tp) * ms, A = aimPlan(w, ms, to), into = A.aimMs - to;
     P.fx = A.tx; P.fy = A.ty;
@@ -353,7 +374,7 @@ function posture(w, tp, now) {
   perched(to, P, 'rest');
 }
 function perched(p, P, phase) {
-  P.x = p.x; P.y = p.y; P.s = p.s; P.flip = p.flip; P.rot = 0; P.feet = 1; P.wing = 0; P.up = p.up ?? 1.2; P.phase = phase;
+  P.x = p.x; P.y = p.y; P.s = p.s; P.flip = p.flip; P.rot = 0; P.feet = 1; P.wing = 0; P.up = p.up ?? 1.2; P.phase = phase; P.rim = !!p.rim;
 }
 // A flight from a to b (u: how far through, 0 to 1; ms: how long it takes):
 // bounding as a woodpecker does, a burst of wingbeats lifting it, its wings
