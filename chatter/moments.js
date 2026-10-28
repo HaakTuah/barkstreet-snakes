@@ -113,6 +113,12 @@ function update() {
   const anyone = s => chatPick(chatGame.snakes.filter(o => o !== s && o.alive)) || null;
   const byName = name => chatGame.snakes.find(o => o.name === name);
   const byId = id => chatGame.snakes.find(o => o.id === id);
+  // What killed a snake no other snake killed, from what the engine recorded
+  // (its last words name it: diesBy in voices.js): its own body, the edge, a
+  // hole it fell into, the woodpecker, hunger or the flames (every fire is
+  // lightning's). A hole's rim it crashed into, like the edge, has none: no fall.
+  const deathBy = s => s.killer === 'self' ? 'self' : s.fatal === 'pecked' ? 'woodpecker' : s.killer === 'hunger' ? 'hunger'
+    : s.killer === 'fire' ? 'fire' : /^fell into/.test(s.cause) ? 'hole' : /edge/.test(s.cause) ? 'edge' : null;
   // Whose head was nearest food that's just gone (anyone's: you can beat a
   // rival to it), if it was near: that snake was after it.
   const after = (x, y, near = NEAR_FOOD) => {
@@ -163,7 +169,8 @@ function update() {
       }
       if (victim.persona) {
         lastSaid[victim.id] = -Infinity;
-        chatSay(victim, 'dies', killer && killer !== victim ? killer : null, true);
+        const by = killer && killer !== victim ? killer : null, how = !by && deathBy(victim);
+        if (!(how && chatSay(victim, `diesBy.${how}`, null, true))) chatSay(victim, 'dies', by, true);
       }
       for (const v of alive) if (v.personaKey === 'vulture' && Math.random() < 0.6) chatSay(v, 'death', victim);
     } else if (e.type === 'eat' && windfall(e)) {

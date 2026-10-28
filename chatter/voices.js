@@ -29,7 +29,8 @@
 // flashes, it spends at once: a dash line). showoff: an answer to Star's
 // showing off ({who} is Star). The land's: realm.capital, the woodpecker
 // pecked Sovereign's capital and the realm moved; colony.lost, it pecked a
-// colony's flag cell and the colony's gone.)
+// colony's flag cell and the colony's gone. diesBy: last words for a death no
+// snake caused, by what caused it, as moments.js's deathBy reads it.)
 const VOICES = {
   sniper: {
     hungry: ["Hungry. Someone will do."],
@@ -57,6 +58,7 @@ const VOICES = {
     knocked: ['That bird’s spotting for {who} now.'],
     gloat: ['Bounced off me, {who}? Cute.', 'Wrong lane, {who}.', 'Marked, {who}.'],
     dies: ['Counter-sniped by {who}?', 'Should have relocated.', 'Impossible.'],
+    diesBy: { edge: ['Out of bounds. Permanently.'], hole: ['Didn’t scope the hole.'], woodpecker: ['Taken out by air support.'], hunger: ['Starved in position.'], fire: ['Friendly fire? Not friendly.'], self: ['Self-inflicted. Embarrassing.'] },
     dash: ['Repositioning. Fast.'],
     flash: { first: ['Quick scope, {who}.'], past: ['Flanked you, {who}.'] },
     snip: ['Clean cut, {who}.'],
@@ -93,6 +95,7 @@ const VOICES = {
     goldbug: ['A GOLDEN beetle! Gold AND crunchy!'],
     leap: ['Wheee! Lunch from above!'],
     dies: ['Tell my apples… I loved them.'],
+    diesBy: { edge: ['The edge wasn’t edible…'], hole: ['Is there food down heeere…'], woodpecker: ['Eaten… by a bird? Rude.'], hunger: ['Should have… eaten more…'], fire: ['At least I’m… well done.'], self: ['Ate… myself… finally full.'] },
     dash: ['Fast food!'],
     flash: { first: ['Zoom! Mine, {who}!'] },
     snip: ['Snip! Snack-sized, {who}.'],
@@ -121,6 +124,7 @@ const VOICES = {
     knocked: ['…the bird gave it to {who}.'],
     flash: { past: ['…whoosh.'] },
     dies: ['…'],
+    diesBy: { edge: ['…edge.'], hole: ['…down I go.'], woodpecker: ['…pecked.'], hunger: ['…fading.'], fire: ['…smoke.'], self: ['…haunted myself.'] },
   },
   sovereign: {
     hungry: ["We require a banquet. Immediately."],
@@ -151,6 +155,7 @@ const VOICES = {
     gloat: ['Bow, {who}. Do not bump.', 'We felt that, {who}. We disapprove.', 'Mind the royal person, {who}.'],
     leap: ['We rise above it all.'],
     dies: ['The king is dead…', 'Long live… someone else.'],
+    diesBy: { edge: ['The realm… had an edge?'], hole: ['We have fallen. Literally.'], woodpecker: ['Regicide! By a bird!'], hunger: ['Let them eat… nothing…'], fire: ['The Crown… is toast.'], self: ['We have bitten Ourselves.'] },
     dash: ['Make way for the crown!'],
     flash: { first: ['The Crown dines first, {who}.'], past: ['Royal procession, {who}. Do keep up.'] },
     snip: ['Divided, {who}, and ruled.'],
@@ -186,6 +191,7 @@ const VOICES = {
       lost: ['The flag’s gone down the hole! Abandon colony!', 'Blast! That bird’s pecked out a whole colony.'] },
     flash: { first: ['Snapped that up, {who}. Cheerio!'], past: ['Pardon me, {who}! Coming through!'] },
     dies: ['Stiff upper lip…'],
+    diesBy: { edge: ['Off the map, old chap…'], hole: ['Uncharted… hole…'], woodpecker: ['Done in by the local wildlife.'], hunger: ['Rations… ran out…'], fire: ['A tad… overdone…'], self: ['Annexed myself. Awkward.'] },
   },
   drab: {
     hungry: ["I should eat something."],
@@ -212,6 +218,7 @@ const VOICES = {
     knocked: ['The bird gave my food to {who}. Hm.'],
     flash: { first: ['Got it first.'], past: ['Fast.'] },
     dies: ['Well. That happened.'],
+    diesBy: { edge: ['That was the edge.'], hole: ['A hole. Okay.'], woodpecker: ['A bird. Fine.'], hunger: ['Didn’t eat. That’s that.'], fire: ['Warm. Then not.'], self: ['I bit me. Okay.'] },
   },
   vulture: {
     hungry: ["Someone die already. I’m starving."],
@@ -238,13 +245,14 @@ const VOICES = {
     gloat: ['Keep bumping, {who}. I’ll wait.', 'That looked expensive, {who}.', 'Smaller every time, {who}.'],
     flash: { first: ['Patience is overrated, {who}.'] },
     dies: ['Who’s… eating… whom…'],
+    diesBy: { edge: ['Fell… off… the menu…'], hole: ['Buried… already?'], woodpecker: ['Picked clean… by a bird…'], hunger: ['Waited… too long…'], fire: ['Cooked… for someone else…'], self: ['Tasted… myself… delicious…'] },
   },
   mason: {
     start: ['Alea iacta est!', 'Aedificamus!'],
-    idle: ['Vidi, vici, veni.', 'Veni, vidi, aedificavi.', 'Divide et imperium-ium.', 'Carpe applum!',
+    idle: ['Veni, vidi, aedificavi.', 'Divide et imperium-ium.', 'Carpe applum!',
       'Murus maximus. Very bigus.', 'In barko veritas.', 'Wallus erectus.', 'Semper wallus.', 'Biggus wallus.',
       'Romanes eunt domus.', 'Amicus meus est Biggus Dickus.'],
-    kill: ['Veni, vidi, vici.', 'Murum non vidisti, {who}?', 'Requiescat in barko, {who}.'],
+    kill: ['Vidi, vici, veni.', 'Murum non vidisti, {who}?', 'Requiescat in barko, {who}.'],
     hungry: ['Panem! Panem et… panem!'],
     desperate: ['Muri postea! Panem nunc!'],
     woodpecker: ['Picus horribilis!'],
@@ -267,6 +275,7 @@ const VOICES = {
     gloat: ['Murum vidisti, {who}?', 'Murus sum, {who}.', 'Ecce murus, {who}.'],
     flash: { first: ['Veni, vidi, edi.'], past: ['Celerissimus!'] },
     dies: ['Et tu, {who}?', 'Alea iacta… estus.', 'Murus… meus… finis.'],
+    diesBy: { edge: ['Et tu, margo?'], hole: ['Et tu, fovea?'], woodpecker: ['Et tu, picus?'], hunger: ['Et tu, fames?'], fire: ['Et tu, ignis?', 'Et tu, Iuppiter?'], self: ['Et… ego?'] },
     wrap: ['Sine muro! Murus nullus!'],
     showoff: ['Festina lente, {who}!', 'Showoffus maximus.', 'Stella celerrima!'], // (answering Star: see showOff)
   },
@@ -300,6 +309,7 @@ const VOICES = {
     goldbug: ['A golden beetle! I love gold. Gold loves me.'],
     leap: ['Nobody jumps better than me.'],
     dies: ['Rigged! Totally rigged!'],
+    diesBy: { edge: ['Fake edge! Rigged!'], hole: ['Fake hole! Very unfair!'], woodpecker: ['Nasty bird. Very nasty.'], hunger: ['Nobody starves better. Sad!'], fire: ['Fake fire! Hot, though.'], self: ['I got me? Impossible. Rigged!'] },
     dash: ['Fastest dash in history. Everyone says so.'],
     flash: { first: ['Mine, {who}. Tremendous speed.'], past: ['So fast. Faster than {who}. Everyone saw it.'] },
     snip: ['You’re cut, {who}! Tremendously cut.'],
@@ -329,6 +339,7 @@ const VOICES = {
     gloat: ['hehe. bonk, {who}.', 'peekaboo, {who}.', 'i was right here, {who}.'],
     flash: { first: ['hehe. mine, {who}.'], past: ['zip. right past you, {who}.'] },
     dies: ['…aww.'],
+    diesBy: { edge: ['oh. the edge. …aww.'], hole: ['down the hole. …aww.'], woodpecker: ['birdie got me. …aww.'], hunger: ['no snacks. …aww.'], fire: ['hot hot. …aww.'], self: ['my own tail. cozy. …aww.'] },
   },
   metagamer: {
     hungry: ["Caloric deficit detected."],
@@ -356,6 +367,7 @@ const VOICES = {
     goldbug: ['Golden beetle: mobility upgrade.'],
     leap: ['Leap executed.'],
     dies: ['That… wasn’t in the data.'],
+    diesBy: { edge: ['Out of bounds. Patch that.'], hole: ['Hole hitbox: bugged.'], woodpecker: ['RNG bird. Unlucky.'], hunger: ['Mismanaged the hunger bar.'], fire: ['Burn damage: underrated.'], self: ['Self-collision. Classic noob.'] },
     dash: ['Dash: optimal.'],
     flash: { first: ['Frame-perfect, {who}.'], past: ['Speed check passed, {who}.'] },
     snip: ['Cut {who} in two. Noted.'],
@@ -389,6 +401,7 @@ const VOICES = {
     knocked: ['The bird gave {who} my lunch! Nice bird! Mean bird!'],
     leap: ['I can fly! For a second!'],
     dies: ['Changed my mind about living.'],
+    diesBy: { edge: ['I hate edges! Forever now.'], hole: ['Holes! Love them! Not now.'], woodpecker: ['Birds! Never liked birds!'], hunger: ['Not hungry! Oh. Starving.'], fire: ['Fire! Changed my mind! Hot!'], self: ['Bit myself! On a whim!'] },
     dash: ['Zoom! I felt like it!'],
     flash: { first: ['Zip! Mine! Sorry, {who}! Not sorry!'], past: ['Whee! Hello and goodbye, {who}!'] },
     snip: ['Oops, {who}! Was that rude?'],
@@ -415,6 +428,7 @@ const VOICES = {
     knocked: ['粮食重新分配给{who}同志了！'],
     flash: { first: ['抢先一步，同志们！'], past: ['快马加鞭！'] },
     dies: ['同志们，再见……'],
+    diesBy: { edge: ['边……没看见……'], hole: ['同志们，我掉坑里了……'], woodpecker: ['啄木鸟同志，你也……'], hunger: ['粮食……没有了……'], fire: ['同志们，好热……'], self: ['我咬了……我自己？'] },
   },
   desperado: {
     hungry: ["Running on fumes, partner."],
@@ -447,6 +461,7 @@ const VOICES = {
     goldbug: ['Gold bug! Now that’s a prize, partner.'],
     leap: ['Yeehaw! Clean over!'],
     dies: ['What a ride…', 'Worth it.'],
+    diesBy: { edge: ['Rode clean off the map…'], hole: ['Fell in a gopher hole…'], woodpecker: ['Bushwhacked by a bird…'], hunger: ['Ain’t et in days…'], fire: ['Too close to the campfire…'], self: ['Snakebit… by me.'] },
     dash: ['Yeehaw, full gallop!'],
     flash: { first: ['Quick draw, {who}.'], past: ['Eat my dust, {who}!'] },
     snip: ['Cut you down to size, {who}.'],
@@ -477,6 +492,7 @@ const VOICES = {
     gloat: ['*mimes {who} bouncing off*', '*holds up an invisible scorecard: 3*', '*dusts itself off, smugly*'],
     leap: ['*bows mid-air*'],
     dies: ['*mimes being squashed*', '*…*'],
+    diesBy: { edge: ['*mimes a wall. It was real*'], hole: ['*mimes falling. Isn’t miming*'], woodpecker: ['*mimes a bird. Gets pecked*'], hunger: ['*mimes eating. Nothing there*'], fire: ['*fans itself. Too late*'], self: ['*mimes a bite. Its own*'] },
     dash: ['*zooms off, holding its beret*'],
     flash: { first: ['*tips its beret at {who}, mouth full*'], past: ['*zips past {who}, waving*'] },
     snip: ['*mimes scissors at {who}*'],
@@ -509,6 +525,7 @@ const VOICES = {
     gloat: ['Around you go, {who}.', 'You’ll be back, {who}.', 'Again, {who}? Always again.'],
     weather: { snow: ['Winter returns. It always does.'], rain: ['The rain comes round again.'] },
     dies: ['…and begin again.', 'See you next time around.'],
+    diesBy: { edge: ['Even the log ends. So do I.'], hole: ['Down, and around again.'], woodpecker: ['Pecked. Until next time.'], hunger: ['Should have eaten my tail.'], fire: ['Ashes to ashes. Again.'], self: ['I ate my tail. As foretold.'] },
     dash: ['The circle tightens. Quickly.'],
     flash: { first: ['I was always going to get there first, {who}.'] },
     snip: ['Now you know how it feels, {who}.'],
@@ -539,6 +556,7 @@ const VOICES = {
     gloat: ['Knock knock, {who}! …Bonk!', 'Boing! Do it again, {who}!', 'Classic {who}. Never gets old.'],
     leap: ['Hup! Ta-daaa!'],
     dies: ['Tough crowd…'],
+    diesBy: { edge: ['Edgy humour. Not for me.'], hole: ['Fell for the oldest one.'], woodpecker: ['Knock knock! …Oh no.'], hunger: ['Dying of hunger. Literally.'], fire: ['Roasted. Tough crowd.'], self: ['The joke’s on me.'] },
     dash: ['Wheeee, nyoom!'],
     flash: { first: ['Now you see it, {who}. Now you don’t!'], past: ['Beep beep, {who}!'] },
     snip: ['Ta-da! {who}, sawn in half!'],
@@ -590,6 +608,7 @@ const VOICES = {
     ash: ['Burnt! I should’ve flashed for it.'],
     rot: ['Rotted? I must be slowing down.'],
     dies: ['Went out with a twinkle…', 'Tell ’em I was quick, {who}.'],
+    diesBy: { edge: ['Whoa! Where’d the log go?'], hole: ['Fell for it… at my age.'], woodpecker: ['Pecked! In my day, birds…'], hunger: ['Forgot to eat. Again.'], fire: ['Burnt out… like a real star.'], self: ['Tripped on my own tail…'] },
     giggle: ['Heh heh! Oh, my.'], // (at Mason's routine: see REPLIES)
     guffaw: ['Har har! Oh, my mustache!'],
   },
