@@ -47,6 +47,26 @@ entry's, not the drawing's. What it should be, seen from above (the head points 
 - Shown in the PR as before and after crops, on a light and a dark board, at the sizes of a phone and a desktop.
 - Art only, no rule changes: the render suite and its looks checks pass; no reviewer needed beyond the pictures.
 
+### 1b++. The phone's bottom: the chatter, the controls and the woodpecker (small, next, a UI lane beside the AI work)
+
+Haakon (28 October 2026), with two screenshots from his phone ([the chatter open](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/3a098b38f41f596834c3bd0fefc5c453eede2b1f/owner-2026-10-28-chat-open.jpg),
+[the chatter shrunk](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/3a098b38f41f596834c3bd0fefc5c453eede2b1f/owner-2026-10-28-chat-shrunk.jpg)): "See how the chat display overlaps with the buttons when it
+is shrunk? Also, it defaults to shrunk at start, even though the space below is used for nothing else. And the
+woodpecker is still too small when it is down there." Claude agreed, and saw in the same pictures that the woodpecker,
+perched below the board, stands on the 4x button and over the chatter's text.
+- **Nothing overlaps a control or text.** The shrunk chatter bar sits clear below the speed row, with the gap the other
+  rows have; no part of the page is drawn over a button or a line of chatter, the woodpecker included.
+- **Open by default where there is room.** At the start, and on a resize or turn of the phone, the chatter opens to fill
+  the space below the controls with as many whole lines as fit, down to the screen's bottom edge (its safe area kept),
+  as the desktop chatter fills its column (PR #72). It starts shrunk only where fewer than three lines fit. A player who
+  shrinks or opens it keeps that choice (in storage, read and written in try/catch).
+- **The woodpecker down there is at least its size on the board,** scaled with the board's cell, and perches where it
+  covers no control and no text: on the chatter panel's top edge or in the empty space, never on a button.
+- **Proved by the layout suite** at phone sizes (390x844, 360x780, 412x915 and a short 375x667), with the chatter open
+  and shrunk and the woodpecker perched below: no control's box meets another's or the chatter's text, and the chatter
+  opens where three lines fit. Before and after crops at a phone's size in the PR.
+- UI only, no rules changed; it runs as its own lane beside the AI work ("as many lanes as can run in parallel").
+
 ### 1c. The big test files, split (Haakon, 28 October 2026, the workshop check: next, before item 3's remaining entries)
 
 Haakon (28 October 2026): "Yes please, sound good! Do it expertly for both!", to Claude's proposal that included moving
