@@ -272,6 +272,7 @@ window.SnakeAI = (() => {
 
   const TUNE = window.TUNING; // (the rules' numbers, so the AI's picture of them stays true)
   const YIELDS = 0.5;      // how much I fear a head-on with a rival no longer than me, which it has as much to lose by or more (see decide's risk)
+  const TURNS_ON = 0;
   const TURNS = 0.5;       // how often a snake turns a given way, for every time it goes on (each way about a quarter of its moves, straight on half, in AI-only rounds)
   const TRAPPED = 5000;
   const NECK = 2000;       // the room I need is through a gap a rival could get to and shut...
@@ -313,7 +314,7 @@ window.SnakeAI = (() => {
   // the per-cell grids: `nbr` lists each cell's neighbours in DIR_LIST order
   // (-1 off the board), and `queue` holds a breadth-first search, one distance
   // after another. No search visits a cell twice, so N * N is always enough.
-  let bufN = 0, mineFree, otherFree, ownFree, risk, strikes, meet, seen;
+  let bufN = 0, mineFree, otherFree, ownFree, risk, strikes, meet, sides, meetSides, seen;
   let foodValue, foodGrow, foodFrom, foodCells, goldCells, beadCells, queue, nbr, necks, reach, lineAt, lineSeen, lineMark, lineIn, lineOut, myCells, marks, leave, leaveStamp, chase, chaseKey;
   let nearStamp, nearHead, nearWho, nearHome, nearGap;
   let stamp = 0;
@@ -355,6 +356,8 @@ window.SnakeAI = (() => {
     risk = new Float32Array(size);
     strikes = new Float32Array(size); // (a rival's head next tick, and its body after: see decide)
     meet = new Float32Array(size);
+    sides = new Float32Array(size);
+    meetSides = new Float32Array(size);
     seen = new Int32Array(size);
     foodValue = new Float64Array(size); // what eating a cell is worth
     foodGrow = new Int8Array(size);     // what eating a cell does to my length
@@ -682,7 +685,7 @@ window.SnakeAI = (() => {
     ensureOwners(others.length + 1);
     const steps = Math.max(1, depth); // even a depth-0 search makes one move
     ensureBodies(Math.max(2, steps), me.body.length + steps + 4); // a body grows at most one cell a step (a power moves up to three at once, eating)
-    mineFree.fill(0); otherFree.fill(0); risk.fill(0); strikes.fill(0); meet.fill(0);
+    mineFree.fill(0); otherFree.fill(0); risk.fill(0); strikes.fill(0); meet.fill(0); sides.fill(0); meetSides.fill(0);
 
     const inside = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
     const myHead = me.body[0];
@@ -1041,8 +1044,10 @@ window.SnakeAI = (() => {
       for (const d of DIR_LIST) {
         if (d.x === -o.dir.x && d.y === -o.dir.y) continue; // (its neck)
         const nx = at(heads[k].x + d.x), ny = at(heads[k].y + d.y);
-        const way = d.x === o.dir.x && d.y === o.dir.y ? strike : strike * TURNS;
-        if (inside(nx, ny) && otherFree[ny * N + nx] <= 1) { strikes[ny * N + nx] += way; meet[ny * N + nx] += way * yields; }
+        if (!inside(nx, ny) || otherFree[ny * N + nx] > 1) continue;
+        const i = ny * N + nx;
+        strikes[i] += strike; meet[i] += strike * yields;
+        if (d.x !== o.dir.x || d.y !== o.dir.y) { sides[i] += strike; meetSides[i] += strike * yields; }
       }
       // (Its powers reach further straight on: a dash three cells, a golden
       // leap three; anyone's flash two, and anyone's leap if there's
@@ -1691,7 +1696,7 @@ window.SnakeAI = (() => {
       // (A rival's head beside a cell: a head-on on my first move; on my
       // next `age`, its body, if it went there, which I can't see yet; after
       // that I'd see where it went in time to turn.)
-      let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t)) - (t === 0 ? meet[i] : t <= age ? strikes[i] * RISK_AHEAD[t] : 0);
+      let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t)) - (t === 0 ? meet[i] - (turning ? 0 : (1 - TURNS) * meetSides[i]) : t <= age ? (strikes[i] - (turning || !TURNS_ON ? 0 : (1 - TURNS) * sides[i])) * RISK_AHEAD[t] : 0);
       if (turning && w.turn) gain -= w.turn * (ahead ? TURN_AHEAD[t] : Math.pow(0.9, t));
       const score = depth <= 1
         ? evaluate(nb, nlen, g, t + 1) + bonus + gain
