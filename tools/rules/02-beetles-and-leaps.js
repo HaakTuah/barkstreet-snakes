@@ -58,9 +58,10 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   const g2 = board([[line(22, 10, 5), 'right'], wall(23)]);
   E.leap(g2, g2.snakes[0]); quiet(g2);
   check('...never off the board', !g2.events.some(e => e.type === 'leap') && g2.events.some(e => e.type === 'crash'));
-  const g3 = board([[line(5, 10, 5), 'right'], wall(6), wall(7)]);
+  const g3 = board([[line(5, 10, 5), 'right'], wall(6), wall(7)]); // (four abreast, two bodies and two holes: past its reach)
+  g3.holes.add(K(8, 10)); g3.holes.add(K(9, 10));
   E.leap(g3, g3.snakes[0]); quiet(g3);
-  check('...never onto a body', !g3.events.some(e => e.type === 'leap') && g3.events.some(e => e.type === 'crash'));
+  check('...never onto a body, nor further than it reaches', !g3.events.some(e => e.type === 'leap') && g3.events.some(e => e.type === 'crash'));
   const g4 = board([[line(5, 10, 5), 'right'], wall(7, 9)]);
   const me = g4.snakes[0];
   E.leap(g4, me);
@@ -71,16 +72,44 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('...it waits a moment for something to hop', waited && g4.events.some(e => e.type === 'leap') && me.body[0].x === 7, JSON.stringify(me.body[0]));
 }
 
-{ // A golden leap: three cells in two ticks, hopping up to two, free.
+{ // The island hop: over up to LEAP_REACH cells of hurdles (here a body, a hole and fire), a cell a tick, landing on the first free cell beyond.
+  const g = board([[line(5, 10, 6), 'right'], wall(6)]);
+  g.holes.add(K(7, 10));
+  g.fires.set(K(8, 10), { from: 0, until: 999, group: 1, strike: false }); g.fireGroups.set(1, 1);
+  const me = g.snakes[0];
+  E.leap(g, me);
+  const seen = [];
+  for (let n = 0; n < 4; n++) { quiet(g); seen.push([me.body[0].x, !!me.flight]); }
+  check('an island hop: over three, up three ticks, a cell a tick', JSON.stringify(seen.slice(0, 3)) === '[[6,true],[7,true],[8,true]]' && g.events.length >= 0, JSON.stringify(seen));
+  check('...and down on the fourth, on the first free cell beyond', me.alive && JSON.stringify(seen[3]) === '[9,false]' && joined(me.body) && !(me.burnUntil > g.tick), JSON.stringify(seen[3]));
+  check('...its body over what it hopped (a hole holds it), and the one hopped is fine', me.body.slice(1, 4).every((c, i) => c.x === 8 - i && c.y === 10) && g.snakes[1].alive && me.body.length === 6 - T.LEAP_COST);
+  const g2 = board([[line(5, 10, 5), 'right'], wall(6), wall(7)]); // (two abreast, the first free cell is the third)
+  E.leap(g2, g2.snakes[0]); quiet(g2); quiet(g2); quiet(g2);
+  check('...over two, it lands on the third tick', g2.snakes[0].body[0].x === 8 && !g2.snakes[0].flight && g2.snakes.every(o => o.alive), JSON.stringify(g2.snakes[0].body[0]));
+}
+
+{ // A golden leap: the same island hop, free.
   const g = board([[line(5, 10, 5), 'right'], wall(6), wall(7)]);
   const me = g.snakes[0];
   me.leaps = 2;
   E.leap(g, me);
   quiet(g);
-  check('a golden leap: two cells up and over at once', me.body[0].x === 7 && me.body[1].x === 6 && !!me.flight && me.leaps === 1 && g.events.some(e => e.type === 'leap' && e.gold), JSON.stringify(me.body.slice(0, 2)));
-  quiet(g);
-  check('...landing on the third next tick', me.alive && me.body[0].x === 8 && joined(me.body) && g.snakes.every(o => o.alive), JSON.stringify(me.body[0]));
+  check('a golden leap: up over what\'s in front', me.body[0].x === 6 && !!me.flight && me.leaps === 1 && g.events.some(e => e.type === 'leap' && e.gold && e.reach === 2));
+  quiet(g); quiet(g);
+  check('...landing on the first free cell beyond', me.alive && me.body[0].x === 8 && !me.flight && joined(me.body) && g.snakes.every(o => o.alive), JSON.stringify(me.body[0]));
   check('...free, and ready again at once', me.body.length === 5 && me.leapReadyAt === 0, me.body.length);
+}
+
+{ // A press stays armed LEAP_WINDOW ticks: pressed with the hurdle 5 cells ahead, it hops when it gets there; and nothing hops without a press.
+  const g = board([[line(5, 10, 5), 'right'], [line(3, 20, 3), 'right']]);
+  g.holes.add(K(10, 10));
+  const me = g.snakes[0];
+  E.leap(g, me);
+  for (let n = 0; n < 5; n++) quiet(g);
+  check('a press made with the hurdle 5 cells ahead still hops it', me.alive && me.body[0].x === 10 && !!me.flight, JSON.stringify(me.body[0]));
+  const g2 = board([[line(5, 10, 5), 'right'], wall(6)]);
+  quiet(g2);
+  check('...and no press, no jump: it crashes', !g2.events.some(e => e.type === 'leap') && g2.events.some(e => e.type === 'crash'));
 }
 
 { // An AI asks for its power the way a person does: boxed in, with a leap, it hops instead of crashing.
@@ -95,9 +124,9 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
     g.food = [];
     look(g);
     quiet(g);
-    look(g);
-    quiet(g);
-    const lands = golden ? [[8, 0], [5, 3]] : [[7, 0]]; // (golden: over the rival, or over its own body, whichever lands better)
+    let hopped = g.events.some(e => e.type === 'leap');
+    for (let n = 0; n < 3 && (a.flight || !hopped); n++) { look(g); quiet(g); hopped ||= g.events.some(e => e.type === 'leap'); }
+    const lands = golden ? [[7, 0], [5, 3]] : [[7, 0], [5, 3]]; // (over the rival, or over its own body, whichever lands better)
     check(`a boxed-in AI with a ${golden ? 'golden' : 'plain'} leap hops instead of crashing`, a.alive && g.snakes.every(o => o.alive) && lands.some(([x, y]) => a.body[0].x === x && a.body[0].y === y) && a.leaps === 0, JSON.stringify(a.body[0]));
   }
 }
@@ -208,11 +237,11 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
 }
 
 { // In the air: no eating, no catching fire, and nothing arriving under you meets you.
-  const g = board([[line(5, 10, 5), 'right'], wall(6), wall(9, 9)], { food: [[7, 10]] }); // (an apple on the golden leap's mid-air cell)
+  const g = board([[line(5, 10, 5), 'right'], wall(6)], { food: [[7, 10]] }); // (an apple in the fire it hops over)
+  g.fires.set(K(7, 10), { from: 0, until: 999, group: 1, strike: false }); g.fireGroups.set(1, 1);
   const me = g.snakes[0];
-  me.leaps = 1;
-  E.leap(g, me); quiet(g);
-  check('in the air, it doesn\'t eat', me.body[0].x === 7 && me.eaten === 0 && g.food.some(f => f.x === 7 && f.y === 10), me.eaten);
+  E.leap(g, me); quiet(g); quiet(g);
+  check('in the air, it doesn\'t eat', me.body[0].x === 7 && !!me.flight && me.eaten === 0 && g.food.some(f => f.x === 7 && f.y === 10), me.eaten);
   const g2 = board([[line(5, 10, 5), 'right'], [[[5, 20], [4, 20], [3, 20]], 'right']]);
   g2.fires.set(K(6, 10), { from: 0, until: 999, group: 1, strike: false }); g2.fireGroups.set(1, 1);
   E.leap(g2, g2.snakes[0]); quiet(g2); quiet(g2);

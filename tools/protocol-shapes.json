@@ -1,6 +1,6 @@
 {
-  "version": 16,
-  "fingerprint": "ac6727303651c3cf",
+  "version": 17,
+  "fingerprint": "84be0cb41067c4d6",
   "kinds": {
     "away": "{1} t: string",
     "back": "{1} t: string",
@@ -66,7 +66,7 @@
     "tick f beetle": "[12] number number number number number number number number number number number number",
     "tick f meal": "[8] number number number number string number number number",
     "tick fi": "[5] number number number number number",
-    "tick s": "[21] number number number number number array<number> object(colonies,desperate,home,lureId,modelId,mood,moodChangedAt,site,victimId) number number number number number number number number number number number number number number",
+    "tick s": "[24] number number number number number array<number> object(colonies,desperate,home,lureId,modelId,mood,moodChangedAt,site,victimId) number number number number number number number number number number number number number number number number number",
     "tick sky": "[3] number number number",
     "tick un": "[4] number number number number",
     "tick w": "[10] number number number array<number> number array<number> number number number array<array<number>>",

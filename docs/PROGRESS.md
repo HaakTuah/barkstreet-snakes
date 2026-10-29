@@ -46,6 +46,8 @@ long time now. Also, the teaching system will have to account for it." It is the
 3b (PR #142) merges, ahead of Wildcard's part of 3b, 2b, 2h, 2i and 3c; the art and sound lanes (2d, 2f, 2j) run
 beside it as before. A playable draft PR as early as it can be, so Haakon can try it this evening.
 
+*Done so far:* **the island hop** and **no auto-jump** (PR #158: a jump goes over up to 3 cells, a cell a tick; a press waits 5 moves; the landing ring; protocol 16).
+
 - **The island hop comes first.** The owner: "jumping is pretty critical to making this game more tense and skill based, rather than RNG". There are two test cases:
   - Gobbler folded on a strip;
   - `docs/handoff/owner-sniper-islands.jpg`: Sniper won coiled on a strip, beside islands of beads across gaps of 1 to 3 cells.
@@ -87,31 +89,13 @@ apple it needs. Build it from the cause, in the one template every rival shares:
 
 ### 2c. Done: the woodpecker, 1.3 times (PR #139); in `docs/archive/progress-done.md`.
 
-### 2d. Rivals' chomps (Haakon, 29 October 2026; small, a sound lane)
-
-Haakon (29 October 2026): "Yes, queue it. Feels strange that there is no sound, when your snake makes loud sound when
-eating." Today only your own snake's eating sounds (`sounds()` in `game/round.js`: `e.type === 'eat' && isMe(e.snake)`);
-a rival's makes no sound, except a golden mushroom, which already plays softer and further off (`{ rival: true, ...at(e.x) }`).
-- **Every rival's eating sounds,** each kind with its own cue as yours does (apple, golden, meat, mushroom, beetle,
-  leaf), but softer and further off, placed where it ate on the board (`at(e.x)`), so you can hear a rival feeding where
-  you aren't looking. Your own stays the loudest and the only one with the streak's rising pitch.
-- **Never a pile-up:** four snakes eating at once must not drown your own chomp or clip (the compressor and the cues'
-  spacing in `audio.js`); rivals' chomps give way to yours, as other rival sounds do.
-- Muted and the sound settings work as for every cue; online, each player hears it on their own machine, so no
-  protocol change. A test checks that a rival's eat plays its rival cue and yours plays yours.
+### 2d. Done: rivals' chomps (PR #150); in `docs/archive/progress-done.md`.
 
 ### 2e. Done: the woodpecker pecks beside a snake, not on it (PR #141); in `docs/archive/progress-done.md`.
 
 ### 2f. Done: Wildcard's hair, lacquered (PR #144, version F); in `docs/archive/progress-done.md`.
 
-### 2f+. Wildcard's hair: F, a size smaller (Haakon, 29 October 2026; small, an art lane beside the new moves)
-
-Haakon (29 October 2026), playing with F: "Dont trumps hair look a bit too big now?" And, to keeping F's shape at about
-85% of its size: "Yes, let's try that!" Keep F's shape as it is, the wave, the sweep to the far side, the grooves and
-the gloss, and scale the whole mass to about 85%, so it sits on the head instead of towering over it, puffing past the
-head less over the ears and behind; the face, the set-back front edge and both eyes as they are. Drawing only. The PR
-shows F now beside F at 85% at a 390-pixel phone (true size and 3x) and desktop 2x, all four headings, and merges once
-the render suite passes; if Haakon then finds it still too big, or now too small, the size is one number to change.
+### 2f+. Done: Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85); in `docs/archive/progress-done.md`.
 
 ### 2g. Done: the meal goes down (PR #146); in `docs/archive/progress-done.md`.
 

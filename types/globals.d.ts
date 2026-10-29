@@ -34,7 +34,7 @@ declare namespace Engine {
     persona?: unknown; personaKey?: string;
     stunUntil: number; burnUntil: number; burnFrom: number;
     leaps: number; leapArmed: number; leapReadyAt: number; dashes: number; wrapUntil: number;
-    flight: { dir: Dir } | null;
+    flight: { dir: Dir; over: { x: number; y: number }[]; land: { x: number; y: number }; gold?: Flag } | null;
     flashReadyAt: number; flashArmed: number;
     coughUntil?: number;
     /** A rival's next way once it's thought, and the tick it thought it for; a person's queued turns. */

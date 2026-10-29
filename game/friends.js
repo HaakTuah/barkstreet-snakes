@@ -88,13 +88,13 @@ const GUIDE_ROWS = [
     ['mushroom', 'Mushroom', `Poison: ${TUNE.SHRINK} off your tail (never below ${TUNE.MIN_LENGTH}). Mind the purple haze.`],
   ]],
   ['Golden things', [
-    ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: long, free, no rest. Hold up to ${TUNE.LEAP_MAX}.`],
+    ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: free, no rest. Hold up to ${TUNE.LEAP_MAX}.`],
     ['leaf', 'Golden leaf', `${TUNE.DASH_CHARGES} golden flashes: three cells at once, slicing thin snakes. Never at an edge or a hole.`],
     ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(TUNE.WRAP_MS)} s a mushroom (up to ${secs(TUNE.WRAP_MAX_MS)}).`],
     ['spill', 'Spilled powers', 'A snake knocked out holding golden jumps or flashes spills them where its head fell: a gold coin ringed with its pips. Grab it and they’re yours.'],
   ]],
   ['Your powers', [
-    ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop a snake, a hole or fire. It costs your tail’s tip, then rests ${secs(TUNE.LEAP_COOLDOWN_MS)} s.`],
+    ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop snakes, holes or fire, up to ${TUNE.LEAP_REACH} cells, to the first free cell: islands too. A ring shows where you’ll land. It costs your tail’s tip, then rests ${secs(TUNE.LEAP_COOLDOWN_MS)} s.`],
     ['flash', 'Flash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift or a right-click on the log'}: two cells in a blink, free. Then it rests ${secs(TUNE.FLASH_COOLDOWN_MS)} s.`],
     ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden flashes.'],
     ['rests', 'Resting', 'Two half-rings round your head: your jump (left) and your flash (right) coming back.'],

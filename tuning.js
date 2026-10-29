@@ -30,17 +30,19 @@ window.TUNING = Object.freeze({
   BEETLE_DIG: 6,            // ...taking this many ticks (it stays put, and can still be caught), then it's underground, as after a dive. A race you can win: never fewer than BEETLE_DIG_FEAR, so a head coming straight at it from where the dig starts gets there on its last tick (5 ticks from a head within 7, nobody coming at one ever did)
   BEETLE_GROWTH: 2,         // a beetle is worth this much
   // Powers. Everyone can jump and flash, two separate presses (Space or a
-  // tap; E, Shift or a swipe the way you're going). A jump hops one cell (a
-  // body, a hole or fire) and lands on the next, two cells in two ticks, for
-  // the tip of your tail; then it needs a moment. A flash goes FLASH_LENGTH
+  // tap; E, Shift or a swipe the way you're going). A jump hops islands: up
+  // over what's right in front (a body, a hole or fire) and up to
+  // LEAP_REACH cells of it, a cell a tick, landing on the first free cell
+  // beyond, for the tip of your tail; then it needs a moment. A flash goes FLASH_LENGTH
   // cells in one tick along the ground, free, then rests.
   LEAP_COST: 1,             // a leap costs this many segments off the tail (and needs more than MIN_LENGTH)...
   LEAP_COOLDOWN_MS: 4000,   // ...and can't be done again for this long
-  LEAP_WINDOW: 3,           // a jump pressed for waits this many ticks for something to hop
+  LEAP_WINDOW: 5,           // a jump pressed for waits this many ticks for something right in front to hop, and somewhere to land within reach (so a press made with a hurdle 4 or 5 cells ahead still goes; 3 before round six B), for rivals too
+  LEAP_REACH: 3,            // round six B, the island hop: a jump goes over up to this many cells of anything it hops (bodies, holes, fire; one before), a cell a tick in the air, and comes down on the first free cell beyond: over three, it's up three ticks and lands on the fourth
   FLASH_LENGTH: 2,          // a flash: this many cells in one tick, along the ground (it eats on the way; whatever's in the way, it runs into as a crawl would)...
   FLASH_COST: 0,            // ...for this many segments off the tail (free: a cost made rounds longer and starved snakes, in simulation)...
   FLASH_COOLDOWN_MS: 6000,  // ...and then it rests this long
-  GOLD_BEETLE_CHANCE: 0.16, // a beetle coming out is a golden one this often (about two golden beetles a round, as many as with more beetles at 0.12): catch it for golden leaps (three cells in two ticks, hopping up to two; free)...
+  GOLD_BEETLE_CHANCE: 0.16, // a beetle coming out is a golden one this often (about two golden beetles a round, as many as with more beetles at 0.12): catch it for golden jumps (the same island hop, free)...
   LEAP_CHARGES: 2,          // ...this many (up to LEAP_MAX held at once)
   LEAP_MAX: 3,
   LEAF_CHANCE: 0.25,        // wind: each gust might blow a golden leaf onto the log (one at a time): dashes...

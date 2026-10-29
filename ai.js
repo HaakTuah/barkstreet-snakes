@@ -785,7 +785,7 @@ window.SnakeAI = (() => {
     ensureBuffers(N);
     ensureOwners(others.length + 1);
     const steps = Math.max(1, depth); // even a depth-0 search makes one move
-    ensureBodies(Math.max(2, steps), me.body.length + steps + 4); // a body grows at most one cell a step (a power moves up to three at once, eating)
+    ensureBodies(Math.max(TUNE.LEAP_REACH + 2, steps), me.body.length + steps + TUNE.LEAP_REACH + 4); // a body grows at most one cell a step (a power moves up to three at once, eating; a jump is down LEAP_REACH + 1 steps on)
     mineFree.fill(0); otherFree.fill(0); risk.fill(0); strikes.fill(0);
 
     const inside = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
@@ -1168,15 +1168,18 @@ window.SnakeAI = (() => {
         const nx = at(heads[k].x + d.x), ny = at(heads[k].y + d.y);
         if (inside(nx, ny) && otherFree[ny * N + nx] - age <= 1) strikes[ny * N + nx] += strike; // (a body as seen, `age` ago)
       }
-      // (Its powers reach further straight on: a dash three cells, a golden
-      // leap three; anyone's flash two, and anyone's leap if there's
-      // something in front to hop. It may be resting them: I can't tell.
+      // (Its powers reach further straight on: a dash three cells; anyone's
+      // flash two, and anyone's leap LEAP_REACH + 1 if there's something in
+      // front to hop (a golden one, whatever's in front). It may be resting
+      // them: I can't tell. One I saw in the air comes down where its ring
+      // is.
       // But a plain flash costs its rest, so a snake spends one racing for
       // food straight ahead of it, not to cross a cell it can't crawl to:
       // its flash I fear only with food on that line within its reach.)
       const fx = at(heads[k].x + o.dir.x), fy = at(heads[k].y + o.dir.y);
       const gold = o.dashes > 0 || o.leaps > 0, hop = inside(fx, fy) && otherFree[fy * N + fx] > 1;
-      const far = gold ? 3 : Math.max(TUNE.FLASH_LENGTH, hop ? 2 : 1);
+      const far = Math.max(gold ? TUNE.DASH_LENGTH : TUNE.FLASH_LENGTH, gold || hop ? TUNE.LEAP_REACH + 1 : 1);
+      if (o.air > 0 && o.land >= 0) strikes[o.land] += strike;
       const on = f => { for (let n = 1; n <= far + 1; n++) if (at(heads[k].x + o.dir.x * n) === f.x && at(heads[k].y + o.dir.y * n) === f.y) return true; return false; };
       if (gold || hop || food.some(f => f.kind !== 'mushroom' && on(f))) for (let i = 2; i <= far; i++) {
         const nx = at(heads[k].x + o.dir.x * i), ny = at(heads[k].y + o.dir.y * i);
@@ -1925,7 +1928,8 @@ window.SnakeAI = (() => {
       const cheap = desperate ? 0.5 : 1;
       const keep = me.grow > 0 ? me.body.length : me.body.length - 1, stampM = ++stamp;
       for (let j = 0; j < keep; j++) myCells[me.body[j].y * N + me.body[j].x] = stampM;
-      const trapped = crawl < DEAD / 2;
+      const trapped = crawl < DEAD / 2, boxed = crawl < -NECK;
+      let hereFree = -1, hereFood = false, landFood = false; // (the free log round me, and whether there's food on it: see islandGain) // (boxed: the crawl leaves me less room than I need, or only through a gap a rival could shut)
       const pecks = view.pecks; // (the woodpecker's mark, if I'm shown it apart from the holes)
       const cellAt = (x, y) => {
         if (me.wrap > 0) { x = (x + N) % N; y = (y + N) % N; } // (the edges wrap for me)
@@ -1936,7 +1940,7 @@ window.SnakeAI = (() => {
       // a hole, if I can tell it from the woodpecker's mark (a mark isn't a
       // hole yet: I'd crawl in), or if it's that or a crash.
       const hurdle = i => myCells[i] === stampM || (mineFree[i] > 1 && (mineFree[i] < HOLE || fire.has(i) || (pecks ? !pecks.has(i) : trapped)));
-      const path = [0, 0, 0];
+      const path = new Int32Array(Math.max(3, TUNE.LEAP_REACH + 1));
       const ate = [-1, -1, -1], ateV = [0, 0, 0];
       let ateL = 0, ateG = 0, ateGain = 0, endRisk = 0, idle = false, muteWas = 0, ateBug = 0, ateWas = -HOLE; // (endRisk: the risk where the last one weighed ends; idle: it was a golden dash just for speed; muteWas, ateBug (which beetles, a bit each): for uneat)
       const meal = (i, step) => foodValue[i] > 0 && foodFrom[i] <= step; // (food there, on my move `step`)
@@ -1956,8 +1960,7 @@ window.SnakeAI = (() => {
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
         if (me.dashes > 0) consider(d, true, dashOpt(d), 0.6, extra);
         else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay)) consider(d, true, flashOpt(d), trapped || race(d) ? 1 : 2, extra);
-        if (me.leaps > 0) consider(d, false, leapOpt(d, 2) ?? leapOpt(d, 1), 0.35, extra);
-        else if (jump) consider(d, false, leapOpt(d, 1), TUNE.LEAP_COST + 0.5, extra);
+        if (jump) consider(d, false, leapOpt(d), me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5, extra);
       }
       return best;
 
@@ -1984,39 +1987,83 @@ window.SnakeAI = (() => {
         return true;
       }
 
-      // A leap over `span` cells (golden: two if it can, else one, as the
-      // engine tries them), landing on the next, two ticks from now.
-      function leapOpt(d, span) {
+      // The island hop, as the engine takes it: up over what's right in
+      // front, on over up to LEAP_REACH cells of hurdles, a cell a tick, and
+      // down on the first free cell beyond, the tick after the last (span:
+      // the cells it goes over; down span + 1 moves from now).
+      function leapOpt(d) {
         const golden = me.leaps > 0;
-        if (!trace(d, span + 1)) return null;
-        let over = false;
-        for (let i = 0; i < span; i++) over ||= hurdle(path[i]);
+        let span = 0;
+        for (let x = myHead.x, y = myHead.y; span <= TUNE.LEAP_REACH; span++) {
+          const c = cellAt(x + d.x, y + d.y);
+          if (c < 0) return null; // (never off the board)
+          x = c % N; y = (c - x) / N;
+          path[span] = c;
+          if (!hurdle(c)) break;
+        }
         const land = path[span];
-        if (!over || !free(land)) return null;
-        if (!golden && !trapped && !meal(land, 2)) { // (the plain jump: out of a crash, or onto food, or just short of it)
+        if (!span || span > TUNE.LEAP_REACH || !free(land)) return null;
+        const down = span + 1;
+        const isle = islandGain(land);
+        if (!golden && !boxed && !isle && !meal(land, down)) { // (the plain jump: out of a crash or a box, to an island, or onto food, or just short of it)
           const lx = land % N, past = cellAt(lx + d.x, (land - lx) / N + d.y);
           // (A habit's jump, for its own sake, only where no rival could get
           // to the landing before I'm down: one moving in as I take off and
           // the jump doesn't go, and I crawl into what I meant to hop.)
-          if (!(past >= 0 && meal(past, 3)) && !(habit.jumpAny && reach[framed[land]] > 2)) return null;
+          if (!(past >= 0 && meal(past, down + 1)) && !(habit.jumpAny && reach[framed[land]] > down)) return null;
         }
         let L = me.body.length, g = me.grow;
         if (!golden) for (let n = 0; n < TUNE.LEAP_COST; n++) { if (g > 0) g--; else L--; }
         for (let i = 0; i <= span; i++) { if (g > 0) g--; else L--; L++; }
-        const nb = bodies[2];
+        const nb = bodies[down];
         for (let j = 0; j < L; j++) {
           if (j <= span) { const c = path[span - j]; nb[j].x = c % N; nb[j].y = (c - nb[j].x) / N; }
           else { const b = me.body[j - span - 1]; nb[j].x = b.x; nb[j].y = b.y; }
         }
-        for (let b = 0; b < bugs; b++) bugStep(b, 0, 1, 0, path[0] % N, (path[0] - path[0] % N) / N, otherBug(b, 0)); // (a beetle runs from me in the air, and I come down where it is then)
-        // (It eats where it lands, and a golden leap what it crawls over first.)
-        eatOn(span === 2 && !hurdle(path[0]) ? path[0] : -1, land, -1, L, g, 0.85, 2);
-        bugsOn(1, land % N, (land - land % N) / N);
+        for (let s = 0; s < span; s++) for (let b = 0; b < bugs; b++) bugStep(b, s, s + 1, s, path[s] % N, (path[s] - path[s] % N) / N, otherBug(b, s)); // (a beetle runs from me in the air, and I come down where it is then)
+        eatOn(-1, land, -1, L, g, 0.85, down); // (it eats where it lands)
+        bugsOn(span, land % N, (land - land % N) / N);
         endRisk = risk[land] + strikes[land];
-        const gain = ateGain - 0.6 * endRisk;
-        const score = depth > 2 ? search(nb, ateL, ateG, depth - 2, 2, gain) : evaluate(nb, ateL, ateG, 2) + gain;
+        const gain = ateGain + isle * U - 0.6 * endRisk;
+        const score = depth > down ? search(nb, ateL, ateG, depth - down, down, gain) : evaluate(nb, ateL, ateG, down) + gain;
         uneat();
         return score;
+      }
+
+      // The island a jump reaches, in apples: folded up where I am, with
+      // less free log round me than my length, or no food on it (the strip
+      // the owner saw Gobbler fold up and die on), the free log I'd land on
+      // beyond what I have here, per my length (at most 2), and an apple
+      // more if there's food there and none here. Free log: cells I can
+      // crawl to without crossing a hole, nobody's body on them (counted up
+      // to 3 lengths). 0 where I'm not cramped, the far side is no roomier,
+      // or it's the same log (I could crawl there).
+      function islandGain(land) {
+        const L = me.body.length, cap = 3 * L, headI = myHead.y * N + myHead.x;
+        if (hereFree < 0) { hereFree = landFree(headI, cap); hereFood = landFood; }
+        if (hereFree >= L && hereFood) return 0;
+        const there = landFree(land, cap);
+        if (seen[headI] === stamp || there <= hereFree) return 0;
+        return Math.min(2, (there - hereFree) / L) + (landFood && !hereFood ? 1 : 0);
+      }
+      function landFree(start, cap) {
+        const stampS = ++stamp;
+        seen[start] = stampS;
+        queue[0] = start;
+        let read = 0, write = 1, n = 0;
+        landFood = false;
+        while (read < write && n < cap) {
+          const i = queue[read++];
+          if (myCells[i] !== stampM && mineFree[i] <= 1) n++;
+          if (foodValue[i] > 0) landFood = true;
+          for (let k = 4 * i; k < 4 * i + 4; k++) {
+            const j = nbr[k];
+            if (j < 0 || seen[j] === stampS || holes.has(j)) continue;
+            seen[j] = stampS;
+            queue[write++] = j;
+          }
+        }
+        return n;
       }
 
       // The plain flash: FLASH_LENGTH cells this tick, along the ground, every

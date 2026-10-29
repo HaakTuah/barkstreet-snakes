@@ -33,7 +33,8 @@
  * @typedef {0 | 1} Flag
  * @typedef {[alive: Flag, dir: number, eaten: number, lastAte: number, nextStarve: number, cells: number[], memory: Engine.Memory | 0,
  *   autopilot: Flag, stunUntil: number, burnUntil: number, burnFrom: number, leaps: number, leapArmed: number, dashes: number,
- *   leapReadyAt: number, wrapUntil: number, flight: number, flashReadyAt: number, flashArmed: number, mealMs: number, coughUntil: number]} SnakeRow
+ *   leapReadyAt: number, wrapUntil: number, flight: number, flashReadyAt: number, flashArmed: number, mealMs: number, coughUntil: number,
+ *   land: number, airLeft: number, airGold: Flag]} SnakeRow  land: where a jump in the air comes down (y * 1000 + x; -1: on the ground); airLeft: cells it still flies over
  * @typedef {[x: number, y: number, kind: number, expires: number, zero: 0, dir: number, px: number, py: number, movedAt: number,
  *   scared: Flag, gold: Flag, digUntil: number]} BeetleRow
  * @typedef {[x: number, y: number, kind: number, expires: number, color: string | 0, heat: number, cooked: Flag, owner: number]} MealRow
@@ -86,7 +87,7 @@
  * @typedef {{ t: 'away' | 'back' }} AwayMsg  the page went out of sight, and came back
  */
 window.SnakeOnline = (() => {
-  const VERSION = 16; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's dropped charges (a knocked-out snake's golden jumps and flashes, spilled as a pickup, and the spill)
+  const VERSION = 17; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's island hop (a jump in the air: where it comes down, how many cells it still flies over, golden); 17: round six B's dropped charges (a knocked-out snake's golden jumps and flashes, spilled as a pickup, and the spill)
   const POWERS = ['leap', 'flash', 'unleap'];
   const MAX_PEOPLE = 4;
   // Seat colors for people: the host is green; friends get colors no rival wears.
@@ -149,6 +150,7 @@ window.SnakeOnline = (() => {
         memoryOf(s), s.autopilot ? 1 : 0, s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed,
         s.dashes, s.leapReadyAt, s.wrapUntil, s.flight ? DIR_NAMES.indexOf(dirName(s.flight.dir)) : -1,
         s.flashReadyAt, s.flashArmed, s.mealMs, s.coughUntil ?? -1,
+        s.flight ? s.flight.land.y * 1000 + s.flight.land.x : -1, s.flight ? s.flight.over.length : 0, s.flight?.gold ? 1 : 0,
       ]),
       // A beetle also says which way it faces and where it came from, so it
       // walks on every screen, and until when it's digging in, if it is (it
@@ -290,7 +292,7 @@ window.SnakeOnline = (() => {
     game.time = msg.ms;
     /** @param {unknown} v */
     const num = v => Number.isFinite(v);
-    msg.s.forEach(([alive, dir, eaten, lastAte, nextStarve, cells, memory, autopilot, stunUntil, burnUntil, burnFrom, leaps, leapArmed, dashes, leapReadyAt, wrapUntil, flight, flashReadyAt, flashArmed, mealMs, coughUntil], id) => {
+    msg.s.forEach(([alive, dir, eaten, lastAte, nextStarve, cells, memory, autopilot, stunUntil, burnUntil, burnFrom, leaps, leapArmed, dashes, leapReadyAt, wrapUntil, flight, flashReadyAt, flashArmed, mealMs, coughUntil, land, airLeft, airGold], id) => {
       const s = game.snakes[id];
       if (!s) return;
       s.alive = !!alive;
@@ -307,7 +309,9 @@ window.SnakeOnline = (() => {
       s.dashes = num(dashes) ? dashes : 0;
       s.leapReadyAt = num(leapReadyAt) ? leapReadyAt : 0;
       s.wrapUntil = num(wrapUntil) ? wrapUntil : -1;
-      s.flight = num(flight) && flight >= 0 && DIRS[DIR_NAMES[flight]] ? { dir: DIRS[DIR_NAMES[flight]] } : null;
+      // (In the air: on over airLeft more cells, straight on, then down at land.)
+      const fd = num(flight) && flight >= 0 && num(land) && land >= 0 ? DIRS[DIR_NAMES[flight]] : null, head = cells[0], left = num(airLeft) ? Math.max(0, Math.min(8, airLeft)) : 0;
+      s.flight = fd ? { dir: fd, over: Array.from({ length: left }, (_, i) => ({ x: head % 1000 + fd.x * (i + 1), y: Math.floor(head / 1000) + fd.y * (i + 1) })), land: { x: land % 1000, y: (land - land % 1000) / 1000 }, gold: airGold ? 1 : 0 } : null;
       s.flashReadyAt = num(flashReadyAt) ? flashReadyAt : 0;
       s.flashArmed = num(flashArmed) ? flashArmed : -1;
       s.mealMs = num(mealMs) && mealMs > 0 ? mealMs : s.mealMs; // (for the hunger bar)
