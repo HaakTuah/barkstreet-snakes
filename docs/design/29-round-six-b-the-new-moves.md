@@ -60,6 +60,8 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 **The plain flash cuts.**
 - It still goes 2 cells along the ground. Now, through a body one cell thick, with a free cell beyond, it cuts that body: the part behind the cut falls to beads, food for anyone (its owner chokes on them).
 - It puts out one cell of fire it passes, if it lands clear.
+- **The neck cut** (the owner, 29 October 2026: "Agreed, do it expertly!"): a cut that leaves another snake fewer than 3 segments in front of it puts it out, as a crash at your smallest does. It's the flash's skilled kill: a one-thick spot right behind a moving head, with free log beyond, and a misjudged one hits the head instead, which is a failed flash (a head can't be cut). The same holds for golden cuts. (Cutting your own body still needs 3 to stay in front, so it never puts you out.)
+  - *The lesson:* the first neck cut you see, "Snip! Too short to go on."
 - **A failed flash hurts more** (the owner kept this on purpose: without a risk, everyone flashes all the time, cautious play loses, and Star crushes everyone). A flash that runs into what it can't get through (the edge, a hole, a body two thick, a head) costs 5 segments and a longer stun (both set by simulation; 3 and 4 ticks for a crash).
 - **Its rest is longer:** 10 to 12 s (6 now), set by simulation.
 - *The cue:* the cut is a snip of light across the body and the beads spill; a failed flash is a bigger bonk, with the stars staying longer.
