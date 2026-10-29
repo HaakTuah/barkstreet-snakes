@@ -3,7 +3,7 @@
 
 // ------------------------------------------------------------ the woodpecker
 
-// A great spotted woodpecker, big (about eight cells tall), clinging to the
+// A great spotted woodpecker, big (about eight and a half cells tall), clinging to the
 // log just outside the board: on whichever side of the board has room on
 // this screen, as near as it can to where it's working. It flies in when
 // sudden death starts, the way a woodpecker flies (a few wingbeats, wings
@@ -36,7 +36,7 @@ function setBoardRect(x, y, w, free = null) {
   boardRect.rims = free?.rims || [];
   perches.clear(); drumAt.clear(); birdLayout++; // (its perches and where it drums are worked out again: the room round the board has changed)
 }
-const BIRD_GROW = 1.6; // (times its first size: 1.3 since 2c, 1.6 since 2k, on the board and under it alike)
+const BIRD_GROW = 1.7; // (times its first size: 1.3 since 2c, 1.7 since 2k, on the board and under it alike)
 const BU = CELL * 0.85 * BIRD_GROW; // the bird's unit
 const BILL = [2.55, -1.72]; // its beak tip, in units, before its head moves
 const BIRD_BOX = [-1.15, -2.55, 2.65, 3.2]; // (all of it, round its feet, in units, facing right: its back, crown, beak tip, tail)

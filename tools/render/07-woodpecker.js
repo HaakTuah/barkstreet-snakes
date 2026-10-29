@@ -174,7 +174,7 @@ const promise = await ev(`(() => {
 })()`);
 {
   const { came, one, two, air } = promise;
-  check(came.phase === 'drum' && came.covered > 8 && // (a quarter of the ring and more: since 2k, bigger, its head is over it rather than its body, 10 of 32 at 1.6)
+  check(came.phase === 'drum' && came.covered > 8 && // (a quarter of the ring and more: since 2k, bigger, its head is over it rather than its body, 9 of 32 at 1.7)
     one.phase === 'drum' && JSON.stringify(promise.lands1) === '[[8,11]]' && one.covered === 0 && one.flip !== came.flip && one.beak < 3,
     'drumming, the woodpecker clings clear of a ring where food in its mark will land, if it can',
     `as it came (facing ${came.flip > 0 ? 'right' : 'left'}) it covers ${came.covered} of 32 points round the ring at 8,11; with an apple landing there it faces ${one.flip > 0 ? 'right' : 'left'}, covering ${one.covered}, its beak ${one.beak} units off the spot`);
