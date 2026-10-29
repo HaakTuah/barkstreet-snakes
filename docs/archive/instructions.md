@@ -307,3 +307,9 @@ In the design chat (29 October 2026, 00:00 UTC), on the rivals making no sound w
 > Yes, queue it. Feels strange that there is no sound, when your snake makes loud sound when eating.
 
 (queued as 2d in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, 00:03 UTC), playing:
+
+> I am seeing copycat shy rotten apples twice now, that was within reach. Both were next to the map edge.
+
+(added to 3b in `docs/PROGRESS.md`)

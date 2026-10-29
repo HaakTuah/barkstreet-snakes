@@ -92,6 +92,13 @@ As `docs/design/35-capricious-copycat-and-wildcard.md` describes: Capricious doe
 a shuffled deck, each with its costume and an opening line; Copycat plays as the leader plays, copying a person by what
 they do; Wildcard draws a few strong traits a round and shows them. One PR, or one per rival if that is cleaner.
 
+Haakon (29 October 2026), playing: "I am seeing copycat shy rotten apples twice now, that was within reach. Both were
+next to the map edge." Copycat left an apple it could reach, beside the board's edge, until it rotted. Likely suspects:
+its mimic weight (120) outweighing the pull of food, and the room and margin weights that count an edge cell against a
+move. Copycat's part of 3b fixes it, and first checks with a census whether every rival does it: of the apples that
+rot, how many were within a rival's reach, and how far each was from the edge. A competent snake takes a safe apple by
+the wall ("Clever rivals, human reactions"); one it takes into a dead end doesn't count as safe.
+
 ### 3c. A new rival: the Charmer (Haakon, 29 October 2026; an AI entry, after 2b and 3b)
 
 Haakon (29 October 2026): "add Charmer to the queue, exactly as I have prescribed, with his clingy unique playstyle."
