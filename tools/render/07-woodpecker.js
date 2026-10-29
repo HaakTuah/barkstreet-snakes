@@ -178,7 +178,8 @@ const promise = await ev(`(() => {
     one.phase === 'drum' && JSON.stringify(promise.lands1) === '[[8,11]]' && one.covered === 0 && one.flip !== came.flip && one.beak < 3,
     'drumming, the woodpecker clings clear of a ring where food in its mark will land, if it can',
     `as it came (facing ${came.flip > 0 ? 'right' : 'left'}) it covers ${came.covered} of 32 points round the ring at 8,11; with an apple landing there it faces ${one.flip > 0 ? 'right' : 'left'}, covering ${one.covered}, its beak ${one.beak} units off the spot`);
-  check(two.phase === 'drum' && two.hid.n > 8 && two.over > 0.4 * two.under && air.under === air.of && air.over > 0.8 * air.of,
+  check(two.phase === 'drum' && two.hid.n > 8 && two.over > 0.3 * two.under && // (since 2k its head, its red cap among it, lies over this ring: drawn over red, the ring looks the same)
+    air.under === air.of && air.over > 0.8 * air.of,
     'and where it can’t, the ring it covers is drawn over it, as is a piece in the air under it',
     `rings at ${JSON.stringify(promise.lands2)}: ${two.hid.n} of 32 points at ${two.hid.x},${two.hid.y} under it, ${two.over} of its ${two.under} pixels there drawn over; an apple up in the air over ${air.cell}: ${air.over} of ${air.of} pixels drawn over it`);
 }
