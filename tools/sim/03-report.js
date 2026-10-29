@@ -60,6 +60,7 @@ function report({ per, total, suddenAt }, withCensus) {
     const share = (n, d) => (100 * n / Math.max(1, d)).toFixed(1) + '%';
     console.log(`hunger: before the woodpecker, ${share(c.hungryEarly, c.aliveEarly)} of snake-time in the hunger warning (${share(c.starvingEarly, c.aliveEarly)} starving); after, ${share(c.hungryLate, c.aliveLate)} (${share(c.starvingLate, c.aliveLate)})`
       + ` · meals a snake-minute mid-round (from HUNGER_MID_FROM_MS to the woodpecker) ${(c.mealsMid / Math.max(1e-9, c.midMs / 60000)).toFixed(1)}`);
+    console.log(`mushrooms come back up: ${a(c.mushrooms)} eaten a round, ${a(c.spits)} spat, ${a(c.spitHits)} on a head (${pct(c.spitHits, c.spits)}%), ${a(c.spitLies)} lying on the log`);
     console.log(`beads: ${a(c.beads)} eaten a round, ${share(c.ownBeads, c.beads)} of them by the snake they broke off · own beads squashed ${a(c.chokes)} a round (in ${of(c.chokeRounds)} of rounds)`);
     const chaseT = [...c.chaseTicks].sort((x, y) => x - y), escaped = c.chasesDived + c.chasesDug + c.chasesFlown;
     console.log(`beetles: above ground ${a(c.bugs)} times a round, and then caught ${share(c.bugsCaught, c.bugs)}, down a burrow ${share(c.bugsDived, c.bugs)}, dug in ${share(c.bugsDug, c.bugs)}, flew off ${share(c.bugsFlown, c.bugs)}, eaten by the woodpecker ${share(c.bugsPecked, c.bugs)}`
@@ -90,7 +91,7 @@ function reportCensus(per) {
   console.log('census, each personality (a round played; flashes and jumps a minute alive; golden: golden power food picked up)');
   console.table(Object.keys(per).sort().map(name => {
     const p = per[name], R = Math.max(1, p.rounds), minutes = Math.max(1e-9, p.aliveMs / 60000), f = (n, d = R) => +(n / d).toFixed(2);
-    return { name, rounds: p.rounds, alive: `${Math.round(p.aliveMs / R / 1000)}s`, food: f(p.eaten), kills: f(p.kills), crashes: f(p.crashes), squashed: f(p.chokes),
+    return { name, rounds: p.rounds, alive: `${Math.round(p.aliveMs / R / 1000)}s`, food: f(p.eaten), kills: f(p.kills), crashes: f(p.crashes), squashed: f(p.chokes), shrooms: f(p.shrooms), 'spit hits': f(p.hits), 'hit by': f(p.hitBy),
       'flash/min': f(p.flashes, minutes), 'jump/min': f(p.jumps, minutes), golden: f(p.golden), leaps: f(p.leaps), dashes: f(p.dashes) };
   }));
 }
