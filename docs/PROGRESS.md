@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 2k (PR #170) | On a phone held upright the woodpecker perches over the speed buttons and the chatter, as you asked in 1b++; at 1.3 it already hid a button's label at some spots, and bigger it hides more of their words (taps still pass through it). Keep it so, or should it keep clear of their words (a smaller bird under the board, or perching only between the buttons)? | Kept as 1b++ has it: over the row and the chatter, taps passing through | open |
+| (none open) | | | |
 
 ## The queue, in order
 
@@ -175,6 +175,15 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
 ### 2j. Done: babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time); in `docs/archive/progress-done.md`.
 
 ### 2k. Done: the woodpecker, as big as it gets, 1.7 times (PR #170); in `docs/archive/progress-done.md`.
+
+### 2k+. The woodpecker perches clear of the buttons' words, at 1.7 times (Haakon, 29 October 2026; small, an art lane)
+
+Haakon (29 October 2026), to whether the bird should keep clear of the speed buttons' words on a phone held upright:
+"Keep the bird 1.7x. And agreed with everything else." So it stays 1.7 times everywhere, and on a phone held upright
+it chooses its perch over the row under the board so that no button's word is covered: between two buttons, or over a
+gap or the chatter's empty end, still drumming and pecking the row as 1b++ has it. It never shrinks for this; where no
+perch at that size clears every word, the size wins and it perches as now. The layout suite gets a test that no
+button's label is covered where a clear perch exists; pictures at 390 and 320 pixels.
 
 ### 2l. Flags that bend as a snake goes over them (Haakon, 29 October 2026; small, an art lane beside 2k)
 
