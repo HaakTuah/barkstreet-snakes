@@ -301,3 +301,9 @@ In the design chat (28 October 2026, 23:57 UTC), on a new rival:
 > add Charmer to the queue, exactly as I have prescribed, with his clingy unique playstyle.
 
 (queued as 3c in `docs/PROGRESS.md`; his look and death mark are left for Haakon to give)
+
+In the design chat (29 October 2026, 00:00 UTC), on the rivals making no sound when they eat:
+
+> Yes, queue it. Feels strange that there is no sound, when your snake makes loud sound when eating.
+
+(queued as 2d in `docs/PROGRESS.md`)
