@@ -36,7 +36,7 @@ const flavorEl = $('overlay-flavor'), badgeEl = $('overlay-badge'), opponentsEl 
 const nameRow = $('name-row'), nameRank = $('name-rank'), nameInput = $('name-input');
 const startBtn = $('start'), watchBtn = $('watch');
 const toastEl = $('toast'), speedEl = $('speed'), announcer = $('announcer'), hintEl = $('hint'), helpEl = $('help');
-const pauseBtn = $('pause'), muteBtn = $('mute'), musicBtn = $('music'), chatterBtn = $('chatter-toggle'), chatlogEl = $('chatlog');
+const pauseBtn = $('pause'), muteBtn = $('mute'), musicBtn = $('music'), voicesBtn = $('voices-toggle'), chatterBtn = $('chatter-toggle'), chatlogEl = $('chatlog');
 const recordsEl = $('records'), recordsBody = $('records-body'), resetBtn = $('records-reset');
 const recordsTabs = [...document.querySelectorAll('#records .tab[data-tab]')];
 const filterEl = $('scores-filter'), filterTabs = [...filterEl.querySelectorAll('.tab')];
@@ -67,12 +67,12 @@ const FLAVOR = {
   // (The arrows first: anyone knows them. A click is the mouse's left button on the board. A first-timer's
   // Hall of Fame is empty: the Field guide's key, G, is in its place before a first round, both under the board.)
   hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P naps · Enter starts · G opens the Field guide',
-  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music',
-  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · M mutes · N toggles the music',
+  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
+  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · M mutes · N toggles the music · V the voices',
   hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash',
   hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash · Tap ⏸ to nap',
   // Watching (Watch AIs, or after you're out): nothing of yours to steer.
-  hintWatch: '1, 2, 4 set the speed · P naps · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music',
+  hintWatch: '1, 2, 4 set the speed · P naps · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
   hintWatchTouch: 'The speed buttons set 1×, 2× or 4× · Tap ⏸ to nap',
   rivals: ['Your rivals today:', 'Up on the log with you:', 'Sharing your bark:'],
   spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
@@ -89,7 +89,6 @@ const FLAVOR = {
   hole: ['The woodpecker sends its regards.', 'Mind the gap.', 'The woodpecker missed you. Its hole didn’t.'],
   pecked: ['The woodpecker didn’t miss.', 'Rat-a-tat. That was you.'],
   starved: ['Should have eaten something.', 'Hunger always wins in the end.', 'All slither, no snacks.'],
-  starvedCoughing: ['Food right there, and you mid-cough.', 'Choked on your own tail, then starved. Rough day.'], // (out of time while coughing: what you reached rolled aside)
   fire: ['Too hot to handle.', 'You found the fire. The hard way.', 'Lightning never strikes twice. It didn’t need to.', 'Burned to a crisp. A small crisp.'],
   // The weather, as it turns (no banner when it clears).
   weather: {
@@ -118,8 +117,7 @@ const FLAVOR = {
   youAtThree: ['Down to\u00a03. One more crash and you’re out.', 'At\u00a03 now. The next crash is the last.'],
   youAlight: ['On fire: 3 bites of tail, and at\u00a03 it ends you. Rain helps.', 'Burning, and losing bits of you. At\u00a03 it ends you.'],
   youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
-  youChoke: 'You choke on your own tail!', // (your own beads: spat aside, and a cough)
-  youCoughing: 'No eating while you cough: food rolls aside.', // (true whenever it shows: a lesson may wait out the cough)
+  youSquash: 'Squashed! Your own tail feeds nobody.', // (round six B: your first own bead squashed)
   youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it comes, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
   youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near enough your head to catch: see DIG_NEAR)
   digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log, once the dig's own lesson is told)

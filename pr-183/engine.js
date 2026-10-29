@@ -39,9 +39,8 @@ window.SnakeEngine = (() => {
     const body = Array.from({ length: T.START_LENGTH }, (_, k) => ({ x: spawn.x - d.x * k, y: spawn.y - d.y * k }));
     return {
       id, body, dir: d, alive: true, grow: 0, eaten: 0, pellets: 0, lastAte: 0, ateTick: -1, nextStarve: T.HUNGER_MS, mealMs: T.HUNGER_MS, // (mealMs: how long its last meal keeps it, for the hunger bar)
-      // stunUntil: the tick it moves again after a crash; burnUntil, burnFrom: on fire (from, until);
-      // coughUntil: the tick it can eat again after choking on its own bead (see eat)
-      stunUntil: -1, burnUntil: -1, burnFrom: -1, coughUntil: -1,
+      // stunUntil: the tick it moves again after a crash; burnUntil, burnFrom: on fire (from, until)
+      stunUntil: -1, burnUntil: -1, burnFrom: -1,
       // Powers. leaps: golden leaps held (golden beetles); dashes: golden
       // flashes held (golden leaves); both can be held at once. leapReadyAt,
       // flashReadyAt: when it can next jump, or flash, plainly (game time);
@@ -1020,7 +1019,6 @@ window.SnakeEngine = (() => {
         id: s.id, body: s.body.map(c => ({ x: c.x, y: c.y })), dir: s.dir,
         stun: Math.max(0, s.stunUntil - game.tick), leaps: s.leaps, // (all of it shows: stars, pips, a gold outline, cough puffs...)
         dashes: s.dashes, wrap: Math.max(0, s.wrapUntil - game.time), air: s.flight ? 1 + s.flight.over.length : 0, land: s.flight ? key(s.flight.land.x, s.flight.land.y) : -1, // (in the air: how many ticks till it's down, and where)
-        cough: Math.max(0, s.coughUntil - game.tick),
       })),
       holes: game.holes.size,
       // (Fire, crackling, smouldering or burning, and the woodpecker's next patch: keep out.)
@@ -1078,8 +1076,6 @@ window.SnakeEngine = (() => {
         leaps: snake.leaps, dashes: snake.dashes, wrap: Math.max(0, snake.wrapUntil - game.time), leapIn: leapIn(game, snake), flashIn: flashIn(game, snake),
         // (who it just met head-on, if it was in the last 3 s or so: it keeps clear of them for a while)
         bumped: snake.bumpedBy && game.tick - snake.bumpedBy.tick < 30 ? snake.bumpedBy.id : -1,
-        // (how many of its next moves eat nothing: it's coughing, after choking on its own bead)
-        coughIn: Math.max(0, snake.coughUntil - game.tick),
       },
       others: snap.snakes.filter(o => o.id !== snake.id),
       food: game.food, // (as it is: it only changes on a tick, so thinking ahead sees what the tick would)
@@ -1138,8 +1134,7 @@ window.SnakeEngine = (() => {
   // Advance one tick. All snakes move at the same time. Returns the snakes that died.
   // game.events lists what happened this tick, for the chatter, sounds and banners:
   // { type: 'eat', snake, kind, x, y, color, cooked, gold } | { type: 'death', snake } | { type: 'spawn', kind, x, y }
-  // | { type: 'choke', snake, x, y, tx, ty } (its own bead at x, y: spat to tx, ty (x, y if it stays), and it coughs)
-  // | { type: 'nudge', snake, kind, x, y, tx, ty } (food its coughing head reached, rolled aside; a beetle scurries)
+  // | { type: 'squash', snake, x, y } (its own bead at x, y: squashed under its head, food for nobody)
   // | { type: 'crash', snake, x, y, cause, killer, killerId, lost } (it bounced, lost `lost` segments, and is stunned)
   // | { type: 'leap', snake, x, y, gold, reach } (it took off over the cell x, y; reach: the cells it flies over, a tick each, landing the tick after)
   // | { type: 'dash', snake, x, y, n, plain } (it went n cells from x, y: plain 1, a flash; else a golden dash) | { type: 'douse', x, y } (a dash put a fire out)
@@ -1179,7 +1174,7 @@ window.SnakeEngine = (() => {
     // Everyone decides, except the stunned: they stay put (and can steer meanwhile).
     const moving = [], fallback = new Map(), held = new Map(); // (fallback: the auto-turn, for a power asked for over a crash that may not go after all; held: a flash there that can't go, and why)
     for (const s of alive) {
-      s.tailMoves = false; s.air = false; s.landing = false; s.boom = false; s.failed = false; s.passed = null; s.from = null;
+      s.tailMoves = false; s.air = false; s.landing = false; s.boom = false; s.failed = false; s.passed = null;
       if (s.stunUntil > game.tick) { s.next = null; continue; }
       let land = null;
       if (s.flight?.over.length) { // in the air: on over the next cell it hops, a cell a tick (turns wait till it's landed)
@@ -1568,7 +1563,7 @@ window.SnakeEngine = (() => {
     const owner = c => leavingNow(game, c.x, c.y) ? null : game.snakes.find(o => o.alive && o.body.some(b => b.x === c.x && b.y === c.y));
     if (!inside(first.x, first.y) || game.holes.has(key(first.x, first.y))) return 'landing';
     let c = first, n = 0;
-    for (let o; inside(c.x, c.y) && (o = owner(c)); n++, c = ahead(game, s, c.x, c.y, s.dir)) if (o.body[0].x === c.x && o.body[0].y === c.y) return 'landing'; // (a head: it can't be cut)
+    for (let o; inside(c.x, c.y) && (o = owner(c)); n++, c = ahead(game, s, c.x, c.y, s.dir)) if ((o.body[0].x === c.x && o.body[0].y === c.y) || (!golden && game.holes.has(key(c.x, c.y)))) return 'landing'; // (a head: it can't be cut; nor, by a plain flash, a body over a hole)
     return n && (n > (golden ? T.DASH_THICK : T.FLASH_THICK) || !inside(c.x, c.y) || game.holes.has(key(c.x, c.y))) ? 'landing' : null;
   }
   // Is (x, y) a tail end that moves on this very tick (its snake moving, not
@@ -1820,7 +1815,8 @@ window.SnakeEngine = (() => {
         span[0].c = c;
         const clear = span.length <= thick && inside(past.x, past.y) && !game.holes.has(key(past.x, past.y));
         if (!clear || span.some(x => x.j === 0) || (!gold && span.some(x => game.holes.has(key(x.c.x, x.c.y))))) { p.solid[i] = true; p.fail = true; break; } // (a head can't be cut; nor what's too thick, or with nothing free beyond)
-        for (const x of span) { // (one cut a snake, nearest its head)
+        for (const [k, x] of span.entries()) { // (one cut a snake, nearest its head, among the cells it reaches: one lying beyond its reach is only what it can't go on through)
+          if (i + k >= n) break;
           const was = p.cuts.find(y => y.o === x.o && y.i === i);
           if (was && was.j <= x.j) continue;
           if (was) p.cuts.splice(p.cuts.indexOf(was), 1);
@@ -1892,7 +1888,6 @@ window.SnakeEngine = (() => {
       for (let n = 0; n < T.FLASH_COST; n++) trim(s);
     }
     const from = s.body[0], last = p.cells.length - 1;
-    s.from = s.body.slice(0, 2); // (where it set off, for food it knocks aside on the way: see eat)
     for (let i = 0; i < last; i++) {
       advance(s, p.cells[i]);
       (s.passed ||= []).push(p.cells[i]); // (food on the way: eaten after everyone's moved, with what its head finds)
@@ -1947,38 +1942,22 @@ window.SnakeEngine = (() => {
 
   // Every living head that moved onto food eats it (not in the air), and a
   // dash eats what was on the cells it passed. But not its own beads (the
-  // tail a crash knocked off, or a cut took): it chokes on one, spits it
-  // aside (it stays food for anyone else) and coughs for COUGH_TICKS, eating
-  // nothing; food its coughing head reaches is nudged aside, out in the open
-  // (left under it, no one else could see it, and it would wait there for
-  // the cougher). More of its own beads met while it coughs are only nudged:
-  // a cough never chains. Where things roll is a rule (see rollSide). (A
-  // starving snake that chokes, or coughs, on the tick it runs out isn't
+  // tail a crash knocked off, or a cut took): its head squashes one, at
+  // once and for nothing (round six B: food for nobody, so chasing your own
+  // beads denies them to everyone else). Nothing is pushed aside. (A
+  // starving snake that squashes a bead on the tick it runs out isn't
   // saved: it ate nothing.)
   function eat(game) {
-    const room = (x, y) => foodRoom(game, x, y), past = (x, y) => foodPast(game, x, y);
     for (const s of game.snakes) {
       if (!s.alive) continue;
       const moved = s.stunUntil <= game.tick || s.landing; // (a crash, or a stun: its head is where it was, and found nothing new; but a jump whose landing was taken came down on what it hopped)
       const cells = s.air || !moved ? s.passed || [] : s.passed ? [...s.passed, s.body[0]] : [s.body[0]]; // (in the air: not what's under its head)
-      for (let n = 0; n < cells.length; n++) {
-        const c = cells[n], i = game.food.findIndex(f => f.x === c.x && f.y === c.y);
+      for (const c of cells) {
+        const i = game.food.findIndex(f => f.x === c.x && f.y === c.y);
         if (i < 0) continue;
-        const f = game.food[i], coughing = game.tick < s.coughUntil;
-        if (!coughing && !(f.kind === 'pellet' && f.owner === s.id)) { consume(game, s, game.food.splice(i, 1)[0], c.x, c.y); continue; }
-        // (where its head came from: a power's way across the board this tick, or its body)
-        const to = rollSide(game, s.from ? { body: [...cells.slice(0, n + 1).reverse(), ...s.from], dir: s.dir } : s, c.x, c.y, room, past) || c;
-        if (coughing) {
-          game.events.push({ type: 'nudge', snake: s, kind: f.kind, x: c.x, y: c.y, tx: to.x, ty: to.y });
-          if (f.kind === 'beetle' && to !== c) { // (a beetle scurries off, out of any hole it was digging)
-            f.px = c.x; f.py = c.y; f.dir = CRAWL.find(d => d.x === Math.sign(to.x - c.x) && d.y === Math.sign(to.y - c.y)); f.movedAt = game.tick; f.scared = true; // (the way it ran, a cell or, rolled on over food, a few)
-            delete f.digUntil;
-          }
-        } else {
-          s.coughUntil = game.tick + T.COUGH_TICKS;
-          game.events.push({ type: 'choke', snake: s, x: c.x, y: c.y, tx: to.x, ty: to.y });
-        }
-        f.x = to.x; f.y = to.y;
+        const f = game.food.splice(i, 1)[0];
+        if (f.kind === 'pellet' && f.owner === s.id) game.events.push({ type: 'squash', snake: s, x: c.x, y: c.y });
+        else consume(game, s, f, c.x, c.y);
       }
     }
   }

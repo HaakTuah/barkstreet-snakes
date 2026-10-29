@@ -107,8 +107,7 @@ function news(dying) {
     if (e.type === 'death' && e.snake.fatal === 'cut' && newsFree() && once('neckCut')) return toast(FLAVOR.neckCut, 2400, 'warn', 'lesson'); // (the first neck cut you see, anyone's)
     if (e.type === 'dig' && me?.alive && Math.abs(me.body[0].x - e.x) + Math.abs(me.body[0].y - e.y) <= DIG_NEAR && newsFree() && once('dig')) return toast(FLAVOR.youDig, 2600, 'beetle', 'lesson'); // (it's over in a second: shown now or kept for the next one, never left waiting)
     if (!me || !isMe(e.snake || {}) && e.by !== me.id) continue; // (the rest is about you)
-    if (e.type === 'choke' && once('choke')) return toast(FLAVOR.youChoke, 2600, 'you', 'lesson');
-    if (e.type === 'nudge' && once('nudge')) return toast(FLAVOR.youCoughing, 2600, 'you', 'lesson');
+    if (e.type === 'squash' && once('squash')) return toast(FLAVOR.youSquash, 2600, 'you', 'lesson');
     if (e.type === 'eat' && e.gold) { flashFrame('gold', true); return toast(FLAVOR.youGoldBeetle(e.snake.leaps), 3000, 'gold', 'lesson'); }
     if (e.type === 'eat' && e.kind === 'leaf') { flashFrame('gold', true); return toast(FLAVOR.youLeaf(e.snake.dashes), 3200, 'gold', 'lesson'); }
     if (e.type === 'eat' && e.kind === 'goldcap') { flashFrame('gold', true); return toast(FLAVOR.youGoldcap(Math.round((me.wrapUntil - theGame.time) / 1000)), 3000, 'gold', 'lesson'); } // (a second one adds to the first: the real total)

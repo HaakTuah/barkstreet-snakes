@@ -290,7 +290,7 @@ function killLine(p) {
   if (p.fatal === 'boom' || /blew up/.test(p.cause)) return pick(FLAVOR.boom);
   if (p.fatal === 'pecked') return pick(FLAVOR.pecked);
   if (/woodpecker hole/.test(p.cause)) return pick(FLAVOR.hole);
-  if (p.killer === 'hunger') return pick(p.diedAt < p.coughUntil ? FLAVOR.starvedCoughing : FLAVOR.starved);
+  if (p.killer === 'hunger') return pick(FLAVOR.starved);
   if (p.killer === 'fire') return pick(FLAVOR.fire);
   return pick(p.killer === 'self' ? FLAVOR.self : FLAVOR.wall); // (the card's fact line already says why: boxed in, or at your smallest)
 }
@@ -299,11 +299,17 @@ function killLine(p) {
 
 // Sounds come from where they happen on the board, a little left or right.
 const at = x => ({ pan: ((x + 0.5) / GRID_SIZE * 2 - 1) * 0.8 });
+// A rival's bubble: a burble in its own voice, quieter the tighter it is for
+// you (SnakeAudio's babble keeps it from ever distracting). Your own snake's
+// lines, and a friend's online, stay silent: they have no voice of their own.
+Chatter.onBubble((s, text) => {
+  if (isMe(s) || !s.persona || !s.body?.length) return;
+  Sound.play('babble', { voice: s.personaKey, chars: text.length, tight: state === 'running' ? dangerNow : 0, ...at(s.body[0].x) });
+});
 // The sound of each thing you eat (anything else is an apple).
 const EAT_CUES = { goldcap: 'wrap', golden: 'golden', leaf: 'leaf', pellet: 'meat', mushroom: 'mushroom', beetle: 'crunch' };
 // Apples eaten in quick succession climb a scale: a streak you can hear.
 let streak = 0, streakAt = -1e9;
-const GAG_TO_COUGH = 2; // ticks from a choke's gag to its cough
 // The snake whose head is nearest a cell (the one a beetle there is fleeing, as the engine reckons it).
 function cornering(x, y) {
   let near = null, gap = Infinity;
@@ -375,10 +381,8 @@ function sounds(dying, wasAlive) {
     else if (e.type === 'baked') Sound.play('bake', at(e.x));
     else if (e.type === 'ash') Sound.play('ash', at(e.x));
     else if (e.type === 'cut') Sound.play('snip', at(e.x));
-    else if (e.type === 'choke') { // (a gag and a spit; its cough follows, below)
-      Sound.play('choke', { rival: !isMe(e.snake), ...at(e.x) });
-      const heard = (theGame.coughs ||= new Map()), c = heard.get(e.snake.id);
-      if (!c || c.until !== e.snake.coughUntil) heard.set(e.snake.id, { at: theGame.tick + GAG_TO_COUGH, until: e.snake.coughUntil }); // (once a cough: a bead spat while it coughs doesn't start another)
+    else if (e.type === 'squash') { // (your own bead, squashed)
+      Sound.play('squash', { rival: !isMe(e.snake), ...at(e.x) });
       if (isMe(e.snake)) streakAt = -1e9; // (no meal: the apples' scale starts again)
     }
     else if (e.type === 'leap') Sound.play('leap', { rival: !isMe(e.snake), gold: !!e.gold, ...at(e.x) });
@@ -391,13 +395,6 @@ function sounds(dying, wasAlive) {
   // from where it ate, never with the streak's climb (that's yours); one at a
   // time, giving way to yours (Audio's CHOMPS).
   for (const e of fed) Sound.play(EAT_CUES[e.kind] || 'eat', { rival: true, gold: !!e.gold, ...at(e.x) });
-  // A choke's cough, a beat after its gag.
-  if (theGame.coughs) for (const [id, c] of theGame.coughs) {
-    if (c.at == null || theGame.tick < c.at) continue;
-    c.at = null;
-    const s = theGame.snakes[id];
-    if (s?.alive) Sound.play('cough', { rival: !isMe(s), ...at(s.body[0].x) });
-  }
   for (const s of dying) if (/blew up/.test(s.cause)) Sound.play('boom', at(s.body[0].x));
   for (const s of dying) {
     if (isMe(s)) continue;
