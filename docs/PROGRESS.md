@@ -97,6 +97,8 @@ apple it needs. Build it from the cause, in the one template every rival shares:
 
 ### 2g. Done: the meal goes down (PR #146); in `docs/archive/progress-done.md`.
 
+### Fix. Done: the layout suite's screen-awake checks no longer hang on the machine's speed (PR #161): the section holds the round's loop still, so your snake can't crash on its own between steps on a slow machine. (`scripts/test.sh` exits 1 on a failure; piped through `tail`, use `set -o pipefail`.)
+
 ### 2h. The endgame: eat what keeps you alive, not what boxes you in (Haakon, 29 October 2026; an AI entry, after 2b)
 
 Haakon (29 October 2026): "snakes should maybe avoid food more with the woodpecker about? I see snakes gorging on the
