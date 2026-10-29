@@ -3,18 +3,9 @@
 What is done and what comes next, in order (how to work through it: `CLAUDE.md`). Mark an item done here, with its PR,
 when it is merged into `develop`; add Haakon's new tasks where he places them, with his words quoted.
 
-## State (27 October 2026)
+## State
 
-Queue item 3, the fixes and polish from the owner's playtest, is under way: "Burrows grow shut" (PR #49), "The
-outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57), "Hunger where your eyes are" (PR #66), "Rainbows, the follow-ups" (PR #68), "The phone gap" (PR #70) "Desktop chatter" (PR #72), "Wildcard's hair" (PR #74) and "Copycat's face" (PR #78), "Rival line-up" (PR #86), "The lobby shows the line-up" (PR #116), "Last words on phones" (PR #124), the head-to-head mode in `tools/abtest.js` (PR #80) and "Hunters miss easy pins" (PR #81) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
-#48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages). The previews wait
-on one setting: Pages still serves `main` (every "pages build and deployment" run so far has built `main`), so the
-preview links in PRs do not open until Haakon switches Pages to "Deploy from a branch: gh-pages, / (root)". Everything
-through PR #52 is in `main` (milestone #53); since 27 October the builder merges the develop-to-main PR itself
-("Standing instructions" in `CLAUDE.md`). input-test failed 4 checks in 1 of 5 runs after #35's build; #38's fix of the
-lessons block is probably that flake. Watch for it.
-
-The plan and history that led here are in `docs/archive/plan-history.md`.
+The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
 ## For Haakon
 
@@ -27,17 +18,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 ## The queue, in order
 
-### 1 and 1b. Done: cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46); in `docs/archive/progress-done.md`.
-
-### 1b+. Done: Wildcard's hair, again (PR #107); in `docs/archive/progress-done.md`.
-
-### 1b+++. Done: Wildcard's hair, Trump's (PR #110); in `docs/archive/progress-done.md`.
-
-### 1b++. Done: the phone's bottom (PR #112); in `docs/archive/progress-done.md`.
-
-### 1c. Done: the big test files split (PRs #95, #96, #97, #100, #102, #103, #104); in `docs/archive/progress-done.md`.
-
-### 2. Done: types for the multiplayer messages (PR #48); in `docs/archive/progress-done.md`.
+**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)).
 
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
@@ -137,18 +118,6 @@ apple it needs. Build it from the cause, in the one template every rival shares:
   meant to move (Gobbler's food share up; Desperado's skims and risks up, its survival not collapsing). "No refuges" and
   "Clever rivals, human reactions" stand: better choices, never faster reactions.
 
-### 2c. Done: the woodpecker, 1.3 times (PR #139); in `docs/archive/progress-done.md`.
-
-### 2d. Done: rivals' chomps (PR #150); in `docs/archive/progress-done.md`.
-
-### 2e. Done: the woodpecker pecks beside a snake, not on it (PR #141); in `docs/archive/progress-done.md`.
-
-### 2f. Done: Wildcard's hair, lacquered (PR #144, version F); in `docs/archive/progress-done.md`.
-
-### 2f+. Done: Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85); in `docs/archive/progress-done.md`.
-
-### 2g. Done: the meal goes down (PR #146); in `docs/archive/progress-done.md`.
-
 ### Fix. Done: the layout suite's screen-awake checks no longer hang on the machine's speed (PR #161): the section holds the round's loop still, so your snake can't crash on its own between steps on a slow machine. (`scripts/test.sh` exits 1 on a failure; piped through `tail`, use `set -o pipefail`.)
 
 ### 2h. The endgame: eat what keeps you alive, not what boxes you in (Haakon, 29 October 2026; an AI entry, after 2b)
@@ -188,34 +157,6 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
 - **Measured:** starving reaches about 5 to 8% of deaths overall, more in lean rounds; the spread of round lengths and
   of deaths by cause widens, per season; per-rival wins within noise overall; every trademark kept; no refuges.
 - **Online:** the host draws the season and sends it; a protocol bump.
-
-### 2j. Done: babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time); in `docs/archive/progress-done.md`.
-
-### 2k. Done: the woodpecker, as big as it gets, 1.7 times (PR #170); in `docs/archive/progress-done.md`.
-
-### 2k+. Done: the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191); in `docs/archive/progress-done.md`.
-
-### 2l. Done: flags that bend as a snake goes over them (PR #186); in `docs/archive/progress-done.md`.
-
-### 2m. Beetles and the woodpecker (Haakon, 29 October 2026; a small engine entry, between item 5's parts 3b and 4)
-
-Haakon (29 October 2026): "Beetles should quickly try to escape down their burrow when woodpecker targets their little
-"island". And it seems almost no new burrows appear as the woodpecker destroy the old ones. Also, if the woodpecker
-takes out the tiles under the beetles, they just teleport now." Three fixes, found in the code:
-- **Burrows run out:** a pecked burrow becomes a hole and is gone, and new ones open only when a new beetle comes out or
-  one digs in. But an underground beetle with no free burrow waits (`crawl`: `if (!b) continue`) until it expires,
-  still counting toward `BEETLE_MAX`, so no new beetle comes out and no new burrow opens. Fix: an underground beetle
-  with no free burrow cracks a new one open where it's quiet, by the rule `beetleOut` uses (`BURROW_SPACING`,
-  `BURROW_MAX`), so burrows keep up with the woodpecker, on the islands that remain.
-- **They flee the beak:** the woodpecker's target is shown ahead (its rings), so a beetle on a targeted patch, or with
-  one between it and safety, treats it as danger as it treats a head: it scurries for a burrow within reach and dives
-  in, else off the patch, else digs in (a dig there is underground before the strike, and comes up elsewhere).
-- **No teleporting:** today a beetle still on a pecked cell is moved to a landing cell at once (`knocks`, then `f.x =
-  to.x`). Instead, a beetle still under the beak when it strikes is eaten by the woodpecker, a gulp, as woodpeckers do
-  (the bird already eats food with nowhere to go); it had the rings' warning to run.
-- The rivals see beetles flee the beak and plan their chase with it; the census counts burrows open over a round,
-  beetles eaten by the bird, and escapes, before and after. Its lesson: the first time, "The woodpecker eats beetles
-  too!", with a Field guide line under Beetles.
 
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
