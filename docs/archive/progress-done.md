@@ -308,6 +308,28 @@ arent distracting! That would be a real turn off!"
 
 Done (PR #162): the `babble` cue in `audio.js`, a voice per rival but Mute (`BABBLERS`), under a seventh of your apple's pluck and half that in a tight spot, at most 0.5 s, one every 4 s at most, none within 0.7 s of your own sounds; the Voices switch under the board between rounds, V at any time, remembered as `barkbite-voices`, on by default. Haakon (29 October 2026): "No, just merge them, then we will adjust if it is distracting." See "Rivals' babble" in `docs/design/21-sound.md`.
 
+### 2k. The woodpecker, as big as it can get away with (Haakon, 29 October 2026; small, an art lane): done, PR #170
+
+Haakon (29 October 2026): "I think the woodpecker should be even bigger". Then, when the design session asked for a
+simulation check: "How should a visual change alter the actual game in any way?" It can't: the bird's size is one
+drawing constant (`BU` in `render/bird.js`), while the rules peck by target cells (`game.woodpecker`), so no
+simulation is run for it. And then: "Maybe make it as big as you can get away with without it falling out of the
+screen, or being pushed onto the gameplay screen when not pecking, or anything."
+- **The biggest that passes every check,** found by trying sizes up from 1.3, not guessed: one size wherever the screen
+  has room for it, as 2c set, and on screens with less room the biggest each of its perches allows (the perches
+  already shrink it, `PERCH_MIN_PX` and `PERCH_FLOOR_PX`; they keep doing so, from the new size).
+- **The checks,** at a 390-pixel phone held upright and on its side, a tablet both ways and desktop: all of it stays on
+  the screen, in every pose and flight (crouching, its tail, its wings open); perched, it never reaches onto the board,
+  nor over the buttons' words or the chatter; drumming, it hides no food, no head and none of the tiles it is about to
+  peck beyond what it hides at 1.3; and nothing else on the page moves to make room for it. The layout suite gets a
+  test for each check, so a later change can't break them.
+- The PR shows 1.3 beside the new size on each of those screens, perched, flying and drumming, says the size it found
+  and what stopped it growing further, and merges once the render and layout suites pass.
+
+Done (PR #170): 1.7 times its first size, one size wherever the screen has room (132 px on a 390×844 phone, from 101;
+drumming 259 px on a 1280×800 laptop, from 198); at 1.8 an iPhone SE held upright no longer fits it whole under the
+board. Drawing only: no simulation. See "The woodpecker, as big as it gets" in `docs/design/32-the-owners-playtest.md`.
+
 ## Item 3, done
 
 From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
