@@ -260,10 +260,8 @@ function drawBody(s, a, now, dead) {
   ctx.rotate((a.star ? a.face : a.turn) + lean); // (and stunned, its wobble: see prepare)
   const faceScale = 1.1 * (1 + a.bump) * (1 + a.swell);
   ctx.scale(faceScale * (1 - 0.22 * a.squash), faceScale * (1 + 0.12 * a.squash)); // (come down from a jump: squashed along the way it's going, a moment)
-  if (!dead) gagCheeks(a, fills[0], now); // (choking on its own bead: a quick puff of its cheeks)
   if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
   else drawFace(s, look, color, blinking, a);
-  if (!dead && a.coughing) drawCough(a, now); // (and then its cough)
   if (!dead && a.growl) drawGrowl(a, now); // (hungry, in the warning's seconds: its growl)
   ctx.restore();
 

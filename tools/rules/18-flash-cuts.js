@@ -32,7 +32,7 @@ function cutScene(personas, bodies, { holes = [], food = [] } = {}) {
   check('boxed in a pocket of its own body, every rival drops its tail and gets out', Object.values(drops).every(v => v === 'dropped'), JSON.stringify(drops));
 }
 
-{ // A rival lying one thick across the way, a long tail behind the cut and open log beyond: the hunters cut it.
+{ // A rival lying one thick across the way, a long tail behind the cut and open log beyond: the hunters cut their target.
   const wall = Array.from({ length: 16 }, (_, i) => [8, 4 + i]); // (heading up, its head at (8,4): (8,10) is its seventh segment)
   const cuts = {};
   for (const key of ['sniper', 'mute', 'vulture', 'creeper', 'drab']) {
@@ -41,6 +41,7 @@ function cutScene(personas, bodies, { holes = [], food = [] } = {}) {
       const g = cutScene([key, 'drab'], [[line(6, 10, 5), 'right'], [wall, 'up']]);
       const [s, o] = g.snakes;
       o.isPlayer = true; o.persona = null; o.queue = []; // (it goes straight on: a person not pressing)
+      s.memory.victimId = o.id; // (the hunters' target: Sniper cuts off its target)
       for (let t = 0; t < 3 && s.alive; t++) { quiet(g); if (g.events.some(e => e.type === 'cut' && e.by === s.id && e.snake === o)) { n++; break; } }
     }
     cuts[key] = n;

@@ -25,7 +25,6 @@ let enabled = true, compact = false, logShown = true, listener = null;
 let lastAny = -Infinity, lastSaid = {}, seen = {}, lastLine = null, pendingReply = null, saidAt = {};
 let struck = false; // (lightning has struck in this storm: one remark is enough)
 let pendingAnswer = null, answeredAt = -Infinity; // (an answer to Star's showing off, on its way; the last one)
-const rolled = []; // food a choking or coughing snake knocked aside, oldest first: { x, y, beetle, by, at } (see windfall)
 const digs = [];   // beetles digging in: { x, y, until, hunter } (see gotAway)
 const knocked = []; // food the woodpecker knocked aside, oldest first: { x, y, beetle, near, at } (see served)
 const LINE_REST = 45000; // a snake doesn't say the same line again within this much game time
@@ -37,13 +36,10 @@ const LAND_ROT_REST = 30000;  // food rotting in Sovereign's realm or Colonist's
 const DESPERATE_REST = 30000; // starving soon (it can come and go as it eats a little)
 const FLASH_REST = 30000;     // its own plain flashes (everyone flashes, about four times a minute)
 const NEAR_FOOD = 5;          // food that rots or burns this near its head (cells, and nearer than anyone's) was food it was after
-const CHOKE_REST = 20000;     // choking on its own bead (it can come again as soon as the cough's over)
-// Food a choking or coughing snake knocks aside lies in the open, for
-// anyone: whoever else eats it within WINDFALL_MS thanks the cougher,
-// cheekily, now and then (WINDFALL_CHANCE), and at most every WINDFALL_REST.
-// (A beetle nudged aside scurries off, so one caught within BEETLE_ROAM
-// cells of where it went counts.)
-const WINDFALL_MS = 6000, WINDFALL_CHANCE = 0.5, WINDFALL_REST = 30000, BEETLE_ROAM = 4;
+const CHOKE_REST = 20000;     // squashing its own bead (its 'choke' lines, from when it choked on them)
+// (Food knocked aside and run off with: a beetle scurries on, so one caught
+// within BEETLE_ROAM cells of where it went counts.)
+const BEETLE_ROAM = 4;
 // A cornered beetle digs in where it is, and is gone under the bark a
 // moment later unless someone catches it first. One that gets away was
 // the snake's that cornered it (the nearest head as it started, within the
@@ -176,7 +172,7 @@ function reset(g) {
   chatGame = g;
   lastAny = -Infinity; lastSaid = {}; seen = {}; lastLine = null; pendingReply = null; saidAt = {}; struck = false;
   pendingAnswer = null; answeredAt = -Infinity;
-  rolled.length = 0; digs.length = 0; knocked.length = 0;
+  digs.length = 0; knocked.length = 0;
   toldThisRound.clear();
   clearBubbles();
   logEl.textContent = '';

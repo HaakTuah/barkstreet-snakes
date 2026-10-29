@@ -103,7 +103,7 @@ check(ahead.growReady && ahead.changed > 0 && ahead.nGrow === 0, 'with the land 
 const guide = await ev(`(() => {
   seeds(46);
   const out = {};
-  for (const k of ['apple', 'golden', 'mushroom', 'goldcap', 'leaf', 'beetle', 'goldbeetle', 'pellet', 'roast', 'baked', 'jump', 'flash', 'wrap', 'held', 'rests', 'hole', 'fire', 'land', 'choke', 'lostflag', 'cough', 'dig', 'knock', 'basic-win', 'basic-steer', 'basic-crash', 'basic-hunger']) {
+  for (const k of ['apple', 'golden', 'mushroom', 'goldcap', 'leaf', 'beetle', 'goldbeetle', 'pellet', 'roast', 'baked', 'jump', 'flash', 'wrap', 'held', 'rests', 'hole', 'fire', 'land', 'squash', 'cut', 'failflash', 'lostflag', 'dig', 'knock', 'basic-win', 'basic-steer', 'basic-crash', 'basic-hunger']) {
     const c = R.guideSprite(k, 72), d = c.getContext('2d').getImageData(0, 0, 72, 72).data;
     let ink = 0, sky = 0, ember = 0;
     for (let i = 0; i < d.length; i += 4) {

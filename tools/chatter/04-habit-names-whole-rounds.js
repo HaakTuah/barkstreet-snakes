@@ -72,13 +72,12 @@
 {
   let total = 0, rounds = 0;
   const per = {};
-  // (Chokes and what coughs knocked aside, beetles that dug in and got away, and food the woodpecker knocked aside, as the engine has them, and the lines for them.)
+  // (Squashed beads, beetles that dug in and got away, and food the woodpecker knocked aside, as the engine has them, and the lines for them.)
   const chokeLines = new Set(Object.values(VOICES).flatMap(v => v.choke || []));
   const esc = s => s.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
-  const thanks = Object.values(VOICES).flatMap(v => v.windfall || []).map(l => new RegExp(`^${l.split('{who}').map(esc).join('.+')}$`));
   const dugLines = new Set(Object.values(VOICES).flatMap(v => v.dug || []));
   const grumbles = Object.values(VOICES).flatMap(v => v.knocked || []).map(l => new RegExp(`^${l.split('{who}').map(esc).join('.+')}$`));
-  let chokes = 0, knocked = 0, choked = 0, thanked = 0, dugOut = 0, dug = 0, knocks = 0, grumbled = 0;
+  let chokes = 0, choked = 0, dugOut = 0, dug = 0, knocks = 0, grumbled = 0;
   // The woodpecker's knocked food, by the rule (see "Knocked aside" above),
   // as the engine has it: a grumble is only ever the rule's, from whoever was
   // after a piece eaten this tick, at its eater; and every piece eaten where
@@ -131,15 +130,15 @@
       knocking(g, heard);
       total += heard.length;
       for (const x of heard) per[x.s.personaKey] = (per[x.s.personaKey] || 0) + 1;
-      for (const e of g.events) { if (e.type === 'choke') chokes++; if (e.type === 'choke' || e.type === 'nudge') knocked++; if (e.type === 'dive' && e.dug) dugOut++; if (e.type === 'knock') knocks++; }
-      for (const x of heard) { if (chokeLines.has(x.text)) choked++; if (thanks.some(t => t.test(x.text))) thanked++; if (dugLines.has(x.text)) dug++; if (grumbles.some(t => t.test(x.text))) grumbled++; }
+      for (const e of g.events) { if (e.type === 'squash') chokes++; if (e.type === 'dive' && e.dug) dugOut++; if (e.type === 'knock') knocks++; }
+      for (const x of heard) { if (chokeLines.has(x.text)) choked++; if (dugLines.has(x.text)) dug++; if (grumbles.some(t => t.test(x.text))) grumbled++; }
     }
     rounds++;
   }
   check(total > 20 * rounds, `whole rounds: the rivals talk (${total} lines in ${rounds} rounds)`);
-  check(choked <= chokes && thanked <= knocked, `...a choke line only for a choke (${choked} of ${chokes}), thanks only for food knocked aside (${thanked} for ${knocked} pieces)`);
+  check(choked <= chokes, `...a choke line only for a squash (${choked} of ${chokes})`);
   check(dug <= dugOut && grumbled <= knocks, `...a dug line only for a beetle that dug in and got away (${dug} of ${dugOut}), a grumble only for food the woodpecker knocked aside (${grumbled} for ${knocks} pieces)`);
-  console.log(`ok   ${rounds} whole AI round${rounds > 1 ? 's' : ''} of Sovereign, Colonist, Vulture and Capricious with the chatter listening: ${total} lines, nothing thrown (${chokes} chokes, ${choked} remarked on; ${knocked} pieces spat or nudged aside, ${thanked} thanks; ${dugOut} beetles dug in and away, ${dug} remarked on; ${knocks} pieces the woodpecker knocked aside, ${grumbled} grumbles)`);
+  console.log(`ok   ${rounds} whole AI round${rounds > 1 ? 's' : ''} of Sovereign, Colonist, Vulture and Capricious with the chatter listening: ${total} lines, nothing thrown (${chokes} squashes, ${choked} remarked on; ${dugOut} beetles dug in and away, ${dug} remarked on; ${knocks} pieces the woodpecker knocked aside, ${grumbled} grumbles)`);
   // ...and one with Star, the rivals who answer it and Copycat (who repeats it in Chinese).
   let star = 0, zh = 0;
   for (let r = 0; r < 1; r++) {

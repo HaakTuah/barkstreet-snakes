@@ -85,7 +85,6 @@ window.TUNING = Object.freeze({
   HUNGER_MS: 20000,         // this long without food (mushrooms don't count) and you start shrinking, in the opening and once the woodpecker's here...
   HUNGER_MID_MS: 12000,     // ...but a meal between HUNGER_MID_FROM_MS and then keeps you only this long (with 20 s, a snake was hungry 3% of the time before 2:00; with 13, 9%; once the rivals hunted well, 8% with 13 and about 10% with 12)
   HUNGER_MID_FROM_MS: 45000,
-  COUGH_TICKS: 9,           // choking on your own bead: you spit it aside and cough this many ticks, eating nothing (food your coughing head reaches is nudged aside)
   STARVE_EVERY_MS: 1500,    // ...one segment this often, starving at MIN_LENGTH
   HUNGER_WARN_MS: 6000,     // warn you when this much time is left (half again as early at your smallest)
   BANNER_BASE_MS: 1000,     // a banner is held for its reading time, read in glances while you steer: this...

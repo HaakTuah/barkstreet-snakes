@@ -89,7 +89,6 @@ const FLAVOR = {
   hole: ['The woodpecker sends its regards.', 'Mind the gap.', 'The woodpecker missed you. Its hole didn’t.'],
   pecked: ['The woodpecker didn’t miss.', 'Rat-a-tat. That was you.'],
   starved: ['Should have eaten something.', 'Hunger always wins in the end.', 'All slither, no snacks.'],
-  starvedCoughing: ['Food right there, and you mid-cough.', 'Choked on your own tail, then starved. Rough day.'], // (out of time while coughing: what you reached rolled aside)
   fire: ['Too hot to handle.', 'You found the fire. The hard way.', 'Lightning never strikes twice. It didn’t need to.', 'Burned to a crisp. A small crisp.'],
   // The weather, as it turns (no banner when it clears).
   weather: {
@@ -118,8 +117,7 @@ const FLAVOR = {
   youAtThree: ['Down to\u00a03. One more crash and you’re out.', 'At\u00a03 now. The next crash is the last.'],
   youAlight: ['On fire: 3 bites of tail, and at\u00a03 it ends you. Rain helps.', 'Burning, and losing bits of you. At\u00a03 it ends you.'],
   youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
-  youChoke: 'You choke on your own tail!', // (your own beads: spat aside, and a cough)
-  youCoughing: 'No eating while you cough: food rolls aside.', // (true whenever it shows: a lesson may wait out the cough)
+  youSquash: 'Squashed! Your own tail feeds nobody.', // (round six B: your first own bead squashed)
   youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it comes, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
   youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near enough your head to catch: see DIG_NEAR)
   digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log, once the dig's own lesson is told)

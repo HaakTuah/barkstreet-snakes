@@ -38,7 +38,7 @@ function flashed(e) {
 // (one line at a time).
 const showsOff = s => (s.personaKey === 'capricious' ? s.memory.mood : s.personaKey) === 'star'; // (Capricious doing Star too)
 // (Clearing a snake's gap for news, unless its last line was this tick's.
-// Star's own moments do; so do a choke, and a colony or a capital the
+// Star's own moments do; so do a squash, and a colony or a capital the
 // woodpecker took.)
 const chatNews = s => { if (s && lastSaid[s.id] < chatGame.time) lastSaid[s.id] = -Infinity; };
 const ownMoment = s => { if (s && showsOff(s)) chatNews(s); };
@@ -57,30 +57,8 @@ function showOff(s, key, who = null, sure = false) {
   return true;
 }
 
-// A choking snake spits its bead aside, and a coughing one nudges aside
-// any food its head reaches: where each piece went (rolled), for a while.
-// A piece someone else eats there was a windfall: a rival who ate it
-// thanks the cougher now and then ({who}), cheekily (windfall: whether it
-// did). Any eating there (the cougher's own, once its cough is over, or
-// yours) settles it.
-function knockedAside(e) {
-  for (let i = rolled.length - 1; i >= 0; i--) if (rolled[i].x === e.x && rolled[i].y === e.y) rolled.splice(i, 1); // (a piece knocked on again)
-  rolled.push({ x: e.tx ?? e.x, y: e.ty ?? e.y, beetle: e.kind === 'beetle', by: e.snake, at: chatGame.time });
-}
 // (Is what e ate the piece that landed at r? A beetle runs on from there.)
 const landed = (r, e) => r.beetle ? e.kind === 'beetle' && Math.abs(r.x - e.x) + Math.abs(r.y - e.y) <= BEETLE_ROAM : r.x === e.x && r.y === e.y;
-function windfall(e) {
-  const i = rolled.findIndex(r => landed(r, e));
-  if (i < 0) return false;
-  const { by } = rolled.splice(i, 1)[0], s = e.snake;
-  if (by === s || !s.persona) return false;
-  const was = (seen[s.id] ||= {});
-  if (chatGame.time - (was.windfallAt ?? -Infinity) < WINDFALL_REST || !(Math.random() < WINDFALL_CHANCE)) return false;
-  if (!chatSay(s, 'windfall', by, true)) return false;
-  was.windfallAt = chatGame.time;
-  return true;
-}
-
 // A beetle that dug in has gone under (a dive, dug): it got away from the
 // snake that cornered it (digs, from its dig), which says so if it's a
 // rival. (One caught as it dug is just a catch: no dive.)
@@ -140,10 +118,6 @@ function update() {
     if (s) chatSay(s, 'start', anyone(s));
   }
 
-  // (Where this tick's spat and nudged food went, before anyone's eating is
-  // looked at: a head can reach it in the same tick.)
-  while (rolled.length && chatGame.time - rolled[0].at > WINDFALL_MS) rolled.shift();
-  for (const e of chatGame.events || []) if (e.type === 'choke' || e.type === 'nudge') knockedAside(e);
   // (Likewise beetles digging in, whose hunter is whoever cornered it, and
   // food the woodpecker knocked aside, with the heads that were near it.)
   while (knocked.length && chatGame.time - knocked[0].at > KNOCKED_MS) knocked.shift();
@@ -173,8 +147,6 @@ function update() {
         if (!(how && chatSay(victim, `diesBy.${how}`, null, true))) chatSay(victim, 'dies', by, true);
       }
       for (const v of alive) if (v.personaKey === 'vulture' && Math.random() < 0.6) chatSay(v, 'death', victim);
-    } else if (e.type === 'eat' && windfall(e)) {
-      // (food a choking or coughing snake knocked its way: it's said its thanks)
     } else if (e.type === 'eat' && e.snake.persona && e.kind !== 'goldcap') { // (a golden mushroom has its own lines: below)
       if (e.kind === 'golden') chatSay(e.snake, 'golden', null, true);
       else if ((e.gold || e.kind === 'leaf') && showsOff(e.snake)) {
@@ -220,12 +192,13 @@ function update() {
       chatSay(e.snake, 'wrap', null, true);
     } else if (e.type === 'alight' && e.snake.persona) {
       chatSay(e.snake, 'burning', null, true);
-    } else if (e.type === 'choke' && e.snake.persona && e.snake.alive) {
-      // Its head met its own bead (a crash's, or a cut's): it gags, spits
-      // it aside and coughs a moment. It says so, at most every CHOKE_REST,
-      // even just after another line: it's news (the crash that broke the
-      // bead off has mostly had its say a second or two before, and a
-      // choke left to wait out the gap would mostly go unsaid).
+    } else if (e.type === 'squash' && e.snake.persona && e.snake.alive) {
+      // Its head met its own bead (a crash's, or a cut's): it squashes it
+      // (round six B; its lines are the choke's, from when it spat them). It
+      // says so, at most every CHOKE_REST, even just after another line:
+      // it's news (the crash that broke the bead off has mostly had its say
+      // a second or two before, and one left to wait out the gap would
+      // mostly go unsaid).
       const s = e.snake, was = (seen[s.id] ||= {});
       if (!(chatGame.time - (was.chokeAt ?? -Infinity) < CHOKE_REST)) {
         chatNews(s);

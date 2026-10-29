@@ -49,7 +49,7 @@ for (const l of PUNCHLINES) ok(spoken.has(l), `punchline "${l}" is a line someon
 
 // Every voice has the moments anyone can have; the woodpecker cuts nothing
 // now, so no voice blames the bird for its tail.
-const EVERYONE = ['under', 'doused', 'ash', 'rot', 'desperate', 'cut', 'choke', 'windfall', 'dug', 'knocked'];
+const EVERYONE = ['under', 'doused', 'ash', 'rot', 'desperate', 'cut', 'choke', 'dug', 'knocked'];
 for (const [who, voice] of Object.entries(VOICES)) {
   for (const k of EVERYONE) ok(voice[k]?.length, `${who} has '${k}' lines`);
   ok(!voice.snipped, `${who}: 'snipped' is gone (a dash's cut is 'cut' now)`);
@@ -68,7 +68,6 @@ ok(VOICES.sovereign.realm?.rotten?.length, 'Sovereign minds rot in its realm');
 ok(VOICES.colonist.colony?.rotten?.length, 'Colonist minds rot in its colonies');
 ok(VOICES.sovereign.realm?.capital?.length, 'Sovereign has lines for a capital the woodpecker took');
 ok(VOICES.colonist.colony?.lost?.length, 'Colonist has lines for a colony the woodpecker took');
-for (const [who, voice] of Object.entries(VOICES)) ok((voice.windfall || []).every(l => l.includes('{who}') || chinese(l)), `${who}: its 'windfall' lines thank the cougher by name`);
 // (A beetle that got away names nobody; food the woodpecker knocked to someone else names who ate it.)
 for (const [who, voice] of Object.entries(VOICES)) {
   ok((voice.dug || []).every(l => !l.includes('{who}')), `${who}: its 'dug' lines name nobody`);

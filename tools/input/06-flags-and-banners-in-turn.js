@@ -58,18 +58,18 @@ const inTurn = async (stage, ms) => {
   const shown = log.filter(l => l.fate === 'shown');
   return { log, shown, held: shown.map((s, i) => ({ text: s.text, held: gone[i] - s.t, read: readMs(s.text), next: shown[i + 1] ? shown[i + 1].t - gone[i] : null })) };
 };
-const SNOW = await ev('SnakeDebug.flavor().weather.snow'), CHOKE = 'You choke on your own tail!', LOST = 'The woodpecker took a flag: that colony’s lost.';
+const SNOW = await ev('SnakeDebug.flavor().weather.snow'), CHOKE = 'Squashed! Your own tail feeds nobody.', LOST = 'The woodpecker took a flag: that colony’s lost.';
 await ev('centre()');
 const inOrder = await inTurn(async () => {
   await ev(`stageEvents(() => [{ type: 'weather', kind: 'snow' }])`);
   await toTick();
-  await ev(`(() => { delete SnakeDebug.game().told.choke; return 'ok'; })()`);
-  await ev('stageChoke(0)'); // (a lesson, a tick into the weather)
+  await ev(`(() => { delete SnakeDebug.game().told.squash; return 'ok'; })()`);
+  await ev('stageSquash(0)'); // (a lesson, a tick into the weather)
   await toTick();
   await ev(`stageEvents(g => { g.woodpecker = { x: 12, y: 0, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: g.tick + 12 }; return [{ type: 'woodpecker' }]; })`);
   await toTick(); // (round news, a tick later)
 }, 16000);
-await ev(`(() => { const g = SnakeDebug.game(); g.woodpecker = null; for (const s of g.snakes) s.coughUntil = -1; return 'ok'; })()`);
+await ev(`(() => { const g = SnakeDebug.game(); g.woodpecker = null; return 'ok'; })()`);
 const order = inOrder.shown.map(s => s.text);
 check(order.length === 3 && SNOW.includes(order[0]) && order[1] === CHOKE && /woodpecker/i.test(order[2]),
   'the weather showing, a lesson waits its turn, and the woodpecker’s coming (round news) waits behind it: nothing cut short, nothing lost', order.join(' / '));
@@ -84,14 +84,14 @@ check(!lost.length && inOrder.log.filter(l => l.text === CHOKE).map(l => l.fate)
 const stale = await inTurn(async () => {
   await ev(`stageEvents(() => [{ type: 'weather', kind: 'snow' }])`);
   await toTick();
-  await ev(`(() => { const g = SnakeDebug.game(); delete g.told.choke; delete g.told.lostColony; g.snakes[2].memory.colonies = [{ x: 20, y: 5, radius: 3, n: 1 }]; return 'ok'; })()`);
-  await ev('stageChoke(0)');
+  await ev(`(() => { const g = SnakeDebug.game(); delete g.told.squash; delete g.told.lostColony; g.snakes[2].memory.colonies = [{ x: 20, y: 5, radius: 3, n: 1 }]; return 'ok'; })()`);
+  await ev('stageSquash(0)');
   await toTick(); // (the lesson, waiting; and the flag, seen standing)
   await ev(`(() => { const g = SnakeDebug.game(); g.holes.add(5 * 24 + 20); g.snakes[2].memory.colonies = []; return 'ok'; })()`);
   await toTick(); // (pecked out: round news, behind the lesson)
   await ev(`(() => { SnakeDebug.game().time += 6001; return 'ok'; })()`); // (between ticks: the round's clock on)
 }, 11000);
-await ev(`(() => { const g = SnakeDebug.game(); g.holes.delete(5 * 24 + 20); delete g.snakes[2].memory.colonies; for (const s of g.snakes) s.coughUntil = -1; return 'ok'; })()`);
+await ev(`(() => { const g = SnakeDebug.game(); g.holes.delete(5 * 24 + 20); delete g.snakes[2].memory.colonies; return 'ok'; })()`);
 const staleOrder = stale.shown.map(s => s.text), staleFates = stale.log.filter(l => l.text === CHOKE).map(l => l.fate).join(' ');
 check(staleOrder.length === 2 && SNOW.includes(staleOrder[0]) && staleOrder[1] === LOST && staleFates === 'queued stale',
   'a lesson whose moment has passed while it waited (6 s of the round) is let go; the round news behind it still comes', `${staleOrder.join(' / ')}; the lesson: ${staleFates}`);
