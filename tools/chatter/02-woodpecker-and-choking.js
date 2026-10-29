@@ -137,12 +137,12 @@
 }
 console.log('ok   the rarer lines keep to their rests; land is radius + LAND_REACH; ash and rot go to whoever was nearest; last words, a mushroom, small talk, the woodpecker and a realm changing, staged');
 
-// Choking on your own bead (round six A): the choker's line, at most every
-// 20 s; the thanks of whoever eats what a choke spat or a cough nudged aside,
-// now and then; and the woodpecker taking a colony's flag or the capital.
+// Squashing your own bead (round six B; it was choking on it in round six
+// A): its line, at most every 20 s; and the woodpecker taking a colony's
+// flag or the capital.
 { // A choke: a line, then none for 20 s; not from a snake that's out; nobody speaks for you; Copycat in Chinese.
   const g = stage(['sniper', 'copycat'], { 0: [3, 20], 1: [12, 12], 2: [12, 18] }), [you, sniper, cat] = g.snakes;
-  const choke = s => [{ type: 'choke', snake: s, x: s.body[0].x, y: s.body[0].y, tx: s.body[0].x, ty: s.body[0].y - 1 }];
+  const choke = s => [{ type: 'squash', snake: s, x: s.body[0].x, y: s.body[0].y }];
   check(says(tick(g, choke(sniper)), sniper, VOICES.sniper.choke), 'Sniper chokes on its own bead: a choke line');
   check(tick(g, choke(sniper), 12000).length === 0, '...and none when it chokes again 12 s later');
   check(says(tick(g, choke(sniper), 9000), sniper, VOICES.sniper.choke), '...but another 21 s after the first');
@@ -154,38 +154,13 @@ console.log('ok   the rarer lines keep to their rests; land is radius + LAND_REA
 { // A choke is news: said even just after the crash that broke the bead off had its say (a crash's bonk, then the choke on its beads 1.9 s on), but never two lines in a tick.
   const g = stage(['sniper', 'joker'], { 0: [3, 20], 1: [12, 12], 2: [12, 18] }), [, sniper, joker] = g.snakes;
   const crash = s => ({ type: 'crash', snake: s, x: s.body[0].x + 1, y: s.body[0].y, killerId: null });
-  const choke = s => ({ type: 'choke', snake: s, x: s.body[0].x, y: s.body[0].y, tx: s.body[0].x, ty: s.body[0].y - 1 });
+  const choke = s => ({ type: 'squash', snake: s, x: s.body[0].x, y: s.body[0].y });
   check(says(tick(g, [crash(sniper)]), sniper, VOICES.sniper.bonk), 'Sniper crashes: its bonk line');
   let h = tick(g, [choke(sniper)], 1900);
   check(says(h, sniper, VOICES.sniper.choke), `...and chokes on the beads it broke off 1.9 s later: its choke line too ("${lineOf(h, sniper)}")`);
   check(tick(g, [crash(sniper)], 5000).length === 1 && tick(g, [choke(sniper)], 1900).length === 0, '...but it crashes and chokes again 7 s on: the bonk, and no choke line (20 s between)');
   h = tick(g, [crash(joker), choke(joker)], 30000);
   check(h.filter(x => x.s === joker).length === 1, `a crash and a choke in the same tick: one line (${h.filter(x => x.s === joker).map(x => `"${x.text}"`).join(', ')})`);
-}
-{ // A windfall: what a choke spat or a cough nudged aside, eaten by a rival soon after (the same tick too): thanks, half the time, at most every 30 s.
-  const g = stage(['vulture', 'gobbler'], { 0: [3, 20], 1: [12, 12], 2: [12, 18] }), [you, vul, gob] = g.snakes;
-  const nudge = (s, x, y, tx, ty, kind = 'food') => ({ type: 'nudge', snake: s, kind, x, y, tx, ty });
-  const eat = (s, x, y, kind = 'food') => ({ type: 'eat', snake: s, kind, x, y });
-  const thanks = (h, s, who) => says(h, s, VOICES[s.personaKey].windfall, who);
-  let h = tick(g, [eat(vul, 4, 19, 'pellet'), { type: 'choke', snake: you, x: 4, y: 20, tx: 4, ty: 19 }]);
-  check(thanks(h, vul, you), `your bead, spat aside and eaten by Vulture the same tick: "${lineOf(h, vul)}"`);
-  check(tick(g, [nudge(you, 5, 20, 5, 19), eat(gob, 5, 19)], 5000, 0.6).length === 0, 'an apple your cough nudged, eaten by Gobbler, and the roll says no: nothing');
-  check(tick(g, [eat(gob, 5, 19)], 5000).length === 0, '...and that settled it: another apple there later is just an apple');
-  tick(g, [nudge(you, 6, 20, 6, 19)], 100);
-  check(tick(g, [eat(gob, 6, 19)], 7000).length === 0, 'one eaten 7 s after it was nudged: just an apple');
-  tick(g, [nudge(gob, 7, 18, 7, 17)], 100);
-  check(tick(g, [eat(gob, 7, 17)], 1500).length === 0, 'Gobbler eats what its own cough nudged, once it\'s over: nothing');
-  tick(g, [nudge(you, 8, 20, 8, 19)], 100);
-  check(tick(g, [eat(you, 8, 19)], 500).length === 0 && tick(g, [eat(gob, 8, 19)], 500).length === 0, 'you eat what your cough nudged: nothing, and that settled it');
-  tick(g, [nudge(you, 9, 9, 9, 10, 'beetle')], 5000);
-  h = tick(g, [eat(gob, 11, 11, 'beetle')], 1000);
-  check(thanks(h, gob, you) && !says(h, gob, VOICES.gobbler.caught), `a beetle your cough nudged scurries off, and Gobbler catches it 3 cells on: thanks, not its catch line ("${lineOf(h, gob)}")`);
-  check(!thanks(tick(g, [nudge(you, 4, 4, 4, 5), eat(gob, 4, 5)], 10000), gob, you), '...and no thanks again 10 s later');
-  h = tick(g, [nudge(vul, 14, 4, 14, 5), eat(gob, 14, 5)], 25000);
-  check(thanks(h, gob, vul), `...but 35 s after, for an apple Vulture's cough nudged: thanks, naming Vulture ("${lineOf(h, gob)}")`);
-  tick(g, [nudge(you, 2, 2, 2, 3, 'beetle')], 40000);
-  h = tick(g, [eat(gob, 9, 9, 'beetle')], 1000);
-  check(!thanks(h, gob, you) && says(h, gob, VOICES.gobbler.caught), 'a beetle caught far from where it was nudged: its own catch, no thanks');
 }
 { // Colonist: the woodpecker pecks out a colony's flag cell and the colony is lost: it says so, even just after another line, and the peck itself goes without its "pecked" line. Planting one too many lets the oldest go: no loss.
   const g = stage(['colonist'], { 0: [3, 22], 1: [22, 2] }), [, col] = g.snakes;
@@ -219,4 +194,4 @@ console.log('ok   the rarer lines keep to their rests; land is radius + LAND_REA
   sov.memory.home = { x: 14, y: 10, radius: 4 };
   check(says(tick(g, [], 5000), sov, VOICES.sovereign.realm.move), '...and a drift off good land: a plain move');
 }
-console.log('ok   choking: the choker\'s line at most every 20 s; a rival who eats what a choke spat or a cough nudged aside thanks the cougher, now and then; a colony or capital the woodpecker took is news, and its peck goes without the "pecked" line');
+console.log('ok   squashing its own bead: its line at most every 20 s; a colony or capital the woodpecker took is news, and its peck goes without the "pecked" line');

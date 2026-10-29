@@ -14,9 +14,8 @@
   const FRAME = 1000 / 30;
   const soonest = { dash: T.MIN_TICK - FRAME, leap: 2 * T.MIN_TICK - FRAME };
   for (const [cue, ms] of Object.entries(soonest)) check(GAP[cue] < ms, `the '${cue}' gap (${GAP[cue]} ms) is under the quickest your own can come again (${ms.toFixed(0)} ms)`);
-  // (You can choke again as soon as your cough is over: both are heard again.)
-  const again = T.COUGH_TICKS * T.MIN_TICK - FRAME;
-  for (const cue of ['choke', 'cough']) check(GAP[cue] < again, `the '${cue}' gap (${GAP[cue]} ms) is under the soonest you can choke again (${again.toFixed(0)} ms)`);
+  // (You can squash your own beads one a tick, a line of them: each is heard.)
+  check(GAP.squash < T.MIN_TICK - FRAME, `the 'squash' gap (${GAP.squash} ms) is under a tick at full speed`);
   // (A beetle digs in again only once it's been under and come out, and the
   // woodpecker strikes again only after a rest and an aim: each is heard.)
   const digAgain = (T.BEETLE_DIG + T.BEETLE_UNDER_MIN) * T.MIN_TICK - FRAME, strikeAgain = (T.PECK_REST_MIN + T.PECK_AIM_TICKS) * T.MIN_TICK - FRAME;
@@ -45,7 +44,7 @@
   const sounds = (name, opts) => { const before = gains; A.play(name, opts); return gains > before; };
   const RIVAL = { rival: true, pan: 0.4 };
   // (Each case starts well apart from the last, so nothing earlier is still sounding or resting.)
-  for (const cue of ['flash', 'dash', 'leap', 'alight', 'wrap', 'choke', 'cough', 'dig', 'knock']) {
+  for (const cue of ['flash', 'dash', 'leap', 'alight', 'wrap', 'squash', 'dig', 'knock']) {
     const gap = GAP[cue];
     check(gap > 0, `'${cue}' has a gap`);
     clock += 5000;
@@ -71,13 +70,9 @@
     sounds(cue, { gold: true }); clock += ms;
     check(sounds(cue, { gold: true }), `your golden ${cue} ${ms.toFixed(0)} ms after your last still sounds`);
   }
-  // The cough comes a beat after the choke (delay): its gap counts from when it was asked for.
+  // A line of your own beads squashed, one a tick: each heard.
   clock += 5000;
-  check(sounds('choke') && sounds('cough', { delay: 0.3 }), 'your choke, and your cough a beat later: both');
-  clock += 300;
-  check(!sounds('cough'), '...and another cough asked for as that one sounds waits (a cough never loops)');
-  clock += again;
-  check(sounds('choke') && sounds('cough', { delay: 0.3 }), '...but your next choke and cough, as soon as you can choke again, sound');
+  check(sounds('squash') && (clock += T.MIN_TICK, sounds('squash')), 'your squash, and the next a tick later: both');
   // A beetle digging in, the woodpecker knocking food aside and a burrow
   // closing over are the world's: two beetles digging in together, the pieces
   // one strike knocks aside, or two burrows closing over as two digs end
@@ -130,11 +125,11 @@
   check(sounds('eat') && (clock += CHOMP_YIELD, sounds('meat', RIVAL)), '...and with the sound back on, both');
   clock += 5000;
   A.setMuted(true);
-  check(!sounds('choke') && !sounds('cough', { delay: 0.3 }) && !sounds('choke', RIVAL), 'muted: no choke, no cough, yours or a rival\'s');
+  check(!sounds('squash') && !sounds('squash', RIVAL), 'muted: no squash, yours or a rival\'s');
   check(!sounds('dig') && !sounds('knock') && !sounds('knock', RIVAL) && !sounds('heal'), '...no dig, no knock, no burrow closing over');
   A.setMuted(false);
-  check(sounds('choke') && sounds('cough', { delay: 0.3 }) && sounds('dig') && sounds('knock') && sounds('heal'), '...and with the sound back on, all of them');
-  console.log('ok   the sound: rivals\' chomps, one at a time, giving way to yours; a rival\'s flash, dash, jump, catching fire, golden mushroom, choke or cough never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard, and your choke and cough each time you can choke; a beetle digging in, the woodpecker knocking food aside and a burrow closing over, one sound a moment and each time they can come again; muted, none');
+  check(sounds('squash') && sounds('dig') && sounds('knock') && sounds('heal'), '...and with the sound back on, all of them');
+  console.log('ok   the sound: rivals\' chomps, one at a time, giving way to yours; a rival\'s flash, dash, jump, catching fire, golden mushroom or squash never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard, and each of your squashes; a beetle digging in, the woodpecker knocking food aside and a burrow closing over, one sound a moment and each time they can come again; muted, none');
 }
 
 // ------------------------------------------------------------ the sound over the music

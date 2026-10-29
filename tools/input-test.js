@@ -29,9 +29,8 @@
 //   with it never presses Play again or focuses the name field either.
 // And two of the loop's own: the rivals have all thought before the board is
 // drawn into their next move (at 30 frames a second too), and a banner keeps
-// its place while that's clear. And choking as the page tells it: your first
-// choke's and nudge's lessons, a choke's gag and its cough a beat later (once
-// a cough), and a rival's heard as a rival's.
+// its place while that's clear. And squashing your own bead as the page tells
+// it: your first squash's lesson and splat, and a rival's heard as a rival's.
 // And the beetles and the woodpecker as it tells them: a beetle digging in
 // near enough to catch teaches its lesson and is heard as yours (a rival's,
 // as a rival's), one that dug in goes under unheard while one down a burrow

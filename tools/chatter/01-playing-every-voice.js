@@ -102,13 +102,8 @@ for (const k of keys) {
   check(says(h, ai, v.cut, you), `${k} says a 'cut' line when a dash cuts it (said: ${lineOf(h, ai)})`);
 
   [g, you, ai] = fresh();
-  h = tick(g, [{ type: 'choke', snake: ai, x: 12, y: 12, tx: 12, ty: 11 }]);
-  check(says(h, ai, v.choke), `${k} says a 'choke' line when it chokes on its own bead (said: ${lineOf(h, ai)})`);
-
-  [g, you, ai] = fresh();
-  check(tick(g, [{ type: 'nudge', snake: you, kind: 'food', x: 3, y: 20, tx: 3, ty: 19 }]).length === 0, `${k}: your cough nudges an apple aside: nothing yet`);
-  h = tick(g, [{ type: 'eat', snake: ai, kind: 'food', x: 3, y: 19 }], 800);
-  check(says(h, ai, v.windfall, you), `${k} says a 'windfall' line when it eats an apple your cough nudged aside (said: ${lineOf(h, ai)})`);
+  h = tick(g, [{ type: 'squash', snake: ai, x: 12, y: 12 }]);
+  check(says(h, ai, v.choke), `${k} says a 'choke' line when it squashes its own bead (said: ${lineOf(h, ai)})`);
 
   [g, you, ai] = fresh();
   check(tick(g, [{ type: 'dig', x: 14, y: 12, until: g.tick + 9 }]).length === 0, `${k}: a beetle digs in by its head: nothing yet`);
@@ -136,4 +131,4 @@ for (const k of keys) {
     check(says(h, ai, v.last), `${k} says a 'last' line when the last apples start falling (said: ${lineOf(h, ai)})`);
   }
 }
-console.log('ok   every voice speaks up when pecked under, put out, starving, cut, choking on its own bead, eating food your cough knocked aside, when a beetle it cornered digs in and gets away, when you eat what the woodpecker knocked away from it, and when food burns or rots by it (and flashes, and the last apples, where it has lines)');
+console.log('ok   every voice speaks up when pecked under, put out, starving, cut, squashing its own bead, when a beetle it cornered digs in and gets away, when you eat what the woodpecker knocked away from it, and when food burns or rots by it (and flashes, and the last apples, where it has lines)');

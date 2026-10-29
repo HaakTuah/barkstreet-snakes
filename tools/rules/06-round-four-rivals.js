@@ -132,7 +132,7 @@ const picks = (view, persona = 'drab', n = 50) => {
   const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
   g.snakes = g.snakes.slice(0, 2);
   const [a, b] = g.snakes;
-  a.body = line(5, 10, 4).map(([x, y]) => ({ x, y })); a.dir = D.right; a.leaps = 1;
+  a.body = line(5, 10, 4).map(([x, y]) => ({ x, y })); a.dir = D.right; a.leaps = 1; a.flashReadyAt = 1e9; // (its flash resting: it could cut through)
   b.body = Array.from({ length: 15 }, (_, i) => ({ x: 6, y: 3 + i })); b.dir = D.up; // (6,3) to (6,17): a long way round
   b.isPlayer = true; b.persona = null; b.queue = [];
   g.food = [{ x: 8, y: 10, kind: 'food', expires: 999 }];

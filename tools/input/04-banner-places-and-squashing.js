@@ -47,46 +47,38 @@ check(at.every(f => f < 0.25 || f > 0.75) && !slots.some(s => s.includes('middle
 await b.viewport(390, 844, { scale: 3, mobile: true });
 await ev('new Promise(r => __raf(() => __raf(() => __raf(r))))');
 
-// Choking, as the page tells it (the engine's chokes and nudges staged by
-// hand, as it makes them): your first choke's lesson, and its gag at once
-// and its cough a beat later, once a cough (a bead spat while you cough
-// starts no other); your first nudge's lesson, once the choke's has had
-// its time; a rival's choke and cough, heard as a rival's. (What the page
-// asks to play: the cues themselves are audio.js's.)
+// Squashing your own bead, as the page tells it (round six B; the engine's
+// squashes staged by hand, as it makes them): your first squash's lesson
+// and its splat, a second squash's splat and no second lesson; a rival's
+// splat, heard as a rival's. (What the page asks to play: the cues
+// themselves are audio.js's.)
 await ev(`(() => {
   const E = SnakeEngine, A = SnakeAudio, play = A.play, g = SnakeDebug.game();
   window.__heard = [];
-  A.play = (name, opts) => { if (name === 'choke' || name === 'cough') __heard.push({ name, rival: !!opts?.rival, tick: SnakeDebug.game().tick }); return play(name, opts); };
+  A.play = (name, opts) => { if (name === 'squash') __heard.push({ name, rival: !!opts?.rival, tick: SnakeDebug.game().tick }); return play(name, opts); };
   Object.assign(g.told ||= {}, { beetle: true, goldBeetle: true, leaf: true, goldcap: true, burrow: true, rainbow: true, baked: true }); // (no news on the tick to speak first)
   g.toldField = true; g.weather.until = Infinity; // (nor a rival's land or a change of weather taking the banner: the round's rivals and sky are random, and either held the lessons below out of their turn on CI)
   const step = E.step; E.step = g => { const out = step(g); const f = window.__staged; window.__staged = null; if (f) f(g); return out; };
-  // A choke on the next tick (fresh: a cough from it; again: a bead spat mid-cough), or a nudge.
-  window.stageChoke = (id, fresh = true) => { window.__staged = g => { const s = g.snakes[id], h = s.body[0]; g.events.push({ type: 'choke', snake: s, x: h.x, y: h.y, tx: h.x, ty: h.y - 1 }); if (fresh) s.coughUntil = g.tick - 1 + TUNING.COUGH_TICKS; }; return 'ok'; };
-  window.stageNudge = (id, kind) => { window.__staged = g => { const s = g.snakes[id], h = s.body[0]; g.events.push({ type: 'nudge', snake: s, kind, x: h.x, y: h.y, tx: h.x + 1, ty: h.y }); }; return 'ok'; };
+  // A squash on the next tick.
+  window.stageSquash = id => { window.__staged = g => { const s = g.snakes[id], h = s.body[0]; g.events.push({ type: 'squash', snake: s, x: h.x, y: h.y }); }; return 'ok'; };
   window.toastText = () => { const t = document.getElementById('toast'); return t.hidden ? '' : t.textContent; };
   return 'ok';
 })()`);
 await ev('vadvance(5300)'); // (the banner before has had its time: its reading time, its fade and a breather)
-await ev('stageChoke(0)');
+await ev('stageSquash(0)');
 await toTick();
-const choked = await ev(`({ tick: SnakeDebug.game().tick, toast: toastText() })`);
+const squashed = await ev(`({ tick: SnakeDebug.game().tick, toast: toastText() })`);
 await toTick(); await toTick();
-await ev('stageChoke(0, false)'); // (another of your beads, mid-cough)
-await toTick(); await toTick(); await toTick();
-await ev(`stageNudge(0, 'food')`);
+await ev('stageSquash(0)'); // (another of your beads)
 await toTick();
-const nudgedAt = await ev('toastText()');
-await ev('vadvance(4200)'); // (the choke's 6 words: 1 s and 0.4 s a word, its fade and a breather)
-const nudged = await ev('toastText()');
+await ev('vadvance(4200)'); // (the lesson's words: 1 s and 0.4 s a word, its fade and a breather)
+const later = await ev('toastText()');
 const mine = await ev('__heard.splice(0)');
-await ev('stageChoke(1)');
-await toTick(); await toTick(); await toTick();
+await ev('stageSquash(1)');
+await toTick(); await toTick();
 const theirs = await ev('__heard.splice(0)');
-await ev(`(() => { for (const s of SnakeDebug.game().snakes) s.coughUntil = -1; return 'ok'; })()`);
-const said = list => list.map(h => `${h.name}${h.rival ? '~' : ''}@${h.tick - choked.tick}`).join(' ');
-check(choked.toast === 'You choke on your own tail!' && said(mine) === 'choke@0 cough@2 choke@3',
-  'your first choke: its lesson, its gag, and its cough two ticks later, once a cough', `“${choked.toast}”; heard ${said(mine)}`);
-check(nudgedAt === choked.toast && nudged === 'No eating while you cough: food rolls aside.',
-  'your first nudge while coughing: its lesson, once the choke’s has had its time', `“${nudgedAt}”, then “${nudged}”`);
-check(theirs.length === 2 && theirs.every(h => h.rival) && theirs[1].tick - theirs[0].tick === 2 && theirs[0].name === 'choke' && theirs[1].name === 'cough',
-  'a rival’s choke and cough are heard as a rival’s', theirs.map(h => `${h.name}${h.rival ? '~' : ''}`).join(' '));
+const said = list => list.map(h => `${h.name}${h.rival ? '~' : ''}@${h.tick - squashed.tick}`).join(' ');
+check(squashed.toast === 'Squashed! Your own tail feeds nobody.' && said(mine) === 'squash@0 squash@3',
+  'your first squash: its lesson and its splat; the next, its splat alone', `“${squashed.toast}”; heard ${said(mine)}`);
+check(later !== squashed.toast, '...the lesson only once', `“${later}”`);
+check(theirs.length === 1 && theirs[0].rival, 'a rival’s squash is heard as a rival’s', theirs.map(h => `${h.name}${h.rival ? '~' : ''}`).join(' '));

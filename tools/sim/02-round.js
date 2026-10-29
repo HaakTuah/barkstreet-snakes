@@ -17,7 +17,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const s of g.snakes) {
       per[s.name] ||= {
         rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, beetles: 0, kills: 0, aliveMs: 0, deaths: {},
-        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, // (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, chokes, crashes survived)
+        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, // (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, own beads squashed (chokes before round six B), crashes survived)
         ...(signs ? { sig: Object.fromEntries(SIGNS.map(k => [k, 0])) } : {}),
       };
       per[s.name].rounds++;
@@ -56,6 +56,9 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const f of bugs) { const b = st.bugs.get(f); if (b && b.near < 0 && g.snakes.some(s => s.alive && Math.abs(s.body[0].x - f.x) + Math.abs(s.body[0].y - f.y) <= T.BEETLE_FEAR)) b.near = g.tick; }
     const riding = new Set(g.snakes.filter(s => s.alive && !s.flight && g.holes.has(s.body[0].y * N + s.body[0].x)));
     const dying = E.step(g);
+    st.edge ||= g.snakes.map(() => [0, 0]); // (each snake's ticks alive, and with its head on the edge)
+    for (const s of g.snakes) if (s.alive) { const h = s.body[0], on = h.x === 0 || h.y === 0 || h.x === N - 1 || h.y === N - 1; st.edge[s.id][0]++; if (on) { st.edge[s.id][1]++; c.edgeTicks++; } }
+    for (const s of dying) if (/blew up/.test(s.cause || '')) c.failedGold++;
     for (const s of g.snakes) if (s.alive && !s.flight && g.holes.has(s.body[0].y * N + s.body[0].x)) { c.rideTicks++; if (!riding.has(s)) c.rides++; }
     for (const s of dying) if (riding.has(s)) { c.rideDeaths++; if (s.fatal === 'hole' || /hole/.test(s.cause || '')) c.rideFalls++; }
     beetleCensus(g, c, st, bugs);
@@ -71,9 +74,9 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
       else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
       else if (e.type === 'flown') total.flown++;
-      else if (e.type === 'crash') { total.crashes++; per[e.snake.name].crashes++; if (e.snake.landing) c.hopFail++; }
+      else if (e.type === 'crash') { total.crashes++; per[e.snake.name].crashes++; if (e.snake.landing) c.hopFail++; if (e.failed) c.failed++; }
       else if (e.type === 'alight') total.alight++;
-      else if (e.type === 'cut') total.cuts++;
+      else if (e.type === 'cut') { total.cuts++; if (e.by === e.snake.id) c.cutsOwn++; if (g.events.some(d => d.type === 'dash' && d.snake.id === e.by && d.plain)) c.cutsPlain++; else c.cutsGold++; }
       else if (e.type === 'baked') total.baked++;
       else if (e.type === 'ash') total.ash++;
       else if (e.type === 'rot') { if (e.kind === 'pellet') total.rotBeads++; else total.rot++; }
@@ -86,8 +89,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       else if (e.type === 'aim') { c.aims++; if (g.woodpecker.target.some(k => nearHead(g, k))) c.aimsNear++; }
       else if (e.type === 'leap') { if (e.gold) { c.goldLeaps++; per[e.snake.name].leaps++; } else { c.jumps++; per[e.snake.name].jumps++; } }
       else if (e.type === 'dash') { if (e.plain) { c.flashes++; per[e.snake.name].flashes++; } else { c.dashes++; per[e.snake.name].dashes++; } }
-      if (e.type === 'choke') { c.chokes++; per[e.snake.name].chokes++; seen.add('choke'); }
-      else if (e.type === 'nudge') { c.nudges++; if (e.kind === 'pellet') c.nudgedBeads++; }
+      if (e.type === 'squash') { c.chokes++; per[e.snake.name].chokes++; seen.add('choke'); } // (round six B: its own bead squashed, counted where the chokes were)
       if (e.type === 'eat') {
         if (e.kind === 'pellet') { c.beads++; if (e.own) c.ownBeads++; }
         if (e.kind === 'mushroom') c.mushrooms++;
@@ -118,6 +120,10 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
   else if (alive.length === 1) { per[alive[0].name].wins++; place.set(alive[0], 1); }
   else total.draws++;
   const food = g.snakes.reduce((n, s) => n + s.eaten, 0), beads = g.snakes.reduce((n, s) => n + s.pellets, 0);
+  for (const s of g.snakes) { // (the edge's huggers, and the rest)
+    const [ticks, on] = st.edge?.[s.id] || [0, 0], hug = ticks && on >= ticks / 8, won = alive.length === 1 && alive[0] === s && g.time < MAX_TIME ? 1 : 0;
+    c[hug ? 'huggers' : 'others']++; c[hug ? 'huggerWins' : 'otherWins'] += won; c[hug ? 'huggerPlace' : 'otherPlace'] += place.get(s) || 1;
+  }
   for (const s of g.snakes) {
     const p = per[s.name];
     p.placeSum += place.get(s) || 1;

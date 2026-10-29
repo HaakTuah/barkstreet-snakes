@@ -113,12 +113,8 @@ function tricornSide(c, a, b) { // each side's middle pulled in toward the crown
 function drawPlayerFace(s, a, now, blinking) {
   const c = CELL;
   const open = mouthOpen(s, a);
-  tongue(a, now, coughing(s) ? 1 : open, 'player', true); // (coughing, its mouth is shut)
+  tongue(a, now, open, 'player', true);
   mouth(open, 0.44);
-  if (!deadNow && coughing(s)) { // (coughing, a mouth shut tight, as the Field guide shows it: there's nothing else on your face to shut)
-    ctx.strokeStyle = INK; ctx.lineWidth = c * 0.06; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(c * 0.3, c * 0.07); ctx.quadraticCurveTo(c * 0.4, c * 0.02, c * 0.47, c * 0.05); ctx.stroke();
-  }
 
   if (blinking) return lids(0.11);
   ctx.fillStyle = '#fffbea';
@@ -148,7 +144,7 @@ function drawFace(s, look, color, blinking, a) {
   blinkNow = blinking;
   const open = mouthOpen(s, a);
   const flicks = look === 'copycat' ? copiedLook(s) : look;
-  tongue(a, lastNow, coughing(s) ? 1 : open, flicks, flicks === 'gobbler', look !== 'sniper' && look !== 'star'); // (Sniper's comes out of its scope, and Star's is its mustache: see drawStarHead; coughing, its mouth is shut)
+  tongue(a, lastNow, open, flicks, flicks === 'gobbler', look !== 'sniper' && look !== 'star'); // (Sniper's comes out of its scope, and Star's is its mustache: see drawStarHead; coughing, its mouth is shut)
   switch (look) {
     case 'sniper': { // one eye squeezed shut (it never blinks on the job), the other behind a scope that swings onto its target
       ctx.strokeStyle = INK;
@@ -203,7 +199,7 @@ function drawFace(s, look, color, blinking, a) {
       ctx.ellipse(c * 0.3, cy + c * 0.03, c * 0.11, c * 0.07, 0, 0, TAU);
       ctx.fill();
       // A big mouth: open wide within 3 cells of food, and chomping after a bite.
-      const hungry = a.near <= 3 && !coughing(s) ? 1 : 0; // (coughing, its mouth stays shut)
+      const hungry = a.near <= 3 ? 1 : 0;
       const gape = Math.max(open, hungry);
       ctx.fillStyle = '#3b0d0d';
       ctx.beginPath();
