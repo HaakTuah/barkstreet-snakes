@@ -468,3 +468,13 @@ Then, to the design session's takes:
 > Yes, i agree to all, expertly! I feel it converts a patch into something that is a meaningful gameplay chocie, which is much better. It is true, you are often the one closest to your own beads. And that was a big problem when you could just regain the lost health. But now it is a real trade-off. You are risking more life, and dedicating energy to sabotaging for another snakes instead of finding something to eat so you regain, so your making an active choice at the cost of your own. Which isn't nessecarily a good choice, if that other snake wasn't set to win anyways. So i think this will he really good!
 
 (written into "Choking on your own tail", replaced, and "Mushrooms come back up"; item 5's part 3. His further idea, an aimed spit, went back to him as a question)
+
+In the design chat (29 October 2026, 12:52 and 12:55 UTC), on mushrooms: "Then maybe you swallow the mushroom, don't get
+stunned, and have a bit of time to angle where you want to spit it, and you can maybe spit it 2 or 3 tiles away? Then
+it can become even more potent for the next person? What do you think, expert?" Then, to the design session's shape of
+it (a second in the cheek, aimed by steering, 3 ahead, a hit on a head poisons, a shade stronger each time to 5, never
+killing by itself):
+
+> Yes, that's fantastic! Let's do that! I love when game mechanics turn fron pure badness to conditional good! Now w eight have snakes back that actually eat them on purpose on certain cases! Bravo!
+
+(written into "Mushrooms come back up" in `docs/design/29-round-six-b-the-new-moves.md` and item 5's part 3)
