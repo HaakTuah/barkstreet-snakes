@@ -498,3 +498,7 @@ becomes a refuge: "Agreed, expert!" (written into "The edge is a shelter, measur
 In the design chat (29 October 2026, 15:19 UTC), back home, to 2k's question (the bird over the speed buttons' words on
 a phone held upright) and the design session's suggestion to keep clear of the words: "Keep the bird 1.7x. And agreed
 with everything else." (queued as 2k+: 1.7 times everywhere, perching clear of the words where it can, never shrinking)
+
+In the design chat (29 October 2026, 16:39 UTC), on learning that the builder had stopped at the weekly usage warning:
+"They weren't supposed to stop before 90%. We're still at only 76%" (written into "Usage" in `CLAUDE.md` and the
+brake in `docs/orchestrating.md`: only the measured share counts; item 5 carries on)

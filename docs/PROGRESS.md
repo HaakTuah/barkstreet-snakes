@@ -48,7 +48,8 @@ beside it as before. A playable draft PR as early as it can be, so Haakon can tr
 
 *Done so far:* **the island hop** and **no auto-jump** (PR #158: a jump goes over up to 3 cells, a cell a tick; a press waits 5 moves; the landing ring; protocol 16).
 
-*Where it stands* (29 October 2026, stopped at the weekly usage warning, per "Usage" in `CLAUDE.md`): parts 1, 2 and
+*Where it stands* (29 October 2026; it paused at the app's weekly usage warning, which is not the brake: Haakon, "They
+weren't supposed to stop before 90%. We're still at only 76%", so it carries on): parts 1, 2 and
 most of 3 are merged (#158, #174, #183: the cuts, a failed flash, your own beads squashed, Mason's double walls, the
 edge measured). **Next, in order:** part 3b, **mushrooms come back up** (nothing built yet; its own PR, an engine-rules
 and AI entry, protocol 19: the cheek, the ring 3 ahead, the spit, a shade stronger each time, the rivals aiming and
