@@ -48,9 +48,13 @@ check(noFs && buttonsNoFs === 5, 'where the browser has no full screen for a pag
 
 // ----------------------------------------------------- the screen awake
 // What the stand-in wake lock was asked, step by step: request, release,
-// lost (the browser let go, as for a hidden tab).
+// lost (the browser let go, as for a hidden tab). The round's own loop is
+// held still and moved on by SnakeDebug.frames only, so what happens between
+// two steps doesn't hang on how fast the machine is (left running, your
+// snake could crash on its own on a slow one and its card let go too soon).
 await open(CALLS);
 await ev(HELPERS);
+await ev(`window.__autoRaf = false; 'ok'`);
 const expect = async (what, wantHeld, wantLog) => {
   await b.sleep(60);
   const h = await ev(`!!__wake.held`), log = await ev(`__wake.log.join(' ')`);
@@ -92,7 +96,7 @@ await ev(`waitFor(() => SnakeDebug.state() === 'over', 15000).then(() => 1)`);
 await expect('the round over: let go', false, 'release request release');
 await ev(`waitFor(() => cardUp(), 8000).then(() => 1)`);
 await b.sleep(600); // (the card takes no tap for a moment)
-await ev(`__wake.log.length = 0; document.getElementById('watch').click(); 'ok'`); // (Watch AIs)
+await ev(`__wake.log.length = 0; window.__autoRaf = false; document.getElementById('watch').click(); 'ok'`); // (Watch AIs; held still again)
 await expect('an AI round to watch: its countdown, held', true, 'request');
 await ev(`SnakeDebug.frames(80); 'ok'`);
 check(await ev('SnakeDebug.state() === "running" && !SnakeDebug.game().withPlayer'), 'an AI round is being watched');
