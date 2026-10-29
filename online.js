@@ -34,10 +34,10 @@
  * @typedef {[alive: Flag, dir: number, eaten: number, lastAte: number, nextStarve: number, cells: number[], memory: Engine.Memory | 0,
  *   autopilot: Flag, stunUntil: number, burnUntil: number, burnFrom: number, leaps: number, leapArmed: number, dashes: number,
  *   leapReadyAt: number, wrapUntil: number, flight: number, flashReadyAt: number, flashArmed: number, mealMs: number,
- *   land: number, airLeft: number, airGold: Flag]} SnakeRow  land: where a jump in the air comes down (y * 1000 + x; -1: on the ground); airLeft: cells it still flies over
+ *   land: number, airLeft: number, airGold: Flag, cheek: number, spitAt: number]} SnakeRow  land: where a jump in the air comes down (y * 1000 + x; -1: on the ground); airLeft: cells it still flies over; cheek: the segments a mushroom in its cheek took (0: none), spat at tick spitAt
  * @typedef {[x: number, y: number, kind: number, expires: number, zero: 0, dir: number, px: number, py: number, movedAt: number,
  *   scared: Flag, gold: Flag, digUntil: number]} BeetleRow
- * @typedef {[x: number, y: number, kind: number, expires: number, color: string | 0, heat: number, cooked: Flag, owner: number]} MealRow
+ * @typedef {[x: number, y: number, kind: number, expires: number, color: string | 0, heat: number, cooked: Flag, owner: number, power: number]} MealRow  power: a mushroom come back up's (0: a fresh one)
  * @typedef {BeetleRow | MealRow} FoodRow
  * @typedef {[until: number, expires: number, from: number, gold: Flag]} UnderRow
  * @typedef {[x: number, y: number, at: number, target: number[], strikeAt: number, last: number[], struckAt: number, restUntil: number,
@@ -54,6 +54,7 @@
  *   | ['crash', snake: number, x: number, y: number, cause: string, killer: string | null, killerId: number | null, lost: number, failed: 0 | 1]
  *   | ['cut', snake: number, x: number, y: number, lost: number, by: number]
  *   | ['squash', snake: number, x: number, y: number]
+ *   | ['spit', snake: number, x: number, y: number, tx: number, ty: number, power: number, hit: number, lx: number | null, ly: number | null]
  *   | ['dig', x: number, y: number, until: number]
  *   | ['dive', x: number, y: number, dug: Flag]
  *   | ['knock', kind: number, x: number, y: number, tx: number | null, ty: number | null, gold: Flag, color: string | 0]
@@ -85,7 +86,7 @@
  * @typedef {{ t: 'away' | 'back' }} AwayMsg  the page went out of sight, and came back
  */
 window.SnakeOnline = (() => {
-  const VERSION = 18; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's island hop (a jump in the air: where it comes down, how many cells it still flies over, golden); 17: round six B's bridges (no message changed: a rule both sides must play by); 18: round six B's cuts (a failed flash's crash says so; the plain flash cuts, its own tail too: a rule both sides play by) and your own beads squashed (no choke, cough or nudge: each snake's cough gone; a squash where each went)
+  const VERSION = 19; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's island hop (a jump in the air: where it comes down, how many cells it still flies over, golden); 17: round six B's bridges (no message changed: a rule both sides must play by); 18: round six B's cuts (a failed flash's crash says so; the plain flash cuts, its own tail too: a rule both sides play by) and your own beads squashed (no choke, cough or nudge: each snake's cough gone; a squash where each went); 19: round six B's mushrooms come back up (each snake's cheek, and when it's spat; a spat mushroom's strength; a spit, where it came down, whom it hit, where it lies)
   const POWERS = ['leap', 'flash', 'unleap'];
   const MAX_PEOPLE = 4;
   // Seat colors for people: the host is green; friends get colors no rival wears.
@@ -149,13 +150,14 @@ window.SnakeOnline = (() => {
         s.dashes, s.leapReadyAt, s.wrapUntil, s.flight ? DIR_NAMES.indexOf(dirName(s.flight.dir)) : -1,
         s.flashReadyAt, s.flashArmed, s.mealMs,
         s.flight ? s.flight.land.y * 1000 + s.flight.land.x : -1, s.flight ? s.flight.over.length : 0, s.flight?.gold ? 1 : 0,
+        s.cheek ? s.cheek.power : 0, s.cheek ? s.cheek.spitAt : -1,
       ]),
       // A beetle also says which way it faces and where it came from, so it
       // walks on every screen, and until when it's digging in, if it is (it
       // sinks as the time runs out); a bead, whose it was (it rots, as all food does).
       f: game.food.map(f => f.kind === 'beetle'
         ? [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, 0, DIR_NAMES.indexOf(dirName(f.dir)), f.px ?? -1, f.py ?? -1, f.movedAt, f.scared ? 1 : 0, f.gold ? 1 : 0, f.digUntil ?? -1]
-        : [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, f.color || 0, f.heat || 0, f.cooked ? 1 : 0, f.owner ?? -1]),
+        : [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, f.color || 0, f.heat || 0, f.cooked ? 1 : 0, f.owner ?? -1, f.power || 0]),
       // The beetles underground: until (when one comes up), when it flies off, the burrow or dig it went down, golden.
       un: (game.unders || []).map(u => [u.until, u.expires, u.from, u.gold ? 1 : 0]),
       h: holes,
@@ -244,6 +246,9 @@ window.SnakeOnline = (() => {
       case 'cut': return ['cut', e.snake.id, e.x, e.y, e.lost, e.by ?? -1];
       // A bead of its own squashed under its head.
       case 'squash': return ['squash', e.snake.id, e.x, e.y];
+      // A mushroom spat from x, y to tx, ty (maybe off the board), this strong; hit: whose head swallowed it (-1: none);
+      // lx, ly: where it lies (null: swallowed or gone).
+      case 'spit': return ['spit', e.snake.id, e.x, e.y, e.tx, e.ty, e.power, e.hit, e.lx, e.ly];
       // A beetle digging in (until it's under), and one going under, down a burrow or where it dug;
       // food the woodpecker knocked aside (to tx, ty; null, null: nowhere to go, so the bird ate it).
       case 'dig': return ['dig', e.x, e.y, e.until];
@@ -288,7 +293,7 @@ window.SnakeOnline = (() => {
     game.time = msg.ms;
     /** @param {unknown} v */
     const num = v => Number.isFinite(v);
-    msg.s.forEach(([alive, dir, eaten, lastAte, nextStarve, cells, memory, autopilot, stunUntil, burnUntil, burnFrom, leaps, leapArmed, dashes, leapReadyAt, wrapUntil, flight, flashReadyAt, flashArmed, mealMs, land, airLeft, airGold], id) => {
+    msg.s.forEach(([alive, dir, eaten, lastAte, nextStarve, cells, memory, autopilot, stunUntil, burnUntil, burnFrom, leaps, leapArmed, dashes, leapReadyAt, wrapUntil, flight, flashReadyAt, flashArmed, mealMs, land, airLeft, airGold, cheek, spitAt], id) => {
       const s = game.snakes[id];
       if (!s) return;
       s.alive = !!alive;
@@ -311,6 +316,7 @@ window.SnakeOnline = (() => {
       s.flashReadyAt = num(flashReadyAt) ? flashReadyAt : 0;
       s.flashArmed = num(flashArmed) ? flashArmed : -1;
       s.mealMs = num(mealMs) && mealMs > 0 ? mealMs : s.mealMs; // (for the hunger bar)
+      s.cheek = num(cheek) && cheek > 0 && num(spitAt) ? { power: Math.min(window.TUNING.SHRINK_MAX, cheek), spitAt, left: 0 } : null; // (the bulge and its ring)
       s.planned = null; s.plannedTick = -1; s.queue.length = 0; // (the last tick's plan is spent: this one's follows, see applyPlan)
       const body = s.body;
       body.length = cells.length;
@@ -334,7 +340,8 @@ window.SnakeOnline = (() => {
         if (px >= 0) { f.px = px; f.py = py; }
         if (Number.isInteger(digUntil) && digUntil >= 0) f.digUntil = digUntil; // (the renderer sinks it by this)
       } else {
-        const [heat, cooked, owner] = more;
+        const [heat, cooked, owner, power] = more;
+        if (f.kind === 'mushroom' && Number.isInteger(power) && power > 0) f.power = Math.min(window.TUNING.SHRINK_MAX, power); // (its shade)
         if (num(heat) && heat > 0) f.heat = heat;
         if (cooked) f.cooked = 1;
         if (Number.isInteger(owner) && owner >= 0) f.owner = owner;
@@ -376,6 +383,11 @@ window.SnakeOnline = (() => {
         case 'fizzle': return snake ? { type: 'fizzle', snake, why: String(e[2] || ''), x: Number(e[3]) || 0, y: Number(e[4]) || 0, flash: e[5] ? 1 : 0 } : null;
         case 'cut': return snake ? { type: 'cut', snake, x: e[2], y: e[3], lost: Number(e[4]) || 0, by: Number.isInteger(e[5]) && e[5] >= 0 ? e[5] : null } : null;
         case 'squash': return snake && e.slice(2, 4).every(cell) ? { type: 'squash', snake, x: e[2], y: e[3] } : null;
+        case 'spit': { // (from a head on the board, to a cell that may be off it; lies on the board, or nowhere: both or neither)
+          const lies = cell(e[8]) && cell(e[9]), near = v => Number.isInteger(v) && v >= -8 && v < window.TUNING.GRID + 8;
+          return snake && cell(e[2]) && cell(e[3]) && near(e[4]) && near(e[5]) && Number.isInteger(e[6]) && e[6] > 0 && (lies || (e[8] === null && e[9] === null))
+            ? { type: 'spit', snake, x: e[2], y: e[3], tx: e[4], ty: e[5], power: Math.min(window.TUNING.SHRINK_MAX, e[6]), hit: Number.isInteger(e[7]) && game.snakes[e[7]] ? e[7] : -1, lx: lies ? e[8] : null, ly: lies ? e[9] : null } : null;
+        }
         case 'dig': return cell(e[1]) && cell(e[2]) && Number.isInteger(e[3]) ? { type: 'dig', x: e[1], y: e[2], until: e[3] } : null;
         case 'dive': return cell(e[1]) && cell(e[2]) ? { type: 'dive', x: e[1], y: e[2], ...(e[3] ? { dug: 1 } : {}) } : null;
         case 'knock': { // (where it flew: a cell on the board, or nowhere, eaten)

@@ -49,8 +49,10 @@ window.SnakeEngine = (() => {
       // still flies over, a tick each], land: { x, y } (where it comes down,
       // the tick after the last of them), gold: 1 for a golden jump }; leapArmed:
       // the last tick a jump it asked for waits; flashArmed: the tick a flash
-      // it asked for goes (the next one it moves).
-      leaps: 0, dashes: 0, leapReadyAt: 0, flashReadyAt: 0, wrapUntil: -1, flight: null, leapArmed: -1, flashArmed: -1,
+      // it asked for goes (the next one it moves). cheek: a mushroom in its
+      // cheek (round six B), { power: the segments it'll take next, spitAt:
+      // the tick it's spat, left: the ticks it had left to wilt }, or null.
+      leaps: 0, dashes: 0, leapReadyAt: 0, flashReadyAt: 0, wrapUntil: -1, flight: null, leapArmed: -1, flashArmed: -1, cheek: null,
       queue: [], cause: null, killer: null, killerId: null, diedAt: null, memory: {}, planned: null, plannedTick: -1, ...props,
     };
   }
@@ -182,6 +184,7 @@ window.SnakeEngine = (() => {
       else if (f.kind === 'golden') golden++;
       else if (f.kind === 'beetle') beetles++;
     }
+    for (const s of game.snakes) if (s.alive && s.cheek) mushrooms++; // (one in a cheek is still about: it comes back up)
 
     const place = placer(game);
     const raining = game.weather.kind === 'rain', winter = game.weather.kind === 'snow';
@@ -1019,6 +1022,7 @@ window.SnakeEngine = (() => {
         id: s.id, body: s.body.map(c => ({ x: c.x, y: c.y })), dir: s.dir,
         stun: Math.max(0, s.stunUntil - game.tick), leaps: s.leaps, // (all of it shows: stars, pips, a gold outline, cough puffs...)
         dashes: s.dashes, wrap: Math.max(0, s.wrapUntil - game.time), air: s.flight ? 1 + s.flight.over.length : 0, land: s.flight ? key(s.flight.land.x, s.flight.land.y) : -1, // (in the air: how many ticks till it's down, and where)
+        spitIn: s.cheek ? s.cheek.spitAt - game.tick + 1 : 0, spitPower: s.cheek ? Math.min(T.SHRINK_MAX, s.cheek.power + 1) : 0, // (a green bulge, and its ring: it's spat after this many more moves, this strong)
       })),
       holes: game.holes.size,
       // (Fire, crackling, smouldering or burning, and the woodpecker's next patch: keep out.)
@@ -1076,6 +1080,8 @@ window.SnakeEngine = (() => {
         leaps: snake.leaps, dashes: snake.dashes, wrap: Math.max(0, snake.wrapUntil - game.time), leapIn: leapIn(game, snake), flashIn: flashIn(game, snake),
         // (who it just met head-on, if it was in the last 3 s or so: it keeps clear of them for a while)
         bumped: snake.bumpedBy && game.tick - snake.bumpedBy.tick < 30 ? snake.bumpedBy.id : -1,
+        // (a mushroom in its cheek: it's spat after this many more moves (0: none), this strong)
+        spitIn: snake.cheek ? snake.cheek.spitAt - game.tick + 1 : 0, spitPower: snake.cheek ? Math.min(T.SHRINK_MAX, snake.cheek.power + 1) : 0,
       },
       others: snap.snakes.filter(o => o.id !== snake.id),
       food: game.food, // (as it is: it only changes on a tick, so thinking ahead sees what the tick would)
@@ -1466,6 +1472,7 @@ window.SnakeEngine = (() => {
       for (const d of drops) meat(d.x, d.y, d.color, d.owner, d.cooked);
     }
 
+    spit(game);
     fillFood(game);
     weather(game);
     game.time += tickMs(game);
@@ -1955,8 +1962,10 @@ window.SnakeEngine = (() => {
       for (const c of cells) {
         const i = game.food.findIndex(f => f.x === c.x && f.y === c.y);
         if (i < 0) continue;
-        const f = game.food.splice(i, 1)[0];
-        if (f.kind === 'pellet' && f.owner === s.id) game.events.push({ type: 'squash', snake: s, x: c.x, y: c.y });
+        const f = game.food[i], own = f.kind === 'pellet' && f.owner === s.id;
+        if (s.cheek && !own) continue; // (its mouth is full: it goes over it, and it stays)
+        game.food.splice(i, 1);
+        if (own) game.events.push({ type: 'squash', snake: s, x: c.x, y: c.y });
         else consume(game, s, f, c.x, c.y);
       }
     }
@@ -2051,12 +2060,10 @@ window.SnakeEngine = (() => {
     if (f.kind === 'leaf') s.dashes = Math.min(T.DASH_MAX, s.dashes + T.DASH_CHARGES); // (a golden leaf: golden flashes, dashes)
     if (f.kind === 'goldcap') s.wrapUntil = Math.min(Math.max(s.wrapUntil, game.time) + T.WRAP_MS, game.time + T.WRAP_MAX_MS); // (a golden mushroom: the edges wrap, a while longer)
     if (f.kind === 'mushroom') {
-      // Shrink: cancel pending growth first, then drop tail segments.
-      let n = T.SHRINK;
-      const fromGrow = Math.min(s.grow, n);
-      s.grow -= fromGrow;
-      n -= fromGrow;
-      while (n-- > 0 && s.body.length > T.MIN_LENGTH) s.body.pop();
+      // It shrinks you by its strength, and sits in your cheek, to come back up (see spit).
+      const power = f.power || T.SHRINK;
+      shrink(s, power);
+      s.cheek = { power, spitAt: game.tick + T.CHEEK_TICKS, left: f.expires != null ? Math.max(0, f.expires - game.tick) : T.MUSHROOM_TICKS };
     } else {
       const growth = f.kind === 'golden' ? T.GOLDEN_GROWTH : f.kind === 'beetle' ? T.BEETLE_GROWTH : f.cooked ? T.COOKED_GROWTH : 1;
       // (A meal never leaves it less time than it had: one just after HUNGER_MID_FROM_MS on top of one just before keeps the longer; mealMs, what a full bar means, is then that long.)
@@ -2068,6 +2075,55 @@ window.SnakeEngine = (() => {
       s.grow += growth;
       s.eaten += growth;
       if (f.kind === 'pellet') s.pellets++;
+    }
+  }
+
+  // Shrink by n: pending growth goes first, then tail segments (never below MIN_LENGTH).
+  function shrink(s, n) {
+    const fromGrow = Math.min(s.grow, n);
+    s.grow -= fromGrow;
+    n -= fromGrow;
+    while (n-- > 0 && s.body.length > T.MIN_LENGTH) s.body.pop();
+  }
+
+  // Mushrooms come back up (round six B). A mushroom in a cheek, its time up,
+  // is spat SPIT_REACH cells ahead of the head, the way the snake faces, in an
+  // arc over anything between, a segment stronger (to SHRINK_MAX). Where it
+  // comes down: off the board, in a hole or a fire, it's gone; on a head, that
+  // snake swallows it (shrinking, and spitting it on in its turn), unless its
+  // own mouth is full: then it bounces off, as off a body; on a body, it rolls
+  // off by the roll rule (see rollSide), as it does off food or a burrow
+  // (with nowhere to roll, it's gone); on bark, it lies there, wilting in half
+  // the time it had left. Worked out in seat order, on the board as the tick
+  // left it. Never kills: a shrink stops at MIN_LENGTH.
+  function spit(game) {
+    for (const s of game.snakes) {
+      if (!s.alive || !s.cheek || game.tick < s.cheek.spitAt) continue;
+      const power = Math.min(T.SHRINK_MAX, s.cheek.power + 1), left = Math.max(T.SPIT_WILT_MIN, Math.round(s.cheek.left / 2)), h = s.body[0];
+      s.cheek = null;
+      let c = h;
+      for (let n = 0; n < T.SPIT_REACH; n++) c = ahead(game, s, c.x, c.y, s.dir);
+      game.events.push({ type: 'spit', snake: s, x: h.x, y: h.y, tx: c.x, ty: c.y, power, hit: -1, lx: null, ly: null });
+      const e = game.events[game.events.length - 1];
+      const k = key(c.x, c.y);
+      if (!inside(c.x, c.y) || game.holes.has(k) || burning(game, k)) continue; // (gone)
+      const o = game.snakes.find(o => o !== s && o.alive && o.body[0].x === c.x && o.body[0].y === c.y);
+      if (o && !o.cheek) { // (swallowed)
+        shrink(o, power);
+        o.cheek = { power, spitAt: game.tick + T.CHEEK_TICKS, left };
+        e.hit = o.id;
+        continue;
+      }
+      let at = c;
+      if (!foodRoom(game, c.x, c.y)) { // (a body, food or a burrow there: it rolls off)
+        const b = game.snakes.find(b => b.alive && b.body.some(p => p.x === c.x && p.y === c.y));
+        const j = b ? b.body.findIndex(p => p.x === c.x && p.y === c.y) : -1;
+        const along = b ? { body: b.body.slice(j), dir: j > 0 ? stepWay(b.body[j], b.body[j - 1]) || b.dir : b.dir } : { body: [c], dir: s.dir };
+        at = rollSide(game, along, c.x, c.y, (x, y) => foodRoom(game, x, y), (x, y) => foodPast(game, x, y));
+        if (!at) continue; // (nowhere to roll: gone)
+      }
+      game.food.push({ x: at.x, y: at.y, kind: 'mushroom', power, expires: game.tick + left });
+      e.lx = at.x; e.ly = at.y;
     }
   }
 
