@@ -436,7 +436,7 @@ window.SnakeEngine = (() => {
         if (d === b.dir) score += 1.5; // it likes to keep going
         else if (d.x === -b.dir.x && d.y === -b.dir.y) score -= 1;
         if (fled) score += 3 * (Math.abs(nx - hx) + Math.abs(ny - hy) - fear); // away from the nearest head...
-        if (home) score += 2 * (homeGap - Math.abs(home.x - nx) - Math.abs(home.y - ny)); // ...and home, if it's near
+        if (home) score += (plan === 1 ? 4 : 2) * (homeGap - Math.abs(home.x - nx) - Math.abs(home.y - ny)); // ...and home, if it's near (under the beak, straight there: it reckoned on a straight run)
         if (plan === 2 || (!plan && gap <= T.BEETLE_FEAR)) score += 3 * (beakGap(w.target, depth, nx, ny) - gap); // (...and the beak, off its mark)
         if (score > bestScore) { bestScore = score; best = d; }
       }
