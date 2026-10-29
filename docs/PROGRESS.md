@@ -23,6 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
+| Wildcard's hair, lacquered (2f) | Which one ships: D, E or F, or C, or keep the current? ([PR #144](https://github.com/HaakTuah/barkstreet-snakes/pull/144), all side by side at true phone size, 3x and desktop) | Suggested: E; the draft waits for the pick | Open |
 
 ## The queue, in order
 
@@ -79,7 +80,7 @@ a rival's makes no sound, except a golden mushroom, which already plays softer a
 
 ### 2e. Done: the woodpecker pecks beside a snake, not on it (PR #141); in `docs/archive/progress-done.md`.
 
-### 2f. Wildcard's hair: lacquered, not a mop (Haakon, 29 October 2026; small, an art lane, next)
+### 2f. Wildcard's hair: lacquered, not a mop (Haakon, 29 October 2026; small, an art lane; draft [PR #144](https://github.com/HaakTuah/barkstreet-snakes/pull/144) waits for Haakon's pick)
 
 Haakon (29 October 2026), on PR #110's hair as it plays: "Trump's hair looks like a mop now…" Then, to one more pass:
 "Yes, and make it do it expertly! I want trump's hair for Pete's sake!"
