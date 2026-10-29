@@ -211,6 +211,27 @@ go, but that the snake is left unhurt? Just a visual issue, nothing gameplaywise
 Done in PR #141: the beak aims at the free rim spot farthest from any body on the cell (of spots as clear, the one
 nearest the bird), the dent beside it with its splits running inward and stopping short of the body; drawing only.
 
+### 2g. The meal goes down: a hungry snake fills out from the head (Haakon, 29 October 2026; small, an art lane): done, PR #146
+
+Haakon (29 October 2026): "I notice snakes imidately become plump again when after eating while starving. I feel it
+should be an animation where you see it transform to getting plump and its color back." And: "Yes, expertly!"
+
+Today `hungerLook()` (`render/looks.js`) works out `slim` and `pale` afresh every frame from the hunger clock, so when a
+hungry snake eats, the clock resets and it snaps back to plump and its own colour at once.
+- **The meal travels down the body:** from the head, the body swells back segment by segment, as if the food were
+  going down, and the colour floods back with it, over about 0.6 to 0.8 s (a first guess; judged by eye). Each
+  segment eases from how slim and pale it was to how the new clock says it should be, so a meal that only partly
+  refills the clock fills it out only that far. Eating again mid-swell starts a new wave from the head.
+- **Every snake alike,** yours and the rivals', and the corpse rule unchanged (starved, it stays thin).
+- **Reduced motion:** no travelling wave; the whole body eases back in a short plain fade.
+- **Drawing only:** the hunger clock, the rules, the simulation's fingerprint and online play are unchanged (each
+  player draws it from the same clock on their own machine).
+- Pictures in the PR: a frame strip of a starving snake eating, at a 390-pixel phone and desktop.
+
+Done in PR #146: a wave from the head, 0.7 s to the tail and three segments deep (`mealSwell` in `render/looks.js`),
+the pale wash flooding back in steps (`drawPale`); with reduced motion, a 0.25 s fade. Meal seen as the clock's
+`lastAte` rising, so it is the same online. Render check in `tools/render/08-hunger.js`.
+
 ## Item 3, done
 
 From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
