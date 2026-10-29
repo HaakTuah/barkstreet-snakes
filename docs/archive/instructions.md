@@ -329,3 +329,11 @@ In the design chat (29 October 2026, 00:27 and 00:28 UTC), on Wildcard's hair as
 > Yes, and make it do it expertly! I want trump's hair for Pete's sake!
 
 (queued as 2f in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, 00:31 and 00:32 UTC), playing:
+
+> I notice snakes imidately become plump again when after eating while starving. I feel it should be an animation where you see it transform to getting plump and its color back.
+
+> Yes, expertly!
+
+(queued as 2g in `docs/PROGRESS.md`)
