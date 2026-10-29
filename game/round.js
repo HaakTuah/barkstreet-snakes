@@ -371,6 +371,7 @@ function sounds(dying, wasAlive) {
     else if ((e.type === 'dive' && !e.dug) || e.type === 'emerge') Sound.play('scrabble', at(e.x)); // (down a burrow, or up out of one; one that dug in was heard boring in)
     else if (e.type === 'dig') Sound.play('dig', { rival: !isMe(cornering(e.x, e.y)), ...at(e.x) }); // (the bore: whose head it fled, yours, or a rival's, softer and further off)
     else if (e.type === 'knock' && e.tx != null && !knocked) { knocked = true; Sound.play('knock', { volume: 0.5, land: (Render.knockFlight?.(e.x, e.y, e.tx, e.ty) ?? 320) / 1000, ...at(e.x) }); } // (food flying off the patch: the world's, quiet, once a strike, at the first piece that flies, landing as it's drawn landing; none for what the bird ate)
+    else if (e.type === 'knock' && e.tx == null && e.kind === 'beetle') Sound.play('crunch', { rival: true, ...at(e.x) }); // (round six B, 2m: the bird's gulp, a beetle's crunch as softly as a rival's, where it was)
     else if (e.type === 'rainbow') Sound.play('rainbow', at(e.x));
     else if (e.type === 'weather' && e.kind === 'rain') Sound.play('rain');
     else if (e.type === 'weather' && e.kind === 'snow') Sound.play('snow');
