@@ -63,6 +63,39 @@ beside it as before. A playable draft PR as early as it can be, so Haakon can tr
 - **Bridges:** as in DESIGN. Crawl on where the body crosses the rim, or land on it from a jump where it will still be there.
 - The earlier start on jumps is `docs/handoff/jumps-wip-unverified.patch` (on f338275). It's unverified; redo it or check it first.
 
+**Every move of the round, in this order** (Haakon, 29 October 2026, when the design session found the entry listed only
+part of "Round six B": "Yes, they are all part of the power update! What i have been looking forwards to!"). Each part
+is its own playable PR, tested both ways (`tools/abtest.js`) with every trademark measured, as the island hop was; the
+design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
+1. **The island hop and no auto-jump** (done, PR #158).
+2. **Bridges** (done, PR #174). Rare by design, about one ride in twenty rounds (Haakon, 29 October 2026: "Agreed with
+   you expert take!"): part 4 and item 6 each report bridge rides again, adding no rule to make them commoner.
+3. **The flashes cut** (the edge shelters a body from cuts, measured for a refuge: "The edge is a shelter, measured"): the plain flash through a body one thick, the golden through two (and fire out), and a cut
+   that leaves a snake fewer than 3 segments puts it out ("The neck cut"; a flash into a head is a failed flash);
+   your own beads squashed as your head passes, the choke, cough and nudge gone ("Choking on your own tail", replaced by
+   the owner, in `docs/design/27-round-six-a-fairness-and-fixes.md`); and **mushrooms come back up**: aimed by steering,
+   spat 3 cells ahead after a second in the cheek, a hit on a head poisoning that snake, a shade stronger each time (3
+   to 5), never killing by itself ("Mushrooms come back up" in the design); a failed flash
+   costs 5 and a longer stun, its rest 10 to 12 s; **dropping your own tail** by the same cut; and **Mason's double
+   walls**, since a wall one thick can now be cut (its straight runs measured before and after).
+4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
+   **leap now** (a second press while a jump waits sends it at once, open ground included: "Leap now" in the design); with
+   **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
+   fall in, onto a snake you're out, trapped).
+5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes.
+6. **Dropped charges** on a knockout, as above. *Built and reviewed* on `round6b/dropped-charges` (a spilled gold coin ringed with the pips; rules tests; review fixes in; protocol to renumber when it merges); still to do: the A/B against rivals that ignore spills (a copy is easy: zero the spill's worth in `ai.js`), pictures, the PR.
+7. **One pricing model for every power,** as above, last (*a first pass is parked* on `round6b/pricing`: the tail tip at length's worth now, rests cheaper while idle with a floor, risk by `headRisk`; on seeds 51/53 the seat-split already shows powers on beating off, 33.6% to 16.4%, with the island hop alone, and this pass did no better, 33.3% to 16.7%, flashing more; a direct head-to-head against today's AI was stopped at look 4, its rounds cached), so it prices every move together, with **each rival's power
+   style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
+Then the teaching system (item 4), which teaches all of them.
+
+**The rivals learn every move in its own part** (Haakon, 29 October 2026: "And very important that the commin ai is
+updated to understand all these rule changes to maximize they use of all the playrules!!!"). No part merges until the
+rivals use its moves when they pay and in their own styles, and see them used against them: hop, ride a bridge, cut,
+neck-cut, drop a tail, fly and steer, leap now, take a landing, follow a portal, grab dropped charges, and keep clear of
+each danger (a landing ring, a flash's line, a bridge's tail end). Rules tests prove each one through the same engine
+calls as a person's, and the head-to-head shows the users ahead ("No ability only people use", "every new move is
+tested both ways"); the pricing part then makes the choices among them as good as they can be.
+
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
 Haakon (29 October 2026), on the "For Haakon" question whether a fed Gobbler should gamble too: "Agreed to all,
@@ -98,6 +131,8 @@ apple it needs. Build it from the cause, in the one template every rival shares:
 ### 2f+. Done: Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85); in `docs/archive/progress-done.md`.
 
 ### 2g. Done: the meal goes down (PR #146); in `docs/archive/progress-done.md`.
+
+### Fix. Done: the layout suite's screen-awake checks no longer hang on the machine's speed (PR #161): the section holds the round's loop still, so your snake can't crash on its own between steps on a slow machine. (`scripts/test.sh` exits 1 on a failure; piped through `tail`, use `set -o pipefail`.)
 
 ### 2h. The endgame: eat what keeps you alive, not what boxes you in (Haakon, 29 October 2026; an AI entry, after 2b)
 
@@ -240,6 +275,15 @@ entry doesn't specify them, and the art waits for his description. Everything el
   "a cast of eighteen", and Capricious's deck of impressions (3b) gain him; online play gets a protocol bump.
 
 ### 4. The teaching system, steps 2–6 (DESIGN "Teaching by showing") — after 5, whose new moves it must teach
+
+**Right after the new moves** (Haakon, 29 October 2026: "And is this before the lessons rework? Because this will
+definetly be part of it. I think all this should come right after the new powers."). It starts as soon as item 5's last
+part merges, ahead of every other entry but the art and sound lanes, as a lane of its own (it touches the lessons, the
+pictures and the Field guide, not the AI, so the AI entries 2b, 2h, 2i, 3b and 3c may run beside it). It teaches every
+move and change of item 5 by showing, each with its picture or cue, its lesson and its Field guide row: the island hop
+and leap now, bridges, the cutting flashes and the neck cut, dropping your tail, Mason's double walls, the golden flight
+and bumps in the air, taking someone's landing, gold portals, dropped charges, squashing your own beads, and the
+mushroom you swallow, aim by steering and spit ("Mushrooms come back up"), with its ring and its growing strength.
 
 Step 1 is merged (#35):
 - 2. the full-size woodpecker on upright phones;
