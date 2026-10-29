@@ -45,15 +45,16 @@ const meal = await ev(`(() => {
   const body = (r, g, b) => r > 60 && r > g + 30 && r > b + 25;
   const g = stage(['sniper', 'gobbler', 'mason']), [you, sn, gob, ma] = g.snakes;
   [you, gob, ma].forEach((s, i) => setBody(s, [[2, 2 + 3 * i], [1, 2 + 3 * i], [0, 2 + 3 * i]], 'right'));
-  setBody(sn, Array.from({ length: 12 }, (_, i) => [15 - i, 12]), 'right');
   sn.mealMs = 12000;
   // (its neck: cells 13 and 12; its tail: cells 5 and 4)
   const look = () => ({ neck: count(12, 11.5, 2, 2, body), tail: count(4, 11.5, 2, 2, body), neckLum: lum(pixels(12, 11.5, 2, 2)), tailLum: lum(pixels(4, 11.5, 2, 2)) });
   const eat = () => { sn.lastAte = g.time; g.tick++; };
   const out = {};
   show(g);
-  for (const still of [false, true]) {
+  for (const how of ['lively', 'reduced']) {
+    const still = how === 'reduced';
     R.setReducedMotion(still);
+    setBody(sn, Array.from({ length: 12 }, (_, i) => [15 - i, 12]), 'right');
     eat(); drawN(40, 1);
     const fed = look();
     sn.lastAte = g.time - TUNING.HUNGER_MS - 2000; g.tick++; drawN(6, 1); // (starving)
@@ -61,7 +62,7 @@ const meal = await ev(`(() => {
     eat(); drawN(still ? 3 : 9, 1); // (it eats: a quarter of a second on, or a tenth with reduced motion)
     const going = look();
     drawN(30, 1); // (a second on)
-    out[still ? 'reduced' : 'lively'] = { fed, starving, going, after: look() };
+    out[how] = { fed, starving, going, after: look() };
   }
   R.setReducedMotion(false);
   SnakeDebug.pinQuality(2);

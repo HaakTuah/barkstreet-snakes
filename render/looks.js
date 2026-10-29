@@ -37,8 +37,8 @@ function animOf(s, now) {
       // A meal going down (see mealSwell): when it ate as this screen saw it
       // (ateSeen: its clock's lastAte), when the swell began, and each
       // segment's slim and pale as drawn (slimSeg, paleSeg; paleTop, the most)
-      // and as they were when it began (slimFrom, paleFrom); segN: how many last frame drew.
-      ateSeen: -1, mealAt: -1e9, segN: 0, paleTop: 0,
+      // and as they were when it began (slimFrom, paleFrom); segN: how many last frame drew, fromN: when it began.
+      ateSeen: -1, mealAt: -1e9, segN: 0, fromN: 0, paleTop: 0,
       slimSeg: new Float32Array(64), paleSeg: new Float32Array(64), slimFrom: new Float32Array(64), paleFrom: new Float32Array(64),
       flow: 0, flowW: 0, flowMv: 0, flowTick: -1, flowAt: -1, bursts: 0, burstAt: -1e9, // (how far it has gone, for its rainbow's stream: see flowOf; its flashes' bursts of it)
       // Up in the air and over holes (see liftOf and sinkOf): each segment's
@@ -280,7 +280,7 @@ const MEAL_MS = 700, MEAL_SPREAD = 3, MEAL_FADE = 250, PALE_STEPS = 6;
 function mealSwell(a, m, now) {
   if (a.slimSeg.length < m) for (const k of ['slimSeg', 'paleSeg', 'slimFrom', 'paleFrom']) { const r = new Float32Array(2 * m); r.set(a[k]); a[k] = r; }
   const t = now - a.mealAt, on = t >= 0 && t < (reduced ? MEAL_FADE : MEAL_MS);
-  const { slimSeg, paleSeg, slimFrom, paleFrom } = a, last = Math.max(0, a.segN - 1);
+  const { slimSeg, paleSeg, slimFrom, paleFrom } = a, last = Math.max(0, a.fromN - 1);
   const front = t / MEAL_MS * (m - 1 + MEAL_SPREAD);
   let top = 0;
   for (let i = 0; i < m; i++) {
@@ -292,7 +292,7 @@ function mealSwell(a, m, now) {
     slimSeg[i] = s;
     paleSeg[i] = top = Math.max(top, p); // (never paler toward the head: see drawPale)
   }
-  a.segN = m; a.paleTop = top;
+  a.segN = m; a.paleTop = paleSeg[m - 1]; // (as stored, rounded alike, so an even wash is seen as one: see drawPale)
 }
 // Its pale wash (starving, and fading as a meal goes down), over its
 // silhouette; while the colour floods back from the head, in a few steps
@@ -342,7 +342,7 @@ function drawCough(a, now) {
 const HUNGER_SLIM = 0.22, GROWL_BEAT = 520, GROWL_ARC = 0.42, HUNGER_PALE = '#f6eedb';
 function hungerLook(s, a, dead, now) {
   if (dead || !game || !s.alive) { a.slim = dead && s.killer === 'hunger' ? HUNGER_SLIM : 0; a.growl = 0; a.pale = 0; a.mealAt = -1e9; a.ateSeen = -1; return; } // (starved, it stays thin)
-  if (a.ateSeen >= 0 && s.lastAte > a.ateSeen) { a.mealAt = now; a.slimFrom.set(a.slimSeg); a.paleFrom.set(a.paleSeg); } // (it ate: the meal goes down from how it was drawn, see mealSwell)
+  if (a.ateSeen >= 0 && s.lastAte > a.ateSeen) { a.mealAt = now; a.fromN = a.segN; a.slimFrom.set(a.slimSeg); a.paleFrom.set(a.paleSeg); } // (it ate: the meal goes down from how it was drawn, see mealSwell)
   a.ateSeen = s.lastAte;
   const left = s.lastAte + T.HUNGER_MS - shownTime, gone = Math.min(1, Math.max(0, 1 - left / (s.mealMs || T.HUNGER_MS)));
   const warn = T.HUNGER_WARN_MS * (s.body.length <= T.MIN_LENGTH ? 1.5 : 1);
