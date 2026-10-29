@@ -729,14 +729,14 @@ function liftOf(s, a, at, k2, now) {
   let head = 0; // (the head's own lift, before it's eased)
   if (a.ml) { // (a jump seen coming: its head starts up toward what it hops)
     let flying = false;
-    for (let j = 0; j < hops.length; j++) if (game.tick - hops[j].tick < 2) flying = true;
+    for (let j = 0; j < hops.length; j++) if (game.tick - hops[j].tick < hops[j].n) flying = true;
     if (!flying) {
       head = reduced ? +(k2 > 0) : archAt(s, pts[0], pts[1], a.mx, a.my, a.mx, a.my);
       a.liftSw = s.leaps > 0 ? T.LEAP_SWELL_GOLD : T.LEAP_SWELL;
     }
   }
   for (let j = hops.length - 1; j >= 0; j--) {
-    const r = hops[j], p = game.tick - r.tick + at, flight = p < 2; // (how far through its two ticks in the air it's drawn)
+    const r = hops[j], p = game.tick - r.tick + at, flight = p < r.n; // (how far through its ticks in the air it's drawn: a tick over each cell it hops, and the landing)
     if (!flight && !r.landed) { // (down: its squash, a ring of dust where it came down)
       r.landed = true; r.landedAt = now;
       if (s.alive) { a.landAt = now; dustRing((r.x1 + r.dx + 0.5) * CELL, (r.y1 + r.dy + 0.5) * CELL); }
@@ -780,11 +780,14 @@ function archAt(s, x, y, x0, y0, x1, y1) {
   return d < 1 ? Math.cos(d * Math.PI / 2) : 0;
 }
 // A jump's records, from its leap event: the cells it hops (x0, y0 to x1,
-// y1), the way it went, its tick, its arch's height now, until when.
+// y1: reach of them, from where it took off), the way it went, its tick,
+// how many ticks it's up (n: one over each cell, and the landing), its
+// arch's height now, until when.
 function hopped(s, e, now) {
-  const a = animOf(s, now), h = s.body[0], hops = a.hops;
+  const a = animOf(s, now), hops = a.hops, reach = e.reach || 1, d = s.flight?.dir || s.dir;
   if (hops.length >= 3) hops.shift();
-  hops.push({ x0: e.x, y0: e.y, x1: h.x, y1: h.y, dx: s.dir.x, dy: s.dir.y, tick: game.tick, gold: !!e.gold, h: 1, landed: false, landedAt: 0, until: game.tick + s.body.length + 2, under: false, jTick: -1 });
+  const x1 = s.wrapUntil >= 0 ? (e.x + d.x * (reach - 1) + GRID) % GRID : e.x + d.x * (reach - 1), y1 = s.wrapUntil >= 0 ? (e.y + d.y * (reach - 1) + GRID) % GRID : e.y + d.y * (reach - 1);
+  hops.push({ x0: e.x, y0: e.y, x1, y1, dx: d.x, dy: d.y, tick: game.tick, n: reach + 1, gold: !!e.gold, h: 1, landed: false, landedAt: 0, until: game.tick + s.body.length + reach + 2, under: false, jTick: -1 });
 }
 
 // A body over a hole, seen from above: nothing under it, so it's shaded

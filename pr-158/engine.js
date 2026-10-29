@@ -48,7 +48,7 @@ window.SnakeEngine = (() => {
       // wrapUntil: the edges wrap round for it till then (a golden mushroom);
       // flight: while its head is in the air, { dir, over: [the cells it
       // still flies over, a tick each], land: { x, y } (where it comes down,
-      // the tick after the last of them) }; leapArmed:
+      // the tick after the last of them), gold: 1 for a golden jump }; leapArmed:
       // the last tick a jump it asked for waits; flashArmed: the tick a flash
       // it asked for goes (the next one it moves).
       leaps: 0, dashes: 0, leapReadyAt: 0, flashReadyAt: 0, wrapUntil: -1, flight: null, leapArmed: -1, flashArmed: -1,
@@ -1708,7 +1708,7 @@ window.SnakeEngine = (() => {
     }
     s.next = path[0];
     s.air = true;
-    s.flight = { dir: s.dir, over: path.slice(1, reach), land: path[reach] };
+    s.flight = { dir: s.dir, over: path.slice(1, reach), land: path[reach], gold: golden ? 1 : 0 };
     s.leapArmed = -1;
     game.events.push({ type: 'leap', snake: s, x: path[0].x, y: path[0].y, gold: golden ? 1 : 0, reach });
   }

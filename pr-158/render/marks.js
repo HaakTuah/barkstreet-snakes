@@ -250,6 +250,30 @@ function drawPress() {
   ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.17; ctx.stroke();
   ctx.strokeStyle = !power ? GLINT : (flash ? s.dashes : s.leaps) > 0 ? HONEY : flash ? EMBER : SKY; ctx.lineWidth = CELL * 0.09; ctx.stroke();
 }
+// The island hop's landing ring: where a jump comes down, on the ground
+// under it, in the jump's sky (a golden one's Honey), inked. Every snake
+// in the air shows it (anyone can see where a jump will land); your own
+// jump, asked for and able to go, shows it before it goes, so you see
+// where you'd land. Just where: never whether it's a trap.
+function drawLandings(now) {
+  if (!game) return;
+  const t = reduced ? 0 : now / 1000;
+  for (const s of game.snakes) {
+    if (!s.alive) continue;
+    let x, y, gold = s.leaps > 0;
+    if (s.flight?.land) { x = s.flight.land.x; y = s.flight.land.y; gold = !!s.flight.gold; }
+    else if (s.id === viewerId) {
+      const a = anim.get(s);
+      if (!a || !a.ml) continue;
+      x = a.lx; y = a.ly;
+    } else continue;
+    const cx = (x + 0.5) * CELL, cy = (y + 0.5) * CELL, r = CELL * (0.38 + 0.04 * Math.sin(t * 9));
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.22; ctx.stroke();
+    ctx.strokeStyle = gold ? HONEY : SKY; ctx.lineWidth = CELL * 0.12; ctx.stroke();
+  }
+}
 // A power asked for, as a mark where the chevron would go (its tip at x,
 // y, pointing along q), added to the current path: the jump's hop, as on
 // its chip (an arc up and over, ending in an arrowhead), or the flash's
