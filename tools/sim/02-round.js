@@ -60,10 +60,15 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     if (mid) c.mealsMid += new Set(g.events.filter(e => e.type === 'eat' && e.kind !== 'mushroom').map(e => e.snake)).size;
     if (signs) signatures(g, T, per, was);
     for (const e of g.events) {
+      if (e.type === 'leap') { // (the island hop: how far, over a hole, and when, for a jumper out soon after)
+        c['hop' + Math.min(3, e.reach)]++;
+        if (Array.from({ length: e.reach }, (_, i) => (e.y + e.snake.dir.y * i) * N + e.x + e.snake.dir.x * i).some(k => g.holes.has(k))) c.hopHole++;
+        (st.hopAt ||= new Map()).set(e.snake, g.tick);
+      }
       if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
       else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
       else if (e.type === 'flown') total.flown++;
-      else if (e.type === 'crash') { total.crashes++; per[e.snake.name].crashes++; }
+      else if (e.type === 'crash') { total.crashes++; per[e.snake.name].crashes++; if (e.snake.landing) c.hopFail++; }
       else if (e.type === 'alight') total.alight++;
       else if (e.type === 'cut') total.cuts++;
       else if (e.type === 'baked') total.baked++;
@@ -90,6 +95,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const s of g.snakes) c.goldGot += Math.max(0, s.leaps + g.events.filter(e => e.type === 'leap' && e.gold && e.snake === s).length - held[s.id]);
     const left = g.snakes.filter(s => s.alive).length;
     for (const s of dying) {
+      if (st.hopAt?.has(s) && g.tick - st.hopAt.get(s) <= 30) c.hopDie++;
       place.set(s, left + 1);
       per[s.name].aliveMs += g.time;
       const cause = causeOf(s);

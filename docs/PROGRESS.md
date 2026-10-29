@@ -46,6 +46,8 @@ long time now. Also, the teaching system will have to account for it." It is the
 3b (PR #142) merges, ahead of Wildcard's part of 3b, 2b, 2h, 2i and 3c; the art and sound lanes (2d, 2f, 2j) run
 beside it as before. A playable draft PR as early as it can be, so Haakon can try it this evening.
 
+*Done so far:* **the island hop** and **no auto-jump** (PR #158: a jump goes over up to 3 cells, a cell a tick; a press waits 5 moves; the landing ring; protocol 16).
+
 - **The island hop comes first.** The owner: "jumping is pretty critical to making this game more tense and skill based, rather than RNG". There are two test cases:
   - Gobbler folded on a strip;
   - `docs/handoff/owner-sniper-islands.jpg`: Sniper won coiled on a strip, beside islands of beads across gaps of 1 to 3 cells.
