@@ -126,7 +126,7 @@ const dug = await ev(`(() => {
   const [tx, ty] = cell(E.knockTo(g2, 11, 12, P));
   out.to = [tx, ty];
   out.ring = count(tx - 0.2, ty - 0.2, 1.4, 1.05, paler); out.noRing = count(18, 18, 1.4, 1.05, paler); // (clear of the mark's own rim, a cell below)
-  out.rings = E.knocks(g2, P).filter(({ to }) => to && count(to.x - 0.2, to.y - 0.2, 1.4, 1.05, paler) > 10).length; // (one for each piece in the mark)
+  out.rings = E.knocks(g2, P).filter(({ to }) => to && count(to.x - 0.2, to.y - 0.2, 1.4, 1.05, paler) > 10).length; // (one for each piece in the mark that lands: the beetle's eaten, so none for it)
   // On the aim's last tick, the engine's promise (w.landings): the bead's ring where it was promised (a free cell
   // nothing else is drawn on), though the rule as the board stands would put it elsewhere; the beetle's by the rule.
   const free = ([x, y]) => !g2.snakes.some(s => s.alive && s.body.some(c => c.x === x && c.y === y)) && !g2.food.some(f => f.x === x && f.y === y) && count(x - 0.2, y - 0.2, 1.4, 1.05, paler) === 0;
@@ -140,17 +140,17 @@ const dug = await ev(`(() => {
   for (const k of P) g2.holes.add(k);
   g2.woodpecker.target = []; g2.woodpecker.struckAt = g2.tick;
   bead.x = tx; bead.y = ty;
-  const [bx, by] = cell(E.knockTo(g2, 13, 11, P));
-  bug.px = 13; bug.py = 11; bug.x = bx; bug.y = by; bug.movedAt = g2.tick;
+  g2.food.splice(g2.food.indexOf(bug), 1); // (round six B, 2m: a beetle still in the mark is the bird's)
   g2.tick++;
-  R.onTick([{ type: 'knock', kind: 'pellet', x: 11, y: 12, tx, ty }, { type: 'knock', kind: 'beetle', x: 13, y: 11, tx: bx, ty: by }]);
+  R.onTick([{ type: 'knock', kind: 'pellet', x: 11, y: 12, tx, ty }, { type: 'knock', kind: 'beetle', x: 13, y: 11, tx: null, ty: null }]);
+  const gulp = R.particles;
   drawN(1, 0.05, 1);
   drawN(1, 0.5, 225); // (about half way through its flight)
   const mid = centre(9, 7, 5, 7, sky);
   out.mid = { bead: mid, beetle: centre(12, 10, 4, 3, emerald), rim: mid ? count(mid[0] - 0.6, mid[1] - 0.6, 1.2, 1.2, parch) : 0 };
   drawN(4, 0.5, 120); g2.tick++; drawN(2, 0.5, 60);
   const end = centre(9, 7, 5, 7, sky);
-  out.end = { bead: end, beetle: centre(12, 10, 4, 3, emerald), rim: end ? count(end[0] - 0.6, end[1] - 0.6, 1.2, 1.2, parch) : 0, bug: [bx, by] };
+  out.end = { bead: end, beetle: count(11, 9, 5, 5, emerald), rim: end ? count(end[0] - 0.6, end[1] - 0.6, 1.2, 1.2, parch) : 0, gulp };
   // A longer throw is in the air longer and flies higher: a bead knocked a cell, then one knocked 4, each
   // followed through its flight (its centre every 30 ms; up is less y).
   out.throws = [];
@@ -229,11 +229,11 @@ const dug = await ev(`(() => {
     'with reduced motion, it’s filled and mossed at once, then fades', `its hole ${hl.calm.hole}, sawdust ${hl.calm.plug}, moss ${hl.calm.moss} at once; ${hl.calmEnd.all} pixels changed after`);
   check(max(dug.calm.parts) === 0 && max(dug.calm.bug) - min(dug.calm.bug) <= 3 && max(dug.calm.bug) < 0.8 * dug.full && min(dug.calm.bug) > 10,
     'with reduced motion, it’s drawn sunk part way, still, and no sawdust flies', `its emerald pixels ${dug.calm.bug.join(', ')} (${dug.full} up on the bark); particles ${max(dug.calm.parts)}`);
-  check(dug.tremble > 0.02 && dug.steady < dug.tremble / 4 && dug.ring > 10 && dug.noRing === 0 && dug.rings === 2, 'through the woodpecker’s aim, food in its mark trembles, food outside it is still, and a ring marks where it’ll be knocked to (the engine’s list: one for each piece)',
-    `the bead in the mark moves ${dug.tremble} cells across, frame to frame, the one outside ${dug.steady}; ${dug.ring} ring pixels at ${dug.to} (the rule’s cell), ${dug.noRing} at a cell nothing lands on; rings at ${dug.rings} of the 2 landings`);
+  check(dug.tremble > 0.02 && dug.steady < dug.tremble / 4 && dug.ring > 10 && dug.noRing === 0 && dug.rings === 1, 'through the woodpecker’s aim, food in its mark trembles, food outside it is still, and a ring marks where it’ll be knocked to (the engine’s list: one for each piece that lands, none for a beetle, which the bird eats)',
+    `the bead in the mark moves ${dug.tremble} cells across, frame to frame, the one outside ${dug.steady}; ${dug.ring} ring pixels at ${dug.to} (the rule’s cell), ${dug.noRing} at a cell nothing lands on; rings at ${dug.rings} of the 1 landing`);
   const vow = dug.promised;
-  check(vow.ring > 10 && vow.rings === 2 && (vow.ruleIsBeetles || vow.rule <= 2), 'on the aim’s last tick, the rings show the engine’s promise (where the strike will land each piece while its cell is free)',
-    `${vow.ring} ring pixels at the promised ${vow.at}, rings at ${vow.rings} of the 2 landings; ${vow.rule} at the rule’s ${dug.to}${vow.ruleIsBeetles ? ' (the beetle’s by the rule now)' : ''}`);
+  check(vow.ring > 10 && vow.rings === 1 && (vow.ruleIsBeetles || vow.rule <= 2), 'on the aim’s last tick, the rings show the engine’s promise (where the strike will land each piece while its cell is free)',
+    `${vow.ring} ring pixels at the promised ${vow.at}, rings at ${vow.rings} of the 1 landing; ${vow.rule} at the rule’s ${dug.to}${vow.ruleIsBeetles ? ' (the beetle’s by the rule now)' : ''}`);
   const [tx, ty] = dug.to, b = dug.mid.bead, e = dug.end.bead;
   check(!!b && b[1] < ty + 0.5 - 0.3 && Math.abs(b[0] - (tx + 0.5)) < 0.3 && dug.mid.rim > dug.end.rim + 15 && !!e && Math.abs(e[0] - (tx + 0.5)) < 0.15 && Math.abs(e[1] - (ty + 0.5)) < 0.2,
     'at the strike, the food flies to where the rule said, up in an arc, rimmed so it reads over a body', `the bead half way at ${b} (it lands at ${tx + 0.5},${ty + 0.5}), then at ${e}; parchment round it ${dug.mid.rim} in the air, ${dug.end.rim} landed`);
@@ -241,7 +241,5 @@ const dug = await ev(`(() => {
   check(near.down && far.down && far.landsBy >= near.landsBy + 120 && far.top < near.top - 0.3 && near.top < 17.5 - 0.4,
     'a longer throw is in the air longer and flies higher (the knock’s arc grows with the way it goes)',
     `knocked 1 cell, up to y ${near.top} (it lies at 17.5), down by ${near.landsBy} ms; knocked 4 cells, up to y ${far.top}, down by ${far.landsBy} ms`);
-  const bm = dug.mid.beetle, be = dug.end.beetle, [bx, by] = dug.end.bug, d = (c, x, y) => Math.hypot(c[0] - x, c[1] - y);
-  check(!!bm && d(bm, 13.5, 11.5) > 0.25 && d(bm, bx + 0.5, by + 0.5) > 0.25 && d(bm, 13.5, 11.5) + d(bm, bx + 0.5, by + 0.5) < d([13.5, 11.5], bx + 0.5, by + 0.5) + 0.2 && !!be && d(be, bx + 0.5, by + 0.5) < 0.2,
-    'a beetle knocked out of the mark scurries there', `half way at ${bm}, then ${be} (from 13.5,11.5 to ${bx + 0.5},${by + 0.5})`);
+  check(dug.end.beetle === 0 && dug.end.gulp > 0, 'a beetle still in the mark at the strike is gone, eaten in a puff (it never flies off it)', `its emerald pixels after ${dug.end.beetle}; particles at the strike ${dug.end.gulp}`);
 }
