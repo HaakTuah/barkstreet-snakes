@@ -388,7 +388,6 @@ if (params.has('debug')) {
     banners: () => bannerLog, // (every banner, and what became of it: shown, queued, stale, skipped, dropped, card)
     firstOut: dying => firstOut(dying), // (the first out's words, as the round would put them: the tests' long names)
     banner: (text, kind = '', level = 'round', opts = {}) => { hideToast(); toast(text, 2800, kind, level, opts); }, // (one put up by hand, at once, as the round would: the tests' phones)
-    hear: events => { theGame.events = events; sounds([], playerAlive()); }, // (what the round plays for these events: the tests' chomps)
     step: Engine.step,
     createGame: Engine.createGame,
     perf: () => perf.stats(),

@@ -33,14 +33,6 @@ window.SnakeAudio = (() => {
   const RIVALS = { rivalDeath: 1, bonked: 1 };
   const RIVAL_VOLUME = 0.5;    // a rival's leap or dash, next to yours...
   const RIVAL_LOWPASS = 2600;  // ...and a little duller, as if further off
-  // A rival feeding: its own chomp for what it ate, as yours is, but softer still (this much of a rival's
-  // leap or dash: about a third of your own chomp, dulled), and never a pile-up: one rival's chomp at a
-  // time, CHOMP_GAP apart whoever ate, and none while your own is sounding (CHOMP_YIELD after yours).
-  // Yours never waits on theirs.
-  const CHOMPS = { eat: 1, golden: 1, meat: 1, mushroom: 1, crunch: 1, leaf: 1 };
-  const RIVAL_CHOMP = 0.6;
-  const CHOMP_GAP = 180;
-  const CHOMP_YIELD = 350;
   // Shortest gap in ms between two plays of the same cue, so bursts don't stack up.
   // A rival's keeps its gap from rivals' and from yours; yours, only from your own
   // (a rival's flash never swallows yours). A dash's is well under the fastest tick, and a
@@ -93,7 +85,6 @@ window.SnakeAudio = (() => {
   const lastPlayed = {};       // cue name (a rival's play: name + '~') -> ms timestamp (see MIN_INTERVAL)
   const coveredUntil = {};     // cue name -> ms timestamp (see COVERS)
   const sounding = {};         // cue name -> { voice, end } of its latest play (see CUTS_SHORT)
-  let yourChomp = -Infinity, rivalChomp = -Infinity; // ms of the last chomp, yours and any rival's (see CHOMPS)
 
   // The pitch and volume of the cue being built; tone() and noise() apply them.
   let pitchMul = 1;
@@ -965,8 +956,6 @@ window.SnakeAudio = (() => {
     const ms = now();
     const key = o.rival ? name + '~' : name, gap = MIN_INTERVAL[name] || 0;
     if (ms - (lastPlayed[key] ?? -Infinity) < gap || ms - (lastPlayed[name] ?? -Infinity) < gap || ms < (coveredUntil[name] || 0)) return;
-    const chomp = !!CHOMPS[name], theirs = chomp && !!o.rival;
-    if (theirs && (ms - rivalChomp < CHOMP_GAP || ms - yourChomp < CHOMP_YIELD)) return;
 
     // If onended never arrived (it can go missing), the clock still tells us everything has stopped.
     if (voices > 0 && ctx.currentTime > lastEnd + 0.5) { voices = 0; generation++; }
@@ -979,10 +968,9 @@ window.SnakeAudio = (() => {
     const delay = Number.isFinite(o.delay) ? Math.max(0, Math.min(1, o.delay)) : 0;
 
     lastPlayed[key] = ms;
-    if (chomp) { if (theirs) rivalChomp = ms; else yourChomp = ms; }
     for (const k in COVERS[name]) coveredUntil[k] = ms + COVERS[name][k];
     pitchMul = Math.pow(2, pitch / 12);
-    volMul = volume * (o.rival ? RIVAL_VOLUME * (theirs ? RIVAL_CHOMP : 1) : 1);
+    volMul = volume * (o.rival ? RIVAL_VOLUME : 1);
     const t = ctx.currentTime + LEAD + delay;
     building = { pending: 0, gen: generation, nodes: [], end: t };
     voices++;

@@ -344,14 +344,12 @@ function birdSounds() {
 function sounds(dying, wasAlive) {
   const me = player();
   let knocked = false;
-  const fed = []; // (rivals' meals: heard after yours, so theirs give way to it)
   for (const e of theGame.events) {
     if (e.type === 'eat' && isMe(e.snake)) {
       if (e.kind !== 'mushroom') { streak = theGame.time - streakAt < 2600 ? Math.min(streak + 1, 7) : 0; streakAt = theGame.time; }
       Sound.play(EAT_CUES[e.kind] || 'eat', { streak: e.kind === 'mushroom' ? 0 : streak, gold: !!e.gold, ...at(e.x) });
       bump(scoreEl);
     } else if (e.type === 'eat' && e.kind === 'goldcap') Sound.play('wrap', { rival: true, ...at(e.x) }); // (someone else's golden mushroom: softer, further off)
-    else if (e.type === 'eat') fed.push(e);
     else if (e.type === 'woodpecker') { Sound.play('call'); Sound.play('riser'); }
     else if (e.type === 'aim') Sound.play('aim', at(e.x));
     else if (e.type === 'peck' && e.cells?.length) Sound.play('crash', at(e.x)); // (its drum came first, blow by blow: see birdSounds)
@@ -387,10 +385,6 @@ function sounds(dying, wasAlive) {
     else if (e.type === 'douse') Sound.play('douse', at(e.x));
     else if (e.type === 'fizzle' && isMe(e.snake)) { Sound.play('thunk', at(e.snake.body[0].x)); (e.flash ? e.snake.tag?.flash : e.snake.tag?.jump)?.animate?.(reducedMQ.matches ? REFUSED : NUDGE, { duration: reducedMQ.matches ? 420 : 260, easing: 'ease-out' }); } // (pressed, and it couldn't go: you hear it, and its chip shakes its head; with reduced motion it flashes)
   }
-  // A rival feeding: its own chomp for what it ate, softer and further off,
-  // from where it ate, never with the streak's climb (that's yours); one at a
-  // time, giving way to yours (Audio's CHOMPS).
-  for (const e of fed) Sound.play(EAT_CUES[e.kind] || 'eat', { rival: true, gold: !!e.gold, ...at(e.x) });
   // A choke's cough, a beat after its gag.
   if (theGame.coughs) for (const [id, c] of theGame.coughs) {
     if (c.at == null || theGame.tick < c.at) continue;
