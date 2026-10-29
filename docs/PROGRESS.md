@@ -104,6 +104,15 @@ a rival's makes no sound, except a golden mushroom, which already plays softer a
 
 ### 2f. Done: Wildcard's hair, lacquered (PR #144, version F); in `docs/archive/progress-done.md`.
 
+### 2f+. Wildcard's hair: F, a size smaller (Haakon, 29 October 2026; small, an art lane beside the new moves)
+
+Haakon (29 October 2026), playing with F: "Dont trumps hair look a bit too big now?" And, to keeping F's shape at about
+85% of its size: "Yes, let's try that!" Keep F's shape as it is, the wave, the sweep to the far side, the grooves and
+the gloss, and scale the whole mass to about 85%, so it sits on the head instead of towering over it, puffing past the
+head less over the ears and behind; the face, the set-back front edge and both eyes as they are. Drawing only. The PR
+shows F now beside F at 85% at a 390-pixel phone (true size and 3x) and desktop 2x, all four headings, and merges once
+the render suite passes; if Haakon then finds it still too big, or now too small, the size is one number to change.
+
 ### 2g. Done: the meal goes down (PR #146); in `docs/archive/progress-done.md`.
 
 ### 2h. The endgame: eat what keeps you alive, not what boxes you in (Haakon, 29 October 2026; an AI entry, after 2b)
