@@ -182,6 +182,16 @@ Also in `next-tasks-verbatim.md`:
 
 *Done on 27 October 2026 (PR #48)*: see "The messages, typed" in `docs/design/22-play-with-friends-online.md`.
 
+### 2c. The woodpecker, 1.3 times (Haakon, 29 October 2026; a layout lane)
+
+Haakon (29 October 2026), "Agreed to all, expertly!", to the "For Haakon" question on its size and the design session's
+take: **1.3 times its size, on the board and under it alike** (one size). Under the board it still clings to and pecks
+the buttons. Since it covers more of the board as it drums, check with the simulation that round length, deaths by
+cause and per-rival wins stay within noise; pictures at a 390-pixel phone and desktop, as for PR #112.
+
+Done (PR #139): 1.3 times everywhere, one size wherever the screen has room (101 px on a 390×844 phone, from 78); the
+simulation's fingerprints identical. See "The woodpecker, 1.3 times" in `docs/design/32-the-owners-playtest.md`.
+
 ## Item 3, done
 
 From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
