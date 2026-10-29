@@ -85,7 +85,17 @@ function predict(s, a) {
     const go = flashReach(s, d, x, y);
     if (go > 1) { a.mf = go - 1; a.mx = wrapX(s, h.x + d.x * go); a.my = wrapX(s, h.y + d.y * go); return; }
   }
-  if (offBoard(x, y) || game.holes.has(y * GRID + x) || stays[y * GRID + x]) { a.mv = 0; a.mg = 0; }
+  if (offBoard(x, y) || ((game.holes.has(y * GRID + x) || stays[y * GRID + x]) && !bridgeFor(s, x, y))) { a.mv = 0; a.mg = 0; }
+  if (game.holes.has(h.y * GRID + h.x) && cover[h.y * GRID + h.x] >= 2) a.rideUntil = game.tick + s.body.length + 1; // (on another's back, over a pit: drawn over it till its tail's off)
+}
+// Round six B: is (x, y) a bridge for s's head, another's body lying over
+// a pit there (behind its head), still there after the move (as the
+// game's bridgeAt has it)?
+function bridgeFor(s, x, y) {
+  const k = y * GRID + x;
+  if (!game.holes.has(k) || stays[k] !== 1) return false;
+  const o = snakeAt(x, y);
+  return !!o && o !== s && o.body.findIndex(c => c.x === x && c.y === y) > 0;
 }
 // Would a jump asked for go, its head at h heading d, the game's clock at
 // t (as the game's hopPlan has it)? Golden, or the plain one rested and
