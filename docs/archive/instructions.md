@@ -401,3 +401,8 @@ And, to Claude's take (they notice each other, a shoving match, the loser flips,
 
 In the design chat (29 October 2026, 09:00 UTC), to the "For Haakon" question on rivals' chomps while watching sped
 up (2d, PR #150), among answers for Amarna Letters: "Yes to all, expertly!" (kept as is)
+
+In the design chat (29 October 2026, 11:33 UTC), to 2j's questions (are the babble voices distracting; the Voices
+switch under the board): "No, just merge them, then we will adjust if it is distracting." And, to the design
+session's other takes, the switch's place among them: "Other than that, implement all you said, expertly!" (2j ships
+with the voices on; the switch stays under the board, V at any time)
