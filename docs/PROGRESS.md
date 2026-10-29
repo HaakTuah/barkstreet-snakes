@@ -168,6 +168,34 @@ arent distracting! That would be a real turn off!"
 - Rivals only for now (your own snake's lines, from the teaching system, stay silent). Online, each player hears it on
   their own machine: no protocol change.
 
+### 2k. The woodpecker, bigger still (Haakon, 29 October 2026; small, an art lane)
+
+Haakon (29 October 2026): "I think the woodpecker should be even bigger". Then, when the design session asked for a
+simulation check: "How should a visual change alter the actual game in any way?" It can't: the bird's size is one
+drawing constant (`BU` in `render/bird.js`), while the rules peck by target cells (`game.woodpecker`), so no
+simulation is run for it. Make it **about 1.6 times its first size** (from 1.3), on the board and under it alike, one
+size wherever the screen has room, as 2c set; where there isn't room, its perches shrink it as they do today
+(`PERCH_MIN_PX`, `PERCH_FLOOR_PX`). The check is what it hides, by eye: while it drums, the food, the heads and the
+tiles it is about to peck still show, and under the board it still clings to the buttons without covering what they
+say. The PR shows 1.3 beside 1.6 at a 390-pixel phone held upright and on its side, and desktop 2x, drumming and
+perched, and merges once the render and layout suites pass; if Haakon finds it too big, the size is one number.
+
+### 2l. Flags that bend as a snake goes over them (Haakon, 29 October 2026; small, an art lane beside 2k)
+
+Haakon (29 October 2026): "would be cool if the flags of sovereign and colonists bends away from a snakes body,
+depending on direction it was hit when a part of a snake occupies its tile". Drawing only (`render/flags.js`), so no
+simulation; online, each player draws it from the snakes they already have: no protocol change.
+- **Pushed the way it was hit:** when any part of any snake lies on the tile of Sovereign's banner or a colony's flag,
+  the pole bends over from its foot in the direction that snake was travelling as it came onto the tile (from the cell
+  before it in the body to that one), so a snake going east pushes it east, and the cloth trails low behind it. It
+  stays bent while the body lies on it, and bends the new way if another snake comes over it from another side.
+- **Springs back:** once the tile is free, it swings upright with a short wobble that dies away, then flies as before.
+  With reduced motion it simply leans while covered and stands up again, without the wobble.
+- **One flag, one look:** it works with what flags already do (the banner's tilt as it's carried, its shake when
+  pecked, a colony flag falling into its pit), never fighting them; the falling flag wins. The PR shows a snake
+  crossing a banner and a colony flag from each side at a 390-pixel phone and desktop 2x (pictures and a short clip),
+  and merges once the render suite passes.
+
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
 Its done entries (PRs #49 to #124) are in `docs/archive/progress-done.md`, "Item 3, done".

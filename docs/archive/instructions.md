@@ -370,3 +370,14 @@ In the design chat (29 October 2026, 07:49 and 07:50 UTC), on Wildcard's hair F 
 > Yes, let's try that!
 
 (the second to keeping F's shape at about 85% of its size; queued as 2f+ in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, shortly before 08:00 UTC), on the woodpecker and the flags:
+
+> I think the woodpecker should be even bigger, and would be cool if the flags of sovereign and colonists bends away from a snakes body, depending on direction it was hit when a part of a snake occupies its tile, don't you think?
+
+Then, to Claude's suggestion that a bigger bird be checked with the simulation:
+
+> How should a visual change alter the actual game in any way?
+
+And, to queueing both as art lanes, the bird checked by eye for what it hides: "Yes, please, expertly!" (queued as 2k
+and 2l in `docs/PROGRESS.md`)
