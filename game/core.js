@@ -36,7 +36,7 @@ const flavorEl = $('overlay-flavor'), badgeEl = $('overlay-badge'), opponentsEl 
 const nameRow = $('name-row'), nameRank = $('name-rank'), nameInput = $('name-input');
 const startBtn = $('start'), watchBtn = $('watch');
 const toastEl = $('toast'), speedEl = $('speed'), announcer = $('announcer'), hintEl = $('hint'), helpEl = $('help');
-const pauseBtn = $('pause'), muteBtn = $('mute'), musicBtn = $('music'), chatterBtn = $('chatter-toggle'), chatlogEl = $('chatlog');
+const pauseBtn = $('pause'), muteBtn = $('mute'), musicBtn = $('music'), voicesBtn = $('voices-toggle'), chatterBtn = $('chatter-toggle'), chatlogEl = $('chatlog');
 const recordsEl = $('records'), recordsBody = $('records-body'), resetBtn = $('records-reset');
 const recordsTabs = [...document.querySelectorAll('#records .tab[data-tab]')];
 const filterEl = $('scores-filter'), filterTabs = [...filterEl.querySelectorAll('.tab')];

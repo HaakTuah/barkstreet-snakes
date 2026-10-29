@@ -400,4 +400,4 @@ function update() {
   }
 }
 
-window.SnakeChatter = { init: chatInit, reset, update, layout, clearBubbles, lastWordsUp, setEnabled, isEnabled, setCompact, onSpeak, replay };
+window.SnakeChatter = { init: chatInit, reset, update, layout, clearBubbles, lastWordsUp, setEnabled, isEnabled, setCompact, onSpeak, onBubble, replay };

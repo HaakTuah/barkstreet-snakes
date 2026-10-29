@@ -299,6 +299,13 @@ function killLine(p) {
 
 // Sounds come from where they happen on the board, a little left or right.
 const at = x => ({ pan: ((x + 0.5) / GRID_SIZE * 2 - 1) * 0.8 });
+// A rival's bubble: a burble in its own voice, quieter the tighter it is for
+// you (SnakeAudio's babble keeps it from ever distracting). Your own snake's
+// lines, and a friend's online, stay silent: they have no voice of their own.
+Chatter.onBubble((s, text) => {
+  if (isMe(s) || !s.persona || !s.body?.length) return;
+  Sound.play('babble', { voice: s.personaKey, chars: text.length, tight: dangerNow, ...at(s.body[0].x) });
+});
 // The sound of each thing you eat (anything else is an apple).
 const EAT_CUES = { goldcap: 'wrap', golden: 'golden', leaf: 'leaf', pellet: 'meat', mushroom: 'mushroom', beetle: 'crunch' };
 // Apples eaten in quick succession climb a scale: a streak you can hear.
