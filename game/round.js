@@ -381,6 +381,10 @@ function sounds(dying, wasAlive) {
     else if (e.type === 'baked') Sound.play('bake', at(e.x));
     else if (e.type === 'ash') Sound.play('ash', at(e.x));
     else if (e.type === 'cut') Sound.play('snip', at(e.x));
+    else if (e.type === 'spit') { // (a mushroom come back up: the gag, "ptoo" and its landing; hit, the poison's own cue for the one it hit)
+      Sound.play('choke', { rival: !isMe(e.snake), ...at(e.x) });
+      if (e.hit >= 0 && isMe(theGame.snakes[e.hit])) Sound.play('mushroom', at(e.tx));
+    }
     else if (e.type === 'squash') { // (your own bead, squashed)
       Sound.play('squash', { rival: !isMe(e.snake), ...at(e.x) });
       if (isMe(e.snake)) streakAt = -1e9; // (no meal: the apples' scale starts again)
