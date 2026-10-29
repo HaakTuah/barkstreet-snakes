@@ -109,9 +109,8 @@ const GUIDE_ROWS = [
     ['capricious', 'Capricious', 'Does impressions of the others, every one before any again: their mark on its pink head, their line, their play.'],
   ]],
 ];
-// (Until the renderer can draw a picture, a stand-in. It draws a kind it
-// doesn't know as an apple, so the kinds it has no picture for yet are
-// named here: none now.)
+// (Until the renderer can draw a picture, a stand-in: it draws a kind it
+// doesn't know as an apple. Every kind has one, in case its picture fails.)
 const GUIDE_STAND_IN = { capricious: '🎭', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', choke: '🤢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', land: '🚩', lostflag: '🚩' };
 const GUIDE_UNDRAWN = new Set();
 function renderGuide() {

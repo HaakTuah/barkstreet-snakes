@@ -93,7 +93,9 @@ const hasChinese = text => /[一-鿿]/.test(text);
 function setWords(el, text) {
   const lead = /^\*([^*]+)\*: (.+)$/.exec(text); // (a stage direction, then words: Capricious's impressions)
   if (lead) {
-    el.append(Object.assign(document.createElement('em'), { textContent: lead[1] + ':' }), ' ');
+    const zh = hasChinese(lead[1]), dir = Object.assign(document.createElement(zh ? 'span' : 'em'), { textContent: zh ? `（${lead[1]}）` : lead[1] + ':' });
+    if (zh) dir.lang = 'zh-Hans'; // (Copycat's echo: Chinese in brackets, not italics)
+    el.append(dir, ' ');
     const said = document.createElement('span');
     setWords(said, lead[2]);
     el.append(said);
