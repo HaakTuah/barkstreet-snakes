@@ -183,14 +183,17 @@ const drawGoldcap = g => {
   g.beginPath(); g.arc(0, 0, c * 0.3, Math.PI * 1.2, Math.PI * 1.45); g.stroke();
 };
 const GOLDCAP_SPOTS = [[-0.19, -0.1, 0.06], [0.06, -0.21, 0.06], [0.23, -0.06, 0.05]];
-const mushroomSprite = () => sprite('mushroom', '', drawMushroom);
-const drawMushroom = g => {
-  const c = CELL;
-  g.fillStyle = '#fef3c7';
+// A mushroom, a shade darker each time it's come back up (round six B: its
+// power, SHRINK fresh, up to SHRINK_MAX), so anyone can see how bad it is.
+const SHROOM_CAPS = ['#dc2626', '#a51c3c', '#6f1546'], SHROOM_STEMS = ['#fef3c7', '#e3d3b0', '#c7b495'];
+const mushroomSprite = (power = 0) => sprite('mushroom', String(power || ''), drawMushroom);
+const drawMushroom = (g, v = '') => {
+  const c = CELL, shade = Math.max(0, Math.min(2, (Number(v) || T.SHRINK) - T.SHRINK));
+  g.fillStyle = SHROOM_STEMS[shade];
   g.beginPath(); // a rounded stem, like every other shape on the board
   if (g.roundRect) g.roundRect(-c * 0.1, -c * 0.02, c * 0.2, c * 0.36, c * 0.07); else g.rect(-c * 0.1, -c * 0.02, c * 0.2, c * 0.36);
   g.fill();
-  g.fillStyle = '#dc2626';
+  g.fillStyle = SHROOM_CAPS[shade];
   g.beginPath(); g.ellipse(0, 0, c * 0.4, c * 0.3, 0, Math.PI, 0); g.closePath(); g.fill();
   g.strokeStyle = 'rgba(30,20,8,0.45)';
   g.lineWidth = c * 0.05;

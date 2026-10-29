@@ -160,7 +160,8 @@ const FLAVOR = {
   wrapEnding: s => [`The edges are back in ${s} seconds.`, `Edges back in ${s} seconds.`],
   youSnip: name => `Snip! You cut ${name} in two.`,
   youSnipped: name => `Snip. ${name} flashed right through you.`,
-  youMushroom: ['You feel smaller. And somehow wiser.', 'A little less of you. Sneaky.'],
+  youMushroomSpit: 'Bleh! Steer to aim it: it lands three ahead.', // (round six B: your first mushroom, which comes back up)
+  youSpatOn: name => `Ptoo! ${name} spat a mushroom on you. Keep out of a green ring.`, // (the first time one hits your head)
   youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
   youStarvingSmall: 'Starving at\u00a03, with nothing to spare. Eat now.',
   // A press that couldn't go (the first time each way, in a round): a jump, or a flash.

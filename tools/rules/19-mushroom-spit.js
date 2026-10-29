@@ -93,3 +93,50 @@ function loaded(bodies, power = T.SHRINK) {
   const down = spitOf(pit);
   check('into a hole, it is gone', down && down.tx === 9 && down.lx === null && !pit.food.some(f => f.power), JSON.stringify(down));
 }
+
+// ---- The rivals: they aim, they dodge, and they eat one on purpose when it pays, each in its style.
+
+// A rival (persona `key`) and a person, set on the board as given, with the past as the rival saw it: the
+// person going straight (its body `back` cells behind where it is now, a snapshot a tick), the rival as it is.
+function spitScene(key, rival, person, { back = 3, food = [] } = {}) {
+  const g = E.createGame({ humans: [{ name: 'P' }], personas: [key] });
+  const [p, r] = g.snakes;
+  r.body = rival[0].map(([x, y]) => ({ x, y })); r.dir = D[rival[1]];
+  p.body = person[0].map(([x, y]) => ({ x, y })); p.dir = D[person[1]];
+  g.food = food.map(([x, y, kind = 'food']) => ({ x, y, kind, expires: 9999 }));
+  g.given = new Set(g.food.map(f => f.y * T.GRID + f.x));
+  for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; s.leapReadyAt = 1e9; s.flashReadyAt = 1e9; } // (fed; no jump or flash: it's the mushroom that's weighed)
+  const snap = k => ({ snakes: g.snakes.map(q => ({ id: q.id, body: q.body.map(c => q === p ? { x: c.x - p.dir.x * k, y: c.y - p.dir.y * k } : { ...c }), dir: q.dir, stun: 0, leaps: 0, dashes: 0, wrap: 0, air: 0, land: -1,
+    spitIn: q.cheek ? q.cheek.spitAt - (g.tick - k) + 1 : 0, spitPower: q.cheek ? Math.min(T.SHRINK_MAX, q.cheek.power + 1) : 0 })), holes: 0, fires: [], pecks: [] });
+  g.reset = () => { g.history = Array.from({ length: back + 1 }, (_, i) => snap(back - i)); };
+  g.reset();
+  return g;
+}
+
+{ // Aiming: a rival with a mushroom in its cheek steers so it comes down on a head. The person heads up column 13
+  // from (13,14), eight long; the rival, its cheek due after five moves, at (6,10) facing right. Straight on, it
+  // spits to (14,10), the person at (13,9) by then: a miss; turning up once on the way, it spits from (10,9) onto (13,9).
+  const hits = {};
+  for (const key of ['sniper', 'joker', 'drab', 'gobbler', 'mason', 'ghost']) {
+    const g = spitScene(key, [line(6, 10, 6), 'right'], [Array.from({ length: 8 }, (_, i) => [13, 14 + i]), 'up']);
+    g.snakes[1].cheek = { power: T.SHRINK, spitAt: g.tick + 4, left: 100 };
+    g.reset();
+    const e = untilSpit(g, 6);
+    hits[key] = e ? (e.hit === 0 ? 'hit' : `missed at ${e.tx},${e.ty}`) : 'none';
+  }
+  check('a rival with a mushroom in its cheek aims it at a head', Object.values(hits).filter(v => v === 'hit').length >= 5, JSON.stringify(hits));
+}
+
+{ // Dodging: a person's mushroom comes up in four moves at (12,5), three ahead of where they'll be; a rival heading
+  // up column 12 from (12,9), ten long, after the apple at (12,4), would be there just then. It sees the ring and
+  // keeps its head out of it (the apple can wait a tick).
+  const hit = {};
+  for (const key of ['sniper', 'joker', 'drab', 'gobbler', 'mason', 'ghost']) {
+    const g = spitScene(key, [Array.from({ length: 10 }, (_, i) => [12, 9 + i]), 'up'], [line(5, 5, 4), 'right'], { food: [[12, 4]] });
+    g.snakes[0].cheek = { power: T.SHRINK, spitAt: g.tick + 3, left: 100 };
+    g.reset();
+    const e = untilSpit(g, 5);
+    hit[key] = e ? (e.hit === 1 ? 'hit' : 'dodged') : 'none';
+  }
+  check('a rival keeps its head out of a ring pointed at it', Object.values(hit).every(v => v === 'dodged'), JSON.stringify(hit));
+}

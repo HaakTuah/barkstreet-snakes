@@ -384,7 +384,7 @@ window.SnakeOnline = (() => {
         case 'cut': return snake ? { type: 'cut', snake, x: e[2], y: e[3], lost: Number(e[4]) || 0, by: Number.isInteger(e[5]) && e[5] >= 0 ? e[5] : null } : null;
         case 'squash': return snake && e.slice(2, 4).every(cell) ? { type: 'squash', snake, x: e[2], y: e[3] } : null;
         case 'spit': { // (from a head on the board, to a cell that may be off it; lies on the board, or nowhere: both or neither)
-          const lies = cell(e[8]) && cell(e[9]), near = v => Number.isInteger(v) && v >= -8 && v < window.TUNING.GRID + 8;
+          const lies = cell(e[8]) && cell(e[9]), near = /** @param {any} v */ v => Number.isInteger(v) && v >= -8 && v < window.TUNING.GRID + 8;
           return snake && cell(e[2]) && cell(e[3]) && near(e[4]) && near(e[5]) && Number.isInteger(e[6]) && e[6] > 0 && (lies || (e[8] === null && e[9] === null))
             ? { type: 'spit', snake, x: e[2], y: e[3], tx: e[4], ty: e[5], power: Math.min(window.TUNING.SHRINK_MAX, e[6]), hit: Number.isInteger(e[7]) && game.snakes[e[7]] ? e[7] : -1, lx: lies ? e[8] : null, ly: lies ? e[9] : null } : null;
         }
