@@ -55,7 +55,7 @@ document.fonts?.addEventListener?.('loadingdone', measureAbove);
 const placeBoard = () => {
   if (!aboveSoon && Math.abs(frameTop() - above) > 0.25) aboveSoon = setTimeout(measureAbove);
   const b = canvasEl.getBoundingClientRect();
-  const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: 0, upright: !!ledgeEl?.offsetParent, hang: [], rims: [] }; // (upright: a phone held upright, the ledge laid out, 0 px tall: the row and the chatter are right under the board)
+  const free = { left: inset('--safe-l'), top: inset('--safe-t'), right: innerWidth - inset('--safe-r'), bottom: innerHeight - inset('--safe-b'), ledge: 0, upright: !!ledgeEl?.offsetParent, hang: [], rims: [], words: [] }; // (upright: a phone held upright, the ledge laid out, 0 px tall: the row and the chatter are right under the board)
   // (held upright, where the row under the board is closer than the moss
   // and the leaves hang off the frame's bottom, 12 px, they're left off:
   // style/ .snug)
@@ -82,6 +82,15 @@ const placeBoard = () => {
     for (const btn of footEl.querySelectorAll('button')) {
       const f = btn.getBoundingClientRect();
       if (f.width && f.height) free.rims.push({ x: f.left, top: f.top, bottom: f.bottom, face: 1 }, { x: f.right, top: f.top, bottom: f.bottom, face: -1 });
+    }
+    // (and the words there it perches clear of where it can, 2k+: the
+    // speed buttons' and the switches' labels, the speed's and the
+    // chatter's captions; the chatter's lines come and go too often for
+    // that, it moving each time)
+    for (const el of document.querySelectorAll('.foot .speed > span, .foot button, #chatter-label')) {
+      const rg = document.createRange(); rg.selectNodeContents(el);
+      const f = rg.getBoundingClientRect();
+      if (f.width && f.height) free.words.push({ left: f.left, right: f.right, top: f.top, bottom: f.bottom });
     }
   }
   // (A banner, held upright: above the board, over the header's title row,

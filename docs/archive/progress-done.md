@@ -20,6 +20,7 @@ it under the workshop check's 20 KB. New ones are added here as they are done or
 | 2j (PR #162, draft) | Is the Voices switch in the right place: under the board beside the chatter's switch, between rounds only? (The header's sound buttons are full at 320 px, and in a round that row holds the help line.) | Under the board, between rounds; V at any time | Answered 29 October 2026: "Other than that, implement all you said, expertly!" Under the board, between rounds; V at any time. |
 | 5, bridges (PR #174) | Bridges come up rarely in play: 0.05 rides a round in simulation, so riders and non-riders come out the same head to head. The rule works (rivals cross when it pays, and riding is riskier than not, so it's no refuge). Is rare what you want, or should bridges come up more (for example, longer bodies over wider pits late in sudden death)? | Kept as it is: a rare, skilful chance when the log is islands, as the design says ("for anyone quick enough"). | Answered 29 October 2026: "Agreed with you expert take!" Kept rare; re-measured once the golden flight (part 4: flights land on bridges) and the woodpecker's three acts (item 6: more pits) are in, adding no rule to make bridges commoner. |
 | 2k (PR #170) | On a phone held upright the woodpecker perches over the speed buttons and the chatter, as you asked in 1b++; at 1.3 it already hid a button's label at some spots, and bigger it hides more of their words (taps still pass through it). Keep it so, or should it keep clear of their words (a smaller bird under the board, or perching only between the buttons)? | Kept as 1b++ has it: over the row and the chatter, taps passing through | Answered 29 October 2026: "Keep the bird 1.7x. And agreed with everything else." The bird stays 1.7 times everywhere; on a phone held upright it perches clear of the buttons' words where it can (between them, or over a gap), never by shrinking, and where no perch clears them at that size, the size wins (entry 2k+). |
+| 5, part 3 (PR #183) | Mason now lays its walls two thick (its body beside itself back to 27%, where it was; it fell to 21% once a wall one thick could be cut), at the price of its straight runs: 3.5 cells a turn down to 3.1 (everyone else: 1.9). Keep it, or keep its runs (walls one thick, which a flash cuts)? | Keep the double walls: the design asks for them, and its runs stay its mark | Answered 29 October 2026: "I agree with all your takes." Kept: the double walls. |
 
 ## The queue, done
 
@@ -501,3 +502,17 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
     snake's last words stay in their bubble where it went out, whole and unfaded, and the round's card waits their 2 s;
     a guest keeps them as they arrive after the round's end. Design in `docs/design/33-one-screen.md`, "Last words on
     phones"; checked by `tools/ui/07-last-words-on-phones.js`.
+
+### 2k+. The woodpecker perches clear of the buttons' words, at 1.7 times (Haakon, 29 October 2026; small, an art lane): done, PR #191
+
+Haakon (29 October 2026), to whether the bird should keep clear of the speed buttons' words on a phone held upright:
+"Keep the bird 1.7x. And agreed with everything else." So it stays 1.7 times everywhere, and on a phone held upright
+it chooses its perch over the row under the board so that no button's word is covered: between two buttons, or over a
+gap or the chatter's empty end, still drumming and pecking the row as 1b++ has it. It never shrinks for this; where no
+perch at that size clears every word, the size wins and it perches as now. The layout suite gets a test that no
+button's label is covered where a clear perch exists; pictures at 390 and 320 pixels.
+
+Done (PR #191): it takes the nearest perch whose box covers none of the row's labels (the speed buttons', the
+switches', the speed's and the chatter's captions), at 390 and 320 px wide the gap between 4× and the switches; the
+chatter's lines are left out, as they change every few seconds. Drawing only: no simulation. Layout part 15 tests it
+at 390×844 and 320×640. See "Clear of the row's words (2k+)" in `docs/design/32-the-owners-playtest.md`.
