@@ -401,6 +401,7 @@ window.SnakeAI = (() => {
   const DISTANCE_CAP = 14; // distance-keepers are happy once this far away
   const PLAIN_GOLD = { power: 1, apple: 1 }; // (golden things worth what they're worth: no craving)
   const NO_HABIT = { price: 1 };             // (powers at their price, used only when they pay)
+  const JUMP_REST = 0.5, IDLE_TICKS = 300, IDLE_FLOOR = 0.5; // (a jump's rest, in apples; a ready power sat unused this long (about 35 s) costs IDLE_FLOOR of its rest's price, and never less)
   const CHOKE = 0.5;       // my own bead isn't food: I'd choke on it and cough, eating nothing for about a second (in apples, on top of what the search sees the cough lose me)
   const BUG_AHEAD = 16;    // how many moves ahead I read a beetle's way...
   const BUG_HURRY = 2;     // ...and how much a move longer to catch one counts against it, as a step further counts for an apple (a beetle on the run is a meal only while I keep after it: at 1, chases dragged on)
@@ -1889,6 +1890,9 @@ window.SnakeAI = (() => {
     // the way, less the risk where it lands and a price in apples (what an
     // apple is worth to me right now). Pressed only when it beats the best
     // crawl, and asked for just as a person presses (memory.flash, memory.power).
+    // (When each plain power came back ready, for its idle price: see powerPick.)
+    if (me.flashIn === 0) memory.flashReady ??= view.tick; else memory.flashReady = null;
+    if (me.leapIn === 0 && !(me.leaps > 0)) memory.jumpReady ??= view.tick; else memory.jumpReady = null;
     const pick = powerPick(bestScore, bestDir);
     if (pick) {
       bestDir = pick.d;
@@ -1926,6 +1930,21 @@ window.SnakeAI = (() => {
       const U = Math.max(40, foodW * w.foodRange + eatW); // (an apple, to me, now)
       const habit = w.powers || NO_HABIT, safe = habit.risk ?? Infinity;
       const cheap = desperate ? 0.5 : 1;
+      // One pricing model for every power (round six B), in apples:
+      // - the tail tip a jump costs, at what length is worth now: a whole
+      //   apple's worth early on, half in sudden death (nothing new grows,
+      //   and length only fills the islands), half again folded up where
+      //   I am (it's in my way);
+      // - a rest, at what keeping the power ready is worth: less the longer
+      //   it has sat ready unused (idle), never under IDLE_FLOOR of it, so
+      //   a ready one is still kept back for a way out;
+      // - the risk where it ends, weighed by my nature (how much I flinch
+      //   from a rival's head: headRisk against the field's usual).
+      // (A habit's prices (Star's) on top, as before; desperate, all half.)
+      const late = view.timeMs >= TUNE.SUDDEN_DEATH_MS;
+      const idleOf = k => { if (memory[k] == null) return 1; return Math.max(IDLE_FLOOR, 1 - (view.tick - memory[k]) / IDLE_TICKS); };
+      const segment = (late ? 0.5 : 1) * (crawl < -NECK ? 0.5 : 1);
+      const flinch = Math.min(2, Math.max(0.5, (w.headRisk || 700) / 700));
       const keep = me.grow > 0 ? me.body.length : me.body.length - 1, stampM = ++stamp;
       for (let j = 0; j < keep; j++) myCells[me.body[j].y * N + me.body[j].x] = stampM;
       const trapped = crawl < DEAD / 2, boxed = crawl < -NECK;
@@ -1959,8 +1978,8 @@ window.SnakeAI = (() => {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
         if (me.dashes > 0) consider(d, true, dashOpt(d), 0.6, extra);
-        else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay)) consider(d, true, flashOpt(d), trapped || race(d) ? 1 : 2, extra);
-        if (jump) consider(d, false, leapOpt(d), me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5, extra);
+        else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay)) consider(d, true, flashOpt(d), (trapped || race(d) ? 1 : 2) * idleOf('flashReady'), extra);
+        if (jump) consider(d, false, leapOpt(d), me.leaps > 0 ? 0.35 : TUNE.LEAP_COST * segment + JUMP_REST * idleOf('jumpReady'), extra);
       }
       return best;
 
@@ -2024,7 +2043,7 @@ window.SnakeAI = (() => {
         eatOn(-1, land, -1, L, g, 0.85, down); // (it eats where it lands)
         bugsOn(span, land % N, (land - land % N) / N);
         endRisk = risk[land] + strikes[land];
-        const gain = ateGain + isle * U - 0.6 * endRisk;
+        const gain = ateGain + isle * U - 0.6 * flinch * endRisk;
         const score = depth > down ? search(nb, ateL, ateG, depth - down, down, gain) : evaluate(nb, ateL, ateG, down) + gain;
         uneat();
         return score;
@@ -2118,7 +2137,7 @@ window.SnakeAI = (() => {
         eatOn(path[0], path[1], n > 2 ? path[2] : -1, L, g, 1, 1);
         bugsOn(0, path[n - 1] % N, (path[n - 1] - path[n - 1] % N) / N);
         endRisk = risk[path[n - 1]] + strikes[path[n - 1]];
-        const gain = bonus + ateGain - endRisk;
+        const gain = bonus + ateGain - flinch * endRisk;
         const score = depth > 1 ? search(nb, ateL, ateG, depth - 1, 1, gain) : evaluate(nb, ateL, ateG, 1) + gain;
         uneat();
         return score;
