@@ -32,10 +32,22 @@
     return AI.styleOf(obs[7]);
   };
   const straight = [];
-  for (let lap = 0; straight.length < 400; lap++) { const y = 3 + (lap % 8) * 2; for (let x = 2; x < N - 2; x++) straight.push([lap % 2 ? N - 1 - x : x, y]); straight.push([lap % 2 ? 2 : N - 3, y + 1]); }
+  for (let lap = 0; lap < 8; lap++) { const y = 3 + (lap % 8) * 2; for (let x = 2; x < N - 2; x++) straight.push([lap % 2 ? N - 1 - x : x, y]); straight.push([lap % 2 ? 2 : N - 3, y + 1]); }
   const ring = [];
   const loop = [[10, 10], [11, 10], [12, 10], [13, 10], [13, 11], [13, 12], [13, 13], [12, 13], [11, 13], [10, 13], [10, 12], [10, 11]]; // (round a 4 x 4 square)
   while (ring.length < 400) ring.push(loop[ring.length % loop.length]);
   const a = watch(straight, 6), b = watch(ring, 11);
+  // Through the AI's own view: Copycat, having watched snake 7 run long and straight, takes it as its model once it
+  // leads, and plays as Mason does. (The view says nothing of who 7 is: a person or a rival making these moves is
+  // read the same.)
+  const obs = {};
+  for (let t = 6; t < straight.length; t++) {
+    const body = straight.slice(t - 5, t + 1).reverse().map(([x, y]) => ({ x, y }));
+    const [hx, hy] = straight[t], [px, py] = straight[t - 1];
+    AI.watchStyles(obs, [{ id: 7, body, dir: { x: hx - px, y: hy - py } }], t);
+  }
+  const memory = { watch: obs };
+  AI.decide(aiView({ tick: 1000, me: aiMe(line(6, 20, 5), 'right'), others: [aiRival(7, line(12, 4, 12), 'right'), aiRival(8, line(20, 14, 4), 'right')] }), AI.PERSONAS.copycat, memory);
+  check('Copycat, in play, takes a leader it has watched run long and straight as its model, and plays as Mason does', memory.modelId === 7 && memory.style === 'mason', JSON.stringify({ model: memory.modelId, style: memory.style }));
   check('Copycat reads a long straight runner as Mason, and a snake round its own tail as Ouroboros', a === 'mason' && b === 'ouroboros', JSON.stringify({ a, b }));
 }

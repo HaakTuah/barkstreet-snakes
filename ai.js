@@ -289,11 +289,11 @@ window.SnakeAI = (() => {
     ouroboros: { ...PERSONAS.ouroboros.w, coil: { ...PERSONAS.ouroboros.w.coil, from: 7 } },
   };
   // What a driver remembers that's only its own: a new mood starts without it.
-  const MOOD_MEMORY = ['home', 'colonies', 'site', 'nextSiteAt', 'planted', 'driftAt', 'victimId', 'lureId', 'obs', 'labels', 'w', 'modelId', 'style', 'watch'];
+  const MOOD_MEMORY = ['home', 'colonies', 'site', 'nextSiteAt', 'planted', 'driftAt', 'victimId', 'lureId', 'obs', 'labels', 'w', 'modelId', 'style', 'watch', 'readAs', 'readSince'];
   // Copycat's copies: its model's style's habits (the short forms, as
   // Capricious's), shadowing it as it goes: less pull to move the way it
   // moves than plain Copycat's, so the habits show.
-  const COPY_MEMORY = MOOD_MEMORY.filter(k => k !== 'modelId' && k !== 'style' && k !== 'watch');
+  const COPY_MEMORY = MOOD_MEMORY.filter(k => !['modelId', 'style', 'watch', 'readAs', 'readSince'].includes(k));
   const COPY_MIMIC = 40;
   const COPIES = {};
 
@@ -312,15 +312,17 @@ window.SnakeAI = (() => {
   // tools/dev/copycat-styles.js, in units of each trait's spread there).
   const STYLE_TRAITS = ['run', 'coiled', 'riding', 'apart', 'near', 'eat', 'power', 'spread'];
   const STYLE_MIN = 60; // (ticks watched before it judges a style)
+  const STYLE_HOLD = 40; // (ticks a new read of its model holds before Copycat changes style)
   function watchStyles(obs, snakes, tick) {
     for (const o of snakes) {
       const ob = (obs[o.id] ||= { tick: -1, n: 0, moves: 0, turns: 0, long: 0, coiled: 0, riding: 0, apart: 0, near: 0, grown: 0, power: 0, sx: 0, sy: 0, sxx: 0, syy: 0, len: o.body.length, hx: o.body[0].x, hy: o.body[0].y, dx: o.dir.x, dy: o.dir.y });
       if (ob.tick === tick) continue;
+      const last = ob.tick;
       ob.tick = tick;
       const h = o.body[0], L = o.body.length, t = o.body[L - 1];
       const step = Math.abs(h.x - ob.hx) + Math.abs(h.y - ob.hy);
       if (step > 0) { ob.moves++; if (o.dir.x !== ob.dx || o.dir.y !== ob.dy) ob.turns++; }
-      if (step > 1 && step < 4) ob.power++; // (not the edges wrapping round)
+      if (step > 1 && step < 4 && tick === last + 1) ob.power++; // (in one tick: not the edges wrapping round, nor ticks I didn't look)
       if (L > ob.len) ob.grown += L - ob.len;
       ob.n++;
       if (L >= 10) { ob.long++; if (manhattan(h, t) <= 3) ob.coiled++; }
@@ -1096,7 +1098,13 @@ window.SnakeAI = (() => {
         const current = indexOf(memory.modelId);
         const k = current >= 0 && others[current].body.length + 3 > others[best].body.length ? current : best;
         if (k < 0) return;
-        const style = styleOf(memory.watch[others[k].id]);
+        // (A new read of its model holds STYLE_HOLD ticks before it takes it:
+        // a style isn't dropped on a moment's change of pace.)
+        const read = styleOf(memory.watch[others[k].id]), now = view.tick;
+        let style = others[k].id === memory.modelId && memory.style ? memory.style : read; // (its first read, it takes at once)
+        if (read === style) memory.readSince = null;
+        else if (memory.readAs !== read || memory.readSince == null) { memory.readAs = read; memory.readSince = now; }
+        else if (now - memory.readSince >= STYLE_HOLD) { style = read; memory.readSince = null; }
         if (others[k].id !== memory.modelId || style !== memory.style) for (const key of COPY_MEMORY) memory[key] = null; // (a new model, or a new read of it: what the last copy kept is gone)
         memory.modelId = others[k].id;
         memory.style = style;
