@@ -1022,7 +1022,7 @@ window.SnakeEngine = (() => {
         id: s.id, body: s.body.map(c => ({ x: c.x, y: c.y })), dir: s.dir,
         stun: Math.max(0, s.stunUntil - game.tick), leaps: s.leaps, // (all of it shows: stars, pips, a gold outline, cough puffs...)
         dashes: s.dashes, wrap: Math.max(0, s.wrapUntil - game.time), air: s.flight ? 1 + s.flight.over.length : 0, land: s.flight ? key(s.flight.land.x, s.flight.land.y) : -1, // (in the air: how many ticks till it's down, and where)
-        spitIn: s.cheek ? s.cheek.spitAt - game.tick + 1 : 0, spitPower: s.cheek ? Math.min(T.SHRINK_MAX, s.cheek.power + 1) : 0, // (a green bulge, and its ring: it's spat after this many more moves, this strong)
+        spitIn: s.cheek ? s.cheek.spitAt - game.tick : 0, spitPower: s.cheek ? Math.min(T.SHRINK_MAX, s.cheek.power + 1) : 0, // (a green bulge, and its ring: it's spat after this many more moves, this strong)
       })),
       holes: game.holes.size,
       // (Fire, crackling, smouldering or burning, and the woodpecker's next patch: keep out.)
@@ -1081,7 +1081,7 @@ window.SnakeEngine = (() => {
         // (who it just met head-on, if it was in the last 3 s or so: it keeps clear of them for a while)
         bumped: snake.bumpedBy && game.tick - snake.bumpedBy.tick < 30 ? snake.bumpedBy.id : -1,
         // (a mushroom in its cheek: it's spat after this many more moves (0: none), this strong)
-        spitIn: snake.cheek ? snake.cheek.spitAt - game.tick + 1 : 0, spitPower: snake.cheek ? Math.min(T.SHRINK_MAX, snake.cheek.power + 1) : 0,
+        spitIn: snake.cheek ? Math.max(0, snake.cheek.spitAt - game.tick) : 0, spitPower: snake.cheek ? Math.min(T.SHRINK_MAX, snake.cheek.power + 1) : 0,
       },
       others: snap.snakes.filter(o => o.id !== snake.id),
       food: game.food, // (as it is: it only changes on a tick, so thinking ahead sees what the tick would)
@@ -1174,6 +1174,10 @@ window.SnakeEngine = (() => {
       else { starving.push(s); continue; }
       if (hungerLeft(game, s) > -T.STARVE_EVERY_MS) game.events.push({ type: 'starving', snake: s });
     }
+
+    // Mushrooms in cheeks whose time is up come back up, before anyone moves:
+    // from where the ring has shown it would land all along.
+    spit(game);
 
     const alive = game.snakes.filter(s => s.alive);
 
@@ -1472,7 +1476,6 @@ window.SnakeEngine = (() => {
       for (const d of drops) meat(d.x, d.y, d.color, d.owner, d.cooked);
     }
 
-    spit(game);
     fillFood(game);
     weather(game);
     game.time += tickMs(game);
@@ -2094,8 +2097,10 @@ window.SnakeEngine = (() => {
   // own mouth is full: then it bounces off, as off a body; on a body, it rolls
   // off by the roll rule (see rollSide), as it does off food or a burrow
   // (with nowhere to roll, it's gone); on bark, it lies there, wilting in half
-  // the time it had left. Worked out in seat order, on the board as the tick
-  // left it. Never kills: a shrink stops at MIN_LENGTH.
+  // the time it had left. Worked out in seat order, at the start of the tick
+  // its time is up, before anyone moves: the head and the way it faces as
+  // the ring showed them. Never kills: a shrink stops at MIN_LENGTH. (A head
+  // over a hole or in a fire it hits isn't swallowed: it's gone, as there.)
   function spit(game) {
     for (const s of game.snakes) {
       if (!s.alive || !s.cheek || game.tick < s.cheek.spitAt) continue;
