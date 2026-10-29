@@ -105,3 +105,25 @@ function bridgeScene(persona, tail) {
   const short = bridgeScene('gobbler', 3);
   check('...and on one too short to cross, never caught on it when its tail passes', short.alive && !short.over, JSON.stringify(short));
 }
+
+{ // ...and land on one from a jump, as a person can: a pit too wide to clear, a body lying across it (its snake held still, far off).
+  const g = E.createGame({ withPlayer: true, personas: ['sniper'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [b, s] = g.snakes;
+  const strip = (x, y) => x >= 1 && x <= 2 && y >= 2 && y <= 21, isle = (x, y) => (x >= 10 && x <= 20 && y >= 4 && y <= 18) || (x === 9 && y === 10);
+  for (let y = 0; y < T.GRID; y++) for (let x = 0; x < T.GRID; x++) if (!strip(x, y) && !isle(x, y)) g.holes.add(K(x, y));
+  s.body = []; for (let y = 12; y <= 21; y++) s.body.push({ x: 2, y }); for (let y = 21; y >= 12; y--) s.body.push({ x: 1, y }); s.dir = D.up;
+  b.body = []; for (let x = 19; x >= 5; x--) b.body.push({ x, y: 11 }); for (let y = 12; y < 20; y++) b.body.push({ x: 5, y }); b.dir = D.right; b.queue = []; b.stunUntil = 1e9;
+  g.food = [{ x: 15, y: 13, kind: 'food', expires: 9999 }];
+  g.given = new Set([K(15, 13)]);
+  const snap = () => ({ snakes: g.snakes.map(q => ({ id: q.id, body: q.body.map(c => ({ ...c })), dir: q.dir, stun: q.stunUntil > 1e8 ? 1e8 : 0, leaps: 0, dashes: 0, wrap: 0, air: 0, land: -1, cough: 0 })), holes: g.holes.size, fires: [], pecks: [] });
+  g.history = [snap(), snap(), snap()];
+  let onto = false, over = false;
+  for (let n = 0; n < 40 && s.alive && !over; n++) {
+    feed(g); quiet(g);
+    const e = g.events.find(e => e.type === 'leap' && e.snake === s);
+    if (e && s.flight && g.holes.has(K(s.flight.land.x, s.flight.land.y))) onto = true;
+    if (s.body[0].x >= 10 && !g.holes.has(K(s.body[0].x, s.body[0].y))) over = true;
+  }
+  check('a rival jumps onto a bridge with nowhere free in reach, and rides it off to the island', onto && over && s.alive, JSON.stringify({ onto, over, alive: s.alive, cause: s.cause }));
+}

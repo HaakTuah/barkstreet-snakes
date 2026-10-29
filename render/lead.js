@@ -126,10 +126,21 @@ function hopsTo(s, h, d) {
   if (offBoard(x, y) || !hurdleAt(x, y)) return false;
   for (let i = 0; i < T.LEAP_REACH; i++) {
     x = wrapX(s, x + d.x); y = wrapX(s, y + d.y);
-    if (offBoard(x, y)) return false;
+    if (offBoard(x, y)) break;
     if (!hurdleAt(x, y)) { landX = x; landY = y; return true; }
   }
+  // (Nowhere free within reach: a bridge that'll still be there when it comes down, as the game's leapPath has it.)
+  x = h.x; y = h.y;
+  for (let i = 1; i <= T.LEAP_REACH; i++) {
+    x = wrapX(s, x + d.x); y = wrapX(s, y + d.y);
+    if (offBoard(x, y)) return false;
+    if (i > 1 && bridgeFor(s, x, y) && lastsFor(s, x, y, i + 1)) { landX = x; landY = y; return true; }
+  }
   return false;
+}
+// Will the body over a pit at (x, y) still be there after `moves` moves?
+function lastsFor(s, x, y, moves) {
+  return game.snakes.some(o => o !== s && o.alive && !o.flight && !game.holes.has(o.body[0].y * GRID + o.body[0].x) && (j => j > 0 && o.body.length - j + o.grow + Math.max(0, o.stunUntil - game.tick) > moves)(o.body.findIndex(c => c.x === x && c.y === y)));
 }
 // How many cells a flash asked for takes a head this tick, (x, y) being
 // the first, as the game moves it: a plain one, if it's rested, up to
