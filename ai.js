@@ -166,7 +166,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1.3, territory: 1.8,
         food: 3, eat: 40, pellet: 1, foodRange: 30,
-        margin: 6, headRisk: 800, zoneRisk: 150, turn: 25, thick: 45,
+        margin: 6, headRisk: 800, zoneRisk: 150, turn: 25, thick: 60, // (thick 45 before round six B: a plain flash cuts a wall one thick, so it lays them two thick)
       },
     },
     wildcard: {
@@ -401,7 +401,7 @@ window.SnakeAI = (() => {
   const DISTANCE_CAP = 14; // distance-keepers are happy once this far away
   const PLAIN_GOLD = { power: 1, apple: 1 }; // (golden things worth what they're worth: no craving)
   const NO_HABIT = { price: 1 };             // (powers at their price, used only when they pay)
-  const CHOKE = 0.5;       // my own bead isn't food: I'd choke on it and cough, eating nothing for about a second (in apples, on top of what the search sees the cough lose me)
+  const CUT_TAIL = 12;     // a cut rival's tail counts for at most this many segments (see flashOpt)
   const BUG_AHEAD = 16;    // how many moves ahead I read a beetle's way...
   const BUG_HURRY = 2;     // ...and how much a move longer to catch one counts against it, as a step further counts for an apple (a beetle on the run is a meal only while I keep after it: at 1, chases dragged on)
   const BUG_WAYS = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }]; // (the order a beetle weighs its ways in: up, right, down, left)
@@ -1276,60 +1276,24 @@ window.SnakeAI = (() => {
       leaf: 2 * Math.max(apple, hunger, 0.5) * craving.power, // (golden powers: worth it for what they do)
       goldcap: 1.5 * Math.max(apple, hunger, 0.5) * craving.power,
     };
-    // My own beads aren't food: my head would choke on one, spit it aside
-    // and cough, eating nothing a while. It never chains: what I meet
-    // coughing (my own beads too) is only nudged aside. mute: how many of my
-    // next moves eat nothing (a choke in the search adds to it). marks:
-    // where there's food, and whose own beads (mine: stampOwn; rival k's:
-    // stampTheirs + k; anything else: stampFood).
-    let mute = me.coughIn || 0, theirBeads = false;
-    const stampFood = ++stamp, stampOwn = ++stamp, stampTheirs = stamp + 1;
-    stamp += others.length;
-    for (const f of food) {
-      const k = f.kind === 'pellet' && f.owner !== me.id ? indexOf(f.owner) : -1;
-      marks[f.y * N + f.x] = f.kind === 'pellet' && f.owner === me.id ? stampOwn : k >= 0 ? stampTheirs + k : stampFood;
-      theirBeads ||= k >= 0;
-    }
-    const marksEnd = stampTheirs + others.length, foodAt = i => marks[i] >= stampFood && marks[i] < marksEnd;
+    // My own beads aren't food: my head squashes one (round six B), and
+    // then it's food for nobody (worth nothing to me in the search: valued
+    // as a meal, it read as eating, and an aggressive rival took risks for
+    // it). A rival's own beads are the same to it: whoever gets there
+    // first, they're gone. mute: how many of my next moves eat nothing (none,
+    // now there's no cough: kept for the search's tables). marks: where
+    // there's food (stampFood), and my own beads (stampOwn).
+    let mute = 0;
+    const stampFood = ++stamp, stampOwn = ++stamp, marksEnd = stampOwn + 1;
+    for (const f of food) marks[f.y * N + f.x] = f.kind === 'pellet' && f.owner === me.id ? stampOwn : stampFood;
 
-    // The same goes for rivals: none can eat its own beads, nor anything
-    // while it coughs (I see a cough as I see the rival, a moment late), so
-    // what it gets to first that it can't eat is anyone's. What's in its way
-    // as it comes on goes where it'll roll, by the rule anyone can work out
-    // (the engine's rollSide, with what I can see), and choking on its own
-    // bead there, it coughs from then on. coughs[k]: how many of rival k's
-    // next moves eat nothing, as I read it.
-    // (The burrows, as anyone sees them: nothing rolls or is knocked onto
-    // one, and a scared beetle runs for one, one growing shut too: it can
-    // still dive in until it closes over.)
+    // (The burrows, as anyone sees them: nothing is knocked onto one, and a
+    // scared beetle runs for one, one growing shut too: it can still dive in
+    // until it closes over.)
     const burrows = [];
     if (view.burrows) for (const b of view.burrows) burrows.push(b.y * N + b.x);
-    let coughing = false;
-    for (let k = 0; k < others.length; k++) { coughs[k] = Math.max(0, (others[k].cough || 0) - age); coughing ||= coughs[k] > 0; }
-    const engine = window.SnakeEngine || {}, rollSide = engine.rollSide;
-    let rolls = null; // ([from, to] cells: food a rival will knock aside)
-    if ((coughing || theirBeads) && rollSide) {
-      const pastFor = (x, y) => { // (it rolls over food or a burrow, where it can't stop)
-        const i = y * N + x;
-        if (holes.has(i) || otherFree[i] > 1) return false;
-        for (let j = 0, keep = me.grow > 0 ? me.body.length : me.body.length - 1; j < keep; j++) if (me.body[j].x === x && me.body[j].y === y) return false;
-        return true;
-      };
-      const roomFor = (x, y) => { const i = y * N + x; return !foodAt(i) && !burrows.includes(i) && pastFor(x, y); };
-      others.forEach((o, k) => {
-        let x = heads[k].x, y = heads[k].y;
-        for (let j = 1; j <= 3; j++) { // (straight on, the way I read it)
-          const before = { x: x - o.dir.x, y: y - o.dir.y }, at = { x, y }, i = (y + o.dir.y) * N + x + o.dir.x;
-          x += o.dir.x; y += o.dir.y;
-          if (!inside(x, y) || holes.has(i) || otherFree[i] > j) break;
-          if (!foodAt(i) || (j > coughs[k] && marks[i] !== stampTheirs + k)) continue;
-          if (j > coughs[k]) coughs[k] = j + TUNE.COUGH_TICKS - 1; // (it chokes)
-          coughing = true;
-          const to = rollSide(null, { body: [at, before], dir: o.dir }, x, y, roomFor, pastFor);
-          if (to) { (rolls ||= []).push([i, to.y * N + to.x]); marks[to.y * N + to.x] = marks[i]; }
-        }
-      });
-    }
+    for (let k = 0; k < others.length; k++) coughs[k] = 0;
+    const engine = window.SnakeEngine || {};
     // The woodpecker's mark: at the strike, each piece of food in it is
     // knocked aside to where the engine's own rule puts it (E.knocks: what
     // the rings show anyone through the aim, on the board as it will be at
@@ -1355,7 +1319,6 @@ window.SnakeAI = (() => {
     const cellOf = f => {
       const i = f.y * N + f.x;
       if (knocked && knocked.has(i)) return knocked.get(i);
-      if (rolls) for (const [from, to] of rolls) if (from === i) return to;
       return i;
     };
 
@@ -1372,7 +1335,7 @@ window.SnakeAI = (() => {
       const own = f.kind === 'pellet' && f.owner === me.id, i = cellOf(f);
       if (i < 0) continue; // (nowhere to knock it: the bird eats it)
       foodGrow[i] = own ? 0 : f.kind === 'mushroom' ? -TUNE.SHRINK : f.kind === 'golden' ? TUNE.GOLDEN_GROWTH : f.kind === 'beetle' ? TUNE.BEETLE_GROWTH : f.cooked ? TUNE.COOKED_GROWTH : 1;
-      let v = own ? -CHOKE : worth[f.kind] ?? 0;
+      let v = own ? 0 : worth[f.kind] ?? 0;
       if (!v) continue;
       if (f.cooked && v > 0) v *= TUNE.COOKED_GROWTH; // (baked: worth more)
       if (f.gold && v > 0) v *= 1.5 * craving.power; // (a golden beetle: leaps too)
@@ -1388,7 +1351,6 @@ window.SnakeAI = (() => {
     // still coughs, and the rivals' own beads.)
     let coughMax = 0, beadCount = 0;
     for (let k = 0; k < others.length; k++) coughMax = Math.max(coughMax, coughs[k]);
-    for (let k = 0; k < foodCount; k++) if (marks[foodCells[k]] >= stampTheirs && marks[foodCells[k]] < marksEnd) beadCells[beadCount++] = foodCells[k];
 
     // Beetles: their ways are there for anyone to read. One crawls a cell
     // every BEETLE_EVERY ticks, straight on till something's in the way; with
@@ -1675,7 +1637,7 @@ window.SnakeAI = (() => {
         if ((s & tags) !== 1) {
           const o = (s & tags) - 2;
           if (o < 0) continue;
-          const can = marks[i] === stampTheirs + o ? Infinity : coughs[o]; // (till when it can't eat it)
+          const can = coughs[o]; // (till when it can't eat it: never, now)
           if (Math.max(when, from) > can) continue;
           when = Math.max(from, t + (seenF[framed[i]] === stampF ? distF[framed[i]] : Math.abs(i % N - head.x) + Math.abs((i - i % N) / N - head.y))); // (as the crow flies, past my room's count)
           if (when > can) continue;
@@ -1754,7 +1716,8 @@ window.SnakeAI = (() => {
 
       //    Thick walls (the trappers): my own body beside my head (not my
       //    neck). Doubled back along myself, my wall is two thick: nobody
-      //    can hop it.
+      //    can hop it, and no plain flash can cut it (round six B: Mason's
+      //    double walls).
       if (w.thick) {
         const neckP = framed[body[1].y * N + body[1].x];
         for (const q of [headP - W, headP + W, headP - 1, headP + 1]) if (q !== neckP && inBody[q] === bodyMark) score += w.thick;
@@ -1832,7 +1795,7 @@ window.SnakeAI = (() => {
       if (!muted) for (let b = 0; b < bugs; b++) if (bugCell[b * SLOTS + t] === i) { caught = b; break; }
       const v = muted ? 0 : here + (caught >= 0 ? bugV[caught] : 0);
       const change = muted ? 0 : (late ? 0 : foodGrow[i]) + (caught >= 0 ? TUNE.BEETLE_GROWTH : 0);
-      const choked = !muted && here < 0 && marks[i] === stampOwn, muteWas = mute;
+      const muteWas = mute;
       if (change < 0) { // a mushroom: pending growth goes first, then the tail
         let n = -change;
         const fromGrow = Math.min(g, n);
@@ -1847,7 +1810,6 @@ window.SnakeAI = (() => {
       for (let b = 0; b < bugs; b++) {
         if (b === caught) { const n = b * SLOTS + t + 1; bugCell[n] = -1; bugDug[n] = -1; } else bugStep(b, t, t + 1, t, nx, ny, otherBug(b, t));
       }
-      if (choked) mute = t + TUNE.COUGH_TICKS;
       const ateBefore = ateAt;
       if (v > 0) ateAt = t + 1;
       const ahead = t < STEPS_AHEAD;
@@ -1973,7 +1935,8 @@ window.SnakeAI = (() => {
       // (Each beetle's crawl after my move s + 1, my head then at (hx, hy):
       // the ones I ate there are gone.)
       const bugsOn = (s, hx, hy) => { for (let b = 0; b < bugs; b++) if (ateBug & (1 << b)) { const n = b * SLOTS + s + 1; bugCell[n] = -1; bugDug[n] = -1; } else bugStep(b, s, s + 1, s, hx, hy, otherBug(b, s)); };
-      let best = null;
+      const cutter = !!w.hunt || (w.aggression || 0) >= 0.5; // (the hunters and the aggressive weigh a cut off to the side too)
+      let best = null, ownCut = -1; // (ownCut: see flashOpt)
       const consider = (d, flash, v, price, extra) => {
         const full = endRisk > safe || idle;
         idle = false;
@@ -1984,8 +1947,8 @@ window.SnakeAI = (() => {
       for (const d of DIR_LIST) {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
-        if (me.dashes > 0) consider(d, true, dashOpt(d), 0.6, extra);
-        else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay)) consider(d, true, flashOpt(d), trapped || race(d) ? 1 : 2, extra);
+        if (me.dashes > 0) consider(d, true, flashOpt(d, true), 0.6, extra);
+        else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)))) consider(d, true, flashOpt(d, false), trapped || race(d) ? 1 : 2, extra);
         if (jump) consider(d, false, leapOpt(d), me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5, extra);
       }
       return best;
@@ -2099,50 +2062,72 @@ window.SnakeAI = (() => {
         return n;
       }
 
-      // The plain flash: FLASH_LENGTH cells this tick, along the ground, every
-      // one free by then (a body, a hole, fire or the edge would stop it there:
-      // a crash), and never stopping in the woodpecker's mark.
-      function flashOpt(d) {
-        const F = TUNE.FLASH_LENGTH;
-        if (!trace(d, F)) return null;
-        for (let i = 0; i < F; i++) if (!free(path[i])) return null;
-        return groundOpt(F, 0);
-      }
-
-      // A golden dash: DASH_LENGTH cells, cutting a snake one cell thick and
-      // putting fire out; never into the edge or a hole (it'd blow up), a
-      // head or a snake two thick (a crash), or my own body.
-      function dashOpt(d) {
-        const L = TUNE.DASH_LENGTH;
-        if (!trace(d, L)) return null;
+      // A flash, as the engine takes it (round six B: the flashes cut): the
+      // plain one FLASH_LENGTH cells this tick along the ground, a golden one
+      // (a dash) DASH_LENGTH. Through a body up to FLASH_THICK thick (a dash,
+      // DASH_THICK) with free log beyond it, it cuts it: a rival's (worth its
+      // tail to me in apples, more readily the more aggressive I am, and its
+      // life if I leave it fewer than MIN_LENGTH in front: the neck cut) or my
+      // own (dropping my tail: the search sees the room it leaves me, less
+      // the length). Never a flash that fails (into the edge, a hole or the
+      // woodpecker's mark, a head, a body too thick or with nothing free
+      // beyond), nor a plain one into a second fire. (ownCut: my body's
+      // length after, if I cut my own.)
+      function flashOpt(d, gold) {
+        const n = gold ? TUNE.DASH_LENGTH : TUNE.FLASH_LENGTH, thick = gold ? TUNE.DASH_THICK : TUNE.FLASH_THICK;
+        if (!trace(d, n)) return null;
         const agg = (w.aggression || 0) + (w.hunt ? 0.5 : 0);
-        let cut = 0, gold = false;
-        for (let i = 0; i < L; i++) {
-          const c = path[i], x = c % N, y = (c - x) / N;
-          if (myCells[c] === stampM) return null;
-          if (holes.has(c) && !fire.has(c)) return null; // (a hole, or the woodpecker's mark: it'd blow up, or soon)
-          if (!holes.has(c) && mineFree[c] > 1) { // (a rival's body that'll still be there)
-            let o = null, j0 = -1;
-            for (const r of others) { j0 = r.body.findIndex(q => q.x === x && q.y === y); if (j0 >= 0) { o = r; break; } }
-            if (!o || j0 === 0) return null; // (a head, or where one may be)
-            const px = x + d.x, py = y + d.y;
-            if (o.body.some(q => q.x === px && q.y === py)) return null; // (two thick)
-            const j = j0 + Math.max(0, age - (o.stun || 0)); // (where it's cut: it's moved on since I saw it)
-            cut += j < TUNE.MIN_LENGTH ? 6 * (0.5 + agg) : Math.max(0, o.body.length - j) * 0.4 * (0.5 + agg); // (in apples: out, or its tail off)
+        const body = i => myCells[i] === stampM || (mineFree[i] > 1 && (!holes.has(i) || (fire.has(i) && others.some(o => o.body.some(q => q.y * N + q.x === i))))); // (mine, or a rival's that'll still be there, on fire too)
+        let cut = 0, got = false, fires = 0, run = 0;
+        ownCut = -1;
+        for (let i = 0; i < n; i++) {
+          const c = path[i];
+          if (holes.has(c) && !fire.has(c)) return null; // (a hole, or the woodpecker's mark: it'd fail or blow up, or soon)
+          if (fire.has(c) && !gold && fires++) return null; // (a second fire: it'd go in)
+          if (!run && body(c)) {
+            let r = 0, b = c, bx = c % N, by = (c - bx) / N;
+            for (; r <= thick && b >= 0 && body(b); r++) { bx += d.x; by += d.y; b = cellAt(bx, by); }
+            if (r > thick || b < 0 || pitHole(b) || myCells[b] === stampM || mineFree[b] > 1) return null; // (too thick, or nothing free beyond: it'd fail)
+            for (let k = 0, x = c % N, y = (c - x) / N; k < r && i + k < n; k++, x += d.x, y += d.y) { // (a layer beyond its reach isn't cut: it's only why it can't go on)
+              if (myCells[cellAt(x, y)] === stampM) { // (my own: my tail drops, only to get out of a trap)
+                const j = me.body.findIndex(q => q.x === x && q.y === y);
+                if (j < TUNE.MIN_LENGTH || !trapped) return null; // (only when it's that or the end: dropped any sooner (boxed), rivals dropped 5 tails a round and starved small)
+                if (ownCut < 0 || j + n - 1 < ownCut) ownCut = j + n - 1;
+                continue;
+              }
+              let o = null, j0 = -1;
+              for (const q of others) { j0 = q.body.findIndex(p => p.x === x && p.y === y); if (j0 >= 0) { o = q; break; } }
+              if (!o || j0 === 0) return null; // (a head, or where one may be)
+              const j = j0 + Math.max(0, age - (o.stun || 0)); // (where it's cut: it's moved on since I saw it)
+              const mark = o.id === memory.victimId ? 2 : 1; // (my target, twice over: Sniper cuts off its target, Mute its boxed one)
+              cut += mark * (j < TUNE.MIN_LENGTH ? 6 * (0.5 + agg) : Math.min(CUT_TAIL, Math.max(0, o.body.length - j)) * 0.1 * (0.5 + agg)); // (in apples: out, or its tail off, up to CUT_TAIL of it: at 0.4 a segment, uncapped, rivals cut 14 times a round and the beads swamped the board; at 0.15, 10 times, and the cut starved small)
+            }
+            run = r;
           }
-          for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold)) gold = true;
+          if (run) run--;
+          if (gold) for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold)) got = true;
         }
-        if (!cut && !gold && !trapped) { // (just for speed: only a habit's, and at anyone's price, so only for a real gain; free, it spent both at once, a zig-zag that got it nothing)
+        if (gold && !cut && !got && !trapped && ownCut < 0) { // (just for speed: only a habit's, and at anyone's price, so only for a real gain; free, it spent both at once, a zig-zag that got it nothing)
           if (!habit.dashSpend) return null;
           idle = true;
         }
-        return groundOpt(L, cut * U);
+        return groundOpt(n, cut * U);
+      }
+      // Is there a body within a flash's reach that way (worth weighing a cut there)?
+      function bodyNear(d) {
+        for (let i = 1, x = myHead.x, y = myHead.y; i <= TUNE.FLASH_LENGTH; i++) {
+          const c = cellAt(x += d.x, y += d.y);
+          if (c < 0) return false;
+          if (myCells[c] === stampM || (!holes.has(c) && mineFree[c] > 1)) return true;
+        }
+        return false;
       }
 
       // Along the ground: n cells this tick (path[0..n-1]), eating them.
       function groundOpt(n, bonus) {
         let L = me.body.length, g = me.grow;
         for (let i = 0; i < n; i++) { if (g > 0) g--; else L--; L++; }
+        if (ownCut >= 0) L = Math.min(L, ownCut); // (my tail dropped)
         const nb = bodies[1];
         for (let j = 0; j < L; j++) {
           if (j < n) { const c = path[n - 1 - j]; nb[j].x = c % N; nb[j].y = (c - nb[j].x) / N; }
@@ -2181,7 +2166,6 @@ window.SnakeAI = (() => {
             n -= fromGrow;
             for (; n > 0 && L > TUNE.MIN_LENGTH; n--) L--;
           } else g += change;
-          if (here < 0 && marks[i] === stampOwn) mute = step + TUNE.COUGH_TICKS - 1;
           if (caught >= 0) ateBug |= 1 << caught;
           if (!v) continue;
           ateGain += v * (foodW * w.foodRange + eatW * soon);

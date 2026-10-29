@@ -108,7 +108,7 @@ check(stars.beads.every((h, i) => dh(h, want[i]) < 22), 'a dead Star’s beads g
 
 // Star's tell is a countdown on its points: its middle always its
 // sunflower; just flashed, its five points dim; they light one by one as
-// its rest runs down (a point each 1.2 s), and never go out until it
+// its rest runs down (a point each fifth of it: 2.2 s at 11 s), and never go out until it
 // flashes again, with reduced motion too (it flashes the moment it can,
 // so a star lit only while its flash was ready was dim nearly all the
 // time, and with reduced motion blinked). Its twinkles burst off its
@@ -132,23 +132,23 @@ const tell = await ev(`(() => {
   const points = s => [0, 1, 4].map(j => lit(s, (270 + 72 * j) * Math.PI / 180, 0.55)).join(''); // (its first, second and fifth)
   const middle = s => lit(s, 0, 0.33) && lit(s, Math.PI, 0.33) ? 1 : 0;
   const down = (s, x) => setBody(s, Array.from({ length: 10 }, (_, i) => [x, 14 - i]), 'down');
-  const out = { now: {}, run: {} };
+  const out = { now: {}, run: {}, rest: TUNING.FLASH_COOLDOWN_MS }, REST = TUNING.FLASH_COOLDOWN_MS;
   for (const still of [true, false]) {
     R.setReducedMotion(still);
     const how = still ? 'reduced' : 'lively';
     // Just flashed, half rested, rested.
     const g = stage(['star', 'star', 'star']), [, a, b2, c] = g.snakes;
     down(a, 6); down(b2, 12); down(c, 18);
-    a.flashReadyAt = g.time + 6000; b2.flashReadyAt = g.time + 3000; c.flashReadyAt = g.time;
+    a.flashReadyAt = g.time + REST; b2.flashReadyAt = g.time + REST / 2; c.flashReadyAt = g.time;
     show(g); drawN(20);
     out.now[how] = [a, b2, c].map(s => ({ points: points(s), middle: middle(s) }));
     // A whole rest, a frame every 100 ms of the game's clock: its points lit, and its middle.
     const g2 = stage(['star', 'mason', 'ghost']), st = g2.snakes[1];
     down(st, 12);
-    st.flashReadyAt = g2.time + 6000;
+    st.flashReadyAt = g2.time + REST;
     show(g2); drawN(20, 0.5, 100);
     const run = [];
-    for (let t = 0; t <= 6500; t += 100) { g2.time = 60000 + t; drawN(1, 0.5, 100); run.push([t, points(st).split('').reduce((n, v) => n + +v, 0), middle(st)]); }
+    for (let t = 0; t <= REST + 500; t += 100) { g2.time = 60000 + t; drawN(1, 0.5, 100); run.push([t, points(st).split('').reduce((n, v) => n + +v, 0), middle(st)]); }
     out.run[how] = run;
   }
   // The burst: its flash comes back (no burst), then it flashes (a burst), lively.
@@ -161,7 +161,7 @@ const tell = await ev(`(() => {
   const base = white(st3);
   g3.time += 200; // (its flash back)
   let back = 0; for (let i = 0; i < 8; i++) { drawN(1); back = Math.max(back, white(st3) - base); }
-  st3.flashReadyAt = g3.time + 6000; g3.tick++;
+  st3.flashReadyAt = g3.time + REST; g3.tick++;
   R.onTick([{ type: 'dash', snake: st3, x: 12, y: 11, n: 3, plain: 1 }]); // (it flashes)
   let flash = 0; for (let i = 0; i < 8; i++) { drawN(1); flash = Math.max(flash, white(st3) - base); }
   out.burst = { base, back, flash };
@@ -174,9 +174,9 @@ for (const how of ['reduced', 'lively']) {
   check(spent.points === '000' && half.points === '110' && full.points === '111' && spent.middle && half.middle && full.middle,
     `Star’s tell, ${how === 'reduced' ? 'with reduced motion' : 'lively'}: just flashed its points are dim, half rested the first two lit, rested all, its middle lit throughout`,
     `its first, second and fifth points ${spent.points}, ${half.points}, ${full.points}; its middle ${spent.middle}${half.middle}${full.middle}`);
-  const run = tell.run[how], steps = run.filter((r, i) => i && r[1] !== run[i - 1][1]), when = [1200, 2400, 6000];
+  const run = tell.run[how], steps = run.filter((r, i) => i && r[1] !== run[i - 1][1]), when = [tell.rest / 5, 2 * tell.rest / 5, tell.rest];
   check(run[0][1] === 0 && run.every(r => r[2]) && steps.length === 3 && steps.every((r, i) => r[1] === i + 1 && Math.abs(r[0] - when[i]) <= 250),
-    `Star’s tell, ${how === 'reduced' ? 'with reduced motion' : 'lively'}: through a rest its points light in turn, a point each 1.2 s, none going out, its middle lit`,
+    `Star’s tell, ${how === 'reduced' ? 'with reduced motion' : 'lively'}: through a rest its points light in turn, a point each fifth of it, none going out, its middle lit`,
     `its first, second and fifth points lit (ms into the rest: how many) ${steps.map(r => `${r[0]}: ${r[1]}`).join(', ')}; middle dim in ${run.filter(r => !r[2]).length} of ${run.length} frames`);
 }
 check(tell.burst.flash > 150 && tell.burst.back * 3 < tell.burst.flash, 'Star’s twinkles burst off its points as it flashes, not as its flash comes back',

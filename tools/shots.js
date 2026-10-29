@@ -10,7 +10,7 @@
 //
 // Your snake is steered by an autopilot (a rival's brain, through real key
 // events) until a lively moment, then crashed on purpose. Moments too rare
-// to wait for (round six A's jumps, bridges, Star's gag, a choke, a pecked
+// to wait for (round six A's jumps, bridges, Star's gag, a squash, a pecked
 // flag, a beetle digging in, a dug burrow and one closing over, the
 // woodpecker's knock) are staged on a still board, on the desktop and the
 // phone.
@@ -68,7 +68,7 @@ fs.mkdirSync(out, { recursive: true });
   // stopped, frames drawn by hand on a clock of their own, as render-test
   // does): a jump at its top over a body (jump), bodies over holes and a
   // tail hanging into one (bridge), Star half way through its mustache gag
-  // beside Copycat's stick-on one (star-gag), a choke and a cough (choke), a
+  // beside Copycat's stick-on one (star-gag), your own bead squashed (squash), a
   // pecked colony's flag falling into its pit and Sovereign's banner carried
   // to its new capital (flag). (The board only: the tags round it are the
   // page's own round's.)
@@ -132,18 +132,15 @@ fs.mkdirSync(out, { recursive: true });
         show(g); drawN(20);
         R.flick(st, 0.5); R.flick(cc, 0.5); drawN(1, 0.5, 0.01);
       })()`,
-      choke: `(() => {
-        const g = stage(['gobbler', 'mason', 'ghost']), [you, gob, ma, gh] = g.snakes;
+      squash: `(() => {
+        const g = stage(['gobbler', 'mason', 'ghost']), [you, gob, ma] = g.snakes;
         setBody(you, Array.from({ length: 8 }, (_, i) => [11 - i, 9]), 'right');
         setBody(gob, Array.from({ length: 8 }, (_, i) => [11 - i, 14]), 'right');
         setBody(ma, Array.from({ length: 6 }, (_, i) => [18, 4 + i]), 'up');
-        g.food.push({ x: 11, y: 11, kind: 'pellet', color: you.color, owner: you.id, expires: g.tick + 900 });
-        g.food.push({ x: 13, y: 14, kind: 'food', expires: g.tick + 900 });
-        gob.coughUntil = g.tick + 30; // (Gobbler's been coughing a while, its mouth shut by an apple right ahead: a puff on its way out)
         show(g); drawN(16, 0.5);
-        g.tick++; you.coughUntil = g.tick + 9;
-        R.onTick([{ type: 'choke', snake: you, x: 12, y: 9, tx: 11, ty: 11 }]); // (you gag and spit your bead aside)
-        drawN(2, 0.5, 40);
+        g.tick++;
+        R.onTick([{ type: 'squash', snake: you, x: 11, y: 9 }]); // (your own bead, squashed under your head: the splat)
+        drawN(3, 0.5, 40);
       })()`,
       dig: `(() => {
         const g = stage(['gobbler', 'sniper', 'mason']), [you, gob, sn, ma] = g.snakes;

@@ -141,6 +141,7 @@
     a.body = line(13, 1, 9).map(([x, y]) => ({ x, y })); a.dir = D.right;
     b.body = line(9, 0, 6).map(([x, y]) => ({ x, y })); b.dir = D.right;
     for (const s of [a, b]) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; } // (fed: it's the hunt that decides)
+    b.flashReadyAt = 1e9; // (its flash resting: rested, it may cut its way out through the hunter, one thick)
     if (person) { b.isPlayer = true; b.persona = null; b.queue = []; }
     a.memory.victimId = b.id;
     g.food = [{ x: 20, y: 20, kind: 'food', expires: 9999 }];
