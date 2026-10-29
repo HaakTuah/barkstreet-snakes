@@ -2,7 +2,8 @@
 // down on a staged board, the same on any copy of the game (for a before and
 // after), the page's loop stopped, cropped round the four heads.
 //   node shots.js <root> <out.jpg> [<w>x<h>[@dpr]] [reduced|still] [weather]
-// (weather: clear by default; snow for a light board, storm for a dark one)
+// (weather: clear by default; snow for a light board, storm for a dark one;
+// WILD_HAIR=<version> picks one of the versions on offer, where there are some)
 const path = require('path');
 const root = path.resolve(process.argv[2]), out = process.argv[3];
 const m = /^(\d+)x(\d+)(?:@([\d.]+))?$/.exec(process.argv[4] || '800x800');
@@ -18,6 +19,7 @@ const { launch, serve, sleep } = require(path.join(root, 'tools', 'browser.js'))
     await b.go(site.url + '?debug', { settle: 800 });
     const box = await b.eval(`(() => {
       window.__autoRaf = false;
+      ${process.env.WILD_HAIR ? `wildHairPick = ${JSON.stringify(process.env.WILD_HAIR)};` : ''}
       const E = SnakeEngine, R = SnakeRender;
       const set = (s, cells, dir) => { s.body = cells.map(([x, y]) => ({ x, y })); s.prev = s.body.map(c => ({ ...c })); s.dir = E.DIRS[dir]; s.queue = []; s.planned = null; };
       const g = E.createGame({ withPlayer: false, personas: ['wildcard', 'wildcard', 'wildcard', 'wildcard'] });
