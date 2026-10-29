@@ -8,6 +8,7 @@ const causeOf = s => s.fatal === 'pecked' ? 'pecked' : s.fatal === 'boom' ? 'boo
 const census = () => ({
   golden: 0, goldBeetles: 0, leaves: 0, goldcaps: 0, mushrooms: 0, strikes: 0, sun: 0, wind: 0, rain: 0, storm: 0, snow: 0,
   goldBeetleRounds: 0, leafRounds: 0, goldcapRounds: 0, stormRounds: 0, starvedEarly: 0,
+  cutsPlain: 0, cutsGold: 0, cutsOwn: 0, failed: 0, failedGold: 0, edgeTicks: 0, huggers: 0, huggerWins: 0, huggerPlace: 0, others: 0, otherWins: 0, otherPlace: 0, // (round six B, the flashes cut: cuts by plain flashes and dashes, of them its own tail dropped; failed flashes (golden ones); snake-ticks with the head on the board's edge; snakes whose head was on the edge a quarter of their time or more ("huggers"), and the rest: how many, wins, places)
   rides: 0, rideTicks: 0, rideDeaths: 0, rideFalls: 0, // (bridges: rides begun, snake-ticks with a head on another's back over a pit, deaths while on one, and of them falls)
   hop1: 0, hop2: 0, hop3: 0, hopHole: 0, hopFail: 0, hopDie: 0, // (round six B's island hop: jumps by the cells they went over, those over a hole, those whose landing crashed, and jumpers out within 3 s of taking off)
   pecks: 0, holes: 0, aims: 0, aimsNear: 0, flashes: 0, jumps: 0, goldLeaps: 0, goldGot: 0, dashes: 0, pickups: 0, greedy: 0,

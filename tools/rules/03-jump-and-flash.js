@@ -31,8 +31,8 @@
     E.leap(g, me); E.flash(g, me);
     const seen = [];
     for (let t = 0; t < dist + 3 && me.alive; t++) { feed(g); quiet(g); for (const e of g.events) if (e.snake === me && ['leap', 'dash', 'crash', 'fizzle'].includes(e.type)) seen.push(`${e.type}@${g.tick - 1}`); }
-    const want = gold && !hole ? 'dash@0' : `leap@${dist - 1},dash@${dist + 1}`; // (a golden flash cuts a body one thick: it goes at once)
-    check(`a jump and a flash pressed together with ${what}: ${gold && !hole ? 'the flash cuts it' : 'it crawls up, hops, then flashes'}`, me.alive && seen.join() === want && me.dashes === 0, `${seen.join()} ${me.cause || ''}`);
+    const want = !hole ? 'dash@0' : `leap@${dist - 1},dash@${dist + 1}`; // (a flash cuts a body one thick: it goes at once)
+    check(`a jump and a flash pressed together with ${what}: ${!hole ? 'the flash cuts it' : 'it crawls up, hops, then flashes'}`, me.alive && seen.join() === want && me.dashes === 0, `${seen.join()} ${me.cause || ''}`);
   }
 }
 
@@ -292,7 +292,7 @@
             if (zone.has(K(n.tx, n.ty)) || g.holes.has(K(n.tx, n.ty)) || !zone.has(K(n.x, n.y)) || !g.food.some(f => f.x === n.tx && f.y === n.ty && f.kind === n.kind) && !g.events.some(o => o.type === 'rot' && o.x === n.tx && o.y === n.ty)) badKnocks++;
           }
         }
-        if (e.type === 'cut') cuts++;
+        if (e.type === 'cut' && !g.events.some(d => d.type === 'dash' && d.snake.id === e.by)) cuts++; // (the woodpecker's: not a flash's)
       }
     }
   });

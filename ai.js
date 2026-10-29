@@ -1973,7 +1973,7 @@ window.SnakeAI = (() => {
       // (Each beetle's crawl after my move s + 1, my head then at (hx, hy):
       // the ones I ate there are gone.)
       const bugsOn = (s, hx, hy) => { for (let b = 0; b < bugs; b++) if (ateBug & (1 << b)) { const n = b * SLOTS + s + 1; bugCell[n] = -1; bugDug[n] = -1; } else bugStep(b, s, s + 1, s, hx, hy, otherBug(b, s)); };
-      let best = null;
+      let best = null, ownCut = -1; // (ownCut: see flashOpt)
       const consider = (d, flash, v, price, extra) => {
         const full = endRisk > safe || idle;
         idle = false;
@@ -1984,8 +1984,8 @@ window.SnakeAI = (() => {
       for (const d of DIR_LIST) {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
-        if (me.dashes > 0) consider(d, true, dashOpt(d), 0.6, extra);
-        else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay)) consider(d, true, flashOpt(d), trapped || race(d) ? 1 : 2, extra);
+        if (me.dashes > 0) consider(d, true, flashOpt(d, true), 0.6, extra);
+        else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || bodyNear(d))) consider(d, true, flashOpt(d, false), trapped || race(d) ? 1 : 2, extra);
         if (jump) consider(d, false, leapOpt(d), me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5, extra);
       }
       return best;
@@ -2099,50 +2099,71 @@ window.SnakeAI = (() => {
         return n;
       }
 
-      // The plain flash: FLASH_LENGTH cells this tick, along the ground, every
-      // one free by then (a body, a hole, fire or the edge would stop it there:
-      // a crash), and never stopping in the woodpecker's mark.
-      function flashOpt(d) {
-        const F = TUNE.FLASH_LENGTH;
-        if (!trace(d, F)) return null;
-        for (let i = 0; i < F; i++) if (!free(path[i])) return null;
-        return groundOpt(F, 0);
-      }
-
-      // A golden dash: DASH_LENGTH cells, cutting a snake one cell thick and
-      // putting fire out; never into the edge or a hole (it'd blow up), a
-      // head or a snake two thick (a crash), or my own body.
-      function dashOpt(d) {
-        const L = TUNE.DASH_LENGTH;
-        if (!trace(d, L)) return null;
+      // A flash, as the engine takes it (round six B: the flashes cut): the
+      // plain one FLASH_LENGTH cells this tick along the ground, a golden one
+      // (a dash) DASH_LENGTH. Through a body up to FLASH_THICK thick (a dash,
+      // DASH_THICK) with free log beyond it, it cuts it: a rival's (worth its
+      // tail to me in apples, more readily the more aggressive I am, and its
+      // life if I leave it fewer than MIN_LENGTH in front: the neck cut) or my
+      // own (dropping my tail: the search sees the room it leaves me, less
+      // the length). Never a flash that fails (into the edge, a hole or the
+      // woodpecker's mark, a head, a body too thick or with nothing free
+      // beyond), nor a plain one into a second fire. (ownCut: my body's
+      // length after, if I cut my own.)
+      function flashOpt(d, gold) {
+        const n = gold ? TUNE.DASH_LENGTH : TUNE.FLASH_LENGTH, thick = gold ? TUNE.DASH_THICK : TUNE.FLASH_THICK;
+        if (!trace(d, n)) return null;
         const agg = (w.aggression || 0) + (w.hunt ? 0.5 : 0);
-        let cut = 0, gold = false;
-        for (let i = 0; i < L; i++) {
-          const c = path[i], x = c % N, y = (c - x) / N;
-          if (myCells[c] === stampM) return null;
-          if (holes.has(c) && !fire.has(c)) return null; // (a hole, or the woodpecker's mark: it'd blow up, or soon)
-          if (!holes.has(c) && mineFree[c] > 1) { // (a rival's body that'll still be there)
-            let o = null, j0 = -1;
-            for (const r of others) { j0 = r.body.findIndex(q => q.x === x && q.y === y); if (j0 >= 0) { o = r; break; } }
-            if (!o || j0 === 0) return null; // (a head, or where one may be)
-            const px = x + d.x, py = y + d.y;
-            if (o.body.some(q => q.x === px && q.y === py)) return null; // (two thick)
-            const j = j0 + Math.max(0, age - (o.stun || 0)); // (where it's cut: it's moved on since I saw it)
-            cut += j < TUNE.MIN_LENGTH ? 6 * (0.5 + agg) : Math.max(0, o.body.length - j) * 0.4 * (0.5 + agg); // (in apples: out, or its tail off)
+        const body = i => myCells[i] === stampM || (!holes.has(i) && mineFree[i] > 1); // (mine, or a rival's that'll still be there)
+        let cut = 0, got = false, fires = 0, run = 0;
+        ownCut = -1;
+        for (let i = 0; i < n; i++) {
+          const c = path[i];
+          if (holes.has(c) && !fire.has(c)) return null; // (a hole, or the woodpecker's mark: it'd fail or blow up, or soon)
+          if (fire.has(c) && !gold && fires++) return null; // (a second fire: it'd go in)
+          if (!run && body(c)) {
+            let r = 0, b = c, bx = c % N, by = (c - bx) / N;
+            for (; r <= thick && b >= 0 && body(b); r++) { bx += d.x; by += d.y; b = cellAt(bx, by); }
+            if (r > thick || b < 0 || pitHole(b) || myCells[b] === stampM || mineFree[b] > 1) return null; // (too thick, or nothing free beyond: it'd fail)
+            for (let k = 0, x = c % N, y = (c - x) / N; k < r; k++, x += d.x, y += d.y) {
+              if (myCells[cellAt(x, y)] === stampM) { // (my own: my tail drops)
+                const j = me.body.findIndex(q => q.x === x && q.y === y);
+                if (j < TUNE.MIN_LENGTH) return null;
+                if (ownCut < 0 || j + n - 1 < ownCut) ownCut = j + n - 1;
+                continue;
+              }
+              let o = null, j0 = -1;
+              for (const q of others) { j0 = q.body.findIndex(p => p.x === x && p.y === y); if (j0 >= 0) { o = q; break; } }
+              if (!o || j0 === 0) return null; // (a head, or where one may be)
+              const j = j0 + Math.max(0, age - (o.stun || 0)); // (where it's cut: it's moved on since I saw it)
+              cut += j < TUNE.MIN_LENGTH ? 6 * (0.5 + agg) : Math.max(0, o.body.length - j) * 0.4 * (0.5 + agg); // (in apples: out, or its tail off)
+            }
+            run = r;
           }
-          for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold)) gold = true;
+          if (run) run--;
+          if (gold) for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold)) got = true;
         }
-        if (!cut && !gold && !trapped) { // (just for speed: only a habit's, and at anyone's price, so only for a real gain; free, it spent both at once, a zig-zag that got it nothing)
+        if (gold && !cut && !got && !trapped && ownCut < 0) { // (just for speed: only a habit's, and at anyone's price, so only for a real gain; free, it spent both at once, a zig-zag that got it nothing)
           if (!habit.dashSpend) return null;
           idle = true;
         }
-        return groundOpt(L, cut * U);
+        return groundOpt(n, cut * U);
+      }
+      // Is there a body within a flash's reach that way (worth weighing a cut there)?
+      function bodyNear(d) {
+        for (let i = 1, x = myHead.x, y = myHead.y; i <= TUNE.FLASH_LENGTH; i++) {
+          const c = cellAt(x += d.x, y += d.y);
+          if (c < 0) return false;
+          if (myCells[c] === stampM || (!holes.has(c) && mineFree[c] > 1)) return true;
+        }
+        return false;
       }
 
       // Along the ground: n cells this tick (path[0..n-1]), eating them.
       function groundOpt(n, bonus) {
         let L = me.body.length, g = me.grow;
         for (let i = 0; i < n; i++) { if (g > 0) g--; else L--; L++; }
+        if (ownCut >= 0) L = Math.min(L, ownCut); // (my tail dropped)
         const nb = bodies[1];
         for (let j = 0; j < L; j++) {
           if (j < n) { const c = path[n - 1 - j]; nb[j].x = c % N; nb[j].y = (c - nb[j].x) / N; }

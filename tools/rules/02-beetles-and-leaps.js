@@ -118,7 +118,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
     const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
     g.snakes = g.snakes.slice(0, 2);
     const [a, b] = g.snakes;
-    a.body = [[5, 0], [4, 0], [4, 1], [5, 1], [5, 2], [4, 2]].map(([x, y]) => ({ x, y })); a.dir = D.right; a.leaps = golden ? 1 : 0;
+    a.body = [[5, 0], [4, 0], [4, 1], [5, 1], [5, 2], [4, 2]].map(([x, y]) => ({ x, y })); a.dir = D.right; a.leaps = golden ? 1 : 0; a.flashReadyAt = 1e9; // (its flash resting: it could cut through the rival)
     b.body = [...Array.from({ length: 13 }, (_, i) => ({ x: 6, y: 12 - i })), { x: 7, y: 0 }]; b.dir = D.down;
     b.isPlayer = true; b.persona = null; b.queue = [];
     g.food = [];
@@ -248,16 +248,18 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('...leaps over fire without catching it', g2.snakes[0].body[0].x === 7 && !(g2.snakes[0].burnUntil > g2.tick) && g2.events.length >= 0, g2.snakes[0].burnUntil);
 }
 
-{ // A dash crashes into a head, or its own body, like anything it can't cut.
-  const g = board([[line(5, 10, 6), 'right'], [[[7, 10], [7, 11], [7, 12], [7, 13], [7, 14]], 'up']]); // (a head in the way)
+{ // A dash into a head fails, as into anything it can't cut; through its own body one thick, it drops its tail.
+  const g = board([[line(5, 10, 9), 'right'], [[[7, 10], [7, 11], [7, 12], [7, 13], [7, 14]], 'up']]); // (a head in the way)
   E.flash(g, Object.assign(g.snakes[0], { dashes: 1 }));
   quiet(g);
-  check('a dash into a head crashes', g.snakes[0].alive && g.snakes[1].alive && g.events.some(e => e.type === 'crash' && e.snake === g.snakes[0]) && !g.events.some(e => e.type === 'cut'));
+  const bonk = g.events.find(e => e.type === 'crash' && e.snake === g.snakes[0]);
+  check('a dash into a head fails: five off and the longer stun', g.snakes[0].alive && g.snakes[1].alive && bonk?.failed === 1 && bonk.lost === T.FAIL_LOSS && g.snakes[0].stunUntil === g.tick + T.FAIL_STUN_TICKS && !g.events.some(e => e.type === 'cut'), JSON.stringify(bonk));
   const coil = [[5, 10], [5, 11], [6, 11], [7, 11], [7, 10], [7, 9], [6, 9], [5, 9], [4, 9], [3, 9]]; // ((7,10), two ahead, is its own body)
   const g2 = board([[coil, 'right'], [[[5, 20], [4, 20], [3, 20]], 'right']]);
   E.flash(g2, Object.assign(g2.snakes[0], { dashes: 1 }));
   quiet(g2);
-  check('...and into its own body', g2.snakes[0].alive && g2.events.some(e => e.type === 'crash' && e.snake === g2.snakes[0] && e.killer === 'self'), JSON.stringify(g2.events.map(e => e.type)));
+  const me = g2.snakes[0];
+  check('...and through its own body, it drops its tail', me.alive && me.body[0].x === 8 && g2.events.some(e => e.type === 'cut' && e.snake === me && e.by === me.id) && !g2.events.some(e => e.type === 'crash') && me.body.length < coil.length, `${JSON.stringify(g2.events.map(e => e.type))} ${me.body.length}`);
 }
 
 { // Rain schedules a golden mushroom now and then (and no other weather does).
@@ -317,9 +319,34 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('...then it rests', E.flashIn(g, me) > 0 && E.flashIn(g, me) <= T.FLASH_COOLDOWN_MS);
   E.flash(g, me); quiet(g);
   check('...a flash while resting fizzles (a crawl instead)', me.body[0].x === 8 && g.events.some(e => e.type === 'fizzle' && e.why === 'resting' && e.flash), JSON.stringify(g.events.map(e => e.type)));
-  const g2 = board([[line(5, 10, 5), 'right'], [[[7, 8], [7, 9], [7, 10], [7, 11], [7, 12], [7, 13]], 'up']]);
-  E.flash(g2, g2.snakes[0]); quiet(g2);
-  check('...into a body it doesn\'t cut: it gets that far and runs into it', g2.snakes[0].body[0].x === 6 && g2.snakes[1].body.length === 6 && g2.events.some(e => e.type === 'crash' && e.snake === g2.snakes[0]), JSON.stringify(g2.snakes[0].body[0]));
+}
+
+{ // Round six B, the flashes cut: the plain flash cuts through a body one thick with free log beyond; anything else it runs into, and it has failed.
+  const col = (x, y0, n) => Array.from({ length: n }, (_, i) => [x, y0 + i]); // (a body down column x, heading up)
+  const flashAt = (bodies, set = () => {}) => { const g = board(bodies); for (const o of g.snakes.slice(1)) o.stunUntil = 1e9; set(g); E.flash(g, g.snakes[0]); quiet(g); return g; };
+  const g = flashAt([[line(5, 10, 6), 'right'], [col(7, 4, 10), 'up']]); // ((7,10) is its seventh segment)
+  const [me, o] = g.snakes;
+  check('a plain flash through a body one thick cuts it: the part behind falls to beads', me.alive && me.body[0].x === 7 && o.alive && o.body.length === 6 && g.events.some(e => e.type === 'cut' && e.snake === o && e.by === me.id && e.lost === 4) && g.food.filter(f => f.kind === 'pellet' && f.owner === o.id).length === 3, `${JSON.stringify(me.body[0])} ${o.body.length}`);
+  const g2 = flashAt([[line(5, 10, 6), 'right'], [col(6, 8, 6), 'up']]); // ((6,10): its third segment)
+  check('...the neck cut: fewer than 3 left in front, and it\'s out', !g2.snakes[1].alive && g2.snakes[1].fatal === 'cut' && g2.snakes[1].killerId === g2.snakes[0].id && g2.snakes[0].alive, g2.snakes[1].cause);
+  const failed = (g, n) => { const e = g.events.find(e => e.type === 'crash' && e.snake === g.snakes[0]); return !!e && e.failed === 1 && e.lost === Math.min(T.FAIL_LOSS, n - T.MIN_LENGTH) && g.snakes[0].stunUntil === g.tick + T.FAIL_STUN_TICKS && !g.events.some(e => e.type === 'cut'); };
+  const g3 = flashAt([[line(5, 10, 9), 'right'], [col(7, 4, 10), 'up'], [col(8, 4, 10), 'up']]);
+  check('...a body two thick it can\'t cut: it gets that far and runs into it, a failed flash (five off, the longer stun)', g3.snakes[0].body[0].x === 6 && g3.snakes[1].body.length === 10 && failed(g3, 9), JSON.stringify(g3.events));
+  const g4b = flashAt([[line(5, 10, 9), 'right'], [col(6, 10, 6), 'up']]); // (a head right in front)
+  check('...into a head, it fails', failed(g4b, 9) && g4b.snakes[1].alive && g4b.snakes[1].body.length === 6, JSON.stringify(g4b.events));
+  const g5 = flashAt([[line(22, 10, 9, -1).map(([x, y]) => [x, y]), 'right'], [col(23, 4, 12), 'up']]); // (a body along the edge: nothing free beyond)
+  check('...the edge shelters a body: nothing free beyond, no cut, and the flash fails', g5.snakes[1].body.length === 12 && failed(g5, 9), JSON.stringify(g5.events));
+  const g6 = flashAt([[line(5, 10, 9), 'right'], [col(6, 4, 12), 'up']], g => g.holes.add(K(7, 10))); // (a hole beyond)
+  check('...nor against a hole', g6.snakes[1].body.length === 12 && failed(g6, 9), JSON.stringify(g6.events));
+  const g7 = flashAt([[line(5, 10, 9), 'right'], [line(5, 20, 3), 'right']], g => { g.fires.set(K(6, 10), { from: 0, until: 999, group: 1, strike: false }); g.fireGroups.set(1, 1); });
+  check('...it puts out the first fire it passes', !g7.fires.has(K(6, 10)) && g7.snakes[0].body[0].x === 7 && !(g7.snakes[0].burnUntil > g7.tick), JSON.stringify(g7.events.map(e => e.type)));
+  const g8 = flashAt([[line(23, 10, 9), 'right'], [line(5, 20, 3), 'right']]);
+  check('...into the edge, a plain flash fails (a golden one blows up)', g8.snakes[0].alive && failed(g8, 9), JSON.stringify(g8.events));
+  check('...and it rests 10 to 12 s', T.FLASH_COOLDOWN_MS >= 10000 && T.FLASH_COOLDOWN_MS <= 12000);
+  const coil = [[5, 10], [5, 11], [6, 11], [7, 11], [7, 10], [7, 9], [6, 9], [5, 9], [4, 9], [3, 9], [2, 9], [1, 9]]; // ((7,10), two ahead, its own fifth segment; (8,10) free)
+  const g9 = flashAt([[coil, 'right'], [line(5, 20, 3), 'right']]);
+  const m9 = g9.snakes[0];
+  check('dropping your tail: a plain flash through your own body one thick cuts it (the rest, beads you can\'t eat back)', m9.alive && m9.body[0].x === 7 && g9.events.some(e => e.type === 'cut' && e.snake === m9 && e.by === m9.id) && m9.body.length === 5 && joined(m9.body), `${JSON.stringify(m9.body)} ${JSON.stringify(g9.events.map(e => e.type))}`);
 }
 
 { // Golden leaves come on the wind, golden mushrooms in the rain, and never otherwise.
@@ -498,11 +525,12 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('...and it says why', fizzled);
 }
 
-{ // A flash asked for in a stun that can't get anywhere (into the edge or body it hit; golden, into the edge or a hole) says so, and the auto-turn takes it clear: it isn't sent back in, nor blown up.
+{ // A flash asked for in a stun that can't get anywhere (into the edge, or a head it hit; golden, into the edge or a hole) says so, and the auto-turn takes it clear: it isn't sent back in, nor blown up.
   const atEdge = () => board([[line(23, 5, 8), 'right'], [line(5, 20, 3), 'right']]);
+  const atHead = () => { const g = board([[line(6, 10, 8), 'right'], [Array.from({ length: 6 }, (_, i) => [7, 10 + i]), 'up']]); g.snakes[1].stunUntil = 1e9; return g; }; // (a head can't be cut)
   const atBody = () => { const g = board([[line(6, 10, 8), 'right'], wall(7, 6, 12)]); g.snakes[1].stunUntil = 1e9; return g; };
   const atHole = () => { const g = board([[line(6, 10, 8), 'right'], [line(5, 20, 3), 'right']]); g.holes.add(K(7, 10)); return g; };
-  for (const [what, make, dashes] of [['plain, at the edge', atEdge, 0], ['plain, at a body', atBody, 0], ['golden, at the edge', atEdge, 2], ['golden, at a hole', atHole, 2]]) {
+  for (const [what, make, dashes] of [['plain, at the edge', atEdge, 0], ['plain, at a head', atHead, 0], ['golden, at the edge', atEdge, 2], ['golden, at a hole', atHole, 2]]) {
     const g = make(), me = g.snakes[0];
     me.dashes = dashes;
     feed(g); quiet(g); // (a crash, a stun)
@@ -517,18 +545,20 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
     check(`a flash asked for in a stun that can't get anywhere (${what}) doesn't send you back in`, me.alive && crashes === 0 && me.body.length === len && (me.body[0].x !== head.x || me.body[0].y !== head.y) && me.dashes === dashes, `${me.cause || ''} ${crashes} crashes, ${JSON.stringify(me.body[0])}`);
     check(`...and says why (${what})`, fizzled);
   }
-  const g = atBody(), [me, o] = g.snakes; // (golden, at a body one thick: that's a cut, and it goes)
-  feed(g); quiet(g);
-  me.dashes = 1;
-  E.flash(g, me);
-  for (let i = 0; i < T.STUN_TICKS + 1; i++) { feed(g); quiet(g); }
-  check('...but a golden one at a body one thick goes: it cuts it', me.alive && me.dashes === 0 && o.body.length === 4 && me.body[0].x === 9, JSON.stringify(me.body[0]));
+  for (const dashes of [1, 0]) { // (at a body one thick: that's a cut, and it goes)
+    const g = atBody(), [me, o] = g.snakes;
+    feed(g); quiet(g);
+    me.dashes = dashes;
+    E.flash(g, me);
+    for (let i = 0; i < T.STUN_TICKS + 1; i++) { feed(g); quiet(g); }
+    check(`...but a ${dashes ? 'golden' : 'plain'} one at a body one thick goes: it cuts it`, me.alive && me.dashes === 0 && o.body.length === 4 && me.body[0].x === (dashes ? 9 : 8), JSON.stringify(me.body[0]));
+  }
 }
 
 { // A jump and a flash asked for together in a stun, where only the jump could go and its landing's taken as it goes: the flash
   // doesn't go instead (back into what it hit, or blown up in it); it says why, and the auto-turn takes it clear.
-  for (const [what, hole, dashes] of [['at a hole, holding golden flashes', true, 1], ['at a hole', true, 0], ['at a body', false, 0]]) {
-    const g = board([[[[5, 10], [4, 10], [3, 10], [2, 10], [1, 10], [0, 10], [0, 11], [0, 12], [0, 13]], 'right'], hole ? [line(20, 2, 4), 'right'] : [Array.from({ length: 6 }, (_, i) => [6, 6 + i]), 'up'], [[[7, 16], [7, 17], [7, 18], [7, 19]], 'up']]);
+  for (const [what, hole, dashes] of [['at a hole, holding golden flashes', true, 1], ['at a hole', true, 0], ['at a head', false, 0]]) {
+    const g = board([[[[5, 10], [4, 10], [3, 10], [2, 10], [1, 10], [0, 10], [0, 11], [0, 12], [0, 13]], 'right'], hole ? [line(20, 2, 4), 'right'] : [Array.from({ length: 6 }, (_, i) => [6, 10 + i]), 'up'], [[[7, 16], [7, 17], [7, 18], [7, 19]], 'up']]);
     const [me, other, runner] = g.snakes;
     other.stunUntil = 1e9; // (the runner comes up column 7 into the landing, (7,10), the tick the stun ends)
     if (hole) g.holes.add(K(6, 10));
