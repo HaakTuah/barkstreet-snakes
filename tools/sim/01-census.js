@@ -22,6 +22,13 @@ const census = () => ({
   bugs: 0, bugsCaught: 0, bugsDived: 0, bugsDug: 0, bugsFlown: 0, bugsPecked: 0,
   chases: 0, chasesCaught: 0, chasesDived: 0, chasesDug: 0, chasesFlown: 0, chasesPecked: 0, chaseTicks: [], // (chaseTicks: from a head first near to the catch)
   divesDugBurrow: 0, // (dives into a burrow a dig left)
+  // Round six B (2m), beetles and the woodpecker: burrows cracked open, and
+  // burrows open summed over the woodpecker's ticks; beetle-ticks spent
+  // underground due up with no burrow to come out of; beetles under the beak
+  // when it aims, and how each got away (ran off, down a burrow, dug in) or
+  // was eaten by it (or caught, or flew off).
+  burrowsOpened: 0, sdTicks: 0, sdBurrowTicks: 0, underWait: 0,
+  beakBugs: 0, beakRan: 0, beakCaught: 0, beakDived: 0, beakDug: 0, beakFlown: 0, beakPecked: 0,
   ticks: 0, burrowTicks: 0, ticksEarly: 0, freeEarly: 0, // (ticks, and burrows open summed over them; before the woodpecker, cells free for an apple summed over them)
   // The woodpecker's fairness: aims whose mark left a snake less room than
   // its length (timed: tails leaving), and of them, the snake out by 3 s
@@ -222,6 +229,7 @@ function beetleCensus(g, c, st, before) {
     }
     if (!how) continue;
     c.bugs++; c['bugs' + how]++;
+    if (st.beak?.has(f)) { c['beak' + how]++; st.beak.delete(f); }
     if (how === 'Caught' && f.digUntil > 0) c.digsCaught++;
     if (b.near < 0) continue;
     c.chases++; c['chases' + how]++;
@@ -229,6 +237,7 @@ function beetleCensus(g, c, st, before) {
   }
   for (const f of g.food) if (f.kind === 'beetle' && !st.bugs.has(f)) st.bugs.set(f, { near: -1 });
   for (const e of g.events) {
+    if (e.type === 'burrow') c.burrowsOpened++;
     if (e.type === 'dig') c.digs++;
     else if (e.type === 'dive' && !e.dug && g.burrows.some(h => at(e, h) && h.dug)) c.divesDugBurrow++;
   }
@@ -245,6 +254,8 @@ function woodpeckerCensus(g, c, st, dying, N) {
       landed.delete(e.y * N + e.x);
     }
     else if (e.type === 'aim') {
+      st.beak = new Set(g.food.filter(f => f.kind === 'beetle' && g.woodpecker.target.includes(f.y * N + f.x)));
+      c.beakBugs += st.beak.size;
       timedGrid(g, N);
       const mark = new Set(g.woodpecker.target);
       for (const s of g.snakes) {
@@ -254,6 +265,7 @@ function woodpeckerCensus(g, c, st, dying, N) {
         if (timedRoom(g, N, s, mark, need) < need) { c.seals++; st.sealed.push([s.id, g.woodpecker.strikeAt]); }
       }
     } else if (e.type === 'peck') {
+      if (st.beak) { for (const f of st.beak) if (g.food.includes(f)) c.beakRan++; st.beak = null; }
       labelLand(g, N);
       const { comp, sizes } = land, foodAt = new Set(g.food.map(f => f.y * N + f.x)), bodyAt = new Set(g.snakes.filter(s => s.alive).flatMap(s => s.body.map(b => b.y * N + b.x)));
       const crumbs = new Set();

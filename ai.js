@@ -431,7 +431,7 @@ window.SnakeAI = (() => {
   // after another. No search visits a cell twice, so N * N is always enough.
   let bufN = 0, mineFree, otherFree, ownFree, risk, strikes, seen;
   let bridgeUntil, ridesWas, foodValue, foodGrow, foodFrom, foodCells, goldCells, beadCells, queue, nbr, necks, reach, lineAt, lineSeen, lineMark, lineIn, lineOut, myCells, marks, leave, leaveStamp, chase, chaseKey;
-  let nearStamp, nearHead, nearWho, nearHome, nearGap;
+  let nearStamp, nearHead, nearWho, nearHome, nearGap, nearBeak;
   let stamp = 0;
   // The board the searches of a search state run on (see evaluate), framed
   // by a border of HOLE so a cell's neighbours are just a row either side of
@@ -492,6 +492,7 @@ window.SnakeAI = (() => {
     nearWho = new Int32Array(size);
     nearHome = new Int32Array(size);
     nearGap = new Int32Array(size);
+    nearBeak = new Int32Array(size);    // and how far off the woodpecker's mark (on it, less than 0: see E.beakGap)
     nbr = new Int32Array(size * 4);
     for (let i = 0; i < size; i++) {
       const x = i % N, y = (i - x) / N;
@@ -1406,11 +1407,13 @@ window.SnakeAI = (() => {
     // where the woodpecker promised), worked out on the board as I see it.
     // It's there from the strike on: the first move that can eat it is the
     // one after the strike's tick (`lands`). Never where it lies: that's a
-    // hole by then, and the mark's no place to wait. (A beetle in the mark is
-    // knocked as the search moves it: see knockBug.)
+    // hole by then, and the mark's no place to wait. (A beetle in the mark
+    // runs from the beak as the search moves it, and is the bird's if it's
+    // still there at the strike: see bugCrawl and knockBug.)
     foodFrom.fill(0);
     const strikeAt = mark.size && view.strikeAt != null && view.strikeAt >= view.tick && engine.knocks ? view.strikeAt : -1;
     const lands = strikeAt - view.tick + 2;
+    const beakOf = strikeAt >= 0 && engine.beakDepth ? engine.beakDepth(mark, pitAt) : null; // (how far each cell of the mark is from the bark beyond, as the engine's beetles reckon it)
     let knocked = null, peckGame = null; // (knocked: cell -> where it lands, -1: the bird eats it)
     if (strikeAt >= 0) {
       peckGame = { snakes: [{ alive: true, body: me.body }, ...others.map(o => ({ alive: true, body: o.body, stunUntil: view.tick + Math.max(0, (o.stun || 0) - age) }))], food, burrows: view.burrows || [], holes, fires: NO_FIRES, tick: view.tick, woodpecker: { strikeAt } };
@@ -1490,7 +1493,7 @@ window.SnakeAI = (() => {
       let d = HOLE, who = -1, home = -1, gap = TUNE.BEETLE_HOME_REACH;
       for (let k = 0; k < others.length; k++) { const e = Math.abs(x - headX[k]) + Math.abs(y - headY[k]); if (e < d) { d = e; who = k; } }
       for (let k = 0; k < burrows.length; k++) { const h = burrows[k], g = Math.abs(h % N - x) + Math.abs((h - h % N) / N - y); if (g < gap) { gap = g; home = h; } }
-      nearStamp[c] = stampN; nearHead[c] = d; nearWho[c] = who; nearHome[c] = home; nearGap[c] = gap;
+      nearStamp[c] = stampN; nearHead[c] = d; nearWho[c] = who; nearHome[c] = home; nearGap[c] = gap; nearBeak[c] = beakOf ? engine.beakGap(mark, beakOf, x, y) : 99;
     }
     // (The other beetle's state in slot s, for beetle b: where it's dug in
     // by then, a burrow's there. -1: there's no other.)
@@ -1508,53 +1511,54 @@ window.SnakeAI = (() => {
       if (c < 0) return;
       const now = view.tick + s;
       bugCrawl(o, n, c, now, s, hx, hy, other >= 0 ? bugDug[other] : -1);
-      if (now === strikeAt && bugCell[n] >= 0 && mark.has(bugCell[n])) knockBug(n, now);
+      if (now === strikeAt && bugCell[n] >= 0 && mark.has(bugCell[n])) knockBug(n);
     }
     function bugCrawl(o, n, c, now, s, hx, hy, dug) {
-      if (bugDig[n] > 0) { if (now >= bugDig[n]) { bugCell[n] = -1; bugDug[n] = c; } return; } // (digging in: there till it's gone, and a burrow's there)
       const x = c % N, y = (c - x) / N;
       if (nearStamp[c] !== stampN) bugNear(c, x, y);
+      const gap = beakOf && now <= strikeAt ? nearBeak[c] : 99, beak = -gap; // (the beak, as the engine's crawl has it: how far off the mark, less than 0 on it)
+      if (bugDig[n] > 0 && gap < 0 && bugDig[n] > strikeAt) bugDig[n] = 0; // (a dig it can't finish before the strike: it runs instead)
+      if (bugDig[n] > 0) { if (now >= bugDig[n]) { bugCell[n] = -1; bugDug[n] = gap < 0 ? -1 : c; } return; } // (digging in: there till it's gone, and a burrow's there, unless the beak's coming)
       let home = nearHome[c], homeGap = nearGap[c]; // (the nearest burrow in reach: another beetle's dig leaves one too)
       if (dug >= 0) { const g = Math.abs(dug % N - x) + Math.abs((dug - dug % N) / N - y); if (g < homeGap) { homeGap = g; home = dug; } }
       const since = now - bugMoved[n];
-      if (home >= 0 && since < bugRest) return; // (too soon to crawl, scared or not, and with a burrow in reach it won't dig)
-      let fear = Math.abs(x - hx) + Math.abs(y - hy), fx = hx, fy = hy;
+      let fear = Math.abs(x - hx) + Math.abs(y - hy), fx = hx, fy = hy, plan = 0;
       if (nearHead[c] < fear) { const k = nearWho[c]; fear = nearHead[c]; fx = headX[k]; fy = headY[k]; }
-      if (home < 0 && fear <= TUNE.BEETLE_DIG_FEAR) { bugDig[n] = now + TUNE.BEETLE_DIG; return; } // (cornered: it digs in, and stays put)
-      const scared = fear <= TUNE.BEETLE_FEAR;
-      if (since < (scared ? TUNE.BEETLE_SCARED_EVERY : TUNE.BEETLE_EVERY)) return;
-      if (!scared) home = -1; // (only a scared one runs for home)
+      const beaked = gap <= TUNE.BEETLE_FEAR;
+      if (gap < 0) { // (under the beak: home if it can get there first, else off the mark, else it digs in, if it can be gone in time)
+        const E = TUNE.BEETLE_SCARED_EVERY, first = Math.max(now, bugMoved[n] + E), inTime = m => first + E * (m - 1) <= strikeAt;
+        if (home >= 0 && inTime(homeGap)) plan = 1;
+        else if (inTime(beak)) plan = 2;
+        else if (now + TUNE.BEETLE_DIG <= strikeAt) { bugDig[n] = now + TUNE.BEETLE_DIG; return; }
+        else plan = 2;
+        if (plan !== 1) home = -1;
+        if (since < E) return;
+      } else {
+        if (home >= 0 && since < bugRest) return; // (too soon to crawl, scared or not, and with a burrow in reach it won't dig)
+        if (home < 0 && fear <= TUNE.BEETLE_DIG_FEAR) { bugDig[n] = now + TUNE.BEETLE_DIG; return; } // (cornered: it digs in, and stays put)
+        if (since < (fear <= TUNE.BEETLE_FEAR || beaked ? TUNE.BEETLE_SCARED_EVERY : TUNE.BEETLE_EVERY)) return;
+        if (fear > TUNE.BEETLE_FEAR && !beaked) home = -1; // (only a scared one runs for home)
+      }
+      const fled = fear <= TUNE.BEETLE_FEAR, scared = fled || beaked;
       let best = -1, bestScore = -Infinity;
       for (let k = 0; k < 4; k++) {
         const nx = x + BUG_WAYS[k].x, ny = y + BUG_WAYS[k].y, ni = ny * N + nx;
-        if (nx < 0 || ny < 0 || nx >= N || ny >= N || mineFree[ni] > s + 1 || (leaveStamp[ni] === stampL && leave[ni] > s + 1) || (nx === hx && ny === hy) || (ni !== bugCell[o] && marks[ni] >= stampFood && marks[ni] < marksEnd)) continue;
+        if (nx < 0 || ny < 0 || nx >= N || ny >= N || (mineFree[ni] > s + 1 && !(plan && beakOf.has(ni))) || (leaveStamp[ni] === stampL && leave[ni] > s + 1) || (nx === hx && ny === hy) || (ni !== bugCell[o] && marks[ni] >= stampFood && marks[ni] < marksEnd)) continue;
         let score = 0.5; // (its wandering, on average)
         const way = bugWay[n];
         if (k === way) score += 1.5; else if (way >= 0 && k === (way + 2) % 4) score -= 1;
-        if (scared) score += 3 * (Math.abs(nx - fx) + Math.abs(ny - fy) - fear);
+        if (fled) score += 3 * (Math.abs(nx - fx) + Math.abs(ny - fy) - fear);
         if (home >= 0) score += 2 * (homeGap - Math.abs(home % N - nx) - Math.abs((home - home % N) / N - ny));
+        if (plan === 2 || (!plan && beaked)) { if (nearStamp[ni] !== stampN) bugNear(ni, nx, ny); score += 3 * (nearBeak[ni] - gap); }
         if (score > bestScore) { bestScore = score; best = k; }
       }
       if (best < 0) return;
       const ni = c + BUG_WAYS[best].y * N + BUG_WAYS[best].x;
       bugCell[n] = scared && (ni === dug || burrows.includes(ni)) ? -1 : ni; bugWay[n] = best; bugMoved[n] = now;
     }
-    // The strike knocks a beetle in the mark to where the rule puts it: it
-    // scurries there (the way it flew) and digs no more; with nowhere to go,
-    // the bird has it. (Where it lands from a cell the search moved it to is
-    // worked out the first time it's asked.)
-    function knockBug(n, now) {
-      const c = bugCell[n];
-      let to = knocked.get(c);
-      if (to === undefined) {
-        const at = engine.knockTo(peckGame, c % N, (c - c % N) / N, mark);
-        knocked.set(c, to = at ? at.y * N + at.x : -1);
-      }
-      bugDig[n] = 0;
-      if (to < 0) { bugCell[n] = -1; bugDug[n] = -1; return; }
-      const dx = to % N - c % N, dy = (to - to % N - c + c % N) / N;
-      bugWay[n] = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 1 : 3) : dy > 0 ? 2 : 0; // (in BUG_WAYS)
-      bugCell[n] = to; bugMoved[n] = now;
+    // The strike: a beetle still in the mark is the bird's (round six B, 2m).
+    function knockBug(n) {
+      bugCell[n] = -1; bugDug[n] = -1; bugDig[n] = 0;
     }
     // From a search's end (my head at (hx, hy) after t moves): the move I'd
     // catch beetle b on, going straight for it (the longer way first); too

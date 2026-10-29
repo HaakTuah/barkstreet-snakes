@@ -320,7 +320,7 @@ window.SnakeEngine = (() => {
     let best = null, gap = -1, fallback = null;
     for (const b of game.burrows) {
       const k = key(b.x, b.y);
-      if (bodyStamp[k] === stamp || game.fires.has(k) || game.holes.has(k) || b.shutAt) continue; // (none comes out of one growing shut)
+      if (bodyStamp[k] === stamp || game.fires.has(k) || game.holes.has(k) || b.shutAt || game.woodpecker?.target.includes(k)) continue; // (none comes out of one growing shut, nor under the beak)
       if (k === not) { fallback = b; continue; }
       const g = headGap(game, b.x, b.y);
       if (g > gap) { gap = g; best = b; }
@@ -352,7 +352,11 @@ window.SnakeEngine = (() => {
       const u = game.unders[i];
       if (game.tick < u.until) continue;
       if (game.tick >= u.expires) { game.unders.splice(i--, 1); continue; } // (it stays home)
-      const b = freeBurrow(game, u.from);
+      let b = freeBurrow(game, u.from);
+      if (!b && openBurrows(game) < T.BURROW_MAX) { // (none free, and room for one: it cracks a new one open where it's quiet, as beetleOut does, so burrows keep up with the woodpecker)
+        const at = placer(game)(null, true, -1, T.BURROW_SPACING);
+        if (at) b = openBurrow(game, at.x, at.y);
+      }
       if (!b) continue;
       b.used = game.time;
       game.food.push({ x: b.x, y: b.y, kind: 'beetle', expires: u.expires, dir: CRAWL[Math.floor(Math.random() * 4)], movedAt: game.tick, ...(u.gold ? { gold: 1 } : {}) });
@@ -360,6 +364,7 @@ window.SnakeEngine = (() => {
       game.unders.splice(i--, 1);
     }
     let marked = false;
+    const w = game.woodpecker, depth = w && w.target.length && game.tick <= w.strikeAt ? beakDepth(w.target, k => game.holes.has(k)) : null; // (the mark, while it's coming: how far each cell of it is from the bark beyond)
     for (const b of [...game.food]) {
       if (b.kind !== 'beetle') continue;
       let fear = 99, hx = 0, hy = 0;
@@ -368,17 +373,46 @@ window.SnakeEngine = (() => {
         const h = s.body[0], d = Math.abs(h.x - b.x) + Math.abs(h.y - b.y);
         if (d < fear) { fear = d; hx = h.x; hy = h.y; }
       }
-      const scared = fear <= T.BEETLE_FEAR;
-      if (!(b.digUntil > 0) && fear <= T.BEETLE_DIG_FEAR && !game.burrows.some(h => Math.abs(h.x - b.x) + Math.abs(h.y - b.y) < T.BEETLE_HOME_REACH)) {
+      // The woodpecker's mark, as it aims, is danger as a head is: within
+      // BEETLE_FEAR of it, a beetle scurries away from it, and for a burrow
+      // in reach, and dives in. On it (under the beak), it scurries for a
+      // burrow in reach, if it can get there before the strike; else off
+      // the mark; else it digs in, if it can be gone in time (a dig there
+      // leaves no burrow: it comes up elsewhere). One already digging that
+      // will be gone in time keeps at it; one that won't, runs. Still there
+      // at the strike, the bird eats it (see knocks). gap: how far off the
+      // mark (on it, less than 0: minus how far it is from the bark beyond,
+      // see beakGap); plan, on it: 1 home, 2 off the mark, 3 dig in.
+      const gap = depth ? beakGap(w.target, depth, b.x, b.y) : 99, beak = -gap;
+      let plan = 0, home = null, homeGap = T.BEETLE_HOME_REACH;
+      if (gap < 0) {
+        const E = T.BEETLE_SCARED_EVERY, first = Math.max(game.tick, b.movedAt + E), inTime = n => first + E * (n - 1) <= w.strikeAt;
+        for (const h of game.burrows) {
+          const g = Math.abs(h.x - b.x) + Math.abs(h.y - b.y);
+          if (g < homeGap) { homeGap = g; home = h; }
+        }
+        if (b.digUntil > 0 && b.digUntil <= w.strikeAt) plan = 3;
+        else if (home && inTime(homeGap)) plan = 1;
+        else if (inTime(beak)) plan = 2;
+        else if (!(b.digUntil > 0) && game.tick + T.BEETLE_DIG <= w.strikeAt) plan = 3;
+        else plan = 2; // (too late for anything else: it runs anyway)
+        if (plan !== 1) home = null;
+        if (plan !== 3 && b.digUntil > 0) delete b.digUntil; // (a dig it can't finish in time: it runs instead)
+        if (plan === 3 && !(b.digUntil > 0)) {
+          b.digUntil = game.tick + T.BEETLE_DIG;
+          game.events.push({ type: 'dig', x: b.x, y: b.y, until: b.digUntil });
+        }
+      } else if (!(b.digUntil > 0) && fear <= T.BEETLE_DIG_FEAR && !game.burrows.some(h => Math.abs(h.x - b.x) + Math.abs(h.y - b.y) < T.BEETLE_HOME_REACH)) {
         b.digUntil = game.tick + T.BEETLE_DIG;
         game.events.push({ type: 'dig', x: b.x, y: b.y, until: b.digUntil });
       }
+      const fled = fear <= T.BEETLE_FEAR, scared = fled || gap <= T.BEETLE_FEAR;
       if (b.digUntil > 0) {
         if (game.tick < b.digUntil) continue; // (digging: it stays put)
         game.food.splice(game.food.indexOf(b), 1);
         goUnder(game, b);
         game.events.push({ type: 'dive', x: b.x, y: b.y, dug: 1 });
-        if (T.BURROW_FROM_DIG) openBurrow(game, b.x, b.y, true);
+        if (T.BURROW_FROM_DIG && !depth?.has(key(b.x, b.y))) openBurrow(game, b.x, b.y, true); // (none where the beak's coming)
         continue;
       }
       if (game.tick - b.movedAt < (scared ? T.BEETLE_SCARED_EVERY : T.BEETLE_EVERY)) continue;
@@ -387,24 +421,23 @@ window.SnakeEngine = (() => {
         for (const f of game.food) bodyStamp[key(f.x, f.y)] = stamp;
         for (const k of game.holes) bodyStamp[k] = stamp;
         for (const k of game.fires.keys()) bodyStamp[k] = stamp; // (beetles keep out of fire...)
-        if (game.woodpecker) for (const k of game.woodpecker.target) bodyStamp[k] = stamp; // (...and the woodpecker's way)
         marked = true;
       }
       // The nearest burrow, if one's close enough to run for.
-      let home = null, homeGap = T.BEETLE_HOME_REACH;
-      if (scared) for (const h of game.burrows) {
+      if (!plan && scared) for (const h of game.burrows) {
         const g = Math.abs(h.x - b.x) + Math.abs(h.y - b.y);
         if (g < homeGap) { homeGap = g; home = h; }
       }
       let best = null, bestScore = -Infinity;
       for (const d of CRAWL) {
-        const nx = b.x + d.x, ny = b.y + d.y;
-        if (!inside(nx, ny) || bodyStamp[key(nx, ny)] === stamp) continue;
+        const nx = b.x + d.x, ny = b.y + d.y, nk = key(nx, ny);
+        if (!inside(nx, ny) || bodyStamp[nk] === stamp || (w && !plan && w.target.includes(nk))) continue; // (...and the woodpecker's way, unless it's on it already)
         let score = Math.random(); // a little wandering
         if (d === b.dir) score += 1.5; // it likes to keep going
         else if (d.x === -b.dir.x && d.y === -b.dir.y) score -= 1;
-        if (scared) score += 3 * (Math.abs(nx - hx) + Math.abs(ny - hy) - fear); // away from the nearest head...
+        if (fled) score += 3 * (Math.abs(nx - hx) + Math.abs(ny - hy) - fear); // away from the nearest head...
         if (home) score += 2 * (homeGap - Math.abs(home.x - nx) - Math.abs(home.y - ny)); // ...and home, if it's near
+        if (plan === 2 || (!plan && gap <= T.BEETLE_FEAR)) score += 3 * (beakGap(w.target, depth, nx, ny) - gap); // (...and the beak, off its mark)
         if (score > bestScore) { bestScore = score; best = d; }
       }
       if (!best) continue;
@@ -421,6 +454,41 @@ window.SnakeEngine = (() => {
         game.events.push({ type: 'dive', x: b.x, y: b.y });
       }
     }
+  }
+  // Round six B (2m): how many cells each cell of the woodpecker's mark
+  // (target: its cells) is from the nearest cell off it, across and down,
+  // on the board and not a hole (isHole(k)): how far a beetle there must
+  // crawl to be clear of the beak. A Map, cell -> cells (none for a cell
+  // that's a hole), worked out once a mark (the AIs ask too: see E.beakDepth).
+  let depthFor = null, depthHoles = -1, depthOf = null;
+  // How far (x, y) is off the mark (target), across and down; on it, minus
+  // how far from the bark beyond (depth: beakDepth's).
+  function beakGap(target, depth, x, y) {
+    const d = depth.get(key(x, y));
+    if (d !== undefined) return -d;
+    let gap = 99;
+    for (const k of target) { const kx = k % GRID, g = Math.abs(kx - x) + Math.abs((k - kx) / GRID - y); if (g < gap) gap = g; }
+    return gap;
+  }
+  function beakDepth(target, isHole) {
+    let holes = 0;
+    for (const k of target) if (isHole(k)) holes++;
+    if (depthFor === target && depthHoles === holes) return depthOf;
+    const mark = new Set(target), out = new Map();
+    for (const k of mark) {
+      if (isHole(k)) continue;
+      const x = k % GRID, y = (k - x) / GRID;
+      let found = GRID * 2;
+      for (let r = 1; r < found; r++) {
+        for (let dx = -r; dx <= r && found > r; dx++) for (const dy of dx === -r || dx === r ? [0] : [r - Math.abs(dx), Math.abs(dx) - r]) {
+          const nx = x + dx, ny = y + dy, nk = key(nx, ny);
+          if (inside(nx, ny) && !mark.has(nk) && !isHole(nk)) { found = r; break; }
+        }
+      }
+      out.set(k, found);
+    }
+    depthFor = target; depthHoles = holes; depthOf = out;
+    return out;
   }
   // A beetle gone underground, where it went down (a burrow, or a dig): it
   // comes up a while later.
@@ -612,8 +680,8 @@ window.SnakeEngine = (() => {
   // such a spot: see pickPatch), eyes it for PECK_AIM_TICKS (everyone sees
   // where, and the AIs keep out of it, like a hole), hammers it all out at
   // once, and rests a good while. Food in the patch when it strikes is
-  // knocked aside (see knockTo; a beetle scurries there), or eaten if there's
-  // nowhere to knock it; fire and a burrow there go. A head on the ground
+  // knocked aside (see knockTo), or eaten if there's nowhere to knock it (a
+  // beetle still there is eaten: it had the rings' warning to run, see crawl); fire and a burrow there go. A head on the ground
   // there, and that snake's out; a body lying across it bridges the new hole
   // (it isn't cut, and drops nothing), and the cell is a hole like any other
   // once its tail has passed. Where knocked food lands is a promise: the
@@ -651,12 +719,7 @@ window.SnakeEngine = (() => {
       for (const k of zone) { game.holes.add(k); if (game.fires.has(k)) putOut(game, k); } // (a burning cell pecked out: the fire there's gone too)
       for (const { food: f, to } of flying) {
         game.events.push({ type: 'knock', kind: f.kind, x: f.x, y: f.y, tx: to ? to.x : null, ty: to ? to.y : null, ...(f.gold ? { gold: 1 } : {}), ...(f.color ? { color: f.color } : {}) });
-        if (!to) { game.food.splice(game.food.indexOf(f), 1); continue; } // (nowhere to go: the bird eats it)
-        if (f.kind === 'beetle') { // (a beetle scurries there, and isn't digging any more)
-          const dx = to.x - f.x, dy = to.y - f.y;
-          f.px = f.x; f.py = f.y; f.dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? DIRS.right : DIRS.left) : dy > 0 ? DIRS.down : DIRS.up; f.movedAt = game.tick; f.scared = true;
-          delete f.digUntil;
-        }
+        if (!to) { game.food.splice(game.food.indexOf(f), 1); continue; } // (nowhere to go, or a beetle: the bird eats it)
         f.x = to.x; f.y = to.y;
       }
       game.burrows = game.burrows.filter(b => !zone.has(key(b.x, b.y))); // (a burrow pecked open is a hole now)
@@ -992,6 +1055,7 @@ window.SnakeEngine = (() => {
     }
     for (const f of game.food) {
       if (!patch.has(key(f.x, f.y))) continue;
+      if (f.kind === 'beetle') { out.push({ food: f, to: null }); continue; } // (round six B, 2m: a beetle still under the beak is the bird's: it had the rings' warning to run)
       const k = kept.get(f), b = broken.get(f);
       const to = k != null ? { x: k % GRID, y: (k - k % GRID) / GRID } : b != null ? knockTo(game, b % GRID, (b - b % GRID) / GRID, patch, free) : knockTo(game, f.x, f.y, patch, free);
       if (to && k == null) landed.add(key(to.x, to.y));
@@ -2136,6 +2200,6 @@ window.SnakeEngine = (() => {
 
   return {
     GRID, PLAYER_COLOR, PERSONAS, DIRS, WEATHER,
-    createGame, step, tickMs, hungerLeft, aiView, canThinkAhead, thinkAhead, suddenDeath, leap, leapIn, flash, flashIn, rollSide, knockTo, knocks,
+    createGame, step, tickMs, hungerLeft, aiView, canThinkAhead, thinkAhead, suddenDeath, leap, leapIn, flash, flashIn, rollSide, knockTo, knocks, beakDepth, beakGap,
   };
 })();
