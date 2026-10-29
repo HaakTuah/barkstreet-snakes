@@ -494,3 +494,7 @@ deadly afraid of the edge, so incentivicing sticking by the edge more might not 
 your idea, so I am conflicted." And to building it his way first, measured, with that rule as the fix if the edge
 becomes a refuge: "Agreed, expert!" (written into "The edge is a shelter, measured" in
 `docs/design/29-round-six-b-the-new-moves.md` and item 5's part 3)
+
+In the design chat (29 October 2026, 15:19 UTC), back home, to 2k's question (the bird over the speed buttons' words on
+a phone held upright) and the design session's suggestion to keep clear of the words: "Keep the bird 1.7x. And agreed
+with everything else." (queued as 2k+: 1.7 times everywhere, perching clear of the words where it can, never shrinking)
