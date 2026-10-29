@@ -186,6 +186,68 @@ function spotIn(cells) {
   return best;
 }
 const ARRIVAL_SPOT = GRID / 2;
+// Where its beak strikes the cell it works on: the middle, or, with a
+// snake lying there, the free corner or edge farthest from the body (drawn
+// narrower than its cell, so that spot shows), so it's seen chipping the
+// log beside the snake, which the strike leaves unhurt. Only where it's
+// drawn: the tiles go as they always did. From the bodies as the tick
+// stands, and when they move it shifts its grip to the new spot in half a
+// tick. AX, AY: from the cell's middle, units, as drawn;
+// AFREE: how far the nearest body's edge is from there (Infinity: none on
+// the cell). The bodies round the cell are kept for the dent's cracks (see
+// clearOf).
+const AIM_IN = 1, AIM_RIM = 2, AIM_TIE = 0.5; // (how far inside the cell's edge it aims; a body's ink round it; how near as clear two spots count as the same, units)
+const aimAt = { spot: -1, from: 0, ox: 0, oy: 0, free: Infinity, px: 0, py: 0, dx: 0, dy: 0 };
+let AX = 0, AY = 0, AFREE = Infinity, segN = 0;
+const segs = new Float32Array(5 * 64); // (x0, y0, x1, y1, r: the bodies' pieces round the cell)
+function freeAim(spot, bx, by) { // (bx, by: where it clings; of spots as clear, the nearest that)
+  const A = aimAt, sx = spot % GRID, sy = (spot - sx) / GRID, mx = sx * CELL + CELL / 2, my = sy * CELL + CELL / 2;
+  let on = false;
+  segN = 0;
+  for (const s of game.snakes) {
+    if (!s.alive) continue;
+    const b = s.body, n = b.length, rad = i => (i === 0 ? 0.54 : 0.44 - 0.1 * i / Math.max(1, n - 1)) * CELL + AIM_RIM; // (as render/lead.js's radius has it)
+    for (let i = 0; i < n; i++) {
+      const c = b[i], d = i + 1 < n ? b[i + 1] : c;
+      if (c.x === sx && c.y === sy) on = true;
+      if (Math.abs(c.x - d.x) + Math.abs(c.y - d.y) > 1) continue; // (across a wrap: each end is its own)
+      if (Math.max(Math.abs(c.x - sx), Math.abs(c.y - sy)) > 1 && Math.max(Math.abs(d.x - sx), Math.abs(d.y - sy)) > 1) continue;
+      if (segN * 5 === segs.length) break;
+      const k = 5 * segN++;
+      segs[k] = c.x * CELL + CELL / 2; segs[k + 1] = c.y * CELL + CELL / 2; segs[k + 2] = d.x * CELL + CELL / 2; segs[k + 3] = d.y * CELL + CELL / 2; segs[k + 4] = Math.max(rad(i), i + 1 < n ? rad(i + 1) : 0);
+    }
+  }
+  A.ox = A.oy = 0; A.free = Infinity;
+  if (!on) return;
+  const h = CELL / 2 - AIM_IN;
+  let best = -Infinity, near = Infinity;
+  for (let q = 0; q < 16; q++) { // (round the cell's rim: its corners, and three points along each edge)
+    const side = q >> 2, t = (q & 3) / 2 - 1, u = side === 0 ? t : side === 1 ? 1 : side === 2 ? -t : -1, v = side === 0 ? -1 : side === 1 ? t : side === 2 ? 1 : -t;
+    const c = clearOf(mx + u * h, my + v * h), d = Math.hypot(mx + u * h - bx, my + v * h - by);
+    if (c > best + AIM_TIE || (c > best - AIM_TIE && d < near)) { best = Math.max(best, c); near = d; A.ox = u * h; A.oy = v * h; A.free = c; }
+  }
+}
+// How far board point x, y lies from the nearest body's edge round the cell, units.
+function clearOf(x, y) {
+  let least = Infinity;
+  for (let k = 0; k < 5 * segN; k += 5) {
+    const ax = segs[k], ay = segs[k + 1], dx = segs[k + 2] - ax, dy = segs[k + 3] - ay, l2 = dx * dx + dy * dy;
+    const t = l2 ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l2)) : 0;
+    least = Math.min(least, Math.hypot(x - ax - t * dx, y - ay - t * dy) - segs[k + 4]);
+  }
+  return least;
+}
+function aimOff(spot, t, d) { // (t: ticks from the strike, as drawn)
+  const A = aimAt, wx = A.ox, wy = A.oy;
+  freeAim(spot, d.x, d.y);
+  if (A.spot !== spot) { A.spot = spot; A.px = A.dx = A.ox; A.py = A.dy = A.oy; A.from = t; }
+  else if (A.ox !== wx || A.oy !== wy) { A.px = A.dx; A.py = A.dy; A.from = t; }
+  const e = smooth(clamp01((t - A.from) * 2)); // (half a tick to shift its grip)
+  A.dx = A.px + (A.ox - A.px) * e; A.dy = A.py + (A.oy - A.py) * e;
+  AX = A.dx; AY = A.dy; AFREE = A.free;
+}
+const aimed1 = { x: 0, y: 0, s: 1, flip: 1, rot: 0 }; // (a drumming pose moved to where it aims)
+const atAim = d => { aimed1.x = d.x + AX; aimed1.y = d.y + AY; aimed1.s = d.s; aimed1.flip = d.flip; aimed1.rot = d.rot; return aimed1; };
 const restSpot = w => (w.last.length ? spotIn(w.last) : Math.max(0, Math.min(GRID - 1, Math.round(w.y))) * GRID + Math.max(0, Math.min(GRID - 1, Math.round(w.x))));
 
 // Its layer: the board and the room round it the bird can use, not the
@@ -333,21 +395,24 @@ function posture(w, tp, now) {
   const P = pose, ms = tickMs(), lively = !reduced;
   P.alpha = 1; P.thrust = 0; P.blur = 0; P.gape = 0; P.air = 0; P.wing = 0; P.stroke = 1; P.sweep = 0; P.near = P.far = 1; P.feet = 1; P.crouch = 0; P.rot = 0;
   P.free = false; P.up = 1.2; P.drum = null; P.blows = 0; P.blink = false; P.rim = false;
+  AX = AY = 0; AFREE = Infinity;
   if (w.target.length) {
     const to = (w.strikeAt - tp) * ms, A = aimPlan(w, ms, to), into = A.aimMs - to;
-    P.fx = A.tx; P.fy = A.ty;
+    if (to <= A.depart) aimOff(A.spot, tp - w.strikeAt, A.drum);
+    P.fx = A.tx + AX; P.fy = A.ty + AY;
     if (A.hop && into < A.H) flight(A.hop, perchAt(A.spot), Math.max(0, into) / A.H, A.H, P, 'hop', 0, 0);
     else if (to > A.depart) { perched(A.from, P, 'eye'); if (lively) P.crouch = smooth(clamp01(1 - (to - A.depart) / B_TAKEOFF)); }
-    else if (to > A.D + B_SETTLE) flight(A.from, A.drum, (A.depart - to) / A.F, A.F, P, 'out', lively ? 1 : 0, 0);
-    else if (to > A.D + 1e-6) { landing(A.drum, (A.D + B_SETTLE - to) / B_SETTLE, P, 'land'); windUp(A, -to, P); }
-    else drumming(A, -to, P);
+    else if (to > A.D + B_SETTLE) flight(A.from, atAim(A.drum), (A.depart - to) / A.F, A.F, P, 'out', lively ? 1 : 0, 0);
+    else if (to > A.D + 1e-6) { landing(atAim(A.drum), (A.D + B_SETTLE - to) / B_SETTLE, P, 'land'); windUp(A, -to, P); }
+    else { drumming(A, -to, P); P.x += AX; P.y += AY; }
     return;
   }
   if (w.struckAt >= 0 && w.last.length) {
     const H = homePlan(w, ms), since = (tp - w.struckAt) * ms;
     P.fx = H.to.x; P.fy = H.to.y - BU * 2;
-    if (since < B_LINGER) { P.fx = H.tx; P.fy = H.ty; lingering(H.drum, clamp01(since / B_LINGER), P); chipsAfter(w, since, P); return; }
-    if (since < B_LINGER + H.F) { flight(H.drum, H.to, (since - B_LINGER) / H.F, H.F, P, 'back', 0, 0.6); chipsAfter(w, since, P); return; }
+    if (since < B_LINGER + H.F) aimOff(H.spot, tp - w.struckAt, H.drum);
+    if (since < B_LINGER) { P.fx = H.tx + AX; P.fy = H.ty + AY; lingering(atAim(H.drum), clamp01(since / B_LINGER), P); chipsAfter(w, since, P); return; }
+    if (since < B_LINGER + H.F) { flight(atAim(H.drum), H.to, (since - B_LINGER) / H.F, H.F, P, 'back', 0, 0.6); chipsAfter(w, since, P); return; }
     if (since < H.total) { landing(H.to, (since - B_LINGER - H.F) / B_SETTLE, P, 'settle'); return; }
     perched(H.to, P, 'rest');
     const kik = since - H.total; // (its "kik!" as it settles: its beak opens)
