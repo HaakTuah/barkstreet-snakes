@@ -69,6 +69,19 @@ take: **1.3 times its size, on the board and under it alike** (one size). Under 
 the buttons. Since it covers more of the board as it drums, check with the simulation that round length, deaths by
 cause and per-rival wins stay within noise; pictures at a 390-pixel phone and desktop, as for PR #112.
 
+### 2d. Rivals' chomps (Haakon, 29 October 2026; small, a sound lane)
+
+Haakon (29 October 2026): "Yes, queue it. Feels strange that there is no sound, when your snake makes loud sound when
+eating." Today only your own snake's eating sounds (`sounds()` in `game/round.js`: `e.type === 'eat' && isMe(e.snake)`);
+a rival's makes no sound, except a golden mushroom, which already plays softer and further off (`{ rival: true, ...at(e.x) }`).
+- **Every rival's eating sounds,** each kind with its own cue as yours does (apple, golden, meat, mushroom, beetle,
+  leaf), but softer and further off, placed where it ate on the board (`at(e.x)`), so you can hear a rival feeding where
+  you aren't looking. Your own stays the loudest and the only one with the streak's rising pitch.
+- **Never a pile-up:** four snakes eating at once must not drown your own chomp or clip (the compressor and the cues'
+  spacing in `audio.js`); rivals' chomps give way to yours, as other rival sounds do.
+- Muted and the sound settings work as for every cue; online, each player hears it on their own machine, so no
+  protocol change. A test checks that a rival's eat plays its rival cue and yours plays yours.
+
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
 Its done entries (PRs #49 to #124) are in `docs/archive/progress-done.md`, "Item 3, done".
