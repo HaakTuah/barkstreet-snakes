@@ -22,7 +22,7 @@ const census = () => ({
   bugs: 0, bugsCaught: 0, bugsDived: 0, bugsDug: 0, bugsFlown: 0, bugsPecked: 0,
   chases: 0, chasesCaught: 0, chasesDived: 0, chasesDug: 0, chasesFlown: 0, chasesPecked: 0, chaseTicks: [], // (chaseTicks: from a head first near to the catch)
   divesDugBurrow: 0, // (dives into a burrow a dig left)
-  // Round six B (2m), beetles and the woodpecker: burrows cracked open, and
+  // Round six B (2m), beetles and the woodpecker: burrows cracked open (not dug), and
   // burrows open summed over the woodpecker's ticks; beetle-ticks spent
   // underground due up with no burrow to come out of; beetles under the beak
   // when it aims, and how each got away (ran off, down a burrow, dug in) or
@@ -237,7 +237,7 @@ function beetleCensus(g, c, st, before) {
   }
   for (const f of g.food) if (f.kind === 'beetle' && !st.bugs.has(f)) st.bugs.set(f, { near: -1 });
   for (const e of g.events) {
-    if (e.type === 'burrow') c.burrowsOpened++;
+    if (e.type === 'burrow' && !e.dug) c.burrowsOpened++;
     if (e.type === 'dig') c.digs++;
     else if (e.type === 'dive' && !e.dug && g.burrows.some(h => at(e, h) && h.dug)) c.divesDugBurrow++;
   }

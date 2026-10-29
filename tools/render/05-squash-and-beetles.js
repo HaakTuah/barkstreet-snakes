@@ -142,8 +142,10 @@ const dug = await ev(`(() => {
   bead.x = tx; bead.y = ty;
   g2.food.splice(g2.food.indexOf(bug), 1); // (round six B, 2m: a beetle still in the mark is the bird's)
   g2.tick++;
-  R.onTick([{ type: 'knock', kind: 'pellet', x: 11, y: 12, tx, ty }, { type: 'knock', kind: 'beetle', x: 13, y: 11, tx: null, ty: null }]);
-  const gulp = R.particles;
+  R.onTick([{ type: 'knock', kind: 'pellet', x: 11, y: 12, tx, ty }]);
+  const flown = R.particles;
+  R.onTick([{ type: 'knock', kind: 'beetle', x: 13, y: 11, tx: null, ty: null }]);
+  const gulp = R.particles - flown; // (the gulp's own puff)
   drawN(1, 0.05, 1);
   drawN(1, 0.5, 225); // (about half way through its flight)
   const mid = centre(9, 7, 5, 7, sky);

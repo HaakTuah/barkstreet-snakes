@@ -1548,7 +1548,7 @@ window.SnakeAI = (() => {
         const way = bugWay[n];
         if (k === way) score += 1.5; else if (way >= 0 && k === (way + 2) % 4) score -= 1;
         if (fled) score += 3 * (Math.abs(nx - fx) + Math.abs(ny - fy) - fear);
-        if (home >= 0) score += 2 * (homeGap - Math.abs(home % N - nx) - Math.abs((home - home % N) / N - ny));
+        if (home >= 0) score += (plan === 1 ? 4 : 2) * (homeGap - Math.abs(home % N - nx) - Math.abs((home - home % N) / N - ny));
         if (plan === 2 || (!plan && beaked)) { if (nearStamp[ni] !== stampN) bugNear(ni, nx, ny); score += 3 * (nearBeak[ni] - gap); }
         if (score > bestScore) { bestScore = score; best = k; }
       }
