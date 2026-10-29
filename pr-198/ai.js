@@ -2124,7 +2124,11 @@ window.SnakeAI = (() => {
         // leap now (pressed twice): over LEAP_REACH cells, down on the next,
         // else the farthest free short of it. Golden, held: on, down on any
         // free cell up to GOLD_FLY cells in the air, the best of them.
-        const lands = (i, now) => i < n && (free(path[i]) || bridgeUntil[path[i]] > i + 1) && !(now && reach[framed[path[i]]] <= i + 1 && strikes[path[i]] > 0);
+        // (Safe, for the moves of round six B, part 4 (leap now, flying on,
+        // steering): only where no rival's head could get before I come down,
+        // and leave its body there. Coming down on a body is the end, and at
+        // first they did it 0.6 times a round, and lost the head-to-head for it.)
+        const lands = (i, safe) => i < n && (free(path[i]) || bridgeUntil[path[i]] > i + 1) && !(safe && reach[framed[path[i]]] <= i);
         let first = -1, now = false;
         if (hurdle(path[0])) {
           for (span = 1; span <= Math.min(TUNE.LEAP_REACH, n - 1); span++) if (!hurdle(path[span]) || bridgeUntil[path[span]] > span + 1) break;
@@ -2137,7 +2141,7 @@ window.SnakeAI = (() => {
         }
         let bestS = null, bestSpan = first;
         for (let k = first; k <= (golden ? Math.min(TUNE.GOLD_FLY, n - 1) : first); k++) {
-          if (k > first && !lands(k, false)) continue;
+          if (k > first && !lands(k, true)) continue;
           const v = landOpt(d, k, golden, now);
           if (v !== null && (bestS === null || v > bestS)) { bestS = v; bestSpan = k; }
         }
@@ -2162,7 +2166,7 @@ window.SnakeAI = (() => {
                 path[n++] = c;
               }
               for (let k = at; k < n; k++) {
-                if (!lands(k, false)) continue;
+                if (!lands(k, true)) continue;
                 const v = landOpt(d2, k, true, now);
                 if (v !== null && (bestS === null || v > bestS)) { bestS = v; bestSpan = k; turn = { at, dir: d2 }; }
               }
