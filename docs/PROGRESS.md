@@ -172,20 +172,7 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
   of deaths by cause widens, per season; per-rival wins within noise overall; every trademark kept; no refuges.
 - **Online:** the host draws the season and sends it; a protocol bump.
 
-### 2j. Babble voices for the chatter, never distracting (Haakon, 29 October 2026; a sound lane)
-
-Haakon (29 October 2026): "And should the chat lines be voiced?" Then, to babble voices: "And make sure the voices
-arent distracting! That would be a real turn off!"
-- **Babble, not speech:** when a rival's bubble appears, a short synthesized burble in its own voice (pitch, timbre,
-  rhythm: Mason clipped and deep, Gobbler gobbly, Ghost faint, and so on; Mute stays silent), made in `audio.js` with
-  Web Audio, no recordings and no dependencies.
-- **Never distracting, first of all:** well under the eating sound, at most about half a second whatever the line's
-  length, never two at once, at most one every few seconds, never over your own sounds (eating, warnings, crashes), and
-  quieter still in tight moments. Its own switch in the sound settings ("Voices").
-- **Haakon judges it:** the PR stays a draft until he has played its preview and says it isn't distracting; if he
-  isn't sure, it ships switched off by default.
-- Rivals only for now (your own snake's lines, from the teaching system, stay silent). Online, each player hears it on
-  their own machine: no protocol change.
+### 2j. Done: babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time); in `docs/archive/progress-done.md`.
 
 ### 2k. The woodpecker, as big as it can get away with (Haakon, 29 October 2026; small, an art lane)
 
