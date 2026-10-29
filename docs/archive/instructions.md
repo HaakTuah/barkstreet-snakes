@@ -502,3 +502,6 @@ with everything else." (queued as 2k+: 1.7 times everywhere, perching clear of t
 In the design chat (29 October 2026, 16:39 UTC), on learning that the builder had stopped at the weekly usage warning:
 "They weren't supposed to stop before 90%. We're still at only 76%" (written into "Usage" in `CLAUDE.md` and the
 brake in `docs/orchestrating.md`: only the measured share counts; item 5 carries on)
+
+In the design chat (29 October 2026, 16:42 UTC), to the question on Mason's double walls (its straight runs 3.5 to 3.1
+cells a turn; everyone else 1.9) and the design session's take to keep them: "I agree with all your takes." (kept)
