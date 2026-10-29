@@ -64,6 +64,7 @@ function frame(alpha, now) {
   drawLandings(now); // (under the snakes: where a jump comes down)
   drawSnakes(alpha, now); // (and the fields' light round any rival in them, under its body)
   if (bentLater.length) drawBentFlags(now); // (a flag a snake lies on, bent over it)
+  if (flagBends.size) forgetBends(now);
   drawTossed(now); // (a bead spat over a head)
   drawRipples(now);
   drawRefusal(now);
