@@ -3,7 +3,7 @@
 
 // ------------------------------------------------------------ the woodpecker
 
-// A great spotted woodpecker, big (about seven and a half cells tall), clinging to the
+// A great spotted woodpecker, big (about six and a half cells tall), clinging to the
 // log just outside the board: on whichever side of the board has room on
 // this screen, as near as it can to where it's working. It flies in when
 // sudden death starts, the way a woodpecker flies (a few wingbeats, wings
