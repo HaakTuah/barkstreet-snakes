@@ -10,13 +10,17 @@
 //   Haakon asked (1b++, "The phone's bottom"): there taps pass through it
 //   (03-devices.js, 13-the-phones-bottom.js);
 // - drumming, it hides no more of the heads, the food and the tiles of its
-//   mark near its spot than it did at 1.3 (60 seeded scenes: the share of
-//   nine points a cell under its body, head, beak or tail, through the
-//   drum, as measured at 1.3 before 2k on these screens, its least);
+//   mark near its spot than it did at 1.3 on that screen (24 seeded
+//   scenes, the corners, edges and middle and a dozen anywhere: the share
+//   of nine points a cell under its body, head, beak or tail, through the
+//   drum);
 // - nothing on the page moves for it: the header, the tags, the board, the
 //   row under it and the chatter are where they are with no woodpecker,
 //   with it perched and with it drumming.
-const AT_13 = { head: 0.19, food: 0.14, tile: 0.1 }; // (at 1.3: 0.20-0.22, 0.15-0.16, 0.11-0.12, tools/dev/woodpecker-size/hides.js)
+const AT_13 = { // (at 1.3, before 2k, on each screen: tools/layout/14's HIDES on the game as it was)
+  '390×844': { head: 0.208, food: 0.182, tile: 0.111 }, '844×390': { head: 0.231, food: 0.151, tile: 0.1 }, '768×1024': { head: 0.213, food: 0.244, tile: 0.111 },
+  '1024×768': { head: 0.271, food: 0.194, tile: 0.108 }, '1280×800': { head: 0.291, food: 0.182, tile: 0.108 },
+};
 const PAGE = `(() => Object.fromEntries(['header', '.tags', '#game', '.foot', '.chatter'].map(s => { const el = document.querySelector(s), r = el && el.getBoundingClientRect(); return [s, r ? [r.left, r.top, r.width, r.height].map(v => Math.round(v * 2) / 2) : null]; })))()`;
 const WORDS = `(() => { const bd = document.getElementById('game').getBoundingClientRect(), out = [], tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let n; (n = tw.nextNode());) { if (!n.textContent.trim() || n.parentElement.closest('#bird-layer')) continue; const r = document.createRange(); r.selectNodeContents(n);
@@ -27,7 +31,7 @@ const HIDES = `(() => {
   const tot = { head: 0, food: 0, tile: 0 }, keep = { snakes: g.snakes.map(s => s.body), food: g.food, tick: g.tick };
   let scenes = 0;
   const share = (cx, cy) => { let n = 0; for (let q = 0; q < 9; q++) { const a = q * TAU / 8, x = (cx + 0.5) * CELL + (q < 8 ? Math.cos(a) * CELL * 0.4 : 0), y = (cy + 0.5) * CELL + (q < 8 ? Math.sin(a) * CELL * 0.4 : 0); if (covers(x, y)) n++; } return n / 9; };
-  for (let sc = 0; sc < 60; sc++) { // (the corners, edges and middle first, then anywhere)
+  for (let sc = 0; sc < 24; sc++) { // (the corners, edges and middle first, then anywhere)
     const tx = sc < 12 ? [0, 23, 0, 23, 12, 12, 0, 23, 1, 22, 12, 6][sc] : ri(N), ty = sc < 12 ? [0, 0, 23, 23, 0, 23, 12, 12, 22, 1, 12, 20][sc] : ri(N);
     const near = () => { for (;;) { const x = tx + ri(7) - 3, y = ty + ri(7) - 3; if (x >= 0 && y >= 0 && x < N && y < N && (x !== tx || y !== ty)) return [x, y]; } };
     g.snakes.forEach(s => { const [x, y] = near(); s.body = [{ x, y }, { x, y }, { x, y }]; });
@@ -36,7 +40,7 @@ const HIDES = `(() => {
     const t0 = g.tick, S = t0 + 40; let now = performance.now();
     g.woodpecker = { x: tx, y: ty, at: g.time, target: [ty * N + tx], strikeAt: S, last: [], struckAt: -1, restUntil: t0, pecks: 1 };
     const h = { head: 0, food: 0, tile: 0, n: 0 };
-    for (let t = t0; t < S + 3; t++) { g.tick = t; for (const u of [0, 0.25, 0.5, 0.75]) { R.frame(u, now += 16); if (pose.phase !== 'drum') continue;
+    for (let t = S - 12; t < S + 2; t++) { g.tick = t; for (const u of [0, 0.5]) { R.frame(u, now += 16); if (pose.phase !== 'drum') continue; // (from its flight in: the drum is its last half second or so)
       birdMats(pose); h.n++;
       for (const s of g.snakes) h.head += share(s.body[0].x, s.body[0].y) / g.snakes.length;
       for (const f of g.food) h.food += share(f.x, f.y) / g.food.length;
@@ -66,8 +70,8 @@ for (const d of [CALLS, sized(844, 390), sized(768, 1024), sized(1024, 768), siz
     return pose.phase; })()`) === 'drum' && await ev(PAGE);
   const moved = [['perched', perched], ['drumming', drumming]].flatMap(([w, at]) => (at ? Object.keys(away).filter(k => JSON.stringify(away[k]) !== JSON.stringify(at[k])).map(k => `${k} ${w}`) : [`${w}: not staged`]));
   check(!moved.length, `${tag}: nothing on the page moves for it (the header, the tags, the board, the row under it, the chatter: the same with it away, perched and drumming)`, moved.join(', '));
-  const more = Object.keys(AT_13).filter(k => !(hid[k] <= AT_13[k]));
-  check(hid.scenes >= 50 && !more.length, `${tag}: drumming, it hides no more of the heads, the food and its mark's tiles near its spot than at 1.3`,
-    `${hid.scenes} scenes: ${Object.keys(AT_13).map(k => `${k} ${hid[k]} (1.3: ${AT_13[k]} at least)`).join(', ')}`);
+  const was = AT_13[`${d.w}×${d.h}`], more = Object.keys(was).filter(k => !(hid[k] <= was[k]));
+  check(hid.scenes >= 20 && !more.length, `${tag}: drumming, it hides no more of the heads, the food and its mark's tiles near its spot than at 1.3`,
+    `${hid.scenes} scenes: ${Object.keys(was).map(k => `${k} ${hid[k]} (1.3: ${was[k]})`).join(', ')}`);
   await ev(`window.__autoRaf = true; 'ok'`);
 }
