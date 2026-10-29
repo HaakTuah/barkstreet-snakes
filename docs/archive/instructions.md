@@ -441,3 +441,7 @@ near anyone. And flashing, can you hit someone straight on the head with it and 
 behind the head?" (the first already holds since the bump rule; the second is a failed flash) Then, to the design
 session's take that a cut leaving a snake fewer than 3 segments puts it out: "Agreed , do it expertly!" (written into
 "The neck cut" in `docs/design/29-round-six-b-the-new-moves.md` and item 5's part 3)
+
+In the design chat (29 October 2026, 12:21 UTC), on the new moves: "And very important that the commin ai is updated to
+understand all these rule changes to maximize they use of all the playrules!!!" (written into item 5 in
+`docs/PROGRESS.md`: no part merges until the rivals use its moves well)
