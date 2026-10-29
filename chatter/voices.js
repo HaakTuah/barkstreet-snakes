@@ -376,13 +376,7 @@ const VOICES = {
     hungry: ["Now I’m hungry! Out of nowhere!"],
     desperate: ['New mood: STARVING.'],
     start: ['Ooh, what shall I be today?'],
-    // Taking up a mood, it does an impression (and can't help asking how it went).
-    mood: {
-      sniper: ['Taking position. …Ooh, I like being Sniper.', 'Headshot! …Is that how Sniper says it?', 'Pew pew! …Sniper doesn’t say pew pew, does it?'],
-      gobbler: ['FOOD. NOW. …Is Gobbler always this hungry?', 'Nom nom nom! I’m Gobbler now!', 'Snacks! All the snacks! …How does Gobbler stop?'],
-      ghost: ['…', '…boo. …Am I doing Ghost right?', 'Shh. I’m being Ghost.'],
-      mason: ['Aedificamus! …Ooh, I speak Latin now!', 'Veni, vidi, aedificavi! …Did I say that right?', 'Wallus maximus! …Is that Latin? It feels Latin.'],
-    },
+    mood: {}, // (taking up a mood, it does an impression: one of that rival's own opening lines, filled in below)
     kill: ['Didn’t plan that. Love it.'],
     weather: { sun: ['Sunshine! I love sunshine! Today.'], rain: ['Rain! I love rain! For now.'], storm: ['Storms are exciting! Or scary? Both!'], wind: ['Whee!'], snow: ['Snow! I love snow! For a bit.'] },
     woodpecker: ['A bird! I love birds! Not this one.'],
@@ -614,6 +608,21 @@ const VOICES = {
   },
 };
 
+// Capricious opens each mood with an impression: one of that rival's own
+// opening lines, marked as one ("*does its best Sovereign*: “Kneel.”"; a
+// mime's is all stage direction: "*does its best Mute: waves silently*").
+// (IMPRESSIONS: each impression's rival and line, for its Chinese: see zh.js.)
+const IMPRESSIONS = new Map();
+for (const key in VOICES) {
+  if (key === 'capricious' || key === 'drab') continue;
+  const name = window.SnakeAI.PERSONAS[key].name;
+  VOICES.capricious.mood[key] = VOICES[key].start.filter(l => !l.includes('{who}')).map(l => {
+    const mime = /^\*(.+)\*$/.exec(l), text = mime ? `*does its best ${name}: ${mime[1]}*` : `*does its best ${name}*: “${l}”`;
+    IMPRESSIONS.set(text, [name, l]);
+    return text;
+  });
+}
+
 // Lines with a punchline are told once a round: a round runs two minutes and
 // more, and a joke told three times in it isn't one. The rest only rest a while.
 // (Each voice's on rows of their own, in the order above.)
@@ -629,8 +638,6 @@ const PUNCHLINES = new Set([
   '{who}? Total loser. Sad!', 'Global warming? Total hoax. Look at all this snow!', 'Fake news! That never happened.', 'Who moved that? Fake wall!', 'I’m bigger than ever. Ask anyone.', 'Low energy, {who}. Very low energy.', 'Nobody bumps me, {who}. Believe me.', '{who} stole my tail! Total theft. Sad!', 'A hole under me? Fake hole. Didn’t even feel it.', 'Fire’s out. Nobody puts out fires like me.', 'Rotten food. Who’s responsible? Not me.', 'So fast. Faster than {who}. Everyone saw it.', 'Showing off, {who}? I show off better.', 'Fast? I invented fast, {who}.', 'Very unfair. Somebody put that there.', 'It dug a tunnel. Somebody build a wall!', 'That bird works for {who}. Sad!',
   'nice tail, {who}.', 'we should hang out, {who}.', 'peekaboo, {who}.', 'shh. nobody saw that.', 'blegh. tastes like me.',
   'Your eat rate is suboptimal, {who}.', 'Input lag, {who}?', 'Frame-perfect, {who}.',
-  'Taking position. …Ooh, I like being Sniper.', 'Headshot! …Is that how Sniper says it?', 'Pew pew! …Sniper doesn’t say pew pew, does it?', 'FOOD. NOW. …Is Gobbler always this hungry?', 'Snacks! All the snacks! …How does Gobbler stop?',
-  '…boo. …Am I doing Ghost right?', 'Shh. I’m being Ghost.', 'Aedificamus! …Ooh, I speak Latin now!', 'Veni, vidi, aedificavi! …Did I say that right?', 'Wallus maximus! …Is that Latin? It feels Latin.',
   'Sunshine! I love sunshine! Today.', 'Rain! I love rain! For now.', 'Snow! I love snow! For a bit.', 'A bird! I love birds! Not this one.', 'Ouch! I hate edges! Today.', 'Fire! I love fire! Ow, no I don’t!',
   'Ouch! Never doing that again! Probably.', 'Ow! That was fun! No it wasn’t.', 'I can fly! For a second!', 'Oops, {who}! Was that rude?', 'Now I’m hungry! Out of nowhere!', 'Didn’t plan that. Love it.', 'New mood: STARVING.', 'The fire’s out! I miss it already! No I don’t.', 'Ash! I love ash! No, I wanted that!', 'It rotted! I didn’t want it anyway! I did.', 'A hole! I love holes! Not under me.', 'Zip! Mine! Sorry, {who}! Not sorry!', 'Ooh, my tail! Yum! No! Yuck!', 'A present from {who}! I love presents! Today.', 'It dug in! Clever bug! Rotten bug!', 'The bird gave {who} my lunch! Nice bird! Mean bird!',
   'Is that the edge? Let’s go see.', 'Yep. That’s the edge, all right.', 'Who wants to play chicken?', 'Cold enough to freeze a cactus.', 'What doesn’t kill me… shrinks me.', 'Fire’s out? Shucks. Was just warming up.', 'Burnt the beans again.', 'Hack! Bit off more than I can chew.', 'That bird just dealt {who} my supper. Crooked dealer.',

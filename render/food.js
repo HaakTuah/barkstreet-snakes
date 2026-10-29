@@ -190,7 +190,7 @@ function beadFill(e) {
 
 // The bead a snake leaves at body segment i: its own colours and markings.
 function beadOf(s, i) {
-  const look = lookOf(s), col = colorOf(s), bow = bowOf(s);
+  const look = coatOf(s), col = colorOf(s), bow = bowOf(s);
   let fill = col[0] === '#' ? col : '#a16207', mark = '';
   if (s.personaKey === 'wildcard') fill = WILD(i);
   else if (look === 'mute') fill = i === 0 ? '#f8fafc' : fill; // (its mood's colour as it went)
