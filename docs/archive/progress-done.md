@@ -501,3 +501,17 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
     snake's last words stay in their bubble where it went out, whole and unfaded, and the round's card waits their 2 s;
     a guest keeps them as they arrive after the round's end. Design in `docs/design/33-one-screen.md`, "Last words on
     phones"; checked by `tools/ui/07-last-words-on-phones.js`.
+
+### 2k+. The woodpecker perches clear of the buttons' words, at 1.7 times (Haakon, 29 October 2026; small, an art lane): done, PR #191
+
+Haakon (29 October 2026), to whether the bird should keep clear of the speed buttons' words on a phone held upright:
+"Keep the bird 1.7x. And agreed with everything else." So it stays 1.7 times everywhere, and on a phone held upright
+it chooses its perch over the row under the board so that no button's word is covered: between two buttons, or over a
+gap or the chatter's empty end, still drumming and pecking the row as 1b++ has it. It never shrinks for this; where no
+perch at that size clears every word, the size wins and it perches as now. The layout suite gets a test that no
+button's label is covered where a clear perch exists; pictures at 390 and 320 pixels.
+
+Done (PR #191): it takes the nearest perch whose box covers none of the row's labels (the speed buttons', the
+switches', the speed's and the chatter's captions), at 390 and 320 px wide the gap between 4× and the switches; the
+chatter's lines are left out, as they change every few seconds. Drawing only: no simulation. Layout part 15 tests it
+at 390×844 and 320×640. See "Clear of the row's words (2k+)" in `docs/design/32-the-owners-playtest.md`.

@@ -189,14 +189,7 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
 
 ### 2k. Done: the woodpecker, as big as it gets, 1.7 times (PR #170); in `docs/archive/progress-done.md`.
 
-### 2k+. The woodpecker perches clear of the buttons' words, at 1.7 times (Haakon, 29 October 2026; small, an art lane)
-
-Haakon (29 October 2026), to whether the bird should keep clear of the speed buttons' words on a phone held upright:
-"Keep the bird 1.7x. And agreed with everything else." So it stays 1.7 times everywhere, and on a phone held upright
-it chooses its perch over the row under the board so that no button's word is covered: between two buttons, or over a
-gap or the chatter's empty end, still drumming and pecking the row as 1b++ has it. It never shrinks for this; where no
-perch at that size clears every word, the size wins and it perches as now. The layout suite gets a test that no
-button's label is covered where a clear perch exists; pictures at 390 and 320 pixels.
+### 2k+. Done: the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191); in `docs/archive/progress-done.md`.
 
 ### 2l. Done: flags that bend as a snake goes over them (PR #186); in `docs/archive/progress-done.md`.
 
