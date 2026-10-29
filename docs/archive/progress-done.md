@@ -19,6 +19,7 @@ it under the workshop check's 20 KB. New ones are added here as they are done or
 | 2j (PR #162, draft) | Are the rivals' babble voices distracting? The preview needs Pages to serve `gh-pages`. Or reply "merge it off" to ship them switched off and judge them on the live game (Voices under the board, or V). | Built and tested as never distracting; on by default in the draft. If you're not sure, it ships off | Answered 29 October 2026: "No, just merge them, then we will adjust if it is distracting." Ship them on; adjust if they distract. |
 | 2j (PR #162, draft) | Is the Voices switch in the right place: under the board beside the chatter's switch, between rounds only? (The header's sound buttons are full at 320 px, and in a round that row holds the help line.) | Under the board, between rounds; V at any time | Answered 29 October 2026: "Other than that, implement all you said, expertly!" Under the board, between rounds; V at any time. |
 | 5, bridges (PR #174) | Bridges come up rarely in play: 0.05 rides a round in simulation, so riders and non-riders come out the same head to head. The rule works (rivals cross when it pays, and riding is riskier than not, so it's no refuge). Is rare what you want, or should bridges come up more (for example, longer bodies over wider pits late in sudden death)? | Kept as it is: a rare, skilful chance when the log is islands, as the design says ("for anyone quick enough"). | Answered 29 October 2026: "Agreed with you expert take!" Kept rare; re-measured once the golden flight (part 4: flights land on bridges) and the woodpecker's three acts (item 6: more pits) are in, adding no rule to make bridges commoner. |
+| 2k (PR #170) | On a phone held upright the woodpecker perches over the speed buttons and the chatter, as you asked in 1b++; at 1.3 it already hid a button's label at some spots, and bigger it hides more of their words (taps still pass through it). Keep it so, or should it keep clear of their words (a smaller bird under the board, or perching only between the buttons)? | Kept as 1b++ has it: over the row and the chatter, taps passing through | Answered 29 October 2026: "Keep the bird 1.7x. And agreed with everything else." The bird stays 1.7 times everywhere; on a phone held upright it perches clear of the buttons' words where it can (between them, or over a gap), never by shrinking, and where no perch clears them at that size, the size wins (entry 2k+). |
 
 ## The queue, done
 
@@ -290,6 +291,65 @@ hungry snake eats, the clock resets and it snaps back to plump and its own colou
 Done in PR #146: a wave from the head, 0.7 s to the tail and three segments deep (`mealSwell` in `render/looks.js`),
 the pale wash flooding back in steps (`drawPale`); with reduced motion, a 0.25 s fade. Meal seen as the clock's
 `lastAte` rising, so it is the same online. Render check in `tools/render/08-hunger.js`.
+
+### 2j. Babble voices for the chatter, never distracting (Haakon, 29 October 2026; a sound lane): done, PR #162
+
+Haakon (29 October 2026): "And should the chat lines be voiced?" Then, to babble voices: "And make sure the voices
+arent distracting! That would be a real turn off!"
+- **Babble, not speech:** when a rival's bubble appears, a short synthesized burble in its own voice (pitch, timbre,
+  rhythm: Mason clipped and deep, Gobbler gobbly, Ghost faint, and so on; Mute stays silent), made in `audio.js` with
+  Web Audio, no recordings and no dependencies.
+- **Never distracting, first of all:** well under the eating sound, at most about half a second whatever the line's
+  length, never two at once, at most one every few seconds, never over your own sounds (eating, warnings, crashes), and
+  quieter still in tight moments. Its own switch in the sound settings ("Voices").
+- **Haakon judges it:** the PR stays a draft until he has played its preview and says it isn't distracting; if he
+  isn't sure, it ships switched off by default.
+- Rivals only for now (your own snake's lines, from the teaching system, stay silent). Online, each player hears it on
+  their own machine: no protocol change.
+
+Done (PR #162): the `babble` cue in `audio.js`, a voice per rival but Mute (`BABBLERS`), under a seventh of your apple's pluck and half that in a tight spot, at most 0.5 s, one every 4 s at most, none within 0.7 s of your own sounds; the Voices switch under the board between rounds, V at any time, remembered as `barkbite-voices`, on by default. Haakon (29 October 2026): "No, just merge them, then we will adjust if it is distracting." See "Rivals' babble" in `docs/design/21-sound.md`.
+
+### 2k. The woodpecker, as big as it can get away with (Haakon, 29 October 2026; small, an art lane): done, PR #170
+
+Haakon (29 October 2026): "I think the woodpecker should be even bigger". Then, when the design session asked for a
+simulation check: "How should a visual change alter the actual game in any way?" It can't: the bird's size is one
+drawing constant (`BU` in `render/bird.js`), while the rules peck by target cells (`game.woodpecker`), so no
+simulation is run for it. And then: "Maybe make it as big as you can get away with without it falling out of the
+screen, or being pushed onto the gameplay screen when not pecking, or anything."
+- **The biggest that passes every check,** found by trying sizes up from 1.3, not guessed: one size wherever the screen
+  has room for it, as 2c set, and on screens with less room the biggest each of its perches allows (the perches
+  already shrink it, `PERCH_MIN_PX` and `PERCH_FLOOR_PX`; they keep doing so, from the new size).
+- **The checks,** at a 390-pixel phone held upright and on its side, a tablet both ways and desktop: all of it stays on
+  the screen, in every pose and flight (crouching, its tail, its wings open); perched, it never reaches onto the board,
+  nor over the buttons' words or the chatter; drumming, it hides no food, no head and none of the tiles it is about to
+  peck beyond what it hides at 1.3; and nothing else on the page moves to make room for it. The layout suite gets a
+  test for each check, so a later change can't break them.
+- The PR shows 1.3 beside the new size on each of those screens, perched, flying and drumming, says the size it found
+  and what stopped it growing further, and merges once the render and layout suites pass.
+
+Done (PR #170): 1.7 times its first size, one size wherever the screen has room (132 px on a 390×844 phone, from 101;
+drumming 259 px on a 1280×800 laptop, from 198); at 1.8 an iPhone SE held upright no longer fits it whole under the
+board. Drawing only: no simulation. See "The woodpecker, as big as it gets" in `docs/design/32-the-owners-playtest.md`.
+
+### 2l. Flags that bend as a snake goes over them (Haakon, 29 October 2026; small, an art lane beside 2k): done, PR #186
+
+Haakon (29 October 2026): "would be cool if the flags of sovereign and colonists bends away from a snakes body,
+depending on direction it was hit when a part of a snake occupies its tile". Drawing only (`render/flags.js`), so no
+simulation; online, each player draws it from the snakes they already have: no protocol change.
+- **Pushed the way it was hit:** when any part of any snake lies on the tile of Sovereign's banner or a colony's flag,
+  the pole bends over from its foot in the direction that snake was travelling as it came onto the tile (from the cell
+  before it in the body to that one), so a snake going east pushes it east, and the cloth trails low behind it. It
+  stays bent while the body lies on it, and bends the new way if another snake comes over it from another side.
+- **Springs back:** once the tile is free, it swings upright with a short wobble that dies away, then flies as before.
+  With reduced motion it simply leans while covered and stands up again, without the wobble.
+- **One flag, one look:** it works with what flags already do (the banner's tilt as it's carried, its shake when
+  pecked, a colony flag falling into its pit), never fighting them; the falling flag wins. The PR shows a snake
+  crossing a banner and a colony flag from each side at a 390-pixel phone and desktop 2x (pictures and a short clip),
+  and merges once the render suite passes.
+
+Done (PR #186): bent flags are drawn over the snakes while they lean, and a north or south push also leans the flag out to its
+cloth's side, so it shows beside the body. Drawing only: no simulation. See "Flags that bend under a snake" in
+`docs/design/32-the-owners-playtest.md`.
 
 ## Item 3, done
 

@@ -239,18 +239,23 @@ const drawBannerCloth = (g, col) => {
   g.fillStyle = '#3a2614'; g.fill();
 };
 // (At cx, cy in cells; tilted about its pole's foot and scaled, as it's
-// carried; fluttering on its own beat.)
+// carried; fluttering on its own beat; once it's at rest on a cell, bent by
+// a snake on it: see bendOn.)
 function drawBanner(cx, cy, col, now, tilt = 0, sc = 1, beat = cx) {
   const x = cx * CELL + CELL / 2, y = cy * CELL + CELL / 2, turned = tilt || sc !== 1;
   if (turned) { ctx.save(); ctx.translate(x, y + CELL * 0.6); ctx.rotate(tilt); ctx.scale(sc, sc); ctx.translate(-x, -y - CELL * 0.6); }
-  flagPole(x, y);
+  const bent = Number.isInteger(cx) && Number.isInteger(cy) && bendOn(cx, cy, now), top = y - CELL * 0.95 - 1;
+  if (bent && !overSnakes) { bentLater.push({ x: cx, y: cy, col, beat, tilt, banner: true }); if (turned) ctx.restore(); return; }
+  bentPole(x, y, bent);
+  if (bent) clothFrame(x, y, x + 1.5, top);
   const sp = bannerSprite(col), half = SPRITE * CELL / 2, dev = sp.width / (SPRITE * CELL);
-  const w = CELL * BANNER_W, h = CELL * BANNER_H + 2, sw = w / FLAG_STRIPS, top = y - CELL * 0.95 - 1;
+  const w = CELL * BANNER_W, h = CELL * BANNER_H + 2, sw = w / FLAG_STRIPS;
   for (let i = 0; i < FLAG_STRIPS; i++) {
     const out = (i + 0.5) / FLAG_STRIPS;
     const dy = reduced ? 0 : Math.sin(now / 200 - i * 0.9 + beat) * CELL * 0.05 * out;
     ctx.drawImage(sp, (half + i * sw) * dev, (half - h / 2) * dev, (sw + 0.6) * dev, h * dev, x + 1.5 + i * sw, top + dy, sw + 0.6, h);
   }
+  if (bent) ctx.restore();
   if (turned) ctx.restore();
 }
 // Sovereign's banner over its capital, as drawn. When the capital moves,
@@ -272,13 +277,117 @@ function drawRealmBanner(r, home, now) {
     b.fx = fx; b.fy = fy; b.tx = home.x; b.ty = home.y; b.at = now;
     u = reduced ? 1 : 0; e = u;
   }
-  const x = b.fx + (b.tx - b.fx) * e, y = b.fy + (b.ty - b.fy) * e, key = home.y * GRID + home.x;
+  const x = u >= 1 ? b.tx : b.fx + (b.tx - b.fx) * e, y = u >= 1 ? b.ty : b.fy + (b.ty - b.fy) * e, key = home.y * GRID + home.x;
   const pecked = u >= 1 && !!holeMask[key] && !r.gone;
   if (u >= 1 && !pecked && !r.shown[key]) return;
   let tilt = 0, sc = 1;
   if (u < 1 && b.carry) { const l = Math.sin(u * Math.PI); sc = 1 + 0.2 * l; tilt = 0.3 * l * (b.tx >= b.fx ? 1 : -1); }
   else if (pecked && !reduced) tilt = Math.sin(now / 85) * 0.2;
   drawBanner(x, y, r.color, now, tilt, sc, home.x);
+}
+// A flag a snake lies on bends over (Haakon, 29 October 2026): any part
+// of any snake on its tile pushes the pole over from its foot the way
+// that snake came onto the tile (from the cell before it in the body), and
+// its cloth trails low behind; it stays so while the body's there, and
+// bends the new way if another snake comes over it from another side.
+// Once the tile's free it swings upright, a short wobble dying away. With
+// reduced motion it simply leans while covered and stands up again. Seen,
+// not played: each screen draws it from the snakes it has. While it
+// leans it's drawn over the snakes, so it shows. The lean is
+// eased from wherever it was to wherever it's going, so a change never
+// jumps: east and west tip the pole over sideways; north (away) leaves it
+// tall but hangs its cloth down; south (towards you) foreshortens it.
+const BEND = 0.6, BEND_SIDE = 0.45, BEND_IN_MS = 110, SPRING_MS = 900, SPRING_PERIOD = 330;
+const flagBends = new Map(); // tile -> { who, at, on, seen, from: [the look it eased from], to: [the push's] }
+const bentLater = []; // (this frame's, to draw over the snakes: see drawBentFlags)
+let overSnakes = false;
+// (What's eased is the look itself, [tilt, lean, turn, push]: the pole's
+// tilt about its foot; how far it leans north (-1) or south (1); the
+// cloth's turn (1 as it flies, -1 turned round to trail west); and how
+// hard it's pushed, for the cloth's droop. So no change of snake jumps.)
+const look = [0, 0, 1, 0];
+let leanX = 0, leanY = 0; // (a step onto a cell: see stepOnto)
+function flagLean(b, now) {
+  const t = now - b.at, f0 = b.from, f1 = b.to;
+  if (b.on) {
+    const u = reduced ? 1 : Math.min(1, t / BEND_IN_MS), e = u * u * (3 - 2 * u);
+    for (let i = 0; i < 4; i++) look[i] = f0[i] + (f1[i] - f0[i]) * e;
+  } else if (reduced || t >= SPRING_MS) { look[0] = look[1] = look[3] = 0; look[2] = 1; }
+  else { // (springing back: the wobble swings the pole, not the cloth round)
+    const f = Math.exp(-t / 200) * Math.cos(t / SPRING_PERIOD * TAU);
+    look[0] = f0[0] * f; look[1] = f0[1] * f; look[3] = f0[3] * f; look[2] = 1 + (f0[2] - 1) * Math.max(0, f);
+  }
+}
+// (Where on s's body the cell x, y is, or -1.)
+function cellOn(s, x, y) {
+  const B = s.body;
+  for (let i = 0; i < B.length; i++) if (B[i].x === x && B[i].y === y) return i;
+  return -1;
+}
+// (The step s took onto the i-th cell of its body, a unit each way: from
+// the cell before it, or, at its tail, the step it took off it; over a
+// wrapped edge, the short way.)
+const stepUnit = d => d > 1 ? -1 : d < -1 ? 1 : d;
+function stepOnto(s, i) {
+  const B = s.body, a = B[i];
+  for (let j = i + 1; j < B.length; j++) if (B[j].x !== a.x || B[j].y !== a.y) { leanX = stepUnit(a.x - B[j].x); leanY = stepUnit(a.y - B[j].y); return; }
+  for (let j = i - 1; j >= 0; j--) if (B[j].x !== a.x || B[j].y !== a.y) { leanX = stepUnit(B[j].x - a.x); leanY = stepUnit(B[j].y - a.y); return; }
+  leanX = s.dir.x; leanY = s.dir.y;
+}
+// The look of the flag on tile x, y now, in look; true if it leans. (The
+// snake already on it keeps it, while it's there; else the first.) North
+// or south, along the body, it would lie hidden on it: so it falls out
+// to the side its cloth flies as well, bending away from the body.
+function bendOn(x, y, now) {
+  const key = y * GRID + x;
+  let b = flagBends.get(key), who = null, at = -1;
+  if (b && b.who && b.who.alive && (at = cellOn(b.who, x, y)) >= 0) who = b.who;
+  else for (const s of game.snakes) if (s.alive && (at = cellOn(s, x, y)) >= 0) { who = s; break; }
+  if (!b) {
+    if (!who) return false;
+    flagBends.set(key, b = { who: null, at: now, on: false, seen: now, from: [0, 0, 1, 0], to: [0, 0, 1, 0] });
+  }
+  b.seen = now;
+  if (who !== b.who) { // (a snake came on, another took over, or it's free: from how it looks now)
+    flagLean(b, now);
+    for (let i = 0; i < 4; i++) b.from[i] = look[i];
+    b.at = now; b.who = who; b.on = !!who;
+    if (who) {
+      stepOnto(who, at);
+      const l = Math.hypot(leanX, leanY) || 1, dx = leanX / l, dy = leanY / l;
+      b.to[0] = BEND * dx + BEND_SIDE * Math.abs(dy); b.to[1] = dy; b.to[2] = dx > 0 ? 1 - 2 * dx : 1; b.to[3] = 1;
+    }
+  }
+  flagLean(b, now);
+  if (!b.on && now - b.at >= SPRING_MS) { flagBends.delete(key); return false; }
+  return look[3] !== 0;
+}
+// (Flags not drawn this frame, as one fallen in, hidden, or a banner
+// moved off: forgotten, so none springs back later from a push long gone.)
+function forgetBends(now) {
+  for (const [key, b] of flagBends) if (b.seen !== now) flagBends.delete(key);
+}
+// (South foreshortens the pole; north stretches it a touch, as a pole
+// leaning away does.)
+const poleScale = () => look[1] > 0 ? 1 - 0.25 * look[1] : 1 - 0.08 * look[1];
+// A pole as bent, and the frame its cloth hangs in at ax, ay (on the pole
+// as it stands): moved with the pole's top, not turned with it, it trails
+// behind the push (pushed east, it's turned round, edge on halfway) and
+// droops. Leaves the frame saved: the caller restores it.
+function bentPole(x, y, bent) {
+  if (!bent) { flagPole(x, y); return; }
+  const foot = y + CELL * 0.6;
+  ctx.save(); ctx.translate(x, foot); ctx.rotate(look[0]); ctx.scale(1, poleScale()); ctx.translate(-x, -foot);
+  flagPole(x, y);
+  ctx.restore();
+}
+function clothFrame(x, y, ax, ay) {
+  const foot = y + CELL * 0.6, th = look[0], c = Math.cos(th), s = Math.sin(th), ox = ax - x, oy = (ay - foot) * poleScale();
+  const droop = Math.min(1, Math.abs(look[3])) * (0.3 + 0.8 * Math.max(0, -look[1]));
+  ctx.save();
+  ctx.translate(x + ox * c - oy * s, foot + ox * s + oy * c);
+  ctx.scale(Math.max(-1, Math.min(1, look[2])), 1); ctx.rotate(droop);
+  ctx.translate(-ax, -ay);
 }
 // A flagpole: inked, with a parchment core and a parchment knob on top.
 function flagPole(x, y) {
@@ -391,10 +500,27 @@ function drawColonyFlags(r, now) {
     const key = c.y * GRID + c.x, n = c.n || 1, kind = n === 1 ? 'union' : n % 2 ? 'red' : 'blue';
     if (holeMask[key]) { fellIn(r, c, kind, now); continue; }
     if (!r.shown[key]) continue;
+    if (bendOn(c.x, c.y, now)) { bentLater.push({ x: c.x, y: c.y, kind, beat: c.x * 0.7 + c.y * 1.3, banner: false }); continue; }
     const x = c.x * CELL + CELL / 2, y = c.y * CELL + CELL / 2;
     flagPole(x, y);
     drawFlag(x + 1.5, y - CELL * 0.92, now, c.x * 0.7 + c.y * 1.3, kind);
   }
+}
+// The flags bent this frame, drawn over the snakes (under them, a snake
+// on one hid it), then forgotten.
+function drawBentFlags(now) {
+  overSnakes = true;
+  for (const f of bentLater) {
+    if (f.banner) { drawBanner(f.x, f.y, f.col, now, f.tilt, 1, f.beat); continue; } // (its shake, if pecked, kept)
+    const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
+    bendOn(f.x, f.y, now);
+    bentPole(x, y, true);
+    clothFrame(x, y, x + 1.5, y - CELL * 0.92);
+    drawFlag(x + 1.5, y - CELL * 0.92, now, f.beat, f.kind);
+    ctx.restore();
+  }
+  overSnakes = false;
+  bentLater.length = 0;
 }
 const FALL_MS = 760, FALL_STILL_MS = 400;
 const fallenFlags = []; // { owner, x, y, kind, beat, at }

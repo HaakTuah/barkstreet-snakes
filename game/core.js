@@ -36,7 +36,7 @@ const flavorEl = $('overlay-flavor'), badgeEl = $('overlay-badge'), opponentsEl 
 const nameRow = $('name-row'), nameRank = $('name-rank'), nameInput = $('name-input');
 const startBtn = $('start'), watchBtn = $('watch');
 const toastEl = $('toast'), speedEl = $('speed'), announcer = $('announcer'), hintEl = $('hint'), helpEl = $('help');
-const pauseBtn = $('pause'), muteBtn = $('mute'), musicBtn = $('music'), chatterBtn = $('chatter-toggle'), chatlogEl = $('chatlog');
+const pauseBtn = $('pause'), muteBtn = $('mute'), musicBtn = $('music'), voicesBtn = $('voices-toggle'), chatterBtn = $('chatter-toggle'), chatlogEl = $('chatlog');
 const recordsEl = $('records'), recordsBody = $('records-body'), resetBtn = $('records-reset');
 const recordsTabs = [...document.querySelectorAll('#records .tab[data-tab]')];
 const filterEl = $('scores-filter'), filterTabs = [...filterEl.querySelectorAll('.tab')];
@@ -67,12 +67,12 @@ const FLAVOR = {
   // (The arrows first: anyone knows them. A click is the mouse's left button on the board. A first-timer's
   // Hall of Fame is empty: the Field guide's key, G, is in its place before a first round, both under the board.)
   hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P naps · Enter starts · G opens the Field guide',
-  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music',
-  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · M mutes · N toggles the music',
+  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
+  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · M mutes · N toggles the music · V the voices',
   hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash',
   hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash · Tap ⏸ to nap',
   // Watching (Watch AIs, or after you're out): nothing of yours to steer.
-  hintWatch: '1, 2, 4 set the speed · P naps · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music',
+  hintWatch: '1, 2, 4 set the speed · P naps · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
   hintWatchTouch: 'The speed buttons set 1×, 2× or 4× · Tap ⏸ to nap',
   rivals: ['Your rivals today:', 'Up on the log with you:', 'Sharing your bark:'],
   spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],

@@ -337,6 +337,9 @@ function updateControls() {
   muteBtn.setAttribute('aria-pressed', String(Sound.isMuted()));
   musicBtn.setAttribute('aria-pressed', String(!Sound.isMusicOn()));
   musicBtn.disabled = Sound.isMuted();
+  voicesBtn.setAttribute('aria-checked', String(Sound.isVoicesOn()));
+  voicesBtn.firstElementChild.textContent = Sound.isVoicesOn() ? 'On' : 'Off'; // (the state is aria-checked: the word is for eyes)
+  voicesBtn.disabled = Sound.isMuted();
   // During a round the page holds still under your fingers (see the swipes).
   document.documentElement.classList.toggle('playing', (state === 'running' || state === 'countdown') && playerAlive());
   document.documentElement.classList.toggle('in-round', state === 'running' || state === 'countdown');

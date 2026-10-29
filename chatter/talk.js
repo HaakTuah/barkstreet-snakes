@@ -53,7 +53,7 @@ const DUG_REST = 30000;
 // head, so a head within NEAR_FOOD of food in its mark is rare, and that
 // one mostly ate it itself: whoever was after it is a little further
 // off, and the nearest that didn't get it.) A knocked beetle scurries off
-// from where it lands, as a nudged one does: caught within BEETLE_ROAM
+// from where it lands: caught within BEETLE_ROAM
 // cells of there counts.
 const KNOCKED_MS = 6000, KNOCKED_NEAR = 8, KNOCKED_REST = 40000;
 // Star lives for its powers (it flashes whenever it's rested and jumps every
@@ -197,6 +197,9 @@ const setCompact = v => { compact = v; chatBoardEl?.classList.toggle('compact-ch
 // Online, the host passes every line on (onSpeak), and friends' screens
 // replay it, so everyone sees the same chatter.
 const onSpeak = fn => { listener = fn; };
+// Each bubble as it appears, on every screen (the babble: game/round.js).
+let bubbleListener = null;
+const onBubble = fn => { bubbleListener = fn; };
 function replay(s, text, reply = false) {
   if (!enabled || !s) return;
   lastSaid[s.id] = chatGame.time;
@@ -271,6 +274,7 @@ function showBubble(s, text, at = null) {
   el.style.setProperty('--edge', s.persona?.ink || s.color);
   chatBoardEl.appendChild(el);
   chatBubbles.set(s.id, { el, snake: s, until: performance.now() + (at ? LAST_WORDS_MS : BUBBLE_MS), at: at && { x: at.x, y: at.y }, w: 0, h: 0, box: { x: 0, y: 0, w: 0, h: 0 }, side: null, shown: null, want: null, wantSince: 0, ox: 0, oy: 0, x: NaN, y: NaN, tail: NaN, near: false });
+  bubbleListener?.(s, text);
 }
 
 // Called every frame: bubbles follow the gliding heads, stay inside the

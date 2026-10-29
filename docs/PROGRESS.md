@@ -172,54 +172,20 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
   of deaths by cause widens, per season; per-rival wins within noise overall; every trademark kept; no refuges.
 - **Online:** the host draws the season and sends it; a protocol bump.
 
-### 2j. Babble voices for the chatter, never distracting (Haakon, 29 October 2026; a sound lane)
+### 2j. Done: babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time); in `docs/archive/progress-done.md`.
 
-Haakon (29 October 2026): "And should the chat lines be voiced?" Then, to babble voices: "And make sure the voices
-arent distracting! That would be a real turn off!"
-- **Babble, not speech:** when a rival's bubble appears, a short synthesized burble in its own voice (pitch, timbre,
-  rhythm: Mason clipped and deep, Gobbler gobbly, Ghost faint, and so on; Mute stays silent), made in `audio.js` with
-  Web Audio, no recordings and no dependencies.
-- **Never distracting, first of all:** well under the eating sound, at most about half a second whatever the line's
-  length, never two at once, at most one every few seconds, never over your own sounds (eating, warnings, crashes), and
-  quieter still in tight moments. Its own switch in the sound settings ("Voices").
-- **Haakon judges it:** the PR stays a draft until he has played its preview and says it isn't distracting; if he
-  isn't sure, it ships switched off by default.
-- Rivals only for now (your own snake's lines, from the teaching system, stay silent). Online, each player hears it on
-  their own machine: no protocol change.
+### 2k. Done: the woodpecker, as big as it gets, 1.7 times (PR #170); in `docs/archive/progress-done.md`.
 
-### 2k. The woodpecker, as big as it can get away with (Haakon, 29 October 2026; small, an art lane)
+### 2k+. The woodpecker perches clear of the buttons' words, at 1.7 times (Haakon, 29 October 2026; small, an art lane)
 
-Haakon (29 October 2026): "I think the woodpecker should be even bigger". Then, when the design session asked for a
-simulation check: "How should a visual change alter the actual game in any way?" It can't: the bird's size is one
-drawing constant (`BU` in `render/bird.js`), while the rules peck by target cells (`game.woodpecker`), so no
-simulation is run for it. And then: "Maybe make it as big as you can get away with without it falling out of the
-screen, or being pushed onto the gameplay screen when not pecking, or anything."
-- **The biggest that passes every check,** found by trying sizes up from 1.3, not guessed: one size wherever the screen
-  has room for it, as 2c set, and on screens with less room the biggest each of its perches allows (the perches
-  already shrink it, `PERCH_MIN_PX` and `PERCH_FLOOR_PX`; they keep doing so, from the new size).
-- **The checks,** at a 390-pixel phone held upright and on its side, a tablet both ways and desktop: all of it stays on
-  the screen, in every pose and flight (crouching, its tail, its wings open); perched, it never reaches onto the board,
-  nor over the buttons' words or the chatter; drumming, it hides no food, no head and none of the tiles it is about to
-  peck beyond what it hides at 1.3; and nothing else on the page moves to make room for it. The layout suite gets a
-  test for each check, so a later change can't break them.
-- The PR shows 1.3 beside the new size on each of those screens, perched, flying and drumming, says the size it found
-  and what stopped it growing further, and merges once the render and layout suites pass.
+Haakon (29 October 2026), to whether the bird should keep clear of the speed buttons' words on a phone held upright:
+"Keep the bird 1.7x. And agreed with everything else." So it stays 1.7 times everywhere, and on a phone held upright
+it chooses its perch over the row under the board so that no button's word is covered: between two buttons, or over a
+gap or the chatter's empty end, still drumming and pecking the row as 1b++ has it. It never shrinks for this; where no
+perch at that size clears every word, the size wins and it perches as now. The layout suite gets a test that no
+button's label is covered where a clear perch exists; pictures at 390 and 320 pixels.
 
-### 2l. Flags that bend as a snake goes over them (Haakon, 29 October 2026; small, an art lane beside 2k)
-
-Haakon (29 October 2026): "would be cool if the flags of sovereign and colonists bends away from a snakes body,
-depending on direction it was hit when a part of a snake occupies its tile". Drawing only (`render/flags.js`), so no
-simulation; online, each player draws it from the snakes they already have: no protocol change.
-- **Pushed the way it was hit:** when any part of any snake lies on the tile of Sovereign's banner or a colony's flag,
-  the pole bends over from its foot in the direction that snake was travelling as it came onto the tile (from the cell
-  before it in the body to that one), so a snake going east pushes it east, and the cloth trails low behind it. It
-  stays bent while the body lies on it, and bends the new way if another snake comes over it from another side.
-- **Springs back:** once the tile is free, it swings upright with a short wobble that dies away, then flies as before.
-  With reduced motion it simply leans while covered and stands up again, without the wobble.
-- **One flag, one look:** it works with what flags already do (the banner's tilt as it's carried, its shake when
-  pecked, a colony flag falling into its pit), never fighting them; the falling flag wins. The PR shows a snake
-  crossing a banner and a colony flag from each side at a 390-pixel phone and desktop 2x (pictures and a short clip),
-  and merges once the render suite passes.
+### 2l. Done: flags that bend as a snake goes over them (PR #186); in `docs/archive/progress-done.md`.
 
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
