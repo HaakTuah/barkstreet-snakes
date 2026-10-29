@@ -362,3 +362,11 @@ think the snakes power update will be finished by 18 of clock?" Then, to moving 
 > It's the one I am most interested in playing, and it has been pushed back for a long time now. Also, the teaching system will have to account for it.
 
 (item 5 moved up in `docs/PROGRESS.md`; the teaching system, item 4, after it)
+
+In the design chat (29 October 2026, 07:49 and 07:50 UTC), on Wildcard's hair F as it plays:
+
+> Dont trumps hair look a bit too big now?
+
+> Yes, let's try that!
+
+(the second to keeping F's shape at about 85% of its size; queued as 2f+ in `docs/PROGRESS.md`)
