@@ -275,6 +275,15 @@ entry doesn't specify them, and the art waits for his description. Everything el
 
 ### 4. The teaching system, steps 2–6 (DESIGN "Teaching by showing") — after 5, whose new moves it must teach
 
+**Right after the new moves** (Haakon, 29 October 2026: "And is this before the lessons rework? Because this will
+definetly be part of it. I think all this should come right after the new powers."). It starts as soon as item 5's last
+part merges, ahead of every other entry but the art and sound lanes, as a lane of its own (it touches the lessons, the
+pictures and the Field guide, not the AI, so the AI entries 2b, 2h, 2i, 3b and 3c may run beside it). It teaches every
+move and change of item 5 by showing, each with its picture or cue, its lesson and its Field guide row: the island hop
+and leap now, bridges, the cutting flashes and the neck cut, dropping your tail, Mason's double walls, the golden flight
+and bumps in the air, taking someone's landing, gold portals, dropped charges, squashing your own beads, and the
+mushroom you swallow, aim by steering and spit ("Mushrooms come back up"), with its ring and its growing strength.
+
 Step 1 is merged (#35):
 - 2. the full-size woodpecker on upright phones;
 - 3. your snake's voice;
