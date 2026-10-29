@@ -69,5 +69,10 @@ with a protocol bump).
   96% of the time it has a model, and reads Star, Joker, Mason, Ghost, Gobbler and Ouroboros as themselves 86-100% of
   the time; Sniper, Sovereign, Desperado and Vulture about half; Creeper poorly (shadowing it, its own head is what
   rides the tail).
+- A new read of its model holds 40 ticks before Copycat changes style (its first, it takes at once), so a realm or a
+  victim doesn't come and go with a moment's change of pace.
+- It shadows its model unless its copy has a lure or a victim of its own: copying Joker or Vulture it lures whoever
+  they would, and copying Sniper its model may be its prey. Copying Sovereign it plants a small home where it is, and
+  its pull toward its model works against it. As the rival it copies would.
 - The cue: its pale copy of the model's colours, as before; its note says "Copying Mason, playing as Mason does."
   (or "Copying you, playing as Gobbler does."). Field guide row: "Copycat".
