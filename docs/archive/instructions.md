@@ -482,3 +482,7 @@ killing by itself):
 In the design chat (29 October 2026, 12:57 UTC), on the lessons: "And is this before the lessons rework? Because this
 will definetly be part of it. I think all this should come right after the new powers." (item 4 in `docs/PROGRESS.md`
 now starts as soon as item 5's last part merges, and teaches every move of it, the mushroom spit included)
+
+In the design chat (29 October 2026, 13:12 UTC), to the "For Haakon" question on bridges coming up rarely (about one
+ride in twenty rounds), and the design session's take (keep it rare, re-measure after the golden flight and the
+woodpecker's three acts): "Agreed with you expert take!"
