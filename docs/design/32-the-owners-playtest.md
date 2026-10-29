@@ -336,7 +336,7 @@ where there was more, bigger (1920×1080 234-279 → 306-364, 915×412 105-128 �
   bigger it covers more of their words (at 1.3 it already hid a speed button's label whole at some spots); taps pass
   through it. Beside the board it never lies over any word.
 
-**Tested:** `tools/layout/14-the-bigger-woodpecker.js` (layout job 3) at the screens the entry names: perched beside the
+**Tested:** `tools/layout/14-the-bigger-woodpecker.js` (layout job 5) at the screens the entry names: perched beside the
 board, off the page's words; drumming, no more of the heads, food and mark's tiles hidden than at 1.3 (24 scenes a
 screen, a 3 by 4 mark, compared over the five screens); nothing on the page moves for it. The rest (on the screen in every pose and flight, never over a cell perched) is
 `03-devices.js` on every screen. Pictures: `tools/dev/woodpecker-size/shots.js`.
