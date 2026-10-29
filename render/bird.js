@@ -3,7 +3,7 @@
 
 // ------------------------------------------------------------ the woodpecker
 
-// A great spotted woodpecker, big (about six cells tall), clinging to the
+// A great spotted woodpecker, big (about six and a half cells tall), clinging to the
 // log just outside the board: on whichever side of the board has room on
 // this screen, as near as it can to where it's working. It flies in when
 // sudden death starts, the way a woodpecker flies (a few wingbeats, wings
@@ -36,7 +36,7 @@ function setBoardRect(x, y, w, free = null) {
   boardRect.rims = free?.rims || [];
   perches.clear(); drumAt.clear(); birdLayout++; // (its perches and where it drums are worked out again: the room round the board has changed)
 }
-const BU = CELL * 0.85; // the bird's unit
+const BU = CELL * 0.85 * 1.3; // the bird's unit (1.3 times its first size since 2c, on the board and under it alike)
 const BILL = [2.55, -1.72]; // its beak tip, in units, before its head moves
 const BIRD_BOX = [-1.15, -2.55, 2.65, 3.2]; // (all of it, round its feet, in units, facing right: its back, crown, beak tip, tail)
 const PERCH_NEAR = 0.65, PERCH_MIN_PX = 30, PERCH_FLOOR_PX = 22; // (how small it may perch: on a nearer side; and, CSS px tall, where there's no room anywhere; and on a phone held upright of a height in between, where the page leaves it room for 24)
@@ -533,7 +533,7 @@ function drumChoice(w, spot, flip) {
 // How much of those (seeX, seeY: each a ring's round, its middle and eight
 // points on it) the bird drumming in pose p covers: its body, its tail,
 // its head and beak, ink and all.
-const SEE_R = CELL * 0.4;
+const SEE_R = CELL * 0.4 + BOX_EDGE * BU; // (its ink's soft edge too, which grew with the bird in 2c)
 function hides(p) {
   const Q = probe;
   Q.x = p.x; Q.y = p.y; Q.s = p.s; Q.flip = p.flip; Q.rot = p.rot; Q.turn = 0; Q.thrust = 0.06; Q.crouch = 0;

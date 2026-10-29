@@ -98,8 +98,9 @@ check(blows.before.blows === blows.n - 1 && blows.last.blows === blows.n && blow
 // (6, 10), the bird coming from the right. Nothing in the mark, it
 // clings as it came, over (8, 11); with an apple whose ring is (8, 11),
 // it clings the other way, the ring clear, its beak still on the spot.
-// With apples both sides, every way covers a ring: the one it covers is
-// drawn over it (its layer at the ring, with and without), and so is a
+// Held to the one way it came (since 2c's bigger bird finds a way nearly
+// clear of any rings round it), with apples both sides: the ring it covers
+// is drawn over it (its layer at the ring, with and without), and so is a
 // piece in the air under it.
 const promise = await ev(`(() => {
   ${BIRD(3)}
@@ -116,9 +117,11 @@ const promise = await ev(`(() => {
   out.came = { flip: pose.flip, phase: pose.phase, covered: covered(8, 11) };
   plan = mark([[7, 11]]); out.lands1 = lands(); pose = at(-plan.times[3]);
   out.one = { flip: pose.flip, phase: pose.phase, covered: covered(8, 11), beak: +Math.hypot(pose.beak[0] - 6.5 * 32, pose.beak[1] - 10.5 * 32).toFixed(1) };
+  for (const f of [1, -1]) { const d = drumPoseAt(spot, f); d.alts = [d]; } // (no other way to cling: since 2c's bigger bird finds one nearly clear of any rings round it)
   plan = mark([[5, 11], [7, 11]]); out.lands2 = lands(); pose = at(-plan.times[3]);
   const hid = out.lands2.map(([x, y]) => ({ x, y, n: covered(x, y) })).sort((a, b) => b.n - a.n)[0], t = __t;
-  const ring = () => ringPts(hid.x, hid.y, 12).concat(ringPts(hid.x, hid.y, 13)).map(([bx, by]) => px(bx, by));
+  // (its ring's pixels on its stroke at every pulse: r 11.5 to 12.8, 3.4 px wide)
+  const ring = () => ringPts(hid.x, hid.y, 11.5).concat(ringPts(hid.x, hid.y, 12.5)).map(([bx, by]) => px(bx, by));
   R.birdOver(false); R.birdFrame(0.5, t); const off = ring();
   R.birdOver(true); R.birdFrame(0.5, t); const on = ring();
   out.two = { phase: R.birdPose().phase, hid, under: off.filter(c => c[3] > 128).length, over: differ(off, on) };
@@ -138,7 +141,7 @@ const promise = await ev(`(() => {
 })()`);
 {
   const { came, one, two, air } = promise;
-  check(came.phase === 'drum' && came.covered > 24 && one.phase === 'drum' && JSON.stringify(promise.lands1) === '[[8,11]]' && one.covered === 0 && one.flip !== came.flip && one.beak < 3,
+  check(came.phase === 'drum' && came.covered > 16 && one.phase === 'drum' && JSON.stringify(promise.lands1) === '[[8,11]]' && one.covered === 0 && one.flip !== came.flip && one.beak < 3,
     'drumming, the woodpecker clings clear of a ring where food in its mark will land, if it can',
     `as it came (facing ${came.flip > 0 ? 'right' : 'left'}) it covers ${came.covered} of 32 points round the ring at 8,11; with an apple landing there it faces ${one.flip > 0 ? 'right' : 'left'}, covering ${one.covered}, its beak ${one.beak} units off the spot`);
   check(two.phase === 'drum' && two.hid.n > 8 && two.over > 0.4 * two.under && air.under === air.of && air.over > 0.8 * air.of,
@@ -179,7 +182,7 @@ await ev(STAGE);
 const layer = await ev(`(() => {
   ${BIRD(0)}
   rest(12 * N + 22); drawN(5);
-  const lb = L.getBoundingClientRect(), bd = document.getElementById('game').getBoundingClientRect(), reach = 6.5 * 32 * 0.85 * bd.width / (N * 32);
+  const lb = L.getBoundingClientRect(), bd = document.getElementById('game').getBoundingClientRect(), reach = BIRD_REACH * BU * bd.width / (N * 32);
   const shown = (Math.min(innerWidth, lb.right) - Math.max(0, lb.left)) * (Math.min(innerHeight, lb.bottom) - Math.max(0, lb.top));
   return { inside: lb.left >= bd.left - reach - 3 && lb.right <= bd.right + reach + 3 && lb.top >= bd.top - reach - 3 && lb.bottom <= bd.bottom + reach + 3, share: +(shown / (innerWidth * innerHeight)).toFixed(2), was: (innerWidth * innerHeight) };
 })()`);

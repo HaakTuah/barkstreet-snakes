@@ -23,9 +23,6 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| Nerve at a contested apple | Gobbler takes the gamble only once it's hungry (about 4 s left), which is rare, so in play its share of contested apples didn't move (17% both). Should a fed Gobbler gamble too? | Taken: no, as built ("the more the hungrier it is"); a fed Gobbler would need a nerve of about 0.9, near fearless (PR #92) | Open |
-| The woodpecker's size under the board (1b++) | Measured, it was already its board size under the board: 78 to 80 px tall on a 390 px phone, drumming on the board 78 to 85 ([PR #112](https://github.com/HaakTuah/barkstreet-snakes/pull/112)); what looks small is likely its slim side view beside the 44 px buttons, while on the board its wings are open. Should it be bigger, on the board and under it alike (say 1.3 times, so it covers more of the board as it drums), or bigger only under the board (then not one size)? | Taken: one size, as the entry says, so unchanged; it now clings to the buttons and pecks them. Suggested, if bigger: 1.3 times everywhere | Open |
-| Wildcard's hair, the new pass (1b+++) | Does the new pass ([PR #110](https://github.com/HaakTuah/barkstreet-snakes/pull/110), beside B and C) read as Trump's hair now, or should C go back in? | Taken: the new pass ships (merged); C comes back in one small PR if you prefer it | Open |
 
 ## The queue, in order
 
@@ -41,6 +38,159 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 ### 2. Done: types for the multiplayer messages (PR #48); in `docs/archive/progress-done.md`.
 
+### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
+
+Haakon (29 October 2026), on the "For Haakon" question whether a fed Gobbler should gamble too: "Agreed to all,
+expertly! Shouldn't the others contest apples more if they're hungry? They're worth more than, because usually apples
+just gove you plus 1, but if you are starving, they give you 1 and save you 1, so become plus 2? But yes, gobbler should
+contest it regardless. And Desperados being an adrenalin junkie, should generally be less risk averse?"
+
+Today hunger already makes every rival look for food harder (`foodW0`, `eatW0` in `decide()`), but only Gobbler and
+Desperado set aside any of a rival's threat at a contested apple (`w.nerve`), so a starving rival still backs off an
+apple it needs. Build it from the cause, in the one template every rival shares:
+- **An apple is worth what it saves.** For every rival, a contested apple's worth counts the length it adds and, when
+  the rival is starving or close to it, the length it stops it losing: about one more, as Haakon says, and more as the
+  hunger clock runs down. The planner weighs that against the head-on risk as it reads it, so a starving rival contests
+  because the apple is worth more, not because of a special rule. Each rival's own weights still shape it: the cautious
+  ones (Ghost) still give way sooner than the bold.
+- **Gobbler contests even when fed:** a moderate nerve at any hunger, rising with it to the cap (today's 0.85), since
+  "eats everything, even a rival's apple" is its character.
+- **Desperado is less risk-averse everywhere,** not only at food: a lower fear of rivals' heads and of where they might
+  be, as an adrenaline junkie's; its skims stay its trademark.
+- **Measured** with `tools/abtest.js` on fresh seeds, against today's AI: per rival, the share of contested apples won,
+  deaths head-on, starving deaths and length lost to hunger, and wins; every trademark within noise, except the two
+  meant to move (Gobbler's food share up; Desperado's skims and risks up, its survival not collapsing). "No refuges" and
+  "Clever rivals, human reactions" stand: better choices, never faster reactions.
+
+### 2c. Done: the woodpecker, 1.3 times (PR #139); in `docs/archive/progress-done.md`.
+
+### 2d. Rivals' chomps (Haakon, 29 October 2026; small, a sound lane)
+
+Haakon (29 October 2026): "Yes, queue it. Feels strange that there is no sound, when your snake makes loud sound when
+eating." Today only your own snake's eating sounds (`sounds()` in `game/round.js`: `e.type === 'eat' && isMe(e.snake)`);
+a rival's makes no sound, except a golden mushroom, which already plays softer and further off (`{ rival: true, ...at(e.x) }`).
+- **Every rival's eating sounds,** each kind with its own cue as yours does (apple, golden, meat, mushroom, beetle,
+  leaf), but softer and further off, placed where it ate on the board (`at(e.x)`), so you can hear a rival feeding where
+  you aren't looking. Your own stays the loudest and the only one with the streak's rising pitch.
+- **Never a pile-up:** four snakes eating at once must not drown your own chomp or clip (the compressor and the cues'
+  spacing in `audio.js`); rivals' chomps give way to yours, as other rival sounds do.
+- Muted and the sound settings work as for every cue; online, each player hears it on their own machine, so no
+  protocol change. A test checks that a rival's eat plays its rival cue and yours plays yours.
+
+### 2e. The woodpecker pecks beside a snake, not on it (Haakon, 29 October 2026; small, an art lane after 2c, which draws the same bird)
+
+Haakon (29 October 2026): "Looks a bit weird when the woodpecker pecks a tile with a snake tail on, and the snake isn't
+hurt. Is it possible to make it so visually, it doesn't peck exactly on the snake? So it looks natural that the tiles
+go, but that the snake is left unhurt? Just a visual issue, nothing gameplaywise." And: "Yes please, expertly!"
+- **Drawing only** (`render/bird.js`, `render/bird-draw.js`): the tiles go at exactly the same moment as today; no rule,
+  timing, simulation fingerprint or online message changes.
+- **On a tile with a snake on it, the beak aims at the free corner or edge farthest from the body** (the body is drawn
+  narrower than its cell, so that spot shows), and the tile cracks and crumbles from that spot inward, so the bird is
+  seen chipping the log beside the snake, and the snake being unhurt reads as natural. On an empty tile it pecks the
+  middle, as now.
+- The aim's mark and the trembling of what lies in it (`render/food.js`) stay as they are. Reduced motion: the same
+  aim, no crumble animation, as today's peck.
+- Pictures in the PR: before and after of a peck beside a tail and on an empty tile, at a 390-pixel phone and desktop.
+  Entry 6 (the woodpecker in three acts) keeps this aim.
+
+### 2f. Wildcard's hair: lacquered, not a mop (Haakon, 29 October 2026; small, an art lane, next)
+
+Haakon (29 October 2026), on PR #110's hair as it plays: "Trump's hair looks like a mop now…" Then, to one more pass:
+"Yes, and make it do it expertly! I want trump's hair for Pete's sake!"
+
+Three passes so far: two blobs (#107), a golden bun (#110's C), and now twenty fine strands with no outline, which read
+as straw or a mop. His hair is none of those: **one smooth, lacquered mass, combed and sprayed into place**, glossy and
+solid, never stringy. Seen from above (the head points +x):
+- **One sculpted shape,** C's overall outline with B's smaller back, puffed a little past the head over the ears and
+  behind, never over the face. Its edge is set off by a soft darker-gold shadow on the head beneath it, not a dark
+  stroke round the hair and not a feathered fringe.
+- **Asymmetric: the comb-over.** A parting on one side; from it the top is combed across the crown to the other side
+  and swept back, so one side reads fuller and the whole top reads as one sweep in one direction. The asymmetry is
+  what makes it his.
+- **The front: one big wave,** just behind the brow, rolled up and over to the side as a single curl, with its
+  shadow on the brow; both eyes clear in all four headings.
+- **A few long, broad comb grooves,** three to five, all following the sweep: not twenty strands, not scoring on a loaf.
+- **Gloss:** one long highlight along the crest of the wave and the sweep, near-white, so it reads as sprayed hair.
+- **Colour:** pale gold-blond, yellow highlights, a warm orange-gold only in the grooves' shadows.
+- **The test before the pictures go to Haakon:** a fresh helper (Haiku, given only the true-size and 3x crops of the
+  versions, never this entry or the reference) is asked "describe this snake's hair in five words". A version passes
+  if the answer reads as a swept, combed, glossy hairstyle, and fails on mop, straw, bun, bread, helmet or hat. Show
+  only versions that pass.
+- **Up to three versions that pass, side by side with C and the current hair,** at true phone size (390 px), phone 3x
+  and desktop 2x, all four headings, clear and storm boards. **The PR stays a draft and does not merge until Haakon
+  picks one** (#110 merged before his verdict; this one waits). Only his pick ships.
+- Art only: the render suite and looks checks pass; reduced motion unchanged.
+
+### 2g. The meal goes down: a hungry snake fills out from the head (Haakon, 29 October 2026; small, an art lane)
+
+Haakon (29 October 2026): "I notice snakes imidately become plump again when after eating while starving. I feel it
+should be an animation where you see it transform to getting plump and its color back." And: "Yes, expertly!"
+
+Today `hungerLook()` (`render/looks.js`) works out `slim` and `pale` afresh every frame from the hunger clock, so when a
+hungry snake eats, the clock resets and it snaps back to plump and its own colour at once.
+- **The meal travels down the body:** from the head, the body swells back segment by segment, as if the food were
+  going down, and the colour floods back with it, over about 0.6 to 0.8 s (a first guess; judged by eye). Each
+  segment eases from how slim and pale it was to how the new clock says it should be, so a meal that only partly
+  refills the clock fills it out only that far. Eating again mid-swell starts a new wave from the head.
+- **Every snake alike,** yours and the rivals', and the corpse rule unchanged (starved, it stays thin).
+- **Reduced motion:** no travelling wave; the whole body eases back in a short plain fade.
+- **Drawing only:** the hunger clock, the rules, the simulation's fingerprint and online play are unchanged (each
+  player draws it from the same clock on their own machine).
+- Pictures in the PR: a frame strip of a starving snake eating, at a 390-pixel phone and desktop.
+
+### 2h. The endgame: eat what keeps you alive, not what boxes you in (Haakon, 29 October 2026; an AI entry, after 2b)
+
+Haakon (29 October 2026): "snakes should maybe avoid food more with the woodpecker about? I see snakes gorging on the
+remains of other snakes, when they have only a few tiles left to move on. They are not doing a context relevant tradeoff
+calculation there, clearly." And: "But sometimes starving still lasts you longer than increased length will, with so
+little room also."
+
+Today `decide()` sets `lean` once sudden death begins ("nobody can afford to be picky"), so food counts in full however
+little room is left, and rivals grow into the space they need to turn in. The trade-off, for every rival through the
+shared template:
+- **A meal is worth the life it buys, against the room it costs.** Weigh how long the snake lasts each way: starving,
+  it shrinks a segment every 1.5 s and frees room as it goes; eating, it gets a meal's time but grows into its pocket.
+  It eats when hunger would end it before room would, and leaves the food when the length would box it in first. With
+  room to spare, food counts as today.
+- **Personality still shapes it:** Gobbler stays the greediest (its food share is its trademark), the careful ones
+  the most sparing.
+- **Measured** head to head on fresh seeds against the AI 2b leaves: deaths in sudden death by cause (self, body, boxed
+  in, starved), who outlasts whom in the endgame, per-rival wins, every trademark within noise.
+
+### 2i. Food seasons: lean, normal and plentiful rounds (Haakon, 29 October 2026; an engine-rules entry, after 2h)
+
+Haakon (29 October 2026): "I think it should be a but more agressive. Someone should at least die from it once in a
+blue moon. Now games maybe feel a bit too samey? It's pretty predictable. But if food levels varied more, that would
+change things up."
+
+Starving is 1 to 3% of deaths (round four's measure, `docs/design/25-round-four-measured.md`), so a snake almost never
+starves, and rounds feel alike. Each round draws its **food season**, as it draws its weather:
+- **Lean:** apples and beetles come more sparsely, so hunger bites and a snake starves now and then. **Normal:** as
+  today. **Plentiful:** more food, snakes grow long, and the danger is crowding. First guesses for the odds (lean 1 in
+  4, normal 1 in 2, plentiful 1 in 4) and the rates, set by measuring and left to tuning.
+- **Seen and taught:** a start banner names it ("A lean season…", "A season of plenty…"), with a one-time lesson and a
+  Field guide row ("Every new rule needs a visible cue and a lesson"). Everyone, rivals included, sees the season, as
+  they see the weather (`aiView()`), and the rivals play it: sparing and hungry-minded in a lean round, wary of
+  crowding in a plentiful one.
+- **Measured:** starving reaches about 5 to 8% of deaths overall, more in lean rounds; the spread of round lengths and
+  of deaths by cause widens, per season; per-rival wins within noise overall; every trademark kept; no refuges.
+- **Online:** the host draws the season and sends it; a protocol bump.
+
+### 2j. Babble voices for the chatter, never distracting (Haakon, 29 October 2026; a sound lane)
+
+Haakon (29 October 2026): "And should the chat lines be voiced?" Then, to babble voices: "And make sure the voices
+arent distracting! That would be a real turn off!"
+- **Babble, not speech:** when a rival's bubble appears, a short synthesized burble in its own voice (pitch, timbre,
+  rhythm: Mason clipped and deep, Gobbler gobbly, Ghost faint, and so on; Mute stays silent), made in `audio.js` with
+  Web Audio, no recordings and no dependencies.
+- **Never distracting, first of all:** well under the eating sound, at most about half a second whatever the line's
+  length, never two at once, at most one every few seconds, never over your own sounds (eating, warnings, crashes), and
+  quieter still in tight moments. Its own switch in the sound settings ("Voices").
+- **Haakon judges it:** the PR stays a draft until he has played its preview and says it isn't distracting; if he
+  isn't sure, it ships switched off by default.
+- Rivals only for now (your own snake's lines, from the teaching system, stay silent). Online, each player hears it on
+  their own machine: no protocol change.
+
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
 Its done entries (PRs #49 to #124) are in `docs/archive/progress-done.md`, "Item 3, done".
@@ -50,6 +200,37 @@ Its done entries (PRs #49 to #124) are in `docs/archive/progress-done.md`, "Item
 As `docs/design/35-capricious-copycat-and-wildcard.md` describes: Capricious does impressions of every other rival from
 a shuffled deck, each with its costume and an opening line; Copycat plays as the leader plays, copying a person by what
 they do; Wildcard draws a few strong traits a round and shows them. One PR, or one per rival if that is cleaner.
+
+Haakon (29 October 2026), playing: "I am seeing copycat shy rotten apples twice now, that was within reach. Both were
+next to the map edge." Copycat left an apple it could reach, beside the board's edge, until it rotted. Likely suspects:
+its mimic weight (120) outweighing the pull of food, and the room and margin weights that count an edge cell against a
+move. Copycat's part of 3b fixes it, and first checks with a census whether every rival does it: of the apples that
+rot, how many were within a rival's reach, and how far each was from the edge. A competent snake takes a safe apple by
+the wall ("Clever rivals, human reactions"); one it takes into a dead end doesn't count as safe.
+
+### 3c. A new rival: the Charmer (Haakon, 29 October 2026; an AI entry, after 2b and 3b)
+
+Haakon (29 October 2026): "add Charmer to the queue, exactly as I have prescribed, with his clingy unique playstyle."
+A vain show-off, named **Charmer**. His look, and the mark he leaves on the map when he dies, are Haakon's to give: this
+entry doesn't specify them, and the art waits for his description. Everything else:
+- **The trademark: courting.** He picks the biggest snake on the board, whoever it is (by length, never by who plays
+  it: "The rivals never treat a person differently"), sidles up and slithers alongside it, two or three cells off its
+  flank, matching its turns. Nobody else in the cast runs beside a rival: Creeper rides tails, Sniper cuts snakes off.
+- **Why it pays:** riding alongside, he sees where his "date" is heading and beats it to the apple, stealing its meal at
+  the last moment.
+- **Rejected:** when the courted snake turns toward him, he backs off, and that dodge can leave him exposed to a third
+  snake, so anyone who reads him can beat him ("No refuges").
+- **Vain:** he loves the open middle of the board, where everyone can see him, and hates coiling into corners; he goes
+  for golden food (the spotlight) and shuns mushrooms (shrinking ruins the look); overconfident in open space, so easy
+  to bait into a Sniper's line.
+- **His tongue is a hairspray can:** a little spritz when he flicks it.
+- **Lines** in his own voice for kills, wins and chatter, as every rival has (`chatter/`), and a blurb for the start
+  screen.
+- **Built from the one template** (`ai.js`: his weights, and a driver for courting), measured like every rival: his
+  trademark (time spent alongside a rival's head, and apples stolen from the snake he courts) and an `abtest.js` run on
+  fresh seeds showing courting pays against a Charmer who doesn't court; every other rival's trademark within noise.
+- **The cast grows to nineteen:** the start screen, the Field guide's row for him, the lobby's line-up, `CLAUDE.md`'s
+  "a cast of eighteen", and Capricious's deck of impressions (3b) gain him; online play gets a protocol bump.
 
 ### 4. The teaching system, steps 2–6 (DESIGN "Teaching by showing")
 
