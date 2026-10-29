@@ -26,6 +26,11 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 - *The cue:* a gold ring marks where you'd land if you let go now, and moves as you fly.
 - *The lesson:* on your first golden jump, "Hold to fly farther. Steer in the air!"
 - Free, as now: 2 per golden beetle, up to 3 held.
+- *The rivals* (part 4, as built): a rival plans its golden flight as it takes off, straight or with one turn (left or
+  right, after any number of cells), down on the best free cell up to 5 in the air. The engine flies it by the same rule
+  as a person's turn (`airTurn`, from the rival's `flyTurn`). A leap now, a flight past the plain hop and a turned one
+  come down only where no rival's head could get first: coming down on a body is the end, and before that check the
+  rivals did it 0.6 times a round and lost the head-to-head with rivals that never used these moves.
 
 **A snake across a pit is a bridge** (the owner: "if you are a shorter snake, jumping on a longer snake, and it is crossing a pit, and you manage to cross in time, before the end of its tail [goes]"):
 - A body lying over a pit already holds (only a head falls in). Now the part of it over the pit is a bridge for anyone: a head may move onto it there, crawling along its back, or land on it from a jump. Everywhere else a body is still a wall, as snake needs it to be.
