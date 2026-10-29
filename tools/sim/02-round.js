@@ -54,7 +54,10 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     if (!late) { c.ticksEarly++; c.freeEarly += freeCells(g, N); }
     const bugs = g.food.filter(f => f.kind === 'beetle');
     for (const f of bugs) { const b = st.bugs.get(f); if (b && b.near < 0 && g.snakes.some(s => s.alive && Math.abs(s.body[0].x - f.x) + Math.abs(s.body[0].y - f.y) <= T.BEETLE_FEAR)) b.near = g.tick; }
+    const riding = new Set(g.snakes.filter(s => s.alive && !s.flight && g.holes.has(s.body[0].y * N + s.body[0].x)));
     const dying = E.step(g);
+    for (const s of g.snakes) if (s.alive && !s.flight && g.holes.has(s.body[0].y * N + s.body[0].x)) { c.rideTicks++; if (!riding.has(s)) c.rides++; }
+    for (const s of dying) if (riding.has(s)) { c.rideDeaths++; if (s.fatal === 'hole' || /hole/.test(s.cause || '')) c.rideFalls++; }
     beetleCensus(g, c, st, bugs);
     woodpeckerCensus(g, c, st, dying, N);
     if (mid) c.mealsMid += new Set(g.events.filter(e => e.type === 'eat' && e.kind !== 'mushroom').map(e => e.snake)).size;

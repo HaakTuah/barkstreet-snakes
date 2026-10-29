@@ -419,7 +419,7 @@ window.SnakeAI = (() => {
   // (-1 off the board), and `queue` holds a breadth-first search, one distance
   // after another. No search visits a cell twice, so N * N is always enough.
   let bufN = 0, mineFree, otherFree, ownFree, risk, strikes, seen;
-  let foodValue, foodGrow, foodFrom, foodCells, goldCells, beadCells, queue, nbr, necks, reach, lineAt, lineSeen, lineMark, lineIn, lineOut, myCells, marks, leave, leaveStamp, chase, chaseKey;
+  let bridgeUntil, ridesWas, foodValue, foodGrow, foodFrom, foodCells, goldCells, beadCells, queue, nbr, necks, reach, lineAt, lineSeen, lineMark, lineIn, lineOut, myCells, marks, leave, leaveStamp, chase, chaseKey;
   let nearStamp, nearHead, nearWho, nearHome, nearGap;
   let stamp = 0;
   // The board the searches of a search state run on (see evaluate), framed
@@ -436,7 +436,7 @@ window.SnakeAI = (() => {
   // seenF and distF, where my room's fill got to and how soon; seenH, where
   // a hunted rival's room did. `reach` is on it too, and reachBlock, when a
   // cell frees up for a rival's reach.
-  let W = 0, framed, unframed, terr, terrFree, meLater, laterCells, laterWas, inBody, seenF, seenH, distF, reachBlock;
+  let W = 0, framed, unframed, bridgeF, terr, terrFree, meLater, laterCells, laterWas, inBody, seenF, seenH, distF, reachBlock;
   const CLAIMED = HOLE + (HOLE >> 1), NOW = -HOLE; // (NOW: free already)
   // The beetles as the search moves them (up to BUGS, as many as can be out
   // at once), each in SLOTS slots from b * SLOTS: its state after s of its
@@ -460,6 +460,8 @@ window.SnakeAI = (() => {
     risk = new Float32Array(size);
     strikes = new Float32Array(size); // (a rival's head next tick, and its body after: see decide)
     seen = new Int32Array(size);
+    bridgeUntil = new Int32Array(size);
+    ridesWas = new Int32Array(size); // (round six B: a rival's body over a pit, a bridge for my head till it leaves, ticks from now; 0: none)
     foodValue = new Float64Array(size); // what eating a cell is worth
     foodGrow = new Int8Array(size);     // what eating a cell does to my length
     foodFrom = new Int32Array(size);    // the first move that can eat it, if it isn't there yet (food the woodpecker will knock there; 0: it's there)
@@ -492,6 +494,7 @@ window.SnakeAI = (() => {
     unframed = new Int32Array(W * W).fill(-1);
     for (let i = 0; i < size; i++) { framed[i] = W + 1 + i + 2 * Math.floor(i / N); unframed[framed[i]] = i; }
     terr = new Int32Array(W * W).fill(HOLE);
+    bridgeF = new Int32Array(W * W); // (bridgeUntil on the framed board, for my room: see fillRoom)
     terrFree = new Int32Array(W * W).fill(HOLE);
     meLater = new Int32Array(W * W).fill(NOW);
     inBody = new Int32Array(W * W);   // (my body in a search state, marked with a stamp)
@@ -630,7 +633,7 @@ window.SnakeAI = (() => {
   // eager (food that isn't there yet, from when it is).
   const room = new Int32Array(3);
   function fillRoom(headP, t, cap, need, eager, foodRange, mute, bodyMark, stampF, laterCount) {
-    const Q = queue, S = seenF, B = terr, ML = meLater, D = distF, Wd = W;
+    const Q = queue, S = seenF, B = terr, BU = bridgeF, ML = meLater, D = distF, Wd = W; // (BU: a bridge is a way through while it lasts, but not under my own body)
     // (Where meLater says a cell's taken longer, the board says so too while
     // it runs: one test where it would be two.)
     for (let k = 0; k < laterCount; k++) { const q = laterCells[k]; laterWas[k] = B[q]; if (ML[q] > B[q]) B[q] = ML[q]; }
@@ -642,27 +645,27 @@ window.SnakeAI = (() => {
       while (read < levelEnd) {
         const p = Q[read++];
         let q = p - Wd;
-        if (S[q] !== stampF && B[q] <= by) {
-          S[q] = stampF; D[q] = d; space++; Q[write++] = q;
-          if (d < trail && inBody[q] === bodyMark) trail = d;
+        if (S[q] !== stampF && (B[q] <= by || (BU[q] > by && inBody[q] !== bodyMark))) {
+          S[q] = stampF; D[q] = d; Q[write++] = q;
+          if (B[q] <= by) { space++; if (d < trail && inBody[q] === bodyMark) trail = d; } // (a bridge: a way through, not room, nor my trail)
           if (eager) { const i = unframed[q], v = foodValue[i]; if (v > 0) anyFood = Math.max(anyFood, v * (foodFrom[i] > by ? latePull(foodRange, t, by, foodFrom[i], mute) : pull)); }
         }
         q = p + Wd;
-        if (S[q] !== stampF && B[q] <= by) {
-          S[q] = stampF; D[q] = d; space++; Q[write++] = q;
-          if (d < trail && inBody[q] === bodyMark) trail = d;
+        if (S[q] !== stampF && (B[q] <= by || (BU[q] > by && inBody[q] !== bodyMark))) {
+          S[q] = stampF; D[q] = d; Q[write++] = q;
+          if (B[q] <= by) { space++; if (d < trail && inBody[q] === bodyMark) trail = d; } // (a bridge: a way through, not room, nor my trail)
           if (eager) { const i = unframed[q], v = foodValue[i]; if (v > 0) anyFood = Math.max(anyFood, v * (foodFrom[i] > by ? latePull(foodRange, t, by, foodFrom[i], mute) : pull)); }
         }
         q = p - 1;
-        if (S[q] !== stampF && B[q] <= by) {
-          S[q] = stampF; D[q] = d; space++; Q[write++] = q;
-          if (d < trail && inBody[q] === bodyMark) trail = d;
+        if (S[q] !== stampF && (B[q] <= by || (BU[q] > by && inBody[q] !== bodyMark))) {
+          S[q] = stampF; D[q] = d; Q[write++] = q;
+          if (B[q] <= by) { space++; if (d < trail && inBody[q] === bodyMark) trail = d; } // (a bridge: a way through, not room, nor my trail)
           if (eager) { const i = unframed[q], v = foodValue[i]; if (v > 0) anyFood = Math.max(anyFood, v * (foodFrom[i] > by ? latePull(foodRange, t, by, foodFrom[i], mute) : pull)); }
         }
         q = p + 1;
-        if (S[q] !== stampF && B[q] <= by) {
-          S[q] = stampF; D[q] = d; space++; Q[write++] = q;
-          if (d < trail && inBody[q] === bodyMark) trail = d;
+        if (S[q] !== stampF && (B[q] <= by || (BU[q] > by && inBody[q] !== bodyMark))) {
+          S[q] = stampF; D[q] = d; Q[write++] = q;
+          if (B[q] <= by) { space++; if (d < trail && inBody[q] === bodyMark) trail = d; } // (a bridge: a way through, not room, nor my trail)
           if (eager) { const i = unframed[q], v = foodValue[i]; if (v > 0) anyFood = Math.max(anyFood, v * (foodFrom[i] > by ? latePull(foodRange, t, by, foodFrom[i], mute) : pull)); }
         }
       }
@@ -801,6 +804,19 @@ window.SnakeAI = (() => {
     const stunLeft = o => Math.max(0, (o.stun || 0) - age);
     for (const o of others) occupy(otherFree, o.body, o.body.length, stunLeft(o), N);
     mineFree.set(otherFree);
+    // Bridges (round six B): a rival's body over a pit (behind its head) I
+    // may crawl onto while it's still there: till it leaves, as I'd see it
+    // (less the time since I saw it, the soonest it could be gone).
+    const pitHole = i => holes.has(i) && !(view.fire || EMPTY).has(i) && !(view.pecks || EMPTY).has(i); // (a hole, not fire nor the woodpecker's mark)
+    bridgeUntil.fill(0); bridgeF.fill(0);
+    for (const o of others) {
+      if (o.air || pitHole(o.body[0].y * N + o.body[0].x)) continue; // (its own head over a pit: its body holds nobody up)
+      const moved = Math.max(0, age - (o.stun || 0)); // (the moves it has made since I saw it, at least)
+      for (let j = 1; j < o.body.length; j++) {
+        const c = o.body[j], i = c.y * N + c.x;
+        if (pitHole(i)) { bridgeUntil[i] = Math.max(bridgeUntil[i], o.body.length - j - moved); bridgeF[framed[i]] = bridgeUntil[i]; }
+      }
+    }
 
     // Where is each opponent now? Assume it kept going straight for `age`
     // ticks and treat that path as occupied (for me only).
@@ -1213,8 +1229,18 @@ window.SnakeAI = (() => {
     // or that of my body, which is all there until now.)
     for (let i = 0; i < N * N; i++) reachBlock[framed[i]] = otherFree[i] - age;
     me.body.forEach((c, j) => { const i = c.y * N + c.x; reachBlock[framed[i]] = Math.max(otherFree[i] - age, me.body.length - j + me.grow); });
+    // (A pit with a body across it is no barrier to a rival while it lasts:
+    // it can ride across, on mine or any other's (never its own). Read as
+    // open from now, for each rival in turn.)
+    const rides = [];
+    others.forEach((o, k) => { if (!o.air && !pitHole(o.body[0].y * N + o.body[0].x)) for (let j = 1; j < o.body.length; j++) { const i = o.body[j].y * N + o.body[j].x; if (pitHole(i)) rides.push(framed[i], k); } });
+    me.body.forEach((c, j) => { const i = c.y * N + c.x; if (j > 0 && pitHole(i)) rides.push(framed[i], -1); });
     reach.fill(HOLE);
-    for (const o of others) reachFrom(framed[o.body[0].y * N + o.body[0].x], (o.stun || 0) - age); // (from when it moved, or moves, again)
+    others.forEach((o, k) => { // (from when it moved, or moves, again)
+      for (let n = 0; n < rides.length; n += 2) if (rides[n + 1] !== k) { ridesWas[n >> 1] = reachBlock[rides[n]]; reachBlock[rides[n]] = Math.min(reachBlock[rides[n]], 0); }
+      reachFrom(framed[o.body[0].y * N + o.body[0].x], (o.stun || 0) - age);
+      for (let n = rides.length - 2; n >= 0; n -= 2) if (rides[n + 1] !== k) reachBlock[rides[n]] = ridesWas[n >> 1];
+    });
 
     // How much food matters right now, given how long I already am. Hunger
     // trumps that: with under 10 s before I start starving, everyone goes
@@ -1499,7 +1525,7 @@ window.SnakeAI = (() => {
 
     // Can my head step into cell (x, y) as move number `step` from now?
     function canEnter(body, len, grow, x, y, step) {
-      if (!inside(x, y) || mineFree[y * N + x] > step) return false;
+      if (!inside(x, y) || (mineFree[y * N + x] > step && !(bridgeUntil[y * N + x] > step))) return false; // (a bridge: while it lasts)
       const keep = grow > 0 ? len : len - 1;
       for (let j = 0; j < keep; j++) if (body[j].x === x && body[j].y === y) return false;
       return true;
@@ -1993,16 +2019,23 @@ window.SnakeAI = (() => {
       // the cells it goes over; down span + 1 moves from now).
       function leapOpt(d) {
         const golden = me.leaps > 0;
-        let span = 0;
+        let span = 0, n = 0; // (n: the cells on the board traced)
         for (let x = myHead.x, y = myHead.y; span <= TUNE.LEAP_REACH; span++) {
           const c = cellAt(x + d.x, y + d.y);
-          if (c < 0) return null; // (never off the board)
+          if (c < 0) break; // (never off the board)
           x = c % N; y = (c - x) / N;
-          path[span] = c;
+          path[span] = c; n++;
           if (!hurdle(c)) break;
         }
+        if (!n || !hurdle(path[0])) return null;
+        if (span >= n || span > TUNE.LEAP_REACH || !free(path[span])) { // (nowhere free within reach: a bridge that'll still be there when I come down, as the engine has it)
+          const last = Math.min(n - 1, TUNE.LEAP_REACH);
+          let i = 1;
+          while (i <= last && !(bridgeUntil[path[i]] > i + 1)) i++;
+          if (i > last) return null;
+          span = i;
+        }
         const land = path[span];
-        if (!span || span > TUNE.LEAP_REACH || !free(land)) return null;
         const down = span + 1;
         const isle = islandGain(land);
         if (!golden && !boxed && !isle && !meal(land, down)) { // (the plain jump: out of a crash or a box, to an island, or onto food, or just short of it)
@@ -2035,7 +2068,7 @@ window.SnakeAI = (() => {
       // the owner saw Gobbler fold up and die on), the free log I'd land on
       // beyond what I have here, per my length (at most 2), and an apple
       // more if there's food there and none here. Free log: cells I can
-      // crawl to without crossing a hole, nobody's body on them (counted up
+      // crawl to without crossing a hole (but on a bridge), nobody's body on them (counted up
       // to 3 lengths). 0 where I'm not cramped, the far side is no roomier,
       // or it's the same log (I could crawl there).
       function islandGain(land) {
@@ -2058,7 +2091,7 @@ window.SnakeAI = (() => {
           if (foodValue[i] > 0) landFood = true;
           for (let k = 4 * i; k < 4 * i + 4; k++) {
             const j = nbr[k];
-            if (j < 0 || seen[j] === stampS || holes.has(j)) continue;
+            if (j < 0 || seen[j] === stampS || (holes.has(j) && !(bridgeUntil[j] > 0))) continue; // (a bridge leads on)
             seen[j] = stampS;
             queue[write++] = j;
           }
