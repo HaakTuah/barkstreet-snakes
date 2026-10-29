@@ -260,7 +260,7 @@ pin keep it Copycat. Uncopied, it stays full flag red.
 - *Now* (`render/looks.js`, `fillsOf()`; the rim in `render/bodies.js`): copying, its head (and its cat ears, with the
   deeper red inside) is its model's own colour, full rather than the body's pale copy, mixed half and half with
   `#de2910` (`COPY_HEAD`, 0.5, in plain RGB). Copying Star it takes the rainbow's hue at Star's head, flowing in step;
-  copying Capricious or Mute, their colour of the moment. A 1.5-unit rim of the flag's red runs round the head inside
+  copying Mute, its colour of the moment (Capricious keeps its own pink in every mood, since 3b). A 1.5-unit rim of the flag's red runs round the head inside
   its edge, and the yellow pin is as it was. Copying no one (or its model out), the head is all red and has no rim.
 - A colour opposite red mixes to a neutral: Metagamer's cyan gives a grey head, Sovereign's blue a plum one, Vulture's
   black a dark red. The rim and pin keep these Copycat; it's the honest half and half.

@@ -518,7 +518,8 @@ function prepare(s, alpha, now, dead, impact = 0) {
   a.color = colorOf(s);
   a.isPlayer = !s.persona;
   // A pale rim so dark bodies read on the bark (Joker's amber and white do already).
-  a.rim = !a.isPlayer && a.look !== 'joker' && (a.look === 'vulture' || s.personaKey === 'mute' || lumaOf(a.color) < 0.4); // (Mute: always, whatever its mood)
+  const coat = coatOf(s);
+  a.rim = !a.isPlayer && coat !== 'joker' && (coat === 'vulture' || s.personaKey === 'mute' || lumaOf(a.color) < 0.4); // (Mute: always, whatever its mood)
   // How far through its move it's drawn: up to 1, from its last cells to
   // these; past 1, on toward the next (see predict). Not past its cells
   // once it's dead or the round's over (the board rests), nor before the
