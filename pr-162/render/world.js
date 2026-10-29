@@ -61,6 +61,7 @@ function frame(alpha, now) {
   if (corpses.length) drawCorpses(alpha, now);
   drawWrapEdges(now);
   if (streaks.length) drawStreaks(now); // (under the snakes: beside the dasher, never through it)
+  drawLandings(now); // (under the snakes: where a jump comes down)
   drawSnakes(alpha, now); // (and the fields' light round any rival in them, under its body)
   drawTossed(now); // (a bead spat over a head)
   drawRipples(now);
@@ -318,9 +319,9 @@ function onTick(events) {
         refusal.at = now; refusal.tick = game.tick;
       }
     } else if (e.type === 'leap') { // up and over (see liftOf): puffs of dust kicked back where it took off (and gold, for a golden leap)
-      const a = animOf(e.snake, now), h = e.snake.body[e.reach || 1] || e.snake.body[0];
+      const a = animOf(e.snake, now), h = e.snake.body[1] || e.snake.body[0]; // (where it took off: a cell a tick, so its neck)
       hopped(e.snake, e, now);
-      a.leapUntil = game.tick + e.snake.body.length + 1; // (until the arch has run off its tail)
+      a.leapUntil = game.tick + e.snake.body.length + (e.reach || 1) + 1; // (until the arch has run off its tail, after a tick in the air over each cell)
       spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 8, 140, 420, 2.2, '#d6b480', '#c08a4a'); // (bark dust: the plain leap's no power)
       dustPuffs(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, e.snake.dir.x, e.snake.dir.y);
       if (e.gold) spawn(h.x * CELL + CELL / 2, h.y * CELL + CELL / 2, 10, 120, 600, 1.8, '#d4a017', '#fffbea'); // (in Honey, a power's gold)
