@@ -24,8 +24,9 @@ let birdLayer = null, birdG = null, birdShown = false;
 // held upright; else 0), where across the ledge the frame's moss and
 // leaves hang into it ([left, right] each), and the buttons' rims under
 // the board it may cling to ({ x, top, bottom, face }): the game keeps
-// them current.
-const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, upright: false, hang: [], rims: [] };
+// them current; and the words there it perches clear of where it can
+// ({ left, right, top, bottom }, 2k+).
+const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, upright: false, hang: [], rims: [], words: [] };
 function setBoardRect(x, y, w, free = null) {
   boardRect.x = x; boardRect.y = y; boardRect.w = w;
   boardRect.left = free ? free.left : 0; boardRect.top = free ? free.top : 0;
@@ -34,6 +35,7 @@ function setBoardRect(x, y, w, free = null) {
   boardRect.upright = !!free?.upright || boardRect.ledge > 0; // (a phone held upright: with no ledge, its board leaves the bird a gutter of 13 px at least)
   boardRect.hang = free?.hang || [];
   boardRect.rims = free?.rims || [];
+  boardRect.words = free?.words || [];
   perches.clear(); drumAt.clear(); birdLayout++; // (its perches and where it drums are worked out again: the room round the board has changed)
 }
 const BIRD_GROW = 1.7; // (times its first size: 1.3 since 2c, 1.7 since 2k, on the board and under it alike)
@@ -121,20 +123,34 @@ function perchFor(tx, ty) {
   // of a spot near the screen's edge, if there's any such place on the
   // middle's side, though further off: flying in from the outer side to
   // strike there, its wings would beat past the screen's edge)
+  // (and clear of the row's words, 2k+, those level with it: between two
+  // buttons, or over a gap or the chatter's empty end, the nearest such
+  // place, as with the moss. It never shrinks for them: where no place
+  // at its size clears them all, it perches as it would without them)
   const hang = side === 'ledge' ? boardRect.hang.map(([l, r]) => [(l - boardRect.x) / sc - gap, (r - boardRect.x) / sc + gap]) : [];
+  const ys = [boardRect.y + (p.y + BIRD_BOX[1] * s * BU - e) * sc, boardRect.y + (p.y + (BIRD_BOX[3] + CROUCH) * s * BU + e) * sc];
+  const words = side === 'ledge' ? boardRect.words.filter(w => w.bottom > ys[0] && w.top < ys[1]).map(w => [(w.left - boardRect.x) / sc, (w.right - boardRect.x) / sc]) : []; // (its box keeps its outline and the gap off them)
   const box = f => (f > 0 ? [BIRD_BOX[0] * s * BU - e, BIRD_BOX[2] * s * BU + e] : [-BIRD_BOX[2] * s * BU - e, -BIRD_BOX[0] * s * BU + e]);
-  const fits = (x, [a, b]) => x + a >= -room.left - 1e-6 && x + b <= SIZE + room.right + 1e-6 && hang.every(([l, r]) => x + b <= l || x + a >= r);
-  if (hang.length) {
-    const onScreen = f => (f > 0 ? tx - FLIGHT_BACK * BU >= -room.left : tx + FLIGHT_BACK * BU <= SIZE + room.right); // (its wings, flying in to strike facing that way)
+  const clearOf = off => (x, [a, b]) => x + a >= -room.left - 1e-6 && x + b <= SIZE + room.right + 1e-6 && off.every(([l, r]) => x + b <= l || x + a >= r);
+  const onScreen = f => (f > 0 ? tx - FLIGHT_BACK * BU >= -room.left : tx + FLIGHT_BACK * BU <= SIZE + room.right); // (its wings, flying in to strike facing that way)
+  const place = off => { // (where it stands if that's clear, else the nearest place beside one that is)
+    const fits = clearOf(off);
     let best = null;
     for (const f of [p.flip, -p.flip]) {
       if (best && !onScreen(f)) break;
       const [a, b] = box(f);
-      for (const x of [p.x, ...hang.flatMap(([l, r]) => [l - b, r - a])]) {
+      for (const x of [p.x, ...off.flatMap(([l, r]) => [l - b, r - a])]) {
         if ((tx - x) * f < 0 || !fits(x, [a, b])) continue; // (its spot behind it, or no room)
         if (!best || Math.abs(x - p.x) < Math.abs(best.x - p.x) - 1e-6) best = { x, f };
       }
     }
+    return best;
+  };
+  let fits = clearOf(hang);
+  if (hang.length || words.length) {
+    let best = words.length ? place([...hang, ...words]) : null;
+    if (best) fits = clearOf([...hang, ...words]);
+    else if (hang.length) best = place(hang);
     if (best) { p.x = best.x; p.flip = best.f; }
   }
   // (on the ledge, it clings to a button's rim where one's near, as it
