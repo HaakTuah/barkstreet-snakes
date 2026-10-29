@@ -91,6 +91,16 @@ const hasChinese = text => /[一-鿿]/.test(text);
 // name: "Mute waves silently". Copycat's Chinese ones go in brackets, as
 // Ghost's "（沉默）" does (Chinese isn't set in italics).
 function setWords(el, text) {
+  const lead = /^\*([^*]+)\*: (.+)$/.exec(text); // (a stage direction, then words: Capricious's impressions)
+  if (lead) {
+    const zh = hasChinese(lead[1]), dir = Object.assign(document.createElement(zh ? 'span' : 'em'), { textContent: zh ? `（${lead[1]}）` : lead[1] + ':' });
+    if (zh) dir.lang = 'zh-Hans'; // (Copycat's echo: Chinese in brackets, not italics)
+    el.append(dir, ' ');
+    const said = document.createElement('span');
+    setWords(said, lead[2]);
+    el.append(said);
+    return;
+  }
   const mimed = /^\*(.+)\*$/.exec(text), zh = hasChinese(text);
   if (mimed && zh) el.textContent = `（${mimed[1]}）`;
   else if (mimed) el.append(Object.assign(document.createElement('em'), { textContent: mimed[1] }));

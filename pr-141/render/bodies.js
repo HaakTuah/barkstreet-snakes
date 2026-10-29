@@ -169,14 +169,15 @@ function drawBody(s, a, now, dead) {
     for (let i = 2; i < Math.min(4, n); i++) for (const [dx, dy] of STARS) star(pts[2 * i] + dx * rad[i], pts[2 * i + 1] + dy * rad[i], rad[i] * 0.2);
     drawTie(a);
   }
-  if (look === 'mason') { // Caesar in marble: grey veins wandering across every segment, now and then a gold one
+  const coat = coatOf(s); // (Capricious's mood is a costume on its head, not its body)
+  if (coat === 'mason') { // Caesar in marble: grey veins wandering across every segment, now and then a gold one
     ctx.lineCap = 'round'; // (as the veins always left it, for the wreath)
     for (let i = 1; i < n; i++) {
       // (each segment's own sprite, drawn at the segment's size before any gulp, and scaled)
       const rb = Math.round(CELL * (0.44 - 0.1 * (i / (n - 1)))), sp = veinSprite(i, rb), h = (rb + 2) * rad[i] / rb;
       ctx.drawImage(sp, pts[2 * i] - h, pts[2 * i + 1] - h, 2 * h, 2 * h);
     }
-  } else if (look === 'ouroboros') { // a python's back: a dark diamond on every segment, a pale fleck in each
+  } else if (coat === 'ouroboros') { // a python's back: a dark diamond on every segment, a pale fleck in each
     ctx.fillStyle = 'rgba(58,36,8,0.75)';
     ctx.beginPath();
     for (let i = 1; i < n; i++) {
@@ -191,7 +192,7 @@ function drawBody(s, a, now, dead) {
       ctx.moveTo(x, y - d); ctx.lineTo(x + d, y); ctx.lineTo(x, y + d); ctx.lineTo(x - d, y); ctx.closePath();
     }
     ctx.fill();
-  } else if (look === 'colonist') { // a redcoat's cross-belts: a cream strap zig-zagging down the body
+  } else if (coat === 'colonist') { // a redcoat's cross-belts: a cream strap zig-zagging down the body
     ctx.strokeStyle = '#fef3c7';
     ctx.lineWidth = 3;
     ctx.lineCap = 'butt';
