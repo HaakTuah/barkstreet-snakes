@@ -677,6 +677,45 @@ window.SnakeEngine = (() => {
     }
   }
 
+  // Round six B, bridges: a snake's body lying over a pit is a bridge for
+  // anyone else's head, there (never its head, nor anywhere on bark, where
+  // a body is a wall): it may crawl onto it and along its back, for as long
+  // as that body is still there once everyone has moved this tick (see
+  // bodyStamp: a tail leaving now isn't). Once the tail has passed, the
+  // cell's open pit again, and a head over it falls in (see fallIn). A
+  // blown-up flash (boom) bridges nothing.
+  // (Never its head's cell: a head-on, or right behind a head. Never a
+  // body whose own head is over a pit, riding or held there: two snakes
+  // can't keep each other up. Never where s's own body still lies: that's
+  // biting itself. A body that crashes this tick bridges only what it keeps.)
+  function bridgeAt(game, s, x, y) {
+    const k = key(x, y);
+    if (s.boom || bodyStamp[k] !== stamp || !game.holes.has(k)) return false;
+    const keep = s.tailMoves ? s.body.length - 1 : s.body.length;
+    for (let j = 0; j < keep; j++) if (s.body[j].x === x && s.body[j].y === y) return false;
+    if (game.snakes.some(o => o !== s && o.alive && o.body[0].x === x && o.body[0].y === y)) return false; // (another's head there now: a head-on, or running into it, as on bark)
+    return game.snakes.some(o => {
+      if (o === s || !o.alive || o.flight || game.holes.has(key(o.body[0].x, o.body[0].y))) return false;
+      const j = o.body.findIndex(c => c.x === x && c.y === y), L = o.body.length;
+      const stays = crashes0.has(o) ? L - Math.min(T.CRASH_LOSS, L - T.MIN_LENGTH) : o.tailMoves ? L - 1 : L;
+      return j > 0 && j < stays && !o.boom;
+    });
+  }
+  // Another's body over a pit at (x, y) that's a bridge for s, still there
+  // after `moves` moves (this one the first), as the rule above has it.
+  function bridgeFor(game, s, x, y, moves) {
+    if (!game.holes.has(key(x, y)) || s.body.some(c => c.x === x && c.y === y)) return false;
+    return game.snakes.some(o => {
+      if (o === s || !o.alive || o.flight || game.holes.has(key(o.body[0].x, o.body[0].y))) return false;
+      const j = o.body.findIndex(c => c.x === x && c.y === y);
+      return j > 0 && o.body.length - j + o.grow + Math.max(0, o.stunUntil - game.tick) > moves;
+    });
+  }
+
+  // A bridge a jump could come down on `moves` moves from now (this one the
+  // first): another's body over a pit, behind its head, still there then.
+  const lasting = (game, s, c, moves) => bridgeFor(game, s, c.x, c.y, moves);
+
   // A head on the ground over a hole, with nothing across it any more,
   // falls in. (A jump whose landing was taken comes down on what it hopped:
   // a body lying across a hole holds it up, until that body moves on.)
@@ -1272,6 +1311,7 @@ window.SnakeEngine = (() => {
       const { x, y } = s.next;
       const k = key(x, y);
       if (!inside(x, y)) return { cause: s.boom ? 'flashed into the edge and blew up' : 'hit the edge', killer: 'wall', killerId: null };
+      if (bridgeAt(game, s, x, y)) return headOnAt(s, x, y); // (round six B: another's body over a pit is a bridge, crossed on its back)
       if (bodyStamp[k] === stamp && !s.boom) { // (a body first: one lying over a hole is what it hit)
         const other = game.snakes[bodyOwner[k]];
         // Two heads swapping cells met head-on, just as if they'd met in one.
@@ -1279,6 +1319,10 @@ window.SnakeEngine = (() => {
         return { cause: other === s ? 'bit itself' : swapped ? `crashed head-on into ${other.name}` : `ran into ${other.name}`, killer: other === s ? 'self' : other.name, killerId: other.id, headOn: swapped };
       }
       if (game.holes.has(k)) return { cause: s.boom ? 'flashed into a woodpecker hole and blew up' : 'hit a woodpecker hole', killer: 'wall', killerId: null }; // (it bounces off a hole's rim like the edge; only a leap coming down on one falls in)
+      return headOnAt(s, x, y);
+    };
+    const headOnAt = (s, x, y) => {
+      const k = key(x, y);
       if (headStamp[k] === stamp && headCount[k] > 1) {
         const other = moving.find(o => o !== s && !o.air && o.next.x === x && o.next.y === y);
         return { cause: `crashed head-on into ${other.name}`, killer: other.name, killerId: other.id, headOn: true, meet: true };
@@ -1481,7 +1525,7 @@ window.SnakeEngine = (() => {
     let best = s.dir, most = -Infinity;
     for (const d of CRAWL) {
       const { x, y } = ahead(game, s, h.x, h.y, d), met = b && b.x === x && b.y === y;
-      if ((back && x === back.x && y === back.y) || (blocked(game, x, y) && !leavingNow(game, x, y)) || (met && shut)) continue;
+      if ((back && x === back.x && y === back.y) || (blocked(game, x, y) && !leavingNow(game, x, y) && !bridgeFor(game, s, x, y, 1)) || (met && shut)) continue; // (a bridge is a way on, as for the crash's verdict)
       let room = Math.min(24, roomFrom(game, x, y, 24)); // (a side that reaches the cap is as roomy as any other)
       for (const o of game.snakes) if (o !== s && o.alive && !(met && o.id === b.by) && Math.abs(o.body[0].x - x) + Math.abs(o.body[0].y - y) === 1) room -= 100;
       let run = 0; // (the open run ahead: cells straight on until something's in the way)
@@ -1503,7 +1547,7 @@ window.SnakeEngine = (() => {
     for (let c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir), i = 0; i < T.LEAP_REACH; i++) {
       c = ahead(game, s, c.x, c.y, s.dir);
       if (!inside(c.x, c.y)) break;
-      if (!blocked(game, c.x, c.y) || leavingNow(game, c.x, c.y)) return null; // (a tail leaving this tick is free by the time it lands, as for the auto-turn)
+      if (!blocked(game, c.x, c.y) || leavingNow(game, c.x, c.y) || bridgeFor(game, s, c.x, c.y, i + 2)) return null; // (a tail leaving this tick is free by the time it lands, as for the auto-turn; a bridge that lasts, as in leapPath)
     }
     return 'landing';
   }
@@ -1564,7 +1608,11 @@ window.SnakeEngine = (() => {
     const h = s.body[0], back = s.body[1], keep = s.body.length - Math.min(T.CRASH_LOSS, s.body.length - T.MIN_LENGTH);
     for (const d of CRAWL) {
       const { x, y } = ahead(game, s, h.x, h.y, d), k = key(x, y);
-      if ((back && x === back.x && y === back.y) || !inside(x, y) || game.holes.has(k)) continue;
+      if ((back && x === back.x && y === back.y) || !inside(x, y)) continue;
+      if (game.holes.has(k)) { // (a pit: room only on a bridge that'll still be there when it moves again (see bridgeAt), its snake not out nor crashing now)
+        if (bridgeFor(game, s, x, y, 2 + T.STUN_TICKS) && !game.snakes.some(o => (out.has(o) || crashes0.has(o)) && o.body.some((c, j) => j > 0 && c.x === x && c.y === y))) return true;
+        continue;
+      }
       const by = arrivalAt(x, y); // (a head that gets there this tick, on the ground or in the air: the cell's its head now...)
       if (by && !out.has(by) && !freeBy(game, by, -1)) continue;
       if (!by && headStamp[k] === stamp && headCount[k] > 0 && metAt(s, x, y)) continue; // (only heads that crashed there: a cell they met in)
@@ -1689,12 +1737,17 @@ window.SnakeEngine = (() => {
     const path = [];
     for (let c = s.body[0], i = 0; i <= T.LEAP_REACH; i++) {
       c = ahead(game, s, c.x, c.y, s.dir);
-      if (!inside(c.x, c.y)) return null; // (never off the board)
+      if (!inside(c.x, c.y)) break; // (never off the board)
       path.push(c);
       if (!hurdle(game, c)) break;
     }
+    if (path.length < 2) return null;
+    if (hurdle(game, path[path.length - 1])) { // (nowhere free within reach: a bridge, where it'll still be there when it comes down (see bridgeAt), else nowhere)
+      const i = path.findIndex((c, i) => i > 0 && lasting(game, s, c, i + 1));
+      if (i < 0) return null;
+      path.length = i + 1;
+    }
     const land = path[path.length - 1];
-    if (path.length < 2 || hurdle(game, land)) return null;
     // (Nor toward a landing another head on the ground is moving into this tick: it'd come down on it.)
     if (moving0.some(o => o !== s && !o.air && !o.flight && o.next && o.next.x === land.x && o.next.y === land.y)) return null;
     return path;
