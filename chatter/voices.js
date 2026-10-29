@@ -260,7 +260,7 @@ const VOICES = {
     caught: ['Scarabaeus captus!', 'Crunchus deliciosus!'],
     ash: ['Cinis! Prandium meum!'],
     rot: ['Rottus maximus.'],
-    weather: { storm: ['Iuppiter iratus est!'], rain: ['Pluvia! Aquaeductus, ubi es?'], sun: ['Sol invictus!'], wind: ['Ventus maximus!'], snow: ['Hiems venit!'] },
+    weather: { storm: ['Iuppiter iratus est!'], rain: ['Pluvia! Aquaeductus, ubi es?'], sun: ['Sol invictus!'], wind: ['Ventus maximus!'], snow: ['Hiems venit!', 'Snows always melt.'] },
     rainbow: ['Arcus caelestis!'],
     bonk: ['Ouchus maximus.', 'Caput meum!', 'Bonkus interruptus.'],
     edge: ['Murus! Unde venit?'],

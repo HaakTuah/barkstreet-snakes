@@ -273,3 +273,85 @@ In the design chat (28 October 2026, 18:29 UTC), on PR #110's three versions of 
 > Agree to all, expertly. Though a bit hard to decide on b or c. I feel maybe the bottom bit of b being smaller looks better, while the overall shape of c is better. So maybe we'll go for c, but it is hard to pick. Not the biggest fan of any of them, to be honest. Doesn't scream trump hair.
 
 (added to 1b+++ in `docs/PROGRESS.md`: C's shape with B's smaller back, then one more pass)
+
+In the design chat (28 October 2026, 23:30 UTC), on the "For Haakon" questions about Gobbler's nerve and the woodpecker's size:
+
+> Agreed to all, expertly! Shouldn't the others contest apples more if they're hungry? They're worth more than, because usually apples just gove you plus 1, but if you are starving, they give you 1 and save you 1, so become plus 2? But yes, gobbler should contest it regardless. And Desperados being an adrenalin junkie, should generally be less risk averse?
+
+(queued as 2b and 2c in `docs/PROGRESS.md`)
+
+In the design chat (28 October 2026, 23:43 UTC), after Amarna Letters' code-PR checks grew from about 6.5 to 10 minutes
+because its test games had grown, and Claude proposed a standing rule for both games that every test uses the smallest
+game that still tests its rule:
+
+> Yes, make it expertly so! Are there more optimizations we can aplly to the development of the 2 games, maestro?
+
+(a standing instruction in `CLAUDE.md`, "the smallest setup that tests the rule")
+
+In the design chat (28 October 2026, 23:47 UTC), to Claude's five optimizations to the development of both games (a fresh
+design chat each day from a handover note; Codex for reviews; builders settling settled questions themselves; this
+file trimmed under its 20 KB mark; faster checks for Amarna Letters):
+
+> Yes, do all expertly 1-5 except codex since we don't have it yet.
+
+(here: `CLAUDE.md` trimmed, the full text of "pipeline, don't wait" and "as many lanes" moved to `docs/orchestrating.md`)
+
+In the design chat (28 October 2026, 23:57 UTC), on a new rival:
+
+> add Charmer to the queue, exactly as I have prescribed, with his clingy unique playstyle.
+
+(queued as 3c in `docs/PROGRESS.md`; his look and death mark are left for Haakon to give)
+
+In the design chat (29 October 2026, 00:00 UTC), on the rivals making no sound when they eat:
+
+> Yes, queue it. Feels strange that there is no sound, when your snake makes loud sound when eating.
+
+(queued as 2d in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, 00:03 UTC), playing:
+
+> I am seeing copycat shy rotten apples twice now, that was within reach. Both were next to the map edge.
+
+(added to 3b in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, 00:06 and 00:07 UTC), playing:
+
+> Looks a bit weird when the woodpecker pecks a tile with a snake tail on, and the snake isn't hurt. Is it possible to make it so visually, it doesn't peck exactly on the snake? So it looks natural that the tiles go, but that the snake is left unhurt? Just a visual issue, nothing gameplaywise.
+
+> Yes please, expertly!
+
+(queued as 2e in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, 00:27 and 00:28 UTC), on Wildcard's hair as it plays:
+
+> Trump's hair looks like a mop now…
+
+> Yes, and make it do it expertly! I want trump's hair for Pete's sake!
+
+(queued as 2f in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, 00:31 and 00:32 UTC), playing:
+
+> I notice snakes imidately become plump again when after eating while starving. I feel it should be an animation where you see it transform to getting plump and its color back.
+
+> Yes, expertly!
+
+(queued as 2g in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, 00:15 to 00:18 UTC), on a new chatter line: "Should colonist have the line "Snows always melt"?", then "It's quoting mark Anthony in rome." (a scene from the series, where Antony speaks for Caesar: "I assure you, it is no threat. Snows always melt."), and, to Claude's take that it belongs to Mason, the Caesar snake, in English, beside "Hiems venit!":
+
+> Agreed.
+
+In the design chat (29 October 2026, 00:48 and 00:50 UTC), after Claude said starving caused 1 to 3% of deaths:
+
+> I think it should be a but more agressive. Someone should at least die from it once in a blue moon. Now games maybe feel a bit too samey? It's pretty predictable. But if food levels varied more, that would change things up.
+>
+> Also, snakes should maybe avoid food more with the woodpecker about? I see snakes gorging on the remains of other snakes, when they have only a few tiles left to move on. They are not doing a context relevant tradeoff calculation there, clearly.
+>
+> And should the chat lines be voiced?
+
+Then, to Claude's takes (food seasons; eating only what keeps you alive in the endgame; babble voices):
+
+> But sometimes starving still lasts you longer than increased length will, with so little room also. And make sure the voices arent distracting! That would be a real turn off!
+
+(queued as 2h, 2i and 2j in `docs/PROGRESS.md`)

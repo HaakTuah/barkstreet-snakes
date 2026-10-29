@@ -11,6 +11,9 @@ it under the workshop check's 20 KB. New ones are added here as they are done or
 | Rival line-up | Online, the host's choice from the start card is used, but the lobby doesn't show it and can't change it. Should the lobby show the line-up, with the same seats to choose (the host only)? | Haakon (28 October 2026): "You figure all this out, expert. You know me by now." Claude decided yes, since online stays in step with local play: queued as "The lobby shows the line-up" | Answered |
 | Rivals too shy of heads | Right at a contested apple, with the other head beside it, rivals still usually back off: about 1 in 8 of those cells would be a head-on, which costs about what the apple is worth. Should some personas (Desperado, Gobbler when starving, the hunters) take that gamble more often, as their own nerve? | Haakon (28 October 2026): "gobbler and Desperados should take the gamble more, that fits their playstyle, no?" Claude agreed: queued as "Nerve at a contested apple" | Answered |
 | Wildcard's hair (1b+++) | Which one: A, B or C? ([PR #110](https://github.com/HaakTuah/barkstreet-snakes/pull/110), pictures side by side; A a small wave and short swirl, B a middle wave with the swirl carried round to the far side, C a big wave swept well out to the side) | Suggested: B; the draft waits for the pick | Answered 28 October: C's overall shape with B's smaller back, then one more pass so it reads as Trump's hair (1b+++ below) |
+| Wildcard's hair, the new pass (1b+++) | Does the new pass ([PR #110](https://github.com/HaakTuah/barkstreet-snakes/pull/110), beside B and C) read as Trump's hair now, or should C go back in? | Taken: the new pass ships (merged); C comes back in one small PR if you prefer it | Answered 29 October ("Agree to all", to the design session's take: keep the new pass) |
+| Nerve at a contested apple | Gobbler takes the gamble only once it's hungry (about 4 s left), which is rare, so in play its share of contested apples didn't move (17% both). Should a fed Gobbler gamble too? | Taken: no, as built ("the more the hungrier it is"); a fed Gobbler would need a nerve of about 0.9, near fearless (PR #92) | Answered 29 October 2026: a fed Gobbler contests too; every rival contests more as it starves; Desperado less risk-averse generally (entry 2b) |
+| The woodpecker's size under the board (1b++) | Measured, it was already its board size under the board: 78 to 80 px tall on a 390 px phone, drumming on the board 78 to 85 ([PR #112](https://github.com/HaakTuah/barkstreet-snakes/pull/112)); what looks small is likely its slim side view beside the 44 px buttons, while on the board its wings are open. Should it be bigger, on the board and under it alike (say 1.3 times, so it covers more of the board as it drums), or bigger only under the board (then not one size)? | Taken: one size, as the entry says, so unchanged; it now clings to the buttons and pecks them. Suggested, if bigger: 1.3 times everywhere | Answered 29 October 2026: 1.3 times everywhere, one size (entry 2c) |
 
 ## The queue, done
 
@@ -178,6 +181,16 @@ Also in `next-tasks-verbatim.md`:
 - A pinned fingerprint of the message shapes together with the protocol version. It fails when the shapes change without a version bump.
 
 *Done on 27 October 2026 (PR #48)*: see "The messages, typed" in `docs/design/22-play-with-friends-online.md`.
+
+### 2c. The woodpecker, 1.3 times (Haakon, 29 October 2026; a layout lane)
+
+Haakon (29 October 2026), "Agreed to all, expertly!", to the "For Haakon" question on its size and the design session's
+take: **1.3 times its size, on the board and under it alike** (one size). Under the board it still clings to and pecks
+the buttons. Since it covers more of the board as it drums, check with the simulation that round length, deaths by
+cause and per-rival wins stay within noise; pictures at a 390-pixel phone and desktop, as for PR #112.
+
+Done (PR #139): 1.3 times everywhere, one size wherever the screen has room (101 px on a 390×844 phone, from 78); the
+simulation's fingerprints identical. See "The woodpecker, 1.3 times" in `docs/design/32-the-owners-playtest.md`.
 
 ## Item 3, done
 
