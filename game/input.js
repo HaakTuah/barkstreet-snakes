@@ -219,6 +219,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'g' || e.key === 'G') { e.preventDefault(); openRecords('guide'); }
   else if (e.key === 'm' || e.key === 'M') toggleMute();
   else if (e.key === 'n' || e.key === 'N') toggleMusic();
+  else if (e.key === 'v' || e.key === 'V') toggleVoices();
   else if (SPEED_KEYS[e.key] && !speedEl.hidden) setSpeed(SPEED_KEYS[e.key]);
   else if (e.key === '`' && DEV) perf.toggle();
 });
@@ -421,6 +422,7 @@ click(watchBtn, () => {
 click(pauseBtn, () => (state === 'paused' ? resume() : state === 'running' && !playerAlive() && shownCard?.reward && !overlay.classList.contains('hidden') ? hideCard() : napNow()));
 muteBtn.addEventListener('click', () => { Sound.unlock(); toggleMute(); }); // (its tap comes after the toggle: see toggleMute)
 click(musicBtn, () => toggleMusic());
+click(voicesBtn, () => toggleVoices());
 click(speedEl, e => { const b = e.target.closest('button'); if (b) setSpeed(Number(b.dataset.speed)); });
 click(chatterBtn, () => { Chatter.setEnabled(!Chatter.isEnabled()); showChatterState(); });
 
@@ -453,6 +455,13 @@ function toggleMute() {
 function toggleMusic() {
   Sound.unlock();
   Sound.toggleMusic();
+  updateControls();
+}
+
+// The rivals' babble (its bubbles stay: this is only their voices).
+function toggleVoices() {
+  Sound.unlock();
+  Sound.toggleVoices();
   updateControls();
 }
 

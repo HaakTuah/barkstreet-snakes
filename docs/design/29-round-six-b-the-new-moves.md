@@ -10,6 +10,10 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 - It goes over up to 3 cells of anything a jump goes over (bodies, holes, fire), landing on the first free cell beyond. It used to go over one.
 - It flies at a snake's pace, a cell a tick: over three cells, the head is in the air for three ticks and lands on the fourth. The body follows the head's path, bridging what it crosses.
 - It waits up to `LEAP_WINDOW` ticks for something to hop, as now, and only goes if there's somewhere to land within reach. It never goes off the board.
+- **Leap now** (the owner, 29 October 2026: "maybe you should be able to leap whenever you want, not only at gaps, so someone really skillfull can time cutting someone else off midair like that. Becomes a high skill manuver."): a second press while a jump waits sends it at once, wherever you are, open ground included (on a phone, a double tap). Over open ground it flies a full plain hop, up three ticks and down on the fourth cell, with its ring, at the same price (the tail's tip and the rest). So the air becomes a place you can use: jump into a rival's flight to bump it down, or come down right in front of a snake to cut it off. One press still waits for a hurdle as before, so nothing is worse for anyone who never double-presses.
+  - *The rivals use it too,* through the same engine call, each in its style: Desperado for the thrill, Sniper to cut a snake off at its landing, Ghost to slip a trap, Drab hardly ever.
+  - *Never a refuge:* ground snakes pass under a flight, so a leap also dodges a head-on or a trap for a few ticks. That's a timed escape with a price, not a way to be safe: the A/B measures how often it's used, how often it ends in a bump or a bad landing, and whether its users outlive everyone, and it's tightened (a longer rest after an open-ground leap, say) if they do.
+  - *The lesson:* the first time you could have cut a flier off, "Press twice to leap now, anywhere!"
 - It still costs the tip of your tail and needs more than 3 to go. Its rest is set by simulation (4 s now; longer, since it does more).
 - It hops fire and never puts it out. Only a flash puts fire out.
 - *The cue:* the landing cell gets a ring while the jump waits; the flight is the arch, shadow and dust round six A drew, longer.
@@ -45,19 +49,25 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 - In the air are: each flying head, and the part of its body lifted over what it hops. Flying into another snake's air is a bump; two flying heads in one cell both bump. Something on the ground passes under a flight, and a flight passes over the ground.
 - A bump costs what a crash does (3 segments, the stun), and you drop where you are:
   - over bark, you're stunned there;
+  - over fire, you're stunned there and catch alight as if you'd crawled in ("Fire on snakes"), on top of the bump's cost (the owner, 29 October 2026: "if you are over fire, you ignite");
   - over a hole, you fall in and you're out;
-  - onto a body, you slide off it to a free cell beside, by the same rule food rolls by (the outside of the turn; else the side with more open log; a tie toward the middle); with no free side, you're out.
-- Coming down on a body at the end of a flight is the same bump. So a fast golden flash through a landing cell steals the landing.
+  - onto a body, you're out: you drop straight down, and a snake under you blocks your landing, so you're trapped (the owner, 29 October 2026: "In my mind, you are trapped if you crash into another snake mid-air and another snake blocks your landing."; it replaced a slide to a free cell beside it);
+  - over bark, the ground's test for being trapped holds as for any crash: if there'll be nowhere to turn when the stun's over, you're out.
+- Coming down on a body at the end of a flight is the same bump, and puts you out. So a fast golden flash through a landing cell steals the landing, and the jumper with it: the landing ring is the warning, and the rivals weigh the risk (a jump only goes where its landing will still be free, as far as anyone can see).
 - *The cue:* a spark and a puff of dust in the air, then the drop (or the slide).
 - *The lesson:* the first time you bump in the air, "Bumped in mid-air! Down you go."
 
 **The plain flash cuts.**
 - It still goes 2 cells along the ground. Now, through a body one cell thick, with a free cell beyond, it cuts that body: the part behind the cut falls to beads, food for anyone (its owner chokes on them).
 - It puts out one cell of fire it passes, if it lands clear.
+- **The neck cut** (the owner, 29 October 2026: "Agreed, do it expertly!"): a cut that leaves another snake fewer than 3 segments in front of it puts it out, as a crash at your smallest does. It's the flash's skilled kill: a one-thick spot right behind a moving head, with free log beyond, and a misjudged one hits the head instead, which is a failed flash (a head can't be cut). The same holds for golden cuts. (Cutting your own body still needs 3 to stay in front, so it never puts you out.)
+  - *The lesson:* the first neck cut you see, "Snip! Too short to go on."
 - **A failed flash hurts more** (the owner kept this on purpose: without a risk, everyone flashes all the time, cautious play loses, and Star crushes everyone). A flash that runs into what it can't get through (the edge, a hole, a body two thick, a head) costs 5 segments and a longer stun (both set by simulation; 3 and 4 ticks for a crash).
 - **Its rest is longer:** 10 to 12 s (6 now), set by simulation.
 - *The cue:* the cut is a snip of light across the body and the beads spill; a failed flash is a bigger bonk, with the stars staying longer.
 - *The lessons:* your first cut, "A flash cuts through a thin body."; your first failed flash, "Too thick! A failed flash costs five."
+
+**The edge is a shelter, measured** (the owner, 29 October 2026: "Right now they are deadly afraid of the edge, so incentivicing sticking by the edge more might not be such a bad thing. But I also like your idea, so I am conflicted."; to the design session's way through: "Agreed, expert!"). A cut needs free log beyond the body, so a body lying along the edge, or against a hole or another body, can't be cut from that side, a neck cut included. That stays: the edge gets a real upside, with its price (fewer ways out, food rolling off it). Part 3 measures time spent along the edge before and after, and whether those who hug it outlive everyone. If it turns out a refuge, the fix goes in before part 3 merges: a flash through a body one thick always cuts it, and a flasher with nothing free beyond then fails against what's there (5 segments and the longer stun; a golden flash blows up). If the rivals' fear of the edge is the AI's own over-caution, the pricing part (part 7) fixes that fear either way.
 
 **The golden flash cuts deeper.** Three cells, as now. It cuts through a body up to two thick (one cut, nearest the flasher's head), puts out every fire cell on its way, and still blows up at the edge or a hole.
 
@@ -67,6 +77,14 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 - Going off an edge while wrapping opens a pair of gold portals, one on each side, trimmed in your colour. The entry swirls in and the exit spills out. The frame is gilded while you wrap. Gold, not blue and orange: on this board sky blue means jump and ember means flash.
 - Others may follow you through while your body passes and for about 1 s after. Coming out onto your body is a crash.
 - *The lesson:* the first time someone follows, "Anyone can follow you through a portal, for a moment."
+
+**Mushrooms come back up** (the owner, 29 October 2026: "what if every snake pukes up the mushrooms instead, so they can poison others as well?"; then "maybe you swallow the mushroom, don't get stunned, and have a bit of time to angle where you want to spit it, and you can maybe spit it 2 or 3 tiles away? Then it can become even more potent for the next person?"; and, to the design session's shape of it: "Yes, that's fantastic! Let's do that! I love when game mechanics turn fron pure badness to conditional good! Now w eight have snakes back that actually eat them on purpose on certain cases! Bravo!"). A mushroom turns from bad luck into a weapon you aim:
+- **Swallow, keep moving.** Eating one still shrinks you, by its strength, and you aren't stunned. It sits in your cheek for about a second (a green bulge anyone can see), and your mouth is full meanwhile: you eat nothing else.
+- **Aim by steering.** While it's in your cheek, a small ring marks the cell 3 ahead of your head, wherever you face. When the second is up, you spit it there in an arc, over anything between. Steering is the only control, on a phone as on a keyboard.
+- **Where it lands:** on bark, it lies there, poisonous; on a head, that snake swallows it (shrinking, and spitting it on in its turn); on a body, it bounces off by the roll rule (into the turn, else the side with more open log, a tie toward the middle); over the edge or a hole, it's gone. The ring gives a target a second to dodge, so a hit is skill against skill.
+- **Stronger each time.** A mushroom takes 3 segments the first time (`SHRINK`), and one more each time it comes back up, to 5 at most; it darkens a shade each time, so anyone can see how bad it is. It never kills by itself: it shrinks you no further than 3. A spat mushroom wilts faster (half the time it had left), so the log never fills with poison. Golden mushrooms are a power, eaten as now.
+- **Eating one on purpose** is a real choice now: a few segments for a shot at a rival, best when you're long and they're close. *The rivals* weigh it so, each in its style (Joker for the laugh, Sniper for the head shot, Drab hardly ever), aim it, and steer clear of a ring pointed at them; rules tests prove both, and the head-to-head shows whether the spitters come out ahead.
+- *The cue:* the green bulge, the ring, the arc and a "ptoo"; a hit is a green puff on the target's head. *The lesson:* the first time, "Bleh! Steer to aim it: it lands three ahead."
 
 **Mason builds double walls.** A plain flash cuts a wall one thick, so Mason, who lives by straight walls ("Keep watch!"), lays them two thick where it can, running back alongside. Its straight runs are measured before and after.
 
