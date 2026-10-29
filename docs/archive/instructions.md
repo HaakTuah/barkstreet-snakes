@@ -362,3 +362,39 @@ think the snakes power update will be finished by 18 of clock?" Then, to moving 
 > It's the one I am most interested in playing, and it has been pushed back for a long time now. Also, the teaching system will have to account for it.
 
 (item 5 moved up in `docs/PROGRESS.md`; the teaching system, item 4, after it)
+
+In the design chat (29 October 2026, 07:49 and 07:50 UTC), on Wildcard's hair F as it plays:
+
+> Dont trumps hair look a bit too big now?
+
+> Yes, let's try that!
+
+(the second to keeping F's shape at about 85% of its size; queued as 2f+ in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, shortly before 08:00 UTC), on the woodpecker and the flags:
+
+> I think the woodpecker should be even bigger, and would be cool if the flags of sovereign and colonists bends away from a snakes body, depending on direction it was hit when a part of a snake occupies its tile, don't you think?
+
+Then, to Claude's suggestion that a bigger bird be checked with the simulation:
+
+> How should a visual change alter the actual game in any way?
+
+And, to queueing both as art lanes, the bird checked by eye for what it hides: "Yes, please, expertly!" (queued as 2k
+and 2l in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, 08:02 UTC), on 2k's size:
+
+> Maybe make it as big as you can get away with without it falling out of the screen, or being pushed onto the gameplay screen when not pecking, or anything.
+
+(2k in `docs/PROGRESS.md` now asks for the biggest size that passes those checks, rather than 1.6 times)
+
+In the design chat (29 October 2026, 08:02 to 08:09 UTC), on beetles that meet: "Also, should 2 beetles who meet start
+fighting?" Then, after Claude suggested measuring first how often they meet:
+
+> Well, what happened the game i was watching now was that 2 beetles ended up on an island the woodpecker made, away from the snakes. Looked a bit boring that they just walked around like that, I wanted something to happen. Therefore, given how rare it is, i thought it should feel special.
+
+And, to Claude's take (they notice each other, a shoving match, the loser flips, a gamble for a snake that gets there):
+
+> Yes, please, expertly! Love how you described it! And it should come late, it is probably the most uneasecary feature we have discussed here, so leave it last or close to last, I'd say.
+
+(queued as 8, last, in `docs/PROGRESS.md`)

@@ -93,6 +93,15 @@ apple it needs. Build it from the cause, in the one template every rival shares:
 
 ### 2f. Done: Wildcard's hair, lacquered (PR #144, version F); in `docs/archive/progress-done.md`.
 
+### 2f+. Wildcard's hair: F, a size smaller (Haakon, 29 October 2026; small, an art lane beside the new moves)
+
+Haakon (29 October 2026), playing with F: "Dont trumps hair look a bit too big now?" And, to keeping F's shape at about
+85% of its size: "Yes, let's try that!" Keep F's shape as it is, the wave, the sweep to the far side, the grooves and
+the gloss, and scale the whole mass to about 85%, so it sits on the head instead of towering over it, puffing past the
+head less over the ears and behind; the face, the set-back front edge and both eyes as they are. Drawing only. The PR
+shows F now beside F at 85% at a 390-pixel phone (true size and 3x) and desktop 2x, all four headings, and merges once
+the render suite passes; if Haakon then finds it still too big, or now too small, the size is one number to change.
+
 ### 2g. Done: the meal goes down (PR #146); in `docs/archive/progress-done.md`.
 
 ### 2h. The endgame: eat what keeps you alive, not what boxes you in (Haakon, 29 October 2026; an AI entry, after 2b)
@@ -148,11 +157,53 @@ arent distracting! That would be a real turn off!"
 - Rivals only for now (your own snake's lines, from the teaching system, stay silent). Online, each player hears it on
   their own machine: no protocol change.
 
+### 2k. The woodpecker, as big as it can get away with (Haakon, 29 October 2026; small, an art lane)
+
+Haakon (29 October 2026): "I think the woodpecker should be even bigger". Then, when the design session asked for a
+simulation check: "How should a visual change alter the actual game in any way?" It can't: the bird's size is one
+drawing constant (`BU` in `render/bird.js`), while the rules peck by target cells (`game.woodpecker`), so no
+simulation is run for it. And then: "Maybe make it as big as you can get away with without it falling out of the
+screen, or being pushed onto the gameplay screen when not pecking, or anything."
+- **The biggest that passes every check,** found by trying sizes up from 1.3, not guessed: one size wherever the screen
+  has room for it, as 2c set, and on screens with less room the biggest each of its perches allows (the perches
+  already shrink it, `PERCH_MIN_PX` and `PERCH_FLOOR_PX`; they keep doing so, from the new size).
+- **The checks,** at a 390-pixel phone held upright and on its side, a tablet both ways and desktop: all of it stays on
+  the screen, in every pose and flight (crouching, its tail, its wings open); perched, it never reaches onto the board,
+  nor over the buttons' words or the chatter; drumming, it hides no food, no head and none of the tiles it is about to
+  peck beyond what it hides at 1.3; and nothing else on the page moves to make room for it. The layout suite gets a
+  test for each check, so a later change can't break them.
+- The PR shows 1.3 beside the new size on each of those screens, perched, flying and drumming, says the size it found
+  and what stopped it growing further, and merges once the render and layout suites pass.
+
+### 2l. Flags that bend as a snake goes over them (Haakon, 29 October 2026; small, an art lane beside 2k)
+
+Haakon (29 October 2026): "would be cool if the flags of sovereign and colonists bends away from a snakes body,
+depending on direction it was hit when a part of a snake occupies its tile". Drawing only (`render/flags.js`), so no
+simulation; online, each player draws it from the snakes they already have: no protocol change.
+- **Pushed the way it was hit:** when any part of any snake lies on the tile of Sovereign's banner or a colony's flag,
+  the pole bends over from its foot in the direction that snake was travelling as it came onto the tile (from the cell
+  before it in the body to that one), so a snake going east pushes it east, and the cloth trails low behind it. It
+  stays bent while the body lies on it, and bends the new way if another snake comes over it from another side.
+- **Springs back:** once the tile is free, it swings upright with a short wobble that dies away, then flies as before.
+  With reduced motion it simply leans while covered and stands up again, without the wobble.
+- **One flag, one look:** it works with what flags already do (the banner's tilt as it's carried, its shake when
+  pecked, a colony flag falling into its pit), never fighting them; the falling flag wins. The PR shows a snake
+  crossing a banner and a colony flag from each side at a 390-pixel phone and desktop 2x (pictures and a short clip),
+  and merges once the render suite passes.
+
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
 Its done entries (PRs #49 to #124) are in `docs/archive/progress-done.md`, "Item 3, done".
 
 ### 3b. The rivals who change: Capricious, Copycat and Wildcard (Wildcard's part after 5)
+
+*Capricious done (PR #126), Copycat done (PR #142), 29 October 2026; the readings are in the design file.* **Wildcard's
+part waits** (after 5), built on the branch `wildcard-shows-its-mix`: two or three traits a round from eight (`TRAITS`
+in `ai.js`), its tag's note ("This round: hungry, reckless and hunts"), a brag as its first line (with its Chinese), a
+Field guide row, protocol 16 with `mix` synced, rules tests, and the simulation's `--signatures` reading each trait's
+trademark. Left to do: merge `develop` into it (its `ai.js` predates 5), re-check the traits that showed weakly in a
+first 40-round look (coward, tail-rider: given Ghost's and Creeper's room weights since), the A/B and head to head,
+pictures, review.
 
 As `docs/design/35-capricious-copycat-and-wildcard.md` describes: Capricious does impressions of every other rival from
 a shuffled deck, each with its costume and an opening line; Copycat plays as the leader plays, copying a person by what
@@ -164,6 +215,10 @@ its mimic weight (120) outweighing the pull of food, and the room and margin wei
 move. Copycat's part of 3b fixes it, and first checks with a census whether every rival does it: of the apples that
 rot, how many were within a rival's reach, and how far each was from the edge. A competent snake takes a safe apple by
 the wall ("Clever rivals, human reactions"); one it takes into a dead end doesn't count as safe.
+*Checked in PR #142* (`tools/dev/rotten-apples.js`, 150 rounds, seed 21): Copycat had been the worst, 0.20 apples
+passed up (its head within 2) and left to rot a minute alive, 0.15 by the edge; with its copied habits and its pull to
+mimic cut from 120 to 40, 0.13 and 0.09, mid-field. But every rival does it: 80% of the apples that rot lie on the edge
+row or one in, and Sniper (0.19), Capricious, Mason and Mute pass up as many. A general edge-apple fix is noted below.
 
 ### 3c. A new rival: the Charmer (Haakon, 29 October 2026; an AI entry, after 2b and 3b)
 
@@ -221,7 +276,33 @@ The draft is in `docs/handoff/woodpecker-acts-draft.md`.
 
 As planned: up to 4 players, key sets, gamepads, and local and online play together.
 
+### 8. Last: beetles who meet, fight (Haakon, 29 October 2026; an engine-rules entry, after everything else)
+
+Haakon (29 October 2026), watching two beetles walk about an island the woodpecker made, away from the snakes: "Looked
+a bit boring that they just walked around like that, I wanted something to happen. Therefore, given how rare it is, i
+thought it should feel special." Then, to the design session's take: "Love how you described it! And it should come
+late, it is probably the most uneasecary feature we have discussed here, so leave it last or close to last".
+- **They notice each other:** two beetles within about 4 cells, with no head near enough to scare them, stop wandering
+  and walk towards each other, sizing each other up, so you can see it coming.
+- **A shoving match:** head to head, wing cases up, a buzzing clack, a second or two of pushing.
+- **One loses:** the loser flips onto its back, legs waving, for about a second, then rights itself and runs for a
+  burrow; the winner lifts its wing cases and buzzes, as they do now and then, but bigger.
+- **The gamble:** while they fight they only bolt from a head within 2 or 3 cells, not 6, so a snake that spots it
+  and gets there in time (over a hole by a jump, if need be) can take one or both. The rivals see fighting beetles as
+  they are, an easier catch, and go for it when it pays, as for any food; a rules test proves it, through the same
+  engine calls.
+- **Every new rule needs a visible cue and a lesson:** the frame lights up emerald as for a beetle, the clack and buzz
+  as world cues, and a Field guide row.
+- **Online stays in step:** a protocol bump if the beetles' messages change.
+- **Measured:** the simulation counts fights a round (rare is fine, as long as it happens), and deaths near a beetle,
+  the one real risk, stay within noise.
+
 ## Noted, not yet queued
+
+- **Apples by the edge rot** (found in PR #142's census, `tools/dev/rotten-apples.js`): 80% of the apples that rot lie
+  on the edge row or one in, passed up by rivals whose heads came within 2. The room and margin weights likely count an
+  edge cell against a move even when the apple is safe; an AI entry could test a safe-meal exception like the one for
+  meals by the neck (`MEAL_DAWDLE`).
 
 Small things found on the way, for Haakon to place in the queue:
 - (None now.)
