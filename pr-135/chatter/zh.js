@@ -38,7 +38,7 @@ const ZH = {
   "Bracing! Simply bracing.": "提神！真是提神！",
   "Cold.": "冷。",
   "Winter. The lean season. My season.": "冬天。饥荒的季节。我的季节。",
-  "Hiems venit!": "冬天来了！",
+  "Hiems venit!": "凛冬将至！",
   "Snows always melt.": "雪总会融化的。",
   "Global warming? Total hoax. Look at all this snow!": "全球变暖？纯属骗局。看看这么多雪！",
   "cold tail. still following.": "尾巴好冷。还在跟着。",
