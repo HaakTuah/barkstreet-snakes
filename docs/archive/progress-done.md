@@ -331,6 +331,26 @@ Done (PR #170): 1.7 times its first size, one size wherever the screen has room 
 drumming 259 px on a 1280×800 laptop, from 198); at 1.8 an iPhone SE held upright no longer fits it whole under the
 board. Drawing only: no simulation. See "The woodpecker, as big as it gets" in `docs/design/32-the-owners-playtest.md`.
 
+### 2l. Flags that bend as a snake goes over them (Haakon, 29 October 2026; small, an art lane beside 2k): done, PR #186
+
+Haakon (29 October 2026): "would be cool if the flags of sovereign and colonists bends away from a snakes body,
+depending on direction it was hit when a part of a snake occupies its tile". Drawing only (`render/flags.js`), so no
+simulation; online, each player draws it from the snakes they already have: no protocol change.
+- **Pushed the way it was hit:** when any part of any snake lies on the tile of Sovereign's banner or a colony's flag,
+  the pole bends over from its foot in the direction that snake was travelling as it came onto the tile (from the cell
+  before it in the body to that one), so a snake going east pushes it east, and the cloth trails low behind it. It
+  stays bent while the body lies on it, and bends the new way if another snake comes over it from another side.
+- **Springs back:** once the tile is free, it swings upright with a short wobble that dies away, then flies as before.
+  With reduced motion it simply leans while covered and stands up again, without the wobble.
+- **One flag, one look:** it works with what flags already do (the banner's tilt as it's carried, its shake when
+  pecked, a colony flag falling into its pit), never fighting them; the falling flag wins. The PR shows a snake
+  crossing a banner and a colony flag from each side at a 390-pixel phone and desktop 2x (pictures and a short clip),
+  and merges once the render suite passes.
+
+Done (PR #186): bent flags are drawn over the snakes while they lean, and a north or south push also leans the flag out to its
+cloth's side, so it shows beside the body. Drawing only: no simulation. See "Flags that bend under a snake" in
+`docs/design/32-the-owners-playtest.md`.
+
 ## Item 3, done
 
 From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
