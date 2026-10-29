@@ -454,3 +454,17 @@ design session suggested choking once per drop:
 > I suggest if you run over them twice you just squash them on the second round. And that stuff can fall off the edge. Now it all weirdly gets pushed somewhere it is still accessible, would be more natural if it can just fall off.
 
 (written into "Choking on your own tail" in `docs/design/27-round-six-a-fairness-and-fixes.md` and item 5's part 3)
+
+In the design chat (29 October 2026, 12:46 and 12:52 UTC), on your own beads and mushrooms:
+
+> Or is it better if we scrap the whole "puke your own beads" which sounds a bit questionable now that I think about it 😂
+>
+> What if you just squash it on a first pass, so it is a real strategy, to pursue your own beads, just to deny the others food?
+>
+> And i am not one who looks to water good, well-working code, so what if every snake pukes up the mushrooms instead, so they can poison others as well?
+
+Then, to the design session's takes:
+
+> Yes, i agree to all, expertly! I feel it converts a patch into something that is a meaningful gameplay chocie, which is much better. It is true, you are often the one closest to your own beads. And that was a big problem when you could just regain the lost health. But now it is a real trade-off. You are risking more life, and dedicating energy to sabotaging for another snakes instead of finding something to eat so you regain, so your making an active choice at the cost of your own. Which isn't nessecarily a good choice, if that other snake wasn't set to win anyways. So i think this will he really good!
+
+(written into "Choking on your own tail", replaced, and "Mushrooms come back up"; item 5's part 3. His further idea, an aimed spit, went back to him as a question)
