@@ -36,6 +36,8 @@ declare namespace Engine {
     leaps: number; leapArmed: number; leapReadyAt: number; dashes: number; wrapUntil: number;
     flight: { dir: Dir; over: { x: number; y: number }[]; land: { x: number; y: number }; gold?: Flag } | null;
     flashReadyAt: number; flashArmed: number;
+    /** A mushroom in its cheek (round six B): the segments it took, when it's spat, the ticks it had left to wilt. */
+    cheek: { power: number; spitAt: number; left: number } | null;
     /** A rival's next way once it's thought, and the tick it thought it for; a person's queued turns. */
     planned?: Dir | null; plannedTick?: number; queue: Dir[];
     // How it died (set when it does: a death event reads them).
@@ -51,6 +53,8 @@ declare namespace Engine {
   interface Meal {
     x: number; y: number; kind: 'food' | 'golden' | 'mushroom' | 'pellet' | 'leaf' | 'goldcap'; expires?: number;
     color?: string; heat?: number; cooked?: Flag; owner?: number;
+    /** A mushroom come back up: the segments it takes (SHRINK when not set). */
+    power?: number;
   }
 
   /** A beetle underground. */
@@ -71,6 +75,7 @@ declare namespace Engine {
     | { type: 'death'; snake: Snake }
     | { type: 'spawn'; kind: string; x?: number; y?: number; gold?: Flag }
     | { type: 'squash'; snake: Snake; x: number; y: number }
+    | { type: 'spit'; snake: Snake; x: number; y: number; tx: number; ty: number; power: number; hit: number; lx: number | null; ly: number | null }
     | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number; failed?: 1 }
     | { type: 'leap'; snake: Snake; x: number; y: number; gold?: Flag; reach: number }
     | { type: 'dash'; snake: Snake; x: number; y: number; n: number; plain?: Flag }
