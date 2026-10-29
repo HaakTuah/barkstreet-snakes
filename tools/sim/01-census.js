@@ -126,18 +126,20 @@ const SIGNS = ['moves', 'runs', 'cells', 'beside', 'long', 'coiled', 'riding', '
 // mood's name ('mason.runs'...), so each impression's trademark can be read
 // against the rival's own. (twin: its sums, as one object that adds to both.)
 const twins = new WeakMap();
-function twin(sig, mood) {
+// (Wildcard's the same, under each of its round's traits: 'mix.hungry.eats'...)
+function twin(sig, moods) {
   let byMood = twins.get(sig);
   if (!byMood) twins.set(sig, byMood = new Map());
-  let t = byMood.get(mood);
+  const key = moods.join();
+  let t = byMood.get(key);
   if (!t) {
     t = {};
-    for (const k of SIGNS) Object.defineProperty(t, k, { get: () => sig[k], set: v => { sig[`${mood}.${k}`] = (sig[`${mood}.${k}`] || 0) + v - sig[k]; sig[k] = v; } });
-    byMood.set(mood, t);
+    for (const k of SIGNS) Object.defineProperty(t, k, { get: () => sig[k], set: v => { for (const mood of moods) sig[`${mood}.${k}`] = (sig[`${mood}.${k}`] || 0) + v - sig[k]; sig[k] = v; } });
+    byMood.set(key, t);
   }
   return t;
 }
-const sigOf = (per, s) => s.memory.mood ? twin(per[s.name].sig, s.memory.mood) : per[s.name].sig;
+const sigOf = (per, s) => s.memory.mood ? twin(per[s.name].sig, [s.memory.mood]) : s.personaKey === 'wildcard' && s.memory.mix ? twin(per[s.name].sig, s.memory.mix.map(t => `mix.${t}`)) : per[s.name].sig;
 
 // Takes one tick's signatures, after the step (was: each snake's head and
 // heading before it, and whether it has moved yet this round; brought up to date).

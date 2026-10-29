@@ -124,6 +124,25 @@ function reportSignatures(per) {
       console.log(`  Capricious as ${who}, ${what}: ${unit === '%' ? (100 * v).toFixed(1) + '%' : v.toFixed(2)} · ${who} ${per[who] && sum([who], b) > 0 ? ratio([who], a, b, unit) : 'not played'}`);
     }
   }
+  // Wildcard's traits: the trademark each should raise, in rounds it had the
+  // trait, against its rounds without it (and the rival that trait is near).
+  const wild = per.Wildcard?.sig;
+  if (wild) {
+    const minute = wild.ticks / Math.max(1e-9, per.Wildcard.aliveMs / 60000);
+    const shows = { hungry: ['eats', 'minutes', 1, 'food a minute', 'Gobbler'], reckless: ['skims', 'ticks', '%', 'skimming danger', 'Desperado'], hunter: ['boxing', 'hunting', '%', 'its target within 4', 'Mute'],
+      coward: ['apart', 'ticks', 1, 'cells from the nearest head', 'Ghost'], wallHugger: ['skims', 'ticks', '%', 'skimming danger', 'Desperado'], territorial: ['atHome', 'homeTicks', '%', 'at home', 'Sovereign'],
+      tailRider: ['riding', 'ticks', '%', 'riding a tail', 'Creeper'], showOff: ['flashes', 'minutes', 1, 'flashes a minute', 'Star'] };
+    const of = (pre, k) => k === 'minutes' ? (wild[`${pre}.ticks`] || 0) / minute : wild[`${pre}.${k}`] || 0;
+    const fmt = (v, unit) => unit === '%' ? (100 * v).toFixed(1) + '%' : v.toFixed(2);
+    console.log('Wildcard\'s traits (each one\'s trademark in its rounds with it · without it · the rival it\'s near)');
+    for (const [t, [a, b, unit, what, who]] of Object.entries(shows)) {
+      const d = of(`mix.${t}`, b);
+      if (!(d > 0)) continue;
+      const allA = b === 'minutes' ? wild[a] : wild[a], allB = b === 'minutes' ? wild.ticks / minute : wild[b];
+      const without = (allA - of(`mix.${t}`, a)) / Math.max(1e-9, allB - d);
+      console.log(`  ${t}, ${what}: ${fmt(of(`mix.${t}`, a) / d, unit)} · without ${fmt(without, unit)} · ${who} ${per[who] && sum([who], b) > 0 ? ratio([who], a, b, unit) : 'not played'}`);
+    }
+  }
   console.table(names.sort().map(name => {
     const one = [name], r = (a, b, unit) => sum(one, b) > 0 ? ratio(one, a, b, unit) : '';
     return { name, run: r('moves', 'runs', 1), beside: r('beside', 'cells', '%'), coiled: r('coiled', 'long', '%'), riding: r('riding', 'ticks', '%'), apart: r('apart', 'ticks', 1),

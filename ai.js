@@ -762,10 +762,10 @@ window.SnakeAI = (() => {
     hungry: { food: 12, eat: 300, pellet: 3, foodRange: 60, contested: 1, hurry: 1.5, nerve: { base: 0.3, hungry: 0.7 } },
     reckless: { margin: 2, headRisk: 350, zoneRisk: 30, nerve: { base: 0.8 } },
     hunter: { aggression: 0.6, hunt: { squeeze: 3, chase: 7, lead: 4 } },
-    coward: { margin: 10, headRisk: 1500, zoneRisk: 400, distance: 8 },
+    coward: { space: 2, territory: 0.6, margin: 10, headRisk: 1500, zoneRisk: 400, distance: 8 }, // (Ghost's, and more)
     wallHugger: { thrill: 20 },
     territorial: { territory: 1.8, home: { radius: 4, leave: 30, grow: 8, max: 6, drift: 15 }, hunt: { squeeze: 2.5, chase: 6, lead: 3 } },
-    tailRider: { tail: 45 },
+    tailRider: { territory: 0.5, tail: 45 }, // (Creeper's: board share would pull it off a tail)
     showOff: { powers: { price: 0, risk: 350, everyWay: true, jumpAny: true, dashSpend: true }, golden: { power: 6, apple: 1.5, contested: 0.5 } },
   };
   const CLASHES = [['coward', 'reckless'], ['coward', 'hunter'], ['coward', 'tailRider'], ['territorial', 'tailRider']];
