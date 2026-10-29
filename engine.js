@@ -1563,7 +1563,7 @@ window.SnakeEngine = (() => {
     const owner = c => leavingNow(game, c.x, c.y) ? null : game.snakes.find(o => o.alive && o.body.some(b => b.x === c.x && b.y === c.y));
     if (!inside(first.x, first.y) || game.holes.has(key(first.x, first.y))) return 'landing';
     let c = first, n = 0;
-    for (let o; inside(c.x, c.y) && (o = owner(c)); n++, c = ahead(game, s, c.x, c.y, s.dir)) if (o.body[0].x === c.x && o.body[0].y === c.y) return 'landing'; // (a head: it can't be cut)
+    for (let o; inside(c.x, c.y) && (o = owner(c)); n++, c = ahead(game, s, c.x, c.y, s.dir)) if ((o.body[0].x === c.x && o.body[0].y === c.y) || (!golden && game.holes.has(key(c.x, c.y)))) return 'landing'; // (a head: it can't be cut; nor, by a plain flash, a body over a hole)
     return n && (n > (golden ? T.DASH_THICK : T.FLASH_THICK) || !inside(c.x, c.y) || game.holes.has(key(c.x, c.y))) ? 'landing' : null;
   }
   // Is (x, y) a tail end that moves on this very tick (its snake moving, not
@@ -1815,7 +1815,8 @@ window.SnakeEngine = (() => {
         span[0].c = c;
         const clear = span.length <= thick && inside(past.x, past.y) && !game.holes.has(key(past.x, past.y));
         if (!clear || span.some(x => x.j === 0) || (!gold && span.some(x => game.holes.has(key(x.c.x, x.c.y))))) { p.solid[i] = true; p.fail = true; break; } // (a head can't be cut; nor what's too thick, or with nothing free beyond)
-        for (const x of span) { // (one cut a snake, nearest its head)
+        for (const [k, x] of span.entries()) { // (one cut a snake, nearest its head, among the cells it reaches: one lying beyond its reach is only what it can't go on through)
+          if (i + k >= n) break;
           const was = p.cuts.find(y => y.o === x.o && y.i === i);
           if (was && was.j <= x.j) continue;
           if (was) p.cuts.splice(p.cuts.indexOf(was), 1);

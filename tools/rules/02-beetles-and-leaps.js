@@ -343,6 +343,8 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   const g8 = flashAt([[line(23, 10, 9), 'right'], [line(5, 20, 3), 'right']]);
   check('...into the edge, a plain flash fails (a golden one blows up)', g8.snakes[0].alive && failed(g8, 9), JSON.stringify(g8.events));
   check('...and it rests 10 to 12 s', T.FLASH_COOLDOWN_MS >= 10000 && T.FLASH_COOLDOWN_MS <= 12000);
+  const g10 = flashAt([[line(5, 10, 9), 'right'], [col(8, 4, 12), 'up'], [col(9, 9, 6), 'up']], g => { g.snakes[0].dashes = 1; }); // (a golden flash's last cell, (8,10), one thick; a neck one beyond its reach, at (9,10))
+  check('a golden flash cuts only what it reaches: a neck one cell beyond its last is left alone', g10.snakes[2].alive && g10.snakes[1].body.length < 12 && g10.snakes[0].body[0].x === 8 && g10.events.filter(e => e.type === 'cut').length === 1, JSON.stringify(g10.events.map(e => e.type)));
   const coil = [[5, 10], [5, 11], [6, 11], [7, 11], [7, 10], [7, 9], [6, 9], [5, 9], [4, 9], [3, 9], [2, 9], [1, 9]]; // ((7,10), two ahead, its own fifth segment; (8,10) free)
   const g9 = flashAt([[coil, 'right'], [line(5, 20, 3), 'right']]);
   const m9 = g9.snakes[0];

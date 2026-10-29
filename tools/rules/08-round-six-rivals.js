@@ -1,9 +1,6 @@
 // ---------------------------------------------------------------- round six A: the rivals
-// What an AI sees of a hand-built game, as it stands, coughs included.
-const lookNow = g => {
-  look(g);
-  g.history[0].snakes.forEach(o => { o.cough = Math.max(0, g.snakes[o.id].coughUntil - g.tick); });
-};
+// What an AI sees of a hand-built game, as it stands.
+const lookNow = g => look(g);
 const ownBead = (x, y, owner = 0) => ({ x, y, kind: 'pellet', owner, color: '#000', expires: 999 });
 const dirOf = d => Object.keys(D).find(k => D[k] === d);
 

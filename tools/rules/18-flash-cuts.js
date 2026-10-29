@@ -68,4 +68,14 @@ function cutScene(personas, bodies, { holes = [], food = [] } = {}) {
     for (let t = 0; t < 3; t++) { quiet(g); if (g.events.some(e => e.type === 'crash' && e.failed)) failed.push(key); }
   }
   check('no rival flashes into a body two thick (a failed flash)', !failed.length, failed.join(', '));
+  // A head right in front (it can't be cut), and a body lying along the edge (nothing free beyond): no flash either.
+  for (const [what, bodies] of [['a head', [[line(6, 10, 5), 'right'], [Array.from({ length: 9 }, (_, i) => [8, 10 + i]), 'up']]], ['a body along the edge', [[line(21, 10, 5), 'right'], [Array.from({ length: 12 }, (_, i) => [23, 4 + i]), 'up']]]]) {
+    const bad = [];
+    for (const key of Object.keys(AI.PERSONAS)) {
+      const g = cutScene([key, 'drab'], bodies);
+      const o = g.snakes[1]; o.isPlayer = true; o.persona = null; o.queue = []; o.stunUntil = 1e9;
+      for (let t = 0; t < 2; t++) { quiet(g); if (g.events.some(e => e.type === 'crash' && e.failed)) bad.push(key); }
+    }
+    check(`...nor into ${what}`, !bad.length, bad.join(', '));
+  }
 }

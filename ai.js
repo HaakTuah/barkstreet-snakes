@@ -402,7 +402,6 @@ window.SnakeAI = (() => {
   const PLAIN_GOLD = { power: 1, apple: 1 }; // (golden things worth what they're worth: no craving)
   const NO_HABIT = { price: 1 };             // (powers at their price, used only when they pay)
   const CUT_TAIL = 12;     // a cut rival's tail counts for at most this many segments (see flashOpt)
-  const DENY = 0.25;       // my own bead isn't food (my head squashes it), but squashed it's food for nobody: what that's worth to me, per point of aggression, as a share of a bead
   const BUG_AHEAD = 16;    // how many moves ahead I read a beetle's way...
   const BUG_HURRY = 2;     // ...and how much a move longer to catch one counts against it, as a step further counts for an apple (a beetle on the run is a meal only while I keep after it: at 1, chases dragged on)
   const BUG_WAYS = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }]; // (the order a beetle weighs its ways in: up, right, down, left)
@@ -1278,8 +1277,9 @@ window.SnakeAI = (() => {
       goldcap: 1.5 * Math.max(apple, hunger, 0.5) * craving.power,
     };
     // My own beads aren't food: my head squashes one (round six B), and
-    // then it's food for nobody: worth something only to deny it (see
-    // DENY). A rival's own beads are the same to it: whoever gets there
+    // then it's food for nobody (worth nothing to me in the search: valued
+    // as a meal, it read as eating, and an aggressive rival took risks for
+    // it). A rival's own beads are the same to it: whoever gets there
     // first, they're gone. mute: how many of my next moves eat nothing (none,
     // now there's no cough: kept for the search's tables). marks: where
     // there's food (stampFood), and my own beads (stampOwn).
@@ -1335,7 +1335,7 @@ window.SnakeAI = (() => {
       const own = f.kind === 'pellet' && f.owner === me.id, i = cellOf(f);
       if (i < 0) continue; // (nowhere to knock it: the bird eats it)
       foodGrow[i] = own ? 0 : f.kind === 'mushroom' ? -TUNE.SHRINK : f.kind === 'golden' ? TUNE.GOLDEN_GROWTH : f.kind === 'beetle' ? TUNE.BEETLE_GROWTH : f.cooked ? TUNE.COOKED_GROWTH : 1;
-      let v = own ? DENY * (w.aggression || 0) * (worth.pellet ?? 0) : worth[f.kind] ?? 0;
+      let v = own ? 0 : worth[f.kind] ?? 0;
       if (!v) continue;
       if (f.cooked && v > 0) v *= TUNE.COOKED_GROWTH; // (baked: worth more)
       if (f.gold && v > 0) v *= 1.5 * craving.power; // (a golden beetle: leaps too)
@@ -2077,7 +2077,7 @@ window.SnakeAI = (() => {
         const n = gold ? TUNE.DASH_LENGTH : TUNE.FLASH_LENGTH, thick = gold ? TUNE.DASH_THICK : TUNE.FLASH_THICK;
         if (!trace(d, n)) return null;
         const agg = (w.aggression || 0) + (w.hunt ? 0.5 : 0);
-        const body = i => myCells[i] === stampM || (!holes.has(i) && mineFree[i] > 1); // (mine, or a rival's that'll still be there)
+        const body = i => myCells[i] === stampM || (mineFree[i] > 1 && (!holes.has(i) || (fire.has(i) && others.some(o => o.body.some(q => q.y * N + q.x === i))))); // (mine, or a rival's that'll still be there, on fire too)
         let cut = 0, got = false, fires = 0, run = 0;
         ownCut = -1;
         for (let i = 0; i < n; i++) {
@@ -2088,7 +2088,7 @@ window.SnakeAI = (() => {
             let r = 0, b = c, bx = c % N, by = (c - bx) / N;
             for (; r <= thick && b >= 0 && body(b); r++) { bx += d.x; by += d.y; b = cellAt(bx, by); }
             if (r > thick || b < 0 || pitHole(b) || myCells[b] === stampM || mineFree[b] > 1) return null; // (too thick, or nothing free beyond: it'd fail)
-            for (let k = 0, x = c % N, y = (c - x) / N; k < r; k++, x += d.x, y += d.y) {
+            for (let k = 0, x = c % N, y = (c - x) / N; k < r && i + k < n; k++, x += d.x, y += d.y) { // (a layer beyond its reach isn't cut: it's only why it can't go on)
               if (myCells[cellAt(x, y)] === stampM) { // (my own: my tail drops, only to get out of a trap)
                 const j = me.body.findIndex(q => q.x === x && q.y === y);
                 if (j < TUNE.MIN_LENGTH || !trapped) return null; // (only when it's that or the end: dropped any sooner (boxed), rivals dropped 5 tails a round and starved small)
