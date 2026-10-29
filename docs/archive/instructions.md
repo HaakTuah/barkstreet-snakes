@@ -381,3 +381,9 @@ Then, to Claude's suggestion that a bigger bird be checked with the simulation:
 
 And, to queueing both as art lanes, the bird checked by eye for what it hides: "Yes, please, expertly!" (queued as 2k
 and 2l in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, 08:02 UTC), on 2k's size:
+
+> Maybe make it as big as you can get away with without it falling out of the screen, or being pushed onto the gameplay screen when not pecking, or anything.
+
+(2k in `docs/PROGRESS.md` now asks for the biggest size that passes those checks, rather than 1.6 times)
