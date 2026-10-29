@@ -322,6 +322,14 @@ In the design chat (29 October 2026, 00:06 and 00:07 UTC), playing:
 
 (queued as 2e in `docs/PROGRESS.md`)
 
+In the design chat (29 October 2026, 00:27 and 00:28 UTC), on Wildcard's hair as it plays:
+
+> Trump's hair looks like a mop now…
+
+> Yes, and make it do it expertly! I want trump's hair for Pete's sake!
+
+(queued as 2f in `docs/PROGRESS.md`)
+
 In the design chat (29 October 2026, 00:15 to 00:18 UTC), on a new chatter line: "Should colonist have the line "Snows always melt"?", then "It's quoting mark Anthony in rome." (a scene from the series, where Antony speaks for Caesar: "I assure you, it is no threat. Snows always melt."), and, to Claude's take that it belongs to Mason, the Caesar snake, in English, beside "Hiems venit!":
 
 > Agreed.
