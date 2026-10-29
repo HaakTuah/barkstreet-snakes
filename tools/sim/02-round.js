@@ -90,7 +90,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       else if (e.type === 'peck') c.pecks++;
       else if (e.type === 'aim') { c.aims++; if (g.woodpecker.target.some(k => nearHead(g, k))) c.aimsNear++; }
       else if (e.type === 'leap') { if (e.gold) { c.goldLeaps++; per[e.snake.name].leaps++; } else { c.jumps++; per[e.snake.name].jumps++; } }
-      if (e.type === 'leap' && e.now) { c.leapsNow++; per[e.snake.name].now++; } // (round six B part 4: leap now, pressed twice)
+      if (e.type === 'leap' && e.now) { c.leapsNow++; per[e.snake.name].now++; (st.nowAt ||= new Map()).set(e.snake, g.tick); (st.nowN ||= new Map()).set(e.snake, (st.nowN.get(e.snake) || 0) + 1); } // (round six B part 4: leap now, pressed twice)
       if (e.type === 'crash' && e.air) { c.bumps++; per[e.snake.name].bumps++; }
       if (e.type === 'death' && /^came down on/.test(e.snake.cause || '')) c.downOnBody++;
       else if (e.type === 'dash') { if (e.plain) { c.flashes++; per[e.snake.name].flashes++; } else { c.dashes++; per[e.snake.name].dashes++; } }
@@ -103,11 +103,13 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       }
     }
     // (golden leaps got: what's held now, and spent this tick, over what was held)
+    for (const s of g.snakes) { const f = s.flight, was = (st.flyDir ||= new Map()).get(s); if (f && was && f.dir !== was) c.airTurns++; st.flyDir.set(s, f ? f.dir : null); } // (turns in the air: a golden flight steered)
     for (const s of g.snakes) if (s.landing && s.flew) { c.goldFlown += s.flew; c.goldFlights++; s.flew = 0; } // (golden flights, and how far each flew)
     for (const s of g.snakes) c.goldGot += Math.max(0, s.leaps + g.events.filter(e => e.type === 'leap' && e.gold && e.snake === s).length - held[s.id]);
     const left = g.snakes.filter(s => s.alive).length;
     for (const s of dying) {
       if (st.hopAt?.has(s) && g.tick - st.hopAt.get(s) <= 30) c.hopDie++;
+      if (st.nowAt?.has(s) && g.tick - st.nowAt.get(s) <= 30) c.nowDie++; // (out within 3 s of a leap now: it failed)
       place.set(s, left + 1);
       per[s.name].aliveMs += g.time;
       const cause = causeOf(s);
@@ -127,6 +129,10 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
   else if (alive.length === 1) { per[alive[0].name].wins++; place.set(alive[0], 1); }
   else total.draws++;
   const food = g.snakes.reduce((n, s) => n + s.eaten, 0), beads = g.snakes.reduce((n, s) => n + s.pellets, 0);
+  { // (leap now's users: the snakes of a round that leapt now more than its average, against the rest: a refuge would show as users outliving everyone)
+    const n = s => st.nowN?.get(s) || 0, mean = g.snakes.reduce((t, s) => t + n(s), 0) / Math.max(1, g.snakes.length);
+    if (mean > 0) for (const s of g.snakes) { const u = n(s) > mean ? 'nowUser' : 'nowOther', won = alive.length === 1 && alive[0] === s && g.time < MAX_TIME ? 1 : 0; c[u + 's']++; c[u + 'Wins'] += won; c[u + 'Place'] += place.get(s) || 1; }
+  }
   for (const s of g.snakes) { // (the edge's huggers, and the rest)
     const [ticks, on] = st.edge?.[s.id] || [0, 0], hug = ticks && on >= ticks / 8, won = alive.length === 1 && alive[0] === s && g.time < MAX_TIME ? 1 : 0;
     c[hug ? 'huggers' : 'others']++; c[hug ? 'huggerWins' : 'otherWins'] += won; c[hug ? 'huggerPlace' : 'otherPlace'] += place.get(s) || 1;

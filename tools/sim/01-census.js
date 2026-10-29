@@ -6,7 +6,7 @@ const causeOf = s => s.fatal === 'pecked' ? 'pecked' : s.fatal === 'boom' ? 'boo
 // What --census counts (summed over rounds; rounds: how many rounds had any;
 // an array: every round's, put together).
 const census = () => ({
-  golden: 0, goldBeetles: 0, leaves: 0, goldcaps: 0, mushrooms: 0, spits: 0, spitHits: 0, spitLies: 0, leapsNow: 0, bumps: 0, downOnBody: 0, goldFlown: 0, goldFlights: 0, strikes: 0, sun: 0, wind: 0, rain: 0, storm: 0, snow: 0,
+  golden: 0, goldBeetles: 0, leaves: 0, goldcaps: 0, mushrooms: 0, spits: 0, spitHits: 0, spitLies: 0, leapsNow: 0, airTurns: 0, nowDie: 0, nowUsers: 0, nowUserWins: 0, nowUserPlace: 0, nowOthers: 0, nowOtherWins: 0, nowOtherPlace: 0, bumps: 0, downOnBody: 0, goldFlown: 0, goldFlights: 0, strikes: 0, sun: 0, wind: 0, rain: 0, storm: 0, snow: 0,
   goldBeetleRounds: 0, leafRounds: 0, goldcapRounds: 0, stormRounds: 0, starvedEarly: 0,
   cutsPlain: 0, cutsGold: 0, cutsOwn: 0, failed: 0, failedGold: 0, edgeTicks: 0, huggers: 0, huggerWins: 0, huggerPlace: 0, others: 0, otherWins: 0, otherPlace: 0, // (round six B, the flashes cut: cuts by plain flashes and dashes, of them its own tail dropped; failed flashes (golden ones); snake-ticks with the head on the board's edge; snakes whose head was on the edge an eighth of their time or more (twice the field's 6% before part 3) ("huggers"), and the rest: how many, wins, places)
   rides: 0, rideTicks: 0, rideDeaths: 0, rideFalls: 0, // (bridges: rides begun, snake-ticks with a head on another's back over a pit, deaths while on one, and of them falls)
