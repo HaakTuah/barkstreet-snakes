@@ -284,7 +284,7 @@ window.SnakeAI = (() => {
   // Wildcard draws a mix for the mood: each mood starts its memory afresh.)
   const MOODS = POOL.filter(k => k !== 'capricious' && k !== 'drab');
   const MOOD_FORMS = {
-    sovereign: { ...PERSONAS.sovereign.w, home: { ...PERSONAS.sovereign.w.home, radius: 3, max: 4 } },
+    sovereign: { ...PERSONAS.sovereign.w, home: { ...PERSONAS.sovereign.w.home, max: 5 } },
     colonist: { ...PERSONAS.colonist.w, colony: { ...PERSONAS.colonist.w.colony, radius: 3, max: 1, every: Infinity } },
     ouroboros: { ...PERSONAS.ouroboros.w, coil: { ...PERSONAS.ouroboros.w.coil, from: 7 } },
   };
