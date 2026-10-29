@@ -54,6 +54,8 @@ function report({ per, total, suddenAt }, withCensus) {
       + ` · golden power food: ${(c.pickups / Math.max(1, snakeRounds)).toFixed(2)} a snake a round (more than 2: ${pct(c.greedy, snakeRounds)}%) · a starvation before 1:00 in ${of(c.starvedEarly)} of rounds`);
     const hops = c.hop1 + c.hop2 + c.hop3;
     console.log(`the island hop: ${a(hops)} jumps a round, over 1/2/3 cells ${[c.hop1, c.hop2, c.hop3].map(n => pct(n, hops) + '%').join('/')}, over a hole ${pct(c.hopHole, hops)}% · landings that crashed ${pct(c.hopFail, hops)}% · out within 3 s of a jump ${pct(c.hopDie, hops)}%`);
+    const snakeTicks = c.aliveEarly + c.aliveLate, deathsAll = Object.values(total.causes).reduce((x, y) => x + y, 0);
+    console.log(`bridges: ${a(c.rides)} rides a round, ${(100 * c.rideTicks / Math.max(1, snakeTicks)).toFixed(2)}% of snake-time on a back · out while riding ${c.rideDeaths} (falls ${c.rideFalls}): ${(1000 * c.rideDeaths / Math.max(1, c.rideTicks)).toFixed(1)} per 1000 ticks riding, against ${(1000 * (deathsAll - c.rideDeaths) / Math.max(1, snakeTicks - c.rideTicks)).toFixed(1)} off`);
     const share = (n, d) => (100 * n / Math.max(1, d)).toFixed(1) + '%';
     console.log(`hunger: before the woodpecker, ${share(c.hungryEarly, c.aliveEarly)} of snake-time in the hunger warning (${share(c.starvingEarly, c.aliveEarly)} starving); after, ${share(c.hungryLate, c.aliveLate)} (${share(c.starvingLate, c.aliveLate)})`
       + ` · meals a snake-minute mid-round (from HUNGER_MID_FROM_MS to the woodpecker) ${(c.mealsMid / Math.max(1e-9, c.midMs / 60000)).toFixed(1)}`);

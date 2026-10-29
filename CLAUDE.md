@@ -150,6 +150,7 @@ that may be deleted. `tools/dev/crop.js` and `tools/dev/montage.js` make them.
 ```bash
 scripts/cloud-setup.sh                 # cloud machines: Chromium for the browser suites, if missing
 scripts/test.sh                        # the types (tsc) and all ten suites, quiet; or name some: scripts/test.sh rules render
+                                       # (exits 1 if any fails; piped, as in `| tail`, the pipe's code is tail's: use set -o pipefail)
 scripts/sim.sh 200 --seed 3 --census   # tools/simulate.js, quiet: fingerprint, check and tables (also seed 11)
 scripts/codemap.sh engine.js           # the functions of a game file, with line numbers (render/*.js, game/*.js too)
 scripts/usage.sh                       # weekly usage, if this session can read it

@@ -664,7 +664,7 @@ const drawTwinkle = (g, i) => {
 // The living snakes, in passes, so no snake's shadow falls on another's body.
 const live = [];
 // (a snake leaping, or still arched over another one, goes on top)
-const overOf = s => { const a = anim.get(s); return a && (a.leapUntil > game.tick || a.ml) ? 1 : 0; }; // (or about to: see predict)
+const overOf = s => { const a = anim.get(s); return a && (a.leapUntil > game.tick || a.rideUntil > game.tick || a.ml) ? 1 : 0; }; // (or about to: see predict; or riding another's back over a pit)
 const byOver = (p, q) => overOf(p) - overOf(q);
 function drawSnakes(alpha, now) {
   live.length = 0;
