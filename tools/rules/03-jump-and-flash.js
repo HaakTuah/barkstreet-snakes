@@ -326,12 +326,12 @@
   check('...and once its tail has passed, it\'s a hole like any other', a.alive && g.holes.has(K(8, 10)) && !a.body.some(p => p.x === 8 && p.y === 10), JSON.stringify(a.body.slice(-2)));
 }
 
-{ // Bodies lying over holes: running into one is running into that snake, a dash cuts it and then blows up in the hole, and an auto-turn never takes a tail over a hole for room.
+{ // Bodies lying over holes: a bridge (round six B), a dash cuts it and then blows up in the hole, and an auto-turn never takes a tail over a hole for room.
   const g = board([[line(5, 5, 6), 'right'], [[[6, 3], [6, 4], [6, 5], [6, 6], [6, 7], [6, 8]], 'up']]);
   g.holes.add(K(6, 5)); // (under P1's third segment)
   E.step(g);
   const crash = g.events.find(e => e.type === 'crash' && e.snake === g.snakes[0]);
-  check('running into a body that lies over a hole is running into that snake', crash && crash.cause === 'ran into P1' && crash.killerId === g.snakes[1].id, crash && crash.cause);
+  check('a body that lies over a hole is a bridge since round six B: a head crawls onto its back (see tools/rules/17-bridges.js)', !crash && g.snakes[0].alive && g.snakes[0].body[0].x === 6 && g.snakes[0].body[0].y === 5, crash && crash.cause);
   const g2 = board([[line(5, 10, 5), 'right'], [[[7, 6], [7, 7], [7, 8], [7, 9], [7, 10], [7, 11], [7, 12], [7, 13]], 'up']]);
   g2.holes.add(K(7, 10)); // (under P1's fifth segment)
   g2.snakes[0].dashes = 1;

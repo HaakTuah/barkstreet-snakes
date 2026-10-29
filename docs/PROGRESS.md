@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| (none open) | | | |
+| 5, bridges (PR #174) | Bridges come up rarely in play: 0.05 rides a round in simulation, so riders and non-riders come out the same head to head. The rule works (rivals cross when it pays, and riding is riskier than not, so it's no refuge). Is rare what you want, or should bridges come up more (for example, longer bodies over wider pits late in sudden death)? | Kept as it is: a rare, skilful chance when the log is islands, as the design says ("for anyone quick enough"). | Open |
 
 ## The queue, in order
 
@@ -68,7 +68,7 @@ part of "Round six B": "Yes, they are all part of the power update! What i have 
 is its own playable PR, tested both ways (`tools/abtest.js`) with every trademark measured, as the island hop was; the
 design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
 1. **The island hop and no auto-jump** (done, PR #158).
-2. **Bridges** (under way on `round6b/bridges`).
+2. **Bridges** (done, PR #174).
 3. **The flashes cut:** the plain flash through a body one thick, the golden through two (and fire out), and a cut
    that leaves a snake fewer than 3 segments puts it out ("The neck cut"; a flash into a head is a failed flash);
    your own beads squashed as your head passes, the choke, cough and nudge gone ("Choking on your own tail", replaced by
@@ -82,8 +82,8 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
    **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
    fall in, onto a snake you're out, trapped).
 5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes.
-6. **Dropped charges** on a knockout, as above.
-7. **One pricing model for every power,** as above, last, so it prices every move together, with **each rival's power
+6. **Dropped charges** on a knockout, as above. *Built and reviewed* on `round6b/dropped-charges` (a spilled gold coin ringed with the pips; rules tests; review fixes in; protocol to renumber when it merges); still to do: the A/B against rivals that ignore spills (a copy is easy: zero the spill's worth in `ai.js`), pictures, the PR.
+7. **One pricing model for every power,** as above, last (*a first pass is parked* on `round6b/pricing`: the tail tip at length's worth now, rests cheaper while idle with a floor, risk by `headRisk`; on seeds 51/53 the seat-split already shows powers on beating off, 33.6% to 16.4%, with the island hop alone, and this pass did no better, 33.3% to 16.7%, flashing more; a direct head-to-head against today's AI was stopped at look 4, its rounds cached), so it prices every move together, with **each rival's power
    style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
 Then the teaching system (item 4), which teaches all of them.
 
