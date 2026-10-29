@@ -73,7 +73,8 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
    costs 5 and a longer stun, its rest 10 to 12 s; **dropping your own tail** by the same cut; and **Mason's double
    walls**, since a wall one thick can now be cut (its straight runs measured before and after).
 4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
-   **bumps in the air** (a crash's cost, and you drop where you are).
+   **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
+   fall in).
 5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes.
 6. **Dropped charges** on a knockout, as above.
 7. **One pricing model for every power,** as above, last, so it prices every move together, with **each rival's power

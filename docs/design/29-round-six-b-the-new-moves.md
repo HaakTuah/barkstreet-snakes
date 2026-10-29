@@ -45,6 +45,7 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 - In the air are: each flying head, and the part of its body lifted over what it hops. Flying into another snake's air is a bump; two flying heads in one cell both bump. Something on the ground passes under a flight, and a flight passes over the ground.
 - A bump costs what a crash does (3 segments, the stun), and you drop where you are:
   - over bark, you're stunned there;
+  - over fire, you're stunned there and catch alight as if you'd crawled in ("Fire on snakes"), on top of the bump's cost (the owner, 29 October 2026: "if you are over fire, you ignite");
   - over a hole, you fall in and you're out;
   - onto a body, you slide off it to a free cell beside, by the same rule food rolls by (the outside of the turn; else the side with more open log; a tie toward the middle); with no free side, you're out.
 - Coming down on a body at the end of a flight is the same bump. So a fast golden flash through a landing cell steals the landing.

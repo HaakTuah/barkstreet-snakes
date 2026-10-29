@@ -416,3 +416,9 @@ the gold portals, in that order, with pricing last:
 > Yes, they are all part of the power update! What i have been looking forwards to!
 
 (item 5 in `docs/PROGRESS.md` now lists every move, in order)
+
+In the design chat (29 October 2026, 11:46 UTC), on the new moves: "And a point about jumps, colliding mid-air costs
+what a regular crash costs, plus you fall, so if you are over fire, you ignite. If you are over a hole, you fall down,
+if you sre over another snake, you get checkmated." (fire written into "Bumps in the air" in
+`docs/design/29-round-six-b-the-new-moves.md` and item 5; the hole was already there; what "checkmated" means over a
+snake went back to Haakon as a question)
