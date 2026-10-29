@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 5, bridges (PR #174) | Bridges come up rarely in play: 0.05 rides a round in simulation, so riders and non-riders come out the same head to head. The rule works (rivals cross when it pays, and riding is riskier than not, so it's no refuge). Is rare what you want, or should bridges come up more (for example, longer bodies over wider pits late in sudden death)? | Kept as it is: a rare, skilful chance when the log is islands, as the design says ("for anyone quick enough"). | Open |
+| (none open) | | | |
 
 ## The queue, in order
 
@@ -68,8 +68,9 @@ part of "Round six B": "Yes, they are all part of the power update! What i have 
 is its own playable PR, tested both ways (`tools/abtest.js`) with every trademark measured, as the island hop was; the
 design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
 1. **The island hop and no auto-jump** (done, PR #158).
-2. **Bridges** (done, PR #174).
-3. **The flashes cut:** the plain flash through a body one thick, the golden through two (and fire out), and a cut
+2. **Bridges** (done, PR #174). Rare by design, about one ride in twenty rounds (Haakon, 29 October 2026: "Agreed with
+   you expert take!"): part 4 and item 6 each report bridge rides again, adding no rule to make them commoner.
+3. **The flashes cut** (the edge shelters a body from cuts, measured for a refuge: "The edge is a shelter, measured"): the plain flash through a body one thick, the golden through two (and fire out), and a cut
    that leaves a snake fewer than 3 segments puts it out ("The neck cut"; a flash into a head is a failed flash);
    your own beads squashed as your head passes, the choke, cough and nudge gone ("Choking on your own tail", replaced by
    the owner, in `docs/design/27-round-six-a-fairness-and-fixes.md`); and **mushrooms come back up**: aimed by steering,
@@ -171,20 +172,7 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
   of deaths by cause widens, per season; per-rival wins within noise overall; every trademark kept; no refuges.
 - **Online:** the host draws the season and sends it; a protocol bump.
 
-### 2j. Babble voices for the chatter, never distracting (Haakon, 29 October 2026; a sound lane)
-
-Haakon (29 October 2026): "And should the chat lines be voiced?" Then, to babble voices: "And make sure the voices
-arent distracting! That would be a real turn off!"
-- **Babble, not speech:** when a rival's bubble appears, a short synthesized burble in its own voice (pitch, timbre,
-  rhythm: Mason clipped and deep, Gobbler gobbly, Ghost faint, and so on; Mute stays silent), made in `audio.js` with
-  Web Audio, no recordings and no dependencies.
-- **Never distracting, first of all:** well under the eating sound, at most about half a second whatever the line's
-  length, never two at once, at most one every few seconds, never over your own sounds (eating, warnings, crashes), and
-  quieter still in tight moments. Its own switch in the sound settings ("Voices").
-- **Haakon judges it:** the PR stays a draft until he has played its preview and says it isn't distracting; if he
-  isn't sure, it ships switched off by default.
-- Rivals only for now (your own snake's lines, from the teaching system, stay silent). Online, each player hears it on
-  their own machine: no protocol change.
+### 2j. Done: babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time); in `docs/archive/progress-done.md`.
 
 ### 2k. The woodpecker, as big as it can get away with (Haakon, 29 October 2026; small, an art lane)
 

@@ -793,6 +793,6 @@
   .name-row input, .lobby input { border: 1px solid FieldText; }
   .name-row input:focus-visible, .lobby input:focus-visible { outline: 2px solid Highlight; }
   h1 .snake-s { color: inherit; } /* (the plain letter: the drawing keeps its own colours, so it goes) */
-  #chatter-toggle::before { forced-color-adjust: none; background: ButtonText; } /* (the switch's bubble in the button's own text colour) */
+  #voices-toggle::before, #chatter-toggle::before { forced-color-adjust: none; background: ButtonText; } /* (the switch's bubble in the button's own text colour) */
   h1 .snake-s > i { display: none; }
 }

@@ -19,6 +19,8 @@
 //   SnakeAudio.music(stage, mood)  the adaptive track (see the music section below)
 //   SnakeAudio.weather(kind)       the weather you can hear: 'rain', 'wind', 'storm', 'snow' or anything else for none
 //   SnakeAudio.setMusicOn(b) / isMusicOn() / toggleMusic()  remembered in this browser
+//   SnakeAudio.play('babble', { voice, chars, tight, pan })  a rival's bubble: a burble in its own voice (see BABBLERS)
+//   SnakeAudio.setVoicesOn(b) / isVoicesOn() / toggleVoices()  the babble's own switch, remembered in this browser
 //
 // The context is made at load and sleeps until the first key or tap; it sleeps
 // again while the sound's muted or the tab is hidden.
@@ -41,6 +43,16 @@ window.SnakeAudio = (() => {
   const RIVAL_CHOMP = 0.6;
   const CHOMP_GAP = 180;
   const CHOMP_YIELD = 350;
+  // A rival's bubble: a short burble in its own voice (BABBLERS), never distracting. A rival's (dulled,
+  // further off), BABBLE_LEVEL of its other sounds, and BABBLE_HUSH quieter still at the tensest (tight:
+  // the danger the music hears); at most BABBLE_MAX seconds whatever the line's length; one at a time, at
+  // most one every few seconds (its MIN_INTERVAL, whoever speaks); none starts within BABBLE_YIELD of your
+  // own sound or the loudest of the world's (HUSHED_BY), and one sounding is cut short by them.
+  const BABBLE_LEVEL = 0.6;
+  const BABBLE_HUSH = 0.5;
+  const BABBLE_MAX = 0.5;
+  const BABBLE_YIELD = 700;
+  const HUSHED_BY = { crash: 1, thunder: 1, drum: 1, knock: 1 }; // (and every cue of your own)
   // Shortest gap in ms between two plays of the same cue, so bursts don't stack up.
   // A rival's keeps its gap from rivals' and from yours; yours, only from your own
   // (a rival's flash never swallows yours). A dash's is well under the fastest tick, and a
@@ -53,6 +65,7 @@ window.SnakeAudio = (() => {
     crackle: 300, thunder: 900, gust: 1500, burrow: 1000, scrabble: 250, rainbow: 1500, rain: 1500,
     ko: 200, close: 1400, field: 800, bonk: 150, bonked: 300, leap: 120, thunk: 250, dash: 50, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
     flash: 150, flashReady: 600, lastApples: 4000,
+    babble: 4000, // (whoever speaks: never two at once, at most one every few seconds; bubbles come more often, so most are silent)
     choke: 300, cough: 600, // (your next choke can come as soon as your cough is over, COUGH_TICKS ticks on: both are heard again)
     dig: 300, knock: 400, // (a beetle digs in again only after a spell under, the woodpecker strikes again only after a rest and an aim: each is heard; beetles digging in together, or the pieces one strike knocks aside, are one sound)
     heal: 400, // (a burrow closes over only for a dig's new one: two digs ending together, one crumble)
@@ -60,13 +73,14 @@ window.SnakeAudio = (() => {
   // A cue that stands for others for a while: a win that's also a best is one phrase.
   const COVERS = { winBest: { win: 6000, best: 6000 } };
   const CUTS_SHORT = { go: 'riser' };        // a cue that cuts another short (the riser lands on Go)
-  const CUT_SHORT = { riser: true };
+  const CUT_SHORT = { riser: true, babble: true }; // (a babble: by your own sounds, see HUSHED_BY)
   const DUCKS = { win: 1.2, best: 0.8, winBest: 1.6 }; // the music steps back under a fanfare (seconds)
   const RESUME_GRACE = 500;    // ms in which cues asked for while the context wakes still play once it runs
   const LEAD = 0.005;          // seconds from asking to sounding
   const NOISE_SECONDS = 4;     // the one shared noise buffer: long enough that long layers never repeat
   const MUTED_KEY = 'barkbite-muted';
   const MUSIC_KEY = 'barkbite-music';
+  const VOICES_KEY = 'barkbite-voices';
   const MUSIC_VOLUME = 0.55;   // the track, relative to the sound effects
   const IDLE_MS = 60000;       // the title loop fades after this long with nobody at the keys...
   const IDLE_STOP_MS = 15000;  // ...and stops this long after
@@ -77,6 +91,7 @@ window.SnakeAudio = (() => {
   let musicBus = null;         // the track's own gain...
   let duck = null;             // ...through a duck (fanfares), into master
   let musicOn = readFlag(MUSIC_KEY, true);
+  let voicesOn = readFlag(VOICES_KEY, true); // (the babble: see BABBLE_LEVEL)
   let noiseBuf = null;         // built in idle time, or on first use
   let unsupported = false;
   let primed = false;          // a gesture has unlocked sound at least once
@@ -94,6 +109,7 @@ window.SnakeAudio = (() => {
   const coveredUntil = {};     // cue name -> ms timestamp (see COVERS)
   const sounding = {};         // cue name -> { voice, end } of its latest play (see CUTS_SHORT)
   let yourChomp = -Infinity, rivalChomp = -Infinity; // ms of the last chomp, yours and any rival's (see CHOMPS)
+  let hushAt = -Infinity;      // ms of your last sound, or the world's loudest (see BABBLE_YIELD)
 
   // The pitch and volume of the cue being built; tone() and noise() apply them.
   let pitchMul = 1;
@@ -944,6 +960,50 @@ window.SnakeAudio = (() => {
     ui(t) {
       knock(t, 1250, 0.06);
     },
+
+    // A rival's bubble: babble, not speech. A few syllables in its own voice (BABBLERS), each a buzz
+    // through a vowel-shaped band, stepping about in pitch and falling at the end, as a sentence does;
+    // more for a longer line, all inside BABBLE_MAX. A snake with no voice (Mute) stays silent.
+    babble(t, o) {
+      const v = BABBLERS[o.voice];
+      if (!v) return;
+      const chars = Number.isFinite(o.chars) ? o.chars : 20;
+      const n = Math.max(2, Math.min(v.n, Math.round(chars / 7)));
+      const syl = Math.min(v.syl, (BABBLE_MAX - 0.03) / n), len = syl * (v.gate || 0.85);
+      for (let i = 0; i < n; i++) {
+        const at = t + i * syl, last = i === n - 1;
+        const from = v.f * Math.pow(2, (Math.random() * 2 - 1) * v.jump / 12);
+        const to = from * Math.pow(2, (last ? -(v.fall ?? 2) : v.glide || 0) / 12);
+        const peak = 0.1 * v.level * (last ? 0.8 : 1);
+        const osc = tone(at, v.wave, from, len, peak, Math.min(0.02, len * 0.3), to, { type: 'bandpass', freq: v.formant * (0.9 + Math.random() * 0.2), q: v.q });
+        if (v.wob) vibrato(osc, at, len, v.wob, from * 0.08);
+        if (v.breath) noise(at, len, peak * v.breath, 'bandpass', v.formant * 1.6, 1.2);
+      }
+    },
+  };
+
+  // Each rival's babble: f its pitch (Hz), syl a syllable (s) and n the most it says, gate how much of
+  // each sounds (clipped below 0.85), wave and formant (Hz, with q) its timbre, jump how far each
+  // syllable steps (semitones, either way), glide its slide within it and fall the last one's drop,
+  // wob a gobble (Hz), breath a whisper over it, level its loudness. Mute has none: it stays silent.
+  const BABBLERS = {
+    mason: { f: 105, syl: 0.09, n: 4, gate: 0.55, wave: 'sawtooth', formant: 600, q: 2, jump: 1, glide: 0, fall: 2, level: 1 }, // clipped and deep
+    gobbler: { f: 175, syl: 0.07, n: 6, wave: 'sawtooth', formant: 700, q: 3, jump: 3, glide: -2, wob: 18, level: 1 }, // gobbly
+    ghost: { f: 330, syl: 0.14, n: 3, wave: 'sine', formant: 420, q: 0.5, jump: 2, glide: 1, breath: 0.8, level: 0.45 }, // faint, airy
+    sniper: { f: 200, syl: 0.06, n: 4, gate: 0.5, wave: 'square', formant: 1200, q: 3, jump: 0.5, glide: 0, fall: 1, level: 0.8 }, // terse, precise
+    sovereign: { f: 140, syl: 0.12, n: 4, wave: 'sawtooth', formant: 650, q: 2, jump: 2, glide: 1, fall: 4, level: 1 }, // stately
+    colonist: { f: 170, syl: 0.08, n: 5, wave: 'sawtooth', formant: 800, q: 2.5, jump: 3, glide: 2, level: 1 }, // brisk, eager
+    drab: { f: 150, syl: 0.1, n: 4, wave: 'triangle', formant: 500, q: 1.5, jump: 0.3, glide: 0, fall: 0.5, level: 0.8 }, // flat
+    vulture: { f: 125, syl: 0.1, n: 4, wave: 'sawtooth', formant: 500, q: 4, jump: 2, glide: -3, breath: 0.5, level: 0.9 }, // raspy
+    wildcard: { f: 190, syl: 0.08, n: 6, wave: 'square', formant: 900, q: 2, jump: 7, glide: 3, level: 0.9 }, // all over the place
+    creeper: { f: 240, syl: 0.11, n: 4, wave: 'triangle', formant: 1400, q: 1.5, jump: 1, glide: -1, breath: 0.9, level: 0.6 }, // a sly whisper
+    metagamer: { f: 230, syl: 0.055, n: 6, wave: 'square', formant: 1300, q: 2.5, jump: 2, glide: 1, level: 0.8 }, // quick, knowing
+    capricious: { f: 210, syl: 0.09, n: 5, wave: 'sawtooth', formant: 900, q: 2, jump: 5, glide: 4, level: 0.9 }, // up and down
+    copycat: { f: 260, syl: 0.08, n: 5, wave: 'triangle', formant: 1100, q: 2, jump: 4, glide: 5, level: 0.9 }, // sing-song glides
+    desperado: { f: 115, syl: 0.13, n: 3, wave: 'sawtooth', formant: 550, q: 2, jump: 1, glide: -4, fall: 5, level: 0.9 }, // a drawl
+    ouroboros: { f: 160, syl: 0.12, n: 4, wave: 'triangle', formant: 700, q: 1.5, jump: 1.5, glide: 2, breath: 0.6, level: 0.8 }, // a hiss round it
+    joker: { f: 280, syl: 0.065, n: 6, wave: 'square', formant: 1200, q: 2.5, jump: 6, glide: 4, level: 0.8 }, // giggly
+    star: { f: 320, syl: 0.075, n: 5, wave: 'triangle', formant: 1500, q: 2, jump: 3, glide: 3, fall: 1, level: 0.9 }, // bright
   };
 
   // ---- Playing --------------------------------------------------------------
@@ -961,7 +1021,9 @@ window.SnakeAudio = (() => {
 
   function start(name, opts) {
     const cue = CUES[name];
-    const o = opts || NO_OPTS;
+    const babble = name === 'babble';
+    const o = babble ? { ...opts, rival: true } : opts || NO_OPTS; // (only rivals babble)
+    if (babble && (!voicesOn || !BABBLERS[o.voice] || now() - hushAt < BABBLE_YIELD)) return; // (Mute's silence holds no one else's back)
     const ms = now();
     const key = o.rival ? name + '~' : name, gap = MIN_INTERVAL[name] || 0;
     if (ms - (lastPlayed[key] ?? -Infinity) < gap || ms - (lastPlayed[name] ?? -Infinity) < gap || ms < (coveredUntil[name] || 0)) return;
@@ -980,9 +1042,12 @@ window.SnakeAudio = (() => {
 
     lastPlayed[key] = ms;
     if (chomp) { if (theirs) rivalChomp = ms; else yourChomp = ms; }
+    const hushes = tier === 'you' || !!HUSHED_BY[name];
+    if (hushes) hushAt = ms;
     for (const k in COVERS[name]) coveredUntil[k] = ms + COVERS[name][k];
     pitchMul = Math.pow(2, pitch / 12);
-    volMul = volume * (o.rival ? RIVAL_VOLUME * (theirs ? RIVAL_CHOMP : 1) : 1);
+    const tight = babble && Number.isFinite(o.tight) ? Math.max(0, Math.min(1, o.tight)) : 0;
+    volMul = volume * (o.rival ? RIVAL_VOLUME * (theirs ? RIVAL_CHOMP : babble ? BABBLE_LEVEL * (1 - BABBLE_HUSH * tight) : 1) : 1);
     const t = ctx.currentTime + LEAD + delay;
     building = { pending: 0, gen: generation, nodes: [], end: t };
     voices++;
@@ -1014,6 +1079,8 @@ window.SnakeAudio = (() => {
       out = into;
       const cut = sounding[CUTS_SHORT[name]];
       if (cut && cut.end > t) cut.voice.gain.setTargetAtTime(0, t, 0.03);
+      const babbling = hushes && sounding.babble;
+      if (babbling && babbling.end > t) babbling.voice.gain.setTargetAtTime(0, t, 0.02);
       if (DUCKS[name]) duckMusic(t, DUCKS[name]);
       cue(t, o);
       if (o.gold && name !== 'golden' && name !== 'leaf' && name !== 'wrap') sparkle(t + 0.05, 0.8);
@@ -1103,6 +1170,17 @@ window.SnakeAudio = (() => {
   }
   const isMusicOn = () => musicOn;
   const toggleMusic = () => setMusicOn(!musicOn);
+
+  // The babble's own switch (the rest of the sound and the music stay as they are; muted, it's silent too).
+  function setVoicesOn(value) {
+    voicesOn = !!value;
+    try { window.localStorage.setItem(VOICES_KEY, voicesOn ? '1' : '0'); } catch { /* storage unavailable */ }
+    const b = sounding.babble;
+    if (!voicesOn && b && ctx && b.end > ctx.currentTime) { try { b.voice.gain.setTargetAtTime(0, ctx.currentTime, 0.02); } catch { /* it ends soon anyway */ } }
+    return voicesOn;
+  }
+  const isVoicesOn = () => voicesOn;
+  const toggleVoices = () => setVoicesOn(!voicesOn);
 
   // One music note straight to the music bus (or `dest`): no voice counting, it ends itself.
   function mtone(t, type, freq, dur, peak, attack, toFreq, filter, dest) {
@@ -1416,5 +1494,5 @@ window.SnakeAudio = (() => {
   const toggleMuted = () => setMuted(!muted);
 
   create();
-  return { unlock, play, setMuted, isMuted, toggleMuted, music, weather, setMusicOn, isMusicOn, toggleMusic, drumBlows };
+  return { unlock, play, setMuted, isMuted, toggleMuted, music, weather, setMusicOn, isMusicOn, toggleMusic, setVoicesOn, isVoicesOn, toggleVoices, drumBlows };
 })();
