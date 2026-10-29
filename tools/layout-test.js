@@ -106,8 +106,8 @@
 // (tools/parts.js): 00 the screens, 01 the page's probes, 02 the helpers, 03 every device, 04 upright
 // heights in between, 05 Score and Best growing, 06 one screen in every state, 07 over the board,
 // 08-09 every 10 and 80 px of height, 10 the chatter streaming and the header on more screens, 11 on
-// its side and old browsers, 12 the cards, full screen, the screen awake and swipes, 99 what it
-// measured. A new check goes in its area's file, or a new one, and a new file into one of JOBS.
+// its side and old browsers, 12 the cards, full screen, the screen awake and swipes, 13 the phone's
+// bottom, 14 the bigger woodpecker, 99 what it measured. A new check goes in its area's file, or a new one, and a new file into one of JOBS.
 //   LAYOUT_JOB=N node tools/layout-test.js: only the parts of job N of JOBS (or its share of a
 //   part's screens), as CI runs them side by side; the screens, the probes, the helpers and the
 //   summary (00-02, 99) run in every job.
@@ -117,9 +117,10 @@ const runParts = require('./parts.js');
 const { launch, serve, HELPERS } = require('./browser');
 
 // CI's jobs, by the time each part took (of about 1150 s on a cloud machine): 03 every device
-// 308 s, 04 154, 05 44, 06 one screen in every state 354, 07 43, 08 87, 09 50, 10 46, 11 19, 12 45.
+// 308 s, 04 154, 05 44, 06 one screen in every state 354, 07 43, 08 87, 09 50, 10 46, 11 19, 12 45,
+// 14 about 90.
 // '03/1' is the first of two shares of part 03's screens (share() in the part), '03/2' the second.
-const JOBS = { 1: ['03/1', '07', '09'], 2: ['03/2', '05', '13'], 3: ['06/1', '10'], 4: ['06/2', '11', '12'], 5: ['04', '08'] };
+const JOBS = { 1: ['03/1', '07', '09'], 2: ['03/2', '05', '13'], 3: ['06/1', '10'], 4: ['06/2', '11', '12'], 5: ['04', '08', '14'] };
 const ALWAYS = ['00', '01', '02', '99'];
 const DIR = path.join(__dirname, 'layout');
 const job = process.env.LAYOUT_JOB;

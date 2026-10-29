@@ -123,8 +123,8 @@ check(['across', 'tail'].every(k => beside[k].inCell && beside[k].clear > 0 && b
 
 // Drumming, it never hides where the food in its mark will land (the
 // ring is a promise you plan by): a patch of 3 by 4 with the spot at
-// (6, 10), the bird coming from the right. Nothing in the mark, it
-// clings as it came, over (8, 11); with an apple whose ring is (8, 11),
+// (6, 10), the bird coming from the right. Clinging as it came, it's
+// over (8, 11); with an apple whose ring is (8, 11),
 // it clings the other way, the ring clear, its beak still on the spot.
 // Held to the one way it came (since 2c's bigger bird finds a way nearly
 // clear of any rings round it), with apples both sides: the ring it covers
@@ -141,8 +141,11 @@ const promise = await ev(`(() => {
   const spot = 10 * N + 6, lands = () => E.knocks(g, P).filter(k => k.to).map(k => [k.to.x, k.to.y]);
   const mark = foods => { g.tick++; g.food = foods.map(([x, y]) => ({ x, y, kind: 'food', expires: g.tick + 900 })); g.woodpecker = { x: 6, y: 10, at: g.time - 9000, target: P, strikeAt: g.tick + 17, last: [spot], struckAt: g.tick - 60, restUntil: g.tick, pecks: 1 }; drawN(3); return R.birdPlan(); };
   const out = {};
+  const ways = [1, -1].map(f => drumPoseAt(spot, f)), alts = ways.map(d => d.alts);
+  ways.forEach(d => { d.alts = [d]; }); // (as it came: since 2k it weighs its mark's tiles and the heads too, so an empty mark needn't leave it so)
   let plan = mark([]), pose = at(-plan.times[3]);
   out.came = { flip: pose.flip, phase: pose.phase, covered: covered(8, 11) };
+  ways.forEach((d, i) => { d.alts = alts[i]; });
   plan = mark([[7, 11]]); out.lands1 = lands(); pose = at(-plan.times[3]);
   out.one = { flip: pose.flip, phase: pose.phase, covered: covered(8, 11), beak: +Math.hypot(pose.beak[0] - 6.5 * 32, pose.beak[1] - 10.5 * 32).toFixed(1) };
   for (const f of [1, -1]) { const d = drumPoseAt(spot, f); d.alts = [d]; } // (no other way to cling: since 2c's bigger bird finds one nearly clear of any rings round it)
@@ -150,8 +153,10 @@ const promise = await ev(`(() => {
   const hid = out.lands2.map(([x, y]) => ({ x, y, n: covered(x, y) })).sort((a, b) => b.n - a.n)[0], t = __t;
   // (its ring's pixels on its stroke at every pulse: r 11.5 to 12.8, 3.4 px wide)
   const ring = () => ringPts(hid.x, hid.y, 11.5).concat(ringPts(hid.x, hid.y, 12.5)).map(([bx, by]) => px(bx, by));
-  R.birdOver(false); R.birdFrame(0.5, t); const off = ring();
-  R.birdOver(true); R.birdFrame(0.5, t); const on = ring();
+  const u = Math.ceil(-plan.times[3] / ms) + plan.times[3] / ms; // (the same moment of the blow as it was measured at: since 2k, bigger, the ring is under its head, which moves between blows)
+  R.birdOver(false); R.birdFrame(u, t); const off = ring();
+  R.birdOver(true); R.birdFrame(u, t); const on = ring();
+  R.birdFrame(0.5, t); // (and back to where the piece in the air is looked for, as before)
   out.two = { phase: R.birdPose().phase, hid, under: off.filter(c => c[3] > 128).length, over: differ(off, on) };
   let cell = null; // (under its body, a piece's height clear of the rings)
   for (let y = 6; y <= 17 && !cell; y++) for (let x = 0; x < N && !cell; x++) {
@@ -169,10 +174,12 @@ const promise = await ev(`(() => {
 })()`);
 {
   const { came, one, two, air } = promise;
-  check(came.phase === 'drum' && came.covered > 16 && one.phase === 'drum' && JSON.stringify(promise.lands1) === '[[8,11]]' && one.covered === 0 && one.flip !== came.flip && one.beak < 3,
+  check(came.phase === 'drum' && came.covered > 8 && // (a quarter of the ring and more: since 2k, bigger, its head is over it rather than its body, 9 of 32 at 1.7)
+    one.phase === 'drum' && JSON.stringify(promise.lands1) === '[[8,11]]' && one.covered === 0 && one.flip !== came.flip && one.beak < 3,
     'drumming, the woodpecker clings clear of a ring where food in its mark will land, if it can',
     `as it came (facing ${came.flip > 0 ? 'right' : 'left'}) it covers ${came.covered} of 32 points round the ring at 8,11; with an apple landing there it faces ${one.flip > 0 ? 'right' : 'left'}, covering ${one.covered}, its beak ${one.beak} units off the spot`);
-  check(two.phase === 'drum' && two.hid.n > 8 && two.over > 0.4 * two.under && air.under === air.of && air.over > 0.8 * air.of,
+  check(two.phase === 'drum' && two.hid.n > 8 && two.over > 0.3 * two.under && // (since 2k its head, its red cap among it, lies over this ring: drawn over red, the ring looks the same)
+    air.under === air.of && air.over > 0.8 * air.of,
     'and where it can’t, the ring it covers is drawn over it, as is a piece in the air under it',
     `rings at ${JSON.stringify(promise.lands2)}: ${two.hid.n} of 32 points at ${two.hid.x},${two.hid.y} under it, ${two.over} of its ${two.under} pixels there drawn over; an apple up in the air over ${air.cell}: ${air.over} of ${air.of} pixels drawn over it`);
 }
