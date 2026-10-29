@@ -341,6 +341,17 @@ board, off the page's words; drumming, no more of the heads, food and mark's til
 screen, a 3 by 4 mark, compared over the five screens); nothing on the page moves for it. The rest (on the screen in every pose and flight, never over a cell perched) is
 `03-devices.js` on every screen. Pictures: `tools/dev/woodpecker-size/shots.js`.
 
+- *Clear of the row's words (2k+).* Haakon (29 October 2026): "Keep the bird 1.7x. And agreed with everything else."
+  On a phone held upright it perches over the row under the board as before, but clear of its words: the speed
+  buttons' and the switches' labels, and the speed's and the chatter's captions (`words` from `placeBoard` in
+  `game/screen.js`, those level with the bird). Where it would stand covers one, it takes the nearest place that
+  covers none, as it already did round the frame's moss (at 390 and 320 px wide, the gap between 4× and the switches,
+  over the chatter's empty end). It never shrinks for this: where no place at its size clears them, it
+  perches as it did. The chatter's lines are left out: they change every few seconds, and the bird would move with
+  each. At 320 px wide the gap is 79 px for its 78, so its box counts its outline and gap but nothing more round the
+  words. Tested in `tools/layout/15-the-perch-clear-of-words.js` (layout job 2) at 390×844 and 320×640; pictures from
+  `tools/dev/woodpecker-perch/shots.js`.
+
 ### The woodpecker pecks beside a snake
 
 Haakon (29 October 2026; entry 2e): on a tile with a snake on it, the bird pecks beside the body, not on it. Its beak

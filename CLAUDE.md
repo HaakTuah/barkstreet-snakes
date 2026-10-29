@@ -120,7 +120,8 @@ want them taking on any bigger task, as I want the bulk of that remaining usage 
 task after task, and check weekly usage after every commit. From about 90% of the weekly limit, take on no bigger
 task: finish the one at hand if it is nearly done, or bring it to a clean commit and open a draft PR saying how to test
 it and what is left; then only small things (a fix, a doc), and note where you stopped in `docs/PROGRESS.md`. Two
-building sessions share the limit: this game's and Amarna Letters'.
+building sessions share the limit: this game's and Amarna Letters'. Only the measured share counts: the app's weekly usage warning is not the brake (Haakon, 29 October 2026: "They
+weren't supposed to stop before 90%. We're still at only 76%").
 
 ## Git and GitHub
 

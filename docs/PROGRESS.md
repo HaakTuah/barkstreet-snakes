@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 5, part 3 (PR #183) | Mason now lays its walls two thick (its body beside itself back to 27%, where it was; it fell to 21% once a wall one thick could be cut), at the price of its straight runs: 3.5 cells a turn down to 3.1 (everyone else: 1.9). Keep it, or keep its runs (walls one thick, which a flash cuts)? | Keep the double walls: the design asks for them, and its runs stay its mark | open |
+| (none open) | | | |
 
 ## The queue, in order
 
@@ -48,7 +48,8 @@ beside it as before. A playable draft PR as early as it can be, so Haakon can tr
 
 *Done so far:* **the island hop** and **no auto-jump** (PR #158: a jump goes over up to 3 cells, a cell a tick; a press waits 5 moves; the landing ring; protocol 16).
 
-*Where it stands* (29 October 2026, stopped at the weekly usage warning, per "Usage" in `CLAUDE.md`): parts 1, 2 and
+*Where it stands* (29 October 2026; it paused at the app's weekly usage warning, which is not the brake: Haakon, "They
+weren't supposed to stop before 90%. We're still at only 76%", so it carries on): parts 1, 2 and
 most of 3 are merged (#158, #174, #183: the cuts, a failed flash, your own beads squashed, Mason's double walls, the
 edge measured). **Next, in order:** part 3b, **mushrooms come back up** (nothing built yet; its own PR, an engine-rules
 and AI entry, protocol 19: the cheek, the ring 3 ahead, the spit, a shade stronger each time, the rivals aiming and
@@ -189,14 +190,7 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
 
 ### 2k. Done: the woodpecker, as big as it gets, 1.7 times (PR #170); in `docs/archive/progress-done.md`.
 
-### 2k+. The woodpecker perches clear of the buttons' words, at 1.7 times (Haakon, 29 October 2026; small, an art lane)
-
-Haakon (29 October 2026), to whether the bird should keep clear of the speed buttons' words on a phone held upright:
-"Keep the bird 1.7x. And agreed with everything else." So it stays 1.7 times everywhere, and on a phone held upright
-it chooses its perch over the row under the board so that no button's word is covered: between two buttons, or over a
-gap or the chatter's empty end, still drumming and pecking the row as 1b++ has it. It never shrinks for this; where no
-perch at that size clears every word, the size wins and it perches as now. The layout suite gets a test that no
-button's label is covered where a clear perch exists; pictures at 390 and 320 pixels.
+### 2k+. Done: the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191); in `docs/archive/progress-done.md`.
 
 ### 2l. Done: flags that bend as a snake goes over them (PR #186); in `docs/archive/progress-done.md`.
 

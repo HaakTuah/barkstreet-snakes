@@ -38,3 +38,5 @@ orchestrator) and for any builder that needs the detail. `CLAUDE.md` keeps what 
      brief and check-in, and passes on every lane's "Questions for Haakon" word for word.
   5. **The brake closes lanes first.** From about 85% of the weekly usage, no new side lane opens and open ones finish;
      from about 90%, as "Usage" says, only small things in the main lane.
+     Only the measured share counts (Haakon, 29 October 2026, when a builder stopped at the app's weekly usage warning: "They weren't supposed to stop before 90%. We're still at only 76%"): the app's weekly usage warning is not the brake, and a session that cannot
+     read the share carries on until Haakon says to stop.
