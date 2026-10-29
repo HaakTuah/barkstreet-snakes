@@ -287,6 +287,27 @@ The draft is in `docs/handoff/woodpecker-acts-draft.md`.
 
 As planned: up to 4 players, key sets, gamepads, and local and online play together.
 
+### 8. Last: beetles who meet, fight (Haakon, 29 October 2026; an engine-rules entry, after everything else)
+
+Haakon (29 October 2026), watching two beetles walk about an island the woodpecker made, away from the snakes: "Looked
+a bit boring that they just walked around like that, I wanted something to happen. Therefore, given how rare it is, i
+thought it should feel special." Then, to the design session's take: "Love how you described it! And it should come
+late, it is probably the most uneasecary feature we have discussed here, so leave it last or close to last".
+- **They notice each other:** two beetles within about 4 cells, with no head near enough to scare them, stop wandering
+  and walk towards each other, sizing each other up, so you can see it coming.
+- **A shoving match:** head to head, wing cases up, a buzzing clack, a second or two of pushing.
+- **One loses:** the loser flips onto its back, legs waving, for about a second, then rights itself and runs for a
+  burrow; the winner lifts its wing cases and buzzes, as they do now and then, but bigger.
+- **The gamble:** while they fight they only bolt from a head within 2 or 3 cells, not 6, so a snake that spots it
+  and gets there in time (over a hole by a jump, if need be) can take one or both. The rivals see fighting beetles as
+  they are, an easier catch, and go for it when it pays, as for any food; a rules test proves it, through the same
+  engine calls.
+- **Every new rule needs a visible cue and a lesson:** the frame lights up emerald as for a beetle, the clack and buzz
+  as world cues, and a Field guide row.
+- **Online stays in step:** a protocol bump if the beetles' messages change.
+- **Measured:** the simulation counts fights a round (rare is fine, as long as it happens), and deaths near a beetle,
+  the one real risk, stay within noise.
+
 ## Noted, not yet queued
 
 - **Apples by the edge rot** (found in PR #142's census, `tools/dev/rotten-apples.js`): 80% of the apples that rot lie
