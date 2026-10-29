@@ -36,10 +36,11 @@ function setBoardRect(x, y, w, free = null) {
   boardRect.rims = free?.rims || [];
   perches.clear(); drumAt.clear(); birdLayout++; // (its perches and where it drums are worked out again: the room round the board has changed)
 }
-const BU = CELL * 0.85 * 1.3; // the bird's unit (1.3 times its first size since 2c, on the board and under it alike)
+const BIRD_GROW = 1.3; // (times its first size: 1.3 since 2c, GROWN since 2k, on the board and under it alike)
+const BU = CELL * 0.85 * BIRD_GROW; // the bird's unit
 const BILL = [2.55, -1.72]; // its beak tip, in units, before its head moves
 const BIRD_BOX = [-1.15, -2.55, 2.65, 3.2]; // (all of it, round its feet, in units, facing right: its back, crown, beak tip, tail)
-const PERCH_NEAR = 0.65, PERCH_MIN_PX = 30, PERCH_FLOOR_PX = 22; // (how small it may perch: on a nearer side; and, CSS px tall, where there's no room anywhere; and on a phone held upright of a height in between, where the page leaves it room for 24)
+const PERCH_NEAR = 0.65 * 1.3 / BIRD_GROW, PERCH_MIN_PX = 30, PERCH_FLOOR_PX = 22; // (how small it may perch: on a nearer side, 0.65 of its size at 2c, so growing never sends it to a smaller perch; and, CSS px tall, where there's no room anywhere; and on a phone held upright of a height in between, where the page leaves it room for 24)
 const PERCH_GAP_PX = 1.5, BOX_EDGE = 0.1; // (how far, CSS px, it keeps off the cells, its ink's soft edge never touching one; and, units, how far its outline and its beak, turned to look, reach past its box)
 const LEDGE_LOOK = 0.3, CROUCH = 0.25; // (on the ledge, how far it may look up at its chunk, radians, with its beak still under the board; and how far its crouch lowers it, units)
 const RIM_GRIP = 0.95, RIM_FEET = 0.8, RIM_REACH = 2.5, RIM_PECK_MS = 360; // (on a button's rim: how far ahead of it its toes grip, and how far under its feet' middle, units; how far along the ledge it goes to one, units; and how long its two pecks at it take)
@@ -580,10 +581,12 @@ function drumPoseAt(spot, flip) {
 // Which of those ways it clings by, drumming: the one that hides least of
 // what you need to see then, as the board stands: the rings where the
 // food in its mark will land (the strike's promise; four times what the
-// food itself counts), then that food, trembling. As it came, upright, if
-// that's as clear. (What it still covers is drawn over it: see
-// drawWoodpecker.)
-const SEE_RING = 4, SEE_FOOD = 1;
+// food itself counts), then the heads (twice), then the food, trembling in
+// its mark or lying near, and the tiles of its mark. As it came, upright,
+// if that's as clear. (Since 2k, bigger, it would hide more of those
+// beside its spot than it did at 1.3 if it didn't weigh them. What it
+// still covers of the rings is drawn over it: see drawWoodpecker.)
+const SEE_RING = 4, SEE_HEAD = 2, SEE_FOOD = 1, SEE_TILE = 1;
 let seeN = 0, seeX = new Float32Array(32), seeY = new Float32Array(32), seeW = new Float32Array(32);
 function drumChoice(w, spot, flip) {
   const d = drumPoseAt(spot, flip);
@@ -595,7 +598,9 @@ function drumChoice(w, spot, flip) {
     seeX[seeN] = (x + 0.5) * CELL; seeY[seeN] = (y + 0.5) * CELL; seeW[seeN++] = wt;
   };
   for (let i = 0; i < lands.length; i += 2) see(lands[i], lands[i + 1], SEE_RING);
-  for (const f of game.food) if (w.target.includes(f.y * GRID + f.x)) see(f.x, f.y, SEE_FOOD);
+  for (const s of game.snakes) if (s.alive && s.body.length) see(s.body[0].x, s.body[0].y, SEE_HEAD);
+  for (const f of game.food) see(f.x, f.y, SEE_FOOD);
+  for (const c of w.target) see(c % GRID, Math.floor(c / GRID), SEE_TILE);
   if (!seeN) return d;
   let pick = d, least = Infinity;
   for (const p of d.alts) {
