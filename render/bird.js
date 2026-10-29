@@ -551,6 +551,7 @@ function chipsAfter(w, since, P) {
 // leaning, facing either way (or, where it must lie level, lying level),
 // for drumChoice.
 const DRUM_TRIES = [0, 1, 0.45, 1, -0.45, 1, 0, -1, 0.45, -1, -0.45, -1, Math.PI / 2, 1, -Math.PI / 2, 1, Math.PI / 2, -1, -Math.PI / 2, -1], DRUM_SIZES = [1, 0.85, 0.72, 0.6];
+const AIM_REACH = CELL / 2 - AIM_IN; // (how far its aim beside a snake can move the whole of it, board px: see freeAim. Since 2k, bigger, a pose fitted at the cell's middle could be moved off the screen by it)
 const DRUM_UPRIGHT = 12; // (the tries upright or leaning: the first six)
 const probe = { x: 0, y: 0, s: 1, flip: 1, rot: 0, crouch: 0, wing: 0, stroke: 1, sweep: 0, near: 1, far: 1, feet: 1, turn: 0, thrust: 0, air: 0 };
 function drumPoseAt(spot, flip) {
@@ -569,7 +570,7 @@ function drumPoseAt(spot, flip) {
       Q.thrust = B_IN; birdBox(Q, true);
       Q.thrust = -1.3 * B_BACK; Q.crouch = 0.8; birdBox(Q, false);
       Q.crouch = 0; Q.rot = (DRUM_TRIES[i] - 0.3) * f; birdBox(Q, false); Q.rot = DRUM_TRIES[i] * f; // (and leaning back as it lands, or as it pulls out of the hole)
-      const over = Math.max(room.x0 - box.x0, room.y0 - box.y0, box.x1 - room.x1, box.y1 - room.y1);
+      const over = Math.max(room.x0 - box.x0, room.y0 - box.y0, box.x1 - room.x1, box.y1 - room.y1) + AIM_REACH; // (and room for its aim beside a snake to move it, see aimOff)
       if (over <= 0) { const p = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot, upright: i < DRUM_UPRIGHT }; if (d) d.alts.push(p); else { d = p; d.alts = [p]; } }
       else if (!d && over < least) { least = over; best = { x: Q.x, y: Q.y, s, flip: f, rot: Q.rot }; }
     }
@@ -581,13 +582,14 @@ function drumPoseAt(spot, flip) {
 }
 // Which of those ways it clings by, drumming: the one that hides least of
 // what you need to see then, as the board stands: the rings where the
-// food in its mark will land (the strike's promise; four times what the
-// food itself counts), then the heads (twice), then the food, trembling in
-// its mark or lying near, and the tiles of its mark. As it came, upright,
+// food in its mark will land (the strike's promise, twice what anything
+// else counts), then the heads, the food (trembling in its mark or lying
+// near) and the tiles of its mark (all of them together counting as one
+// head, so a ring still outweighs them). As it came, upright,
 // if that's as clear. (Since 2k, bigger, it would hide more of those
 // beside its spot than it did at 1.3 if it didn't weigh them. What it
 // still covers of the rings is drawn over it: see drawWoodpecker.)
-const SEE_RING = 4, SEE_HEAD = 2, SEE_FOOD = 1, SEE_TILE = 1;
+const SEE_RING = 4, SEE_HEAD = 2, SEE_FOOD = 2, SEE_TILE = 2;
 let seeN = 0, seeX = new Float32Array(32), seeY = new Float32Array(32), seeW = new Float32Array(32);
 function drumChoice(w, spot, flip) {
   const d = drumPoseAt(spot, flip);
@@ -601,7 +603,7 @@ function drumChoice(w, spot, flip) {
   for (let i = 0; i < lands.length; i += 2) see(lands[i], lands[i + 1], SEE_RING);
   for (const s of game.snakes) if (s.alive && s.body.length) see(s.body[0].x, s.body[0].y, SEE_HEAD);
   for (const f of game.food) see(f.x, f.y, SEE_FOOD);
-  for (const c of w.target) see(c % GRID, Math.floor(c / GRID), SEE_TILE);
+  for (const c of w.target) see(c % GRID, Math.floor(c / GRID), SEE_TILE / w.target.length);
   if (!seeN) return d;
   let pick = d, least = Infinity;
   for (const p of d.alts) {
