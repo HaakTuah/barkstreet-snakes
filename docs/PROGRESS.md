@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| (none open) | | | |
+| 2d, rivals' chomps (PR #150) | While you watch after dying, sped up, rivals feeding on bead trails can chomp up to about five times a second (softly, 0.3 of your own chomp, one at a time). Busy, or fine? | Kept as is; if busy, a longer gap between rivals' chomps only while watching. | open |
 
 ## The queue, in order
 
@@ -87,18 +87,7 @@ apple it needs. Build it from the cause, in the one template every rival shares:
 
 ### 2c. Done: the woodpecker, 1.3 times (PR #139); in `docs/archive/progress-done.md`.
 
-### 2d. Rivals' chomps (Haakon, 29 October 2026; small, a sound lane)
-
-Haakon (29 October 2026): "Yes, queue it. Feels strange that there is no sound, when your snake makes loud sound when
-eating." Today only your own snake's eating sounds (`sounds()` in `game/round.js`: `e.type === 'eat' && isMe(e.snake)`);
-a rival's makes no sound, except a golden mushroom, which already plays softer and further off (`{ rival: true, ...at(e.x) }`).
-- **Every rival's eating sounds,** each kind with its own cue as yours does (apple, golden, meat, mushroom, beetle,
-  leaf), but softer and further off, placed where it ate on the board (`at(e.x)`), so you can hear a rival feeding where
-  you aren't looking. Your own stays the loudest and the only one with the streak's rising pitch.
-- **Never a pile-up:** four snakes eating at once must not drown your own chomp or clip (the compressor and the cues'
-  spacing in `audio.js`); rivals' chomps give way to yours, as other rival sounds do.
-- Muted and the sound settings work as for every cue; online, each player hears it on their own machine, so no
-  protocol change. A test checks that a rival's eat plays its rival cue and yours plays yours.
+### 2d. Done: rivals' chomps (PR #150); in `docs/archive/progress-done.md`.
 
 ### 2e. Done: the woodpecker pecks beside a snake, not on it (PR #141); in `docs/archive/progress-done.md`.
 

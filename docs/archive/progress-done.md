@@ -193,6 +193,21 @@ cause and per-rival wins stay within noise; pictures at a 390-pixel phone and de
 Done (PR #139): 1.3 times everywhere, one size wherever the screen has room (101 px on a 390×844 phone, from 78); the
 simulation's fingerprints identical. See "The woodpecker, 1.3 times" in `docs/design/32-the-owners-playtest.md`.
 
+### 2d. Rivals' chomps (Haakon, 29 October 2026; small, a sound lane)
+
+Haakon (29 October 2026): "Yes, queue it. Feels strange that there is no sound, when your snake makes loud sound when
+eating." Today only your own snake's eating sounds (`sounds()` in `game/round.js`: `e.type === 'eat' && isMe(e.snake)`);
+a rival's makes no sound, except a golden mushroom, which already plays softer and further off (`{ rival: true, ...at(e.x) }`).
+- **Every rival's eating sounds,** each kind with its own cue as yours does (apple, golden, meat, mushroom, beetle,
+  leaf), but softer and further off, placed where it ate on the board (`at(e.x)`), so you can hear a rival feeding where
+  you aren't looking. Your own stays the loudest and the only one with the streak's rising pitch.
+- **Never a pile-up:** four snakes eating at once must not drown your own chomp or clip (the compressor and the cues'
+  spacing in `audio.js`); rivals' chomps give way to yours, as other rival sounds do.
+- Muted and the sound settings work as for every cue; online, each player hears it on their own machine, so no
+  protocol change. A test checks that a rival's eat plays its rival cue and yours plays yours.
+
+Done in PR #150: a rival's meal plays its kind's own cue, as a rival's (dulled, at 0.3 of your chomp), from where it ate, never with the streak; one rival's chomp at a time, 180 ms apart, none for 350 ms after yours. Design: "Rivals' chomps" in `docs/design/21-sound.md`.
+
 ### 2e. The woodpecker pecks beside a snake, not on it (Haakon, 29 October 2026; small, an art lane after 2c, which draws the same bird)
 
 Haakon (29 October 2026): "Looks a bit weird when the woodpecker pecks a tile with a snake tail on, and the snake isn't
