@@ -165,6 +165,14 @@ Its done entries (PRs #49 to #124) are in `docs/archive/progress-done.md`, "Item
 
 ### 3b. The rivals who change: Capricious, Copycat and Wildcard (Wildcard's part after 5)
 
+*Capricious done (PR #126), Copycat done (PR #142), 29 October 2026; the readings are in the design file.* **Wildcard's
+part waits** (after 5), built on the branch `wildcard-shows-its-mix`: two or three traits a round from eight (`TRAITS`
+in `ai.js`), its tag's note ("This round: hungry, reckless and hunts"), a brag as its first line (with its Chinese), a
+Field guide row, protocol 16 with `mix` synced, rules tests, and the simulation's `--signatures` reading each trait's
+trademark. Left to do: merge `develop` into it (its `ai.js` predates 5), re-check the traits that showed weakly in a
+first 40-round look (coward, tail-rider: given Ghost's and Creeper's room weights since), the A/B and head to head,
+pictures, review.
+
 As `docs/design/35-capricious-copycat-and-wildcard.md` describes: Capricious does impressions of every other rival from
 a shuffled deck, each with its costume and an opening line; Copycat plays as the leader plays, copying a person by what
 they do; Wildcard draws a few strong traits a round and shows them. One PR, or one per rival if that is cleaner.
@@ -175,6 +183,10 @@ its mimic weight (120) outweighing the pull of food, and the room and margin wei
 move. Copycat's part of 3b fixes it, and first checks with a census whether every rival does it: of the apples that
 rot, how many were within a rival's reach, and how far each was from the edge. A competent snake takes a safe apple by
 the wall ("Clever rivals, human reactions"); one it takes into a dead end doesn't count as safe.
+*Checked in PR #142* (`tools/dev/rotten-apples.js`, 150 rounds, seed 21): Copycat had been the worst, 0.20 apples
+passed up (its head within 2) and left to rot a minute alive, 0.15 by the edge; with its copied habits and its pull to
+mimic cut from 120 to 40, 0.13 and 0.09, mid-field. But every rival does it: 80% of the apples that rot lie on the edge
+row or one in, and Sniper (0.19), Capricious, Mason and Mute pass up as many. A general edge-apple fix is noted below.
 
 ### 3c. A new rival: the Charmer (Haakon, 29 October 2026; an AI entry, after 2b and 3b)
 
@@ -233,6 +245,11 @@ The draft is in `docs/handoff/woodpecker-acts-draft.md`.
 As planned: up to 4 players, key sets, gamepads, and local and online play together.
 
 ## Noted, not yet queued
+
+- **Apples by the edge rot** (found in PR #142's census, `tools/dev/rotten-apples.js`): 80% of the apples that rot lie
+  on the edge row or one in, passed up by rivals whose heads came within 2. The room and margin weights likely count an
+  edge cell against a move even when the apple is safe; an AI entry could test a safe-meal exception like the one for
+  meals by the neck (`MEAL_DAWDLE`).
 
 Small things found on the way, for Haakon to place in the queue:
 - (None now.)
