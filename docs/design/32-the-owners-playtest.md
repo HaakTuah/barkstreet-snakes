@@ -307,6 +307,33 @@ gap"): at 1440×900 it perches at 191 px and drums at 224 (it was 173 for both),
 101; a tablet held upright or a 1024×768 window still tuck it into the gutter at 32 to 39 px, as before. It is drawn
 only, so play is unchanged: the simulation's fingerprints are identical.
 
+### The woodpecker, as big as it gets
+
+Haakon (29 October 2026; entry 2k): "as big as you can get away with without it falling out of the screen, or being
+pushed onto the gameplay screen when not pecking, or anything." Drawing only (`BIRD_GROW` in `render/bird.js`, 1.6
+times its first size, from 1.3), so play is unchanged and no simulation was run. Found by trying 1.5, 1.6, 1.65, 1.7
+and 2.0 against the layout and render suites: from 1.65, flying out to a top corner of a short laptop window
+(1000×480), the top of its wingbeat goes past the screen's top edge. Measured (drawn bird, CSS px, 1.3 → 1.6): a
+390×844 phone, perched under the board and drumming, 101 → 124; drumming on a phone on its side 101 → 124, a tablet
+192 → 236 (upright) and 190 → 233 (on its side), a 1280×800 laptop 198 → 244. Where a perch has less room it is the
+biggest that perch allows, as before (on its side 96, a tablet's gutter 32 to 39, a laptop's 148 to 178): unchanged,
+since those were already as big as the room let them be.
+- *A nearer side counts as at 2c.* A perch is "near enough" if it has room for 0.65 of the bird's size at 2c, not of
+  its new size, so growing never sends it to a smaller perch on the far side (without that, at 1.5 on a 1280×800
+  laptop, it perched at 46 px for some spots instead of 177).
+- *Its blow goes as deep as at 1.3* (`B_IN`), so pecking beside a snake its beak stays in the cell.
+- *Drumming, it weighs what it would hide:* of the ways it can cling, it takes the one that hides least of the rings
+  (four), the heads (two), the food and the tiles of its mark (one each). Bigger, it hides less than it did at 1.3: a
+  head beside its spot 9 to 14% of the time against 21 to 29%.
+- *On a phone held upright* it still stands over the row under the board and the chatter, as Haakon asked in 1b++, so
+  bigger it covers more of their words (at 1.3 it already hid a speed button's label whole at some spots); taps pass
+  through it. Beside the board it never lies over any word.
+
+**Tested:** `tools/layout/14-the-bigger-woodpecker.js` (layout job 3) at the screens the entry names: perched beside the
+board, off the page's words; drumming, no more of the heads, food and mark's tiles hidden than at 1.3 on that screen;
+nothing on the page moves for it. The rest (on the screen in every pose and flight, never over a cell perched) is
+`03-devices.js` on every screen. Pictures: `tools/dev/woodpecker-size/shots.js`.
+
 ### The woodpecker pecks beside a snake
 
 Haakon (29 October 2026; entry 2e): on a tile with a snake on it, the bird pecks beside the body, not on it. Its beak
