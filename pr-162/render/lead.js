@@ -85,7 +85,17 @@ function predict(s, a) {
     const go = flashReach(s, d, x, y);
     if (go > 1) { a.mf = go - 1; a.mx = wrapX(s, h.x + d.x * go); a.my = wrapX(s, h.y + d.y * go); return; }
   }
-  if (offBoard(x, y) || game.holes.has(y * GRID + x) || stays[y * GRID + x]) { a.mv = 0; a.mg = 0; }
+  if (offBoard(x, y) || ((game.holes.has(y * GRID + x) || stays[y * GRID + x]) && !bridgeFor(s, x, y))) { a.mv = 0; a.mg = 0; }
+  if (game.holes.has(h.y * GRID + h.x) && cover[h.y * GRID + h.x] >= 2) a.rideUntil = game.tick + s.body.length + 1; // (on another's back, over a pit: drawn over it till its tail's off)
+}
+// Round six B: is (x, y) a bridge for s's head, another's body lying over
+// a pit there (behind its head), still there after the move (as the
+// game's bridgeAt has it)?
+function bridgeFor(s, x, y) {
+  const k = y * GRID + x;
+  if (!game.holes.has(k) || stays[k] !== 1) return false;
+  const o = snakeAt(x, y);
+  return !!o && o !== s && o.body.findIndex(c => c.x === x && c.y === y) > 0;
 }
 // Would a jump asked for go, its head at h heading d, the game's clock at
 // t (as the game's hopPlan has it)? Golden, or the plain one rested and
@@ -116,10 +126,21 @@ function hopsTo(s, h, d) {
   if (offBoard(x, y) || !hurdleAt(x, y)) return false;
   for (let i = 0; i < T.LEAP_REACH; i++) {
     x = wrapX(s, x + d.x); y = wrapX(s, y + d.y);
-    if (offBoard(x, y)) return false;
+    if (offBoard(x, y)) break;
     if (!hurdleAt(x, y)) { landX = x; landY = y; return true; }
   }
+  // (Nowhere free within reach: a bridge that'll still be there when it comes down, as the game's leapPath has it.)
+  x = h.x; y = h.y;
+  for (let i = 1; i <= T.LEAP_REACH; i++) {
+    x = wrapX(s, x + d.x); y = wrapX(s, y + d.y);
+    if (offBoard(x, y)) return false;
+    if (i > 1 && bridgeFor(s, x, y) && lastsFor(s, x, y, i + 1)) { landX = x; landY = y; return true; }
+  }
   return false;
+}
+// Will the body over a pit at (x, y) still be there after `moves` moves?
+function lastsFor(s, x, y, moves) {
+  return game.snakes.some(o => o !== s && o.alive && !o.flight && !game.holes.has(o.body[0].y * GRID + o.body[0].x) && (j => j > 0 && o.body.length - j + o.grow + Math.max(0, o.stunUntil - game.tick) > moves)(o.body.findIndex(c => c.x === x && c.y === y)));
 }
 // How many cells a flash asked for takes a head this tick, (x, y) being
 // the first, as the game moves it: a plain one, if it's rested, up to

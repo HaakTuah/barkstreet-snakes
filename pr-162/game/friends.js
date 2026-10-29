@@ -102,6 +102,7 @@ const GUIDE_ROWS = [
     ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
     ['knock', 'Woodpecker', 'From 2:00 it pecks out patches, and won’t shut you in or leave crumbs of log if it can help it. Food in its mark is knocked to the nearest free cell, where the ring is.'],
     ['hole', 'Holes', 'The woodpecker’s, from 2:00. Bump one like the edge; a peck right under your head is the end.'],
+    ['bridge', 'Bridges', 'A snake lying across a pit is a bridge: crawl onto its back there, or land on it from a jump. Get off onto bark before its tail passes, or you fall in.'],
     ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and it notices.'],
     ['lostflag', 'Lost flags', 'A flag the woodpecker pecks out is lost: the colony goes, and a capital moves.'],
   ]],
@@ -112,7 +113,7 @@ const GUIDE_ROWS = [
 ];
 // (Until the renderer can draw a picture, a stand-in: it draws a kind it
 // doesn't know as an apple. Every kind has one, in case its picture fails.)
-const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', choke: '🤢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', land: '🚩', lostflag: '🚩' };
+const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', choke: '🤢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', bridge: '🌉', land: '🚩', lostflag: '🚩' };
 const GUIDE_UNDRAWN = new Set();
 function renderGuide() {
   const px = Math.round(36 * (window.devicePixelRatio || 1));
