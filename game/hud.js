@@ -50,10 +50,14 @@ tagsEl.addEventListener('click', e => {
 });
 // The note in a line (a banner, and what a screen reader hears).
 const youWords = s => s.alive ? yourPowerWords(s) : 'You’re out of this round.'; // (your powers, while you have a round to use them in)
-// (Who a rival is being now, where that changes: Capricious's mood.)
+// Wildcard's traits, as its note says them ("This round: hungry, reckless, hunts").
+const TRAIT_WORDS = { hungry: 'hungry', reckless: 'reckless', hunter: 'hunts', coward: 'timid', wallHugger: 'hugs walls', territorial: 'guards a home', tailRider: 'rides tails', showOff: 'shows off' };
+const listed = words => words.length < 2 ? words.join('') : `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+// (Who a rival is being now, where that changes: Capricious's mood, Copycat's model, Wildcard's mix.)
 const nowWords = s => {
   if (!s.alive) return '';
   if (s.personaKey === 'capricious' && s.memory.mood) return ` Doing its best ${CAST[s.memory.mood].name} now.`;
+  if (s.personaKey === 'wildcard' && s.memory.mix?.length) return ` This round: ${listed(s.memory.mix.map(t => TRAIT_WORDS[t] || t))}.`;
   const model = s.personaKey === 'copycat' && theGame.snakes.find(o => o.id === s.memory.modelId && o.alive);
   if (model) return ` Copying ${isMe(model) ? 'you' : model.name}${s.memory.style ? `, playing as ${CAST[s.memory.style].name} does` : ''}.`; // (the style it reads from how its model plays: see ai.js's styleOf)
   return '';

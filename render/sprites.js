@@ -379,6 +379,7 @@ const GUIDE = {
     g.beginPath(); g.arc(0, 0, CELL * 0.68, 0, TAU); g.stroke();
     g.restore();
   }),
+  wildcard: g => guideSnake(g, '#b22234', false, (x, y) => { g.save(); g.translate(x, y); wildHair(); g.restore(); }), // (its flag red, under its pompadour)
   copycat: g => { // (Copycat shadowing Sovereign: its body a pale copy of Sovereign's blue, its cat-eared head half its red)
     guideSnake(g, '#9fbcf3', false, (x, y) => {
       g.fillStyle = '#904b8f'; circle(x, y, CELL * 0.5); // (its head, half and half)

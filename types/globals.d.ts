@@ -14,7 +14,7 @@ declare namespace Engine {
   /** What a snake remembers that a guest's renderer and chatter read (see online.js: MEMORY). */
   interface Memory {
     home?: Cell | null; colonies?: Cell[] | null; mood?: string | null; moodChangedAt?: number | null;
-    modelId?: number | null; style?: string | null; victimId?: number | null; lureId?: number | null; site?: Cell | null;
+    modelId?: number | null; style?: string | null; mix?: string[] | null; victimId?: number | null; lureId?: number | null; site?: Cell | null;
     desperate?: boolean | null;
     /** The tick a rival asked to jump, and to flash, when it thought (plans). */
     power?: number | null; flash?: number | null;

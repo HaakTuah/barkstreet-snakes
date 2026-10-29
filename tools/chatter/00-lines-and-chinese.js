@@ -79,10 +79,10 @@ for (const [who, voice] of Object.entries(VOICES)) {
 for (const [path, line] of lines) ok(!/shut (you|me|us|anyone) in|never shuts|plays fair/i.test(line), `${path}: "${line}" leaves the woodpecker's fair play to the lesson`);
 // Star, the newest, has lines for every moment anyone has lines for (but the
 // ones that are someone's own: Vulture's deaths, the land, Capricious's
-// moods, Gobbler's and Desperado's spawns and first strike, the answers to
+// moods, Wildcard's mix brags, Gobbler's and Desperado's spawns and first strike, the answers to
 // Star), and its own: its flashes, its flash back, its grumbling while it
 // rests and its stash of golden things. Some rivals answer it.
-const OWN = ['death', 'intruder', 'flag', 'realm', 'colony', 'mood', 'spawn', 'beetle', 'weather.strike', 'showoff'];
+const OWN = ['death', 'intruder', 'flag', 'realm', 'colony', 'mood', 'mix', 'spawn', 'beetle', 'weather.strike', 'showoff'];
 const momentsOf = (v, at = '', out = new Set()) => { if (Array.isArray(v)) out.add(at); else for (const [k, w] of Object.entries(v)) momentsOf(w, at ? `${at}.${k}` : k, out); return out; };
 const anyones = new Set(Object.entries(VOICES).filter(([who]) => who !== 'star').flatMap(([, v]) => [...momentsOf(v)]));
 const starHas = momentsOf(VOICES.star);
