@@ -23,7 +23,8 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| (none open) | | | |
+| 2j (PR #162, draft) | Are the rivals' babble voices distracting? The preview needs Pages to serve `gh-pages`. Or reply "merge it off" to ship them switched off and judge them on the live game (Voices under the board, or V). | Built and tested as never distracting; on by default in the draft. If you're not sure, it ships off | open |
+| 2j (PR #162, draft) | Is the Voices switch in the right place: under the board beside the chatter's switch, between rounds only? (The header's sound buttons are full at 320 px, and in a round that row holds the help line.) | Under the board, between rounds; V at any time | open |
 
 ## The queue, in order
 
@@ -45,6 +46,8 @@ Moved up by Haakon (29 October 2026): "It's the one I am most interested in play
 long time now. Also, the teaching system will have to account for it." It is the next AI entry once Copycat's part of
 3b (PR #142) merges, ahead of Wildcard's part of 3b, 2b, 2h, 2i and 3c; the art and sound lanes (2d, 2f, 2j) run
 beside it as before. A playable draft PR as early as it can be, so Haakon can try it this evening.
+
+*Done so far:* **the island hop** and **no auto-jump** (PR #158: a jump goes over up to 3 cells, a cell a tick; a press waits 5 moves; the landing ring; protocol 16).
 
 - **The island hop comes first.** The owner: "jumping is pretty critical to making this game more tense and skill based, rather than RNG". There are two test cases:
   - Gobbler folded on a strip;

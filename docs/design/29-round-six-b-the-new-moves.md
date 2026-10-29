@@ -80,5 +80,7 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 
 **Balance targets** (simulation, paired seeds): powers on clearly beat powers off in the seat-split A/B (today they're even, 2.499 against 2.497); every persona wins 15–35% of rounds; rounds about 160–180 s; starving at most 8%; failed flashes rare enough to be a risk you take on purpose. The chosen numbers (the jump's rest, the flash's rest, a failed flash's cost) go here, for the owner's playtest.
 
+**The chosen numbers so far** (PR #158, the island hop): `LEAP_REACH` 3; `LEAP_WINDOW` 5 (a press waits five moves); the jump's rest stays 4 s (the head-to-head below showed no need to lengthen it: rounds 169 s, inside 160–180). A golden jump is the same hop, free (its held flight isn't built yet). Measured on fresh seeds 41 and 43 (1,200 paired rounds, head to head): rivals who island-hop against the same AI without it win 26.5% to 23.4% (+3.1 points, interval −0.6 to +6.8), eat more (56.0 to 54.5), live as long, and jump 4.8 times a round to 1.5; every trademark the same or within noise. In a field of its own (200 rounds, seed 3): 19.5 plain jumps a round (6.2 before), 47% over one cell, 34% over two, 18% over three; 1% of landings crash; rounds 169 s (165 before), sudden death 49 s (45), starving 3% of deaths (1%).
+
 **Effects:** take-off and landing dust; the flight's shadow on the ground; the landing ring; bumps in the air; cuts and spilled beads; dropped tails; fire put out.
 
