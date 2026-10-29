@@ -53,3 +53,21 @@ with a protocol bump).
   direction). The four hand-written mood lines it had are gone. Copycat echoes it in Chinese.
 - Measured: the simulation's `--signatures` counts each mood's ticks again under the mood's name, and prints each
   impression's trademark beside the rival's own.
+
+**Built (3b), Copycat (PR #142).** With these readings:
+- The AI's view carries no persona, and must not ("The rivals never treat a person differently"), so Copycat reads
+  every leader, rival or person, by behaviour alone. Over the ticks it has watched (as it saw them, its reaction time
+  late), each snake's eight traits: moves per turn, coiling, riding tails, distance from heads, heads near, growth,
+  jumps and flashes, and how far it strays (`watchStyles`, `traitsOf` in `ai.js`). The style is the nearest of twelve
+  rivals' own (`styleOf`, `STYLES`, measured by `tools/dev/copycat-styles.js`), after 60 ticks watched. So a person
+  is copied as Mason if they run long and straight, as Gobbler if they eat a lot and go near heads, and so on.
+- It takes the style's habits (weights, the short forms of `MOOD_FORMS`, and the driver), with its pull to move the way
+  its model moves cut from 120 to 40 so the habits show, and shadows the model (its lure), unless the copy has a lure
+  of its own (Vulture's, Joker's). A new model, or a new read of it, starts the copy's memory afresh.
+- Not styles: Capricious, Copycat and Wildcard (mixes of others); Mute and Metagamer, which play like Sniper and Drab
+  from outside; Colonist, whose mark is its flags. In play (`tools/dev/copycat-reads.js`, 120 rounds) it has a style
+  96% of the time it has a model, and reads Star, Joker, Mason, Ghost, Gobbler and Ouroboros as themselves 86-100% of
+  the time; Sniper, Sovereign, Desperado and Vulture about half; Creeper poorly (shadowing it, its own head is what
+  rides the tail).
+- The cue: its pale copy of the model's colours, as before; its note says "Copying Mason, playing as Mason does."
+  (or "Copying you, playing as Gobbler does."). Field guide row: "Copycat".
