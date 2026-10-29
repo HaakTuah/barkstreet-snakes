@@ -83,6 +83,14 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
    style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
 Then the teaching system (item 4), which teaches all of them.
 
+**The rivals learn every move in its own part** (Haakon, 29 October 2026: "And very important that the commin ai is
+updated to understand all these rule changes to maximize they use of all the playrules!!!"). No part merges until the
+rivals use its moves when they pay and in their own styles, and see them used against them: hop, ride a bridge, cut,
+neck-cut, drop a tail, fly and steer, leap now, take a landing, follow a portal, grab dropped charges, and keep clear of
+each danger (a landing ring, a flash's line, a bridge's tail end). Rules tests prove each one through the same engine
+calls as a person's, and the head-to-head shows the users ahead ("No ability only people use", "every new move is
+tested both ways"); the pricing part then makes the choices among them as good as they can be.
+
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
 Haakon (29 October 2026), on the "For Haakon" question whether a fed Gobbler should gamble too: "Agreed to all,
