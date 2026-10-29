@@ -533,7 +533,7 @@ function drumChoice(w, spot, flip) {
 // How much of those (seeX, seeY: each a ring's round, its middle and eight
 // points on it) the bird drumming in pose p covers: its body, its tail,
 // its head and beak, ink and all.
-const SEE_R = CELL * 0.4;
+const SEE_R = CELL * 0.4 + BOX_EDGE * BU; // (its ink's soft edge too, which grew with the bird in 2c)
 function hides(p) {
   const Q = probe;
   Q.x = p.x; Q.y = p.y; Q.s = p.s; Q.flip = p.flip; Q.rot = p.rot; Q.turn = 0; Q.thrust = 0.06; Q.crouch = 0;
