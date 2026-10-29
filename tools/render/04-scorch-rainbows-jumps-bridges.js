@@ -68,8 +68,8 @@ check(mids.every(r => rise(r) > 4.5), 'from an apple by the middle, high or low,
 // draws it. At the top of the jump its neck is up behind its head, in an
 // arch (wider than its body further back), and its shadow, left on the
 // ground, falls across the body it hops (just below it and to the right,
-// that body darkens: the shadow was drawn under every body). Two ticks
-// on, its body still arches over what it crossed (the segment over it
+// that body darkens: the shadow was drawn under every body). Once it's
+// down (the island hop: a tick in the air over each), its body still arches over what it crossed (the segment over it
 // wider than the rest), over both for the golden jump. Lively, dust
 // puffs where it takes off and rings where it lands, and a faint trail
 // marks its way; with reduced motion, none of either, but the lift and
@@ -102,6 +102,7 @@ const jumps = await ev(`(() => {
     for (const al of [0, 0.25, 0.5]) frame(al); // (the top of the jump)
     const hx = R.headPx(you, 0.5, TUNING.GRID * ${CELL}, {}).x / ${CELL}; // (where its head's drawn: its neck's a cell behind, and measured just ahead of it, clear of the dust kicked up behind)
     const r = { under: +(lum(pixels(9.62, 13.4, 0.76, 0.35)) / under0).toFixed(2), neck: count(hx - 0.65, 11, 0.2, 2, green), back: count(hx - 3.65, 11, 0.2, 2, green), off: R.motes };
+    if (gold) { doStep(g); frame(0.5); } // (golden, over two: a tick more in the air)
     doStep(g);
     frame(0.25); const m0 = R.motes;
     frame(0.5); // (down)
@@ -120,7 +121,7 @@ for (const [what, r] of Object.entries(jumps)) {
   const still = what.startsWith('reduced');
   check(r.neck > 1.12 * r.back && r.under < 0.96, `a ${what} jump: at its top its neck arches up behind its head, and its shadow falls across what it hops`,
     `its neck ${r.neck} pixels across, ${r.back} further back; the body under it, below and to the right, at ${r.under} of its brightness`);
-  check(r.cross > 1.15 * r.flat && (!what.includes('golden') || r.cross2 > 1.15 * r.flat), `a ${what} jump: two ticks on, its body still arches over what it crossed`,
+  check(r.cross > 1.15 * r.flat && (!what.includes('golden') || r.cross2 > 1.15 * r.flat), `a ${what} jump: down again, its body still arches over what it crossed`,
     `the segment over it ${r.cross}${what.includes('golden') ? ` and ${r.cross2}` : ''} pixels across, ${r.flat} on the bark`);
   if (still) check(r.off === 0 && r.ring === 0 && r.trail === 0, `a ${what} jump: no dust and no trail`, `${r.off} motes as it took off, ${r.ring} more as it landed; ${r.trail} trail pixels`);
   else check(r.off >= 4 && r.ring >= 8 && (what.includes('golden') || r.trail > 30), `a ${what} jump: dust puffs as it takes off and rings it as it lands, and a faint trail marks its way`,
