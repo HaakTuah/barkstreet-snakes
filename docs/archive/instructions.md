@@ -355,3 +355,10 @@ Then, to Claude's takes (food seasons; eating only what keeps you alive in the e
 > But sometimes starving still lasts you longer than increased length will, with so little room also. And make sure the voices arent distracting! That would be a real turn off!
 
 (queued as 2h, 2i and 2j in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, 06:49 and 07:12 UTC), on when Round six B's new moves will be playable: "Do you
+think the snakes power update will be finished by 18 of clock?" Then, to moving it up to right after Copycat:
+
+> It's the one I am most interested in playing, and it has been pushed back for a long time now. Also, the teaching system will have to account for it.
+
+(item 5 moved up in `docs/PROGRESS.md`; the teaching system, item 4, after it)
