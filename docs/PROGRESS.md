@@ -23,7 +23,8 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| (none open) | | | |
+| 2j (PR #162, draft) | Are the rivals' babble voices distracting? The preview needs Pages to serve `gh-pages`. Or reply "merge it off" to ship them switched off and judge them on the live game (Voices under the board, or V). | Built and tested as never distracting; on by default in the draft. If you're not sure, it ships off | open |
+| 2j (PR #162, draft) | Is the Voices switch in the right place: under the board beside the chatter's switch, between rounds only? (The header's sound buttons are full at 320 px, and in a round that row holds the help line.) | Under the board, between rounds; V at any time | open |
 
 ## The queue, in order
 
