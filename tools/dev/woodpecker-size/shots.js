@@ -1,7 +1,8 @@
 // Pictures of the woodpecker at its size (2c, "The woodpecker, 1.3
-// times"), on any copy of the game, for a before and after: perched at
-// rest (beside the board, or under it on a phone held upright) and
-// drumming its chunk on the board, and how tall it stands, CSS px:
+// times"; 2k, as big as it can get away with), on any copy of the game,
+// for a before and after: perched at rest (beside the board, or under it
+// on a phone held upright), flying out to its chunk, and drumming it on
+// the board, and how tall it stands, CSS px:
 //   node shots.js <root> <out-prefix> <w>x<h>@<dpr>[m] ...   (m: a phone)
 const path = require('path');
 const root = path.resolve(process.argv[2]), out = process.argv[3], sizes = process.argv.slice(4);
@@ -25,9 +26,13 @@ const { launch, serve, sleep } = require(path.join(root, 'tools', 'browser.js'))
       const tall = `Math.round(SnakeRender.birdPose().s * (BIRD_BOX[3] - BIRD_BOX[1]) * BU * boardRect.w / SIZE)`;
       const rest = await b.eval(tall);
       await b.shot(`${out}-rest-${m[1]}x${m[2]}.jpg`, 82);
-      const drum = await b.eval(`(() => { const g = SnakeDebug.game(), R = SnakeRender, S = window.__S;
+      await b.eval(`(() => { const g = SnakeDebug.game(), R = SnakeRender, S = window.__S; let n = 0;
         Object.assign(g.woodpecker, { target: [window.__cell], strikeAt: S, restUntil: window.__t0 });
-        for (let t = window.__t0; t < S + 40; t++) { g.tick = t; for (const u of [0, 0.25, 0.5, 0.75]) { R.frame(u, window.__now += 16); if (R.birdPose().phase === 'drum' && t >= S - 2) return ${tall}; } }
+        for (let t = window.__t0; t < S + 40; t++) { g.tick = t; for (const u of [0, 0.25, 0.5, 0.75]) { R.frame(u, window.__now += 16); if (R.birdPose().phase === 'out' && ++n === 3) { window.__t = t + 1; return 'ok'; } } }
+        window.__t = window.__t0; return 'none'; })()`);
+      await b.shot(`${out}-fly-${m[1]}x${m[2]}.jpg`, 82);
+      const drum = await b.eval(`(() => { const g = SnakeDebug.game(), R = SnakeRender, S = window.__S;
+        for (let t = window.__t; t < S + 40; t++) { g.tick = t; for (const u of [0, 0.25, 0.5, 0.75]) { R.frame(u, window.__now += 16); if (R.birdPose().phase === 'drum' && t >= S - 2) return ${tall}; } }
         return -1; })()`);
       await b.shot(`${out}-drum-${m[1]}x${m[2]}.jpg`, 82);
       console.log(s, `perched ${rest} px tall, drumming ${drum} px`);
