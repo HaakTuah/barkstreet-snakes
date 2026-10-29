@@ -323,15 +323,18 @@ since those were already as big as the room let them be.
   laptop, it perched at 46 px for some spots instead of 177).
 - *Its blow goes as deep as at 1.3* (`B_IN`), so pecking beside a snake its beak stays in the cell.
 - *Drumming, it weighs what it would hide:* of the ways it can cling, it takes the one that hides least of the rings
-  (four), the heads (two), the food and the tiles of its mark (one each). Bigger, it hides less than it did at 1.3: a
-  head beside its spot 9 to 14% of the time against 21 to 29%.
+  (four), the heads and the food (two each) and the tiles of its mark (two, all of them together). Bigger, it hides
+  less than it did at 1.3, over the five screens: a head near its spot 15% of the time against 21%, food 16% against
+  20%, its mark's tiles 3.7% against 4.2%.
+- *Its drum poses keep room for its aim beside a snake* (`AIM_REACH`): since 2e that aim moves the whole bird by up to
+  half a cell, which, bigger, could carry its landing in a top corner past the screen's edge.
 - *On a phone held upright* it still stands over the row under the board and the chatter, as Haakon asked in 1b++, so
   bigger it covers more of their words (at 1.3 it already hid a speed button's label whole at some spots); taps pass
   through it. Beside the board it never lies over any word.
 
 **Tested:** `tools/layout/14-the-bigger-woodpecker.js` (layout job 3) at the screens the entry names: perched beside the
-board, off the page's words; drumming, no more of the heads, food and mark's tiles hidden than at 1.3 on that screen;
-nothing on the page moves for it. The rest (on the screen in every pose and flight, never over a cell perched) is
+board, off the page's words; drumming, no more of the heads, food and mark's tiles hidden than at 1.3 (24 scenes a
+screen, a 3 by 4 mark, compared over the five screens); nothing on the page moves for it. The rest (on the screen in every pose and flight, never over a cell perched) is
 `03-devices.js` on every screen. Pictures: `tools/dev/woodpecker-size/shots.js`.
 
 ### The woodpecker pecks beside a snake
