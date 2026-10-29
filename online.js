@@ -67,6 +67,7 @@
  *   | ['peck', x: number, y: number, cells: number[], under: number[]]
  *   | ['rot', x: number, y: number, bead: Flag, color: string | 0]
  *   | ['flown', x: number, y: number]
+ *   | ['spill', snake: number, x: number, y: number, leaps: number, dashes: number]
  *   | [type: 'starving' | 'alight' | 'singe', snake: number]
  *   | [type: 'baked' | 'ash', x: number, y: number, kind: number]
  *   | [type: 'emerge' | 'gust' | 'charge' | 'strike' | 'rainbow' | 'aim' | 'douse' | 'lastApples', x: number, y: number]} EventRow
@@ -85,7 +86,7 @@
  * @typedef {{ t: 'away' | 'back' }} AwayMsg  the page went out of sight, and came back
  */
 window.SnakeOnline = (() => {
-  const VERSION = 15; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note)
+  const VERSION = 16; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's dropped charges (a knocked-out snake's golden jumps and flashes, spilled as a pickup, and the spill)
   const POWERS = ['leap', 'flash', 'unleap'];
   const MAX_PEOPLE = 4;
   // Seat colors for people: the host is green; friends get colors no rival wears.
@@ -94,7 +95,7 @@ window.SnakeOnline = (() => {
   const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   const CODE_LENGTH = 5;
   const DIR_NAMES = ['up', 'down', 'left', 'right'];
-  const KINDS = ['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap'];
+  const KINDS = ['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap', 'spill'];
   const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm', 'snow']; // (the engine's order)
   // Events that only say where something happened (and, for food, what).
   const AT = ['emerge', 'gust', 'charge', 'strike', 'rainbow', 'aim', 'douse', 'lastApples'];
@@ -154,7 +155,7 @@ window.SnakeOnline = (() => {
       // sinks as the time runs out); a bead, whose it was (it rots, as all food does).
       f: game.food.map(f => f.kind === 'beetle'
         ? [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, 0, DIR_NAMES.indexOf(dirName(f.dir)), f.px ?? -1, f.py ?? -1, f.movedAt, f.scared ? 1 : 0, f.gold ? 1 : 0, f.digUntil ?? -1]
-        : [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, f.color || 0, f.heat || 0, f.cooked ? 1 : 0, f.owner ?? -1]),
+        : [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, f.color || 0, f.kind === 'spill' ? (f.leaps || 0) + 10 * (f.dashes || 0) : f.heat || 0, f.cooked ? 1 : 0, f.owner ?? -1]), // (a spill's charges where heat goes: its golden jumps, and ten for each golden flash)
       // The beetles underground: until (when one comes up), when it flies off, the burrow or dig it went down, golden.
       un: (game.unders || []).map(u => [u.until, u.expires, u.from, u.gold ? 1 : 0]),
       h: holes,
@@ -261,6 +262,7 @@ window.SnakeOnline = (() => {
       case 'peck': return ['peck', e.x, e.y, e.cells || [], e.under || []];
       case 'rot': return ['rot', e.x, e.y, e.kind === 'pellet' ? 1 : 0, e.color || 0]; // (an apple, or a bead in its colour)
       case 'flown': return ['flown', e.x, e.y];
+      case 'spill': return ['spill', e.snake.id, e.x, e.y, e.leaps, e.dashes];
       default: { // (the kinds SNAKE, FOOD_AT and AT list)
         const g = /** @type {any} */ (e);
         if (SNAKE.includes(e.type)) return [g.type, g.snake.id];
@@ -334,7 +336,8 @@ window.SnakeOnline = (() => {
         if (Number.isInteger(digUntil) && digUntil >= 0) f.digUntil = digUntil; // (the renderer sinks it by this)
       } else {
         const [heat, cooked, owner] = more;
-        if (num(heat) && heat > 0) f.heat = heat;
+        if (f.kind === 'spill') { f.leaps = num(heat) ? heat % 10 : 0; f.dashes = num(heat) ? Math.floor(heat / 10) % 10 : 0; }
+        else if (num(heat) && heat > 0) f.heat = heat;
         if (cooked) f.cooked = 1;
         if (Number.isInteger(owner) && owner >= 0) f.owner = owner;
       }
@@ -392,6 +395,7 @@ window.SnakeOnline = (() => {
         case 'peck': return { type: 'peck', x: e[1], y: e[2], cells: Array.isArray(e[3]) ? e[3].filter(Number.isInteger) : [], under: Array.isArray(e[4]) ? e[4].filter(Number.isInteger) : [] };
         case 'rot': return { type: 'rot', x: e[1], y: e[2], kind: e[3] ? 'pellet' : 'apple', ...(typeof e[4] === 'string' ? { color: e[4] } : {}) };
         case 'flown': return { type: 'flown', x: e[1], y: e[2] };
+        case 'spill': return snake && cell(e[2]) && cell(e[3]) ? { type: 'spill', snake, x: e[2], y: e[3], leaps: num(e[4]) ? e[4] : 0, dashes: num(e[5]) ? e[5] : 0 } : null;
         default: { // (the kinds SNAKE, FOOD_AT and AT list)
           const g = /** @type {any} */ (e);
           if (SNAKE.includes(e[0])) return snake ? { type: g[0], snake } : null;

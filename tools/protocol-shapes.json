@@ -1,6 +1,6 @@
 {
-  "version": 15,
-  "fingerprint": "6820d1c1f61b54d3",
+  "version": 16,
+  "fingerprint": "ac6727303651c3cf",
   "kinds": {
     "away": "{1} t: string",
     "back": "{1} t: string",
@@ -58,6 +58,7 @@
     "tick e shut": "[4] string number number number",
     "tick e singe": "[2] string number",
     "tick e spawn": "[5] string string number number number",
+    "tick e spill": "[6] string number number number number number",
     "tick e starving": "[2] string number",
     "tick e strike": "[3] string number number",
     "tick e weather": "[2] string number",

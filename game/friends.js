@@ -91,6 +91,7 @@ const GUIDE_ROWS = [
     ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: long, free, no rest. Hold up to ${TUNE.LEAP_MAX}.`],
     ['leaf', 'Golden leaf', `${TUNE.DASH_CHARGES} golden flashes: three cells at once, slicing thin snakes. Never at an edge or a hole.`],
     ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(TUNE.WRAP_MS)} s a mushroom (up to ${secs(TUNE.WRAP_MAX_MS)}).`],
+    ['spill', 'Spilled powers', 'A snake knocked out holding golden jumps or flashes spills them where its head fell: a gold coin ringed with its pips. Grab it and they’re yours.'],
   ]],
   ['Your powers', [
     ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop a snake, a hole or fire. It costs your tail’s tip, then rests ${secs(TUNE.LEAP_COOLDOWN_MS)} s.`],

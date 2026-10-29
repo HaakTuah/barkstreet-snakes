@@ -50,8 +50,8 @@ declare namespace Engine {
     dir: Dir; px?: number; py?: number; movedAt: number; scared?: boolean; gold?: Flag; digUntil?: number;
   }
   interface Meal {
-    x: number; y: number; kind: 'food' | 'golden' | 'mushroom' | 'pellet' | 'leaf' | 'goldcap'; expires?: number;
-    color?: string; heat?: number; cooked?: Flag; owner?: number;
+    x: number; y: number; kind: 'food' | 'golden' | 'mushroom' | 'pellet' | 'leaf' | 'goldcap' | 'spill'; expires?: number;
+    color?: string; heat?: number; cooked?: Flag; owner?: number; leaps?: number; dashes?: number;
   }
 
   /** A beetle underground. */
@@ -87,6 +87,7 @@ declare namespace Engine {
     | { type: 'woodpecker' }
     | { type: 'peck'; x: number; y: number; cells?: number[]; under?: number[] }
     | { type: 'rot'; x: number; y: number; kind: string; color?: string }
+    | { type: 'spill'; snake: Snake; x: number; y: number; leaps: number; dashes: number }
     | { type: 'starving' | 'alight' | 'singe'; snake: Snake }
     | { type: 'baked' | 'ash'; x: number; y: number; kind: string }
     | { type: 'heal' | 'flown' | 'emerge' | 'gust' | 'charge' | 'strike' | 'rainbow' | 'aim' | 'douse' | 'lastApples'; x: number; y: number };

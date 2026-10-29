@@ -144,6 +144,8 @@ const FLAVOR = {
   goldBeetle: ['A golden beetle! Catch it for golden jumps.', 'A golden beetle: catch it, and jump far for free.'],
   goldBeetleWatch: ['A golden beetle! Whoever catches it jumps far.', 'A golden beetle is scuttling about.'],
   youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space or a click'} to jump.`,
+  youSpill: (l, d) => `Grabbed: ${[l ? `${l} golden jump${l === 1 ? '' : 's'}` : '', d ? `${d} golden flash${d === 1 ? '' : 'es'}` : ''].filter(Boolean).join(' and ')} now.`,
+  spillFirst: 'Knocked out, a snake spills its golden powers. Grab them!', // (the first spill in a round: round six B's dropped charges)
   youLeapFirst: 'Hup! A jump costs your tail tip, then a short rest.',
   youDashFirst: 'Golden flashes cut thin snakes in two.',
   leaf: ['A golden leaf on the wind. Eat it for golden flashes.', 'A golden leaf blew onto the log: golden flashes, for the taking.'],

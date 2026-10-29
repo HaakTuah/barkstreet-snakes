@@ -1343,7 +1343,7 @@ window.SnakeAI = (() => {
       const own = f.kind === 'pellet' && f.owner === me.id, i = cellOf(f);
       if (i < 0) continue; // (nowhere to knock it: the bird eats it)
       foodGrow[i] = own ? 0 : f.kind === 'mushroom' ? -TUNE.SHRINK : f.kind === 'golden' ? TUNE.GOLDEN_GROWTH : f.kind === 'beetle' ? TUNE.BEETLE_GROWTH : f.cooked ? TUNE.COOKED_GROWTH : 1;
-      let v = own ? -CHOKE : worth[f.kind] ?? 0;
+      let v = own ? -CHOKE : f.kind === 'spill' ? ((f.leaps || 0) + (f.dashes || 0)) * Math.max(apple, hunger, 0.5) * craving.power : worth[f.kind] ?? 0; // (a knocked-out snake's spilled charges: each worth what a golden power is)
       if (!v) continue;
       if (f.cooked && v > 0) v *= TUNE.COOKED_GROWTH; // (baked: worth more)
       if (f.gold && v > 0) v *= 1.5 * craving.power; // (a golden beetle: leaps too)
@@ -1352,7 +1352,7 @@ window.SnakeAI = (() => {
       if (desperate && v > 0 && away > lifeTicks + 1) continue; // (I'd starve on the way)
       foodValue[i] += v;
       foodCells[foodCount++] = i;
-      if (craving.contested && v > 0 && (f.gold || f.kind === 'leaf' || f.kind === 'goldcap')) goldCells[goldCount++] = i;
+      if (craving.contested && v > 0 && (f.gold || f.kind === 'leaf' || f.kind === 'goldcap' || f.kind === 'spill')) goldCells[goldCount++] = i;
     }
     // (For the territory search, which can stop once I claim nothing more
     // unless food a rival gets to could still be mine: how long any rival
@@ -2050,7 +2050,7 @@ window.SnakeAI = (() => {
             const j = j0 + Math.max(0, age - (o.stun || 0)); // (where it's cut: it's moved on since I saw it)
             cut += j < TUNE.MIN_LENGTH ? 6 * (0.5 + agg) : Math.max(0, o.body.length - j) * 0.4 * (0.5 + agg); // (in apples: out, or its tail off)
           }
-          for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold)) gold = true;
+          for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.kind === 'spill' || f.gold)) gold = true;
         }
         if (!cut && !gold && !trapped) { // (just for speed: only a habit's, and at anyone's price, so only for a real gain; free, it spent both at once, a zig-zag that got it nothing)
           if (!habit.dashSpend) return null;

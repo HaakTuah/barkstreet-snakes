@@ -288,6 +288,17 @@ const GUIDE = {
   mushroom: g => { g.scale(1.2, 1.2); drawHaze(g); g.translate(0, CELL * 0.04); drawMushroom(g); }, // (on bark, as on the log: its cream stem vanished on the card; and the purple haze its rule mentions)
   goldcap: g => { guideGlow(g); g.translate(0, CELL * 0.04); drawGoldcap(g); },
   leaf: g => { guideGlow(g); drawGoldLeaf(g); },
+  spill: g => { // (a knocked-out snake's charges: the gold coin, ringed with two golden jumps' sky dots and a golden flash's ember diamond)
+    guideGlow(g);
+    g.beginPath(); g.arc(0, 0, CELL * 0.24, 0, TAU); g.fillStyle = HONEY; g.fill(); g.strokeStyle = INK; g.lineWidth = CELL * 0.07; g.stroke();
+    for (let i = 0; i < 3; i++) {
+      const a = TAU * i / 3 - Math.PI / 2, x = Math.cos(a) * CELL * 0.3, y = Math.sin(a) * CELL * 0.3, r = CELL * 0.08;
+      g.beginPath();
+      if (i < 2) g.arc(x, y, r, 0, TAU);
+      else { g.moveTo(x + Math.cos(a) * r * 1.5, y + Math.sin(a) * r * 1.5); g.lineTo(x - Math.sin(a) * r, y + Math.cos(a) * r); g.lineTo(x - Math.cos(a) * r * 1.5, y - Math.sin(a) * r * 1.5); g.lineTo(x + Math.sin(a) * r, y - Math.cos(a) * r); g.closePath(); }
+      g.fillStyle = i < 2 ? SKY : EMBER; g.fill(); g.strokeStyle = INK; g.lineWidth = CELL * 0.04; g.stroke();
+    }
+  },
   beetle: g => drawGuideBeetle(g, false),
   goldbeetle: g => { guideGlow(g); drawGuideBeetle(g, true); },
   pellet: g => { g.scale(1.5, 1.5); drawBead(g, '#fb923c|'); },

@@ -1109,6 +1109,7 @@ window.SnakeEngine = (() => {
   // | { type: 'knock', kind, x, y, tx, ty, gold, color } (food the strike knocked from x, y to tx, ty, or eaten: tx, ty null;
   //   gold: 1, a golden beetle; color: a bead's)
   // | { type: 'cut', snake, x, y, lost, by } (a dash (by: who) cut it: its tail fell off) | { type: 'flown', x, y } (a beetle got away)
+  // | { type: 'spill', snake, x, y, leaps, dashes } (a snake out spilled the golden jumps and flashes it held: a pickup at x, y)
   // | { type: 'rot', x, y, kind, color } (an apple (kind 'apple') or a bead ('pellet', in its color) rotted away)
   // | { type: 'lastApples', x, y } (sudden death's first apple fell: the last apples come one at a time)
   // | { type: 'baked', x, y, kind } | { type: 'ash', x, y, kind } (food in the fire)
@@ -1409,6 +1410,7 @@ window.SnakeEngine = (() => {
         const expires = game.tick + Math.round(T.PELLET_TICKS * (cooked ? T.PELLET_COOKED : 1) * between(0.75, 1.25));
         game.food.push(cooked ? { x, y, kind: 'pellet', color, owner, expires, cooked: 1 } : { x, y, kind: 'pellet', color, owner, expires });
       };
+      for (const s of dying) spill(game, s); // (first: the beads keep off its cell)
       for (const s of dying) {
         s.diedAt = game.tick;
         game.events.push({ type: 'death', snake: s });
@@ -1976,12 +1978,34 @@ window.SnakeEngine = (() => {
     };
     return on(ways[0]) || on(ways[1]);
   }
+  // Round six B, dropped charges: a snake out with golden jumps or flashes
+  // held spills them where its head fell, as one golden pickup anyone can
+  // grab (the nearest cell to its head with nothing on it, within 3: over
+  // a hole, on the rim; none, and they're lost). Only a knockout: a bump
+  // keeps them.
+  function spill(game, s) {
+    if (!(s.leaps > 0) && !(s.dashes > 0)) return;
+    const h = s.body[0];
+    let at = null;
+    for (let r = 0; r <= 3 && !at; r++) for (let dx = -r; dx <= r && !at; dx++) for (const dy of r - Math.abs(dx) ? [-(r - Math.abs(dx)), r - Math.abs(dx)] : [0]) {
+      const x = h.x + dx, y = h.y + dy, k = key(x, y);
+      if (inside(x, y) && bodyStamp[k] !== stamp && !game.holes.has(k) && !game.fires.has(k)) { at = { x, y }; break; }
+    }
+    const leaps = s.leaps, dashes = s.dashes;
+    s.leaps = 0; s.dashes = 0;
+    if (!at) return;
+    bodyStamp[key(at.x, at.y)] = stamp;
+    game.food.push({ x: at.x, y: at.y, kind: 'spill', leaps, dashes, expires: game.tick + T.SPILL_TICKS });
+    game.events.push({ type: 'spill', snake: s, x: at.x, y: at.y, leaps, dashes });
+  }
+
   // A head eats food.
   function consume(game, s, f, x, y) {
     game.events.push({ type: 'eat', snake: s, kind: f.kind, x, y, color: f.color, cooked: !!f.cooked, gold: !!f.gold });
     // Golden powers add up: each kind on top of what's held, any kinds at once.
     if (f.gold) s.leaps = Math.min(T.LEAP_MAX, s.leaps + T.LEAP_CHARGES); // (a golden beetle: golden jumps)
     if (f.kind === 'leaf') s.dashes = Math.min(T.DASH_MAX, s.dashes + T.DASH_CHARGES); // (a golden leaf: golden flashes, dashes)
+    if (f.kind === 'spill') { s.leaps = Math.min(T.LEAP_MAX, s.leaps + (f.leaps || 0)); s.dashes = Math.min(T.DASH_MAX, s.dashes + (f.dashes || 0)); } // (a knocked-out snake's charges: all of them)
     if (f.kind === 'goldcap') s.wrapUntil = Math.min(Math.max(s.wrapUntil, game.time) + T.WRAP_MS, game.time + T.WRAP_MAX_MS); // (a golden mushroom: the edges wrap, a while longer)
     if (f.kind === 'mushroom') {
       // Shrink: cancel pending growth first, then drop tail segments.

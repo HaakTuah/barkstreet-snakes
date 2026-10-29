@@ -102,6 +102,7 @@ function flyingSprite(f, b) {
   if (f.kind === 'mushroom') return mushroomSprite();
   if (f.kind === 'leaf') return goldLeafSprite();
   if (f.kind === 'goldcap') return goldcapSprite();
+  if (f.kind === 'spill') return goldenSprite(); // (a spill knocked aside: a glint of gold in the air)
   const left = f.expires != null ? f.expires - game.tick : 999;
   return appleSprite(f.cooked ? 'baked' : left > 50 ? 'fresh' : left > 22 ? 'bruised' : 'rotten');
 }
@@ -499,6 +500,26 @@ function drawFood(alpha, now) {
         b.next = now + 250 + Math.random() * 300; // (poison spores, puffing off it)
         mote(x + (Math.random() - 0.5) * CELL * 0.5, y - CELL * 0.12, (Math.random() - 0.5) * 8, -12 - Math.random() * 8, 1700, 1.8 + Math.random() * 1.2, 0);
       }
+    } else if (f.kind === 'spill') {
+      // A knocked-out snake's charges (round six B): a gold coin under its
+      // glow, turning slowly, ringed with the pips it held, as they were on
+      // its head (sky dots for golden jumps, ember diamonds for flashes).
+      const left = f.expires != null ? f.expires - game.tick : 999;
+      const fade = left > 20 ? 1 : 0.4 + 0.6 * Math.max(0, left) / 20;
+      const glow = pop * (1.1 + (lively ? 0.16 * Math.sin(t * 4) : 0)), w = SPRITE * CELL * glow;
+      ctx.globalAlpha = fade * (lively ? 0.85 + 0.15 * Math.sin(t * 4) : 1);
+      ctx.drawImage(glowSprite(), x - w / 2, y - w / 2, w, w);
+      ctx.globalAlpha = fade;
+      shadowAt(x + 1, y + CELL * 0.3, pop * 0.7);
+      ctx.beginPath(); ctx.arc(x, y, CELL * 0.24 * pop, 0, TAU);
+      ctx.fillStyle = HONEY; ctx.fill();
+      ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.07; ctx.stroke();
+      const n = (f.leaps || 0) + (f.dashes || 0), turn = lively ? t * 0.8 : 0;
+      for (let i = 0; i < n; i++) {
+        const a = turn + TAU * i / Math.max(1, n) - Math.PI / 2, px = x + Math.cos(a) * CELL * 0.3 * pop, py = y + Math.sin(a) * CELL * 0.3 * pop;
+        drawPip(px, py, a, CELL * 0.07 * pop, i < (f.leaps || 0));
+      }
+      ctx.globalAlpha = 1;
     } else if (f.kind === 'leaf' || f.kind === 'goldcap') {
       // Golden powers: a glow, a gentle flutter (the leaf) or bob (the mushroom), and glints.
       const left = f.expires != null ? f.expires - game.tick : 999;
