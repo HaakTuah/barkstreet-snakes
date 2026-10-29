@@ -478,3 +478,7 @@ killing by itself):
 > Yes, that's fantastic! Let's do that! I love when game mechanics turn fron pure badness to conditional good! Now w eight have snakes back that actually eat them on purpose on certain cases! Bravo!
 
 (written into "Mushrooms come back up" in `docs/design/29-round-six-b-the-new-moves.md` and item 5's part 3)
+
+In the design chat (29 October 2026, 12:57 UTC), on the lessons: "And is this before the lessons rework? Because this
+will definetly be part of it. I think all this should come right after the new powers." (item 4 in `docs/PROGRESS.md`
+now starts as soon as item 5's last part merges, and teaches every move of it, the mushroom spit included)
