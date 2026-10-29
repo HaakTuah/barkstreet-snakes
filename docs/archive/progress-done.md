@@ -255,6 +255,17 @@ solid, never stringy. Seen from above (the head points +x):
   picks one** (#110 merged before his verdict; this one waits). Only his pick ships.
 - Art only: the render suite and looks checks pass; reduced motion unchanged.
 
+### 2f+. Wildcard's hair: F, a size smaller (Haakon, 29 October 2026; small, an art lane beside the new moves): done, PR #156
+
+Haakon (29 October 2026), playing with F: "Dont trumps hair look a bit too big now?" And, to keeping F's shape at about
+85% of its size: "Yes, let's try that!" Keep F's shape as it is, the wave, the sweep to the far side, the grooves and
+the gloss, and scale the whole mass to about 85%, so it sits on the head instead of towering over it, puffing past the
+head less over the ears and behind; the face, the set-back front edge and both eyes as they are. Drawing only. The PR
+shows F now beside F at 85% at a 390-pixel phone (true size and 3x) and desktop 2x, all four headings, and merges once
+the render suite passes; if Haakon then finds it still too big, or now too small, the size is one number to change.
+
+Done: the whole mass, grooves, gloss and shadow with it, scaled by `WILD_SIZE` (0.85) about the wave's front (`WILD_FRONT`), so the front edge and the eyes stay put; `render/faces.js`.
+
 ### 2g. The meal goes down: a hungry snake fills out from the head (Haakon, 29 October 2026; small, an art lane): done, PR #146
 
 Haakon (29 October 2026): "I notice snakes imidately become plump again when after eating while starving. I feel it
