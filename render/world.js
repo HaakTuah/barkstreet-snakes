@@ -243,12 +243,12 @@ function onTick(events) {
       else spawn(x, y, T.PARTICLES_EAT, 180, T.PARTICLE_LIFE, 2.8, '#a3e635', '#f6ecd2'); // sprout and parchment: visible on bark and on green snakes alike (gold means a power)
       eatenNow.add(e.y * GRID + e.x);
       if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.6), GROWN[e.kind === 'golden' ? T.GOLDEN_GROWTH : e.kind === 'beetle' ? T.BEETLE_GROWTH : e.cooked ? T.COOKED_GROWTH : 1] || '+1');
-    } else if (e.type === 'choke') { // gagged on its own bead: a quick puff of its cheeks, and the bead spat aside (then it coughs: see drawCough)
-      animOf(e.snake, now).chokeAt = now;
-      moveFood(e.x, e.y, e.tx ?? e.x, e.ty ?? e.y, now, true, false, e.snake);
-    } else if (e.type === 'nudge') { // food its coughing head reached, nudged aside: it rolls there, or a beetle scurries
-      if (e.kind === 'beetle') scurries.push({ x: e.x, y: e.y, tx: e.tx ?? e.x, ty: e.ty ?? e.y, tick: game.tick });
-      else moveFood(e.x, e.y, e.tx ?? e.x, e.ty ?? e.y, now, false);
+    } else if (e.type === 'squash') { // its own bead squashed under its head (round six B): a soft splat in the bead's colours, low and flat, and a smear that fades
+      const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2, col = colorOf(e.snake);
+      eatenNow.add(e.y * GRID + e.x);
+      spawn(x, y, 9, 70, 520, 2.6, col[0] === '#' ? col : '#a3a3a3', '#57534e');
+      if (!reduced) for (let k = 0; k < 3; k++) mote(x + (k - 1) * CELL * 0.22, y + CELL * 0.1, (k - 1) * 6, 2, 900, 3.4, 2);
+      if (e.snake.id === viewerId) floater(x, Math.max(CELL * 1.3, y - CELL * 0.6), 'Splat!');
     } else if (e.type === 'knock') { // the woodpecker's strike knocks food out of its patch: it flies to where the rule says, in an arc as high and long as the throw (see knockFly), and a beetle scurries there; with nowhere to go, the bird has it
       const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
       if (e.tx == null || e.ty == null) { eatenNow.add(e.y * GRID + e.x); spawn(x, y, 8, 160, 420, 2.2, e.kind === 'beetle' ? '#059669' : '#c08a4a', '#f6ecd2'); }
@@ -289,7 +289,9 @@ function onTick(events) {
       // - and a -N the top edge would push down (onto Bonk!, the neck and
       //   the stars, where they read as one word) goes under Bonk!.
       const hx = h.x * CELL + CELL / 2, hy = h.y * CELL + CELL / 2, dx = s.dir.x, dy = s.dir.y, side = hx < SIZE / 2 ? 1 : -1;
-      const stars = starsOff(s), refused = s.id === viewerId && refusal.tick === game.tick, half = floatHalfOf('Bonk!');
+      const word = e.failed ? 'BONK!' : 'Bonk!'; // (a failed flash: a bigger bonk, an ember burst, and the stars stay longer, as its stun does)
+      if (e.failed) spawn(px, py, 22, 300, 640, 3.2, '#f97316', '#fde047');
+      const stars = starsOff(s), refused = s.id === viewerId && refusal.tick === game.tick, half = floatHalfOf(word);
       let bx = px + dx * CELL * 0.4, by = py + dy * CELL * 0.4;
       if (dy && (refused || (stars < 0) === (dy < 0))) bx += side * CELL * 1.2;
       else if (dx && (refused || bx < half || bx > SIZE - half)) by += stars < 0 ? CELL : -CELL;
@@ -298,13 +300,13 @@ function onTick(events) {
         bx = hx + (dx ? (on ? dx : -dx) : side) * CELL * 1.9;
         by = Math.min(FLOAT_LOW, Math.max(FLOAT_TOP, hy));
       }
-      floater(bx, by, 'Bonk!');
+      floater(bx, by, word);
       if (s.id === viewerId) {
-        if (e.lost >= 1 && e.lost <= 3) {
+        if (e.lost >= 1 && e.lost <= T.FAIL_LOSS) {
           const under = hy - CELL * 1.9 < FLOAT_TOP;
           floater(under ? bx : hx - dx * CELL * 1.2, under ? by + CELL * 0.85 : hy - CELL * 1.9, '-' + e.lost);
         }
-        if (!reduced) shake(4);
+        if (!reduced) shake(e.failed ? 7 : 4);
       }
     } else if (e.type === 'fizzle') { // asked to jump or flash, and it couldn't: refused, on what it couldn't hop (and then ran into), or where it would have gone
       const s = e.snake;
@@ -339,7 +341,7 @@ function onTick(events) {
       const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
       spawn(x, y, 10, 80, 600, 2.4, '#e2e8f0', '#94a3b8');
       if (!reduced) for (let k = 0; k < 4; k++) mote(x + (Math.random() - 0.5) * CELL * 0.6, y, (Math.random() - 0.5) * 12, -20 - Math.random() * 14, 1200, 4 + Math.random() * 3, 2);
-    } else if (e.type === 'cut') { // a golden flash (a dash) cut through it (the woodpecker's cuts, its "Ouch!", went in round four)
+    } else if (e.type === 'cut') { // a flash cut through it, a plain one or a golden one (a dash); its own tail dropped, by its own flash (the woodpecker's cuts, its "Ouch!", went in round four)
       floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.2), e.by != null ? 'Snip!' : 'Ouch!');
       if (e.by != null) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 220, 500, 2.4, '#d4a017', e.snake.color || '#fffbea');
     } else if (e.type === 'alight') { // crawled into the fire: a burst of flame

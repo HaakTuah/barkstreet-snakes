@@ -1,4 +1,4 @@
-// ---------------------------------------------------------------- choking on your own tail
+// ---------------------------------------------------------------- your own tail: squashed (round six B; choked on in round six A)
 // (A step with only the food a test laid, wherever it has rolled to since: nothing that grows mid-test gets in the way.)
 const lay = (g, ...food) => { g.food = food; g.mine = new Set(food); return food; };
 const kept = g => { g.food = g.food.filter(f => g.mine.has(f)); return E.step(g); };
@@ -10,34 +10,34 @@ const at = (c, x, y) => !!c && c.x === x && c.y === y;
 const passHere = g => (x, y) => !g.holes.has(K(x, y)) && !g.snakes.some(o => o.alive && o.body.some(c => c.x === x && c.y === y));
 const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x && f.y === y);
 
-{ // Your own bead: you choke on it, spit it aside (it stays food), and cough. You lose nothing, but you get nothing back. Anyone else's is a meal.
+{ // Your own bead: your head squashes it (round six B), at once and for nothing: food for nobody. Anyone else's is a meal.
   const g = board([[line(5, 5, 5), 'right'], [line(5, 15, 5), 'right']], { time: 5000 });
   const [a, b] = g.snakes;
   a.lastAte = 1000; a.nextStarve = 1000 + T.HUNGER_MS; b.lastAte = 1000; b.nextStarve = 1000 + T.HUNGER_MS;
   const [mine, theirs] = lay(g, bead(a, 6, 5), bead(a, 6, 15));
   kept(g);
-  const choke = g.events.find(e => e.type === 'choke');
-  check('your own bead: you choke on it, and spit it aside, still food', choke && choke.snake === a && at(choke, 6, 5) && g.food.includes(mine) && !at(mine, 6, 5) && at(mine, choke.tx, choke.ty), JSON.stringify(choke && { x: choke.x, y: choke.y, tx: choke.tx, ty: choke.ty }));
-  check('...no length, no score, no meal', a.body.length === 5 && a.grow === 0 && a.eaten === 0 && a.pellets === 0 && a.lastAte === 1000 && a.nextStarve === 1000 + T.HUNGER_MS && !g.events.some(e => e.type === 'eat' && e.snake === a), JSON.stringify({ length: a.body.length, grow: a.grow, eaten: a.eaten, lastAte: a.lastAte }));
-  check('...and you cough for COUGH_TICKS', a.coughUntil === g.tick - 1 + T.COUGH_TICKS, a.coughUntil);
+  const sq = g.events.find(e => e.type === 'squash');
+  check('your own bead: you squash it, and it\'s gone', sq && sq.snake === a && at(sq, 6, 5) && !g.food.includes(mine), JSON.stringify(sq && { x: sq.x, y: sq.y }));
+  check('...no length, no score, no meal, no cough', a.body.length === 5 && a.grow === 0 && a.eaten === 0 && a.pellets === 0 && a.lastAte === 1000 && a.nextStarve === 1000 + T.HUNGER_MS && !g.events.some(e => e.type === 'eat' && e.snake === a) && !('coughUntil' in a), JSON.stringify({ length: a.body.length, grow: a.grow, eaten: a.eaten, lastAte: a.lastAte }));
   check("...someone else's bead is a meal", b.eaten === 1 && b.lastAte === 5000 && !g.food.includes(theirs) && g.events.some(e => e.type === 'eat' && e.snake === b && e.kind === 'pellet'), b.lastAte);
+  const g2 = board([[line(5, 5, 5), 'right'], [line(9, 6, 3, 1), 'left']]); // (a rival coming along row 6 eats nothing where the bead was)
+  lay(g2, bead(g2.snakes[0], 6, 5), { x: 7, y: 5, kind: 'food', expires: 9999 });
+  kept(g2);
+  check('...and food is no longer pushed aside: the apple beyond stays where it lay', g2.food.some(f => f.kind === 'food' && at(f, 7, 5)), JSON.stringify(g2.food));
 }
 
-{ // Where a spat bead goes is a rule, never chance, and anyone can work it out before the move.
-  // P0 heads right along row y (or turns down at (5,5)); holes block cells, and more of its own beads lie at `beads`;
-  // returns the choke and what was predicted.
+{ // Where something spat goes (round six B: the mushroom that comes back up) is a rule, never chance, and anyone can work it out:
+  // E.rollSide, from where the head is about to go. P0 heads right along row y (or turns down at (5,5)); holes block cells,
+  // and food lies at `beads`.
   const spit = ({ y = 5, turn = false, holes = [], beads = [], wrap = false, n = 3 }) => {
     const g = board([[line(5, y, n), 'right'], far]);
     const [a] = g.snakes;
     if (wrap) a.wrapUntil = 1e9;
     for (const [x, hy] of holes) g.holes.add(K(x, hy));
     const next = turn ? { x: 5, y: y + 1 } : { x: 6, y };
-    if (turn) a.queue = [D.down];
-    const [b] = lay(g, bead(a, next.x, next.y), ...beads.map(([x, by]) => bead(a, x, by)));
-    const guess = E.rollSide(g, a, next.x, next.y, freeHere(g), passHere(g)); // (before the move: the cell it's about to go into)
-    kept(g);
-    const e = g.events.find(e => e.type === 'choke' && e.snake === a);
-    return { e, b, guess, to: e && { x: e.tx, y: e.ty } };
+    if (turn) a.dir = D.down;
+    lay(g, { x: next.x, y: next.y, kind: 'food', expires: 9999 }, ...beads.map(([x, by]) => bead(a, x, by)));
+    return E.rollSide(g, turn ? { body: a.body, dir: D.down } : a, next.x, next.y, freeHere(g), passHere(g));
   };
   const cases = [
     ['a turn knocks it to the inside of the turn, beside the neck', { turn: true }, [4, 6]],
@@ -56,9 +56,8 @@ const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x
     ['...the edge is an edge, even when the edges wrap for it', { y: 0, wrap: true, holes: [[6, 1]] }, [6, 0]],
   ];
   for (const [name, opts, [x, y]] of cases) {
-    const { e, b, guess, to } = spit(opts);
-    check(`a spat bead: ${name}`, at(to, x, y) && at(b, x, y), JSON.stringify(to));
-    check('...as worked out before the move', at(guess || { x: e?.x, y: e?.y }, x, y), JSON.stringify(guess));
+    const to = spit(opts);
+    check(`the roll rule: ${name}`, at(to || { x: opts.turn ? 5 : 6, y: (opts.y ?? 5) + (opts.turn ? 1 : 0) }, x, y), JSON.stringify(to));
   }
   // A tie both ways (no nearer side) goes to the snake's right. On the 24-cell log there's no middle column or
   // row, so the middle always settles a tie: only an odd-sized board has one.
@@ -72,93 +71,24 @@ const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x
   check("...a tie with no nearer side goes to the snake's right (a 25-cell board)", at(up, 13, 10) && at(down, 11, 14), JSON.stringify([up, down]));
 }
 
-{ // The cough: COUGH_TICKS moves that eat nothing (the choke's and the rest); food the coughing head reaches is nudged aside by the same rule.
-  const g = board([[line(5, 5, 5), 'right'], far]);
-  const [a] = g.snakes;
-  lay(g, bead(a, 6, 5));
-  kept(g);
-  const nudged = [];
-  let ateAt = -1;
-  for (let k = 1; k <= T.COUGH_TICKS && ateAt < 0; k++) {
-    const apple = { x: a.body[0].x + 1, y: 5, kind: 'food', expires: 9999 };
-    g.food.push(apple); g.mine.add(apple);
-    kept(g);
-    const e = g.events.find(e => e.snake === a && (e.type === 'nudge' || e.type === 'eat'));
-    if (e?.type === 'eat') ateAt = k;
-    else if (e) nudged.push({ e, apple });
-  }
-  check('the cough: COUGH_TICKS moves eat nothing, and then it eats', nudged.length === T.COUGH_TICKS - 1 && ateAt === T.COUGH_TICKS && a.eaten === 1, `${nudged.length} nudged, ate on move ${ateAt}`);
-  check('...what the coughing head reached was nudged aside, by the rule, and is still there', nudged.every(({ e, apple }) => e.kind === 'food' && e.y === 5 && at(apple, e.x, 6) && e.tx === e.x && e.ty === 6 && g.food.includes(apple)), JSON.stringify(nudged.map(({ e }) => [e.x, e.y, e.tx, e.ty])));
-  check('...and nothing was eaten meanwhile', !g.events.some(e => e.type === 'choke') && a.grow === 1 && a.body.length === 5, `${a.body.length} long, grow ${a.grow}`);
+{ // A snake out of time at its smallest, reaching food: it eats instead of starving. Not if it squashes its own bead: it ate nothing.
+  const g = board([[[[5, 5], [4, 5], [3, 5]], 'right'], [[[15, 15], [14, 15], [13, 15]], 'right']]);
+  const s = g.snakes[0];
+  s.nextStarve = 0; s.lastAte = -T.HUNGER_MS;
+  lay(g, bead(s, 6, 5));
+  const dying = kept(g);
+  check('a snake out of time that squashes its own bead isn\'t saved by it', dying.includes(s) && s.killer === 'hunger' && g.events.some(e => e.type === 'squash' && e.snake === s), s.alive ? 'alive' : s.cause);
 }
 
-{ // No dribbling: going round a staircase (up, right, up, right) coughing, the food a turn reaches goes beside the neck,
-  // out in the open, and the next step leaves it there. (On the outside of the turn it lay just where the next step
-  // went, and was nudged along under the head all through the cough, to be eaten as it ended.)
-  const g = board([[[[10, 14], [10, 15], [10, 16], [10, 17], [10, 18]], 'up'], far]);
-  const [a] = g.snakes;
-  a.coughUntil = 99;
-  const [apple] = lay(g, { x: 11, y: 14, kind: 'food', expires: 9999 });
-  const nudges = [];
-  for (const d of [D.right, D.up, D.right, D.up, D.right, D.up]) {
-    a.queue = [d];
-    kept(g);
-    for (const e of g.events) if (e.type === 'nudge' && e.snake === a) nudges.push([e.x, e.y, e.tx, e.ty]);
-  }
-  check('no dribbling: coughing round a staircase, the food a turn reaches goes beside the neck, and stays there', JSON.stringify(nudges) === JSON.stringify([[11, 14, 11, 15]]) && at(apple, 11, 15) && at(a.body[0], 13, 11), JSON.stringify({ nudges, apple, head: a.body[0] }));
-}
-
-{ // A cough never chains: more of your own beads met while coughing are nudged aside, and the cough ends when it would have.
-  const g = board([[line(5, 5, 5), 'right'], far]);
-  const [a] = g.snakes;
-  const [, second] = lay(g, bead(a, 6, 5), bead(a, 8, 5));
-  kept(g); kept(g); kept(g);
-  const e = g.events.find(e => e.snake === a && (e.type === 'nudge' || e.type === 'choke'));
-  check('a cough never chains: your own bead met while coughing is only nudged', e?.type === 'nudge' && e.kind === 'pellet' && at(e, 8, 5) && at(second, e.tx, e.ty) && a.coughUntil === T.COUGH_TICKS, JSON.stringify(e && { type: e.type, coughUntil: a.coughUntil }));
-}
-
-{ // What's spat or nudged aside stays food for anyone else: a rival comes along and eats it.
-  for (const [what, food] of [['a spat bead', a => bead(a, 6, 5)], ['food nudged aside', () => ({ x: 6, y: 5, kind: 'food', expires: 9999 })]]) {
-    const g = board([[line(5, 5, 5), 'right'], [line(9, 6, 3, 1), 'left']]); // (the rival comes along row 6, to (6,6) on its third move)
-    const [a, b] = g.snakes;
-    if (what !== 'a spat bead') a.coughUntil = 99;
-    const [f] = lay(g, food(a));
-    kept(g);
-    const rolled = at(f, 6, 6);
-    kept(g); kept(g);
-    const e = g.events.find(e => e.type === 'eat' && e.snake === b);
-    check(`${what} is food for anyone else`, rolled && e && at(e, 6, 6) && !g.food.includes(f) && b.eaten === 1, JSON.stringify({ rolled, f, eaten: b.eaten }));
-  }
-}
-
-{ // A snake out of time at its smallest, reaching food: it eats instead of starving. Not if it chokes or coughs: it ate nothing.
-  for (const [what, setup] of [['chokes on its own bead', (g, s) => lay(g, bead(s, 6, 5))], ['is coughing', (g, s) => { s.coughUntil = 99; lay(g, { x: 6, y: 5, kind: 'food', expires: 9999 }); }]]) {
-    const g = board([[[[5, 5], [4, 5], [3, 5]], 'right'], [[[15, 15], [14, 15], [13, 15]], 'right']]);
-    const s = g.snakes[0];
-    s.nextStarve = 0; s.lastAte = -T.HUNGER_MS;
-    setup(g, s);
-    const dying = kept(g);
-    check(`a snake out of time that ${what} isn't saved by it`, dying.includes(s) && s.killer === 'hunger' && g.events.some(e => (e.type === 'choke' || e.type === 'nudge') && e.snake === s), s.alive ? 'alive' : s.cause);
-  }
-}
-
-{ // A golden dash over two of its own beads: it chokes on the first, and the second is nudged (a cough never chains), each aside by the rule.
+{ // A golden dash over two of its own beads squashes both.
   const g = board([[line(5, 5, 5), 'right'], far]);
   const [a] = g.snakes;
   a.dashes = 1;
-  const [first, second] = lay(g, bead(a, 6, 5), bead(a, 7, 5));
+  lay(g, bead(a, 6, 5), bead(a, 7, 5));
   E.flash(g, a);
   kept(g);
-  const ev = g.events.filter(e => e.snake === a && ['choke', 'nudge', 'eat'].includes(e.type)).map(e => [e.type, e.x, e.y, e.tx, e.ty]);
-  check('a dash over your own beads: a choke on the first, the next nudged', JSON.stringify(ev) === JSON.stringify([['choke', 6, 5, 6, 6], ['nudge', 7, 5, 7, 6]]) && at(first, 6, 6) && at(second, 7, 6) && at(a.body[0], 5 + T.DASH_LENGTH, 5), JSON.stringify(ev));
-  // Turning into a dash, at its smallest (the cells it set off from are gone from its body by the end): the first cell's a turn, the inside is back against the way it was going.
-  const g2 = board([[line(5, 5, T.MIN_LENGTH), 'right'], far]);
-  const [s] = g2.snakes;
-  s.dashes = 1; s.queue = [D.down];
-  const [b] = lay(g2, bead(s, 5, 6));
-  E.flash(g2, s);
-  kept(g2);
-  check('...turning into a dash, its own bead goes to the inside of the turn', at(b, 4, 6) && g2.events.some(e => e.type === 'choke' && at(e, 5, 6)) && at(s.body[0], 5, 5 + T.DASH_LENGTH), JSON.stringify(b));
+  const ev = g.events.filter(e => e.snake === a && ['squash', 'eat'].includes(e.type)).map(e => [e.type, e.x, e.y]);
+  check('a dash over your own beads squashes both', JSON.stringify(ev) === JSON.stringify([['squash', 6, 5], ['squash', 7, 5]]) && !g.food.some(f => f.kind === 'pellet') && at(a.body[0], 5 + T.DASH_LENGTH, 5), JSON.stringify(ev));
 }
 
 { // A head that stays put (a crash, a stun) finds nothing new under it, but a jump whose landing was taken comes down on what it hopped: food cooking in the fire there is eaten.
@@ -172,37 +102,12 @@ const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x
   check('a jump whose landing is taken comes down on food in the fire it hopped, and eats it', me.alive && at(me.body[0], 6, 10) && ate && at(ate, 6, 10) && g.events.some(e => e.type === 'crash' && e.snake === me) && q.alive, JSON.stringify({ head: me.body[0], ate: !!ate }));
 }
 
-{ // A coughing head that reaches a beetle sends it scurrying aside, by the same rule (it doesn't get eaten).
-  const g = board([[line(5, 5, 5), 'right'], far]);
-  const [a] = g.snakes;
-  a.coughUntil = 99;
-  const [bug] = lay(g, { x: 6, y: 5, kind: 'beetle', expires: 9999, dir: D.left, movedAt: -10 });
-  kept(g);
-  const e = g.events.find(e => e.type === 'nudge');
-  check('a coughing head sends a beetle scurrying aside', e && e.kind === 'beetle' && at(bug, 6, 6) && bug.px === 6 && bug.py === 5 && bug.dir === D.down && bug.movedAt === g.tick - 1 && bug.scared && g.food.includes(bug) && !g.events.some(e => e.type === 'eat'), JSON.stringify(bug));
-  // Apples on both sides: it scurries on over one, facing the way it ran, and crawls on from there.
-  const h = board([[line(5, 5, 5), 'right'], far]);
-  h.snakes[0].coughUntil = 99;
-  h.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }];
-  h.burrows = [{ x: 10, y: 9, at: 0, used: 0 }]; // (one in reach, so it runs for it rather than digging in)
-  const [b2] = lay(h, { x: 6, y: 5, kind: 'beetle', expires: 9999, dir: D.left, movedAt: -10 }, { x: 6, y: 4, kind: 'food', expires: 9999 }, { x: 6, y: 6, kind: 'food', expires: 9999 });
-  kept(h);
-  const ran = { x: b2.x, y: b2.y, dir: b2.dir };
-  let crawled = true;
-  try { for (let t = 0; t < 8; t++) kept(h); } catch (err) { crawled = String(err); }
-  check('...over food on both sides, it scurries on over it, facing the way it ran, and crawls on from there', at(ran, 6, 7) && ran.dir === D.down && crawled === true, JSON.stringify({ ran, crawled }));
-}
-
-{ // An AI sees how many of its moves will eat nothing (as a person sees the puffs), a rival's cough as it saw it, and the food as it is now.
+{ // An AI sees the food as it is now, not as it was.
   const g = board([[line(5, 5, 5), 'right'], far]);
   const [a, b] = g.snakes;
   lay(g, bead(a, 6, 5));
   kept(g);
-  const snap = g.history[g.history.length - 1].snakes.find(o => o.id === a.id);
-  check('an AI sees how long it coughs, and a rival does too', E.aiView(g, a).me.coughIn === T.COUGH_TICKS - 1 && E.aiView(g, b).me.coughIn === 0 && snap.cough === T.COUGH_TICKS - 1, JSON.stringify([E.aiView(g, a).me.coughIn, snap.cough]));
-  check('...and the food as it is, not as it was', E.aiView(g, b).food === g.food && E.aiView(g, a).food === g.food);
-  const fresh = E.createGame({ withPlayer: false });
-  check('...no one coughs at the start', fresh.snakes.every(o => o.coughUntil < 0 && E.aiView(fresh, o).me.coughIn === 0));
+  check('an AI sees the food as it is, not as it was', E.aiView(g, b).food === g.food && E.aiView(g, a).food === g.food);
 }
 
 { // A meal keeps you HUNGER_MS in the opening and once the woodpecker's here, but only HUNGER_MID_MS in between, when food is everywhere.

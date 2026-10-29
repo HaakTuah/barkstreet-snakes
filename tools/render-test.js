@@ -50,12 +50,8 @@
 //   its shadow shows on the pit's floor (dark, in a floor lit round it),
 //   and a tail end over a hole droops, darker; its outline stays as smooth
 //   as on the bark (no segment bulging above its line, the rim unbroken).
-// - Choking (staged from the engine's choke and nudge events): the cheeks
-//   puff with the bead in its mouth (none of it over the face), then it's
-//   spat aside out of its cheek, in an arc to where it went; coughing, the
-//   mouth stays shut and puffs of breath come out, big enough to see on a
-//   phone, the head jolting (with reduced motion, the puffs still, no
-//   jolt); nudged food rolls aside, and a beetle scurries.
+// - Squashing your own bead (staged from the engine's squash event): it's
+//   gone at once, never spat, rolled or left behind.
 // - Beetles and the woodpecker's knock (staged from the engine's state and
 //   events): two beetles out at once, each drawn; a cornered one digs in
 //   (it sinks, a collar of sawdust round it, sawdust spraying; with reduced
@@ -97,7 +93,7 @@
 //   node tools/render-test.js [--seed N]   (N: other staged boards, other bark)
 // The checks are in tools/render/, one file per area, run in name order as the body of this one
 // (tools/parts.js): 01 a flash, as drawn, 02 beads and golden pips, 03 Star, 04 scorch, rainbows,
-// jumps and bridges, 05 the cough and beetles, 06 flags, strikes and the Field guide, 07 the
+// jumps and bridges, 05 the squash and beetles, 06 flags, strikes and the Field guide, 07 the
 // woodpecker, 08 hunger, 09 the chomps (what the round plays when you or a rival eats), 10 flags bending under a snake. A new check goes in its area's file, or a new one.
 const path = require('path');
 const runParts = require('./parts.js');

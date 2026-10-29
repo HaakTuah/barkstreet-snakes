@@ -104,18 +104,3 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
   check('in the game: a cornered beetle digs in, and Gobbler catches it before it\'s gone', dug && caught && caught.x === dug.x && caught.y === dug.y && g.tick - 1 <= dug.until, JSON.stringify({ dug, caught: caught && [caught.x, caught.y, g.tick - 1], bug }));
 }
 
-{ // Nothing rolls onto a burrow: a coughing head knocks an apple to the side with more open log, else toward the middle,
-  // never onto a burrow (nothing grows on one): there, the other side. (The rivals' picture of the roll has the same check.)
-  const roll = burrow => {
-    const g = board([[[[12, 13], [12, 14], [12, 15], [12, 16]], 'up'], [line(20, 22, 4), 'right']]);
-    feed(g);
-    g.snakes[0].coughUntil = 999;
-    if (burrow) g.burrows = [{ x: 11, y: 12, at: 0, used: 0 }];
-    g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }];
-    const [apple] = lay(g, { x: 12, y: 12, kind: 'food', expires: 999 });
-    kept(g);
-    return [apple.x, apple.y];
-  };
-  const open = roll(false), beside = roll(true);
-  check('a cough\'s roll never puts food on a burrow: it goes to the other side', JSON.stringify(open) === '[11,12]' && JSON.stringify(beside) === '[13,12]', JSON.stringify({ open, beside }));
-}

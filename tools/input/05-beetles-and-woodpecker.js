@@ -40,7 +40,7 @@ const digNear = (dx, dy) => ev(`stageEvents(g => { const h = g.snakes[0].body[0]
 const rivalDig = () => ev(`stageEvents(g => { const h = g.snakes[1].body[0]; return [{ type: 'dig', x: h.x + 1, y: h.y + 1, until: g.tick + ${BEETLE_DIG} }]; })`);
 await ev('centre()');
 await ev(`put(1, 2, 2, 'right')`); // (a rival's head far from yours)
-await ev('vadvance(6000)'); // (the nudge's lesson has had its time)
+await ev('vadvance(6000)'); // (the squash's lesson has had its time)
 await rivalDig();
 await toTick();
 const farDig = { toast: await ev('toastText()'), heard: await cues() };

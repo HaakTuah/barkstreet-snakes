@@ -36,7 +36,6 @@ declare namespace Engine {
     leaps: number; leapArmed: number; leapReadyAt: number; dashes: number; wrapUntil: number;
     flight: { dir: Dir; over: { x: number; y: number }[]; land: { x: number; y: number }; gold?: Flag } | null;
     flashReadyAt: number; flashArmed: number;
-    coughUntil?: number;
     /** A rival's next way once it's thought, and the tick it thought it for; a person's queued turns. */
     planned?: Dir | null; plannedTick?: number; queue: Dir[];
     // How it died (set when it does: a death event reads them).
@@ -71,9 +70,8 @@ declare namespace Engine {
     | { type: 'eat'; snake: Snake; kind: string; x: number; y: number; color?: string; cooked?: Flag; gold?: Flag }
     | { type: 'death'; snake: Snake }
     | { type: 'spawn'; kind: string; x?: number; y?: number; gold?: Flag }
-    | { type: 'choke'; snake: Snake; x: number; y: number; tx: number; ty: number }
-    | { type: 'nudge'; snake: Snake; kind: string; x: number; y: number; tx: number; ty: number }
-    | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number }
+    | { type: 'squash'; snake: Snake; x: number; y: number }
+    | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number; failed?: 1 }
     | { type: 'leap'; snake: Snake; x: number; y: number; gold?: Flag; reach: number }
     | { type: 'dash'; snake: Snake; x: number; y: number; n: number; plain?: Flag }
     | { type: 'fizzle'; snake: Snake; why: string; x: number; y: number; flash?: Flag }

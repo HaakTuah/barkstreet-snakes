@@ -1,94 +1,38 @@
-// Choking and the cough (round six A), staged as the engine reports them
-// (the choke and nudge events, s.coughUntil). Joker chokes on its own
-// bead right in front of it and spits it aside: its cheeks puff out for
-// a moment (its white face wider across) with the bead in its mouth,
-// none of it drawn (over its face, on a phone, the bead was the whole
-// head); then it's spat out of its cheek on the side it lands, never
-// over its face, up off its shadow on the ground, and lands where it went.
-// Gobbler coughs with an apple right ahead: its mouth stays shut (it
-// gapes at food otherwise) and puffs of breath come out past it, with
-// reduced motion too. Food a coughing head nudges rolls there (half way,
-// it's between the cells), and a beetle scurries. Every count and centre
-// is of pixels the snakes and food changed: against the same board with
-// nobody near and nothing on it (the same log under it), so none depends
-// on the bark (a knot's ink beside Joker's face passed for its cheeks).
-const choke = await ev(`(() => {
+// Squashing your own bead (round six B; it was choking on it, with a cough,
+// in round six A), staged as the engine reports it (the squash event, the
+// bead gone from the food): Joker's own bead lies right in front of it; it
+// goes on over it, and the bead isn't drawn there any more, none of it
+// (no spit, no roll: food is no longer pushed aside), and nothing throws.
+// Counts are of pixels changed against the same board with nothing on it.
+const squash = await ev(`(() => {
   seeds(40);
   SnakeDebug.pinQuality(0);
-  const at = s => { const o = R.headPx(s, 0.5, TUNING.GRID * ${CELL}, {}); return [o.x / ${CELL}, o.y / ${CELL}]; };
-  const g = stage(['joker', 'gobbler', 'mason']), [you, jo, gob, ma] = g.snakes;
-  // The bare board: everyone still along the bottom row, where stage() put them, no food. (Shown again, below, it gets the same log.)
+  const g = stage(['joker', 'gobbler', 'mason']), [you, jo] = g.snakes;
   show(g); R.setViewer(99); drawN(20, 0.5);
   const cv = document.getElementById('game'), W = cv.width, kk = W / (TUNING.GRID * ${CELL}), bare = cv.getContext('2d').getImageData(0, 0, W, cv.height).data;
-  const changed = (x, y, w, h, is, each) => { // (each pixel in the box that passes is() and isn't what the bare board has there)
-    const p = pixels(x, y, w, h), d = p.data, px = Math.round(x * ${CELL} * kk), py = Math.round(y * ${CELL} * kk);
-    for (let i = 0; i < d.length; i += 4) {
-      const col = (i / 4) % p.width, row = Math.floor(i / 4 / p.width), j = ((py + row) * W + px + col) * 4;
-      if (is(d[i], d[i + 1], d[i + 2]) && Math.abs(d[i] - bare[j]) + Math.abs(d[i + 1] - bare[j + 1]) + Math.abs(d[i + 2] - bare[j + 2]) > 24) each(col, row);
-    }
-    return p;
-  };
-  const count = (x, y, w, h, is) => { let n = 0; changed(x, y, w, h, is, () => n++); return n; };
-  const centre = (x, y, w, h, is) => { let n = 0, sx = 0, sy = 0; const p = changed(x, y, w, h, is, (c, r) => { n++; sx += c; sy += r; }); return n ? [+(x + sx / n / p.width * w).toFixed(2), +(y + sy / n / p.height * h).toFixed(2)] : null; };
-  const sky = (r, g, b) => b > 200 && g > 150 && r < 120, face = (r, g, b) => Math.min(r, g, b) > 215 || Math.max(r, g, b) < 40, mouth = (r, g, b) => r > 40 && r < 90 && g < 30 && b < 30, darker = (r, g, b) => r + g + b < 160;
-  const lime = (r, g, b) => g > 150 && r > 100 && r < 170 && b < 60, emerald = (r, g, b) => g > 110 && g > r + 60 && b > 80 && b < g;
-  const pale = (r, g, b) => Math.min(r, g, b) > 200 && b > 180;
-  const out = {};
+  const sky = (r, g, b) => b > 200 && g > 150 && r < 120;
+  const count = (x, y, w, h) => { const p = pixels(x, y, w, h), d = p.data, px = Math.round(x * ${CELL} * kk), py = Math.round(y * ${CELL} * kk); let n = 0;
+    for (let i = 0; i < d.length; i += 4) { const col = (i / 4) % p.width, row = Math.floor(i / 4 / p.width), j = ((py + row) * W + px + col) * 4; if (sky(d[i], d[i + 1], d[i + 2]) && Math.abs(d[i] - bare[j]) + Math.abs(d[i + 1] - bare[j + 1]) + Math.abs(d[i + 2] - bare[j + 2]) > 24) n++; }
+    return n; };
   setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
   setBody(jo, Array.from({ length: 6 }, (_, i) => [8 - i, 8]), 'right');
-  setBody(gob, Array.from({ length: 6 }, (_, i) => [8 - i, 16]), 'right');
-  setBody(ma, Array.from({ length: 6 }, (_, i) => [16, 6 - i]), 'down');
-  g.food.push({ x: 8, y: 10, kind: 'pellet', color: '#38bdf8', owner: jo.id, expires: g.tick + 900 }); // (sky: nothing else here is)
-  g.food.push({ x: 10, y: 16, kind: 'food', expires: g.tick + 900 });
-  g.food.push({ x: 15, y: 12, kind: 'food', expires: g.tick + 900 });
-  g.food.push({ x: 4, y: 12, kind: 'beetle', dir: E.DIRS.right, movedAt: g.tick - 50, expires: g.tick + 900 });
-  show(g); R.setViewer(99); drawN(20, 0.5); // (half way through the tick, drawn at its cells: nobody's moving)
-  { // (the bark far from everyone, cells 19 to 23 across, 8 to 10 down, is just as it was bare: the same log)
-    const x0 = Math.round(19 * ${CELL} * kk), y0 = Math.round(8 * ${CELL} * kk), w = W - x0, d = cv.getContext('2d').getImageData(x0, y0, w, Math.round(3 * ${CELL} * kk)).data;
-    let n = 0;
-    for (let i = 0; i < d.length; i += 4) { const j = ((y0 + Math.floor(i / 4 / w)) * W + x0 + (i / 4) % w) * 4; if (d[i] !== bare[j] || d[i + 1] !== bare[j + 1] || d[i + 2] !== bare[j + 2]) n++; }
-    if (n) throw new Error('the choke board’s bark far from everyone isn’t as it was bare (' + n + ' pixels): its counts would be against another log');
-  }
-  // (each measured from where its head's drawn that frame, as it eases out of the move the drawing guessed it'd make)
-  const cheeks = () => { const [x, y] = at(jo); return count(x + 0.05, y - 0.8, 0.6, 0.24, face); }; // (white or ink, just past its face, on the side the bead doesn't fly over)
-  const shut = () => { const [x, y] = at(gob); return count(x, y - 0.4, 0.8, 0.8, mouth); }, puffed = () => { const [x, y] = at(gob); return count(x + 0.45, y - 0.6, 1.2, 1.2, pale); };
-  const orange = (r, g, b) => r > 200 && g > 100 && g < 190 && b < 110, front = () => { const [x, y] = at(gob); let m = -1; const p = changed(x - 0.5, y - 0.6, 1.4, 1.2, orange, c => { m = Math.max(m, c); }); return m < 0 ? null : x - 0.5 + (m + 1) / p.width * 1.4; }; // (how far its head reaches ahead, cells)
-  out.before = { cheeks: cheeks(), mouth: shut() };
+  const b = { x: 9, y: 8, kind: 'pellet', color: '#38bdf8', owner: jo.id, expires: g.tick + 900 }; // (sky: nothing else here is)
+  g.food.push(b);
+  show(g); R.setViewer(99); drawN(20, 0.5);
+  const out = { before: count(8.5, 6.5, 3, 3) };
   g.tick++;
-  jo.coughUntil = g.tick + 9; gob.coughUntil = g.tick + 9;
-  R.onTick([{ type: 'choke', snake: jo, x: 9, y: 8, tx: 8, ty: 10 }, { type: 'nudge', snake: ma, kind: 'food', x: 16, y: 13, tx: 15, ty: 12 }, { type: 'nudge', snake: ma, kind: 'beetle', x: 5, y: 12, tx: 4, ty: 12 }]);
-  const [hx, hy] = at(jo), onFace = () => count(hx - 0.35, hy - 0.35, 0.7, 0.7, sky); // (its eyes and snout)
-  drawN(1, 0.05, 80);
-  out.gag = { cheeks: cheeks(), bead: count(6.5, 6.5, 4, 5, sky) };
-  drawN(1, 0.5, 80); // (half way: 160 ms)
-  const bead = centre(7.5, 7.5, 3, 4, sky);
-  out.mid = { bead, face: onFace(), shadow: bead && centre(bead[0] - 0.5, bead[1] + 0.5, 1, 0.8, darker), apple: centre(14.2, 11.2, 3, 3, lime), beetle: centre(3, 11, 3, 2, emerald) }; // (its shadow on the ground: below where its ink rim reaches)
-  g.tick++; drawN(4, 0.5, 80); // (the next tick: all of it there)
-  out.end = { bead: centre(7.5, 7.5, 3, 4, sky), apple: centre(14.2, 11.2, 3, 3, lime), beetle: centre(3, 11, 3, 2, emerald) };
-  let reach = 0;
-  const puffs = () => { let n = 0; reach = 0; for (let i = 0; i < 10; i++) { drawN(1, 0.5, 30); n = Math.max(n, puffed()); reach = Math.max(reach, front()); } return n; };
-  out.cough = { mouth: shut(), puffs: puffs(), reach };
-  R.setReducedMotion(true);
-  out.still = { puffs: puffs(), reach };
-  R.setReducedMotion(false);
-  gob.coughUntil = -1; g.tick++; drawN(10, 0.5, 30);
-  out.after = { mouth: shut(), puffs: puffed(), reach: front() };
-  out.cellPx = Math.round((W / TUNING.GRID) ** 2);
+  setBody(jo, Array.from({ length: 6 }, (_, i) => [9 - i, 8]), 'right');
+  g.food.splice(g.food.indexOf(b), 1);
+  R.onTick([{ type: 'squash', snake: jo, x: 9, y: 8 }]);
+  drawN(3, 0.5, 80);
+  out.mid = count(6.5, 5.5, 6, 6);
+  g.tick++; drawN(10, 0.5, 80);
+  out.after = count(5.5, 4.5, 8, 8);
   SnakeDebug.pinQuality(2);
   return out;
 })()`);
-const between = (c, x0, y0, x1, y1) => !!c && Math.min(x0, x1) + 0.1 < c[0] && c[0] < Math.max(x0, x1) - 0.1 && Math.min(y0, y1) - 0.05 < c[1] && c[1] < Math.max(y0, y1) + 0.05;
-const bead = choke.mid.bead, shade = choke.mid.shadow;
-check(choke.gag.cheeks > choke.before.cheeks + 8 && choke.gag.bead === 0 && between(bead, 8.3, 8.9, 9.6, 10.5) && choke.mid.face === 0 && !!shade && shade[1] - bead[1] > 0.45 && !!choke.end.bead && Math.abs(choke.end.bead[0] - 8.5) < 0.12 && Math.abs(choke.end.bead[1] - 10.5) < 0.2,
-  'choking on its own bead, its cheeks puff out with the bead in its mouth, then it spits it aside out of its cheek, never over its face, up in a little arc, to land where it went',
-  `its face just past its cheeks ${choke.before.cheeks} pixels, then ${choke.gag.cheeks} as it gags, the bead's ${choke.gag.bead} pixels drawn then; half way at ${bead?.slice(0, 2)}, ${choke.mid.face} over its face, its shadow on the ground at y ${shade?.[1]}; then at ${choke.end.bead}`);
-check(choke.before.mouth > 20 && choke.cough.mouth * 3 < choke.before.mouth && choke.after.mouth > 20 && choke.cough.puffs > 10 && choke.still.puffs > 10 && choke.after.puffs === 0, 'coughing, its mouth stays shut and puffs of breath come out past it (with reduced motion too)',
-  `Gobbler’s mouth, an apple right ahead: ${choke.before.mouth} pixels open, ${choke.cough.mouth} coughing, ${choke.after.mouth} after; puffs ${choke.cough.puffs}, with reduced motion ${choke.still.puffs}, after ${choke.after.puffs}`);
-const jolt = choke.cough.reach - choke.after.reach, calmJolt = choke.still.reach - choke.after.reach;
-check(choke.cough.puffs > 0.1 * choke.cellPx && choke.still.puffs > 0.1 * choke.cellPx && jolt > 0.09 && Math.abs(calmJolt) < 0.03, 'a cough reads at a phone’s size: a puff a good part of a cell, the head jolting forward with it (with reduced motion, no jolt)',
-  `the puff at its biggest ${(choke.cough.puffs / choke.cellPx).toFixed(2)} of a cell (${(choke.still.puffs / choke.cellPx).toFixed(2)} with reduced motion); the head’s front ${jolt.toFixed(2)} cells further forward at a cough (${calmJolt.toFixed(2)} with reduced motion)`);
-check(between(choke.mid.apple, 15.5, 12.5, 16.5, 13.5) && !!choke.end.apple && Math.abs(choke.end.apple[0] - 15.5) < 0.15 && between(choke.mid.beetle, 4.5, 12.5, 5.5, 12.5) && !!choke.end.beetle && Math.abs(choke.end.beetle[0] - 4.5) < 0.15,
-  'food a coughing head nudges rolls aside, and a beetle scurries', `the apple half way at ${choke.mid.apple}, then ${choke.end.apple}; the beetle ${choke.mid.beetle}, then ${choke.end.beetle}`);
+check(squash.before > 20 && squash.mid === 0 && squash.after === 0, 'a bead squashed under its own snake is gone at once: never drawn spat, rolled or left behind',
+  `the bead's sky pixels before ${squash.before}, as it's squashed ${squash.mid}, after ${squash.after}`);
 
 // Beetles and the woodpecker's knock (round six A), staged as the engine
 // reports them: two beetles out at once; b.digUntil and the dig and dive
@@ -109,7 +53,7 @@ check(between(choke.mid.apple, 15.5, 12.5, 16.5, 13.5) && !!choke.end.apple && M
 // each piece (one for each); at the strike it flies there, up in an arc, rimmed in ink and
 // parchment over whatever it crosses (a longer throw higher, and longer in the air), and a beetle knocked scurries
 // there. Counts and centres are of pixels changed against the bare
-// board, as the choke's are.
+// board, as the squash's are.
 const dug = await ev(`(() => {
   seeds(41);
   SnakeDebug.pinQuality(0);

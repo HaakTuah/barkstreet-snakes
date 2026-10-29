@@ -41,21 +41,21 @@ function trackFood(now) {
   fresh = false;
 }
 
-// Food moved aside (see onTick): a bead its own snake choked on, spat
-// from (x, y) to (tx, ty) in a little arc (or, with nowhere to go, tossed
-// up where it was); food a coughing head nudged, rolling there; or food
+// Food moved aside (see onTick): something spat from (x, y) to (tx, ty)
+// in a little arc (or, with nowhere to go, tossed up where it was: since
+// round six B nothing is, until a mushroom comes back up); or food
 // the woodpecker's strike knocked out of its patch, flying there in an
 // arc, higher and longer the further it goes. Its look goes with it (a
 // bead keeps its markings), and it's drawn going there (see drawFood); a
 // beetle scurries there (see drawBeetle). With reduced motion it's simply
 // there.
-// A bead its own snake choked on is in its mouth while its cheeks puff (so
+// Something spat is in its mouth while its cheeks puff (so
 // the face shows the gag: on a phone a bead over it was the whole head),
 // and it's spat out on the "ptoo" (SPIT_WAIT), out of its cheek on the
 // side it lands (its head has gone on by then, and the bead lands beside
 // its neck: from the front of its mouth it flew back over its face),
 // small at first, full size as it clears the head, landing on the tok
-// (SPAT_MS from the choke, as the sound has it).
+// (SPAT_MS from the spit, as the sound has it).
 const SPAT_MS = 320, ROLL_MS = 280, FLY_CELL_MS = 70, FLY_MAX_MS = 620, SPIT_WAIT = 120, SPIT_SIDE = 0.7, SPIT_AHEAD = 0.25;
 // How far on its way a piece moved aside is (0..1; -1 while it's still in
 // the mouth that spat it), and, as it leaves, where from.
