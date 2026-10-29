@@ -14,6 +14,7 @@ it under the workshop check's 20 KB. New ones are added here as they are done or
 | Wildcard's hair, the new pass (1b+++) | Does the new pass ([PR #110](https://github.com/HaakTuah/barkstreet-snakes/pull/110), beside B and C) read as Trump's hair now, or should C go back in? | Taken: the new pass ships (merged); C comes back in one small PR if you prefer it | Answered 29 October ("Agree to all", to the design session's take: keep the new pass) |
 | Nerve at a contested apple | Gobbler takes the gamble only once it's hungry (about 4 s left), which is rare, so in play its share of contested apples didn't move (17% both). Should a fed Gobbler gamble too? | Taken: no, as built ("the more the hungrier it is"); a fed Gobbler would need a nerve of about 0.9, near fearless (PR #92) | Answered 29 October 2026: a fed Gobbler contests too; every rival contests more as it starves; Desperado less risk-averse generally (entry 2b) |
 | The woodpecker's size under the board (1b++) | Measured, it was already its board size under the board: 78 to 80 px tall on a 390 px phone, drumming on the board 78 to 85 ([PR #112](https://github.com/HaakTuah/barkstreet-snakes/pull/112)); what looks small is likely its slim side view beside the 44 px buttons, while on the board its wings are open. Should it be bigger, on the board and under it alike (say 1.3 times, so it covers more of the board as it drums), or bigger only under the board (then not one size)? | Taken: one size, as the entry says, so unchanged; it now clings to the buttons and pecks them. Suggested, if bigger: 1.3 times everywhere | Answered 29 October 2026: 1.3 times everywhere, one size (entry 2c) |
+| Wildcard's hair, lacquered (2f) | Which one ships: D, E or F, or C, or keep the current? ([PR #144](https://github.com/HaakTuah/barkstreet-snakes/pull/144), all side by side at true phone size, 3x and desktop) | Suggested: E; the draft waits for the pick | Answered 29 October 2026: "Can't really see the difference between E and F, so you pick, expertly." The design session picked F; F shipped (PR #144) |
 
 ## The queue, done
 
@@ -210,6 +211,34 @@ go, but that the snake is left unhurt? Just a visual issue, nothing gameplaywise
 
 Done in PR #141: the beak aims at the free rim spot farthest from any body on the cell (of spots as clear, the one
 nearest the bird), the dent beside it with its splits running inward and stopping short of the body; drawing only.
+
+### 2f. Wildcard's hair: lacquered, not a mop (Haakon, 29 October 2026; small, an art lane): done, PR #144, version F
+
+Haakon (29 October 2026), on PR #110's hair as it plays: "Trump's hair looks like a mop now…" Then, to one more pass:
+"Yes, and make it do it expertly! I want trump's hair for Pete's sake!"
+
+Three passes so far: two blobs (#107), a golden bun (#110's C), and now twenty fine strands with no outline, which read
+as straw or a mop. His hair is none of those: **one smooth, lacquered mass, combed and sprayed into place**, glossy and
+solid, never stringy. Seen from above (the head points +x):
+- **One sculpted shape,** C's overall outline with B's smaller back, puffed a little past the head over the ears and
+  behind, never over the face. Its edge is set off by a soft darker-gold shadow on the head beneath it, not a dark
+  stroke round the hair and not a feathered fringe.
+- **Asymmetric: the comb-over.** A parting on one side; from it the top is combed across the crown to the other side
+  and swept back, so one side reads fuller and the whole top reads as one sweep in one direction. The asymmetry is
+  what makes it his.
+- **The front: one big wave,** just behind the brow, rolled up and over to the side as a single curl, with its
+  shadow on the brow; both eyes clear in all four headings.
+- **A few long, broad comb grooves,** three to five, all following the sweep: not twenty strands, not scoring on a loaf.
+- **Gloss:** one long highlight along the crest of the wave and the sweep, near-white, so it reads as sprayed hair.
+- **Colour:** pale gold-blond, yellow highlights, a warm orange-gold only in the grooves' shadows.
+- **The test before the pictures go to Haakon:** a fresh helper (Haiku, given only the true-size and 3x crops of the
+  versions, never this entry or the reference) is asked "describe this snake's hair in five words". A version passes
+  if the answer reads as a swept, combed, glossy hairstyle, and fails on mop, straw, bun, bread, helmet or hat. Show
+  only versions that pass.
+- **Up to three versions that pass, side by side with C and the current hair,** at true phone size (390 px), phone 3x
+  and desktop 2x, all four headings, clear and storm boards. **The PR stays a draft and does not merge until Haakon
+  picks one** (#110 merged before his verdict; this one waits). Only his pick ships.
+- Art only: the render suite and looks checks pass; reduced motion unchanged.
 
 ### 2g. The meal goes down: a hungry snake fills out from the head (Haakon, 29 October 2026; small, an art lane): done, PR #146
 

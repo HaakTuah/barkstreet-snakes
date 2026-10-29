@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| Wildcard's hair, lacquered (2f) | Which one ships: D, E or F, or C, or keep the current? ([PR #144](https://github.com/HaakTuah/barkstreet-snakes/pull/144), all side by side at true phone size, 3x and desktop) | Suggested: E; the draft waits for the pick | Open |
+| (none open) | | | |
 
 ## The queue, in order
 
@@ -80,33 +80,7 @@ a rival's makes no sound, except a golden mushroom, which already plays softer a
 
 ### 2e. Done: the woodpecker pecks beside a snake, not on it (PR #141); in `docs/archive/progress-done.md`.
 
-### 2f. Wildcard's hair: lacquered, not a mop (Haakon, 29 October 2026; small, an art lane; draft [PR #144](https://github.com/HaakTuah/barkstreet-snakes/pull/144) waits for Haakon's pick)
-
-Haakon (29 October 2026), on PR #110's hair as it plays: "Trump's hair looks like a mop now…" Then, to one more pass:
-"Yes, and make it do it expertly! I want trump's hair for Pete's sake!"
-
-Three passes so far: two blobs (#107), a golden bun (#110's C), and now twenty fine strands with no outline, which read
-as straw or a mop. His hair is none of those: **one smooth, lacquered mass, combed and sprayed into place**, glossy and
-solid, never stringy. Seen from above (the head points +x):
-- **One sculpted shape,** C's overall outline with B's smaller back, puffed a little past the head over the ears and
-  behind, never over the face. Its edge is set off by a soft darker-gold shadow on the head beneath it, not a dark
-  stroke round the hair and not a feathered fringe.
-- **Asymmetric: the comb-over.** A parting on one side; from it the top is combed across the crown to the other side
-  and swept back, so one side reads fuller and the whole top reads as one sweep in one direction. The asymmetry is
-  what makes it his.
-- **The front: one big wave,** just behind the brow, rolled up and over to the side as a single curl, with its
-  shadow on the brow; both eyes clear in all four headings.
-- **A few long, broad comb grooves,** three to five, all following the sweep: not twenty strands, not scoring on a loaf.
-- **Gloss:** one long highlight along the crest of the wave and the sweep, near-white, so it reads as sprayed hair.
-- **Colour:** pale gold-blond, yellow highlights, a warm orange-gold only in the grooves' shadows.
-- **The test before the pictures go to Haakon:** a fresh helper (Haiku, given only the true-size and 3x crops of the
-  versions, never this entry or the reference) is asked "describe this snake's hair in five words". A version passes
-  if the answer reads as a swept, combed, glossy hairstyle, and fails on mop, straw, bun, bread, helmet or hat. Show
-  only versions that pass.
-- **Up to three versions that pass, side by side with C and the current hair,** at true phone size (390 px), phone 3x
-  and desktop 2x, all four headings, clear and storm boards. **The PR stays a draft and does not merge until Haakon
-  picks one** (#110 merged before his verdict; this one waits). Only his pick ships.
-- Art only: the render suite and looks checks pass; reduced motion unchanged.
+### 2f. Done: Wildcard's hair, lacquered (PR #144, version F); in `docs/archive/progress-done.md`.
 
 ### 2g. Done: the meal goes down (PR #146); in `docs/archive/progress-done.md`.
 
