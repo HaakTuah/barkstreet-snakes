@@ -166,7 +166,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1.3, territory: 1.8,
         food: 3, eat: 40, pellet: 1, foodRange: 30,
-        margin: 6, headRisk: 800, zoneRisk: 150, turn: 25, thick: 45,
+        margin: 6, headRisk: 800, zoneRisk: 150, turn: 25, thick: 90, // (thick 45 before round six B: a plain flash cuts a wall one thick, so it lays them two thick)
       },
     },
     wildcard: {
@@ -1935,6 +1935,7 @@ window.SnakeAI = (() => {
       // (Each beetle's crawl after my move s + 1, my head then at (hx, hy):
       // the ones I ate there are gone.)
       const bugsOn = (s, hx, hy) => { for (let b = 0; b < bugs; b++) if (ateBug & (1 << b)) { const n = b * SLOTS + s + 1; bugCell[n] = -1; bugDug[n] = -1; } else bugStep(b, s, s + 1, s, hx, hy, otherBug(b, s)); };
+      const cutter = !!w.hunt || (w.aggression || 0) >= 0.5; // (the hunters and the aggressive weigh a cut off to the side too)
       let best = null, ownCut = -1; // (ownCut: see flashOpt)
       const consider = (d, flash, v, price, extra) => {
         const full = endRisk > safe || idle;
@@ -1947,7 +1948,7 @@ window.SnakeAI = (() => {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
         if (me.dashes > 0) consider(d, true, flashOpt(d, true), 0.6, extra);
-        else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || bodyNear(d))) consider(d, true, flashOpt(d, false), trapped || race(d) ? 1 : 2, extra);
+        else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)))) consider(d, true, flashOpt(d, false), trapped || race(d) ? 1 : 2, extra);
         if (jump) consider(d, false, leapOpt(d), me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5, extra);
       }
       return best;
@@ -2088,9 +2089,9 @@ window.SnakeAI = (() => {
             for (; r <= thick && b >= 0 && body(b); r++) { bx += d.x; by += d.y; b = cellAt(bx, by); }
             if (r > thick || b < 0 || pitHole(b) || myCells[b] === stampM || mineFree[b] > 1) return null; // (too thick, or nothing free beyond: it'd fail)
             for (let k = 0, x = c % N, y = (c - x) / N; k < r; k++, x += d.x, y += d.y) {
-              if (myCells[cellAt(x, y)] === stampM) { // (my own: my tail drops, only to get out of a box: length is worth trading only for room I need)
+              if (myCells[cellAt(x, y)] === stampM) { // (my own: my tail drops, only to get out of a trap)
                 const j = me.body.findIndex(q => q.x === x && q.y === y);
-                if (j < TUNE.MIN_LENGTH || !(boxed || trapped)) return null;
+                if (j < TUNE.MIN_LENGTH || !trapped) return null; // (only when it's that or the end: dropped any sooner (boxed), rivals dropped 5 tails a round and starved small)
                 if (ownCut < 0 || j + n - 1 < ownCut) ownCut = j + n - 1;
                 continue;
               }
@@ -2099,7 +2100,7 @@ window.SnakeAI = (() => {
               if (!o || j0 === 0) return null; // (a head, or where one may be)
               const j = j0 + Math.max(0, age - (o.stun || 0)); // (where it's cut: it's moved on since I saw it)
               const mark = o.id === memory.victimId ? 2 : 1; // (my target, twice over: Sniper cuts off its target, Mute its boxed one)
-              cut += mark * (j < TUNE.MIN_LENGTH ? 6 * (0.5 + agg) : Math.min(CUT_TAIL, Math.max(0, o.body.length - j)) * 0.15 * (0.5 + agg)); // (in apples: out, or its tail off, up to CUT_TAIL of it: at 0.4 a segment, uncapped, rivals cut 14 times a round and the beads swamped the board)
+              cut += mark * (j < TUNE.MIN_LENGTH ? 6 * (0.5 + agg) : Math.min(CUT_TAIL, Math.max(0, o.body.length - j)) * 0.1 * (0.5 + agg)); // (in apples: out, or its tail off, up to CUT_TAIL of it: at 0.4 a segment, uncapped, rivals cut 14 times a round and the beads swamped the board; at 0.15, 10 times, and the cut starved small)
             }
             run = r;
           }
