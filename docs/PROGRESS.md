@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| (none open) | | | |
+| 2d, rivals' chomps (PR #150) | While you watch after dying, sped up, rivals feeding on bead trails can chomp up to about five times a second (softly, 0.3 of your own chomp, one at a time). Busy, or fine? | Kept as is; if busy, a longer gap between rivals' chomps only while watching. | open |
 
 ## The queue, in order
 
