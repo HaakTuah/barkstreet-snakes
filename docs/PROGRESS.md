@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 2k (PR #170) | On a phone held upright the woodpecker perches over the speed buttons and the chatter, as you asked in 1b++; at 1.3 it already hid a button's label at some spots, and bigger it hides more of their words (taps still pass through it). Keep it so, or should it keep clear of their words (a smaller bird under the board, or perching only between the buttons)? | Kept as 1b++ has it: over the row and the chatter, taps passing through | open |
+| (none open) | | | |
 
 ## The queue, in order
 
@@ -176,21 +176,16 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
 
 ### 2k. Done: the woodpecker, as big as it gets, 1.7 times (PR #170); in `docs/archive/progress-done.md`.
 
-### 2l. Flags that bend as a snake goes over them (Haakon, 29 October 2026; small, an art lane beside 2k)
+### 2k+. The woodpecker perches clear of the buttons' words, at 1.7 times (Haakon, 29 October 2026; small, an art lane)
 
-Haakon (29 October 2026): "would be cool if the flags of sovereign and colonists bends away from a snakes body,
-depending on direction it was hit when a part of a snake occupies its tile". Drawing only (`render/flags.js`), so no
-simulation; online, each player draws it from the snakes they already have: no protocol change.
-- **Pushed the way it was hit:** when any part of any snake lies on the tile of Sovereign's banner or a colony's flag,
-  the pole bends over from its foot in the direction that snake was travelling as it came onto the tile (from the cell
-  before it in the body to that one), so a snake going east pushes it east, and the cloth trails low behind it. It
-  stays bent while the body lies on it, and bends the new way if another snake comes over it from another side.
-- **Springs back:** once the tile is free, it swings upright with a short wobble that dies away, then flies as before.
-  With reduced motion it simply leans while covered and stands up again, without the wobble.
-- **One flag, one look:** it works with what flags already do (the banner's tilt as it's carried, its shake when
-  pecked, a colony flag falling into its pit), never fighting them; the falling flag wins. The PR shows a snake
-  crossing a banner and a colony flag from each side at a 390-pixel phone and desktop 2x (pictures and a short clip),
-  and merges once the render suite passes.
+Haakon (29 October 2026), to whether the bird should keep clear of the speed buttons' words on a phone held upright:
+"Keep the bird 1.7x. And agreed with everything else." So it stays 1.7 times everywhere, and on a phone held upright
+it chooses its perch over the row under the board so that no button's word is covered: between two buttons, or over a
+gap or the chatter's empty end, still drumming and pecking the row as 1b++ has it. It never shrinks for this; where no
+perch at that size clears every word, the size wins and it perches as now. The layout suite gets a test that no
+button's label is covered where a clear perch exists; pictures at 390 and 320 pixels.
+
+### 2l. Done: flags that bend as a snake goes over them (PR #186); in `docs/archive/progress-done.md`.
 
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 

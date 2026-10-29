@@ -351,3 +351,16 @@ the cell's middle, stopping short of the body, and none is drawn where no room s
 chips fly from there. When a body comes or goes it shifts its grip to the new spot in half a tick. On an empty tile it
 pecks the middle, as before. Drawing only (`aimOff` in `render/bird.js`): the tiles go at the same moment, and the
 simulation does not load the renderer, so its fingerprints cannot change.
+
+### Flags that bend under a snake
+
+Haakon (29 October 2026; entry 2l): Sovereign's banner and Colonist's flags bend over while any part of any snake lies
+on their tile. The pole tips from its foot the way that snake stepped onto the tile, and the cloth trails behind and
+droops. The snake already on it keeps it; when it leaves, another snake there takes over and the flag eases to the new
+way. A north or south push also leans the flag out to its cloth's side (east), because a pole leaning straight along a
+body lay hidden on it. North stretches the pole a touch and hangs the cloth; south shortens the pole. While a flag
+leans it is drawn over the snakes, since under them it couldn't be seen. Freed, it springs upright with a wobble that
+dies away in under a second. With reduced motion it leans and stands up at once. The banner bends only at rest on its
+cell, never while it glides or is carried, and keeps its shake if pecked. A flag that falls into a pit drops its bend.
+Drawing only (`bendOn` in `render/flags.js`): each screen draws it from the snakes it has, so online play needs no
+protocol change, and the simulation doesn't load the renderer.
