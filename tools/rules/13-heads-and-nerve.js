@@ -11,7 +11,7 @@
     const view = aiView({ me: aiMe(line(10, 10, 8), 'right'), others: [rival, aiRival(2, [[25, 25], [25, 24], [25, 23], [25, 22], [25, 21]], 'down')], food: food.map(f => ({ kind: 'food', expires: 999, ...f })) });
     return Object.keys(AI.PERSONAS).filter(key => {
       let on = 0;
-      for (let i = 0; i < 4; i++) { const d = AI.decide(view, AI.PERSONAS[key], {}); if (d.x === 1 && d.y === 0) on++; }
+      for (let i = 0; i < 4; i++) { const d = AI.decide(view, AI.PERSONAS[key], key === 'wildcard' ? { mix: ['tailRider', 'wallHugger'] } : {}); if (d.x === 1 && d.y === 0) on++; } // (a Wildcard neither hungry nor reckless this round: those take the gamble, by their nature)
       return on >= 3;
     });
   };
@@ -34,7 +34,7 @@
       others: [aiRival(1, line(13, 10, 5, 1), 'left'), aiRival(2, [[20, 20], [20, 19], [20, 18], [20, 17]], 'down')],
     });
     let on = 0;
-    for (let i = 0; i < 4; i++) { const d = AI.decide(view, AI.PERSONAS[key], {}); if (d.x === 1 && d.y === 0) on++; }
+    for (let i = 0; i < 4; i++) { const d = AI.decide(view, AI.PERSONAS[key], key === 'wildcard' ? { mix: ['tailRider', 'wallHugger'] } : {}); if (d.x === 1 && d.y === 0) on++; } // (a Wildcard neither hungry nor reckless this round: those take the gamble, by their nature)
     return on >= 3;
   });
   const fed = takers(99999), half = takers(8000), hungry = takers(4000);

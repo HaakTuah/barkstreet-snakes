@@ -39,3 +39,28 @@
   const a = watch(straight, 6), b = watch(ring, 11);
   check('Copycat reads a long straight runner as Mason, and a snake round its own tail as Ouroboros', a === 'mason' && b === 'ouroboros', JSON.stringify({ a, b }));
 }
+
+{ // Wildcard draws two or three traits a round, never two that pull against each other, each pushed to an extreme
+  // and everything else plain (Drab's): over many rounds every trait comes up, and its mix is in its memory (its
+  // name tag's note says it, and it brags about it).
+  const mixes = [];
+  seededWhile(37, () => {
+    for (let r = 0; r < 300; r++) {
+      const g = board([[line(5, 5, 5), 'right'], [line(5, 18, 5), 'right']]), memory = {};
+      AI.decide(E.aiView(g, g.snakes[0]), AI.PERSONAS.wildcard, memory);
+      mixes.push(memory.mix);
+    }
+  });
+  const clash = m => (m.includes('coward') && (m.includes('reckless') || m.includes('hunter') || m.includes('tailRider'))) || (m.includes('territorial') && m.includes('tailRider'));
+  const all = new Set(mixes.flat());
+  check('Wildcard draws two or three traits a round, none clashing, and every trait comes up',
+    mixes.every(m => Array.isArray(m) && m.length >= 2 && m.length <= 3 && new Set(m).size === m.length && !clash(m)) && Object.keys(AI.TRAITS).every(t => all.has(t)), JSON.stringify(mixes.slice(0, 5)));
+}
+
+{ // A Wildcard whose round's mix shows off spends its powers as Star does (an apple four on, open ground: it flashes
+  // for it); one whose mix doesn't, doesn't.
+  const view = () => aiView({ me: aiMe(line(6, 12, 5), 'right', { flashIn: 0 }), others: [aiRival(1, line(20, 2, 5), 'right')], food: [{ x: 10, y: 12, kind: 'food', expires: 999 }] });
+  const flashes = mix => { let n = 0; for (let i = 0; i < 6; i++) { const memory = { mix }, v = view(); AI.decide(v, AI.PERSONAS.wildcard, memory); if (memory.flash === v.tick) n++; } return n; };
+  const shows = flashes(['showOff', 'hungry']), plain = flashes(['hungry', 'reckless']);
+  check('a Wildcard that shows off this round flashes where Star would; one that doesn\'t, doesn\'t', shows === 6 && plain === 0, JSON.stringify({ shows, plain }));
+}

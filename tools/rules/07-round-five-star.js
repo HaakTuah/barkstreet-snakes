@@ -10,7 +10,7 @@ const habits = (view, keys, n = 10) => Object.fromEntries(keys.map(key => {
   }
   return [key, out];
 }));
-const rest = Object.keys(AI.PERSONAS).filter(k => k !== 'star');
+const rest = Object.keys(AI.PERSONAS).filter(k => k !== 'star' && k !== 'wildcard'); // (a Wildcard that shows off this round plays its powers as Star does: see 14-the-rivals-who-change)
 const powered = (got, mark) => Object.entries(got).filter(([, out]) => Object.keys(out).some(k => k.includes(mark))).map(([key]) => key);
 
 { // Star flashes every chance it gets: rested on open ground, an apple four on, it flashes for it; nobody else thinks an apple worth that.
