@@ -15,6 +15,7 @@ it under the workshop check's 20 KB. New ones are added here as they are done or
 | Nerve at a contested apple | Gobbler takes the gamble only once it's hungry (about 4 s left), which is rare, so in play its share of contested apples didn't move (17% both). Should a fed Gobbler gamble too? | Taken: no, as built ("the more the hungrier it is"); a fed Gobbler would need a nerve of about 0.9, near fearless (PR #92) | Answered 29 October 2026: a fed Gobbler contests too; every rival contests more as it starves; Desperado less risk-averse generally (entry 2b) |
 | The woodpecker's size under the board (1b++) | Measured, it was already its board size under the board: 78 to 80 px tall on a 390 px phone, drumming on the board 78 to 85 ([PR #112](https://github.com/HaakTuah/barkstreet-snakes/pull/112)); what looks small is likely its slim side view beside the 44 px buttons, while on the board its wings are open. Should it be bigger, on the board and under it alike (say 1.3 times, so it covers more of the board as it drums), or bigger only under the board (then not one size)? | Taken: one size, as the entry says, so unchanged; it now clings to the buttons and pecks them. Suggested, if bigger: 1.3 times everywhere | Answered 29 October 2026: 1.3 times everywhere, one size (entry 2c) |
 | Wildcard's hair, lacquered (2f) | Which one ships: D, E or F, or C, or keep the current? ([PR #144](https://github.com/HaakTuah/barkstreet-snakes/pull/144), all side by side at true phone size, 3x and desktop) | Suggested: E; the draft waits for the pick | Answered 29 October 2026: "Can't really see the difference between E and F, so you pick, expertly." The design session picked F; F shipped (PR #144) |
+| 2d, rivals' chomps (PR #150) | While you watch after dying, sped up, rivals feeding on bead trails can chomp up to about five times a second (softly, 0.3 of your own chomp, one at a time). Busy, or fine? | Kept as is; if busy, a longer gap between rivals' chomps only while watching. | Answered 29 October 2026: "Yes to all, expertly!" Kept as is. |
 
 ## The queue, done
 
@@ -193,6 +194,21 @@ cause and per-rival wins stay within noise; pictures at a 390-pixel phone and de
 Done (PR #139): 1.3 times everywhere, one size wherever the screen has room (101 px on a 390×844 phone, from 78); the
 simulation's fingerprints identical. See "The woodpecker, 1.3 times" in `docs/design/32-the-owners-playtest.md`.
 
+### 2d. Rivals' chomps (Haakon, 29 October 2026; small, a sound lane)
+
+Haakon (29 October 2026): "Yes, queue it. Feels strange that there is no sound, when your snake makes loud sound when
+eating." Today only your own snake's eating sounds (`sounds()` in `game/round.js`: `e.type === 'eat' && isMe(e.snake)`);
+a rival's makes no sound, except a golden mushroom, which already plays softer and further off (`{ rival: true, ...at(e.x) }`).
+- **Every rival's eating sounds,** each kind with its own cue as yours does (apple, golden, meat, mushroom, beetle,
+  leaf), but softer and further off, placed where it ate on the board (`at(e.x)`), so you can hear a rival feeding where
+  you aren't looking. Your own stays the loudest and the only one with the streak's rising pitch.
+- **Never a pile-up:** four snakes eating at once must not drown your own chomp or clip (the compressor and the cues'
+  spacing in `audio.js`); rivals' chomps give way to yours, as other rival sounds do.
+- Muted and the sound settings work as for every cue; online, each player hears it on their own machine, so no
+  protocol change. A test checks that a rival's eat plays its rival cue and yours plays yours.
+
+Done in PR #150: a rival's meal plays its kind's own cue, as a rival's (dulled, at 0.3 of your chomp), from where it ate, never with the streak; one rival's chomp at a time, 180 ms apart, none for 350 ms after yours. Design: "Rivals' chomps" in `docs/design/21-sound.md`.
+
 ### 2e. The woodpecker pecks beside a snake, not on it (Haakon, 29 October 2026; small, an art lane after 2c, which draws the same bird)
 
 Haakon (29 October 2026): "Looks a bit weird when the woodpecker pecks a tile with a snake tail on, and the snake isn't
@@ -239,6 +255,17 @@ solid, never stringy. Seen from above (the head points +x):
   and desktop 2x, all four headings, clear and storm boards. **The PR stays a draft and does not merge until Haakon
   picks one** (#110 merged before his verdict; this one waits). Only his pick ships.
 - Art only: the render suite and looks checks pass; reduced motion unchanged.
+
+### 2f+. Wildcard's hair: F, a size smaller (Haakon, 29 October 2026; small, an art lane beside the new moves): done, PR #156
+
+Haakon (29 October 2026), playing with F: "Dont trumps hair look a bit too big now?" And, to keeping F's shape at about
+85% of its size: "Yes, let's try that!" Keep F's shape as it is, the wave, the sweep to the far side, the grooves and
+the gloss, and scale the whole mass to about 85%, so it sits on the head instead of towering over it, puffing past the
+head less over the ears and behind; the face, the set-back front edge and both eyes as they are. Drawing only. The PR
+shows F now beside F at 85% at a 390-pixel phone (true size and 3x) and desktop 2x, all four headings, and merges once
+the render suite passes; if Haakon then finds it still too big, or now too small, the size is one number to change.
+
+Done: the whole mass, grooves, gloss and shadow with it, scaled by `WILD_SIZE` (0.85) about the wave's front (`WILD_FRONT`), so the front edge and the eyes stay put; `render/faces.js`.
 
 ### 2g. The meal goes down: a hungry snake fills out from the head (Haakon, 29 October 2026; small, an art lane): done, PR #146
 
