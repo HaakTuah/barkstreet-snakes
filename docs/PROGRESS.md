@@ -62,12 +62,7 @@ apple it needs. Build it from the cause, in the one template every rival shares:
   meant to move (Gobbler's food share up; Desperado's skims and risks up, its survival not collapsing). "No refuges" and
   "Clever rivals, human reactions" stand: better choices, never faster reactions.
 
-### 2c. The woodpecker, 1.3 times (Haakon, 29 October 2026; a layout lane)
-
-Haakon (29 October 2026), "Agreed to all, expertly!", to the "For Haakon" question on its size and the design session's
-take: **1.3 times its size, on the board and under it alike** (one size). Under the board it still clings to and pecks
-the buttons. Since it covers more of the board as it drums, check with the simulation that round length, deaths by
-cause and per-rival wins stay within noise; pictures at a 390-pixel phone and desktop, as for PR #112.
+### 2c. Done: the woodpecker, 1.3 times (PR #139); in `docs/archive/progress-done.md`.
 
 ### 2d. Rivals' chomps (Haakon, 29 October 2026; small, a sound lane)
 
