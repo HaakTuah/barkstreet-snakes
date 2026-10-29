@@ -54,6 +54,8 @@ window.SnakeAI = (() => {
   //                                   close behind my own tail, so I move as a ring
   //   thick                         reward for each cell of my own body beside my head (not my neck):
   //                                   a wall two thick can't be hopped
+  //   leapNow                       what a leap now over open ground costs me, as a share of the jump's
+  //                                   price (round six B; default 1)
   //   spit                          how much a shot with a mushroom is worth to me, when I weigh eating
   //                                   one on purpose (round six B; default SPIT)
   //   powers                        { price, risk, everyWay, jumpAny, dashSpend }: a power habit (see
@@ -73,7 +75,7 @@ window.SnakeAI = (() => {
   const DRAB = {
     space: 1.2, territory: 1.5, aggression: 0.3,
     food: 5, eat: 80, pellet: 1.2, foodRange: 60,
-    margin: 8, headRisk: 700, zoneRisk: 150, spit: 0.05, // (hardly ever a mushroom on purpose)
+    margin: 8, headRisk: 700, zoneRisk: 150, spit: 0.05, leapNow: 4, // (hardly ever a mushroom on purpose, nor a leap now)
   };
   const HUNT = { squeeze: 2.5, chase: 6, lead: 4 };
 
@@ -114,7 +116,7 @@ window.SnakeAI = (() => {
       w: {
         space: 2, territory: 0.6,
         food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 18, fedFactor: 0.4,
-        margin: 6, headRisk: 900, zoneRisk: 150, distance: 5, spit: 0.2, // (at 6, once the rivals read knocked food and digging beetles, it won 39 / 31%)
+        margin: 6, headRisk: 900, zoneRisk: 150, distance: 5, spit: 0.2, leapNow: 0.8, // (a leap now to slip a trap) // (at 6, once the rivals read knocked food and digging beetles, it won 39 / 31%)
       },
     },
     sovereign: {
@@ -218,7 +220,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1, territory: 0.6,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40,
-        margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25,
+        margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25, leapNow: 0.6, // (a leap now for the thrill)
         nerve: { base: 0.7 }, // (it'll stare down a rival's head for an apple)
       },
     },
@@ -766,7 +768,7 @@ window.SnakeAI = (() => {
     margin: undefined, headRisk: undefined, zoneRisk: undefined, nerve: undefined, distance: undefined,
     hunt: undefined, home: undefined, lure: undefined, turn: undefined, tail: undefined, mimic: undefined,
     colony: undefined, goal: undefined, thrill: undefined, coil: undefined, thick: undefined, powers: undefined, golden: undefined, hurry: undefined,
-    spit: undefined,
+    spit: undefined, leapNow: undefined,
   };
   const weighed = w => Object.assign({ ...WEIGHTS }, w);
 
@@ -2068,7 +2070,7 @@ window.SnakeAI = (() => {
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
         if (me.dashes > 0) consider(d, true, flashOpt(d, true), 0.6, extra);
         else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)))) consider(d, true, flashOpt(d, false), trapped || race(d) ? 1 : 2, extra);
-        if (jump) consider(d, false, leapOpt(d), me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5, extra);
+        if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5) * (leapNow ? w.leapNow ?? 1 : 1), extra); } // (leap now, at its price to my style)
       }
       return best;
 
