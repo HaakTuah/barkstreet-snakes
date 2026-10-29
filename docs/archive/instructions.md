@@ -445,3 +445,12 @@ session's take that a cut leaving a snake fewer than 3 segments puts it out: "Ag
 In the design chat (29 October 2026, 12:21 UTC), on the new moves: "And very important that the commin ai is updated to
 understand all these rule changes to maximize they use of all the playrules!!!" (written into item 5 in
 `docs/PROGRESS.md`: no part merges until the rivals use its moves well)
+
+In the design chat (29 October 2026, 12:25 and 12:29 UTC), on cutting yourself small: "if you cut yourself on purpose,
+it would be because you want to fit into a small space, like in the end game. But then ypu drop your pellets, which you
+will be constantly swallowing and spitting out. Is this optimal? The loop you are trapped in, I mean?" Then, after the
+design session suggested choking once per drop:
+
+> I suggest if you run over them twice you just squash them on the second round. And that stuff can fall off the edge. Now it all weirdly gets pushed somewhere it is still accessible, would be more natural if it can just fall off.
+
+(written into "Choking on your own tail" in `docs/design/27-round-six-a-fairness-and-fixes.md` and item 5's part 3)

@@ -70,7 +70,9 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
 1. **The island hop and no auto-jump** (done, PR #158).
 2. **Bridges** (under way on `round6b/bridges`).
 3. **The flashes cut:** the plain flash through a body one thick, the golden through two (and fire out), and a cut
-   that leaves a snake fewer than 3 segments puts it out ("The neck cut"; a flash into a head is a failed flash); a failed flash
+   that leaves a snake fewer than 3 segments puts it out ("The neck cut"; a flash into a head is a failed flash);
+   your own beads squashed the second time you run over them, and food or a spat bead sent off the edge or over a
+   hole falls and is gone ("Choking on your own tail", changed by the owner, in `docs/design/27-round-six-a-fairness-and-fixes.md`); a failed flash
    costs 5 and a longer stun, its rest 10 to 12 s; **dropping your own tail** by the same cut; and **Mason's double
    walls**, since a wall one thick can now be cut (its straight runs measured before and after).
 4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
