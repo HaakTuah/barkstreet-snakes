@@ -323,6 +323,7 @@ function resetBird(now = 0) {
 // the air; and how far its head draws back between blows (units). A
 // flight takes longer the further it goes (flightMs, hopMs).
 const B_SETTLE = 120, B_TAKEOFF = 200, B_LINGER = 90, B_LOOK = 260, B_ARRIVE = 900, B_BEAT = 104, B_CHIPS = 340, B_BACK = 0.42;
+const B_IN = 0.06 * 1.3 / BIRD_GROW; // (how far its beak goes into the bark on a blow, units: as deep as at 1.3, whatever its size, so it stays in the cell it pecks)
 const flightMs = d => Math.max(240, Math.min(540, 200 + 0.42 * d));
 const hopMs = d => Math.max(180, Math.min(380, 140 + 0.35 * d));
 const smooth = t => t * t * (3 - 2 * t), clamp01 = t => (t < 0 ? 0 : t > 1 ? 1 : t);
@@ -523,9 +524,9 @@ function drumming(A, t, P) {
   while (i + 1 < n && A.times[i + 1] <= t) i++;
   if (i < n - 1) {
     const gap = A.times[i + 1] - A.times[i], p = clamp01((t - A.times[i]) / gap);
-    P.thrust = 0.06 - (B_BACK + 0.06) * Math.pow(Math.sin(Math.PI * p), 0.8);
+    P.thrust = B_IN - (B_BACK + B_IN) * Math.pow(Math.sin(Math.PI * p), 0.8);
     P.blur = reduced ? 0 : clamp01((46 - gap) / 16);
-  } else P.thrust = 0.06;
+  } else P.thrust = B_IN;
   P.drum = A; P.blows = i + 1; P.t = t;
 }
 // The strike made: its head pulled out of the hole, wings opening, a lean back.
@@ -565,7 +566,7 @@ function drumPoseAt(spot, flip) {
       Q.s = s; Q.flip = f; Q.rot = DRUM_TRIES[i] * f; Q.x = Q.y = 0; Q.turn = 0; Q.thrust = 0; Q.crouch = 0;
       birdMats(Q);
       Q.x = tx - atX(HM, BILL[0], BILL[1]); Q.y = ty - atY(HM, BILL[0], BILL[1]);
-      Q.thrust = 0.06; birdBox(Q, true);
+      Q.thrust = B_IN; birdBox(Q, true);
       Q.thrust = -1.3 * B_BACK; Q.crouch = 0.8; birdBox(Q, false);
       Q.crouch = 0; Q.rot = (DRUM_TRIES[i] - 0.3) * f; birdBox(Q, false); Q.rot = DRUM_TRIES[i] * f; // (and leaning back as it lands, or as it pulls out of the hole)
       const over = Math.max(room.x0 - box.x0, room.y0 - box.y0, box.x1 - room.x1, box.y1 - room.y1);
@@ -615,7 +616,7 @@ function drumChoice(w, spot, flip) {
 const SEE_R = CELL * 0.4 + BOX_EDGE * BU; // (its ink's soft edge too, which grew with the bird in 2c)
 function hides(p) {
   const Q = probe;
-  Q.x = p.x; Q.y = p.y; Q.s = p.s; Q.flip = p.flip; Q.rot = p.rot; Q.turn = 0; Q.thrust = 0.06; Q.crouch = 0;
+  Q.x = p.x; Q.y = p.y; Q.s = p.s; Q.flip = p.flip; Q.rot = p.rot; Q.turn = 0; Q.thrust = B_IN; Q.crouch = 0;
   birdMats(Q);
   let sum = 0;
   for (let j = 0; j < seeN; j++) {
