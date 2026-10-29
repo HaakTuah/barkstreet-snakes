@@ -54,6 +54,8 @@ window.SnakeAI = (() => {
   //                                   close behind my own tail, so I move as a ring
   //   thick                         reward for each cell of my own body beside my head (not my neck):
   //                                   a wall two thick can't be hopped
+  //   spit                          how much a shot with a mushroom is worth to me, when I weigh eating
+  //                                   one on purpose (round six B; default SPIT)
   //   powers                        { price, risk, everyWay, jumpAny, dashSpend }: a power habit (see
   //                                   powerPick). price: what every power costs me, as a share of what it
   //                                   costs anyone else, wherever it ends with no more risk than `risk`
@@ -71,7 +73,7 @@ window.SnakeAI = (() => {
   const DRAB = {
     space: 1.2, territory: 1.5, aggression: 0.3,
     food: 5, eat: 80, pellet: 1.2, foodRange: 60,
-    margin: 8, headRisk: 700, zoneRisk: 150,
+    margin: 8, headRisk: 700, zoneRisk: 150, spit: 0.05, // (hardly ever a mushroom on purpose)
   };
   const HUNT = { squeeze: 2.5, chase: 6, lead: 4 };
 
@@ -88,7 +90,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1, territory: 0.8, aggression: 0.3,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, hungryBelow: 16, fedFactor: 0.3,
-        margin: 10, headRisk: 600, zoneRisk: 80, thick: 15, hunt: HUNT,
+        margin: 10, headRisk: 600, zoneRisk: 80, thick: 15, hunt: HUNT, spit: 1.5, // (a mushroom for the head shot)
       },
     },
     gobbler: {
@@ -112,7 +114,7 @@ window.SnakeAI = (() => {
       w: {
         space: 2, territory: 0.6,
         food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 18, fedFactor: 0.4,
-        margin: 6, headRisk: 900, zoneRisk: 150, distance: 5, // (at 6, once the rivals read knocked food and digging beetles, it won 39 / 31%)
+        margin: 6, headRisk: 900, zoneRisk: 150, distance: 5, spit: 0.2, // (at 6, once the rivals read knocked food and digging beetles, it won 39 / 31%)
       },
     },
     sovereign: {
@@ -253,7 +255,7 @@ window.SnakeAI = (() => {
         space: 1, territory: 0.6,
         food: 5, eat: 70, pellet: 1.2, foodRange: 40,
         margin: 6, headRisk: 600, zoneRisk: 40, turn: -12, // (at 4, once the rivals read knocked food and digging beetles, it won 12 / 18%: it wants a little more room behind its lures)
-        lure: { weight: 6, dist: 3 }, hunt: { squeeze: 3, chase: 0, lead: 2 },
+        lure: { weight: 6, dist: 3 }, hunt: { squeeze: 3, chase: 0, lead: 2 }, spit: 2, // (a mushroom for the laugh)
       },
     },
     star: {
@@ -402,6 +404,15 @@ window.SnakeAI = (() => {
   const PLAIN_GOLD = { power: 1, apple: 1 }; // (golden things worth what they're worth: no craving)
   const NO_HABIT = { price: 1 };             // (powers at their price, used only when they pay)
   const CUT_TAIL = 12;     // a cut rival's tail counts for at most this many segments (see flashOpt)
+  // Mushrooms come back up (round six B). A segment off a rival's length,
+  // hit with a spat mushroom, is worth SPIT_SEG of an apple to me (my own
+  // segment, lost to one, a whole apple); AIM: how much I aim mine (0: I
+  // spit it wherever I'm facing); SPIT_HIT: the chance I'd guess a shot has
+  // of landing on a head, when I weigh eating one on purpose (w.spit: how
+  // much a shot is worth to me; SPIT: anyone's).
+  // A shot is weighed only at a mushroom within SPIT_NEAR of my head, with a
+  // rival's head within a spit of it: farther, it's a guess, not a shot.
+  const SPIT_SEG = 0.5, AIM = 1, SPIT_HIT = 0.35, SPIT = 0.5, SPIT_NEAR = 4;
   const BUG_AHEAD = 16;    // how many moves ahead I read a beetle's way...
   const BUG_HURRY = 2;     // ...and how much a move longer to catch one counts against it, as a step further counts for an apple (a beetle on the run is a meal only while I keep after it: at 1, chases dragged on)
   const BUG_WAYS = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }]; // (the order a beetle weighs its ways in: up, right, down, left)
@@ -755,6 +766,7 @@ window.SnakeAI = (() => {
     margin: undefined, headRisk: undefined, zoneRisk: undefined, nerve: undefined, distance: undefined,
     hunt: undefined, home: undefined, lure: undefined, turn: undefined, tail: undefined, mimic: undefined,
     colony: undefined, goal: undefined, thrill: undefined, coil: undefined, thick: undefined, powers: undefined, golden: undefined, hurry: undefined,
+    spit: undefined,
   };
   const weighed = w => Object.assign({ ...WEIGHTS }, w);
 
@@ -1220,6 +1232,79 @@ window.SnakeAI = (() => {
       }
     });
 
+    // Mushrooms come back up (round six B). Where a rival's head will be
+    // after m more moves, as I'd guess: straight on from where I think it is
+    // now, till something's in the way.
+    const headAfter = (k, m) => {
+      const o = others[k];
+      let x = heads[k].x, y = heads[k].y;
+      for (let n = 1; n <= m; n++) {
+        const nx = x + o.dir.x, ny = y + o.dir.y;
+        if (!inside(nx, ny) || otherFree[ny * N + nx] - age > n) break;
+        x = nx; y = ny;
+      }
+      return { x, y };
+    };
+    // Where I could spit from to hit rival k after m moves (its head then,
+    // as I'd guess it, SPIT_REACH ahead of mine, whichever way I'd face),
+    // within `budget` moves of `from`: the nearest such cell, or null.
+    const firingAt = (k, m, from, budget) => {
+      const q = headAfter(k, m), R = TUNE.SPIT_REACH;
+      let best = null, bestD = budget + 1;
+      for (const d of DIR_LIST) {
+        const x = q.x - d.x * R, y = q.y - d.y * R, dd = Math.abs(x - from.x) + Math.abs(y - from.y);
+        if (inside(x, y) && !holes.has(y * N + x) && dd < bestD) { bestD = dd; best = { x, y }; }
+      }
+      return best;
+    };
+    // A segment's worth, in what the search counts an apple.
+    const appleW = w.food * w.foodRange + w.eat;
+    // Rivals with one in their cheek: it comes up SPIT_REACH ahead of their
+    // head after the moves their bulge says (as I saw it, `age` ago), aimed
+    // as they steer: likeliest straight on, else to a side. I keep my head
+    // out of that ring when it comes, unless my own mouth is full then (it
+    // bounces off). dodge: [move, cell, what it'd cost me] for each.
+    const dodge = [];
+    others.forEach((o, k) => {
+      const m = (o.spitIn || 0) - age;
+      if (m < 1 || m > steps || (me.spitIn || 0) >= m) return;
+      const loss = Math.min(o.spitPower || TUNE.SHRINK, me.body.length - TUNE.MIN_LENGTH);
+      if (loss <= 0) return;
+      const p = headAfter(k, m), R = TUNE.SPIT_REACH;
+      for (const d of DIR_LIST) {
+        if (d.x === -o.dir.x && d.y === -o.dir.y) continue;
+        const x = p.x + d.x * R, y = p.y + d.y * R;
+        if (inside(x, y)) dodge.push(m, y * N + x, loss * appleW * (sameDir(d, o.dir) ? 1 : 0.5));
+      }
+    });
+    // Mine: after me.spitIn moves it comes up SPIT_REACH ahead, the way I
+    // face then. aim: [cell, worth] for each rival head I might hit there (a
+    // segment of theirs SPIT_SEG of an apple, as many as it'd shrink them;
+    // beside where I guess it'll be, a third: it may turn into it). Not one
+    // whose own mouth is full by then: it would bounce off.
+    const aimAt = me.spitIn || 0, aim = [];
+    // (Till then, farther off than the search sees: I close in on the rival
+    // I'd hit hardest, to about SPIT_REACH from its head, at the search's
+    // last step. closeOn: [rival, worth].)
+    const closeOn = [];
+    if (AIM && aimAt > steps) {
+      let bestV = 0, bx = 0, by = 0;
+      others.forEach((o, k) => {
+        if ((o.spitIn || 0) - age >= aimAt) return;
+        const v = Math.min(me.spitPower || TUNE.SHRINK, o.body.length - TUNE.MIN_LENGTH), p = v > bestV && firingAt(k, aimAt, myHead, aimAt);
+        if (p) { bestV = v; bx = p.x; by = p.y; }
+      });
+      if (bestV > 0) closeOn.push(bx, by, AIM * SPIT_SEG * appleW * bestV / 2);
+    }
+    if (AIM && aimAt >= 1 && aimAt <= steps) others.forEach((o, k) => {
+      if ((o.spitIn || 0) - age >= aimAt) return;
+      const v = AIM * SPIT_SEG * appleW * Math.min(me.spitPower || TUNE.SHRINK, o.body.length - TUNE.MIN_LENGTH);
+      if (v <= 0) return;
+      const q = headAfter(k, aimAt);
+      aim.push(q.y * N + q.x, v);
+      for (const d of DIR_LIST) if (inside(q.x + d.x, q.y + d.y)) aim.push((q.y + d.y) * N + q.x + d.x, v / 3);
+    });
+
     // Reach: the soonest (in ticks from now) any rival could be in each cell,
     // spreading a cell a tick from where I last saw its head (once its stun
     // is over), round bodies and my own body as they are now. A gap I need
@@ -1276,6 +1361,26 @@ window.SnakeAI = (() => {
       leaf: 2 * Math.max(apple, hunger, 0.5) * craving.power, // (golden powers: worth it for what they do)
       goldcap: 1.5 * Math.max(apple, hunger, 0.5) * craving.power,
     };
+    // A mushroom (round six B): it costs me as many apples as it's strong;
+    // but with a shot, each segment's worth less the longer I am (a whole
+    // apple up to 10 long), against the shot: as many segments off the nearest rival I could reach
+    // with it (its head within a spit of where I'd swallow it) as it would
+    // come back up strong, at SPIT_SEG of an apple each, times my taste for
+    // it (w.spit) and the odds of a hit. Never better than a persona that
+    // hates them says (w.mushroom), nor than nothing while my mouth is full.
+    const spitTaste = w.spit ?? SPIT;
+    const shroomWorth = f => {
+      const power = f.power || TUNE.SHRINK, len = me.body.length + me.grow;
+      let shot = 0;
+      if (spitTaste > 0) others.forEach((o, k) => {
+        const away = manhattan(f, myHead);
+        if (away <= SPIT_NEAR && Math.abs(heads[k].x - f.x) + Math.abs(heads[k].y - f.y) <= SPIT_NEAR + TUNE.SPIT_REACH && (o.spitIn || 0) - age < away + TUNE.CHEEK_TICKS && firingAt(k, away + TUNE.CHEEK_TICKS, f, TUNE.CHEEK_TICKS)) shot = Math.max(shot, Math.min(Math.min(TUNE.SHRINK_MAX, power + 1), o.body.length - TUNE.MIN_LENGTH));
+      });
+      if (!shot) return Math.min(-power, w.mushroom ?? -power); // (no shot: what it costs anyone, as it always did)
+      const lost = Math.min(power, Math.max(0, len - TUNE.MIN_LENGTH)) * Math.min(1, 10 / Math.max(1, len));
+      const v = -lost + spitTaste * SPIT_HIT * SPIT_SEG * shot;
+      return Math.min(v, w.mushroom ?? Infinity); // (desperate, w.mushroom is -SHRINK: no shots)
+    };
     // My own beads aren't food: my head squashes one (round six B), and
     // then it's food for nobody (worth nothing to me in the search: valued
     // as a meal, it read as eating, and an aggressive rival took risks for
@@ -1283,7 +1388,7 @@ window.SnakeAI = (() => {
     // first, they're gone. mute: how many of my next moves eat nothing (none,
     // now there's no cough: kept for the search's tables). marks: where
     // there's food (stampFood), and my own beads (stampOwn).
-    let mute = 0;
+    let mute = me.spitIn || 0; // (a mushroom in my cheek: my mouth is full till it's spat)
     const stampFood = ++stamp, stampOwn = ++stamp, marksEnd = stampOwn + 1;
     for (const f of food) marks[f.y * N + f.x] = f.kind === 'pellet' && f.owner === me.id ? stampOwn : stampFood;
 
@@ -1334,8 +1439,8 @@ window.SnakeAI = (() => {
       if (f.kind === 'beetle' && bugs < BUGS) { bugFood[bugs++] = f; continue; }
       const own = f.kind === 'pellet' && f.owner === me.id, i = cellOf(f);
       if (i < 0) continue; // (nowhere to knock it: the bird eats it)
-      foodGrow[i] = own ? 0 : f.kind === 'mushroom' ? -TUNE.SHRINK : f.kind === 'golden' ? TUNE.GOLDEN_GROWTH : f.kind === 'beetle' ? TUNE.BEETLE_GROWTH : f.cooked ? TUNE.COOKED_GROWTH : 1;
-      let v = own ? 0 : worth[f.kind] ?? 0;
+      foodGrow[i] = own ? 0 : f.kind === 'mushroom' ? -(f.power || TUNE.SHRINK) : f.kind === 'golden' ? TUNE.GOLDEN_GROWTH : f.kind === 'beetle' ? TUNE.BEETLE_GROWTH : f.cooked ? TUNE.COOKED_GROWTH : 1;
+      let v = own ? 0 : f.kind === 'mushroom' ? shroomWorth(f) : worth[f.kind] ?? 0;
       if (!v) continue;
       if (f.cooked && v > 0) v *= TUNE.COOKED_GROWTH; // (baked: worth more)
       if (f.gold && v > 0) v *= 1.5 * craving.power; // (a golden beetle: leaps too)
@@ -1796,7 +1901,8 @@ window.SnakeAI = (() => {
       const v = muted ? 0 : here + (caught >= 0 ? bugV[caught] : 0);
       const change = muted ? 0 : (late ? 0 : foodGrow[i]) + (caught >= 0 ? TUNE.BEETLE_GROWTH : 0);
       const muteWas = mute;
-      if (change < 0) { // a mushroom: pending growth goes first, then the tail
+      if (change < 0) { // a mushroom: pending growth goes first, then the tail (and my mouth is full a while)
+        mute = t + 1 + TUNE.CHEEK_TICKS;
         let n = -change;
         const fromGrow = Math.min(g, n);
         g -= fromGrow;
@@ -1819,6 +1925,17 @@ window.SnakeAI = (() => {
       const keep = v > 0 ? nerveKeep : 1; // (my nerve over food; times 1, the very same numbers)
       let gain = v * (foodW * w.foodRange + eatW * (ahead ? SOONER[t] : Math.pow(0.85, t))) - risk[i] * keep * (ahead ? RISK_AHEAD[t] : Math.pow(0.6, t)) - (t <= age ? strikes[i] * keep * RISK_AHEAD[t] : 0);
       if (turning && w.turn) gain -= w.turn * (ahead ? TURN_AHEAD[t] : Math.pow(0.9, t));
+      // (A mushroom coming up: mine aimed at a head, as I face after this
+      // move; a rival's ring, my head kept out of it.)
+      if (t + 1 === aimAt && aim.length) {
+        const ax = nx + d.x * TUNE.SPIT_REACH, ay = ny + d.y * TUNE.SPIT_REACH;
+        if (inside(ax, ay)) { const a = ay * N + ax; for (let n = 0; n < aim.length; n += 2) if (aim[n] === a) gain += aim[n + 1]; }
+      }
+      for (let n = 0; n < dodge.length; n += 3) if (dodge[n] === t + 1 && dodge[n + 1] === i) gain -= dodge[n + 2];
+      if (closeOn.length && t + 1 === steps) { // (on my way to where I'd spit from: there by the time it comes up)
+        const dist = Math.abs(nx - closeOn[0]) + Math.abs(ny - closeOn[1]), late = Math.max(0, dist - (aimAt - t - 1));
+        gain += closeOn[2] * (Math.max(0, 1 - late / 4) - 0.02 * dist);
+      }
       const score = depth <= 1
         ? evaluate(nb, nlen, g, t + 1) + bonus + gain
         : search(nb, nlen, g, depth - 1, t + 1, bonus + gain);

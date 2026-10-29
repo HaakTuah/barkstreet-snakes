@@ -62,7 +62,9 @@ function frame(alpha, now) {
   drawWrapEdges(now);
   if (streaks.length) drawStreaks(now); // (under the snakes: beside the dasher, never through it)
   drawLandings(now); // (under the snakes: where a jump comes down)
+  drawSpitRings(now); // (and where a mushroom in a cheek comes down)
   drawSnakes(alpha, now); // (and the fields' light round any rival in them, under its body)
+  drawCheeks(now); // (a mushroom in a cheek: puffed green)
   if (bentLater.length) drawBentFlags(now); // (a flag a snake lies on, bent over it)
   if (flagBends.size) forgetBends(now);
   drawTossed(now); // (a bead spat over a head)
@@ -249,6 +251,15 @@ function onTick(events) {
       spawn(x, y, 9, 70, 520, 2.6, col[0] === '#' ? col : '#a3a3a3', '#57534e');
       if (!reduced) for (let k = 0; k < 3; k++) mote(x + (k - 1) * CELL * 0.22, y + CELL * 0.1, (k - 1) * 6, 2, 900, 3.4, 2);
       if (e.snake.id === viewerId) floater(x, Math.max(CELL * 1.3, y - CELL * 0.6), 'Splat!');
+    } else if (e.type === 'spit') { // a mushroom come back up (round six B): in an arc to where it lies, or onto a head (a green puff: poisoned), or gone
+      const tx = e.tx * CELL + CELL / 2, ty = e.ty * CELL + CELL / 2;
+      if (e.lx != null) moveFood(e.x, e.y, e.lx, e.ly, now, true, true, e.snake);
+      else if (e.hit >= 0) {
+        spawn(tx, ty, 14, 170, 600, 2.8, '#84cc16', '#c084fc');
+        const o = game.snakes[e.hit];
+        if (o) animOf(o, now).queasyAt = now;
+        if (o && o.id === viewerId) floater(tx, Math.max(CELL * 1.3, ty - CELL * 0.6), `-${e.power}`);
+      } else if (e.tx >= 0 && e.ty >= 0 && e.tx < GRID && e.ty < GRID) spawn(tx, ty, 7, 110, 420, 2.2, '#6f1546', '#84cc16'); // (into a hole or the fire)
     } else if (e.type === 'knock') { // the woodpecker's strike knocks food out of its patch: it flies to where the rule says, in an arc as high and long as the throw (see knockFly), and a beetle scurries there; with nowhere to go, the bird has it
       const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
       if (e.tx == null || e.ty == null) { eatenNow.add(e.y * GRID + e.x); spawn(x, y, 8, 160, 420, 2.2, e.kind === 'beetle' ? '#059669' : '#c08a4a', '#f6ecd2'); }
