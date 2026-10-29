@@ -1,0 +1,652 @@
+/* The page's styles (see style/base.css): the cards, the friends' lobby,
+   what's below the board and the Hall of Fame. */
+
+/* -------------------------------------------------------------- cards */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(20, 12, 4, 0.5);
+  animation: fade-in 0.25s ease-out;
+}
+.overlay.hidden { display: none; }
+@keyframes fade-in { from { opacity: 0; } }
+
+.card {
+  max-width: 400px;
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-soft) transparent;
+  --pad-x: 20px;
+  --pad-y: 18px;
+  padding: var(--pad-y) var(--pad-x);
+  border-radius: var(--r-card);
+  background: var(--parchment);
+  color: var(--ink);
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), var(--ring);
+  animation: rise 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@keyframes rise { from { transform: translateY(14px) scale(0.97); opacity: 0; } }
+
+.card h2 { margin: 0 0 6px; font-size: 2rem; font-weight: 700; color: var(--heartwood); }
+.card p { margin: 0 0 10px; color: var(--ink-soft); text-wrap: pretty; }
+.card.beat h2 { font-size: 3.4rem; line-height: 1; margin-bottom: 8px; }
+.card p[hidden] { display: none; }
+.flavor { font-style: italic; color: var(--ink) !important; }
+.hint { margin: 12px 0 0 !important; font-size: 0.8rem; }
+/* A snake's note, asked for from its tag: it stands in for the card's words
+   (and its flavor line) until you're done with it. A slip of darker
+   parchment edged in the snake's colour, its dot and name on top, as on its
+   tag; what it holds now under how it plays. */
+.card.noting #overlay-text, .card.noting .flavor { display: none !important; }
+.rival-note {
+  position: relative;
+  max-width: 340px;
+  margin: 2px auto 12px;
+  padding: 8px 12px 9px 14px;
+  border-radius: var(--r-tag);
+  background: rgba(58, 38, 20, 0.07);
+  box-shadow: inset 4px 0 0 var(--edge, var(--ink-soft)), inset 0 0 0 1px rgba(58, 38, 20, 0.12);
+  text-align: left;
+  animation: note-in 0.18s ease-out;
+}
+.rival-note[hidden] { display: none; }
+@keyframes note-in { from { opacity: 0; transform: translateY(4px); } }
+.card .rival-note p { margin: 0; font-size: inherit; text-wrap: pretty; } /* (the note's own sizes: the card's "p" rules for small boards don't reach in) */
+.card .rival-note .who { display: flex; align-items: center; gap: 7px; padding-right: 26px; color: var(--heartwood); font-weight: 700; }
+.card .rival-note .how { margin-top: 3px; color: var(--ink); }
+.card .rival-note .now { margin-top: 4px; color: var(--ink-soft); font-size: 0.88em; }
+.rival-note .now[hidden] { display: none; }
+.note-close {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 28px;
+  min-width: 0;
+  height: 28px;
+  min-height: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  box-shadow: none;
+  color: var(--ink-soft);
+}
+.note-close:hover { background: rgba(58, 38, 20, 0.1); color: var(--ink); }
+.note-close:active { transform: none; box-shadow: none; }
+.note-close svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+
+/* The new-best moment: a honey seal on the card. */
+.badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: var(--honey);
+  color: var(--ink) !important;
+  font-weight: 700;
+  box-shadow: 0 2px 0 #d4a72c;
+  animation: pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+}
+@keyframes pop { from { transform: scale(0.4); opacity: 0; } }
+
+/* The buttons stay in view when a card is taller than the board (they stick to its bottom edge). */
+.buttons .text-button { flex-basis: 100%; margin: 2px auto 0; }
+/* How to play and Play with friends share a row under the big buttons (each its own row only if they can't). */
+.card-links { flex-basis: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18px; }
+.card-links[hidden] { display: none; }
+.card-links .text-button { flex-basis: auto; margin: 2px 0 0; }
+.buttons .hint { flex-basis: 100%; margin-top: 0 !important; } /* (in the sticky row with the buttons: always in view, even on a card that scrolls) */
+/* The main button calls you: a ring ripples out from it, over and over. It's
+   a pill of light just behind the button, growing out from under it about
+   12px and fading: transform and opacity only, so the compositor runs it and
+   the card isn't repainted every frame (a box-shadow's spread was). It grows
+   a little more up and down than across, since the button is wider than tall. */
+#start { position: relative; --call-x: 1.22; --call-y: 1.58; }
+#start::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1; /* (behind the button, in the buttons' own layer) */
+  border-radius: inherit;
+  background: rgba(163, 230, 53, 0.65);
+  opacity: 0;
+  pointer-events: none;
+  animation: call 1.8s ease-out infinite;
+}
+#start:active::after, #start:disabled::after { animation: none; } /* (pressed or disabled, the button is a layer of its own, and the light would show over it) */
+@keyframes call { from { transform: none; opacity: 1; } to { transform: scale(var(--call-x), var(--call-y)); opacity: 0; } }
+.buttons::before { /* when the card scrolls, what's behind the buttons fades into them */
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 12px;
+  background: linear-gradient(rgba(246, 236, 210, 0), var(--parchment));
+  pointer-events: none;
+}
+.buttons {
+  position: sticky;
+  bottom: calc(3px - var(--pad-y)); /* (inside the card's 3px ring, which stays unbroken) */
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 4px calc(3px - var(--pad-x)) 0;
+  padding: 6px calc(var(--pad-x) - 3px) 8px;
+  background: var(--parchment);
+}
+
+.opponents {
+  list-style: none;
+  margin: 0 auto 12px;
+  padding: 0;
+  max-width: 340px;
+  text-align: left;
+  font-size: 0.85rem;
+}
+.opponents[hidden] { display: none; }
+.opponents li { display: flex; align-items: baseline; gap: 7px; margin: 7px 0; }
+.opponents .dot { transform: translateY(1px); }
+.opponents .blurb { color: var(--ink-soft); }
+/* A start card's seat: who sits there is yours to choose (the picker). Chosen, it wears a ring. */
+.opponents .seat, .lobby-players .seat { display: inline-flex; align-items: center; gap: 6px; flex: none; margin: -2px 0; padding: 2px 7px 2px 5px; border-radius: 999px; font-weight: inherit; color: inherit; background: rgba(58, 38, 20, 0.07); box-shadow: none; }
+.opponents .seat:not(:disabled):hover, .lobby-players .seat:not(:disabled):hover { background: rgba(58, 38, 20, 0.14); }
+.opponents .seat:active, .lobby-players .seat:active { transform: none; box-shadow: none; }
+.opponents .seat.chosen, .lobby-players .seat.chosen { box-shadow: inset 0 0 0 1.5px var(--heartwood); }
+.opponents .seat .dot, .lobby-players .seat .dot { transform: none; }
+.opponents .swap svg, .lobby-players .swap svg { display: block; width: 11px; height: 11px; fill: none; stroke: var(--ink-soft); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.card.beat .opponents .swap { display: none; }
+
+.name-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  color: var(--leaf-dark);
+  font-weight: 600;
+}
+.name-row[hidden] { display: none; }
+.name-row input {
+  width: 190px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--r-tag);
+  background: #fffbea;
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+  box-shadow: inset 0 0 0 1.5px var(--ink-soft);
+  outline: 2px solid transparent; /* (becomes visible in High Contrast) */
+  outline-offset: -2px;
+}
+.name-row input::placeholder, .lobby input::placeholder { color: var(--ink-soft); opacity: 1; font-style: italic; }
+.name-row input:focus-visible, .lobby input:focus-visible { outline: 2px solid transparent; box-shadow: inset 0 0 0 2.5px var(--leaf-dark); }
+
+/* ------------------------------------------- play with friends: the lobby */
+
+.lobby { display: flex; flex-direction: column; gap: 10px; margin: 0 0 12px; text-align: left; }
+.lobby[hidden], .lobby [hidden] { display: none; }
+.lobby-row { display: flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 600; }
+.lobby-row > span, .lobby-row > label { flex: none; }
+.lobby input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--r-tag);
+  background: #fffbea;
+  color: var(--ink);
+  font: inherit;
+  box-shadow: inset 0 0 0 1.5px var(--ink-soft);
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+}
+.lobby input:disabled { opacity: 0.7; }
+.lobby-share input { font-size: 0.85rem; color: var(--ink-soft); }
+#lobby-code { flex: none; width: calc(5ch + 0.75em + 30px); text-transform: uppercase; letter-spacing: 0.12em; text-align: center; }
+.lobby-players { list-style: none; margin: 0; padding: 8px 12px; border-radius: var(--r-tag); box-shadow: var(--ring); }
+.lobby-players li { display: flex; align-items: center; gap: 8px; margin: 4px 0; color: var(--ink); }
+.lobby-players .tag { margin-left: auto; font-size: 0.8rem; color: var(--ink-soft); }
+.lobby-players .open-seat { color: var(--ink-soft); font-style: italic; }
+.lobby-status { margin: 0 !important; min-height: 1.2em; font-size: 0.9rem; text-align: center; color: var(--leaf-dark) !important; font-weight: 600; }
+.lobby-status:empty { min-height: 0; }
+.lobby-status.trouble { color: var(--berry-text) !important; }
+.text-button {
+  display: block;
+  margin: 12px auto 0;
+  padding: 4px 8px;
+  border: 0;
+  background: none;
+  color: var(--leaf-dark);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  box-shadow: none;
+}
+.text-button[hidden] { display: none; }
+.card:focus { outline: none; } /* focused only so keys reach it; buttons show the ring */
+.text-button:hover { color: var(--leaf-dark); background: none; text-decoration-thickness: 2px; }
+
+/* A banner for the round's news, on the board at its top or foot (under the
+   cards), or on a phone held upright above it (.above, below). */
+.toast {
+  position: absolute;
+  z-index: 2; /* under the cards */
+  left: 50%;
+  top: 12px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  transform: translateX(-50%);
+  padding: 7px 14px;
+  border-radius: var(--r-tag);
+  background: var(--parchment);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  text-wrap: balance; /* (two even lines, not a long one and a word) */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 0 0 2px var(--parchment-2);
+  pointer-events: none;
+  animation: settle 0.36s ease-out;
+  transition: opacity 0.2s;
+  overflow: hidden;
+}
+.toast[hidden] { display: none; }
+/* (It settles in, a short drop and a fade, and fades out rising a little:
+   no slam from 1.9x, no throb, no shine. With reduced motion, a fade.) */
+@keyframes settle { from { transform: translateX(-50%) translateY(-6px); opacity: 0; } }
+.toast.leaving, .toast.settled.leaving { animation: toast-out 0.24s ease-in forwards; }
+@keyframes toast-out { to { transform: translateX(-50%) translateY(-4px); opacity: 0; } }
+@keyframes toast-fade-in { from { opacity: 0; } }
+@keyframes toast-fade-out { to { opacity: 0; } }
+/* Each kind of moment has its own dress: a ring in its colour, gold, a
+   leafy Go!. */
+.toast[data-kind="kill"] { color: #7f1d1d; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #dc2626; }
+.toast[data-kind="warn"] { color: #7f1d1d; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #dc2626; }
+.toast[data-kind="beetle"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #059669; }
+.toast[data-kind="bird"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #ea580c; }
+.toast[data-kind="note"] { max-width: min(calc(100% - 32px), 420px); font-weight: 500; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 4px 0 0 var(--edge, var(--ink-soft)), inset 0 0 0 2px var(--parchment-2); } /* (a rival's note while you watch: edged in its colour, as on a card) */
+.toast[data-kind="you"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #4ade80; } /* (yours: your snake's green, not a gold that isn't a power) */
+.toast[data-kind="gold"] { background: linear-gradient(180deg, #fffbea, #fde68a); box-shadow: 0 0 20px rgba(253, 230, 138, 0.65), inset 0 0 0 2px #d4a017; }
+/* The weather, as it turns: gold sun, rain blue, a storm's violet night, fire. */
+.toast[data-kind="sun"] { background: linear-gradient(180deg, #fff7d1, #fde68a); box-shadow: 0 0 18px rgba(251, 191, 36, 0.5), inset 0 0 0 2px #f59e0b; }
+.toast[data-kind="wind"] { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #16a34a; }
+.toast[data-kind="rain"] { background: #e0ecff; color: #1e3a8a; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #3b82f6; }
+.toast[data-kind="storm"] { background: #2e1065; color: #ede9fe; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), inset 0 0 0 2px #a78bfa; }
+.toast[data-kind="snow"] { background: #f0f9ff; color: #0c4a6e; box-shadow: 0 0 18px rgba(186, 230, 253, 0.6), inset 0 0 0 2px #7dd3fc; }
+.toast[data-kind="fire"] { background: linear-gradient(180deg, #ffedd5, #fdba74); color: #7c2d12; box-shadow: 0 0 18px rgba(249, 115, 22, 0.55), inset 0 0 0 2px #ea580c; }
+.toast[data-kind="go"] { padding: 8px 24px; font-size: 1.3rem; background: var(--leaf); color: #fffbea; box-shadow: 0 4px 0 var(--leaf-dark), 0 8px 20px rgba(0, 0, 0, 0.45); }
+/* A head coming into the banner's place: it moves to the board's foot, if
+   that's clear, and stays there while it is (with heads in both, it fades
+   where it is). Never the middle of the board, where the play is. */
+.toast.low { top: auto; bottom: 12px; }
+.toast.settled { animation: none; } /* (settled in once; moving it doesn't replay that) */
+.toast.under { opacity: 0.3; }
+/* On a phone held upright the banner is off the board altogether: in the
+   header, over its title row, level with the title (snake.js placeToast),
+   one line whose words shrink to fit it, never over the row of buttons
+   under it (the pause button), the name tags or the board. */
+header { position: relative; } /* (the banner's room, on a phone held upright) */
+.toast.above { top: var(--toast-y, 0px); z-index: 6; width: var(--toast-max, 100%); max-width: none; padding: 4px 12px; font-size: var(--toast-fs, 0.86rem); white-space: nowrap; text-overflow: ellipsis; }
+.toast.above[data-kind="go"] { padding: 3px 18px; font-size: var(--toast-fs, 1.1rem); } /* (Go!, as big as the row lets it be) */
+
+/* How to steer, level with the YOU arrow as a round starts: positioned by
+   transform each frame (it rides along with your head), never in a finger's
+   way, gone once you steer. Your snake's green, like YOU. */
+.steer-hint {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  top: 0;
+  padding: 2px 8px;
+  border-radius: var(--r-tag);
+  background: rgba(246, 236, 210, 0.94); /* parchment */
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 0 0 2px #4ade80;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+  will-change: transform;
+}
+.steer-hint.on { opacity: 1; }
+
+/* Speech bubbles by snakes' heads: the box is positioned by transform each
+   frame (snake.js / chatter.js); the bubble inside it pops in from its tail. */
+.bubble {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: max-content;
+  max-width: 38%;
+  pointer-events: none;
+  will-change: transform;
+  transition: opacity 0.2s;
+}
+/* With no card up, over the woodpecker's layer too: a rival's "Mind the
+   gap!" comes as the bird drums right by it, and the words come first.
+   (Still under the cards, and under the Hall of Fame, later in the page.) */
+.overlay.hidden ~ .bubble { z-index: 10; }
+.bubble > span {
+  display: block;
+  position: relative;
+  padding: 3px 8px;
+  border-radius: var(--r-tag);
+  background: rgba(246, 236, 210, 0.95); /* parchment */
+  color: var(--ink);
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+  border: 2px solid var(--edge, var(--ink-soft));
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  transform-origin: var(--tail, 50%) calc(100% + 8px);
+  animation: bubble-in 0.34s cubic-bezier(0.2, 0.9, 0.3, 1.45);
+}
+@keyframes bubble-in { from { transform: scale(0.3); opacity: 0; } }
+.bubble > span::after {
+  content: '';
+  position: absolute;
+  left: var(--tail, 50%);
+  top: 100%;
+  border: 6px solid transparent;
+  border-top-color: var(--edge, var(--ink-soft));
+  transform: translateX(-50%);
+}
+.bubble.near { opacity: 0.3; } /* your head is close: the bubble gets out of your way */
+.compact-chat .bubble { max-width: 62%; }
+.bubble[data-side="below"] > span { transform-origin: var(--tail, 50%) -8px; }
+.bubble[data-side="left"] > span { transform-origin: calc(100% + 8px) var(--tail, 50%); }
+.bubble[data-side="right"] > span { transform-origin: -8px var(--tail, 50%); }
+.bubble[data-side="below"] > span::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--edge, var(--ink-soft)); }
+.bubble[data-side="left"] > span::after, .bubble[data-side="right"] > span::after { top: var(--tail, 50%); border-top-color: transparent; transform: translateY(-50%); }
+.bubble[data-side="left"] > span::after { left: 100%; border-left-color: var(--edge, var(--ink-soft)); }
+.bubble[data-side="right"] > span::after { left: auto; right: 100%; border-right-color: var(--edge, var(--ink-soft)); }
+
+/* -------------------------------------------------- below the board */
+
+/* The woodpecker's ledge: room under the board for it to perch, only on a
+   phone held upright (see the small screens). */
+.perch-ledge { display: none; pointer-events: none; }
+
+/* The row under the board: the speed buttons while you watch, the help (the
+   keys, or the taps), and the chatter's switch. Its height is kept (--foot:
+   the help's two lines, or a fingertip's switch), whatever it holds. */
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  min-height: var(--foot);
+  margin-top: 10px;
+}
+.speed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.speed[hidden] { display: none; }
+.speed button[aria-pressed="true"] { background: var(--leaf-dark); box-shadow: 0 2px 0 #1c3007; }
+
+/* The chatter's switch: a speech bubble and its state. It sits in the row
+   under the board, apart from the chatter's caption, so the bubble says what
+   it's for, and its tooltip and spoken name say "Bark chatter"; the word is
+   for eyes, the state is aria-checked. Off, it's an outline, as before. */
+/* The babble's switch beside it (Voices: the rivals' voices, not their bubbles), alike but for its speaker. */
+#voices-toggle + #chatter-toggle { margin-left: 0; }
+#voices-toggle { flex: none; margin-left: auto; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding-inline: 10px 12px; }
+#voices-toggle::before {
+  content: '';
+  flex: none;
+  width: 15px;
+  height: 14px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 14'%3E%3Cpath d='M1 5h2.4L7 2v10L3.4 9H1z'/%3E%3Cpath d='M9.4 4.6c1 1 1 3.8 0 4.8M11.6 2.8c2 2 2 6.4 0 8.4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 14'%3E%3Cpath d='M1 5h2.4L7 2v10L3.4 9H1z'/%3E%3Cpath d='M9.4 4.6c1 1 1 3.8 0 4.8M11.6 2.8c2 2 2 6.4 0 8.4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+#voices-toggle[aria-checked="false"] { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--muted); }
+#chatter-toggle { flex: none; margin-left: auto; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding-inline: 10px 12px; }
+#chatter-toggle::before {
+  content: '';
+  flex: none;
+  width: 15px;
+  height: 14px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 14'%3E%3Cpath d='M2.6 1h9.8A1.6 1.6 0 0 1 14 2.6v6a1.6 1.6 0 0 1-1.6 1.6H7.2L3.8 13v-2.8H2.6A1.6 1.6 0 0 1 1 8.6v-6A1.6 1.6 0 0 1 2.6 1z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 14'%3E%3Cpath d='M2.6 1h9.8A1.6 1.6 0 0 1 14 2.6v6a1.6 1.6 0 0 1-1.6 1.6H7.2L3.8 13v-2.8H2.6A1.6 1.6 0 0 1 1 8.6v-6A1.6 1.6 0 0 1 2.6 1z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+#chatter-toggle[aria-checked="false"] { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--muted); }
+.foot:has(> .help[hidden]):has(> .speed[hidden]) #voices-toggle { margin-left: auto; }
+.foot:has(> .help[hidden]):has(> .speed[hidden]) #chatter-toggle { margin-right: auto; } /* (alone in their row, at the start card, where the card has the keys: in the middle, so the row doesn't look as if something's missing) */
+
+/* The chatter: its box is what's left of the screen (it never sizes the
+   page), and the panel in it, the caption and the log, as tall as its
+   lines, up to that. snake.js fitChatter decides what shows (data-fit):
+   full, the caption and as many whole lines as fit, newest first; strip,
+   the lines alone (the caption goes first), and where not even the newest
+   fits whole, it cut to the rows that do; none, no panel (the switch is
+   still in the row above); off, the chatter's switched off. */
+.chatter {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  --panel: rgba(63, 37, 16, 0.55);
+  --panel-edge: rgba(246, 236, 210, 0.08);
+}
+.chatter-head {
+  flex: none;
+  margin-top: 8px;
+  padding: 5px 12px 0;
+  border: 1px solid var(--panel-edge);
+  border-bottom: 0;
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+.chatlog {
+  flex: none;
+  list-style: none;
+  margin: 0;
+  padding: 3px 12px 6px;
+  border: 1px solid var(--panel-edge);
+  border-top: 0;
+  border-radius: 0 0 var(--r-card) var(--r-card);
+  background: var(--panel);
+  font-size: 0.88rem;
+  line-height: 1.25; /* (no less than the font's own, so a row's words never reach into the row above: a line cut to its rows ends cleanly) */
+}
+.chatter[data-fit="strip"] .chatter-head { display: none; }
+.chatter[data-fit="strip"] .chatlog { margin-top: 4px; padding: 1px 10px 2px; border-top: 1px solid var(--panel-edge); border-radius: 12px; }
+.chatter[data-fit="strip"] .chatlog li { padding-block: 0; } /* (slim: a phone's line of two rows whole in about 40 px, 360×640 and 375×635) */
+.chatter[data-fit="none"] > *, .chatter[data-fit="off"] > * { display: none; }
+.chatlog[hidden] { display: none; }
+.chatlog:empty::before { content: 'Quiet on the bark… for now.'; color: var(--muted); font-style: italic; }
+.chatlog li { padding: 2px 0; animation: log-in 0.4s ease-out; }
+.chatlog li.gone { display: none; } /* (an older line with no room for all of it) */
+.chatlog li.cut { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--rows, 1); line-clamp: var(--rows, 1); overflow: hidden; } /* (the newest, with room for only some of its rows: its last ends in an ellipsis) */
+@keyframes log-in { from { transform: translateX(-12px); opacity: 0; } }
+.chatlog li:nth-child(2) span { color: #e4d8ba; }
+.chatlog li:nth-child(n+3) span { color: var(--muted); }
+.chatlog strong { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }
+
+.help { flex: 1 1 0; min-width: 0; margin: 0; text-align: center; font-size: 0.8rem; line-height: 1.2; color: var(--muted); }
+.help[hidden] { display: none; }
+main.help-yields .help { display: none; } /* (where it doesn't fit the row, its items squeezed past its box or its lines past the page's bottom; and watching, where it would leave the chatter no row: it only says what the speed buttons do. snake.js fitColumn) */
+.hint span, .help span, #overlay-text span.whole { white-space: nowrap; } /* (each item whole, a line breaking only after its dot; a long reason may wrap, rather than run off a phone's card) */
+.sep { font-style: normal; }
+.glyph { display: inline-block; width: 0.62em; height: 0.78em; vertical-align: -0.06em; fill: currentColor; } /* (the pause button's own bars, not a font's) */
+
+/* The woodpecker's layer: the board and the room round it, sized and moved by the renderer with a transform, under the dialogs, never in the way of a tap. */
+.bird-layer {
+  position: fixed;
+  top: 0;
+  left: 0; /* (sized by the game, to the window it draws for) */
+  z-index: 9;
+  display: none;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------- the rival picker */
+
+/* Over the page like the Hall of Fame (.records), every rival and "Any". */
+.picker-card { max-width: 620px; }
+.picker-card h2 { margin: 0; font-size: 1.15rem; color: var(--heartwood); }
+.picker-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
+.picker-list .pick { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 1px 8px; width: 100%; height: 100%; padding: 7px 10px; border-radius: var(--r-tag); text-align: left; font-weight: inherit; font-size: 0.85rem; color: var(--ink); background: var(--parchment-2); box-shadow: none; }
+.picker-list .pick:not(:disabled):hover { background: #dfcd9f; }
+.picker-list .pick:active { transform: none; box-shadow: none; }
+.picker-list .pick[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--heartwood); }
+.picker-list .pick .blurb, .picker-list .pick .who { grid-column: 2; color: var(--ink-soft); font-size: 0.92em; }
+.picker-list .pick .who { font-size: 0.8em; font-style: italic; }
+.picker-list .any .dot { background: conic-gradient(#d97706 0 25%, #4d7c0f 0 50%, #64748b 0 75%, #b91c1c 0); }
+
+/* ------------------------------------------------- Hall of Fame dialog */
+
+.records {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.6);
+}
+.records[hidden] { display: none; }
+
+.records-card {
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: var(--r-card);
+  background: var(--parchment);
+  color: var(--ink);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), var(--ring);
+  animation: rise 0.25s ease-out;
+}
+
+/* The book's tabs and its × stay at the top of its page as it scrolls,
+   inside its ring (a death card's link opens it scrolled to its row: the ×
+   went up with the page, 460 to 990 px off a phone's screen, and with it
+   the focus ring). At rest it's where it was: 16 px in, 12 over the page.
+   (Stuck, it's 3 px from the page's top, past its 16 px padding: -13.) */
+.records-head { position: sticky; top: -13px; z-index: 1; box-shadow: 0 -3px 0 var(--parchment-2); /* (covers the ring's band above it, where scrolled words would show) */ display: flex; align-items: center; justify-content: space-between; margin: -13px -13px 4px; padding: 13px 13px 8px; border-radius: 13px 13px 0 0; background: var(--parchment); }
+
+.tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--parchment-2); }
+.tab { padding: 6px 14px; font-size: 0.9rem; background: transparent; color: var(--ink); box-shadow: none; }
+.tab .tab-icon { display: none; width: 18px; height: 18px; fill: currentColor; vertical-align: -3px; } /* (the Hall of Fame as a trophy, on phones) */
+.tab:active { transform: none; box-shadow: none; }
+.tab[aria-pressed="true"] { background: var(--heartwood); color: var(--cream); }
+.tabs-small { display: inline-flex; margin-bottom: 8px; }
+.tabs-small[hidden] { display: none; }
+.tabs-small .tab { padding: 4px 12px; font-size: 0.8rem; }
+
+.close { padding: 0 10px; font-size: 1.6rem; line-height: 1.3; background: transparent; color: var(--ink-soft); box-shadow: none; }
+.close:active { transform: none; box-shadow: none; }
+
+.records-body { min-height: 120px; }
+.empty { margin: 32px 0; text-align: center; color: var(--ink-soft); font-style: italic; }
+.records-note { margin: 0 0 10px; font-size: 0.85rem; text-align: center; color: var(--ink-soft); font-style: italic; text-wrap: balance; }
+
+.scores-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.scores-table th { padding: 6px 7px; text-align: left; font-weight: 500; font-size: 0.8rem; color: var(--ink-soft); }
+.scores-table td { padding: 7px; border-top: 1px solid var(--parchment-2); }
+.scores-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.scores-table .name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scores-table .name .dot { margin-right: 8px; vertical-align: middle; }
+.scores-table .name .who { margin-left: 6px; font-size: 0.72rem; color: var(--ink-soft); }
+.scores-table tr.ai .name { color: var(--ink-soft); }
+.scores-table .won { color: var(--leaf-dark); font-weight: 700; }
+.scores-table .muted { color: var(--ink-soft); }
+.scores-table tr.highlight td { background: rgba(77, 124, 15, 0.16); }
+.scores-table tr.highlight td:first-child { box-shadow: inset 3px 0 0 var(--leaf-dark); }
+
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+.tile { padding: 10px; border-radius: var(--r-tag); background: var(--parchment-2); text-align: center; }
+.tile-value { font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tile-label { font-size: 0.75rem; color: var(--ink); }
+
+.nemesis { margin: 0 0 12px; }
+.nemesis .dot { margin: 0 6px 0 2px; vertical-align: -1px; }
+.bars { margin-bottom: 16px; }
+.bars h3 { margin: 0 0 8px; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+.bar-row { display: grid; grid-template-columns: 110px 1fr 32px; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.85rem; }
+.bar-label { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bar-track { height: 10px; border-radius: 999px; background: var(--parchment-2); overflow: hidden; }
+.bar-fill { display: block; height: 100%; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(58, 38, 20, 0.35); }
+
+/* The Field guide: each thing's picture beside its rule, in groups. */
+.guide-head { margin: 4px 0 4px; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+.guide { margin: 0 0 12px; padding: 0; list-style: none; }
+.guide li { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--parchment-2); }
+.guide li:first-child { border-top: 0; }
+/* The row your death's card opened the guide at: lit in honey, fading to the page over 2.4 s. */
+.guide li.spot { margin-inline: -8px; padding-inline: 8px; border-radius: 10px; animation: spot 2.4s ease-out 0.2s both; }
+@keyframes spot { from { background: var(--honey); } to { background: transparent; } }
+.guide-pics { flex: none; display: flex; align-items: center; justify-content: center; width: 44px; }
+.guide-art { flex: none; width: 36px; height: 36px; }
+.guide-pics .guide-art:nth-child(2) { margin: 10px 0 0 -14px; } /* (two: the second a little in front, lower down) */
+.guide-pics .guide-art:first-child:not(:only-child) { width: 30px; height: 30px; margin-top: -10px; }
+.guide-pics .guide-art:nth-child(2) { width: 30px; height: 30px; }
+.guide-art.stand-in { display: inline-flex; align-items: center; justify-content: center; font-size: 22px; line-height: 1; }
+.guide p { margin: 0; font-size: 0.88rem; line-height: 1.35; color: var(--ink); text-wrap: pretty; }
+.guide strong { font-weight: 600; }
+.bar-count { text-align: right; font-variant-numeric: tabular-nums; }
+
+button.link {
+  display: block;
+  margin: 4px auto 0;
+  padding: 6px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  background: transparent;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  box-shadow: none;
+}
+button.link:active { transform: none; }
+button.link[hidden] { display: none; } /* (its display would otherwise win over hidden: the Field guide has nothing to clear) */
+
+/* The dev-only frame-time overlay (?perf, or ` with ?debug). */
+.perf {
+  position: fixed;
+  right: 8px;
+  bottom: 8px;
+  z-index: 20;
+  margin: 0;
+  padding: 6px 9px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--sprout);
+  font: 12px/1.4 ui-monospace, Consolas, monospace;
+  white-space: pre;
+  pointer-events: none;
+}
+
