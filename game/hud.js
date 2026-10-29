@@ -51,7 +51,13 @@ tagsEl.addEventListener('click', e => {
 // The note in a line (a banner, and what a screen reader hears).
 const youWords = s => s.alive ? yourPowerWords(s) : 'You’re out of this round.'; // (your powers, while you have a round to use them in)
 // (Who a rival is being now, where that changes: Capricious's mood.)
-const nowWords = s => s.alive && s.personaKey === 'capricious' && s.memory.mood ? ` Doing its best ${CAST[s.memory.mood].name} now.` : '';
+const nowWords = s => {
+  if (!s.alive) return '';
+  if (s.personaKey === 'capricious' && s.memory.mood) return ` Doing its best ${CAST[s.memory.mood].name} now.`;
+  const model = s.personaKey === 'copycat' && theGame.snakes.find(o => o.id === s.memory.modelId && o.alive);
+  if (model) return ` Copying ${isMe(model) ? 'you' : model.name}${s.memory.style ? `, playing as ${CAST[s.memory.style].name} does` : ''}.`; // (the style it reads from how its model plays: see ai.js's styleOf)
+  return '';
+};
 const noteLine = s => isMe(s) ? youWords(s) : `${s.name}: ${s.persona.blurb}${nowWords(s)}${powerWords(s)}`;
 function openNote(s) {
   closeNote();

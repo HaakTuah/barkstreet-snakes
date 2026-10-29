@@ -39,6 +39,28 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 ### 2. Done: types for the multiplayer messages (PR #48); in `docs/archive/progress-done.md`.
 
+### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
+
+Moved up by Haakon (29 October 2026): "It's the one I am most interested in playing, and it has been pushed back for a
+long time now. Also, the teaching system will have to account for it." It is the next AI entry once Copycat's part of
+3b (PR #142) merges, ahead of Wildcard's part of 3b, 2b, 2h, 2i and 3c; the art and sound lanes (2d, 2f, 2j) run
+beside it as before. A playable draft PR as early as it can be, so Haakon can try it this evening.
+
+- **The island hop comes first.** The owner: "jumping is pretty critical to making this game more tense and skill based, rather than RNG". There are two test cases:
+  - Gobbler folded on a strip;
+  - `docs/handoff/owner-sniper-islands.jpg`: Sniper won coiled on a strip, beside islands of beads across gaps of 1 to 3 cells.
+- **No auto-jump** (the owner agreed). A press stays armed until a hurdle 4–5 cells ahead is reached (`LEAP_WINDOW` is 3 ticks today), for rivals too. The landing ring shows where you'd land, and it gives no trap warnings.
+- **One pricing model for every power:**
+  - gain is searched from where the power ends, plus a tempo credit for flashes and the island reached for jumps;
+  - the tail tip is priced at what length is worth now (cheap late in the round);
+  - an idle power gets cheaper, with a floor kept for a way out;
+  - risk is a failed flash (about 5 segments and a longer stun) or a bump in the air, weighed by each rival's nature;
+  - not a junkie like Star, and not hoarding.
+  - Caution: at a flat 1-apple price, rivals flashed 3 times a minute and did no better. Judge it by the seat-split A/B.
+- **Dropped charges:** not on every bump. On a knockout, the charges spill where the head fell as a golden pickup anyone can grab.
+- **Bridges:** as in DESIGN. Crawl on where the body crosses the rim, or land on it from a jump where it will still be there.
+- The earlier start on jumps is `docs/handoff/jumps-wip-unverified.patch` (on f338275). It's unverified; redo it or check it first.
+
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
 Haakon (29 October 2026), on the "For Haakon" question whether a fed Gobbler should gamble too: "Agreed to all,
@@ -141,7 +163,15 @@ arent distracting! That would be a real turn off!"
 
 Its done entries (PRs #49 to #124) are in `docs/archive/progress-done.md`, "Item 3, done".
 
-### 3b. The rivals who change: Capricious, Copycat and Wildcard
+### 3b. The rivals who change: Capricious, Copycat and Wildcard (Wildcard's part after 5)
+
+*Capricious done (PR #126), Copycat done (PR #142), 29 October 2026; the readings are in the design file.* **Wildcard's
+part waits** (after 5), built on the branch `wildcard-shows-its-mix`: two or three traits a round from eight (`TRAITS`
+in `ai.js`), its tag's note ("This round: hungry, reckless and hunts"), a brag as its first line (with its Chinese), a
+Field guide row, protocol 16 with `mix` synced, rules tests, and the simulation's `--signatures` reading each trait's
+trademark. Left to do: merge `develop` into it (its `ai.js` predates 5), re-check the traits that showed weakly in a
+first 40-round look (coward, tail-rider: given Ghost's and Creeper's room weights since), the A/B and head to head,
+pictures, review.
 
 As `docs/design/35-capricious-copycat-and-wildcard.md` describes: Capricious does impressions of every other rival from
 a shuffled deck, each with its costume and an opening line; Copycat plays as the leader plays, copying a person by what
@@ -153,6 +183,10 @@ its mimic weight (120) outweighing the pull of food, and the room and margin wei
 move. Copycat's part of 3b fixes it, and first checks with a census whether every rival does it: of the apples that
 rot, how many were within a rival's reach, and how far each was from the edge. A competent snake takes a safe apple by
 the wall ("Clever rivals, human reactions"); one it takes into a dead end doesn't count as safe.
+*Checked in PR #142* (`tools/dev/rotten-apples.js`, 150 rounds, seed 21): Copycat had been the worst, 0.20 apples
+passed up (its head within 2) and left to rot a minute alive, 0.15 by the edge; with its copied habits and its pull to
+mimic cut from 120 to 40, 0.13 and 0.09, mid-field. But every rival does it: 80% of the apples that rot lie on the edge
+row or one in, and Sniper (0.19), Capricious, Mason and Mute pass up as many. A general edge-apple fix is noted below.
 
 ### 3c. A new rival: the Charmer (Haakon, 29 October 2026; an AI entry, after 2b and 3b)
 
@@ -178,7 +212,7 @@ entry doesn't specify them, and the art waits for his description. Everything el
 - **The cast grows to nineteen:** the start screen, the Field guide's row for him, the lobby's line-up, `CLAUDE.md`'s
   "a cast of eighteen", and Capricious's deck of impressions (3b) gain him; online play gets a protocol bump.
 
-### 4. The teaching system, steps 2–6 (DESIGN "Teaching by showing")
+### 4. The teaching system, steps 2–6 (DESIGN "Teaching by showing") — after 5, whose new moves it must teach
 
 Step 1 is merged (#35):
 - 2. the full-size woodpecker on upright phones;
@@ -197,23 +231,6 @@ The teaching audits in `tools/dev/teach/audit` and `tools/dev/teach-build/audit`
 every banner: use them to measure it. The patches were made before DESIGN.md was split: their DESIGN.md hunks now belong
 in `docs/design/29-round-six-b-the-new-moves.md` and `docs/design/30-teaching-by-showing.md`.
 
-### 5. Round six B: the new moves (DESIGN "Round six B")
-
-- **The island hop comes first.** The owner: "jumping is pretty critical to making this game more tense and skill based, rather than RNG". There are two test cases:
-  - Gobbler folded on a strip;
-  - `docs/handoff/owner-sniper-islands.jpg`: Sniper won coiled on a strip, beside islands of beads across gaps of 1 to 3 cells.
-- **No auto-jump** (the owner agreed). A press stays armed until a hurdle 4–5 cells ahead is reached (`LEAP_WINDOW` is 3 ticks today), for rivals too. The landing ring shows where you'd land, and it gives no trap warnings.
-- **One pricing model for every power:**
-  - gain is searched from where the power ends, plus a tempo credit for flashes and the island reached for jumps;
-  - the tail tip is priced at what length is worth now (cheap late in the round);
-  - an idle power gets cheaper, with a floor kept for a way out;
-  - risk is a failed flash (about 5 segments and a longer stun) or a bump in the air, weighed by each rival's nature;
-  - not a junkie like Star, and not hoarding.
-  - Caution: at a flat 1-apple price, rivals flashed 3 times a minute and did no better. Judge it by the seat-split A/B.
-- **Dropped charges:** not on every bump. On a knockout, the charges spill where the head fell as a golden pickup anyone can grab.
-- **Bridges:** as in DESIGN. Crawl on where the body crosses the rim, or land on it from a jump where it will still be there.
-- The earlier start on jumps is `docs/handoff/jumps-wip-unverified.patch` (on f338275). It's unverified; redo it or check it first.
-
 ### 6. Round six C: the woodpecker in three acts
 
 The draft is in `docs/handoff/woodpecker-acts-draft.md`.
@@ -228,6 +245,11 @@ The draft is in `docs/handoff/woodpecker-acts-draft.md`.
 As planned: up to 4 players, key sets, gamepads, and local and online play together.
 
 ## Noted, not yet queued
+
+- **Apples by the edge rot** (found in PR #142's census, `tools/dev/rotten-apples.js`): 80% of the apples that rot lie
+  on the edge row or one in, passed up by rivals whose heads came within 2. The room and margin weights likely count an
+  edge cell against a move even when the apple is safe; an AI entry could test a safe-meal exception like the one for
+  meals by the neck (`MEAL_DAWDLE`).
 
 Small things found on the way, for Haakon to place in the queue:
 - (None now.)
