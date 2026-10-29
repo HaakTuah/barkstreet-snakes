@@ -1107,9 +1107,11 @@ window.SnakeEngine = (() => {
   // everything in aiView() is fixed between ticks (the food too: it only
   // moves, grows or goes during a tick, after everyone has decided), except
   // a snake about to starve, which shrinks at the start of the tick and must
-  // decide after that.
+  // decide after that, and everyone on a tick a mushroom comes back up.
   // (A stunned snake doesn't decide at all until it can move again, nor one in the air.)
-  const canThinkAhead = (game, s) => s.alive && (!s.isPlayer || !!s.autopilot) && game.time < s.nextStarve && s.plannedTick !== game.tick && s.stunUntil <= game.tick && !s.flight;
+  const canThinkAhead = (game, s) => s.alive && (!s.isPlayer || !!s.autopilot) && game.time < s.nextStarve && s.plannedTick !== game.tick && s.stunUntil <= game.tick && !s.flight && !spitDue(game);
+  // (A mushroom due to come up this tick changes the board before anyone decides: see spit.)
+  const spitDue = game => game.snakes.some(o => o.alive && o.cheek && o.cheek.spitAt <= game.tick);
 
   // A person's snake is handed to an AI (autopilot: a persona) when they leave.
   const brainOf = s => s.autopilot || s.persona;
