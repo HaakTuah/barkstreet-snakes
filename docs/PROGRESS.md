@@ -168,17 +168,23 @@ arent distracting! That would be a real turn off!"
 - Rivals only for now (your own snake's lines, from the teaching system, stay silent). Online, each player hears it on
   their own machine: no protocol change.
 
-### 2k. The woodpecker, bigger still (Haakon, 29 October 2026; small, an art lane)
+### 2k. The woodpecker, as big as it can get away with (Haakon, 29 October 2026; small, an art lane)
 
 Haakon (29 October 2026): "I think the woodpecker should be even bigger". Then, when the design session asked for a
 simulation check: "How should a visual change alter the actual game in any way?" It can't: the bird's size is one
 drawing constant (`BU` in `render/bird.js`), while the rules peck by target cells (`game.woodpecker`), so no
-simulation is run for it. Make it **about 1.6 times its first size** (from 1.3), on the board and under it alike, one
-size wherever the screen has room, as 2c set; where there isn't room, its perches shrink it as they do today
-(`PERCH_MIN_PX`, `PERCH_FLOOR_PX`). The check is what it hides, by eye: while it drums, the food, the heads and the
-tiles it is about to peck still show, and under the board it still clings to the buttons without covering what they
-say. The PR shows 1.3 beside 1.6 at a 390-pixel phone held upright and on its side, and desktop 2x, drumming and
-perched, and merges once the render and layout suites pass; if Haakon finds it too big, the size is one number.
+simulation is run for it. And then: "Maybe make it as big as you can get away with without it falling out of the
+screen, or being pushed onto the gameplay screen when not pecking, or anything."
+- **The biggest that passes every check,** found by trying sizes up from 1.3, not guessed: one size wherever the screen
+  has room for it, as 2c set, and on screens with less room the biggest each of its perches allows (the perches
+  already shrink it, `PERCH_MIN_PX` and `PERCH_FLOOR_PX`; they keep doing so, from the new size).
+- **The checks,** at a 390-pixel phone held upright and on its side, a tablet both ways and desktop: all of it stays on
+  the screen, in every pose and flight (crouching, its tail, its wings open); perched, it never reaches onto the board,
+  nor over the buttons' words or the chatter; drumming, it hides no food, no head and none of the tiles it is about to
+  peck beyond what it hides at 1.3; and nothing else on the page moves to make room for it. The layout suite gets a
+  test for each check, so a later change can't break them.
+- The PR shows 1.3 beside the new size on each of those screens, perched, flying and drumming, says the size it found
+  and what stopped it growing further, and merges once the render and layout suites pass.
 
 ### 2l. Flags that bend as a snake goes over them (Haakon, 29 October 2026; small, an art lane beside 2k)
 
