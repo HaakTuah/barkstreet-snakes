@@ -637,72 +637,74 @@ function lens3d(sg, tint) {
   ctx.fill();
 }
 // Wildcard's hair (Trump's), seen from above: the head points +x, and -y is
-// the far side. Parted on the near side, it's combed from the parting across
-// the crown in long strands that overhang the far side, their ends feathered
-// into wisps; at the front a wave stands up over the brow (clear of the
-// eyes), its shadow on the forehead. Pale straw with near-white shine, orange
-// only in the shadows, and no outline: its shadow on the head sets it off.
+// the far side. One smooth, lacquered mass, combed and sprayed into place:
+// parted on the near side, the top combed from the parting across the crown
+// and swept back over the far side, so that side reads fuller; at the front
+// one big wave behind the brow, rolled up and over to the far side (clear of
+// the eyes). A few broad comb grooves follow the sweep, one long near-white
+// gloss runs along the wave's crest and on round the sweep, and no outline:
+// its soft shadow on the head sets it off. WILD_WAVE is how far the wave
+// stands up, WILD_SIDE how far the sweep overhangs the far side.
+const WILD_WAVE = 0.1, WILD_SIDE = 0.12, WILD_GROOVES = 4;
 function wildHairEdge() {
-  const c = CELL, q = (cx, cy, x, y) => ctx.quadraticCurveTo(c * cx, c * cy, c * x, c * y);
+  const c = CELL, b = (x1, y1, x2, y2, x, y) => ctx.bezierCurveTo(c * x1, c * y1, c * x2, c * y2, c * x, c * y);
+  const w = WILD_WAVE, s = WILD_SIDE;
   ctx.beginPath();
-  ctx.moveTo(-c * 0.02, c * 0.3); // the parting's front end
-  ctx.bezierCurveTo(c * 0.06, c * 0.26, c * 0.1, c * 0.08, c * 0.08, -c * 0.1); // the wave, along the brow
-  ctx.bezierCurveTo(c * 0.07, -c * 0.32, c * 0.0, -c * 0.5, -c * 0.12, -c * 0.74); // swept round, overhanging the far side
-  q(-0.18, -0.68, -0.24, -0.66); // (each lock's end, then the dip behind it)
-  q(-0.3, -0.8, -0.44, -0.84);
-  q(-0.46, -0.72, -0.52, -0.68);
-  q(-0.6, -0.76, -0.68, -0.7);
-  q(-0.66, -0.58, -0.7, -0.5);
-  q(-0.8, -0.4, -0.84, -0.22); // round the back, a wisp or two
-  q(-0.74, -0.14, -0.76, -0.04);
-  q(-0.86, 0.06, -0.82, 0.14);
-  q(-0.72, 0.16, -0.7, 0.26);
-  q(-0.66, 0.4, -0.52, 0.42); // the near side, short below the parting
-  ctx.bezierCurveTo(-c * 0.34, c * 0.46, -c * 0.12, c * 0.42, -c * 0.02, c * 0.3);
+  ctx.moveTo(-c * 0.04, c * 0.3); // the parting's front end
+  b(0.08, 0.26, 0.12 + w, 0.02, 0.1 + w * 0.8, -0.2); // the wave, standing up behind the brow
+  b(0.08 + w, -0.44 - s, 0.04, -0.66 - s, -0.08, -0.68 - s); // rolled over to the far side, overhanging it
+  b(-0.18, -0.7 - s, -0.22, -0.7 - s, -0.3, -0.72 - s); // (where the curl meets the sweep)
+  b(-0.5, -0.84 - s, -0.76, -0.74 - s, -0.86, -0.5 - s * 0.5); // swept back along the far side, fuller
+  b(-0.96, -0.26, -0.92, 0.1, -0.74, 0.26); // round the back
+  b(-0.56, 0.46, -0.26, 0.44, -0.04, 0.3); // the near side, short below the parting
   ctx.closePath();
+}
+// One comb groove (or its lit ridge), from the parting across the crown and
+// swept back over the far side, all of them gathering towards the back of it:
+// t from 0 (the front, after the wave) to 1.
+function wildGroove(t, shift) {
+  const c = CELL, x0 = -0.04 - t * 0.5 + shift;
+  ctx.moveTo(c * x0, c * 0.32);
+  ctx.bezierCurveTo(c * (x0 + 0.1 - 0.06 * t), c * 0.0, c * (-0.08 - 0.3 * t + shift), -c * (0.5 + WILD_SIDE), c * (-0.62 - 0.1 * t + shift), -c * (0.66 + WILD_SIDE * 0.7 - 0.12 * t));
 }
 function wildHair() {
   const c = CELL;
   ctx.save();
   ctx.translate(-c * 0.07, 0); // (set back, so most of the face shows)
-  ctx.save();
-  ctx.translate(c * 0.05, c * 0.02); // its shadow on the head, falling on the brow in front of the wave
-  wildHairEdge(); ctx.fillStyle = 'rgba(120,53,15,0.3)'; ctx.fill();
+  ctx.save(); // its soft shadow on the head, darker gold, falling on the brow in front of the wave
+  ctx.fillStyle = 'rgba(146,84,14,0.16)';
+  ctx.translate(c * 0.07, c * 0.03); wildHairEdge(); ctx.fill();
+  ctx.translate(-c * 0.03, -c * 0.01); wildHairEdge(); ctx.fill();
   ctx.restore();
   ctx.save();
   wildHairEdge();
-  const straw = ctx.createLinearGradient(0, c * 0.4, 0, -c * 0.8); // lit from the parting, deeper where it overhangs
-  straw.addColorStop(0, '#fbe7a1'); straw.addColorStop(0.55, '#f6d57a'); straw.addColorStop(1, '#e9b94e');
-  ctx.fillStyle = straw;
+  const gold = ctx.createLinearGradient(c * 0.1, c * 0.4, -c * 0.6, -c * 0.8); // lit at the parting, deeper where it overhangs
+  gold.addColorStop(0, '#fde58a'); gold.addColorStop(0.45, '#f7c948'); gold.addColorStop(1, '#e09a2a');
+  ctx.fillStyle = gold;
   ctx.fill();
   ctx.clip();
   ctx.lineCap = 'round';
-  // Fine strands, all combed one way: from the parting across the crown and
-  // out past the far side (the wave's run round from the brow, the same way).
-  const comb = (shift, width, colour, every, from) => {
+  // The comb grooves: a warm orange-gold shadow, and beside it the lit ridge.
+  const grooves = (shift, width, colour) => {
     ctx.strokeStyle = colour; ctx.lineWidth = c * width;
     ctx.beginPath();
-    for (let i = from; i < 20; i += every) {
-      const t = i / 19, wob = Math.sin(i * 2.3) * 0.025, x0 = 0.04 - t * 0.7 + shift + wob;
-      ctx.moveTo(c * x0, c * 0.36); // (the front ones swept round further, after the wave)
-      ctx.bezierCurveTo(c * (x0 + 0.03 - 0.03 * t), c * 0.05, c * (x0 - 0.1 - 0.06 * (1 - t)), -c * 0.45, c * (x0 - 0.3 + 0.1 * t + wob), -c * 0.95);
-    }
+    for (let i = 0; i < WILD_GROOVES; i++) wildGroove((i + 0.7) / WILD_GROOVES, shift);
     ctx.stroke();
   };
-  comb(0, 0.018, 'rgba(201,124,32,0.4)', 1, 0); // the shadows between strands
-  comb(0.018, 0.014, 'rgba(255,251,235,0.5)', 1, 0);
-  comb(0.02, 0.016, 'rgba(255,255,255,0.85)', 5, 2); // a few near-white ones for the shine
-  // The wave's crest, catching the light, and the hollow behind it.
-  ctx.lineWidth = c * 0.05;
-  ctx.strokeStyle = 'rgba(201,124,32,0.5)';
-  ctx.beginPath(); ctx.moveTo(-c * 0.1, c * 0.32); ctx.bezierCurveTo(-c * 0.02, c * 0.1, -c * 0.02, -c * 0.3, -c * 0.16, -c * 0.62); ctx.stroke();
-  ctx.lineWidth = c * 0.045;
-  ctx.strokeStyle = '#fffbeb';
-  ctx.beginPath(); ctx.moveTo(-c * 0.02, c * 0.28); ctx.bezierCurveTo(c * 0.06, c * 0.1, c * 0.06, -c * 0.3, -c * 0.08, -c * 0.66); ctx.stroke();
-  // The parting, and the short hair below it combed down and back.
-  ctx.strokeStyle = 'rgba(180,98,20,0.7)';
+  grooves(0, 0.045, 'rgba(194,110,18,0.4)');
+  grooves(0.035, 0.025, 'rgba(255,244,190,0.55)');
+  // The wave: the hollow behind its crest, then the gloss along the crest and
+  // on round the sweep, a soft broad sheen with a bright line down it.
+  ctx.lineWidth = c * 0.07;
+  ctx.strokeStyle = 'rgba(194,110,18,0.45)';
+  ctx.beginPath(); wildGroove(0, -0.06); ctx.stroke();
+  const gloss = () => { ctx.beginPath(); wildGroove(0, 0.02); };
+  ctx.lineWidth = c * 0.13; ctx.strokeStyle = 'rgba(255,250,225,0.35)'; gloss(); ctx.stroke();
+  ctx.lineWidth = c * 0.04; ctx.strokeStyle = 'rgba(255,253,244,0.95)'; gloss(); ctx.stroke();
+  // The parting.
+  ctx.strokeStyle = 'rgba(180,98,20,0.6)';
   ctx.lineWidth = c * 0.025;
-  ctx.beginPath(); ctx.moveTo(-c * 0.04, c * 0.31); ctx.quadraticCurveTo(-c * 0.3, c * 0.3, -c * 0.6, c * 0.36); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-c * 0.06, c * 0.31); ctx.quadraticCurveTo(-c * 0.3, c * 0.3, -c * 0.6, c * 0.36); ctx.stroke();
   ctx.restore();
   ctx.restore();
 }
