@@ -197,25 +197,7 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
 
 ### 2l. Done: flags that bend as a snake goes over them (PR #186); in `docs/archive/progress-done.md`.
 
-### 2m. Beetles and the woodpecker (Haakon, 29 October 2026; a small engine entry, between item 5's parts 3b and 4)
-
-Haakon (29 October 2026): "Beetles should quickly try to escape down their burrow when woodpecker targets their little
-"island". And it seems almost no new burrows appear as the woodpecker destroy the old ones. Also, if the woodpecker
-takes out the tiles under the beetles, they just teleport now." Three fixes, found in the code:
-- **Burrows run out:** a pecked burrow becomes a hole and is gone, and new ones open only when a new beetle comes out or
-  one digs in. But an underground beetle with no free burrow waits (`crawl`: `if (!b) continue`) until it expires,
-  still counting toward `BEETLE_MAX`, so no new beetle comes out and no new burrow opens. Fix: an underground beetle
-  with no free burrow cracks a new one open where it's quiet, by the rule `beetleOut` uses (`BURROW_SPACING`,
-  `BURROW_MAX`), so burrows keep up with the woodpecker, on the islands that remain.
-- **They flee the beak:** the woodpecker's target is shown ahead (its rings), so a beetle on a targeted patch, or with
-  one between it and safety, treats it as danger as it treats a head: it scurries for a burrow within reach and dives
-  in, else off the patch, else digs in (a dig there is underground before the strike, and comes up elsewhere).
-- **No teleporting:** today a beetle still on a pecked cell is moved to a landing cell at once (`knocks`, then `f.x =
-  to.x`). Instead, a beetle still under the beak when it strikes is eaten by the woodpecker, a gulp, as woodpeckers do
-  (the bird already eats food with nowhere to go); it had the rings' warning to run.
-- The rivals see beetles flee the beak and plan their chase with it; the census counts burrows open over a round,
-  beetles eaten by the bird, and escapes, before and after. Its lesson: the first time, "The woodpecker eats beetles
-  too!", with a Field guide line under Beetles.
+### 2m. Done: beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it); in `docs/archive/progress-done.md`.
 
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
