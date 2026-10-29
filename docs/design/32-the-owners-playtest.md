@@ -294,3 +294,15 @@ Who you meet is dealt from a deck, and you may choose instead, seat by seat.
     sent whenever it changes; the round message carries the round's as before.
 - *The Hall of Fame:* every entry of a round with any chosen rival (yours, the rivals', a friend's) is marked "chosen"
   after its name. Protocol 12 carries the round's `chosen` flag and a shared best round's.
+
+### The woodpecker, 1.3 times
+
+Haakon (29 October 2026): 1.3 times its size, on the board and under it alike (one size; entry 2c). The bird's unit
+(`BU` in `render/bird.js`) is 1.3 times what it was, so everything that sizes it (its perches, its room round the board,
+its flights, its drum poses, its rims under the board) grows with it, and it stays one size, perched and drumming,
+wherever the screen has room for it: about 101 px of drawn bird on a 390×844 phone (from 78), at all four phones as
+before, and 177 to 233 px on desktops from 1280×720 to 1920×1080 (from 136 to 179). Where the gutter beside the board
+is narrow it still perches a little smaller, as it always has ("with room for it a little smaller", see "The phone
+gap"): at 1440×900 it perches at 191 px and drums at 224 (it was 173 for both), and on a phone on its side 96 against
+101; a tablet held upright or a 1024×768 window still tuck it into the gutter at 32 to 39 px, as before. It is drawn
+only, so play is unchanged: the simulation's fingerprints are identical.
