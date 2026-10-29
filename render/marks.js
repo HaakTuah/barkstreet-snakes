@@ -685,7 +685,7 @@ function drawPasses(from, to, now, halos) {
         else { // queasy after a mushroom: a sickly green wash, fading; starving, a pale one
           const q = a.queasyAt ? 1 - (now - a.queasyAt) / 1400 : 0;
           if (q > 0 && q <= 1) { ctx.fillStyle = rgba('#65a30d', 0.38 * q); silhouette(a, 0.5); }
-          if (a.pale) { ctx.fillStyle = rgba(HUNGER_PALE, 0.5 * a.pale); silhouette(a, 0); } // (starving: it pales, see hungerLook)
+          drawPale(a); // (starving: it pales, see hungerLook; its colour floods back as a meal goes down, see mealSwell)
         }
         if (ox || oy) ctx.translate(-ox, -oy);
       }
