@@ -134,7 +134,8 @@ const FLAVOR = {
   // Beside the YOU arrow, as a round starts (until you steer).
   steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
   leapNothing: 'Jumps hop over a snake, a hole or fire.',
-  leapEarly: 'A bit early: jump when it’s right in front.',
+  leapEarly: 'A bit early: a jump waits five moves, then lapses.',
+  islandHop: touchFirst ? 'Tap to hop up to three cells. Find an island!' : 'Space hops up to three cells. Find an island!', // (the first time you're boxed in with a jumpable gap: round six B's island hop)
   powersFirst: 'Tap jumps. Swipe ahead flashes.', // (a short phone's first Go: steering is beside YOU. One line on a 320 px phone, so it fits between the heads)
   bothOut: ['Nobody walked away from that one.', 'A draw, of sorts.', 'Both of you. At once.'],
   wakeBeat: 'Ready…',

@@ -1168,15 +1168,18 @@ window.SnakeAI = (() => {
         const nx = at(heads[k].x + d.x), ny = at(heads[k].y + d.y);
         if (inside(nx, ny) && otherFree[ny * N + nx] - age <= 1) strikes[ny * N + nx] += strike; // (a body as seen, `age` ago)
       }
-      // (Its powers reach further straight on: a dash three cells, a golden
-      // leap three; anyone's flash two, and anyone's leap if there's
-      // something in front to hop. It may be resting them: I can't tell.
+      // (Its powers reach further straight on: a dash three cells; anyone's
+      // flash two, and anyone's leap LEAP_REACH + 1 if there's something in
+      // front to hop (a golden one, whatever's in front). It may be resting
+      // them: I can't tell. One I saw in the air comes down where its ring
+      // is.
       // But a plain flash costs its rest, so a snake spends one racing for
       // food straight ahead of it, not to cross a cell it can't crawl to:
       // its flash I fear only with food on that line within its reach.)
       const fx = at(heads[k].x + o.dir.x), fy = at(heads[k].y + o.dir.y);
       const gold = o.dashes > 0 || o.leaps > 0, hop = inside(fx, fy) && otherFree[fy * N + fx] > 1;
-      const far = gold ? 3 : Math.max(TUNE.FLASH_LENGTH, hop ? 2 : 1);
+      const far = Math.max(gold ? TUNE.DASH_LENGTH : TUNE.FLASH_LENGTH, gold || hop ? TUNE.LEAP_REACH + 1 : 1);
+      if (o.air > 0 && o.land >= 0) strikes[o.land] += strike;
       const on = f => { for (let n = 1; n <= far + 1; n++) if (at(heads[k].x + o.dir.x * n) === f.x && at(heads[k].y + o.dir.y * n) === f.y) return true; return false; };
       if (gold || hop || food.some(f => f.kind !== 'mushroom' && on(f))) for (let i = 2; i <= far; i++) {
         const nx = at(heads[k].x + o.dir.x * i), ny = at(heads[k].y + o.dir.y * i);

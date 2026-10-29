@@ -61,6 +61,7 @@ function frame(alpha, now) {
   if (corpses.length) drawCorpses(alpha, now);
   drawWrapEdges(now);
   if (streaks.length) drawStreaks(now); // (under the snakes: beside the dasher, never through it)
+  drawLandings(now); // (under the snakes: where a jump comes down)
   drawSnakes(alpha, now); // (and the fields' light round any rival in them, under its body)
   drawTossed(now); // (a bead spat over a head)
   drawRipples(now);

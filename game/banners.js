@@ -126,11 +126,48 @@ function news(dying) {
   // A few seconds in, your flash ready and never used yet (this visit): its key, once a round.
   if (me?.alive && !flashedEver && theGame.time >= 6000 && Engine.flashIn(theGame, me) === 0 && newsFree() && once('flashKey')) return toast(FLAVOR.flashKey, 3200, 'you', 'lesson');
   if (me?.alive && me.leapArmed >= 0 && me.leapArmed === theGame.tick - 1 && !theGame.events.some(e => e.snake === me && (e.type === 'leap' || e.type === 'dash' || e.type === 'fizzle')) ) { // (it ran out: too early, with a hurdle on the line, or nothing to hop at all)
-    const early = hurdleAhead(me, 4);
+    const early = hurdleAhead(me, 8);
     if (once(early ? 'leapEarly' : 'leapNothing')) return toast(early ? FLAVOR.leapEarly : FLAVOR.leapNothing, 2600, 'you', 'lesson');
   }
+  // Boxed in, with a gap you could hop to an island and your jump ready: the island hop, once.
+  if (me?.alive && !me.flight && theGame.tick % 4 === 0 && newsFree() && !theGame.told?.islandHop && Engine.leapIn(theGame, me) === 0 && islandNear(me) && once('islandHop')) return toast(FLAVOR.islandHop, 3000, 'you', 'lesson');
   for (const e of theGame.events) if (e.type === 'baked' && newsOnce('baked')) return toast(lineFor('baked'), 2600, 'fire');
 }
+
+// Boxed in (less free log you can crawl to than your length), with a hop
+// from your head, any way but back, that lands on log you can't crawl to?
+function islandNear(s) {
+  const G = GRID_SIZE, h = s.body[0], taken = new Set();
+  for (const o of theGame.snakes) if (o.alive) for (const c of o.body) taken.add(c.y * G + c.x);
+  const blocked = k => theGame.holes.has(k) || !!theGame.fires?.has(k);
+  const reach = new Set([h.y * G + h.x]), todo = [h.y * G + h.x];
+  let free = 0;
+  while (todo.length && free < s.body.length) {
+    const k = todo.pop(), x = k % G, y = (k - x) / G;
+    for (const [dx, dy] of SIDES4) {
+      const nx = x + dx, ny = y + dy, n = ny * G + nx;
+      if (nx < 0 || ny < 0 || nx >= G || ny >= G || reach.has(n) || blocked(n)) continue;
+      reach.add(n); todo.push(n);
+      if (!taken.has(n)) free++;
+    }
+  }
+  if (free >= s.body.length) return false;
+  for (const [dx, dy] of SIDES4) {
+    if (dx === -s.dir.x && dy === -s.dir.y) continue;
+    let x = h.x + dx, y = h.y + dy;
+    if (x < 0 || y < 0 || x >= G || y >= G || !(blocked(y * G + x) || taken.has(y * G + x))) continue;
+    for (let i = 0; i < TUNE.LEAP_REACH; i++) {
+      x += dx; y += dy;
+      if (x < 0 || y < 0 || x >= G || y >= G) break;
+      const n = y * G + x;
+      if (blocked(n) || taken.has(n)) continue;
+      if (!reach.has(n)) return true;
+      break;
+    }
+  }
+  return false;
+}
+const SIDES4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
 // Is there something to hop on your line, within n cells (a body, a hole, fire)?
 // (next: on the way it goes next, a turn queued included.)
