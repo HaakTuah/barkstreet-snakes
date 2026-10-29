@@ -98,7 +98,7 @@
 // The checks are in tools/render/, one file per area, run in name order as the body of this one
 // (tools/parts.js): 01 a flash, as drawn, 02 beads and golden pips, 03 Star, 04 scorch, rainbows,
 // jumps and bridges, 05 the cough and beetles, 06 flags, strikes and the Field guide, 07 the
-// woodpecker, 08 hunger. A new check goes in its area's file, or a new one.
+// woodpecker, 08 hunger, 09 the chomps (what the round plays when you or a rival eats). A new check goes in its area's file, or a new one.
 const path = require('path');
 const runParts = require('./parts.js');
 const { launch, serve } = require('./browser');
