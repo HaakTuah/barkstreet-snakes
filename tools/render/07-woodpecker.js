@@ -93,6 +93,34 @@ check(blows.before.blows === blows.n - 1 && blows.last.blows === blows.n && blow
   'its last blow lands on the strike’s tick, as the patch gives way, and then it pulls its head out of the hole',
   `4 ms before: blow ${blows.before.blows} of ${blows.n}; on the tick: blow ${blows.last.blows}, its beak ${blows.last.d} units off; the strike made: ${blows.hole.phase}, ${blows.hole.d} units off, 60 ms on ${blows.pulled.d}`);
 
+// On a cell with a snake lying on it, it pecks beside the body, not on
+// it: its beak, at every blow and as it pulls out of the hole, on the
+// free edge or corner farthest from the body (a body straight across:
+// the edge beside it, where it's nearest the bird; a tail ending there:
+// a corner past the tip), clear of the body as drawn. On an empty cell, the middle, as
+// the test above has it.
+const beside = await ev(`(() => {
+  ${BIRD(5)}
+  const spot = 10 * N + 9, tx = 9 * 32 + 16, ty = 10 * 32 + 16, you = g.snakes[0];
+  const out = {};
+  for (const [name, cells, dir] of [['across', [[11, 10], [10, 10], [9, 10], [8, 10], [7, 10]], 'right'], ['tail', [[9, 7], [9, 8], [9, 9], [9, 10]], 'up']]) {
+    setBody(you, cells, dir);
+    rest(spot); drawN(10);
+    const plan = aim(spot, spot), n = you.body.length;
+    const clear = p => { let least = Infinity; for (let i = 0; i < n; i++) { const a = you.body[i], b = you.body[Math.min(n - 1, i + 1)], ax = a.x * 32 + 16, ay = a.y * 32 + 16, dx = (b.x - a.x) * 32, dy = (b.y - a.y) * 32, l2 = dx * dx + dy * dy, t = l2 ? Math.max(0, Math.min(1, ((p[0] - ax) * dx + (p[1] - ay) * dy) / l2)) : 0, r = (i === 0 ? 0.54 : 0.44 - 0.1 * i / (n - 1)) * 32; least = Math.min(least, Math.hypot(p[0] - ax - t * dx, p[1] - ay - t * dy) - r); } return least; };
+    at(plan.depart - 10); // (it sets off: its aim settled on the way in)
+    const on = plan.times.map(t => at(-t).beak);
+    g.woodpecker.target = []; g.woodpecker.last = [spot];
+    const hole = after(0).beak;
+    out[name] = { off: on.map(p => [+(p[0] - tx).toFixed(1), +(p[1] - ty).toFixed(1)]), clear: +Math.min(...on.map(clear)).toFixed(1), inCell: on.every(p => Math.abs(p[0] - tx) < 16 && Math.abs(p[1] - ty) < 16), hole: [+(hole[0] - tx).toFixed(1), +(hole[1] - ty).toFixed(1)], holeClear: +clear(hole).toFixed(1) };
+  }
+  setBody(you, [[4, 23], [3, 23], [2, 23]], 'right');
+  return out;
+})()`);
+check(['across', 'tail'].every(k => beside[k].inCell && beside[k].clear > 0 && beside[k].holeClear > 0) && Math.abs(beside.across.off[0][1]) > 13 && beside.tail.off[0][1] > 12 && Math.abs(beside.tail.off[0][0]) > 12,
+  'on a cell with a snake lying on it, the woodpecker pecks beside the body, not on it: the free edge beside a body across it, a corner past a tail’s tip, clear of the body at every blow and as it pulls out',
+  ['across', 'tail'].map(k => `${k}: its beak at ${beside[k].off[0].join(', ')} units from the middle, ${beside[k].clear} clear of the body at the closest blow, ${beside[k].holeClear} as the strike is made`).join('; '));
+
 // Drumming, it never hides where the food in its mark will land (the
 // ring is a promise you plan by): a patch of 3 by 4 with the spot at
 // (6, 10), the bird coming from the right. Nothing in the mark, it

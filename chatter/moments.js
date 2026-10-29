@@ -36,7 +36,7 @@ function flashed(e) {
 // kill, a cut) would mostly come while it's still in its gap after the
 // last line: those clear it (ownMoment), unless that line was this tick's
 // (one line at a time).
-const showsOff = s => s.personaKey === 'star';
+const showsOff = s => (s.personaKey === 'capricious' ? s.memory.mood : s.personaKey) === 'star'; // (Capricious doing Star too)
 // (Clearing a snake's gap for news, unless its last line was this tick's.
 // Star's own moments do; so do a choke, and a colony or a capital the
 // woodpecker took.)

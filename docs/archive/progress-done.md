@@ -192,6 +192,25 @@ cause and per-rival wins stay within noise; pictures at a 390-pixel phone and de
 Done (PR #139): 1.3 times everywhere, one size wherever the screen has room (101 px on a 390×844 phone, from 78); the
 simulation's fingerprints identical. See "The woodpecker, 1.3 times" in `docs/design/32-the-owners-playtest.md`.
 
+### 2e. The woodpecker pecks beside a snake, not on it (Haakon, 29 October 2026; small, an art lane after 2c, which draws the same bird)
+
+Haakon (29 October 2026): "Looks a bit weird when the woodpecker pecks a tile with a snake tail on, and the snake isn't
+hurt. Is it possible to make it so visually, it doesn't peck exactly on the snake? So it looks natural that the tiles
+go, but that the snake is left unhurt? Just a visual issue, nothing gameplaywise." And: "Yes please, expertly!"
+- **Drawing only** (`render/bird.js`, `render/bird-draw.js`): the tiles go at exactly the same moment as today; no rule,
+  timing, simulation fingerprint or online message changes.
+- **On a tile with a snake on it, the beak aims at the free corner or edge farthest from the body** (the body is drawn
+  narrower than its cell, so that spot shows), and the tile cracks and crumbles from that spot inward, so the bird is
+  seen chipping the log beside the snake, and the snake being unhurt reads as natural. On an empty tile it pecks the
+  middle, as now.
+- The aim's mark and the trembling of what lies in it (`render/food.js`) stay as they are. Reduced motion: the same
+  aim, no crumble animation, as today's peck.
+- Pictures in the PR: before and after of a peck beside a tail and on an empty tile, at a 390-pixel phone and desktop.
+  Entry 6 (the woodpecker in three acts) keeps this aim.
+
+Done in PR #141: the beak aims at the free rim spot farthest from any body on the cell (of spots as clear, the one
+nearest the bird), the dent beside it with its splits running inward and stopping short of the body; drawing only.
+
 ## Item 3, done
 
 From "3. Fixes and polish (the owner's playtest of 2026-10-20)".

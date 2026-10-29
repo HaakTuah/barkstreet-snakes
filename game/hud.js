@@ -50,7 +50,9 @@ tagsEl.addEventListener('click', e => {
 });
 // The note in a line (a banner, and what a screen reader hears).
 const youWords = s => s.alive ? yourPowerWords(s) : 'You’re out of this round.'; // (your powers, while you have a round to use them in)
-const noteLine = s => isMe(s) ? youWords(s) : `${s.name}: ${s.persona.blurb}${powerWords(s)}`;
+// (Who a rival is being now, where that changes: Capricious's mood.)
+const nowWords = s => s.alive && s.personaKey === 'capricious' && s.memory.mood ? ` Doing its best ${CAST[s.memory.mood].name} now.` : '';
+const noteLine = s => isMe(s) ? youWords(s) : `${s.name}: ${s.persona.blurb}${nowWords(s)}${powerWords(s)}`;
 function openNote(s) {
   closeNote();
   noted = s;
@@ -68,7 +70,7 @@ function openNote(s) {
 // What it holds now (kept up to date while the note's up: on your death's
 // card the round goes on).
 function noteNowFor(s) {
-  const now = isMe(s) ? '' : !s.alive ? 'Out of this round.' : powerWords(s).trim();
+  const now = isMe(s) ? '' : !s.alive ? 'Out of this round.' : (nowWords(s) + powerWords(s)).trim();
   if (noteNow.textContent !== now) noteNow.textContent = now;
   if (noteNow.hidden !== !now) noteNow.hidden = !now; // (written only when it changes: this runs with the HUD)
   if (isMe(s)) { const how = youWords(s); if (noteHow.textContent !== how) noteHow.textContent = how; }

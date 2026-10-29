@@ -285,25 +285,32 @@ function drawBird(g, P, half) {
 // On its chunk, drumming: a dent where its beak strikes, deeper blow by
 // blow, with splits running from it along the grain and across (the
 // mark's own cracks are the board's: this is the bird's work), gone once
-// the strike has made it a hole (the board draws the hole), and none over
-// a body lying there; and chips flying off each blow and falling (not
-// with reduced motion).
+// the strike has made it a hole (the board draws the hole); beside a body
+// lying there (see aimOff), smaller where there's less room, its splits
+// running in toward the cell's middle and stopping short of the body, and
+// none where no room shows; and chips flying off each blow and falling
+// (not with reduced motion).
 function drawDent(g, A, done) {
-  const sx = A.spot % GRID, sy = (A.spot - sx) / GRID;
-  for (const s of game.snakes) if (s.alive) for (const c of s.body) if (c.x === sx && c.y === sy) return;
-  const f = done / A.times.length, r = CELL * (0.07 + 0.15 * f);
+  if (AFREE < 1.5) return;
+  const x = A.tx + AX, y = A.ty + AY, beside = AFREE < Infinity, f = done / A.times.length;
+  const r = beside ? Math.min(CELL * (0.07 + 0.15 * f), Math.max(CELL * 0.05, AFREE * 0.75)) : CELL * (0.07 + 0.15 * f);
+  const inward = Math.atan2(-AY, -AX);
   useBase(g);
   g.fillStyle = 'rgba(20,10,4,0.85)';
-  oval(g, A.tx, A.ty, r, r * 0.82); g.fill();
+  oval(g, x, y, r, r * 0.82); g.fill();
   g.strokeStyle = 'rgba(20,10,4,0.8)'; g.lineWidth = 1.6; g.lineCap = 'round';
   g.beginPath();
   for (let m = 0; m < 4; m++) {
-    const a = (m === 0 ? -Math.PI / 2 : m === 1 ? Math.PI / 2 : m === 2 ? 0.4 : Math.PI + 0.4) + (hash01(A.spot * 13 + m) - 0.5) * 0.6, l = r * (1.1 + (m < 2 ? 1.6 : 0.8) * f);
-    g.moveTo(A.tx + Math.cos(a) * r * 0.7, A.ty + Math.sin(a) * r * 0.7); g.lineTo(A.tx + Math.cos(a) * l, A.ty + Math.sin(a) * l);
+    const a = (beside ? inward + (m === 0 ? -0.45 : m === 1 ? 0.45 : m === 2 ? -1.25 : 1.25) : m === 0 ? -Math.PI / 2 : m === 1 ? Math.PI / 2 : m === 2 ? 0.4 : Math.PI + 0.4) + (hash01(A.spot * 13 + m) - 0.5) * 0.6;
+    const c = Math.cos(a), sn = Math.sin(a);
+    let l = r * (1.1 + (m < 2 ? 1.6 : 0.8) * f);
+    if (beside) for (let d = r * 0.7; d < l; d += 1) if (clearOf(x + c * d, y + sn * d) < 1.2) { l = d; break; } // (short of the body)
+    if (l <= r * 0.7 + 0.5) continue;
+    g.moveTo(x + c * r * 0.7, y + sn * r * 0.7); g.lineTo(x + c * l, y + sn * l);
   }
   g.stroke();
   g.fillStyle = 'rgba(254,243,199,0.65)'; // (a fleck of pale wood on its far side, where the light falls in)
-  oval(g, A.tx + r * 0.35, A.ty + r * 0.3, r * 0.35, r * 0.3); g.fill();
+  oval(g, x + r * 0.35, y + r * 0.3, r * 0.35, r * 0.3); g.fill();
 }
 const CHIP_COLS = ['#e9cf9c', '#5a3b22'];
 function drawChips(g, A, t) {
@@ -318,7 +325,7 @@ function drawChips(g, A, t) {
       g.globalAlpha = 1 - age / B_CHIPS;
       for (let j = c; j < 4; j += 2) {
         const h = A.strikeAt * 7919 + i * 31 + j * 7, a = up + (hash01(h) - 0.5) * 2.2, v = 0.16 + 0.26 * hash01(h + 1), sz = 2.6 + 3 * hash01(h + 2);
-        const x = A.tx + Math.cos(a) * v * age, y = A.ty + Math.sin(a) * v * age + 0.0011 * age * age;
+        const x = A.tx + AX + Math.cos(a) * v * age, y = A.ty + AY + Math.sin(a) * v * age + 0.0011 * age * age;
         if (x - sz < room.x0 || x + sz > room.x1 || y - sz < room.y0 || y + sz > room.y1) continue;
         g.fillRect(x - sz / 2, y - sz / 2, sz, sz);
       }
@@ -363,7 +370,7 @@ function drawWoodpecker(alpha, now, dt) {
     const A = P.drum;
     if (P.blows > 0) drawDent(g, A, P.blows);
     if (!reduced) drawChips(g, A, P.t);
-    x0 = Math.min(x0, A.tx - 5 * CELL); x1 = Math.max(x1, A.tx + 5 * CELL); y0 = Math.min(y0, A.ty - 5 * CELL); y1 = Math.max(y1, A.ty + 5 * CELL); // (as far as its chips fly)
+    x0 = Math.min(x0, A.tx + AX - 5 * CELL); x1 = Math.max(x1, A.tx + AX + 5 * CELL); y0 = Math.min(y0, A.ty + AY - 5 * CELL); y1 = Math.max(y1, A.ty + AY + 5 * CELL); // (as far as its chips fly)
   }
   drawBird(g, P, lay.sc * BU * P.s < partsK * 0.55);
   overBird(g, w, alpha, now);

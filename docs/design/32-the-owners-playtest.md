@@ -260,7 +260,7 @@ pin keep it Copycat. Uncopied, it stays full flag red.
 - *Now* (`render/looks.js`, `fillsOf()`; the rim in `render/bodies.js`): copying, its head (and its cat ears, with the
   deeper red inside) is its model's own colour, full rather than the body's pale copy, mixed half and half with
   `#de2910` (`COPY_HEAD`, 0.5, in plain RGB). Copying Star it takes the rainbow's hue at Star's head, flowing in step;
-  copying Capricious or Mute, their colour of the moment. A 1.5-unit rim of the flag's red runs round the head inside
+  copying Mute, its colour of the moment (Capricious keeps its own pink in every mood, since 3b). A 1.5-unit rim of the flag's red runs round the head inside
   its edge, and the yellow pin is as it was. Copying no one (or its model out), the head is all red and has no rim.
 - A colour opposite red mixes to a neutral: Metagamer's cyan gives a grey head, Sovereign's blue a plum one, Vulture's
   black a dark red. The rim and pin keep these Copycat; it's the honest half and half.
@@ -306,3 +306,14 @@ is narrow it still perches a little smaller, as it always has ("with room for it
 gap"): at 1440×900 it perches at 191 px and drums at 224 (it was 173 for both), and on a phone on its side 96 against
 101; a tablet held upright or a 1024×768 window still tuck it into the gutter at 32 to 39 px, as before. It is drawn
 only, so play is unchanged: the simulation's fingerprints are identical.
+
+### The woodpecker pecks beside a snake
+
+Haakon (29 October 2026; entry 2e): on a tile with a snake on it, the bird pecks beside the body, not on it. Its beak
+aims at the spot on the cell's rim (its corners and three points along each edge, just inside the edge) farthest from
+the edge of any body there, as drawn; of spots about as clear (half a unit), the one nearest where it clings, so a body
+straight across the cell has it peck the edge on its own side. The dent and its splits start there and run in toward
+the cell's middle, stopping short of the body, and none is drawn where no room shows (the body fills the cell); the
+chips fly from there. When a body comes or goes it shifts its grip to the new spot in half a tick. On an empty tile it
+pecks the middle, as before. Drawing only (`aimOff` in `render/bird.js`): the tiles go at the same moment, and the
+simulation does not load the renderer, so its fingerprints cannot change.
