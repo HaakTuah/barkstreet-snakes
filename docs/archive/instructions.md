@@ -406,3 +406,13 @@ In the design chat (29 October 2026, 11:33 UTC), to 2j's questions (are the babb
 switch under the board): "No, just merge them, then we will adjust if it is distracting." And, to the design
 session's other takes, the switch's place among them: "Other than that, implement all you said, expertly!" (2j ships
 with the voices on; the switch stays under the board, V at any time)
+
+In the design chat (29 October 2026, 11:40 and 11:42 UTC), on the new moves: "What about the new flashes that can cut
+all the time? Super jumps? And portals others also can follow and pass through for a short time?" The design session
+found item 5 listed only part of "Round six B" (the island hop, bridges, pricing and dropped charges), and suggested
+adding the cutting flashes with tail-dropping and Mason's double walls, the golden flight with bumps in the air, and
+the gold portals, in that order, with pricing last:
+
+> Yes, they are all part of the power update! What i have been looking forwards to!
+
+(item 5 in `docs/PROGRESS.md` now lists every move, in order)

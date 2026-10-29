@@ -63,6 +63,23 @@ beside it as before. A playable draft PR as early as it can be, so Haakon can tr
 - **Bridges:** as in DESIGN. Crawl on where the body crosses the rim, or land on it from a jump where it will still be there.
 - The earlier start on jumps is `docs/handoff/jumps-wip-unverified.patch` (on f338275). It's unverified; redo it or check it first.
 
+**Every move of the round, in this order** (Haakon, 29 October 2026, when the design session found the entry listed only
+part of "Round six B": "Yes, they are all part of the power update! What i have been looking forwards to!"). Each part
+is its own playable PR, tested both ways (`tools/abtest.js`) with every trademark measured, as the island hop was; the
+design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
+1. **The island hop and no auto-jump** (done, PR #158).
+2. **Bridges** (under way on `round6b/bridges`).
+3. **The flashes cut:** the plain flash through a body one thick, the golden through two (and fire out); a failed flash
+   costs 5 and a longer stun, its rest 10 to 12 s; **dropping your own tail** by the same cut; and **Mason's double
+   walls**, since a wall one thick can now be cut (its straight runs measured before and after).
+4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
+   **bumps in the air** (a crash's cost, and you drop where you are).
+5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes.
+6. **Dropped charges** on a knockout, as above.
+7. **One pricing model for every power,** as above, last, so it prices every move together, with **each rival's power
+   style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
+Then the teaching system (item 4), which teaches all of them.
+
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
 Haakon (29 October 2026), on the "For Haakon" question whether a fed Gobbler should gamble too: "Agreed to all,
