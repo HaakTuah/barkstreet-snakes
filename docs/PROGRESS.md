@@ -63,6 +63,36 @@ beside it as before. A playable draft PR as early as it can be, so Haakon can tr
 - **Bridges:** as in DESIGN. Crawl on where the body crosses the rim, or land on it from a jump where it will still be there.
 - The earlier start on jumps is `docs/handoff/jumps-wip-unverified.patch` (on f338275). It's unverified; redo it or check it first.
 
+**Every move of the round, in this order** (Haakon, 29 October 2026, when the design session found the entry listed only
+part of "Round six B": "Yes, they are all part of the power update! What i have been looking forwards to!"). Each part
+is its own playable PR, tested both ways (`tools/abtest.js`) with every trademark measured, as the island hop was; the
+design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
+1. **The island hop and no auto-jump** (done, PR #158).
+2. **Bridges** (under way on `round6b/bridges`).
+3. **The flashes cut:** the plain flash through a body one thick, the golden through two (and fire out), and a cut
+   that leaves a snake fewer than 3 segments puts it out ("The neck cut"; a flash into a head is a failed flash);
+   your own beads squashed the second time you run over them, and food or a spat bead sent off the edge or over a
+   hole falls and is gone ("Choking on your own tail", changed by the owner, in `docs/design/27-round-six-a-fairness-and-fixes.md`); a failed flash
+   costs 5 and a longer stun, its rest 10 to 12 s; **dropping your own tail** by the same cut; and **Mason's double
+   walls**, since a wall one thick can now be cut (its straight runs measured before and after).
+4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
+   **leap now** (a second press while a jump waits sends it at once, open ground included: "Leap now" in the design); with
+   **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
+   fall in, onto a snake you're out, trapped).
+5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes.
+6. **Dropped charges** on a knockout, as above.
+7. **One pricing model for every power,** as above, last, so it prices every move together, with **each rival's power
+   style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
+Then the teaching system (item 4), which teaches all of them.
+
+**The rivals learn every move in its own part** (Haakon, 29 October 2026: "And very important that the commin ai is
+updated to understand all these rule changes to maximize they use of all the playrules!!!"). No part merges until the
+rivals use its moves when they pay and in their own styles, and see them used against them: hop, ride a bridge, cut,
+neck-cut, drop a tail, fly and steer, leap now, take a landing, follow a portal, grab dropped charges, and keep clear of
+each danger (a landing ring, a flash's line, a bridge's tail end). Rules tests prove each one through the same engine
+calls as a person's, and the head-to-head shows the users ahead ("No ability only people use", "every new move is
+tested both ways"); the pricing part then makes the choices among them as good as they can be.
+
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
 Haakon (29 October 2026), on the "For Haakon" question whether a fed Gobbler should gamble too: "Agreed to all,
@@ -98,6 +128,8 @@ apple it needs. Build it from the cause, in the one template every rival shares:
 ### 2f+. Done: Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85); in `docs/archive/progress-done.md`.
 
 ### 2g. Done: the meal goes down (PR #146); in `docs/archive/progress-done.md`.
+
+### Fix. Done: the layout suite's screen-awake checks no longer hang on the machine's speed (PR #161): the section holds the round's loop still, so your snake can't crash on its own between steps on a slow machine. (`scripts/test.sh` exits 1 on a failure; piped through `tail`, use `set -o pipefail`.)
 
 ### 2h. The endgame: eat what keeps you alive, not what boxes you in (Haakon, 29 October 2026; an AI entry, after 2b)
 

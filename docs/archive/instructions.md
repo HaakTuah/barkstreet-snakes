@@ -401,3 +401,56 @@ And, to Claude's take (they notice each other, a shoving match, the loser flips,
 
 In the design chat (29 October 2026, 09:00 UTC), to the "For Haakon" question on rivals' chomps while watching sped
 up (2d, PR #150), among answers for Amarna Letters: "Yes to all, expertly!" (kept as is)
+
+In the design chat (29 October 2026, 11:33 UTC), to 2j's questions (are the babble voices distracting; the Voices
+switch under the board): "No, just merge them, then we will adjust if it is distracting." And, to the design
+session's other takes, the switch's place among them: "Other than that, implement all you said, expertly!" (2j ships
+with the voices on; the switch stays under the board, V at any time)
+
+In the design chat (29 October 2026, 11:40 and 11:42 UTC), on the new moves: "What about the new flashes that can cut
+all the time? Super jumps? And portals others also can follow and pass through for a short time?" The design session
+found item 5 listed only part of "Round six B" (the island hop, bridges, pricing and dropped charges), and suggested
+adding the cutting flashes with tail-dropping and Mason's double walls, the golden flight with bumps in the air, and
+the gold portals, in that order, with pricing last:
+
+> Yes, they are all part of the power update! What i have been looking forwards to!
+
+(item 5 in `docs/PROGRESS.md` now lists every move, in order)
+
+In the design chat (29 October 2026, 11:46 UTC), on the new moves: "And a point about jumps, colliding mid-air costs
+what a regular crash costs, plus you fall, so if you are over fire, you ignite. If you are over a hole, you fall down,
+if you sre over another snake, you get checkmated." (fire written into "Bumps in the air" in
+`docs/design/29-round-six-b-the-new-moves.md` and item 5; the hole was already there; what "checkmated" means over a
+snake went back to Haakon as a question)
+
+In the design chat (29 October 2026, 11:49 and 11:50 UTC), on a mid-air bump over another snake (the design slid you
+off to a free cell beside it): "Well, you are out in game if you are trapped by other snakes, so why should we be more
+lenient when leaping?" Then: "In my mind, you are trapped if you crash into another snake mid-air and another snake
+blocks your landing." (written into "Bumps in the air": onto a body you're out; over bark the ground's trapped test
+holds)
+
+In the design chat (29 October 2026, 11:54 and 11:55 UTC), on the jump: "I imagine mid air crashes won't be that
+frequent. But maybe you should be able to leap whenever you want, not only at gaps, so someone really skillfull can
+time cutting someone else off midair like that. Becomes a high skill manuver." Then, to the design session's take (a
+second press while a jump waits sends it at once; the rivals use it; tested so it never becomes a refuge): "Agreed to
+all, implement expertly!" (written into "Leap now" in `docs/design/29-round-six-b-the-new-moves.md` and item 5's part 4)
+
+In the design chat (29 October 2026, 12:05 and 12:16 UTC), on the new moves: "If you manage to get right under where
+someone is landing, are you knocking them out then too? I think so, so it becomes a risky manuver to do frequently
+near anyone. And flashing, can you hit someone straight on the head with it and take them out, or only all that's
+behind the head?" (the first already holds since the bump rule; the second is a failed flash) Then, to the design
+session's take that a cut leaving a snake fewer than 3 segments puts it out: "Agreed , do it expertly!" (written into
+"The neck cut" in `docs/design/29-round-six-b-the-new-moves.md` and item 5's part 3)
+
+In the design chat (29 October 2026, 12:21 UTC), on the new moves: "And very important that the commin ai is updated to
+understand all these rule changes to maximize they use of all the playrules!!!" (written into item 5 in
+`docs/PROGRESS.md`: no part merges until the rivals use its moves well)
+
+In the design chat (29 October 2026, 12:25 and 12:29 UTC), on cutting yourself small: "if you cut yourself on purpose,
+it would be because you want to fit into a small space, like in the end game. But then ypu drop your pellets, which you
+will be constantly swallowing and spitting out. Is this optimal? The loop you are trapped in, I mean?" Then, after the
+design session suggested choking once per drop:
+
+> I suggest if you run over them twice you just squash them on the second round. And that stuff can fall off the edge. Now it all weirdly gets pushed somewhere it is still accessible, would be more natural if it can just fall off.
+
+(written into "Choking on your own tail" in `docs/design/27-round-six-a-fairness-and-fixes.md` and item 5's part 3)
