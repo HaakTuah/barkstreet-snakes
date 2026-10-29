@@ -73,6 +73,7 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
    costs 5 and a longer stun, its rest 10 to 12 s; **dropping your own tail** by the same cut; and **Mason's double
    walls**, since a wall one thick can now be cut (its straight runs measured before and after).
 4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
+   **leap now** (a second press while a jump waits sends it at once, open ground included: "Leap now" in the design); with
    **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
    fall in, onto a snake you're out, trapped).
 5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes.

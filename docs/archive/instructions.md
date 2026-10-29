@@ -428,3 +428,9 @@ off to a free cell beside it): "Well, you are out in game if you are trapped by 
 lenient when leaping?" Then: "In my mind, you are trapped if you crash into another snake mid-air and another snake
 blocks your landing." (written into "Bumps in the air": onto a body you're out; over bark the ground's trapped test
 holds)
+
+In the design chat (29 October 2026, 11:54 and 11:55 UTC), on the jump: "I imagine mid air crashes won't be that
+frequent. But maybe you should be able to leap whenever you want, not only at gaps, so someone really skillfull can
+time cutting someone else off midair like that. Becomes a high skill manuver." Then, to the design session's take (a
+second press while a jump waits sends it at once; the rivals use it; tested so it never becomes a refuge): "Agreed to
+all, implement expertly!" (written into "Leap now" in `docs/design/29-round-six-b-the-new-moves.md` and item 5's part 4)
