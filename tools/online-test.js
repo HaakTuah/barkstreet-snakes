@@ -361,7 +361,7 @@ const ways = EVENTS({ id: 1, color: '#fff', name: 'S' }, { id: 2, color: '#000',
 const says = KINDS.filter(k => k !== 'death').flatMap(k => [...new Set((ways[k] || [{ x: 1, y: 1 }]).flatMap(w => Object.keys(w).filter(f => !blank(w[f]))))].map(f => `${k} ${f}`));
 const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fatal'].map(f => `death ${f}`), ...FATAL.map(k => `death fatal ${k}`), ...FIELDS.map(f => `snake ${f}`), ...LOOKS.map(f => `memory ${f}`), 'holes', 'burrows', 'burrows dug', 'burrows shut', 'unders', 'unders gold',
   ...['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap', 'spill'].flatMap(k => [`food ${k}`, `food ${k} 3`]), // (each kind, and when it goes)
-  'food food 5', 'food food 6', 'food spill 5', 'food pellet 4', 'food pellet 7', ...[5, 6, 7, 8, 9, 10, 11].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden, digging in)
+  'food food 5', 'food food 6', 'food spill 7', 'food pellet 4', 'food pellet 7', ...[5, 6, 7, 8, 9, 10, 11].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden, digging in)
   ...FIRES.map(k => `fire ${k}`),
   ...WEATHER.map((w, k) => `weather ${k}`), ...Array.from({ length: 10 }, (_, j) => `woodpecker ${j}`), ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
 const lacking = [...new Set(want)].filter(short).map(k => `${k} (${seen.get(k) || 0})`);

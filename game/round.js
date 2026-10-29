@@ -300,7 +300,7 @@ function killLine(p) {
 // Sounds come from where they happen on the board, a little left or right.
 const at = x => ({ pan: ((x + 0.5) / GRID_SIZE * 2 - 1) * 0.8 });
 // The sound of each thing you eat (anything else is an apple).
-const EAT_CUES = { goldcap: 'wrap', golden: 'golden', leaf: 'leaf', pellet: 'meat', mushroom: 'mushroom', beetle: 'crunch' };
+const EAT_CUES = { goldcap: 'wrap', golden: 'golden', leaf: 'leaf', spill: 'golden', pellet: 'meat', mushroom: 'mushroom', beetle: 'crunch' };
 // Apples eaten in quick succession climb a scale: a streak you can hear.
 let streak = 0, streakAt = -1e9;
 const GAG_TO_COUGH = 2; // ticks from a choke's gag to its cough

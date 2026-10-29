@@ -192,7 +192,7 @@ function nearest(s, what) {
   let best = 1e9, out = null;
   if (what === 'food' || what === 'gold') {
     for (const f of game.food) {
-      if (f.kind === 'mushroom' || (what === 'gold' && !(f.kind === 'leaf' || f.kind === 'goldcap' || (f.kind === 'beetle' && f.gold)))) continue;
+      if (f.kind === 'mushroom' || (what === 'gold' && !(f.kind === 'leaf' || f.kind === 'goldcap' || f.kind === 'spill' || (f.kind === 'beetle' && f.gold)))) continue;
       const d = (f.x - h.x) * (f.x - h.x) + (f.y - h.y) * (f.y - h.y);
       if (d > 0 && d < best) { best = d; out = f; }
     }

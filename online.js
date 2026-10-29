@@ -157,7 +157,7 @@ window.SnakeOnline = (() => {
       // sinks as the time runs out); a bead, whose it was (it rots, as all food does).
       f: game.food.map(f => f.kind === 'beetle'
         ? [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, 0, DIR_NAMES.indexOf(dirName(f.dir)), f.px ?? -1, f.py ?? -1, f.movedAt, f.scared ? 1 : 0, f.gold ? 1 : 0, f.digUntil ?? -1]
-        : [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, f.color || 0, f.kind === 'spill' ? (f.leaps || 0) + 10 * (f.dashes || 0) : f.heat || 0, f.cooked ? 1 : 0, f.owner ?? -1]), // (a spill's charges where heat goes: its golden jumps, and ten for each golden flash)
+        : [f.x, f.y, KINDS.indexOf(f.kind), f.expires ?? -1, f.color || 0, f.heat || 0, f.cooked ? 1 : 0, f.kind === 'spill' ? (f.leaps || 0) + 10 * (f.dashes || 0) : f.owner ?? -1]), // (a spill's charges where a bead's owner goes: its golden jumps, and ten for each golden flash)
       // The beetles underground: until (when one comes up), when it flies off, the burrow or dig it went down, golden.
       un: (game.unders || []).map(u => [u.until, u.expires, u.from, u.gold ? 1 : 0]),
       h: holes,
@@ -340,10 +340,10 @@ window.SnakeOnline = (() => {
         if (Number.isInteger(digUntil) && digUntil >= 0) f.digUntil = digUntil; // (the renderer sinks it by this)
       } else {
         const [heat, cooked, owner] = more;
-        if (f.kind === 'spill') { f.leaps = num(heat) ? heat % 10 : 0; f.dashes = num(heat) ? Math.floor(heat / 10) % 10 : 0; }
-        else if (num(heat) && heat > 0) f.heat = heat;
+        if (num(heat) && heat > 0) f.heat = heat;
         if (cooked) f.cooked = 1;
-        if (Number.isInteger(owner) && owner >= 0) f.owner = owner;
+        if (f.kind === 'spill') { f.leaps = Number.isInteger(owner) && owner >= 0 ? owner % 10 : 0; f.dashes = Number.isInteger(owner) && owner >= 0 ? Math.floor(owner / 10) % 10 : 0; }
+        else if (Number.isInteger(owner) && owner >= 0) f.owner = owner;
       }
       return f;
     });

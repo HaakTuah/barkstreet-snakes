@@ -1346,7 +1346,7 @@ window.SnakeAI = (() => {
       const own = f.kind === 'pellet' && f.owner === me.id, i = cellOf(f);
       if (i < 0) continue; // (nowhere to knock it: the bird eats it)
       foodGrow[i] = own ? 0 : f.kind === 'mushroom' ? -TUNE.SHRINK : f.kind === 'golden' ? TUNE.GOLDEN_GROWTH : f.kind === 'beetle' ? TUNE.BEETLE_GROWTH : f.cooked ? TUNE.COOKED_GROWTH : 1;
-      let v = own ? -CHOKE : f.kind === 'spill' ? ((f.leaps || 0) + (f.dashes || 0)) * Math.max(apple, hunger, 0.5) * craving.power : worth[f.kind] ?? 0; // (a knocked-out snake's spilled charges: each worth what a golden power is)
+      let v = own ? -CHOKE : f.kind === 'spill' ? (Math.min(f.leaps || 0, TUNE.LEAP_MAX - me.leaps) + Math.min(f.dashes || 0, TUNE.DASH_MAX - me.dashes)) * Math.max(apple, hunger, 0.5) * craving.power : worth[f.kind] ?? 0; // (a knocked-out snake's spilled charges: each worth what a golden power is, as many as I can still hold)
       if (!v) continue;
       if (f.cooked && v > 0) v *= TUNE.COOKED_GROWTH; // (baked: worth more)
       if (f.gold && v > 0) v *= 1.5 * craving.power; // (a golden beetle: leaps too)
