@@ -27,14 +27,14 @@ check(beads.wild.every((c, i) => wildWant[i](c)), 'Wildcard’s beads keep the s
 // Stunned, a jump and a flash both asked, a turn up pressed, a body one
 // thick right above: the game will hop it (a jump goes first), so the
 // mark is the jump's hop, in sky, not the flash's chevrons, in ember.
-// Two thick, there's nowhere to land: the flash's.
+// Four thick, past the jump's reach, there's nowhere to land: the flash's.
 const marks = await ev(`(() => {
   seeds(1);
   const out = {};
-  for (const thick of [1, 2]) {
+  for (const thick of [1, 4]) {
     const g = stage(['creeper', 'ghost', 'mason']), [you, o] = g.snakes;
     setBody(you, Array.from({ length: 8 }, (_, i) => [10 - i, 13]), 'right');
-    setBody(o, Array.from({ length: 7 * thick }, (_, i) => i < 7 ? [7 + i, 12] : [20 - i, 11]), 'left'); o.stunUntil = 1e9;
+    setBody(o, Array.from({ length: 7 * thick }, (_, i) => { const r = Math.floor(i / 7), j = i % 7; return [r % 2 ? 13 - j : 7 + j, 12 - r]; }), 'left'); o.stunUntil = 1e9;
     you.stunUntil = g.tick + 2; you.queue = [E.DIRS.up]; you.leapReadyAt = you.flashReadyAt = 0;
     E.leap(g, you); E.flash(g, you);
     show(g); drawN(10);
@@ -48,7 +48,7 @@ const marks = await ev(`(() => {
   return out;
 })()`);
 check(marks[1].sky > 8 && marks[1].ember < 3 && marks[1].did.startsWith('leap'), 'stunned, a jump and a flash asked, a body one thick ahead: the jump’s mark (the game hops)', `sky ${marks[1].sky}, ember ${marks[1].ember} pixels; then ${marks[1].did}`);
-check(marks[2].ember > 8 && marks[2].sky < 3, 'stunned, both asked, a body two thick ahead: the flash’s mark', `sky ${marks[2].sky}, ember ${marks[2].ember} pixels; then ${marks[2].did}`);
+check(marks[4].ember > 8 && marks[4].sky < 3, 'stunned, both asked, a body four thick ahead: the flash’s mark', `sky ${marks[4].sky}, ember ${marks[4].ember} pixels; then ${marks[4].did}`);
 
 // Golden power pips at the board's edge, the arc behind the head off it
 // (a head just turned off an edge, a corner): none cut off (as many of

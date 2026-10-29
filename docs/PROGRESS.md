@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 2d, rivals' chomps (PR #150) | While you watch after dying, sped up, rivals feeding on bead trails can chomp up to about five times a second (softly, 0.3 of your own chomp, one at a time). Busy, or fine? | Kept as is; if busy, a longer gap between rivals' chomps only while watching. | open |
+| (none open) | | | |
 
 ## The queue, in order
 
@@ -45,6 +45,8 @@ Moved up by Haakon (29 October 2026): "It's the one I am most interested in play
 long time now. Also, the teaching system will have to account for it." It is the next AI entry once Copycat's part of
 3b (PR #142) merges, ahead of Wildcard's part of 3b, 2b, 2h, 2i and 3c; the art and sound lanes (2d, 2f, 2j) run
 beside it as before. A playable draft PR as early as it can be, so Haakon can try it this evening.
+
+*Done so far:* **the island hop** and **no auto-jump** (PR #158: a jump goes over up to 3 cells, a cell a tick; a press waits 5 moves; the landing ring; protocol 16).
 
 - **The island hop comes first.** The owner: "jumping is pretty critical to making this game more tense and skill based, rather than RNG". There are two test cases:
   - Gobbler folded on a strip;

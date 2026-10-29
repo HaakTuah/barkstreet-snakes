@@ -46,7 +46,9 @@ window.SnakeEngine = (() => {
       // flashes held (golden leaves); both can be held at once. leapReadyAt,
       // flashReadyAt: when it can next jump, or flash, plainly (game time);
       // wrapUntil: the edges wrap round for it till then (a golden mushroom);
-      // flight: { dir } while it's in the air (it lands next tick); leapArmed:
+      // flight: while its head is in the air, { dir, over: [the cells it
+      // still flies over, a tick each], land: { x, y } (where it comes down,
+      // the tick after the last of them), gold: 1 for a golden jump }; leapArmed:
       // the last tick a jump it asked for waits; flashArmed: the tick a flash
       // it asked for goes (the next one it moves).
       leaps: 0, dashes: 0, leapReadyAt: 0, flashReadyAt: 0, wrapUntil: -1, flight: null, leapArmed: -1, flashArmed: -1,
@@ -978,7 +980,8 @@ window.SnakeEngine = (() => {
       snakes: game.snakes.filter(s => s.alive).map(s => ({
         id: s.id, body: s.body.map(c => ({ x: c.x, y: c.y })), dir: s.dir,
         stun: Math.max(0, s.stunUntil - game.tick), leaps: s.leaps, // (all of it shows: stars, pips, a gold outline, cough puffs...)
-        dashes: s.dashes, wrap: Math.max(0, s.wrapUntil - game.time), air: s.flight ? 1 : 0, cough: Math.max(0, s.coughUntil - game.tick),
+        dashes: s.dashes, wrap: Math.max(0, s.wrapUntil - game.time), air: s.flight ? 1 + s.flight.over.length : 0, land: s.flight ? key(s.flight.land.x, s.flight.land.y) : -1, // (in the air: how many ticks till it's down, and where)
+        cough: Math.max(0, s.coughUntil - game.tick),
       })),
       holes: game.holes.size,
       // (Fire, crackling, smouldering or burning, and the woodpecker's next patch: keep out.)
@@ -1099,7 +1102,7 @@ window.SnakeEngine = (() => {
   // | { type: 'choke', snake, x, y, tx, ty } (its own bead at x, y: spat to tx, ty (x, y if it stays), and it coughs)
   // | { type: 'nudge', snake, kind, x, y, tx, ty } (food its coughing head reached, rolled aside; a beetle scurries)
   // | { type: 'crash', snake, x, y, cause, killer, killerId, lost } (it bounced, lost `lost` segments, and is stunned)
-  // | { type: 'leap', snake, x, y, gold, reach } (it took off over the cell x, y; reach: cells it rises over, landing next tick)
+  // | { type: 'leap', snake, x, y, gold, reach } (it took off over the cell x, y; reach: the cells it flies over, a tick each, landing the tick after)
   // | { type: 'dash', snake, x, y, n, plain } (it went n cells from x, y: plain 1, a flash; else a golden dash) | { type: 'douse', x, y } (a dash put a fire out)
   // | { type: 'fizzle', snake, why, x, y, flash } (asked to jump, or flash (flash: 1), but couldn't: 'resting', 'small' or
   //   'landing'; x, y the cell it faced, off the board at the edge)
@@ -1140,7 +1143,11 @@ window.SnakeEngine = (() => {
       s.tailMoves = false; s.air = false; s.landing = false; s.boom = false; s.passed = null; s.from = null;
       if (s.stunUntil > game.tick) { s.next = null; continue; }
       let land = null;
-      if (s.flight) { // in the air: it comes down where it was going (turns wait till it's landed)
+      if (s.flight?.over.length) { // in the air: on over the next cell it hops, a cell a tick (turns wait till it's landed)
+        s.dir = s.flight.dir;
+        land = s.flight.over.shift();
+        s.air = true;
+      } else if (s.flight) { // ...and then it comes down where it was going
         s.dir = s.flight.dir;
         land = s.flight.land;
         s.flight = null;
@@ -1220,7 +1227,7 @@ window.SnakeEngine = (() => {
     const gone = new Set(), hops = [], plans = [], went = new Set(), cuts = [];
     moving0 = moving; // (a jump won't take off toward a landing another head is moving into)
     for (const s of moving) {
-      if (s.landing) { if (s.flashArmed >= game.tick) s.flashArmed = game.tick + 1; continue; } // (on its way down: once it's moving on the ground)
+      if (s.landing || s.air) { if (s.flashArmed >= game.tick) s.flashArmed = game.tick + 1; continue; } // (in the air, or on its way down: once it's moving on the ground)
       const jump = s.leapArmed >= game.tick, fl = s.flashArmed >= game.tick;
       if (jump && (!fl || held.has(s) || hopPlan(game, s))) { hops.push(s); if (fl) s.flashArmed = game.tick + 1; continue; }
       if (!fl) continue;
@@ -1493,9 +1500,10 @@ window.SnakeEngine = (() => {
       if (s.body.length <= T.MIN_LENGTH) return 'small';
       if (game.time < s.leapReadyAt) return 'resting';
     }
-    for (let c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir), i = 0; i < (s.leaps > 0 ? 2 : 1); i++) {
+    for (let c = ahead(game, s, s.body[0].x, s.body[0].y, s.dir), i = 0; i < T.LEAP_REACH; i++) {
       c = ahead(game, s, c.x, c.y, s.dir);
-      if (inside(c.x, c.y) && (!blocked(game, c.x, c.y) || leavingNow(game, c.x, c.y))) return null; // (a tail leaving this tick is free by the time it lands, as for the auto-turn)
+      if (!inside(c.x, c.y)) break;
+      if (!blocked(game, c.x, c.y) || leavingNow(game, c.x, c.y)) return null; // (a tail leaving this tick is free by the time it lands, as for the auto-turn)
     }
     return 'landing';
   }
@@ -1627,12 +1635,14 @@ window.SnakeEngine = (() => {
 
   // ------------------------------------------------------------- powers
 
-  // A leap: up over the cell in front (a golden leap: over the two in front,
-  // the first of them this tick), its head in the air over the last, landing
-  // beyond it next tick. Only if there's something to hop (a body, a hole or
-  // fire) and somewhere to land (none of those). The plain leap costs the tip
-  // of its tail (it needs more than MIN_LENGTH) and needs a moment before the
-  // next; golden ones are free.
+  // A leap, the island hop: up over what's right in front (a body, a hole or
+  // fire), and on over up to LEAP_REACH cells of it, a cell a tick, coming
+  // down on the first free cell beyond (none of those) the tick after: over
+  // three, it's up three ticks and lands on the fourth. Only if there's
+  // somewhere to land within reach, on the board. Its body follows its
+  // head's path, over what it hopped. The plain leap costs the tip of its
+  // tail (it needs more than MIN_LENGTH) and needs a moment before the
+  // next; golden ones are the same hop, free.
   function hop(game, s) {
     const path = hopPlan(game, s);
     if (path) return leapGo(game, s, path);
@@ -1646,11 +1656,9 @@ window.SnakeEngine = (() => {
       s.leapArmed = -1;
     }
   }
-  // Could it leap now? Golden: over two, or over one, landing on the first
-  // free cell; else the plain one, if it's ready. Its way, or null.
+  // Could it leap now? Golden, or the plain one if it's ready. Its way, or null.
   function hopPlan(game, s) {
-    if (s.leaps > 0) return leapPath(game, s, 2) || leapPath(game, s, 1);
-    return game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH ? leapPath(game, s, 1) : null;
+    return s.leaps > 0 || (game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH) ? leapPath(game, s) : null;
   }
   // A flash asked for with a jump (p: its plan): if it would stop at a hurdle
   // (run into it, or blow up in it: not a snake one thick a dash cuts, nor
@@ -1664,7 +1672,7 @@ window.SnakeEngine = (() => {
     if (!inside(end.x, end.y) || !hurdle(game, end) || (p.gold && !p.boom && !(p.solid[k] && !p.cuts.some(x => x.i === k)))) return -1;
     if (p.cells.slice(0, k).some(c => hurdle(game, c)) || s.leapArmed < game.tick + k) return -1;
     if (!(s.leaps > 0 || (game.time >= s.leapReadyAt && s.body.length > T.MIN_LENGTH))) return -1;
-    for (let c = end, i = 0; i < (s.leaps > 0 ? 2 : 1); i++) {
+    for (let c = end, i = 0; i < T.LEAP_REACH; i++) {
       c = ahead(game, s, c.x, c.y, s.dir);
       if (!inside(c.x, c.y)) return -1;
       if (!hurdle(game, c)) return k;
@@ -1673,17 +1681,21 @@ window.SnakeEngine = (() => {
   }
   // Something a leap goes over: a body (still there after this tick's crawl), a hole or fire.
   const hurdle = (game, c) => { const k = key(c.x, c.y); return bodyStamp[k] === stamp || game.holes.has(k) || burning(game, k); };
-  // A leap over `reach` cells (1, or 2 for a golden one), landing on the
-  // next: those cells, or null if there's nothing to hop or nowhere to land.
-  function leapPath(game, s, reach) {
+  // The island hop's way: the cells it goes over (the first right in front,
+  // and every one a hurdle), then the first free cell beyond, within
+  // LEAP_REACH, where it lands; or null if there's nothing to hop or nowhere
+  // to land.
+  function leapPath(game, s) {
     const path = [];
-    for (let c = s.body[0], i = 0; i <= reach; i++) {
+    for (let c = s.body[0], i = 0; i <= T.LEAP_REACH; i++) {
       c = ahead(game, s, c.x, c.y, s.dir);
       if (!inside(c.x, c.y)) return null; // (never off the board)
       path.push(c);
+      if (!hurdle(game, c)) break;
     }
-    if (!path.slice(0, reach).some(c => hurdle(game, c)) || hurdle(game, path[reach])) return null;
-    const land = path[reach]; // (nor toward a landing another head on the ground is moving into this tick: it'd come down on it)
+    const land = path[path.length - 1];
+    if (path.length < 2 || hurdle(game, land)) return null;
+    // (Nor toward a landing another head on the ground is moving into this tick: it'd come down on it.)
     if (moving0.some(o => o !== s && !o.air && !o.flight && o.next && o.next.x === land.x && o.next.y === land.y)) return null;
     return path;
   }
@@ -1694,14 +1706,9 @@ window.SnakeEngine = (() => {
       s.leapReadyAt = game.time + T.LEAP_COOLDOWN_MS;
       for (let n = 0; n < T.LEAP_COST; n++) trim(s);
     }
-    s.from = s.body.slice(0, 2); // (where it set off, for food it knocks aside on the way: see eat)
-    for (let i = 0; i < reach - 1; i++) {
-      if (!hurdle(game, path[i])) (s.passed ||= []).push(path[i]); // (crawling over a free cell on the way: what's there is eaten after the move)
-      advance(s, path[i]);
-    }
-    s.next = path[reach - 1];
+    s.next = path[0];
     s.air = true;
-    s.flight = { dir: s.dir, land: path[reach] };
+    s.flight = { dir: s.dir, over: path.slice(1, reach), land: path[reach], gold: golden ? 1 : 0 };
     s.leapArmed = -1;
     game.events.push({ type: 'leap', snake: s, x: path[0].x, y: path[0].y, gold: golden ? 1 : 0, reach });
   }

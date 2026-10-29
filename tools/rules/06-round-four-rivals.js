@@ -137,9 +137,6 @@ const picks = (view, persona = 'drab', n = 50) => {
   b.isPlayer = true; b.persona = null; b.queue = [];
   g.food = [{ x: 8, y: 10, kind: 'food', expires: 999 }];
   g.given = new Set(g.food.map(f => f.y * T.GRID + f.x));
-  look(g);
-  quiet(g);
-  look(g);
-  quiet(g);
+  for (let n = 0; n < 3; n++) { look(g); quiet(g); } // (up over it, down beyond, and on to the apple)
   check('an AI spends a golden leap when it pays', a.alive && a.leaps === 0 && a.body[0].x === 8 && a.body[0].y === 10 && a.eaten === 1, JSON.stringify({ head: a.body[0], leaps: a.leaps, eaten: a.eaten }));
 }
