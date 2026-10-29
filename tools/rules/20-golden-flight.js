@@ -113,3 +113,22 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   for (let n = 0; n < 8 && a.alive && !(from && !a.flight); n++) { look(g); quiet(g); if (a.flight) { from ||= a.flight.dir; if (a.flight.dir !== from) turned = true; } }
   check('a rival with a golden jump steers in the air onto open bark, where flying straight comes down in a pocket', a.alive && turned && !a.flight && a.body[0].x === x + 2 && Math.abs(a.body[0].y - 10) >= 2 && !g.holes.has(K(a.body[0].x, a.body[0].y)), JSON.stringify({ head: a.body[0], turned, alive: a.alive, cause: a.cause }));
 }
+
+{ // A rival leaps now when it pays, in its style. Heading right with pits on both sides of its head, a person's head
+  // crossing up into the cell in front of it next tick: crawling on is a head-on, turning is a pit, and one press would
+  // wait for something to hop until too late. Ghost ("a leap now to slip a trap") presses twice, leaps at once over the
+  // crossing and comes down beyond it. Drab, which hardly ever leaps now (four times the price), takes the bump.
+  for (const key of ['ghost', 'drab']) {
+    const g = E.createGame({ withPlayer: false, personas: [key, 'drab'] });
+    g.snakes = g.snakes.slice(0, 2);
+    const [a, b] = g.snakes;
+    a.body = Array.from({ length: 7 }, (_, i) => ({ x: 6 - i, y: 10 })); a.dir = D.right; a.leaps = 0; a.leapReadyAt = 0; a.flashReadyAt = 1e9;
+    b.body = Array.from({ length: 5 }, (_, i) => ({ x: 7, y: 11 + i })); b.dir = D.up; b.isPlayer = true; b.persona = null; b.queue = [];
+    for (const k of [K(6, 9), K(6, 11), K(5, 9), K(5, 11)]) g.holes.add(k);
+    g.food = []; g.time = 30000;
+    let now = null;
+    for (let n = 0; n < 6 && a.alive; n++) { feed(g); look(g); quiet(g); now ||= g.events.find(e => e.type === 'leap' && e.snake === a && e.now); }
+    if (key === 'ghost') check('a rival leaps now (pressed twice) over a head crossing in front of it, where crawling on is a head-on and turning a pit', now && a.alive && a.body[0].x >= 9, JSON.stringify({ now: !!now, head: a.body[0], alive: a.alive, cause: a.cause }));
+    else check('...in its style: Drab, which hardly ever leaps now, takes the bump instead', !now, JSON.stringify({ now: !!now, head: a.body[0] }));
+  }
+}
