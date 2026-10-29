@@ -2004,7 +2004,7 @@ window.SnakeAI = (() => {
     if (pick) {
       bestDir = pick.d;
       if (pick.flash) memory.flash = view.tick;
-      else { memory.power = view.tick; memory.leapNow = pick.now ? view.tick : -1; memory.fly = pick.fly || 0; } // (pressed twice for now; held for as far as it means to fly)
+      else { memory.power = view.tick; memory.leapNow = pick.now ? view.tick : -1; memory.fly = pick.fly || 0; memory.flyTurn = pick.turn || null; } // (pressed twice for now; held for as far as it means to fly, steered where it means to turn)
     }
     return bestDir;
 
@@ -2053,7 +2053,8 @@ window.SnakeAI = (() => {
       // hole yet: I'd crawl in), or if it's that or a crash.
       const hurdle = i => myCells[i] === stampM || (mineFree[i] > 1 && (mineFree[i] < HOLE || fire.has(i) || (pecks ? !pecks.has(i) : trapped)));
       const path = new Int32Array(Math.max(3, TUNE.LEAP_REACH + 1, TUNE.GOLD_FLY + 1));
-      let leapNow = false, leapFly = 0; // (how the best jump leapOpt found goes: pressed twice, now; held, a golden flight's cells in the air)
+      const straight = new Int32Array(path.length); // (the straight way, kept while a turned flight is tried in path)
+      let leapNow = false, leapFly = 0, leapTurn = null; // (how the best jump leapOpt found goes: pressed twice, now; held, a golden flight's cells in the air, and its turn: { at: cells flown, dir })
       const ate = [-1, -1, -1], ateV = [0, 0, 0];
       let ateL = 0, ateG = 0, ateGain = 0, endRisk = 0, idle = false, muteWas = 0, ateBug = 0, ateWas = -HOLE; // (endRisk: the risk where the last one weighed ends; idle: it was a golden dash just for speed; muteWas, ateBug (which beetles, a bit each): for uneat)
       const meal = (i, step) => foodValue[i] > 0 && foodFrom[i] <= step; // (food there, on my move `step`)
@@ -2067,7 +2068,7 @@ window.SnakeAI = (() => {
         idle = false;
         if (v === null) return;
         v += extra - price * cheap * (full ? 1 : habit.price) * U;
-        if (v > (best ? best.v : crawl + 1)) best = { d, flash, v, now: !flash && leapNow, fly: flash ? 0 : leapFly };
+        if (v > (best ? best.v : crawl + 1)) best = { d, flash, v, now: !flash && leapNow, fly: flash ? 0 : leapFly, turn: flash ? null : leapTurn };
       };
       for (const d of DIR_LIST) {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
@@ -2107,7 +2108,7 @@ window.SnakeAI = (() => {
       // the cells it goes over; down span + 1 moves from now).
       function leapOpt(d) {
         const golden = me.leaps > 0;
-        leapNow = false; leapFly = 0;
+        leapNow = false; leapFly = 0; leapTurn = null;
         let span = 0, n = 0; // (n: the cells on the board traced)
         const far = golden ? TUNE.GOLD_FLY : TUNE.LEAP_REACH;
         for (let x = myHead.x, y = myHead.y; n <= far; ) {
@@ -2140,7 +2141,36 @@ window.SnakeAI = (() => {
           const v = landOpt(d, k, golden, now);
           if (v !== null && (bestS === null || v > bestS)) { bestS = v; bestSpan = k; }
         }
-        leapNow = now; leapFly = golden && bestSpan > first ? bestSpan : 0;
+        // Golden, steered: on that way for `at` cells, then a turn (left or
+        // right: the engine's airTurn, a person's as much as mine), and on,
+        // down on any free cell up to GOLD_FLY cells in the air: the best of
+        // them, if better than flying straight.
+        let turn = null;
+        if (golden) {
+          straight.set(path);
+          const n0 = n;
+          for (const d2 of DIR_LIST) {
+            if (d2.x === d.x || d2.y === d.y) continue; // (a turn: not on, nor back)
+            for (let at = 1; at < TUNE.GOLD_FLY; at++) {
+              if (at > n0) break;
+              path.set(straight);
+              n = at;
+              for (let x = path[at - 1] % N, y = (path[at - 1] - x) / N; n <= TUNE.GOLD_FLY; ) {
+                const c = cellAt(x + d2.x, y + d2.y);
+                if (c < 0) break;
+                x = c % N; y = (c - x) / N;
+                path[n++] = c;
+              }
+              for (let k = at; k < n; k++) {
+                if (!lands(k, false)) continue;
+                const v = landOpt(d2, k, true, now);
+                if (v !== null && (bestS === null || v > bestS)) { bestS = v; bestSpan = k; turn = { at, dir: d2 }; }
+              }
+            }
+          }
+          path.set(straight); n = n0;
+        }
+        leapNow = now; leapTurn = turn; leapFly = golden && (turn || bestSpan > first) ? bestSpan : 0;
         return bestS;
       }
       // A jump along d down on path[span], span + 1 moves from now (the cells before it in the air).

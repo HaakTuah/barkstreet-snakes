@@ -1303,6 +1303,8 @@ window.SnakeEngine = (() => {
             leap(game, s);
             if (s.memory.leapNow === game.tick) leap(game, s);
             s.flyFor = s.memory.fly || 0;
+            const t = s.memory.flyTurn;
+            s.flyTurn = t ? { at: t.at, dir: Object.values(DIRS).find(q => q.x === t.dir.x && q.y === t.dir.y) } : null;
             if (!s.flyFor) letGo(game, s);
           }
           if (s.memory.flash === game.tick) flash(game, s);
@@ -1921,10 +1923,16 @@ window.SnakeEngine = (() => {
     return null;
   }
   // A golden flight's turn in the air: a person's next queued turn (not back
-  // on itself), a tick at a time; a rival flies straight, choosing only how
-  // far (flyFor). null: on as it was.
+  // on itself), a tick at a time; a rival's, the one it planned as it took
+  // off (flyTurn: after how many cells in the air, which way), and how far
+  // (flyFor). null: on as it was.
   function airTurn(game, s, f) {
-    if (!s.isPlayer || s.autopilot) return null;
+    if (!s.isPlayer || s.autopilot) {
+      const t = s.flyTurn;
+      if (!t || f.flown !== t.at) return null;
+      s.flyTurn = null;
+      return t.dir.x === f.dir.x || t.dir.y === f.dir.y ? null : t.dir; // (a turn: not on, nor back)
+    }
     while (s.queue.length) {
       const d = s.queue.shift();
       if ((d.x === -f.dir.x && d.y === -f.dir.y) || (d.x === f.dir.x && d.y === f.dir.y)) continue;
