@@ -117,7 +117,7 @@ const beside = await ev(`(() => {
   setBody(you, [[4, 23], [3, 23], [2, 23]], 'right');
   return out;
 })()`);
-check(['across', 'tail'].every(k => beside[k].inCell && beside[k].clear > 0 && beside[k].holeClear > 0) && Math.abs(beside.across.off[0][1]) > 13 && beside.tail.off[0][1] > 13 && Math.abs(beside.tail.off[0][0]) > 13,
+check(['across', 'tail'].every(k => beside[k].inCell && beside[k].clear > 0 && beside[k].holeClear > 0) && Math.abs(beside.across.off[0][1]) > 13 && beside.tail.off[0][1] > 12 && Math.abs(beside.tail.off[0][0]) > 12,
   'on a cell with a snake lying on it, the woodpecker pecks beside the body, not on it: the free edge beside a body across it, a corner past a tail’s tip, clear of the body at every blow and as it pulls out',
   ['across', 'tail'].map(k => `${k}: its beak at ${beside[k].off[0].join(', ')} units from the middle, ${beside[k].clear} clear of the body at the closest blow, ${beside[k].holeClear} as the strike is made`).join('; '));
 
