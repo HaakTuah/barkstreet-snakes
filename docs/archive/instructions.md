@@ -313,3 +313,11 @@ In the design chat (29 October 2026, 00:03 UTC), playing:
 > I am seeing copycat shy rotten apples twice now, that was within reach. Both were next to the map edge.
 
 (added to 3b in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, 00:06 and 00:07 UTC), playing:
+
+> Looks a bit weird when the woodpecker pecks a tile with a snake tail on, and the snake isn't hurt. Is it possible to make it so visually, it doesn't peck exactly on the snake? So it looks natural that the tiles go, but that the snake is left unhurt? Just a visual issue, nothing gameplaywise.
+
+> Yes please, expertly!
+
+(queued as 2e in `docs/PROGRESS.md`)

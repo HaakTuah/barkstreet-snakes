@@ -82,6 +82,22 @@ a rival's makes no sound, except a golden mushroom, which already plays softer a
 - Muted and the sound settings work as for every cue; online, each player hears it on their own machine, so no
   protocol change. A test checks that a rival's eat plays its rival cue and yours plays yours.
 
+### 2e. The woodpecker pecks beside a snake, not on it (Haakon, 29 October 2026; small, an art lane after 2c, which draws the same bird)
+
+Haakon (29 October 2026): "Looks a bit weird when the woodpecker pecks a tile with a snake tail on, and the snake isn't
+hurt. Is it possible to make it so visually, it doesn't peck exactly on the snake? So it looks natural that the tiles
+go, but that the snake is left unhurt? Just a visual issue, nothing gameplaywise." And: "Yes please, expertly!"
+- **Drawing only** (`render/bird.js`, `render/bird-draw.js`): the tiles go at exactly the same moment as today; no rule,
+  timing, simulation fingerprint or online message changes.
+- **On a tile with a snake on it, the beak aims at the free corner or edge farthest from the body** (the body is drawn
+  narrower than its cell, so that spot shows), and the tile cracks and crumbles from that spot inward, so the bird is
+  seen chipping the log beside the snake, and the snake being unhurt reads as natural. On an empty tile it pecks the
+  middle, as now.
+- The aim's mark and the trembling of what lies in it (`render/food.js`) stay as they are. Reduced motion: the same
+  aim, no crumble animation, as today's peck.
+- Pictures in the PR: before and after of a peck beside a tail and on an empty tile, at a 390-pixel phone and desktop.
+  Entry 6 (the woodpecker in three acts) keeps this aim.
+
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
 Its done entries (PRs #49 to #124) are in `docs/archive/progress-done.md`, "Item 3, done".
