@@ -91,13 +91,50 @@
     clock += ms;
     check(sounds(cue, { pan: 0.3 }), `...and the next, ${ms.toFixed(0)} ms on, sounds`);
   }
+  // The chomps: a rival's meal plays its kind's own cue, a rival's, but never
+  // a pile-up (one rival's at a time, CHOMP_GAP apart whoever ate), and none
+  // while yours sounds (CHOMP_YIELD after it); yours never waits on theirs.
+  const [CHOMP_GAP, CHOMP_YIELD] = ['CHOMP_GAP', 'CHOMP_YIELD'].map(k => +new RegExp(`\\b${k} = (\\d+)`).exec(asrc)[1]);
+  const CHOMPS = ['eat', 'golden', 'meat', 'mushroom', 'crunch', 'leaf'];
+  check(CHOMP_GAP <= T.MIN_TICK * 2 && CHOMP_YIELD >= 300, `rivals' chomps ${CHOMP_GAP} ms apart at least (two of the fastest ticks at most: a feeding rival is heard), none for ${CHOMP_YIELD} ms after yours`);
+  for (const cue of CHOMPS) {
+    clock += 5000;
+    check(sounds(cue, RIVAL), `a rival's '${cue}' sounds`);
+    clock += 5000;
+    check(sounds(cue) && !sounds(cue, RIVAL), `your '${cue}', and a rival's in the same moment: the rival's gives way`);
+    clock += CHOMP_YIELD - 20;
+    check(!sounds(cue, RIVAL), `...and still does ${CHOMP_YIELD - 20} ms on, as yours rings`);
+    clock += 40;
+    check(sounds(cue, RIVAL), `...but sounds once yours is over`);
+    clock += 5000;
+    sounds(cue, RIVAL);
+    check(sounds(cue), `your '${cue}' just as a rival's sounds still sounds (yours never waits on theirs)`);
+  }
+  // Three rivals eating at once, different things: one chomp; the next a CHOMP_GAP on.
+  clock += 5000;
+  const three = ['eat', 'meat', 'crunch'].map(c => sounds(c, { rival: true, pan: -0.5 }));
+  check(three.join() === 'true,false,false', `three rivals eating at once (an apple, a bead, a beetle): one chomp, not three (${three})`);
+  clock += CHOMP_GAP / 2;
+  check(!sounds('golden', RIVAL), `...another rival's ${CHOMP_GAP / 2} ms on waits`);
+  clock += CHOMP_GAP;
+  check(sounds('mushroom', RIVAL), `...and one ${CHOMP_GAP} ms after that sounds`);
+  // Four eating at once, yours among them: yours, and none of theirs.
+  clock += 5000;
+  const four = [sounds('eat'), sounds('meat', RIVAL), sounds('crunch', RIVAL), sounds('leaf', RIVAL)];
+  check(four.join() === 'true,false,false,false', `four eating at once, yours first: only yours (${four})`);
+  clock += 5000;
+  A.setMuted(true);
+  check(CHOMPS.every(c => !sounds(c) && !sounds(c, RIVAL)), 'muted: no chomp, yours or a rival\'s');
+  A.setMuted(false);
+  clock += 5000;
+  check(sounds('eat') && (clock += CHOMP_YIELD, sounds('meat', RIVAL)), '...and with the sound back on, both');
   clock += 5000;
   A.setMuted(true);
   check(!sounds('choke') && !sounds('cough', { delay: 0.3 }) && !sounds('choke', RIVAL), 'muted: no choke, no cough, yours or a rival\'s');
   check(!sounds('dig') && !sounds('knock') && !sounds('knock', RIVAL) && !sounds('heal'), '...no dig, no knock, no burrow closing over');
   A.setMuted(false);
   check(sounds('choke') && sounds('cough', { delay: 0.3 }) && sounds('dig') && sounds('knock') && sounds('heal'), '...and with the sound back on, all of them');
-  console.log('ok   the sound: a rival\'s flash, dash, jump, catching fire, golden mushroom, choke or cough never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard, and your choke and cough each time you can choke; a beetle digging in, the woodpecker knocking food aside and a burrow closing over, one sound a moment and each time they can come again; muted, none');
+  console.log('ok   the sound: rivals\' chomps, one at a time, giving way to yours; a rival\'s flash, dash, jump, catching fire, golden mushroom, choke or cough never swallows yours, and gives way to it; your own golden dashes and jumps on each other\'s heels are each heard, and your choke and cough each time you can choke; a beetle digging in, the woodpecker knocking food aside and a burrow closing over, one sound a moment and each time they can come again; muted, none');
 }
 
 // ------------------------------------------------------------ the sound over the music
@@ -142,6 +179,10 @@
   check(theirs.filter(x => !(x.type === 'bandpass' && x.freq > LOWPASS)).every(x => dulled(x.into)), '...and the rest of it is dulled, as before');
   const near = (a, b) => Math.abs(a - b) < 1e-9;
   check(scratches(theirs).every((x, i) => near(x.peak, scratches(yours)[i].peak * RIVAL_VOLUME)), `...as soft as the rest of a rival's (${RIVAL_VOLUME} of yours)`);
+  // A rival's chomp: the same cue as yours, dulled, and softer than a rival's other sounds (RIVAL_CHOMP of them).
+  const RIVAL_CHOMP = +/\bRIVAL_CHOMP = ([\d.]+)/.exec(asrc)[1];
+  const bite = grains('meat', {}), theirBite = grains('meat', { rival: true, pan: 0.4 });
+  check(RIVAL_CHOMP < 1 && theirBite.length === bite.length && theirBite.every((x, i) => near(x.peak, bite[i].peak * RIVAL_VOLUME * RIVAL_CHOMP) && dulled(x.into)), `a rival's bead: your nom's bite, dulled, at ${RIVAL_VOLUME * RIVAL_CHOMP} of yours (softer than a rival's leap or dash, at ${RIVAL_VOLUME})`);
   const heal = grains('heal', {}), scrabble = grains('scrabble', {});
   const flecks = heal.filter(x => (x.type === 'highpass' || x.type === 'bandpass') && x.freq >= 2000);
   check(flecks.length >= 3, `a burrow closing over: ${flecks.length} flecks of sawdust above 2 kHz, where the music leaves room`);

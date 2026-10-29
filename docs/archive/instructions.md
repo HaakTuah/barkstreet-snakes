@@ -398,3 +398,6 @@ And, to Claude's take (they notice each other, a shoving match, the loser flips,
 > Yes, please, expertly! Love how you described it! And it should come late, it is probably the most uneasecary feature we have discussed here, so leave it last or close to last, I'd say.
 
 (queued as 8, last, in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, 09:00 UTC), to the "For Haakon" question on rivals' chomps while watching sped
+up (2d, PR #150), among answers for Amarna Letters: "Yes to all, expertly!" (kept as is)
