@@ -47,8 +47,9 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
   - over bark, you're stunned there;
   - over fire, you're stunned there and catch alight as if you'd crawled in ("Fire on snakes"), on top of the bump's cost (the owner, 29 October 2026: "if you are over fire, you ignite");
   - over a hole, you fall in and you're out;
-  - onto a body, you slide off it to a free cell beside, by the same rule food rolls by (the outside of the turn; else the side with more open log; a tie toward the middle); with no free side, you're out.
-- Coming down on a body at the end of a flight is the same bump. So a fast golden flash through a landing cell steals the landing.
+  - onto a body, you're out: you drop straight down, and a snake under you blocks your landing, so you're trapped (the owner, 29 October 2026: "In my mind, you are trapped if you crash into another snake mid-air and another snake blocks your landing."; it replaced a slide to a free cell beside it);
+  - over bark, the ground's test for being trapped holds as for any crash: if there'll be nowhere to turn when the stun's over, you're out.
+- Coming down on a body at the end of a flight is the same bump, and puts you out. So a fast golden flash through a landing cell steals the landing, and the jumper with it: the landing ring is the warning, and the rivals weigh the risk (a jump only goes where its landing will still be free, as far as anyone can see).
 - *The cue:* a spark and a puff of dust in the air, then the drop (or the slide).
 - *The lesson:* the first time you bump in the air, "Bumped in mid-air! Down you go."
 

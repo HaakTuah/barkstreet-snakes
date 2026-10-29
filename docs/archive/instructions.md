@@ -422,3 +422,9 @@ what a regular crash costs, plus you fall, so if you are over fire, you ignite. 
 if you sre over another snake, you get checkmated." (fire written into "Bumps in the air" in
 `docs/design/29-round-six-b-the-new-moves.md` and item 5; the hole was already there; what "checkmated" means over a
 snake went back to Haakon as a question)
+
+In the design chat (29 October 2026, 11:49 and 11:50 UTC), on a mid-air bump over another snake (the design slid you
+off to a free cell beside it): "Well, you are out in game if you are trapped by other snakes, so why should we be more
+lenient when leaping?" Then: "In my mind, you are trapped if you crash into another snake mid-air and another snake
+blocks your landing." (written into "Bumps in the air": onto a body you're out; over bark the ground's trapped test
+holds)
