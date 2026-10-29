@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| (none open) | | | |
+| 2k (PR #170) | On a phone held upright the woodpecker perches over the speed buttons and the chatter, as you asked in 1b++; at 1.3 it already hid a button's label at some spots, and bigger it hides more of their words (taps still pass through it). Keep it so, or should it keep clear of their words (a smaller bird under the board, or perching only between the buttons)? | Kept as 1b++ has it: over the row and the chatter, taps passing through | open |
 
 ## The queue, in order
 
@@ -174,23 +174,7 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
 
 ### 2j. Done: babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time); in `docs/archive/progress-done.md`.
 
-### 2k. The woodpecker, as big as it can get away with (Haakon, 29 October 2026; small, an art lane)
-
-Haakon (29 October 2026): "I think the woodpecker should be even bigger". Then, when the design session asked for a
-simulation check: "How should a visual change alter the actual game in any way?" It can't: the bird's size is one
-drawing constant (`BU` in `render/bird.js`), while the rules peck by target cells (`game.woodpecker`), so no
-simulation is run for it. And then: "Maybe make it as big as you can get away with without it falling out of the
-screen, or being pushed onto the gameplay screen when not pecking, or anything."
-- **The biggest that passes every check,** found by trying sizes up from 1.3, not guessed: one size wherever the screen
-  has room for it, as 2c set, and on screens with less room the biggest each of its perches allows (the perches
-  already shrink it, `PERCH_MIN_PX` and `PERCH_FLOOR_PX`; they keep doing so, from the new size).
-- **The checks,** at a 390-pixel phone held upright and on its side, a tablet both ways and desktop: all of it stays on
-  the screen, in every pose and flight (crouching, its tail, its wings open); perched, it never reaches onto the board,
-  nor over the buttons' words or the chatter; drumming, it hides no food, no head and none of the tiles it is about to
-  peck beyond what it hides at 1.3; and nothing else on the page moves to make room for it. The layout suite gets a
-  test for each check, so a later change can't break them.
-- The PR shows 1.3 beside the new size on each of those screens, perched, flying and drumming, says the size it found
-  and what stopped it growing further, and merges once the render and layout suites pass.
+### 2k. Done: the woodpecker, as big as it gets, 1.7 times (PR #170); in `docs/archive/progress-done.md`.
 
 ### 2l. Flags that bend as a snake goes over them (Haakon, 29 October 2026; small, an art lane beside 2k)
 
