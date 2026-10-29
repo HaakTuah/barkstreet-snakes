@@ -83,3 +83,33 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   for (let n = 0; n < 3; n++) quiet(g);
   check('a head on the ground passes under a flight\'s lifted body', b.alive && b.body[0].x === 5 && b.body[0].y === 10 && !g.events.some(e => e.type === 'crash'), JSON.stringify(b.body[0]));
 }
+
+{ // A rival steers in the air as a person does, through the same engine rule: the turn it planned as it took off
+  // (flyTurn: after how many cells in the air, which way) and where it lets go (flyFor). The same flight as the
+  // person's above: two cells right, then down, held for GOLD_FLY.
+  const g = board([[line(3, 10, 6), 'right'], [line(4, 25, 4), 'right']]);
+  const me = g.snakes[0];
+  me.leaps = 1; me.autopilot = true;
+  E.leap(g, me); E.leap(g, me);
+  me.flyTurn = { at: 2, dir: D.down }; me.flyFor = T.GOLD_FLY;
+  const way = fly(g, 6);
+  check('a rival\'s planned turn in the air is flown as a person\'s is', way === '4,10^ 5,10^ 5,11^ 5,12^ 5,13^ 5,14' && me.alive && joined(me.body), way);
+}
+
+{ // ...and it plans one when it pays. A rival heading right into a rival lying down a whole column, in a column of
+  // pits but for its own cell. Over the column, flying straight, it can only come down in a pocket one cell big (pits
+  // round it, and on to the edge): it would be out on its next move. Turned in the air past the pit beside the pocket,
+  // it comes down on open bark.
+  const N = T.GRID, x = N - 5;
+  const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  a.body = Array.from({ length: 5 }, (_, i) => ({ x: x - i, y: 10 })); a.dir = D.right; a.leaps = 1; a.flashReadyAt = 1e9;
+  b.body = Array.from({ length: N }, (_, i) => ({ x: x + 1, y: i })); b.dir = D.up; b.isPlayer = true; b.persona = null; b.queue = []; b.stunUntil = 1e9;
+  for (let y = 0; y < N; y++) if (y !== 10) g.holes.add(K(x, y));
+  for (const k of [K(x + 3, 10), K(x + 4, 10), K(x + 2, 9), K(x + 2, 11)]) g.holes.add(k);
+  g.food = []; g.time = 30000;
+  let from = null, turned = false;
+  for (let n = 0; n < 8 && a.alive && !(from && !a.flight); n++) { look(g); quiet(g); if (a.flight) { from ||= a.flight.dir; if (a.flight.dir !== from) turned = true; } }
+  check('a rival with a golden jump steers in the air onto open bark, where flying straight comes down in a pocket', a.alive && turned && !a.flight && a.body[0].x === x + 2 && Math.abs(a.body[0].y - 10) >= 2 && !g.holes.has(K(a.body[0].x, a.body[0].y)), JSON.stringify({ head: a.body[0], turned, alive: a.alive, cause: a.cause }));
+}
