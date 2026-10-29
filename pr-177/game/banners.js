@@ -129,17 +129,9 @@ function news(dying) {
     const early = hurdleAhead(me, 8);
     if (once(early ? 'leapEarly' : 'leapNothing')) return toast(early ? FLAVOR.leapEarly : FLAVOR.leapNothing, 2600, 'you', 'lesson');
   }
-  // Another snake lying across a pit near you: bridges, once.
-  if (me?.alive && theGame.tick % 4 === 2 && newsFree() && !theGame.told?.bridge && bridgeNear(me) && once('bridge')) return toast(FLAVOR.bridgeFirst, 3000, 'you', 'lesson');
   // Boxed in, with a gap you could hop to an island and your jump ready: the island hop, once.
   if (me?.alive && !me.flight && theGame.tick % 4 === 0 && newsFree() && !theGame.told?.islandHop && Engine.leapIn(theGame, me) === 0 && islandNear(me) && once('islandHop')) return toast(FLAVOR.islandHop, 3000, 'you', 'lesson');
   for (const e of theGame.events) if (e.type === 'baked' && newsOnce('baked')) return toast(lineFor('baked'), 2600, 'fire');
-}
-
-// Another snake's body over a pit (behind its head), within 4 cells of your head?
-function bridgeNear(s) {
-  const h = s.body[0];
-  return theGame.snakes.some(o => o.alive && o !== s && o.body.some((c, j) => j > 0 && Math.abs(c.x - h.x) + Math.abs(c.y - h.y) <= 4 && theGame.holes.has(c.y * GRID_SIZE + c.x)));
 }
 
 // Boxed in (less free log you can crawl to than your length), with a hop

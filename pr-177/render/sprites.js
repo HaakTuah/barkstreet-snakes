@@ -278,7 +278,7 @@ function guideSprite(kind, px) {
   guideSprites.set(key, c);
   return c;
 }
-const GUIDE_TILE = { hole: 1.5, bridge: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, choke: 1.15, lostflag: 1.2, cough: 1.15, dig: 0.9, knock: 1.35, 'basic-win': 1.1, 'basic-steer': 1.1, 'basic-crash': 1.1 }; // (on a tile of bark this many cells either side of the middle)
+const GUIDE_TILE = { hole: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, choke: 1.15, lostflag: 1.2, cough: 1.15, dig: 0.9, knock: 1.35, 'basic-win': 1.1, 'basic-steer': 1.1, 'basic-crash': 1.1 }; // (on a tile of bark this many cells either side of the middle)
 const COUGH_GUIDE = [[0.74, 0.02, 0.21, 1], [0.97, -0.46, 0.13, 0.75]]; // (the guide's puffs: x, y, radius in cells, and how faint)
 const DIG_SPRAY = [[-0.62, -0.42, 0.045], [0.6, -0.5, 0.04], [0.66, 0.36, 0.05], [-0.5, 0.58, 0.04], [0.05, -0.7, 0.035], [-0.72, 0.1, 0.035]];
 const GUIDE = {
@@ -297,11 +297,6 @@ const GUIDE = {
   wrap: g => drawPowerGlyph(g, 'wrap'),
   fire: g => { drawFireGlow(g); g.scale(1.3, 1.3); drawFlames(g, '0'); },
   hole: g => { guideCells(GUIDE_HOLE); g.translate(-12 * CELL, -12 * CELL); drawPits(g, guideMask, 0, 0, GRID - 1, GRID - 1); },
-  bridge: g => { // (round six B: the holes, with a green body lying across them, a bridge)
-    g.save(); GUIDE.hole(g); g.restore();
-    g.beginPath(); g.roundRect(-CELL * 1.6, -CELL * 0.36, CELL * 3.2, CELL * 0.72, CELL * 0.36);
-    g.fillStyle = '#5fd17a'; g.fill(); g.strokeStyle = INK; g.lineWidth = CELL * 0.1; g.stroke();
-  },
   land: g => { guideCells(GUIDE_LAND); g.translate(-12 * CELL, -12 * CELL); paintLand(g, null, guideMask, guideNone, '#2563eb', 0, NO_HOLES); },
   held: g => guideSnake(g, '#2563eb', false, (x, y) => drawPips(x, y, Math.PI, CELL * 0.54, 0, 1, 1, false)),
   rests: g => guideSnake(g, '#4ade80', true, (x, y) => { const rr = CELL * 0.84; restHalf(x, y, rr, -1, 0.6, SKY); restHalf(x, y, rr, 1, 0.3, EMBER); }),
