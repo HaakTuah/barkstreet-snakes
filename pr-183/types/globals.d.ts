@@ -73,7 +73,7 @@ declare namespace Engine {
     | { type: 'spawn'; kind: string; x?: number; y?: number; gold?: Flag }
     | { type: 'choke'; snake: Snake; x: number; y: number; tx: number; ty: number }
     | { type: 'nudge'; snake: Snake; kind: string; x: number; y: number; tx: number; ty: number }
-    | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number }
+    | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number; failed?: 1 }
     | { type: 'leap'; snake: Snake; x: number; y: number; gold?: Flag; reach: number }
     | { type: 'dash'; snake: Snake; x: number; y: number; n: number; plain?: Flag }
     | { type: 'fizzle'; snake: Snake; why: string; x: number; y: number; flash?: Flag }

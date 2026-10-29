@@ -1754,7 +1754,8 @@ window.SnakeAI = (() => {
 
       //    Thick walls (the trappers): my own body beside my head (not my
       //    neck). Doubled back along myself, my wall is two thick: nobody
-      //    can hop it.
+      //    can hop it, and no plain flash can cut it (round six B: Mason's
+      //    double walls).
       if (w.thick) {
         const neckP = framed[body[1].y * N + body[1].x];
         for (const q of [headP - W, headP + W, headP - 1, headP + 1]) if (q !== neckP && inBody[q] === bodyMark) score += w.thick;

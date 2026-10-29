@@ -369,7 +369,7 @@ function sounds(dying, wasAlive) {
     else if (e.type === 'weather' && e.kind === 'rain') Sound.play('rain');
     else if (e.type === 'weather' && e.kind === 'snow') Sound.play('snow');
     else if (e.type === 'ember') Sound.play('ember', at(e.x));
-    else if (e.type === 'crash') { Sound.play(isMe(e.snake) ? 'bonk' : 'bonked', at(e.x)); if (isMe(e.snake) && youHideAt) { youHideAt = 0; markYou(false); } } // (YOU makes room for the -1 and the stars)
+    else if (e.type === 'crash') { Sound.play(isMe(e.snake) ? (e.failed ? 'bigBonk' : 'bonk') : 'bonked', at(e.x)); if (isMe(e.snake) && youHideAt) { youHideAt = 0; markYou(false); } } // (YOU makes room for the -1 and the stars)
     else if (e.type === 'alight') Sound.play('alight', { rival: !isMe(e.snake), ...at(e.snake.body[0].x) });
     else if (e.type === 'singe' && isMe(e.snake)) Sound.play('singe');
     else if (e.type === 'baked') Sound.play('bake', at(e.x));

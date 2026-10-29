@@ -51,7 +51,7 @@ window.SnakeAudio = (() => {
     rivalDeath: 120, death: 250, best: 400, win: 600, winBest: 600,
     beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, hungerWarn: 1500, ui: 30, // peck: never more than 3 in any second
     crackle: 300, thunder: 900, gust: 1500, burrow: 1000, scrabble: 250, rainbow: 1500, rain: 1500,
-    ko: 200, close: 1400, field: 800, bonk: 150, bonked: 300, leap: 120, thunk: 250, dash: 50, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
+    ko: 200, close: 1400, field: 800, bonk: 150, bigBonk: 300, bonked: 300, leap: 120, thunk: 250, dash: 50, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
     flash: 150, flashReady: 600, lastApples: 4000,
     choke: 300, cough: 600, // (your next choke can come as soon as your cough is over, COUGH_TICKS ticks on: both are heard again)
     dig: 300, knock: 400, // (a beetle digs in again only after a spell under, the woodpecker strikes again only after a rest and an aim: each is heard; beetles digging in together, or the pieces one strike knocks aside, are one sound)
@@ -721,6 +721,19 @@ window.SnakeAudio = (() => {
       mallet(t + 0.16, mtof(88), 0.12, 0.08);
       mallet(t + 0.24, mtof(91), 0.12, 0.07);
       mallet(t + 0.32, mtof(88), 0.14, 0.06);
+    },
+    // Your failed flash (round six B): a bigger bonk, a heavy thud under it,
+    // and the stars' mallets slower and lower, going round longer.
+    bigBonk(t) {
+      tone(t, 'sine', 150, 0.3, 0.6, 0.002, 50);
+      tone(t, 'triangle', 520, 0.16, 0.42, 0.001, 220, 1400);
+      noise(t, 0.09, 0.3, 'lowpass', 700, 0.8);
+      noise(t, 0.07, 0.2, 'bandpass', 600, 1.2);
+      tone(t + 0.05, 'triangle', 260, 0.4, 0.16, 0.01, 420);
+      mallet(t + 0.22, mtof(84), 0.14, 0.08);
+      mallet(t + 0.34, mtof(87), 0.14, 0.07);
+      mallet(t + 0.46, mtof(84), 0.16, 0.06);
+      mallet(t + 0.58, mtof(87), 0.18, 0.05);
     },
     // A leap: a springy boing up and a whoosh of air.
     leap(t) {
