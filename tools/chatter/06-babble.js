@@ -66,6 +66,7 @@
   check(cast.every(k => BABBLERS.includes(k)) && !BABBLERS.includes('mute'), `every rival but Mute has a babble (${BABBLERS.length}), Mute none`);
   later();
   check(!babble('mute').built, 'Mute stays silent');
+  check(babble('mason').built, '...and holds no one else\'s back');
   // At most BABBLE_MAX seconds, however long the line; a longer line says more (up to its voice's most).
   let longest = 0, shortest = Infinity;
   const yourChomp = (later(), play('eat'));

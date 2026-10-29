@@ -1023,7 +1023,7 @@ window.SnakeAudio = (() => {
     const cue = CUES[name];
     const babble = name === 'babble';
     const o = babble ? { ...opts, rival: true } : opts || NO_OPTS; // (only rivals babble)
-    if (babble && (!voicesOn || now() - hushAt < BABBLE_YIELD)) return;
+    if (babble && (!voicesOn || !BABBLERS[o.voice] || now() - hushAt < BABBLE_YIELD)) return; // (Mute's silence holds no one else's back)
     const ms = now();
     const key = o.rival ? name + '~' : name, gap = MIN_INTERVAL[name] || 0;
     if (ms - (lastPlayed[key] ?? -Infinity) < gap || ms - (lastPlayed[name] ?? -Infinity) < gap || ms < (coveredUntil[name] || 0)) return;
