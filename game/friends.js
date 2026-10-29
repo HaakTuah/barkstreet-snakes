@@ -89,12 +89,14 @@ const GUIDE_ROWS = [
   ]],
   ['Golden things', [
     ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: free, no rest. Hold up to ${TUNE.LEAP_MAX}.`],
-    ['leaf', 'Golden leaf', `${TUNE.DASH_CHARGES} golden flashes: three cells at once, slicing thin snakes. Never at an edge or a hole.`],
+    ['leaf', 'Golden leaf', `${TUNE.DASH_CHARGES} golden flashes: three cells at once, cutting through a body up to ${TUNE.DASH_THICK} thick and putting out every fire. Never at an edge or a hole: you blow up.`],
     ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(TUNE.WRAP_MS)} s a mushroom (up to ${secs(TUNE.WRAP_MAX_MS)}).`],
   ]],
   ['Your powers', [
     ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop snakes, holes or fire, up to ${TUNE.LEAP_REACH} cells, to the first free cell: islands too. A ring shows where you’ll land. It costs your tail’s tip, then rests ${secs(TUNE.LEAP_COOLDOWN_MS)} s.`],
     ['flash', 'Flash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift or a right-click on the log'}: two cells in a blink, free. Then it rests ${secs(TUNE.FLASH_COOLDOWN_MS)} s.`],
+    ['cut', 'Cuts', 'A flash cuts through a body one thick with free log beyond: the part behind falls to beads. Leave fewer than 3 in front and that snake is out. Your own body too: drop your tail to fit a pocket. Along the edge, or against a hole or another body, nothing can be cut from that side.'],
+    ['failflash', 'Failed flash', `Flash into a head, a body too thick, the edge or a hole and it fails: ${TUNE.FAIL_LOSS} off your tail and a longer stun.`],
     ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden flashes.'],
     ['rests', 'Resting', 'Two half-rings round your head: your jump (left) and your flash (right) coming back.'],
   ]],
@@ -113,7 +115,7 @@ const GUIDE_ROWS = [
 ];
 // (Until the renderer can draw a picture, a stand-in: it draws a kind it
 // doesn't know as an apple. Every kind has one, in case its picture fails.)
-const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', choke: '🤢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', bridge: '🌉', land: '🚩', lostflag: '🚩' };
+const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', choke: '🤢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', cut: '✂️', failflash: '💫', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', bridge: '🌉', land: '🚩', lostflag: '🚩' };
 const GUIDE_UNDRAWN = new Set();
 function renderGuide() {
   const px = Math.round(36 * (window.devicePixelRatio || 1));

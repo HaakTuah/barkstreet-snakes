@@ -147,7 +147,12 @@ const FLAVOR = {
   youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space or a click'} to jump.`,
   bridgeFirst: 'A snake across a pit is a bridge, until its tail passes!', // (the first time a snake lies across a pit near you: round six B's bridges)
   youLeapFirst: 'Hup! A jump costs your tail tip, then a short rest.',
-  youDashFirst: 'Golden flashes cut thin snakes in two.',
+  youDashFirst: 'Golden flashes cut through two thick, and put out fire.',
+  youCutFirst: 'A flash cuts through a thin body.', // (round six B: your first cut)
+  youFlashFailed: 'Too thick! A failed flash costs five.', // (your first failed flash)
+  neckCut: 'Snip! Too short to go on.', // (the first neck cut you see: a cut that left a snake fewer than 3 in front)
+  dropTail: 'Flash through your own tail to drop it.', // (the first time you're in a pocket smaller than you, your flash ready and your own body one thick in front)
+  youDropTail: 'Tail dropped: lighter, and out of the pocket.', // (your first own cut)
   leaf: ['A golden leaf on the wind. Eat it for golden flashes.', 'A golden leaf blew onto the log: golden flashes, for the taking.'],
   leafWatch: ['A golden leaf on the wind: golden flashes, for whoever eats it.'],
   youLeaf: n => `${n} golden flash${n === 1 ? '' : 'es'}: ${touchFirst ? 'swipe ahead' : 'E or right-click'}. Never at edges or holes.`, // (the danger in it: the first one may be the one. One key and the mouse, to keep it to 60 characters: the Field guide names Shift)
@@ -231,7 +236,7 @@ const howYouDied = p => {
   if (p.fatal === 'hunger') return 'You ran out of food at your smallest'; // (under "Starved!": not "You starved" again)
   if (p.fatal === 'pecked') return 'The woodpecker struck right under your head'; // (only a head in the patch is out: a body over it bridges it)
   if (p.fatal === 'fire') return 'The flames got you at your smallest';
-  if (p.fatal === 'cut') return `${theGame.snakes[p.killerId]?.name || 'A'}’s golden flash cut you right behind the head`;
+  if (p.fatal === 'cut') return `${theGame.snakes[p.killerId]?.name || 'A'}’s flash cut you right behind the head`;
   const k = p.killerId != null ? theGame.snakes[p.killerId] : null;
   const why = p.fatal === 'shorter' && k && !k.persona ? ', and they were longer' : WHY_OUT[p.fatal] || ''; // (a friend is "they")
   return `You ${yourCause(p)}${why}`;

@@ -122,7 +122,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
   else total.draws++;
   const food = g.snakes.reduce((n, s) => n + s.eaten, 0), beads = g.snakes.reduce((n, s) => n + s.pellets, 0);
   for (const s of g.snakes) { // (the edge's huggers, and the rest)
-    const [ticks, on] = st.edge?.[s.id] || [0, 0], hug = ticks && on >= ticks / 4, won = alive.length === 1 && alive[0] === s && g.time < MAX_TIME ? 1 : 0;
+    const [ticks, on] = st.edge?.[s.id] || [0, 0], hug = ticks && on >= ticks / 8, won = alive.length === 1 && alive[0] === s && g.time < MAX_TIME ? 1 : 0;
     c[hug ? 'huggers' : 'others']++; c[hug ? 'huggerWins' : 'otherWins'] += won; c[hug ? 'huggerPlace' : 'otherPlace'] += place.get(s) || 1;
   }
   for (const s of g.snakes) {

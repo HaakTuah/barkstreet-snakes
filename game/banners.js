@@ -104,6 +104,7 @@ function news(dying) {
     if (e.type === 'spawn' && e.kind === 'leaf') { flashFrame('gold'); if (newsOnce('leaf')) return toast(lineFor('leaf'), 2400, 'gold'); }
     if (e.type === 'spawn' && e.kind === 'goldcap') { flashFrame('gold'); if (newsOnce('goldcap')) return toast(lineFor('goldcap'), 2400, 'gold'); }
     if (e.type === 'peck' && me?.alive && e.under?.includes(me.id) && once('peckedUnder')) return toast(FLAVOR.youPeckedUnder, 2800, 'bird', 'lesson'); // (struck under your body: a bridge, not a cut)
+    if (e.type === 'death' && e.snake.fatal === 'cut' && newsFree() && once('neckCut')) return toast(FLAVOR.neckCut, 2400, 'warn', 'lesson'); // (the first neck cut you see, anyone's)
     if (e.type === 'dig' && me?.alive && Math.abs(me.body[0].x - e.x) + Math.abs(me.body[0].y - e.y) <= DIG_NEAR && newsFree() && once('dig')) return toast(FLAVOR.youDig, 2600, 'beetle', 'lesson'); // (it's over in a second: shown now or kept for the next one, never left waiting)
     if (!me || !isMe(e.snake || {}) && e.by !== me.id) continue; // (the rest is about you)
     if (e.type === 'choke' && once('choke')) return toast(FLAVOR.youChoke, 2600, 'you', 'lesson');
@@ -119,7 +120,10 @@ function news(dying) {
     if (e.type === 'dash' && !e.plain && once('dash')) return toast(FLAVOR.youDashFirst, 2800, 'gold', 'lesson');
     const refused = e.type === 'fizzle' && (e.flash ? FLAVOR.fizzleFlash : FLAVOR.fizzle)[e.why];
     if (refused && once((e.flash ? 'fizzleFlash' : 'fizzle') + e.why)) return toast(refused, 1800, 'warn', 'lesson');
+    if (e.type === 'cut' && e.by === me.id && isMe(e.snake)) { if (once('youDropTail')) return toast(FLAVOR.youDropTail, 2400, 'you', 'lesson'); continue; } // (your own tail: dropped)
+    if (e.type === 'cut' && e.by === me.id && once('youCutFirst')) return toast(FLAVOR.youCutFirst, 2400, 'gold', 'lesson');
     if (e.type === 'cut' && e.by === me.id) return toast(FLAVOR.youSnip(who(e.snake, true)), 1800, 'gold');
+    if (e.type === 'crash' && e.failed && once('youFlashFailed')) return toast(FLAVOR.youFlashFailed, 2600, 'warn', 'lesson');
     if (e.type === 'cut' && e.by != null) return toast(FLAVOR.youSnipped(theGame.snakes[e.by]?.name || 'Someone'), 2200, 'warn', 'lesson');
     if (e.type === 'alight') { flashFrame('kill'); if (once('alight')) return toast(pick(FLAVOR.youAlight), 2600, 'fire', 'lesson'); } // (later burns: the flames and the -1s say it)
   }
@@ -131,6 +135,8 @@ function news(dying) {
   }
   // Another snake lying across a pit near you: bridges, once.
   if (me?.alive && theGame.tick % 4 === 2 && newsFree() && !theGame.told?.bridge && bridgeNear(me) && once('bridge')) return toast(FLAVOR.bridgeFirst, 3000, 'you', 'lesson');
+  // In a pocket smaller than you, your own body one thick in front and your flash ready: dropping your tail, once.
+  if (me?.alive && !me.flight && theGame.tick % 4 === 1 && newsFree() && !theGame.told?.dropTail && !theGame.told?.youDropTail && Engine.flashIn(theGame, me) === 0 && tailToDrop(me) && once('dropTail')) return toast(FLAVOR.dropTail, 3000, 'you', 'lesson');
   // Boxed in, with a gap you could hop to an island and your jump ready: the island hop, once.
   if (me?.alive && !me.flight && theGame.tick % 4 === 0 && newsFree() && !theGame.told?.islandHop && Engine.leapIn(theGame, me) === 0 && islandNear(me) && once('islandHop')) return toast(FLAVOR.islandHop, 3000, 'you', 'lesson');
   for (const e of theGame.events) if (e.type === 'baked' && newsOnce('baked')) return toast(lineFor('baked'), 2600, 'fire');
@@ -176,6 +182,36 @@ function islandNear(s) {
   return false;
 }
 const SIDES4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+
+// In a pocket smaller than you (less free log you can crawl to than your
+// length), with your own body one thick within a flash ahead, free log
+// beyond it, and at least 3 left in front of the cut?
+function tailToDrop(s) {
+  const G = GRID_SIZE, h = s.body[0], taken = new Set();
+  for (const o of theGame.snakes) if (o.alive) for (const c of o.body) taken.add(c.y * G + c.x);
+  const blocked = k => theGame.holes.has(k) || !!theGame.fires?.has(k);
+  const out = (x, y) => x < 0 || y < 0 || x >= G || y >= G;
+  const reach = new Set([h.y * G + h.x]), todo = [h.y * G + h.x];
+  let free = 0;
+  while (todo.length && free < s.body.length) {
+    const k = todo.pop(), x = k % G, y = (k - x) / G;
+    for (const [dx, dy] of SIDES4) {
+      const nx = x + dx, ny = y + dy, n = ny * G + nx;
+      if (out(nx, ny) || reach.has(n) || blocked(n) || taken.has(n)) continue;
+      reach.add(n); todo.push(n); free++;
+    }
+  }
+  if (free >= s.body.length) return false;
+  for (let i = 1, x = h.x, y = h.y; i <= TUNE.FLASH_LENGTH; i++) {
+    x += s.dir.x; y += s.dir.y;
+    if (out(x, y)) return false;
+    const j = s.body.findIndex(c => c.x === x && c.y === y);
+    if (j < 0) { if (blocked(y * G + x) || taken.has(y * G + x)) return false; continue; }
+    const bx = x + s.dir.x, by = y + s.dir.y;
+    return j >= TUNE.MIN_LENGTH && !out(bx, by) && !theGame.holes.has(by * G + bx) && !taken.has(by * G + bx);
+  }
+  return false;
+}
 
 // Is there something to hop on your line, within n cells (a body, a hole, fire)?
 // (next: on the way it goes next, a turn queued included.)
