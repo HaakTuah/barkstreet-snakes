@@ -63,6 +63,7 @@ function frame(alpha, now) {
   if (streaks.length) drawStreaks(now); // (under the snakes: beside the dasher, never through it)
   drawLandings(now); // (under the snakes: where a jump comes down)
   drawSnakes(alpha, now); // (and the fields' light round any rival in them, under its body)
+  if (bentLater.length) drawBentFlags(now); // (a flag a snake lies on, bent over it)
   drawTossed(now); // (a bead spat over a head)
   drawRipples(now);
   drawRefusal(now);
@@ -763,7 +764,7 @@ function setGame(g) {
   bugs.length = bugPops.length = scurries.length = dives.length = heals.length = 0;
   bugFor.clear(); shutSeen.clear();
   knockFor = -1; tickNow = 0;
-  fallenFlags.length = 0;
+  fallenFlags.length = 0; flagBends.clear(); bentLater.length = 0;
   fallen.length = 0;
   nextLeaf = 0;
   crackCache.clear();
