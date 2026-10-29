@@ -379,6 +379,14 @@ const GUIDE = {
     g.beginPath(); g.arc(0, 0, CELL * 0.68, 0, TAU); g.stroke();
     g.restore();
   }),
+  copycat: g => { // (Copycat shadowing Sovereign: its body a pale copy of Sovereign's blue, its cat-eared head half its red)
+    guideSnake(g, '#9fbcf3', false, (x, y) => {
+      g.fillStyle = '#904b8f'; circle(x, y, CELL * 0.5); // (its head, half and half)
+      for (const sg of SIDES2) { g.fillStyle = '#de2910'; g.beginPath(); g.moveTo(x - CELL * 0.3, sg * CELL * 0.2); g.lineTo(x - CELL * 0.62, sg * CELL * 0.5); g.lineTo(x - CELL * 0.05, sg * CELL * 0.42); g.closePath(); g.fill(); }
+      for (const sg of SIDES2) { g.fillStyle = '#fffbea'; circle(x + CELL * 0.16, sg * CELL * 0.2, CELL * 0.13); g.fillStyle = INK; circle(x + CELL * 0.2, sg * CELL * 0.2, CELL * 0.07); }
+      g.fillStyle = '#ffde00'; circle(x - CELL * 0.18, 0, CELL * 0.08); // (its pin)
+    });
+  },
   'basic-win': g => guideSnake(g, '#4ade80', true, (x, y) => {
     for (let i = 0; i < 7; i++) {
       const a = -2.75 + i * 0.78, r = CELL * (0.74 + (i % 2) * 0.2);
