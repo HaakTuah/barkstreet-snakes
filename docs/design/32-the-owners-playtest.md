@@ -375,3 +375,24 @@ dies away in under a second. With reduced motion it leans and stands up at once.
 cell, never while it glides or is carried, and keeps its shake if pecked. A flag that falls into a pit drops its bend.
 Drawing only (`bendOn` in `render/flags.js`): each screen draws it from the snakes it has, so online play needs no
 protocol change, and the simulation doesn't load the renderer.
+
+### Beetles and the woodpecker
+
+Haakon (29 October 2026; entry 2m): beetles should "quickly try to escape down their burrow when woodpecker targets
+their little island"; burrows ran out as the woodpecker pecked them; and beetles under a strike teleported. The rules
+(`crawl`, `beakDepth`, `beakGap` and `knocks` in `engine.js`):
+- **Burrows keep up.** A beetle due up from underground with no free burrow cracks a new one open where it's quiet,
+  by `beetleOut`'s rule (`BURROW_SPACING` apart, at most `BURROW_MAX` open). None comes up under the beak: `freeBurrow`
+  and `placer` leave the mark out.
+- **The mark is danger, as a head is.** While the woodpecker aims, a beetle within `BEETLE_FEAR` of its mark scurries
+  away from it and for a burrow in reach, and dives in. On the mark, it plans against the strike: a burrow in reach it
+  can get to in time (pulled there straight, twice as hard as a head-scared run), else off the mark by the shortest
+  way, else it digs in if the dig is done before the strike. A dig there leaves no burrow, and it comes up elsewhere. A
+  dig already under way that won't be done in time is dropped, and it runs.
+- **No teleporting.** A beetle still on the mark at the strike is the bird's: a `knock` with no landing, a puff and a
+  soft crunch, no ring through the aim. Its lesson, the first time: "The woodpecker eats beetles too!". The Field
+  guide's Beetles and Woodpecker rows say so.
+- **The rivals** move each beetle in their search by the same rule (`bugCrawl` in `ai.js`, with `E.beakDepth` and
+  `E.beakGap`). So a beetle bound down a burrow beyond the mark isn't chased, and one running off it toward a rival is.
+  One gap, not worth its code: the AI's copy lets a fleeing beetle cross a body lying on the mark (the mark's cells
+  read as holes there), where the engine stops it.

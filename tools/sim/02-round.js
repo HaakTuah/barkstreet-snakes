@@ -51,6 +51,8 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     if (mid) c.midMs += E.tickMs(g) * g.snakes.filter(s => s.alive).length;
     c.ticks++;
     c.burrowTicks += g.burrows.length;
+    if (late) { c.sdTicks++; c.sdBurrowTicks += g.burrows.length; }
+    for (const u of g.unders) if (g.tick >= u.until) c.underWait++;
     if (!late) { c.ticksEarly++; c.freeEarly += freeCells(g, N); }
     const bugs = g.food.filter(f => f.kind === 'beetle');
     for (const f of bugs) { const b = st.bugs.get(f); if (b && b.near < 0 && g.snakes.some(s => s.alive && Math.abs(s.body[0].x - f.x) + Math.abs(s.body[0].y - f.y) <= T.BEETLE_FEAR)) b.near = g.tick; }

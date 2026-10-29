@@ -177,16 +177,22 @@
   check('at BURROW_MAX open, a new burrow starts the stalest growing shut, over 6 to 14 s, and it stays there meanwhile',
     times.length === 40 && times.every(([x, y, ms, n]) => x === 3 && y === 3 && ms >= T.BURROW_SHUT_MIN_MS && ms <= T.BURROW_SHUT_MAX_MS && n === T.BURROW_MAX + 1)
     && Math.max(...times.map(t => t[2])) - Math.min(...times.map(t => t[2])) > 2000, JSON.stringify(times.slice(0, 5)));
-  // None comes out of one growing shut: with it the only burrow, a beetle due up stays under; with an open one too, it comes out there.
+  // None comes out of one growing shut: with it the only burrow, a beetle due up cracks a new one open (round six B, 2m: burrows
+  // keep up with the woodpecker), where it's quiet and BURROW_SPACING from the others, and comes out there.
   const g = staged(); g.time = 30000;
   g.burrows = [{ x: 3, y: 3, at: 0, used: 0, shutFrom: 29000, shutAt: 39000 }];
   g.unders = [{ until: 0, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }]; // (and one that stays under: no more come out meanwhile)
-  for (let t = 0; t < 5; t++) E.step(g);
-  const stayed = g.unders.length === 2 && !g.food.some(f => f.kind === 'beetle');
-  g.burrows.push({ x: 14, y: 3, at: 0, used: 0 });
   E.step(g);
-  const out = g.food.find(f => f.kind === 'beetle');
-  check('none comes out of a burrow growing shut: a beetle due up stays under, and comes out of an open one', stayed && out && out.x === 14 && out.y === 3 && g.unders.length === 1, JSON.stringify({ stayed, out }));
+  const out = g.food.find(f => f.kind === 'beetle'), fresh = g.burrows.find(h => !h.shutAt);
+  check('none comes out of a burrow growing shut: a beetle due up with no free burrow cracks one open, apart from the others, and comes out there',
+    out && fresh && at(out, fresh.x, fresh.y) && Math.abs(fresh.x - 3) + Math.abs(fresh.y - 3) >= T.BURROW_SPACING && g.burrows.length === 2 && g.unders.length === 1, JSON.stringify({ out, burrows: g.burrows }));
+  // At BURROW_MAX open and none free (food on each), it waits under: no more burrows than that.
+  const full = staged(); full.time = 30000;
+  full.burrows = [{ x: 3, y: 3, at: 0, used: 0 }, { x: 14, y: 3, at: 0, used: 0 }, { x: 3, y: 14, at: 0, used: 0 }].slice(0, T.BURROW_MAX);
+  full.food = full.burrows.map(h => ({ x: h.x, y: h.y, kind: 'food', expires: 1e9 }));
+  full.unders = [{ until: 0, expires: 1e9, from: -1, gold: false }, { until: 1e9, expires: 1e9, from: -1, gold: false }];
+  for (let t = 0; t < 5; t++) E.step(full);
+  check('...but at BURROW_MAX open, none of them free, it waits under', full.unders.length === 2 && !full.food.some(f => f.kind === 'beetle') && full.burrows.length === T.BURROW_MAX, JSON.stringify(full.burrows));
   // A scared beetle still dives into one growing shut.
   const d = staged(); d.time = 30000;
   d.burrows = [{ x: 12, y: 10, at: 0, used: 0, shutFrom: 29000, shutAt: 39000 }];
