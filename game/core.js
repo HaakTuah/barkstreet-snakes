@@ -119,6 +119,7 @@ const FLAVOR = {
   youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
   youSquash: 'Squashed! Your own tail feeds nobody.', // (round six B: your first own bead squashed)
   youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it comes, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
+  birdBeetle: 'The woodpecker eats beetles too!', // (round six B, 2m: the first beetle you see the bird eat, one that didn't get off its mark in time)
   youDig: 'A cornered beetle digs in. Grab it before it’s gone!', // (the first one near enough your head to catch: see DIG_NEAR)
   digBurrow: 'A beetle that digs in leaves a burrow behind.', // (the first burrow a dig leaves in a round, anywhere on the log, once the dig's own lesson is told)
   digAndBurrow: 'A cornered beetle digs in, leaving a burrow.', // (the same, when the dig's lesson hasn't been told yet: most digs are far from you, so this one teaches both, the dig first)

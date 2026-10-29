@@ -109,22 +109,24 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   const all = []; for (let k = 0; k < CELLS; k++) all.push(k);
   check('...and nowhere: null', E.knockTo(g, 10, 10, all) === null);
   // At the strike: each piece in the patch knocked, by the same rule, one after another (none lands where another did); a beetle
-  // scurries there (and isn't digging any more); with nowhere to go, the bird eats it. Each says so.
+  // still there (one that couldn't get away: it has only just moved, and its dig won't be done in time) is the bird's, as is
+  // anything with nowhere to go (round six B, 2m: no beetle flies off the patch). Each says so.
   const s = board([[line(3, 3, 4), 'right'], [line(20, 22, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
   feed(s);
   const apple = { x: 12, y: 12, kind: 'food', expires: 9999 }, bead = { x: 12, y: 13, kind: 'pellet', color: '#abc', owner: 1, expires: 9999 };
-  const bug = { x: 13, y: 12, kind: 'beetle', gold: 1, expires: 9999, dir: D.up, movedAt: 0, digUntil: 50 };
+  const bug = { x: 13, y: 12, kind: 'beetle', gold: 1, expires: 9999, dir: D.up, movedAt: s.tick, digUntil: 50 };
   s.food = [apple, bead, bug]; s.given = new Set(s.food.map(f => K(f.x, f.y)));
   const patch = [K(12, 12), K(12, 13), K(13, 12), K(13, 13)];
-  const ahead = E.knocks(s, patch).map(({ food, to }) => [food.kind, to.x, to.y]);
+  const ahead = E.knocks(s, patch).map(({ food, to }) => [food.kind, to ? to.x : null, to ? to.y : null]);
   s.woodpecker = { x: 12, y: 12, at: s.time, target: patch, strikeAt: s.tick, last: [], struckAt: -1, restUntil: 0 };
   E.step(s);
   const ks = s.events.filter(e => e.type === 'knock');
   const where = ks.map(e => [e.kind, e.tx, e.ty]);
-  check('at the strike, food in the patch is knocked aside by the rule, as anyone could work it out through the aim', JSON.stringify(where) === JSON.stringify(ahead) && new Set(where.map(([, x, y]) => K(x, y))).size === 3 && where.every(([, x, y]) => !patch.includes(K(x, y))),
+  const flew = where.filter(([, x]) => x != null);
+  check('at the strike, food in the patch is knocked aside by the rule, as anyone could work it out through the aim', JSON.stringify(where) === JSON.stringify(ahead) && flew.length === 2 && new Set(flew.map(([, x, y]) => K(x, y))).size === 2 && flew.every(([, x, y]) => !patch.includes(K(x, y))),
     JSON.stringify({ where, ahead }));
-  check('...each says what, from where to where (a golden beetle, a bead in its colour)', ks.length === 3 && ks.every(e => typeof e.x === 'number' && typeof e.tx === 'number') && ks.find(e => e.kind === 'beetle').gold === 1 && ks.find(e => e.kind === 'pellet').color === '#abc', JSON.stringify(ks));
-  check('...a knocked beetle scurries there (and digs no more)', at(bug, ks[2].tx, ks[2].ty) && bug.px === 13 && bug.py === 12 && bug.scared && bug.movedAt === s.tick - 1 && !('digUntil' in bug) && s.food.includes(apple) && at(apple, ks[0].tx, ks[0].ty), JSON.stringify(bug));
+  check('...each says what, from where to where (a golden beetle, a bead in its colour)', ks.length === 3 && ks.every(e => typeof e.x === 'number' && (e.kind === 'beetle' ? e.tx === null : typeof e.tx === 'number')) && ks.find(e => e.kind === 'beetle').gold === 1 && ks.find(e => e.kind === 'pellet').color === '#abc', JSON.stringify(ks));
+  check('...a beetle still under the beak is the bird\'s: gone, never moved off the patch (its dig would have come too late)', !s.food.includes(bug) && at(bug, 13, 12) && !('digUntil' in bug) && s.food.includes(apple) && at(apple, ks[0].tx, ks[0].ty), JSON.stringify(bug));
   const t = board([[line(3, 3, 4), 'right'], [line(20, 22, 4), 'right']], { time: T.SUDDEN_DEATH_MS });
   feed(t);
   const lone = { x: 12, y: 12, kind: 'food', expires: 9999 };
