@@ -644,8 +644,11 @@ function lens3d(sg, tint) {
 // the eyes). A few broad comb grooves follow the sweep, one long near-white
 // gloss runs along the wave's crest and on round the sweep, and no outline:
 // its soft shadow on the head sets it off. WILD_WAVE is how far the wave
-// stands up, WILD_SIDE how far the sweep overhangs the far side.
-const WILD_WAVE = 0.1, WILD_SIDE = 0.12, WILD_GROOVES = 4;
+// stands up, WILD_SIDE how far the sweep overhangs the far side. WILD_SIZE
+// scales the whole mass (grooves, gloss and shadow with it) about the wave's
+// front, WILD_FRONT, so the front edge stays where it is and the rest sits on
+// the head instead of towering over it.
+const WILD_WAVE = 0.1, WILD_SIDE = 0.12, WILD_GROOVES = 4, WILD_SIZE = 0.85, WILD_FRONT = 0.19;
 function wildHairEdge() {
   const c = CELL, b = (x1, y1, x2, y2, x, y) => ctx.bezierCurveTo(c * x1, c * y1, c * x2, c * y2, c * x, c * y);
   const w = WILD_WAVE, s = WILD_SIDE;
@@ -671,6 +674,7 @@ function wildHair() {
   const c = CELL;
   ctx.save();
   ctx.translate(-c * 0.07, 0); // (set back, so most of the face shows)
+  ctx.translate(c * WILD_FRONT, 0); ctx.scale(WILD_SIZE, WILD_SIZE); ctx.translate(-c * WILD_FRONT, 0);
   ctx.save(); // its soft shadow on the head, darker gold, falling on the brow in front of the wave
   ctx.fillStyle = 'rgba(146,84,14,0.16)';
   ctx.translate(c * 0.07, c * 0.03); wildHairEdge(); ctx.fill();
