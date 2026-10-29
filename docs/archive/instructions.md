@@ -321,3 +321,11 @@ In the design chat (29 October 2026, 00:06 and 00:07 UTC), playing:
 > Yes please, expertly!
 
 (queued as 2e in `docs/PROGRESS.md`)
+
+In the design chat (29 October 2026, 00:27 and 00:28 UTC), on Wildcard's hair as it plays:
+
+> Trump's hair looks like a mop now…
+
+> Yes, and make it do it expertly! I want trump's hair for Pete's sake!
+
+(queued as 2f in `docs/PROGRESS.md`)
