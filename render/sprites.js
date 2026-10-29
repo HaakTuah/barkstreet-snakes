@@ -371,6 +371,14 @@ const GUIDE = {
   // wriggling, in the win's confetti; your head with a turn ahead of it;
   // your head dazed by a crash, its stars going round, as on the log; and
   // a tag's hunger bar, running low.
+  capricious: g => guideSnake(g, '#ec4899', false, (x, y) => { // (Capricious doing Sovereign: the crown on its own pink head, its pink ring round it)
+    g.save(); g.translate(x, y);
+    poly(CROWN, 1, '#facc15');
+    g.fillStyle = '#dc2626'; circle(-CELL * 0.06, 0, CELL * 0.07);
+    g.strokeStyle = '#ec4899'; g.lineWidth = CELL * 0.08;
+    g.beginPath(); g.arc(0, 0, CELL * 0.68, 0, TAU); g.stroke();
+    g.restore();
+  }),
   'basic-win': g => guideSnake(g, '#4ade80', true, (x, y) => {
     for (let i = 0; i < 7; i++) {
       const a = -2.75 + i * 0.78, r = CELL * (0.74 + (i % 2) * 0.2);

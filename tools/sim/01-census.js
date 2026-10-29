@@ -119,7 +119,25 @@ const totals = () => ({ rounds: 0, timeSum: 0, times: [], sudden: 0, draws: 0, s
 //   luring             ticks with a rival head 2 to 4 away: just out of its reach, close enough to follow (Joker)
 //   skims              ticks with the head beside the edge, a hole or a body (not its own neck), or a rival head within 2 (Desperado)
 //   flashes, jumps     plain and golden flashes, and jumps of both kinds (Star: a minute alive)
-const SIGNS = ['moves', 'runs', 'cells', 'beside', 'long', 'coiled', 'riding', 'apart', 'foodShare', 'beadShare', 'homeTicks', 'atHome', 'hunting', 'boxing', 'luring', 'skims', 'flashes', 'jumps', 'ticks'];
+//   eats, beadsEaten   food eaten, and of it beads (Gobbler and Vulture by the minute, for Capricious's impressions of them)
+const SIGNS = ['moves', 'runs', 'cells', 'beside', 'long', 'coiled', 'riding', 'apart', 'foodShare', 'beadShare', 'homeTicks', 'atHome', 'hunting', 'boxing', 'luring', 'skims', 'flashes', 'jumps', 'eats', 'beadsEaten', 'ticks'];
+
+// Capricious in a mood: its signatures count for it, and again under the
+// mood's name ('mason.runs'...), so each impression's trademark can be read
+// against the rival's own. (twin: its sums, as one object that adds to both.)
+const twins = new WeakMap();
+function twin(sig, mood) {
+  let byMood = twins.get(sig);
+  if (!byMood) twins.set(sig, byMood = new Map());
+  let t = byMood.get(mood);
+  if (!t) {
+    t = {};
+    for (const k of SIGNS) Object.defineProperty(t, k, { get: () => sig[k], set: v => { sig[`${mood}.${k}`] = (sig[`${mood}.${k}`] || 0) + v - sig[k]; sig[k] = v; } });
+    byMood.set(mood, t);
+  }
+  return t;
+}
+const sigOf = (per, s) => s.memory.mood ? twin(per[s.name].sig, s.memory.mood) : per[s.name].sig;
 
 // Takes one tick's signatures, after the step (was: each snake's head and
 // heading before it, and whether it has moved yet this round; brought up to date).
@@ -131,7 +149,7 @@ function signatures(g, T, per, was) {
   for (const s of alive) for (const c of s.body) mark[c.y * N + c.x] = all;
   const bodyAt = (x, y) => x >= 0 && y >= 0 && x < N && y < N && mark[y * N + x] === all;
   for (const s of alive) {
-    const p = per[s.name].sig, h = s.body[0], L = s.body.length;
+    const p = sigOf(per, s), h = s.body[0], L = s.body.length;
     const w = was[s.id];
     p.ticks++;
     if (h.x !== w.x || h.y !== w.y) { p.moves++; if (s.dir.x !== w.dir.x || s.dir.y !== w.dir.y || !w.moved) p.runs++; w.moved = true; }
@@ -176,8 +194,9 @@ function signatures(g, T, per, was) {
     }
   }
   for (const e of g.events) {
-    if (e.type === 'dash') per[e.snake.name].sig.flashes++;
-    else if (e.type === 'leap') per[e.snake.name].sig.jumps++;
+    if (e.type === 'dash') sigOf(per, e.snake).flashes++;
+    else if (e.type === 'leap') sigOf(per, e.snake).jumps++;
+    else if (e.type === 'eat' && e.snake) { const p = sigOf(per, e.snake); p.eats++; if (e.kind === 'pellet') p.beadsEaten++; }
   }
 }
 
