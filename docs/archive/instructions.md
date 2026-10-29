@@ -387,3 +387,14 @@ In the design chat (29 October 2026, 08:02 UTC), on 2k's size:
 > Maybe make it as big as you can get away with without it falling out of the screen, or being pushed onto the gameplay screen when not pecking, or anything.
 
 (2k in `docs/PROGRESS.md` now asks for the biggest size that passes those checks, rather than 1.6 times)
+
+In the design chat (29 October 2026, 08:02 to 08:09 UTC), on beetles that meet: "Also, should 2 beetles who meet start
+fighting?" Then, after Claude suggested measuring first how often they meet:
+
+> Well, what happened the game i was watching now was that 2 beetles ended up on an island the woodpecker made, away from the snakes. Looked a bit boring that they just walked around like that, I wanted something to happen. Therefore, given how rare it is, i thought it should feel special.
+
+And, to Claude's take (they notice each other, a shoving match, the loser flips, a gamble for a snake that gets there):
+
+> Yes, please, expertly! Love how you described it! And it should come late, it is probably the most uneasecary feature we have discussed here, so leave it last or close to last, I'd say.
+
+(queued as 8, last, in `docs/PROGRESS.md`)
