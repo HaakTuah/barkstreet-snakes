@@ -62,8 +62,16 @@ window.TUNING = Object.freeze({
   GOLDCAP_TICKS: 120,       // ...and withers after this many ticks
   WRAP_MS: 12000,           // ...eat it, and for this long the edges wrap round (off one side, in at the other); another adds as much again...
   WRAP_MAX_MS: 20000,       // ...up to this much in all
-  SHRINK: 3,                // a mushroom takes this many segments off...
+  SHRINK: 3,                // a mushroom takes this many segments off the first time...
   MIN_LENGTH: 3,            // ...but never below this
+  // Round six B: a mushroom comes back up. Swallowed, it sits in the cheek
+  // (the mouth full: nothing else is eaten) for CHEEK_TICKS, then it's spat
+  // SPIT_REACH cells ahead of the head, over anything between, a shade
+  // stronger: one segment more each time it comes back up, to SHRINK_MAX.
+  CHEEK_TICKS: 9,           // about a second: the ring 3 ahead shows where it'll land, for anyone to dodge
+  SPIT_REACH: 3,
+  SHRINK_MAX: 5,
+  SPIT_WILT_MIN: 20,        // a spat mushroom wilts in half the time it had left, but lies at least this many ticks
   START_LENGTH: 4,          // every snake starts this long: one more than the least, so a first crash costs a segment, not the round
 
   // --------------------------------------------------------------- crashes

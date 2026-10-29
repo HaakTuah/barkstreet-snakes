@@ -99,7 +99,7 @@ function drawTossed(now) {
 function flyingSprite(f, b) {
   if (f.kind === 'pellet') return beadSprite(f.cooked ? ROAST : b.v);
   if (f.kind === 'golden') return goldenSprite();
-  if (f.kind === 'mushroom') return mushroomSprite();
+  if (f.kind === 'mushroom') return mushroomSprite(f.power);
   if (f.kind === 'leaf') return goldLeafSprite();
   if (f.kind === 'goldcap') return goldcapSprite();
   const left = f.expires != null ? f.expires - game.tick : 999;
@@ -279,7 +279,7 @@ function drawMushroomAt(f, x, y, t, pop) {
   const lean = (lively ? Math.sin(t * 2.5) * 0.12 : 0) + 0.5 * wilt * (f.x % 2 ? 1 : -1);
   ctx.globalAlpha = 1 - 0.4 * wilt;
   shadowAt(x + 1, y + CELL * 0.36, pop * (1 - 0.25 * wilt));
-  blitAbout(mushroomSprite(), x, y, 0, CELL * 0.34, pop * (1 - 0.2 * wilt) * (1 - breathe * 0.5), pop * (1 - 0.3 * wilt) * (1 + breathe), lean);
+  blitAbout(mushroomSprite(f.power), x, y, 0, CELL * 0.34, pop * (1 - 0.2 * wilt) * (1 - breathe * 0.5), pop * (1 - 0.3 * wilt) * (1 + breathe), lean);
   if (lively && pop >= 1) { // stink lines: two wavy violet wisps rising off it (the cartoon for "don't eat me")
     ctx.strokeStyle = '#c4b5fd';
     ctx.lineWidth = 2;
