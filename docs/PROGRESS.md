@@ -70,7 +70,7 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
 1. **The island hop and no auto-jump** (done, PR #158).
 2. **Bridges** (done, PR #174). Rare by design, about one ride in twenty rounds (Haakon, 29 October 2026: "Agreed with
    you expert take!"): part 4 and item 6 each report bridge rides again, adding no rule to make them commoner.
-3. **The flashes cut:** the plain flash through a body one thick, the golden through two (and fire out), and a cut
+3. **The flashes cut** (the edge shelters a body from cuts, measured for a refuge: "The edge is a shelter, measured"): the plain flash through a body one thick, the golden through two (and fire out), and a cut
    that leaves a snake fewer than 3 segments puts it out ("The neck cut"; a flash into a head is a failed flash);
    your own beads squashed as your head passes, the choke, cough and nudge gone ("Choking on your own tail", replaced by
    the owner, in `docs/design/27-round-six-a-fairness-and-fixes.md`); and **mushrooms come back up**: aimed by steering,

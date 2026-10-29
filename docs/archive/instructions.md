@@ -486,3 +486,11 @@ now starts as soon as item 5's last part merges, and teaches every move of it, t
 In the design chat (29 October 2026, 13:12 UTC), to the "For Haakon" question on bridges coming up rarely (about one
 ride in twenty rounds), and the design session's take (keep it rare, re-measure after the golden flight and the
 woodpecker's three acts): "Agreed with you expert take!"
+
+In the design chat (29 October 2026, 13:15 to 13:19 UTC), on flashes and the edge: "Bridges can be cut by flash, yes?
+And the existence of flash and super flash could incentivize being by the edge more, no?" Then, to the design
+session's suggestion that a cut always happen, the flasher paying when nothing is free beyond: "Right now they are
+deadly afraid of the edge, so incentivicing sticking by the edge more might not be such a bad thing. But I also like
+your idea, so I am conflicted." And to building it his way first, measured, with that rule as the fix if the edge
+becomes a refuge: "Agreed, expert!" (written into "The edge is a shelter, measured" in
+`docs/design/29-round-six-b-the-new-moves.md` and item 5's part 3)
