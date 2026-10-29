@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| (none open) | | | |
+| 5, part 3 (PR #183) | Mason now lays its walls two thick (its body beside itself back to 27%, where it was; it fell to 21% once a wall one thick could be cut), at the price of its straight runs: 3.5 cells a turn down to 3.1 (everyone else: 1.9). Keep it, or keep its runs (walls one thick, which a flash cuts)? | Keep the double walls: the design asks for them, and its runs stay its mark | open |
 
 ## The queue, in order
 
@@ -47,6 +47,15 @@ long time now. Also, the teaching system will have to account for it." It is the
 beside it as before. A playable draft PR as early as it can be, so Haakon can try it this evening.
 
 *Done so far:* **the island hop** and **no auto-jump** (PR #158: a jump goes over up to 3 cells, a cell a tick; a press waits 5 moves; the landing ring; protocol 16).
+
+*Where it stands* (29 October 2026, stopped at the weekly usage warning, per "Usage" in `CLAUDE.md`): parts 1, 2 and
+most of 3 are merged (#158, #174, #183: the cuts, a failed flash, your own beads squashed, Mason's double walls, the
+edge measured). **Next, in order:** part 3b, **mushrooms come back up** (nothing built yet; its own PR, an engine-rules
+and AI entry, protocol 19: the cheek, the ring 3 ahead, the spit, a shade stronger each time, the rivals aiming and
+dodging); then part 4, part 5, part 6 (*built and reviewed* on `round6b/dropped-charges`: merge `develop` into it, renumber
+its protocol after 18, run its A/B), and part 7 (*parked* on `round6b/pricing`; part 3's numbers to watch there: Joker
+and Sovereign low on single seeds, Gobbler's and Vulture's shares a little lower). Mason's walls are an open question
+for Haakon (the table above).
 
 - **The island hop comes first.** The owner: "jumping is pretty critical to making this game more tense and skill based, rather than RNG". There are two test cases:
   - Gobbler folded on a strip;
@@ -78,6 +87,10 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
    to 5), never killing by itself ("Mushrooms come back up" in the design); a failed flash
    costs 5 and a longer stun, its rest 10 to 12 s; **dropping your own tail** by the same cut; and **Mason's double
    walls**, since a wall one thick can now be cut (its straight runs measured before and after).
+   *Done* (PR #183): the cuts (plain, golden through two, the neck cut, your own tail), a failed flash (5 and a stun
+   of 6), the rest at 12 s, your own beads squashed, Mason's double walls, and the edge measured (no refuge); its
+   numbers are in the design's "Part 3, the chosen numbers". *Next:* **mushrooms come back up**, in its own PR (3b),
+   before part 4.
 4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
    **leap now** (a second press while a jump waits sends it at once, open ground included: "Leap now" in the design); with
    **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you

@@ -19,15 +19,16 @@ const powered = (got, mark) => Object.entries(got).filter(([, out]) => Object.ke
   check('Star flashes where no one else would (an apple four on, open ground)', star['right+flash'] === 10 && !others.length, JSON.stringify({ star, others }));
 }
 
-{ // ...weighed every way, but never into a crash: with a body two on across its way, it flashes off to the side.
-  const wall = Array.from({ length: 9 }, (_, i) => [8, 8 + i]); // (a rival lying across (8, 8) to (8, 16))
-  const view = () => aiView({ me: aiMe(line(6, 12, 5), 'right', { flashIn: 0 }), others: [aiRival(1, wall, 'up')], food: [{ x: 12, y: 12, kind: 'food', expires: 999 }] });
+{ // ...weighed every way, but never into a failed flash: with a body two thick two on across its way, it flashes off to the side.
+  const wall = Array.from({ length: 9 }, (_, i) => [8, 8 + i]), wall2 = Array.from({ length: 9 }, (_, i) => [9, 16 - i]); // (rivals lying across (8, 8) to (8, 16), and beside it: two thick, no cut)
+  const view = () => aiView({ me: aiMe(line(6, 12, 5), 'right', { flashIn: 0 }), others: [aiRival(1, wall, 'up'), aiRival(2, wall2, 'down')], food: [{ x: 12, y: 12, kind: 'food', expires: 999 }] });
   const star = habits(view, ['star']).star, others = powered(habits(view, rest, 4), '+flash');
-  check('...weighed every way: it flashes off to the side of a body two on, never into it', (star['up+flash'] || 0) + (star['down+flash'] || 0) === 10, JSON.stringify(star));
+  check('...weighed every way, never into a body two thick two on', !star['right+flash'], JSON.stringify(star));
   check('...where nobody else flashes', !others.length, others.join(', '));
   // Hemmed in two cells on every way (the flash would stop in a body), it doesn't flash at all.
   const cup = [[6, 10], [7, 10], [8, 10], [8, 11], [8, 12], [8, 13], [8, 14], [7, 14], [6, 14], [5, 14], [4, 14], [3, 14]];
-  const hemmed = habits(() => aiView({ me: aiMe(line(6, 12, 5), 'right', { flashIn: 0 }), others: [aiRival(1, cup, 'left')] }), ['star']).star;
+  const cup2 = [[3, 15], [4, 15], [5, 15], [6, 15], [7, 15], [8, 15], [9, 15], [9, 14], [9, 13], [9, 12], [9, 11], [9, 10], [9, 9], [8, 9], [7, 9], [6, 9]]; // (round it, outside: two thick, no cut)
+  const hemmed = habits(() => aiView({ me: aiMe(line(6, 12, 5), 'right', { flashIn: 0 }), others: [aiRival(1, cup, 'left'), aiRival(2, cup2, 'right')] }), ['star']).star;
   check('...and with a body two on every way, it never flashes', !Object.keys(hemmed).some(k => k.includes('+flash')), JSON.stringify(hemmed));
 }
 
@@ -41,7 +42,7 @@ const powered = (got, mark) => Object.entries(got).filter(([, out]) => Object.ke
   const g = E.createGame({ withPlayer: false, personas: ['star', 'drab'] });
   g.snakes = g.snakes.slice(0, 2);
   const [a, b] = g.snakes;
-  a.body = line(6, 12, 5).map(([x, y]) => ({ x, y })); a.dir = D.right;
+  a.body = line(6, 12, 5).map(([x, y]) => ({ x, y })); a.dir = D.right; a.flashReadyAt = 1e9; // (its flash resting: it could cut through)
   b.body = wall.map(([x, y]) => ({ x, y })); b.dir = D.up;
   g.food = [{ x: 10, y: 12, kind: 'food', expires: 999 }];
   g.given = new Set(g.food.map(f => f.y * T.GRID + f.x));

@@ -69,7 +69,6 @@ function renderRecords() {
 // The Field guide: every food, power and danger, with its picture (drawn by
 // the renderer, as it is on the log) and its rule in a line or two.
 const secs = ms => Math.round(ms / 1000);
-const coughFor = Math.max(1, secs(TUNE.COUGH_TICKS * TUNE.START_TICK)); // (a cough's ticks at the round's usual pace)
 const GUIDE_ROWS = [
   // (How to play opens here: the round in four lines, before the things on the log.)
   ['The basics', [
@@ -82,19 +81,20 @@ const GUIDE_ROWS = [
     ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(TUNE.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time; leave one too long and it rots.`],
     ['golden', 'Golden apple', `Worth ${TUNE.GOLDEN_GROWTH}, and everyone saw it land.`],
     [['beetle', 'dig'], 'Beetles', `Worth ${TUNE.BEETLE_GROWTH}, up to ${inWords(TUNE.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in, so be quick${TUNE.BURROW_FROM_DIG ? `, and leaves a burrow, taking the place of any burrow near it (burrows keep apart)` : ''}. A burrow left unused grows shut (past ${inWords(TUNE.BURROW_MAX)}, the one unused longest): beetles still go in, but none come out.`],
-    [['pellet', 'choke'], 'Beads', `What a crash knocks off, and what a dead snake leaves (${TUNE.CORPSE_EVERY === 2 ? 'every other segment' : TUNE.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${TUNE.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own make you choke: you spit them aside.`],
-    ['cough', 'Coughing', `After a choke you cough for ${coughFor === 1 ? 'about a second' : `about ${coughFor} seconds`} (puffs, mouth shut) and can’t eat. Food you reach rolls aside: into a turn, or to the more open side, over food.`],
+    [['pellet', 'squash'], 'Beads', `What a crash knocks off, and what a dead snake leaves (${TUNE.CORPSE_EVERY === 2 ? 'every other segment' : TUNE.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${TUNE.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own you squash flat as you pass: food for nobody, so chase them down to keep them from the others.`],
     [['baked', 'roast'], 'Baked and roast', `Food left in a fire bakes: worth ${TUNE.COOKED_GROWTH}, if you can take the heat. Then it’s ash.`],
     ['mushroom', 'Mushroom', `Poison: ${TUNE.SHRINK} off your tail (never below ${TUNE.MIN_LENGTH}). Mind the purple haze.`],
   ]],
   ['Golden things', [
     ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: free, no rest. Hold up to ${TUNE.LEAP_MAX}.`],
-    ['leaf', 'Golden leaf', `${TUNE.DASH_CHARGES} golden flashes: three cells at once, slicing thin snakes. Never at an edge or a hole.`],
+    ['leaf', 'Golden leaf', `${TUNE.DASH_CHARGES} golden flashes: three cells at once, cutting through a body up to ${TUNE.DASH_THICK} thick and putting out every fire. Never at an edge or a hole: you blow up.`],
     ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(TUNE.WRAP_MS)} s a mushroom (up to ${secs(TUNE.WRAP_MAX_MS)}).`],
   ]],
   ['Your powers', [
     ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop snakes, holes or fire, up to ${TUNE.LEAP_REACH} cells, to the first free cell: islands too. A ring shows where you’ll land. It costs your tail’s tip, then rests ${secs(TUNE.LEAP_COOLDOWN_MS)} s.`],
     ['flash', 'Flash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift or a right-click on the log'}: two cells in a blink, free. Then it rests ${secs(TUNE.FLASH_COOLDOWN_MS)} s.`],
+    ['cut', 'Cuts', 'A flash cuts through a body one thick with free log beyond: the part behind falls to beads. Leave fewer than 3 in front and that snake is out. Your own body too: drop your tail to fit a pocket. Along the edge, or against a hole or another body, nothing can be cut from that side.'],
+    ['failflash', 'Failed flash', `Flash into a head, a body too thick, the edge or a hole and it fails: ${TUNE.FAIL_LOSS} off your tail and a longer stun.`],
     ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden flashes.'],
     ['rests', 'Resting', 'Two half-rings round your head: your jump (left) and your flash (right) coming back.'],
   ]],
@@ -113,7 +113,7 @@ const GUIDE_ROWS = [
 ];
 // (Until the renderer can draw a picture, a stand-in: it draws a kind it
 // doesn't know as an apple. Every kind has one, in case its picture fails.)
-const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', choke: '🤢', cough: '💨', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', bridge: '🌉', land: '🚩', lostflag: '🚩' };
+const GUIDE_STAND_IN = { capricious: '🎭', copycat: '🐱', 'basic-win': '👑', 'basic-steer': '🐍', 'basic-crash': '💥', 'basic-hunger': '🍽️', apple: '🍎', golden: '🌟', beetle: '🪲', goldbeetle: '🪲', dig: '🪲', pellet: '🟢', squash: '💦', baked: '🍎', roast: '🍖', mushroom: '🍄', goldcap: '🍄', leaf: '🍂', jump: '⤴️', flash: '⚡', cut: '✂️', failflash: '💫', wrap: '🔁', held: '✨', rests: '⏳', fire: '🔥', knock: '🍎', hole: '🕳️', bridge: '🌉', land: '🚩', lostflag: '🚩' };
 const GUIDE_UNDRAWN = new Set();
 function renderGuide() {
   const px = Math.round(36 * (window.devicePixelRatio || 1));

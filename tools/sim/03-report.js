@@ -55,11 +55,12 @@ function report({ per, total, suddenAt }, withCensus) {
     const hops = c.hop1 + c.hop2 + c.hop3;
     console.log(`the island hop: ${a(hops)} jumps a round, over 1/2/3 cells ${[c.hop1, c.hop2, c.hop3].map(n => pct(n, hops) + '%').join('/')}, over a hole ${pct(c.hopHole, hops)}% · landings that crashed ${pct(c.hopFail, hops)}% · out within 3 s of a jump ${pct(c.hopDie, hops)}%`);
     const snakeTicks = c.aliveEarly + c.aliveLate, deathsAll = Object.values(total.causes).reduce((x, y) => x + y, 0);
+    console.log(`the flashes cut: ${a(c.cutsPlain)} plain cuts and ${a(c.cutsGold)} golden a round (own tail dropped ${a(c.cutsOwn)}), neck cuts ${a(total.causes.cut || 0)}, failed flashes ${a(c.failed)} (${pct(c.failed, c.flashes + c.dashes)}% of flashes; dashes blown up ${a(c.failedGold)}) · along the edge ${(100 * c.edgeTicks / Math.max(1, snakeTicks)).toFixed(1)}% of snake-time; huggers (an eighth of their time or more) ${pct(c.huggers, c.huggers + c.others)}% of snakes, winning ${pct(c.huggerWins, c.huggers)}% (place ${(c.huggerPlace / Math.max(1, c.huggers)).toFixed(2)}) against ${pct(c.otherWins, c.others)}% (place ${(c.otherPlace / Math.max(1, c.others)).toFixed(2)})`);
     console.log(`bridges: ${a(c.rides)} rides a round, ${(100 * c.rideTicks / Math.max(1, snakeTicks)).toFixed(2)}% of snake-time on a back · out while riding ${c.rideDeaths} (falls ${c.rideFalls}): ${(1000 * c.rideDeaths / Math.max(1, c.rideTicks)).toFixed(1)} per 1000 ticks riding, against ${(1000 * (deathsAll - c.rideDeaths) / Math.max(1, snakeTicks - c.rideTicks)).toFixed(1)} off`);
     const share = (n, d) => (100 * n / Math.max(1, d)).toFixed(1) + '%';
     console.log(`hunger: before the woodpecker, ${share(c.hungryEarly, c.aliveEarly)} of snake-time in the hunger warning (${share(c.starvingEarly, c.aliveEarly)} starving); after, ${share(c.hungryLate, c.aliveLate)} (${share(c.starvingLate, c.aliveLate)})`
       + ` · meals a snake-minute mid-round (from HUNGER_MID_FROM_MS to the woodpecker) ${(c.mealsMid / Math.max(1e-9, c.midMs / 60000)).toFixed(1)}`);
-    console.log(`beads: ${a(c.beads)} eaten a round, ${share(c.ownBeads, c.beads)} of them by the snake they broke off · chokes ${a(c.chokes)} a round (in ${of(c.chokeRounds)} of rounds), food nudged aside coughing ${a(c.nudges)} (beads ${a(c.nudgedBeads)})`);
+    console.log(`beads: ${a(c.beads)} eaten a round, ${share(c.ownBeads, c.beads)} of them by the snake they broke off · own beads squashed ${a(c.chokes)} a round (in ${of(c.chokeRounds)} of rounds)`);
     const chaseT = [...c.chaseTicks].sort((x, y) => x - y), escaped = c.chasesDived + c.chasesDug + c.chasesFlown;
     console.log(`beetles: above ground ${a(c.bugs)} times a round, and then caught ${share(c.bugsCaught, c.bugs)}, down a burrow ${share(c.bugsDived, c.bugs)}, dug in ${share(c.bugsDug, c.bugs)}, flew off ${share(c.bugsFlown, c.bugs)}, eaten by the woodpecker ${share(c.bugsPecked, c.bugs)}`
       + ` · chased (a head came within BEETLE_FEAR) ${a(c.chases)} a round: escaped ${share(escaped, c.chases)} (down a burrow ${share(c.chasesDived, c.chases)}, dug in ${share(c.chasesDug, c.chases)}, flew off ${share(c.chasesFlown, c.chases)}), caught ${share(c.chasesCaught, c.chases)} after a median ${chaseT.length ? chaseT[chaseT.length >> 1] : '-'} ticks`
@@ -89,7 +90,7 @@ function reportCensus(per) {
   console.log('census, each personality (a round played; flashes and jumps a minute alive; golden: golden power food picked up)');
   console.table(Object.keys(per).sort().map(name => {
     const p = per[name], R = Math.max(1, p.rounds), minutes = Math.max(1e-9, p.aliveMs / 60000), f = (n, d = R) => +(n / d).toFixed(2);
-    return { name, rounds: p.rounds, alive: `${Math.round(p.aliveMs / R / 1000)}s`, food: f(p.eaten), kills: f(p.kills), crashes: f(p.crashes), chokes: f(p.chokes),
+    return { name, rounds: p.rounds, alive: `${Math.round(p.aliveMs / R / 1000)}s`, food: f(p.eaten), kills: f(p.kills), crashes: f(p.crashes), squashed: f(p.chokes),
       'flash/min': f(p.flashes, minutes), 'jump/min': f(p.jumps, minutes), golden: f(p.golden), leaps: f(p.leaps), dashes: f(p.dashes) };
   }));
 }

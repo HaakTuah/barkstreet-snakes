@@ -495,7 +495,7 @@ const STACHE_STEPS = 16;
 const stacheSprite = (i = 0) => sprite('stache', reduced && i ? -i : i, drawStacheSprite);
 // The step of its gag a snake's flick is at (0: not flicking), as tongue() times it.
 function stacheStep(s, a, now) {
-  if (deadNow || now >= a.tongueUntil || coughing(s) || mouthOpen(s, a) >= 0.08) return 0;
+  if (deadNow || now >= a.tongueUntil || mouthOpen(s, a) >= 0.08) return 0;
   const p = 1 - (a.tongueUntil - now) / a.tongueMs;
   return Math.max(1, Math.min(STACHE_STEPS - 1, Math.round(p * STACHE_STEPS)));
 }

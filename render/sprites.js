@@ -258,8 +258,9 @@ const drawBead = (g, v) => {
 // beetle, goldbeetle, pellet, roast (a roasted bead), baked (a baked
 // apple), jump, flash, wrap, hole, fire, land, held (a snake holding
 // golden powers: its gold line and a pip of each kind), rests (you, your
-// jump and flash resting: your two half-rings), choke (you spitting your
-// own bead aside), cough (you coughing: mouth shut, puffs of breath),
+// jump and flash resting: your two half-rings), squash (your own bead
+// squashed flat behind you), cut (a body cut through), failflash (a
+// failed flash's burst and stars),
 // lostflag (a colony's flag falling into its pit), dig (a beetle half
 // sunk in sawdust, digging in), knock (an apple flying out of the
 // woodpecker's mark to the ring where it lands), and the basics (How to
@@ -278,8 +279,8 @@ function guideSprite(kind, px) {
   guideSprites.set(key, c);
   return c;
 }
-const GUIDE_TILE = { hole: 1.5, bridge: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, choke: 1.15, lostflag: 1.2, cough: 1.15, dig: 0.9, knock: 1.35, 'basic-win': 1.1, 'basic-steer': 1.1, 'basic-crash': 1.1 }; // (on a tile of bark this many cells either side of the middle)
-const COUGH_GUIDE = [[0.74, 0.02, 0.21, 1], [0.97, -0.46, 0.13, 0.75]]; // (the guide's puffs: x, y, radius in cells, and how faint)
+const GUIDE_TILE = { hole: 1.5, bridge: 1.5, land: 1.25, fire: 0.95, mushroom: 0.95, held: 1.1, rests: 1.05, squash: 1.15, cut: 1.15, failflash: 1.15, lostflag: 1.2, dig: 0.9, knock: 1.35, 'basic-win': 1.1, 'basic-steer': 1.1, 'basic-crash': 1.1 }; // (on a tile of bark this many cells either side of the middle)
+const SQUASH_SPLAT = [[1.25, -0.32, 0.07], [1.35, 0.3, 0.06], [0.1, 0.36, 0.05], [1.6, 0.02, 0.05]]; // (the guide's squash: the splat's drops, x, y, radius in cells)
 const DIG_SPRAY = [[-0.62, -0.42, 0.045], [0.6, -0.5, 0.04], [0.66, 0.36, 0.05], [-0.5, 0.58, 0.04], [0.05, -0.7, 0.035], [-0.72, 0.1, 0.035]];
 const GUIDE = {
   apple: g => drawApple(g, 'fresh'),
@@ -305,35 +306,29 @@ const GUIDE = {
   land: g => { guideCells(GUIDE_LAND); g.translate(-12 * CELL, -12 * CELL); paintLand(g, null, guideMask, guideNone, '#2563eb', 0, NO_HOLES); },
   held: g => guideSnake(g, '#2563eb', false, (x, y) => drawPips(x, y, Math.PI, CELL * 0.54, 0, 1, 1, false)),
   rests: g => guideSnake(g, '#4ade80', true, (x, y) => { const rr = CELL * 0.84; restHalf(x, y, rr, -1, 0.6, SKY); restHalf(x, y, rr, 1, 0.3, EMBER); }),
-  choke: g => guideSnake(g, '#4ade80', true, x => { // (choking on its own bead: cheeks puffed, the bead spat aside in an arc, a cough of breath)
+  squash: g => { // (round six B: your own bead squashed flat behind your head, a smear in its colour with a splat round it)
     const c = CELL;
-    g.beginPath();
-    for (const sg of SIDES2) { g.moveTo(x + c * 0.56, sg * c * 0.38); g.arc(x + c * 0.4, sg * c * 0.38, c * 0.16, 0, TAU); }
-    g.strokeStyle = INK; g.lineWidth = c * 0.04; g.stroke();
-    g.fillStyle = '#4ade80'; g.fill();
-    for (const sg of SIDES2) { g.fillStyle = '#fffbea'; circle(x + c * 0.16, sg * c * 0.2, c * 0.13); g.fillStyle = INK; circle(x + c * 0.2, sg * c * 0.2, c * 0.07); } // (its eyes again, over its cheeks)
-    g.strokeStyle = 'rgba(255,251,234,0.8)'; g.lineWidth = c * 0.045; g.lineCap = 'round'; g.setLineDash([c * 0.07, c * 0.09]);
-    g.beginPath(); g.moveTo(x + c * 0.55, c * 0.12); g.quadraticCurveTo(x + c * 1.0, c * 0.02, x + c * 0.8, c * 0.5); g.stroke();
-    g.setLineDash(NO_DASH);
-    g.save(); g.translate(x + c * 0.78, c * 0.74); drawBead(g, '#4ade80|'); g.restore();
-    const px = x + c * 0.8, py = -c * 0.5, r = c * 0.13; // (a puff of a cough)
-    g.beginPath();
-    for (let j = 0; j < COUGH_PUFF.length; j += 3) { const cx = px + COUGH_PUFF[j] * r, cy = py + COUGH_PUFF[j + 1] * r, cr = COUGH_PUFF[j + 2] * r; g.moveTo(cx + cr, cy); g.arc(cx, cy, cr, 0, TAU); }
-    g.strokeStyle = 'rgba(58,38,20,0.6)'; g.lineWidth = c * 0.05; g.stroke();
-    g.fillStyle = '#fbf7ec'; g.fill();
-  }),
-  cough: g => guideSnake(g, '#4ade80', true, x => { // (coughing: its mouth shut, puffs of breath coming out past it)
+    g.save(); g.scale(1.6, 0.55); g.translate(c * 0.55, 0); drawBead(g, '#4ade80|'); g.restore();
+    g.fillStyle = 'rgba(74,222,128,0.55)';
+    for (const [px, py, r] of SQUASH_SPLAT) circle(c * px, c * py, c * r);
+    guideSnake(g, '#4ade80', true, () => {});
+  },
+  cut: g => { // (round six B: a body cut through, the snip of light across the gap, and its tail falling to beads)
     const c = CELL;
-    g.strokeStyle = INK; g.lineWidth = c * 0.04; g.lineCap = 'round'; // (its mouth, shut)
-    g.beginPath(); g.moveTo(x + c * 0.3, c * 0.07); g.quadraticCurveTo(x + c * 0.4, c * 0.02, x + c * 0.47, c * 0.05); g.stroke();
-    for (const [px, py, r, a] of COUGH_GUIDE) {
-      g.globalAlpha = a;
-      g.beginPath();
-      for (let j = 0; j < COUGH_PUFF.length; j += 3) { const cx = x + c * px + COUGH_PUFF[j] * c * r, cy = c * py + COUGH_PUFF[j + 1] * c * r, cr = COUGH_PUFF[j + 2] * c * r; g.moveTo(cx + cr, cy); g.arc(cx, cy, cr, 0, TAU); }
-      g.strokeStyle = 'rgba(58,38,20,0.6)'; g.lineWidth = c * 0.05; g.stroke();
-      g.fillStyle = '#fbf7ec'; g.fill();
-    }
-    g.globalAlpha = 1;
+    g.fillStyle = INK; g.beginPath(); g.roundRect(-c * 1.15, -c * 0.38, c * 0.95, c * 0.76, c * 0.38); g.fill();
+    g.fillStyle = '#5fd17a'; g.beginPath(); g.roundRect(-c * 1.1, -c * 0.33, c * 0.85, c * 0.66, c * 0.33); g.fill();
+    for (let k = 0; k < 2; k++) { g.save(); g.translate(c * (0.45 + 0.55 * k), c * (0.1 - 0.05 * k)); drawBead(g, '#5fd17a|'); g.restore(); }
+    g.strokeStyle = '#fffbea'; g.lineWidth = c * 0.12; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(-c * 0.05, -c * 0.62); g.lineTo(c * 0.1, c * 0.62); g.stroke();
+    g.strokeStyle = EMBER; g.lineWidth = c * 0.05;
+    g.beginPath(); g.moveTo(-c * 0.05, -c * 0.62); g.lineTo(c * 0.1, c * 0.62); g.stroke();
+  },
+  failflash: g => guideSnake(g, '#4ade80', true, x => { // (round six B: a failed flash, an ember burst where it hit and its stars going round)
+    const c = CELL;
+    g.strokeStyle = EMBER; g.lineWidth = c * 0.07; g.lineCap = 'round';
+    for (let k = 0; k < 7; k++) { const t = -1.2 + k * 0.4; g.beginPath(); g.moveTo(x + c * 0.7 + Math.cos(t) * c * 0.18, Math.sin(t) * c * 0.18); g.lineTo(x + c * 0.7 + Math.cos(t) * c * 0.48, Math.sin(t) * c * 0.48); g.stroke(); }
+    g.fillStyle = '#fde047';
+    for (const [px, py] of [[-0.1, -0.62], [0.35, -0.7], [-0.45, -0.5]]) { g.beginPath(); for (let k = 0; k < 10; k++) { const r = k % 2 ? c * 0.06 : c * 0.14, t = k * Math.PI / 5; g[k ? 'lineTo' : 'moveTo'](x + c * px + Math.cos(t) * r, c * py + Math.sin(t) * r); } g.closePath(); g.fill(); }
   }),
   dig: g => { // (a cornered beetle digging in: half sunk in its bore, a collar of sawdust round it, sawdust flying off)
     const c = CELL, was = ctx;
@@ -566,7 +561,7 @@ const drawPowerGlyph = (g, kind) => {
 // Between steps it's never quite still: its feelers wave, it breathes, and
 // every few seconds it lifts its wing cases and buzzes, as if about to fly
 // off. Scared, it trembles. It pops in when it comes out. Sent scurrying
-// (nudged aside by a coughing head, knocked aside by the woodpecker), it
+// (knocked aside by the woodpecker), it
 // scurries there. Cornered, it digs in (see digOf).
 //
 // Up to two are out at once, each with its own heading, pop and wing beat:
