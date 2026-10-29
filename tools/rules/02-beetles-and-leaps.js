@@ -88,11 +88,11 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('...over two, it lands on the third tick', g2.snakes[0].body[0].x === 8 && !g2.snakes[0].flight && g2.snakes.every(o => o.alive), JSON.stringify(g2.snakes[0].body[0]));
 }
 
-{ // A golden leap: the same island hop, free.
+{ // A golden leap, a quick press (let go at once): the same island hop, free.
   const g = board([[line(5, 10, 5), 'right'], wall(6), wall(7)]);
   const me = g.snakes[0];
   me.leaps = 2;
-  E.leap(g, me);
+  E.leap(g, me); E.letGo(g, me);
   quiet(g);
   check('a golden leap: up over what\'s in front', me.body[0].x === 6 && !!me.flight && me.leaps === 1 && g.events.some(e => e.type === 'leap' && e.gold && e.reach === 2));
   quiet(g); quiet(g);

@@ -52,6 +52,7 @@ window.TUNING = Object.freeze({
   GOLD_BEETLE_CHANCE: 0.16, // a beetle coming out is a golden one this often (about two golden beetles a round, as many as with more beetles at 0.12): catch it for golden jumps (the same island hop, free)...
   LEAP_CHARGES: 2,          // ...this many (up to LEAP_MAX held at once)
   LEAP_MAX: 3,
+  GOLD_FLY: 5,              // round six B: a golden jump held flies on, up to this many cells in the air (let go: down on the next cell; a quick press: the plain hop)
   LEAF_CHANCE: 0.25,        // wind: each gust might blow a golden leaf onto the log (one at a time): dashes...
   LEAF_TICKS: 90,           // ...it blows away after this many ticks
   DASH_CHARGES: 2,          // ...this many (up to DASH_MAX held): golden flashes, three cells in one tick, cutting through a body up to DASH_THICK thick and putting out every fire (the edge or a hole: you blow up)
