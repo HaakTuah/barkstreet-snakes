@@ -73,3 +73,35 @@ const across = (n, hx = 14) => Array.from({ length: n }, (_, i) => [hx - i, 10])
   E.leap(g2, g2.snakes[0]); quiet(g2);
   check('...never on one that won\'t be there when it comes down', !g2.events.some(e => e.type === 'leap'));
 }
+
+// The rivals use bridges too, through the same engine calls: folded on a strip, food on an
+// island across a pit, and a person's body lying across it (its tail end trailing down the pit).
+function bridgeScene(persona, tail) {
+  const g = E.createGame({ withPlayer: true, personas: [persona] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [b, s] = g.snakes;
+  const strip = (x, y) => x >= 1 && x <= 2 && y >= 2 && y <= 21, isle = (x, y) => (x >= 6 && x <= 16 && y >= 4 && y <= 18) || (x === 5 && y === 10);
+  for (let y = 0; y < T.GRID; y++) for (let x = 0; x < T.GRID; x++) if (!strip(x, y) && !isle(x, y)) g.holes.add(K(x, y));
+  s.body = []; for (let y = 12; y <= 21; y++) s.body.push({ x: 2, y }); for (let y = 21; y >= 12; y--) s.body.push({ x: 1, y }); s.dir = D.up;
+  b.body = []; for (let x = 7; x >= 3; x--) b.body.push({ x, y: 11 }); for (let y = 12; y < 12 + tail; y++) b.body.push({ x: 3, y }); b.dir = D.right; b.queue = [];
+  s.leapReadyAt = 1e12; // (no jumping: the bridge only)
+  g.food = [{ x: 12, y: 11, kind: 'food', expires: 9999 }];
+  g.given = new Set([K(12, 11)]);
+  const snap = () => ({ snakes: g.snakes.map(q => ({ id: q.id, body: q.body.map(c => ({ ...c })), dir: q.dir, stun: 0, leaps: 0, dashes: 0, wrap: 0, air: 0, land: -1, cough: 0 })), holes: g.holes.size, fires: [], pecks: [] });
+  g.history = [snap(), snap(), snap()];
+  let rode = false, over = false;
+  for (let n = 0; n < 40 && s.alive && !over; n++) {
+    b.queue = b.body[0].x >= 15 ? [b.body[0].y < 11 ? D.down : D.up] : []; // (it keeps going, round the island)
+    feed(g); quiet(g);
+    const h = s.body[0];
+    if (g.holes.has(K(h.x, h.y))) rode = true;
+    if (rode && h.x >= 6 && !g.holes.has(K(h.x, h.y))) over = true;
+  }
+  return { rode, over, alive: s.alive };
+}
+{
+  const long = bridgeScene('gobbler', 9);
+  check('a rival crosses a bridge to an island when it pays, and gets off in time', long.rode && long.over && long.alive, JSON.stringify(long));
+  const short = bridgeScene('gobbler', 3);
+  check('...and on one too short to cross, never caught on it when its tail passes', short.alive && !short.over, JSON.stringify(short));
+}
