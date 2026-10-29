@@ -330,6 +330,14 @@ In the design chat (29 October 2026, 00:27 and 00:28 UTC), on Wildcard's hair as
 
 (queued as 2f in `docs/PROGRESS.md`)
 
+In the design chat (29 October 2026, 00:31 and 00:32 UTC), playing:
+
+> I notice snakes imidately become plump again when after eating while starving. I feel it should be an animation where you see it transform to getting plump and its color back.
+
+> Yes, expertly!
+
+(queued as 2g in `docs/PROGRESS.md`)
+
 In the design chat (29 October 2026, 00:15 to 00:18 UTC), on a new chatter line: "Should colonist have the line "Snows always melt"?", then "It's quoting mark Anthony in rome." (a scene from the series, where Antony speaks for Caesar: "I assure you, it is no threat. Snows always melt."), and, to Claude's take that it belongs to Mason, the Caesar snake, in English, beside "Hiems venit!":
 
 > Agreed.
