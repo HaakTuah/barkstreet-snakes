@@ -76,6 +76,8 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 - Others may follow you through while your body passes and for about 1 s after. Coming out onto your body is a crash.
 - *The lesson:* the first time someone follows, "Anyone can follow you through a portal, for a moment."
 
+**Mushrooms come back up** (the owner, 29 October 2026: "what if every snake pukes up the mushrooms instead, so they can poison others as well?"; "Yes, i agree to all, expertly!"). A mushroom still shrinks whoever eats it (`SHRINK`, 3), and is then thrown back up rather than gone: it lands by the roll rule (into the turn, else the side with more open log, a tie toward the middle), still poisonous for whoever eats it next, and it falls off the edge or into a hole where the rule sends it there. A spat mushroom wilts faster (half the time it had left), so the log never fills with poison. Golden mushrooms are a power, eaten as now. *The cue:* a green-cheeked gulp and the mushroom flying out; *the lesson:* the first time, "Bleh! Mushrooms come back up, and still poison."; the rivals spit them where it hurts and steer clear of spat ones.
+
 **Mason builds double walls.** A plain flash cuts a wall one thick, so Mason, who lives by straight walls ("Keep watch!"), lays them two thick where it can, running back alongside. Its straight runs are measured before and after.
 
 **Every rival has a power style.** Each persona uses jumps and flashes its own way, through the same engine calls as a person:
