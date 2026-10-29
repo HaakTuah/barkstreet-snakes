@@ -156,6 +156,7 @@ const promise = await ev(`(() => {
   const u = Math.ceil(-plan.times[3] / ms) + plan.times[3] / ms; // (the same moment of the blow as it was measured at: since 2k, bigger, the ring is under its head, which moves between blows)
   R.birdOver(false); R.birdFrame(u, t); const off = ring();
   R.birdOver(true); R.birdFrame(u, t); const on = ring();
+  R.birdFrame(0.5, t); // (and back to where the piece in the air is looked for, as before)
   out.two = { phase: R.birdPose().phase, hid, under: off.filter(c => c[3] > 128).length, over: differ(off, on) };
   let cell = null; // (under its body, a piece's height clear of the rings)
   for (let y = 6; y <= 17 && !cell; y++) for (let x = 0; x < N && !cell; x++) {
