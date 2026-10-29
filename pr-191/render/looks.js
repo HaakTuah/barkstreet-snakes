@@ -47,7 +47,6 @@ function animOf(s, now) {
       // last came down (its squash).
       lift: new Float32Array(32), hang: new Float32Array(32), sink: new Float32Array(32), lifted: false, bridging: false, liftSw: T.LEAP_SWELL,
       hops: [], holeTick: -1, holeGame: null, nearHole: false, landAt: -1e9, squash: 0,
-      chokeAt: -1e9, coughFrom: 0, coughing: false, // (when it choked on its own bead; when its cough began, as this screen saw it)
     };
     anim.set(s, a);
   }
@@ -231,41 +230,6 @@ function updateGaze(s, look, a, now) {
 // The mouth: open when food is right in front, then a couple of chews after a bite.
 let deadNow = false; // the snake being drawn has just died: mouth shut
 let frameDt = 16;     // this frame's length, for easing
-// Choked on its own bead, it coughs for a moment and eats nothing (the
-// engine's s.coughUntil, synced to guests): its mouth stays shut, and no
-// tongue or gag comes out (see drawCough for its puffs).
-const coughing = s => !!game && s.coughUntil > game.tick;
-// Choking, drawn: as it gags its cheeks puff out for a moment (gagCheeks),
-// and while it coughs, a cough every COUGH_BEAT, each a little puff of
-// breath out past its shut mouth (drawCough), growing and fading as it
-// drifts off (with reduced motion, staying put as it fades), its head
-// jolting (see prepare). The bead it spat flies off in a little arc (see
-// moveFood). How far through its cough's beat it is (-1 before the first).
-// (Made to read at arm's length on a phone, where the first puff was a
-// speck of 3 to 6 px and the jolt under a pixel: the puff 0.14 to 0.28 of
-// a cell, holding its white longer; the head swelling 15% and lurching a
-// tenth of a cell forward over the first third of each beat.)
-const GAG_MS = 280, COUGH_FIRST = 160, COUGH_BEAT = 300, COUGH_JOLT = 0.3, COUGH_SWELL = 0.15, COUGH_LURCH = 0.1;
-function coughPhase(a, now) {
-  const t = now - a.coughFrom - COUGH_FIRST;
-  return t < 0 ? -1 : (t % COUGH_BEAT) / COUGH_BEAT;
-}
-// (In the face's frame, before its face: its cheeks, in the head's own
-// colour and inked, out either side behind its mouth; a star's out past
-// its mustache. Puffed up fast and down slower; with reduced motion,
-// simply puffed while it lasts.)
-function gagCheeks(a, col, now) {
-  const t = (now - a.chokeAt) / GAG_MS;
-  if (t < 0 || t >= 1) return;
-  const c = CELL, puff = reduced ? 1 : t < 0.3 ? t / 0.3 : 1 - (t - 0.3) / 0.7, r = c * (0.1 + 0.12 * puff), x = c * (a.star ? 0.04 : 0.34), y = c * (a.star ? 0.44 : 0.33 + 0.06 * puff);
-  ctx.beginPath();
-  for (const sg of SIDES2) { ctx.moveTo(x + r, sg * y); ctx.arc(x, sg * y, r, 0, TAU); }
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = c * 0.04;
-  ctx.stroke();
-  ctx.fillStyle = col;
-  ctx.fill();
-}
 // The meal goes down (the owner: it plumped up at once, "it should be an
 // animation where you see it transform"): after a meal, from the head, each
 // segment eases from how slim and pale it was drawn to how its clock says it
@@ -311,23 +275,6 @@ function drawPale(a) {
     was = want;
     ctx.fillStyle = rgba(HUNGER_PALE, al); shape(a, 0, i, m - 1); ctx.fill();
   }
-}
-// (In the face's frame, after its face: a puff of breath, a little cloud
-// of three rounds, out past its mouth, inked lightly so it reads on the bark.)
-const COUGH_PUFF = [0, 0, 1, -0.55, 0.5, 0.62, -0.55, -0.5, 0.62]; // (each round: x, y, radius, in the puff's radius)
-function drawCough(a, now) {
-  const ph = coughPhase(a, now);
-  if (ph < 0) return;
-  const c = CELL, x = c * (0.64 + (reduced ? 0 : 0.36 * ph)), r = c * (0.14 + 0.14 * ph), was = ctx.globalAlpha;
-  ctx.globalAlpha = was * (1 - ph * ph * ph);
-  ctx.beginPath();
-  for (let j = 0; j < COUGH_PUFF.length; j += 3) { const px = x + COUGH_PUFF[j] * r, py = COUGH_PUFF[j + 1] * r, pr = COUGH_PUFF[j + 2] * r; ctx.moveTo(px + pr, py); ctx.arc(px, py, pr, 0, TAU); }
-  ctx.strokeStyle = 'rgba(58,38,20,0.55)';
-  ctx.lineWidth = c * 0.045;
-  ctx.stroke();
-  ctx.fillStyle = '#fbf7ec';
-  ctx.fill();
-  ctx.globalAlpha = was;
 }
 // Hunger where your eyes are (on a wide screen the tag's bar goes unseen:
 // the owner starved): every snake shows it on its body, from the clock its
@@ -376,7 +323,7 @@ function drawGrowl(a, now) {
   ctx.lineCap = cap;
 }
 function mouthOpen(s, a) {
-  if (deadNow || coughing(s)) return 0;
+  if (deadNow) return 0;
   const t = (lastNow - a.ateAt) / T.CHEW_MS;
   if (t >= 0 && t < 1) return 0.55 * Math.abs(Math.sin(t * Math.PI * 2));
   if (!game) return 0;
@@ -673,16 +620,6 @@ function prepare(s, alpha, now, dead, impact = 0) {
   a.tickPos = game ? game.tick - 1 + alpha : 0;
   const bite = (lastNow - a.ateAt) / T.BITE_MS;
   a.bump = !dead && bite >= 0 && bite < 1 ? (a.gulpR > T.GULP ? 0.2 : 0.12) * Math.sin(bite * Math.PI) : 0;
-  // Choked on its own bead: it coughs a while (see drawCough), its head
-  // jolting at each cough. (From the choke, if this screen saw it; a
-  // friend's screen may only see the cough.)
-  const cough = !dead && coughing(s);
-  if (cough && !a.coughing) a.coughFrom = now - a.chokeAt < 500 ? a.chokeAt : now;
-  a.coughing = cough;
-  if (cough && !reduced) { // (a jolt: its head swells and lurches forward with each cough)
-    const ph = coughPhase(a, now);
-    if (ph >= 0 && ph < COUGH_JOLT) { const j = Math.sin(ph / COUGH_JOLT * Math.PI); a.bump += COUGH_SWELL * j; pts[0] += a.hc * CELL * COUGH_LURCH * j; pts[1] += a.hs * CELL * COUGH_LURCH * j; }
-  }
   for (let i = 0; i < m; i++) a.rad[i] = radius(i, m, a, a.tickPos);
   mealSwell(a, m, now);
   for (let i = 1; i < m; i++) if (a.slimSeg[i]) a.rad[i] *= 1 - a.slimSeg[i]; // (hungry: its body slims, its head as it was, and fills out again as a meal goes down: see hungerLook, mealSwell)

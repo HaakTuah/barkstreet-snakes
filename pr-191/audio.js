@@ -10,7 +10,7 @@
 //                                   streak: 0..7 (apples in a row: the pluck climbs a pentatonic scale),
 //                                   gold: true (a golden pickup: a sparkle over the cue),
 //                                   crest: seconds (the riser: how long it rises),
-//                                   delay: seconds, 0..1 (it sounds that much later, on the audio clock: the cough a beat after the choke),
+//                                   delay: seconds, 0..1 (it sounds that much later, on the audio clock),
 //                                   the drum: strike (which of the round's, from 0), from: ms (into it already), rate (watched faster),
 //                                   the knock: land: seconds (how long the piece it's for is in the air, as drawn),
 //                                   the call: settle: true (one "kik!", the bird back on its perch) }
@@ -63,10 +63,10 @@ window.SnakeAudio = (() => {
     rivalDeath: 120, death: 250, best: 400, win: 600, winBest: 600,
     beat: 80, go: 80, woodpecker: 400, peck: 340, hungry: 1200, hungerWarn: 1500, ui: 30, // peck: never more than 3 in any second
     crackle: 300, thunder: 900, gust: 1500, burrow: 1000, scrabble: 250, rainbow: 1500, rain: 1500,
-    ko: 200, close: 1400, field: 800, bonk: 150, bonked: 300, leap: 120, thunk: 250, dash: 50, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
+    ko: 200, close: 1400, field: 800, bonk: 150, bigBonk: 300, bonked: 300, leap: 120, thunk: 250, dash: 50, douse: 300, wrap: 1500, boom: 300, ready: 600, alight: 400, singe: 200, bake: 400, ash: 400, snip: 300, drum: 300, crash: 300, aim: 400, call: 2000, snow: 1500, ember: 250, riser: 1500, stinger: 1500,
     flash: 150, flashReady: 600, lastApples: 4000,
     babble: 4000, // (whoever speaks: never two at once, at most one every few seconds; bubbles come more often, so most are silent)
-    choke: 300, cough: 600, // (your next choke can come as soon as your cough is over, COUGH_TICKS ticks on: both are heard again)
+    choke: 300, squash: 50,
     dig: 300, knock: 400, // (a beetle digs in again only after a spell under, the woodpecker strikes again only after a rest and an aim: each is heard; beetles digging in together, or the pieces one strike knocks aside, are one sound)
     heal: 400, // (a burrow closes over only for a dig's new one: two digs ending together, one crumble)
   };
@@ -598,9 +598,10 @@ window.SnakeAudio = (() => {
       tone(t + 0.24, 'sine', 340, 0.06, 0.08, 0.004, 600);
     },
 
-    // Choking on your own bead: a gag (a strangled gulp that rattles in the
-    // throat), then a spit, "ptoo" (the lips popping, a hollow "oo"), and the
-    // bead landing aside on the bark with a little tok. About 400 ms.
+    // A spit: a gag (a strangled gulp that rattles in the throat), then
+    // "ptoo" (the lips popping, a hollow "oo"), and what's spat landing on
+    // the bark with a little tok. About 400 ms. (Choking on your own bead
+    // went in round six B; kept for the mushroom that comes back up.)
     choke(t) {
       const gag = tone(t, 'triangle', 170, 0.11, 0.26, 0.004, 250, 900);
       vibrato(gag, t, 0.11, 38, 30);
@@ -613,14 +614,13 @@ window.SnakeAudio = (() => {
       knock(t + 0.32, 1250, 0.1);
     },
 
-    // The cough after it: a small one, two dry hacks, the second softer (each
-    // a burst of breath through the throat over a short voiced thump).
-    cough(t) {
-      for (const [at, k] of [[0, 1], [0.15, 0.7]]) {
-        noise(t + at, 0.08, 0.24 * k, 'bandpass', 760, 1.1);
-        noise(t + at, 0.05, 0.06 * k, 'highpass', 2600, 0.7);
-        body(t + at, 190, 0.07, 0.26 * k, 0.003, 140, 560, 1.2);
-      }
+    // Your own bead squashed under your head (round six B): a soft wet
+    // splat, low, with a little squelch after it.
+    squash(t) {
+      noise(t, 0.07, 0.2, 'lowpass', 600, 0.9);
+      body(t, 120, 0.08, 0.24, 0.003, 80, 420, 1.2);
+      noise(t + 0.04, 0.09, 0.07, 'bandpass', 1300, 3);
+      tone(t + 0.05, 'sine', 260, 0.06, 0.05, 0.004, 150);
     },
 
     // Lightning on its way: a dry, irregular crackle, high and quiet.
@@ -737,6 +737,19 @@ window.SnakeAudio = (() => {
       mallet(t + 0.16, mtof(88), 0.12, 0.08);
       mallet(t + 0.24, mtof(91), 0.12, 0.07);
       mallet(t + 0.32, mtof(88), 0.14, 0.06);
+    },
+    // Your failed flash (round six B): a bigger bonk, a heavy thud under it,
+    // and the stars' mallets slower and lower, going round longer.
+    bigBonk(t) {
+      tone(t, 'sine', 150, 0.3, 0.6, 0.002, 50);
+      tone(t, 'triangle', 520, 0.16, 0.42, 0.001, 220, 1400);
+      noise(t, 0.09, 0.3, 'lowpass', 700, 0.8);
+      noise(t, 0.07, 0.2, 'bandpass', 600, 1.2);
+      tone(t + 0.05, 'triangle', 260, 0.4, 0.16, 0.01, 420);
+      mallet(t + 0.22, mtof(84), 0.14, 0.08);
+      mallet(t + 0.34, mtof(87), 0.14, 0.07);
+      mallet(t + 0.46, mtof(84), 0.16, 0.06);
+      mallet(t + 0.58, mtof(87), 0.18, 0.05);
     },
     // A leap: a springy boing up and a whoosh of air.
     leap(t) {
