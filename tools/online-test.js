@@ -193,7 +193,7 @@ const EVENTS = (s, o, h, k) => {
     weather: [{ kind: ['sun', 'wind', 'rain', 'storm', 'snow'][k % 5] }], ember: [{ ...at, fx: Math.max(0, h.x - 1), fy: h.y }], woodpecker: [{}],
     peck: [{ ...at, cells: [h.y * E.GRID + h.x], under: [s.id] }], rot: [{ ...at, kind: 'apple' }, { ...at, kind: 'pellet', color: o.color }],
     baked: [{ ...at, kind: 'food' }], ash: [{ ...at, kind: 'pellet' }],
-    squash: [{ snake: s, ...at }], crash: [{ snake: s, ...at, cause: `crashed into ${o.name}`, killer: o.name, killerId: o.id, lost: 3 }, { snake: s, ...at, cause: 'hit the edge', killer: 'wall', killerId: null, lost: 5, failed: 1 }],
+    squash: [{ snake: s, ...at }], spit: [{ snake: s, ...at, tx: at.x, ty: at.y + 3, power: 4, hit: o.id, lx: null, ly: null }, { snake: s, ...at, tx: at.x, ty: at.y + 3, power: 5, hit: -1, lx: at.x, ly: at.y }], crash: [{ snake: s, ...at, cause: `crashed into ${o.name}`, killer: o.name, killerId: o.id, lost: 3 }, { snake: s, ...at, cause: 'hit the edge', killer: 'wall', killerId: null, lost: 5, failed: 1 }],
     dig: [{ ...at, until: k + 8 }], dive: [{ ...at }, { ...at, dug: 1 }],
     knock: [{ kind: 'food', ...at, tx: Math.min(E.GRID - 1, h.x + 2), ty: h.y }, { kind: 'beetle', ...at, tx: h.x, ty: Math.max(0, h.y - 2), gold: 1 }, { kind: 'pellet', ...at, tx: null, ty: null, color: o.color }], // (knocked aside, a golden beetle scurrying, and a bead in its colour with nowhere to go)
     burrow: [{ ...at }, { ...at, dug: 1 }], shut: [{ ...at, at: 9000 + k }], heal: [{ ...at }], // (one cracked open, or left by a dig; one starting to grow shut; one closing over)
