@@ -191,7 +191,7 @@ const ARRIVAL_SPOT = GRID / 2;
 // narrower than its cell, so that spot shows), so it's seen chipping the
 // log beside the snake, which the strike leaves unhurt. Only where it's
 // drawn: the tiles go as they always did. From the bodies as the tick
-// stands, and when they move it shifts its grip to the new spot in half a
+// stands (and as they slide through it), and when they move it shifts its grip to the new spot in half a
 // tick. AX, AY: from the cell's middle, units, as drawn;
 // AFREE: how far the nearest body's edge is from there (Infinity: none on
 // the cell). The bodies round the cell are kept for the dent's cracks (see
@@ -199,22 +199,31 @@ const ARRIVAL_SPOT = GRID / 2;
 const AIM_IN = 1, AIM_RIM = 2, AIM_TIE = 0.5; // (how far inside the cell's edge it aims; a body's ink round it; how near as clear two spots count as the same, units)
 const aimAt = { spot: -1, from: 0, ox: 0, oy: 0, free: Infinity, px: 0, py: 0, dx: 0, dy: 0 };
 let AX = 0, AY = 0, AFREE = Infinity, segN = 0;
-const segs = new Float32Array(5 * 64); // (x0, y0, x1, y1, r: the bodies' pieces round the cell)
+const segs = new Float32Array(5 * 128); // (x0, y0, x1, y1, r: the bodies' pieces round the cell)
+function addSeg(x0, y0, x1, y1, r) { // (cells; r, units)
+  if (segN * 5 === segs.length) return;
+  const k = 5 * segN++;
+  segs[k] = x0 * CELL + CELL / 2; segs[k + 1] = y0 * CELL + CELL / 2; segs[k + 2] = x1 * CELL + CELL / 2; segs[k + 3] = y1 * CELL + CELL / 2; segs[k + 4] = r;
+}
 function freeAim(spot, bx, by) { // (bx, by: where it clings; of spots as clear, the nearest that)
   const A = aimAt, sx = spot % GRID, sy = (spot - sx) / GRID, mx = sx * CELL + CELL / 2, my = sy * CELL + CELL / 2;
   let on = false;
   segN = 0;
   for (const s of game.snakes) {
     if (!s.alive) continue;
-    const b = s.body, n = b.length, rad = i => (i === 0 ? 0.54 : 0.44 - 0.1 * i / Math.max(1, n - 1)) * CELL + AIM_RIM; // (as render/lead.js's radius has it)
-    for (let i = 0; i < n; i++) {
-      const c = b[i], d = i + 1 < n ? b[i + 1] : c;
-      if (c.x === sx && c.y === sy) on = true;
-      if (Math.abs(c.x - d.x) + Math.abs(c.y - d.y) > 1) continue; // (across a wrap: each end is its own)
-      if (Math.max(Math.abs(c.x - sx), Math.abs(c.y - sy)) > 1 && Math.max(Math.abs(d.x - sx), Math.abs(d.y - sy)) > 1) continue;
-      if (segN * 5 === segs.length) break;
-      const k = 5 * segN++;
-      segs[k] = c.x * CELL + CELL / 2; segs[k + 1] = c.y * CELL + CELL / 2; segs[k + 2] = d.x * CELL + CELL / 2; segs[k + 3] = d.y * CELL + CELL / 2; segs[k + 4] = Math.max(rad(i), i + 1 < n ? rad(i + 1) : 0);
+    // (where it lies this tick and lay the last, and its head's half step on:
+    // it's drawn sliding from half a tick behind to half a tick ahead)
+    for (const b of s.prev?.length ? [s.body, s.prev] : [s.body]) {
+      const n = b.length, rad = i => (i === 0 ? 0.54 : 0.44 - 0.1 * i / Math.max(1, n - 1)) * CELL + AIM_RIM; // (as render/lead.js's radius has it)
+      for (let i = 0; i < n; i++) {
+        const c = b[i];
+        let d = i + 1 < n ? b[i + 1] : c;
+        if (b === s.body && c.x === sx && c.y === sy) on = true;
+        if (Math.abs(c.x - d.x) + Math.abs(c.y - d.y) > 1) d = c; // (across a wrap: each end is its own)
+        if (Math.max(Math.abs(c.x - sx), Math.abs(c.y - sy)) > 1 && Math.max(Math.abs(d.x - sx), Math.abs(d.y - sy)) > 1) continue;
+        addSeg(c.x, c.y, d.x, d.y, Math.max(rad(i), i + 1 < n ? rad(i + 1) : 0));
+        if (i === 0 && b === s.body && s.dir) addSeg(c.x, c.y, c.x + s.dir.x / 2, c.y + s.dir.y / 2, rad(0));
+      }
     }
   }
   A.ox = A.oy = 0; A.free = Infinity;
