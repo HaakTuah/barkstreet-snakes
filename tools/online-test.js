@@ -193,7 +193,7 @@ const EVENTS = (s, o, h, k) => {
     weather: [{ kind: ['sun', 'wind', 'rain', 'storm', 'snow'][k % 5] }], ember: [{ ...at, fx: Math.max(0, h.x - 1), fy: h.y }], woodpecker: [{}],
     peck: [{ ...at, cells: [h.y * E.GRID + h.x], under: [s.id] }], rot: [{ ...at, kind: 'apple' }, { ...at, kind: 'pellet', color: o.color }],
     baked: [{ ...at, kind: 'food' }], ash: [{ ...at, kind: 'pellet' }],
-    squash: [{ snake: s, ...at }], spit: [{ snake: s, ...at, tx: at.x, ty: at.y + 3, power: 4, hit: o.id, lx: null, ly: null }, { snake: s, ...at, tx: at.x, ty: at.y + 3, power: 5, hit: -1, lx: at.x, ly: at.y }], crash: [{ snake: s, ...at, cause: `crashed into ${o.name}`, killer: o.name, killerId: o.id, lost: 3 }, { snake: s, ...at, cause: 'hit the edge', killer: 'wall', killerId: null, lost: 5, failed: 1 }],
+    squash: [{ snake: s, ...at }], spit: [{ snake: s, ...at, tx: at.x, ty: at.y + 3, power: 4, hit: o.id, lx: null, ly: null }, { snake: s, ...at, tx: at.x, ty: at.y + 3, power: 5, hit: -1, lx: at.x, ly: at.y }], crash: [{ snake: s, ...at, cause: `crashed into ${o.name}`, killer: o.name, killerId: o.id, lost: 3 }, { snake: s, ...at, cause: 'hit the edge', killer: 'wall', killerId: null, lost: 5, failed: 1 }, { snake: s, ...at, cause: `bumped into ${o.name} in mid-air`, killer: o.name, killerId: o.id, lost: 3, air: 1 }],
     dig: [{ ...at, until: k + 8 }], dive: [{ ...at }, { ...at, dug: 1 }],
     knock: [{ kind: 'food', ...at, tx: Math.min(E.GRID - 1, h.x + 2), ty: h.y }, { kind: 'beetle', ...at, tx: h.x, ty: Math.max(0, h.y - 2), gold: 1 }, { kind: 'pellet', ...at, tx: null, ty: null, color: o.color }], // (knocked aside, a golden beetle scurrying, and a bead in its colour with nowhere to go)
     burrow: [{ ...at }, { ...at, dug: 1 }], shut: [{ ...at, at: 9000 + k }], heal: [{ ...at }], // (one cracked open, or left by a dig; one starting to grow shut; one closing over)
@@ -277,10 +277,10 @@ for (let r = 0; r < rounds; r++) {
     // as their browser would: a message, checked, then the engine's own call.
     for (const s of host.snakes) {
       if (!s.isPlayer || !s.alive || chance() > 0.12) continue;
-      const msg = wire({ t: 'pow', k: O.POWERS[chance() < 0.6 ? 1 : chance() < 0.85 ? 0 : 2] });
+      const p = chance(), msg = wire({ t: 'pow', k: p < 0.5 ? 'flash' : p < 0.75 ? 'leap' : p < 0.9 ? 'letgo' : 'unleap' }); // (letgo: the jump let go, a golden flight coming down)
       if (!O.POWERS.includes(msg.k)) continue;
       if (msg.k === 'unleap') { if (s.leapArmed >= host.tick) s.leapArmed = -1; } // (a held jump taken back, as the host does)
-      else (msg.k === 'flash' ? E.flash : E.leap)(host, s);
+      else (msg.k === 'flash' ? E.flash : msg.k === 'letgo' ? E.letGo : E.leap)(host, s);
       presses++;
     }
     const dyingHost = E.step(host);
@@ -392,7 +392,7 @@ function protocolSamples() {
     { type: 'eat', snake: a, kind: 'pellet', ...at, color: '#f00', cooked: true, gold: false }, { type: 'leap', snake: a, ...at, gold: 1, reach: 2 },
     { type: 'dash', snake: a, ...at, n: 3, plain: 1 }, { type: 'death', snake: d }, { type: 'fizzle', snake: a, why: 'resting', ...at, flash: 1 },
     { type: 'crash', snake: a, ...at, cause: 'hit B', killer: 'B', killerId: 1, lost: 2 }, { type: 'cut', snake: a, ...at, lost: 3, by: 1 },
-    { type: 'squash', snake: a, ...at }, { type: 'spit', snake: a, ...at, tx: 2, ty: 6, power: 4, hit: 1, lx: null, ly: null }, { type: 'spit', snake: a, ...at, tx: 2, ty: 6, power: 5, hit: -1, lx: 3, ly: 6 }, { type: 'crash', snake: a, ...at, cause: 'hit the edge', killer: 'wall', killerId: null, lost: 5, failed: 1 }, { type: 'dig', ...at, until: 30 },
+    { type: 'squash', snake: a, ...at }, { type: 'spit', snake: a, ...at, tx: 2, ty: 6, power: 4, hit: 1, lx: null, ly: null }, { type: 'spit', snake: a, ...at, tx: 2, ty: 6, power: 5, hit: -1, lx: 3, ly: 6 }, { type: 'crash', snake: a, ...at, cause: 'hit the edge', killer: 'wall', killerId: null, lost: 5, failed: 1 }, { type: 'crash', snake: a, ...at, cause: 'bumped into B in mid-air', killer: 'B', killerId: 1, lost: 3, air: 1 }, { type: 'dig', ...at, until: 30 },
     { type: 'dive', ...at, dug: 1 }, { type: 'knock', kind: 'pellet', ...at, tx: 4, ty: 4, gold: 0, color: '#f00' }, { type: 'burrow', ...at, dug: 1 },
     { type: 'shut', ...at, at: 9900 }, { type: 'heal', ...at }, { type: 'spawn', kind: 'food', ...at, gold: 0 }, { type: 'weather', kind: 'rain' }, { type: 'ember', ...at, fx: 4, fy: 4 },
     { type: 'woodpecker' }, { type: 'peck', ...at, cells: [10, 11], under: [0] }, { type: 'rot', ...at, kind: 'pellet', color: '#f00' }, { type: 'flown', ...at },

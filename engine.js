@@ -1217,6 +1217,7 @@ window.SnakeEngine = (() => {
         s.air = true;
       } else if (f) { // ...and then it comes down where it was going (let go: the next cell)
         s.dir = f.dir;
+        s.flew = f.gold ? f.flown : 0; // (how many cells a golden flight was in the air, for whoever counts)
         land = f.land;
         s.flight = null;
         s.landing = true;
@@ -1848,6 +1849,7 @@ window.SnakeEngine = (() => {
       if (hurdle(game, c) && !lasting(game, s, c, n + 1)) continue;
       if (moving0.some(o => o !== s && !o.air && !o.flight && o.next && o.next.x === c.x && o.next.y === c.y)) continue;
       path.length = n + 1;
+      path.now = 1;
       return path;
     }
     return null;
@@ -1883,7 +1885,7 @@ window.SnakeEngine = (() => {
     // (held: a golden one flies on while the jump's held; flown: the cells it's been in the air over; path: their keys, its lifted body's)
     s.flight = { dir: s.dir, over: path.slice(1, reach), land: path[reach], gold: golden ? 1 : 0, held: golden && s.jumpHeld ? 1 : 0, flown: 1, path: [key(path[0].x, path[0].y)] };
     s.leapArmed = -1; s.leapNow = 0;
-    game.events.push({ type: 'leap', snake: s, x: path[0].x, y: path[0].y, gold: golden ? 1 : 0, reach });
+    game.events.push({ type: 'leap', snake: s, x: path[0].x, y: path[0].y, gold: golden ? 1 : 0, reach, ...(path.now ? { now: 1 } : {}) });
   }
 
   // A flash asked for, as it would go on the board before any power moves:

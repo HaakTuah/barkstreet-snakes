@@ -160,6 +160,9 @@ const FLAVOR = {
   wrapEnding: s => [`The edges are back in ${s} seconds.`, `Edges back in ${s} seconds.`],
   youSnip: name => `Snip! You cut ${name} in two.`,
   youSnipped: name => `Snip. ${name} flashed right through you.`,
+  youBumped: 'Bumped in mid-air! Down you go.', // (round six B: your first bump in the air)
+  youGoldFly: 'Hold to fly farther. Steer in the air!', // (your first golden jump)
+  leapNow: 'Press twice to leap now, anywhere!', // (the first time a flier comes down just ahead of you: you could have cut it off)
   youMushroomSpit: 'Bleh! Steer to aim it: it lands three ahead.', // (round six B: your first mushroom, which comes back up)
   youSpatOn: name => `Ptoo! ${name} spat a mushroom on you. Steer to spit it back: it lands three ahead.`, // (the first time one hits your head)
   youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],

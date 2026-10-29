@@ -800,7 +800,7 @@ window.SnakeAI = (() => {
     ensureBuffers(N);
     ensureOwners(others.length + 1);
     const steps = Math.max(1, depth); // even a depth-0 search makes one move
-    ensureBodies(Math.max(TUNE.LEAP_REACH + 2, steps), me.body.length + steps + TUNE.LEAP_REACH + 4); // a body grows at most one cell a step (a power moves up to three at once, eating; a jump is down LEAP_REACH + 1 steps on)
+    ensureBodies(Math.max(TUNE.GOLD_FLY + 2, steps), me.body.length + steps + TUNE.GOLD_FLY + 4); // a body grows at most one cell a step (a power moves up to three at once, eating; a jump is down LEAP_REACH + 1 steps on, a golden flight GOLD_FLY + 1)
     mineFree.fill(0); otherFree.fill(0); risk.fill(0); strikes.fill(0);
 
     const inside = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
@@ -1997,7 +1997,8 @@ window.SnakeAI = (() => {
     const pick = powerPick(bestScore, bestDir);
     if (pick) {
       bestDir = pick.d;
-      if (pick.flash) memory.flash = view.tick; else memory.power = view.tick;
+      if (pick.flash) memory.flash = view.tick;
+      else { memory.power = view.tick; memory.leapNow = pick.now ? view.tick : -1; memory.fly = pick.fly || 0; } // (pressed twice for now; held for as far as it means to fly)
     }
     return bestDir;
 
@@ -2045,7 +2046,8 @@ window.SnakeAI = (() => {
       // a hole, if I can tell it from the woodpecker's mark (a mark isn't a
       // hole yet: I'd crawl in), or if it's that or a crash.
       const hurdle = i => myCells[i] === stampM || (mineFree[i] > 1 && (mineFree[i] < HOLE || fire.has(i) || (pecks ? !pecks.has(i) : trapped)));
-      const path = new Int32Array(Math.max(3, TUNE.LEAP_REACH + 1));
+      const path = new Int32Array(Math.max(3, TUNE.LEAP_REACH + 1, TUNE.GOLD_FLY + 1));
+      let leapNow = false, leapFly = 0; // (how the best jump leapOpt found goes: pressed twice, now; held, a golden flight's cells in the air)
       const ate = [-1, -1, -1], ateV = [0, 0, 0];
       let ateL = 0, ateG = 0, ateGain = 0, endRisk = 0, idle = false, muteWas = 0, ateBug = 0, ateWas = -HOLE; // (endRisk: the risk where the last one weighed ends; idle: it was a golden dash just for speed; muteWas, ateBug (which beetles, a bit each): for uneat)
       const meal = (i, step) => foodValue[i] > 0 && foodFrom[i] <= step; // (food there, on my move `step`)
@@ -2059,7 +2061,7 @@ window.SnakeAI = (() => {
         idle = false;
         if (v === null) return;
         v += extra - price * cheap * (full ? 1 : habit.price) * U;
-        if (v > (best ? best.v : crawl + 1)) best = { d, flash, v };
+        if (v > (best ? best.v : crawl + 1)) best = { d, flash, v, now: !flash && leapNow, fly: flash ? 0 : leapFly };
       };
       for (const d of DIR_LIST) {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
@@ -2099,26 +2101,48 @@ window.SnakeAI = (() => {
       // the cells it goes over; down span + 1 moves from now).
       function leapOpt(d) {
         const golden = me.leaps > 0;
+        leapNow = false; leapFly = 0;
         let span = 0, n = 0; // (n: the cells on the board traced)
-        for (let x = myHead.x, y = myHead.y; span <= TUNE.LEAP_REACH; span++) {
+        const far = golden ? TUNE.GOLD_FLY : TUNE.LEAP_REACH;
+        for (let x = myHead.x, y = myHead.y; n <= far; ) {
           const c = cellAt(x + d.x, y + d.y);
           if (c < 0) break; // (never off the board)
           x = c % N; y = (c - x) / N;
-          path[span] = c; n++;
-          if (!hurdle(c)) break;
+          path[n++] = c;
         }
-        if (!n || !hurdle(path[0])) return null;
-        if (span >= n || span > TUNE.LEAP_REACH || !free(path[span])) { // (nowhere free within reach: a bridge that'll still be there when I come down, as the engine has it)
-          const last = Math.min(n - 1, TUNE.LEAP_REACH);
-          let i = 1;
-          while (i <= last && !(bridgeUntil[path[i]] > i + 1)) i++;
-          if (i > last) return null;
-          span = i;
+        if (!n) return null;
+        // The island hop, as the engine takes it: up over what's right in
+        // front, on over up to LEAP_REACH cells of hurdles, and down on the
+        // first free cell beyond, or a bridge that lasts. Over open ground,
+        // leap now (pressed twice): over LEAP_REACH cells, down on the next,
+        // else the farthest free short of it. Golden, held: on, down on any
+        // free cell up to GOLD_FLY cells in the air, the best of them.
+        const lands = (i, now) => i < n && (free(path[i]) || bridgeUntil[path[i]] > i + 1) && !(now && reach[framed[path[i]]] <= i + 1 && strikes[path[i]] > 0);
+        let first = -1, now = false;
+        if (hurdle(path[0])) {
+          for (span = 1; span <= Math.min(TUNE.LEAP_REACH, n - 1); span++) if (!hurdle(path[span]) || bridgeUntil[path[span]] > span + 1) break;
+          if (span > TUNE.LEAP_REACH || span >= n || !lands(span, false)) return null;
+          first = span;
+        } else {
+          for (span = Math.min(TUNE.LEAP_REACH, n - 1); span >= 1 && !lands(span, true); span--);
+          if (span < 1) return null;
+          first = span; now = true;
         }
+        let bestS = null, bestSpan = first;
+        for (let k = first; k <= (golden ? Math.min(TUNE.GOLD_FLY, n - 1) : first); k++) {
+          if (k > first && !lands(k, false)) continue;
+          const v = landOpt(d, k, golden, now);
+          if (v !== null && (bestS === null || v > bestS)) { bestS = v; bestSpan = k; }
+        }
+        leapNow = now; leapFly = golden && bestSpan > first ? bestSpan : 0;
+        return bestS;
+      }
+      // A jump along d down on path[span], span + 1 moves from now (the cells before it in the air).
+      function landOpt(d, span, golden, now) {
         const land = path[span];
         const down = span + 1;
         const isle = islandGain(land);
-        if (!golden && !boxed && !isle && !meal(land, down)) { // (the plain jump: out of a crash or a box, to an island, or onto food, or just short of it)
+        if (!golden && !boxed && !isle && !meal(land, down) && !now) { // (the plain jump: out of a crash or a box, to an island, or onto food, or just short of it)
           const lx = land % N, past = cellAt(lx + d.x, (land - lx) / N + d.y);
           // (A habit's jump, for its own sake, only where no rival could get
           // to the landing before I'm down: one moving in as I take off and

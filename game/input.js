@@ -112,7 +112,7 @@ function power(kind) {
   if (hosting()) return hostPress(me => powerOf(me, kind));
   powerOf(player(), kind);
 }
-const powerOf = (s, kind) => (kind === 'unleap' ? unleap : kind === 'flash' ? Engine.flash : Engine.leap)(theGame, s);
+const powerOf = (s, kind) => (kind === 'unleap' ? unleap : kind === 'letgo' ? Engine.letGo : kind === 'flash' ? Engine.flash : Engine.leap)(theGame, s);
 // A jump asked for and not gone yet, taken back (a finger held still that
 // turned out to be a swipe: see the touches).
 const unleap = (g, s) => { if (s?.alive && s.leapArmed >= g.tick) s.leapArmed = -1; };
@@ -149,7 +149,10 @@ function napKey() {
 // Space be a jump, so mashing jump just after you die can't start a round.
 let tabbing = false, tabbed = null;
 document.addEventListener('focusin', e => { tabbed = tabbing ? e.target : null; tabbing = false; });
-document.addEventListener('keyup', e => { if (e.key === 'Tab') tabbing = false; }); // (a Tab that took focus out of the page: the game's next focus isn't yours)
+document.addEventListener('keyup', e => {
+  if (e.key === 'Tab') tabbing = false;
+  if (e.key === ' ' && state === 'running') power('letgo'); // (the jump let go: a golden flight comes down on the next cell)
+}); // (a Tab that took focus out of the page: the game's next focus isn't yours)
 
 // Copying the title: its S is a drawing over a see-through letter, so a
 // rich paste (into an email, say) would read "Barkstreet  nakes". A copy
@@ -283,6 +286,7 @@ function tapped(sw) {
   sw.tap = false;
   clearTimeout(sw.timer);
   for (const o of swipes.values()) o.held = 0; // (a jump meant: nothing to take back)
+  sw.jumped = true; // (its lift lets the jump go: see endSwipe)
   power('leap');
 }
 // Held still: a jump now, if there's something to hop on the way (it waits
@@ -292,7 +296,7 @@ function tapped(sw) {
 function held(sw) {
   sw.timer = 0;
   const me = player();
-  if (!sw.tap || !me?.alive || !hurdleAhead(me, TUNE.LEAP_WINDOW + 1, true)) return;
+  if (!sw.tap || !me?.alive || !(hurdleAhead(me, TUNE.LEAP_WINDOW + 1, true) || me.leapArmed >= theGame.tick)) return; // (or a second touch while a jump waits: leap now, held as long as the finger stays)
   tapped(sw);
   sw.held = performance.now();
 }
@@ -355,6 +359,7 @@ const endSwipe = e => {
     if (lastSwipe?.sw === sw) lastSwipe.up = now;
     const far = Math.max(sw.far, Math.hypot(c.clientX - sw.x0, c.clientY - sw.y0));
     if (sw.tap && e.type === 'touchend' && (far <= TUNE.TAP_STILL_PX || (far < swipeMin() && now - sw.at < TUNE.TAP_QUICK_MS))) tapped(sw);
+    if (sw.jumped) power('letgo'); // (the finger off the glass: a golden flight comes down; a quick tap, a plain-length hop)
     sw.tap = false;
     if (e.type === 'touchend' && sw.run < cardShownAt + TUNE.CARD_TAP_MS && (!sw.button || overlay.contains(sw.button))) { e.preventDefault(); continue; } // (begun as a card came up by itself, or in a run of touches that was: no click, the browser's or ours)
     if (!sw.button || e.type !== 'touchend' || sw.moved) continue; // (a scroll: the browser's own business)
@@ -386,6 +391,7 @@ function mousePress(e) {
   if (kind && e.target === canvasEl && !e.ctrlKey && !e.metaKey && !e.altKey) power(kind); // (the board itself, no card over it; and no shortcut)
 }
 document.addEventListener('pointerdown', mousePress);
+document.addEventListener('pointerup', e => { if (e.pointerType === 'mouse' && e.button === 0 && state === 'running') power('letgo'); }); // (the left button let go: a golden flight comes down)
 document.addEventListener('pointermove', e => { if (e.button >= 0) mousePress(e); }); // (only a chord's press or release says which button)
 boardEl.addEventListener('contextmenu', e => { if (!e.target.closest?.('.card')) e.preventDefault(); }); // (a card's own text and fields keep theirs)
 // A mouse press in a run begun as a card came up by itself (or this soon after): still mashing jump.

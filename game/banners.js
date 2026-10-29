@@ -123,6 +123,8 @@ function news(dying) {
     if (e.type === 'cut' && e.by === me.id && isMe(e.snake)) { if (once('youDropTail')) return toast(FLAVOR.youDropTail, 2400, 'you', 'lesson'); continue; } // (your own tail: dropped)
     if (e.type === 'cut' && e.by === me.id && once('youCutFirst')) return toast(FLAVOR.youCutFirst, 2400, 'gold', 'lesson');
     if (e.type === 'cut' && e.by === me.id) return toast(FLAVOR.youSnip(who(e.snake, true)), 1800, 'gold');
+    if (e.type === 'crash' && e.air && isMe(e.snake) && once('youBumped')) return toast(FLAVOR.youBumped, 2400, 'warn', 'lesson');
+    if (e.type === 'leap' && e.gold && isMe(e.snake) && once('youGoldFly')) return toast(touchFirst ? FLAVOR.youGoldFly.replace('Hold', 'Hold your finger down') : FLAVOR.youGoldFly, 2800, 'gold', 'lesson');
     if (e.type === 'crash' && e.failed && once('youFlashFailed')) return toast(FLAVOR.youFlashFailed, 2600, 'warn', 'lesson');
     if (e.type === 'cut' && e.by != null) return toast(FLAVOR.youSnipped(theGame.snakes[e.by]?.name || 'Someone'), 2200, 'warn', 'lesson');
     if (e.type === 'alight') { flashFrame('kill'); if (once('alight')) return toast(pick(FLAVOR.youAlight), 2600, 'fire', 'lesson'); } // (later burns: the flames and the -1s say it)
@@ -137,6 +139,8 @@ function news(dying) {
   if (me?.alive && theGame.tick % 4 === 2 && newsFree() && !theGame.told?.bridge && bridgeNear(me) && once('bridge')) return toast(FLAVOR.bridgeFirst, 3000, 'you', 'lesson');
   // In a pocket smaller than you, your own body one thick in front and your flash ready: dropping your tail, once.
   if (me?.alive && !me.flight && theGame.tick % 4 === 1 && newsFree() && !theGame.told?.dropTail && !theGame.told?.youDropTail && Engine.flashIn(theGame, me) === 0 && tailToDrop(me) && once('dropTail')) return toast(FLAVOR.dropTail, 3000, 'you', 'lesson');
+  // A flier coming down on your line, within a leap now's reach, your jump ready: you could have cut it off. Once.
+  if (me?.alive && !me.flight && theGame.tick % 4 === 3 && newsFree() && !theGame.told?.leapNow && Engine.leapIn(theGame, me) === 0 && fliersAhead(me) && once('leapNow')) return toast(touchFirst ? FLAVOR.leapNow.replace('Press', 'Tap') : FLAVOR.leapNow, 2800, 'you', 'lesson');
   // Boxed in, with a gap you could hop to an island and your jump ready: the island hop, once.
   if (me?.alive && !me.flight && theGame.tick % 4 === 0 && newsFree() && !theGame.told?.islandHop && Engine.leapIn(theGame, me) === 0 && islandNear(me) && once('islandHop')) return toast(FLAVOR.islandHop, 3000, 'you', 'lesson');
   for (const e of theGame.events) if (e.type === 'baked' && newsOnce('baked')) return toast(lineFor('baked'), 2600, 'fire');
@@ -186,6 +190,11 @@ const SIDES4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 // In a pocket smaller than you (less free log you can crawl to than your
 // length), with your own body one thick within a flash ahead, free log
 // beyond it, and at least 3 left in front of the cut?
+// A rival in the air coming down on the line ahead of you, within LEAP_REACH + 1 cells: a leap now could meet it (see leapNow).
+function fliersAhead(me) {
+  const h = me.body[0], d = me.dir;
+  return theGame.snakes.some(o => o !== me && o.alive && o.flight && [1, 2, 3, 4].slice(0, TUNE.LEAP_REACH + 1).some(n => o.flight.land.x === h.x + d.x * n && o.flight.land.y === h.y + d.y * n));
+}
 function tailToDrop(s) {
   const G = GRID_SIZE, h = s.body[0], taken = new Set();
   for (const o of theGame.snakes) if (o.alive) for (const c of o.body) taken.add(c.y * G + c.x);
