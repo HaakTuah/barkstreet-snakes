@@ -434,3 +434,10 @@ frequent. But maybe you should be able to leap whenever you want, not only at ga
 time cutting someone else off midair like that. Becomes a high skill manuver." Then, to the design session's take (a
 second press while a jump waits sends it at once; the rivals use it; tested so it never becomes a refuge): "Agreed to
 all, implement expertly!" (written into "Leap now" in `docs/design/29-round-six-b-the-new-moves.md` and item 5's part 4)
+
+In the design chat (29 October 2026, 12:05 and 12:16 UTC), on the new moves: "If you manage to get right under where
+someone is landing, are you knocking them out then too? I think so, so it becomes a risky manuver to do frequently
+near anyone. And flashing, can you hit someone straight on the head with it and take them out, or only all that's
+behind the head?" (the first already holds since the bump rule; the second is a failed flash) Then, to the design
+session's take that a cut leaving a snake fewer than 3 segments puts it out: "Agreed , do it expertly!" (written into
+"The neck cut" in `docs/design/29-round-six-b-the-new-moves.md` and item 5's part 3)
