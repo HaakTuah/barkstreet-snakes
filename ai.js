@@ -90,7 +90,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1, territory: 0.8, aggression: 0.3,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, hungryBelow: 16, fedFactor: 0.3,
-        margin: 10, headRisk: 600, zoneRisk: 80, thick: 15, hunt: HUNT, spit: 1.5, // (a mushroom for the head shot)
+        margin: 10, headRisk: 600, zoneRisk: 80, thick: 15, hunt: HUNT, spit: 2.5, // (a mushroom for the head shot)
       },
     },
     gobbler: {
@@ -255,7 +255,7 @@ window.SnakeAI = (() => {
         space: 1, territory: 0.6,
         food: 5, eat: 70, pellet: 1.2, foodRange: 40,
         margin: 6, headRisk: 600, zoneRisk: 40, turn: -12, // (at 4, once the rivals read knocked food and digging beetles, it won 12 / 18%: it wants a little more room behind its lures)
-        lure: { weight: 6, dist: 3 }, hunt: { squeeze: 3, chase: 0, lead: 2 }, spit: 2, // (a mushroom for the laugh)
+        lure: { weight: 6, dist: 3 }, hunt: { squeeze: 3, chase: 0, lead: 2 }, spit: 4, // (a mushroom for the laugh)
       },
     },
     star: {
@@ -2276,7 +2276,8 @@ window.SnakeAI = (() => {
           let caught = -1;
           for (let q = 0; q < bugs; q++) if (bugCell[q * SLOTS + step - 1] === i) { caught = q; break; }
           const v = here + (caught >= 0 ? bugV[caught] : 0), change = (late ? 0 : foodGrow[i]) + (caught >= 0 ? TUNE.BEETLE_GROWTH : 0);
-          if (change < 0) {
+          if (change < 0) { // (a mushroom: my mouth is full after it, the rest of the way too)
+            mute = Math.max(mute, step + TUNE.CHEEK_TICKS);
             let n = -change;
             const fromGrow = Math.min(g, n);
             g -= fromGrow;

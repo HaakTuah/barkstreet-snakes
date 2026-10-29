@@ -278,16 +278,18 @@ function drawLandings(now) {
 // a small green ring on the cell SPIT_REACH ahead of its head, the way it
 // faces (where it'll land: steering aims it), drawing in as the second
 // runs out, for everyone to see and dodge; and its cheeks puffed green (see
-// drawCheeks), a shade darker the stronger it'll come up.
+// drawCheeks), a shade darker the stronger it was swallowed (as the mushroom's own shade).
 const SPIT_RING = '#a3e635', CHEEKS = ['#84cc16', '#65a30d', '#4d7c0f'];
 function drawSpitRings(now) {
   if (!game) return;
   const t = reduced ? 0 : now / 1000;
   for (const s of game.snakes) {
     if (!s.alive || !s.cheek) continue;
-    const h = s.body[0], x = h.x + s.dir.x * T.SPIT_REACH, y = h.y + s.dir.y * T.SPIT_REACH;
+    const h = s.body[0], wrap = s.wrapUntil > game.time; // (the edges wrap for it: it lands on the far side)
+    let x = h.x + s.dir.x * T.SPIT_REACH, y = h.y + s.dir.y * T.SPIT_REACH;
+    if (wrap) { x = (x + GRID) % GRID; y = (y + GRID) % GRID; }
     if (x < 0 || y < 0 || x >= GRID || y >= GRID) continue; // (over the edge: it's gone, nothing to dodge)
-    const left = Math.max(0, Math.min(1, (s.cheek.spitAt - game.tick + 1) / T.CHEEK_TICKS));
+    const left = Math.max(0, Math.min(1, (s.cheek.spitAt - game.tick) / T.CHEEK_TICKS));
     const cx = (x + 0.5) * CELL, cy = (y + 0.5) * CELL, r = CELL * (0.24 + 0.14 * left + 0.03 * Math.sin(t * 12));
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
