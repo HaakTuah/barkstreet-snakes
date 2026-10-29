@@ -744,7 +744,7 @@ function liftOf(s, a, at, k2, now) {
     if (r.jTick !== game.tick) { // (where in its body the cells it hopped are now, and whether a body still lies under them: once a tick)
       r.jTick = game.tick;
       r.under = false;
-      for (let x = r.x0, y = r.y0, n = 0; n < 3; n++) {
+      for (let x = r.x0, y = r.y0, n = 0; n < T.LEAP_REACH; n++) {
         const key = y * GRID + x;
         if (x >= 0 && y >= 0 && x < GRID && y < GRID && (cover[key] >= 2 || (cover[key] === 1 && coverBy[key] !== s.id))) r.under = true;
         if (x === r.x1 && y === r.y1) break;
@@ -760,7 +760,7 @@ function liftOf(s, a, at, k2, now) {
       const v = r.h * archAt(s, pts[2 * i], pts[2 * i + 1], r.x0, r.y0, r.x1, r.y1);
       if (v > lift[i]) lift[i] = v;
     }
-    if (flight && (lift[0] > head || reduced)) head = reduced ? 1 : lift[0]; // (with reduced motion, a still pose up in the air for its two ticks)
+    if (flight && (lift[0] > head || reduced)) head = reduced ? 1 : lift[0]; // (with reduced motion, a still pose up in the air for its ticks there)
   }
   // (the head eased a touch, so a jump seen late, or a guess put right, never pops)
   a.rise = reduced ? head : a.rise + (head - a.rise) * (1 - Math.exp(-frameDt / 25));

@@ -253,8 +253,8 @@ function drawPress() {
 // The island hop's landing ring: where a jump comes down, on the ground
 // under it, in the jump's sky (a golden one's Honey), inked. Every snake
 // in the air shows it (anyone can see where a jump will land); your own
-// jump, asked for and able to go, shows it before it goes, so you see
-// where you'd land. Just where: never whether it's a trap.
+// jump, asked for, shows it while the press waits for its hurdle (up
+// to LEAP_WINDOW moves), so you see where you'd land. Just where: never whether it's a trap.
 function drawLandings(now) {
   if (!game) return;
   const t = reduced ? 0 : now / 1000;
@@ -264,7 +264,7 @@ function drawLandings(now) {
     if (s.flight?.land) { x = s.flight.land.x; y = s.flight.land.y; gold = !!s.flight.gold; }
     else if (s.id === viewerId) {
       const a = anim.get(s);
-      if (!a || !a.ml) continue;
+      if (!a || !a.lr) continue;
       x = a.lx; y = a.ly;
     } else continue;
     const cx = (x + 0.5) * CELL, cy = (y + 0.5) * CELL, r = CELL * (0.38 + 0.04 * Math.sin(t * 9));

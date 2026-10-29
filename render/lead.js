@@ -74,12 +74,13 @@ const asksFlash = s => s.flashArmed >= game.tick || ((!s.isPlayer || s.autopilot
 // (Fire isn't a crash: a crawl goes in.)
 function predict(s, a) {
   const h = s.body[0];
-  a.mx = h.x; a.my = h.y; a.mv = 0; a.mg = 0; a.ml = 0; a.mf = 0;
+  a.mx = h.x; a.my = h.y; a.mv = 0; a.mg = 0; a.ml = 0; a.mf = 0; a.lr = 0;
   if (!s.alive || s.stunUntil > game.tick) return;
   const d = s.flight ? s.flight.dir : wayOf(s), x = wrapX(s, h.x + d.x), y = wrapX(s, h.y + d.y);
   a.mx = x; a.my = y; a.mv = 1; a.mg = s.grow > 0 ? 1 : 0; a.mdx = d.x; a.mdy = d.y;
   if (s.flight?.over.length) return; // (in the air: on over what it hops, a cell a tick, then down where it's going)
-  if (!s.flight && asksJump(s) && hops(s, h, d, game.time)) { a.ml = 1; a.lx = landX; a.ly = landY; return; } // (and where it'll come down: see drawLandings)
+  if (!s.flight && asksJump(s) && ringAhead(s, h, d)) a.lr = 1; // (where it'll come down, while the press waits: see drawLandings)
+  if (!s.flight && asksJump(s) && hops(s, h, d, game.time)) { a.ml = 1; return; }
   if (!s.flight && asksFlash(s)) {
     const go = flashReach(s, d, x, y);
     if (go > 1) { a.mf = go - 1; a.mx = wrapX(s, h.x + d.x * go); a.my = wrapX(s, h.y + d.y * go); return; }
@@ -95,6 +96,20 @@ let landX = 0, landY = 0;
 function hops(s, h, d, t) {
   if (!(s.leaps > 0) && (t < s.leapReadyAt || s.body.length <= T.MIN_LENGTH)) return false;
   return hopsTo(s, h, d);
+}
+// A jump asked for, waiting: the first hurdle on its way within the
+// LEAP_WINDOW moves the press waits, and where it'd land hopping it from
+// the cell before (landX, landY), if the jump will be ready.
+function ringAhead(s, h, d) {
+  if (!(s.leaps > 0) && (s.body.length <= T.MIN_LENGTH || s.leapReadyAt > game.time + (s.leapArmed - game.tick) * (timeAt - timeFrom || T.START_TICK))) return false;
+  let x = h.x, y = h.y;
+  for (let i = 0; i < Math.max(1, s.leapArmed - game.tick + 1) && i < T.LEAP_WINDOW; i++) {
+    const nx = wrapX(s, x + d.x), ny = wrapX(s, y + d.y);
+    if (offBoard(nx, ny)) return false;
+    if (hurdleAt(nx, ny)) return hopsTo(s, { x, y }, d);
+    x = nx; y = ny;
+  }
+  return false;
 }
 function hopsTo(s, h, d) {
   let x = wrapX(s, h.x + d.x), y = wrapX(s, h.y + d.y);
