@@ -164,7 +164,7 @@ const FLAVOR = {
   youGoldFly: 'Hold to fly farther. Steer in the air!', // (your first golden jump)
   leapNow: 'Press twice to leap now, anywhere!', // (the first time a flier comes down just ahead of you: you could have cut it off)
   youMushroomSpit: 'Bleh! Steer to aim it: it lands three ahead.', // (round six B: your first mushroom, which comes back up)
-  youSpatOn: name => `Ptoo! ${name} spat a mushroom on you. Steer to spit it back: it lands three ahead.`, // (the first time one hits your head)
+  youSpatOn: name => `Ptoo! ${name} got you. Steer to spit it back.`, // (the first time one hits your head)
   youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
   youStarvingSmall: 'Starving at\u00a03, with nothing to spare. Eat now.',
   // A press that couldn't go (the first time each way, in a round): a jump, or a flash.

@@ -505,3 +505,9 @@ brake in `docs/orchestrating.md`: only the measured share counts; item 5 carries
 
 In the design chat (29 October 2026, 16:42 UTC), to the question on Mason's double walls (its straight runs 3.5 to 3.1
 cells a turn; everyone else 1.9) and the design session's take to keep them: "I agree with all your takes." (kept)
+
+In the design chat (29 October 2026, 16:51 UTC), on beetles and the woodpecker:
+
+> Beetles should quickly try to escape down their burrow when woodpecker targets their little "island". And it seems almost no new burrows appear as the woodpecker destroy the old ones. Also, if the woodpecker takes out the tiles under the beetles, they just teleport now.
+
+(queued as 2m in `docs/PROGRESS.md`, between item 5's parts 3b and 4)

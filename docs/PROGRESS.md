@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| (none open) | | | |
+| 5, part 3b (PR #195) | Spat mushrooms hardly ever land between rivals (1 to 2% of spits hit a head; the A/B shows no edge for the spitters, +0.6 points, within noise): the rivals keep their heads apart and step out of a ring a second ahead. Keep it as a skill shot for people, as designed, or make the spit a shot that flies along the line up to 5 cells and stops on the first head or body? | Keep it as designed for now and judge it in play; a shot along the line is a small change if you want spits to land more. | Open |
 
 ## The queue, in order
 
@@ -46,17 +46,20 @@ long time now. Also, the teaching system will have to account for it." It is the
 3b (PR #142) merges, ahead of Wildcard's part of 3b, 2b, 2h, 2i and 3c; the art and sound lanes (2d, 2f, 2j) run
 beside it as before. A playable draft PR as early as it can be, so Haakon can try it this evening.
 
-*Done so far:* **the island hop** and **no auto-jump** (PR #158: a jump goes over up to 3 cells, a cell a tick; a press waits 5 moves; the landing ring; protocol 16).
+*Done so far:* **the island hop** and **no auto-jump** (PR #158: a jump goes over up to 3 cells, a cell a tick; a press waits 5 moves; the landing ring; protocol 16); **mushrooms come back up** (part 3b, PR #195: the cheek, the ring 3 ahead, the spit, a shade stronger each time to 5; the rivals aim, dodge and eat one for a shot in their styles; protocol 19; its numbers and the design finding in the design's "Part 3b, the chosen numbers").
 
 *Where it stands* (29 October 2026; it paused at the app's weekly usage warning, which is not the brake: Haakon, "They
 weren't supposed to stop before 90%. We're still at only 76%", so it carries on): parts 1, 2 and
 most of 3 are merged (#158, #174, #183: the cuts, a failed flash, your own beads squashed, Mason's double walls, the
-edge measured). **Next, in order:** part 3b, **mushrooms come back up** (nothing built yet; its own PR, an engine-rules
-and AI entry, protocol 19: the cheek, the ring 3 ahead, the spit, a shade stronger each time, the rivals aiming and
-dodging); then part 4, part 5, part 6 (*built and reviewed* on `round6b/dropped-charges`: merge `develop` into it, renumber
-its protocol after 18, run its A/B), and part 7 (*parked* on `round6b/pricing`; part 3's numbers to watch there: Joker
-and Sovereign low on single seeds, Gobbler's and Vulture's shares a little lower). Mason's walls are an open question
-for Haakon (the table above).
+edge measured). **Next, in order:** part 4 (*under way* on `round6b/golden-flight`, pushed, no PR yet: leap now, the
+golden flight held and steered, bumps in the air and down on a body out, protocol 20, input, lessons, rules tests,
+the rivals weighing leap now and how far to fly; first look, 40 rounds on seed 5: rivals leap now 24 times a round,
+golden flights 3.8 cells in the air, 0.65 snakes a round come down on a body; still to do: merge `develop` into it,
+its draft PR, the A/B both ways (a copy that never leaps now nor flies past the plain hop), check leap now for a
+refuge, rivals' tests for both moves, the rivals steering in the air, bridge rides re-measured); then part 5, part 6 (*built and reviewed* on `round6b/dropped-charges`: merge `develop` into it, renumber
+its protocol after part 4's 20, run its A/B), and part 7 (*parked* on `round6b/pricing`; part 3's numbers to watch there: Joker
+and Sovereign low on single seeds, Gobbler's and Vulture's shares a little lower). Mason's double walls are kept
+(Haakon, 29 October 2026).
 
 - **The island hop comes first.** The owner: "jumping is pretty critical to making this game more tense and skill based, rather than RNG". There are two test cases:
   - Gobbler folded on a strip;
@@ -193,6 +196,26 @@ starves, and rounds feel alike. Each round draws its **food season**, as it draw
 ### 2k+. Done: the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191); in `docs/archive/progress-done.md`.
 
 ### 2l. Done: flags that bend as a snake goes over them (PR #186); in `docs/archive/progress-done.md`.
+
+### 2m. Beetles and the woodpecker (Haakon, 29 October 2026; a small engine entry, between item 5's parts 3b and 4)
+
+Haakon (29 October 2026): "Beetles should quickly try to escape down their burrow when woodpecker targets their little
+"island". And it seems almost no new burrows appear as the woodpecker destroy the old ones. Also, if the woodpecker
+takes out the tiles under the beetles, they just teleport now." Three fixes, found in the code:
+- **Burrows run out:** a pecked burrow becomes a hole and is gone, and new ones open only when a new beetle comes out or
+  one digs in. But an underground beetle with no free burrow waits (`crawl`: `if (!b) continue`) until it expires,
+  still counting toward `BEETLE_MAX`, so no new beetle comes out and no new burrow opens. Fix: an underground beetle
+  with no free burrow cracks a new one open where it's quiet, by the rule `beetleOut` uses (`BURROW_SPACING`,
+  `BURROW_MAX`), so burrows keep up with the woodpecker, on the islands that remain.
+- **They flee the beak:** the woodpecker's target is shown ahead (its rings), so a beetle on a targeted patch, or with
+  one between it and safety, treats it as danger as it treats a head: it scurries for a burrow within reach and dives
+  in, else off the patch, else digs in (a dig there is underground before the strike, and comes up elsewhere).
+- **No teleporting:** today a beetle still on a pecked cell is moved to a landing cell at once (`knocks`, then `f.x =
+  to.x`). Instead, a beetle still under the beak when it strikes is eaten by the woodpecker, a gulp, as woodpeckers do
+  (the bird already eats food with nowhere to go); it had the rings' warning to run.
+- The rivals see beetles flee the beak and plan their chase with it; the census counts burrows open over a round,
+  beetles eaten by the bird, and escapes, before and after. Its lesson: the first time, "The woodpecker eats beetles
+  too!", with a Field guide line under Beetles.
 
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
