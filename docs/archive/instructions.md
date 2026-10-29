@@ -341,3 +341,17 @@ In the design chat (29 October 2026, 00:31 and 00:32 UTC), playing:
 In the design chat (29 October 2026, 00:15 to 00:18 UTC), on a new chatter line: "Should colonist have the line "Snows always melt"?", then "It's quoting mark Anthony in rome." (a scene from the series, where Antony speaks for Caesar: "I assure you, it is no threat. Snows always melt."), and, to Claude's take that it belongs to Mason, the Caesar snake, in English, beside "Hiems venit!":
 
 > Agreed.
+
+In the design chat (29 October 2026, 00:48 and 00:50 UTC), after Claude said starving caused 1 to 3% of deaths:
+
+> I think it should be a but more agressive. Someone should at least die from it once in a blue moon. Now games maybe feel a bit too samey? It's pretty predictable. But if food levels varied more, that would change things up.
+>
+> Also, snakes should maybe avoid food more with the woodpecker about? I see snakes gorging on the remains of other snakes, when they have only a few tiles left to move on. They are not doing a context relevant tradeoff calculation there, clearly.
+>
+> And should the chat lines be voiced?
+
+Then, to Claude's takes (food seasons; eating only what keeps you alive in the endgame; babble voices):
+
+> But sometimes starving still lasts you longer than increased length will, with so little room also. And make sure the voices arent distracting! That would be a real turn off!
+
+(queued as 2h, 2i and 2j in `docs/PROGRESS.md`)

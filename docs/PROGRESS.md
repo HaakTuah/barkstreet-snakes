@@ -143,6 +143,59 @@ hungry snake eats, the clock resets and it snaps back to plump and its own colou
   player draws it from the same clock on their own machine).
 - Pictures in the PR: a frame strip of a starving snake eating, at a 390-pixel phone and desktop.
 
+### 2h. The endgame: eat what keeps you alive, not what boxes you in (Haakon, 29 October 2026; an AI entry, after 2b)
+
+Haakon (29 October 2026): "snakes should maybe avoid food more with the woodpecker about? I see snakes gorging on the
+remains of other snakes, when they have only a few tiles left to move on. They are not doing a context relevant tradeoff
+calculation there, clearly." And: "But sometimes starving still lasts you longer than increased length will, with so
+little room also."
+
+Today `decide()` sets `lean` once sudden death begins ("nobody can afford to be picky"), so food counts in full however
+little room is left, and rivals grow into the space they need to turn in. The trade-off, for every rival through the
+shared template:
+- **A meal is worth the life it buys, against the room it costs.** Weigh how long the snake lasts each way: starving,
+  it shrinks a segment every 1.5 s and frees room as it goes; eating, it gets a meal's time but grows into its pocket.
+  It eats when hunger would end it before room would, and leaves the food when the length would box it in first. With
+  room to spare, food counts as today.
+- **Personality still shapes it:** Gobbler stays the greediest (its food share is its trademark), the careful ones
+  the most sparing.
+- **Measured** head to head on fresh seeds against the AI 2b leaves: deaths in sudden death by cause (self, body, boxed
+  in, starved), who outlasts whom in the endgame, per-rival wins, every trademark within noise.
+
+### 2i. Food seasons: lean, normal and plentiful rounds (Haakon, 29 October 2026; an engine-rules entry, after 2h)
+
+Haakon (29 October 2026): "I think it should be a but more agressive. Someone should at least die from it once in a
+blue moon. Now games maybe feel a bit too samey? It's pretty predictable. But if food levels varied more, that would
+change things up."
+
+Starving is 1 to 3% of deaths (round four's measure, `docs/design/25-round-four-measured.md`), so a snake almost never
+starves, and rounds feel alike. Each round draws its **food season**, as it draws its weather:
+- **Lean:** apples and beetles come more sparsely, so hunger bites and a snake starves now and then. **Normal:** as
+  today. **Plentiful:** more food, snakes grow long, and the danger is crowding. First guesses for the odds (lean 1 in
+  4, normal 1 in 2, plentiful 1 in 4) and the rates, set by measuring and left to tuning.
+- **Seen and taught:** a start banner names it ("A lean season…", "A season of plenty…"), with a one-time lesson and a
+  Field guide row ("Every new rule needs a visible cue and a lesson"). Everyone, rivals included, sees the season, as
+  they see the weather (`aiView()`), and the rivals play it: sparing and hungry-minded in a lean round, wary of
+  crowding in a plentiful one.
+- **Measured:** starving reaches about 5 to 8% of deaths overall, more in lean rounds; the spread of round lengths and
+  of deaths by cause widens, per season; per-rival wins within noise overall; every trademark kept; no refuges.
+- **Online:** the host draws the season and sends it; a protocol bump.
+
+### 2j. Babble voices for the chatter, never distracting (Haakon, 29 October 2026; a sound lane)
+
+Haakon (29 October 2026): "And should the chat lines be voiced?" Then, to babble voices: "And make sure the voices
+arent distracting! That would be a real turn off!"
+- **Babble, not speech:** when a rival's bubble appears, a short synthesized burble in its own voice (pitch, timbre,
+  rhythm: Mason clipped and deep, Gobbler gobbly, Ghost faint, and so on; Mute stays silent), made in `audio.js` with
+  Web Audio, no recordings and no dependencies.
+- **Never distracting, first of all:** well under the eating sound, at most about half a second whatever the line's
+  length, never two at once, at most one every few seconds, never over your own sounds (eating, warnings, crashes), and
+  quieter still in tight moments. Its own switch in the sound settings ("Voices").
+- **Haakon judges it:** the PR stays a draft until he has played its preview and says it isn't distracting; if he
+  isn't sure, it ships switched off by default.
+- Rivals only for now (your own snake's lines, from the teaching system, stay silent). Online, each player hears it on
+  their own machine: no protocol change.
+
 ### 3. Fixes and polish (the owner's playtest of 2026-10-20)
 
 Its done entries (PRs #49 to #124) are in `docs/archive/progress-done.md`, "Item 3, done".
