@@ -643,13 +643,12 @@ function lens3d(sg, tint) {
 // one big wave behind the brow, rolled up and over to the far side (clear of
 // the eyes). A few broad comb grooves follow the sweep, one long near-white
 // gloss runs along the wave's crest and on round the sweep, and no outline:
-// its soft shadow on the head sets it off. (Three versions, D, E and F, for
-// Haakon to pick from: how big the wave is, how far the sweep overhangs.)
-const WILD_HAIRS = { D: { wave: 0, side: 0, grooves: 3 }, E: { wave: 0.05, side: 0.06, grooves: 4 }, F: { wave: 0.1, side: 0.12, grooves: 4 } };
-let wildHairPick = 'E';
-function wildHairEdge(v) {
+// its soft shadow on the head sets it off. WILD_WAVE is how far the wave
+// stands up, WILD_SIDE how far the sweep overhangs the far side.
+const WILD_WAVE = 0.1, WILD_SIDE = 0.12, WILD_GROOVES = 4;
+function wildHairEdge() {
   const c = CELL, b = (x1, y1, x2, y2, x, y) => ctx.bezierCurveTo(c * x1, c * y1, c * x2, c * y2, c * x, c * y);
-  const w = v.wave, s = v.side;
+  const w = WILD_WAVE, s = WILD_SIDE;
   ctx.beginPath();
   ctx.moveTo(-c * 0.04, c * 0.3); // the parting's front end
   b(0.08, 0.26, 0.12 + w, 0.02, 0.1 + w * 0.8, -0.2); // the wave, standing up behind the brow
@@ -663,22 +662,22 @@ function wildHairEdge(v) {
 // One comb groove (or its lit ridge), from the parting across the crown and
 // swept back over the far side, all of them gathering towards the back of it:
 // t from 0 (the front, after the wave) to 1.
-function wildGroove(v, t, shift) {
+function wildGroove(t, shift) {
   const c = CELL, x0 = -0.04 - t * 0.5 + shift;
   ctx.moveTo(c * x0, c * 0.32);
-  ctx.bezierCurveTo(c * (x0 + 0.1 - 0.06 * t), c * 0.0, c * (-0.08 - 0.3 * t + shift), -c * (0.5 + v.side), c * (-0.62 - 0.1 * t + shift), -c * (0.66 + v.side * 0.7 - 0.12 * t));
+  ctx.bezierCurveTo(c * (x0 + 0.1 - 0.06 * t), c * 0.0, c * (-0.08 - 0.3 * t + shift), -c * (0.5 + WILD_SIDE), c * (-0.62 - 0.1 * t + shift), -c * (0.66 + WILD_SIDE * 0.7 - 0.12 * t));
 }
 function wildHair() {
-  const c = CELL, v = WILD_HAIRS[wildHairPick];
+  const c = CELL;
   ctx.save();
   ctx.translate(-c * 0.07, 0); // (set back, so most of the face shows)
   ctx.save(); // its soft shadow on the head, darker gold, falling on the brow in front of the wave
   ctx.fillStyle = 'rgba(146,84,14,0.16)';
-  ctx.translate(c * 0.07, c * 0.03); wildHairEdge(v); ctx.fill();
-  ctx.translate(-c * 0.03, -c * 0.01); wildHairEdge(v); ctx.fill();
+  ctx.translate(c * 0.07, c * 0.03); wildHairEdge(); ctx.fill();
+  ctx.translate(-c * 0.03, -c * 0.01); wildHairEdge(); ctx.fill();
   ctx.restore();
   ctx.save();
-  wildHairEdge(v);
+  wildHairEdge();
   const gold = ctx.createLinearGradient(c * 0.1, c * 0.4, -c * 0.6, -c * 0.8); // lit at the parting, deeper where it overhangs
   gold.addColorStop(0, '#fde58a'); gold.addColorStop(0.45, '#f7c948'); gold.addColorStop(1, '#e09a2a');
   ctx.fillStyle = gold;
@@ -686,10 +685,10 @@ function wildHair() {
   ctx.clip();
   ctx.lineCap = 'round';
   // The comb grooves: a warm orange-gold shadow, and beside it the lit ridge.
-  const n = v.grooves, grooves = (shift, width, colour) => {
+  const grooves = (shift, width, colour) => {
     ctx.strokeStyle = colour; ctx.lineWidth = c * width;
     ctx.beginPath();
-    for (let i = 0; i < n; i++) wildGroove(v, (i + 0.7) / n, shift);
+    for (let i = 0; i < WILD_GROOVES; i++) wildGroove((i + 0.7) / WILD_GROOVES, shift);
     ctx.stroke();
   };
   grooves(0, 0.045, 'rgba(194,110,18,0.4)');
@@ -698,8 +697,8 @@ function wildHair() {
   // on round the sweep, a soft broad sheen with a bright line down it.
   ctx.lineWidth = c * 0.07;
   ctx.strokeStyle = 'rgba(194,110,18,0.45)';
-  ctx.beginPath(); wildGroove(v, 0, -0.06); ctx.stroke();
-  const gloss = () => { ctx.beginPath(); wildGroove(v, 0, 0.02); };
+  ctx.beginPath(); wildGroove(0, -0.06); ctx.stroke();
+  const gloss = () => { ctx.beginPath(); wildGroove(0, 0.02); };
   ctx.lineWidth = c * 0.13; ctx.strokeStyle = 'rgba(255,250,225,0.35)'; gloss(); ctx.stroke();
   ctx.lineWidth = c * 0.04; ctx.strokeStyle = 'rgba(255,253,244,0.95)'; gloss(); ctx.stroke();
   // The parting.

@@ -34,6 +34,12 @@ function animOf(s, now) {
       jc: false, fc: false, flashFx: -1e9, // (your rests: cooling last frame; when your flash came back)
       star: false, turn: 0, face: 0, hue: 0, hueAt: -1, glow: 1, brow: 1, flareAt: -1e9, shedAt: 0, // (Star: its head a star, turned so, its face upright; its rainbow (and Copycat's copy of it); its tell; its tail's twinkles)
       slim: 0, growl: 0, pale: 0, // (hungry: how much slimmer, how hard it growls, how pale: see hungerLook)
+      // A meal going down (see mealSwell): when it ate as this screen saw it
+      // (ateSeen: its clock's lastAte), when the swell began, and each
+      // segment's slim and pale as drawn (slimSeg, paleSeg; paleTop, the most)
+      // and as they were when it began (slimFrom, paleFrom); segN: how many last frame drew, fromN: when it began.
+      ateSeen: -1, mealAt: -1e9, segN: 0, fromN: 0, paleTop: 0,
+      slimSeg: new Float32Array(64), paleSeg: new Float32Array(64), slimFrom: new Float32Array(64), paleFrom: new Float32Array(64),
       flow: 0, flowW: 0, flowMv: 0, flowTick: -1, flowAt: -1, bursts: 0, burstAt: -1e9, // (how far it has gone, for its rainbow's stream: see flowOf; its flashes' bursts of it)
       // Up in the air and over holes (see liftOf and sinkOf): each segment's
       // lift (0..1, the top of a jump 1) and how far it hangs over a pit
@@ -260,6 +266,52 @@ function gagCheeks(a, col, now) {
   ctx.fillStyle = col;
   ctx.fill();
 }
+// The meal goes down (the owner: it plumped up at once, "it should be an
+// animation where you see it transform"): after a meal, from the head, each
+// segment eases from how slim and pale it was drawn to how its clock says it
+// should be now (a meal that refills it only partly fills it out only that
+// far), a wave MEAL_SPREAD segments deep that reaches the tail in MEAL_MS,
+// whatever its length, its colour flooding back with it. Eating again
+// mid-swell starts a new wave from the head, from how it's drawn then. With
+// reduced motion, no wave: the whole body eases back in a short plain fade.
+// (Drawn from the clock alone, like the rest of its hunger: the same on
+// every screen online.)
+const MEAL_MS = 700, MEAL_SPREAD = 3, MEAL_FADE = 250, PALE_STEPS = 6;
+function mealSwell(a, m, now) {
+  if (a.slimSeg.length < m) for (const k of ['slimSeg', 'paleSeg', 'slimFrom', 'paleFrom']) { const r = new Float32Array(2 * m); r.set(a[k]); a[k] = r; }
+  const t = now - a.mealAt, on = t >= 0 && t < (reduced ? MEAL_FADE : MEAL_MS);
+  const { slimSeg, paleSeg, slimFrom, paleFrom } = a, last = Math.max(0, a.fromN - 1);
+  const front = t / MEAL_MS * (m - 1 + MEAL_SPREAD);
+  let top = 0;
+  for (let i = 0; i < m; i++) {
+    let s = a.slim, p = a.pale;
+    if (on) {
+      const j = Math.min(i, last), k = reduced ? t / MEAL_FADE : Math.min(1, Math.max(0, (front - i) / MEAL_SPREAD)), e = 1 - k * k * (3 - 2 * k); // (how much of how it was still shows; a segment grown since, as its tail was)
+      s += (slimFrom[j] - s) * e; p += (paleFrom[j] - p) * e;
+    }
+    slimSeg[i] = s;
+    paleSeg[i] = top = Math.max(top, p); // (never paler toward the head: see drawPale)
+  }
+  a.segN = m; a.paleTop = paleSeg[m - 1]; // (as stored, rounded alike, so an even wash is seen as one: see drawPale)
+}
+// Its pale wash (starving, and fading as a meal goes down), over its
+// silhouette; while the colour floods back from the head, in a few steps
+// along it, each over the rest of its body from where its wash reaches that
+// much (no seams where its segments overlap: each step is one fill).
+function drawPale(a) {
+  const top = a.paleTop, p = a.paleSeg, m = a.n;
+  if (top <= 0.004) return;
+  if (p[0] >= top) { ctx.fillStyle = rgba(HUNGER_PALE, 0.5 * top); silhouette(a, 0); return; } // (all alike: one wash)
+  let was = 0;
+  for (let l = 1, i = 0; l <= PALE_STEPS; l++) {
+    const lv = top * (l - 0.5) / PALE_STEPS; // (a step reaches the segments at least this pale)
+    while (i < m && p[i] < lv) i++;
+    if (i >= m) break;
+    const want = 0.5 * top * l / PALE_STEPS, al = 1 - (1 - want) / (1 - was); // (each step on top of the ones before it comes to want)
+    was = want;
+    ctx.fillStyle = rgba(HUNGER_PALE, al); shape(a, 0, i, m - 1); ctx.fill();
+  }
+}
 // (In the face's frame, after its face: a puff of breath, a little cloud
 // of three rounds, out past its mouth, inked lightly so it reads on the bark.)
 const COUGH_PUFF = [0, 0, 1, -0.55, 0.5, 0.62, -0.55, -0.5, 0.62]; // (each round: x, y, radius, in the puff's radius)
@@ -288,8 +340,10 @@ function drawCough(a, now) {
 // starved, its corpse stays thin. With reduced motion the lines stay still
 // and the head doesn't shake.
 const HUNGER_SLIM = 0.22, GROWL_BEAT = 520, GROWL_ARC = 0.42, HUNGER_PALE = '#f6eedb';
-function hungerLook(s, a, dead) {
-  if (dead || !game || !s.alive) { a.slim = dead && s.killer === 'hunger' ? HUNGER_SLIM : 0; a.growl = 0; a.pale = 0; return; } // (starved, it stays thin)
+function hungerLook(s, a, dead, now) {
+  if (dead || !game || !s.alive) { a.slim = dead && s.killer === 'hunger' ? HUNGER_SLIM : 0; a.growl = 0; a.pale = 0; a.mealAt = -1e9; a.ateSeen = -1; return; } // (starved, it stays thin)
+  if (a.ateSeen >= 0 && s.lastAte > a.ateSeen) { a.mealAt = now; a.fromN = a.segN; a.slimFrom.set(a.slimSeg); a.paleFrom.set(a.paleSeg); } // (it ate: the meal goes down from how it was drawn, see mealSwell)
+  a.ateSeen = s.lastAte;
   const left = s.lastAte + T.HUNGER_MS - shownTime, gone = Math.min(1, Math.max(0, 1 - left / (s.mealMs || T.HUNGER_MS)));
   const warn = T.HUNGER_WARN_MS * (s.body.length <= T.MIN_LENGTH ? 1.5 : 1);
   a.slim = HUNGER_SLIM * gone * Math.sqrt(gone);
@@ -600,7 +654,7 @@ function prepare(s, alpha, now, dead, impact = 0) {
   // wobble. (Out, it stays as it was: a corpse never drawn alive takes the
   // way it went.)
   if (!dead || a.hc === undefined) steer(s, a, now);
-  hungerLook(s, a, dead);
+  hungerLook(s, a, dead, now);
   const wobble = reduced || dead || !game ? 0 : s.stunUntil >= game.tick ? Math.sin(now / 45) * 0.16 : a.growl ? Math.sin(now / 62) * 0.11 * a.growl : 0;
   a.turn = Math.atan2(a.hs, a.hc) + wobble;
   if (a.star) a.face = starFace(a) + wobble; // (a star's points turn with it; its face stays upright: see starFace)
@@ -630,7 +684,8 @@ function prepare(s, alpha, now, dead, impact = 0) {
     if (ph >= 0 && ph < COUGH_JOLT) { const j = Math.sin(ph / COUGH_JOLT * Math.PI); a.bump += COUGH_SWELL * j; pts[0] += a.hc * CELL * COUGH_LURCH * j; pts[1] += a.hs * CELL * COUGH_LURCH * j; }
   }
   for (let i = 0; i < m; i++) a.rad[i] = radius(i, m, a, a.tickPos);
-  if (a.slim) for (let i = 1; i < m; i++) a.rad[i] *= 1 - a.slim; // (hungry: its body slims, its head as it was: see hungerLook)
+  mealSwell(a, m, now);
+  for (let i = 1; i < m; i++) if (a.slimSeg[i]) a.rad[i] *= 1 - a.slimSeg[i]; // (hungry: its body slims, its head as it was, and fills out again as a meal goes down: see hungerLook, mealSwell)
   // Seen from above, up is toward you: what's in the air swells (its head
   // the most at the top of a jump, its neck after it, in an arch), and
   // what hangs into a pit is smaller (see sinkOf). (A lift up the screen
