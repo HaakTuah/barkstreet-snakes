@@ -68,7 +68,8 @@ part of "Round six B": "Yes, they are all part of the power update! What i have 
 is its own playable PR, tested both ways (`tools/abtest.js`) with every trademark measured, as the island hop was; the
 design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
 1. **The island hop and no auto-jump** (done, PR #158).
-2. **Bridges** (done, PR #174).
+2. **Bridges** (done, PR #174). Rare by design, about one ride in twenty rounds (Haakon, 29 October 2026: "Agreed with
+   you expert take!"): part 4 and item 6 each report bridge rides again, adding no rule to make them commoner.
 3. **The flashes cut:** the plain flash through a body one thick, the golden through two (and fire out), and a cut
    that leaves a snake fewer than 3 segments puts it out ("The neck cut"; a flash into a head is a failed flash);
    your own beads squashed as your head passes, the choke, cough and nudge gone ("Choking on your own tail", replaced by
