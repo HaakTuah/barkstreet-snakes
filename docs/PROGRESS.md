@@ -51,7 +51,7 @@ beside it as before. A playable draft PR as early as it can be, so Haakon can tr
 *Where it stands* (29 October 2026; it paused at the app's weekly usage warning, which is not the brake: Haakon, "They
 weren't supposed to stop before 90%. We're still at only 76%", so it carries on): parts 1, 2 and
 most of 3 are merged (#158, #174, #183: the cuts, a failed flash, your own beads squashed, Mason's double walls, the
-edge measured). **Next, in order:** part 4 (*under way* on `round6b/golden-flight`, pushed, no PR yet: leap now, the
+edge measured). **Next, in order:** part 4 (*under way* on `round6b/golden-flight`, draft PR #198, `develop` merged in: leap now, the
 golden flight held and steered, bumps in the air and down on a body out, protocol 20, input, lessons, rules tests,
 the rivals weighing leap now and how far to fly; first look, 40 rounds on seed 5: rivals leap now 24 times a round,
 golden flights 3.8 cells in the air, 0.65 snakes a round come down on a body; still to do: merge `develop` into it,
