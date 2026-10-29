@@ -23,7 +23,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 5, part 3 (PR #183) | Mason now lays its walls two thick (its body beside itself back to 27%, where it was; it fell to 21% once a wall one thick could be cut), at the price of its straight runs: 3.5 cells a turn down to 3.1 (everyone else: 1.9). Keep it, or keep its runs (walls one thick, which a flash cuts)? | Keep the double walls: the design asks for them, and its runs stay its mark | open |
+| (none open) | | | |
 
 ## The queue, in order
 
