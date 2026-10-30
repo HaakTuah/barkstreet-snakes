@@ -557,3 +557,7 @@ In the design chat (30 October 2026, 02:22-02:42 UTC): "Question, why does the s
 snakes game now?" Then: "I might've picked them yes. Didn't expect them to stay permanently." And, to the design
 session's takes (a picked seat lasts this visit, with a pin to clear it; rivals never met go back into the deck at a
 random place, not on top): "Agreed to all!" (queued as 2u)
+
+In the design chat (30 October 2026, 06:52 UTC), on the second try at Wildcard's hair (PR #208) and the waiting part 4:
+"Yes to all, except the hair, it looks horrible. I want the original hair, but I want the lick reversed. That's all.
+Keep it that simple." (written into 2n; part 4 waits for a session that makes leap now pay the rivals)

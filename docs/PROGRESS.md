@@ -10,12 +10,14 @@ The first open entry below is next. The older state notes (27 October 2026) are 
 **The main lane stopped here** (30 October 2026, at about 88% of the weekly usage, by the same words). Part 4 of item 5,
 with 2r folded in, is built, reviewed and parked as draft PR #198 (protocol 20): its rivals who leap now and fly come out
 even with rivals who never do, in three head-to-heads (last, on fresh seeds 47 and 59: 24.7% to 25.2%), so by "No part
-merges until the rivals use its moves well" it waits on Haakon's answer in the "For Haakon" table; its "Still to do" list
+merges until the rivals use its moves well" it waits, as Haakon agreed (30 October 2026), for a session that makes leap
+now and the flight pay the rivals; its "Still to do" list
 says what is left. Part 5 (#202) stays parked behind it. Nothing newer (3b+, 2q, 2s, parts 6 and 7) has been started.
 
 **The art lane stopped here** (30 October 2026, at about 88% of the weekly usage: Haakon, "I want them to finish what they
-have started, if we believe they can"). 2o, 2p and 2t are merged (PRs #210, #211, #212). 2n's second try waits for
-Haakon's yes on PR #208 (the "For Haakon" table); once he says yes it needs its reviewer, then it merges. The next art
+have started, if we believe they can"). 2o, 2p and 2t are merged (PRs #210, #211, #212). 2n's second try was turned
+down (Haakon: "it looks horrible"): PR #208 is redone as 2n now says, the original with its lick reversed and nothing
+else, and merges once he says yes. The next art
 entry, 2u, has not been started.
 
 ## For Haakon
@@ -25,8 +27,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 5, part 4 (PR #198) | Leap now and the golden flight are built and play, but rivals who use them come out even with rivals who never do (three head-to-heads, all within noise; last 24.7% to 25.2%). Merge it as a move for people that the rivals use without gaining from it, or wait for a session that finds where leap now pays them? | Wait: "No part merges until the rivals use its moves well". Next try: price leap now by what it saves (a head-on or a crash the crawl's search sees coming), not open ground at large. | Open |
-| 2n (PR #208) | Wildcard's hair, second try (no flick, after "But the hair flicks outwards? That's not trump?"): the original pompadour as one rounded mass, its front wave curling up and back over itself, the top combed back to one side, ends tucked in; pictures in PR #208. Yes, or what to change? | Suggested: yes, merge it as is. The PR waits for his yes. | open |
+| (none open) | | | |
 
 ## The queue, in order
 
@@ -118,13 +119,12 @@ better than what he has right now". Draw Wildcard's head as each version has had
 heading. The design session made [the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg) from the PRs' own pictures (30 October 2026): 1 the
 original, 2 PR #107's two blobs, 3 and 4 PR #110's B and C (never shipped), 5 PR #110 as shipped (the "mop"), 6 PR #144's
 F, 7 PR #156's F at 85% (now). **Haakon's pick: the original, its swirl turned up** (30 October 2026: "What if we took
-the original, but have the swirl point upwards instead of downwards?", then "Yes, please, expertly please!"). Bring back
-the original from `render/` at a79946b (PR #107's "before": the fluffy pompadour, its strands and outline), with one
-change: the swoop at the front no longer curls forward and down over the brow; it lifts off the forehead and sweeps up
-and back over the crown, as Trump's front does, its tip flicking out to one side so that from straight above it reads
-as a swoop, not a bun or a turban. Both eyes show in all four headings. The PR shows before (today's F at 85%), the
-original and the new one in all four headings at 390 px and desktop 2x, and **merges only once Haakon has seen it and
-said yes** (drawing only: no simulation, no protocol change).
+the original, but have the swirl point upwards instead of downwards?", then "Yes, please, expertly please!"). **Then, simply** (Haakon, 30 October 2026, on the second try: "it looks horrible. I want the original hair, but I
+want the lick reversed. That's all. Keep it that simple."): bring back the original exactly as it was at a79946b (PR
+#107's "before": the fluffy pompadour, its strands, colours and outline), and reverse its lick, the one curl at the front
+that comes down over the brow, so it curls the other way, up and back; nothing else changes (no new shape, no flick, no
+reworked mass). The PR shows the original and the new one side by side in all four headings, at 390 px and desktop 2x,
+and **merges only once Haakon has said yes** (drawing only: no simulation, no protocol change).
 
 ### 2q. Rivals notice like people (30 October 2026; an AI entry, after part 4)
 
