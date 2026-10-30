@@ -46,3 +46,23 @@ const portalRun = (gap, ticks = 40) => {
   const spanning = open.filter(([, s]) => !s).length, ms = open.length * E.tickMs(g);
   check('it stays open while the owner\'s body is through it, then shuts PORTAL_MS after', spanning === 5 && g.portals.length === 0 && open.some(([, s]) => s > 0 && s <= T.PORTAL_MS), JSON.stringify(open));
 }
+
+{ // The rivals use them: heading up the right edge beside an open portal there, a golden apple just beyond its exit on
+  // the far side, an AI turns into it and goes through (two moves to the apple, where without it there's the edge).
+  // With the portal shut, it doesn't turn into the edge.
+  const view = shutAt => () => aiView({ me: aiMe([[N21 - 1, 10], [N21 - 1, 11], [N21 - 1, 12], [N21 - 1, 13]], 'up'), others: [aiRival(1, line(8, 20, 4), 'right')], tickMs: 110,
+    food: [{ x: 1, y: 10, kind: 'golden', expires: 999 }, { x: 12, y: 3, kind: 'food', expires: 999 }],
+    portals: shutAt === null ? [] : [{ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt }] });
+  const open = picks(view(30000 + 800), 'drab', 20), none = picks(view(null), 'drab', 20);
+  check('an AI goes through an open gold portal when it pays (food just beyond its exit)', open.right === 20, JSON.stringify(open));
+  check('...and never into the edge where there\'s none', !none.right, JSON.stringify(none));
+}
+
+{ // ...and see them used against them: a rival's head one move from an open portal's entry can come out at its exit
+  // next, so an AI by the exit doesn't step there (it would meet that head), where with the portal shut it might.
+  const view = shutAt => () => aiView({ me: aiMe([[1, 10], [2, 10], [3, 10], [4, 10]], 'left'), others: [aiRival(1, [[N21 - 2, 10], [N21 - 3, 10], [N21 - 4, 10], [N21 - 5, 10]], 'right')], tickMs: 110,
+    food: [{ x: 0, y: 10, kind: 'golden', expires: 999 }, { x: 1, y: 3, kind: 'food', expires: 999 }],
+    portals: shutAt === null ? [] : [{ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 0, shutAt }] });
+  const open = picks(view(30000 + 800), 'drab', 20), none = picks(view(null), 'drab', 20);
+  check('an AI keeps its head off a portal\'s exit a rival could come out of next (it sees portals used against it)', !open.left && none.left === 20, JSON.stringify({ open, none }));
+}

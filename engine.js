@@ -1201,6 +1201,8 @@ window.SnakeEngine = (() => {
       strikeAt: game.woodpecker?.target.length ? game.woodpecker.strikeAt : null,
       landings: game.woodpecker?.landings || null,
       burrows: game.burrows, // (as they are: a person sees every burrow on the board, [{ x, y, at }])
+      portals: game.portals, // (round six B, part 5: the gold portals, as anyone sees them open and shutting)
+      tickMs: tickMs(game),
       age: game.history.length - 1 - idx,
       tick: game.tick,
       timeMs: game.time,
