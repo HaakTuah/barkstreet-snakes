@@ -540,10 +540,15 @@ takes out the tiles under the beetles, they just teleport now." Three fixes, fou
   beetles eaten by the bird, and escapes, before and after. Its lesson: the first time, "The woodpecker eats beetles
   too!", with a Field guide line under Beetles.
 
-### 2o. A squashed bead leaves a splat (30 October 2026; done, PR #210)
+### 2o. A squashed bead leaves a splat (30 October 2026; small, an art lane): done, PR #210
 
 Haakon: "splashing looks like eating. Should leave behind squashed beads in my opinion". A bead squashed under your
 own head ("Squashed the second time" in `docs/design/27-round-six-a-fairness-and-fixes.md`) shows no gulp, no growth
 pulse and no eating sound: it leaves a flat splat in the bead's own colours, a little wider than the bead, fading over
 about 3 s, with a soft splat sound; with reduced motion it simply fades. Drawing and sound only, from the event the
 engine already sends: no simulation, no protocol change.
+
+Done (PR #210): the spray of crumbs and the "Splat!" over your head are gone; a flat splat in the bead's main colour,
+with a darker rim, a sheen and a few drops, lies where it was and fades over 3 s (with reduced motion it doesn't
+spread). The sound is the soft splat it had. See "*The cue:*" under "Squashed the second time" in
+`docs/design/27-round-six-a-fairness-and-fixes.md`.
