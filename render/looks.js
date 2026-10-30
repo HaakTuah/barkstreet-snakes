@@ -20,7 +20,8 @@ function animOf(s, now) {
       // band bends through, radii and fills, sized for the body as it grows.
       n: 0, pts: new Float32Array(64), cor: new Float32Array(64), rad: new Float32Array(32), fills: new Array(32),
       offs: null, offList: [], offPool: [], // (where it's drawn across a wrapped edge, if it is: see unwrap)
-      look: '', color: '', isPlayer: false, rim: false, bump: 0, tickPos: 0, lean: 0,
+      look: '', color: '', isPlayer: false, costume: null, costumeAt: -1e9, oldLook: '', oldColor: '', oldHead: null, wornLook: '', wornColor: '', wornHead: null, // (costume: see costumeChange)
+      rim: false, bump: 0, tickPos: 0, lean: 0,
       // Drawn ahead (see predict): the cell its head goes to next (mx, my),
       // whether it moves (mv), grows (mg) or leaps (ml), how many cells
       // further a flash takes it (mf) and which way (mdx, mdy); the same as
