@@ -541,3 +541,9 @@ woodpecker never leaving a piece of the log out of a hop's reach, rather than a 
 think now that capricious is always pink, it doesnt need that weird border effect around its head anymore. Agreed?
 Though it maybe should be more apparent when it transforms, like an coded animation that works for all of them, or
 something?" (a question; in the "For Haakon" table)
+
+In the design chat (30 October 2026, 02:15 UTC), to the design session's take on Capricious (drop its ring; a short
+costume change for every mood, Copycat's new model the same way): "Agreed to both, expertly! And don't forget a snake
+must account for if it can jump off the island again if it picks to jump there!" (queued as 2t; written into 2r) And:
+"Also, where are the pictures of wildcard's different hairstyles?" (the design session made them from the PRs' own
+pictures; 2n waits for his pick)
