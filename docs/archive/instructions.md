@@ -565,3 +565,7 @@ Keep it that simple." (written into 2n; part 4 waits for a session that makes le
 In the design chat (30 October 2026, 07:11-07:13 UTC): "Should barkstreet snakes also have a "updated game" thingy that
 pops up?" And, to the design session's take (a note only between rounds, one tap to reload, the host first online; one
 line of what changed after updating): "Yes to both, do it expertly!" (queued as 2v)
+
+In the design chat (30 October 2026, 07:15-07:16 UTC), on new versions: "I just figured it should've updated itself, and
+not have to ask me." And: "It should update when you start game. It always pops up when I havent even started a game
+yet. Like why would I not want the latest version?" (2v now updates by itself between rounds, with no note to tap)
