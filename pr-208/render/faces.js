@@ -380,7 +380,7 @@ function drawFace(s, look, color, blinking, a) {
       }
       break;
     }
-    case 'wildcard': { // a big fluffy golden pompadour, its front swept up and back to a flick; squinty eyes, a pout
+    case 'wildcard': { // a big fluffy golden pompadour, its front wave curled up and back over itself; squinty eyes, a pout
       wildHair();
       // A pout.
       if (open > 0.08) mouth(open, 0.43);
@@ -633,11 +633,13 @@ function lens3d(sg, tint) {
   ctx.fill();
 }
 // Wildcard's hair (Trump's), seen from above: the head points +x, and -y is
-// the far side. A big fluffy golden pompadour (the original, PR #74), with
-// its front turned up (2n): a roll across the brow, just behind the eyes,
-// that lifts off the forehead and sweeps up and back over the crown, its tip
-// flicking out past the near side, over a fluffy mass swept back behind it.
-// The back: puffed out past the head, swept back.
+// the far side. A big fluffy golden pompadour (the original, PR #74), its
+// front turned up (2n): one smooth, rounded mass, no strand or tip out past
+// its outline. At the front a roll across the brow, just behind the eyes,
+// the wave lifting off the forehead and curling up and back over itself;
+// behind it the top combed back and over to the far side, its ends tucked
+// in, puffed a little at the sides and the back.
+// The back: puffed out past the head, all round.
 function hairBack() {
   const c = CELL;
   ctx.beginPath();
@@ -649,18 +651,16 @@ function hairBack() {
   ctx.bezierCurveTo(-c * 0.24, c * 0.62, -c * 0.04, c * 0.6, 0, c * 0.48);
   ctx.closePath();
 }
-// The pompadour: the roll across the brow, rising at its near end into the
-// swoop, which turns back over the crown to the flick.
+// The roll: across the brow, rounded at both ends.
 function pompadour() {
   const c = CELL;
   ctx.beginPath();
   ctx.moveTo(-c * 0.18, -c * 0.48);
   ctx.bezierCurveTo(c * 0.04, -c * 0.6, c * 0.18, -c * 0.42, c * 0.12, -c * 0.22); // the roll's far corner
   ctx.bezierCurveTo(c * 0.08, -c * 0.08, c * 0.06, c * 0.12, c * 0.12, c * 0.28); // the brow, behind the eyes
-  ctx.bezierCurveTo(c * 0.16, c * 0.42, c * 0.02, c * 0.5, -c * 0.16, c * 0.44); // lifting off it, turning back...
-  ctx.bezierCurveTo(-c * 0.34, c * 0.4, -c * 0.5, c * 0.46, -c * 0.7, c * 0.62); // ...over the crown, out to the flick...
-  ctx.bezierCurveTo(-c * 0.6, c * 0.4, -c * 0.44, c * 0.2, -c * 0.24, c * 0.14); // ...and back under it
-  ctx.bezierCurveTo(-c * 0.32, -c * 0.06, -c * 0.32, -c * 0.3, -c * 0.18, -c * 0.48); // the roll's back edge
+  ctx.bezierCurveTo(c * 0.16, c * 0.42, c * 0.0, c * 0.5, -c * 0.14, c * 0.44); // its near corner, rounded back
+  ctx.bezierCurveTo(-c * 0.28, c * 0.38, -c * 0.3, c * 0.2, -c * 0.27, c * 0.04); // the roll's back edge...
+  ctx.bezierCurveTo(-c * 0.32, -c * 0.14, -c * 0.32, -c * 0.34, -c * 0.18, -c * 0.48);
   ctx.closePath();
 }
 function wildHair() {
@@ -681,32 +681,33 @@ function wildHair() {
   ctx.beginPath();
   ctx.moveTo(-c * 0.3, -c * 0.44); ctx.quadraticCurveTo(-c * 0.56, -c * 0.4, -c * 0.6, -c * 0.16);
   ctx.stroke();
-  ctx.strokeStyle = '#d97706'; // swept back: long strands curving round behind the roll
-  ctx.lineWidth = c * 0.024;
+  ctx.strokeStyle = '#d97706'; // the top, combed back and over to the far side, the ends tucked in
+  ctx.lineWidth = c * 0.026;
   ctx.beginPath();
-  ctx.moveTo(-c * 0.2, -c * 0.3); ctx.bezierCurveTo(-c * 0.34, -c * 0.24, -c * 0.5, -c * 0.12, -c * 0.56, c * 0.06);
-  ctx.moveTo(-c * 0.34, -c * 0.02); ctx.bezierCurveTo(-c * 0.44, c * 0.02, -c * 0.54, c * 0.1, -c * 0.6, c * 0.2);
+  ctx.moveTo(-c * 0.3, c * 0.34); ctx.bezierCurveTo(-c * 0.44, c * 0.3, -c * 0.56, c * 0.12, -c * 0.56, -c * 0.06);
+  ctx.moveTo(-c * 0.32, c * 0.12); ctx.bezierCurveTo(-c * 0.44, c * 0.06, -c * 0.52, -c * 0.1, -c * 0.48, -c * 0.26);
+  ctx.moveTo(-c * 0.32, -c * 0.1); ctx.bezierCurveTo(-c * 0.4, -c * 0.16, -c * 0.42, -c * 0.28, -c * 0.36, -c * 0.38);
   ctx.stroke();
-  ctx.save(); // the swoop stands up off the head: its shadow falls on the mass behind it
-  ctx.translate(-c * 0.03, c * 0.05);
-  pompadour(); ctx.fillStyle = 'rgba(120,53,15,0.4)'; ctx.fill();
+  ctx.save(); // the roll stands up off the head: its shadow falls on the mass behind it
+  ctx.translate(-c * 0.04, c * 0.03);
+  pompadour(); ctx.fillStyle = 'rgba(120,53,15,0.35)'; ctx.fill();
   ctx.restore();
   ctx.strokeStyle = '#92400e';
   ctx.lineWidth = c * 0.07;
   pompadour(); ctx.stroke();
   ctx.fillStyle = '#fcd34d';
   ctx.fill();
-  ctx.strokeStyle = '#fef3c7'; // the shine along its crest, from the roll up and round to the flick
+  ctx.strokeStyle = '#d97706'; // the wave curling back over itself: the hollow under its curl, and the curl's ends turned in
+  ctx.lineWidth = c * 0.035;
+  ctx.beginPath();
+  ctx.moveTo(-c * 0.12, -c * 0.36); ctx.bezierCurveTo(-c * 0.06, -c * 0.16, -c * 0.08, c * 0.14, -c * 0.12, c * 0.32);
+  ctx.moveTo(-c * 0.04, -c * 0.42); ctx.quadraticCurveTo(-c * 0.12, -c * 0.44, -c * 0.12, -c * 0.36);
+  ctx.moveTo(-c * 0.02, c * 0.38); ctx.quadraticCurveTo(-c * 0.12, c * 0.4, -c * 0.12, c * 0.32);
+  ctx.stroke();
+  ctx.strokeStyle = '#fef3c7'; // the shine along its crest
   ctx.lineWidth = c * 0.04;
   ctx.beginPath();
-  ctx.moveTo(-c * 0.06, -c * 0.4); ctx.bezierCurveTo(c * 0.06, -c * 0.2, c * 0.04, c * 0.22, -c * 0.12, c * 0.34);
-  ctx.quadraticCurveTo(-c * 0.36, c * 0.36, -c * 0.56, c * 0.5);
-  ctx.stroke();
-  ctx.strokeStyle = '#d97706'; // combed strands, from the brow up and back to the flick
-  ctx.lineWidth = c * 0.032;
-  ctx.beginPath();
-  ctx.moveTo(-c * 0.12, -c * 0.24); ctx.bezierCurveTo(-c * 0.1, c * 0.06, -c * 0.16, c * 0.22, -c * 0.4, c * 0.36);
-  ctx.moveTo(-c * 0.02, -c * 0.02); ctx.bezierCurveTo(c * 0.0, c * 0.2, -c * 0.12, c * 0.32, -c * 0.34, c * 0.32);
+  ctx.moveTo(-c * 0.02, -c * 0.4); ctx.bezierCurveTo(c * 0.08, -c * 0.2, c * 0.05, c * 0.16, c * 0.02, c * 0.34);
   ctx.stroke();
 }
 // One of undecided Capricious's eyes (at y: the white's radius w, the pupil's r), turned to what it's watching.
