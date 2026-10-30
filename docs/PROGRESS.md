@@ -187,6 +187,21 @@ them, or something?", and to the design session's take: "Agreed to both, expertl
 Drawing only, from what each player already has (the mood and the model): no simulation, no protocol change. Pictures
 of each mood's change and Copycat's at 390 px and desktop 2x; the render suite.
 
+### 2u. Picked rivals for this visit; unmet rivals back into the deck (30 October 2026; small, a UI lane)
+
+Haakon asked why the same cast showed up each time he started the game, then: "I might've picked them yes. Didn't
+expect them to stay permanently", and to the design session's takes: "Agreed to all!". In `records.js` and the start
+card (`game/round.js`, `game/hud.js`):
+- **A picked seat lasts this visit,** round after round, and the next time the game is opened every seat is "Any"
+  again (kept in `sessionStorage`, not `localStorage`; the storage key `LINEUP_KEY` keeps its name and is simply no longer
+  read, per "Never rename"). A picked seat shows a small pin on the start card, and one tap on the pin sets it back to
+  "Any".
+- **Rivals dealt but never met** (the page closed or reloaded on the start card) go back into the deck at a random place
+  among the rivals not yet dealt, not on top (`Records.undeal`): everyone is still met before anyone comes round again,
+  but opening the game gives a fresh cast.
+Online is unchanged (the host deals). The UI suite: a pick lasts across rounds and is gone in a new visit; a pin
+clears; an undealt rival is not dealt first every time (a seeded test).
+
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
 Haakon (29 October 2026), on the "For Haakon" question whether a fed Gobbler should gamble too: "Agreed to all,
