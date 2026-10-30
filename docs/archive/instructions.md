@@ -511,3 +511,11 @@ In the design chat (29 October 2026, 16:51 UTC), on beetles and the woodpecker:
 > Beetles should quickly try to escape down their burrow when woodpecker targets their little "island". And it seems almost no new burrows appear as the woodpecker destroy the old ones. Also, if the woodpecker takes out the tiles under the beetles, they just teleport now.
 
 (queued as 2m in `docs/PROGRESS.md`, between item 5's parts 3b and 4)
+
+In the design chat (30 October 2026, 01:27 UTC), to the design session's take on PR #195's finding (spat mushrooms
+hardly ever land between rivals) that the spit should fly along the line up to 5 cells and stop at the first head or
+body:
+
+> 3. Agreed, do it expertly!
+
+(queued as item 5, part 3b+, right after part 4; written into the design's "The spit flies along the line")
