@@ -1405,7 +1405,7 @@ window.SnakeEngine = (() => {
     if (gone.size) for (let i = moving.length - 1; i >= 0; i--) if (gone.has(moving[i])) moving.splice(i, 1);
     const bumps = airBumps(game, moving);
     for (const s of moving) {
-      if (s.air || !inside(s.next.x, s.next.y)) continue; // (off-board heads, and heads in the air, never meet anyone)
+      if (s.air || s.bumped || !inside(s.next.x, s.next.y)) continue; // (off-board heads, heads in the air, and a flier bumped down where it was (it never gets there) never meet anyone)
       const k = key(s.next.x, s.next.y);
       if (headStamp[k] !== stamp) { headStamp[k] = stamp; headCount[k] = 0; headFirst[k] = s.id; }
       headCount[k]++;
