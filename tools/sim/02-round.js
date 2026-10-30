@@ -63,6 +63,8 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const s of dying) if (/blew up/.test(s.cause || '')) c.failedGold++;
     for (const s of g.snakes) if (s.alive && !s.flight && g.holes.has(s.body[0].y * N + s.body[0].x)) { c.rideTicks++; if (!riding.has(s)) c.rides++; }
     for (const s of dying) if (riding.has(s)) { c.rideDeaths++; if (s.fatal === 'hole' || /hole/.test(s.cause || '')) c.rideFalls++; }
+    for (const e of g.events) { if (e.type === 'portal') c.portals++; else if (e.type === 'through') { c.throughs++; (st.thruAt ||= new Map()).set(e.snake, g.tick); } }
+    for (const s of dying) if (st.thruAt?.has(s) && g.tick - st.thruAt.get(s) <= 30) c.throughOut++;
     beetleCensus(g, c, st, bugs);
     woodpeckerCensus(g, c, st, dying, N);
     if (mid) c.mealsMid += new Set(g.events.filter(e => e.type === 'eat' && e.kind !== 'mushroom').map(e => e.snake)).size;
