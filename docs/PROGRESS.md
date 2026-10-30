@@ -14,7 +14,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| (none open) | | | |
+| 2n (PR #208) | Wildcard's new hair (the original pompadour, its front lifting off the brow and sweeping up and back to a flick; pictures in PR #208): yes, or what to change? | Suggested: yes, merge it as is. The PR waits for his yes. | open |
 
 ## The queue, in order
 
