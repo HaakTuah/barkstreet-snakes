@@ -519,3 +519,25 @@ body:
 > 3. Agreed, do it expertly!
 
 (queued as item 5, part 3b+, right after part 4; written into the design's "The spit flies along the line")
+
+In the design chat (30 October 2026, 02:02 UTC), feedback from playtesting:
+
+> - trump looks like David Lynch now. I actually think the very first or second hairstyle trump had in the game is better than what he has right now
+> - splashing looks like eating. Should leave behind squashed beads in my opinion
+> - when you eat a mushroom, you cannot eat for a really long time like a few seconds. Cost me a few apples. That's a pretty big trade off for getting to spit on someone
+> - the flag bends now. But i would like to give it some perspective also. So people that pass behind it, dont show up in front of it. They should be behind it. Also, it doesn't quiet know what to do when a snake hits it dead on, so that must be accounted for. And it should also react to soverign and colonists hitting it.
+> - I see snakes jumping onto small islands where they have no chance to survive for very long
+> - do the snakes have a bit too good reaction time? This is just a question! Just seems they play a bit too well in that regard perhaps
+> - I believe we discussed previously making it so the regular leap could close any gap, so it could carry you across to any island. I still see the situation arise where 2 islands form at the opposite ends, and the snakes are trapped on each, so the one on the bigger one wins.
+
+And, to the design session's takes (the five hair versions side by side to pick from; a splat for a squashed bead;
+the spitter sliding over its own mushroom, since it was swallowing it again 3 moves later; flags in depth, head-on and
+bent by their owners; rivals weighing an island before hopping; rivals noticing far things later than near ones; the
+woodpecker never leaving a piece of the log out of a hop's reach, rather than a jump across any gap), at 02:09 UTC:
+
+> Agreed to all! Implement expertly!
+
+(queued as 2n, 2o, 2p, 2q, 2r (in item 5's part 4), 2s and in item 5's part 3b+). On Capricious, the same minute: "And i
+think now that capricious is always pink, it doesnt need that weird border effect around its head anymore. Agreed?
+Though it maybe should be more apparent when it transforms, like an coded animation that works for all of them, or
+something?" (a question; in the "For Haakon" table)
