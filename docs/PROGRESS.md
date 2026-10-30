@@ -7,6 +7,12 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
+**The main lane stopped here** (30 October 2026, at about 88% of the weekly usage, by the same words). Part 4 of item 5,
+with 2r folded in, is built, reviewed and parked as draft PR #198 (protocol 20): its rivals who leap now and fly come out
+even with rivals who never do, in three head-to-heads (last, on fresh seeds 47 and 59: 24.7% to 25.2%), so by "No part
+merges until the rivals use its moves well" it waits on Haakon's answer in the "For Haakon" table; its "Still to do" list
+says what is left. Part 5 (#202) stays parked behind it. Nothing newer (3b+, 2q, 2s, parts 6 and 7) has been started.
+
 **The art lane stopped here** (30 October 2026, at about 88% of the weekly usage: Haakon, "I want them to finish what they
 have started, if we believe they can"). 2o, 2p and 2t are merged (PRs #210, #211, #212). 2n's second try waits for
 Haakon's yes on PR #208 (the "For Haakon" table); once he says yes it needs its reviewer, then it merges. The next art
@@ -19,6 +25,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
+| 5, part 4 (PR #198) | Leap now and the golden flight are built and play, but rivals who use them come out even with rivals who never do (three head-to-heads, all within noise; last 24.7% to 25.2%). Merge it as a move for people that the rivals use without gaining from it, or wait for a session that finds where leap now pays them? | Wait: "No part merges until the rivals use its moves well". Next try: price leap now by what it saves (a head-on or a crash the crawl's search sees coming), not open ground at large. | Open |
 | 2n (PR #208) | Wildcard's hair, second try (no flick, after "But the hair flicks outwards? That's not trump?"): the original pompadour as one rounded mass, its front wave curling up and back over itself, the top combed back to one side, ends tucked in; pictures in PR #208. Yes, or what to change? | Suggested: yes, merge it as is. The PR waits for his yes. | open |
 
 ## The queue, in order
@@ -37,13 +44,8 @@ beside it as before. A playable draft PR as early as it can be, so Haakon can tr
 *Where it stands* (29 October 2026; it paused at the app's weekly usage warning, which is not the brake: Haakon, "They
 weren't supposed to stop before 90%. We're still at only 76%", so it carries on): parts 1, 2 and
 most of 3 are merged (#158, #174, #183: the cuts, a failed flash, your own beads squashed, Mason's double walls, the
-edge measured). **Next, in order:** part 4 (*under way* on `round6b/golden-flight`, pushed, no PR yet: leap now, the
-golden flight held and steered, bumps in the air and down on a body out, protocol 20, input, lessons, rules tests,
-the rivals weighing leap now and how far to fly; first look, 40 rounds on seed 5: rivals leap now 24 times a round,
-golden flights 3.8 cells in the air, 0.65 snakes a round come down on a body; still to do: merge `develop` into it,
-its draft PR, the A/B both ways (a copy that never leaps now nor flies past the plain hop), check leap now for a
-refuge, rivals' tests for both moves, the rivals steering in the air, bridge rides re-measured, and **no hop onto a
-doomed island** (2r)); then 2q (rivals notice like people), 2s (the log never drifts apart), part 3b+ (the spit
+edge measured). **Next, in order:** part 4 (*built, reviewed and parked* as draft PR #198, 2r folded in: its A/B
+comes out even, and its "Still to do" list says what is left; see "The main lane stopped here" above); then 2q (rivals notice like people), 2s (the log never drifts apart), part 3b+ (the spit
 flies along the line, the spitter sliding over its own), then part 5, part 6 (*built and reviewed* on `round6b/dropped-charges`: merge `develop` into it, renumber
 its protocol after part 4's 20, run its A/B), and part 7 (*parked* on `round6b/pricing`; part 3's numbers to watch there: Joker
 and Sovereign low on single seeds, Gobbler's and Vulture's shares a little lower). Mason's double walls are kept
