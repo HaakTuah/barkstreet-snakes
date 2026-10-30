@@ -552,3 +552,8 @@ In the design chat (30 October 2026, 02:19 UTC), on the picture of Wildcard's se
 the original, but have the swirl point upwards instead of downwards?" And, to the design session's take (the front
 lifting up and back off the brow as Trump's does, its tip flicking to one side, shown to him before it merges), at
 02:20 UTC: "Yes, please, expertly please!" (written into 2n)
+
+In the design chat (30 October 2026, 02:22-02:42 UTC): "Question, why does the same cast show up each time I start the
+snakes game now?" Then: "I might've picked them yes. Didn't expect them to stay permanently." And, to the design
+session's takes (a picked seat lasts this visit, with a pin to clear it; rivals never met go back into the deck at a
+random place, not on top): "Agreed to all!" (queued as 2u)
