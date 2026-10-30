@@ -18,7 +18,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 ## The queue, in order
 
-**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)).
+**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)); 2t (Capricious without its ring, and a costume change for every change (PR #212)).
 
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
@@ -150,19 +150,6 @@ fair"). So the log can break into islands, but every island stays a hop from ano
 Measured: rounds whose last snakes are each alone on an island they can't leave (25-31% today, "Last snakes on
 islands of their own"), the biggest island's wins, round length and sudden-death deaths, before and after; the
 woodpecker's mark still shows each patch before it goes. Online the same, with a protocol bump if the mark changes.
-
-### 2t. Capricious without its ring, and a costume change for every change (30 October 2026; small, an art lane)
-
-Haakon: "i think now that capricious is always pink, it doesnt need that weird border effect around its head anymore.
-Agreed? Though it maybe should be more apparent when it transforms, like an coded animation that works for all of
-them, or something?", and to the design session's take: "Agreed to both, expertly!". In `render/bodies.js`:
-- **The ring goes:** the breathing pink ring with pale dashes round Capricious's head (it kept Capricious findable
-  while its body changed with its mood; the pink coat does that now), and the ring that flashes out on a mood change.
-- **A costume change instead,** one animation for every mood: a quick pink puff round the head, the old costume popping
-  off and the new one popping on, about half a second; with reduced motion a plain crossfade.
-- **Copycat the same way** when it takes on a new model, in its own red, so the rivals who change read alike.
-Drawing only, from what each player already has (the mood and the model): no simulation, no protocol change. Pictures
-of each mood's change and Copycat's at 390 px and desktop 2x; the render suite.
 
 ### 2u. Picked rivals for this visit; unmet rivals back into the deck (30 October 2026; small, a UI lane)
 

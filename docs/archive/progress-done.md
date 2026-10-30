@@ -572,3 +572,21 @@ Done (PR #211): every flag is drawn over the snakes, upper rows first, cut away 
 a head from the north or the south knocks it flat, its cloth wrapped round the head for 260 ms, then under the body;
 owners already bent their own (now tested). See "Flags in depth, hit head-on (2p)" in
 `docs/design/32-the-owners-playtest.md`.
+
+### 2t. Capricious without its ring, and a costume change for every change (30 October 2026; small, an art lane): done, PR #212
+
+Haakon: "i think now that capricious is always pink, it doesnt need that weird border effect around its head anymore.
+Agreed? Though it maybe should be more apparent when it transforms, like an coded animation that works for all of
+them, or something?", and to the design session's take: "Agreed to both, expertly!". In `render/bodies.js`:
+- **The ring goes:** the breathing pink ring with pale dashes round Capricious's head (it kept Capricious findable
+  while its body changed with its mood; the pink coat does that now), and the ring that flashes out on a mood change.
+- **A costume change instead,** one animation for every mood: a quick pink puff round the head, the old costume popping
+  off and the new one popping on, about half a second; with reduced motion a plain crossfade.
+- **Copycat the same way** when it takes on a new model, in its own red, so the rivals who change read alike.
+Drawing only, from what each player already has (the mood and the model): no simulation, no protocol change. Pictures
+of each mood's change and Copycat's at 390 px and desktop 2x; the render suite.
+
+Done (PR #212): the breathing ring and the ring flashing out are gone; every change of Capricious's mood and of
+Copycat's model is one 500 ms costume change (a puff round the head in its pink or red, the old face and head colour
+popping off, the new one popping on; with reduced motion a crossfade). See "A costume change (2t)" in
+`docs/design/35-capricious-copycat-and-wildcard.md`.
