@@ -2183,7 +2183,7 @@ window.SnakeAI = (() => {
         const land = path[span];
         const down = span + 1;
         const isle = islandGain(land);
-        const doom = doomed(land, golden);
+        const doom = doomed(land, span, golden);
         if (doom >= 0) return DEAD + (span + 1 + doom) * 1000; // (the death it is, that many moves on: taken only if staying is worse)
         if (!golden && !boxed && !isle && !meal(land, down) && !now) { // (the plain jump: out of a crash or a box, to an island, or onto food, or just short of it)
           const lx = land % N, past = cellAt(lx + d.x, (land - lx) / N + d.y);
@@ -2233,13 +2233,14 @@ window.SnakeAI = (() => {
       // October 2026): "I see snakes jumping onto small islands where they
       // have no chance to survive for very long". The moves I'd live there,
       // or -1 if it isn't doomed.
-      function doomed(land, golden) {
+      function doomed(land, span, golden) {
         const L = me.body.length - (golden ? 0 : TUNE.LEAP_COST);
         const room = landFree(land, L), stampS = stamp, cells = landCells;
         if (room >= L || seen[myHead.y * N + myHead.x] === stampS) return -1;
-        const tickMs = Math.max(TUNE.MIN_TICK, TUNE.START_TICK - (TUNE.START_TICK - TUNE.MIN_TICK) * view.timeMs / TUNE.RAMP_MS);
-        const rest = golden ? (me.leaps > 1 ? 0 : me.leapRest) : TUNE.LEAP_COOLDOWN_MS;
-        if (rest / tickMs + 1 >= room) return room;
+        if (!(golden && me.leaps > 1) && L - TUNE.LEAP_COST <= TUNE.MIN_LENGTH) return room; // (too short for the plain jump off)
+        const tickMs = Math.max(TUNE.MIN_TICK, TUNE.START_TICK - (TUNE.START_TICK - TUNE.MIN_TICK) * (view.timeMs || 0) / TUNE.RAMP_MS);
+        const rest = golden ? (me.leaps > 1 ? 0 : me.leapRest || 0) : TUNE.LEAP_COOLDOWN_MS; // (from when it takes off)
+        if (rest / tickMs - (span + 1) + 1 >= room) return room; // (its rest left once down, and a move to hop off: it fills the island first)
         for (let q = 0; q < cells; q++) for (let k = 0; k < 4; k++) { // (a hop off: from a cell of it, over 1 to LEAP_REACH cells of holes, onto other log)
           let j = nbr[4 * queue[q] + k], over = 0;
           while (j >= 0 && over <= TUNE.LEAP_REACH && holes.has(j) && !(bridgeUntil[j] > 0)) { over++; j = nbr[4 * j + k]; }

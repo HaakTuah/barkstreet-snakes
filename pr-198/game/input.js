@@ -109,7 +109,7 @@ function power(kind) {
   if (!(state === 'running' || (kind === 'letgo' && state === 'paused')) || !playerAlive()) return; // (a jump let go while napping still comes down: it isn't held when you wake)
   if (kind === 'flash') flashedEver = true;
   if (guesting()) return online.room.send({ t: 'pow', k: kind });
-  if (hosting()) return hostPress(me => powerOf(me, kind));
+  if (hosting()) return hostPress(me => powerOf(me, kind), kind === 'letgo');
   powerOf(player(), kind);
 }
 const powerOf = (s, kind) => (kind === 'unleap' ? unleap : kind === 'letgo' ? Engine.letGo : kind === 'flash' ? Engine.flash : Engine.leap)(theGame, s);
@@ -121,9 +121,9 @@ const unleap = (g, s) => { if (s?.alive && s.leapArmed >= g.tick) s.leapArmed = 
 // the other half to arrive. So the host's own presses (turns and powers)
 // wait a whole round trip, in the order they were made: no one gets a head start.
 let hostPressAt = 0;
-function hostPress(fn) {
+function hostPress(fn, letGo = false) {
   const me = player();
-  if (me.autopilot) me.autopilot = null; // back from a hidden tab: your hands again
+  if (me.autopilot && !letGo) me.autopilot = null; // back from a hidden tab: your hands again
   const now = performance.now();
   const at = Math.max(now + Math.min(TUNE.HOST_DELAY_MAX, online.room.rtt()), hostPressAt);
   hostPressAt = at;
