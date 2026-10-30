@@ -547,3 +547,8 @@ costume change for every mood, Copycat's new model the same way): "Agreed to bot
 must account for if it can jump off the island again if it picks to jump there!" (queued as 2t; written into 2r) And:
 "Also, where are the pictures of wildcard's different hairstyles?" (the design session made them from the PRs' own
 pictures; 2n waits for his pick)
+
+In the design chat (30 October 2026, 02:19 UTC), on the picture of Wildcard's seven hair versions: "What if we took
+the original, but have the swirl point upwards instead of downwards?" And, to the design session's take (the front
+lifting up and back off the brow as Trump's does, its tip flicking to one side, shown to him before it merges), at
+02:20 UTC: "Yes, please, expertly please!" (written into 2n)
