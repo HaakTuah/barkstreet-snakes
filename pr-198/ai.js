@@ -2131,17 +2131,18 @@ window.SnakeAI = (() => {
         const lands = (i, safe) => i < n && (free(path[i]) || bridgeUntil[path[i]] > i + 1) && !(safe && reach[framed[path[i]]] <= i);
         let first = -1, now = false;
         if (hurdle(path[0])) {
-          for (span = 1; span <= Math.min(TUNE.LEAP_REACH, n - 1); span++) if (!hurdle(path[span]) || bridgeUntil[path[span]] > span + 1) break;
+          for (span = 1; span <= Math.min(TUNE.LEAP_REACH, n - 1); span++) if (!hurdle(path[span])) break;
+          if (span > Math.min(TUNE.LEAP_REACH, n - 1)) for (span = 1; span <= Math.min(TUNE.LEAP_REACH, n - 1); span++) if (bridgeUntil[path[span]] > span + 1) break; // (as the engine: a bridge that lasts only when no free cell is in reach)
           if (span > TUNE.LEAP_REACH || span >= n || !lands(span, false)) return null;
           first = span;
         } else {
-          for (span = Math.min(TUNE.LEAP_REACH, n - 1); span >= 1 && !lands(span, true); span--);
+          for (span = Math.min(TUNE.LEAP_REACH, n - 1); span >= 1 && !lands(span, false); span--); // (where the engine puts it down: the farthest free cell; safe or not, below)
           if (span < 1) return null;
           first = span; now = true;
         }
         let bestS = null, bestSpan = first;
         for (let k = first; k <= (golden ? Math.min(TUNE.GOLD_FLY, n - 1) : first); k++) {
-          if (k > first && !lands(k, true)) continue;
+          if ((k > first || now) && !lands(k, true)) continue; // (a leap now, or flying on: only down where it's safe)
           const v = landOpt(d, k, golden, now);
           if (v !== null && (bestS === null || v > bestS)) { bestS = v; bestSpan = k; }
         }
