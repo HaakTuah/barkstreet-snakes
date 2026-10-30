@@ -1803,7 +1803,7 @@ window.SnakeEngine = (() => {
     }
     for (const [s] of out) {
       s.air = false; s.flight = null; s.bumped = true;
-      if (s.tailMoves) { const t = s.body[s.body.length - 1], k = key(t.x, t.y); bodyStamp[k] = stamp; bodyOwner[k] = s.id; } // (it stays put, its tail too)
+      for (const c of s.body) { const k = key(c.x, c.y); bodyStamp[k] = stamp; bodyOwner[k] = s.id; } // (it stays put, its tail too, and its lifted body comes down: a wall again to heads on the ground)
     }
     return out;
   }

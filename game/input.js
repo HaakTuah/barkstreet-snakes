@@ -106,7 +106,7 @@ function steerTo(name, swipe = false) {
 // stunned, it goes when the stun's over): they never start, wake or
 // dismiss anything. Online it goes to the host's game, as your turns do.
 function power(kind) {
-  if (state !== 'running' || !playerAlive()) return;
+  if (!(state === 'running' || (kind === 'letgo' && state === 'paused')) || !playerAlive()) return; // (a jump let go while napping still comes down: it isn't held when you wake)
   if (kind === 'flash') flashedEver = true;
   if (guesting()) return online.room.send({ t: 'pow', k: kind });
   if (hosting()) return hostPress(me => powerOf(me, kind));
@@ -151,7 +151,7 @@ let tabbing = false, tabbed = null;
 document.addEventListener('focusin', e => { tabbed = tabbing ? e.target : null; tabbing = false; });
 document.addEventListener('keyup', e => {
   if (e.key === 'Tab') tabbing = false;
-  if (e.key === ' ' && state === 'running') power('letgo'); // (the jump let go: a golden flight comes down on the next cell)
+  if (e.key === ' ') power('letgo'); // (the jump let go: a golden flight comes down on the next cell)
 }); // (a Tab that took focus out of the page: the game's next focus isn't yours)
 
 // Copying the title: its S is a drawing over a see-through letter, so a
@@ -493,6 +493,7 @@ nameInput.addEventListener('change', () => {
 // while you're playing (a watched round can keep going on screen). Online the
 // round goes on regardless.
 document.addEventListener('visibilitychange', () => {
+  if (document.hidden) power('letgo'); // (a held jump can't be let go out of sight: it comes down now)
   if (online) return awayOnline();
   if (!document.hidden) return;
   napNow();
@@ -540,6 +541,7 @@ function awayOnline() {
   }
 }
 window.addEventListener('blur', () => {
+  power('letgo'); // (Space held as the window lost focus: its key-up never comes)
   if (online || !playerAlive() || pendingCard) return;
   napNow();
 });
