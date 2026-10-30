@@ -2075,7 +2075,7 @@ window.SnakeAI = (() => {
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
         if (me.dashes > 0) consider(d, true, flashOpt(d, true), 0.6, extra);
         else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)))) consider(d, true, flashOpt(d, false), trapped || race(d) ? 1 : 2, extra);
-        if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5) * (leapNow ? w.leapNow ?? 1 : 1), extra); } // (leap now, at its price to my style)
+        if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5) * (leapNow ? 2 * (w.leapNow ?? 1) : 1), extra); } // (leap now, at twice the jump's price, times my style's: at the jump's, rivals with it came out even with rivals without)
       }
       return best;
 
