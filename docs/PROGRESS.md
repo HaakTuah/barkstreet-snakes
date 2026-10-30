@@ -173,23 +173,23 @@ card (`game/round.js`, `game/hud.js`):
 Online is unchanged (the host deals). The UI suite: a pick lasts across rounds and is gone in a new visit; a pin
 clears; an undealt rival is not dealt first every time (a seeded test).
 
-### 2v. A new version, told between rounds (30 October 2026; small, a UI lane)
+### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane)
 
-Haakon: "Should barkstreet snakes also have a "updated game" thingy that pops up?", and to the design session's take
-(a note only between rounds, one tap to reload, the host first online; and one line of what changed): "Yes to both, do
-it expertly!". Today a fresh load always gets the newest version (`sw.js` asks the network first), but a page left open
-or resumed on a phone keeps the version it loaded and is never told, and online the first sign is a refused join ("That
+Haakon: "Should barkstreet snakes also have a "updated game" thingy that pops up?", "Yes to both, do it expertly!", and
+then, of Amarna Letters' note: "It should update when you start game. [...] Like why would I not want the latest
+version?" Today a fresh load always gets the newest version (`sw.js` asks the network first), but a page left open or
+resumed on a phone keeps the version it loaded and is never told, and online the first sign is a refused join ("That
 room runs a different version of the game").
 - **It looks:** when the page is shown again after being hidden, and every 30 minutes while open (as Amarna Letters'
   `ui/update.ts` does), it asks whether a newer version is published (the service worker's update check).
-- **Never during a round:** on the start card and the round-over screen only, a small line, "A new version is ready",
-  and one tap reloads; ignored, it stays out of the way. Records and settings survive the reload, as they do today.
-- **Online:** the host sees it in the lobby and between rounds and updates before starting the next, so a new room starts
-  everyone on one version; a friend who is behind is told plainly to reload, as now.
+- **It updates by itself, never during a round:** on the start card or the round-over screen it reloads into the new
+  version at once, with no question; records and settings survive, as they do today.
+- **Online:** the host updates before opening the next room, so a new room starts everyone on one version; a friend who
+  is behind is updated the same way before joining.
 - **What changed:** after an update, the start card shows one line of what is new for a few rounds (from a short list
   kept beside the version number, written with each milestone), then it goes.
-Drawing and the service worker only: no rules, no rivals, no protocol change. The UI suite: the note shows only between
-rounds, a tap reloads into the new version, the line of what changed shows once and goes.
+Drawing and the service worker only: no rules, no rivals, no protocol change. The UI suite: no reload during a round,
+one between rounds when a new version is waiting, the line of what changed shown once and gone.
 
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
