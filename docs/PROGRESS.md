@@ -7,6 +7,11 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
+**The art lane stopped here** (30 October 2026, at about 88% of the weekly usage: Haakon, "I want them to finish what they
+have started, if we believe they can"). 2o, 2p and 2t are merged (PRs #210, #211, #212). 2n's second try waits for
+Haakon's yes on PR #208 (the "For Haakon" table); once he says yes it needs its reviewer, then it merges. The next art
+entry, 2u, has not been started.
+
 ## For Haakon
 
 Every open question for Haakon, until he answers it ("Questions come back to Haakon directly" under "Standing
@@ -14,7 +19,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 2n (PR #208) | Wildcard's new hair (the original pompadour, its front lifting off the brow and sweeping up and back to a flick; pictures in PR #208): yes, or what to change? | Suggested: yes, merge it as is. The PR waits for his yes. | open |
+| 2n (PR #208) | Wildcard's hair, second try (no flick, after "But the hair flicks outwards? That's not trump?"): the original pompadour as one rounded mass, its front wave curling up and back over itself, the top combed back to one side, ends tucked in; pictures in PR #208. Yes, or what to change? | Suggested: yes, merge it as is. The PR waits for his yes. | open |
 
 ## The queue, in order
 
