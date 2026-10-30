@@ -14,11 +14,11 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| (none open) | | | |
+| 2n (PR #208) | Wildcard's new hair (the original pompadour, its front lifting off the brow and sweeping up and back to a flick; pictures in PR #208): yes, or what to change? | Suggested: yes, merge it as is. The PR waits for his yes. | open |
 
 ## The queue, in order
 
-**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)).
+**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)).
 
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
@@ -119,29 +119,6 @@ as a swoop, not a bun or a turban. Both eyes show in all four headings. The PR s
 original and the new one in all four headings at 390 px and desktop 2x, and **merges only once Haakon has seen it and
 said yes** (drawing only: no simulation, no protocol change).
 
-### 2o. A squashed bead leaves a splat (30 October 2026; small, an art lane)
-
-Haakon: "splashing looks like eating. Should leave behind squashed beads in my opinion". A bead squashed under your
-own head ("Squashed the second time" in `docs/design/27-round-six-a-fairness-and-fixes.md`) shows no gulp, no growth
-pulse and no eating sound: it leaves a flat splat in the bead's own colours, a little wider than the bead, fading over
-about 3 s, with a soft splat sound; with reduced motion it simply fades. Drawing and sound only, from the event the
-engine already sends: no simulation, no protocol change.
-
-### 2p. Flags in depth, hit head-on, and bent by their owners (30 October 2026; small, an art lane after 2l)
-
-Haakon: "the flag bends now. But i would like to give it some perspective also. So people that pass behind it, dont
-show up in front of it. They should be behind it. Also, it doesn't quiet know what to do when a snake hits it dead on,
-so that must be accounted for. And it should also react to soverign and colonists hitting it." In `render/flags.js`
-(2l, "Flags that bend under a snake" in `docs/design/32-the-owners-playtest.md`):
-- **In depth:** the pole and cloth rise above their tile, so anything on the cells the flag stands in front of (the
-  row above it on screen) is drawn behind the cloth, and anything in front of it over it, as one sorts things by how
-  far down the screen they stand.
-- **Head-on:** a snake that comes onto the flag's tile straight at the pole (no sideways direction to push) bends it
-  flat ahead of the head, the cloth wrapping round the head for a moment, then trailing under the body; it springs
-  back as 2l does.
-- **Everyone bends it,** Sovereign and Colonist over their own flags included.
-Pictures at 390 px and desktop 2x; the render suite; no simulation, no protocol change.
-
 ### 2q. Rivals notice like people (30 October 2026; an AI entry, after part 4)
 
 Haakon: "do the snakes have a bit too good reaction time? [...] Just seems they play a bit too well in that regard
@@ -186,6 +163,21 @@ them, or something?", and to the design session's take: "Agreed to both, expertl
 - **Copycat the same way** when it takes on a new model, in its own red, so the rivals who change read alike.
 Drawing only, from what each player already has (the mood and the model): no simulation, no protocol change. Pictures
 of each mood's change and Copycat's at 390 px and desktop 2x; the render suite.
+
+### 2u. Picked rivals for this visit; unmet rivals back into the deck (30 October 2026; small, a UI lane)
+
+Haakon asked why the same cast showed up each time he started the game, then: "I might've picked them yes. Didn't
+expect them to stay permanently", and to the design session's takes: "Agreed to all!". In `records.js` and the start
+card (`game/round.js`, `game/hud.js`):
+- **A picked seat lasts this visit,** round after round, and the next time the game is opened every seat is "Any"
+  again (kept in `sessionStorage`, not `localStorage`; the storage key `LINEUP_KEY` keeps its name and is simply no longer
+  read, per "Never rename"). A picked seat shows a small pin on the start card, and one tap on the pin sets it back to
+  "Any".
+- **Rivals dealt but never met** (the page closed or reloaded on the start card) go back into the deck at a random place
+  among the rivals not yet dealt, not on top (`Records.undeal`): everyone is still met before anyone comes round again,
+  but opening the game gives a fresh cast.
+Online is unchanged (the host deals). The UI suite: a pick lasts across rounds and is gone in a new visit; a pin
+clears; an undealt rival is not dealt first every time (a seeded test).
 
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
