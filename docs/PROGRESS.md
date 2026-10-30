@@ -14,11 +14,11 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| (none open) | | | |
+| 2n (PR #208) | Wildcard's new hair (the original pompadour, its front lifting off the brow and sweeping up and back to a flick; pictures in PR #208): yes, or what to change? | Suggested: yes, merge it as is. The PR waits for his yes. | open |
 
 ## The queue, in order
 
-**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)).
+**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)).
 
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
@@ -118,14 +118,6 @@ and back over the crown, as Trump's front does, its tip flicking out to one side
 as a swoop, not a bun or a turban. Both eyes show in all four headings. The PR shows before (today's F at 85%), the
 original and the new one in all four headings at 390 px and desktop 2x, and **merges only once Haakon has seen it and
 said yes** (drawing only: no simulation, no protocol change).
-
-### 2o. A squashed bead leaves a splat (30 October 2026; small, an art lane)
-
-Haakon: "splashing looks like eating. Should leave behind squashed beads in my opinion". A bead squashed under your
-own head ("Squashed the second time" in `docs/design/27-round-six-a-fairness-and-fixes.md`) shows no gulp, no growth
-pulse and no eating sound: it leaves a flat splat in the bead's own colours, a little wider than the bead, fading over
-about 3 s, with a soft splat sound; with reduced motion it simply fades. Drawing and sound only, from the event the
-engine already sends: no simulation, no protocol change.
 
 ### 2p. Flags in depth, hit head-on, and bent by their owners (30 October 2026; small, an art lane after 2l)
 

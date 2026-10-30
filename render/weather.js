@@ -1,5 +1,5 @@
-// The renderer (see render/core.js): fire and its scorch, the sky's tint,
-// rain, lightning and rainbows.
+// The renderer (see render/core.js): fire and its scorch, a squashed bead's
+// splat, the sky's tint, rain, lightning and rainbows.
 
 // ------------------------------------------------------------ weather
 
@@ -124,6 +124,44 @@ function sootBlob(p, key, rx, ry) {
     px = x; py = y;
   }
   p.closePath();
+}
+
+// A bead squashed under its owner's head (2o): a flat splat in the bead's
+// own colour, a little wider than the bead, with a darker rim, a sheen and a
+// few drops flung round it. It spreads out in a blink, lies there, and fades
+// over SPLAT_MS (with reduced motion it is simply there, and fades).
+const splats = []; // { x, y, at, fill, key }
+const SPLAT_MS = 3000;
+function addSplat(x, y, fill, now) {
+  splats.push({ x, y, at: now, fill, key: (y * GRID + x) * 7 + (game.tick % 97) });
+}
+function drawSplats(now) {
+  for (let i = splats.length - 1; i >= 0; i--) if (now - splats[i].at > SPLAT_MS) splats.splice(i, 1);
+  for (const s of splats) {
+    const t = (now - s.at) / SPLAT_MS, grow = reduced ? 1 : Math.max(0.55, Math.min(1, 0.55 + (now - s.at) / 260));
+    const cx = (s.x + 0.5) * CELL, cy = (s.y + 0.5) * CELL, r = CELL * 0.4 * grow;
+    ctx.globalAlpha = Math.min(1, (1 - t) * 1.6);
+    ctx.beginPath(); // (the splat: an uneven, flat blob, and its drops)
+    const N = 9;
+    let px = 0, py = 0;
+    for (let j = 0; j <= N + 1; j++) {
+      const k = j % N, a = k / N * TAU, w = 0.72 + 0.5 * noise(s.key, k, 41);
+      const x = cx + Math.cos(a) * r * w, y = cy + Math.sin(a) * r * w * 0.86;
+      if (j === 1) ctx.moveTo((px + x) / 2, (py + y) / 2);
+      else if (j > 1) ctx.quadraticCurveTo(px, py, (px + x) / 2, (py + y) / 2);
+      px = x; py = y;
+    }
+    ctx.closePath();
+    for (let j = 0; j < 4; j++) {
+      const a = noise(s.key, j, 42) * TAU, d = r * (1.15 + 0.35 * noise(s.key, j, 43)), dr = CELL * (0.035 + 0.035 * noise(s.key, j, 44)) * grow;
+      ctx.moveTo(cx + Math.cos(a) * d + dr, cy + Math.sin(a) * d * 0.86); ctx.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.86, dr, 0, TAU);
+    }
+    ctx.fillStyle = s.fill; ctx.fill();
+    ctx.strokeStyle = mix(s.fill, INK, 0.35); ctx.lineWidth = CELL * 0.04; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)'; // (a wet sheen)
+    ctx.beginPath(); ctx.ellipse(cx - r * 0.25, cy - r * 0.25, r * 0.3, r * 0.14, -0.5, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 }
 
 // Fire on the bark: smouldering cells glow, burning cells flame (deadly),
