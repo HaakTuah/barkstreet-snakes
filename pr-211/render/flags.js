@@ -245,7 +245,7 @@ function drawBanner(cx, cy, col, now, tilt = 0, sc = 1, beat = cx) {
   const x = cx * CELL + CELL / 2, y = cy * CELL + CELL / 2, turned = tilt || sc !== 1;
   const bent = Number.isInteger(cx) && Number.isInteger(cy) && bendOn(cx, cy, now), top = y - CELL * 0.95 - 1;
   if (!overSnakes) { // (under the snakes: only one hit head-on, lying flat; the rest wait, see drawBentFlags)
-    if (bent && laidFlat()) {
+    if (bent && lying()) {
       bentPole(x, y, true);
       if (!wrapping(now)) { clothFrame(x, y, x + 1.5, top); bannerCloth(x + 1.5, top, col, now, beat); ctx.restore(); }
       else flagsLater.push({ x: cx, y: cy, col, beat, wrap: bendNowB, banner: true });
@@ -394,6 +394,7 @@ const poleScale = () => look[1] > 0 ? 1 - (0.25 + 1.65 * look[4]) * look[1] : 1 
 // (The flag bendOn last looked at: laid flat by a head under it, and still
 // wrapped round that head.)
 const laidFlat = () => bendNowB.on && bendNowB.head;
+const lying = () => laidFlat() || (look[4] > 0 && look[1] > 0.3); // (or still lying towards you as it springs back: under what's just gone over it)
 const wrapping = now => !reduced && laidFlat() && now - bendNowB.at < WRAP_MS;
 // A pole as bent, and the frame its cloth hangs in at ax, ay (on the pole
 // as it stands): moved with the pole's top, not turned with it, it trails
@@ -526,7 +527,7 @@ function drawColonyFlags(r, now) {
     if (holeMask[key]) { fellIn(r, c, kind, now); continue; }
     if (!r.shown[key]) continue;
     const x = c.x * CELL + CELL / 2, y = c.y * CELL + CELL / 2, top = y - CELL * 0.92, beat = c.x * 0.7 + c.y * 1.3;
-    if (bendOn(c.x, c.y, now) && laidFlat()) { // (knocked flat by a head: under the snakes, but its wrap over them)
+    if (bendOn(c.x, c.y, now) && lying()) { // (knocked flat by a head: under the snakes, but its wrap over them)
       bentPole(x, y, true);
       if (!wrapping(now)) { clothFrame(x, y, x + 1.5, top); drawFlag(x + 1.5, top, now, beat, kind); ctx.restore(); }
       else flagsLater.push({ x: c.x, y: c.y, kind, beat, wrap: bendNowB, banner: false });
@@ -574,6 +575,7 @@ function clipFront(fx, fy) {
       if (c && c.y === row && j >= 0 && j < 4) frontLift[j] = Math.max(frontLift[j], i <= 0 ? 0.35 : 0.2); // (its outline, and a head its face)
     }
   }
+  if (!frontLift[0] && !frontLift[1] && !frontLift[2] && !frontLift[3]) return; // (nothing in front: no clip)
   ctx.beginPath();
   ctx.rect(-CELL, -CELL * 2, SIZE + CELL * 2, SIZE + CELL * 4);
   for (let j = 0; j < 4; j++) if (frontLift[j]) ctx.rect((cx - 1 + j) * CELL, (row - frontLift[j]) * CELL, CELL, CELL * (1 + frontLift[j])); // (one each: even-odd, two would cancel)
