@@ -138,7 +138,7 @@ function addSplat(x, y, fill, now) {
 function drawSplats(now) {
   for (let i = splats.length - 1; i >= 0; i--) if (now - splats[i].at > SPLAT_MS) splats.splice(i, 1);
   for (const s of splats) {
-    const t = (now - s.at) / SPLAT_MS, grow = reduced ? 1 : Math.min(1, 0.55 + (now - s.at) / 260);
+    const t = (now - s.at) / SPLAT_MS, grow = reduced ? 1 : Math.max(0.55, Math.min(1, 0.55 + (now - s.at) / 260));
     const cx = (s.x + 0.5) * CELL, cy = (s.y + 0.5) * CELL, r = CELL * 0.4 * grow;
     ctx.globalAlpha = Math.min(1, (1 - t) * 1.6);
     ctx.beginPath(); // (the splat: an uneven, flat blob, and its drops)
