@@ -389,7 +389,7 @@ function fromFriend(id, msg) {
     const s = theGame.snakes.find(o => o.peer === id);
     if (!s?.alive || s.left || (state !== 'countdown' && state !== 'running')) return;
     if (msg.t === 'pow' ? !Online.POWERS.includes(msg.k) || state !== 'running' : !Online.DIR_NAMES.includes(msg.d)) return;
-    if (s.autopilot) handBack(s);
+    if (s.autopilot && !(msg.t === 'pow' && msg.k === 'letgo')) handBack(s); // (a jump let go isn't taking the wheel: a blur or a hidden tab sends one)
     if (msg.t === 'pow') powerOf(s, msg.k);
     else if (msg.t === 'swipe' && state === 'running') swipeTo(msg.d, s);
     else turn(msg.d, s);
