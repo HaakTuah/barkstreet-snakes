@@ -28,7 +28,7 @@
  * @typedef {{ t: 'closed' }} ClosedMsg  the host closed the room
  *
  * @typedef {{ t: 'tick', k: number, ms: number, len: number, s: SnakeRow[], f: FoodRow[], un: UnderRow[], h: number[],
- *   w: WoodpeckerRow | 0, bu: BurrowRow[], fi: FireRow[], sky: [kind: number, since: number, until: number], e: EventRow[] }} TickMsg
+ *   w: WoodpeckerRow | 0, bu: BurrowRow[], po: PortalRow[], fi: FireRow[], sky: [kind: number, since: number, until: number], e: EventRow[] }} TickMsg
  *   one tick as the host saw it (see tick())
  * @typedef {0 | 1} Flag
  * @typedef {[alive: Flag, dir: number, eaten: number, lastAte: number, nextStarve: number, cells: number[], memory: Engine.Memory | 0,
@@ -43,6 +43,7 @@
  * @typedef {[x: number, y: number, at: number, target: number[], strikeAt: number, last: number[], struckAt: number, restUntil: number,
  *   pecks: number, landings: [from: number, to: number][] | 0]} WoodpeckerRow
  * @typedef {[x: number, y: number, at: number, used: number, dug: Flag, shutFrom: number, shutAt: number]} BurrowRow
+ * @typedef {[x: number, y: number, dx: number, dy: number, tx: number, ty: number, owner: number, shutAt: number]} PortalRow  a gold portal: its entry and the way through, its exit, whose, when it shuts (0: its owner's body is still through it)
  * @typedef {[cell: number, from: number, until: number, how: 0 | 1 | 2, group: number]} FireRow  how: 1 struck by lightning, 2 an ember
  *
  * An event (see encodeEvent()): snake is a snake's id; kind KINDS's index (a string for spawn).
@@ -61,6 +62,8 @@
  *   | ['burrow', x: number, y: number, dug: Flag]
  *   | ['shut', x: number, y: number, at: number]
  *   | ['heal', x: number, y: number]
+ *   | [type: 'portal' | 'through', snake: number, x: number, y: number, tx: number, ty: number, owner: number]
+ *   | ['portalShut', x: number, y: number, tx: number, ty: number]
  *   | ['spawn', kind: string, x: number, y: number, gold: Flag]
  *   | ['weather', kind: number]
  *   | ['ember', x: number, y: number, fx: number, fy: number]
@@ -86,7 +89,7 @@
  * @typedef {{ t: 'away' | 'back' }} AwayMsg  the page went out of sight, and came back
  */
 window.SnakeOnline = (() => {
-  const VERSION = 19; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's island hop (a jump in the air: where it comes down, how many cells it still flies over, golden); 17: round six B's bridges (no message changed: a rule both sides must play by); 18: round six B's cuts (a failed flash's crash says so; the plain flash cuts, its own tail too: a rule both sides play by) and your own beads squashed (no choke, cough or nudge: each snake's cough gone; a squash where each went); 19: round six B's mushrooms come back up (each snake's cheek, and when it's spat; a spat mushroom's strength; a spit, where it came down, whom it hit, where it lies)
+  const VERSION = 21; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's island hop (a jump in the air: where it comes down, how many cells it still flies over, golden); 17: round six B's bridges (no message changed: a rule both sides must play by); 18: round six B's cuts (a failed flash's crash says so; the plain flash cuts, its own tail too: a rule both sides play by) and your own beads squashed (no choke, cough or nudge: each snake's cough gone; a squash where each went); 19: round six B's mushrooms come back up (each snake's cheek, and when it's spat; a spat mushroom's strength; a spit, where it came down, whom it hit, where it lies); 20: round six B's golden flight, leap now and bumps in the air (part 4); 21: round six B's gold portals (each portal, and portals opening, followed through and shutting)
   const POWERS = ['leap', 'flash', 'unleap'];
   const MAX_PEOPLE = 4;
   // Seat colors for people: the host is green; friends get colors no rival wears.
@@ -169,6 +172,8 @@ window.SnakeOnline = (() => {
       // shut, the times it started and will close over, else -1), fire (cell,
       // burning from, until, struck by lightning, which fire), the weather.
       bu: game.burrows.map(b => [b.x, b.y, b.at, b.used ?? -1, b.dug ? 1 : 0, b.shutFrom ?? -1, b.shutAt ?? -1]),
+      // The gold portals (round six B, part 5): entry, the way through, exit, whose, when it shuts.
+      po: game.portals.map(p => [p.x, p.y, p.dx, p.dy, p.tx, p.ty, p.owner, p.shutAt]),
       fi: [...game.fires].map(([k, f]) => [k, f.from, f.until, f.strike ? 1 : f.ember ? 2 : 0, f.group]),
       sky: [WEATHER.indexOf(game.weather.kind), game.weather.since, game.weather.until],
       e: /** @type {EventRow[]} */ (game.events.map(encodeEvent).filter(Boolean)),
@@ -259,6 +264,8 @@ window.SnakeOnline = (() => {
       case 'burrow': return ['burrow', e.x, e.y, e.dug ? 1 : 0];
       case 'shut': return ['shut', e.x, e.y, e.at];
       case 'heal': return ['heal', e.x, e.y];
+      case 'portal': case 'through': return [e.type, e.snake.id, e.x, e.y, e.tx, e.ty, e.owner ?? e.snake.id];
+      case 'portalShut': return ['portalShut', e.x, e.y, e.tx, e.ty];
       case 'spawn': return ['spawn', e.kind, e.x ?? -1, e.y ?? -1, e.gold ? 1 : 0];
       case 'weather': return ['weather', WEATHER.indexOf(e.kind)];
       case 'ember': return ['ember', e.x, e.y, e.fx, e.fy];
@@ -360,6 +367,10 @@ window.SnakeOnline = (() => {
     game.woodpecker = msg.w ? { x: w[0], y: w[1], at: w[2], target: cellsOf(w[3]), strikeAt: w[4], last: cellsOf(w[5]), struckAt: w[6], restUntil: w[7], ...(Number(w[8]) > 0 ? { pecks: Number(w[8]) } : {}), ...(landings.length ? { landings } : {}) } : null;
     game.burrows = (Array.isArray(msg.bu) ? msg.bu : []).filter(b => Array.isArray(b) && b.length >= 3 && b.every(num) && cell(b[0]) && cell(b[1]) && Number.isInteger(b[2])) // (on the board, opened on a tick)
       .map(([x, y, at, used, dug, shutFrom, shutAt]) => ({ x, y, at, ...(used >= 0 ? { used } : {}), ...(dug ? { dug: 1 } : {}), ...(shutAt > 0 && shutFrom >= 0 && shutFrom < shutAt ? { shutFrom, shutAt } : {}) })); // (the renderer draws a dug one freshly bored, and one growing shut closing)
+    /** @param {any} v */
+    const way = v => v === -1 || v === 0 || v === 1;
+    game.portals = (Array.isArray(msg.po) ? msg.po : []).filter(p => Array.isArray(p) && p.length === 8 && p.every(num) && cell(p[0]) && cell(p[1]) && way(p[2]) && way(p[3]) && Math.abs(p[2]) + Math.abs(p[3]) === 1 && cell(p[4]) && cell(p[5]))
+      .map(([x, y, dx, dy, tx, ty, owner, shutAt]) => ({ x, y, dx, dy, tx, ty, owner, shutAt }));
     game.unders = (Array.isArray(msg.un) ? msg.un : []).filter(u => Array.isArray(u) && u.every(num) && Number.isInteger(u[2]) && u[2] >= 0 && u[2] < window.TUNING.GRID * window.TUNING.GRID)
       .map(([until, expires, from, gold]) => ({ until, expires, from, gold: !!gold }));
     game.fires = new Map((Array.isArray(msg.fi) ? msg.fi : []).filter(f => Array.isArray(f) && f.every(num))
@@ -397,6 +408,8 @@ window.SnakeOnline = (() => {
         case 'burrow': return cell(e[1]) && cell(e[2]) ? { type: 'burrow', x: e[1], y: e[2], ...(e[3] ? { dug: 1 } : {}) } : null;
         case 'shut': return cell(e[1]) && cell(e[2]) && num(e[3]) ? { type: 'shut', x: e[1], y: e[2], at: e[3] } : null;
         case 'heal': return cell(e[1]) && cell(e[2]) ? { type: 'heal', x: e[1], y: e[2] } : null;
+        case 'portal': case 'through': return snake && cell(e[2]) && cell(e[3]) && cell(e[4]) && cell(e[5]) ? { type: e[0], snake, x: e[2], y: e[3], tx: e[4], ty: e[5], ...(e[0] === 'through' ? { owner: Number(e[6]) } : {}) } : null;
+        case 'portalShut': return cell(e[1]) && cell(e[2]) && cell(e[3]) && cell(e[4]) ? { type: 'portalShut', x: e[1], y: e[2], tx: e[3], ty: e[4] } : null;
         case 'spawn': return { type: 'spawn', kind: e[1], x: e[2], y: e[3], gold: !!e[4] };
         case 'weather': return { type: 'weather', kind: WEATHER[e[1]] || 'clear' };
         case 'ember': return { type: 'ember', x: e[1], y: e[2], fx: e[3], fy: e[4] };
