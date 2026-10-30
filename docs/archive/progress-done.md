@@ -552,3 +552,23 @@ Done (PR #210): the spray of crumbs and the "Splat!" over your head are gone; a 
 with a darker rim, a sheen and a few drops, lies where it was and fades over 3 s (with reduced motion it doesn't
 spread). The sound is the soft splat it had. See "*The cue:*" under "Squashed the second time" in
 `docs/design/27-round-six-a-fairness-and-fixes.md`.
+
+### 2p. Flags in depth, hit head-on, and bent by their owners (30 October 2026; small, an art lane after 2l): done, PR #211
+
+Haakon: "the flag bends now. But i would like to give it some perspective also. So people that pass behind it, dont
+show up in front of it. They should be behind it. Also, it doesn't quiet know what to do when a snake hits it dead on,
+so that must be accounted for. And it should also react to soverign and colonists hitting it." In `render/flags.js`
+(2l, "Flags that bend under a snake" in `docs/design/32-the-owners-playtest.md`):
+- **In depth:** the pole and cloth rise above their tile, so anything on the cells the flag stands in front of (the
+  row above it on screen) is drawn behind the cloth, and anything in front of it over it, as one sorts things by how
+  far down the screen they stand.
+- **Head-on:** a snake that comes onto the flag's tile straight at the pole (no sideways direction to push) bends it
+  flat ahead of the head, the cloth wrapping round the head for a moment, then trailing under the body; it springs
+  back as 2l does.
+- **Everyone bends it,** Sovereign and Colonist over their own flags included.
+Pictures at 390 px and desktop 2x; the render suite; no simulation, no protocol change.
+
+Done (PR #211): every flag is drawn over the snakes, upper rows first, cut away over the snakes on the row in front;
+a head from the north or the south knocks it flat, its cloth wrapped round the head for 260 ms, then under the body;
+owners already bent their own (now tested). See "Flags in depth, hit head-on (2p)" in
+`docs/design/32-the-owners-playtest.md`.
