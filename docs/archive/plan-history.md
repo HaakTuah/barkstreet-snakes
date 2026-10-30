@@ -399,3 +399,16 @@ The package to build in PR A wave 2:
 - Possible tweak only if it feels unfair: a golden flash about to blow up falls back to a plain flash.
 
 Related: [[round5-star]], [[round4-feedback]], [[game-ai-fairness]], [[pr-pictures-branch]].
+
+## State notes from docs/PROGRESS.md (27 October 2026)
+
+Queue item 3, the fixes and polish from the owner's playtest, is under way: "Burrows grow shut" (PR #49), "The
+outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57), "Hunger where your eyes are" (PR #66), "Rainbows, the follow-ups" (PR #68), "The phone gap" (PR #70) "Desktop chatter" (PR #72), "Wildcard's hair" (PR #74) and "Copycat's face" (PR #78), "Rival line-up" (PR #86), "The lobby shows the line-up" (PR #116), "Last words on phones" (PR #124), the head-to-head mode in `tools/abtest.js` (PR #80) and "Hunters miss easy pins" (PR #81) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
+#48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages). The previews wait
+on one setting: Pages still serves `main` (every "pages build and deployment" run so far has built `main`), so the
+preview links in PRs do not open until Haakon switches Pages to "Deploy from a branch: gh-pages, / (root)". Everything
+through PR #52 is in `main` (milestone #53); since 27 October the builder merges the develop-to-main PR itself
+("Standing instructions" in `CLAUDE.md`). input-test failed 4 checks in 1 of 5 runs after #35's build; #38's fix of the
+lessons block is probably that flake. Watch for it.
+
+The plan and history that led here are in `docs/archive/plan-history.md`.
