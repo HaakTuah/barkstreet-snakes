@@ -885,6 +885,19 @@ window.SnakeAI = (() => {
     // A hole the woodpecker made, as I see it (among the holes I keep out
     // of, fire and its mark aren't pits).
     const fire = view.fire || EMPTY, mark = view.pecks || EMPTY;
+    // The gold portals (round six B, part 5), as anyone sees them, and how
+    // many moves from now each is still open: till it shuts, or while its
+    // owner's body is through it and PORTAL_MS after.
+    const portals = view.portals || [], portalLeft = portals.map(p => {
+      const tick = view.tickMs || 110;
+      if (p.shutAt) return Math.floor((p.shutAt - view.timeMs) / tick);
+      const o = p.owner === me.id ? me : others.find(q => q.id === p.owner);
+      const j = o ? o.body.findIndex((c, i) => i + 1 < o.body.length && c.x === p.tx && c.y === p.ty && o.body[i + 1].x === p.x && o.body[i + 1].y === p.y) : -1;
+      return (j >= 0 ? o.body.length - j - 1 : 0) + Math.floor(TUNE.PORTAL_MS / tick);
+    });
+    // (Off an edge where one opens that way, through to its exit, while it's
+    // open at move `step`.)
+    const portalOut = (x, y, d, step) => { for (let n = 0; n < portals.length; n++) { const p = portals[n]; if (p.x === x && p.y === y && p.dx === d.x && p.dy === d.y && portalLeft[n] >= step) return true; } return false; };
     const pitAt = i => holes.has(i) && !fire.has(i) && !mark.has(i), pit = (x, y) => pitAt(y * N + x);
 
     // Choose the rival I have the best shot at: little room, I can get in
@@ -1194,7 +1207,8 @@ window.SnakeAI = (() => {
       const wrapO = o.wrap > 0, at = v => wrapO ? (v + N) % N : v; // (the edges wrap for it a while)
       for (const d of DIR_LIST) {
         if (d.x === -o.dir.x && d.y === -o.dir.y) continue; // (its neck)
-        const nx = at(heads[k].x + d.x), ny = at(heads[k].y + d.y);
+        let nx = at(heads[k].x + d.x), ny = at(heads[k].y + d.y);
+        if (!inside(nx, ny) && portalOut(heads[k].x, heads[k].y, d, 1)) { nx = (nx + N) % N; ny = (ny + N) % N; } // (through a gold portal, out at its exit)
         if (inside(nx, ny) && otherFree[ny * N + nx] - age <= 1) strikes[ny * N + nx] += strike; // (a body as seen, `age` ago)
       }
       // (Its powers reach further straight on: a dash three cells; anyone's
@@ -1327,6 +1341,12 @@ window.SnakeAI = (() => {
       reachFrom(framed[o.body[0].y * N + o.body[0].x], (o.stun || 0) - age);
       for (let n = rides.length - 2; n >= 0; n -= 2) if (rides[n + 1] !== k) reachBlock[rides[n]] = ridesWas[n >> 1];
     });
+    // (A gold portal: a rival that reaches its entry while it's open comes
+    // out at its exit a move later.)
+    for (let n = 0; n < portals.length; n++) {
+      const p = portals[n], at = reach[framed[p.y * N + p.x]], ex = framed[p.ty * N + p.tx];
+      if (at + 1 <= portalLeft[n] && at + 1 < reach[ex]) reach[ex] = at + 1;
+    }
 
     // How much food matters right now, given how long I already am. Hunger
     // trumps that: with under 10 s before I start starving, everyone goes
@@ -1888,7 +1908,7 @@ window.SnakeAI = (() => {
     // `body` is the first `len` cells; the moved body goes into bodies[t + 1].
     function move(body, len, grow, d, depth, t, bonus) {
       let nx = body[0].x + d.x, ny = body[0].y + d.y;
-      if (t < wrapSteps) { nx = (nx + N) % N; ny = (ny + N) % N; } // (the edges wrap for me a while yet)
+      if (t < wrapSteps || (portals.length && (nx < 0 || ny < 0 || nx >= N || ny >= N) && portalOut(body[0].x, body[0].y, d, t + 1))) { nx = (nx + N) % N; ny = (ny + N) % N; } // (the edges wrap for me a while yet; or a gold portal, open then)
       if (!canEnter(body, len, grow, nx, ny, t + 1)) return null;
       const i = ny * N + nx;
       const turning = d.x !== unit(body[0].x - body[1].x) || d.y !== unit(body[0].y - body[1].y);

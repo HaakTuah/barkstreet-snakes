@@ -197,6 +197,7 @@ const EVENTS = (s, o, h, k) => {
     dig: [{ ...at, until: k + 8 }], dive: [{ ...at }, { ...at, dug: 1 }],
     knock: [{ kind: 'food', ...at, tx: Math.min(E.GRID - 1, h.x + 2), ty: h.y }, { kind: 'beetle', ...at, tx: h.x, ty: Math.max(0, h.y - 2), gold: 1 }, { kind: 'pellet', ...at, tx: null, ty: null, color: o.color }], // (knocked aside, a golden beetle scurrying, and a bead in its colour with nowhere to go)
     burrow: [{ ...at }, { ...at, dug: 1 }], shut: [{ ...at, at: 9000 + k }], heal: [{ ...at }], // (one cracked open, or left by a dig; one starting to grow shut; one closing over)
+    portal: [{ snake: s, x: E.GRID - 1, y: h.y, tx: 0, ty: h.y }], through: [{ snake: s, x: 0, y: h.y, tx: E.GRID - 1, ty: h.y, owner: o.id }], portalShut: [{ x: h.x, y: 0, tx: h.x, ty: E.GRID - 1 }], // (round six B, part 5: gold portals)
   };
 };
 const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm', 'snow'], FIRES = ['burning', 'struck', 'ember']; // (online.js's orders)
@@ -235,6 +236,7 @@ function stage(game) {
   if (bug && short('food beetle 9')) { bug.scared = true; return; } // (a scared one)
   const digger = game.food.find(f => f.kind === 'beetle' && f.digUntil == null);
   if (digger && short('food beetle 11')) { digger.digUntil = k + 8; return; } // (one digging in, cornered)
+  if (!game.portals.length && short('portals')) { game.portals.push({ x: E.GRID - 1, y: h.y, dx: 1, dy: 0, tx: 0, ty: h.y, owner: s.id, shutAt: game.time + T.PORTAL_MS }); return; } // (a gold portal, shutting; the engine shuts it in its time)
   if (game.burrows.length && short('burrows dug')) { game.burrows[0].dug = 1; return; } // (one a dig left)
   if (game.burrows.length && !game.burrows[0].shutAt && short('burrows shut')) { game.burrows[0].shutFrom = game.time; game.burrows[0].shutAt = game.time + 9000; return; } // (one growing shut)
   const hatch = game.burrows[0] || free(game);
@@ -284,7 +286,7 @@ for (let r = 0; r < rounds; r++) {
       presses++;
     }
     const dyingHost = E.step(host);
-    if (r === rounds - 1) stage(host); // (in the last round: the ones before have had their go)
+    if (r >= rounds - 2) stage(host); // (in the last two rounds: the ones before have had their go; one was too few once the gold portals came)
     const msg = wire(O.tick(host, { holesFrom: holesSent, tickLen: E.tickMs(host) }));
     holesSent = host.holes.size;
     const dyingGuest = O.apply(guest, msg, E.DIRS);
@@ -385,6 +387,7 @@ function protocolSamples() {
   host.holes.add(123);
   host.woodpecker = { x: 1, y: 2, at: 3, target: [10, 11], strikeAt: 20, last: [9], struckAt: 4, restUntil: 5, pecks: 2, landings: [[10, 12], [11, -1]] };
   host.burrows = [{ x: 2, y: 3, at: 4, used: 8, dug: 1, shutFrom: 900, shutAt: 9900 }];
+  host.portals = [{ x: 2, y: 3, dx: 1, dy: 0, tx: 4, ty: 3, owner: 0, shutAt: 0 }];
   host.fires = new Map([[44, { from: 1, until: 9, strike: true, group: 1 }]]);
   host.weather = { kind: 'rain', since: 1, until: 99 };
   const at = { x: 2, y: 3 };
@@ -394,7 +397,7 @@ function protocolSamples() {
     { type: 'crash', snake: a, ...at, cause: 'hit B', killer: 'B', killerId: 1, lost: 2 }, { type: 'cut', snake: a, ...at, lost: 3, by: 1 },
     { type: 'squash', snake: a, ...at }, { type: 'spit', snake: a, ...at, tx: 2, ty: 6, power: 4, hit: 1, lx: null, ly: null }, { type: 'spit', snake: a, ...at, tx: 2, ty: 6, power: 5, hit: -1, lx: 3, ly: 6 }, { type: 'crash', snake: a, ...at, cause: 'hit the edge', killer: 'wall', killerId: null, lost: 5, failed: 1 }, { type: 'dig', ...at, until: 30 },
     { type: 'dive', ...at, dug: 1 }, { type: 'knock', kind: 'pellet', ...at, tx: 4, ty: 4, gold: 0, color: '#f00' }, { type: 'burrow', ...at, dug: 1 },
-    { type: 'shut', ...at, at: 9900 }, { type: 'heal', ...at }, { type: 'spawn', kind: 'food', ...at, gold: 0 }, { type: 'weather', kind: 'rain' }, { type: 'ember', ...at, fx: 4, fy: 4 },
+    { type: 'shut', ...at, at: 9900 }, { type: 'heal', ...at }, { type: 'portal', snake: a, ...at, tx: 4, ty: 3 }, { type: 'through', snake: a, ...at, tx: 4, ty: 3, owner: 1 }, { type: 'portalShut', ...at, tx: 4, ty: 3 }, { type: 'spawn', kind: 'food', ...at, gold: 0 }, { type: 'weather', kind: 'rain' }, { type: 'ember', ...at, fx: 4, fy: 4 },
     { type: 'woodpecker' }, { type: 'peck', ...at, cells: [10, 11], under: [0] }, { type: 'rot', ...at, kind: 'pellet', color: '#f00' }, { type: 'flown', ...at },
     { type: 'starving', snake: a }, { type: 'alight', snake: a }, { type: 'singe', snake: a }, { type: 'baked', ...at, kind: 'food' }, { type: 'ash', ...at, kind: 'food' },
     ...['emerge', 'gust', 'charge', 'strike', 'rainbow', 'aim', 'douse', 'lastApples'].map(type => ({ type, ...at })),

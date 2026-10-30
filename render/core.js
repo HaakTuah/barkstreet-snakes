@@ -53,6 +53,7 @@
 //   bird.js       the woodpecker: its perch, its plan, its poses
 //   bird-draw.js  the woodpecker drawn
 //   holes.js      its aim and patch on the board, and the holes and pits it leaves
+//   portals.js    the gold portals a wrapping snake opens going off an edge
 //   world.js      the frame, the round's events and moments, and the API
 
 const T = window.TUNING;

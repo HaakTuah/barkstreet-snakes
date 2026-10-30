@@ -60,6 +60,8 @@ declare namespace Engine {
   /** A beetle underground. */
   interface Under { until: number; expires: number; from: number; gold: boolean }
   interface Burrow { x: number; y: number; at: number; used?: number; dug?: number | boolean; shutFrom?: number; shutAt?: number }
+  /** A gold portal (round six B, part 5): the entry, the way through it, the exit, whose, and when it shuts (0: its owner's body is still through it). */
+  interface Portal { x: number; y: number; dx: number; dy: number; tx: number; ty: number; owner: number; shutAt: number }
   interface Fire { from: number; until: number; strike: boolean; ember?: boolean; group: number }
   interface Weather { kind: string; since: number; until: number }
   interface Woodpecker {
@@ -84,6 +86,8 @@ declare namespace Engine {
     | { type: 'knock'; kind: string; x: number; y: number; tx?: number | null; ty?: number | null; gold?: Flag; color?: string }
     | { type: 'dig'; x: number; y: number; until: number }
     | { type: 'shut'; x: number; y: number; at: number }
+    | { type: 'portal' | 'through'; snake: Snake; x: number; y: number; tx: number; ty: number; owner?: number }
+    | { type: 'portalShut'; x: number; y: number; tx: number; ty: number }
     | { type: 'dive' | 'burrow'; x: number; y: number; dug?: Flag }
     | { type: 'weather'; kind: string }
     | { type: 'ember'; x: number; y: number; fx: number; fy: number }
@@ -104,6 +108,7 @@ declare namespace Engine {
     unders?: Under[];
     woodpecker: Woodpecker | null;
     burrows: Burrow[];
+    portals: Portal[];
     /** By cell. */
     fires: Map<number, Fire>;
     weather: Weather;
