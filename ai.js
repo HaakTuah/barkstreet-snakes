@@ -2041,7 +2041,7 @@ window.SnakeAI = (() => {
       const keep = me.grow > 0 ? me.body.length : me.body.length - 1, stampM = ++stamp;
       for (let j = 0; j < keep; j++) myCells[me.body[j].y * N + me.body[j].x] = stampM;
       const trapped = crawl < DEAD / 2, boxed = crawl < -NECK;
-      let hereFree = -1, hereFood = false, landFood = false; // (the free log round me, and whether there's food on it: see islandGain) // (boxed: the crawl leaves me less room than I need, or only through a gap a rival could shut)
+      let hereFree = -1, hereFood = false, landFood = false, landCells = 0; // (the free log round me, and whether there's food on it: see islandGain) // (boxed: the crawl leaves me less room than I need, or only through a gap a rival could shut)
       const pecks = view.pecks; // (the woodpecker's mark, if I'm shown it apart from the holes)
       const cellAt = (x, y) => {
         if (me.wrap > 0) { x = (x + N) % N; y = (y + N) % N; } // (the edges wrap for me)
@@ -2183,6 +2183,8 @@ window.SnakeAI = (() => {
         const land = path[span];
         const down = span + 1;
         const isle = islandGain(land);
+        const doom = doomed(land, golden);
+        if (doom >= 0) return DEAD + (span + 1 + doom) * 1000; // (the death it is, that many moves on: taken only if staying is worse)
         if (!golden && !boxed && !isle && !meal(land, down) && !now) { // (the plain jump: out of a crash or a box, to an island, or onto food, or just short of it)
           const lx = land % N, past = cellAt(lx + d.x, (land - lx) / N + d.y);
           // (A habit's jump, for its own sake, only where no rival could get
@@ -2224,6 +2226,27 @@ window.SnakeAI = (() => {
         if (seen[headI] === stamp || there <= hereFree) return 0;
         return Math.min(2, (there - hereFree) / L) + (landFood && !hereFood ? 1 : 0);
       }
+      // 2r, no hop onto a doomed island: where I'd come down is another
+      // piece of log (not joined to mine) with less free room than my
+      // length, and I can't jump off it again (a hop from its rim to other
+      // log, with my jump rested before I've filled it up). Haakon (30
+      // October 2026): "I see snakes jumping onto small islands where they
+      // have no chance to survive for very long". The moves I'd live there,
+      // or -1 if it isn't doomed.
+      function doomed(land, golden) {
+        const L = me.body.length - (golden ? 0 : TUNE.LEAP_COST);
+        const room = landFree(land, L), stampS = stamp, cells = landCells;
+        if (room >= L || seen[myHead.y * N + myHead.x] === stampS) return -1;
+        const tickMs = Math.max(TUNE.MIN_TICK, TUNE.START_TICK - (TUNE.START_TICK - TUNE.MIN_TICK) * view.timeMs / TUNE.RAMP_MS);
+        const rest = golden ? (me.leaps > 1 ? 0 : me.leapRest) : TUNE.LEAP_COOLDOWN_MS;
+        if (rest / tickMs + 1 >= room) return room;
+        for (let q = 0; q < cells; q++) for (let k = 0; k < 4; k++) { // (a hop off: from a cell of it, over 1 to LEAP_REACH cells of holes, onto other log)
+          let j = nbr[4 * queue[q] + k], over = 0;
+          while (j >= 0 && over <= TUNE.LEAP_REACH && holes.has(j) && !(bridgeUntil[j] > 0)) { over++; j = nbr[4 * j + k]; }
+          if (over >= 1 && over <= TUNE.LEAP_REACH && j >= 0 && seen[j] !== stampS) return -1;
+        }
+        return room;
+      }
       function landFree(start, cap) {
         const stampS = ++stamp;
         seen[start] = stampS;
@@ -2241,6 +2264,7 @@ window.SnakeAI = (() => {
             queue[write++] = j;
           }
         }
+        landCells = write;
         return n;
       }
 

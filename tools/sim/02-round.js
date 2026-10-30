@@ -67,11 +67,21 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     woodpeckerCensus(g, c, st, dying, N);
     if (mid) c.mealsMid += new Set(g.events.filter(e => e.type === 'eat' && e.kind !== 'mushroom').map(e => e.snake)).size;
     if (signs) signatures(g, T, per, was);
+    if (st.isleFrom) for (const [s, was] of st.isleFrom) { // (2r: down on another piece of log smaller than itself, where it can't live)
+      if (s.flight && s.alive) continue;
+      st.isleFrom.delete(s);
+      if (!s.alive) continue;
+      if (land.holes !== g.holes.size) labelLand(g, N);
+      const h = s.body[0], k = land.comp[h.y * N + h.x];
+      if (k >= 0 && k !== was && land.sizes[k] < s.body.length) c.smallIsle++;
+    }
     for (const e of g.events) {
       if (e.type === 'leap') { // (the island hop: how far, over a hole, and when, for a jumper out soon after)
         c['hop' + Math.min(3, e.reach)]++;
         if (Array.from({ length: e.reach }, (_, i) => (e.y + e.snake.dir.y * i) * N + e.x + e.snake.dir.x * i).some(k => g.holes.has(k))) c.hopHole++;
         (st.hopAt ||= new Map()).set(e.snake, g.tick);
+        if (land.holes !== g.holes.size) labelLand(g, N);
+        const from = e.snake.body[1]; (st.isleFrom ||= new Map()).set(e.snake, from ? land.comp[from.y * N + from.x] : -1); // (2r: the piece of log it took off from)
       }
       if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
       else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
