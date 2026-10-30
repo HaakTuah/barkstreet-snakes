@@ -1,5 +1,6 @@
 // Frame strips of a snake crossing a colony's flag and Sovereign's banner
-// (2l, flags that bend as a snake goes over them), from each side, on any
+// (2l, flags that bend as a snake goes over them), from each side, and
+// passing the row behind it and in front of it (2p), on any
 // copy of the game: a crop round the flag at each tick as the snake comes
 // on, lies on it and leaves, then as it springs back. One picture a frame:
 //   node shots.js <root> <out-dir> <w>x<h>@<dpr>[m] ...   (m: a phone)
@@ -9,7 +10,7 @@ const fs = require('fs'), path = require('path');
 const root = path.resolve(process.argv[2]), out = process.argv[3], sizes = process.argv.slice(4);
 const { launch, serve } = require(path.join(root, 'tools', 'browser.js'));
 const FLAGS = { flag: [12, 7], banner: [17, 15] };
-const SIDES = { east: [1, 0, 'right'], west: [-1, 0, 'left'], north: [0, -1, 'up'], south: [0, 1, 'down'] };
+const SIDES = { east: [1, 0, 'right'], west: [-1, 0, 'left'], north: [0, -1, 'up'], south: [0, 1, 'down'], behind: [1, 0, 'right', -1], front: [1, 0, 'right', 1] }; // (2p: behind and front pass the row above it and below it)
 (async () => {
   fs.mkdirSync(out, { recursive: true });
   const site = await serve(root); const b = await launch();
@@ -34,7 +35,7 @@ const SIDES = { east: [1, 0, 'right'], west: [-1, 0, 'left'], north: [0, -1, 'up
         sov.memory.home = { x: 17, y: 15, radius: 4 };
         document.getElementById('overlay').classList.add('hidden'); R.setViewer(0); R.setGame(g); drawN(30, 0.5, 60); return 'ok'; })()`);
       const box = await b.eval(`(() => { const r = document.getElementById('game').getBoundingClientRect(); return [r.left, r.top, r.width / TUNING.GRID]; })()`);
-      for (const [fname, [fx, fy]] of Object.entries(FLAGS)) for (const [side, [dx, dy, dir]] of Object.entries(SIDES)) {
+      for (const [fname, [fx, fy]] of Object.entries(FLAGS)) for (const [side, [dx, dy, dir, row = 0]] of Object.entries(SIDES)) {
         let n = 0;
         const shot = async () => {
           const c = box[2], r = await b.send('Page.captureScreenshot', { format: 'jpeg', quality: 88, clip: { x: box[0] + (fx - 2) * c, y: box[1] + (fy - 2) * c, width: 5 * c, height: 4.5 * c, scale: 1 } });
@@ -42,7 +43,7 @@ const SIDES = { east: [1, 0, 'right'], west: [-1, 0, 'left'], north: [0, -1, 'up
         };
         // (the head from two cells short of the flag to past it, the tail leaving it, then the spring back)
         for (let h = -2; h <= 6; h++) {
-          const cells = [0, 1, 2, 3].map(i => [fx + dx * (h - i), fy + dy * (h - i)]);
+          const cells = [0, 1, 2, 3].map(i => [fx + dx * (h - i), fy + row + dy * (h - i)]);
           await b.eval(`(() => { setBody(__g.snakes[0], ${JSON.stringify(cells)}, '${dir}'); __g.tick++; drawN(3, 0.5, 33); return 'ok'; })()`);
           await shot();
         }
