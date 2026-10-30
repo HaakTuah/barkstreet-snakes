@@ -222,7 +222,7 @@ function stage(game) {
     staged.set('landings', (staged.get('landings') || 0) + 1);
     return;
   }
-  if (k % 5) return; // (one thing staged every 5 ticks: 7 left some kinds short once the gold portals came)
+  if (k % 7) return;
   if (short('snake leaps')) { s.leaps = Math.min(T.LEAP_MAX, s.leaps + T.LEAP_CHARGES); return; } // (as a golden beetle gives them)
   if (short('snake dashes')) { s.dashes = Math.min(T.DASH_MAX, s.dashes + T.DASH_CHARGES); return; } // (a golden leaf)
   if (short('snake wrapUntil')) { s.wrapUntil = game.time + T.WRAP_MS; return; } // (and a golden mushroom)
@@ -286,7 +286,7 @@ for (let r = 0; r < rounds; r++) {
       presses++;
     }
     const dyingHost = E.step(host);
-    if (r === rounds - 1) stage(host); // (in the last round: the ones before have had their go)
+    if (r >= rounds - 2) stage(host); // (in the last two rounds: the ones before have had their go; one was too few once the gold portals came)
     const msg = wire(O.tick(host, { holesFrom: holesSent, tickLen: E.tickMs(host) }));
     holesSent = host.holes.size;
     const dyingGuest = O.apply(guest, msg, E.DIRS);
