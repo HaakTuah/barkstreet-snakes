@@ -376,6 +376,26 @@ cell, never while it glides or is carried, and keeps its shake if pecked. A flag
 Drawing only (`bendOn` in `render/flags.js`): each screen draws it from the snakes it has, so online play needs no
 protocol change, and the simulation doesn't load the renderer.
 
+### Flags in depth, hit head-on (2p)
+
+Haakon (30 October 2026): "the flag bends now. But i would like to give it some perspective also. So people that pass
+behind it, dont show up in front of it. They should be behind it. Also, it doesn't quiet know what to do when a snake
+hits it dead on, so that must be accounted for. And it should also react to soverign and colonists hitting it."
+- **In depth.** Every flag and banner is drawn over the snakes (`drawBentFlags` in `render/flags.js`), upper rows first, so
+  anything on the tiles behind it goes under its pole and cloth. Over the row in front of it, it is cut away where a
+  snake lies (`clipFront`: each body cell a fifth of a cell above its row for its outline, a head's a third for its face), so
+  whatever stands in front hides the pole's foot.
+- **Head-on.** A head that comes onto the tile from the north or the south has no side to push the pole to: it is knocked
+  flat ahead of the head (`look[4]`, how flat: laid towards you, the pole turns right round and lies down the screen; laid
+  away, it lies up it), and for `WRAP_MS` (260 ms) its cloth is wrapped round the head, over it, its ends folded back along
+  the head's sides (`wrapCloth`). Then it lies under the body, drawn under the snakes, and springs back as any flag does
+  once the tile is free. A flag laid away swings up through upright as it springs back, never flattening towards you. With
+  reduced motion there is no wrap.
+- **Owners.** Sovereign over its own banner and Colonist over its own flags bend them as anyone does (they already did;
+  a render test now proves it). What looked wrong was the head-on case, which owners meet most, heading for their own
+  flag.
+- Drawing only, from the snakes each screen has: no simulation, no protocol change.
+
 ### Beetles and the woodpecker
 
 Haakon (29 October 2026; entry 2m): beetles should "quickly try to escape down their burrow when woodpecker targets

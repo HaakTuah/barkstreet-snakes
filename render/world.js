@@ -66,7 +66,7 @@ function frame(alpha, now) {
   drawSpitRings(now); // (and where a mushroom in a cheek comes down)
   drawSnakes(alpha, now); // (and the fields' light round any rival in them, under its body)
   drawCheeks(now); // (a mushroom in a cheek: puffed green)
-  if (bentLater.length) drawBentFlags(now); // (a flag a snake lies on, bent over it)
+  if (flagsLater.length) drawBentFlags(now); // (the flags, over the snakes, but not over what stands in front of them)
   if (flagBends.size) forgetBends(now);
   drawTossed(now); // (a bead spat over a head)
   drawRipples(now);
@@ -778,7 +778,7 @@ function setGame(g) {
   bugs.length = bugPops.length = scurries.length = dives.length = heals.length = 0;
   bugFor.clear(); shutSeen.clear();
   knockFor = -1; tickNow = 0;
-  fallenFlags.length = 0; flagBends.clear(); bentLater.length = 0;
+  fallenFlags.length = 0; flagBends.clear(); flagsLater.length = 0;
   fallen.length = 0;
   nextLeaf = 0;
   crackCache.clear();
