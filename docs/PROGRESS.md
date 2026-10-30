@@ -14,7 +14,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 5, part 3b (PR #195) | Spat mushrooms hardly ever land between rivals (1 to 2% of spits hit a head; the A/B shows no edge for the spitters, +0.6 points, within noise): the rivals keep their heads apart and step out of a ring a second ahead. Keep it as a skill shot for people, as designed, or make the spit a shot that flies along the line up to 5 cells and stops on the first head or body? | Keep it as designed for now and judge it in play; a shot along the line is a small change if you want spits to land more. | Open |
+| (none open) | | | |
 
 ## The queue, in order
 
@@ -37,7 +37,8 @@ golden flight held and steered, bumps in the air and down on a body out, protoco
 the rivals weighing leap now and how far to fly; first look, 40 rounds on seed 5: rivals leap now 24 times a round,
 golden flights 3.8 cells in the air, 0.65 snakes a round come down on a body; still to do: merge `develop` into it,
 its draft PR, the A/B both ways (a copy that never leaps now nor flies past the plain hop), check leap now for a
-refuge, rivals' tests for both moves, the rivals steering in the air, bridge rides re-measured); then part 5, part 6 (*built and reviewed* on `round6b/dropped-charges`: merge `develop` into it, renumber
+refuge, rivals' tests for both moves, the rivals steering in the air, bridge rides re-measured); then part 3b+ (the
+spit flies along the line), then part 5, part 6 (*built and reviewed* on `round6b/dropped-charges`: merge `develop` into it, renumber
 its protocol after part 4's 20, run its A/B), and part 7 (*parked* on `round6b/pricing`; part 3's numbers to watch there: Joker
 and Sovereign low on single seeds, Gobbler's and Vulture's shares a little lower). Mason's double walls are kept
 (Haakon, 29 October 2026).
@@ -76,6 +77,12 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
    of 6), the rest at 12 s, your own beads squashed, Mason's double walls, and the edge measured (no refuge); its
    numbers are in the design's "Part 3, the chosen numbers". *Next:* **mushrooms come back up**, in its own PR (3b),
    before part 4.
+   **3b+. The spit flies along the line** (Haakon, 30 October 2026: "3. Agreed, do it expertly!"; the design's
+   "The spit flies along the line"): straight ahead up to 5 cells, two a tick, stopping at the first head (poisoned) or
+   body (bounced by the roll rule), gone over the edge or a hole; a dotted line in place of the ring; the rivals lead
+   their shots and step out of lines; the A/B should now show the spitters ahead, no refuge; lesson, cue, protocol
+   bump. It runs right after part 4 merges and before part 5 (part 4 is already under way, and rule and AI changes
+   run one at a time).
 4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
    **leap now** (a second press while a jump waits sends it at once, open ground included: "Leap now" in the design); with
    **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
