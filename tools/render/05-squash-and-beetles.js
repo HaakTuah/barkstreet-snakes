@@ -1,8 +1,9 @@
 // Squashing your own bead (round six B; it was choking on it, with a cough,
 // in round six A), staged as the engine reports it (the squash event, the
 // bead gone from the food): Joker's own bead lies right in front of it; it
-// goes on over it, and the bead isn't drawn there any more, none of it
-// (no spit, no roll: food is no longer pushed aside), and nothing throws.
+// goes on over it, and the bead isn't drawn there any more (no spit, no
+// roll: food is no longer pushed aside); a flat splat in its colour lies
+// where it was, wider than the bead, and fades away within 3 s (2o).
 // Counts are of pixels changed against the same board with nothing on it.
 const squash = await ev(`(() => {
   seeds(40);
@@ -24,15 +25,16 @@ const squash = await ev(`(() => {
   setBody(jo, Array.from({ length: 6 }, (_, i) => [9 - i, 8]), 'right');
   g.food.splice(g.food.indexOf(b), 1);
   R.onTick([{ type: 'squash', snake: jo, x: 9, y: 8 }]);
-  drawN(3, 0.5, 80);
-  out.mid = count(6.5, 5.5, 6, 6);
-  g.tick++; drawN(10, 0.5, 80);
+  setBody(jo, Array.from({ length: 6 }, (_, i) => [9 - i, 14]), 'right'); // (moved off it, so what it left shows)
+  drawN(4, 0.5, 80);
+  out.mid = count(8.5, 6.5, 3, 3); out.away = count(5.5, 4.5, 8, 8) - out.mid;
+  g.tick++; drawN(36, 0.5, 80);
   out.after = count(5.5, 4.5, 8, 8);
   SnakeDebug.pinQuality(2);
   return out;
 })()`);
-check(squash.before > 20 && squash.mid === 0 && squash.after === 0, 'a bead squashed under its own snake is gone at once: never drawn spat, rolled or left behind',
-  `the bead's sky pixels before ${squash.before}, as it's squashed ${squash.mid}, after ${squash.after}`);
+check(squash.before > 20 && squash.mid > squash.before && squash.away === 0 && squash.after === 0, 'a bead squashed under its own snake leaves a splat in its colour, wider than the bead, where it lay (never spat or rolled), gone within 3 s',
+  `the bead's sky pixels before ${squash.before}, the splat's ${squash.mid} (elsewhere ${squash.away}), 3 s on ${squash.after}`);
 
 // Beetles and the woodpecker's knock (round six A), staged as the engine
 // reports them: two beetles out at once; b.digUntil and the dig and dive

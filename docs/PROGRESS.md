@@ -7,6 +7,11 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
+**The art lane stopped here** (30 October 2026, at about 88% of the weekly usage: Haakon, "I want them to finish what they
+have started, if we believe they can"). 2o, 2p and 2t are merged (PRs #210, #211, #212). 2n's second try waits for
+Haakon's yes on PR #208 (the "For Haakon" table); once he says yes it needs its reviewer, then it merges. The next art
+entry, 2u, has not been started.
+
 ## For Haakon
 
 Every open question for Haakon, until he answers it ("Questions come back to Haakon directly" under "Standing
@@ -14,11 +19,11 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 5, part 3b (PR #195) | Spat mushrooms hardly ever land between rivals (1 to 2% of spits hit a head; the A/B shows no edge for the spitters, +0.6 points, within noise): the rivals keep their heads apart and step out of a ring a second ahead. Keep it as a skill shot for people, as designed, or make the spit a shot that flies along the line up to 5 cells and stops on the first head or body? | Keep it as designed for now and judge it in play; a shot along the line is a small change if you want spits to land more. | Open |
+| 2n (PR #208) | Wildcard's hair, second try (no flick, after "But the hair flicks outwards? That's not trump?"): the original pompadour as one rounded mass, its front wave curling up and back over itself, the top combed back to one side, ends tucked in; pictures in PR #208. Yes, or what to change? | Suggested: yes, merge it as is. The PR waits for his yes. | open |
 
 ## The queue, in order
 
-**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)).
+**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)); 2t (Capricious without its ring, and a costume change for every change (PR #212)).
 
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
@@ -37,7 +42,9 @@ golden flight held and steered, bumps in the air and down on a body out, protoco
 the rivals weighing leap now and how far to fly; first look, 40 rounds on seed 5: rivals leap now 24 times a round,
 golden flights 3.8 cells in the air, 0.65 snakes a round come down on a body; still to do: merge `develop` into it,
 its draft PR, the A/B both ways (a copy that never leaps now nor flies past the plain hop), check leap now for a
-refuge, rivals' tests for both moves, the rivals steering in the air, bridge rides re-measured); then part 5, part 6 (*built and reviewed* on `round6b/dropped-charges`: merge `develop` into it, renumber
+refuge, rivals' tests for both moves, the rivals steering in the air, bridge rides re-measured, and **no hop onto a
+doomed island** (2r)); then 2q (rivals notice like people), 2s (the log never drifts apart), part 3b+ (the spit
+flies along the line, the spitter sliding over its own), then part 5, part 6 (*built and reviewed* on `round6b/dropped-charges`: merge `develop` into it, renumber
 its protocol after part 4's 20, run its A/B), and part 7 (*parked* on `round6b/pricing`; part 3's numbers to watch there: Joker
 and Sovereign low on single seeds, Gobbler's and Vulture's shares a little lower). Mason's double walls are kept
 (Haakon, 29 October 2026).
@@ -76,6 +83,14 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
    of 6), the rest at 12 s, your own beads squashed, Mason's double walls, and the edge measured (no refuge); its
    numbers are in the design's "Part 3, the chosen numbers". *Next:* **mushrooms come back up**, in its own PR (3b),
    before part 4.
+   **3b+. The spit flies along the line** (Haakon, 30 October 2026: "3. Agreed, do it expertly!"; the design's
+   "The spit flies along the line"): straight ahead up to 5 cells, two a tick, stopping at the first head (poisoned) or
+   body (bounced by the roll rule), gone over the edge or a hole; a dotted line in place of the ring; the rivals lead
+   their shots and step out of lines; the A/B should now show the spitters ahead, no refuge; lesson, cue, protocol
+   bump. **The spitter slides over its own mushroom** for a few moves (`OWN_SPIT_TICKS`, a first guess of 6), as a full
+   mouth slides over food, so it can't swallow it again: today the spit lands 3 straight ahead and a snake that keeps
+   going eats it 3 moves later, shrinks again and has a full mouth again, a loop that cost Haakon several apples (his playtest, 30 October 2026); everyone else is hit by it as before. It runs after part 4, 2q and 2s, before part 5 (rule and AI
+   changes run one at a time; 2q first, so 3b+'s A/B measures dodging with human reactions).
 4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
    **leap now** (a second press while a jump waits sends it at once, open ground included: "Leap now" in the design); with
    **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
@@ -93,6 +108,68 @@ neck-cut, drop a tail, fly and steer, leap now, take a landing, follow a portal,
 each danger (a landing ring, a flash's line, a bridge's tail end). Rules tests prove each one through the same engine
 calls as a person's, and the head-to-head shows the users ahead ("No ability only people use", "every new move is
 tested both ways"); the pricing part then makes the choices among them as good as they can be.
+
+### 2n. Wildcard's hair: every version side by side, Haakon picks (30 October 2026; small, an art lane)
+
+Haakon: "trump looks like David Lynch now. I actually think the very first or second hairstyle trump had in the game is
+better than what he has right now". Draw Wildcard's head as each version has had it, side by side at the same size and
+heading. The design session made [the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg) from the PRs' own pictures (30 October 2026): 1 the
+original, 2 PR #107's two blobs, 3 and 4 PR #110's B and C (never shipped), 5 PR #110 as shipped (the "mop"), 6 PR #144's
+F, 7 PR #156's F at 85% (now). **Haakon's pick: the original, its swirl turned up** (30 October 2026: "What if we took
+the original, but have the swirl point upwards instead of downwards?", then "Yes, please, expertly please!"). Bring back
+the original from `render/` at a79946b (PR #107's "before": the fluffy pompadour, its strands and outline), with one
+change: the swoop at the front no longer curls forward and down over the brow; it lifts off the forehead and sweeps up
+and back over the crown, as Trump's front does, its tip flicking out to one side so that from straight above it reads
+as a swoop, not a bun or a turban. Both eyes show in all four headings. The PR shows before (today's F at 85%), the
+original and the new one in all four headings at 390 px and desktop 2x, and **merges only once Haakon has seen it and
+said yes** (drawing only: no simulation, no protocol change).
+
+### 2q. Rivals notice like people (30 October 2026; an AI entry, after part 4)
+
+Haakon: "do the snakes have a bit too good reaction time? [...] Just seems they play a bit too well in that regard
+perhaps", and to the take that what is superhuman is not the 240 ms but seeing the whole board at once: "Agreed to
+all!". Every rival's view of another snake is as old as a person's notice of it would be: `REACTION_MS` (240) near its
+own head, growing with distance to about 400 ms across the board (`REACTION_FAR_MS`, first guesses), with a little
+variation from moment to moment, so near things are seen at once and far ones a beat late, as a person sees them
+("Clever rivals, human reactions"; the AI still plans as far ahead as before). Online the same. Measured before and
+after: per-persona win rates, every trademark and the feel numbers within noise or explained, through
+`tools/abtest.js` on fresh seeds; the PR shows the table.
+
+### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
+
+Haakon: "I see snakes jumping onto small islands where they have no chance to survive for very long". Before a hop or
+a flight, a rival weighs where it lands: the island's free room against its own length, the food on it, and above all
+**whether it can jump off again** (Haakon, 30 October 2026: "don't forget a snake must account for if it can jump off
+the island again if it picks to jump there!"): another piece of log within a hop of the island, and room to live on
+it until its jump's rest is over, and from where on the island its head can take that hop; a landing it can't live on scores as the death it is, unless staying
+is worse. A rules test sets up the case (a long snake beside a small island and a bigger one in reach), and part 4's
+A/B reports hops onto islands too small to live on, before and after.
+
+### 2s. The log breaks, but never drifts apart (30 October 2026; an engine-rules entry, after 2q)
+
+Haakon: "I still see the situation arise where 2 islands form at the opposite ends, and the snakes are trapped on
+each, so the one on the bigger one wins", and to the take that a jump across any gap would be a refuge: "Agreed to
+all!". The woodpecker never pecks a patch that would leave a piece of the log out of a plain hop's reach (`LEAP_REACH`,
+3 cells) of every other piece: it picks another patch, as it does for crumbs ("No crumbs" in "The woodpecker plays
+fair"). So the log can break into islands, but every island stays a hop from another, and the end stays a fight.
+Measured: rounds whose last snakes are each alone on an island they can't leave (25-31% today, "Last snakes on
+islands of their own"), the biggest island's wins, round length and sudden-death deaths, before and after; the
+woodpecker's mark still shows each patch before it goes. Online the same, with a protocol bump if the mark changes.
+
+### 2u. Picked rivals for this visit; unmet rivals back into the deck (30 October 2026; small, a UI lane)
+
+Haakon asked why the same cast showed up each time he started the game, then: "I might've picked them yes. Didn't
+expect them to stay permanently", and to the design session's takes: "Agreed to all!". In `records.js` and the start
+card (`game/round.js`, `game/hud.js`):
+- **A picked seat lasts this visit,** round after round, and the next time the game is opened every seat is "Any"
+  again (kept in `sessionStorage`, not `localStorage`; the storage key `LINEUP_KEY` keeps its name and is simply no longer
+  read, per "Never rename"). A picked seat shows a small pin on the start card, and one tap on the pin sets it back to
+  "Any".
+- **Rivals dealt but never met** (the page closed or reloaded on the start card) go back into the deck at a random place
+  among the rivals not yet dealt, not on top (`Records.undeal`): everyone is still met before anyone comes round again,
+  but opening the game gives a fresh cast.
+Online is unchanged (the host deals). The UI suite: a pick lasts across rounds and is gone in a new visit; a pin
+clears; an undealt rival is not dealt first every time (a seeded test).
 
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
