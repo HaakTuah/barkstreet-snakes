@@ -14,7 +14,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 2n, Wildcard's hair | Which of the seven ([the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg): 1 the original, 2 PR #107, 3 and 4 PR #110's B and C, 5 PR #110 as shipped, 6 PR #144's F, 7 today's F at 85%) should Wildcard wear? | You said the first or second felt better: 1 is the original swirl, 2 the two blobs | Open |
+| (none open) | | | |
 
 ## The queue, in order
 
@@ -110,8 +110,14 @@ Haakon: "trump looks like David Lynch now. I actually think the very first or se
 better than what he has right now". Draw Wildcard's head as each version has had it, side by side at the same size and
 heading. The design session made [the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg) from the PRs' own pictures (30 October 2026): 1 the
 original, 2 PR #107's two blobs, 3 and 4 PR #110's B and C (never shipped), 5 PR #110 as shipped (the "mop"), 6 PR #144's
-F, 7 PR #156's F at 85% (now). *Waits for Haakon's pick* (the "For Haakon" table); then bring that version back from
-its own commit's `render/` files, as it was (the drawing only: no simulation, no protocol change).
+F, 7 PR #156's F at 85% (now). **Haakon's pick: the original, its swirl turned up** (30 October 2026: "What if we took
+the original, but have the swirl point upwards instead of downwards?", then "Yes, please, expertly please!"). Bring back
+the original from `render/` at a79946b (PR #107's "before": the fluffy pompadour, its strands and outline), with one
+change: the swoop at the front no longer curls forward and down over the brow; it lifts off the forehead and sweeps up
+and back over the crown, as Trump's front does, its tip flicking out to one side so that from straight above it reads
+as a swoop, not a bun or a turban. Both eyes show in all four headings. The PR shows before (today's F at 85%), the
+original and the new one in all four headings at 390 px and desktop 2x, and **merges only once Haakon has seen it and
+said yes** (drawing only: no simulation, no protocol change).
 
 ### 2o. A squashed bead leaves a splat (30 October 2026; small, an art lane)
 
