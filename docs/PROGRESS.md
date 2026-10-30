@@ -14,7 +14,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| Capricious's ring | Now that Capricious is always pink, drop the breathing pink ring round its head, and make a mood change a short costume change any rival's mood can use (a pink puff, the old costume popping off, the new one on), Copycat taking on a new model the same way? | Yes to both; the puff is drawing only | Open |
+| 2n, Wildcard's hair | Which of the seven ([the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg): 1 the original, 2 PR #107, 3 and 4 PR #110's B and C, 5 PR #110 as shipped, 6 PR #144's F, 7 today's F at 85%) should Wildcard wear? | You said the first or second felt better: 1 is the original swirl, 2 the two blobs | Open |
 
 ## The queue, in order
 
@@ -108,9 +108,10 @@ tested both ways"); the pricing part then makes the choices among them as good a
 
 Haakon: "trump looks like David Lynch now. I actually think the very first or second hairstyle trump had in the game is
 better than what he has right now". Draw Wildcard's head as each version has had it, side by side at the same size and
-heading, labelled: the original, 1b+ (PR #107), 1b+++ (PR #110), 2f (PR #144, F) and 2f+ (PR #156, F at 85%), each
-from its own commit's `render/` files; post the picture in a draft PR and ask Haakon which, under "Questions for Haakon".
-Ship his pick once he answers (the drawing only: no simulation, no protocol change).
+heading. The design session made [the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg) from the PRs' own pictures (30 October 2026): 1 the
+original, 2 PR #107's two blobs, 3 and 4 PR #110's B and C (never shipped), 5 PR #110 as shipped (the "mop"), 6 PR #144's
+F, 7 PR #156's F at 85% (now). *Waits for Haakon's pick* (the "For Haakon" table); then bring that version back from
+its own commit's `render/` files, as it was (the drawing only: no simulation, no protocol change).
 
 ### 2o. A squashed bead leaves a splat (30 October 2026; small, an art lane)
 
@@ -149,8 +150,10 @@ after: per-persona win rates, every trademark and the feel numbers within noise 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
 Haakon: "I see snakes jumping onto small islands where they have no chance to survive for very long". Before a hop or
-a flight, a rival weighs where it lands: the island's free room against its own length, the food on it, and whether it
-can hop off again before its jump's rest is over; a landing it can't live on scores as the death it is, unless staying
+a flight, a rival weighs where it lands: the island's free room against its own length, the food on it, and above all
+**whether it can jump off again** (Haakon, 30 October 2026: "don't forget a snake must account for if it can jump off
+the island again if it picks to jump there!"): another piece of log within a hop of the island, and room to live on
+it until its jump's rest is over, and from where on the island its head can take that hop; a landing it can't live on scores as the death it is, unless staying
 is worse. A rules test sets up the case (a long snake beside a small island and a bigger one in reach), and part 4's
 A/B reports hops onto islands too small to live on, before and after.
 
@@ -164,6 +167,19 @@ fair"). So the log can break into islands, but every island stays a hop from ano
 Measured: rounds whose last snakes are each alone on an island they can't leave (25-31% today, "Last snakes on
 islands of their own"), the biggest island's wins, round length and sudden-death deaths, before and after; the
 woodpecker's mark still shows each patch before it goes. Online the same, with a protocol bump if the mark changes.
+
+### 2t. Capricious without its ring, and a costume change for every change (30 October 2026; small, an art lane)
+
+Haakon: "i think now that capricious is always pink, it doesnt need that weird border effect around its head anymore.
+Agreed? Though it maybe should be more apparent when it transforms, like an coded animation that works for all of
+them, or something?", and to the design session's take: "Agreed to both, expertly!". In `render/bodies.js`:
+- **The ring goes:** the breathing pink ring with pale dashes round Capricious's head (it kept Capricious findable
+  while its body changed with its mood; the pink coat does that now), and the ring that flashes out on a mood change.
+- **A costume change instead,** one animation for every mood: a quick pink puff round the head, the old costume popping
+  off and the new one popping on, about half a second; with reduced motion a plain crossfade.
+- **Copycat the same way** when it takes on a new model, in its own red, so the rivals who change read alike.
+Drawing only, from what each player already has (the mood and the model): no simulation, no protocol change. Pictures
+of each mood's change and Copycat's at 390 px and desktop 2x; the render suite.
 
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
