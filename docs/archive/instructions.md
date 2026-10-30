@@ -561,3 +561,7 @@ random place, not on top): "Agreed to all!" (queued as 2u)
 In the design chat (30 October 2026, 06:52 UTC), on the second try at Wildcard's hair (PR #208) and the waiting part 4:
 "Yes to all, except the hair, it looks horrible. I want the original hair, but I want the lick reversed. That's all.
 Keep it that simple." (written into 2n; part 4 waits for a session that makes leap now pay the rivals)
+
+In the design chat (30 October 2026, 07:11-07:13 UTC): "Should barkstreet snakes also have a "updated game" thingy that
+pops up?" And, to the design session's take (a note only between rounds, one tap to reload, the host first online; one
+line of what changed after updating): "Yes to both, do it expertly!" (queued as 2v)
