@@ -14,7 +14,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| (none open) | | | |
+| Capricious's ring | Now that Capricious is always pink, drop the breathing pink ring round its head, and make a mood change a short costume change any rival's mood can use (a pink puff, the old costume popping off, the new one on), Copycat taking on a new model the same way? | Yes to both; the puff is drawing only | Open |
 
 ## The queue, in order
 
@@ -37,8 +37,9 @@ golden flight held and steered, bumps in the air and down on a body out, protoco
 the rivals weighing leap now and how far to fly; first look, 40 rounds on seed 5: rivals leap now 24 times a round,
 golden flights 3.8 cells in the air, 0.65 snakes a round come down on a body; still to do: merge `develop` into it,
 its draft PR, the A/B both ways (a copy that never leaps now nor flies past the plain hop), check leap now for a
-refuge, rivals' tests for both moves, the rivals steering in the air, bridge rides re-measured); then part 3b+ (the
-spit flies along the line), then part 5, part 6 (*built and reviewed* on `round6b/dropped-charges`: merge `develop` into it, renumber
+refuge, rivals' tests for both moves, the rivals steering in the air, bridge rides re-measured, and **no hop onto a
+doomed island** (2r)); then 2q (rivals notice like people), 2s (the log never drifts apart), part 3b+ (the spit
+flies along the line, the spitter sliding over its own), then part 5, part 6 (*built and reviewed* on `round6b/dropped-charges`: merge `develop` into it, renumber
 its protocol after part 4's 20, run its A/B), and part 7 (*parked* on `round6b/pricing`; part 3's numbers to watch there: Joker
 and Sovereign low on single seeds, Gobbler's and Vulture's shares a little lower). Mason's double walls are kept
 (Haakon, 29 October 2026).
@@ -81,8 +82,10 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
    "The spit flies along the line"): straight ahead up to 5 cells, two a tick, stopping at the first head (poisoned) or
    body (bounced by the roll rule), gone over the edge or a hole; a dotted line in place of the ring; the rivals lead
    their shots and step out of lines; the A/B should now show the spitters ahead, no refuge; lesson, cue, protocol
-   bump. It runs right after part 4 merges and before part 5 (part 4 is already under way, and rule and AI changes
-   run one at a time).
+   bump. **The spitter slides over its own mushroom** for a few moves (`OWN_SPIT_TICKS`, a first guess of 6), as a full
+   mouth slides over food, so it can't swallow it again: today the spit lands 3 straight ahead and a snake that keeps
+   going eats it 3 moves later, shrinks again and has a full mouth again, a loop that cost Haakon several apples (his playtest, 30 October 2026); everyone else is hit by it as before. It runs after part 4, 2q and 2s, before part 5 (rule and AI
+   changes run one at a time; 2q first, so 3b+'s A/B measures dodging with human reactions).
 4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
    **leap now** (a second press while a jump waits sends it at once, open ground included: "Leap now" in the design); with
    **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
@@ -100,6 +103,67 @@ neck-cut, drop a tail, fly and steer, leap now, take a landing, follow a portal,
 each danger (a landing ring, a flash's line, a bridge's tail end). Rules tests prove each one through the same engine
 calls as a person's, and the head-to-head shows the users ahead ("No ability only people use", "every new move is
 tested both ways"); the pricing part then makes the choices among them as good as they can be.
+
+### 2n. Wildcard's hair: every version side by side, Haakon picks (30 October 2026; small, an art lane)
+
+Haakon: "trump looks like David Lynch now. I actually think the very first or second hairstyle trump had in the game is
+better than what he has right now". Draw Wildcard's head as each version has had it, side by side at the same size and
+heading, labelled: the original, 1b+ (PR #107), 1b+++ (PR #110), 2f (PR #144, F) and 2f+ (PR #156, F at 85%), each
+from its own commit's `render/` files; post the picture in a draft PR and ask Haakon which, under "Questions for Haakon".
+Ship his pick once he answers (the drawing only: no simulation, no protocol change).
+
+### 2o. A squashed bead leaves a splat (30 October 2026; small, an art lane)
+
+Haakon: "splashing looks like eating. Should leave behind squashed beads in my opinion". A bead squashed under your
+own head ("Squashed the second time" in `docs/design/27-round-six-a-fairness-and-fixes.md`) shows no gulp, no growth
+pulse and no eating sound: it leaves a flat splat in the bead's own colours, a little wider than the bead, fading over
+about 3 s, with a soft splat sound; with reduced motion it simply fades. Drawing and sound only, from the event the
+engine already sends: no simulation, no protocol change.
+
+### 2p. Flags in depth, hit head-on, and bent by their owners (30 October 2026; small, an art lane after 2l)
+
+Haakon: "the flag bends now. But i would like to give it some perspective also. So people that pass behind it, dont
+show up in front of it. They should be behind it. Also, it doesn't quiet know what to do when a snake hits it dead on,
+so that must be accounted for. And it should also react to soverign and colonists hitting it." In `render/flags.js`
+(2l, "Flags that bend under a snake" in `docs/design/32-the-owners-playtest.md`):
+- **In depth:** the pole and cloth rise above their tile, so anything on the cells the flag stands in front of (the
+  row above it on screen) is drawn behind the cloth, and anything in front of it over it, as one sorts things by how
+  far down the screen they stand.
+- **Head-on:** a snake that comes onto the flag's tile straight at the pole (no sideways direction to push) bends it
+  flat ahead of the head, the cloth wrapping round the head for a moment, then trailing under the body; it springs
+  back as 2l does.
+- **Everyone bends it,** Sovereign and Colonist over their own flags included.
+Pictures at 390 px and desktop 2x; the render suite; no simulation, no protocol change.
+
+### 2q. Rivals notice like people (30 October 2026; an AI entry, after part 4)
+
+Haakon: "do the snakes have a bit too good reaction time? [...] Just seems they play a bit too well in that regard
+perhaps", and to the take that what is superhuman is not the 240 ms but seeing the whole board at once: "Agreed to
+all!". Every rival's view of another snake is as old as a person's notice of it would be: `REACTION_MS` (240) near its
+own head, growing with distance to about 400 ms across the board (`REACTION_FAR_MS`, first guesses), with a little
+variation from moment to moment, so near things are seen at once and far ones a beat late, as a person sees them
+("Clever rivals, human reactions"; the AI still plans as far ahead as before). Online the same. Measured before and
+after: per-persona win rates, every trademark and the feel numbers within noise or explained, through
+`tools/abtest.js` on fresh seeds; the PR shows the table.
+
+### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
+
+Haakon: "I see snakes jumping onto small islands where they have no chance to survive for very long". Before a hop or
+a flight, a rival weighs where it lands: the island's free room against its own length, the food on it, and whether it
+can hop off again before its jump's rest is over; a landing it can't live on scores as the death it is, unless staying
+is worse. A rules test sets up the case (a long snake beside a small island and a bigger one in reach), and part 4's
+A/B reports hops onto islands too small to live on, before and after.
+
+### 2s. The log breaks, but never drifts apart (30 October 2026; an engine-rules entry, after 2q)
+
+Haakon: "I still see the situation arise where 2 islands form at the opposite ends, and the snakes are trapped on
+each, so the one on the bigger one wins", and to the take that a jump across any gap would be a refuge: "Agreed to
+all!". The woodpecker never pecks a patch that would leave a piece of the log out of a plain hop's reach (`LEAP_REACH`,
+3 cells) of every other piece: it picks another patch, as it does for crumbs ("No crumbs" in "The woodpecker plays
+fair"). So the log can break into islands, but every island stays a hop from another, and the end stays a fight.
+Measured: rounds whose last snakes are each alone on an island they can't leave (25-31% today, "Last snakes on
+islands of their own"), the biggest island's wins, round length and sudden-death deaths, before and after; the
+woodpecker's mark still shows each patch before it goes. Online the same, with a protocol bump if the mark changes.
 
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
