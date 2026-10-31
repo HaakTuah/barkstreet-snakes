@@ -133,5 +133,17 @@ Two beetles that meet fight a shoving match, and a snake that gets there in time
   edge cell against a move even when the apple is safe; an AI entry could test a safe-meal exception like the one for
   meals by the neck (`MEAL_DAWDLE`).
 
+- **The improvement audit (31 October 2026, PR #220)**: its three questions are answered (Haakon, 31 October: "Agreed to
+  all, expertly!"; `docs/handoff/queue-specs.md`, part 7 and 2s; the rows are in `docs/archive/progress-done.md`), and
+  the whole list, with how to see each and where in the code, is in that PR. For the AI and engine lanes: Ghost starves
+  most (11% of its rounds on seed 3, the band's worst; it keeps its distance from food's company too); on seed 11 the
+  edge-huggers (4% of snakes) won 43% against 24%, on seed 3 27% against 25%, so the edge's shelter stays on part 7's
+  watch list; the rivals' bubbles overlap each other at 4× for a second or so, 29 times in three watched rounds (the
+  chatter's, not a rule); once, on a phone, a snake of about 15 steered by Ouroboros's AI starved 4 s after its hunger
+  warning (a tick-by-tick probe over three more rounds saw only the slow shrink, so unexplained: likely its own tail
+  dropped out of its coil with the hunger clock at zero, which the AI's trap test doesn't weigh); a person's exploits
+  need a person: nothing in the AI-only censuses shows one.
+
 Small things found on the way, for Haakon to place in the queue:
 - (None now.)
+
