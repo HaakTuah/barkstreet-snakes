@@ -518,6 +518,9 @@ main.help-yields .help { display: none; } /* (where it doesn't fit the row, its 
   display: none;
   pointer-events: none;
 }
+/* (While a card is up, under it: the bird flying across the round's card hid its title. Still over the board and
+   the page round it, the card over both: the cards are at 3, in the page's own layer.) */
+body:has(#overlay:not(.hidden)) .bird-layer { z-index: 2; }
 
 /* ------------------------------------------------- the rival picker */
 

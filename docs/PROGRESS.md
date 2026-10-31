@@ -56,6 +56,8 @@ the second account until its usage is spent; on the main account the brake close
 - The open entries' specs moved word for word to `docs/handoff/queue-specs.md` by the design session (31 October
   2026); each entry here keeps its title, a line and a pointer, and this file is now about 12 KB.
 - The Voices switch's icon (PR #224): a head speaking, no longer the header's sound speaker.
+- The woodpecker flies under a card that's up, no longer across its title (PR #BC; the audit's third find).
+- *Parked:* the woodpecker over the help line between rounds (the audit's second find; PR #240 has what was tried): on a 390 px phone the help line and the switches fill the row, so no perch at its size clears them, and by 2k+ it never shrinks for words. Needs a design call: perch lower, the help stepping aside under it, or a smaller bird there.
 
 ## The queue, in order
 
