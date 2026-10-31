@@ -55,6 +55,7 @@ the second account until its usage is spent; on the main account the brake close
 - The housekeeping (PR #222): done entries and done parts' detail moved to `docs/archive/progress-done.md`; this file
   is now about 33 KB, all of it open entries, kept word for word.
 - The Voices switch's icon (PR #224): a head speaking, no longer the header's sound speaker.
+- The Hall of Fame's "Clear everything" (PR #NN): shown only once something is kept (a row, a round in your story, a Best).
 
 ## The queue, in order
 
