@@ -52,7 +52,7 @@ the second account until its usage is spent; on the main account the brake close
   half done: a fix not finished when usage ends is left unstarted, its find noted for the next session.
 
 *Done in the lane:*
-- The housekeeping (PR #HK): done entries and done parts' detail moved to `docs/archive/progress-done.md`; this file
+- The housekeeping (PR #222): done entries and done parts' detail moved to `docs/archive/progress-done.md`; this file
   is now about 33 KB, all of it open entries, kept word for word.
 
 ## The queue, in order
