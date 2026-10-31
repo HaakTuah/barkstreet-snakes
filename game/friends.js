@@ -310,6 +310,7 @@ async function hostRoom() {
   const attempt = ++joinAttempt;
   startBtn.disabled = true;
   setStatus('Opening a room…');
+  if (await SnakeUpdate.beforeRoom()) return; // (a newer version out: into it first, and the room opens there)
   try {
     const room = await Net.host({ newCode: Online.newCode, onLeave: friendLeft, onMessage: fromFriend });
     if (attempt !== joinAttempt) { room.close(); return; }
@@ -518,6 +519,7 @@ function handleHost(msg) {
       if (state === 'lobby') showGuestLobby();
       break;
     case 'reject':
+      if (msg.why === 'version') SnakeUpdate.beforeRoom(online.code); // (behind the host? into the new version, and in)
       endOnline();
       state = 'lobby';
       showCard({

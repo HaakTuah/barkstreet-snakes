@@ -338,7 +338,7 @@ function ready(personas, chosen = false) {
   readyPersonas = theGame.snakes.filter(s => s.persona).map(s => s.personaKey);
   state = 'ready';
   buildOpponents(); // (now with its seats to choose)
-  showCard({ title: `Ready, ${localName()}?`, text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true, how: 'How to play' });
+  showCard({ title: `Ready, ${localName()}?`, text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true, how: 'How to play', flavor: SnakeUpdate.news() });
   setTimeout(warmUpGame, 400);
 }
 
