@@ -53,7 +53,16 @@ the second account until its usage is spent; on the main account the brake close
 - The open entries' specs moved word for word to `docs/handoff/queue-specs.md` by the design session (31 October
   2026); each entry here keeps its title, a line and a pointer, and this file is now about 12 KB.
 - The Voices switch's icon (PR #224): a head speaking, no longer the header's sound speaker.
+- Your lesson fades once you're out (PR #231): "Crashes cost tail. You're at 3…" and the hunger warning no longer stay up after you're out.
+- The Hall of Fame's "Clear everything" (PR #230): shown only once something is kept (a row, a round in your story, a Best).
 - A start card whose names wrap fits a small board (PR #234): at 320 px upright or 568 px sideways its tip goes, then its lines sit closer, so the buttons never cover a name.
+
+## The split lane (the workshop check's files over about 50 KB)
+
+- `audio.js` became `audio/` (PR #225): `cues.js` and `sound.js`, sound proven unchanged by `tools/dev/same-sound.js`.
+  `chatter/zh.js` became `zh.js` and `zh-more.js` (PR #226), checked by `tools/dev/same-zh.js`.
+- **Waiting for the main lane** (PR #198 and its parked #202 have them open): `ai.js` (139 KB), `engine.js` (128 KB) and
+  `render/world.js` (51 KB). Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
 
 ## The queue, in order
 
