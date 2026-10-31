@@ -187,7 +187,7 @@ const FLAVOR = {
   friendAway: name => `${name} went quiet. An AI steers until they’re back.`,
   friendBack: name => `${name} is back.`,
   youAway: 'You went quiet for a moment, so an AI steered for you.',
-  tapTip: touchFirst ? 'Tap a rival’s name tag to see how it plays.' : 'Click a rival’s name tag to see how it plays.', // (no "above": on a phone on its side the tags are beside the log)
+  tapTip: touchFirst ? 'Tap names to swap, tags to see how they play.' : 'Click names to swap, tags to see how they play.', // (no "above": on a phone on its side the tags are beside the log)
   takeBack: 'An AI kept your snake going. Steer to take it back.',
   watchingFirst: 'This round’s already going. You’re in from the next one.',
   rivals0: 'Just friends today. No mercy:',
