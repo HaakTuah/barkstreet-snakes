@@ -108,21 +108,28 @@ it until its jump's rest is over, and from where on the island its head can take
 is worse. A rules test sets up the case (a long snake beside a small island and a bigger one in reach), and part 4's
 A/B reports hops onto islands too small to live on, before and after.
 
-### 2s. The log breaks, but never drifts apart (30 October 2026; an engine-rules entry, after part 4; moved ahead of 2q, 31 October 2026)
+### 2s. A piece cut loose falls: the log stays one piece (30 October 2026, rewritten 31 October 2026; an engine-rules entry, after part 4; ahead of 2q)
 
-Haakon: "I still see the situation arise where 2 islands form at the opposite ends, and the snakes are trapped on
-each, so the one on the bigger one wins", and to the take that a jump across any gap would be a refuge: "Agreed to
-all!". The woodpecker never pecks a patch that would leave a piece of the log out of a plain hop's reach (`LEAP_REACH`,
-3 cells) of every other piece: it picks another patch, as it does for crumbs ("No crumbs" in "The woodpecker plays
-fair"). So the log can break into islands, but every island stays a hop from another, and the end stays a fight.
-Measured: rounds whose last snakes are each alone on an island they can't leave (25-31% today, "Last snakes on
-islands of their own"), the biggest island's wins, round length and sudden-death deaths, before and after; the
-woodpecker's mark still shows each patch before it goes. Online the same, with a protocol bump if the mark changes.
-
-**Ahead of 2q** (31 October 2026; the improvement audit found half the rounds ending with the snakes split onto
-islands, 51% on seed 3 against the 25-31% above, the biggest island winning only 49% of them; Haakon: "Agreed to all, expertly!"): it
-runs after part 4 and before 2q, and is measured with part 4's flight in place, since a flight reaches farther than a
-plain hop.
+Haakon (30 October 2026): "I still see the situation arise where 2 islands form at the opposite ends, and the snakes
+are trapped on each, so the one on the bigger one wins". The first answer kept every island a hop from another. Haakon
+(31 October 2026), on the woodpecker cutting out shapes that fall once cut loose: "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."
+- **The rule:** the log is the biggest piece of bark; any other piece, once no bark joins it to the log, falls away
+  (it cracks, tips and drops, its bark and anything on it gone). So the log is always one piece with holes in it, and
+  there are no islands. Gaps inside it stay: holes a jump or a flight crosses, bridges over them, shortcuts and escapes.
+- **Fair:** the woodpecker's mark shows, before its strike, any piece that strike would cut loose (the piece shaded as
+  it will fall), and it never cuts loose a piece a snake couldn't leave in the warning's time, as it never shuts anyone
+  in today ("The woodpecker plays fair"); a snake still on a falling piece falls with it ("Down the hole!"). Food on it
+  falls too.
+- **Replaces** "every island stays a hop from another" (the first 2s). 2r's rule (no hop onto a doomed island) stays,
+  harmless, for any gap a snake might misjudge; part 4's measures of islands become measures of gaps.
+- **The rivals** see a piece that a mark would cut loose as gone at the strike, and get off it in time; a rules test
+  proves both, through the same engine calls.
+- **A cue and a lesson:** the crack and the tip as it drops, a creak and a far-off thud; the first time, "Cut loose,
+  it falls!", and a Field guide line under the Woodpecker.
+- **Measured** with part 4's flight in place: rounds ending with snakes on pieces of their own (51% on seed 3 today)
+  to none; deaths by falling with a piece, kept rare; round length and sudden-death deaths by cause; every rival's
+  trademark. Entry 6 then makes the woodpecker cut shapes on purpose, down to a floor.
+- **Online:** a protocol bump for the falling piece.
 
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
