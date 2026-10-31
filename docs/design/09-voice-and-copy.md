@@ -1,5 +1,10 @@
 ## Voice and copy
 
+**New lines, until the writing pass** (Haakon, 31 October 2026, of the rivals' lines: "most of it is corny writing";
+the make-over is queue entry 9). Every line added before then is clever rather than corny: a wordplay, a reference
+that lands in a moment, or a rival's own humour, in its own voice; never a pun for its own sake or a line any rival
+could say. Short enough for the bubble on a phone, and no song lyrics or long quotes.
+
 **Tone: a wry woodland storyteller.** Short, warm and a little cheeky, never more than two short sentences. Exclamation marks are rare. The narrator speaks to you in the second person, and the snakes speak for themselves in their own voices.
 
 | Moment | Copy |
@@ -8,7 +13,7 @@
 | Start prompt | **"Ready, Green?"** (your Hall of Fame name, once you have one: the header already says *Barkstreet Snakes*), then "Three rivals. One mossy log. Last snake wriggling wins." The control hint below adapts to keyboard or touch. |
 | Countdown | Rotating roll-calls ("Up on the log with you:", "Sharing your bark:") above the rival list |
 | Go | "Slither!" when you're playing; "And they're off." when you're watching (the narrator never talks to "you" in a round you're not in) |
-| Pause | Title **Napping**, then a rotating line ("Snakes need rest too."), then "P or Esc to wake up" on keyboard or "Tap Wake up" on touch (Space jumps since round four, so it no longer wakes) |
+| Pause | Title **Napping**, then a rotating line ("Snakes need rest too."), then "Any key to wake up" on keyboard or "Tap to wake up" on touch. Any key that plays wakes the game (Space, the arrows and WASD, the flash keys, Enter, P or Esc), and on touch a tap on the board or the Wake up button; the waking press never fires a power (Space wakes without jumping; a flash key wakes without flashing), while a steering key wakes and steers, as the press that starts or wakes a round always has ("A power only when you ask" in `docs/design/11-the-third-pass-what-it-settles.md`). The keys that open or set something (G, H, M, N, V and the speed keys) keep their own jobs and leave the game napping. P or Esc still starts a nap; Space stays the jump (Haakon, 31 October 2026, after asking for Space to pause and hearing that Space jumps: "Ahh, true! yeah, really any button should unpause, no?", then "Yes, please! Expertly!"; built in the polish lane) |
 | Death titles | Matched to the cause, in a word that means out (never "Bonk!": that's for a knock you survive): "Flattened!" for the edge (or a woodpecker hole you hit), "Down the hole!" for a jump that comes down in one, **Pecked!** for the woodpecker, "Tangled!" for biting yourself, "Squashed!" for a rival's body, "Out cold!" for a head-on crash, "Toasted!" for fire, "Sliced!" for a cut (Snip! is for a cut you survive; the card's own verb is never the title too), "Kaboom!" for a golden flash with nowhere to go and **Starved!** for hunger. Most have a second ("Splintered!", "Splat!", "Lights out!", "Halved!", "Drilled!"); a starving card says "You ran out of food at your smallest" and a peck "The woodpecker struck right under your head" (only a head in the patch is out), so the fact line never repeats the title, so a death isn't always the same word |
 | Death flavor | Cause-specific lines, or the killer's own line, rewritten to be cause-neutral |
 | New best | **"New best: 14!"** with a short fanfare and a gold burst. Hall of Fame: "Hall of Fame #2. Carve your name:" |
