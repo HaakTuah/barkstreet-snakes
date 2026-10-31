@@ -53,7 +53,9 @@ function run(srcs) {
   log.push('CUES ' + [...names].join(','));
   const OPTS = [undefined, { rival: true, pan: 0.4 }, { pitch: 3, volume: 0.6, pan: -0.7 }, { streak: 5 }, { gold: true, streak: 9 }, { crest: 1.2 }, { delay: 0.3 }, { strike: 4, from: 60, rate: 1.5 }, { strike: 0 }, { land: 0.5 }, { settle: true }];
   for (const name of names) for (const o of OPTS) { tick(4000); log.push(`-- ${name} ${JSON.stringify(o)}`); A.play(name, o); }
-  for (const voice of ['mason', 'ghost', 'mute', 'star', 'joker', 'copycat']) for (const o of [{ chars: 40, pan: 0.2 }, { chars: 120, tight: true, pan: -0.5 }]) { tick(9000); log.push(`-- babble ${voice}`); A.play('babble', { voice, ...o }); }
+  const voices = [...(/const BABBLERS = \{([\s\S]*?)\n  \};/.exec(srcs.map(s => s[1]).join('\n'))[1]).matchAll(/^    (\w+):/gm)].map(x => x[1]).concat('mute');
+  log.push('BABBLERS ' + voices.join(','));
+  for (const voice of voices) for (const o of [{ chars: 40, pan: 0.2 }, { chars: 120, tight: true, pan: -0.5 }]) { tick(9000); log.push(`-- babble ${voice}`); A.play('babble', { voice, ...o }); }
   for (let s = 0; s < 14; s++) log.push(`drum ${s} ${A.drumBlows(s).join(',')}`);
   const frames = (stage, mood, ms) => { for (let t = 0; t < ms; t += 50) { A.music(stage, mood); tick(50); } };
   for (const [stage, mood] of [['title'], ['round', { danger: 0, intensity: 0.2 }], ['round', { danger: 0.8, watching: true, intensity: 0.9 }], ['round', { danger: 1, paused: true }], ['round', { intensity: 1 }]]) { log.push(`-- music ${stage} ${JSON.stringify(mood)}`); frames(stage, mood, 6000); for (const cue of ['aim', 'drum', 'drum', 'drum', 'drum', 'aim']) { A.play(cue, {}); frames(stage, mood, 1500); } }
