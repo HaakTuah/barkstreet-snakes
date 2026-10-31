@@ -17,7 +17,7 @@ beside it as before. A playable draft PR as early as it can be, so Haakon can tr
 *Where it stands* (29 October 2026; it paused at the app's weekly usage warning, which is not the brake: Haakon, "They
 weren't supposed to stop before 90%. We're still at only 76%", so it carries on): parts 1, 2 and
 most of 3 are merged (#158, #174, #183: the cuts, a failed flash, your own beads squashed, Mason's double walls, the
-edge measured). **Next, in order:** part 4 (*built, reviewed and parked* as draft PR #198, 2r folded in: its A/B
+edge measured). **Next, in order** (2s now runs before 2q: Haakon, 31 October 2026, "Agreed to all, expertly!")**:** part 4 (*built, reviewed and parked* as draft PR #198, 2r folded in: its A/B
 comes out even, and its "Still to do" list says what is left; see "The main lane stopped here" above); then 2q (rivals notice like people), 2s (the log never drifts apart), part 3b+ (the spit
 flies along the line, the spitter sliding over its own), then part 5, part 6 (*built and reviewed* on `round6b/dropped-charges`: merge `develop` into it, renumber
 its protocol after part 4's 20, run its A/B), and part 7 (*parked* on `round6b/pricing`; part 3's numbers to watch there: Joker
@@ -57,6 +57,12 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
 6. **Dropped charges** on a knockout, as above. *Built and reviewed* on `round6b/dropped-charges` (a spilled gold coin ringed with the pips; rules tests; review fixes in; protocol to renumber when it merges); still to do: the A/B against rivals that ignore spills (a copy is easy: zero the spill's worth in `ai.js`), pictures, the PR.
 7. **One pricing model for every power,** as above, last (*a first pass is parked* on `round6b/pricing`: the tail tip at length's worth now, rests cheaper while idle with a floor, risk by `headRisk`; on seeds 51/53 the seat-split already shows powers on beating off, 33.6% to 16.4%, with the island hop alone, and this pass did no better, 33.3% to 16.7%, flashing more; a direct head-to-head against today's AI was stopped at look 4, its rounds cached), so it prices every move together, with **each rival's power
    style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
+   Part 7 also takes two of the improvement audit's finds (31 October 2026; Haakon: "Agreed to all, expertly!"): **the trademarks
+   that never show** (Mute's boxing and Joker's lures level with the field, Mason's body beside itself below it) get
+   measures that catch the behaviour first (Mute's boxing counting the kills it gets by boxing; it leads the kills at
+   0.52 a round), then more teeth in play where they stay flat; and **character never costs wins**: Joker (14% and 18%
+   on seeds 3 and 11) comes up into the 15-35% band, and the gap between the flashier rivals (Joker, Capricious,
+   Copycat, Star) and the plain Drab (32% and 30%) closes, every trademark kept and Drab left as it is.
 Then the teaching system (item 4), which teaches all of them.
 
 **The rivals learn every move in its own part** (Haakon, 29 October 2026: "And very important that the commin ai is
@@ -81,7 +87,7 @@ that comes down over the brow, so it curls the other way, up and back; nothing e
 reworked mass). The PR shows the original and the new one side by side in all four headings, at 390 px and desktop 2x,
 and **merges only once Haakon has said yes** (drawing only: no simulation, no protocol change).
 
-### 2q. Rivals notice like people (30 October 2026; an AI entry, after part 4)
+### 2q. Rivals notice like people (30 October 2026; an AI entry, after 2s)
 
 Haakon: "do the snakes have a bit too good reaction time? [...] Just seems they play a bit too well in that regard
 perhaps", and to the take that what is superhuman is not the 240 ms but seeing the whole board at once: "Agreed to
@@ -102,7 +108,7 @@ it until its jump's rest is over, and from where on the island its head can take
 is worse. A rules test sets up the case (a long snake beside a small island and a bigger one in reach), and part 4's
 A/B reports hops onto islands too small to live on, before and after.
 
-### 2s. The log breaks, but never drifts apart (30 October 2026; an engine-rules entry, after 2q)
+### 2s. The log breaks, but never drifts apart (30 October 2026; an engine-rules entry, after part 4; moved ahead of 2q, 31 October 2026)
 
 Haakon: "I still see the situation arise where 2 islands form at the opposite ends, and the snakes are trapped on
 each, so the one on the bigger one wins", and to the take that a jump across any gap would be a refuge: "Agreed to
@@ -112,6 +118,11 @@ fair"). So the log can break into islands, but every island stays a hop from ano
 Measured: rounds whose last snakes are each alone on an island they can't leave (25-31% today, "Last snakes on
 islands of their own"), the biggest island's wins, round length and sudden-death deaths, before and after; the
 woodpecker's mark still shows each patch before it goes. Online the same, with a protocol bump if the mark changes.
+
+**Ahead of 2q** (31 October 2026; the improvement audit found half the rounds ending with the snakes split onto
+islands, 51% on seed 3 against the 25-31% above, the biggest island winning only 49% of them; Haakon: "Agreed to all, expertly!"): it
+runs after part 4 and before 2q, and is measured with part 4's flight in place, since a flight reaches farther than a
+plain hop.
 
 ### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane)
 
