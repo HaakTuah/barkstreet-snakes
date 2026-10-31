@@ -15,6 +15,18 @@ for (const [w, h] of [[390, 844], [320, 640]]) {
   await tap(await at('#records-close'));
   p = await P();
   check(p.how === 'How to play', `phone ${w}: the start card has How to play`, p.how);
+  // Three picked rivals, each pinned: the pins take next to no room (the card no taller), and a tap beside one still unpins it.
+  const cardFit = () => ev(`(() => { const c = document.querySelector('.overlay .card'); return { h: c.scrollHeight, rows: new Set([...document.querySelectorAll('.opponents .seat')].map(s => Math.round(s.getBoundingClientRect().top))).size }; })()`);
+  const unpinned = await cardFit();
+  await ev(`for (const [i, k] of [[0, 'vulture'], [1, 'joker'], [2, 'mason']]) { document.querySelector('.seat[data-seat="' + i + '"]').click(); document.querySelector('#picker .pick[data-key="' + k + '"]').click(); } 'ok'`);
+  const pinned = await cardFit();
+  check(await ev(`document.querySelectorAll('.opponents .unpin').length`) === 3 && pinned.h === unpinned.h && pinned.rows === unpinned.rows, `phone ${w}: three seats pinned, the card no taller and its seats on as many rows`, JSON.stringify({ unpinned, pinned }));
+  await b.sleep(600); // (the card just rebuilt: a tap only counts once it has settled)
+  const [px, py] = await at('.opponents .unpin[data-seat="1"]');
+  await tap([px + 8, py]);
+  check(await ev(`document.querySelectorAll('.opponents .unpin').length + ':' + sessionStorage.getItem('snake-visit-lineup')`) === '2:["vulture",null,"mason"]', `phone ${w}: a tap just beside a pin unpins its seat`);
+  await ev(`sessionStorage.clear(); 'ok'`);
+  await load();
   await tap(await at('#how'));
   p = await P();
   check(p.book && p.tab === 'guide' && p.firstHead === 'The basics', `phone ${w}: How to play opens the guide on The basics`, p.firstHead);
