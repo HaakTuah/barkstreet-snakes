@@ -75,6 +75,7 @@ the second account until its usage is spent; on the main account the brake close
 - *As designed:* the empty chatter-log line (the audit's sixth find): it's a new line's 0.4 s slide-in (`log-in`) caught mid-fade. Over 3 watched rounds on a phone on its side, 23 of 621 visible-row samples caught one, and none stayed empty. No fix.
 - The tail-drop lesson only in a real pocket, not when you've coiled with room to crawl out after your tail (PR #246; the audit's fifth find).
 - The screenshot tour runs through again (PR #252): `tools/shots.js`'s staged knock-flight stopped at food the bird eats (the engine's knock list gives it nowhere to go); it skips that piece, as the engine does.
+- Any key wakes from a nap (PR #271): Space, the flash keys, Enter, P or Esc wake without a power, an arrow wakes and steers, a tap on the board or the card wakes on touch; G, H, M, N, V and the speed keys keep their jobs. The card says "Any key to wake up" / "Tap to wake up".
 
 ## The split lane (the workshop check's files over about 50 KB)
 

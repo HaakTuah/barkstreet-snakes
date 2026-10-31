@@ -67,19 +67,19 @@ const FLAVOR = {
   // (The arrows first: anyone knows them. A click is the mouse's left button on the board. A first-timer's
   // Hall of Fame is empty: the Field guide's key, G, is in its place before a first round, both under the board.)
   hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P naps · Enter starts · G opens the Field guide',
-  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
+  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P or Esc naps, any key wakes · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
   hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · M mutes · N toggles the music · V the voices',
   hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash',
   hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash · Tap ⏸ to nap',
   // Watching (Watch AIs, or after you're out): nothing of yours to steer.
-  hintWatch: '1, 2, 4 set the speed · P naps · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
+  hintWatch: '1, 2, 4 set the speed · P naps, any key wakes · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
   hintWatchTouch: 'The speed buttons set 1×, 2× or 4× · Tap ⏸ to nap',
   rivals: ['Your rivals today:', 'Up on the log with you:', 'Sharing your bark:'],
   spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
   go: ['Slither!', 'Off you go.', 'Mind the edges.'],
   goWatch: ['And they’re off.', 'Off they slither.', 'Let the wriggling begin.'],
   pause: ['Snakes need rest too.', 'Curled up in a warm patch of bark.', 'The log will wait.'],
-  wake: touchFirst ? 'Tap Wake up when you’re ready.' : 'P or Esc to wake up.',
+  wake: touchFirst ? 'Tap to wake up.' : 'Any key to wake up.',
   // (Bonk! is for a knock you survive, Snip! for a cut you survive: a
   // death's title is a word that means out.)
   deathTitle: { boom: ['Kaboom!', 'Ka-blam!'], wall: ['Flattened!', 'Splintered!'], self: ['Tangled!', 'Knotted!'], rival: ['Squashed!', 'Splat!'], headOn: ['Out cold!', 'Lights out!'], fire: ['Toasted!', 'Scorched!'], cut: ['Sliced!', 'Chopped!'], pecked: ['Pecked!', 'Drilled!'] }, // (never the card's own verb again: "Head-on! You crashed head-on…")
