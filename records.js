@@ -8,7 +8,8 @@ window.SnakeRecords = (() => {
   const BEST_KEY = 'snake-best';
   const PLAYER_KEY = 'snake-player';
   const PROBE_KEY = 'snake-probe';
-  const LINEUP_KEY = 'snake-lineup'; // (the rivals you chose, seat by seat)
+  const LINEUP_KEY = 'snake-lineup'; // (the rivals you chose, for good: no longer read, and never renamed; see VISIT_KEY)
+  const VISIT_KEY = 'snake-visit-lineup'; // (the rivals you chose this visit, seat by seat)
   const DECK_KEY = 'snake-deck';     // (the rivals still to be dealt before any comes round again)
   const MAX_SCORES = 10;
   const MAX_NAME = 16;
@@ -234,11 +235,16 @@ window.SnakeRecords = (() => {
   // ---------------------------------------------------------------- the line-up
 
   // The rivals you chose for the start card's seats: a persona's key, or null
-  // for "Any" (dealt). pool: the keys there are, so a stored one that's gone
-  // (or a seat chosen twice) comes back as "Any".
+  // for "Any" (dealt). They last this visit (this tab, reloads too, in
+  // sessionStorage), and the next time the game is opened every seat is "Any".
+  // pool: the keys there are, so a stored one that's gone (or a seat chosen
+  // twice) comes back as "Any".
   const SEATS = 3;
+  let visitSeats = null; // (where sessionStorage won't keep them)
   function seats(pool) {
-    const raw = load(LINEUP_KEY, []), out = [];
+    let raw = visitSeats;
+    try { raw = JSON.parse(sessionStorage.getItem(VISIT_KEY)) ?? visitSeats; } catch { /* storage unavailable */ }
+    const out = [];
     for (let i = 0; i < SEATS; i++) {
       const k = Array.isArray(raw) ? raw[i] : null;
       out.push(typeof k === 'string' && pool.includes(k) && !out.includes(k) ? k : null);
@@ -253,7 +259,8 @@ window.SnakeRecords = (() => {
     const other = key ? list.indexOf(key) : -1;
     if (other >= 0 && other !== i) list[other] = list[i];
     list[i] = key;
-    save(LINEUP_KEY, list);
+    visitSeats = list;
+    try { sessionStorage.setItem(VISIT_KEY, JSON.stringify(list)); } catch { /* kept in visitSeats */ }
     return list;
   }
 
@@ -281,11 +288,17 @@ window.SnakeRecords = (() => {
     return out;
   }
 
-  // Rivals dealt but never met go back on the top of the deck, so they're next.
-  function undeal(pool, keys) {
+  // Rivals dealt but never met go back in the deck. Within a visit they go on
+  // top, so they're next; anywhere (the page closing on a start card), each
+  // goes to a random place among the rivals not yet dealt: everyone is still
+  // met before anyone comes round again, but opening the game gives a fresh cast.
+  function undeal(pool, keys, { anywhere = false } = {}) {
     if (!keys.length) return;
     const raw = load(DECK_KEY, []), deck = Array.isArray(raw) ? raw.filter(k => pool.includes(k)) : [];
-    save(DECK_KEY, [...keys.filter((k, i) => pool.includes(k) && !deck.includes(k) && keys.indexOf(k) === i), ...deck]);
+    const back = keys.filter((k, i) => pool.includes(k) && !deck.includes(k) && keys.indexOf(k) === i);
+    if (!anywhere) return save(DECK_KEY, [...back, ...deck]);
+    for (const k of back) deck.splice(Math.floor(Math.random() * (deck.length + 1)), 0, k);
+    save(DECK_KEY, deck);
   }
 
   // ---------------------------------------------------------------- rendering
