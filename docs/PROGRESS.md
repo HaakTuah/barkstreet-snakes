@@ -51,6 +51,10 @@ the second account until its usage is spent; on the main account the brake close
   and 11), so nothing that changes play slips in; merged at once, one line per fix under this lane. Nothing is left
   half done: a fix not finished when usage ends is left unstarted, its find noted for the next session.
 
+*Done in the lane:*
+- The housekeeping (PR #HK): done entries and done parts' detail moved to `docs/archive/progress-done.md`; this file
+  is now about 33 KB, all of it open entries, kept word for word.
+
 ## The queue, in order
 
 **Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)); 2t (Capricious without its ring, and a costume change for every change (PR #212)).
@@ -62,7 +66,7 @@ long time now. Also, the teaching system will have to account for it." It is the
 3b (PR #142) merges, ahead of Wildcard's part of 3b, 2b, 2h, 2i and 3c; the art and sound lanes (2d, 2f, 2j) run
 beside it as before. A playable draft PR as early as it can be, so Haakon can try it this evening.
 
-*Done so far:* **the island hop** and **no auto-jump** (PR #158: a jump goes over up to 3 cells, a cell a tick; a press waits 5 moves; the landing ring; protocol 16); **mushrooms come back up** (part 3b, PR #195: the cheek, the ring 3 ahead, the spit, a shade stronger each time to 5; the rivals aim, dodge and eat one for a shot in their styles; protocol 19; its numbers and the design finding in the design's "Part 3b, the chosen numbers").
+*Done so far:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195); their words and detail are in `docs/archive/progress-done.md`, "Item 5, its done parts".
 
 *Where it stands* (29 October 2026; it paused at the app's weekly usage warning, which is not the brake: Haakon, "They
 weren't supposed to stop before 90%. We're still at only 76%", so it carries on): parts 1, 2 and
@@ -74,10 +78,6 @@ its protocol after part 4's 20, run its A/B), and part 7 (*parked* on `round6b/p
 and Sovereign low on single seeds, Gobbler's and Vulture's shares a little lower). Mason's double walls are kept
 (Haakon, 29 October 2026).
 
-- **The island hop comes first.** The owner: "jumping is pretty critical to making this game more tense and skill based, rather than RNG". There are two test cases:
-  - Gobbler folded on a strip;
-  - `docs/handoff/owner-sniper-islands.jpg`: Sniper won coiled on a strip, beside islands of beads across gaps of 1 to 3 cells.
-- **No auto-jump** (the owner agreed). A press stays armed until a hurdle 4–5 cells ahead is reached (`LEAP_WINDOW` is 3 ticks today), for rivals too. The landing ring shows where you'd land, and it gives no trap warnings.
 - **One pricing model for every power:**
   - gain is searched from where the power ends, plus a tempo credit for flashes and the island reached for jumps;
   - the tail tip is priced at what length is worth now (cheap late in the round);
@@ -86,8 +86,6 @@ and Sovereign low on single seeds, Gobbler's and Vulture's shares a little lower
   - not a junkie like Star, and not hoarding.
   - Caution: at a flat 1-apple price, rivals flashed 3 times a minute and did no better. Judge it by the seat-split A/B.
 - **Dropped charges:** not on every bump. On a knockout, the charges spill where the head fell as a golden pickup anyone can grab.
-- **Bridges:** as in DESIGN. Crawl on where the body crosses the rim, or land on it from a jump where it will still be there.
-- The earlier start on jumps is `docs/handoff/jumps-wip-unverified.patch` (on f338275). It's unverified; redo it or check it first.
 
 **Every move of the round, in this order** (Haakon, 29 October 2026, when the design session found the entry listed only
 part of "Round six B": "Yes, they are all part of the power update! What i have been looking forwards to!"). Each part
@@ -96,18 +94,7 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
 1. **The island hop and no auto-jump** (done, PR #158).
 2. **Bridges** (done, PR #174). Rare by design, about one ride in twenty rounds (Haakon, 29 October 2026: "Agreed with
    you expert take!"): part 4 and item 6 each report bridge rides again, adding no rule to make them commoner.
-3. **The flashes cut** (the edge shelters a body from cuts, measured for a refuge: "The edge is a shelter, measured"): the plain flash through a body one thick, the golden through two (and fire out), and a cut
-   that leaves a snake fewer than 3 segments puts it out ("The neck cut"; a flash into a head is a failed flash);
-   your own beads squashed as your head passes, the choke, cough and nudge gone ("Choking on your own tail", replaced by
-   the owner, in `docs/design/27-round-six-a-fairness-and-fixes.md`); and **mushrooms come back up**: aimed by steering,
-   spat 3 cells ahead after a second in the cheek, a hit on a head poisoning that snake, a shade stronger each time (3
-   to 5), never killing by itself ("Mushrooms come back up" in the design); a failed flash
-   costs 5 and a longer stun, its rest 10 to 12 s; **dropping your own tail** by the same cut; and **Mason's double
-   walls**, since a wall one thick can now be cut (its straight runs measured before and after).
-   *Done* (PR #183): the cuts (plain, golden through two, the neck cut, your own tail), a failed flash (5 and a stun
-   of 6), the rest at 12 s, your own beads squashed, Mason's double walls, and the edge measured (no refuge); its
-   numbers are in the design's "Part 3, the chosen numbers". *Next:* **mushrooms come back up**, in its own PR (3b),
-   before part 4.
+3. **The flashes cut** and **mushrooms come back up** (done, PRs #183 and #195).
    **3b+. The spit flies along the line** (Haakon, 30 October 2026: "3. Agreed, do it expertly!"; the design's
    "The spit flies along the line"): straight ahead up to 5 cells, two a tick, stopping at the first head (poisoned) or
    body (bounced by the roll rule), gone over the edge or a hole; a dotted line in place of the ring; the rivals lead
@@ -237,8 +224,6 @@ apple it needs. Build it from the cause, in the one template every rival shares:
   meant to move (Gobbler's food share up; Desperado's skims and risks up, its survival not collapsing). "No refuges" and
   "Clever rivals, human reactions" stand: better choices, never faster reactions.
 
-### Fix. Done: the layout suite's screen-awake checks no longer hang on the machine's speed (PR #161): the section holds the round's loop still, so your snake can't crash on its own between steps on a slow machine. (`scripts/test.sh` exits 1 on a failure; piped through `tail`, use `set -o pipefail`.)
-
 ### 2h. The endgame: eat what keeps you alive, not what boxes you in (Haakon, 29 October 2026; an AI entry, after 2b)
 
 Haakon (29 October 2026): "snakes should maybe avoid food more with the woodpecker about? I see snakes gorging on the
@@ -295,16 +280,7 @@ As `docs/design/35-capricious-copycat-and-wildcard.md` describes: Capricious doe
 a shuffled deck, each with its costume and an opening line; Copycat plays as the leader plays, copying a person by what
 they do; Wildcard draws a few strong traits a round and shows them. One PR, or one per rival if that is cleaner.
 
-Haakon (29 October 2026), playing: "I am seeing copycat shy rotten apples twice now, that was within reach. Both were
-next to the map edge." Copycat left an apple it could reach, beside the board's edge, until it rotted. Likely suspects:
-its mimic weight (120) outweighing the pull of food, and the room and margin weights that count an edge cell against a
-move. Copycat's part of 3b fixes it, and first checks with a census whether every rival does it: of the apples that
-rot, how many were within a rival's reach, and how far each was from the edge. A competent snake takes a safe apple by
-the wall ("Clever rivals, human reactions"); one it takes into a dead end doesn't count as safe.
-*Checked in PR #142* (`tools/dev/rotten-apples.js`, 150 rounds, seed 21): Copycat had been the worst, 0.20 apples
-passed up (its head within 2) and left to rot a minute alive, 0.15 by the edge; with its copied habits and its pull to
-mimic cut from 120 to 40, 0.13 and 0.09, mid-field. But every rival does it: 80% of the apples that rot lie on the edge
-row or one in, and Sniper (0.19), Capricious, Mason and Mute pass up as many. A general edge-apple fix is noted below.
+Copycat's rotten apples by the edge: checked and eased in PR #142; the general edge fix is noted at the end of this file (`docs/archive/progress-done.md`, "Item 3b, done parts").
 
 ### 3c. A new rival: the Charmer (Haakon, 29 October 2026; an AI entry, after 2b and 3b)
 
