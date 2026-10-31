@@ -1,5 +1,10 @@
 ## Voice and copy
 
+**New lines, until the writing pass** (Haakon, 31 October 2026, of the rivals' lines: "most of it is corny writing";
+the make-over is queue entry 9). Every line added before then is clever rather than corny: a wordplay, a reference
+that lands in a moment, or a rival's own humour, in its own voice; never a pun for its own sake or a line any rival
+could say. Short enough for the bubble on a phone, and no song lyrics or long quotes.
+
 **Tone: a wry woodland storyteller.** Short, warm and a little cheeky, never more than two short sentences. Exclamation marks are rare. The narrator speaks to you in the second person, and the snakes speak for themselves in their own voices.
 
 | Moment | Copy |
