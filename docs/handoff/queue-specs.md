@@ -120,6 +120,7 @@ are trapped on each, so the one on the bigger one wins". The first answer kept e
   it will fall), and it never cuts loose a piece a snake couldn't leave in the warning's time, as it never shuts anyone
   in today ("The woodpecker plays fair"); a snake still on a falling piece falls with it ("Down the hole!"). Food on it
   falls too.
+- **No size is banned from falling** (Haakon, 31 October 2026: "No outline should be banned from falling, but ideally, it never takes out half the trunk."): whatever is cut loose falls. The woodpecker aims small (entry 6 plans it), and the only guard is the fair one above.
 - **Replaces** "every island stays a hop from another" (the first 2s). 2r's rule (no hop onto a doomed island) stays,
   harmless, for any gap a snake might misjudge; part 4's measures of islands become measures of gaps.
 - **The rivals** see a piece that a mark would cut loose as gone at the strike, and get off it in time; a rules test
