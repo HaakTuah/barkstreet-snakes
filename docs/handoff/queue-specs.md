@@ -297,3 +297,18 @@ to choose from): "yes, and let it be creative! i don't want it to strictly look 
 - **The Chinese lines last,** if usage allows: the same make-over, written as Chinese, not translated word for word;
   otherwise left as they are.
 - **Meanwhile:** new lines follow "New lines, until the writing pass" in `docs/design/09-voice-and-copy.md`.
+
+### 2w. Beetles get away at least a third of the time (Haakon, 31 October 2026; an engine-rules entry, after part 4)
+
+Haakon (31 October 2026): "Do beetles ever manage to espace?" Told that about 33% of chased beetles got away when last measured (round six A,
+inside its 20–35% band): "Yeah, I feel it should be at least a third of the time."
+- **The band** (in `docs/design/27-round-six-a-fairness-and-fixes.md`, "A cornered beetle digs in") moves from 20–35% to
+  **33–45%** of chases: at least a third, as he said; the ceiling of 45% is the design session's reading, so beetles
+  stay worth hunting.
+- **Measure first,** on `develop` once part 4 has merged, since the golden flight changes how snakes hunt: escapes from a
+  chase (down a burrow, dug in), beetles caught a round, the ticks of chase per catch, on fresh seeds.
+- **If it falls short, tune the beetles' side,** never the rivals' skill ("Clever rivals, human reactions"): how far
+  they see a head and run for a burrow, how fast they dig in, how many burrows stay open. Each step measured; the
+  round's length, deaths near a beetle and every rival's trademark within noise.
+- **The rules test and the census** keep the band: the simulation's check fails a run whose escapes fall below a third.
+- **Online stays in step:** a protocol bump if a beetle's messages change.

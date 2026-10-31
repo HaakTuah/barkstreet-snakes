@@ -93,6 +93,10 @@ The golden jump that flies, leap now, gold portals, dropped charges, the spit al
 
 The woodpecker never pecks a patch that would leave a piece of the log out of a plain hop's reach of every other piece, so islands form but nobody is stranded on one; measured with part 4's flight in place (half the rounds now end split onto islands, the audit found). Spec: `docs/handoff/queue-specs.md`, "2s. The log breaks, but never drifts apart".
 
+### 2w. Beetles get away at least a third of the time (Haakon, 31 October 2026; an engine-rules entry, after part 4)
+
+The escape band moves from 20–35% to at least a third (33–45%): measured on `develop` once part 4's flight is in, and the beetles' side tuned if it falls short, never the rivals made worse. Spec: `docs/handoff/queue-specs.md`, "2w. Beetles get away at least a third of the time".
+
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
 Before a hop or a flight a rival weighs where it lands, above all whether it can jump off again; built into part 4 (#198). Spec: `docs/handoff/queue-specs.md`, "2r. No hop onto a doomed island".
