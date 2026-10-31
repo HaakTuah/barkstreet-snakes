@@ -596,3 +596,46 @@ In the design chat (31 October 2026, 14:39-14:40 UTC): "The README for both proj
 to be updated?" Then, to a one-time refresh in the polish lane (the developer part moved to `docs/developing.md`) and
 a standing rule that a change a player sees updates the README in the same PR, checked at each milestone: "Yes,
 expertly to both!" (written into `docs/PROGRESS.md`, "The polish lane", and `CLAUDE.md`, "Standing instructions")
+
+In the design chat (31 October 2026, 18:59-19:01 UTC), on the woodpecker over the help line on an upright phone (the
+audit's second find, PR #240 parked): "Don't really care if it covers that a bit. None essential, you still see, and
+you can click through. It also moves about frequently, so it doesn't cover the same spot all the time. So which of the
+answer options fit with that?" To leaving it as 2k+ has it and closing the find: "yes, leave it." (written into
+`docs/PROGRESS.md`, "The polish lane", and `docs/design/32-the-owners-playtest.md`, "Clear of the row's words (2k+)")
+
+In the design chat (31 October 2026, 19:10 UTC), told that part 5's gold portals (PR #202) are parked and that in six test
+rounds no rival followed through one: "Then we can increase the time it is open, until it actually makes a gameplay difference from time to time." (written into `docs/design/29-round-six-b-the-new-moves.md`, "Gold portals
+for the wrap", and `docs/handoff/queue-specs.md`, part 5)
+
+In the design chat (31 October 2026, 19:13-19:15 UTC), on part 4's A/B coming out even: "And I cannot believe that super flash and super jump isn't useful, then it must be the AI not properly being updated to understand its utility. Super jump essentially lets you fly for like 5 tiles, no? changing directions mid air like mario? and super flash let's you flash forward 3 tiles instead of 2 like regular flash, and can cut 2 tiles deep? how is that not useful?" To the design session's take (measure the flight and leap now apart; teach the rivals the flight's uses until fliers come out ahead; measure the golden flash on its own in the same pass; if only the flight pays, merge it without leap now and bring leap now back to him): "Yes, please, expertly!" (written into `docs/design/29-round-six-b-the-new-moves.md`, `docs/handoff/queue-specs.md` part 4 and `docs/PROGRESS.md`)
+
+In the design chat (31 October 2026, 19:20-19:22 UTC): "Also, many of the Snakes dialogue lines are really really bad and corny. some of it are fun pop cultural stuff or wordplays I came up with, but most of it is corny writing by Opus 5.5. I think it would be nice to have a Fable 5.1 run on it at the end, to really piff up the writing. make it more clever and culturally engrossing. Though Trump actually got some good lines! So i don't want it to remove across the lines. remove the funny gags like Mason talking bad latin, or saying vidi vici veni which is a sex joke. but i want it to look at all, and give it a make over. the chinese lines are not as important. if it can, do them too, but most can't read them regardless. concur?" To the design session's take (the gags kept, the pass at the
+end of the queue, protected lines, a side-by-side page to choose from, the Chinese last): "yes, and let it be creative! i don't want it to strictly look and improve whats there. that contrains it. let it go a bit wild and add stuff to, or make it over. it needs creative control outside of what i protect." (written into
+`docs/PROGRESS.md` and `docs/handoff/queue-specs.md` as entry 9, and `docs/design/09-voice-and-copy.md`, "New lines,
+until the writing pass")
+
+In the design chat (31 October 2026, 19:34 UTC), with a desktop screenshot of the woodpecker beside the board: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much." (written
+into `docs/PROGRESS.md`, the polish lane, and `docs/design/32-the-owners-playtest.md`; the size is his to pick from pictures)
+
+In the design chat (31 October 2026, 19:34-19:37 UTC): "Space should also pause and unpause on Barkstreet Snakes." Told that Space is the jump since round four, and that P or Esc
+nap: "Ahh, true! yeah, really any button should unpause, no?" To the design session's shape of it (any playing key, or a tap on the board, wakes; the waking press only
+wakes; the keys that open or set something keep their jobs): "Yes, please! Expertly!" (written into `docs/design/09-voice-and-copy.md`,
+the Pause row, and `docs/PROGRESS.md`, the polish lane)
+
+In the design chat (31 October 2026, 19:39-19:40 UTC): "Do beetles ever manage to espace?" Told that about 33% of chased beetles got away when last
+measured, inside the 20–35% band: "Yeah, I feel it should be at least a third of the time." (written into `docs/PROGRESS.md` and `docs/handoff/queue-specs.md` as entry 2w,
+and `docs/design/27-round-six-a-fairness-and-fixes.md`, "The escape band")
+
+In the design chat (31 October 2026, 19:45-19:55 UTC), watching Creeper drop his tail in a pocket: "Most box themselves in so the don't have the oppertunity to amputate like that. Would be better if they could anticipate it earlier, so they amputate while they still have the chance." Then: "I notice also that they eat insatiably others beads, when the map gets really small. i might eat one to stop hunger, but i would not eat it all at once. it only pays to be bigger than your opponent that late in game, if you are afraid you might have to run out the clock, but i have yet to see that happen. which is a shame. but woodpecker is getting a makeover right, so i don't want to focus to much on the current timing dynamic of the game. but yes. from my point of view, even if it was a time game, it would only  make sense to eat it, cut yourself so you are just longer than your opponent, then squash the beads. what's your expert take?" To the design session's take (fold the tail drop planned ahead, a length target and the denial play into entry 2h, the reasoning now and its numbers after the woodpecker's acts): "Sounds good!" (written into `docs/handoff/queue-specs.md` and `docs/PROGRESS.md`, entry 2h)
+
+In the design chat (31 October 2026, 19:55-20:02 UTC), on the woodpecker: "Sounds good! though I think it should take fewer chunks at once as a rule, because the map shrinks really quickly now! and i also think when there is just a little bit of space, it should slow down again, so it isn't and rng competition where it is who's island it pecks at next that decides it, capiche? Whats your take?" To the design session's take (it takes less at once, eases off when the log gets tight, pecks where there is the most log per snake): "Yes, to everything, expertly! and i also want hunger to be a factor! right now, food and beads jjust become a negative at the end. if we manage to balance this right, we can make it a trade-off, just like we tried with everything else, like mushrooms. that's a sign of good game design, conditional goods. thomas sowell in game mechanics." (written into `docs/PROGRESS.md`, entry 6)
+
+In the design chat (31 October 2026, 20:04 UTC), of the design session's line "Sowell would approve: no solutions, only
+trade-offs.": "Maybe it include that one, so the builder understands xD" (written into `CLAUDE.md`, "Rules that stand",
+as "Conditional goods: no solutions, only trade-offs")
+
+In the design chat (31 October 2026, 20:14-20:20 UTC), on the woodpecker: "Bowser 2 in Super Mario 64 is what I always compare my imagined woodpecker to, and it doesn't break down the map until there is no space." Then: "sorry! final bowser!" To the design session's take on the final Bowser (the log breaking in big moments, a floor, then the bird fighting): "Yes, though I don't know about in a few big moments, I think perhaps I like what we've planned already better. Fits a woodpecker. but what if it takes few chunks at once, but it is cutting out a shape, and when that shape is no longer attached to anyhting, it falls? I really like your idea about a floor, and how it continues to peck which you must avoid, without taking out much anymore. maybe just a tile here and there in the late late game. what do you think, expert?" To the design session's take on that (pecks along an outline, the shape falling when cut loose, a floor, then aimed dodgeable pecks; every piece cut loose falls, so no islands, replacing 2s): "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting." (written into `docs/PROGRESS.md`, entries 2s and 6, and `docs/handoff/queue-specs.md`, entry 2s)
+
+In the design chat (31 October 2026, 20:26 UTC), to the design session's question whether the bird should only cut loose pieces small next to the log: "No outline should be banned from falling, but ideally, it never takes out half the trunk." (written into `docs/PROGRESS.md`, entry 6, and `docs/handoff/queue-specs.md`, entry 2s)
+
+In the design chat (31 October 2026, 20:27 UTC), to the design session's question whether part 4's flight test should run again after 2s removes the islands: "yes." (written into `docs/handoff/queue-specs.md`, entry 2s)

@@ -11,9 +11,10 @@ https://haaktuah.github.io/barkstreet-snakes/.
 | --- | --- |
 | What is done and the queue, in order | `docs/PROGRESS.md` |
 | How builder sessions and lanes are run (for the orchestrator) | `docs/orchestrating.md` |
+| Running and checking it: switches, PR pictures, every tool | `docs/developing.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
 | Materials the queue points to: the open entries' specs word for word (`queue-specs.md`), the owner's saved tasks word for word, the teaching prototypes and judges, the woodpecker acts draft, the bridge-glitch repro, the unverified jumps start, the Sniper screenshot | `docs/handoff/` |
-| The game | `index.html`, `style/` (three stylesheets, listed in `style/base.css`), `engine.js`, `ai.js`, `render/` (seventeen files, listed in `render/core.js`), `game/` (seven, listed in `game/core.js`), `chatter/` (four, listed in `chatter/voices.js`), `audio/` (two, listed in `audio/cues.js`), `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
+| The game | `index.html`, `style/` (three stylesheets, listed in `style/base.css`), `engine.js`, `ai.js`, `render/` (seventeen files, listed in `render/core.js`), `game/` (seven, listed in `game/core.js`), `chatter/` (five, listed in `chatter/voices.js`), `audio/` (two, listed in `audio/cues.js`), `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
 | Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, each a runner of its folder of parts by area, such as `tools/rules/` (`tools/parts.js`), `simulate.js` (its parts in `tools/sim/`), `abtest.js`, `bench-ai.js`, `browser.js`; `protocol-shapes.json`, the online messages' pinned shapes) |
 | The online messages' types (checked by `tsc`, never shipped) | `jsconfig.json`, `types/globals.d.ts`, and the JSDoc in `net.js` and `online.js` |
 | Study and measuring tools from earlier rounds | `tools/dev/` (teaching audits, burrow spacing, board sizes, the woodpecker and food study, PR pictures) |
@@ -107,6 +108,9 @@ The same in both of Haakon's games; only the list of hard work differs.
   deaths by cause, starving and crashes survived within noise). The same holds for visuals: a look-alike is fine if
   nobody would see a difference. Fingerprint-identical changes are the fast lane; the rest go through
   `tools/abtest.js` on fresh seeds.
+- **Conditional goods: no solutions, only trade-offs** (Haakon, 31 October 2026: "conditional goods. thomas sowell in
+  game mechanics."). Every move, food or power helps in some situations and costs in others; simulations check that
+  neither always nor never using it wins, as with the mushrooms.
 - **Everything new belongs.** Haakon: "Very important everything feels balanced, cohesive, purposeful and like it
   belongs!" (13 October).
 - **Online stays in step:** everything new works in online play, with a protocol bump when messages change.
@@ -129,7 +133,7 @@ weren't supposed to stop before 90%. We're still at only 76%").
 `main` is Haakon's and is what the live site plays: never push to it, never force-push. Work on a branch from `develop`,
 one per task, with a PR into `develop`; merge it yourself when the suites pass (and, for a task that changes the game,
 one reviewer has found nothing blocking). At each milestone make sure a PR from `develop` to `main` carries the new
-work, saying what to try, and merge it yourself once its CI is green (see "Standing instructions"). Before pushing to a branch whose PR you opened earlier, check whether that
+work, saying what to try, with its line of what is new at the top of `version.js`'s news, and merge it yourself once its CI is green (see "Standing instructions"). Before pushing to a branch whose PR you opened earlier, check whether that
 PR was merged; if it was, start a new branch and PR. Don't stack PRs on each other's branches.
 
 Cloud sessions can't use GitHub's GraphQL API, so `gh pr create` and `gh pr view` fail. Use the REST API:
@@ -141,11 +145,9 @@ gh api repos/HaakTuah/barkstreet-snakes/pulls/<n> --jq '{state, merged}'        
 gh api "repos/HaakTuah/barkstreet-snakes/pulls?state=open&base=main&head=HaakTuah:develop" --jq '.[0].number'  # the open milestone PR
 ```
 
-PR pictures go on the orphan branch `pr-media`, never merged, named by PR number (`pr41-*.jpg`): start from
-`git ls-tree origin/pr-media`, add each file with `git hash-object -w`, build the new tree with `git mktree`, commit it
-with `git commit-tree <tree> -p origin/pr-media`, and push that commit to `refs/heads/pr-media` (never force). Link
-pictures by commit SHA (`https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/<sha>/<name>`), never by a branch
-that may be deleted. `tools/dev/crop.js` and `tools/dev/montage.js` make them.
+PR pictures go on the orphan branch `pr-media`, never merged and never force-pushed, named by PR number (`pr41-*.jpg`),
+and are linked by commit SHA, never by a branch that may be deleted: the steps are in `docs/developing.md`, "PR
+pictures".
 
 ## Commands
 
@@ -159,12 +161,8 @@ scripts/usage.sh                       # weekly usage, if this session can read 
 ```
 
 The simulation always prints its fingerprint; `--check` also fails the run if a round stalls or a rival never wins. A
-change that should keep behaviour must keep the fingerprints; `--root DIR` runs another copy of the game files. The
-browser suites (scope, render, input, layout, ui) drive a headless Chrome through `tools/browser.js`: it looks in the usual
-places, or set `CHROME=/path/to/chrome`; `CI=1` runs it without its sandbox, which is needed as root (`scripts/test.sh`
-sets it). Optional: `SIM_WORKERS` sets the simulation's cores, `BARKBITE_PRIORITY=normal` for timing runs,
-`ONLINE_SEEN=1` makes online-test print what it saw, `LAYOUT_JOB=N` runs one of the layout suite's five CI jobs. To play it locally, `.claude/launch.json` serves the folder on
-port 5173.
+change that should keep behaviour must keep the fingerprints. The browser suites' Chrome, the optional switches and
+playing it locally: `docs/developing.md`, "Switches for the checks".
 
 ## Standing instructions
 
