@@ -123,6 +123,9 @@ are trapped on each, so the one on the bigger one wins". The first answer kept e
 - **No size is banned from falling** (Haakon, 31 October 2026: "No outline should be banned from falling, but ideally, it never takes out half the trunk."): whatever is cut loose falls. The woodpecker aims small (entry 6 plans it), and the only guard is the fair one above.
 - **Replaces** "every island stays a hop from another" (the first 2s). 2r's rule (no hop onto a doomed island) stays,
   harmless, for any gap a snake might misjudge; part 4's measures of islands become measures of gaps.
+- **The flight measured again** (Haakon, 31 October 2026: "yes.", to running part 4's both-ways test again once the
+  islands are gone): part 4's A/B of the golden flight (and of leap now and the golden flash, as part 4 measures them)
+  runs again on 2s's log, and the rivals' use of the flight is patched if its users no longer come out ahead.
 - **The rivals** see a piece that a mark would cut loose as gone at the strike, and get off it in time; a rules test
   proves both, through the same engine calls.
 - **A cue and a lesson:** the crack and the tip as it drops, a creak and a far-off thud; the first time, "Cut loose,
