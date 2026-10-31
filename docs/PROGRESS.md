@@ -55,6 +55,7 @@ the second account until its usage is spent; on the main account the brake close
 - The housekeeping (PR #222): done entries and done parts' detail moved to `docs/archive/progress-done.md`; this file
   is now about 33 KB, all of it open entries, kept word for word.
 - The Voices switch's icon (PR #224): a head speaking, no longer the header's sound speaker.
+- Your lesson fades once you're out (PR #LS): "Crashes cost tail. You're at 3…" and the hunger warning no longer stay up after you're out.
 
 ## The queue, in order
 
