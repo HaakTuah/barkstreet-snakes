@@ -67,6 +67,9 @@ const flush = () => new Promise(r => setTimeout(r, 0));
   ok(caches.all.get('barkstreet-snakes-5').has(MAIN + 'index.html'), "main's pages go into main's cache");
   await pr.fetch(PR + 'index.html'); await flush();
   ok(caches.all.get('barkstreet-snakes-pr41-5').has(PR + 'index.html') && !caches.all.get('barkstreet-snakes-5').has(PR + 'index.html'), "a preview's pages go into its own cache, not main's");
+  // update.js's look at the newest version.js (no-store) keeps no copy: the offline copy's stays with its own files.
+  await main.event('fetch', { request: { method: 'GET', url: MAIN + 'version.js', cache: 'no-store' } }); await flush();
+  ok(!caches.all.get('barkstreet-snakes-5').has(MAIN + 'version.js'), "a look at the newest version.js isn't kept for offline play");
 
   // Offline, each answers only from its own cache.
   const off = () => { throw new Error('offline'); };

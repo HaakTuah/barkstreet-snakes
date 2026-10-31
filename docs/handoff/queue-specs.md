@@ -52,8 +52,8 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
 4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
    **leap now** (a second press while a jump waits sends it at once, open ground included: "Leap now" in the design); with
    **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
-   fall in, onto a snake you're out, trapped).
-5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes.
+   fall in, onto a snake you're out, trapped). Its A/B came out even with leap now and the flight measured together, so (Haakon, 31 October 2026: "Yes, please, expertly!", to splitting it): the flight and leap now are measured apart; the rivals learn the flight's uses (out of a box, across to food, cutting off, steering planned in the air) until fliers come out ahead; the golden flash is measured on its own in the same pass and its use taught where it falls short; if the flight pays and leap now doesn't, the flight merges without leap now, and leap now comes back to Haakon. "The rivals fly it as a person would" and "The golden flash cuts deeper" in `docs/design/29-round-six-b-the-new-moves.md`.
+5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes. In six test rounds nobody followed, so the time it stays open is lengthened step by step until following makes a gameplay difference from time to time (Haakon, 31 October 2026: "Then we can increase the time it is open, until it actually makes a gameplay difference from time to time."), after checking that the rivals see the chance at all: "Open long enough to matter" in `docs/design/29-round-six-b-the-new-moves.md`.
 6. **Dropped charges** on a knockout, as above. *Built and reviewed* on `round6b/dropped-charges` (a spilled gold coin ringed with the pips; rules tests; review fixes in; protocol to renumber when it merges); still to do: the A/B against rivals that ignore spills (a copy is easy: zero the spill's worth in `ai.js`), pictures, the PR.
 7. **One pricing model for every power,** as above, last (*a first pass is parked* on `round6b/pricing`: the tail tip at length's worth now, rests cheaper while idle with a floor, risk by `headRisk`; on seeds 51/53 the seat-split already shows powers on beating off, 33.6% to 16.4%, with the island hop alone, and this pass did no better, 33.3% to 16.7%, flashing more; a direct head-to-head against today's AI was stopped at look 4, its rounds cached), so it prices every move together, with **each rival's power
    style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
@@ -108,39 +108,36 @@ it until its jump's rest is over, and from where on the island its head can take
 is worse. A rules test sets up the case (a long snake beside a small island and a bigger one in reach), and part 4's
 A/B reports hops onto islands too small to live on, before and after.
 
-### 2s. The log breaks, but never drifts apart (30 October 2026; an engine-rules entry, after part 4; moved ahead of 2q, 31 October 2026)
+### 2s. A piece cut loose falls: the log stays one piece (30 October 2026, rewritten 31 October 2026; an engine-rules entry, after part 4; ahead of 2q)
 
-Haakon: "I still see the situation arise where 2 islands form at the opposite ends, and the snakes are trapped on
-each, so the one on the bigger one wins", and to the take that a jump across any gap would be a refuge: "Agreed to
-all!". The woodpecker never pecks a patch that would leave a piece of the log out of a plain hop's reach (`LEAP_REACH`,
-3 cells) of every other piece: it picks another patch, as it does for crumbs ("No crumbs" in "The woodpecker plays
-fair"). So the log can break into islands, but every island stays a hop from another, and the end stays a fight.
-Measured: rounds whose last snakes are each alone on an island they can't leave (25-31% today, "Last snakes on
-islands of their own"), the biggest island's wins, round length and sudden-death deaths, before and after; the
-woodpecker's mark still shows each patch before it goes. Online the same, with a protocol bump if the mark changes.
-
-**Ahead of 2q** (31 October 2026; the improvement audit found half the rounds ending with the snakes split onto
-islands, 51% on seed 3 against the 25-31% above, the biggest island winning only 49% of them; Haakon: "Agreed to all, expertly!"): it
-runs after part 4 and before 2q, and is measured with part 4's flight in place, since a flight reaches farther than a
-plain hop.
-
-### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane)
-
-Haakon: "Should barkstreet snakes also have a "updated game" thingy that pops up?", "Yes to both, do it expertly!", and
-then, of Amarna Letters' note: "It should update when you start game. [...] Like why would I not want the latest
-version?" Today a fresh load always gets the newest version (`sw.js` asks the network first), but a page left open or
-resumed on a phone keeps the version it loaded and is never told, and online the first sign is a refused join ("That
-room runs a different version of the game").
-- **It looks:** when the page is shown again after being hidden, and every 30 minutes while open (as Amarna Letters'
-  `ui/update.ts` does), it asks whether a newer version is published (the service worker's update check).
-- **It updates by itself, never during a round:** on the start card or the round-over screen it reloads into the new
-  version at once, with no question; records and settings survive, as they do today.
-- **Online:** the host updates before opening the next room, so a new room starts everyone on one version; a friend who
-  is behind is updated the same way before joining.
-- **What changed:** after an update, the start card shows one line of what is new for a few rounds (from a short list
-  kept beside the version number, written with each milestone), then it goes.
-Drawing and the service worker only: no rules, no rivals, no protocol change. The UI suite: no reload during a round,
-one between rounds when a new version is waiting, the line of what changed shown once and gone.
+Haakon (30 October 2026): "I still see the situation arise where 2 islands form at the opposite ends, and the snakes
+are trapped on each, so the one on the bigger one wins". The first answer kept every island a hop from another. Haakon
+(31 October 2026), on the woodpecker cutting out shapes that fall once cut loose: "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."
+- **The rule:** the log is the biggest piece of bark; any other piece, once no bark joins it to the log, falls away
+  (it cracks, tips and drops, its bark and anything on it gone). So the log is always one piece with holes in it, and
+  there are no islands. Gaps inside it stay: holes a jump or a flight crosses, bridges over them, shortcuts and escapes.
+- **Fair:** the woodpecker's mark shows, before its strike, any piece that strike would cut loose (the piece shaded as
+  it will fall), and it never cuts loose a piece a snake couldn't leave in the warning's time, as it never shuts anyone
+  in today ("The woodpecker plays fair"); a snake still on a falling piece falls with it ("Down the hole!"). Food on it
+  falls too.
+- **No size is banned from falling** (Haakon, 31 October 2026: "No outline should be banned from falling, but ideally, it never takes out half the trunk."): whatever is cut loose falls. The woodpecker aims small (entry 6 plans it), and the only guard is the fair one above.
+- **Replaces** "every island stays a hop from another" (the first 2s). 2r's rule (no hop onto a doomed island) stays,
+  harmless, for any gap a snake might misjudge; part 4's measures of islands become measures of gaps. The lessons
+  and picture lines that speak of islands speak of the far side of a gap instead: the jump's lesson ("Space hops up
+  to three cells. Find an island!", `docs/design/29-round-six-b-the-new-moves.md`) and the island hop's picture line
+  ("Tap! I can hop to that island.", `docs/design/30-teaching-by-showing.md`), with their Field guide rows; the
+  writing pass (entry 9) may reword them again.
+- **The flight measured again** (Haakon, 31 October 2026: "yes.", to running part 4's both-ways test again once the
+  islands are gone): part 4's A/B of the golden flight (and of leap now and the golden flash, as part 4 measures them)
+  runs again on 2s's log, and the rivals' use of the flight is patched if its users no longer come out ahead.
+- **The rivals** see a piece that a mark would cut loose as gone at the strike, and get off it in time; a rules test
+  proves both, through the same engine calls.
+- **A cue and a lesson:** the crack and the tip as it drops, a creak and a far-off thud; the first time, "Cut loose,
+  it falls!", and a Field guide line under the Woodpecker.
+- **Measured** with part 4's flight in place: rounds ending with snakes on pieces of their own (51% on seed 3 today)
+  to none; deaths by falling with a piece, kept rare; round length and sudden-death deaths by cause; every rival's
+  trademark. Entry 6 then makes the woodpecker cut shapes on purpose, down to a floor.
+- **Online:** a protocol bump for the falling piece.
 
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
@@ -182,8 +179,27 @@ shared template:
   room to spare, food counts as today.
 - **Personality still shapes it:** Gobbler stays the greediest (its food share is its trademark), the careful ones
   the most sparing.
+- **Grown, 31 October 2026** (Haakon, watching Creeper drop his tail in a pocket: "Most box themselves in so the don't have the oppertunity to amputate like that. Would be better if they could anticipate it earlier, so they amputate while they still have the chance." Then: "I notice also that they eat insatiably others beads, when the map gets really small. i might eat one to stop hunger, but i would not eat it all at once. it only pays to be bigger than your opponent that late in game, if you are afraid you might have to run out the clock, but i have yet to see that happen. which is a shame. but woodpecker is getting a makeover right, so i don't want to focus to much on the current timing dynamic of the game. but yes. from my point of view, even if it was a time game, it would only  make sense to eat it, cut yourself so you are just longer than your opponent, then squash the beads. what's your expert take?" Then, to
+  the design session's take, folding all four into this entry: "Sounds good!"):
+  - **The tail drop planned ahead.** A drop needs the flash rested, a body one thick and a free cell beyond, and a boxed
+    snake rarely has all three. So the rivals plan it: when the search sees the room round them falling below their
+    length within the next few moves, they weigh cutting now, while they can, against going on and being sealed in.
+    Each in its style (Ouroboros late and rarely, Creeper readily).
+  - **A length target.** Late in a round there is no clock to run out: the round ends when one snake is left. Length is
+    worth a crash buffer (a crash costs 3, and one at your smallest puts you out) and a hunger buffer (a segment every
+    1.5 s starving), and beyond that it only fills the room a snake needs to turn in. So a rival keeps enough for a
+    crash or two and its hunger, and no more: one bead to stop hunger, not the whole heap.
+  - **The denial play, where it pays.** Eat the beads a starving rival needs, cut back to the length you want, and
+    squash your own dropped beads so nobody eats them. It costs the flash (and a failed flash costs 5), and against a
+    greedy rival the beads left are a trap that boxes it in, so the rivals try it where it pays, and it stays only if
+    the both-ways A/B says it wins.
+  - **Reasoning now, numbers later.** The woodpecker's three acts (entry 6) change the endgame's timing, so this entry
+    builds the reasoning (what a meal buys against the room it costs, the length worth keeping, when to cut), and its
+    numbers are measured again after entry 6.
 - **Measured** head to head on fresh seeds against the AI 2b leaves: deaths in sudden death by cause (self, body, boxed
-  in, starved), who outlasts whom in the endgame, per-rival wins, every trademark within noise.
+  in, starved), who outlasts whom in the endgame, per-rival wins, every trademark within noise; and, for the parts
+  grown on 31 October, deaths in a pocket smaller than the snake (40–45% of sudden death's today), tail drops made in
+  time, and each part's both-ways A/B.
 
 ### 2i. Food seasons: lean, normal and plentiful rounds (Haakon, 29 October 2026; an engine-rules entry, after 2h)
 
@@ -272,7 +288,7 @@ The teaching audits in `tools/dev/teach/audit` and `tools/dev/teach-build/audit`
 every banner: use them to measure it. The patches were made before DESIGN.md was split: their DESIGN.md hunks now belong
 in `docs/design/29-round-six-b-the-new-moves.md` and `docs/design/30-teaching-by-showing.md`.
 
-### 8. Last: beetles who meet, fight (Haakon, 29 October 2026; an engine-rules entry, after everything else)
+### 8. Near the end: beetles who meet, fight (Haakon, 29 October 2026; an engine-rules entry, last but the writing pass)
 
 Haakon (29 October 2026), watching two beetles walk about an island the woodpecker made, away from the snakes: "Looked
 a bit boring that they just walked around like that, I wanted something to happen. Therefore, given how rare it is, i
@@ -292,3 +308,41 @@ late, it is probably the most uneasecary feature we have discussed here, so leav
 - **Online stays in step:** a protocol bump if the beetles' messages change.
 - **Measured:** the simulation counts fights a round (rare is fine, as long as it happens), and deaths near a beetle,
   the one real risk, stay within noise.
+
+### 9. At the very end: the writing pass (Haakon, 31 October 2026; Fable 5.1, after everything else, entry 8 included)
+
+Haakon (31 October 2026): "Also, many of the Snakes dialogue lines are really really bad and corny. some of it are fun pop cultural stuff or wordplays I came up with, but most of it is corny writing by Opus 5.5. I think it would be nice to have a Fable 5.1 run on it at the end, to really piff up the writing. make it more clever and culturally engrossing. Though Trump actually got some good lines! So i don't want it to remove across the lines. remove the funny gags like Mason talking bad latin, or saying vidi vici veni which is a sex joke. but i want it to look at all, and give it a make over. the chinese lines are not as important. if it can, do them too, but most can't read them regardless. concur?" Then, to the design session's take (his gags kept, at the end of the queue, a page
+to choose from): "yes, and let it be creative! i don't want it to strictly look and improve whats there. that contrains it. let it go a bit wild and add stuff to, or make it over. it needs creative control outside of what i protect."
+- **Who and when:** a Fable 5.1 session at high effort, after entry 8, so it covers every line the queue adds (the
+  Charmer, the new moves, the woodpecker's acts).
+- **Creative control:** outside the protected lines, the session decides. It may rewrite, cut and add lines, remake a
+  rival's way of talking, write running jokes and callbacks between rivals, and give lines to moments that have none
+  (new moments use the events the game already sends; the chatter is presentation, so no rule changes). Clever and
+  culturally engrossing over corny: wordplay, references that land in a moment, each rival's own humour. Each rival
+  stays who it is, its name, look and play ("Every rival keeps its trademark").
+- **Protected, word for word:** Haakon's own lines, found from `docs/archive/instructions.md`, `docs/handoff/` and the
+  git history (lines he wrote or asked for word for word); Wildcard's lines, which he likes (Trump's, by his hair), kept
+  as they are, though the session may add to them and offer replacements beside them for him to pick; and the gags:
+  Mason's bad Latin and "vidi vici veni". The session lists what it protected, and why, at the top of its PR.
+- **Bounds:** every line fits its bubble on a phone (the layout suite) and fires on its moment; no song lyrics and no
+  long quotes, since those belong to their owners (a short reference is fine); nothing hateful.
+- **Haakon chooses:** the PR has a page with each rival's lines old and new side by side, new ones marked, so he can
+  keep or reject them one by one; a rejected line goes back to the old one.
+- **The Chinese lines last,** if usage allows: the same make-over, written as Chinese, not translated word for word;
+  otherwise left as they are.
+- **Meanwhile:** new lines follow "New lines, until the writing pass" in `docs/design/09-voice-and-copy.md`.
+
+### 2w. Beetles get away at least a third of the time (Haakon, 31 October 2026; an engine-rules entry, after part 4)
+
+Haakon (31 October 2026): "Do beetles ever manage to espace?" Told that about 33% of chased beetles got away when last measured (round six A,
+inside its 20–35% band): "Yeah, I feel it should be at least a third of the time."
+- **The band** (in `docs/design/27-round-six-a-fairness-and-fixes.md`, "A cornered beetle digs in") moves from 20–35% to
+  **33–45%** of chases: at least a third, as he said; the ceiling of 45% is the design session's reading, so beetles
+  stay worth hunting.
+- **Measure first,** on `develop` once part 4 has merged, since the golden flight changes how snakes hunt: escapes from a
+  chase (down a burrow, dug in), beetles caught a round, the ticks of chase per catch, on fresh seeds.
+- **If it falls short, tune the beetles' side,** never the rivals' skill ("Clever rivals, human reactions"): how far
+  they see a head and run for a burrow, how fast they dig in, how many burrows stay open. Each step measured; the
+  round's length, deaths near a beetle and every rival's trademark within noise.
+- **The rules test and the census** keep the band: the simulation's check fails a run whose escapes fall below a third.
+- **Online stays in step:** a protocol bump if a beetle's messages change.

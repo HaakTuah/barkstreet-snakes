@@ -95,6 +95,18 @@ check(p.tab === 'stats' && p.label === 'Your story', 'H opens Your story if that
 await key('h');
 p = await P();
 check(!p.book, '...and H again closes it');
+// "Clear everything" only when there's something to clear (nothing kept yet, here: no rounds played).
+const keep = await ev(`JSON.stringify(['snake-highscores', 'snake-stats', 'snake-best'].map(k => localStorage.getItem(k)))`);
+await ev(`['snake-highscores', 'snake-stats', 'snake-best'].forEach(k => localStorage.removeItem(k)); 'ok'`);
+await key('h');
+const emptyHall = await ev(`document.getElementById('records-reset').hidden`);
+await key('h');
+await ev(`SnakeRecords.setBest(7); 'ok'`);
+await key('h');
+const bestKept = await ev(`document.getElementById('records-reset').hidden`);
+await key('h');
+await ev(`JSON.parse(${JSON.stringify(keep)}).forEach((v, i) => { const k = ['snake-highscores', 'snake-stats', 'snake-best'][i]; if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }); 'ok'`);
+check(emptyHall === true && bestKept === false, 'the Hall of Fame offers "Clear everything" only once something is kept (a Best, here)', JSON.stringify({ emptyHall, bestKept }));
 await mouse(await at('#how'));
 p = await P();
 check(p.book && p.tab === 'guide' && p.pageTop === 0, 'How to play opens the guide, at the top', `${p.tab} / ${p.pageTop}`);

@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const ROOT = path.join(require.main.path, '..');
-const CHATTER = ['voices', 'zh', 'talk', 'moments'].map(n => `chatter/${n}.js`); // (index.html's order)
+const CHATTER = ['voices', 'zh', 'zh-more', 'talk', 'moments'].map(n => `chatter/${n}.js`); // (index.html's order)
 const src = CHATTER.map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
 // (The tables are read from the source, as they were when they were private
 // to the chatter: from the opening bracket to the closing one, at the start of a line.)
@@ -15,7 +15,9 @@ const slice = (head, tail, name) => {
   return new Function(`return ${src.slice(start + head.length - 1, end + '\n}'.length)}`)();
 };
 const table = name => slice(`\nconst ${name} = {`, '\n};\n', name);
-const VOICES = table('VOICES'), ZH = table('ZH'), REPLIES = table('REPLIES');
+const VOICES = table('VOICES'), REPLIES = table('REPLIES');
+const ZH1 = table('ZH'), ZH2 = slice('\nObject.assign(ZH, {', '\n});\n', 'ZH (zh-more.js)'); // (its two files)
+const ZH = { ...ZH1, ...ZH2 };
 const PUNCHLINES = slice('\nconst PUNCHLINES = new Set([', '\n]);\n', 'PUNCHLINES');
 // (The chatter's reach for whoever was after food the woodpecker knocked aside: cells from where it lay.)
 const KNOCKED_NEAR = +/\bKNOCKED_NEAR = (\d+)/.exec(src)[1];
@@ -42,6 +44,7 @@ for (const [path, line] of lines) {
   if (line in ZH) ok(line.includes('{who}') === ZH[line].includes('{who}'), `${path}: "${line}" names {who} in both`);
 }
 const said = new Set(lines.map(([, l]) => l));
+for (const l of Object.keys(ZH2)) ok(!(l in ZH1), `"${l}" has its Chinese once (zh.js or zh-more.js, not both)`);
 const orphans = Object.keys(ZH).filter(l => !said.has(l));
 for (const l of orphans) ok(false, `the Chinese for "${l}" has no English line (it was removed or reworded)`);
 const spoken = new Set(Object.values(VOICES).flatMap(function all(v) { return Array.isArray(v) ? v : Object.values(v).flatMap(all); }));

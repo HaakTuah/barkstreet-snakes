@@ -42,3 +42,4 @@ the file of its topic; a new round or topic gets its own file and a line here.
 | [`docs/design/33-one-screen.md`](docs/design/33-one-screen.md) | One screen |
 | [`docs/design/34-skipped-or-adapted-guidelines.md`](docs/design/34-skipped-or-adapted-guidelines.md) | Skipped or adapted guidelines |
 | [`docs/design/35-capricious-copycat-and-wildcard.md`](docs/design/35-capricious-copycat-and-wildcard.md) | Capricious, Copycat and Wildcard: every rival by turns, copying the winner's play, a few strong traits a round |
+| [`docs/design/36-updating.md`](docs/design/36-updating.md) | Updating: the newest version by itself between rounds, and what changed |
