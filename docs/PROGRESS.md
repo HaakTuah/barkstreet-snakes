@@ -7,17 +7,11 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane stopped here** (30 October 2026, at about 88% of the weekly usage, by the same words). Part 4 of item 5,
-with 2r folded in, is built, reviewed and parked as draft PR #198 (protocol 20): its rivals who leap now and fly come out
-even with rivals who never do, in three head-to-heads (last, on fresh seeds 47 and 59: 24.7% to 25.2%), so by "No part
-merges until the rivals use its moves well" it waits, as Haakon agreed (30 October 2026), for a session that makes leap
-now and the flight pay the rivals; its "Still to do" list
-says what is left. Part 5 (#202) stays parked behind it. Nothing newer (3b+, 2q, 2s, parts 6 and 7) has been started.
-
-**The art lane stopped here** (30 October 2026, at about 88% of the weekly usage: Haakon, "I want them to finish what they
-have started, if we believe they can"). 2o, 2p and 2t are merged (PRs #210, #211, #212). 2n's second try was turned
-down (Haakon: "it looks horrible"); the third, the original with its lick reversed and nothing else, is merged
-(PR #208, 31 October 2026). 2u is merged (PR #221).
+**Resumed 31 October 2026 on a second account**, spent to the end before Monday. The main lane took up part 4 (#198,
+2r folded in), making leap now and the flight pay the rivals; 2s now runs before 2q, then 3b+, parts 5 to 7. Merged
+since: 2n (the original hair, lick reversed, #208), 2u (#221), the Voices icon (#224), live with milestone #227. Open
+lanes: 2v (#223), the audio and Chinese splits (#225, #226), the polish fixes and the improvement audit (#220). The
+older state notes are in `docs/archive/plan-history.md`.
 
 ## For Haakon
 
@@ -36,7 +30,10 @@ we add a polish point to each that it can spend the last credits on also?" and, 
 the second account until its usage is spent; on the main account the brake closes it first (from about 85%).
 - **First, the housekeeping:** done (PR #222, and the design session's move of the open entries' specs to
   `docs/handoff/queue-specs.md`, 31 October 2026); merged branches now go by GitHub's "Automatically delete head
-  branches", which Haakon turns on, and the older ones may stay. Then archive leftovers nobody uses.
+  branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
+- **The README, done** (PR #241; Haakon, 31 October 2026: "Yes, expertly to both!"): `README.md` is for players, up to
+  the game as it plays now; the developer part is in `docs/developing.md`. From here every entry keeps it current ("A
+  change a player sees updates the README" in `CLAUDE.md`); 2v adds the update between rounds when it merges.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
@@ -133,5 +130,17 @@ Two beetles that meet fight a shoving match, and a snake that gets there in time
   edge cell against a move even when the apple is safe; an AI entry could test a safe-meal exception like the one for
   meals by the neck (`MEAL_DAWDLE`).
 
+- **The improvement audit (31 October 2026, PR #220)**: its three questions are answered (Haakon, 31 October: "Agreed to
+  all, expertly!"; `docs/handoff/queue-specs.md`, part 7 and 2s; the rows are in `docs/archive/progress-done.md`), and
+  the whole list, with how to see each and where in the code, is in that PR. For the AI and engine lanes: Ghost starves
+  most (11% of its rounds on seed 3, the band's worst; it keeps its distance from food's company too); on seed 11 the
+  edge-huggers (4% of snakes) won 43% against 24%, on seed 3 27% against 25%, so the edge's shelter stays on part 7's
+  watch list; the rivals' bubbles overlap each other at 4× for a second or so, 29 times in three watched rounds (the
+  chatter's, not a rule); once, on a phone, a snake of about 15 steered by Ouroboros's AI starved 4 s after its hunger
+  warning (a tick-by-tick probe over three more rounds saw only the slow shrink, so unexplained: likely its own tail
+  dropped out of its coil with the hunger clock at zero, which the AI's trap test doesn't weigh); a person's exploits
+  need a person: nothing in the AI-only censuses shows one.
+
 Small things found on the way, for Haakon to place in the queue:
 - (None now.)
+

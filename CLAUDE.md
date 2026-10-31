@@ -229,3 +229,7 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   fingerprint and `--check`, the online round trip), and long measurements (`tools/abtest.js`, censuses) in
   `scripts/sim.sh`, never in CI. When the game grows (rivals, moves, board sizes), the tests' default does not grow
   with it; the workshop check's check times are the measure.
+- **31 October 2026: a change a player sees updates the README.** "Yes, expertly to both!" (the words are in
+  `docs/archive/instructions.md`). Any entry or PR that changes what a player sees or does updates `README.md` in the
+  same PR, as it does the lesson and the Field guide row; the workshop check gains a sixth point: (6) the README is
+  current, said in one line of each milestone PR and fixed if not.
