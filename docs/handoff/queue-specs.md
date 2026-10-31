@@ -274,3 +274,26 @@ late, it is probably the most uneasecary feature we have discussed here, so leav
 - **Online stays in step:** a protocol bump if the beetles' messages change.
 - **Measured:** the simulation counts fights a round (rare is fine, as long as it happens), and deaths near a beetle,
   the one real risk, stay within noise.
+
+### 9. At the very end: the writing pass (Haakon, 31 October 2026; Fable 5.1, after everything else)
+
+Haakon (31 October 2026): "Also, many of the Snakes dialogue lines are really really bad and corny. some of it are fun pop cultural stuff or wordplays I came up with, but most of it is corny writing by Opus 5.5. I think it would be nice to have a Fable 5.1 run on it at the end, to really piff up the writing. make it more clever and culturally engrossing. Though Trump actually got some good lines! So i don't want it to remove across the lines. remove the funny gags like Mason talking bad latin, or saying vidi vici veni which is a sex joke. but i want it to look at all, and give it a make over. the chinese lines are not as important. if it can, do them too, but most can't read them regardless. concur?" Then, to the design session's take (his gags kept, at the end of the queue, a page
+to choose from): "yes, and let it be creative! i don't want it to strictly look and improve whats there. that contrains it. let it go a bit wild and add stuff to, or make it over. it needs creative control outside of what i protect."
+- **Who and when:** a Fable 5.1 session at high effort, after entry 8, so it covers every line the queue adds (the
+  Charmer, the new moves, the woodpecker's acts).
+- **Creative control:** outside the protected lines, the session decides. It may rewrite, cut and add lines, remake a
+  rival's way of talking, write running jokes and callbacks between rivals, and give lines to moments that have none
+  (new moments use the events the game already sends; the chatter is presentation, so no rule changes). Clever and
+  culturally engrossing over corny: wordplay, references that land in a moment, each rival's own humour. Each rival
+  stays who it is, its name, look and play ("Every rival keeps its trademark").
+- **Protected, word for word:** Haakon's own lines, found from `docs/archive/instructions.md`, `docs/handoff/` and the
+  git history (lines he wrote or asked for word for word); Wildcard's lines, which he likes (Trump's, by his hair), kept
+  as they are, though the session may add to them and offer replacements beside them for him to pick; and the gags:
+  Mason's bad Latin and "vidi vici veni". The session lists what it protected, and why, at the top of its PR.
+- **Bounds:** every line fits its bubble on a phone (the layout suite) and fires on its moment; no song lyrics and no
+  long quotes, since those belong to their owners (a short reference is fine); nothing hateful.
+- **Haakon chooses:** the PR has a page with each rival's lines old and new side by side, new ones marked, so he can
+  keep or reject them one by one; a rejected line goes back to the old one.
+- **The Chinese lines last,** if usage allows: the same make-over, written as Chinese, not translated word for word;
+  otherwise left as they are.
+- **Meanwhile:** new lines follow "New lines, until the writing pass" in `docs/design/09-voice-and-copy.md`.
