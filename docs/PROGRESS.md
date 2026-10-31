@@ -63,6 +63,7 @@ the second account until its usage is spent; on the main account the brake close
 - The woodpecker flies under a card that's up, no longer across its title (PR #243; the audit's third find).
 - *Parked:* the woodpecker over the help line between rounds (the audit's second find; PR #240 has what was tried): on a 390 px phone the help line and the switches fill the row, so no perch at its size clears them, and by 2k+ it never shrinks for words. Needs a design call: perch lower, the help stepping aside under it, or a smaller bird there.
 - *Not reproduced:* bubbles overlapping at 4× (the audit's fourth find). In 8 watched phone rounds and 3 desktop rounds at 4×, the longest overlap was 0.4 s on the phone and 0.19 s on desktop, only while bubbles glide to a new side. Dropping the older bubble after 0.25 s of overlap made no measurable difference, so nothing was merged.
+- *As designed:* the empty chatter-log line (the audit's sixth find): it's a new line's 0.4 s slide-in (`log-in`) caught mid-fade. Over 3 watched rounds on a phone on its side, 23 of 621 visible-row samples caught one, and none stayed empty. No fix.
 - The tail-drop lesson only in a real pocket, not when you've coiled with room to crawl out after your tail (PR #246; the audit's fifth find).
 
 ## The split lane (the workshop check's files over about 50 KB)
