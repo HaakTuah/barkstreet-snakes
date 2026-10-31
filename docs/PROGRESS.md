@@ -34,6 +34,13 @@ the second account until its usage is spent; on the main account the brake close
 - **The README, done** (PR #241; Haakon, 31 October 2026: "Yes, expertly to both!"): `README.md` is for players, up to
   the game as it plays now; the developer part is in `docs/developing.md`. From here every entry keeps it current ("A
   change a player sees updates the README" in `CLAUDE.md`); 2v adds the update between rounds when it merges.
+- **Next, any key wakes from a nap** (Haakon, 31 October 2026: "Space should also pause and unpause on Barkstreet Snakes." Told that Space is the jump: "Ahh, true! yeah, really any button should unpause, no?" Then, to the design session's shape of it: "Yes, please! Expertly!"): as the Pause row of "Voice and copy" (`docs/design/09-voice-and-copy.md`) now says. Any playing key, or a tap on the board on touch, wakes; the waking press never fires a power (a steering key wakes and steers, as it always has: "A power only when you ask"); G, H, M, N, V and the speed keys keep their jobs; the card says "Any key to wake up" / "Tap to wake up"; the help line, the Field guide and the README to match. Online: a nap is local only as now. A rules or input test both ways: Space wakes without a jump, G opens the Field guide and the game stays napping.
+- **Next, the woodpecker bigger on a phone** (Haakon, 31 October 2026, with a desktop screenshot beside it: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much."): on a
+  phone, upright and on its side, it is drawn bigger than 2k's 1.7 times, so it looks as threatening there as it does
+  beside the board on a desktop; the desktop is unchanged. Pictures first, at 390×844 and 780×320, perched and striking,
+  at three sizes side by side on `pr-media`, and Haakon picks before it merges, as with Wildcard's hair (2n). A bigger
+  bird may cover more of the row and the chatter under the board (his answer on the help line), never a card (PR #243),
+  and never the board's play for longer than a strike does now. Presentation only: the fingerprints unchanged.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
@@ -82,9 +89,13 @@ the second account until its usage is spent; on the main account the brake close
 
 The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in: its A/B comes out even, so it waits until the rivals use the moves well: the flight and leap now measured apart, the rivals taught the flight's uses, the golden flash measured on its own in the same pass, and the flight merged without leap now if only the flight pays; Haakon, 31 October 2026), then 2s and 2q (2s first: Haakon, 31 October 2026, "Agreed to all, expertly!"), part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves".
 
-### 2s. The log breaks, but never drifts apart (30 October 2026; an engine-rules entry, after part 4; moved ahead of 2q, 31 October 2026)
+### 2s. A piece cut loose falls: the log stays one piece (30 October 2026, rewritten 31 October 2026; an engine-rules entry, after part 4; ahead of 2q)
 
-The woodpecker never pecks a patch that would leave a piece of the log out of a plain hop's reach of every other piece, so islands form but nobody is stranded on one; measured with part 4's flight in place (half the rounds now end split onto islands, the audit found). Spec: `docs/handoff/queue-specs.md`, "2s. The log breaks, but never drifts apart".
+No more islands (Haakon, 31 October 2026: "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."): any piece of log no longer attached to the log falls away, warned, so the log is always one piece with holes in it, and jumps and flights cross the gaps inside it. Replaces "every island stays a hop from another". Spec: `docs/handoff/queue-specs.md`, "2s. A piece cut loose falls".
+
+### 2w. Beetles get away at least a third of the time (Haakon, 31 October 2026; an engine-rules entry, after part 4)
+
+The escape band moves from 20–35% to at least a third (33–45%): measured on `develop` once part 4's flight is in, and the beetles' side tuned if it falls short, never the rivals made worse. Spec: `docs/handoff/queue-specs.md`, "2w. Beetles get away at least a third of the time".
 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
@@ -99,6 +110,8 @@ Every rival sees another snake as late as a person would notice it: `REACTION_MS
 A contested apple is worth what it saves: a starving rival contests it because it is worth more; Gobbler contests even when fed; Desperado is less risk-averse everywhere. Spec: `docs/handoff/queue-specs.md`, "2b. Hunger's worth at a contested apple, for every rival".
 
 ### 2h. The endgame: eat what keeps you alive, not what boxes you in (Haakon, 29 October 2026; an AI entry, after 2b)
+
+Grown on 31 October 2026: the tail drop planned ahead, a length target (a crash and hunger buffer, no more), and the denial play where it pays; the reasoning now, its numbers again after entry 6.
 
 In the endgame a meal is worth the life it buys against the room it costs: a rival eats when hunger would end it before room would. Spec: `docs/handoff/queue-specs.md`, "2h. The endgame: eat what keeps you alive, not what boxes you in".
 
@@ -126,6 +139,14 @@ Teaches every move of item 5 by showing, each with its picture or cue, its lesso
 
 The draft is in `docs/handoff/woodpecker-acts-draft.md`.
 
+- **Its pace and fairness, and hunger in the endgame** (Haakon, 31 October 2026: "Sounds good! though I think it should take fewer chunks at once as a rule, because the map shrinks really quickly now! and i also think when there is just a little bit of space, it should slow down again, so it isn't and rng competition where it is who's island it pecks at next that decides it, capiche? Whats your take?" Then, to the design session's take: "Yes, to everything, expertly! and i also want hunger to be a factor! right now, food and beads jjust become a negative at the end. if we manage to balance this right, we can make it a trade-off, just like we tried with everything else, like mushrooms. that's a sign of good game design, conditional goods. thomas sowell in game mechanics."). These come before the draft's numbers and win where they differ:
+  - **Like the final Bowser, as a woodpecker** (Haakon, 31 October 2026: "Bowser 2 in Super Mario 64 is what I always compare my imagined woodpecker to, and it doesn't break down the map until there is no space.", then "sorry! final bowser!"; to the design session's take: "Yes, though I don't know about in a few big moments, I think perhaps I like what we've planned already better. Fits a woodpecker. but what if it takes few chunks at once, but it is cutting out a shape, and when that shape is no longer attached to anyhting, it falls? I really like your idea about a floor, and how it continues to peck which you must avoid, without taking out much anymore. maybe just a tile here and there in the late late game. what do you think, expert?"; then "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."). It cuts shapes, never melts the log:
+    - **A few cells a peck, along an outline.** Its pecks trace a dotted cut across the log, so everyone can watch the outline close round a piece; when the last peck cuts it loose, the piece falls away (2s's rule). The gaze in act 1 says where it will start cutting. The last peck is warned like any strike, and a snake still on the piece falls with it ("Down the hole!"), unless it crawled or jumped off in time; it never cuts loose a piece a snake couldn't leave in the warning's time ("The woodpecker plays fair"). The draft's combos give way to the outline. **It aims small, nothing is banned** (Haakon, 31 October 2026: "No outline should be banned from falling, but ideally, it never takes out half the trunk."): it plans its outlines round edges and corners, pieces small next to the log (about a sixth at most, a first guess), and never plans a cut that halves the trunk; but no size is banned from falling, so a piece that ends up cut loose falls, whatever its size, by 2s's rule. Measured: the biggest piece that fell in a round.
+    - **A floor.** It cuts shapes only while the log is bigger than the room the snakes left need to play (about twice their length together, a first guess, set by simulation). At the floor it stops cutting.
+    - **Then it fights.** At the floor it keeps pecking at the snakes, aimed and warned (its rings), so they must dodge; a peck that catches a snake is a crash, never instant death, and never unavoidable ("No refuges" both ways). It takes only a tile here and there in the very late game.
+    - **It cuts where there is the most log per snake,** never at random, so whose piece goes next never decides a round. Measured: how often a round is decided by where it cut, with the draft's "the biggest island not deciding the round".
+  - **Hunger stays a factor to the end: food a conditional good.** Today food and beads only hurt at the end, since length fills the room. Balanced so a meal is a real trade-off there too, as the mushrooms are: life bought against room cost, each winning sometimes. The hunger clock is tuned with the bird's pace for it. Measured by three versions of the rivals head to head in the endgame: ones that always eat, ones that never eat, and 2h's weighing. Neither always nor never may win; the weighing must, and both starving and boxed-in deaths must show among the endgame's causes.
+
 - Also: an A/B test of food knocked aside against food falling into the hole, with a `?food=fall` knob for the owner's playtests.
 - If the knock stays, it gets bark chips spraying out and a little bounce where it lands.
 - Ghost's memorial: the planned smoke wisp, or the owner's idea of a broken shackle with a few chain links. Ghost's tongue stays smoke.
@@ -135,9 +156,13 @@ The draft is in `docs/handoff/woodpecker-acts-draft.md`.
 
 As planned: up to 4 players, key sets, gamepads, and local and online play together.
 
-### 8. Last: beetles who meet, fight (Haakon, 29 October 2026; an engine-rules entry, after everything else)
+### 8. Near the end: beetles who meet, fight (Haakon, 29 October 2026; an engine-rules entry, last but the writing pass)
 
-Two beetles that meet fight a shoving match, and a snake that gets there in time can catch them while they do; last of all. Spec: `docs/handoff/queue-specs.md`, "8. Last: beetles who meet, fight".
+Two beetles that meet fight a shoving match, and a snake that gets there in time can catch them while they do; last of the rules, before the writing pass. Spec: `docs/handoff/queue-specs.md`, "8. Near the end: beetles who meet, fight".
+
+### 9. At the very end: the writing pass (Haakon, 31 October 2026; Fable 5.1, after everything else, entry 8 included)
+
+Every rival's lines given a make-over by a Fable 5.1 session with creative control, outside what Haakon protects: his own lines, the lines he likes, and the gags (Mason's bad Latin, "vidi vici veni"). After everything else, so it covers every line the queue adds. Spec: `docs/handoff/queue-specs.md`, "9. At the very end: the writing pass".
 
 ## Noted, not yet queued
 
