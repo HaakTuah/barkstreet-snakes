@@ -36,13 +36,21 @@ function setBoardRect(x, y, w, free = null) {
   boardRect.hang = free?.hang || [];
   boardRect.rims = free?.rims || [];
   boardRect.words = free?.words || [];
+  growBird(Math.min(innerWidth, innerHeight) <= PHONE_SHORT_PX ? BIRD_GROW * PHONE_GROW : BIRD_GROW);
   perches.clear(); drumAt.clear(); birdLayout++; // (its perches and where it drums are worked out again: the room round the board has changed)
 }
 const BIRD_GROW = 1.7; // (times its first size: 1.3 since 2c, 1.7 since 2k, on the board and under it alike)
-const BU = CELL * 0.85 * BIRD_GROW; // the bird's unit
+// On a phone (a screen no more than PHONE_SHORT_PX on its short side,
+// held upright or on its side) its board is less than half a desktop's,
+// so the bird grows PHONE_GROW times more, to look as threatening there as
+// beside a desktop's board (Haakon, 31 October 2026). Everything sized by
+// it (BU and what's worked out from it) is set by growBird as the layout
+// changes, never in the middle of a frame.
+const PHONE_SHORT_PX = 500, PHONE_GROW = 1.6;
+let BU = CELL * 0.85 * BIRD_GROW; // the bird's unit
 const BILL = [2.55, -1.72]; // its beak tip, in units, before its head moves
 const BIRD_BOX = [-1.15, -2.55, 2.65, 3.2]; // (all of it, round its feet, in units, facing right: its back, crown, beak tip, tail)
-const PERCH_NEAR = 0.65 * 1.3 / BIRD_GROW, PERCH_MIN_PX = 30, PERCH_FLOOR_PX = 22; // (how small it may perch: on a nearer side, 0.65 of its size at 2c, so growing never sends it to a smaller perch; and, CSS px tall, where there's no room anywhere; and on a phone held upright of a height in between, where the page leaves it room for 24)
+let PERCH_NEAR = 0.65 * 1.3 / BIRD_GROW; const PERCH_MIN_PX = 30, PERCH_FLOOR_PX = 22; // (how small it may perch: on a nearer side, 0.65 of its size at 2c, so growing never sends it to a smaller perch; and, CSS px tall, where there's no room anywhere; and on a phone held upright of a height in between, where the page leaves it room for 24)
 const PERCH_GAP_PX = 1.5, BOX_EDGE = 0.1; // (how far, CSS px, it keeps off the cells, its ink's soft edge never touching one; and, units, how far its outline and its beak, turned to look, reach past its box)
 const LEDGE_LOOK = 0.3, CROUCH = 0.25; // (on the ledge, how far it may look up at its chunk, radians, with its beak still under the board; and how far its crouch lowers it, units)
 const RIM_GRIP = 0.95, RIM_FEET = 0.8, RIM_REACH = 2.5, RIM_PECK_MS = 360; // (on a button's rim: how far ahead of it its toes grip, and how far under its feet' middle, units; how far along the ledge it goes to one, units; and how long its two pecks at it take)
@@ -339,7 +347,7 @@ function resetBird(now = 0) {
 // the air; and how far its head draws back between blows (units). A
 // flight takes longer the further it goes (flightMs, hopMs).
 const B_SETTLE = 120, B_TAKEOFF = 200, B_LINGER = 90, B_LOOK = 260, B_ARRIVE = 900, B_BEAT = 104, B_CHIPS = 340, B_BACK = 0.42;
-const B_IN = 0.06 * 1.3 / BIRD_GROW; // (how far its beak goes into the bark on a blow, units: as deep as at 1.3, whatever its size, so it stays in the cell it pecks)
+let B_IN = 0.06 * 1.3 / BIRD_GROW; // (how far its beak goes into the bark on a blow, units: as deep as at 1.3, whatever its size, so it stays in the cell it pecks)
 const flightMs = d => Math.max(240, Math.min(540, 200 + 0.42 * d));
 const hopMs = d => Math.max(180, Math.min(380, 140 + 0.35 * d));
 const smooth = t => t * t * (3 - 2 * t), clamp01 = t => (t < 0 ? 0 : t > 1 ? 1 : t);
@@ -631,7 +639,10 @@ function drumChoice(w, spot, flip) {
 // How much of those (seeX, seeY: each a ring's round, its middle and eight
 // points on it) the bird drumming in pose p covers: its body, its tail,
 // its head and beak, ink and all.
-const SEE_R = CELL * 0.4 + BOX_EDGE * BU; // (its ink's soft edge too, which grew with the bird in 2c)
+let SEE_R = CELL * 0.4 + BOX_EDGE * BU; // (its ink's soft edge too, which grew with the bird in 2c)
+function growBird(grow) { // (its size, times its first: BU and what's worked out from it)
+  BU = CELL * 0.85 * grow; PERCH_NEAR = 0.65 * 1.3 / grow; B_IN = 0.06 * 1.3 / grow; SEE_R = CELL * 0.4 + BOX_EDGE * BU;
+}
 function hides(p) {
   const Q = probe;
   Q.x = p.x; Q.y = p.y; Q.s = p.s; Q.flip = p.flip; Q.rot = p.rot; Q.turn = 0; Q.thrust = B_IN; Q.crouch = 0;
