@@ -7,17 +7,11 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane stopped here** (30 October 2026, at about 88% of the weekly usage, by the same words). Part 4 of item 5,
-with 2r folded in, is built, reviewed and parked as draft PR #198 (protocol 20): its rivals who leap now and fly come out
-even with rivals who never do, in three head-to-heads (last, on fresh seeds 47 and 59: 24.7% to 25.2%), so by "No part
-merges until the rivals use its moves well" it waits, as Haakon agreed (30 October 2026), for a session that makes leap
-now and the flight pay the rivals; its "Still to do" list
-says what is left. Part 5 (#202) stays parked behind it. Nothing newer (3b+, 2q, 2s, parts 6 and 7) has been started.
-
-**The art lane stopped here** (30 October 2026, at about 88% of the weekly usage: Haakon, "I want them to finish what they
-have started, if we believe they can"). 2o, 2p and 2t are merged (PRs #210, #211, #212). 2n's second try was turned
-down (Haakon: "it looks horrible"); the third, the original with its lick reversed and nothing else, is merged
-(PR #208, 31 October 2026). 2u is merged (PR #221).
+**Resumed 31 October 2026 on a second account**, spent to the end before Monday. The main lane took up part 4 (#198,
+2r folded in), making leap now and the flight pay the rivals; 2s now runs before 2q, then 3b+, parts 5 to 7. Merged
+since: 2n (the original hair, lick reversed, #208), 2u (#221), the Voices icon (#224), live with milestone #227. Open
+lanes: 2v (#223), the audio and Chinese splits (#225, #226), the polish fixes and the improvement audit (#220). The
+older state notes are in `docs/archive/plan-history.md`.
 
 ## For Haakon
 
@@ -36,7 +30,7 @@ we add a polish point to each that it can spend the last credits on also?" and, 
 the second account until its usage is spent; on the main account the brake closes it first (from about 85%).
 - **First, the housekeeping:** done (PR #222, and the design session's move of the open entries' specs to
   `docs/handoff/queue-specs.md`, 31 October 2026); merged branches now go by GitHub's "Automatically delete head
-  branches", which Haakon turns on, and the older ones may stay. Then archive leftovers nobody uses.
+  branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
 - **The README, next** (Haakon, 31 October 2026: "Yes, expertly to both!"): bring `README.md` up to the game as it
   plays now: the rules through round six B so far (the island hop and no auto-jump, bridges, the cutting flashes,
   mushrooms that come back up, squashing your own beads), flags, picked rivals for the visit, the update between
