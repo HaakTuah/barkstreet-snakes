@@ -596,3 +596,9 @@ In the design chat (31 October 2026, 14:39-14:40 UTC): "The README for both proj
 to be updated?" Then, to a one-time refresh in the polish lane (the developer part moved to `docs/developing.md`) and
 a standing rule that a change a player sees updates the README in the same PR, checked at each milestone: "Yes,
 expertly to both!" (written into `docs/PROGRESS.md`, "The polish lane", and `CLAUDE.md`, "Standing instructions")
+
+In the design chat (31 October 2026, 18:59-19:01 UTC), on the woodpecker over the help line on an upright phone (the
+audit's second find, PR #240 parked): "Don't really care if it covers that a bit. None essential, you still see, and
+you can click through. It also moves about frequently, so it doesn't cover the same spot all the time. So which of the
+answer options fit with that?" To leaving it as 2k+ has it and closing the find: "yes, leave it." (written into
+`docs/PROGRESS.md`, "The polish lane", and `docs/design/32-the-owners-playtest.md`, "Clear of the row's words (2k+)")

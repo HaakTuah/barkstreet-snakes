@@ -363,7 +363,11 @@ screen, a 3 by 4 mark, compared over the five screens); nothing on the page move
   perches as it did. The chatter's lines are left out: they change every few seconds, and the bird would move with
   each. At 320 px wide the gap is 79 px for its 78, so its box counts its outline and gap but nothing more round the
   words. Tested in `tools/layout/15-the-perch-clear-of-words.js` (layout job 2) at 390×844 and 320×640; pictures from
-  `tools/dev/woodpecker-perch/shots.js`.
+  `tools/dev/woodpecker-perch/shots.js`. In your own round, after you're out, the help line's words share the row too,
+  and on a 390 px phone no place at the bird's size clears them; it perches as it would, and that stays (Haakon, 31
+  October 2026, of the bird covering part of the help line or the chatter: "Don't really care if it covers that a
+  bit. None essential, you still see, and you can click through. It also moves about frequently, so it doesn't cover
+  the same spot all the time.", then "yes, leave it."). No perch lower, no help line stepping aside, no smaller bird.
 
 ### The woodpecker pecks beside a snake
 
