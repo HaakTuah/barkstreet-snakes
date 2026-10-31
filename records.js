@@ -118,6 +118,8 @@ window.SnakeRecords = (() => {
   const hasName = () => getName() !== DEFAULT_NAME;
 
   const getBest = () => num(load(BEST_KEY, 0));
+  // Nothing kept to clear: no rows, no rounds in your story, no Best.
+  const isEmpty = () => !scores().length && !stats().played && !getBest();
   const setBest = v => save(BEST_KEY, v);
 
   // The stored list is the overall top 10 plus your own top 10, so the AIs
@@ -429,7 +431,7 @@ window.SnakeRecords = (() => {
   }
 
   return {
-    MAX_SCORES, SEATS, seats, setSeat, deal, undeal, cleanName, cleanShared, scores, stats, addScore, recordPlayer, recordFriend, shareable, importShared, playerId, rankOf, rename, setName, reset, getName, hasName, getBest, setBest,
+    MAX_SCORES, SEATS, seats, setSeat, deal, undeal, cleanName, cleanShared, scores, stats, addScore, recordPlayer, recordFriend, shareable, importShared, playerId, rankOf, rename, setName, reset, getName, hasName, getBest, setBest, isEmpty,
     renderScores, renderStats, ordinal, clock,
   };
 })();

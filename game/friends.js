@@ -52,7 +52,7 @@ function renderRecords() {
   recordsTabs.forEach(t => t.setAttribute('aria-pressed', String(t.dataset.tab === recordsTab)));
   filterTabs.forEach(t => t.setAttribute('aria-pressed', String(t.dataset.filter === scoresFilter)));
   filterEl.hidden = recordsTab !== 'scores';
-  resetBtn.hidden = recordsTab === 'guide'; // (nothing there to clear)
+  resetBtn.hidden = recordsTab === 'guide' || Records.isEmpty(); // (nothing there, or nothing yet, to clear)
   recordsBody.textContent = '';
   if (recordsTab === 'scores') {
     Records.renderScores(recordsBody, theGame.entryId, scoresFilter, PLAYER_COLOR, dotByName);
