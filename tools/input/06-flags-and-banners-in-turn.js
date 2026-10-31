@@ -95,3 +95,36 @@ await ev(`(() => { const g = SnakeDebug.game(); g.holes.delete(5 * 24 + 20); del
 const staleOrder = stale.shown.map(s => s.text), staleFates = stale.log.filter(l => l.text === CHOKE).map(l => l.fate).join(' ');
 check(staleOrder.length === 2 && SNOW.includes(staleOrder[0]) && staleOrder[1] === LOST && staleFates === 'queued stale',
   'a lesson whose moment has passed while it waited (6 s of the round) is let go; the round news behind it still comes', `${staleOrder.join(' / ')}; the lesson: ${staleFates}`);
+// A lesson that stops holding while it shows fades early, not after its
+// reading time: your crash's lesson ("…the next one ends you."), once
+// you're out (the polish lane).
+const early = await ev(`(() => {
+  hideToast(); let holds = true;
+  toast('A lesson that holds.', 3000, 'warn', 'lesson', { still: () => holds });
+  const shown = !toastEl.hidden && !toastEl.classList.contains('leaving');
+  toastFade(); const kept = !toastEl.classList.contains('leaving');
+  holds = false; toastFade(); const going = toastEl.classList.contains('leaving');
+  hideToast(); return JSON.stringify({ shown, kept, going });
+})()`);
+check(early === JSON.stringify({ shown: true, kept: true, going: true }), 'a lesson showing fades early once it no longer holds (yours, once you’re out), and stays while it holds', early);
+// "Flash through your own tail to drop it." comes only in a real pocket:
+// holes all round but a pocket of one cell, your body one thick ahead and
+// free log beyond it. Your head right behind your own tail is a coil you
+// can crawl out of (the tail frees its cells in time: no lesson); the
+// same pocket with the tail far off is a trap (the lesson). The polish
+// lane, from the audit: it came up when you coiled by choice.
+const pocket = await ev(`(() => {
+  const g = SnakeDebug.game(), keep = { snakes: g.snakes, holes: g.holes, fires: g.fires };
+  const P = (...xy) => xy.map(([x, y]) => ({ x, y }));
+  const coil = P([10, 10], [9, 10], [9, 11], [10, 11], [11, 11], [12, 11], [12, 10], [12, 9], [11, 9]);
+  const trap = P([10, 10], [9, 10], [9, 11], [10, 11], [11, 11], [12, 11], [12, 10], [12, 9], [11, 9], [10, 9], [9, 9]);
+  const read = body => {
+    const open = new Set([...body.map(c => c.y * 24 + c.x), 10 * 24 + 11, 10 * 24 + 13]);
+    g.holes = new Set([...Array(24 * 24).keys()].filter(k => !open.has(k))); g.fires = new Map();
+    const s = { body, dir: { x: 1, y: 0 }, alive: true };
+    g.snakes = [s];
+    return tailToDrop(s);
+  };
+  try { return JSON.stringify({ coil: read(coil), trap: read(trap) }); } finally { Object.assign(g, keep); }
+})()`);
+check(pocket === JSON.stringify({ coil: false, trap: true }), 'the tail-drop lesson: not for a coil whose tail frees the way in time, but for a real pocket', pocket);

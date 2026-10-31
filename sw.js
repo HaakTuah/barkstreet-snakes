@@ -10,7 +10,7 @@ const SCOPE = new URL(self.registration.scope).pathname; // (its folder: /barkst
 const PREVIEW = (SCOPE.match(/\/pr-(\d+)\/$/) || [])[1];
 const CACHE = (PREVIEW ? `barkstreet-snakes-pr${PREVIEW}-` : 'barkstreet-snakes-') + '5'; // (a new number drops the old cache on activate; only the game's own: every project site of the account shares this origin)
 const OURS = PREVIEW ? k => k.startsWith(`barkstreet-snakes-pr${PREVIEW}-`) : k => /^(barkstreet-snakes|bark-and-bite)-(?!pr\d)/.test(k);
-const FILES = ['./', 'index.html', 'style/base.css', 'style/panels.css', 'style/screens.css', 'tuning.js', 'ai.js', 'engine.js', 'records.js', 'chatter/voices.js', 'chatter/zh.js', 'chatter/talk.js', 'chatter/moments.js', 'audio.js', 'render/core.js', 'render/sprites.js', 'render/looks.js', 'render/lead.js', 'render/shadows.js', 'render/bodies.js', 'render/marks.js', 'render/tongues.js', 'render/faces.js', 'render/land.js', 'render/flags.js', 'render/food.js', 'render/weather.js', 'render/bird.js', 'render/bird-draw.js', 'render/holes.js', 'render/world.js', 'online.js', 'net.js', 'game/core.js', 'game/round.js', 'game/banners.js', 'game/hud.js', 'game/input.js', 'game/friends.js', 'game/screen.js'];
+const FILES = ['./', 'index.html', 'style/base.css', 'style/panels.css', 'style/screens.css', 'tuning.js', 'ai.js', 'engine.js', 'records.js', 'chatter/voices.js', 'chatter/zh.js', 'chatter/zh-more.js', 'chatter/talk.js', 'chatter/moments.js', 'audio/cues.js', 'audio/sound.js', 'render/core.js', 'render/sprites.js', 'render/looks.js', 'render/lead.js', 'render/shadows.js', 'render/bodies.js', 'render/marks.js', 'render/tongues.js', 'render/faces.js', 'render/land.js', 'render/flags.js', 'render/food.js', 'render/weather.js', 'render/bird.js', 'render/bird-draw.js', 'render/holes.js', 'render/world.js', 'online.js', 'net.js', 'version.js', 'update.js', 'game/core.js', 'game/round.js', 'game/banners.js', 'game/hud.js', 'game/input.js', 'game/friends.js', 'game/screen.js'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
@@ -25,7 +25,7 @@ self.addEventListener('fetch', e => {
   const plain = new URL(req.url); plain.search = ''; // (a room link's ?join=… is the same page: one copy of it)
   if (!PREVIEW && /^pr-\d+(\/|$)/.test(plain.pathname.slice(SCOPE.length))) return; // (a preview's, before its own worker takes it over: the network's)
   e.respondWith(fetch(req).then(res => {
-    if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(plain.href, copy)).catch(() => {}); }
+    if (res.ok && req.cache !== 'no-store') { const copy = res.clone(); caches.open(CACHE).then(c => c.put(plain.href, copy)).catch(() => {}); }
     return res;
   }).catch(() => caches.open(CACHE).then(c => c.match(req, { ignoreSearch: true })).then(hit => hit || Response.error()))); // (its own cache only)
 });
