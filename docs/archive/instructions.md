@@ -574,3 +574,8 @@ In the design chat (31 October 2026, 11:31-11:39 UTC), on a second account spent
 100% on this account i have used it for what I need." "I can set them to yse fable." "Should we add a polish point to
 each that it can spend the last credits on also?" And, to the design session's shape of the polish lane: "Yes, and make
 things as refined as possible!" (written into `docs/PROGRESS.md`, "The polish lane")
+
+In the design chat (31 October 2026, 13:44 UTC), to the design session's questions on the second account's first
+reports (Wildcard's hair, third try; turning on GitHub's "Automatically delete head branches" and leaving the 144 old
+merged branches; moving the open entries' specs out of `docs/PROGRESS.md`): "Yes, to all, expertly! The hair looks
+"okay" now." (2n merges with PR #208; the specs moved to `docs/handoff/queue-specs.md`; Haakon turns on the setting)
