@@ -241,12 +241,20 @@ It must read at phone size."
   head; at phone size it read as a yellow cap.
 - *Then* (PR #74, `pompadour()`): the roll swooped forward along one side to a flick past that eye. Haakon (28
   October): "It flips to the front side, you know like a blond emo/goth haircut"; heading up, it read like a turban.
-- *Now* (PR #107, `render/faces.js`, `hairBack()` and `hairRoll()`), seen from above with the head pointing +x and -y the
+- *Then* (PR #107, `render/faces.js`, `hairBack()` and `hairRoll()`), seen from above with the head pointing +x and -y the
   far side: two shapes, each with a dark amber outline so they read at phone size. Nothing is in front of the brow: a
   lighter raised roll runs along the hairline just behind the eyes (its front edge at x = 0.12 of a cell, no further),
   with a shine along its crest, fuller at the far end. Behind it, the fluffy golden mass puffs out past the head, most
   at the back and the far side; its strands run straight back over the crown and turn to the far side at their ends, so
   the comb reads up, back and round. The eyes, pout and squint are as they were.
+- *Then* PR #110's lacquered mop, PR #144's version F and PR #156's F at 85%. Haakon (30 October): "trump looks like
+  David Lynch now. I actually think the very first or second hairstyle trump had in the game is better", and picked the
+  first, "but have the swirl point upwards instead of downwards".
+- *Now* (2n, `render/faces.js`, `hairBack()`, `pompadour()`, `wildHair()`): PR #74's pompadour exactly as it was
+  (shape, size, strands, colours and outline), with one change: its lick, the curl at the near end of the roll that came
+  forward over the brow to a flick past the eye, is turned round, curling up and back over the hair behind it, its two
+  combed strands following it. Two tries that reworked more were turned down; Haakon (31 October): "it looks horrible.
+  I want the original hair, but I want the lick reversed. That's all. Keep it that simple."
 - Drawn in the head's own frame, so it is the same at every heading, and still: nothing in it moves, with reduced motion
   or without. Capricious's Wildcard mood wears it too. Drawing only.
 
@@ -279,8 +287,11 @@ Who you meet is dealt from a deck, and you may choose instead, seat by seat.
   simulator and tools keep the engine's own uniform pick (`pickOpponents`), so fingerprints are unchanged.
 - *Choosing* (`game/hud.js`, `openPicker()`; the seats in `game/banners.js`, `buildOpponents()`): on the start card
   each rival is a button with a swap mark; it opens a picker of "Any" and all eighteen, each with its dot and blurb,
-  over the page like the Hall of Fame (Escape or × closes it). A chosen seat wears a ring. The choice is kept per seat
-  under the new key `snake-lineup` (`seats()`, `setSeat()`) for every round after, until changed; "Any" seats are
+  over the page like the Hall of Fame (Escape or × closes it). A chosen seat wears a ring, and on the start card a
+  small pin beside it: a tap on the pin sets the seat back to "Any" (`unpinSeat()`). The choice is kept per seat for
+  this visit (2u, 30 October 2026: "Didn't expect them to stay permanently"), round after round and across a reload in
+  the same tab, in `sessionStorage` under `snake-visit-lineup` (`seats()`, `setSeat()`); the next time the game is
+  opened every seat is "Any" again. The old lasting key `snake-lineup` is no longer read (and never renamed). "Any" seats are
   dealt from the deck, which skips the chosen rivals (they stay in it for later). Choosing a rival already in another
   seat swaps the two. Watching from the start card keeps its three and deals the fourth.
 - *Online* the host's choice and deck decide. A guest's own choice and deck are untouched. With more people, fewer
@@ -289,7 +300,9 @@ Who you meet is dealt from a deck, and you may choose instead, seat by seat.
     them, "unless a friend joins". The room opens with the start card's line-up (and what the deck dealt for it); after
     each round the next is dealt, shown on the round's card. The host's seats are the start card's buttons, opening the
     same picker (a chosen one wears its ring); the guests see each seat's rival, and "chosen", as it stands. A seat a
-    friend takes sends its rival back to the top of the deck, as does closing the room or the page.
+    friend takes sends its rival back to the top of the deck, as does closing the room. Closing the page (a start
+    card's or the room's rivals never met) sends them back to a random place among the rivals not yet dealt
+    (`undeal(..., { anywhere: true })`), so opening the game gives a fresh cast and everyone is still met first.
   - Protocol 13: the lobby message carries the line-up (`lineup`: each seat's rival and whether the host chose it),
     sent whenever it changes; the round message carries the round's as before.
 - *The Hall of Fame:* every entry of a round with any chosen rival (yours, the rivals', a friend's) is marked "chosen"
