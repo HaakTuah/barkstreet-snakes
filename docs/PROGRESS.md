@@ -180,7 +180,7 @@ Measured: rounds whose last snakes are each alone on an island they can't leave 
 islands of their own"), the biggest island's wins, round length and sudden-death deaths, before and after; the
 woodpecker's mark still shows each patch before it goes. Online the same, with a protocol bump if the mark changes.
 
-### 2u. Picked rivals for this visit; unmet rivals back into the deck (30 October 2026; small, a UI lane)
+### 2u. Picked rivals for this visit; unmet rivals back into the deck (30 October 2026; small, a UI lane) — done, PR #221
 
 Haakon asked why the same cast showed up each time he started the game, then: "I might've picked them yes. Didn't
 expect them to stay permanently", and to the design session's takes: "Agreed to all!". In `records.js` and the start
