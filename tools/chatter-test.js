@@ -29,7 +29,7 @@
 // whole AI rounds with the chatter listening, to see nothing throws: one with
 // the rivals who have the most to say about the board (Sovereign's realm and
 // Colonist's colonies, intruders and fire on them, Vulture at every death,
-// Capricious in its moods), one with Star and the rivals who answer it. Last, the sound (audio.js on a stand-in AudioContext): a rival's
+// Capricious in its moods), one with Star and the rivals who answer it. Last, the sound (audio/ on a stand-in AudioContext): a rival's
 // flash, jump, choke or the like never silences yours, your own golden ones
 // in a row are each heard, your choke and its cough (a beat later) each time
 // you can choke, a beetle digging in and the woodpecker knocking food aside
