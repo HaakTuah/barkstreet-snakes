@@ -184,6 +184,7 @@ lobbyPlayers.addEventListener('click', e => { const b = e.target.closest?.('.sea
 // The pin on a chosen seat: back to "Any", without the picker.
 function unpinSeat(seat) {
   if (!choosing() || online) return;
+  closeNote();
   pickRival(null, seat);
 }
 opponentsEl.addEventListener('click', e => { const b = e.target.closest?.('.unpin'); if (b && cardSettled(e)) { Sound.play('ui'); unpinSeat(Number(b.dataset.seat)); } });

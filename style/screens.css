@@ -30,7 +30,9 @@
   .card .opponents .seat.chosen strong { text-decoration: underline solid var(--heartwood) 2px; }
   .card .opponents .seat:focus-visible { outline-offset: -4px; outline-width: 2px; }
   .opponents .swap { display: none; }
-  .card .opponents .unpin { width: auto; height: auto; margin: -9px -6px -9px -3px; padding: 9px 6px; } /* (the pin a fingertip tall, as the seat is, without taking it from the card) */
+  /* (the pin next to no width, so three still fit one row at 320 px; its ::before is a fingertip's room to tap) */
+  .card .opponents .unpin { position: relative; width: auto; height: auto; margin: 0 -2px 0 -4px; padding: 0; overflow: visible; }
+  .card .opponents .unpin::before { content: ''; position: absolute; inset: -12px -7px; }
 }
 @container (max-height: 380px) {
   .card-links { gap: 0 8px; } /* (How to play and Play with friends still share a row on a phone) */
@@ -770,6 +772,7 @@
   .speed { gap: 10px; }
   .note-close { top: 0; right: 0; width: 36px; height: 36px; } /* (a fingertip's room, in the note's corner) */
   .opponents .seat, .lobby-players .seat { min-height: 30px; }
+  .opponents .unpin { min-height: 0; } /* (a seat's pin: as tall as its seat, by its padding, not a 44 px button's) */
   .lobby-players .seat { margin: -4px 0; } /* (the lobby's: as tall, the row no taller than a friend's) */ /* (the start card's seats: a fingertip's room, without the card outgrowing a phone's board) */
 }
 

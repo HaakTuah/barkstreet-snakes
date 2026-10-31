@@ -669,7 +669,7 @@ function unpinButton(i, who) {
   button.type = 'button';
   button.className = 'unpin';
   button.dataset.seat = i;
-  button.setAttribute('aria-label', `${who} is pinned for this visit. Unpin: back to Any`);
+  button.setAttribute('aria-label', `Unpin ${who} (chosen for this visit): back to Any`);
   button.title = 'Pinned for this visit: tap to unpin';
   button.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 1.5h4M5 1.5v3.2L3 7h6L7 4.7V1.5M6 7v3.5"/></svg>';
   return button;
