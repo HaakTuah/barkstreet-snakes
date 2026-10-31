@@ -54,6 +54,18 @@ the second account until its usage is spent; on the main account the brake close
   2026); each entry here keeps its title, a line and a pointer, and this file is now about 12 KB.
 - The Voices switch's icon (PR #224): a head speaking, no longer the header's sound speaker.
 - Your lesson fades once you're out (PR #231): "Crashes cost tail. You're at 3…" and the hunger warning no longer stay up after you're out.
+- The Hall of Fame's "Clear everything" (PR #230): shown only once something is kept (a row, a round in your story, a Best).
+- "AIs" read as "Als" in the round font (PR #229): "Watch AIs" is "Watch rivals" (start and round-over cards), and the lobby says "Empty seats go to rivals" and "A rival, unless a friend joins".
+- The start card's tip says what both taps do (PR #242): "Tap names to swap, tags to see how they play." (it named only the tags, right under the names that swap).
+- The Field guide's Beetles row split in two (PR #244): Beetles, and Burrows after it, the same words (it was eleven lines on a phone).
+- A start card whose names wrap fits a small board (PR #234): at 320 px upright or 568 px sideways its tip goes, then its lines sit closer, so the buttons never cover a name.
+- Score and Best step aside under a banner above the board, on a phone held upright (PR #232; the audit's first find).
+- The woodpecker flies under a card that's up, no longer across its title (PR #243; the audit's third find).
+- *Left as it is, by Haakon's answer:* the woodpecker over the help line between rounds (the audit's second find; PR #240 closed). On a 390 px phone it may cover part of the help line or the chatter's words; nothing essential is hidden, it moves often and taps pass through it ("Clear of the row's words (2k+)" in `docs/design/32-the-owners-playtest.md`). Not to be raised again.
+- *Not reproduced:* bubbles overlapping at 4× (the audit's fourth find). In 8 watched phone rounds and 3 desktop rounds at 4×, the longest overlap was 0.4 s on the phone and 0.19 s on desktop, only while bubbles glide to a new side. Dropping the older bubble after 0.25 s of overlap made no measurable difference, so nothing was merged.
+- *Measured, nothing to fix:* sound piling up while watching (PR #248, `tools/dev/sound-levels.js`). At 4× the round asks for about 10 cues a second and the gaps let 4.5 through, at most 5 in any 250 ms; rivals' chomps 2 a second, the babble one every 4 s at most. Same shape at 1× and 2×, halved. The chatter's words were scanned too: no typos, apostrophes consistent.
+- *As designed:* the empty chatter-log line (the audit's sixth find): it's a new line's 0.4 s slide-in (`log-in`) caught mid-fade. Over 3 watched rounds on a phone on its side, 23 of 621 visible-row samples caught one, and none stayed empty. No fix.
+- The tail-drop lesson only in a real pocket, not when you've coiled with room to crawl out after your tail (PR #246; the audit's fifth find).
 
 ## The split lane (the workshop check's files over about 50 KB)
 
