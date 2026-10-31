@@ -585,3 +585,9 @@ takes (the trademarks that never show: measures first, then more teeth in part 7
 into the 15-35% band and the gap to Drab closed in part 7, every trademark kept and Drab left as it is; 2s ahead of 2q,
 measured with part 4's flight in place): "Agreed to all, expertly!" (written into `docs/PROGRESS.md` and
 `docs/handoff/queue-specs.md`, entries 5, 2s and 2q)
+
+In the design chat (31 October 2026, 13:56-13:57 UTC), as the second account neared its five-hour limit: "Have we
+informed them to push every single commit? I see that they are now running out of their allocated usage for the next
+couple of hours. I don't want them to stop, but I do hope they have pushed everything that they can." Then, to making
+"push after every commit" a standing rule in both games in place of "at every passed step and at least once an hour":
+"YES!" (written into `CLAUDE.md`, "Standing instructions")
