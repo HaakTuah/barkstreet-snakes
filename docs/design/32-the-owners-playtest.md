@@ -368,6 +368,7 @@ screen, a 3 by 4 mark, compared over the five screens); nothing on the page move
   October 2026, of the bird covering part of the help line or the chatter: "Don't really care if it covers that a
   bit. None essential, you still see, and you can click through. It also moves about frequently, so it doesn't cover
   the same spot all the time.", then "yes, leave it."). No perch lower, no help line stepping aside, no smaller bird.
+- *Bigger on a phone* (Haakon, 31 October 2026: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much."): the polish lane draws it bigger on a phone, at the size he picks from pictures; see `docs/PROGRESS.md`, the polish lane.
 
 ### The woodpecker pecks beside a snake
 
