@@ -95,3 +95,15 @@ await ev(`(() => { const g = SnakeDebug.game(); g.holes.delete(5 * 24 + 20); del
 const staleOrder = stale.shown.map(s => s.text), staleFates = stale.log.filter(l => l.text === CHOKE).map(l => l.fate).join(' ');
 check(staleOrder.length === 2 && SNOW.includes(staleOrder[0]) && staleOrder[1] === LOST && staleFates === 'queued stale',
   'a lesson whose moment has passed while it waited (6 s of the round) is let go; the round news behind it still comes', `${staleOrder.join(' / ')}; the lesson: ${staleFates}`);
+// A lesson that stops holding while it shows fades early, not after its
+// reading time: your crash's lesson ("…the next one ends you."), once
+// you're out (the polish lane).
+const early = await ev(`(() => {
+  hideToast(); let holds = true;
+  toast('A lesson that holds.', 3000, 'warn', 'lesson', { still: () => holds });
+  const shown = !toastEl.hidden && !toastEl.classList.contains('leaving');
+  toastFade(); const kept = !toastEl.classList.contains('leaving');
+  holds = false; toastFade(); const going = toastEl.classList.contains('leaving');
+  hideToast(); return JSON.stringify({ shown, kept, going });
+})()`);
+check(early === JSON.stringify({ shown: true, kept: true, going: true }), 'a lesson showing fades early once it no longer holds (yours, once you’re out), and stays while it holds', early);
