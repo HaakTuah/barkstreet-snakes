@@ -54,6 +54,8 @@ window.SnakeAI = (() => {
   //                                   close behind my own tail, so I move as a ring
   //   thick                         reward for each cell of my own body beside my head (not my neck):
   //                                   a wall two thick can't be hopped
+  //   leapNow                       what a leap now over open ground costs me, as a share of the jump's
+  //                                   price (round six B; default 1)
   //   spit                          how much a shot with a mushroom is worth to me, when I weigh eating
   //                                   one on purpose (round six B; default SPIT)
   //   powers                        { price, risk, everyWay, jumpAny, dashSpend }: a power habit (see
@@ -73,7 +75,7 @@ window.SnakeAI = (() => {
   const DRAB = {
     space: 1.2, territory: 1.5, aggression: 0.3,
     food: 5, eat: 80, pellet: 1.2, foodRange: 60,
-    margin: 8, headRisk: 700, zoneRisk: 150, spit: 0.05, // (hardly ever a mushroom on purpose)
+    margin: 8, headRisk: 700, zoneRisk: 150, spit: 0.05, leapNow: 4, // (hardly ever a mushroom on purpose, nor a leap now)
   };
   const HUNT = { squeeze: 2.5, chase: 6, lead: 4 };
 
@@ -114,7 +116,7 @@ window.SnakeAI = (() => {
       w: {
         space: 2, territory: 0.6,
         food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 18, fedFactor: 0.4,
-        margin: 6, headRisk: 900, zoneRisk: 150, distance: 5, spit: 0.2, // (at 6, once the rivals read knocked food and digging beetles, it won 39 / 31%)
+        margin: 6, headRisk: 900, zoneRisk: 150, distance: 5, spit: 0.2, leapNow: 0.8, // (a leap now to slip a trap) // (at 6, once the rivals read knocked food and digging beetles, it won 39 / 31%)
       },
     },
     sovereign: {
@@ -218,7 +220,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1, territory: 0.6,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40,
-        margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25,
+        margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25, leapNow: 0.6, // (a leap now for the thrill)
         nerve: { base: 0.7 }, // (it'll stare down a rival's head for an apple)
       },
     },
@@ -767,7 +769,7 @@ window.SnakeAI = (() => {
     margin: undefined, headRisk: undefined, zoneRisk: undefined, nerve: undefined, distance: undefined,
     hunt: undefined, home: undefined, lure: undefined, turn: undefined, tail: undefined, mimic: undefined,
     colony: undefined, goal: undefined, thrill: undefined, coil: undefined, thick: undefined, powers: undefined, golden: undefined, hurry: undefined,
-    spit: undefined,
+    spit: undefined, leapNow: undefined,
   };
   const weighed = w => Object.assign({ ...WEIGHTS }, w);
 
@@ -801,7 +803,7 @@ window.SnakeAI = (() => {
     ensureBuffers(N);
     ensureOwners(others.length + 1);
     const steps = Math.max(1, depth); // even a depth-0 search makes one move
-    ensureBodies(Math.max(TUNE.LEAP_REACH + 2, steps), me.body.length + steps + TUNE.LEAP_REACH + 4); // a body grows at most one cell a step (a power moves up to three at once, eating; a jump is down LEAP_REACH + 1 steps on)
+    ensureBodies(Math.max(TUNE.GOLD_FLY + 2, steps), me.body.length + steps + TUNE.GOLD_FLY + 4); // a body grows at most one cell a step (a power moves up to three at once, eating; a jump is down LEAP_REACH + 1 steps on, a golden flight GOLD_FLY + 1)
     mineFree.fill(0); otherFree.fill(0); risk.fill(0); strikes.fill(0);
 
     const inside = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
@@ -2001,7 +2003,8 @@ window.SnakeAI = (() => {
     const pick = powerPick(bestScore, bestDir);
     if (pick) {
       bestDir = pick.d;
-      if (pick.flash) memory.flash = view.tick; else memory.power = view.tick;
+      if (pick.flash) memory.flash = view.tick;
+      else { memory.power = view.tick; memory.leapNow = pick.now ? view.tick : -1; memory.fly = pick.fly || 0; memory.flyTurn = pick.turn || null; } // (pressed twice for now; held for as far as it means to fly, steered where it means to turn)
     }
     return bestDir;
 
@@ -2038,18 +2041,31 @@ window.SnakeAI = (() => {
       const keep = me.grow > 0 ? me.body.length : me.body.length - 1, stampM = ++stamp;
       for (let j = 0; j < keep; j++) myCells[me.body[j].y * N + me.body[j].x] = stampM;
       const trapped = crawl < DEAD / 2, boxed = crawl < -NECK;
-      let hereFree = -1, hereFood = false, landFood = false; // (the free log round me, and whether there's food on it: see islandGain) // (boxed: the crawl leaves me less room than I need, or only through a gap a rival could shut)
+      let hereFree = -1, hereFood = false, landFood = false, landCells = 0; // (the free log round me, and whether there's food on it: see islandGain) // (boxed: the crawl leaves me less room than I need, or only through a gap a rival could shut)
       const pecks = view.pecks; // (the woodpecker's mark, if I'm shown it apart from the holes)
       const cellAt = (x, y) => {
         if (me.wrap > 0) { x = (x + N) % N; y = (y + N) % N; } // (the edges wrap for me)
         return inside(x, y) ? y * N + x : -1;
       };
       const free = i => i >= 0 && myCells[i] !== stampM && mineFree[i] <= 1; // (free by next tick)
+      // Leap now (pressed twice, over open ground) is weighed only for what
+      // it saves: the crawl ends in a crash (trapped), or its first move is
+      // a cell a rival's head could take this tick (a head-on: in the air I
+      // pass over it). Anywhere else it does what a crawl would, or what the
+      // plain hop does a move later at the hurdle, for the tip of my tail
+      // and a rest I then don't have for a real hurdle: weighed everywhere
+      // at twice the jump's price, rivals with it came out even with rivals
+      // without, in three head-to-heads; weighed out of a neck a rival could
+      // shut too (6 of 10 leaps now a round), still even, a jump a snake up.
+      const crawlCell = cellAt(myHead.x + crawlDir.x, myHead.y + crawlDir.y);
+      const fleeing = trapped || (crawlCell >= 0 && strikes[crawlCell] >= w.headRisk);
       // Something to hop: a body still there next tick (mine too), or fire;
       // a hole, if I can tell it from the woodpecker's mark (a mark isn't a
       // hole yet: I'd crawl in), or if it's that or a crash.
       const hurdle = i => myCells[i] === stampM || (mineFree[i] > 1 && (mineFree[i] < HOLE || fire.has(i) || (pecks ? !pecks.has(i) : trapped)));
-      const path = new Int32Array(Math.max(3, TUNE.LEAP_REACH + 1));
+      const path = new Int32Array(Math.max(3, TUNE.LEAP_REACH + 1, TUNE.GOLD_FLY + 1));
+      const straight = new Int32Array(path.length); // (the straight way, kept while a turned flight is tried in path)
+      let leapNow = false, leapFly = 0, leapTurn = null; // (how the best jump leapOpt found goes: pressed twice, now; held, a golden flight's cells in the air, and its turn: { at: cells flown, dir })
       const ate = [-1, -1, -1], ateV = [0, 0, 0];
       let ateL = 0, ateG = 0, ateGain = 0, endRisk = 0, idle = false, muteWas = 0, ateBug = 0, ateWas = -HOLE; // (endRisk: the risk where the last one weighed ends; idle: it was a golden dash just for speed; muteWas, ateBug (which beetles, a bit each): for uneat)
       const meal = (i, step) => foodValue[i] > 0 && foodFrom[i] <= step; // (food there, on my move `step`)
@@ -2063,14 +2079,14 @@ window.SnakeAI = (() => {
         idle = false;
         if (v === null) return;
         v += extra - price * cheap * (full ? 1 : habit.price) * U;
-        if (v > (best ? best.v : crawl + 1)) best = { d, flash, v };
+        if (v > (best ? best.v : crawl + 1)) best = { d, flash, v, now: !flash && leapNow, fly: flash ? 0 : leapFly, turn: flash ? null : leapTurn };
       };
       for (const d of DIR_LIST) {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
         if (me.dashes > 0) consider(d, true, flashOpt(d, true), 0.6, extra);
         else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)))) consider(d, true, flashOpt(d, false), trapped || race(d) ? 1 : 2, extra);
-        if (jump) consider(d, false, leapOpt(d), me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5, extra);
+        if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5) * (leapNow ? (w.leapNow ?? 1) : 1), extra); } // (leap now, at the jump's price times my style's: only out of trouble, see fleeing)
       }
       return best;
 
@@ -2103,26 +2119,85 @@ window.SnakeAI = (() => {
       // the cells it goes over; down span + 1 moves from now).
       function leapOpt(d) {
         const golden = me.leaps > 0;
+        leapNow = false; leapFly = 0; leapTurn = null;
         let span = 0, n = 0; // (n: the cells on the board traced)
-        for (let x = myHead.x, y = myHead.y; span <= TUNE.LEAP_REACH; span++) {
+        const far = golden ? TUNE.GOLD_FLY : TUNE.LEAP_REACH;
+        for (let x = myHead.x, y = myHead.y; n <= far; ) {
           const c = cellAt(x + d.x, y + d.y);
           if (c < 0) break; // (never off the board)
           x = c % N; y = (c - x) / N;
-          path[span] = c; n++;
-          if (!hurdle(c)) break;
+          path[n++] = c;
         }
-        if (!n || !hurdle(path[0])) return null;
-        if (span >= n || span > TUNE.LEAP_REACH || !free(path[span])) { // (nowhere free within reach: a bridge that'll still be there when I come down, as the engine has it)
-          const last = Math.min(n - 1, TUNE.LEAP_REACH);
-          let i = 1;
-          while (i <= last && !(bridgeUntil[path[i]] > i + 1)) i++;
-          if (i > last) return null;
-          span = i;
+        if (!n) return null;
+        // The island hop, as the engine takes it: up over what's right in
+        // front, on over up to LEAP_REACH cells of hurdles, and down on the
+        // first free cell beyond, or a bridge that lasts. Over open ground,
+        // leap now (pressed twice): over LEAP_REACH cells, down on the next,
+        // else the farthest free short of it. Golden, held: on, down on any
+        // free cell up to GOLD_FLY cells in the air, the best of them.
+        // (Safe, for the moves of round six B, part 4 (leap now, flying on,
+        // steering): only where no rival's head could get before I come down,
+        // and leave its body there. Coming down on a body is the end, and at
+        // first they did it 0.6 times a round, and lost the head-to-head for it.)
+        const lands = (i, safe) => i < n && (free(path[i]) || bridgeUntil[path[i]] > i + 1) && !(safe && reach[framed[path[i]]] <= i);
+        let first = -1, now = false;
+        if (hurdle(path[0])) {
+          for (span = 1; span <= Math.min(TUNE.LEAP_REACH, n - 1); span++) if (!hurdle(path[span])) break;
+          if (span > Math.min(TUNE.LEAP_REACH, n - 1)) for (span = 1; span <= Math.min(TUNE.LEAP_REACH, n - 1); span++) if (bridgeUntil[path[span]] > span + 1) break; // (as the engine: a bridge that lasts only when no free cell is in reach)
+          if (span > TUNE.LEAP_REACH || span >= n || !lands(span, false)) return null;
+          first = span;
+        } else {
+          if (!golden && !fleeing) return null; // (leap now: only out of trouble, above)
+          for (span = Math.min(TUNE.LEAP_REACH, n - 1); span >= 1 && !lands(span, false); span--); // (where the engine puts it down: the farthest free cell; safe or not, below)
+          if (span < 1) return null;
+          first = span; now = true;
         }
+        let bestS = null, bestSpan = first;
+        for (let k = first; k <= (golden ? Math.min(TUNE.GOLD_FLY, n - 1) : first); k++) {
+          if ((k > first || now) && !lands(k, true)) continue; // (a leap now, or flying on: only down where it's safe)
+          const v = landOpt(d, k, golden, now);
+          if (v !== null && (bestS === null || v > bestS)) { bestS = v; bestSpan = k; }
+        }
+        // Golden, steered: on that way for `at` cells, then a turn (left or
+        // right: the engine's airTurn, a person's as much as mine), and on,
+        // down on any free cell up to GOLD_FLY cells in the air: the best of
+        // them, if better than flying straight.
+        let turn = null;
+        if (golden) {
+          straight.set(path);
+          const n0 = n;
+          for (const d2 of DIR_LIST) {
+            if (d2.x === d.x || d2.y === d.y) continue; // (a turn: not on, nor back)
+            for (let at = 1; at < TUNE.GOLD_FLY; at++) {
+              if (at > n0) break;
+              path.set(straight);
+              n = at;
+              for (let x = path[at - 1] % N, y = (path[at - 1] - x) / N; n <= TUNE.GOLD_FLY; ) {
+                const c = cellAt(x + d2.x, y + d2.y);
+                if (c < 0) break;
+                x = c % N; y = (c - x) / N;
+                path[n++] = c;
+              }
+              for (let k = at; k < n; k++) {
+                if (!lands(k, true)) continue;
+                const v = landOpt(d2, k, true, now);
+                if (v !== null && (bestS === null || v > bestS)) { bestS = v; bestSpan = k; turn = { at, dir: d2 }; }
+              }
+            }
+          }
+          path.set(straight); n = n0;
+        }
+        leapNow = now; leapTurn = turn; leapFly = golden && (turn || bestSpan > first) ? bestSpan : 0;
+        return bestS;
+      }
+      // A jump along d down on path[span], span + 1 moves from now (the cells before it in the air).
+      function landOpt(d, span, golden, now) {
         const land = path[span];
         const down = span + 1;
         const isle = islandGain(land);
-        if (!golden && !boxed && !isle && !meal(land, down)) { // (the plain jump: out of a crash or a box, to an island, or onto food, or just short of it)
+        const doom = doomed(land, span, golden);
+        if (doom >= 0) return DEAD + (span + 1 + doom) * 1000; // (the death it is, that many moves on: taken only if staying is worse)
+        if (!golden && !boxed && !isle && !meal(land, down) && !now) { // (the plain jump: out of a crash or a box, to an island, or onto food, or just short of it)
           const lx = land % N, past = cellAt(lx + d.x, (land - lx) / N + d.y);
           // (A habit's jump, for its own sake, only where no rival could get
           // to the landing before I'm down: one moving in as I take off and
@@ -2163,6 +2238,28 @@ window.SnakeAI = (() => {
         if (seen[headI] === stamp || there <= hereFree) return 0;
         return Math.min(2, (there - hereFree) / L) + (landFood && !hereFood ? 1 : 0);
       }
+      // 2r, no hop onto a doomed island: where I'd come down is another
+      // piece of log (not joined to mine) with less free room than my
+      // length, and I can't jump off it again (a hop from its rim to other
+      // log, with my jump rested before I've filled it up). Haakon (30
+      // October 2026): "I see snakes jumping onto small islands where they
+      // have no chance to survive for very long". The moves I'd live there,
+      // or -1 if it isn't doomed.
+      function doomed(land, span, golden) {
+        const L = me.body.length - (golden ? 0 : TUNE.LEAP_COST);
+        const room = landFree(land, L), stampS = stamp, cells = landCells;
+        if (room >= L || seen[myHead.y * N + myHead.x] === stampS) return -1;
+        if (!(golden && me.leaps > 1) && L - TUNE.LEAP_COST <= TUNE.MIN_LENGTH) return room; // (too short for the plain jump off)
+        const tickMs = Math.max(TUNE.MIN_TICK, TUNE.START_TICK - (TUNE.START_TICK - TUNE.MIN_TICK) * (view.timeMs || 0) / TUNE.RAMP_MS);
+        const rest = golden ? (me.leaps > 1 ? 0 : me.leapRest || 0) : TUNE.LEAP_COOLDOWN_MS; // (from when it takes off)
+        if (rest / tickMs - (span + 1) + 1 >= room) return room; // (its rest left once down, and a move to hop off: it fills the island first)
+        for (let q = 0; q < cells; q++) for (let k = 0; k < 4; k++) { // (a hop off: from a cell of it, over 1 to LEAP_REACH cells of holes, onto other log)
+          let j = nbr[4 * queue[q] + k], over = 0;
+          while (j >= 0 && over <= TUNE.LEAP_REACH && holes.has(j) && !(bridgeUntil[j] > 0)) { over++; j = nbr[4 * j + k]; }
+          if (over >= 1 && over <= TUNE.LEAP_REACH && j >= 0 && seen[j] !== stampS) return -1;
+        }
+        return room;
+      }
       function landFree(start, cap) {
         const stampS = ++stamp;
         seen[start] = stampS;
@@ -2180,6 +2277,7 @@ window.SnakeAI = (() => {
             queue[write++] = j;
           }
         }
+        landCells = write;
         return n;
       }
 

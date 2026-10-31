@@ -17,7 +17,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const s of g.snakes) {
       per[s.name] ||= {
         rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, beetles: 0, kills: 0, aliveMs: 0, deaths: {},
-        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, shrooms: 0, hits: 0, hitBy: 0, // (round six B: mushrooms eaten, spits that hit a head, and taken; (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, own beads squashed (chokes before round six B), crashes survived)
+        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, shrooms: 0, hits: 0, hitBy: 0, now: 0, bumps: 0, flown: 0, flights: 0, // (round six B: mushrooms eaten, spits that hit a head, and taken; (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, own beads squashed (chokes before round six B), crashes survived)
         ...(signs ? { sig: Object.fromEntries(SIGNS.map(k => [k, 0])) } : {}),
       };
       per[s.name].rounds++;
@@ -67,11 +67,21 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     woodpeckerCensus(g, c, st, dying, N);
     if (mid) c.mealsMid += new Set(g.events.filter(e => e.type === 'eat' && e.kind !== 'mushroom').map(e => e.snake)).size;
     if (signs) signatures(g, T, per, was);
+    if (st.isleFrom) for (const [s, was] of st.isleFrom) { // (2r: down on another piece of log smaller than itself, where it can't live)
+      if (s.flight && s.alive) continue;
+      st.isleFrom.delete(s);
+      if (!s.alive) continue;
+      if (land.holes !== g.holes.size) labelLand(g, N);
+      const h = s.body[0], k = land.comp[h.y * N + h.x];
+      if (k >= 0 && (was < 0 || k !== land.comp[was]) && land.sizes[k] < s.body.length) c.smallIsle++;
+    }
     for (const e of g.events) {
       if (e.type === 'leap') { // (the island hop: how far, over a hole, and when, for a jumper out soon after)
         c['hop' + Math.min(3, e.reach)]++;
         if (Array.from({ length: e.reach }, (_, i) => (e.y + e.snake.dir.y * i) * N + e.x + e.snake.dir.x * i).some(k => g.holes.has(k))) c.hopHole++;
         (st.hopAt ||= new Map()).set(e.snake, g.tick);
+        (st.hopReach ||= new Map()).set(e.snake, e.reach); // (how far the hop would have gone: a golden flight past it is a flight)
+        const from = e.snake.body[1]; (st.isleFrom ||= new Map()).set(e.snake, from ? from.y * N + from.x : -1); // (2r: the cell it took off from)
       }
       if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
       else if (e.type === 'eat' && e.kind === 'beetle') { total.caught++; per[e.snake.name].beetles++; }
@@ -90,7 +100,10 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       else if (e.type === 'peck') c.pecks++;
       else if (e.type === 'aim') { c.aims++; if (g.woodpecker.target.some(k => nearHead(g, k))) c.aimsNear++; }
       else if (e.type === 'leap') { if (e.gold) { c.goldLeaps++; per[e.snake.name].leaps++; } else { c.jumps++; per[e.snake.name].jumps++; } }
-      else if (e.type === 'dash') { if (e.plain) { c.flashes++; per[e.snake.name].flashes++; } else { c.dashes++; per[e.snake.name].dashes++; } }
+      if (e.type === 'leap' && e.now) { c.leapsNow++; per[e.snake.name].now++; (st.nowAt ||= new Map()).set(e.snake, g.tick); (st.nowN ||= new Map()).set(e.snake, (st.nowN.get(e.snake) || 0) + 1); } // (round six B part 4: leap now, pressed twice)
+      if (e.type === 'crash' && e.air) { c.bumps++; per[e.snake.name].bumps++; }
+      if (e.type === 'death' && /^came down on/.test(e.snake.cause || '')) c.downOnBody++;
+      if (e.type === 'dash') { if (e.plain) { c.flashes++; per[e.snake.name].flashes++; } else { c.dashes++; per[e.snake.name].dashes++; } }
       if (e.type === 'spit') { c.spits++; if (e.hit >= 0) { c.spitHits++; per[e.snake.name].hits++; per[g.snakes[e.hit].name].hitBy++; } else if (e.lx != null) c.spitLies++; }
       if (e.type === 'squash') { c.chokes++; per[e.snake.name].chokes++; seen.add('choke'); } // (round six B: its own bead squashed, counted where the chokes were)
       if (e.type === 'eat') {
@@ -100,10 +113,14 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       }
     }
     // (golden leaps got: what's held now, and spent this tick, over what was held)
+    for (const s of g.snakes) { const f = s.flight, was = (st.flyDir ||= new Map()).get(s); if (f && was && f.dir !== was) c.airTurns++; st.flyDir.set(s, f ? f.dir : null); } // (turns in the air: a golden flight steered)
+    for (const s of g.snakes) if (s.landing && s.flew) { c.goldFlown += s.flew; c.goldFlights++; if (s.flew > (st.hopReach?.get(s) ?? Infinity)) { c.flyPast++; (st.flyAt ||= new Map()).set(s, g.tick); } s.flew = 0; } // (golden flights, and how far each flew; past the plain hop's cells, a flight held on)
     for (const s of g.snakes) c.goldGot += Math.max(0, s.leaps + g.events.filter(e => e.type === 'leap' && e.gold && e.snake === s).length - held[s.id]);
     const left = g.snakes.filter(s => s.alive).length;
     for (const s of dying) {
       if (st.hopAt?.has(s) && g.tick - st.hopAt.get(s) <= 30) c.hopDie++;
+      if (st.nowAt?.has(s) && g.tick - st.nowAt.get(s) <= 30) c.nowDie++; // (out within 3 s of a leap now: it failed)
+      if (st.flyAt?.has(s) && g.tick - st.flyAt.get(s) <= 30) c.flyDie++; // (out within 3 s of a flight past the plain hop)
       place.set(s, left + 1);
       per[s.name].aliveMs += g.time;
       const cause = causeOf(s);
@@ -123,6 +140,10 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
   else if (alive.length === 1) { per[alive[0].name].wins++; place.set(alive[0], 1); }
   else total.draws++;
   const food = g.snakes.reduce((n, s) => n + s.eaten, 0), beads = g.snakes.reduce((n, s) => n + s.pellets, 0);
+  { // (leap now's users: the snakes of a round that leapt now more than its average, against the rest: a refuge would show as users outliving everyone)
+    const n = s => st.nowN?.get(s) || 0, mean = g.snakes.reduce((t, s) => t + n(s), 0) / Math.max(1, g.snakes.length);
+    if (mean > 0) for (const s of g.snakes) { const u = n(s) > mean ? 'nowUser' : 'nowOther', won = alive.length === 1 && alive[0] === s && g.time < MAX_TIME ? 1 : 0; c[u + 's']++; c[u + 'Wins'] += won; c[u + 'Place'] += place.get(s) || 1; }
+  }
   for (const s of g.snakes) { // (the edge's huggers, and the rest)
     const [ticks, on] = st.edge?.[s.id] || [0, 0], hug = ticks && on >= ticks / 8, won = alive.length === 1 && alive[0] === s && g.time < MAX_TIME ? 1 : 0;
     c[hug ? 'huggers' : 'others']++; c[hug ? 'huggerWins' : 'otherWins'] += won; c[hug ? 'huggerPlace' : 'otherPlace'] += place.get(s) || 1;
