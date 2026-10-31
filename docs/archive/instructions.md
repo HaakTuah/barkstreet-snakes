@@ -602,3 +602,7 @@ audit's second find, PR #240 parked): "Don't really care if it covers that a bit
 you can click through. It also moves about frequently, so it doesn't cover the same spot all the time. So which of the
 answer options fit with that?" To leaving it as 2k+ has it and closing the find: "yes, leave it." (written into
 `docs/PROGRESS.md`, "The polish lane", and `docs/design/32-the-owners-playtest.md`, "Clear of the row's words (2k+)")
+
+In the design chat (31 October 2026, 19:10 UTC), told that part 5's gold portals (PR #202) are parked and that in six test
+rounds no rival followed through one: "Then we can increase the time it is open, until it actually makes a gameplay difference from time to time." (written into `docs/design/29-round-six-b-the-new-moves.md`, "Gold portals
+for the wrap", and `docs/handoff/queue-specs.md`, part 5)
