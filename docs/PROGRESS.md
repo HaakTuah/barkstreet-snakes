@@ -59,6 +59,7 @@ the second account until its usage is spent; on the main account the brake close
 - The start card's tip says what both taps do (PR #242): "Tap names to swap, tags to see how they play." (it named only the tags, right under the names that swap).
 - The Field guide's Beetles row split in two (PR #244): Beetles, and Burrows after it, the same words (it was eleven lines on a phone).
 - A start card whose names wrap fits a small board (PR #234): at 320 px upright or 568 px sideways its tip goes, then its lines sit closer, so the buttons never cover a name.
+- Score and Best step aside under a banner above the board, on a phone held upright (PR #232; the audit's first find).
 - The woodpecker flies under a card that's up, no longer across its title (PR #243; the audit's third find).
 - *Parked:* the woodpecker over the help line between rounds (the audit's second find; PR #240 has what was tried): on a 390 px phone the help line and the switches fill the row, so no perch at its size clears them, and by 2k+ it never shrinks for words. Needs a design call: perch lower, the help stepping aside under it, or a smaller bird there.
 - *Not reproduced:* bubbles overlapping at 4× (the audit's fourth find). In 8 watched phone rounds and 3 desktop rounds at 4×, the longest overlap was 0.4 s on the phone and 0.19 s on desktop, only while bubbles glide to a new side. Dropping the older bubble after 0.25 s of overlap made no measurable difference, so nothing was merged.

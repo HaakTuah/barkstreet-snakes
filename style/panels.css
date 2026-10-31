@@ -308,6 +308,10 @@
 header { position: relative; } /* (the banner's room, on a phone held upright) */
 .toast.above { top: var(--toast-y, 0px); z-index: 6; width: var(--toast-max, 100%); max-width: none; padding: 4px 12px; font-size: var(--toast-fs, 0.86rem); white-space: nowrap; text-overflow: ellipsis; }
 .toast.above[data-kind="go"] { padding: 3px 18px; font-size: var(--toast-fs, 1.1rem); } /* (Go!, as big as the row lets it be) */
+/* (Score and Best, on the title row beside it, step aside while it's up:
+   their bottoms peeked out under it. Back as it fades.) */
+.stats .stat { transition: opacity 0.2s; }
+header:has(> .toast.above:not([hidden]):not(.leaving)) .stats .stat { opacity: 0; }
 
 /* How to steer, level with the YOU arrow as a round starts: positioned by
    transform each frame (it rides along with your head), never in a finger's
