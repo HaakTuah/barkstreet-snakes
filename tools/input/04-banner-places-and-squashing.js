@@ -78,7 +78,7 @@ await ev('stageSquash(1)');
 await toTick(); await toTick();
 const theirs = await ev('__heard.splice(0)');
 const said = list => list.map(h => `${h.name}${h.rival ? '~' : ''}@${h.tick - squashed.tick}`).join(' ');
-check(squashed.toast === 'Your own beads squash flat: food for nobody.' && said(mine) === 'squash@0 squash@3',
+check(squashed.toast === 'Your own beads feed nobody.' && said(mine) === 'squash@0 squash@3',
   'your first squash: its lesson and its splat; the next, its splat alone', `“${squashed.toast}”; heard ${said(mine)}`);
 check(later !== squashed.toast, '...the lesson only once', `“${later}”`);
 check(theirs.length === 1 && theirs[0].rival, 'a rival’s squash is heard as a rival’s', theirs.map(h => `${h.name}${h.rival ? '~' : ''}`).join(' '));
