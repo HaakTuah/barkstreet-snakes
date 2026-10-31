@@ -31,12 +31,9 @@ the second account until its usage is spent; on the main account the brake close
 - **First, the housekeeping:** done (PR #222, and the design session's move of the open entries' specs to
   `docs/handoff/queue-specs.md`, 31 October 2026); merged branches now go by GitHub's "Automatically delete head
   branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
-- **The README, next** (Haakon, 31 October 2026: "Yes, expertly to both!"): bring `README.md` up to the game as it
-  plays now: the rules through round six B so far (the island hop and no auto-jump, bridges, the cutting flashes,
-  mushrooms that come back up, squashing your own beads), flags, picked rivals for the visit, the update between
-  rounds, the cast; and move the developer part ("Run locally" onward) to `docs/developing.md` with a link, so the
-  README is for players and well under the 50 KB mark. One PR, docs only; then every entry keeps it current ("A
-  change a player sees updates the README" in `CLAUDE.md`).
+- **The README, done** (PR #241; Haakon, 31 October 2026: "Yes, expertly to both!"): `README.md` is for players, up to
+  the game as it plays now; the developer part is in `docs/developing.md`. From here every entry keeps it current ("A
+  change a player sees updates the README" in `CLAUDE.md`); 2v adds the update between rounds when it merges.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
@@ -56,7 +53,15 @@ the second account until its usage is spent; on the main account the brake close
 - The open entries' specs moved word for word to `docs/handoff/queue-specs.md` by the design session (31 October
   2026); each entry here keeps its title, a line and a pointer, and this file is now about 12 KB.
 - The Voices switch's icon (PR #224): a head speaking, no longer the header's sound speaker.
+- Your lesson fades once you're out (PR #231): "Crashes cost tail. You're at 3…" and the hunger warning no longer stay up after you're out.
 - Score and Best step aside under a banner above the board, on a phone held upright (PR #232; the audit's first find).
+
+## The split lane (the workshop check's files over about 50 KB)
+
+- `audio.js` became `audio/` (PR #225): `cues.js` and `sound.js`, sound proven unchanged by `tools/dev/same-sound.js`.
+  `chatter/zh.js` became `zh.js` and `zh-more.js` (PR #226), checked by `tools/dev/same-zh.js`.
+- **Waiting for the main lane** (PR #198 and its parked #202 have them open): `ai.js` (139 KB), `engine.js` (128 KB) and
+  `render/world.js` (51 KB). Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
 
 ## The queue, in order
 
@@ -134,5 +139,17 @@ Two beetles that meet fight a shoving match, and a snake that gets there in time
   edge cell against a move even when the apple is safe; an AI entry could test a safe-meal exception like the one for
   meals by the neck (`MEAL_DAWDLE`).
 
+- **The improvement audit (31 October 2026, PR #220)**: its three questions are answered (Haakon, 31 October: "Agreed to
+  all, expertly!"; `docs/handoff/queue-specs.md`, part 7 and 2s; the rows are in `docs/archive/progress-done.md`), and
+  the whole list, with how to see each and where in the code, is in that PR. For the AI and engine lanes: Ghost starves
+  most (11% of its rounds on seed 3, the band's worst; it keeps its distance from food's company too); on seed 11 the
+  edge-huggers (4% of snakes) won 43% against 24%, on seed 3 27% against 25%, so the edge's shelter stays on part 7's
+  watch list; the rivals' bubbles overlap each other at 4× for a second or so, 29 times in three watched rounds (the
+  chatter's, not a rule); once, on a phone, a snake of about 15 steered by Ouroboros's AI starved 4 s after its hunger
+  warning (a tick-by-tick probe over three more rounds saw only the slow shrink, so unexplained: likely its own tail
+  dropped out of its coil with the hunger clock at zero, which the AI's trap test doesn't weigh); a person's exploits
+  need a person: nothing in the AI-only censuses shows one.
+
 Small things found on the way, for Haakon to place in the queue:
 - (None now.)
+
