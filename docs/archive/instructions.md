@@ -621,3 +621,7 @@ In the design chat (31 October 2026, 19:34-19:37 UTC): "Space should also pause 
 nap: "Ahh, true! yeah, really any button should unpause, no?" To the design session's shape of it (any playing key, or a tap on the board, wakes; the waking press only
 wakes; the keys that open or set something keep their jobs): "Yes, please! Expertly!" (written into `docs/design/09-voice-and-copy.md`,
 the Pause row, and `docs/PROGRESS.md`, the polish lane)
+
+In the design chat (31 October 2026, 19:39-19:40 UTC): "Do beetles ever manage to espace?" Told that about 33% of chased beetles got away when last
+measured, inside the 20–35% band: "Yeah, I feel it should be at least a third of the time." (written into `docs/PROGRESS.md` and `docs/handoff/queue-specs.md` as entry 2w,
+and `docs/design/27-round-six-a-fairness-and-fixes.md`, "The escape band")
