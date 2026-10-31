@@ -273,7 +273,7 @@ The teaching audits in `tools/dev/teach/audit` and `tools/dev/teach-build/audit`
 every banner: use them to measure it. The patches were made before DESIGN.md was split: their DESIGN.md hunks now belong
 in `docs/design/29-round-six-b-the-new-moves.md` and `docs/design/30-teaching-by-showing.md`.
 
-### 8. Last: beetles who meet, fight (Haakon, 29 October 2026; an engine-rules entry, after everything else)
+### 8. Near the end: beetles who meet, fight (Haakon, 29 October 2026; an engine-rules entry, last but the writing pass)
 
 Haakon (29 October 2026), watching two beetles walk about an island the woodpecker made, away from the snakes: "Looked
 a bit boring that they just walked around like that, I wanted something to happen. Therefore, given how rare it is, i
@@ -294,7 +294,7 @@ late, it is probably the most uneasecary feature we have discussed here, so leav
 - **Measured:** the simulation counts fights a round (rare is fine, as long as it happens), and deaths near a beetle,
   the one real risk, stay within noise.
 
-### 9. At the very end: the writing pass (Haakon, 31 October 2026; Fable 5.1, after everything else)
+### 9. At the very end: the writing pass (Haakon, 31 October 2026; Fable 5.1, after everything else, entry 8 included)
 
 Haakon (31 October 2026): "Also, many of the Snakes dialogue lines are really really bad and corny. some of it are fun pop cultural stuff or wordplays I came up with, but most of it is corny writing by Opus 5.5. I think it would be nice to have a Fable 5.1 run on it at the end, to really piff up the writing. make it more clever and culturally engrossing. Though Trump actually got some good lines! So i don't want it to remove across the lines. remove the funny gags like Mason talking bad latin, or saying vidi vici veni which is a sex joke. but i want it to look at all, and give it a make over. the chinese lines are not as important. if it can, do them too, but most can't read them regardless. concur?" Then, to the design session's take (his gags kept, at the end of the queue, a page
 to choose from): "yes, and let it be creative! i don't want it to strictly look and improve whats there. that contrains it. let it go a bit wild and add stuff to, or make it over. it needs creative control outside of what i protect."

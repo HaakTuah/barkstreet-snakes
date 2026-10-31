@@ -108,6 +108,9 @@ The same in both of Haakon's games; only the list of hard work differs.
   deaths by cause, starving and crashes survived within noise). The same holds for visuals: a look-alike is fine if
   nobody would see a difference. Fingerprint-identical changes are the fast lane; the rest go through
   `tools/abtest.js` on fresh seeds.
+- **Conditional goods: no solutions, only trade-offs** (Haakon, 31 October 2026: "conditional goods. thomas sowell in
+  game mechanics."). Every move, food or power helps in some situations and costs in others; simulations check that
+  neither always nor never using it wins, as with the mushrooms.
 - **Everything new belongs.** Haakon: "Very important everything feels balanced, cohesive, purposeful and like it
   belongs!" (13 October).
 - **Online stays in step:** everything new works in online play, with a protocol bump when messages change.
