@@ -641,3 +641,28 @@ the wall ("Clever rivals, human reactions"); one it takes into a dead end doesn'
 passed up (its head within 2) and left to rot a minute alive, 0.15 by the edge; with its copied habits and its pull to
 mimic cut from 120 to 40, 0.13 and 0.09, mid-field. But every rival does it: 80% of the apples that rot lie on the edge
 row or one in, and Sniper (0.19), Capricious, Mason and Mute pass up as many. A general edge-apple fix is noted below.
+
+## Done, 31 October 2026
+
+### 2u. Picked rivals for this visit; unmet rivals back into the deck (30 October 2026; small, a UI lane) — done, PR #221
+
+Haakon asked why the same cast showed up each time he started the game, then: "I might've picked them yes. Didn't
+expect them to stay permanently", and to the design session's takes: "Agreed to all!". In `records.js` and the start
+card (`game/round.js`, `game/hud.js`):
+- **A picked seat lasts this visit,** round after round, and the next time the game is opened every seat is "Any"
+  again (kept in `sessionStorage`, not `localStorage`; the storage key `LINEUP_KEY` keeps its name and is simply no longer
+  read, per "Never rename"). A picked seat shows a small pin on the start card, and one tap on the pin sets it back to
+  "Any".
+- **Rivals dealt but never met** (the page closed or reloaded on the start card) go back into the deck at a random place
+  among the rivals not yet dealt, not on top (`Records.undeal`): everyone is still met before anyone comes round again,
+  but opening the game gives a fresh cast.
+Online is unchanged (the host deals). The UI suite: a pick lasts across rounds and is gone in a new visit; a pin
+clears; an undealt rival is not dealt first every time (a seeded test).
+
+### 2n. Wildcard's hair: the original, its lick reversed (30 October 2026; small, an art lane) — done, PR #208
+
+The original pompadour (PR #74, at a79946b) as it was, with only its lick reversed: the curl at the near end of the roll
+now curls up and back over the hair behind it instead of forward over the brow. Two tries that reworked more were
+turned down (Haakon: "it looks horrible. I want the original hair, but I want the lick reversed. That's all. Keep it
+that simple."); the third had his yes ("The hair looks 'okay' now."; "The hair's third try is approved: merge #208.").
+See "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
