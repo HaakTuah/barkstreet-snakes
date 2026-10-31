@@ -634,7 +634,7 @@ function buildOpponents() {
     blurb.textContent = s.persona ? s.persona.blurb : 'Your friend. For now.';
     if (seats && s.persona && seat < Records.SEATS) {
       const i = seat++;
-      li.append(seatButton(i, dot, name, !!seats[i]), ' ', blurb);
+      li.append(seatButton(i, dot, name, !!seats[i]), ...(seats[i] ? [unpinButton(i, s.name)] : []), ' ', blurb);
     } else li.append(dot, name, ' ', blurb);
     opponentsEl.append(li);
   }
@@ -659,6 +659,19 @@ function seatButton(i, dot, name, chosen) {
   swap.setAttribute('aria-hidden', 'true');
   swap.innerHTML = '<svg viewBox="0 0 12 12"><path d="M2 4h8M7.5 1.5 10 4 7.5 6.5M10 8H2M4.5 5.5 2 8l2.5 2.5"/></svg>';
   button.append(dot, name, swap);
+  return button;
+}
+
+// A chosen seat's pin, beside it on the start card: a tap sets the seat back
+// to "Any" (unpinSeat). Your choice lasts this visit.
+function unpinButton(i, who) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'unpin';
+  button.dataset.seat = i;
+  button.setAttribute('aria-label', `${who} is pinned for this visit. Unpin: back to Any`);
+  button.title = 'Pinned for this visit: tap to unpin';
+  button.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 1.5h4M5 1.5v3.2L3 7h6L7 4.7V1.5M6 7v3.5"/></svg>';
   return button;
 }
 

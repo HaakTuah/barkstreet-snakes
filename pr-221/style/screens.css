@@ -30,6 +30,7 @@
   .card .opponents .seat.chosen strong { text-decoration: underline solid var(--heartwood) 2px; }
   .card .opponents .seat:focus-visible { outline-offset: -4px; outline-width: 2px; }
   .opponents .swap { display: none; }
+  .card .opponents .unpin { width: auto; height: auto; margin: -9px -6px -9px -3px; padding: 9px 6px; } /* (the pin a fingertip tall, as the seat is, without taking it from the card) */
 }
 @container (max-height: 380px) {
   .card-links { gap: 0 8px; } /* (How to play and Play with friends still share a row on a phone) */
