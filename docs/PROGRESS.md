@@ -73,6 +73,7 @@ the second account until its usage is spent; on the main account the brake close
 - *Measured, nothing to fix:* sound piling up while watching (PR #248, `tools/dev/sound-levels.js`). At 4× the round asks for about 10 cues a second and the gaps let 4.5 through, at most 5 in any 250 ms; rivals' chomps 2 a second, the babble one every 4 s at most. Same shape at 1× and 2×, halved. The chatter's words were scanned too: no typos, apostrophes consistent.
 - *As designed:* the empty chatter-log line (the audit's sixth find): it's a new line's 0.4 s slide-in (`log-in`) caught mid-fade. Over 3 watched rounds on a phone on its side, 23 of 621 visible-row samples caught one, and none stayed empty. No fix.
 - The tail-drop lesson only in a real pocket, not when you've coiled with room to crawl out after your tail (PR #246; the audit's fifth find).
+- The screenshot tour runs through again (PR #252): `tools/shots.js`'s staged knock-flight stopped at food the bird eats (the engine's knock list gives it nowhere to go); it skips that piece, as the engine does.
 
 ## The split lane (the workshop check's files over about 50 KB)
 
