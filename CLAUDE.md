@@ -108,6 +108,9 @@ The same in both of Haakon's games; only the list of hard work differs.
   deaths by cause, starving and crashes survived within noise). The same holds for visuals: a look-alike is fine if
   nobody would see a difference. Fingerprint-identical changes are the fast lane; the rest go through
   `tools/abtest.js` on fresh seeds.
+- **Conditional goods: no solutions, only trade-offs** (Haakon, 31 October 2026: "conditional goods. thomas sowell in
+  game mechanics."). Every move, food or power helps in some situations and costs in others; simulations check that
+  neither always nor never using it wins, as with the mushrooms.
 - **Everything new belongs.** Haakon: "Very important everything feels balanced, cohesive, purposeful and like it
   belongs!" (13 October).
 - **Online stays in step:** everything new works in online play, with a protocol bump when messages change.
@@ -130,7 +133,7 @@ weren't supposed to stop before 90%. We're still at only 76%").
 `main` is Haakon's and is what the live site plays: never push to it, never force-push. Work on a branch from `develop`,
 one per task, with a PR into `develop`; merge it yourself when the suites pass (and, for a task that changes the game,
 one reviewer has found nothing blocking). At each milestone make sure a PR from `develop` to `main` carries the new
-work, saying what to try, and merge it yourself once its CI is green (see "Standing instructions"). Before pushing to a branch whose PR you opened earlier, check whether that
+work, saying what to try, with its line of what is new at the top of `version.js`'s news, and merge it yourself once its CI is green (see "Standing instructions"). Before pushing to a branch whose PR you opened earlier, check whether that
 PR was merged; if it was, start a new branch and PR. Don't stack PRs on each other's branches.
 
 Cloud sessions can't use GitHub's GraphQL API, so `gh pr create` and `gh pr view` fail. Use the REST API:
