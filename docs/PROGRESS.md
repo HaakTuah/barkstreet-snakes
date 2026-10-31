@@ -20,9 +20,7 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| Audit (31 Oct) | **Two trademarks never show in the numbers.** Mute's boxing and Joker's lures sit level with the field (seed 11: Mute 8.2% against everyone else's 8.7%; Joker 9.2% against 8.3%; round six A's table had 8.0/7.8 and 8.6/8.3), and Mason's "body beside itself" is *below* the field (27% against 31%); every other trademark leads its field by half again or more. Rework the measures, or give the play teeth? | Suggested: both, in part 7. First the measures (a trademark should lead its field the way the others do; Mute leads the kills, 0.52 a round, which its measure doesn't count), then the play where a measure still shows nothing. No rule changes until then. | open |
-| Audit (31 Oct) | **Character costs wins.** On seeds 3 and 11 (200 rounds each, census), the plain Drab is in the top four both times (32%, 30%) while Joker (14%, 18%), Capricious (21%, 19%), Copycat (20%, 21%) and Star (23%, 20%) are at the bottom both times. Is a rival with a trademark allowed to pay for it in wins, or should part 7's pricing bring the four up into the band (15–35% was the target)? | Suggested: part 7 brings them up without touching their trademarks (Joker is on its watch list already); Drab's own rate is fine as it is. | open |
-| Audit (31 Oct) | **Half the rounds now end split onto islands.** 51% of seed 3's rounds (seed 11 about the same) end with the last snakes each alone on an island, against the 25–31% noted in 2s; the biggest island's snake wins 49%, a blind pick. Should 2s move up the queue (it is after 2q today)? | Suggested: yes, 2s before 2q: it is the ending a person sees most often now, and it is an engine-rules entry that doesn't wait on the AI's A/B. | open |
+| (none open) | | | |
 
 ## The polish lane
 
@@ -135,12 +133,16 @@ Two beetles that meet fight a shoving match, and a snake that gets there in time
   edge cell against a move even when the apple is safe; an AI entry could test a safe-meal exception like the one for
   meals by the neck (`MEAL_DAWDLE`).
 
-- **The improvement audit (31 October 2026, PR #220)**, besides the three "For Haakon" rows above: the whole list, with
-  how to see each and where in the code, is in that PR. For the AI and engine lanes: Ghost starves most (11% of its
-  rounds on seed 3, the band's worst; it keeps its distance from food's company too); on seed 11 the edge-huggers (4% of
-  snakes) won 43% against 24%, on seed 3 27% against 25%, so the edge's shelter stays on part 7's watch list; the
-  rivals' bubbles overlap each other at 4× for a second or so, 29 times in three watched rounds (the chatter's, not a
-  rule); a person's exploits need a person: nothing in the AI-only censuses shows one.
+- **The improvement audit (31 October 2026, PR #220)**: its three questions are answered (Haakon, 31 October: "Agreed to
+  all, expertly!"; `docs/handoff/queue-specs.md`, part 7 and 2s; the rows are in `docs/archive/progress-done.md`), and
+  the whole list, with how to see each and where in the code, is in that PR. For the AI and engine lanes: Ghost starves
+  most (11% of its rounds on seed 3, the band's worst; it keeps its distance from food's company too); on seed 11 the
+  edge-huggers (4% of snakes) won 43% against 24%, on seed 3 27% against 25%, so the edge's shelter stays on part 7's
+  watch list; the rivals' bubbles overlap each other at 4× for a second or so, 29 times in three watched rounds (the
+  chatter's, not a rule); once, on a phone, a snake of about 15 steered by Ouroboros's AI starved 4 s after its hunger
+  warning (a tick-by-tick probe over three more rounds saw only the slow shrink, so unexplained: likely its own tail
+  dropped out of its coil with the hunger clock at zero, which the AI's trap test doesn't weigh); a person's exploits
+  need a person: nothing in the AI-only censuses shows one.
 
 Small things found on the way, for Haakon to place in the queue:
 - (None now.)
