@@ -124,24 +124,6 @@ islands, 51% on seed 3 against the 25-31% above, the biggest island winning only
 runs after part 4 and before 2q, and is measured with part 4's flight in place, since a flight reaches farther than a
 plain hop.
 
-### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane)
-
-Haakon: "Should barkstreet snakes also have a "updated game" thingy that pops up?", "Yes to both, do it expertly!", and
-then, of Amarna Letters' note: "It should update when you start game. [...] Like why would I not want the latest
-version?" Today a fresh load always gets the newest version (`sw.js` asks the network first), but a page left open or
-resumed on a phone keeps the version it loaded and is never told, and online the first sign is a refused join ("That
-room runs a different version of the game").
-- **It looks:** when the page is shown again after being hidden, and every 30 minutes while open (as Amarna Letters'
-  `ui/update.ts` does), it asks whether a newer version is published (the service worker's update check).
-- **It updates by itself, never during a round:** on the start card or the round-over screen it reloads into the new
-  version at once, with no question; records and settings survive, as they do today.
-- **Online:** the host updates before opening the next room, so a new room starts everyone on one version; a friend who
-  is behind is updated the same way before joining.
-- **What changed:** after an update, the start card shows one line of what is new for a few rounds (from a short list
-  kept beside the version number, written with each milestone), then it goes.
-Drawing and the service worker only: no rules, no rivals, no protocol change. The UI suite: no reload during a round,
-one between rounds when a new version is waiting, the line of what changed shown once and gone.
-
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 
 Haakon (29 October 2026), on the "For Haakon" question whether a fed Gobbler should gamble too: "Agreed to all,
