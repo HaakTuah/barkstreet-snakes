@@ -16,8 +16,8 @@ says what is left. Part 5 (#202) stays parked behind it. Nothing newer (3b+, 2q,
 
 **The art lane stopped here** (30 October 2026, at about 88% of the weekly usage: Haakon, "I want them to finish what they
 have started, if we believe they can"). 2o, 2p and 2t are merged (PRs #210, #211, #212). 2n's second try was turned
-down (Haakon: "it looks horrible"); the third, the original with its lick reversed and nothing else, has his yes (31
-October 2026) and merges with PR #208. 2u is merged (PR #221).
+down (Haakon: "it looks horrible"); the third, the original with its lick reversed and nothing else, is merged
+(PR #208, 31 October 2026). 2u is merged (PR #221).
 
 ## For Haakon
 
@@ -64,10 +64,6 @@ the second account until its usage is spent; on the main account the brake close
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
 The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in: its A/B comes out even, so it waits until leap now and the flight pay the rivals), then 2q, 2s, part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves".
-
-### 2n. Wildcard's hair: every version side by side, Haakon picks (30 October 2026; small, an art lane)
-
-The original hair as it was at a79946b, with only its lick reversed, curling up and back; nothing else changes. Haakon, 31 October 2026, on the third try (PR #208): "The hair looks 'okay' now." That is his yes: PR #208 gets its review and merges. Spec: `docs/handoff/queue-specs.md`, "2n. Wildcard's hair: every version side by side, Haakon picks".
 
 ### 2q. Rivals notice like people (30 October 2026; an AI entry, after part 4)
 
