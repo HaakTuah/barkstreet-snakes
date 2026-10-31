@@ -27,6 +27,12 @@ for (const [w, h] of [[390, 844], [320, 640]]) {
   check(await ev(`document.querySelectorAll('.opponents .unpin').length + ':' + sessionStorage.getItem('snake-visit-lineup')`) === '2:["vulture",null,"mason"]', `phone ${w}: a tap just beside a pin unpins its seat`);
   await ev(`sessionStorage.clear(); 'ok'`);
   await load();
+  // The longest names, wrapped onto two rows: the start card still fits its board (the tip goes first, then its lines sit closer).
+  await ev(`SnakeDebug.setup(['capricious', 'desperado', 'metagamer']); 'ok'`);
+  await b.sleep(300);
+  const fit = await ev(`(() => { const c = document.querySelector('.overlay .card'); return { over: c.scrollHeight - c.clientHeight, steps: ['snug', 'snugger'].filter(k => c.classList.contains(k)).join() }; })()`);
+  check(fit.over <= 1 && (w === 390 ? fit.steps === '' : fit.steps !== ''), `phone ${w}: the start card with the longest names fits its board${w === 390 ? ', nothing dropped' : ', its tip dropped'}`, JSON.stringify(fit));
+  await load();
   await tap(await at('#how'));
   p = await P();
   check(p.book && p.tab === 'guide' && p.firstHead === 'The basics', `phone ${w}: How to play opens the guide on The basics`, p.firstHead);

@@ -54,6 +54,11 @@ the second account until its usage is spent; on the main account the brake close
   2026); each entry here keeps its title, a line and a pointer, and this file is now about 12 KB.
 - The Voices switch's icon (PR #224): a head speaking, no longer the header's sound speaker.
 - Your lesson fades once you're out (PR #231): "Crashes cost tail. You're at 3…" and the hunger warning no longer stay up after you're out.
+- The Hall of Fame's "Clear everything" (PR #230): shown only once something is kept (a row, a round in your story, a Best).
+- "AIs" read as "Als" in the round font (PR #229): "Watch AIs" is "Watch rivals" (start and round-over cards), and the lobby says "Empty seats go to rivals" and "A rival, unless a friend joins".
+- The start card's tip says what both taps do (PR #242): "Tap names to swap, tags to see how they play." (it named only the tags, right under the names that swap).
+- The Field guide's Beetles row split in two (PR #244): Beetles, and Burrows after it, the same words (it was eleven lines on a phone).
+- A start card whose names wrap fits a small board (PR #234): at 320 px upright or 568 px sideways its tip goes, then its lines sit closer, so the buttons never cover a name.
 - The woodpecker flies under a card that's up, no longer across its title (PR #243; the audit's third find).
 - *Parked:* the woodpecker over the help line between rounds (the audit's second find; PR #240 has what was tried): on a 390 px phone the help line and the switches fill the row, so no perch at its size clears them, and by 2k+ it never shrinks for words. Needs a design call: perch lower, the help stepping aside under it, or a smaller bird there.
 - *Not reproduced:* bubbles overlapping at 4× (the audit's fourth find). In 8 watched phone rounds and 3 desktop rounds at 4×, the longest overlap was 0.4 s on the phone and 0.19 s on desktop, only while bubbles glide to a new side. Dropping the older bubble after 0.25 s of overlap made no measurable difference, so nothing was merged.
