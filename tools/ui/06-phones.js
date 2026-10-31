@@ -78,3 +78,11 @@ for (const [w, h] of [[390, 844], [320, 640]]) {
   p = await P();
   check(!p.book, `phone ${w}: a tap on the book’s × closes it`);
 }
+// A small phone on its side (568x320): the friends card's code row, Join and all, within the card.
+await b.viewport(568, 320, { scale: 2, mobile: true });
+await load();
+await ev(`document.getElementById('friends').click(); 'ok'`);
+await b.sleep(300);
+const joinRow = await ev(`(() => { const c = document.querySelector('.overlay .card').getBoundingClientRect(), j = document.querySelector('#lobby-join button').getBoundingClientRect(); return { over: Math.round(j.right - c.right) }; })()`);
+check(joinRow.over < 0, 'phone 568 on its side: the friends card’s Join button sits within the card', JSON.stringify(joinRow));
+await load();

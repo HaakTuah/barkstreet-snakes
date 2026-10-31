@@ -74,6 +74,8 @@ the second account until its usage is spent; on the main account the brake close
 - *As designed:* the empty chatter-log line (the audit's sixth find): it's a new line's 0.4 s slide-in (`log-in`) caught mid-fade. Over 3 watched rounds on a phone on its side, 23 of 621 visible-row samples caught one, and none stayed empty. No fix.
 - The tail-drop lesson only in a real pocket, not when you've coiled with room to crawl out after your tail (PR #246; the audit's fifth find).
 
+- The friends card's Join on a small phone on its side (PR #NN): at 568x320 it ran 15 px off the card's edge; its row is a little tighter there.
+
 ## The split lane (the workshop check's files over about 50 KB)
 
 - `audio.js` became `audio/` (PR #225): `cues.js` and `sound.js`, sound proven unchanged by `tools/dev/same-sound.js`.

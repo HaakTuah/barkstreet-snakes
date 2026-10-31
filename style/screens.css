@@ -122,6 +122,10 @@
   .buttons { gap: 8px; }
   .buttons button:not(.text-button) { flex: 1 1 0; min-width: 0; padding: 7px 8px; font-size: 0.85rem; line-height: 1.15; }
   #start { --call-x: 1.18; --call-y: 1.8; } /* (its ring as wide on a smaller button) */
+  .lobby-join { gap: 5px; } /* (the friends card's code row, Join and all, within a 568x320 phone's card: Join ran 15 px off its edge) */
+  .lobby-join button { padding-inline: 12px; }
+  .lobby-join label { font-size: 0.85rem; }
+  .lobby-join #lobby-code { padding-inline: 6px; width: calc(5ch + 0.75em + 18px); }
 }
 
 @media (max-width: 440px) {
