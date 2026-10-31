@@ -613,3 +613,6 @@ In the design chat (31 October 2026, 19:20-19:22 UTC): "Also, many of the Snakes
 end of the queue, protected lines, a side-by-side page to choose from, the Chinese last): "yes, and let it be creative! i don't want it to strictly look and improve whats there. that contrains it. let it go a bit wild and add stuff to, or make it over. it needs creative control outside of what i protect." (written into
 `docs/PROGRESS.md` and `docs/handoff/queue-specs.md` as entry 9, and `docs/design/09-voice-and-copy.md`, "New lines,
 until the writing pass")
+
+In the design chat (31 October 2026, 19:34 UTC), with a desktop screenshot of the woodpecker beside the board: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much." (written
+into `docs/PROGRESS.md`, the polish lane, and `docs/design/32-the-owners-playtest.md`; the size is his to pick from pictures)

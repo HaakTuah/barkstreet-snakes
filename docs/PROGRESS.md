@@ -34,6 +34,12 @@ the second account until its usage is spent; on the main account the brake close
 - **The README, done** (PR #241; Haakon, 31 October 2026: "Yes, expertly to both!"): `README.md` is for players, up to
   the game as it plays now; the developer part is in `docs/developing.md`. From here every entry keeps it current ("A
   change a player sees updates the README" in `CLAUDE.md`); 2v adds the update between rounds when it merges.
+- **Next, the woodpecker bigger on a phone** (Haakon, 31 October 2026, with a desktop screenshot beside it: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much."): on a
+  phone, upright and on its side, it is drawn bigger than 2k's 1.7 times, so it looks as threatening there as it does
+  beside the board on a desktop; the desktop is unchanged. Pictures first, at 390×844 and 780×320, perched and striking,
+  at three sizes side by side on `pr-media`, and Haakon picks before it merges, as with Wildcard's hair (2n). A bigger
+  bird may cover more of the row and the chatter under the board (his answer on the help line), never a card (PR #243),
+  and never the board's play for longer than a strike does now. Presentation only: the fingerprints unchanged.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
