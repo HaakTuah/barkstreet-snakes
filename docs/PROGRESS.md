@@ -55,6 +55,7 @@ the second account until its usage is spent; on the main account the brake close
 - The housekeeping (PR #222): done entries and done parts' detail moved to `docs/archive/progress-done.md`; this file
   is now about 33 KB, all of it open entries, kept word for word.
 - The Voices switch's icon (PR #224): a head speaking, no longer the header's sound speaker.
+- "AIs" read as "Als" in the round font (PR #NN): "Watch AIs" is "Watch rivals" (start and round-over cards), and the lobby says "Empty seats go to rivals" and "A rival, unless a friend joins".
 
 ## The queue, in order
 
