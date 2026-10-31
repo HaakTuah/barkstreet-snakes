@@ -137,6 +137,10 @@ The page is always one screen tall, so nothing scrolls, on a phone, a tablet or 
 
 Held upright, the board runs edge to edge (382 px on a 390 px phone); on its side, it takes the full height. Held upright, the round's news (a banner: the weather, the woodpecker, first blood) comes in one line above the board, over the title, so it never covers the board, your name tag or the pause button; elsewhere it's at the board's top or foot, never its middle. Each banner stays up as long as it takes to read (1 s and 0.4 s a word, 4.5 s at most), and the next waits its turn. The screen stays awake while you play or watch. On Android (and desktops), the full screen button in the header gives the game the whole screen; on an iPhone, Add to Home Screen opens it without Safari's bars.
 
+## Always the newest version
+
+A page left open, or a phone coming back to it, picks up a newer version by itself between rounds: on the start card or a round's end it reloads, never during a round, and your records and settings stay. Hosting or joining a room updates first, so friends play the same version. For a few rounds after, the start card says what is new.
+
 ## Run locally
 
 Serve the folder with any static server (for example `npx serve` or `python -m http.server`) and open it in a browser. Opening `index.html` directly works too.

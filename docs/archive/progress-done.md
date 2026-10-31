@@ -659,6 +659,14 @@ card (`game/round.js`, `game/hud.js`):
 Online is unchanged (the host deals). The UI suite: a pick lasts across rounds and is gone in a new visit; a pin
 clears; an undealt rival is not dealt first every time (a seeded test).
 
+### 2n. Wildcard's hair: the original, its lick reversed (30 October 2026; small, an art lane) — done, PR #208
+
+The original pompadour (PR #74, at a79946b) as it was, with only its lick reversed: the curl at the near end of the roll
+now curls up and back over the hair behind it instead of forward over the brow. Two tries that reworked more were
+turned down (Haakon: "it looks horrible. I want the original hair, but I want the lick reversed. That's all. Keep it
+that simple."); the third had his yes ("The hair looks 'okay' now."; "The hair's third try is approved: merge #208.").
+See "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
+
 ### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane): done, PR #223
 
 Haakon: "Should barkstreet snakes also have a "updated game" thingy that pops up?", "Yes to both, do it expertly!", and

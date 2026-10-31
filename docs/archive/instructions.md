@@ -579,3 +579,20 @@ In the design chat (31 October 2026, 13:44 UTC), to the design session's questio
 reports (Wildcard's hair, third try; turning on GitHub's "Automatically delete head branches" and leaving the 144 old
 merged branches; moving the open entries' specs out of `docs/PROGRESS.md`): "Yes, to all, expertly! The hair looks
 "okay" now." (2n merges with PR #208; the specs moved to `docs/handoff/queue-specs.md`; Haakon turns on the setting)
+
+In the design chat (31 October 2026, 13:51-13:53 UTC), to the improvement audit's questions and the design session's
+takes (the trademarks that never show: measures first, then more teeth in part 7; character never costs wins: Joker
+into the 15-35% band and the gap to Drab closed in part 7, every trademark kept and Drab left as it is; 2s ahead of 2q,
+measured with part 4's flight in place): "Agreed to all, expertly!" (written into `docs/PROGRESS.md` and
+`docs/handoff/queue-specs.md`, entries 5, 2s and 2q)
+
+In the design chat (31 October 2026, 13:56-13:57 UTC), as the second account neared its five-hour limit: "Have we
+informed them to push every single commit? I see that they are now running out of their allocated usage for the next
+couple of hours. I don't want them to stop, but I do hope they have pushed everything that they can." Then, to making
+"push after every commit" a standing rule in both games in place of "at every passed step and at least once an hour":
+"YES!" (written into `CLAUDE.md`, "Standing instructions")
+
+In the design chat (31 October 2026, 14:39-14:40 UTC): "The README for both projects should probably also be queued
+to be updated?" Then, to a one-time refresh in the polish lane (the developer part moved to `docs/developing.md`) and
+a standing rule that a change a player sees updates the README in the same PR, checked at each milestone: "Yes,
+expertly to both!" (written into `docs/PROGRESS.md`, "The polish lane", and `CLAUDE.md`, "Standing instructions")
