@@ -53,6 +53,7 @@ the second account until its usage is spent; on the main account the brake close
 - The open entries' specs moved word for word to `docs/handoff/queue-specs.md` by the design session (31 October
   2026); each entry here keeps its title, a line and a pointer, and this file is now about 12 KB.
 - The Voices switch's icon (PR #224): a head speaking, no longer the header's sound speaker.
+- Your lesson fades once you're out (PR #231): "Crashes cost tail. You're at 3…" and the hunger warning no longer stay up after you're out.
 
 ## The split lane (the workshop check's files over about 50 KB)
 
