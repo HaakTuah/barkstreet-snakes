@@ -50,6 +50,7 @@ function frame(alpha, now) {
 
   drawBurrows(now);
   drawPatch(alpha, now); // (the woodpecker's next patch, on the bark under the snakes)
+  if (splats.length) drawSplats(now);
   drawLeaves(now, dt);
   drawFood(alpha, now);
   drawDive(now);
@@ -65,7 +66,7 @@ function frame(alpha, now) {
   drawSpitRings(now); // (and where a mushroom in a cheek comes down)
   drawSnakes(alpha, now); // (and the fields' light round any rival in them, under its body)
   drawCheeks(now); // (a mushroom in a cheek: puffed green)
-  if (bentLater.length) drawBentFlags(now); // (a flag a snake lies on, bent over it)
+  if (flagsLater.length) drawBentFlags(now); // (the flags, over the snakes, but not over what stands in front of them)
   if (flagBends.size) forgetBends(now);
   drawTossed(now); // (a bead spat over a head)
   drawRipples(now);
@@ -245,12 +246,10 @@ function onTick(events) {
       else spawn(x, y, T.PARTICLES_EAT, 180, T.PARTICLE_LIFE, 2.8, '#a3e635', '#f6ecd2'); // sprout and parchment: visible on bark and on green snakes alike (gold means a power)
       eatenNow.add(e.y * GRID + e.x);
       if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.6), GROWN[e.kind === 'golden' ? T.GOLDEN_GROWTH : e.kind === 'beetle' ? T.BEETLE_GROWTH : e.cooked ? T.COOKED_GROWTH : 1] || '+1');
-    } else if (e.type === 'squash') { // its own bead squashed under its head (round six B): a soft splat in the bead's colours, low and flat, and a smear that fades
-      const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2, col = colorOf(e.snake);
+    } else if (e.type === 'squash') { // its own bead squashed under its head: a splat in the bead's colour that fades (see addSplat)
       eatenNow.add(e.y * GRID + e.x);
-      spawn(x, y, 9, 70, 520, 2.6, col[0] === '#' ? col : '#a3a3a3', '#57534e');
-      if (!reduced) for (let k = 0; k < 3; k++) mote(x + (k - 1) * CELL * 0.22, y + CELL * 0.1, (k - 1) * 6, 2, 900, 3.4, 2);
-      if (e.snake.id === viewerId) floater(x, Math.max(CELL * 1.3, y - CELL * 0.6), 'Splat!');
+      const v = born.get(e.y * GRID + e.x)?.v, fill = v ? v.slice(0, v.indexOf('|')) : colorOf(e.snake);
+      addSplat(e.x, e.y, fill[0] === '#' ? fill : '#a16207', now);
     } else if (e.type === 'spit') { // a mushroom come back up (round six B): in an arc to where it lies, or onto a head (a green puff: poisoned), or gone
       const tx = e.tx * CELL + CELL / 2, ty = e.ty * CELL + CELL / 2;
       if (e.lx != null) moveFood(e.x, e.y, e.lx, e.ly, now, true, true, e.snake);
@@ -776,10 +775,11 @@ function setGame(g) {
   eatenNow.clear();
   bornTick = -1;
   fresh = true;
+  splats.length = 0;
   bugs.length = bugPops.length = scurries.length = dives.length = heals.length = 0;
   bugFor.clear(); shutSeen.clear();
   knockFor = -1; tickNow = 0;
-  fallenFlags.length = 0; flagBends.clear(); bentLater.length = 0;
+  fallenFlags.length = 0; flagBends.clear(); flagsLater.length = 0;
   fallen.length = 0;
   nextLeaf = 0;
   crackCache.clear();
