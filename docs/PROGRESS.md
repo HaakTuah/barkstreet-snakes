@@ -31,12 +31,9 @@ the second account until its usage is spent; on the main account the brake close
 - **First, the housekeeping:** done (PR #222, and the design session's move of the open entries' specs to
   `docs/handoff/queue-specs.md`, 31 October 2026); merged branches now go by GitHub's "Automatically delete head
   branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
-- **The README, next** (Haakon, 31 October 2026: "Yes, expertly to both!"): bring `README.md` up to the game as it
-  plays now: the rules through round six B so far (the island hop and no auto-jump, bridges, the cutting flashes,
-  mushrooms that come back up, squashing your own beads), flags, picked rivals for the visit, the update between
-  rounds, the cast; and move the developer part ("Run locally" onward) to `docs/developing.md` with a link, so the
-  README is for players and well under the 50 KB mark. One PR, docs only; then every entry keeps it current ("A
-  change a player sees updates the README" in `CLAUDE.md`).
+- **The README, done** (PR #241; Haakon, 31 October 2026: "Yes, expertly to both!"): `README.md` is for players, up to
+  the game as it plays now; the developer part is in `docs/developing.md`. From here every entry keeps it current ("A
+  change a player sees updates the README" in `CLAUDE.md`); 2v adds the update between rounds when it merges.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
