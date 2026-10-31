@@ -56,6 +56,13 @@ the second account until its usage is spent; on the main account the brake close
   is now about 33 KB, all of it open entries, kept word for word.
 - The Voices switch's icon (PR #224): a head speaking, no longer the header's sound speaker.
 
+## The split lane (the workshop check's files over about 50 KB)
+
+- `audio.js` became `audio/` (PR #225): `cues.js` and `sound.js`, sound proven unchanged by `tools/dev/same-sound.js`.
+  `chatter/zh.js` became `zh.js` and `zh-more.js` (PR #226), checked by `tools/dev/same-zh.js`.
+- **Waiting for the main lane** (PR #198 and its parked #202 have them open): `ai.js` (139 KB), `engine.js` (128 KB) and
+  `render/world.js` (51 KB). Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
+
 ## The queue, in order
 
 **Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)); 2t (Capricious without its ring, and a costume change for every change (PR #212)).
