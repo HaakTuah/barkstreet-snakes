@@ -58,7 +58,7 @@ const inTurn = async (stage, ms) => {
   const shown = log.filter(l => l.fate === 'shown');
   return { log, shown, held: shown.map((s, i) => ({ text: s.text, held: gone[i] - s.t, read: readMs(s.text), next: shown[i + 1] ? shown[i + 1].t - gone[i] : null })) };
 };
-const SNOW = await ev('SnakeDebug.flavor().weather.snow'), CHOKE = 'Squashed! Your own tail feeds nobody.', LOST = 'The woodpecker took a flag: that colony’s lost.';
+const SNOW = await ev('SnakeDebug.flavor().weather.snow'), CHOKE = 'Your own beads feed nobody.', LOST = 'The woodpecker took a flag: that colony’s lost.';
 await ev('centre()');
 const inOrder = await inTurn(async () => {
   await ev(`stageEvents(() => [{ type: 'weather', kind: 'snow' }])`);
