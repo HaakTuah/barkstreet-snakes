@@ -616,3 +616,8 @@ until the writing pass")
 
 In the design chat (31 October 2026, 19:34 UTC), with a desktop screenshot of the woodpecker beside the board: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much." (written
 into `docs/PROGRESS.md`, the polish lane, and `docs/design/32-the-owners-playtest.md`; the size is his to pick from pictures)
+
+In the design chat (31 October 2026, 19:34-19:37 UTC): "Space should also pause and unpause on Barkstreet Snakes." Told that Space is the jump since round four, and that P or Esc
+nap: "Ahh, true! yeah, really any button should unpause, no?" To the design session's shape of it (any playing key, or a tap on the board, wakes; the waking press only
+wakes; the keys that open or set something keep their jobs): "Yes, please! Expertly!" (written into `docs/design/09-voice-and-copy.md`,
+the Pause row, and `docs/PROGRESS.md`, the polish lane)
