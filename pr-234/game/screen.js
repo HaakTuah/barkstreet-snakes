@@ -85,10 +85,9 @@ const placeBoard = () => {
     }
     // (and the words there it perches clear of where it can, 2k+: the
     // speed buttons' and the switches' labels, the speed's and the
-    // chatter's captions, the help line's words, each part on its own;
-    // the chatter's lines come and go too often for that, it moving each
-    // time)
-    for (const el of document.querySelectorAll('.foot .speed > span, .foot button, .foot .help > span, #chatter-label')) {
+    // chatter's captions; the chatter's lines come and go too often for
+    // that, it moving each time)
+    for (const el of document.querySelectorAll('.foot .speed > span, .foot button, #chatter-label')) {
       const rg = document.createRange(); rg.selectNodeContents(el);
       const f = rg.getBoundingClientRect();
       if (f.width && f.height) free.words.push({ left: f.left, right: f.right, top: f.top, bottom: f.bottom });
