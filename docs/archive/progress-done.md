@@ -24,6 +24,8 @@ it under the workshop check's 20 KB. New ones are added here as they are done or
 | 5, part 3b (PR #195) | Spat mushrooms hardly ever land between rivals (1 to 2% of spits hit a head; the A/B shows no edge for the spitters, +0.6 points, within noise): the rivals keep their heads apart and step out of a ring a second ahead. Keep it as a skill shot for people, as designed, or make the spit a shot that flies along the line up to 5 cells and stops on the first head or body? | Keep it as designed for now and judge it in play; a shot along the line is a small change if you want spits to land more. | Haakon (30 October 2026): "3. Agreed, do it expertly!" (to the shot along the line); queued as item 5, part 3b+ | Answered |
 | Capricious's ring | Now that Capricious is always pink, drop the breathing pink ring round its head, and make a mood change a short costume change any rival's mood can use (a pink puff, the old costume popping off, the new one on), Copycat taking on a new model the same way? | Yes to both; the puff is drawing only | Haakon (30 October 2026): "Agreed to both, expertly!"; queued as 2t | Answered |
 | 2n, Wildcard's hair | Which of the seven ([the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg): 1 the original, 2 PR #107, 3 and 4 PR #110's B and C, 5 PR #110 as shipped, 6 PR #144's F, 7 today's F at 85%) should Wildcard wear? | You said the first or second felt better: 1 is the original swirl, 2 the two blobs | Haakon (30 October 2026): "What if we took the original, but have the swirl point upwards instead of downwards?" then "Yes, please, expertly please!"; written into 2n | Answered |
+| 5, part 4 (PR #198) | Leap now and the golden flight are built and play, but rivals who use them come out even with rivals who never do (three head-to-heads, all within noise; last 24.7% to 25.2%). Merge it as a move for people that the rivals use without gaining from it, or wait for a session that finds where leap now pays them? | Haakon (30 October 2026): "Yes to all" (to waiting): part 4 waits for a session that makes leap now pay the rivals | Answered |
+| 2n (PR #208) | Wildcard's hair, second try (no flick, after "But the hair flicks outwards? That's not trump?"): the original pompadour as one rounded mass, its front wave curling up and back over itself, the top combed back to one side, ends tucked in; pictures in PR #208. Yes, or what to change? | Haakon (30 October 2026): "it looks horrible. I want the original hair, but I want the lick reversed. That's all. Keep it that simple." (written into 2n) | Answered |
 
 ## The queue, done
 
@@ -572,3 +574,21 @@ Done (PR #211): every flag is drawn over the snakes, upper rows first, cut away 
 a head from the north or the south knocks it flat, its cloth wrapped round the head for 260 ms, then under the body;
 owners already bent their own (now tested). See "Flags in depth, hit head-on (2p)" in
 `docs/design/32-the-owners-playtest.md`.
+
+### 2t. Capricious without its ring, and a costume change for every change (30 October 2026; small, an art lane): done, PR #212
+
+Haakon: "i think now that capricious is always pink, it doesnt need that weird border effect around its head anymore.
+Agreed? Though it maybe should be more apparent when it transforms, like an coded animation that works for all of
+them, or something?", and to the design session's take: "Agreed to both, expertly!". In `render/bodies.js`:
+- **The ring goes:** the breathing pink ring with pale dashes round Capricious's head (it kept Capricious findable
+  while its body changed with its mood; the pink coat does that now), and the ring that flashes out on a mood change.
+- **A costume change instead,** one animation for every mood: a quick pink puff round the head, the old costume popping
+  off and the new one popping on, about half a second; with reduced motion a plain crossfade.
+- **Copycat the same way** when it takes on a new model, in its own red, so the rivals who change read alike.
+Drawing only, from what each player already has (the mood and the model): no simulation, no protocol change. Pictures
+of each mood's change and Copycat's at 390 px and desktop 2x; the render suite.
+
+Done (PR #212): the breathing ring and the ring flashing out are gone; every change of Capricious's mood and of
+Copycat's model is one 500 ms costume change (a puff round the head in its pink or red, the old face and head colour
+popping off, the new one popping on; with reduced motion a crossfade). See "A costume change (2t)" in
+`docs/design/35-capricious-copycat-and-wildcard.md`.

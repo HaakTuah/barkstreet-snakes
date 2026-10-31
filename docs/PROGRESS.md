@@ -7,6 +7,19 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
+**The main lane stopped here** (30 October 2026, at about 88% of the weekly usage, by the same words). Part 4 of item 5,
+with 2r folded in, is built, reviewed and parked as draft PR #198 (protocol 20): its rivals who leap now and fly come out
+even with rivals who never do, in three head-to-heads (last, on fresh seeds 47 and 59: 24.7% to 25.2%), so by "No part
+merges until the rivals use its moves well" it waits, as Haakon agreed (30 October 2026), for a session that makes leap
+now and the flight pay the rivals; its "Still to do" list
+says what is left. Part 5 (#202) stays parked behind it. Nothing newer (3b+, 2q, 2s, parts 6 and 7) has been started.
+
+**The art lane stopped here** (30 October 2026, at about 88% of the weekly usage: Haakon, "I want them to finish what they
+have started, if we believe they can"). 2o, 2p and 2t are merged (PRs #210, #211, #212). 2n's second try was turned
+down (Haakon: "it looks horrible"): PR #208 is redone as 2n now says, the original with its lick reversed and nothing
+else, and merges once he says yes. The next art
+entry, 2u, has not been started.
+
 ## For Haakon
 
 Every open question for Haakon, until he answers it ("Questions come back to Haakon directly" under "Standing
@@ -14,11 +27,33 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 2n (PR #208) | Wildcard's new hair (the original pompadour, its front lifting off the brow and sweeping up and back to a flick; pictures in PR #208): yes, or what to change? | Suggested: yes, merge it as is. The PR waits for his yes. | open |
+| (none open) | | | |
+
+## The polish lane
+
+A side lane of small refinements, beside the AI and engine lane and never ahead of it (Haakon, 31 October 2026: "Should
+we add a polish point to each that it can spend the last credits on also?" and, to the design session's shape of it,
+"Yes, and make things as refined as possible!"). Taken when the main lane's current entry is merged or parked, and on
+the second account until its usage is spent; on the main account the brake closes it first (from about 85%).
+- **First, the housekeeping:** this file is about 35 KB, past the workshop check's 20 KB; move done entries and their
+  detail to `docs/archive/progress-done.md`, leaving a line pointing to them, as the check says. Then delete merged
+  branches and archive leftovers nobody uses.
+- **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
+  place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
+  rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
+  sideways, reduced motion, tap targets and contrast; typos and wording in banners, chatter, the Field guide and
+  menus; errors or warnings in the console; sound levels that jar; slow frames that can be made smooth.
+- **What does not:** anything that changes a rule, a number, a rival's play or the online messages; those go to their
+  entries.
+- **How:** look for them by playing the live build, on a phone-sized screen and on desktop, through every screen, a
+  lesson, an online lobby, and whole rounds watched at top speed; each find is its own small PR (about half an hour),
+  with a before-and-after picture on `pr-media`, the suites green and the simulation's fingerprints unchanged (seeds 3
+  and 11), so nothing that changes play slips in; merged at once, one line per fix under this lane. Nothing is left
+  half done: a fix not finished when usage ends is left unstarted, its find noted for the next session.
 
 ## The queue, in order
 
-**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)).
+**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)); 2t (Capricious without its ring, and a costume change for every change (PR #212)).
 
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
@@ -32,13 +67,8 @@ beside it as before. A playable draft PR as early as it can be, so Haakon can tr
 *Where it stands* (29 October 2026; it paused at the app's weekly usage warning, which is not the brake: Haakon, "They
 weren't supposed to stop before 90%. We're still at only 76%", so it carries on): parts 1, 2 and
 most of 3 are merged (#158, #174, #183: the cuts, a failed flash, your own beads squashed, Mason's double walls, the
-edge measured). **Next, in order:** part 4 (*under way* on `round6b/golden-flight`, pushed, no PR yet: leap now, the
-golden flight held and steered, bumps in the air and down on a body out, protocol 20, input, lessons, rules tests,
-the rivals weighing leap now and how far to fly; first look, 40 rounds on seed 5: rivals leap now 24 times a round,
-golden flights 3.8 cells in the air, 0.65 snakes a round come down on a body; still to do: merge `develop` into it,
-its draft PR, the A/B both ways (a copy that never leaps now nor flies past the plain hop), check leap now for a
-refuge, rivals' tests for both moves, the rivals steering in the air, bridge rides re-measured, and **no hop onto a
-doomed island** (2r)); then 2q (rivals notice like people), 2s (the log never drifts apart), part 3b+ (the spit
+edge measured). **Next, in order:** part 4 (*built, reviewed and parked* as draft PR #198, 2r folded in: its A/B
+comes out even, and its "Still to do" list says what is left; see "The main lane stopped here" above); then 2q (rivals notice like people), 2s (the log never drifts apart), part 3b+ (the spit
 flies along the line, the spitter sliding over its own), then part 5, part 6 (*built and reviewed* on `round6b/dropped-charges`: merge `develop` into it, renumber
 its protocol after part 4's 20, run its A/B), and part 7 (*parked* on `round6b/pricing`; part 3's numbers to watch there: Joker
 and Sovereign low on single seeds, Gobbler's and Vulture's shares a little lower). Mason's double walls are kept
@@ -111,13 +141,12 @@ better than what he has right now". Draw Wildcard's head as each version has had
 heading. The design session made [the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg) from the PRs' own pictures (30 October 2026): 1 the
 original, 2 PR #107's two blobs, 3 and 4 PR #110's B and C (never shipped), 5 PR #110 as shipped (the "mop"), 6 PR #144's
 F, 7 PR #156's F at 85% (now). **Haakon's pick: the original, its swirl turned up** (30 October 2026: "What if we took
-the original, but have the swirl point upwards instead of downwards?", then "Yes, please, expertly please!"). Bring back
-the original from `render/` at a79946b (PR #107's "before": the fluffy pompadour, its strands and outline), with one
-change: the swoop at the front no longer curls forward and down over the brow; it lifts off the forehead and sweeps up
-and back over the crown, as Trump's front does, its tip flicking out to one side so that from straight above it reads
-as a swoop, not a bun or a turban. Both eyes show in all four headings. The PR shows before (today's F at 85%), the
-original and the new one in all four headings at 390 px and desktop 2x, and **merges only once Haakon has seen it and
-said yes** (drawing only: no simulation, no protocol change).
+the original, but have the swirl point upwards instead of downwards?", then "Yes, please, expertly please!"). **Then, simply** (Haakon, 30 October 2026, on the second try: "it looks horrible. I want the original hair, but I
+want the lick reversed. That's all. Keep it that simple."): bring back the original exactly as it was at a79946b (PR
+#107's "before": the fluffy pompadour, its strands, colours and outline), and reverse its lick, the one curl at the front
+that comes down over the brow, so it curls the other way, up and back; nothing else changes (no new shape, no flick, no
+reworked mass). The PR shows the original and the new one side by side in all four headings, at 390 px and desktop 2x,
+and **merges only once Haakon has said yes** (drawing only: no simulation, no protocol change).
 
 ### 2q. Rivals notice like people (30 October 2026; an AI entry, after part 4)
 
@@ -151,19 +180,6 @@ Measured: rounds whose last snakes are each alone on an island they can't leave 
 islands of their own"), the biggest island's wins, round length and sudden-death deaths, before and after; the
 woodpecker's mark still shows each patch before it goes. Online the same, with a protocol bump if the mark changes.
 
-### 2t. Capricious without its ring, and a costume change for every change (30 October 2026; small, an art lane)
-
-Haakon: "i think now that capricious is always pink, it doesnt need that weird border effect around its head anymore.
-Agreed? Though it maybe should be more apparent when it transforms, like an coded animation that works for all of
-them, or something?", and to the design session's take: "Agreed to both, expertly!". In `render/bodies.js`:
-- **The ring goes:** the breathing pink ring with pale dashes round Capricious's head (it kept Capricious findable
-  while its body changed with its mood; the pink coat does that now), and the ring that flashes out on a mood change.
-- **A costume change instead,** one animation for every mood: a quick pink puff round the head, the old costume popping
-  off and the new one popping on, about half a second; with reduced motion a plain crossfade.
-- **Copycat the same way** when it takes on a new model, in its own red, so the rivals who change read alike.
-Drawing only, from what each player already has (the mood and the model): no simulation, no protocol change. Pictures
-of each mood's change and Copycat's at 390 px and desktop 2x; the render suite.
-
 ### 2u. Picked rivals for this visit; unmet rivals back into the deck (30 October 2026; small, a UI lane)
 
 Haakon asked why the same cast showed up each time he started the game, then: "I might've picked them yes. Didn't
@@ -178,6 +194,24 @@ card (`game/round.js`, `game/hud.js`):
   but opening the game gives a fresh cast.
 Online is unchanged (the host deals). The UI suite: a pick lasts across rounds and is gone in a new visit; a pin
 clears; an undealt rival is not dealt first every time (a seeded test).
+
+### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane)
+
+Haakon: "Should barkstreet snakes also have a "updated game" thingy that pops up?", "Yes to both, do it expertly!", and
+then, of Amarna Letters' note: "It should update when you start game. [...] Like why would I not want the latest
+version?" Today a fresh load always gets the newest version (`sw.js` asks the network first), but a page left open or
+resumed on a phone keeps the version it loaded and is never told, and online the first sign is a refused join ("That
+room runs a different version of the game").
+- **It looks:** when the page is shown again after being hidden, and every 30 minutes while open (as Amarna Letters'
+  `ui/update.ts` does), it asks whether a newer version is published (the service worker's update check).
+- **It updates by itself, never during a round:** on the start card or the round-over screen it reloads into the new
+  version at once, with no question; records and settings survive, as they do today.
+- **Online:** the host updates before opening the next room, so a new room starts everyone on one version; a friend who
+  is behind is updated the same way before joining.
+- **What changed:** after an update, the start card shows one line of what is new for a few rounds (from a short list
+  kept beside the version number, written with each milestone), then it goes.
+Drawing and the service worker only: no rules, no rivals, no protocol change. The UI suite: no reload during a round,
+one between rounds when a new version is waiting, the line of what changed shown once and gone.
 
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 

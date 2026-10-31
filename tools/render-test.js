@@ -95,7 +95,7 @@
 // The checks are in tools/render/, one file per area, run in name order as the body of this one
 // (tools/parts.js): 01 a flash, as drawn, 02 beads and golden pips, 03 Star, 04 scorch, rainbows,
 // jumps and bridges, 05 the squash and beetles, 06 flags, strikes and the Field guide, 07 the
-// woodpecker, 08 hunger, 09 the chomps (what the round plays when you or a rival eats), 10 flags bending under a snake, standing in depth and hit head-on. A new check goes in its area's file, or a new one.
+// woodpecker, 08 hunger, 09 the chomps (what the round plays when you or a rival eats), 10 flags bending under a snake, standing in depth and hit head-on, 11 the costume change (Capricious without its ring). A new check goes in its area's file, or a new one.
 const path = require('path');
 const runParts = require('./parts.js');
 const { launch, serve } = require('./browser');

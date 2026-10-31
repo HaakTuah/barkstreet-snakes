@@ -270,7 +270,7 @@ const bows = await ev(`(() => {
   { const [hx, hy] = at(c3); out.mixed = rgb(hx + 0.02, hy + 0.3); }
   out.rimScan = scan(c3);
   out.model = mg.color;
-  c3.memory.modelId = null; drawN(2);
+  c3.memory.modelId = null; drawN(18); // (past its costume change, 2t)
   { const [hx, hy] = at(c3); out.alone = rgb(hx + 0.02, hy + 0.3); }
   // Star out: its shockwave, held still (reduced motion), a moment on.
   R.setReducedMotion(true);
