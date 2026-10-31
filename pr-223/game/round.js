@@ -250,7 +250,7 @@ function endRound() {
       : { title, flavor, text: yours, reward: !!me, primary: null, secondary: 'Leave room', lobby: { players: true, status: FLAVOR.waiting(online.hostName, true) },
         actions: { secondary: leaveRoom } };
   } else pendingCard = theGame.withPlayer
-    ? { title, flavor, reward: true, primary: 'Play again', secondary: 'Watch AIs', text: yours, ...(how && guideFor(me)) } // (it says how you died, so it names what got you too: when your death ended the round, it's your death's card)
+    ? { title, flavor, reward: true, primary: 'Play again', secondary: 'Watch rivals', text: yours, ...(how && guideFor(me)) } // (it says how you died, so it names what got you too: when your death ended the round, it's your death's card)
     : { title, flavor, primary: 'Play', secondary: 'Watch again' };
   cardAt = lastFrame + TUNE.ROUND_END_PAUSE;
   updateControls();
