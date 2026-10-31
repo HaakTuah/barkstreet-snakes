@@ -412,6 +412,10 @@ hits it dead on, so that must be accounted for. And it should also react to sove
 - **Owners.** Sovereign over its own banner and Colonist over its own flags bend them as anyone does (they already did;
   a render test now proves it). What looked wrong was the head-on case, which owners meet most, heading for their own
   flag.
+- **Planted under a snake** (PR #255, polish). A flag that wasn't on the board a moment ago (`FLAG_FRESH_MS`, 250 ms)
+  and turns up with a snake already on its tile, as each new colony does under Colonist's head, is bent from its first
+  frame: never seen standing, it doesn't stand for a frame and then snap over, and a head-on one lies flat under the
+  head without wrapping the face that planted it.
 - Drawing only, from the snakes each screen has: no simulation, no protocol change.
 
 ### Beetles and the woodpecker
