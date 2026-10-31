@@ -179,8 +179,8 @@ const FLAVOR = {
   awake: 'Awake.',
   friendWin: ['Bragging rights, for now.', 'Rematch?', 'Fair and square. Probably.'],
   friendKill: ['No hard feelings. Well, a few.', 'Friendship is complicated.', 'That calls for a rematch.'],
-  friendsIntro: 'Host a game and send your friends the link, or join theirs. Empty seats get AI rivals.',
-  hostIntro: location.protocol === 'file:' ? 'Send this code to up to three friends. Empty seats get AI rivals.' : 'Send this link to up to three friends. Empty seats get AI rivals.',
+  friendsIntro: 'Host a game and send your friends the link, or join theirs. Empty seats go to rivals.',
+  hostIntro: location.protocol === 'file:' ? 'Send this code to up to three friends. Empty seats go to rivals.' : 'Send this link to up to three friends. Empty seats go to rivals.',
   joining: code => `Knocking on room ${code}…`,
   waiting: (name, next) => `Waiting for ${name} to start the ${next ? 'next ' : ''}round.`,
   roomGone: name => `${name} closed the room.`,
@@ -190,7 +190,7 @@ const FLAVOR = {
   friendAway: name => `${name} went quiet. An AI steers until they’re back.`,
   friendBack: name => `${name} is back.`,
   youAway: 'You went quiet for a moment, so an AI steered for you.',
-  tapTip: touchFirst ? 'Tap a rival’s name tag to see how it plays.' : 'Click a rival’s name tag to see how it plays.', // (no "above": on a phone on its side the tags are beside the log)
+  tapTip: touchFirst ? 'Tap names to swap, tags to see how they play.' : 'Click names to swap, tags to see how they play.', // (no "above": on a phone on its side the tags are beside the log)
   takeBack: 'An AI kept your snake going. Steer to take it back.',
   watchingFirst: 'This round’s already going. You’re in from the next one.',
   rivals0: 'Just friends today. No mercy:',

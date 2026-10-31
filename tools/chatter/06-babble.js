@@ -1,5 +1,5 @@
 // ------------------------------------------------------------ the babble
-// A rival's bubble is heard as a burble in its own voice (audio.js's babble),
+// A rival's bubble is heard as a burble in its own voice (audio/'s babble),
 // never distracting: every voice but Mute's has one, and Mute stays silent;
 // at most BABBLE_MAX seconds whatever the line's length; well under your own
 // chomp, dulled as a rival's is, and quieter still in a tight moment; never
@@ -9,7 +9,7 @@
 // silent while muted, and the music's switch leaves it be. On a stand-in
 // context that records each node, its envelope's peak and when it stops.
 {
-  const asrc = fs.readFileSync(path.join(ROOT, 'audio.js'), 'utf8');
+  const asrc = audioSource();
   const num = k => +new RegExp(`\\b${k} = ([\\d.]+)`).exec(asrc)[1];
   const [BABBLE_MAX, BABBLE_YIELD, BABBLE_LEVEL, BABBLE_HUSH, LOWPASS] = ['BABBLE_MAX', 'BABBLE_YIELD', 'BABBLE_LEVEL', 'BABBLE_HUSH', 'RIVAL_LOWPASS'].map(num);
   const GAP = +/\bbabble: (\d+)/.exec(asrc)[1];
@@ -41,7 +41,7 @@
       window: { AudioContext: Recorder, performance: { now: () => clock }, localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); } } },
       document: { hidden: false, addEventListener() {} }, setTimeout: () => 0, clearTimeout() {},
     });
-    vm.runInContext(asrc, c, { filename: 'audio.js' });
+    runAudio(c);
     c.window.SnakeAudio.unlock();
     return c.window.SnakeAudio;
   };

@@ -7,6 +7,9 @@ it under the workshop check's 20 KB. New ones are added here as they are done or
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
+| Audit (31 Oct) | **Two trademarks never show in the numbers.** Mute's boxing and Joker's lures sit level with the field (seed 11: Mute 8.2% against everyone else's 8.7%; Joker 9.2% against 8.3%; round six A's table had 8.0/7.8 and 8.6/8.3), and Mason's "body beside itself" is *below* the field (27% against 31%); every other trademark leads its field by half again or more. Rework the measures, or give the play teeth? | Suggested: both, in part 7. First the measures (a trademark should lead its field the way the others do; Mute leads the kills, 0.52 a round, which its measure doesn't count), then the play where a measure still shows nothing. No rule changes until then. | Answered 31 October (Haakon: "Agreed to all, expertly!"; the reading taken is in `docs/handoff/queue-specs.md`, part 7 and 2s) |
+| Audit (31 Oct) | **Character costs wins.** On seeds 3 and 11 (200 rounds each, census), the plain Drab is in the top four both times (32%, 30%) while Joker (14%, 18%), Capricious (21%, 19%), Copycat (20%, 21%) and Star (23%, 20%) are at the bottom both times. Is a rival with a trademark allowed to pay for it in wins, or should part 7's pricing bring the four up into the band (15–35% was the target)? | Suggested: part 7 brings them up without touching their trademarks (Joker is on its watch list already); Drab's own rate is fine as it is. | Answered 31 October (Haakon: "Agreed to all, expertly!"; the reading taken is in `docs/handoff/queue-specs.md`, part 7 and 2s) |
+| Audit (31 Oct) | **Half the rounds now end split onto islands.** 51% of seed 3's rounds (seed 11 about the same) end with the last snakes each alone on an island, against the 25–31% noted in 2s; the biggest island's snake wins 49%, a blind pick. Should 2s move up the queue (it is after 2q today)? | Suggested: yes, 2s before 2q: it is the ending a person sees most often now, and it is an engine-rules entry that doesn't wait on the AI's A/B. | Answered 31 October (Haakon: "Agreed to all, expertly!"; the reading taken is in `docs/handoff/queue-specs.md`, part 7 and 2s) |
 | Sniper's kill line | Which words, beside "One shot."? | Haakon (27 October 2026): "One shot, one whoppertunity" (queued under item 3) | Answered |
 | Rival line-up | Online, the host's choice from the start card is used, but the lobby doesn't show it and can't change it. Should the lobby show the line-up, with the same seats to choose (the host only)? | Haakon (28 October 2026): "You figure all this out, expert. You know me by now." Claude decided yes, since online stays in step with local play: queued as "The lobby shows the line-up" | Answered |
 | Rivals too shy of heads | Right at a contested apple, with the other head beside it, rivals still usually back off: about 1 in 8 of those cells would be a head-on, which costs about what the apple is worth. Should some personas (Desperado, Gobbler when starving, the hunters) take that gamble more often, as their own nerve? | Haakon (28 October 2026): "gobbler and Desperados should take the gamble more, that fits their playstyle, no?" Claude agreed: queued as "Nerve at a contested apple" | Answered |
@@ -666,3 +669,24 @@ now curls up and back over the hair behind it instead of forward over the brow. 
 turned down (Haakon: "it looks horrible. I want the original hair, but I want the lick reversed. That's all. Keep it
 that simple."); the third had his yes ("The hair looks 'okay' now."; "The hair's third try is approved: merge #208.").
 See "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
+
+### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane): done, PR #223
+
+Haakon: "Should barkstreet snakes also have a "updated game" thingy that pops up?", "Yes to both, do it expertly!", and
+then, of Amarna Letters' note: "It should update when you start game. [...] Like why would I not want the latest
+version?" Today a fresh load always gets the newest version (`sw.js` asks the network first), but a page left open or
+resumed on a phone keeps the version it loaded and is never told, and online the first sign is a refused join ("That
+room runs a different version of the game").
+- **It looks:** when the page is shown again after being hidden, and every 30 minutes while open (as Amarna Letters'
+  `ui/update.ts` does), it asks whether a newer version is published (the service worker's update check).
+- **It updates by itself, never during a round:** on the start card or the round-over screen it reloads into the new
+  version at once, with no question; records and settings survive, as they do today.
+- **Online:** the host updates before opening the next room, so a new room starts everyone on one version; a friend who
+  is behind is updated the same way before joining.
+- **What changed:** after an update, the start card shows one line of what is new for a few rounds (from a short list
+  kept beside the version number, written with each milestone), then it goes.
+Drawing and the service worker only: no rules, no rivals, no protocol change. The UI suite: no reload during a round,
+one between rounds when a new version is waiting, the line of what changed shown once and gone.
+
+Done (PR #223): `version.js` (the build, stamped by the Pages workflow, and the news, one line per milestone) and
+`update.js`; the start card's intro line says what is new for three rounds. See `docs/design/36-updating.md`.
