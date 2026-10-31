@@ -401,3 +401,5 @@ late, it is probably the most uneasecary feature we have discussed here, so leav
 
 Small things found on the way, for Haakon to place in the queue:
 - (None now.)
+
+<!-- audit/improvement: the improvement audit's findings go here (For Haakon rows and Noted lines) when it merges -->
