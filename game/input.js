@@ -170,7 +170,10 @@ document.addEventListener('copy', e => {
   e.clipboardData.setData('text/html', text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]));
   e.preventDefault();
 });
+let shiftAlone = false;
+document.addEventListener('keyup', e => { if (e.key === 'Shift' && shiftAlone && recordsEl.hidden && pickerEl.hidden) wakes(); shiftAlone = false; });
 document.addEventListener('keydown', e => {
+  if (e.key !== 'Shift') shiftAlone = false;
   Sound.unlock();
   tabbing = e.key === 'Tab';
   if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -187,6 +190,7 @@ document.addEventListener('keydown', e => {
   if (pow) {
     if (e.key === ' ' && e.target === tabbed && e.target.closest?.('button')) return; // (Tabbed to: the button's own key)
     e.preventDefault();
+    if (e.key === 'Shift' && state === 'paused') { shiftAlone = !e.repeat; return; } // (napping, Shift wakes on its lift, if no key came with it: Shift+G is G, Shift+Tab is Tab)
     if (!e.repeat && recordsEl.hidden && pickerEl.hidden && !wakes()) power(pow); // (napping: it wakes, and fires nothing)
     return;
   }
@@ -430,7 +434,7 @@ click(watchBtn, () => {
 }, cardSettled);
 // A tap on the board or the napping card's words wakes, as the Wake up
 // button does (its buttons and links keep their own jobs).
-overlay.addEventListener('click', e => { if (e.pointerType === 'touch' && state === 'paused' && !e.target.closest('button, a, input') && cardSettled(e)) wakes(); }); // (on touch: a mouse's click there stays nothing, as it was)
+overlay.addEventListener('click', e => { if (performance.now() - touchAt < 800 && state === 'paused' && !e.target.closest('button, a, input') && cardSettled(e)) wakes(); }); // (a touch's, just now, which Safari's clicks don't say: a mouse's click there stays nothing, as it was)
 click(pauseBtn, () => (state === 'paused' ? resume() : state === 'running' && !playerAlive() && shownCard?.reward && !overlay.classList.contains('hidden') ? hideCard() : napNow()));
 muteBtn.addEventListener('click', () => { Sound.unlock(); toggleMute(); }); // (its tap comes after the toggle: see toggleMute)
 click(musicBtn, () => toggleMusic());
