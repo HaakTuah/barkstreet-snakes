@@ -59,6 +59,7 @@ the second account until its usage is spent; on the main account the brake close
 - The start card's tip says what both taps do (PR #242): "Tap names to swap, tags to see how they play." (it named only the tags, right under the names that swap).
 - The Field guide's Beetles row split in two (PR #244): Beetles, and Burrows after it, the same words (it was eleven lines on a phone).
 - A start card whose names wrap fits a small board (PR #234): at 320 px upright or 568 px sideways its tip goes, then its lines sit closer, so the buttons never cover a name.
+- **Unfinished, pick up here:** the online room card on small boards (draft PR, branch `polish/small-room`): its seats flow in a row and each rival's "unless a friend joins" is hidden (CSS in `style/screens.css`); fixed from 360 px up, but at 320x640 it still overflows by 61 px and at 568x320 by 98 px. Next: look at those two, then pictures, the UI suite and merge.
 
 ## The split lane (the workshop check's files over about 50 KB)
 

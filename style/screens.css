@@ -28,6 +28,12 @@
   .card.snugger #overlay-text { margin-bottom: 2px; }
   .card.snugger .opponents { margin-bottom: 2px; row-gap: 0; }
   .card.snugger .hint { margin-top: 0 !important; }
+  /* (the room's seats as the start card's: names in a row, each rival's "unless a friend joins" left to the card's own
+     words, "Empty seats go to rivals"; four rows of them ran under the buttons, 117 px at 320x640) */
+  .lobby-players { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; padding: 6px 10px; }
+  .lobby-players li { margin: 2px 0; gap: 6px; }
+  .lobby-players li > strong + .open-seat, .lobby-players .seat + .open-seat { display: none; }
+  .lobby-players .tag { margin-left: 0; }
   /* (the seats as plain names, as the roll-call was, a dotted line under each saying it's a button: chips with
      their swap mark wrapped onto a second row and the card scrolled, 40 px at 320x640) */
   .card .opponents .seat, .card .opponents .seat:not(:disabled):hover { min-height: 0; margin: -7px -5px; padding: 7px 5px; gap: 7px; background: none; } /* (a fingertip's height, without taking it from the card) */
