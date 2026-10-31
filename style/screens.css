@@ -31,17 +31,17 @@
   /* (the room's seats as the start card's: names in a row, each rival's "unless a friend joins" left to the card's own
      words, "Empty seats go to rivals"; four rows of them ran under the buttons, 117 px at 320x640) */
   .lobby-players { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; padding: 6px 10px; }
-  .lobby-players li { margin: 2px 0; gap: 6px; }
+  .lobby-players li { margin: 1px 0; gap: 6px; }
   .lobby-players li > strong + .open-seat, .lobby-players .seat + .open-seat { display: none; }
   .lobby-players .tag { margin-left: 0; }
   /* (the seats as plain names, as the roll-call was, a dotted line under each saying it's a button: chips with
      their swap mark wrapped onto a second row and the card scrolled, 40 px at 320x640) */
-  .card .opponents .seat, .card .opponents .seat:not(:disabled):hover { min-height: 0; margin: -7px -5px; padding: 7px 5px; gap: 7px; background: none; } /* (a fingertip's height, without taking it from the card) */
-  .opponents .seat strong { text-decoration: underline dotted var(--ink-soft) 1.5px; text-underline-offset: 3px; }
-  .card .opponents .seat.chosen { box-shadow: none; } /* (chosen: its line drawn solid, in heartwood; a ring a fingertip tall crossed the words above) */
-  .card .opponents .seat.chosen strong { text-decoration: underline solid var(--heartwood) 2px; }
-  .card .opponents .seat:focus-visible { outline-offset: -4px; outline-width: 2px; }
-  .opponents .swap { display: none; }
+  .card .opponents .seat, .card .opponents .seat:not(:disabled):hover, .card .lobby-players .seat, .card .lobby-players .seat:not(:disabled):hover { min-height: 0; margin: -7px -5px; padding: 7px 5px; gap: 7px; background: none; } /* (a fingertip's height, without taking it from the card) */
+  .opponents .seat strong, .lobby-players .seat strong { text-decoration: underline dotted var(--ink-soft) 1.5px; text-underline-offset: 3px; }
+  .card .opponents .seat.chosen, .card .lobby-players .seat.chosen { box-shadow: none; } /* (chosen: its line drawn solid, in heartwood; a ring a fingertip tall crossed the words above) */
+  .card .opponents .seat.chosen strong, .card .lobby-players .seat.chosen strong { text-decoration: underline solid var(--heartwood) 2px; }
+  .card .opponents .seat:focus-visible, .card .lobby-players .seat:focus-visible { outline-offset: -4px; outline-width: 2px; }
+  .opponents .swap, .lobby-players .swap { display: none; }
   /* (the pin next to no width, so three still fit one row at 320 px; its ::before is a fingertip's room to tap) */
   .card .opponents .unpin { position: relative; width: auto; height: auto; margin: 0 -2px 0 -4px; padding: 0; overflow: visible; }
   .card .opponents .unpin::before { content: ''; position: absolute; inset: -12px -7px; }
