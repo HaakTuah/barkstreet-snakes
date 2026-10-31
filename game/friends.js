@@ -311,6 +311,7 @@ async function hostRoom() {
   const attempt = ++joinAttempt;
   startBtn.disabled = true;
   setStatus('Opening a room…');
+  if (await window.SnakeUpdate?.beforeRoom(null, () => attempt === joinAttempt)) return; // (a newer version out: into it first, and the room opens there)
   try {
     const room = await Net.host({ newCode: Online.newCode, onLeave: friendLeft, onMessage: fromFriend });
     if (attempt !== joinAttempt) { room.close(); return; }
@@ -484,6 +485,7 @@ async function joinRoom(text) {
     title: 'Play with friends', text: FLAVOR.joining(code), secondary: 'Cancel',
     lobby: { status: '' }, actions: { secondary: backToStart },
   });
+  if (await window.SnakeUpdate?.beforeRoom(code, () => attempt === joinAttempt)) return; // (a newer version out: into it first, and in)
   try {
     const room = await Net.join(code, { onMessage: fromHost, onLost: hostLost });
     if (attempt !== joinAttempt) { room.close(); return; }
@@ -519,12 +521,14 @@ function handleHost(msg) {
       if (state === 'lobby') showGuestLobby();
       break;
     case 'reject':
+      const code = online.code;
       endOnline();
       state = 'lobby';
       showCard({
         title: 'Play with friends', primary: 'Back', actions: { primary: backToStart },
         text: msg.why === 'full' ? 'That room is full: four people already.' : 'That room runs a different version of the game. Reload both pages and try again.',
       });
+      if (msg.why === 'version') window.SnakeUpdate?.beforeRoom(code); // (behind the host after all? into the new version, and in)
       break;
     case 'lobby':
       if (!Array.isArray(msg.players)) break;

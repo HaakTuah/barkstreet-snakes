@@ -2,6 +2,24 @@
 
 For people working on the game: how to run it locally, the checks and experiments, and how it is put together. The game itself is described for players in the [README](../README.md).
 
+## Switches for the checks
+
+- `--root DIR` runs the simulation on another copy of the game files.
+- The browser suites (scope, render, input, layout, ui) drive a headless Chrome through `tools/browser.js`: it looks in
+  the usual places, or set `CHROME=/path/to/chrome`; `CI=1` runs it without its sandbox, which is needed as root
+  (`scripts/test.sh` sets it).
+- Optional: `SIM_WORKERS` sets the simulation's cores, `BARKBITE_PRIORITY=normal` for timing runs, `ONLINE_SEEN=1`
+  makes online-test print what it saw, `LAYOUT_JOB=N` runs one of the layout suite's five CI jobs.
+- To play it locally, `.claude/launch.json` serves the folder on port 5173.
+
+## PR pictures
+
+On the orphan branch `pr-media`, never merged, named by PR number (`pr41-*.jpg`): start from `git ls-tree
+origin/pr-media`, add each file with `git hash-object -w`, build the new tree with `git mktree`, commit it with
+`git commit-tree <tree> -p origin/pr-media`, and push that commit to `refs/heads/pr-media` (never force). Link pictures
+by commit SHA (`https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/<sha>/<name>`), never by a branch that may
+be deleted. `tools/dev/crop.js` and `tools/dev/montage.js` make them.
+
 ## Run locally
 
 Serve the folder with any static server (for example `npx serve` or `python -m http.server`) and open it in a browser. Opening `index.html` directly works too.
