@@ -51,7 +51,7 @@ await ev('new Promise(r => __raf(() => __raf(() => __raf(r))))');
 // squashes staged by hand, as it makes them): your first squash's lesson
 // and its splat, a second squash's splat and no second lesson; a rival's
 // splat, heard as a rival's. (What the page asks to play: the cues
-// themselves are audio.js's.)
+// themselves are audio/'s.)
 await ev(`(() => {
   const E = SnakeEngine, A = SnakeAudio, play = A.play, g = SnakeDebug.game();
   window.__heard = [];

@@ -12,8 +12,8 @@ https://haaktuah.github.io/barkstreet-snakes/.
 | What is done and the queue, in order | `docs/PROGRESS.md` |
 | How builder sessions and lanes are run (for the orchestrator) | `docs/orchestrating.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
-| Materials the queue points to: the owner's saved tasks word for word, the teaching prototypes and judges, the woodpecker acts draft, the bridge-glitch repro, the unverified jumps start, the Sniper screenshot | `docs/handoff/` |
-| The game | `index.html`, `style/` (three stylesheets, listed in `style/base.css`), `engine.js`, `ai.js`, `render/` (seventeen files, listed in `render/core.js`), `game/` (seven, listed in `game/core.js`), `chatter/` (five, listed in `chatter/voices.js`), `audio.js`, `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
+| Materials the queue points to: the open entries' specs word for word (`queue-specs.md`), the owner's saved tasks word for word, the teaching prototypes and judges, the woodpecker acts draft, the bridge-glitch repro, the unverified jumps start, the Sniper screenshot | `docs/handoff/` |
+| The game | `index.html`, `style/` (three stylesheets, listed in `style/base.css`), `engine.js`, `ai.js`, `render/` (seventeen files, listed in `render/core.js`), `game/` (seven, listed in `game/core.js`), `chatter/` (five, listed in `chatter/voices.js`), `audio/` (two, listed in `audio/cues.js`), `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
 | Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, each a runner of its folder of parts by area, such as `tools/rules/` (`tools/parts.js`), `simulate.js` (its parts in `tools/sim/`), `abtest.js`, `bench-ai.js`, `browser.js`; `protocol-shapes.json`, the online messages' pinned shapes) |
 | The online messages' types (checked by `tsc`, never shipped) | `jsconfig.json`, `types/globals.d.ts`, and the JSDoc in `net.js` and `online.js` |
 | Study and measuring tools from earlier rounds | `tools/dev/` (teaching audits, burrow spacing, board sizes, the woodpecker and food study, PR pictures) |
@@ -23,7 +23,8 @@ https://haaktuah.github.io/barkstreet-snakes/.
 
 1. Work from `develop`: if you are on `main`, check out `develop` first (this file and `docs/` live there until Haakon
    next merges `develop` into `main`).
-2. Take the first open item in `docs/PROGRESS.md`. Its words, and the design sections it names, are the spec.
+2. Take the first open item in `docs/PROGRESS.md`. Its full text, in `docs/handoff/queue-specs.md` under the same title,
+   and the design sections it names, are the spec.
 3. Read only those sections: `grep -rn "## Section" docs/design` finds a section that code or the queue names.
 4. Check weekly usage with `scripts/usage.sh`, and again after every commit (see "Usage"). If it says "unknown", this
    session cannot see usage: say so in the first line of each PR you open, and carry on; Haakon then watches usage
@@ -172,10 +173,9 @@ Haakon's standing instructions given since this file was last revised, dated, ne
 - **27 October 2026:** "You merge it. Always." Merge the milestone PR from `develop` into `main` yourself, once its CI
   is green, instead of leaving it for Haakon. Still never push to `main` directly or force-push: it changes by that
   merge only.
-- **27 October 2026: push as you go.** "Yes to all, expertly!" (to adding the rule; the words are in
-  `docs/archive/instructions.md`). Push the task's branch at every passed step, and at least once an hour while work is
-  under way, even before its PR opens (a draft PR if it is not ready), so nothing is lost if a session dies or its
-  machine is reclaimed.
+- **27 October 2026: push as you go; 31 October 2026: after every commit.** "Yes to all, expertly!", then "YES!" (the
+  words are in `docs/archive/instructions.md`). Push the task's branch after every commit, even before its PR opens (a
+  draft PR if it is not ready), so nothing is lost if a session dies, runs out of usage or its machine is reclaimed.
 - **27 October 2026: every new move is tested both ways.** (the words are in `docs/archive/instructions.md`). For every new move
   or rule a snake can choose to use, run `tools/abtest.js` on fresh seeds: rivals that use it, against a copy where it
   is taken from the play of some rivals only (the others keep it, so the rule itself is unchanged). Its users should come
@@ -229,3 +229,7 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   fingerprint and `--check`, the online round trip), and long measurements (`tools/abtest.js`, censuses) in
   `scripts/sim.sh`, never in CI. When the game grows (rivals, moves, board sizes), the tests' default does not grow
   with it; the workshop check's check times are the measure.
+- **31 October 2026: a change a player sees updates the README.** "Yes, expertly to both!" (the words are in
+  `docs/archive/instructions.md`). Any entry or PR that changes what a player sees or does updates `README.md` in the
+  same PR, as it does the lesson and the Field guide row; the workshop check gains a sixth point: (6) the README is
+  current, said in one line of each milestone PR and fixed if not.
