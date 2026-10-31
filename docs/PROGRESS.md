@@ -7,17 +7,11 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**The main lane stopped here** (30 October 2026, at about 88% of the weekly usage, by the same words). Part 4 of item 5,
-with 2r folded in, is built, reviewed and parked as draft PR #198 (protocol 20): its rivals who leap now and fly come out
-even with rivals who never do, in three head-to-heads (last, on fresh seeds 47 and 59: 24.7% to 25.2%), so by "No part
-merges until the rivals use its moves well" it waits, as Haakon agreed (30 October 2026), for a session that makes leap
-now and the flight pay the rivals; its "Still to do" list
-says what is left. Part 5 (#202) stays parked behind it. Nothing newer (3b+, 2q, 2s, parts 6 and 7) has been started.
-
-**The art lane stopped here** (30 October 2026, at about 88% of the weekly usage: Haakon, "I want them to finish what they
-have started, if we believe they can"). 2o, 2p and 2t are merged (PRs #210, #211, #212). 2n's second try was turned
-down (Haakon: "it looks horrible"); the third, the original with its lick reversed and nothing else, has his yes (31
-October 2026) and merges with PR #208. 2u is merged (PR #221).
+**Resumed 31 October 2026 on a second account**, spent to the end before Monday. The main lane took up part 4 (#198,
+2r folded in), making leap now and the flight pay the rivals; 2s now runs before 2q, then 3b+, parts 5 to 7. Merged
+since: 2n (the original hair, lick reversed, #208), 2u (#221), the Voices icon (#224), live with milestone #227. Open
+lanes: 2v (#223), the audio and Chinese splits (#225, #226), the polish fixes and the improvement audit (#220). The
+older state notes are in `docs/archive/plan-history.md`.
 
 ## For Haakon
 
@@ -36,7 +30,13 @@ we add a polish point to each that it can spend the last credits on also?" and, 
 the second account until its usage is spent; on the main account the brake closes it first (from about 85%).
 - **First, the housekeeping:** done (PR #222, and the design session's move of the open entries' specs to
   `docs/handoff/queue-specs.md`, 31 October 2026); merged branches now go by GitHub's "Automatically delete head
-  branches", which Haakon turns on, and the older ones may stay. Then archive leftovers nobody uses.
+  branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
+- **The README, next** (Haakon, 31 October 2026: "Yes, expertly to both!"): bring `README.md` up to the game as it
+  plays now: the rules through round six B so far (the island hop and no auto-jump, bridges, the cutting flashes,
+  mushrooms that come back up, squashing your own beads), flags, picked rivals for the visit, the update between
+  rounds, the cast; and move the developer part ("Run locally" onward) to `docs/developing.md` with a link, so the
+  README is for players and well under the 50 KB mark. One PR, docs only; then every entry keeps it current ("A
+  change a player sees updates the README" in `CLAUDE.md`).
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
@@ -64,23 +64,19 @@ the second account until its usage is spent; on the main account the brake close
 
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
-The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in: its A/B comes out even, so it waits until leap now and the flight pay the rivals), then 2q, 2s, part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves".
+The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in: its A/B comes out even, so it waits until leap now and the flight pay the rivals), then 2s and 2q (2s first: Haakon, 31 October 2026, "Agreed to all, expertly!"), part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves".
 
-### 2n. Wildcard's hair: every version side by side, Haakon picks (30 October 2026; small, an art lane)
+### 2s. The log breaks, but never drifts apart (30 October 2026; an engine-rules entry, after part 4; moved ahead of 2q, 31 October 2026)
 
-The original hair as it was at a79946b, with only its lick reversed, curling up and back; nothing else changes. Haakon, 31 October 2026, on the third try (PR #208): "The hair looks 'okay' now." That is his yes: PR #208 gets its review and merges. Spec: `docs/handoff/queue-specs.md`, "2n. Wildcard's hair: every version side by side, Haakon picks".
-
-### 2q. Rivals notice like people (30 October 2026; an AI entry, after part 4)
-
-Every rival sees another snake as late as a person would notice it: `REACTION_MS` near its own head, growing to about 400 ms across the board, measured with `tools/abtest.js`. Spec: `docs/handoff/queue-specs.md`, "2q. Rivals notice like people".
+The woodpecker never pecks a patch that would leave a piece of the log out of a plain hop's reach of every other piece, so islands form but nobody is stranded on one; measured with part 4's flight in place (half the rounds now end split onto islands, the audit found). Spec: `docs/handoff/queue-specs.md`, "2s. The log breaks, but never drifts apart".
 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
 Before a hop or a flight a rival weighs where it lands, above all whether it can jump off again; built into part 4 (#198). Spec: `docs/handoff/queue-specs.md`, "2r. No hop onto a doomed island".
 
-### 2s. The log breaks, but never drifts apart (30 October 2026; an engine-rules entry, after 2q)
+### 2q. Rivals notice like people (30 October 2026; an AI entry, after 2s)
 
-The woodpecker never pecks a patch that would leave a piece of the log out of a plain hop's reach of every other piece, so islands form but nobody is stranded on one. Spec: `docs/handoff/queue-specs.md`, "2s. The log breaks, but never drifts apart".
+Every rival sees another snake as late as a person would notice it: `REACTION_MS` near its own head, growing to about 400 ms across the board, measured with `tools/abtest.js`. Spec: `docs/handoff/queue-specs.md`, "2q. Rivals notice like people".
 
 ### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane)
 

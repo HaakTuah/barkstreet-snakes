@@ -173,10 +173,9 @@ Haakon's standing instructions given since this file was last revised, dated, ne
 - **27 October 2026:** "You merge it. Always." Merge the milestone PR from `develop` into `main` yourself, once its CI
   is green, instead of leaving it for Haakon. Still never push to `main` directly or force-push: it changes by that
   merge only.
-- **27 October 2026: push as you go.** "Yes to all, expertly!" (to adding the rule; the words are in
-  `docs/archive/instructions.md`). Push the task's branch at every passed step, and at least once an hour while work is
-  under way, even before its PR opens (a draft PR if it is not ready), so nothing is lost if a session dies or its
-  machine is reclaimed.
+- **27 October 2026: push as you go; 31 October 2026: after every commit.** "Yes to all, expertly!", then "YES!" (the
+  words are in `docs/archive/instructions.md`). Push the task's branch after every commit, even before its PR opens (a
+  draft PR if it is not ready), so nothing is lost if a session dies, runs out of usage or its machine is reclaimed.
 - **27 October 2026: every new move is tested both ways.** (the words are in `docs/archive/instructions.md`). For every new move
   or rule a snake can choose to use, run `tools/abtest.js` on fresh seeds: rivals that use it, against a copy where it
   is taken from the play of some rivals only (the others keep it, so the rule itself is unchanged). Its users should come
@@ -230,3 +229,7 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   fingerprint and `--check`, the online round trip), and long measurements (`tools/abtest.js`, censuses) in
   `scripts/sim.sh`, never in CI. When the game grows (rivals, moves, board sizes), the tests' default does not grow
   with it; the workshop check's check times are the measure.
+- **31 October 2026: a change a player sees updates the README.** "Yes, expertly to both!" (the words are in
+  `docs/archive/instructions.md`). Any entry or PR that changes what a player sees or does updates `README.md` in the
+  same PR, as it does the lesson and the Field guide row; the workshop check gains a sixth point: (6) the README is
+  current, said in one line of each milestone PR and fixed if not.
