@@ -52,8 +52,8 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
 4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
    **leap now** (a second press while a jump waits sends it at once, open ground included: "Leap now" in the design); with
    **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
-   fall in, onto a snake you're out, trapped).
-5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes.
+   fall in, onto a snake you're out, trapped). Its A/B came out even with leap now and the flight measured together, so (Haakon, 31 October 2026: "Yes, please, expertly!", to splitting it): the flight and leap now are measured apart; the rivals learn the flight's uses (out of a box, across to food, cutting off, steering planned in the air) until fliers come out ahead; the golden flash is measured on its own in the same pass and its use taught where it falls short; if the flight pays and leap now doesn't, the flight merges without leap now, and leap now comes back to Haakon. "The rivals fly it as a person would" and "The golden flash cuts deeper" in `docs/design/29-round-six-b-the-new-moves.md`.
+5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes. In six test rounds nobody followed, so the time it stays open is lengthened step by step until following makes a gameplay difference from time to time (Haakon, 31 October 2026: "Then we can increase the time it is open, until it actually makes a gameplay difference from time to time."), after checking that the rivals see the chance at all: "Open long enough to matter" in `docs/design/29-round-six-b-the-new-moves.md`.
 6. **Dropped charges** on a knockout, as above. *Built and reviewed* on `round6b/dropped-charges` (a spilled gold coin ringed with the pips; rules tests; review fixes in; protocol to renumber when it merges); still to do: the A/B against rivals that ignore spills (a copy is easy: zero the spill's worth in `ai.js`), pictures, the PR.
 7. **One pricing model for every power,** as above, last (*a first pass is parked* on `round6b/pricing`: the tail tip at length's worth now, rests cheaper while idle with a floor, risk by `headRisk`; on seeds 51/53 the seat-split already shows powers on beating off, 33.6% to 16.4%, with the island hop alone, and this pass did no better, 33.3% to 16.7%, flashing more; a direct head-to-head against today's AI was stopped at look 4, its rounds cached), so it prices every move together, with **each rival's power
    style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
@@ -123,24 +123,6 @@ woodpecker's mark still shows each patch before it goes. Online the same, with a
 islands, 51% on seed 3 against the 25-31% above, the biggest island winning only 49% of them; Haakon: "Agreed to all, expertly!"): it
 runs after part 4 and before 2q, and is measured with part 4's flight in place, since a flight reaches farther than a
 plain hop.
-
-### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane)
-
-Haakon: "Should barkstreet snakes also have a "updated game" thingy that pops up?", "Yes to both, do it expertly!", and
-then, of Amarna Letters' note: "It should update when you start game. [...] Like why would I not want the latest
-version?" Today a fresh load always gets the newest version (`sw.js` asks the network first), but a page left open or
-resumed on a phone keeps the version it loaded and is never told, and online the first sign is a refused join ("That
-room runs a different version of the game").
-- **It looks:** when the page is shown again after being hidden, and every 30 minutes while open (as Amarna Letters'
-  `ui/update.ts` does), it asks whether a newer version is published (the service worker's update check).
-- **It updates by itself, never during a round:** on the start card or the round-over screen it reloads into the new
-  version at once, with no question; records and settings survive, as they do today.
-- **Online:** the host updates before opening the next room, so a new room starts everyone on one version; a friend who
-  is behind is updated the same way before joining.
-- **What changed:** after an update, the start card shows one line of what is new for a few rounds (from a short list
-  kept beside the version number, written with each milestone), then it goes.
-Drawing and the service worker only: no rules, no rivals, no protocol change. The UI suite: no reload during a round,
-one between rounds when a new version is waiting, the line of what changed shown once and gone.
 
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 

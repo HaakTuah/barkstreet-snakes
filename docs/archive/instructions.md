@@ -596,3 +596,15 @@ In the design chat (31 October 2026, 14:39-14:40 UTC): "The README for both proj
 to be updated?" Then, to a one-time refresh in the polish lane (the developer part moved to `docs/developing.md`) and
 a standing rule that a change a player sees updates the README in the same PR, checked at each milestone: "Yes,
 expertly to both!" (written into `docs/PROGRESS.md`, "The polish lane", and `CLAUDE.md`, "Standing instructions")
+
+In the design chat (31 October 2026, 18:59-19:01 UTC), on the woodpecker over the help line on an upright phone (the
+audit's second find, PR #240 parked): "Don't really care if it covers that a bit. None essential, you still see, and
+you can click through. It also moves about frequently, so it doesn't cover the same spot all the time. So which of the
+answer options fit with that?" To leaving it as 2k+ has it and closing the find: "yes, leave it." (written into
+`docs/PROGRESS.md`, "The polish lane", and `docs/design/32-the-owners-playtest.md`, "Clear of the row's words (2k+)")
+
+In the design chat (31 October 2026, 19:10 UTC), told that part 5's gold portals (PR #202) are parked and that in six test
+rounds no rival followed through one: "Then we can increase the time it is open, until it actually makes a gameplay difference from time to time." (written into `docs/design/29-round-six-b-the-new-moves.md`, "Gold portals
+for the wrap", and `docs/handoff/queue-specs.md`, part 5)
+
+In the design chat (31 October 2026, 19:13-19:15 UTC), on part 4's A/B coming out even: "And I cannot believe that super flash and super jump isn't useful, then it must be the AI not properly being updated to understand its utility. Super jump essentially lets you fly for like 5 tiles, no? changing directions mid air like mario? and super flash let's you flash forward 3 tiles instead of 2 like regular flash, and can cut 2 tiles deep? how is that not useful?" To the design session's take (measure the flight and leap now apart; teach the rivals the flight's uses until fliers come out ahead; measure the golden flash on its own in the same pass; if only the flight pays, merge it without leap now and bring leap now back to him): "Yes, please, expertly!" (written into `docs/design/29-round-six-b-the-new-moves.md`, `docs/handoff/queue-specs.md` part 4 and `docs/PROGRESS.md`)

@@ -107,3 +107,24 @@ const early = await ev(`(() => {
   hideToast(); return JSON.stringify({ shown, kept, going });
 })()`);
 check(early === JSON.stringify({ shown: true, kept: true, going: true }), 'a lesson showing fades early once it no longer holds (yours, once you’re out), and stays while it holds', early);
+// "Flash through your own tail to drop it." comes only in a real pocket:
+// holes all round but a pocket of one cell, your body one thick ahead and
+// free log beyond it. Your head right behind your own tail is a coil you
+// can crawl out of (the tail frees its cells in time: no lesson); the
+// same pocket with the tail far off is a trap (the lesson). The polish
+// lane, from the audit: it came up when you coiled by choice.
+const pocket = await ev(`(() => {
+  const g = SnakeDebug.game(), keep = { snakes: g.snakes, holes: g.holes, fires: g.fires };
+  const P = (...xy) => xy.map(([x, y]) => ({ x, y }));
+  const coil = P([10, 10], [9, 10], [9, 11], [10, 11], [11, 11], [12, 11], [12, 10], [12, 9], [11, 9]);
+  const trap = P([10, 10], [9, 10], [9, 11], [10, 11], [11, 11], [12, 11], [12, 10], [12, 9], [11, 9], [10, 9], [9, 9]);
+  const read = body => {
+    const open = new Set([...body.map(c => c.y * 24 + c.x), 10 * 24 + 11, 10 * 24 + 13]);
+    g.holes = new Set([...Array(24 * 24).keys()].filter(k => !open.has(k))); g.fires = new Map();
+    const s = { body, dir: { x: 1, y: 0 }, alive: true };
+    g.snakes = [s];
+    return tailToDrop(s);
+  };
+  try { return JSON.stringify({ coil: read(coil), trap: read(trap) }); } finally { Object.assign(g, keep); }
+})()`);
+check(pocket === JSON.stringify({ coil: false, trap: true }), 'the tail-drop lesson: not for a coil whose tail frees the way in time, but for a real pocket', pocket);
