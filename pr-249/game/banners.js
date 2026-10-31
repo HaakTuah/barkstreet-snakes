@@ -192,18 +192,14 @@ function tailToDrop(s) {
   for (const o of theGame.snakes) if (o.alive) for (const c of o.body) taken.add(c.y * G + c.x);
   const blocked = k => theGame.holes.has(k) || !!theGame.fires?.has(k);
   const out = (x, y) => x < 0 || y < 0 || x >= G || y >= G;
-  // (your own body counts as free where its tail will have left by the time
-  // your head could crawl there: a coil you can crawl out of is no pocket)
-  const own = new Map(s.body.map((c, j) => [c.y * G + c.x, j])), len = s.body.length;
-  const reach = new Map([[h.y * G + h.x, 0]]), todo = [h.y * G + h.x];
+  const reach = new Set([h.y * G + h.x]), todo = [h.y * G + h.x];
   let free = 0;
-  for (let q = 0; q < todo.length && free < len; q++) {
-    const k = todo[q], x = k % G, y = (k - x) / G, d = reach.get(k) + 1;
+  while (todo.length && free < s.body.length) {
+    const k = todo.pop(), x = k % G, y = (k - x) / G;
     for (const [dx, dy] of SIDES4) {
       const nx = x + dx, ny = y + dy, n = ny * G + nx;
-      if (out(nx, ny) || reach.has(n) || blocked(n)) continue;
-      if (taken.has(n) && !(own.has(n) && d >= len - own.get(n))) continue;
-      reach.set(n, d); todo.push(n); free++;
+      if (out(nx, ny) || reach.has(n) || blocked(n) || taken.has(n)) continue;
+      reach.add(n); todo.push(n); free++;
     }
   }
   if (free >= s.body.length) return false;
