@@ -2048,16 +2048,17 @@ window.SnakeAI = (() => {
         return inside(x, y) ? y * N + x : -1;
       };
       const free = i => i >= 0 && myCells[i] !== stampM && mineFree[i] <= 1; // (free by next tick)
-      // Leap now (pressed twice, over open ground) is weighed only when the
-      // crawl is in trouble: it ends in a crash (trapped), through a neck a
-      // rival could shut (boxed), or its first move is a cell a rival's head
-      // could take this tick (a head-on: in the air I pass over it). On open
-      // ground it does what a crawl would, for the tip of my tail and a rest
-      // I then don't have for a real hurdle: weighed everywhere at twice the
-      // jump's price, rivals with it came out even with rivals without, in
-      // three head-to-heads.
+      // Leap now (pressed twice, over open ground) is weighed only for what
+      // it saves: the crawl ends in a crash (trapped), or its first move is
+      // a cell a rival's head could take this tick (a head-on: in the air I
+      // pass over it). Anywhere else it does what a crawl would, or what the
+      // plain hop does a move later at the hurdle, for the tip of my tail
+      // and a rest I then don't have for a real hurdle: weighed everywhere
+      // at twice the jump's price, rivals with it came out even with rivals
+      // without, in three head-to-heads; weighed out of a neck a rival could
+      // shut too (6 of 10 leaps now a round), still even, a jump a snake up.
       const crawlCell = cellAt(myHead.x + crawlDir.x, myHead.y + crawlDir.y);
-      const fleeing = trapped || boxed || (crawlCell >= 0 && strikes[crawlCell] >= w.headRisk);
+      const fleeing = trapped || (crawlCell >= 0 && strikes[crawlCell] >= w.headRisk);
       // Something to hop: a body still there next tick (mine too), or fire;
       // a hole, if I can tell it from the woodpecker's mark (a mark isn't a
       // hole yet: I'd crawl in), or if it's that or a crash.
@@ -2085,7 +2086,7 @@ window.SnakeAI = (() => {
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
         if (me.dashes > 0) consider(d, true, flashOpt(d, true), 0.6, extra);
         else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)))) consider(d, true, flashOpt(d, false), trapped || race(d) ? 1 : 2, extra);
-        if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5) * (leapNow ? 2 * (w.leapNow ?? 1) : 1), extra); } // (leap now, at twice the jump's price, times my style's: at the jump's, rivals with it came out even with rivals without)
+        if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5) * (leapNow ? (w.leapNow ?? 1) : 1), extra); } // (leap now, at the jump's price times my style's: only out of trouble, see fleeing)
       }
       return best;
 
