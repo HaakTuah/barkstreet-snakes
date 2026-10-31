@@ -26,3 +26,21 @@ for (const d of [CALLS, sized(320, 640)]) {
   check(sizes.size === 1 && [...sizes][0] === '1.000', `${tag}: at its full size there, one size at every perch`, [...sizes].join(', '));
   await ev(`window.__autoRaf = true; 'ok'`);
 }
+// (and in your own round, the help line under the board, "Swipe to steer ·
+// Tap to jump · …", among them: after you're out the round goes on and
+// the bird perched over its words, the polish lane's second find from the
+// audit; each of its parts is a word it keeps clear of)
+const HELP_LABELS = LABELS.replace(`'.foot .speed > span, .foot button, #chatter-label'`, `'.foot .speed > span, .foot button, .foot .help > span, #chatter-label'`);
+if (!only || CALLS.name.includes(only)) {
+  const tag = `${CALLS.name}, your round, the woodpecker clear of the help line`;
+  await open(CALLS);
+  await toRound('start');
+  const labels = await ev(HELP_LABELS), helps = await ev(`document.querySelectorAll('.foot .help:not([hidden]) > span').length`), over = [];
+  for (const [x, y] of [[1, 22], [6, 22], [12, 22], [17, 22], [22, 22], [12, 18]]) for (const aim of [false, true]) {
+    const p = await ev(PERCH(x, y, aim, labels));
+    if (!p) { over.push(`${x},${y}: not perched`); continue; }
+    if (Object.keys(p.on).length) over.push(`${x},${y}${aim ? ' eyeing' : ''}: over ${Object.keys(p.on).join(', ')}`);
+  }
+  check(helps >= 3 && !over.length, `${tag}: perched under the board, none of it lies over the help line's words or the row's labels`, over.join('; ') || `12 perches, ${helps} parts of the help line`);
+  await ev(`window.__autoRaf = true; 'ok'`);
+}
