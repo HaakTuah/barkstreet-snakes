@@ -318,6 +318,12 @@ function drawRealmBanner(r, home, now) {
 // once.)
 const BEND = 0.6, BEND_SIDE = 0.45, BEND_IN_MS = 110, SPRING_MS = 900, SPRING_PERIOD = 330, WRAP_MS = 260;
 const flagBends = new Map(); // tile -> { who, at, on, seen, head, from: [the look it eased from], to: [the push's] }
+// (When each flag's tile was last looked at. A flag that wasn't on the
+// board a moment ago, planted with a snake already on its tile, as a new
+// colony is under Colonist's head, starts bent: it was never seen standing,
+// so it doesn't stand for a frame and then snap over, or wrap the head
+// that planted it.)
+const flagLastSeen = new Map(), FLAG_FRESH_MS = 250;
 const flagsLater = []; // (this frame's, to draw over the snakes: see drawBentFlags)
 let overSnakes = false, bendNowB = null; // (bendNowB: the bend bendOn last looked at)
 // (What's eased is the look itself, [tilt, lean, turn, push]: the pole's
@@ -361,6 +367,8 @@ function stepOnto(s, i) {
 function bendOn(x, y, now) {
   const key = y * GRID + x;
   let b = flagBends.get(key), who = null, at = -1;
+  const last = flagLastSeen.get(key), fresh = !b && (last === undefined || now - last > FLAG_FRESH_MS);
+  flagLastSeen.set(key, now);
   if (b && b.who && b.who.alive && (at = cellOn(b.who, x, y)) >= 0) who = b.who;
   else for (const s of game.snakes) if (s.alive && (at = cellOn(s, x, y)) >= 0) { who = s; break; }
   if (!b) {
@@ -377,6 +385,7 @@ function bendOn(x, y, now) {
       const l = Math.hypot(leanX, leanY) || 1, dx = leanX / l, dy = leanY / l;
       b.head = !dx && at === 0; // (head-on: knocked flat, see WRAP_MS)
       b.to[0] = b.head ? 0 : BEND * dx + BEND_SIDE * Math.abs(dy); b.to[1] = dy; b.to[2] = dx > 0 ? 1 - 2 * dx : 1; b.to[3] = 1; b.to[4] = b.head ? 1 : 0;
+      if (fresh) { for (let i = 0; i < 5; i++) b.from[i] = b.to[i]; b.at = now - Math.max(BEND_IN_MS, WRAP_MS); } // (planted under it: bent already, no wrap)
     }
   }
   flagLean(b, now);
