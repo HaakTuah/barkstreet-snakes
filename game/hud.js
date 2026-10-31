@@ -192,6 +192,27 @@ pickerList.addEventListener('click', e => { const b = e.target.closest?.('.pick'
 $('picker-close').addEventListener('click', closePicker);
 pickerEl.addEventListener('click', e => { if (e.target === pickerEl) closePicker(); });
 
+// A start card whose rivals' names wrap onto a second row can outgrow a
+// small board (a 320 px phone, or one held sideways), and its buttons, held
+// at the bottom, then cover a name or the tip under them. It makes room in
+// steps: first the tip goes (each name's dotted line still says it's a
+// button), then the card's lines sit closer. The steering hint always stays.
+// Checked when the names or the window change, never because of its own steps.
+let fitFor = '';
+function fitStartCard() {
+  const seen = !opponentsEl.hidden && opponentsEl.offsetHeight > 0, sig = seen ? `${opponentsEl.textContent}|${innerWidth}x${innerHeight}` : '';
+  if (sig === fitFor) return;
+  fitFor = sig;
+  cardEl.classList.remove('snug', 'snugger');
+  if (!seen) return;
+  for (const step of ['snug', 'snugger']) {
+    if (cardEl.scrollHeight <= cardEl.clientHeight + 1) break;
+    cardEl.classList.add(step);
+  }
+}
+new ResizeObserver(fitStartCard).observe(opponentsEl);
+addEventListener('resize', fitStartCard);
+
 // What the chips mean, in words (phones have no tooltips).
 function yourPowerWords(s) {
   const how = (left, gold) => gold ? `${gold} golden` : left === 0 ? 'ready' : left === Infinity ? 'not at 3' : 'resting';
