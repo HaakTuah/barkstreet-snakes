@@ -240,7 +240,7 @@ function renderPlayers() {
     } else {
       dot.style.background = 'var(--parchment-2)';
       label.className = 'open-seat';
-      label.textContent = 'An AI rival, unless a friend joins';
+      label.textContent = 'A rival, unless a friend joins';
       li.append(dot, label);
     }
     lobbyPlayers.append(li);
