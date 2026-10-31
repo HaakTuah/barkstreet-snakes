@@ -56,7 +56,7 @@ Golden ones go before the plain ones and leave their rests alone. Anyone holding
 
 ## Play with friends
 
-Press **Play with friends** on the start screen, then **Host a game** and send the link (or the five-letter code) to up to three friends. When they're in, press **Start**. Empty seats get AI rivals, and you can play round after round in the same room.
+Press **Play with friends** on the start screen, then **Host a game** and send the link (or the five-letter code) to up to three friends. When they're in, press **Start**. Empty seats go to rivals, and you can play round after round in the same room.
 
 - One browser hosts: it runs the game, and friends' browsers connect straight to it (peer to peer). There's no game server and nothing to sign up for. A free public service, PeerJS, only introduces the browsers to each other.
 - It's fair: the rivals treat everyone alike, and the host's own turns are held back by the friends' lag, so the host gets no head start.
@@ -92,7 +92,7 @@ The AI snakes talk. Each one has its own voice: Sovereign uses the royal "we", C
 
 ## Watching the AIs
 
-Press **Watch AIs** on the start screen for a round between four AI snakes, with a 1×/2×/4× speed control (or the keys 1, 2 and 4). The same control appears when you're watching after dying. Every round starts at 1×, and at 2× or 4× the board's own effects speed up too. **Watch again** on the round-over card keeps you watching; Enter or R start a round you play. Watched rounds put the AI snakes in the Hall of Fame, but don't count towards your own stats.
+Press **Watch rivals** on the start screen for a round between four AI snakes, with a 1×/2×/4× speed control (or the keys 1, 2 and 4). The same control appears when you're watching after dying. Every round starts at 1×, and at 2× or 4× the board's own effects speed up too. **Watch again** on the round-over card keeps you watching; Enter or R start a round you play. Watched rounds put the AI snakes in the Hall of Fame, but don't count towards your own stats.
 
 ## The rivals
 
