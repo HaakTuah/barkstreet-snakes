@@ -64,6 +64,8 @@ the second account until its usage is spent; on the main account the brake close
 - *Left as it is, by Haakon's answer:* the woodpecker over the help line between rounds (the audit's second find; PR #240 closed). On a 390 px phone it may cover part of the help line or the chatter's words; nothing essential is hidden, it moves often and taps pass through it ("Clear of the row's words (2k+)" in `docs/design/32-the-owners-playtest.md`). Not to be raised again.
 - *Not reproduced:* bubbles overlapping at 4× (the audit's fourth find). In 8 watched phone rounds and 3 desktop rounds at 4×, the longest overlap was 0.4 s on the phone and 0.19 s on desktop, only while bubbles glide to a new side. Dropping the older bubble after 0.25 s of overlap made no measurable difference, so nothing was merged.
 - *Measured, nothing to fix:* sound piling up while watching (PR #248, `tools/dev/sound-levels.js`). At 4× the round asks for about 10 cues a second and the gaps let 4.5 through, at most 5 in any 250 ms; rivals' chomps 2 a second, the babble one every 4 s at most. Same shape at 1× and 2×, halved. The chatter's words were scanned too: no typos, apostrophes consistent.
+- *As designed:* the empty chatter-log line (the audit's sixth find): it's a new line's 0.4 s slide-in (`log-in`) caught mid-fade. Over 3 watched rounds on a phone on its side, 23 of 621 visible-row samples caught one, and none stayed empty. No fix.
+- The tail-drop lesson only in a real pocket, not when you've coiled with room to crawl out after your tail (PR #246; the audit's fifth find).
 
 ## The split lane (the workshop check's files over about 50 KB)
 
