@@ -164,8 +164,27 @@ shared template:
   room to spare, food counts as today.
 - **Personality still shapes it:** Gobbler stays the greediest (its food share is its trademark), the careful ones
   the most sparing.
+- **Grown, 31 October 2026** (Haakon, watching Creeper drop his tail in a pocket: "Most box themselves in so the don't have the oppertunity to amputate like that. Would be better if they could anticipate it earlier, so they amputate while they still have the chance." Then: "I notice also that they eat insatiably others beads, when the map gets really small. i might eat one to stop hunger, but i would not eat it all at once. it only pays to be bigger than your opponent that late in game, if you are afraid you might have to run out the clock, but i have yet to see that happen. which is a shame. but woodpecker is getting a makeover right, so i don't want to focus to much on the current timing dynamic of the game. but yes. from my point of view, even if it was a time game, it would only  make sense to eat it, cut yourself so you are just longer than your opponent, then squash the beads. what's your expert take?" Then, to
+  the design session's take, folding all four into this entry: "Sounds good!"):
+  - **The tail drop planned ahead.** A drop needs the flash rested, a body one thick and a free cell beyond, and a boxed
+    snake rarely has all three. So the rivals plan it: when the search sees the room round them falling below their
+    length within the next few moves, they weigh cutting now, while they can, against going on and being sealed in.
+    Each in its style (Ouroboros late and rarely, Creeper readily).
+  - **A length target.** Late in a round there is no clock to run out: the round ends when one snake is left. Length is
+    worth a crash buffer (a crash costs 3, and one at your smallest puts you out) and a hunger buffer (a segment every
+    1.5 s starving), and beyond that it only fills the room a snake needs to turn in. So a rival keeps enough for a
+    crash or two and its hunger, and no more: one bead to stop hunger, not the whole heap.
+  - **The denial play, where it pays.** Eat the beads a starving rival needs, cut back to the length you want, and
+    squash your own dropped beads so nobody eats them. It costs the flash (and a failed flash costs 5), and against a
+    greedy rival the beads left are a trap that boxes it in, so the rivals try it where it pays, and it stays only if
+    the both-ways A/B says it wins.
+  - **Reasoning now, numbers later.** The woodpecker's three acts (entry 6) change the endgame's timing, so this entry
+    builds the reasoning (what a meal buys against the room it costs, the length worth keeping, when to cut), and its
+    numbers are measured again after entry 6.
 - **Measured** head to head on fresh seeds against the AI 2b leaves: deaths in sudden death by cause (self, body, boxed
-  in, starved), who outlasts whom in the endgame, per-rival wins, every trademark within noise.
+  in, starved), who outlasts whom in the endgame, per-rival wins, every trademark within noise; and, for the parts
+  grown on 31 October, deaths in a pocket smaller than the snake (40–45% of sudden death's today), tail drops made in
+  time, and each part's both-ways A/B.
 
 ### 2i. Food seasons: lean, normal and plentiful rounds (Haakon, 29 October 2026; an engine-rules entry, after 2h)
 
