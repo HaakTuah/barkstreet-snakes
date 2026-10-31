@@ -250,13 +250,11 @@ It must read at phone size."
 - *Then* PR #110's lacquered mop, PR #144's version F and PR #156's F at 85%. Haakon (30 October): "trump looks like
   David Lynch now. I actually think the very first or second hairstyle trump had in the game is better", and picked the
   first, "but have the swirl point upwards instead of downwards".
-- *Now* (2n, `render/faces.js`, `hairBack()`, `pompadour()`, `wildHair()`): PR #74's pompadour at its own size, outline
-  and fluff, its front turned up. A first try swept the roll back to a flick out past the near side; Haakon (30 October):
-  "But the hair flicks outwards? That's not trump?". So it is one smooth, rounded mass with nothing past its outline at
-  any heading: the roll across the brow, rounded at both ends, its wave curling up and back over itself (the hollow under
-  the curl and the curl's ends turned in, the shine along its crest, its shadow on the mass behind it); behind it the
-  top combed back and over to the far side, the ends tucked in, puffed a little at the sides and the back. Both eyes
-  show at every heading.
+- *Now* (2n, `render/faces.js`, `hairBack()`, `pompadour()`, `wildHair()`): PR #74's pompadour exactly as it was
+  (shape, size, strands, colours and outline), with one change: its lick, the curl at the near end of the roll that came
+  forward over the brow to a flick past the eye, is turned round, curling up and back over the hair behind it, its two
+  combed strands following it. Two tries that reworked more were turned down; Haakon (31 October): "it looks horrible.
+  I want the original hair, but I want the lick reversed. That's all. Keep it that simple."
 - Drawn in the head's own frame, so it is the same at every heading, and still: nothing in it moves, with reduced motion
   or without. Capricious's Wildcard mood wears it too. Drawing only.
 
