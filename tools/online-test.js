@@ -574,3 +574,30 @@ console.log(`ok: ${rounds} rounds (seed ${SEED}), ${ticks} ticks, ${checks} chec
 console.log(`ok: crossed, ${MIN} times at least: all ${KINDS.length} kinds of event and all they say, all ${FIELDS.length} fields of a snake, its ${LOOKS.length} looks, the food, the woodpecker, fire and weather (${seen.size} things in all; ${stagedAll} events staged: ${[...staged].map(([k, v]) => `${k} ${v}`).join(', ') || 'none'})`);
 console.log(`ok: all ${SAMPLES.length} kinds of message round-trip unchanged, as typed; their shapes match the pin (protocol ${O.VERSION}, shapes ${FINGERPRINT}, ${kindsNow.length} kinds)`);
 console.log(`ok: crossed, once at least: all ${FATAL.length} ways to be out (${FATAL.map(k => `${k} ${n(`death fatal ${k}`)}`).join(', ')}; staged on boards of their own: ${deathsStaged.join(', ') || 'none'})`);
+
+// A page going away (closed, reloaded, off elsewhere) closes its room at once, so the others hear a plain close now,
+// not after the silence it takes to notice (20 s, 8 s): net.js with a stand-in PeerJS, one host and one friend.
+(async () => {
+  const on = {}, made = [];
+  const emitter = o => { const h = {}; return Object.assign(o, { on: (t, f) => { (h[t] ||= []).push(f); }, once: (t, f) => { (h[t] ||= []).push(f); }, off() {}, fire: (t, ...a) => (h[t] || []).forEach(f => f(...a)) }); };
+  const conn = () => emitter({ open: true, peer: 'friend-' + made.length, closed: 0, close() { this.closed++; }, send() {} });
+  class Peer { constructor(id) { emitter(this); this.id = typeof id === 'string' ? id : 'guest'; this.destroyed = false; made.push(this); setTimeout(() => this.fire('open'), 0); }
+    destroy() { this.destroyed = true; } connect() { const c = conn(); this.out = c; setTimeout(() => c.fire('open'), 0); return c; } }
+  const win = { Peer, addEventListener: (t, f) => { on[t] = f; } };
+  const ctx = vm.createContext({ window: win, addEventListener: win.addEventListener, performance, setTimeout, clearTimeout, setInterval, clearInterval, console });
+  vm.runInContext(NET, ctx);
+  const Net = vm.runInContext('typeof SnakeNet !== "undefined" ? SnakeNet : window.SnakeNet', ctx);
+  let lost = 0;
+  const hosted = await Net.host({ newCode: () => 'ABCDE', onLeave() {}, onMessage() {} });
+  const inbound = conn(); made[0].fire('connection', inbound); inbound.fire('open');
+  const joined = await Net.join('ABCDE', { onMessage() {}, onLost: () => lost++ });
+  if (!on.pagehide) { console.error('net.js listens for no pagehide: a page going away leaves its room to time out'); process.exit(1); }
+  on.pagehide();
+  const guestPeer = made[1];
+  if (!inbound.closed || !made[0].destroyed || !guestPeer.out.closed || !guestPeer.destroyed || lost) {
+    console.error('a page going away left its room open', { hostConn: inbound.closed, hostPeer: made[0].destroyed, guestConn: guestPeer.out.closed, guestPeer: guestPeer.destroyed, lost }); process.exit(1);
+  }
+  on.pagehide(); hosted.close(); joined.close(); // (again, and closed by hand after: nothing twice, nothing thrown)
+  console.log('ok: a page going away closes its room at once, the host’s and a friend’s (no message: the others hear a plain close)');
+  process.exit(0);
+})();

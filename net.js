@@ -81,6 +81,13 @@ window.SnakeNet = (() => {
     }), () => opened?.destroy());
   }
 
+  // A page going away (closed, reloaded, off to another site) closes its room at once, so the others hear of it
+  // now, as a plain close, not after the silence it takes to notice (20 s for a friend, 8 for the host). No
+  // message: just the connections closed.
+  /** @type {Set<{ close(): void }>} */
+  const leaving = new Set();
+  addEventListener('pagehide', () => { for (const room of [...leaving]) room.close(); });
+
   // Host a room. newCode() makes room codes; a taken one is replaced (up to 4 tries).
   // Callbacks: onLeave(id), onMessage(id, msg), and optionally onJoin(id) (a
   // connection opened; it's admitted once its hello is accepted) and onLost(err)
@@ -141,7 +148,7 @@ window.SnakeNet = (() => {
 
     /** @param {string} id @param {HostMessage} msg */
     const send = (id, msg) => { const f = friends.get(id); if (f?.conn.open) f.conn.send(msg); };
-    return {
+    const room = {
       code,
       send,
       /** @param {HostMessage} msg */
@@ -156,8 +163,10 @@ window.SnakeNet = (() => {
       rtt() { let sum = 0, n = 0; for (const f of friends.values()) if (f.rtt) { sum += f.rtt; n++; } return n ? sum / n : 0; },
       /** @param {string} id */
       drop(id) { const f = friends.get(id); if (f) { friends.delete(id); f.conn.close(); } },
-      close() { clearInterval(pinger); for (const f of friends.values()) f.conn.close(); friends.clear(); peer.destroy(); },
+      close() { leaving.delete(room); clearInterval(pinger); for (const f of friends.values()) f.conn.close(); friends.clear(); peer.destroy(); },
     };
+    leaving.add(room);
+    return room;
   }
 
   // Join a room by its code. Callbacks: onMessage(msg), onLost(reason).
@@ -195,12 +204,14 @@ window.SnakeNet = (() => {
     // Lets the host notice within a moment if this browser goes quiet.
     const keepalive = setInterval(() => { if (conn.open) conn.send({ t: 'k' }); }, KEEPALIVE_MS);
 
-    return {
+    const room = {
       id: peer.id,
       /** @param {GuestMessage} msg */
       send(msg) { if (conn.open) conn.send(msg); },
-      close() { if (closed) return; closed = true; clearInterval(watch); clearInterval(keepalive); conn.close(); peer.destroy(); },
+      close() { leaving.delete(room); if (closed) return; closed = true; clearInterval(watch); clearInterval(keepalive); conn.close(); peer.destroy(); },
     };
+    leaving.add(room);
+    return room;
   }
 
   return { host, join, explain };
