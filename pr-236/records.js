@@ -1,0 +1,435 @@
+// The Hall of Fame, your stats and your best score, saved in this browser
+// only. Every storage access is wrapped, and whatever comes back from storage
+// is checked before use, so blocked or corrupt storage never breaks the game.
+window.SnakeRecords = (() => {
+  const SCORES_KEY = 'snake-highscores';
+  const STATS_KEY = 'snake-stats';
+  const NAME_KEY = 'snake-name';
+  const BEST_KEY = 'snake-best';
+  const PLAYER_KEY = 'snake-player';
+  const PROBE_KEY = 'snake-probe';
+  const LINEUP_KEY = 'snake-lineup'; // (the rivals you chose, for good: no longer read, and never renamed; see VISIT_KEY)
+  const VISIT_KEY = 'snake-visit-lineup'; // (the rivals you chose this visit, seat by seat)
+  const DECK_KEY = 'snake-deck';     // (the rivals still to be dealt before any comes round again)
+  const MAX_SCORES = 10;
+  const MAX_NAME = 16;
+  const DEFAULT_NAME = 'Green'; // (what the game calls you until you carve a name)
+  const OLD_DEFAULT = 'You';    // (what your unnamed rows used to say: they say Green now)
+
+  // A browser that won't keep anything (storage blocked, or full) still gets
+  // its records for as long as the tab is open: whatever couldn't be written
+  // is kept here instead, as storage would have it, and the Hall of Fame says so.
+  const memory = new Map();
+  let keeping = true;
+  try { localStorage.setItem(PROBE_KEY, '1'); localStorage.removeItem(PROBE_KEY); } catch { keeping = false; }
+  let playedHere = 0, wiped = false; // (this session: rounds recorded, and whether you cleared everything)
+
+  function load(key, fallback) {
+    try { return JSON.parse(memory.has(key) ? memory.get(key) : localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+  }
+
+  function save(key, value) {
+    const text = JSON.stringify(value);
+    try { localStorage.setItem(key, text); memory.delete(key); } catch { keeping = false; memory.set(key, text); }
+  }
+
+  // Names from anywhere (typed, stored or a friend's) lose control and
+  // text-direction characters, keep single spaces, and are cut at MAX_NAME
+  // characters (whole ones: never half an emoji).
+  const UNSAFE = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g;
+  function cleanName(text) {
+    return [...String(text ?? '').replace(UNSAFE, '').replace(/\s+/g, ' ').trim()].slice(0, MAX_NAME).join('').trim();
+  }
+  // Anything else stored or shared: plain colours, plausible numbers and dates, short ids.
+  const cleanColor = c => (typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c) ? c : '#a8a29e');
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, num(v)));
+  const cleanId = v => String(v ?? '').replace(/[^\w-]/g, '').slice(0, 40);
+  const isDate = d => Number.isFinite(d) && d > 0 && d <= Date.now() + 864e5;
+
+  const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  const count = v => Math.round(clamp(v, 0, 1e6)); // a tally: a whole number, never negative
+
+  // Rank: better place first (a win beats a shared-first draw), then the
+  // longer survival, then more food, then the older entry.
+  const compare = (a, b) => a.place - b.place || b.won - a.won || b.survived - a.survived || b.eaten - a.eaten || a.date - b.date;
+
+  // Rivals that were renamed: their old rows and kills carry over.
+  const RENAMED = Object.freeze({ __proto__: null, Hunter: 'Sniper' });
+
+  // Stored entries, cleaned up: anything malformed is dropped.
+  function scores() {
+    const raw = load(SCORES_KEY, []);
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(e => e && typeof e === 'object' && Number.isFinite(e.place) && isDate(e.date)).map(cleanEntry).sort(compare);
+  }
+
+  // A row's name: a renamed rival goes by its new one, and your own unnamed
+  // rows (from before, "You") are Green.
+  function rowName(e) {
+    if (e.ai && typeof e.name === 'string' && RENAMED[e.name]) return RENAMED[e.name];
+    const name = cleanName(e.name);
+    return !name || (name === OLD_DEFAULT && !e.ai && !e.friend) ? DEFAULT_NAME : name;
+  }
+
+  function cleanEntry(e) {
+    return {
+      id: cleanId(e.id ?? e.date) || cleanId(e.date), name: rowName(e),
+      color: cleanColor(e.color), ai: !!e.ai,
+      place: Math.round(clamp(e.place, 1, 4)), won: !!e.won, draw: !!e.draw,
+      eaten: Math.round(clamp(e.eaten, 0, 9999)), survived: Math.round(clamp(e.survived, 0, 36e5)), date: e.date,
+      watched: !!e.watched,
+      friend: !!e.friend && !e.ai,
+      owner: typeof e.owner === 'string' ? cleanId(e.owner) : (e.ai || e.friend ? '' : playerId()),
+      round: typeof e.round === 'string' ? cleanId(e.round) : '',
+      chosen: !!e.chosen, // (a round whose rivals were chosen, not dealt)
+    };
+  }
+
+  // A random id for whoever plays in this browser, so a round shared between
+  // friends' Halls of Fame is never counted twice.
+  let me = null;
+  function playerId() {
+    if (me) return me;
+    const stored = load(PLAYER_KEY, null);
+    me = typeof stored === 'string' && /^[a-z0-9]{8,40}$/.test(stored) ? stored : Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+    if (me !== stored) save(PLAYER_KEY, me);
+    return me;
+  }
+
+  // The same round of the same person, wherever it was recorded.
+  const sameAs = e => (e.owner && e.round ? `r:${e.round}:${e.owner}` : e.owner ? `o:${e.owner}:${e.id}` : null);
+
+  function stats() {
+    const raw = load(STATS_KEY, {});
+    const s = raw && typeof raw === 'object' ? raw : {};
+    const places = Array.isArray(s.places) && s.places.length === 4 ? s.places.map(count) : [0, 0, 0, 0];
+    const killers = Object.create(null); // (so a rival named "constructor" is just a name)
+    if (s.killers && typeof s.killers === 'object' && !Array.isArray(s.killers)) for (const [k, v] of Object.entries(s.killers)) {
+      const name = RENAMED[k] || cleanName(k); // (RENAMED has no prototype, so "constructor" isn't in it)
+      if (name) killers[name] = (killers[name] || 0) + count(v);
+    }
+    return { played: count(s.played), wins: count(s.wins), draws: count(s.draws), places, killers, totalEaten: count(s.totalEaten) };
+  }
+
+  function getName() {
+    const n = load(NAME_KEY, DEFAULT_NAME);
+    return typeof n === 'string' && n.trim() && n !== OLD_DEFAULT ? n.slice(0, MAX_NAME) : DEFAULT_NAME;
+  }
+  const hasName = () => getName() !== DEFAULT_NAME;
+
+  const getBest = () => num(load(BEST_KEY, 0));
+  const setBest = v => save(BEST_KEY, v);
+
+  // The stored list is the overall top 10 plus your own top 10, so the AIs
+  // can't push all of your rounds out.
+  const topOverall = list => list.slice(0, MAX_SCORES);
+  const topPlayer = list => list.filter(e => !e.ai && !e.friend).slice(0, MAX_SCORES);
+
+  // score = { name, color, ai, place, won, draw, eaten, survived, watched,
+  //   friend, owner, round, id, date }. The last five are for rounds that came
+  //   from friends or were played with them; a round already here isn't added
+  //   twice. Returns the entry id.
+  function addScore(score) {
+    const entry = cleanEntry({
+      ...score,
+      id: typeof score.id === 'string' && cleanId(score.id) ? score.id : Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      date: isDate(score.date) ? score.date : Date.now(),
+      owner: score.ai ? '' : typeof score.owner === 'string' ? score.owner : playerId(),
+    });
+    const list = scores();
+    const key = sameAs(entry);
+    const already = key && list.find(e => sameAs(e) === key);
+    if (already) return already.id;
+    const sorted = [...list, entry].sort(compare);
+    const keep = new Set([...topOverall(sorted), ...topPlayer(sorted)]);
+    save(SCORES_KEY, sorted.filter(e => keep.has(e)));
+    return entry.id;
+  }
+
+  // Where an entry sits: { overall, personal }, each 1-based or 0 if not in that top 10.
+  function rankOf(id) {
+    const list = scores();
+    return {
+      overall: topOverall(list).findIndex(e => e.id === id) + 1,
+      personal: topPlayer(list).findIndex(e => e.id === id) + 1,
+    };
+  }
+
+  // result = { place, won, draw, eaten, survived, killer }. Updates your stats
+  // and adds a Hall of Fame entry under your saved name. Returns the entry id.
+  function recordPlayer(result) {
+    const st = stats();
+    st.played++;
+    if (result.won) st.wins++;
+    if (result.draw) st.draws++;
+    if (result.place >= 1 && result.place <= 4) st.places[result.place - 1]++;
+    const killer = result.killer && cleanName(result.killer);
+    if (killer) st.killers[killer] = (st.killers[killer] || 0) + 1;
+    st.totalEaten += num(result.eaten);
+    save(STATS_KEY, st);
+    playedHere++;
+    return addScore({ ...result, name: getName(), ai: false });
+  }
+
+  // Your best rounds, to share with friends when you play together. Unnamed
+  // ones go under the name you're playing as.
+  function shareable(playingAs) {
+    return topPlayer(scores()).map(e => ({
+      id: e.id, name: e.name === DEFAULT_NAME ? playingAs : e.name, place: e.place, won: e.won, draw: e.draw,
+      eaten: e.eaten, survived: e.survived, date: e.date, round: e.round, owner: e.owner, chosen: e.chosen,
+    }));
+  }
+
+  // Rows a friend shared, as the host passes them on: only that friend's own
+  // (owner), at most ten, cleaned.
+  function cleanShared(entries, owner) {
+    if (!Array.isArray(entries)) return [];
+    return entries.filter(e => e && typeof e === 'object' && e.owner === owner && Number.isFinite(e.place) && isDate(e.date)).slice(0, MAX_SCORES)
+      .map(e => { const c = cleanEntry(e); return { id: c.id, name: c.name, place: c.place, won: c.won, draw: c.draw, eaten: c.eaten, survived: c.survived, date: c.date, round: c.round, owner: c.owner, chosen: c.chosen }; });
+  }
+
+  // A friend's shared rounds, in their seat color. Checked like anything else
+  // from outside, and your own rounds coming back are skipped.
+  function importShared(entries, color) {
+    if (!Array.isArray(entries)) return;
+    for (const e of entries.slice(0, 4 * MAX_SCORES)) {
+      if (!e || typeof e !== 'object' || typeof e.owner !== 'string' || !e.owner || e.owner === playerId()) continue;
+      if (!Number.isFinite(e.place) || e.place < 1 || e.place > 4 || !isDate(e.date)) continue;
+      addScore({ ...e, name: e.name || 'Friend', color, friend: true, ai: false, watched: false });
+    }
+  }
+
+  // A friend's result in a round you played together (never one claiming to be yours).
+  function recordFriend(result, { name, color, owner, round }) {
+    if (owner === playerId()) return null;
+    return addScore({ ...result, name, color, owner, round, friend: true });
+  }
+
+  // Your name, as the Hall of Fame and your friends online see it.
+  function setName(name) {
+    name = cleanName(name);
+    if (!name || name === OLD_DEFAULT) name = DEFAULT_NAME;
+    save(NAME_KEY, name);
+    return name;
+  }
+
+  // Carving a name: this round's row takes it, and so do all your unnamed ones.
+  function rename(id, name) {
+    name = setName(name);
+    const list = scores();
+    const carve = list.filter(e => e.id === id || (!e.ai && !e.friend && e.name === DEFAULT_NAME));
+    for (const e of carve) e.name = name;
+    if (carve.length) save(SCORES_KEY, list);
+  }
+
+  function reset() {
+    for (const key of [SCORES_KEY, STATS_KEY, BEST_KEY]) memory.delete(key);
+    try {
+      localStorage.removeItem(SCORES_KEY);
+      localStorage.removeItem(STATS_KEY);
+      localStorage.removeItem(BEST_KEY);
+    } catch { /* storage unavailable */ }
+    wiped = true;
+  }
+
+  // ---------------------------------------------------------------- the line-up
+
+  // The rivals you chose for the start card's seats: a persona's key, or null
+  // for "Any" (dealt). They last this visit (this tab, reloads too, in
+  // sessionStorage), and the next time the game is opened every seat is "Any".
+  // pool: the keys there are, so a stored one that's gone (or a seat chosen
+  // twice) comes back as "Any".
+  const SEATS = 3;
+  let visitSeats = null; // (where sessionStorage won't keep them)
+  function seats(pool) {
+    let raw = visitSeats;
+    try { raw = JSON.parse(sessionStorage.getItem(VISIT_KEY)) ?? visitSeats; } catch { /* storage unavailable */ }
+    const out = [];
+    for (let i = 0; i < SEATS; i++) {
+      const k = Array.isArray(raw) ? raw[i] : null;
+      out.push(typeof k === 'string' && pool.includes(k) && !out.includes(k) ? k : null);
+    }
+    return out;
+  }
+  // Seat i gets key (null: "Any"). One already in another seat swaps with it.
+  function setSeat(pool, i, key) {
+    const list = seats(pool);
+    if (!(i >= 0 && i < SEATS)) return list;
+    key = typeof key === 'string' && pool.includes(key) ? key : null;
+    const other = key ? list.indexOf(key) : -1;
+    if (other >= 0 && other !== i) list[other] = list[i];
+    list[i] = key;
+    visitSeats = list;
+    try { sessionStorage.setItem(VISIT_KEY, JSON.stringify(list)); } catch { /* kept in visitSeats */ }
+    return list;
+  }
+
+  // n rivals from this browser's deck: every one of pool is dealt before any
+  // comes round again. skip: keys not to deal (chosen ones; they stay in the
+  // deck for later). The deck is shuffled afresh when it runs out, after
+  // whatever it still holds.
+  function deal(pool, n, skip = []) {
+    const raw = load(DECK_KEY, []);
+    let deck = Array.isArray(raw) ? raw.filter((k, i) => pool.includes(k) && raw.indexOf(k) === i) : [];
+    const out = [];
+    for (let fresh = 0; out.length < n && fresh < 2; fresh++) {
+      deck = deck.filter(k => {
+        if (out.length >= n || skip.includes(k) || out.includes(k)) return true;
+        out.push(k);
+        return false;
+      });
+      if (out.length < n) {
+        const more = pool.filter(k => !deck.includes(k));
+        for (let i = more.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [more[i], more[j]] = [more[j], more[i]]; }
+        deck.push(...more);
+      }
+    }
+    save(DECK_KEY, deck);
+    return out;
+  }
+
+  // Rivals dealt but never met go back in the deck. Within a visit they go on
+  // top, so they're next; anywhere (the page closing on a start card), each
+  // goes to a random place among the rivals not yet dealt: everyone is still
+  // met before anyone comes round again, but opening the game gives a fresh cast.
+  function undeal(pool, keys, { anywhere = false } = {}) {
+    if (!keys.length) return;
+    const raw = load(DECK_KEY, []), deck = Array.isArray(raw) ? raw.filter(k => pool.includes(k)) : [];
+    const back = keys.filter((k, i) => pool.includes(k) && !deck.includes(k) && keys.indexOf(k) === i);
+    if (!anywhere) return save(DECK_KEY, [...back, ...deck]);
+    for (const k of back) deck.splice(Math.floor(Math.random() * (deck.length + 1)), 0, k);
+    save(DECK_KEY, deck);
+  }
+
+  // ---------------------------------------------------------------- rendering
+
+  const ordinal = n => n + (['th', 'st', 'nd', 'rd'][n] || 'th');
+  const placeLabel = e => e.won ? 'Won' : e.draw ? 'Shared 1st' : ordinal(e.place);
+  const clock = ms => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
+
+  function el(tag, props = {}, ...children) {
+    const node = Object.assign(document.createElement(tag), props);
+    node.append(...children);
+    return node;
+  }
+
+  // paint: a background the game draws for that snake, as on its tag (Mason's marble, Ghost's pale fill), or null for its colour.
+  const dot = (color, paint = null) => { const d = el('span', { className: 'dot' }); d.style.background = paint || cleanColor(color); return d; };
+  // A tag after a name, with a comma only a screen reader hears ("Green, this round", not "Greenthis round").
+  const tag = text => [el('span', { className: 'sr-only', textContent: ', ' }), el('span', { className: 'who', textContent: text })];
+
+  // At the top of both tabs, while nothing here will outlast the tab.
+  const keepingNote = container => {
+    if (!keeping) container.append(el('p', { className: 'records-note', textContent: 'This browser isn’t keeping records, so these last until you close the tab.' }));
+  };
+
+  // filter: 'all' (everyone, overall top 10) or 'me' (your top 10).
+  // playerColor colors your rows' dots; AI rows use the color saved with them.
+  const safeDate = (fmt, d) => { try { return fmt.format(d); } catch { return ''; } };
+
+  // paint: (a rival's name) => a dot's background, or null (see dot).
+  function renderScores(container, highlightId, filter, playerColor, paint = null) {
+    const all = scores();
+    const list = filter === 'me' ? topPlayer(all) : topOverall(all);
+    keepingNote(container);
+    if (!list.length) {
+      container.append(el('p', { className: 'empty', textContent: 'No legends yet. Go make one.' }));
+      return;
+    }
+    const fmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
+    const rows = list.map((e, i) => el('tr', { ...(e.id === highlightId && { ariaCurrent: 'true' }), className: [e.id === highlightId && 'highlight', e.ai && 'ai', e.friend && 'friend'].filter(Boolean).join(' ') },
+      el('td', { className: 'num', textContent: i + 1 }),
+      el('td', { className: 'name', title: (e.watched ? `${e.name} (a watched round)` : e.friend ? `${e.name} (a friend)` : e.name) + (e.chosen ? ', rivals chosen' : '') },
+        dot(e.ai || e.friend ? e.color : playerColor, e.ai && paint ? paint(e.name) : null), e.name, ...(e.friend ? tag('friend') : []),
+        ...(e.id === highlightId ? tag('this round') : []), ...(e.chosen ? tag('chosen') : [])),
+      el('td', { className: e.won ? 'won' : '', textContent: placeLabel(e) }),
+      el('td', { className: 'num', textContent: e.survived ? clock(e.survived) : '–' }),
+      el('td', { className: 'num', textContent: e.eaten }),
+      el('td', { className: 'muted date', textContent: safeDate(fmt, e.date) }),
+    ));
+    container.append(el('table', { className: 'scores-table' },
+      el('thead', {}, el('tr', {},
+        el('th', { className: 'num', textContent: '#' }),
+        el('th', { textContent: 'Name' }),
+        el('th', { textContent: 'Result' }),
+        el('th', { className: 'num', textContent: 'Time' }),
+        el('th', { className: 'num', textContent: 'Score' }),
+        el('th', { className: 'date', textContent: 'Date' }),
+      )),
+      el('tbody', {}, ...rows),
+    ));
+  }
+
+  // colors: { name -> color } for the snakes, used in the "what got you" bars.
+  function renderStats(container, colors, paint = null) {
+    const st = stats();
+    keepingNote(container);
+    if (!st.played) {
+      // (Never "you haven't played" to someone who has, this session: after a clear, it's a fresh start.)
+      container.append(el('p', { className: 'empty', textContent: playedHere || wiped ? 'A clean slate. The log is waiting.' : 'You haven’t played yet. The log is waiting.' }));
+      return;
+    }
+    const avgPlace = st.places.reduce((sum, n, i) => sum + n * (i + 1), 0) / st.played;
+    const tile = (label, value, sub) => el('div', { className: 'tile' },
+      el('div', { className: 'tile-value', textContent: value }),
+      el('div', { className: 'tile-label', textContent: label + (sub ? ` · ${sub}` : '') }),
+    );
+    container.append(el('div', { className: 'tiles' },
+      tile('Rounds', st.played),
+      tile('Wins', st.wins, `${Math.round(100 * st.wins / st.played)}%`),
+      tile('Avg place', avgPlace.toFixed(1)),
+      tile('Avg score', (st.totalEaten / st.played).toFixed(1)),
+    ));
+
+    const bars = (title, items) => {
+      const max = Math.max(1, ...items.map(i => i.count));
+      return el('section', { className: 'bars' },
+        el('h3', { textContent: title }),
+        ...items.map(i => el('div', { className: 'bar-row' },
+          el('span', { className: 'bar-label' }, ...(i.color ? [dot(i.color, i.paint)] : []), i.label),
+          el('span', { className: 'bar-track' },
+            el('span', { className: 'bar-fill', style: `width:${100 * i.count / max}%;background:${i.fill || i.color}` })),
+          el('span', { className: 'bar-count', textContent: i.count }),
+        )),
+      );
+    };
+
+    // (1st place counts wins and shared firsts: shown apart, so it agrees with Wins.)
+    const finishes = [{ label: 'Won', count: st.wins, fill: 'var(--leaf)' }];
+    if (st.draws) finishes.push({ label: 'Shared 1st', count: st.draws, fill: 'var(--leaf)' });
+    for (let i = 1; i < 4; i++) finishes.push({ label: ordinal(i + 1), count: st.places[i], fill: 'var(--leaf)' });
+    container.append(bars('How you finished', finishes));
+
+    // What got you that isn't a snake: its bar label, and how it reads in
+    // "Your nemesis: …" (the same thing, in the same words; "&" keeps the edge
+    // and its holes one thing in a tie). The key stays 'wall', so old stats
+    // carry over; the words say edge, as the game does. (Pecks were counted
+    // there too, before the woodpecker had its own.)
+    const NOT_A_SNAKE = {
+      __proto__: null, // (so a rival named "constructor" is just a name)
+      wall: ['Edge & holes', 'the edge & holes'],
+      woodpecker: ['Woodpecker', 'the woodpecker'],
+      self: ['Yourself', 'yourself'],
+      hunger: ['Hunger', 'hunger'],
+      fire: ['Fire', 'fire'],
+    };
+    const killerLabel = k => NOT_A_SNAKE[k]?.[0] ?? k;
+    const nemesisOf = k => NOT_A_SNAKE[k]?.[1] ?? k;
+    const killers = Object.entries(st.killers)
+      .map(([k, count]) => ({ key: k, label: killerLabel(k), count, color: colors[k] || '#a8a29e', paint: paint ? paint(k) : null }))
+      .sort((a, b) => b.count - a.count);
+    if (killers.length) {
+      const top = killers[0];
+      const tied = killers.filter(k => k.count === top.count).map(k => nemesisOf(k.key));
+      container.append(el('p', { className: 'nemesis' }, tied.length > 1
+        ? `No nemesis yet: ${tied.slice(0, -1).join(', ')} and ${tied[tied.length - 1]} are tied.`
+        : el('span', {}, 'Your nemesis: ', dot(top.color, top.paint), el('strong', { textContent: nemesisOf(top.key) }), '.')));
+      container.append(bars('What got you', killers));
+    }
+  }
+
+  return {
+    MAX_SCORES, SEATS, seats, setSeat, deal, undeal, cleanName, cleanShared, scores, stats, addScore, recordPlayer, recordFriend, shareable, importShared, playerId, rankOf, rename, setName, reset, getName, hasName, getBest, setBest,
+    renderScores, renderStats, ordinal, clock,
+  };
+})();
