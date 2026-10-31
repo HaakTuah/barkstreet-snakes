@@ -2048,6 +2048,16 @@ window.SnakeAI = (() => {
         return inside(x, y) ? y * N + x : -1;
       };
       const free = i => i >= 0 && myCells[i] !== stampM && mineFree[i] <= 1; // (free by next tick)
+      // Leap now (pressed twice, over open ground) is weighed only when the
+      // crawl is in trouble: it ends in a crash (trapped), through a neck a
+      // rival could shut (boxed), or its first move is a cell a rival's head
+      // could take this tick (a head-on: in the air I pass over it). On open
+      // ground it does what a crawl would, for the tip of my tail and a rest
+      // I then don't have for a real hurdle: weighed everywhere at twice the
+      // jump's price, rivals with it came out even with rivals without, in
+      // three head-to-heads.
+      const crawlCell = cellAt(myHead.x + crawlDir.x, myHead.y + crawlDir.y);
+      const fleeing = trapped || boxed || (crawlCell >= 0 && strikes[crawlCell] >= w.headRisk);
       // Something to hop: a body still there next tick (mine too), or fire;
       // a hole, if I can tell it from the woodpecker's mark (a mark isn't a
       // hole yet: I'd crawl in), or if it's that or a crash.
@@ -2136,6 +2146,7 @@ window.SnakeAI = (() => {
           if (span > TUNE.LEAP_REACH || span >= n || !lands(span, false)) return null;
           first = span;
         } else {
+          if (!golden && !fleeing) return null; // (leap now: only out of trouble, above)
           for (span = Math.min(TUNE.LEAP_REACH, n - 1); span >= 1 && !lands(span, false); span--); // (where the engine puts it down: the farthest free cell; safe or not, below)
           if (span < 1) return null;
           first = span; now = true;

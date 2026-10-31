@@ -80,6 +80,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
         c['hop' + Math.min(3, e.reach)]++;
         if (Array.from({ length: e.reach }, (_, i) => (e.y + e.snake.dir.y * i) * N + e.x + e.snake.dir.x * i).some(k => g.holes.has(k))) c.hopHole++;
         (st.hopAt ||= new Map()).set(e.snake, g.tick);
+        (st.hopReach ||= new Map()).set(e.snake, e.reach); // (how far the hop would have gone: a golden flight past it is a flight)
         const from = e.snake.body[1]; (st.isleFrom ||= new Map()).set(e.snake, from ? from.y * N + from.x : -1); // (2r: the cell it took off from)
       }
       if (e.type === 'spawn' && e.kind === 'beetle') { total.beetles++; if (e.gold) { c.goldBeetles++; seen.add('goldBeetle'); } }
@@ -113,12 +114,13 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     }
     // (golden leaps got: what's held now, and spent this tick, over what was held)
     for (const s of g.snakes) { const f = s.flight, was = (st.flyDir ||= new Map()).get(s); if (f && was && f.dir !== was) c.airTurns++; st.flyDir.set(s, f ? f.dir : null); } // (turns in the air: a golden flight steered)
-    for (const s of g.snakes) if (s.landing && s.flew) { c.goldFlown += s.flew; c.goldFlights++; s.flew = 0; } // (golden flights, and how far each flew)
+    for (const s of g.snakes) if (s.landing && s.flew) { c.goldFlown += s.flew; c.goldFlights++; if (s.flew > (st.hopReach?.get(s) ?? Infinity)) { c.flyPast++; (st.flyAt ||= new Map()).set(s, g.tick); } s.flew = 0; } // (golden flights, and how far each flew; past the plain hop's cells, a flight held on)
     for (const s of g.snakes) c.goldGot += Math.max(0, s.leaps + g.events.filter(e => e.type === 'leap' && e.gold && e.snake === s).length - held[s.id]);
     const left = g.snakes.filter(s => s.alive).length;
     for (const s of dying) {
       if (st.hopAt?.has(s) && g.tick - st.hopAt.get(s) <= 30) c.hopDie++;
       if (st.nowAt?.has(s) && g.tick - st.nowAt.get(s) <= 30) c.nowDie++; // (out within 3 s of a leap now: it failed)
+      if (st.flyAt?.has(s) && g.tick - st.flyAt.get(s) <= 30) c.flyDie++; // (out within 3 s of a flight past the plain hop)
       place.set(s, left + 1);
       per[s.name].aliveMs += g.time;
       const cause = causeOf(s);
