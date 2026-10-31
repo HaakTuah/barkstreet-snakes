@@ -22,10 +22,10 @@ self.addEventListener('activate', e => e.waitUntil(caches.keys().then(keys => Pr
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
-  const plain = new URL(req.url); plain.search = ''; // (a room link's ?join=… is the same page: one copy of it)
+  const plain = new URL(req.url); plain.search = ''; // (a room link's ?join=… is the same page: one copy of it; update.js's look at version.js, no-store, keeps none, so the offline copy's stays with its files)
   if (!PREVIEW && /^pr-\d+(\/|$)/.test(plain.pathname.slice(SCOPE.length))) return; // (a preview's, before its own worker takes it over: the network's)
   e.respondWith(fetch(req).then(res => {
-    if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(plain.href, copy)).catch(() => {}); }
+    if (res.ok && req.cache !== 'no-store') { const copy = res.clone(); caches.open(CACHE).then(c => c.put(plain.href, copy)).catch(() => {}); }
     return res;
   }).catch(() => caches.open(CACHE).then(c => c.match(req, { ignoreSearch: true })).then(hit => hit || Response.error()))); // (its own cache only)
 });

@@ -4,7 +4,7 @@
 // reloads there, once, with no question. After an update the start card's
 // intro line says what is new for a few rounds (a first visit shows none), then
 // it goes. Online, the host's Host a game goes into the new version first and
-// the room opens there.
+// the room opens there; a friend joining does the same, and joins.
 await b.viewport(1280, 800);
 let loads = 0;
 const stop = b.on('Page.loadEventFired', () => loads++);
@@ -24,8 +24,9 @@ const went = await reloaded(from, 40000);
 const left = await ev(`sessionStorage.getItem('t-left')`);
 check(went && left === 'over' && (await ev(`SnakeDebug.state()`)) === 'ready', '...at the round’s end it reloads into it, with no question, on to the start card', `reloaded ${went}, left at ${left}`);
 from = loads;
+const again = await newer('next'); // (the site half published: the build it reloaded for, still not what it got)
 await b.sleep(1500);
-check(loads === from && (await ev(`SnakeUpdate.waiting()`)) === null, '...once: the page it got stays (a build it reloaded for and didn’t get is let be)', `${loads - from} more loads`);
+check(again === null && loads === from, '...once: the build it reloaded for and didn’t get is let be (no loop)', `found ${again}, ${loads - from} more loads`);
 
 // What changed: a returning player's next few start cards, then gone; a first visit, none.
 const line = await ev(`'New: ' + SnakeVersion.news[0].line`);
@@ -55,6 +56,18 @@ from = loads;
 await ev(`document.getElementById('start').click(); 1`);
 const hosted = await reloaded(from);
 const after = await P();
-check(hosted && after.state === 'lobby' && after.title === 'Play with friends', 'Host a game with a newer version out: into it first, and the room opens there', `reloaded ${hosted}, ${after.state}: ${after.title}`);
+const opening = await ev(`document.getElementById('lobby-status').textContent`);
+check(hosted && after.state === 'lobby' && after.title === 'Play with friends' && opening !== '', 'Host a game with a newer version out: into it first, and the room opens there', `reloaded ${hosted}, ${after.state}: ${after.title}; “${opening}”`);
+await ev(`backToStart(); 1`);
+
+// A friend joining with a newer version out: into it first, and joins straight (the room's code kept).
+await ev(`document.getElementById('friends').click(); 1`);
+await b.sleep(300);
+await newer('next3');
+from = loads;
+await ev(`joinRoom('K7QXM'); 1`);
+const joined = await reloaded(from);
+const there = await ev(`[location.search, SnakeDebug.state(), document.getElementById('overlay-text').textContent]`);
+check(joined && /join=K7QXM/.test(there[0]) && there[1] === 'lobby', 'joining with a newer version out: into it first, and on to the same room', `reloaded ${joined}, ${JSON.stringify(there)}`);
 await ev(`backToStart(); 1`);
 stop();
