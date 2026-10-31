@@ -1,7 +1,7 @@
 // ------------------------------------------------------------ desktop
 await b.viewport(1280, 800);
 await load();
-// Choosing your rivals: a seat opens the picker; a rival chosen sits there, remembered; "Any" deals again.
+// Choosing your rivals: a seat opens the picker; a rival chosen sits there for this visit, pinned; the pin or "Any" deals again.
 const seated = () => ev(`SnakeDebug.game().snakes.filter(s => s.persona).map(s => s.personaKey).join()`);
 const before = (await seated()).split(',');
 await ev(`document.querySelector('.seat[data-seat="1"]').click(); 'ok'`);
@@ -13,14 +13,46 @@ check(!pk.open && pk.focus === '1' && await seated() === before.join(), '...Esc 
 const pickKey = ['mason', 'star', 'ghost', 'joker'].find(k => !before.includes(k));
 await ev(`document.querySelector('.seat[data-seat="1"]').click(); document.querySelector('#picker .pick[data-key="${pickKey}"]').click(); 'ok'`);
 let now = (await seated()).split(',');
-pk = await ev(`({ chosen: document.querySelector('.seat[data-seat="1"]').classList.contains('chosen'), open: !document.getElementById('picker').hidden, kept: localStorage.getItem('snake-lineup'), game: SnakeDebug.game().chosen })`);
+pk = await ev(`({ chosen: document.querySelector('.seat[data-seat="1"]').classList.contains('chosen'), open: !document.getElementById('picker').hidden, kept: sessionStorage.getItem('snake-visit-lineup'), game: SnakeDebug.game().chosen })`);
 check(now[1] === pickKey && now[0] === before[0] && now[2] === before[2] && pk.chosen && !pk.open && pk.game, 'picking a rival seats it there (the others stay), marked chosen, and the round counts as chosen', `${now} ${JSON.stringify(pk)}`);
+await ev(`SnakeDebug.game().spent = true; SnakeDebug.setup(); 'ok'`); // (the next round's start card, as after a round)
+now = (await seated()).split(',');
+pk = await ev(`({ pins: [...document.querySelectorAll('.opponents .unpin')].map(b => b.dataset.seat).join(), local: localStorage.getItem('snake-lineup') })`);
+check(now[1] === pickKey && pk.pins === '1' && pk.local === null, '...it lasts round after round, with a pin beside that seat only (kept for this visit, not in localStorage)', `${now} ${JSON.stringify(pk)}`);
 await load();
 now = (await seated()).split(',');
-check(now[1] === pickKey && !now.slice(0, 1).concat(now[2]).includes(pickKey), '...and it is kept after a reload', now.join());
+check(now[1] === pickKey && !now.slice(0, 1).concat(now[2]).includes(pickKey), '...and after a reload in the same visit', now.join());
+await mouse(await at('.opponents .unpin[data-seat="1"]'));
+pk = await ev(`({ kept: sessionStorage.getItem('snake-visit-lineup'), game: SnakeDebug.game().chosen, ring: document.querySelectorAll('.seat.chosen').length, pins: document.querySelectorAll('.opponents .unpin').length, open: !document.getElementById('picker').hidden, focus: document.activeElement?.dataset?.seat })`);
+check(pk.kept === '[null,null,null]' && !pk.game && !pk.ring && !pk.pins && !pk.open && pk.focus === '1', 'a click on the pin sets the seat back to "Any": dealt again, no pin, no picker, focus on the seat', JSON.stringify(pk));
+await ev(`document.querySelector('.seat[data-seat="1"]').click(); document.querySelector('#picker .pick[data-key="${pickKey}"]').click(); 'ok'`);
+await ev(`sessionStorage.clear(); localStorage.setItem('snake-lineup', JSON.stringify(['${pickKey}', null, null])); 'ok'`); // (a new visit; an old lasting choice)
+await load();
+pk = await ev(`({ chosen: SnakeDebug.game().chosen, pins: document.querySelectorAll('.opponents .unpin').length })`);
+check(!pk.chosen && !pk.pins, '...and a new visit has every seat "Any" again (an old lasting choice is not read)', JSON.stringify(pk));
+await ev(`localStorage.removeItem('snake-lineup'); 'ok'`);
 await ev(`document.querySelector('.seat[data-seat="1"]').click(); document.querySelector('#picker .pick[data-key=""]').click(); 'ok'`);
-pk = await ev(`({ kept: localStorage.getItem('snake-lineup'), game: SnakeDebug.game().chosen, ring: document.querySelectorAll('.seat.chosen').length })`);
-check(pk.kept === '[null,null,null]' && !pk.game && !pk.ring, '"Any" undoes it: dealt again, not chosen', JSON.stringify(pk));
+pk = await ev(`({ kept: sessionStorage.getItem('snake-visit-lineup'), game: SnakeDebug.game().chosen, ring: document.querySelectorAll('.seat.chosen').length })`);
+check(pk.kept === '[null,null,null]' && !pk.game && !pk.ring, '"Any" in the picker does it too: dealt again, not chosen', JSON.stringify(pk));
+// Rivals dealt but never met (the page closed on a start card) go back among the ones not yet dealt, not on top (seeded).
+pk = await ev(`(() => {
+  const R = SnakeRecords, pool = SnakeAI.POOL, deck = localStorage.getItem('snake-deck'), rnd = Math.random;
+  let seed = 7; Math.random = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  const firsts = [];
+  try {
+    for (let n = 0; n < 12; n++) {
+      localStorage.setItem('snake-deck', JSON.stringify(pool.slice(3)));
+      R.undeal(pool, pool.slice(0, 3), { anywhere: true });
+      const d = JSON.parse(localStorage.getItem('snake-deck'));
+      firsts.push(pool.slice(0, 3).includes(d[0]) && d.length === pool.length && new Set(d).size === pool.length ? 'back' : 'deck');
+    }
+    localStorage.setItem('snake-deck', JSON.stringify(pool.slice(3)));
+    R.undeal(pool, pool.slice(0, 3));
+    const top = JSON.parse(localStorage.getItem('snake-deck')).slice(0, 3).join() === pool.slice(0, 3).join();
+    return { firsts: firsts.join(), back: firsts.filter(f => f === 'back').length, top };
+  } finally { Math.random = rnd; if (deck === null) localStorage.removeItem('snake-deck'); else localStorage.setItem('snake-deck', deck); }
+})()`);
+check(pk.back < 12 && pk.firsts.includes('deck') && pk.top, 'an undealt rival goes back somewhere in the deck, not dealt first every time (within a visit, on top)', JSON.stringify(pk));
 await load();
 let p = await P();
 check(p.how === 'How to play', 'the start card has How to play', p.how);
