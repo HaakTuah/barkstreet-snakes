@@ -591,3 +591,8 @@ informed them to push every single commit? I see that they are now running out o
 couple of hours. I don't want them to stop, but I do hope they have pushed everything that they can." Then, to making
 "push after every commit" a standing rule in both games in place of "at every passed step and at least once an hour":
 "YES!" (written into `CLAUDE.md`, "Standing instructions")
+
+In the design chat (31 October 2026, 14:39-14:40 UTC): "The README for both projects should probably also be queued
+to be updated?" Then, to a one-time refresh in the polish lane (the developer part moved to `docs/developing.md`) and
+a standing rule that a change a player sees updates the README in the same PR, checked at each milestone: "Yes,
+expertly to both!" (written into `docs/PROGRESS.md`, "The polish lane", and `CLAUDE.md`, "Standing instructions")
