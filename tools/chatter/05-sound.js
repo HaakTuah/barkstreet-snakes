@@ -1,13 +1,18 @@
 // ------------------------------------------------------------ the sound's gaps
-// audio.js on a stand-in AudioContext whose nodes take any call: a cue that
+// (The sound is the files of audio/, in the page's order: its source, for the tunings read
+// from it, and each run on a stand-in context under its own name.)
+const AUDIO_FILES = ['audio/cues.js', 'audio/sound.js'];
+const audioSource = () => AUDIO_FILES.map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
+const runAudio = c => { for (const f of AUDIO_FILES) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), c, { filename: f }); };
+// audio/ on a stand-in AudioContext whose nodes take any call: a cue that
 // plays builds its voice (a gain), one its gap holds back builds nothing.
 // Yours never waits on a rival's (now that every rival flashes a few times a
 // minute, it would swallow yours); a rival's gives way to yours. And your own
 // golden dashes or jumps, one straight after another, are each heard.
 {
-  const asrc = fs.readFileSync(path.join(ROOT, 'audio.js'), 'utf8');
+  const asrc = audioSource();
   const head = '  const MIN_INTERVAL = {', start = asrc.indexOf(head), end = asrc.indexOf('\n  };\n', start);
-  if (start < 0 || end < 0) throw new Error('no MIN_INTERVAL in audio.js');
+  if (start < 0 || end < 0) throw new Error('no MIN_INTERVAL in audio/sound.js');
   const GAP = new Function(`return ${asrc.slice(start + head.length - 1, end + '\n  }'.length)}`)();
   // The quickest your own can come again: a dash the very next tick, a jump the
   // tick after it lands; at full speed, and dealt out a frame early on a 30 Hz screen.
@@ -38,7 +43,7 @@
     window: { AudioContext: Context, performance: { now: () => clock } },
     document: { hidden: false, addEventListener() {} }, setTimeout: () => 0, clearTimeout() {},
   });
-  vm.runInContext(asrc, actx, { filename: 'audio.js' });
+  runAudio(actx);
   const A = actx.window.SnakeAudio;
   check(A.unlock(), 'the sound unlocks on the stand-in context');
   const sounds = (name, opts) => { const before = gains; A.play(name, opts); return gains > before; };
@@ -140,7 +145,7 @@
 // and a crumble louder than a beetle's scrabble (which the music buries). On a
 // stand-in context that records how each cue is wired.
 {
-  const asrc = fs.readFileSync(path.join(ROOT, 'audio.js'), 'utf8');
+  const asrc = audioSource();
   const [LOWPASS, RIVAL_VOLUME] = [+/\bRIVAL_LOWPASS = (\d+)/.exec(asrc)[1], +/\bRIVAL_VOLUME = ([\d.]+)/.exec(asrc)[1]];
   let clock = 0;
   const made = [];
@@ -155,7 +160,7 @@
   }
   for (const [m, kind] of [['createGain', 'gain'], ['createBiquadFilter', 'filter'], ['createOscillator', 'osc'], ['createBufferSource', 'noise'], ['createStereoPanner', 'panner'], ['createDynamicsCompressor', 'compressor'], ['createPeriodicWave', 'wave']]) Recorder.prototype[m] = () => node(kind);
   const rctx = vm.createContext({ window: { AudioContext: Recorder, performance: { now: () => clock } }, document: { hidden: false, addEventListener() {} }, setTimeout: () => 0, clearTimeout() {} });
-  vm.runInContext(asrc, rctx, { filename: 'audio.js' });
+  runAudio(rctx);
   const RA = rctx.window.SnakeAudio;
   check(RA.unlock(), 'the sound unlocks on a recording stand-in');
   // (A noise grain: its source, through its filter and its envelope, into where the cue goes.)
