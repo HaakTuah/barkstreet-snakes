@@ -56,6 +56,7 @@ the second account until its usage is spent; on the main account the brake close
 - The open entries' specs moved word for word to `docs/handoff/queue-specs.md` by the design session (31 October
   2026); each entry here keeps its title, a line and a pointer, and this file is now about 12 KB.
 - The Voices switch's icon (PR #224): a head speaking, no longer the header's sound speaker.
+- A start card whose names wrap fits a small board (PR #234): at 320 px upright or 568 px sideways its tip goes, then its lines sit closer, so the buttons never cover a name.
 
 ## The queue, in order
 
