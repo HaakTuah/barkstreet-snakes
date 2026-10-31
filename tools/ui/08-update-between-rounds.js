@@ -41,7 +41,8 @@ for (let i = 0; i < 4; i++) {
   await ev(`SnakeDebug.setup(); 1`);
 }
 shown.push((await P()).text);
-check(shown.slice(0, 3).every(f => f === line) && !shown[3] && !shown[4], 'after an update the start card says what is new for three rounds, and then it’s gone', shown.map(f => f ? 'line' : 'none').join(', '));
+const intro = await ev(`SnakeDebug.flavor().intro`);
+check(shown.slice(0, 3).every(f => f === line) && shown[3] === intro && shown[4] === intro, 'after an update the start card says what is new for three rounds, and then the intro is back', shown.map(f => f === line ? 'new' : f === intro ? 'intro' : `“${f}”`).join(', '));
 await ev(`localStorage.clear(); 1`);
 await load();
 check((await P()).text !== line, '...a first visit (no records) shows no such line');
