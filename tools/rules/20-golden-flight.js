@@ -132,3 +132,20 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
     else check('...in its style: Drab, which hardly ever leaps now, takes the bump instead', !now, JSON.stringify({ now: !!now, head: a.body[0] }));
   }
 }
+
+{ // ...and never over open ground for its own sake: Star, the power addict, on open bark with an apple four cells
+  // ahead and a rival near but not in its way, crawls (weighed everywhere, it leapt now onto the apple at once, for
+  // the tip of its tail and a rest). A leap now is weighed only when the crawl is in trouble (a crash within its search, a neck a
+  // rival could shut, a head-on on its first move): over open ground it does what a crawl does, for the tip of the tail
+  // and a rest then wanting for a real hurdle (at twice the jump's price, weighed everywhere, rivals with it came out
+  // even with rivals without, in three head-to-heads).
+  const g = E.createGame({ withPlayer: false, personas: ['star', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  a.body = Array.from({ length: 7 }, (_, i) => ({ x: 6 - i, y: 10 })); a.dir = D.right; a.leaps = 0; a.leapReadyAt = 0; a.flashReadyAt = 1e9;
+  b.body = Array.from({ length: 5 }, (_, i) => ({ x: 11, y: 13 + i })); b.dir = D.up; b.flashReadyAt = 1e9; b.leapReadyAt = 1e9;
+  g.food = [{ x: 10, y: 10, kind: 'food', expires: g.tick + 900 }]; g.given = new Set([10 * T.GRID + 10]); g.time = 30000;
+  let now = null;
+  for (let n = 0; n < 8 && a.alive; n++) { feed(g); look(g); quiet(g); now ||= g.events.find(e => e.type === 'leap' && e.snake === a && e.now); }
+  check('a rival with its jump rested never leaps now over open ground, nobody in its way: it crawls', !now && a.alive, JSON.stringify({ now: !!now, head: a.body[0], alive: a.alive }));
+}
