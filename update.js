@@ -1,4 +1,4 @@
-// The newest version, by itself between rounds (docs/design: "Updating").
+// The newest version, by itself between rounds (docs/design/36-updating.md).
 // The page looks whether a newer version is out (version.js's build, asked
 // for afresh) when it is shown again after being hidden and every 30 minutes,
 // and when one is, it reloads into it on the start card or the round-over

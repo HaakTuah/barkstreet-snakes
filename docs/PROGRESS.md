@@ -53,7 +53,7 @@ the second account until its usage is spent; on the main account the brake close
 
 ## The queue, in order
 
-**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)); 2t (Capricious without its ring, and a costume change for every change (PR #212)).
+**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)); 2t (Capricious without its ring, and a costume change for every change (PR #212)); 2v (the newest version, by itself between rounds (PR #223)).
 
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
@@ -194,24 +194,6 @@ card (`game/round.js`, `game/hud.js`):
   but opening the game gives a fresh cast.
 Online is unchanged (the host deals). The UI suite: a pick lasts across rounds and is gone in a new visit; a pin
 clears; an undealt rival is not dealt first every time (a seeded test).
-
-### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane)
-
-Haakon: "Should barkstreet snakes also have a "updated game" thingy that pops up?", "Yes to both, do it expertly!", and
-then, of Amarna Letters' note: "It should update when you start game. [...] Like why would I not want the latest
-version?" Today a fresh load always gets the newest version (`sw.js` asks the network first), but a page left open or
-resumed on a phone keeps the version it loaded and is never told, and online the first sign is a refused join ("That
-room runs a different version of the game").
-- **It looks:** when the page is shown again after being hidden, and every 30 minutes while open (as Amarna Letters'
-  `ui/update.ts` does), it asks whether a newer version is published (the service worker's update check).
-- **It updates by itself, never during a round:** on the start card or the round-over screen it reloads into the new
-  version at once, with no question; records and settings survive, as they do today.
-- **Online:** the host updates before opening the next room, so a new room starts everyone on one version; a friend who
-  is behind is updated the same way before joining.
-- **What changed:** after an update, the start card shows one line of what is new for a few rounds (from a short list
-  kept beside the version number, written with each milestone), then it goes.
-Drawing and the service worker only: no rules, no rivals, no protocol change. The UI suite: no reload during a round,
-one between rounds when a new version is waiting, the line of what changed shown once and gone.
 
 ### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
 

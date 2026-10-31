@@ -592,3 +592,24 @@ Done (PR #212): the breathing ring and the ring flashing out are gone; every cha
 Copycat's model is one 500 ms costume change (a puff round the head in its pink or red, the old face and head colour
 popping off, the new one popping on; with reduced motion a crossfade). See "A costume change (2t)" in
 `docs/design/35-capricious-copycat-and-wildcard.md`.
+
+### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane): done, PR #223
+
+Haakon: "Should barkstreet snakes also have a "updated game" thingy that pops up?", "Yes to both, do it expertly!", and
+then, of Amarna Letters' note: "It should update when you start game. [...] Like why would I not want the latest
+version?" Today a fresh load always gets the newest version (`sw.js` asks the network first), but a page left open or
+resumed on a phone keeps the version it loaded and is never told, and online the first sign is a refused join ("That
+room runs a different version of the game").
+- **It looks:** when the page is shown again after being hidden, and every 30 minutes while open (as Amarna Letters'
+  `ui/update.ts` does), it asks whether a newer version is published (the service worker's update check).
+- **It updates by itself, never during a round:** on the start card or the round-over screen it reloads into the new
+  version at once, with no question; records and settings survive, as they do today.
+- **Online:** the host updates before opening the next room, so a new room starts everyone on one version; a friend who
+  is behind is updated the same way before joining.
+- **What changed:** after an update, the start card shows one line of what is new for a few rounds (from a short list
+  kept beside the version number, written with each milestone), then it goes.
+Drawing and the service worker only: no rules, no rivals, no protocol change. The UI suite: no reload during a round,
+one between rounds when a new version is waiting, the line of what changed shown once and gone.
+
+Done (PR #223): `version.js` (the build, stamped by the Pages workflow, and the news, one line per milestone) and
+`update.js`; the start card's flavour line says what is new for three rounds. See `docs/design/36-updating.md`.
