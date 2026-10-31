@@ -579,3 +579,9 @@ In the design chat (31 October 2026, 13:44 UTC), to the design session's questio
 reports (Wildcard's hair, third try; turning on GitHub's "Automatically delete head branches" and leaving the 144 old
 merged branches; moving the open entries' specs out of `docs/PROGRESS.md`): "Yes, to all, expertly! The hair looks
 "okay" now." (2n merges with PR #208; the specs moved to `docs/handoff/queue-specs.md`; Haakon turns on the setting)
+
+In the design chat (31 October 2026, 13:56-13:57 UTC), as the second account neared its five-hour limit: "Have we
+informed them to push every single commit? I see that they are now running out of their allocated usage for the next
+couple of hours. I don't want them to stop, but I do hope they have pushed everything that they can." Then, to making
+"push after every commit" a standing rule in both games in place of "at every passed step and at least once an hour":
+"YES!" (written into `CLAUDE.md`, "Standing instructions")
