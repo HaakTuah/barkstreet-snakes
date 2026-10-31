@@ -612,4 +612,4 @@ Drawing and the service worker only: no rules, no rivals, no protocol change. Th
 one between rounds when a new version is waiting, the line of what changed shown once and gone.
 
 Done (PR #223): `version.js` (the build, stamped by the Pages workflow, and the news, one line per milestone) and
-`update.js`; the start card's flavour line says what is new for three rounds. See `docs/design/36-updating.md`.
+`update.js`; the start card's intro line says what is new for three rounds. See `docs/design/36-updating.md`.

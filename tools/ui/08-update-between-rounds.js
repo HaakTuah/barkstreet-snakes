@@ -2,7 +2,7 @@
 // (update.js) A newer version out (its build, as version.js would name it)
 // never reloads the page during a round: it waits for the round's end and
 // reloads there, once, with no question. After an update the start card's
-// flavour says what is new for a few rounds (a first visit shows none), then
+// intro line says what is new for a few rounds (a first visit shows none), then
 // it goes. Online, the host's Host a game goes into the new version first and
 // the room opens there.
 await b.viewport(1280, 800);
@@ -33,15 +33,15 @@ await ev(`localStorage.clear(); localStorage.setItem('snake-name', '"Haakon"'); 
 await load();
 const shown = [];
 for (let i = 0; i < 4; i++) {
-  shown.push((await P()).flavor);
+  shown.push((await P()).text);
   await fresh(['mason'], true);
   await ev(`SnakeDebug.setup(); 1`);
 }
-shown.push((await P()).flavor);
+shown.push((await P()).text);
 check(shown.slice(0, 3).every(f => f === line) && !shown[3] && !shown[4], 'after an update the start card says what is new for three rounds, and then it’s gone', shown.map(f => f ? 'line' : 'none').join(', '));
 await ev(`localStorage.clear(); 1`);
 await load();
-check(!(await P()).flavor, '...a first visit (no records) shows no such line');
+check((await P()).text !== line, '...a first visit (no records) shows no such line');
 
 // Online: the host looks before opening the room, and opens it in the new version.
 await ev(`localStorage.clear(); sessionStorage.clear(); 1`);

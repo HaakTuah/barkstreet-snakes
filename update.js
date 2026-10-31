@@ -71,14 +71,15 @@ window.SnakeUpdate = (() => {
     return true;
   }
 
-  // What is new, for the start card's flavour line: a returning player's
+  // What is new, in the start card's intro line (the same length: the card
+  // keeps its size on the smallest phone): a returning player's
   // first few rounds on a version with news they haven't seen (a first visit
   // is all new, and shows none).
   const top = V.news[0];
   let seen = read(localStorage, NEWS);
   if (top && seen?.on !== top.on) {
     let returning = !!seen;
-    try { returning ||= Object.keys(localStorage).some(k => /^(snake-|barkbite-)/.test(k)); } catch { /* none */ }
+    try { returning ||= Object.keys(localStorage).some(k => /^snake-(best|highscores|name|stats)$/.test(k)); } catch { /* none */ } // (records or a name: what any load writes, such as the deck, doesn't count)
     seen = { on: top.on, left: returning ? ROUNDS : 0 };
     keep(localStorage, NEWS, seen);
   }
