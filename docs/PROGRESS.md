@@ -59,6 +59,7 @@ the second account until its usage is spent; on the main account the brake close
 - The start card's tip says what both taps do (PR #242): "Tap names to swap, tags to see how they play." (it named only the tags, right under the names that swap).
 - The Field guide's Beetles row split in two (PR #244): Beetles, and Burrows after it, the same words (it was eleven lines on a phone).
 - A start card whose names wrap fits a small board (PR #234): at 320 px upright or 568 px sideways its tip goes, then its lines sit closer, so the buttons never cover a name.
+- Score and Best step aside under a banner above the board, on a phone held upright (PR #232; the audit's first find).
 
 ## The split lane (the workshop check's files over about 50 KB)
 
