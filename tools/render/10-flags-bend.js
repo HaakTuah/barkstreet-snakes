@@ -137,6 +137,10 @@ const planted = await ev(`(() => {
   setBody(you, [[16, 14], [15, 14], [14, 14], [13, 14]], 'right'); // (going east, its head where the colony goes down)
   col.memory.colonies.push({ x: 16, y: 14, radius: 3, n: 4 });
   for (let i = 0; i < 120 && !out.first; i++) { drawN(1, 0.5, 33); out.frames++; const f = centre(14, 12, 5, 3, navy); if (f[0] > 5) out.first = f; }
+  setBody(you, [[6, 16], [6, 15], [6, 14], [6, 13]], 'down'); // (going south, head-on: a colony goes down under it)
+  col.memory.colonies.push({ x: 6, y: 16, radius: 3, n: 6 });
+  out.headOn = [];
+  for (let i = 0; i < 120 && out.headOn.length < 8; i++) { drawN(1, 0.5, 33); const pole = centre(5.9, 16.6, 0.2, 1.2, (r, g, b) => r > 205 && g > 190 && b > 150 && b < 205 && r - b > 25); if (pole[0] > 0 || out.headOn.length) out.headOn.push(centre(4, 14, 5, 3, navy)[0]); }
   SnakeDebug.pinQuality(2);
   return out;
 })()`);
@@ -144,3 +148,6 @@ const pl = planted;
 check(pl.first && pl.upright[0] > 20 && pl.first[2] - 14 > pl.upright[2] - 7 + 0.1,
   'a flag planted under a snake is bent from the first frame it shows, not standing for a frame first',
   `the standing flag’s navy at ${xy(pl.upright)}; the planted one, ${pl.frames} frames on, at ${pl.first ? xy(pl.first) : 'nothing'}`);
+check(pl.headOn.length === 8 && Math.max(...pl.headOn) < pl.upright[0] * 0.5,
+  '...and one planted under a head going south lies flat under it from the first frame: never standing, never wrapped round its face',
+  `its navy over its first frames: ${pl.headOn.join(', ')} (a standing flag’s ${pl.upright[0]})`);

@@ -291,6 +291,7 @@ function drawRealmBanner(r, home, now) {
   }
   const x = u >= 1 ? b.tx : b.fx + (b.tx - b.fx) * e, y = u >= 1 ? b.ty : b.fy + (b.ty - b.fy) * e, key = home.y * GRID + home.x;
   const pecked = u >= 1 && !!holeMask[key] && !r.gone;
+  if (u < 1) flagSeen(key, now); // (in sight as it glides or is carried there, so it eases over as it lands on a snake, not snapping as if new)
   if (u >= 1 && !pecked && !r.shown[key]) return;
   let tilt = 0, sc = 1;
   if (u < 1 && b.carry) { const l = Math.sin(u * Math.PI); sc = 1 + 0.2 * l; tilt = 0.3 * l * (b.tx >= b.fx ? 1 : -1); }
@@ -318,12 +319,20 @@ function drawRealmBanner(r, home, now) {
 // once.)
 const BEND = 0.6, BEND_SIDE = 0.45, BEND_IN_MS = 110, SPRING_MS = 900, SPRING_PERIOD = 330, WRAP_MS = 260;
 const flagBends = new Map(); // tile -> { who, at, on, seen, head, from: [the look it eased from], to: [the push's] }
-// (When each flag's tile was last looked at. A flag that wasn't on the
-// board a moment ago, planted with a snake already on its tile, as a new
-// colony is under Colonist's head, starts bent: it was never seen standing,
-// so it doesn't stand for a frame and then snap over, or wrap the head
-// that planted it.)
-const flagLastSeen = new Map(), FLAG_FRESH_MS = 250;
+// (The frame each flag's tile was last drawn in, by its clock. A flag
+// that wasn't drawn in the last frame drawn, planted with a snake already
+// on its tile, as a new colony is under Colonist's head, starts bent: it
+// was never seen standing, so it doesn't stand for a frame and then snap
+// over, or wrap the head that planted it. Frames, not ms, so watching at 4x
+// or a slow phone's long frames never count a flag in sight as new.)
+const flagLastSeen = new Map();
+let flagFrame = -1, flagFramePrev = -1;
+function flagSeen(key, now) { // (and whether it's new: not drawn last frame, nor yet this one)
+  if (now !== flagFrame) { flagFramePrev = flagFrame; flagFrame = now; }
+  const last = flagLastSeen.get(key);
+  flagLastSeen.set(key, now);
+  return last !== now && last !== flagFramePrev;
+}
 const flagsLater = []; // (this frame's, to draw over the snakes: see drawBentFlags)
 let overSnakes = false, bendNowB = null; // (bendNowB: the bend bendOn last looked at)
 // (What's eased is the look itself, [tilt, lean, turn, push]: the pole's
@@ -367,8 +376,7 @@ function stepOnto(s, i) {
 function bendOn(x, y, now) {
   const key = y * GRID + x;
   let b = flagBends.get(key), who = null, at = -1;
-  const last = flagLastSeen.get(key), fresh = !b && (last === undefined || now - last > FLAG_FRESH_MS);
-  flagLastSeen.set(key, now);
+  const fresh = flagSeen(key, now) && !b;
   if (b && b.who && b.who.alive && (at = cellOn(b.who, x, y)) >= 0) who = b.who;
   else for (const s of game.snakes) if (s.alive && (at = cellOn(s, x, y)) >= 0) { who = s; break; }
   if (!b) {
