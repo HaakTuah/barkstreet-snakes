@@ -29,6 +29,28 @@ instructions" in `CLAUDE.md`). Each task's last message and each milestone PR op
 |---|---|---|---|
 | (none open) | | | |
 
+## The polish lane
+
+A side lane of small refinements, beside the AI and engine lane and never ahead of it (Haakon, 31 October 2026: "Should
+we add a polish point to each that it can spend the last credits on also?" and, to the design session's shape of it,
+"Yes, and make things as refined as possible!"). Taken when the main lane's current entry is merged or parked, and on
+the second account until its usage is spent; on the main account the brake closes it first (from about 85%).
+- **First, the housekeeping:** this file is about 35 KB, past the workshop check's 20 KB; move done entries and their
+  detail to `docs/archive/progress-done.md`, leaving a line pointing to them, as the check says. Then delete merged
+  branches and archive leftovers nobody uses.
+- **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
+  place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
+  rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
+  sideways, reduced motion, tap targets and contrast; typos and wording in banners, chatter, the Field guide and
+  menus; errors or warnings in the console; sound levels that jar; slow frames that can be made smooth.
+- **What does not:** anything that changes a rule, a number, a rival's play or the online messages; those go to their
+  entries.
+- **How:** look for them by playing the live build, on a phone-sized screen and on desktop, through every screen, a
+  lesson, an online lobby, and whole rounds watched at top speed; each find is its own small PR (about half an hour),
+  with a before-and-after picture on `pr-media`, the suites green and the simulation's fingerprints unchanged (seeds 3
+  and 11), so nothing that changes play slips in; merged at once, one line per fix under this lane. Nothing is left
+  half done: a fix not finished when usage ends is left unstarted, its find noted for the next session.
+
 ## The queue, in order
 
 **Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)); 2t (Capricious without its ring, and a costume change for every change (PR #212)).

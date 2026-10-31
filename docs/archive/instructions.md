@@ -569,3 +569,8 @@ line of what changed after updating): "Yes to both, do it expertly!" (queued as 
 In the design chat (30 October 2026, 07:15-07:16 UTC), on new versions: "I just figured it should've updated itself, and
 not have to ask me." And: "It should update when you start game. It always pops up when I havent even started a game
 yet. Like why would I not want the latest version?" (2v now updates by itself between rounds, with no note to tap)
+
+In the design chat (31 October 2026, 11:31-11:39 UTC), on a second account spent before Monday's reset: "They can spend
+100% on this account i have used it for what I need." "I can set them to yse fable." "Should we add a polish point to
+each that it can spend the last credits on also?" And, to the design session's shape of the polish lane: "Yes, and make
+things as refined as possible!" (written into `docs/PROGRESS.md`, "The polish lane")
