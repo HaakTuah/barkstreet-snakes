@@ -579,3 +579,9 @@ In the design chat (31 October 2026, 13:44 UTC), to the design session's questio
 reports (Wildcard's hair, third try; turning on GitHub's "Automatically delete head branches" and leaving the 144 old
 merged branches; moving the open entries' specs out of `docs/PROGRESS.md`): "Yes, to all, expertly! The hair looks
 "okay" now." (2n merges with PR #208; the specs moved to `docs/handoff/queue-specs.md`; Haakon turns on the setting)
+
+In the design chat (31 October 2026, 13:51-13:53 UTC), to the improvement audit's questions and the design session's
+takes (the trademarks that never show: measures first, then more teeth in part 7; character never costs wins: Joker
+into the 15-35% band and the gap to Drab closed in part 7, every trademark kept and Drab left as it is; 2s ahead of 2q,
+measured with part 4's flight in place): "Agreed to all, expertly!" (written into `docs/PROGRESS.md` and
+`docs/handoff/queue-specs.md`, entries 5, 2s and 2q)
