@@ -135,7 +135,7 @@ The page is always one screen tall, so nothing scrolls, on a phone, a tablet or 
 
 ## On a phone
 
-Held upright, the board runs edge to edge (382 px on a 390 px phone); on its side, it takes the full height. Held upright, the round's news (a banner: the weather, the woodpecker, first blood) comes in one line above the board, over the title, so it never covers the board, your name tag or the pause button; elsewhere it's at the board's top or foot, never its middle. Each banner stays up as long as it takes to read (1 s and 0.4 s a word, 4.5 s at most), and the next waits its turn. The screen stays awake while you play or watch. On Android (and desktops), the full screen button in the header gives the game the whole screen; on an iPhone, Add to Home Screen opens it without Safari's bars.
+Held upright, the board runs edge to edge (382 px on a 390 px phone); on its side, it takes the full height. Held upright, the round's news (a banner: the weather, the woodpecker, first blood) comes in one line above the board, over the title, so it never covers the board, your name tag or the pause button; elsewhere it's at the board's top or foot, never its middle. Each banner stays up as long as it takes to read (1 s and 0.4 s a word, 4.5 s at most), and the next waits its turn; a lesson about your snake goes as soon as you're out. The screen stays awake while you play or watch. On Android (and desktops), the full screen button in the header gives the game the whole screen; on an iPhone, Add to Home Screen opens it without Safari's bars.
 
 ## Run locally
 
