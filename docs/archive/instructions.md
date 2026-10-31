@@ -557,3 +557,37 @@ In the design chat (30 October 2026, 02:22-02:42 UTC): "Question, why does the s
 snakes game now?" Then: "I might've picked them yes. Didn't expect them to stay permanently." And, to the design
 session's takes (a picked seat lasts this visit, with a pin to clear it; rivals never met go back into the deck at a
 random place, not on top): "Agreed to all!" (queued as 2u)
+
+In the design chat (30 October 2026, 06:52 UTC), on the second try at Wildcard's hair (PR #208) and the waiting part 4:
+"Yes to all, except the hair, it looks horrible. I want the original hair, but I want the lick reversed. That's all.
+Keep it that simple." (written into 2n; part 4 waits for a session that makes leap now pay the rivals)
+
+In the design chat (30 October 2026, 07:11-07:13 UTC): "Should barkstreet snakes also have a "updated game" thingy that
+pops up?" And, to the design session's take (a note only between rounds, one tap to reload, the host first online; one
+line of what changed after updating): "Yes to both, do it expertly!" (queued as 2v)
+
+In the design chat (30 October 2026, 07:15-07:16 UTC), on new versions: "I just figured it should've updated itself, and
+not have to ask me." And: "It should update when you start game. It always pops up when I havent even started a game
+yet. Like why would I not want the latest version?" (2v now updates by itself between rounds, with no note to tap)
+
+In the design chat (31 October 2026, 11:31-11:39 UTC), on a second account spent before Monday's reset: "They can spend
+100% on this account i have used it for what I need." "I can set them to yse fable." "Should we add a polish point to
+each that it can spend the last credits on also?" And, to the design session's shape of the polish lane: "Yes, and make
+things as refined as possible!" (written into `docs/PROGRESS.md`, "The polish lane")
+
+In the design chat (31 October 2026, 13:44 UTC), to the design session's questions on the second account's first
+reports (Wildcard's hair, third try; turning on GitHub's "Automatically delete head branches" and leaving the 144 old
+merged branches; moving the open entries' specs out of `docs/PROGRESS.md`): "Yes, to all, expertly! The hair looks
+"okay" now." (2n merges with PR #208; the specs moved to `docs/handoff/queue-specs.md`; Haakon turns on the setting)
+
+In the design chat (31 October 2026, 13:51-13:53 UTC), to the improvement audit's questions and the design session's
+takes (the trademarks that never show: measures first, then more teeth in part 7; character never costs wins: Joker
+into the 15-35% band and the gap to Drab closed in part 7, every trademark kept and Drab left as it is; 2s ahead of 2q,
+measured with part 4's flight in place): "Agreed to all, expertly!" (written into `docs/PROGRESS.md` and
+`docs/handoff/queue-specs.md`, entries 5, 2s and 2q)
+
+In the design chat (31 October 2026, 13:56-13:57 UTC), as the second account neared its five-hour limit: "Have we
+informed them to push every single commit? I see that they are now running out of their allocated usage for the next
+couple of hours. I don't want them to stop, but I do hope they have pushed everything that they can." Then, to making
+"push after every commit" a standing rule in both games in place of "at every passed step and at least once an hour":
+"YES!" (written into `CLAUDE.md`, "Standing instructions")
