@@ -63,19 +63,19 @@ the second account until its usage is spent; on the main account the brake close
 
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
-The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in: its A/B comes out even, so it waits until leap now and the flight pay the rivals), then 2q, 2s, part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves".
+The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in: its A/B comes out even, so it waits until leap now and the flight pay the rivals), then 2s and 2q (2s first: Haakon, 31 October 2026, "Agreed to all, expertly!"), part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves".
 
-### 2q. Rivals notice like people (30 October 2026; an AI entry, after part 4)
+### 2s. The log breaks, but never drifts apart (30 October 2026; an engine-rules entry, after part 4; moved ahead of 2q, 31 October 2026)
 
-Every rival sees another snake as late as a person would notice it: `REACTION_MS` near its own head, growing to about 400 ms across the board, measured with `tools/abtest.js`. Spec: `docs/handoff/queue-specs.md`, "2q. Rivals notice like people".
+The woodpecker never pecks a patch that would leave a piece of the log out of a plain hop's reach of every other piece, so islands form but nobody is stranded on one; measured with part 4's flight in place (half the rounds now end split onto islands, the audit found). Spec: `docs/handoff/queue-specs.md`, "2s. The log breaks, but never drifts apart".
 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
 Before a hop or a flight a rival weighs where it lands, above all whether it can jump off again; built into part 4 (#198). Spec: `docs/handoff/queue-specs.md`, "2r. No hop onto a doomed island".
 
-### 2s. The log breaks, but never drifts apart (30 October 2026; an engine-rules entry, after 2q)
+### 2q. Rivals notice like people (30 October 2026; an AI entry, after 2s)
 
-The woodpecker never pecks a patch that would leave a piece of the log out of a plain hop's reach of every other piece, so islands form but nobody is stranded on one. Spec: `docs/handoff/queue-specs.md`, "2s. The log breaks, but never drifts apart".
+Every rival sees another snake as late as a person would notice it: `REACTION_MS` near its own head, growing to about 400 ms across the board, measured with `tools/abtest.js`. Spec: `docs/handoff/queue-specs.md`, "2q. Rivals notice like people".
 
 ### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane)
 

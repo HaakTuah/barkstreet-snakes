@@ -580,6 +580,11 @@ reports (Wildcard's hair, third try; turning on GitHub's "Automatically delete h
 merged branches; moving the open entries' specs out of `docs/PROGRESS.md`): "Yes, to all, expertly! The hair looks
 "okay" now." (2n merges with PR #208; the specs moved to `docs/handoff/queue-specs.md`; Haakon turns on the setting)
 
+In the design chat (31 October 2026, 13:51-13:53 UTC), to the improvement audit's questions and the design session's
+takes (the trademarks that never show: measures first, then more teeth in part 7; character never costs wins: Joker
+into the 15-35% band and the gap to Drab closed in part 7, every trademark kept and Drab left as it is; 2s ahead of 2q,
+measured with part 4's flight in place): "Agreed to all, expertly!" (written into `docs/PROGRESS.md` and
+`docs/handoff/queue-specs.md`, entries 5, 2s and 2q)
 In the design chat (31 October 2026, 13:56-13:57 UTC), as the second account neared its five-hour limit: "Have we
 informed them to push every single commit? I see that they are now running out of their allocated usage for the next
 couple of hours. I don't want them to stop, but I do hope they have pushed everything that they can." Then, to making
