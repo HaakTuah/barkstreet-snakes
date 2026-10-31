@@ -96,7 +96,7 @@ function steerTo(name, swipe = false) {
     return;
   }
   if (state === 'ready') start({ going: true });
-  if (state === 'paused' && askingStartOver) resume(); // (steering: you meant to keep going)
+  if (state === 'paused') resume(); // (any steer wakes a nap, and steers: you meant to keep going)
   if (state === 'countdown') { heard(); turn(name); go(); youHideAt = Math.min(youHideAt, performance.now() + TUNE.YOU_AFTER_STEER_MS); }
   else if (state === 'running') { heard(); press(name, player()); }
 }
@@ -135,6 +135,14 @@ function hostPress(fn) {
 // A result is on its way (your death's card in the freeze, or the round's
 // card in its pause): keys wait for it, never throw it away.
 const cardComing = () => !!pendingCard && (state === 'over' || (state === 'running' && !playerAlive()));
+// Any key that plays wakes a nap (the Pause row of "Voice and copy"):
+// Space and the flash keys wake without a power, Enter wakes, a steering
+// key wakes and steers (steerTo). Whether it woke the game.
+function wakes() {
+  if (state !== 'paused' || online || cardComing() || askingStartOver) return false; // (Start over? is answered by its buttons, Enter or a steer)
+  resume();
+  return true;
+}
 // P and Esc nap and wake (and only that: starting is Enter, R or an arrow).
 function napKey() {
   if (online || cardComing()) return; // no napping online
@@ -179,7 +187,7 @@ document.addEventListener('keydown', e => {
   if (pow) {
     if (e.key === ' ' && e.target === tabbed && e.target.closest?.('button')) return; // (Tabbed to: the button's own key)
     e.preventDefault();
-    if (!e.repeat && recordsEl.hidden && pickerEl.hidden) power(pow);
+    if (!e.repeat && recordsEl.hidden && pickerEl.hidden && !wakes()) power(pow); // (napping: it wakes, and fires nothing)
     return;
   }
   if (!pickerEl.hidden) {
@@ -193,7 +201,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   const dir = KEYS[e.key] || CODES[e.code];
-  if (dir) { e.preventDefault(); if (!e.repeat) steerTo(dir); return; } // (a held key's repeats steer nothing: its first press did)
+  if (dir) { e.preventDefault(); if (!e.repeat) { if (!playerAlive()) wakes(); steerTo(dir); } return; } // (out and napping, it only wakes) // (a held key's repeats steer nothing: its first press did)
   // A held key repeats nothing, not even a focused button (holding Enter on
   // Play would otherwise start the round and then skip its countdown).
   if (e.repeat) { if (e.key === 'Enter') e.preventDefault(); return; }
@@ -212,6 +220,7 @@ document.addEventListener('keydown', e => {
     if (cardComing()) return; // (the result's card first)
     if (state === 'countdown') { if (!online) go(); } // (online the countdown runs its course: everyone starts together)
     else if (state === 'paused' && askingStartOver) start();
+    else if (state === 'paused' && key === 'Enter') resume(); // (Enter wakes; R still asks to start over)
     else if ((state === 'running' || state === 'paused') && playerAlive() && !online) askStartOver(key); // (R sits next to D: a slip shouldn't throw a round away, napping or not)
     else start({ aiOnly: false });
   }
@@ -419,6 +428,9 @@ click(watchBtn, () => {
   else if (state === 'paused') { if (playerAlive()) askStartOver(null); else start(); } // "Start over" on touch: it asks first, too (out already, there's nothing to lose)
   else start({ aiOnly: true });
 }, cardSettled);
+// A tap on the board or the napping card's words wakes, as the Wake up
+// button does (its buttons and links keep their own jobs).
+overlay.addEventListener('click', e => { if (e.pointerType === 'touch' && state === 'paused' && !e.target.closest('button, a, input') && cardSettled(e)) wakes(); }); // (on touch: a mouse's click there stays nothing, as it was)
 click(pauseBtn, () => (state === 'paused' ? resume() : state === 'running' && !playerAlive() && shownCard?.reward && !overlay.classList.contains('hidden') ? hideCard() : napNow()));
 muteBtn.addEventListener('click', () => { Sound.unlock(); toggleMute(); }); // (its tap comes after the toggle: see toggleMute)
 click(musicBtn, () => toggleMusic());
