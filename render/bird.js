@@ -26,7 +26,7 @@ let birdLayer = null, birdG = null, birdShown = false;
 // the board it may cling to ({ x, top, bottom, face }): the game keeps
 // them current; and the words there it perches clear of where it can
 // ({ left, right, top, bottom }, 2k+).
-const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, upright: false, hang: [], rims: [], words: [] };
+const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, upright: false, phone: false, hang: [], rims: [], words: [] };
 function setBoardRect(x, y, w, free = null) {
   boardRect.x = x; boardRect.y = y; boardRect.w = w;
   boardRect.left = free ? free.left : 0; boardRect.top = free ? free.top : 0;
@@ -36,7 +36,8 @@ function setBoardRect(x, y, w, free = null) {
   boardRect.hang = free?.hang || [];
   boardRect.rims = free?.rims || [];
   boardRect.words = free?.words || [];
-  growBird(Math.min(innerWidth, innerHeight) <= PHONE_SHORT_PX ? BIRD_GROW * PHONE_GROW : BIRD_GROW);
+  boardRect.phone = Math.min(innerWidth, innerHeight) <= PHONE_SHORT_PX;
+  growBird(boardRect.phone ? BIRD_GROW * PHONE_GROW : BIRD_GROW);
   perches.clear(); drumAt.clear(); birdLayout++; // (its perches and where it drums are worked out again: the room round the board has changed)
 }
 const BIRD_GROW = 1.7; // (times its first size: 1.3 since 2c, 1.7 since 2k, on the board and under it alike)
@@ -47,6 +48,7 @@ const BIRD_GROW = 1.7; // (times its first size: 1.3 since 2c, 1.7 since 2k, on 
 // it (BU and what's worked out from it) is set by growBird as the layout
 // changes, never in the middle of a frame.
 const PHONE_SHORT_PX = 500, PHONE_GROW = 1.6;
+const EYE_BACK = 0.54, EDGE_SLACK_PX = 60; // (units behind its head's middle its eye's back edge is, so beak to eye is BILL[0] - EYE_BACK; and how far, CSS px, the free page may stop short of the screen's edge, a notch's safe area, and still count as running to it)
 let BU = CELL * 0.85 * BIRD_GROW; // the bird's unit
 const BILL = [2.55, -1.72]; // its beak tip, in units, before its head moves
 const BIRD_BOX = [-1.15, -2.55, 2.65, 3.2]; // (all of it, round its feet, in units, facing right: its back, crown, beak tip, tail)
@@ -109,8 +111,18 @@ function perchFor(tx, ty) {
   // leaves it room for that much, see style/)
   const between = boardRect.upright && (side === 'left' || side === 'right') && !(fit[side] >= least) && shrunk(side) < least;
   if (between && ledge >= floor && ledge >= shrunk(side)) side = 'ledge';
-  const nowhere = (side === 'left' || side === 'right') && !(fit[side] >= least);
-  const s = side === 'ledge' ? ledge : nowhere ? Math.max(between ? floor : least, shrunk(side)) : Math.max(least, fit[side]);
+  // (a phone on its side, Haakon's answer for #270: at its full size, partly
+  // off the screen: its beak, head and eye in the gap beside the board, on
+  // the side that runs to the screen's edge, inside the safe area; its back
+  // and tail cut off by the screen's edge. Smaller only where even its eye
+  // wouldn't fit, and never over the board while it perches)
+  const edgeSide = k => (k === 'right' ? boardRect.right >= innerWidth - EDGE_SLACK_PX : boardRect.left <= EDGE_SLACK_PX);
+  const cutSide = boardRect.phone && !boardRect.upright && sc ? ['left', 'right'].filter(k => fit[k] < 1 && edgeSide(k)).sort(nearer)[0] : null;
+  const cutS = cutSide ? Math.min(1, (room[cutSide] - gap) / ((BILL[0] - EYE_BACK + BOX_EDGE) * BU)) : 0;
+  const cut = cutS >= least && (side === 'left' || side === 'right');
+  if (cut) side = cutSide;
+  const nowhere = !cut && (side === 'left' || side === 'right') && !(fit[side] >= least);
+  const s = cut ? cutS : side === 'ledge' ? ledge : nowhere ? Math.max(between ? floor : least, shrunk(side)) : Math.max(least, fit[side]);
   const e = BOX_EDGE * s * BU + (nowhere ? 0 : gap), short = nowhere ? 0.05 * s * BU : e; // (how far it keeps clear all round, its outline at least; and its beak, of the board)
   const along = v => Math.max(BU * 2, Math.min(SIZE - BU * 2, v));
   const face = tx < SIZE / 2 ? 1 : -1; // (above or below the board, it stands off to one side of the spot)
@@ -122,7 +134,8 @@ function perchFor(tx, ty) {
   // (then all of it on the screen, off the furniture, its outline and its crouch too: its back first, if it can't all fit)
   const x0 = (p.flip > 0 ? BIRD_BOX[0] : -BIRD_BOX[2]) * s * BU - e, x1 = (p.flip > 0 ? BIRD_BOX[2] : -BIRD_BOX[0]) * s * BU + e;
   const lo = -room.left - x0, hi = SIZE + room.right - x1;
-  if (p.flip > 0) p.x = Math.max(lo, Math.min(hi, p.x));
+  if (cut) { /* (its back off the screen: where it is, beak short of the board) */ }
+  else if (p.flip > 0) p.x = Math.max(lo, Math.min(hi, p.x));
   else p.x = Math.min(hi, Math.max(lo, p.x));
   p.y = Math.max(-room.top - BIRD_BOX[1] * s * BU + e, Math.min(SIZE + room.bottom - (BIRD_BOX[3] + CROUCH) * s * BU - e, p.y));
   // (on the ledge, clear of the moss and leaves hanging into it: where it
