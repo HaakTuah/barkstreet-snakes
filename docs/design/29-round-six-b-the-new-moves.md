@@ -17,7 +17,7 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 - It still costs the tip of your tail and needs more than 3 to go. Its rest is set by simulation (4 s now; longer, since it does more).
 - It hops fire and never puts it out. Only a flash puts fire out.
 - *The cue:* the landing cell gets a ring while the jump waits; the flight is the arch, shadow and dust round six A drew, longer.
-- *The lesson:* the first time you're boxed in with a jumpable gap, "Space hops up to three cells. Find an island!" (a tap on phones).
+- *The lesson:* the first time you're boxed in with a jumpable gap, "Space hops up to three cells. Hop the gap!" (2s: the log is one piece, so no islands) (a tap on phones).
 
 **The golden jump flies** (the owner: "you can essentially fly, like a mario jump, choosing exact landing site"):
 - Hold the jump to keep flying, up to 5 cells; let go and you come down on the next cell. A quick press is a plain-length hop, free.

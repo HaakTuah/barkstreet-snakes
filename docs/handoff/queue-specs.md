@@ -108,7 +108,7 @@ it until its jump's rest is over, and from where on the island its head can take
 is worse. A rules test sets up the case (a long snake beside a small island and a bigger one in reach), and part 4's
 A/B reports hops onto islands too small to live on, before and after.
 
-### 2s. A piece cut loose falls: the log stays one piece (30 October 2026, rewritten 31 October 2026; an engine-rules entry, after part 4; ahead of 2q)
+### 2s. A piece cut loose falls: the log stays one piece (30 October 2026, rewritten 31 October 2026; an engine-rules entry, after part 4; ahead of 2q) — done, PR #289
 
 Haakon (30 October 2026): "I still see the situation arise where 2 islands form at the opposite ends, and the snakes
 are trapped on each, so the one on the bigger one wins". The first answer kept every island a hop from another. Haakon

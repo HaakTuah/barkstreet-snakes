@@ -50,7 +50,9 @@
 //   flags.js      land made ahead of a strike, its dashes, banners and flags
 //   food.js       the food, and the beetles' burrows
 //   weather.js    fire and scorch, the sky, rain, lightning, rainbows
-//   bird.js       the woodpecker: its perch, its plan, its poses
+//   bird-perch.js the woodpecker's size, its perch, its aim and its layer
+//   bird.js       the woodpecker's plan and its poses
+//   bird-drum.js  how it clings to drum, and what of the board it hides
 //   bird-draw.js  the woodpecker drawn
 //   holes.js      its aim and patch on the board, and the holes and pits it leaves
 //   world.js      the frame, the round's events and moments, and the API

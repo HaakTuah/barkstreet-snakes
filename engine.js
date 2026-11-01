@@ -689,7 +689,8 @@ window.SnakeEngine = (() => {
   // promiseLandings) are kept while their cells are still free.
   // game.woodpecker: { at (time it came), target: [cells it's aiming at],
   //   strikeAt (tick), last: [cells it took out last], struckAt (tick), restUntil (tick), x, y (where it's busy),
-  //   pecks (strikes so far), landings (from PECK_PROMISE_TICKS moves before a strike: [[from, to], ...] cells, to -1 for none) }
+  //   pecks (strikes so far), landings (from PECK_PROMISE_TICKS moves before a strike: [[from, to], ...] cells, to -1 for none),
+  //   fall (2s: the cells of target on pieces it cuts loose, which fall with the strike, food and all) }
   function peck(game, dying) {
     if (!suddenDeath(game)) return;
     let w = game.woodpecker;
@@ -709,7 +710,8 @@ window.SnakeEngine = (() => {
       for (const s of game.snakes) {
         if (!s.alive) continue;
         if (!s.flight && zone.has(key(s.body[0].x, s.body[0].y))) { // (a head in the air isn't in it)
-          s.cause = 'got pecked by the woodpecker'; s.killer = 'wall'; s.killerId = null; s.fatal = 'pecked';
+          if (w.fall?.includes(key(s.body[0].x, s.body[0].y))) { s.cause = 'fell into a woodpecker hole'; s.killer = 'wall'; s.killerId = null; s.fatal = 'hole'; s.fell = true; } // (2s: down the hole with the piece it was on)
+          else { s.cause = 'got pecked by the woodpecker'; s.killer = 'wall'; s.killerId = null; s.fatal = 'pecked'; }
           s.alive = false;
           dying.push(s);
           continue;
@@ -717,23 +719,26 @@ window.SnakeEngine = (() => {
         if (s.body.some((c, i) => i && zone.has(key(c.x, c.y)))) under.push(s.id);
       }
       for (const k of zone) { game.holes.add(k); if (game.fires.has(k)) putOut(game, k); } // (a burning cell pecked out: the fire there's gone too)
-      for (const { food: f, to } of flying) {
+      for (const { food: f, to, fell } of flying) {
+        if (fell) { game.food.splice(game.food.indexOf(f), 1); continue; } // (2s: gone with its piece; the peck's fall shows it)
         game.events.push({ type: 'knock', kind: f.kind, x: f.x, y: f.y, tx: to ? to.x : null, ty: to ? to.y : null, ...(f.gold ? { gold: 1 } : {}), ...(f.color ? { color: f.color } : {}) });
         if (!to) { game.food.splice(game.food.indexOf(f), 1); continue; } // (nowhere to go, or a beetle: the bird eats it)
         f.x = to.x; f.y = to.y;
       }
       game.burrows = game.burrows.filter(b => !zone.has(key(b.x, b.y))); // (a burrow pecked open is a hole now)
       const hit = [...zone];
-      game.events.push({ type: 'peck', x: w.x, y: w.y, cells: hit, under });
+      game.events.push({ type: 'peck', x: w.x, y: w.y, cells: hit, under, ...(w.fall ? { fall: w.fall } : {}) }); // (fall: the cells of the pieces cut loose, 2s)
       w.pecks = (w.pecks || 0) + 1; // (it gets hungrier: shorter rests, bigger patches)
       delete w.landings;
+      delete w.fall;
       w.last = hit; w.struckAt = game.tick; w.target = []; w.restUntil = game.tick + Math.max(T.PECK_REST_MIN, Math.round(T.PECK_REST_TICKS * Math.pow(T.PECK_HUNGRIER, w.pecks)));
       return;
     }
     if (!w.target.length && game.tick >= w.restUntil) {
-      const patch = pickPatch(game);
+      const { patch, fall } = pickPatch(game);
       if (!patch.length) return;
       w.target = patch;
+      if (fall.length) w.fall = fall; else delete w.fall; // (2s: the pieces it cuts loose, in the mark too: they fall with the strike)
       w.strikeAt = game.tick + T.PECK_AIM_TICKS;
       let sx = 0, sy = 0;
       for (const k of patch) { sx += k % GRID; sy += Math.floor(k / GRID); }
@@ -800,19 +805,23 @@ window.SnakeEngine = (() => {
   // PECK_UNDER_BODY of the time (any snake's, never a head), beside an old
   // hollow PECK_WIDEN of the time (fewer, bigger hollows), else anywhere. It
   // grows compact (a cell with more of the patch, or old holes, beside it is
-  // likelier), is rounded off (see smoothPatch), and takes any crumbs it
-  // would cut off (see crumbs). It may cover food: that's knocked aside at
+  // likelier), is rounded off (see smoothPatch), and takes any piece of log
+  // it would cut loose (see cutLoose: 2s, the log stays one piece). It may cover food: that's knocked aside at
   // the strike (see knockTo). It keeps PECK_CLEARANCE cells from every head
   // and shuts nobody in (see shutsIn) while it can; failing that, it keeps
   // clear of heads themselves, shutting nobody in; failing that, those two
   // again, shutting someone in; failing that, anywhere left. (Each try:
   // [keep clear, of heads by more than this, shut nobody in].)
-  const PATCH_TRIES = [[true, T.PECK_CLEARANCE, true], [true, 0, true], [true, T.PECK_CLEARANCE, false], [true, 0, false], [false, -1, false]];
+  // (2s: and first, aiming small, cutting loose no piece bigger than
+  // PECK_FALL_SOFT; then any: [keep clear, of heads by more than this, shut
+  // nobody in, aim small].)
+  const PATCH_TRIES = [[true, T.PECK_CLEARANCE, true, true], [true, 0, true, true], [true, T.PECK_CLEARANCE, true, false], [true, 0, true, false],
+    [true, T.PECK_CLEARANCE, false, false], [true, 0, false, false], [false, -1, false, false]];
   function pickPatch(game) {
     const roll = Math.random();
     const nearHole = k => CRAWL.some(d => { const x = k % GRID + d.x, y = Math.floor(k / GRID) + d.y; return inside(x, y) && game.holes.has(key(x, y)); });
     const room = { now: null }; // (each snake's room as things stand: worked out once, if a try asks)
-    for (const [clear, gap, fair] of PATCH_TRIES) {
+    for (const [clear, gap, fair, small] of PATCH_TRIES) {
       const ok = k => {
         if (game.holes.has(k)) return false;
         if (!clear) return true;
@@ -853,10 +862,15 @@ window.SnakeEngine = (() => {
         }
         if (patch.length < Math.ceil(chunk / 2)) continue;
         smoothPatch(game, patch, inPatch, ok);
-        if (patch.length >= Math.ceil(chunk / 2) && (!clear || crumbs(game, patch)) && !(fair && shutsIn(game, patch, room))) return patch;
+        if (patch.length < Math.ceil(chunk / 2)) continue;
+        const fall = cutLoose(game, inPatch, ok, clear, small);
+        if (!fall) continue;
+        for (const k of fall) inPatch.add(k);
+        if (fair && shutsIn(game, inPatch, room)) continue;
+        return { patch: [...patch, ...fall], fall };
       }
     }
-    return [];
+    return { patch: [], fall: [] };
   }
   // Rounder hollows: after it grows, a patch takes any cell beside it with
   // three or more of its four neighbours in the patch, an old hole or off the
@@ -886,43 +900,51 @@ window.SnakeEngine = (() => {
       for (const k of drop) { patch.splice(patch.indexOf(k), 1); inPatch.delete(k); }
     }
   }
-  // No crumbs: islands of PECK_NO_ORPHANS cells or fewer that the patch
-  // would cut off from the rest of the log go into it (so they're in the
-  // mark from the start). False if a snake is on one: then it's not this patch.
-  const crumbSeen = new Int32Array(CELLS), crumbQ = new Int32Array(CELLS);
-  let crumbStamp = 0;
-  function crumbs(game, patch) {
-    const max = T.PECK_NO_ORPHANS;
-    if (!max) return true;
-    const inP = new Set(patch), bodyAt = new Set(), add = [];
-    for (const s of game.snakes) if (s.alive) for (const c of s.body) bodyAt.add(key(c.x, c.y));
-    for (const p of patch) for (const d of CRAWL) {
-      const x0 = p % GRID + d.x, y0 = Math.floor(p / GRID) + d.y;
-      if (!inside(x0, y0)) continue;
-      const n0 = key(x0, y0);
-      if (inP.has(n0) || game.holes.has(n0)) continue;
-      const st = ++crumbStamp; // (the land from here, counted up to one more than a crumb)
-      crumbSeen[n0] = st; crumbQ[0] = n0;
+  // The log stays one piece (2s, Haakon, 31 October 2026: "we want to avoid
+  // the islands stuff"): the log is the biggest piece of bark left once the
+  // patch is out; every other piece, cut loose, falls with the strike, so it
+  // goes into the mark from the start (shaded as it will fall: w.fall) and
+  // anyone sees it coming. Returns its cells ([] if none), or null if this
+  // patch won't do: keeping clear (keep), a piece as near a head as the
+  // patch may be (ok), so nobody is on it before they can see it, and it
+  // never drops a snake that couldn't get off in the warning's time (a
+  // crumb of PECK_NO_ORPHANS cells or fewer only never under a head: the
+  // rest of its neighbourhood is the patch's); aiming small (small), one bigger than PECK_FALL_SOFT.
+  // (No size is banned from falling: the last tries take any.)
+  const pieceOf = new Int32Array(CELLS), pieceQ = new Int32Array(CELLS);
+  function cutLoose(game, inP, ok, keep, small) {
+    pieceOf.fill(-1);
+    const sizes = [];
+    for (let k0 = 0; k0 < CELLS; k0++) {
+      if (pieceOf[k0] >= 0 || inP.has(k0) || game.holes.has(k0)) continue;
+      const id = sizes.length;
+      pieceOf[k0] = id; pieceQ[0] = k0;
       let r = 0, w = 1;
-      while (r < w && w <= max) {
-        const i = crumbQ[r++], x = i % GRID, y = Math.floor(i / GRID);
-        for (const dd of CRAWL) {
-          const nx = x + dd.x, ny = y + dd.y;
+      while (r < w) {
+        const i = pieceQ[r++], x = i % GRID, y = (i - x) / GRID;
+        for (const d of CRAWL) {
+          const nx = x + d.x, ny = y + d.y;
           if (!inside(nx, ny)) continue;
           const ni = key(nx, ny);
-          if (crumbSeen[ni] === st || inP.has(ni) || game.holes.has(ni)) continue;
-          crumbSeen[ni] = st; crumbQ[w++] = ni;
-          if (w > max) break;
+          if (pieceOf[ni] >= 0 || inP.has(ni) || game.holes.has(ni)) continue;
+          pieceOf[ni] = id; pieceQ[w++] = ni;
         }
       }
-      if (w > max) continue; // (an island too big to be a crumb, or the rest of the log)
-      for (let j = 0; j < w; j++) {
-        if (bodyAt.has(crumbQ[j])) return false;
-        add.push(crumbQ[j]);
-      }
+      sizes.push(w);
     }
-    for (const c of add) if (!inP.has(c)) { inP.add(c); patch.push(c); }
-    return true;
+    if (sizes.length < 2) return [];
+    const heads = sizes.map(() => 0); // (two pieces as big: the log is the one with more heads on it)
+    for (const s of game.snakes) if (s.alive) { const k = key(s.body[0].x, s.body[0].y); if (pieceOf[k] >= 0) heads[pieceOf[k]]++; }
+    let log = 0;
+    for (let i = 1; i < sizes.length; i++) if (sizes[i] > sizes[log] || (sizes[i] === sizes[log] && heads[i] > heads[log])) log = i;
+    const fall = [];
+    for (let k = 0; k < CELLS; k++) {
+      if (pieceOf[k] < 0 || pieceOf[k] === log) continue;
+      if (keep && !(sizes[pieceOf[k]] <= T.PECK_NO_ORPHANS ? headGap(game, k % GRID, (k - k % GRID) / GRID) > 0 : ok(k))) return null;
+      fall.push(k);
+    }
+    if (small && fall.length > T.PECK_FALL_SOFT) return null;
+    return fall;
   }
   // Never shut anyone in: would this patch leave a snake less room than its
   // length (pending growth too), where it has that much now? Room is timed,
@@ -1043,7 +1065,7 @@ window.SnakeEngine = (() => {
   // the rings show and the strike does. ahead: moves still to come before
   // the strike (see strikeIn; the strike itself passes 0).
   function knocks(game, cells, promised = null, ahead = strikeIn(game)) {
-    const patch = cells instanceof Set ? cells : new Set(cells), room = knockRoom(game, ahead), landed = new Set(), out = [];
+    const patch = cells instanceof Set ? cells : new Set(cells), room = knockRoom(game, ahead), landed = new Set(), out = [], fell = game.woodpecker?.fall;
     const free = (x, y) => room(x, y) && !landed.has(key(x, y));
     const kept = new Map(), broken = new Map(); // (food: the cell it was promised, still free; or taken since)
     if (promised) for (const [from, to] of promised) {
@@ -1055,6 +1077,7 @@ window.SnakeEngine = (() => {
     }
     for (const f of game.food) {
       if (!patch.has(key(f.x, f.y))) continue;
+      if (fell?.includes(key(f.x, f.y))) { out.push({ food: f, to: null, fell: true }); continue; } // (2s: on a piece cut loose, it falls with it)
       if (f.kind === 'beetle') { out.push({ food: f, to: null }); continue; } // (round six B, 2m: a beetle still under the beak is the bird's: it had the rings' warning to run)
       const k = kept.get(f), b = broken.get(f);
       const to = k != null ? { x: k % GRID, y: (k - k % GRID) / GRID } : b != null ? knockTo(game, b % GRID, (b - b % GRID) / GRID, patch, free) : knockTo(game, f.x, f.y, patch, free);
@@ -1158,6 +1181,7 @@ window.SnakeEngine = (() => {
       // them to everyone.)
       strikeAt: game.woodpecker?.target.length ? game.woodpecker.strikeAt : null,
       landings: game.woodpecker?.landings || null,
+      fall: game.woodpecker?.fall || null, // (2s: the pieces its mark cuts loose, shaded for everyone: they fall at the strike, food and all)
       burrows: game.burrows, // (as they are: a person sees every burrow on the board, [{ x, y, at }])
       age: game.history.length - 1 - idx,
       tick: game.tick,

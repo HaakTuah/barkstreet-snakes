@@ -362,7 +362,7 @@ function sounds(dying, wasAlive) {
     else if (e.type === 'eat') fed.push(e);
     else if (e.type === 'woodpecker') { Sound.play('call'); Sound.play('riser'); }
     else if (e.type === 'aim') Sound.play('aim', at(e.x));
-    else if (e.type === 'peck' && e.cells?.length) Sound.play('crash', at(e.x)); // (its drum came first, blow by blow: see birdSounds)
+    else if (e.type === 'peck' && e.cells?.length) { Sound.play('crash', at(e.x)); if (e.fall?.length) Sound.play('fall', at(e.fall[0] % GRID_SIZE)); } // (its drum came first, blow by blow: see birdSounds; 2s: a piece cut loose creaks and drops)
     else if (e.type === 'spawn' && e.kind === 'beetle') Sound.play('beetle', at(e.x));
     else if (e.type === 'starving' && isMe(e.snake)) Sound.play('hungry');
     else if (e.type === 'charge') Sound.play('crackle', at(e.x));

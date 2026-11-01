@@ -133,7 +133,8 @@ window.TUNING = Object.freeze({
   PECK_REST_MIN: 10,
   PECK_CHUNK_MAX: 20,       // ...and each patch a cell bigger than the last (up to this): fewer, rounder holes fill the log as fast as the old 9 to 16 with longer rests
   PECK_CLEARANCE: 4,        // it aims more than this far from every head (nobody can be in a fresh mark before they can see it), and never shuts anyone in, while there's such a spot; food in the mark is knocked aside at the strike
-  PECK_NO_ORPHANS: 2,       // a patch that would cut off an island of this many cells or fewer takes them too (unless a snake's on one: then another patch)
+  PECK_NO_ORPHANS: 2,       // a crumb this small cut loose (2s: it falls with the strike, as any piece cut loose) may lie near a head, never under one; a bigger piece keeps the patch's clearance
+  PECK_FALL_SOFT: 12,       // the log stays one piece (2s): a patch that cuts a piece loose takes it too (it falls with the strike, shown in the mark); it aims to cut loose none bigger than this, but takes any if it must
   PECK_UNDER_BODY: 0.33,    // this share of strikes starts under a body (a body lying over a fresh hole bridges it; only a head falls in)
   PECK_WIDEN: 0.5,          // this share widens an old hollow (fewer, bigger hollows)
   SD_APPLE_GAP: 20,         // sudden death: with no apple on the board, the next falls this many ticks after the last went, times its number (about 2 s, 4 s, 6 s...)
