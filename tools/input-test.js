@@ -179,6 +179,8 @@ const KEYS = {
   ArrowRight: { key: 'ArrowRight', code: 'ArrowRight', vk: 39 },
   d: { key: 'd', code: 'KeyD', vk: 68, text: 'd' },
   p: { key: 'p', code: 'KeyP', vk: 80, text: 'p' },
+  g: { key: 'g', code: 'KeyG', vk: 71, text: 'g' },
+  Enter: { key: 'Enter', code: 'Enter', vk: 13, text: '\r' },
   r: { key: 'r', code: 'KeyR', vk: 82, text: 'r' },
   Escape: { key: 'Escape', code: 'Escape', vk: 27 },
   Tab: { key: 'Tab', code: 'Tab', vk: 9 },

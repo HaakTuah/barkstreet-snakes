@@ -185,6 +185,7 @@ fs.mkdirSync(out, { recursive: true });
         show(g); drawN(24, 0.6);
         const ev = [];
         for (const { food: f, to } of E.knocks(g, P)) { // (the engine's own list, in the strike's order)
+          if (!to) continue; // (nowhere to go: the bird eats it, as the engine does)
           ev.push({ type: 'knock', kind: f.kind, x: f.x, y: f.y, tx: to.x, ty: to.y });
           if (f.kind === 'beetle') { f.px = f.x; f.py = f.y; f.movedAt = g.tick; }
           f.x = to.x; f.y = to.y;

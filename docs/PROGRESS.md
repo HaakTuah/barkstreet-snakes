@@ -33,16 +33,13 @@ the second account until its usage is spent; on the main account the brake close
 - **First, the housekeeping:** done (PR #222, and the design session's move of the open entries' specs to
   `docs/handoff/queue-specs.md`, 31 October 2026); merged branches now go by GitHub's "Automatically delete head
   branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
-- **The README, done** (PR #241; Haakon, 31 October 2026: "Yes, expertly to both!"): `README.md` is for players, up to
-  the game as it plays now; the developer part is in `docs/developing.md`. From here every entry keeps it current ("A
-  change a player sees updates the README" in `CLAUDE.md`); 2v adds the update between rounds when it merges.
-- **Next, any key wakes from a nap** (Haakon, 31 October 2026: "Space should also pause and unpause on Barkstreet Snakes." Told that Space is the jump: "Ahh, true! yeah, really any button should unpause, no?" Then, to the design session's shape of it: "Yes, please! Expertly!"): as the Pause row of "Voice and copy" (`docs/design/09-voice-and-copy.md`) now says. Any playing key, or a tap on the board on touch, wakes; the waking press never fires a power (a steering key wakes and steers, as it always has: "A power only when you ask"); G, H, M, N, V and the speed keys keep their jobs; the card says "Any key to wake up" / "Tap to wake up"; the help line, the Field guide and the README to match. Online: a nap is local only as now. A rules or input test both ways: Space wakes without a jump, G opens the Field guide and the game stays napping.
+- **Done in the lane's entries:** the README for players (PR #241) and any key wakes from a nap (PR #271): their words are in `docs/archive/progress-done.md`, "The polish lane, done".
 - **Next, the woodpecker bigger on a phone** (Haakon, 31 October 2026, with a desktop screenshot beside it: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much."): on a
   phone, upright and on its side, it is drawn bigger than 2k's 1.7 times, so it looks as threatening there as it does
   beside the board on a desktop; the desktop is unchanged. Pictures first, at 390×844 and 780×320, perched and striking,
   at three sizes side by side on `pr-media`, and Haakon picks before it merges, as with Wildcard's hair (2n). A bigger
   bird may cover more of the row and the chatter under the board (his answer on the help line), never a card (PR #243),
-  and never the board's play for longer than a strike does now. Presentation only: the fingerprints unchanged.
+  and never the board's play for longer than a strike does now. Presentation only: the fingerprints unchanged. **Answered** (Haakon, 1 November 2026, to #270's two questions): size B, 1.6 times (212 px upright, 172 px sideways, the same size beside the board both ways); and sideways it perches at that full size, partly off-screen, its head, beak and eye in the gap beside the board and inside the safe area, its back and tail cut off by the screen edge, so it is the same size perched and striking and never covers the board while it perches ("Seems better than making it super small and have it swell up whenever it attacks", then "Yes.").
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
@@ -56,30 +53,15 @@ the second account until its usage is spent; on the main account the brake close
   and 11), so nothing that changes play slips in; merged at once, one line per fix under this lane. Nothing is left
   half done: a fix not finished when usage ends is left unstarted, its find noted for the next session.
 
-*Done in the lane:*
-- The housekeeping (PR #222): done entries and done parts' detail moved to `docs/archive/progress-done.md`; this file
-  is now about 33 KB, all of it open entries, kept word for word.
-- The open entries' specs moved word for word to `docs/handoff/queue-specs.md` by the design session (31 October
-  2026); each entry here keeps its title, a line and a pointer, and this file is now about 12 KB.
-- The Voices switch's icon (PR #224): a head speaking, no longer the header's sound speaker.
-- Your lesson fades once you're out (PR #231): "Crashes cost tail. You're at 3…" and the hunger warning no longer stay up after you're out.
-- The Hall of Fame's "Clear everything" (PR #230): shown only once something is kept (a row, a round in your story, a Best).
-- "AIs" read as "Als" in the round font (PR #229): "Watch AIs" is "Watch rivals" (start and round-over cards), and the lobby says "Empty seats go to rivals" and "A rival, unless a friend joins".
-- The start card's tip says what both taps do (PR #242): "Tap names to swap, tags to see how they play." (it named only the tags, right under the names that swap).
-- The Field guide's Beetles row split in two (PR #244): Beetles, and Burrows after it, the same words (it was eleven lines on a phone).
-- A start card whose names wrap fits a small board (PR #234): at 320 px upright or 568 px sideways its tip goes, then its lines sit closer, so the buttons never cover a name.
-- Score and Best step aside under a banner above the board, on a phone held upright (PR #232; the audit's first find).
-- The woodpecker flies under a card that's up, no longer across its title (PR #243; the audit's third find).
-- *Left as it is, by Haakon's answer:* the woodpecker over the help line between rounds (the audit's second find; PR #240 closed). On a 390 px phone it may cover part of the help line or the chatter's words; nothing essential is hidden, it moves often and taps pass through it ("Clear of the row's words (2k+)" in `docs/design/32-the-owners-playtest.md`). Not to be raised again.
-- *Not reproduced:* bubbles overlapping at 4× (the audit's fourth find). In 8 watched phone rounds and 3 desktop rounds at 4×, the longest overlap was 0.4 s on the phone and 0.19 s on desktop, only while bubbles glide to a new side. Dropping the older bubble after 0.25 s of overlap made no measurable difference, so nothing was merged.
-- *Measured, nothing to fix:* sound piling up while watching (PR #248, `tools/dev/sound-levels.js`). At 4× the round asks for about 10 cues a second and the gaps let 4.5 through, at most 5 in any 250 ms; rivals' chomps 2 a second, the babble one every 4 s at most. Same shape at 1× and 2×, halved. The chatter's words were scanned too: no typos, apostrophes consistent.
-- *As designed:* the empty chatter-log line (the audit's sixth find): it's a new line's 0.4 s slide-in (`log-in`) caught mid-fade. Over 3 watched rounds on a phone on its side, 23 of 621 visible-row samples caught one, and none stayed empty. No fix.
-- The tail-drop lesson only in a real pocket, not when you've coiled with room to crawl out after your tail (PR #246; the audit's fifth find).
+*Done in the lane:* each fix's line is in `docs/archive/progress-done.md`, "The polish lane, done".
+
+- The room card on a phone (PR #256): its seats as names in a row, as the start card's, each rival's "unless a friend joins" left to the card's own words; it fits a 320 px phone upright (it ran 117 px under its buttons), and on a 568x320 one sideways it scrolls 84 px, not 234.
+
+- The friends card's Join on a small phone on its side (PR #272): at 568x320 it ran 15 px off the card's edge; its row is a little tighter there.
 
 ## The split lane (the workshop check's files over about 50 KB)
 
-- `audio.js` became `audio/` (PR #225): `cues.js` and `sound.js`, sound proven unchanged by `tools/dev/same-sound.js`.
-  `chatter/zh.js` became `zh.js` and `zh-more.js` (PR #226), checked by `tools/dev/same-zh.js`.
+- *Done:* `audio.js` and `chatter/zh.js` split (PRs #225, #226): `docs/archive/progress-done.md`, "The split lane, done".
 - **Waiting for the main lane** (PR #198 and its parked #202 have them open): `ai.js` (139 KB), `engine.js` (128 KB) and
   `render/world.js` (51 KB). Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
 

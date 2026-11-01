@@ -73,6 +73,7 @@ Press **Play with friends** on the start screen, then **Host a game** and send t
 | Jump | Space, or click the board | Tap |
 | Flash | E or Shift, or right-click the board | Swipe the way you're already going |
 | Nap (pause) | P or Esc | ⏸ button |
+| Wake up | Any key that plays: Space, an arrow (it wakes and steers), E, Shift, Enter, P or Esc; the wake never fires a power | Tap the board or the card, or Wake up |
 | Start / start over | Enter or R (mid-round it asks first: press it again), or any arrow on the start screen | Play button |
 | Field guide (how to play, and every food, power and danger) | G | Field guide button (an open book), or **How to play** on the start screen |
 | Hall of Fame, Your story | H | Hall of Fame button (a trophy) |
