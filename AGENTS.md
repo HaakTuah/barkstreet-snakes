@@ -152,6 +152,13 @@ The simulation always prints its fingerprint; `--check` also fails the run if a 
 change that should keep behaviour must keep the fingerprints. The browser suites' Chrome, the optional switches and
 playing it locally: `docs/developing.md`, "Switches for the checks".
 
+## Review guidelines
+
+For Codex's code review (`@codex review`), and every other reviewer: give a score from 1 to 10, and list everything
+that keeps the work from 10, each point concrete (a file and line, or a design section) and marked **blocking**
+(against the design, the PR's description and the sections it names, its tests, or the rules in this file) or **not
+blocking**. Check the rules that stand above all. The whole method: "Reviews" in `docs/claude-and-codex.md`.
+
 ## Standing instructions
 
 Haakon's standing instructions given since this file was last revised, dated, newest last.
