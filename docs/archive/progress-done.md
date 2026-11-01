@@ -690,3 +690,39 @@ one between rounds when a new version is waiting, the line of what changed shown
 
 Done (PR #223): `version.js` (the build, stamped by the Pages workflow, and the news, one line per milestone) and
 `update.js`; the start card's intro line says what is new for three rounds. See `docs/design/36-updating.md`.
+
+## The polish lane, done (moved 31 October 2026)
+
+Word for word from "The polish lane" in `docs/PROGRESS.md`.
+
+- **The README, done** (PR #241; Haakon, 31 October 2026: "Yes, expertly to both!"): `README.md` is for players, up to
+  the game as it plays now; the developer part is in `docs/developing.md`. From here every entry keeps it current ("A
+  change a player sees updates the README" in `CLAUDE.md`); 2v adds the update between rounds when it merges.
+- **Next, any key wakes from a nap** (Haakon, 31 October 2026: "Space should also pause and unpause on Barkstreet Snakes." Told that Space is the jump: "Ahh, true! yeah, really any button should unpause, no?" Then, to the design session's shape of it: "Yes, please! Expertly!"): as the Pause row of "Voice and copy" (`docs/design/09-voice-and-copy.md`) now says. Any playing key, or a tap on the board on touch, wakes; the waking press never fires a power (a steering key wakes and steers, as it always has: "A power only when you ask"); G, H, M, N, V and the speed keys keep their jobs; the card says "Any key to wake up" / "Tap to wake up"; the help line, the Field guide and the README to match. Online: a nap is local only as now. A rules or input test both ways: Space wakes without a jump, G opens the Field guide and the game stays napping.
+
+- The housekeeping (PR #222): done entries and done parts' detail moved to `docs/archive/progress-done.md`; this file
+  is now about 33 KB, all of it open entries, kept word for word.
+- The open entries' specs moved word for word to `docs/handoff/queue-specs.md` by the design session (31 October
+  2026); each entry here keeps its title, a line and a pointer, and this file is now about 12 KB.
+- The Voices switch's icon (PR #224): a head speaking, no longer the header's sound speaker.
+- Your lesson fades once you're out (PR #231): "Crashes cost tail. You're at 3…" and the hunger warning no longer stay up after you're out.
+- The Hall of Fame's "Clear everything" (PR #230): shown only once something is kept (a row, a round in your story, a Best).
+- "AIs" read as "Als" in the round font (PR #229): "Watch AIs" is "Watch rivals" (start and round-over cards), and the lobby says "Empty seats go to rivals" and "A rival, unless a friend joins".
+- The start card's tip says what both taps do (PR #242): "Tap names to swap, tags to see how they play." (it named only the tags, right under the names that swap).
+- The Field guide's Beetles row split in two (PR #244): Beetles, and Burrows after it, the same words (it was eleven lines on a phone).
+- A start card whose names wrap fits a small board (PR #234): at 320 px upright or 568 px sideways its tip goes, then its lines sit closer, so the buttons never cover a name.
+- Score and Best step aside under a banner above the board, on a phone held upright (PR #232; the audit's first find).
+- The woodpecker flies under a card that's up, no longer across its title (PR #243; the audit's third find).
+- *Left as it is, by Haakon's answer:* the woodpecker over the help line between rounds (the audit's second find; PR #240 closed). On a 390 px phone it may cover part of the help line or the chatter's words; nothing essential is hidden, it moves often and taps pass through it ("Clear of the row's words (2k+)" in `docs/design/32-the-owners-playtest.md`). Not to be raised again.
+- *Not reproduced:* bubbles overlapping at 4× (the audit's fourth find). In 8 watched phone rounds and 3 desktop rounds at 4×, the longest overlap was 0.4 s on the phone and 0.19 s on desktop, only while bubbles glide to a new side. Dropping the older bubble after 0.25 s of overlap made no measurable difference, so nothing was merged.
+- The squash lesson (PR #250): "Your own beads feed nobody.", no longer "Squashed! Your own tail feeds nobody." (it opened with a rival's death title, and called the beads tail; the Field guide's Beads row says beads).
+- *Measured, nothing to fix:* sound piling up while watching (PR #248, `tools/dev/sound-levels.js`). At 4× the round asks for about 10 cues a second and the gaps let 4.5 through, at most 5 in any 250 ms; rivals' chomps 2 a second, the babble one every 4 s at most. Same shape at 1× and 2×, halved. The chatter's words were scanned too: no typos, apostrophes consistent.
+- *As designed:* the empty chatter-log line (the audit's sixth find): it's a new line's 0.4 s slide-in (`log-in`) caught mid-fade. Over 3 watched rounds on a phone on its side, 23 of 621 visible-row samples caught one, and none stayed empty. No fix.
+- The tail-drop lesson only in a real pocket, not when you've coiled with room to crawl out after your tail (PR #246; the audit's fifth find).
+- The screenshot tour runs through again (PR #252): `tools/shots.js`'s staged knock-flight stopped at food the bird eats (the engine's knock list gives it nowhere to go); it skips that piece, as the engine does.
+- Any key wakes from a nap (PR #271): Space, the flash keys, Enter, P or Esc wake without a power, an arrow wakes and steers, a tap on the board or the card wakes on touch; G, H, M, N, V and the speed keys keep their jobs. The card says "Any key to wake up" / "Tap to wake up".
+
+## The split lane, done (moved 31 October 2026)
+
+- `audio.js` became `audio/` (PR #225): `cues.js` and `sound.js`, sound proven unchanged by `tools/dev/same-sound.js`.
+  `chatter/zh.js` became `zh.js` and `zh-more.js` (PR #226), checked by `tools/dev/same-zh.js`.

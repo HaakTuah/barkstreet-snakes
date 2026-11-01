@@ -107,23 +107,33 @@ for (let n = 0; n < 60; n++) {
 const allLat = [...turnLat, ...pressLat.jump, ...pressLat.flash];
 check(late === 0 && Math.max(...allLat) <= 120 + P + 0.01, 'every press reaches the engine within a tick and a frame', `turns ${JSON.stringify(stats(turnLat))}`);
 
-// Napping: P and Esc nap and wake; Space, E and Shift don't wake; the
-// press that wakes, and the arrow that skips the wake beat, fire nothing.
+// Napping: P and Esc nap; any key that plays wakes (the Pause row of
+// "Voice and copy"): Space, E and Shift wake and fire nothing, Enter and P
+// wake, an arrow wakes and steers; G opens the Field guide and the game
+// keeps napping. The arrow that skips the wake beat fires nothing either.
 await ev('centre()');
 before = await powers();
-await key('p'); await ev('vf(2)');
-const napped = await state();
-for (const k of [' ', 'e', 'ShiftRight']) { await key(k); await ev('vf(2)'); }
-const stillNapping = await state();
-await key('p'); await ev('vf(2)');
-const waking = await state();
-await key('ArrowRight'); await ev('vf(2)');
-const awake = await state();
+const wokeBy = [];
+for (const k of [' ', 'e', 'ShiftRight', 'Enter', 'p']) {
+  await key('p'); await ev('vf(2)');
+  const napped = await state();
+  await key(k); await ev('vf(2)');
+  wokeBy.push(`${k}: ${napped} → ${await state()}`);
+  await key('ArrowRight'); await ev('vf(2)'); // (past the wake beat)
+}
 await key('Escape'); await ev('vf(2)');
 const napped2 = await state();
-await key('Escape'); await ev('vf(30)');
-check(napped === 'paused' && stillNapping === 'paused' && waking === 'countdown' && awake === 'running' && napped2 === 'paused' && await state() === 'running' && await powers() === before,
-  'P and Esc nap and wake; Space, E and Shift don’t; waking fires no power', [napped, stillNapping, waking, awake, napped2].join(' '));
+await down('ShiftLeft'); await key('g'); await up('ShiftLeft'); await ev('vf(2)'); // (Shift+G: G's job, and Shift with it wakes nothing)
+const guide = await ev(`({ s: SnakeDebug.state(), open: !document.getElementById('records').hidden })`);
+await key('Escape'); await ev('vf(2)');
+const afterGuide = await state();
+await key('ArrowUp'); await ev('vf(2)');
+const steered = await ev(`({ s: SnakeDebug.state(), dir: SnakeDebug.game().snakes[0].dir.y, queued: SnakeDebug.game().snakes[0].queue.map(d => d.y) })`);
+await ev('vf(30)');
+check(wokeBy.every(w => w.endsWith('paused → countdown')) && napped2 === 'paused' && await state() === 'running' && await powers() === before,
+  'napping, any key that plays wakes (Space, E, Shift, Enter, P), and waking fires no power', wokeBy.join('; '));
+check(guide.s === 'paused' && guide.open && afterGuide === 'paused' && steered.s === 'running' && (steered.dir === -1 || steered.queued.includes(-1)),
+  'napping, Shift+G opens the Field guide and the game keeps napping (Shift alone wakes); an arrow wakes and steers', JSON.stringify({ guide, afterGuide, steered }));
 
 // Start over? (R): Space doesn't answer it; an arrow ahead keeps going, and fires nothing.
 before = await powers();
