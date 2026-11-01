@@ -7,8 +7,7 @@ lanes, its fallback and the reviews between the two builders: `docs/claude-and-c
 
 - **28 October 2026: pipeline, don't wait.** "Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns." (to Claude's proposal; the words are in
   `docs/archive/instructions.md`). Waiting is lost time and, past an hour, a lost cache, so:
-  1. **Review in the background.** Open the PR, start its reviewer as a background agent (or the `codex-review` label for Codex's review:
-     `docs/claude-and-codex.md`), and go on meanwhile with what comes next: the next entry's text, its sections, the check for
+  1. **Review in the background.** Open the PR, start its reviewer as a background agent, and go on meanwhile with what comes next: the next entry's text, its sections, the check for
      changes. Fix what the review finds when it returns, then merge.
   2. **The next entry beside it.** Entries are mostly independent: take the next one from `develop`, never stacked on
      an open PR's branch ("Don't stack PRs"). Two AI changes are never measured at once: an AI entry waits for the
