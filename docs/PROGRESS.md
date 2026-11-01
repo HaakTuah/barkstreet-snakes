@@ -53,6 +53,8 @@ the second account until its usage is spent; on the main account the brake close
 
 *Done in the lane:* each fix's line is in `docs/archive/progress-done.md`, "The polish lane, done".
 
+- The room card on a phone (PR #256): its seats as names in a row, as the start card's, each rival's "unless a friend joins" left to the card's own words; it fits a 320 px phone upright (it ran 117 px under its buttons), and on a 568x320 one sideways it scrolls 84 px, not 234.
+
 ## The split lane (the workshop check's files over about 50 KB)
 
 - *Done:* `audio.js` and `chatter/zh.js` split (PRs #225, #226): `docs/archive/progress-done.md`, "The split lane, done".

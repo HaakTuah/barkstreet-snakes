@@ -33,6 +33,14 @@ for (const [w, h] of [[390, 844], [320, 640]]) {
   const fit = await ev(`(() => { const c = document.querySelector('.overlay .card'); return { over: c.scrollHeight - c.clientHeight, steps: ['snug', 'snugger'].filter(k => c.classList.contains(k)).join() }; })()`);
   check(fit.over <= 1 && (w === 390 ? fit.steps === '' : fit.steps !== ''), `phone ${w}: the start card with the longest names fits its board${w === 390 ? ', nothing dropped' : ', its tip dropped'}`, JSON.stringify(fit));
   await load();
+  // The room the host opens (a stand-in for the network): its four seats in a row of names, the card within its board.
+  await ev(`SnakeDebug.setup(['capricious', 'desperado', 'metagamer']); SnakeNet.host = async () => ({ code: 'MOSSY', send() {}, broadcast() {}, admit() {}, quietFor: () => 0, rtt: () => 0, drop() {}, close() {} }); document.getElementById('friends').click(); 'ok'`);
+  await b.sleep(300);
+  await ev(`document.getElementById('start').click(); 'ok'`);
+  await wait(`!document.getElementById('lobby-players').hidden`);
+  const room = await ev(`(() => { const c = document.querySelector('.overlay .card'); return { over: c.scrollHeight - c.clientHeight, seats: document.querySelectorAll('#lobby-players li').length }; })()`);
+  check(room.over <= 1 && room.seats === 4, `phone ${w}: the room's card, four seats, fits its board`, JSON.stringify(room));
+  await load();
   await tap(await at('#how'));
   p = await P();
   check(p.book && p.tab === 'guide' && p.firstHead === 'The basics', `phone ${w}: How to play opens the guide on The basics`, p.firstHead);
