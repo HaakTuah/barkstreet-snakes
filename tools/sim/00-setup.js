@@ -9,7 +9,8 @@ const { Worker, isMainThread, parentPort, workerData } = require('worker_threads
 // (Workers don't see the command line, so the root travels with each job.)
 const argRoot = process.argv.indexOf('--root');
 const ROOT = isMainThread ? (argRoot > 0 ? path.resolve(process.argv[argRoot + 1]) : path.join(__dirname, '..')) : workerData.root;
-const MAX_TIME = 600000; // a round still going after 10 minutes counts as stalled
+const MAX_TIME = 600000;
+const CHASE_NEAR = 6; // (a beetle counts as chased once a head is this near: fixed, not BEETLE_FEAR, so a change to how soon beetles take fright is measured on the same chases (2w)) // a round still going after 10 minutes counts as stalled
 const GAME_FILES = ['tuning.js', 'ai.js', 'engine.js'];
 
 // A CommonJS file run from its text, as if required from where it lies: how
