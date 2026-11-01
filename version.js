@@ -9,8 +9,9 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-01', line: 'The flash is now the dash.' },
     { on: '2026-11-01', line: 'No more islands: a piece cut loose falls away.' },
-    { on: '2026-11-01', line: 'Any key wakes a nap; a bigger woodpecker on phones.' },
+    { on: '2026-11-01', line: 'Any key wakes a nap; a bigger bird on phones.' },
     { on: '2026-10-31', line: 'The game now updates itself between rounds.' },
   ],
 };

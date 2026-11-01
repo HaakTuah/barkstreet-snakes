@@ -175,6 +175,7 @@ The weekly blind re-reviews and the canaries, newest first ("Reviews", point 5).
 
 | Date | Check | PR | Reviewer checked | Misses | What changed |
 | --- | --- | --- | --- | --- | --- |
+| 2026-11-01 | Blind re-review (week 1) | Snakes #289 (engine rules, merged at 7, 9, 10) | Codex (its 10) and Claude's reviewer (its 9) | 3 (blocking; scored 7) | Follow-up entry 2s+ in `docs/PROGRESS.md`; the first miss, so no brief changed yet |
 | 2026-11-01 | Canary (before this rule) | Snakes #298 | Codex | 0 of 3 | None needed |
 
 ## For Codex

@@ -33,7 +33,7 @@ function buildTags() {
 // desktop, its tooltip still does).
 const noteEl = $('rival-note'), noteDot = noteEl.querySelector('.dot'), noteWho = noteEl.querySelector('strong');
 const noteHow = noteEl.querySelector('.how'), noteNow = noteEl.querySelector('.now'), cardEl = overlay.querySelector('.card');
-let noted = null, bannered = null; // (whose note is on the card; whose is the banner)
+let noted = null, bannered = null, noteShutAt = -1e9; // (whose note is on the card; whose is the banner; when a note last closed: the tap that closes one on a napping card doesn't wake it too)
 tagsEl.addEventListener('click', e => {
   const li = e.target.closest?.('li'), s = li && theGame.snakes.find(o => o.tag?.li === li);
   if (!s || !(s.persona || isMe(s)) || state === 'countdown' || state === 'lobby') return;
@@ -90,6 +90,7 @@ function closeNote(byKey = false) {
   noted.tag?.li.classList.remove('noted');
   name?.setAttribute('aria-expanded', 'false');
   noted = null;
+  noteShutAt = performance.now();
   noteEl.hidden = true;
   cardEl.classList.remove('noting');
   if (!inside) return;
@@ -216,10 +217,10 @@ addEventListener('resize', fitStartCard);
 // What the chips mean, in words (phones have no tooltips).
 function yourPowerWords(s) {
   const how = (left, gold) => gold ? `${gold} golden` : left === 0 ? 'ready' : left === Infinity ? 'not at 3' : 'resting';
-  return `${touchFirst ? 'A tap' : 'Space or a click'} jumps: ${how(Engine.leapIn(theGame, s), s.leaps)}. ${touchFirst ? 'A swipe ahead' : 'E, Shift or right-click'} flashes: ${how(Engine.flashIn(theGame, s), s.dashes)}.`;
+  return `${touchFirst ? 'A tap' : 'Space or a click'} jumps: ${how(Engine.leapIn(theGame, s), s.leaps)}. ${touchFirst ? 'A swipe ahead' : 'E, Shift or right-click'} dashes: ${how(Engine.flashIn(theGame, s), s.dashes)}.`;
 }
 // Golden powers held, as words: ['2 golden jumps', '1 golden flash'].
-const goldWords = s => [s.leaps > 0 && `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}`, s.dashes > 0 && `${s.dashes} golden flash${s.dashes === 1 ? '' : 'es'}`].filter(Boolean);
+const goldWords = s => [s.leaps > 0 && `${s.leaps} golden jump${s.leaps === 1 ? '' : 's'}`, s.dashes > 0 && `${s.dashes} golden dash${s.dashes === 1 ? '' : 'es'}`].filter(Boolean);
 const powerWords = s => { const held = goldWords(s); return (held.length ? ` Holding ${held.join(' and ')}.` : '') + (s.wrapUntil > theGame.time ? ' The edges wrap for it.' : ''); };
 
 function updateHud(force = false) {
@@ -305,7 +306,7 @@ function updateHud(force = false) {
 function chip(kind, n, s) {
   const gold = kind !== 'wrap' && n > 0;
   const title = kind === 'wrap' ? `The edges wrap round for ${isMe(s) ? 'you' : s.persona ? 'it' : 'them'}`
-    : gold ? (kind === 'jump' ? 'Golden jumps: long ones, free' : 'Golden flashes: three cells at once') : '';
+    : gold ? (kind === 'jump' ? 'Golden jumps: long ones, free' : 'Golden dashes: three cells at once') : '';
   return `<span class="chip ${kind}${gold ? ' gold' : ''}${isMe(s) ? ' mine' : ''}"${title ? ` title="${title}"` : ''}>${POW_ICON[kind]}${n ? `<b>${n}</b>` : ''}</span>`;
 }
 // Your own chip's rest: filling in tenths (a write a few times a second, not

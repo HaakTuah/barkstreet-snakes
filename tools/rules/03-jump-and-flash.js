@@ -338,7 +338,7 @@
   E.flash(g2, g2.snakes[0]);
   const dying = quiet(g2);
   check('a dash cuts a body lying over a hole...', g2.snakes[1].alive && g2.snakes[1].body.length === 4 && g2.events.some(e => e.type === 'cut' && e.by === g2.snakes[0].id), g2.snakes[1].body.length);
-  check('...and then blows up in the hole', dying.includes(g2.snakes[0]) && g2.snakes[0].cause === 'flashed into a woodpecker hole and blew up', g2.snakes[0].cause);
+  check('...and then blows up in the hole', dying.includes(g2.snakes[0]) && g2.snakes[0].cause === 'dashed into a woodpecker hole and blew up', g2.snakes[0].cause);
   // A's stun ends facing the edge: up is P1's tail end, leaving this tick but lying over a hole; down's a dead end, but open.
   const g3 = board([[[[23, 5], [22, 5], [21, 5], [20, 5], [19, 5], [18, 5]], 'right'], [[[20, 1], [21, 1], [22, 1], [23, 1], [23, 2], [23, 3], [23, 4]], 'left']]);
   for (const k of [K(23, 4), K(22, 6), K(23, 7)]) g3.holes.add(k);

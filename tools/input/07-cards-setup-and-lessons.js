@@ -146,7 +146,7 @@ const FIRST_OUT = `(() => {
   a.name = 'Wilhelmina Grant'; b.name = 'Bartholomew Lark'; c.name = 'WWWWWWWWWWWWWWWW'; me.name = 'Gwendolyn Marsh';
   const dead = (s, cause, by) => Object.assign(s, { alive: false, cause, killer: by ? by.name : 'wall', killerId: by ? by.id : null });
   const cases = [
-    () => [dead(a, 'flashed into a woodpecker hole and blew up')],
+    () => [dead(a, 'dashed into a woodpecker hole and blew up')],
     () => [dead(a, 'got pecked by the woodpecker')],
     () => [dead(a, 'starved')],
     () => [Object.assign(dead(a, 'bit itself'), { killer: 'self', killerId: a.id })],

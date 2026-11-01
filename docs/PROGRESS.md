@@ -33,10 +33,9 @@ the second account until its usage is spent; on the main account the brake close
   branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
 - **Done in the lane's entries:** the README for players (PR #241) and any key wakes from a nap (PR #271): their words are in `docs/archive/progress-done.md`, "The polish lane, done".
 - **The woodpecker bigger on a phone, done** (PR #270; Haakon picked B, and answered for a phone on its side): see "The woodpecker, as big as it gets", *Bigger on a phone*, in `docs/design/32-the-owners-playtest.md`.
-- **Next: the flash becomes the dash** (Haakon, 1 November 2026: "dash is better actually", and "Yes, i think so", to calling it
-  the dash wherever a player sees it): the move along the ground is the *dash* and the golden one the *golden dash*, in the key
-  help, the lessons, the Field guide, banners, chatter, the README and the design notes ("One word for each thing"); the
-  code already says dash. No rule, number or online message changes, so no protocol bump.
+- **Done: the flash became the dash** (PR #304; Haakon, 1 November 2026: "dash is better actually"): the key help,
+  the lessons, banners, the Field guide, the HUD, Star's chatter (English and Chinese), the README and "One word for
+  each thing"; words only, the fingerprints unchanged.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
@@ -77,6 +76,17 @@ the second account until its usage is spent; on the main account the brake close
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
 The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, parked on Haakon's question in "For Haakon" (1 November 2026: the flight even on its own, under real and amplified rules, after the rivals re-plan it in the air and an escalation), 2r folded in: its A/B comes out even, so it waits until the rivals use the moves well: the flight and leap now measured apart, the rivals taught the flight's uses, the golden flash measured on its own in the same pass, and the flight merged without leap now if only the flight pays; Haakon, 31 October 2026), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves".
+
+### 2s+. The log's fall, proven (1 November 2026; the weekly blind re-review of PR #289; an engine-rules follow-up, after part 4)
+
+The blind re-review ("Reviews", point 5, in `docs/claude-and-codex.md`) scored #289 a 7: three blocking points it
+passed with, each a miss. (1) A rules test that the woodpecker aims small (`PECK_FALL_SOFT`) and still takes a big piece
+when nothing smaller is left. (2) An online round trip that carries a non-empty `fall` (`online.js`; the pinned shapes
+hold only the empty one). (3) The case where a head is on a piece cut loose on the last tries: tested, or said in the
+design ("The log stays one piece"). Not blocking, fixed in the same PR: food and beetles on a falling piece tip away
+with it (and a beetle gets the bird-eats cue); `pieceFalls` cleared between rounds; the sim's dead island-crumb counters
+(`tools/sim/01-census.js`, `03-report.js`) removed; a render or UI check for the shade and the lesson. The flight's A/B
+on the new log is part 4's.
 
 ### 2w. Beetles get away at least a third of the time (Haakon, 31 October 2026; an engine-rules entry, after part 4)
 
