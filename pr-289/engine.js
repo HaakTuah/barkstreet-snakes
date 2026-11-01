@@ -689,7 +689,8 @@ window.SnakeEngine = (() => {
   // promiseLandings) are kept while their cells are still free.
   // game.woodpecker: { at (time it came), target: [cells it's aiming at],
   //   strikeAt (tick), last: [cells it took out last], struckAt (tick), restUntil (tick), x, y (where it's busy),
-  //   pecks (strikes so far), landings (from PECK_PROMISE_TICKS moves before a strike: [[from, to], ...] cells, to -1 for none) }
+  //   pecks (strikes so far), landings (from PECK_PROMISE_TICKS moves before a strike: [[from, to], ...] cells, to -1 for none),
+  //   fall (2s: the cells of target on pieces it cuts loose, which fall with the strike, food and all) }
   function peck(game, dying) {
     if (!suddenDeath(game)) return;
     let w = game.woodpecker;
@@ -804,8 +805,8 @@ window.SnakeEngine = (() => {
   // PECK_UNDER_BODY of the time (any snake's, never a head), beside an old
   // hollow PECK_WIDEN of the time (fewer, bigger hollows), else anywhere. It
   // grows compact (a cell with more of the patch, or old holes, beside it is
-  // likelier), is rounded off (see smoothPatch), and takes any crumbs it
-  // would cut off (see crumbs). It may cover food: that's knocked aside at
+  // likelier), is rounded off (see smoothPatch), and takes any piece of log
+  // it would cut loose (see cutLoose: 2s, the log stays one piece). It may cover food: that's knocked aside at
   // the strike (see knockTo). It keeps PECK_CLEARANCE cells from every head
   // and shuts nobody in (see shutsIn) while it can; failing that, it keeps
   // clear of heads themselves, shutting nobody in; failing that, those two
@@ -932,8 +933,10 @@ window.SnakeEngine = (() => {
       sizes.push(w);
     }
     if (sizes.length < 2) return [];
+    const heads = sizes.map(() => 0); // (two pieces as big: the log is the one with more heads on it)
+    for (const s of game.snakes) if (s.alive) { const k = key(s.body[0].x, s.body[0].y); if (pieceOf[k] >= 0) heads[pieceOf[k]]++; }
     let log = 0;
-    for (let i = 1; i < sizes.length; i++) if (sizes[i] > sizes[log]) log = i;
+    for (let i = 1; i < sizes.length; i++) if (sizes[i] > sizes[log] || (sizes[i] === sizes[log] && heads[i] > heads[log])) log = i;
     const fall = [];
     for (let k = 0; k < CELLS; k++) {
       if (pieceOf[k] < 0 || pieceOf[k] === log) continue;
@@ -1178,6 +1181,7 @@ window.SnakeEngine = (() => {
       // them to everyone.)
       strikeAt: game.woodpecker?.target.length ? game.woodpecker.strikeAt : null,
       landings: game.woodpecker?.landings || null,
+      fall: game.woodpecker?.fall || null, // (2s: the pieces its mark cuts loose, shaded for everyone: they fall at the strike, food and all)
       burrows: game.burrows, // (as they are: a person sees every burrow on the board, [{ x, y, at }])
       age: game.history.length - 1 - idx,
       tick: game.tick,

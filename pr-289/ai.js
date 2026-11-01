@@ -791,6 +791,7 @@ window.SnakeAI = (() => {
   //          food: [{ x, y, kind }], holes: Set of cell indexes, age, tick, timeMs,
   //          pecks: the woodpecker's mark (among the holes), strikeAt: its strike's tick,
   //          landings: where it promised the food in its mark would land (its rings in the last PECK_PROMISE_TICKS moves),
+  //          fall: the cells of its mark on pieces it cuts loose (2s: they fall at the strike, with any food on them),
   //          burrows: [{ x, y, shutAt (once it grows shut: the game time it closes over) }] }
   // memory: an object kept for this snake for the whole round.
   function decide(view, persona, memory = {}) {
@@ -1416,7 +1417,7 @@ window.SnakeAI = (() => {
     const beakOf = strikeAt >= 0 && engine.beakDepth ? engine.beakDepth(mark, pitAt) : null; // (how far each cell of the mark is from the bark beyond, as the engine's beetles reckon it)
     let knocked = null, peckGame = null; // (knocked: cell -> where it lands, -1: the bird eats it)
     if (strikeAt >= 0) {
-      peckGame = { snakes: [{ alive: true, body: me.body }, ...others.map(o => ({ alive: true, body: o.body, stunUntil: view.tick + Math.max(0, (o.stun || 0) - age) }))], food, burrows: view.burrows || [], holes, fires: NO_FIRES, tick: view.tick, woodpecker: { strikeAt } };
+      peckGame = { snakes: [{ alive: true, body: me.body }, ...others.map(o => ({ alive: true, body: o.body, stunUntil: view.tick + Math.max(0, (o.stun || 0) - age) }))], food, burrows: view.burrows || [], holes, fires: NO_FIRES, tick: view.tick, woodpecker: { strikeAt, fall: view.fall || undefined } }; // (2s: food on a piece cut loose falls with it, never knocked: see E.knocks)
       knocked = new Map();
       for (const { food: f, to } of engine.knocks(peckGame, mark, view.landings)) {
         const from = f.y * N + f.x, i = to ? to.y * N + to.x : -1;
