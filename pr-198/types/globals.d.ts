@@ -67,6 +67,8 @@ declare namespace Engine {
     struckAt: number; restUntil: number; pecks?: number;
     /** [from, to] cells; to -1: the bird eats it. */
     landings?: [number, number][];
+    /** 2s: the cells of the pieces its patch cuts loose (in target too): they fall with the strike. */
+    fall?: number[];
   }
 
   /** The engine's events, as engine.js lists them above step(): just the fields online.js reads. */
@@ -88,7 +90,7 @@ declare namespace Engine {
     | { type: 'weather'; kind: string }
     | { type: 'ember'; x: number; y: number; fx: number; fy: number }
     | { type: 'woodpecker' }
-    | { type: 'peck'; x: number; y: number; cells?: number[]; under?: number[] }
+    | { type: 'peck'; x: number; y: number; cells?: number[]; under?: number[]; fall?: number[] }
     | { type: 'rot'; x: number; y: number; kind: string; color?: string }
     | { type: 'starving' | 'alight' | 'singe'; snake: Snake }
     | { type: 'baked' | 'ash'; x: number; y: number; kind: string }
