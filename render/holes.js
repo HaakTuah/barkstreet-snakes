@@ -121,8 +121,8 @@ function drawPatch(alpha, now) {
 // dark with pale streaks sliding down across them (held still under reduced
 // motion), so the whole piece reads as going, not only the patch; at the
 // strike, the piece tips away about its middle, shrinking and darkening
-// into the pit, as the log's bark drops out of sight (FALL_MS).
-const FALL_MS = 750, falls = [];
+// into the pit, as the log's bark drops out of sight (PIECE_FALL_MS).
+const PIECE_FALL_MS = 750, pieceFalls = [];
 function fallShade(cells, prog, now) {
   ctx.save();
   ctx.beginPath();
@@ -144,13 +144,13 @@ function fallShade(cells, prog, now) {
 function fallAway(cells, now) {
   let sx = 0, sy = 0;
   for (const k of cells) { sx += (k % GRID) + 0.5; sy += Math.floor(k / GRID) + 0.5; }
-  falls.push({ cells: cells.slice(), at: now, cx: sx / cells.length * CELL, cy: sy / cells.length * CELL, tilt: (cells[0] % 2 ? 1 : -1) * 0.35 });
+  pieceFalls.push({ cells: cells.slice(), at: now, cx: sx / cells.length * CELL, cy: sy / cells.length * CELL, tilt: (cells[0] % 2 ? 1 : -1) * 0.35 });
   for (const k of cells) spawn((k % GRID) * CELL + CELL / 2, Math.floor(k / GRID) * CELL + CELL / 2, 3, 160, 600, 2.4, '#8a6a2a', '#3b2412');
 }
 function drawFalls(now) {
-  for (let i = falls.length - 1; i >= 0; i--) {
-    const f = falls[i], t = (now - f.at) / (reduced ? FALL_MS / 2 : FALL_MS);
-    if (t >= 1 || t < 0) { falls.splice(i, 1); continue; }
+  for (let i = pieceFalls.length - 1; i >= 0; i--) {
+    const f = pieceFalls[i], t = (now - f.at) / (reduced ? PIECE_FALL_MS / 2 : PIECE_FALL_MS);
+    if (t >= 1 || t < 0) { pieceFalls.splice(i, 1); continue; }
     const e = t * t; // (slow to start, as it tips, then away)
     ctx.save();
     ctx.globalAlpha = 1 - e;
