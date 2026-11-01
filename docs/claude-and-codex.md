@@ -1,8 +1,8 @@
 # Claude and Codex
 
-Decided 1 November 2026 (`docs/archive/instructions.md`, 1 November 2026). Two builders spread the weekly usage, Claude on Haakon's Claude plan and Codex
-(OpenAI's) on ChatGPT Pro, and review each other: different models have different blind spots. This file is the whole
-arrangement; `AGENTS.md` points here, and nothing here is repeated there.
+Decided 1 November 2026 (`docs/archive/instructions.md`, 1 November 2026). Two builders spread the weekly usage, Claude
+on Haakon's Claude plan and Codex (OpenAI's) on ChatGPT Pro, and review each other: different models have different
+blind spots. This file is the whole arrangement; `AGENTS.md` points here, and nothing here is repeated there.
 
 ## Who does what
 
@@ -22,8 +22,9 @@ arrangement; `AGENTS.md` points here, and nothing here is repeated there.
 
 ## What goes to Codex
 
-**Route by how the result can be checked.** If tests, fingerprints, the suites and `tools/abtest.js` or a measurement can prove the work right, Codex builds
-it, and a wrong result shows itself; if only judgment can (taste, the design, the sources), Claude does.
+**Route by how the result can be checked.** If tests, fingerprints, the suites and `tools/abtest.js` or a measurement
+can prove the work right, Codex builds it, and a wrong result shows itself; if only judgment can (taste, the design, the
+sources), Claude does.
 
 - **Claude keeps the decisions and hands them over as tests that fail.** Codex makes them pass without changing them;
   if it thinks one is wrong, it says so on the thread instead of rewriting it.
