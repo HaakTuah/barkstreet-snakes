@@ -16,6 +16,7 @@ Codex: read its "For Codex" section at the start of every task.
 | --- | --- |
 | What is done and the queue, in order | `docs/PROGRESS.md` |
 | Claude and Codex: who builds what, the hand-over, the fallback, the reviews' score | `docs/claude-and-codex.md` |
+| Security: what is protected, and the rules every builder and reviewer keeps | `SECURITY.md` |
 | How builder sessions and lanes are run (for the orchestrator) | `docs/orchestrating.md` |
 | Running and checking it: switches, PR pictures, every tool | `docs/developing.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
@@ -154,10 +155,11 @@ playing it locally: `docs/developing.md`, "Switches for the checks".
 
 ## Review guidelines
 
-For Codex's code review (`@codex review`), and every other reviewer: give a score from 1 to 10, and list everything
-that keeps the work from 10, each point concrete (a file and line, or a design section) and marked **blocking**
-(against the design, the PR's description and the sections it names, its tests, or the rules in this file) or **not
-blocking**. Check the rules that stand above all. The whole method: "Reviews" in `docs/claude-and-codex.md`.
+For Codex's code review, which reports findings by priority: report as **P1** (blocking) a departure from the design or
+from the PR's description and the sections it names; a broken rule of this file (above all the rules that stand) or of
+`SECURITY.md`; a test changed, skipped or weakened; and a protected file changed by a Codex lane. Every other reviewer
+gives a score from 1 to 10 and everything that keeps the work from 10, each point blocking or not. The whole method:
+"Codex reviews" and "Reviews" in `docs/claude-and-codex.md`.
 
 ## Standing instructions
 
