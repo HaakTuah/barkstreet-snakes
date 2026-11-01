@@ -66,11 +66,11 @@ const FLAVOR = {
   intro: 'Three rivals. One mossy log. Last snake wriggling wins.',
   // (The arrows first: anyone knows them. A click is the mouse's left button on the board. A first-timer's
   // Hall of Fame is empty: the Field guide's key, G, is in its place before a first round, both under the board.)
-  hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P naps · Enter starts · G opens the Field guide',
-  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P or Esc naps, any key wakes · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
-  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · M mutes · N toggles the music · V the voices',
-  hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash',
-  hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash · Tap ⏸ to nap',
+  hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · P naps · Enter starts · G opens the Field guide',
+  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · P or Esc naps, any key wakes · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
+  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · M mutes · N toggles the music · V the voices',
+  hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to dash',
+  hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to dash · Tap ⏸ to nap',
   // Watching (Watch AIs, or after you're out): nothing of yours to steer.
   hintWatch: '1, 2, 4 set the speed · P naps, any key wakes · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
   hintWatchTouch: 'The speed buttons set 1×, 2× or 4× · Tap ⏸ to nap',
@@ -85,7 +85,7 @@ const FLAVOR = {
   deathTitle: { boom: ['Kaboom!', 'Ka-blam!'], wall: ['Flattened!', 'Splintered!'], self: ['Tangled!', 'Knotted!'], rival: ['Squashed!', 'Splat!'], headOn: ['Out cold!', 'Lights out!'], fire: ['Toasted!', 'Scorched!'], cut: ['Sliced!', 'Chopped!'], pecked: ['Pecked!', 'Drilled!'] }, // (never the card's own verb again: "Head-on! You crashed head-on…")
   wall: ['The log goes on. You don’t.', 'That edge came out of nowhere.', 'Even logs have edges.'],
   self: ['Of all the snakes to bite.', 'You were in your own way.', 'You can’t outrun yourself.'],
-  boom: ['A golden flash needs somewhere to go.', 'Full speed, no brakes.', 'Golden, briefly.'],
+  boom: ['A golden dash needs somewhere to go.', 'Full speed, no brakes.', 'Golden, briefly.'],
   hole: ['The woodpecker sends its regards.', 'Mind the gap.', 'The woodpecker missed you. Its hole didn’t.'],
   pecked: ['The woodpecker didn’t miss.', 'Rat-a-tat. That was you.'],
   starved: ['Should have eaten something.', 'Hunger always wins in the end.', 'All slither, no snacks.'],
@@ -130,13 +130,13 @@ const FLAVOR = {
   lostCapital: 'The woodpecker took a capital: its realm moves.',
   lastApples: 'The last apples are falling.',
   // Your flash, ready and never used yet: the key, once a round (until you've flashed).
-  flashKey: touchFirst ? 'Your flash is ready: swipe the way you’re going.' : 'Your flash is ready: E, Shift or right-click.', // (what it does is the Field guide's: a lesson is 60 characters at most)
+  flashKey: touchFirst ? 'Your dash is ready: swipe the way you’re going.' : 'Your dash is ready: E, Shift or right-click.', // (what it does is the Field guide's: a lesson is 60 characters at most)
   // Beside the YOU arrow, as a round starts (until you steer).
   steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
   leapNothing: 'Jumps hop over a snake, a hole or fire.',
   leapEarly: `A bit early: a jump waits ${TUNE.LEAP_WINDOW} moves, then lapses.`,
   islandHop: touchFirst ? 'Tap to hop up to three cells. Hop the gap!' : 'Space hops up to three cells. Hop the gap!', // (the first time you're boxed in with a jumpable gap: round six B's island hop)
-  powersFirst: 'Tap jumps. Swipe ahead flashes.', // (a short phone's first Go: steering is beside YOU. One line on a 320 px phone, so it fits between the heads)
+  powersFirst: 'Tap jumps. Swipe ahead dashes.', // (a short phone's first Go: steering is beside YOU. One line on a 320 px phone, so it fits between the heads)
   bothOut: ['Nobody walked away from that one.', 'A draw, of sorts.', 'Both of you. At once.'],
   wakeBeat: 'Ready…',
   baked: ['Baking in the fire: worth 2, if you can take the heat.', 'Baked: hot food is worth 2, if you can take the heat.'],
@@ -147,21 +147,21 @@ const FLAVOR = {
   youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space or a click'} to jump.`,
   bridgeFirst: 'A snake across a pit is a bridge, until its tail passes!', // (the first time a snake lies across a pit near you: round six B's bridges)
   youLeapFirst: 'Hup! A jump costs your tail tip, then a short rest.',
-  youDashFirst: 'Golden flashes cut through two thick, and put out fire.',
-  youCutFirst: 'A flash cuts through a thin body.', // (round six B: your first cut)
-  youFlashFailed: 'Too thick! A failed flash costs five.', // (your first failed flash)
+  youDashFirst: 'Golden dashes cut through two thick, and put out fire.',
+  youCutFirst: 'A dash cuts through a thin body.', // (round six B: your first cut)
+  youFlashFailed: 'Too thick! A failed dash costs five.', // (your first failed flash)
   neckCut: 'Snip! Too short to go on.', // (the first neck cut you see: a cut that left a snake fewer than 3 in front)
-  dropTail: 'Flash through your own tail to drop it.', // (the first time you're in a pocket smaller than you, your flash ready and your own body one thick in front)
+  dropTail: 'Dash through your own tail to drop it.', // (the first time you're in a pocket smaller than you, your dash ready and your own body one thick in front)
   youDropTail: 'Tail dropped: lighter, and out of the pocket.', // (your first own cut)
-  leaf: ['A golden leaf on the wind. Eat it for golden flashes.', 'A golden leaf blew onto the log: golden flashes, for the taking.'],
-  leafWatch: ['A golden leaf on the wind: golden flashes, for whoever eats it.'],
-  youLeaf: n => `${n} golden flash${n === 1 ? '' : 'es'}: ${touchFirst ? 'swipe ahead' : 'E or right-click'}. Never at edges or holes.`, // (the danger in it: the first one may be the one. One key and the mouse, to keep it to 60 characters: the Field guide names Shift)
+  leaf: ['A golden leaf on the wind. Eat it for golden dashes.', 'A golden leaf blew onto the log: golden dashes, for the taking.'],
+  leafWatch: ['A golden leaf on the wind: golden dashes, for whoever eats it.'],
+  youLeaf: n => `${n} golden dash${n === 1 ? '' : 'es'}: ${touchFirst ? 'swipe ahead' : 'E or right-click'}. Never at edges or holes.`, // (the danger in it: the first one may be the one. One key and the mouse, to keep it to 60 characters: the Field guide names Shift)
   goldcap: ['A golden mushroom: eat it and the edges wrap.', 'A golden mushroom came up. Eat it: no edges for a while.'],
   goldcapWatch: ['A golden mushroom: no edges, for whoever eats it.'],
   youGoldcap: s => `A golden mushroom: ${s} seconds with no edges.`,
   wrapEnding: s => [`The edges are back in ${s} seconds.`, `Edges back in ${s} seconds.`],
   youSnip: name => `Snip! You cut ${name} in two.`,
-  youSnipped: name => `Snip. ${name} flashed right through you.`,
+  youSnipped: name => `Snip. ${name} dashed right through you.`,
   youMushroomSpit: 'Bleh! Steer to aim it: it lands three ahead.', // (round six B: your first mushroom, which comes back up)
   youSpatOn: name => `Ptoo! ${name} got you. Steer to spit it back.`, // (the first time one hits your head)
   youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
@@ -170,7 +170,7 @@ const FLAVOR = {
   // (A flash is free, FLASH_COST 0, so it's never too small; it has nowhere
   // to go only over a crash: straight back in, or blown up at the edge or a hole.)
   fizzle: { resting: 'Your jump needs a moment.', small: 'Too small to jump: it costs tail.', landing: 'Nowhere to land.' },
-  fizzleFlash: { resting: 'Your flash needs a moment.', landing: 'Nowhere to flash.' },
+  fizzleFlash: { resting: 'Your dash needs a moment.', landing: 'Nowhere to dash.' },
   newBest: n => `New best: ${n}!`,
   startOver: 'Start over?',
   startOverText: key => key ? `${key} again starts over. P, Esc or an arrow keeps going.` : 'This round’s gone if you do.',
@@ -205,8 +205,8 @@ const FLAVOR = {
     'The woodpecker is here. Keep out of wherever it’s looking.': 'The woodpecker is here. Keep out of its sight.',
     'Rat-a-tat. The woodpecker has come for the log, a patch at a time.': 'Rat-a-tat. The woodpecker has come for the log.',
     'The woodpecker is here. Everyone, keep clear of its mark.': 'The woodpecker is here. Everyone, mind its mark.',
-    'A golden leaf blew onto the log: golden flashes, for the taking.': 'A golden leaf blew in: golden flashes to take.',
-    'A golden leaf on the wind: golden flashes, for whoever eats it.': 'A golden leaf: golden flashes, for whoever eats it.',
+    'A golden leaf blew onto the log: golden dashes, for the taking.': 'A golden leaf blew in: golden dashes to take.',
+    'A golden leaf on the wind: golden dashes, for whoever eats it.': 'A golden leaf: golden dashes, for whoever eats it.',
     'A golden mushroom came up. Eat it: no edges for a while.': 'A golden mushroom came up: no edges for a while.',
     'This round’s already going. You’re in from the next one.': 'This round’s going. You’re in from the next one.',
     'You went quiet for a moment, so an AI steered for you.': 'You went quiet, so an AI steered for you.',
@@ -227,7 +227,7 @@ function causeFor(s) {
   return k && isMe(k) && s.cause.endsWith(k.name) ? s.cause.slice(0, -k.name.length) + 'you' : s.cause;
 }
 // A cause in fewer words, for a banner's one line on a phone.
-const shortCause = c => c.replace(/^flashed into (the edge|a woodpecker hole) and blew up$/, 'blew up').replace(/^got pecked by the woodpecker$/, 'got pecked').replace(/^(fell into|hit) a woodpecker hole$/, '$1 a hole').replace(/^got cut in two by /, 'was cut by ').replace(/^crashed head-on into (.+)$/, 'hit $1 head-on');
+const shortCause = c => c.replace(/^dashed into (the edge|a woodpecker hole) and blew up$/, 'blew up').replace(/^got pecked by the woodpecker$/, 'got pecked').replace(/^(fell into|hit) a woodpecker hole$/, '$1 a hole').replace(/^got cut in two by /, 'was cut by ').replace(/^crashed head-on into (.+)$/, 'hit $1 head-on');
 // Your death, in the second person.
 const yourCause = p => p.killer === 'self' ? 'bit yourself' : causeFor(p);
 // Why a crash was the end (the engine's verdict): length is armour, so a
@@ -237,7 +237,7 @@ const howYouDied = p => {
   if (p.fatal === 'hunger') return 'You ran out of food at your smallest'; // (under "Starved!": not "You starved" again)
   if (p.fatal === 'pecked') return 'The woodpecker struck right under your head'; // (only a head in the patch is out: a body over it bridges it)
   if (p.fatal === 'fire') return 'The flames got you at your smallest';
-  if (p.fatal === 'cut') return `${theGame.snakes[p.killerId]?.name || 'A'}’s flash cut you right behind the head`;
+  if (p.fatal === 'cut') return `${theGame.snakes[p.killerId]?.name || 'A'}’s dash cut you right behind the head`;
   const k = p.killerId != null ? theGame.snakes[p.killerId] : null;
   const why = p.fatal === 'shorter' && k && !k.persona ? ', and they were longer' : WHY_OUT[p.fatal] || ''; // (a friend is "they")
   return `You ${yourCause(p)}${why}`;

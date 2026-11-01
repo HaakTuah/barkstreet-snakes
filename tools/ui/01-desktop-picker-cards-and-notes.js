@@ -154,7 +154,7 @@ await powers('Ouroboros', 3, 3, true);
 await b.sleep(200);
 await mouse(await nameAt('Ouroboros'));
 p = await P();
-check(p.note.includes('Holding 3 golden jumps and 3 golden flashes. The edges wrap for it.'), 'what it holds now is on its note', p.note);
+check(p.note.includes('Holding 3 golden jumps and 3 golden dashes. The edges wrap for it.'), 'what it holds now is on its note', p.note);
 await powers('Ouroboros', 0, 0, false);
 await mouse(await tagAt('You'));
 p = await P();

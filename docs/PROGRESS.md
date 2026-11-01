@@ -33,10 +33,9 @@ the second account until its usage is spent; on the main account the brake close
   branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
 - **Done in the lane's entries:** the README for players (PR #241) and any key wakes from a nap (PR #271): their words are in `docs/archive/progress-done.md`, "The polish lane, done".
 - **The woodpecker bigger on a phone, done** (PR #270; Haakon picked B, and answered for a phone on its side): see "The woodpecker, as big as it gets", *Bigger on a phone*, in `docs/design/32-the-owners-playtest.md`.
-- **Next: the flash becomes the dash** (Haakon, 1 November 2026: "dash is better actually", and "Yes, i think so", to calling it
-  the dash wherever a player sees it): the move along the ground is the *dash* and the golden one the *golden dash*, in the key
-  help, the lessons, the Field guide, banners, chatter, the README and the design notes ("One word for each thing"); the
-  code already says dash. No rule, number or online message changes, so no protocol bump.
+- **Done: the flash became the dash** (PR #304; Haakon, 1 November 2026: "dash is better actually"): the key help,
+  the lessons, banners, the Field guide, the HUD, Star's chatter (English and Chinese), the README and "One word for
+  each thing"; words only, the fingerprints unchanged.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
