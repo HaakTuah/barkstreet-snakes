@@ -8,7 +8,8 @@
 // must be unique across the page's scripts (tools/scope-test.js checks).
 //
 //   voices.js   every voice's lines, by moment, and the punchlines
-//   zh.js       the same lines in Chinese, for Copycat
+//   zh.js       the same lines in Chinese, for Copycat: Sniper to Wildcard
+//   zh-more.js  ...and Creeper to Star, the answers and the impressions
 //   talk.js     who may speak and when, the words, the bubbles and the log
 //   moments.js  what each moment of a round makes them say, and the API
 

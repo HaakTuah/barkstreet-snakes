@@ -71,14 +71,14 @@ function news(dying) {
     // Your first crash: the rule, first (landing at 3, the lesson says so too).
     if (theGame.events.some(e => e.type === 'crash' && e.snake === me) && once('crash')) {
       if (small) once('atThree');
-      return toast(small ? FLAVOR.youCrashToThree : pick(FLAVOR.youCrash), 3000, 'warn', 'lesson');
+      return toast(small ? FLAVOR.youCrashToThree : pick(FLAVOR.youCrash), 3000, 'warn', 'lesson', { still: () => me.alive });
     }
     const wrapLeft = me.wrapUntil - theGame.time;
     if (wrapLeft > 0 && wrapLeft <= TUNE.WRAP_WARN_MS && !theGame.toldWrapEnd) { theGame.toldWrapEnd = true; return toast(pick(FLAVOR.wrapEnding(Math.round(TUNE.WRAP_WARN_MS / 1000))), 1800, 'warn', 'lesson', { still: () => me.alive && me.wrapUntil > theGame.time }); }
     if (wrapLeft > TUNE.WRAP_WARN_MS) theGame.toldWrapEnd = false;
     const left = Engine.hungerLeft(theGame, me);
     const warnAt = TUNE.HUNGER_WARN_MS * (small ? 1.5 : 1); // (at your smallest, starving is the end: a little earlier, and sharper)
-    if (left < warnAt && !theGame.warnedHunger) { theGame.warnedHunger = true; Sound.play('hungerWarn'); return toast(small ? FLAVOR.youStarvingSmall : pick(FLAVOR.youHungry), 2800, 'warn', 'lesson'); }
+    if (left < warnAt && !theGame.warnedHunger) { theGame.warnedHunger = true; Sound.play('hungerWarn'); return toast(small ? FLAVOR.youStarvingSmall : pick(FLAVOR.youHungry), 2800, 'warn', 'lesson', { still: () => me.alive }); }
     if (left > warnAt) theGame.warnedHunger = false;
     if (small && theGame.time > 1000 && once('atThree')) return toast(pick(FLAVOR.youAtThree), 2600, 'warn', 'lesson', { still: () => me.alive && me.body.length <= TUNE.MIN_LENGTH });
   }
@@ -201,14 +201,18 @@ function tailToDrop(s) {
   for (const o of theGame.snakes) if (o.alive) for (const c of o.body) taken.add(c.y * G + c.x);
   const blocked = k => theGame.holes.has(k) || !!theGame.fires?.has(k);
   const out = (x, y) => x < 0 || y < 0 || x >= G || y >= G;
-  const reach = new Set([h.y * G + h.x]), todo = [h.y * G + h.x];
+  // (your own body counts as free where its tail will have left by the time
+  // your head could crawl there: a coil you can crawl out of is no pocket)
+  const own = new Map(s.body.map((c, j) => [c.y * G + c.x, j])), len = s.body.length;
+  const reach = new Map([[h.y * G + h.x, 0]]), todo = [h.y * G + h.x];
   let free = 0;
-  while (todo.length && free < s.body.length) {
-    const k = todo.pop(), x = k % G, y = (k - x) / G;
+  for (let q = 0; q < todo.length && free < len; q++) {
+    const k = todo[q], x = k % G, y = (k - x) / G, d = reach.get(k) + 1;
     for (const [dx, dy] of SIDES4) {
       const nx = x + dx, ny = y + dy, n = ny * G + nx;
-      if (out(nx, ny) || reach.has(n) || blocked(n) || taken.has(n)) continue;
-      reach.add(n); todo.push(n); free++;
+      if (out(nx, ny) || reach.has(n) || blocked(n)) continue;
+      if (taken.has(n) && !(own.has(n) && d >= len - own.get(n))) continue;
+      reach.set(n, d); todo.push(n); free++;
     }
   }
   if (free >= s.body.length) return false;
@@ -272,6 +276,7 @@ let bannerText = '', toastAbove = false, aboveBand = null; // (the banner's word
 const SLOTS = ['', 'low'], SHIFT = [{ opacity: 0 }, { opacity: 1 }];
 const headerEl = document.querySelector('header');
 function toastFade() {
+  if (toastLevel === 'lesson' && toastOpts.still && !toastEl.hidden && !toastEl.classList.contains('leaving') && !toastOpts.still()) return hideToast(true); // (a lesson showing that no longer holds, as yours once you're out, fades early)
   if (toastAbove || toastEl.hidden || toastEl.classList.contains('leaving')) return; // (above the board, nothing comes under it; going, it goes from where it is)
   const busy = { '': false, low: false }, soon = { '': false, low: false };
   if (boardPx && theGame) {
@@ -383,7 +388,8 @@ function placeToast() {
 // front of the line). While a card is up, only round news. Screen readers
 // hear round news and lessons (and the weather), not the chatter of
 // spawns. opts: { quiet } (shown, not said: something else says it),
-// { still } (a lesson that waits is shown only if this still holds),
+// { still } (a lesson is shown only while this still holds: waiting,
+// it's let go; showing, it fades early),
 // { follows } (a lesson that goes with the banner just before it: it
 // waits from when that one comes up), { phone } (its words on a phone
 // held upright, one line), { short } (its fewest words there, for when
@@ -643,7 +649,7 @@ function buildOpponents() {
     blurb.textContent = s.persona ? s.persona.blurb : 'Your friend. For now.';
     if (seats && s.persona && seat < Records.SEATS) {
       const i = seat++;
-      li.append(seatButton(i, dot, name, !!seats[i]), ' ', blurb);
+      li.append(seatButton(i, dot, name, !!seats[i]), ...(seats[i] ? [unpinButton(i, s.name)] : []), ' ', blurb);
     } else li.append(dot, name, ' ', blurb);
     opponentsEl.append(li);
   }
@@ -668,6 +674,19 @@ function seatButton(i, dot, name, chosen) {
   swap.setAttribute('aria-hidden', 'true');
   swap.innerHTML = '<svg viewBox="0 0 12 12"><path d="M2 4h8M7.5 1.5 10 4 7.5 6.5M10 8H2M4.5 5.5 2 8l2.5 2.5"/></svg>';
   button.append(dot, name, swap);
+  return button;
+}
+
+// A chosen seat's pin, beside it on the start card: a tap sets the seat back
+// to "Any" (unpinSeat). Your choice lasts this visit.
+function unpinButton(i, who) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'unpin';
+  button.dataset.seat = i;
+  button.setAttribute('aria-label', `Unpin ${who} (chosen for this visit): back to Any`);
+  button.title = 'Pinned for this visit: tap to unpin';
+  button.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 1.5h4M5 1.5v3.2L3 7h6L7 4.7V1.5M6 7v3.5"/></svg>';
   return button;
 }
 

@@ -50,10 +50,12 @@ function dealLineUp(want) {
   return { keys: Array.from({ length: want }, (_, i) => seats[i] || next.shift()), fresh, chosen: mine.length > 0 };
 }
 
-// Closing the page on a start card: its rivals weren't met, so they're next.
+// Closing the page on a start card: its rivals weren't met, so they go back
+// in the deck, somewhere among the ones not yet dealt (not on top: opening
+// the game again gives a fresh cast).
 window.addEventListener('pagehide', () => {
-  if (theGame && !theGame.spent) Records.undeal(SnakeAI.POOL, theGame.dealt || []);
-  if (hosting() && online.lineup) Records.undeal(SnakeAI.POOL, online.lineup.fresh); // (the lobby's, likewise)
+  if (theGame && !theGame.spent) Records.undeal(SnakeAI.POOL, theGame.dealt || [], { anywhere: true });
+  if (hosting() && online.lineup) Records.undeal(SnakeAI.POOL, online.lineup.fresh, { anywhere: true }); // (the lobby's, likewise)
 });
 
 // Start a round in the given mode. The round on the start card is used as-is;
@@ -248,7 +250,7 @@ function endRound() {
       : { title, flavor, text: yours, reward: !!me, primary: null, secondary: 'Leave room', lobby: { players: true, status: FLAVOR.waiting(online.hostName, true) },
         actions: { secondary: leaveRoom } };
   } else pendingCard = theGame.withPlayer
-    ? { title, flavor, reward: true, primary: 'Play again', secondary: 'Watch AIs', text: yours, ...(how && guideFor(me)) } // (it says how you died, so it names what got you too: when your death ended the round, it's your death's card)
+    ? { title, flavor, reward: true, primary: 'Play again', secondary: 'Watch rivals', text: yours, ...(how && guideFor(me)) } // (it says how you died, so it names what got you too: when your death ended the round, it's your death's card)
     : { title, flavor, primary: 'Play', secondary: 'Watch again' };
   cardAt = lastFrame + TUNE.ROUND_END_PAUSE;
   updateControls();

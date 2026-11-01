@@ -100,8 +100,9 @@ function closeNote(byKey = false) {
 $('note-close').addEventListener('click', e => closeNote(e.detail === 0));
 document.addEventListener('pointerdown', e => { if (noted && !e.target.closest?.('#scoreboard, button, input, label, a, #records, #picker')) closeNote(); });
 // Choosing your rivals: a start card's seat opens the picker, every rival
-// and "Any" (dealt from the deck). The choice is kept in this browser
-// (Records.setSeat) for every round after, until you change it; online it's
+// and "Any" (dealt from the deck). The choice is kept for this visit
+// (Records.setSeat), round after round, and a chosen seat wears a pin: a tap
+// on it sets the seat back to "Any" (unpinSeat). Online it's
 // the host's that counts, chosen in the lobby's seats (hostLineUp). A rival
 // already in another seat swaps with this one's.
 const pickerEl = $('picker'), pickerList = $('picker-list'), pickerTitle = $('picker-title');
@@ -164,8 +165,7 @@ function reseat(was, dealt, seat, key) {
   const fill = Records.deal(pool, keys.filter(k => !k).length, keys.filter(Boolean)), next = [...fill];
   return { keys: keys.map(k => k || next.shift()), kept, fill, chosen: seats.some(Boolean) };
 }
-function pickRival(key) {
-  const seat = pickerSeat;
+function pickRival(key, seat = pickerSeat) {
   if (online) {
     const up = reseat(hostLineUp().keys, hostLineUp().fresh, seat, key);
     online.lineup = { keys: up.keys, fresh: [...up.kept, ...up.fill] };
@@ -181,9 +181,37 @@ function pickRival(key) {
 }
 opponentsEl.addEventListener('click', e => { const b = e.target.closest?.('.seat'); if (b && cardSettled(e)) { Sound.play('ui'); openPicker(Number(b.dataset.seat)); } });
 lobbyPlayers.addEventListener('click', e => { const b = e.target.closest?.('.seat'); if (b && cardSettled(e)) { Sound.play('ui'); openPicker(Number(b.dataset.seat)); } });
+// The pin on a chosen seat: back to "Any", without the picker.
+function unpinSeat(seat) {
+  if (!choosing() || online) return;
+  closeNote();
+  pickRival(null, seat);
+}
+opponentsEl.addEventListener('click', e => { const b = e.target.closest?.('.unpin'); if (b && cardSettled(e)) { Sound.play('ui'); unpinSeat(Number(b.dataset.seat)); } });
 pickerList.addEventListener('click', e => { const b = e.target.closest?.('.pick'); if (b) { Sound.play('ui'); pickRival(b.dataset.key); } });
 $('picker-close').addEventListener('click', closePicker);
 pickerEl.addEventListener('click', e => { if (e.target === pickerEl) closePicker(); });
+
+// A start card whose rivals' names wrap onto a second row can outgrow a
+// small board (a 320 px phone, or one held sideways), and its buttons, held
+// at the bottom, then cover a name or the tip under them. It makes room in
+// steps: first the tip goes (each name's dotted line still says it's a
+// button), then the card's lines sit closer. The steering hint always stays.
+// Checked when the names or the window change, never because of its own steps.
+let fitFor = '';
+function fitStartCard() {
+  const seen = !opponentsEl.hidden && opponentsEl.offsetHeight > 0, sig = seen ? `${opponentsEl.textContent}|${innerWidth}x${innerHeight}` : '';
+  if (sig === fitFor) return;
+  fitFor = sig;
+  cardEl.classList.remove('snug', 'snugger');
+  if (!seen) return;
+  for (const step of ['snug', 'snugger']) {
+    if (cardEl.scrollHeight <= cardEl.clientHeight + 1) break;
+    cardEl.classList.add(step);
+  }
+}
+new ResizeObserver(fitStartCard).observe(opponentsEl);
+addEventListener('resize', fitStartCard);
 
 // What the chips mean, in words (phones have no tooltips).
 function yourPowerWords(s) {
