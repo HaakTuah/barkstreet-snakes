@@ -71,7 +71,6 @@ function report({ per, total, suddenAt }, withCensus) {
     const knockT = [...c.knockedTicks].sort((x, y) => x - y);
     console.log(`the woodpecker's fairness: food knocked aside ${a(c.knocks)} a round (${a(c.knockedEaten)} eaten, with nowhere to knock it; ${a(c.knockedTaken)} eaten by a snake where it landed, within 6 s: within 2 s ${a(knockT.filter(n => n <= 20).length)}, a median ${knockT.length ? knockT[knockT.length >> 1] : '-'} ticks after the strike) · marks shutting a snake in ${a(c.seals)} a round; sealed deaths (out within 3 s of the strike) ${share(c.sealedOut, sdDeaths)} of sudden-death deaths`
       + ` · pieces cut loose (2s) ${(c.falls / sd).toFixed(2)} a woodpecker round, ${(c.fallCells / Math.max(1, c.falls)).toFixed(1)} cells each, over 12 cells ${(c.fallBig / sd).toFixed(2)}, snakes down with one ${(c.fellOut / sd).toFixed(2)}, strikes leaving the log in pieces ${(c.piecesLeft / sd).toFixed(2)}`
-      + ` · islands of 1-2 cells cut off ${(c.crumbs / sd).toFixed(2)} a woodpecker round (food on ${(c.crumbsFood / sd).toFixed(2)}, a snake on ${(c.crumbsSnake / sd).toFixed(2)})`
       + ` · the last snakes split onto islands of their own in ${of(c.split)} of rounds; the biggest island's won ${share(c.splitBiggest, c.split)} of those (a blind pick: ${share(c.splitChance, c.split)})`);
   }
   console.table(Object.entries(per).map(([name, p]) => ({

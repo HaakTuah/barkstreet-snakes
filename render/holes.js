@@ -123,6 +123,7 @@ function drawPatch(alpha, now) {
 // strike, the piece tips away about its middle, shrinking and darkening
 // into the pit, as the log's bark drops out of sight (PIECE_FALL_MS).
 const PIECE_FALL_MS = 750, pieceFalls = [];
+const FALL_FOOD = { food: '#65a30d', golden: '#facc15', beetle: '#3f2a14', pellet: '#d6b480', mushroom: '#b91c1c', goldcap: '#facc15', leaf: '#facc15' };
 function fallShade(cells, prog, now) {
   ctx.save();
   ctx.beginPath();
@@ -144,7 +145,8 @@ function fallShade(cells, prog, now) {
 function fallAway(cells, now) {
   let sx = 0, sy = 0;
   for (const k of cells) { sx += (k % GRID) + 0.5; sy += Math.floor(k / GRID) + 0.5; }
-  pieceFalls.push({ cells: cells.slice(), at: now, cx: sx / cells.length * CELL, cy: sy / cells.length * CELL, tilt: (cells[0] % 2 ? 1 : -1) * 0.35 });
+  const on = cells.filter(k => born.has(k)).map(k => ({ k, kind: born.get(k).kind })); // (the food that was on it, as last drawn: it goes down with it)
+  pieceFalls.push({ cells: cells.slice(), on, at: now, cx: sx / cells.length * CELL, cy: sy / cells.length * CELL, tilt: (cells[0] % 2 ? 1 : -1) * 0.35 });
   for (const k of cells) spawn((k % GRID) * CELL + CELL / 2, Math.floor(k / GRID) * CELL + CELL / 2, 3, 160, 600, 2.4, '#8a6a2a', '#3b2412');
 }
 function drawFalls(now) {
@@ -162,8 +164,14 @@ function drawFalls(now) {
     for (const k of f.cells) ctx.rect((k % GRID) * CELL, Math.floor(k / GRID) * CELL, CELL, CELL);
     ctx.fillStyle = BARK;
     ctx.fill();
+    for (const { k, kind } of f.on) { // (its food, as dots of its colour, darkening with it)
+      ctx.fillStyle = FALL_FOOD[kind] || FALL_FOOD.food;
+      ctx.beginPath(); ctx.arc((k % GRID) * CELL + CELL / 2, Math.floor(k / GRID) * CELL + CELL / 2, CELL * 0.28, 0, TAU); ctx.fill();
+    }
     ctx.globalAlpha = (1 - e) * (0.25 + 0.6 * e);
     ctx.fillStyle = '#000';
+    ctx.beginPath(); // (the shade over the slab and its food alike)
+    for (const k of f.cells) ctx.rect((k % GRID) * CELL, Math.floor(k / GRID) * CELL, CELL, CELL);
     ctx.fill();
     ctx.restore();
   }

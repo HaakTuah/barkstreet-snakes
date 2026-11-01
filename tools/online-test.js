@@ -191,7 +191,7 @@ const EVENTS = (s, o, h, k) => {
     alight: [{ snake: s }], singe: [{ snake: s }], starving: [{ snake: s }],
     spawn: [{ kind: 'beetle', ...at, gold: true }, { kind: 'golden', ...at }, { kind: 'leaf', ...at }, { kind: 'goldcap', ...at }],
     weather: [{ kind: ['sun', 'wind', 'rain', 'storm', 'snow'][k % 5] }], ember: [{ ...at, fx: Math.max(0, h.x - 1), fy: h.y }], woodpecker: [{}],
-    peck: [{ ...at, cells: [h.y * E.GRID + h.x], under: [s.id] }], rot: [{ ...at, kind: 'apple' }, { ...at, kind: 'pellet', color: o.color }],
+    peck: [{ ...at, cells: [h.y * E.GRID + h.x], under: [s.id] }, { ...at, cells: [h.y * E.GRID + h.x], under: [], fall: [h.y * E.GRID + h.x] }], rot: [{ ...at, kind: 'apple' }, { ...at, kind: 'pellet', color: o.color }],
     baked: [{ ...at, kind: 'food' }], ash: [{ ...at, kind: 'pellet' }],
     squash: [{ snake: s, ...at }], spit: [{ snake: s, ...at, tx: at.x, ty: at.y + 3, power: 4, hit: o.id, lx: null, ly: null }, { snake: s, ...at, tx: at.x, ty: at.y + 3, power: 5, hit: -1, lx: at.x, ly: at.y }], crash: [{ snake: s, ...at, cause: `crashed into ${o.name}`, killer: o.name, killerId: o.id, lost: 3 }, { snake: s, ...at, cause: 'hit the edge', killer: 'wall', killerId: null, lost: 5, failed: 1 }],
     dig: [{ ...at, until: k + 8 }], dive: [{ ...at }, { ...at, dug: 1 }],
@@ -221,6 +221,7 @@ function stage(game) {
     staged.set('landings', (staged.get('landings') || 0) + 1);
     return;
   }
+  if (w && w.target.length > 1 && !w.fall && k < w.strikeAt && short('woodpecker 10')) { w.fall = [w.target[w.target.length - 1]]; staged.set('fall', (staged.get('fall') || 0) + 1); return; } // (2s: a mark that cuts a piece loose, its last cell the piece)
   if (k % 7) return;
   if (short('snake leaps')) { s.leaps = Math.min(T.LEAP_MAX, s.leaps + T.LEAP_CHARGES); return; } // (as a golden beetle gives them)
   if (short('snake dashes')) { s.dashes = Math.min(T.DASH_MAX, s.dashes + T.DASH_CHARGES); return; } // (a golden leaf)
@@ -354,7 +355,7 @@ const want = [...KINDS, ...says, ...['snake', 'cause', 'killer', 'diedAt', 'fata
   ...['food', 'golden', 'mushroom', 'pellet', 'beetle', 'leaf', 'goldcap'].flatMap(k => [`food ${k}`, `food ${k} 3`]), // (each kind, and when it goes)
   'food food 5', 'food food 6', 'food pellet 4', 'food pellet 7', ...[5, 6, 7, 8, 9, 10, 11].map(j => `food beetle ${j}`), // (warming and baked; a bead's colour and whose; a beetle's way, where from, when it moved, scared, golden, digging in)
   ...FIRES.map(k => `fire ${k}`),
-  ...WEATHER.map((w, k) => `weather ${k}`), ...Array.from({ length: 10 }, (_, j) => `woodpecker ${j}`), ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
+  ...WEATHER.map((w, k) => `weather ${k}`), ...Array.from({ length: 11 }, (_, j) => `woodpecker ${j}`), ...['way', 'jump', 'flash'].flatMap(k => [`plan rival ${k}`, `plan person ${k}`])];
 const lacking = [...new Set(want)].filter(short).map(k => `${k} (${seen.get(k) || 0})`);
 if (process.env.ONLINE_SEEN) console.log([...seen].sort().map(([k, v]) => `${k}: ${v}`).join('\n'));
 if (lacking.length) { console.error(`seen too few times (fewer than ${MIN}; a death's, never), the test lost its point there: ${lacking.join(', ')}`); process.exit(1); }
