@@ -368,7 +368,7 @@ screen, a 3 by 4 mark, compared over the five screens); nothing on the page move
   October 2026, of the bird covering part of the help line or the chatter: "Don't really care if it covers that a
   bit. None essential, you still see, and you can click through. It also moves about frequently, so it doesn't cover
   the same spot all the time.", then "yes, leave it."). No perch lower, no help line stepping aside, no smaller bird.
-- *Bigger on a phone* (Haakon, 31 October 2026: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much."): the polish lane draws it bigger on a phone, at the size he picks from pictures; see `docs/PROGRESS.md`, the polish lane.
+- *Bigger on a phone* (Haakon, 31 October 2026: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much."). PR #270: on a phone (a screen no more than 500 px on its short side, `PHONE_SHORT_PX`) it grows 1.6 times more (`PHONE_GROW`), size B of the three he was shown; the desktop is unchanged. Upright, it stands 212 px tall on a 390×844 phone, perched and striking (132 before). On its side, Haakon (31 October 2026): "Sideways, the bird perches at its full B size, partly off-screen: head, beak and eye in the gap beside the board and inside the safe area, its back and tail cut off by the screen edge. Same size perched and striking, never covering the board while it perches." So on its side it perches in the gap on the side that runs to the screen's edge, its beak short of the board and its eye in the gap, inside the safe area, the rest past the edge; its size there is B or, where the gap is narrower, as big as still leaves its eye in the gap (164 px tall at 780×320, 157 px at 844×390), the same perched and striking. Held upright, it is B or as big as still stands whole on the ledge under the board (212 px at 390×844, 164 px at 320×640), again one size perched and striking. Never smaller than 2k's: where even that leaves no room (a 375×667 phone upright; a sideways screen whose gap won't hold its eye), it is 2k's bird, perched as before. Its size is worked out again only when the screen's width changes, so a phone's address bar never resizes it. At 320×640 it covers the row's words, which Haakon accepted. Its depth into the bark and its smallest perch stay what they were at 1.3, whatever its size (`growBird` in `render/bird.js`).
 
 ### The woodpecker pecks beside a snake
 
@@ -412,6 +412,10 @@ hits it dead on, so that must be accounted for. And it should also react to sove
 - **Owners.** Sovereign over its own banner and Colonist over its own flags bend them as anyone does (they already did;
   a render test now proves it). What looked wrong was the head-on case, which owners meet most, heading for their own
   flag.
+- **Planted under a snake** (PR #255, polish). A flag that wasn't on the board a moment ago (not drawn in the last frame drawn, by frames, not ms, so watching at 4x never counts a flag in sight as new; Sovereign's banner counts as in sight while it glides or is carried)
+  and turns up with a snake already on its tile, as each new colony does under Colonist's head, is bent from its first
+  frame: never seen standing, it doesn't stand for a frame and then snap over, and a head-on one lies flat under the
+  head without wrapping the face that planted it.
 - Drawing only, from the snakes each screen has: no simulation, no protocol change.
 
 ### Beetles and the woodpecker

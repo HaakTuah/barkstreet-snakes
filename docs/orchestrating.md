@@ -1,7 +1,9 @@
 # Orchestrating the builders
 
-The full text of two standing instructions from `CLAUDE.md`, for the session that starts builder sessions (the
-orchestrator) and for any builder that needs the detail. `CLAUDE.md` keeps what every builder needs from them.
+The full text of two standing instructions from `AGENTS.md`, for the session that starts builder sessions (the
+orchestrator) and for any builder that needs the detail. `AGENTS.md` keeps what every builder needs from them. Codex's
+lanes, its fallback and the reviews between the two builders: `docs/claude-and-codex.md`; an open issue with an
+`@codex` brief counts as a claimed lane, like a draft PR.
 
 - **28 October 2026: pipeline, don't wait.** "Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns." (to Claude's proposal; the words are in
   `docs/archive/instructions.md`). Waiting is lost time and, past an hour, a lost cache, so:
@@ -15,8 +17,10 @@ orchestrator) and for any builder that needs the detail. `CLAUDE.md` keeps what 
      orchestrator starts a fresh session for it with the PR, the review and nothing else, at the task's effort; the
      builder goes on.
   4. **Keep the cache warm.** One session per task, continued for its review fixes and its milestone while its context
-     is under an hour old, rather than a fresh session reading everything again; a fresh session for a new task, or when a
-     session's context has grown large. Long runs and checks go in the background; no turn sits idle waiting. Files every
+     is under an hour old, rather than a fresh session reading everything again. A new task goes to whichever does the
+     most work for the fewest tokens without losing quality (Haakon, 1 November 2026: "We should do whatever is most effective at acheivein the goal, which is accomplishing them most possible, with the least tokens, without sacrifacing quality."): a session already open when the task touches
+     the same files, its context is under an hour old and still small, and its last task has merged; otherwise a fresh
+     session, and always one when a session's context has grown large. Long runs and checks go in the background; no turn sits idle waiting. Files every
      session reads stay small (the workshop check), since they are the start of every call.
   5. **Hand over at once.** The last message says what merged and what is next. The orchestrator starts the next session
      as soon as a task merges, woken by the PR's merge rather than a clock, with an hourly check as the fallback.

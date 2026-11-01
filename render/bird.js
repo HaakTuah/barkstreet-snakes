@@ -26,7 +26,8 @@ let birdLayer = null, birdG = null, birdShown = false;
 // the board it may cling to ({ x, top, bottom, face }): the game keeps
 // them current; and the words there it perches clear of where it can
 // ({ left, right, top, bottom }, 2k+).
-const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, upright: false, hang: [], rims: [], words: [] };
+let grownFor = ''; // (the screen's width, and whether it's a phone's, the bird's size was worked out for)
+const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, upright: false, phone: false, hang: [], rims: [], words: [] };
 function setBoardRect(x, y, w, free = null) {
   boardRect.x = x; boardRect.y = y; boardRect.w = w;
   boardRect.left = free ? free.left : 0; boardRect.top = free ? free.top : 0;
@@ -36,13 +37,35 @@ function setBoardRect(x, y, w, free = null) {
   boardRect.hang = free?.hang || [];
   boardRect.rims = free?.rims || [];
   boardRect.words = free?.words || [];
+  boardRect.phone = Math.min(innerWidth, innerHeight) <= PHONE_SHORT_PX;
+  if (`${innerWidth} ${boardRect.phone}` !== grownFor) { // (worked out again only when the screen's width changes, turned round, say: a phone's address bar coming and going never resizes it, nor its layer)
+    grownFor = w && free ? `${innerWidth} ${boardRect.phone}` : ''; // (not until the page has laid the board out)
+    let grow = boardRect.phone ? BIRD_GROW * PHONE_GROW : BIRD_GROW;
+    if (boardRect.phone && boardRect.ledge > 0 && w) { // (held upright: no bigger than stands whole on the ledge, so it's one size perched and striking; never smaller than 2k's)
+      const fits = 0.999 * (Math.min(innerHeight, boardRect.bottom) - y - w - 2 * PERCH_GAP_PX) / ((BIRD_BOX[3] - BIRD_BOX[1] + 2 * BOX_EDGE + CROUCH) * CELL * 0.85 * w / SIZE);
+      grow = Math.max(BIRD_GROW, Math.min(grow, fits));
+    } else if (boardRect.phone && w) { // (on its side: no bigger than leaves its beak, head and eye in the gap beside the board on a side that runs to the screen's edge, its back off the screen; never smaller than 2k's, perching as it did where the gap won't hold its eye)
+      const rooms = [boardRect.left <= EDGE_SLACK_PX ? x - boardRect.left : 0, boardRect.right >= innerWidth - EDGE_SLACK_PX ? Math.min(innerWidth, boardRect.right) - x - w : 0];
+      const fits = 0.999 * (Math.max(...rooms) - 2 * PERCH_GAP_PX) / ((BILL[0] - EYE_BACK + BOX_EDGE) * CELL * 0.85 * w / SIZE);
+      grow = Math.max(BIRD_GROW, Math.min(grow, fits));
+    }
+    growBird(grow);
+  }
   perches.clear(); drumAt.clear(); birdLayout++; // (its perches and where it drums are worked out again: the room round the board has changed)
 }
 const BIRD_GROW = 1.7; // (times its first size: 1.3 since 2c, 1.7 since 2k, on the board and under it alike)
-const BU = CELL * 0.85 * BIRD_GROW; // the bird's unit
+// On a phone (a screen no more than PHONE_SHORT_PX on its short side,
+// held upright or on its side) its board is less than half a desktop's,
+// so the bird grows PHONE_GROW times more, to look as threatening there as
+// beside a desktop's board (Haakon, 31 October 2026). Everything sized by
+// it (BU and what's worked out from it) is set by growBird as the layout
+// changes, never in the middle of a frame.
+const PHONE_SHORT_PX = 500, PHONE_GROW = 1.6;
+const EYE_BACK = 0.2, EDGE_SLACK_PX = 60; // (units behind its head's middle its eye's back edge is, so beak to eye is BILL[0] - EYE_BACK; and how far, CSS px, the free page may stop short of the screen's edge, a notch's safe area, and still count as running to it)
+let BU = CELL * 0.85 * BIRD_GROW; // the bird's unit
 const BILL = [2.55, -1.72]; // its beak tip, in units, before its head moves
 const BIRD_BOX = [-1.15, -2.55, 2.65, 3.2]; // (all of it, round its feet, in units, facing right: its back, crown, beak tip, tail)
-const PERCH_NEAR = 0.65 * 1.3 / BIRD_GROW, PERCH_MIN_PX = 30, PERCH_FLOOR_PX = 22; // (how small it may perch: on a nearer side, 0.65 of its size at 2c, so growing never sends it to a smaller perch; and, CSS px tall, where there's no room anywhere; and on a phone held upright of a height in between, where the page leaves it room for 24)
+let PERCH_NEAR = 0.65 * 1.3 / BIRD_GROW; const PERCH_MIN_PX = 30, PERCH_FLOOR_PX = 22; // (how small it may perch: on a nearer side, 0.65 of its size at 2c, so growing never sends it to a smaller perch; and, CSS px tall, where there's no room anywhere; and on a phone held upright of a height in between, where the page leaves it room for 24)
 const PERCH_GAP_PX = 1.5, BOX_EDGE = 0.1; // (how far, CSS px, it keeps off the cells, its ink's soft edge never touching one; and, units, how far its outline and its beak, turned to look, reach past its box)
 const LEDGE_LOOK = 0.3, CROUCH = 0.25; // (on the ledge, how far it may look up at its chunk, radians, with its beak still under the board; and how far its crouch lowers it, units)
 const RIM_GRIP = 0.95, RIM_FEET = 0.8, RIM_REACH = 2.5, RIM_PECK_MS = 360; // (on a button's rim: how far ahead of it its toes grip, and how far under its feet' middle, units; how far along the ledge it goes to one, units; and how long its two pecks at it take)
@@ -101,8 +124,18 @@ function perchFor(tx, ty) {
   // leaves it room for that much, see style/)
   const between = boardRect.upright && (side === 'left' || side === 'right') && !(fit[side] >= least) && shrunk(side) < least;
   if (between && ledge >= floor && ledge >= shrunk(side)) side = 'ledge';
-  const nowhere = (side === 'left' || side === 'right') && !(fit[side] >= least);
-  const s = side === 'ledge' ? ledge : nowhere ? Math.max(between ? floor : least, shrunk(side)) : Math.max(least, fit[side]);
+  // (a phone on its side, Haakon's answer for #270: at its full size, partly
+  // off the screen: its beak, head and eye in the gap beside the board, on
+  // the side that runs to the screen's edge, inside the safe area; its back
+  // and tail cut off by the screen's edge. Smaller only where even its eye
+  // wouldn't fit, and never over the board while it perches)
+  const edgeSide = k => (k === 'right' ? boardRect.right >= innerWidth - EDGE_SLACK_PX : boardRect.left <= EDGE_SLACK_PX);
+  const cutSide = boardRect.phone && !boardRect.upright && sc && BU > CELL * 0.85 * BIRD_GROW * 1.001 ? ['left', 'right'].filter(k => fit[k] < 1 && edgeSide(k)).sort(nearer)[0] : null;
+  const cutS = cutSide ? Math.min(1, (room[cutSide] - gap) / ((BILL[0] - EYE_BACK + BOX_EDGE) * BU)) : 0;
+  const cut = cutS >= Math.max(least, fit[cutSide] || 0) && (side === 'left' || side === 'right'); // (only where it's bigger so than all of it on the screen)
+  if (cut) side = cutSide;
+  const nowhere = !cut && (side === 'left' || side === 'right') && !(fit[side] >= least);
+  const s = cut ? cutS : side === 'ledge' ? ledge : nowhere ? Math.max(between ? floor : least, shrunk(side)) : Math.max(least, fit[side]);
   const e = BOX_EDGE * s * BU + (nowhere ? 0 : gap), short = nowhere ? 0.05 * s * BU : e; // (how far it keeps clear all round, its outline at least; and its beak, of the board)
   const along = v => Math.max(BU * 2, Math.min(SIZE - BU * 2, v));
   const face = tx < SIZE / 2 ? 1 : -1; // (above or below the board, it stands off to one side of the spot)
@@ -114,7 +147,8 @@ function perchFor(tx, ty) {
   // (then all of it on the screen, off the furniture, its outline and its crouch too: its back first, if it can't all fit)
   const x0 = (p.flip > 0 ? BIRD_BOX[0] : -BIRD_BOX[2]) * s * BU - e, x1 = (p.flip > 0 ? BIRD_BOX[2] : -BIRD_BOX[0]) * s * BU + e;
   const lo = -room.left - x0, hi = SIZE + room.right - x1;
-  if (p.flip > 0) p.x = Math.max(lo, Math.min(hi, p.x));
+  if (cut) { /* (its back off the screen: where it is, beak short of the board) */ }
+  else if (p.flip > 0) p.x = Math.max(lo, Math.min(hi, p.x));
   else p.x = Math.min(hi, Math.max(lo, p.x));
   p.y = Math.max(-room.top - BIRD_BOX[1] * s * BU + e, Math.min(SIZE + room.bottom - (BIRD_BOX[3] + CROUCH) * s * BU - e, p.y));
   // (on the ledge, clear of the moss and leaves hanging into it: where it
@@ -290,7 +324,9 @@ const BIRD_REACH = 6.5, BIRD_ROOM = 1.2;
 const lay = { x: 0, y: 0, w: 0, h: 0, W: 0, H: 0, dpr: 0, sc: 1, ox: 0, oy: 0 }; // (where it is and how big, CSS px; its pixels; and the board's units to them)
 function placeLayer(dpr) {
   const css = boardRect.w / SIZE, most = BIRD_REACH * BU * css, least = BIRD_ROOM * BU * css, m = v => Math.max(least, Math.min(most, v));
-  const left = Math.floor(boardRect.x - m(boardRect.x - boardRect.left)), right = Math.ceil(boardRect.x + boardRect.w + m(boardRect.right - boardRect.x - boardRect.w));
+  const big = boardRect.phone && !boardRect.upright && BU > CELL * 0.85 * BIRD_GROW * 1.001; // (a phone on its side, its bird bigger: perched with its back past the screen's edge, so its layer runs to that edge, not the safe area's, and the screen cuts it)
+  const L0 = big && boardRect.left <= EDGE_SLACK_PX ? 0 : boardRect.left, R0 = big && boardRect.right >= innerWidth - EDGE_SLACK_PX ? innerWidth : boardRect.right;
+  const left = Math.floor(boardRect.x - m(boardRect.x - L0)), right = Math.ceil(boardRect.x + boardRect.w + m(R0 - boardRect.x - boardRect.w));
   const top = m(boardRect.y - boardRect.top), x = Math.max(0, left), y = Math.floor(boardRect.y - top);
   const w = Math.max(1, Math.min(innerWidth, right) - x), h = Math.ceil(top + boardRect.w + most) + 1;
   let fresh = false;
@@ -339,7 +375,7 @@ function resetBird(now = 0) {
 // the air; and how far its head draws back between blows (units). A
 // flight takes longer the further it goes (flightMs, hopMs).
 const B_SETTLE = 120, B_TAKEOFF = 200, B_LINGER = 90, B_LOOK = 260, B_ARRIVE = 900, B_BEAT = 104, B_CHIPS = 340, B_BACK = 0.42;
-const B_IN = 0.06 * 1.3 / BIRD_GROW; // (how far its beak goes into the bark on a blow, units: as deep as at 1.3, whatever its size, so it stays in the cell it pecks)
+let B_IN = 0.06 * 1.3 / BIRD_GROW; // (how far its beak goes into the bark on a blow, units: as deep as at 1.3, whatever its size, so it stays in the cell it pecks)
 const flightMs = d => Math.max(240, Math.min(540, 200 + 0.42 * d));
 const hopMs = d => Math.max(180, Math.min(380, 140 + 0.35 * d));
 const smooth = t => t * t * (3 - 2 * t), clamp01 = t => (t < 0 ? 0 : t > 1 ? 1 : t);
@@ -566,7 +602,7 @@ function chipsAfter(w, since, P) {
 // could cling there as big (alts, the first this one): upright or
 // leaning, facing either way (or, where it must lie level, lying level),
 // for drumChoice.
-const DRUM_TRIES = [0, 1, 0.45, 1, -0.45, 1, 0, -1, 0.45, -1, -0.45, -1, Math.PI / 2, 1, -Math.PI / 2, 1, Math.PI / 2, -1, -Math.PI / 2, -1], DRUM_SIZES = [1, 0.85, 0.72, 0.6];
+const DRUM_TRIES = [0, 1, 0.45, 1, -0.45, 1, 0, -1, 0.45, -1, -0.45, -1, Math.PI / 2, 1, -Math.PI / 2, 1, Math.PI / 2, -1, -Math.PI / 2, -1], DRUM_SIZES = [1, 0.85, 0.72, 0.6, 0.5, 0.42, 0.375]; // (the last three only for a phone's bigger bird, down to 0.6 of 2k's: corners of a short screen)
 const AIM_REACH = CELL / 2 - AIM_IN; // (how far its aim beside a snake can move the whole of it, board px: see freeAim. Since 2k, bigger, a pose fitted at the cell's middle could be moved off the screen by it)
 const DRUM_UPRIGHT = 12; // (the tries upright or leaning: the first six)
 const probe = { x: 0, y: 0, s: 1, flip: 1, rot: 0, crouch: 0, wing: 0, stroke: 1, sweep: 0, near: 1, far: 1, feet: 1, turn: 0, thrust: 0, air: 0 };
@@ -577,6 +613,7 @@ function drumPoseAt(spot, flip) {
   const tx = (spot % GRID) * CELL + CELL / 2, ty = Math.floor(spot / GRID) * CELL + CELL / 2, Q = probe;
   let best = null, least = Infinity;
   for (const s of DRUM_SIZES) {
+    if (s < 0.6 && !(BU > CELL * 0.85 * BIRD_GROW * 1.001)) break; // (the smaller ones only for a phone's bigger bird: the desktop's as it was)
     for (let i = 0; i < DRUM_TRIES.length; i += 2) {
       if (d && (i < DRUM_UPRIGHT) !== d.upright) break; // (no lying level where it can stand)
       const f = flip * DRUM_TRIES[i + 1];
@@ -631,7 +668,10 @@ function drumChoice(w, spot, flip) {
 // How much of those (seeX, seeY: each a ring's round, its middle and eight
 // points on it) the bird drumming in pose p covers: its body, its tail,
 // its head and beak, ink and all.
-const SEE_R = CELL * 0.4 + BOX_EDGE * BU; // (its ink's soft edge too, which grew with the bird in 2c)
+let SEE_R = CELL * 0.4 + BOX_EDGE * BU; // (its ink's soft edge too, which grew with the bird in 2c)
+function growBird(grow) { // (its size, times its first: BU and what's worked out from it)
+  BU = CELL * 0.85 * grow; PERCH_NEAR = 0.65 * 1.3 / grow; B_IN = 0.06 * 1.3 / grow; SEE_R = CELL * 0.4 + BOX_EDGE * BU;
+}
 function hides(p) {
   const Q = probe;
   Q.x = p.x; Q.y = p.y; Q.s = p.s; Q.flip = p.flip; Q.rot = p.rot; Q.turn = 0; Q.thrust = B_IN; Q.crouch = 0;
