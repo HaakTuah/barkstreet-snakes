@@ -44,6 +44,10 @@ function setBoardRect(x, y, w, free = null) {
     if (boardRect.phone && boardRect.ledge > 0 && w) { // (held upright: no bigger than stands whole on the ledge, so it's one size perched and striking; never smaller than 2k's)
       const fits = 0.999 * (Math.min(innerHeight, boardRect.bottom) - y - w - 2 * PERCH_GAP_PX) / ((BIRD_BOX[3] - BIRD_BOX[1] + 2 * BOX_EDGE + CROUCH) * CELL * 0.85 * w / SIZE);
       grow = Math.max(BIRD_GROW, Math.min(grow, fits));
+    } else if (boardRect.phone && w) { // (on its side: no bigger than leaves its beak, head and eye in the gap beside the board on a side that runs to the screen's edge, its back off the screen; never smaller than 2k's, perching as it did where the gap won't hold its eye)
+      const rooms = [boardRect.left <= EDGE_SLACK_PX ? x - boardRect.left : 0, boardRect.right >= innerWidth - EDGE_SLACK_PX ? Math.min(innerWidth, boardRect.right) - x - w : 0];
+      const fits = 0.999 * (Math.max(...rooms) - 2 * PERCH_GAP_PX) / ((BILL[0] - EYE_BACK + BOX_EDGE) * CELL * 0.85 * w / SIZE);
+      grow = Math.max(BIRD_GROW, Math.min(grow, fits));
     }
     growBird(grow);
   }
@@ -57,7 +61,7 @@ const BIRD_GROW = 1.7; // (times its first size: 1.3 since 2c, 1.7 since 2k, on 
 // it (BU and what's worked out from it) is set by growBird as the layout
 // changes, never in the middle of a frame.
 const PHONE_SHORT_PX = 500, PHONE_GROW = 1.6;
-const EYE_BACK = 0.54, EDGE_SLACK_PX = 60; // (units behind its head's middle its eye's back edge is, so beak to eye is BILL[0] - EYE_BACK; and how far, CSS px, the free page may stop short of the screen's edge, a notch's safe area, and still count as running to it)
+const EYE_BACK = 0.2, EDGE_SLACK_PX = 60; // (units behind its head's middle its eye's back edge is, so beak to eye is BILL[0] - EYE_BACK; and how far, CSS px, the free page may stop short of the screen's edge, a notch's safe area, and still count as running to it)
 let BU = CELL * 0.85 * BIRD_GROW; // the bird's unit
 const BILL = [2.55, -1.72]; // its beak tip, in units, before its head moves
 const BIRD_BOX = [-1.15, -2.55, 2.65, 3.2]; // (all of it, round its feet, in units, facing right: its back, crown, beak tip, tail)
@@ -126,7 +130,7 @@ function perchFor(tx, ty) {
   // and tail cut off by the screen's edge. Smaller only where even its eye
   // wouldn't fit, and never over the board while it perches)
   const edgeSide = k => (k === 'right' ? boardRect.right >= innerWidth - EDGE_SLACK_PX : boardRect.left <= EDGE_SLACK_PX);
-  const cutSide = boardRect.phone && !boardRect.upright && sc ? ['left', 'right'].filter(k => fit[k] < 1 && edgeSide(k)).sort(nearer)[0] : null;
+  const cutSide = boardRect.phone && !boardRect.upright && sc && BU > CELL * 0.85 * BIRD_GROW * 1.001 ? ['left', 'right'].filter(k => fit[k] < 1 && edgeSide(k)).sort(nearer)[0] : null;
   const cutS = cutSide ? Math.min(1, (room[cutSide] - gap) / ((BILL[0] - EYE_BACK + BOX_EDGE) * BU)) : 0;
   const cut = cutS >= Math.max(least, fit[cutSide] || 0) && (side === 'left' || side === 'right'); // (only where it's bigger so than all of it on the screen)
   if (cut) side = cutSide;
