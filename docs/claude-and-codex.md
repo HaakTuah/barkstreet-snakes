@@ -99,8 +99,9 @@ Every review, in either direction:
 
 - Codex on ChatGPT Pro 100, connected to HaakTuah's two game repositories. Code Review: automatic review off,
   exhaustive review on, so reviews run only on `@codex review`.
-- One Codex cloud environment per repository, its setup script `bash scripts/cloud-setup.sh`, the agent's internet
-  off.
+- One Codex cloud environment per repository, set up by Codex's own onboarding from `scripts/cloud-setup.sh`. The
+  agent's internet is off except fonts.googleapis.com and fonts.gstatic.com: the game's font, which the input and
+  layout suites need to measure text as players see it.
 - Before the first lane: a health check in each environment (`scripts/test.sh`, reporting what fails and why), then one
   small Barkstreet Snakes docs lane to test that an `@codex` comment starts a task. If it does not, the fallback is a
   runner on Haakon's PC (`codex exec`), designed then.
