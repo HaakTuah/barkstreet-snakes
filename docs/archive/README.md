@@ -7,6 +7,8 @@ History, kept for the record. Sessions read it only when a task points here.
 | `instructions.md` | Haakon's instructions and decisions given in chat that no other doc recorded, word for word with their dates (UTC). Add new standing ones here. |
 | `plan-history.md` | The plan as it grew from round six on (PRs A to D, where each session stopped, the measured numbers), moved word for word from the assistant's project memory. Paths into `.git/perry-tools` there now mean `tools/dev/` or `docs/handoff/`. |
 | `progress-done.md` | The done entries of `docs/PROGRESS.md`'s queue and its answered "For Haakon" rows, moved word for word (28 October 2026) to keep it small. New ones are added here. |
+| `handoff/` | Handoff material whose entries are done, moved from `docs/handoff/` (31 October 2026): the owner's saved tasks word for word (`next-tasks-verbatim.md`, item 1), the bridge-glitch repro (`stage-bridge-glitch.js`, bridges: PR #174) and the unverified jumps start (`jumps-wip-unverified.patch`, the island hop: PR #158). |
+| `pictures/` | One-off scripts that took a merged PR's pictures, moved from `tools/dev/` (31 October 2026), nothing pointing to them: `bead-splat` (#210), `costume-change` and `costumes` (#212, Capricious and Copycat), `flag-bend` (#186, #211), `noscroll-fix`, `phone-bottom` (#112), `rainbow-round` (Star), `woodpecker-beside` (#141). Each takes the game's folder as its first argument, so they still run from here. |
 
 ## What came from Haakon's computer (PR #37, then #38, 26 October 2026)
 
