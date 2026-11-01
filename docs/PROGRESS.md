@@ -32,12 +32,7 @@ the second account until its usage is spent; on the main account the brake close
   `docs/handoff/queue-specs.md`, 31 October 2026); merged branches now go by GitHub's "Automatically delete head
   branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
 - **Done in the lane's entries:** the README for players (PR #241) and any key wakes from a nap (PR #271): their words are in `docs/archive/progress-done.md`, "The polish lane, done".
-- **Next, the woodpecker bigger on a phone** (Haakon, 31 October 2026, with a desktop screenshot beside it: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much."): on a
-  phone, upright and on its side, it is drawn bigger than 2k's 1.7 times, so it looks as threatening there as it does
-  beside the board on a desktop; the desktop is unchanged. Pictures first, at 390×844 and 780×320, perched and striking,
-  at three sizes side by side on `pr-media`, and Haakon picks before it merges, as with Wildcard's hair (2n). A bigger
-  bird may cover more of the row and the chatter under the board (his answer on the help line), never a card (PR #243),
-  and never the board's play for longer than a strike does now. Presentation only: the fingerprints unchanged. **Answered** (Haakon, 1 November 2026, to #270's two questions): size B, 1.6 times (212 px upright, 172 px sideways, the same size beside the board both ways); and sideways it perches at that full size, partly off-screen, its head, beak and eye in the gap beside the board and inside the safe area, its back and tail cut off by the screen edge, so it is the same size perched and striking and never covers the board while it perches ("Seems better than making it super small and have it swell up whenever it attacks", then "Yes.").
+- **The woodpecker bigger on a phone, done** (PR #270; Haakon picked B, and answered for a phone on its side): see "The woodpecker, as big as it gets", *Bigger on a phone*, in `docs/design/32-the-owners-playtest.md`.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and

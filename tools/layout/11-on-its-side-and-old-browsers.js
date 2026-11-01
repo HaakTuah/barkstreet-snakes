@@ -16,7 +16,9 @@ for (const [w, h, dpr, insets] of [[780, 340, 3], [844, 340, 3, notchSide], [780
 // On a screen under about 600 px wide on its side the board is as wide as
 // the column leaves it, shorter than the screen, so there's room under
 // it. Perched (resting and eyeing its chunk) for spots all over the board,
-// the woodpecker never covers a cell and is all on the screen: below the
+// the woodpecker never covers a cell and is all on the screen (on a phone,
+// where its bigger size since #270 no longer fits under the board, beside
+// it with its back off the screen's edge, never its eye): below the
 // board it stands as on the ledge, its crown just under the board,
 // looking up only a little. (With a little less room than all of it
 // needed, pushed back onto the screen, it hung over the bottom row; and
@@ -28,7 +30,10 @@ for (const [w, h, dpr] of [[480, 320, 2], [540, 320, 2], [600, 360, 2]]) {
   await toRound();
   const l = await ev(LAYOUT), ps = [];
   for (const [x, y] of SPOTS) for (const aim of [false, true]) ps.push({ x, y, aim, p: await ev(PERCH(x, y, aim, furnitureOf(l))) });
-  const bad = ps.filter(q => !q.p || q.p.over || q.p.cut.length || Object.keys(q.p.on).length || q.p.x < -0.5 || q.p.r > l.vw + 0.5 || q.p.y < -0.5 || q.p.b > l.vh + 0.5);
+  // (a phone, its bird a size bigger since #270: where it no longer stands under the board it perches beside it, partly off the screen, Haakon's answer: its back cut off by the screen's edge on that side, never its eye)
+  const back = p => Math.min(w, h) <= 500 && p.eye && (p.x >= l.board.r - 0.5 ? 'right' : p.r <= l.board.x + 0.5 ? 'left' : null);
+  const eyeOn = p => p.eye.x >= 0 && p.eye.x <= l.vw && p.eye.y >= 0 && p.eye.y <= l.vh;
+  const bad = ps.filter(q => { if (!q.p) return true; const k = back(q.p); return q.p.over || q.p.cut.some(e => e !== k) || (k && !eyeOn(q.p)) || Object.keys(q.p.on).length || (q.p.x < -0.5 && k !== 'left') || (q.p.r > l.vw + 0.5 && k !== 'right') || q.p.y < -0.5 || q.p.b > l.vh + 0.5; });
   const under = ps.filter(q => q.p && q.p.y >= l.board.b - 0.5).length;
   check(!bad.length, `${name}: perched, resting or eyeing its chunk, the woodpecker never covers a cell, and is all on the screen and off the column`,
     bad.map(q => `${q.x},${q.y}${q.aim ? ' eyeing' : ''}: ${q.p ? `${q.p.over} px over the cells${q.p.cut.length ? ', cut off' : ''}${Object.keys(q.p.on).map(k => `, over the ${k}`).join('')}` : 'not drawn'}`).join('; ') || `${ps.length} perches, ${under} of them under the board`);
