@@ -70,6 +70,7 @@ function playOut(g, from) {
     left -= dying.length;
   }
   for (const s of g.snakes) if (s.alive && !out.has(s.id)) out.set(s.id, { place: 1, alive: g.time - t0 });
+  for (const s of g.snakes) if (!s.alive && !out.has(s.id)) out.set(s.id, { place: left + 1, alive: 0 }); // (out on the fork's own tick)
   for (const [id, o] of out) o.len10 = len10.has(id) ? len10.get(id) : g.snakes[id].alive ? g.snakes[id].body.length : 0;
   return out;
 }
