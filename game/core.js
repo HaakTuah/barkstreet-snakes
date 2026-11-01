@@ -117,6 +117,7 @@ const FLAVOR = {
   youAtThree: ['Down to\u00a03. One more crash and you’re out.', 'At\u00a03 now. The next crash is the last.'],
   youAlight: ['On fire: 3 bites of tail, and at\u00a03 it ends you. Rain helps.', 'Burning, and losing bits of you. At\u00a03 it ends you.'],
   youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
+  cutLoose: 'Cut loose, it falls! Get off the shaded piece.', // (2s: the first mark that cuts a piece loose, or its strike)
   youSquash: 'Your own beads feed nobody.', // (round six B: your first own bead squashed)
   youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it comes, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
   birdBeetle: 'The woodpecker eats beetles too!', // (round six B, 2m: the first beetle you see the bird eat, one that didn't get off its mark in time)
@@ -134,7 +135,7 @@ const FLAVOR = {
   steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
   leapNothing: 'Jumps hop over a snake, a hole or fire.',
   leapEarly: `A bit early: a jump waits ${TUNE.LEAP_WINDOW} moves, then lapses.`,
-  islandHop: touchFirst ? 'Tap to hop up to three cells. Find an island!' : 'Space hops up to three cells. Find an island!', // (the first time you're boxed in with a jumpable gap: round six B's island hop)
+  islandHop: touchFirst ? 'Tap to hop up to three cells. Hop the gap!' : 'Space hops up to three cells. Hop the gap!', // (the first time you're boxed in with a jumpable gap: round six B's island hop)
   powersFirst: 'Tap jumps. Swipe ahead flashes.', // (a short phone's first Go: steering is beside YOU. One line on a 320 px phone, so it fits between the heads)
   bothOut: ['Nobody walked away from that one.', 'A draw, of sorts.', 'Both of you. At once.'],
   wakeBeat: 'Ready…',
