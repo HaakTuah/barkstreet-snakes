@@ -33,7 +33,7 @@ function buildTags() {
 // desktop, its tooltip still does).
 const noteEl = $('rival-note'), noteDot = noteEl.querySelector('.dot'), noteWho = noteEl.querySelector('strong');
 const noteHow = noteEl.querySelector('.how'), noteNow = noteEl.querySelector('.now'), cardEl = overlay.querySelector('.card');
-let noted = null, bannered = null; // (whose note is on the card; whose is the banner)
+let noted = null, bannered = null, noteShutAt = -1e9; // (whose note is on the card; whose is the banner; when a note last closed: the tap that closes one on a napping card doesn't wake it too)
 tagsEl.addEventListener('click', e => {
   const li = e.target.closest?.('li'), s = li && theGame.snakes.find(o => o.tag?.li === li);
   if (!s || !(s.persona || isMe(s)) || state === 'countdown' || state === 'lobby') return;
@@ -90,6 +90,7 @@ function closeNote(byKey = false) {
   noted.tag?.li.classList.remove('noted');
   name?.setAttribute('aria-expanded', 'false');
   noted = null;
+  noteShutAt = performance.now();
   noteEl.hidden = true;
   cardEl.classList.remove('noting');
   if (!inside) return;
