@@ -20,7 +20,7 @@ instructions" in `AGENTS.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 5, part 4 (#198) | The golden flight works and the rivals fly it, but it can't show in wins between rivals: a flight moves a cell a tick like a crawl, so it buys no time, and under today's rules no rival in 30 rounds died holding a golden jump (0 of 90 deaths), so it has nobody to save; leap now came out even too; the golden flash pays in food and kills, not wins. Which: (a) merge the flight and leap now as they are, moves that pay for a person's timing; (b) the flight flies 2 cells a tick while held, so it buys time, measured again; (c) more golden beetles? | (b) for the flight, and leap now dropped (between rivals it's the plain hop a move early). #198 parked till then. | Open, 1 November 2026 |
+| 5, part 4 (#198) | The golden flight works and the rivals fly it, but it can't show in wins between rivals: a flight moves a cell a tick like a crawl, so it buys no time, and under today's rules no rival in 30 rounds died holding a golden jump (0 of 90 deaths), so it has nobody to save; leap now came out even too; the golden flash pays in food and kills, not wins. Which: (a) merge the flight and leap now as they are, moves that pay for a person's timing; (b) the flight flies 2 cells a tick while held, so it buys time, measured again; (c) more golden beetles? | Answered (Haakon, 1 November 2026): none of the three. "they must work until the rivals know how to use them. i am certain they will give better performance if used appropiately" (as on 31 October: "then it must be the AI"): the moves stay as designed (the golden leap flies up to 5 cells and steers, leap now, the golden flash cuts two thick), and the rivals are improved until their users come out ahead. Leap now stays: "no dropping of leap, leap goes in the game that is my vision". #198 goes on, on those terms. | Answered, 1 November 2026 |
 
 ## The polish lane
 
@@ -33,6 +33,10 @@ the second account until its usage is spent; on the main account the brake close
   branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
 - **Done in the lane's entries:** the README for players (PR #241) and any key wakes from a nap (PR #271): their words are in `docs/archive/progress-done.md`, "The polish lane, done".
 - **The woodpecker bigger on a phone, done** (PR #270; Haakon picked B, and answered for a phone on its side): see "The woodpecker, as big as it gets", *Bigger on a phone*, in `docs/design/32-the-owners-playtest.md`.
+- **Next: the flash becomes the dash** (Haakon, 1 November 2026: "dash is better actually", and "Yes, i think so", to calling it
+  the dash wherever a player sees it): the move along the ground is the *dash* and the golden one the *golden dash*, in the key
+  help, the lessons, the Field guide, banners, chatter, the README and the design notes ("One word for each thing"); the
+  code already says dash. No rule, number or online message changes, so no protocol bump.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
