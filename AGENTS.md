@@ -222,4 +222,4 @@ Haakon's standing instructions given since this file was last revised, dated, ne
 - **1 November 2026: Claude and Codex build together.** (the words are in `docs/archive/instructions.md`). Codex
   builds beside Claude, on its own subscription, to spread the weekly usage, and the two review each other's work.
   Claude orchestrates and keeps the decisions; Codex takes what tests can prove. The routing, the hand-over by the
-  `codex` label and the runner on Haakon's PC, the fallback when Codex is out of usage and the reviews' score: `docs/claude-and-codex.md`.
+  `codex` label and Haakon's poller, the fallback when Codex is out of usage and the reviews' score: `docs/claude-and-codex.md`.
