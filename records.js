@@ -5,7 +5,7 @@ window.SnakeRecords = (() => {
   const SCORES_KEY = 'snake-highscores';
   const STATS_KEY = 'snake-stats';
   const NAME_KEY = 'snake-name';
-  const BEST_KEY = 'snake-best';
+  const BEST_KEY = 'snake-best-v2';
   const PLAYER_KEY = 'snake-player';
   const PROBE_KEY = 'snake-probe';
   const LINEUP_KEY = 'snake-lineup'; // (the rivals you chose, for good: no longer read, and never renamed; see VISIT_KEY)

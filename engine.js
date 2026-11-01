@@ -22,7 +22,7 @@ window.SnakeEngine = (() => {
   let stamp = 0;
 
   const key = (x, y) => y * GRID + x;
-  const inside = (x, y) => x >= 0 && y >= 0 && x < GRID && y < GRID;
+  const inside = (x, y) => x >= 0 && y >= 0 && x <= GRID && y <= GRID;
   // One cell on from (x, y) in direction d: off the board, unless the edges
   // wrap round for this snake (a golden mushroom).
   const wraps = (game, s) => s.wrapUntil > game.time;

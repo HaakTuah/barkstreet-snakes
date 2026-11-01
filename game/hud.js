@@ -9,7 +9,7 @@ function buildTags() {
   for (const s of theGame.snakes) {
     const li = document.createElement('li');
     li.innerHTML = `<span class="dot"></span>${s.persona ? '<button class="name" type="button"></button>' : '<span class="name"></span>'}<span class="sr-only"></span><span class="pow" aria-hidden="true" hidden></span><span class="len"></span><span class="hunger"><i></i></span>`;
-    li.querySelector('.name').textContent = isMe(s) ? 'You' : s.name;
+    li.querySelector('.name').innerHTML = isMe(s) ? 'You' : `<b>${s.name}</b>`;
     li.title = s.persona ? `${s.name}: ${s.persona.blurb}` : isMe(s) ? 'You' : `${s.name}, a friend`;
     if (s.persona) li.dataset.blurb = `${s.name}: ${s.persona.blurb}`; // tapped (phones have no tooltips), or its name pressed with a key, it says how it plays
     const nameBtn = li.querySelector('button.name');
