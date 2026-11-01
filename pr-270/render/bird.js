@@ -26,7 +26,7 @@ let birdLayer = null, birdG = null, birdShown = false;
 // the board it may cling to ({ x, top, bottom, face }): the game keeps
 // them current; and the words there it perches clear of where it can
 // ({ left, right, top, bottom }, 2k+).
-let grownFor = -1; // (the screen's width the bird's size was worked out for)
+let grownFor = ''; // (the screen's width, and whether it's a phone's, the bird's size was worked out for)
 const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, upright: false, phone: false, hang: [], rims: [], words: [] };
 function setBoardRect(x, y, w, free = null) {
   boardRect.x = x; boardRect.y = y; boardRect.w = w;
@@ -38,8 +38,8 @@ function setBoardRect(x, y, w, free = null) {
   boardRect.rims = free?.rims || [];
   boardRect.words = free?.words || [];
   boardRect.phone = Math.min(innerWidth, innerHeight) <= PHONE_SHORT_PX;
-  if (innerWidth !== grownFor) { // (worked out again only when the screen's width changes, turned round, say: a phone's address bar coming and going never resizes it, nor its layer)
-    grownFor = w && free ? innerWidth : -1; // (not until the page has laid the board out)
+  if (`${innerWidth} ${boardRect.phone}` !== grownFor) { // (worked out again only when the screen's width changes, turned round, say: a phone's address bar coming and going never resizes it, nor its layer)
+    grownFor = w && free ? `${innerWidth} ${boardRect.phone}` : ''; // (not until the page has laid the board out)
     let grow = boardRect.phone ? BIRD_GROW * PHONE_GROW : BIRD_GROW;
     if (boardRect.phone && boardRect.ledge > 0 && w) { // (held upright: no bigger than stands whole on the ledge, so it's one size perched and striking; never smaller than 2k's)
       const fits = 0.999 * (Math.min(innerHeight, boardRect.bottom) - y - w - 2 * PERCH_GAP_PX) / ((BIRD_BOX[3] - BIRD_BOX[1] + 2 * BOX_EDGE + CROUCH) * CELL * 0.85 * w / SIZE);
@@ -324,7 +324,9 @@ const BIRD_REACH = 6.5, BIRD_ROOM = 1.2;
 const lay = { x: 0, y: 0, w: 0, h: 0, W: 0, H: 0, dpr: 0, sc: 1, ox: 0, oy: 0 }; // (where it is and how big, CSS px; its pixels; and the board's units to them)
 function placeLayer(dpr) {
   const css = boardRect.w / SIZE, most = BIRD_REACH * BU * css, least = BIRD_ROOM * BU * css, m = v => Math.max(least, Math.min(most, v));
-  const left = Math.floor(boardRect.x - m(boardRect.x - boardRect.left)), right = Math.ceil(boardRect.x + boardRect.w + m(boardRect.right - boardRect.x - boardRect.w));
+  const big = boardRect.phone && !boardRect.upright && BU > CELL * 0.85 * BIRD_GROW * 1.001; // (a phone on its side, its bird bigger: perched with its back past the screen's edge, so its layer runs to that edge, not the safe area's, and the screen cuts it)
+  const L0 = big && boardRect.left <= EDGE_SLACK_PX ? 0 : boardRect.left, R0 = big && boardRect.right >= innerWidth - EDGE_SLACK_PX ? innerWidth : boardRect.right;
+  const left = Math.floor(boardRect.x - m(boardRect.x - L0)), right = Math.ceil(boardRect.x + boardRect.w + m(R0 - boardRect.x - boardRect.w));
   const top = m(boardRect.y - boardRect.top), x = Math.max(0, left), y = Math.floor(boardRect.y - top);
   const w = Math.max(1, Math.min(innerWidth, right) - x), h = Math.ceil(top + boardRect.w + most) + 1;
   let fresh = false;
@@ -611,6 +613,7 @@ function drumPoseAt(spot, flip) {
   const tx = (spot % GRID) * CELL + CELL / 2, ty = Math.floor(spot / GRID) * CELL + CELL / 2, Q = probe;
   let best = null, least = Infinity;
   for (const s of DRUM_SIZES) {
+    if (s < 0.6 && !(BU > CELL * 0.85 * BIRD_GROW * 1.001)) break; // (the smaller ones only for a phone's bigger bird: the desktop's as it was)
     for (let i = 0; i < DRUM_TRIES.length; i += 2) {
       if (d && (i < DRUM_UPRIGHT) !== d.upright) break; // (no lying level where it can stand)
       const f = flip * DRUM_TRIES[i + 1];
