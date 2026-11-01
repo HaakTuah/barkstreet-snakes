@@ -691,6 +691,12 @@ one between rounds when a new version is waiting, the line of what changed shown
 Done (PR #223): `version.js` (the build, stamped by the Pages workflow, and the news, one line per milestone) and
 `update.js`; the start card's intro line says what is new for three rounds. See `docs/design/36-updating.md`.
 
+## Done, 1 November 2026
+
+### 2s. A piece cut loose falls: the log stays one piece (30 October 2026, rewritten 31 October 2026; an engine-rules entry) — done, PR #289 (its measures in `docs/design/27-round-six-a-fairness-and-fixes.md`, "The log stays one piece")
+
+No more islands (Haakon, 31 October 2026: "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."): any piece of log no longer attached to the log falls away, warned, so the log is always one piece with holes in it, and jumps and flights cross the gaps inside it. Replaces "every island stays a hop from another". Spec: `docs/handoff/queue-specs.md`, "2s. A piece cut loose falls".
+
 ## The polish lane, done (moved 31 October 2026)
 
 Word for word from "The polish lane" in `docs/PROGRESS.md`.
