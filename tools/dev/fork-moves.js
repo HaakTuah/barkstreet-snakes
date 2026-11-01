@@ -66,7 +66,7 @@ function playOut(g, from) {
   while (g.snakes.filter(s => s.alive).length > 1 && g.time < MAX_TIME) {
     const dying = E.step(g);
     if (g.time - t0 >= 10000 && !len10.size) for (const s of g.snakes) len10.set(s.id, s.alive ? s.body.length + Math.max(0, s.grow) : 0);
-    for (const s of dying) out.set(s.id, { place: left, alive: g.time - t0, len10: 0 });
+    for (const s of dying) out.set(s.id, { place: left, alive: g.time - t0, len10: 0, cause: s.cause });
     left -= dying.length;
   }
   for (const s of g.snakes) if (s.alive && !out.has(s.id)) out.set(s.id, { place: 1, alive: g.time - t0 });
@@ -112,9 +112,10 @@ for (let r = 0; r < ROUNDS; r++) {
     if (process.env.FORK_CHECK && (sig(A) !== sig(back(after)) || afterA !== after.rng)) throw new Error(`round ${r}, tick ${g.tick}: the fork's own play differs from the round's`);
     rngState = before.rng; ctx.__forbid[MOVE].add(id); E.step(B); ctx.__forbid = empty(); const afterB = rngState;
     if (used(B, B.snakes[id])) { g = back(after); continue; } // (it couldn't be stopped: a held move)
+    const ctxA = { cut: A.events.some(e => e.type === 'cut' && e.by === id), ate: A.events.filter(e => e.type === 'eat' && e.snake?.id === id).length, len: A.snakes[id].body.length, late: E.suddenDeath(A) ? 1 : 0, gold: A.snakes[id].leaps };
     rngState = afterA; const oa = playOut(A); rngState = afterB; const ob = playOut(B);
     const a = oa.get(id), bb = ob.get(id);
-    diffs.push({ place: bb.place - a.place, win: (a.place === 1) - (bb.place === 1), alive: (a.alive - bb.alive) / 1000, out5: (bb.alive < 5000) - (a.alive < 5000), len10: a.len10 - bb.len10, persona: g.snakes[id].name });
+    diffs.push({ ...ctxA, causeA: a.alive < 10000 ? a.cause : '', causeB: bb.alive < 10000 ? bb.cause : '', place: bb.place - a.place, win: (a.place === 1) - (bb.place === 1), alive: (a.alive - bb.alive) / 1000, out5: (bb.alive < 5000) - (a.alive < 5000), len10: a.len10 - bb.len10, persona: g.snakes[id].name });
     forks++;
     g = back(after);
   }
