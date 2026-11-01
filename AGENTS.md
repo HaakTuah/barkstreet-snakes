@@ -157,10 +157,12 @@ playing it locally: `docs/developing.md`, "Switches for the checks".
 
 For Codex's code review, which reports findings by priority: report as **P1** (blocking) a departure from the design or
 from the PR's description and the sections it names; a broken rule of this file (above all the rules that stand) or of
-`SECURITY.md`; a test changed, skipped or weakened; and a protected file changed by a Codex lane. Every other reviewer
-(Claude's design check on the big items, and Claude's reviewer whenever Codex is unavailable) gives a score from 1 to 10
-and everything that keeps the work from 10, each point blocking or not. The whole method: "Codex reviews" and "Reviews"
-in `docs/claude-and-codex.md`.
+`SECURITY.md`; a test changed, skipped or weakened; and a protected file changed by a Codex lane. Every finding counts:
+the PR passes only with none open. In a later round of the same PR, check that the earlier findings were fixed and
+review what changed since; raise something new about unchanged code only as P0 or P1. Every other reviewer (Claude's
+design check on the big items, and Claude's reviewer whenever Codex is unavailable) gives a score from 1 to 10 and
+everything that keeps the work from 10, and only a 10, a list with nothing open, passes. The whole method, with its
+guards against endless rounds and a slipping bar: "Codex reviews" and "Reviews" in `docs/claude-and-codex.md`.
 
 ## Standing instructions
 
@@ -206,7 +208,7 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   `develop` again, with the "For Haakon" table, since Haakon's answers can change it while you work. Build what changed,
   or, if that is large, say so in the PR and add it as its own entry right after the task.
 - **28 October 2026: pipeline, don't wait** (full text, with the orchestrator's part, in `docs/orchestrating.md`).
-  Open the PR, start its reviewer in the background, and go on with what comes next; fix what the review finds when it
+  Open the PR, start its reviewers in the background (Codex's review and the design check together), and go on with what comes next; fix what the review finds when it
   returns, then merge. Take the next entry from `develop`, never stacked on an open PR's branch; an AI entry waits for
   the last AI change to merge, so each head-to-head compares against a settled AI. Long runs and checks go in the
   background, and no turn sits idle. The last message says what merged and what is next.
@@ -233,3 +235,9 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   builds beside Claude, on its own subscription, to spread the weekly usage, and the two review each other's work.
   Claude orchestrates and keeps the decisions; Codex takes what tests can prove. The routing, the hand-over by the
   `codex` label and Haakon's poller, the fallback when Codex is out of usage and the reviews' score: `docs/claude-and-codex.md`.
+- **1 November 2026: only a 10 passes** (the words are in `docs/archive/instructions.md`). Every review passes the work only at a 10, which for Codex
+  means no finding open, with guards against endless rounds and a slipping bar. The score follows from the list, and
+  later rounds judge the changes. After three rounds the escalation helper takes one look, and what is still open
+  leaves the PR blocked, never merged below 10. A blind re-review of a merged 10 every week and canaries now and then
+  are logged and reported. On the big tasks, Codex's review and Claude's design check start at the same time. The
+  method: `docs/claude-and-codex.md`, "Reviews".
