@@ -158,11 +158,13 @@ function drawFalls(now) {
     if (!reduced) ctx.rotate(f.tilt * e);
     ctx.scale(1 - 0.55 * e, 1 - 0.55 * e);
     ctx.translate(-f.cx, -f.cy);
+    ctx.beginPath(); // (one path, filled once: squares filled one by one show their seams where they overlap)
+    for (const k of f.cells) ctx.rect((k % GRID) * CELL, Math.floor(k / GRID) * CELL, CELL, CELL);
     ctx.fillStyle = BARK;
-    for (const k of f.cells) ctx.fillRect((k % GRID) * CELL - 0.5, Math.floor(k / GRID) * CELL - 0.5, CELL + 1, CELL + 1);
+    ctx.fill();
     ctx.globalAlpha = (1 - e) * (0.25 + 0.6 * e);
     ctx.fillStyle = '#000';
-    for (const k of f.cells) ctx.fillRect((k % GRID) * CELL - 0.5, Math.floor(k / GRID) * CELL - 0.5, CELL + 1, CELL + 1);
+    ctx.fill();
     ctx.restore();
   }
 }
