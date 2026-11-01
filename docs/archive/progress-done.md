@@ -693,6 +693,17 @@ Done (PR #223): `version.js` (the build, stamped by the Pages workflow, and the 
 
 ## Done, 1 November 2026
 
+### 2s+. The log's fall, proven (1 November 2026; the weekly blind re-review of PR #289) — done, PR #311 (Review: engine rules · Claude · design check 8, 9, 10; Codex P1×2, clean)
+
+The blind re-review ("Reviews", point 5, in `docs/claude-and-codex.md`) scored #289 a 7: three blocking points it
+passed with, each a miss. (1) A rules test that the woodpecker aims small (`PECK_FALL_SOFT`) and still takes a big piece
+when nothing smaller is left. (2) An online round trip that carries a non-empty `fall` (`online.js`; the pinned shapes
+hold only the empty one). (3) The case where a head is on a piece cut loose on the last tries: tested, or said in the
+design ("The log stays one piece"). Not blocking, fixed in the same PR: food and beetles on a falling piece tip away
+with it (and a beetle gets the bird-eats cue); `pieceFalls` cleared between rounds; the sim's dead island-crumb counters
+(`tools/sim/01-census.js`, `03-report.js`) removed; a render or UI check for the shade and the lesson. The flight's A/B
+on the new log is part 4's.
+
 ### 2s. A piece cut loose falls: the log stays one piece (30 October 2026, rewritten 31 October 2026; an engine-rules entry) — done, PR #289 (its measures in `docs/design/27-round-six-a-fairness-and-fixes.md`, "The log stays one piece")
 
 No more islands (Haakon, 31 October 2026: "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."): any piece of log no longer attached to the log falls away, warned, so the log is always one piece with holes in it, and jumps and flights cross the gaps inside it. Replaces "every island stays a hop from another". Spec: `docs/handoff/queue-specs.md`, "2s. A piece cut loose falls".
