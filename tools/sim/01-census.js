@@ -268,7 +268,7 @@ function woodpeckerCensus(g, c, st, dying, N) {
       if (st.beak) { for (const f of st.beak) if (g.food.includes(f)) c.beakRan++; st.beak = null; }
       labelLand(g, N);
       const { comp, sizes } = land, foodAt = new Set(g.food.map(f => f.y * N + f.x)), bodyAt = new Set(g.snakes.filter(s => s.alive).flatMap(s => s.body.map(b => b.y * N + b.x)));
-      if (e.fall) { c.falls++; c.fallCells += e.fall.length; if (e.fall.length > 12) c.fallBig++; } // (2s: pieces cut loose, fallen with the strike; bigger than PECK_FALL_SOFT's 12)
+      if (e.fall) { c.falls++; c.fallCells += e.fall.length; if (e.fall.length > T.PECK_FALL_SOFT) c.fallBig++; } // (2s: pieces cut loose, fallen with the strike; bigger than PECK_FALL_SOFT)
       if (sizes.length > 1) c.piecesLeft++; // (2s: a strike that left the log in pieces)
       const crumbs = new Set();
       for (const k of e.cells) for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {

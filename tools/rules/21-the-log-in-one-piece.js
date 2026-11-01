@@ -82,3 +82,17 @@ function pieces2s(g, mark) {
   check('2s: with no mark there, a rival goes out onto the piece for its food', free.ate && free.on > 0, JSON.stringify(free));
   check('...and with the piece marked to fall, it keeps off it', shown.alive && shown.on === 0 && !shown.ate, JSON.stringify(shown));
 }
+
+{ // The rivals are shown which cells fall (aiView's fall, the same for everyone), and the knock rule they work landings out
+  // with (E.knocks, as the strike does) says food on a falling piece falls with it: no landing for it to chase, and the
+  // patch's own food still flies to its ring.
+  const g = board([[[[5, 5], [4, 5], [3, 5]], 'right'], [[[5, 12], [4, 12], [3, 12]], 'right']], { food: [[16, 9], [13, 10]], time: T.SUDDEN_DEATH_MS });
+  for (let k = 0; k < T.GRID * T.GRID; k++) if (!land2s.some(([x, y]) => K(x, y) === k)) g.holes.add(k);
+  g.woodpecker = { x: 13, y: 10, at: g.time, target: [K(...neck2s), ...peninK], fall: [...peninK], strikeAt: g.tick + 10, last: [], struckAt: -1, restUntil: 0 };
+  const view = E.aiView(g, g.snakes[0]);
+  check('2s: a rival is shown the cells that will fall', Array.isArray(view.fall) && view.fall.length === peninK.length && peninK.every(k => view.fall.includes(k)), JSON.stringify(view.fall));
+  const seen = E.knocks({ ...g, woodpecker: { strikeAt: g.woodpecker.strikeAt, fall: view.fall } }, g.woodpecker.target, null);
+  const onPiece = seen.find(o => o.food.x === 16 && o.food.y === 9), onNeck = seen.find(o => o.food.x === 13 && o.food.y === 10);
+  check('...and works out that food on it falls, never lands', onPiece && onPiece.to === null && onPiece.fell, JSON.stringify(onPiece));
+  check('...while the patch\'s own food lands outside the mark', onNeck && onNeck.to && !g.woodpecker.target.includes(K(onNeck.to.x, onNeck.to.y)), JSON.stringify(onNeck));
+}

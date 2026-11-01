@@ -42,7 +42,7 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   const field = rect(10, 6, 21, 17), bay1 = [[9, 11]], bay2 = [[9, 14], [8, 14]];
   const a = [[[5, 11], [4, 11], [3, 11], [2, 11]], 'right'], c = [[[5, 14], [4, 14], [3, 14], [2, 14]], 'right'];
   // (their land joined to the field round the back, 2s: the log is one piece)
-  const ways = [...rect(1, 4, 1, 19), ...rect(2, 4, 10, 4), ...rect(10, 5, 10, 5), ...rect(2, 19, 10, 19), ...rect(10, 18, 10, 18), [2, 11 - 0], [1, 11]].filter(([x, y]) => !(x === 2 && y === 11));
+  const ways = [...rect(1, 4, 1, 19), ...rect(2, 4, 10, 4), ...rect(10, 5, 10, 5), ...rect(2, 19, 10, 19), ...rect(10, 18, 10, 18)];
   field.push(...ways);
   const g = island([a, c], [...field, ...bay1, ...bay2]);
   const got = seededWhile(611, () => marks(g, 200));
