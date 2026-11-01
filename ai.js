@@ -1983,6 +1983,17 @@ window.SnakeAI = (() => {
       return 1000 - Math.min(999, mineFree[y * N + x]);
     }
 
+    // In the air on a golden flight (round six B, part 4: "the rivals fly it
+    // as a person would"): every move I'm up, I plan again where to come
+    // down, by what I see now: on, a turn, or down on the next cell. The
+    // same weighing as at take-off (leapOpt, in the air), on the cells I
+    // can still fly; the engine reads it as a let-go or a turn, as a
+    // person's (memory.fly, memory.flyTurn: counted from take-off).
+    if (me.flight) {
+      const pick = powerPick(-Infinity, me.flight.dir);
+      if (pick) { memory.flyAt = view.tick; memory.fly = me.flight.flown + (pick.fly || 0); memory.flyTurn = pick.turn ? { at: me.flight.flown + pick.turn.at, dir: pick.turn.dir } : null; }
+      return me.flight.dir;
+    }
     let bestDir = me.dir, bestScore = -Infinity;
     for (const d of DIR_LIST) {
       if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
@@ -2033,7 +2044,8 @@ window.SnakeAI = (() => {
     // same risk where it ends. One that ends where a rival could strike costs
     // it the full price.
     function powerPick(crawl, crawlDir) {
-      const jump = me.leaps > 0 || (me.leapIn === 0 && me.body.length > TUNE.MIN_LENGTH);
+      const air = me.flight || null; // (up on a golden flight: only where to come down is weighed, see leapOpt)
+      const jump = air || me.leaps > 0 || (me.leapIn === 0 && me.body.length > TUNE.MIN_LENGTH);
       if (me.flashIn !== 0 && !jump) return null;
       const U = Math.max(40, foodW * w.foodRange + eatW); // (an apple, to me, now)
       const habit = w.powers || NO_HABIT, safe = habit.risk ?? Infinity;
@@ -2081,6 +2093,7 @@ window.SnakeAI = (() => {
         v += extra - price * cheap * (full ? 1 : habit.price) * U;
         if (v > (best ? best.v : crawl + 1)) best = { d, flash, v, now: !flash && leapNow, fly: flash ? 0 : leapFly, turn: flash ? null : leapTurn };
       };
+      if (air) { const v = leapOpt(air.dir); return v === null ? null : { d: air.dir, flash: false, v, now: false, fly: leapFly, turn: leapTurn }; } // (in the air: where to come down, from here)
       for (const d of DIR_LIST) {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
@@ -2118,10 +2131,13 @@ window.SnakeAI = (() => {
       // down on the first free cell beyond, the tick after the last (span:
       // the cells it goes over; down span + 1 moves from now).
       function leapOpt(d) {
-        const golden = me.leaps > 0;
+        const golden = !!air || me.leaps > 0;
         leapNow = false; leapFly = 0; leapTurn = null;
         let span = 0, n = 0; // (n: the cells on the board traced)
-        const far = golden ? TUNE.GOLD_FLY : TUNE.LEAP_REACH;
+        // (In the air: the cells I can still fly, GOLD_FLY less those flown;
+        // path[0] is the next cell, where I come down if I let go now.)
+        const far = air ? TUNE.GOLD_FLY - air.flown : golden ? TUNE.GOLD_FLY : TUNE.LEAP_REACH;
+        if (far < 0) return null;
         for (let x = myHead.x, y = myHead.y; n <= far; ) {
           const c = cellAt(x + d.x, y + d.y);
           if (c < 0) break; // (never off the board)
@@ -2141,7 +2157,8 @@ window.SnakeAI = (() => {
         // first they did it 0.6 times a round, and lost the head-to-head for it.)
         const lands = (i, safe) => i < n && (free(path[i]) || bridgeUntil[path[i]] > i + 1) && !(safe && reach[framed[path[i]]] <= i);
         let first = -1, now = false;
-        if (hurdle(path[0])) {
+        if (air) first = 0; // (in the air I pass over whatever's below: down on any free cell from the next on)
+        else if (hurdle(path[0])) {
           for (span = 1; span <= Math.min(TUNE.LEAP_REACH, n - 1); span++) if (!hurdle(path[span])) break;
           if (span > Math.min(TUNE.LEAP_REACH, n - 1)) for (span = 1; span <= Math.min(TUNE.LEAP_REACH, n - 1); span++) if (bridgeUntil[path[span]] > span + 1) break; // (as the engine: a bridge that lasts only when no free cell is in reach)
           if (span > TUNE.LEAP_REACH || span >= n || !lands(span, false)) return null;
@@ -2153,8 +2170,8 @@ window.SnakeAI = (() => {
           first = span; now = true;
         }
         let bestS = null, bestSpan = first;
-        for (let k = first; k <= (golden ? Math.min(TUNE.GOLD_FLY, n - 1) : first); k++) {
-          if ((k > first || now) && !lands(k, true)) continue; // (a leap now, or flying on: only down where it's safe)
+        for (let k = first; k <= (golden ? Math.min(far, n - 1) : first); k++) {
+          if ((k > first || now || air) && !lands(k, true)) continue; // (a leap now, flying on, or any landing from the air: only down where it's safe)
           const v = landOpt(d, k, golden, now);
           if (v !== null && (bestS === null || v > bestS)) { bestS = v; bestSpan = k; }
         }
@@ -2168,11 +2185,11 @@ window.SnakeAI = (() => {
           const n0 = n;
           for (const d2 of DIR_LIST) {
             if (d2.x === d.x || d2.y === d.y) continue; // (a turn: not on, nor back)
-            for (let at = 1; at < TUNE.GOLD_FLY; at++) {
+            for (let at = air ? 0 : 1; at < far; at++) { // (in the air, a turn now: the next cell already that way)
               if (at > n0) break;
               path.set(straight);
               n = at;
-              for (let x = path[at - 1] % N, y = (path[at - 1] - x) / N; n <= TUNE.GOLD_FLY; ) {
+              for (let x = at ? path[at - 1] % N : myHead.x, y = at ? (path[at - 1] - path[at - 1] % N) / N : myHead.y; n <= far; ) {
                 const c = cellAt(x + d2.x, y + d2.y);
                 if (c < 0) break;
                 x = c % N; y = (c - x) / N;

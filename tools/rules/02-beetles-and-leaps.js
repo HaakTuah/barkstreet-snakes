@@ -126,7 +126,7 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
     quiet(g);
     let hopped = g.events.some(e => e.type === 'leap');
     for (let n = 0; n < 3 && (a.flight || !hopped); n++) { look(g); quiet(g); hopped ||= g.events.some(e => e.type === 'leap'); }
-    const lands = golden ? [[7, 0], [5, 3], [7, 1], [6, 1]] : [[7, 0], [5, 3]]; // (over the rival, or over its own body, whichever lands better; golden, it may steer down in the air past the rival's tail)
+    const lands = golden ? [[7, 0], [5, 3], [7, 1], [6, 1], [8, 0], [8, 1]] : [[7, 0], [5, 3]]; // (over the rival, or over its own body, whichever lands better; golden, it may steer down in the air past the rival's tail, or, planning again as it flies, fly on over the tail and come down beyond it)
     check(`a boxed-in AI with a ${golden ? 'golden' : 'plain'} leap hops instead of crashing`, a.alive && g.snakes.every(o => o.alive) && lands.some(([x, y]) => a.body[0].x === x && a.body[0].y === y) && a.leaps === 0, JSON.stringify(a.body[0]));
   }
 }

@@ -92,14 +92,17 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   me.leaps = 1; me.autopilot = true;
   E.leap(g, me); E.leap(g, me);
   me.flyTurn = { at: 2, dir: D.down }; me.flyFor = T.GOLD_FLY;
+  Object.defineProperty(me.memory, 'flyAt', { get: () => -1, set() {} }); // (the plan pinned: a rival plans again every move it's up, which the next check is about; here the engine's flying of a plan is the rule tested)
   const way = fly(g, 6);
   check('a rival\'s planned turn in the air is flown as a person\'s is', way === '4,10^ 5,10^ 5,11^ 5,12^ 5,13^ 5,14' && me.alive && joined(me.body), way);
 }
 
-{ // ...and it plans one when it pays. A rival heading right into a rival lying down a whole column, in a column of
-  // pits but for its own cell. Over the column, flying straight, it can only come down in a pocket one cell big (pits
-  // round it, and on to the edge): it would be out on its next move. Turned in the air past the pit beside the pocket,
-  // it comes down on open bark.
+{ // ...and it plans one when it pays, and plans again every move it's up. A rival heading right into a rival lying
+  // down a whole column, in a column of pits but for its own cell. Over the column, flying straight, it can only come
+  // down in a pocket one cell big (pits round it, and on to the edge): it would be out on its next move. Turned in the
+  // air past the pit beside the pocket, it comes down on open bark (where exactly is its own plan, made as it flies:
+  // one draw turns once and comes down two cells off the pocket's row, another turns again and flies back over the
+  // column to the open log).
   const N = T.GRID, x = N - 5;
   const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
   g.snakes = g.snakes.slice(0, 2);
@@ -111,7 +114,7 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   g.food = []; g.time = 30000;
   let from = null, turned = false;
   for (let n = 0; n < 8 && a.alive && !(from && !a.flight); n++) { look(g); quiet(g); if (a.flight) { from ||= a.flight.dir; if (a.flight.dir !== from) turned = true; } }
-  check('a rival with a golden jump steers in the air onto open bark, where flying straight comes down in a pocket', a.alive && turned && !a.flight && a.body[0].x === x + 2 && Math.abs(a.body[0].y - 10) >= 2 && !g.holes.has(K(a.body[0].x, a.body[0].y)), JSON.stringify({ head: a.body[0], turned, alive: a.alive, cause: a.cause }));
+  check('a rival with a golden jump steers in the air onto open bark, where flying straight comes down in a pocket', a.alive && turned && !a.flight && !(a.body[0].x === x + 2 && a.body[0].y === 10) && !g.holes.has(K(a.body[0].x, a.body[0].y)), JSON.stringify({ head: a.body[0], turned, alive: a.alive, cause: a.cause }));
 }
 
 { // A rival leaps now when it pays, in its style. Heading right with pits on both sides of its head, a person's head
@@ -148,4 +151,22 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   let now = null;
   for (let n = 0; n < 8 && a.alive; n++) { feed(g); look(g); quiet(g); now ||= g.events.find(e => e.type === 'leap' && e.snake === a && e.now); }
   check('a rival with its jump rested never leaps now over open ground, nobody in its way: it crawls', !now && a.alive, JSON.stringify({ now: !!now, head: a.body[0], alive: a.alive }));
+}
+
+{ // A rival plans again every move it's up ("the rivals fly it as a person would"): what it sees in the air counts. Up
+  // on a golden leap now, held for the full flight, with a rival's body lying where that flight would come down (seen
+  // only once it's up): it comes down short of it, or turns, and lives. Flown as planned at take-off, it came down on
+  // the body and was out.
+  const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
+  g.snakes = g.snakes.slice(0, 2);
+  const [a, b] = g.snakes;
+  a.body = Array.from({ length: 6 }, (_, i) => ({ x: 5 - i, y: 10 })); a.dir = D.right; a.leaps = 1; a.flashReadyAt = 1e9;
+  b.body = Array.from({ length: 7 }, (_, i) => ({ x: 14 - i, y: 10 })); b.dir = D.right; b.isPlayer = true; b.persona = null; b.queue = []; b.stunUntil = 1e9;
+  g.food = []; g.time = 30000;
+  E.leap(g, a); E.leap(g, a);
+  look(g); quiet(g);
+  check('(the flight is up: a golden leap now)', !!a.flight && a.flight.gold && a.body[0].x === 6, JSON.stringify(a.body[0]));
+  a.flight.held = 1; a.flyFor = T.GOLD_FLY; a.flyTurn = null; // (held for the whole flight, straight: down on the body at x 11)
+  for (let n = 0; n < 6 && a.alive && a.flight; n++) { look(g); quiet(g); }
+  check('a rival up on a golden flight plans again as it flies: it comes down short of a body it sees ahead, or turns, and lives', a.alive && !a.flight && !b.body.some(c => c.x === a.body[0].x && c.y === a.body[0].y), JSON.stringify({ head: a.body[0], alive: a.alive, cause: a.cause }));
 }
