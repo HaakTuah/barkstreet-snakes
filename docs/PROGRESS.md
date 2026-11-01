@@ -58,6 +58,14 @@ the second account until its usage is spent; on the main account the brake close
 
 ## The split lane (the workshop check's files over about 50 KB)
 
+- **First, at the next milestone** (Haakon, 1 November 2026): the workshop check's point (2) before anything else.
+  `AGENTS.md` (22 KB) and this file (20 KB) go back under about 20 KB: done entries, answered questions and standing
+  instructions already written into the text above them move to `docs/archive/`, with a line pointing there.
+- **Next, beside it: a check for unused code** (Haakon, 1 November 2026; a side lane, no game change). Extend
+  `tools/scope-test.js`, which already reads every top-level name the page's scripts declare, to fail on a name that no
+  game file, `index.html` or test uses outside its own declaration, with a short list of names the browser or the tools
+  call by name. No new dependency. Its first run lists today's unused names; each is removed in its own small PR,
+  proven by the suites and unchanged fingerprints (seeds 3 and 11), or kept on the list with the reason.
 - *Done:* `audio.js` and `chatter/zh.js` split (PRs #225, #226): `docs/archive/progress-done.md`, "The split lane, done".
 - **Waiting for the main lane** (PR #198 and its parked #202 have them open): `ai.js` (139 KB), `engine.js` (128 KB) and
   `render/world.js` (51 KB). Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
