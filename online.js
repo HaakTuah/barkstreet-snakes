@@ -47,11 +47,11 @@
  *
  * An event (see encodeEvent()): snake is a snake's id; kind KINDS's index (a string for spawn).
  * @typedef {['eat', snake: number, kind: number, x: number, y: number, color: string | 0, cooked: Flag, gold: Flag]
- *   | ['leap', snake: number, x: number, y: number, gold: Flag, reach: number]
+ *   | ['leap', snake: number, x: number, y: number, gold: Flag, reach: number, now: Flag]
  *   | ['dash', snake: number, x: number, y: number, n: number, plain: Flag]
  *   | ['death', snake: number, cause: string, killer: string | null, killerId: number | null, diedAt: number, fatal: string | 0]
  *   | ['fizzle', snake: number, why: string, x: number, y: number, flash: Flag]
- *   | ['crash', snake: number, x: number, y: number, cause: string, killer: string | null, killerId: number | null, lost: number, failed: 0 | 1]
+ *   | ['crash', snake: number, x: number, y: number, cause: string, killer: string | null, killerId: number | null, lost: number, failed: 0 | 1, air: 0 | 1]
  *   | ['cut', snake: number, x: number, y: number, lost: number, by: number]
  *   | ['squash', snake: number, x: number, y: number]
  *   | ['spit', snake: number, x: number, y: number, tx: number, ty: number, power: number, hit: number, lx: number | null, ly: number | null]
@@ -81,12 +81,13 @@
  * @typedef {{ t: 'hello', v: number, name: string, owner: string, scores: ScoreRow[] }} HelloMsg  v: VERSION; owner: a player id; scores: your best rounds
  * @typedef {'up' | 'down' | 'left' | 'right'} DirName
  * @typedef {{ t: 'turn' | 'swipe', d: DirName }} TurnMsg  turn: a key (it only steers); swipe: a fresh swipe (the way you're going flashes, any other way steers)
- * @typedef {{ t: 'pow', k: 'leap' | 'flash' | 'unleap' }} PowMsg
+ * @typedef {{ t: 'pow', k: 'leap' | 'flash' | 'unleap' | 'letgo' }} PowMsg
  *   'leap' (Space, a tap) | 'flash' (E, Shift) | 'unleap' (a jump a finger held still asked for, taken back: it was a swipe)
+ *   | 'letgo' (the jump let go: Space up, the finger lifted; a golden flight comes down)
  * @typedef {{ t: 'away' | 'back' }} AwayMsg  the page went out of sight, and came back
  */
 window.SnakeOnline = (() => {
-  const VERSION = 20; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's island hop (a jump in the air: where it comes down, how many cells it still flies over, golden); 17: round six B's bridges (no message changed: a rule both sides must play by); 18: round six B's cuts (a failed flash's crash says so; the plain flash cuts, its own tail too: a rule both sides play by) and your own beads squashed (no choke, cough or nudge: each snake's cough gone; a squash where each went); 19: round six B's mushrooms come back up (each snake's cheek, and when it's spat; a spat mushroom's strength; a spit, where it came down, whom it hit, where it lies); 20: 2s, a piece cut loose falls (the woodpecker's mark says which of its cells fall, and its strike which fell)
+  const VERSION = 21; // 2: burrows, fire and weather; 3: the woodpecker's chunks, winter; 4: crashes, burning snakes, cooking, rot; 5: golden beetles and leaps, Ouroboros; 6: powers (everyone leaps; golden leaves, dashes; golden mushrooms, wrap); 7: jump and flash apart (everyone flashes), beads' owners and rot, holes under bodies, the last apples; 8: plans, so friends draw everyone ahead the way they're going, and a held jump taken back; 9: choking on your own beads (each snake's cough; chokes and nudges, and where each piece rolled); 10: beetles that dig in (each one's digUntil; digs, and dives that were digs), several beetles underground, and food the woodpecker knocks aside (where each piece flew, and a bead's colour; where its strike promised each would land); burrows as the engine keeps them (when each was last used, and whether a dig left it), a dug burrow opening and one closing over; 11: burrows grow shut (when each started and will close over, and one starting to); 12: rivals chosen (a round's, and a shared best round's, chosen flag); 13: the lobby shows the line-up (the host's rivals, seat by seat, and which were chosen); 14: Capricious does every rival (its mood any of them, worn as a costume); 15: Copycat plays as its model plays (the style it reads, for its note); 16: round six B's island hop (a jump in the air: where it comes down, how many cells it still flies over, golden); 17: round six B's bridges (no message changed: a rule both sides must play by); 18: round six B's cuts (a failed flash's crash says so; the plain flash cuts, its own tail too: a rule both sides play by) and your own beads squashed (no choke, cough or nudge: each snake's cough gone; a squash where each went); 19: round six B's mushrooms come back up (each snake's cheek, and when it's spat; a spat mushroom's strength; a spit, where it came down, whom it hit, where it lies); 20: 2s, a piece cut loose falls (the woodpecker's mark says which of its cells fall, and its strike which fell); 21: round six B's golden flight, leap now and bumps in the air (a jump let go, a crash in the air)
   const POWERS = ['leap', 'flash', 'unleap'];
   const MAX_PEOPLE = 4;
   // Seat colors for people: the host is green; friends get colors no rival wears.
@@ -238,11 +239,11 @@ window.SnakeOnline = (() => {
   function encodeEvent(e) {
     switch (e.type) {
       case 'eat': return ['eat', e.snake.id, KINDS.indexOf(e.kind), e.x, e.y, e.color || 0, e.cooked ? 1 : 0, e.gold ? 1 : 0];
-      case 'leap': return ['leap', e.snake.id, e.x, e.y, e.gold ? 1 : 0, e.reach];
+      case 'leap': return ['leap', e.snake.id, e.x, e.y, e.gold ? 1 : 0, e.reach, e.now ? 1 : 0];
       case 'dash': return ['dash', e.snake.id, e.x, e.y, e.n, e.plain ? 1 : 0];
       case 'death': return ['death', e.snake.id, e.snake.cause, e.snake.killer, e.snake.killerId, e.snake.diedAt, e.snake.fatal || 0];
       case 'fizzle': return ['fizzle', e.snake.id, e.why, e.x, e.y, e.flash ? 1 : 0];
-      case 'crash': return ['crash', e.snake.id, e.x, e.y, e.cause, e.killer, e.killerId, e.lost, e.failed ? 1 : 0];
+      case 'crash': return ['crash', e.snake.id, e.x, e.y, e.cause, e.killer, e.killerId, e.lost, e.failed ? 1 : 0, e.air ? 1 : 0];
       case 'cut': return ['cut', e.snake.id, e.x, e.y, e.lost, e.by ?? -1];
       // A bead of its own squashed under its head.
       case 'squash': return ['squash', e.snake.id, e.x, e.y];
@@ -312,7 +313,8 @@ window.SnakeOnline = (() => {
       s.wrapUntil = num(wrapUntil) ? wrapUntil : -1;
       // (In the air: on over airLeft more cells, straight on, then down at land.)
       const fd = num(flight) && flight >= 0 && num(land) && land >= 0 ? DIRS[DIR_NAMES[flight]] : null, head = cells[0], left = num(airLeft) ? Math.max(0, Math.min(8, airLeft)) : 0;
-      s.flight = fd ? { dir: fd, over: Array.from({ length: left }, (_, i) => ({ x: head % 1000 + fd.x * (i + 1), y: Math.floor(head / 1000) + fd.y * (i + 1) })), land: { x: land % 1000, y: (land - land % 1000) / 1000 }, gold: airGold ? 1 : 0 } : null;
+      const G = window.TUNING.GRID, wrapped = /** @param {number} v */ v => s.wrapUntil > msg.ms ? (v + G) % G : v; // (over the wrapped edge, as the host has it)
+      s.flight = fd ? { dir: fd, over: Array.from({ length: left }, (_, i) => ({ x: wrapped(head % 1000 + fd.x * (i + 1)), y: wrapped(Math.floor(head / 1000) + fd.y * (i + 1)) })), land: { x: land % 1000, y: (land - land % 1000) / 1000 }, gold: airGold ? 1 : 0 } : null;
       s.flashReadyAt = num(flashReadyAt) ? flashReadyAt : 0;
       s.flashArmed = num(flashArmed) ? flashArmed : -1;
       s.mealMs = num(mealMs) && mealMs > 0 ? mealMs : s.mealMs; // (for the hunger bar)
@@ -372,14 +374,14 @@ window.SnakeOnline = (() => {
       const snake = typeof e[1] === 'number' ? game.snakes[e[1]] : null;
       switch (e[0]) {
         case 'eat': return { type: 'eat', snake: /** @type {Engine.Snake} */ (snake), kind: KINDS[e[2]], x: e[3], y: e[4], color: e[5] || undefined, cooked: !!e[6], gold: !!e[7] };
-        case 'leap': return snake ? { type: 'leap', snake, x: e[2], y: e[3], gold: e[4] ? 1 : 0, reach: Number(e[5]) || 1 } : null;
+        case 'leap': return snake ? { type: 'leap', snake, x: e[2], y: e[3], gold: e[4] ? 1 : 0, reach: Number(e[5]) || 1, ...(e[6] === 1 ? { now: 1 } : {}) } : null;
         case 'dash': return snake ? { type: 'dash', snake, x: e[2], y: e[3], n: Number(e[4]) || 1, ...(e[5] ? { plain: 1 } : {}) } : null;
         case 'death':
           if (!snake) throw new Error('death'); // (the tick can't be used: the guest waits for the next)
           Object.assign(snake, { alive: false, cause: e[2], killer: e[3], killerId: e[4], diedAt: e[5], fatal: typeof e[6] === 'string' ? e[6] : null });
           dying.push(snake);
           return { type: 'death', snake };
-        case 'crash': return { type: 'crash', snake: /** @type {Engine.Snake} */ (snake), x: e[2], y: e[3], cause: String(e[4] || ''), killer: e[5], killerId: Number.isInteger(e[6]) ? e[6] : null, lost: Number(e[7]) || 0, ...(e[8] === 1 ? { failed: 1 } : {}) };
+        case 'crash': return { type: 'crash', snake: /** @type {Engine.Snake} */ (snake), x: e[2], y: e[3], cause: String(e[4] || ''), killer: e[5], killerId: Number.isInteger(e[6]) ? e[6] : null, lost: Number(e[7]) || 0, ...(e[8] === 1 ? { failed: 1 } : {}), ...(e[9] === 1 ? { air: 1 } : {}) };
         case 'fizzle': return snake ? { type: 'fizzle', snake, why: String(e[2] || ''), x: Number(e[3]) || 0, y: Number(e[4]) || 0, flash: e[5] ? 1 : 0 } : null;
         case 'cut': return snake ? { type: 'cut', snake, x: e[2], y: e[3], lost: Number(e[4]) || 0, by: Number.isInteger(e[5]) && e[5] >= 0 ? e[5] : null } : null;
         case 'squash': return snake && e.slice(2, 4).every(cell) ? { type: 'squash', snake, x: e[2], y: e[3] } : null;

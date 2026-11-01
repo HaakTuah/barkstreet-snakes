@@ -6,11 +6,11 @@ const causeOf = s => s.fatal === 'pecked' ? 'pecked' : s.fatal === 'boom' ? 'boo
 // What --census counts (summed over rounds; rounds: how many rounds had any;
 // an array: every round's, put together).
 const census = () => ({
-  golden: 0, goldBeetles: 0, leaves: 0, goldcaps: 0, mushrooms: 0, spits: 0, spitHits: 0, spitLies: 0, strikes: 0, sun: 0, wind: 0, rain: 0, storm: 0, snow: 0,
+  golden: 0, goldBeetles: 0, leaves: 0, goldcaps: 0, mushrooms: 0, spits: 0, spitHits: 0, spitLies: 0, leapsNow: 0, airTurns: 0, nowDie: 0, flyPast: 0, flyDie: 0, nowUsers: 0, nowUserWins: 0, nowUserPlace: 0, nowOthers: 0, nowOtherWins: 0, nowOtherPlace: 0, bumps: 0, downOnBody: 0, goldFlown: 0, goldFlights: 0, strikes: 0, sun: 0, wind: 0, rain: 0, storm: 0, snow: 0,
   goldBeetleRounds: 0, leafRounds: 0, goldcapRounds: 0, stormRounds: 0, starvedEarly: 0,
   cutsPlain: 0, cutsGold: 0, cutsOwn: 0, failed: 0, failedGold: 0, edgeTicks: 0, huggers: 0, huggerWins: 0, huggerPlace: 0, others: 0, otherWins: 0, otherPlace: 0, // (round six B, the flashes cut: cuts by plain flashes and dashes, of them its own tail dropped; failed flashes (golden ones); snake-ticks with the head on the board's edge; snakes whose head was on the edge an eighth of their time or more (twice the field's 6% before part 3) ("huggers"), and the rest: how many, wins, places)
   rides: 0, rideTicks: 0, rideDeaths: 0, rideFalls: 0, // (bridges: rides begun, snake-ticks with a head on another's back over a pit, deaths while on one, and of them falls)
-  hop1: 0, hop2: 0, hop3: 0, hopHole: 0, hopFail: 0, hopDie: 0, // (round six B's island hop: jumps by the cells they went over, those over a hole, those whose landing crashed, and jumpers out within 3 s of taking off)
+  hop1: 0, hop2: 0, hop3: 0, hopHole: 0, hopFail: 0, hopDie: 0, smallIsle: 0, // (round six B's island hop: jumps by the cells they went over, those over a hole, those whose landing crashed, jumpers out within 3 s of taking off, and jumps down on another island smaller than the jumper (2r))
   pecks: 0, holes: 0, aims: 0, aimsNear: 0, flashes: 0, jumps: 0, goldLeaps: 0, goldGot: 0, dashes: 0, pickups: 0, greedy: 0,
   aliveEarly: 0, hungryEarly: 0, starvingEarly: 0, aliveLate: 0, hungryLate: 0, starvingLate: 0, // (snake-ticks before and after the woodpecker: alive, in the hunger warning, starving)
   beads: 0, ownBeads: 0, chokes: 0, chokeRounds: 0, nudges: 0, nudgedBeads: 0, // (beads eaten, and by the snake they broke off; own beads squashed (chokes before round six B); food nudged aside coughing, and the beads among it, before round six B)

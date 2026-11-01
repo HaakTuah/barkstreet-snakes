@@ -27,6 +27,11 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 - *The lesson:* on your first golden jump, "Hold to fly farther. Steer in the air!"
 - Free, as now: 2 per golden beetle, up to 3 held.
 - *The rivals fly it as a person would* (the owner, 31 October 2026, after part 4's A/B came out even with leap now and the flight measured together: "And I cannot believe that super flash and super jump isn't useful, then it must be the AI not properly being updated to understand its utility. Super jump essentially lets you fly for like 5 tiles, no? changing directions mid air like mario? and super flash let's you flash forward 3 tiles instead of 2 like regular flash, and can cut 2 tiles deep? how is that not useful?"; then, to the design session's take, "Yes, please, expertly!"). The flight is measured on its own, apart from leap now, so neither hides the other. The rivals learn its uses until those who fly come out ahead: flying out of a box over bodies and holes, crossing a gap to food, coming down in a rival's path to cut it off, and steering in the air, planned as they fly, not only at take-off. If the flight pays and leap now still doesn't, the flight merges without it, and leap now goes back to the owner as a design question.
+- *The rivals* (part 4, as built): a rival plans its golden flight as it takes off, straight or with one turn (left or
+  right, after any number of cells), down on the best free cell up to 5 in the air. The engine flies it by the same rule
+  as a person's turn (`airTurn`, from the rival's `flyTurn`). A leap now, a flight past the plain hop and a turned one
+  come down only where no rival's head could get first: coming down on a body is the end, and before that check the
+  rivals did it 0.6 times a round and lost the head-to-head with rivals that never used these moves.
 
 **A snake across a pit is a bridge** (the owner: "if you are a shorter snake, jumping on a longer snake, and it is crossing a pit, and you manage to cross in time, before the end of its tail [goes]"):
 - A body lying over a pit already holds (only a head falls in). Now the part of it over the pit is a bridge for anyone: a head may move onto it there, crawling along its back, or land on it from a jump. Everywhere else a body is still a wall, as snake needs it to be.
