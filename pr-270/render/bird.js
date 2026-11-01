@@ -26,6 +26,7 @@ let birdLayer = null, birdG = null, birdShown = false;
 // the board it may cling to ({ x, top, bottom, face }): the game keeps
 // them current; and the words there it perches clear of where it can
 // ({ left, right, top, bottom }, 2k+).
+let grownFor = -1; // (the screen's width the bird's size was worked out for)
 const boardRect = { x: 0, y: 0, w: 0, left: 0, top: 0, right: 0, bottom: 0, ledge: 0, upright: false, phone: false, hang: [], rims: [], words: [] };
 function setBoardRect(x, y, w, free = null) {
   boardRect.x = x; boardRect.y = y; boardRect.w = w;
@@ -37,12 +38,15 @@ function setBoardRect(x, y, w, free = null) {
   boardRect.rims = free?.rims || [];
   boardRect.words = free?.words || [];
   boardRect.phone = Math.min(innerWidth, innerHeight) <= PHONE_SHORT_PX;
-  let grow = boardRect.phone ? BIRD_GROW * PHONE_GROW : BIRD_GROW;
-  if (boardRect.phone && boardRect.ledge > 0 && w) { // (held upright: no bigger than stands whole on the ledge, so it's one size perched and striking; never smaller than 2k's)
-    const fits = 0.999 * (Math.min(innerHeight, boardRect.bottom) - y - w - 2 * PERCH_GAP_PX) / ((BIRD_BOX[3] - BIRD_BOX[1] + 2 * BOX_EDGE + CROUCH) * CELL * 0.85 * w / SIZE);
-    grow = Math.max(BIRD_GROW, Math.min(grow, fits));
+  if (innerWidth !== grownFor) { // (worked out again only when the screen's width changes, turned round, say: a phone's address bar coming and going never resizes it, nor its layer)
+    grownFor = w && free ? innerWidth : -1; // (not until the page has laid the board out)
+    let grow = boardRect.phone ? BIRD_GROW * PHONE_GROW : BIRD_GROW;
+    if (boardRect.phone && boardRect.ledge > 0 && w) { // (held upright: no bigger than stands whole on the ledge, so it's one size perched and striking; never smaller than 2k's)
+      const fits = 0.999 * (Math.min(innerHeight, boardRect.bottom) - y - w - 2 * PERCH_GAP_PX) / ((BIRD_BOX[3] - BIRD_BOX[1] + 2 * BOX_EDGE + CROUCH) * CELL * 0.85 * w / SIZE);
+      grow = Math.max(BIRD_GROW, Math.min(grow, fits));
+    }
+    growBird(grow);
   }
-  growBird(grow);
   perches.clear(); drumAt.clear(); birdLayout++; // (its perches and where it drums are worked out again: the room round the board has changed)
 }
 const BIRD_GROW = 1.7; // (times its first size: 1.3 since 2c, 1.7 since 2k, on the board and under it alike)
