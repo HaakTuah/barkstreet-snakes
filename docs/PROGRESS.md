@@ -1,6 +1,6 @@
 # Progress
 
-What is done and what comes next, in order (how to work through it: `CLAUDE.md`). Mark an item done here, with its PR,
+What is done and what comes next, in order (how to work through it: `AGENTS.md`). Mark an item done here, with its PR,
 when it is merged into `develop`; add Haakon's new tasks where he places them, with his words quoted.
 
 ## State
@@ -16,7 +16,7 @@ older state notes are in `docs/archive/plan-history.md`.
 ## For Haakon
 
 Every open question for Haakon, until he answers it ("Questions come back to Haakon directly" under "Standing
-instructions" in `CLAUDE.md`). Each task's last message and each milestone PR open with the same list. Answered rows: `docs/archive/progress-done.md`, "For Haakon, answered".
+instructions" in `AGENTS.md`). Each task's last message and each milestone PR open with the same list. Answered rows: `docs/archive/progress-done.md`, "For Haakon, answered".
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|

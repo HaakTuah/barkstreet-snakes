@@ -1,7 +1,9 @@
 # Orchestrating the builders
 
-The full text of two standing instructions from `CLAUDE.md`, for the session that starts builder sessions (the
-orchestrator) and for any builder that needs the detail. `CLAUDE.md` keeps what every builder needs from them.
+The full text of two standing instructions from `AGENTS.md`, for the session that starts builder sessions (the
+orchestrator) and for any builder that needs the detail. `AGENTS.md` keeps what every builder needs from them. Codex's
+lanes, its fallback and the reviews between the two builders: `docs/claude-and-codex.md`; an open issue with an
+`@codex` brief counts as a claimed lane, like a draft PR.
 
 - **28 October 2026: pipeline, don't wait.** "Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns." (to Claude's proposal; the words are in
   `docs/archive/instructions.md`). Waiting is lost time and, past an hour, a lost cache, so:
