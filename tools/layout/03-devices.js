@@ -112,7 +112,7 @@ for (const d of share('03', DEVICES)) {
   const cutPhone = side && Math.min(d.w, d.h) <= 500;
   const backOff = p => cutPhone && p.eye && (p.x >= play.board.r - 0.5 ? 'right' : p.r <= play.board.x + 0.5 ? 'left' : null);
   const eyeIn = p => p.eye.x >= si.left && p.eye.x <= play.vw - si.right && p.eye.y >= si.top && p.eye.y <= play.vh - si.bottom;
-  const outside = p => { const k = backOff(p); return [...p.cut.filter(e => e !== k).map(e => `cut off at the screen's ${e}`), k && !eyeIn(p) && 'its eye off the screen', p.x < si.left - 0.5 && k !== 'left' && 'left', p.r > play.vw - si.right + 0.5 && k !== 'right' && 'right', p.y < si.top - 0.5 && 'top', p.b > play.vh - si.bottom + 0.5 && 'bottom'].filter(Boolean); };
+  const outside = p => { const k = backOff(p); return [...p.cut.filter(e => e !== k).map(e => `cut off at the screen's ${e}`), k && !eyeIn(p) && 'its eye off the screen', k && p.cut.includes(k) && p.inside?.includes(k) && `cut off by its layer inside the screen's ${k} (not by the screen's edge)`, p.x < si.left - 0.5 && k !== 'left' && 'left', p.r > play.vw - si.right + 0.5 && k !== 'right' && 'right', p.y < si.top - 0.5 && 'top', p.b > play.vh - si.bottom + 0.5 && 'bottom'].filter(Boolean); };
   const offWhy = q => [...outside(q.p), ...Object.keys(q.p.on).map(k => `${q.p.on[k]} px over the ${k}`)];
   const off = drawn.filter(q => offWhy(q).length);
   check(!off.length, `${tag}: perched, all of it is on the screen, inside its safe area, and off ${upright ? 'the tags and the header (it stands over the row under the board and the chatter)' : 'the tags, the chatter and the header'}`, off.map(q => `${q.x},${q.y}${q.aim ? ' eyeing' : ''}: ${offWhy(q).join(', ')} (${r1(q.p.x)},${r1(q.p.y)}-${r1(q.p.r)},${r1(q.p.b)})`).join('; '));
