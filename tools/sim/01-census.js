@@ -244,7 +244,7 @@ function beetleCensus(g, c, st, before) {
 }
 
 // --census, after a tick: what the woodpecker did, fairly or not (see census).
-function woodpeckerCensus(g, c, st, dying, N) {
+function woodpeckerCensus(g, c, st, dying, N, T) {
   const landed = st.landed ||= new Map(); // (where each piece the strike knocked aside landed: the strike's tick; a beetle runs on, so it's left out)
   for (const e of g.events) {
     if (e.type === 'knock') { c.knocks++; if (e.tx == null) c.knockedEaten++; else if (e.kind !== 'beetle') landed.set(e.ty * N + e.tx, g.tick - 1); }
