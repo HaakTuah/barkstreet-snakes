@@ -37,7 +37,12 @@ function setBoardRect(x, y, w, free = null) {
   boardRect.rims = free?.rims || [];
   boardRect.words = free?.words || [];
   boardRect.phone = Math.min(innerWidth, innerHeight) <= PHONE_SHORT_PX;
-  growBird(boardRect.phone ? BIRD_GROW * PHONE_GROW : BIRD_GROW);
+  let grow = boardRect.phone ? BIRD_GROW * PHONE_GROW : BIRD_GROW;
+  if (boardRect.phone && boardRect.ledge > 0 && w) { // (held upright: no bigger than stands whole on the ledge, so it's one size perched and striking; never smaller than 2k's)
+    const fits = 0.999 * (Math.min(innerHeight, boardRect.bottom) - y - w - 2 * PERCH_GAP_PX) / ((BIRD_BOX[3] - BIRD_BOX[1] + 2 * BOX_EDGE + CROUCH) * CELL * 0.85 * w / SIZE);
+    grow = Math.max(BIRD_GROW, Math.min(grow, fits));
+  }
+  growBird(grow);
   perches.clear(); drumAt.clear(); birdLayout++; // (its perches and where it drums are worked out again: the room round the board has changed)
 }
 const BIRD_GROW = 1.7; // (times its first size: 1.3 since 2c, 1.7 since 2k, on the board and under it alike)
@@ -119,7 +124,7 @@ function perchFor(tx, ty) {
   const edgeSide = k => (k === 'right' ? boardRect.right >= innerWidth - EDGE_SLACK_PX : boardRect.left <= EDGE_SLACK_PX);
   const cutSide = boardRect.phone && !boardRect.upright && sc ? ['left', 'right'].filter(k => fit[k] < 1 && edgeSide(k)).sort(nearer)[0] : null;
   const cutS = cutSide ? Math.min(1, (room[cutSide] - gap) / ((BILL[0] - EYE_BACK + BOX_EDGE) * BU)) : 0;
-  const cut = cutS >= least && (side === 'left' || side === 'right');
+  const cut = cutS >= Math.max(least, fit[cutSide] || 0) && (side === 'left' || side === 'right'); // (only where it's bigger so than all of it on the screen)
   if (cut) side = cutSide;
   const nowhere = !cut && (side === 'left' || side === 'right') && !(fit[side] >= least);
   const s = cut ? cutS : side === 'ledge' ? ledge : nowhere ? Math.max(between ? floor : least, shrunk(side)) : Math.max(least, fit[side]);
@@ -587,7 +592,7 @@ function chipsAfter(w, since, P) {
 // could cling there as big (alts, the first this one): upright or
 // leaning, facing either way (or, where it must lie level, lying level),
 // for drumChoice.
-const DRUM_TRIES = [0, 1, 0.45, 1, -0.45, 1, 0, -1, 0.45, -1, -0.45, -1, Math.PI / 2, 1, -Math.PI / 2, 1, Math.PI / 2, -1, -Math.PI / 2, -1], DRUM_SIZES = [1, 0.85, 0.72, 0.6];
+const DRUM_TRIES = [0, 1, 0.45, 1, -0.45, 1, 0, -1, 0.45, -1, -0.45, -1, Math.PI / 2, 1, -Math.PI / 2, 1, Math.PI / 2, -1, -Math.PI / 2, -1], DRUM_SIZES = [1, 0.85, 0.72, 0.6, 0.5, 0.42, 0.375]; // (the last three only for a phone's bigger bird, down to 0.6 of 2k's: corners of a short screen)
 const AIM_REACH = CELL / 2 - AIM_IN; // (how far its aim beside a snake can move the whole of it, board px: see freeAim. Since 2k, bigger, a pose fitted at the cell's middle could be moved off the screen by it)
 const DRUM_UPRIGHT = 12; // (the tries upright or leaning: the first six)
 const probe = { x: 0, y: 0, s: 1, flip: 1, rot: 0, crouch: 0, wing: 0, stroke: 1, sweep: 0, near: 1, far: 1, feet: 1, turn: 0, thrust: 0, air: 0 };
