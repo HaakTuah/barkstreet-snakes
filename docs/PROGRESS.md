@@ -1,6 +1,6 @@
 # Progress
 
-What is done and what comes next, in order (how to work through it: `CLAUDE.md`). Mark an item done here, with its PR,
+What is done and what comes next, in order (how to work through it: `AGENTS.md`). Mark an item done here, with its PR,
 when it is merged into `develop`; add Haakon's new tasks where he places them, with his words quoted.
 
 ## State
@@ -24,11 +24,11 @@ older state notes are in `docs/archive/plan-history.md`.
 ## For Haakon
 
 Every open question for Haakon, until he answers it ("Questions come back to Haakon directly" under "Standing
-instructions" in `CLAUDE.md`). Each task's last message and each milestone PR open with the same list. Answered rows: `docs/archive/progress-done.md`, "For Haakon, answered".
+instructions" in `AGENTS.md`). Each task's last message and each milestone PR open with the same list. Answered rows: `docs/archive/progress-done.md`, "For Haakon, answered".
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| (none open) | | | |
+| 5, part 4 (#198) | The golden flight works and the rivals fly it, but it can't show in wins between rivals: a flight moves a cell a tick like a crawl, so it buys no time, and under today's rules no rival in 30 rounds died holding a golden jump (0 of 90 deaths), so it has nobody to save; leap now came out even too; the golden flash pays in food and kills, not wins. Which: (a) merge the flight and leap now as they are, moves that pay for a person's timing; (b) the flight flies 2 cells a tick while held, so it buys time, measured again; (c) more golden beetles? | Answered (Haakon, 1 November 2026): none of the three. "they must work until the rivals know how to use them. i am certain they will give better performance if used appropiately" (as on 31 October: "then it must be the AI"): the moves stay as designed (the golden leap flies up to 5 cells and steers, leap now, the golden flash cuts two thick), and the rivals are improved until their users come out ahead. Leap now stays: "no dropping of leap, leap goes in the game that is my vision". #198 goes on, on those terms. | Answered, 1 November 2026 |
 
 ## The polish lane
 
@@ -40,12 +40,11 @@ the second account until its usage is spent; on the main account the brake close
   `docs/handoff/queue-specs.md`, 31 October 2026); merged branches now go by GitHub's "Automatically delete head
   branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
 - **Done in the lane's entries:** the README for players (PR #241) and any key wakes from a nap (PR #271): their words are in `docs/archive/progress-done.md`, "The polish lane, done".
-- **Next, the woodpecker bigger on a phone** (Haakon, 31 October 2026, with a desktop screenshot beside it: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much."): on a
-  phone, upright and on its side, it is drawn bigger than 2k's 1.7 times, so it looks as threatening there as it does
-  beside the board on a desktop; the desktop is unchanged. Pictures first, at 390×844 and 780×320, perched and striking,
-  at three sizes side by side on `pr-media`, and Haakon picks before it merges, as with Wildcard's hair (2n). A bigger
-  bird may cover more of the row and the chatter under the board (his answer on the help line), never a card (PR #243),
-  and never the board's play for longer than a strike does now. Presentation only: the fingerprints unchanged. **Answered** (Haakon, 1 November 2026, to #270's two questions): size B, 1.6 times (212 px upright, 172 px sideways, the same size beside the board both ways); and sideways it perches at that full size, partly off-screen, its head, beak and eye in the gap beside the board and inside the safe area, its back and tail cut off by the screen edge, so it is the same size perched and striking and never covers the board while it perches ("Seems better than making it super small and have it swell up whenever it attacks", then "Yes.").
+- **The woodpecker bigger on a phone, done** (PR #270; Haakon picked B, and answered for a phone on its side): see "The woodpecker, as big as it gets", *Bigger on a phone*, in `docs/design/32-the-owners-playtest.md`.
+- **Next: the flash becomes the dash** (Haakon, 1 November 2026: "dash is better actually", and "Yes, i think so", to calling it
+  the dash wherever a player sees it): the move along the ground is the *dash* and the golden one the *golden dash*, in the key
+  help, the lessons, the Field guide, banners, chatter, the README and the design notes ("One word for each thing"); the
+  code already says dash. No rule, number or online message changes, so no protocol bump.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
@@ -67,21 +66,25 @@ the second account until its usage is spent; on the main account the brake close
 
 ## The split lane (the workshop check's files over about 50 KB)
 
+- **First, at the next milestone** (Haakon, 1 November 2026): the workshop check's point (2) before anything else.
+  `AGENTS.md` (22 KB) and this file (20 KB) go back under about 20 KB: done entries, answered questions and standing
+  instructions already written into the text above them move to `docs/archive/`, with a line pointing there.
+- **Next, beside it: a check for unused code** (Haakon, 1 November 2026; a side lane, no game change). Extend
+  `tools/scope-test.js`, which already reads every top-level name the page's scripts declare, to fail on a name that no
+  game file, `index.html` or test uses outside its own declaration, with a short list of names the browser or the tools
+  call by name. No new dependency. Its first run lists today's unused names; each is removed in its own small PR,
+  proven by the suites and unchanged fingerprints (seeds 3 and 11), or kept on the list with the reason.
 - *Done:* `audio.js` and `chatter/zh.js` split (PRs #225, #226): `docs/archive/progress-done.md`, "The split lane, done".
 - **Waiting for the main lane** (PR #198 and its parked #202 have them open): `ai.js` (139 KB), `engine.js` (128 KB) and
   `render/world.js` (51 KB). Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
 
 ## The queue, in order
 
-**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)); 2t (Capricious without its ring, and a costume change for every change (PR #212)); 2u (picked rivals for this visit; unmet rivals back into the deck (PR #221)); 2v (the newest version, by itself between rounds (PR #223)).
+**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)); 2t (Capricious without its ring, and a costume change for every change (PR #212)); 2u (picked rivals for this visit; unmet rivals back into the deck (PR #221)); 2v (the newest version, by itself between rounds (PR #223)); 2s (a piece cut loose falls, the log stays one piece (PR #289)).
 
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
-The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in: its A/B comes out even, so it waits until the rivals use the moves well: the flight and leap now measured apart, the rivals taught the flight's uses, the golden flash measured on its own in the same pass, and the flight merged without leap now if only the flight pays; Haakon, 31 October 2026), then 2s and 2q (2s first: Haakon, 31 October 2026, "Agreed to all, expertly!"), part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves".
-
-### 2s. A piece cut loose falls: the log stays one piece (30 October 2026, rewritten 31 October 2026; an engine-rules entry, after part 4; ahead of 2q)
-
-No more islands (Haakon, 31 October 2026: "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."): any piece of log no longer attached to the log falls away, warned, so the log is always one piece with holes in it, and jumps and flights cross the gaps inside it. Replaces "every island stays a hop from another". Spec: `docs/handoff/queue-specs.md`, "2s. A piece cut loose falls".
+The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, parked on Haakon's question in "For Haakon" (1 November 2026: the flight even on its own, under real and amplified rules, after the rivals re-plan it in the air and an escalation), 2r folded in: its A/B comes out even, so it waits until the rivals use the moves well: the flight and leap now measured apart, the rivals taught the flight's uses, the golden flash measured on its own in the same pass, and the flight merged without leap now if only the flight pays; Haakon, 31 October 2026), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves".
 
 ### 2w. Beetles get away at least a third of the time (Haakon, 31 October 2026; an engine-rules entry, after part 4)
 

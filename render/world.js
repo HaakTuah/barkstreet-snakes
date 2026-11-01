@@ -50,6 +50,7 @@ function frame(alpha, now) {
 
   drawBurrows(now);
   drawPatch(alpha, now); // (the woodpecker's next patch, on the bark under the snakes)
+  drawFalls(now); // (2s: pieces cut loose, falling away)
   if (splats.length) drawSplats(now);
   drawLeaves(now, dt);
   drawFood(alpha, now);
@@ -376,6 +377,7 @@ function onTick(events) {
     } else if (e.type === 'peck') { // a chunk comes out: chips flying from every cell, and a thump
       for (const k of e.cells || []) spawn((k % GRID) * CELL + CELL / 2, Math.floor(k / GRID) * CELL + CELL / 2, 4, 240, 520, 2.8, '#c08a4a', '#3b2412');
       if (e.cells?.length && !reduced) shake(5);
+      if (e.fall?.length) fallAway(e.fall, now); // (2s: a piece cut loose tips and drops: see holes.js)
     } else if ((e.type === 'spawn' && e.kind === 'beetle') || e.type === 'emerge') {
       bugPops.push({ x: e.x, y: e.y, tick: game.tick, at: now }); // (it pops out of its burrow, kicking up a little sawdust)
       if (e.x >= 0) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 110, 420, 2, '#d6b480', '#a16207');
