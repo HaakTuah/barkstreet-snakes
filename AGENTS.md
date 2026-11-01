@@ -16,11 +16,12 @@ Codex: read its "For Codex" section at the start of every task.
 | --- | --- |
 | What is done and the queue, in order | `docs/PROGRESS.md` |
 | Claude and Codex: who builds what, the hand-over, the fallback, the reviews' score | `docs/claude-and-codex.md` |
+| Security: what is protected, and the rules every builder and reviewer keeps | `SECURITY.md` |
 | How builder sessions and lanes are run (for the orchestrator) | `docs/orchestrating.md` |
 | Running and checking it: switches, PR pictures, every tool | `docs/developing.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
 | Materials the queue points to: the open entries' specs word for word (`queue-specs.md`), the teaching prototypes and judges, the woodpecker acts draft, the Sniper screenshot | `docs/handoff/` |
-| The game | `index.html`, `style/` (three stylesheets, listed in `style/base.css`), `engine.js`, `ai.js`, `render/` (seventeen files, listed in `render/core.js`), `game/` (seven, listed in `game/core.js`), `chatter/` (five, listed in `chatter/voices.js`), `audio/` (two, listed in `audio/cues.js`), `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
+| The game | `index.html`, `style/` (three stylesheets, listed in `style/base.css`), `engine.js`, `ai.js`, `render/` (nineteen files, listed in `render/core.js`), `game/` (seven, listed in `game/core.js`), `chatter/` (five, listed in `chatter/voices.js`), `audio/` (two, listed in `audio/cues.js`), `net.js`, `online.js`, `records.js`, `tuning.js`, `sw.js` |
 | Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, each a runner of its folder of parts by area, such as `tools/rules/` (`tools/parts.js`), `simulate.js` (its parts in `tools/sim/`), `abtest.js`, `bench-ai.js`, `browser.js`; `protocol-shapes.json`, the online messages' pinned shapes) |
 | The online messages' types (checked by `tsc`, never shipped) | `jsconfig.json`, `types/globals.d.ts`, and the JSDoc in `net.js` and `online.js` |
 | Study and measuring tools from earlier rounds | `tools/dev/` (teaching audits, burrow spacing, board sizes, the woodpecker and food study, PR pictures) |
@@ -72,8 +73,10 @@ How to keep to them:
   project's repository or folders, such as Amarna Letters'.
 - **Sessions.** When sessions are started for you task by task (a Claude Code Project does this), stop when your task
   is merged and say what is next; otherwise carry on with the next task in the same session.
-- **Keep files small and organised:** split code where it naturally belongs, by responsibility, and keep each file under
-  about 50 KB. Split a file that grows past that in its own PR, with behaviour proven unchanged.
+- **Keep it lean** (Haakon, 1 November 2026; the words are in `docs/archive/instructions.md`). Every change removes what it replaces, in the same PR: no
+  commented-out code, no "old" copies, nothing it made unused (code, files, settings, assets, test helpers). Look for an
+  existing helper before writing one. Split code by responsibility and keep each file under about 50 KB; split a file
+  that grows past that in its own PR, with behaviour proven unchanged. A leftover is a finding in every review.
 
 ## Rules that stand
 
@@ -152,6 +155,18 @@ The simulation always prints its fingerprint; `--check` also fails the run if a 
 change that should keep behaviour must keep the fingerprints. The browser suites' Chrome, the optional switches and
 playing it locally: `docs/developing.md`, "Switches for the checks".
 
+## Review guidelines
+
+For Codex's code review, which reports findings by priority: report as **P1** (blocking) a departure from the design or
+from the PR's description and the sections it names; a broken rule of this file (above all the rules that stand) or of
+`SECURITY.md`; a test changed, skipped or weakened; and a protected file changed by a Codex lane. Report anything the
+change leaves behind (code, files or settings it made unused, commented-out code) as a finding. Every finding counts:
+the PR passes only with none open. In a later round of the same PR, check that the earlier findings were fixed and
+review what changed since; raise something new about unchanged code only as P0 or P1. Every other reviewer (Claude's
+design check on the big items, and Claude's reviewer whenever Codex is unavailable) gives a score from 1 to 10 and
+everything that keeps the work from 10, and only a 10, a list with nothing open, passes. The whole method, with its
+guards against endless rounds and a slipping bar: "Codex reviews" and "Reviews" in `docs/claude-and-codex.md`.
+
 ## Standing instructions
 
 Haakon's standing instructions given since this file was last revised, dated, newest last.
@@ -196,7 +211,7 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   `develop` again, with the "For Haakon" table, since Haakon's answers can change it while you work. Build what changed,
   or, if that is large, say so in the PR and add it as its own entry right after the task.
 - **28 October 2026: pipeline, don't wait** (full text, with the orchestrator's part, in `docs/orchestrating.md`).
-  Open the PR, start its reviewer in the background, and go on with what comes next; fix what the review finds when it
+  Open the PR, start its reviewers in the background (Codex's review and the design check together), and go on with what comes next; fix what the review finds when it
   returns, then merge. Take the next entry from `develop`, never stacked on an open PR's branch; an AI entry waits for
   the last AI change to merge, so each head-to-head compares against a settled AI. Long runs and checks go in the
   background, and no turn sits idle. The last message says what merged and what is next.
@@ -221,5 +236,11 @@ Haakon's standing instructions given since this file was last revised, dated, ne
   current, said in one line of each milestone PR and fixed if not.
 - **1 November 2026: Claude and Codex build together.** (the words are in `docs/archive/instructions.md`). Codex
   builds beside Claude, on its own subscription, to spread the weekly usage, and the two review each other's work.
-  Claude orchestrates and keeps the decisions; Codex takes what tests can prove. The routing, the hand-over by
-  `@codex` comment, the fallback when Codex is out of usage and the reviews' score: `docs/claude-and-codex.md`.
+  Claude orchestrates and keeps the decisions; Codex takes what tests can prove. The routing, the hand-over by the
+  `codex` label and Haakon's poller, the fallback when Codex is out of usage and the reviews' score: `docs/claude-and-codex.md`.
+- **1 November 2026: only a 10 passes** (the words are in `docs/archive/instructions.md`). Every review passes the work only at a 10, which for Codex
+  means no finding open, with guards against endless rounds and a slipping bar. The score follows from the list, and
+  later rounds judge the changes. After three rounds the escalation helper takes one look, and what is still open
+  leaves the PR blocked, never merged below 10. A blind re-review of a merged 10 every week and canaries now and then
+  are logged and reported. On the big tasks, Codex's review and Claude's design check start at the same time. The
+  method: `docs/claude-and-codex.md`, "Reviews".
