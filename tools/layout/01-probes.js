@@ -165,7 +165,7 @@ const PERCH = (x, y, pose, rects = {}) => `(() => {
   for (const q of all) for (const k in q.on) on[k] = Math.max(on[k] || 0, q.on[k]);
   const p = { over: Math.max(...all.map(q => q.over)), on, cut: [...new Set(all.flatMap(q => q.cut))], x: Math.min(...all.map(q => q.x)), y: Math.min(...all.map(q => q.y)), r: Math.max(...all.map(q => q.r)), b: Math.max(...all.map(q => q.b)) };
   p.h = p.b - p.y;
-  { const P = R.birdPose(), sc = boardRect.w / SIZE; birdMats(P); p.eye = { x: boardRect.x + atX(HM, 0.75, -1.9) * sc, y: boardRect.y + atY(HM, 0.75, -1.9) * sc }; } // (its eye, CSS px: on a phone on its side, its back may be off the screen, never its eye)
+  { const P = R.birdPose(), L = P.layer; p.eye = { x: L.x + P.eye[0] * L.w / L.W, y: L.y + P.eye[1] * L.h / L.H }; } // (its eye, CSS px, from its layer's pixels: on a phone on its side, its back may be off the screen, never its eye)
   return p;
 })()`;
 const SPOTS = [[1, 1], [12, 1], [22, 1], [1, 12], [12, 12], [22, 12], [1, 22], [6, 22], [12, 22], [17, 22], [22, 22]];
