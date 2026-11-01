@@ -104,6 +104,7 @@ function news(dying) {
     if (e.type === 'spawn' && e.kind === 'leaf') { flashFrame('gold'); if (newsOnce('leaf')) return toast(lineFor('leaf'), 2400, 'gold'); }
     if (e.type === 'spawn' && e.kind === 'goldcap') { flashFrame('gold'); if (newsOnce('goldcap')) return toast(lineFor('goldcap'), 2400, 'gold'); }
     if (e.type === 'knock' && e.kind === 'beetle' && e.tx == null && newsFree() && once('birdBeetle')) return toast(FLAVOR.birdBeetle, 2400, 'bird', 'lesson'); // (round six B, 2m: the first beetle the bird eats, anyone's to catch)
+    if ((e.type === 'aim' ? theGame.woodpecker?.fall?.length : e.type === 'peck' && e.fall?.length) && newsFree() && once('cutLoose')) return toast(FLAVOR.cutLoose, 2600, 'bird', 'lesson'); // (2s: the first piece cut loose, as its mark shows it, or as it falls if the banner was busy)
     if (e.type === 'peck' && me?.alive && e.under?.includes(me.id) && once('peckedUnder')) return toast(FLAVOR.youPeckedUnder, 2800, 'bird', 'lesson'); // (struck under your body: a bridge, not a cut)
     if (e.type === 'death' && e.snake.fatal === 'cut' && newsFree() && once('neckCut')) return toast(FLAVOR.neckCut, 2400, 'warn', 'lesson'); // (the first neck cut you see, anyone's)
     if (e.type === 'dig' && me?.alive && Math.abs(me.body[0].x - e.x) + Math.abs(me.body[0].y - e.y) <= DIG_NEAR && newsFree() && once('dig')) return toast(FLAVOR.youDig, 2600, 'beetle', 'lesson'); // (it's over in a second: shown now or kept for the next one, never left waiting)

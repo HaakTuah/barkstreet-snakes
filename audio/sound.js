@@ -69,6 +69,7 @@ window.SnakeAudio = (() => {
     babble: 4000, // (whoever speaks: never two at once, at most one every few seconds; bubbles come more often, so most are silent)
     choke: 300, squash: 50,
     dig: 300, knock: 400, // (a beetle digs in again only after a spell under, the woodpecker strikes again only after a rest and an aim: each is heard; beetles digging in together, or the pieces one strike knocks aside, are one sound)
+    fall: 900, // (2s: a piece cut loose falls with a strike: one a strike)
     heal: 400, // (a burrow closes over only for a dig's new one: two digs ending together, one crumble)
   };
   // A cue that stands for others for a while: a win that's also a best is one phrase.

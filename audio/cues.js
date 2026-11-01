@@ -260,6 +260,19 @@ window.SnakeAudioCues = k => {
       for (let i = 0; i < 3; i++) noise(t + 0.16 + i * 0.05, 0.02, 0.05, 'lowpass', 1100, 0.8);
     },
 
+    // A piece of log cut loose falls (2s): bark tearing off with a long creak,
+    // sliding down as it tips, and a far-off thud as it lands, well below
+    // (dull and low, a beat later). About 900 ms.
+    fall(t) {
+      knock(t, 360, 0.2);
+      noise(t + 0.01, 0.12, 0.12, 'bandpass', 1100, 1.1);
+      const creak = tone(t + 0.04, 'triangle', 170, 0.5, 0.09, 0.03, 90, 650);
+      vibrato(creak, t + 0.04, 0.5, 19, 11);
+      noise(t + 0.2, 0.35, 0.05, 'bandpass', 700, 0.8);
+      tone(t + 0.7, 'sine', 72, 0.24, 0.28, 0.004, 40);
+      noise(t + 0.7, 0.16, 0.14, 'lowpass', 300, 0.7);
+    },
+
     // A burrow closing over: a muffled crumble. Sawdust trickles into the hole
     // (five grains, each lower and fainter, a fleck of it ticking in over each),
     // then a hushed pat as the moss settles over it. About 350 ms. (It was as
