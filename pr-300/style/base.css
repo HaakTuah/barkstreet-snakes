@@ -1,0 +1,535 @@
+/* Barkstreet Snakes: "storybook bark".
+   Eight interface colors (see DESIGN.md), one rounded type family, one frame
+   treatment: parchment with an inset ring, wood for anything structural, leaf
+   for anything you press.
+
+   Once style.css, split into the files of style/, linked in this order by
+   index.html (sw.js keeps them), so the cascade is the same:
+     base.css     the colours, type, buttons, the header, the tags, the board
+     panels.css   the cards, the friends' lobby, below the board, the Hall of Fame
+     screens.css  small screens, and every other size and shape of screen */
+:root {
+  --night-moss: #131d15;
+  --night-moss-2: #1f3022;
+  --bark: #5a3b22;
+  --heartwood: #7a4a24;
+  --heartwood-dark: #3f2510;
+  --parchment: #f6ecd2;
+  --parchment-2: #e8d9b0;
+  --ink: #3a2614;
+  --ink-soft: #6b5439;
+  --leaf: #4d7c0f;
+  --leaf-dark: #2f4f0c;
+  --sprout: #a3e635;
+  --honey: #fde68a;
+  --berry: #dc2626;
+  --berry-text: #b91c1c; /* berry dark enough for small text on parchment (5.6:1) */
+  --cream: #f6ecd2;
+  --muted: #c4b896;
+
+  --r-tag: 10px;
+  --r-card: 16px;
+  --r-frame: 20px;
+  --ring: inset 0 0 0 3px var(--parchment-2);
+  --font: 'Fredoka', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
+  /* The screen's safe area (a notch, rounded corners, the home bar): the
+     page keeps inside it, and the game reads it (the woodpecker perches in it). */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  /* The page's own margin above and below (inside the safe area): the page
+     is exactly the screen's height less these. */
+  --pad-t: max(12px, var(--safe-t));
+  --pad-b: max(12px, var(--safe-b));
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  color: var(--cream);
+  font-family: var(--font);
+  /* The forest floor: shafts of light through the canopy, dark earth and leaf litter. */
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 0%, rgba(160, 200, 120, 0.12), transparent 70%) fixed,
+    radial-gradient(ellipse 50% 35% at 85% 10%, rgba(160, 200, 120, 0.08), transparent 70%) fixed,
+    radial-gradient(ellipse at top, var(--night-moss-2), var(--night-moss) 70%) fixed,
+    var(--night-moss);
+  overscroll-behavior: none; /* no pull-to-refresh mid-round */
+}
+/* During a round, swipes steer anywhere on the page, so nothing scrolls or zooms. */
+html.playing, html.playing body { touch-action: none; }
+
+body {
+  display: flex;
+  justify-content: center;
+  padding: var(--pad-t) max(12px, var(--safe-r)) var(--pad-b) max(12px, var(--safe-l));
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The page is one screen tall, never more, in every state: the header, the
+   tags, the board and the row under it keep their size, and the chatter
+   takes what's left (snake.js fitChatter shows its whole lines, down to
+   none). Here (a tablet held upright, a near-square window, a screen too
+   tall for the column beside the board) the board is as big as leaves room
+   above it for the header and the tags as they are (--above, measured:
+   snake.js placeBoard), and under it for the row under the board and a
+   chatter of its caption and two lines (--below), so it never changes size
+   between playing and watching; and never smaller than it was before the
+   page was one screen tall (the screen's height less 260 px: the owner's
+   call, the board first), where the chatter and the help give way instead:
+   the chatter to a strip or none, its lines in bubbles on the board, and
+   the help where it doesn't fit its row (snake.js fitColumn). */
+main {
+  --foot: 30px; /* (the row under the board: its height, kept; 44 on a touch screen) */
+  --chat-room: 84px; /* (the chatter's caption and two lines of words) */
+  --below: calc(10px + var(--foot) + var(--chat-room) + var(--pad-b));
+  width: 100%;
+  /* The board grows with the screen but always fits its height. (260 px:
+     the floor, as before "One screen". 115 px:
+     what's above it, until the page has measured it: the page's top, the
+     header in one row, the tags in one, and their margins.) */
+  max-width: min(900px, max(280px, calc(100vh - 260px), calc(100vh - var(--above, 115px) - var(--below))));
+  height: calc(100vh - var(--pad-t) - var(--pad-b));
+  display: flex;
+  flex-direction: column;
+}
+/* (dvh in a test of its own: a value with var() in it is only checked as
+   it's used, so a browser without dvh wouldn't drop a second declaration,
+   it would lose the property) */
+@supports (height: 1dvh) {
+  main {
+    max-width: min(900px, max(280px, calc(100dvh - 260px), calc(100dvh - var(--above, 115px) - var(--below))));
+    height: calc(100dvh - var(--pad-t) - var(--pad-b));
+  }
+}
+main > * { flex: none; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ------------------------------------------------------------- buttons */
+
+button {
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 28px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--leaf);
+  color: #fffbea;
+  box-shadow: 0 3px 0 var(--leaf-dark);
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s, filter 0.12s;
+}
+
+/* Hover never lowers the text's contrast: leaf darkens, wood lightens a touch. */
+button:not([class]):not(:disabled):hover { background: #436c0d; }
+button.secondary:not(:disabled):hover { background: rgba(58, 38, 20, 0.06); }
+button.small:not(:disabled):hover, button.icon:not(:disabled):hover, .speed button:hover { background: #8a5429; }
+.speed button[aria-pressed="true"]:hover { background: var(--leaf-dark); }
+button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--leaf-dark); }
+button[hidden] { display: none; }
+button:disabled { opacity: 0.4; cursor: default; filter: none; transform: none; }
+
+:focus-visible { outline: 3px solid var(--honey); outline-offset: 2px; }
+.card :focus-visible, .records-card :focus-visible { outline-color: var(--ink); }
+
+button.secondary {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 2px var(--ink-soft);
+}
+button.secondary:active { box-shadow: inset 0 0 0 2px var(--ink-soft); }
+
+button.small, .speed button {
+  padding: 5px 12px;
+  font-size: 0.85rem;
+  background: var(--heartwood);
+  color: var(--cream);
+  box-shadow: 0 2px 0 var(--heartwood-dark);
+}
+
+button.icon {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: var(--heartwood);
+  box-shadow: 0 2px 0 var(--heartwood-dark);
+}
+button.icon svg, .trophy svg { width: 18px; height: 18px; fill: currentColor; stroke: currentColor; stroke-width: 0; }
+button.icon { flex-shrink: 0; color: var(--cream); }
+button.icon .wave, button.icon .slash { fill: none; stroke-width: 1.8; stroke-linecap: round; }
+button.icon .slash { display: none; }
+button.icon[aria-pressed="true"] .slash { display: inline; }
+button.icon[aria-pressed="true"] .wave { display: none; }
+#pause .play { display: none; }
+#pause[data-paused="true"] .play { display: inline; }
+#pause[data-paused="true"] .bar { display: none; }
+#fullscreen path { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; } /* (corners going out; in full screen, coming in) */
+#fullscreen[hidden], #fullscreen .shrink, #fullscreen[data-full="true"] .grow { display: none; } /* (hidden: its icon look would otherwise win) */
+#fullscreen[data-full="true"] .shrink { display: inline; }
+
+/* -------------------------------------------------------------- header */
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 10px;
+  margin-bottom: 10px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--sprout);
+  text-shadow: 0 2px 0 var(--leaf-dark), 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+/* title-s: the S of Snakes, a honey snake. (Drawn and written by tools/title-s.js: change it there.)
+   The letter stays as text, only see-through: it's what's read out and
+   copied, and it keeps its place in the word. The drawing stands on the
+   baseline from the letter's left edge (the <i>, an empty box whose baseline
+   is the line's, so it sits the same in Fredoka and the stand-in font). The
+   <b> is the drawing's box (it casts the title's drop), each piece of the
+   snake an <svg> of its own in that same box, and each joint an empty box (a
+   <span>) holding the piece that hangs from it and the joints beyond, turned
+   by a transform the compositor runs: nothing is laid out or painted while
+   it moves. Each box's line is exactly its drawing's height (line-height: 0),
+   so its top left is the drawing's in any font; negative margins keep them
+   all from taking room or raising the title's line. */
+h1 .snake-s { color: transparent; text-shadow: none; white-space: nowrap; } /* (inline: a box round it would split the word, "S nakes", for a screen reader; nowrap: where the title wraps, the snake goes with its letter) */
+h1 .snake-s > i { user-select: none; -webkit-user-select: none; } /* (the drawing never goes into a selection: a copy is the words; see game/input.js) */
+h1 .snake-s :is(i, span) { display: inline-block; width: 0; height: 0; }
+h1 .snake-s :is(b, span) { line-height: 0; }
+h1 .snake-s b { display: inline-block; width: .84em; height: 1em; margin: -0.5em -.74em -0.2em -.1em; filter: drop-shadow(0 2px 0 var(--leaf-dark)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)); } /* (the title's own drop; the tongue goes under it, so it casts none) */
+h1 .snake-s span { margin-top: -0.5em; }
+h1 .snake-s svg { width: .84em; height: 1em; margin: 0 -.84em 0 0; vertical-align: -.1em; overflow: visible; }
+h1 .snake-s .s-tongue { margin: -0.5em -.74em 0 -.1em; }
+/* Now and then it wriggles: a wave down its body, head first (each piece
+   turns on the joint it hangs from, and the pieces beyond it go with it; the
+   middle holds still), then it tastes the air twice. It blinks on a beat of
+   its own: a shut-eyed head over the open one, for a moment. */
+h1 .snake-s .s-up { transform-origin: .434em .565em; animation: s-up 4.2s ease-in-out 1.58s infinite; }
+h1 .snake-s .s-neck { transform-origin: .221em .364em; animation: s-neck 4.2s ease-in-out 1.5s infinite; }
+h1 .snake-s .s-low { transform-origin: .447em .799em; animation: s-low 4.2s ease-in-out 1.66s infinite; }
+h1 .snake-s .s-tail { transform-origin: .284em .807em; animation: s-tail 4.2s ease-in-out 1.74s infinite; }
+h1 .snake-s .s-shut { opacity: 0; animation: s-blink 5.3s steps(1, end) 3.4s infinite; }
+h1 .snake-s .s-tongue { opacity: 0; animation: s-flick 4.2s ease-in-out 1.5s infinite; }
+html.in-round h1 .snake-s * { animation: none; } /* (it rests during a round, tongue in and eyes open: nobody's looking) */
+@keyframes s-neck {
+  0%, 23.81%, 100% { transform: rotate(0deg); }
+  5.71% { transform: rotate(11deg); }
+  11.9% { transform: rotate(-11deg); }
+  18.33% { transform: rotate(4.95deg); }
+}
+@keyframes s-up {
+  0%, 23.81%, 100% { transform: rotate(0deg); }
+  5.71% { transform: rotate(7deg); }
+  11.9% { transform: rotate(-7deg); }
+  18.33% { transform: rotate(3.15deg); }
+}
+@keyframes s-low {
+  0%, 23.81%, 100% { transform: rotate(0deg); }
+  5.71% { transform: rotate(8deg); }
+  11.9% { transform: rotate(-8deg); }
+  18.33% { transform: rotate(3.6deg); }
+}
+@keyframes s-tail {
+  0%, 23.81%, 100% { transform: rotate(0deg); }
+  5.71% { transform: rotate(14deg); }
+  11.9% { transform: rotate(-14deg); }
+  18.33% { transform: rotate(6.3deg); }
+}
+@keyframes s-flick {
+  0%, 25.24%, 38.57%, 100% { opacity: 0; transform: translate(-.168em, .006em); }
+  25.95%, 37.86% { opacity: 1; }
+  28.57%, 34.52% { transform: none; }
+  31.67% { transform: translate(-.059em, .002em); }
+}
+@keyframes s-blink {
+  0% { opacity: 1; }
+  2.64% { opacity: 0; }
+}
+/* (end of title-s) */
+
+.tagline { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); }
+
+header { min-width: 0; }
+.hud { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; color: var(--muted); }
+.hud .stat { white-space: nowrap; }
+.trophy { display: inline-flex; align-items: center; gap: 6px; }
+.trophy svg { display: none; }
+.hud .stat strong { display: inline-block; min-width: 2ch; color: var(--cream); font-variant-numeric: tabular-nums; } /* room for two digits, so a growing score never reflows the header */
+.hud .stat strong { transform-origin: left center; } /* its pop (snake.js bump) grows away from the label */
+/* Score over Best, beside the title (its two lines, the title and the
+   tagline, beside their two): the pair takes the width of one, which gives
+   the buttons their room and the Field guide its name. Their words to the
+   right, their digits in a column, with room kept for four, so nothing
+   moves as they grow (after the rule above, which would otherwise win: it
+   kept two, and at 100 the row wrapped at each step's page), in 0.9rem, as
+   on a phone, so four cost the row 10 px, not 18. On a phone and in the
+   column beside the board each takes its own place (.stats has no box
+   there), at its own size, with its own room. */
+.stats { display: grid; justify-items: end; line-height: 1.15; }
+.stats .stat { font-size: 0.9rem; }
+.stats .stat strong { min-width: 4ch; }
+
+/* -------------------------------------------- the snakes' name tags */
+
+.scoreboard {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.scoreboard li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 5px 9px 7px;
+  border-radius: var(--r-tag);
+  background: var(--parchment);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 2px 0 var(--parchment-2);
+  overflow: hidden;
+}
+
+.dot {
+  flex: none;
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px rgba(58, 38, 20, 0.45);
+}
+
+.opponents .tap-tip { display: none; }
+.card.beat .opponents .tap-tip { display: none !important; } /* (a second's countdown: no time to tap, and taps steer) */
+.scoreboard button.name { min-height: 0; padding: 0; border: 0; border-radius: 4px; background: none; box-shadow: none; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: none; }
+.scoreboard button.name:active { transform: none; box-shadow: none; }
+.scoreboard :focus-visible { outline-color: var(--ink); outline-offset: 1px; } /* (Ink on parchment: Honey there is invisible) */
+.scoreboard .name { flex: 1 1 auto; min-width: 2.2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scoreboard .len { flex: none; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; } /* (the crown and the number on one line) */
+/* Powers: a chip each (6 px, like everything small), an ink icon and a
+   count. Gold is the family: a golden power held is a Honey chip in a gold
+   line, its icon in its own accent (jumps sky, flashes ember), with how many
+   are held. Your own jump and flash fill in their accent as they rest, and
+   are solid, ringed, when ready (greyed when you're too small for them); the
+   icon keeps full contrast all the while. The edges wrapping: a loop and the
+   seconds left, in a gold line. On a narrow tag the chips give way first,
+   down to their icons, and the name keeps its room. */
+.scoreboard .pow { flex: 0 40 auto; min-width: 19px; display: inline-flex; align-items: center; gap: 2px; overflow: hidden; }
+.scoreboard .pow[hidden] { display: none; } /* (its display would otherwise win over hidden) */
+.scoreboard .chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 1px 4px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.scoreboard .chip svg { flex: none; width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.scoreboard .chip b { font-weight: 700; font-variant-numeric: tabular-nums; }
+.scoreboard .chip.mine { --rest: #a8dcf5; --line: #2f6f96; background: linear-gradient(90deg, var(--rest) var(--fill, 100%), rgba(58, 38, 20, 0.16) var(--fill, 100%)); }
+.scoreboard .chip.flash.mine { --rest: #f7a866; --line: #b5531d; }
+.scoreboard .chip.mine.ready { background: var(--rest); box-shadow: inset 0 0 0 1px var(--line); }
+.scoreboard .chip.mine.small { background: rgba(58, 38, 20, 0.08); color: var(--ink-soft); }
+.scoreboard .chip.gold { background: #fde68a; box-shadow: inset 0 0 0 1px #d4a017; }
+.scoreboard .chip.gold.jump svg { color: #2f6f96; }
+.scoreboard .chip.gold.flash svg { color: #b5531d; }
+.scoreboard .chip.wrap { background: #fef3c7; box-shadow: inset 0 0 0 1.5px #d4a017; }
+/* A narrow tag: the chips are just their icons (the board's pips and the
+   screen reader's words still give the counts), so the name keeps its letters. */
+.scoreboard li { container: tag / inline-size; }
+/* Four tags in a row only where they have room for a name, a chip and a
+   crowned length (a near-square window gives them 130 px): otherwise two rows
+   of two, as on a phone. */
+main { container: page / inline-size; }
+@container page (max-width: 660px) {
+  .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container tag (max-width: 175px) {
+  .scoreboard .chip b { display: none; }
+  .scoreboard .chip { padding-inline: 3px; }
+  .scoreboard .pow { flex-shrink: 0; min-width: min-content; }
+  .scoreboard .chip:not(.wrap) ~ .chip.wrap { display: none; } /* (with other powers, the wrap gives way: it shows on the board, as the gold shimmer) */
+  .scoreboard li.leader .len::before { display: none; } /* (the leader's gold ring says it) */
+  .scoreboard .name { font-size: 0.86rem; }
+}
+
+/* Hunger: a thin bar along the bottom of each tag (scaled, never resized). */
+.scoreboard .hunger {
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  bottom: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(58, 38, 20, 0.14);
+  overflow: hidden;
+}
+.scoreboard .hunger i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--leaf);
+  transform-origin: left; /* (1% steps look smooth; a transition would restyle the page every frame) */
+}
+.scoreboard li.starving .hunger i { background: var(--berry); }
+.scoreboard li[data-blurb] { cursor: help; } /* tap a rival's tag to hear how it plays */
+.scoreboard li.noted { outline: 2px solid var(--cream); outline-offset: 2px; } /* (its note is on the card: a parchment ring round its tag, on the dark page) */
+/* Friends' markings (see MARKS in render.js), in their dots too. */
+.dot[data-ring] { box-shadow: 0 0 0 2px #ec4899; } /* Capricious: a pink ring, whatever its mood */
+.dot[data-mark="spots"] { background-image: radial-gradient(circle at 32% 58%, rgba(58, 38, 20, 0.6) 0 15%, transparent 17%), radial-gradient(circle at 68% 42%, rgba(58, 38, 20, 0.6) 0 15%, transparent 17%) !important; }
+.dot[data-mark="rings"] { background-image: radial-gradient(circle, transparent 0 30%, rgba(58, 38, 20, 0.6) 32% 44%, transparent 46%) !important; }
+.dot[data-mark="dots"] { background-image: radial-gradient(circle, rgba(58, 38, 20, 0.6) 0 26%, transparent 28%) !important; }
+/* Starving: a berry ring pulses around the tag (opacity only, so nothing repaints). */
+.scoreboard li::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.6);
+  opacity: 0;
+  pointer-events: none;
+}
+.scoreboard li.starving::after { animation: rumble 0.6s ease-in-out infinite alternate; }
+@keyframes rumble { to { opacity: 1; } }
+
+/* The leader (the longest snake) wears a gold ring and a bobbing crown. */
+.scoreboard li.leader { box-shadow: 0 2px 0 var(--parchment-2), inset 0 0 0 2px #d4a017; }
+.scoreboard li.leader .len::before { /* (it bobs when crowned, then rests: a crown bobbing forever restyles the page every frame) */
+  content: '';
+  display: inline-block;
+  width: 13px;
+  height: 11px;
+  margin-right: 3px;
+  vertical-align: -1px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 11'%3E%3Cpath d='M1.2 3.4l2.8 2.7L6.5 1l2.5 5.1 2.8-2.7-1.1 6.4H2.3z' fill='%23fde68a' stroke='%23d4a017' stroke-width='.9' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  animation: crown-bob 1.6s ease-in-out 3;
+}
+@keyframes crown-bob { 50% { transform: translateY(-2px) rotate(-8deg); } }
+
+/* Out of the round: the tag fades, the words stay readable. */
+.scoreboard li.dead { background: rgba(246, 236, 210, 0.66); }
+.scoreboard li.dead::after { animation: none; opacity: 0; }
+.scoreboard li.dead .name { text-decoration: line-through; }
+.scoreboard li.dead .dot { opacity: 0.5; }
+
+/* ------------------------------------------------- the board and frame */
+
+.frame {
+  position: relative;
+  padding: 10px;
+  border-radius: var(--r-frame);
+  background: linear-gradient(145deg, #94602f, var(--heartwood) 40%, #5c3519);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.25);
+}
+/* Moss creeping over the frame's edges, the same moss as on the log (on the
+   frame, never over the cells), with a soft shadow under it. */
+.moss { position: absolute; z-index: 4; height: 16px; pointer-events: none; filter: drop-shadow(0 1.5px 1px rgba(14, 8, 2, 0.45)); }
+.moss.top { top: -7px; }
+.moss.bottom { bottom: -6px; transform: scaleY(-1); }
+
+/* Now and then a band of light runs along the wood (under the board, so
+   only the frame shows it). */
+.frame-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+.frame-sheen > i { /* (a real element, not a pseudo-element, so the compositor can run it) */
+  position: absolute;
+  will-change: transform;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 26%;
+  background: linear-gradient(90deg, transparent, rgba(255, 228, 180, 0.32), transparent);
+  transform: translateX(-150%) skewX(-18deg);
+  animation: sheen 8s ease-in-out 2s infinite;
+}
+@keyframes sheen { 0% { transform: translateX(-150%) skewX(-18deg); } 16%, 100% { transform: translateX(480%) skewX(-18deg); } }
+
+/* The big moments light the frame up round its edge, in their colour
+   (snake.js flashFrame animates its opacity). */
+.frame-glow {
+  position: absolute;
+  inset: -2px;
+  z-index: 6;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 0 0 3px var(--glow, #fde68a), 0 0 12px 2px var(--glow, #fde68a), inset 0 0 26px 6px var(--glow, #fde68a); /* (a short outer glow: a long one washed the tags above with "knocked out" red) */
+}
+
+/* Leaves rest on the frame's corners and never reach the bark's cells. */
+.leaves {
+  position: absolute;
+  z-index: 5;
+  width: clamp(30px, 8%, 56px);
+  height: clamp(30px, 8%, 56px);
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+.leaves.tl { left: -8px; top: -8px; }
+.leaves.tr { right: -8px; top: -8px; }
+.leaves.bl { left: -8px; bottom: -8px; }
+.leaves.br { right: -8px; bottom: -8px; }
+/* ...and sway in the breeze, each on its own beat. (The whole leaf turns, by
+   its transform, so the compositor runs it: animating the SVG's insides made
+   the page lay out and repaint every frame, and the rotate property had the
+   page re-layerized every frame. The corners' mirroring is in the SVG.) */
+.leaves { will-change: transform; animation: leaf-sway 4.6s ease-in-out infinite alternate; }
+.leaves.tr { animation-delay: -1.3s; animation-duration: 5.2s; }
+.leaves.bl { animation-delay: -2.7s; animation-duration: 5.8s; }
+.leaves.br { animation-delay: -3.9s; animation-duration: 4.9s; }
+@keyframes leaf-sway { from { transform: rotate(-6deg); } to { transform: rotate(7deg); } }
+
+.board {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: clamp(4px, 1.2%, 10px);
+  overflow: hidden;
+  background: var(--bark);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none; /* swipes steer; they never scroll or zoom the page */
+}
+
