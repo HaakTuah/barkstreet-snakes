@@ -1408,7 +1408,7 @@ window.SnakeEngine = (() => {
     const crashOf = s => {
       const { x, y } = s.next;
       const k = key(x, y);
-      if (!inside(x, y)) return { cause: s.boom ? 'flashed into the edge and blew up' : 'hit the edge', killer: 'wall', killerId: null };
+      if (!inside(x, y)) return { cause: s.boom ? 'dashed into the edge and blew up' : 'hit the edge', killer: 'wall', killerId: null };
       if (bridgeAt(game, s, x, y)) return headOnAt(s, x, y); // (round six B: another's body over a pit is a bridge, crossed on its back)
       if (bodyStamp[k] === stamp && !s.boom) { // (a body first: one lying over a hole is what it hit)
         const other = game.snakes[bodyOwner[k]];
@@ -1416,7 +1416,7 @@ window.SnakeEngine = (() => {
         const swapped = other !== s && x === other.body[0].x && y === other.body[0].y && other.next?.x === s.body[0].x && other.next?.y === s.body[0].y;
         return { cause: other === s ? 'bit itself' : swapped ? `crashed head-on into ${other.name}` : `ran into ${other.name}`, killer: other === s ? 'self' : other.name, killerId: other.id, headOn: swapped };
       }
-      if (game.holes.has(k)) return { cause: s.boom ? 'flashed into a woodpecker hole and blew up' : 'hit a woodpecker hole', killer: 'wall', killerId: null }; // (it bounces off a hole's rim like the edge; only a leap coming down on one falls in)
+      if (game.holes.has(k)) return { cause: s.boom ? 'dashed into a woodpecker hole and blew up' : 'hit a woodpecker hole', killer: 'wall', killerId: null }; // (it bounces off a hole's rim like the edge; only a leap coming down on one falls in)
       return headOnAt(s, x, y);
     };
     const headOnAt = (s, x, y) => {

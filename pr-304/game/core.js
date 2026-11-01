@@ -227,7 +227,7 @@ function causeFor(s) {
   return k && isMe(k) && s.cause.endsWith(k.name) ? s.cause.slice(0, -k.name.length) + 'you' : s.cause;
 }
 // A cause in fewer words, for a banner's one line on a phone.
-const shortCause = c => c.replace(/^flashed into (the edge|a woodpecker hole) and blew up$/, 'blew up').replace(/^got pecked by the woodpecker$/, 'got pecked').replace(/^(fell into|hit) a woodpecker hole$/, '$1 a hole').replace(/^got cut in two by /, 'was cut by ').replace(/^crashed head-on into (.+)$/, 'hit $1 head-on');
+const shortCause = c => c.replace(/^dashed into (the edge|a woodpecker hole) and blew up$/, 'blew up').replace(/^got pecked by the woodpecker$/, 'got pecked').replace(/^(fell into|hit) a woodpecker hole$/, '$1 a hole').replace(/^got cut in two by /, 'was cut by ').replace(/^crashed head-on into (.+)$/, 'hit $1 head-on');
 // Your death, in the second person.
 const yourCause = p => p.killer === 'self' ? 'bit yourself' : causeFor(p);
 // Why a crash was the end (the engine's verdict): length is armour, so a
