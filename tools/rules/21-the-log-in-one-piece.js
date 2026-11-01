@@ -99,8 +99,9 @@ function pieces2s(g, mark) {
 
 { // 2s+: the bird aims small (PECK_FALL_SOFT, 12 cells: its first tries cut nothing bigger loose; past them any size
   // may fall, as the design says under "The log stays one piece"). A field, a neck and a 4x4 peninsula beyond it (16
-  // cells, over the cap), a snake far off on the field: with the field to peck, no mark cuts the peninsula loose. (With
-  // the nine-cell peninsula, under the cap, some do: above.)
+  // cells, over the cap), a snake far off on the field: with the field to peck, no mark cuts the peninsula loose; on the
+  // same seed, with the nine-cell peninsula instead, under the cap, some marks take the neck and cut it loose, so the
+  // bigger one was a patch it could have taken.
   const marksOf = (g, n, seed) => seededWhile(seed, () => {
     const out = [];
     g.woodpecker = { x: 12, y: 0, at: g.time, target: [], strikeAt: -1, last: [], struckAt: -1, restUntil: g.tick };
@@ -113,5 +114,6 @@ function pieces2s(g, mark) {
   });
   const big = rect(14, 8, 17, 11);
   const a = marksOf(island([[[[4, 4], [3, 4], [2, 4]], 'right']], [...field2s, neck2s, ...big]), 120, 631);
-  check('2s+: the bird aims small: with any other patch to take, none cuts a piece bigger than PECK_FALL_SOFT loose', T.PECK_FALL_SOFT < big.length && a.length === 120 && a.every(m => m.fall.length <= T.PECK_FALL_SOFT), `${a.length} marks; ${a.filter(m => m.fall.length > T.PECK_FALL_SOFT).length} of ${a.length} cut a bigger piece loose`);
+  const small = marksOf(island([[[[4, 4], [3, 4], [2, 4]], 'right']], land2s), 120, 631);
+  check('2s+: the bird aims small: with any other patch to take, none cuts a piece bigger than PECK_FALL_SOFT loose', T.PECK_FALL_SOFT < big.length && a.length === 120 && a.every(m => m.fall.length <= T.PECK_FALL_SOFT) && small.some(m => m.mark.has(K(...neck2s)) && m.fall.length), `${a.filter(m => m.fall.length > T.PECK_FALL_SOFT).length} of ${a.length} cut a bigger piece loose; the nine-cell one cut loose ${small.filter(m => m.mark.has(K(...neck2s)) && m.fall.length).length} of ${small.length} times`);
 }
