@@ -25,8 +25,9 @@ const rect = (x0, y0, x1, y1) => { const out = []; for (let y = y0; y <= y1; y++
 const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x, s.body[0].y)));
 
 { // It never shuts you in while it has another patch to pick. A snake at the mouth of a winding corridor, 36 cells long and a
-  // dead end, with growth to come that needs 35 of them (so any patch in it shuts the snake in), and a field far off.
-  const corridor = [...rect(4, 12, 23, 12), ...rect(23, 13, 23, 20), ...rect(15, 20, 22, 20)], field = rect(0, 0, 11, 8);
+  // dead end, with growth to come that needs 35 of them (so any patch in it shuts the snake in), and a field far off, joined
+  // to the corridor behind the snake's head (2s: the log is one piece), so the snake can't get there.
+  const corridor = [...rect(4, 12, 23, 12), ...rect(23, 13, 23, 20), ...rect(15, 20, 22, 20)], field = [...rect(0, 0, 11, 8), ...rect(1, 9, 1, 11)];
   const snake = [[[3, 12], [2, 12], [1, 12], [0, 12]], 'right'];
   const inCorridor = m => corridor.some(([x, y]) => m.has(K(x, y)));
   const fair = seededWhile(601, () => marks(island([snake], [...corridor, ...field], { grow: 31 }), 30));
@@ -40,6 +41,9 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
   // patch's own growth), on land of its own.
   const field = rect(10, 6, 21, 17), bay1 = [[9, 11]], bay2 = [[9, 14], [8, 14]];
   const a = [[[5, 11], [4, 11], [3, 11], [2, 11]], 'right'], c = [[[5, 14], [4, 14], [3, 14], [2, 14]], 'right'];
+  // (their land joined to the field round the back, 2s: the log is one piece)
+  const ways = [...rect(1, 4, 1, 19), ...rect(2, 4, 10, 4), ...rect(10, 5, 10, 5), ...rect(2, 19, 10, 19), ...rect(10, 18, 10, 18), [2, 11 - 0], [1, 11]].filter(([x, y]) => !(x === 2 && y === 11));
+  field.push(...ways);
   const g = island([a, c], [...field, ...bay1, ...bay2]);
   const got = seededWhile(611, () => marks(g, 200));
   const has = (m, cells) => cells.every(([x, y]) => m.has(K(x, y)));
@@ -63,13 +67,15 @@ const heads = g => new Set(g.snakes.filter(s => s.alive).map(s => K(s.body[0].x,
     return n;
   };
   check('...so no mark leaves a crumb beside it', got.every(m => !crumbsLeft(m)), `${got.filter(m => crumbsLeft(m)).length} of ${got.length}`);
-  // A snake lying through the bay's mouth with its tail in the bay: a patch there would cut it off with the snake on it, so
-  // none is picked. Its tail one cell short of the bay, the mouth is taken now and then, bay and all.
-  const through = n => [[[16, 11], ...Array.from({ length: n }, (_, i) => [15 - i, 11])], 'right'];
-  const on = seededWhile(612, () => marks(island([a, through(7), c], [...field, ...bay1, ...bay2]), 200));
-  const off = seededWhile(612, () => marks(island([a, through(6), c], [...field, ...bay1, ...bay2]), 200));
-  check('...but a patch that would cut off a snake on one isn\'t picked', on.length === 200 && !on.some(m => m.has(K(10, 11))) && off.some(m => m.has(K(10, 11)) && m.has(K(9, 11))),
-    `${on.filter(m => m.has(K(10, 11))).length} with the snake on it, ${off.filter(m => m.has(K(10, 11))).length} without`);
+  // 2s: a piece cut loose falls, and never with a head on it while there's another patch. A snake whose head is in the
+  // one-cell bay (its body out through the mouth): no mark takes the mouth (it'd drop the head with the bay). With only its
+  // tail in the bay, the bay may go: the body lies over the new hole, a bridge, and its head is out on the field.
+  const headIn = [[[9, 11], [10, 11], [11, 11], [12, 11]], 'left'];
+  const tailIn = [[[16, 11], ...Array.from({ length: 7 }, (_, i) => [15 - i, 11])], 'right'];
+  const on = seededWhile(612, () => marks(island([a, headIn, c], [...field, ...bay1, ...bay2]), 200));
+  const off = seededWhile(612, () => marks(island([a, tailIn, c], [...field, ...bay1, ...bay2]), 200));
+  check('...but never a piece with a head on it, while there\'s another patch (a tail on it, yes: it bridges the hole)', on.length === 200 && !on.some(m => m.has(K(9, 11))) && off.some(m => m.has(K(9, 11))),
+    `${on.filter(m => m.has(K(9, 11))).length} with the head on it, ${off.filter(m => m.has(K(9, 11))).length} with the tail`);
 }
 
 { // Rounder hollows. A 3x4 field with a one-cell bay off its side: the patch grows 12 of the 13 cells, and the one it left

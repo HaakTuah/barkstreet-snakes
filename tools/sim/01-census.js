@@ -36,7 +36,7 @@ const census = () => ({
   // off (with food on them, a snake on them); and the rounds whose last
   // snakes ended up on islands of their own, of them how often the one on
   // the biggest won (chance: what a blind pick would get).
-  seals: 0, sealedOut: 0, crumbs: 0, crumbsFood: 0, crumbsSnake: 0, split: 0, splitBiggest: 0, splitChance: 0,
+  seals: 0, sealedOut: 0, crumbs: 0, crumbsFood: 0, crumbsSnake: 0, falls: 0, fallCells: 0, fallBig: 0, fellOut: 0, piecesLeft: 0, split: 0, splitBiggest: 0, splitChance: 0,
   causesSD: {}, sdTimes: [],
 });
 
@@ -268,6 +268,8 @@ function woodpeckerCensus(g, c, st, dying, N) {
       if (st.beak) { for (const f of st.beak) if (g.food.includes(f)) c.beakRan++; st.beak = null; }
       labelLand(g, N);
       const { comp, sizes } = land, foodAt = new Set(g.food.map(f => f.y * N + f.x)), bodyAt = new Set(g.snakes.filter(s => s.alive).flatMap(s => s.body.map(b => b.y * N + b.x)));
+      if (e.fall) { c.falls++; c.fallCells += e.fall.length; if (e.fall.length > 12) c.fallBig++; } // (2s: pieces cut loose, fallen with the strike; bigger than PECK_FALL_SOFT's 12)
+      if (sizes.length > 1) c.piecesLeft++; // (2s: a strike that left the log in pieces)
       const crumbs = new Set();
       for (const k of e.cells) for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
         const x = k % N + dx, y = Math.floor(k / N) + dy;
@@ -282,6 +284,7 @@ function woodpeckerCensus(g, c, st, dying, N) {
       }
     }
   }
+  for (const s of dying) if (s.fell) c.fellOut++; // (2s: down with a piece cut loose)
   for (const s of dying) { // (shut in by a mark, and out by 3 s after its strike)
     if (!st.sealed.some(([id, at]) => id === s.id && g.tick - 1 <= at + 30)) continue;
     c.sealedOut++;
