@@ -1144,6 +1144,8 @@ window.SnakeEngine = (() => {
         leaps: snake.leaps, dashes: snake.dashes, wrap: Math.max(0, snake.wrapUntil - game.time), leapIn: leapIn(game, snake), flashIn: flashIn(game, snake),
         // (the plain jump's own rest, golden jumps held or not, as its mark on its head shows a person theirs)
         leapRest: Math.max(0, snake.leapReadyAt - game.time),
+        // (up on a golden flight: which way, and how many cells it's flown, so it can plan where to come down as it flies)
+        flight: snake.flight?.gold && snake.flight.held ? { dir: snake.flight.dir, flown: snake.flight.flown } : null,
         // (who it just met head-on, if it was in the last 3 s or so: it keeps clear of them for a while)
         bumped: snake.bumpedBy && game.tick - snake.bumpedBy.tick < 30 ? snake.bumpedBy.id : -1,
         // (a mushroom in its cheek: it's spat after this many more moves (0: none), this strong)
@@ -1270,6 +1272,10 @@ window.SnakeEngine = (() => {
       let land = null;
       const f = s.flight;
       if (f?.gold) { // a golden flight: steered in the air, one turn a tick, on from where it is that way (round six B)
+        if (f.held && f.flown < T.GOLD_FLY && !(s.isPlayer && !s.autopilot)) { // (a rival plans again where to come down, every move it's up: part 4, "the rivals fly it as a person would")
+          decide(aiView(game, s), brainOf(s), s.memory);
+          if (s.memory.flyAt === game.tick) { s.flyFor = s.memory.fly || 0; const t = s.memory.flyTurn; s.flyTurn = t ? { at: t.at, dir: Object.values(DIRS).find(q => q.x === t.dir.x && q.y === t.dir.y) } : null; }
+        }
         const d = airTurn(game, s, f);
         if (d) { f.dir = d; f.over = []; f.land = ahead(game, s, s.body[0].x, s.body[0].y, d); }
         if (!(s.isPlayer && !s.autopilot) && f.flown >= (s.flyFor || 0)) f.held = 0; // (a rival lets go where it chose to come down)
