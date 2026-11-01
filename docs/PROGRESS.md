@@ -78,6 +78,17 @@ the second account until its usage is spent; on the main account the brake close
 
 The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, parked on Haakon's question in "For Haakon" (1 November 2026: the flight even on its own, under real and amplified rules, after the rivals re-plan it in the air and an escalation), 2r folded in: its A/B comes out even, so it waits until the rivals use the moves well: the flight and leap now measured apart, the rivals taught the flight's uses, the golden flash measured on its own in the same pass, and the flight merged without leap now if only the flight pays; Haakon, 31 October 2026), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves".
 
+### 2s+. The log's fall, proven (1 November 2026; the weekly blind re-review of PR #289; an engine-rules follow-up, after part 4)
+
+The blind re-review ("Reviews", point 5, in `docs/claude-and-codex.md`) scored #289 a 7: three blocking points it
+passed with, each a miss. (1) A rules test that the woodpecker aims small (`PECK_FALL_SOFT`) and still takes a big piece
+when nothing smaller is left. (2) An online round trip that carries a non-empty `fall` (`online.js`; the pinned shapes
+hold only the empty one). (3) The case where a head is on a piece cut loose on the last tries: tested, or said in the
+design ("The log stays one piece"). Not blocking, fixed in the same PR: food and beetles on a falling piece tip away
+with it (and a beetle gets the bird-eats cue); `pieceFalls` cleared between rounds; the sim's dead island-crumb counters
+(`tools/sim/01-census.js`, `03-report.js`) removed; a render or UI check for the shade and the lesson. The flight's A/B
+on the new log is part 4's.
+
 ### 2w. Beetles get away at least a third of the time (Haakon, 31 October 2026; an engine-rules entry, after part 4)
 
 The escape band moves from 20–35% to at least a third (33–45%): measured on `develop` once part 4's flight is in, and the beetles' side tuned if it falls short, never the rivals made worse. Spec: `docs/handoff/queue-specs.md`, "2w. Beetles get away at least a third of the time".
