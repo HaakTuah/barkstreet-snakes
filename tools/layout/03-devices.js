@@ -105,7 +105,14 @@ for (const d of share('03', DEVICES)) {
   const covers = drawn.filter(q => q.p.over > (gutter ? 4 : 0));
   check(!covers.length, `${tag}: perched (resting or eyeing its chunk), it never covers a cell${gutter ? ' (with room nowhere, its beak’s tip touches the edge, as before: 4 px at most)' : ''}`, covers.length ? covers.map(q => `${q.x},${q.y}${q.aim ? ' eyeing' : ''}: ${q.p.over} px`).join('; ') : `${drawn.length} perches`);
   const si = { left: 0, right: 0, top: 0, bottom: 0, ...d.insets }; // (inside the safe area, not just the screen: never under a notch)
-  const outside = p => [...p.cut.map(e => `cut off at the screen's ${e}`), p.x < si.left - 0.5 && 'left', p.r > play.vw - si.right + 0.5 && 'right', p.y < si.top - 0.5 && 'top', p.b > play.vh - si.bottom + 0.5 && 'bottom'].filter(Boolean);
+  // (a phone on its side, Haakon for #270: the bird perches at full size,
+  // partly off the screen: its beak, head and eye in the gap beside the
+  // board, inside the safe area, its back and tail cut off by the screen's
+  // edge on that side; there, that edge may cut it, never its eye)
+  const cutPhone = side && Math.min(d.w, d.h) <= 500;
+  const backOff = p => cutPhone && p.eye && (p.x >= play.board.r - 0.5 ? 'right' : p.r <= play.board.x + 0.5 ? 'left' : null);
+  const eyeIn = p => p.eye.x >= si.left && p.eye.x <= play.vw - si.right && p.eye.y >= si.top && p.eye.y <= play.vh - si.bottom;
+  const outside = p => { const k = backOff(p); return [...p.cut.filter(e => e !== k).map(e => `cut off at the screen's ${e}`), k && !eyeIn(p) && 'its eye off the screen', p.x < si.left - 0.5 && k !== 'left' && 'left', p.r > play.vw - si.right + 0.5 && k !== 'right' && 'right', p.y < si.top - 0.5 && 'top', p.b > play.vh - si.bottom + 0.5 && 'bottom'].filter(Boolean); };
   const offWhy = q => [...outside(q.p), ...Object.keys(q.p.on).map(k => `${q.p.on[k]} px over the ${k}`)];
   const off = drawn.filter(q => offWhy(q).length);
   check(!off.length, `${tag}: perched, all of it is on the screen, inside its safe area, and off ${upright ? 'the tags and the header (it stands over the row under the board and the chatter)' : 'the tags, the chatter and the header'}`, off.map(q => `${q.x},${q.y}${q.aim ? ' eyeing' : ''}: ${offWhy(q).join(', ')} (${r1(q.p.x)},${r1(q.p.y)}-${r1(q.p.r)},${r1(q.p.b)})`).join('; '));
@@ -137,6 +144,8 @@ for (const d of share('03', DEVICES)) {
     for (const [x, y] of FLIGHT_SPOTS) for (const from of [[x, y], [23 - x, 23 - y]]) flights.push({ x, y, from, f: await ev(FLIGHT(x, y, from)) });
     const cuts = f => [...f.f.fly.map(e => ({ what: 'flying', e })), ...f.f.drum.map(e => ({ what: 'drumming', e }))];
     const say = (f, list) => `${f.x},${f.y} from ${f.from} ${[...new Set(list.map(c => c.what))].map(w => `${w} (${list.filter(c => c.what === w).map(c => c.e).join(', ')})`).join(', ')}`;
+    const homeEdges = new Set(drawn.map(q => backOff(q.p)).filter(Boolean)); // (on a phone on its side, the edge its perch runs past: flying off it and home to it, cut there too)
+    for (const f of flights) f.f.fly = f.f.fly.filter(e => !homeEdges.has(e));
     const cutOff = flights.filter(f => cuts(f).length);
     check(!cutOff.length, `${tag}: flying out to a spot at the board's edges and corners, drumming it and flying home, through the whole wingbeat, it isn't cut off by the screen's edge`, cutOff.map(f => `cut off: ${say(f, cuts(f))}`).join('; ') || `${flights.length} flights`);
   }

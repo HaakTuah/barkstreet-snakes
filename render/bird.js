@@ -124,7 +124,7 @@ function perchFor(tx, ty) {
   const edgeSide = k => (k === 'right' ? boardRect.right >= innerWidth - EDGE_SLACK_PX : boardRect.left <= EDGE_SLACK_PX);
   const cutSide = boardRect.phone && !boardRect.upright && sc ? ['left', 'right'].filter(k => fit[k] < 1 && edgeSide(k)).sort(nearer)[0] : null;
   const cutS = cutSide ? Math.min(1, (room[cutSide] - gap) / ((BILL[0] - EYE_BACK + BOX_EDGE) * BU)) : 0;
-  const cut = cutS >= least && (side === 'left' || side === 'right');
+  const cut = cutS >= Math.max(least, fit[cutSide] || 0) && (side === 'left' || side === 'right'); // (only where it's bigger so than all of it on the screen)
   if (cut) side = cutSide;
   const nowhere = !cut && (side === 'left' || side === 'right') && !(fit[side] >= least);
   const s = cut ? cutS : side === 'ledge' ? ledge : nowhere ? Math.max(between ? floor : least, shrunk(side)) : Math.max(least, fit[side]);
