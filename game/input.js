@@ -433,8 +433,9 @@ click(watchBtn, () => {
   else start({ aiOnly: true });
 }, cardSettled);
 // A tap on the board or the napping card's words wakes, as the Wake up
-// button does (its buttons and links keep their own jobs).
-overlay.addEventListener('click', e => { if (performance.now() - touchAt < 800 && state === 'paused' && !e.target.closest('button, a, input') && cardSettled(e)) wakes(); }); // (a touch's, just now, which Safari's clicks don't say: a mouse's click there stays nothing, as it was)
+// button does (its buttons and links keep their own jobs); a tap that
+// closed a rival's note was for the note, and wakes nothing.
+overlay.addEventListener('click', e => { if (performance.now() - touchAt < 800 && performance.now() - noteShutAt > 800 && state === 'paused' && !e.target.closest('button, a, input') && cardSettled(e)) wakes(); }); // (a touch's, just now, which Safari's clicks don't say: a mouse's click there stays nothing, as it was)
 click(pauseBtn, () => (state === 'paused' ? resume() : state === 'running' && !playerAlive() && shownCard?.reward && !overlay.classList.contains('hidden') ? hideCard() : napNow()));
 muteBtn.addEventListener('click', () => { Sound.unlock(); toggleMute(); }); // (its tap comes after the toggle: see toggleMute)
 click(musicBtn, () => toggleMusic());

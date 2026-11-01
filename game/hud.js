@@ -98,7 +98,9 @@ function closeNote(byKey = false) {
   if (to === name) tabbed = name; // (back as if Tabbed to: Enter there opens it again, rather than asking to start over)
 }
 $('note-close').addEventListener('click', e => closeNote(e.detail === 0));
-document.addEventListener('pointerdown', e => { if (noted && !e.target.closest?.('#scoreboard, button, input, label, a, #records, #picker')) closeNote(); });
+// (noteShutAt: when a tap closed a note, so that tap's click doesn't also wake a nap: it was for the note)
+let noteShutAt = -Infinity;
+document.addEventListener('pointerdown', e => { if (noted && !e.target.closest?.('#scoreboard, button, input, label, a, #records, #picker')) { closeNote(); noteShutAt = performance.now(); } });
 // Choosing your rivals: a start card's seat opens the picker, every rival
 // and "Any" (dealt from the deck). The choice is kept for this visit
 // (Records.setSeat), round after round, and a chosen seat wears a pin: a tap
