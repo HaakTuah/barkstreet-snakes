@@ -55,7 +55,9 @@ animation task to Codex, compared against Claude's; after that, art goes where i
 3. **Questions go on the thread,** both ways, each comment standing alone (no "as discussed"). At most **two rounds**
    per question; then the orchestrator takes the most reasonable reading and writes it under "Readings taken".
    Whatever only Haakon can settle goes to "Questions for Haakon" and the "For Haakon" table in `docs/PROGRESS.md`, as always.
-4. **Codex's PR** is reviewed as below, sent back with `@codex` and the review's list, and merged by the orchestrator.
+4. **Write the mention only to start Codex.** Its bot answers every `@codex` it finds in a PR's or issue's text or
+   comments, even inside backticks, so a description or report that only talks about it says "the Codex mention".
+5. **Codex's PR** is reviewed as below, sent back with `@codex` and the review's list, and merged by the orchestrator.
 
 ## When Codex is not there
 
