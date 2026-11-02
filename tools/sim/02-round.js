@@ -17,7 +17,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const s of g.snakes) {
       per[s.name] ||= {
         rounds: 0, wins: 0, placeSum: 0, eaten: 0, pellets: 0, beetles: 0, kills: 0, aliveMs: 0, deaths: {},
-        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, shrooms: 0, hits: 0, hitBy: 0, now: 0, bumps: 0, flown: 0, flights: 0, // (round six B: mushrooms eaten, spits that hit a head, and taken; (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, own beads squashed (chokes before round six B), crashes survived)
+        flashes: 0, jumps: 0, dashes: 0, leaps: 0, golden: 0, chokes: 0, crashes: 0, shrooms: 0, hits: 0, hitBy: 0, now: 0, bumps: 0, flown: 0, flights: 0, ringGo: 0, // (round six B: mushrooms eaten, spits that hit a head, and taken; (for --census: plain flashes and jumps, golden dashes and leaps, golden power food, own beads squashed (chokes before round six B), crashes survived)
         ...(signs ? { sig: Object.fromEntries(SIGNS.map(k => [k, 0])) } : {}),
       };
       per[s.name].rounds++;
@@ -57,7 +57,9 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     const bugs = g.food.filter(f => f.kind === 'beetle');
     for (const f of bugs) { const b = st.bugs.get(f); if (b && b.near < 0 && g.snakes.some(s => s.alive && Math.abs(s.body[0].x - f.x) + Math.abs(s.body[0].y - f.y) <= CHASE_NEAR)) b.near = g.tick; }
     const riding = new Set(g.snakes.filter(s => s.alive && !s.flight && g.holes.has(s.body[0].y * N + s.body[0].x)));
+    const rings = ringsUp(g); // (2y: each jump's ring before the tick, and who could get there first)
     const dying = E.step(g);
+    landingsTaken(g, c, per, rings);
     st.edge ||= g.snakes.map(() => [0, 0]); // (each snake's ticks alive, and with its head on the edge)
     for (const s of g.snakes) if (s.alive) { const h = s.body[0], on = h.x === 0 || h.y === 0 || h.x === N - 1 || h.y === N - 1; st.edge[s.id][0]++; if (on) { st.edge[s.id][1]++; c.edgeTicks++; } }
     for (const s of dying) if (/blew up/.test(s.cause || '')) c.failedGold++;
@@ -171,4 +173,30 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
   for (const k of ['goldBeetle', 'leaf', 'goldcap', 'storm', 'starvedEarly', 'choke']) if (seen.has(k)) c[k === 'starvedEarly' ? k : k + 'Rounds']++;
   for (const n of picked) { c.pickups += n; if (n > 2) c.greedy++; }
   return { r, result: { per, total } };
+}
+
+// 2y: rivals going for a landing. Each jump up before the tick: its ring, the
+// moves till it's down, its way, and the heads on the ground that could be
+// there by then (contested). After it: a head stepped or flashed onto a ring
+// (it went for the landing), a leap now came down on or beside one (it cut a
+// flier off), and a flier with a contested ring turned in the air (it steered away).
+function ringsUp(g) {
+  const out = [];
+  for (const s of g.snakes) {
+    if (!s.alive || !s.flight?.ring) continue;
+    const r = s.flight.ring, by = g.snakes.filter(o => o !== s && o.alive && !o.flight && Math.abs(o.body[0].x - r.x) + Math.abs(o.body[0].y - r.y) <= r.n);
+    out.push({ s, x: r.x, y: r.y, n: r.n, dir: s.flight.dir, by });
+  }
+  return out;
+}
+function landingsTaken(g, c, per, rings) {
+  for (const r of rings) {
+    if (r.by.length) { c.ringsContested++; if (r.s.flight && r.s.flight.dir !== r.dir) c.steerAway++; }
+    for (const o of g.snakes) {
+      if (o === r.s || !o.alive || !r.by.includes(o)) continue;
+      const h = o.body[0], leapt = g.events.find(e => e.type === 'leap' && e.snake === o);
+      if (!leapt && h.x === r.x && h.y === r.y) { c.ringGo++; per[o.name].ringGo++; }
+      else if (leapt?.now && o.flight?.ring && Math.abs(o.flight.ring.x - r.x) + Math.abs(o.flight.ring.y - r.y) <= 1) { c.ringNow++; per[o.name].ringGo++; }
+    }
+  }
 }
