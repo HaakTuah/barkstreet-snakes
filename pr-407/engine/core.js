@@ -14,7 +14,7 @@
 // both).
 //
 //   core.js        tuning, the grid and the occupancy stamps, snakes and a new game, the tick's length, hunger and meals
-//   food.js        apples and filling the board with food, the food foodPlacer, eating, mushrooms' cheeks and spitting
+//   food.js        apples and filling the board with food, the food placer, eating, mushrooms' cheeks and spitting
 //   roll.js        knocked food rolling: which way a head's step went, and where food goes
 //   beetles.js     beetles, their burrows, their crawl and going under
 //   weather.js     the weather, spells, rainbows, lightning, fire and cooking
