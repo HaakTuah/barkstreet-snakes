@@ -38,11 +38,9 @@ the second account until its usage is spent; on the main account the brake close
      the PR shows ten lines before and after, so the owner can set the bar.
   4. **A cheap guard after:** a test that fails when too many lines in one voice share one shape (the same opening
      words and punctuation), so the formula cannot creep back.
-  **Scored like every review** (the owner, 2 November 2026): each kind of text gets a score from 1 to 10, with
-  everything that keeps it from 10, and only a 10 passes; a 10 means nothing in it reads machine-made, every voice is
-  its own and no formula repeats. The usual guards hold ("Reviews" in `docs/claude-and-codex.md`): later rounds judge
-  the fixes, with the reviewer's own earlier lists; three rounds at most, then the escalation helper. The owner's read
-  of the ten lines before and after is the final word, and calibrates the reviewer. One PR per voice group or screen, in this lane.
+  Each kind of text is reviewed as every review is ("Reviews" in `docs/claude-and-codex.md`); here a 10 means
+  nothing reads machine-made, every voice is its own and no formula repeats. The owner's read of the ten lines before
+  and after is the final word. One PR per voice group or screen, in this lane.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
