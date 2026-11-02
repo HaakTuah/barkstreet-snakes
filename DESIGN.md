@@ -10,7 +10,7 @@ the file of its topic; a new round or topic gets its own file and a line here.
 | [`docs/design/01-the-vision-in-one-paragraph.md`](docs/design/01-the-vision-in-one-paragraph.md) | The vision in one paragraph |
 | [`docs/design/02-art-direction-storybook-bark-on-a-mossy-log.md`](docs/design/02-art-direction-storybook-bark-on-a-mossy-log.md) | Art direction: "storybook bark", on a mossy log |
 | [`docs/design/03-the-snake-as-a-character.md`](docs/design/03-the-snake-as-a-character.md) | The snake as a character |
-| [`docs/design/04-food-and-the-world.md`](docs/design/04-food-and-the-world.md) | Food and the world: food, beetles, burrows, holes, remains, and the realms and colonies with their flags |
+| [`docs/design/04-food-and-the-world.md`](docs/design/04-food-and-the-world.md) | Food and the world: food and its looks, how much there is and hunger, the rivals and food, beetles and their dig, burrows, holes, remains, and the realms and colonies with their flags |
 | [`docs/design/05-weather.md`](docs/design/05-weather.md) | Weather |
 | [`docs/design/06-keeping-it-smooth.md`](docs/design/06-keeping-it-smooth.md) | Keeping it smooth |
 | [`docs/design/07-borders-and-frames.md`](docs/design/07-borders-and-frames.md) | Borders and frames |
