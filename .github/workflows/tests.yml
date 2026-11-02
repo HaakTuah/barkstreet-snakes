@@ -4,12 +4,12 @@
 # thinking ahead, and the renderer's, controls' and page's
 # promises in headless Chrome (the runner has it): the page on phones,
 # tablets and desktops too. The jobs run side by side.
-# Each job runs only where it can be affected (Haakon, 28 October 2026: "tests
+# Each job runs only where it can be affected (the owner, 28 October 2026: "tests
 # should only run where they impact something"): nothing for notes alone
 # (docs/, tools/dev/, .claude/, any .md), the Node checks and the browser's
 # three for any change to the game or its tools, and the page on every screen
 # for a change to what the page shows (index.html, style/, render/, game/,
-# chatter/, audio.js, online.js, net.js, records.js, sw.js, the layout test
+# chatter/, audio/, online.js, net.js, records.js, lineup.js, scores-screen.js, sw.js, the layout test
 # and its parts, the parts' loader, the browser driver or this file). A
 # skipped job counts as passed.
 name: tests
@@ -19,6 +19,10 @@ on:
     branches: [main]
   pull_request:
 
+# Read-only: the jobs only check out and test (SECURITY.md, point 2: the fewest permissions each job needs).
+permissions:
+  contents: read
+
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -27,7 +31,7 @@ jobs:
       code: ${{ steps.what.outputs.code }}
       page: ${{ steps.what.outputs.page }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: What changed
@@ -43,7 +47,7 @@ jobs:
           files=$(git diff --name-only "$BASE" HEAD)
           echo "$files"
           code=$(echo "$files" | grep -v -E '^(docs/|tools/dev/|\.claude/)|\.md$' | grep -c . || true)
-          page=$(echo "$files" | grep -E '^(index\.html|style/|render/|game/|chatter/|audio\.js|online\.js|net\.js|records\.js|sw\.js|tools/layout-test\.js|tools/layout/|tools/parts\.js|tools/browser\.js|\.github/workflows/tests\.yml)' | grep -c . || true)
+          page=$(echo "$files" | grep -E '^(index\.html|style/|render/|game/|chatter/|audio/|online\.js|net\.js|records\.js|lineup\.js|scores-screen\.js|sw\.js|tools/layout-test\.js|tools/layout/|tools/parts\.js|tools/browser\.js|\.github/workflows/tests\.yml)' | grep -c . || true)
           echo "code=$([ "$code" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
           echo "page=$([ "$page" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
@@ -53,24 +57,29 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 26
       - name: Rules
         run: node tools/rules-test.js
       - name: Online
         run: node tools/online-test.js
       # The online messages' types (net.js and online.js, see jsconfig.json): a
-      # check only, with TypeScript fetched for this step. Nothing is built or shipped.
+      # check only, with TypeScript installed for this step at tools/package.json's
+      # version. Nothing is built or shipped.
       - name: Types
-        run: npx -y -p typescript@6.0.2 tsc --noEmit -p jsconfig.json
+        run: |
+          npm ci --prefix tools --ignore-scripts --no-audit --no-fund
+          tools/node_modules/.bin/tsc --noEmit -p jsconfig.json
       - name: Chatter
         run: node tools/chatter-test.js
       - name: Records
         run: node tools/records-test.js
       - name: Service worker
         run: node tools/sw-test.js
+      - name: The versions Dependabot cannot see
+        run: node tools/versions-test.js
       # Four of seed 3's rounds, each played on its own seed (round r of a run
       # with --seed S is round 0 of one with --seed S + 7919 r): 29, 37 and
       # 38, and 47. Between them they cross every kind of event the engine
@@ -94,10 +103,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 26
       - name: The page's shared scope
         run: node tools/scope-test.js
       - name: Render
@@ -130,10 +139,10 @@ jobs:
           - job: 5
             what: upright heights, every 10 px held upright, the bigger woodpecker
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 26
       - name: The page on every screen
         env:
           LAYOUT_JOB: ${{ matrix.job }}

@@ -1,6 +1,6 @@
 // What net.js and online.js see of the rest of the page, for `tsc --noEmit -p jsconfig.json`
 // (a check only: nothing here is shipped or loaded). Hand-written, and only the fields
-// online.js reads or writes: engine.js itself isn't annotated. A field online.js starts
+// online.js reads or writes: the engine itself isn't annotated. A field online.js starts
 // reading goes in here too, or the check fails.
 
 declare namespace Engine {
@@ -34,7 +34,8 @@ declare namespace Engine {
     persona?: unknown; personaKey?: string;
     stunUntil: number; burnUntil: number; burnFrom: number;
     leaps: number; leapArmed: number; leapReadyAt: number; dashes: number; wrapUntil: number;
-    flight: { dir: Dir; over: { x: number; y: number }[]; land: { x: number; y: number }; gold?: Flag } | null;
+    flight: { dir: Dir; over: { x: number; y: number }[]; land: { x: number; y: number }; gold?: Flag; held?: Flag; flown?: number; path?: number[]; ring?: { x: number; y: number; n?: number } } | null;
+    jumpHeld?: Flag; leapNow?: Flag; flyFor?: number; flyTurn?: { at: number; dir: Dir } | null; flew?: number; bumped?: boolean;
     flashReadyAt: number; flashArmed: number;
     /** A mushroom in its cheek (round six B): the segments it took, when it's spat, the ticks it had left to wilt. */
     cheek: { power: number; spitAt: number; left: number } | null;
@@ -69,17 +70,19 @@ declare namespace Engine {
     struckAt: number; restUntil: number; pecks?: number;
     /** [from, to] cells; to -1: the bird eats it. */
     landings?: [number, number][];
+    /** 2s: the cells of the pieces its patch cuts loose (in target too): they fall with the strike. */
+    fall?: number[];
   }
 
-  /** The engine's events, as engine.js lists them above step(): just the fields online.js reads. */
+  /** The engine's events, as engine/step.js lists them above step(): just the fields online.js reads. */
   type Event =
     | { type: 'eat'; snake: Snake; kind: string; x: number; y: number; color?: string; cooked?: Flag; gold?: Flag }
     | { type: 'death'; snake: Snake }
     | { type: 'spawn'; kind: string; x?: number; y?: number; gold?: Flag }
     | { type: 'squash'; snake: Snake; x: number; y: number }
     | { type: 'spit'; snake: Snake; x: number; y: number; tx: number; ty: number; power: number; hit: number; lx: number | null; ly: number | null }
-    | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number; failed?: 1 }
-    | { type: 'leap'; snake: Snake; x: number; y: number; gold?: Flag; reach: number }
+    | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number; failed?: 1; air?: 1 }
+    | { type: 'leap'; snake: Snake; x: number; y: number; gold?: Flag; reach: number; now?: 1 }
     | { type: 'dash'; snake: Snake; x: number; y: number; n: number; plain?: Flag }
     | { type: 'fizzle'; snake: Snake; why: string; x: number; y: number; flash?: Flag }
     | { type: 'cut'; snake: Snake; x: number; y: number; lost: number; by?: number | null }
@@ -92,7 +95,7 @@ declare namespace Engine {
     | { type: 'weather'; kind: string }
     | { type: 'ember'; x: number; y: number; fx: number; fy: number }
     | { type: 'woodpecker' }
-    | { type: 'peck'; x: number; y: number; cells?: number[]; under?: number[] }
+    | { type: 'peck'; x: number; y: number; cells?: number[]; under?: number[]; fall?: number[] }
     | { type: 'rot'; x: number; y: number; kind: string; color?: string }
     | { type: 'starving' | 'alight' | 'singe'; snake: Snake }
     | { type: 'baked' | 'ash'; x: number; y: number; kind: string }

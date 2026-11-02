@@ -16,7 +16,7 @@
 //   tick.
 // - A dead snake's beads keep its markings (Joker's purple and amber,
 //   Wildcard's collar, stars and stripes), though only every other segment
-//   leaves one.
+//   leaves one: each bead is its stretch of two, half and half.
 // - Golden power pips stay on the board at its edge (a head in the first
 //   column, the top row or a corner shows as many of them as one in the
 //   middle), never on the head (none inside its face, where moving the arc
@@ -25,8 +25,8 @@
 //   rainbow streams back along it as it goes, faster than it crawls
 //   (backward over the log, each segment round the rainbow about once a
 //   second; still while it's stunned, a burst as it flashes; with reduced
-//   motion a slow drift where it is), its gold line runs round its points, and a dead Star's beads go
-//   round the rainbow from its head. Its tell is a countdown: its points go
+//   motion a slow drift where it is), its gold line runs round its points, and a dead Star's beads are
+//   its rainbow where it was, segment by segment. Its tell is a countdown: its points go
 //   dim as it flashes and light one by one through its rest, its middle
 //   always lit (with reduced motion too: a point at a time, never a blink),
 //   and its twinkles burst as it flashes, not as its flash comes back. Its
@@ -51,7 +51,8 @@
 //   and a tail end over a hole droops, darker; its outline stays as smooth
 //   as on the bark (no segment bulging above its line, the rim unbroken).
 // - Squashing your own bead (staged from the engine's squash event): it's
-//   gone at once, never spat, rolled or left behind.
+//   gone at once, never spat or rolled, and a splat in its colour, wider
+//   than the bead, lies where it was and fades within 3 s.
 // - Beetles and the woodpecker's knock (staged from the engine's state and
 //   events): two beetles out at once, each drawn; a cornered one digs in
 //   (it sinks, a collar of sawdust round it, sawdust spraying; with reduced
@@ -94,19 +95,14 @@
 // The checks are in tools/render/, one file per area, run in name order as the body of this one
 // (tools/parts.js): 01 a flash, as drawn, 02 beads and golden pips, 03 Star, 04 scorch, rainbows,
 // jumps and bridges, 05 the squash and beetles, 06 flags, strikes and the Field guide, 07 the
-// woodpecker, 08 hunger, 09 the chomps (what the round plays when you or a rival eats), 10 flags bending under a snake. A new check goes in its area's file, or a new one.
+// woodpecker, 08 hunger, 09 the chomps (what the round plays when you or a rival eats), 10 flags bending under a snake, standing in depth and hit head-on, 11 the costume change (Capricious without its ring), 12 a piece falling. A new check goes in its area's file, or a new one.
 const path = require('path');
 const runParts = require('./parts.js');
-const { launch, serve } = require('./browser');
+const { launch, serve, reporter } = require('./browser');
 
 const SEED = process.argv.includes('--seed') ? Number(process.argv[process.argv.indexOf('--seed') + 1]) : 1;
 const CELL = 32; // (the board's units a cell, as render/ draws them)
-const results = [];
-let failed = 0;
-const check = (ok, what, detail = '') => {
-  results.push(`${ok ? 'ok  ' : 'FAIL'} ${what}${detail ? ` (${detail})` : ''}`);
-  if (!ok) failed++;
-};
+const report = reporter(), { results, check } = report;
 
 // Before the page's own scripts: a switch for its animation loop; a wait for
 // the page to settle (the board laid out, at its size, after a load or a
@@ -154,7 +150,7 @@ const STAGE = `(() => {
 (async () => {
   const site = await serve();
   const b = await launch();
-  const ev = expr => b.eval(expr);
+  const { ev } = b;
   try {
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: PRE });
     await b.viewport(800, 800);
@@ -162,11 +158,11 @@ const STAGE = `(() => {
     await runParts.inside(path.join(__dirname, 'render'), { SEED, CELL, check, STAGE, site, b, ev });
 
     console.log(results.join('\n'));
-    if (b.errors.length) { console.log('page errors:', b.errors); failed++; }
+    if (b.errors.length) { console.log('page errors:', b.errors); report.failed++; }
   } finally {
     await b.close();
     site.close();
   }
-  if (failed) { console.error(`\n${failed} failed`); process.exit(1); }
+  if (report.failed) { console.error(`\n${report.failed} failed`); process.exit(1); }
   console.log(`\nall passed (${results.length} checks)`);
 })().catch(e => { console.error(e); process.exit(1); });

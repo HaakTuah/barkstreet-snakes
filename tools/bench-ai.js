@@ -62,39 +62,32 @@ const BASE = option('--base', 'HEAD'), ROOT = path.resolve(option('--root', REPO
 const SEED = Number(option('--seed', 3)), ROUNDS = Math.max(1, Number(option('--rounds', 100)) || 100), PER = Math.max(1, Number(option('--per', 40)) || 40);
 const REPEAT = Math.max(1, Number(option('--repeat', 3)));
 const ONLY = option('--only', null);
-const FILES = ['tuning.js', 'ai.js', 'engine.js'];
+const gameFiles = require('./game-files.js');
 const MAX_TIME = 600000; // (as in tools/simulate.js)
 try { os.setPriority(os.constants.priority.PRIORITY_BELOW_NORMAL); } catch {} // (whoever's using the computer comes first)
 
-// A copy's files: from a folder, or from git at a revision.
+// A copy's files ({ names, texts }): from a folder, or from git at a revision.
 function sources(where) {
-  if (fs.existsSync(where) && fs.statSync(where).isDirectory()) return FILES.map(f => fs.readFileSync(path.join(where, f), 'utf8'));
-  return FILES.map(f => execFileSync('git', ['show', `${where}:${f}`], { cwd: REPO, encoding: 'utf8', maxBuffer: 1 << 26 }));
+  const read = fs.existsSync(where) && fs.statSync(where).isDirectory() ? f => fs.readFileSync(path.join(where, f), 'utf8')
+    : f => execFileSync('git', ['show', `${where}:${f}`], { cwd: REPO, encoding: 'utf8', maxBuffer: 1 << 26 });
+  const names = gameFiles(null, read);
+  return { names, texts: names.map(read) };
 }
 
-// mulberry32, as tools/simulate.js seeds its rounds.
-function seeded(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+const seeded = require('./seeded.js'); // (mulberry32, as tools/simulate.js seeds its rounds)
 
 // A copy of the game in a fresh context, with its own Math.random (reseeded
 // for every round, or every position), which counts what's drawn from it.
-// `wrap`, if given, stands in for decide() before engine.js takes it.
+// `wrap`, if given, stands in for decide() before the engine takes it.
 function load(files, label, wrap) {
   const copy = { rng: Math.random, draws: 0, label };
   const M = Object.create(Math);
   M.random = () => { copy.draws++; return copy.rng(); };
   const ctx = vm.createContext({ window: {}, console, Math: M });
-  files.forEach((src, i) => {
-    if (FILES[i] === 'engine.js' && wrap) ctx.window.SnakeAI.decide = wrap(ctx.window.SnakeAI.decide, ctx.window.SnakeAI.PERSONAS);
-    vm.runInContext(src, ctx, { filename: `${label}/${FILES[i]}` });
+  files.texts.forEach((src, i) => {
+    const f = files.names[i];
+    if (wrap && f === files.names.find(gameFiles.engine)) ctx.window.SnakeAI.decide = wrap(ctx.window.SnakeAI.decide, ctx.window.SnakeAI.PERSONAS);
+    vm.runInContext(src, ctx, { filename: `${label}/${f}` });
   });
   copy.T = ctx.window.TUNING;
   copy.AI = ctx.window.SnakeAI;
@@ -202,7 +195,7 @@ const ms = x => x.toFixed(3);
   // (Kept for the same base files, options and code that takes them: the
   // rest of this file can change without playing the rounds again.)
   const cacheFile = path.join(os.tmpdir(), 'barkbite-bench-ai', crypto.createHash('sha1')
-    .update(baseFiles.concat([seeded, load, lineups, record].map(String)).join('\u0000'))
+    .update(baseFiles.texts.concat([seeded, load, lineups, record].map(String)).join('\u0000'))
     .update(JSON.stringify({ SEED, ROUNDS, PER, MAX_TIME, v: 2 })).digest('hex') + '.bin');
   let taken;
   if (!args.includes('--fresh') && fs.existsSync(cacheFile)) taken = v8.deserialize(fs.readFileSync(cacheFile));

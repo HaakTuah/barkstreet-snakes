@@ -361,7 +361,7 @@ The package to build in PR A wave 2:
 
 ## Controls for everyone, and PR D: local two-player (the owner, 2026-10-18)
 
-- **Context:** the owner's father wouldn't know the WASD convention. Arrow keys ALREADY steer ("Arrows or WASD steer" on the start card and hints). Make it obvious.
+- **Context:** a newcomer wouldn't know the WASD convention. Arrow keys ALREADY steer ("Arrows or WASD steer" on the start card and hints). Make it obvious.
   - **PR A:** clearer arrow-first wording; mouse buttons as an option for one player (left click = jump, right click = flash, no context menu over the board).
   - **PR C:** onboarding shows a small picture of the keys on the start card (arrows, Space, Shift) instead of text.
 - **PR D (after C, continuous): local two-player on one keyboard,** plus a key-settings screen to rebind keys (layouts differ: Mac has no right Ctrl, Norwegian punctuation moves).
@@ -406,7 +406,7 @@ Queue item 3, the fixes and polish from the owner's playtest, is under way: "Bur
 outline glitch over a hole" (PR #52), "Rainbows upside down" (PR #57), "Hunger where your eyes are" (PR #66), "Rainbows, the follow-ups" (PR #68), "The phone gap" (PR #70) "Desktop chatter" (PR #72), "Wildcard's hair" (PR #74) and "Copycat's face" (PR #78), "Rival line-up" (PR #86), "The lobby shows the line-up" (PR #116), "Last words on phones" (PR #124), the head-to-head mode in `tools/abtest.js` (PR #80) and "Hunters miss easy pins" (PR #81) are done; next is the first open entry below. Queue items 1, 1b and 2 are done (2: PR
 #48, the online messages typed; 1: PR #41, render.js split into `render/`, and PR previews on Pages). The previews wait
 on one setting: Pages still serves `main` (every "pages build and deployment" run so far has built `main`), so the
-preview links in PRs do not open until Haakon switches Pages to "Deploy from a branch: gh-pages, / (root)". Everything
+preview links in PRs do not open until the owner switches Pages to "Deploy from a branch: gh-pages, / (root)". Everything
 through PR #52 is in `main` (milestone #53); since 27 October the builder merges the develop-to-main PR itself
 ("Standing instructions" in `CLAUDE.md`). input-test failed 4 checks in 1 of 5 runs after #35's build; #38's fix of the
 lessons block is probably that flake. Watch for it.

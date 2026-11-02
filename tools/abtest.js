@@ -26,7 +26,7 @@
 // simulate.js run of the same rounds afterwards.
 //
 // Head to head (--head-to-head): A's AI and B's in the same rounds, under
-// A's rules (A and B must have the same tuning.js and engine.js: it compares
+// A's rules (A and B must have the same tuning.js and engine: it compares
 // two AIs, or rivals with a move against rivals without it, on one set of
 // rules). Every round is played twice, as duplicate bridge is: once with B's
 // AI steering the snakes with even ids and A's the odd, once the other way
@@ -43,7 +43,7 @@
 // tools/abtest.js . . --head-to-head --metrics side,deaths,powers,trademarks
 // --rounds 20 --batch 20` must give B-A = 0 on every row.) Two trademarks
 // read the AI's own memory (Sovereign's home, Mute's victimId): if B's
-// ai.js renames those, its snakes measure as 0 there, a false difference.
+// AI renames those, its snakes measure as 0 there, a false difference.
 // How fine it sees (27 October 2026, seeds 3 and 11, 600 rounds each, the
 // default side rows): two copies that differ only in their random draws
 // came out with every interval around 0 (win% a snake +0.7 points, within
@@ -57,7 +57,7 @@
 //                        [--alpha P] [--margin ROW=X ...] [--workers N] [--json]
 //   node tools/abtest.js [A] B --head-to-head [--seed N ...] [--rounds N] [--batch N] [--metrics LIST] [--alpha P] ...
 //
-//   A, B        the two copies (folders with tuning.js, ai.js and engine.js); A defaults to this one
+//   A, B        the two copies of the game (folders, such as worktrees); A defaults to this one
 //   --seed N    a seed to play (repeat it for more; default 3 and 11, the screening's: confirm
 //               what they chose on seeds they haven't played, 29 and 41 say)
 //   --rounds N  at most this many rounds a seed (default 600)
@@ -91,6 +91,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { execFileSync } = require('child_process');
+const gameFiles = require('./game-files.js');
 
 const { TRADEMARKS } = require('./simulate.js');
 
@@ -198,17 +199,7 @@ function tOf(p, df) {
   return z + (z3 + z) / (4 * df) + (5 * z5 + 16 * z3 + 3 * z) / (96 * df ** 2) + (3 * z7 + 19 * z5 + 17 * z3 - 15 * z) / (384 * df ** 3);
 }
 
-// mulberry32, for the bootstrap: the same intervals every time for the same rounds.
-function seeded(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+const seeded = require('./seeded.js'); // (mulberry32, for the bootstrap: the same intervals every time for the same rounds)
 // The median of the first n of xs (reordering them).
 function median(xs, n = xs.length) {
   if (!n) return NaN;
@@ -325,7 +316,8 @@ if (require.main === module) {
   const roots = args.filter((a, i) => !a.startsWith('--') && !WITH_VALUE.includes(args[i - 1]));
   if (!roots.length || roots.length > 2) fail('usage: node tools/abtest.js [A] B [--seed N ...] [--rounds N] [--batch N] [--metrics LIST] [--at MS] [--alpha P] [--margin ROW=X ...] [--workers N] [--json] [--head-to-head]');
   const [A, B] = (roots.length === 1 ? [path.join(__dirname, '..'), roots[0]] : roots).map(r => path.resolve(r));
-  for (const r of [A, B]) if (!['tuning.js', 'ai.js', 'engine.js'].every(f => fs.existsSync(path.join(r, f)))) fail(`${r} isn't a copy of the game (no tuning.js, ai.js and engine.js)`);
+  for (const r of [A, B]) if (!fs.existsSync(path.join(r, 'index.html'))) fail(`${r} isn't a copy of the game (no index.html)`);
+  const filesIn = r => gameFiles(r), read = (r, f) => fs.readFileSync(path.join(r, f), 'utf8');
   const seeds = all('--seed').map(Number);
   if (!seeds.length) seeds.push(3, 11);
   const MAX = Number(one('--rounds')) || 600, BATCH = Math.min(MAX, Number(one('--batch')) || 100), LOOKS = Math.ceil(MAX / BATCH);
@@ -334,8 +326,9 @@ if (require.main === module) {
   const groups = (one('--metrics') || (h2h ? 'side' : USUAL.join(','))).split(',').map(g => g.trim()).filter(Boolean), known = h2h ? H2H : GROUPS;
   for (const g of groups) if (!known.includes(g)) fail(`no metric ${g}${h2h ? ' head to head' : ''} (there are ${known.join(', ')})`);
   if (h2h && at != null) fail("--head-to-head doesn't go with --at");
-  for (const f of h2h ? ['tuning.js', 'engine.js'] : []) if (fs.readFileSync(path.join(A, f), 'utf8') !== fs.readFileSync(path.join(B, f), 'utf8'))
-    fail(`head to head plays under one set of rules, and A's ${f} and B's differ: give both the same ${f} (a new rule on both sides, its use in B's ai.js only)`);
+  const rules = r => filesIn(r).filter(f => !gameFiles.ai(f)).map(f => `${f}\u0000${read(r, f)}`).join('\u0000'); // (tuning.js and the engine's files)
+  if (h2h && rules(A) !== rules(B))
+    fail("head to head plays under one set of rules, and A's tuning.js or engine and B's differ: give both the same (a new rule on both sides, its use in B's AI only)");
   const signs = groups.includes('trademarks') ? ['--signatures'] : [];
   const margins = new Map(all('--margin').map(m => { const [k, v] = m.split('='); return [k, Number(v)]; }));
 
@@ -369,7 +362,7 @@ if (require.main === module) {
   // Both copies' files, as the experiment began: its looks must all be of
   // the same two (simulate.js would play an edited copy's rounds afresh, and
   // they'd be another experiment's, under this one's plan of looks).
-  const filesOf = root => crypto.createHash('sha1').update(['tuning.js', 'ai.js', 'engine.js'].map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\u0000')).digest('hex');
+  const filesOf = root => crypto.createHash('sha1').update(filesIn(root).map(f => `${f}\u0000${read(root, f)}`).join('\u0000')).digest('hex');
   const began = [filesOf(A), filesOf(B)];
   const unchanged = () => [A, B].forEach((r, i) => { if (filesOf(r) !== began[i]) fail(`${'AB'[i]}'s files (${r}) changed during the experiment, so its looks would mix two copies: start it again`); });
 

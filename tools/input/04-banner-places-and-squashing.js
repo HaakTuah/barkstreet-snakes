@@ -51,7 +51,7 @@ await ev('new Promise(r => __raf(() => __raf(() => __raf(r))))');
 // squashes staged by hand, as it makes them): your first squash's lesson
 // and its splat, a second squash's splat and no second lesson; a rival's
 // splat, heard as a rival's. (What the page asks to play: the cues
-// themselves are audio.js's.)
+// themselves are audio/'s.)
 await ev(`(() => {
   const E = SnakeEngine, A = SnakeAudio, play = A.play, g = SnakeDebug.game();
   window.__heard = [];
@@ -78,7 +78,7 @@ await ev('stageSquash(1)');
 await toTick(); await toTick();
 const theirs = await ev('__heard.splice(0)');
 const said = list => list.map(h => `${h.name}${h.rival ? '~' : ''}@${h.tick - squashed.tick}`).join(' ');
-check(squashed.toast === 'Squashed! Your own tail feeds nobody.' && said(mine) === 'squash@0 squash@3',
+check(squashed.toast === 'Your own beads feed nobody.' && said(mine) === 'squash@0 squash@3',
   'your first squash: its lesson and its splat; the next, its splat alone', `“${squashed.toast}”; heard ${said(mine)}`);
 check(later !== squashed.toast, '...the lesson only once', `“${later}”`);
 check(theirs.length === 1 && theirs[0].rival, 'a rival’s squash is heard as a rival’s', theirs.map(h => `${h.name}${h.rival ? '~' : ''}`).join(' '));

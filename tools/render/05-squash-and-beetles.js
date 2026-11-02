@@ -1,8 +1,9 @@
 // Squashing your own bead (round six B; it was choking on it, with a cough,
 // in round six A), staged as the engine reports it (the squash event, the
 // bead gone from the food): Joker's own bead lies right in front of it; it
-// goes on over it, and the bead isn't drawn there any more, none of it
-// (no spit, no roll: food is no longer pushed aside), and nothing throws.
+// goes on over it, and the bead isn't drawn there any more (no spit, no
+// roll: food is no longer pushed aside); a flat splat in its colour lies
+// where it was, wider than the bead, and fades away within 3 s (2o).
 // Counts are of pixels changed against the same board with nothing on it.
 const squash = await ev(`(() => {
   seeds(40);
@@ -24,15 +25,38 @@ const squash = await ev(`(() => {
   setBody(jo, Array.from({ length: 6 }, (_, i) => [9 - i, 8]), 'right');
   g.food.splice(g.food.indexOf(b), 1);
   R.onTick([{ type: 'squash', snake: jo, x: 9, y: 8 }]);
-  drawN(3, 0.5, 80);
-  out.mid = count(6.5, 5.5, 6, 6);
-  g.tick++; drawN(10, 0.5, 80);
+  setBody(jo, Array.from({ length: 6 }, (_, i) => [9 - i, 14]), 'right'); // (moved off it, so what it left shows)
+  drawN(4, 0.5, 80);
+  out.mid = count(8.5, 6.5, 3, 3); out.away = count(5.5, 4.5, 8, 8) - out.mid;
+  g.tick++; drawN(36, 0.5, 80);
   out.after = count(5.5, 4.5, 8, 8);
   SnakeDebug.pinQuality(2);
   return out;
 })()`);
-check(squash.before > 20 && squash.mid === 0 && squash.after === 0, 'a bead squashed under its own snake is gone at once: never drawn spat, rolled or left behind',
-  `the bead's sky pixels before ${squash.before}, as it's squashed ${squash.mid}, after ${squash.after}`);
+check(squash.before > 20 && squash.mid > squash.before && squash.away === 0 && squash.after === 0, 'a bead squashed under its own snake leaves a splat in its colour, wider than the bead, where it lay (never spat or rolled), gone within 3 s',
+  `the bead's sky pixels before ${squash.before}, the splat's ${squash.mid} (elsewhere ${squash.away}), 3 s on ${squash.after}`);
+
+// The spit's tell (the owner, 2 November 2026): a mushroom in Joker's cheek,
+// its green bulge counting down to the spit: bigger move by move as the
+// second runs out, and on each of the last three moves a throb, big as the
+// move starts and settling through it. (Each count at mid move, the wobble
+// at the same point of its swing.)
+const cheek = await ev(`(() => {
+  seeds(42);
+  SnakeDebug.pinQuality(0);
+  const g = stage(['joker', 'gobbler', 'mason']), [you, jo] = g.snakes;
+  setBody(you, [[2, 22], [1, 22], [0, 22]], 'right');
+  setBody(jo, Array.from({ length: 6 }, (_, i) => [8 - i, 8]), 'right'); jo.stunUntil = 1e9;
+  show(g); R.setViewer(99);
+  const green = () => { const d = pixels(6.5, 6.5, 3, 3).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - 132) < 24 && Math.abs(d[i + 1] - 204) < 24 && d[i + 2] < 70) n++; return n; };
+  const at = (n, alpha) => { jo.cheek = { power: TUNING.SHRINK, spitAt: g.tick + n, left: 100 }; __t = Math.ceil(__t / 628.3185) * 628.3185 + 314.159; drawN(1, alpha, 0); return green(); };
+  const out = { counts: [8, 6, 4, 3].map(n => at(n, 0.5)), beat: [at(1, 0), at(1, 0.95)] };
+  jo.cheek = null;
+  SnakeDebug.pinQuality(2);
+  return out;
+})()`);
+check(cheek.counts.every((c, i) => !i || c > cheek.counts[i - 1] + 2) && cheek.beat[0] > cheek.beat[1] + 4, 'a mushroom in a cheek counts down: the bulge grows as the spit nears, and throbs on each of the last three moves',
+  `green pixels mid move with 8, 6, 4 and 3 moves to go: ${cheek.counts.join(', ')}; at the start of one of the last three ${cheek.beat[0]}, at its end ${cheek.beat[1]}`);
 
 // Beetles and the woodpecker's knock (round six A), staged as the engine
 // reports them: two beetles out at once; b.digUntil and the dig and dive

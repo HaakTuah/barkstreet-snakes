@@ -15,6 +15,32 @@ for (const [w, h] of [[390, 844], [320, 640]]) {
   await tap(await at('#records-close'));
   p = await P();
   check(p.how === 'How to play', `phone ${w}: the start card has How to play`, p.how);
+  // Three picked rivals, each pinned: the pins take next to no room (the card no taller), and a tap beside one still unpins it.
+  const cardFit = () => ev(`(() => { const c = document.querySelector('.overlay .card'); return { h: c.scrollHeight, rows: new Set([...document.querySelectorAll('.opponents .seat')].map(s => Math.round(s.getBoundingClientRect().top))).size }; })()`);
+  const unpinned = await cardFit();
+  await ev(`for (const [i, k] of [[0, 'vulture'], [1, 'joker'], [2, 'mason']]) { document.querySelector('.seat[data-seat="' + i + '"]').click(); document.querySelector('#picker .pick[data-key="' + k + '"]').click(); } 'ok'`);
+  const pinned = await cardFit();
+  check(await ev(`document.querySelectorAll('.opponents .unpin').length`) === 3 && pinned.h === unpinned.h && pinned.rows === unpinned.rows, `phone ${w}: three seats pinned, the card no taller and its seats on as many rows`, JSON.stringify({ unpinned, pinned }));
+  await b.sleep(600); // (the card just rebuilt: a tap only counts once it has settled)
+  const [px, py] = await at('.opponents .unpin[data-seat="1"]');
+  await tap([px + 8, py]);
+  check(await ev(`document.querySelectorAll('.opponents .unpin').length + ':' + sessionStorage.getItem('snake-visit-lineup')`) === '2:["vulture",null,"mason"]', `phone ${w}: a tap just beside a pin unpins its seat`);
+  await ev(`sessionStorage.clear(); 'ok'`);
+  await load();
+  // The longest names, wrapped onto two rows: the start card still fits its board (the tip goes first, then its lines sit closer).
+  await ev(`SnakeDebug.setup(['capricious', 'desperado', 'metagamer']); 'ok'`);
+  await b.sleep(300);
+  const fit = await ev(`(() => { const c = document.querySelector('.overlay .card'); return { over: c.scrollHeight - c.clientHeight, steps: ['snug', 'snugger'].filter(k => c.classList.contains(k)).join() }; })()`);
+  check(fit.over <= 1 && (w === 390 ? fit.steps === '' : fit.steps !== ''), `phone ${w}: the start card with the longest names fits its board${w === 390 ? ', nothing dropped' : ', its tip dropped'}`, JSON.stringify(fit));
+  await load();
+  // The room the host opens (a stand-in for the network): its four seats in a row of names, the card within its board.
+  await ev(`SnakeDebug.setup(['capricious', 'desperado', 'metagamer']); SnakeNet.host = async () => ({ code: 'MOSSY', send() {}, broadcast() {}, admit() {}, quietFor: () => 0, rtt: () => 0, drop() {}, close() {} }); document.getElementById('friends').click(); 'ok'`);
+  await b.sleep(300);
+  await ev(`document.getElementById('start').click(); 'ok'`);
+  await wait(`!document.getElementById('lobby-players').hidden`);
+  const room = await ev(`(() => { const c = document.querySelector('.overlay .card'); return { over: c.scrollHeight - c.clientHeight, seats: document.querySelectorAll('#lobby-players li').length }; })()`);
+  check(room.over <= 1 && room.seats === 4, `phone ${w}: the room's card, four seats, fits its board`, JSON.stringify(room));
+  await load();
   await tap(await at('#how'));
   p = await P();
   check(p.book && p.tab === 'guide' && p.firstHead === 'The basics', `phone ${w}: How to play opens the guide on The basics`, p.firstHead);
@@ -51,7 +77,7 @@ for (const [w, h] of [[390, 844], [320, 640]]) {
   check(p.kind === 'note' && p.toast.startsWith('Metagamer'), `phone ${w}: watching, a tap on a tag is a banner`, p.toast);
   await fresh(['ouroboros', 'metagamer', 'gobbler']);
   await ev(fire);
-  await wait(`cardUp() && !me().alive`);
+  await wait(`cardUp() && !you().alive`);
   await b.sleep(900);
   await tap(await at('#how'));
   p = await P();
@@ -60,3 +86,11 @@ for (const [w, h] of [[390, 844], [320, 640]]) {
   p = await P();
   check(!p.book, `phone ${w}: a tap on the book’s × closes it`);
 }
+// A small phone on its side (568x320): the friends card's code row, Join and all, within the card.
+await b.viewport(568, 320, { scale: 2, mobile: true });
+await load();
+await ev(`document.getElementById('friends').click(); 'ok'`);
+await b.sleep(300);
+const joinRow = await ev(`(() => { const c = document.querySelector('.overlay .card').getBoundingClientRect(), j = document.querySelector('#lobby-join button').getBoundingClientRect(); return { over: Math.round(j.right - c.right) }; })()`);
+check(joinRow.over < 0, 'phone 568 on its side: the friends card’s Join button sits within the card', JSON.stringify(joinRow));
+await load();

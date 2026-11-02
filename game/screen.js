@@ -3,7 +3,7 @@
 
 // ------------------------------------------------- size and motion
 
-Render.init({ canvas: canvasEl, personas: CAST, birdLayer: $('bird-layer') });
+Render.init({ canvas: canvasEl, birdLayer: $('bird-layer') });
 // Where the board is on the page (the woodpecker perches beside it, on its own layer).
 // ...and how far the free page runs round it before the tags, the speed
 // buttons, the chatter or the header (no perching on those), inside the
@@ -276,6 +276,33 @@ const applyMotion = () => Render.setReducedMotion(reducedMQ.matches);
 reducedMQ.addEventListener?.('change', applyMotion);
 applyMotion();
 
+// The screen stays on while you play, through the countdown, and while
+// you watch a round (a screen wake lock); a nap, a card or the Hall of
+// Fame lets it go. A hidden tab loses it (the browser lets it go), so
+// coming back asks again, if it's still wanted then (alone you'll be
+// napping: waking asks). Where there's no wake lock, nothing changes; a
+// refusal (a battery saver, say) isn't asked again until the next time
+// it's wanted.
+const awake = { lock: null, asking: false, refused: false };
+function keepAwake() {
+  if (!navigator.wakeLock) return;
+  const want = !document.hidden && recordsEl.hidden && pickerEl.hidden && (state === 'countdown' || (state === 'running' && overlay.classList.contains('hidden')));
+  if (!want) {
+    awake.refused = false;
+    if (awake.lock) { const lock = awake.lock; awake.lock = null; lock.release().catch(() => {}); }
+    return;
+  }
+  if (awake.lock || awake.asking || awake.refused) return;
+  awake.asking = true;
+  navigator.wakeLock.request('screen').then(lock => {
+    awake.asking = false;
+    awake.lock = lock;
+    lock.addEventListener('release', () => { if (awake.lock === lock) awake.lock = null; }); // (the browser's doing: a hidden tab)
+    keepAwake(); // (let go at once if it's no longer wanted)
+  }, () => { awake.asking = false; awake.refused = true; });
+}
+document.addEventListener('visibilitychange', keepAwake); // (after the nap's, in input.js)
+
 // ------------------------------------------- dev: frame-time overlay
 
 // Behind ?perf or ?debug, toggled with the ` key: average and worst frame
@@ -338,7 +365,7 @@ function ready(personas, chosen = false) {
   readyPersonas = theGame.snakes.filter(s => s.persona).map(s => s.personaKey);
   state = 'ready';
   buildOpponents(); // (now with its seats to choose)
-  showCard({ title: `Ready, ${localName()}?`, text: FLAVOR.intro, primary: 'Play', secondary: 'Watch AIs', opponents: true, friends: true, how: 'How to play' });
+  showCard({ title: `Ready, ${localName()}?`, text: window.SnakeUpdate?.news() || FLAVOR.intro, primary: 'Play', secondary: 'Watch rivals', opponents: true, friends: true, how: 'How to play' }); // (after an update, what's new in the intro's place)
   setTimeout(warmUpGame, 400);
 }
 

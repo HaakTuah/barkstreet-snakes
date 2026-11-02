@@ -114,7 +114,76 @@ function drawPatch(alpha, now) {
     for (let n = 0; n < dents; n++) { const d = dentOrder[n], rr = dentR[d], x = dentX[d] + rr * 0.45, y = dentY[d] + rr * 0.45; ctx.moveTo(x + rr * 0.4, y); ctx.arc(x, y, rr * 0.4, 0, TAU); }
     ctx.fill();
   }
+  if (w.fall?.length) fallShade(w.fall, prog, now); // (2s: the pieces it cuts loose, shaded as they'll fall)
   knockRings(w, prog, now); // (and where the food in it will be knocked to)
+}
+// 2s, a piece cut loose falls: in the mark, the cells that will fall go
+// dark with pale streaks sliding down across them (held still under reduced
+// motion), so the whole piece reads as going, not only the patch; at the
+// strike, the piece tips away about its middle, shrinking and darkening
+// into the pit, as the log's bark drops out of sight (PIECE_FALL_MS).
+const PIECE_FALL_MS = 750, pieceFalls = [];
+const FALL_FOOD = { food: '#65a30d', golden: '#facc15', beetle: '#3f2a14', pellet: '#d6b480', mushroom: '#b91c1c', goldcap: '#facc15', leaf: '#facc15' };
+function fallShade(cells, prog, now) {
+  ctx.save();
+  ctx.beginPath();
+  for (const k of cells) ctx.rect((k % GRID) * CELL, Math.floor(k / GRID) * CELL, CELL, CELL);
+  ctx.clip();
+  ctx.globalAlpha = 0.3 + 0.35 * prog;
+  ctx.fillStyle = '#140a04';
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  ctx.globalAlpha = 0.22 + 0.3 * prog;
+  ctx.strokeStyle = '#fef3c7';
+  ctx.lineWidth = 2;
+  const gap = CELL * 0.6, slide = reduced ? 0 : (now * 0.02) % gap;
+  ctx.beginPath();
+  for (let d = -SIZE + slide; d < SIZE; d += gap) { ctx.moveTo(d, 0); ctx.lineTo(d + SIZE, SIZE); }
+  ctx.stroke();
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+function fallAway(cells, now) {
+  let sx = 0, sy = 0;
+  for (const k of cells) { sx += (k % GRID) + 0.5; sy += Math.floor(k / GRID) + 0.5; }
+  const on = cells.filter(k => born.has(k) && born.get(k).kind !== 'beetle').map(k => { const b = born.get(k), v = b.kind === 'pellet' && b.v ? b.v.slice(0, b.v.indexOf('|')) : ''; return { k, fill: v && v[0] === '#' ? v : FALL_FOOD[b.kind] || FALL_FOOD.food }; }); // (the food that was on it, as last drawn, a bead in its own colour: it goes down with it)
+  for (const b of bugs) { const k = b.y * GRID + b.x; if (cells.includes(k)) on.push({ k, fill: b.gold ? FALL_FOOD.golden : FALL_FOOD.beetle }); } // (and its beetles, kept apart from the food: see trackBugs)
+  pieceFalls.push({ cells: cells.slice(), on, at: now, cx: sx / cells.length * CELL, cy: sy / cells.length * CELL, tilt: (cells[0] % 2 ? 1 : -1) * 0.35 });
+  for (const k of cells) spawn((k % GRID) * CELL + CELL / 2, Math.floor(k / GRID) * CELL + CELL / 2, 3, 160, 600, 2.4, '#8a6a2a', '#3b2412');
+}
+// How far a piece cut loose has fallen (0..1), the piece on a cell (a flag
+// there rides it down: see drawFallenFlags), and its tip and drop, slow to
+// start, then away (e: the fall eased), for its slab and whatever is on it.
+const fallT = (f, now) => (now - f.at) / (reduced ? PIECE_FALL_MS / 2 : PIECE_FALL_MS);
+const pieceOn = key => pieceFalls.find(f => f.cells.includes(key)) || null;
+function fallMove(f, e) {
+  ctx.globalAlpha = 1 - e;
+  ctx.translate(f.cx, f.cy + (reduced ? 0 : e * CELL * 0.4));
+  if (!reduced) ctx.rotate(f.tilt * e);
+  ctx.scale(1 - 0.55 * e, 1 - 0.55 * e);
+  ctx.translate(-f.cx, -f.cy);
+}
+function drawFalls(now) {
+  for (let i = pieceFalls.length - 1; i >= 0; i--) {
+    const f = pieceFalls[i], t = fallT(f, now);
+    if (t >= 1 || t < 0) { pieceFalls.splice(i, 1); continue; }
+    const e = t * t;
+    ctx.save();
+    fallMove(f, e);
+    ctx.beginPath(); // (one path, filled once: squares filled one by one show their seams where they overlap)
+    for (const k of f.cells) ctx.rect((k % GRID) * CELL, Math.floor(k / GRID) * CELL, CELL, CELL);
+    ctx.fillStyle = BARK;
+    ctx.fill();
+    for (const { k, fill } of f.on) { // (its food, as dots of its colour, darkening with it)
+      ctx.fillStyle = fill;
+      ctx.beginPath(); ctx.arc((k % GRID) * CELL + CELL / 2, Math.floor(k / GRID) * CELL + CELL / 2, CELL * 0.28, 0, TAU); ctx.fill();
+    }
+    ctx.globalAlpha = (1 - e) * (0.25 + 0.6 * e);
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); // (the shade over the slab and its food alike)
+    for (const k of f.cells) ctx.rect((k % GRID) * CELL, Math.floor(k / GRID) * CELL, CELL, CELL);
+    ctx.fill();
+    ctx.restore();
+  }
 }
 // The patch's outline, traced once each time it changes (see traceCells),
 // kept as its corners, loop by loop (round the outside, and round any cell

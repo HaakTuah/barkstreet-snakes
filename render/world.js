@@ -50,6 +50,9 @@ function frame(alpha, now) {
 
   drawBurrows(now);
   drawPatch(alpha, now); // (the woodpecker's next patch, on the bark under the snakes)
+  drawFalls(now); // (2s: pieces cut loose, falling away)
+  if (fallenFlags.length) drawFallenFlags(now); // (flags falling into the pit, some on those pieces)
+  if (splats.length) drawSplats(now);
   drawLeaves(now, dt);
   drawFood(alpha, now);
   drawDive(now);
@@ -64,9 +67,8 @@ function frame(alpha, now) {
   drawLandings(now); // (under the snakes: where a jump comes down)
   drawSpitRings(now); // (and where a mushroom in a cheek comes down)
   drawSnakes(alpha, now); // (and the fields' light round any rival in them, under its body)
-  drawCheeks(now); // (a mushroom in a cheek: puffed green)
-  drawPortals(now); // (over the snakes: a body goes into one, and comes out of the other)
-  if (bentLater.length) drawBentFlags(now); // (a flag a snake lies on, bent over it)
+  drawCheeks(alpha, now); // (a mushroom in a cheek: puffed green, counting down to the spit)
+  if (flagsLater.length) drawBentFlags(now); // (the flags, over the snakes, but not over what stands in front of them)
   if (flagBends.size) forgetBends(now);
   drawTossed(now); // (a bead spat over a head)
   drawRipples(now);
@@ -222,6 +224,7 @@ function onTick(events) {
   tickNow = now;
   for (let i = scurries.length - 1; i >= 0; i--) if (scurries[i].tick < game.tick) scurries.splice(i, 1); // (a tick's own: see drawBeetle)
   for (let i = bugPops.length - 1; i >= 0; i--) if (bugPops[i].tick < game.tick) bugPops.splice(i, 1);
+  let cutBeads = GRID * GRID; const prevAt = new Map(); // (a tick's beads from cuts: no more than the board has cells, whatever a peer sends; each body's cells indexed once)
   for (const e of events) {
     if (e.type === 'eat') {
       let x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
@@ -246,12 +249,10 @@ function onTick(events) {
       else spawn(x, y, T.PARTICLES_EAT, 180, T.PARTICLE_LIFE, 2.8, '#a3e635', '#f6ecd2'); // sprout and parchment: visible on bark and on green snakes alike (gold means a power)
       eatenNow.add(e.y * GRID + e.x);
       if (e.snake.id === viewerId && e.kind !== 'mushroom') floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.6), GROWN[e.kind === 'golden' ? T.GOLDEN_GROWTH : e.kind === 'beetle' ? T.BEETLE_GROWTH : e.cooked ? T.COOKED_GROWTH : 1] || '+1');
-    } else if (e.type === 'squash') { // its own bead squashed under its head (round six B): a soft splat in the bead's colours, low and flat, and a smear that fades
-      const x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2, col = colorOf(e.snake);
+    } else if (e.type === 'squash') { // its own bead squashed under its head: a splat in the bead's colour that fades (see addSplat)
       eatenNow.add(e.y * GRID + e.x);
-      spawn(x, y, 9, 70, 520, 2.6, col[0] === '#' ? col : '#a3a3a3', '#57534e');
-      if (!reduced) for (let k = 0; k < 3; k++) mote(x + (k - 1) * CELL * 0.22, y + CELL * 0.1, (k - 1) * 6, 2, 900, 3.4, 2);
-      if (e.snake.id === viewerId) floater(x, Math.max(CELL * 1.3, y - CELL * 0.6), 'Splat!');
+      const v = born.get(e.y * GRID + e.x)?.v, fill = v ? v.slice(0, v.indexOf('|')) : colorOf(e.snake);
+      addSplat(e.x, e.y, fill[0] === '#' ? fill : '#a16207', now);
     } else if (e.type === 'spit') { // a mushroom come back up (round six B): in an arc to where it lies, or onto a head (a green puff: poisoned), or gone
       const tx = e.tx * CELL + CELL / 2, ty = e.ty * CELL + CELL / 2;
       if (e.lx != null) moveFood(e.x, e.y, e.lx, e.ly, now, true, true, e.snake);
@@ -288,6 +289,7 @@ function onTick(events) {
       }
       const px = (h.x + 0.5 + s.dir.x * 0.5) * CELL, py = (h.y + 0.5 + s.dir.y * 0.5) * CELL;
       const other = e.killerId != null ? game.snakes[e.killerId] : null, col = other ? colorOf(other) : '', bow = other && bowOf(other);
+      if (e.air) { spawn(px, py - CELL * 0.4, 12, 240, 380, 2.4, '#fffbea', '#fde68a'); spawn(h.x * CELL + CELL / 2, (h.y + 0.5) * CELL, 8, 90, 600, 3, '#c08a4a', '#8b6b4a'); } // (round six B, a bump in the air: a spark up there, and dust where it drops)
       if (bow) spawnBow(px, py, 12, 220, 480, 2.6, bow); // (a rainbow's in its colours: see burst)
       else if (other && col[0] === '#') spawn(px, py, 12, 220, 480, 2.6, col, '#fffbea');
       else spawn(px, py, 12, 220, 480, 2.6, '#c08a4a', '#3b2412'); // (chips of bark)
@@ -355,6 +357,14 @@ function onTick(events) {
       if (!reduced) for (let k = 0; k < 4; k++) mote(x + (Math.random() - 0.5) * CELL * 0.6, y, (Math.random() - 0.5) * 12, -20 - Math.random() * 14, 1200, 4 + Math.random() * 3, 2);
     } else if (e.type === 'cut') { // a flash cut through it, a plain one or a golden one (a dash); its own tail dropped, by its own flash (the woodpecker's cuts, its "Ouch!", went in round four)
       floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.2), e.by != null ? 'Snip!' : 'Ouch!');
+      const prev = e.snake.prev || []; // (its tail falls as beads in its markings: segment p0 + i lay at prev[p0 + i])
+      let at = prevAt.get(e.snake);
+      if (!at) { at = new Map(); prev.forEach((c, k) => { const key = c.y * GRID + c.x; if (!at.has(key)) at.set(key, k); }); prevAt.set(e.snake, at); }
+      const p0 = at.get(e.y * GRID + e.x) ?? -1;
+      if (p0 >= 0) for (let i = 1; i < e.lost && p0 + i < prev.length && cutBeads > 0; i++, cutBeads--) {
+        const key = prev[p0 + i].y * GRID + prev[p0 + i].x;
+        if (!born.has(key)) born.set(key, { kind: 'pellet', at: now + i * RIPPLE_MS, i, next: 0, gen: bornGen, v: beadOf(e.snake, p0 + i) });
+      }
       if (e.by != null) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 220, 500, 2.4, '#d4a017', e.snake.color || '#fffbea');
     } else if (e.type === 'alight') { // crawled into the fire: a burst of flame
       const h = e.snake.body[0];
@@ -377,6 +387,7 @@ function onTick(events) {
     } else if (e.type === 'peck') { // a chunk comes out: chips flying from every cell, and a thump
       for (const k of e.cells || []) spawn((k % GRID) * CELL + CELL / 2, Math.floor(k / GRID) * CELL + CELL / 2, 4, 240, 520, 2.8, '#c08a4a', '#3b2412');
       if (e.cells?.length && !reduced) shake(5);
+      if (e.fall?.length) fallAway(e.fall, now); // (2s: a piece cut loose tips and drops: see holes.js)
     } else if ((e.type === 'spawn' && e.kind === 'beetle') || e.type === 'emerge') {
       bugPops.push({ x: e.x, y: e.y, tick: game.tick, at: now }); // (it pops out of its burrow, kicking up a little sawdust)
       if (e.x >= 0) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 6, 110, 420, 2, '#d6b480', '#a16207');
@@ -412,6 +423,7 @@ function onTick(events) {
       spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 8, 260, T.PARTICLE_LIFE * 1.2, 2.2, '#d1fae5', '#059669');
     }
   }
+  for (const s of game.snakes) flying(s, now); // (a golden flight's arch kept over its way, after this tick's take-offs are in: see flying)
 }
 
 // A dead snake bursts into meat, or with reduced motion fades over its meat.
@@ -441,9 +453,10 @@ function burst(s) {
   blasts.push({ x: hx, y: hy, at: lastNow, color: hex, bow });
   if (bow) spawnBow(hx, hy, 26, 380, T.PARTICLE_LIFE * 1.3, 3.4, bow);
   else spawn(hx, hy, 26, 380, T.PARTICLE_LIFE * 1.3, 3.4, hex, '#fffbea');
+  const fills = animOf(s, lastNow).fills;
   for (let i = 1; i < s.body.length; i += 2) {
-    const c = s.body[i];
-    spawn(c.x * CELL + CELL / 2, c.y * CELL + CELL / 2, Math.max(2, Math.round(T.PARTICLES_DEATH / Math.ceil(s.body.length / 2))), 240, T.PARTICLE_LIFE * 1.2, 3, bow ? bow(TWINKLE_HUES[(i >> 1) % TWINKLE_HUES.length])[0] : hex, '#a16207'); // (a rainbow's in its colours, as its beads)
+    const c = s.body[i], f = fills[i];
+    spawn(c.x * CELL + CELL / 2, c.y * CELL + CELL / 2, Math.max(2, Math.round(T.PARTICLES_DEATH / Math.ceil(s.body.length / 2))), 240, T.PARTICLE_LIFE * 1.2, 3, f && f[0] === '#' ? f : hex, '#a16207'); // (each piece its segment's colour as last drawn, as its beads)
   }
   for (let i = 0; i < 6; i++) mote(hx + (Math.random() - 0.5) * CELL, hy + (Math.random() - 0.5) * CELL, (Math.random() - 0.5) * 30, -18 - Math.random() * 18, 1400, 4 + Math.random() * 3, 2);
 }
@@ -748,7 +761,6 @@ function init(opts) {
   birdLayer = opts.birdLayer || null;
   birdG = birdLayer ? birdLayer.getContext('2d') : null;
   ctx = canvas.getContext('2d', { alpha: false });
-  PERSONAS = opts.personas;
   k = canvas.width / SIZE;
   // Text sprites drawn before the font arrived get redrawn with it.
   document.fonts?.ready.then(() => { sprites.delete('float'); floatHalf.clear(); warmUp(); });
@@ -764,6 +776,7 @@ function warmUp() {
 }
 function setGame(g) {
   game = g;
+  pieceFalls.length = 0; // (2s: no slab still falling from the round before)
   warmUp();
   deaths.length = 0;
   corpses.length = 0;
@@ -776,10 +789,11 @@ function setGame(g) {
   eatenNow.clear();
   bornTick = -1;
   fresh = true;
+  splats.length = 0;
   bugs.length = bugPops.length = scurries.length = dives.length = heals.length = 0;
   bugFor.clear(); shutSeen.clear();
   knockFor = -1; tickNow = 0;
-  fallenFlags.length = 0; flagBends.clear(); bentLater.length = 0;
+  fallenFlags.length = 0; flagBends.clear(); flagsLater.length = 0;
   fallen.length = 0;
   nextLeaf = 0;
   crackCache.clear();
@@ -835,14 +849,6 @@ window.SnakeRender = {
   prebuild(on) { prebuilding = !!on; if (!on) { pre.ready = false; pre.key = NaN; } }, // (the land a strike leaves made ahead, or not: for the tests, comparing the two)
   get prebuilt() { return pre.ready; }, // (made ahead, and waiting for the strike: for the tests)
   get landMade() { return { swapped: landSwaps, built: landBuilds, stale: landStale, unready: landUnready }; }, // (how often a realm's layers were swapped in, made ahead, and made; strikes made the old way, and why: for the tests)
-  // (s's land's layers and the dashes as drawn, as a hash of their pixels, where they land and how big: for the tests)
-  landPixels(s) {
-    const r = realms.get(s), out = {};
-    const hash = c => { if (!c || !c.width) return null; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let h = 2166136261; for (let i = 0; i < d.length; i++) h = Math.imul(h ^ d[i], 16777619); return `${c.width}x${c.height}:${h >>> 0}`; };
-    if (r) { out.any = r.any; out.at = [r.X, r.Y]; out.layer = r.any ? hash(r.layer) : null; out.glow = r.any ? hash(r.glow) : null; out.shared = r.shared.length; }
-    out.dash = dash.any ? [dash.X, dash.Y, hash(dash.layer)] : null;
-    return out;
-  },
   flick(s, p) { const a = animOf(s, lastNow), [, len] = FLICKS[lookOf(s)] || FLICKS.player; a.tongueMs = T.TONGUE_MS * len; a.tongueUntil = lastNow + (1 - p) * a.tongueMs; a.nextTongue = lastNow + 1e9; }, // (its tongue or gag p of the way through, and then no more: for the tests)
   birdHome, // (when the woodpecker lands back on its perch after a strike, ms after it: the game's "kik!")
   knockFlight: (x, y, tx, ty) => knockFly(Math.hypot(tx - x, ty - y)), // (how long a piece the strike knocks from (x, y) to (tx, ty) is in the air, ms: the knock sound's landing)

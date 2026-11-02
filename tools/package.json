@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "description": "The tools' own packages, for checking and testing only: the game ships no dependencies. Exact versions, each audited in tools/licences.json; Dependabot proposes updates (.github/dependabot.yml).",
+  "devDependencies": {
+    "playwright": "1.64.1",
+    "typescript": "7.0.2"
+  }
+}

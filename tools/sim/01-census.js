@@ -6,11 +6,11 @@ const causeOf = s => s.fatal === 'pecked' ? 'pecked' : s.fatal === 'boom' ? 'boo
 // What --census counts (summed over rounds; rounds: how many rounds had any;
 // an array: every round's, put together).
 const census = () => ({
-  golden: 0, goldBeetles: 0, leaves: 0, goldcaps: 0, mushrooms: 0, spits: 0, spitHits: 0, spitLies: 0, strikes: 0, sun: 0, wind: 0, rain: 0, storm: 0, snow: 0,
-  goldBeetleRounds: 0, leafRounds: 0, goldcapRounds: 0, stormRounds: 0, starvedEarly: 0,
+  golden: 0, goldBeetles: 0, leaves: 0, goldcaps: 0, mushrooms: 0, spits: 0, spitHits: 0, spitLies: 0, leapsNow: 0, airTurns: 0, nowDie: 0, flyPast: 0, flyDie: 0, nowUsers: 0, nowUserWins: 0, nowUserPlace: 0, nowOthers: 0, nowOtherWins: 0, nowOtherPlace: 0, bumps: 0, downOnBody: 0, ringsContested: 0, steerAway: 0, ringGo: 0, ringNow: 0, goldFlown: 0, goldFlights: 0, strikes: 0, sun: 0, wind: 0, rain: 0, storm: 0, snow: 0,
+  deathsNearBeetle: 0, goldBeetleRounds: 0, leafRounds: 0, goldcapRounds: 0, stormRounds: 0, starvedEarly: 0,
   cutsPlain: 0, cutsGold: 0, cutsOwn: 0, failed: 0, failedGold: 0, edgeTicks: 0, huggers: 0, huggerWins: 0, huggerPlace: 0, others: 0, otherWins: 0, otherPlace: 0, // (round six B, the flashes cut: cuts by plain flashes and dashes, of them its own tail dropped; failed flashes (golden ones); snake-ticks with the head on the board's edge; snakes whose head was on the edge an eighth of their time or more (twice the field's 6% before part 3) ("huggers"), and the rest: how many, wins, places)
   rides: 0, rideTicks: 0, rideDeaths: 0, rideFalls: 0, // (bridges: rides begun, snake-ticks with a head on another's back over a pit, deaths while on one, and of them falls)
-  hop1: 0, hop2: 0, hop3: 0, hopHole: 0, hopFail: 0, hopDie: 0, // (round six B's island hop: jumps by the cells they went over, those over a hole, those whose landing crashed, and jumpers out within 3 s of taking off)
+  hop1: 0, hop2: 0, hop3: 0, hopHole: 0, hopFail: 0, hopDie: 0, smallIsle: 0, // (round six B's island hop: jumps by the cells they went over, those over a hole, those whose landing crashed, jumpers out within 3 s of taking off, and jumps down on another island smaller than the jumper (2r))
   pecks: 0, holes: 0, aims: 0, aimsNear: 0, flashes: 0, jumps: 0, goldLeaps: 0, goldGot: 0, dashes: 0, pickups: 0, greedy: 0,
   aliveEarly: 0, hungryEarly: 0, starvingEarly: 0, aliveLate: 0, hungryLate: 0, starvingLate: 0, // (snake-ticks before and after the woodpecker: alive, in the hunger warning, starving)
   beads: 0, ownBeads: 0, chokes: 0, chokeRounds: 0, nudges: 0, nudgedBeads: 0, // (beads eaten, and by the snake they broke off; own beads squashed (chokes before round six B); food nudged aside coughing, and the beads among it, before round six B)
@@ -27,7 +27,7 @@ const census = () => ({
   // underground due up with no burrow to come out of; beetles under the beak
   // when it aims, and how each got away (ran off, down a burrow, dug in) or
   // was eaten by it (or caught, or flew off).
-  portals: 0, throughs: 0, throughOut: 0, // (round six B, part 5: gold portals opened, followers through, and followers out within 3 s of it)
+  portals: 0, throughs: 0, throughOut: 0, followRounds: 0, ownerOut: 0, // (round six B, part 5: gold portals opened, followers through, followers out within 3 s of it, rounds with anyone following, and portals' owners out within 3 s of being followed)
   burrowsOpened: 0, sdTicks: 0, sdBurrowTicks: 0, underWait: 0,
   beakBugs: 0, beakRan: 0, beakCaught: 0, beakDived: 0, beakDug: 0, beakFlown: 0, beakPecked: 0,
   ticks: 0, burrowTicks: 0, ticksEarly: 0, freeEarly: 0, // (ticks, and burrows open summed over them; before the woodpecker, cells free for an apple summed over them)
@@ -37,7 +37,7 @@ const census = () => ({
   // off (with food on them, a snake on them); and the rounds whose last
   // snakes ended up on islands of their own, of them how often the one on
   // the biggest won (chance: what a blind pick would get).
-  seals: 0, sealedOut: 0, crumbs: 0, crumbsFood: 0, crumbsSnake: 0, split: 0, splitBiggest: 0, splitChance: 0,
+  seals: 0, sealedOut: 0, falls: 0, fallCells: 0, fallBig: 0, fellOut: 0, piecesLeft: 0, split: 0, splitBiggest: 0, splitChance: 0,
   causesSD: {}, sdTimes: [],
 });
 
@@ -245,7 +245,7 @@ function beetleCensus(g, c, st, before) {
 }
 
 // --census, after a tick: what the woodpecker did, fairly or not (see census).
-function woodpeckerCensus(g, c, st, dying, N) {
+function woodpeckerCensus(g, c, st, dying, N, T) {
   const landed = st.landed ||= new Map(); // (where each piece the strike knocked aside landed: the strike's tick; a beetle runs on, so it's left out)
   for (const e of g.events) {
     if (e.type === 'knock') { c.knocks++; if (e.tx == null) c.knockedEaten++; else if (e.kind !== 'beetle') landed.set(e.ty * N + e.tx, g.tick - 1); }
@@ -268,21 +268,12 @@ function woodpeckerCensus(g, c, st, dying, N) {
     } else if (e.type === 'peck') {
       if (st.beak) { for (const f of st.beak) if (g.food.includes(f)) c.beakRan++; st.beak = null; }
       labelLand(g, N);
-      const { comp, sizes } = land, foodAt = new Set(g.food.map(f => f.y * N + f.x)), bodyAt = new Set(g.snakes.filter(s => s.alive).flatMap(s => s.body.map(b => b.y * N + b.x)));
-      const crumbs = new Set();
-      for (const k of e.cells) for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
-        const x = k % N + dx, y = Math.floor(k / N) + dy;
-        if (x < 0 || y < 0 || x >= N || y >= N || comp[y * N + x] < 0 || sizes[comp[y * N + x]] > 2) continue;
-        crumbs.add(comp[y * N + x]);
-      }
-      for (const id of crumbs) {
-        const cells = []; for (let k = 0; k < N * N; k++) if (comp[k] === id) cells.push(k);
-        c.crumbs++;
-        if (cells.some(k => foodAt.has(k))) c.crumbsFood++;
-        if (cells.some(k => bodyAt.has(k))) c.crumbsSnake++;
-      }
+      const { sizes } = land;
+      if (e.fall) { c.falls++; c.fallCells += e.fall.length; if (e.fall.length > T.PECK_FALL_SOFT) c.fallBig++; } // (2s: pieces cut loose, fallen with the strike; bigger than PECK_FALL_SOFT)
+      if (sizes.length > 1) c.piecesLeft++; // (2s: a strike that left the log in pieces)
     }
   }
+  for (const s of dying) if (s.fell) c.fellOut++; // (2s: down with a piece cut loose)
   for (const s of dying) { // (shut in by a mark, and out by 3 s after its strike)
     if (!st.sealed.some(([id, at]) => id === s.id && g.tick - 1 <= at + 30)) continue;
     c.sealedOut++;

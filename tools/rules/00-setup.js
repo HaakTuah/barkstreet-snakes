@@ -6,21 +6,12 @@ const vm = require('vm');
 
 const ROOT = path.join(require.main.path, '..');
 const ctx = vm.createContext({ window: {}, console, Math });
-for (const f of ['tuning.js', 'ai.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+const GAME = require('./game-files.js')(ROOT), RULES = GAME.filter(f => f !== 'tuning.js'); // (the game's files; RULES: all but tuning.js, for a board under other numbers)
+for (const f of GAME) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 const { SnakeEngine: E, SnakeAI: AI, TUNING: T } = ctx.window;
 const D = E.DIRS;
 
-// mulberry32, as simulate.js has it: the game's randomness from a seed.
-const seeded = seed => {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-};
+const seeded = require('./seeded.js'); // (mulberry32: the game's randomness from a seed)
 // The game's randomness from a seed for a while (fn), then as it was: whole
 // rounds played for their numbers come out the same every run, whatever
 // changes in the checks before them.

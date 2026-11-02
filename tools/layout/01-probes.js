@@ -88,11 +88,15 @@ const BANNER = ([text, kind, level, opts] = [], show = true) => `(() => {
   const t = document.getElementById('toast');
   if (${show}) SnakeDebug.banner(${JSON.stringify(text)}, ${JSON.stringify(kind)}, ${JSON.stringify(level)}, ${JSON.stringify(opts || {})});
   if (t.hidden) return null;
-  for (const a of t.getAnimations()) a.finish();
+  // (an animation finished, to read it where it rests; but a banner on its way out, read where it rested, its exit put
+  // back after: finished, the exit's fade would leave it 4 px up and unseen, read as over the safe top)
+  const exits = [];
+  for (const a of t.getAnimations()) if (t.classList.contains('leaving') && /-out$/.test(a.animationName)) { exits.push([a, a.currentTime]); a.currentTime = 0; } else a.finish();
   const box = el => { const r = el.getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom }; };
   const hit = (a, c) => a.x < c.r - 0.5 && c.x < a.r - 0.5 && a.y < c.b - 0.5 && c.y < a.b - 0.5;
   const me = SnakeDebug.game().snakes.find(s => s.isPlayer), cs = getComputedStyle(t);
   const tb = box(t), board = box(document.getElementById('game')), tag = me?.tag?.li ? box(me.tag.li) : null, pause = box(document.getElementById('pause'));
+  for (const [a, at] of exits) a.currentTime = at;
   return { text: t.textContent, above: t.classList.contains('above'), box: tb, onBoard: hit(tb, board), onTag: !!tag && hit(tb, tag), onPause: hit(tb, pause),
     mid: ((tb.y + tb.b) / 2 - board.y) / (board.b - board.y), safeTop: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-t')) || 0, vw: innerWidth,
     lines: t.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) > parseFloat(cs.fontSize) * 1.4 ? 2 : 1, whole: t.scrollWidth <= t.clientWidth + 1 };
@@ -148,7 +152,7 @@ const PERCH = (x, y, pose, rects = {}) => `(() => {
       if (a >= 200) { cl ||= i <= el; cr ||= i >= er; ct ||= j <= et; cb ||= j >= eb; } // (not the soft edge of a line ending a hair inside the screen)
     }
     if (x1 < 0) return null;
-    return { over, on, cut: [cl && 'left', ct && 'top', cr && 'right', cb && 'bottom'].filter(Boolean), x: lb.left + x0 / sx, y: lb.top + y0 / sy, r: lb.left + (x1 + 1) / sx, b: lb.top + (y1 + 1) / sy };
+    return { over, on, cut: [cl && 'left', ct && 'top', cr && 'right', cb && 'bottom'].filter(Boolean), inside: [lb.left > 0.5 && 'left', lb.right < innerWidth - 0.5 && 'right'].filter(Boolean), x: lb.left + x0 / sx, y: lb.top + y0 / sy, r: lb.left + (x1 + 1) / sx, b: lb.top + (y1 + 1) / sy };
   };
   const all = [];
   if (aim) { // (its head turned and tilted to its chunk, crouched to take off)
@@ -163,8 +167,9 @@ const PERCH = (x, y, pose, rects = {}) => `(() => {
   if (all.some(q => !q)) return null;
   const on = {};
   for (const q of all) for (const k in q.on) on[k] = Math.max(on[k] || 0, q.on[k]);
-  const p = { over: Math.max(...all.map(q => q.over)), on, cut: [...new Set(all.flatMap(q => q.cut))], x: Math.min(...all.map(q => q.x)), y: Math.min(...all.map(q => q.y)), r: Math.max(...all.map(q => q.r)), b: Math.max(...all.map(q => q.b)) };
+  const p = { over: Math.max(...all.map(q => q.over)), on, cut: [...new Set(all.flatMap(q => q.cut))], inside: all[0].inside, x: Math.min(...all.map(q => q.x)), y: Math.min(...all.map(q => q.y)), r: Math.max(...all.map(q => q.r)), b: Math.max(...all.map(q => q.b)) };
   p.h = p.b - p.y;
+  { const P = R.birdPose(), L = P.layer; p.eye = { x: L.x + P.eye[0] * L.w / L.W, y: L.y + P.eye[1] * L.h / L.H }; } // (its eye, CSS px, from its layer's pixels: on a phone on its side, its back may be off the screen, never its eye)
   return p;
 })()`;
 const SPOTS = [[1, 1], [12, 1], [22, 1], [1, 12], [12, 12], [22, 12], [1, 22], [6, 22], [12, 22], [17, 22], [22, 22]];

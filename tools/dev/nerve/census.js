@@ -21,7 +21,8 @@ let state = 0;
 const rng = () => { state = (state + 0x6d2b79f5) >>> 0; let t = state; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const M = Object.create(Math); M.random = rng;
 const ctx = vm.createContext({ window: {}, console, Math: M });
-for (const f of ['tuning.js', 'ai.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+const gameFiles = require('../../game-files.js'), GAME = gameFiles(ROOT), AI_FILES = GAME.filter(gameFiles.ai), ENGINE_FILES = GAME.filter(gameFiles.engine);
+for (const f of ['tuning.js', ...AI_FILES]) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 const AI = ctx.window.SnakeAI;
 const keyOf = new Map(Object.entries(AI.PERSONAS).map(([k, p]) => [p, k])), mineKey = new WeakMap();
 const per = {}, row = k => (per[k] ||= { ate: 0, headOns: 0, decisions: 0, apples: 0, won: 0, headOn: 0, lost: 0, mine: 0, theirs: 0, nobody: 0 });
@@ -43,7 +44,7 @@ ctx.window.SnakeAI = { ...AI, decide: (view, brain, memory) => {
   }
   return d;
 } };
-vm.runInContext(fs.readFileSync(path.join(ROOT, 'engine.js'), 'utf8'), ctx, { filename: 'engine.js' }); // (after: it takes the AI as it finds it)
+for (const f of ENGINE_FILES) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f }); // (after: it takes the AI as it finds it)
 const E = ctx.window.SnakeEngine;
 let rounds = 0, ticks = 0;
 for (let n = 0; n < ROUNDS; n++) {

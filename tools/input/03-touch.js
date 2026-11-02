@@ -1,4 +1,21 @@
 // -------------------------------------------------------------- touch
+// A real touch swipe on the board, across the way your snake is going, turns it: on the call's phone held
+// upright, on a small one, and both on their sides.
+for (const [w, h, scale] of [[390, 844, 3], [320, 640, 2], [780, 320, 3], [640, 320, 2]]) {
+  await b.viewport(w, h, { scale, mobile: true });
+  await startRound();
+  const g = await ev(`(() => { const r = document.getElementById('game').getBoundingClientRect(), me = SnakeDebug.game().snakes[0], D = SnakeEngine.DIRS; return { x: r.x + r.width / 2, y: r.y + r.height / 2, across: me.dir === D.left || me.dir === D.right }; })()`);
+  const way = g.across ? 'up' : 'right', dx = g.across ? 0 : 7, dy = g.across ? -7 : 0;
+  await b.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: g.x, y: g.y, id: 1 }] });
+  for (let i = 1; i <= 8; i++) {
+    await b.sleep(16);
+    await b.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: g.x + dx * i, y: g.y + dy * i, id: 1 }] });
+  }
+  await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await b.sleep(60);
+  const turned = await ev(`(() => { const me = SnakeDebug.game().snakes[0], D = SnakeEngine.DIRS; return me.queue.includes(D.${way}) || me.dir === D.${way}; })()`);
+  check(turned, `${w}×${h}: a swipe ${way} on the board turns your snake ${way}`);
+}
 await b.viewport(390, 844, { scale: 3, mobile: true });
 await freshRound();
 const box = await ev(`document.getElementById('game').getBoundingClientRect().toJSON()`);
@@ -249,3 +266,18 @@ for (const v of [0.15, 0.2, 0.3, 0.45, 0.6, 0.8, 1.0, 1.2]) {
 }
 check(jumps === 0, 'swipes never jump', `${jumps} of ${swipes} swipes; ${none} slanted 40° never registered (a way must be half again the other), ${wrong} went another way`);
 const regStats = Object.fromEntries(Object.entries(reg).map(([v, l]) => [v, stats(l).median]));
+// Napping, a tap on the board round the card, or on its words, wakes ("Tap
+// to wake up", the Pause row of "Voice and copy"), and fires no jump.
+const napTaps = [];
+for (const at of ['rim', '#overlay-text']) {
+  await ev('centre()'); await ev(`napNow(); 'ok'`); await ev('vf(2)');
+  before = await powers();
+  const napped = await state();
+  const p = at === 'rim' ? { x: box.x + 8, y: cy } : await ev(`(() => { const r = document.querySelector('${at}').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
+  await ev(`vadvance(TUNING.CARD_TAP_MS + 50)`); // (a card that came up by itself takes no tap for a moment)
+  await touch('touchStart', [{ x: p.x, y: p.y, id: 1 }]); await ev('vadvance(40)'); await touch('touchEnd', []);
+  await ev('vf(2)');
+  napTaps.push(`${at}: ${napped} → ${await state()}, ${await powers() - before} powers`);
+}
+await ev('vf(40)');
+check(napTaps.every(t => t.endsWith('paused → countdown, 0 powers')), 'napping, a tap on the board or the card’s words wakes, and fires no jump', napTaps.join('; '));

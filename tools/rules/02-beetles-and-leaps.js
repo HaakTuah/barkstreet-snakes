@@ -88,11 +88,11 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   check('...over two, it lands on the third tick', g2.snakes[0].body[0].x === 8 && !g2.snakes[0].flight && g2.snakes.every(o => o.alive), JSON.stringify(g2.snakes[0].body[0]));
 }
 
-{ // A golden leap: the same island hop, free.
+{ // A golden leap, a quick press (let go at once): the same island hop, free.
   const g = board([[line(5, 10, 5), 'right'], wall(6), wall(7)]);
   const me = g.snakes[0];
   me.leaps = 2;
-  E.leap(g, me);
+  E.leap(g, me); E.letGo(g, me);
   quiet(g);
   check('a golden leap: up over what\'s in front', me.body[0].x === 6 && !!me.flight && me.leaps === 1 && g.events.some(e => e.type === 'leap' && e.gold && e.reach === 2));
   quiet(g); quiet(g);
@@ -125,9 +125,9 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
     look(g);
     quiet(g);
     let hopped = g.events.some(e => e.type === 'leap');
-    for (let n = 0; n < 3 && (a.flight || !hopped); n++) { look(g); quiet(g); hopped ||= g.events.some(e => e.type === 'leap'); }
-    const lands = golden ? [[7, 0], [5, 3]] : [[7, 0], [5, 3]]; // (over the rival, or over its own body, whichever lands better)
-    check(`a boxed-in AI with a ${golden ? 'golden' : 'plain'} leap hops instead of crashing`, a.alive && g.snakes.every(o => o.alive) && lands.some(([x, y]) => a.body[0].x === x && a.body[0].y === y) && a.leaps === 0, JSON.stringify(a.body[0]));
+    for (let n = 0; n < T.GOLD_FLY + 3 && (a.flight || !hopped); n++) { look(g); quiet(g); hopped ||= g.events.some(e => e.type === 'leap'); } // (till it's down: a golden one, planning again as it flies, may fly on)
+    const out = golden ? a.body[0].x > 5 || a.body[0].y > 2 : [[7, 0], [5, 3]].some(([x, y]) => a.body[0].x === x && a.body[0].y === y); // (over the rival, or over its own body, whichever lands better; golden, planning again every move it's up, anywhere out of the box past the rival's body or its own: alive and down is the rule)
+    check(`a boxed-in AI with a ${golden ? 'golden' : 'plain'} leap hops instead of crashing`, a.alive && !a.flight && g.snakes.every(o => o.alive) && out && a.leaps === 0, JSON.stringify(a.body[0]));
   }
 }
 
@@ -187,11 +187,11 @@ const quiet = g => { if (g.given) g.food = g.food.filter(f => g.given.has(f.y * 
   const g = board([[line(22, 10, 8), 'right'], [line(5, 20, 3), 'right']]);
   E.flash(g, Object.assign(g.snakes[0], { dashes: 1 }));
   const dying = quiet(g);
-  check('a dash into the edge blows up', dying.includes(g.snakes[0]) && g.snakes[0].cause === 'flashed into the edge and blew up', g.snakes[0].cause);
+  check('a dash into the edge blows up', dying.includes(g.snakes[0]) && g.snakes[0].cause === 'dashed into the edge and blew up', g.snakes[0].cause);
   const g2 = board([[line(5, 10, 8), 'right'], [line(5, 20, 3), 'right']]);
   g2.holes.add(K(7, 10));
   E.flash(g2, Object.assign(g2.snakes[0], { dashes: 1 }));
-  check('...and into a hole', quiet(g2).includes(g2.snakes[0]) && g2.snakes[0].cause === 'flashed into a woodpecker hole and blew up', g2.snakes[0].cause);
+  check('...and into a hole', quiet(g2).includes(g2.snakes[0]) && g2.snakes[0].cause === 'dashed into a woodpecker hole and blew up', g2.snakes[0].cause);
 }
 
 { // A golden mushroom: for a while the edges wrap round.

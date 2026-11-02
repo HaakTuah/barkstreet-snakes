@@ -50,10 +50,21 @@ function dealLineUp(want) {
   return { keys: Array.from({ length: want }, (_, i) => seats[i] || next.shift()), fresh, chosen: mine.length > 0 };
 }
 
-// Closing the page on a start card: its rivals weren't met, so they're next.
+// Closing the page on a start card: its rivals weren't met, so they go back
+// in the deck, somewhere among the ones not yet dealt (not on top: opening
+// the game again gives a fresh cast). If the back/forward cache brings the
+// page back, the card (and the lobby's line) is there again, so they come out
+// of the deck again: everyone is still met once before anyone comes round.
+let undealtOnHide = [];
 window.addEventListener('pagehide', () => {
-  if (theGame && !theGame.spent) Records.undeal(SnakeAI.POOL, theGame.dealt || []);
-  if (hosting() && online.lineup) Records.undeal(SnakeAI.POOL, online.lineup.fresh); // (the lobby's, likewise)
+  undealtOnHide = [
+    ...(theGame && !theGame.spent ? Records.undeal(SnakeAI.POOL, theGame.dealt || [], { anywhere: true }) : []),
+    ...(hosting() && online.lineup ? Records.undeal(SnakeAI.POOL, online.lineup.fresh, { anywhere: true }) : []), // (the lobby's, likewise)
+  ];
+});
+window.addEventListener('pageshow', e => {
+  if (e.persisted) Records.takeOut(undealtOnHide);
+  undealtOnHide = [];
 });
 
 // Start a round in the given mode. The round on the start card is used as-is;
@@ -214,6 +225,15 @@ function youDied() {
   updateControls();
 }
 
+// The moment you die: the board holds still (alone), your snake holds its
+// pose with its eyes screwed shut, then bursts. Also when it ends the round.
+function deathMoment() {
+  freezeUntil = lastFrame + (reducedMQ.matches ? TUNE.DEATH_FREEZE / 2 : TUNE.DEATH_FREEZE);
+  Render.hold(boardClock + (freezeUntil - lastFrame)); // (on the board's clock)
+  Render.shake(TUNE.SHAKE_PX);
+  flashFrame('kill', true);
+}
+
 // A death card's way into the Field guide: the row about what got you.
 function guideFor(p) {
   const [howRow, name] = p.killer === 'hunger' ? ['basic-hunger', 'Hunger']
@@ -248,7 +268,7 @@ function endRound() {
       : { title, flavor, text: yours, reward: !!me, primary: null, secondary: 'Leave room', lobby: { players: true, status: FLAVOR.waiting(online.hostName, true) },
         actions: { secondary: leaveRoom } };
   } else pendingCard = theGame.withPlayer
-    ? { title, flavor, reward: true, primary: 'Play again', secondary: 'Watch AIs', text: yours, ...(how && guideFor(me)) } // (it says how you died, so it names what got you too: when your death ended the round, it's your death's card)
+    ? { title, flavor, reward: true, primary: 'Play again', secondary: 'Watch rivals', text: yours, ...(how && guideFor(me)) } // (it says how you died, so it names what got you too: when your death ended the round, it's your death's card)
     : { title, flavor, primary: 'Play', secondary: 'Watch again' };
   cardAt = lastFrame + TUNE.ROUND_END_PAUSE;
   updateControls();
@@ -360,7 +380,7 @@ function sounds(dying, wasAlive) {
     else if (e.type === 'eat') fed.push(e);
     else if (e.type === 'woodpecker') { Sound.play('call'); Sound.play('riser'); }
     else if (e.type === 'aim') Sound.play('aim', at(e.x));
-    else if (e.type === 'peck' && e.cells?.length) Sound.play('crash', at(e.x)); // (its drum came first, blow by blow: see birdSounds)
+    else if (e.type === 'peck' && e.cells?.length) { Sound.play('crash', at(e.x)); if (e.fall?.length) Sound.play('fall', at(e.fall[0] % GRID_SIZE)); } // (its drum came first, blow by blow: see birdSounds; 2s: a piece cut loose creaks and drops)
     else if (e.type === 'spawn' && e.kind === 'beetle') Sound.play('beetle', at(e.x));
     else if (e.type === 'starving' && isMe(e.snake)) Sound.play('hungry');
     else if (e.type === 'charge') Sound.play('crackle', at(e.x));

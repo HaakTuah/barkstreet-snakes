@@ -64,7 +64,7 @@ const freeHere = g => (x, y) => passHere(g)(x, y) && !g.food.some(f => f.x === x
   const c = vm.createContext({ window: {}, console, Math });
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'tuning.js'), 'utf8'), c, { filename: 'tuning.js' });
   c.window.TUNING = Object.freeze({ ...c.window.TUNING, GRID: 25 });
-  for (const f of ['ai.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), c, { filename: f });
+  for (const f of RULES) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), c, { filename: f });
   const E25 = c.window.SnakeEngine, D25 = E25.DIRS, all = () => true;
   const up = E25.rollSide(null, { body: [{ x: 12, y: 10 }, { x: 12, y: 11 }, { x: 12, y: 12 }], dir: D25.up }, 12, 10, all);
   const down = E25.rollSide(null, { body: [{ x: 12, y: 14 }, { x: 12, y: 13 }, { x: 12, y: 12 }], dir: D25.down }, 12, 14, all);

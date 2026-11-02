@@ -1,4 +1,4 @@
-// A small headless-Chrome driver for the tools (shots.js, bench.js): it serves
+// A small headless-Chrome driver for the tools (shots.js, bench.js) and the browser suites: it serves
 // this folder on a free port, launches Chrome with a throwaway profile and
 // speaks the DevTools protocol over Node's built-in WebSocket. No dependencies.
 // Chrome is found in the usual places, or set CHROME=/path/to/chrome.
@@ -109,6 +109,11 @@ async function launch() {
   await send('Page.enable');
   await send('Runtime.enable');
   const VK = { Enter: 13, ' ': 32, ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40, Escape: 27 };
+  const evaluate = async expr => {
+    const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true, userGesture: true });
+    if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);
+    return r.result.value;
+  };
   let closed = false;
   return {
     send, errors, sleep,
@@ -120,11 +125,7 @@ async function launch() {
     },
     // Loads a page, then lets it settle for a moment (settle: ms; 0 for a page that says itself when it's ready).
     async go(url, { settle = 400 } = {}) { const loaded = once('Page.loadEventFired'); await send('Page.navigate', { url }); await loaded; if (settle) await sleep(settle); },
-    async eval(expr) {
-      const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true, userGesture: true });
-      if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);
-      return r.result.value;
-    },
+    eval: evaluate, ev: evaluate, // (ev: the suites' short name for it)
     async shot(file, quality = 85) { const r = await send('Page.captureScreenshot', { format: 'jpeg', quality }); fs.writeFileSync(file, Buffer.from(r.data, 'base64')); },
     async key(key) {
       const text = key === 'Enter' ? '\r' : key.length === 1 ? key : undefined;
@@ -171,8 +172,19 @@ window.waitFor = (cond, ms = 60000) => new Promise((res, rej) => {
   (function check() { let v; try { v = cond(); } catch (e) { return rej(e); } if (v) return res(v); if (performance.now() - t0 > ms) return rej(new Error('timeout: ' + cond)); setTimeout(check, 10); })();
 });
 window.cardUp = () => !document.getElementById('overlay').classList.contains('hidden');
-window.me = () => SnakeDebug.game().snakes[0];
+window.you = () => SnakeDebug.game().snakes[0];
 window.running = () => waitFor(() => SnakeDebug.state() === 'running');
 'ok'`;
 
-module.exports = { launch, serve, sleep, HELPERS };
+// The report of a browser suite: check(ok, what, detail) adds a line to results and counts a failure in
+// failed (which the runner adds its own to, such as the page's errors).
+function reporter() {
+  const report = { results: [], failed: 0 };
+  report.check = (ok, what, detail = '') => {
+    report.results.push(`${ok ? 'ok  ' : 'FAIL'} ${what}${detail ? ` (${detail})` : ''}`);
+    if (!ok) report.failed++;
+  };
+  return report;
+}
+
+module.exports = { launch, serve, sleep, HELPERS, reporter };

@@ -1,5 +1,5 @@
 // Every number that controls how Barkstreet Snakes plays and feels, in one place.
-// Rules are read by engine.js (and by the headless simulator); feel and juice
+// Rules are read by engine/ (and by the headless simulator); feel and juice
 // by game/ and render/. Times are in milliseconds unless noted.
 window.TUNING = Object.freeze({
   // ------------------------------------------------------------- the board
@@ -27,7 +27,7 @@ window.TUNING = Object.freeze({
   BEETLE_FEAR: 6,           // ...from any head within this many cells (4 until the dig became a race: one that runs sooner reaches its burrow more often)
   BEETLE_HOME_REACH: 7,     // a scared beetle runs for a burrow nearer than this...
   BEETLE_DIG_FEAR: 6,       // ...and one with a head this near and no burrow in reach digs in where it is...
-  BEETLE_DIG: 6,            // ...taking this many ticks (it stays put, and can still be caught), then it's underground, as after a dive. A race you can win: never fewer than BEETLE_DIG_FEAR, so a head coming straight at it from where the dig starts gets there on its last tick (5 ticks from a head within 7, nobody coming at one ever did)
+  BEETLE_DIG: 4,            // ...taking this many ticks (it stays put, and can still be caught), then it's underground, as after a dive. A race it can win (2w, the owner: beetles get away "at least a third of the time"): under BEETLE_DIG_FEAR, so a head coming straight at it from as far as the dig starts is late; one already nearer, or cutting in, still catches it (chased beetles got away: at 6, 25/26% on seeds 3/11, the race the head's; at 5, 33/32%; at 4, 41/38%)
   BEETLE_GROWTH: 2,         // a beetle is worth this much
   // Powers. Everyone can jump and flash, two separate presses (Space or a
   // tap; E, Shift or a swipe the way you're going). A jump hops islands: up
@@ -52,6 +52,7 @@ window.TUNING = Object.freeze({
   GOLD_BEETLE_CHANCE: 0.16, // a beetle coming out is a golden one this often (about two golden beetles a round, as many as with more beetles at 0.12): catch it for golden jumps (the same island hop, free)...
   LEAP_CHARGES: 2,          // ...this many (up to LEAP_MAX held at once)
   LEAP_MAX: 3,
+  GOLD_FLY: 5,              // round six B: a golden jump held past the plain hop flies this many cells in the air, always (2y: let go, it flies on; a quick press: the plain hop)
   LEAF_CHANCE: 0.25,        // wind: each gust might blow a golden leaf onto the log (one at a time): dashes...
   LEAF_TICKS: 90,           // ...it blows away after this many ticks
   DASH_CHARGES: 2,          // ...this many (up to DASH_MAX held): golden flashes, three cells in one tick, cutting through a body up to DASH_THICK thick and putting out every fire (the edge or a hole: you blow up)
@@ -134,7 +135,8 @@ window.TUNING = Object.freeze({
   PECK_REST_MIN: 10,
   PECK_CHUNK_MAX: 20,       // ...and each patch a cell bigger than the last (up to this): fewer, rounder holes fill the log as fast as the old 9 to 16 with longer rests
   PECK_CLEARANCE: 4,        // it aims more than this far from every head (nobody can be in a fresh mark before they can see it), and never shuts anyone in, while there's such a spot; food in the mark is knocked aside at the strike
-  PECK_NO_ORPHANS: 2,       // a patch that would cut off an island of this many cells or fewer takes them too (unless a snake's on one: then another patch)
+  PECK_NO_ORPHANS: 2,       // a crumb this small cut loose (2s: it falls with the strike, as any piece cut loose) may lie near a head, never under one; a bigger piece keeps the patch's clearance
+  PECK_FALL_SOFT: 12,       // the log stays one piece (2s): a patch that cuts a piece loose takes it too (it falls with the strike, shown in the mark); it aims to cut loose none bigger than this, but takes any if it must
   PECK_UNDER_BODY: 0.33,    // this share of strikes starts under a body (a body lying over a fresh hole bridges it; only a head falls in)
   PECK_WIDEN: 0.5,          // this share widens an old hollow (fewer, bigger hollows)
   SD_APPLE_GAP: 20,         // sudden death: with no apple on the board, the next falls this many ticks after the last went, times its number (about 2 s, 4 s, 6 s...)
@@ -240,7 +242,6 @@ window.TUNING = Object.freeze({
   CHEW_MS: 420,             // and the mouth's chewing after it
   CHEEKS_MS: 900,           // Gobbler's cheeks puff up at a bite and go down over this long
   FLOAT_MS: 700,            // a "+1" rises and fades over this long
-  MOOD_RING_MS: 900,        // Capricious's ring flashing out when its mood changes
   GOLDEN_DIM_TICKS: 30,     // a golden apple dims (calmly) over its last this-many ticks
   CORPSE_FADE_MS: 250,      // with reduced motion, a dead snake fades over this long instead of bursting
 });

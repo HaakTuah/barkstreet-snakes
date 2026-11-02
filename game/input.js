@@ -1,5 +1,5 @@
 // The game controller (see game/core.js): input, from keys, touch, swipes
-// and the buttons.
+// and the buttons; and napping and waking.
 
 // ------------------------------------------------------------- input
 
@@ -96,7 +96,7 @@ function steerTo(name, swipe = false) {
     return;
   }
   if (state === 'ready') start({ going: true });
-  if (state === 'paused' && askingStartOver) resume(); // (steering: you meant to keep going)
+  if (state === 'paused') resume(); // (any steer wakes a nap, and steers: you meant to keep going)
   if (state === 'countdown') { heard(); turn(name); go(); youHideAt = Math.min(youHideAt, performance.now() + TUNE.YOU_AFTER_STEER_MS); }
   else if (state === 'running') { heard(); press(name, player()); }
 }
@@ -106,13 +106,13 @@ function steerTo(name, swipe = false) {
 // stunned, it goes when the stun's over): they never start, wake or
 // dismiss anything. Online it goes to the host's game, as your turns do.
 function power(kind) {
-  if (state !== 'running' || !playerAlive()) return;
+  if (!(state === 'running' || (kind === 'letgo' && state === 'paused')) || !playerAlive()) return; // (a jump let go while napping counts: it isn't held when you wake)
   if (kind === 'flash') flashedEver = true;
   if (guesting()) return online.room.send({ t: 'pow', k: kind });
-  if (hosting()) return hostPress(me => powerOf(me, kind));
+  if (hosting()) return hostPress(me => powerOf(me, kind), kind === 'letgo');
   powerOf(player(), kind);
 }
-const powerOf = (s, kind) => (kind === 'unleap' ? unleap : kind === 'flash' ? Engine.flash : Engine.leap)(theGame, s);
+const powerOf = (s, kind) => (kind === 'unleap' ? unleap : kind === 'letgo' ? Engine.letGo : kind === 'flash' ? Engine.flash : Engine.leap)(theGame, s);
 // A jump asked for and not gone yet, taken back (a finger held still that
 // turned out to be a swipe: see the touches).
 const unleap = (g, s) => { if (s?.alive && s.leapArmed >= g.tick) s.leapArmed = -1; };
@@ -121,9 +121,9 @@ const unleap = (g, s) => { if (s?.alive && s.leapArmed >= g.tick) s.leapArmed = 
 // the other half to arrive. So the host's own presses (turns and powers)
 // wait a whole round trip, in the order they were made: no one gets a head start.
 let hostPressAt = 0;
-function hostPress(fn) {
+function hostPress(fn, letGo = false) {
   const me = player();
-  if (me.autopilot) me.autopilot = null; // back from a hidden tab: your hands again
+  if (me.autopilot && !letGo) me.autopilot = null; // back from a hidden tab: your hands again
   const now = performance.now();
   const at = Math.max(now + Math.min(TUNE.HOST_DELAY_MAX, online.room.rtt()), hostPressAt);
   hostPressAt = at;
@@ -135,6 +135,14 @@ function hostPress(fn) {
 // A result is on its way (your death's card in the freeze, or the round's
 // card in its pause): keys wait for it, never throw it away.
 const cardComing = () => !!pendingCard && (state === 'over' || (state === 'running' && !playerAlive()));
+// Any key that plays wakes a nap (the Pause row of "Voice and copy"):
+// Space and the flash keys wake without a power, Enter wakes, a steering
+// key wakes and steers (steerTo). Whether it woke the game.
+function wakes() {
+  if (state !== 'paused' || online || cardComing() || askingStartOver) return false; // (Start over? is answered by its buttons, Enter or a steer)
+  resume();
+  return true;
+}
 // P and Esc nap and wake (and only that: starting is Enter, R or an arrow).
 function napKey() {
   if (online || cardComing()) return; // no napping online
@@ -149,7 +157,10 @@ function napKey() {
 // Space be a jump, so mashing jump just after you die can't start a round.
 let tabbing = false, tabbed = null;
 document.addEventListener('focusin', e => { tabbed = tabbing ? e.target : null; tabbing = false; });
-document.addEventListener('keyup', e => { if (e.key === 'Tab') tabbing = false; }); // (a Tab that took focus out of the page: the game's next focus isn't yours)
+document.addEventListener('keyup', e => {
+  if (e.key === 'Tab') tabbing = false;
+  if (e.key === ' ') power('letgo'); // (the jump let go: over the plain hop's cells, a golden jump is the plain hop; past them, it flies on)
+}); // (a Tab that took focus out of the page: the game's next focus isn't yours)
 
 // Copying the title: its S is a drawing over a see-through letter, so a
 // rich paste (into an email, say) would read "Barkstreet  nakes". A copy
@@ -162,7 +173,10 @@ document.addEventListener('copy', e => {
   e.clipboardData.setData('text/html', text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]));
   e.preventDefault();
 });
+let shiftAlone = false;
+document.addEventListener('keyup', e => { if (e.key === 'Shift' && shiftAlone && recordsEl.hidden && pickerEl.hidden) wakes(); shiftAlone = false; });
 document.addEventListener('keydown', e => {
+  if (e.key !== 'Shift') shiftAlone = false;
   Sound.unlock();
   tabbing = e.key === 'Tab';
   if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -179,7 +193,8 @@ document.addEventListener('keydown', e => {
   if (pow) {
     if (e.key === ' ' && e.target === tabbed && e.target.closest?.('button')) return; // (Tabbed to: the button's own key)
     e.preventDefault();
-    if (!e.repeat && recordsEl.hidden && pickerEl.hidden) power(pow);
+    if (e.key === 'Shift' && state === 'paused') { shiftAlone = !e.repeat; return; } // (napping, Shift wakes on its lift, if no key came with it: Shift+G is G, Shift+Tab is Tab)
+    if (!e.repeat && recordsEl.hidden && pickerEl.hidden && !wakes()) power(pow); // (napping: it wakes, and fires nothing)
     return;
   }
   if (!pickerEl.hidden) {
@@ -193,7 +208,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   const dir = KEYS[e.key] || CODES[e.code];
-  if (dir) { e.preventDefault(); if (!e.repeat) steerTo(dir); return; } // (a held key's repeats steer nothing: its first press did)
+  if (dir) { e.preventDefault(); if (!e.repeat) { if (!playerAlive()) wakes(); steerTo(dir); } return; } // (out and napping, it only wakes) // (a held key's repeats steer nothing: its first press did)
   // A held key repeats nothing, not even a focused button (holding Enter on
   // Play would otherwise start the round and then skip its countdown).
   if (e.repeat) { if (e.key === 'Enter') e.preventDefault(); return; }
@@ -212,6 +227,7 @@ document.addEventListener('keydown', e => {
     if (cardComing()) return; // (the result's card first)
     if (state === 'countdown') { if (!online) go(); } // (online the countdown runs its course: everyone starts together)
     else if (state === 'paused' && askingStartOver) start();
+    else if (state === 'paused' && key === 'Enter') resume(); // (Enter wakes; R still asks to start over)
     else if ((state === 'running' || state === 'paused') && playerAlive() && !online) askStartOver(key); // (R sits next to D: a slip shouldn't throw a round away, napping or not)
     else start({ aiOnly: false });
   }
@@ -283,6 +299,7 @@ function tapped(sw) {
   sw.tap = false;
   clearTimeout(sw.timer);
   for (const o of swipes.values()) o.held = 0; // (a jump meant: nothing to take back)
+  sw.jumped = true; // (its lift lets the jump go: see endSwipe)
   power('leap');
 }
 // Held still: a jump now, if there's something to hop on the way (it waits
@@ -292,7 +309,7 @@ function tapped(sw) {
 function held(sw) {
   sw.timer = 0;
   const me = player();
-  if (!sw.tap || !me?.alive || !hurdleAhead(me, TUNE.LEAP_WINDOW + 1, true)) return;
+  if (!sw.tap || !me?.alive || !(hurdleAhead(me, TUNE.LEAP_WINDOW + 1, true) || me.leapArmed >= theGame.tick)) return; // (or a second touch while a jump waits: leap now, held as long as the finger stays)
   tapped(sw);
   sw.held = performance.now();
 }
@@ -355,6 +372,7 @@ const endSwipe = e => {
     if (lastSwipe?.sw === sw) lastSwipe.up = now;
     const far = Math.max(sw.far, Math.hypot(c.clientX - sw.x0, c.clientY - sw.y0));
     if (sw.tap && e.type === 'touchend' && (far <= TUNE.TAP_STILL_PX || (far < swipeMin() && now - sw.at < TUNE.TAP_QUICK_MS))) tapped(sw);
+    if (sw.jumped) power('letgo'); // (the finger off the glass: a quick tap, a plain-length hop; a golden flight held past it flies on)
     sw.tap = false;
     if (e.type === 'touchend' && sw.run < cardShownAt + TUNE.CARD_TAP_MS && (!sw.button || overlay.contains(sw.button))) { e.preventDefault(); continue; } // (begun as a card came up by itself, or in a run of touches that was: no click, the browser's or ours)
     if (!sw.button || e.type !== 'touchend' || sw.moved) continue; // (a scroll: the browser's own business)
@@ -386,6 +404,7 @@ function mousePress(e) {
   if (kind && e.target === canvasEl && !e.ctrlKey && !e.metaKey && !e.altKey) power(kind); // (the board itself, no card over it; and no shortcut)
 }
 document.addEventListener('pointerdown', mousePress);
+document.addEventListener('pointerup', e => { if (e.pointerType === 'mouse' && e.button === 0 && state === 'running') power('letgo'); }); // (the left button let go: see letGo)
 document.addEventListener('pointermove', e => { if (e.button >= 0) mousePress(e); }); // (only a chord's press or release says which button)
 boardEl.addEventListener('contextmenu', e => { if (!e.target.closest?.('.card')) e.preventDefault(); }); // (a card's own text and fields keep theirs)
 // A mouse press in a run begun as a card came up by itself (or this soon after): still mashing jump.
@@ -419,6 +438,9 @@ click(watchBtn, () => {
   else if (state === 'paused') { if (playerAlive()) askStartOver(null); else start(); } // "Start over" on touch: it asks first, too (out already, there's nothing to lose)
   else start({ aiOnly: true });
 }, cardSettled);
+// A tap on the board or the napping card's words wakes, as the Wake up
+// button does (its buttons and links keep their own jobs).
+overlay.addEventListener('click', e => { if (performance.now() - touchAt < 800 && performance.now() - noteShutAt > 800 && state === 'paused' && !e.target.closest('button, a, input') && cardSettled(e)) wakes(); }); // (a touch's, just now, which Safari's clicks don't say: a mouse's click there stays nothing, as it was)
 click(pauseBtn, () => (state === 'paused' ? resume() : state === 'running' && !playerAlive() && shownCard?.reward && !overlay.classList.contains('hidden') ? hideCard() : napNow()));
 muteBtn.addEventListener('click', () => { Sound.unlock(); toggleMute(); }); // (its tap comes after the toggle: see toggleMute)
 click(musicBtn, () => toggleMusic());
@@ -487,37 +509,11 @@ nameInput.addEventListener('change', () => {
 // while you're playing (a watched round can keep going on screen). Online the
 // round goes on regardless.
 document.addEventListener('visibilitychange', () => {
+  if (document.hidden) power('letgo'); // (a held jump can't be let go out of sight)
   if (online) return awayOnline();
   if (!document.hidden) return;
   napNow();
 });
-
-// The screen stays on while you play, through the countdown, and while
-// you watch a round (a screen wake lock); a nap, a card or the Hall of
-// Fame lets it go. A hidden tab loses it (the browser lets it go), so
-// coming back asks again, if it's still wanted then (alone you'll be
-// napping: waking asks). Where there's no wake lock, nothing changes; a
-// refusal (a battery saver, say) isn't asked again until the next time
-// it's wanted.
-const awake = { lock: null, asking: false, refused: false };
-function keepAwake() {
-  if (!navigator.wakeLock) return;
-  const want = !document.hidden && recordsEl.hidden && pickerEl.hidden && (state === 'countdown' || (state === 'running' && overlay.classList.contains('hidden')));
-  if (!want) {
-    awake.refused = false;
-    if (awake.lock) { const lock = awake.lock; awake.lock = null; lock.release().catch(() => {}); }
-    return;
-  }
-  if (awake.lock || awake.asking || awake.refused) return;
-  awake.asking = true;
-  navigator.wakeLock.request('screen').then(lock => {
-    awake.asking = false;
-    awake.lock = lock;
-    lock.addEventListener('release', () => { if (awake.lock === lock) awake.lock = null; }); // (the browser's doing: a hidden tab)
-    keepAwake(); // (let go at once if it's no longer wanted)
-  }, () => { awake.asking = false; awake.refused = true; });
-}
-document.addEventListener('visibilitychange', keepAwake); // (after the nap above)
 
 // Online the round goes on while your tab is hidden, so an AI steers your
 // snake until you're back and turn again. A friend's tab says so itself: a
@@ -534,6 +530,7 @@ function awayOnline() {
   }
 }
 window.addEventListener('blur', () => {
+  power('letgo'); // (Space held as the window lost focus: its key-up never comes)
   if (online || !playerAlive() || pendingCard) return;
   napNow();
 });

@@ -129,7 +129,7 @@ The owner played the live game (6d478ed) on a desktop and sent three findings, f
 - `tools/render-test.js` checks the opening shrinking with sawdust and moss coming in, the closing over from there, and the scar gone after 22 s.
 - `tools/input-test.js` checks the lesson and the sound.
 
-**The cue, evened out** (27 October 2026, PR #55). Haakon: "Yes, you can try that and see if it adds to the game! Review it afterwards and make an expert call." Staged frames at 0, 1/3, 2/3 and 0.95 of its time had shown it all but done by a third (the plug drawn at full width early, the opening's rim and specks covered) and two thirds and nearly shut alike, the moss only small flecks. Now it goes evenly (above), the moss in cushions that read at phone size, and the scar a little stronger (0.45, was 0.3). With reduced motion nothing changes in it: it is a slow change of look, not motion, and the closing over keeps its calm version. The Field guide keeps its longer line over the spec's "A burrow left unused grows shut.": that alone reads as a timer, and the longer line says which one (past three, the one unused longest) and what it means for play (beetles still go in, none come out). `tools/render-test.js` checks the opening's dark pixels and the sawdust and moss in it changing by like steps each third, and the moss over a good part of a cell by the end. `tools/dev/burrow-shut/frames.js` stages the frames.
+**The cue, evened out** (27 October 2026, PR #55). The owner: "Yes, you can try that and see if it adds to the game! Review it afterwards and make an expert call." Staged frames at 0, 1/3, 2/3 and 0.95 of its time had shown it all but done by a third (the plug drawn at full width early, the opening's rim and specks covered) and two thirds and nearly shut alike, the moss only small flecks. Now it goes evenly (above), the moss in cushions that read at phone size, and the scar a little stronger (0.45, was 0.3). With reduced motion nothing changes in it: it is a slow change of look, not motion, and the closing over keeps its calm version. The Field guide keeps its longer line over the spec's "A burrow left unused grows shut.": that alone reads as a timer, and the longer line says which one (past three, the one unused longest) and what it means for play (beetles still go in, none come out). `tools/render-test.js` checks the opening's dark pixels and the sawdust and moss in it changing by like steps each third, and the moss over a good part of a cell by the end. `tools/dev/burrow-shut/frames.js` stages the frames.
 
 **Measured** (600 rounds each, seeds 3 and 11, against e55855a):
 
@@ -162,7 +162,7 @@ Escapes stay inside the 20–35%. The simulation's check passed on both seeds.
 
 **Where its top is** (27 October 2026, after PR #57 put the top 0.06 of the board from the top edge with the radius fixed at 1.09 boards, which left an apple near the middle of the top half showing only the rising side): the arch's top is half way from the apple to the far edge, so the arch is even between them and comes back down to the apple's height at the far edge. The side is the far side by the apple's column, fixed for that rainbow (the board has an even number of columns, so no apple is in the middle), and within each half the arch changes smoothly as the apple's place does.
 
-**Rounder, and the same in both halves** (27 October 2026, Haakon on the follow-ups PR #61 left open: "And I agree, queue!"; this PR): with its centre 1.15 boards down, an arch over a short stretch was shallow (from an apple by the middle it rose about a cell), and an apple in the lower half kept the old half circle round its own height, so one low near the middle showed only its rising side. Now every rainbow, from either half, follows the one rule: up out of the apple, its top half way to the far edge, down to the apple's height at that edge and on off the board. Each is the same round arch, its centre below the apple by half the arch's half-width (d, half the way to the far edge): its radius 1.12 d, its top 0.62 d above the apple, the arc from the apple to the far edge 127°. From an apple by the middle (d about 6.25 cells) it rises 3.9 cells, from one low by a side edge 7. Where its top would come nearer the top edge than 0.06 of the board (or half the apple's height, for an apple in the top 0.12 of the board), it's flatter instead, its centre lower so its top is just that, and the change is smooth where the two meet. A low apple's arch is smaller than the old half circle (whose top was 0.1 of the board from the top edge from anywhere), but it's always whole. render-test checks twenty apples, left, middle and right, high and low in both halves, and that from one by the middle, high or low, it rises clearly (its glow's top over 4.5 cells above the apple's middle; 5.2 now, 2.25 before).
+**Rounder, and the same in both halves** (27 October 2026, the owner on the follow-ups PR #61 left open: "And I agree, queue!"; this PR): with its centre 1.15 boards down, an arch over a short stretch was shallow (from an apple by the middle it rose about a cell), and an apple in the lower half kept the old half circle round its own height, so one low near the middle showed only its rising side. Now every rainbow, from either half, follows the one rule: up out of the apple, its top half way to the far edge, down to the apple's height at that edge and on off the board. Each is the same round arch, its centre below the apple by half the arch's half-width (d, half the way to the far edge): its radius 1.12 d, its top 0.62 d above the apple, the arc from the apple to the far edge 127°. From an apple by the middle (d about 6.25 cells) it rises 3.9 cells, from one low by a side edge 7. Where its top would come nearer the top edge than 0.06 of the board (or half the apple's height, for an apple in the top 0.12 of the board), it's flatter instead, its centre lower so its top is just that, and the change is smooth where the two meet. A low apple's arch is smaller than the old half circle (whose top was 0.1 of the board from the top edge from anywhere), but it's always whole. render-test checks twenty apples, left, middle and right, high and low in both halves, and that from one by the middle, high or low, it rises clearly (its glow's top over 4.5 cells above the apple's middle; 5.2 now, 2.25 before).
 
 ### Hunger on the body
 
@@ -170,7 +170,7 @@ Escapes stay inside the 20–35%. The simulation's check passed on both seeds.
 
 **The call** (27 October 2026): every snake shows its hunger on its body, read from the clock its tag reads (`hungerLook` in `render/looks.js`), so you see it where your eyes already are, on yourself and on every rival:
 - **It slims** as its last meal runs out: its body (not its head) up to 22% thinner, by the share of the meal gone to the power 1.5, so a snake just fed looks as it always did, a hungry one is plainly thinner, and the change creeps in rather than jumps.
-- **It growls** in the warning's seconds (the toast's: 6 s left, 9 at its smallest): two short arcs either side of its head, cream under ink so they read on the bark and on any body, swelling out and fading on each rumble (520 ms, a beat the "Your tummy is rumbling" toast and the rumble sound go with), and its head shakes a little, both stronger toward the end. With reduced motion the arcs hold still and the head doesn't shake.
+- **It growls** in the warning's seconds (the toast's, `Engine.hungerWarning`: 6 s before it starts shrinking, or 9 before it would starve if that's sooner, in real time, snow or not; until #327 it read the hunger clock, so a snake of 4 in snow was warned only 4.5 s before the end): two short arcs either side of its head, cream under ink so they read on the bark and on any body, swelling out and fading on each rumble (520 ms, a beat the "Your tummy is rumbling" toast and the rumble sound go with), and its head shakes a little, both stronger toward the end. With reduced motion the arcs hold still and the head doesn't shake.
 - **It pales** while starving (shrinking a segment every 1.5 s): a parchment wash over its whole shape, full within the first segment lost. On the palest bodies (Mason's marble, Ghost) it barely shows; the slimness and the growl carry it there.
 - The Field guide's Hunger row says it: "A hungry snake grows thin, then growls; one gone pale is shrinking. At 3 it starves. Your bar is under your name."
 
@@ -203,7 +203,7 @@ So what starves a new player is not seeing hunger at all: unseen, 8.0% of rounds
 
 ### The phone's bottom
 
-**The finding** (Haakon, 28 October 2026, queue item 1b++, with two screenshots): on an upright phone, watching, the
+**The finding** (the owner, 28 October 2026, queue item 1b++, with two screenshots): on an upright phone, watching, the
 folded chatter's strip touched the speed buttons' rims; it started folded though nothing else used the screen under it;
 and the woodpecker looked too small down there. "It is important that it is big ... It should stay much more
 consistent. And it it purches on and interact with us elements down there, then that just looks cool really."
@@ -218,10 +218,10 @@ consistent. And it it purches on and interact with us elements down there, then 
 - *The woodpecker, one size.* Measured before the change: perched under the board it was already the size it is on the
   board (scale 1 in every phase, 78 to 80 px of drawn bird on a 390×844 phone, drumming 78 to 85), at all four phones;
   only on a phone under about 600 px tall did it shrink (to 0.51 at 375×560), which is outside this entry. So its size
-  is unchanged, and what looked small is its slim perched profile beside the 44 px buttons (see "For Haakon").
+  is unchanged, and what looked small is its slim perched profile beside the 44 px buttons (its question and answer: `docs/archive/progress-done.md`, "For the owner, answered").
 - *It plays with the controls.* Under the board it clings to a button's rim where one is near (2.5 of its units, about
   34 px on a 390 px phone): its toes on the side of a speed button or the chatter's switch, facing the button and its
-  spot, as it clings to the log; resting there, every 3 to 7 s it pecks at the button, two quick taps (render/bird.js
+  spot, as it clings to the log; resting there, every 3 to 7 s it pecks at the button, two quick taps (render/bird-perch.js
   `perchFor`, render/bird-draw.js `headAndEye`). Going from one spot to the next it hops from rim to rim. It still
   never covers a cell, stays on the screen and clear of the frame's moss and leaves, and taps pass through it (its
   layer's `pointer-events: none`, as decided on 20 October). With reduced motion it clings but doesn't peck.
@@ -234,19 +234,27 @@ perched under the board, flying and drumming on it.
 
 ### Wildcard's hair
 
-Haakon: "Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side.
+The owner: "Not a comb-over: his real swoop, a big fluffy golden-blond pompadour swept back, then forward and to one side.
 It must read at phone size."
 
 - *Before:* a flat golden patch combed across the back of the head to a small curl over one eye, the same size as the
   head; at phone size it read as a yellow cap.
-- *Then* (PR #74, `pompadour()`): the roll swooped forward along one side to a flick past that eye. Haakon (28
+- *Then* (PR #74, `pompadour()`): the roll swooped forward along one side to a flick past that eye. The owner (28
   October): "It flips to the front side, you know like a blond emo/goth haircut"; heading up, it read like a turban.
-- *Now* (PR #107, `render/faces.js`, `hairBack()` and `hairRoll()`), seen from above with the head pointing +x and -y the
+- *Then* (PR #107, `render/faces.js`, `hairBack()` and `hairRoll()`), seen from above with the head pointing +x and -y the
   far side: two shapes, each with a dark amber outline so they read at phone size. Nothing is in front of the brow: a
   lighter raised roll runs along the hairline just behind the eyes (its front edge at x = 0.12 of a cell, no further),
   with a shine along its crest, fuller at the far end. Behind it, the fluffy golden mass puffs out past the head, most
   at the back and the far side; its strands run straight back over the crown and turn to the far side at their ends, so
   the comb reads up, back and round. The eyes, pout and squint are as they were.
+- *Then* PR #110's lacquered mop, PR #144's version F and PR #156's F at 85%. The owner (30 October): "trump looks like
+  David Lynch now. I actually think the very first or second hairstyle trump had in the game is better", and picked the
+  first, "but have the swirl point upwards instead of downwards".
+- *Now* (2n, `render/faces.js`, `hairBack()`, `pompadour()`, `wildHair()`): PR #74's pompadour exactly as it was
+  (shape, size, strands, colours and outline), with one change: its lick, the curl at the near end of the roll that came
+  forward over the brow to a flick past the eye, is turned round, curling up and back over the hair behind it, its two
+  combed strands following it. Two tries that reworked more were turned down; the owner (31 October): "it looks horrible.
+  I want the original hair, but I want the lick reversed. That's all. Keep it that simple."
 - Drawn in the head's own frame, so it is the same at every heading, and still: nothing in it moves, with reduced motion
   or without. Capricious's Wildcard mood wears it too. Drawing only.
 
@@ -277,10 +285,13 @@ Who you meet is dealt from a deck, and you may choose instead, seat by seat.
   eighteen and deals from it, every rival once before any comes round again, across rounds and reloads. When it runs
   out, a fresh shuffle goes in behind whatever it still holds. Watching (four rivals) deals the same way. The
   simulator and tools keep the engine's own uniform pick (`pickOpponents`), so fingerprints are unchanged.
-- *Choosing* (`game/hud.js`, `openPicker()`; the seats in `game/banners.js`, `buildOpponents()`): on the start card
+- *Choosing* (`game/cards.js`, `openPicker()`; the seats in `game/cards.js`, `buildOpponents()`): on the start card
   each rival is a button with a swap mark; it opens a picker of "Any" and all eighteen, each with its dot and blurb,
-  over the page like the Hall of Fame (Escape or × closes it). A chosen seat wears a ring. The choice is kept per seat
-  under the new key `snake-lineup` (`seats()`, `setSeat()`) for every round after, until changed; "Any" seats are
+  over the page like the Hall of Fame (Escape or × closes it). A chosen seat wears a ring, and on the start card a
+  small pin beside it: a tap on the pin sets the seat back to "Any" (`unpinSeat()`). The choice is kept per seat for
+  this visit (2u, 30 October 2026: "Didn't expect them to stay permanently"), round after round and across a reload in
+  the same tab, in `sessionStorage` under `snake-visit-lineup` (`seats()`, `setSeat()`); the next time the game is
+  opened every seat is "Any" again. The old lasting key `snake-lineup` is no longer read (and never renamed). "Any" seats are
   dealt from the deck, which skips the chosen rivals (they stay in it for later). Choosing a rival already in another
   seat swaps the two. Watching from the start card keeps its three and deals the fourth.
 - *Online* the host's choice and deck decide. A guest's own choice and deck are untouched. With more people, fewer
@@ -289,7 +300,9 @@ Who you meet is dealt from a deck, and you may choose instead, seat by seat.
     them, "unless a friend joins". The room opens with the start card's line-up (and what the deck dealt for it); after
     each round the next is dealt, shown on the round's card. The host's seats are the start card's buttons, opening the
     same picker (a chosen one wears its ring); the guests see each seat's rival, and "chosen", as it stands. A seat a
-    friend takes sends its rival back to the top of the deck, as does closing the room or the page.
+    friend takes sends its rival back to the top of the deck, as does closing the room. Closing the page (a start
+    card's or the room's rivals never met) sends them back to a random place among the rivals not yet dealt
+    (`undeal(..., { anywhere: true })`), so opening the game gives a fresh cast and everyone is still met first.
   - Protocol 13: the lobby message carries the line-up (`lineup`: each seat's rival and whether the host chose it),
     sent whenever it changes; the round message carries the round's as before.
 - *The Hall of Fame:* every entry of a round with any chosen rival (yours, the rivals', a friend's) is marked "chosen"
@@ -297,7 +310,7 @@ Who you meet is dealt from a deck, and you may choose instead, seat by seat.
 
 ### The woodpecker, 1.3 times
 
-Haakon (29 October 2026): 1.3 times its size, on the board and under it alike (one size; entry 2c). The bird's unit
+The owner (29 October 2026): 1.3 times its size, on the board and under it alike (one size; entry 2c). The bird's unit
 (`BU` in `render/bird.js`) is 1.3 times what it was, so everything that sizes it (its perches, its room round the board,
 its flights, its drum poses, its rims under the board) grows with it, and it stays one size, perched and drumming,
 wherever the screen has room for it: about 101 px of drawn bird on a 390×844 phone (from 78), and one size on every
@@ -309,7 +322,7 @@ only, so play is unchanged: the simulation's fingerprints are identical.
 
 ### The woodpecker, as big as it gets
 
-Haakon (29 October 2026; entry 2k): "as big as you can get away with without it falling out of the screen, or being
+The owner (29 October 2026; entry 2k): "as big as you can get away with without it falling out of the screen, or being
 pushed onto the gameplay screen when not pecking, or anything." Drawing only (`BIRD_GROW` in `render/bird.js`, 1.7
 times its first size, from 1.3), so play is unchanged and no simulation was run. Found by trying 1.5 to 2.0 against
 the layout and render suites. Two things stopped it first and were fixed (below: its drum poses' room for the aim, the
@@ -332,7 +345,7 @@ where there was more, bigger (1920×1080 234-279 → 306-364, 915×412 105-128 �
   half a cell, which, bigger, carried its landing in a top corner past the screen's edge (from 1.6 on a 1024×768
   tablet, from 1.65 on a 1000×480 laptop window). Near the board's foot on a phone on its side it lies level to drum
   where it can't stand, as its design allows.
-- *On a phone held upright* it still stands over the row under the board and the chatter, as Haakon asked in 1b++, so
+- *On a phone held upright* it still stands over the row under the board and the chatter, as the owner asked in 1b++, so
   bigger it covers more of their words (at 1.3 it already hid a speed button's label whole at some spots); taps pass
   through it. Beside the board it never lies over any word.
 
@@ -341,7 +354,7 @@ board, off the page's words; drumming, no more of the heads, food and mark's til
 screen, a 3 by 4 mark, compared over the five screens); nothing on the page moves for it. The rest (on the screen in every pose and flight, never over a cell perched) is
 `03-devices.js` on every screen. Pictures: `tools/dev/woodpecker-size/shots.js`.
 
-- *Clear of the row's words (2k+).* Haakon (29 October 2026): "Keep the bird 1.7x. And agreed with everything else."
+- *Clear of the row's words (2k+).* The owner (29 October 2026): "Keep the bird 1.7x. And agreed with everything else."
   On a phone held upright it perches over the row under the board as before, but clear of its words: the speed
   buttons' and the switches' labels, and the speed's and the chatter's captions (`words` from `placeBoard` in
   `game/screen.js`, those level with the bird). Where it would stand covers one, it takes the nearest place that
@@ -350,11 +363,16 @@ screen, a 3 by 4 mark, compared over the five screens); nothing on the page move
   perches as it did. The chatter's lines are left out: they change every few seconds, and the bird would move with
   each. At 320 px wide the gap is 79 px for its 78, so its box counts its outline and gap but nothing more round the
   words. Tested in `tools/layout/15-the-perch-clear-of-words.js` (layout job 2) at 390×844 and 320×640; pictures from
-  `tools/dev/woodpecker-perch/shots.js`.
+  `tools/dev/woodpecker-perch/shots.js`. In your own round, after you're out, the help line's words share the row too,
+  and on a 390 px phone no place at the bird's size clears them; it perches as it would, and that stays (the owner, 31
+  October 2026, of the bird covering part of the help line or the chatter: "Don't really care if it covers that a
+  bit. None essential, you still see, and you can click through. It also moves about frequently, so it doesn't cover
+  the same spot all the time.", then "yes, leave it."). No perch lower, no help line stepping aside, no smaller bird.
+- *Bigger on a phone* (the owner, 31 October 2026: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much."). PR #270: on a phone (a screen no more than 500 px on its short side, `PHONE_SHORT_PX`) it grows 1.6 times more (`PHONE_GROW`), size B of the three he was shown; the desktop is unchanged. Upright, it stands 212 px tall on a 390×844 phone, perched and striking (132 before). On its side, the owner (31 October 2026): "Sideways, the bird perches at its full B size, partly off-screen: head, beak and eye in the gap beside the board and inside the safe area, its back and tail cut off by the screen edge. Same size perched and striking, never covering the board while it perches." So on its side it perches in the gap on the side that runs to the screen's edge, its beak short of the board and its eye in the gap, inside the safe area, the rest past the edge; its size there is B or, where the gap is narrower, as big as still leaves its eye in the gap (164 px tall at 780×320, 157 px at 844×390), the same perched and striking. Held upright, it is B or as big as still stands whole on the ledge under the board (212 px at 390×844, 164 px at 320×640), again one size perched and striking. Never smaller than 2k's: where even that leaves no room (a 375×667 phone upright; a sideways screen whose gap won't hold its eye), it is 2k's bird, perched as before. Its size is worked out again only when the screen's width changes, so a phone's address bar never resizes it. At 320×640 it covers the row's words, which the owner accepted. Its depth into the bark and its smallest perch stay what they were at 1.3, whatever its size (`growBird` in `render/bird-drum.js`).
 
 ### The woodpecker pecks beside a snake
 
-Haakon (29 October 2026; entry 2e): on a tile with a snake on it, the bird pecks beside the body, not on it. Its beak
+The owner (29 October 2026; entry 2e): on a tile with a snake on it, the bird pecks beside the body, not on it. Its beak
 aims at the spot on the cell's rim (its corners and three points along each edge, just inside the edge) farthest from
 the edge of any body there, as drawn; of spots about as clear (half a unit), the one nearest where it clings, so a body
 straight across the cell has it peck the edge on its own side. The dent and its splits start there and run in toward
@@ -365,22 +383,46 @@ simulation does not load the renderer, so its fingerprints cannot change.
 
 ### Flags that bend under a snake
 
-Haakon (29 October 2026; entry 2l): Sovereign's banner and Colonist's flags bend over while any part of any snake lies
+The owner (29 October 2026; entry 2l): Sovereign's banner and Colonist's flags bend over while any part of any snake lies
 on their tile. The pole tips from its foot the way that snake stepped onto the tile, and the cloth trails behind and
 droops. The snake already on it keeps it; when it leaves, another snake there takes over and the flag eases to the new
 way. A north or south push also leans the flag out to its cloth's side (east), because a pole leaning straight along a
 body lay hidden on it. North stretches the pole a touch and hangs the cloth; south shortens the pole. While a flag
 leans it is drawn over the snakes, since under them it couldn't be seen. Freed, it springs upright with a wobble that
 dies away in under a second. With reduced motion it leans and stands up at once. The banner bends only at rest on its
-cell, never while it glides or is carried, and keeps its shake if pecked. A flag that falls into a pit drops its bend.
+cell, never while it glides or pops up at a new capital. A flag that falls into a pit drops its bend.
 Drawing only (`bendOn` in `render/flags.js`): each screen draws it from the snakes it has, so online play needs no
 protocol change, and the simulation doesn't load the renderer.
 
+### Flags in depth, hit head-on (2p)
+
+The owner (30 October 2026): "the flag bends now. But i would like to give it some perspective also. So people that pass
+behind it, dont show up in front of it. They should be behind it. Also, it doesn't quiet know what to do when a snake
+hits it dead on, so that must be accounted for. And it should also react to soverign and colonists hitting it."
+- **In depth.** Every flag and banner is drawn over the snakes (`drawBentFlags` in `render/flags.js`), upper rows first, so
+  anything on the tiles behind it goes under its pole and cloth. Over the row in front of it, it is cut away where a
+  snake lies (`clipFront`: each body cell a fifth of a cell above its row for its outline, a head's a third for its face), so
+  whatever stands in front hides the pole's foot.
+- **Head-on.** A head that comes onto the tile from the north or the south has no side to push the pole to: it is knocked
+  flat ahead of the head (`look[4]`, how flat: laid towards you, the pole turns right round and lies down the screen; laid
+  away, it lies up it), and for `WRAP_MS` (260 ms) its cloth is wrapped round the head, over it, its ends folded back along
+  the head's sides (`wrapCloth`). Then it lies under the body, drawn under the snakes, and springs back as any flag does
+  once the tile is free. A flag laid away swings up through upright as it springs back, never flattening towards you. With
+  reduced motion there is no wrap.
+- **Owners.** Sovereign over its own banner and Colonist over its own flags bend them as anyone does (they already did;
+  a render test now proves it). What looked wrong was the head-on case, which owners meet most, heading for their own
+  flag.
+- **Planted under a snake** (PR #255, polish). A flag that wasn't on the board a moment ago (not drawn in the last frame drawn, by frames, not ms, so watching at 4x never counts a flag in sight as new; Sovereign's banner counts as in sight while it glides)
+  and turns up with a snake already on its tile, as each new colony does under Colonist's head, is bent from its first
+  frame: never seen standing, it doesn't stand for a frame and then snap over, and a head-on one lies flat under the
+  head without wrapping the face that planted it.
+- Drawing only, from the snakes each screen has: no simulation, no protocol change.
+
 ### Beetles and the woodpecker
 
-Haakon (29 October 2026; entry 2m): beetles should "quickly try to escape down their burrow when woodpecker targets
+The owner (29 October 2026; entry 2m): beetles should "quickly try to escape down their burrow when woodpecker targets
 their little island"; burrows ran out as the woodpecker pecked them; and beetles under a strike teleported. The rules
-(`crawl`, `beakDepth`, `beakGap` and `knocks` in `engine.js`):
+(`crawl`, `beakDepth`, `beakGap` and `knocks` in `engine/`):
 - **Burrows keep up.** A beetle due up from underground with no free burrow cracks a new one open where it's quiet,
   by `beetleOut`'s rule (`BURROW_SPACING` apart, at most `BURROW_MAX` open). None comes up under the beak: `freeBurrow`
   and `placer` leave the mark out.
@@ -392,7 +434,7 @@ their little island"; burrows ran out as the woodpecker pecked them; and beetles
 - **No teleporting.** A beetle still on the mark at the strike is the bird's: a `knock` with no landing, a puff and a
   soft crunch, no ring through the aim. Its lesson, the first time: "The woodpecker eats beetles too!". The Field
   guide's Beetles and Woodpecker rows say so.
-- **The rivals** move each beetle in their search by the same rule (`bugCrawl` in `ai.js`, with `E.beakDepth` and
+- **The rivals** move each beetle in their search by the same rule (`bugCrawl` in `ai/beetles.js`, with `E.beakDepth` and
   `E.beakGap`). So a beetle bound down a burrow beyond the mark isn't chased, and one running off it toward a rival is.
   One gap, not worth its code: the AI's copy lets a fleeing beetle cross a body lying on the mark (the mark's cells
   read as holes there), where the engine stops it.
