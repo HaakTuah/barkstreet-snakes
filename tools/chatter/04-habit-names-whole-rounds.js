@@ -70,7 +70,7 @@
 // throws, it talks, and what it says about the woodpecker's knocked food is the rule's. (--rounds N
 // below plays whole rounds, to see how rare the grumbles are.)
 {
-  let total = 0, rounds = 0;
+  let total = 0;
   const per = {};
   // (Squashed beads, beetles that dug in and got away, and food the woodpecker knocked aside, as the engine has them, and the lines for them.)
   const chokeLines = new Set(Object.values(VOICES).flatMap(v => v.choke || []));
@@ -154,7 +154,6 @@
       if (way) { lay(col, tx - D[way].x, ty - D[way].y, way); col.planned = D[way]; col.plannedTick = g.tick + 1; g.time += 5000; } // (a few seconds later: past Sovereign's gap since the strike, inside the 6 s a grumble is owed)
     }
     for (let t = 0; t < 4; t++) play();
-    rounds++;
   }
   check(knockWatch.picks === 1 && knockWatch.said === 1, `a scripted strike knocks the apple Sovereign was after aside, and Colonist eats it: Sovereign grumbles (${knockWatch.said} of ${knockWatch.picks})`);
   check(total > 0 && choked <= chokes, `...the rivals talk (${total} lines on the board), and a choke line only for a squash (${choked} of ${chokes})`);
@@ -198,7 +197,7 @@
     minutes += g.time / 60000;
   }
   if (more) console.log(`ok   ${more} more whole AI rounds of four rivals at random (${(minutes / more).toFixed(1)} min a round): ${heardGrumbles} grumbles at food the woodpecker knocked aside (${(heardGrumbles / more).toFixed(2)} a round)`);
-  check(!knockWatch.stray.length, `the whole rounds: a grumble only from whoever was after a piece the woodpecker knocked aside, at its eater (stray: ${knockWatch.stray.join('; ') || 'none'})`);
+  check(!knockWatch.stray.length, `the boards: a grumble only from whoever was after a piece the woodpecker knocked aside, at its eater (stray: ${knockWatch.stray.join('; ') || 'none'})`);
   check(!knockWatch.missed.length, `...and one for every such piece eaten while that rival was free to speak (${knockWatch.free}; missed: ${knockWatch.missed.join('; ') || 'none'})`);
-  console.log(`ok   the whole rounds' knocked food: ${knockWatch.picks} pieces eaten with a rival after them (the nearest to where each lay, the eater aside, within ${KNOCKED_NEAR}), ${knockWatch.free} of those rivals free to speak, ${knockWatch.said} grumbles, none stray`);
+  console.log(`ok   the boards' knocked food: ${knockWatch.picks} pieces eaten with a rival after them (the nearest to where each lay, the eater aside, within ${KNOCKED_NEAR}), ${knockWatch.free} of those rivals free to speak, ${knockWatch.said} grumbles, none stray`);
 }

@@ -250,7 +250,7 @@
   // step into one without crossing the mark.)
   const scatter = seeded(5);
   let near = 0, nearAims = 0, early = 0, underFood = 0, knocked = 0, badKnocks = 0, strikes = 0, cells = 0, aims = 0, underBodies = 0, besideHoles = 0, under = 0, cuts = 0, aimedAt = -1;
-  for (const spots of [[[14, 3], [22, 9], [16, 15], [23, 21]], [[18, 5], [13, 11], [23, 16], [15, 22]], [[12, 2], [20, 8], [14, 14], [22, 20]], [[22, 4], [15, 10], [12, 17], [18, 23]]]) {
+  for (const [b, spots] of [[[14, 3], [22, 9], [16, 15], [23, 21]], [[18, 5], [13, 11], [23, 16], [15, 22]], [[12, 2], [20, 8], [14, 14], [22, 20]], [[22, 4], [15, 10], [12, 17], [18, 23]]].entries()) seededWhile(101 + b, () => { // (the engine's own draws seeded per board, so the run's seed and the checks before can't move them)
     const g = board(spots.map(([x, y]) => [line(x, y, 12), 'right']), { time: T.SUDDEN_DEATH_MS });
     for (const s of g.snakes) s.stunUntil = 1e9;
     for (let t = 0; t < 700 && g.holes.size < T.GRID * T.GRID / 2; t++) {
@@ -298,12 +298,14 @@
         if (e.type === 'cut' && !g.events.some(d => d.type === 'dash' && d.snake.id === e.by)) cuts++; // (the woodpecker's: not a flash's)
       }
     }
-  }
+  });
   check('the woodpecker strikes in patches', strikes > 20 && cells / strikes > T.PECK_CHUNK / 2, `${strikes} strikes, ${(cells / Math.max(1, strikes)).toFixed(1)} cells each`);
   check('the woodpecker aims well away from heads', nearAims <= 3, `${nearAims} of ${aims} aims near a head (${near} cells too close)`);
   check('the woodpecker gives warning', early === 0, `${early} without`);
   check('the woodpecker\'s patches cover food now, and knock it out of the way', underFood > 10 && knocked >= underFood / 2 && badKnocks === 0, `${underFood} food under marks, ${knocked} knocked, ${badKnocks} landed wrong`);
-  check('...but under bodies, often', underBodies > aims * T.PECK_UNDER_BODY && under > 0, `${underBodies} of ${aims} aims, ${under} snakes under strikes`);
+  // (A patch begun under a body: its roll at PECK_UNDER_BODY, and chance besides. Here about 24 of 65; with the roll
+  // taken out, about 8. The bar sits between, a quarter of the aims, so neither a re-roll nor the rule broken is a near thing.)
+  check('...but under bodies, often', underBodies > aims * T.PECK_UNDER_BODY * 0.75 && under > 0, `${underBodies} of ${aims} aims, ${under} snakes under strikes`);
   check('...widens old hollows', besideHoles > aims * T.PECK_WIDEN, `${besideHoles} of ${aims} aims beside an old hole`);
   check('...and never cuts', cuts === 0, `${cuts} cuts`);
 }
