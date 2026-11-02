@@ -1,0 +1,20 @@
+{
+  "about": "What Dependabot cannot see (.github/dependabot.yml covers the actions and tools/package.json): each version is read from its file by its pattern, never written here, and tools/versions.js compares it with the npm registry's newest stable release old enough to take ('days': a week, two for a script players' browsers load; 'sameMajor': only within the major version the project chose). .github/workflows/versions.yml runs it monthly and opens an enhancement issue for each one behind.",
+  "entries": [
+    {
+      "name": "peerjs",
+      "file": "net.js",
+      "pattern": "/ajax/libs/peerjs/(\\d+\\.\\d+\\.\\d+)/",
+      "days": 14,
+      "how": "PeerJS loads from cdnjs in every player's browser. Check that cdnjs serves the new version and read its release notes; then update the address and PEERJS_SRI in net.js (the hash of the file cdnjs serves), its entry and its bundled packages' in tools/licences.json, and THIRD-PARTY-NOTICES.txt; then run the online suite and play a round online."
+    },
+    {
+      "name": "node",
+      "file": "scripts/cloud-setup.sh",
+      "pattern": "node@(\\d+\\.\\d+\\.\\d+)",
+      "days": 7,
+      "sameMajor": true,
+      "how": "The exact Node scripts/cloud-setup.sh installs on a cloud machine with an older one (CI's actions/setup-node takes the newest of the same major by itself). Update it there and in tools/licences.json (node and node-linux-x64), and run the suites. A new major is the October move in docs/developing.md, \"Node's version\", not this."
+    }
+  ]
+}

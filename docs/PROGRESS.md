@@ -46,16 +46,11 @@ and the owner's notes of 2 November, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
-- **Every version where Dependabot sees it** (the owner, 2 November 2026): a tools-only `package.json` (TypeScript,
-  Playwright; the game still ships no dependencies) read by `.github/workflows/tests.yml`, `scripts/cloud-setup.sh` and
-  `scripts/test.sh` instead of three written versions, with npm added to `.github/dependabot.yml`; Playwright up from
-  1.49.1; PeerJS (`net.js`, loaded from cdnjs in every player's browser) given an integrity hash so a changed file is
-  refused; and what Dependabot still cannot read (PeerJS) listed in one file, checked by a monthly scheduled workflow
-  that opens an `enhancement` issue when it is behind.
-
 - *Done:* CI and the cloud setup on Node 26 (from 22; suites green, fingerprints unchanged; PR #369).
 - *Done:* licences audited (`tools/licences.json`), gated on every PR (`.github/workflows/licences.yml`) and their notices
   shipped (`THIRD-PARTY-NOTICES.txt`); two lists, what ships and tools that only run (PR #377).
+- *Done:* every version where Dependabot sees it: the tools' packages in `tools/package.json` (Playwright 1.49.1 to
+  1.64.1), Dependabot's npm updates, and a monthly check of the rest, PeerJS and Node (`tools/versions.json`; PR #385).
 
 - **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;
   part 2, `docs/design/`, PR #335; part 3, the code, draft PR #337): its spec is in

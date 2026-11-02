@@ -2,9 +2,10 @@
 // The licence gate's audit check (SECURITY.md, point 10), run on every pull request by
 // .github/workflows/licences.yml beside GitHub's dependency review: every entry of tools/licences.json is under a
 // licence on its list (what ships, the strict list; a tool that only runs, the tools' list); nothing the game or its
-// tools use is missing from it (the actions the workflows use, the packages npx and npm fetch, package.json's and
-// package-lock.json's packages if there are any, every address the game loads from, code copied in with someone's
-// licence notice, and any font, image, sound or data file); what the game serves is audited as shipping; both lists
+// tools use is missing from it (the actions the workflows use, the packages npx and npm fetch, the packages of the
+// tools' package.json and its lock, and the root's if there are any, every address the game loads from, code copied in
+// with someone's licence notice, and any font, image, sound or data file); what the game serves is audited as
+// shipping; both lists
 // keep to SECURITY.md's; and everything that ships has its notice in THIRD-PARTY-NOTICES.txt.
 //
 //   node tools/licences.js [--audit FILE]   (FILE: another audit to check, such as a test's)
@@ -97,8 +98,8 @@ for (const f of ci) {
   for (const m of src.matchAll(/\b(npx|npm(?:\s+-\S+)*\s+(?:install|in|i|add|exec|x))\s([^\n;&|>]*)/g)) for (const [p, v] of fetched(m[1], m[2], `${f}, ${m[0].trim()}`)) need(p, `${f}, ${m[0].trim()}`, v);
 }
 
-// package.json and its lock, if the tools have them: every package, the ones pulled in included.
-for (const f of ['package.json', 'package-lock.json']) {
+// The tools' package.json and its lock (tools/), or any at the root: every package, the ones pulled in included.
+for (const f of ['tools/package.json', 'tools/package-lock.json', 'package.json', 'package-lock.json']) {
   if (!fs.existsSync(path.join(root, f))) continue;
   const j = JSON.parse(read(f));
   for (const k of ['dependencies', 'devDependencies', 'optionalDependencies']) for (const n of Object.keys(j[k] || {})) need(n, f);
