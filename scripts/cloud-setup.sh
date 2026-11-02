@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
-# Prepare a cloud machine (Ubuntu 24.04, run as root) for the suites: Node 22 is already there, but TypeScript and
-# Chrome or Chromium may not be. tools/browser.js looks in /usr/bin/google-chrome, /usr/bin/chromium and
+# Prepare a cloud machine (Ubuntu 24.04, run as root) for the suites: Node 26 (the version CI runs; "Node's version" in
+# docs/developing.md), TypeScript, and Chrome or Chromium. tools/browser.js looks in /usr/bin/google-chrome, /usr/bin/chromium and
 # /usr/bin/chromium-browser, or uses CHROME. Safe to run twice; always exits 0 and says what it could not do.
 # The same script can be pasted into a cloud environment's "Setup script" field.
+# Node: an older one is replaced with Node 26 from the npm registry (the "node" package), installed in /opt/node26 and
+# linked over the node found first on PATH, so every shell runs it; npm and npx stay as they are.
+node_major=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null)
+if [ "${node_major:-0}" -ge 26 ]; then echo "node: $(node -v) present"
+elif command -v npm >/dev/null 2>&1 && npm install -g --prefix /opt/node26 node@26 >/tmp/node-install.log 2>&1 \
+  && [ -x /opt/node26/bin/node ] && ln -sf "$(readlink -f /opt/node26/bin/node)" "$(dirname "$(command -v node)")/node"; then
+  hash -r; echo "node: installed $(node -v)"
+else echo "NOT INSTALLED: Node 26 (see /tmp/node-install.log); the suites run on $(node -v 2>/dev/null || echo no node)"; fi
 # TypeScript for the types suite: the version CI fetches (.github/workflows/tests.yml), installed once here so the
 # suite runs without the network (Codex's cloud has none while it works).
 if [ "$(tsc -v 2>/dev/null)" = "Version 6.0.2" ]; then echo "typescript: present"

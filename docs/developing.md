@@ -38,7 +38,8 @@ breaking changes, and merges it, or closes it with the reason.
 
 **Node's version.** CI's `node-version` and the cloud machines run the same Node, so a check that passes in a session
 passes in CI. Each October, when a new even-numbered Node becomes long-term support, both move to it in one PR
-(`.github/workflows/tests.yml` and `scripts/cloud-setup.sh`), proven by the suites and the fingerprints.
+(`.github/workflows/tests.yml` and `scripts/cloud-setup.sh`, which installs it from the npm registry on a machine with
+an older one), proven by the suites and the fingerprints.
 
 **The licence gate** (`.github/workflows/licences.yml`, `SECURITY.md`, point 10) runs on every PR: GitHub's
 dependency review fails a package added or updated under a licence off the list (`.github/dependency-review-config.yml`,
