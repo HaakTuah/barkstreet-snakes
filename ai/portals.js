@@ -7,8 +7,9 @@
 // body is through it and PORTAL_MS after.
 // (readPortals() sets these for each decision:)
 // portalPlan: how many of them my own plans read as a way through (my room,
-// the territory, a hunt, a goal: see portalHop, portalDist), with each
-// one's entry and exit on the framed board (portalIn, portalEx).
+// food, a hunt, a goal: see portalHop, portalDist); each one's entry and
+// exit on the framed board (portalIn, portalEx: the rivals' way through
+// in the territory split too, see spreadTerritory).
 let seenPortals, portalLeft, portalPlan = 0;
 const portalIn = [], portalEx = [], portalLast = [], portalXY = [];
 function readPortals() {
@@ -21,7 +22,7 @@ function readPortals() {
     return (j >= 0 ? o.body.length - j - 1 : 0) + Math.floor(TUNE.PORTAL_MS / tick);
   });
   portalPlan = PLAN_PORTALS ? seenPortals.length : 0;
-  for (let n = 0; n < portalPlan; n++) {
+  for (let n = 0; n < seenPortals.length; n++) {
     const p = seenPortals[n];
     portalIn[n] = framed[p.y * N + p.x]; portalEx[n] = framed[p.ty * N + p.tx]; portalLast[n] = portalLeft[n];
     portalXY[2 * n] = p.x; portalXY[2 * n + 1] = p.y;

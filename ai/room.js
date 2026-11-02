@@ -170,7 +170,7 @@ function spreadTerritory(ns, t, age, bits, tags, stop, coughMax, beadCount) {
         if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
       }
     }
-    for (let n = 0; n < portalPlan; n++) { // (a rival that has an open gold portal's entry claims its exit a move later, if it's free; my own way through, the search plans)
+    for (let n = 0; n < seenPortals.length; n++) { // (a rival that has an open gold portal's entry claims its exit a move later, if it's free; my own way through, the search plans)
       const px = portalEx[n], s = B[portalIn[n]], tag = s & tags;
       if (tag < 2 || s < next - (1 << bits) || s >= next || T1 > portalLast[n] || B[px] > T1 || (tag === 1 && ML[px] > T1)) continue;
       B[px] = next + tag; if (tag === 1) mine++; else theirs++; Q[write++] = px;
