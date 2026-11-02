@@ -28,3 +28,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Everything used is audited, under a licence on the list
         run: node tools/licences.js
+      - name: The audit check fails on every form of something unaudited (invented names)
+        run: node tools/licences-test.js

@@ -48,25 +48,22 @@ for (const e of audit) {
   if (AWAITING.some(([n, l, q]) => n === e.name && l === e.licence && q === e.question)) console.log(`awaiting the owner (#${e.question}): ${e.name}, ${e.licence}`);
   else fail(`${e.name}: ${e.licence} is not on the list (SECURITY.md, point 10)`);
 }
-// The packages an npx or npm install command fetches, read from its words up to the end of the command: for npx,
-// those named by -p or --package, else its first word; for npm install or exec, every word not an option (an
-// option's value, as in --prefix DIR, is not a package). What can't be read, such as a variable, a path, a URL or a
-// tarball, comes back as itself, so it fails rather than slipping past.
-const VALUED = new Set(['--prefix', '--registry', '--cache', '--userconfig', '--workspace', '-w', '--tag', '--omit', '--include', '--loglevel', '-C']);
-function fetched(cmd, rest) {
-  const words = rest.trim().split(/\s+/).filter(Boolean), out = [];
-  // (an alias, name@npm:other@1, fetches the other: that is what's audited)
-  const bare = w => { const alias = w.match(/^(?:@[^/@\s]+\/)?[^@\s]+@npm:(.+)$/); return alias ? bare(alias[1]) : w.replace(/^(@[^/@\s]+\/[^@\s]+|[^@\s]+)@.*$/, '$1'); };
+// The packages an npx or npm install command fetches, failing closed: each must be written in one strict form,
+// name@exact.version (for npx, after -p or --package, else its first word; for npm install or exec, every word not
+// an option), and anything else (a bare name, a range or tag, an alias, a URL, git, a path, a tarball, a variable, an
+// option's value) can't be audited and fails.
+const EXACT = /^((?:@[a-z0-9][\w.-]*\/)?[a-z0-9][\w.-]*)@\d+\.\d+\.\d+$/i;
+function fetched(cmd, rest, where) {
+  const words = rest.trim().split(/\s+/).filter(Boolean), specs = [];
   for (let i = 0; i < words.length; i++) {
     const w = words[i];
-    if (w === '-p' || w === '--package') { out.push(bare(words[++i] || '')); continue; }
-    if (w.startsWith('--package=')) { out.push(bare(w.slice(10))); continue; }
-    if (VALUED.has(w)) { i++; continue; }
+    if (w === '-p' || w === '--package') { specs.push(words[++i] || ''); continue; }
+    if (w.startsWith('--package=')) { specs.push(w.slice(10)); continue; }
     if (w.startsWith('-')) continue;
-    if (cmd === 'npx') { if (!out.length) out.push(bare(w)); break; }
-    out.push(bare(w));
+    if (cmd === 'npx') { if (!specs.length) specs.push(w); break; }
+    specs.push(w);
   }
-  return out;
+  return specs.flatMap(spec => { const m = spec.match(EXACT); if (!m) fail(`${where}: ${spec} can't be audited (only name@exact.version)`); return m ? [m[1]] : []; });
 }
 const need = (name, where) => { if (!byName.has(name)) fail(`${name} (${where}) is not in tools/licences.json`); };
 
@@ -75,7 +72,7 @@ const ci = ['.github/workflows', 'scripts'].flatMap(d => fs.readdirSync(path.joi
 for (const f of ci) {
   const src = read(f);
   for (const m of src.matchAll(/uses:\s*['"]?([\w.-]+\/[\w.-]+)/g)) need(m[1], f);
-  for (const m of src.matchAll(/\b(npx|npm\s+(?:install|i|add|exec|x))\s([^\n;&|>]*)/g)) for (const p of fetched(m[1], m[2])) need(p, `${f}, ${m[0].trim()}`);
+  for (const m of src.matchAll(/\b(npx|npm\s+(?:install|i|add|exec|x))\s([^\n;&|>]*)/g)) for (const p of fetched(m[1], m[2], `${f}, ${m[0].trim()}`)) need(p, `${f}, ${m[0].trim()}`);
 }
 
 // package.json and its lock, if the tools have them: every package, the ones pulled in included.

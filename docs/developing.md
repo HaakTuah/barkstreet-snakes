@@ -44,7 +44,9 @@ passes in CI. Each October, when a new even-numbered Node becomes long-term supp
 dependency review fails a package added or updated under a licence off the list (`.github/dependency-review-config.yml`,
 the one copy of it), and `node tools/licences.js` holds everything else to it through the audit, `tools/licences.json`:
 an action, a tool fetched with npx or npm, an address the game loads from or an asset file left out of it fails, and so
-does a shipped entry without its notice in `THIRD-PARTY-NOTICES.txt`. Something new goes into the audit with its
+does a shipped entry without its notice in `THIRD-PARTY-NOTICES.txt`. A package an npx or npm install
+fetches must be written `name@exact.version`, or it can't be audited and fails; `tools/licences-test.js` stages each
+form the gate must reject. Something new goes into the audit with its
 licence, checked from its own published licence file; one off the list fails and becomes a `question` issue for the owner
 (only the two tools in use when the gate came in, `AWAITING` in `tools/licences.js`, pass while they wait).
 
