@@ -1521,6 +1521,9 @@ window.SnakeEngine = (() => {
       } else if (down && under && !game.holes.has(key(h.x, h.y))) { // (round six B: down onto a body, it's trapped there: out)
         Object.assign(c, { cause: `came down on ${under.name}`, killer: under.name, killerId: under.id, headOn: false, meet: false });
         out.add(s); why.set(s, 'boxed');
+      } else if (s.landing && !out.has(s) && c.killer === 'wall' && inside(s.next.x, s.next.y) && game.holes.has(key(s.next.x, s.next.y))) { // (let go over a hole's rim: it comes down in the hole, whatever lies under it now)
+        Object.assign(c, { cause: 'fell into a woodpecker hole', killer: 'wall', killerId: null, headOn: false, meet: false });
+        out.add(s); why.set(s, 'hole');
       } else if (s.landing && !out.has(s) && c.killerId != null && !c.meet) { // (its landing taken by a body: the same bump, and out, whatever lies under it: "a fast golden flash through a landing cell steals the landing, and the jumper with it")
         const o = game.snakes.find(q => q.id === c.killerId);
         Object.assign(c, { cause: `came down on ${o === s ? 'itself' : o.name}`, killer: o === s ? 'self' : o.name, killerId: o.id, headOn: false, meet: false });

@@ -224,6 +224,7 @@ function onTick(events) {
   tickNow = now;
   for (let i = scurries.length - 1; i >= 0; i--) if (scurries[i].tick < game.tick) scurries.splice(i, 1); // (a tick's own: see drawBeetle)
   for (let i = bugPops.length - 1; i >= 0; i--) if (bugPops[i].tick < game.tick) bugPops.splice(i, 1);
+  for (const s of game.snakes) flying(s, now); // (a golden flight's arch kept over its way: see flying)
   let cutBeads = GRID * GRID; const prevAt = new Map(); // (a tick's beads from cuts: no more than the board has cells, whatever a peer sends; each body's cells indexed once)
   for (const e of events) {
     if (e.type === 'eat') {
