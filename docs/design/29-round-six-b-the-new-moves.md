@@ -127,15 +127,16 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
   - Per use (`tools/dev/fork-moves.js --move fly --rest`, the round forked at each flight and played on with and without it): +0.09 ± 0.07 place a flight (seeds 701–704, n 406), −0.04 before `shutIn`.
   - Eleven other plans were measured the same way and dropped: keeping golden charges for flights, a ply of search after landing, charging contested landings, and Fable's design (an honest landing price, committing in the air, purpose flights with seals priced as kills).
 - **A design finding** (issue #363): a snake flies past the plain hop only about 0.4 times a round, so +0.09 a flight is under a win point a round, inside the noise. Leap now out of a trap is rarer still. Both pay when used, and their worth is a person's timing.
-- **In a field of its own** (200 rounds, seeds 3 and 11, `--check` passes):
-  - rounds 174 s and 177 s;
-  - flights past the plain hop 1.58 and 1.74 a round, 3.1 to 3.2 cells in the air each; out within 3 s of one 2% and 3%;
-  - down on a body 0.07 and 0.06 a round, bumps in the air 0.00 and 0.01;
+- **In a field of its own** (200 rounds, seeds 3 and 11, `--check` passes, the final rules):
+  - rounds 175 s on both;
+  - flights past the plain hop 1.54 and 1.76 a round, 3.0 and 3.2 cells in the air each; out within 3 s of one 4% on both;
+  - down on a body 0.10 and 0.12 a round (a landing taken by a body is out, whatever lies under it), bumps in the air 0.00 and 0.01;
   - out within 3 s of a leap now 4% and 3%;
-  - golden cuts 0.57 and 0.53 a round, no dash blown up;
+  - golden cuts 0.54 and 0.52 a round, dashes blown up 0.00 and 0.01;
   - down on an island smaller than itself 0.00;
-  - bridge rides 0.07 and 0.06 a round;
-  - beetles chased and got away 41% and 38% (2w's band).
+  - bridge rides 0.07 and 0.05 a round;
+  - beetles chased and got away 41% and 40% (2w's band).
+- **The owner's answer** (#363, 2 November 2026): part 4 merges as it stands. Next, 2y: the rivals take landings, then the flight and leap now are measured again.
 
 **For the teaching system (item 4), part 3b:** the lessons are banners for now ("Bleh! Steer to aim it: it lands three ahead." on your first mushroom; "Ptoo! … Steer to spit it back" the first time one hits you); its hint to draw is the ring itself, with a line from the head to it while it's in your cheek, and a flash on the ring as it's about to go.
 
