@@ -76,10 +76,9 @@ function news(dying) {
     const wrapLeft = me.wrapUntil - theGame.time;
     if (wrapLeft > 0 && wrapLeft <= TUNE.WRAP_WARN_MS && !theGame.toldWrapEnd) { theGame.toldWrapEnd = true; return toast(pick(FLAVOR.wrapEnding(Math.round(TUNE.WRAP_WARN_MS / 1000))), 1800, 'warn', 'lesson', { still: () => me.alive && me.wrapUntil > theGame.time }); }
     if (wrapLeft > TUNE.WRAP_WARN_MS) theGame.toldWrapEnd = false;
-    const left = Engine.hungerLeft(theGame, me);
-    const warnAt = TUNE.HUNGER_WARN_MS * (small ? 1.5 : 1); // (at your smallest, starving is the end: a little earlier, and sharper)
-    if (left < warnAt && !theGame.warnedHunger) { theGame.warnedHunger = true; Sound.play('hungerWarn'); return toast(small ? FLAVOR.youStarvingSmall : pick(FLAVOR.youHungry), 2800, 'warn', 'lesson', { still: () => me.alive }); }
-    if (left > warnAt) theGame.warnedHunger = false;
+    const warned = Engine.hungerWarning(theGame, me) < 1; // (at your smallest, or a shrink from it, starving is the end: a little earlier, and at your smallest sharper)
+    if (warned && !theGame.warnedHunger) { theGame.warnedHunger = true; Sound.play('hungerWarn'); return toast(small ? FLAVOR.youStarvingSmall : pick(FLAVOR.youHungry), 2800, 'warn', 'lesson', { still: () => me.alive }); }
+    if (!warned) theGame.warnedHunger = false;
     if (small && theGame.time > 1000 && once('atThree')) return toast(pick(FLAVOR.youAtThree), 2600, 'warn', 'lesson', { still: () => me.alive && me.body.length <= TUNE.MIN_LENGTH });
   }
   // A flag or a capital the woodpecker pecked out (see landLost): its rule,

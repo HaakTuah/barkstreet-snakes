@@ -340,8 +340,8 @@ function drawPale(a) {
 // the owner starved): every snake shows it on its body, from the clock its
 // tag reads. Its body slims as its last meal runs out (by the share of it
 // gone, slowly at first, up to HUNGER_SLIM thinner; its head keeps its
-// size); in the warning's seconds (the toast's: 6 s left, 9 at its
-// smallest) its head shakes and growl lines rumble out either side of it
+// size); in the warning's seconds (the toast's: SnakeEngine.hungerWarning,
+// 6 s before it shrinks, 9 before it would starve) its head shakes and growl lines rumble out either side of it
 // (drawGrowl), stronger toward the end (not once the round's over);
 // starving (shrinking), it pales (a parchment wash: see drawPasses), and
 // starved, its corpse stays thin. With reduced motion the lines stay still
@@ -352,9 +352,9 @@ function hungerLook(s, a, dead, now) {
   if (a.ateSeen >= 0 && s.lastAte > a.ateSeen) { a.mealAt = now; a.fromN = a.segN; a.slimFrom.set(a.slimSeg); a.paleFrom.set(a.paleSeg); } // (it ate: the meal goes down from how it was drawn, see mealSwell)
   a.ateSeen = s.lastAte;
   const left = s.lastAte + T.HUNGER_MS - shownTime, gone = Math.min(1, Math.max(0, 1 - left / (s.mealMs || T.HUNGER_MS)));
-  const warn = T.HUNGER_WARN_MS * (s.body.length <= T.MIN_LENGTH ? 1.5 : 1);
+  const warn = SnakeEngine.hungerWarning(game, s, shownTime);
   a.slim = HUNGER_SLIM * gone * Math.sqrt(gone);
-  a.growl = left < warn && !leadRest ? Math.min(1, 1.4 - 0.9 * Math.max(0, left) / warn) : 0;
+  a.growl = warn < 1 && !leadRest ? Math.min(1, 1.4 - 0.9 * Math.max(0, warn)) : 0;
   a.pale = left < 0 ? Math.min(1, -left / T.STARVE_EVERY_MS) : 0;
 }
 // (In the face's frame, after its face: two short arcs either side of its
