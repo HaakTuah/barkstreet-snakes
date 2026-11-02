@@ -48,23 +48,8 @@ The pips sit on a short arc behind the head, a little bigger now; holding both k
 
 ### The woodpecker: holes under you, and holes that look like holes
 
-- **It pecks under bodies too.** A third of its strikes start under a snake (`PECK_UNDER_BODY`, any body but never a head; the same share on every strike, the first included). A body lying over a fresh hole **bridges it**: it isn't cut and drops nothing, and the cell is an ordinary hole once the tail has passed. Only a head on the ground in the patch falls in. A jump whose landing was taken meanwhile comes down on a bridging body, not into the hole under it; if that body moves on while the head is still there, stunned, it falls in. (Round four's critique: it was left standing on an open hole, and walked off it.)
-  - *Why:* the old cut took 32 segments on average and was decided by reaction time. *Measured*, 40 of 49 cuts were heads already heading into the mark, exactly within the 240 ms nobody can react in.
-- **It aims at least 5 cells from every head** (`PECK_CLEARANCE` 4, from 2), and clear of all food, while there's such a spot, so nobody can be inside a fresh mark before they can see it. (In 600 AI rounds on each of two seeds it had to aim nearer a head 4 times in about 20,000 aims; 6 times on the final build.) *Since round six A* it may cover food, knocking it aside, and shuts nobody in while it has another patch to pick: see "The woodpecker plays fair".
-- **Fewer, bigger hollows.** Half the strikes widen an old hollow (`PECK_WIDEN`), and patches grow compact. The log ends up with a few big hollows instead of a pegboard.
-- **Bigger patches** (decided in the balance pass, once the rest was built): 9 cells, a cell bigger each strike up to 16 (`PECK_CHUNK`, `PECK_CHUNK_MAX`; from 7 and 14). See "Events and timings". (*Since round six A*, 12 growing to 20, with shorter rests.)
-- **Holes stay permanent and only ever added.** The squeeze is what ends rounds, and online play relies on it.
-- **The look.** One pit per connected hollow, traced along the cell edges:
-  - a torn, inked lip;
-  - a dark floor;
-  - a far wall lit from the top left like everything else;
-  - splinters over the rim and sawdust round it;
-  - at the board's edge, a notch bitten out of the log.
-
-  They lie on the static layer under the snakes, so a body bridging a hole is drawn across it, and a strike paints again only the box round its new holes. The old look, one round dark disc a cell, read as bubble wrap.
-- **The aim marker.** It's traced with the same outline, its rim the pit's torn lip to come (the same wobble, corners rounder: 11 units against the pits' 7), and still glows red. Its cracks run along the grain under the snakes, and as the strike nears the pecks bite nicks in from outside the rim, each its own size and unevenly spaced, first and closest together where the bird is at it. (Evenly spaced dents on the rim, as first built, read as a dotted selection box.)
-- **The rivals tell a mark from a hole** (`view.pecks`, added at the merge). A mark isn't a hole yet, so a golden jump or a jump for food may hop real holes but never a mark; a flash, plain or golden, treats a mark as a wall.
-- **The first time it pecks under you:** "Pecking under you! Only your head can fall in." (It replaces "The woodpecker took your tail.")
+Its rules are in `38-the-woodpecker.md` ("The strike", "Fewer, bigger hollows", "The pits and the mark" and "The rivals tell a
+mark from a hole"), and its text as it was, with its measurements, in `docs/archive/design-woodpecker.md`.
 
 ### Food
 
@@ -115,7 +100,8 @@ The land rule becomes one rule everywhere (the AI, the chatter, the HUD and the 
 - **A lightning fire has a budget:** at most 12 cells over its life (`FIRE_TOTAL`), besides 6 at once. Fires kept themselves going until rain came, some for over a minute.
 - **More golden power food.** Golden things are worth more now that they stack and the rivals use them: leaves 0.07 → 0.25 a gust, golden mushrooms 0.12 → 0.55 a rain spell (at 0.4 the wrap still missed most rounds), golden beetles 0.3 → 0.4 (0.16 since round six A, with beetles out more often).
 - **Unchanged, because measured right:** the woodpecker at 2:00, and the 120 → 90 ms speed ramp.
-- **Changed once the rest was built:** the woodpecker's patches start at 9 cells and grow to 16 (`PECK_CHUNK`, `PECK_CHUNK_MAX`; from 7 and 14). With a flash for everyone and rivals that see starving coming, nearly every snake now reaches 2:00, so sudden death ran a minute. Now it's about 50 s, and the median round about 170 s. (The woodpecker's speed turned out to be the weak lever: hungrier rests changed nothing, and shorter shortest rests saved 2 s.) (*Since round six A*, patches of 12 growing to 20 with shorter rests, since fewer, rounder holes take as long to fill the log.)
+- **Changed once the rest was built:** the woodpecker's patches; their sizes now are in `38-the-woodpecker.md` ("How it picks a
+  patch"), and this call as it was, with its measurements, in `docs/archive/design-woodpecker.md`.
 
 ### Controls that keep up
 
