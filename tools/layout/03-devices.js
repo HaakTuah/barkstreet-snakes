@@ -79,7 +79,7 @@ for (const d of share('03', DEVICES)) {
     // (the page can't scroll while you play: a help line cut in half by the screen's edge is hidden)
     const whole = play.help.b <= play.vh + 0.5, gone = play.help.y >= play.vh - 0.5 || !play.helpShown;
     const lesson = await ev(`document.getElementById('toast').textContent`);
-    check((whole || gone) && (whole || lesson === 'Tap jumps. Swipe ahead flashes.'), `${tag}: playing, the help under the board is wholly on the screen, or not shown and the first Go says how to jump and flash`,
+    check((whole || gone) && (whole || lesson === 'Tap jumps. Swipe ahead dashes.'), `${tag}: playing, the help under the board is wholly on the screen, or not shown and the first Go says how to jump and flash`,
       `${r1(play.help.y)}-${r1(play.help.b)} of ${play.vh}${play.helpShown ? '' : ', hidden'}; Go said "${lesson}"`);
   }
 

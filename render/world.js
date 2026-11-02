@@ -765,6 +765,7 @@ function warmUp() {
 }
 function setGame(g) {
   game = g;
+  pieceFalls.length = 0; // (2s: no slab still falling from the round before)
   warmUp();
   deaths.length = 0;
   corpses.length = 0;
