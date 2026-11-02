@@ -26,6 +26,22 @@ check(beads.joker.every(([u, l]) => purple(u) && amber(l)), 'Joker’s beads are
 const wildWant = [[navy, navy], [white, red], [white, red], [white, red], [white, red]];
 check(beads.wild.every(([u, l], i) => wildWant[i][0](u) && wildWant[i][1](l)), 'Wildcard’s beads keep the stars and stripes', JSON.stringify(beads.wild));
 
+// A tail cut off by a dash falls as beads in its own markings, each its
+// own segment's (Joker's amber and purple in turn), not the plain colour.
+const cutTail = await ev(`(() => {
+  seeds(250);
+  const g = stage(['joker', 'mason', 'ghost']), jo = g.snakes[1];
+  setBody(jo, Array.from({ length: 12 }, (_, i) => [20 - i, 16]), 'right');
+  show(g); drawN(10);
+  const cut = jo.body.splice(6);
+  for (const c of cut.slice(1)) g.food.push({ x: c.x, y: c.y, kind: 'pellet', color: jo.color, owner: jo.id, expires: g.tick + 900 });
+  g.tick++;
+  R.onTick([{ type: 'cut', snake: jo, x: cut[0].x, y: cut[0].y, lost: cut.length, by: g.snakes[2].id }]);
+  drawN(60);
+  return [7, 8, 9, 10].map(j => rgb(20 - j + 0.27, 16 + 0.46));
+})()`);
+check(cutTail.every((c, i) => (i % 2 ? purple : amber)(c)), 'a tail cut off falls as beads in its markings, each its own segment’s', JSON.stringify(cutTail));
+
 // Stunned, a jump and a flash both asked, a turn up pressed, a body one
 // thick right above: the game will hop it (a jump goes first), so the
 // mark is the jump's hop, in sky, not the flash's chevrons, in ember.
