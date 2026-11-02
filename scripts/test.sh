@@ -12,6 +12,11 @@ for s in "${suites[@]}"; do
   if [ "$s" = types ]; then # (TypeScript, a check only, at tools/package.json's version: installed there first if it isn't yet)
     { cmp -s tools/package-lock.json tools/node_modules/.installed-lock || { npm ci --prefix tools --ignore-scripts --no-audit --no-fund \
       && cp tools/package-lock.json tools/node_modules/.installed-lock; }; } >"$log" 2>&1 && tools/node_modules/.bin/tsc --noEmit -p jsconfig.json >>"$log" 2>&1; rc=$?
+  elif [ "$s" = layout ]; then # (its five CI jobs side by side, as CI runs them: one after another it takes about 30 minutes
+    # on a cloud machine, and prints nothing but each part's end until then; JOBS in tools/layout-test.js)
+    pids=(); for j in 1 2 3 4 5; do LAYOUT_JOB=$j node tools/layout-test.js >"$dir/layout-$j.log" 2>&1 & pids+=($!); done
+    rc=0; for p in "${pids[@]}"; do wait "$p" || rc=1; done
+    for j in 1 2 3 4 5; do echo "== job $j"; cat "$dir/layout-$j.log"; done >"$log"
   else node "tools/$s-test.js" >"$log" 2>&1; rc=$?; fi
   t=$(( $(date +%s) - start ))
   if [ $rc -eq 0 ]; then echo "PASS $s (${t}s)"; else

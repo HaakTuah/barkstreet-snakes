@@ -6,7 +6,8 @@ const vm = require('vm');
 
 const ROOT = path.join(require.main.path, '..');
 const ctx = vm.createContext({ window: {}, console, Math });
-for (const f of ['tuning.js', 'ai.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+const GAME = require('./game-files.js')(ROOT), RULES = GAME.filter(f => f !== 'tuning.js'); // (the game's files; RULES: all but tuning.js, for a board under other numbers)
+for (const f of GAME) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 const { SnakeEngine: E, SnakeAI: AI, TUNING: T } = ctx.window;
 const D = E.DIRS;
 

@@ -1,5 +1,5 @@
-// Measures each rival's style as Copycat reads it (ai.js's watchStyles and
-// traitsOf: what anyone can see a snake do), for ai.js's STYLES: plays
+// Measures each rival's style as Copycat reads it (the AI's watchStyles and
+// traitsOf: what anyone can see a snake do), for the AI's STYLES: plays
 // rounds of every rival, watching every snake from the start, and takes
 // each one's traits every CHECK ticks once it has been watched STYLE_MIN.
 // Prints each rival's mean traits, each trait's spread within a rival (the
@@ -12,7 +12,7 @@ let a = seed >>> 0;
 const rng = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const M = Object.create(Math); M.random = rng;
 const ctx = vm.createContext({ window: {}, console, Math: M });
-for (const f of ['tuning.js', 'ai.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), ctx, { filename: f });
+for (const f of require('../game-files.js')(root)) vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), ctx, { filename: f });
 const { SnakeEngine: E, SnakeAI: AI } = ctx.window;
 const CHECK = 150, MIN = 60;
 const samples = {}; // persona -> [traits]

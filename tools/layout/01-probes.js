@@ -88,11 +88,15 @@ const BANNER = ([text, kind, level, opts] = [], show = true) => `(() => {
   const t = document.getElementById('toast');
   if (${show}) SnakeDebug.banner(${JSON.stringify(text)}, ${JSON.stringify(kind)}, ${JSON.stringify(level)}, ${JSON.stringify(opts || {})});
   if (t.hidden) return null;
-  for (const a of t.getAnimations()) a.finish();
+  // (an animation finished, to read it where it rests; but a banner on its way out, read where it rested, its exit put
+  // back after: finished, the exit's fade would leave it 4 px up and unseen, read as over the safe top)
+  const exits = [];
+  for (const a of t.getAnimations()) if (t.classList.contains('leaving') && /-out$/.test(a.animationName)) { exits.push([a, a.currentTime]); a.currentTime = 0; } else a.finish();
   const box = el => { const r = el.getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom }; };
   const hit = (a, c) => a.x < c.r - 0.5 && c.x < a.r - 0.5 && a.y < c.b - 0.5 && c.y < a.b - 0.5;
   const me = SnakeDebug.game().snakes.find(s => s.isPlayer), cs = getComputedStyle(t);
   const tb = box(t), board = box(document.getElementById('game')), tag = me?.tag?.li ? box(me.tag.li) : null, pause = box(document.getElementById('pause'));
+  for (const [a, at] of exits) a.currentTime = at;
   return { text: t.textContent, above: t.classList.contains('above'), box: tb, onBoard: hit(tb, board), onTag: !!tag && hit(tb, tag), onPause: hit(tb, pause),
     mid: ((tb.y + tb.b) / 2 - board.y) / (board.b - board.y), safeTop: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-t')) || 0, vw: innerWidth,
     lines: t.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) > parseFloat(cs.fontSize) * 1.4 ? 2 : 1, whole: t.scrollWidth <= t.clientWidth + 1 };

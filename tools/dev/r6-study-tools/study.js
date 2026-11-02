@@ -30,7 +30,7 @@ function loadGame(root) {
   const M = Object.create(Math);
   M.random = () => rng();
   const ctx = vm.createContext({ window: {}, console, Math: M });
-  for (const f of ['tuning.js', 'ai.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), ctx, { filename: f });
+  for (const f of require('../../game-files.js')(root)) vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), ctx, { filename: f });
   return { E: ctx.window.SnakeEngine, T: ctx.window.TUNING };
 }
 const causeOf = s => s.fatal === 'pecked' ? 'pecked' : s.fatal === 'boom' ? 'boom' : s.killer === 'self' ? 'self' : s.killer === 'hunger' ? 'starved' : s.killer === 'fire' ? 'fire'
