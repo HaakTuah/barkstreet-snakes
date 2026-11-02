@@ -129,7 +129,7 @@ const PRE = `(() => {
 const STAGE = `(() => {
   window.__autoRaf = false;
   window.E = SnakeEngine; window.R = SnakeRender;
-  window.__t = performance.now() + 1e6;
+  window.__t = 1e9; // (the virtual clock's start, fixed: from the page's own clock, each run drew the pulses and the bird's motion at another phase, and a check could pass or fail on the time it took to get here)
   window.drawN = (n, alpha = 0.5, step = 33) => { for (let i = 0; i < n; i++) { __t += step; R.frame(alpha, __t); } return n; };
   window.setBody = (s, cells, dir) => { s.body = cells.map(([x, y]) => ({ x, y })); s.prev = s.body.map(c => ({ ...c })); s.dir = E.DIRS[dir]; s.queue = []; s.planned = null; };
   let boards = 0;
