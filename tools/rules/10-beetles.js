@@ -85,7 +85,7 @@
   text = text.replace(/BURROW_FROM_DIG: *\w+,/, 'BURROW_FROM_DIG: true,').replace(/BURROW_HEAL_MS: *\d+,/, 'BURROW_HEAL_MS: 30000,');
   const on = vm.createContext({ window: {}, console, Math });
   vm.runInContext(text, on, { filename: 'tuning.js' });
-  for (const f of ['ai.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), on, { filename: f });
+  for (const f of RULES) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), on, { filename: f });
   const E2 = on.window.SnakeEngine, T2 = on.window.TUNING;
   const staged = () => {
     const g = E2.createGame({ humans: [{ name: 'P0' }, { name: 'P1' }], personas: [] });
@@ -117,7 +117,7 @@
   const play = changes => {
     const c = vm.createContext({ window: {}, console, Math: M });
     vm.runInContext(Object.entries(changes).reduce((s, [k, v]) => s.replace(new RegExp(`${k}: *[\\w.]+,`), `${k}: ${v},`), text), c, { filename: 'tuning.js' });
-    for (const f of ['ai.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), c, { filename: f });
+    for (const f of RULES) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), c, { filename: f });
     return [c.window.SnakeEngine, c.window.TUNING];
   };
   const [E3, T3] = play({});

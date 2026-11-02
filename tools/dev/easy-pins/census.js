@@ -22,7 +22,8 @@ let rng = Math.random;
 const M = Object.create(Math); M.random = () => rng();
 const ctx = vm.createContext({ window: {}, console, Math: M });
 const run = f => vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
-run('tuning.js'); run('ai.js');
+const gameFiles = require('../../game-files.js'), GAME = gameFiles(ROOT), AI_FILES = GAME.filter(gameFiles.ai), ENGINE_FILES = GAME.filter(gameFiles.engine);
+run('tuning.js'); AI_FILES.forEach(run);
 const AI = ctx.window.SnakeAI, keyOf = new Map(Object.entries(AI.PERSONAS).map(([k, p]) => [p, k]));
 const per = {}, row = k => (per[k] ||= { decisions: 0, chances: 0, closed: 0, episodes: 0, episodesClosed: 0 });
 const episode = new Map(); // row -> memory -> { tick, closed } of the pin it last had a chance at
@@ -96,7 +97,7 @@ function count(r, k, view, memory, d, pin) {
     else if (DUMP && !k.startsWith('(')) missed.push({ key: k, did: d, pin, victimId: memory.victimId, view: JSON.parse(JSON.stringify({ ...view, holes: [...view.holes], fire: [...(view.fire || [])], pecks: [...(view.pecks || [])] })) });
   }
 }
-run('engine.js');
+ENGINE_FILES.forEach(run);
 const E = ctx.window.SnakeEngine;
 for (let r = 0; r < ROUNDS; r++) {
   rng = seeded(SEED + r * 7919);
