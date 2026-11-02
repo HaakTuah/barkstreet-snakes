@@ -98,16 +98,11 @@
 // woodpecker, 08 hunger, 09 the chomps (what the round plays when you or a rival eats), 10 flags bending under a snake, standing in depth and hit head-on, 11 the costume change (Capricious without its ring), 12 a piece falling. A new check goes in its area's file, or a new one.
 const path = require('path');
 const runParts = require('./parts.js');
-const { launch, serve } = require('./browser');
+const { launch, serve, reporter } = require('./browser');
 
 const SEED = process.argv.includes('--seed') ? Number(process.argv[process.argv.indexOf('--seed') + 1]) : 1;
 const CELL = 32; // (the board's units a cell, as render/ draws them)
-const results = [];
-let failed = 0;
-const check = (ok, what, detail = '') => {
-  results.push(`${ok ? 'ok  ' : 'FAIL'} ${what}${detail ? ` (${detail})` : ''}`);
-  if (!ok) failed++;
-};
+const report = reporter(), { results, check } = report;
 
 // Before the page's own scripts: a switch for its animation loop; a wait for
 // the page to settle (the board laid out, at its size, after a load or a
@@ -155,7 +150,7 @@ const STAGE = `(() => {
 (async () => {
   const site = await serve();
   const b = await launch();
-  const ev = expr => b.eval(expr);
+  const { ev } = b;
   try {
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: PRE });
     await b.viewport(800, 800);
@@ -163,11 +158,11 @@ const STAGE = `(() => {
     await runParts.inside(path.join(__dirname, 'render'), { SEED, CELL, check, STAGE, site, b, ev });
 
     console.log(results.join('\n'));
-    if (b.errors.length) { console.log('page errors:', b.errors); failed++; }
+    if (b.errors.length) { console.log('page errors:', b.errors); report.failed++; }
   } finally {
     await b.close();
     site.close();
   }
-  if (failed) { console.error(`\n${failed} failed`); process.exit(1); }
+  if (report.failed) { console.error(`\n${report.failed} failed`); process.exit(1); }
   console.log(`\nall passed (${results.length} checks)`);
 })().catch(e => { console.error(e); process.exit(1); });

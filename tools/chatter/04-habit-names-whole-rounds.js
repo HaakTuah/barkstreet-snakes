@@ -66,9 +66,9 @@
   console.log(`ok   names in the log read on its wood (${need}:1), keeping their colours' hue and saturation: Copycat rgb(${cat}), the flag's red; Sniper rgb(${shown.Sniper}), Colonist rgb(${shown.Colonist}), Wildcard rgb(${shown.Wildcard})`);
 }
 
-// Whole rounds of rivals with the chatter listening: nothing throws, and it talks.
-// (These two, with what's staged above, run every line of chatter/ that six
-// rounds did, four of them with rivals at random.)
+// Rivals on scripted boards, the real engine playing a few ticks with the chatter listening: nothing
+// throws, it talks, and what it says about the woodpecker's knocked food is the rule's. (--rounds N
+// below plays whole rounds, to see how rare the grumbles are.)
 {
   let total = 0, rounds = 0;
   const per = {};
@@ -118,35 +118,55 @@
       for (const x of heardNow) { spoke[x.s.id] = now; const l = isGrumble(x.text); if (l) told.add(l); }
     };
   };
-  for (let r = 0; r < 1; r++) {
-    rng = seeded(31 + r * 7919);
-    const g = E.createGame({ withPlayer: false, personas: ['sovereign', 'colonist', 'vulture', 'capricious'] });
+  // (The smallest setup: scripted boards, the real engine and its real events for a few ticks.)
+  const D = E.DIRS;
+  const lay = (s, x, y, dir) => { s.dir = D[dir]; s.body = [0, 1, 2].map(i => ({ x: x - D[dir].x * i, y: y - D[dir].y * i })); s.prev = s.body.map(c => ({ ...c })); };
+  const board = (personas, spots) => {
+    rng = seeded(31);
+    const g = E.createGame({ withPlayer: false, personas });
+    g.food = []; g.tick = 100; g.time = T.SUDDEN_DEATH_MS;
+    g.snakes.forEach((s, i) => { lay(s, ...spots[i]); s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; });
     C.reset(g);
+    return g;
+  };
+  // Four rivals; the woodpecker's strike knocks the apple Sovereign is after aside, and Colonist, set beside
+  // where it landed, eats it: Sovereign, the nearest head to where it lay, grumbles at Colonist.
+  {
+    const g = board(['sovereign', 'colonist', 'vulture', 'capricious'], [[16, 12, 'right'], [3, 3, 'up'], [3, 20, 'down'], [20, 20, 'down']]);
+    const [, col] = g.snakes, K = (x, y) => y * T.GRID + x;
+    g.food = [{ x: 12, y: 12, kind: 'food' }];
+    g.woodpecker = { x: 12, y: 12, at: g.time, target: [K(12, 12), K(11, 12), K(13, 12), K(12, 11), K(12, 13)], strikeAt: g.tick, last: [], struckAt: -1, restUntil: 0 };
     const knocking = watchKnocks();
-    while (g.snakes.filter(s => s.alive).length > 1 && g.time < 400000) {
+    const play = () => {
       E.step(g);
       heard = [];
       C.update();
       knocking(g, heard);
       total += heard.length;
-      for (const x of heard) per[x.s.personaKey] = (per[x.s.personaKey] || 0) + 1;
       for (const e of g.events) { if (e.type === 'squash') chokes++; if (e.type === 'dive' && e.dug) dugOut++; if (e.type === 'knock') knocks++; }
       for (const x of heard) { if (chokeLines.has(x.text)) choked++; if (dugLines.has(x.text)) dug++; if (grumbles.some(t => t.test(x.text))) grumbled++; }
+    };
+    play(); // (the strike)
+    const knock = g.events.find(e => e.type === 'knock' && e.tx != null);
+    if (knock) { // (Colonist's head beside the landing, going onto it: the next step eats)
+      const [tx, ty] = [knock.tx, knock.ty], free = (x, y) => x >= 0 && y >= 0 && x < T.GRID && y < T.GRID && !g.holes.has(K(x, y)) && g.snakes.every(s => s === col || s.body.every(c => c.x !== x || c.y !== y));
+      const way = ['right', 'left', 'down', 'up'].find(n => [0, 1, 2, 3].every(i => free(tx - D[n].x * (i + 1), ty - D[n].y * (i + 1))));
+      if (way) { lay(col, tx - D[way].x, ty - D[way].y, way); col.planned = D[way]; col.plannedTick = g.tick + 1; g.time += 5000; } // (a few seconds later: past Sovereign's gap since the strike, inside the 6 s a grumble is owed)
     }
+    for (let t = 0; t < 4; t++) play();
     rounds++;
   }
-  check(total > 20 * rounds, `whole rounds: the rivals talk (${total} lines in ${rounds} rounds)`);
-  check(choked <= chokes, `...a choke line only for a squash (${choked} of ${chokes})`);
+  check(knockWatch.picks === 1 && knockWatch.said === 1, `a scripted strike knocks the apple Sovereign was after aside, and Colonist eats it: Sovereign grumbles (${knockWatch.said} of ${knockWatch.picks})`);
+  check(total > 0 && choked <= chokes, `...the rivals talk (${total} lines on the board), and a choke line only for a squash (${choked} of ${chokes})`);
   check(dug <= dugOut && grumbled <= knocks, `...a dug line only for a beetle that dug in and got away (${dug} of ${dugOut}), a grumble only for food the woodpecker knocked aside (${grumbled} for ${knocks} pieces)`);
-  console.log(`ok   ${rounds} whole AI round${rounds > 1 ? 's' : ''} of Sovereign, Colonist, Vulture and Capricious with the chatter listening: ${total} lines, nothing thrown (${chokes} squashes, ${choked} remarked on; ${dugOut} beetles dug in and away, ${dug} remarked on; ${knocks} pieces the woodpecker knocked aside, ${grumbled} grumbles)`);
+  console.log(`ok   a scripted board of Sovereign, Colonist, Vulture and Capricious with the real engine and the chatter listening: ${total} lines, nothing thrown (${knocks} pieces the woodpecker knocked aside, ${grumbled} grumbles)`);
   // ...and one with Star, the rivals who answer it and Copycat (who repeats it in Chinese).
   let star = 0, zh = 0;
-  for (let r = 0; r < 1; r++) {
-    rng = seeded(97 + r * 7919);
-    const g = E.createGame({ withPlayer: false, personas: ['star', 'wildcard', 'mason', 'copycat'] });
-    C.reset(g);
-    const knocking = watchKnocks();
-    while (g.snakes.filter(s => s.alive).length > 1 && g.time < 400000) {
+  {
+    const g = board(['star', 'wildcard', 'mason', 'copycat'], [[12, 12, 'right'], [4, 4, 'up'], [20, 4, 'up'], [4, 20, 'down']]);
+    const knocking = watchKnocks(), [st] = g.snakes;
+    for (let t = 0; t < 30; t++) {
+      if (t % 10 === 0) { st.dashes = 1; st.flashReadyAt = g.time; E.flash(g, st); }
       E.step(g);
       heard = [];
       C.update();
@@ -154,8 +174,8 @@
       for (const x of heard) { if (x.s.personaKey === 'star') star++; if (x.s.personaKey === 'copycat' && /[一-鿿]/.test(x.text) && !x.text.includes('{')) zh++; }
     }
   }
-  check(star > 5, `a whole round with Star: it talks (${star} lines)`);
-  console.log(`ok   a whole AI round with Star, Wildcard, Mason and Copycat: Star ${star} lines, Copycat ${zh} in Chinese, nothing thrown`);
+  check(star > 0 && zh > 0, `a scripted board with Star: it flashes and talks (${star} lines), and Copycat repeats it in Chinese (${zh})`);
+  console.log(`ok   a scripted board with Star, Wildcard, Mason and Copycat: Star ${star} lines, Copycat ${zh} in Chinese, nothing thrown`);
   // (--rounds N: N more whole rounds, of four rivals at random, to see the
   // woodpecker's knocked food and the grumbles over many: they're rare, a
   // round or two in ten.)

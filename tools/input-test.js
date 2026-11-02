@@ -5,7 +5,8 @@
 // nothing else running on the machine can bend the timing. It checks what
 // DESIGN promises:
 // - Space jumps; E and either Shift flash; a tap jumps; a fresh swipe the way
-//   you're going flashes.
+//   you're going flashes; a swipe across the way you're going turns, on phones held upright and on
+//   their sides.
 // - Pressing the way you're going, a held key and its auto-repeat, and the
 //   press that starts or wakes a round never fire a power.
 // - Space, E and Shift never start, wake or dismiss anything (a button you
@@ -56,15 +57,10 @@
 // the lessons (and the measured latencies). A new check goes in its area's file, or a new one.
 const path = require('path');
 const runParts = require('./parts.js');
-const { launch, serve } = require('./browser');
+const { launch, serve, reporter } = require('./browser');
 
 const P = 1000 / 60; // one frame
-const results = [];
-let failed = 0;
-const check = (ok, what, detail = '') => {
-  results.push(`${ok ? 'ok  ' : 'FAIL'} ${what}${detail ? ` (${detail})` : ''}`);
-  if (!ok) failed++;
-};
+const report = reporter(), { results, check } = report;
 const stats = list => {
   const s = [...list].sort((a, b) => a - b);
   return { n: s.length, mean: +(s.reduce((a, b) => a + b, 0) / (s.length || 1)).toFixed(1), median: +(s[s.length >> 1] ?? 0).toFixed(1), max: +(s[s.length - 1] ?? 0).toFixed(1) };
@@ -189,7 +185,7 @@ const KEYS = {
 (async () => {
   const site = await serve();
   const b = await launch();
-  const ev = expr => b.eval(expr);
+  const { ev } = b;
   const down = (name, repeat = false) => { const k = KEYS[name]; return b.send('Input.dispatchKeyEvent', { type: k.text ? 'keyDown' : 'rawKeyDown', key: k.key, code: k.code, windowsVirtualKeyCode: k.vk, text: k.text, location: k.location || 0, autoRepeat: repeat }); };
   const up = name => { const k = KEYS[name]; return b.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k.key, code: k.code, windowsVirtualKeyCode: k.vk, location: k.location || 0 }); };
   const key = async name => { await down(name); await up(name); };
@@ -223,11 +219,11 @@ const KEYS = {
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: PRE });
 
     await runParts.inside(path.join(__dirname, 'input'), { launch, serve, P, results, check, stats, PRE, INSTRUMENT, VCLOCK, KEYS, site, b, ev, down, up, key, powers, state, startRound, freshRound, toTick });
-    if (b.errors.length) { console.log('page errors:', b.errors); failed++; }
+    if (b.errors.length) { console.log('page errors:', b.errors); report.failed++; }
   } finally {
     await b.close();
     site.close();
   }
-  if (failed) { console.error(`\n${failed} failed`); process.exit(1); }
+  if (report.failed) { console.error(`\n${report.failed} failed`); process.exit(1); }
   console.log(`\nall passed (${results.length} checks)`);
 })().catch(e => { console.error(e); process.exit(1); });

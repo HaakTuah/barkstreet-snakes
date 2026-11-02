@@ -72,17 +72,7 @@ function sources(where) {
   return FILES.map(f => execFileSync('git', ['show', `${where}:${f}`], { cwd: REPO, encoding: 'utf8', maxBuffer: 1 << 26 }));
 }
 
-// mulberry32, as tools/simulate.js seeds its rounds.
-function seeded(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+const seeded = require('./seeded.js'); // (mulberry32, as tools/simulate.js seeds its rounds)
 
 // A copy of the game in a fresh context, with its own Math.random (reseeded
 // for every round, or every position), which counts what's drawn from it.

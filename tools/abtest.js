@@ -198,17 +198,7 @@ function tOf(p, df) {
   return z + (z3 + z) / (4 * df) + (5 * z5 + 16 * z3 + 3 * z) / (96 * df ** 2) + (3 * z7 + 19 * z5 + 17 * z3 - 15 * z) / (384 * df ** 3);
 }
 
-// mulberry32, for the bootstrap: the same intervals every time for the same rounds.
-function seeded(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+const seeded = require('./seeded.js'); // (mulberry32, for the bootstrap: the same intervals every time for the same rounds)
 // The median of the first n of xs (reordering them).
 function median(xs, n = xs.length) {
   if (!n) return NaN;
