@@ -36,7 +36,7 @@ could say. Short enough for the bubble on a phone, and no song lyrics or long qu
 - Last words know what killed them. Killed by a snake, a rival names it ("Et tu, {who}?"); killed by anything else, it
   names that, in its own voice, from the cause the engine records: the edge, a hole it fell into, the woodpecker, hunger, fire (every
   fire is lightning's, so Mason's "Et tu, ignis?" and "Et tu, Iuppiter?" share it) or its own body (`diesBy` in
-  `chatter/voices.js`). A cause with no line (a hole's rim it crashed into, which is no fall), or one it said
+  each rival's file in `chatter/voices/`). A cause with no line (a hole's rim it crashed into, which is no fall), or one it said
   a moment ago, falls back to its plain last words.
   Mushrooms only shrink, so none dies of one. Mason's kill line is the punchline "Vidi, vici, veni." (he saw, he
   conquered, then he came), and "Veni, vidi, vici." is nobody's line, so the proper version never spoils it.

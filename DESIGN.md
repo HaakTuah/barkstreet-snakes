@@ -10,7 +10,7 @@ the file of its topic; a new round or topic gets its own file and a line here.
 | [`docs/design/01-the-vision-in-one-paragraph.md`](docs/design/01-the-vision-in-one-paragraph.md) | The vision in one paragraph |
 | [`docs/design/02-art-direction-storybook-bark-on-a-mossy-log.md`](docs/design/02-art-direction-storybook-bark-on-a-mossy-log.md) | Art direction: "storybook bark", on a mossy log |
 | [`docs/design/03-the-snake-as-a-character.md`](docs/design/03-the-snake-as-a-character.md) | The snake as a character |
-| [`docs/design/04-food-and-the-world.md`](docs/design/04-food-and-the-world.md) | Food and the world |
+| [`docs/design/04-food-and-the-world.md`](docs/design/04-food-and-the-world.md) | Food and the world: food, beetles, burrows, holes, remains, and the realms and colonies with their flags |
 | [`docs/design/05-weather.md`](docs/design/05-weather.md) | Weather |
 | [`docs/design/06-keeping-it-smooth.md`](docs/design/06-keeping-it-smooth.md) | Keeping it smooth |
 | [`docs/design/07-borders-and-frames.md`](docs/design/07-borders-and-frames.md) | Borders and frames |
@@ -18,7 +18,7 @@ the file of its topic; a new round or topic gets its own file and a line here.
 | [`docs/design/09-voice-and-copy.md`](docs/design/09-voice-and-copy.md) | Voice and copy |
 | [`docs/design/10-feel-targets-checked-in-phase-7.md`](docs/design/10-feel-targets-checked-in-phase-7.md) | Feel targets (checked in Phase 7) |
 | [`docs/design/11-the-third-pass-what-it-settles.md`](docs/design/11-the-third-pass-what-it-settles.md) | The third pass: what it settles |
-| [`docs/design/12-the-rounds-arc.md`](docs/design/12-the-rounds-arc.md) | The round's arc |
+| [`docs/design/12-the-rounds-arc.md`](docs/design/12-the-rounds-arc.md) | The round's arc: its timeline, with the woodpecker as first rebuilt, the cornered rivals, starving and the Hall of Fame's ranking |
 | [`docs/design/13-lines-and-announcements.md`](docs/design/13-lines-and-announcements.md) | Lines and announcements |
 | [`docs/design/14-crashes-not-deaths-the-rules-reworked.md`](docs/design/14-crashes-not-deaths-the-rules-reworked.md) | Crashes, not deaths (the rules, reworked) |
 | [`docs/design/15-the-rivals-look-further-ahead.md`](docs/design/15-the-rivals-look-further-ahead.md) | The rivals look further ahead |
