@@ -39,20 +39,20 @@
 //
 //   core.js       setup, colours, the bark (the static layer, snow, embers, leaves)
 //   sprites.js    cached sprites, the Field guide's pictures, beetles, particles
-//   looks.js      each snake's animation state, its looks, its gaze, its jumps
+//   looks.js      each snake's animation state, its looks, its costume change, its gaze, its jumps and their landing rings
 //   lead.js       drawing half a tick ahead: where bodies go, and their shape
 //   shadows.js    the veil, shadows on the bark and the light in a pit
 //   bodies.js     outlines, the gold line of a power, and the body itself
 //   marks.js      pips, rests, your pressed turn, Mason's veins, the tie, Star's head;
-//                 and every snake drawn in turn, its passes, trails and fire
+//                 and every snake drawn in turn, its passes and trails
 //   tongues.js    every look's tongue (or gag)
 //   faces.js      eyes, lids, mouths, hats and beaks, and every look's face
 //   land.js       Sovereign's realm and Colonist's colonies: land on a map
 //   flags.js      land made ahead of a strike, its dashes, banners, flags, ripples and hues
-//   food.js       the food, and the beetles' burrows
-//   weather.js    fire and scorch, the sky, rain, lightning, rainbows
-//   bird-perch.js the woodpecker's size, its perch, its aim and its layer
-//   bird.js       the woodpecker's plan and its poses
+//   food.js       the food and its pictures, a mushroom's spit rings and cheeks, the beetles' burrows and bore
+//   weather.js    fire and scorch, a snake on fire, the sky, rain, lightning, rainbows
+//   bird-perch.js the woodpecker's size and growth, its perch, its aim and its layer
+//   bird.js       the woodpecker's plan, its poses, its head and eye
 //   bird-drum.js  how it clings to drum, and what of the board it hides
 //   bird-draw.js  the woodpecker drawn
 //   holes.js      its aim and patch on the board, and the holes and pits it leaves
@@ -66,6 +66,10 @@ const BARK = '#5a3b22';
 const INK = '#0b1210';
 const TAU = Math.PI * 2;
 const SIDES2 = [-1, 1]; // (either side, for a loop over both: no array made a frame)
+// The renderer's two small random sources, each written once: a seeded sequence of numbers 0..1 (the same every time for a seed), and a number
+// 0..1 for a place, hashed from a number by a sine.
+const seededRnd = seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const sinHash = x => { const h = Math.sin(x * 12.9898) * 43758.5453; return h - Math.floor(h); };
 
 let canvas, ctx, PERSONAS;
 let devPerCss = 1;         // device pixels per CSS pixel on the board
@@ -132,8 +136,7 @@ function buildBark(from = barkSeed) {
   const b = makeLayer(px, px);
   const g = b.getContext('2d');
   g.scale(k, k);
-  let seed = from;
-  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const rnd = seededRnd(from);
   const dot = (x, y, r) => { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); };
   g.fillStyle = BARK;
   g.fillRect(0, 0, SIZE, SIZE);
@@ -274,8 +277,7 @@ function buildBark(from = barkSeed) {
 let shadeLayer = null;
 function buildShade(from = barkSeed) {
   const n = 256, s = makeLayer(n, n), g = s.getContext('2d');
-  let seed = from * 7 + 3;
-  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const rnd = seededRnd(from * 7 + 3);
   for (let i = 0; i < 22; i++) {
     const cx = rnd() * n, cy = rnd() * n;
     for (let j = 0; j < 6; j++) {
@@ -308,8 +310,7 @@ function buildDrifts(d, step) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, d.width, d.height);
   g.setTransform(k, 0, 0, k, 0, 0);
-  let seed = barkSeed * 13 + 5;
-  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const rnd = seededRnd(barkSeed * 13 + 5);
   const grown = step / DRIFT_STEPS, wide = 0.4 + 0.6 * grown, long = 0.25 + 0.75 * grown; // (how far it has grown, across and along)
   const n = DRIFT_PTS, cx = [], cy = [], lw = [], rw = [], ring = [], specks = [];
   for (let i = 0; i < 20; i++) {
@@ -391,8 +392,7 @@ let snowTile = null;
 function buildSnowTile() {
   const n = RAIN_TILE, t = makeLayer(n * k, n * k), g = t.getContext('2d');
   g.scale(k, k);
-  let seed = 77;
-  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const rnd = seededRnd(77);
   for (let i = 0; i < 70; i++) {
     const x = rnd() * n, y = rnd() * n, r = 1.4 + rnd() * 2.6;
     g.fillStyle = `rgba(255,255,255,${0.55 + rnd() * 0.4})`;

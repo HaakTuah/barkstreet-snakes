@@ -1,4 +1,4 @@
-// The renderer (see render/core.js): the woodpecker's size (on a phone too),
+// The renderer (see render/core.js): the woodpecker's size (on a phone too, and how it grows),
 // where it perches, where it aims beside a snake, and its layer.
 
 // ------------------------------------------------------------ the woodpecker
@@ -70,6 +70,9 @@ const PERCH_GAP_PX = 1.5, BOX_EDGE = 0.1; // (how far, CSS px, it keeps off the 
 const LEDGE_LOOK = 0.3, CROUCH = 0.25; // (on the ledge, how far it may look up at its chunk, radians, with its beak still under the board; and how far its crouch lowers it, units)
 const RIM_GRIP = 0.95, RIM_FEET = 0.8, RIM_REACH = 2.5, RIM_PECK_MS = 360; // (on a button's rim: how far ahead of it its toes grip, and how far under its feet' middle, units; how far along the ledge it goes to one, units; and how long its two pecks at it take)
 const FLIGHT_BACK = 6; // (units: how far behind the spot it strikes its wings reach as it flies in, its beak's length and a wingbeat back)
+function growBird(grow) { // (its size, times its first: BU and what's worked out from it)
+  BU = CELL * 0.85 * grow; PERCH_NEAR = 0.65 * 1.3 / grow; B_IN = 0.06 * 1.3 / grow; SEE_R = CELL * 0.4 + BOX_EDGE * BU;
+}
 // Where it perches to work on a spot (board px), and how big (s): beside
 // the board on the nearest side with room for it on this screen (or with
 // room for it a little smaller), its beak just short of the board; with
