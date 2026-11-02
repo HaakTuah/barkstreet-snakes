@@ -34,7 +34,7 @@
  * @typedef {[alive: Flag, dir: number, eaten: number, lastAte: number, nextStarve: number, cells: number[], memory: Engine.Memory | 0,
  *   autopilot: Flag, stunUntil: number, burnUntil: number, burnFrom: number, leaps: number, leapArmed: number, dashes: number,
  *   leapReadyAt: number, wrapUntil: number, flight: number, flashReadyAt: number, flashArmed: number, mealMs: number,
- *   land: number, airLeft: number, airGold: Flag, cheek: number, spitAt: number, ring: number]} SnakeRow  land: where a jump in the air comes down if it flies no further (y * 1000 + x; -1: on the ground); airLeft: cells it still flies over; ring: where its ring shows it comes down (a committed golden flight's, GOLD_FLY cells out; y * 1000 + x, -1: on the ground); cheek: the segments a mushroom in its cheek took (0: none), spat at tick spitAt
+ *   land: number, airLeft: number, airGold: Flag, cheek: number, spitAt: number, ring: number, ringIn: number]} SnakeRow  land: where a jump in the air comes down if it flies no further (y * 1000 + x; -1: on the ground); airLeft: cells it still flies over; ring: where its ring shows it comes down (a committed golden flight's, GOLD_FLY cells out; y * 1000 + x, -1: on the ground), ringIn the moves till it's down there; cheek: the segments a mushroom in its cheek took (0: none), spat at tick spitAt
  * @typedef {[x: number, y: number, kind: number, expires: number, zero: 0, dir: number, px: number, py: number, movedAt: number,
  *   scared: Flag, gold: Flag, digUntil: number]} BeetleRow
  * @typedef {[x: number, y: number, kind: number, expires: number, color: string | 0, heat: number, cooked: Flag, owner: number, power: number]} MealRow  power: a mushroom come back up's (0: a fresh one)
@@ -151,7 +151,7 @@ window.SnakeOnline = (() => {
         s.dashes, s.leapReadyAt, s.wrapUntil, s.flight ? DIR_NAMES.indexOf(dirName(s.flight.dir)) : -1,
         s.flashReadyAt, s.flashArmed, s.mealMs,
         s.flight ? s.flight.land.y * 1000 + s.flight.land.x : -1, s.flight ? s.flight.over.length : 0, s.flight?.gold ? 1 : 0,
-        s.cheek ? s.cheek.power : 0, s.cheek ? s.cheek.spitAt : -1, s.flight?.ring ? s.flight.ring.y * 1000 + s.flight.ring.x : -1,
+        s.cheek ? s.cheek.power : 0, s.cheek ? s.cheek.spitAt : -1, s.flight?.ring ? s.flight.ring.y * 1000 + s.flight.ring.x : -1, s.flight?.ring ? s.flight.ring.n ?? 0 : 0,
       ]),
       // A beetle also says which way it faces and where it came from, so it
       // walks on every screen, and until when it's digging in, if it is (it
@@ -294,7 +294,7 @@ window.SnakeOnline = (() => {
     game.time = msg.ms;
     /** @param {unknown} v */
     const num = v => Number.isFinite(v);
-    msg.s.forEach(([alive, dir, eaten, lastAte, nextStarve, cells, memory, autopilot, stunUntil, burnUntil, burnFrom, leaps, leapArmed, dashes, leapReadyAt, wrapUntil, flight, flashReadyAt, flashArmed, mealMs, land, airLeft, airGold, cheek, spitAt, ring], id) => {
+    msg.s.forEach(([alive, dir, eaten, lastAte, nextStarve, cells, memory, autopilot, stunUntil, burnUntil, burnFrom, leaps, leapArmed, dashes, leapReadyAt, wrapUntil, flight, flashReadyAt, flashArmed, mealMs, land, airLeft, airGold, cheek, spitAt, ring, ringIn], id) => {
       const s = game.snakes[id];
       if (!s) return;
       s.alive = !!alive;
@@ -314,7 +314,7 @@ window.SnakeOnline = (() => {
       // (In the air: on over airLeft more cells, straight on, then down at land.)
       const fd = num(flight) && flight >= 0 && num(land) && land >= 0 ? DIRS[DIR_NAMES[flight]] : null, head = cells[0], left = num(airLeft) ? Math.max(0, Math.min(8, airLeft)) : 0;
       const G = window.TUNING.GRID, wrapped = /** @param {number} v */ v => s.wrapUntil > msg.ms ? (v + G) % G : v; // (over the wrapped edge, as the host has it)
-      s.flight = fd ? { dir: fd, over: Array.from({ length: left }, (_, i) => ({ x: wrapped(head % 1000 + fd.x * (i + 1)), y: wrapped(Math.floor(head / 1000) + fd.y * (i + 1)) })), land: { x: land % 1000, y: (land - land % 1000) / 1000 }, gold: airGold ? 1 : 0, ...(num(ring) && ring >= 0 ? { ring: { x: ring % 1000, y: (ring - ring % 1000) / 1000 } } : {}) } : null;
+      s.flight = fd ? { dir: fd, over: Array.from({ length: left }, (_, i) => ({ x: wrapped(head % 1000 + fd.x * (i + 1)), y: wrapped(Math.floor(head / 1000) + fd.y * (i + 1)) })), land: { x: land % 1000, y: (land - land % 1000) / 1000 }, gold: airGold ? 1 : 0, ...(num(ring) && ring >= 0 ? { ring: { x: ring % 1000, y: (ring - ring % 1000) / 1000, n: num(ringIn) ? Math.max(0, Math.min(8, ringIn)) : 1 } } : {}) } : null;
       s.flashReadyAt = num(flashReadyAt) ? flashReadyAt : 0;
       s.flashArmed = num(flashArmed) ? flashArmed : -1;
       s.mealMs = num(mealMs) && mealMs > 0 ? mealMs : s.mealMs; // (for the hunger bar)
