@@ -42,7 +42,7 @@ vector and security concerns".
   stored or shown.
 - **URL parameters and room codes:** cleaned to their own alphabet and length (`cleanCode`).
 6. **Nothing untrusted becomes markup or code:** text from any source above reaches the page only as text
-   (`textContent`), or escaped (`&`, `<`, `>`, `"`, `'`) where `innerHTML` and the HUD's markup (`game/hud.js`, `game/banners.js`) build markup; never into an attribute, a URL, a
+   (`textContent`), or escaped (`&`, `<`, `>`, `"`, `'`) where `innerHTML` and the HUD's markup (`game/hud.js`, `game/cards.js`) build markup; never into an attribute, a URL, a
    style or an event handler unescaped; no `eval`, `new Function` or string timers.
 7. **What runs in players' browsers:**
 - **The third-party script:** PeerJS loads from cdnjs only with its pinned version and SRI hash (`PEERJS_SRI` in

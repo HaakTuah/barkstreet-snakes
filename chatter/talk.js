@@ -405,7 +405,7 @@ function nudge(side, x, y, w, h, boardPx) {
 // The banner's box on the board (it's centred by a transform, which the
 // offsets leave out). While it's faded for a head under it, the board
 // comes first and bubbles may cross it; above the board (a phone held
-// upright: game/banners.js placeToast), it's in nobody's way.
+// upright: game/toasts.js placeToast), it's in nobody's way.
 let banner = null, bannerStale = true, bannerPx = 0;
 function readBanner(boardPx) {
   bannerStale = false;

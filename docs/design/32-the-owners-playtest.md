@@ -285,7 +285,7 @@ Who you meet is dealt from a deck, and you may choose instead, seat by seat.
   eighteen and deals from it, every rival once before any comes round again, across rounds and reloads. When it runs
   out, a fresh shuffle goes in behind whatever it still holds. Watching (four rivals) deals the same way. The
   simulator and tools keep the engine's own uniform pick (`pickOpponents`), so fingerprints are unchanged.
-- *Choosing* (`game/hud.js`, `openPicker()`; the seats in `game/banners.js`, `buildOpponents()`): on the start card
+- *Choosing* (`game/cards.js`, `openPicker()`; the seats in `game/cards.js`, `buildOpponents()`): on the start card
   each rival is a button with a swap mark; it opens a picker of "Any" and all eighteen, each with its dot and blurb,
   over the page like the Hall of Fame (Escape or × closes it). A chosen seat wears a ring, and on the start card a
   small pin beside it: a tap on the pin sets the seat back to "Any" (`unpinSeat()`). The choice is kept per seat for

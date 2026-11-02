@@ -1,4 +1,4 @@
-// The game controller (see game/core.js): the HUD, the scoreboard and its tags.
+// The game controller (see game/core.js): the HUD, the scoreboard and its tags, and the steering hint.
 
 // ------------------------------------------------------------- the HUD
 
@@ -100,98 +100,6 @@ function closeNote(byKey = false) {
 }
 $('note-close').addEventListener('click', e => closeNote(e.detail === 0));
 document.addEventListener('pointerdown', e => { if (noted && !e.target.closest?.('#scoreboard, button, input, label, a, #records, #picker')) closeNote(); });
-// Choosing your rivals: a start card's seat opens the picker, every rival
-// and "Any" (dealt from the deck). The choice is kept for this visit
-// (Records.setSeat), round after round, and a chosen seat wears a pin: a tap
-// on it sets the seat back to "Any" (unpinSeat). Online it's
-// the host's that counts, chosen in the lobby's seats (hostLineUp). A rival
-// already in another seat swaps with this one's.
-const pickerEl = $('picker'), pickerList = $('picker-list'), pickerTitle = $('picker-title');
-let pickerSeat = -1;
-const keyDot = key => PERSONA_DOTS[key] || CAST[key].ink || CAST[key].color;
-// Where the seats are: the start card's, or (hosting) the lobby's.
-const choosing = () => (online ? hosting() && !lobbyEl.hidden && !lobbyPlayers.hidden && (state === 'lobby' || state === 'over') : state === 'ready');
-const seatsNow = () => (online ? hostLineUp().keys : theGame.snakes.filter(s => s.persona).map(s => s.personaKey));
-const seatEl = seat => (online ? lobbyPlayers : opponentsEl).querySelector(`.seat[data-seat="${seat}"]`);
-function openPicker(seat) {
-  if (!choosing()) return;
-  closeNote();
-  pickerSeat = seat;
-  const seats = Records.seats(SnakeAI.POOL), here = seatsNow()[seat];
-  pickerTitle.textContent = `Who sits here, instead of ${here ? CAST[here].name : 'them'}?`;
-  pickerList.textContent = '';
-  for (const key of [null, ...SnakeAI.POOL]) {
-    const li = document.createElement('li'), button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'pick' + (key ? '' : ' any');
-    button.dataset.key = key || '';
-    button.setAttribute('aria-pressed', String(seats[seat] === key));
-    const dot = document.createElement('span');
-    dot.className = 'dot';
-    if (key) dot.style.background = keyDot(key);
-    const name = document.createElement('strong');
-    name.textContent = key ? CAST[key].name : 'Any';
-    const blurb = document.createElement('span');
-    blurb.className = 'blurb';
-    blurb.textContent = key ? CAST[key].blurb : 'Dealt: you meet them all before anyone twice.';
-    button.append(dot, name, blurb);
-    const other = key ? seats.indexOf(key) : -1;
-    if (other >= 0 && other !== seat) {
-      const tag = document.createElement('span');
-      tag.className = 'who';
-      tag.textContent = 'in another seat: swaps';
-      button.append(tag);
-    }
-    li.append(button);
-    pickerList.append(li);
-  }
-  pickerEl.hidden = false;
-  mainEl.inert = true;
-  pickerEl.querySelector('.picker-card').scrollTop = 0;
-  (pickerList.querySelector('[aria-pressed="true"]') || $('picker-close')).focus({ preventScroll: false });
-}
-function closePicker() {
-  if (pickerEl.hidden) return;
-  pickerEl.hidden = true;
-  mainEl.inert = false;
-  (seatEl(pickerSeat) || startBtn).focus({ preventScroll: true });
-}
-// The seat takes its rival, or one dealt for "Any"; the other seats keep theirs.
-// dealt: the ones the deck dealt to these seats (they go back if never met).
-function reseat(was, dealt, seat, key) {
-  const pool = SnakeAI.POOL, seats = Records.setSeat(pool, seat, key || null);
-  // (The rival picked from another seat leaves it this seat's old one: they swap.)
-  const keys = was.map((k, i) => seats[i] || (i !== seat && k === key ? was[seat] : i === seat || seats.includes(k) ? null : k));
-  const kept = dealt.filter(k => keys.includes(k)); // (one you sent away counts as met)
-  const fill = Records.deal(pool, keys.filter(k => !k).length, keys.filter(Boolean)), next = [...fill];
-  return { keys: keys.map(k => k || next.shift()), kept, fill, chosen: seats.some(Boolean) };
-}
-function pickRival(key, seat = pickerSeat) {
-  if (online) {
-    const up = reseat(hostLineUp().keys, hostLineUp().fresh, seat, key);
-    online.lineup = { keys: up.keys, fresh: [...up.kept, ...up.fill] };
-    sendLobby();
-  } else {
-    const up = reseat(seatsNow(), theGame.dealt || [], seat, key);
-    theGame.dealt = [...up.kept, ...up.fill]; // (newGame keeps the ones seated)
-    ready(up.keys, up.chosen);
-  }
-  pickerEl.hidden = true;
-  mainEl.inert = false;
-  seatEl(seat)?.focus({ preventScroll: true });
-}
-opponentsEl.addEventListener('click', e => { const b = e.target.closest?.('.seat'); if (b && cardSettled(e)) { Sound.play('ui'); openPicker(Number(b.dataset.seat)); } });
-lobbyPlayers.addEventListener('click', e => { const b = e.target.closest?.('.seat'); if (b && cardSettled(e)) { Sound.play('ui'); openPicker(Number(b.dataset.seat)); } });
-// The pin on a chosen seat: back to "Any", without the picker.
-function unpinSeat(seat) {
-  if (!choosing() || online) return;
-  closeNote();
-  pickRival(null, seat);
-}
-opponentsEl.addEventListener('click', e => { const b = e.target.closest?.('.unpin'); if (b && cardSettled(e)) { Sound.play('ui'); unpinSeat(Number(b.dataset.seat)); } });
-pickerList.addEventListener('click', e => { const b = e.target.closest?.('.pick'); if (b) { Sound.play('ui'); pickRival(b.dataset.key); } });
-$('picker-close').addEventListener('click', closePicker);
-pickerEl.addEventListener('click', e => { if (e.target === pickerEl) closePicker(); });
 
 // A start card whose rivals' names wrap onto a second row can outgrow a
 // small board (a 320 px phone, or one held sideways), and its buttons, held
@@ -384,4 +292,65 @@ function setSpeed(n) {
   tickLen = Engine.tickMs(theGame) / (spectating() ? speed : 1);
   acc *= tickLen / was; // (the same point between ticks: nothing jumps)
   updateControls();
+}
+
+// YOU over your snake, from the countdown till a few seconds in (or just
+// after you steer), and beside its arrow how to steer, until you do.
+function markYou(on) {
+  Render.showYou(on);
+  if (on && !theGame.steered && player()) showSteerHint(); else hideSteerHint();
+}
+const steerHintEl = $('steer-hint'), hintAt = { x: 0, y: 0 }, hintBox = { x: 0, y: 0, w: 0, h: 0 };
+let steerHintOn = false;
+function showSteerHint() {
+  if (steerHintOn) return;
+  steerHintEl.textContent = FLAVOR.steerHint;
+  steerHintEl.classList.add('on');
+  hintBox.w = steerHintEl.offsetWidth; hintBox.h = steerHintEl.offsetHeight; // (measured once a round: no layout reads in the loop)
+  steerHintOn = true;
+  hintSpot = 0;
+  placeSteerHint();
+}
+function hideSteerHint() {
+  if (!steerHintOn) return;
+  steerHintOn = false;
+  steerHintEl.classList.remove('on');
+}
+// Level with the YOU label: over your head (under it heading down, or by
+// the top edge, as the arrow goes), on whichever side has room and no
+// rival's speech bubble (else the other side, else level with your head's
+// other side: a line a rival's just started saying stays readable). It
+// rides along with your head (a transform: the compositor's work).
+const bubbles = [], bubbleSize = new WeakMap(); // (the bubbles' boxes this frame; each one's size, measured once, as the chatter does)
+let hintSpot = 0;
+function placeSteerHint() {
+  const me = player();
+  if (!me?.alive || !boardPx) return hideSteerHint();
+  Render.headPx(me, drawAlpha, boardPx, hintAt);
+  const c = boardPx / GRID_SIZE, w = hintBox.w, h = hintBox.h;
+  let sgn = me.dir.y > 0 ? 1 : -1;
+  if (sgn < 0 ? hintAt.y < c * 2.6 : hintAt.y > boardPx - c * 2.6) sgn = -sgn;
+  const right = hintAt.x + c * 1.3, left = hintAt.x - c * 1.3 - w;
+  const sides = right + w <= boardPx - 4 ? [right, left] : [Math.max(4, left), right];
+  const spots = [];
+  for (const s of [sgn, -sgn]) for (const x of sides) if (x >= 4 && x + w <= boardPx - 4) spots.push({ x, y: Math.min(boardPx - h - 4, Math.max(4, hintAt.y + s * c * 2.5 - h / 2)) });
+  bubbleBoxes();
+  const clear = p => bubbles.every(b => p.x >= b.x + b.w + 4 || b.x >= p.x + w + 4 || p.y >= b.y + b.h + 4 || b.y >= p.y + h + 4);
+  if (!(spots[hintSpot] && clear(spots[hintSpot]))) hintSpot = Math.max(0, spots.findIndex(clear)); // (it stays put while it can: no hopping to and fro)
+  const spot = spots[hintSpot] || { x: sides[0], y: hintAt.y + sgn * c * 2.5 - h / 2 }; // (no spot clear: where it'd be anyway)
+  hintBox.x = Math.round(spot.x);
+  hintBox.y = Math.round(spot.y);
+  steerHintEl.style.transform = `translate(${hintBox.x}px, ${hintBox.y}px)`;
+}
+// The rivals' speech bubbles on the board, as the chatter placed them (its
+// transforms: no layout read but a new bubble's size, once).
+function bubbleBoxes() {
+  bubbles.length = 0;
+  for (const el of boardEl.querySelectorAll('.bubble')) {
+    const m = /translate\((-?[\d.]+)px, (-?[\d.]+)px\)/.exec(el.style.transform);
+    if (!m) continue;
+    let size = bubbleSize.get(el);
+    if (!size) bubbleSize.set(el, size = { w: el.offsetWidth, h: el.offsetHeight });
+    bubbles.push({ x: Number(m[1]), y: Number(m[2]), w: size.w, h: size.h });
+  }
 }
