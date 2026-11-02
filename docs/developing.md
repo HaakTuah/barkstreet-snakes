@@ -115,7 +115,7 @@ Every seeded round is cached by the files that played it, round by round, so ask
 | File | What it does |
 |------|--------------|
 | `tuning.js` | Every number that shapes how the game plays and feels, in one place. |
-| `engine.js` | The rules: moving, eating, dying, hunger, the woodpecker. No drawing, so it also runs in Node. |
+| `engine/` | The rules: moving, eating, dying, hunger, the woodpecker, in files by system (listed in `engine/core.js`). No drawing, so it also runs in Node. |
 | `ai.js` | The rivals' brains and personalities. |
 | `render/` | Draws the board on a canvas, with smooth movement between ticks: a file for each thing it draws, sharing one scope (the list is at the top of `render/core.js`). |
 | `audio/` | Sound effects and the adaptive music, synthesised live: `cues.js` (every cue), `music.js`, `weather.js`, then `sound.js` (the synthesiser, playing, mute; makes `SnakeAudio`). |

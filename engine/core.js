@@ -1,0 +1,160 @@
+// The rules of Barkstreet Snakes: no DOM, no drawing. The game (game/) and the
+// headless simulator both run these files unchanged. Tuning lives in tuning.js.
+//
+// The engine is split into the files of engine/, by what they hold, so a
+// change reads a few small files instead of one big one. They are plain
+// scripts that share one scope, like render/'s: index.html loads them in the
+// order below (sw.js lists them too), each sees every name the others declare
+// (and the AI's, which load before them), and the last, step.js, makes
+// window.SnakeEngine. So a file may call anything from inside its functions,
+// but what runs as it loads (a table, a constant worked out from another) may
+// use only names from itself or the files before it. The scope is the page's,
+// shared with ai/, render/ and game/, so every name at a file's top must be
+// unique across them all and no browser global (tools/scope-test.js checks
+// both).
+//
+//   core.js        tuning, the grid and the occupancy stamps, snakes and a new game, the tick's length, hunger and meals
+//   food.js        apples and filling the board with food, the food foodPlacer, eating, mushrooms' cheeks and spitting
+//   roll.js        knocked food rolling: which way a head's step went, and where food goes
+//   beetles.js     beetles, their burrows, their crawl and going under
+//   weather.js     the weather, spells, rainbows, lightning, fire and cooking
+//   pits.js        bridges over holes, and falling in
+//   woodpecker.js  the woodpecker's peck: choosing and shaping its patch, how deep it digs
+//   landings.js    where snakes in a patch land: rooms, knock-aside and the promised landings
+//   view.js        what a snake sees (snapshot, aiView) and what it thinks ahead
+//   powers.js      leaps and dashes: their paths, plans, cuts and mid-tick moves
+//   crashes.js     what a crash does: recoil, stuns, the room left, bumps in the air
+//   step.js        the tick, and the API (window.SnakeEngine)
+
+const T = window.TUNING;
+const GRID = T.GRID;
+const CELLS = GRID * GRID;
+const PLAYER_COLOR = '#4ade80';
+const aiDecide = window.SnakeAI.decide; // (read as the engine loads: the tools swap it in first)
+const { DIRS, PERSONAS, POOL } = window.SnakeAI; // TEMPORARY: delete this line when ai/ lands (it then declares these at top level)
+
+const SPAWNS = [
+  { x: 5, y: 3, dir: DIRS.right },
+  { x: 20, y: 5, dir: DIRS.down },
+  { x: 18, y: 20, dir: DIRS.left },
+  { x: 3, y: 18, dir: DIRS.up },
+];
+// Occupancy grids for collision checks, reused every tick. A cell counts as
+// marked only when its stamp equals the current tick's stamp, so nothing
+// needs clearing between ticks.
+const bodyStamp = new Int32Array(CELLS), bodyOwner = new Int16Array(CELLS);
+const headStamp = new Int32Array(CELLS), headCount = new Uint8Array(CELLS), headFirst = new Int16Array(CELLS);
+let stamp = 0;
+const key = (x, y) => y * GRID + x;
+const inside = (x, y) => x >= 0 && y >= 0 && x < GRID && y < GRID;
+// One cell on from (x, y) in direction d: off the board, unless the edges
+// wrap round for this snake (a golden mushroom).
+const wraps = (game, s) => s.wrapUntil > game.time;
+function ahead(game, s, x, y, d) {
+  let nx = x + d.x, ny = y + d.y;
+  if (wraps(game, s)) { nx = (nx + GRID) % GRID; ny = (ny + GRID) % GRID; }
+  return { x: nx, y: ny };
+}
+const between = (a, b) => a + Math.random() * (b - a);
+const WEATHER = ['clear', 'sun', 'wind', 'rain', 'storm', 'snow'];
+function makeSnake(id, spawn, props) {
+  const d = spawn.dir;
+  const body = Array.from({ length: T.START_LENGTH }, (_, k) => ({ x: spawn.x - d.x * k, y: spawn.y - d.y * k }));
+  return {
+    id, body, dir: d, alive: true, grow: 0, eaten: 0, pellets: 0, lastAte: 0, ateTick: -1, nextStarve: T.HUNGER_MS, mealMs: T.HUNGER_MS, // (mealMs: how long its last meal keeps it, for the hunger bar)
+    // stunUntil: the tick it moves again after a crash; burnUntil, burnFrom: on fire (from, until)
+    stunUntil: -1, burnUntil: -1, burnFrom: -1,
+    // Powers. leaps: golden leaps held (golden beetles); dashes: golden
+    // flashes held (golden leaves); both can be held at once. leapReadyAt,
+    // flashReadyAt: when it can next jump, or flash, plainly (game time);
+    // wrapUntil: the edges wrap round for it till then (a golden mushroom);
+    // flight: while its head is in the air, { dir, over: [the cells it
+    // still flies over, a tick each], land: { x, y } (where it comes down,
+    // the tick after the last of them), gold: 1 for a golden jump }; leapArmed:
+    // the last tick a jump it asked for waits; flashArmed: the tick a flash
+    // it asked for goes (the next one it moves). cheek: a mushroom in its
+    // cheek (round six B), { power: the segments it'll take next, spitAt:
+    // the tick it's spat, left: the ticks it had left to wilt }, or null.
+    leaps: 0, dashes: 0, leapReadyAt: 0, flashReadyAt: 0, wrapUntil: -1, flight: null, leapArmed: -1, flashArmed: -1, cheek: null,
+    queue: [], cause: null, killer: null, killerId: null, diedAt: null, memory: {}, planned: null, plannedTick: -1, ...props,
+  };
+}
+const aiSnake = (id, spawn, key) => {
+  const p = PERSONAS[key];
+  return makeSnake(id, spawn, { name: p.name, color: p.color, persona: p, personaKey: key });
+};
+function pickOpponents(n) {
+  const pool = [...POOL];
+  const picks = [];
+  while (picks.length < n && pool.length) picks.push(...pool.splice(Math.floor(Math.random() * pool.length), 1));
+  return picks;
+}
+// humans: [{ name, color }] for the snakes people steer (isPlayer: driven by
+// an input queue): one by default, none for an AI-only round, up to four
+// online. AI snakes fill the other seats, from persona keys (random by
+// default). Names are made unique, so a person called "Sniper" can't be
+// mistaken for the rival of that name.
+function createGame({ humans = null, withPlayer = true, personas = null } = {}) {
+  const people = (humans || (withPlayer ? [{ name: 'Green', color: PLAYER_COLOR }] : [])).slice(0, SPAWNS.length);
+  const wanted = T.OPPONENTS + 1 - people.length;
+  const keys = (personas || pickOpponents(wanted)).filter(k => Object.prototype.hasOwnProperty.call(PERSONAS, k)).slice(0, wanted);
+  const snakes = [];
+  // (The killer of a snake that hit the edge, itself, hunger, fire or the woodpecker is that word, so no one may be called it.)
+  const taken = new Set([...keys.map(k => PERSONAS[k].name), 'wall', 'self', 'hunger', 'fire', 'woodpecker']);
+  for (const h of people) {
+    const base = String(h.name || 'Green');
+    let name = base;
+    for (let n = 2; taken.has(name); n++) name = `${base} ${n}`;
+    taken.add(name);
+    snakes.push(makeSnake(snakes.length, SPAWNS[snakes.length], { name, color: h.color || PLAYER_COLOR, isPlayer: true }));
+  }
+  keys.forEach(k => {
+    const id = snakes.length;
+    snakes.push(aiSnake(id, SPAWNS[id % SPAWNS.length], k));
+  });
+  const game = {
+    snakes, food: [], tick: 0, time: 0, history: [], withPlayer: people.length > 0, events: [],
+    holes: new Set(), woodpecker: null,
+    // Beetle burrows ({ x, y, at: the tick it cracked open, used, dug: see openBurrow }), the beetles
+    // underground (unders: [{ until: the tick it may come up, expires,
+    // from: the cell it went down, gold }]), fire (cell -> { from, until, group, strike }:
+    // it burns (setting alight any head that enters) from tick `from` to `until`; before that it's
+    // only smouldering, or crackling where lightning will strike), and the
+    // weather ({ kind, since, until, nextGust, nextStrike }, in game time).
+    // fireGroups: how many cells each fire has burning now; fireTotals: how
+    // many it has caught over its life. weatherBag: the spells still to come
+    // before any kind repeats (see spell). sdApples: apples fallen since the
+    // woodpecker came; sdAppleAt: the tick the next falls.
+    burrows: [], unders: [], fires: new Map(), fireGroups: new Map(), fireTotals: new Map(), fireGroup: 0,
+    weather: { kind: 'clear', since: 0, until: T.WEATHER_FIRST_MS, nextGust: 0, nextStrike: 0 }, weatherBag: [],
+    sdApples: 0, sdAppleAt: null,
+  };
+  fillFood(game);
+  snapshot(game);
+  return game;
+}
+// How long the next tick lasts. The opening ticks ease from OPENING_TICK down
+// to START_TICK, then the speed ramps gently toward MIN_TICK.
+function tickLength(game) {
+  if (game.tick < T.OPENING_TICKS) {
+    return T.OPENING_TICK + (T.START_TICK - T.OPENING_TICK) * (game.tick / T.OPENING_TICKS);
+  }
+  return Math.max(T.MIN_TICK, T.START_TICK - (T.START_TICK - T.MIN_TICK) * game.time / T.RAMP_MS);
+}
+const suddenDeath = game => game.time >= T.SUDDEN_DEATH_MS;
+// Milliseconds until a snake starts starving (negative once it has).
+// (lastAte is when it ate as the clock counts it: a meal that lasts less
+// than HUNGER_MS counts as eaten that much earlier, and winter moves it on.)
+const hungerLeft = (game, s) => s.lastAte + T.HUNGER_MS - game.time;
+// How long a meal keeps a snake from shrinking: HUNGER_MS in the opening
+// and once the woodpecker's here, HUNGER_MID_MS between, when food is
+// everywhere (with a long clock, hunger hardly ever mattered then).
+const mealLasts = game => game.time >= T.HUNGER_MID_FROM_MS && !suddenDeath(game) ? T.HUNGER_MID_MS : T.HUNGER_MS;
+// Mark every living body cell in the occupancy grid (with a fresh stamp).
+function markBodies(game) {
+  stamp++;
+  for (const s of game.snakes) {
+    if (!s.alive) continue;
+    for (const c of s.body) { bodyStamp[key(c.x, c.y)] = stamp; bodyOwner[key(c.x, c.y)] = s.id; }
+  }
+}
