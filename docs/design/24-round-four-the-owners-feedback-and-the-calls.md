@@ -68,29 +68,8 @@ The pips sit on a short arc behind the head, a little bigger now; holding both k
 
 ### Food
 
-**Does your own food poison you?** No, and it won't. Poison would punish the natural move of picking your tail back up after a crash, and seat colours can look alike. But **your own beads aren't a meal**: they give the length back (and the score), not the hunger clock.
-
-*Measured*, 24% of the beads eaten were the eater's own, and crashing on purpose and then eating your own beads was a free hunger reset.
-- **Telling it:** a muted Parchment +1 (+2 roasted) with no hunger refill, and once: "Your own tail won't feed you." (*Replaced in round six A:* you choke on your own beads instead, and the mercy below is gone.)
-- **Owners:** beads carry their owner, so this is the same rule for everyone, AI included.
-- **One mercy:** a snake out of time that reaches its own bead that very tick grows instead of starving (as with any food); its next shrink takes the growth back.
-
-**Body food rots.** Beads fade, shrink and go after about 14 s (`PELLET_TICKS`, ± a quarter; roasted ones last half again), in a puff of their own colour, as apples do.
-
-**A body leaves every other segment** (at least 3 beads, from the head; where there are too few, the skipped segments nearest the tail make up the number), not all of it. A kill was worth +30 to +70, and the winner of the first big fight snowballed. Crash drops, cut tails and burnt bits stay whole.
-
-**Too much food mid-round, too little at the end?** Yes on both counts. *Measured:*
-- Before 2:00, hunger mattered for 0.8% of snake-time: the median gap between meals was 1.4 s against a 20 s clock.
-- After 2:00, 24% of snake-time was starving, and two thirds of sudden-death starvations happened with no food on the board at all.
-
-The calls:
-- **Three apples all round** (*since round six A*, two all round, with beetles carrying more of the food: see "Less fruit, more beetles"). Two after 0:45 was the first call, so hunger would matter mid-round. *Measured*, it hardly did: before 2:00 snakes spent 4.4% of their time in the hunger warning, against 2.9% with three. What it did do: shorter snakes at 2:00 left more room once the woodpecker came, so rounds ran 5 s longer, a quarter of sudden death's deaths were in holes, and starving rose from 2% to 7% of all deaths. So the dial was taken out (`APPLES_LATE` is gone). Beads that rot, a dead snake leaving every other segment and your own beads not being a meal made the middle a little leaner, but not by enough: the critique measured 3.0 / 3.2% of snake-time in the hunger warning before 2:00 (seeds 3 / 11). So, after it:
-- **A meal mid-round keeps you 13 s, not 20** (`HUNGER_MID_MS`, from 0:45 until the woodpecker comes; one in the opening or in sudden death keeps you 20 s, `HUNGER_MS`), with three apples still all round (*since round six A*, 12 s, with two apples and fewer beetles: see "Fewer beetles after all"). *Measured* with the census, 600 rounds on seeds 3 and 11: snake-time in the hunger warning before 2:00 went from 3.0 / 3.2% to 8.8 / 8.9%. The round (169 / 170 s) and sudden death (49 / 50 s) didn't move, and starving went from 2 / 1% of deaths to 3 / 2%. Also tried: 13 s from the start (10.9%; its first death came at 120 s), 11 s (17.9%), 15 s (7.5%), and apples rotting sooner mid-round (no change: they're eaten long before). Two apples after 0:45 had given 4.4%, with longer rounds and more starving at the end.
-  - *The hunger bar.* Each snake keeps how long its last meal keeps it (`mealMs`), and its tag's bar is measured against that, so it's full after any meal, though one mid-round lasts less. Under `HUNGER_WARN_MS` (6 s) left, the tag shows it's starving: the bar in Berry, a ring pulsing round the tag, and "starving" for a screen reader. (Measured against 20 s, a mid-round meal filled it two thirds; online, protocol 8 carries `mealMs`.)
-- **The last apples fall one at a time.** In sudden death, food no longer stops dead. Once the board has no apple, another drops, each wait longer than the last (`SD_APPLE_GAP`, 20 ticks, times its number: about 2 s, 4 s, 6 s…), never in the woodpecker's mark. It's announced once, with its own falling notes: "The last apples are falling." (At a lesson's level, after the tick's other news: it waits out a banner that's holding, such as the woodpecker's arrival, instead of cutting it short, and replaces only routine news.)
-- **No winter before 45 s.** Snow in the first half-minute starved 5-long snakes in about 1 round in 5. *Measured*, 55% of early starving happened in snow, which is 8% of that time.
-- **Mushrooms never sprout within 2 cells of a head.** Nobody can see one appear in front of them in time.
-- **Golden apples, leaves and mushrooms land somewhere quiet** (the farthest of 8 tries from every head). They become a race you can see, instead of gone in 1.5 s.
+The rules this section settled are in `04-food-and-the-world.md` ("Food on the log"), and its text as it was, with
+its measurements, in `docs/archive/design-food.md`.
 
 ### Rivals
 

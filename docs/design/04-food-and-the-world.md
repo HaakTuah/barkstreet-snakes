@@ -13,3 +13,107 @@
 - **Sovereign's realm grows and moves.** It starts at radius 4 and gains a cell of radius for every 8 segments Sovereign grows, up to 7. If Sovereign wastes away, it shrinks back (2 segments' grace, so it doesn't flicker). Every 1.5 s it checks whether a cell's step would put clearly more of it on open log (holes and fire are lost land) and drifts that way, one cell at a time. On screen its land grows or shrinks a ring of cells at a time, and its border flares. Its capital flies a swallow-tailed banner in parchment and ink, its crown inked, trimmed in the realm's colour (no gold: gold means a power). Sovereign remarks on it ("Our realm expands!", "A strategic retreat. A royal one.", "The court relocates."). Over 600 seeded rounds it wins as often as before (28% to 27%); over 120 rounds against two others its realm reached radius 5 to 7 in four rounds of five.
 - **Colonist's flags.** It plants the Union Flag and it flies (drawn in strips that ripple out from the pole), on an inked pole with a parchment knob (round four; it had a gilt finial). It used to be St George's cross, which is England's flag; redcoats were the British Army from 1707, and the colonies were claimed under the Union Flag. The game uses the 1801 flag everyone recognises, the one of the Empire's great colonising century (a tricorn-era purist would leave out St Patrick's red saltire). **Its later colonies fly colonial ensigns**, as the Empire's colonies did: the Union Flag in the corner of a Blue Ensign with the Southern Cross (the second, fourth, …) or a Red Ensign with the colony's badge, here the log's own oak on a white roundel (the third, fifth, …). The first colony keeps the Union Flag. Each colony remembers its number, so its flag never changes.
 
+
+### Food on the log
+
+How much food there is and how long a meal keeps you, as round four and round six A settled it (their text, with what
+was tried and measured, is in `docs/archive/design-food.md`).
+
+- **Two apples all round** (`APPLES`; one in winter, `SNOW_APPLES`: see "Weather"): eaten or rotted, another drops
+  somewhere. Beetles carry more of the food (see "Less fruit, more beetles").
+- **A meal keeps you 20 s** (`HUNGER_MS`) in the opening and once the woodpecker has come, and **12 s mid-round**
+  (`HUNGER_MID_MS`, from 0:45, `HUNGER_MID_FROM_MS`), so hunger matters in the middle of the round too. Each snake keeps
+  how long its last meal keeps it (`mealMs`, carried online), and its tag's bar is measured against that, so it's full
+  after any meal. Under `HUNGER_WARN_MS` (6 s) left, the tag shows it's starving: the bar in Berry, a ring pulsing round
+  the tag, and "starving" for a screen reader.
+- **Your own beads aren't a meal:** you choke on them (see "Choking on your own tail" under round six A). Beads carry
+  their owner, so it's the same rule for everyone, rivals included. Poison would punish picking your tail back up after
+  a crash, and seat colours can look alike.
+- **Body food rots:** beads fade, shrink and go after about 14 s (`PELLET_TICKS`, give or take a quarter; roasted ones
+  last half again), in a puff of their own colour, as apples do.
+- **A body leaves every other segment** (at least 3 beads, from the head; where there are too few, the skipped segments
+  nearest the tail make up the number), so a kill doesn't snowball. Crash drops, cut tails and burnt bits stay whole.
+- **The last apples fall one at a time.** In sudden death, once the board has no apple, another drops, each wait longer
+  than the last (`SD_APPLE_GAP`, 20 ticks, times its number: about 2 s, 4 s, 6 s…), never in the woodpecker's mark.
+  It's announced once, with its own falling notes: "The last apples are falling." (At a lesson's level, after the
+  tick's other news: it waits out a banner that's holding, and replaces only routine news.)
+- **No winter before 45 s** (`SNOW_FROM_MS`): snow in the first half-minute starved short snakes.
+- **Mushrooms never sprout within 2 cells of a head:** nobody could see one appear in front of them in time.
+- **Golden apples, leaves and mushrooms land somewhere quiet** (the farthest of 8 tries from every head), so each is a
+  race you can see.
+
+### Rivals see food as it is
+
+Rivals see other snakes a quarter of a second late, like a person's reaction, and food as it is now (seen late, they
+chased where a beetle had been).
+
+- A rival aims where a fleeing beetle is heading, from the way it faces and its pace, which anyone can see: straight on,
+  then away from the nearest head toward a burrow nearer than `BEETLE_HOME_REACH` (7), and diving in. A cornered one (a
+  head within `BEETLE_DIG_FEAR` and no burrow in reach) digs in where it is and stays put until it's gone. Every move
+  the search tries moves every beetle that's out, and from where each search ends each chase is played out.
+- Catching sooner counts twice what a step closer to an apple does (`BUG_HURRY`; Gobbler's `hurry` is 1.5, so it keeps
+  after a running beetle longer than anyone), so a catch in hand isn't dropped for an errand.
+- Rivals see every burrow on the board, as a person does (`view.burrows`): a dug one the moment it's bored, a closed one
+  the moment it closes.
+- They go for a digging beetle when they can get there first and in time, and leave one they can't reach before it's
+  under. They predict a cornered beetle's dig by the engine's rule as their search moves it, and the burrow it leaves,
+  which a second beetle may run for.
+
+### Less fruit, more beetles
+
+The owner wanted food "a bit too plentiful most of the time" made scarcer, and more beetles. With the rivals hunting
+beetles well, beetles carry more of the food (this section also holds what "Fewer beetles after all" settled).
+
+- **Up to two beetles at once**, above ground or under (`BEETLE_MAX`), coming out at 0.008 a tick (`BEETLE_CHANCE`)
+  while fewer are out, from 15 s (`BEETLE_FIRST_MS`) and in sudden death too; one in six is golden
+  (`GOLD_BEETLE_CHANCE`), about two a round.
+- **A beetle scurries from a head within 6** (`BEETLE_FEAR`) at half a snake's speed, running for a burrow nearer than 7
+  (`BEETLE_HOME_REACH`), and dives in.
+- **The escape band: at least a third** (the owner, 31 October 2026: "Yeah, I feel it should be at least a third of the
+  time."). Escapes from a chase are kept at 33–45%; with `--census`, the simulation's `--check` fails a run outside it.
+  A chase counts from a head within 6 cells, fixed (`CHASE_NEAR` in the simulation), so a change to how soon beetles take
+  fright is measured on the same chases.
+- **A cornered beetle digs in:** with a head within 6 (`BEETLE_DIG_FEAR`) and no burrow nearer than 7, it stops and bores
+  into the bark for 4 ticks (`BEETLE_DIG`, under half a second). It can still be caught while it digs; then it's
+  underground and comes out of a burrow later, as after a dive. It's a race the beetle wins from an approach: come
+  straight at it from where it starts digging and it's gone two ticks before you're there; a head already nearer, or
+  one that cut it off from its burrow, still catches it. Knocked aside by the woodpecker or nudged by a cough, it
+  scurries out of its hole, and may dig again where it lands.
+- **A dig leaves a burrow** (`BURROW_FROM_DIG`), counting toward the three burrows at most (`BURROW_MAX`): past three, the
+  one unused longest closes over, growing shut first (see "Burrows grow shut"). Closing over when unused is off
+  (`BURROW_HEAL_MS` 0, kept as a switch): the cap already makes the burrows follow the hunting.
+- **Burrows keep apart** (`BURROW_SPACING` 10; the owner: "2 or all 3 of the burrows end up clustered really close"): a
+  new burrow opens at least 10 from the others whenever there's room (the quietest of a few such spots), and a dig nearer
+  than 10 to a burrow takes its place: that one closes over.
+- **The dig's cue:** it stops, wiggles and trembles; sawdust sprays every 60–130 ms; it sinks, up to 45% smaller and
+  darker, into a collar of sawdust that thickens as it goes. Gone, the collar closes and the burrow's there without a pop
+  (it was bored, not cracked open), freshly bored: a raw pale rim, and splinters torn out past a ring of its sawdust. It
+  holds that for 1.2 s and settles into an ordinary burrow by 4 s. With reduced motion it's half sunk and still, with no
+  spray.
+- **A burrow closing over** fills with a plug of sawdust from the middle out, a cushion of the log's own dark olive moss
+  creeps over it, and it fades into the bark with its cracks in about 1.1 s, throwing a few specks of sawdust and moss;
+  with reduced motion it's filled and mossed at once, then fades. Both looks are timed on the page's clock from when it
+  first drew the burrow, so watched at 4× they last a quarter as long in game time.
+- **The sound:** the dig is a quick scrabbling bore (about 450 ms: legs scratching, a rasp sinking into the wood, a low
+  grind a phone can hear, a puff of sawdust), heard as yours when your head is the nearest, otherwise as a rival's, whose
+  legs' scratches skip the rival dulling so it's heard over the sudden-death music. The dug dive and the burrow it leaves
+  are silent, since the bore said it. A beetle going down a burrow or coming up keeps its quiet scrabble (`scrabble`). A
+  burrow closing over is a muffled crumble (`heal`, about 350 ms: grains of sawdust trickling in, then a hushed pat as
+  the moss settles), the world's, about level with a beetle's skitter; two digs ending together make one crumble. Their
+  levels as rendered are in `docs/archive/design-food.md`.
+- **The lessons**, each when the banner is free for it, else the next such moment teaches it:
+  - a dig within `DIG_NEAR` (the dig's length plus one, across and down) of your head, one you could still catch: "A
+    cornered beetle digs in. Grab it before it's gone!";
+  - the first burrow a dig leaves in a round, anywhere on the log: "A beetle that digs in leaves a burrow behind." With
+    the dig's lesson not told yet, that burrow teaches both: "A cornered beetle digs in, leaving a burrow.";
+  - the first burrow starting to grow shut once the burrow's lesson is told, once a round, for watchers too: "Old burrows
+    grow shut: beetles go in, none come out." (see "Burrows grow shut");
+  - a dig that takes a nearer burrow's place, the first time in a round: "A beetle that digs in by a burrow takes its
+    place."
+- **The Field guide:** the Apple row says how many are on the log; the Beetles row tells the dig as a race (come straight
+  at it and it's gone, so be nearer, or cut it off from its burrow), and the Burrows row the burrow a dig leaves and the
+  growing shut. Their words are in `game/friends.js`, written from the tuning.
+- **The voice:** a beetle that digs in and gets away: the rival that cornered it (the nearest head as it started, within
+  6) says so as it goes under, at most every 30 s (Gobbler: "NO! My snack went DOWN!"; Mason: "Diggus escapus.";
+  Desperado: "Varmint went to ground."; Mute *knocks on the bark, then shrugs*; Copycat: 深挖洞，广积粮！). One caught
+  mid-dig is just a catch, and nobody speaks for you.
