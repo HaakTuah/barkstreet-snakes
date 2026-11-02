@@ -55,7 +55,8 @@ for (const e of audit) {
 const VALUED = new Set(['--prefix', '--registry', '--cache', '--userconfig', '--workspace', '-w', '--tag', '--omit', '--include', '--loglevel', '-C']);
 function fetched(cmd, rest) {
   const words = rest.trim().split(/\s+/).filter(Boolean), out = [];
-  const bare = w => w.replace(/^(@[^/@\s]+\/[^@\s]+|[^@\s]+)@.*$/, '$1');
+  // (an alias, name@npm:other@1, fetches the other: that is what's audited)
+  const bare = w => { const alias = w.match(/^(?:@[^/@\s]+\/)?[^@\s]+@npm:(.+)$/); return alias ? bare(alias[1]) : w.replace(/^(@[^/@\s]+\/[^@\s]+|[^@\s]+)@.*$/, '$1'); };
   for (let i = 0; i < words.length; i++) {
     const w = words[i];
     if (w === '-p' || w === '--package') { out.push(bare(words[++i] || '')); continue; }
@@ -93,8 +94,9 @@ const walk = d => fs.readdirSync(path.join(root, d), { withFileTypes: true }).fl
 for (const f of walk('.')) {
   if (/\.(png|jpe?g|gif|webp|avif|ico|bmp|svg|woff2?|ttf|otf|eot|mp3|ogg|oga|wav|flac|m4a|aac|opus|webm|mp4|csv|tsv)$/i.test(f)) need(f.replace(/^\.\//, ''), 'an asset file');
   if (!/\.(html|js|css|json|webmanifest)$/.test(f)) continue;
-  for (const line of read(f).split('\n')) for (const m of line.matchAll(/https?:\/\/[^\s'"`)<>]+/g)) {
-    const url = m[0];
+  for (const line of read(f).split('\n')) for (const m of line.matchAll(/(https?:)?\/\/[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?(\/[^\s'"`)<>]*)?/gi)) {
+    if (!m[1] && /[\w:]$/.test(line.slice(0, m.index))) continue; // (a comment's // after a word, not an address)
+    const url = m[1] ? m[0] : 'https:' + m[0]; // (a scheme-relative address loads over the page's https)
     if (own.test(url) || (/rel=["']?(preconnect|dns-prefetch)/.test(line) && /^https?:\/\/[^/]+\/?$/.test(url))) continue; // (a bare origin to warm up: nothing is loaded from it)
     if (!loads.some(([u]) => url.startsWith(u))) fail(`${f} loads ${url}, which no entry of tools/licences.json covers`);
     // (one Google Fonts address can ask for several families: each must be a font of its own in the audit)
