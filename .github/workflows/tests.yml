@@ -4,7 +4,7 @@
 # thinking ahead, and the renderer's, controls' and page's
 # promises in headless Chrome (the runner has it): the page on phones,
 # tablets and desktops too. The jobs run side by side.
-# Each job runs only where it can be affected (Haakon, 28 October 2026: "tests
+# Each job runs only where it can be affected (the owner, 28 October 2026: "tests
 # should only run where they impact something"): nothing for notes alone
 # (docs/, tools/dev/, .claude/, any .md), the Node checks and the browser's
 # three for any change to the game or its tools, and the page on every screen

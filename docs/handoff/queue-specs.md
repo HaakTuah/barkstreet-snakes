@@ -1,22 +1,22 @@
 # The queue's specs, word for word
 
 The full text of each open entry in `docs/PROGRESS.md`, moved here on 31 October 2026 so the progress file stays under the
-workshop check's 20 KB (Haakon: "Yes, to all, expertly!"). Each entry in the queue keeps its title, a line of what it is
+workshop check's 20 KB (the owner: "Yes, to all, expertly!"). Each entry in the queue keeps its title, a line of what it is
 and a pointer here; this text is its spec, as the entry's own words were. When an entry is done, its section moves to
 `docs/archive/progress-done.md` with it.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
-Moved up by Haakon (29 October 2026): "It's the one I am most interested in playing, and it has been pushed back for a
+Moved up by the owner (29 October 2026): "It's the one I am most interested in playing, and it has been pushed back for a
 long time now. Also, the teaching system will have to account for it." It goes ahead of Wildcard's part of 3b, 2b, 2h, 2i
-and 3c. A playable draft PR as early as it can be, so Haakon can try it.
+and 3c. A playable draft PR as early as it can be, so the owner can try it.
 
 *Done so far:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195); their words and detail are in `docs/archive/progress-done.md`, "Item 5, its done parts".
 
 *Where it stands:* the parts left and their order are in `docs/PROGRESS.md`, item 5 (part 6 is *built and reviewed*
 on `round6b/dropped-charges`: merge `develop` into it, renumber its protocol after part 4's, run its A/B; part 7 is
 *parked* on `round6b/pricing`; part 3's numbers to watch there: Joker and Sovereign low on single seeds, Gobbler's and
-Vulture's shares a little lower). Mason's double walls are kept (Haakon, 29 October 2026). The 29 October status this
+Vulture's shares a little lower). Mason's double walls are kept (the owner, 29 October 2026). The 29 October status this
 replaced is in git history (the file-by-file review, 2 November 2026).
 
 - **One pricing model for every power:**
@@ -28,31 +28,31 @@ replaced is in git history (the file-by-file review, 2 November 2026).
   - Caution: at a flat 1-apple price, rivals flashed 3 times a minute and did no better. Judge it by the seat-split A/B.
 - **Dropped charges:** not on every bump. On a knockout, the charges spill where the head fell as a golden pickup anyone can grab.
 
-**Every move of the round, in this order** (Haakon, 29 October 2026, when the design session found the entry listed only
+**Every move of the round, in this order** (the owner, 29 October 2026, when the design session found the entry listed only
 part of "Round six B": "Yes, they are all part of the power update! What i have been looking forwards to!"). Each part
 is its own playable PR, tested both ways (`tools/abtest.js`) with every trademark measured, as the island hop was; the
 design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
 1. **The island hop and no auto-jump** (done, PR #158).
-2. **Bridges** (done, PR #174). Rare by design, about one ride in twenty rounds (Haakon, 29 October 2026: "Agreed with
+2. **Bridges** (done, PR #174). Rare by design, about one ride in twenty rounds (the owner, 29 October 2026: "Agreed with
    you expert take!"): part 4 and item 6 each report bridge rides again, adding no rule to make them commoner.
 3. **The flashes cut** and **mushrooms come back up** (done, PRs #183 and #195).
-   **3b+. The spit flies along the line** (Haakon, 30 October 2026: "3. Agreed, do it expertly!"; the design's
+   **3b+. The spit flies along the line** (the owner, 30 October 2026: "3. Agreed, do it expertly!"; the design's
    "The spit flies along the line"): straight ahead up to 5 cells, two a tick, stopping at the first head (poisoned) or
    body (bounced by the roll rule), gone over the edge or a hole; a dotted line in place of the ring; the rivals lead
    their shots and step out of lines; the A/B should now show the spitters ahead, no refuge; lesson, cue, protocol
    bump. **The spitter slides over its own mushroom** (moved to the front as its own entry, 2x, on 2 November 2026) for a few moves (`OWN_SPIT_TICKS`, a first guess of 6), as a full
    mouth slides over food, so it can't swallow it again: today the spit lands 3 straight ahead and a snake that keeps
-   going eats it 3 moves later, shrinks again and has a full mouth again, a loop that cost Haakon several apples (his playtest, 30 October 2026); everyone else is hit by it as before. It runs after part 4, 2q and 2s, before part 5 (rule and AI
+   going eats it 3 moves later, shrinks again and has a full mouth again, a loop that cost the owner several apples (his playtest, 30 October 2026); everyone else is hit by it as before. It runs after part 4, 2q and 2s, before part 5 (rule and AI
    changes run one at a time; 2q first, so 3b+'s A/B measures dodging with human reactions).
 4. **The golden jump flies:** hold to fly up to 5 cells, steer in the air, the gold ring where you'd come down; with
    **leap now** (a second press while a jump waits sends it at once, open ground included: "Leap now" in the design); with
    **bumps in the air** (a crash's cost, and you drop where you are: over fire you catch alight too, over a hole you
-   fall in, onto a snake you're out, trapped). Its A/B came out even with leap now and the flight measured together, so (Haakon, 31 October 2026: "Yes, please, expertly!", to splitting it): the flight and leap now are measured apart; the rivals learn the flight's uses (out of a box, across to food, cutting off, steering planned in the air) until fliers come out ahead; the golden flash is measured on its own in the same pass and its use taught where it falls short; if the flight pays and leap now doesn't, the flight merges without leap now, and leap now comes back to Haakon. "The rivals fly it as a person would" and "The golden flash cuts deeper" in `docs/design/29-round-six-b-the-new-moves.md`.
-5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes. In six test rounds nobody followed, so the time it stays open is lengthened step by step until following makes a gameplay difference from time to time (Haakon, 31 October 2026: "Then we can increase the time it is open, until it actually makes a gameplay difference from time to time."), after checking that the rivals see the chance at all: "Open long enough to matter" in `docs/design/29-round-six-b-the-new-moves.md`.
+   fall in, onto a snake you're out, trapped). Its A/B came out even with leap now and the flight measured together, so (the owner, 31 October 2026: "Yes, please, expertly!", to splitting it): the flight and leap now are measured apart; the rivals learn the flight's uses (out of a box, across to food, cutting off, steering planned in the air) until fliers come out ahead; the golden flash is measured on its own in the same pass and its use taught where it falls short; if the flight pays and leap now doesn't, the flight merges without leap now, and leap now comes back to the owner. "The rivals fly it as a person would" and "The golden flash cuts deeper" in `docs/design/29-round-six-b-the-new-moves.md`.
+5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes. In six test rounds nobody followed, so the time it stays open is lengthened step by step until following makes a gameplay difference from time to time (the owner, 31 October 2026: "Then we can increase the time it is open, until it actually makes a gameplay difference from time to time."), after checking that the rivals see the chance at all: "Open long enough to matter" in `docs/design/29-round-six-b-the-new-moves.md`.
 6. **Dropped charges** on a knockout, as above. *Built and reviewed* on `round6b/dropped-charges` (a spilled gold coin ringed with the pips; rules tests; review fixes in; protocol to renumber when it merges); still to do: the A/B against rivals that ignore spills (a copy is easy: zero the spill's worth in `ai.js`), pictures, the PR.
 7. **One pricing model for every power,** as above, last (*a first pass is parked* on `round6b/pricing`: the tail tip at length's worth now, rests cheaper while idle with a floor, risk by `headRisk`; on seeds 51/53 the seat-split already shows powers on beating off, 33.6% to 16.4%, with the island hop alone, and this pass did no better, 33.3% to 16.7%, flashing more; a direct head-to-head against today's AI was stopped at look 4, its rounds cached), so it prices every move together, with **each rival's power
    style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
-   Part 7 also takes two of the improvement audit's finds (31 October 2026; Haakon: "Agreed to all, expertly!"): **the trademarks
+   Part 7 also takes two of the improvement audit's finds (31 October 2026; the owner: "Agreed to all, expertly!"): **the trademarks
    that never show** (Mute's boxing and Joker's lures level with the field, Mason's body beside itself below it) get
    measures that catch the behaviour first (Mute's boxing counting the kills it gets by boxing; it leads the kills at
    0.52 a round), then more teeth in play where they stay flat; and **character never costs wins**: Joker (14% and 18%
@@ -60,7 +60,7 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
    Copycat, Star) and the plain Drab (32% and 30%) closes, every trademark kept and Drab left as it is.
 Then the teaching system (item 4), which teaches all of them.
 
-**The rivals learn every move in its own part** (Haakon, 29 October 2026: "And very important that the commin ai is
+**The rivals learn every move in its own part** (the owner, 29 October 2026: "And very important that the commin ai is
 updated to understand all these rule changes to maximize they use of all the playrules!!!"). No part merges until the
 rivals use its moves when they pay and in their own styles, and see them used against them: hop, ride a bridge, cut,
 neck-cut, drop a tail, fly and steer, leap now, take a landing, follow a portal, grab dropped charges, and keep clear of
@@ -70,7 +70,7 @@ tested both ways"); the pricing part then makes the choices among them as good a
 
 ### 2q. Rivals notice like people (30 October 2026; an AI entry, after 2s)
 
-Haakon: "do the snakes have a bit too good reaction time? [...] Just seems they play a bit too well in that regard
+The owner: "do the snakes have a bit too good reaction time? [...] Just seems they play a bit too well in that regard
 perhaps", and to the take that what is superhuman is not the 240 ms but seeing the whole board at once: "Agreed to
 all!". Every rival's view of another snake is as old as a person's notice of it would be: `REACTION_MS` (240) near its
 own head, growing with distance to about 400 ms across the board (`REACTION_FAR_MS`, first guesses), with a little
@@ -81,17 +81,17 @@ after: per-persona win rates, every trademark and the feel numbers within noise 
 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
-Haakon: "I see snakes jumping onto small islands where they have no chance to survive for very long". Before a hop or
+The owner: "I see snakes jumping onto small islands where they have no chance to survive for very long". Before a hop or
 a flight, a rival weighs where it lands: the island's free room against its own length, the food on it, and above all
-**whether it can jump off again** (Haakon, 30 October 2026: "don't forget a snake must account for if it can jump off
+**whether it can jump off again** (the owner, 30 October 2026: "don't forget a snake must account for if it can jump off
 the island again if it picks to jump there!"): another piece of log within a hop of the island, and room to live on
 it until its jump's rest is over, and from where on the island its head can take that hop; a landing it can't live on scores as the death it is, unless staying
 is worse. A rules test sets up the case (a long snake beside a small island and a bigger one in reach), and part 4's
 A/B reports hops onto islands too small to live on, before and after.
 
-### 2b. Hunger's worth at a contested apple, for every rival (Haakon, 29 October 2026; an AI entry)
+### 2b. Hunger's worth at a contested apple, for every rival (the owner, 29 October 2026; an AI entry)
 
-Haakon (29 October 2026), on the "For Haakon" question whether a fed Gobbler should gamble too: "Agreed to all,
+The owner (29 October 2026), on the "For the owner" question whether a fed Gobbler should gamble too: "Agreed to all,
 expertly! Shouldn't the others contest apples more if they're hungry? They're worth more than, because usually apples
 just gove you plus 1, but if you are starving, they give you 1 and save you 1, so become plus 2? But yes, gobbler should
 contest it regardless. And Desperados being an adrenalin junkie, should generally be less risk averse?"
@@ -100,7 +100,7 @@ Today hunger already makes every rival look for food harder (`foodW0`, `eatW0` i
 Desperado set aside any of a rival's threat at a contested apple (`w.nerve`), so a starving rival still backs off an
 apple it needs. Build it from the cause, in the one template every rival shares:
 - **An apple is worth what it saves.** For every rival, a contested apple's worth counts the length it adds and, when
-  the rival is starving or close to it, the length it stops it losing: about one more, as Haakon says, and more as the
+  the rival is starving or close to it, the length it stops it losing: about one more, as the owner says, and more as the
   hunger clock runs down. The planner weighs that against the head-on risk as it reads it, so a starving rival contests
   because the apple is worth more, not because of a special rule. Each rival's own weights still shape it: the cautious
   ones (Ghost) still give way sooner than the bold.
@@ -113,9 +113,9 @@ apple it needs. Build it from the cause, in the one template every rival shares:
   meant to move (Gobbler's food share up; Desperado's skims and risks up, its survival not collapsing). "No refuges" and
   "Clever rivals, human reactions" stand: better choices, never faster reactions.
 
-### 2h. The endgame: eat what keeps you alive, not what boxes you in (Haakon, 29 October 2026; an AI entry, after 2b)
+### 2h. The endgame: eat what keeps you alive, not what boxes you in (the owner, 29 October 2026; an AI entry, after 2b)
 
-Haakon (29 October 2026): "snakes should maybe avoid food more with the woodpecker about? I see snakes gorging on the
+The owner (29 October 2026): "snakes should maybe avoid food more with the woodpecker about? I see snakes gorging on the
 remains of other snakes, when they have only a few tiles left to move on. They are not doing a context relevant tradeoff
 calculation there, clearly." And: "But sometimes starving still lasts you longer than increased length will, with so
 little room also."
@@ -129,7 +129,7 @@ shared template:
   room to spare, food counts as today.
 - **Personality still shapes it:** Gobbler stays the greediest (its food share is its trademark), the careful ones
   the most sparing.
-- **Grown, 31 October 2026** (Haakon, watching Creeper drop his tail in a pocket: "Most box themselves in so the don't have the oppertunity to amputate like that. Would be better if they could anticipate it earlier, so they amputate while they still have the chance." Then: "I notice also that they eat insatiably others beads, when the map gets really small. i might eat one to stop hunger, but i would not eat it all at once. it only pays to be bigger than your opponent that late in game, if you are afraid you might have to run out the clock, but i have yet to see that happen. which is a shame. but woodpecker is getting a makeover right, so i don't want to focus to much on the current timing dynamic of the game. but yes. from my point of view, even if it was a time game, it would only  make sense to eat it, cut yourself so you are just longer than your opponent, then squash the beads. what's your expert take?" Then, to
+- **Grown, 31 October 2026** (the owner, watching Creeper drop his tail in a pocket: "Most box themselves in so the don't have the oppertunity to amputate like that. Would be better if they could anticipate it earlier, so they amputate while they still have the chance." Then: "I notice also that they eat insatiably others beads, when the map gets really small. i might eat one to stop hunger, but i would not eat it all at once. it only pays to be bigger than your opponent that late in game, if you are afraid you might have to run out the clock, but i have yet to see that happen. which is a shame. but woodpecker is getting a makeover right, so i don't want to focus to much on the current timing dynamic of the game. but yes. from my point of view, even if it was a time game, it would only  make sense to eat it, cut yourself so you are just longer than your opponent, then squash the beads. what's your expert take?" Then, to
   the design session's take, folding all four into this entry: "Sounds good!"):
   - **The tail drop planned ahead.** A drop needs the flash rested, a body one thick and a free cell beyond, and a boxed
     snake rarely has all three. So the rivals plan it: when the search sees the room round them falling below their
@@ -151,9 +151,9 @@ shared template:
   grown on 31 October, deaths in a pocket smaller than the snake (40–45% of sudden death's today), tail drops made in
   time, and each part's both-ways A/B.
 
-### 2i. Food seasons: lean, normal and plentiful rounds (Haakon, 29 October 2026; an engine-rules entry, after 2h)
+### 2i. Food seasons: lean, normal and plentiful rounds (the owner, 29 October 2026; an engine-rules entry, after 2h)
 
-Haakon (29 October 2026): "I think it should be a but more agressive. Someone should at least die from it once in a
+The owner (29 October 2026): "I think it should be a but more agressive. Someone should at least die from it once in a
 blue moon. Now games maybe feel a bit too samey? It's pretty predictable. But if food levels varied more, that would
 change things up."
 
@@ -186,10 +186,10 @@ they do; Wildcard draws a few strong traits a round and shows them. One PR, or o
 
 Copycat's rotten apples by the edge: checked and eased in PR #142; the general edge fix is noted at the end of this file (`docs/archive/progress-done.md`, "Item 3b, done parts").
 
-### 3c. A new rival: the Charmer (Haakon, 29 October 2026; an AI entry, after 2b and 3b)
+### 3c. A new rival: the Charmer (the owner, 29 October 2026; an AI entry, after 2b and 3b)
 
-Haakon (29 October 2026): "add Charmer to the queue, exactly as I have prescribed, with his clingy unique playstyle."
-A vain show-off, named **Charmer**. His look, and the mark he leaves on the map when he dies, are Haakon's to give: this
+The owner (29 October 2026): "add Charmer to the queue, exactly as I have prescribed, with his clingy unique playstyle."
+A vain show-off, named **Charmer**. His look, and the mark he leaves on the map when he dies, are the owner's to give: this
 entry doesn't specify them, and the art waits for his description. Everything else:
 - **The trademark: courting.** He picks the biggest snake on the board, whoever it is (by length, never by who plays
   it: "The rivals never treat a person differently"), sidles up and slithers alongside it, two or three cells off its
@@ -212,7 +212,7 @@ entry doesn't specify them, and the art waits for his description. Everything el
 
 ### 4. The teaching system, steps 2–6 (DESIGN "Teaching by showing") — after 5, whose new moves it must teach
 
-**Right after the new moves** (Haakon, 29 October 2026: "And is this before the lessons rework? Because this will
+**Right after the new moves** (the owner, 29 October 2026: "And is this before the lessons rework? Because this will
 definetly be part of it. I think all this should come right after the new powers."). It starts as soon as item 5's last
 part merges, ahead of every other entry but the art and sound lanes, as a lane of its own (it touches the lessons, the
 pictures and the Field guide, not the AI, so the AI entries 2b, 2h, 2i, 3b and 3c may run beside it). It teaches every
@@ -259,9 +259,9 @@ The draft is in `docs/handoff/woodpecker-acts-draft.md`.
 - Ghost's memorial: the planned smoke wisp, or the owner's idea of a broken shackle with a few chain links. Ghost's tongue stays smoke.
 - The earlier "the bird eats the food" variant for that A/B is in `tools/dev/r6-study-tools/patch-flex3.js` (PECK_FOOD).
 
-### 8. Near the end: beetles who meet, fight (Haakon, 29 October 2026; an engine-rules entry, last but the writing pass)
+### 8. Near the end: beetles who meet, fight (the owner, 29 October 2026; an engine-rules entry, last but the writing pass)
 
-Haakon (29 October 2026), watching two beetles walk about an island the woodpecker made, away from the snakes: "Looked
+The owner (29 October 2026), watching two beetles walk about an island the woodpecker made, away from the snakes: "Looked
 a bit boring that they just walked around like that, I wanted something to happen. Therefore, given how rare it is, i
 thought it should feel special." Then, to the design session's take: "Love how you described it! And it should come
 late, it is probably the most uneasecary feature we have discussed here, so leave it last or close to last".
@@ -280,9 +280,9 @@ late, it is probably the most uneasecary feature we have discussed here, so leav
 - **Measured:** the simulation counts fights a round (rare is fine, as long as it happens), and deaths near a beetle,
   the one real risk, stay within noise.
 
-### 9. At the very end: the writing pass (Haakon, 31 October 2026; Fable 5.1, after everything else, entry 8 included)
+### 9. At the very end: the writing pass (the owner, 31 October 2026; Fable 5.1, after everything else, entry 8 included)
 
-Haakon (31 October 2026): "Also, many of the Snakes dialogue lines are really really bad and corny. some of it are fun pop cultural stuff or wordplays I came up with, but most of it is corny writing by Opus 5.5. I think it would be nice to have a Fable 5.1 run on it at the end, to really piff up the writing. make it more clever and culturally engrossing. Though Trump actually got some good lines! So i don't want it to remove across the lines. remove the funny gags like Mason talking bad latin, or saying vidi vici veni which is a sex joke. but i want it to look at all, and give it a make over. the chinese lines are not as important. if it can, do them too, but most can't read them regardless. concur?" Then, to the design session's take (his gags kept, at the end of the queue, a page
+The owner (31 October 2026): "Also, many of the Snakes dialogue lines are really really bad and corny. some of it are fun pop cultural stuff or wordplays I came up with, but most of it is corny writing by Opus 5.5. I think it would be nice to have a Fable 5.1 run on it at the end, to really piff up the writing. make it more clever and culturally engrossing. Though Trump actually got some good lines! So i don't want it to remove across the lines. remove the funny gags like Mason talking bad latin, or saying vidi vici veni which is a sex joke. but i want it to look at all, and give it a make over. the chinese lines are not as important. if it can, do them too, but most can't read them regardless. concur?" Then, to the design session's take (his gags kept, at the end of the queue, a page
 to choose from): "yes, and let it be creative! i don't want it to strictly look and improve whats there. that contrains it. let it go a bit wild and add stuff to, or make it over. it needs creative control outside of what i protect."
 - **Who and when:** a Fable 5.1 session at high effort, after entry 8, so it covers every line the queue adds (the
   Charmer, the new moves, the woodpecker's acts).
@@ -291,21 +291,21 @@ to choose from): "yes, and let it be creative! i don't want it to strictly look 
   (new moments use the events the game already sends; the chatter is presentation, so no rule changes). Clever and
   culturally engrossing over corny: wordplay, references that land in a moment, each rival's own humour. Each rival
   stays who it is, its name, look and play ("Every rival keeps its trademark").
-- **Protected, word for word:** Haakon's own lines, found from `docs/archive/instructions.md`, `docs/handoff/` and the
+- **Protected, word for word:** the owner's own lines, found from `docs/archive/instructions.md`, `docs/handoff/` and the
   git history (lines he wrote or asked for word for word); Wildcard's lines, which he likes (Trump's, by his hair), kept
   as they are, though the session may add to them and offer replacements beside them for him to pick; and the gags:
   Mason's bad Latin and "vidi vici veni". The session lists what it protected, and why, at the top of its PR.
 - **Bounds:** every line fits its bubble on a phone (the layout suite) and fires on its moment; no song lyrics and no
   long quotes, since those belong to their owners (a short reference is fine); nothing hateful.
-- **Haakon chooses:** the PR has a page with each rival's lines old and new side by side, new ones marked, so he can
+- **The owner chooses:** the PR has a page with each rival's lines old and new side by side, new ones marked, so he can
   keep or reject them one by one; a rejected line goes back to the old one.
 - **The Chinese lines last,** if usage allows: the same make-over, written as Chinese, not translated word for word;
   otherwise left as they are.
 - **Meanwhile:** new lines follow "New lines, until the writing pass" in `docs/design/09-voice-and-copy.md`.
 
-### The file-by-file review (Haakon, 2 November 2026; the workshop lane, after the chatter split)
+### The file-by-file review (the owner, 2 November 2026; the workshop lane, after the chatter split)
 
-Haakon: "Need a full review and clean up where we look at every file, especially the documents, and ask what does this
+The owner: "Need a full review and clean up where we look at every file, especially the documents, and ask what does this
 state that it does, and does it do it? If something in it doesn't then it needs to be somewhere else, if anywhere at
 all." Every file, docs first: what does it say it is for, and does it do that? What doesn't belong moves to where it
 does, or goes; code is checked against "Split by meaning" and "Keep it lean" in `AGENTS.md`. The files every session
