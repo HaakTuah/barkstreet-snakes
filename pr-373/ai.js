@@ -1230,6 +1230,7 @@ window.SnakeAI = (() => {
       const gold = o.dashes > 0 || o.leaps > 0, hop = inside(fx, fy) && otherFree[fy * N + fx] > 1;
       const far = Math.max(gold ? TUNE.DASH_LENGTH : TUNE.FLASH_LENGTH, gold || hop ? TUNE.LEAP_REACH + 1 : 1);
       if (o.air - age >= 1 && o.land >= 0) rings.push(o.air - age, o.land, strike);
+      else if (o.air > 0 && o.land >= 0) strikes[o.land] += strike; // (down on its ring since I saw it: its head is there now)
       const on = f => { for (let n = 1; n <= far + 1; n++) if (at(heads[k].x + o.dir.x * n) === f.x && at(heads[k].y + o.dir.y * n) === f.y) return true; return false; };
       if (gold || hop || food.some(f => f.kind !== 'mushroom' && on(f))) for (let i = 2; i <= far; i++) {
         const nx = at(heads[k].x + o.dir.x * i), ny = at(heads[k].y + o.dir.y * i);
