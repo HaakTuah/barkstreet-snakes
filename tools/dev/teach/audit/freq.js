@@ -12,7 +12,7 @@ function seeded(seed) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) 
 let rng = Math.random;
 const M = Object.create(Math); M.random = () => rng();
 const ctx = vm.createContext({ window: {}, console, Math: M });
-for (const f of ['tuning.js', 'ai.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), ctx, { filename: f });
+for (const f of require('../../../game-files.js')(root)) vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), ctx, { filename: f });
 const E = ctx.window.SnakeEngine, T = ctx.window.TUNING;
 const KEYS = ['crash', 'atThree', 'hungry', 'alight', 'peckedUnder', 'choke', 'nudge', 'ownBead', 'digNear', 'goldBeetle', 'leaf', 'goldcap', 'wrapEnding', 'leap', 'goldDash', 'snipped', 'woodpecker', 'mushroom'];
 const GLOBAL = ['digBurrow', 'lastApples', 'woodpeckerCame', 'goldBeetleSpawn', 'leafSpawn', 'goldcapSpawn', 'rain', 'storm', 'snow', 'baked', 'rainbow'];

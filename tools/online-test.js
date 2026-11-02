@@ -50,11 +50,12 @@ const chance = seeded(SEED * 7 + 1);
 const M = Object.create(Math);
 M.random = () => rng();
 const ctx = vm.createContext({ window: {}, console, Math: M });
-for (const f of ['tuning.js', 'ai.js', 'engine.js', 'records.js', 'online.js']) {
+const gameFiles = require('./game-files.js');
+for (const f of [...gameFiles(ROOT), 'records.js', 'online.js']) {
   vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 }
 const { SnakeEngine: E, SnakeOnline: O, SnakeRecords: Rec, TUNING: T } = ctx.window;
-const ENGINE = fs.readFileSync(path.join(ROOT, 'engine.js'), 'utf8');
+const ENGINE = gameFiles(ROOT).filter(gameFiles.engine).map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
 // Every kind of event the engine makes (each must cross). (A kind the
 // protocol carries before the engine makes it would go in here too, staged
 // till it does: none now.)
@@ -76,7 +77,7 @@ const LINEUPS = [
 // What a snake's memory sends (a guest's renderer and chatter read them all).
 const LOOKS = ['home', 'colonies', 'mood', 'moodChangedAt', 'modelId', 'victimId', 'lureId', 'site', 'desperate'];
 // The fields of a snake in a tick, in order (see online.js: tick and apply).
-const FIELDS = ['alive', 'dir', 'eaten', 'lastAte', 'nextStarve', 'cells', 'memory', 'autopilot', 'stunUntil', 'burnUntil', 'burnFrom', 'leaps', 'leapArmed', 'dashes', 'leapReadyAt', 'wrapUntil', 'flight', 'flashReadyAt', 'flashArmed', 'mealMs', 'land', 'airLeft', 'airGold', 'cheek', 'spitAt'];
+const FIELDS = ['alive', 'dir', 'eaten', 'lastAte', 'nextStarve', 'cells', 'memory', 'autopilot', 'stunUntil', 'burnUntil', 'burnFrom', 'leaps', 'leapArmed', 'dashes', 'leapReadyAt', 'wrapUntil', 'flight', 'flashReadyAt', 'flashArmed', 'mealMs', 'land', 'airLeft', 'airGold', 'cheek', 'spitAt', 'ring', 'ringIn'];
 // What a data channel would deliver (PeerJS refuses JSON messages of 16,300 bytes or more).
 const LIMIT = 16000;
 let biggest = 0;
@@ -149,7 +150,7 @@ function matched(r, host, guest, dyingHost, dyingGuest) {
   check(r, k, 'alive', host.snakes.map(s => s.alive), guest.snakes.map(s => s.alive));
   check(r, k, 'dirs', host.snakes.map(s => s.dir), guest.snakes.map(s => s.dir));
   check(r, k, 'hunger', host.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve, s.mealMs]), guest.snakes.map(s => [s.eaten, s.lastAte, s.nextStarve, s.mealMs]));
-  const powers = g => g.snakes.map(s => [s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed, s.dashes, s.leapReadyAt, s.wrapUntil, s.flight ? [s.flight.dir, s.flight.land, s.flight.over, !!s.flight.gold] : null, s.flashReadyAt, s.flashArmed, !!s.autopilot, s.cheek ? [s.cheek.power, s.cheek.spitAt] : null]);
+  const powers = g => g.snakes.map(s => [s.stunUntil, s.burnUntil, s.burnFrom, s.leaps, s.leapArmed, s.dashes, s.leapReadyAt, s.wrapUntil, s.flight ? [s.flight.dir, s.flight.land, s.flight.over, !!s.flight.gold, s.flight.ring ? [s.flight.ring.x, s.flight.ring.y, s.flight.ring.n] : null] : null, s.flashReadyAt, s.flashArmed, !!s.autopilot, s.cheek ? [s.cheek.power, s.cheek.spitAt] : null]);
   check(r, k, 'stuns, burns and powers', powers(host), powers(guest));
   const food = g => g.food.map(f => [f.x, f.y, f.kind, f.expires, f.color, f.dir && f.kind === 'beetle' ? f.dir : null, f.px ?? null, f.py ?? null, f.movedAt ?? null, !!f.scared, f.heat || 0, !!f.cooked, !!f.gold, f.owner ?? null, f.digUntil ?? null, f.power || 0]);
   check(r, k, 'food', food(host), food(guest));
@@ -367,7 +368,7 @@ function protocolSamples() {
   const [a, b, c, d] = host.snakes, D = E.DIRS;
   host.tick = 12; host.time = 1440;
   Object.assign(c.memory, { home: { x: 1, y: 2 }, colonies: [{ x: 3, y: 4 }], mood: 'sniper', moodChangedAt: 5, modelId: 1, victimId: 0, lureId: 0, site: { x: 5, y: 6 }, desperate: true });
-  Object.assign(b, { autopilot: E.PERSONAS.drab, flight: { dir: D.up, over: [{ x: b.body[0].x, y: b.body[0].y - 1 }], land: { x: b.body[0].x, y: b.body[0].y - 2 }, gold: 1 } });
+  Object.assign(b, { autopilot: E.PERSONAS.drab, flight: { dir: D.up, over: [{ x: b.body[0].x, y: b.body[0].y - 1 }], land: { x: b.body[0].x, y: b.body[0].y - 2 }, gold: 1, ring: { x: b.body[0].x, y: b.body[0].y - 5, n: 5 } } });
   Object.assign(d, { alive: false, cause: 'starved', killer: 'hunger', killerId: null, diedAt: 1400, fatal: 'hunger' });
   host.food = [{ x: 3, y: 4, kind: 'beetle', expires: 500, dir: D.left, px: 4, py: 4, movedAt: 7, scared: true, gold: 1, digUntil: 30 },
     { x: 5, y: 6, kind: 'pellet', expires: 400, color: '#f00', heat: 2, cooked: 1, owner: 1 }, { x: 7, y: 6, kind: 'mushroom', expires: 300, power: 4 }];

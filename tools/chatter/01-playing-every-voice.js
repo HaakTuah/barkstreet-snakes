@@ -23,7 +23,7 @@ const ctx = vm.createContext({
   document: { createElement: () => new El(), body: new El(), hidden: false },
   addEventListener() {}, ResizeObserver: class { observe() {} }, MutationObserver: class { observe() {} },
 });
-for (const f of ['tuning.js', 'ai.js', 'engine.js', ...CHATTER]) {
+for (const f of [...require('./game-files.js')(ROOT), ...CHATTER]) {
   vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 }
 const { SnakeEngine: E, SnakeChatter: C, TUNING: T } = ctx.window;

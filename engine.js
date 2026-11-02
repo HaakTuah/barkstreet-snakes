@@ -129,6 +129,21 @@ window.SnakeEngine = (() => {
   // (lastAte is when it ate as the clock counts it: a meal that lasts less
   // than HUNGER_MS counts as eaten that much earlier, and winter moves it on.)
   const hungerLeft = (game, s) => s.lastAte + T.HUNGER_MS - game.time;
+  // How much of its hunger warning a snake has left, in real time: 1 or more
+  // before the warning, under 1 in it (0 or less once the time's up). The
+  // warning comes HUNGER_WARN_MS before it starts shrinking, or half again
+  // that before it would starve, whichever is sooner, so a snake with one
+  // segment to spare is warned as early as one at its smallest. Snow runs the
+  // clock faster, so it comes sooner by the clock. (The toast, the tag and
+  // the growl all read this, so they agree; and only what a guest online is
+  // sent: not grow, which only lengthens its life, so it's warned a little
+  // early then, never late. A snake of 4 in snow was once warned only 4 s
+  // before it starved: #327.)
+  const hungerWarning = (game, s, now = game.time) => {
+    const rate = game.weather.kind === 'snow' ? T.SNOW_HUNGER : 1, left = s.lastAte + T.HUNGER_MS - now;
+    const end = Math.max(left, s.nextStarve - now) + (s.body.length - T.MIN_LENGTH) * T.STARVE_EVERY_MS;
+    return Math.min(left / T.HUNGER_WARN_MS, end / (1.5 * T.HUNGER_WARN_MS)) / rate;
+  };
   // How long a meal keeps a snake from shrinking: HUNGER_MS in the opening
   // and once the woodpecker's here, HUNGER_MID_MS between, when food is
   // everywhere (with a long clock, hunger hardly ever mattered then).
@@ -1108,11 +1123,12 @@ window.SnakeEngine = (() => {
   }
 
   function snapshot(game) {
+    for (const s of game.snakes) if (s.flight) s.flight.ring = ringOf(game, s); // (where each jump in the air comes down, as its ring shows: 2y)
     game.history.push({
       snakes: game.snakes.filter(s => s.alive).map(s => ({
         id: s.id, body: s.body.map(c => ({ x: c.x, y: c.y })), dir: s.dir,
         stun: Math.max(0, s.stunUntil - game.tick), leaps: s.leaps, // (all of it shows: stars, pips, a gold outline, cough puffs...)
-        dashes: s.dashes, wrap: Math.max(0, s.wrapUntil - game.time), air: s.flight ? 1 + s.flight.over.length : 0, land: s.flight ? key(s.flight.land.x, s.flight.land.y) : -1, // (in the air: how many ticks till it's down, and where)
+        dashes: s.dashes, wrap: Math.max(0, s.wrapUntil - game.time), air: s.flight ? s.flight.ring.n : 0, land: s.flight ? key(s.flight.ring.x, s.flight.ring.y) : -1, // (in the air: how many ticks till it's down, and where: its ring)
         spitIn: s.cheek ? s.cheek.spitAt - game.tick : 0, spitPower: s.cheek ? Math.min(T.SHRINK_MAX, s.cheek.power + 1) : 0, // (a green bulge, and its ring: it's spat after this many more moves, this strong)
       })),
       holes: game.holes.size,
@@ -1226,11 +1242,25 @@ window.SnakeEngine = (() => {
     s.leapArmed = Math.max(game.tick, s.stunUntil) + T.LEAP_WINDOW; // (stunned: from when it moves again)
     s.jumpHeld = 1;
   }
-  // The jump let go (a key up, a finger lifted): a golden flight comes down on the next cell.
+  // The jump let go (a key up, a finger lifted). Over the plain hop's cells a
+  // golden jump let go is the plain hop, down where it was going; held past
+  // them, it's committed: it always flies GOLD_FLY cells, steered, and letting
+  // go no longer brings it down (2y, the owner: "should it be you have to go 5 tiles").
   function letGo(game, s) {
     if (!s?.alive) return;
     s.jumpHeld = 0;
-    if (s.flight) { if (s.flight.gold && s.flight.held) s.flight.cut = 1; s.flight.held = 0; } // (let go once up: down on the next cell, even over what it hops; a quick press, never held, is the plain hop)
+    if (s.flight?.over.length) s.flight.held = 0;
+    if (s.flight) s.flight.ring = ringOf(game, s);
+  }
+  // Where a jump in the air comes down, as its ring shows everyone: { x, y,
+  // n: moves till it's down }. A committed golden flight flies on, as the
+  // engine flies it (flyOn), to GOLD_FLY cells in the air; else down where
+  // it was going, past the cells it hops.
+  function ringOf(game, s) {
+    const f = s.flight;
+    let land = f.land, n = 1 + f.over.length, flown = f.flown + f.over.length;
+    if (f.gold && f.held) while (flown < T.GOLD_FLY && flyOn(game, s, { land, dir: f.dir })) { land = ahead(game, s, land.x, land.y, f.dir); flown++; n++; }
+    return { x: land.x, y: land.y, n };
   }
   // A snake asks to flash: a person with E, Shift or a swipe the way they're
   // going, an AI by saying so (memory.flash: the tick). It goes the next tick
@@ -1302,12 +1332,10 @@ window.SnakeEngine = (() => {
       if (f?.gold) { // a golden flight: steered in the air, one turn a tick, on from where it is that way (round six B)
         if (f.held && f.flown < T.GOLD_FLY && !(s.isPlayer && !s.autopilot)) { // (a rival plans again where to come down, every move it's up: part 4, "the rivals fly it as a person would")
           decide(aiView(game, s), brainOf(s), s.memory);
-          if (s.memory.flyAt === game.tick) { s.flyFor = s.memory.fly || 0; const t = s.memory.flyTurn; s.flyTurn = t ? { at: t.at, dir: Object.values(DIRS).find(q => q.x === t.dir.x && q.y === t.dir.y) } : null; }
+          if (s.memory.flyAt === game.tick) { const t = s.memory.flyTurn; s.flyTurn = t ? { at: t.at, dir: Object.values(DIRS).find(q => q.x === t.dir.x && q.y === t.dir.y) } : null; }
         }
-        const d = f.held ? airTurn(game, s, f) : null; // (steered only while held: let go, it comes down on the next cell, and a quick press is a plain-length hop, its turns waiting till it's down)
+        const d = f.held ? airTurn(game, s, f) : null; // (steered only while held: a quick press is a plain-length hop, its turns waiting till it's down)
         if (d) { f.dir = d; f.over = []; f.land = ahead(game, s, s.body[0].x, s.body[0].y, d); }
-        if (!(s.isPlayer && !s.autopilot) && f.flown >= (s.flyFor || 0)) { if (f.held && s.flyFor > 0) f.cut = 1; f.held = 0; } // (a rival lets go where it chose to come down; flyFor 0, a plain-length hop)
-        if (f.cut && f.over.length) { f.land = f.over[0]; f.over = []; } // (let go over what it hops: down on the next cell, whatever's there)
       }
       if (f?.over.length) { // in the air: on over the next cell it hops, a cell a tick (turns wait till it's landed, but a golden flight's)
         s.dir = f.dir;
@@ -1339,10 +1367,9 @@ window.SnakeEngine = (() => {
           if (s.memory.power === game.tick) { // (it asked to jump, or flash, as a person would: twice for now; held for as far as it means to fly)
             leap(game, s);
             if (s.memory.leapNow === game.tick) leap(game, s);
-            s.flyFor = s.memory.fly || 0;
             const t = s.memory.flyTurn;
             s.flyTurn = t ? { at: t.at, dir: Object.values(DIRS).find(q => q.x === t.dir.x && q.y === t.dir.y) } : null;
-            if (!s.flyFor) letGo(game, s);
+            if (!s.memory.fly) letGo(game, s); // (held for the full flight, or let go: the plain hop)
           }
           if (s.memory.flash === game.tick) flash(game, s);
         }
@@ -1968,8 +1995,7 @@ window.SnakeEngine = (() => {
   }
   // A golden flight's turn in the air: a person's next queued turn (not back
   // on itself), a tick at a time; a rival's, the one it planned as it took
-  // off (flyTurn: after how many cells in the air, which way), and how far
-  // (flyFor). null: on as it was.
+  // off (flyTurn: after how many cells in the air, which way). null: on as it was.
   function airTurn(game, s, f) {
     if (!s.isPlayer || s.autopilot) {
       const t = s.flyTurn;
@@ -2365,6 +2391,6 @@ window.SnakeEngine = (() => {
 
   return {
     GRID, PLAYER_COLOR, PERSONAS, DIRS, WEATHER,
-    createGame, step, tickMs, hungerLeft, aiView, canThinkAhead, thinkAhead, suddenDeath, leap, letGo, leapIn, flash, flashIn, rollSide, knockTo, knocks, beakDepth, beakGap,
+    createGame, step, tickMs, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, suddenDeath, leap, letGo, leapIn, flash, flashIn, rollSide, knockTo, knocks, beakDepth, beakGap,
   };
 })();
