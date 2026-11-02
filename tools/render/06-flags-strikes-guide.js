@@ -5,8 +5,8 @@
 // just after the peck, tips over (its ensign's navy lower) and is gone
 // into the pit a moment later, the other colony's flag standing; the
 // lost land shrinks away into the pit (its far edge before its near
-// one); and the banner is carried from the old capital (between the two,
-// part way) to the new one, not jumping there.
+// one); and the banner falls into the pit too, a new one planted at the
+// new capital: never carried (jumping) between the two.
 const lost = await ev(`(() => {
   seeds(44);
   SnakeDebug.pinQuality(0);
@@ -25,7 +25,7 @@ const lost = await ev(`(() => {
   for (const k of [7 * 24 + 12, 7 * 24 + 13, 8 * 24 + 12, 15 * 24 + 17, 15 * 24 + 16, 16 * 24 + 17]) g.holes.add(k);
   g.tick++; R.onTick([{ type: 'peck', x: 12, y: 7, cells: [7 * 24 + 12] }]);
   drawN(1, 0.5, 60);
-  out.pecked = { flag: flag() };
+  out.pecked = { flag: flag(), banner: banner(15.6, 18.4) };
   drawN(1, 0.5, 60); // (a tick later: forgotten, and moved)
   col.memory.colonies = [col.memory.colonies[0]]; sov.memory.home = { x: 12, y: 14, radius: 4 }; g.tick++;
   drawN(2, 0.5, 60);
@@ -33,9 +33,9 @@ const lost = await ev(`(() => {
   drawN(1, 0.5, 60);
   out.shrinking = { far: R.landShown(col, 9, 7), near: R.landShown(col, 11, 7) }; // (three cells from the pit, and one)
   drawN(3, 0.5, 60);
-  out.carried = banner(12.6, 18.4); // (about half way)
+  out.between = banner(13.6, 16.4); // (between the two: nothing carried there)
   drawN(20, 0.5, 60);
-  out.after = { flag: flag(), other: centre(4.5, 5.4, 2.6, 2.8, navy), land: R.landShown(col, 11, 7), banner: banner(11, 14.4) };
+  out.after = { flag: flag(), other: centre(4.5, 5.4, 2.6, 2.8, navy), land: R.landShown(col, 11, 7), banner: banner(11, 14.4), old: banner(15.6, 18.4) };
   SnakeDebug.pinQuality(2);
   return out;
 })()`);
@@ -43,8 +43,8 @@ const lf = lost;
 check(lf.before.flag[0] > 20 && lf.pecked.flag[0] > 20 && lf.tipping.flag[0] > 5 && lf.tipping.flag[2] > lf.pecked.flag[2] + 0.1 && lf.after.flag[0] === 0 && lf.after.other[0] > 10,
   'a colony’s flag pecked out tips over and falls into the pit; the other colony’s stands', `its ensign’s navy (pixels, y): ${lf.before.flag.join(' at ')} before, ${lf.pecked.flag.join(' at ')} just after the peck, ${lf.tipping.flag.join(' at ')} tipping, ${lf.after.flag[0]} after; the other ${lf.after.other[0]}`);
 check(!lf.shrinking.far && lf.shrinking.near && !lf.after.land, 'its land shrinks away into the pit', `three cells from the pit ${lf.shrinking.far ? 'still there' : 'gone'} while the cell beside it is ${lf.shrinking.near ? 'still there' : 'gone'}; ${lf.after.land ? 'some left' : 'all gone'} after`);
-check(lf.carried[0] > 10 && lf.carried[1] > 13.5 && lf.carried[1] < 16.8 && lf.after.banner[0] > 10 && Math.abs(lf.after.banner[1] - 12.9) < 0.6,
-  'Sovereign’s banner is carried to its new capital', `its parchment part way at x ${lf.carried[1]} (${lf.carried[0]} pixels; from 17 to 12), then at ${lf.after.banner[1]}`);
+check(lf.pecked.banner[0] > 10 && lf.after.old[0] === 0 && lf.between[0] < 4 && lf.after.banner[0] > 10 && Math.abs(lf.after.banner[1] - 12.9) < 0.6,
+  'Sovereign’s banner falls into the pit and a new one stands at its new capital, none carried between', `its parchment just after the peck: ${lf.pecked.banner[0]} pixels, ${lf.after.old[0]} after; between the two: ${lf.between[0]} pixels; then at ${lf.after.banner[1]} (${lf.after.banner[0]} pixels; from 17 to 12)`);
 
 // A strike that doesn't stutter (round six A): the land a strike will
 // leave is made ahead while the woodpecker aims, and swapped in at the

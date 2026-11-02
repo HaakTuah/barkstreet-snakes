@@ -13,13 +13,15 @@ const eatenNow = new Set(); // cells eaten on the last tick (so food that just v
 let bornTick = -1, bornGen = 0, fresh = true;
 const POP_MS = 420, RIPPLE_MS = 30;
 
+// Whether a piece of food is on the board (a peer's tick could say otherwise).
+const onBoard = f => Number.isInteger(f.x) && Number.isInteger(f.y) && f.x >= 0 && f.y >= 0 && f.x < GRID && f.y < GRID;
 function trackFood(now) {
   if (game.tick === bornTick) return;
   bornTick = game.tick;
   bornGen++;
   let n = 0;
   for (const f of game.food) {
-    if (f.kind === 'beetle') continue;
+    if (f.kind === 'beetle' || !onBoard(f)) continue;
     const key = f.y * GRID + f.x;
     let b = born.get(key);
     if (!b || b.kind !== f.kind) {
@@ -165,20 +167,23 @@ const KNOCK_DASH = [5, 4];
 
 // A dead snake's beads: what each one looks like, and a ripple from head to
 // tail. A corpse leaves a bead on every other segment (see the engine's
-// leavesBead), so the markings go by the bead's place among the beads it
-// left, not by its segment: Joker's beads still alternate purple and amber,
-// Wildcard's still run collar, stars and stripes, Star's round the rainbow. (The ripple keeps the
+// leavesBead), so each bead stands for its stretch of the body, from its own
+// segment to the next bead's: both segments' colours, half and half, and
+// their markings, so Joker's beads are still purple and amber and
+// Wildcard's still run collar, stars and stripes. (The ripple keeps the
 // segment's time, so it still runs down the body.)
 const remainsAt = new Set();
 function noteRemains(s, now) {
   remainsAt.clear();
   for (const f of game.food) if (f.kind === 'pellet' && (f.owner == null || f.owner === s.id)) remainsAt.add(f.y * GRID + f.x);
-  for (let i = 0, n = -1; i < s.body.length; i++) {
+  const left = i => remainsAt.has(s.body[i].y * GRID + s.body[i].x);
+  for (let i = 0; i < s.body.length; i++) {
     const key = s.body[i].y * GRID + s.body[i].x, old = born.get(key);
-    if (!remainsAt.has(key)) continue; // (no bead left there)
-    n++;
+    if (!left(i)) continue; // (no bead left there)
     if (old && old.kind !== 'pellet') continue; // (food there stays food)
-    born.set(key, { kind: 'pellet', at: now + i * RIPPLE_MS, i, next: 0, gen: bornGen, v: beadOf(s, n) });
+    let j = i + 1;
+    while (j < s.body.length && !left(j)) j++;
+    born.set(key, { kind: 'pellet', at: now + i * RIPPLE_MS, i, next: 0, gen: bornGen, v: beadOf(s, i, j) });
   }
 }
 
@@ -188,25 +193,29 @@ function beadFill(e) {
   return fill && fill[0] === '#' ? fill : '#a16207';
 }
 
-// The bead a snake leaves at body segment i: its own colours and markings.
-function beadOf(s, i) {
-  const look = coatOf(s), col = colorOf(s), bow = bowOf(s);
-  let fill = col[0] === '#' ? col : '#a16207', mark = '';
-  if (s.personaKey === 'wildcard') fill = WILD(i);
-  else if (look === 'mute') fill = i === 0 ? '#f8fafc' : fill; // (its mood's colour as it went)
-  else if (look === 'joker') fill = i === 0 ? '#f8fafc' : i % 2 ? '#f59e0b' : '#a21caf';
-  else if (bow) fill = bow(TWINKLE_HUES[i % TWINKLE_HUES.length])[0]; // (its rainbow, in order: red, orange, yellow, green, blue, violet, and round again; Copycat's copy of it, pale)
-  else if (look === 'sniper' && i % 3 === 2) fill = mix(fill, '#fca5a5', 0.35);
-  else if (look === 'vulture' && i < 2) fill = i ? '#f5f5f4' : '#f9a8d4';
-  else if (look === 'desperado' && i === 1) fill = '#dc2626';
-  else if (look === 'desperado' && i >= 4 && i % 4 === 0) fill = '#ecdfc3'; // (its poncho's cream stripes)
-  if (!s.persona) mark = MARKS[col] || '';
-  else if (look === 'mason') mark = i % 4 === 3 ? 'marble2' : 'marble';
-  else if (look === 'colonist') mark = i % 2 ? 'strap' : 'strap2';
-  else if (look === 'ouroboros') mark = 'diamond';
-  else if (s.personaKey === 'copycat') mark = 'copy';
-  else if (look === 'ghost') mark = 'ghost';
-  return fill + '|' + mark;
+// The bead a snake leaves for its segments i to j - 1 (one, or the stretch
+// a corpse's bead stands for): their fills and markings as last drawn (see
+// fillsOf and drawBody), so Star's and Copycat's beads carry the rainbow
+// where it was, a crash's and a cut's in their markings too.
+// 'fill|mark' or, two-tone, 'fill|mark|fill2'.
+function beadOf(s, i, j = i + 1) {
+  const fills = animOf(s, lastNow).fills, fill = k => { const c = fills[k]; return c && c[0] === '#' ? c : '#a16207'; };
+  const look = coatOf(s), wild = s.personaKey === 'wildcard';
+  let mark = '';
+  for (let k = i; k < j; k++) {
+    const m = look === 'ghost' ? 'ghost'
+      : wild ? (k === 2 || k === 3 ? 'stars' : '')
+      : !k ? ''
+      : !s.persona ? MARKS[colorOf(s)] || ''
+      : look === 'mason' ? (k % 4 === 3 ? 'marble2' : 'marble')
+      : look === 'colonist' ? (k % 2 ? 'strap' : 'strap2')
+      : look === 'ouroboros' ? 'diamond'
+      : s.personaKey === 'copycat' ? 'copy' : '';
+    if (!mark || m === 'marble2') mark = m || mark; // (a gold vein shows)
+    else if (m && m !== mark && look === 'colonist') mark = 'cross'; // (both straps: its cross-belts)
+  }
+  const a = fill(i), b = fill(j - 1);
+  return a + '|' + mark + (b !== a ? '|' + b : '');
 }
 
 // How big something popping in is, ms after it appeared: nothing yet, then
@@ -445,6 +454,7 @@ function drawFood(alpha, now) {
   const perPx = boardRect.w > 0 ? SIZE / boardRect.w : 1; // (the board's units a CSS px: the tremble is as big on any screen)
   for (const f of game.food) {
     if (f.kind === 'beetle') { drawBeetle(f, alpha, now); continue; }
+    if (!onBoard(f)) continue; // (food lies on the log, one piece to a cell, so a frame's beads never need more sprites than it has cells: see beadSprite)
     const key = f.y * GRID + f.x, b = born.get(key);
     if (f.kind === 'pellet' && heldCells[key]) { if (b) b.at = now + b.i * RIPPLE_MS; continue; } // (under a held corpse: not yet)
     const pop = b ? popOf(now - b.at) : 1;

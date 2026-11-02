@@ -5,7 +5,9 @@
 // The checks are in tools/rules/, one file per area, run in name order in one scope (tools/parts.js):
 // 00 setup, 01 crashes, 02 golden beetles and leaps, 03 jump and flash, 04 fire, weather and burrows,
 // 05 choking on your own tail, 06-08 the rivals of rounds four to six, 09 the woodpecker, 10 beetles,
-// 11-13 the owner's playtest and the rivals' pass. A new check goes in its area's file, or a new one.
+// 11-13 the owner's playtest and the rivals' pass, 14 the rivals who change, 15 round six B, 17 bridges,
+// 18 flash cuts, 19 the mushroom spit, 20 beetles and the beak, 21 the log in one piece.
+// A new check goes in its area's file, or a new one.
 const path = require('path');
 const read = require('./parts.js')(path.join(__dirname, 'rules'));
 const failed = read('failed'), checks = read('checks');

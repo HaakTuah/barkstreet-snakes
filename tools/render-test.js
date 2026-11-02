@@ -16,7 +16,7 @@
 //   tick.
 // - A dead snake's beads keep its markings (Joker's purple and amber,
 //   Wildcard's collar, stars and stripes), though only every other segment
-//   leaves one.
+//   leaves one: each bead is its stretch of two, half and half.
 // - Golden power pips stay on the board at its edge (a head in the first
 //   column, the top row or a corner shows as many of them as one in the
 //   middle), never on the head (none inside its face, where moving the arc
@@ -25,8 +25,8 @@
 //   rainbow streams back along it as it goes, faster than it crawls
 //   (backward over the log, each segment round the rainbow about once a
 //   second; still while it's stunned, a burst as it flashes; with reduced
-//   motion a slow drift where it is), its gold line runs round its points, and a dead Star's beads go
-//   round the rainbow from its head. Its tell is a countdown: its points go
+//   motion a slow drift where it is), its gold line runs round its points, and a dead Star's beads are
+//   its rainbow where it was, segment by segment. Its tell is a countdown: its points go
 //   dim as it flashes and light one by one through its rest, its middle
 //   always lit (with reduced motion too: a point at a time, never a blink),
 //   and its twinkles burst as it flashes, not as its flash comes back. Its
@@ -95,7 +95,7 @@
 // The checks are in tools/render/, one file per area, run in name order as the body of this one
 // (tools/parts.js): 01 a flash, as drawn, 02 beads and golden pips, 03 Star, 04 scorch, rainbows,
 // jumps and bridges, 05 the squash and beetles, 06 flags, strikes and the Field guide, 07 the
-// woodpecker, 08 hunger, 09 the chomps (what the round plays when you or a rival eats), 10 flags bending under a snake, standing in depth and hit head-on, 11 the costume change (Capricious without its ring). A new check goes in its area's file, or a new one.
+// woodpecker, 08 hunger, 09 the chomps (what the round plays when you or a rival eats), 10 flags bending under a snake, standing in depth and hit head-on, 11 the costume change (Capricious without its ring), 12 a piece falling. A new check goes in its area's file, or a new one.
 const path = require('path');
 const runParts = require('./parts.js');
 const { launch, serve } = require('./browser');

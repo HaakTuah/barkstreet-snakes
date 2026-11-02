@@ -3,8 +3,8 @@
 // whether it sounded (it built nodes) or was held back (a gap, the voice limit, a yield).
 // Per speed: cues asked for and heard a second, the most heard in any 250 ms and any 1 s,
 // and the busiest cues. Watching only (a round you play runs at 1×).
-//   node tools/dev/sound-levels.js [seconds per speed, 40] [rivals, e.g. gobbler,vulture,star]
-const { launch, serve } = require('../browser.js');
+//   node docs/archive/studies/sound-levels.js [seconds per speed, 40] [rivals, e.g. gobbler,vulture,star]
+const { launch, serve } = require('../../../tools/browser.js');
 const SECS = +process.argv[2] || 40, RIVALS = (process.argv[3] || '').split(',').filter(Boolean);
 (async () => {
   const srv = await serve(), b = await launch();
