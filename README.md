@@ -143,3 +143,7 @@ Held upright, the board runs edge to edge (382 px on a 390 px phone); on its sid
 ## Always the newest version
 
 A page left open, or a phone coming back to it, picks up a newer version by itself between rounds: on the start card or a round's end it reloads, never during a round, and your records and settings stay. Hosting or joining a room updates first, so friends play the same version. For a few rounds after, the start card says what is new.
+
+## Licences
+
+The game is its maker's, all rights reserved. What it borrows, PeerJS for online play and the Fredoka lettering, is under free licences, whose notices are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).

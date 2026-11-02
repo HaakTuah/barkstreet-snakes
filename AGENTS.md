@@ -205,7 +205,7 @@ to the owner, who alone can dismiss it. PR pictures go on the orphan branch `pr-
 
 ```bash
 scripts/cloud-setup.sh                 # cloud machines: Chromium for the browser suites, if missing
-scripts/test.sh                        # the types (tsc) and all ten suites, quiet; or name some: scripts/test.sh rules render
+scripts/test.sh                        # the types (tsc) and all eleven suites, quiet; or name some: scripts/test.sh rules render
                                        # (exits 1 if any fails; piped, as in `| tail`, the pipe's code is tail's: use set -o pipefail)
 scripts/sim.sh 200 --seed 3 --census   # tools/simulate.js, quiet: fingerprint, check and tables (also seed 11)
 scripts/codemap.sh engine.js           # the functions of a game file, with line numbers (render/*.js, game/*.js too)
@@ -229,6 +229,10 @@ method, with its guards against endless rounds and a slipping bar, is "Codex rev
 
 **What the rivals know,** for every reviewer: report as P1 any AI logic that reads the game other than through
 `aiView()`, or anything in `aiView()` a snake on the log could not see or know (a person's input before it lands).
+
+**What a player sees, for every reviewer** of a change a player can see: the README, the one-time lesson and its Field
+guide row, the visible cue, and online play in step each come with it; one missing is a P1 (the rules in "Rules that
+stand" and "How to work").
 
 **One idea, for every reviewer** of a change to the game (not docs, design copies or Dependabot's updates): end the
 review with one thing outside this change that would make the game better, or "none", the usual answer when nothing is
