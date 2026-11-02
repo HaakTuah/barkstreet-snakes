@@ -19,6 +19,7 @@
     { "name": "GitHub CLI", "kind": "tool", "version": "the runner's", "licence": "MIT", "used": "gh in pages.yml and delete-merged-branches.yml" },
     { "name": "CodeQL CLI", "kind": "tool", "version": "codeql-action's", "licence": "LicenseRef-GitHub-CodeQL-Terms", "used": "code scanning, run by github/codeql-action", "question": 380 },
 
+    { "name": "mossgrip-widgets", "kind": "npm", "version": "0.0.1", "licence": "GPL-3.0-only", "used": "a fake entry, to show the gate failing" },
     { "name": "actions/checkout", "kind": "action", "licence": "MIT", "used": "every workflow" },
     { "name": "actions/setup-node", "kind": "action", "licence": "MIT", "used": "tests.yml" },
     { "name": "github/codeql-action", "kind": "action", "licence": "MIT", "used": "codeql.yml" },
