@@ -786,6 +786,22 @@ function hopped(s, e, now) {
   const x1 = s.wrapUntil >= 0 ? (e.x + d.x * (reach - 1) + GRID) % GRID : e.x + d.x * (reach - 1), y1 = s.wrapUntil >= 0 ? (e.y + d.y * (reach - 1) + GRID) % GRID : e.y + d.y * (reach - 1);
   hops.push({ x0: e.x, y0: e.y, x1, y1, dx: d.x, dy: d.y, tick: game.tick, n: reach + 1, gold: !!e.gold, h: 1, landed: false, landedAt: 0, until: game.tick + s.body.length + reach + 2, under: false, jTick: -1 });
 }
+// A golden flight, once up, keeps its arch over the way it really flies
+// (once a tick, from onTick): held on, the arch stretches to the head, a
+// tick more; turned, a new arch from the turn; let go short of the plain
+// hop's cells, it comes down a cell on, where the engine puts it.
+function flying(s, now) {
+  const a = anim.get(s), r = a?.hops[a.hops.length - 1];
+  if (!r || !r.gold || r.tick === game.tick) return;
+  const h = s.body[0], f = s.flight, t = game.tick - r.tick;
+  if (f?.gold) {
+    if (f.dir.x !== r.dx || f.dir.y !== r.dy) hopped(s, { x: h.x, y: h.y, reach: 1, gold: 1 }, now);
+    else { r.x1 = h.x; r.y1 = h.y; r.n = Math.max(r.n, t + 2); }
+    const top = a.hops[a.hops.length - 1];
+    top.until = Math.max(top.until, game.tick + s.body.length + 2);
+    a.leapUntil = Math.max(a.leapUntil || 0, top.until);
+  } else if (!r.landed && t + 1 < r.n) { r.n = t + 1; r.x1 = h.x - r.dx; r.y1 = h.y - r.dy; } // (let go early: down here, now)
+}
 // The island hop's landing ring: where a jump comes down, on the ground
 // under it, in the jump's sky (a golden one's Honey), inked. Every snake
 // in the air shows it (anyone can see where a jump will land); your own
@@ -797,7 +813,7 @@ function drawLandings(now) {
   for (const s of game.snakes) {
     if (!s.alive) continue;
     let x, y, gold = s.leaps > 0;
-    if (s.flight?.land) { x = s.flight.land.x; y = s.flight.land.y; gold = !!s.flight.gold; }
+    if (s.flight?.land) { const f = s.flight, c = f.gold && f.held && f.over.length ? f.over[0] : f.land; x = c.x; y = c.y; gold = !!f.gold; } // (held over the plain hop's cells, a golden flight let go comes down on the next one)
     else if (s.id === viewerId) {
       const a = anim.get(s);
       if (!a || !a.lr) continue;
