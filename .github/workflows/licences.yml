@@ -1,0 +1,30 @@
+# The licence gate (SECURITY.md, point 10), on every pull request, Dependabot's included: GitHub's dependency
+# review fails one that adds or updates a package under a licence off the list (.github/dependency-review-config.yml),
+# and tools/licences.js holds everything else the game and its tools use (PeerJS from cdnjs, the font, the tools
+# the workflows fetch) to the same list through its audit, tools/licences.json. Its own file, so it never collides
+# with tests.yml. Read-only, and no secrets.
+name: licences
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4 # (the config file is read from the checkout)
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          config-file: ./.github/dependency-review-config.yml
+
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Everything used is audited, under a licence on the list
+        run: node tools/licences.js

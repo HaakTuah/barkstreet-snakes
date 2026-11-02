@@ -1,0 +1,23 @@
+# The licences allowed (SECURITY.md, point 10), as SPDX ids: the one copy the checks read. GitHub's dependency
+# review (.github/workflows/licences.yml) fails a pull request that adds or updates a package under any other;
+# tools/licences.js holds tools/licences.json, the audit of everything else, to the same list ("public-domain" is
+# its own word for what has no SPDX id), and fails if this list and SECURITY.md's part.
+allow-licenses:
+  - MIT
+  - MIT-0
+  - ISC
+  - BSD-2-Clause
+  - BSD-3-Clause
+  - Apache-2.0
+  - 0BSD
+  - CC0-1.0
+  - Unlicense
+  - Zlib
+  - BlueOak-1.0.0
+  - Python-2.0
+  - CC-BY-3.0
+  - CC-BY-4.0
+  - OFL-1.1
+# Licences only: the vulnerability alerts are Dependabot's (SECURITY.md, point 4).
+vulnerability-check: false
+comment-summary-in-pr: never
