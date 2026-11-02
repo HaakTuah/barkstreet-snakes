@@ -19,6 +19,17 @@ const REPLIES = {
     then: 'Et uxor: Incontinentia Buttocks.' }, // ...and Mason, straight-faced, carries on
   'Et uxor: Incontinentia Buttocks.': { by: s => !GIGGLE_PROOF.includes(s.personaKey), lines: ['BWAHAHA—', 'I can’t. I CAN’T.', '*wheeze*'], own: 'guffaw', after: 800 },
 };
+// (The answers in Chinese, for Copycat.)
+Object.assign(ZH, {
+  "Et uxor: Incontinentia Buttocks.": "还有他老婆：Incontinentia Buttocks。",
+  "BWAHAHA—": "哇哈哈哈——",
+  "I can’t. I CAN’T.": "我不行了。真不行了。",
+  "*wheeze*": "*笑到喘不过气*",
+  "Pfft…": "噗……",
+  "*snort*": "*噗嗤*",
+  "Snrk. Sorry. Go on.": "噗。抱歉。你继续。",
+  "“Romani ite domum”, actually.": "其实应该是“Romani ite domum”。"
+});
 
 let chatBoardEl, logEl, bannerEl, chatGame;
 let enabled = true, compact = false, logShown = true, listener = null;
