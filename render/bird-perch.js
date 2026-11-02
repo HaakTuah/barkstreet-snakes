@@ -16,7 +16,7 @@
 // every knock of the drum you hear, chips flying, the last blow on the
 // strike; flies back, and says "kik!" as it settles. It's drawn on its own
 // layer, the board and the room round it its perch and its flights need,
-// from parts drawn once (see birdPart).
+// from parts drawn once (`bodyPart`, `headPart` and `wingPart` in bird-draw.js).
 let birdLayer = null, birdG = null, birdShown = false;
 // The board on the page, in CSS px, and how far the free page runs round it
 // before the page's own furniture (the tags, the speed buttons, the chatter)

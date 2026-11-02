@@ -43,11 +43,12 @@
 //   lead.js       drawing half a tick ahead: where bodies go, and their shape
 //   shadows.js    the veil, shadows on the bark and the light in a pit
 //   bodies.js     outlines, the gold line of a power, and the body itself
-//   marks.js      pips, rests, your pressed turn, Mason's veins, the tie, Star's head
+//   marks.js      pips, rests, your pressed turn, Mason's veins, the tie, Star's head;
+//                 and every snake drawn in turn, its passes, trails and fire
 //   tongues.js    every look's tongue (or gag)
-//   faces.js      eyes, lids and mouths, and every look's face
+//   faces.js      eyes, lids, mouths, hats and beaks, and every look's face
 //   land.js       Sovereign's realm and Colonist's colonies: land on a map
-//   flags.js      land made ahead of a strike, its dashes, banners and flags
+//   flags.js      land made ahead of a strike, its dashes, banners, flags, ripples and hues
 //   food.js       the food, and the beetles' burrows
 //   weather.js    fire and scorch, the sky, rain, lightning, rainbows
 //   bird-perch.js the woodpecker's size, its perch, its aim and its layer
