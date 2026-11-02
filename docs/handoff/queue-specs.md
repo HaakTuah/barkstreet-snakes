@@ -210,6 +210,38 @@ entry doesn't specify them, and the art waits for his description. Everything el
 - **The cast grows to nineteen:** the start screen, the Field guide's row for him, the lobby's line-up, `CLAUDE.md`'s
   "a cast of eighteen", and Capricious's deck of impressions (3b) gain him; online play gets a protocol bump.
 
+### 3d. A new pair of rivals: Barkis & Boot-Snake (the owner, 2 November 2026; an AI entry, after 3c)
+
+The owner (2 November 2026), asking for them: "What do you think of Barkis & Boot-Snake, should that be added as a rival
+also. maybe a conjoined snake somehow?"; on their source: "[…] inspired, but snakes on a bark, or "hard wood"."; and on
+the queueing: "Yes, but make it very very clear where they are inspired on. Push that line to the max, so people
+actually fully get the reference and think it is funny!"
+Two rivals dealt together, played for laughs. **The reference lives in their names and their nature:** two dim,
+giggling teenage-minded snakes who find crashes hilarious and lose the thread at once. **Nothing is copied from the
+show that inspired them,** since the game is public: no look, line, laugh or catchphrase of its characters. Their looks
+and every line are their own. Not one conjoined body: two ordinary snakes in two seats, so no rule is theirs alone ("No
+ability only people use").
+- **The trademark: a pair hunt that falls apart.** Boot-Snake, the bossy one, picks a victim by its position (never by
+  who plays it: "The rivals never treat a person differently") and drives it toward a wall, a hole or fire; Barkis, the
+  jittery one, cuts it off. Then they get sidetracked: both go for the same apple, or Barkis trails Boot-Snake for a few
+  ticks instead of closing. They never cut each other off, and leave each other's apple alone.
+- **They laugh at crashes:** when any snake crashes near them, each stops chasing for a beat to snicker (a chatter line
+  and a little shake), which is the opening a player can use.
+- **Bait them apart:** drawn to different apples, or one of them hit, they lose the pair hunt; the one left alone plays
+  worse, sulking. Splitting them must work ("No refuges"), and the lesson says so.
+- **Their look, snakes of the log:** both in patched bark brown, as if grown out of the hardwood. Barkis lanky and pale
+  with a tall frayed crest; Boot-Snake squat and dark with a heavy brow ridge. The mark each leaves on death: a
+  splintered chip of bark.
+- **Lines** in two voices of their own, egging each other on and snickering, for kills, wins and chatter (`chatter/`),
+  and one blurb for the pair on the start screen.
+- **Dealt together, as a rare draw,** taking two of the three rival seats; online too, with a protocol bump.
+- **Measured like every rival:** their trademark (ticks spent driving and cutting off the same victim, and how often a
+  hunt is dropped for an apple or a laugh) and an `abtest.js` run on fresh seeds showing the pair hunt pays against the
+  same two hunting alone; their pair's wins kept within the cast's spread, and every other rival's trademark within
+  noise.
+- **The cast grows to twenty-one** with the Charmer: the start screen, a Field guide row ("Barkis & Boot-Snake hunt as a
+  pair: bait them apart"), the lobby's line-up, `CLAUDE.md`'s cast count and Capricious's deck of impressions (3b).
+
 ### 4. The teaching system, steps 2–6 (DESIGN "Teaching by showing") — after 5, whose new moves it must teach
 
 **Right after the new moves** (the owner, 29 October 2026: "And is this before the lessons rework? Because this will
