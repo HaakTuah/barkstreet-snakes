@@ -31,7 +31,6 @@ const GRID = T.GRID;
 const CELLS = GRID * GRID;
 const PLAYER_COLOR = '#4ade80';
 const aiDecide = window.SnakeAI.decide; // (read as the engine loads: the tools swap it in first)
-const { DIRS, PERSONAS, POOL } = window.SnakeAI; // TEMPORARY: delete this line when ai/ lands (it then declares these at top level)
 
 const SPAWNS = [
   { x: 5, y: 3, dir: DIRS.right },
