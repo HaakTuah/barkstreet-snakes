@@ -68,7 +68,7 @@ Every seeded round is cached by the files that played it, round by round, so ask
 | `engine.js` | The rules: moving, eating, dying, hunger, the woodpecker. No drawing, so it also runs in Node. |
 | `ai.js` | The rivals' brains and personalities. |
 | `render/` | Draws the board on a canvas, with smooth movement between ticks: a file for each thing it draws, sharing one scope (the list is at the top of `render/core.js`). |
-| `audio/` | Sound effects and the adaptive music, synthesised live: `cues.js` (every cue), then `sound.js` (the synthesiser, playing, music, weather; makes `SnakeAudio`). |
+| `audio/` | Sound effects and the adaptive music, synthesised live: `cues.js` (every cue), `music.js`, `weather.js`, then `sound.js` (the synthesiser, playing, mute; makes `SnakeAudio`). |
 | `chatter/` | The rivals' speech bubbles and chat log: their lines, in English and Chinese, and the talk (the list is at the top of `chatter/voices.js`). |
 | `records.js` | The Hall of Fame and your stats. |
 | `lineup.js`, `scores-screen.js` | The start card's seats and deck; the Hall of Fame and stats drawn. |
