@@ -198,10 +198,10 @@ const SIDES4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 // A rival in the air coming down on the line ahead of you, within LEAP_REACH + 1 cells: a leap now could meet it (see leapNow).
 function fliersAhead(me) {
   const h = me.body[0], d = me.dir;
-  return theGame.snakes.some(o => o !== me && o.alive && o.flight && [1, 2, 3, 4].slice(0, TUNE.LEAP_REACH + 1).some(n => ringOf(o).x === h.x + d.x * n && ringOf(o).y === h.y + d.y * n));
+  return theGame.snakes.some(o => o !== me && o.alive && o.flight && [1, 2, 3, 4].slice(0, TUNE.LEAP_REACH + 1).some(n => landingOf(o).x === h.x + d.x * n && landingOf(o).y === h.y + d.y * n));
 }
 // Where a jump in the air comes down: its ring (a committed golden flight's, GOLD_FLY cells out).
-const ringOf = o => o.flight.ring || o.flight.land;
+const landingOf = o => o.flight.ring || o.flight.land;
 // The fliers whose rings s's head could crawl onto before they're down (2y: a body there takes the landing).
 function ringsInReach(s) {
   const h = s.body[0];
