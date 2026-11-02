@@ -155,7 +155,9 @@ The owner's words behind them are in `docs/archive/instructions.md`.
   seeds pits rivals that use it against a copy where only some rivals lose it (so the rule itself is unchanged). Its
   users should come out ahead in wins or survival; if not, the PR says why: the move doesn't matter (a design finding
   for the owner) or the rivals play it badly, fixed before it merges. The PR shows the table, with how often each rival
-  used the move and how often it worked.
+  used the move and how often it worked. A move too rare to move whole rounds is judged per use: each use is forked and
+  played on with and without it, since whole rounds cannot show it. And a move is measured against rivals who play its
+  counter: a dodge is worth only what the threat it dodges is worth.
 - **Every new rule needs a visible cue and a lesson** (a one-time lesson and a Field guide row): very important.
 - **Every rival keeps its trademark,** measured before and after a change: Mason's straight runs, Ouroboros's coiling,
   Creeper's tail-riding, Ghost's distance, Gobbler's food share, Vulture's beads, Sovereign's time home, Mute's boxing,
