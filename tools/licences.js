@@ -74,12 +74,16 @@ const need = (name, where, version) => {
   else if (version && e.version !== version) fail(`${name}@${version} (${where}) is audited at ${e.version}: audit the new version, and what it pulls in`);
 };
 
-// What the workflows and scripts use: actions, and the packages npx and npm install fetch.
-const ci = ['.github/workflows', 'scripts'].flatMap(d => fs.readdirSync(path.join(root, d)).map(f => `${d}/${f}`));
+// What the workflows, scripts and tools use: actions, and the packages npx and npm install fetch (the tools' own
+// test, which stages such lines on purpose, left out).
+const walk = (d, skip) => fs.readdirSync(path.join(root, d), { withFileTypes: true }).flatMap(x => x.isDirectory() ? (skip.has(x.name) ? [] : walk(path.join(d, x.name), skip)) : [path.join(d, x.name)]);
+const none = new Set(['node_modules']);
+const ci = ['.github/workflows', 'scripts', 'tools'].flatMap(d => walk(d, none)).filter(f => /\.(ya?ml|sh|js)$/.test(f) && f !== path.join('tools', 'licences-test.js'));
 for (const f of ci) {
-  const src = read(f).split('\n').map(l => l.replace(/(^|\s)#.*$/, '')).join('\n'); // (a comment fetches nothing)
+  const comment = f.endsWith('.js') ? /(^|\s)\/\/.*$/ : /(^|\s)#.*$/;
+  const src = read(f).split('\n').map(l => l.replace(comment, '')).join('\n'); // (a comment fetches nothing)
   for (const m of src.matchAll(/uses:\s*['"]?([\w.-]+\/[\w.-]+)/g)) need(m[1], f);
-  for (const m of src.matchAll(/\b(npx|npm\s+(?:install|i|add|exec|x))\s([^\n;&|>]*)/g)) for (const [p, v] of fetched(m[1], m[2], `${f}, ${m[0].trim()}`)) need(p, `${f}, ${m[0].trim()}`, v);
+  for (const m of src.matchAll(/\b(npx|npm(?:\s+-\S+)*\s+(?:install|in|i|add|exec|x))\s([^\n;&|>]*)/g)) for (const [p, v] of fetched(m[1], m[2], `${f}, ${m[0].trim()}`)) need(p, `${f}, ${m[0].trim()}`, v);
 }
 
 // package.json and its lock, if the tools have them: every package, the ones pulled in included.
@@ -90,14 +94,16 @@ for (const f of ['package.json', 'package-lock.json']) {
   for (const [p, v] of Object.entries(j.packages || {})) if (p) need(v.name || p.replace(/^.*node_modules\//, ''), f, v.version);
 }
 
-// What the game loads: every address in the files it serves (not the tools or notes), and any asset file.
+// What the game loads: every address in the files it serves (not the tools or notes), any file there carrying
+// someone's licence notice (third-party code copied in), and any font, image, sound or data file in the game or its
+// tools (docs/ holds the owner's own pictures and notes).
 const own = /^https?:\/\/(www\.w3\.org|haaktuah\.github\.io|github\.com\/HaakTuah)\b/i;
 const loads = audit.flatMap(e => (e.loads || []).map(u => [u, e]));
-const skip = new Set(['.git', 'tools', 'docs', 'scripts', '.github', '.claude', 'node_modules', 'types']);
-const walk = d => fs.readdirSync(path.join(root, d), { withFileTypes: true }).flatMap(x => x.isDirectory() ? (skip.has(x.name) ? [] : walk(path.join(d, x.name))) : [path.join(d, x.name)]);
-for (const f of walk('.')) {
-  if (/\.(png|jpe?g|gif|webp|avif|ico|bmp|svg|woff2?|ttf|otf|eot|mp3|ogg|oga|wav|flac|m4a|aac|opus|webm|mp4|csv|tsv)$/i.test(f)) need(f.replace(/^\.\//, ''), 'an asset file');
+const served = walk('.', new Set(['.git', 'tools', 'docs', 'scripts', '.github', '.claude', 'node_modules', 'types']));
+for (const f of [...served, ...walk('tools', none)]) if (/\.(png|jpe?g|gif|webp|avif|ico|bmp|svg|woff2?|ttf|otf|eot|mp3|ogg|oga|wav|flac|m4a|aac|opus|webm|mp4|csv|tsv)$/i.test(f)) need(f, 'an asset file');
+for (const f of served) {
   if (!/\.(html|js|css|json|webmanifest)$/.test(f)) continue;
+  if (/\/\*!|@license|SPDX-License-Identifier|Copyright \(c\)/i.test(read(f))) need(f, 'a file carrying a licence notice');
   for (const line of read(f).split('\n')) for (const m of line.matchAll(/(https?:)?\/\/[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?(\/[^\s'"`)<>]*)?/gi)) {
     if (!m[1] && /[\w:]$/.test(line.slice(0, m.index))) continue; // (a comment's // after a word, not an address)
     const url = m[1] ? m[0] : 'https:' + m[0]; // (a scheme-relative address loads over the page's https)

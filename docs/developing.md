@@ -41,16 +41,17 @@ passes in CI. Each October, when a new even-numbered Node becomes long-term supp
 (`.github/workflows/tests.yml` and `scripts/cloud-setup.sh`, which installs it from the npm registry on a machine with
 an older one), proven by the suites and the fingerprints.
 
-**The licence gate** (`.github/workflows/licences.yml`, `SECURITY.md`, point 10) runs on every PR: GitHub's
-dependency review fails a package added or updated under a licence off the list (`.github/dependency-review-config.yml`,
-the one copy of it), and `node tools/licences.js` holds everything else to it through the audit, `tools/licences.json`:
-an action, a tool fetched with npx or npm, an address the game loads from or an asset file left out of it fails, and so
-does a shipped entry without its notice in `THIRD-PARTY-NOTICES.txt`. A package an npx or npm install
-fetches must be written `name@exact.version`, or it can't be audited and fails, and at the version its entry
-audits (an update is audited again, with what it pulls in), as must a lock file's packages; `tools/licences-test.js` stages each
-form the gate must reject. Something new goes into the audit with its
-licence, checked from its own published licence file; one off the list fails and becomes a `question` issue for the owner
-(only the two tools in use when the gate came in, `AWAITING` in `tools/licences.js`, pass while they wait).
+**The licence gate** (`.github/workflows/licences.yml`, `SECURITY.md`, point 10) runs on every PR: GitHub's dependency
+review fails a package added or updated under a licence off the list (`.github/dependency-review-config.yml`, the one
+copy of it), and `node tools/licences.js` holds everything else to it through the audit, `tools/licences.json`: an
+action, a tool fetched with npx or npm, an address the game loads from or a file in the game or its tools carrying
+someone's licence notice, or a font, image, sound or data file, left out of it fails, and so does a shipped entry
+without its notice in `THIRD-PARTY-NOTICES.txt`. A package an npx or npm install fetches must be written
+`name@exact.version`, or it can't be audited and fails, and at the version its entry audits (an update is audited again,
+with what it pulls in), as must a lock file's packages; `tools/licences-test.js` stages each form the gate must reject.
+Something new goes into the audit with its licence, checked from its own published licence file; one off the list fails
+and becomes a `question` issue for the owner (only the two tools in use when the gate came in, `AWAITING` in
+`tools/licences.js`, pass while they wait).
 
 **CodeQL checks every PR** into `develop` and `main`, every push to them and once a week (`.github/workflows/codeql.yml`).
 A finding on a PR shows on it as a note; what to do with it is in `AGENTS.md`, "Git and GitHub". Alerts already in the

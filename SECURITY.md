@@ -74,7 +74,8 @@ vector and security concerns".
    Clause), and never anything without a licence. A check on every pull request, Dependabot's included, fails one that
    adds a package, or updates one, to a licence off the list; one the owner wants anyway is a `question` issue, never
    merged on its own. What these licences ask, keeping their notices, is met by a third-party notices file shipped with
-   the game, [`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt); the audit of every licence is `tools/licences.json`. The owner's own code carries no licence file, by his choice: all rights reserved. Never add one.
+   the game, [`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt); the audit of every licence is `tools/licences.json`.
+   The owner's own code carries no licence file, by his choice: all rights reserved. Never add one.
 
 ## Reporting a weakness
 

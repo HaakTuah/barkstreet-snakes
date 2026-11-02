@@ -26,14 +26,20 @@ const entry = e => dir => { const p = path.join(dir, 'tools/licences.json'), a =
 
 ok(gate(() => {}).passes, 'the repository as it is passes');
 ok(gate(append('scripts/cloud-setup.sh', '# npm install mossgrip-widgets, a comment, fetches nothing\n')).passes, 'a comment naming an install passes');
+ok(gate(edit('index.html', '<body>', '<body><link rel="preconnect" href="https://cdn.mossgrip.example">')).passes, 'a preconnect to a bare origin, loading nothing, passes');
 const fails = [
   ['a licence off the list', entry({ name: 'mossgrip-widgets', licence: 'GPL-3.0-only' })],
   ['one off the list naming a question of its own', entry({ name: 'mossgrip-widgets', licence: 'GPL-3.0-only', question: 999 })],
   ['an allowed licence grouped with one off the list', entry({ name: 'mossgrip-widgets', licence: '(MIT OR GPL-3.0-only) AND GPL-3.0-only' })],
+  ['a licence on the dependency review\'s list but not in SECURITY.md', edit('.github/dependency-review-config.yml', '  - MIT\n', '  - MIT\n  - LGPL-2.1-only\n')],
+  ['a tool awaiting the owner whose licence has changed', edit('tools/licences.json', '"licence": "Artistic-2.0"', '"licence": "GPL-3.0-only"')],
+  ['AND and OR mixed without brackets', entry({ name: 'mossgrip-widgets', licence: 'MIT AND GPL-3.0-only OR MIT' })],
   ['an action not in the audit', append('.github/workflows/tests.yml', '      - uses: mossgrip/setup-moss@v1\n')],
   ['npm install of a package not in the audit', append('scripts/cloud-setup.sh', 'npm install -g mossgrip-widgets@1.2.3\n')],
   ['an audited package fetched at another version', edit('scripts/cloud-setup.sh', 'playwright@1.49.1', 'playwright@1.50.0')],
   ['a lock file holding a package at another version than audited', dir => fs.writeFileSync(path.join(dir, 'package-lock.json'), JSON.stringify({ packages: { '': {}, 'node_modules/typescript': { version: '6.0.3' } } }))],
+  ['npm install with an option before install', append('scripts/cloud-setup.sh', 'npm -g install mossgrip-widgets\n')],
+  ['npx in a string a tool runs', append('tools/dev/crop.js', "\nrequire('child_process').execSync('npx -y mossgrip-cli');\n")],
   ['npm install without a version', append('scripts/cloud-setup.sh', 'npm install --no-save typescript\n')],
   ['npm install of a major version alone, into a folder', append('scripts/cloud-setup.sh', 'npm install -g --prefix /opt/moss node@26\n')],
   ['npm install of a range', append('scripts/cloud-setup.sh', 'npm install typescript@^6.0.2\n')],
@@ -43,10 +49,14 @@ const fails = [
   ['npm install of a variable', append('scripts/cloud-setup.sh', 'npm i "$PKG"\n')],
   ['npx of a package without a version', append('scripts/cloud-setup.sh', 'npx -y mossgrip-cli build\n')],
   ['a package.json dependency not in the audit', dir => fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ devDependencies: { 'mossgrip-widgets': '1.2.3' } }))],
+  ['a lock file holding a package not in the audit', dir => fs.writeFileSync(path.join(dir, 'package-lock.json'), JSON.stringify({ packages: { '': {}, 'node_modules/mossgrip-widgets': { version: '1.2.3' } } }))],
+  ['third-party code copied into the game', dir => { fs.mkdirSync(path.join(dir, 'lib')); fs.writeFileSync(path.join(dir, 'lib/mossgrip.min.js'), '/*! mossgrip v1 | GPL-3.0 */\nvar m=1;\n'); }],
+  ['a bare origin loaded from, not warmed up', edit('index.html', '<body>', '<body><script src="https://cdn.mossgrip.example"></script>')],
   ['an address the game loads that is not in the audit', edit('index.html', '<body>', '<body><img src="https://cdn.mossgrip.example/bark.png">')],
   ['a scheme-relative address', edit('index.html', '<body>', '<body><img src="//cdn.mossgrip.example/bark.png">')],
   ['a second Google Fonts family', edit('index.html', 'family=Fredoka:', 'family=Fredoka:wght@400&family=Mossface:')],
   ['an asset file not in the audit', dir => fs.writeFileSync(path.join(dir, 'bark.png'), '')],
+  ['a font kept with a tool', dir => fs.writeFileSync(path.join(dir, 'tools/dev/mossface.ttf'), '')],
   ['a shipped entry without its notice', entry({ name: 'mossgrip-widgets', licence: 'MIT', ships: true })],
 ];
 for (const [what, change] of fails) { const r = gate(change); ok(!r.passes && /FAIL/.test(r.out), `fails on ${what}`, r.out); }
