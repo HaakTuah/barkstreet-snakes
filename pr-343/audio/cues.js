@@ -5,11 +5,13 @@
 // Once audio.js, the sound is split into the files of audio/, loaded in order by
 // index.html (sw.js lists them too):
 //
-//   cues.js    every cue, the drum's table and the babblers' voices (this file)
-//   sound.js   the synthesiser: setup, building blocks, playing, the music, the
-//              weather and mute; it makes window.SnakeAudio (its API is listed there)
+//   cues.js     every cue, the drum's table and the babblers' voices (this file)
+//   music.js    the adaptive track and its switch
+//   weather.js  the weather's beds and raindrops, on the music's bus
+//   sound.js    the synthesiser: setup, building blocks, playing and mute, and the shared
+//               state; it makes the others and window.SnakeAudio (its API is listed there)
 //
-// Unlike render/'s files they don't share the page's scope: this one leaves a
+// Unlike render/'s files they don't share the page's scope: each leaves a
 // maker, which sound.js calls once with a kit of its building blocks (and live
 // views of the context, the cue being built and where it goes), and takes it
 // away again. So nothing here is a name at the page's top.
