@@ -51,6 +51,7 @@ function frame(alpha, now) {
   drawBurrows(now);
   drawPatch(alpha, now); // (the woodpecker's next patch, on the bark under the snakes)
   drawFalls(now); // (2s: pieces cut loose, falling away)
+  if (fallenFlags.length) drawFallenFlags(now); // (flags falling into the pit, some on those pieces)
   if (splats.length) drawSplats(now);
   drawLeaves(now, dt);
   drawFood(alpha, now);

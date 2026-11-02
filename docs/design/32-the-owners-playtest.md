@@ -390,7 +390,7 @@ way. A north or south push also leans the flag out to its cloth's side (east), b
 body lay hidden on it. North stretches the pole a touch and hangs the cloth; south shortens the pole. While a flag
 leans it is drawn over the snakes, since under them it couldn't be seen. Freed, it springs upright with a wobble that
 dies away in under a second. With reduced motion it leans and stands up at once. The banner bends only at rest on its
-cell, never while it glides or is carried, and keeps its shake if pecked. A flag that falls into a pit drops its bend.
+cell, never while it glides or pops up at a new capital. A flag that falls into a pit drops its bend.
 Drawing only (`bendOn` in `render/flags.js`): each screen draws it from the snakes it has, so online play needs no
 protocol change, and the simulation doesn't load the renderer.
 
@@ -412,7 +412,7 @@ hits it dead on, so that must be accounted for. And it should also react to sove
 - **Owners.** Sovereign over its own banner and Colonist over its own flags bend them as anyone does (they already did;
   a render test now proves it). What looked wrong was the head-on case, which owners meet most, heading for their own
   flag.
-- **Planted under a snake** (PR #255, polish). A flag that wasn't on the board a moment ago (not drawn in the last frame drawn, by frames, not ms, so watching at 4x never counts a flag in sight as new; Sovereign's banner counts as in sight while it glides or is carried)
+- **Planted under a snake** (PR #255, polish). A flag that wasn't on the board a moment ago (not drawn in the last frame drawn, by frames, not ms, so watching at 4x never counts a flag in sight as new; Sovereign's banner counts as in sight while it glides)
   and turns up with a snake already on its tile, as each new colony does under Colonist's head, is bent from its first
   frame: never seen standing, it doesn't stand for a frame and then snap over, and a head-on one lies flat under the
   head without wrapping the face that planted it.
