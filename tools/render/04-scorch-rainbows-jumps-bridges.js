@@ -122,9 +122,19 @@ const jumps = await ev(`(() => {
     setBody(gob, Array.from({ length: 9 }, (_, i) => [10, 8 + i]), 'down'); gob.stunUntil = 1e9;
     show(g); R.setViewer(99); R.setLead(0.5); drawN(10, 1);
     E.leap(g, you);
-    for (let n = 0; n < 4; n++) { doStep(g); frame(0.25); frame(0.5); }
+    doStep(g); frame(0.25); frame(0.5);
+    for (let n = 1; n < 4; n++) { doStep(g); frame(0.25); frame(0.5); }
     const hx = R.headPx(you, 0.5, TUNING.GRID * ${CELL}, {}).x / ${CELL};
     out.held = { up: !!you.flight, x: you.body[0].x, neck: count(hx - 0.65, 11, 0.2, 2, green), back: count(hx - 3.65, 11, 0.2, 2, green) };
+    const g2 = stage(['gobbler', 'sniper', 'mason']), [me, ...rest] = g2.snakes; // (over open ground: a golden leap now, held)
+    rest.forEach((o, i) => { setBody(o, [[2 + 4 * i, 22], [1 + 4 * i, 22], [0 + 4 * i, 22]], 'right'); o.stunUntil = 1e9; o.nextStarve = 1e15; });
+    setBody(me, Array.from({ length: 8 }, (_, i) => [9 - i, 12]), 'right'); me.leaps = 2; me.nextStarve = 1e15;
+    show(g2); R.setViewer(99); drawN(10, 1);
+    E.leap(g2, me); E.leap(g2, me);
+    doStep(g2); frame(0.25); frame(0.5);
+    const honey = (r, g, b) => r > 200 && g > 170 && b < 170 && r - b > 70; // (the golden ring's Honey)
+    const ring = { next: count(11.05, 12.05, 0.9, 0.9, honey), hop: count(13.05, 12.05, 0.9, 0.9, honey), over: me.flight && me.flight.over.length, head: me.body[0].x };
+    out.held.ring = ring;
   }
   R.setReducedMotion(false);
   R.setLead(0.5);
@@ -132,6 +142,7 @@ const jumps = await ev(`(() => {
   return out;
 })()`);
 const held = jumps.held; delete jumps.held;
+check(held.ring.over && held.ring.next > 2 && held.ring.hop === 0, 'held over the plain hop\'s cells, a golden flight\'s ring is on the next cell, where letting go puts it', JSON.stringify(held.ring));
 check(held.up && held.x >= 13 && held.neck > 1.12 * held.back, 'a golden flight held on past the plain hop\'s cells is drawn up in the air there, its neck arched, not at ground height', JSON.stringify(held));
 for (const [what, r] of Object.entries(jumps)) {
   const still = what.startsWith('reduced');
