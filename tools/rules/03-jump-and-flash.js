@@ -47,10 +47,11 @@
 }
 
 { // A flash waiting on a jump isn't lost when the jump doesn't land cleanly: it goes when the snake moves again, as one pressed in a stun does.
-  // Pressed in the air, and the landing's taken (it comes down on what it hopped, stunned).
-  const g = board([[line(5, 10, 8), 'right'], wall(6, 7, 7), [[[7, 12], [7, 13], [7, 14], [7, 15]], 'up']]);
-  const [me, w, r] = g.snakes;
-  w.stunUntil = 1e9; // (r comes up column 7 into the landing, (7,10), as me comes down)
+  // Pressed in the air, and the landing's taken (it comes down in the fire it hopped, stunned and alight: down on a
+  // body, since round six B's bumps in the air, it would be out).
+  const g = board([[line(5, 10, 8), 'right'], [[[7, 12], [7, 13], [7, 14], [7, 15]], 'up']]);
+  const [me, r] = g.snakes;
+  g.fires.set(K(6, 10), { from: 0, until: 999, group: 1, strike: false }); g.fireGroups.set(1, 1); // (r comes up column 7 into the landing, (7,10), as me comes down)
   E.leap(g, me);
   const seen = [];
   for (let t = 0; t < 3 + T.STUN_TICKS && me.alive; t++) {

@@ -43,3 +43,4 @@ the file of its topic; a new round or topic gets its own file and a line here.
 | [`docs/design/34-skipped-or-adapted-guidelines.md`](docs/design/34-skipped-or-adapted-guidelines.md) | Skipped or adapted guidelines |
 | [`docs/design/35-capricious-copycat-and-wildcard.md`](docs/design/35-capricious-copycat-and-wildcard.md) | Capricious, Copycat and Wildcard: every rival by turns, copying the winner's play, a few strong traits a round; a costume change |
 | [`docs/design/36-updating.md`](docs/design/36-updating.md) | Updating: the newest version by itself between rounds, and what changed |
+| [`docs/design/37-one-stamina.md`](docs/design/37-one-stamina.md) | One stamina for jump and dash: one bar, no tail cost, each power a third to two thirds of uses (to build, entry 2u) |

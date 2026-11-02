@@ -289,6 +289,7 @@ function onTick(events) {
       }
       const px = (h.x + 0.5 + s.dir.x * 0.5) * CELL, py = (h.y + 0.5 + s.dir.y * 0.5) * CELL;
       const other = e.killerId != null ? game.snakes[e.killerId] : null, col = other ? colorOf(other) : '', bow = other && bowOf(other);
+      if (e.air) { spawn(px, py - CELL * 0.4, 12, 240, 380, 2.4, '#fffbea', '#fde68a'); spawn(h.x * CELL + CELL / 2, (h.y + 0.5) * CELL, 8, 90, 600, 3, '#c08a4a', '#8b6b4a'); } // (round six B, a bump in the air: a spark up there, and dust where it drops)
       if (bow) spawnBow(px, py, 12, 220, 480, 2.6, bow); // (a rainbow's in its colours: see burst)
       else if (other && col[0] === '#') spawn(px, py, 12, 220, 480, 2.6, col, '#fffbea');
       else spawn(px, py, 12, 220, 480, 2.6, '#c08a4a', '#3b2412'); // (chips of bark)
@@ -422,6 +423,7 @@ function onTick(events) {
       spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 8, 260, T.PARTICLE_LIFE * 1.2, 2.2, '#d1fae5', '#059669');
     }
   }
+  for (const s of game.snakes) flying(s, now); // (a golden flight's arch kept over its way, after this tick's take-offs are in: see flying)
 }
 
 // A dead snake bursts into meat, or with reduced motion fades over its meat.
