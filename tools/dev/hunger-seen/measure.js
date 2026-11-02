@@ -17,7 +17,8 @@ let rng = Math.random;
 const M = Object.create(Math); M.random = () => rng();
 const ctx = vm.createContext({ window: {}, console, Math: M });
 const load = f => vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), ctx, { filename: f });
-load('tuning.js'); load('ai.js');
+const gameFiles = require('../../game-files.js'), GAME = gameFiles(root), AI_FILES = GAME.filter(gameFiles.ai), ENGINE_FILES = GAME.filter(gameFiles.engine);
+load('tuning.js'); AI_FILES.forEach(load);
 const T = ctx.window.TUNING, AI = ctx.window.SnakeAI, decide = AI.decide;
 const LAG = 1000, SLIM_SEEN = 0.05, SLIM = 0.22; // (SLIM: hungerLook's thinnest; seen at 5% thinner)
 let game = null;
@@ -32,7 +33,7 @@ AI.decide = (view, persona, memory) => {
   }
   return decide(view, persona, memory);
 };
-load('engine.js');
+ENGINE_FILES.forEach(load);
 const E = ctx.window.SnakeEngine;
 let starved = 0, died = 0, alive = 0, starving = 0, hungry = 0, rounds = 0, won = 0;
 const causes = {};

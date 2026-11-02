@@ -25,13 +25,13 @@ const ROUNDS = Number(process.argv[2]) || 100, SEED = Number(arg('--seed', 1)), 
 let state = 0;
 const rng = () => { state = (state + 0x6d2b79f5) >>> 0; let t = state; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const M = Object.create(Math); M.random = rng;
+const gameFiles = require('../../game-files.js'), GAME = gameFiles(ROOT), AI_FILES = GAME.filter(gameFiles.ai), ENGINE_FILES = GAME.filter(gameFiles.engine);
 const load = (patch) => {
   const c = vm.createContext({ window: {}, console, Math: M });
-  for (const f of ['tuning.js', 'ai.js']) {
-    let src = fs.readFileSync(path.join(ROOT, f), 'utf8');
-    if (f === 'ai.js' && patch) { const n = src.length; src = patch(src); if (src.length === n) throw new Error('patch missed'); }
-    vm.runInContext(src, c, { filename: f });
-  }
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'tuning.js'), 'utf8'), c, { filename: 'tuning.js' });
+  let src = AI_FILES.map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n'); // (the AI's files as one script, to patch)
+  if (patch) { const n = src.length; src = patch(src); if (src.length === n) throw new Error('patch missed'); }
+  vm.runInContext(src, c, { filename: 'ai' });
   return c;
 };
 const ctx = load(null);
@@ -76,7 +76,7 @@ function show(view, key, d, b) {
   for (let y = h.y - R; y <= h.y + R; y++) { let l = ''; for (let x = h.x - R; x <= h.x + R; x++) l += x < 0 || y < 0 || x >= N || y >= N ? '#' : g.get(y * N + x) || '.'; lines.push(l); }
   console.log(`${key} len ${view.me.body.length} age ${view.age}; rivals ${view.others.map((o, k) => 'ABC'[k] + ' len ' + o.body.length + ' dir ' + o.dir.x + ',' + o.dir.y + (o.stun ? ' stun' : '')).join(', ')}\n${lines.join('\n')}\n`);
 }
-vm.runInContext(fs.readFileSync(path.join(ROOT, 'engine.js'), 'utf8'), ctx, { filename: 'engine.js' });
+for (const f of ENGINE_FILES) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 const E = ctx.window.SnakeEngine;
 const per2 = {};
 for (let n = 0; n < ROUNDS; n++) {

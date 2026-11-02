@@ -22,7 +22,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
       };
       per[s.name].rounds++;
       if (seats != null && s.id % 2 === seats) { // (--versus: this snake is the other AI's)
-        if (!theirKeys.has(s.personaKey)) throw new Error(`the --versus copy's ai.js has no personality ${s.personaKey}`);
+        if (!theirKeys.has(s.personaKey)) throw new Error(`the --versus copy's AI has no personality ${s.personaKey}`);
         theirs.add(s.memory);
         per[s.name].versus = 1;
       }

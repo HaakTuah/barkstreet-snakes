@@ -13,7 +13,7 @@ if (isMainThread && require.main === module) {
   const versus = text('--versus') && path.resolve(text('--versus')), seats = versus ? ['even', 'odd'].indexOf(text('--seats') || 'even') : null;
   if (versus && (saveAt != null || fromFile)) fail("--versus doesn't go with --save-at or --from");
   if (seats < 0) fail('--seats is even or odd');
-  if (versus && !fs.existsSync(path.join(versus, 'ai.js'))) fail(`${versus} has no ai.js`);
+  if (versus && !fs.existsSync(path.join(versus, 'index.html'))) fail(`${versus} isn't a copy of the game (no index.html)`);
   try { os.setPriority(os.constants.priority.PRIORITY_BELOW_NORMAL); } catch {} // (the machine's own user comes first; the worker threads share this priority)
   const hash = (...parts) => crypto.createHash('sha1').update(parts.join('\u0000')).digest('hex');
   const read = f => fs.readFileSync(f, 'utf8');
@@ -27,7 +27,7 @@ if (isMainThread && require.main === module) {
   // stored, as it is now.
   const SELF = { text: module.joined, file: __filename }, STATE_FILE = require.resolve('./snapshots/state.js'), SEEDED_FILE = require.resolve('./seeded.js');
   const snapshot = () => {
-    const game = GAME_FILES.map(f => read(path.join(ROOT, f))), state = read(STATE_FILE), seededText = read(SEEDED_FILE), other = versus ? read(path.join(versus, 'ai.js')) : null;
+    const game = GAME_FILES.map(f => read(path.join(ROOT, f))), state = read(STATE_FILE), seededText = read(SEEDED_FILE), other = versus ? gameFiles.apart(gameFiles(versus).filter(gameFiles.ai).map(f => read(path.join(versus, f)))) : null;
     return { game, state, other, key: hash(...game, SELF.text, seededText, state, ...(versus ? [other, seats] : [])) };
   };
   let files = snapshot();
