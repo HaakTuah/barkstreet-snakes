@@ -56,6 +56,8 @@ window.SnakeAI = (() => {
   //                                   a wall two thick can't be hopped
   //   leapNow                       what a leap now (only out of a trap) costs me, as a share of the jump's
   //                                   price (round six B; default 1)
+  //   landing                       how much putting a flier out by lying on its ring is worth to me
+  //                                   (2y; default 0.6, times 0.5 + my aggression, see cover)
   //   spit                          how much a shot with a mushroom is worth to me, when I weigh eating
   //                                   one on purpose (round six B; default SPIT)
   //   powers                        { price, risk, everyWay, jumpAny, dashSpend }: a power habit (see
@@ -93,7 +95,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1, territory: 0.8, aggression: 0.3,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40, hungryBelow: 16, fedFactor: 0.3,
-        margin: 10, headRisk: 600, zoneRisk: 80, thick: 15, hunt: HUNT, spit: 2.5, // (a mushroom for the head shot)
+        margin: 10, headRisk: 600, zoneRisk: 80, thick: 15, hunt: HUNT, spit: 2.5, landing: 1.5, // (a mushroom for the head shot; a flier's ring, the one place it'll certainly be)
       },
     },
     gobbler: {
@@ -150,7 +152,7 @@ window.SnakeAI = (() => {
       blurb: 'Plays it safe and sensible. Nothing special.',
       kill: ['You lost to Drab. Drab!', 'Drab didn’t mean anything by it.', 'Beaten by beige.'],
       win: ['Somehow.', 'Mildly pleased.', 'It says it was fine.'],
-      w: DRAB,
+      w: { ...DRAB, landing: 0.15 }, // (a flier's ring hardly ever)
     },
     vulture: {
       name: 'Vulture', color: '#27272a', ink: '#f9a8d4', look: 'vulture', driver: 'vulture',
@@ -221,7 +223,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1, territory: 0.6,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40,
-        margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25, leapNow: 0.6, // (a leap now out of a trap, cheaper still)
+        margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25, leapNow: 0.6, landing: 1.2, // (a leap now out of a trap, cheaper still; a flier's ring for the thrill of it)
         nerve: { base: 0.7 }, // (it'll stare down a rival's head for an apple)
       },
     },
@@ -409,6 +411,9 @@ window.SnakeAI = (() => {
   const SHUT_FOOD = 2, FOOD_CUT = 12; // a rival's nearest food put FOOD_CUT moves or more further off by my landing, in apples (see shutIn)
   const SHUT_IN = 4, SHUT_MOVES = 10; // a rival shut in by my flight's landing, all the room it gets to in SHUT_MOVES moves cut away, in apples (see shutIn)
   const CUT_TAIL = 12;     // a cut rival's tail counts for at most this many segments (see flashOpt)
+  const KILL = 6;          // a rival put out, cut off at the neck or come down on my body, in apples (times 0.5 + my aggression: see flashOpt, cover)
+  const STAY = 0.8, LANDING = 0.6; // 2y: the share of a flier's moves it doesn't steer its ring away on; how much taking a landing is worth to me (w.landing) if my style doesn't say
+  const SPARE = 0.3;       // 2y: a held flight with no other safe landing left at its last turn, in apples against it (see spare)
   // Mushrooms come back up (round six B). A segment off a rival's length,
   // hit with a spat mushroom, is worth SPIT_SEG of an apple to me (my own
   // segment, lost to one, a whole apple); AIM: how much I aim mine (0: I
@@ -772,7 +777,7 @@ window.SnakeAI = (() => {
     margin: undefined, headRisk: undefined, zoneRisk: undefined, nerve: undefined, distance: undefined,
     hunt: undefined, home: undefined, lure: undefined, turn: undefined, tail: undefined, mimic: undefined,
     colony: undefined, goal: undefined, thrill: undefined, coil: undefined, thick: undefined, powers: undefined, golden: undefined, hurry: undefined,
-    spit: undefined, leapNow: undefined,
+    spit: undefined, leapNow: undefined, landing: undefined,
   };
   const weighed = w => Object.assign({ ...WEIGHTS }, w);
 
@@ -920,7 +925,8 @@ window.SnakeAI = (() => {
     }
 
     function targetOf(k, lead) {
-      const d = others[k].dir, h = heads[k];
+      const o = others[k], d = o.dir, h = heads[k];
+      if (o.air - age > 1 && o.land >= 0) return { x: o.land % N, y: (o.land - o.land % N) / N }; // (up in the air: where its ring is, the one place it'll certainly be)
       return {
         x: Math.min(N - 1, Math.max(0, h.x + d.x * lead)),
         y: Math.min(N - 1, Math.max(0, h.y + d.y * lead)),
@@ -1199,7 +1205,12 @@ window.SnakeAI = (() => {
     // (A rival still stunned next tick can't strike; one I just met head-on,
     // I give twice the berth for a while, so we don't go for the same cell again.)
     // Only cells it can step into: not back into its neck, a hole or a body
-    // still there.
+    // still there. (One I saw in the air comes down on its ring on the move
+    // its ring says: a head-on then; a move either side at half (a flight
+    // steered at the edge comes down sooner; its neck lies there the move
+    // after). ringRisk; rings: [move, cell, what it'd cost me].)
+    const rings = [];
+    const ringRisk = (i, t) => { let v = 0; for (let n = 0; n < rings.length; n += 3) if (rings[n + 1] === i && Math.abs(rings[n] - t) <= 1) v += rings[n] === t ? rings[n + 2] : rings[n + 2] / 2; return v; };
     others.forEach((o, k) => {
       const strike = stunLeft(o) > 1 ? 0 : w.headRisk * (o.id === me.bumped ? 2 : 1);
       const wrapO = o.wrap > 0, at = v => wrapO ? (v + N) % N : v; // (the edges wrap for it a while)
@@ -1211,15 +1222,14 @@ window.SnakeAI = (() => {
       // (Its powers reach further straight on: a dash three cells; anyone's
       // flash two, and anyone's leap LEAP_REACH + 1 if there's something in
       // front to hop (a golden one, whatever's in front). It may be resting
-      // them: I can't tell. One I saw in the air comes down where its ring
-      // is.
+      // them: I can't tell.
       // But a plain flash costs its rest, so a snake spends one racing for
       // food straight ahead of it, not to cross a cell it can't crawl to:
       // its flash I fear only with food on that line within its reach.)
       const fx = at(heads[k].x + o.dir.x), fy = at(heads[k].y + o.dir.y);
       const gold = o.dashes > 0 || o.leaps > 0, hop = inside(fx, fy) && otherFree[fy * N + fx] > 1;
       const far = Math.max(gold ? TUNE.DASH_LENGTH : TUNE.FLASH_LENGTH, gold || hop ? TUNE.LEAP_REACH + 1 : 1);
-      if (o.air > 0 && o.land >= 0) strikes[o.land] += strike;
+      if (o.air - age >= 1 && o.land >= 0) rings.push(o.air - age, o.land, strike);
       const on = f => { for (let n = 1; n <= far + 1; n++) if (at(heads[k].x + o.dir.x * n) === f.x && at(heads[k].y + o.dir.y * n) === f.y) return true; return false; };
       if (gold || hop || food.some(f => f.kind !== 'mushroom' && on(f))) for (let i = 2; i <= far; i++) {
         const nx = at(heads[k].x + o.dir.x * i), ny = at(heads[k].y + o.dir.y * i);
@@ -1356,6 +1366,40 @@ window.SnakeAI = (() => {
     // apple, not a reading of the risk: the maps stay as they are).
     const starved = me.hungerLeft == null ? 0 : Math.min(1, Math.max(0, 1 - me.hungerLeft / TUNE.HUNGER_MS));
     const nerveKeep = w.nerve ? 1 - Math.min(NERVE_MAX, (w.nerve.base || 0) + (w.nerve.hungry || 0) * starved) : 1;
+
+    // 2y, a landing taken: a flier comes down on its ring when its ring says,
+    // and a body of mine still lying there then puts it out (my head there
+    // then is a head-on; my tail has moved off). So my head on the ring
+    // from L - 2 moves before it's down to the move before. cover: [cell,
+    // from, to, worth, sure] for each I can get to in time, in what the
+    // search counts (U, an apple, as in powerPick): a rival out, KILL apples
+    // as a cut (as much more as I'm aggressive, my target twice), times my
+    // style's (w.landing), times the share of its moves it won't steer the
+    // ring away on (STAY each, the ones since I saw it too), half if another
+    // rival on the ground is nearer (we'd meet there). (In time: crawling,
+    // or a flash or dash on the way.) coverAt: what my
+    // body on cell i from my move t is worth, and which (coverHit, a bit
+    // each); covered: those this line has taken already; sureCover: those
+    // near sure (a power spent on: see flashOpt).
+    const cover = [];
+    let coverHit = 0, covered = 0, sureCover = 0;
+    others.forEach((o, k) => {
+      const n = (o.air || 0) - age, L = me.body.length;
+      if (n <= 1 || o.land < 0 || holes.has(o.land)) return; // (down already, or this move: it's danger only, see ringRisk)
+      const lx = o.land % N, ly = (o.land - lx) / N, dist = Math.abs(lx - myHead.x) + Math.abs(ly - myHead.y);
+      if (dist > n - 1 + (me.dashes > 0 ? TUNE.DASH_LENGTH - 1 : me.flashIn === 0 ? TUNE.FLASH_LENGTH - 1 : 0)) return; // (a flash, or a dash, gets me there sooner: see flashOpt)
+      const agg = (w.aggression || 0) + (w.hunt ? 0.5 : 0), U = Math.max(40, foodW * w.foodRange + eatW);
+      const first = others.some((q, j) => j !== k && !q.air && Math.abs(heads[j].x - lx) + Math.abs(heads[j].y - ly) < dist) ? 0.5 : 1;
+      const sure = Math.pow(STAY, o.air - 1) * first;
+      if (sure >= 0.5) sureCover |= 1 << (cover.length / 5);
+      cover.push(o.land, n - (L - 2), n - 1, KILL * (0.5 + agg) * (o.id === memory.victimId ? 2 : 1) * (w.landing ?? LANDING) * sure * U, sure);
+    });
+    const coverAt = (i, t) => {
+      let v = 0;
+      coverHit = 0;
+      for (let n = 0; n < cover.length; n += 5) if (cover[n] === i && t >= cover[n + 1] && t <= cover[n + 2]) { v += cover[n + 3]; coverHit |= 1 << (n / 5); }
+      return v;
+    };
 
     // How many ticks something I saw has left before it rots, withers or
     // flies off (in winter an apple rots twice as fast, and has done since I saw it).
@@ -1947,9 +1991,22 @@ window.SnakeAI = (() => {
         if (inside(ax, ay)) { const a = ay * N + ax; for (let n = 0; n < aim.length; n += 2) if (aim[n] === a) gain += aim[n + 1]; }
       }
       for (let n = 0; n < dodge.length; n += 3) if (dodge[n] === t + 1 && dodge[n + 1] === i) gain -= dodge[n + 2];
+      if (rings.length) gain -= ringRisk(i, t + 1);
       if (closeOn.length && t + 1 === steps) { // (on my way to where I'd spit from: there by the time it comes up)
         const dist = Math.abs(nx - closeOn[0]) + Math.abs(ny - closeOn[1]), late = Math.max(0, dist - (aimAt - t - 1));
         gain += closeOn[2] * (Math.max(0, 1 - late / 4) - 0.02 * dist);
+      }
+      // (A flier's ring: my head on it in time, or, farther off than the
+      // search sees, on my way there by the time it counts, at the last step.)
+      const coveredWas = covered;
+      if (cover.length) {
+        gain += coverAt(i, t + 1);
+        covered |= coverHit;
+        if (t + 1 === steps) for (let n = 0; n < cover.length; n += 5) {
+          if (cover[n + 2] <= steps || covered & (1 << (n / 5))) continue;
+          const lx = cover[n] % N, dist = Math.abs(nx - lx) + Math.abs(ny - (cover[n] - lx) / N), late = Math.max(0, dist - (cover[n + 2] - steps));
+          gain += cover[n + 3] * Math.max(0, 1 - late / 2 - 0.02 * dist);
+        }
       }
       const score = depth <= 1
         ? evaluate(nb, nlen, g, t + 1) + bonus + gain
@@ -1957,6 +2014,7 @@ window.SnakeAI = (() => {
       foodValue[i] = was;
       mute = muteWas;
       ateAt = ateBefore;
+      covered = coveredWas;
       return score;
     }
 
@@ -2077,7 +2135,8 @@ window.SnakeAI = (() => {
       // 4, the rest of the round forked at each use: out of a trap, +0.10 ±
       // 0.07 place a use (206 uses); also over a head-on coming (Ghost's and
       // Desperado's style, a try), −0.02 ± 0.08, and −0.28 before sudden
-      // death; weighed everywhere at twice the jump's price, even.)
+      // death; weighed everywhere at twice the jump's price, even.) And (2y)
+      // down on a flier's ring before it comes down there: see cover.
       // Something to hop: a body still there next tick (mine too), or fire;
       // a hole, if I can tell it from the woodpecker's mark (a mark isn't a
       // hole yet: I'd crawl in), or if it's that or a crash.
@@ -2105,7 +2164,7 @@ window.SnakeAI = (() => {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
         if (me.dashes > 0) { const v = flashOpt(d, true); if (trapped || cutKills || habit.dashSpend) consider(d, true, v, 0.6, extra); } // (a golden dash, held: out of a trap, or for a cut that puts a rival out; spent so, it gains (see part 4's chosen numbers); spent as it came, −0.11 ± 0.09 place a use; Star (dashSpend), its trademark, spends them as they come)
-        else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)))) consider(d, true, flashOpt(d, false), trapped || race(d) ? 1 : 2, extra);
+        else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)) || coverNear(d))) consider(d, true, flashOpt(d, false), trapped || race(d) ? 1 : 2, extra);
         if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5) * (leapNow ? (w.leapNow ?? 1) : 1), extra); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
       }
       return best;
@@ -2161,7 +2220,10 @@ window.SnakeAI = (() => {
         // (Safe, for the moves of round six B, part 4 (leap now, flying on,
         // steering): only where no rival's head could get before I come down,
         // and leave its body there. Coming down on a body is the end, and at
-        // first they did it 0.6 times a round, and lost the head-to-head for it.)
+        // first they did it 0.6 times a round, and lost the head-to-head for it.
+        // Up in the air (2y), with rivals coming for my ring, a landing one
+        // could get to first is priced instead (landOpt): a wall, and I'd dive
+        // for the cramped spots nobody can reach.)
         const lands = (i, safe) => i < n && (free(path[i]) || bridgeUntil[path[i]] > i + 1) && !(safe && reach[framed[path[i]]] <= i);
         let first = -1, now = false;
         if (air) first = 0; // (in the air I pass over whatever's below: down on any free cell from the next on)
@@ -2171,15 +2233,15 @@ window.SnakeAI = (() => {
           if (span > TUNE.LEAP_REACH || span >= n || !lands(span, false)) return null;
           first = span;
         } else {
-          if (!golden && !trapped) return null; // (leap now: only out of a trap, above)
+          if (!golden && !trapped && !cover.length) return null; // (leap now: only out of a trap, above, or down on a flier's ring before it)
           for (span = Math.min(TUNE.LEAP_REACH, n - 1); span >= 1 && !lands(span, false); span--); // (where the engine puts it down: the farthest free cell; safe or not, below)
-          if (span < 1) return null;
+          if (span < 1 || (!golden && !trapped && !coverAt(path[span], span + 1))) return null;
           first = span; now = true;
         }
         let bestS = null, bestSpan = first;
         const full = Math.min(far, n - 1); // (a held flight's landing)
         for (let k = air ? full : first; k <= (golden ? full : first); k += Math.max(1, full - first)) {
-          if ((k > first || now || air) && !lands(k, true)) continue; // (a leap now, flying on, or any landing from the air: only down where it's safe)
+          if ((k > first || now || air) && !lands(k, !air)) continue; // (a leap now or flying on: only down where it's safe; from the air, anywhere free, a rival that could be there first priced, see landOpt)
           const v = landOpt(d, k, golden, now);
           if (v !== null && (bestS === null || v > bestS)) { bestS = v; bestSpan = k; }
         }
@@ -2204,7 +2266,7 @@ window.SnakeAI = (() => {
                 path[n++] = c;
               }
               for (let k = Math.max(at, n - 1); k < n; k++) {
-                if (!lands(k, true)) continue;
+                if (!lands(k, !air)) continue;
                 const v = landOpt(d2, k, true, now);
                 if (v !== null && (bestS === null || v > bestS)) { bestS = v; bestSpan = k; turn = { at, dir: d2 }; }
               }
@@ -2241,11 +2303,43 @@ window.SnakeAI = (() => {
         const shut = golden ? shutIn(nb, L, g, down, land) : 0; // (before it eats: the body as it comes down)
         eatOn(-1, land, -1, L, g, 0.85, down); // (it eats where it lands)
         bugsOn(span, land % N, (land - land % N) / N);
-        endRisk = risk[land] + strikes[land];
-        const gain = ateGain + isle * U - 0.6 * endRisk + shut * U;
+        endRisk = risk[land] + strikes[land] + ringRisk(land, down) + (air ? contest(land, down) : 0);
+        const take = coverAt(land, down), lone = golden && !air && span === TUNE.GOLD_FLY && !spare(span); // (down on a flier's ring before it; a held flight with nowhere else to come down, see spare)
+        covered = coverHit;
+        const gain = ateGain + isle * U - 0.6 * endRisk + shut * U + take - (lone ? SPARE * U : 0);
         const score = depth > down ? search(nb, ateL, ateG, depth - down, down, gain) : evaluate(nb, ateL, ateG, down) + gain;
+        covered = 0;
         uneat();
         return score;
+      }
+      // Up in the air (2y): each rival on the ground that could get to where
+      // I'd come down before I'm down (as I last saw it), a head-on's price,
+      // twice if it was heading straight for it.
+      function contest(land, down) {
+        const lx = land % N, ly = (land - lx) / N;
+        let v = 0;
+        others.forEach((o, k) => {
+          if (o.air || Math.abs(heads[k].x - lx) + Math.abs(heads[k].y - ly) > down - 1) return;
+          let line = 1;
+          for (let m = 1; m < down && line === 1; m++) if (heads[k].x + o.dir.x * m === lx && heads[k].y + o.dir.y * m === ly) line = 2;
+          v += line * w.headRisk;
+        });
+        return v;
+      }
+      // Is there another safe landing left, from the cell I'm over two moves
+      // before I'd be down on path[span] (the last turn I could make: on, or
+      // to a side, three cells)? A held flight without one is a dead ring
+      // if a rival comes for it.
+      function spare(span) {
+        const base = path[span - 3], prev = span > 3 ? path[span - 4] : myHead.y * N + myHead.x;
+        const bx = base % N, ix = unit(bx - prev % N), iy = unit((base - bx) / N - (prev - prev % N) / N);
+        for (const e of DIR_LIST) {
+          if (e.x === -ix && e.y === -iy) continue;
+          let c = base;
+          for (let s = 0; s < 3 && c >= 0; s++) c = cellAt(c % N + e.x, (c - c % N) / N + e.y);
+          if (c >= 0 && c !== path[span] && free(c) && reach[framed[c]] > span) return true;
+        }
+        return false;
       }
 
       // A flight down to cut a rival off, in apples: Haakon's flight, where
@@ -2356,11 +2450,12 @@ window.SnakeAI = (() => {
         const agg = (w.aggression || 0) + (w.hunt ? 0.5 : 0);
         const body = i => myCells[i] === stampM || (mineFree[i] > 1 && (!holes.has(i) || (fire.has(i) && others.some(o => o.body.some(q => q.y * N + q.x === i))))); // (mine, or a rival's that'll still be there, on fire too)
         let cut = 0, got = false, fires = 0, run = 0;
-        ownCut = -1; cutKills = false;
+        ownCut = -1; cutKills = false; covered = 0;
         for (let i = 0; i < n; i++) {
           const c = path[i];
           if (holes.has(c) && !fire.has(c)) return null; // (a hole, or the woodpecker's mark: it'd fail or blow up, or soon)
           if (fire.has(c) && !gold && fires++) return null; // (a second fire: it'd go in)
+          if (cover.length) { cut += coverAt(c, i + 2 - n) / U; covered |= coverHit; } // (my body on a flier's ring from this move: see cover)
           if (!run && body(c)) {
             let r = 0, b = c, bx = c % N, by = (c - bx) / N;
             for (; r <= thick && b >= 0 && body(b); r++) { bx += d.x; by += d.y; b = cellAt(bx, by); }
@@ -2378,13 +2473,14 @@ window.SnakeAI = (() => {
               const j = j0 + Math.max(0, age - (o.stun || 0)); // (where it's cut: it's moved on since I saw it)
               const mark = o.id === memory.victimId ? 2 : 1; // (my target, twice over: Sniper cuts off its target, Mute its boxed one)
               if (j < TUNE.MIN_LENGTH) cutKills = true; // (it's out)
-              cut += mark * (j < TUNE.MIN_LENGTH ? 6 * (0.5 + agg) : Math.min(CUT_TAIL, Math.max(0, o.body.length - j)) * 0.1 * (0.5 + agg)); // (in apples: out, or its tail off, up to CUT_TAIL of it: at 0.4 a segment, uncapped, rivals cut 14 times a round and the beads swamped the board; at 0.15, 10 times, and the cut starved small)
+              cut += mark * (j < TUNE.MIN_LENGTH ? KILL * (0.5 + agg) : Math.min(CUT_TAIL, Math.max(0, o.body.length - j)) * 0.1 * (0.5 + agg)); // (in apples: out, or its tail off, up to CUT_TAIL of it: at 0.4 a segment, uncapped, rivals cut 14 times a round and the beads swamped the board; at 0.15, 10 times, and the cut starved small)
             }
             run = r;
           }
           if (run) run--;
           if (gold) for (const f of food) if (f.y * N + f.x === c && (f.kind === 'golden' || f.kind === 'leaf' || f.kind === 'goldcap' || f.gold)) got = true;
         }
+        if (covered & sureCover) cutKills = true; // (it's out, near enough sure)
         if (gold && !cut && !got && !trapped && ownCut < 0) { // (just for speed: only a habit's, and at anyone's price, so only for a real gain; free, it spent both at once, a zig-zag that got it nothing)
           if (!habit.dashSpend) return null;
           idle = true;
@@ -2397,6 +2493,16 @@ window.SnakeAI = (() => {
           const c = cellAt(x += d.x, y += d.y);
           if (c < 0) return false;
           if (myCells[c] === stampM || (!holes.has(c) && mineFree[c] > 1)) return true;
+        }
+        return false;
+      }
+      // ...or a flier's ring I'd lie on in time (see cover)?
+      function coverNear(d) {
+        if (!cover.length) return false;
+        for (let i = 1, x = myHead.x, y = myHead.y; i <= TUNE.FLASH_LENGTH; i++) {
+          const c = cellAt(x += d.x, y += d.y);
+          if (c < 0) return false;
+          if (coverAt(c, i + 1 - TUNE.FLASH_LENGTH)) return true;
         }
         return false;
       }
@@ -2413,9 +2519,10 @@ window.SnakeAI = (() => {
         }
         eatOn(path[0], path[1], n > 2 ? path[2] : -1, L, g, 1, 1);
         bugsOn(0, path[n - 1] % N, (path[n - 1] - path[n - 1] % N) / N);
-        endRisk = risk[path[n - 1]] + strikes[path[n - 1]];
+        endRisk = risk[path[n - 1]] + strikes[path[n - 1]] + ringRisk(path[n - 1], 1);
         const gain = bonus + ateGain - endRisk;
         const score = depth > 1 ? search(nb, ateL, ateG, depth - 1, 1, gain) : evaluate(nb, ateL, ateG, 1) + gain;
+        covered = 0;
         uneat();
         return score;
       }
