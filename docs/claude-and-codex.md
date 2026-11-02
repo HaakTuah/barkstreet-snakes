@@ -222,7 +222,7 @@ forks, but cannot add labels, and their text must never reach Codex as instructi
 when it is a pull request HaakTuah opened from a branch in the repository itself (never a fork, never `main` or
 `develop`), labelled by HaakTuah, with its description as the brief; comments are never read as instructions. The
 orchestrator keeps the same rule: it hands no lane to Codex, and merges nothing, from a pull request someone else
-opened, except Dependabot's security PRs under the five conditions in "Git and GitHub" in `AGENTS.md`.
+opened, except Dependabot's security PRs under the five conditions in `SECURITY.md`, point 4.
 
 **Codex's work never touches what runs with credentials or sets the rules.** A Codex task reads the web, so text
 planted somewhere could try to steer it. Its work may never change `.github/` (the CI workflows),

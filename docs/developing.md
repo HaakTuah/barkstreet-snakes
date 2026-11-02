@@ -20,6 +20,26 @@ origin/pr-media`, add each file with `git hash-object -w`, build the new tree wi
 by commit SHA (`https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/<sha>/<name>`), never by a branch that may
 be deleted. `tools/dev/crop.js` and `tools/dev/montage.js` make them.
 
+## GitHub: the REST calls, Dependabot and CodeQL
+
+Cloud sessions can't use GitHub's GraphQL API, so `gh pr create` and `gh pr view` fail. Use the REST API:
+
+```bash
+gh api repos/HaakTuah/barkstreet-snakes/pulls -f title=... -f head=<branch> -f base=develop -f body=...  # add -F draft=true for a draft
+gh api -X PUT repos/HaakTuah/barkstreet-snakes/pulls/<n>/merge -f merge_method=merge                    # merge into develop
+gh api repos/HaakTuah/barkstreet-snakes/pulls/<n> --jq '{state, merged}'                                 # was it merged?
+gh api "repos/HaakTuah/barkstreet-snakes/pulls?state=open&base=main&head=HaakTuah:develop" --jq '.[0].number'  # the open milestone PR
+```
+
+**Dependabot's security PRs** are the one other way into `main`, under the five conditions in `SECURITY.md`, point 4.
+**Its version updates** (`.github/dependabot.yml`: weekly, grouped, each release a week old) aim at `develop` and are
+ordinary small PRs: the next free lane takes one, runs the checks, gets Codex's review, reads the release notes for
+breaking changes, and merges it, or closes it with the reason.
+
+**CodeQL checks every PR** into `develop` and `main`, every push to them and once a week (`.github/workflows/codeql.yml`).
+A finding on a PR shows on it as a note; what to do with it is in `AGENTS.md`, "Git and GitHub". Alerts already in the
+code are the owner's to pass on (`SECURITY.md`, point 9).
+
 ## Run locally
 
 Serve the folder with any static server (for example `npx serve` or `python -m http.server`) and open it in a browser. Opening `index.html` directly works too.
