@@ -191,16 +191,16 @@ const KEYS = {
   const key = async name => { await down(name); await up(name); };
   const powers = () => ev('__log.powers.length');
   const state = () => ev('SnakeDebug.state()');
-  // A round started from a fresh start card, the page's loop stopped once it
-  // runs (its countdown on the virtual clock too: its frames, without waiting
-  // them out), drawn at the plainest quality (the controls don't care, and
+  // A round started from a fresh start card, the page's loop stopped as Play
+  // is pressed (its countdown on the virtual clock too: its frames, without
+  // waiting them out, and no real frame, however long the next call takes), drawn at the plainest quality (the controls don't care, and
   // each frame driven by hand costs a fraction).
   const startRound = async () => {
     await ev(`window.__autoRaf = true; 'ok'`);
     await b.go(site.url + '?debug', { settle: 0 });
     await ev('new Promise(r => __raf(() => __raf(r)))'); // (laid out)
-    await ev(`document.getElementById('start').click(); 'ok'`);
-    const going = await ev(`(() => { window.__autoRaf = false; for (let i = 0; i < 600 && SnakeDebug.state() !== 'running'; i++) SnakeDebug.frames(1, ${P}); return SnakeDebug.state(); })()`);
+    await ev(`window.__autoRaf = false; document.getElementById('start').click(); 'ok'`);
+    const going = await ev(`(() => { for (let i = 0; i < 600 && SnakeDebug.state() !== 'running'; i++) SnakeDebug.frames(1, ${P}); return SnakeDebug.state(); })()`);
     if (going !== 'running') throw new Error('the round never started: ' + going);
     await ev(`SnakeDebug.pinQuality(0); 'ok'`);
   };

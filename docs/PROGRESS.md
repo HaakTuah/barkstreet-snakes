@@ -62,6 +62,8 @@ and the owner's notes of 2 November, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
+- *Done:* the input suite's "rivals have all thought" check, counted round after round to its 100-tick floor and its
+  round started on the virtual clock, so neither a short random round nor load can flip it (#414, PR #415).
 - *Done:* the layout suite in cloud sessions (#383): it never hung, it ran about 28 minutes in one process, silent
   until its end; `scripts/test.sh` now runs its five CI jobs side by side, each part's end is printed, and the banner
   probe no longer misreads a banner on its way out (PR #396).
