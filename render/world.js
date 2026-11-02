@@ -761,7 +761,6 @@ function init(opts) {
   birdLayer = opts.birdLayer || null;
   birdG = birdLayer ? birdLayer.getContext('2d') : null;
   ctx = canvas.getContext('2d', { alpha: false });
-  PERSONAS = opts.personas;
   k = canvas.width / SIZE;
   // Text sprites drawn before the font arrived get redrawn with it.
   document.fonts?.ready.then(() => { sprites.delete('float'); floatHalf.clear(); warmUp(); });
