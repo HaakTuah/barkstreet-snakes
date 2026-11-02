@@ -25,6 +25,7 @@ const edit = (f, from, to) => dir => { const p = path.join(dir, f), s = fs.readF
 const entry = e => dir => { const p = path.join(dir, 'tools/licences.json'), a = JSON.parse(fs.readFileSync(p, 'utf8')); a.entries.push(e); fs.writeFileSync(p, JSON.stringify(a)); };
 
 ok(gate(() => {}).passes, 'the repository as it is passes');
+ok(gate(append('scripts/cloud-setup.sh', '# npm install mossgrip-widgets, a comment, fetches nothing\n')).passes, 'a comment naming an install passes');
 const fails = [
   ['a licence off the list', entry({ name: 'mossgrip-widgets', licence: 'GPL-3.0-only' })],
   ['one off the list naming a question of its own', entry({ name: 'mossgrip-widgets', licence: 'GPL-3.0-only', question: 999 })],
@@ -32,6 +33,7 @@ const fails = [
   ['an action not in the audit', append('.github/workflows/tests.yml', '      - uses: mossgrip/setup-moss@v1\n')],
   ['npm install of a package not in the audit', append('scripts/cloud-setup.sh', 'npm install -g mossgrip-widgets@1.2.3\n')],
   ['npm install without a version', append('scripts/cloud-setup.sh', 'npm install --no-save typescript\n')],
+  ['npm install of a major version alone, into a folder', append('scripts/cloud-setup.sh', 'npm install -g --prefix /opt/moss node@26\n')],
   ['npm install of a range', append('scripts/cloud-setup.sh', 'npm install typescript@^6.0.2\n')],
   ['npm install of an alias', append('scripts/cloud-setup.sh', 'npm install typescript@npm:mossgrip-lint@9.0.0\n')],
   ['npm install from a URL', append('scripts/cloud-setup.sh', 'npm install https://mossgrip.example/widgets.tgz\n')],

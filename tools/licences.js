@@ -59,6 +59,7 @@ function fetched(cmd, rest, where) {
     const w = words[i];
     if (w === '-p' || w === '--package') { specs.push(words[++i] || ''); continue; }
     if (w.startsWith('--package=')) { specs.push(w.slice(10)); continue; }
+    if (w === '--prefix') { i++; continue; } // (a folder to install into, not a package)
     if (w.startsWith('-')) continue;
     if (cmd === 'npx') { if (!specs.length) specs.push(w); break; }
     specs.push(w);
@@ -70,7 +71,7 @@ const need = (name, where) => { if (!byName.has(name)) fail(`${name} (${where}) 
 // What the workflows and scripts use: actions, and the packages npx and npm install fetch.
 const ci = ['.github/workflows', 'scripts'].flatMap(d => fs.readdirSync(path.join(root, d)).map(f => `${d}/${f}`));
 for (const f of ci) {
-  const src = read(f);
+  const src = read(f).split('\n').map(l => l.replace(/(^|\s)#.*$/, '')).join('\n'); // (a comment fetches nothing)
   for (const m of src.matchAll(/uses:\s*['"]?([\w.-]+\/[\w.-]+)/g)) need(m[1], f);
   for (const m of src.matchAll(/\b(npx|npm\s+(?:install|i|add|exec|x))\s([^\n;&|>]*)/g)) for (const p of fetched(m[1], m[2], `${f}, ${m[0].trim()}`)) need(p, `${f}, ${m[0].trim()}`);
 }
