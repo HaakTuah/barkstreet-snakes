@@ -48,7 +48,8 @@ and the owner's notes of 2 November, among them).
 
 - **Licences: audit, gate and notices** (the owner, 2 November 2026; `SECURITY.md`, point 10): every tool, PeerJS, and
   every font, sound, image and data set audited with its licence, anything off the list a `question` issue; a check on
-  every pull request (`actions/dependency-review-action`) failing a package off the list; a third-party notices file
+  every pull request (`actions/dependency-review-action`) failing a package off its list (what ships, or tools that
+  only run: point 10, split on 2 November); a third-party notices file
   shipped with the game (PeerJS's, at least).
 - **Every version where Dependabot sees it** (the owner, 2 November 2026): a tools-only `package.json` (TypeScript,
   Playwright; the game still ships no dependencies) read by `.github/workflows/tests.yml`, `scripts/cloud-setup.sh` and
