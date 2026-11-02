@@ -579,12 +579,12 @@ function drawFields(now) {
   ctx.globalAlpha = 1;
   ctx.setTransform(k, 0, 0, k, shakeX, shakeY);
   // The flags, while the land under them is still there (one the
-  // woodpecker pecked out falls into the pit, and a capital's banner is
-  // carried to the new one: see drawColonyFlags and drawRealmBanner).
+  // woodpecker pecked out, or on a piece cut loose, falls into the pit, a
+  // capital's banner too: see drawColonyFlags, drawRealmBanner and, over the
+  // falling pieces, drawFallenFlags).
   for (const r of fieldSpecs) {
     const s = r.owner;
     if (s.memory.home) drawRealmBanner(r, s.memory.home, now);
     if (s.memory.colonies) drawColonyFlags(r, now);
   }
-  if (fallenFlags.length) drawFallenFlags(now);
 }

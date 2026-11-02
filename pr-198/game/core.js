@@ -9,11 +9,11 @@
 // names from itself or the files before it (a listener's body runs later).
 //
 //   core.js     the page's elements, words, the game's state and the loop
-//   round.js    a round: starting, ticking, ending; and its sounds
+//   round.js    a round: starting and ending; and its sounds
 //   banners.js  the banners for a round's big moments, and the cards
 //   hud.js      the scoreboard and the tags
-//   input.js    keys, touch and swipes, and the buttons
-//   friends.js  the Hall of Fame, and playing with friends online
+//   input.js    keys, touch and swipes, the buttons, and napping and waking
+//   friends.js  the Hall of Fame and the Field guide, and playing with friends online
 //   screen.js   size and motion, the dev overlay, and the start
 
 const TUNE = window.TUNING;

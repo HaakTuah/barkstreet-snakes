@@ -1,5 +1,5 @@
-// The game controller (see game/core.js): the Hall of Fame, and playing with
-// friends online: hosting, joining and leaving.
+// The game controller (see game/core.js): the Hall of Fame and the Field
+// guide (one book), and playing with friends online: hosting, joining and leaving.
 
 // ------------------------------------------------------ Hall of Fame
 

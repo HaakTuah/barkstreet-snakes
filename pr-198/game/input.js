@@ -1,5 +1,5 @@
 // The game controller (see game/core.js): input, from keys, touch, swipes
-// and the buttons.
+// and the buttons; and napping and waking.
 
 // ------------------------------------------------------------- input
 
