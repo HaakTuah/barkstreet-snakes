@@ -4,11 +4,12 @@
 // calls a rival makes; the rivals' part is below.
 const N21 = T.GRID;
 // A wraps (a golden mushroom) heading right along row 10 toward the right edge; B, not wrapping, follows along the row,
-// its head `gap` cells behind A's tail. Steps until B is out or `ticks` are done; what happened.
-const portalRun = (gap, ticks = 40) => {
+// its head `gap` cells behind A's tail (held still `stun` ticks first). Steps until B is out or `ticks` are done; what happened.
+const portalRun = (gap, ticks = 40, stun = 0) => {
   const g = board([[line(N21 - 2, 10, 4), 'right'], [line(N21 - 6 - gap, 10, 3), 'right']], { time: 30000 });
   const [a, b] = g.snakes;
   a.wrapUntil = g.time + 60000;
+  if (stun) b.stunUntil = g.tick + stun; // (held where it is that many ticks)
   const seen = [];
   let through = null, opened = null;
   for (let t = 0; t < ticks && b.alive && !(through && b.body[0].x < 5); t++) {
@@ -32,8 +33,10 @@ const portalRun = (gap, ticks = 40) => {
   check('another snake following it goes through the portal, out at the exit', b.alive && through && through.snake === 1 && through.owner === 0 && through.tx === 0 && b.body[0].y === 10 && b.body[0].x < 5 && !seen.some(e => e.includes('crash')), JSON.stringify({ head: b.body[0], through, seen }));
 }
 
-{ // Too late (the portal shut PORTAL_MS after the body passed): the edge is an edge again.
-  const { g, b, seen } = portalRun(14);
+{ // Too late (the portal shut PORTAL_MS after the body passed): the edge is an edge again. (The follower held still,
+  // stunned, as long as PORTAL_MS and the owner's body take to go by and a little more.)
+  const late = Math.ceil(T.PORTAL_MS / 110) + 12;
+  const { g, b, seen } = portalRun(3, late + 20, late);
   check('...but not once it has shut, PORTAL_MS after the body passed: the edge is the edge', seen.some(e => e.endsWith('portalShut')) && seen.some(e => /(crash|death)1$/.test(e)) && !seen.some(e => e.includes('through')) && b.body[0].x === N21 - 1, JSON.stringify({ seen, head: b.body[0], alive: b.alive, cause: b.cause, tick: g.tick }));
 }
 
@@ -49,8 +52,9 @@ const portalRun = (gap, ticks = 40) => {
 
 { // The rivals use them: heading up the right edge beside an open portal there, a golden apple just beyond its exit on
   // the far side, an AI turns into it and goes through (two moves to the apple, where without it there's the edge).
-  // With the portal shut, it doesn't turn into the edge.
-  const view = shutAt => () => aiView({ me: aiMe([[N21 - 1, 10], [N21 - 1, 11], [N21 - 1, 12], [N21 - 1, 13]], 'up'), others: [aiRival(1, line(8, 20, 4), 'right')], tickMs: 110,
+  // With the portal shut, it doesn't turn into the edge. (Hungry: full, with nobody near the apple, it may as well
+  // loop round and go through a few moves later, which it now sees it can.)
+  const view = shutAt => () => aiView({ me: aiMe([[N21 - 1, 10], [N21 - 1, 11], [N21 - 1, 12], [N21 - 1, 13]], 'up', { hungerLeft: 8000, starveIn: 8000 }), others: [aiRival(1, line(8, 20, 4), 'right')], tickMs: 110,
     food: [{ x: 1, y: 10, kind: 'golden', expires: 999 }, { x: 12, y: 3, kind: 'food', expires: 999 }],
     portals: shutAt === null ? [] : [{ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt }] });
   const open = picks(view(30000 + 800), 'drab', 20), none = picks(view(null), 'drab', 20);
