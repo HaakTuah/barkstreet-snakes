@@ -19,15 +19,16 @@ if (isMainThread && require.main === module) {
   const read = f => fs.readFileSync(f, 'utf8');
   // What rounds are played with: the game's files, and this file (its parts
   // joined, as tools/simulate.js runs them: module.joined) and the state
-  // store too, since what a run counts can change; and their key. The cores
+  // store too, since what a run counts can change, and the seeded draws
+  // (tools/seeded.js, required); and their key. The cores
   // are handed these very texts (this file's as the run began), so the
   // key is always that of the code played. They're read again once the lock
   // is taken: whatever was edited while the run waited is played, and
   // stored, as it is now.
-  const SELF = { text: module.joined, file: __filename }, STATE_FILE = require.resolve('./snapshots/state.js');
+  const SELF = { text: module.joined, file: __filename }, STATE_FILE = require.resolve('./snapshots/state.js'), SEEDED_FILE = require.resolve('./seeded.js');
   const snapshot = () => {
-    const game = GAME_FILES.map(f => read(path.join(ROOT, f))), state = read(STATE_FILE), other = versus ? read(path.join(versus, 'ai.js')) : null;
-    return { game, state, other, key: hash(...game, SELF.text, state, ...(versus ? [other, seats] : [])) };
+    const game = GAME_FILES.map(f => read(path.join(ROOT, f))), state = read(STATE_FILE), seededText = read(SEEDED_FILE), other = versus ? read(path.join(versus, 'ai.js')) : null;
+    return { game, state, other, key: hash(...game, SELF.text, seededText, state, ...(versus ? [other, seats] : [])) };
   };
   let files = snapshot();
   const CACHE = path.join(os.tmpdir(), 'barkbite-sim-cache');
