@@ -10,11 +10,13 @@
 //
 //   core.js     the page's elements, words, the game's state and the loop
 //   round.js    a round: starting and ending; and its sounds
-//   banners.js  the banners for a round's big moments, and the cards
-//   hud.js      the scoreboard and the tags
+//   banners.js  what a round says: the banners for its big moments, and the lessons
+//   toasts.js   the banner itself: where it goes, how long it stays; the short cues beside it
+//   cards.js    the cards, the rivals' roll-call and the seats where you choose them
+//   hud.js      the scoreboard, the tags and the steering hint
 //   input.js    keys, touch and swipes, the buttons, and napping and waking
 //   friends.js  the Hall of Fame and the Field guide, and playing with friends online
-//   screen.js   size and motion, the dev overlay, and the start
+//   screen.js   size and motion, the screen kept awake, the dev overlay, and the start
 
 const TUNE = window.TUNING;
 const Engine = window.SnakeEngine;
