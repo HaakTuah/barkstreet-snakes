@@ -767,6 +767,9 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
   instead of jumping (food's own fall is entry 6's A/B); and **the spit's tell**: the cheek's bulge counts down to the
   spit, so a player sees when it comes (where it flies is 3b+'s dotted line).
 
+- The room card's seats two by two on a phone (PR #347): at 390 and 360 px upright and 844x390 on its side they wrapped
+  three and one, the last rival alone on its row; a 16-letter name ran past their box at 320 px, now ending in "…".
+
 ## The split lane, done (moved 31 October 2026)
 
 - `audio.js` became `audio/` (PR #225): `cues.js` and `sound.js`, sound proven unchanged by `docs/archive/studies/same-sound.js`.

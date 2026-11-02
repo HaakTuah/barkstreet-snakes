@@ -216,6 +216,15 @@ function youDied() {
   updateControls();
 }
 
+// The moment you die: the board holds still (alone), your snake holds its
+// pose with its eyes screwed shut, then bursts. Also when it ends the round.
+function deathMoment() {
+  freezeUntil = lastFrame + (reducedMQ.matches ? TUNE.DEATH_FREEZE / 2 : TUNE.DEATH_FREEZE);
+  Render.hold(boardClock + (freezeUntil - lastFrame)); // (on the board's clock)
+  Render.shake(TUNE.SHAKE_PX);
+  flashFrame('kill', true);
+}
+
 // A death card's way into the Field guide: the row about what got you.
 function guideFor(p) {
   const [howRow, name] = p.killer === 'hunger' ? ['basic-hunger', 'Hunger']
