@@ -8,7 +8,7 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
 **2 November 2026, a fresh week:** the main lane is part 4 (#198, merged as it stands so the owner can play it), then
-2y, then part 5 (#202, unparked: the wrap's trade-off), then 2x, then 2z; the polish
+2y, then part 5 (#202, unparked: the wrap's trade-off), then 2x, then 2z, then 2u; the polish
 lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
@@ -98,6 +98,11 @@ after 2y (the owner: "Yes, expertly to all 3!"). Its spec and A/B are as entry 5
 The only golden food without a power: +3, a race to it before it fades. A census on fresh seeds: how often it is
 contested, and whether a snake that eats one places or wins better than one that does not. If it pays, it stays as it
 is. If it does not: +3 and both rests refilled ("the apple of vigour"), measured both ways like any rule.
+
+### 2u. One stamina for jump and dash (the owner, 2 November 2026; an engine-rules entry, after 2z and before part 7)
+
+One bar for both plain powers, no tail cost, each power a third to two thirds of plain power uses and neither better in
+aggregate, the pace kept: `docs/design/37-one-stamina.md`. Part 7's pricing then prices the one stamina.
 
 ### 2x. The spitter slides over its own mushroom (the owner, 2 November 2026; an engine-rules entry, after part 5)
 
