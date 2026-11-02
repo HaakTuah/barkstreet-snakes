@@ -7,7 +7,9 @@ For people working on the game: how to run it locally, the checks and experiment
 - `--root DIR` runs the simulation on another copy of the game files.
 - The browser suites (scope, render, input, layout, ui) drive a headless Chrome through `tools/browser.js`: it looks in
   the usual places, or set `CHROME=/path/to/chrome`; `CI=1` runs it without its sandbox, which is needed as root
-  (`scripts/test.sh` sets it).
+  (`scripts/test.sh` sets it). The layout suite is the long one: whole, in one process, about 30 minutes on a cloud
+  machine, printing only each part's end until its results come at the end, so `scripts/test.sh` runs its five CI jobs
+  side by side, as CI does (logs: `layout-1.log` to `layout-5.log` beside the others).
 - Optional: `SIM_WORKERS` sets the simulation's cores, `BARKBITE_PRIORITY=normal` for timing runs, `ONLINE_SEEN=1`
   makes online-test print what it saw, `LAYOUT_JOB=N` runs one of the layout suite's five CI jobs.
 - To play it locally, `.claude/launch.json` serves the folder on port 5173.

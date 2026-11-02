@@ -46,11 +46,11 @@ and the owner's notes of 2 November, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
-- **First: the layout suite hangs in Claude's cloud machines (#383)** (the owner, 2 November 2026: next in this lane,
-  ahead of everything below). Until it is fixed, no session can run the full suites, and every builder leans on CI.
-  Start where the report points: where `tools/layout-test.js` waits on Chrome (a page event, or a font or other request
-  that never arrives through the session's proxy); fixed when `scripts/test.sh` finishes in a session as it does in CI.
-  The commit says "Fixes #383".
+- *Done:* the layout suite in cloud sessions (#383): it never hung, it ran about 28 minutes in one process, silent
+  until its end; `scripts/test.sh` now runs its five CI jobs side by side, each part's end is printed, and the banner
+  probe no longer misreads a banner on its way out (PR #396).
+- *Done:* the workflows' actions, `actions/checkout` and `actions/setup-node` 4 to 7 (Dependabot, PR #361).
+- *Done:* TypeScript 6.0.2 to 7.0.2, the native compiler, its 20 platform packages audited (Dependabot, PR #390).
 - *Done:* CI and the cloud setup on Node 26 (from 22; suites green, fingerprints unchanged; PR #369).
 - *Done:* licences audited (`tools/licences.json`), gated on every PR (`.github/workflows/licences.yml`) and their notices
   shipped (`THIRD-PARTY-NOTICES.txt`); two lists, what ships and tools that only run (PR #377).
@@ -81,7 +81,7 @@ and the owner's notes of 2 November, among them).
 **From the issues** (the owner, 2 November 2026): Ghost starving most (#325) is measured in the next AI entry, as its
 trademark (distance) or a fault; in the same entry, apples by the edge rotting (#324): 80% of the apples that rot lie on
 the edge row or one in, passed up by rivals whose room and margin weights count a safe edge cell against them, so it
-tests a safe-meal exception like the one by the neck (`MEAL_DAWDLE`), measured both ways; the snake that starved 4 s after its warning (#327) is a bug any lane may take.
+tests a safe-meal exception like the one by the neck (`MEAL_DAWDLE`), measured both ways; the snake that starved 4 s after its warning (#327) was a snake of 4 in snow, warned on the hunger clock: fixed in the warning (PR #397).
 
 ### 2y+. Split `ai.js` and `engine.js` by meaning (the owner, 2 November 2026; the main lane, right after 2y, before part 5)
 
@@ -89,6 +89,18 @@ Both have grown past the mark (148 KB and 136 KB) and every main-lane entry touc
 entries" never came. Each is split by meaning in a PR of its own (the rivals' shared template, each rival's override,
 planning, and so on for `ai.js`; the rules by system for `engine.js`), proven unchanged by the fingerprints and the
 suites, so it goes quickly and needs no head-to-head. Part 5's branch (#202) then merges the split in once.
+
+### 2y++. The golden flight, followed up (the owner, 2 November 2026; #399 and #401; side lanes now, the last step after part 7)
+
+2y left the flight even both ways (24.9% against 25.1% head to head; +0.10 ± 0.15 place a use): between rivals a
+landing is almost never contestable. The flight stays as built for now, and no rule changes yet:
+1. **The ring tinted by its taker** (#401; a side lane now, drawing only): when a snake's head is closing on another's
+   ring and could get there in time, the ring is tinted briefly in that snake's colour, for everyone. `render/looks.js`
+   is at the 50 KB mark, so its step 0 split comes first.
+2. **The flight measured against fliers who fly like people** (a measurement, a side lane now): fliers who take off into
+   contested rings, as people do, against the rivals who now take landings; per use and head to head.
+3. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
+   even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
 
 ### 5 (part 5). Gold portals, unparked (the owner, 2 November 2026; an engine-rules entry, right after 2y)
 

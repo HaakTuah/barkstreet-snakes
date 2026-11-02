@@ -126,6 +126,15 @@ goes to building. Its usage can run out like any other, and it may then not say 
    Codex's answer, so neither waits for the other, and the builder answers both lists in one round.
 6. **Docs-only PRs and the milestone PRs get no review,** as before. Codex's automatic review stays off in its settings
    for both repositories, so it reviews only when asked.
+   **One security review a PR, at most** (the owner, 2 November 2026: Codex spent as much of its week on reviews as
+   Claude did on everything, two thirds of it on security reviews run with every round). Codex's security review is
+   set to run only when asked, never with every code review. A builder asks for it once (`@codex security review`), on
+   the round it expects to be the last, and only when the change touches what a security review is for: input from
+   players, models or files, a workflow, the network, saved files or exports, or a dependency newly added or moved up a
+   major version. Every other PR gets the code review alone, Dependabot's minor and patch updates included (CI, the
+   licence gate and GitHub's dependency review check those). If a later fix changes the risky part again, the builder
+   asks once more. Codex's automatic review and automatic security review are both off in its settings, so nothing
+   runs unless a builder asks.
 7. **Checks that run the work, once Codex can build** (the owner, 2 November 2026; the words are in
    `docs/archive/instructions.md`). The native review reads the diff but runs nothing, so it cannot check a claim such
    as "the rivals now dash 40% more". When Codex's environments work ("Setup"), a Codex task in its container also
@@ -152,7 +161,8 @@ The guards against both are part of the rule:
    with the same model, effort and brief as before. It checks those points and the lines changed since. Something new
    about work it already saw is raised only if it is a fault that blocks: a bug, a broken rule, a security hole, a
    departure from the design. Taste does not grow between rounds, so the rounds come to an end.
-4. **At most three rounds, then the escalation helper, then blocked.** Anything still open after the third round goes
+4. **At most three rounds, then the escalation helper, then blocked, held firmly** (a fourth round is never asked
+   for, whatever the reason). Anything still open after the third round goes
    to the escalation helper (`CLAUDE.md`) with a self-contained brief. It fixes each point, or rules it outside the
    task or wrong, with reasons. Whatever is still open after that, the PR is **not merged:** it stays open as a draft,
    is marked blocked in `docs/PROGRESS.md` filed as a `question` issue and linked under "Questions for the owner", and the work goes on with the next
