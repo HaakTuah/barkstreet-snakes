@@ -34,7 +34,8 @@ declare namespace Engine {
     persona?: unknown; personaKey?: string;
     stunUntil: number; burnUntil: number; burnFrom: number;
     leaps: number; leapArmed: number; leapReadyAt: number; dashes: number; wrapUntil: number;
-    flight: { dir: Dir; over: { x: number; y: number }[]; land: { x: number; y: number }; gold?: Flag } | null;
+    flight: { dir: Dir; over: { x: number; y: number }[]; land: { x: number; y: number }; gold?: Flag; held?: Flag; cut?: Flag; flown?: number; path?: number[] } | null;
+    jumpHeld?: Flag; leapNow?: Flag; flyFor?: number; flyTurn?: { at: number; dir: Dir } | null; flew?: number; bumped?: boolean;
     flashReadyAt: number; flashArmed: number;
     /** A mushroom in its cheek (round six B): the segments it took, when it's spat, the ticks it had left to wilt. */
     cheek: { power: number; spitAt: number; left: number } | null;
@@ -78,8 +79,8 @@ declare namespace Engine {
     | { type: 'spawn'; kind: string; x?: number; y?: number; gold?: Flag }
     | { type: 'squash'; snake: Snake; x: number; y: number }
     | { type: 'spit'; snake: Snake; x: number; y: number; tx: number; ty: number; power: number; hit: number; lx: number | null; ly: number | null }
-    | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number; failed?: 1 }
-    | { type: 'leap'; snake: Snake; x: number; y: number; gold?: Flag; reach: number }
+    | { type: 'crash'; snake: Snake; x: number; y: number; cause: string; killer: string | null; killerId: number | null; lost: number; failed?: 1; air?: 1 }
+    | { type: 'leap'; snake: Snake; x: number; y: number; gold?: Flag; reach: number; now?: 1 }
     | { type: 'dash'; snake: Snake; x: number; y: number; n: number; plain?: Flag }
     | { type: 'fizzle'; snake: Snake; why: string; x: number; y: number; flash?: Flag }
     | { type: 'cut'; snake: Snake; x: number; y: number; lost: number; by?: number | null }
