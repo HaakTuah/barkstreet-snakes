@@ -1,0 +1,25 @@
+// Copycat's lines, by moment (see chatter/voices.js).
+// (Its lines are Chinese already: Copycat repeats what it hears, in Chinese.)
+addVoice('copycat', {
+  desperate: ['饿了，同志们！什么都吃！'],
+  start: ['同志们好！'],
+  idle: ['为人民服务！', '团结就是力量！', '同志们，冲啊！', '五年计划，提前完成！', '自力更生！', '劳动最光荣！'],
+  kill: ['向前进！'],
+  ash: ['粮食烧成灰了，同志们！'],
+  rot: ['浪费可耻，同志们！'],
+  weather: { storm: ['雷电交加，同志们小心！'], rain: ['下雨了，同志们！'], snow: ['下雪了，同志们，节约粮食！'] },
+  woodpecker: ['啄木鸟来了，同志们！'],
+  last: ['最后的苹果，同志们！'],
+  rainbow: ['彩虹！同志们，金苹果！'],
+  bonk: ['哎哟！', '哎呀，同志们！'],
+  burning: ['着火了，同志们！'],
+  doused: ['火灭了，同志们！'],
+  under: ['脚下有洞，同志们，不要怕！'],
+  cut: ['尾巴没了，同志们！'],
+  choke: ['咳咳！同志们，这是自己的尾巴！', '自己人不吃自己人！'],
+  dug: ['深挖洞，广积粮！', '地道战！虫子跑了，同志们！'],
+  knocked: ['粮食重新分配给{who}同志了！'],
+  flash: { first: ['抢先一步，同志们！'], past: ['快马加鞭！'] },
+  dies: ['同志们，再见……'],
+  diesBy: { edge: ['边……没看见……'], hole: ['同志们，我掉坑里了……'], woodpecker: ['啄木鸟同志，你也……'], hunger: ['粮食……没有了……'], fire: ['同志们，好热……'], self: ['我咬了……我自己？'] },
+});
