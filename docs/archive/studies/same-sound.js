@@ -4,7 +4,7 @@
 // afresh after a round), the weather, mute and the switches, on a stand-in context that logs
 // every node made and every call with its arguments, Math.random seeded alike. The same log is
 // the same sound.
-//   node tools/dev/same-sound.js [ref]   (ref: origin/develop unless told; run from the repository)
+//   node docs/archive/studies/same-sound.js [ref]   (ref: origin/develop unless told; run from the repository)
 const fs = require('fs'), vm = require('vm'), cp = require('child_process');
 const ref = process.argv[2] || 'origin/develop';
 const files = html => [...html.matchAll(/<script src="(audio[^"]*)"/g)].map(m => m[1]);

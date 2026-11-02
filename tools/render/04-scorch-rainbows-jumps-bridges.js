@@ -143,7 +143,7 @@ const bridge = await ev(`(() => {
   seeds(38);
   SnakeDebug.pinQuality(0);
   const count = (x, y, w, h, is) => { const p = pixels(x, y, w, h); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (is(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; };
-  const reddish = (r, g, b) => r > 120 && r > g + 50 && r > b + 40, body = (r, g, b) => r > 60 && r > g + 50 && r > b + 40; // (its red, lit; or in shade too, but not the pit's floor lit round it)
+  const body = (r, g, b) => r > 60 && r > g + 50 && r > b + 40; // (its red, lit or in shade, but not the pit's floor lit round it)
   const g = stage(['sniper', 'gobbler', 'mason']), [you, sn, gob, ma] = g.snakes;
   setBody(you, [[2, 22], [1, 22], [0, 22]], 'right'); you.stunUntil = 1e9;
   setBody(ma, [[2, 2], [1, 2], [0, 2]], 'right'); ma.stunUntil = 1e9;

@@ -641,7 +641,7 @@ its mimic weight (120) outweighing the pull of food, and the room and margin wei
 move. Copycat's part of 3b fixes it, and first checks with a census whether every rival does it: of the apples that
 rot, how many were within a rival's reach, and how far each was from the edge. A competent snake takes a safe apple by
 the wall ("Clever rivals, human reactions"); one it takes into a dead end doesn't count as safe.
-*Checked in PR #142* (`tools/dev/rotten-apples.js`, 150 rounds, seed 21): Copycat had been the worst, 0.20 apples
+*Checked in PR #142* (`docs/archive/studies/rotten-apples.js`, 150 rounds, seed 21): Copycat had been the worst, 0.20 apples
 passed up (its head within 2) and left to rot a minute alive, 0.15 by the edge; with its copied habits and its pull to
 mimic cut from 120 to 40, 0.13 and 0.09, mid-field. But every rival does it: 80% of the apples that rot lie on the edge
 row or one in, and Sniper (0.19), Capricious, Mason and Mute pass up as many. A general edge-apple fix is noted below.
@@ -738,7 +738,7 @@ Word for word from "The polish lane" in `docs/PROGRESS.md`.
 - *Left as it is, by Haakon's answer:* the woodpecker over the help line between rounds (the audit's second find; PR #240 closed). On a 390 px phone it may cover part of the help line or the chatter's words; nothing essential is hidden, it moves often and taps pass through it ("Clear of the row's words (2k+)" in `docs/design/32-the-owners-playtest.md`). Not to be raised again.
 - *Not reproduced:* bubbles overlapping at 4× (the audit's fourth find). In 8 watched phone rounds and 3 desktop rounds at 4×, the longest overlap was 0.4 s on the phone and 0.19 s on desktop, only while bubbles glide to a new side. Dropping the older bubble after 0.25 s of overlap made no measurable difference, so nothing was merged.
 - The squash lesson (PR #250): "Your own beads feed nobody.", no longer "Squashed! Your own tail feeds nobody." (it opened with a rival's death title, and called the beads tail; the Field guide's Beads row says beads).
-- *Measured, nothing to fix:* sound piling up while watching (PR #248, `tools/dev/sound-levels.js`). At 4× the round asks for about 10 cues a second and the gaps let 4.5 through, at most 5 in any 250 ms; rivals' chomps 2 a second, the babble one every 4 s at most. Same shape at 1× and 2×, halved. The chatter's words were scanned too: no typos, apostrophes consistent.
+- *Measured, nothing to fix:* sound piling up while watching (PR #248, `docs/archive/studies/sound-levels.js`). At 4× the round asks for about 10 cues a second and the gaps let 4.5 through, at most 5 in any 250 ms; rivals' chomps 2 a second, the babble one every 4 s at most. Same shape at 1× and 2×, halved. The chatter's words were scanned too: no typos, apostrophes consistent.
 - *As designed:* the empty chatter-log line (the audit's sixth find): it's a new line's 0.4 s slide-in (`log-in`) caught mid-fade. Over 3 watched rounds on a phone on its side, 23 of 621 visible-row samples caught one, and none stayed empty. No fix.
 - The tail-drop lesson only in a real pocket, not when you've coiled with room to crawl out after your tail (PR #246; the audit's fifth find).
 - The screenshot tour runs through again (PR #252): `tools/shots.js`'s staged knock-flight stopped at food the bird eats (the engine's knock list gives it nowhere to go); it skips that piece, as the engine does.
@@ -753,7 +753,7 @@ Word for word from "The polish lane" in `docs/PROGRESS.md`.
 
 ## The split lane, done (moved 31 October 2026)
 
-- `audio.js` became `audio/` (PR #225): `cues.js` and `sound.js`, sound proven unchanged by `tools/dev/same-sound.js`.
-  `chatter/zh.js` became `zh.js` and `zh-more.js` (PR #226), checked by `tools/dev/same-zh.js`.
+- `audio.js` became `audio/` (PR #225): `cues.js` and `sound.js`, sound proven unchanged by `docs/archive/studies/same-sound.js`.
+  `chatter/zh.js` became `zh.js` and `zh-more.js` (PR #226), checked by `docs/archive/studies/same-zh.js`.
 - Chatter split by meaning (Haakon, 2 November 2026; PR #318): a file per rival in `chatter/voices/` over a shared
   core, with the impressions and the talk on their own, listed in `chatter/voices.js`.

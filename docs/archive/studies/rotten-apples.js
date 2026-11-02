@@ -3,9 +3,9 @@
 // how far it lay from the edge. Per rival: apples passed up a minute alive,
 // all and by the edge (on the edge row or one in). Haakon saw Copycat shy
 // apples by the edge (29 October 2026); this checks every rival.
-//   node tools/dev/rotten-apples.js [root] [rounds] [seed]
+//   node docs/archive/studies/rotten-apples.js [root] [rounds] [seed]
 const fs = require('fs'), path = require('path'), vm = require('vm');
-const root = path.resolve(process.argv[2] || path.join(__dirname, '..', '..'));
+const root = path.resolve(process.argv[2] || path.join(__dirname, '..', '..', '..'));
 const rounds = +(process.argv[3] || 100), seed = +(process.argv[4] || 5), REACH = 2;
 let a = seed >>> 0;
 const rng = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };

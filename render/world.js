@@ -838,14 +838,6 @@ window.SnakeRender = {
   prebuild(on) { prebuilding = !!on; if (!on) { pre.ready = false; pre.key = NaN; } }, // (the land a strike leaves made ahead, or not: for the tests, comparing the two)
   get prebuilt() { return pre.ready; }, // (made ahead, and waiting for the strike: for the tests)
   get landMade() { return { swapped: landSwaps, built: landBuilds, stale: landStale, unready: landUnready }; }, // (how often a realm's layers were swapped in, made ahead, and made; strikes made the old way, and why: for the tests)
-  // (s's land's layers and the dashes as drawn, as a hash of their pixels, where they land and how big: for the tests)
-  landPixels(s) {
-    const r = realms.get(s), out = {};
-    const hash = c => { if (!c || !c.width) return null; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let h = 2166136261; for (let i = 0; i < d.length; i++) h = Math.imul(h ^ d[i], 16777619); return `${c.width}x${c.height}:${h >>> 0}`; };
-    if (r) { out.any = r.any; out.at = [r.X, r.Y]; out.layer = r.any ? hash(r.layer) : null; out.glow = r.any ? hash(r.glow) : null; out.shared = r.shared.length; }
-    out.dash = dash.any ? [dash.X, dash.Y, hash(dash.layer)] : null;
-    return out;
-  },
   flick(s, p) { const a = animOf(s, lastNow), [, len] = FLICKS[lookOf(s)] || FLICKS.player; a.tongueMs = T.TONGUE_MS * len; a.tongueUntil = lastNow + (1 - p) * a.tongueMs; a.nextTongue = lastNow + 1e9; }, // (its tongue or gag p of the way through, and then no more: for the tests)
   birdHome, // (when the woodpecker lands back on its perch after a strike, ms after it: the game's "kik!")
   knockFlight: (x, y, tx, ty) => knockFly(Math.hypot(tx - x, ty - y)), // (how long a piece the strike knocks from (x, y) to (tx, ty) is in the air, ms: the knock sound's landing)
