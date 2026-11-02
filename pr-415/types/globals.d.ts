@@ -1,6 +1,6 @@
 // What net.js and online.js see of the rest of the page, for `tsc --noEmit -p jsconfig.json`
 // (a check only: nothing here is shipped or loaded). Hand-written, and only the fields
-// online.js reads or writes: engine.js itself isn't annotated. A field online.js starts
+// online.js reads or writes: the engine itself isn't annotated. A field online.js starts
 // reading goes in here too, or the check fails.
 
 declare namespace Engine {
@@ -72,7 +72,7 @@ declare namespace Engine {
     fall?: number[];
   }
 
-  /** The engine's events, as engine.js lists them above step(): just the fields online.js reads. */
+  /** The engine's events, as engine/step.js lists them above step(): just the fields online.js reads. */
   type Event =
     | { type: 'eat'; snake: Snake; kind: string; x: number; y: number; color?: string; cooked?: Flag; gold?: Flag }
     | { type: 'death'; snake: Snake }
