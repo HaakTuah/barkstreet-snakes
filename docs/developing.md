@@ -36,6 +36,10 @@ gh api "repos/HaakTuah/barkstreet-snakes/pulls?state=open&base=main&head=HaakTua
 ordinary small PRs: the next free lane takes one, runs the checks, gets Codex's review, reads the release notes for
 breaking changes, and merges it, or closes it with the reason.
 
+**Node's version.** CI's `node-version` and the cloud machines run the same Node, so a check that passes in a session
+passes in CI. Each October, when a new even-numbered Node becomes long-term support, both move to it in one PR
+(`.github/workflows/tests.yml` and `scripts/cloud-setup.sh`), proven by the suites and the fingerprints.
+
 **CodeQL checks every PR** into `develop` and `main`, every push to them and once a week (`.github/workflows/codeql.yml`).
 A finding on a PR shows on it as a note; what to do with it is in `AGENTS.md`, "Git and GitHub". Alerts already in the
 code are the owner's to pass on (`SECURITY.md`, point 9).
