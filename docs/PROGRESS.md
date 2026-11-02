@@ -49,8 +49,8 @@ and the owner's notes of 2 November, among them).
   part 2, `docs/design/`, PR #335; part 3, the code, draft PR #337): its spec is in
   `docs/handoff/queue-specs.md` under the same title.
 - *Done:* `audio.js` and `chatter/zh.js` split (PRs #225, #226), the chatter split by meaning (PR #318), the workshop
-  check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November; `AGENTS.md` is 22 KB after that day's rules, so
-  the next check condenses it) and point (5), the unused-code check (PR #331):
+  check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November; condensed again from 23.6 to 19.8 KB, PR #360)
+  and point (5), the unused-code check (PR #331):
   `docs/archive/progress-done.md`, "The split lane, done".
 - **The file-by-file review's moves:** done, a folder a PR (#341, #342, #343, #344, #345):
   `docs/archive/progress-done.md`, "The split lane, done". Left: `render/world.js`'s part, which waits with it below;
