@@ -32,19 +32,47 @@ const portalRun = (gap, ticks = 40) => {
   check('another snake following it goes through the portal, out at the exit', b.alive && through && through.snake === 1 && through.owner === 0 && through.tx === 0 && b.body[0].y === 10 && b.body[0].x < 5 && !seen.some(e => e.includes('crash')), JSON.stringify({ head: b.body[0], through, seen }));
 }
 
+// Round and round inside a box (x0..x1, y0..y1), clockwise or not: the turn a snake takes at its corners, so it can wait
+// out a portal, as long as PORTAL_MS is, without meeting an edge.
+const lap = (s, x0, y0, x1, y1, cw) => {
+  const { x, y } = s.body[0], d = s.dir;
+  if (d === D.right && x >= x1) s.dir = cw ? D.down : D.up;
+  else if (d === D.down && y >= y1) s.dir = cw ? D.left : D.right;
+  else if (d === D.left && x <= x0) s.dir = cw ? D.up : D.down;
+  else if (d === D.up && y <= y0) s.dir = cw ? D.right : D.left;
+};
+// A wraps just long enough to go through the right edge on row 10, then laps a box by the exit; B laps a box below
+// till the portal has shut, then heads up and right, off the edge where the portal was.
+const portalLate = (len, waits = true) => {
+  const g = board([[line(N21 - 2, 10, len), 'right'], [line(14, 21, 3), 'right']], { time: 30000 });
+  const [a, b] = g.snakes;
+  a.wrapUntil = g.time + 700;
+  const open = [], seen = [];
+  let shut = false;
+  for (let t = 0; t < 160 && b.alive && !seen.some(e => e.includes('through')); t++) {
+    if (a.body[0].x < N21 / 2) lap(a, 0, 10, 6, 15, true);
+    const go = shut || !waits; // (on its way: up the box's right side and on, then right along row 10)
+    if (!(go && b.dir === D.up && b.body[0].x === 19)) lap(b, 14, 16, 19, 21, false);
+    if (go && b.dir === D.up && b.body[0].y === 10) b.dir = D.right;
+    feed(g); quiet(g);
+    if (g.portals.length) open.push([g.tick - 1, g.portals[0].shutAt ? g.portals[0].shutAt - g.time : 0]);
+    for (const e of g.events) {
+      if (e.type === 'portalShut') shut = true;
+      if (['portal', 'through', 'portalShut', 'crash', 'death'].includes(e.type)) seen.push(`${g.tick - 1}:${e.type}${e.snake ? e.snake.id : ''}`);
+    }
+  }
+  return { g, a, b, open, seen };
+};
+
 { // Too late (the portal shut PORTAL_MS after the body passed): the edge is an edge again.
-  const { g, b, seen } = portalRun(14);
+  const { g, b, seen } = portalLate(4, true);
   check('...but not once it has shut, PORTAL_MS after the body passed: the edge is the edge', seen.some(e => e.endsWith('portalShut')) && seen.some(e => /(crash|death)1$/.test(e)) && !seen.some(e => e.includes('through')) && b.body[0].x === N21 - 1, JSON.stringify({ seen, head: b.body[0], alive: b.alive, cause: b.cause, tick: g.tick }));
 }
 
 { // It stays open while the owner's body is through it, and shuts PORTAL_MS after the tail has passed.
-  const g = board([[line(N21 - 2, 10, 6), 'right'], [line(3, 20, 3), 'right']], { time: 30000 });
-  const [a] = g.snakes;
-  a.wrapUntil = g.time + 60000;
-  const open = [];
-  for (let t = 0; t < 30 && !g.events.some(e => e.type === 'portalShut'); t++) { feed(g); quiet(g); if (g.portals.length) open.push([g.tick - 1, g.portals[0].shutAt ? g.portals[0].shutAt - g.time : 0]); }
-  const spanning = open.filter(([, s]) => !s).length, ms = open.length * E.tickMs(g);
-  check('it stays open while the owner\'s body is through it, then shuts PORTAL_MS after', spanning === 5 && g.portals.length === 0 && open.some(([, s]) => s > 0 && s <= T.PORTAL_MS), JSON.stringify(open));
+  const { g, open } = portalLate(6, true);
+  const spanning = open.filter(([, s]) => !s).length;
+  check('it stays open while the owner\'s body is through it, then shuts PORTAL_MS after', spanning === 5 && g.portals.length === 0 && open.some(([, s]) => s > 0 && s <= T.PORTAL_MS) && open.length * E.tickMs(g) >= T.PORTAL_MS * 0.8, JSON.stringify(open.filter((o, i) => i < 8 || i > open.length - 3)));
 }
 
 { // The rivals use them: heading up the right edge beside an open portal there, a golden apple just beyond its exit on
