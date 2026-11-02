@@ -1,5 +1,5 @@
 // The Hall of Fame, your stats and your best score, saved in this browser
-// only. Every storage access is wrapped, and whatever comes back from storage
+// only, and drawn into their screens; and the rivals you chose for the seats. Every storage access is wrapped, and whatever comes back from storage
 // is checked before use, so blocked or corrupt storage never breaks the game.
 window.SnakeRecords = (() => {
   const SCORES_KEY = 'snake-highscores';
