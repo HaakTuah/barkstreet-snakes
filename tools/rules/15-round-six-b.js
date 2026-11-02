@@ -62,3 +62,30 @@ function hopsWithin(g, n) {
   quiet(g);
   check('...not with room and food on its own side', !g.events.some(e => e.type === 'leap') && s.alive, JSON.stringify(s.body[0]));
 }
+
+{ // 2r, no hop onto a doomed island (Haakon, 30 October 2026: "don't forget a snake must account for if it can jump off
+  // the island again"). Gobbler, 26 long, folded on a strip it can't live on, with a golden jump and its plain one
+  // resting a minute: up across a hollow, an island of 20 cells with food on it, nothing in a hop of it but the strip; right,
+  // across one as wide, an island of 30 cells, no food. It hops right: the small one is the death it is. With its plain
+  // jump rested, it could hop back off the small one, so it takes the food.
+  for (const rested of [false, true]) {
+    const g = E.createGame({ withPlayer: false, personas: ['gobbler', 'drab'] });
+    g.snakes = g.snakes.slice(0, 2);
+    const [s, o] = g.snakes;
+    const strip = (x, y) => x >= 1 && x <= 2 && y >= 8 && y <= 21, small = (x, y) => x >= 1 && x <= 4 && y >= 1 && y <= 5;
+    const big = (x, y) => x >= 5 && x <= 10 && y >= 8 && y <= 12, far = (x, y) => x >= 18 && x <= 22 && y >= 18 && y <= 22;
+    for (let y = 0; y < T.GRID; y++) for (let x = 0; x < T.GRID; x++) if (!strip(x, y) && !small(x, y) && !big(x, y) && !far(x, y)) g.holes.add(K(x, y));
+    s.body = [];
+    for (let y = 8; y <= 20; y++) s.body.push({ x: 2, y });
+    for (let y = 20; y >= 8; y--) s.body.push({ x: 1, y });
+    s.dir = D.up; s.leaps = 1; s.leapReadyAt = rested ? 0 : g.time + 60000; s.grow = 3; // (just ate: its tail stays, so the strip is a dead end)
+    o.body = [{ x: 20, y: 20 }, { x: 19, y: 20 }, { x: 18, y: 20 }]; o.dir = D.right;
+    g.food = [[2, 4], [3, 2], [1, 2]].map(([x, y]) => ({ x, y, kind: 'food', expires: 9999 }));
+    g.given = new Set(g.food.map(f => f.y * T.GRID + f.x));
+    const snap = () => ({ snakes: g.snakes.map(q => ({ id: q.id, body: q.body.map(c => ({ ...c })), dir: q.dir, stun: 0, leaps: q.leaps, dashes: 0, wrap: 0, air: 0, land: -1, cough: 0 })), holes: g.holes.size, fires: [], pecks: [] });
+    g.history = [snap(), snap(), snap()];
+    const e = hopsWithin(g, 10);
+    if (!rested) check('2r: a rival hops to the island it can live on, not the small one it could never leave', !!e && e.x === 3 && e.y === 8, JSON.stringify(e && { x: e.x, y: e.y }));
+    else check('...and with its plain jump rested, so it could hop back off, it takes the small one with the food', !!e && e.x === 2 && e.y === 7, JSON.stringify(e && { x: e.x, y: e.y }));
+  }
+}

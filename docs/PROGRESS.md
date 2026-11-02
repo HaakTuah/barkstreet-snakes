@@ -46,6 +46,17 @@ and the owner's notes of 2 November, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
+- **Licences: audit, gate and notices** (the owner, 2 November 2026; `SECURITY.md`, point 10): every tool, PeerJS, and
+  every font, sound, image and data set audited with its licence, anything off the list a `question` issue; a check on
+  every pull request (`actions/dependency-review-action`) failing a package off the list; a third-party notices file
+  shipped with the game (PeerJS's, at least).
+- **Every version where Dependabot sees it** (the owner, 2 November 2026): a tools-only `package.json` (TypeScript,
+  Playwright; the game still ships no dependencies) read by `.github/workflows/tests.yml`, `scripts/cloud-setup.sh` and
+  `scripts/test.sh` instead of three written versions, with npm added to `.github/dependabot.yml`; Playwright up from
+  1.49.1; PeerJS (`net.js`, loaded from cdnjs in every player's browser) given an integrity hash so a changed file is
+  refused; and what Dependabot still cannot read (PeerJS) listed in one file, checked by a monthly scheduled workflow
+  that opens an `enhancement` issue when it is behind.
+
 - **Node 26** (the owner, 2 November 2026; "Node's version" in `docs/developing.md`): CI's `node-version` and
   `scripts/cloud-setup.sh` move from 22 to 26 together (installing it from the npm registry if the machine has an
   older one), proven by the suites and the fingerprints; 24 if the tooling is not ready for 26, said in the PR.

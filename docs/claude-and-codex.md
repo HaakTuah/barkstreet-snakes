@@ -143,7 +143,7 @@ The guards against both are part of the rule:
    standing rules) or **not blocking**, which says only what is fixed first. **A 10 is a list with nothing open:** the
    work does all of the task's text and the sections it names, keeps every standing rule, leaves nothing behind ("Keep it lean" in `AGENTS.md`), its tests prove it, and a
    demanding expert would hand it over as it stands. A 10 with a point open, or less than 10 with none, is no review:
-   ask again. This definition goes into every reviewer's brief word for word, and only the owner changes it; so does "One idea, for every reviewer" ("Review guidelines" in `AGENTS.md`).
+   ask again. This definition goes into every reviewer's brief word for word, and only the owner changes it; so do "What a player sees" and "One idea, for every reviewer" ("Review guidelines" in `AGENTS.md`).
 2. **Every point is fixed, or moved out with a reason.** A point within the task is always fixed. A point outside it
    (code or a question the task did not touch) may become a follow-up (a `bug` issue if it is a bug, otherwise an entry in `docs/PROGRESS.md`), with the reason in the
    PR. A point the builder thinks wrong is answered in the PR with why. The next round's reviewer rules on each move
@@ -181,6 +181,7 @@ The weekly blind re-reviews and the canaries, newest first ("Reviews", point 5).
 
 | Date | Check | PR | Reviewer checked | Misses | What changed |
 | --- | --- | --- | --- | --- | --- |
+| 2026-11-02 | Blind re-review (week 2) | Snakes #221 (interface, 2u; its reviewer found nothing blocking) | Claude's reviewer | 1 by the letter (blocking; scored 8): the README not updated, a rule made an hour after #221 merged (#237), so none against the rules of its day | Already fixed by #241; non-blocking bug filed as #376; two in a row by the letter, so asked in #378, reading taken: brief unchanged |
 | 2026-11-01 | Blind re-review (week 1) | Snakes #289 (engine rules, merged at 7, 9, 10) | Codex (its 10) and Claude's reviewer (its 9) | 3 (blocking; scored 7) | Follow-up entry 2s+, done (`docs/archive/progress-done.md`); the first miss, so no brief changed yet |
 | 2026-11-01 | Canary (before this rule) | Snakes #298 | Codex | 0 of 3 | None needed |
 
