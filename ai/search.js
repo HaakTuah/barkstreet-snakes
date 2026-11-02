@@ -23,7 +23,7 @@ function setUpSearch() {
 // `body` is the first `len` cells; the moved body goes into bodies[t + 1].
 function move(body, len, grow, d, depth, t, bonus) {
   let nx = body[0].x + d.x, ny = body[0].y + d.y;
-  if (t < wrapSteps || (seenPortals.length && !inGrid(nx, ny) && portalOut(body[0].x, body[0].y, d, t + 1))) { nx = (nx + N) % N; ny = (ny + N) % N; } // (the edges wrap for me a while yet; or a gold portal, open then)
+  if (t < wrapSteps || (portalPlan && !inGrid(nx, ny) && portalOut(body[0].x, body[0].y, d, t + 1))) { nx = (nx + N) % N; ny = (ny + N) % N; } // (the edges wrap for me a while yet; or a gold portal, open then)
   if (!canEnter(body, len, grow, nx, ny, t + 1)) return null;
   const i = ny * N + nx;
   const turning = d.x !== unit(body[0].x - body[1].x) || d.y !== unit(body[0].y - body[1].y);

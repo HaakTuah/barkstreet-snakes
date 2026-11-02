@@ -66,3 +66,14 @@ const portalRun = (gap, ticks = 40) => {
   const open = picks(view(30000 + 800), 'drab', 20), none = picks(view(null), 'drab', 20);
   check('an AI keeps its head off a portal\'s exit a rival could come out of next (it sees portals used against it)', !open.left && none.left === 20, JSON.stringify({ open, none }));
 }
+
+{ // ...and plan for them, as a way to what's beyond, while it's still open: Gobbler heading up near the right edge, an
+  // apple far round the board (21 moves) but 11 through an open portal's exit, another 13 moves to its left. With the
+  // portal open long enough, it heads for the entry; shut, or shutting before it could get there, for the nearer apple.
+  const view = shutAt => () => aiView({ me: aiMe([[19, 14], [19, 15], [19, 16], [19, 17]], 'up'), others: [aiRival(1, line(20, 22, 4), 'right')], tickMs: 110,
+    food: [{ x: 2, y: 10, kind: 'food', expires: 999 }, { x: 6, y: 14, kind: 'food', expires: 999 }],
+    portals: shutAt === null ? [] : [{ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt }] });
+  const open = picks(view(30000 + 1300), 'gobbler', 20), late = picks(view(30000 + 400), 'gobbler', 20), none = picks(view(null), 'gobbler', 20);
+  check('an AI plans for an open gold portal: food beyond its exit pulls it toward the entry while it\'s open (Gobbler)', !open.left, JSON.stringify(open));
+  check('...but not when it would shut before it got there, nor with none', late.left === 20 && none.left === 20, JSON.stringify({ late, none }));
+}

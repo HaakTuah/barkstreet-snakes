@@ -79,6 +79,14 @@ function fillRoom(headP, t, cap, need, eager, foodRange, mute, bodyMark, stampF,
   let read = 0, write = 1, space = 0, anyFood = 0, trail = HOLE, neckCount = 0;
   for (let d = 1; read < write && (space < cap || (eager && !anyFood && d <= foodRange)); d++) {
     const levelEnd = write, by = t + d, pull = eager ? Math.max(0, foodRange - (t + d > mute ? d : mute + 1 - t)) : 0; // (coughing, I'd only nudge it)
+    if (portalPlan) { // (an open gold portal's exit, a move after its entry: room, and food, beyond it)
+      const from = write;
+      write = portalHop(d, t, headP, stampF, write);
+      for (let k = from; k < write; k++) {
+        space++;
+        if (eager) { const i = unframed[Q[k]], v = foodValue[i]; if (v > 0) anyFood = Math.max(anyFood, v * (foodFrom[i] > by ? latePull(foodRange, t, by, foodFrom[i], mute) : pull)); }
+      }
+    }
     while (read < levelEnd) {
       const p = Q[read++];
       let q = p - Wd;
@@ -161,6 +169,11 @@ function spreadTerritory(ns, t, age, bits, tags, stop, coughMax, beadCount) {
         q = p + 1; s = B[q]; o = s & tags;
         if (s <= T1) { B[q] = claim; theirs++; Q[write++] = q; } else if (s >= next && o && o !== tag) { if (o === 1) mine--; else theirs--; B[q] = next; }
       }
+    }
+    for (let n = 0; n < portalPlan; n++) { // (a rival that has an open gold portal's entry claims its exit a move later, if it's free; my own way through, the search plans)
+      const px = portalEx[n], s = B[portalIn[n]], tag = s & tags;
+      if (tag < 2 || s < next - (1 << bits) || s >= next || T1 > portalLast[n] || B[px] > T1 || (tag === 1 && ML[px] > T1)) continue;
+      B[px] = next + tag; if (tag === 1) mine++; else theirs++; Q[write++] = px;
     }
     if (mine === mineBefore && T >= t && stop && T1 + 1 > coughMax) {
       let open = false; // (a rival's own bead nobody's claimed yet)

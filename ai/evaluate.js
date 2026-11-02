@@ -162,6 +162,7 @@ function evaluate(body, len, grow, t) {
       when = Math.max(from, t + (seenF[framed[i]] === stampF ? distF[framed[i]] : Math.abs(i % N - head.x) + Math.abs((i - i % N) / N - head.y))); // (as the crow flies, past my room's count)
       if (when > can) continue;
     } else {
+      if (portalPlan) { const fx = i % N, fy = (i - fx) / N, via = portalDist(head.x, head.y, fx, fy, t); if (via < Math.abs(fx - head.x) + Math.abs(fy - head.y)) when = Math.min(when, t + via); } // (sooner through an open gold portal, as the crow flies)
       if (from > when) { early = EARLY * (from - when); when = from; } // (see latePull)
       if (when <= mute && reach[framed[i]] <= mute) continue;
     }
@@ -188,7 +189,7 @@ function evaluate(body, len, grow, t) {
   // A craving: golden power food anywhere, a rival's side or not (as the crow flies; knocked, from when it lands).
   for (let k = 0; k < goldCount; k++) {
     const i = goldCells[k], v = foodValue[i], x = i % N;
-    if (v > 0) foodScore = Math.max(foodScore, craving.contested * v * Math.max(0, w.foodRange - Math.max(Math.abs(x - head.x) + Math.abs((i - x) / N - head.y), foodFrom[i] - t)));
+    if (v > 0) foodScore = Math.max(foodScore, craving.contested * v * Math.max(0, w.foodRange - Math.max(portalDist(head.x, head.y, x, (i - x) / N, t), foodFrom[i] - t)));
   }
 
   let score = w.space * space
@@ -199,7 +200,7 @@ function evaluate(body, len, grow, t) {
   // 4. Hunting: shrink the victim's room and get in front of it.
   if (intent.victim >= 0) {
     score -= w.hunt.squeeze * victimRoom;
-    score -= w.hunt.chase * manhattan(head, intent.target);
+    score -= w.hunt.chase * (portalPlan ? portalDist(head.x, head.y, intent.target.x, intent.target.y, t) : manhattan(head, intent.target)); // (through an open gold portal, if that's nearer)
   }
 
   // 5. Distance from rivals: from the nearest head (Ghost), or per rival.
@@ -216,7 +217,7 @@ function evaluate(body, len, grow, t) {
   if (intent.lure >= 0) score -= w.lure.weight * Math.abs(manhattan(head, heads[intent.lure]) - w.lure.dist);
 
   // Heading for a spot (Colonist's next flag).
-  if (intent.goal) score -= w.goal * manhattan(head, intent.goal);
+  if (intent.goal) score -= w.goal * (portalPlan ? portalDist(head.x, head.y, intent.goal.x, intent.goal.y, t) : manhattan(head, intent.goal));
 
   // Desperado: the closer to danger, the better.
   if (w.thrill) {
