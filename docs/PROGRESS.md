@@ -48,6 +48,9 @@ and the owner's notes of 2 November, among them).
 - *Done:* `audio.js` and `chatter/zh.js` split (PRs #225, #226), the chatter split by meaning (PR #318), the workshop
   check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November) and point (5), the unused-code check (PR #331):
   `docs/archive/progress-done.md`, "The split lane, done".
+- **The file-by-file review's moves** (found in part 3, PR #337): what sits in the wrong file moves to the file for it,
+  and helpers written several times are written once, a folder per PR, behaviour proven unchanged. Spec:
+  `docs/handoff/queue-specs.md`, "The file-by-file review's moves". `render/world.js`'s part waits with it below.
 - **Waiting for the main lane** (PR #198 and its parked #202 have them open): `ai.js` (139 KB), `engine.js` (128 KB) and
   `render/world.js` (51 KB). Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
 

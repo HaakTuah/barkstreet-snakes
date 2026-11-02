@@ -43,7 +43,7 @@
 // The checks are in tools/chatter/, one file per area, run in name order in one scope
 // (tools/parts.js): 00 every line and its Chinese, 01 the chatter playing (a stand-in page) and every
 // voice, 02 the woodpecker and choking, 03 beetles and Star, 04 the power habit, the names in the log
-// and whole rounds, 05 the sound. A new check goes in its area's file, or a new one.
+// and whole rounds, 05 the sound, 06 the babble. A new check goes in its area's file, or a new one.
 const path = require('path');
 const read = require('./parts.js')(path.join(__dirname, 'chatter'));
 const fails = read('fails'), oks = read('oks');

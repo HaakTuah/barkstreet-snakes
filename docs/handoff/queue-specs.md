@@ -313,3 +313,35 @@ reads first, then `docs/`, then the code, in a few PRs, each with a table of eve
 it, behaviour proven unchanged (suites, fingerprints). Helpers by "Helpers: when they pay" in `CLAUDE.md` (a Haiku
 search helper per folder).
 
+### The file-by-file review's moves (the workshop lane; found in part 3 of the file-by-file review, PR #337, 2 November 2026)
+
+Part 3 of the review asked of every code file what its header says it holds and whether it holds that. Its headers
+are now right; what sits in the wrong file is listed here, checked against the code, for PRs of their own ("Split by
+meaning" in `AGENTS.md`: a split goes in its own PR, behaviour proven unchanged by the fingerprints and the suites,
+with what it saves said). One folder per PR; `render/world.js` waits for the main lane, as its split does.
+
+- **render/:** `drawSnakes`, `drawPasses`, `drawTrails` (marks.js) to world.js, with the frame; `drawBurning` (marks.js)
+  to weather.js, with the fire; `drawSpitRings` and `drawCheeks` (marks.js) to food.js; `drawLandings` (marks.js) to
+  looks.js, with the jumps; `drawYou`, its marker and `drawRefusal` (world.js) to marks.js; the food pictures
+  (`drawApple` to `drawBead`) and the beetle's bore (`digOf`, `drawDig`, `digCollar`) from sprites.js to food.js;
+  `costumeChange`, `drawChange`, `oldCostume` (bodies.js) to looks.js; `growBird` (bird-drum.js) to bird-perch.js;
+  `headAndEye` and `birdWatch` (bird-draw.js) to bird.js, which keeps what the bird remembers between frames. The seeded
+  `rnd` written six times (core.js four times, food.js, weather.js) and the sin hash twice in food.js, written once.
+- **game/:** `sendPlan` and `hostTick` (core.js) to friends.js, with the online code; `deathMoment` (core.js) to
+  round.js; the steer hints (`showSteerHint` to `bubbleBoxes`) and `markYou` (banners.js) to hud.js; the seat picker
+  (hud.js) beside the start card's seats (banners.js); `keepAwake` (input.js) to screen.js. `banners.js` (48 KB) holds
+  toasts, news, lessons and cards: a split by what each is for.
+- **chatter/ and records.js:** `addLog` (moments.js) to talk.js, which holds the log; the land checks (`landsOf` to
+  `sharesLand`, talk.js) to moments.js, their only reader; `ZH_LABELS` (voices/metagamer.js, read by moments.js) to
+  moments.js. In records.js, the line-up (`seats`, `setSeat`, `deal`, `undeal`) and the screens drawn (`renderScores`,
+  `renderStats`) are their own things beside the records kept.
+- **audio/:** `sound.js` (46 KB) holds the synthesiser, the music and the weather's sound: a split by what each is for.
+- **tools/:** the seeded `seeded()` written six times (online-test.js, sim/00-setup.js, bench-ai.js, abtest.js,
+  chatter/01, rules/00-setup.js), `check()` and `ev` in each browser suite's runner, `ok()` in records-test.js and
+  sw-test.js, the quantile four times in scenes.js: each written once in a shared file (browser.js already serves the
+  browser tools). `render/09-chomps.js` checks sounds, so it moves to the chatter suite's `05-sound.js`; the swipe check
+  in `layout/12` is the controls suite's (`input/03-touch.js`). Two tests play whole rounds against "The smallest setup
+  that tests the rule": `chatter/04` (two whole AI rounds by default) and `rules/03`'s eight sudden-death boards, each
+  made a scripted board for a few ticks. `tools/trace.js` is run by nothing and named only in a comment: say what it is
+  for in `docs/developing.md`, or archive it.
+
