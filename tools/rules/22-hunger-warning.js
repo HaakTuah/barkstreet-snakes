@@ -50,3 +50,10 @@ function starveScene(n, left, weather = 'snow') {
   check('...a long snake 6 s before it starts shrinking, as it was', Math.abs(shrinkAt(15000) - long.warn - T.HUNGER_WARN_MS) <= tick && long.warn === long.oldWarn, `${shrinkAt(15000) - long.warn} ms`);
   check('...and in snow, 6 s before by the clock on the wall, not the hunger clock', Math.abs(shrinkAt(15000 / T.SNOW_HUNGER) - longSnow.warn - T.HUNGER_WARN_MS) <= tick, `${shrinkAt(15000 / T.SNOW_HUNGER) - longSnow.warn} ms`);
 }
+{ // Online, a guest reads the warning from what it's sent (lastAte, nextStarve, the body, the weather): never
+  // from pending growth, which isn't sent. At 3 in snow with a golden apple's growth to come, host and guest agree.
+  const g = starveScene(3, 12000).s, game = { weather: { kind: 'snow' }, time: 0 };
+  const fed = { ...g, alive: true, lastAte: -T.HUNGER_MS + 12000, nextStarve: 12000 };
+  const host = E.hungerWarning(game, { ...fed, grow: 3 }), guest = E.hungerWarning(game, { ...fed, grow: 0 });
+  check('#327: the warning reads only what a guest is sent (not pending growth)', host === guest, JSON.stringify({ host, guest }));
+}

@@ -135,11 +135,13 @@ window.SnakeEngine = (() => {
   // that before it would starve, whichever is sooner, so a snake with one
   // segment to spare is warned as early as one at its smallest. Snow runs the
   // clock faster, so it comes sooner by the clock. (The toast, the tag and
-  // the growl all read this, so they agree. A snake of 4 in snow was once
-  // warned only 4 s before it starved: #327.)
+  // the growl all read this, so they agree; and only what a guest online is
+  // sent: not grow, which only lengthens its life, so it's warned a little
+  // early then, never late. A snake of 4 in snow was once warned only 4 s
+  // before it starved: #327.)
   const hungerWarning = (game, s, now = game.time) => {
     const rate = game.weather.kind === 'snow' ? T.SNOW_HUNGER : 1, left = s.lastAte + T.HUNGER_MS - now;
-    const end = Math.max(left, s.nextStarve - now) + (s.grow + s.body.length - T.MIN_LENGTH) * T.STARVE_EVERY_MS;
+    const end = Math.max(left, s.nextStarve - now) + (s.body.length - T.MIN_LENGTH) * T.STARVE_EVERY_MS;
     return Math.min(left / T.HUNGER_WARN_MS, end / (1.5 * T.HUNGER_WARN_MS)) / rate;
   };
   // How long a meal keeps a snake from shrinking: HUNGER_MS in the opening
