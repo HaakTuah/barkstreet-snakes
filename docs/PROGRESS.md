@@ -46,6 +46,10 @@ and the owner's notes of 2 November, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
+- **Node 26** (the owner, 2 November 2026; "Node's version" in `docs/developing.md`): CI's `node-version` and
+  `scripts/cloud-setup.sh` move from 22 to 26 together (installing it from the npm registry if the machine has an
+  older one), proven by the suites and the fingerprints; 24 if the tooling is not ready for 26, said in the PR.
+
 - **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;
   part 2, `docs/design/`, PR #335; part 3, the code, draft PR #337): its spec is in
   `docs/handoff/queue-specs.md` under the same title.
