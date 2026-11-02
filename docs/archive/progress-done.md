@@ -694,6 +694,21 @@ Done (PR #223): `version.js` (the build, stamped by the Pages workflow, and the 
 
 ## Done, 1 November 2026
 
+### 2y. Rivals take landings, then the flight and leap now measured again (the owner, 2 November 2026; an AI entry) — done, PR #373 (the flight still even: question #399)
+
+Part 4 merges as it stands (#363; the owner: "But what they have for now can be merged, I'd like to play it myself.").
+The flight's worth is dodging a contested landing and leap now's is cutting a flier off, so both look flat while the
+rivals seldom go for a landing (the owner: "I suspect the enemy AI might be the big problem. jumps are risky because
+someone can cut you off, and insta kill you, by being where you land. but if the enemies don't do this, then landing
+wherever doesn't matter so much."). About a day, in order: (0) the held flight always flies the full 5 cells,
+steerable, never cut short, a quick press still the plain golden hop ("The golden jump flies" in
+`docs/design/29-round-six-b-the-new-moves.md`; cue, lesson and Field guide row with it; online in step); (1) measure, per round, how often a rival goes for a landing
+(steps or flashes into a landing ring, or leaps now to cut a flier off) and how often a jumper steers away from a
+contested one; (2) the rivals take landings when it pays, each in its style (Sniper most, Desperado for the thrill, Drab
+hardly ever), planned from the visible ring, never by reaction ("Clever rivals, human reactions"); (3) the flight and
+leap now measured both ways again, and per use, leap now included ("Every new move is tested both ways"). If they pay,
+done; if still flat, the PR says so as a design finding.
+
 ### 2w. Beetles get away at least a third of the time (the owner, 31 October 2026; an engine-rules entry, after part 4) — done, PR #313 (Review: engine rules · Claude · Codex P1×2, clean; design check 7, 8, 10)
 
 The escape band moves from 20–35% to at least a third (33–45%): measured on `develop` once part 4's flight is in, and the beetles' side tuned if it falls short, never the rivals made worse. Spec: `docs/handoff/queue-specs.md`, "2w. Beetles get away at least a third of the time".
