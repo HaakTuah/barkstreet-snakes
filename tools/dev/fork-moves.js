@@ -8,7 +8,9 @@
 // With --forced it asks the other question: at ticks where a rival could
 // have used the move and didn't, what would using it have been worth (the
 // move it would have made with the move's price waived)?
-//   node tools/dev/fork-moves.js <root> --move fly|now|dash [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--json]
+// --rest forbids that rival the move for the rest of the round in the play without it: one tick measures when to use
+// it (the rival still holds it and uses it later), the rest of the round whether having it helps.
+//   node tools/dev/fork-moves.js <root> --move fly|now|dash [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
 //     fly: a golden flight past the plain hop, or turned; now: a plain leap now; dash: a golden flash
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
@@ -16,7 +18,7 @@ const args = process.argv.slice(2);
 const root = path.resolve(args[0] && !args[0].startsWith('--') ? args[0] : path.join(__dirname, '..', '..'));
 const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const MOVE = opt('--move', 'fly'), ROUNDS = Number(opt('--rounds', 40)), SEED = Number(opt('--seed', 1)), PER = Number(opt('--per-round', 4));
-const FORCED = args.includes('--forced'), JSON_OUT = args.includes('--json');
+const FORCED = args.includes('--forced'), JSON_OUT = args.includes('--json'), REST = args.includes('--rest');
 const State = require(path.join(__dirname, '..', 'snapshots', 'state.js'));
 
 // The AI, taught to skip the move for the snakes in __forbid (and, --forced, to
@@ -113,7 +115,7 @@ for (let r = 0; r < ROUNDS; r++) {
     rngState = before.rng; ctx.__forbid[MOVE].add(id); E.step(B); ctx.__forbid = empty(); const afterB = rngState;
     if (used(B, B.snakes[id])) { g = back(after); continue; } // (it couldn't be stopped: a held move)
     const ctxA = { cut: A.events.some(e => e.type === 'cut' && e.by === id), ate: A.events.filter(e => e.type === 'eat' && e.snake?.id === id).length, len: A.snakes[id].body.length, late: E.suddenDeath(A) ? 1 : 0, gold: A.snakes[id].leaps };
-    rngState = afterA; const oa = playOut(A); rngState = afterB; const ob = playOut(B);
+    rngState = afterA; const oa = playOut(A); rngState = afterB; if (REST) ctx.__forbid[MOVE].add(id); const ob = playOut(B); ctx.__forbid = empty();
     const a = oa.get(id), bb = ob.get(id);
     diffs.push({ ...ctxA, causeA: a.alive < 10000 ? a.cause : '', causeB: bb.alive < 10000 ? bb.cause : '', place: bb.place - a.place, win: (a.place === 1) - (bb.place === 1), alive: (a.alive - bb.alive) / 1000, out5: (bb.alive < 5000) - (a.alive < 5000), len10: a.len10 - bb.len10, persona: g.snakes[id].name });
     forks++;
