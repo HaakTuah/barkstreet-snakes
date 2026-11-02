@@ -262,9 +262,9 @@ window.SnakeAI = (() => {
     },
     star: {
       name: 'Star', color: '#eab308', look: 'star', // (a rainbow body behind a sunflower star; sunflower stands in for it in text)
-      blurb: 'Jumps and flashes every chance it gets. Catch it when it dims.',
+      blurb: 'Jumps and dashes every chance it gets. Catch it when it dims.',
       kill: ['Star was there in a flash.', 'Back in its day, that was just the warm-up.', 'Make a wish.'],
-      win: ['Not bad for an old-timer.', 'Never once sat still.', 'One more flash, for the road.'],
+      win: ['Not bad for an old-timer.', 'Never once sat still.', 'One more dash, for the road.'],
       w: {
         space: 1, territory: 1.2, // (at 0.6 it won 23%, in every round of 800; at 1.2, 26.5%, and 28.4% once its jumps kept clear of heads and its golden dashes weren't thrown away)
         food: 5, eat: 70, pellet: 1.2, foodRange: 40,
@@ -1995,7 +1995,7 @@ window.SnakeAI = (() => {
       if (pick) { memory.flyAt = view.tick; memory.fly = me.flight.flown + (pick.fly || 0); memory.flyTurn = pick.turn ? { at: me.flight.flown + pick.turn.at, dir: pick.turn.dir } : null; }
       return me.flight.dir;
     }
-    let bestDir = me.dir, bestScore = -Infinity;
+    let bestDir = me.dir, bestScore = -Infinity, unstruck = -Infinity; // (unstruck: the best crawl whose first move no rival's head could take this tick, see powerPick)
     for (const d of DIR_LIST) {
       if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
       let s = move(me.body, me.body.length, me.grow, d, depth, 0, 0);
@@ -2006,6 +2006,9 @@ window.SnakeAI = (() => {
       else if (ctx.mimicDir && sameDir(d, ctx.mimicDir)) s += w.mimic;
       s += Math.random() * 1e-3; // tie-break
       if (s > bestScore) { bestScore = s; bestDir = d; }
+      let ux = myHead.x + d.x, uy = myHead.y + d.y;
+      if (me.wrap > 0) { ux = (ux + N) % N; uy = (uy + N) % N; }
+      if (!(inside(ux, uy) && strikes[uy * N + ux] >= w.headRisk) && s > unstruck) unstruck = s;
     }
     // Powers: each weighed as a move. The same search as crawling, from
     // where the power leaves me and to the same horizon, plus what it eats on
@@ -2071,7 +2074,28 @@ window.SnakeAI = (() => {
       // without, in three head-to-heads; weighed out of a neck a rival could
       // shut too (6 of 10 leaps now a round), still even, a jump a snake up.
       const crawlCell = cellAt(myHead.x + crawlDir.x, myHead.y + crawlDir.y);
-      const fleeing = trapped || (crawlCell >= 0 && strikes[crawlCell] >= w.headRisk);
+      const fleeing = trapped || ((w.leapNow ?? 1) < 1 && crawlCell >= 0 && strikes[crawlCell] >= w.headRisk && unstruck < DEAD / 2 && headOn(crawlCell)); // (out of a trap; and in my style (Ghost's, Desperado's), over a head-on coming that I can't crawl out of: see headOn)
+      // A head-on that's coming, not just one that could: a rival's head (as
+      // I'd guess it, gone straight on) has that cell straight ahead, or it's
+      // the only way it has. (A rival steers clear of a head-on as I do: one
+      // that could, mostly doesn't, and leaping over it threw away the tip of
+      // my tail and my jump's rest for nothing.)
+      function headOn(c) {
+        for (let k = 0; k < others.length; k++) {
+          const o = others[k];
+          if (stunLeft(o) > 1) continue;
+          let ways = 0, at = false;
+          for (const d of DIR_LIST) {
+            if (d.x === -o.dir.x && d.y === -o.dir.y) continue;
+            const q = cellAt(heads[k].x + d.x, heads[k].y + d.y);
+            if (q < 0 || mineFree[q] > 1 || myCells[q] === stampM) continue;
+            ways++;
+            if (q === c) { at = true; if (sameDir(d, o.dir)) return true; }
+          }
+          if (at && ways === 1) return true;
+        }
+        return false;
+      }
       // Something to hop: a body still there next tick (mine too), or fire;
       // a hole, if I can tell it from the woodpecker's mark (a mark isn't a
       // hole yet: I'd crawl in), or if it's that or a crash.
@@ -2187,7 +2211,7 @@ window.SnakeAI = (() => {
           for (const d2 of DIR_LIST) {
             if (d2.x === d.x || d2.y === d.y) continue; // (a turn: not on, nor back)
             for (let at = air ? 0 : 1; at < far; at++) { // (in the air, a turn now: the next cell already that way)
-              if (at > n0) break;
+              if (at >= n0) break; // (a turn over a cell I can still fly past: as the engine (flyOn), never over the last before the edge, where I come down)
               path.set(straight);
               n = at;
               for (let x = at ? path[at - 1] % N : myHead.x, y = at ? (path[at - 1] - path[at - 1] % N) / N : myHead.y; n <= far; ) {
