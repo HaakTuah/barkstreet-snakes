@@ -27,7 +27,7 @@ window.TUNING = Object.freeze({
   BEETLE_FEAR: 6,           // ...from any head within this many cells (4 until the dig became a race: one that runs sooner reaches its burrow more often)
   BEETLE_HOME_REACH: 7,     // a scared beetle runs for a burrow nearer than this...
   BEETLE_DIG_FEAR: 6,       // ...and one with a head this near and no burrow in reach digs in where it is...
-  BEETLE_DIG: 6,            // ...taking this many ticks (it stays put, and can still be caught), then it's underground, as after a dive. A race you can win: never fewer than BEETLE_DIG_FEAR, so a head coming straight at it from where the dig starts gets there on its last tick (5 ticks from a head within 7, nobody coming at one ever did)
+  BEETLE_DIG: 5,            // ...taking this many ticks (it stays put, and can still be caught), then it's underground, as after a dive. A race it can win (2w, Haakon: beetles get away "at least a third of the time"): a tick under BEETLE_DIG_FEAR, so a head coming straight at it from as far as the dig starts is a tick late; one already nearer, or cutting in, still catches it (at 6, the race was the head's: chased beetles got away 25% of the time; at 5, 34%)
   BEETLE_GROWTH: 2,         // a beetle is worth this much
   // Powers. Everyone can jump and flash, two separate presses (Space or a
   // tap; E, Shift or a swipe the way you're going). A jump hops islands: up
