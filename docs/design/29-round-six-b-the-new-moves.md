@@ -127,10 +127,10 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
   - Per use (`tools/dev/fork-moves.js --move fly --rest`, the round forked at each flight and played on with and without it): +0.09 ± 0.07 place a flight (seeds 701–704, n 406), −0.04 before `shutIn`.
   - Eleven other plans were measured the same way and dropped: keeping golden charges for flights, a ply of search after landing, charging contested landings, and Fable's design (an honest landing price, committing in the air, purpose flights with seals priced as kills).
 - **A design finding** (issue #363): a snake flies past the plain hop only about 0.4 times a round, so +0.09 a flight is under a win point a round, inside the noise. Leap now out of a trap is rarer still. Both pay when used, and their worth is a person's timing.
-- **In a field of its own** (200 rounds, seeds 3 and 11, `--check` passes, the final rules):
+- **In a field of its own** (200 rounds, seeds 3 and 11, `--check` passes, the rules as merged; fingerprints 9099647 and 346542088):
   - rounds 175 s on both;
   - flights past the plain hop 1.54 and 1.76 a round, 3.0 and 3.2 cells in the air each; out within 3 s of one 4% on both;
-  - down on a body 0.10 and 0.12 a round (a landing taken by a body is out, whatever lies under it), bumps in the air 0.00 and 0.01;
+  - down on a body 0.12 and 0.10 a round (a landing taken by a body is out, and one let go over a hole's rim falls in, whatever lies under it), bumps in the air 0.00 and 0.01;
   - out within 3 s of a leap now 4% and 3%;
   - golden cuts 0.54 and 0.52 a round, dashes blown up 0.00 and 0.01;
   - down on an island smaller than itself 0.00;
