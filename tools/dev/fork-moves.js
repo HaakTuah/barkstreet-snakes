@@ -27,8 +27,8 @@ function patchAI(text) {
   const swap = (a, b) => { if (!text.includes(a)) throw new Error(`ai.js has changed: can't find ${a.slice(0, 60)}`); text = text.replace(a, b); };
   swap('for (let k = first; k <= (golden ? Math.min(far, n - 1) : first); k++) {', 'for (let k = first; k <= (golden && !globalThis.__forbid.fly.has(me.id) ? Math.min(far, n - 1) : first); k++) {');
   swap('        let turn = null;\n        if (golden) {', '        let turn = null;\n        if (golden && !globalThis.__forbid.fly.has(me.id)) {');
-  swap('if (!golden && !fleeing) return null;', 'if (!golden && (globalThis.__forbid.now.has(me.id) || (!fleeing && !globalThis.__force.now.has(me.id)))) return null;');
-  swap('if (me.dashes > 0) consider(', 'if (me.dashes > 0 && !globalThis.__forbid.dash.has(me.id)) consider(');
+  swap('if (!golden && !trapped) return null;', 'if (!golden && (globalThis.__forbid.now.has(me.id) || (!trapped && !globalThis.__force.now.has(me.id)))) return null;');
+  swap('if (me.dashes > 0) { const v', 'if (me.dashes > 0 && !globalThis.__forbid.dash.has(me.id)) { const v');
   // (--forced: the move's price waived, so it's taken wherever it scores above the crawl)
   swap('v += extra - price * cheap * (full ? 1 : habit.price) * U;', 'v += extra - (globalThis.__force.any.has(me.id) && (flash ? globalThis.__force.dash.has(me.id) : (globalThis.__force.fly.has(me.id) && leapFly) || (globalThis.__force.now.has(me.id) && leapNow)) ? 0 : price * cheap * (full ? 1 : habit.price) * U);');
   return text;

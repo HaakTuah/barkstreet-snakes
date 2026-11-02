@@ -118,10 +118,11 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   check('a rival with a golden jump steers in the air onto open bark, where flying straight comes down in a pocket', a.alive && turned && !a.flight && !(a.body[0].x === x + 2 && a.body[0].y === 10) && !g.holes.has(K(a.body[0].x, a.body[0].y)), JSON.stringify({ head: a.body[0], turned, alive: a.alive, cause: a.cause }));
 }
 
-{ // A rival leaps now when it pays, in its style. Heading right with pits on both sides of its head, a person's head
-  // crossing up into the cell in front of it next tick: crawling on is a head-on, turning is a pit, and one press would
-  // wait for something to hop until too late. Ghost ("a leap now to slip a trap") presses twice, leaps at once over the
-  // crossing and comes down beyond it. Drab, which hardly ever leaps now (four times the price), takes the bump.
+{ // A rival leaps now only out of a trap, never over a head that might cross. Heading right with pits on both sides
+  // of its head, a person's head crossing up into the cell in front of it next tick: crawling on may be a head-on,
+  // turning is a pit. Ghost and Drab alike crawl on, keeping the tip of the tail and the jump's rest (part 4, the round
+  // forked at each use: leaps now over a head-on that might come, Ghost's and Desperado's style in a try, cost −0.28 ±
+  // 0.18 place a use before sudden death; only out of a trap, +0.10 ± 0.07).
   for (const key of ['ghost', 'drab']) {
     const g = E.createGame({ withPlayer: false, personas: [key, 'drab'] });
     g.snakes = g.snakes.slice(0, 2);
@@ -132,15 +133,13 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
     g.food = []; g.time = 30000;
     let now = null;
     for (let n = 0; n < 6 && a.alive; n++) { feed(g); look(g); quiet(g); now ||= g.events.find(e => e.type === 'leap' && e.snake === a && e.now); }
-    if (key === 'ghost') check('a rival leaps now (pressed twice) over a head crossing in front of it, where crawling on is a head-on and turning a pit', now && a.alive && a.body[0].x >= 9, JSON.stringify({ now: !!now, head: a.body[0], alive: a.alive, cause: a.cause }));
-    else check('...in its style: Drab, which hardly ever leaps now, takes the bump instead', !now, JSON.stringify({ now: !!now, head: a.body[0] }));
+    check(`${key === 'ghost' ? 'a rival' : '...Drab too'} doesn't leap now over a head crossing in front of it, where crawling on may be a head-on and turning a pit: it crawls on`, !now, JSON.stringify({ now: !!now, head: a.body[0], alive: a.alive }));
   }
 }
 
 { // ...and never over open ground for its own sake: Star, the power addict, on open bark with an apple four cells
   // ahead and a rival near but not in its way, crawls (weighed everywhere, it leapt now onto the apple at once, for
-  // the tip of its tail and a rest). A leap now is weighed only when the crawl is in trouble (a crash within its search, a neck a
-  // rival could shut, a head-on on its first move): over open ground it does what a crawl does, for the tip of the tail
+  // the tip of its tail and a rest). A leap now is weighed only out of a trap (every crawl crashes within its search): over open ground it does what a crawl does, for the tip of the tail
   // and a rest then wanting for a real hurdle (at twice the jump's price, weighed everywhere, rivals with it came out
   // even with rivals without, in three head-to-heads).
   const g = E.createGame({ withPlayer: false, personas: ['star', 'drab'] });

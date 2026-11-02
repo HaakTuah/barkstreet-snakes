@@ -1996,7 +1996,7 @@ window.SnakeAI = (() => {
       if (pick) { memory.flyAt = view.tick; memory.fly = me.flight.flown + (pick.fly || 0); memory.flyTurn = pick.turn ? { at: me.flight.flown + pick.turn.at, dir: pick.turn.dir } : null; }
       return me.flight.dir;
     }
-    let bestDir = me.dir, bestScore = -Infinity, unstruck = -Infinity; // (unstruck: the best crawl whose first move no rival's head could take this tick, see powerPick)
+    let bestDir = me.dir, bestScore = -Infinity;
     for (const d of DIR_LIST) {
       if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
       let s = move(me.body, me.body.length, me.grow, d, depth, 0, 0);
@@ -2007,9 +2007,6 @@ window.SnakeAI = (() => {
       else if (ctx.mimicDir && sameDir(d, ctx.mimicDir)) s += w.mimic;
       s += Math.random() * 1e-3; // tie-break
       if (s > bestScore) { bestScore = s; bestDir = d; }
-      let ux = myHead.x + d.x, uy = myHead.y + d.y;
-      if (me.wrap > 0) { ux = (ux + N) % N; uy = (uy + N) % N; }
-      if (!(inside(ux, uy) && strikes[uy * N + ux] >= w.headRisk) && s > unstruck) unstruck = s;
     }
     // Powers: each weighed as a move. The same search as crawling, from
     // where the power leaves me and to the same horizon, plus what it eats on
@@ -2065,38 +2062,14 @@ window.SnakeAI = (() => {
         return inside(x, y) ? y * N + x : -1;
       };
       const free = i => i >= 0 && myCells[i] !== stampM && mineFree[i] <= 1; // (free by next tick)
-      // Leap now (pressed twice, over open ground) is weighed only for what
-      // it saves: the crawl ends in a crash (trapped), or its first move is
-      // a cell a rival's head could take this tick (a head-on: in the air I
-      // pass over it). Anywhere else it does what a crawl would, or what the
-      // plain hop does a move later at the hurdle, for the tip of my tail
-      // and a rest I then don't have for a real hurdle: weighed everywhere
-      // at twice the jump's price, rivals with it came out even with rivals
-      // without, in three head-to-heads; weighed out of a neck a rival could
-      // shut too (6 of 10 leaps now a round), still even, a jump a snake up.
-      const crawlCell = cellAt(myHead.x + crawlDir.x, myHead.y + crawlDir.y);
-      const fleeing = trapped || ((w.leapNow ?? 1) < 1 && crawlCell >= 0 && strikes[crawlCell] >= w.headRisk && unstruck < DEAD / 2 && headOn(crawlCell)); // (out of a trap; and in my style (Ghost's, Desperado's), over a head-on coming that I can't crawl out of: see headOn)
-      // A head-on that's coming, not just one that could: a rival's head (as
-      // I'd guess it, gone straight on) has that cell straight ahead, or it's
-      // the only way it has. (A rival steers clear of a head-on as I do: one
-      // that could, mostly doesn't, and leaping over it threw away the tip of
-      // my tail and my jump's rest for nothing.)
-      function headOn(c) {
-        for (let k = 0; k < others.length; k++) {
-          const o = others[k];
-          if (stunLeft(o) > 1) continue;
-          let ways = 0, at = false;
-          for (const d of DIR_LIST) {
-            if (d.x === -o.dir.x && d.y === -o.dir.y) continue;
-            const q = cellAt(heads[k].x + d.x, heads[k].y + d.y);
-            if (q < 0 || mineFree[q] > 1 || myCells[q] === stampM) continue;
-            ways++;
-            if (q === c) { at = true; if (sameDir(d, o.dir)) return true; }
-          }
-          if (at && ways === 1) return true;
-        }
-        return false;
-      }
+      // Leap now (pressed twice, over open ground) is weighed only out of a
+      // trap: every crawl ends in a crash. Anywhere else it does what a crawl
+      // would, or what the plain hop does a move later at the hurdle, for the
+      // tip of my tail and a rest I then don't have for a real hurdle. (Part
+      // 4, the rest of the round forked at each use: out of a trap, +0.10 ±
+      // 0.07 place a use (206 uses); also over a head-on coming (Ghost's and
+      // Desperado's style, a try), −0.02 ± 0.08, and −0.28 before sudden
+      // death; weighed everywhere at twice the jump's price, even.)
       // Something to hop: a body still there next tick (mine too), or fire;
       // a hole, if I can tell it from the woodpecker's mark (a mark isn't a
       // hole yet: I'd crawl in), or if it's that or a crash.
@@ -2125,7 +2098,7 @@ window.SnakeAI = (() => {
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
         if (me.dashes > 0) { const v = flashOpt(d, true); if (trapped || cutKills || habit.dashSpend) consider(d, true, v, 0.6, extra); } // (a golden dash, held: out of a trap, or for a cut that puts a rival out; spent so, it gains (see part 4's chosen numbers); spent as it came, −0.11 ± 0.09 place a use; Star (dashSpend), its trademark, spends them as they come)
         else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)))) consider(d, true, flashOpt(d, false), trapped || race(d) ? 1 : 2, extra);
-        if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5) * (leapNow ? (w.leapNow ?? 1) : 1), extra); } // (leap now, at the jump's price times my style's: only out of trouble, see fleeing)
+        if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5) * (leapNow ? (w.leapNow ?? 1) : 1), extra); } // (leap now, at the jump's price times my style's: only out of a trap, see leapOpt)
       }
       return best;
 
@@ -2190,7 +2163,7 @@ window.SnakeAI = (() => {
           if (span > TUNE.LEAP_REACH || span >= n || !lands(span, false)) return null;
           first = span;
         } else {
-          if (!golden && !fleeing) return null; // (leap now: only out of trouble, above)
+          if (!golden && !trapped) return null; // (leap now: only out of a trap, above)
           for (span = Math.min(TUNE.LEAP_REACH, n - 1); span >= 1 && !lands(span, false); span--); // (where the engine puts it down: the farthest free cell; safe or not, below)
           if (span < 1) return null;
           first = span; now = true;
