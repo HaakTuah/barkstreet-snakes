@@ -51,6 +51,8 @@ const fails = [
   ['a package.json dependency not in the audit', dir => fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ devDependencies: { 'mossgrip-widgets': '1.2.3' } }))],
   ['a lock file holding a package not in the audit', dir => fs.writeFileSync(path.join(dir, 'package-lock.json'), JSON.stringify({ packages: { '': {}, 'node_modules/mossgrip-widgets': { version: '1.2.3' } } }))],
   ['third-party code copied into the game', dir => { fs.mkdirSync(path.join(dir, 'lib')); fs.writeFileSync(path.join(dir, 'lib/mossgrip.min.js'), '/*! mossgrip v1 | GPL-3.0 */\nvar m=1;\n'); }],
+  ['third-party code copied into a tool', dir => fs.writeFileSync(path.join(dir, 'tools/dev/mossgrip.mjs'), '/*! mossgrip v1 | GPL-3.0 */\nexport const m = 1;\n')],
+  ['npx in a tool written as a module', dir => fs.writeFileSync(path.join(dir, 'tools/dev/moss.mjs'), "import { execSync } from 'child_process';\nexecSync('npx -y mossgrip-cli');\n")],
   ['a bare origin loaded from, not warmed up', edit('index.html', '<body>', '<body><script src="https://cdn.mossgrip.example"></script>')],
   ['an address the game loads that is not in the audit', edit('index.html', '<body>', '<body><img src="https://cdn.mossgrip.example/bark.png">')],
   ['a scheme-relative address', edit('index.html', '<body>', '<body><img src="//cdn.mossgrip.example/bark.png">')],

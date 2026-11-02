@@ -78,9 +78,9 @@ const need = (name, where, version) => {
 // test, which stages such lines on purpose, left out).
 const walk = (d, skip) => fs.readdirSync(path.join(root, d), { withFileTypes: true }).flatMap(x => x.isDirectory() ? (skip.has(x.name) ? [] : walk(path.join(d, x.name), skip)) : [path.join(d, x.name)]);
 const none = new Set(['node_modules']);
-const ci = ['.github/workflows', 'scripts', 'tools'].flatMap(d => walk(d, none)).filter(f => /\.(ya?ml|sh|js)$/.test(f) && f !== path.join('tools', 'licences-test.js'));
+const ci = ['.github/workflows', 'scripts', 'tools'].flatMap(d => walk(d, none)).filter(f => /\.(ya?ml|sh|[cm]?js)$/.test(f) && f !== path.join('tools', 'licences-test.js'));
 for (const f of ci) {
-  const comment = f.endsWith('.js') ? /(^|\s)\/\/.*$/ : /(^|\s)#.*$/;
+  const comment = /\.[cm]?js$/.test(f) ? /(^|\s)\/\/.*$/ : /(^|\s)#.*$/;
   const src = read(f).split('\n').map(l => l.replace(comment, '')).join('\n'); // (a comment fetches nothing)
   for (const m of src.matchAll(/uses:\s*['"]?([\w.-]+\/[\w.-]+)/g)) need(m[1], f);
   for (const m of src.matchAll(/\b(npx|npm(?:\s+-\S+)*\s+(?:install|in|i|add|exec|x))\s([^\n;&|>]*)/g)) for (const [p, v] of fetched(m[1], m[2], `${f}, ${m[0].trim()}`)) need(p, `${f}, ${m[0].trim()}`, v);
@@ -100,10 +100,12 @@ for (const f of ['package.json', 'package-lock.json']) {
 const own = /^https?:\/\/(www\.w3\.org|haaktuah\.github\.io|github\.com\/HaakTuah)\b/i;
 const loads = audit.flatMap(e => (e.loads || []).map(u => [u, e]));
 const served = walk('.', new Set(['.git', 'tools', 'docs', 'scripts', '.github', '.claude', 'node_modules', 'types']));
-for (const f of [...served, ...walk('tools', none)]) if (/\.(png|jpe?g|gif|webp|avif|ico|bmp|svg|woff2?|ttf|otf|eot|mp3|ogg|oga|wav|flac|m4a|aac|opus|webm|mp4|csv|tsv)$/i.test(f)) need(f, 'an asset file');
+const tools = walk('tools', none);
+const ownGate = new Set(['licences.js', 'licences-test.js'].map(f => path.join('tools', f))); // (they name the markers they look for)
+for (const f of [...served, ...tools]) if (/\.(html|[cm]?js|css)$/.test(f) && !ownGate.has(f) && /\/\*!|@license|SPDX-License-Identifier|Copyright \(c\)/i.test(read(f))) need(f, 'a file carrying a licence notice');
+for (const f of [...served, ...tools]) if (/\.(png|jpe?g|gif|webp|avif|ico|bmp|svg|woff2?|ttf|otf|eot|mp3|ogg|oga|wav|flac|m4a|aac|opus|webm|mp4|csv|tsv)$/i.test(f)) need(f, 'an asset file');
 for (const f of served) {
   if (!/\.(html|js|css|json|webmanifest)$/.test(f)) continue;
-  if (/\/\*!|@license|SPDX-License-Identifier|Copyright \(c\)/i.test(read(f))) need(f, 'a file carrying a licence notice');
   for (const line of read(f).split('\n')) for (const m of line.matchAll(/(https?:)?\/\/[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?(\/[^\s'"`)<>]*)?/gi)) {
     if (!m[1] && /[\w:]$/.test(line.slice(0, m.index))) continue; // (a comment's // after a word, not an address)
     const url = m[1] ? m[0] : 'https:' + m[0]; // (a scheme-relative address loads over the page's https)
