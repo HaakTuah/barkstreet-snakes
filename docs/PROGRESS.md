@@ -58,9 +58,10 @@ players, any key wakes, the woodpecker bigger on a phone, the flash become the d
 - **First, at the next milestone** (Haakon, 1 November 2026): the workshop check's point (2) before anything else.
   `AGENTS.md` is 19 KB since its standing instructions became rules (2 November); this file (20 KB) goes back under
   about 20 KB, done entries and answered questions moving to `docs/archive/` with a line pointing there.
-- **Chatter split by meaning**, then **the file-by-file review** (Haakon, 2 November 2026): their specs are in
-  `docs/handoff/queue-specs.md` under the same titles.
-- *Done:* `audio.js` and `chatter/zh.js` split (PRs #225, #226): `docs/archive/progress-done.md`, "The split lane, done".
+- **The unused-code check** (the workshop check's point 5; draft PR #331), then **the file-by-file review** (Haakon,
+  2 November 2026): its spec is in `docs/handoff/queue-specs.md` under the same title.
+- *Done:* `audio.js` and `chatter/zh.js` split (PRs #225, #226), and the chatter split by meaning (PR #318):
+  `docs/archive/progress-done.md`, "The split lane, done".
 - **Waiting for the main lane** (PR #198 and its parked #202 have them open): `ai.js` (139 KB), `engine.js` (128 KB) and
   `render/world.js` (51 KB). Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
 

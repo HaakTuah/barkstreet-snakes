@@ -755,3 +755,5 @@ Word for word from "The polish lane" in `docs/PROGRESS.md`.
 
 - `audio.js` became `audio/` (PR #225): `cues.js` and `sound.js`, sound proven unchanged by `tools/dev/same-sound.js`.
   `chatter/zh.js` became `zh.js` and `zh-more.js` (PR #226), checked by `tools/dev/same-zh.js`.
+- Chatter split by meaning (Haakon, 2 November 2026; PR #318): a file per rival in `chatter/voices/` over a shared
+  core, with the impressions and the talk on their own, listed in `chatter/voices.js`.
