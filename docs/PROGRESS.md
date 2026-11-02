@@ -148,11 +148,12 @@ Capricious done (PR #126) and Copycat done (PR #142). **Wildcard's part waits** 
 
 Charmer, a vain show-off who courts the biggest snake on the board and steals its meals; his look and his mark on death wait for the owner's description. Spec: `docs/handoff/queue-specs.md`, "3c. A new rival: the Charmer".
 
-### 3d. A new rival: Barkis & Boot-Snake, one snake with two heads (the owner, 2 November 2026; an AI entry, after 3c)
+### 3d. A new rival: Barkis & Boot-Snake, one snake with two sides (the owner, 2 November 2026; an AI entry, after 3c)
 
-One snake with a head at each end and two minds, who swap who is in front from time to time and after a scare; by
-every snake's rules, so nothing is theirs alone. The reference lives in their names and nature, nothing copied from the
-show. Spec: `docs/handoff/queue-specs.md`, "3d. A new rival: Barkis & Boot-Snake, one snake with two heads".
+One snake with two sides and two minds: it rolls over from time to time and after a scare, and whichever side is up
+steers; one head, by every snake's rules, so nothing is theirs alone. The reference lives in their names and nature,
+nothing copied from the show. Spec: `docs/handoff/queue-specs.md`, "3d. A new rival: Barkis & Boot-Snake, one snake
+with two sides".
 
 ### 4. The teaching system, steps 2–6 (DESIGN "Teaching by showing") — after 5, whose new moves it must teach
 
