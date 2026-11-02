@@ -12,9 +12,10 @@
   let caught = null;
   for (let t = 0; t < T.BEETLE_DIG && !caught; t++) { feed(g); kept(g); if (!(b.x === 10 && b.y === 10)) break; caught = g.events.find(e => e.type === 'eat' && e.kind === 'beetle'); }
   check('...stays put while it digs, and can still be caught', caught && caught.x === 10 && caught.y === 10, JSON.stringify(b));
-  // A race you can win: coming straight at it from outside BEETLE_DIG_FEAR, the dig starts as your head comes within it,
-  // and you get there on the dig's last tick. (Dug in for 5 ticks from a head within 7, nobody coming at one ever
-  // caught it: 0 of 65 digs started 7 cells off, in AI rounds, though the lesson said "Grab it before it's gone!")
+  // A race it can win (2w, Haakon: beetles get away "at least a third of the time"): coming straight at it from outside
+  // BEETLE_DIG_FEAR, the dig starts as your head comes within it, and it's underground before you get there. A head
+  // already nearer catches it (above). (At BEETLE_DIG 6 the race was the head's, on the dig's last tick, and chased
+  // beetles got away 25% of the time; at 4, about 40%.)
   const race = board([[line(5, 12, 4), 'right'], [line(20, 22, 4), 'right']], { time: 30000 });
   race.burrows = [];
   race.unders = away();
@@ -25,7 +26,7 @@
     raceDig ||= race.events.find(e => e.type === 'dig') && { at: race.tick - 1, gap: Math.abs(race.snakes[0].body[0].x - rb.x) + Math.abs(race.snakes[0].body[0].y - rb.y), until: rb.digUntil };
     raceAte = race.events.find(e => e.type === 'eat' && e.kind === 'beetle');
   }
-  check(`...a race you can win: coming straight at it from outside BEETLE_DIG_FEAR, you get there ${T.BEETLE_DIG === T.BEETLE_DIG_FEAR ? 'on its last tick' : 'in time'}`, raceDig && raceDig.gap === T.BEETLE_DIG_FEAR && raceAte && raceAte.x === 5 + T.BEETLE_DIG_FEAR + 1 && race.tick - 1 === raceDig.at + T.BEETLE_DIG_FEAR && race.tick - 1 <= raceDig.until,
+  check('...a race it can win: coming straight at it from outside BEETLE_DIG_FEAR, you get there too late', T.BEETLE_DIG < T.BEETLE_DIG_FEAR && raceDig && raceDig.gap === T.BEETLE_DIG_FEAR && !raceAte && !race.food.includes(rb),
     JSON.stringify({ dig: raceDig, ate: raceAte && [raceAte.x, raceAte.y, race.tick - 1], DIG: T.BEETLE_DIG, FEAR: T.BEETLE_DIG_FEAR }));
   // Nobody comes for it: when it's done it's underground, a burrow opens where it dug (BURROW_FROM_DIG), and it comes out
   // of a burrow later (another, if there is one).

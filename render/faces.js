@@ -48,15 +48,6 @@ function cross(x, y, d) {
   ctx.moveTo(c * (x + d), c * (y - d)); ctx.lineTo(c * (x - d), c * (y + d));
 }
 
-// Plain dark eyes, shifted a touch toward what the snake is looking at.
-function eyes(r, fill) {
-  if (blinkNow) return lids(r);
-  const c = CELL, ox = gazeX * c * 0.03, oy = gazeY * c * 0.03;
-  ctx.fillStyle = fill;
-  circle(c * 0.15 + ox, -c * 0.2 + oy, c * r);
-  circle(c * 0.15 + ox, c * 0.2 + oy, c * r);
-}
-
 // Small white eyes whose pupils turn toward what the snake is looking at.
 // r: the pupil's radius (the white is a size up).
 function lookingEyes(r, x = 0.15, y = 0.2, wide = 1.55) {
@@ -92,8 +83,6 @@ function poly(pts, sign, fill) {
 }
 
 const CROWN = [0.02, -0.34, 0.02, 0.34, -0.42, 0.34, -0.22, 0.17, -0.42, 0, -0.22, -0.17, -0.42, -0.34];
-const TRICORN = [0.05, 0, -0.45, -0.45, -0.45, 0.45];
-const BEAK = [0.32, -0.12, 0.6, 0, 0.32, 0.12];
 const EAR = [-0.3, 0.1, -0.05, 0.42, -0.45, 0.5];
 const EAR_IN = [-0.28, 0.18, -0.12, 0.38, -0.38, 0.42];
 const JESTER = [-0.1, 0.3, -0.55, 0.62, -0.32, 0.05];

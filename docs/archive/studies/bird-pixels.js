@@ -3,7 +3,7 @@
 // upright, a phone on its side and a desktop, with the clock, the dice and the
 // quality held still: run it on two copies of the game to prove a change to the
 // bird's code draws it pixel for pixel the same (the bird.js split, say).
-//   node tools/dev/bird-pixels.js <root>
+//   node docs/archive/studies/bird-pixels.js <root>
 const path = require('path');
 const root = path.resolve(process.argv[2]);
 const { launch, serve, sleep } = require(path.join(root, 'tools', 'browser.js'));

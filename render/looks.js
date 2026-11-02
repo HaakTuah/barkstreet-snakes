@@ -1,6 +1,6 @@
 // The renderer (see render/core.js): each snake's animation state, its
-// looks (which face, tongue and marks), its gaze, and its jumps and body
-// over holes.
+// looks (which face, tongue and marks, and a costume change), its gaze, and
+// its jumps (and their landing rings) and body over holes.
 
 // ----------------------------------------------- per-snake animation state
 
@@ -148,6 +148,65 @@ function findById(id) {
   return null;
 }
 
+// A costume change (2t): Capricious taking up a mood (or putting one
+// down), or Copycat a new model (or none). One animation for all of them,
+// in the face's frame, over COSTUME_MS: a quick puff round the head, in
+// Capricious's pink or Copycat's red; the old costume popping off (bigger,
+// fading, its head's old colour with it) and the new one popping on. With
+// reduced motion, a plain crossfade. (Seen, not played: each screen sees
+// the mood and the model it has.)
+const COSTUME_MS = 500;
+function costumeChange(s, a, now) {
+  const cap = s.personaKey === 'capricious';
+  if (!cap && s.personaKey !== 'copycat') return -1;
+  const key = cap ? a.look : copying(s) ? String(s.memory.modelId) : '';
+  if (a.costume !== key) {
+    if (a.costume !== null) { a.costumeAt = now; a.oldLook = a.wornLook; a.oldColor = a.wornColor; a.oldHead = a.wornHead; }
+    a.costume = key;
+  }
+  a.wornLook = a.look; a.wornColor = a.color; a.wornHead = a.fills[0]; // (as worn this frame: the old costume, next change)
+  const u = (now - a.costumeAt) / COSTUME_MS;
+  return u >= 0 && u < 1 ? u : -1;
+}
+function drawChange(s, a, look, color, blinking, u) {
+  const r = a.rad[0] / 1.1, g = ctx.globalAlpha;
+  if (reduced) {
+    ctx.globalAlpha = g * (1 - u); oldCostume(s, a, blinking, r);
+    ctx.globalAlpha = g * u; drawFace(s, look, color, blinking, a);
+    ctx.globalAlpha = g;
+    return;
+  }
+  const on = popOf((u - 0.3) / 0.7 * POP_MS); // (on from 30% of the way, past full size and back)
+  if (on > 0) { ctx.save(); ctx.scale(on, on); drawFace(s, look, color, blinking, a); ctx.restore(); }
+  if (u < 0.5) { // (off: bigger, and gone)
+    const v = u / 0.5, k = 1 + 0.5 * v;
+    ctx.save(); ctx.globalAlpha = g * (1 - v) * (1 - v); ctx.scale(k, k);
+    oldCostume(s, a, blinking, r);
+    ctx.restore();
+  }
+  const col = s.personaKey === 'copycat' ? s.color : '#ec4899', pale = s.personaKey === 'copycat' ? '#fecaca' : '#fbcfe8';
+  const p = Math.sin(Math.min(1, u / 0.85) * Math.PI); // (the puff: swells round the head, then clears)
+  ctx.beginPath();
+  for (let i = 0; i < 9; i++) {
+    const ang = i * TAU / 9 + u * 0.9, d = r * (0.95 + 0.6 * u), pr = r * (0.26 + 0.1 * (i % 2)) * p;
+    if (pr <= 0) continue;
+    ctx.moveTo(Math.cos(ang) * d + pr, Math.sin(ang) * d); ctx.arc(Math.cos(ang) * d, Math.sin(ang) * d, pr, 0, TAU);
+  }
+  ctx.globalAlpha = g * Math.min(1, 1.6 * (1 - u));
+  ctx.fillStyle = pale; ctx.fill();
+  ctx.strokeStyle = col; ctx.lineWidth = CELL * 0.05; ctx.stroke();
+  ctx.globalAlpha = g;
+}
+// The costume it wore before the change: its head's colour and its face.
+function oldCostume(s, a, blinking, r) {
+  if (a.oldHead == null) return;
+  ctx.fillStyle = a.oldHead;
+  circle(0, 0, r);
+  const head = a.fills[0];
+  a.fills[0] = a.oldHead; // (its face's own colours from it: Copycat's ears)
+  drawFace(s, a.oldLook, a.oldColor, blinking, a);
+  a.fills[0] = head;
+}
 // ------------------------------------------------------------ the gaze
 
 // What a snake is looking at: a cell, or null for straight ahead. Each rival
@@ -726,6 +785,30 @@ function hopped(s, e, now) {
   if (hops.length >= 3) hops.shift();
   const x1 = s.wrapUntil >= 0 ? (e.x + d.x * (reach - 1) + GRID) % GRID : e.x + d.x * (reach - 1), y1 = s.wrapUntil >= 0 ? (e.y + d.y * (reach - 1) + GRID) % GRID : e.y + d.y * (reach - 1);
   hops.push({ x0: e.x, y0: e.y, x1, y1, dx: d.x, dy: d.y, tick: game.tick, n: reach + 1, gold: !!e.gold, h: 1, landed: false, landedAt: 0, until: game.tick + s.body.length + reach + 2, under: false, jTick: -1 });
+}
+// The island hop's landing ring: where a jump comes down, on the ground
+// under it, in the jump's sky (a golden one's Honey), inked. Every snake
+// in the air shows it (anyone can see where a jump will land); your own
+// jump, asked for, shows it while the press waits for its hurdle (up
+// to LEAP_WINDOW moves), so you see where you'd land. Just where: never whether it's a trap.
+function drawLandings(now) {
+  if (!game) return;
+  const t = reduced ? 0 : now / 1000;
+  for (const s of game.snakes) {
+    if (!s.alive) continue;
+    let x, y, gold = s.leaps > 0;
+    if (s.flight?.land) { x = s.flight.land.x; y = s.flight.land.y; gold = !!s.flight.gold; }
+    else if (s.id === viewerId) {
+      const a = anim.get(s);
+      if (!a || !a.lr) continue;
+      x = a.lx; y = a.ly;
+    } else continue;
+    const cx = (x + 0.5) * CELL, cy = (y + 0.5) * CELL, r = CELL * (0.38 + 0.04 * Math.sin(t * 9));
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.22; ctx.stroke();
+    ctx.strokeStyle = gold ? HONEY : SKY; ctx.lineWidth = CELL * 0.12; ctx.stroke();
+  }
 }
 
 // A body over a hole, seen from above: nothing under it, so it's shaded

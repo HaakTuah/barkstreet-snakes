@@ -1,5 +1,5 @@
-// The renderer (see render/core.js): fire and its scorch, a squashed bead's
-// splat, the sky's tint, rain, lightning and rainbows.
+// The renderer (see render/core.js): fire and its scorch, a snake on fire, a
+// squashed bead's splat, the sky's tint, rain, lightning and rainbows.
 
 // ------------------------------------------------------------ weather
 
@@ -252,6 +252,22 @@ function drawFire(alpha, now) {
     if (lively && Math.random() < 0.06) mote(x, y - c * 0.4, (Math.random() - 0.5) * 8, -20, 1800, 4 + Math.random() * 3, 2);
   }
 }
+// A snake on fire: flames along its back (the fire's own flicker, smaller,
+// dying down as it goes out), a glow under them, embers and smoke going up.
+function drawBurning(s, a, now) {
+  const lively = !reduced, t = now / 1000, left = Math.min(1, (s.burnUntil - game.tick) / (T.BURN_TICKS / 2));
+  const size = SPRITE * CELL * (0.45 + 0.25 * left);
+  for (let i = 1; i < a.n && i < 12; i += 2) {
+    const x = a.pts[2 * i], y = a.pts[2 * i + 1];
+    ctx.globalAlpha = 0.45;
+    ctx.drawImage(fireGlowSprite(), x - size * 0.6, y - size * 0.6, size * 1.2, size * 1.2);
+    ctx.globalAlpha = 1;
+    const fr = lively ? Math.floor(t * 14 + i * 3) % FLAME_FRAMES : 0;
+    ctx.drawImage(bodyFlameSprite(fr), x - size / 2, y - size * 0.62, size, size);
+    if (lively && Math.random() < 0.05) mote(x, y - CELL * 0.3, (Math.random() - 0.5) * 12, -40 - Math.random() * 20, 650, 1.3 + Math.random(), 3);
+    if (lively && Math.random() < 0.03) mote(x, y - CELL * 0.3, (Math.random() - 0.5) * 6, -18, 1100, 2.5 + Math.random() * 2, 2);
+  }
+}
 // Lightning on its way: a ring closing in on the cell, so you can see how
 // long there is, and a bolt in the middle, both opaque and inked like every
 // other mark on the board, with a soft glow round the ring. Over the storm's gloom (see-through and under it, the mark of
@@ -329,8 +345,7 @@ function buildRainTile() {
   g.strokeStyle = 'rgba(220,232,255,0.6)';
   g.lineWidth = 1.5;
   g.lineCap = 'round';
-  let seed = 99;
-  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const rnd = seededRnd(99);
   g.beginPath();
   for (let i = 0; i < 60; i++) {
     const x = rnd() * n, y = rnd() * n, len = 14 + rnd() * 10;

@@ -4,7 +4,9 @@ await b.go(site.url + '?debug', { settle: 0 });
 await ev('__settle()');
 await ev(STAGE);
 
-// A dead snake's beads: every other segment, in its own markings.
+// A dead snake's beads: every other segment, each standing for its stretch
+// of two, half and half (its own segment's colour upper left, the next's
+// lower right), in its own markings.
 const beads = await ev(`(() => {
   seeds(0);
   const g = stage(['joker', 'wildcard', 'colonist']), [you, joker, wild] = g.snakes;
@@ -15,14 +17,46 @@ const beads = await ev(`(() => {
   g.tick++;
   R.onTick([{ type: 'death', snake: joker }, { type: 'death', snake: wild }]);
   drawN(90);
-  const at = (y, n) => rgb(20 - n * TUNING.CORPSE_EVERY + 0.5, y + 0.55); // (the bead's middle, below its gloss)
-  return { joker: [1, 2, 3, 4, 5].map(n => at(4, n)), wild: [2, 3, 4, 5, 6, 7].map(n => at(10, n)) };
+  const at = (y, n) => [rgb(20 - n * TUNING.CORPSE_EVERY + 0.27, y + 0.46), rgb(20 - n * TUNING.CORPSE_EVERY + 0.56, y + 0.53)]; // (a box in each half (rgb reads 0.12 of a cell from its corner), clear of the gloss and the stars)
+  return { joker: [1, 2, 3, 4, 5].map(n => at(4, n)), wild: [1, 2, 3, 4, 5].map(n => at(10, n)) };
 })()`);
 const amber = ([r, g, b]) => r > b + 80 && g > b + 40, purple = ([r, g, b]) => r > g + 50 && b > g + 50, red = ([r, g, b]) => r > g + 60 && r > b + 50;
 const navy = ([r, g, b]) => b > r + 15 && b > g + 15, white = ([r, g, b]) => Math.min(r, g, b) > 140 && Math.max(r, g, b) - Math.min(r, g, b) < 45;
-check(beads.joker.every((c, i) => (i % 2 ? purple : amber)(c)), 'Joker’s beads alternate amber and purple', JSON.stringify(beads.joker));
-const wildWant = [navy, navy, white, red, white, red];
-check(beads.wild.every((c, i) => wildWant[i](c)), 'Wildcard’s beads keep the stars and stripes', JSON.stringify(beads.wild));
+check(beads.joker.every(([u, l]) => purple(u) && amber(l)), 'Joker’s beads are purple and amber, as its body', JSON.stringify(beads.joker));
+const wildWant = [[navy, navy], [white, red], [white, red], [white, red], [white, red]];
+check(beads.wild.every(([u, l], i) => wildWant[i][0](u) && wildWant[i][1](l)), 'Wildcard’s beads keep the stars and stripes', JSON.stringify(beads.wild));
+
+// A tail cut off by a dash falls as beads in its own markings, each its
+// own segment's (Joker's amber and purple in turn), not the plain colour.
+const cutTail = await ev(`(() => {
+  seeds(250);
+  const g = stage(['joker', 'mason', 'ghost']), jo = g.snakes[1];
+  setBody(jo, Array.from({ length: 12 }, (_, i) => [20 - i, 16]), 'right');
+  show(g); drawN(10);
+  const cut = jo.body.splice(6);
+  for (const c of cut.slice(1)) g.food.push({ x: c.x, y: c.y, kind: 'pellet', color: jo.color, owner: jo.id, expires: g.tick + 900 });
+  g.tick++;
+  R.onTick([{ type: 'cut', snake: jo, x: cut[0].x, y: cut[0].y, lost: cut.length, by: g.snakes[2].id }]);
+  drawN(60);
+  return [7, 8, 9, 10].map(j => rgb(20 - j + 0.27, 16 + 0.46));
+})()`);
+check(cutTail.every((c, i) => (i % 2 ? purple : amber)(c)), 'a tail cut off falls as beads in its markings, each its own segment’s', JSON.stringify(cutTail));
+
+// A peer's tick with food off the board (or between cells), each bead its
+// own colour: none of it is drawn, so the bead sprites stay those of the
+// beads on the log, made once, not every frame.
+const offBoard = await ev(`(() => {
+  seeds(251);
+  const g = stage(['joker', 'mason', 'ghost']);
+  show(g); drawN(3); // (the round under way: food after this pops in at once)
+  g.food = [{ x: 5, y: 5, kind: 'pellet', color: '#123456', expires: g.tick + 900 }];
+  for (let i = 0; i < 700; i++) g.food.push({ x: i % 2 ? -1 - i : 3.5 + i / 2000, y: 4, kind: 'pellet', color: '#' + (0x100000 + i).toString(16), expires: g.tick + 900 });
+  g.tick++; drawN(20);
+  const made = sprites.get('bead'), keys = [...made.keys()];
+  drawN(3);
+  return { kept: made.size, same: keys.every(k => made.has(k)) && [...made.keys()].length === keys.length, odd: keys.filter(k => k.startsWith('#1') && k !== '#123456|').length };
+})()`);
+check(offBoard.odd === 0 && offBoard.same, 'food a peer puts off the board or between cells is never drawn, so its beads make no sprites', JSON.stringify(offBoard));
 
 // Stunned, a jump and a flash both asked, a turn up pressed, a body one
 // thick right above: the game will hop it (a jump goes first), so the

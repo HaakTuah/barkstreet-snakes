@@ -66,7 +66,7 @@ Old against new AI with `tools/abtest.js` on fresh seeds:
   - head-on deaths 3.7% → 2.7% (same).
   - Every other cause of death and starving moved by less than 1.6 points.
 
-**The shared cause with "Rivals too shy of heads":** both come from fear read off the board as it is now, not off the line being played. Here, it was a gap a sealed-off rival "could" shut. There, it is `headRisk` beside every rival head, including cells the rival can't or wouldn't enter, and cells the snake will have left before the rival could get there. `lineOn` and `lineFill` give that task what it needs: a rival's timed reach on the line's own board. The cell beside a pinned rival's head is the same overlap, and it's left to that task.
+**The shared cause with "Rivals read heads better":** both come from fear read off the board as it is now, not off the line being played. Here, it was a gap a sealed-off rival "could" shut. There, it is `headRisk` beside every rival head, including cells the rival can't or wouldn't enter, and cells the snake will have left before the rival could get there. `lineOn` and `lineFill` give that task what it needs: a rival's timed reach on the line's own board. The cell beside a pinned rival's head is the same overlap, and it's left to that task.
 
 ### Rivals read heads better (the owner's playtest, 27 October 2026)
 

@@ -135,6 +135,11 @@ SCENES.woodpecker = `(() => {
     return g;
   })()`;
 
+// Page-side source: q(values, p), the value a share p of the way up the sorted ones (to 2 places),
+// and sum(values), the median, 90th percentile and worst of a run's frames.
+const SUMMARY = `const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return +s[Math.min(s.length - 1, Math.floor(s.length * p))].toFixed(2); };
+  const sum = a => ({ median: q(a, 0.5), p90: q(a, 0.9), worst: q(a, 1) });`;
+
 // Page-side source: window.__sync(), which waits for the GPU to finish the
 // board, by reading one pixel of it back through a one-pixel canvas of its
 // own. (Read back from the board itself, Chrome takes it for a canvas that's
@@ -183,8 +188,7 @@ const throughput = (batches = 12, frames = 30) => `(async () => {
 // readback of the board and of the bird's layer; then the patch grows back
 // and it rests again (untimed). Resolves to { drum, strike } summaries.
 const birdStrikes = (rounds = 16) => `(async () => {
-  const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return +s[Math.min(s.length - 1, Math.floor(s.length * p))].toFixed(2); };
-  const sum = a => ({ median: q(a, 0.5), p90: q(a, 0.9), worst: q(a, 1) });
+  ${SUMMARY}
   ${SYNC}
   const g = __scene.game, w = g.woodpecker, P = __scene.strike, drum = [], strike = [], sync = () => { __sync(); window.__birdSync?.(); };
   for (let n = 0; n < ${rounds}; n++) {
@@ -208,8 +212,7 @@ const birdStrikes = (rounds = 16) => `(async () => {
 // board, each closed by a readback (so the GPU's share counts), then takes
 // them away again (untimed). Resolves to { steady, strike } summaries.
 const strikes = (rounds = 24) => `(async () => {
-  const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return +s[Math.min(s.length - 1, Math.floor(s.length * p))].toFixed(2); };
-  const sum = a => ({ median: q(a, 0.5), p90: q(a, 0.9), worst: q(a, 1) });
+  ${SUMMARY}
   ${SYNC}
   const g = __scene.game, steady = [], strike = [];
   for (let n = 0; n < ${rounds}; n++) {
@@ -230,8 +233,7 @@ const strikes = (rounds = 24) => `(async () => {
 // render/weather.js's drawScorch), each closed by a readback. Resolves to { steady,
 // burnout } summaries.
 const burnouts = (rounds = 24) => `(async () => {
-  const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return +s[Math.min(s.length - 1, Math.floor(s.length * p))].toFixed(2); };
-  const sum = a => ({ median: q(a, 0.5), p90: q(a, 0.9), worst: q(a, 1) });
+  ${SUMMARY}
   ${SYNC}
   const g = __scene.game, steady = [], burnout = [];
   let seed = 5;
@@ -257,8 +259,7 @@ const burnouts = (rounds = 24) => `(async () => {
 // (untimed). Resolves to { aim, steady, strike } summaries (ms, the full
 // cost of a frame: script and the GPU's raster).
 const landStrikes = (rounds = 12, aim = 30) => `(async () => {
-  const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return +s[Math.min(s.length - 1, Math.floor(s.length * p))].toFixed(2); };
-  const sum = a => ({ median: q(a, 0.5), p90: q(a, 0.9), worst: q(a, 1) });
+  ${SUMMARY}
   ${SYNC}
   const g = __scene.game, P = __scene.strike, aimed = [], steady = [], strike = [];
   let sx = 0, sy = 0;

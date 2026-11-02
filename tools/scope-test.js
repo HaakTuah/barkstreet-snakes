@@ -18,7 +18,7 @@ if (!process.execArgv.includes('--expose-internals')) // (Node's own parser is i
 const acorn = require('internal/deps/acorn/acorn/dist/acorn');
 const { launch } = require('./browser');
 const root = path.join(__dirname, '..');
-const ok = (cond, what, detail = '') => { if (!cond) { console.error('FAIL:', what, detail); process.exit(1); } console.log('ok  ', what); };
+const ok = require('./ok.js');
 
 // The names a script declares at its top: functions, classes, and every name
 // in a var, let or const there (destructured ones too).

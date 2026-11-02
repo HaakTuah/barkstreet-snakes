@@ -7,19 +7,39 @@ Claude alone uses. Who builds what, and how the two hand work over and review ea
 
 ## Models, effort and helpers
 
-The same in both of Haakon's games; only the list of hard work differs.
+The same in both of the owner's games; only the list of hard work differs.
 
 | Who | Model | Effort | For |
 | --- | --- | --- | --- |
-| You, the builder | Opus | medium; high for the AI's planning, the engine's rules and online sync (a big-file split is checked by its fingerprints and suites, so medium is enough) | the task itself |
+| You, the builder | Opus | medium, as the orchestrator starts you; the work marked high (the AI's planning, the engine's rules, online sync) goes to helpers at high effort inside your session (a big-file split is checked by its fingerprints and suites, so medium is enough) | the task itself |
 | Search helper | Haiku (`model: "haiku"`) | as it comes | finding where things are across many files; it returns file:line and one-line conclusions |
-| Reviewer | Opus (`model: "opus"`, `effort: "high"`; `"medium"` for the design check) | high; medium for the design check | Codex's PRs; Claude's when Codex is unavailable; and the design check with a score on its engine-rules and AI entries (new moves and rules, the rivals' play) (`docs/claude-and-codex.md`, "Codex reviews"): every task that changes the game, once, before it is merged; docs, READMEs, small fixes and config get none: give it the diff and the task's text, nothing else, and send the work back until it meets the task |
+| Parallel helper | Sonnet (`model: "sonnet"`) for routine parts; Opus (`model: "opus"`) for parts that need design judgement | medium; high (`effort: "high"`) for the work the builder's row marks high | one part of the work with a shape from "Helpers: when they pay" below, with a narrow brief and its own files |
+| Reviewer | Opus (`model: "opus"`, `effort: "high"`) | high | Codex's PRs, and Claude's when Codex is unavailable (`docs/claude-and-codex.md`, "Codex reviews"); every other PR that changes the game gets one review (Codex's, or this one when Codex is unavailable); docs, READMEs and config get none |
+| Design check | Fable (`model: "fable"`, `effort: "medium"`) | medium | the design check with a score on its engine-rules and AI entries (new moves and rules, the rivals' play): every such entry, once, before it is merged: give it the diff, the task's text and the "What the rivals know" line of "Review guidelines" in `AGENTS.md`, nothing else, and send the work back until it meets the task. The strongest fresh eye where misses cost most, in one short call. If Fable is out of usage or unavailable, or the owner says its share for the week is spent, the same call goes to Opus (`model: "opus"`, `effort: "high"`); nothing ever waits for Fable |
+| Planning design | Fable (`model: "fable"`, `effort: "high"`) | high | the rivals' planning, asked directly when the entry needs a new or better plan, at most once per entry: a self-contained brief (the problem, the measurements, the files and lines); it returns a design, which you build and measure with Opus. If Fable is out of usage or unavailable, or the owner says its share for the week is spent, the same call goes to Opus (`model: "opus"`, `effort: "high"`); nothing ever waits for Fable |
 | Escalation | Opus (`model: "opus"`, `effort: "high"`, or `"xhigh"` if you already run at high) | high or extra high | one problem that has defeated you twice, when Codex is unavailable or has failed at it too (Codex comes first: `docs/claude-and-codex.md`): give it a self-contained brief (the problem, what you tried, the files and lines), then apply and check its answer yourself |
+| Last escalation | Fable (`model: "fable"`, `effort: "high"`) | high | a problem the escalation helper could not solve either, such as the rivals' planning: the same self-contained brief; apply and check its answer yourself. Otherwise Fable only for the design check, the planning design above and work the owner gives it by name (the writing pass, entry 9 in `docs/PROGRESS.md`), since its usage runs out first |
 
-- **Never more than two helpers at a time,** and only these four uses. No workflows and no ultracode. No agent kept
-  alive to wait for a run: long runs go in the background (the Bash tool's background mode).
-- **Effort is set when the session starts** and you can't raise your own. If the escalation helper fails too, write the
-  problem up in the PR and `docs/PROGRESS.md` as blocked, go on with the next task, and say in your update that it needs a
-  session at higher effort.
+**Helpers: when they pay** (the words are in `docs/archive/instructions.md`, 2 November 2026). A helper starts cold,
+rereads what it needs and returns only a summary, so it is worth its cost only when the work has one of these shapes:
+
+- *Parallel and independent:* parts that touch different files and need nothing from each other.
+- *Competing approaches, judged by measurement:* several candidate fixes for one problem, each tried in its own
+  worktree and measured the same way (`tools/abtest.js`, a census, the fingerprints); the best is kept, the rest dropped.
+- *Bulk to brief:* many files read to answer one narrow question; the helper returns file:line and a sentence, so your
+  context stays clean.
+- *Fresh eyes:* a review, or a problem that has beaten you twice.
+
+It does not pay for small or one-pass work (docs, config, small fixes), for steps that depend on each other, when
+briefing it would cost most of the work, or for waiting on a run. Give each helper the cheapest model that does its part
+well (the table above), a narrow brief and its own files, and check every result before you use it. At most four at a
+time, reviewers included; each lane's builder keeps its own four. The PR lists the helpers that ran and what each gave,
+so the rule can be checked against its cost. Never stop to ask about helpers: decide by these shapes. Helpers are a builder's: an orchestrator gives each lane a builder session instead (`docs/orchestrating.md`).
+
+- **No workflows and no ultracode.** No agent kept alive to wait for a run: long runs go in the background (the Bash
+  tool's background mode).
+- **Effort is set when the session starts** and you can't raise your own, but you can give a helper more. Work the table marks high goes to helpers at `effort: "high"` inside your session, above all the competing approaches of the hardest problems, never to a wait for a session at higher effort; then the escalation chain if a problem beats you twice. If the last escalation fails too, or Fable is
+  out of usage or unavailable, write the problem up in the PR and `docs/PROGRESS.md` as blocked, with its brief ready
+  for a later session, go on with the next task, and say in your update that it is blocked.
 - Sessions started from a Claude Code Project don't load `.claude/agents/`, so always pass `model` (and `effort`) in
   the call. Never max effort: it costs the most and tends to overthink.

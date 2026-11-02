@@ -55,7 +55,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const u of g.unders) if (g.tick >= u.until) c.underWait++;
     if (!late) { c.ticksEarly++; c.freeEarly += freeCells(g, N); }
     const bugs = g.food.filter(f => f.kind === 'beetle');
-    for (const f of bugs) { const b = st.bugs.get(f); if (b && b.near < 0 && g.snakes.some(s => s.alive && Math.abs(s.body[0].x - f.x) + Math.abs(s.body[0].y - f.y) <= T.BEETLE_FEAR)) b.near = g.tick; }
+    for (const f of bugs) { const b = st.bugs.get(f); if (b && b.near < 0 && g.snakes.some(s => s.alive && Math.abs(s.body[0].x - f.x) + Math.abs(s.body[0].y - f.y) <= CHASE_NEAR)) b.near = g.tick; }
     const riding = new Set(g.snakes.filter(s => s.alive && !s.flight && g.holes.has(s.body[0].y * N + s.body[0].x)));
     const dying = E.step(g);
     st.edge ||= g.snakes.map(() => [0, 0]); // (each snake's ticks alive, and with its head on the edge)
@@ -103,6 +103,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const s of g.snakes) c.goldGot += Math.max(0, s.leaps + g.events.filter(e => e.type === 'leap' && e.gold && e.snake === s).length - held[s.id]);
     const left = g.snakes.filter(s => s.alive).length;
     for (const s of dying) {
+      if (g.food.some(f => f.kind === 'beetle' && Math.abs(f.x - s.body[0].x) + Math.abs(f.y - s.body[0].y) <= 3)) c.deathsNearBeetle++; // (2w: out with a beetle within 3 cells of its head)
       if (st.hopAt?.has(s) && g.tick - st.hopAt.get(s) <= 30) c.hopDie++;
       place.set(s, left + 1);
       per[s.name].aliveMs += g.time;

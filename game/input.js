@@ -1,5 +1,5 @@
 // The game controller (see game/core.js): input, from keys, touch, swipes
-// and the buttons.
+// and the buttons; and napping and waking.
 
 // ------------------------------------------------------------- input
 
@@ -507,33 +507,6 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) return;
   napNow();
 });
-
-// The screen stays on while you play, through the countdown, and while
-// you watch a round (a screen wake lock); a nap, a card or the Hall of
-// Fame lets it go. A hidden tab loses it (the browser lets it go), so
-// coming back asks again, if it's still wanted then (alone you'll be
-// napping: waking asks). Where there's no wake lock, nothing changes; a
-// refusal (a battery saver, say) isn't asked again until the next time
-// it's wanted.
-const awake = { lock: null, asking: false, refused: false };
-function keepAwake() {
-  if (!navigator.wakeLock) return;
-  const want = !document.hidden && recordsEl.hidden && pickerEl.hidden && (state === 'countdown' || (state === 'running' && overlay.classList.contains('hidden')));
-  if (!want) {
-    awake.refused = false;
-    if (awake.lock) { const lock = awake.lock; awake.lock = null; lock.release().catch(() => {}); }
-    return;
-  }
-  if (awake.lock || awake.asking || awake.refused) return;
-  awake.asking = true;
-  navigator.wakeLock.request('screen').then(lock => {
-    awake.asking = false;
-    awake.lock = lock;
-    lock.addEventListener('release', () => { if (awake.lock === lock) awake.lock = null; }); // (the browser's doing: a hidden tab)
-    keepAwake(); // (let go at once if it's no longer wanted)
-  }, () => { awake.asking = false; awake.refused = true; });
-}
-document.addEventListener('visibilitychange', keepAwake); // (after the nap above)
 
 // Online the round goes on while your tab is hidden, so an AI steers your
 // snake until you're back and turn again. A friend's tab says so itself: a

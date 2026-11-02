@@ -7,6 +7,7 @@ it under the workshop check's 20 KB. New ones are added here as they are done or
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
+| 5, part 4 (#198) | The golden flight works and the rivals fly it, but it can't show in wins between rivals: a flight moves a cell a tick like a crawl, so it buys no time, and under today's rules no rival in 30 rounds died holding a golden jump (0 of 90 deaths), so it has nobody to save; leap now came out even too; the golden flash pays in food and kills, not wins. Which: (a) merge the flight and leap now as they are, moves that pay for a person's timing; (b) the flight flies 2 cells a tick while held, so it buys time, measured again; (c) more golden beetles? | Answered (Haakon, 1 November 2026): none of the three. "they must work until the rivals know how to use them. i am certain they will give better performance if used appropiately" (as on 31 October: "then it must be the AI"): the moves stay as designed (the golden leap flies up to 5 cells and steers, leap now, the golden flash cuts two thick), and the rivals are improved until their users come out ahead. Leap now stays: "no dropping of leap, leap goes in the game that is my vision". #198 goes on, on those terms. | Answered, 1 November 2026 |
 | Audit (31 Oct) | **Two trademarks never show in the numbers.** Mute's boxing and Joker's lures sit level with the field (seed 11: Mute 8.2% against everyone else's 8.7%; Joker 9.2% against 8.3%; round six A's table had 8.0/7.8 and 8.6/8.3), and Mason's "body beside itself" is *below* the field (27% against 31%); every other trademark leads its field by half again or more. Rework the measures, or give the play teeth? | Suggested: both, in part 7. First the measures (a trademark should lead its field the way the others do; Mute leads the kills, 0.52 a round, which its measure doesn't count), then the play where a measure still shows nothing. No rule changes until then. | Answered 31 October (Haakon: "Agreed to all, expertly!"; the reading taken is in `docs/handoff/queue-specs.md`, part 7 and 2s) |
 | Audit (31 Oct) | **Character costs wins.** On seeds 3 and 11 (200 rounds each, census), the plain Drab is in the top four both times (32%, 30%) while Joker (14%, 18%), Capricious (21%, 19%), Copycat (20%, 21%) and Star (23%, 20%) are at the bottom both times. Is a rival with a trademark allowed to pay for it in wins, or should part 7's pricing bring the four up into the band (15–35% was the target)? | Suggested: part 7 brings them up without touching their trademarks (Joker is on its watch list already); Drab's own rate is fine as it is. | Answered 31 October (Haakon: "Agreed to all, expertly!"; the reading taken is in `docs/handoff/queue-specs.md`, part 7 and 2s) |
 | Audit (31 Oct) | **Half the rounds now end split onto islands.** 51% of seed 3's rounds (seed 11 about the same) end with the last snakes each alone on an island, against the 25–31% noted in 2s; the biggest island's snake wins 49%, a blind pick. Should 2s move up the queue (it is after 2q today)? | Suggested: yes, 2s before 2q: it is the ending a person sees most often now, and it is an engine-rules entry that doesn't wait on the AI's A/B. | Answered 31 October (Haakon: "Agreed to all, expertly!"; the reading taken is in `docs/handoff/queue-specs.md`, part 7 and 2s) |
@@ -640,7 +641,7 @@ its mimic weight (120) outweighing the pull of food, and the room and margin wei
 move. Copycat's part of 3b fixes it, and first checks with a census whether every rival does it: of the apples that
 rot, how many were within a rival's reach, and how far each was from the edge. A competent snake takes a safe apple by
 the wall ("Clever rivals, human reactions"); one it takes into a dead end doesn't count as safe.
-*Checked in PR #142* (`tools/dev/rotten-apples.js`, 150 rounds, seed 21): Copycat had been the worst, 0.20 apples
+*Checked in PR #142* (`docs/archive/studies/rotten-apples.js`, 150 rounds, seed 21): Copycat had been the worst, 0.20 apples
 passed up (its head within 2) and left to rot a minute alive, 0.15 by the edge; with its copied habits and its pull to
 mimic cut from 120 to 40, 0.13 and 0.09, mid-field. But every rival does it: 80% of the apples that rot lie on the edge
 row or one in, and Sniper (0.19), Capricious, Mason and Mute pass up as many. A general edge-apple fix is noted below.
@@ -693,6 +694,21 @@ Done (PR #223): `version.js` (the build, stamped by the Pages workflow, and the 
 
 ## Done, 1 November 2026
 
+### 2w. Beetles get away at least a third of the time (Haakon, 31 October 2026; an engine-rules entry, after part 4) — done, PR #313 (Review: engine rules · Claude · Codex P1×2, clean; design check 7, 8, 10)
+
+The escape band moves from 20–35% to at least a third (33–45%): measured on `develop` once part 4's flight is in, and the beetles' side tuned if it falls short, never the rivals made worse. Spec: `docs/handoff/queue-specs.md`, "2w. Beetles get away at least a third of the time".
+
+### 2s+. The log's fall, proven (1 November 2026; the weekly blind re-review of PR #289) — done, PR #311 (Review: engine rules · Claude · design check 8, 9, 10; Codex P1×2, clean)
+
+The blind re-review ("Reviews", point 5, in `docs/claude-and-codex.md`) scored #289 a 7: three blocking points it
+passed with, each a miss. (1) A rules test that the woodpecker aims small (`PECK_FALL_SOFT`) and still takes a big piece
+when nothing smaller is left. (2) An online round trip that carries a non-empty `fall` (`online.js`; the pinned shapes
+hold only the empty one). (3) The case where a head is on a piece cut loose on the last tries: tested, or said in the
+design ("The log stays one piece"). Not blocking, fixed in the same PR: food and beetles on a falling piece tip away
+with it (and a beetle gets the bird-eats cue); `pieceFalls` cleared between rounds; the sim's dead island-crumb counters
+(`tools/sim/01-census.js`, `03-report.js`) removed; a render or UI check for the shade and the lesson. The flight's A/B
+on the new log is part 4's.
+
 ### 2s. A piece cut loose falls: the log stays one piece (30 October 2026, rewritten 31 October 2026; an engine-rules entry) — done, PR #289 (its measures in `docs/design/27-round-six-a-fairness-and-fixes.md`, "The log stays one piece")
 
 No more islands (Haakon, 31 October 2026: "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."): any piece of log no longer attached to the log falls away, warned, so the log is always one piece with holes in it, and jumps and flights cross the gaps inside it. Replaces "every island stays a hop from another". Spec: `docs/handoff/queue-specs.md`, "2s. A piece cut loose falls".
@@ -722,13 +738,125 @@ Word for word from "The polish lane" in `docs/PROGRESS.md`.
 - *Left as it is, by Haakon's answer:* the woodpecker over the help line between rounds (the audit's second find; PR #240 closed). On a 390 px phone it may cover part of the help line or the chatter's words; nothing essential is hidden, it moves often and taps pass through it ("Clear of the row's words (2k+)" in `docs/design/32-the-owners-playtest.md`). Not to be raised again.
 - *Not reproduced:* bubbles overlapping at 4× (the audit's fourth find). In 8 watched phone rounds and 3 desktop rounds at 4×, the longest overlap was 0.4 s on the phone and 0.19 s on desktop, only while bubbles glide to a new side. Dropping the older bubble after 0.25 s of overlap made no measurable difference, so nothing was merged.
 - The squash lesson (PR #250): "Your own beads feed nobody.", no longer "Squashed! Your own tail feeds nobody." (it opened with a rival's death title, and called the beads tail; the Field guide's Beads row says beads).
-- *Measured, nothing to fix:* sound piling up while watching (PR #248, `tools/dev/sound-levels.js`). At 4× the round asks for about 10 cues a second and the gaps let 4.5 through, at most 5 in any 250 ms; rivals' chomps 2 a second, the babble one every 4 s at most. Same shape at 1× and 2×, halved. The chatter's words were scanned too: no typos, apostrophes consistent.
+- *Measured, nothing to fix:* sound piling up while watching (PR #248, `docs/archive/studies/sound-levels.js`). At 4× the round asks for about 10 cues a second and the gaps let 4.5 through, at most 5 in any 250 ms; rivals' chomps 2 a second, the babble one every 4 s at most. Same shape at 1× and 2×, halved. The chatter's words were scanned too: no typos, apostrophes consistent.
 - *As designed:* the empty chatter-log line (the audit's sixth find): it's a new line's 0.4 s slide-in (`log-in`) caught mid-fade. Over 3 watched rounds on a phone on its side, 23 of 621 visible-row samples caught one, and none stayed empty. No fix.
 - The tail-drop lesson only in a real pocket, not when you've coiled with room to crawl out after your tail (PR #246; the audit's fifth find).
 - The screenshot tour runs through again (PR #252): `tools/shots.js`'s staged knock-flight stopped at food the bird eats (the engine's knock list gives it nowhere to go); it skips that piece, as the engine does.
 - Any key wakes from a nap (PR #271): Space, the flash keys, Enter, P or Esc wake without a power, an arrow wakes and steers, a tap on the board or the card wakes on touch; G, H, M, N, V and the speed keys keep their jobs. The card says "Any key to wake up" / "Tap to wake up".
+- **Done in the lane's entries:** the README for players (PR #241) and any key wakes from a nap (PR #271): their words are in `docs/archive/progress-done.md`, "The polish lane, done".
+- **The woodpecker bigger on a phone, done** (PR #270; Haakon picked B, and answered for a phone on its side): see "The woodpecker, as big as it gets", *Bigger on a phone*, in `docs/design/32-the-owners-playtest.md`.
+- **Done: the flash became the dash** (PR #304; Haakon, 1 November 2026: "dash is better actually"): the key help,
+  the lessons, banners, the Field guide, the HUD, Star's chatter (English and Chinese), the README and "One word for
+  each thing"; words only, the fingerprints unchanged.
+- The room card on a phone (PR #256): its seats as names in a row, as the start card's, each rival's "unless a friend joins" left to the card's own words; it fits a 320 px phone upright (it ran 117 px under its buttons), and on a 568x320 one sideways it scrolls 84 px, not 234.
+- The friends card's Join on a small phone on its side (PR #272): at 568x320 it ran 15 px off the card's edge; its row is a little tighter there.
+
+Moved from "The polish lane" in `docs/PROGRESS.md` (2 November 2026, the file-by-file review), word for word; the
+owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the flags) and #321 (the spit's tell):
+
+- **First, the housekeeping:** done (PR #222, and the design session's move of the open entries' specs to
+  `docs/handoff/queue-specs.md`, 31 October 2026); merged branches now go by GitHub's "Automatically delete head
+  branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
+- **Next, from the owner's notes of 2 November** (his words: `docs/archive/instructions.md`), one PR each: **every
+  snake's remains match the body they came from** ("Remains" in `docs/design/04-food-and-the-world.md`): The owner saw it
+  on Star, but `beadOf` in `render/food.js` has three faults. A dead snake's beads take their pattern by bead count, not
+  by the segment they came from, so every patterned rival's comes out squeezed (Wildcard, Joker, Sniper, Vulture,
+  Desperado, Mason, Colonist); Star's and Copycat's beads go round six fixed hues from red, while their bodies show a
+  running, fading rainbow; and crash drops and cut tails carry only the base colour. Each bead takes the fill and mark
+  its segment had at that moment; **flags fall with the log** when a gap opens under them, as the piece does,
+  instead of jumping (food's own fall is entry 6's A/B); and **the spit's tell**: the cheek's bulge counts down to the
+  spit, so a player sees when it comes (where it flies is 3b+'s dotted line).
+
+- The room card's seats two by two on a phone (PR #347): at 390 and 360 px upright and 844x390 on its side they wrapped
+  three and one, the last rival alone on its row; a 16-letter name ran past their box at 320 px, now ending in "…".
 
 ## The split lane, done (moved 31 October 2026)
 
-- `audio.js` became `audio/` (PR #225): `cues.js` and `sound.js`, sound proven unchanged by `tools/dev/same-sound.js`.
-  `chatter/zh.js` became `zh.js` and `zh-more.js` (PR #226), checked by `tools/dev/same-zh.js`.
+- `audio.js` became `audio/` (PR #225): `cues.js` and `sound.js`, sound proven unchanged by `docs/archive/studies/same-sound.js`.
+  `chatter/zh.js` became `zh.js` and `zh-more.js` (PR #226), checked by `docs/archive/studies/same-zh.js`.
+- Chatter split by meaning (the owner, 2 November 2026; PR #318): a file per rival in `chatter/voices/` over a shared
+  core, with the impressions and the talk on their own, listed in `chatter/voices.js`.
+- The workshop check's point (2), 2 November 2026: `docs/PROGRESS.md` back under 20 KB (10 KB, item 6's spec moved to `docs/handoff/queue-specs.md`) and `AGENTS.md` at 20 KB.
+- The unused-code check, the workshop check's point (5) (PR #331): unused code removed and done study tools moved
+  from `tools/dev/` to `docs/archive/` (`docs/archive/README.md` lists them).
+- The file-by-file review's moves (2 November 2026), a folder a PR, behaviour proven unchanged by the fingerprints and
+  the suites: render/ (PR #341: the food, the jumps, the fire and the bird's memory each in one file; the seeded random
+  and the sine hash written once), game/ (PR #342: `banners.js` split into banners, toasts and cards), chatter/ and
+  `records.js` (PR #343: `records.js` split into the records, `lineup.js` and `scores-screen.js`), audio/ (PR #344:
+  `sound.js` split into the synth, `music.js` and `weather.js`), tools/ (PR #345: `seeded()`, `ok()` and the runners'
+  `check()` written once; `chatter/04` and `rules/03`'s woodpecker boards made scripted boards). `render/09-chomps.js`
+  stays in the render suite: it drives the real page, which the chatter suite can't without a weaker stand-in.
+
+## Done specs, moved from the queue's specs (2 November 2026)
+
+Word for word from `docs/handoff/queue-specs.md`, moved by the file-by-file review once their entries were done: 2n
+(its first try; PR #208 was the third), 2s (PR #289), 2w (PR #313) and the chatter split (PR #318).
+
+#### 2n. Wildcard's hair: every version side by side, Haakon picks (30 October 2026; small, an art lane)
+
+Haakon: "trump looks like David Lynch now. I actually think the very first or second hairstyle trump had in the game is
+better than what he has right now". Draw Wildcard's head as each version has had it, side by side at the same size and
+heading. The design session made [the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg) from the PRs' own pictures (30 October 2026): 1 the
+original, 2 PR #107's two blobs, 3 and 4 PR #110's B and C (never shipped), 5 PR #110 as shipped (the "mop"), 6 PR #144's
+F, 7 PR #156's F at 85% (now). **Haakon's pick: the original, its swirl turned up** (30 October 2026: "What if we took
+the original, but have the swirl point upwards instead of downwards?", then "Yes, please, expertly please!"). **Then, simply** (Haakon, 30 October 2026, on the second try: "it looks horrible. I want the original hair, but I
+want the lick reversed. That's all. Keep it that simple."): bring back the original exactly as it was at a79946b (PR
+#107's "before": the fluffy pompadour, its strands, colours and outline), and reverse its lick, the one curl at the front
+that comes down over the brow, so it curls the other way, up and back; nothing else changes (no new shape, no flick, no
+reworked mass). The PR shows the original and the new one side by side in all four headings, at 390 px and desktop 2x,
+and **merges only once Haakon has said yes** (drawing only: no simulation, no protocol change).
+
+#### 2s. A piece cut loose falls: the log stays one piece (30 October 2026, rewritten 31 October 2026; an engine-rules entry, after part 4; ahead of 2q) — done, PR #289
+
+Haakon (30 October 2026): "I still see the situation arise where 2 islands form at the opposite ends, and the snakes
+are trapped on each, so the one on the bigger one wins". The first answer kept every island a hop from another. Haakon
+(31 October 2026), on the woodpecker cutting out shapes that fall once cut loose: "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."
+- **The rule:** the log is the biggest piece of bark; any other piece, once no bark joins it to the log, falls away
+  (it cracks, tips and drops, its bark and anything on it gone). So the log is always one piece with holes in it, and
+  there are no islands. Gaps inside it stay: holes a jump or a flight crosses, bridges over them, shortcuts and escapes.
+- **Fair:** the woodpecker's mark shows, before its strike, any piece that strike would cut loose (the piece shaded as
+  it will fall), and it never cuts loose a piece a snake couldn't leave in the warning's time, as it never shuts anyone
+  in today ("The woodpecker plays fair"); a snake still on a falling piece falls with it ("Down the hole!"). Food on it
+  falls too.
+- **No size is banned from falling** (Haakon, 31 October 2026: "No outline should be banned from falling, but ideally, it never takes out half the trunk."): whatever is cut loose falls. The woodpecker aims small (entry 6 plans it), and the only guard is the fair one above.
+- **Replaces** "every island stays a hop from another" (the first 2s). 2r's rule (no hop onto a doomed island) stays,
+  harmless, for any gap a snake might misjudge; part 4's measures of islands become measures of gaps. The lessons
+  and picture lines that speak of islands speak of the far side of a gap instead: the jump's lesson ("Space hops up
+  to three cells. Find an island!", `docs/design/29-round-six-b-the-new-moves.md`) and the island hop's picture line
+  ("Tap! I can hop to that island.", `docs/design/30-teaching-by-showing.md`), with their Field guide rows; the
+  writing pass (entry 9) may reword them again.
+- **The flight measured again** (Haakon, 31 October 2026: "yes.", to running part 4's both-ways test again once the
+  islands are gone): part 4's A/B of the golden flight (and of leap now and the golden flash, as part 4 measures them)
+  runs again on 2s's log, and the rivals' use of the flight is patched if its users no longer come out ahead.
+- **The rivals** see a piece that a mark would cut loose as gone at the strike, and get off it in time; a rules test
+  proves both, through the same engine calls.
+- **A cue and a lesson:** the crack and the tip as it drops, a creak and a far-off thud; the first time, "Cut loose,
+  it falls!", and a Field guide line under the Woodpecker.
+- **Measured** with part 4's flight in place: rounds ending with snakes on pieces of their own (51% on seed 3 today)
+  to none; deaths by falling with a piece, kept rare; round length and sudden-death deaths by cause; every rival's
+  trademark. Entry 6 then makes the woodpecker cut shapes on purpose, down to a floor.
+- **Online:** a protocol bump for the falling piece.
+
+#### 2w. Beetles get away at least a third of the time (Haakon, 31 October 2026; an engine-rules entry, after part 4)
+
+Haakon (31 October 2026): "Do beetles ever manage to espace?" Told that about 33% of chased beetles got away when last measured (round six A,
+inside its 20–35% band): "Yeah, I feel it should be at least a third of the time."
+- **The band** (in `docs/design/27-round-six-a-fairness-and-fixes.md`, "A cornered beetle digs in") moves from 20–35% to
+  **33–45%** of chases: at least a third, as he said; the ceiling of 45% is the design session's reading, so beetles
+  stay worth hunting.
+- **Measure first,** on `develop` once part 4 has merged, since the golden flight changes how snakes hunt: escapes from a
+  chase (down a burrow, dug in), beetles caught a round, the ticks of chase per catch, on fresh seeds.
+- **If it falls short, tune the beetles' side,** never the rivals' skill ("Clever rivals, human reactions"): how far
+  they see a head and run for a burrow, how fast they dig in, how many burrows stay open. Each step measured; the
+  round's length, deaths near a beetle and every rival's trademark within noise.
+- **The rules test and the census** keep the band: the simulation's check fails a run whose escapes fall below a third.
+- **Online stays in step:** a protocol bump if a beetle's messages change.
+
+#### Chatter split by meaning (Haakon, 2 November 2026; the workshop lane)
+
+Haakon: "Have we split files where it doesn't make any difference? Like chatter? Like, splitting out chinese, i get. But
+have one zh and zh-more, how does an agent/session which to look in? Won't it just check both?" ("Split by meaning" in
+`AGENTS.md`.) `chatter/zh.js` and `zh-more.js` were cut by size (Copycat to Wildcard, then Creeper to Star), and
+`voices.js` is 49 KB. Re-split along what people look up, a voice (a file per voice, or per voice and language), with
+the lines every voice shares written once; weigh the page's extra script tags and `sw.js` entries against what a
+session saves, and say both in the PR. Behaviour proven unchanged (the chatter suite, fingerprints on seeds 3 and 11).

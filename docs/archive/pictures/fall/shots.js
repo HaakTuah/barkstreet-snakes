@@ -2,9 +2,9 @@
 // fall, and that piece tipping away at the strike, on a staged board (an
 // old hollow down from the top edge and one in from the right, a corner of
 // log between them that the mark cuts loose, an apple on it, four snakes):
-//   node tools/dev/fall-shots.js <out-prefix> [WxH@dpr]
+//   node docs/archive/pictures/fall/shots.js <out-prefix> [WxH@dpr]
 const path = require('path');
-const root = path.join(__dirname, '..', '..'), out = process.argv[2] || 'fall';
+const root = path.join(__dirname, '..', '..', '..', '..'), out = process.argv[2] || 'fall';
 const size = /^(\d+)x(\d+)(?:@([\d.]+))?$/.exec(process.argv.find(a => /^\d+x\d+/.test(a)) || '900x900@2');
 const { launch, serve, sleep } = require(path.join(root, 'tools', 'browser.js'));
 (async () => {
