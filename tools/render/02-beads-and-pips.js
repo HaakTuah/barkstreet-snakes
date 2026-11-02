@@ -42,6 +42,22 @@ const cutTail = await ev(`(() => {
 })()`);
 check(cutTail.every((c, i) => (i % 2 ? purple : amber)(c)), 'a tail cut off falls as beads in its markings, each its own segment’s', JSON.stringify(cutTail));
 
+// A peer's tick with food off the board (or between cells), each bead its
+// own colour: none of it is drawn, so the bead sprites stay those of the
+// beads on the log, made once, not every frame.
+const offBoard = await ev(`(() => {
+  seeds(251);
+  const g = stage(['joker', 'mason', 'ghost']);
+  show(g); drawN(3); // (the round under way: food after this pops in at once)
+  g.food = [{ x: 5, y: 5, kind: 'pellet', color: '#123456', expires: g.tick + 900 }];
+  for (let i = 0; i < 700; i++) g.food.push({ x: i % 2 ? -1 - i : 3.5 + i / 2000, y: 4, kind: 'pellet', color: '#' + (0x100000 + i).toString(16), expires: g.tick + 900 });
+  g.tick++; drawN(20);
+  const made = sprites.get('bead'), keys = [...made.keys()];
+  drawN(3);
+  return { kept: made.size, same: keys.every(k => made.has(k)) && [...made.keys()].length === keys.length, odd: keys.filter(k => k.startsWith('#1') && k !== '#123456|').length };
+})()`);
+check(offBoard.odd === 0 && offBoard.same, 'food a peer puts off the board or between cells is never drawn, so its beads make no sprites', JSON.stringify(offBoard));
+
 // Stunned, a jump and a flash both asked, a turn up pressed, a body one
 // thick right above: the game will hop it (a jump goes first), so the
 // mark is the jump's hop, in sky, not the flash's chevrons, in ember.
