@@ -1,7 +1,7 @@
 // The apples rivals leave to rot: for every apple that rots, which rivals'
 // heads came within REACH of it while it lay there (they passed it up), and
 // how far it lay from the edge. Per rival: apples passed up a minute alive,
-// all and by the edge (on the edge row or one in). Haakon saw Copycat shy
+// all and by the edge (on the edge row or one in). The owner saw Copycat shy
 // apples by the edge (29 October 2026); this checks every rival.
 //   node docs/archive/studies/rotten-apples.js [root] [rounds] [seed]
 const fs = require('fs'), path = require('path'), vm = require('vm');

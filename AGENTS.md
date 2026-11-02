@@ -77,7 +77,8 @@ usage allows, at the lowest cost now and later.
   `scripts/sim.sh`, never in CI.
 - **A change a player sees updates the README,** in the same PR, as it does the lesson and the Field guide row.
 - **The owner's words are kept, in the archive.** Quote each instruction he gives word for word, dated, in the PR and
-  in `docs/archive/instructions.md`. A standing rule goes, as briefly as it can be said and with what it is for, into
+  in `docs/archive/instructions.md`, leaving out any personal detail as "[…]" (`SECURITY.md`, point 11: nothing
+  personal, ever). A standing rule goes, as briefly as it can be said and with what it is for, into
   the section of this file where it applies (or `CLAUDE.md`, if only Claude uses it), never as a dated entry or a
   quote, since every session pays to read this file.
 - **Each game's files stay in its own repository.** Never write this project's notes, logs or files into another

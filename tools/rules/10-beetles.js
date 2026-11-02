@@ -12,7 +12,7 @@
   let caught = null;
   for (let t = 0; t < T.BEETLE_DIG && !caught; t++) { feed(g); kept(g); if (!(b.x === 10 && b.y === 10)) break; caught = g.events.find(e => e.type === 'eat' && e.kind === 'beetle'); }
   check('...stays put while it digs, and can still be caught', caught && caught.x === 10 && caught.y === 10, JSON.stringify(b));
-  // A race it can win (2w, Haakon: beetles get away "at least a third of the time"): coming straight at it from outside
+  // A race it can win (2w, the owner: beetles get away "at least a third of the time"): coming straight at it from outside
   // BEETLE_DIG_FEAR, the dig starts as your head comes within it, and it's underground before you get there. A head
   // already nearer catches it (above). (At BEETLE_DIG 6 the race was the head's, on the dig's last tick, and chased
   // beetles got away 25% of the time; at 4, about 40%.)

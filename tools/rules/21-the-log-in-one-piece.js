@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------- 2s: a piece cut loose falls, the log stays one piece
-// (Haakon, 31 October 2026: "we want to avoid the islands stuff.") The land: a field, a one-cell neck on its right, and a
+// (the owner, 31 October 2026: "we want to avoid the islands stuff.") The land: a field, a one-cell neck on its right, and a
 // 3x3 peninsula beyond it, nine cells (under PECK_FALL_SOFT): a patch that takes the neck cuts the peninsula loose.
 const field2s = rect(2, 2, 12, 18), neck2s = [13, 10], penin2s = rect(14, 9, 16, 11);
 const land2s = [...field2s, neck2s, ...penin2s];

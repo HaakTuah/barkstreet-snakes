@@ -904,7 +904,7 @@ window.SnakeEngine = (() => {
       for (const k of drop) { patch.splice(patch.indexOf(k), 1); inPatch.delete(k); }
     }
   }
-  // The log stays one piece (2s, Haakon, 31 October 2026: "we want to avoid
+  // The log stays one piece (2s, the owner, 31 October 2026: "we want to avoid
   // the islands stuff"): the log is the biggest piece of bark left once the
   // patch is out; every other piece, cut loose, falls with the strike, so it
   // goes into the mark from the start (shaded as it will fall: w.fall) and
