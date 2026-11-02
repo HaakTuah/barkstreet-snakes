@@ -71,7 +71,6 @@
 // below plays whole rounds, to see how rare the grumbles are.)
 {
   let total = 0;
-  const per = {};
   // (Squashed beads, beetles that dug in and got away, and food the woodpecker knocked aside, as the engine has them, and the lines for them.)
   const chokeLines = new Set(Object.values(VOICES).flatMap(v => v.choke || []));
   const esc = s => s.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
