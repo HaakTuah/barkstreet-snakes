@@ -406,6 +406,8 @@ window.SnakeAI = (() => {
   const DISTANCE_CAP = 14; // distance-keepers are happy once this far away
   const PLAIN_GOLD = { power: 1, apple: 1 }; // (golden things worth what they're worth: no craving)
   const NO_HABIT = { price: 1 };             // (powers at their price, used only when they pay)
+  const SHUT_FOOD = 2, FOOD_CUT = 12; // a rival's nearest food put FOOD_CUT moves or more further off by my landing, in apples (see shutIn)
+  const SHUT_IN = 4, SHUT_MOVES = 10; // a rival shut in by my flight's landing, all the room it gets to in SHUT_MOVES moves cut away, in apples (see shutIn)
   const CUT_TAIL = 12;     // a cut rival's tail counts for at most this many segments (see flashOpt)
   // Mushrooms come back up (round six B). A segment off a rival's length,
   // hit with a spat mushroom, is worth SPIT_SEG of an apple to me (my own
@@ -857,7 +859,10 @@ window.SnakeAI = (() => {
 
     // How much room snake k has from its predicted head. `blockT` > 0 means my
     // body (as placed in ownFree for a search state at time blockT) is in the way.
-    function roomOf(k, blockT = 0) {
+    // (Only what it gets to in `upTo` moves, if given; and into roomFood, how
+    // many moves to the first food it gets to: HOLE, none.)
+    let roomFood = HOLE;
+    function roomOf(k, blockT = 0, upTo = HOLE) {
       const h = heads[k];
       const start = h.y * N + h.x;
       const stampS = ++stamp;
@@ -865,7 +870,8 @@ window.SnakeAI = (() => {
       queue[0] = start;
       // queue[read, write) is still to expand; it holds one distance at a time.
       let read = 0, write = 1, room = 0;
-      for (let d = 1; read < write && room < ROOM_CAP; d++) {
+      roomFood = HOLE;
+      for (let d = 1; read < write && room < ROOM_CAP && d <= upTo; d++) {
         const levelEnd = write;
         while (read < levelEnd) {
           const i = queue[read++];
@@ -873,6 +879,7 @@ window.SnakeAI = (() => {
             const ni = nbr[n];
             if (ni < 0 || seen[ni] === stampS || otherFree[ni] > d || (ownFree[ni] && ownFree[ni] > d - blockT)) continue; // (a cell that isn't my body is free of me)
             seen[ni] = stampS;
+            if (foodValue[ni] > 0 && d < roomFood) roomFood = d;
             room++;
             queue[write++] = ni;
           }
@@ -2055,6 +2062,7 @@ window.SnakeAI = (() => {
       const keep = me.grow > 0 ? me.body.length : me.body.length - 1, stampM = ++stamp;
       for (let j = 0; j < keep; j++) myCells[me.body[j].y * N + me.body[j].x] = stampM;
       const trapped = crawl < DEAD / 2, boxed = crawl < -NECK;
+      const roomsHere = new Int32Array(others.length).fill(-1), foodHere = new Int32Array(others.length); // (each rival's room and moves to food as I am, once asked: see shutIn)
       let hereFree = -1, hereFood = false, landFood = false, landCells = 0; // (the free log round me, and whether there's food on it: see islandGain) // (boxed: the crawl leaves me less room than I need, or only through a gap a rival could shut)
       const pecks = view.pecks; // (the woodpecker's mark, if I'm shown it apart from the holes)
       const cellAt = (x, y) => {
@@ -2229,13 +2237,44 @@ window.SnakeAI = (() => {
           else { const b = me.body[j - span - 1]; nb[j].x = b.x; nb[j].y = b.y; }
         }
         for (let s = 0; s < span; s++) for (let b = 0; b < bugs; b++) bugStep(b, s, s + 1, s, path[s] % N, (path[s] - path[s] % N) / N, otherBug(b, s)); // (a beetle runs from me in the air, and I come down where it is then)
+        const shut = golden ? shutIn(nb, L, g, down, land) : 0; // (before it eats: the body as it comes down)
         eatOn(-1, land, -1, L, g, 0.85, down); // (it eats where it lands)
         bugsOn(span, land % N, (land - land % N) / N);
         endRisk = risk[land] + strikes[land];
-        const gain = ateGain + isle * U - 0.6 * endRisk;
+        const gain = ateGain + isle * U - 0.6 * endRisk + shut * U;
         const score = depth > down ? search(nb, ateL, ateG, depth - down, down, gain) : evaluate(nb, ateL, ateG, down) + gain;
         uneat();
         return score;
+      }
+
+      // A flight down to cut a rival off, in apples: Haakon's flight, where
+      // "someone really skillful can time cutting someone else off midair".
+      // Each rival near where I'd land: its room (roomOf: from its head, my
+      // body in the way, what it gets to in SHUT_MOVES moves) as I am, and
+      // with me down there; the share of that I'd take away (in its way, or
+      // shut in against bodies, holes or the edge) is worth SHUT_IN apples;
+      // and the moves on to its nearest food (up to
+      // FOOD_CUT), SHUT_FOOD apples, all of them. As much more as I'm
+      // aggressive (a hunter's victim twice, as with the cut), half to one
+      // that can jump out.
+      function shutIn(nb, L, g, down, land) {
+        const agg = (w.aggression || 0) + (w.hunt ? 0.5 : 0);
+        if (!agg) return 0;
+        const lx = land % N, ly = (land - lx) / N;
+        let v = 0, placed = false;
+        for (let k = 0; k < others.length; k++) {
+          const o = others[k];
+          if (Math.abs(heads[k].x - lx) + Math.abs(heads[k].y - ly) > TUNE.GOLD_FLY + 2) continue;
+          if (roomsHere[k] < 0) { body0ToOwnFree(me.body, me.body.length, me.grow); roomsHere[k] = roomOf(k, 0, SHUT_MOVES); foodHere[k] = Math.min(FOOD_CUT, roomFood); clearOwnFree(me.body, me.body.length); }
+          const before = roomsHere[k];
+          if (!before) continue;
+          if (!placed) { body0ToOwnFree(nb, L, g); placed = true; }
+          const after = roomOf(k, down, SHUT_MOVES), late = Math.min(FOOD_CUT, roomFood) - foodHere[k];
+          const cut = Math.max(0, SHUT_IN * (before - after) / before) + Math.max(0, SHUT_FOOD * late / FOOD_CUT);
+          if (cut > 0) v += (o.id === memory.victimId ? 2 : 1) * (o.leaps > 0 || o.leapIn === 0 ? 0.5 : 1) * (0.5 + agg) * cut;
+        }
+        if (placed) clearOwnFree(nb, L);
+        return v;
       }
 
       // The island a jump reaches, in apples: folded up where I am, with
