@@ -7,11 +7,9 @@ when it is merged into `develop`; add Haakon's new tasks where he places them, w
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**Resumed 31 October 2026 on a second account**, spent to the end before Monday. The main lane took up part 4 (#198,
-2r folded in), making leap now and the flight pay the rivals; 2s now runs before 2q, then 3b+, parts 5 to 7. Merged
-since: 2n (the original hair, lick reversed, #208), 2u (#221), the Voices icon (#224), live with milestone #227; then 2v
-(#223). Open lanes: the audio and Chinese splits (#225, #226), the polish fixes and the improvement audit (#220). The
-older state notes are in `docs/archive/plan-history.md`.
+**2 November 2026, a fresh week:** the main lane is part 4 (#198), then 2x, then part 5 (#202, parked); the polish
+lane and the workshop lane run beside it, each claimed by a draft PR. The older state notes are in
+`docs/archive/plan-history.md`.
 
 ## For Haakon
 
@@ -20,7 +18,7 @@ instructions" in `AGENTS.md`). Each task's last message and each milestone PR op
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 5, part 4 (#198) | The golden flight works and the rivals fly it, but it can't show in wins between rivals: a flight moves a cell a tick like a crawl, so it buys no time, and under today's rules no rival in 30 rounds died holding a golden jump (0 of 90 deaths), so it has nobody to save; leap now came out even too; the golden flash pays in food and kills, not wins. Which: (a) merge the flight and leap now as they are, moves that pay for a person's timing; (b) the flight flies 2 cells a tick while held, so it buys time, measured again; (c) more golden beetles? | Answered (Haakon, 1 November 2026): none of the three. "they must work until the rivals know how to use them. i am certain they will give better performance if used appropiately" (as on 31 October: "then it must be the AI"): the moves stay as designed (the golden leap flies up to 5 cells and steers, leap now, the golden flash cuts two thick), and the rivals are improved until their users come out ahead. Leap now stays: "no dropping of leap, leap goes in the game that is my vision". #198 goes on, on those terms. | Answered, 1 November 2026 |
+| (none open) | | | |
 
 ## The polish lane
 
@@ -70,7 +68,7 @@ players, any key wakes, the woodpecker bigger on a phone, the flash become the d
 
 ## The queue, in order
 
-**Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)); 2t (Capricious without its ring, and a costume change for every change (PR #212)); 2u (picked rivals for this visit; unmet rivals back into the deck (PR #221)); 2v (the newest version, by itself between rounds (PR #223)); 2s (a piece cut loose falls, the log stays one piece (PR #289)); 2s+ (the log's fall, proven (PR #311)); 2w (beetles get away 38–41% of chases: they dig in in 4 ticks (PR #313)).
+**Done:** every finished entry, 1 to 2w, with its PR, is in `docs/archive/progress-done.md`, "The queue, done".
 
 ### 2x. The spitter slides over its own mushroom (Haakon, 2 November 2026; an engine-rules entry, next, ahead of part 5)
 
@@ -78,7 +76,7 @@ Taken out of 3b+ and moved to the front, since it still bites (Haakon: "Still ge
 
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
-The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, parked on Haakon's question in "For Haakon" (1 November 2026: the flight even on its own, under real and amplified rules, after the rivals re-plan it in the air and an escalation), 2r folded in: its A/B comes out even, so it waits until the rivals use the moves well: the flight and leap now measured apart, the rivals taught the flight's uses, the golden flash measured on its own in the same pass, and the flight merged without leap now if only the flight pays; Haakon, 31 October 2026), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
+The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; Haakon answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done.md`, "For Haakon, answered"), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 
