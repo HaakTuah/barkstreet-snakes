@@ -224,6 +224,7 @@ function onTick(events) {
   tickNow = now;
   for (let i = scurries.length - 1; i >= 0; i--) if (scurries[i].tick < game.tick) scurries.splice(i, 1); // (a tick's own: see drawBeetle)
   for (let i = bugPops.length - 1; i >= 0; i--) if (bugPops[i].tick < game.tick) bugPops.splice(i, 1);
+  let cutBeads = GRID * GRID; const prevAt = new Map(); // (a tick's beads from cuts: no more than the board has cells, whatever a peer sends; each body's cells indexed once)
   for (const e of events) {
     if (e.type === 'eat') {
       let x = e.x * CELL + CELL / 2, y = e.y * CELL + CELL / 2;
@@ -355,6 +356,14 @@ function onTick(events) {
       if (!reduced) for (let k = 0; k < 4; k++) mote(x + (Math.random() - 0.5) * CELL * 0.6, y, (Math.random() - 0.5) * 12, -20 - Math.random() * 14, 1200, 4 + Math.random() * 3, 2);
     } else if (e.type === 'cut') { // a flash cut through it, a plain one or a golden one (a dash); its own tail dropped, by its own flash (the woodpecker's cuts, its "Ouch!", went in round four)
       floater(e.x * CELL + CELL / 2, Math.max(CELL * 1.3, e.y * CELL - CELL * 0.2), e.by != null ? 'Snip!' : 'Ouch!');
+      const prev = e.snake.prev || []; // (its tail falls as beads in its markings: segment p0 + i lay at prev[p0 + i])
+      let at = prevAt.get(e.snake);
+      if (!at) { at = new Map(); prev.forEach((c, k) => { const key = c.y * GRID + c.x; if (!at.has(key)) at.set(key, k); }); prevAt.set(e.snake, at); }
+      const p0 = at.get(e.y * GRID + e.x) ?? -1;
+      if (p0 >= 0) for (let i = 1; i < e.lost && p0 + i < prev.length && cutBeads > 0; i++, cutBeads--) {
+        const key = prev[p0 + i].y * GRID + prev[p0 + i].x;
+        if (!born.has(key)) born.set(key, { kind: 'pellet', at: now + i * RIPPLE_MS, i, next: 0, gen: bornGen, v: beadOf(e.snake, p0 + i) });
+      }
       if (e.by != null) spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 12, 220, 500, 2.4, '#d4a017', e.snake.color || '#fffbea');
     } else if (e.type === 'alight') { // crawled into the fire: a burst of flame
       const h = e.snake.body[0];
@@ -442,9 +451,10 @@ function burst(s) {
   blasts.push({ x: hx, y: hy, at: lastNow, color: hex, bow });
   if (bow) spawnBow(hx, hy, 26, 380, T.PARTICLE_LIFE * 1.3, 3.4, bow);
   else spawn(hx, hy, 26, 380, T.PARTICLE_LIFE * 1.3, 3.4, hex, '#fffbea');
+  const fills = animOf(s, lastNow).fills;
   for (let i = 1; i < s.body.length; i += 2) {
-    const c = s.body[i];
-    spawn(c.x * CELL + CELL / 2, c.y * CELL + CELL / 2, Math.max(2, Math.round(T.PARTICLES_DEATH / Math.ceil(s.body.length / 2))), 240, T.PARTICLE_LIFE * 1.2, 3, bow ? bow(TWINKLE_HUES[(i >> 1) % TWINKLE_HUES.length])[0] : hex, '#a16207'); // (a rainbow's in its colours, as its beads)
+    const c = s.body[i], f = fills[i];
+    spawn(c.x * CELL + CELL / 2, c.y * CELL + CELL / 2, Math.max(2, Math.round(T.PARTICLES_DEATH / Math.ceil(s.body.length / 2))), 240, T.PARTICLE_LIFE * 1.2, 3, f && f[0] === '#' ? f : hex, '#a16207'); // (each piece its segment's colour as last drawn, as its beads)
   }
   for (let i = 0; i < 6; i++) mote(hx + (Math.random() - 0.5) * CELL, hy + (Math.random() - 0.5) * CELL, (Math.random() - 0.5) * 30, -18 - Math.random() * 18, 1400, 4 + Math.random() * 3, 2);
 }

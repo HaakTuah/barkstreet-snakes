@@ -4,7 +4,7 @@
 // so a colour goes back over the log at a quarter of it; still while it's
 // stunned; a burst as it flashes; drifting slowly where it is with
 // reduced motion), the gold line round its points, and its beads in
-// rainbow order. Two Stars heading right along rows 8 and 14, one
+// the rainbow its body had there. Two Stars heading right along rows 8 and 14, one
 // resting, one ready; Mason (a round head) beside them. (Its tell, its
 // face and its rainbow on others: below.)
 const stars = await ev(`(() => {
@@ -78,15 +78,16 @@ const stars = await ev(`(() => {
   const gold = ring(rest, 0.875, 360);
   out.gold = [-36, 36].map(d => [-2, -1, 0, 1, 2].some(k => honey(gold[(360 + d + k) % 360])));
   R.setReducedMotion(false);
-  // A dead Star's beads: every other segment, round the rainbow from its head.
+  // A dead Star's beads: every other segment, in the rainbow its body had there as it went.
   const g2 = stage(['star', 'ghost', 'mason']), st = g2.snakes[1];
   setBody(st, Array.from({ length: 16 }, (_, i) => [20 - i, 10]), 'right');
   show(g2); drawN(10);
+  out.body = [1, 2, 3, 4, 5, 6, 7].map(n => hue(rgb(20 - n * TUNING.CORPSE_EVERY + 0.5, 10 + 0.5)));
   st.alive = false; st.killer = 'wall'; st.body.forEach((c, j) => { if (j % TUNING.CORPSE_EVERY === 0) g2.food.push({ x: c.x, y: c.y, kind: 'pellet', color: st.color, owner: st.id, expires: g2.tick + 900 }); });
   g2.tick++;
   R.onTick([{ type: 'death', snake: st }]);
   drawN(90);
-  out.beads = [0, 1, 2, 3, 4, 5, 6].map(n => hue(rgb(20 - n * TUNING.CORPSE_EVERY + 0.5, 10 + 0.55)));
+  out.beads = [1, 2, 3, 4, 5, 6, 7].map(n => hue(rgb(20 - n * TUNING.CORPSE_EVERY + 0.27, 10 + 0.46))); // (each bead's own segment's half, its upper left)
   SnakeDebug.pinQuality(2);
   return out;
 })()`);
@@ -103,8 +104,7 @@ check(perSec(going.seg) >= 220 && perSec(going.seg) <= 420 && perSec(going.log) 
 check(Math.abs(stunned.seg) <= 4 && Math.abs(stunned.log) <= 4, 'stunned, it stays, and so does its rainbow', `segment 3 turned ${stunned.seg}°, the log under it ${stunned.log}°, in ${stunned.ms} ms`);
 check(flash.seg >= 2 * normal.seg, 'a flash bursts its rainbow on', `segment 3 turned ${flash.seg}° in the three ticks from a flash, ${normal.seg}° in three going on`);
 check(stars.gold.every(Boolean), 'holding golden powers, Star’s gold line runs round its points', `Honey just past its two front points: ${stars.gold.join(', ')}`);
-const want = [0, 32, 55, 130, 205, 275, 0];
-check(stars.beads.every((h, i) => dh(h, want[i]) < 22), 'a dead Star’s beads go round the rainbow from its head', `hues ${stars.beads.join(', ')} (red, orange, yellow, green, blue, violet, red: ${want.join(', ')})`);
+check(new Set(stars.body).size >= 5 && stars.beads.every((h, i) => dh(h, stars.body[i]) < 15), 'a dead Star’s beads are its rainbow where it was, segment by segment', `beads ${stars.beads.join(', ')}; its body there ${stars.body.join(', ')}`);
 
 // Star's tell is a countdown on its points: its middle always its
 // sunflower; just flashed, its five points dim; they light one by one as
