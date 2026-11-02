@@ -81,7 +81,7 @@ and the owner's notes of 2 November, among them).
 **From the issues** (the owner, 2 November 2026): Ghost starving most (#325) is measured in the next AI entry, as its
 trademark (distance) or a fault; in the same entry, apples by the edge rotting (#324): 80% of the apples that rot lie on
 the edge row or one in, passed up by rivals whose room and margin weights count a safe edge cell against them, so it
-tests a safe-meal exception like the one by the neck (`MEAL_DAWDLE`), measured both ways; the snake that starved 4 s after its warning (#327) is a bug any lane may take.
+tests a safe-meal exception like the one by the neck (`MEAL_DAWDLE`), measured both ways; the snake that starved 4 s after its warning (#327) was a snake of 4 in snow, warned on the hunger clock: fixed in the warning (PR #397).
 
 ### 2y+. Split `ai.js` and `engine.js` by meaning (the owner, 2 November 2026; the main lane, right after 2y, before part 5)
 

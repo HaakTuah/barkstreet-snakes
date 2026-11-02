@@ -129,6 +129,21 @@ window.SnakeEngine = (() => {
   // (lastAte is when it ate as the clock counts it: a meal that lasts less
   // than HUNGER_MS counts as eaten that much earlier, and winter moves it on.)
   const hungerLeft = (game, s) => s.lastAte + T.HUNGER_MS - game.time;
+  // How much of its hunger warning a snake has left, in real time: 1 or more
+  // before the warning, under 1 in it (0 or less once the time's up). The
+  // warning comes HUNGER_WARN_MS before it starts shrinking, or half again
+  // that before it would starve, whichever is sooner, so a snake with one
+  // segment to spare is warned as early as one at its smallest. Snow runs the
+  // clock faster, so it comes sooner by the clock. (The toast, the tag and
+  // the growl all read this, so they agree; and only what a guest online is
+  // sent: not grow, which only lengthens its life, so it's warned a little
+  // early then, never late. A snake of 4 in snow was once warned only 4 s
+  // before it starved: #327.)
+  const hungerWarning = (game, s, now = game.time) => {
+    const rate = game.weather.kind === 'snow' ? T.SNOW_HUNGER : 1, left = s.lastAte + T.HUNGER_MS - now;
+    const end = Math.max(left, s.nextStarve - now) + (s.body.length - T.MIN_LENGTH) * T.STARVE_EVERY_MS;
+    return Math.min(left / T.HUNGER_WARN_MS, end / (1.5 * T.HUNGER_WARN_MS)) / rate;
+  };
   // How long a meal keeps a snake from shrinking: HUNGER_MS in the opening
   // and once the woodpecker's here, HUNGER_MID_MS between, when food is
   // everywhere (with a long clock, hunger hardly ever mattered then).
@@ -2376,6 +2391,6 @@ window.SnakeEngine = (() => {
 
   return {
     GRID, PLAYER_COLOR, PERSONAS, DIRS, WEATHER,
-    createGame, step, tickMs, hungerLeft, aiView, canThinkAhead, thinkAhead, suddenDeath, leap, letGo, leapIn, flash, flashIn, rollSide, knockTo, knocks, beakDepth, beakGap,
+    createGame, step, tickMs, hungerLeft, hungerWarning, aiView, canThinkAhead, thinkAhead, suddenDeath, leap, letGo, leapIn, flash, flashIn, rollSide, knockTo, knocks, beakDepth, beakGap,
   };
 })();
