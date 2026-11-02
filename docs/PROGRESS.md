@@ -31,11 +31,6 @@ the second account until its usage is spent; on the main account the brake close
 - **First, the housekeeping:** done (PR #222, and the design session's move of the open entries' specs to
   `docs/handoff/queue-specs.md`, 31 October 2026); merged branches now go by GitHub's "Automatically delete head
   branches", and the older ones went by the "Delete merged branches" button in Actions (31 October 2026). Then archive leftovers nobody uses.
-- **Done in the lane's entries:** the README for players (PR #241) and any key wakes from a nap (PR #271): their words are in `docs/archive/progress-done.md`, "The polish lane, done".
-- **The woodpecker bigger on a phone, done** (PR #270; Haakon picked B, and answered for a phone on its side): see "The woodpecker, as big as it gets", *Bigger on a phone*, in `docs/design/32-the-owners-playtest.md`.
-- **Done: the flash became the dash** (PR #304; Haakon, 1 November 2026: "dash is better actually"): the key help,
-  the lessons, banners, the Field guide, the HUD, Star's chatter (English and Chinese), the README and "One word for
-  each thing"; words only, the fingerprints unchanged.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
@@ -49,11 +44,8 @@ the second account until its usage is spent; on the main account the brake close
   and 11), so nothing that changes play slips in; merged at once, one line per fix under this lane. Nothing is left
   half done: a fix not finished when usage ends is left unstarted, its find noted for the next session.
 
-*Done in the lane:* each fix's line is in `docs/archive/progress-done.md`, "The polish lane, done".
-
-- The room card on a phone (PR #256): its seats as names in a row, as the start card's, each rival's "unless a friend joins" left to the card's own words; it fits a 320 px phone upright (it ran 117 px under its buttons), and on a 568x320 one sideways it scrolls 84 px, not 234.
-
-- The friends card's Join on a small phone on its side (PR #272): at 568x320 it ran 15 px off the card's edge; its row is a little tighter there.
+*Done in the lane:* each fix's line is in `docs/archive/progress-done.md`, "The polish lane, done" (the README for
+players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone, among them).
 
 ## The split lane (the workshop check's files over about 50 KB)
 
