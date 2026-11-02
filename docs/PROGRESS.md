@@ -90,6 +90,18 @@ entries" never came. Each is split by meaning in a PR of its own (the rivals' sh
 planning, and so on for `ai.js`; the rules by system for `engine.js`), proven unchanged by the fingerprints and the
 suites, so it goes quickly and needs no head-to-head. Part 5's branch (#202) then merges the split in once.
 
+### 2y++. The golden flight, followed up (the owner, 2 November 2026; #399 and #401; side lanes now, the last step after part 7)
+
+2y left the flight even both ways (24.9% against 25.1% head to head; +0.10 ± 0.15 place a use): between rivals a
+landing is almost never contestable. The flight stays as built for now, and no rule changes yet:
+1. **The ring tinted by its taker** (#401; a side lane now, drawing only): when a snake's head is closing on another's
+   ring and could get there in time, the ring is tinted briefly in that snake's colour, for everyone. `render/looks.js`
+   is at the 50 KB mark, so its step 0 split comes first.
+2. **The flight measured against fliers who fly like people** (a measurement, a side lane now): fliers who take off into
+   contested rings, as people do, against the rivals who now take landings; per use and head to head.
+3. **Measured again after 2u and part 7,** whose stamina and pricing change what a flight costs. Only if it is still
+   even then does a bigger change go to the owner as a question: a longer flight, or the ring shown before take-off.
+
 ### 5 (part 5). Gold portals, unparked (the owner, 2 November 2026; an engine-rules entry, right after 2y)
 
 The golden mushroom's wrap has no cost while the edges open for its holder alone, a small refuge from the edge; part 5's
