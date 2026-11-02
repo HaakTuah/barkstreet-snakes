@@ -65,7 +65,8 @@ window.SnakeAI = (() => {
   //                                   not just the way I'd crawl; jumpAny: the plain jump over any hurdle
   //                                   with somewhere free to land that no rival could reach first, not
   //                                   just out of a crash or onto food; dashSpend: golden dashes spent on
-  //                                   speed too (at the full price), not just on cuts and golden things
+  //                                   speed too (at the full price), and not kept for a trap (or a cut
+  //                                   that puts a rival out) as everyone else's
   //   golden                        { power, apple, contested }: golden power food (golden beetles, leaves,
   //                                   golden mushrooms) worth this many times what it's worth to anyone
   //                                   else, and a golden apple this many; contested: how much golden power
@@ -2110,7 +2111,7 @@ window.SnakeAI = (() => {
       // the ones I ate there are gone.)
       const bugsOn = (s, hx, hy) => { for (let b = 0; b < bugs; b++) if (ateBug & (1 << b)) { const n = b * SLOTS + s + 1; bugCell[n] = -1; bugDug[n] = -1; } else bugStep(b, s, s + 1, s, hx, hy, otherBug(b, s)); };
       const cutter = !!w.hunt || (w.aggression || 0) >= 0.5; // (the hunters and the aggressive weigh a cut off to the side too)
-      let best = null, ownCut = -1; // (ownCut: see flashOpt)
+      let best = null, ownCut = -1, cutKills = false; // (ownCut, cutKills: see flashOpt)
       const consider = (d, flash, v, price, extra) => {
         const full = endRisk > safe || idle;
         idle = false;
@@ -2122,7 +2123,7 @@ window.SnakeAI = (() => {
       for (const d of DIR_LIST) {
         if (d.x === -me.dir.x && d.y === -me.dir.y) continue;
         const extra = (ctx.mimicDir && sameDir(d, ctx.mimicDir) ? w.mimic : 0) - (w.turn && !sameDir(d, me.dir) ? w.turn : 0);
-        if (me.dashes > 0) consider(d, true, flashOpt(d, true), 0.6, extra);
+        if (me.dashes > 0) { const v = flashOpt(d, true); if (trapped || cutKills || habit.dashSpend) consider(d, true, v, 0.6, extra); } // (a golden dash, held: out of a trap, or for a cut that puts a rival out; spent so, it gains (see part 4's chosen numbers); spent as it came, −0.11 ± 0.09 place a use; Star (dashSpend), its trademark, spends them as they come)
         else if (me.flashIn === 0 && (trapped || d === crawlDir || habit.everyWay || (cutter && bodyNear(d)))) consider(d, true, flashOpt(d, false), trapped || race(d) ? 1 : 2, extra);
         if (jump) { const v = leapOpt(d); consider(d, false, v, (me.leaps > 0 ? 0.35 : TUNE.LEAP_COST + 0.5) * (leapNow ? (w.leapNow ?? 1) : 1), extra); } // (leap now, at the jump's price times my style's: only out of trouble, see fleeing)
       }
@@ -2340,7 +2341,7 @@ window.SnakeAI = (() => {
         const agg = (w.aggression || 0) + (w.hunt ? 0.5 : 0);
         const body = i => myCells[i] === stampM || (mineFree[i] > 1 && (!holes.has(i) || (fire.has(i) && others.some(o => o.body.some(q => q.y * N + q.x === i))))); // (mine, or a rival's that'll still be there, on fire too)
         let cut = 0, got = false, fires = 0, run = 0;
-        ownCut = -1;
+        ownCut = -1; cutKills = false;
         for (let i = 0; i < n; i++) {
           const c = path[i];
           if (holes.has(c) && !fire.has(c)) return null; // (a hole, or the woodpecker's mark: it'd fail or blow up, or soon)
@@ -2361,6 +2362,7 @@ window.SnakeAI = (() => {
               if (!o || j0 === 0) return null; // (a head, or where one may be)
               const j = j0 + Math.max(0, age - (o.stun || 0)); // (where it's cut: it's moved on since I saw it)
               const mark = o.id === memory.victimId ? 2 : 1; // (my target, twice over: Sniper cuts off its target, Mute its boxed one)
+              if (j < TUNE.MIN_LENGTH) cutKills = true; // (it's out)
               cut += mark * (j < TUNE.MIN_LENGTH ? 6 * (0.5 + agg) : Math.min(CUT_TAIL, Math.max(0, o.body.length - j)) * 0.1 * (0.5 + agg)); // (in apples: out, or its tail off, up to CUT_TAIL of it: at 0.4 a segment, uncapped, rivals cut 14 times a round and the beads swamped the board; at 0.15, 10 times, and the cut starved small)
             }
             run = r;
