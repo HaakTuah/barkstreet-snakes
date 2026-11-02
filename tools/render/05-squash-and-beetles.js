@@ -36,7 +36,7 @@ const squash = await ev(`(() => {
 check(squash.before > 20 && squash.mid > squash.before && squash.away === 0 && squash.after === 0, 'a bead squashed under its own snake leaves a splat in its colour, wider than the bead, where it lay (never spat or rolled), gone within 3 s',
   `the bead's sky pixels before ${squash.before}, the splat's ${squash.mid} (elsewhere ${squash.away}), 3 s on ${squash.after}`);
 
-// The spit's tell (Haakon, 2 November 2026): a mushroom in Joker's cheek,
+// The spit's tell (the owner, 2 November 2026): a mushroom in Joker's cheek,
 // its green bulge counting down to the spit: bigger move by move as the
 // second runs out, and on each of the last three moves a throb, big as the
 // move starts and settling through it. (Each count at mid move, the wobble

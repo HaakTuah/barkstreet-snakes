@@ -1,6 +1,6 @@
 // The rivals you chose for the start card's seats, and the deck they are dealt
 // from, kept in this browser (see records.js): window.SnakeRecords's seats,
-// setSeat, deal and undeal. After records.js, which gives it the storage.
+// setSeat, deal, undeal and takeOut. After records.js, which gives it the storage.
 (() => {
   const { load, save } = window.SnakeRecords.kept;
   const LINEUP_KEY = 'snake-lineup'; // (the rivals you chose, for good: no longer read, and never renamed; see VISIT_KEY)
@@ -65,14 +65,25 @@
   // top, so they're next; anywhere (the page closing on a start card), each
   // goes to a random place among the rivals not yet dealt: everyone is still
   // met before anyone comes round again, but opening the game gives a fresh cast.
+  // Returns the keys it put back.
   function undeal(pool, keys, { anywhere = false } = {}) {
-    if (!keys.length) return;
+    if (!keys.length) return [];
     const raw = load(DECK_KEY, []), deck = Array.isArray(raw) ? raw.filter(k => pool.includes(k)) : [];
     const back = keys.filter((k, i) => pool.includes(k) && !deck.includes(k) && keys.indexOf(k) === i);
-    if (!anywhere) return save(DECK_KEY, [...back, ...deck]);
-    for (const k of back) deck.splice(Math.floor(Math.random() * (deck.length + 1)), 0, k);
-    save(DECK_KEY, deck);
+    if (!anywhere) save(DECK_KEY, [...back, ...deck]);
+    else {
+      for (const k of back) deck.splice(Math.floor(Math.random() * (deck.length + 1)), 0, k);
+      save(DECK_KEY, deck);
+    }
+    return back;
   }
 
-  Object.assign(window.SnakeRecords, { SEATS, seats, setSeat, deal, undeal });
+  // Rivals undealt that are to be met after all (the back/forward cache
+  // bringing a start card back) come out of the deck again.
+  function takeOut(keys) {
+    const raw = load(DECK_KEY, []);
+    if (keys.length && Array.isArray(raw)) save(DECK_KEY, raw.filter(k => !keys.includes(k)));
+  }
+
+  Object.assign(window.SnakeRecords, { SEATS, seats, setSeat, deal, undeal, takeOut });
 })();

@@ -57,7 +57,7 @@ const BIRD_GROW = 1.7; // (times its first size: 1.3 since 2c, 1.7 since 2k, on 
 // On a phone (a screen no more than PHONE_SHORT_PX on its short side,
 // held upright or on its side) its board is less than half a desktop's,
 // so the bird grows PHONE_GROW times more, to look as threatening there as
-// beside a desktop's board (Haakon, 31 October 2026). Everything sized by
+// beside a desktop's board (the owner, 31 October 2026). Everything sized by
 // it (BU and what's worked out from it) is set by growBird as the layout
 // changes, never in the middle of a frame.
 const PHONE_SHORT_PX = 500, PHONE_GROW = 1.6;
@@ -127,7 +127,7 @@ function perchFor(tx, ty) {
   // leaves it room for that much, see style/)
   const between = boardRect.upright && (side === 'left' || side === 'right') && !(fit[side] >= least) && shrunk(side) < least;
   if (between && ledge >= floor && ledge >= shrunk(side)) side = 'ledge';
-  // (a phone on its side, Haakon's answer for #270: at its full size, partly
+  // (a phone on its side, the owner's answer for #270: at its full size, partly
   // off the screen: its beak, head and eye in the gap beside the board, on
   // the side that runs to the screen's edge, inside the safe area; its back
   // and tail cut off by the screen's edge. Smaller only where even its eye

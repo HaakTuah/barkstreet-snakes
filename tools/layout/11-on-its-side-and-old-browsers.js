@@ -30,7 +30,7 @@ for (const [w, h, dpr] of [[480, 320, 2], [540, 320, 2], [600, 360, 2]]) {
   await toRound();
   const l = await ev(LAYOUT), ps = [];
   for (const [x, y] of SPOTS) for (const aim of [false, true]) ps.push({ x, y, aim, p: await ev(PERCH(x, y, aim, furnitureOf(l))) });
-  // (a phone, its bird a size bigger since #270: where it no longer stands under the board it perches beside it, partly off the screen, Haakon's answer: its back cut off by the screen's edge on that side, never its eye)
+  // (a phone, its bird a size bigger since #270: where it no longer stands under the board it perches beside it, partly off the screen, the owner's answer: its back cut off by the screen's edge on that side, never its eye)
   const back = p => Math.min(w, h) <= 500 && p.eye && (p.x >= l.board.r - 0.5 ? 'right' : p.r <= l.board.x + 0.5 ? 'left' : null);
   const eyeOn = p => p.eye.x >= 0 && p.eye.x <= l.vw && p.eye.y >= 0 && p.eye.y <= l.vh;
   const bad = ps.filter(q => { if (!q.p) return true; const k = back(q.p); return q.p.over || q.p.cut.some(e => e !== k) || (k && !eyeOn(q.p)) || Object.keys(q.p.on).length || (q.p.x < -0.5 && k !== 'left') || (q.p.r > l.vw + 0.5 && k !== 'right') || q.p.y < -0.5 || q.p.b > l.vh + 0.5; });

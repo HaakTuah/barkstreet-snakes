@@ -9,6 +9,7 @@
 window.SnakeVersion = {
   build: 'dev',
   news: [
+    { on: '2026-11-02', line: 'Going Back no longer brings the same rivals twice.' },
     { on: '2026-11-02', line: 'Hold a golden jump to fly and steer. Leap now!' },
     { on: '2026-11-02', line: 'Beads match bodies; flags fall; spit counts down.' },
     { on: '2026-11-01', line: 'The flash is now the dash.' },

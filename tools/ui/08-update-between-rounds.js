@@ -32,7 +32,7 @@ check(again === null && loads === from, '...once: the build it reloaded for and 
 const line = await ev(`'New: ' + SnakeVersion.news[0].line`);
 const lengths = await ev(`SnakeVersion.news.map(n => ('New: ' + n.line).length).concat(SnakeDebug.flavor().intro.length)`), introLen = lengths.pop();
 check(lengths.every(n => n <= introLen), 'every line of what is new is no longer than the intro it stands in for', `${lengths.join(', ')} of ${introLen}`);
-await ev(`localStorage.clear(); localStorage.setItem('snake-name', '"Haakon"'); 1`);
+await ev(`localStorage.clear(); localStorage.setItem('snake-name', '"Ada"'); 1`);
 await load();
 const shown = [];
 for (let i = 0; i < 4; i++) {

@@ -60,21 +60,26 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
       - name: Rules
         run: node tools/rules-test.js
       - name: Online
         run: node tools/online-test.js
       # The online messages' types (net.js and online.js, see jsconfig.json): a
-      # check only, with TypeScript fetched for this step. Nothing is built or shipped.
+      # check only, with TypeScript installed for this step at tools/package.json's
+      # version. Nothing is built or shipped.
       - name: Types
-        run: npx -y -p typescript@6.0.2 tsc --noEmit -p jsconfig.json
+        run: |
+          npm ci --prefix tools --ignore-scripts --no-audit --no-fund
+          tools/node_modules/.bin/tsc --noEmit -p jsconfig.json
       - name: Chatter
         run: node tools/chatter-test.js
       - name: Records
         run: node tools/records-test.js
       - name: Service worker
         run: node tools/sw-test.js
+      - name: The versions Dependabot cannot see
+        run: node tools/versions-test.js
       # Four of seed 3's rounds, each played on its own seed (round r of a run
       # with --seed S is round 0 of one with --seed S + 7919 r): 29, 37 and
       # 38, and 47. Between them they cross every kind of event the engine
@@ -101,7 +106,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
       - name: The page's shared scope
         run: node tools/scope-test.js
       - name: Render
@@ -137,7 +142,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
       - name: The page on every screen
         env:
           LAYOUT_JOB: ${{ matrix.job }}
