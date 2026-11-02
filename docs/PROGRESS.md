@@ -66,8 +66,9 @@ and the owner's notes of 2 November, among them).
 **Done:** every finished entry, 1 to 2w, with its PR, is in `docs/archive/progress-done.md`, "The queue, done".
 
 **From the issues** (the owner, 2 November 2026): Ghost starving most (#325) is measured in the next AI entry, as its
-trademark (distance) or a fault; apples by the edge rotting (#324) waits for an engine-rules entry, with the
-conditional-goods simulations; the snake that starved 4 s after its warning (#327) is a bug any lane may take.
+trademark (distance) or a fault; in the same entry, apples by the edge rotting (#324): 80% of the apples that rot lie on
+the edge row or one in, passed up by rivals whose room and margin weights count a safe edge cell against them, so it
+tests a safe-meal exception like the one by the neck (`MEAL_DAWDLE`), measured both ways; the snake that starved 4 s after its warning (#327) is a bug any lane may take.
 
 ### 2x. The spitter slides over its own mushroom (the owner, 2 November 2026; an engine-rules entry, next, ahead of part 5)
 
