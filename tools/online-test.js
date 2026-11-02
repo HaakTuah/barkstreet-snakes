@@ -43,18 +43,8 @@ const SEED = seedAt >= 0 ? Number(args[seedAt + 1]) : 1;
 const rounds = Number(args.find((a, i) => /^\d+$/.test(a) && i !== seedAt + 1)) || 3;
 const MIN = 3; // (crossings of each event kind, each thing it says, each field of a tick)
 
-// mulberry32, as simulate.js has it: the game draws from rng (reseeded every
-// round), the people's presses from their own.
-function seeded(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+// The game draws from rng (reseeded every round), the people's presses from their own.
+const seeded = require('./seeded.js');
 let rng = seeded(SEED);
 const chance = seeded(SEED * 7 + 1);
 const M = Object.create(Math);

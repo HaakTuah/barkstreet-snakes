@@ -7,7 +7,7 @@
 //   node tools/records-test.js
 const fs = require('fs');
 const vm = require('vm');
-const src = fs.readFileSync(require('path').join(__dirname, '..', 'records.js'), 'utf8');
+const srcs = ['records.js', 'lineup.js', 'scores-screen.js'].map(f => fs.readFileSync(require('path').join(__dirname, '..', f), 'utf8'));
 // Just enough of a page to render into: elements are { className, textContent, children }.
 const document = { createElement: tag => ({ tag, children: [], style: {}, append(...c) { this.children.push(...c); } }) };
 const text = n => (n && typeof n === 'object' ? (n.textContent ?? '') + n.children.map(text).join('') : String(n));
@@ -17,11 +17,11 @@ function player(storage) {
   const store = new Map();
   const localStorage = storage || { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) };
   const ctx = vm.createContext({ window: {}, localStorage, document, console, Math, Date, Intl });
-  vm.runInContext(src, ctx);
+  for (const src of srcs) vm.runInContext(src, ctx);
   return ctx.window.SnakeRecords;
 }
 const A = player(), B = player();
-const ok = (cond, what) => { if (!cond) { console.error('FAIL:', what); process.exit(1); } console.log('ok  ', what); };
+const ok = require('./ok.js');
 
 A.setName('Haakon');
 A.recordPlayer({ place: 1, won: true, eaten: 30, survived: 90000 });

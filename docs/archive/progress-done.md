@@ -779,6 +779,13 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
 - The workshop check's point (2), 2 November 2026: `docs/PROGRESS.md` back under 20 KB (10 KB, item 6's spec moved to `docs/handoff/queue-specs.md`) and `AGENTS.md` at 20 KB.
 - The unused-code check, the workshop check's point (5) (PR #331): unused code removed and done study tools moved
   from `tools/dev/` to `docs/archive/` (`docs/archive/README.md` lists them).
+- The file-by-file review's moves (2 November 2026), a folder a PR, behaviour proven unchanged by the fingerprints and
+  the suites: render/ (PR #341: the food, the jumps, the fire and the bird's memory each in one file; the seeded random
+  and the sine hash written once), game/ (PR #342: `banners.js` split into banners, toasts and cards), chatter/ and
+  `records.js` (PR #343: `records.js` split into the records, `lineup.js` and `scores-screen.js`), audio/ (PR #344:
+  `sound.js` split into the synth, `music.js` and `weather.js`), tools/ (PR #345: `seeded()`, `ok()` and the runners'
+  `check()` written once; `chatter/04` and `rules/03`'s woodpecker boards made scripted boards). `render/09-chomps.js`
+  stays in the render suite: it drives the real page, which the chatter suite can't without a weaker stand-in.
 
 ## Done specs, moved from the queue's specs (2 November 2026)
 

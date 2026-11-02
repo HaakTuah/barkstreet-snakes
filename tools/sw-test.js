@@ -10,7 +10,7 @@ const path = require('path');
 const vm = require('vm');
 const root = path.join(__dirname, '..');
 const src = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
-const ok = (cond, what) => { if (!cond) { console.error('FAIL:', what); process.exit(1); } console.log('ok  ', what); };
+const ok = require('./ok.js');
 
 // A worker registered at `scope`, over one origin's caches (shared, as a
 // browser's are) and a network that answers `net` (a Response, or a throw).

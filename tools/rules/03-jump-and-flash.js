@@ -244,23 +244,26 @@
 }
 
 { // The woodpecker aims clear of heads (while there's room), under bodies too, and warns before it strikes; food in the mark is knocked aside.
-  // (Eight seeded rounds, with the same rivals and boards every run, and no
-  // rests: it takes aim again the moment it has struck, so they bring about
-  // 160 aims and 155 strikes. With its rests, six rounds brought 85, and
-  // caught a clearance kept for all but one cell in 13 only two or three
-  // times in some of them, as a change to the engine re-rolls them all. This
-  // way any such rounds catch it, about a dozen times. Its rests are checked
-  // above. A crumb it takes, cut off by the patch and old holes, may be
-  // nearer a head: nobody can step into one without crossing the mark.)
-  let near = 0, nearAims = 0, early = 0, underFood = 0, knocked = 0, badKnocks = 0, strikes = 0, cells = 0, aims = 0, underBodies = 0, besideHoles = 0, under = 0, cuts = 0;
-  for (let r = 0; r < 8; r++) seededWhile(101 + r, () => {
-    const g = E.createGame({ withPlayer: false });
-    g.time = T.SUDDEN_DEATH_MS;
-    for (const s of g.snakes) { s.lastAte = g.time; s.nextStarve = g.time + T.HUNGER_MS; s.grow = 30; } // (fed, so they last, and long, as by 2:00)
-    let aimedAt = -1;
-    for (let t = 0; t < 500 && g.snakes.filter(s => s.alive).length > 1; t++) {
+  // (Four scripted boards, each of four long snakes lying still where they are, until the log is half holes: the
+  // woodpecker with no rests, so it takes aim the moment it has struck, and apples scattered afresh whenever it has
+  // no mark, so some are always under the next. A few hundred ticks of the engine alone bring dozens of aims. Its rests are
+  // checked above. A crumb it takes, cut off by the patch and old holes, may be nearer a head: nobody can
+  // step into one without crossing the mark.)
+  const scatter = seeded(5);
+  let near = 0, nearAims = 0, early = 0, underFood = 0, knocked = 0, badKnocks = 0, strikes = 0, cells = 0, aims = 0, underBodies = 0, besideHoles = 0, under = 0, cuts = 0, aimedAt = -1;
+  for (const [b, spots] of [[[14, 3], [22, 9], [16, 15], [23, 21]], [[18, 5], [13, 11], [23, 16], [15, 22]], [[12, 2], [20, 8], [14, 14], [22, 20]], [[22, 4], [15, 10], [12, 17], [18, 23]]].entries()) seededWhile(101 + b, () => { // (the engine's own draws seeded per board, so the run's seed and the checks before can't move them)
+    const g = board(spots.map(([x, y]) => [line(x, y, 12), 'right']), { time: T.SUDDEN_DEATH_MS });
+    for (const s of g.snakes) s.stunUntil = 1e9;
+    for (let t = 0; t < 700 && g.holes.size < T.GRID * T.GRID / 2; t++) {
+      feed(g);
+      g.weather = { kind: 'clear', since: 0, until: 1e12, nextGust: 1e12, nextStrike: 1e12 };
       const w = g.woodpecker;
-      if (w && !w.target.length) w.restUntil = Math.min(w.restUntil, g.tick + 1); // (no rest: it aims this tick)
+      if (w && !w.target.length) {
+        w.restUntil = Math.min(w.restUntil, g.tick + 1); // (no rest: it aims this tick)
+        const lying = new Set(g.snakes.flatMap(s => s.body.map(c => K(c.x, c.y))));
+        g.food = [];
+        while (g.food.length < 14) { const k = Math.floor(scatter() * T.GRID * T.GRID); if (!g.holes.has(k) && !lying.has(k) && !g.food.some(f => K(f.x, f.y) === k)) g.food.push({ x: k % T.GRID, y: Math.floor(k / T.GRID), kind: 'food' }); }
+      }
       const foodCells = new Set(g.food.map(f => f.y * T.GRID + f.x)), holes = new Set(g.holes);
       E.step(g);
       const heads = g.snakes.filter(s => s.alive).map(s => s.body[0]); // (as they were when it took aim)
@@ -277,7 +280,7 @@
             if (foodCells.has(k)) underFood++;
           }
           if (near > nearBefore) nearAims++;
-          if (g.woodpecker.target.some(k => bodies.has(k))) underBodies++;
+          if (bodies.has(g.woodpecker.target[0])) underBodies++;
           if (g.woodpecker.target.some(k => [-1, 1, -T.GRID, T.GRID].some(d => holes.has(k + d)))) besideHoles++;
         }
         if (e.type === 'peck') {
@@ -298,13 +301,12 @@
     }
   });
   check('the woodpecker strikes in patches', strikes > 20 && cells / strikes > T.PECK_CHUNK / 2, `${strikes} strikes, ${(cells / Math.max(1, strikes)).toFixed(1)} cells each`);
-  // (A patch nearer a head is its fallback when every spot clear of them would shut a snake in, or none of its tries
-  // found one: late in these restless rounds, a couple of aims in about 160 at most, depending on how the rounds went.
-  // With the clearance ignored, 86 of them were near a head.)
   check('the woodpecker aims well away from heads', nearAims <= 3, `${nearAims} of ${aims} aims near a head (${near} cells too close)`);
   check('the woodpecker gives warning', early === 0, `${early} without`);
   check('the woodpecker\'s patches cover food now, and knock it out of the way', underFood > 10 && knocked >= underFood / 2 && badKnocks === 0, `${underFood} food under marks, ${knocked} knocked, ${badKnocks} landed wrong`);
-  check('...but under bodies, often', underBodies > aims * T.PECK_UNDER_BODY && under > 0, `${underBodies} of ${aims} aims, ${under} snakes under strikes`);
+  // (A patch begun under a body: its roll at PECK_UNDER_BODY, and chance besides. Here about 24 of 65; with the roll
+  // taken out, about 8. The bar sits between, a quarter of the aims, so neither a re-roll nor the rule broken is a near thing.)
+  check('...but under bodies, often', underBodies > aims * T.PECK_UNDER_BODY * 0.75 && under > 0, `${underBodies} of ${aims} aims, ${under} snakes under strikes`);
   check('...widens old hollows', besideHoles > aims * T.PECK_WIDEN, `${besideHoles} of ${aims} aims beside an old hole`);
   check('...and never cuts', cuts === 0, `${cuts} cuts`);
 }

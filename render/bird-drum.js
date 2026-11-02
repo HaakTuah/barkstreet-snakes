@@ -78,9 +78,6 @@ function drumChoice(w, spot, flip) {
 // points on it) the bird drumming in pose p covers: its body, its tail,
 // its head and beak, ink and all.
 let SEE_R = CELL * 0.4 + BOX_EDGE * BU; // (its ink's soft edge too, which grew with the bird in 2c)
-function growBird(grow) { // (its size, times its first: BU and what's worked out from it)
-  BU = CELL * 0.85 * grow; PERCH_NEAR = 0.65 * 1.3 / grow; B_IN = 0.06 * 1.3 / grow; SEE_R = CELL * 0.4 + BOX_EDGE * BU;
-}
 function hides(p) {
   const Q = probe;
   Q.x = p.x; Q.y = p.y; Q.s = p.s; Q.flip = p.flip; Q.rot = p.rot; Q.turn = 0; Q.thrust = B_IN; Q.crouch = 0;
