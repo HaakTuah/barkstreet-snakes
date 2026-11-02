@@ -1,16 +1,21 @@
 // The chatter (see chatter/voices.js): what each moment of a round makes the
 // snakes say, and the API: the last file, it makes window.SnakeChatter.
 
-function addLog(s, text) {
-  const li = document.createElement('li');
-  const who = document.createElement('strong');
-  who.textContent = s.name;
-  who.style.color = readable(s.persona?.ink || s.color);
-  const said = document.createElement('span');
-  setWords(said, text);
-  li.append(who, ' ', said);
-  logEl.prepend(li);
-  while (logEl.children.length > LOG_SIZE) logEl.lastChild.remove();
+// The Metagamer's labels for how a snake plays, for Copycat's Chinese.
+const ZH_LABELS = { aggressive: '好斗', greedy: '贪吃', evasive: '爱躲', unclear: '看不透' };
+
+// Land, by the one rule the AI, the HUD and the borders use: cell x, y is a
+// field's land when its centre is within the field's radius plus LAND_REACH.
+const chatOnLand = (x, y, f) => Math.hypot(x - f.x, y - f.y) <= f.radius + window.TUNING.LAND_REACH;
+// The fields a snake holds: Sovereign's realm, or Colonist's colonies (or none).
+const landsOf = m => m.home ? [m.home] : m.colonies?.length ? m.colonies : null;
+// Do two fields share a cell of land? (Where they do, the map hatches it.)
+function sharesLand(a, b) {
+  const N = window.TUNING.GRID, r = Math.ceil(a.radius + window.TUNING.LAND_REACH);
+  for (let y = Math.max(0, a.y - r); y <= Math.min(N - 1, a.y + r); y++) {
+    for (let x = Math.max(0, a.x - r); x <= Math.min(N - 1, a.x + r); x++) if (chatOnLand(x, y, a) && chatOnLand(x, y, b)) return true;
+  }
+  return false;
 }
 
 // Everyone flashes, often (about ten a round), so a plain flash is worth a
