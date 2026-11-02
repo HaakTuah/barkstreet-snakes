@@ -796,7 +796,7 @@ function drawSpitRings(now) {
     ctx.strokeStyle = SPIT_RING; ctx.lineWidth = CELL * 0.09; ctx.stroke();
   }
 }
-// The bulge counts down to the spit (Haakon, 2 November 2026: "Really not
+// The bulge counts down to the spit (the owner, 2 November 2026: "Really not
 // easy to tell either when your character will spit it"): it swells from a
 // mouthful to fit to burst as the second runs out, and on each of the last
 // three moves it throbs, three, two, one, and the spit comes on the next.

@@ -36,7 +36,7 @@ jobs:
       GONE: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           # (a pull request's own head, not the merge GitHub makes of it; closed, main)

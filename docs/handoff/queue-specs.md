@@ -50,7 +50,7 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
    fall in, onto a snake you're out, trapped). Its A/B came out even with leap now and the flight measured together, so (the owner, 31 October 2026: "Yes, please, expertly!", to splitting it): the flight and leap now are measured apart; the rivals learn the flight's uses (out of a box, across to food, cutting off, steering planned in the air) until fliers come out ahead; the golden flash is measured on its own in the same pass and its use taught where it falls short; if the flight pays and leap now doesn't, the flight merges without leap now, and leap now comes back to the owner. "The rivals fly it as a person would" and "The golden flash cuts deeper" in `docs/design/29-round-six-b-the-new-moves.md`.
 5. **Gold portals for the wrap:** anyone may follow through for about a second after your body passes. In six test rounds nobody followed, so the time it stays open is lengthened step by step until following makes a gameplay difference from time to time (the owner, 31 October 2026: "Then we can increase the time it is open, until it actually makes a gameplay difference from time to time."), after checking that the rivals see the chance at all: "Open long enough to matter" in `docs/design/29-round-six-b-the-new-moves.md`.
 6. **Dropped charges** on a knockout, as above. *Built and reviewed* on `round6b/dropped-charges` (a spilled gold coin ringed with the pips; rules tests; review fixes in; protocol to renumber when it merges); still to do: the A/B against rivals that ignore spills (a copy is easy: zero the spill's worth in `ai.js`), pictures, the PR.
-7. **One pricing model for every power,** as above, last (*a first pass is parked* on `round6b/pricing`: the tail tip at length's worth now, rests cheaper while idle with a floor, risk by `headRisk`; on seeds 51/53 the seat-split already shows powers on beating off, 33.6% to 16.4%, with the island hop alone, and this pass did no better, 33.3% to 16.7%, flashing more; a direct head-to-head against today's AI was stopped at look 4, its rounds cached), so it prices every move together, with **each rival's power
+7. **One pricing model for every power,** as above, last, and built afresh on top of 2u's one stamina, not resumed from the parked pass (the owner, 2 November 2026); the parked pass on `round6b/pricing` is a reference for its findings only (*a first pass is parked* on `round6b/pricing`: the tail tip at length's worth now, rests cheaper while idle with a floor, risk by `headRisk`; on seeds 51/53 the seat-split already shows powers on beating off, 33.6% to 16.4%, with the island hop alone, and this pass did no better, 33.3% to 16.7%, flashing more; a direct head-to-head against today's AI was stopped at look 4, its rounds cached), so it prices every move together, with **each rival's power
    style** ("Every rival has a power style"); the design's "Balance targets" are its measure.
    Part 7 also takes two of the improvement audit's finds (31 October 2026; the owner: "Agreed to all, expertly!"): **the trademarks
    that never show** (Mute's boxing and Joker's lures level with the field, Mason's body beside itself below it) get
@@ -209,6 +209,55 @@ entry doesn't specify them, and the art waits for his description. Everything el
   fresh seeds showing courting pays against a Charmer who doesn't court; every other rival's trademark within noise.
 - **The cast grows to nineteen:** the start screen, the Field guide's row for him, the lobby's line-up, `CLAUDE.md`'s
   "a cast of eighteen", and Capricious's deck of impressions (3b) gain him; online play gets a protocol bump.
+
+### 3d. A new rival: Barkis & Boot-Snake, one snake with two sides (the owner, 2 November 2026; an AI entry, after 3c)
+
+The owner (2 November 2026), asking for them: "What do you think of Barkis & Boot-Snake, should that be added as a rival
+also. maybe a conjoined snake somehow?"; on their source: "[…] inspired, but snakes on a bark, or "hard wood"."; on
+the reference: "Yes, but make it very very clear where they are inspired on. Push that line to the max, so people
+actually fully get the reference and think it is funny!"; and on their body: "Oh, they must be cojoined. they can flip
+around so they change between the 2 from time to time, and maybe it triggers if they hit something or something. that
+way It works that they are cojoined, don't have to make different rules for them. they are just a very visually unique
+snake, with 2 unique ai personalities and lines."; then, to the design session's take on a head at each end against
+one head and a body that rolls over (the roll keeps one head at the end that moves, as on every snake, so a tail never
+looks like a head, and shows who steers from any part of the body): "Yes, please! Expertly!"
+**One snake in one seat, with two sides:** it moves, eats, grows and dies by exactly the rules every snake does, with
+one head at the end that moves, like every snake ("Every new rule needs a visible cue": nothing on the board lies about
+where its head is). Its two sides are the two of them: Barkis's side, pale bark, and his face on the head, lanky with
+a tall frayed crest; Boot-Snake's side, dark bark, and his face, squat with a heavy brow ridge. Whichever side is up
+steers. Nothing about the body is theirs alone ("No ability only people use").
+**The reference lives in their names and their nature:** two dim, giggling teenage-minded snakes who find crashes
+hilarious and lose the thread at once. **Nothing is copied from the show that inspired them,** since the game is
+public: no look, line, laugh or catchphrase of its characters. Their looks and every line are their own.
+- **The flip: who is on top.** From time to time the body rolls over: a quick barrel roll runs from head to tail, the
+  colour turning with it, and the other side comes up, face and all, so the other one now steers. For a few frames
+  mid-roll both faces show. The snake keeps going the way it was going (no reversal, so no new move); only the side up
+  and the mind steering change. Any part of the body tells who is steering, even with the head off screen. It flips every so often (a first guess: every 8 to 15 seconds,
+  at random), and at once after a scare: a near miss, a bump in the air, or a rival crashing beside them. A crash that
+  kills still kills: the flip never saves them.
+- **Two minds, two styles, in the one template** (`ai.js`: two sets of weights and the swap):
+  - **Boot-Snake, the bossy one,** hunts: he picks a victim by its position (never by who plays it: "The rivals never
+    treat a person differently") and drives it toward a wall, a hole or fire.
+  - **Barkis, the jittery one,** forgets the hunt and chases the nearest apple, golden first.
+  - So their play lurches between the two, and a player who reads which side is up knows what comes next. A
+    flip mid-hunt drops the hunt: that is the opening ("No refuges").
+- **They laugh at crashes:** when any snake crashes near them, both snicker (a chatter line and a little shake), and the
+  one on top loses a beat.
+- **Their look, a snake of the log:** patched bark, as if grown out of the hardwood, pale on Barkis's side and dark on
+  Boot-Snake's, so the two read apart at any size, on a phone too, and for colour-blind players by pattern as well as
+  shade. The mark they leave on death: a splintered chip of bark, half pale and half dark.
+- **Lines** in two voices of their own, bickering and egging each other on, for kills, wins, flips and chatter
+  (`chatter/`), and one blurb on the start screen. The one underneath keeps talking, heckling the one on top, so they
+  stay a pair even when only one face shows.
+- **Measured like every rival:** their trademark (how their hunting and eating shares swing after each flip, and how
+  often a flip drops a hunt) and an `abtest.js` run on fresh seeds against the same snake with one mind only; every
+  other rival's trademark within noise. Online, the side that is up is sent like any other drawing state, with a
+  protocol bump.
+- **The cast grows to twenty** with the Charmer: the start screen, a Field guide row ("Barkis & Boot-Snake: watch which
+  side is up"), the lobby's line-up, `CLAUDE.md`'s cast count and Capricious's deck of impressions (3b).
+- **Later, only if the owner wants it:** a real reversal (head and tail swapping, the snake going back the way it
+  came) would be a new move, so it would have to be a move every snake can use, priced and tested both ways, after 2u
+  and part 7. Not part of this entry.
 
 ### 4. The teaching system, steps 2–6 (DESIGN "Teaching by showing") — after 5, whose new moves it must teach
 

@@ -31,7 +31,7 @@ jobs:
       code: ${{ steps.what.outputs.code }}
       page: ${{ steps.what.outputs.page }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: What changed
@@ -57,8 +57,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
       - name: Rules
@@ -66,15 +66,20 @@ jobs:
       - name: Online
         run: node tools/online-test.js
       # The online messages' types (net.js and online.js, see jsconfig.json): a
-      # check only, with TypeScript fetched for this step. Nothing is built or shipped.
+      # check only, with TypeScript installed for this step at tools/package.json's
+      # version. Nothing is built or shipped.
       - name: Types
-        run: npx -y -p typescript@6.0.2 tsc --noEmit -p jsconfig.json
+        run: |
+          npm ci --prefix tools --ignore-scripts --no-audit --no-fund
+          tools/node_modules/.bin/tsc --noEmit -p jsconfig.json
       - name: Chatter
         run: node tools/chatter-test.js
       - name: Records
         run: node tools/records-test.js
       - name: Service worker
         run: node tools/sw-test.js
+      - name: The versions Dependabot cannot see
+        run: node tools/versions-test.js
       # Four of seed 3's rounds, each played on its own seed (round r of a run
       # with --seed S is round 0 of one with --seed S + 7919 r): 29, 37 and
       # 38, and 47. Between them they cross every kind of event the engine
@@ -98,8 +103,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
       - name: The page's shared scope
@@ -134,8 +139,8 @@ jobs:
           - job: 5
             what: upright heights, every 10 px held upright, the bigger woodpecker
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
       - name: The page on every screen

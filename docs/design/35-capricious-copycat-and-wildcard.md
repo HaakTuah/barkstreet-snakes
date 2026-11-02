@@ -1,6 +1,6 @@
 ## Capricious, Copycat and Wildcard
 
-Proposed by Claude on 26 October 2026, at Haakon's request; Haakon on Capricious: it should "be able to emulate far
+Proposed by Claude on 26 October 2026, at the owner's request; the owner on Capricious: it should "be able to emulate far
 more, if not all". Three rivals change who they are: Capricious by the moment, Copycat by whoever leads, Wildcard by
 the round. Today they blur. Capricious has four impressions (Sniper, Gobbler, Ghost, Mason), so the same faces keep
 coming back. Copycat copies only the leader's steering. Wildcard's habits are drawn evenly from wide ranges, so most
@@ -79,7 +79,7 @@ with a protocol bump).
 
 ### A costume change (2t)
 
-Haakon (30 October 2026): "i think now that capricious is always pink, it doesnt need that weird border effect around
+The owner (30 October 2026): "i think now that capricious is always pink, it doesnt need that weird border effect around
 its head anymore. Agreed? Though it maybe should be more apparent when it transforms, like an coded animation that works
 for all of them, or something?", and to the design session's take: "Agreed to both, expertly!".
 - *Before:* a breathing pink ring with pale dashes round Capricious's head, kept so it could be found while its body

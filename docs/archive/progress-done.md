@@ -1,19 +1,19 @@
 # Progress: done
 
-Done entries and answered "For Haakon" rows, moved word for word from `docs/PROGRESS.md` on 28 October 2026 to keep
+Done entries and answered "For the owner" rows, moved word for word from `docs/PROGRESS.md` on 28 October 2026 to keep
 it under the workshop check's 20 KB. New ones are added here as they are done or answered.
 
-## For Haakon, answered
+## For the owner, answered
 
 | Task | Question | Reading taken or suggested | State |
 |---|---|---|---|
-| 5, part 4 (#198) | The golden flight works and the rivals fly it, but it can't show in wins between rivals: a flight moves a cell a tick like a crawl, so it buys no time, and under today's rules no rival in 30 rounds died holding a golden jump (0 of 90 deaths), so it has nobody to save; leap now came out even too; the golden flash pays in food and kills, not wins. Which: (a) merge the flight and leap now as they are, moves that pay for a person's timing; (b) the flight flies 2 cells a tick while held, so it buys time, measured again; (c) more golden beetles? | Answered (Haakon, 1 November 2026): none of the three. "they must work until the rivals know how to use them. i am certain they will give better performance if used appropiately" (as on 31 October: "then it must be the AI"): the moves stay as designed (the golden leap flies up to 5 cells and steers, leap now, the golden flash cuts two thick), and the rivals are improved until their users come out ahead. Leap now stays: "no dropping of leap, leap goes in the game that is my vision". #198 goes on, on those terms. | Answered, 1 November 2026 |
-| Audit (31 Oct) | **Two trademarks never show in the numbers.** Mute's boxing and Joker's lures sit level with the field (seed 11: Mute 8.2% against everyone else's 8.7%; Joker 9.2% against 8.3%; round six A's table had 8.0/7.8 and 8.6/8.3), and Mason's "body beside itself" is *below* the field (27% against 31%); every other trademark leads its field by half again or more. Rework the measures, or give the play teeth? | Suggested: both, in part 7. First the measures (a trademark should lead its field the way the others do; Mute leads the kills, 0.52 a round, which its measure doesn't count), then the play where a measure still shows nothing. No rule changes until then. | Answered 31 October (Haakon: "Agreed to all, expertly!"; the reading taken is in `docs/handoff/queue-specs.md`, part 7 and 2s) |
-| Audit (31 Oct) | **Character costs wins.** On seeds 3 and 11 (200 rounds each, census), the plain Drab is in the top four both times (32%, 30%) while Joker (14%, 18%), Capricious (21%, 19%), Copycat (20%, 21%) and Star (23%, 20%) are at the bottom both times. Is a rival with a trademark allowed to pay for it in wins, or should part 7's pricing bring the four up into the band (15–35% was the target)? | Suggested: part 7 brings them up without touching their trademarks (Joker is on its watch list already); Drab's own rate is fine as it is. | Answered 31 October (Haakon: "Agreed to all, expertly!"; the reading taken is in `docs/handoff/queue-specs.md`, part 7 and 2s) |
-| Audit (31 Oct) | **Half the rounds now end split onto islands.** 51% of seed 3's rounds (seed 11 about the same) end with the last snakes each alone on an island, against the 25–31% noted in 2s; the biggest island's snake wins 49%, a blind pick. Should 2s move up the queue (it is after 2q today)? | Suggested: yes, 2s before 2q: it is the ending a person sees most often now, and it is an engine-rules entry that doesn't wait on the AI's A/B. | Answered 31 October (Haakon: "Agreed to all, expertly!"; the reading taken is in `docs/handoff/queue-specs.md`, part 7 and 2s) |
-| Sniper's kill line | Which words, beside "One shot."? | Haakon (27 October 2026): "One shot, one whoppertunity" (queued under item 3) | Answered |
-| Rival line-up | Online, the host's choice from the start card is used, but the lobby doesn't show it and can't change it. Should the lobby show the line-up, with the same seats to choose (the host only)? | Haakon (28 October 2026): "You figure all this out, expert. You know me by now." Claude decided yes, since online stays in step with local play: queued as "The lobby shows the line-up" | Answered |
-| Rivals too shy of heads | Right at a contested apple, with the other head beside it, rivals still usually back off: about 1 in 8 of those cells would be a head-on, which costs about what the apple is worth. Should some personas (Desperado, Gobbler when starving, the hunters) take that gamble more often, as their own nerve? | Haakon (28 October 2026): "gobbler and Desperados should take the gamble more, that fits their playstyle, no?" Claude agreed: queued as "Nerve at a contested apple" | Answered |
+| 5, part 4 (#198) | The golden flight works and the rivals fly it, but it can't show in wins between rivals: a flight moves a cell a tick like a crawl, so it buys no time, and under today's rules no rival in 30 rounds died holding a golden jump (0 of 90 deaths), so it has nobody to save; leap now came out even too; the golden flash pays in food and kills, not wins. Which: (a) merge the flight and leap now as they are, moves that pay for a person's timing; (b) the flight flies 2 cells a tick while held, so it buys time, measured again; (c) more golden beetles? | Answered (the owner, 1 November 2026): none of the three. "they must work until the rivals know how to use them. i am certain they will give better performance if used appropiately" (as on 31 October: "then it must be the AI"): the moves stay as designed (the golden leap flies up to 5 cells and steers, leap now, the golden flash cuts two thick), and the rivals are improved until their users come out ahead. Leap now stays: "no dropping of leap, leap goes in the game that is my vision". #198 goes on, on those terms. | Answered, 1 November 2026 |
+| Audit (31 Oct) | **Two trademarks never show in the numbers.** Mute's boxing and Joker's lures sit level with the field (seed 11: Mute 8.2% against everyone else's 8.7%; Joker 9.2% against 8.3%; round six A's table had 8.0/7.8 and 8.6/8.3), and Mason's "body beside itself" is *below* the field (27% against 31%); every other trademark leads its field by half again or more. Rework the measures, or give the play teeth? | Suggested: both, in part 7. First the measures (a trademark should lead its field the way the others do; Mute leads the kills, 0.52 a round, which its measure doesn't count), then the play where a measure still shows nothing. No rule changes until then. | Answered 31 October (the owner: "Agreed to all, expertly!"; the reading taken is in `docs/handoff/queue-specs.md`, part 7 and 2s) |
+| Audit (31 Oct) | **Character costs wins.** On seeds 3 and 11 (200 rounds each, census), the plain Drab is in the top four both times (32%, 30%) while Joker (14%, 18%), Capricious (21%, 19%), Copycat (20%, 21%) and Star (23%, 20%) are at the bottom both times. Is a rival with a trademark allowed to pay for it in wins, or should part 7's pricing bring the four up into the band (15–35% was the target)? | Suggested: part 7 brings them up without touching their trademarks (Joker is on its watch list already); Drab's own rate is fine as it is. | Answered 31 October (the owner: "Agreed to all, expertly!"; the reading taken is in `docs/handoff/queue-specs.md`, part 7 and 2s) |
+| Audit (31 Oct) | **Half the rounds now end split onto islands.** 51% of seed 3's rounds (seed 11 about the same) end with the last snakes each alone on an island, against the 25–31% noted in 2s; the biggest island's snake wins 49%, a blind pick. Should 2s move up the queue (it is after 2q today)? | Suggested: yes, 2s before 2q: it is the ending a person sees most often now, and it is an engine-rules entry that doesn't wait on the AI's A/B. | Answered 31 October (the owner: "Agreed to all, expertly!"; the reading taken is in `docs/handoff/queue-specs.md`, part 7 and 2s) |
+| Sniper's kill line | Which words, beside "One shot."? | The owner (27 October 2026): "One shot, one whoppertunity" (queued under item 3) | Answered |
+| Rival line-up | Online, the host's choice from the start card is used, but the lobby doesn't show it and can't change it. Should the lobby show the line-up, with the same seats to choose (the host only)? | The owner (28 October 2026): "You figure all this out, expert. You know me by now." Claude decided yes, since online stays in step with local play: queued as "The lobby shows the line-up" | Answered |
+| Rivals too shy of heads | Right at a contested apple, with the other head beside it, rivals still usually back off: about 1 in 8 of those cells would be a head-on, which costs about what the apple is worth. Should some personas (Desperado, Gobbler when starving, the hunters) take that gamble more often, as their own nerve? | The owner (28 October 2026): "gobbler and Desperados should take the gamble more, that fits their playstyle, no?" Claude agreed: queued as "Nerve at a contested apple" | Answered |
 | Wildcard's hair (1b+++) | Which one: A, B or C? ([PR #110](https://github.com/HaakTuah/barkstreet-snakes/pull/110), pictures side by side; A a small wave and short swirl, B a middle wave with the swirl carried round to the far side, C a big wave swept well out to the side) | Suggested: B; the draft waits for the pick | Answered 28 October: C's overall shape with B's smaller back, then one more pass so it reads as Trump's hair (1b+++ below) |
 | Wildcard's hair, the new pass (1b+++) | Does the new pass ([PR #110](https://github.com/HaakTuah/barkstreet-snakes/pull/110), beside B and C) read as Trump's hair now, or should C go back in? | Taken: the new pass ships (merged); C comes back in one small PR if you prefer it | Answered 29 October ("Agree to all", to the design session's take: keep the new pass) |
 | Nerve at a contested apple | Gobbler takes the gamble only once it's hungry (about 4 s left), which is rare, so in play its share of contested apples didn't move (17% both). Should a fed Gobbler gamble too? | Taken: no, as built ("the more the hungrier it is"); a fed Gobbler would need a nerve of about 0.9, near fearless (PR #92) | Answered 29 October 2026: a fed Gobbler contests too; every rival contests more as it starves; Desperado less risk-averse generally (entry 2b) |
@@ -25,11 +25,11 @@ it under the workshop check's 20 KB. New ones are added here as they are done or
 | 5, bridges (PR #174) | Bridges come up rarely in play: 0.05 rides a round in simulation, so riders and non-riders come out the same head to head. The rule works (rivals cross when it pays, and riding is riskier than not, so it's no refuge). Is rare what you want, or should bridges come up more (for example, longer bodies over wider pits late in sudden death)? | Kept as it is: a rare, skilful chance when the log is islands, as the design says ("for anyone quick enough"). | Answered 29 October 2026: "Agreed with you expert take!" Kept rare; re-measured once the golden flight (part 4: flights land on bridges) and the woodpecker's three acts (item 6: more pits) are in, adding no rule to make bridges commoner. |
 | 2k (PR #170) | On a phone held upright the woodpecker perches over the speed buttons and the chatter, as you asked in 1b++; at 1.3 it already hid a button's label at some spots, and bigger it hides more of their words (taps still pass through it). Keep it so, or should it keep clear of their words (a smaller bird under the board, or perching only between the buttons)? | Kept as 1b++ has it: over the row and the chatter, taps passing through | Answered 29 October 2026: "Keep the bird 1.7x. And agreed with everything else." The bird stays 1.7 times everywhere; on a phone held upright it perches clear of the buttons' words where it can (between them, or over a gap), never by shrinking, and where no perch clears them at that size, the size wins (entry 2k+). |
 | 5, part 3 (PR #183) | Mason now lays its walls two thick (its body beside itself back to 27%, where it was; it fell to 21% once a wall one thick could be cut), at the price of its straight runs: 3.5 cells a turn down to 3.1 (everyone else: 1.9). Keep it, or keep its runs (walls one thick, which a flash cuts)? | Keep the double walls: the design asks for them, and its runs stay its mark | Answered 29 October 2026: "I agree with all your takes." Kept: the double walls. |
-| 5, part 3b (PR #195) | Spat mushrooms hardly ever land between rivals (1 to 2% of spits hit a head; the A/B shows no edge for the spitters, +0.6 points, within noise): the rivals keep their heads apart and step out of a ring a second ahead. Keep it as a skill shot for people, as designed, or make the spit a shot that flies along the line up to 5 cells and stops on the first head or body? | Keep it as designed for now and judge it in play; a shot along the line is a small change if you want spits to land more. | Haakon (30 October 2026): "3. Agreed, do it expertly!" (to the shot along the line); queued as item 5, part 3b+ | Answered |
-| Capricious's ring | Now that Capricious is always pink, drop the breathing pink ring round its head, and make a mood change a short costume change any rival's mood can use (a pink puff, the old costume popping off, the new one on), Copycat taking on a new model the same way? | Yes to both; the puff is drawing only | Haakon (30 October 2026): "Agreed to both, expertly!"; queued as 2t | Answered |
-| 2n, Wildcard's hair | Which of the seven ([the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg): 1 the original, 2 PR #107, 3 and 4 PR #110's B and C, 5 PR #110 as shipped, 6 PR #144's F, 7 today's F at 85%) should Wildcard wear? | You said the first or second felt better: 1 is the original swirl, 2 the two blobs | Haakon (30 October 2026): "What if we took the original, but have the swirl point upwards instead of downwards?" then "Yes, please, expertly please!"; written into 2n | Answered |
-| 5, part 4 (PR #198) | Leap now and the golden flight are built and play, but rivals who use them come out even with rivals who never do (three head-to-heads, all within noise; last 24.7% to 25.2%). Merge it as a move for people that the rivals use without gaining from it, or wait for a session that finds where leap now pays them? | Haakon (30 October 2026): "Yes to all" (to waiting): part 4 waits for a session that makes leap now pay the rivals | Answered |
-| 2n (PR #208) | Wildcard's hair, second try (no flick, after "But the hair flicks outwards? That's not trump?"): the original pompadour as one rounded mass, its front wave curling up and back over itself, the top combed back to one side, ends tucked in; pictures in PR #208. Yes, or what to change? | Haakon (30 October 2026): "it looks horrible. I want the original hair, but I want the lick reversed. That's all. Keep it that simple." (written into 2n) | Answered |
+| 5, part 3b (PR #195) | Spat mushrooms hardly ever land between rivals (1 to 2% of spits hit a head; the A/B shows no edge for the spitters, +0.6 points, within noise): the rivals keep their heads apart and step out of a ring a second ahead. Keep it as a skill shot for people, as designed, or make the spit a shot that flies along the line up to 5 cells and stops on the first head or body? | Keep it as designed for now and judge it in play; a shot along the line is a small change if you want spits to land more. | The owner (30 October 2026): "3. Agreed, do it expertly!" (to the shot along the line); queued as item 5, part 3b+ | Answered |
+| Capricious's ring | Now that Capricious is always pink, drop the breathing pink ring round its head, and make a mood change a short costume change any rival's mood can use (a pink puff, the old costume popping off, the new one on), Copycat taking on a new model the same way? | Yes to both; the puff is drawing only | the owner (30 October 2026): "Agreed to both, expertly!"; queued as 2t | Answered |
+| 2n, Wildcard's hair | Which of the seven ([the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg): 1 the original, 2 PR #107, 3 and 4 PR #110's B and C, 5 PR #110 as shipped, 6 PR #144's F, 7 today's F at 85%) should Wildcard wear? | You said the first or second felt better: 1 is the original swirl, 2 the two blobs | the owner (30 October 2026): "What if we took the original, but have the swirl point upwards instead of downwards?" then "Yes, please, expertly please!"; written into 2n | Answered |
+| 5, part 4 (PR #198) | Leap now and the golden flight are built and play, but rivals who use them come out even with rivals who never do (three head-to-heads, all within noise; last 24.7% to 25.2%). Merge it as a move for people that the rivals use without gaining from it, or wait for a session that finds where leap now pays them? | The owner (30 October 2026): "Yes to all" (to waiting): part 4 waits for a session that makes leap now pay the rivals | Answered |
+| 2n (PR #208) | Wildcard's hair, second try (no flick, after "But the hair flicks outwards? That's not trump?"): the original pompadour as one rounded mass, its front wave curling up and back over itself, the top combed back to one side, ends tucked in; pictures in PR #208. Yes, or what to change? | The owner (30 October 2026): "it looks horrible. I want the original hair, but I want the lick reversed. That's all. Keep it that simple." (written into 2n) | Answered |
 
 ## The queue, done
 
@@ -41,7 +41,7 @@ The owner's words are in `docs/handoff/next-tasks-verbatim.md`, with their two a
 - DESIGN.md split into `docs/design/`, moved as it is. *Done on 26 October 2026 (PR #39).*
 - render.js split into modules, fully: the seventeen files of `render/`, sharing one scope. *Done on 26 October 2026 (PR #41).*
 - PR previews on Pages at `/pr-<n>/` (`.github/workflows/pages.yml`, from the gh-pages branch), with main at the root and `sw.js`
-  keeping their caches apart. *Done on 26 October 2026 (PR #41).* Haakon must switch Pages to "Deploy from a branch:
+  keeping their caches apart. *Done on 26 October 2026 (PR #41).* The owner must switch Pages to "Deploy from a branch:
   gh-pages, / (root)" (the PR says how).
 - Sizes before and after, in the PR. *Done (PR #41).*
 
@@ -51,7 +51,7 @@ After render.js, split the other game files over about 100 KB into modules by re
 same rule as render.js: only with identical simulation results and the suites passing, and only the parts that split
 cleanly. render.js's way may suit them too (see the top of `render/core.js`: plain scripts sharing one scope, loaded in
 order; engine.js and ai.js are also loaded by the Node tools, which would need the new list). In order: snake.js (196 KB), chatter.js (154 KB), engine.js (113 KB), ai.js (109 KB), style.css (101 KB). Every
-later task then reads a few small files instead of these. Haakon may veto it.
+later task then reads a few small files instead of these. The owner may veto it.
 
 - snake.js into the seven files of `game/` (renames where its names met render/'s; `tools/scope-test.js` guards the shared
   scope). *Done on 27 October 2026 (PR #43).*
@@ -63,9 +63,9 @@ later task then reads a few small files instead of these. Haakon may veto it.
 - style.css into the three stylesheets of `style/`, linked in the same order. *Done on 27 October 2026 (PR #46).* With it,
   item 1b is done.
 
-### 1b+. Wildcard's hair, again (Haakon, 28 October 2026)
+### 1b+. Wildcard's hair, again (the owner, 28 October 2026)
 
-Haakon (28 October 2026): "Wildcard's hair still looks really weird. It flips to the front side, you know like a blond
+The owner (28 October 2026): "Wildcard's hair still looks really weird. It flips to the front side, you know like a blond
 emo/goth haircut. Don't know what claud code insists on that, trump's hear doesn't go to the front and side like that."
 The earlier entry asked for hair "swept back, then forward and to one side", and `pompadour()` in `render/faces.js` does
 just that: it swoops forward along one side to a flick past the eye, a fringe over the face. The wrong part was the
@@ -82,9 +82,9 @@ entry's, not the drawing's. What it should be, seen from above (the head points 
 - Art only, no rule changes: the render suite and its looks checks pass; no reviewer needed beyond the pictures.
 - *Done on 28 October 2026 (PR #107):* see "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
 
-### 1b+++. Wildcard's hair: Trump's hair, seen from above (Haakon, 28 October 2026; small, next, a UI lane beside the AI work)
+### 1b+++. Wildcard's hair: Trump's hair, seen from above (the owner, 28 October 2026; small, next, a UI lane beside the AI work)
 
-Haakon (28 October 2026), on PR #107's pictures: "Also, looks like it is messing up wildcards hair again. But now by just
+The owner (28 October 2026), on PR #107's pictures: "Also, looks like it is messing up wildcards hair again. But now by just
 making it look like 2 weird yellow blobs instead. You can take a look and see how it is making it now. Hope that isn't
 what it ends up going with." Then: "Can't you just describe who's hair it is making? Is it that difficult to make trump's
 hair?" And, to sending it back with three versions for him to pick from: "Yes please, expertly!"
@@ -105,13 +105,13 @@ stars-and-stripes body and the red tie): draw that, as seen from straight above 
 - **Colour:** straw-gold, darker orange in the grooves between strands, one or two light strands for the shine.
 - **Judged at real size.** The outline has to read on its own on a 390-pixel phone at its true size, not only in a
   zoomed crop.
-- **Three versions for Haakon to pick:** A, B and C, differing in the size of the front wave and how far the swirl goes
+- **Three versions for the owner to pick:** A, B and C, differing in the size of the front wave and how far the swirl goes
   to the side. The PR shows them side by side, all four headings, on the clear and storm boards, at phone size (true
-  size and 3x) and desktop 2x, and asks Haakon in "Questions for Haakon" which one; it stays a draft until he answers,
+  size and 3x) and desktop 2x, and asks the owner in "Questions for the owner" which one; it stays a draft until he answers,
   and the lane goes on with other work meanwhile. Only the chosen one ships: no option in the game, the others deleted.
 - Art only, no rule changes: the render suite and its looks checks pass; reduced motion unchanged; no reviewer needed
-  beyond the pictures and Haakon's pick.
-- **Haakon's pick, and one more pass** (28 October 2026, on PR #110): "Agree to all, expertly. Though a bit hard to
+  beyond the pictures and the owner's pick.
+- **The owner's pick, and one more pass** (28 October 2026, on PR #110): "Agree to all, expertly. Though a bit hard to
   decide on b or c. I feel maybe the bottom bit of b being smaller looks better, while the overall shape of c is better.
   So maybe we'll go for c, but it is hard to pick. Not the biggest fan of any of them, to be honest. Doesn't scream trump
   hair." So: **C's overall shape, with B's smaller back** (the part behind the head no bigger than B's). Then one more
@@ -127,14 +127,14 @@ stars-and-stripes body and the red tie): draw that, as seen from straight above 
     eyes (the eyes stay clear).
   - **A parting on one side,** from which the hair is combed across the crown to the other side: the comb-over, seen
     from above.
-  The PR shows C as it is beside the new pass, at the same sizes and boards, and asks Haakon again. If the new pass
-  still does not read as his hair, Haakon chooses between them; the costume (the stars-and-stripes body, the red tie,
+  The PR shows C as it is beside the new pass, at the same sizes and boards, and asks the owner again. If the new pass
+  still does not read as his hair, the owner chooses between them; the costume (the stars-and-stripes body, the red tie,
   the orange face) carries the rest.
-  *Done on 28 October 2026 (PR #110): C's shape with B's smaller back, then the pass above; Haakon is asked again.*
+  *Done on 28 October 2026 (PR #110): C's shape with B's smaller back, then the pass above; the owner is asked again.*
 
-### 1b++. The phone's bottom: the chatter, the controls and the woodpecker (Haakon, 28 October 2026)
+### 1b++. The phone's bottom: the chatter, the controls and the woodpecker (the owner, 28 October 2026)
 
-Haakon (28 October 2026), with two screenshots from his phone ([the chatter open](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/3a098b38f41f596834c3bd0fefc5c453eede2b1f/owner-2026-10-28-chat-open.jpg),
+The owner (28 October 2026), with two screenshots from his phone ([the chatter open](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/3a098b38f41f596834c3bd0fefc5c453eede2b1f/owner-2026-10-28-chat-open.jpg),
 [the chatter shrunk](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/3a098b38f41f596834c3bd0fefc5c453eede2b1f/owner-2026-10-28-chat-shrunk.jpg)): "See how the chat display overlaps with the buttons when it
 is shrunk? Also, it defaults to shrunk at start, even though the space below is used for nothing else. And the
 woodpecker is still too small when it is down there." Then, on whether it may cover things down there: "Really, I don't
@@ -157,9 +157,9 @@ it it purches on and interact with us elements down there, then that just looks 
 - UI only, no rules changed; it runs as its own lane beside the AI work ("as many lanes as can run in parallel").
 - *Done on 28 October 2026 (PR #112):* see "The phone's bottom" in `docs/design/32-the-owners-playtest.md`.
 
-### 1c. The big test files, split (Haakon, 28 October 2026, the workshop check: next, before item 3's remaining entries)
+### 1c. The big test files, split (the owner, 28 October 2026, the workshop check: next, before item 3's remaining entries)
 
-Haakon (28 October 2026): "Yes please, sound good! Do it expertly for both!", to Claude's proposal that included moving
+The owner (28 October 2026): "Yes please, sound good! Do it expertly for both!", to Claude's proposal that included moving
 the big-file split up the queue. The suites have grown past the 50 KB mark many times over: `tools/rules-test.js`
 (199 KB), `render-test.js` (139 KB), `layout-test.js` (120 KB), `input-test.js` (90 KB), `chatter-test.js` (81 KB),
 `simulate.js` (59 KB) and `ui-test.js` (52 KB), so every task that adds a test reads and searches far more than it
@@ -198,9 +198,9 @@ Also in `next-tasks-verbatim.md`:
 
 *Done on 27 October 2026 (PR #48)*: see "The messages, typed" in `docs/design/22-play-with-friends-online.md`.
 
-### 2c. The woodpecker, 1.3 times (Haakon, 29 October 2026; a layout lane)
+### 2c. The woodpecker, 1.3 times (the owner, 29 October 2026; a layout lane)
 
-Haakon (29 October 2026), "Agreed to all, expertly!", to the "For Haakon" question on its size and the design session's
+The owner (29 October 2026), "Agreed to all, expertly!", to the "For the owner" question on its size and the design session's
 take: **1.3 times its size, on the board and under it alike** (one size). Under the board it still clings to and pecks
 the buttons. Since it covers more of the board as it drums, check with the simulation that round length, deaths by
 cause and per-rival wins stay within noise; pictures at a 390-pixel phone and desktop, as for PR #112.
@@ -208,9 +208,9 @@ cause and per-rival wins stay within noise; pictures at a 390-pixel phone and de
 Done (PR #139): 1.3 times everywhere, one size wherever the screen has room (101 px on a 390×844 phone, from 78); the
 simulation's fingerprints identical. See "The woodpecker, 1.3 times" in `docs/design/32-the-owners-playtest.md`.
 
-### 2d. Rivals' chomps (Haakon, 29 October 2026; small, a sound lane)
+### 2d. Rivals' chomps (the owner, 29 October 2026; small, a sound lane)
 
-Haakon (29 October 2026): "Yes, queue it. Feels strange that there is no sound, when your snake makes loud sound when
+The owner (29 October 2026): "Yes, queue it. Feels strange that there is no sound, when your snake makes loud sound when
 eating." Today only your own snake's eating sounds (`sounds()` in `game/round.js`: `e.type === 'eat' && isMe(e.snake)`);
 a rival's makes no sound, except a golden mushroom, which already plays softer and further off (`{ rival: true, ...at(e.x) }`).
 - **Every rival's eating sounds,** each kind with its own cue as yours does (apple, golden, meat, mushroom, beetle,
@@ -223,9 +223,9 @@ a rival's makes no sound, except a golden mushroom, which already plays softer a
 
 Done in PR #150: a rival's meal plays its kind's own cue, as a rival's (dulled, at 0.3 of your chomp), from where it ate, never with the streak; one rival's chomp at a time, 180 ms apart, none for 350 ms after yours. Design: "Rivals' chomps" in `docs/design/21-sound.md`.
 
-### 2e. The woodpecker pecks beside a snake, not on it (Haakon, 29 October 2026; small, an art lane after 2c, which draws the same bird)
+### 2e. The woodpecker pecks beside a snake, not on it (the owner, 29 October 2026; small, an art lane after 2c, which draws the same bird)
 
-Haakon (29 October 2026): "Looks a bit weird when the woodpecker pecks a tile with a snake tail on, and the snake isn't
+The owner (29 October 2026): "Looks a bit weird when the woodpecker pecks a tile with a snake tail on, and the snake isn't
 hurt. Is it possible to make it so visually, it doesn't peck exactly on the snake? So it looks natural that the tiles
 go, but that the snake is left unhurt? Just a visual issue, nothing gameplaywise." And: "Yes please, expertly!"
 - **Drawing only** (`render/bird.js`, `render/bird-draw.js`): the tiles go at exactly the same moment as today; no rule,
@@ -242,9 +242,9 @@ go, but that the snake is left unhurt? Just a visual issue, nothing gameplaywise
 Done in PR #141: the beak aims at the free rim spot farthest from any body on the cell (of spots as clear, the one
 nearest the bird), the dent beside it with its splits running inward and stopping short of the body; drawing only.
 
-### 2f. Wildcard's hair: lacquered, not a mop (Haakon, 29 October 2026; small, an art lane): done, PR #144, version F
+### 2f. Wildcard's hair: lacquered, not a mop (the owner, 29 October 2026; small, an art lane): done, PR #144, version F
 
-Haakon (29 October 2026), on PR #110's hair as it plays: "Trump's hair looks like a mop now…" Then, to one more pass:
+The owner (29 October 2026), on PR #110's hair as it plays: "Trump's hair looks like a mop now…" Then, to one more pass:
 "Yes, and make it do it expertly! I want trump's hair for Pete's sake!"
 
 Three passes so far: two blobs (#107), a golden bun (#110's C), and now twenty fine strands with no outline, which read
@@ -261,29 +261,29 @@ solid, never stringy. Seen from above (the head points +x):
 - **A few long, broad comb grooves,** three to five, all following the sweep: not twenty strands, not scoring on a loaf.
 - **Gloss:** one long highlight along the crest of the wave and the sweep, near-white, so it reads as sprayed hair.
 - **Colour:** pale gold-blond, yellow highlights, a warm orange-gold only in the grooves' shadows.
-- **The test before the pictures go to Haakon:** a fresh helper (Haiku, given only the true-size and 3x crops of the
+- **The test before the pictures go to the owner:** a fresh helper (Haiku, given only the true-size and 3x crops of the
   versions, never this entry or the reference) is asked "describe this snake's hair in five words". A version passes
   if the answer reads as a swept, combed, glossy hairstyle, and fails on mop, straw, bun, bread, helmet or hat. Show
   only versions that pass.
 - **Up to three versions that pass, side by side with C and the current hair,** at true phone size (390 px), phone 3x
-  and desktop 2x, all four headings, clear and storm boards. **The PR stays a draft and does not merge until Haakon
+  and desktop 2x, all four headings, clear and storm boards. **The PR stays a draft and does not merge until the owner
   picks one** (#110 merged before his verdict; this one waits). Only his pick ships.
 - Art only: the render suite and looks checks pass; reduced motion unchanged.
 
-### 2f+. Wildcard's hair: F, a size smaller (Haakon, 29 October 2026; small, an art lane beside the new moves): done, PR #156
+### 2f+. Wildcard's hair: F, a size smaller (the owner, 29 October 2026; small, an art lane beside the new moves): done, PR #156
 
-Haakon (29 October 2026), playing with F: "Dont trumps hair look a bit too big now?" And, to keeping F's shape at about
+The owner (29 October 2026), playing with F: "Dont trumps hair look a bit too big now?" And, to keeping F's shape at about
 85% of its size: "Yes, let's try that!" Keep F's shape as it is, the wave, the sweep to the far side, the grooves and
 the gloss, and scale the whole mass to about 85%, so it sits on the head instead of towering over it, puffing past the
 head less over the ears and behind; the face, the set-back front edge and both eyes as they are. Drawing only. The PR
 shows F now beside F at 85% at a 390-pixel phone (true size and 3x) and desktop 2x, all four headings, and merges once
-the render suite passes; if Haakon then finds it still too big, or now too small, the size is one number to change.
+the render suite passes; if the owner then finds it still too big, or now too small, the size is one number to change.
 
 Done: the whole mass, grooves, gloss and shadow with it, scaled by `WILD_SIZE` (0.85) about the wave's front (`WILD_FRONT`), so the front edge and the eyes stay put; `render/faces.js`.
 
-### 2g. The meal goes down: a hungry snake fills out from the head (Haakon, 29 October 2026; small, an art lane): done, PR #146
+### 2g. The meal goes down: a hungry snake fills out from the head (the owner, 29 October 2026; small, an art lane): done, PR #146
 
-Haakon (29 October 2026): "I notice snakes imidately become plump again when after eating while starving. I feel it
+The owner (29 October 2026): "I notice snakes imidately become plump again when after eating while starving. I feel it
 should be an animation where you see it transform to getting plump and its color back." And: "Yes, expertly!"
 
 Today `hungerLook()` (`render/looks.js`) works out `slim` and `pale` afresh every frame from the hunger clock, so when a
@@ -302,9 +302,9 @@ Done in PR #146: a wave from the head, 0.7 s to the tail and three segments deep
 the pale wash flooding back in steps (`drawPale`); with reduced motion, a 0.25 s fade. Meal seen as the clock's
 `lastAte` rising, so it is the same online. Render check in `tools/render/08-hunger.js`.
 
-### 2j. Babble voices for the chatter, never distracting (Haakon, 29 October 2026; a sound lane): done, PR #162
+### 2j. Babble voices for the chatter, never distracting (the owner, 29 October 2026; a sound lane): done, PR #162
 
-Haakon (29 October 2026): "And should the chat lines be voiced?" Then, to babble voices: "And make sure the voices
+The owner (29 October 2026): "And should the chat lines be voiced?" Then, to babble voices: "And make sure the voices
 arent distracting! That would be a real turn off!"
 - **Babble, not speech:** when a rival's bubble appears, a short synthesized burble in its own voice (pitch, timbre,
   rhythm: Mason clipped and deep, Gobbler gobbly, Ghost faint, and so on; Mute stays silent), made in `audio.js` with
@@ -312,16 +312,16 @@ arent distracting! That would be a real turn off!"
 - **Never distracting, first of all:** well under the eating sound, at most about half a second whatever the line's
   length, never two at once, at most one every few seconds, never over your own sounds (eating, warnings, crashes), and
   quieter still in tight moments. Its own switch in the sound settings ("Voices").
-- **Haakon judges it:** the PR stays a draft until he has played its preview and says it isn't distracting; if he
+- **The owner judges it:** the PR stays a draft until he has played its preview and says it isn't distracting; if he
   isn't sure, it ships switched off by default.
 - Rivals only for now (your own snake's lines, from the teaching system, stay silent). Online, each player hears it on
   their own machine: no protocol change.
 
-Done (PR #162): the `babble` cue in `audio.js`, a voice per rival but Mute (`BABBLERS`), under a seventh of your apple's pluck and half that in a tight spot, at most 0.5 s, one every 4 s at most, none within 0.7 s of your own sounds; the Voices switch under the board between rounds, V at any time, remembered as `barkbite-voices`, on by default. Haakon (29 October 2026): "No, just merge them, then we will adjust if it is distracting." See "Rivals' babble" in `docs/design/21-sound.md`.
+Done (PR #162): the `babble` cue in `audio.js`, a voice per rival but Mute (`BABBLERS`), under a seventh of your apple's pluck and half that in a tight spot, at most 0.5 s, one every 4 s at most, none within 0.7 s of your own sounds; the Voices switch under the board between rounds, V at any time, remembered as `barkbite-voices`, on by default. The owner (29 October 2026): "No, just merge them, then we will adjust if it is distracting." See "Rivals' babble" in `docs/design/21-sound.md`.
 
-### 2k. The woodpecker, as big as it can get away with (Haakon, 29 October 2026; small, an art lane): done, PR #170
+### 2k. The woodpecker, as big as it can get away with (the owner, 29 October 2026; small, an art lane): done, PR #170
 
-Haakon (29 October 2026): "I think the woodpecker should be even bigger". Then, when the design session asked for a
+The owner (29 October 2026): "I think the woodpecker should be even bigger". Then, when the design session asked for a
 simulation check: "How should a visual change alter the actual game in any way?" It can't: the bird's size is one
 drawing constant (`BU` in `render/bird.js`), while the rules peck by target cells (`game.woodpecker`), so no
 simulation is run for it. And then: "Maybe make it as big as you can get away with without it falling out of the
@@ -341,9 +341,9 @@ Done (PR #170): 1.7 times its first size, one size wherever the screen has room 
 drumming 259 px on a 1280×800 laptop, from 198); at 1.8 an iPhone SE held upright no longer fits it whole under the
 board. Drawing only: no simulation. See "The woodpecker, as big as it gets" in `docs/design/32-the-owners-playtest.md`.
 
-### 2l. Flags that bend as a snake goes over them (Haakon, 29 October 2026; small, an art lane beside 2k): done, PR #186
+### 2l. Flags that bend as a snake goes over them (the owner, 29 October 2026; small, an art lane beside 2k): done, PR #186
 
-Haakon (29 October 2026): "would be cool if the flags of sovereign and colonists bends away from a snakes body,
+The owner (29 October 2026): "would be cool if the flags of sovereign and colonists bends away from a snakes body,
 depending on direction it was hit when a part of a snake occupies its tile". Drawing only (`render/flags.js`), so no
 simulation; online, each player draws it from the snakes they already have: no protocol change.
 - **Pushed the way it was hit:** when any part of any snake lies on the tile of Sovereign's banner or a colony's flag,
@@ -372,7 +372,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
   - It needs online sync (a protocol bump), the rivals reading it through the same rule, a rules test, and a Field guide line ("A burrow left unused grows shut.").
   - Escapes must stay at 20–35%.
   - *Done on 27 October 2026 (PR #49)*: see "Burrows grow shut" in `docs/design/32-the-owners-playtest.md`.
-- **Burrows grow shut, evened out.** Haakon (27 October 2026): "Yes, you can try that and see if it adds to the game! Review it afterwards and make an expert call." ("That": the change spread evenly over its 6–14 s, bolder moss at phone size, a slightly stronger scar, and the Field guide line weighed.)
+- **Burrows grow shut, evened out.** The owner (27 October 2026): "Yes, you can try that and see if it adds to the game! Review it afterwards and make an expert call." ("That": the change spread evenly over its 6–14 s, bolder moss at phone size, a slightly stronger scar, and the Field guide line weighed.)
   - *Done on 27 October 2026 (PR #55)*: see "The cue, evened out" in `docs/design/32-the-owners-playtest.md`.
 - **The outline glitch over a hole.** Over a pit, the body's round segments bulge above its line and its pale rim disappears.
   - Repro: `node docs/handoff/stage-bridge-glitch.js <repo> p390 390x844@3t bridge`, with shots in a `shots/` folder beside the script.
@@ -382,7 +382,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
 - **Rainbows upside down.** `drawRainbow` deliberately hangs the arch downward from an apple in the log's upper half.
   - Fix: always upright. For an apple in the upper half, use a great circle centred below the log (cy about 1.15 × the board, its top about 0.06 × the board from the top edge). It rises out of the apple, over, and down off the far side, with red outermost.
   - *Done on 27 October 2026 (PR #57; its top on the board from every apple, over and down to the far side, in the PR after it)*: see "Rainbows upright" in `docs/design/32-the-owners-playtest.md`.
-- **Rainbows, the follow-ups** (left open by PR #61). Haakon (27 October 2026), on Claude's three recommendations: "And I agree, queue!" One PR, render only:
+- **Rainbows, the follow-ups** (left open by PR #61). The owner (27 October 2026), on Claude's three recommendations: "And I agree, queue!" One PR, render only:
   - *Rounder over the middle.* From an apple near the middle the arch rises only about a cell, which barely reads as a rainbow. Move the circle's centre higher (today 1.15 boards below the top edge) so the arch from a mid-board apple rises clearly before it comes down; keep its top on the board and red outermost. This changes the numbers of "Rainbows upright": record the new ones there, with before/after pictures.
   - *The lower half, mirrored.* An apple low on the board near the middle can still show only the rising side. Give the lower half the same rule as the top: up out of the apple, over, and down toward the far side, with the render check's 12 apples extended to cover it.
   - *A render check that doesn't depend on order.* The choking check in `tools/render-test.js` passes or fails by how many boards earlier checks set up, since each moves the random seed along. Give each check its own seed so adding one can't break another.
@@ -399,14 +399,14 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
   - *Done on 27 October 2026 (PR #70)*: see "The phone gap" in `docs/design/32-the-owners-playtest.md`.
 - **Desktop chatter.** Fill the column down to the board's bottom edge with as many whole lines as fit (today it stops at about 5). Older lines fade at the top, and you can scroll back.
   - *Done on 27 October 2026 (PR #72)*: see "Desktop chatter" in `docs/design/33-one-screen.md`.
-- **A head-to-head mode in `tools/abtest.js`.** Haakon (27 October 2026): "Yes to all, expertly!" Old and new AI mixed in
+- **A head-to-head mode in `tools/abtest.js`.** The owner (27 October 2026): "Yes to all, expertly!" Old and new AI mixed in
   the same rounds on paired seats, which the optimization bar in `CLAUDE.md` calls for (the assistant's note of
   2026-10-18), and which the standing instruction "every new move is tested both ways" uses: rivals with a move and
   rivals without it on the same board. Before item 5, whose new moves need it.
   - *Done on 27 October 2026 (PR #80)*: `node tools/abtest.js [A] B --head-to-head` (built on `simulate.js --versus`;
     how it works, its rows and how fine it sees are in `tools/abtest.js`'s header). Given the same AI twice it comes out
     exactly even on every row; the A/A and known-difference runs are in the PR.
-- **Hunters miss easy pins.** Haakon (26 October 2026): "it seems they try to box you, but often don't on really easy
+- **Hunters miss easy pins.** The owner (26 October 2026): "it seems they try to box you, but often don't on really easy
   opportunities where they got you squeezed against the wall."
   - Stage pins: a snake against the edge with one way out and a hunter beside it. Every hunter should close it, unless
     closing it would kill the hunter.
@@ -418,7 +418,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
     `docs/design/15-the-rivals-look-further-ahead.md` (the neck test reads the rivals on the line's own board; a pin
     the hunter closes isn't a pin on it). Missed easy pins 35 → 14 in 200 rounds. It found the root shared with the next
     entry: fear read off the board as it is now, not off the line played.
-- **Rivals too shy of heads.** Haakon (27 October 2026): "it seems to me the rival snakes might be a bit too adverse to
+- **Rivals too shy of heads.** The owner (27 October 2026): "it seems to me the rival snakes might be a bit too adverse to
   have their heads next to each other, even if the other snake can't cut you off, or if the would see and have time to
   react ahead of time. Can this be investigated, expertly?"
   Then (27 October 2026): "the snake game bug should be addressed, as it makes it so they seemingly always chicken out
@@ -446,7 +446,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
     Swerves 8.0 → 2.9 per 1,000 decisions, apples given up in one halved; head-on crashes, wins and trademarks within
     noise. Fearing the cells right beside a head less, in any of five ways tried, raised head-on crashes 10–30%, so
     that fear stays as each persona has it.
-- **Nerve at a contested apple.** Haakon (28 October 2026), answering PR #83's question: "gobbler and Desperados
+- **Nerve at a contested apple.** The owner (28 October 2026), answering PR #83's question: "gobbler and Desperados
   should take the gamble more, that fits their playstyle, no?" Claude agreed: Desperado lives by skims and Gobbler by
   its food share, so at a contested apple with the other head beside it (a head-on about 1 time in 8, costing about
   what the apple is worth) both take the gamble more often: Desperado always more, Gobbler the more the hungrier it is.
@@ -481,12 +481,12 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
   ("Gran is first out."), and the chatter keeps the full line.
   - *Done on 28 October 2026 (PR #118):* `opts.short`, used only on a phone held upright when the line is still cut
     at its smallest; design in `docs/design/30-teaching-by-showing.md`, *Phone words*.
-- **Sniper's longer kill line.** Haakon's words (27 October 2026): "One shot, one whoppertunity". Add it to Sniper's
+- **Sniper's longer kill line.** The owner's words (27 October 2026): "One shot, one whoppertunity". Add it to Sniper's
   kill lines in `chatter/voices.js` beside "One shot.", with its translation in each language file (as `chatter/zh.js`
   has "One shot."), keeping the pun where the language allows. It must fit the banner and the chatter strip on a phone.
   - *Done on 28 October 2026 (PR #120):* the Chinese is "一枪，一次粮机。", 粮 (food) slipped into 良机 (a golden
     opportunity), as "whopper" into "opportunity".
-- **Mason's Caesar, the punchline and "Et tu" for everything.** Haakon (27 October 2026), on Claude's suggestion: "Yes,
+- **Mason's Caesar, the punchline and "Et tu" for everything.** The owner (27 October 2026), on Claude's suggestion: "Yes,
   that would be quiet cool! Then it would show if they died from the edge, falling, or a mushroom also. Or lightning."
   - *The joke as his kill line.* Mason's kill line becomes "Vidi, vici, veni." (he saw, he conquered, then he came), and
     "Veni, vidi, vici." leaves his lines, so the proper version never spoils the punchline. "Veni, vidi, aedificavi."
@@ -495,7 +495,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
     {who}?"); a death by anything else gets his plain lines. Give the last words the cause the engine already records
     (`cause` and `killer` on the crash), so Mason says "Et tu, …?" to whatever killed him: the edge ("Et tu, margo?"),
     a fall into a hole ("Et tu, fovea?"), fire ("Et tu, ignis?"), hunger ("Et tu, fames?"), the woodpecker ("Et tu,
-    picus?"), a mushroom ("Et tu, fungus?"), lightning ("Et tu, Iuppiter?") and his own body ("Et… ego?", Haakon's pause, in Latin: "ego" is both "I" and what kills a wall-builder who bites himself),
+    picus?"), a mushroom ("Et tu, fungus?"), lightning ("Et tu, Iuppiter?") and his own body ("Et… ego?", the owner's pause, in Latin: "ego" is both "I" and what kills a wall-builder who bites himself),
     for whichever of these the game has.
   - *Every rival, the same way.* The cause is there for all eighteen, so each gets last words for the deaths it can
     have, in its own voice, where they are funny, and the chatter shows how they died. Translations in each language
@@ -504,7 +504,7 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
     the edge, a hole, the woodpecker, hunger, fire and a snake's own body, for all eighteen, with their Chinese.
     Mushrooms only shrink, so none dies of one; every fire is lightning's, so Mason's fire lines are "Et tu, ignis?"
     and "Et tu, Iuppiter?". Design in `docs/design/09-voice-and-copy.md`, "Last words know what killed them".
-- **Last words on phones.** Haakon (27 October 2026): "Yes to all, expertly!" On phones with no chatter panel, the
+- **Last words on phones.** The owner (27 October 2026): "Yes to all, expertly!" On phones with no chatter panel, the
   round-ending snake's last words are lost, and at 390x664 the strip's line is cut with an ellipsis (from #34;
   `docs/archive/plan-history.md`). Show the last words whole where a phone player sees them, without crowding the board.
   - *Done on 28 October 2026 (PR #124):* where the log can't show them whole (no panel, or a folded strip), the round-ending
@@ -512,9 +512,9 @@ From "3. Fixes and polish (the owner's playtest of 2026-10-20)".
     a guest keeps them as they arrive after the round's end. Design in `docs/design/33-one-screen.md`, "Last words on
     phones"; checked by `tools/ui/07-last-words-on-phones.js`.
 
-### 2k+. The woodpecker perches clear of the buttons' words, at 1.7 times (Haakon, 29 October 2026; small, an art lane): done, PR #191
+### 2k+. The woodpecker perches clear of the buttons' words, at 1.7 times (the owner, 29 October 2026; small, an art lane): done, PR #191
 
-Haakon (29 October 2026), to whether the bird should keep clear of the speed buttons' words on a phone held upright:
+The owner (29 October 2026), to whether the bird should keep clear of the speed buttons' words on a phone held upright:
 "Keep the bird 1.7x. And agreed with everything else." So it stays 1.7 times everywhere, and on a phone held upright
 it chooses its perch over the row under the board so that no button's word is covered: between two buttons, or over a
 gap or the chatter's empty end, still drumming and pecking the row as 1b++ has it. It never shrinks for this; where no
@@ -526,9 +526,9 @@ switches', the speed's and the chatter's captions), at 390 and 320 px wide the g
 chatter's lines are left out, as they change every few seconds. Drawing only: no simulation. Layout part 15 tests it
 at 390×844 and 320×640. See "Clear of the row's words (2k+)" in `docs/design/32-the-owners-playtest.md`.
 
-### 2m. Beetles and the woodpecker (Haakon, 29 October 2026; a small engine entry): done, PR #199
+### 2m. Beetles and the woodpecker (the owner, 29 October 2026; a small engine entry): done, PR #199
 
-Haakon (29 October 2026): "Beetles should quickly try to escape down their burrow when woodpecker targets their little
+The owner (29 October 2026): "Beetles should quickly try to escape down their burrow when woodpecker targets their little
 "island". And it seems almost no new burrows appear as the woodpecker destroy the old ones. Also, if the woodpecker
 takes out the tiles under the beetles, they just teleport now." Three fixes, found in the code:
 - **Burrows run out:** a pecked burrow becomes a hole and is gone, and new ones open only when a new beetle comes out or
@@ -548,7 +548,7 @@ takes out the tiles under the beetles, they just teleport now." Three fixes, fou
 
 ### 2o. A squashed bead leaves a splat (30 October 2026; small, an art lane): done, PR #210
 
-Haakon: "splashing looks like eating. Should leave behind squashed beads in my opinion". A bead squashed under your
+The owner: "splashing looks like eating. Should leave behind squashed beads in my opinion". A bead squashed under your
 own head ("Squashed the second time" in `docs/design/27-round-six-a-fairness-and-fixes.md`) shows no gulp, no growth
 pulse and no eating sound: it leaves a flat splat in the bead's own colours, a little wider than the bead, fading over
 about 3 s, with a soft splat sound; with reduced motion it simply fades. Drawing and sound only, from the event the
@@ -561,7 +561,7 @@ spread). The sound is the soft splat it had. See "*The cue:*" under "Squashed th
 
 ### 2p. Flags in depth, hit head-on, and bent by their owners (30 October 2026; small, an art lane after 2l): done, PR #211
 
-Haakon: "the flag bends now. But i would like to give it some perspective also. So people that pass behind it, dont
+The owner: "the flag bends now. But i would like to give it some perspective also. So people that pass behind it, dont
 show up in front of it. They should be behind it. Also, it doesn't quiet know what to do when a snake hits it dead on,
 so that must be accounted for. And it should also react to soverign and colonists hitting it." In `render/flags.js`
 (2l, "Flags that bend under a snake" in `docs/design/32-the-owners-playtest.md`):
@@ -581,7 +581,7 @@ owners already bent their own (now tested). See "Flags in depth, hit head-on (2p
 
 ### 2t. Capricious without its ring, and a costume change for every change (30 October 2026; small, an art lane): done, PR #212
 
-Haakon: "i think now that capricious is always pink, it doesnt need that weird border effect around its head anymore.
+The owner: "i think now that capricious is always pink, it doesnt need that weird border effect around its head anymore.
 Agreed? Though it maybe should be more apparent when it transforms, like an coded animation that works for all of
 them, or something?", and to the design session's take: "Agreed to both, expertly!". In `render/bodies.js`:
 - **The ring goes:** the breathing pink ring with pale dashes round Capricious's head (it kept Capricious findable
@@ -635,7 +635,7 @@ Word for word from item 5 in `docs/PROGRESS.md`.
 
 Word for word from item 3b in `docs/PROGRESS.md`.
 
-Haakon (29 October 2026), playing: "I am seeing copycat shy rotten apples twice now, that was within reach. Both were
+The owner (29 October 2026), playing: "I am seeing copycat shy rotten apples twice now, that was within reach. Both were
 next to the map edge." Copycat left an apple it could reach, beside the board's edge, until it rotted. Likely suspects:
 its mimic weight (120) outweighing the pull of food, and the room and margin weights that count an edge cell against a
 move. Copycat's part of 3b fixes it, and first checks with a census whether every rival does it: of the apples that
@@ -650,7 +650,7 @@ row or one in, and Sniper (0.19), Capricious, Mason and Mute pass up as many. A 
 
 ### 2u. Picked rivals for this visit; unmet rivals back into the deck (30 October 2026; small, a UI lane) — done, PR #221
 
-Haakon asked why the same cast showed up each time he started the game, then: "I might've picked them yes. Didn't
+The owner asked why the same cast showed up each time he started the game, then: "I might've picked them yes. Didn't
 expect them to stay permanently", and to the design session's takes: "Agreed to all!". In `records.js` and the start
 card (`game/round.js`, `game/hud.js`):
 - **A picked seat lasts this visit,** round after round, and the next time the game is opened every seat is "Any"
@@ -667,13 +667,13 @@ clears; an undealt rival is not dealt first every time (a seeded test).
 
 The original pompadour (PR #74, at a79946b) as it was, with only its lick reversed: the curl at the near end of the roll
 now curls up and back over the hair behind it instead of forward over the brow. Two tries that reworked more were
-turned down (Haakon: "it looks horrible. I want the original hair, but I want the lick reversed. That's all. Keep it
+turned down (the owner: "it looks horrible. I want the original hair, but I want the lick reversed. That's all. Keep it
 that simple."); the third had his yes ("The hair looks 'okay' now."; "The hair's third try is approved: merge #208.").
 See "Wildcard's hair" in `docs/design/32-the-owners-playtest.md`.
 
 ### 2v. The newest version, by itself between rounds (30 October 2026; small, a UI lane): done, PR #223
 
-Haakon: "Should barkstreet snakes also have a "updated game" thingy that pops up?", "Yes to both, do it expertly!", and
+The owner: "Should barkstreet snakes also have a "updated game" thingy that pops up?", "Yes to both, do it expertly!", and
 then, of Amarna Letters' note: "It should update when you start game. [...] Like why would I not want the latest
 version?" Today a fresh load always gets the newest version (`sw.js` asks the network first), but a page left open or
 resumed on a phone keeps the version it loaded and is never told, and online the first sign is a refused join ("That
@@ -709,7 +709,7 @@ hardly ever), planned from the visible ring, never by reaction ("Clever rivals, 
 leap now measured both ways again, and per use, leap now included ("Every new move is tested both ways"). If they pay,
 done; if still flat, the PR says so as a design finding.
 
-### 2w. Beetles get away at least a third of the time (Haakon, 31 October 2026; an engine-rules entry, after part 4) — done, PR #313 (Review: engine rules · Claude · Codex P1×2, clean; design check 7, 8, 10)
+### 2w. Beetles get away at least a third of the time (the owner, 31 October 2026; an engine-rules entry, after part 4) — done, PR #313 (Review: engine rules · Claude · Codex P1×2, clean; design check 7, 8, 10)
 
 The escape band moves from 20–35% to at least a third (33–45%): measured on `develop` once part 4's flight is in, and the beetles' side tuned if it falls short, never the rivals made worse. Spec: `docs/handoff/queue-specs.md`, "2w. Beetles get away at least a third of the time".
 
@@ -726,16 +726,16 @@ on the new log is part 4's.
 
 ### 2s. A piece cut loose falls: the log stays one piece (30 October 2026, rewritten 31 October 2026; an engine-rules entry) — done, PR #289 (its measures in `docs/design/27-round-six-a-fairness-and-fixes.md`, "The log stays one piece")
 
-No more islands (Haakon, 31 October 2026: "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."): any piece of log no longer attached to the log falls away, warned, so the log is always one piece with holes in it, and jumps and flights cross the gaps inside it. Replaces "every island stays a hop from another". Spec: `docs/handoff/queue-specs.md`, "2s. A piece cut loose falls".
+No more islands (the owner, 31 October 2026: "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."): any piece of log no longer attached to the log falls away, warned, so the log is always one piece with holes in it, and jumps and flights cross the gaps inside it. Replaces "every island stays a hop from another". Spec: `docs/handoff/queue-specs.md`, "2s. A piece cut loose falls".
 
 ## The polish lane, done (moved 31 October 2026)
 
 Word for word from "The polish lane" in `docs/PROGRESS.md`.
 
-- **The README, done** (PR #241; Haakon, 31 October 2026: "Yes, expertly to both!"): `README.md` is for players, up to
+- **The README, done** (PR #241; the owner, 31 October 2026: "Yes, expertly to both!"): `README.md` is for players, up to
   the game as it plays now; the developer part is in `docs/developing.md`. From here every entry keeps it current ("A
   change a player sees updates the README" in `CLAUDE.md`); 2v adds the update between rounds when it merges.
-- **Next, any key wakes from a nap** (Haakon, 31 October 2026: "Space should also pause and unpause on Barkstreet Snakes." Told that Space is the jump: "Ahh, true! yeah, really any button should unpause, no?" Then, to the design session's shape of it: "Yes, please! Expertly!"): as the Pause row of "Voice and copy" (`docs/design/09-voice-and-copy.md`) now says. Any playing key, or a tap on the board on touch, wakes; the waking press never fires a power (a steering key wakes and steers, as it always has: "A power only when you ask"); G, H, M, N, V and the speed keys keep their jobs; the card says "Any key to wake up" / "Tap to wake up"; the help line, the Field guide and the README to match. Online: a nap is local only as now. A rules or input test both ways: Space wakes without a jump, G opens the Field guide and the game stays napping.
+- **Next, any key wakes from a nap** (the owner, 31 October 2026: "Space should also pause and unpause on Barkstreet Snakes." Told that Space is the jump: "Ahh, true! yeah, really any button should unpause, no?" Then, to the design session's shape of it: "Yes, please! Expertly!"): as the Pause row of "Voice and copy" (`docs/design/09-voice-and-copy.md`) now says. Any playing key, or a tap on the board on touch, wakes; the waking press never fires a power (a steering key wakes and steers, as it always has: "A power only when you ask"); G, H, M, N, V and the speed keys keep their jobs; the card says "Any key to wake up" / "Tap to wake up"; the help line, the Field guide and the README to match. Online: a nap is local only as now. A rules or input test both ways: Space wakes without a jump, G opens the Field guide and the game stays napping.
 
 - The housekeeping (PR #222): done entries and done parts' detail moved to `docs/archive/progress-done.md`; this file
   is now about 33 KB, all of it open entries, kept word for word.
@@ -750,7 +750,7 @@ Word for word from "The polish lane" in `docs/PROGRESS.md`.
 - A start card whose names wrap fits a small board (PR #234): at 320 px upright or 568 px sideways its tip goes, then its lines sit closer, so the buttons never cover a name.
 - Score and Best step aside under a banner above the board, on a phone held upright (PR #232; the audit's first find).
 - The woodpecker flies under a card that's up, no longer across its title (PR #243; the audit's third find).
-- *Left as it is, by Haakon's answer:* the woodpecker over the help line between rounds (the audit's second find; PR #240 closed). On a 390 px phone it may cover part of the help line or the chatter's words; nothing essential is hidden, it moves often and taps pass through it ("Clear of the row's words (2k+)" in `docs/design/32-the-owners-playtest.md`). Not to be raised again.
+- *Left as it is, by the owner's answer:* the woodpecker over the help line between rounds (the audit's second find; PR #240 closed). On a 390 px phone it may cover part of the help line or the chatter's words; nothing essential is hidden, it moves often and taps pass through it ("Clear of the row's words (2k+)" in `docs/design/32-the-owners-playtest.md`). Not to be raised again.
 - *Not reproduced:* bubbles overlapping at 4× (the audit's fourth find). In 8 watched phone rounds and 3 desktop rounds at 4×, the longest overlap was 0.4 s on the phone and 0.19 s on desktop, only while bubbles glide to a new side. Dropping the older bubble after 0.25 s of overlap made no measurable difference, so nothing was merged.
 - The squash lesson (PR #250): "Your own beads feed nobody.", no longer "Squashed! Your own tail feeds nobody." (it opened with a rival's death title, and called the beads tail; the Field guide's Beads row says beads).
 - *Measured, nothing to fix:* sound piling up while watching (PR #248, `docs/archive/studies/sound-levels.js`). At 4× the round asks for about 10 cues a second and the gaps let 4.5 through, at most 5 in any 250 ms; rivals' chomps 2 a second, the babble one every 4 s at most. Same shape at 1× and 2×, halved. The chatter's words were scanned too: no typos, apostrophes consistent.
@@ -759,8 +759,8 @@ Word for word from "The polish lane" in `docs/PROGRESS.md`.
 - The screenshot tour runs through again (PR #252): `tools/shots.js`'s staged knock-flight stopped at food the bird eats (the engine's knock list gives it nowhere to go); it skips that piece, as the engine does.
 - Any key wakes from a nap (PR #271): Space, the flash keys, Enter, P or Esc wake without a power, an arrow wakes and steers, a tap on the board or the card wakes on touch; G, H, M, N, V and the speed keys keep their jobs. The card says "Any key to wake up" / "Tap to wake up".
 - **Done in the lane's entries:** the README for players (PR #241) and any key wakes from a nap (PR #271): their words are in `docs/archive/progress-done.md`, "The polish lane, done".
-- **The woodpecker bigger on a phone, done** (PR #270; Haakon picked B, and answered for a phone on its side): see "The woodpecker, as big as it gets", *Bigger on a phone*, in `docs/design/32-the-owners-playtest.md`.
-- **Done: the flash became the dash** (PR #304; Haakon, 1 November 2026: "dash is better actually"): the key help,
+- **The woodpecker bigger on a phone, done** (PR #270; the owner picked B, and answered for a phone on its side): see "The woodpecker, as big as it gets", *Bigger on a phone*, in `docs/design/32-the-owners-playtest.md`.
+- **Done: the flash became the dash** (PR #304; the owner, 1 November 2026: "dash is better actually"): the key help,
   the lessons, banners, the Field guide, the HUD, Star's chatter (English and Chinese), the README and "One word for
   each thing"; words only, the fingerprints unchanged.
 - The room card on a phone (PR #256): its seats as names in a row, as the start card's, each rival's "unless a friend joins" left to the card's own words; it fits a 320 px phone upright (it ran 117 px under its buttons), and on a 568x320 one sideways it scrolls 84 px, not 234.
@@ -807,24 +807,24 @@ owner's three notes of 2 November merged as PRs #322 (the remains), #320 (the fl
 Word for word from `docs/handoff/queue-specs.md`, moved by the file-by-file review once their entries were done: 2n
 (its first try; PR #208 was the third), 2s (PR #289), 2w (PR #313) and the chatter split (PR #318).
 
-#### 2n. Wildcard's hair: every version side by side, Haakon picks (30 October 2026; small, an art lane)
+#### 2n. Wildcard's hair: every version side by side, the owner picks (30 October 2026; small, an art lane)
 
-Haakon: "trump looks like David Lynch now. I actually think the very first or second hairstyle trump had in the game is
+The owner: "trump looks like David Lynch now. I actually think the very first or second hairstyle trump had in the game is
 better than what he has right now". Draw Wildcard's head as each version has had it, side by side at the same size and
 heading. The design session made [the picture](https://raw.githubusercontent.com/HaakTuah/barkstreet-snakes/2b0f035452522c107030f31987ee78fdb7eaf97e/design-wildcard-hair-versions.jpg) from the PRs' own pictures (30 October 2026): 1 the
 original, 2 PR #107's two blobs, 3 and 4 PR #110's B and C (never shipped), 5 PR #110 as shipped (the "mop"), 6 PR #144's
-F, 7 PR #156's F at 85% (now). **Haakon's pick: the original, its swirl turned up** (30 October 2026: "What if we took
-the original, but have the swirl point upwards instead of downwards?", then "Yes, please, expertly please!"). **Then, simply** (Haakon, 30 October 2026, on the second try: "it looks horrible. I want the original hair, but I
+F, 7 PR #156's F at 85% (now). **The owner's pick: the original, its swirl turned up** (30 October 2026: "What if we took
+the original, but have the swirl point upwards instead of downwards?", then "Yes, please, expertly please!"). **Then, simply** (the owner, 30 October 2026, on the second try: "it looks horrible. I want the original hair, but I
 want the lick reversed. That's all. Keep it that simple."): bring back the original exactly as it was at a79946b (PR
 #107's "before": the fluffy pompadour, its strands, colours and outline), and reverse its lick, the one curl at the front
 that comes down over the brow, so it curls the other way, up and back; nothing else changes (no new shape, no flick, no
 reworked mass). The PR shows the original and the new one side by side in all four headings, at 390 px and desktop 2x,
-and **merges only once Haakon has said yes** (drawing only: no simulation, no protocol change).
+and **merges only once the owner has said yes** (drawing only: no simulation, no protocol change).
 
 #### 2s. A piece cut loose falls: the log stays one piece (30 October 2026, rewritten 31 October 2026; an engine-rules entry, after part 4; ahead of 2q) — done, PR #289
 
-Haakon (30 October 2026): "I still see the situation arise where 2 islands form at the opposite ends, and the snakes
-are trapped on each, so the one on the bigger one wins". The first answer kept every island a hop from another. Haakon
+The owner (30 October 2026): "I still see the situation arise where 2 islands form at the opposite ends, and the snakes
+are trapped on each, so the one on the bigger one wins". The first answer kept every island a hop from another. The owner
 (31 October 2026), on the woodpecker cutting out shapes that fall once cut loose: "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."
 - **The rule:** the log is the biggest piece of bark; any other piece, once no bark joins it to the log, falls away
   (it cracks, tips and drops, its bark and anything on it gone). So the log is always one piece with holes in it, and
@@ -833,14 +833,14 @@ are trapped on each, so the one on the bigger one wins". The first answer kept e
   it will fall), and it never cuts loose a piece a snake couldn't leave in the warning's time, as it never shuts anyone
   in today ("The woodpecker plays fair"); a snake still on a falling piece falls with it ("Down the hole!"). Food on it
   falls too.
-- **No size is banned from falling** (Haakon, 31 October 2026: "No outline should be banned from falling, but ideally, it never takes out half the trunk."): whatever is cut loose falls. The woodpecker aims small (entry 6 plans it), and the only guard is the fair one above.
+- **No size is banned from falling** (the owner, 31 October 2026: "No outline should be banned from falling, but ideally, it never takes out half the trunk."): whatever is cut loose falls. The woodpecker aims small (entry 6 plans it), and the only guard is the fair one above.
 - **Replaces** "every island stays a hop from another" (the first 2s). 2r's rule (no hop onto a doomed island) stays,
   harmless, for any gap a snake might misjudge; part 4's measures of islands become measures of gaps. The lessons
   and picture lines that speak of islands speak of the far side of a gap instead: the jump's lesson ("Space hops up
   to three cells. Find an island!", `docs/design/29-round-six-b-the-new-moves.md`) and the island hop's picture line
   ("Tap! I can hop to that island.", `docs/design/30-teaching-by-showing.md`), with their Field guide rows; the
   writing pass (entry 9) may reword them again.
-- **The flight measured again** (Haakon, 31 October 2026: "yes.", to running part 4's both-ways test again once the
+- **The flight measured again** (the owner, 31 October 2026: "yes.", to running part 4's both-ways test again once the
   islands are gone): part 4's A/B of the golden flight (and of leap now and the golden flash, as part 4 measures them)
   runs again on 2s's log, and the rivals' use of the flight is patched if its users no longer come out ahead.
 - **The rivals** see a piece that a mark would cut loose as gone at the strike, and get off it in time; a rules test
@@ -852,9 +852,9 @@ are trapped on each, so the one on the bigger one wins". The first answer kept e
   trademark. Entry 6 then makes the woodpecker cut shapes on purpose, down to a floor.
 - **Online:** a protocol bump for the falling piece.
 
-#### 2w. Beetles get away at least a third of the time (Haakon, 31 October 2026; an engine-rules entry, after part 4)
+#### 2w. Beetles get away at least a third of the time (the owner, 31 October 2026; an engine-rules entry, after part 4)
 
-Haakon (31 October 2026): "Do beetles ever manage to espace?" Told that about 33% of chased beetles got away when last measured (round six A,
+The owner (31 October 2026): "Do beetles ever manage to espace?" Told that about 33% of chased beetles got away when last measured (round six A,
 inside its 20–35% band): "Yeah, I feel it should be at least a third of the time."
 - **The band** (in `docs/design/27-round-six-a-fairness-and-fixes.md`, "A cornered beetle digs in") moves from 20–35% to
   **33–45%** of chases: at least a third, as he said; the ceiling of 45% is the design session's reading, so beetles
@@ -867,9 +867,9 @@ inside its 20–35% band): "Yeah, I feel it should be at least a third of the ti
 - **The rules test and the census** keep the band: the simulation's check fails a run whose escapes fall below a third.
 - **Online stays in step:** a protocol bump if a beetle's messages change.
 
-#### Chatter split by meaning (Haakon, 2 November 2026; the workshop lane)
+#### Chatter split by meaning (the owner, 2 November 2026; the workshop lane)
 
-Haakon: "Have we split files where it doesn't make any difference? Like chatter? Like, splitting out chinese, i get. But
+The owner: "Have we split files where it doesn't make any difference? Like chatter? Like, splitting out chinese, i get. But
 have one zh and zh-more, how does an agent/session which to look in? Won't it just check both?" ("Split by meaning" in
 `AGENTS.md`.) `chatter/zh.js` and `zh-more.js` were cut by size (Copycat to Wildcard, then Creeper to Star), and
 `voices.js` is 49 KB. Re-split along what people look up, a voice (a file per voice, or per voice and language), with

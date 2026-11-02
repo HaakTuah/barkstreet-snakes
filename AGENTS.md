@@ -77,7 +77,8 @@ usage allows, at the lowest cost now and later.
   `scripts/sim.sh`, never in CI.
 - **A change a player sees updates the README,** in the same PR, as it does the lesson and the Field guide row.
 - **The owner's words are kept, in the archive.** Quote each instruction he gives word for word, dated, in the PR and
-  in `docs/archive/instructions.md`. A standing rule goes, as briefly as it can be said and with what it is for, into
+  in `docs/archive/instructions.md`, leaving out any personal detail as "[…]" (`SECURITY.md`, point 11: nothing
+  personal, ever). A standing rule goes, as briefly as it can be said and with what it is for, into
   the section of this file where it applies (or `CLAUDE.md`, if only Claude uses it), never as a dated entry or a
   quote, since every session pays to read this file.
 - **Each game's files stay in its own repository.** Never write this project's notes, logs or files into another
@@ -205,7 +206,7 @@ to the owner, who alone can dismiss it. PR pictures go on the orphan branch `pr-
 
 ```bash
 scripts/cloud-setup.sh                 # cloud machines: Chromium for the browser suites, if missing
-scripts/test.sh                        # the types (tsc) and all eleven suites, quiet; or name some: scripts/test.sh rules render
+scripts/test.sh                        # the types (tsc) and all twelve suites, quiet; or name some: scripts/test.sh rules render
                                        # (exits 1 if any fails; piped, as in `| tail`, the pipe's code is tail's: use set -o pipefail)
 scripts/sim.sh 200 --seed 3 --census   # tools/simulate.js, quiet: fingerprint, check and tables (also seed 11)
 scripts/codemap.sh engine.js           # the functions of a game file, with line numbers (render/*.js, game/*.js too)

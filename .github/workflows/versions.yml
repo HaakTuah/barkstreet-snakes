@@ -1,0 +1,41 @@
+# The monthly version check (the owner, 2 November 2026): what Dependabot cannot see (tools/versions.json: PeerJS,
+# Node's exact version) is compared with the npm registry's newest stable release old enough to take
+# (tools/versions.js), and each one behind gets an enhancement issue for the owner, unless one is already open.
+# Scheduled runs use main's copy of these files. Nothing is checked out but this repository, and no untrusted text is
+# written into the script: the titles and bodies pass through a file and jq.
+name: versions
+
+on:
+  schedule:
+    - cron: '23 5 3 * *' # (the 3rd of each month, 05:23 UTC)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+      - name: An issue for each version behind
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          behind="$RUNNER_TEMP/behind.json"
+          node tools/versions.js --issues > "$behind"
+          open=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&labels=enhancement&per_page=100" --jq '.[].title')
+          for i in $(seq 0 $(( $(jq length "$behind") - 1 ))); do
+            title=$(jq -r ".[$i].title" "$behind")
+            if grep -qF -- "$(jq -r ".[$i].key" "$behind")" <<<"$open"; then echo "already open: $title"; continue; fi
+            jq -r ".[$i].body" "$behind" > "$RUNNER_TEMP/body.md"
+            gh issue create --title "$title" --body-file "$RUNNER_TEMP/body.md" --label enhancement --assignee HaakTuah
+          done

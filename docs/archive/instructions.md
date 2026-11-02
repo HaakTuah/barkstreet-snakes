@@ -200,7 +200,7 @@ On a suggested stop for the builders ("these 2" are this game's builder and Amar
 > I don't agree with that break. I want these 2 continually working until they reach about 90% usage, at that point I don't want them taking on any bigger task, as I want the bulk of that remaining usage for myself.
 
 It replaces the 95% line of the usage plan. Written into `CLAUDE.md` as "Usage". The same evening the builders were given
-a `develop` branch to merge their PRs into, so that work can go on while Haakon is away; `main` stays his to merge.
+a `develop` branch to merge their PRs into, so that work can go on while the owner is away; `main` stays his to merge.
 
 ### 2026-10-26 20:45
 
@@ -208,12 +208,12 @@ On the setup itself:
 
 > Go, do it all, expertly! Just make sure you don't lose anything important along the way, or duplicate unessecarily, which creates drift!
 
-On the milestone PR from `develop` into `main` (27 October 2026), after being told Haakon would merge it:
+On the milestone PR from `develop` into `main` (27 October 2026), after being told the owner would merge it:
 
 > You merge it. Always.
 
 In the design chat (27 October 2026, 09:00 UTC), after Claude found no pushes from either builder for over an hour.
-Haakon had asked "And shouldn't they push regularly so they don't risk losing anything?", and Claude asked "Shall I add
+The owner had asked "And shouldn't they push regularly so they don't risk losing anything?", and Claude asked "Shall I add
 a 'push at every checkpoint, at least hourly' rule to both projects' instructions?":
 
 > Yes to all, expertly!
@@ -230,7 +230,7 @@ reached him:
 > Yes to all, expertly! And we need that all these questions get directly back to me from both projects. Having to hunt them down like this isn't good.
 
 In the design chat (27 October 2026, 16:56 UTC), on Claude's proposal that builders check for changes again before
-opening their pull request, after two Amarna Letters items had begun before Haakon's answers reached them:
+opening their pull request, after two Amarna Letters items had begun before the owner's answers reached them:
 
 > Yes, why not? If you don't object.
 
@@ -274,7 +274,7 @@ In the design chat (28 October 2026, 18:29 UTC), on PR #110's three versions of 
 
 (added to 1b+++ in `docs/PROGRESS.md`: C's shape with B's smaller back, then one more pass)
 
-In the design chat (28 October 2026, 23:30 UTC), on the "For Haakon" questions about Gobbler's nerve and the woodpecker's size:
+In the design chat (28 October 2026, 23:30 UTC), on the "For the owner" questions about Gobbler's nerve and the woodpecker's size:
 
 > Agreed to all, expertly! Shouldn't the others contest apples more if they're hungry? They're worth more than, because usually apples just gove you plus 1, but if you are starving, they give you 1 and save you 1, so become plus 2? But yes, gobbler should contest it regardless. And Desperados being an adrenalin junkie, should generally be less risk averse?
 
@@ -300,7 +300,7 @@ In the design chat (28 October 2026, 23:57 UTC), on a new rival:
 
 > add Charmer to the queue, exactly as I have prescribed, with his clingy unique playstyle.
 
-(queued as 3c in `docs/PROGRESS.md`; his look and death mark are left for Haakon to give)
+(queued as 3c in `docs/PROGRESS.md`; his look and death mark are left for the owner to give)
 
 In the design chat (29 October 2026, 00:00 UTC), on the rivals making no sound when they eat:
 
@@ -399,7 +399,7 @@ And, to Claude's take (they notice each other, a shoving match, the loser flips,
 
 (queued as 8, last, in `docs/PROGRESS.md`)
 
-In the design chat (29 October 2026, 09:00 UTC), to the "For Haakon" question on rivals' chomps while watching sped
+In the design chat (29 October 2026, 09:00 UTC), to the "For the owner" question on rivals' chomps while watching sped
 up (2d, PR #150), among answers for Amarna Letters: "Yes to all, expertly!" (kept as is)
 
 In the design chat (29 October 2026, 11:33 UTC), to 2j's questions (are the babble voices distracting; the Voices
@@ -421,7 +421,7 @@ In the design chat (29 October 2026, 11:46 UTC), on the new moves: "And a point 
 what a regular crash costs, plus you fall, so if you are over fire, you ignite. If you are over a hole, you fall down,
 if you sre over another snake, you get checkmated." (fire written into "Bumps in the air" in
 `docs/design/29-round-six-b-the-new-moves.md` and item 5; the hole was already there; what "checkmated" means over a
-snake went back to Haakon as a question)
+snake went back to the owner as a question)
 
 In the design chat (29 October 2026, 11:49 and 11:50 UTC), on a mid-air bump over another snake (the design slid you
 off to a free cell beside it): "Well, you are out in game if you are trapped by other snakes, so why should we be more
@@ -483,7 +483,7 @@ In the design chat (29 October 2026, 12:57 UTC), on the lessons: "And is this be
 will definetly be part of it. I think all this should come right after the new powers." (item 4 in `docs/PROGRESS.md`
 now starts as soon as item 5's last part merges, and teaches every move of it, the mushroom spit included)
 
-In the design chat (29 October 2026, 13:12 UTC), to the "For Haakon" question on bridges coming up rarely (about one
+In the design chat (29 October 2026, 13:12 UTC), to the "For the owner" question on bridges coming up rarely (about one
 ride in twenty rounds), and the design session's take (keep it rare, re-measure after the golden flight and the
 woodpecker's three acts): "Agreed with you expert take!"
 
@@ -540,7 +540,7 @@ woodpecker never leaving a piece of the log out of a hop's reach, rather than a 
 (queued as 2n, 2o, 2p, 2q, 2r (in item 5's part 4), 2s and in item 5's part 3b+). On Capricious, the same minute: "And i
 think now that capricious is always pink, it doesnt need that weird border effect around its head anymore. Agreed?
 Though it maybe should be more apparent when it transforms, like an coded animation that works for all of them, or
-something?" (a question; in the "For Haakon" table)
+something?" (a question; in the "For the owner" table)
 
 In the design chat (30 October 2026, 02:15 UTC), to the design session's take on Capricious (drop its ring; a short
 costume change for every mood, Copycat's new model the same way): "Agreed to both, expertly! And don't forget a snake
@@ -578,7 +578,7 @@ things as refined as possible!" (written into `docs/PROGRESS.md`, "The polish la
 In the design chat (31 October 2026, 13:44 UTC), to the design session's questions on the second account's first
 reports (Wildcard's hair, third try; turning on GitHub's "Automatically delete head branches" and leaving the 144 old
 merged branches; moving the open entries' specs out of `docs/PROGRESS.md`): "Yes, to all, expertly! The hair looks
-"okay" now." (2n merges with PR #208; the specs moved to `docs/handoff/queue-specs.md`; Haakon turns on the setting)
+"okay" now." (2n merges with PR #208; the specs moved to `docs/handoff/queue-specs.md`; the owner turns on the setting)
 
 In the design chat (31 October 2026, 13:51-13:53 UTC), to the improvement audit's questions and the design session's
 takes (the trademarks that never show: measures first, then more teeth in part 7; character never costs wins: Joker
@@ -648,9 +648,9 @@ In the design chat (1 November 2026, 12:52-14:40 UTC), on Claude and Codex build
 
 In the design chat (1 November 2026, 15:16 UTC), after the first `@codex` test, where Codex's bot answered within seconds: "Isn't 15 minutes a bit long to wait for it? here it took like a seconds or 2, max 3?" Then, to the design session's proposal (about 5 minutes to a sign of life, a take-back at once when the bot answers with an error, about 2 hours to a PR): "yes, expertly!" (written into `docs/claude-and-codex.md`, "When Codex is not there"; the same in Amarna Letters)
 
-In the design chat (1 November 2026, 16:10-16:19 UTC), after the Codex GitHub bot turned out to need a Legacy environment that cannot be created: "Is it possible to have the orchestrator run locally, while the rest run on cloud. But still is a security risk. Also, can anyone who comments on my repo make my codex do whatever? that would be a big risk!" Then, to the design session's answers (the orchestrator stays in the cloud and the PC only hands lanes to Codex's cloud; the runner acts only on pull requests HaakTuah opened from the repository and labelled himself, with the description as the brief), 16:19 UTC: "Yes to all, expertly!" (written into `docs/claude-and-codex.md`, "Handing work to Codex" and "The runner on Haakon's PC", and `scripts/codex-runner.sh`; the same in Amarna Letters)
+In the design chat (1 November 2026, 16:10-16:19 UTC), after the Codex GitHub bot turned out to need a Legacy environment that cannot be created: "Is it possible to have the orchestrator run locally, while the rest run on cloud. But still is a security risk. Also, can anyone who comments on my repo make my codex do whatever? that would be a big risk!" Then, to the design session's answers (the orchestrator stays in the cloud and the PC only hands lanes to Codex's cloud; the runner acts only on pull requests HaakTuah opened from the repository and labelled himself, with the description as the brief), 16:19 UTC: "Yes to all, expertly!" (written into `docs/claude-and-codex.md`, "Handing work to Codex" and "The runner on the owner's PC", and `scripts/codex-runner.sh`; the same in Amarna Letters)
 
-In the design chat (1 November 2026, 16:42-16:49 UTC), while the Codex runner was being set up on his PC: "Remember that this is an open repo, so extremely important that nothing is pushed there which opens and exploit, and lets everyone read it, so that they can attack my system or repos through it." (16:42 UTC) Then (16:49 UTC): "I don't like that I have a copy of the repository and this on my computer. I think it should be removed and just set up here locally. having it on a repository announces how it works, and it should just be a poller anyhow that triggers a codex cloud instance, nothing which can anyhow do anything else on my computers." (the runner removed from the repository; a poller kept on his PC only starts Codex's cloud tasks, with no copy of the repository; written into `docs/claude-and-codex.md`, "Handing work to Codex" and "Haakon's poller"; the same in Amarna Letters)
+In the design chat (1 November 2026, 16:42-16:49 UTC), while the Codex runner was being set up on his PC: "Remember that this is an open repo, so extremely important that nothing is pushed there which opens and exploit, and lets everyone read it, so that they can attack my system or repos through it." (16:42 UTC) Then (16:49 UTC): "I don't like that I have a copy of the repository and this on my computer. I think it should be removed and just set up here locally. having it on a repository announces how it works, and it should just be a poller anyhow that triggers a codex cloud instance, nothing which can anyhow do anything else on my computers." (the runner removed from the repository; a poller kept on his PC only starts Codex's cloud tasks, with no copy of the repository; written into `docs/claude-and-codex.md`, "Handing work to Codex" and "the owner's poller"; the same in Amarna Letters)
 
 In the design chat (1 November 2026, 17:10 UTC), after Codex's code review proved to work (#291) while its building cannot, on the design session's proposal that Codex review Claude's PRs and build nothing until he says: "Yes, please, expertly so! Thought remember, it can run out of usage, even just reviewing. So we should probably have some standard of waiting, then asking it if it is spending too long (which shouldn't be that long a wait), and then handing it off to another reviewer if it dosen't answer quickly? also, will the codex reviewer have our review criterias with the 1 to 10 score scale and all?" (written into `docs/claude-and-codex.md`, the status line and "Codex reviews", and a "Review guidelines" section in `AGENTS.md`, which Codex's review reads; the same in Amarna Letters)
 
@@ -666,7 +666,7 @@ In the design chat (1 November 2026, 18:17 UTC): "Agreed to both 1 and 2, but I 
 
 In the design chat (1 November 2026, 18:35-18:37 UTC), after a talk about keeping projects lean: "Yes, please, expertly! Should we also have any of this, expert?", then, to the design session's questions (add to both games "every change removes what it replaces" and leftovers in the definition of a 10; the files every session reads back under 20 KB first at the next milestone's workshop check; a check for unused code in this game's queue): "yes, please, expertly expertly!" (written into `AGENTS.md`, "Keep it lean" under "How to work" (replacing "Keep files small and organised") and the "Review guidelines"; `docs/claude-and-codex.md`, the definition of a 10 in "Reviews"; `docs/PROGRESS.md`, the split lane; the same in Amarna Letters, without the unused-code entry)
 
-In the design chat (2 November 2026, 06:36 UTC), Haakon's notes, sent as a file ("Made some notes while you were out of usage."); the parts about this game and how both games are built, word for word:
+In the design chat (2 November 2026, 06:36 UTC), the owner's notes, sent as a file ("Made some notes while you were out of usage."); the parts about this game and how both games are built, word for word:
 
 > Should we use a regular container codex imstance to review rather than naitve review when we get environments. Since reviewer we can't get proper feedback ans it can't run our project?
 >
@@ -692,7 +692,7 @@ In the design chat (2 November 2026, 06:36 UTC), Haakon's notes, sent as a file 
 >
 > Still get the bug with swallowing a mushroom over and over again after puking it up. Really not easy to tell either when your character will spit it, or to aim it anywhere
 
-The design session answered each and asked ten questions, of which these concern this game: (1) keep Codex's native review and add container checks of a PR's measurements once environments work; (2) Fable as the last escalation step after Opus extra-high, blocked as the fallback; (3) "Helpers: when they pay", at most four at a time; (4) the always-read files hold rules, not a timeline, with the dated words only here; (5) split by meaning, and principles over rules, safety rules excepted, starting with chatter; (6) a file-by-file review after 4 and 5; (10) the bugs queued as written, and the skeletons back in the queue beside the memorials. Haakon, at 06:48 UTC, to all ten: "Yes ro absolutely all pt these! Extra expertly expertly!" (written into `AGENTS.md`, restructured: the standing instructions became rules in "Starting a task", "How to work", "Questions and readings", "How work flows", "The workshop check", "Rules that stand", "Usage" and "Git and GitHub", with "Split by meaning" and "Principles over rules"; `CLAUDE.md`, the parallel helper, Fable as the last escalation and "Helpers: when they pay"; `docs/orchestrating.md`; `docs/claude-and-codex.md`, point 7 of "Codex reviews" and Fable after the escalation helper; `docs/PROGRESS.md`, the polish lane's next fixes, the workshop lane, the skeletons in entry 6 and 2x, the spitter sliding over its own mushroom, moved to the front; `docs/handoff/queue-specs.md`, the chatter split and the file-by-file review; the same, with its own parts, in Amarna Letters)
+The design session answered each and asked ten questions, of which these concern this game: (1) keep Codex's native review and add container checks of a PR's measurements once environments work; (2) Fable as the last escalation step after Opus extra-high, blocked as the fallback; (3) "Helpers: when they pay", at most four at a time; (4) the always-read files hold rules, not a timeline, with the dated words only here; (5) split by meaning, and principles over rules, safety rules excepted, starting with chatter; (6) a file-by-file review after 4 and 5; (10) the bugs queued as written, and the skeletons back in the queue beside the memorials. The owner, at 06:48 UTC, to all ten: "Yes ro absolutely all pt these! Extra expertly expertly!" (written into `AGENTS.md`, restructured: the standing instructions became rules in "Starting a task", "How to work", "Questions and readings", "How work flows", "The workshop check", "Rules that stand", "Usage" and "Git and GitHub", with "Split by meaning" and "Principles over rules"; `CLAUDE.md`, the parallel helper, Fable as the last escalation and "Helpers: when they pay"; `docs/orchestrating.md`; `docs/claude-and-codex.md`, point 7 of "Codex reviews" and Fable after the escalation helper; `docs/PROGRESS.md`, the polish lane's next fixes, the workshop lane, the skeletons in entry 6 and 2x, the spitter sliding over its own mushroom, moved to the front; `docs/handoff/queue-specs.md`, the chatter split and the file-by-file review; the same, with its own parts, in Amarna Letters)
 
 Moved here from `AGENTS.md`, where they stood word for word since 21 October 2026, now that it holds rules only (the limit of two agents is replaced by "Helpers: when they pay"):
 
@@ -711,13 +711,13 @@ In the design chat (2 November 2026, 07:10 and 07:15 UTC): "Does the surverniour
 
 In the design chat (2 November 2026, 07:42 and 07:43 UTC), after the first orchestrator of the week ran part of the work itself and gave lanes to its own helpers: "Why is the orchestrator doing things directly?" Then, to the design session's answer (its start prompt never said lanes go to builder sessions) and its question (write "the orchestrator builds nothing itself; each lane is a builder session, and helpers belong to builders" into both games): "yes please, expertly!" (written into `docs/orchestrating.md`, at its top, and `CLAUDE.md`, "Helpers: when they pay"; the same in Amarna Letters)
 
-In the design chat (2 November 2026, 07:46 and 07:47 UTC), after the orchestrator, which could not set a builder session's effort, held back part 4 (marked high) for Haakon to start: "I can't start a builder under it?? It will just have to start a regular one, then escalate? maybe it should try on medium first?" Then, to the design session's take (builders start at the orchestrator's effort, and the work marked high goes to helpers at high effort inside the builder, then the escalation chain): "Yes, expertly! We don't want them to hang up like this again, and this seems like a smarter split!" (written into `CLAUDE.md`, "Models, effort and helpers", and `docs/orchestrating.md`; the same in Amarna Letters)
+In the design chat (2 November 2026, 07:46 and 07:47 UTC), after the orchestrator, which could not set a builder session's effort, held back part 4 (marked high) for the owner to start: "I can't start a builder under it?? It will just have to start a regular one, then escalate? maybe it should try on medium first?" Then, to the design session's take (builders start at the orchestrator's effort, and the work marked high goes to helpers at high effort inside the builder, then the escalation chain): "Yes, expertly! We don't want them to hang up like this again, and this seems like a smarter split!" (written into `CLAUDE.md`, "Models, effort and helpers", and `docs/orchestrating.md`; the same in Amarna Letters)
 
-In the design chat (2 November 2026, 08:25 and 08:28 UTC), on whether agents should file ideas as issues: "Because that's different from how all questions to me bubble up, but maybe stuff is lost for me, because they only raise blocking questions? Should we also have something like this? Right now we have to hunt across PRs and stuff for the questions? Would this be a better place for all of that?" Then, to the design session's take (one inbox of issues assigned to him, labelled `for-haakon` and `idea`): "Yes, important to avoid duplication, we want everything there then, and just pointers there in the prs and stuff, to make us aware that new ones are added. Should it be low stake to suggest an idea? […]" (written into `AGENTS.md`, "Questions, readings and ideas"; `docs/PROGRESS.md`, "For Haakon" and "Noted, not yet queued" now point to the issues, the noted ideas moved to #324 to #327; the same in Amarna Letters)
+In the design chat (2 November 2026, 08:25 and 08:28 UTC), on whether agents should file ideas as issues: "Because that's different from how all questions to me bubble up, but maybe stuff is lost for me, because they only raise blocking questions? Should we also have something like this? Right now we have to hunt across PRs and stuff for the questions? Would this be a better place for all of that?" Then, to the design session's take (one inbox of issues assigned to him, labelled with a label named for the owner, and `idea`): "Yes, important to avoid duplication, we want everything there then, and just pointers there in the prs and stuff, to make us aware that new ones are added. Should it be low stake to suggest an idea? […]" (written into `AGENTS.md`, "Questions, readings and ideas"; `docs/PROGRESS.md`, "For the owner" and "Noted, not yet queued" now point to the issues, the noted ideas moved to #324 to #327; the same in Amarna Letters)
 
 In the design chat (2 November 2026, 08:44 and 08:46 UTC), after GitHub's secret scanning flagged as a public leak a made-up Google key in an Amarna Letters test: "auto security scan has found issues", then, to the design session's take (fake keys built when the test runs, invented names in test data): "Yes, expertly." (written into `SECURITY.md`, "Test data is never real"; the same in Amarna Letters)
 
-In the design chat (2 November 2026, 08:57 UTC), to the design session's two questions (should the rules and labels say "the owner" instead of his name, keeping it only in archived quotes; and should private mentions be removed from the public archives): "Yes, expertly across the board!" (written into `AGENTS.md`, `CLAUDE.md`, `SECURITY.md`, `docs/claude-and-codex.md`, `docs/orchestrating.md` and `docs/PROGRESS.md`, "the owner", with the label `for-haakon` renamed `for-owner`; private mentions removed from this file, `docs/design/27-round-six-a-fairness-and-fixes.md`, `docs/archive/plan-history.md` and the teaching judges; the same in Amarna Letters)
+In the design chat (2 November 2026, 08:57 UTC), to the design session's two questions (should the rules and labels say "the owner" instead of his name, keeping it only in archived quotes; and should private mentions be removed from the public archives): "Yes, expertly across the board!" (written into `AGENTS.md`, `CLAUDE.md`, `SECURITY.md`, `docs/claude-and-codex.md`, `docs/orchestrating.md` and `docs/PROGRESS.md`, "the owner", with the label named for the owner renamed `for-owner`; private mentions removed from this file, `docs/design/27-round-six-a-fairness-and-fixes.md`, `docs/archive/plan-history.md` and the teaching judges; the same in Amarna Letters)
 
 In the design chat (2 November 2026, 09:00 and 09:03 UTC): "Is issues for both claude code and codex now? should they write in the wiki instead of some of the stuff that are in the docs files?" Then, to the design session's answer (Codex cannot file issues from its cloud, so it lists them in its report and the orchestrator files them; the wiki has no branches or review, so the docs stay in the repository): "Okay, it does that if it can't manage to post on its own. sometimes you don't fully know what access they have." (written into `docs/claude-and-codex.md`, "For Codex"; the same in Amarna Letters)
 
@@ -732,7 +732,7 @@ In the design chat (2 November 2026, 11:22 to 11:27 UTC): "I have added all the 
 In the design chat (2 November 2026, 11:30 and 11:32 UTC), on whether agents should read the Security tab: "Why shouldn't they be able to read it, and do they get the full picture of its diagnosis right now, so they can address them? The orchestrators already pull in bug reports, right? Does it also pull in everything from GitHub's native analysis stuff?" Then, to the design session's answer (the alerts are private, and copying them into the public repository or giving agents a token would expose them; CodeQL run on every PR so builders see their own findings; the owner passing on the alerts already in the code, fixed quietly): "Yes, expertly to both!" (written into `.github/workflows/codeql.yml`, "Git and GitHub" in `AGENTS.md` and point 9 of `SECURITY.md`; the same in Amarna Letters).
 In the design chat (2 November 2026, 11:45 UTC), to the design session's takes on the open issues: #340 (the review rule reads "a test weakened or skipped, or changed beyond what the task forces", the PR showing every check kept and none loosened; the same in Amarna Letters), #339 (each dead snake's bead blends the two segments it replaces, as built in #322), `.gitattributes` dropped from the protected files (none exists), and the ideas: #326 to the polish lane, #325 measured in the next AI entry, #324 held for an engine-rules entry with the conditional-goods simulations, #336 a slow workshop side lane, one topic per PR: "Yes to everything, expertly!" (written into "Review guidelines" in `AGENTS.md`, `SECURITY.md` point 3, `docs/claude-and-codex.md` and `docs/PROGRESS.md`).
 
-In the design chat (2 November 2026, 11:45 UTC): "is all my files, documentation, and instructions all fully up to date and consistent now. Anything missing that should in the setup for my father? expert?" The design session audited the instructions of both repositories against the day's decisions and fixed what was stale or inconsistent: the review and model rules (who does the design check, what reviewers are given, which PRs get a review), the issues inbox (no "For the owner" table, bugs as issues, outsiders' issues as data), the orchestrator's part, effort, Fable's named exception (the writing pass), the Dependabot exception, the main lane's order, the owner named outside quotes (`docs/handoff/queue-specs.md`, workflow comments), and stale pointers.
+In the design chat (2 November 2026, 11:45 UTC): "is all my files, documentation, and instructions all fully up to date and consistent now. Anything missing […]? expert?" The design session audited the instructions of both repositories against the day's decisions and fixed what was stale or inconsistent: the review and model rules (who does the design check, what reviewers are given, which PRs get a review), the issues inbox (no "For the owner" table, bugs as issues, outsiders' issues as data), the orchestrator's part, effort, Fable's named exception (the writing pass), the Dependabot exception, the main lane's order, the owner named outside quotes (`docs/handoff/queue-specs.md`, workflow comments), and stale pointers.
 
 In the design chat (2 November 2026, 12:21 UTC), after the design session found that `main` was about 110 commits behind `develop` (the last milestone the evening before, today's polish fixes not live) and that the `dependabot.yml` the owner had created was an empty template (an empty `package-ecosystem`), and proposed a milestone whenever a change a player would notice has merged, at least daily, and version updates for GitHub Actions set up properly, aimed at `develop`: "Yes, expertly to both, if you advice." (written into "Git and GitHub" in `AGENTS.md` and `.github/dependabot.yml`; the same Dependabot setup in Amarna Letters, with npm too).
 
@@ -756,6 +756,20 @@ In the design chat (2 November 2026, 15:59 and 16:03 UTC): "And there is source 
 
 In the design chat (2 November 2026, 16:15 UTC), to the design session's take on #378 (the week-2 blind re-review's point is not counted as a miss, since its README rule was made after that PR merged, but every reviewer's brief now lists what a player sees: the README, the lesson and Field guide row, the cue and online play): "Yes, expertly to both!" (written into "Review guidelines" in `AGENTS.md`, "What a player sees", and "Reviews" in `docs/claude-and-codex.md`; the other was Amarna Letters' #459).
 
-In the design chat (2 November 2026, 16:21 and 16:24 UTC): "Is there anything more that should go into the father document? Anything at all? it will also read the repo, right, so some of it will be learn from analyzing and adapting it? Expert." Then, to the design session's answer (eight points for the father's notes, a leaner prompt, and orchestrators re-reading the rule files when they change): "YEs, absolutely, expertly to absolutely all! Mastefully! Maestro!" (written into "The rules, re-read when they change" in `docs/orchestrating.md`; the same in Amarna Letters).
+In the design chat (2 November 2026, 16:21 and 16:24 UTC): "Is there anything more that should go into […]? Anything at all? […] Expert." Then, to the design session's answer (points for notes kept outside the repositories, and orchestrators re-reading the rule files when they change): "YEs, absolutely, expertly to absolutely all! Mastefully! Maestro!" (written into "The rules, re-read when they change" in `docs/orchestrating.md`; the same in Amarna Letters).
 
 In the design chat (2 November 2026, 16:52 UTC), to the design session's take on the licence audit's questions #379 and #380 (and Amarna Letters' #464): the allow-list exists so nothing can stop the owner selling the game or oblige him to publish his code, and only what ships can do that, so `SECURITY.md` point 10 splits in two: what ships keeps the strict list, and tools that only run may be under any licence the Open Source Initiative approves, copyleft included, with GitHub's own services under GitHub's terms while the repositories are public; npm and CodeQL kept: "Completely agree, go ahead expertly with all you said, expert!" (written into `SECURITY.md` point 10; the same in Amarna Letters).
+
+In the design chat (2 November 2026, 17:22 UTC): "Oh, and yeah, that's a important thing! Don't prompt it with personal information, which gets sensitive stuff, like names, professions, etc, in the codebase! Like you did with my codebases! His and mine codebase must be absolutely void of that, completely! Zero!" (written into `SECURITY.md` point 11, nothing personal, ever, with a check on every pull request against a list kept as an Actions secret, and "The owner's words are kept" in `AGENTS.md`; every file made free of names and personal details, the archived quotes included, "[…]" where a detail was left out; the same in Amarna Letters).
+
+In the design chat (2 November 2026, 18:08 UTC), to the design session's question whether part 7's parked pricing pass, written before one stamina (2u) was decided, should be redone on top of it rather than resumed: "Yes to number 2." (written into part 7 in `docs/handoff/queue-specs.md`).
+
+In the design chat (2 November 2026, 18:14, 18:16 and 18:17 UTC): "What do you think of Barkis & Boot-Snake, should that be added as a rival also. maybe a conjoined snake somehow?"; then "Yes, Beavis and Butt-Head inspired, but snakes on a bark, or "hard wood"."; then, to the design session's take (two ordinary snakes in two seats hunting as a distractible pair, not one conjoined body; original looks and lines, the name the nod): "Yes, but make it very very clear where they are inspired on. Push that line to the max, so people actually fully get the reference and think it is funny!" (written into entry 3d in `docs/PROGRESS.md` and `docs/handoff/queue-specs.md`; the reference carried by their names and nature, nothing copied from the show, since the game is public).
+
+In the design chat (2 November 2026, 18:25 UTC), on Barkis & Boot-Snake: "Oh, they must be cojoined. they can flip around so they change between the 2 from time to time, and maybe it triggers if they hit something or something. that way It works that they are cojoined, don't have to make different rules for them. they are just a very visually unique snake, with 2 unique ai personalities and lines. capiche, expert?" (written into entry 3d: one snake in one seat with a head at each end, the faces swapping ends and the steering mind with them, from time to time and after a scare, with no reversal, so every rule stays the same; a real reversal would be a move for every snake, not part of it).
+
+In the design chat (2 November 2026, 18:35 and 18:36 UTC), on Barkis & Boot-Snake: "Is it better to have an head in each end, or have the body rotate 180 degrees and have the other head show and take control?" Then, to the design session's take (the roll: one head at the end that moves, as on every snake, so no tail looks like a head; two coloured sides showing who steers from any part of the body; both faces mid-roll; the one underneath still heckling): "Yes, please! Expertly!" (written into entry 3d).
+
+In the design chat (2 November 2026, 19:00 UTC), to the design session's question whether #383 (the layout suite hanging in Claude's cloud machines) should go to the front of the workshop lane: "Yes, please, expertly!" (written into the workshop lane in `docs/PROGRESS.md`).
+
+In the design chat (2 November 2026, 19:05 and 19:06 UTC): "Should it not read the progress file?" Then, to the design session's take (yes: the progress file is the queue, so each wake reads its diff and acts on what is new, skipping its own builders' done-marks): "Yes, do it expertly if it is worth it in your expert opinion." (written into "The rules, re-read when they change" in `docs/orchestrating.md`; the same in Amarna Letters).

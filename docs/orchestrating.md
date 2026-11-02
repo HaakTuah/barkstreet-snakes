@@ -11,7 +11,9 @@ lanes, its fallback and the reviews between the two builders: `docs/claude-and-c
 stood when it started. So on every wake, the hourly check included, it pulls `develop`, and if `AGENTS.md`, `CLAUDE.md`,
 `SECURITY.md`, `docs/claude-and-codex.md` or this file changed since it last read them, it re-reads the changed parts,
 passes what touches them on to its running builders in one message, and says so in one line to the owner. Nobody has
-to tell it.
+to tell it. The same wake reads `docs/PROGRESS.md`'s diff since it last looked: it acts on what is new there (an entry added or
+moved, an answer of the owner's, a lane opened or a bug put first), opening a lane where one is due, and skips the
+done-marks its own builders made (archive, 2 November 2026).
 
 - **28 October 2026: pipeline, don't wait.** "Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns." (to Claude's proposal; the words are in
   `docs/archive/instructions.md`). Waiting is lost time and, past an hour, a lost cache, so:

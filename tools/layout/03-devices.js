@@ -105,7 +105,7 @@ for (const d of share('03', DEVICES)) {
   const covers = drawn.filter(q => q.p.over > (gutter ? 4 : 0));
   check(!covers.length, `${tag}: perched (resting or eyeing its chunk), it never covers a cell${gutter ? ' (with room nowhere, its beak’s tip touches the edge, as before: 4 px at most)' : ''}`, covers.length ? covers.map(q => `${q.x},${q.y}${q.aim ? ' eyeing' : ''}: ${q.p.over} px`).join('; ') : `${drawn.length} perches`);
   const si = { left: 0, right: 0, top: 0, bottom: 0, ...d.insets }; // (inside the safe area, not just the screen: never under a notch)
-  // (a phone on its side, Haakon for #270: the bird perches at full size,
+  // (a phone on its side, the owner for #270: the bird perches at full size,
   // partly off the screen: its beak, head and eye in the gap beside the
   // board, inside the safe area, its back and tail cut off by the screen's
   // edge on that side; there, that edge may cut it, never its eye)

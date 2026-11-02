@@ -4,3 +4,4 @@
 # Output of the study tools in tools/dev
 tools/dev/**/out/
 tools/dev/**/runs/
+tools/node_modules/
