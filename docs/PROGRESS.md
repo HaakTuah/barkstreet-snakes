@@ -8,7 +8,7 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
 **2 November 2026, a fresh week:** the main lane is part 4 (#198, merged as it stands so the owner can play it), then
-2y (done, PR #373; the flight's question is #399), then part 5 (#202, unparked: the wrap's trade-off), then 2x, then 2z, then 2u; the polish
+2y (done, PR #373; the flight’s question is #399), then 2y+ (split `ai.js` and `engine.js`), then part 5 (#202, unparked: the wrap's trade-off), then 2x, then 2z, then 2u; the polish
 lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
@@ -71,8 +71,8 @@ and the owner's notes of 2 November, among them).
 - **The design by topic, not by round** (#336; the owner, 2 November 2026): each topic's current rule moves from the
   round files into its topic file in `docs/design/`, superseded versions and measurements to `docs/archive/`. A slow
   side lane, one topic per docs-only PR, taken when a lane is free; code comments citing a section are checked.
-- **Waiting for the main lane** (PR #198 and its parked #202 have them open): `ai.js` (139 KB), `engine.js` (128 KB) and
-  `render/world.js` (51 KB). Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
+- **Waiting for the main lane:** `ai.js` and `engine.js` are now the main lane's own step, 2y+; `render/world.js` (50 KB)
+  still waits for a gap. Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
 
 ## The queue, in order
 
@@ -82,6 +82,13 @@ and the owner's notes of 2 November, among them).
 trademark (distance) or a fault; in the same entry, apples by the edge rotting (#324): 80% of the apples that rot lie on
 the edge row or one in, passed up by rivals whose room and margin weights count a safe edge cell against them, so it
 tests a safe-meal exception like the one by the neck (`MEAL_DAWDLE`), measured both ways; the snake that starved 4 s after its warning (#327) is a bug any lane may take.
+
+### 2y+. Split `ai.js` and `engine.js` by meaning (the owner, 2 November 2026; the main lane, right after 2y, before part 5)
+
+Both have grown past the mark (148 KB and 136 KB) and every main-lane entry touches them, so the gap "between AI
+entries" never came. Each is split by meaning in a PR of its own (the rivals' shared template, each rival's override,
+planning, and so on for `ai.js`; the rules by system for `engine.js`), proven unchanged by the fingerprints and the
+suites, so it goes quickly and needs no head-to-head. Part 5's branch (#202) then merges the split in once.
 
 ### 5 (part 5). Gold portals, unparked (the owner, 2 November 2026; an engine-rules entry, right after 2y)
 
