@@ -21,7 +21,7 @@ function player(storage) {
   return ctx.window.SnakeRecords;
 }
 const A = player(), B = player();
-const ok = (cond, what) => { if (!cond) { console.error('FAIL:', what); process.exit(1); } console.log('ok  ', what); };
+const ok = require('./ok.js');
 
 A.setName('Haakon');
 A.recordPlayer({ place: 1, won: true, eaten: 30, survived: 90000 });

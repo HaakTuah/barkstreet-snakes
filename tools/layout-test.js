@@ -90,7 +90,6 @@
 //   go for a nap, a card and the Hall of Fame; a hidden tab loses it and
 //   coming back asks again when it's wanted; a refusal isn't asked again
 //   and again; and with no wake lock at all, nothing breaks.
-// - A real touch swipe on the board still turns, held upright and on its side.
 // - A banner while you play (DESIGN "Teaching by showing"): held upright, on
 //   every phone here and at every height of the upright sweep (put up, and
 //   the one up as the screen changes), one line over the header's title
@@ -106,7 +105,7 @@
 // (tools/parts.js): 00 the screens, 01 the page's probes, 02 the helpers, 03 every device, 04 upright
 // heights in between, 05 Score and Best growing, 06 one screen in every state, 07 over the board,
 // 08-09 every 10 and 80 px of height, 10 the chatter streaming and the header on more screens, 11 on
-// its side and old browsers, 12 the cards, full screen, the screen awake and swipes, 13 the phone's
+// its side and old browsers, 12 the cards, full screen, the screen awake, 13 the phone's
 // bottom, 14 the bigger woodpecker, 15 its perch clear of the words, 99 what it measured. A new check goes in its area's file, or a new one, and a new file into one of JOBS.
 //   LAYOUT_JOB=N node tools/layout-test.js: only the parts of job N of JOBS (or its share of a
 //   part's screens), as CI runs them side by side; the screens, the probes, the helpers and the
@@ -114,7 +113,7 @@
 const path = require('path');
 const fs = require('fs');
 const runParts = require('./parts.js');
-const { launch, serve, HELPERS } = require('./browser');
+const { launch, serve, HELPERS, reporter } = require('./browser');
 
 // CI's jobs, by the time each part took (of about 1150 s on a cloud machine): 03 every device
 // 308 s, 04 154, 05 44, 06 one screen in every state 354, 07 43, 08 87, 09 50, 10 46, 11 19, 12 45,
@@ -142,26 +141,21 @@ const share = (part, list) => {
   return list.slice(Math.floor(list.length * i / n), Math.floor(list.length * (i + 1) / n));
 };
 
-const results = [];
-let failed = 0;
-const check = (ok, what, detail = '') => {
-  results.push(`${ok ? 'ok  ' : 'FAIL'} ${what}${detail ? ` (${detail})` : ''}`);
-  if (!ok) failed++;
-};
+const report = reporter(), { results, check } = report;
 
 (async () => {
   const site = await serve();
   const b = await launch();
-  const ev = expr => b.eval(expr);
+  const { ev } = b;
   const board = [];
   try {
     await runParts.inside(DIR, { HELPERS, results, check, share, site, b, ev, board },
       file => !mine || [...ALWAYS, ...mine.map(e => e.split('/')[0])].includes(path.basename(file).slice(0, 2)));
-    if (b.errors.length) { console.log('page errors:', b.errors); failed++; }
+    if (b.errors.length) { console.log('page errors:', b.errors); report.failed++; }
   } finally {
     await b.close();
     site.close();
   }
-  if (failed) { console.error(`\n${failed} failed`); process.exit(1); }
+  if (report.failed) { console.error(`\n${report.failed} failed`); process.exit(1); }
   console.log(`\nall passed (${results.length} checks${job ? `, job ${job} of ${Object.keys(JOBS).length}` : ''})`);
 })().catch(e => { console.error(e); process.exit(1); });

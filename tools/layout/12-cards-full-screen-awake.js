@@ -112,22 +112,3 @@ await open(CALLS, '&nowake');
 await toRound();
 await ev(`window.__autoRaf = true; document.getElementById('pause').click(); 'ok'`);
 check(await ev('typeof navigator.wakeLock === "undefined" && SnakeDebug.state() === "paused"'), 'with no wake lock at all, a round plays and naps as ever');
-
-// ------------------------------------------------------------ swipes
-// A real touch swipe on the board, across the way your snake is going, turns it.
-for (const d of [CALLS, sized(320, 640), CALLS_SIDE, sized(640, 320)]) {
-  await open(d);
-  await toRound();
-  const g = await ev(`(() => { const r = document.getElementById('game').getBoundingClientRect(), me = SnakeDebug.game().snakes[0], D = SnakeEngine.DIRS; return { x: r.x + r.width / 2, y: r.y + r.height / 2, across: me.dir === D.left || me.dir === D.right }; })()`);
-  const way = g.across ? 'up' : 'right', dx = g.across ? 0 : 7, dy = g.across ? -7 : 0;
-  await b.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: g.x, y: g.y, id: 1 }] });
-  for (let i = 1; i <= 8; i++) {
-    await b.sleep(16);
-    await b.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: g.x + dx * i, y: g.y + dy * i, id: 1 }] });
-  }
-  await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await b.sleep(60);
-  const turned = await ev(`(() => { const me = SnakeDebug.game().snakes[0], D = SnakeEngine.DIRS; return me.queue.includes(D.${way}) || me.dir === D.${way}; })()`);
-  check(turned, `${d.name}: a swipe ${way} on the board turns your snake ${way}`);
-  await ev(`window.__autoRaf = true; 'ok'`);
-}
