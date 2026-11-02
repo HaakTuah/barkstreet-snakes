@@ -52,10 +52,19 @@ function dealLineUp(want) {
 
 // Closing the page on a start card: its rivals weren't met, so they go back
 // in the deck, somewhere among the ones not yet dealt (not on top: opening
-// the game again gives a fresh cast).
+// the game again gives a fresh cast). If the back/forward cache brings the
+// page back, the card (and the lobby's line) is there again, so they come out
+// of the deck again: everyone is still met once before anyone comes round.
+let undealtOnHide = [];
 window.addEventListener('pagehide', () => {
-  if (theGame && !theGame.spent) Records.undeal(SnakeAI.POOL, theGame.dealt || [], { anywhere: true });
-  if (hosting() && online.lineup) Records.undeal(SnakeAI.POOL, online.lineup.fresh, { anywhere: true }); // (the lobby's, likewise)
+  undealtOnHide = [
+    ...(theGame && !theGame.spent ? Records.undeal(SnakeAI.POOL, theGame.dealt || [], { anywhere: true }) : []),
+    ...(hosting() && online.lineup ? Records.undeal(SnakeAI.POOL, online.lineup.fresh, { anywhere: true }) : []), // (the lobby's, likewise)
+  ];
+});
+window.addEventListener('pageshow', e => {
+  if (e.persisted) Records.takeOut(undealtOnHide);
+  undealtOnHide = [];
 });
 
 // Start a round in the given mode. The round on the start card is used as-is;
