@@ -52,9 +52,10 @@ and the owner's notes of 2 November, among them).
   check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November; `AGENTS.md` is 22 KB after that day's rules, so
   the next check condenses it) and point (5), the unused-code check (PR #331):
   `docs/archive/progress-done.md`, "The split lane, done".
-- **The file-by-file review's moves** (found in part 3, PR #337): what sits in the wrong file moves to the file for it,
-  and helpers written several times are written once, a folder per PR, behaviour proven unchanged. Spec:
-  `docs/handoff/queue-specs.md`, "The file-by-file review's moves". `render/world.js`'s part waits with it below.
+- **The file-by-file review's moves:** done, a folder a PR (#341, #342, #343, #344, #345):
+  `docs/archive/progress-done.md`, "The split lane, done". Left: `render/world.js`'s part, which waits with it below;
+  `render/food.js`, 66 KB after the moves, split by meaning (its pictures, or its burrows and the beetle's bore) in a PR
+  of its own.
 - **The design by topic, not by round** (#336; the owner, 2 November 2026): each topic's current rule moves from the
   round files into its topic file in `docs/design/`, superseded versions and measurements to `docs/archive/`. A slow
   side lane, one topic per docs-only PR, taken when a lane is free; code comments citing a section are checked.
