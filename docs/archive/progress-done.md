@@ -693,6 +693,10 @@ Done (PR #223): `version.js` (the build, stamped by the Pages workflow, and the 
 
 ## Done, 1 November 2026
 
+### 2w. Beetles get away at least a third of the time (Haakon, 31 October 2026; an engine-rules entry, after part 4) — done, PR #313 (Review: engine rules · Claude · Codex P1×2, clean; design check 7, 8, 10)
+
+The escape band moves from 20–35% to at least a third (33–45%): measured on `develop` once part 4's flight is in, and the beetles' side tuned if it falls short, never the rivals made worse. Spec: `docs/handoff/queue-specs.md`, "2w. Beetles get away at least a third of the time".
+
 ### 2s+. The log's fall, proven (1 November 2026; the weekly blind re-review of PR #289) — done, PR #311 (Review: engine rules · Claude · design check 8, 9, 10; Codex P1×2, clean)
 
 The blind re-review ("Reviews", point 5, in `docs/claude-and-codex.md`) scored #289 a 7: three blocking points it

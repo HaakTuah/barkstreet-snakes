@@ -88,7 +88,7 @@ const marked = (more = {}) => aiView({ holes: new Set(MARK), pecks: new Set(MARK
   g.snakes = g.snakes.slice(0, 2);
   const [a, b] = g.snakes;
   g.time = 30000;
-  a.body = cellsOf(line(13 - T.BEETLE_DIG_FEAR - 2, 12, 5)); a.dir = D.right;
+  a.body = cellsOf(line(13 - T.BEETLE_DIG, 12, 5)); a.dir = D.right; // (2w: as near as the dig is long, as it digs in: from farther off, straight on, it'd be gone first)
   b.body = cellsOf(line(20, 22, 4)); b.dir = D.right; b.isPlayer = true; b.persona = null; b.queue = []; b.stunUntil = 1e9;
   g.burrows = [{ x: 22, y: 2, at: 0, used: 0 }];
   g.unders = [{ until: 1e9, expires: 1e9, from: -1, gold: false }];

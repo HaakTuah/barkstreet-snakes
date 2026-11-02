@@ -15,8 +15,11 @@ const dirOf = d => Object.keys(D).find(k => D[k] === d);
   check('...but with no burrow there (it sees the burrows as they are), the beetle digs in, and it takes that', gone.right === 20, JSON.stringify(gone));
 }
 
-{ // In the game: a beetle crawling along the edge of the log, and running once it's near: Gobbler goes where it's heading and catches it.
+{ // In the game: a beetle crawling along the edge of the log, and running once it's near, for a burrow 6 cells on along
+  // the edge: Gobbler goes where it's heading and catches it. (2w: with no burrow in reach, it would dig in at once,
+  // a head 6 off, and be gone before any head got there.)
   const g = E.createGame({ withPlayer: false, personas: ['gobbler', 'drab'] });
+  g.burrows = [{ x: 15, y: 22, at: 0, used: 0 }];
   g.snakes = g.snakes.slice(0, 2);
   const [a, b] = g.snakes;
   a.body = line(6, 19, 5).map(([x, y]) => ({ x, y })); a.dir = D.right;
