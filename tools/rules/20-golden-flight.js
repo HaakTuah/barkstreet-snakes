@@ -63,6 +63,14 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   E.letGo(g5, me5); // (over bark, a body lying on the next cell)
   way5 += ' ' + fly(g5, 1);
   check('...let go with a body on the next cell, its landing is taken: out, though bark lies under it', !me5.alive && /came down on/.test(me5.cause || ''), way5 + ' ' + JSON.stringify([me5.alive, me5.cause]));
+  const g7 = board([[line(3, 10, 6), 'right'], [line(4, 25, 4), 'right']]);
+  const me7 = g7.snakes[0];
+  me7.leaps = 1; g7.holes.add(K(8, 10));
+  E.leap(g7, me7); E.leap(g7, me7);
+  let way7 = fly(g7, 4);
+  E.letGo(g7, me7); // (over bark, a hole on the next cell)
+  way7 += ' ' + fly(g7, 1);
+  check('...let go with a hole on the next cell, it comes down in the hole', !me7.alive && /fell into/.test(me7.cause || ''), way7 + ' ' + JSON.stringify([me7.alive, me7.cause]));
 }
 
 { // Bumps in the air: a flying head into another's air (its flying head, or its body lifted over the cells its flight

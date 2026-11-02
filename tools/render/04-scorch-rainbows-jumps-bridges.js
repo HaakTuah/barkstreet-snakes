@@ -96,7 +96,7 @@ const jumps = await ev(`(() => {
     show(g); R.setViewer(99); R.setLead(0.5); drawN(10, 1); // (no rests round its head, nor halo: they'd pass for the trail)
     frame(0);
     const under0 = lum(pixels(9.62, 13.4, 0.76, 0.35)); // (the body it hops, below it, clear of its outline)
-    E.leap(g, you);
+    E.leap(g, you); E.letGo(g, you); // (a quick press: golden, the plain-length hop; held, it would fly on)
     for (const al of [0.25, 0.5, 0.75]) frame(al);
     doStep(g);
     for (const al of [0, 0.25, 0.5]) frame(al); // (the top of the jump)
@@ -112,11 +112,27 @@ const jumps = await ev(`(() => {
     r.cross = count(10.4, 11, 0.2, 2, green); r.cross2 = count(11.4, 11, 0.2, 2, green); r.flat = count(7.4, 11, 0.2, 2, green);
     out[(still ? 'reduced ' : '') + (gold ? 'golden' : 'plain')] = r;
   }
+  { // (held: a golden flight flies on past the plain hop's cells, and is drawn up there, its neck arched, till it's down)
+    R.setReducedMotion(false);
+    const g = stage(['gobbler', 'sniper', 'mason']), [you, gob, sn, ma] = g.snakes;
+    for (const s of g.snakes) s.nextStarve = 1e15;
+    setBody(ma, [[2, 22], [1, 22], [0, 22]], 'right'); ma.stunUntil = 1e9;
+    setBody(sn, Array.from({ length: 9 }, (_, i) => [11, 16 - i]), 'up'); sn.stunUntil = 1e9;
+    setBody(you, Array.from({ length: 8 }, (_, i) => [9 - i, 12]), 'right'); you.leaps = 2;
+    setBody(gob, Array.from({ length: 9 }, (_, i) => [10, 8 + i]), 'down'); gob.stunUntil = 1e9;
+    show(g); R.setViewer(99); R.setLead(0.5); drawN(10, 1);
+    E.leap(g, you);
+    for (let n = 0; n < 4; n++) { doStep(g); frame(0.25); frame(0.5); }
+    const hx = R.headPx(you, 0.5, TUNING.GRID * ${CELL}, {}).x / ${CELL};
+    out.held = { up: !!you.flight, x: you.body[0].x, neck: count(hx - 0.65, 11, 0.2, 2, green), back: count(hx - 3.65, 11, 0.2, 2, green) };
+  }
   R.setReducedMotion(false);
   R.setLead(0.5);
   SnakeDebug.pinQuality(2);
   return out;
 })()`);
+const held = jumps.held; delete jumps.held;
+check(held.up && held.x >= 13 && held.neck > 1.12 * held.back, 'a golden flight held on past the plain hop\'s cells is drawn up in the air there, its neck arched, not at ground height', JSON.stringify(held));
 for (const [what, r] of Object.entries(jumps)) {
   const still = what.startsWith('reduced');
   check(r.neck > 1.12 * r.back && r.under < 0.96, `a ${what} jump: at its top its neck arches up behind its head, and its shadow falls across what it hops`,
