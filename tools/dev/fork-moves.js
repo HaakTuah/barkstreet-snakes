@@ -11,7 +11,7 @@
 // --rest forbids that rival the move for the rest of the round in the play without it: one tick measures when to use
 // it (the rival still holds it and uses it later), the rest of the round whether having it helps.
 //   node tools/dev/fork-moves.js <root> --move fly|now|dash [--rounds 40] [--seed 1] [--per-round 4] [--forced] [--rest] [--json]
-//     fly: a golden flight past the plain hop, or turned; now: a plain leap now; dash: a golden flash
+//     fly: a golden flight held past the plain hop (always GOLD_FLY cells); now: a plain leap now; dash: a golden flash
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const args = process.argv.slice(2);
@@ -25,7 +25,7 @@ const State = require(path.join(__dirname, '..', 'snapshots', 'state.js'));
 // take it at no price for those in __force): a copy of its text, patched here.
 function patchAI(text) {
   const swap = (a, b) => { if (!text.includes(a)) throw new Error(`ai.js has changed: can't find ${a.slice(0, 60)}`); text = text.replace(a, b); };
-  swap('for (let k = first; k <= (golden ? Math.min(far, n - 1) : first); k++) {', 'for (let k = first; k <= (golden && !globalThis.__forbid.fly.has(me.id) ? Math.min(far, n - 1) : first); k++) {');
+  swap('for (let k = air ? full : first; k <= (golden ? full : first); k += Math.max(1, full - first)) {', 'for (let k = air ? full : first; k <= (golden && !globalThis.__forbid.fly.has(me.id) ? full : first); k += Math.max(1, full - first)) {');
   swap('        let turn = null;\n        if (golden) {', '        let turn = null;\n        if (golden && !globalThis.__forbid.fly.has(me.id)) {');
   swap('if (!golden && !trapped) return null;', 'if (!golden && (globalThis.__forbid.now.has(me.id) || (!trapped && !globalThis.__force.now.has(me.id)))) return null;');
   swap('if (me.dashes > 0) { const v', 'if (me.dashes > 0 && !globalThis.__forbid.dash.has(me.id)) { const v');
@@ -51,7 +51,7 @@ const MAX_TIME = 600000;
 function used(g, s) {
   for (const e of g.events) {
     if (e.snake !== s) continue;
-    if (MOVE === 'fly' && e.type === 'leap' && e.gold && (s.flyFor || 0) > 0) return true;
+    if (MOVE === 'fly' && e.type === 'leap' && e.gold && s.flight?.held) return true; // (held: the full flight, 2y)
     if (MOVE === 'now' && e.type === 'leap' && e.now && !e.gold) return true;
     if (MOVE === 'dash' && e.type === 'dash' && !e.plain) return true;
   }

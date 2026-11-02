@@ -16,7 +16,7 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   check('...at the plain jump\'s price', me.body.length === 6 - T.LEAP_COST && me.leapReadyAt > 0);
 }
 
-{ // The golden jump flies: held, on up to GOLD_FLY cells in the air, down on the next; let go, down on the next cell.
+{ // The golden jump flies: held, GOLD_FLY cells in the air, always, down on the next (2y); a quick press, the plain hop.
   const g = board([[line(3, 10, 6), 'right'], [line(4, 25, 4), 'right']]);
   const me = g.snakes[0];
   me.leaps = 2;
@@ -27,18 +27,22 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   const me2 = g2.snakes[0];
   me2.leaps = 1;
   E.leap(g2, me2); E.leap(g2, me2);
-  let way2 = fly(g2, 4);
+  let way2 = fly(g2, 1);
+  const ring2 = me2.flight && me2.flight.ring;
+  way2 += ' ' + fly(g2, 3);
   E.letGo(g2, me2);
-  way2 += ' ' + fly(g2, 1);
-  check('...let go, it comes down on the next cell', way2 === '4,10^ 5,10^ 6,10^ 7,10^ 8,10', way2);
+  way2 += ' ' + fly(g2, 2);
+  check(`2y: held past the plain hop's cells, it's committed: let go, it flies on all the same, ${T.GOLD_FLY} cells, and comes down on the next`, way2 === '4,10^ 5,10^ 6,10^ 7,10^ 8,10^ 9,10' && me2.alive && !me2.flight, way2);
+  check('...its ring shows where, from the first cell up', ring2 && ring2.x === 9 && ring2.y === 10 && ring2.n === 5, JSON.stringify(ring2));
   const g6 = board([[line(3, 10, 6), 'right'], [line(4, 25, 4), 'right']]);
   const me6 = g6.snakes[0];
   me6.leaps = 1;
   E.leap(g6, me6); E.leap(g6, me6);
   let way6 = fly(g6, 1);
   E.letGo(g6, me6); // (still over the plain hop's cells)
-  way6 += ' ' + fly(g6, 1);
-  check('...let go before the plain hop\'s cells are flown, it comes down on the next cell all the same', way6 === '4,10^ 5,10' && me6.alive && !me6.flight, way6);
+  const ring6 = me6.flight && { ...me6.flight.ring };
+  way6 += ' ' + fly(g6, 3);
+  check('...let go over the plain hop\'s cells, it\'s the plain hop: down where the plain hop comes down, and its ring moves there', way6 === '4,10^ 5,10^ 6,10^ 7,10' && me6.alive && !me6.flight && ring6 && ring6.x === 7 && ring6.y === 10, way6 + ' ' + JSON.stringify(ring6));
   const g3 = board([[line(3, 10, 6), 'right'], [line(4, 25, 4), 'right']]);
   const me3 = g3.snakes[0];
   me3.leaps = 1;
@@ -55,22 +59,22 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   me4.queue.push(D.down); // (pressed in the air, over the body it hops)
   way4 += ' ' + fly(g4, 2);
   check('...a quick golden press is the plain hop: a turn pressed before it lands waits till it\'s down, never dropping it on what it hopped', way4 === '7,10^ 8,10 8,11' && me4.alive, way4);
-  const g5 = board([[line(3, 10, 6), 'right'], [Array.from({ length: 9 }, (_, i) => [8, 6 + i]), 'up']]);
+  const g5 = board([[line(3, 10, 6), 'right'], [Array.from({ length: 9 }, (_, i) => [9, 6 + i]), 'up']]);
   const me5 = g5.snakes[0];
   me5.leaps = 1; g5.snakes[1].stunUntil = 1e9;
   E.leap(g5, me5); E.leap(g5, me5);
   let way5 = fly(g5, 4);
-  E.letGo(g5, me5); // (over bark, a body lying on the next cell)
-  way5 += ' ' + fly(g5, 1);
-  check('...let go with a body on the next cell, its landing is taken: out, though bark lies under it', !me5.alive && /came down on/.test(me5.cause || ''), way5 + ' ' + JSON.stringify([me5.alive, me5.cause]));
+  E.letGo(g5, me5); // (a body lying where it comes down: letting go won't bring it down short)
+  way5 += ' ' + fly(g5, 2);
+  check('...committed, a body lying on its landing takes it: letting go doesn\'t bring it down short, and it\'s out', !me5.alive && /came down on/.test(me5.cause || ''), way5 + ' ' + JSON.stringify([me5.alive, me5.cause]));
   const g7 = board([[line(3, 10, 6), 'right'], [line(4, 25, 4), 'right']]);
   const me7 = g7.snakes[0];
-  me7.leaps = 1; g7.holes.add(K(8, 10));
+  me7.leaps = 1; g7.holes.add(K(9, 10));
   E.leap(g7, me7); E.leap(g7, me7);
   let way7 = fly(g7, 4);
-  E.letGo(g7, me7); // (over bark, a hole on the next cell)
-  way7 += ' ' + fly(g7, 1);
-  check('...let go with a hole on the next cell, it comes down in the hole', !me7.alive && /fell into/.test(me7.cause || ''), way7 + ' ' + JSON.stringify([me7.alive, me7.cause]));
+  E.letGo(g7, me7);
+  way7 += ' ' + fly(g7, 2);
+  check('...and with a hole on its landing, it comes down in the hole', !me7.alive && /fell into/.test(me7.cause || ''), way7 + ' ' + JSON.stringify([me7.alive, me7.cause]));
 }
 
 { // Bumps in the air: a flying head into another's air (its flying head, or its body lifted over the cells its flight
@@ -117,13 +121,13 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
 }
 
 { // A rival steers in the air as a person does, through the same engine rule: the turn it planned as it took off
-  // (flyTurn: after how many cells in the air, which way) and where it lets go (flyFor). The same flight as the
-  // person's above: two cells right, then down, held for GOLD_FLY.
+  // (flyTurn: after how many cells in the air, which way). The same flight as the person's above: two cells right,
+  // then down, held for GOLD_FLY.
   const g = board([[line(3, 10, 6), 'right'], [line(4, 25, 4), 'right']]);
   const me = g.snakes[0];
   me.leaps = 1; me.autopilot = true;
   E.leap(g, me); E.leap(g, me);
-  me.flyTurn = { at: 2, dir: D.down }; me.flyFor = T.GOLD_FLY;
+  me.flyTurn = { at: 2, dir: D.down };
   Object.defineProperty(me.memory, 'flyAt', { get: () => -1, set() {} }); // (the plan pinned: a rival plans again every move it's up, which the next check is about; here the engine's flying of a plan is the rule tested)
   const way = fly(g, 6);
   check('a rival\'s planned turn in the air is flown as a person\'s is', way === '4,10^ 5,10^ 5,11^ 5,12^ 5,13^ 5,14' && me.alive && joined(me.body), way);
@@ -206,8 +210,8 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
 
 { // A rival plans again every move it's up ("the rivals fly it as a person would"): what it sees in the air counts. Up
   // on a golden leap now, held for the full flight, with a rival's body lying where that flight would come down (seen
-  // only once it's up): it comes down short of it, or turns, and lives. Flown as planned at take-off, it came down on
-  // the body and was out.
+  // only once it's up): committed (2y), it turns, and lives. Flown as planned at take-off, it came down on the body and
+  // was out.
   const g = E.createGame({ withPlayer: false, personas: ['drab', 'drab'] });
   g.snakes = g.snakes.slice(0, 2);
   const [a, b] = g.snakes;
@@ -217,7 +221,7 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   E.leap(g, a); E.leap(g, a);
   look(g); quiet(g);
   check('(the flight is up: a golden leap now)', !!a.flight && a.flight.gold && a.body[0].x === 6, JSON.stringify(a.body[0]));
-  a.flight.held = 1; a.flyFor = T.GOLD_FLY; a.flyTurn = null; // (held for the whole flight, straight: down on the body at x 11)
+  a.flight.held = 1; a.flyTurn = null; // (held for the whole flight, straight: down on the body at x 11)
   for (let n = 0; n < 6 && a.alive && a.flight; n++) { look(g); quiet(g); }
-  check('a rival up on a golden flight plans again as it flies: it comes down short of a body it sees ahead, or turns, and lives', a.alive && !a.flight && !b.body.some(c => c.x === a.body[0].x && c.y === a.body[0].y), JSON.stringify({ head: a.body[0], alive: a.alive, cause: a.cause }));
+  check('a rival up on a golden flight plans again as it flies: it steers clear of a body it sees on its landing, and lives', a.alive && !a.flight && !b.body.some(c => c.x === a.body[0].x && c.y === a.body[0].y), JSON.stringify({ head: a.body[0], alive: a.alive, cause: a.cause }));
 }

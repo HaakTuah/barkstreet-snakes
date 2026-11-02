@@ -165,7 +165,7 @@ const FLAVOR = {
   youSnip: name => `Snip! You cut ${name} in two.`,
   youSnipped: name => `Snip. ${name} dashed right through you.`,
   youBumped: 'Bumped in mid-air! Down you go.', // (round six B: your first bump in the air)
-  youGoldFly: 'Hold to fly farther. Steer in the air!', // (your first golden jump)
+  youGoldFly: 'Hold to fly 5. Steer to land!', // (your first golden jump)
   leapNow: 'Press twice to leap now, anywhere!', // (the first time a flier comes down just ahead of you: you could have cut it off)
   youMushroomSpit: 'Bleh! Steer to aim it: it lands three ahead.', // (round six B: your first mushroom, which comes back up)
   youSpatOn: name => `Ptoo! ${name} got you. Steer to spit it back.`, // (the first time one hits your head)
