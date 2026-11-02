@@ -26,13 +26,18 @@ const entry = e => dir => { const p = path.join(dir, 'tools/licences.json'), a =
 
 ok(gate(() => {}).passes, 'the repository as it is passes');
 ok(gate(append('scripts/cloud-setup.sh', '# npm install mossgrip-widgets, a comment, fetches nothing\n')).passes, 'a comment naming an install passes');
+ok(gate(entry({ name: 'mossgrip-cli', licence: 'GPL-3.0-only' })).passes, 'a tool that only runs under GPL passes');
 ok(gate(edit('index.html', '<body>', '<body><link rel="preconnect" href="https://cdn.mossgrip.example">')).passes, 'a preconnect to a bare origin, loading nothing, passes');
 const fails = [
-  ['a licence off the list', entry({ name: 'mossgrip-widgets', licence: 'GPL-3.0-only' })],
-  ['one off the list naming a question of its own', entry({ name: 'mossgrip-widgets', licence: 'GPL-3.0-only', question: 999 })],
-  ['an allowed licence grouped with one off the list', entry({ name: 'mossgrip-widgets', licence: '(MIT OR GPL-3.0-only) AND GPL-3.0-only' })],
-  ['a licence on the dependency review\'s list but not in SECURITY.md', edit('.github/dependency-review-config.yml', '  - MIT\n', '  - MIT\n  - LGPL-2.1-only\n')],
-  ['a tool awaiting the owner whose licence has changed', edit('tools/licences.json', '"licence": "Artistic-2.0"', '"licence": "GPL-3.0-only"')],
+  ['a tool under a licence that is not open source', entry({ name: 'mossgrip-widgets', licence: 'LicenseRef-Mossgrip-Proprietary' })],
+  ['a shipped package under a licence only tools may use', entry({ name: 'mossgrip-widgets', licence: 'MPL-2.0', ships: true })],
+  ['a tool under terms point 10 never allows', entry({ name: 'mossgrip-cli', licence: 'BUSL-1.1' })],
+  ["GitHub's terms on something not GitHub's", entry({ name: 'mossgrip-cli', licence: 'LicenseRef-GitHub-Terms' })],
+  ["GitHub's terms on something that ships", edit('tools/licences.json', '"kind": "github-service",', '"kind": "github-service", "ships": true,')],
+  ['an allowed licence grouped with one off the list, in what ships', entry({ name: 'mossgrip-widgets', licence: '(MIT OR GPL-3.0-only) AND GPL-3.0-only', ships: true })],
+  ['a licence on the ship list but not in SECURITY.md\'s', edit('tools/licences.json', '"ships": ["MIT",', '"ships": ["LGPL-2.1-only", "MIT",')],
+  ['a ship-list licence missing from the tools\' list', edit('.github/dependency-review-config.yml', '  - Zlib\n', '')],
+  ['a licence point 10 never allows on the tools\' list', edit('.github/dependency-review-config.yml', '  - MIT\n', '  - MIT\n  - CC-BY-NC-4.0\n')],
   ['AND and OR mixed without brackets', entry({ name: 'mossgrip-widgets', licence: 'MIT AND GPL-3.0-only OR MIT' })],
   ['an action not in the audit', append('.github/workflows/tests.yml', '      - uses: mossgrip/setup-moss@v1\n')],
   ['npm install of a package not in the audit', append('scripts/cloud-setup.sh', 'npm install -g mossgrip-widgets@1.2.3\n')],
@@ -51,6 +56,8 @@ const fails = [
   ['a package.json dependency not in the audit', dir => fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ devDependencies: { 'mossgrip-widgets': '1.2.3' } }))],
   ['a lock file holding a package not in the audit', dir => fs.writeFileSync(path.join(dir, 'package-lock.json'), JSON.stringify({ packages: { '': {}, 'node_modules/mossgrip-widgets': { version: '1.2.3' } } }))],
   ['third-party code copied into the game', dir => { fs.mkdirSync(path.join(dir, 'lib')); fs.writeFileSync(path.join(dir, 'lib/mossgrip.min.js'), '/*! mossgrip v1 | GPL-3.0 */\nvar m=1;\n'); }],
+  ['third-party code served with the game but audited as a tool', dir => { fs.mkdirSync(path.join(dir, 'lib')); fs.writeFileSync(path.join(dir, 'lib/mossgrip.min.js'), '/*! mossgrip v1 | MIT */\nvar m=1;\n'); entry({ name: 'lib/mossgrip.min.js', licence: 'MIT' })(dir); }],
+  ['an address the game loads, audited as a tool', entry({ name: 'mossgrip-cdn', licence: 'MIT', loads: ['https://cdn.mossgrip.example/'] })],
   ['third-party code copied into a tool', dir => fs.writeFileSync(path.join(dir, 'tools/dev/mossgrip.mjs'), '/*! mossgrip v1 | GPL-3.0 */\nexport const m = 1;\n')],
   ['npx in a tool written as a module', dir => fs.writeFileSync(path.join(dir, 'tools/dev/moss.mjs'), "import { execSync } from 'child_process';\nexecSync('npx -y mossgrip-cli');\n")],
   ['a bare origin loaded from, not warmed up', edit('index.html', '<body>', '<body><script src="https://cdn.mossgrip.example"></script>')],

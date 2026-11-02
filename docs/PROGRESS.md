@@ -55,7 +55,7 @@ and the owner's notes of 2 November, among them).
 
 - *Done:* CI and the cloud setup on Node 26 (from 22; suites green, fingerprints unchanged; PR #369).
 - *Done:* licences audited (`tools/licences.json`), gated on every PR (`.github/workflows/licences.yml`) and their notices
-  shipped (`THIRD-PARTY-NOTICES.txt`); npm and CodeQL await the owner (#379, #380; PR #377).
+  shipped (`THIRD-PARTY-NOTICES.txt`); two lists, what ships and tools that only run (PR #377).
 
 - **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;
   part 2, `docs/design/`, PR #335; part 3, the code, draft PR #337): its spec is in
