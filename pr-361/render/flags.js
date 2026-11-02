@@ -271,7 +271,7 @@ function bannerCloth(x, top, col, now, beat) {
   }
 }
 // Sovereign's banner over its capital, as drawn. When the realm drifts a
-// cell, it glides there. When a gap opens under it (Haakon, 2 November
+// cell, it glides there. When a gap opens under it (the owner, 2 November
 // 2026: flags fall, they don't jump), it falls as a colony's flag does,
 // with the piece if it stood on one cut loose (see drawFallenFlags), and a
 // new one is planted at the new capital, popping up as food does. With
@@ -301,7 +301,7 @@ function drawRealmBanner(r, home, now) {
   if (u >= 1 && !r.shown[key]) return;
   drawBanner(x, y, r.color, now, popOf(now - b.planted), home.x);
 }
-// A flag a snake lies on bends over (Haakon, 29 October 2026): any part
+// A flag a snake lies on bends over (the owner, 29 October 2026): any part
 // of any snake on its tile pushes the pole over from its foot the way
 // that snake came onto the tile (from the cell before it in the body), and
 // its cloth trails low behind; it stays so while the body's there, and
