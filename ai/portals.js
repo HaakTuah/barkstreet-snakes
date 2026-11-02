@@ -6,9 +6,13 @@
 // moves from now each is still open: till it shuts, or while its owner's
 // body is through it and PORTAL_MS after.
 // (readPortals() sets these for each decision:)
-let seenPortals, portalLeft;
+// portalIn, portalEx: each one's entry and exit on the framed board, for
+// the room's fill (a way through to its exit while it's open).
+let seenPortals, portalLeft, portalIn, portalEx;
 function readPortals() {
   seenPortals = view.portals || [];
+  portalIn = seenPortals.map(p => framed[p.y * N + p.x]);
+  portalEx = seenPortals.map(p => framed[p.ty * N + p.tx]);
   const tick = view.tickMs || 110;
   portalLeft = seenPortals.map(p => {
     if (p.shutAt) return Math.floor((p.shutAt - view.timeMs) / tick);
@@ -26,6 +30,15 @@ function portalOut(x, y, d, step) {
     if (p.x === x && p.y === y && p.dx === d.x && p.dy === d.y && portalLeft[n] >= step) return true;
   }
   return false;
+}
+
+// Off the grid at (x, y), a step from inside it: through a gold portal
+// open there that way now, to its exit (for a power's path, as the
+// engine's ahead() takes it); -1 if none.
+function portalCell(x, y) {
+  const sx = x < 0 ? 0 : x >= N ? N - 1 : x, sy = y < 0 ? 0 : y >= N ? N - 1 : y, d = { x: x - sx, y: y - sy };
+  if (Math.abs(d.x) + Math.abs(d.y) !== 1 || !inGrid(sx, sy) || !portalOut(sx, sy, d, 1)) return -1;
+  return ((y + N) % N) * N + (x + N) % N;
 }
 
 // A rival that reaches a portal's entry while it's open comes out at its

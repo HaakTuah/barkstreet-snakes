@@ -27,7 +27,7 @@ const census = () => ({
   // underground due up with no burrow to come out of; beetles under the beak
   // when it aims, and how each got away (ran off, down a burrow, dug in) or
   // was eaten by it (or caught, or flew off).
-  portals: 0, throughs: 0, throughOut: 0, followRounds: 0, ownerOut: 0, // (round six B, part 5: gold portals opened, followers through, followers out within 3 s of it, rounds with anyone following, and portals' owners out within 3 s of being followed)
+  portals: 0, portalChances: 0, throughs: 0, throughOut: 0, followRounds: 0, ownerOut: 0, // (round six B, part 5: gold portals opened, those a rival could have followed (its head within reach of the entry while it was open), followers through, followers out within 3 s of it, rounds with anyone following, and portals' owners out within 3 s of being followed)
   burrowsOpened: 0, sdTicks: 0, sdBurrowTicks: 0, underWait: 0,
   beakBugs: 0, beakRan: 0, beakCaught: 0, beakDived: 0, beakDug: 0, beakFlown: 0, beakPecked: 0,
   ticks: 0, burrowTicks: 0, ticksEarly: 0, freeEarly: 0, // (ticks, and burrows open summed over them; before the woodpecker, cells free for an apple summed over them)

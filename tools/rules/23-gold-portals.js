@@ -66,3 +66,15 @@ const portalRun = (gap, ticks = 40) => {
   const open = picks(view(30000 + 800), 'drab', 20), none = picks(view(null), 'drab', 20);
   check('an AI keeps its head off a portal\'s exit a rival could come out of next (it sees portals used against it)', !open.left && none.left === 20, JSON.stringify({ open, none }));
 }
+
+{ // ...and see the chance from a few moves off, not only beside it: heading up three cells in from the right edge,
+  // level with an open portal's entry there, an apple just beyond its exit on the far side (five moves through it)
+  // and another straight ahead (nine), an AI turns for the portal; with it shut, never toward the edge. (Its room's
+  // fill and the territory split count a way through a portal open by the time it would get there: see room.js.)
+  const view = shutAt => () => aiView({ me: aiMe([[N21 - 4, 10], [N21 - 4, 11], [N21 - 4, 12], [N21 - 4, 13]], 'up'), others: [aiRival(1, line(4, 20, 4), 'right')], tickMs: 110,
+    food: [{ x: 1, y: 10, kind: 'food', expires: 999 }, { x: N21 - 4, y: 1, kind: 'food', expires: 999 }],
+    portals: shutAt === null ? [] : [{ x: N21 - 1, y: 10, dx: 1, dy: 0, tx: 0, ty: 10, owner: 1, shutAt }] });
+  const open = picks(view(30000 + 800), 'drab', 20), none = picks(view(null), 'drab', 20);
+  check('an AI a few moves off an open gold portal heads for it when food past its exit is nearer that way', open.right === 20, JSON.stringify(open));
+  check('...and not toward the edge when it is shut', !none.right, JSON.stringify(none));
+}
