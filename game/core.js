@@ -465,14 +465,6 @@ function think(dt, ticked = false) {
   }
 }
 
-// Hosting: where everyone goes next, for friends' screens, once a tick when
-// the rivals have thought, and again when a person's press changes it.
-let planSent = false;
-function sendPlan() {
-  planSent = true;
-  online.room.broadcast(Online.plan(theGame));
-}
-
 // One tick of the rules (alone, or as the host: friends get a copy).
 function tick() {
   const wasAlive = playerAlive();
@@ -486,25 +478,6 @@ function tick() {
     planSent = false;
   }
   Chatter.update();
-  afterTick(dying, wasAlive);
-}
-
-// A tick from the host, on a friend's screen.
-function hostTick(msg) {
-  if (!theGame || (state !== 'running' && state !== 'countdown')) return;
-  if (state === 'countdown') go();
-  const wasAlive = playerAlive();
-  for (const s of theGame.snakes) rememberPrev(s);
-  const wasPiloted = !!player()?.autopilot;
-  const dying = Online.apply(theGame, msg, DIRS);
-  // If the host had an AI steer for you for a while (your connection
-  // hiccupped), say so once you're back.
-  const piloted = !!player()?.autopilot;
-  if (piloted && !wasPiloted) online.pilotedAt = performance.now();
-  if (wasPiloted && !piloted && player() && performance.now() - online.pilotedAt > 2000 && !online.toldAway) toast(FLAVOR.youAway, 2200);
-  if (!piloted) online.toldAway = false;
-  tickLen = msg.len || Engine.tickMs(theGame);
-  online.lastTickAt = performance.now();
   afterTick(dying, wasAlive);
 }
 
@@ -528,15 +501,6 @@ function afterTick(dying, wasAlive) {
     return endRound();
   }
   if (youJustDied) youDied();
-}
-
-// The moment you die: the board holds still (alone), your snake holds its
-// pose with its eyes screwed shut, then bursts. Also when it ends the round.
-function deathMoment() {
-  freezeUntil = lastFrame + (reducedMQ.matches ? TUNE.DEATH_FREEZE / 2 : TUNE.DEATH_FREEZE);
-  Render.hold(boardClock + (freezeUntil - lastFrame)); // (on the board's clock)
-  Render.shake(TUNE.SHAKE_PX);
-  flashFrame('kill', true);
 }
 
 // Each segment's previous cell, for interpolation. Reuses the same objects.
