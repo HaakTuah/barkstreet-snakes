@@ -7,6 +7,12 @@ lanes, its fallback and the reviews between the two builders: `docs/claude-and-c
 
 **The orchestrator builds nothing itself** (the owner, 2 November 2026: "Why is the orchestrator doing things directly?", then "yes please, expertly!"). Every lane, the item or main lane included, goes to a builder session of its own, with its own brief, at the effort `CLAUDE.md` gives that work. Helpers belong to builders, never to the orchestrator: a lane is never a helper of the orchestrator's. The orchestrator keeps its own context small, for what only it does: claims, starting and handing over sessions, merging Codex's work, and the owner's questions word for word. A session it starts runs at its own effort, and it never waits for one at a higher effort: the builder gives the work marked high to helpers at high effort (`CLAUDE.md`, "Models, effort and helpers"). Only if it cannot start builder sessions at all does it say so and stop, and the owner starts them. Why: its context is re-read on every turn, so building in it costs the most; it runs at its own effort, not the work's; and if it dies, every lane stops with it.
 
+**The rules, re-read when they change** (the owner, 2 November 2026). A running orchestrator remembers the rules as they
+stood when it started. So on every wake, the hourly check included, it pulls `develop`, and if `AGENTS.md`, `CLAUDE.md`,
+`SECURITY.md`, `docs/claude-and-codex.md` or this file changed since it last read them, it re-reads the changed parts,
+passes what touches them on to its running builders in one message, and says so in one line to the owner. Nobody has
+to tell it.
+
 - **28 October 2026: pipeline, don't wait.** "Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns." (to Claude's proposal; the words are in
   `docs/archive/instructions.md`). Waiting is lost time and, past an hour, a lost cache, so:
   1. **Review in the background.** Open the PR, start its review (Codex's: `docs/claude-and-codex.md`, "Codex reviews"; or, from the builder, Claude's reviewer as a
