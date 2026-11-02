@@ -54,7 +54,7 @@ window.SnakeAI = (() => {
   //                                   close behind my own tail, so I move as a ring
   //   thick                         reward for each cell of my own body beside my head (not my neck):
   //                                   a wall two thick can't be hopped
-  //   leapNow                       what a leap now over open ground costs me, as a share of the jump's
+  //   leapNow                       what a leap now (only out of a trap) costs me, as a share of the jump's
   //                                   price (round six B; default 1)
   //   spit                          how much a shot with a mushroom is worth to me, when I weigh eating
   //                                   one on purpose (round six B; default SPIT)
@@ -76,7 +76,7 @@ window.SnakeAI = (() => {
   const DRAB = {
     space: 1.2, territory: 1.5, aggression: 0.3,
     food: 5, eat: 80, pellet: 1.2, foodRange: 60,
-    margin: 8, headRisk: 700, zoneRisk: 150, spit: 0.05, leapNow: 4, // (hardly ever a mushroom on purpose, nor a leap now)
+    margin: 8, headRisk: 700, zoneRisk: 150, spit: 0.05, leapNow: 4, // (hardly ever a mushroom on purpose; a leap now out of a trap, at four times the price)
   };
   const HUNT = { squeeze: 2.5, chase: 6, lead: 4 };
 
@@ -117,7 +117,7 @@ window.SnakeAI = (() => {
       w: {
         space: 2, territory: 0.6,
         food: 3, eat: 30, pellet: 1, foodRange: 15, hungryBelow: 18, fedFactor: 0.4,
-        margin: 6, headRisk: 900, zoneRisk: 150, distance: 5, spit: 0.2, leapNow: 0.8, // (a leap now to slip a trap) // (at 6, once the rivals read knocked food and digging beetles, it won 39 / 31%)
+        margin: 6, headRisk: 900, zoneRisk: 150, distance: 5, spit: 0.2, leapNow: 0.8, // (a leap now out of a trap, a little cheaper) // (at 6, once the rivals read knocked food and digging beetles, it won 39 / 31%)
       },
     },
     sovereign: {
@@ -221,7 +221,7 @@ window.SnakeAI = (() => {
       w: {
         space: 1, territory: 0.6,
         food: 6, eat: 80, pellet: 1.5, foodRange: 40,
-        margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25, leapNow: 0.6, // (a leap now for the thrill)
+        margin: 5, headRisk: 600, zoneRisk: 40, thrill: 25, leapNow: 0.6, // (a leap now out of a trap, cheaper still)
         nerve: { base: 0.7 }, // (it'll stare down a rival's head for an apple)
       },
     },
@@ -2256,7 +2256,7 @@ window.SnakeAI = (() => {
       // and the moves on to its nearest food (up to
       // FOOD_CUT), SHUT_FOOD apples, all of them. As much more as I'm
       // aggressive (a hunter's victim twice, as with the cut), half to one
-      // that can jump out.
+      // holding a golden jump (its pips show it can hop out).
       function shutIn(nb, L, g, down, land) {
         const agg = (w.aggression || 0) + (w.hunt ? 0.5 : 0);
         if (!agg) return 0;
@@ -2271,7 +2271,7 @@ window.SnakeAI = (() => {
           if (!placed) { body0ToOwnFree(nb, L, g); placed = true; }
           const after = roomOf(k, down, SHUT_MOVES), late = Math.min(FOOD_CUT, roomFood) - foodHere[k];
           const cut = Math.max(0, SHUT_IN * (before - after) / before) + Math.max(0, SHUT_FOOD * late / FOOD_CUT);
-          if (cut > 0) v += (o.id === memory.victimId ? 2 : 1) * (o.leaps > 0 || o.leapIn === 0 ? 0.5 : 1) * (0.5 + agg) * cut;
+          if (cut > 0) v += (o.id === memory.victimId ? 2 : 1) * (o.leaps > 0 ? 0.5 : 1) * (0.5 + agg) * cut;
         }
         if (placed) clearOwnFree(nb, L);
         return v;

@@ -1304,7 +1304,7 @@ window.SnakeEngine = (() => {
           decide(aiView(game, s), brainOf(s), s.memory);
           if (s.memory.flyAt === game.tick) { s.flyFor = s.memory.fly || 0; const t = s.memory.flyTurn; s.flyTurn = t ? { at: t.at, dir: Object.values(DIRS).find(q => q.x === t.dir.x && q.y === t.dir.y) } : null; }
         }
-        const d = airTurn(game, s, f);
+        const d = f.held ? airTurn(game, s, f) : null; // (steered only while held: let go, it comes down on the next cell, and a quick press is a plain-length hop, its turns waiting till it's down)
         if (d) { f.dir = d; f.over = []; f.land = ahead(game, s, s.body[0].x, s.body[0].y, d); }
         if (!(s.isPlayer && !s.autopilot) && f.flown >= (s.flyFor || 0)) f.held = 0; // (a rival lets go where it chose to come down)
       }
