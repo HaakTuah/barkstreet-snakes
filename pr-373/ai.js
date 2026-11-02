@@ -2342,7 +2342,7 @@ window.SnakeAI = (() => {
         return false;
       }
 
-      // A flight down to cut a rival off, in apples: Haakon's flight, where
+      // A flight down to cut a rival off, in apples: the owner's flight, where
       // "someone really skillful can time cutting someone else off midair".
       // Each rival near where I'd land: its room (roomOf: from its head, my
       // body in the way, what it gets to in SHUT_MOVES moves) as I am, and
@@ -2393,7 +2393,7 @@ window.SnakeAI = (() => {
       // 2r, no hop onto a doomed island: where I'd come down is another
       // piece of log (not joined to mine) with less free room than my
       // length, and I can't jump off it again (a hop from its rim to other
-      // log, with my jump rested before I've filled it up). Haakon (30
+      // log, with my jump rested before I've filled it up). The owner (30
       // October 2026): "I see snakes jumping onto small islands where they
       // have no chance to survive for very long". The moves I'd live there,
       // or -1 if it isn't doomed.
