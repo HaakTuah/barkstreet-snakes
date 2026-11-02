@@ -176,6 +176,9 @@ The guards against both are part of the rule:
      guidelines), a test PR with planted faults goes to each reviewer and is never merged. The faults are a bug, a
      broken standing rule, a security hole and a departure from the design, as on Snakes #298. Each fault not found is
      a miss.
+   - **A slop check every month** (the owner, 2 November 2026): a fresh reviewer reads only the text a player reads
+     that changed since the last check, scored as every review is, a 10 meaning nothing reads machine-made; what it
+     finds is fixed in the polish lane. The slop audit's formula test runs on every PR.
    - **Logged and reported:** each check is a row in "Calibration" below, and each milestone PR says in one line the
      misses since the last one. Two misses in a row by the same reviewer: its brief or guidelines are tightened, with
      the owner, and the categories it reviews go back to the other reviewer meanwhile.
