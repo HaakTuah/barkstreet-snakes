@@ -12,8 +12,9 @@ lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
 
-Everything for the owner is an issue: [questions and readings](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Afor-owner)
-(`for-owner`) and [ideas](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aidea) (`idea`), by
+Everything for the owner is an issue: [questions and readings](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aquestion)
+(`question`), [ideas](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Aenhancement) (`enhancement`) and
+[bugs](https://github.com/HaakTuah/barkstreet-snakes/issues?q=is%3Aopen+label%3Abug) (`bug`), by
 "Questions, readings and ideas" in `AGENTS.md`. Answered rows from before 2 November 2026: `docs/archive/progress-done.md`,
 "For the owner, answered".
 
@@ -117,5 +118,5 @@ Every rival's lines given a make-over by a Fable 5.1 session with creative contr
 
 ## Noted, not yet queued
 
-Ideas are issues labelled `idea` now ("For the owner" above); the four noted here moved there on 2 November 2026 (#324 to
-#327).
+Ideas are issues now (Feature requests, `enhancement`: "For the owner" above); the four noted here moved there on 2 November
+2026 (#324 to #327).

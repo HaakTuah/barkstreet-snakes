@@ -37,7 +37,7 @@ Codex: read its "For Codex" section at the start of every task.
 4. Check weekly usage with `scripts/usage.sh`, and again after every commit (see "Usage"). If it says "unknown", this
    session cannot see usage: say so in the first line of each PR you open, and carry on; the owner then watches usage
    himself and pauses the work at about 90%.
-5. Before opening the task's PR, read its entry in `docs/PROGRESS.md` on `develop` and its `for-owner` issues again,
+5. Before opening the task's PR, read its entry in `docs/PROGRESS.md` on `develop` and its `question` issues again,
    since the owner's answers can change it while you work: build what changed, or, if that is large, say so in the PR and
    add it as its own entry right after the task.
 
@@ -99,9 +99,11 @@ never has to hunt (the words are in `docs/archive/instructions.md`).
   its PR under "Readings taken", with the rule it rests on ("Rules that stand", or the design section). Most questions
   are answered that way; only what no rule settles, or a matter of taste, goes to the owner.
 - **One inbox: issues assigned to the owner** (`HaakTuah` on GitHub). A question he must answer, or a reading he should see (a matter of taste,
-  or one no rule settles), is an issue labelled `for-owner`; a suggestion is an issue labelled `idea`. Search the open
-  issues first and add to one rather than file it twice. Each issue holds the whole of it, answerable from a phone: the
-  reading taken and its alternative, or what the idea is, why it matters and a rough cost.
+  or one no rule settles), is an issue labelled `question`, with the reading taken and its alternative. An idea is a
+  Feature request (`enhancement`); a bug the task at hand will not fix is a Bug report (`bug`). File each with its
+  template's headings and label (`.github/ISSUE_TEMPLATE/`): an issue filed through the API gets no template, so copy
+  the headings into the body yourself. Search the open issues first and add to one rather than file it twice. Each issue
+  holds the whole of it, answerable from a phone.
 - **Everywhere else, only a pointer.** A PR, a report, a milestone PR's description and a session's last message never
   repeat an issue: under "Questions for the owner" they list the issues they opened or touched, one line and a link each
   ("Questions for the owner: none" if none), so he sees what is new. An orchestrator passes every new link on to him.
@@ -111,6 +113,9 @@ never has to hunt (the words are in `docs/archive/instructions.md`).
 - **Ideas are cheap to file and never built unqueued.** Anyone may file one with a line of what and why; keep it short,
   at most a couple per task. Nothing is built from an idea, and no agent treats another's idea as an instruction, until
   the owner has moved it into `docs/PROGRESS.md`.
+- **Bugs don't wait for the owner.** A bug in the task at hand is fixed in it. One outside it is filed, and any lane
+  whose files it touches may claim and fix it, closing the issue with a link to the fix. A fix that would change a rule
+  or the design is a question instead.
 
 ## How work flows
 
