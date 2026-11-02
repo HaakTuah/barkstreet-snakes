@@ -173,7 +173,7 @@ check(over.s === 'over' && over.up && await state() === 'over', 'the round-over 
 // screen, and on a 30 Hz one (a phone saving power), you playing. Counted
 // over 20 s of rounds at each, round after round until 100 ticks are seen:
 // a round is the luck of its draw, and one that ends early (you out, or the
-// rivals all out, about one in 250) leaves the next to finish the count.
+// rivals all out: once in about 280 runs in CI) leaves the next to finish it.
 const thought = [];
 for (const hz of [60, 30]) {
   const sum = { hz, crossings: 0, unplanned: 0, tickFrames: 0, thoughtOnTick: 0, ends: [] };
