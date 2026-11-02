@@ -44,19 +44,22 @@ the second account until its usage is spent; on the main account the brake close
   and 11), so nothing that changes play slips in; merged at once, one line per fix under this lane. Nothing is left
   half done: a fix not finished when usage ends is left unstarted, its find noted for the next session.
 
+- **Next, from Haakon's notes of 2 November** (his words: `docs/archive/instructions.md`), one PR each: **Star's
+  beads** take the colours of the part of its body they came from again ("Remains" in
+  `docs/design/04-food-and-the-world.md`); **flags fall with the log** when a gap opens under them, as the piece does,
+  instead of jumping (food's own fall is entry 6's A/B); and **the spit's tell**: the cheek's bulge counts down to the
+  spit, so a player sees when it comes (where it flies is 3b+'s dotted line).
+
 *Done in the lane:* each fix's line is in `docs/archive/progress-done.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone, among them).
 
-## The split lane (the workshop check's files over about 50 KB)
+## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
 - **First, at the next milestone** (Haakon, 1 November 2026): the workshop check's point (2) before anything else.
-  `AGENTS.md` (22 KB) and this file (20 KB) go back under about 20 KB: done entries, answered questions and standing
-  instructions already written into the text above them move to `docs/archive/`, with a line pointing there.
-- **Next, beside it: a check for unused code** (Haakon, 1 November 2026; a side lane, no game change). Extend
-  `tools/scope-test.js`, which already reads every top-level name the page's scripts declare, to fail on a name that no
-  game file, `index.html` or test uses outside its own declaration, with a short list of names the browser or the tools
-  call by name. No new dependency. Its first run lists today's unused names; each is removed in its own small PR,
-  proven by the suites and unchanged fingerprints (seeds 3 and 11), or kept on the list with the reason.
+  `AGENTS.md` is 19 KB since its standing instructions became rules (2 November); this file (20 KB) goes back under
+  about 20 KB, done entries and answered questions moving to `docs/archive/` with a line pointing there.
+- **Chatter split by meaning**, then **the file-by-file review** (Haakon, 2 November 2026): their specs are in
+  `docs/handoff/queue-specs.md` under the same titles.
 - *Done:* `audio.js` and `chatter/zh.js` split (PRs #225, #226): `docs/archive/progress-done.md`, "The split lane, done".
 - **Waiting for the main lane** (PR #198 and its parked #202 have them open): `ai.js` (139 KB), `engine.js` (128 KB) and
   `render/world.js` (51 KB). Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
@@ -64,6 +67,10 @@ players, any key wakes, the woodpecker bigger on a phone, the flash become the d
 ## The queue, in order
 
 **Done** (each in `docs/archive/progress-done.md`): 1 and 1b (cheaper development and previews (PRs #39, #41), the big files split (PRs #43, #45, #46)); 1b+ (Wildcard's hair, again (PR #107)); 1b+++ (Wildcard's hair, Trump's (PR #110)); 1b++ (the phone's bottom (PR #112)); 1c (the big test files split (PRs #95, #96, #97, #100, #102, #103, #104)); 2 (types for the multiplayer messages (PR #48)); 2c (the woodpecker, 1.3 times (PR #139)); 2d (rivals' chomps (PR #150)); 2e (the woodpecker pecks beside a snake, not on it (PR #141)); 2f (Wildcard's hair, lacquered (PR #144, version F)); 2f+ (Wildcard's hair, a size smaller (PR #156, `WILD_SIZE` 0.85)); 2g (the meal goes down (PR #146)); 2j (babble voices for the rivals' bubbles, never distracting (PR #162; on by default, the Voices switch under the board between rounds, V at any time)); 2k (the woodpecker, as big as it gets, 1.7 times (PR #170)); 2k+ (the woodpecker perches clear of the buttons' words, at 1.7 times (PR #191)); 2l (flags that bend as a snake goes over them (PR #186)); 2m (beetles and the woodpecker (PR #199: burrows keep up, beetles flee the beak, the bird eats one still under it)); 2o (a squashed bead leaves a splat (PR #210)); 2p (flags in depth, hit head-on, and bent by their owners (PR #211)); 2t (Capricious without its ring, and a costume change for every change (PR #212)); 2u (picked rivals for this visit; unmet rivals back into the deck (PR #221)); 2v (the newest version, by itself between rounds (PR #223)); 2s (a piece cut loose falls, the log stays one piece (PR #289)); 2s+ (the log's fall, proven (PR #311)); 2w (beetles get away 38–41% of chases: they dig in in 4 ticks (PR #313)).
+
+### 2x. The spitter slides over its own mushroom (Haakon, 2 November 2026; an engine-rules entry, next, ahead of part 5)
+
+Taken out of 3b+ and moved to the front, since it still bites (Haakon: "Still get the bug with swallowing a mushroom over and over again after puking it up."): the spec is 3b+'s "The spitter slides over its own mushroom" in `docs/handoff/queue-specs.md`, entry 5.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B"); next AI entry, right after Copycat's part of 3b
 
@@ -121,6 +128,7 @@ The draft is in `docs/handoff/woodpecker-acts-draft.md`.
 
 - Also: an A/B test of food knocked aside against food falling into the hole, with a `?food=fall` knob for the owner's playtests.
 - If the knock stays, it gets bark chips spraying out and a little bounce where it lands.
+- **Skeletons for the dead, beside the memorials** (Haakon, 2 November 2026; lost from the queue when round six's plan was archived): vertebrae beads in the snake's colours and a skull wearing its trademark, still food at a glance (crash drops stay beads; rot bleaches and crumbles them), and every rival's trademark memorial on the head tile for about 15 s, as "Skeletons for the dead" and "Trademark memorials" in `docs/archive/plan-history.md` list them. On the food A/B above, Haakon leans to falling.
 - Ghost's memorial: the planned smoke wisp, or the owner's idea of a broken shackle with a few chain links. Ghost's tongue stays smoke.
 - The earlier "the bird eats the food" variant for that A/B is in `tools/dev/r6-study-tools/patch-flex3.js` (PECK_FOOD).
 

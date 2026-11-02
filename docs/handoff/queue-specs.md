@@ -45,7 +45,7 @@ design's words for each are in `docs/design/29-round-six-b-the-new-moves.md`:
    "The spit flies along the line"): straight ahead up to 5 cells, two a tick, stopping at the first head (poisoned) or
    body (bounced by the roll rule), gone over the edge or a hole; a dotted line in place of the ring; the rivals lead
    their shots and step out of lines; the A/B should now show the spitters ahead, no refuge; lesson, cue, protocol
-   bump. **The spitter slides over its own mushroom** for a few moves (`OWN_SPIT_TICKS`, a first guess of 6), as a full
+   bump. **The spitter slides over its own mushroom** (moved to the front as its own entry, 2x, on 2 November 2026) for a few moves (`OWN_SPIT_TICKS`, a first guess of 6), as a full
    mouth slides over food, so it can't swallow it again: today the spit lands 3 straight ahead and a snake that keeps
    going eats it 3 moves later, shrinks again and has a full mouth again, a loop that cost Haakon several apples (his playtest, 30 October 2026); everyone else is hit by it as before. It runs after part 4, 2q and 2s, before part 5 (rule and AI
    changes run one at a time; 2q first, so 3b+'s A/B measures dodging with human reactions).
@@ -346,3 +346,23 @@ inside its 20–35% band): "Yeah, I feel it should be at least a third of the ti
   round's length, deaths near a beetle and every rival's trademark within noise.
 - **The rules test and the census** keep the band: the simulation's check fails a run whose escapes fall below a third.
 - **Online stays in step:** a protocol bump if a beetle's messages change.
+
+### Chatter split by meaning (Haakon, 2 November 2026; the workshop lane)
+
+Haakon: "Have we split files where it doesn't make any difference? Like chatter? Like, splitting out chinese, i get. But
+have one zh and zh-more, how does an agent/session which to look in? Won't it just check both?" ("Split by meaning" in
+`AGENTS.md`.) `chatter/zh.js` and `zh-more.js` were cut by size (Copycat to Wildcard, then Creeper to Star), and
+`voices.js` is 49 KB. Re-split along what people look up, a voice (a file per voice, or per voice and language), with
+the lines every voice shares written once; weigh the page's extra script tags and `sw.js` entries against what a
+session saves, and say both in the PR. Behaviour proven unchanged (the chatter suite, fingerprints on seeds 3 and 11).
+
+### The file-by-file review (Haakon, 2 November 2026; the workshop lane, after the chatter split)
+
+Haakon: "Need a full review and clean up where we look at every file, especially the documents, and ask what does this
+state that it does, and does it do it? If something in it doesn't then it needs to be somewhere else, if anywhere at
+all." Every file, docs first: what does it say it is for, and does it do that? What doesn't belong moves to where it
+does, or goes; code is checked against "Split by meaning" and "Keep it lean" in `AGENTS.md`. The files every session
+reads first, then `docs/`, then the code, in a few PRs, each with a table of every file it covered and what happened to
+it, behaviour proven unchanged (suites, fingerprints). Helpers by "Helpers: when they pay" in `CLAUDE.md` (a Haiku
+search helper per folder).
+

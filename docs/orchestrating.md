@@ -1,7 +1,7 @@
 # Orchestrating the builders
 
-The full text of two standing instructions from `AGENTS.md`, for the session that starts builder sessions (the
-orchestrator) and for any builder that needs the detail. `AGENTS.md` keeps what every builder needs from them. Codex's
+The full text of two of Haakon's instructions, for the session that starts builder sessions (the orchestrator) and
+for any builder that needs the detail. "How work flows" in `AGENTS.md` keeps what every builder needs from them. Codex's
 lanes, its fallback and the reviews between the two builders: `docs/claude-and-codex.md`; a draft PR labelled
 `codex` is a claimed lane like any other.
 
@@ -30,7 +30,7 @@ lanes, its fallback and the reviews between the two builders: `docs/claude-and-c
      search helper, not the builder reading large files itself, is the cheap way to look across many files.
 
 - **28 October 2026: as many lanes as can run in parallel.** "Yes, allow for as many lanes as can be parallelized, expert." (the words are in `docs/archive/instructions.md`).
-  This replaces the limit of two agents in "How to work" for builders; each builder keeps its own limit of helpers.
+  Each lane's builder keeps its own helpers ("Helpers: when they pay" in `CLAUDE.md`).
   1. **A lane is independent work:** it touches different files from every other open lane (or parts of one file
      nobody else touches), shares no measurement with another, and does not wait on another's result. Here, changes to the AI or the engine's rules run one at a time, since each is measured head to head against a settled AI, and so do changes to the online messages, since each bumps the protocol; beside them run independent entries: art, chatter lines, interface and layout fixes, docs and test-file splits.
   2. **Claim it on GitHub first.** Before starting, open a draft PR from a fresh branch off `develop`, its title naming

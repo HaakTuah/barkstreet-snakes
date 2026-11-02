@@ -665,3 +665,44 @@ In the design chat (1 November 2026, 18:11 UTC): "I agree with your assesment." 
 In the design chat (1 November 2026, 18:17 UTC): "Agreed to both 1 and 2, but I want 3 stricter, though we should have a measure there to ensure not endless loop, or lowering of what a 10 is. Carry this out, expert." (to the design session's answers to his question whether only a 10 passes Claude's reviews and whether both reviews run at the same time: (1) both games say that Codex's review and Claude's design check start at the same time; (2) the day's experience gathered now into a notes doc for his father's setup, the guide itself after week one; (3) the reviews' pass mark) (written into `docs/claude-and-codex.md`, "Codex reviews", points 4 and 5, and "Reviews: only a 10 passes", with its guards and the new "Calibration" table; the "Review guidelines", a standing instruction and the pipeline line in `AGENTS.md`; `docs/orchestrating.md`, "Review in the background"; the same in Amarna Letters)
 
 In the design chat (1 November 2026, 18:35-18:37 UTC), after the design session added "Keep it lean" to the prompt for his father's setup: "Yes, please, expertly! Should we also have any of this, expert?", then, to the design session's questions (add to both games "every change removes what it replaces" and leftovers in the definition of a 10; the files every session reads back under 20 KB first at the next milestone's workshop check; a check for unused code in this game's queue): "yes, please, expertly expertly!" (written into `AGENTS.md`, "Keep it lean" under "How to work" (replacing "Keep files small and organised") and the "Review guidelines"; `docs/claude-and-codex.md`, the definition of a 10 in "Reviews"; `docs/PROGRESS.md`, the split lane; the same in Amarna Letters, without the unused-code entry)
+
+In the design chat (2 November 2026, 06:36 UTC), Haakon's notes, sent as a file ("Made some notes while you were out of usage."); the parts about this game and how both games are built, word for word:
+
+> Should we use a regular container codex imstance to review rather than naitve review when we get environments. Since reviewer we can't get proper feedback ans it can't run our project?
+>
+> Also, why does codex post as a bot while claude code posts under my name?
+>
+> is codex reviewing all of the PRs?
+>
+> does claude escelate a task to a agent/session with higher effort or fable if it can't manage it? Like with the ai stuff? Fable runs out of usage faster than the rest, so there must always be fallbacks
+>
+> should we become more lenient about workflows and helpers? Claude code seems to struggle now with getting the ai to use the new powers properly? I see it is not allowed much per Claude.md. And now that we are getting codex into the mix, we might not have to be as sparing? Remember the goal, get as much done with qualitt output, with as efficient toke usage as we can. That does not mean we drag out time, simply to drag out time. I see AGENT.md prohitbits the use of subagents outright. I want productive use of them, i think, unless you disagree as an expert? My impression is that they are not optimal for every task, but are of benefit for certain tasks? Maybe we can make an outline of criterias that actually make it use it optimally? Think carefully about any wording, we want that exact optimal balance!
+>
+> Is agents.md and these files that are always read really the best place for a timeline of decisions? Shouldn't they be purely condensed instructions, as much quality tokens as possible? Your take, expert?
+>
+> Have we split files where it doesn't make any difference? Like chatter? Like, splitting out chinese, i get. But have one zh and zh-more, how does an agent/session which to look in? Won't it just check both? If this gives nothing, then i suggest we establish a new rule. Be fully consistent and ruthless on breaking up and using inheritance whereever sensible and we can, so it aids in finding stuff and not ingesting needless tokens. But always ask if it gives any benefit down the line to break something. Maybe some of the issue we got, we have written rules instead of focusing on the principles. The principle is price and maintainability down the line, to help out on both those fronts. And if the a rule don't align with its stated principle, that should be flagged, and the principle overrules the rule. What is your take, expert? But i really think we should be much more ruthless where we can break up and have gains from it.
+>
+> Need a full review and clean up where we look at every file, especially the documents, and ask what does this state that it does, and does it do it? If something in it doesn't then it needs to be somewhere else, if anywhere at all.
+>
+> Star's beads have stopped having the same color as that part of his snake body had
+>
+> Wasn't snakes supposed to leave behind a skeleton and suvernour when they die?
+>
+> Flags now jumps when a gaps open up under it, like items. I think probably all should fall instead. Your expert take?
+>
+> Still get the bug with swallowing a mushroom over and over again after puking it up. Really not easy to tell either when your character will spit it, or to aim it anywhere
+
+The design session answered each and asked ten questions, of which these concern this game: (1) keep Codex's native review and add container checks of a PR's measurements once environments work; (2) Fable as the last escalation step after Opus extra-high, blocked as the fallback; (3) "Helpers: when they pay", at most four at a time; (4) the always-read files hold rules, not a timeline, with the dated words only here; (5) split by meaning, and principles over rules, safety rules excepted, starting with chatter; (6) a file-by-file review after 4 and 5; (10) the bugs queued as written, and the skeletons back in the queue beside the memorials. Haakon, at 06:48 UTC, to all ten: "Yes ro absolutely all pt these! Extra expertly expertly!" (written into `AGENTS.md`, restructured: the standing instructions became rules in "Starting a task", "How to work", "Questions and readings", "How work flows", "The workshop check", "Rules that stand", "Usage" and "Git and GitHub", with "Split by meaning" and "Principles over rules"; `CLAUDE.md`, the parallel helper, Fable as the last escalation and "Helpers: when they pay"; `docs/orchestrating.md`; `docs/claude-and-codex.md`, point 7 of "Codex reviews" and Fable after the escalation helper; `docs/PROGRESS.md`, the polish lane's next fixes, the workshop lane, the skeletons in entry 6 and 2x, the spitter sliding over its own mushroom, moved to the front; `docs/handoff/queue-specs.md`, the chatter split and the file-by-file review; the same, with its own parts, in Amarna Letters)
+
+Moved here from `AGENTS.md`, where they stood word for word since 21 October 2026, now that it holds rules only (the limit of two agents is replaced by "Helpers: when they pay"):
+
+> - A question is a question. Answer it; don't act on it unless I say so.
+> - Match effort to the task. Docs, READMEs, small fixes and config: one pass, no subagents.
+> - Don't use more than 2 agents unless I ask for it. Never stop to ask about this:
+>   pick the cheaper way, and say in the PR what you chose.
+> - Usage is limited. Prefer the cheapest approach that does the job well.
+> - Read only the parts of large files the task needs (search, then read sections).
+> - Long simulations: run them in the background and wait for the completion notice.
+>   Don't poll, and don't keep agents alive just to wait for a run.
+> - At each milestone, open a PR I can play, say in it what to try, and carry on with
+>   the next item without waiting for me to review or merge.
