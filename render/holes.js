@@ -150,17 +150,25 @@ function fallAway(cells, now) {
   pieceFalls.push({ cells: cells.slice(), on, at: now, cx: sx / cells.length * CELL, cy: sy / cells.length * CELL, tilt: (cells[0] % 2 ? 1 : -1) * 0.35 });
   for (const k of cells) spawn((k % GRID) * CELL + CELL / 2, Math.floor(k / GRID) * CELL + CELL / 2, 3, 160, 600, 2.4, '#8a6a2a', '#3b2412');
 }
+// How far a piece cut loose has fallen (0..1), the piece on a cell (a flag
+// there rides it down: see drawFallenFlags), and its tip and drop, slow to
+// start, then away (e: the fall eased), for its slab and whatever is on it.
+const fallT = (f, now) => (now - f.at) / (reduced ? PIECE_FALL_MS / 2 : PIECE_FALL_MS);
+const pieceOn = key => pieceFalls.find(f => f.cells.includes(key)) || null;
+function fallMove(f, e) {
+  ctx.globalAlpha = 1 - e;
+  ctx.translate(f.cx, f.cy + (reduced ? 0 : e * CELL * 0.4));
+  if (!reduced) ctx.rotate(f.tilt * e);
+  ctx.scale(1 - 0.55 * e, 1 - 0.55 * e);
+  ctx.translate(-f.cx, -f.cy);
+}
 function drawFalls(now) {
   for (let i = pieceFalls.length - 1; i >= 0; i--) {
-    const f = pieceFalls[i], t = (now - f.at) / (reduced ? PIECE_FALL_MS / 2 : PIECE_FALL_MS);
+    const f = pieceFalls[i], t = fallT(f, now);
     if (t >= 1 || t < 0) { pieceFalls.splice(i, 1); continue; }
-    const e = t * t; // (slow to start, as it tips, then away)
+    const e = t * t;
     ctx.save();
-    ctx.globalAlpha = 1 - e;
-    ctx.translate(f.cx, f.cy + (reduced ? 0 : e * CELL * 0.4));
-    if (!reduced) ctx.rotate(f.tilt * e);
-    ctx.scale(1 - 0.55 * e, 1 - 0.55 * e);
-    ctx.translate(-f.cx, -f.cy);
+    fallMove(f, e);
     ctx.beginPath(); // (one path, filled once: squares filled one by one show their seams where they overlap)
     for (const k of f.cells) ctx.rect((k % GRID) * CELL, Math.floor(k / GRID) * CELL, CELL, CELL);
     ctx.fillStyle = BARK;
