@@ -13,13 +13,15 @@ const eatenNow = new Set(); // cells eaten on the last tick (so food that just v
 let bornTick = -1, bornGen = 0, fresh = true;
 const POP_MS = 420, RIPPLE_MS = 30;
 
+// Whether a piece of food is on the board (a peer's tick could say otherwise).
+const onBoard = f => Number.isInteger(f.x) && Number.isInteger(f.y) && f.x >= 0 && f.y >= 0 && f.x < GRID && f.y < GRID;
 function trackFood(now) {
   if (game.tick === bornTick) return;
   bornTick = game.tick;
   bornGen++;
   let n = 0;
   for (const f of game.food) {
-    if (f.kind === 'beetle') continue;
+    if (f.kind === 'beetle' || !onBoard(f)) continue;
     const key = f.y * GRID + f.x;
     let b = born.get(key);
     if (!b || b.kind !== f.kind) {
@@ -452,6 +454,7 @@ function drawFood(alpha, now) {
   const perPx = boardRect.w > 0 ? SIZE / boardRect.w : 1; // (the board's units a CSS px: the tremble is as big on any screen)
   for (const f of game.food) {
     if (f.kind === 'beetle') { drawBeetle(f, alpha, now); continue; }
+    if (!onBoard(f)) continue; // (food lies on the log, one piece to a cell, so a frame's beads never need more sprites than it has cells: see beadSprite)
     const key = f.y * GRID + f.x, b = born.get(key);
     if (f.kind === 'pellet' && heldCells[key]) { if (b) b.at = now + b.i * RIPPLE_MS; continue; } // (under a held corpse: not yet)
     const pop = b ? popOf(now - b.at) : 1;
