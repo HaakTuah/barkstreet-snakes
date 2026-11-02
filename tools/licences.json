@@ -1,5 +1,5 @@
 {
-  "about": "The licence audit (SECURITY.md, point 10): everything the game and its tools use, with its licence (SPDX) and where it comes in. tools/licences.js checks every licence against .github/dependency-review-config.yml's list and that nothing used is missing here. 'ships': it reaches a player's browser, so its notice is in THIRD-PARTY-NOTICES.txt. 'loads': the addresses the game fetches it from. 'question': an issue the owner is asked about a licence off the list; only those pass while it is open. Checked 2 November 2026, from each package's own published licence.",
+  "about": "The licence audit (SECURITY.md, point 10): everything the game and its tools use, with its licence (SPDX) and where it comes in. tools/licences.js checks every licence against .github/dependency-review-config.yml's list and that nothing used is missing here. 'ships': it reaches a player's browser, so its notice is in THIRD-PARTY-NOTICES.txt. 'loads': the addresses the game fetches it from. 'question': the issue asking the owner about a licence off the list; only the tools in use when the gate came in, listed in tools/licences.js (AWAITING), pass with one, and anything new off the list fails. Checked 2 November 2026, from each package's own published licence.",
   "entries": [
     { "name": "peerjs", "kind": "npm", "version": "1.5.4", "licence": "MIT", "used": "online play, loaded by net.js", "ships": true, "loads": ["https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/"] },
     { "name": "eventemitter3", "kind": "npm", "version": "4.x", "licence": "MIT", "used": "bundled in peerjs.min.js", "ships": true },
@@ -7,7 +7,7 @@
     { "name": "peerjs-js-binarypack", "kind": "npm", "version": "2.x", "licence": "MIT", "used": "bundled in peerjs.min.js", "ships": true },
     { "name": "webrtc-adapter", "kind": "npm", "version": "9.x", "licence": "BSD-3-Clause", "used": "bundled in peerjs.min.js", "ships": true },
     { "name": "sdp", "kind": "npm", "version": "3.x", "licence": "MIT", "used": "bundled in peerjs.min.js, through webrtc-adapter", "ships": true },
-    { "name": "Fredoka", "kind": "font", "version": "Google Fonts", "licence": "OFL-1.1", "used": "the lettering, loaded by index.html", "ships": true, "loads": ["https://fonts.googleapis.com/css2?family=Fredoka", "https://fonts.googleapis.com", "https://fonts.gstatic.com"] },
+    { "name": "Fredoka", "kind": "font", "version": "Google Fonts", "licence": "OFL-1.1", "used": "the lettering, loaded by index.html", "ships": true, "loads": ["https://fonts.googleapis.com/css2?family=Fredoka:"] },
 
     { "name": "typescript", "kind": "npm", "version": "6.0.2", "licence": "Apache-2.0", "used": "the types suite (tsc), no dependencies" },
     { "name": "playwright", "kind": "npm", "version": "1.49.1", "licence": "Apache-2.0", "used": "scripts/cloud-setup.sh installs Chromium with it" },

@@ -45,7 +45,8 @@ dependency review fails a package added or updated under a licence off the list 
 the one copy of it), and `node tools/licences.js` holds everything else to it through the audit, `tools/licences.json`:
 an action, a tool fetched with npx or npm, an address the game loads from or an asset file left out of it fails, and so
 does a shipped entry without its notice in `THIRD-PARTY-NOTICES.txt`. Something new goes into the audit with its
-licence, checked from its own published licence file; one off the list is a `question` issue, its number on the entry.
+licence, checked from its own published licence file; one off the list fails and becomes a `question` issue for the owner
+(only the two tools in use when the gate came in, `AWAITING` in `tools/licences.js`, pass while they wait).
 
 **CodeQL checks every PR** into `develop` and `main`, every push to them and once a week (`.github/workflows/codeql.yml`).
 A finding on a PR shows on it as a note; what to do with it is in `AGENTS.md`, "Git and GitHub". Alerts already in the

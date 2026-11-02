@@ -26,17 +26,46 @@ for (const line of read('.github/dependency-review-config.yml').split('\n')) {
   if (inList && m) allowed.add(m[1]); else if (inList && /^\S/.test(line)) inList = false;
 }
 const point10 = (read('SECURITY.md').match(/^10\. \*\*Licences[\s\S]*?(?=\n\S|\n\n)/m) || [''])[0].replace(/\s+/g, ' ');
-for (const id of allowed) if (id !== 'public-domain' && !new RegExp(`(^|[ ,(])${id.replace(/[.+]/g, '\\$&')}([ ,)]|$)`).test(point10)) fail(`${id} is on the dependency review's list but not in SECURITY.md, point 10`);
+const escape = t => t.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
+for (const id of allowed) if (id !== 'public-domain' && !new RegExp(`(^|[ ,(])${escape(id)}([ ,)]|$)`).test(point10)) fail(`${id} is on the dependency review's list but not in SECURITY.md, point 10`);
 
-// Each entry's licence: an SPDX expression, every part of an AND allowed, one of an OR.
-const ok = expr => expr.split(/\s+OR\s+/).some(alt => alt.replace(/[()]/g, '').split(/\s+AND\s+/).every(id => allowed.has(id.trim())));
+// Each entry's licence: one SPDX id, or ids joined by AND (each allowed) or by OR (one allowed); a mix of the two or
+// brackets fails, written out in full instead, so no grouping can hide a licence off the list.
+const ok = expr => {
+  if (/[()]/.test(expr) || (/\sAND\s/.test(expr) && /\sOR\s/.test(expr))) return false;
+  const ids = expr.split(/\s+(?:AND|OR)\s+/).map(id => id.trim());
+  return /\sOR\s/.test(expr) ? ids.some(id => allowed.has(id)) : ids.every(id => allowed.has(id));
+};
+// The tools already in use when the gate came in whose licences are off the list, each awaiting the owner's answer
+// in its issue (name, licence and issue as tools/licences.json has them). Only these pass: anything new off the list
+// fails, whatever its entry says, and an entry goes from here once the owner has answered.
+const AWAITING = [['npm', 'Artistic-2.0', 379], ['CodeQL CLI', 'LicenseRef-GitHub-CodeQL-Terms', 380]];
 const byName = new Map();
 for (const e of audit) {
   if (!e.name || !e.licence) { fail(`an entry without a name or licence: ${JSON.stringify(e)}`); continue; }
   byName.set(e.name, e);
   if (ok(e.licence)) continue;
-  if (Number.isInteger(e.question)) console.log(`awaiting the owner (#${e.question}): ${e.name}, ${e.licence}`);
+  if (AWAITING.some(([n, l, q]) => n === e.name && l === e.licence && q === e.question)) console.log(`awaiting the owner (#${e.question}): ${e.name}, ${e.licence}`);
   else fail(`${e.name}: ${e.licence} is not on the list (SECURITY.md, point 10)`);
+}
+// The packages an npx or npm install command fetches, read from its words up to the end of the command: for npx,
+// those named by -p or --package, else its first word; for npm install or exec, every word not an option (an
+// option's value, as in --prefix DIR, is not a package). What can't be read, such as a variable, a path, a URL or a
+// tarball, comes back as itself, so it fails rather than slipping past.
+const VALUED = new Set(['--prefix', '--registry', '--cache', '--userconfig', '--workspace', '-w', '--tag', '--omit', '--include', '--loglevel', '-C']);
+function fetched(cmd, rest) {
+  const words = rest.trim().split(/\s+/).filter(Boolean), out = [];
+  const bare = w => w.replace(/^(@[^/@\s]+\/[^@\s]+|[^@\s]+)@.*$/, '$1');
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    if (w === '-p' || w === '--package') { out.push(bare(words[++i] || '')); continue; }
+    if (w.startsWith('--package=')) { out.push(bare(w.slice(10))); continue; }
+    if (VALUED.has(w)) { i++; continue; }
+    if (w.startsWith('-')) continue;
+    if (cmd === 'npx') { if (!out.length) out.push(bare(w)); break; }
+    out.push(bare(w));
+  }
+  return out;
 }
 const need = (name, where) => { if (!byName.has(name)) fail(`${name} (${where}) is not in tools/licences.json`); };
 
@@ -45,8 +74,7 @@ const ci = ['.github/workflows', 'scripts'].flatMap(d => fs.readdirSync(path.joi
 for (const f of ci) {
   const src = read(f);
   for (const m of src.matchAll(/uses:\s*['"]?([\w.-]+\/[\w.-]+)/g)) need(m[1], f);
-  for (const m of src.matchAll(/\b(?:npx|npm\s+(?:install|i|exec))\b[^\n]*/g))
-    for (const p of m[0].matchAll(/(?:^|\s)(?:-p\s+|--package[= ])?((?:@[\w.-]+\/)?[a-z][\w.-]*)@\d/g)) need(p[1], f);
+  for (const m of src.matchAll(/\b(npx|npm\s+(?:install|i|add|exec|x))\s([^\n;&|>]*)/g)) for (const p of fetched(m[1], m[2])) need(p, `${f}, ${m[0].trim()}`);
 }
 
 // package.json and its lock, if the tools have them: every package, the ones pulled in included.
@@ -65,8 +93,16 @@ const walk = d => fs.readdirSync(path.join(root, d), { withFileTypes: true }).fl
 for (const f of walk('.')) {
   if (/\.(png|jpe?g|gif|webp|avif|ico|bmp|svg|woff2?|ttf|otf|eot|mp3|ogg|oga|wav|flac|m4a|aac|opus|webm|mp4|csv|tsv)$/i.test(f)) need(f.replace(/^\.\//, ''), 'an asset file');
   if (!/\.(html|js|css|json|webmanifest)$/.test(f)) continue;
-  for (const m of read(f).matchAll(/https?:\/\/[^\s'"`)<>]+/g))
-    if (!own.test(m[0]) && !loads.some(([u]) => m[0].startsWith(u))) fail(`${f} loads ${m[0]}, which no entry of tools/licences.json covers`);
+  for (const line of read(f).split('\n')) for (const m of line.matchAll(/https?:\/\/[^\s'"`)<>]+/g)) {
+    const url = m[0];
+    if (own.test(url) || (/rel=["']?(preconnect|dns-prefetch)/.test(line) && /^https?:\/\/[^/]+\/?$/.test(url))) continue; // (a bare origin to warm up: nothing is loaded from it)
+    if (!loads.some(([u]) => url.startsWith(u))) fail(`${f} loads ${url}, which no entry of tools/licences.json covers`);
+    // (one Google Fonts address can ask for several families: each must be a font of its own in the audit)
+    if (/^https:\/\/fonts\.googleapis\.com\//.test(url)) for (const fam of url.matchAll(/[?&]family=([^:&]+)/g)) {
+      const name = decodeURIComponent(fam[1].replace(/\+/g, ' '));
+      if (byName.get(name)?.kind !== 'font') fail(`${f} loads the font ${name}, which is not a font in tools/licences.json`);
+    }
+  }
 }
 
 // The notices: everything that ships is named in THIRD-PARTY-NOTICES.txt, which sw.js keeps for offline play.
