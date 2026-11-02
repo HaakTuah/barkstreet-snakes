@@ -297,7 +297,13 @@ function drawSpitRings(now) {
     ctx.strokeStyle = SPIT_RING; ctx.lineWidth = CELL * 0.09; ctx.stroke();
   }
 }
-function drawCheeks(now) {
+// The bulge counts down to the spit (Haakon, 2 November 2026: "Really not
+// easy to tell either when your character will spit it"): it swells from a
+// mouthful to fit to burst as the second runs out, and on each of the last
+// three moves it throbs, three, two, one, and the spit comes on the next.
+// With reduced motion it swells, without the throbs or the wobble.
+const CHEEK_R = 0.12, CHEEK_GROW = 0.1, CHEEK_THROB = 0.06, CHEEK_BEATS = 3;
+function drawCheeks(alpha, now) {
   if (!game) return;
   const t = reduced ? 0 : now / 1000;
   for (const s of game.snakes) {
@@ -305,7 +311,9 @@ function drawCheeks(now) {
     const a = anim.get(s);
     if (!a || !a.n) continue;
     // (behind the eyes, bulging out past the head on either side: a mouthful, never a pair of goggles)
-    const hx = a.pts[0], hy = a.pts[1], px = -s.dir.y, py = s.dir.x, r = CELL * (0.17 + 0.02 * Math.sin(t * 10));
+    const n = s.cheek.spitAt - game.tick, go = Math.max(0, Math.min(1, 1 - (n + 1 - alpha) / T.CHEEK_TICKS)); // (n: moves before the one it's spat on; go: 0 as it's swallowed, 1 as it's spat)
+    const throb = !reduced && n >= 0 && n < CHEEK_BEATS ? CHEEK_THROB * (1 - alpha) * (1 - alpha) : 0;
+    const hx = a.pts[0], hy = a.pts[1], px = -s.dir.y, py = s.dir.x, r = CELL * (CHEEK_R + CHEEK_GROW * go + throb + 0.015 * Math.sin(t * 10));
     ctx.fillStyle = CHEEKS[Math.max(0, Math.min(2, s.cheek.power - T.SHRINK))];
     ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.06;
     for (const side of SIDES2) {
