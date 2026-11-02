@@ -47,7 +47,7 @@ usage allows, at the lowest cost now and later.
 - **A question is a question.** Answer it; act on it only when the owner says so.
 - **Match effort to the task,** and take the cheapest approach that does the job well, since usage is limited. Docs,
   READMEs, small fixes and config: one pass, no helpers.
-- **Read little.** Never read a large game file whole (`render/world.js` is over 50 KB): find what you need
+- **Read little.** Never read a large game file whole (`render/world.js` is about 40 KB): find what you need
   with `scripts/codemap.sh <file>` or grep, then read that line range. Don't re-read what you just edited.
 - **Print little.** `scripts/test.sh` and `scripts/sim.sh` print a summary and the failures and keep the full log in a
   file; never paste a full log into the conversation. Run long ones in the background (the Bash tool's background mode)
