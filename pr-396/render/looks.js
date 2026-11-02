@@ -340,8 +340,8 @@ function drawPale(a) {
 // the owner starved): every snake shows it on its body, from the clock its
 // tag reads. Its body slims as its last meal runs out (by the share of it
 // gone, slowly at first, up to HUNGER_SLIM thinner; its head keeps its
-// size); in the warning's seconds (the toast's: 6 s left, 9 at its
-// smallest) its head shakes and growl lines rumble out either side of it
+// size); in the warning's seconds (the toast's: SnakeEngine.hungerWarning,
+// 6 s before it shrinks, 9 before it would starve) its head shakes and growl lines rumble out either side of it
 // (drawGrowl), stronger toward the end (not once the round's over);
 // starving (shrinking), it pales (a parchment wash: see drawPasses), and
 // starved, its corpse stays thin. With reduced motion the lines stay still
@@ -352,9 +352,9 @@ function hungerLook(s, a, dead, now) {
   if (a.ateSeen >= 0 && s.lastAte > a.ateSeen) { a.mealAt = now; a.fromN = a.segN; a.slimFrom.set(a.slimSeg); a.paleFrom.set(a.paleSeg); } // (it ate: the meal goes down from how it was drawn, see mealSwell)
   a.ateSeen = s.lastAte;
   const left = s.lastAte + T.HUNGER_MS - shownTime, gone = Math.min(1, Math.max(0, 1 - left / (s.mealMs || T.HUNGER_MS)));
-  const warn = T.HUNGER_WARN_MS * (s.body.length <= T.MIN_LENGTH ? 1.5 : 1);
+  const warn = SnakeEngine.hungerWarning(game, s, shownTime);
   a.slim = HUNGER_SLIM * gone * Math.sqrt(gone);
-  a.growl = left < warn && !leadRest ? Math.min(1, 1.4 - 0.9 * Math.max(0, left) / warn) : 0;
+  a.growl = warn < 1 && !leadRest ? Math.min(1, 1.4 - 0.9 * Math.max(0, warn)) : 0;
   a.pale = left < 0 ? Math.min(1, -left / T.STARVE_EVERY_MS) : 0;
 }
 // (In the face's frame, after its face: two short arcs either side of its
@@ -788,8 +788,8 @@ function hopped(s, e, now) {
 }
 // A golden flight, once up, keeps its arch over the way it really flies
 // (once a tick, from onTick): held on, the arch stretches to the head, a
-// tick more; turned, a new arch from the turn; let go short of the plain
-// hop's cells, it comes down a cell on, where the engine puts it.
+// tick more; turned, a new arch from the turn; down sooner than drawn (a
+// bump), it comes down where the engine puts it.
 function flying(s, now) {
   const a = anim.get(s), r = a?.hops[a.hops.length - 1];
   if (!r || !r.gold || r.tick === game.tick) return;
@@ -800,7 +800,7 @@ function flying(s, now) {
     const top = a.hops[a.hops.length - 1];
     top.until = Math.max(top.until, game.tick + s.body.length + 2);
     a.leapUntil = Math.max(a.leapUntil || 0, top.until);
-  } else if (!r.landed && t + 1 < r.n) { r.n = t + 1; r.x1 = h.x - r.dx; r.y1 = h.y - r.dy; } // (let go early: down here, now)
+  } else if (!r.landed && t + 1 < r.n) { r.n = t + 1; r.x1 = h.x - r.dx; r.y1 = h.y - r.dy; } // (down sooner than drawn: here, now)
 }
 // The island hop's landing ring: where a jump comes down, on the ground
 // under it, in the jump's sky (a golden one's Honey), inked. Every snake
@@ -813,7 +813,7 @@ function drawLandings(now) {
   for (const s of game.snakes) {
     if (!s.alive) continue;
     let x, y, gold = s.leaps > 0;
-    if (s.flight?.land) { const f = s.flight, c = f.gold && f.held && f.over.length ? f.over[0] : f.land; x = c.x; y = c.y; gold = !!f.gold; } // (held over the plain hop's cells, a golden flight let go comes down on the next one)
+    if (s.flight?.land) { const c = s.flight.ring || s.flight.land; x = c.x; y = c.y; gold = !!s.flight.gold; } // (its ring: a committed golden flight's, GOLD_FLY cells out)
     else if (s.id === viewerId) {
       const a = anim.get(s);
       if (!a || !a.lr) continue;
