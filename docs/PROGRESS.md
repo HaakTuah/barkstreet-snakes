@@ -8,7 +8,7 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
 **2 November 2026, a fresh week:** the main lane is part 4 (#198, merged as it stands so the owner can play it), then
-2y, then part 5 (#202, unparked: the wrap's trade-off), then 2x, then 2z, then 2u; the polish
+2y (done, PR #373; the flight's question is #399), then part 5 (#202, unparked: the wrap's trade-off), then 2x, then 2z, then 2u; the polish
 lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
@@ -82,21 +82,6 @@ and the owner's notes of 2 November, among them).
 trademark (distance) or a fault; in the same entry, apples by the edge rotting (#324): 80% of the apples that rot lie on
 the edge row or one in, passed up by rivals whose room and margin weights count a safe edge cell against them, so it
 tests a safe-meal exception like the one by the neck (`MEAL_DAWDLE`), measured both ways; the snake that starved 4 s after its warning (#327) is a bug any lane may take.
-
-### 2y. Rivals take landings, then the flight and leap now measured again (the owner, 2 November 2026; an AI entry, next)
-
-Part 4 merges as it stands (#363; the owner: "But what they have for now can be merged, I'd like to play it myself.").
-The flight's worth is dodging a contested landing and leap now's is cutting a flier off, so both look flat while the
-rivals seldom go for a landing (the owner: "I suspect the enemy AI might be the big problem. jumps are risky because
-someone can cut you off, and insta kill you, by being where you land. but if the enemies don't do this, then landing
-wherever doesn't matter so much."). About a day, in order: (0) the held flight always flies the full 5 cells,
-steerable, never cut short, a quick press still the plain golden hop ("The golden jump flies" in
-`docs/design/29-round-six-b-the-new-moves.md`; cue, lesson and Field guide row with it; online in step); (1) measure, per round, how often a rival goes for a landing
-(steps or flashes into a landing ring, or leaps now to cut a flier off) and how often a jumper steers away from a
-contested one; (2) the rivals take landings when it pays, each in its style (Sniper most, Desperado for the thrill, Drab
-hardly ever), planned from the visible ring, never by reaction ("Clever rivals, human reactions"); (3) the flight and
-leap now measured both ways again, and per use, leap now included ("Every new move is tested both ways"). If they pay,
-done; if still flat, the PR says so as a design finding.
 
 ### 5 (part 5). Gold portals, unparked (the owner, 2 November 2026; an engine-rules entry, right after 2y)
 
