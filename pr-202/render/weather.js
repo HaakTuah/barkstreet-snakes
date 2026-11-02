@@ -1,5 +1,5 @@
-// The renderer (see render/core.js): fire and its scorch, the sky's tint,
-// rain, lightning and rainbows.
+// The renderer (see render/core.js): fire and its scorch, a snake on fire, a
+// squashed bead's splat, the sky's tint, rain, lightning and rainbows.
 
 // ------------------------------------------------------------ weather
 
@@ -126,6 +126,44 @@ function sootBlob(p, key, rx, ry) {
   p.closePath();
 }
 
+// A bead squashed under its owner's head (2o): a flat splat in the bead's
+// own colour, a little wider than the bead, with a darker rim, a sheen and a
+// few drops flung round it. It spreads out in a blink, lies there, and fades
+// over SPLAT_MS (with reduced motion it is simply there, and fades).
+const splats = []; // { x, y, at, fill, key }
+const SPLAT_MS = 3000;
+function addSplat(x, y, fill, now) {
+  splats.push({ x, y, at: now, fill, key: (y * GRID + x) * 7 + (game.tick % 97) });
+}
+function drawSplats(now) {
+  for (let i = splats.length - 1; i >= 0; i--) if (now - splats[i].at > SPLAT_MS) splats.splice(i, 1);
+  for (const s of splats) {
+    const t = (now - s.at) / SPLAT_MS, grow = reduced ? 1 : Math.max(0.55, Math.min(1, 0.55 + (now - s.at) / 260));
+    const cx = (s.x + 0.5) * CELL, cy = (s.y + 0.5) * CELL, r = CELL * 0.4 * grow;
+    ctx.globalAlpha = Math.min(1, (1 - t) * 1.6);
+    ctx.beginPath(); // (the splat: an uneven, flat blob, and its drops)
+    const N = 9;
+    let px = 0, py = 0;
+    for (let j = 0; j <= N + 1; j++) {
+      const k = j % N, a = k / N * TAU, w = 0.72 + 0.5 * noise(s.key, k, 41);
+      const x = cx + Math.cos(a) * r * w, y = cy + Math.sin(a) * r * w * 0.86;
+      if (j === 1) ctx.moveTo((px + x) / 2, (py + y) / 2);
+      else if (j > 1) ctx.quadraticCurveTo(px, py, (px + x) / 2, (py + y) / 2);
+      px = x; py = y;
+    }
+    ctx.closePath();
+    for (let j = 0; j < 4; j++) {
+      const a = noise(s.key, j, 42) * TAU, d = r * (1.15 + 0.35 * noise(s.key, j, 43)), dr = CELL * (0.035 + 0.035 * noise(s.key, j, 44)) * grow;
+      ctx.moveTo(cx + Math.cos(a) * d + dr, cy + Math.sin(a) * d * 0.86); ctx.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.86, dr, 0, TAU);
+    }
+    ctx.fillStyle = s.fill; ctx.fill();
+    ctx.strokeStyle = mix(s.fill, INK, 0.35); ctx.lineWidth = CELL * 0.04; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)'; // (a wet sheen)
+    ctx.beginPath(); ctx.ellipse(cx - r * 0.25, cy - r * 0.25, r * 0.3, r * 0.14, -0.5, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
 // Fire on the bark: smouldering cells glow, burning cells flame (deadly),
 // sending up embers and smoke. (Lightning on its way: see drawStrikes.)
 const fireGlowSprite = () => sprite('fireglow', '', drawFireGlow);
@@ -214,6 +252,22 @@ function drawFire(alpha, now) {
     if (lively && Math.random() < 0.06) mote(x, y - c * 0.4, (Math.random() - 0.5) * 8, -20, 1800, 4 + Math.random() * 3, 2);
   }
 }
+// A snake on fire: flames along its back (the fire's own flicker, smaller,
+// dying down as it goes out), a glow under them, embers and smoke going up.
+function drawBurning(s, a, now) {
+  const lively = !reduced, t = now / 1000, left = Math.min(1, (s.burnUntil - game.tick) / (T.BURN_TICKS / 2));
+  const size = SPRITE * CELL * (0.45 + 0.25 * left);
+  for (let i = 1; i < a.n && i < 12; i += 2) {
+    const x = a.pts[2 * i], y = a.pts[2 * i + 1];
+    ctx.globalAlpha = 0.45;
+    ctx.drawImage(fireGlowSprite(), x - size * 0.6, y - size * 0.6, size * 1.2, size * 1.2);
+    ctx.globalAlpha = 1;
+    const fr = lively ? Math.floor(t * 14 + i * 3) % FLAME_FRAMES : 0;
+    ctx.drawImage(bodyFlameSprite(fr), x - size / 2, y - size * 0.62, size, size);
+    if (lively && Math.random() < 0.05) mote(x, y - CELL * 0.3, (Math.random() - 0.5) * 12, -40 - Math.random() * 20, 650, 1.3 + Math.random(), 3);
+    if (lively && Math.random() < 0.03) mote(x, y - CELL * 0.3, (Math.random() - 0.5) * 6, -18, 1100, 2.5 + Math.random() * 2, 2);
+  }
+}
 // Lightning on its way: a ring closing in on the cell, so you can see how
 // long there is, and a bolt in the middle, both opaque and inked like every
 // other mark on the board, with a soft glow round the ring. Over the storm's gloom (see-through and under it, the mark of
@@ -291,8 +345,7 @@ function buildRainTile() {
   g.strokeStyle = 'rgba(220,232,255,0.6)';
   g.lineWidth = 1.5;
   g.lineCap = 'round';
-  let seed = 99;
-  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const rnd = seededRnd(99);
   g.beginPath();
   for (let i = 0; i < 60; i++) {
     const x = rnd() * n, y = rnd() * n, len = 14 + rnd() * 10;

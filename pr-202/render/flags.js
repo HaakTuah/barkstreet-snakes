@@ -238,54 +238,70 @@ const drawBannerCloth = (g, col) => {
   g.lineTo(cx + cw / 4, cy - ch * 0.05); g.lineTo(cx + cw / 2, cy - ch / 2); g.lineTo(cx + cw / 2, cy + ch / 2); g.closePath();
   g.fillStyle = '#3a2614'; g.fill();
 };
-// (At cx, cy in cells; tilted about its pole's foot and scaled, as it's
-// carried; fluttering on its own beat; once it's at rest on a cell, bent by
+// (At cx, cy in cells; scaled about its pole's foot as it's planted;
+// fluttering on its own beat; once it's at rest on a cell, bent by
 // a snake on it: see bendOn.)
-function drawBanner(cx, cy, col, now, tilt = 0, sc = 1, beat = cx) {
-  const x = cx * CELL + CELL / 2, y = cy * CELL + CELL / 2, turned = tilt || sc !== 1;
-  if (turned) { ctx.save(); ctx.translate(x, y + CELL * 0.6); ctx.rotate(tilt); ctx.scale(sc, sc); ctx.translate(-x, -y - CELL * 0.6); }
+function drawBanner(cx, cy, col, now, sc = 1, beat = cx) {
+  const x = cx * CELL + CELL / 2, y = cy * CELL + CELL / 2, scaled = sc !== 1;
   const bent = Number.isInteger(cx) && Number.isInteger(cy) && bendOn(cx, cy, now), top = y - CELL * 0.95 - 1;
-  if (bent && !overSnakes) { bentLater.push({ x: cx, y: cy, col, beat, tilt, banner: true }); if (turned) ctx.restore(); return; }
+  if (!overSnakes) { // (under the snakes: only one hit head-on, lying flat; the rest wait, see drawBentFlags)
+    if (bent && lying()) {
+      bentPole(x, y, true);
+      if (!wrapping(now)) { clothFrame(x, y, x + 1.5, top); bannerCloth(x + 1.5, top, col, now, beat); ctx.restore(); }
+      else flagsLater.push({ x: cx, y: cy, col, beat, wrap: bendNowB, banner: true });
+      return;
+    }
+    flagsLater.push({ x: cx, y: cy, col, beat, sc, banner: true });
+    return;
+  }
+  if (scaled) { ctx.save(); ctx.translate(x, y + CELL * 0.6); ctx.scale(sc, sc); ctx.translate(-x, -y - CELL * 0.6); }
   bentPole(x, y, bent);
   if (bent) clothFrame(x, y, x + 1.5, top);
+  bannerCloth(x + 1.5, top, col, now, beat);
+  if (bent) ctx.restore();
+  if (scaled) ctx.restore();
+}
+function bannerCloth(x, top, col, now, beat) {
   const sp = bannerSprite(col), half = SPRITE * CELL / 2, dev = sp.width / (SPRITE * CELL);
   const w = CELL * BANNER_W, h = CELL * BANNER_H + 2, sw = w / FLAG_STRIPS;
   for (let i = 0; i < FLAG_STRIPS; i++) {
     const out = (i + 0.5) / FLAG_STRIPS;
     const dy = reduced ? 0 : Math.sin(now / 200 - i * 0.9 + beat) * CELL * 0.05 * out;
-    ctx.drawImage(sp, (half + i * sw) * dev, (half - h / 2) * dev, (sw + 0.6) * dev, h * dev, x + 1.5 + i * sw, top + dy, sw + 0.6, h);
+    ctx.drawImage(sp, (half + i * sw) * dev, (half - h / 2) * dev, (sw + 0.6) * dev, h * dev, x + i * sw, top + dy, sw + 0.6, h);
   }
-  if (bent) ctx.restore();
-  if (turned) ctx.restore();
 }
-// Sovereign's banner over its capital, as drawn. When the capital moves,
-// it goes too: a quick glide as the realm drifts a cell; pecked out from
-// under it, it teeters over the pit until the realm moves (at once, as
-// the rules have it), and is carried there, lifted (bigger) and leaning
-// the way it's going. While the land under it is there, as before, or
-// while it's on its way. With reduced motion it's simply at the new
-// capital, and doesn't teeter.
-const BANNER_GLIDE_MS = 240, BANNER_CARRY_MS = 700;
+// Sovereign's banner over its capital, as drawn. When the realm drifts a
+// cell, it glides there. When a gap opens under it (the owner, 2 November
+// 2026: flags fall, they don't jump), it falls as a colony's flag does,
+// with the piece if it stood on one cut loose (see drawFallenFlags), and a
+// new one is planted at the new capital, popping up as food does. With
+// reduced motion it's simply at the new capital.
+const BANNER_GLIDE_MS = 240;
 function drawRealmBanner(r, home, now) {
   let b = r.banner;
-  if (!b) b = r.banner = { fx: home.x, fy: home.y, tx: home.x, ty: home.y, at: -1e9, carry: false };
-  const dur = b.carry ? BANNER_CARRY_MS : BANNER_GLIDE_MS;
-  let u = reduced ? 1 : Math.max(0, Math.min(1, (now - b.at) / dur)), e = u * u * (3 - 2 * u);
-  if (home.x !== b.tx || home.y !== b.ty) { // (moved: from where it's drawn now)
-    const fx = b.fx + (b.tx - b.fx) * e, fy = b.fy + (b.ty - b.fy) * e;
-    b.carry = !!holeMask[b.ty * GRID + b.tx];
-    b.fx = fx; b.fy = fy; b.tx = home.x; b.ty = home.y; b.at = now;
-    u = reduced ? 1 : 0; e = u;
+  if (!b) b = r.banner = { fx: home.x, fy: home.y, tx: home.x, ty: home.y, at: -1e9, fell: false, planted: -1e9 };
+  let u = reduced ? 1 : Math.max(0, Math.min(1, (now - b.at) / BANNER_GLIDE_MS)), e = u * u * (3 - 2 * u);
+  const fall = (x, y) => { b.fell = true; fallenFlags.push({ owner: r.owner, x, y, col: r.color, beat: x, at: now, piece: pieceOn(y * GRID + x) }); };
+  if (home.x !== b.tx || home.y !== b.ty) {
+    if (!b.fell && game.holes.has(b.ty * GRID + b.tx)) fall(b.tx, b.ty); // (pecked and moved between two frames: it still falls, not glides over the pit)
+    if (b.fell) { b.fx = b.tx = home.x; b.fy = b.ty = home.y; b.fell = false; b.planted = now; u = e = 1; } // (its old one gone into the pit: a new one planted at the new capital)
+    else { // (drifted a cell: it glides from where it's drawn now)
+      const fx = b.fx + (b.tx - b.fx) * e, fy = b.fy + (b.ty - b.fy) * e;
+      b.fx = fx; b.fy = fy; b.tx = home.x; b.ty = home.y; b.at = now;
+      u = reduced ? 1 : 0; e = u;
+    }
   }
-  const x = u >= 1 ? b.tx : b.fx + (b.tx - b.fx) * e, y = u >= 1 ? b.ty : b.fy + (b.ty - b.fy) * e, key = home.y * GRID + home.x;
-  const pecked = u >= 1 && !!holeMask[key] && !r.gone;
-  if (u >= 1 && !pecked && !r.shown[key]) return;
-  let tilt = 0, sc = 1;
-  if (u < 1 && b.carry) { const l = Math.sin(u * Math.PI); sc = 1 + 0.2 * l; tilt = 0.3 * l * (b.tx >= b.fx ? 1 : -1); }
-  else if (pecked && !reduced) tilt = Math.sin(now / 85) * 0.2;
-  drawBanner(x, y, r.color, now, tilt, sc, home.x);
+  const key = home.y * GRID + home.x;
+  if (u >= 1 && game.holes.has(key)) { // (a gap opened under it: it falls, as a colony's flag does)
+    if (!b.fell) fall(home.x, home.y);
+    return;
+  }
+  const x = u >= 1 ? b.tx : b.fx + (b.tx - b.fx) * e, y = u >= 1 ? b.ty : b.fy + (b.ty - b.fy) * e;
+  if (u < 1) flagSeen(key, now); // (in sight as it glides there, so it eases over as it lands on a snake, not snapping as if new)
+  if (u >= 1 && !r.shown[key]) return;
+  drawBanner(x, y, r.color, now, popOf(now - b.planted), home.x);
 }
-// A flag a snake lies on bends over (Haakon, 29 October 2026): any part
+// A flag a snake lies on bends over (the owner, 29 October 2026): any part
 // of any snake on its tile pushes the pole over from its foot the way
 // that snake came onto the tile (from the cell before it in the body), and
 // its cloth trails low behind; it stays so while the body's there, and
@@ -293,29 +309,51 @@ function drawRealmBanner(r, home, now) {
 // Once the tile's free it swings upright, a short wobble dying away. With
 // reduced motion it simply leans while covered and stands up again. Seen,
 // not played: each screen draws it from the snakes it has. While it
-// leans it's drawn over the snakes, so it shows. The lean is
+// leans it's drawn over the snakes, so it shows (as every flag is: see
+// drawBentFlags). The lean is
 // eased from wherever it was to wherever it's going, so a change never
 // jumps: east and west tip the pole over sideways; north (away) leaves it
 // tall but hangs its cloth down; south (towards you) foreshortens it.
-const BEND = 0.6, BEND_SIDE = 0.45, BEND_IN_MS = 110, SPRING_MS = 900, SPRING_PERIOD = 330;
-const flagBends = new Map(); // tile -> { who, at, on, seen, from: [the look it eased from], to: [the push's] }
-const bentLater = []; // (this frame's, to draw over the snakes: see drawBentFlags)
-let overSnakes = false;
+// Hit head-on (2p: a head coming straight at it from north or south, with
+// no side to push it to), it's knocked flat ahead of the head, the pole
+// laid along the way it's going, its cloth wrapped round the head for
+// WRAP_MS (over the snakes), then trailing under the body (under them);
+// it springs back up as any does. (With reduced motion: no wrap, flat at
+// once.)
+const BEND = 0.6, BEND_SIDE = 0.45, BEND_IN_MS = 110, SPRING_MS = 900, SPRING_PERIOD = 330, WRAP_MS = 260;
+const flagBends = new Map(); // tile -> { who, at, on, seen, head, from: [the look it eased from], to: [the push's] }
+// (The frame each flag's tile was last drawn in, by its clock. A flag
+// that wasn't drawn in the last frame drawn, planted with a snake already
+// on its tile, as a new colony is under Colonist's head, starts bent: it
+// was never seen standing, so it doesn't stand for a frame and then snap
+// over, or wrap the head that planted it. Frames, not ms, so watching at 4x
+// or a slow phone's long frames never count a flag in sight as new.)
+const flagLastSeen = new Map();
+let flagFrame = -1, flagFramePrev = -1;
+function flagSeen(key, now) { // (and whether it's new: not drawn last frame, nor yet this one)
+  if (now !== flagFrame) { flagFramePrev = flagFrame; flagFrame = now; }
+  const last = flagLastSeen.get(key);
+  flagLastSeen.set(key, now);
+  return last !== now && last !== flagFramePrev;
+}
+const flagsLater = []; // (this frame's, to draw over the snakes: see drawBentFlags)
+let overSnakes = false, bendNowB = null; // (bendNowB: the bend bendOn last looked at)
 // (What's eased is the look itself, [tilt, lean, turn, push]: the pole's
 // tilt about its foot; how far it leans north (-1) or south (1); the
 // cloth's turn (1 as it flies, -1 turned round to trail west); and how
-// hard it's pushed, for the cloth's droop. So no change of snake jumps.)
-const look = [0, 0, 1, 0];
+// hard it's pushed, for the cloth's droop; and how flat it's laid, a head-on
+// hit's. So no change of snake jumps.)
+const look = [0, 0, 1, 0, 0];
 let leanX = 0, leanY = 0; // (a step onto a cell: see stepOnto)
 function flagLean(b, now) {
   const t = now - b.at, f0 = b.from, f1 = b.to;
   if (b.on) {
     const u = reduced ? 1 : Math.min(1, t / BEND_IN_MS), e = u * u * (3 - 2 * u);
-    for (let i = 0; i < 4; i++) look[i] = f0[i] + (f1[i] - f0[i]) * e;
-  } else if (reduced || t >= SPRING_MS) { look[0] = look[1] = look[3] = 0; look[2] = 1; }
+    for (let i = 0; i < 5; i++) look[i] = f0[i] + (f1[i] - f0[i]) * e;
+  } else if (reduced || t >= SPRING_MS) { look[0] = look[1] = look[3] = look[4] = 0; look[2] = 1; }
   else { // (springing back: the wobble swings the pole, not the cloth round)
     const f = Math.exp(-t / 200) * Math.cos(t / SPRING_PERIOD * TAU);
-    look[0] = f0[0] * f; look[1] = f0[1] * f; look[3] = f0[3] * f; look[2] = 1 + (f0[2] - 1) * Math.max(0, f);
+    look[0] = f0[0] * f; look[1] = f0[1] * f; look[3] = f0[3] * f; look[2] = 1 + (f0[2] - 1) * Math.max(0, f); look[4] = f0[1] > 0 ? f0[4] : 0; // (flat only towards you: one laid north swings up through upright)
   }
 }
 // (Where on s's body the cell x, y is, or -1.)
@@ -341,21 +379,24 @@ function stepOnto(s, i) {
 function bendOn(x, y, now) {
   const key = y * GRID + x;
   let b = flagBends.get(key), who = null, at = -1;
+  const fresh = flagSeen(key, now) && !b;
   if (b && b.who && b.who.alive && (at = cellOn(b.who, x, y)) >= 0) who = b.who;
   else for (const s of game.snakes) if (s.alive && (at = cellOn(s, x, y)) >= 0) { who = s; break; }
   if (!b) {
     if (!who) return false;
-    flagBends.set(key, b = { who: null, at: now, on: false, seen: now, from: [0, 0, 1, 0], to: [0, 0, 1, 0] });
+    flagBends.set(key, b = { who: null, at: now, on: false, seen: now, head: false, from: [0, 0, 1, 0, 0], to: [0, 0, 1, 0, 0] });
   }
-  b.seen = now;
+  b.seen = now; bendNowB = b;
   if (who !== b.who) { // (a snake came on, another took over, or it's free: from how it looks now)
     flagLean(b, now);
-    for (let i = 0; i < 4; i++) b.from[i] = look[i];
-    b.at = now; b.who = who; b.on = !!who;
+    for (let i = 0; i < 5; i++) b.from[i] = look[i];
+    b.at = now; b.who = who; b.on = !!who; b.head = false;
     if (who) {
       stepOnto(who, at);
       const l = Math.hypot(leanX, leanY) || 1, dx = leanX / l, dy = leanY / l;
-      b.to[0] = BEND * dx + BEND_SIDE * Math.abs(dy); b.to[1] = dy; b.to[2] = dx > 0 ? 1 - 2 * dx : 1; b.to[3] = 1;
+      b.head = !dx && at === 0; // (head-on: knocked flat, see WRAP_MS)
+      b.to[0] = b.head ? 0 : BEND * dx + BEND_SIDE * Math.abs(dy); b.to[1] = dy; b.to[2] = dx > 0 ? 1 - 2 * dx : 1; b.to[3] = 1; b.to[4] = b.head ? 1 : 0;
+      if (fresh) { for (let i = 0; i < 5; i++) b.from[i] = b.to[i]; b.at = now - Math.max(BEND_IN_MS, WRAP_MS); } // (planted under it: bent already, no wrap)
     }
   }
   flagLean(b, now);
@@ -367,9 +408,14 @@ function bendOn(x, y, now) {
 function forgetBends(now) {
   for (const [key, b] of flagBends) if (b.seen !== now) flagBends.delete(key);
 }
-// (South foreshortens the pole; north stretches it a touch, as a pole
-// leaning away does.)
-const poleScale = () => look[1] > 0 ? 1 - 0.25 * look[1] : 1 - 0.08 * look[1];
+// (South foreshortens the pole, and laid flat turns it right round, lying
+// towards you; north stretches it a touch, as a pole leaning away does.)
+const poleScale = () => look[1] > 0 ? 1 - (0.25 + 1.65 * look[4]) * look[1] : 1 - 0.08 * look[1];
+// (The flag bendOn last looked at: laid flat by a head under it, and still
+// wrapped round that head.)
+const laidFlat = () => bendNowB.on && bendNowB.head;
+const lying = () => laidFlat() || (look[4] > 0 && look[1] > 0.3); // (or still lying towards you as it springs back: under what's just gone over it)
+const wrapping = now => !reduced && laidFlat() && now - bendNowB.at < WRAP_MS;
 // A pole as bent, and the frame its cloth hangs in at ax, ay (on the pole
 // as it stands): moved with the pole's top, not turned with it, it trails
 // behind the push (pushed east, it's turned round, edge on halfway) and
@@ -500,48 +546,103 @@ function drawColonyFlags(r, now) {
     const key = c.y * GRID + c.x, n = c.n || 1, kind = n === 1 ? 'union' : n % 2 ? 'red' : 'blue';
     if (holeMask[key]) { fellIn(r, c, kind, now); continue; }
     if (!r.shown[key]) continue;
-    if (bendOn(c.x, c.y, now)) { bentLater.push({ x: c.x, y: c.y, kind, beat: c.x * 0.7 + c.y * 1.3, banner: false }); continue; }
-    const x = c.x * CELL + CELL / 2, y = c.y * CELL + CELL / 2;
-    flagPole(x, y);
-    drawFlag(x + 1.5, y - CELL * 0.92, now, c.x * 0.7 + c.y * 1.3, kind);
+    const x = c.x * CELL + CELL / 2, y = c.y * CELL + CELL / 2, top = y - CELL * 0.92, beat = c.x * 0.7 + c.y * 1.3;
+    if (bendOn(c.x, c.y, now) && lying()) { // (knocked flat by a head: under the snakes, but its wrap over them)
+      bentPole(x, y, true);
+      if (!wrapping(now)) { clothFrame(x, y, x + 1.5, top); drawFlag(x + 1.5, top, now, beat, kind); ctx.restore(); }
+      else flagsLater.push({ x: c.x, y: c.y, kind, beat, wrap: bendNowB, banner: false });
+      continue;
+    }
+    flagsLater.push({ x: c.x, y: c.y, kind, beat, banner: false });
   }
 }
-// The flags bent this frame, drawn over the snakes (under them, a snake
-// on one hid it), then forgotten.
+// The flags, drawn over the snakes (2p): a pole and cloth stand up off
+// their tile, so whatever is on the tiles behind it (above it on screen)
+// is behind it; but not over what stands in front of it, the row below,
+// whose cells (a head's a little higher, for its face) are cut out of
+// where it's drawn. Upper flags first, so a lower one is in front. A flag
+// wrapped round a head is its cloth only, round that head (see
+// wrapCloth). Then forgotten.
 function drawBentFlags(now) {
   overSnakes = true;
-  for (const f of bentLater) {
-    if (f.banner) { drawBanner(f.x, f.y, f.col, now, f.tilt, 1, f.beat); continue; } // (its shake, if pecked, kept)
-    const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2;
-    bendOn(f.x, f.y, now);
-    bentPole(x, y, true);
-    clothFrame(x, y, x + 1.5, y - CELL * 0.92);
-    drawFlag(x + 1.5, y - CELL * 0.92, now, f.beat, f.kind);
+  flagsLater.sort((a, b) => a.y - b.y);
+  for (const f of flagsLater) {
+    if (f.wrap) { wrapCloth(f, now); continue; }
+    ctx.save();
+    clipFront(f.x, f.y);
+    if (f.banner) drawBanner(f.x, f.y, f.col, now, f.sc, f.beat); // (its size, if just planted, kept)
+    else {
+      const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2, bent = bendOn(f.x, f.y, now);
+      bentPole(x, y, bent);
+      if (bent) clothFrame(x, y, x + 1.5, y - CELL * 0.92);
+      drawFlag(x + 1.5, y - CELL * 0.92, now, f.beat, f.kind);
+      if (bent) ctx.restore();
+    }
     ctx.restore();
   }
   overSnakes = false;
-  bentLater.length = 0;
+  flagsLater.length = 0;
+}
+// (The clip for a flag at x, y: the board, less every snake's cells on the
+// row in front of it, near it.)
+function clipFront(fx, fy) {
+  const row = Math.round(fy) + 1, cx = Math.round(fx);
+  frontLift.fill(0);
+  for (const s of game.snakes) {
+    if (!s.alive) continue;
+    for (let i = -1; i < s.body.length; i++) { // (-1: where its head was, as it's drawn sliding from there)
+      const c = i < 0 ? s.prev && s.prev[0] : s.body[i], j = c ? c.x - cx + 1 : -1;
+      if (c && c.y === row && j >= 0 && j < 4) frontLift[j] = Math.max(frontLift[j], i <= 0 ? 0.35 : 0.2); // (its outline, and a head its face)
+    }
+  }
+  if (!frontLift[0] && !frontLift[1] && !frontLift[2] && !frontLift[3]) return; // (nothing in front: no clip)
+  ctx.beginPath();
+  ctx.rect(-CELL, -CELL * 2, SIZE + CELL * 2, SIZE + CELL * 4);
+  for (let j = 0; j < 4; j++) if (frontLift[j]) ctx.rect((cx - 1 + j) * CELL, (row - frontLift[j]) * CELL, CELL, CELL * (1 + frontLift[j])); // (one each: even-odd, two would cancel)
+  ctx.clip('evenodd');
+}
+const frontLift = new Float32Array(4); // (the columns from one left of the flag to two right of it)
+// A flag knocked flat by a head, its cloth wrapped round that head for a
+// moment: across the front of the head as it's drawn, its ends folded back
+// along its sides, and slipping off under it at the end.
+function wrapCloth(f, now) {
+  const b = f.wrap, s = b.who, a = s && anim.get(s);
+  if (!a) return;
+  const u = Math.min(1, (now - b.at) / WRAP_MS), d = s.dir.y >= 0 ? 1 : -1;
+  const sp = f.banner ? bannerSprite(f.col) : flagSprite(f.kind), half = SPRITE * CELL / 2, dev = sp.width / (SPRITE * CELL);
+  const sw0 = CELL * (f.banner ? BANNER_W : UNION_W), h0 = CELL * (f.banner ? BANNER_H : UNION_H);
+  const w = CELL * 0.95, h = h0 * 0.62, sw = w / FLAG_STRIPS, front = a.by + d * CELL * (0.28 - 0.3 * u * u);
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, (1 - u) * 3.5);
+  for (let i = 0; i < FLAG_STRIPS; i++) {
+    const q = (i + 0.5) / FLAG_STRIPS * 2 - 1, fold = q * q * CELL * 0.32; // (its ends folded back along the head's sides)
+    const flap = Math.sin(now / 90 + i) * CELL * 0.02;
+    ctx.drawImage(sp, (half + i * sw0 / FLAG_STRIPS) * dev, (half - h0 / 2) * dev, (sw0 / FLAG_STRIPS + 0.6) * dev, h0 * dev, a.bx - w / 2 + i * sw, front - d * fold - h / 2 + flap, sw + 0.6, h);
+  }
+  ctx.restore();
 }
 const FALL_MS = 760, FALL_STILL_MS = 400;
-const fallenFlags = []; // { owner, x, y, kind, beat, at }
+const fallenFlags = []; // { owner, x, y, kind (a colony's) or col (a capital's banner), beat, at, piece (the piece cut loose it stands on, or null) }
 function fellIn(r, c, kind, now) {
   for (const f of fallenFlags) if (f.owner === r.owner && f.x === c.x && f.y === c.y) return;
-  fallenFlags.push({ owner: r.owner, x: c.x, y: c.y, kind, beat: c.x * 0.7 + c.y * 1.3, at: now });
+  const key = c.y * GRID + c.x;
+  fallenFlags.push({ owner: r.owner, x: c.x, y: c.y, kind, beat: c.x * 0.7 + c.y * 1.3, at: now, piece: pieceOn(key) });
   r.fallen.push({ x: c.x, y: c.y, radius: c.radius, at: now });
 }
 function drawFallenFlags(now) {
   for (let i = fallenFlags.length - 1; i >= 0; i--) {
-    const f = fallenFlags[i], u = (now - f.at) / (reduced ? FALL_STILL_MS : FALL_MS);
-    if (u >= 1) { // (gone: forgotten once Colonist has forgotten the colony)
+    const f = fallenFlags[i], u = f.piece ? fallT(f.piece, now) : (now - f.at) / (reduced ? FALL_STILL_MS : FALL_MS);
+    if (u >= 1) { // (gone: a colony's forgotten once Colonist has forgotten the colony)
       let kept = false;
-      for (const c of f.owner.memory.colonies || NO_SITES) if (c.x === f.x && c.y === f.y) kept = true;
+      if (!f.col) for (const c of f.owner.memory.colonies || NO_SITES) if (c.x === f.x && c.y === f.y) kept = true;
       if (!kept) fallenFlags.splice(i, 1);
       continue;
     }
     const x = f.x * CELL + CELL / 2, y = f.y * CELL + CELL / 2, foot = y + CELL * 0.6;
     ctx.save();
-    if (reduced) ctx.globalAlpha = 1 - u;
-    else { // (tipping over the way it flies, then dropping in: smaller and fading into the dark)
+    if (f.piece) fallMove(f.piece, u * u); // (on a piece cut loose: it goes down with the piece, as its food does)
+    else if (reduced) ctx.globalAlpha = 1 - u;
+    else { // (pecked out under it: tipping over the way it flies, then dropping in, smaller and fading into the dark)
       const tip = Math.min(1, u / 0.45), drop = Math.max(0, (u - 0.35) / 0.65), s = 1 - 0.65 * drop;
       ctx.globalAlpha = 1 - drop * drop;
       ctx.translate(x, foot + drop * CELL * 0.3);
@@ -550,7 +651,8 @@ function drawFallenFlags(now) {
       ctx.translate(-x, -foot);
     }
     flagPole(x, y);
-    drawFlag(x + 1.5, y - CELL * 0.92, now, f.beat, f.kind);
+    if (f.col) bannerCloth(x + 1.5, y - CELL * 0.95 - 1, f.col, now, f.beat);
+    else drawFlag(x + 1.5, y - CELL * 0.92, now, f.beat, f.kind);
     ctx.restore();
   }
 }

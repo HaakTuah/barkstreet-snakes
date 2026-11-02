@@ -224,19 +224,6 @@ function drawBody(s, a, now, dead) {
     ctx.stroke();
     ctx.setLineDash(NO_DASH);
   }
-  if (s.personaKey === 'capricious') { // always findable, whatever the mood: a pink ring that breathes, pale dashes running round it
-    ctx.strokeStyle = '#ec4899';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(pts[0], pts[1], rad[0] + 2.5 + (reduced ? 0 : Math.sin(now / 240) * 1.2), 0, TAU);
-    ctx.stroke();
-    ctx.strokeStyle = '#fdf2f8';
-    ctx.setLineDash(MOOD_DASH);
-    ctx.lineDashOffset = reduced ? 0 : -now / 35;
-    ctx.stroke();
-    ctx.setLineDash(NO_DASH);
-    ctx.lineDashOffset = 0;
-  }
   if (a.star && !dead) shedTwinkle(s, a, now);
 
   // Head features, drawn in a frame where +x points the way the snake faces.
@@ -260,8 +247,10 @@ function drawBody(s, a, now, dead) {
   ctx.rotate((a.star ? a.face : a.turn) + lean); // (and stunned, its wobble: see prepare)
   const faceScale = 1.1 * (1 + a.bump) * (1 + a.swell);
   ctx.scale(faceScale * (1 - 0.22 * a.squash), faceScale * (1 + 0.12 * a.squash)); // (come down from a jump: squashed along the way it's going, a moment)
+  const change = dead ? -1 : costumeChange(s, a, now); // (how far through a costume change, or -1)
   if (a.isPlayer) drawPlayerFace(s, a, now, blinking);
-  else drawFace(s, look, color, blinking, a);
+  else if (change < 0) drawFace(s, look, color, blinking, a);
+  else drawChange(s, a, look, color, blinking, change);
   if (!dead && a.growl) drawGrowl(a, now); // (hungry, in the warning's seconds: its growl)
   ctx.restore();
 
@@ -292,22 +281,8 @@ function drawBody(s, a, now, dead) {
       ctx.stroke();
     }
   }
-
-  // Capricious: a ring that flashes out when its mood changes.
-  if (!reduced && s.personaKey === 'capricious' && s.memory.moodChangedAt != null && game) {
-    const age = Math.max(0, shownTime - s.memory.moodChangedAt); // (it may have changed its mind ahead of the tick that shows it)
-    if (age < T.MOOD_RING_MS) {
-      ctx.strokeStyle = color;
-      ctx.globalAlpha *= 1 - age / T.MOOD_RING_MS;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(pts[0], pts[1], CELL * (0.6 + 1.6 * age / T.MOOD_RING_MS), 0, TAU);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-  }
 }
-const DASH = [3, 3], NO_DASH = [], MOOD_DASH = [5, 7];
+const DASH = [3, 3], NO_DASH = [];
 // A body over a pit (see sinkOf): with nothing under it to light it from
 // below, its side away from the light (down and to the right) is in shade,
 // the more the further over the pit it is; and a tail end hanging into the

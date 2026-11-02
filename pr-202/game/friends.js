@@ -1,5 +1,5 @@
-// The game controller (see game/core.js): the Hall of Fame, and playing with
-// friends online: hosting, joining and leaving.
+// The game controller (see game/core.js): the Hall of Fame and the Field
+// guide (one book), and playing with friends online: hosting, joining and leaving.
 
 // ------------------------------------------------------ Hall of Fame
 
@@ -52,7 +52,7 @@ function renderRecords() {
   recordsTabs.forEach(t => t.setAttribute('aria-pressed', String(t.dataset.tab === recordsTab)));
   filterTabs.forEach(t => t.setAttribute('aria-pressed', String(t.dataset.filter === scoresFilter)));
   filterEl.hidden = recordsTab !== 'scores';
-  resetBtn.hidden = recordsTab === 'guide'; // (nothing there to clear)
+  resetBtn.hidden = recordsTab === 'guide' || Records.isEmpty(); // (nothing there, or nothing yet, to clear)
   recordsBody.textContent = '';
   if (recordsTab === 'scores') {
     Records.renderScores(recordsBody, theGame.entryId, scoresFilter, PLAYER_COLOR, dotByName);
@@ -80,27 +80,28 @@ const GUIDE_ROWS = [
   ['Food', [
     ['apple', 'Apple', `Worth 1, and a full tummy. ${inWords(TUNE.APPLES).replace(/^./, c => c.toUpperCase())} on the log at a time; leave one too long and it rots.`],
     ['golden', 'Golden apple', `Worth ${TUNE.GOLDEN_GROWTH}, and everyone saw it land.`],
-    [['beetle', 'dig'], 'Beetles', `Worth ${TUNE.BEETLE_GROWTH}, up to ${inWords(TUNE.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in, so be quick${TUNE.BURROW_FROM_DIG ? `, and leaves a burrow, taking the place of any burrow near it (burrows keep apart)` : ''}. A burrow left unused grows shut (past ${inWords(TUNE.BURROW_MAX)}, the one unused longest): beetles still go in, but none come out. They flee the woodpecker’s mark too: one still on it when it strikes, it eats.`],
+    ['beetle', 'Beetles', `Worth ${TUNE.BEETLE_GROWTH}, up to ${inWords(TUNE.BEETLE_MAX ?? 2)} out at once, even in sudden death. They scurry from heads at half your speed. A cornered one digs in: come straight at it and it’s gone, so be nearer, or cut it off from its burrow. They flee the woodpecker’s mark too: one still on it when it strikes, it eats.`],
+    ['dig', 'Burrows', `${TUNE.BURROW_FROM_DIG ? 'A beetle that digs in leaves a burrow, taking the place of any burrow near it (burrows keep apart). ' : ''}A burrow left unused grows shut (past ${inWords(TUNE.BURROW_MAX)}, the one unused longest): beetles still go in, but none come out.`],
     [['pellet', 'squash'], 'Beads', `What a crash knocks off, and what a dead snake leaves (${TUNE.CORPSE_EVERY === 2 ? 'every other segment' : TUNE.CORPSE_EVERY === 1 ? 'all of it' : `one segment in ${TUNE.CORPSE_EVERY}`}). Worth 1 each, and they rot. Your own you squash flat as you pass: food for nobody, so chase them down to keep them from the others.`],
     [['baked', 'roast'], 'Baked and roast', `Food left in a fire bakes: worth ${TUNE.COOKED_GROWTH}, if you can take the heat. Then it’s ash.`],
     ['mushroom', 'Mushroom', `Poison: ${TUNE.SHRINK} off your tail (never below ${TUNE.MIN_LENGTH}). A second later it comes back up, ${inWords(TUNE.SPIT_REACH)} ahead of you: steer to aim it at a head. Each time it comes back up it takes one more, up to ${TUNE.SHRINK_MAX}, a shade darker. Keep out of a green ring.`],
   ]],
   ['Golden things', [
-    ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: free, no rest. Hold up to ${TUNE.LEAP_MAX}.`],
-    ['leaf', 'Golden leaf', `${TUNE.DASH_CHARGES} golden flashes: three cells at once, cutting through a body up to ${TUNE.DASH_THICK} thick and putting out every fire. Never at an edge or a hole: you blow up.`],
+    ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: free, no rest. Tap for the plain hop; hold the jump and you fly ${TUNE.GOLD_FLY} cells, always, steering in the air to land where it's safe. Hold up to ${TUNE.LEAP_MAX}.`],
+    ['leaf', 'Golden leaf', `${TUNE.DASH_CHARGES} golden dashes: three cells at once, cutting through a body up to ${TUNE.DASH_THICK} thick and putting out every fire. Never at an edge or a hole: you blow up.`],
     ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(TUNE.WRAP_MS)} s a mushroom (up to ${secs(TUNE.WRAP_MAX_MS)}). Going off one opens gold portals: anyone may follow you through, for a moment.`],
   ]],
   ['Your powers', [
-    ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop snakes, holes or fire, up to ${TUNE.LEAP_REACH} cells, to the first free cell: islands too. A ring shows where you’ll land. It costs your tail’s tip, then rests ${secs(TUNE.LEAP_COOLDOWN_MS)} s.`],
-    ['flash', 'Flash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift or a right-click on the log'}: two cells in a blink, free. Then it rests ${secs(TUNE.FLASH_COOLDOWN_MS)} s.`],
-    ['cut', 'Cuts', 'A flash cuts through a body one thick with free log beyond: the part behind falls to beads. Leave fewer than 3 in front and that snake is out. Your own body too: drop your tail to fit a pocket. Along the edge, or against a hole or another body, nothing can be cut from that side.'],
-    ['failflash', 'Failed flash', `Flash into a head, a body too thick, the edge or a hole and it fails: ${TUNE.FAIL_LOSS} off your tail and a longer stun.`],
-    ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden flashes.'],
-    ['rests', 'Resting', 'Two half-rings round your head: your jump (left) and your flash (right) coming back.'],
+    ['jump', 'Jump', `${touchFirst ? 'A tap' : 'Space or a click on the log'}: hop snakes, holes or fire, up to ${TUNE.LEAP_REACH} cells, to the first free cell: across a gap too. ${touchFirst ? 'Tap twice' : 'Press twice'} to leap now, open ground too. A ring shows where you’ll land. It costs your tail’s tip, then rests ${secs(TUNE.LEAP_COOLDOWN_MS)} s. Bump into a flier in the air and you drop: onto a body or into a hole, you’re out. Lie on a flier’s ring before it lands and it’s out: rivals will try it on you.`],
+    ['flash', 'Dash', `${touchFirst ? 'A swipe the way you’re going' : 'E, Shift or a right-click on the log'}: two cells in a blink, free. Then it rests ${secs(TUNE.FLASH_COOLDOWN_MS)} s.`],
+    ['cut', 'Cuts', 'A dash cuts through a body one thick with free log beyond: the part behind falls to beads. Leave fewer than 3 in front and that snake is out. Your own body too: drop your tail to fit a pocket. Along the edge, or against a hole or another body, nothing can be cut from that side.'],
+    ['failflash', 'Failed dash', `Dash into a head, a body too thick, the edge or a hole and it fails: ${TUNE.FAIL_LOSS} off your tail and a longer stun.`],
+    ['held', 'Golden powers', 'Gold round a snake: it holds golden powers. Sky dots are golden jumps, ember diamonds golden dashes.'],
+    ['rests', 'Resting', 'Two half-rings round your head: your jump (left) and your dash (right) coming back.'],
   ]],
   ['The log', [
     ['fire', 'Fire', 'Lightning lights it. Crawl in and it takes 3 bites of tail; rain puts it out.'],
-    ['knock', 'Woodpecker', 'From 2:00 it pecks out patches, and won’t shut you in or leave crumbs of log if it can help it. Food in its mark is knocked to the nearest free cell, where the ring is; a beetle there, it eats.'],
+    ['knock', 'Woodpecker', 'From 2:00 it pecks out patches, and won’t shut you in if it can help it. A piece it cuts loose from the log is shaded in its mark, and falls with the strike: the log stays one piece. Food in its mark is knocked to the nearest free cell, where the ring is; a beetle there, it eats.'],
     ['hole', 'Holes', 'The woodpecker’s, from 2:00. Bump one like the edge; a peck right under your head is the end.'],
     ['bridge', 'Bridges', 'A snake lying across a pit is a bridge: crawl onto its back there, or land on it from a jump. Get off onto bark before its tail passes, or you fall in.'],
     ['land', 'Borders', 'Sovereign’s realm and Colonist’s colonies. Cross one and it notices.'],
@@ -239,7 +240,7 @@ function renderPlayers() {
     } else {
       dot.style.background = 'var(--parchment-2)';
       label.className = 'open-seat';
-      label.textContent = 'An AI rival, unless a friend joins';
+      label.textContent = 'A rival, unless a friend joins';
       li.append(dot, label);
     }
     lobbyPlayers.append(li);
@@ -310,6 +311,7 @@ async function hostRoom() {
   const attempt = ++joinAttempt;
   startBtn.disabled = true;
   setStatus('Opening a room…');
+  if (await window.SnakeUpdate?.beforeRoom(null, () => attempt === joinAttempt)) return; // (a newer version out: into it first, and the room opens there)
   try {
     const room = await Net.host({ newCode: Online.newCode, onLeave: friendLeft, onMessage: fromFriend });
     if (attempt !== joinAttempt) { room.close(); return; }
@@ -343,6 +345,14 @@ function showRoom() {
 function sendLobby() {
   online.room.broadcast({ t: 'lobby', players: online.players.map(({ id, name, color, host }) => ({ id, name, color, host: !!host })), lineup: lobbyRivals() });
   if (!lobbyPlayers.hidden) renderPlayers();
+}
+
+// Hosting: where everyone goes next, for friends' screens, once a tick when
+// the rivals have thought, and again when a person's press changes it.
+let planSent = false;
+function sendPlan() {
+  planSent = true;
+  online.room.broadcast(Online.plan(theGame));
 }
 
 function fromFriend(id, msg) {
@@ -389,7 +399,7 @@ function fromFriend(id, msg) {
     const s = theGame.snakes.find(o => o.peer === id);
     if (!s?.alive || s.left || (state !== 'countdown' && state !== 'running')) return;
     if (msg.t === 'pow' ? !Online.POWERS.includes(msg.k) || state !== 'running' : !Online.DIR_NAMES.includes(msg.d)) return;
-    if (s.autopilot) handBack(s);
+    if (s.autopilot && !(msg.t === 'pow' && msg.k === 'letgo')) handBack(s); // (a jump let go isn't taking the wheel: a blur or a hidden tab sends one)
     if (msg.t === 'pow') powerOf(s, msg.k);
     else if (msg.t === 'swipe' && state === 'running') swipeTo(msg.d, s);
     else turn(msg.d, s);
@@ -483,6 +493,7 @@ async function joinRoom(text) {
     title: 'Play with friends', text: FLAVOR.joining(code), secondary: 'Cancel',
     lobby: { status: '' }, actions: { secondary: backToStart },
   });
+  if (await window.SnakeUpdate?.beforeRoom(code, () => attempt === joinAttempt)) return; // (a newer version out: into it first, and in)
   try {
     const room = await Net.join(code, { onMessage: fromHost, onLost: hostLost });
     if (attempt !== joinAttempt) { room.close(); return; }
@@ -518,12 +529,14 @@ function handleHost(msg) {
       if (state === 'lobby') showGuestLobby();
       break;
     case 'reject':
+      const code = online.code;
       endOnline();
       state = 'lobby';
       showCard({
         title: 'Play with friends', primary: 'Back', actions: { primary: backToStart },
         text: msg.why === 'full' ? 'That room is full: four people already.' : 'That room runs a different version of the game. Reload both pages and try again.',
       });
+      if (msg.why === 'version') window.SnakeUpdate?.beforeRoom(code); // (behind the host after all? into the new version, and in)
       break;
     case 'lobby':
       if (!Array.isArray(msg.players)) break;
@@ -564,6 +577,25 @@ function guestRound(msg) {
   updateControls();
   showCard({ title: '…', text: theGame.rivalsLine, opponents: true, quiet: true, beat: true });
   markYou(playerAlive());
+}
+
+// A tick from the host, on a friend's screen.
+function hostTick(msg) {
+  if (!theGame || (state !== 'running' && state !== 'countdown')) return;
+  if (state === 'countdown') go();
+  const wasAlive = playerAlive();
+  for (const s of theGame.snakes) rememberPrev(s);
+  const wasPiloted = !!player()?.autopilot;
+  const dying = Online.apply(theGame, msg, DIRS);
+  // If the host had an AI steer for you for a while (your connection
+  // hiccupped), say so once you're back.
+  const piloted = !!player()?.autopilot;
+  if (piloted && !wasPiloted) online.pilotedAt = performance.now();
+  if (wasPiloted && !piloted && player() && performance.now() - online.pilotedAt > 2000 && !online.toldAway) toast(FLAVOR.youAway, 2200);
+  if (!piloted) online.toldAway = false;
+  tickLen = msg.len || Engine.tickMs(theGame);
+  online.lastTickAt = performance.now();
+  afterTick(dying, wasAlive);
 }
 
 function hostLost(reason) {

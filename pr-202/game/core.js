@@ -1,5 +1,5 @@
 // The game controller: the loop, input, the cards and the HUD. The rules live
-// in engine.js, the drawing in render/, and every feel number in tuning.js.
+// in engine/, the drawing in render/, and every feel number in tuning.js.
 //
 // Once snake.js, it is split into the files of game/, by what they do. Like
 // render/ (see render/core.js), they are plain scripts sharing one scope,
@@ -9,16 +9,17 @@
 // names from itself or the files before it (a listener's body runs later).
 //
 //   core.js     the page's elements, words, the game's state and the loop
-//   round.js    a round: starting, ticking, ending; and its sounds
-//   banners.js  the banners for a round's big moments, and the cards
-//   hud.js      the scoreboard and the tags
-//   input.js    keys, touch and swipes, and the buttons
-//   friends.js  the Hall of Fame, and playing with friends online
-//   screen.js   size and motion, the dev overlay, and the start
+//   round.js    a round: starting and ending; and its sounds
+//   banners.js  what a round says: the banners for its big moments, and the lessons
+//   toasts.js   the banner itself: where it goes, how long it stays; the short cues beside it
+//   cards.js    the cards, the rivals' roll-call and the seats where you choose them
+//   hud.js      the scoreboard, the tags and the steering hint
+//   input.js    keys, touch and swipes, the buttons, and napping and waking
+//   friends.js  the Hall of Fame and the Field guide, and playing with friends online
+//   screen.js   size and motion, the screen kept awake, the dev overlay, and the start
 
-const TUNE = window.TUNING;
 const Engine = window.SnakeEngine;
-const { GRID: GRID_SIZE, PLAYER_COLOR, PERSONAS: CAST, DIRS } = Engine;
+const { GRID: GRID_SIZE, PERSONAS: CAST } = Engine; // (TUNE, DIRS: the AI's, ai/core.js; PLAYER_COLOR: the engine's, engine/core.js)
 const Render = window.SnakeRender;
 const Records = window.SnakeRecords;
 const Chatter = window.SnakeChatter;
@@ -66,26 +67,26 @@ const FLAVOR = {
   intro: 'Three rivals. One mossy log. Last snake wriggling wins.',
   // (The arrows first: anyone knows them. A click is the mouse's left button on the board. A first-timer's
   // Hall of Fame is empty: the Field guide's key, G, is in its place before a first round, both under the board.)
-  hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P naps · Enter starts · G opens the Field guide',
-  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · P or Esc naps · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
-  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click flashes · M mutes · N toggles the music · V the voices',
-  hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash',
-  hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to flash · Tap ⏸ to nap',
+  hintStart: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · P naps · Enter starts · G opens the Field guide',
+  hintKeys: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · P or Esc naps, any key wakes · Enter starts over · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
+  hintOnline: 'Arrow keys steer (or WASD) · Space or click jumps · E, Shift or right-click dashes · M mutes · N toggles the music · V the voices',
+  hintOnlineTouch: 'Swipe to steer · Tap to jump · Swipe ahead to dash',
+  hintTouch: 'Swipe to steer · Tap to jump · Swipe ahead to dash · Tap ⏸ to nap',
   // Watching (Watch AIs, or after you're out): nothing of yours to steer.
-  hintWatch: '1, 2, 4 set the speed · P naps · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
+  hintWatch: '1, 2, 4 set the speed · P naps, any key wakes · Enter plays · H opens the Hall of Fame · G opens the Field guide · M mutes · N toggles the music · V the voices',
   hintWatchTouch: 'The speed buttons set 1×, 2× or 4× · Tap ⏸ to nap',
   rivals: ['Your rivals today:', 'Up on the log with you:', 'Sharing your bark:'],
   spectators: ['Tonight on the bark:', 'In the ring today:', 'Place your bets:'],
   go: ['Slither!', 'Off you go.', 'Mind the edges.'],
   goWatch: ['And they’re off.', 'Off they slither.', 'Let the wriggling begin.'],
   pause: ['Snakes need rest too.', 'Curled up in a warm patch of bark.', 'The log will wait.'],
-  wake: touchFirst ? 'Tap Wake up when you’re ready.' : 'P or Esc to wake up.',
+  wake: touchFirst ? 'Tap to wake up.' : 'Any key to wake up.',
   // (Bonk! is for a knock you survive, Snip! for a cut you survive: a
   // death's title is a word that means out.)
   deathTitle: { boom: ['Kaboom!', 'Ka-blam!'], wall: ['Flattened!', 'Splintered!'], self: ['Tangled!', 'Knotted!'], rival: ['Squashed!', 'Splat!'], headOn: ['Out cold!', 'Lights out!'], fire: ['Toasted!', 'Scorched!'], cut: ['Sliced!', 'Chopped!'], pecked: ['Pecked!', 'Drilled!'] }, // (never the card's own verb again: "Head-on! You crashed head-on…")
   wall: ['The log goes on. You don’t.', 'That edge came out of nowhere.', 'Even logs have edges.'],
   self: ['Of all the snakes to bite.', 'You were in your own way.', 'You can’t outrun yourself.'],
-  boom: ['A golden flash needs somewhere to go.', 'Full speed, no brakes.', 'Golden, briefly.'],
+  boom: ['A golden dash needs somewhere to go.', 'Full speed, no brakes.', 'Golden, briefly.'],
   hole: ['The woodpecker sends its regards.', 'Mind the gap.', 'The woodpecker missed you. Its hole didn’t.'],
   pecked: ['The woodpecker didn’t miss.', 'Rat-a-tat. That was you.'],
   starved: ['Should have eaten something.', 'Hunger always wins in the end.', 'All slither, no snacks.'],
@@ -117,7 +118,8 @@ const FLAVOR = {
   youAtThree: ['Down to\u00a03. One more crash and you’re out.', 'At\u00a03 now. The next crash is the last.'],
   youAlight: ['On fire: 3 bites of tail, and at\u00a03 it ends you. Rain helps.', 'Burning, and losing bits of you. At\u00a03 it ends you.'],
   youPeckedUnder: 'Pecking under you! Only your head can fall in.', // (a body over a fresh hole bridges it)
-  youSquash: 'Squashed! Your own tail feeds nobody.', // (round six B: your first own bead squashed)
+  cutLoose: 'Cut loose, it falls! Get off the shaded piece.', // (2s: the first mark that cuts a piece loose, or its strike)
+  youSquash: 'Your own beads feed nobody.', // (round six B: your first own bead squashed)
   youWoodpecker: 'Food in the woodpecker’s mark flies to its ring.', // (once a round, as it comes, once its own banner has had its time: the one idea you can act on, in one line on a phone; that it won't shut you in if it can help it is the Field guide's)
   birdBeetle: 'The woodpecker eats beetles too!', // (round six B, 2m: the first beetle you see the bird eat, one that didn't get off its mark in time)
   portalFollow: 'Anyone can follow you through a portal, for a moment.', // (round six B, part 5: the first time anyone follows anyone through a gold portal)
@@ -130,13 +132,13 @@ const FLAVOR = {
   lostCapital: 'The woodpecker took a capital: its realm moves.',
   lastApples: 'The last apples are falling.',
   // Your flash, ready and never used yet: the key, once a round (until you've flashed).
-  flashKey: touchFirst ? 'Your flash is ready: swipe the way you’re going.' : 'Your flash is ready: E, Shift or right-click.', // (what it does is the Field guide's: a lesson is 60 characters at most)
+  flashKey: touchFirst ? 'Your dash is ready: swipe the way you’re going.' : 'Your dash is ready: E, Shift or right-click.', // (what it does is the Field guide's: a lesson is 60 characters at most)
   // Beside the YOU arrow, as a round starts (until you steer).
   steerHint: touchFirst ? 'Swipe to steer' : 'Arrow keys to steer (or WASD)',
   leapNothing: 'Jumps hop over a snake, a hole or fire.',
   leapEarly: `A bit early: a jump waits ${TUNE.LEAP_WINDOW} moves, then lapses.`,
-  islandHop: touchFirst ? 'Tap to hop up to three cells. Find an island!' : 'Space hops up to three cells. Find an island!', // (the first time you're boxed in with a jumpable gap: round six B's island hop)
-  powersFirst: 'Tap jumps. Swipe ahead flashes.', // (a short phone's first Go: steering is beside YOU. One line on a 320 px phone, so it fits between the heads)
+  islandHop: touchFirst ? 'Tap to hop up to three cells. Hop the gap!' : 'Space hops up to three cells. Hop the gap!', // (the first time you're boxed in with a jumpable gap: round six B's island hop)
+  powersFirst: 'Tap jumps. Swipe ahead dashes.', // (a short phone's first Go: steering is beside YOU. One line on a 320 px phone, so it fits between the heads)
   bothOut: ['Nobody walked away from that one.', 'A draw, of sorts.', 'Both of you. At once.'],
   wakeBeat: 'Ready…',
   baked: ['Baking in the fire: worth 2, if you can take the heat.', 'Baked: hot food is worth 2, if you can take the heat.'],
@@ -147,21 +149,26 @@ const FLAVOR = {
   youGoldBeetle: n => `Golden: ${n} long jump${n === 1 ? '' : 's'}, free. ${touchFirst ? 'Tap' : 'Space or a click'} to jump.`,
   bridgeFirst: 'A snake across a pit is a bridge, until its tail passes!', // (the first time a snake lies across a pit near you: round six B's bridges)
   youLeapFirst: 'Hup! A jump costs your tail tip, then a short rest.',
-  youDashFirst: 'Golden flashes cut through two thick, and put out fire.',
-  youCutFirst: 'A flash cuts through a thin body.', // (round six B: your first cut)
-  youFlashFailed: 'Too thick! A failed flash costs five.', // (your first failed flash)
+  youDashFirst: 'Golden dashes cut through two thick, and put out fire.',
+  youCutFirst: 'A dash cuts through a thin body.', // (round six B: your first cut)
+  youFlashFailed: 'Too thick! A failed dash costs five.', // (your first failed flash)
   neckCut: 'Snip! Too short to go on.', // (the first neck cut you see: a cut that left a snake fewer than 3 in front)
-  dropTail: 'Flash through your own tail to drop it.', // (the first time you're in a pocket smaller than you, your flash ready and your own body one thick in front)
+  dropTail: 'Dash through your own tail to drop it.', // (the first time you're in a pocket smaller than you, your dash ready and your own body one thick in front)
   youDropTail: 'Tail dropped: lighter, and out of the pocket.', // (your first own cut)
-  leaf: ['A golden leaf on the wind. Eat it for golden flashes.', 'A golden leaf blew onto the log: golden flashes, for the taking.'],
-  leafWatch: ['A golden leaf on the wind: golden flashes, for whoever eats it.'],
-  youLeaf: n => `${n} golden flash${n === 1 ? '' : 'es'}: ${touchFirst ? 'swipe ahead' : 'E or right-click'}. Never at edges or holes.`, // (the danger in it: the first one may be the one. One key and the mouse, to keep it to 60 characters: the Field guide names Shift)
+  leaf: ['A golden leaf on the wind. Eat it for golden dashes.', 'A golden leaf blew onto the log: golden dashes, for the taking.'],
+  leafWatch: ['A golden leaf on the wind: golden dashes, for whoever eats it.'],
+  youLeaf: n => `${n} golden dash${n === 1 ? '' : 'es'}: ${touchFirst ? 'swipe ahead' : 'E or right-click'}. Never at edges or holes.`, // (the danger in it: the first one may be the one. One key and the mouse, to keep it to 60 characters: the Field guide names Shift)
   goldcap: ['A golden mushroom: eat it and the edges wrap.', 'A golden mushroom came up. Eat it: no edges for a while.'],
   goldcapWatch: ['A golden mushroom: no edges, for whoever eats it.'],
   youGoldcap: s => `A golden mushroom: ${s} seconds with no edges.`,
   wrapEnding: s => [`The edges are back in ${s} seconds.`, `Edges back in ${s} seconds.`],
   youSnip: name => `Snip! You cut ${name} in two.`,
-  youSnipped: name => `Snip. ${name} flashed right through you.`,
+  youSnipped: name => `Snip. ${name} dashed right through you.`,
+  youBumped: 'Bumped in mid-air! Down you go.', // (round six B: your first bump in the air)
+  youGoldFly: 'Hold to fly 5. Steer to land!', // (your first golden jump)
+  ringRace: 'Lie on its ring before it lands, and it’s out!', // (2y: the first time a flier's ring is in your reach before it comes down)
+  youRingRaced: 'A rival could get to your ring first. Steer away!', // (2y: the first time a rival could reach your ring before you're down)
+  leapNow: 'Press twice to leap now, anywhere!', // (the first time a flier comes down just ahead of you: you could have cut it off)
   youMushroomSpit: 'Bleh! Steer to aim it: it lands three ahead.', // (round six B: your first mushroom, which comes back up)
   youSpatOn: name => `Ptoo! ${name} got you. Steer to spit it back.`, // (the first time one hits your head)
   youHungry: ['Your tummy is rumbling. Time for a snack.', 'Getting peckish… find food soon.'],
@@ -170,15 +177,15 @@ const FLAVOR = {
   // (A flash is free, FLASH_COST 0, so it's never too small; it has nowhere
   // to go only over a crash: straight back in, or blown up at the edge or a hole.)
   fizzle: { resting: 'Your jump needs a moment.', small: 'Too small to jump: it costs tail.', landing: 'Nowhere to land.' },
-  fizzleFlash: { resting: 'Your flash needs a moment.', landing: 'Nowhere to flash.' },
+  fizzleFlash: { resting: 'Your dash needs a moment.', landing: 'Nowhere to dash.' },
   newBest: n => `New best: ${n}!`,
   startOver: 'Start over?',
   startOverText: key => key ? `${key} again starts over. P, Esc or an arrow keeps going.` : 'This round’s gone if you do.',
   awake: 'Awake.',
   friendWin: ['Bragging rights, for now.', 'Rematch?', 'Fair and square. Probably.'],
   friendKill: ['No hard feelings. Well, a few.', 'Friendship is complicated.', 'That calls for a rematch.'],
-  friendsIntro: 'Host a game and send your friends the link, or join theirs. Empty seats get AI rivals.',
-  hostIntro: location.protocol === 'file:' ? 'Send this code to up to three friends. Empty seats get AI rivals.' : 'Send this link to up to three friends. Empty seats get AI rivals.',
+  friendsIntro: 'Host a game and send your friends the link, or join theirs. Empty seats go to rivals.',
+  hostIntro: location.protocol === 'file:' ? 'Send this code to up to three friends. Empty seats go to rivals.' : 'Send this link to up to three friends. Empty seats go to rivals.',
   joining: code => `Knocking on room ${code}…`,
   waiting: (name, next) => `Waiting for ${name} to start the ${next ? 'next ' : ''}round.`,
   roomGone: name => `${name} closed the room.`,
@@ -188,7 +195,7 @@ const FLAVOR = {
   friendAway: name => `${name} went quiet. An AI steers until they’re back.`,
   friendBack: name => `${name} is back.`,
   youAway: 'You went quiet for a moment, so an AI steered for you.',
-  tapTip: touchFirst ? 'Tap a rival’s name tag to see how it plays.' : 'Click a rival’s name tag to see how it plays.', // (no "above": on a phone on its side the tags are beside the log)
+  tapTip: touchFirst ? 'Tap names to swap, tags to see how they play.' : 'Click names to swap, tags to see how they play.', // (no "above": on a phone on its side the tags are beside the log)
   takeBack: 'An AI kept your snake going. Steer to take it back.',
   watchingFirst: 'This round’s already going. You’re in from the next one.',
   rivals0: 'Just friends today. No mercy:',
@@ -205,8 +212,8 @@ const FLAVOR = {
     'The woodpecker is here. Keep out of wherever it’s looking.': 'The woodpecker is here. Keep out of its sight.',
     'Rat-a-tat. The woodpecker has come for the log, a patch at a time.': 'Rat-a-tat. The woodpecker has come for the log.',
     'The woodpecker is here. Everyone, keep clear of its mark.': 'The woodpecker is here. Everyone, mind its mark.',
-    'A golden leaf blew onto the log: golden flashes, for the taking.': 'A golden leaf blew in: golden flashes to take.',
-    'A golden leaf on the wind: golden flashes, for whoever eats it.': 'A golden leaf: golden flashes, for whoever eats it.',
+    'A golden leaf blew onto the log: golden dashes, for the taking.': 'A golden leaf blew in: golden dashes to take.',
+    'A golden leaf on the wind: golden dashes, for whoever eats it.': 'A golden leaf: golden dashes, for whoever eats it.',
     'A golden mushroom came up. Eat it: no edges for a while.': 'A golden mushroom came up: no edges for a while.',
     'This round’s already going. You’re in from the next one.': 'This round’s going. You’re in from the next one.',
     'You went quiet for a moment, so an AI steered for you.': 'You went quiet, so an AI steered for you.',
@@ -227,7 +234,7 @@ function causeFor(s) {
   return k && isMe(k) && s.cause.endsWith(k.name) ? s.cause.slice(0, -k.name.length) + 'you' : s.cause;
 }
 // A cause in fewer words, for a banner's one line on a phone.
-const shortCause = c => c.replace(/^flashed into (the edge|a woodpecker hole) and blew up$/, 'blew up').replace(/^got pecked by the woodpecker$/, 'got pecked').replace(/^(fell into|hit) a woodpecker hole$/, '$1 a hole').replace(/^got cut in two by /, 'was cut by ').replace(/^crashed head-on into (.+)$/, 'hit $1 head-on');
+const shortCause = c => c.replace(/^dashed into (the edge|a woodpecker hole) and blew up$/, 'blew up').replace(/^got pecked by the woodpecker$/, 'got pecked').replace(/^(fell into|hit) a woodpecker hole$/, '$1 a hole').replace(/^got cut in two by /, 'was cut by ').replace(/^crashed head-on into (.+)$/, 'hit $1 head-on');
 // Your death, in the second person.
 const yourCause = p => p.killer === 'self' ? 'bit yourself' : causeFor(p);
 // Why a crash was the end (the engine's verdict): length is armour, so a
@@ -237,7 +244,7 @@ const howYouDied = p => {
   if (p.fatal === 'hunger') return 'You ran out of food at your smallest'; // (under "Starved!": not "You starved" again)
   if (p.fatal === 'pecked') return 'The woodpecker struck right under your head'; // (only a head in the patch is out: a body over it bridges it)
   if (p.fatal === 'fire') return 'The flames got you at your smallest';
-  if (p.fatal === 'cut') return `${theGame.snakes[p.killerId]?.name || 'A'}’s flash cut you right behind the head`;
+  if (p.fatal === 'cut') return `${theGame.snakes[p.killerId]?.name || 'A'}’s dash cut you right behind the head`;
   const k = p.killerId != null ? theGame.snakes[p.killerId] : null;
   const why = p.fatal === 'shorter' && k && !k.persona ? ', and they were longer' : WHY_OUT[p.fatal] || ''; // (a friend is "they")
   return `You ${yourCause(p)}${why}`;
@@ -465,14 +472,6 @@ function think(dt, ticked = false) {
   }
 }
 
-// Hosting: where everyone goes next, for friends' screens, once a tick when
-// the rivals have thought, and again when a person's press changes it.
-let planSent = false;
-function sendPlan() {
-  planSent = true;
-  online.room.broadcast(Online.plan(theGame));
-}
-
 // One tick of the rules (alone, or as the host: friends get a copy).
 function tick() {
   const wasAlive = playerAlive();
@@ -486,25 +485,6 @@ function tick() {
     planSent = false;
   }
   Chatter.update();
-  afterTick(dying, wasAlive);
-}
-
-// A tick from the host, on a friend's screen.
-function hostTick(msg) {
-  if (!theGame || (state !== 'running' && state !== 'countdown')) return;
-  if (state === 'countdown') go();
-  const wasAlive = playerAlive();
-  for (const s of theGame.snakes) rememberPrev(s);
-  const wasPiloted = !!player()?.autopilot;
-  const dying = Online.apply(theGame, msg, DIRS);
-  // If the host had an AI steer for you for a while (your connection
-  // hiccupped), say so once you're back.
-  const piloted = !!player()?.autopilot;
-  if (piloted && !wasPiloted) online.pilotedAt = performance.now();
-  if (wasPiloted && !piloted && player() && performance.now() - online.pilotedAt > 2000 && !online.toldAway) toast(FLAVOR.youAway, 2200);
-  if (!piloted) online.toldAway = false;
-  tickLen = msg.len || Engine.tickMs(theGame);
-  online.lastTickAt = performance.now();
   afterTick(dying, wasAlive);
 }
 
@@ -528,15 +508,6 @@ function afterTick(dying, wasAlive) {
     return endRound();
   }
   if (youJustDied) youDied();
-}
-
-// The moment you die: the board holds still (alone), your snake holds its
-// pose with its eyes screwed shut, then bursts. Also when it ends the round.
-function deathMoment() {
-  freezeUntil = lastFrame + (reducedMQ.matches ? TUNE.DEATH_FREEZE / 2 : TUNE.DEATH_FREEZE);
-  Render.hold(boardClock + (freezeUntil - lastFrame)); // (on the board's clock)
-  Render.shake(TUNE.SHAKE_PX);
-  flashFrame('kill', true);
 }
 
 // Each segment's previous cell, for interpolation. Reuses the same objects.
