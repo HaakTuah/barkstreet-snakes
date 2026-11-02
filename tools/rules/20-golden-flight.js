@@ -39,6 +39,14 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   me3.queue.push(D.down);
   way3 += ' ' + fly(g3, 4);
   check('...and steers in the air, a turn a tick', way3 === '4,10^ 5,10^ 5,11^ 5,12^ 5,13^ 5,14' && me3.alive && joined(me3.body), way3);
+  const g4 = board([[line(6, 10, 6), 'right'], [Array.from({ length: 7 }, (_, i) => [7, 7 + i]), 'up']]);
+  const me4 = g4.snakes[0];
+  me4.leaps = 1; g4.snakes[1].stunUntil = 1e9;
+  E.leap(g4, me4); E.letGo(g4, me4);
+  let way4 = fly(g4, 1);
+  me4.queue.push(D.down); // (pressed in the air, over the body it hops)
+  way4 += ' ' + fly(g4, 2);
+  check('...a quick golden press is the plain hop: a turn pressed before it lands waits till it\'s down, never dropping it on what it hopped', way4 === '7,10^ 8,10 8,11' && me4.alive, way4);
 }
 
 { // Bumps in the air: a flying head into another's air (its flying head, or its body lifted over the cells its flight
@@ -134,6 +142,25 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
     let now = null;
     for (let n = 0; n < 6 && a.alive; n++) { feed(g); look(g); quiet(g); now ||= g.events.find(e => e.type === 'leap' && e.snake === a && e.now); }
     check(`${key === 'ghost' ? 'a rival' : '...Drab too'} doesn't leap now over a head crossing in front of it, where crawling on may be a head-on and turning a pit: it crawls on`, !now, JSON.stringify({ now: !!now, head: a.body[0], alive: a.alive }));
+  }
+}
+
+{ // ...and leaps now when it is trapped. Heading right down a corridor of pits two cells long, a pit across its end:
+  // every crawl crashes within its search, and nothing is right in front to hop yet. Ghost and Desperado, whose
+  // style makes a leap now cheap, press twice, through the same engine call as a person's, and come down past the pit
+  // (Drab, at four times the price, crawls on and hops a wall of the corridor once it's beside it: as good a way out).
+  for (const key of ['ghost', 'desperado']) {
+    const g = E.createGame({ withPlayer: false, personas: [key, 'drab'] });
+    g.snakes = g.snakes.slice(0, 2);
+    const [a, b] = g.snakes;
+    a.body = Array.from({ length: 7 }, (_, i) => ({ x: 6 - i, y: 10 })); a.dir = D.right; a.leaps = 0; a.leapReadyAt = 0; a.flashReadyAt = 1e9;
+    b.body = Array.from({ length: 5 }, (_, i) => ({ x: 20, y: 20 + i })); b.dir = D.up; b.flashReadyAt = 1e9; b.leapReadyAt = 1e9;
+    for (let x = 5; x <= 8; x++) { g.holes.add(K(x, 9)); g.holes.add(K(x, 11)); }
+    g.holes.add(K(9, 10));
+    g.food = []; g.time = 30000;
+    let now = null;
+    for (let n = 0; n < 6 && a.alive && !(now && !a.flight); n++) { feed(g); look(g); quiet(g); now ||= g.events.find(e => e.type === 'leap' && e.snake === a && e.now); }
+    check(`${key === 'ghost' ? 'a rival' : '...Desperado too'} in a dead end, every crawl a crash, leaps now and comes down past the pit`, !!now && a.alive && !a.flight && a.body[0].x >= 10, JSON.stringify({ now: !!now, head: a.body[0], alive: a.alive, cause: a.cause }));
   }
 }
 
