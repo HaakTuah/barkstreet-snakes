@@ -229,3 +229,7 @@ method, with its guards against endless rounds and a slipping bar, is "Codex rev
 
 **What the rivals know,** for every reviewer: report as P1 any AI logic that reads the game other than through
 `aiView()`, or anything in `aiView()` a snake on the log could not see or know (a person's input before it lands).
+
+**One idea, for every reviewer:** end the review with one thing outside this change that would make the game better,
+or "none". It never blocks (a P3 at most). The builder files a real one as an `enhancement` issue and links it in the
+PR; nothing is built from it until the owner queues it.
