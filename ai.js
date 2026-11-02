@@ -2261,13 +2261,15 @@ window.SnakeAI = (() => {
         const agg = (w.aggression || 0) + (w.hunt ? 0.5 : 0);
         if (!agg) return 0;
         const lx = land % N, ly = (land - lx) / N;
+        const near = k => Math.abs(heads[k].x - lx) + Math.abs(heads[k].y - ly) <= TUNE.GOLD_FLY + 2;
         let v = 0, placed = false;
-        for (let k = 0; k < others.length; k++) {
-          const o = others[k];
-          if (Math.abs(heads[k].x - lx) + Math.abs(heads[k].y - ly) > TUNE.GOLD_FLY + 2) continue;
-          if (roomsHere[k] < 0) { body0ToOwnFree(me.body, me.body.length, me.grow); roomsHere[k] = roomOf(k, 0, SHUT_MOVES); foodHere[k] = Math.min(FOOD_CUT, roomFood); clearOwnFree(me.body, me.body.length); }
-          const before = roomsHere[k];
-          if (!before) continue;
+        for (let k = 0; k < others.length; k++) { // (each near rival's room as I am, first: my own body alone in ownFree)
+          if (!near(k) || roomsHere[k] >= 0) continue;
+          body0ToOwnFree(me.body, me.body.length, me.grow); roomsHere[k] = roomOf(k, 0, SHUT_MOVES); foodHere[k] = Math.min(FOOD_CUT, roomFood); clearOwnFree(me.body, me.body.length);
+        }
+        for (let k = 0; k < others.length; k++) { // (...then with me down there)
+          const o = others[k], before = roomsHere[k];
+          if (!near(k) || !before) continue;
           if (!placed) { body0ToOwnFree(nb, L, g); placed = true; }
           const after = roomOf(k, down, SHUT_MOVES), late = Math.min(FOOD_CUT, roomFood) - foodHere[k];
           const cut = Math.max(0, SHUT_IN * (before - after) / before) + Math.max(0, SHUT_FOOD * late / FOOD_CUT);

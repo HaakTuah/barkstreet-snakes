@@ -1230,7 +1230,7 @@ window.SnakeEngine = (() => {
   function letGo(game, s) {
     if (!s?.alive) return;
     s.jumpHeld = 0;
-    if (s.flight) s.flight.held = 0;
+    if (s.flight) { if (s.flight.gold && s.flight.held) s.flight.cut = 1; s.flight.held = 0; } // (let go once up: down on the next cell, even over what it hops; a quick press, never held, is the plain hop)
   }
   // A snake asks to flash: a person with E, Shift or a swipe the way they're
   // going, an AI by saying so (memory.flash: the tick). It goes the next tick
@@ -1306,7 +1306,8 @@ window.SnakeEngine = (() => {
         }
         const d = f.held ? airTurn(game, s, f) : null; // (steered only while held: let go, it comes down on the next cell, and a quick press is a plain-length hop, its turns waiting till it's down)
         if (d) { f.dir = d; f.over = []; f.land = ahead(game, s, s.body[0].x, s.body[0].y, d); }
-        if (!(s.isPlayer && !s.autopilot) && f.flown >= (s.flyFor || 0)) f.held = 0; // (a rival lets go where it chose to come down)
+        if (!(s.isPlayer && !s.autopilot) && f.flown >= (s.flyFor || 0)) { if (f.held && s.flyFor > 0) f.cut = 1; f.held = 0; } // (a rival lets go where it chose to come down; flyFor 0, a plain-length hop)
+        if (f.cut && f.over.length) { f.land = f.over[0]; f.over = []; } // (let go over what it hops: down on the next cell, whatever's there)
       }
       if (f?.over.length) { // in the air: on over the next cell it hops, a cell a tick (turns wait till it's landed, but a golden flight's)
         s.dir = f.dir;
@@ -1519,6 +1520,10 @@ window.SnakeEngine = (() => {
         out.add(s); why.set(s, 'hole');
       } else if (down && under && !game.holes.has(key(h.x, h.y))) { // (round six B: down onto a body, it's trapped there: out)
         Object.assign(c, { cause: `came down on ${under.name}`, killer: under.name, killerId: under.id, headOn: false, meet: false });
+        out.add(s); why.set(s, 'boxed');
+      } else if (s.landing && !out.has(s) && c.killerId != null && !c.meet) { // (its landing taken by a body: the same bump, and out, whatever lies under it: "a fast golden flash through a landing cell steals the landing, and the jumper with it")
+        const o = game.snakes.find(q => q.id === c.killerId);
+        Object.assign(c, { cause: `came down on ${o === s ? 'itself' : o.name}`, killer: o === s ? 'self' : o.name, killerId: o.id, headOn: false, meet: false });
         out.add(s); why.set(s, 'boxed');
       }
       if (s.boom) { out.add(s); why.set(s, 'boom'); } // (blown up)

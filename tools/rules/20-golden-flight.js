@@ -31,6 +31,14 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   E.letGo(g2, me2);
   way2 += ' ' + fly(g2, 1);
   check('...let go, it comes down on the next cell', way2 === '4,10^ 5,10^ 6,10^ 7,10^ 8,10', way2);
+  const g6 = board([[line(3, 10, 6), 'right'], [line(4, 25, 4), 'right']]);
+  const me6 = g6.snakes[0];
+  me6.leaps = 1;
+  E.leap(g6, me6); E.leap(g6, me6);
+  let way6 = fly(g6, 1);
+  E.letGo(g6, me6); // (still over the plain hop's cells)
+  way6 += ' ' + fly(g6, 1);
+  check('...let go before the plain hop\'s cells are flown, it comes down on the next cell all the same', way6 === '4,10^ 5,10' && me6.alive && !me6.flight, way6);
   const g3 = board([[line(3, 10, 6), 'right'], [line(4, 25, 4), 'right']]);
   const me3 = g3.snakes[0];
   me3.leaps = 1;
@@ -47,6 +55,14 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   me4.queue.push(D.down); // (pressed in the air, over the body it hops)
   way4 += ' ' + fly(g4, 2);
   check('...a quick golden press is the plain hop: a turn pressed before it lands waits till it\'s down, never dropping it on what it hopped', way4 === '7,10^ 8,10 8,11' && me4.alive, way4);
+  const g5 = board([[line(3, 10, 6), 'right'], [Array.from({ length: 9 }, (_, i) => [8, 6 + i]), 'up']]);
+  const me5 = g5.snakes[0];
+  me5.leaps = 1; g5.snakes[1].stunUntil = 1e9;
+  E.leap(g5, me5); E.leap(g5, me5);
+  let way5 = fly(g5, 4);
+  E.letGo(g5, me5); // (over bark, a body lying on the next cell)
+  way5 += ' ' + fly(g5, 1);
+  check('...let go with a body on the next cell, its landing is taken: out, though bark lies under it', !me5.alive && /came down on/.test(me5.cause || ''), way5 + ' ' + JSON.stringify([me5.alive, me5.cause]));
 }
 
 { // Bumps in the air: a flying head into another's air (its flying head, or its body lifted over the cells its flight
