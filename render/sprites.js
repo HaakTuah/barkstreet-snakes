@@ -208,8 +208,16 @@ const drawMushroom = (g, v = '') => {
 // strap, a friend's spots), so no two snakes leave the same remains. A light
 // rim and a dark edge keep every bead readable on the bark.
 // variant: 'fill|mark' or two-tone 'fill|mark|fill2' (see beadOf), mark one of '', marble, marble2 (a gold vein), strap, strap2, cross (both straps), stars, spots, rings, dots, copy, ghost.
-// (Star's rainbow runs through every hue, so the bead sprites are let go now and then, as Mason's veins are.)
-const beadSprite = v => { if (sprites.get('bead')?.size >= 400) sprites.get('bead').clear(); return sprite('bead', v, drawBead); };
+// (Star's rainbow runs through every hue, so bead sprites are kept for the
+// beads in use: as many as the board has cells, one bead to a cell, so every
+// bead on it stays drawn from its own, whatever a peer sends; past that the
+// one unused longest goes.)
+const beadSprite = v => {
+  const kept = sprites.get('bead'), sp = kept?.get(v);
+  if (sp) { kept.delete(v); kept.set(v, sp); return sp; } // (last used last)
+  if (kept && kept.size >= GRID * GRID) kept.delete(kept.keys().next().value);
+  return sprite('bead', v, drawBead);
+};
 const drawBead = (g, v) => {
   const c = CELL, r = c * 0.26, [fill, mark, fill2] = v.split('|');
   const disc = (x, y, rr) => { g.beginPath(); g.arc(x, y, rr, 0, TAU); g.fill(); };
