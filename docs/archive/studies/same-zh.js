@@ -3,7 +3,7 @@
 // then every voice's lines, every line's Chinese (the impressions and the answers included),
 // the Metagamer's labels and the punchlines compared, by byte.
 // Key order is free: the table is only ever looked up.
-//   node tools/dev/same-zh.js [ref]   (run from the repository)
+//   node docs/archive/studies/same-zh.js [ref]   (run from the repository)
 const fs = require('fs'), vm = require('vm'), cp = require('child_process');
 const ref = process.argv[2] || 'origin/develop';
 const files = html => [...html.matchAll(/<script src="(chatter\/[^"]+)"/g)].map(m => m[1]);
