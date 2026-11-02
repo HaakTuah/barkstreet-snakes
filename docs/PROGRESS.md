@@ -91,8 +91,8 @@ and the owner's notes of 2 November, among them).
 - **The design by topic, not by round** (#336; the owner, 2 November 2026): each topic's current rule moves from the
   round files into its topic file in `docs/design/`, superseded versions and measurements to `docs/archive/`. A slow
   side lane, one topic per docs-only PR, taken when a lane is free; code comments citing a section are checked.
-  Done: food (round four's "Food", round six A's food and beetles into `04-food-and-the-world.md`; PR #425). Next:
-  the burrows and beetles of the owner's playtest (32), then the woodpecker.
+  Done: food (round four's "Food", round six A's food and beetles into `04-food-and-the-world.md`; PR #425). The
+  playtest's burrows and beetles (32) followed (PR #426). Next: the woodpecker.
 - **Waiting for a gap:** `render/world.js` (50 KB), the last big file now that `ai/` and `engine/` are split (2y+). Split
   in a PR of its own when no open lane touches it, proven by fingerprints and suites.
 
