@@ -4,6 +4,7 @@ History, kept for the record. Sessions read it only when a task points here.
 
 | File | What it holds |
 | --- | --- |
+| `AUDIT.md` | The third polish pass's audit (from the project's root, moved by the file-by-file review, 2 November 2026): its baseline branch and PRs are long merged. |
 | `instructions.md` | Haakon's instructions and decisions given in chat that no other doc recorded, word for word with their dates (UTC). Add new standing ones here. |
 | `plan-history.md` | The plan as it grew from round six on (PRs A to D, where each session stopped, the measured numbers), moved word for word from the assistant's project memory. Paths into `.git/perry-tools` there now mean `tools/dev/` or `docs/handoff/`. |
 | `progress-done.md` | The done entries of `docs/PROGRESS.md`'s queue and its answered "For Haakon" rows, moved word for word (28 October 2026) to keep it small. New ones are added here. |
