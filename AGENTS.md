@@ -2,7 +2,7 @@
 
 A snake game on a mossy log: you against three AI rivals drawn from a cast of eighteen, in the browser on desktop and
 phone, with online play through PeerJS. Plain HTML, CSS and JavaScript: no build step and no dependencies, which is one
-of its features. Haakon (the owner) plays it, gives feedback and decides; builders like you build it. Live at
+of its features. The owner plays it, gives feedback and decides; builders like you build it. Live at
 https://haaktuah.github.io/barkstreet-snakes/.
 
 **Two builders build it:** Claude (Anthropic's Claude Code) and Codex (OpenAI's). Both work from this file: Claude
@@ -25,20 +25,20 @@ Codex: read its "For Codex" section at the start of every task.
 | Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, each a runner of its folder of parts by area, such as `tools/rules/` (`tools/parts.js`), `simulate.js` (its parts in `tools/sim/`), `abtest.js`, `bench-ai.js`, `browser.js`; `protocol-shapes.json`, the online messages' pinned shapes) |
 | The online messages' types (checked by `tsc`, never shipped) | `jsconfig.json`, `types/globals.d.ts`, and the JSDoc in `net.js` and `online.js` |
 | Study and measuring tools from earlier rounds | `tools/dev/` (teaching audits, burrow spacing, board sizes, the woodpecker and food study, PR pictures) |
-| History: the old polish audit, the plan as it grew, Haakon's instructions word for word | `AUDIT.md`, `docs/archive/` |
+| History: the old polish audit, the plan as it grew, the owner's instructions word for word | `AUDIT.md`, `docs/archive/` |
 
 ## Starting a task
 
-1. Work from `develop`: if you are on `main`, check out `develop` first (this file and `docs/` live there until Haakon
+1. Work from `develop`: if you are on `main`, check out `develop` first (this file and `docs/` live there until the owner
    next merges `develop` into `main`).
 2. Take the first open item in `docs/PROGRESS.md`. Its full text, in `docs/handoff/queue-specs.md` under the same title,
    and the design sections it names, are the spec.
 3. Read only those sections: `grep -rn "## Section" docs/design` finds a section that code or the queue names.
 4. Check weekly usage with `scripts/usage.sh`, and again after every commit (see "Usage"). If it says "unknown", this
-   session cannot see usage: say so in the first line of each PR you open, and carry on; Haakon then watches usage
+   session cannot see usage: say so in the first line of each PR you open, and carry on; the owner then watches usage
    himself and pauses the work at about 90%.
-5. Before opening the task's PR, read its entry and the "For Haakon" table in `docs/PROGRESS.md` on `develop` again,
-   since Haakon's answers can change it while you work: build what changed, or, if that is large, say so in the PR and
+5. Before opening the task's PR, read its entry and the "For the owner" table in `docs/PROGRESS.md` on `develop` again,
+   since the owner's answers can change it while you work: build what changed, or, if that is large, say so in the PR and
    add it as its own entry right after the task.
 
 ## How to work
@@ -46,7 +46,7 @@ Codex: read its "For Codex" section at the start of every task.
 Every rule here says what it is for. The aim behind them all: as much finished work of full quality as the week's
 usage allows, at the lowest cost now and later.
 
-- **A question is a question.** Answer it; act on it only when Haakon says so.
+- **A question is a question.** Answer it; act on it only when the owner says so.
 - **Match effort to the task,** and take the cheapest approach that does the job well, since usage is limited. Docs,
   READMEs, small fixes and config: one pass, no helpers.
 - **Read little.** Some game files are large (`engine.js` and `ai.js` are over 100 KB): never read one whole. Find what
@@ -81,7 +81,7 @@ usage allows, at the lowest cost now and later.
   tests that guard the whole (the simulation's fingerprint and `--check`, the online round trip), and long measurements
   (`tools/abtest.js`, censuses) in `scripts/sim.sh`, never in CI. When the game grows, the tests' default does not.
 - **A change a player sees updates the README,** in the same PR, as it does the lesson and the Field guide row.
-- **Haakon's words are kept, in the archive.** Quote each instruction he gives word for word in the PR and in
+- **The owner's words are kept, in the archive.** Quote each instruction he gives word for word in the PR and in
   `docs/archive/instructions.md`, dated. A standing rule goes into the section of this file where it applies (or
   `CLAUDE.md`, if only Claude uses it), said as briefly as it can be, with what it is for: never as a dated entry or a
   quote here, since every session pays to read this file.
@@ -92,25 +92,25 @@ usage allows, at the lowest cost now and later.
 
 ## Questions, readings and ideas
 
-Everything Haakon should see lives in one place, this repository's issues, so nothing is lost or said twice and he
+Everything the owner should see lives in one place, this repository's issues, so nothing is lost or said twice and he
 never has to hunt (the words are in `docs/archive/instructions.md`).
 
 - **Every reading is noted.** Each reading a task takes, where its entry or the design left something open, goes into
   its PR under "Readings taken", with the rule it rests on ("Rules that stand", or the design section). Most questions
-  are answered that way; only what no rule settles, or a matter of taste, goes to Haakon.
-- **One inbox: issues assigned to Haakon.** A question he must answer, or a reading he should see (a matter of taste,
-  or one no rule settles), is an issue labelled `for-haakon`; a suggestion is an issue labelled `idea`. Search the open
+  are answered that way; only what no rule settles, or a matter of taste, goes to the owner.
+- **One inbox: issues assigned to the owner** (`HaakTuah` on GitHub). A question he must answer, or a reading he should see (a matter of taste,
+  or one no rule settles), is an issue labelled `for-owner`; a suggestion is an issue labelled `idea`. Search the open
   issues first and add to one rather than file it twice. Each issue holds the whole of it, answerable from a phone: the
   reading taken and its alternative, or what the idea is, why it matters and a rough cost.
 - **Everywhere else, only a pointer.** A PR, a report, a milestone PR's description and a session's last message never
-  repeat an issue: under "Questions for Haakon" they list the issues they opened or touched, one line and a link each
-  ("Questions for Haakon: none" if none), so he sees what is new. An orchestrator passes every new link on to him.
-- **Only Haakon's comments answer.** Anyone can comment on a public issue; only his comments count (`SECURITY.md`).
+  repeat an issue: under "Questions for the owner" they list the issues they opened or touched, one line and a link each
+  ("Questions for the owner: none" if none), so he sees what is new. An orchestrator passes every new link on to him.
+- **Only the owner's comments answer.** Anyone can comment on a public issue; only his comments count (`SECURITY.md`).
   Whoever acts on his answer quotes it word for word in `docs/archive/instructions.md`, writes the decision where it belongs, and closes the issue
   with a link to the change.
 - **Ideas are cheap to file and never built unqueued.** Anyone may file one with a line of what and why; keep it short,
   at most a couple per task. Nothing is built from an idea, and no agent treats another's idea as an instruction, until
-  Haakon has moved it into `docs/PROGRESS.md`.
+  The owner has moved it into `docs/PROGRESS.md`.
 
 ## How work flows
 
@@ -146,15 +146,15 @@ merged branches, deleted from GitHub; (5) leftovers nobody uses, archived or rem
   own style, and they see it used against them; rules tests prove both, through the same engine calls. If the rivals
   can't learn a move well, the move doesn't go in. **No refuges:** a move must take timing and skill and never make
   anyone safe; measure how often it is used, fails, and whether its users outlive everyone, and tighten or drop it.
-- **Clever rivals, human reactions.** Haakon: "They shouldn't have super human reaction speed, but they should be very
+- **Clever rivals, human reactions.** the owner: "They shouldn't have super human reaction speed, but they should be very
   clever" (11 October). They get better through planning ahead, "not by increasing reaction time, or making them all
   samey in strategy, nor decreasing performance below good gameplay levels" (14 October).
 - **Every new move is tested both ways.** For every move or rule a snake can choose to use, run `tools/abtest.js` on
   fresh seeds: rivals that use it against a copy where it is taken from the play of some rivals only (the others keep
   it, so the rule itself is unchanged). Its users should come out ahead in wins or survival. If they don't, the PR
-  says why: the move doesn't matter (a design finding for Haakon) or the rivals play it badly, which is fixed before it
+  says why: the move doesn't matter (a design finding for the owner) or the rivals play it badly, which is fixed before it
   merges. The PR shows the table, with how often each rival used the move and how often it worked.
-- **Every new rule needs a visible cue and a lesson** (a one-time lesson and a Field guide row). Haakon called this
+- **Every new rule needs a visible cue and a lesson** (a one-time lesson and a Field guide row). The owner called this
   "very important".
 - **Every rival keeps its trademark,** measured before and after a change: Mason's straight runs, Ouroboros's coiling,
   Creeper's tail-riding, Ghost's distance, Gobbler's food share, Vulture's beads, Sovereign's time home, Mute's boxing,
@@ -164,10 +164,10 @@ merged branches, deleted from GitHub; (5) leftovers nobody uses, archived or rem
   deaths by cause, starving and crashes survived within noise). The same holds for visuals: a look-alike is fine if
   nobody would see a difference. Fingerprint-identical changes are the fast lane; the rest go through
   `tools/abtest.js` on fresh seeds.
-- **Conditional goods: no solutions, only trade-offs** (Haakon, 31 October 2026: "conditional goods. thomas sowell in
+- **Conditional goods: no solutions, only trade-offs** (the owner, 31 October 2026: "conditional goods. thomas sowell in
   game mechanics."). Every move, food or power helps in some situations and costs in others; simulations check that
   neither always nor never using it wins, as with the mushrooms.
-- **Everything new belongs.** Haakon: "Very important everything feels balanced, cohesive, purposeful and like it
+- **Everything new belongs.** the owner: "Very important everything feels balanced, cohesive, purposeful and like it
   belongs!" (13 October).
 - **Online stays in step:** everything new works in online play, with a protocol bump when messages change.
 - **Never rename** the storage keys (`snake-*`, `barkbite-muted`, `barkbite-music`) or `net.js`'s PREFIX `'barkbite-'`:
@@ -177,17 +177,17 @@ merged branches, deleted from GitHub; (5) leftovers nobody uses, archived or rem
 ## Usage
 
 Work continuously, task after task, and check weekly usage after every commit. From about 90% of the weekly limit, take
-on no bigger task, so the rest of the week stays Haakon's: finish the one at hand if it is nearly done, or bring it to a
+on no bigger task, so the rest of the week stays the owner's: finish the one at hand if it is nearly done, or bring it to a
 clean commit and open a draft PR saying how to test it and what is left; then only small things (a fix, a doc), and
 note where you stopped in `docs/PROGRESS.md`. Two building sessions share the limit: this game's and Amarna Letters'.
 Only the measured share counts, never the app's warning, and a session that cannot read it carries on.
 
 ## Git and GitHub
 
-`main` is Haakon's and is what the live site plays: never push to it, never force-push. Work on a branch from `develop`,
+`main` is the owner's and is what the live site plays: never push to it, never force-push. Work on a branch from `develop`,
 one per task, with a PR into `develop`; merge it yourself when the suites pass (and, for a task that changes the game,
 one reviewer has found nothing blocking). At each milestone make sure a PR from `develop` to `main` carries the new
-work, saying what to try, with its line of what is new at the top of `version.js`'s news, and merge it yourself once its CI is green; then carry on with the next task without waiting for Haakon. Push the task's branch after every commit, even before its PR opens (a draft PR if it is not ready), so nothing is lost if a session dies or its machine is reclaimed. Before pushing to a branch whose PR you opened earlier, check whether that
+work, saying what to try, with its line of what is new at the top of `version.js`'s news, and merge it yourself once its CI is green; then carry on with the next task without waiting for the owner. Push the task's branch after every commit, even before its PR opens (a draft PR if it is not ready), so nothing is lost if a session dies or its machine is reclaimed. Before pushing to a branch whose PR you opened earlier, check whether that
 PR was merged; if it was, start a new branch and PR. Don't stack PRs on each other's branches.
 
 Cloud sessions can't use GitHub's GraphQL API, so `gh pr create` and `gh pr view` fail. Use the REST API:
