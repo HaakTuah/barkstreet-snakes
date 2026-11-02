@@ -117,3 +117,56 @@ beetles well, beetles carry more of the food (this section also holds what "Fewe
   6) says so as it goes under, at most every 30 s (Gobbler: "NO! My snack went DOWN!"; Mason: "Diggus escapus.";
   Desperado: "Varmint went to ground."; Mute *knocks on the bark, then shrugs*; Copycat: 深挖洞，广积粮！). One caught
   mid-dig is just a catch, and nobody speaks for you.
+
+### Burrows grow shut
+
+A burrow past the cap doesn't close over at once: it grows shut (the owner's playtest, 27 October 2026; its text, with
+how it was tested and measured, is in `docs/archive/design-food.md`).
+
+- **The rule.** A new burrow that opens while three are open (`BURROW_MAX`) starts the stalest growing shut. It takes a
+  random time between `BURROW_SHUT_MIN_MS` and `BURROW_SHUT_MAX_MS` (6 and 14 s of game time; the engine's seeded
+  randomness) and then closes over. The cap counts only open burrows, so there are three most of the time and briefly
+  four. A dig nearer than `BURROW_SPACING` to a burrow also starts that one growing shut. While it grows shut, a scared
+  beetle can still run for it and dive in, but none comes out of it: `freeBurrow` skips it, so a beetle below comes up
+  out of an open one, or waits.
+- **The rivals** read it by the same rule, from `view.burrows` (each one carries `shutFrom` and `shutAt`): a burrow
+  growing shut is a home a scared beetle runs to and dives into until it closes, as in the engine.
+- **The cue** (`drawShutting` in `render/burrows.js`), evenly over its time:
+  - the opening's area shrinks evenly to a tenth (`SHUT_HOLE`), keeping its dark rim, as sawdust fills in from the rim,
+    lumps of it creeping over the opening's edge; its pale rim and specks round it stay;
+  - the bark's grain grows across it, along the log;
+  - four cushions of the log's moss grow in over the rim one after another, each to about a third of a cell across;
+  - its cracks fade to half.
+  At the end comes the closing over (`drawHeals`, see "Less fruit, more beetles"): it starts from the look it had grown
+  to, packs the plug in under its moss, then the big cushion and the fade. Then a faint scar (a greyed oval of sawdust
+  with the grain across it, at 0.45) stays where it was, fading over `SCAR_MS` (20 s). With reduced motion the growing
+  shut is as it is (a slow change of look, not motion), and the closing over keeps its calm version.
+- **The sound:** silent while it grows shut, then the crumble (`heal`) as it closes over.
+- **The lesson** (once a round, once the burrow's lesson is told, the first time the banner is free for one starting to
+  grow shut): "Old burrows grow shut: beetles go in, none come out."
+- **The Field guide's** Burrows row says which one grows shut (past three, the one unused longest) and what it means for
+  play (beetles still go in, none come out), not only that it does: alone, that would read as a timer.
+- **Online** (protocol 11): each burrow row carries `shutFrom` and `shutAt` (−1 while it's open), checked before it's
+  drawn (a row that shuts before it started counts as open), and the event `['shut', x, y, at]` marks one starting to
+  grow shut.
+
+### Beetles and the woodpecker
+
+The owner (29 October 2026; entry 2m): beetles should "quickly try to escape down their burrow when woodpecker targets
+their little island"; burrows ran out as the woodpecker pecked them; and beetles under a strike teleported. The rules
+(`crawl`, `beakDepth`, `beakGap` and `knocks` in `engine/`):
+- **Burrows keep up.** A beetle due up from underground with no free burrow cracks a new one open where it's quiet,
+  by `beetleOut`'s rule (`BURROW_SPACING` apart, at most `BURROW_MAX` open). None comes up under the beak: `freeBurrow`
+  and `placer` leave the mark out.
+- **The mark is danger, as a head is.** While the woodpecker aims, a beetle within `BEETLE_FEAR` of its mark scurries
+  away from it and for a burrow in reach, and dives in. On the mark, it plans against the strike: a burrow in reach it
+  can get to in time (pulled there straight, twice as hard as a head-scared run), else off the mark by the shortest
+  way, else it digs in if the dig is done before the strike. A dig there leaves no burrow, and it comes up elsewhere. A
+  dig already under way that won't be done in time is dropped, and it runs.
+- **No teleporting.** A beetle still on the mark at the strike is the bird's: a `knock` with no landing, a puff and a
+  soft crunch, no ring through the aim. Its lesson, the first time: "The woodpecker eats beetles too!". The Field
+  guide's Beetles and Woodpecker rows say so.
+- **The rivals** move each beetle in their search by the same rule (`bugCrawl` in `ai/beetles.js`, with `E.beakDepth` and
+  `E.beakGap`). So a beetle bound down a burrow beyond the mark isn't chased, and one running off it toward a rival is.
+  One gap, not worth its code: the AI's copy lets a fleeing beetle cross a body lying on the mark (the mark's cells
+  read as holes there), where the engine stops it.

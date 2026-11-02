@@ -10,7 +10,7 @@ the file of its topic; a new round or topic gets its own file and a line here.
 | [`docs/design/01-the-vision-in-one-paragraph.md`](docs/design/01-the-vision-in-one-paragraph.md) | The vision in one paragraph |
 | [`docs/design/02-art-direction-storybook-bark-on-a-mossy-log.md`](docs/design/02-art-direction-storybook-bark-on-a-mossy-log.md) | Art direction: "storybook bark", on a mossy log |
 | [`docs/design/03-the-snake-as-a-character.md`](docs/design/03-the-snake-as-a-character.md) | The snake as a character |
-| [`docs/design/04-food-and-the-world.md`](docs/design/04-food-and-the-world.md) | Food and the world: food and its looks, how much there is and hunger, the rivals and food, beetles and their dig, burrows, holes, remains, and the realms and colonies with their flags |
+| [`docs/design/04-food-and-the-world.md`](docs/design/04-food-and-the-world.md) | Food and the world: food and its looks, how much there is and hunger, the rivals and food, beetles and their dig, burrows and their growing shut, beetles and the woodpecker, holes, remains, and the realms and colonies with their flags |
 | [`docs/design/05-weather.md`](docs/design/05-weather.md) | Weather |
 | [`docs/design/06-keeping-it-smooth.md`](docs/design/06-keeping-it-smooth.md) | Keeping it smooth |
 | [`docs/design/07-borders-and-frames.md`](docs/design/07-borders-and-frames.md) | Borders and frames |
@@ -38,7 +38,7 @@ the file of its topic; a new round or topic gets its own file and a line here.
 | [`docs/design/29-round-six-b-the-new-moves.md`](docs/design/29-round-six-b-the-new-moves.md) | Round six B: the new moves |
 | [`docs/design/30-teaching-by-showing.md`](docs/design/30-teaching-by-showing.md) | Teaching by showing |
 | [`docs/design/31-phones.md`](docs/design/31-phones.md) | Phones |
-| [`docs/design/32-the-owners-playtest.md`](docs/design/32-the-owners-playtest.md) | The owner's playtest, finding by finding with the call on each: the rivals' reads, the cards and the header, burrows, rainbows, hunger on the body, the phone's gap and bottom, Wildcard's hair and Copycat's face, the rival line-up, the woodpecker's size and pecks, flags, beetles |
+| [`docs/design/32-the-owners-playtest.md`](docs/design/32-the-owners-playtest.md) | The owner's playtest, finding by finding with the call on each: the rivals' reads, the cards and the header, rainbows, hunger on the body, the phone's gap and bottom, Wildcard's hair and Copycat's face, the rival line-up, the woodpecker's size and pecks, flags (its burrows and beetles are now in 04) |
 | [`docs/design/33-one-screen.md`](docs/design/33-one-screen.md) | One screen |
 | [`docs/design/34-skipped-or-adapted-guidelines.md`](docs/design/34-skipped-or-adapted-guidelines.md) | Skipped or adapted guidelines |
 | [`docs/design/35-capricious-copycat-and-wildcard.md`](docs/design/35-capricious-copycat-and-wildcard.md) | Capricious, Copycat and Wildcard: every rival by turns, copying the winner's play, a few strong traits a round; a costume change |
