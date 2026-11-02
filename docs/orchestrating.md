@@ -57,3 +57,11 @@ given is not), so a stall shows in one line.
      from about 90%, as "Usage" says, only small things in the main lane.
      Only the measured share counts (the owner, 29 October 2026, when a builder stopped at the app's weekly usage warning: "They weren't supposed to stop before 90%. We're still at only 76%"): the app's weekly usage warning is not the brake, and a session that cannot
      read the share carries on until the owner says to stop.
+
+## The workshop check
+
+At every milestone, say in one line of the milestone PR what slows the work as the game grows, and fix what passes its
+mark: (1) how long the checks take for a docs-only and a code PR, finding out why if either grew by over a fifth since the last check; (2) the files every session reads, `AGENTS.md`, `CLAUDE.md` and `docs/PROGRESS.md`,
+each kept under about 20 KB, with done entries and answered questions moved to `docs/archive/` and a line pointing to
+them; (3) files that should be split by meaning (`AGENTS.md`, "How to work"), each in a PR of its own with behaviour proven unchanged; (4)
+merged branches, deleted from GitHub; (5) leftovers nobody uses, archived or removed; (6) the README current.
