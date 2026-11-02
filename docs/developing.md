@@ -67,10 +67,10 @@ Every seeded round is cached by the files that played it, round by round, so ask
 | `tuning.js` | Every number that shapes how the game plays and feels, in one place. |
 | `engine.js` | The rules: moving, eating, dying, hunger, the woodpecker. No drawing, so it also runs in Node. |
 | `ai.js` | The rivals' brains and personalities. |
-| `render/` | Draws the board on a canvas, with smooth movement between ticks: nineteen files by what they draw, sharing one scope (the list is at the top of `render/core.js`). |
+| `render/` | Draws the board on a canvas, with smooth movement between ticks: a file for each thing it draws, sharing one scope (the list is at the top of `render/core.js`). |
 | `audio/` | Sound effects and the adaptive music, synthesised live: `cues.js` (every cue), then `sound.js` (the synthesiser, playing, music, weather; makes `SnakeAudio`). |
 | `chatter/` | The rivals' speech bubbles and chat log: their lines, in English and Chinese, and the talk (the list is at the top of `chatter/voices.js`). |
 | `records.js` | The Hall of Fame and your stats. |
 | `online.js` | Play with friends: the messages between host and friends. |
 | `net.js` | Play with friends: the connections (PeerJS, loaded only when used). |
-| `game/` | Ties it together: the game loop, input, the cards, the controls and the lobby: seven files by what they do (the list is at the top of `game/core.js`). |
+| `game/` | Ties it together: the game loop, input, the cards, the controls and the lobby: a file for each thing it does (the list is at the top of `game/core.js`). |

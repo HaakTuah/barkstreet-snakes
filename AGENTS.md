@@ -25,7 +25,7 @@ Codex: read its "For Codex" section at the start of every task.
 | Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, each a runner of its folder of parts by area, such as `tools/rules/` (`tools/parts.js`), `simulate.js` (its parts in `tools/sim/`), `abtest.js`, `bench-ai.js`, `browser.js`; `protocol-shapes.json`, the online messages' pinned shapes) |
 | The online messages' types (checked by `tsc`, never shipped) | `jsconfig.json`, `types/globals.d.ts`, and the JSDoc in `net.js` and `online.js` |
 | Study and measuring tools from earlier rounds | `tools/dev/` (teaching audits, the rivals' censuses, the woodpecker and food study, PR pictures) (done ones: `docs/archive/`) |
-| History: the old polish audit, the plan as it grew, the owner's instructions word for word | `AUDIT.md`, `docs/archive/` |
+| History: the old polish audit, the plan as it grew, the owner's instructions word for word | `docs/archive/` |
 
 ## Starting a task
 

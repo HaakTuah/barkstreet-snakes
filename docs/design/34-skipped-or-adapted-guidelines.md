@@ -36,4 +36,4 @@ Each line gives the guideline, what was done, and why.
 - **A jitter buffer for friends' screens:** *skipped.* Tick spacing measured steady (118-122 ms, even with the host's tab hidden), and a buffer would add latency for everyone.
 - **Command letters on Colemak and Workman:** *skipped.* WASD is read by physical key so it works on any layout; on Colemak, the physical S key types "r", so giving letters priority would restart your round when you steer down.
 - **Renaming the storage keys and `pellet`:** *skipped.* Renaming keys would orphan everyone's saved Hall of Fame; the rest is cosmetic.
-- **Splitting snake.js (the friends' lobby into its own file) and the long `drawFace` and `decide()`:** *skipped for now.* Big moves with no change a player can see; noted in AUDIT.md for later.
+- **Splitting snake.js (the friends' lobby into its own file) and the long `drawFace` and `decide()`:** *skipped for now.* Big moves with no change a player can see; noted in `docs/archive/AUDIT.md` for later.
