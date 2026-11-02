@@ -112,6 +112,31 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 
 **Part 3b, the chosen numbers** (PR #195, mushrooms come back up): `CHEEK_TICKS` 9 (about a second), `SPIT_REACH` 3, `SHRINK_MAX` 5, `SPIT_WILT_MIN` 20 ticks. *Readings taken:* the spit leaves at the start of the tick its time is up, before anyone moves, from the head and the way it faces then: exactly where the ring has been (the review found the ring a cell short when it left after the move); a head whose own mouth is full makes a spit bounce off it as off a body; a spat mushroom that lands on food or a burrow rolls off by the same rule; a head over a hole or in a fire isn't swallowing: the mushroom is gone there; mushrooms in cheeks count toward the board's quota, so the log holds no more poison than before. *The rivals:* everyone aims one in the cheek (the last moves before the spit), closes in on where it could hit a head before that, and keeps its head out of any ring due within its search; eating one on purpose is weighed only at a mushroom within 4 of its head with a rival's head close and a line to spit along, as a shot worth `w.spit` × 0.35 × half a segment for each it would take off (Joker 4 "for the laugh", Sniper 2.5 "for the head shot", Ghost 0.2, Drab and those built on Drab 0.05, the rest 0.5; Gobbler's hatred caps it); without a shot a mushroom costs what it always did. *Measured* on fresh seeds 71 and 73 (1,200 paired rounds, head to head, against the same AI that never aims nor eats one on purpose, both dodging): the spitters win 25.2% to 24.6% (+0.6 points, interval −2.5 to +3.7), live as long (156 s), eat as much, kill as often, die of the same causes; every trademark the same or within noise (Vulture's beads 31.3% to 33.4%, within noise). **A design finding:** between rivals a spit hardly ever lands (1 to 2% of spits hit a head, about the same when nobody dodges, and as rare with a cheek of 3 ticks): the rivals keep their heads apart, so a head is seldom 3 cells in line from a spitter, and a ring a second ahead is easy to step out of. It's a skill shot for people, and the rivals dodge theirs. Haakon's answer (30 October 2026): the spit becomes a shot along the line, part 3b+ (the question and answer: `docs/archive/progress-done.md`, "For Haakon, answered").
 
+**Part 4, the chosen numbers** (PR #198: the golden flight, leap now, bumps in the air, and 2r's doomed islands): `GOLD_FLY` 5 (a held golden jump flies up to 5 cells, one turn planned, a person's turn a tick at a time), `LEAP_WINDOW` 5, leap now down on the fourth cell (`LEAP_REACH` + 1) or the farthest free short of it.
+- **The rivals:**
+  - They plan a flight at take-off and again every tick in the air: the straight landings and one turn, each landing only where no rival's head can get there first.
+  - A landing that shuts a nearby rival in is worth apples: the share of the room that rival reaches in 10 moves my landed body takes away (4 apples for all of it), and the moves it adds to its nearest food (2 apples at 12 moves or more). Times (0.5 + aggression, +0.5 for a hunter), its victim twice, half for a rival that can jump out (`shutIn`). The owner: "someone really skillful can time cutting someone else off midair".
+  - Leap now only out of a trap, when every crawl crashes. Used over open ground, or over a coming head-on, it cost them.
+  - A held golden dash is kept for a trap, or for a cut that puts a rival out. Star spends them as they come (`dashSpend`): its trademark.
+  - 2r: no hop onto an island too small to live on, unless it can hop off again in time (`doomed`).
+- **Measured,** head to head on fresh seeds, each move taken from the same AI by itself:
+  - *The golden dash, kept* (seeds 659/661, 1,200 paired rounds): place 2.46 to 2.54 and time alive 156 s to 155 s (both decided); win 25.8% to 24.0% (not decided).
+  - *The flight* (seeds 641/643, 1,200): 24.7% to 25.1%, even (interval −2.9 to +3.6).
+  - *Leap now* (seeds 647/653, 800): 25.0% to 24.8%, decided the same.
+  - Every trademark the same or within noise in all three.
+  - Per use (`tools/dev/fork-moves.js --move fly --rest`, the round forked at each flight and played on with and without it): +0.09 ± 0.07 place a flight (seeds 701–704, n 406), −0.04 before `shutIn`.
+  - Eleven other plans were measured the same way and dropped: keeping golden charges for flights, a ply of search after landing, charging contested landings, and Fable's design (an honest landing price, committing in the air, purpose flights with seals priced as kills).
+- **A design finding** (issue #363): a snake flies past the plain hop only about 0.4 times a round, so +0.09 a flight is under a win point a round, inside the noise. Leap now out of a trap is rarer still. Both pay when used, and their worth is a person's timing.
+- **In a field of its own** (200 rounds, seeds 3 and 11, `--check` passes):
+  - rounds 174 s and 177 s;
+  - flights past the plain hop 1.58 and 1.74 a round, 3.1 to 3.2 cells in the air each; out within 3 s of one 2% and 3%;
+  - down on a body 0.07 and 0.06 a round, bumps in the air 0.00 and 0.01;
+  - out within 3 s of a leap now 4% and 3%;
+  - golden cuts 0.57 and 0.53 a round, no dash blown up;
+  - down on an island smaller than itself 0.00;
+  - bridge rides 0.07 and 0.06 a round;
+  - beetles chased and got away 41% and 38% (2w's band).
+
 **For the teaching system (item 4), part 3b:** the lessons are banners for now ("Bleh! Steer to aim it: it lands three ahead." on your first mushroom; "Ptoo! … Steer to spit it back" the first time one hits you); its hint to draw is the ring itself, with a line from the head to it while it's in your cheek, and a flash on the ring as it's about to go.
 
 **For the teaching system (item 4):** the cut's lessons are banners for now (your first cut, your first failed flash, the first neck cut you see, your first dropped tail, the first squash, and "Flash through your own tail to drop it" when you're in a pocket smaller than you with your own body one thick in front); its hint to draw is where a flash would cut, a snip line across the body in front of you when a cut is in reach, and a warning tint on a cut that would fail (too thick, nothing free beyond, a head).
