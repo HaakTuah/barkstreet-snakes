@@ -80,10 +80,12 @@ if (isMainThread && require.main === module) {
     }
     if (flag('--check')) {
       const never = Object.entries(merged.per).filter(([, p]) => p.rounds >= 20 && !p.wins).map(([n]) => n);
-      // (2w: with --census, chased beetles get away at least a third of the time; Haakon, 31 October 2026, "at least a third")
+      // (2w: with --census, chased beetles get away a third to 45% of the time: Haakon, 31 October 2026, "at least a third"; the ceiling
+      // so beetles stay worth hunting. CI runs no census, so this guards a census run by hand.)
       const c = merged.total.census, chased = c ? c.chases : 0, away = c ? c.chasesDived + c.chasesDug + c.chasesFlown : 0;
       const problems = [merged.total.stalled && `${merged.total.stalled} stalled`, never.length && `never won: ${never.join(', ')}`,
-        chased >= 100 && away / chased < 1 / 3 && `chased beetles got away ${(100 * away / chased).toFixed(1)}% of the time, under a third`].filter(Boolean);
+        chased >= 100 && away / chased < 1 / 3 && `chased beetles got away ${(100 * away / chased).toFixed(1)}% of the time, under a third`,
+        chased >= 100 && away / chased > 0.45 && `chased beetles got away ${(100 * away / chased).toFixed(1)}% of the time, over 45%`].filter(Boolean);
       if (problems.length) { console.error('check failed: ' + problems.join('; ')); process.exit(1); }
       console.log('check ok');
     }

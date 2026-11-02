@@ -103,6 +103,7 @@ function playRound(E, T, r, { seed, ahead, signs, saveAt, seats }, saved) {
     for (const s of g.snakes) c.goldGot += Math.max(0, s.leaps + g.events.filter(e => e.type === 'leap' && e.gold && e.snake === s).length - held[s.id]);
     const left = g.snakes.filter(s => s.alive).length;
     for (const s of dying) {
+      if (g.food.some(f => f.kind === 'beetle' && Math.abs(f.x - s.body[0].x) + Math.abs(f.y - s.body[0].y) <= 3)) c.deathsNearBeetle++; // (2w: out with a beetle within 3 cells of its head)
       if (st.hopAt?.has(s) && g.tick - st.hopAt.get(s) <= 30) c.hopDie++;
       place.set(s, left + 1);
       per[s.name].aliveMs += g.time;
