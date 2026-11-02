@@ -225,3 +225,25 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   for (let n = 0; n < 6 && a.alive && a.flight; n++) { look(g); quiet(g); }
   check('a rival up on a golden flight plans again as it flies: it steers clear of a body it sees on its landing, and lives', a.alive && !a.flight && !b.body.some(c => c.x === a.body[0].x && c.y === a.body[0].y), JSON.stringify({ head: a.body[0], alive: a.alive, cause: a.cause }));
 }
+
+{ // 2y: rivals take landings, planned from the ring everyone sees (through aiView, a reaction ago). A person takes off
+  // on a held golden flight along row 10, its ring GOLD_FLY + 1 cells on, at (12, 10); a rival a cell below and right
+  // of the ring, heading left with an apple ahead, held still (stunned) till its view shows the flight up: then it
+  // has two moves before the flier is down, time to step onto the ring and lie there. Sniper, the flier its victim,
+  // does, and the flier comes down on it and is out; Drab, which hardly ever goes for a landing, doesn't, and the
+  // flier comes down safe.
+  for (const key of ['sniper', 'drab']) {
+    const g = E.createGame({ withPlayer: false, personas: [key, 'drab'] });
+    g.snakes = g.snakes.slice(0, 2);
+    const [a, b] = g.snakes;
+    a.body = Array.from({ length: 6 }, (_, i) => ({ x: 13 + i, y: 11 })); a.dir = D.left; a.leaps = 0; a.leapReadyAt = 1e9; a.flashReadyAt = 1e9; a.stunUntil = g.tick + 3;
+    b.body = Array.from({ length: 6 }, (_, i) => ({ x: 6 - i, y: 10 })); b.dir = D.right; b.isPlayer = true; b.persona = null; b.queue = []; b.leaps = 1;
+    g.food = [{ x: 8, y: 11, kind: 'food', expires: g.tick + 900 }]; g.given = new Set([11 * T.GRID + 8]); g.time = 30000;
+    E.leap(g, b); E.leap(g, b);
+    let ring = null;
+    for (let n = 0; n < 8 && b.alive && !(ring && !b.flight); n++) { feed(g); quiet(g); ring ||= b.flight && { ...b.flight.ring }; }
+    const took = !b.alive && /came down on/.test(b.cause || ''), seen = JSON.stringify({ ring, head: a.body[0], flier: b.body[0], alive: b.alive, cause: b.cause });
+    if (key === 'sniper') check('2y: Sniper sees a flier\'s ring in time, steps onto it, and the flier comes down on it and is out', took && a.alive && ring.x === 12 && ring.y === 10, seen);
+    else check('...Drab in the same spot doesn\'t, and the flier comes down safe', b.alive && a.alive, seen);
+  }
+}
