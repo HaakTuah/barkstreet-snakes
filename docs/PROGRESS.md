@@ -85,9 +85,9 @@ and the owner's notes of 2 November, among them).
   and point (5), the unused-code check (PR #331):
   `docs/archive/progress-done.md`, "The split lane, done".
 - **The file-by-file review's moves:** done, a folder a PR (#341, #342, #343, #344, #345):
-  `docs/archive/progress-done.md`, "The split lane, done". Left: `render/world.js`'s part, which waits with it below;
-  `render/food.js`, 66 KB after the moves, split by meaning (its pictures, or its burrows and the beetle's bore) in a PR
-  of its own.
+  `docs/archive/progress-done.md`, "The split lane, done". Left: `render/world.js`'s part, which waits with it below.
+  `render/food.js` split by meaning: its burrows and the beetle's bore to `render/burrows.js` (66 to 43.5 and 22.6 KB;
+  PR #421).
 - **The design by topic, not by round** (#336; the owner, 2 November 2026): each topic's current rule moves from the
   round files into its topic file in `docs/design/`, superseded versions and measurements to `docs/archive/`. A slow
   side lane, one topic per docs-only PR, taken when a lane is free; code comments citing a section are checked.
