@@ -64,6 +64,8 @@ and the owner's notes of 2 November, among them).
 
 - *Done:* the workshop check's point (2): `AGENTS.md` from 21.5 to 20.0 KB, every rule kept; the workshop check's marks
   moved to `docs/orchestrating.md`, the file table's detail to `docs/developing.md` (PR #420).
+- *Done:* the render suite's virtual clock starts at a fixed time, so the woodpecker's ring check (and every staged
+  check) draws at the same phase on every run, whatever the load (#424, PR #427).
 - *Done:* the input suite's "rivals have all thought" check, counted round after round to its 100-tick floor and its
   round started on the virtual clock, so neither a short random round nor load can flip it (#414, PR #415).
 - *Done:* the layout suite in cloud sessions (#383): it never hung, it ran about 28 minutes in one process, silent
