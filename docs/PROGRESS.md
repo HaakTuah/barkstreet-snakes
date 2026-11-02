@@ -8,7 +8,7 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
 **2 November 2026, a fresh week:** the main lane is part 4 (#198, merged as it stands so the owner can play it), then
-2y, then 2x, then part 5 (#202, parked); the polish
+2y, then part 5 (#202, unparked: the wrap's trade-off), then 2x, then 2z, then 2u; the polish
 lane and the workshop lane run beside it, each claimed by a draft PR.
 
 ## For the owner
@@ -46,6 +46,10 @@ and the owner's notes of 2 November, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
+- **Node 26** (the owner, 2 November 2026; "Node's version" in `docs/developing.md`): CI's `node-version` and
+  `scripts/cloud-setup.sh` move from 22 to 26 together (installing it from the npm registry if the machine has an
+  older one), proven by the suites and the fingerprints; 24 if the tooling is not ready for 26, said in the PR.
+
 - **The file-by-file review** (the owner, 2 November 2026; part 1, the docs every session reads, done in PR #334;
   part 2, `docs/design/`, PR #335; part 3, the code, draft PR #337): its spec is in
   `docs/handoff/queue-specs.md` under the same title.
@@ -78,14 +82,33 @@ Part 4 merges as it stands (#363; the owner: "But what they have for now can be 
 The flight's worth is dodging a contested landing and leap now's is cutting a flier off, so both look flat while the
 rivals seldom go for a landing (the owner: "I suspect the enemy AI might be the big problem. jumps are risky because
 someone can cut you off, and insta kill you, by being where you land. but if the enemies don't do this, then landing
-wherever doesn't matter so much."). About a day, in order: (1) measure, per round, how often a rival goes for a landing
+wherever doesn't matter so much."). About a day, in order: (0) the held flight always flies the full 5 cells,
+steerable, never cut short, a quick press still the plain golden hop ("The golden jump flies" in
+`docs/design/29-round-six-b-the-new-moves.md`; cue, lesson and Field guide row with it; online in step); (1) measure, per round, how often a rival goes for a landing
 (steps or flashes into a landing ring, or leaps now to cut a flier off) and how often a jumper steers away from a
 contested one; (2) the rivals take landings when it pays, each in its style (Sniper most, Desperado for the thrill, Drab
 hardly ever), planned from the visible ring, never by reaction ("Clever rivals, human reactions"); (3) the flight and
 leap now measured both ways again, and per use, leap now included ("Every new move is tested both ways"). If they pay,
 done; if still flat, the PR says so as a design finding.
 
-### 2x. The spitter slides over its own mushroom (the owner, 2 November 2026; an engine-rules entry, next, ahead of part 5)
+### 5 (part 5). Gold portals, unparked (the owner, 2 November 2026; an engine-rules entry, right after 2y)
+
+The golden mushroom's wrap has no cost while the edges open for its holder alone, a small refuge from the edge; part 5's
+gold portals are its counterweight (anyone may follow through for about a second), so #202 comes off the shelf right
+after 2y (the owner: "Yes, expertly to all 3!"). Its spec and A/B are as entry 5 says.
+
+### 2z. The golden apple's worth (the owner, 2 November 2026; a measurement, then an engine-rules entry if needed)
+
+The only golden food without a power: +3, a race to it before it fades. A census on fresh seeds: how often it is
+contested, and whether a snake that eats one places or wins better than one that does not. If it pays, it stays as it
+is. If it does not: +3 and both rests refilled ("the apple of vigour"), measured both ways like any rule.
+
+### 2u. One stamina for jump and dash (the owner, 2 November 2026; an engine-rules entry, after 2z and before part 7)
+
+One bar for both plain powers, no tail cost, each power a third to two thirds of plain power uses and neither better in
+aggregate, the pace kept: `docs/design/37-one-stamina.md`. Part 7's pricing then prices the one stamina.
+
+### 2x. The spitter slides over its own mushroom (the owner, 2 November 2026; an engine-rules entry, after part 5)
 
 Taken out of 3b+ and moved to the front, since it still bites (the owner: "Still get the bug with swallowing a mushroom over and over again after puking it up."): the spec is 3b+'s "The spitter slides over its own mushroom" in `docs/handoff/queue-specs.md`, entry 5.
 
