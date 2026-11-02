@@ -57,6 +57,8 @@
 //   bird-draw.js  the woodpecker drawn
 //   holes.js      its aim and patch on the board, and the holes and pits it leaves
 //   portals.js    the gold portals a wrapping snake opens going off an edge
+//   blasts.js     a snake going out with a pop: the starburst, its ring and pieces
+//   edges.js      the wrap seam round the board and a dash's speed-line streaks
 //   world.js      the frame, the round's events and moments, and the API
 
 const CELL = 32;
