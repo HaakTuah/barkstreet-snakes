@@ -72,7 +72,7 @@ vector and security concerns".
      BSD-2-Clause, BSD-3-Clause, Apache-2.0, 0BSD, CC0-1.0, Unlicense, Zlib, BlueOak-1.0.0, Python-2.0, CC-BY-3.0 and
      CC-BY-4.0 (for data and assets), OFL-1.1 (for fonts), or the public domain. Never copyleft (GPL, LGPL, AGPL, MPL,
      EPL, CDDL, CC-BY-SA). What these licences ask, keeping their notices, is met by a third-party notices file shipped
-     with the game.
+     with the game, [`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt).
    - **Tools that only run** (to build, test, render, check or scan, on a builder's machine or in CI), nothing of which
      ships: any licence the Open Source Initiative approves, copyleft included, or one on the same terms (such as
      matplotlib's, modelled on Python's). Running a program carries no obligation, and what it makes is the owner's.
@@ -82,9 +82,10 @@ vector and security concerns".
    - **Never, in either:** non-commercial or no-derivatives terms, source-available terms (BSL, SSPL, Elastic, Commons
      Clause), or anything without a licence.
 
-   A check on every pull request, Dependabot's included, fails one that adds a package, or updates one, to a licence
-   off its list; one the owner wants anyway is a `question` issue, never merged on its own. The owner's own code
-   carries no licence file, by his choice: all rights reserved. Never add one.
+   A check on every pull request, Dependabot's included, fails one that adds a package, or updates one, to a licence off
+   its list; one the owner wants anyway is a `question` issue, never merged on its own. The audit of every licence, with
+   which list each is held to, is `tools/licences.json`. The owner's own code carries no licence file, by his choice:
+   all rights reserved. Never add one.
 
 ## Reporting a weakness
 

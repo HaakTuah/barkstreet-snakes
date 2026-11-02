@@ -205,7 +205,7 @@ to the owner, who alone can dismiss it. PR pictures go on the orphan branch `pr-
 
 ```bash
 scripts/cloud-setup.sh                 # cloud machines: Chromium for the browser suites, if missing
-scripts/test.sh                        # the types (tsc) and all ten suites, quiet; or name some: scripts/test.sh rules render
+scripts/test.sh                        # the types (tsc) and all eleven suites, quiet; or name some: scripts/test.sh rules render
                                        # (exits 1 if any fails; piped, as in `| tail`, the pipe's code is tail's: use set -o pipefail)
 scripts/sim.sh 200 --seed 3 --census   # tools/simulate.js, quiet: fingerprint, check and tables (also seed 11)
 scripts/codemap.sh engine.js           # the functions of a game file, with line numbers (render/*.js, game/*.js too)

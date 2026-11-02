@@ -41,6 +41,20 @@ passes in CI. Each October, when a new even-numbered Node becomes long-term supp
 (`.github/workflows/tests.yml` and `scripts/cloud-setup.sh`, which installs it from the npm registry on a machine with
 an older one), proven by the suites and the fingerprints.
 
+**The licence gate** (`.github/workflows/licences.yml`, `SECURITY.md`, point 10) runs on every PR and keeps point 10's
+two lists. GitHub's dependency review fails a package added or updated under a licence off the tools' list
+(`.github/dependency-review-config.yml`: what the Open Source Initiative approves), since every package it sees is a
+tool. `node tools/licences.js` holds everything else through the audit, `tools/licences.json`: what ships (served with
+the game, or loaded by it) to the strict list there, word for word point 10's, and each tool that only runs to the
+tools' list, GitHub's own services under GitHub's terms. An action, a package fetched with npx or npm, an address the
+game loads from, a file in the game or its tools carrying someone's licence notice, or a font, image, sound or data file
+left out of the audit fails, as does a shipped entry without its notice in `THIRD-PARTY-NOTICES.txt`. A package an npx
+or npm install fetches must be written `name@exact.version`, or it can't be audited and fails, and at the version its
+entry audits (an update is audited again, with what it pulls in), as must a lock file's packages;
+`tools/licences-test.js` stages each form the gate must reject. Something new goes into the audit with its licence,
+checked from its own published licence file; a tool under another licence OSI approves has its id added to the tools'
+list in the same PR, and one off its list is a `question` issue for the owner, never merged on its own.
+
 **CodeQL checks every PR** into `develop` and `main`, every push to them and once a week (`.github/workflows/codeql.yml`).
 A finding on a PR shows on it as a note; what to do with it is in `AGENTS.md`, "Git and GitHub". Alerts already in the
 code are the owner's to pass on (`SECURITY.md`, point 9).

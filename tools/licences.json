@@ -1,0 +1,31 @@
+{
+  "about": "The licence audit (SECURITY.md, point 10): everything the game and its tools use, with its licence (SPDX) and where it comes in. tools/licences.js holds each entry to its list: 'ships' (it reaches a player's browser, so its notice is in THIRD-PARTY-NOTICES.txt) to the strict list below, word for word point 10's; the rest, tools that only run, to the tools' list in .github/dependency-review-config.yml (any licence the Open Source Initiative approves; GitHub's own services under GitHub's terms). 'loads': the addresses the game fetches it from. Checked 2 November 2026, from each package's own published licence.",
+  "ships": ["MIT", "MIT-0", "ISC", "BSD-2-Clause", "BSD-3-Clause", "Apache-2.0", "0BSD", "CC0-1.0", "Unlicense", "Zlib", "BlueOak-1.0.0", "Python-2.0", "CC-BY-3.0", "CC-BY-4.0", "OFL-1.1"],
+  "entries": [
+    { "name": "peerjs", "kind": "npm", "version": "1.5.4", "licence": "MIT", "used": "online play, loaded by net.js", "ships": true, "loads": ["https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/"] },
+    { "name": "eventemitter3", "kind": "npm", "version": "4.x", "licence": "MIT", "used": "bundled in peerjs.min.js", "ships": true },
+    { "name": "@msgpack/msgpack", "kind": "npm", "version": "2.x", "licence": "ISC", "used": "bundled in peerjs.min.js", "ships": true },
+    { "name": "peerjs-js-binarypack", "kind": "npm", "version": "2.x", "licence": "MIT", "used": "bundled in peerjs.min.js", "ships": true },
+    { "name": "webrtc-adapter", "kind": "npm", "version": "9.x", "licence": "BSD-3-Clause", "used": "bundled in peerjs.min.js", "ships": true },
+    { "name": "sdp", "kind": "npm", "version": "3.x", "licence": "MIT", "used": "bundled in peerjs.min.js, through webrtc-adapter", "ships": true },
+    { "name": "Fredoka", "kind": "font", "version": "Google Fonts", "licence": "OFL-1.1", "used": "the lettering, loaded by index.html", "ships": true, "loads": ["https://fonts.googleapis.com/css2?family=Fredoka:"] },
+
+    { "name": "typescript", "kind": "npm", "version": "6.0.2", "licence": "Apache-2.0", "used": "the types suite (tsc), no dependencies" },
+    { "name": "playwright", "kind": "npm", "version": "1.49.1", "licence": "Apache-2.0", "used": "scripts/cloud-setup.sh installs Chromium with it" },
+    { "name": "playwright-core", "kind": "npm", "version": "1.49.1", "licence": "Apache-2.0", "used": "through playwright" },
+    { "name": "fsevents", "kind": "npm", "version": "2.3.2", "licence": "MIT", "used": "through playwright, optional, macOS only" },
+    { "name": "Chromium", "kind": "tool", "version": "Playwright's, or the runner's Chrome", "licence": "BSD-3-Clause", "used": "the browser suites, headless" },
+    { "name": "node", "kind": "npm", "version": "26.12.1", "licence": "MIT", "used": "scripts/cloud-setup.sh installs Node 26 with it in cloud sessions" },
+    { "name": "node-bin-setup", "kind": "npm", "version": "1.x", "licence": "ISC", "used": "through node" },
+    { "name": "node-linux-x64", "kind": "npm", "version": "26.12.1", "licence": "MIT", "used": "through node: the Node binary itself (node-<platform> on other machines, the same licence)" },
+    { "name": "Node.js", "kind": "tool", "version": "26", "licence": "MIT", "used": "every suite and tool" },
+    { "name": "npm", "kind": "tool", "version": "bundled with Node", "licence": "Artistic-2.0", "used": "npx and npm install fetch TypeScript and Playwright" },
+    { "name": "GitHub CLI", "kind": "tool", "version": "the runner's", "licence": "MIT", "used": "gh in pages.yml and delete-merged-branches.yml" },
+    { "name": "CodeQL CLI", "kind": "github-service", "version": "codeql-action's", "licence": "LicenseRef-GitHub-Terms", "used": "code scanning, run by github/codeql-action: a GitHub service, free while the repository is public" },
+
+    { "name": "actions/checkout", "kind": "action", "licence": "MIT", "used": "every workflow" },
+    { "name": "actions/setup-node", "kind": "action", "licence": "MIT", "used": "tests.yml" },
+    { "name": "github/codeql-action", "kind": "action", "licence": "MIT", "used": "codeql.yml" },
+    { "name": "actions/dependency-review-action", "kind": "action", "licence": "MIT", "used": "licences.yml, the licence gate" }
+  ]
+}
