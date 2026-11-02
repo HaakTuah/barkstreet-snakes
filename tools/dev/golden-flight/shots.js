@@ -2,10 +2,11 @@
 // page's loop stopped: your snake holding a golden jump beside a hollow,
 // the jump asked for (its landing ring before it goes), then a picture at
 // each tick in the air (held past the plain hop, a turn in the air) and one
-// after it comes down where the jump was let go.
-//   node shots.js <root> <out-prefix>
+// after it comes down where the jump was let go. With "now": leap now, the
+// plain jump pressed twice over open ground, at once, down on the fourth cell.
+//   node shots.js <root> <out-prefix> [now]
 const path = require('path');
-const root = path.resolve(process.argv[2]), out = process.argv[3];
+const root = path.resolve(process.argv[2]), out = process.argv[3], now = process.argv[4] === 'now';
 const { launch, serve, sleep } = require(path.join(root, 'tools', 'browser.js'));
 (async () => {
   const site = await serve(root); const b = await launch();
@@ -19,27 +20,27 @@ const { launch, serve, sleep } = require(path.join(root, 'tools', 'browser.js'))
       const g = window.__g = E.createGame({ withPlayer: true, personas: ['gobbler'] });
       g.snakes = g.snakes.slice(0, 2);
       g.time = 60000; g.tick = 500; g.weather.until = 1e12;
-      for (let y = 9; y <= 13; y++) for (let x = 7; x <= 9; x++) g.holes.add(y * G + x);
+      if (!${now}) for (let y = 9; y <= 13; y++) for (let x = 7; x <= 9; x++) g.holes.add(y * G + x);
       const [me, o] = g.snakes;
-      me.body = Array.from({ length: 9 }, (_, i) => ({ x: 6 - i, y: 10 })); me.dir = E.DIRS.right; me.leaps = 2;
+      me.body = Array.from({ length: 9 }, (_, i) => ({ x: 6 - i, y: 10 })); me.dir = E.DIRS.right; me.leaps = ${now} ? 0 : 2; me.leapReadyAt = 0;
       o.body = [[13, 12], [14, 12], [15, 12], [16, 12], [16, 13]].map(([x, y]) => ({ x, y })); o.dir = E.DIRS.left;
       for (const s of g.snakes) { s.prev = s.body.map(c => ({ ...c })); s.lastAte = g.time; s.nextStarve = g.time + 99999; }
       g.food = [{ x: 12, y: 7, kind: 'food', expires: g.tick + 900 }];
       document.getElementById('overlay').classList.add('hidden');
       R.setViewer(0); R.setGame(g);
       window.__t = performance.now() + 1e6;
-      E.leap(g, me);
+      E.leap(g, me); if (${now}) { E.leap(g, me); E.letGo(g, me); }
       for (let i = 0; i < 6; i++) { __t += 33; R.frame(0.3, __t); }
       return 'ok';
     })()`);
     await sleep(150);
     await b.shot(`${out}-0-asked.jpg`, 88);
-    for (let n = 1; n <= 7; n++) {
+    for (let n = 1; n <= (now ? 5 : 7); n++) {
       const r = await b.eval(`(() => {
         const E = SnakeEngine, R = SnakeRender, g = window.__g, me = g.snakes[0];
         g.snakes[1].queue = [];
-        if (me.flight && me.flight.flown === 3) me.queue = [E.DIRS.up]; // (steered up over the far rim)
-        if (me.flight && me.flight.flown === 4) E.letGo(g, me);         // (let go: down on the next cell)
+        if (!${now} && me.flight && me.flight.flown === 3) me.queue = [E.DIRS.up]; // (steered up over the far rim)
+        if (!${now} && me.flight && me.flight.flown === 4) E.letGo(g, me);         // (let go: down on the next cell)
         for (const s of g.snakes) s.prev = s.body.map(c => ({ ...c }));
         E.step(g); R.onTick(g.events);
         for (let i = 0; i < 4; i++) { __t += 30; R.frame(0.25 * (i + 1) * 0.5, __t); }
