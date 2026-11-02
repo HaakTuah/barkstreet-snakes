@@ -46,11 +46,11 @@ and the owner's notes of 2 November, among them).
 
 ## The workshop lane (splits by meaning, leftovers, the file-by-file review)
 
-- **First: the layout suite hangs in Claude's cloud machines (#383)** (the owner, 2 November 2026: next in this lane,
-  ahead of everything below). Until it is fixed, no session can run the full suites, and every builder leans on CI.
-  Start where the report points: where `tools/layout-test.js` waits on Chrome (a page event, or a font or other request
-  that never arrives through the session's proxy); fixed when `scripts/test.sh` finishes in a session as it does in CI.
-  The commit says "Fixes #383".
+- *Done:* the layout suite in cloud sessions (#383): it never hung, it ran about 28 minutes in one process, silent
+  until its end; `scripts/test.sh` now runs its five CI jobs side by side, each part's end is printed, and the banner
+  probe no longer misreads a banner on its way out (PR #396).
+- *Done:* the workflows' actions, `actions/checkout` and `actions/setup-node` 4 to 7 (Dependabot, PR #361).
+- *Done:* TypeScript 6.0.2 to 7.0.2, the native compiler, its 20 platform packages audited (Dependabot, PR #390).
 - *Done:* CI and the cloud setup on Node 26 (from 22; suites green, fingerprints unchanged; PR #369).
 - *Done:* licences audited (`tools/licences.json`), gated on every PR (`.github/workflows/licences.yml`) and their notices
   shipped (`THIRD-PARTY-NOTICES.txt`); two lists, what ships and tools that only run (PR #377).
