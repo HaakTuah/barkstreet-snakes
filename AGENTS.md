@@ -230,6 +230,10 @@ method, with its guards against endless rounds and a slipping bar, is "Codex rev
 **What the rivals know,** for every reviewer: report as P1 any AI logic that reads the game other than through
 `aiView()`, or anything in `aiView()` a snake on the log could not see or know (a person's input before it lands).
 
+**What a player sees, for every reviewer** of a change a player can see: the README, the one-time lesson and its Field
+guide row, the visible cue, and online play in step each come with it; one missing is a P1 (the rules in "Rules that
+stand" and "How to work").
+
 **One idea, for every reviewer** of a change to the game (not docs, design copies or Dependabot's updates): end the
 review with one thing outside this change that would make the game better, or "none", the usual answer when nothing is
 worth the owner's time. It never blocks (a P3 at most). The builder searches the open ideas first: a new one is filed as
