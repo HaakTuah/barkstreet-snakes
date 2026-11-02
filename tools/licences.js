@@ -52,7 +52,7 @@ for (const e of audit) {
 // name@exact.version (for npx, after -p or --package, else its first word; for npm install or exec, every word not
 // an option), and anything else (a bare name, a range or tag, an alias, a URL, git, a path, a tarball, a variable, an
 // option's value) can't be audited and fails.
-const EXACT = /^((?:@[a-z0-9][\w.-]*\/)?[a-z0-9][\w.-]*)@\d+\.\d+\.\d+$/i;
+const EXACT = /^((?:@[a-z0-9][\w.-]*\/)?[a-z0-9][\w.-]*)@(\d+\.\d+\.\d+)$/i;
 function fetched(cmd, rest, where) {
   const words = rest.trim().split(/\s+/).filter(Boolean), specs = [];
   for (let i = 0; i < words.length; i++) {
@@ -64,16 +64,22 @@ function fetched(cmd, rest, where) {
     if (cmd === 'npx') { if (!specs.length) specs.push(w); break; }
     specs.push(w);
   }
-  return specs.flatMap(spec => { const m = spec.match(EXACT); if (!m) fail(`${where}: ${spec} can't be audited (only name@exact.version)`); return m ? [m[1]] : []; });
+  return specs.flatMap(spec => { const m = spec.match(EXACT); if (!m) fail(`${where}: ${spec} can't be audited (only name@exact.version)`); return m ? [[m[1], spec.slice(m[1].length + 1)]] : []; });
 }
-const need = (name, where) => { if (!byName.has(name)) fail(`${name} (${where}) is not in tools/licences.json`); };
+// Something used must be in the audit; one fetched at an exact version, at that version, so an update is audited
+// again (its licence, and what it pulls in) rather than riding on the old entry.
+const need = (name, where, version) => {
+  const e = byName.get(name);
+  if (!e) fail(`${name} (${where}) is not in tools/licences.json`);
+  else if (version && e.version !== version) fail(`${name}@${version} (${where}) is audited at ${e.version}: audit the new version, and what it pulls in`);
+};
 
 // What the workflows and scripts use: actions, and the packages npx and npm install fetch.
 const ci = ['.github/workflows', 'scripts'].flatMap(d => fs.readdirSync(path.join(root, d)).map(f => `${d}/${f}`));
 for (const f of ci) {
   const src = read(f).split('\n').map(l => l.replace(/(^|\s)#.*$/, '')).join('\n'); // (a comment fetches nothing)
   for (const m of src.matchAll(/uses:\s*['"]?([\w.-]+\/[\w.-]+)/g)) need(m[1], f);
-  for (const m of src.matchAll(/\b(npx|npm\s+(?:install|i|add|exec|x))\s([^\n;&|>]*)/g)) for (const p of fetched(m[1], m[2], `${f}, ${m[0].trim()}`)) need(p, `${f}, ${m[0].trim()}`);
+  for (const m of src.matchAll(/\b(npx|npm\s+(?:install|i|add|exec|x))\s([^\n;&|>]*)/g)) for (const [p, v] of fetched(m[1], m[2], `${f}, ${m[0].trim()}`)) need(p, `${f}, ${m[0].trim()}`, v);
 }
 
 // package.json and its lock, if the tools have them: every package, the ones pulled in included.
@@ -81,7 +87,7 @@ for (const f of ['package.json', 'package-lock.json']) {
   if (!fs.existsSync(path.join(root, f))) continue;
   const j = JSON.parse(read(f));
   for (const k of ['dependencies', 'devDependencies', 'optionalDependencies']) for (const n of Object.keys(j[k] || {})) need(n, f);
-  for (const [p, v] of Object.entries(j.packages || {})) if (p) need(v.name || p.replace(/^.*node_modules\//, ''), f);
+  for (const [p, v] of Object.entries(j.packages || {})) if (p) need(v.name || p.replace(/^.*node_modules\//, ''), f, v.version);
 }
 
 // What the game loads: every address in the files it serves (not the tools or notes), and any asset file.

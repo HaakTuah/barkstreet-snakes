@@ -32,6 +32,8 @@ const fails = [
   ['an allowed licence grouped with one off the list', entry({ name: 'mossgrip-widgets', licence: '(MIT OR GPL-3.0-only) AND GPL-3.0-only' })],
   ['an action not in the audit', append('.github/workflows/tests.yml', '      - uses: mossgrip/setup-moss@v1\n')],
   ['npm install of a package not in the audit', append('scripts/cloud-setup.sh', 'npm install -g mossgrip-widgets@1.2.3\n')],
+  ['an audited package fetched at another version', edit('scripts/cloud-setup.sh', 'playwright@1.49.1', 'playwright@1.50.0')],
+  ['a lock file holding a package at another version than audited', dir => fs.writeFileSync(path.join(dir, 'package-lock.json'), JSON.stringify({ packages: { '': {}, 'node_modules/typescript': { version: '6.0.3' } } }))],
   ['npm install without a version', append('scripts/cloud-setup.sh', 'npm install --no-save typescript\n')],
   ['npm install of a major version alone, into a folder', append('scripts/cloud-setup.sh', 'npm install -g --prefix /opt/moss node@26\n')],
   ['npm install of a range', append('scripts/cloud-setup.sh', 'npm install typescript@^6.0.2\n')],
