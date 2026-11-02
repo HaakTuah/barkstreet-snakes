@@ -422,7 +422,7 @@ hits it dead on, so that must be accounted for. And it should also react to sove
 
 The owner (29 October 2026; entry 2m): beetles should "quickly try to escape down their burrow when woodpecker targets
 their little island"; burrows ran out as the woodpecker pecked them; and beetles under a strike teleported. The rules
-(`crawl`, `beakDepth`, `beakGap` and `knocks` in `engine.js`):
+(`crawl`, `beakDepth`, `beakGap` and `knocks` in `engine/`):
 - **Burrows keep up.** A beetle due up from underground with no free burrow cracks a new one open where it's quiet,
   by `beetleOut`'s rule (`BURROW_SPACING` apart, at most `BURROW_MAX` open). None comes up under the beak: `freeBurrow`
   and `placer` leave the mark out.

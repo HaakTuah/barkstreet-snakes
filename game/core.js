@@ -1,5 +1,5 @@
 // The game controller: the loop, input, the cards and the HUD. The rules live
-// in engine.js, the drawing in render/, and every feel number in tuning.js.
+// in engine/, the drawing in render/, and every feel number in tuning.js.
 //
 // Once snake.js, it is split into the files of game/, by what they do. Like
 // render/ (see render/core.js), they are plain scripts sharing one scope,
@@ -19,7 +19,7 @@
 //   screen.js   size and motion, the screen kept awake, the dev overlay, and the start
 
 const Engine = window.SnakeEngine;
-const { GRID: GRID_SIZE, PLAYER_COLOR, PERSONAS: CAST } = Engine; // (TUNE, DIRS: the AI's, ai/core.js)
+const { GRID: GRID_SIZE, PERSONAS: CAST } = Engine; // (TUNE, DIRS: the AI's, ai/core.js; PLAYER_COLOR: the engine's, engine/core.js)
 const Render = window.SnakeRender;
 const Records = window.SnakeRecords;
 const Chatter = window.SnakeChatter;

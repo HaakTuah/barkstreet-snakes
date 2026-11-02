@@ -13,11 +13,11 @@
 // Sovereign's realm, Colonist's colonies and the site it's off to plant,
 // Capricious's moods, Copycat's model, Vulture's lure, a hunter's victim; and
 // a person called Sniper plays the rival of that name. It counts what
-// crossed: every kind of event the engine has (read from engine.js) and
+// crossed: every kind of event the engine has (read from engine/) and
 // everything each said, every field of a tick (a snake's whenever it
 // changed, the food's, the woodpecker's, fire's, the weather's, the beetles
 // underground), each at least MIN times, and every way the engine says a
-// snake was out (also read from engine.js), once at least. What the rounds
+// snake was out (also read from engine/), once at least. What the rounds
 // don't bring often enough is staged now and then, as the engine makes it (a
 // squash, a fire put out, a beetle flown off, a beetle digging
 // in, beetles underground, food knocked aside, an apple in the mark on the
@@ -65,7 +65,7 @@ const KINDS = [...new Set([...ENGINE.matchAll(/events\.push\(\{ type: '(\w+)'/g)
 const FATAL_SET = [...ENGINE.matchAll(/\.fatal = ([^;]+);/g)].flatMap(m => [...m[1].matchAll(/'(\w+)'/g)].map(q => q[1]));
 const FATAL_WHY = [...ENGINE.matchAll(/why\.set\(\w+, '(\w+)'\)/g)].map(m => m[1]);
 const FATAL = [...new Set([...FATAL_SET, ...FATAL_WHY])].sort();
-if (!FATAL_SET.length || !FATAL_WHY.length) { console.error(`the ways to be out read from engine.js (${FATAL.join(', ')}) miss what ${FATAL_SET.length ? 'why.set' : 's.fatal ='} says: the pattern lost them`); process.exit(1); }
+if (!FATAL_SET.length || !FATAL_WHY.length) { console.error(`the ways to be out read from engine/ (${FATAL.join(', ')}) miss what ${FATAL_SET.length ? 'why.set' : 's.fatal ='} says: the pattern lost them`); process.exit(1); }
 // What a person, the rivals and the brains at the other people's wheels are,
 // round by round (past these: two to four people, rivals at random, Drab
 // driving).
@@ -119,7 +119,7 @@ function counted(msg, last, events) {
     for (const [k, v] of Object.entries(e)) if (k !== 'type' && !blank(v)) cross(`${e.type} ${k === 'snake' ? 'snake' : k}`);
     if (e.type === 'death') {
       for (const k of ['cause', 'killer', 'killerId', 'diedAt', 'fatal']) if (!blank(e.snake[k])) cross(`death ${k}`);
-      if (!FATAL.includes(e.snake.fatal)) { console.error(`a snake out "${e.snake.fatal}", which isn't among the ways read from engine.js (${FATAL.join(', ')})`); process.exit(1); }
+      if (!FATAL.includes(e.snake.fatal)) { console.error(`a snake out "${e.snake.fatal}", which isn't among the ways read from engine/ (${FATAL.join(', ')})`); process.exit(1); }
       cross(`death fatal ${e.snake.fatal}`);
     }
   }

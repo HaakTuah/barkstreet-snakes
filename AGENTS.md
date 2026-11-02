@@ -20,7 +20,7 @@ it directly. Codex: read the "For Codex" section of `docs/claude-and-codex.md` a
 | Running and checking it: switches, the browser suites' Chrome, PR pictures, Dependabot and CodeQL, every tool | `docs/developing.md` |
 | The design, one file per topic | `docs/design/` (index: `DESIGN.md`) |
 | Materials the queue points to, with the open entries' specs word for word (`queue-specs.md`) | `docs/handoff/` |
-| The game (what each file does: `docs/developing.md`, "How it's put together") | `index.html`, `style/` (listed in `style/base.css`), `engine.js`, `ai/` (listed in `ai/core.js`), `render/` (listed in `render/core.js`), `game/` (in `game/core.js`), `chatter/` (in `chatter/voices.js`), `audio/` (in `audio/cues.js`), `net.js`, `online.js`, `records.js`, `lineup.js`, `scores-screen.js`, `tuning.js`, `sw.js` |
+| The game (what each file does: `docs/developing.md`, "How it's put together") | `index.html`, `style/` (listed in `style/base.css`), `engine/` (listed in `engine/core.js`), `ai/` (listed in `ai/core.js`), `render/` (listed in `render/core.js`), `game/` (in `game/core.js`), `chatter/` (in `chatter/voices.js`), `audio/` (in `audio/cues.js`), `net.js`, `online.js`, `records.js`, `lineup.js`, `scores-screen.js`, `tuning.js`, `sw.js` |
 | Tests, simulation, browser tooling | `tools/` (the suites `*-test.js`, each running its folder of parts, such as `tools/rules/` (`tools/parts.js`); `simulate.js` (its parts in `tools/sim/`), `abtest.js`, `bench-ai.js`, `browser.js`; `protocol-shapes.json`, the online messages' pinned shapes) |
 | The online messages' types (checked by `tsc`, never shipped) | `jsconfig.json`, `types/globals.d.ts`, and the JSDoc in `net.js` and `online.js` |
 | Study and measuring tools from earlier rounds (censuses, audits, PR pictures) | `tools/dev/` (done ones: `docs/archive/`) |
@@ -47,7 +47,7 @@ usage allows, at the lowest cost now and later.
 - **A question is a question.** Answer it; act on it only when the owner says so.
 - **Match effort to the task,** and take the cheapest approach that does the job well, since usage is limited. Docs,
   READMEs, small fixes and config: one pass, no helpers.
-- **Read little.** Never read a large game file whole (`engine.js` is over 100 KB): find what you need
+- **Read little.** Never read a large game file whole (`render/world.js` is over 50 KB): find what you need
   with `scripts/codemap.sh <file>` or grep, then read that line range. Don't re-read what you just edited.
 - **Print little.** `scripts/test.sh` and `scripts/sim.sh` print a summary and the failures and keep the full log in a
   file; never paste a full log into the conversation. Run long ones in the background (the Bash tool's background mode)
@@ -211,7 +211,7 @@ scripts/cloud-setup.sh                 # cloud machines: Chromium for the browse
 scripts/test.sh                        # the types (tsc) and all twelve suites, quiet; or name some: scripts/test.sh rules render
                                        # (exits 1 if any fails; piped, as in `| tail`, the pipe's code is tail's: use set -o pipefail)
 scripts/sim.sh 200 --seed 3 --census   # tools/simulate.js, quiet: fingerprint, check and tables (also seed 11)
-scripts/codemap.sh engine.js           # the functions of a game file, with line numbers (ai/*.js, render/*.js, game/*.js too)
+scripts/codemap.sh engine/step.js         # the functions of a game file, with line numbers (ai/*.js, render/*.js, game/*.js too)
 scripts/usage.sh                       # weekly usage, if this session can read it
 ```
 

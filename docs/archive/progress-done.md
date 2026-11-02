@@ -728,6 +728,13 @@ on the new log is part 4's.
 
 No more islands (the owner, 31 October 2026: "Yes, I think that's it. can still be jumpable gaps, but we want to avoid the islands stuff. it becomes too much rng, and isn't very exciting."): any piece of log no longer attached to the log falls away, warned, so the log is always one piece with holes in it, and jumps and flights cross the gaps inside it. Replaces "every island stays a hop from another". Spec: `docs/handoff/queue-specs.md`, "2s. A piece cut loose falls".
 
+### 2y+. Split `ai.js` and `engine.js` by meaning (the owner, 2 November 2026; the main lane, right after 2y, before part 5) — done, PRs #406 (the tools load the game's files from `index.html`), #408 (`ai/`), #407 (`engine/`)
+
+Both have grown past the mark (148 KB and 136 KB) and every main-lane entry touches them, so the gap "between AI
+entries" never came. Each is split by meaning in a PR of its own (the rivals' shared template, each rival's override,
+planning, and so on for `ai.js`; the rules by system for `engine.js`), proven unchanged by the fingerprints and the
+suites, so it goes quickly and needs no head-to-head. Part 5's branch (#202) then merges the split in once.
+
 ## The polish lane, done (moved 31 October 2026)
 
 Word for word from "The polish lane" in `docs/PROGRESS.md`.
