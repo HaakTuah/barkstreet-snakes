@@ -140,6 +140,9 @@ function news(dying) {
   if (me?.alive && theGame.tick % 4 === 2 && newsFree() && !theGame.told?.bridge && bridgeNear(me) && once('bridge')) return toast(FLAVOR.bridgeFirst, 3000, 'you', 'lesson');
   // In a pocket smaller than you, your own body one thick in front and your flash ready: dropping your tail, once.
   if (me?.alive && !me.flight && theGame.tick % 4 === 1 && newsFree() && !theGame.told?.dropTail && !theGame.told?.youDropTail && Engine.flashIn(theGame, me) === 0 && tailToDrop(me) && once('dropTail')) return toast(FLAVOR.dropTail, 3000, 'you', 'lesson');
+  // 2y, a landing to take: a flier's ring you could crawl to before it's down; and your own ring, a rival's head that could. Once each.
+  if (me?.alive && !me.flight && theGame.tick % 4 === 1 && newsFree() && !theGame.told?.ringRace && ringsInReach(me).length && once('ringRace')) return toast(FLAVOR.ringRace, 2800, 'you', 'lesson');
+  if (me?.alive && me.flight?.ring && theGame.tick % 2 === 0 && newsFree() && !theGame.told?.youRingRaced && theGame.snakes.some(o => o !== me && o.alive && !o.flight && ringsInReach(o).includes(me)) && once('youRingRaced')) return toast(FLAVOR.youRingRaced, 2800, 'warn', 'lesson');
   // A flier coming down on your line, within a leap now's reach, your jump ready: you could have cut it off. Once.
   if (me?.alive && !me.flight && theGame.tick % 4 === 3 && newsFree() && !theGame.told?.leapNow && Engine.leapIn(theGame, me) === 0 && fliersAhead(me) && once('leapNow')) return toast(touchFirst ? FLAVOR.leapNow.replace('Press', 'Tap') : FLAVOR.leapNow, 2800, 'you', 'lesson');
   // Boxed in, with a gap you could hop to an island and your jump ready: the island hop, once.
@@ -194,7 +197,14 @@ const SIDES4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 // A rival in the air coming down on the line ahead of you, within LEAP_REACH + 1 cells: a leap now could meet it (see leapNow).
 function fliersAhead(me) {
   const h = me.body[0], d = me.dir;
-  return theGame.snakes.some(o => o !== me && o.alive && o.flight && [1, 2, 3, 4].slice(0, TUNE.LEAP_REACH + 1).some(n => o.flight.land.x === h.x + d.x * n && o.flight.land.y === h.y + d.y * n));
+  return theGame.snakes.some(o => o !== me && o.alive && o.flight && [1, 2, 3, 4].slice(0, TUNE.LEAP_REACH + 1).some(n => landingOf(o).x === h.x + d.x * n && landingOf(o).y === h.y + d.y * n));
+}
+// Where a jump in the air comes down: its ring (a committed golden flight's, GOLD_FLY cells out).
+const landingOf = o => o.flight.ring || o.flight.land;
+// The fliers whose rings s's head could crawl onto before they're down (2y: a body there takes the landing).
+function ringsInReach(s) {
+  const h = s.body[0];
+  return theGame.snakes.filter(o => o !== s && o.alive && o.flight?.ring && o.flight.ring.n >= 2 && Math.abs(o.flight.ring.x - h.x) + Math.abs(o.flight.ring.y - h.y) <= o.flight.ring.n - 1);
 }
 function tailToDrop(s) {
   const G = GRID_SIZE, h = s.body[0], taken = new Set();

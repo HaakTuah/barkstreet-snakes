@@ -788,8 +788,8 @@ function hopped(s, e, now) {
 }
 // A golden flight, once up, keeps its arch over the way it really flies
 // (once a tick, from onTick): held on, the arch stretches to the head, a
-// tick more; turned, a new arch from the turn; let go short of the plain
-// hop's cells, it comes down a cell on, where the engine puts it.
+// tick more; turned, a new arch from the turn; down sooner than drawn (a
+// bump), it comes down where the engine puts it.
 function flying(s, now) {
   const a = anim.get(s), r = a?.hops[a.hops.length - 1];
   if (!r || !r.gold || r.tick === game.tick) return;
@@ -800,7 +800,7 @@ function flying(s, now) {
     const top = a.hops[a.hops.length - 1];
     top.until = Math.max(top.until, game.tick + s.body.length + 2);
     a.leapUntil = Math.max(a.leapUntil || 0, top.until);
-  } else if (!r.landed && t + 1 < r.n) { r.n = t + 1; r.x1 = h.x - r.dx; r.y1 = h.y - r.dy; } // (let go early: down here, now)
+  } else if (!r.landed && t + 1 < r.n) { r.n = t + 1; r.x1 = h.x - r.dx; r.y1 = h.y - r.dy; } // (down sooner than drawn: here, now)
 }
 // The island hop's landing ring: where a jump comes down, on the ground
 // under it, in the jump's sky (a golden one's Honey), inked. Every snake
@@ -813,7 +813,7 @@ function drawLandings(now) {
   for (const s of game.snakes) {
     if (!s.alive) continue;
     let x, y, gold = s.leaps > 0;
-    if (s.flight?.land) { const f = s.flight, c = f.gold && f.held && f.over.length ? f.over[0] : f.land; x = c.x; y = c.y; gold = !!f.gold; } // (held over the plain hop's cells, a golden flight let go comes down on the next one)
+    if (s.flight?.land) { const c = s.flight.ring || s.flight.land; x = c.x; y = c.y; gold = !!s.flight.gold; } // (its ring: a committed golden flight's, GOLD_FLY cells out)
     else if (s.id === viewerId) {
       const a = anim.get(s);
       if (!a || !a.lr) continue;

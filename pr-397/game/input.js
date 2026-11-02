@@ -106,7 +106,7 @@ function steerTo(name, swipe = false) {
 // stunned, it goes when the stun's over): they never start, wake or
 // dismiss anything. Online it goes to the host's game, as your turns do.
 function power(kind) {
-  if (!(state === 'running' || (kind === 'letgo' && state === 'paused')) || !playerAlive()) return; // (a jump let go while napping still comes down: it isn't held when you wake)
+  if (!(state === 'running' || (kind === 'letgo' && state === 'paused')) || !playerAlive()) return; // (a jump let go while napping counts: it isn't held when you wake)
   if (kind === 'flash') flashedEver = true;
   if (guesting()) return online.room.send({ t: 'pow', k: kind });
   if (hosting()) return hostPress(me => powerOf(me, kind), kind === 'letgo');
@@ -159,7 +159,7 @@ let tabbing = false, tabbed = null;
 document.addEventListener('focusin', e => { tabbed = tabbing ? e.target : null; tabbing = false; });
 document.addEventListener('keyup', e => {
   if (e.key === 'Tab') tabbing = false;
-  if (e.key === ' ') power('letgo'); // (the jump let go: a golden flight comes down on the next cell)
+  if (e.key === ' ') power('letgo'); // (the jump let go: over the plain hop's cells, a golden jump is the plain hop; past them, it flies on)
 }); // (a Tab that took focus out of the page: the game's next focus isn't yours)
 
 // Copying the title: its S is a drawing over a see-through letter, so a
@@ -372,7 +372,7 @@ const endSwipe = e => {
     if (lastSwipe?.sw === sw) lastSwipe.up = now;
     const far = Math.max(sw.far, Math.hypot(c.clientX - sw.x0, c.clientY - sw.y0));
     if (sw.tap && e.type === 'touchend' && (far <= TUNE.TAP_STILL_PX || (far < swipeMin() && now - sw.at < TUNE.TAP_QUICK_MS))) tapped(sw);
-    if (sw.jumped) power('letgo'); // (the finger off the glass: a golden flight comes down; a quick tap, a plain-length hop)
+    if (sw.jumped) power('letgo'); // (the finger off the glass: a quick tap, a plain-length hop; a golden flight held past it flies on)
     sw.tap = false;
     if (e.type === 'touchend' && sw.run < cardShownAt + TUNE.CARD_TAP_MS && (!sw.button || overlay.contains(sw.button))) { e.preventDefault(); continue; } // (begun as a card came up by itself, or in a run of touches that was: no click, the browser's or ours)
     if (!sw.button || e.type !== 'touchend' || sw.moved) continue; // (a scroll: the browser's own business)
@@ -404,7 +404,7 @@ function mousePress(e) {
   if (kind && e.target === canvasEl && !e.ctrlKey && !e.metaKey && !e.altKey) power(kind); // (the board itself, no card over it; and no shortcut)
 }
 document.addEventListener('pointerdown', mousePress);
-document.addEventListener('pointerup', e => { if (e.pointerType === 'mouse' && e.button === 0 && state === 'running') power('letgo'); }); // (the left button let go: a golden flight comes down)
+document.addEventListener('pointerup', e => { if (e.pointerType === 'mouse' && e.button === 0 && state === 'running') power('letgo'); }); // (the left button let go: see letGo)
 document.addEventListener('pointermove', e => { if (e.button >= 0) mousePress(e); }); // (only a chord's press or release says which button)
 boardEl.addEventListener('contextmenu', e => { if (!e.target.closest?.('.card')) e.preventDefault(); }); // (a card's own text and fields keep theirs)
 // A mouse press in a run begun as a card came up by itself (or this soon after): still mashing jump.
@@ -509,7 +509,7 @@ nameInput.addEventListener('change', () => {
 // while you're playing (a watched round can keep going on screen). Online the
 // round goes on regardless.
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) power('letgo'); // (a held jump can't be let go out of sight: it comes down now)
+  if (document.hidden) power('letgo'); // (a held jump can't be let go out of sight)
   if (online) return awayOnline();
   if (!document.hidden) return;
   napNow();
