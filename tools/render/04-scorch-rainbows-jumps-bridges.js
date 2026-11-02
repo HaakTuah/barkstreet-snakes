@@ -122,8 +122,7 @@ const jumps = await ev(`(() => {
     setBody(gob, Array.from({ length: 9 }, (_, i) => [10, 8 + i]), 'down'); gob.stunUntil = 1e9;
     show(g); R.setViewer(99); R.setLead(0.5); drawN(10, 1);
     E.leap(g, you);
-    doStep(g); frame(0.25); frame(0.5);
-    for (let n = 1; n < 4; n++) { doStep(g); frame(0.25); frame(0.5); }
+    for (let n = 0; n < 4; n++) { doStep(g); frame(0.25); frame(0.5); }
     const hx = R.headPx(you, 0.5, TUNING.GRID * ${CELL}, {}).x / ${CELL};
     out.held = { up: !!you.flight, x: you.body[0].x, neck: count(hx - 0.65, 11, 0.2, 2, green), back: count(hx - 3.65, 11, 0.2, 2, green) };
     const g2 = stage(['gobbler', 'sniper', 'mason']), [me, ...rest] = g2.snakes; // (over open ground: a golden leap now, held)
@@ -135,6 +134,18 @@ const jumps = await ev(`(() => {
     const honey = (r, g, b) => r > 200 && g > 170 && b < 170 && r - b > 70; // (the golden ring's Honey)
     const ring = { next: count(11.05, 12.05, 0.9, 0.9, honey), hop: count(13.05, 12.05, 0.9, 0.9, honey), over: me.flight && me.flight.over.length, head: me.body[0].x };
     out.held.ring = ring;
+    const g3 = stage(['gobbler', 'sniper', 'mason']), [me3, gb3, sn3, ma3] = g3.snakes; // (two golden hops in a row: the second's take-off never lifts the first's arch again)
+    for (const s of g3.snakes) s.nextStarve = 1e15;
+    setBody(ma3, [[2, 22], [1, 22], [0, 22]], 'right'); ma3.stunUntil = 1e9;
+    setBody(gb3, Array.from({ length: 9 }, (_, i) => [10, 8 + i]), 'down'); gb3.stunUntil = 1e9;
+    setBody(sn3, Array.from({ length: 9 }, (_, i) => [15, 16 - i]), 'up'); sn3.stunUntil = 1e9;
+    setBody(me3, Array.from({ length: 8 }, (_, i) => [9 - i, 12]), 'right'); me3.leaps = 2;
+    show(g3); R.setViewer(99); drawN(10, 1);
+    E.leap(g3, me3); E.letGo(g3, me3); // (a quick golden press over Gobbler, down on 11)
+    for (let n = 0; n < 5; n++) { doStep(g3); frame(0.25); frame(0.5); } // (on to 14, the first arch's record still kept over the body it crossed)
+    E.leap(g3, me3); E.letGo(g3, me3); // (and over Sniper)
+    doStep(g3); frame(0.5);
+    out.held.again = { head: me3.body[0].x, up: !!me3.flight, mid: count(11.4, 11, 0.2, 2, green), mid2: count(12.4, 11, 0.2, 2, green), flat: count(8.4, 11, 0.2, 2, green) };
   }
   R.setReducedMotion(false);
   R.setLead(0.5);
@@ -143,6 +154,7 @@ const jumps = await ev(`(() => {
 })()`);
 const held = jumps.held; delete jumps.held;
 check(held.ring.over && held.ring.next > 2 && held.ring.hop === 0, 'held over the plain hop\'s cells, a golden flight\'s ring is on the next cell, where letting go puts it', JSON.stringify(held.ring));
+check(held.again.up && held.again.head === 15 && held.again.mid <= 1.35 * held.again.flat && held.again.mid2 <= 1.35 * held.again.flat, 'a second golden hop soon after the first lifts only its own arch: the body between them is never raised to its height (it stays at the crossing\'s low arch, under a third higher than flat)', JSON.stringify(held.again));
 check(held.up && held.x >= 13 && held.neck > 1.12 * held.back, 'a golden flight held on past the plain hop\'s cells is drawn up in the air there, its neck arched, not at ground height', JSON.stringify(held));
 for (const [what, r] of Object.entries(jumps)) {
   const still = what.startsWith('reduced');

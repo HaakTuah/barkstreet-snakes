@@ -130,7 +130,7 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 - **In a field of its own** (200 rounds, seeds 3 and 11, `--check` passes, the rules as merged; fingerprints 9099647 and 346542088):
   - rounds 175 s on both;
   - flights past the plain hop 1.54 and 1.76 a round, 3.0 and 3.2 cells in the air each; out within 3 s of one 4% on both;
-  - down on a body 0.12 and 0.10 a round (a landing taken by a body is out, and one let go over a hole's rim falls in, whatever lies under it), bumps in the air 0.00 and 0.01;
+  - down on a body 0.12 and 0.10 a round (a landing taken by a body is out, whatever lies under it; one let go over a hole's rim falls in, counted with the holes), bumps in the air 0.00 and 0.01;
   - out within 3 s of a leap now 4% and 3%;
   - golden cuts 0.54 and 0.52 a round, dashes blown up 0.00 and 0.01;
   - down on an island smaller than itself 0.00;
