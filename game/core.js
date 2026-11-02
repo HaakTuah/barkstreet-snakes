@@ -167,7 +167,7 @@ const FLAVOR = {
   youBumped: 'Bumped in mid-air! Down you go.', // (round six B: your first bump in the air)
   youGoldFly: 'Hold to fly 5. Steer to land!', // (your first golden jump)
   ringRace: 'Lie on its ring before it lands, and it’s out!', // (2y: the first time a flier's ring is in your reach before it comes down)
-  youRingRaced: 'They’re going for your landing. Steer away!', // (2y: the first time a rival could reach your ring before you're down)
+  youRingRaced: 'A rival could get to your ring first. Steer away!', // (2y: the first time a rival could reach your ring before you're down)
   leapNow: 'Press twice to leap now, anywhere!', // (the first time a flier comes down just ahead of you: you could have cut it off)
   youMushroomSpit: 'Bleh! Steer to aim it: it lands three ahead.', // (round six B: your first mushroom, which comes back up)
   youSpatOn: name => `Ptoo! ${name} got you. Steer to spit it back.`, // (the first time one hits your head)
