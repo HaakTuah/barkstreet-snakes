@@ -18,9 +18,8 @@
 //   friends.js  the Hall of Fame and the Field guide, and playing with friends online
 //   screen.js   size and motion, the screen kept awake, the dev overlay, and the start
 
-const TUNE = window.TUNING;
 const Engine = window.SnakeEngine;
-const { GRID: GRID_SIZE, PLAYER_COLOR, PERSONAS: CAST, DIRS } = Engine;
+const { GRID: GRID_SIZE, PLAYER_COLOR, PERSONAS: CAST } = Engine; // (TUNE, DIRS: the AI's, ai/core.js)
 const Render = window.SnakeRender;
 const Records = window.SnakeRecords;
 const Chatter = window.SnakeChatter;
