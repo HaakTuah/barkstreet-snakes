@@ -24,7 +24,7 @@ const State = require(path.join(__dirname, '..', 'snapshots', 'state.js'));
 // The AI, taught to skip the move for the snakes in __forbid (and, --forced, to
 // take it at no price for those in __force): a copy of its text, patched here.
 function patchAI(text) {
-  const swap = (a, b) => { if (!text.includes(a)) throw new Error(`ai.js has changed: can't find ${a.slice(0, 60)}`); text = text.replace(a, b); };
+  const swap = (a, b) => { if (!text.includes(a)) throw new Error(`the AI has changed: can't find ${a.slice(0, 60)}`); text = text.replace(a, b); };
   swap('for (let k = air ? full : first; k <= (golden ? full : first); k += Math.max(1, full - first)) {', 'for (let k = air ? full : first; k <= (golden && !globalThis.__forbid.fly.has(me.id) ? full : first); k += Math.max(1, full - first)) {');
   swap('        let turn = null;\n        if (golden) {', '        let turn = null;\n        if (golden && !globalThis.__forbid.fly.has(me.id)) {');
   swap('if (!golden && !trapped && !cover.length) return null;', 'if (!golden && (globalThis.__forbid.now.has(me.id) || (!trapped && !cover.length && !globalThis.__force.now.has(me.id)))) return null;');
@@ -41,9 +41,10 @@ const M = Object.create(Math); M.random = rng;
 const ctx = vm.createContext({ window: {}, console, Math: M });
 const empty = () => ({ fly: new Set(), now: new Set(), dash: new Set(), any: new Set() });
 ctx.__forbid = empty(); ctx.__force = empty();
-vm.runInContext(fs.readFileSync(path.join(root, 'tuning.js'), 'utf8'), ctx, { filename: 'tuning.js' });
-vm.runInContext(patchAI(fs.readFileSync(path.join(root, 'ai.js'), 'utf8')), ctx, { filename: 'ai.js' });
-vm.runInContext(fs.readFileSync(path.join(root, 'engine.js'), 'utf8'), ctx, { filename: 'engine.js' });
+const gameFiles = require('../game-files.js'), files = gameFiles(root), read = f => fs.readFileSync(path.join(root, f), 'utf8');
+vm.runInContext(read('tuning.js'), ctx, { filename: 'tuning.js' });
+vm.runInContext(patchAI(files.filter(gameFiles.ai).map(read).join('\n')), ctx, { filename: 'ai' }); // (the AI's files as one script, patched)
+for (const f of files.filter(gameFiles.engine)) vm.runInContext(read(f), ctx, { filename: f });
 const E = ctx.window.SnakeEngine, T = ctx.window.TUNING;
 const known = State.known({ SnakeAI: ctx.window.SnakeAI, SnakeEngine: E, TUNING: T }), decode = State.decoder(ctx);
 const MAX_TIME = 600000;

@@ -50,11 +50,12 @@ const chance = seeded(SEED * 7 + 1);
 const M = Object.create(Math);
 M.random = () => rng();
 const ctx = vm.createContext({ window: {}, console, Math: M });
-for (const f of ['tuning.js', 'ai.js', 'engine.js', 'records.js', 'online.js']) {
+const gameFiles = require('./game-files.js');
+for (const f of [...gameFiles(ROOT), 'records.js', 'online.js']) {
   vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 }
 const { SnakeEngine: E, SnakeOnline: O, SnakeRecords: Rec, TUNING: T } = ctx.window;
-const ENGINE = fs.readFileSync(path.join(ROOT, 'engine.js'), 'utf8');
+const ENGINE = gameFiles(ROOT).filter(gameFiles.engine).map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
 // Every kind of event the engine makes (each must cross). (A kind the
 // protocol carries before the engine makes it would go in here too, staged
 // till it does: none now.)

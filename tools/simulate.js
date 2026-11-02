@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Headless balance check. Plays AI-only rounds with the game's own rules and
-// AI (tuning.js, ai.js and engine.js, loaded unchanged) and prints how each
+// AI (tuning.js and the AI's and engine's files, loaded unchanged) and prints how each
 // personality did. Needs only Node. It's gentle on the machine by default:
 // half the cores, at below-normal priority (whoever's using the computer
 // comes first), one run at a time across the machine (a second run waits
@@ -52,9 +52,9 @@
 //             Mute boxing its target, Joker's lures, Desperado's skims and
 //             Star's powers (see SIGNS)
 //   --root    play another copy of the game (to compare versions)
-//   --versus DIR  head to head: DIR's ai.js steers half the snakes of every
+//   --versus DIR  head to head: DIR's AI steers half the snakes of every
 //             round, this copy's (--root's) the other half, under this copy's
-//             rules (its tuning.js and engine.js). DIR's AI gets its own
+//             rules (its tuning.js and engine). DIR's AI gets its own
 //             personalities' weights, by key. --seats even|odd says which
 //             half is DIR's: the snakes with even ids (the default) or odd.
 //             Each snake DIR steered has versus: 1 in its numbers (summed:

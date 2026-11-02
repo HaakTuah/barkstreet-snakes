@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Rule checks on hand-built boards: node tools/rules-test.js [--seed N]
-// Loads tuning.js, ai.js and engine.js unchanged, the way the game does.
+// Loads the game's files (tools/game-files.js) unchanged, the way the game does.
 // (N: other randomness for the checks that don't seed their own.)
 // The checks are in tools/rules/, one file per area, run in name order in one scope (tools/parts.js):
 // 00 setup, 01 crashes, 02 golden beetles and leaps, 03 jump and flash, 04 fire, weather and burrows,
