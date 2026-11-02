@@ -204,7 +204,7 @@ entry doesn't specify them, and the art waits for his description. Everything el
 - **His tongue is a hairspray can:** a little spritz when he flicks it.
 - **Lines** in his own voice for kills, wins and chatter, as every rival has (`chatter/`), and a blurb for the start
   screen.
-- **Built from the one template** (`ai.js`: his weights, and a driver for courting), measured like every rival: his
+- **Built from the one template** (`ai/rivals.js`; his own file in `ai/rivals/`: his weights, and a driver for courting), measured like every rival: his
   trademark (time spent alongside a rival's head, and apples stolen from the snake he courts) and an `abtest.js` run on
   fresh seeds showing courting pays against a Charmer who doesn't court; every other rival's trademark within noise.
 - **The cast grows to nineteen:** the start screen, the Field guide's row for him, the lobby's line-up, `CLAUDE.md`'s
@@ -235,7 +235,7 @@ public: no look, line, laugh or catchphrase of its characters. Their looks and e
   and the mind steering change. Any part of the body tells who is steering, even with the head off screen. It flips every so often (a first guess: every 8 to 15 seconds,
   at random), and at once after a scare: a near miss, a bump in the air, or a rival crashing beside them. A crash that
   kills still kills: the flip never saves them.
-- **Two minds, two styles, in the one template** (`ai.js`: two sets of weights and the swap):
+- **Two minds, two styles, in the one template** (`ai/rivals.js`; its own file in `ai/rivals/`: two sets of weights and the swap):
   - **Boot-Snake, the bossy one,** hunts: he picks a victim by its position (never by who plays it: "The rivals never
     treat a person differently") and drives it toward a wall, a hole or fire.
   - **Barkis, the jittery one,** forgets the hunt and chases the nearest apple, golden first.

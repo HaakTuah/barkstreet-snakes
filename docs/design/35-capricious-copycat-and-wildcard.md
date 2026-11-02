@@ -41,7 +41,7 @@ with a protocol bump).
 **Built (3b), Capricious (PR #126).** As above, with these readings:
 - The deck is the 16 others (not Drab, which is its dithering, nor itself), shuffled; the top of a fresh deck is never
   the mood just over. A round's moods rarely get through all 16, so a round shows each rival at most once.
-- Short forms (`MOOD_FORMS` in `ai.js`): Sovereign's home starts at radius 3 and grows to 4 at most; Colonist plants
+- Short forms (`MOOD_FORMS` in `ai/moods.js`): Sovereign's home starts at radius 3 and grows to 4 at most; Colonist plants
   one flag of radius 3 where the mood starts and no more (a pecked one is replanted); Ouroboros coils from 7 long, not
   10. Each mood starts with its driver's memory empty (`MOOD_MEMORY`), so Metagamer watches afresh, Wildcard draws
   afresh, and a realm or a flag goes when its mood does. The rest play as themselves.
@@ -58,7 +58,7 @@ with a protocol bump).
 - The AI's view carries no persona, and must not ("The rivals never treat a person differently"), so Copycat reads
   every leader, rival or person, by behaviour alone. Over the ticks it has watched (as it saw them, its reaction time
   late), each snake's eight traits: moves per turn, coiling, riding tails, distance from heads, heads near, growth,
-  jumps and flashes, and how far it strays (`watchStyles`, `traitsOf` in `ai.js`). The style is the nearest of twelve
+  jumps and flashes, and how far it strays (`watchStyles`, `traitsOf` in `ai/moods.js`). The style is the nearest of twelve
   rivals' own (`styleOf`, `STYLES`, measured by `tools/dev/copycat-styles.js`), after 60 ticks watched. So a person
   is copied as Mason if they run long and straight, as Gobbler if they eat a lot and go near heads, and so on.
 - It takes the style's habits (weights, the short forms of `MOOD_FORMS`, and the driver), with its pull to move the way

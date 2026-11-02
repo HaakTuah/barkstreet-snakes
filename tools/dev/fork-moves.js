@@ -26,8 +26,8 @@ const State = require(path.join(__dirname, '..', 'snapshots', 'state.js'));
 function patchAI(text) {
   const swap = (a, b) => { if (!text.includes(a)) throw new Error(`the AI has changed: can't find ${a.slice(0, 60)}`); text = text.replace(a, b); };
   swap('for (let k = air ? full : first; k <= (golden ? full : first); k += Math.max(1, full - first)) {', 'for (let k = air ? full : first; k <= (golden && !globalThis.__forbid.fly.has(me.id) ? full : first); k += Math.max(1, full - first)) {');
-  swap('        let turn = null;\n        if (golden) {', '        let turn = null;\n        if (golden && !globalThis.__forbid.fly.has(me.id)) {');
-  swap('if (!golden && !trapped && !cover.length) return null;', 'if (!golden && (globalThis.__forbid.now.has(me.id) || (!trapped && !cover.length && !globalThis.__force.now.has(me.id)))) return null;');
+  swap('  let turn = null;\n  if (golden) {', '  let turn = null;\n  if (golden && !globalThis.__forbid.fly.has(me.id)) {');
+  swap('if (!golden && !trapped && !ringCover.length) return null;', 'if (!golden && (globalThis.__forbid.now.has(me.id) || (!trapped && !ringCover.length && !globalThis.__force.now.has(me.id)))) return null;');
   swap('if (span < 1 || (!golden && !trapped && !coverAt(path[span], span + 1))) return null;', 'if (span < 1 || (!golden && !trapped && !globalThis.__force.now.has(me.id) && !coverAt(path[span], span + 1))) return null;');
   swap('if (me.dashes > 0) { const v', 'if (me.dashes > 0 && !globalThis.__forbid.dash.has(me.id)) { const v');
   // (--forced: the move's price waived, so it's taken wherever it scores above the crawl)

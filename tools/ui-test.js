@@ -129,7 +129,7 @@ const KEYS = {
   };
   const die = async () => {
     await ev(`pilot.crash = true; 'ok'`);
-    await wait(`cardUp() && !me().alive`);
+    await wait(`cardUp() && !you().alive`);
     await b.sleep(900);
   };
 
