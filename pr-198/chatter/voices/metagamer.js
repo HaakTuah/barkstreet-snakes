@@ -1,6 +1,4 @@
 // Metagamer's lines, by moment (see chatter/voices.js), their Chinese for Copycat, and its punchlines.
-// The Metagamer's labels for how a snake plays, for Copycat's Chinese.
-const ZH_LABELS = { aggressive: '好斗', greedy: '贪吃', evasive: '爱躲', unclear: '看不透' };
 addVoice('metagamer', {
   hungry: ["Caloric deficit detected."],
   desperate: ['Hunger critical. Abandoning strategy.'],
