@@ -207,16 +207,18 @@ const drawMushroom = (g, v = '') => {
 // colours and markings (Star's rainbow, Mason's marble, Colonist's
 // strap, a friend's spots), so no two snakes leave the same remains. A light
 // rim and a dark edge keep every bead readable on the bark.
-// variant: 'fill|mark', mark one of '', marble, marble2 (a gold vein), strap, strap2, spots, rings, dots, copy, ghost.
-const beadSprite = v => sprite('bead', v, drawBead);
+// variant: 'fill|mark' or two-tone 'fill|mark|fill2' (see beadOf), mark one of '', marble, marble2 (a gold vein), strap, strap2, cross (both straps), stars, spots, rings, dots, copy, ghost.
+// (Star's rainbow runs through every hue, so the bead sprites are let go now and then, as Mason's veins are.)
+const beadSprite = v => { if (sprites.get('bead')?.size >= 400) sprites.get('bead').clear(); return sprite('bead', v, drawBead); };
 const drawBead = (g, v) => {
-  const c = CELL, r = c * 0.26, bar = v.indexOf('|'), fill = v.slice(0, bar), mark = v.slice(bar + 1);
+  const c = CELL, r = c * 0.26, [fill, mark, fill2] = v.split('|');
   const disc = (x, y, rr) => { g.beginPath(); g.arc(x, y, rr, 0, TAU); g.fill(); };
   if (mark === 'ghost') g.globalAlpha = 0.72;
   g.fillStyle = 'rgba(255,244,226,0.5)';
   disc(0, 0, r + c * 0.05);
   g.fillStyle = fill;
   disc(0, 0, r);
+  if (fill2) { g.fillStyle = fill2; g.beginPath(); g.arc(0, 0, r, -Math.PI / 4, Math.PI * 3 / 4); g.fill(); g.beginPath(); g.arc(0, 0, r, 0, TAU); } // (its stretch's tail end, the lower half)
   g.strokeStyle = 'rgba(30,20,8,0.5)';
   g.lineWidth = c * 0.03;
   g.stroke();
@@ -229,13 +231,17 @@ const drawBead = (g, v) => {
     g.moveTo(-r * 0.7, -r * 0.45); g.quadraticCurveTo(0, r * 0.1, r * 0.75, -r * 0.2);
     g.moveTo(-r * 0.15, r * 0.75); g.quadraticCurveTo(r * 0.05, r * 0.35, r * 0.6, r * 0.45);
     g.stroke();
-  } else if (mark === 'strap' || mark === 'strap2') {
+  } else if (mark === 'strap' || mark === 'strap2' || mark === 'cross') {
     g.strokeStyle = '#fef3c7';
     g.lineWidth = c * 0.07;
     g.beginPath();
-    const d = r * 0.7, sg = mark === 'strap' ? 1 : -1;
-    g.moveTo(-d, -d * sg); g.lineTo(d, d * sg);
+    const d = r * 0.7;
+    if (mark !== 'strap2') { g.moveTo(-d, -d); g.lineTo(d, d); }
+    if (mark !== 'strap') { g.moveTo(d, -d); g.lineTo(-d, d); }
     g.stroke();
+  } else if (mark === 'stars') {
+    g.fillStyle = '#ffffff';
+    for (const [dx, dy] of STARS) star(dx * r, dy * r, r * 0.22, g);
   } else if (mark === 'spots' || mark === 'dots') {
     g.fillStyle = 'rgba(58,38,20,0.45)';
     if (mark === 'dots') disc(0, 0, r * 0.32);

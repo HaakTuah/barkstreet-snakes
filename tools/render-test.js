@@ -16,7 +16,7 @@
 //   tick.
 // - A dead snake's beads keep its markings (Joker's purple and amber,
 //   Wildcard's collar, stars and stripes), though only every other segment
-//   leaves one.
+//   leaves one: each bead is its stretch of two, half and half.
 // - Golden power pips stay on the board at its edge (a head in the first
 //   column, the top row or a corner shows as many of them as one in the
 //   middle), never on the head (none inside its face, where moving the arc
@@ -25,8 +25,8 @@
 //   rainbow streams back along it as it goes, faster than it crawls
 //   (backward over the log, each segment round the rainbow about once a
 //   second; still while it's stunned, a burst as it flashes; with reduced
-//   motion a slow drift where it is), its gold line runs round its points, and a dead Star's beads go
-//   round the rainbow from its head. Its tell is a countdown: its points go
+//   motion a slow drift where it is), its gold line runs round its points, and a dead Star's beads are
+//   its rainbow where it was, segment by segment. Its tell is a countdown: its points go
 //   dim as it flashes and light one by one through its rest, its middle
 //   always lit (with reduced motion too: a point at a time, never a blink),
 //   and its twinkles burst as it flashes, not as its flash comes back. Its

@@ -4,7 +4,9 @@ await b.go(site.url + '?debug', { settle: 0 });
 await ev('__settle()');
 await ev(STAGE);
 
-// A dead snake's beads: every other segment, in its own markings.
+// A dead snake's beads: every other segment, each standing for its stretch
+// of two, half and half (its own segment's colour upper left, the next's
+// lower right), in its own markings.
 const beads = await ev(`(() => {
   seeds(0);
   const g = stage(['joker', 'wildcard', 'colonist']), [you, joker, wild] = g.snakes;
@@ -15,14 +17,14 @@ const beads = await ev(`(() => {
   g.tick++;
   R.onTick([{ type: 'death', snake: joker }, { type: 'death', snake: wild }]);
   drawN(90);
-  const at = (y, n) => rgb(20 - n * TUNING.CORPSE_EVERY + 0.5, y + 0.55); // (the bead's middle, below its gloss)
-  return { joker: [1, 2, 3, 4, 5].map(n => at(4, n)), wild: [2, 3, 4, 5, 6, 7].map(n => at(10, n)) };
+  const at = (y, n) => [rgb(20 - n * TUNING.CORPSE_EVERY + 0.27, y + 0.46), rgb(20 - n * TUNING.CORPSE_EVERY + 0.56, y + 0.53)]; // (a box in each half (rgb reads 0.12 of a cell from its corner), clear of the gloss and the stars)
+  return { joker: [1, 2, 3, 4, 5].map(n => at(4, n)), wild: [1, 2, 3, 4, 5].map(n => at(10, n)) };
 })()`);
 const amber = ([r, g, b]) => r > b + 80 && g > b + 40, purple = ([r, g, b]) => r > g + 50 && b > g + 50, red = ([r, g, b]) => r > g + 60 && r > b + 50;
 const navy = ([r, g, b]) => b > r + 15 && b > g + 15, white = ([r, g, b]) => Math.min(r, g, b) > 140 && Math.max(r, g, b) - Math.min(r, g, b) < 45;
-check(beads.joker.every((c, i) => (i % 2 ? purple : amber)(c)), 'Joker’s beads alternate amber and purple', JSON.stringify(beads.joker));
-const wildWant = [navy, navy, white, red, white, red];
-check(beads.wild.every((c, i) => wildWant[i](c)), 'Wildcard’s beads keep the stars and stripes', JSON.stringify(beads.wild));
+check(beads.joker.every(([u, l]) => purple(u) && amber(l)), 'Joker’s beads are purple and amber, as its body', JSON.stringify(beads.joker));
+const wildWant = [[navy, navy], [white, red], [white, red], [white, red], [white, red]];
+check(beads.wild.every(([u, l], i) => wildWant[i][0](u) && wildWant[i][1](l)), 'Wildcard’s beads keep the stars and stripes', JSON.stringify(beads.wild));
 
 // Stunned, a jump and a flash both asked, a turn up pressed, a body one
 // thick right above: the game will hop it (a jump goes first), so the
