@@ -1994,13 +1994,13 @@ window.SnakeAI = (() => {
 
     // In the air on a golden flight (round six B, part 4: "the rivals fly it
     // as a person would"): every move I'm up, I plan again where to come
-    // down, by what I see now: on, a turn, or down on the next cell. The
-    // same weighing as at take-off (leapOpt, in the air), on the cells I
-    // can still fly; the engine reads it as a let-go or a turn, as a
-    // person's (memory.fly, memory.flyTurn: counted from take-off).
+    // down, by what I see now: on, or a turn (2y: it always flies GOLD_FLY
+    // cells, so where it comes down is only steered). The same weighing as
+    // at take-off (leapOpt, in the air); the engine reads it as a turn, as a
+    // person's (memory.flyTurn: counted from take-off).
     if (me.flight) {
       const pick = powerPick(-Infinity, me.flight.dir);
-      if (pick) { memory.flyAt = view.tick; memory.fly = me.flight.flown + (pick.fly || 0); memory.flyTurn = pick.turn ? { at: me.flight.flown + pick.turn.at, dir: pick.turn.dir } : null; }
+      if (pick) { memory.flyAt = view.tick; memory.flyTurn = pick.turn ? { at: me.flight.flown + pick.turn.at, dir: pick.turn.dir } : null; }
       return me.flight.dir;
     }
     let bestDir = me.dir, bestScore = -Infinity;
@@ -2142,7 +2142,7 @@ window.SnakeAI = (() => {
         leapNow = false; leapFly = 0; leapTurn = null;
         let span = 0, n = 0; // (n: the cells on the board traced)
         // (In the air: the cells I can still fly, GOLD_FLY less those flown;
-        // path[0] is the next cell, where I come down if I let go now.)
+        // path[0] is the next cell, path[far] where I come down.)
         const far = air ? TUNE.GOLD_FLY - air.flown : golden ? TUNE.GOLD_FLY : TUNE.LEAP_REACH;
         if (far < 0) return null;
         for (let x = myHead.x, y = myHead.y; n <= far; ) {
@@ -2156,8 +2156,8 @@ window.SnakeAI = (() => {
         // front, on over up to LEAP_REACH cells of hurdles, and down on the
         // first free cell beyond, or a bridge that lasts. Over open ground,
         // leap now (pressed twice): over LEAP_REACH cells, down on the next,
-        // else the farthest free short of it. Golden, held: on, down on any
-        // free cell up to GOLD_FLY cells in the air, the best of them.
+        // else the farthest free short of it. Golden, held: on, always
+        // GOLD_FLY cells in the air (2y), or the last before the edge.
         // (Safe, for the moves of round six B, part 4 (leap now, flying on,
         // steering): only where no rival's head could get before I come down,
         // and leave its body there. Coming down on a body is the end, and at
@@ -2177,15 +2177,16 @@ window.SnakeAI = (() => {
           first = span; now = true;
         }
         let bestS = null, bestSpan = first;
-        for (let k = first; k <= (golden ? Math.min(far, n - 1) : first); k++) {
+        const full = Math.min(far, n - 1); // (a held flight's landing)
+        for (let k = air ? full : first; k <= (golden ? full : first); k += Math.max(1, full - first)) {
           if ((k > first || now || air) && !lands(k, true)) continue; // (a leap now, flying on, or any landing from the air: only down where it's safe)
           const v = landOpt(d, k, golden, now);
           if (v !== null && (bestS === null || v > bestS)) { bestS = v; bestSpan = k; }
         }
         // Golden, steered: on that way for `at` cells, then a turn (left or
         // right: the engine's airTurn, a person's as much as mine), and on,
-        // down on any free cell up to GOLD_FLY cells in the air: the best of
-        // them, if better than flying straight.
+        // down GOLD_FLY cells in the air (or the last before the edge), if
+        // better than flying straight.
         let turn = null;
         if (golden) {
           straight.set(path);
@@ -2202,7 +2203,7 @@ window.SnakeAI = (() => {
                 x = c % N; y = (c - x) / N;
                 path[n++] = c;
               }
-              for (let k = at; k < n; k++) {
+              for (let k = Math.max(at, n - 1); k < n; k++) {
                 if (!lands(k, true)) continue;
                 const v = landOpt(d2, k, true, now);
                 if (v !== null && (bestS === null || v > bestS)) { bestS = v; bestSpan = k; turn = { at, dir: d2 }; }
@@ -2211,7 +2212,7 @@ window.SnakeAI = (() => {
           }
           path.set(straight); n = n0;
         }
-        leapNow = now; leapTurn = turn; leapFly = golden && (turn || bestSpan > first) ? bestSpan : 0;
+        leapNow = now; leapTurn = turn; leapFly = golden && (turn || bestSpan > first || (air && bestS !== null)) ? bestSpan : 0;
         return bestS;
       }
       // A jump along d down on path[span], span + 1 moves from now (the cells before it in the air).

@@ -87,7 +87,7 @@ const GUIDE_ROWS = [
     ['mushroom', 'Mushroom', `Poison: ${TUNE.SHRINK} off your tail (never below ${TUNE.MIN_LENGTH}). A second later it comes back up, ${inWords(TUNE.SPIT_REACH)} ahead of you: steer to aim it at a head. Each time it comes back up it takes one more, up to ${TUNE.SHRINK_MAX}, a shade darker. Keep out of a green ring.`],
   ]],
   ['Golden things', [
-    ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: free, no rest. Hold the jump to fly up to ${TUNE.GOLD_FLY} cells and steer in the air; let go to come down. Hold up to ${TUNE.LEAP_MAX}.`],
+    ['goldbeetle', 'Golden beetle', `${TUNE.LEAP_CHARGES} golden jumps: free, no rest. Tap for the plain hop; hold the jump and you fly ${TUNE.GOLD_FLY} cells, always, steering in the air to land where it's safe. Hold up to ${TUNE.LEAP_MAX}.`],
     ['leaf', 'Golden leaf', `${TUNE.DASH_CHARGES} golden dashes: three cells at once, cutting through a body up to ${TUNE.DASH_THICK} thick and putting out every fire. Never at an edge or a hole: you blow up.`],
     ['goldcap', 'Golden mushroom', `Up in the rain. The edges wrap round for you, ${secs(TUNE.WRAP_MS)} s a mushroom (up to ${secs(TUNE.WRAP_MAX_MS)}).`],
   ]],
