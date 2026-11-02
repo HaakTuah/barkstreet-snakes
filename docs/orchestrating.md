@@ -9,7 +9,7 @@ lanes, its fallback and the reviews between the two builders: `docs/claude-and-c
 
 - **28 October 2026: pipeline, don't wait.** "Yes, please, organize it expertly so we maximize token caching, time spent, and all other concerns." (to Claude's proposal; the words are in
   `docs/archive/instructions.md`). Waiting is lost time and, past an hour, a lost cache, so:
-  1. **Review in the background.** Open the PR, start its review (Codex's: `docs/claude-and-codex.md`, "Codex reviews"; or Claude's reviewer as a
+  1. **Review in the background.** Open the PR, start its review (Codex's: `docs/claude-and-codex.md`, "Codex reviews"; or, from the builder, Claude's reviewer as a
      background agent; on engine-rules and AI entries, Codex's review and the design check together, in the same turn), and go
      on meanwhile with what comes next: the next entry's text, its sections, the check for changes. Fix what the reviews
      find when they return, in one round, then merge at a 10 ("Reviews" in `docs/claude-and-codex.md`).
@@ -17,7 +17,7 @@ lanes, its fallback and the reviews between the two builders: `docs/claude-and-c
      an open PR's branch ("Don't stack PRs"). Two AI changes are never measured at once: an AI entry waits for the
      last AI change to merge, so each head-to-head compares against a settled AI.
   3. **Bigger review fixes in a session of their own.** If a review asks for more than about an hour's work, the
-     orchestrator starts a fresh session for it with the PR, the review and nothing else, at the task's effort; the
+     orchestrator starts a fresh session for it with the PR, the review and nothing else, at the builder's effort (medium; work marked high goes to its helpers); the
      builder goes on.
   4. **Keep the cache warm.** One session per task, continued for its review fixes and its milestone while its context
      is under an hour old, rather than a fresh session reading everything again. A new task goes to whichever does the

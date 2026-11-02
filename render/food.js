@@ -1,5 +1,6 @@
 // The renderer (see render/core.js): the food (tossed, knocked, the dust
-// and steam about it), and the beetles' burrows.
+// and steam about it) and its pictures, the spit rings and cheeks of a
+// mushroom, and the beetles' burrows and the bore a cornered one digs.
 
 // ------------------------------------------------------------ the food
 
@@ -556,6 +557,272 @@ function drawFood(alpha, now) {
   }
 }
 
+function drawAppleShape(g, body, leaf = '#15803d') {
+  const c = CELL;
+  g.fillStyle = body;
+  g.beginPath(); g.arc(0, c * 0.04, c * 0.34, 0, TAU); g.fill();
+  g.strokeStyle = 'rgba(30,20,8,0.45)';
+  g.lineWidth = c * 0.05;
+  g.stroke();
+  g.fillStyle = 'rgba(255,255,255,0.5)';
+  g.beginPath(); g.arc(-c * 0.12, -c * 0.06, c * 0.08, 0, TAU); g.fill();
+  g.strokeStyle = '#78350f';
+  g.lineWidth = c * 0.07;
+  g.beginPath(); g.moveTo(0, -c * 0.22); g.lineTo(c * 0.04, -c * 0.42); g.stroke();
+  g.fillStyle = leaf;
+  g.beginPath(); g.ellipse(c * 0.17, -c * 0.36, c * 0.14, c * 0.07, -0.5, 0, TAU); g.fill();
+}
+
+// An apple as it ages (it rots away in the end): fresh; bruised, with brown
+// spots; rotten, brown and wrinkled, its leaf dead. Or baked in a fire:
+// deep red, glazed and split, a little caramel oozing.
+const APPLE_LOOKS = { fresh: ['#84cc16', '#15803d'], bruised: ['#9fb53a', '#4d7c0f'], rotten: ['#8a6a2a', '#78716c'], baked: ['#9a3412', '#57534e'] };
+const drawApple = (g, v) => {
+  const [body, leaf] = APPLE_LOOKS[v] || APPLE_LOOKS.fresh, c = CELL;
+  drawAppleShape(g, body, leaf);
+  if (v === 'bruised' || v === 'rotten') {
+    g.fillStyle = v === 'rotten' ? 'rgba(66,38,12,0.6)' : 'rgba(110,66,20,0.5)';
+    for (const [x, y, rr] of [[0.1, 0.12, 0.07], [-0.1, 0.18, 0.05], [0.17, -0.02, 0.045]]) { g.beginPath(); g.arc(c * x, c * y, c * rr, 0, TAU); g.fill(); }
+  }
+  if (v === 'rotten') { // wrinkles
+    g.strokeStyle = 'rgba(52,30,10,0.6)';
+    g.lineWidth = c * 0.03;
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(-c * 0.2, -c * 0.02); g.quadraticCurveTo(-c * 0.12, c * 0.06, -c * 0.2, c * 0.14);
+    g.moveTo(c * 0.02, c * 0.24); g.quadraticCurveTo(c * 0.1, c * 0.16, c * 0.2, c * 0.22);
+    g.stroke();
+  }
+  if (v === 'baked') { // glazed and split, caramel in the split
+    g.strokeStyle = '#fbbf24';
+    g.lineWidth = c * 0.05;
+    g.lineCap = 'round';
+    g.beginPath(); g.moveTo(-c * 0.06, c * 0.02); g.lineTo(c * 0.02, c * 0.12); g.lineTo(-c * 0.02, c * 0.22); g.stroke();
+    g.strokeStyle = 'rgba(254,215,170,0.8)';
+    g.lineWidth = c * 0.04;
+    g.beginPath(); g.arc(0, c * 0.04, c * 0.26, Math.PI * 1.1, Math.PI * 1.45); g.stroke();
+  }
+};
+const drawGolden = g => drawAppleShape(g, '#fbbf24');
+const appleSprite = (v = 'fresh') => sprite('apple', v, drawApple);
+const goldenSprite = () => sprite('golden', '', drawGolden);
+const glowSprite = () => sprite('glow', '', drawGlow);
+const drawGlow = g => { // (in Honey: gold means a power)
+  const grad = g.createRadialGradient(0, 0, CELL * 0.2, 0, 0, CELL * 0.8);
+  grad.addColorStop(0, 'rgba(253,230,138,0.55)');
+  grad.addColorStop(1, 'rgba(253,230,138,0)');
+  g.fillStyle = grad;
+  g.beginPath(); g.arc(0, 0, CELL * 0.8, 0, TAU); g.fill();
+};
+// A four-point sparkle: the golden apple's non-color cue.
+const starSprite = () => sprite('star', '', drawStar);
+const drawStar = g => {
+  g.fillStyle = '#fffbea';
+  g.beginPath();
+  const r1 = CELL * 0.2, r2 = CELL * 0.05;
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * TAU, r = i % 2 ? r2 : r1;
+    if (i) g.lineTo(Math.cos(a) * r, Math.sin(a) * r); else g.moveTo(r, 0);
+  }
+  g.fill();
+};
+// A golden leaf (on the wind: dashes): a broad ginkgo fan about a cell
+// across, in Honey, inked like every other pickup and lit along its top:
+// nothing like the slim autumn leaves blowing past.
+const goldLeafSprite = () => sprite('goldleaf', '', drawGoldLeaf);
+const drawGoldLeaf = g => {
+  const c = CELL;
+  const fan = () => {
+    g.beginPath();
+    g.moveTo(0, c * 0.26); // (the base, where the stalk joins)
+    g.quadraticCurveTo(-c * 0.16, c * 0.05, -c * 0.46, -c * 0.1);
+    g.quadraticCurveTo(-c * 0.42, -c * 0.42, -c * 0.07, -c * 0.44);
+    g.lineTo(0, -c * 0.31); // (the notch in its edge)
+    g.lineTo(c * 0.07, -c * 0.44);
+    g.quadraticCurveTo(c * 0.42, -c * 0.42, c * 0.46, -c * 0.1);
+    g.quadraticCurveTo(c * 0.16, c * 0.05, 0, c * 0.26);
+    g.closePath();
+  };
+  g.strokeStyle = '#3a2614'; // the stalk
+  g.lineWidth = c * 0.07;
+  g.lineCap = 'round';
+  g.beginPath(); g.moveTo(0, c * 0.24); g.quadraticCurveTo(c * 0.02, c * 0.4, c * 0.08, c * 0.48); g.stroke();
+  const grad = g.createLinearGradient(0, -c * 0.44, 0, c * 0.26);
+  grad.addColorStop(0, '#fffbea'); grad.addColorStop(0.35, '#fde68a'); grad.addColorStop(1, '#d4a017');
+  fan();
+  g.fillStyle = grad; g.fill();
+  g.strokeStyle = 'rgba(180,120,10,0.7)'; // veins, fanning out from the base
+  g.lineWidth = c * 0.022;
+  g.beginPath();
+  for (const a of [-1.05, -0.6, -0.2, 0.2, 0.6, 1.05]) { g.moveTo(0, c * 0.2); g.lineTo(Math.sin(a) * c * 0.4, c * 0.2 - Math.cos(a) * c * 0.56); }
+  g.stroke();
+  fan();
+  g.lineJoin = 'round';
+  g.strokeStyle = '#3a2614'; g.lineWidth = c * 0.05; g.stroke();
+  g.strokeStyle = '#fffbea'; g.lineWidth = c * 0.03; // (its top edge, catching the light)
+  g.beginPath(); g.moveTo(-c * 0.36, -c * 0.24); g.quadraticCurveTo(-c * 0.3, -c * 0.38, -c * 0.1, -c * 0.4); g.stroke();
+};
+// A golden mushroom (in the rain: the edges wrap): the mushroom's shape,
+// its cap in the golden leaf's Honey and inked like it, with white spots
+// (ringed, so they show on the pale gold) and a shine.
+const goldcapSprite = () => sprite('goldcap', '', drawGoldcap);
+const drawGoldcap = g => {
+  const c = CELL;
+  g.lineJoin = 'round';
+  g.strokeStyle = '#3a2614';
+  g.lineWidth = c * 0.05;
+  g.fillStyle = '#fef3c7';
+  g.beginPath();
+  if (g.roundRect) g.roundRect(-c * 0.1, -c * 0.02, c * 0.2, c * 0.36, c * 0.07); else g.rect(-c * 0.1, -c * 0.02, c * 0.2, c * 0.36);
+  g.fill(); g.stroke();
+  const grad = g.createLinearGradient(0, -c * 0.32, 0, 0);
+  grad.addColorStop(0, '#fffbea'); grad.addColorStop(0.35, '#fde68a'); grad.addColorStop(1, '#d4a017');
+  g.fillStyle = grad;
+  g.beginPath(); g.ellipse(0, 0, c * 0.42, c * 0.32, 0, Math.PI, 0); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#ffffff';
+  g.strokeStyle = 'rgba(180,120,10,0.7)'; // (the leaf's veins)
+  g.lineWidth = c * 0.022;
+  for (const [x, y, r] of GOLDCAP_SPOTS) { g.beginPath(); g.arc(c * x, c * y, c * r, 0, TAU); g.fill(); g.stroke(); }
+  g.strokeStyle = 'rgba(255,251,234,0.85)'; // a shine on the cap
+  g.lineWidth = c * 0.04;
+  g.lineCap = 'round';
+  g.beginPath(); g.arc(0, 0, c * 0.3, Math.PI * 1.2, Math.PI * 1.45); g.stroke();
+};
+const GOLDCAP_SPOTS = [[-0.19, -0.1, 0.06], [0.06, -0.21, 0.06], [0.23, -0.06, 0.05]];
+// A mushroom, a shade darker each time it's come back up (round six B: its
+// power, SHRINK fresh, up to SHRINK_MAX), so anyone can see how bad it is.
+const SHROOM_CAPS = ['#dc2626', '#a51c3c', '#6f1546'], SHROOM_STEMS = ['#fef3c7', '#e3d3b0', '#c7b495'];
+const mushroomSprite = (power = 0) => sprite('mushroom', String(power || ''), drawMushroom);
+const drawMushroom = (g, v = '') => {
+  const c = CELL, shade = Math.max(0, Math.min(2, (Number(v) || T.SHRINK) - T.SHRINK));
+  g.fillStyle = SHROOM_STEMS[shade];
+  g.beginPath(); // a rounded stem, like every other shape on the board
+  if (g.roundRect) g.roundRect(-c * 0.1, -c * 0.02, c * 0.2, c * 0.36, c * 0.07); else g.rect(-c * 0.1, -c * 0.02, c * 0.2, c * 0.36);
+  g.fill();
+  g.fillStyle = SHROOM_CAPS[shade];
+  g.beginPath(); g.ellipse(0, 0, c * 0.4, c * 0.3, 0, Math.PI, 0); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(30,20,8,0.45)';
+  g.lineWidth = c * 0.05;
+  g.stroke();
+  g.fillStyle = '#ffffff';
+  g.beginPath(); g.arc(-c * 0.18, -c * 0.1, c * 0.06, 0, TAU); g.fill();
+  g.beginPath(); g.arc(c * 0.06, -c * 0.2, c * 0.06, 0, TAU); g.fill();
+  g.beginPath(); g.arc(c * 0.22, -c * 0.06, c * 0.05, 0, TAU); g.fill();
+};
+// What's left of a snake: it falls to pieces, glossy beads in its own
+// colours and markings (Star's rainbow, Mason's marble, Colonist's
+// strap, a friend's spots), so no two snakes leave the same remains. A light
+// rim and a dark edge keep every bead readable on the bark.
+// variant: 'fill|mark' or two-tone 'fill|mark|fill2' (see beadOf), mark one of '', marble, marble2 (a gold vein), strap, strap2, cross (both straps), stars, spots, rings, dots, copy, ghost.
+// (Star's rainbow runs through every hue, so bead sprites are kept for the
+// beads in use: as many as the board has cells, one bead to a cell, so every
+// bead on it stays drawn from its own, whatever a peer sends; past that the
+// one unused longest goes.)
+const beadSprite = v => {
+  const kept = sprites.get('bead'), sp = kept?.get(v);
+  if (sp) { kept.delete(v); kept.set(v, sp); return sp; } // (last used last)
+  if (kept && kept.size >= GRID * GRID) kept.delete(kept.keys().next().value);
+  return sprite('bead', v, drawBead);
+};
+const drawBead = (g, v) => {
+  const c = CELL, r = c * 0.26, [fill, mark, fill2] = v.split('|');
+  const disc = (x, y, rr) => { g.beginPath(); g.arc(x, y, rr, 0, TAU); g.fill(); };
+  if (mark === 'ghost') g.globalAlpha = 0.72;
+  g.fillStyle = 'rgba(255,244,226,0.5)';
+  disc(0, 0, r + c * 0.05);
+  g.fillStyle = fill;
+  disc(0, 0, r);
+  if (fill2) { g.fillStyle = fill2; g.beginPath(); g.arc(0, 0, r, -Math.PI / 4, Math.PI * 3 / 4); g.fill(); g.beginPath(); g.arc(0, 0, r, 0, TAU); } // (its stretch's tail end, the lower half)
+  g.strokeStyle = 'rgba(30,20,8,0.5)';
+  g.lineWidth = c * 0.03;
+  g.stroke();
+  g.fillStyle = 'rgba(30,41,59,0.6)';
+  if (mark === 'marble' || mark === 'marble2') {
+    g.strokeStyle = mark === 'marble2' ? 'rgba(201,162,39,0.85)' : 'rgba(100,116,139,0.6)';
+    g.lineWidth = c * 0.03;
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(-r * 0.7, -r * 0.45); g.quadraticCurveTo(0, r * 0.1, r * 0.75, -r * 0.2);
+    g.moveTo(-r * 0.15, r * 0.75); g.quadraticCurveTo(r * 0.05, r * 0.35, r * 0.6, r * 0.45);
+    g.stroke();
+  } else if (mark === 'strap' || mark === 'strap2' || mark === 'cross') {
+    g.strokeStyle = '#fef3c7';
+    g.lineWidth = c * 0.07;
+    g.beginPath();
+    const d = r * 0.7;
+    if (mark !== 'strap2') { g.moveTo(-d, -d); g.lineTo(d, d); }
+    if (mark !== 'strap') { g.moveTo(d, -d); g.lineTo(-d, d); }
+    g.stroke();
+  } else if (mark === 'stars') {
+    g.fillStyle = '#ffffff';
+    for (const [dx, dy] of STARS) star(dx * r, dy * r, r * 0.22, g);
+  } else if (mark === 'spots' || mark === 'dots') {
+    g.fillStyle = 'rgba(58,38,20,0.45)';
+    if (mark === 'dots') disc(0, 0, r * 0.32);
+    else { disc(-r * 0.38, r * 0.12, r * 0.18); disc(r * 0.38, -r * 0.12, r * 0.18); }
+  } else if (mark === 'diamond') {
+    g.fillStyle = 'rgba(58,36,8,0.75)';
+    g.beginPath(); g.moveTo(0, -r * 0.6); g.lineTo(r * 0.6, 0); g.lineTo(0, r * 0.6); g.lineTo(-r * 0.6, 0); g.closePath(); g.fill();
+  } else if (mark === 'rings' || mark === 'copy') {
+    g.strokeStyle = mark === 'copy' ? 'rgba(255,255,255,0.75)' : 'rgba(58,38,20,0.5)';
+    g.lineWidth = c * 0.04;
+    if (mark === 'copy') g.setLineDash([c * 0.07, c * 0.07]);
+    g.beginPath(); g.arc(0, 0, r * (mark === 'copy' ? 0.75 : 0.55), 0, TAU); g.stroke();
+    g.setLineDash([]);
+  }
+  g.fillStyle = 'rgba(255,255,255,0.55)'; // the gloss
+  g.beginPath(); g.ellipse(-r * 0.32, -r * 0.38, r * 0.3, r * 0.2, -0.6, 0, TAU); g.fill();
+};
+// Mushrooms come back up (round six B). While one's in a snake's cheek:
+// a small green ring on the cell SPIT_REACH ahead of its head, the way it
+// faces (where it'll land: steering aims it), drawing in as the second
+// runs out, for everyone to see and dodge; and its cheeks puffed green (see
+// drawCheeks), a shade darker the stronger it was swallowed (as the mushroom's own shade).
+const SPIT_RING = '#a3e635', CHEEKS = ['#84cc16', '#65a30d', '#4d7c0f'];
+function drawSpitRings(now) {
+  if (!game) return;
+  const t = reduced ? 0 : now / 1000;
+  for (const s of game.snakes) {
+    if (!s.alive || !s.cheek) continue;
+    const h = s.body[0], wrap = s.wrapUntil > game.time; // (the edges wrap for it: it lands on the far side)
+    let x = h.x + s.dir.x * T.SPIT_REACH, y = h.y + s.dir.y * T.SPIT_REACH;
+    if (wrap) { x = (x + GRID) % GRID; y = (y + GRID) % GRID; }
+    if (x < 0 || y < 0 || x >= GRID || y >= GRID) continue; // (over the edge: it's gone, nothing to dodge)
+    const left = Math.max(0, Math.min(1, (s.cheek.spitAt - game.tick) / T.CHEEK_TICKS));
+    const cx = (x + 0.5) * CELL, cy = (y + 0.5) * CELL, r = CELL * (0.24 + 0.14 * left + 0.03 * Math.sin(t * 12));
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.18; ctx.stroke();
+    ctx.strokeStyle = SPIT_RING; ctx.lineWidth = CELL * 0.09; ctx.stroke();
+  }
+}
+// The bulge counts down to the spit (Haakon, 2 November 2026: "Really not
+// easy to tell either when your character will spit it"): it swells from a
+// mouthful to fit to burst as the second runs out, and on each of the last
+// three moves it throbs, three, two, one, and the spit comes on the next.
+// With reduced motion it swells, without the throbs or the wobble.
+const CHEEK_R = 0.12, CHEEK_GROW = 0.1, CHEEK_THROB = 0.06, CHEEK_BEATS = 3;
+function drawCheeks(alpha, now) {
+  if (!game) return;
+  const t = reduced ? 0 : now / 1000;
+  for (const s of game.snakes) {
+    if (!s.alive || !s.cheek) continue;
+    const a = anim.get(s);
+    if (!a || !a.n) continue;
+    // (behind the eyes, bulging out past the head on either side: a mouthful, never a pair of goggles)
+    const n = s.cheek.spitAt - game.tick, go = Math.max(0, Math.min(1, 1 - (n + 1 - alpha) / T.CHEEK_TICKS)); // (n: moves before the one it's spat on; go: 0 as it's swallowed, 1 as it's spat)
+    const throb = !reduced && n >= 0 && n < CHEEK_BEATS ? CHEEK_THROB * (1 - alpha) * (1 - alpha) : 0;
+    const hx = a.pts[0], hy = a.pts[1], px = -s.dir.y, py = s.dir.x, r = CELL * (CHEEK_R + CHEEK_GROW * go + throb + 0.015 * Math.sin(t * 10));
+    ctx.fillStyle = CHEEKS[Math.max(0, Math.min(2, s.cheek.power - T.SHRINK))];
+    ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.06;
+    for (const side of SIDES2) {
+      ctx.beginPath();
+      ctx.arc(hx + px * side * CELL * 0.42 - s.dir.x * CELL * 0.22, hy + py * side * CELL * 0.42 - s.dir.y * CELL * 0.22, r, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+    }
+  }
+}
+
 // ------------------------------------------------------------ burrows
 
 // A beetle burrow: an oval opening in the bark, splintered round its rim,
@@ -587,8 +854,7 @@ function cracksOf(b) {
   const k = b.y * GRID + b.x;
   let br = crackCache.get(k);
   if (br) return br;
-  let seed = (k * 7919 + 13) % 2147483647 || 1;
-  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const rnd = seededRnd((k * 7919 + 13) % 2147483647 || 1);
   br = [];
   const split = (x, y, base, len) => {
     const pts = [[x, y]];
@@ -649,7 +915,7 @@ function drawShutting(x, y, key, w, shut, a = 1) {
 }
 function shutBase(x, y, key, w, shut, a) {
   const c = CELL, s = w / (SPRITE * c), hr = Math.sqrt(1 - SHUT_HOLE * shut), seed = key * 7 + 3;
-  const rnd = i => { const h = Math.sin((seed + i) * 12.9898) * 43758.5453; return h - Math.floor(h); };
+  const rnd = i => sinHash(seed + i);
   ctx.globalAlpha = a;
   ctx.drawImage(burrowSprite(BURROW_LOOKS[key % 4]), x - w / 2, y - w / 2, w, w); // (its pale rim and specks stay)
   ctx.save();
@@ -713,7 +979,7 @@ const freshSprite = v => sprite('burrowFresh', v, drawFreshBore);
 const drawFreshBore = (g, v) => {
   const c = CELL, seed = Number(v) * 17 + 3, rot = 0.4, cs = Math.cos(rot), sn = Math.sin(rot);
   const on = (t, rx, ry) => { const ex = Math.cos(t) * rx, ey = Math.sin(t) * ry; return [ex * cs - ey * sn, ex * sn + ey * cs]; }; // (a point on the hole's tilted oval)
-  const rnd = i => { const h = Math.sin((seed + i) * 12.9898) * 43758.5453; return h - Math.floor(h); };
+  const rnd = i => sinHash(seed + i);
   g.fillStyle = 'rgba(236,212,160,0.3)'; // (a bed of it round the hole, not over it)
   g.beginPath(); g.ellipse(0, 0, c * 0.5, c * 0.42, rot, 0, TAU); g.ellipse(0, 0, c * 0.25, c * 0.17, rot, 0, TAU); g.fill('evenodd');
   for (let pass = 0; pass < 3; pass++) { // the lumps: their shadow, the sawdust, its lit tops
@@ -807,7 +1073,7 @@ const drawHealScar = (g, v) => {
 // lit on its upper left, and fuzz.
 const healMossSprite = v => sprite('healMoss', v, drawHealMoss);
 const drawHealMoss = (g, v) => {
-  const c = CELL, n = Number(v) + 1, rnd = i => { const h = Math.sin((n * 31 + i) * 12.9898) * 43758.5453; return h - Math.floor(h); };
+  const c = CELL, n = Number(v) + 1, rnd = i => sinHash(n * 31 + i);
   const tufts = [[0, 0, 0.11]];
   for (let i = 0; i < 9; i++) { const a = i * TAU / 9 + rnd(i) * 0.6, d = 0.09 + 0.08 * rnd(i + 20); tufts.push([Math.cos(a) * d * 1.15, Math.sin(a) * d * 0.85, 0.06 + 0.035 * rnd(i + 40)]); }
   tufts.sort((p, q) => p[1] - q[1]); // (back to front)
@@ -881,3 +1147,51 @@ const drawBurrowHole = (g, v) => {
     g.beginPath(); g.arc(Math.cos(a) * c * (0.34 + (i % 3) * 0.05), Math.sin(a) * c * (0.3 + (i % 2) * 0.06), 1.1 + (i % 2) * 0.5, 0, TAU); g.fill();
   }
 };
+
+// A cornered beetle digs in (round six A): it stops where it is and bores
+// into the bark (BEETLE_DIG ticks), frantic, sawdust spraying off it, and
+// sinks into the bark as its time runs out: smaller, darker, a collar of
+// sawdust closing in round it. It can still be caught. Then it's gone,
+// its collar closing over it (see drawDive), and its bore is left a
+// burrow (BURROW_FROM_DIG), freshly bored for a few seconds (see
+// drawFresh): no heap without a burrow. With reduced motion: no spray,
+// and it's drawn sunk part way, still, until it's gone.
+const DIG_SHRINK = 0.45, DIG_STILL = 0.5;
+// How far a digging beetle has sunk (0 if it isn't digging; up to 1).
+function digOf(f, alpha) {
+  if (f.digUntil == null || !(f.digUntil >= game.tick)) return 0;
+  if (reduced) return DIG_STILL;
+  const D = T.BEETLE_DIG || 8, p = Math.max(0, Math.min(1, (game.tick - 1 + alpha - (f.digUntil - D)) / D));
+  return Math.max(0.04, Math.min(0.95, p * p * (3 - 2 * p)));
+}
+// Under it: the bore it's making, a dark hollow opening as it goes down;
+// and sawdust spraying off it now and then.
+function drawDig(st, x, y, dig, now) {
+  const c = CELL, r = c * (0.18 + 0.2 * Math.min(1, dig * 1.6));
+  ctx.fillStyle = 'rgba(20,10,4,0.8)';
+  ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.82, 0, 0, TAU); ctx.fill();
+  if (!reduced && now >= st.spray) {
+    st.spray = now + 60 + Math.random() * 70;
+    spawn(x, y, 2, 120, 360, 1.8, '#e6cc96', '#b07d48');
+  }
+}
+// Over it: a collar of the sawdust it's pushing out, heaped round its
+// bore and over its edges, deeper as it sinks (seeded by where it is, so
+// it holds still): lumps run together into a ring, in its shadow, then
+// sawdust, then paler crumbs on top, lit from the upper left.
+const COLLAR_N = 16;
+function digCollar(x, y, dig, seed) {
+  const c = CELL, up = Math.min(1, dig * 2.5), ri = c * (0.3 - 0.1 * dig), ro = ri + c * (0.04 + 0.1 * up + 0.04 * dig), rm = (ri + ro) / 2, rl = (ro - ri) / 2;
+  for (let pass = 0; pass < 3; pass++) {
+    ctx.fillStyle = pass === 0 ? 'rgba(70,42,18,0.8)' : pass === 1 ? '#d7b47a' : '#efdcb0';
+    const dx = pass === 0 ? 1 : pass === 1 ? 0 : -0.7, dy = pass === 0 ? 1.3 : pass === 1 ? 0 : -0.9;
+    ctx.beginPath();
+    for (let i = 0; i < COLLAR_N; i++) {
+      if (pass === 2 && noise(seed, i, 43) < 0.45) continue; // (crumbs on top, here and there)
+      const a = (i + 0.5 * noise(seed, i, 41)) * TAU / COLLAR_N, r = rm + rl * 0.35 * (noise(seed, i, 44) - 0.5);
+      const cr = (pass === 2 ? 0.45 : 1) * (rl * (0.6 + 0.9 * noise(seed, i, 42)) + 0.6), px = x + Math.cos(a) * r + dx, py = y + Math.sin(a) * r * 0.9 + dy;
+      ctx.moveTo(px + cr, py); ctx.arc(px, py, cr, 0, TAU);
+    }
+    ctx.fill();
+  }
+}

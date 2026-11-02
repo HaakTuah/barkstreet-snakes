@@ -37,6 +37,8 @@ the second account until its usage is spent; on the main account the brake close
   and 11), so nothing that changes play slips in; merged at once, one line per fix under this lane. Nothing is left
   half done: a fix not finished when usage ends is left unstarted, its find noted for the next session.
 
+*Next find:* the rivals' speech bubbles overlap (#326; the owner, 2 November 2026).
+
 *Done in the lane:* each fix's line is in `docs/archive/progress-done.md`, "The polish lane, done" (the README for
 players, any key wakes, the woodpecker bigger on a phone, the flash become the dash, the room card and Join on a phone,
 and the owner's notes of 2 November, among them).
@@ -47,11 +49,15 @@ and the owner's notes of 2 November, among them).
   part 2, `docs/design/`, PR #335; part 3, the code, draft PR #337): its spec is in
   `docs/handoff/queue-specs.md` under the same title.
 - *Done:* `audio.js` and `chatter/zh.js` split (PRs #225, #226), the chatter split by meaning (PR #318), the workshop
-  check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November) and point (5), the unused-code check (PR #331):
+  check's point (2) (this file 10 KB, `AGENTS.md` 20 KB, 2 November; `AGENTS.md` is 22 KB after that day's rules, so
+  the next check condenses it) and point (5), the unused-code check (PR #331):
   `docs/archive/progress-done.md`, "The split lane, done".
 - **The file-by-file review's moves** (found in part 3, PR #337): what sits in the wrong file moves to the file for it,
   and helpers written several times are written once, a folder per PR, behaviour proven unchanged. Spec:
   `docs/handoff/queue-specs.md`, "The file-by-file review's moves". `render/world.js`'s part waits with it below.
+- **The design by topic, not by round** (#336; the owner, 2 November 2026): each topic's current rule moves from the
+  round files into its topic file in `docs/design/`, superseded versions and measurements to `docs/archive/`. A slow
+  side lane, one topic per docs-only PR, taken when a lane is free; code comments citing a section are checked.
 - **Waiting for the main lane** (PR #198 and its parked #202 have them open): `ai.js` (139 KB), `engine.js` (128 KB) and
   `render/world.js` (51 KB). Split each in a PR of its own once the main lane merges, proven by fingerprints and suites.
 
@@ -59,13 +65,18 @@ and the owner's notes of 2 November, among them).
 
 **Done:** every finished entry, 1 to 2w, with its PR, is in `docs/archive/progress-done.md`, "The queue, done".
 
+**From the issues** (the owner, 2 November 2026): Ghost starving most (#325) is measured in the next AI entry, as its
+trademark (distance) or a fault; in the same entry, apples by the edge rotting (#324): 80% of the apples that rot lie on
+the edge row or one in, passed up by rivals whose room and margin weights count a safe edge cell against them, so it
+tests a safe-meal exception like the one by the neck (`MEAL_DAWDLE`), measured both ways; the snake that starved 4 s after its warning (#327) is a bug any lane may take.
+
 ### 2x. The spitter slides over its own mushroom (the owner, 2 November 2026; an engine-rules entry, next, ahead of part 5)
 
 Taken out of 3b+ and moved to the front, since it still bites (the owner: "Still get the bug with swallowing a mushroom over and over again after puking it up."): the spec is 3b+'s "The spitter slides over its own mushroom" in `docs/handoff/queue-specs.md`, entry 5.
 
 ### 5. Round six B: the new moves (DESIGN "Round six B")
 
-The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done.md`, "For the owner, answered"), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
+The golden jump that flies, leap now, gold portals, dropped charges, the spit along the line and one pricing model for every power, each its own playable PR that the rivals use well. *Done:* parts 1, 2, 3 and 3b (PRs #158, #174, #183, #195). **Next, in order:** part 4 (draft PR #198, 2r folded in; the owner answered on 1 November 2026 that the moves stay as designed and the rivals are improved until their users come out ahead: the row is in `docs/archive/progress-done.md`, "For the owner, answered"), then 2x (above), then 2q (2s done, PR #289; part 4's both-ways test runs again on its log when part 4 goes on), part 3b+ (the spit flies along the line), part 5 (#202, gold portals), part 6 (built on `round6b/dropped-charges`) and part 7 (parked on `round6b/pricing`; it also fixes the trademark measures and lifts Joker into the band, see the spec); then the teaching system (item 4). Spec: `docs/handoff/queue-specs.md`, "5. Round six B: the new moves". **When part 4 merges:** run the census on seeds 3 and 11 again (`scripts/sim.sh 200 --seed 3 --census --check`): chased beetles must still get away a third to 45% of the time (2w measured it before the flight was in; `--check` fails a census outside that band).
 
 ### 2r. No hop onto a doomed island (30 October 2026; part of item 5's part 4)
 

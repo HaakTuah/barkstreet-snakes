@@ -250,79 +250,6 @@ function drawPress() {
   ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.17; ctx.stroke();
   ctx.strokeStyle = !power ? GLINT : (flash ? s.dashes : s.leaps) > 0 ? HONEY : flash ? EMBER : SKY; ctx.lineWidth = CELL * 0.09; ctx.stroke();
 }
-// The island hop's landing ring: where a jump comes down, on the ground
-// under it, in the jump's sky (a golden one's Honey), inked. Every snake
-// in the air shows it (anyone can see where a jump will land); your own
-// jump, asked for, shows it while the press waits for its hurdle (up
-// to LEAP_WINDOW moves), so you see where you'd land. Just where: never whether it's a trap.
-function drawLandings(now) {
-  if (!game) return;
-  const t = reduced ? 0 : now / 1000;
-  for (const s of game.snakes) {
-    if (!s.alive) continue;
-    let x, y, gold = s.leaps > 0;
-    if (s.flight?.land) { x = s.flight.land.x; y = s.flight.land.y; gold = !!s.flight.gold; }
-    else if (s.id === viewerId) {
-      const a = anim.get(s);
-      if (!a || !a.lr) continue;
-      x = a.lx; y = a.ly;
-    } else continue;
-    const cx = (x + 0.5) * CELL, cy = (y + 0.5) * CELL, r = CELL * (0.38 + 0.04 * Math.sin(t * 9));
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.22; ctx.stroke();
-    ctx.strokeStyle = gold ? HONEY : SKY; ctx.lineWidth = CELL * 0.12; ctx.stroke();
-  }
-}
-// Mushrooms come back up (round six B). While one's in a snake's cheek:
-// a small green ring on the cell SPIT_REACH ahead of its head, the way it
-// faces (where it'll land: steering aims it), drawing in as the second
-// runs out, for everyone to see and dodge; and its cheeks puffed green (see
-// drawCheeks), a shade darker the stronger it was swallowed (as the mushroom's own shade).
-const SPIT_RING = '#a3e635', CHEEKS = ['#84cc16', '#65a30d', '#4d7c0f'];
-function drawSpitRings(now) {
-  if (!game) return;
-  const t = reduced ? 0 : now / 1000;
-  for (const s of game.snakes) {
-    if (!s.alive || !s.cheek) continue;
-    const h = s.body[0], wrap = s.wrapUntil > game.time; // (the edges wrap for it: it lands on the far side)
-    let x = h.x + s.dir.x * T.SPIT_REACH, y = h.y + s.dir.y * T.SPIT_REACH;
-    if (wrap) { x = (x + GRID) % GRID; y = (y + GRID) % GRID; }
-    if (x < 0 || y < 0 || x >= GRID || y >= GRID) continue; // (over the edge: it's gone, nothing to dodge)
-    const left = Math.max(0, Math.min(1, (s.cheek.spitAt - game.tick) / T.CHEEK_TICKS));
-    const cx = (x + 0.5) * CELL, cy = (y + 0.5) * CELL, r = CELL * (0.24 + 0.14 * left + 0.03 * Math.sin(t * 12));
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.18; ctx.stroke();
-    ctx.strokeStyle = SPIT_RING; ctx.lineWidth = CELL * 0.09; ctx.stroke();
-  }
-}
-// The bulge counts down to the spit (Haakon, 2 November 2026: "Really not
-// easy to tell either when your character will spit it"): it swells from a
-// mouthful to fit to burst as the second runs out, and on each of the last
-// three moves it throbs, three, two, one, and the spit comes on the next.
-// With reduced motion it swells, without the throbs or the wobble.
-const CHEEK_R = 0.12, CHEEK_GROW = 0.1, CHEEK_THROB = 0.06, CHEEK_BEATS = 3;
-function drawCheeks(alpha, now) {
-  if (!game) return;
-  const t = reduced ? 0 : now / 1000;
-  for (const s of game.snakes) {
-    if (!s.alive || !s.cheek) continue;
-    const a = anim.get(s);
-    if (!a || !a.n) continue;
-    // (behind the eyes, bulging out past the head on either side: a mouthful, never a pair of goggles)
-    const n = s.cheek.spitAt - game.tick, go = Math.max(0, Math.min(1, 1 - (n + 1 - alpha) / T.CHEEK_TICKS)); // (n: moves before the one it's spat on; go: 0 as it's swallowed, 1 as it's spat)
-    const throb = !reduced && n >= 0 && n < CHEEK_BEATS ? CHEEK_THROB * (1 - alpha) * (1 - alpha) : 0;
-    const hx = a.pts[0], hy = a.pts[1], px = -s.dir.y, py = s.dir.x, r = CELL * (CHEEK_R + CHEEK_GROW * go + throb + 0.015 * Math.sin(t * 10));
-    ctx.fillStyle = CHEEKS[Math.max(0, Math.min(2, s.cheek.power - T.SHRINK))];
-    ctx.strokeStyle = INK; ctx.lineWidth = CELL * 0.06;
-    for (const side of SIDES2) {
-      ctx.beginPath();
-      ctx.arc(hx + px * side * CELL * 0.42 - s.dir.x * CELL * 0.22, hy + py * side * CELL * 0.42 - s.dir.y * CELL * 0.22, r, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-    }
-  }
-}
 // A power asked for, as a mark where the chevron would go (its tip at x,
 // y, pointing along q), added to the current path: the jump's hop, as on
 // its chip (an arc up and over, ending in an arrowhead), or the flash's
@@ -809,21 +736,4 @@ function drawTrails(from, to, now) {
   }
   ctx.lineJoin = 'round'; // (as it found it)
   ctx.globalAlpha = 1;
-}
-
-// A snake on fire: flames along its back (the fire's own flicker, smaller,
-// dying down as it goes out), a glow under them, embers and smoke going up.
-function drawBurning(s, a, now) {
-  const lively = !reduced, t = now / 1000, left = Math.min(1, (s.burnUntil - game.tick) / (T.BURN_TICKS / 2));
-  const size = SPRITE * CELL * (0.45 + 0.25 * left);
-  for (let i = 1; i < a.n && i < 12; i += 2) {
-    const x = a.pts[2 * i], y = a.pts[2 * i + 1];
-    ctx.globalAlpha = 0.45;
-    ctx.drawImage(fireGlowSprite(), x - size * 0.6, y - size * 0.6, size * 1.2, size * 1.2);
-    ctx.globalAlpha = 1;
-    const fr = lively ? Math.floor(t * 14 + i * 3) % FLAME_FRAMES : 0;
-    ctx.drawImage(bodyFlameSprite(fr), x - size / 2, y - size * 0.62, size, size);
-    if (lively && Math.random() < 0.05) mote(x, y - CELL * 0.3, (Math.random() - 0.5) * 12, -40 - Math.random() * 20, 650, 1.3 + Math.random(), 3);
-    if (lively && Math.random() < 0.03) mote(x, y - CELL * 0.3, (Math.random() - 0.5) * 6, -18, 1100, 2.5 + Math.random() * 2, 2);
-  }
 }
