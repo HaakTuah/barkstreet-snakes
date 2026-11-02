@@ -36,7 +36,7 @@ The trade-off every approach ran into: a snake that dodges traps lives into sudd
 
 ### Hunters close easy pins (the owner's playtest, 27 October 2026)
 
-Haakon (26 October 2026): "it seems they try to box you, but often don't on really easy opportunities where they got you squeezed against the wall."
+The owner (26 October 2026): "it seems they try to box you, but often don't on really easy opportunities where they got you squeezed against the wall."
 
 **The cause** was the neck test again, in two ways. A hunter has to go to the edge to close a pin, and then every line ends with its head against the edge or its own body, with one or two ways on: a neck right by the head.
 - The test asked whether a rival could get to that gap, reading `reach`, which is worked out once on the board as it is now. The rival being pinned could get there on that board: along the edge, through the cell the hunter's line had just moved into. So the very snake it was sealing in looked as if it could come round through its body and shut it in. On a staged pin (a rival heading along the top edge with its only way on straight ahead, the hunter running along the row below, 2 to 5 cells ahead), no hunter closed it, on any edge, at any reaction delay: 0 of 48 tries each, for Sniper, Mute, Sovereign, Colonist, Metagamer and Joker.
@@ -70,7 +70,7 @@ Old against new AI with `tools/abtest.js` on fresh seeds:
 
 ### Rivals read heads better (the owner's playtest, 27 October 2026)
 
-Haakon (27 October 2026): "it seems to me the rival snakes might be a bit too adverse to have their heads next to each other, even if the other snake can't cut you off, or if the would see and have time to react ahead of time." And: "they seemingly always chicken out when competiting with you for resources."
+The owner (27 October 2026): "it seems to me the rival snakes might be a bit too adverse to have their heads next to each other, even if the other snake can't cut you off, or if the would see and have time to react ahead of time." And: "they seemingly always chicken out when competiting with you for resources."
 
 **Measured first** (`tools/dev/shy-heads/census.js`: at every decision the same view also goes to a copy of the AI with no fear of heads; where their first moves differ, the snake swerved, and since a rival's next move was decided on a view at least a tick old, whether the fearless move would have met a head is known exactly):
 - About 8 swerves per 1,000 decisions. 99% of them avoided a cell that was safe on the next tick; of the swerves that gave up an apple, a rival ate it 55% of the time.
@@ -101,7 +101,7 @@ Haakon (27 October 2026): "it seems to me the rival snakes might be a bit too ad
 
 ### Nerve at a contested apple (28 October 2026)
 
-Haakon (28 October 2026), answering PR #83's question: "gobbler and Desperados should take the gamble more, that fits their playstyle, no?"
+The owner (28 October 2026), answering PR #83's question: "gobbler and Desperados should take the gamble more, that fits their playstyle, no?"
 
 **Measured first** (`tools/dev/nerve/census.js`; a staged duel in `tools/rules-test.js`):
 - An apple a step from me and a step from a rival's head as I read it now (seen `age` ticks ago, gone straight on since): no persona went for it.

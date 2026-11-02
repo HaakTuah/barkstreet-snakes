@@ -63,7 +63,7 @@ function hopsWithin(g, n) {
   check('...not with room and food on its own side', !g.events.some(e => e.type === 'leap') && s.alive, JSON.stringify(s.body[0]));
 }
 
-{ // 2r, no hop onto a doomed island (Haakon, 30 October 2026: "don't forget a snake must account for if it can jump off
+{ // 2r, no hop onto a doomed island (the owner, 30 October 2026: "don't forget a snake must account for if it can jump off
   // the island again"). Gobbler, 26 long, folded on a strip it can't live on, with a golden jump and its plain one
   // resting a minute: up across a hollow, an island of 20 cells with food on it, nothing in a hop of it but the strip; right,
   // across one as wide, an island of 30 cells, no food. It hops right: the small one is the death it is. With its plain

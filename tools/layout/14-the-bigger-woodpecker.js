@@ -7,7 +7,7 @@
 // - perched beside the board, none of it lies over any of the page's
 //   words (a button's, a tag's, the chatter's, the header's). Held
 //   upright it stands over the row under the board and the chatter, as
-//   Haakon asked (1b++, "The phone's bottom"): there taps pass through it
+//   The owner asked (1b++, "The phone's bottom"): there taps pass through it
 //   (03-devices.js, 13-the-phones-bottom.js);
 // - drumming, it hides no more of the heads, the food and the tiles of its
 //   mark near its spot than it did at 1.3, over these screens (24 seeded

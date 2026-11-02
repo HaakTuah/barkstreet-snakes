@@ -54,6 +54,15 @@ pk = await ev(`(() => {
 })()`);
 check(pk.back < 12 && pk.firsts.includes('deck') && pk.top, 'an undealt rival goes back somewhere in the deck, not dealt first every time (within a visit, on top)', JSON.stringify(pk));
 await load();
+// ...and if the back/forward cache brings the start card back, they come out of the deck again (#376).
+pk = await ev(`(() => {
+  const dealt = SnakeDebug.game().dealt, deck = () => JSON.parse(localStorage.getItem('snake-deck')) || [];
+  window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true }));
+  const hidden = dealt.filter(k => deck().includes(k)).length;
+  window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+  return { dealt: dealt.length, hidden, shown: dealt.filter(k => deck().includes(k)).length };
+})()`);
+check(pk.dealt === 3 && pk.hidden === 3 && pk.shown === 0, 'a start card the back/forward cache restores deals its rivals out of the deck again', JSON.stringify(pk));
 let p = await P();
 check(p.how === 'How to play', 'the start card has How to play', p.how);
 check(/G opens the Field guide/.test(p.hint), 'the start card’s keys say G opens the Field guide', p.hint);

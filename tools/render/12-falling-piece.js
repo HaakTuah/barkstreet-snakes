@@ -32,7 +32,7 @@ check(fallen.shade < fallen.pecked - 5, '2s: the piece a mark cuts loose is shad
 check(fallen.mid > fallen.after + 2, '...and at the strike it tips away into the pit, gone within a second', JSON.stringify(fallen));
 check(fallen.onSlab === 2, '...its apple and its beetle going down with it', JSON.stringify(fallen));
 
-// A flag on a piece cut loose falls with it (Haakon, 2 November 2026: flags
+// A flag on a piece cut loose falls with it (the owner, 2 November 2026: flags
 // fall with the log, not jump): upright on its slab, shrinking with it
 // toward the piece's middle, gone with it within a second; never tipping
 // over on its own pole as a flag pecked out from under it does.
