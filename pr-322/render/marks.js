@@ -382,13 +382,13 @@ function veinSprite(i, r) {
 }
 
 const STARS = [[-0.45, -0.45], [0.45, -0.45], [0, 0], [-0.45, 0.45], [0.45, 0.45]];
-function star(x, y, r) {
-  ctx.beginPath();
+function star(x, y, r, g = ctx) {
+  g.beginPath();
   for (let i = 0; i < 10; i++) {
     const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r;
-    if (i) ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); else ctx.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    if (i) g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); else g.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
   }
-  ctx.fill();
+  g.fill();
 }
 
 // Wildcard's long red tie: knotted under the chin, down over the collar and
