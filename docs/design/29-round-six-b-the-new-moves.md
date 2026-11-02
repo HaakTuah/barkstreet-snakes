@@ -27,11 +27,22 @@ The owner's notes after Star turned the powers into moves you plan with: hopping
 - *The lesson:* on your first golden jump, "Hold to fly 5. Steer to land!"
 - Free, as now: 2 per golden beetle, up to 3 held.
 - *The rivals fly it as a person would* (the owner, 31 October 2026, after part 4's A/B came out even with leap now and the flight measured together: "And I cannot believe that super flash and super jump isn't useful, then it must be the AI not properly being updated to understand its utility. Super jump essentially lets you fly for like 5 tiles, no? changing directions mid air like mario? and super flash let's you flash forward 3 tiles instead of 2 like regular flash, and can cut 2 tiles deep? how is that not useful?"; then, to the design session's take, "Yes, please, expertly!"). The flight is measured on its own, apart from leap now, so neither hides the other. The rivals learn its uses until those who fly come out ahead: flying out of a box over bodies and holes, crossing a gap to food, coming down in a rival's path to cut it off, and steering in the air, planned as they fly, not only at take-off. If the flight pays and leap now still doesn't, the flight merges without it, and leap now goes back to the owner as a design question.
-- *The rivals* (part 4, as built): a rival plans its golden flight as it takes off, straight or with one turn (left or
-  right, after any number of cells), down on the best free cell up to 5 in the air. The engine flies it by the same rule
-  as a person's turn (`airTurn`, from the rival's `flyTurn`). A leap now, a flight past the plain hop and a turned one
-  come down only where no rival's head could get first: coming down on a body is the end, and before that check the
-  rivals did it 0.6 times a round and lost the head-to-head with rivals that never used these moves.
+- *The rivals* (part 4, as built; 2y): a rival plans its golden flight as it takes off, straight or with one turn (left
+  or right, after any number of cells): the plain hop, or the full 5 in the air. The engine flies it by the same rule as
+  a person's turn (`airTurn`, from the rival's `flyTurn`), and the rival plans its turn again every move it's up. A leap
+  now, a held flight and a turned one take off only toward a landing no rival's head could get to first (coming down
+  on a body is the end, and before that check the rivals did it 0.6 times a round and lost the head-to-head with rivals
+  that never used these moves); once up, a landing a rival could reach first is priced as a head-on, so it steers away
+  where something better is left, and a held flight with no other safe landing at its last turn costs a little more.
+- *Taking a landing* (2y, the owner: "jumps are risky because someone can cut you off, and insta kill you, by being
+  where you land"): a rival goes for a flier's ring it can reach in time, by crawling, a flash or dash through it, or a
+  leap now down on it first, planned from the ring as it saw it (a reaction late), never by reaction. A flier put out is
+  worth what a neck cut that puts a rival out is (`KILL`, 6 apples, times 0.5 + its aggression, its target twice), times
+  its style (`w.landing`: Sniper 1.5, Desperado 1.2 for the thrill, Drab 0.15, the rest 0.6), times the chance the ring
+  stays put (`STAY` 0.8 for each of the flier's moves), halved if another rival is nearer. Its head on the ring on the
+  landing move is a head-on, so it's priced as one, and the moves either side at half. Sniper hunts its target's ring.
+
+**2y, the chosen numbers** (PR #373): the held flight always flies `GOLD_FLY` 5; the rivals take landings at `KILL` 6 apples × (0.5 + aggression), their target twice, × `w.landing` (Sniper 1.5, Desperado 1.2, Drab 0.15, the rest 0.6), × `STAY` 0.8 a move the ring could still be steered, halved if another rival is nearer; a held flight with no other safe landing at its last turn costs `SPARE` 0.3 apples. *Measured:* rivals go for a ring 0.19 and 0.15 times a round on seeds 3 and 11 (0.15 and 0.10 before), every trademark within noise; leap now, per use (n = 347, forked and played on with and without it), +0.12 ± 0.11 place, +2.4 s alive; head to head even (24.8% to 25.0%, too rare to move rounds). The flight, head to head (1,200 paired rounds), 24.9% to 25.1%, and per use +0.10 ± 0.15 place (n = 376): still even, since a rival sees a flier a reaction late and fliers take off only toward rings no rival can reach first (3 of 165 rings seen were reachable). A design question for the owner: #399.
 
 **A snake across a pit is a bridge** (the owner: "if you are a shorter snake, jumping on a longer snake, and it is crossing a pit, and you manage to cross in time, before the end of its tail [goes]"):
 - A body lying over a pit already holds (only a head falls in). Now the part of it over the pit is a bridge for anyone: a head may move onto it there, crawling along its back, or land on it from a jump. Everywhere else a body is still a wall, as snake needs it to be.

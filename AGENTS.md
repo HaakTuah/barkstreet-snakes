@@ -66,8 +66,10 @@ usage allows, at the lowest cost now and later.
   every reader more, and every file is also a script tag and an `sw.js` entry. Where a family differs only in part
   (rivals, voices, moves), write the shared part once and each difference as an override. Size is only a warning: a
   file past about 20 KB probably holds more than one thing. Splitting an existing file goes in its own PR, with
-  behaviour proven unchanged (fingerprints and suites) and what it saves said in the PR. Drift still adds up, so the
-  workshop check and the file-by-file reviews keep running, with their tracking.
+  behaviour proven unchanged (fingerprints and suites) and what it saves said in the PR. **Step 0:** before an entry or
+  lane changes a file past about 50 KB, that file is split by meaning first, in its own PR; and new work for a file
+  past the mark goes in as a new file, never as more lines in it (archive, 2 November 2026). Drift still adds up, so
+  the workshop check and the file-by-file reviews keep running, with their tracking.
 - **Principles over rules.** Where a rule's letter would defeat what it is for, follow its purpose, say so in the PR
   under "Readings taken", and flag the rule to be fixed. Never for the safety rules: `SECURITY.md`, `main`, keys and
   secrets, and the storage keys.
