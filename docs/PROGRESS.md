@@ -7,7 +7,14 @@ when it is merged into `develop`; add the owner's new tasks where he places them
 
 The first open entry below is next. The older state notes (27 October 2026) are in `docs/archive/plan-history.md`.
 
-**Pick up here (part 4, #198, 2 November 2026, 10:30 UTC):** the older notes for this branch are in #198's body. `develop` is merged in. Censuses with `--check` pass: seed 3 (fingerprint 120729843) and seed 11 (387595451). The flight's both-ways A/B (seeds 601/607) came out even: 25.1% with, 24.7% without. The flight's fork baseline (seeds 701–704, `--rest`) is −0.04 ± 0.07 place a use (n 410). Four helpers are trying competing flight fixes against it (spend golden charges only on flights; landings that cut a rival off; deeper landing search, dropped: −0.12; charging contested landings). Running: leap now's A/B (seeds 613/617), then the dash's (619/631).
+**Pick up here (part 4, #198, 2 November 2026, 15:00 UTC):** the older notes for this branch are in #198's body. `develop` is merged in (04d912c).
+- **Kept:** offensive flights (`shutIn`, 3837922). A golden landing that takes a nearby rival's room or its way to food is worth apples by aggression. Fork per use (`--move fly --rest`, seeds 701–704): +0.086 ± 0.070 place, against −0.041 ± 0.068 before (n 406/410); flights as often.
+- **Tried and dropped, on the same seeds:**
+  - keeping golden charges for flights: −0.00;
+  - a ply of search after landing: −0.12;
+  - charging contested landings: −0.05 and −0.23;
+  - Fable's design (3 variants): an honest landing price +0.04, committing in the air +0.03, purpose flights with seals as kills +0.04 (only 18% of seals killed).
+- **Running, one at a time:** the both-ways A/Bs on the AI at 3837922 (copies in the scratchpad's `ab2/`, rounds cached): the flight on seeds 641/643, leap now on 647/653, the dash on 659/661. Then the censuses on seeds 3 and 11 again, the trademarks, the design's numbers, the review (Codex and Fable's design check), and the merge.
 
 **2 November 2026, a fresh week:** the main lane is part 4 (#198), then 2x, then part 5 (#202, parked); the polish
 lane and the workshop lane run beside it, each claimed by a draft PR.
