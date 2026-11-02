@@ -8,7 +8,7 @@
 // is the size it was (2k: 1.7 times, never shrunk for this). At 320 px,
 // since #270's bigger bird on a phone (164 px tall there), no place at its
 // size clears them, so it perches as it would (2k+: never shrunk for them;
-// Haakon, of it covering the row: "Don't really care if it covers that a
+// The owner, of it covering the row: "Don't really care if it covers that a
 // bit"): there only its size is checked.
 const LABELS = `(() => { const out = {};
   for (const el of document.querySelectorAll('.foot .speed > span, .foot button, #chatter-label')) { const r = document.createRange(); r.selectNodeContents(el); const q = r.getBoundingClientRect();

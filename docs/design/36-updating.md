@@ -1,6 +1,6 @@
 ## Updating
 
-The newest version, by itself between rounds (entry 2v, 30 October 2026). Haakon: "It should update when you start
+The newest version, by itself between rounds (entry 2v, 30 October 2026). The owner: "It should update when you start
 game. [...] Like why would I not want the latest version?"
 
 - **How a page knows.** `version.js` names its build: `'dev'` in the repository, stamped with the commit by
