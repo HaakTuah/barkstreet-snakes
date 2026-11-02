@@ -16,7 +16,9 @@ A round has a shape, and the music follows it:
 they stand now are in `38-the-woodpecker.md`, and their text as it was, with their measurements, in
 `docs/archive/design-woodpecker.md`.
 
-**A cornered AI makes the sensible last move.** When every move looks fatal, a wall, a hole or its own body is certain death, but a rival's cell may already be free (it sees rivals as they were a moment ago), so it bets on the cell that frees up soonest. It used to pick at random, and those were the deaths that looked dumbest: self-bites fell from 15% to 8% of AI deaths and wall crashes from 7% to 2%. Two heads that swap cells now count as a head-on, as they look.
+**A cornered AI makes the sensible last move**: its rule is in `39-the-rivals.md` under that name, and its text as it
+was, with what it measured, in `docs/archive/design-rivals.md`. Two heads that swap cells count as a head-on, as
+they look.
 
 **Starving is decided after eating.** A snake whose head reaches food on the tick it would starve eats instead.
 

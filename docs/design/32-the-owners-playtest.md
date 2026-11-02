@@ -7,46 +7,8 @@ The owner played the live game (6d478ed) on a desktop and sent three findings, f
 
 ### A meal isn't a pin
 
-**The cause** was the neck test's allowance for a head pinned against something (`PINNED_DAWDLE`, 8: see "The rivals look further ahead"), not Ouroboros. Every rival did it, and beside holes, fire, the woodpecker's mark and bodies as well as the edge.
-- The rivals look three moves ahead. Eating food on the edge from two away, every line that eats ends with the head still on the edge: one or two ways on, and no room before them. That's a neck right by the head, and it was a trap if any rival could get to both ways on within 8 ticks of the snake (about any rival within a dozen cells, on a 24-cell log). A trap costs 2,400–3,400; the meal was worth 150–500 to Ouroboros (850–2,500 to Gobbler).
-- So every line that ate lost to one that stayed a row in, and the snake turned off a cell or two short. A move later the food was out of its three-move window, the food's pull brought it back, and it turned off again: the circling.
-- In the AI's own terms, at the turn-aways with room to spare and no head within 6 cells: the pin decided 64% of them at the edge and 57% in corners (none in the open); Ouroboros's coiling, 3%.
-- The allowance's reason ("I don't always leave a pocket straight away") doesn't hold just after a meal: the line is there only because the food was, and it leaves on its next move.
-
-**The call:** for 3 moves after a line eats (`MEAL_PLIES`), a neck's allowance is 2 ticks (`MEAL_DAWDLE`): only a head that could get to the gap about as soon as the snake (one that could cut it off) makes it a trap. Everywhere else the neck test is as it was. A jump or a flash that eats on its way counts as a meal too. It's a dozen lines, with no wider search and nothing more to think about.
-- *Turned down:* only the pinned neck (corners stay shy: the deeper necks there are its own body); a lower `PINNED_DAWDLE` everywhere (it's the boxed-in dial, and not about food); searching on past a meal (a sixth more lines to score, and a bias toward lines that eat); leaving food cells out of the neck test (it would drop the real refusals too).
-- *The screenshot's apple:* dimmed, with something above it and no glow, it reads as a rotten green apple and its fly (a golden apple only dims in its last 3 s, its glow and sparkle with it). It changes nothing: a rotten apple is worth its full 1 to a rival, a dim golden one its 3, until it would be gone before the rival got there. A golden apple at (2, 1) by the corner isn't a pin by itself; refusing it took a body beside it (Ouroboros's own coil) or a rival within a dozen ticks, which is what this fixes.
-
-**Measured** (600 AI-only rounds a seed, seeds 3 and 11, "before → after", as `tools/simulate.js` plays them; food eaten counts every time a snake that's the nearest head, with a way there, comes within 2 cells of it):
-
-| | Seed 3 | Seed 11 |
-|---|---|---|
-| Apples and golden apples eaten: in the open | 89 → 89% | 88 → 89% |
-| ...on the edge | 50 → 79% | 50 → 79% |
-| ...in a corner | 66 → 82% | 64 → 82% |
-| ...beside a hole, fire or the woodpecker's mark | 58 → 71% | 56 → 71% |
-| ...beside another snake's body | 57 → 73% | 57 → 73% |
-| ...beside its own body | 66 → 74% | 65 → 73% |
-| Golden apples eaten on the edge | 61 → 90% | 60 → 89% |
-| Each rival on the edge (lowest–highest; Ouroboros) | 39–60 → 64–86% (47 → 78) | 40–60 → 66–87% (49 → 79) |
-| Turned off food by the edge with room to spare and no head within 6, per 100 snake-rounds | 157 → 34 | 155 → 34 |
-| Circling (3 or more turn-offs from the same food), by the edge or in a corner, per 100 snake-rounds | 45 → 10 | 47 → 11 |
-| Hanging about food (within 5 cells for 3 s), per 100 snake-rounds: all; apples; golden | 12.0 → 6.7; 4.3 → 0.8; 0.4 → 0 | 12.2 → 6.6; 4.1 → 0.4; 0.1 → 0 |
-| Median round; sudden death | 172 → 165 s; 52 → 45 s | 172 → 166 s; 52 → 46 s |
-| Deaths in holes; starved | 20 → 14%; 2 → 1% | 20 → 17%; 3 → 1% |
-| Deaths before the woodpecker, a round | 0.57 → 0.69 | 0.48 → 0.70 |
-| Win rates | 19–34 → 18–35% | 17–33 → 16–33% |
-| Ouroboros coiled (field) | 42 → 38% (14 → 13) | 42 → 39% (15 → 13) |
-
-- **The rest of it:** what's left of the hanging about is beetles, and some of that is the fix's own. The strictest count, within 3 cells for 3 s, was already mostly beetles, and beetles went up: 0.8 → 1.5 / 1.1 → 1.8 per 100 snake-rounds (0.8 → 2.2 on a fresh seed, 41), apples and golden apples 0 → 0.1 / 0 → 0. Nine in ten are a beetle on the edge or in a corner with a well-fed snake a cell or two off, shadowing it along the edge: the fix makes a line that catches a beetle there worth taking, and the beetle moves on first. About half end in a catch (beetles caught: 92 → 94%); those that don't went 9 → 15 / 17 → 22 in 600 rounds. Round six's rivals (feature/powers-2), who see food where it is now (these see it a reaction time late), hang about no beetle at all (seed 3), with the fix or without. If this ships first, the shadowing comes with it; a beetle-only exception in the neck test was turned down. The edge's share of the meals against its share of the food's time on the log: 0.44 → 0.59 / 0.45 → 0.60 (1 is "eaten as often as it lies there"). Every rival is in it: the lowest on the edge, Vulture (it lives on beads), went 39 → 70 / 40 → 66%.
-- **The cost:** rounds a little shorter, and more snakes out early, most of them into themselves. In 600 paired rounds on a fresh seed (41, each round dealt the same both ways): the median round 171 → 166 s (−5 s, between −8.6 and −1.8), sudden death 51 → 46 s. Deaths before the woodpecker (above; 0.50 → 0.66 on seed 41): self-crashes 1.5 to 2 times as many, 0.085 → 0.127 / 0.083 → 0.145 a round (0.057 → 0.115 on seed 41), and crashes into others 0.40 → 0.49 / 0.33 → 0.48 (0.36 → 0.47). It isn't the meals by the edge themselves: per meal, deaths within 15 ticks of one don't rise (seed 41: by the edge 7.0 → 5.1 a thousand meals, in a corner 15.4 → 4.7), and most of the extra self-crashes come 16 ticks or more after the snake's last meal. It's length: snakes eat more (54 / 55 → 59.5 food a snake-round) and are 10–15% longer from a minute in (seed 41: 22.8 → 25.2 cells at 60 s, 30.1 → 34.6 at 90; 27.9 → 33.3 at an early death). `MEAL_DAWDLE` isn't the dial for that: at 4 the diagnosis measured the edge at 71% and corners at 78%, still with 0.60 early deaths a round, and the pinned neck alone 0.64, against 0.48 (seed 11). If the old pace is wanted back, growth or food is what to tune, not the neck test.
-- **Mason** gained most: its walls run along the edges, and now it eats there (30 / 36%, from 22 / 27). It claims a little less territory, 1.6 from 1.8 (as in round four, when the board split started counting): 25 / 25%, its straight runs as they were (3.53 / 3.48 cells, against the field's 1.90). That moves every round Mason's in, and Copycat, who copies whoever's winning, came out at 35.2% on seed 3, one win over the band's top (43 of 122; 28% before Mason's change, and on seed 11 it went the other way, 26 → 21%): luck, not a lean. 1.7 was tried and put Gobbler at 12% on seed 11.
-- **Character:** every trademark is about where it was. Ouroboros coils a little less (above), still three times the field; Joker's luring, the thinnest lead, is 8.6 / 8.3% against the field's 8.3 / 8.1 (9.2 / 9.0 against 8.5 / 8.3 before).
-- `simulate.js 60 --seed 3` gives 829665990 with and without `--ahead`; fingerprints 574216369 / 762530038.
-
-**Tests:** `tools/rules-test.js` stages it in the game, every rival hungry enough that taste doesn't decide (4 s before it starts shrinking) and another snake about ten ticks off: every rival takes an apple on the edge, a golden apple in the corner (along either edge), the golden apple by the corner from the screenshot, and an apple beside woodpecker holes, fire or another snake's body, within a few ticks (on main every rival left the edge's and the corner's, 11 the holes' and the fire's, 7 the body's; the screenshot's own spot was taken); and every rival still refuses an apple in a pocket of holes too small for it, in a channel a cell wide with a rival's head at its far end, on the edge with a rival's head two along the edge coming at it, and a golden apple in the corner with a head coming up the other edge.
-
-**With round six A** (merged in after it shipped): round six A carried this fix onto its own AI (981842d: the same `MEAL_DAWDLE` and `MEAL_PLIES`, a jump's or a flash's meal counting too) with these tests, adapted to its rivals, and measured its rivals with it in (see "Round six A, measured"). So `ai.js` and `tools/rules-test.js` are round six A's: Mason's `territory` stays 1.8 there (its band was measured that way; the 1.6 above was this build's call, on the rivals before round six A), and the numbers and fingerprints above are this build's, before the merge. After it, `simulate.js 60 --seed 3` gives 78597151 with and without `--ahead`, as round six A does: the rest of this work is the page's, not the rules'.
+Its rules are in `39-the-rivals.md` under the same name, and its text as it was, with what it measured and how it was
+tested, in `docs/archive/design-rivals.md`.
 
 ### A rival's note
 
@@ -239,36 +201,8 @@ pin keep it Copycat. Uncopied, it stays full flag red.
 
 ### The rival line-up
 
-Who you meet is dealt from a deck, and you may choose instead, seat by seat.
-
-- *Before:* three rivals drawn uniformly from the eighteen each round, with no memory, so a favourite could go a dozen
-  rounds unseen and another come three times running.
-- *The deck* (`records.js`, `deal()`, under the new key `snake-deck`): this browser keeps a shuffled deck of the
-  eighteen and deals from it, every rival once before any comes round again, across rounds and reloads. When it runs
-  out, a fresh shuffle goes in behind whatever it still holds. Watching (four rivals) deals the same way. The
-  simulator and tools keep the engine's own uniform pick (`pickOpponents`), so fingerprints are unchanged.
-- *Choosing* (`game/cards.js`, `openPicker()`; the seats in `game/cards.js`, `buildOpponents()`): on the start card
-  each rival is a button with a swap mark; it opens a picker of "Any" and all eighteen, each with its dot and blurb,
-  over the page like the Hall of Fame (Escape or × closes it). A chosen seat wears a ring, and on the start card a
-  small pin beside it: a tap on the pin sets the seat back to "Any" (`unpinSeat()`). The choice is kept per seat for
-  this visit (2u, 30 October 2026: "Didn't expect them to stay permanently"), round after round and across a reload in
-  the same tab, in `sessionStorage` under `snake-visit-lineup` (`seats()`, `setSeat()`); the next time the game is
-  opened every seat is "Any" again. The old lasting key `snake-lineup` is no longer read (and never renamed). "Any" seats are
-  dealt from the deck, which skips the chosen rivals (they stay in it for later). Choosing a rival already in another
-  seat swaps the two. Watching from the start card keeps its three and deals the fourth.
-- *Online* the host's choice and deck decide. A guest's own choice and deck are untouched. With more people, fewer
-  seats are dealt: the first seats' choices count.
-  - *In the lobby* (`game/friends.js`, `hostLineUp()`, `renderPlayers()`): the empty seats show the rivals who'll take
-    them, "unless a friend joins". The room opens with the start card's line-up (and what the deck dealt for it); after
-    each round the next is dealt, shown on the round's card. The host's seats are the start card's buttons, opening the
-    same picker (a chosen one wears its ring); the guests see each seat's rival, and "chosen", as it stands. A seat a
-    friend takes sends its rival back to the top of the deck, as does closing the room. Closing the page (a start
-    card's or the room's rivals never met) sends them back to a random place among the rivals not yet dealt
-    (`undeal(..., { anywhere: true })`), so opening the game gives a fresh cast and everyone is still met first.
-  - Protocol 13: the lobby message carries the line-up (`lineup`: each seat's rival and whether the host chose it),
-    sent whenever it changes; the round message carries the round's as before.
-- *The Hall of Fame:* every entry of a round with any chosen rival (yours, the rivals', a friend's) is marked "chosen"
-  after its name. Protocol 12 carries the round's `chosen` flag and a shared best round's.
+Its rules are in `39-the-rivals.md` under the same name, and its text as it was, with how dealing went before, in
+`docs/archive/design-rivals.md`.
 
 ### The woodpecker, 1.3 times
 
