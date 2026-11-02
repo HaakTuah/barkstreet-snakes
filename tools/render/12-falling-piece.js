@@ -63,3 +63,22 @@ const riding = await ev(`(() => {
 const [bn, bx, by] = riding.before, [mn, mx, my] = riding.mid;
 check(bn > 20 && mn > 3 && mn < bn && Math.abs(mx - bx) < 0.6 && my > by - 0.2 && riding.after[0] === 0,
   'a flag on a piece cut loose falls with the piece, upright, shrinking with it, gone with it', JSON.stringify(riding));
+
+// Sovereign's capital pecked out and the realm moved before the next frame
+// (a catch-up of ticks, or a guest getting two at once): its banner still
+// falls into the pit, and none glides over it to the new capital.
+const sameFrame = await ev(`(() => {
+  seeds(240);
+  SnakeDebug.pinQuality(0);
+  const g = stage(['sovereign', 'mason', 'ghost']), N = TUNING.GRID, sov = g.snakes[1];
+  g.snakes.forEach((s, i) => setBody(s, [[3 + 4 * i, 22], [2 + 4 * i, 22], [1 + 4 * i, 22]], 'right'));
+  sov.memory.home = { x: 17, y: 12, radius: 4 };
+  show(g); drawN(30, 0.5, 60);
+  for (const k of [12 * N + 17, 12 * N + 16, 13 * N + 17]) g.holes.add(k);
+  sov.memory.home = { x: 9, y: 12, radius: 4 }; g.tick += 2;
+  R.onTick([{ type: 'peck', x: 17, y: 12, cells: [12 * N + 17, 12 * N + 16, 13 * N + 17] }]);
+  drawN(3, 0.5, 60);
+  const cream = (r, gg, b) => r > 225 && gg > 215 && b > 180, between = (() => { const p = pixels(11, 10, 5, 3); let n = 0; for (let i = 0; i < p.data.length; i += 4) if (cream(p.data[i], p.data[i + 1], p.data[i + 2])) n++; return n; })();
+  return { fell: fallenFlags.filter(f => f.col && f.x === 17 && f.y === 12).length, between };
+})()`);
+check(sameFrame.fell === 1 && sameFrame.between < 4, 'a capital pecked out and moved before the next frame: its banner still falls, none glides between', JSON.stringify(sameFrame));
