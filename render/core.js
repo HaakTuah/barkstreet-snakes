@@ -58,8 +58,6 @@
 //   holes.js      its aim and patch on the board, and the holes and pits it leaves
 //   world.js      the frame, the round's events and moments, and the API
 
-const T = window.TUNING;
-const GRID = T.GRID;
 const CELL = 32;
 const SIZE = GRID * CELL;
 const BARK = '#5a3b22';
@@ -71,7 +69,7 @@ const SIDES2 = [-1, 1]; // (either side, for a loop over both: no array made a f
 const seededRnd = seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const sinHash = x => { const h = Math.sin(x * 12.9898) * 43758.5453; return h - Math.floor(h); };
 
-let canvas, ctx, PERSONAS;
+let canvas, ctx;
 let devPerCss = 1;         // device pixels per CSS pixel on the board
 let shakeX = 0, shakeY = 0; // this frame's shake, in device pixels
 let viewerId = -1; // your snake on this screen (it gets the bright outline), -1 if none

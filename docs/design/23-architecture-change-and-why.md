@@ -2,7 +2,7 @@
 
 `snake.js` was 1,500 lines mixing the rules engine, the renderer, the UI, input and debug tools. It is split into:
 - **`tuning.js`:** every number that shapes how the game plays and feels, in one frozen object.
-- **`engine.js`:** the pure rules. It's used unchanged by the game and by `tools/simulate.js`. It has no DOM.
+- **`engine/`:** the pure rules. It's used unchanged by the game and by `tools/simulate.js`. It has no DOM.
 - **`render/`:** the canvas renderer: layers, sprite caches, particles and character animation (once `render.js`; split by responsibility on 26 October 2026, its files listed in `render/core.js`).
 - **`audio/`:** a tiny Web Audio synthesiser for the cues and the adaptive music (once `audio.js`; two files, listed in `audio/cues.js`).
 - **`snake.js`** (now `game/`, split by responsibility on 26 October 2026, its files listed in `game/core.js`)**:** the game controller: the loop, input, overlays, HUD, records glue, the friends lobby and the dev frame-time overlay (`?perf`).

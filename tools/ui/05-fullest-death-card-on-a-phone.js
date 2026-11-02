@@ -45,7 +45,7 @@ for (const [w, h, want, round] of [[390, 844, 'badge+carve+link', 'carve+link'],
   const yourCard = `SnakeDebug.state() !== 'over' && document.getElementById('how').textContent.startsWith('Field guide:')`;
   for (let tries = 0; tries < 3; tries++) {
     await fresh(['joker', 'capricious', 'vulture']);
-    await ev(`me().eaten = 30; 1`);
+    await ev(`you().eaten = 30; 1`);
     await die();
     if (await ev(yourCard)) break;
   }
@@ -71,7 +71,7 @@ for (const [w, h, want, round] of [[390, 844, 'badge+carve+link', 'carve+link'],
     await wait(`!cardUp()`);
     await ev(`pilot.on = false; 1`);
     await fresh(['joker', 'capricious', 'vulture']);
-    await ev(`me().eaten = 40; 1`);
+    await ev(`you().eaten = 40; 1`);
     await die();
     f = await ev(fitNow);
     check(/^Hall of Fame #\d+, as Perry\.$/.test(f.rank) && !f.field && f.shown === 'carve+link' && f.over <= 0, `phone ${w}x${h}: the next good round, with a name already carved, the link is there from the start`, JSON.stringify(f));
@@ -81,7 +81,7 @@ for (const [w, h, want, round] of [[390, 844, 'badge+carve+link', 'carve+link'],
     await wait(`!cardUp()`);
     await ev(`pilot.on = false; 1`);
     await fresh(['copycat']);
-    await ev(`me().eaten = 40; pilot.crash = true; 1`); // (a new best: the carve offered again, no name yet)
+    await ev(`you().eaten = 40; pilot.crash = true; 1`); // (a new best: the carve offered again, no name yet)
     await wait(`SnakeDebug.state() === 'over' && cardUp()`);
     await b.sleep(1000);
     await ev(words(LONG_ROUND, WIN));
@@ -90,7 +90,7 @@ for (const [w, h, want, round] of [[390, 844, 'badge+carve+link', 'carve+link'],
     if (w === 390) { // (a win's round card keeps its badge: what gives way is for the card your death ended)
       await ev(`pilot.on = false; 1`);
       await fresh(['copycat']);
-      await ev(`me().eaten = 99; pilot.on = false; const r = SnakeDebug.game().snakes.find(s => s !== me()); r.alive = false; r.diedAt = SnakeDebug.game().time; 1`);
+      await ev(`you().eaten = 99; pilot.on = false; const r = SnakeDebug.game().snakes.find(s => s !== you()); r.alive = false; r.diedAt = SnakeDebug.game().time; 1`);
       await wait(`SnakeDebug.state() === 'over' && cardUp()`);
       await b.sleep(1000);
       f = await ev(fitNow);
