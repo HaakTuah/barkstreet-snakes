@@ -281,7 +281,9 @@ function drawRealmBanner(r, home, now) {
   let b = r.banner;
   if (!b) b = r.banner = { fx: home.x, fy: home.y, tx: home.x, ty: home.y, at: -1e9, fell: false, planted: -1e9 };
   let u = reduced ? 1 : Math.max(0, Math.min(1, (now - b.at) / BANNER_GLIDE_MS)), e = u * u * (3 - 2 * u);
+  const fall = (x, y) => { b.fell = true; fallenFlags.push({ owner: r.owner, x, y, col: r.color, beat: x, at: now, piece: pieceOn(y * GRID + x) }); };
   if (home.x !== b.tx || home.y !== b.ty) {
+    if (!b.fell && game.holes.has(b.ty * GRID + b.tx)) fall(b.tx, b.ty); // (pecked and moved between two frames: it still falls, not glides over the pit)
     if (b.fell) { b.fx = b.tx = home.x; b.fy = b.ty = home.y; b.fell = false; b.planted = now; u = e = 1; } // (its old one gone into the pit: a new one planted at the new capital)
     else { // (drifted a cell: it glides from where it's drawn now)
       const fx = b.fx + (b.tx - b.fx) * e, fy = b.fy + (b.ty - b.fy) * e;
@@ -290,8 +292,8 @@ function drawRealmBanner(r, home, now) {
     }
   }
   const key = home.y * GRID + home.x;
-  if (u >= 1 && holeMask[key]) { // (a gap opened under it: it falls, as a colony's flag does)
-    if (!b.fell) { b.fell = true; fallenFlags.push({ owner: r.owner, x: home.x, y: home.y, col: r.color, beat: home.x, at: now, piece: pieceOn(key) }); }
+  if (u >= 1 && game.holes.has(key)) { // (a gap opened under it: it falls, as a colony's flag does)
+    if (!b.fell) fall(home.x, home.y);
     return;
   }
   const x = u >= 1 ? b.tx : b.fx + (b.tx - b.fx) * e, y = u >= 1 ? b.ty : b.fy + (b.ty - b.fy) * e;
