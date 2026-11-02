@@ -25,6 +25,20 @@ A side lane of small refinements, beside the AI and engine lane and never ahead 
 we add a polish point to each that it can spend the last credits on also?" and, to the design session's shape of it,
 "Yes, and make things as refined as possible!"). Taken when the main lane's current entry is merged or parked, and on
 the second account until its usage is spent; on the main account the brake closes it first (from about 85%).
+- **First: the slop audit** (the owner, 2 November 2026: "Are these 2 games ai sloppy?", then "Yes, please,
+  expertly!"). Everything a player reads, checked by fresh eyes for the tells of machine-written text, before the
+  writing pass at the end, which still comes:
+  1. **Scope:** every voice's chatter, impressions, moments and talk (`chatter/`), each rival's blurb, the lessons, the
+     Field guide, banners, cards, menus, the news lines and the README's player text.
+  2. **A fresh-eyes reviewer** (a helper given only the text and this brief, Opus at high effort) reads each voice or
+     screen whole and lists its worst lines, each with the tell: one sentence shape filled in again and again (as in
+     Capricious's "Sunshine! I love sunshine! Today." and its siblings), filler and hedging, clichés, every line
+     exclaimed, two voices that sound alike, the same joke twice, lines too long to read in play.
+  3. **The builder rewrites them** in each character's own voice, keeping every trademark and line count's purpose;
+     the PR shows ten lines before and after, so the owner can set the bar.
+  4. **A cheap guard after:** a test that fails when too many lines in one voice share one shape (the same opening
+     words and punctuation), so the formula cannot creep back.
+  Done when a second fresh read finds nothing worse than fine. One PR per voice group or screen, in this lane.
 - **What belongs:** whatever makes the game feel finished without changing how it plays: things drawn wrong, out of
   place, overlapping, flickering or cut off; the same thing drawn, named or worded differently in two places (a
   rival's colours, a move's name in the lesson and the Field guide); layout at 390 px and desktop, phone held upright and
