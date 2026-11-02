@@ -1,7 +1,7 @@
 // ------------------------------------------------------------ the sound's gaps
 // (The sound is the files of audio/, in the page's order: its source, for the tunings read
 // from it, and each run on a stand-in context under its own name.)
-const AUDIO_FILES = ['audio/cues.js', 'audio/sound.js'];
+const AUDIO_FILES = ['audio/cues.js', 'audio/music.js', 'audio/weather.js', 'audio/sound.js'];
 const audioSource = () => AUDIO_FILES.map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
 const runAudio = c => { for (const f of AUDIO_FILES) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), c, { filename: f }); };
 // audio/ on a stand-in AudioContext whose nodes take any call: a cue that
