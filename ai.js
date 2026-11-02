@@ -2211,7 +2211,7 @@ window.SnakeAI = (() => {
           for (const d2 of DIR_LIST) {
             if (d2.x === d.x || d2.y === d.y) continue; // (a turn: not on, nor back)
             for (let at = air ? 0 : 1; at < far; at++) { // (in the air, a turn now: the next cell already that way)
-              if (at > n0) break;
+              if (at >= n0) break; // (a turn over a cell I can still fly past: as the engine (flyOn), never over the last before the edge, where I come down)
               path.set(straight);
               n = at;
               for (let x = at ? path[at - 1] % N : myHead.x, y = at ? (path[at - 1] - path[at - 1] % N) / N : myHead.y; n <= far; ) {

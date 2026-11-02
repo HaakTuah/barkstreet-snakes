@@ -114,6 +114,7 @@ const fly = (g, n) => { const at = []; for (let i = 0; i < n; i++) { quiet(g); a
   g.food = []; g.time = 30000;
   let from = null, turned = false;
   for (let n = 0; n < 8 && a.alive && !(from && !a.flight); n++) { look(g); quiet(g); if (a.flight) { from ||= a.flight.dir; if (a.flight.dir !== from) turned = true; } }
+  turned ||= a.alive && a.body[0].y !== 10; // (a turn on the last cell in the air comes down the same tick: off the row it flew)
   check('a rival with a golden jump steers in the air onto open bark, where flying straight comes down in a pocket', a.alive && turned && !a.flight && !(a.body[0].x === x + 2 && a.body[0].y === 10) && !g.holes.has(K(a.body[0].x, a.body[0].y)), JSON.stringify({ head: a.body[0], turned, alive: a.alive, cause: a.cause }));
 }
 
