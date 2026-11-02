@@ -71,6 +71,7 @@ Every seeded round is cached by the files that played it, round by round, so ask
 | `audio/` | Sound effects and the adaptive music, synthesised live: `cues.js` (every cue), then `sound.js` (the synthesiser, playing, music, weather; makes `SnakeAudio`). |
 | `chatter/` | The rivals' speech bubbles and chat log: their lines, in English and Chinese, and the talk (the list is at the top of `chatter/voices.js`). |
 | `records.js` | The Hall of Fame and your stats. |
+| `lineup.js`, `scores-screen.js` | The start card's seats and deck; the Hall of Fame and stats drawn. |
 | `online.js` | Play with friends: the messages between host and friends. |
 | `net.js` | Play with friends: the connections (PeerJS, loaded only when used). |
 | `game/` | Ties it together: the game loop, input, the cards, the controls and the lobby: a file for each thing it does (the list is at the top of `game/core.js`). |
