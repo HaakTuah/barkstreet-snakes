@@ -44,9 +44,13 @@ the second account until its usage is spent; on the main account the brake close
   and 11), so nothing that changes play slips in; merged at once, one line per fix under this lane. Nothing is left
   half done: a fix not finished when usage ends is left unstarted, its find noted for the next session.
 
-- **Next, from Haakon's notes of 2 November** (his words: `docs/archive/instructions.md`), one PR each: **Star's
-  beads** take the colours of the part of its body they came from again ("Remains" in
-  `docs/design/04-food-and-the-world.md`); **flags fall with the log** when a gap opens under them, as the piece does,
+- **Next, from Haakon's notes of 2 November** (his words: `docs/archive/instructions.md`), one PR each: **every
+  snake's remains match the body they came from** ("Remains" in `docs/design/04-food-and-the-world.md`): Haakon saw it
+  on Star, but `beadOf` in `render/food.js` has three faults. A dead snake's beads take their pattern by bead count, not
+  by the segment they came from, so every patterned rival's comes out squeezed (Wildcard, Joker, Sniper, Vulture,
+  Desperado, Mason, Colonist); Star's and Copycat's beads go round six fixed hues from red, while their bodies show a
+  running, fading rainbow; and crash drops and cut tails carry only the base colour. Each bead takes the fill and mark
+  its segment had at that moment; **flags fall with the log** when a gap opens under them, as the piece does,
   instead of jumping (food's own fall is entry 6's A/B); and **the spit's tell**: the cheek's bulge counts down to the
   spit, so a player sees when it comes (where it flies is 3b+'s dotted line).
 
