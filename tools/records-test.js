@@ -23,23 +23,23 @@ function player(storage) {
 const A = player(), B = player();
 const ok = require('./ok.js');
 
-A.setName('Haakon');
+A.setName('Ada');
 A.recordPlayer({ place: 1, won: true, eaten: 30, survived: 90000 });
 A.recordPlayer({ place: 3, eaten: 12, survived: 40000 });
 B.recordPlayer({ place: 2, eaten: 20, survived: 70000 }); // B never set a name
 ok(A.playerId() !== B.playerId(), 'different players get different ids');
 
 // Connecting: each imports the other's best rounds.
-B.importShared(A.shareable('Haakon'), '#4ade80');
+B.importShared(A.shareable('Ada'), '#4ade80');
 A.importShared(B.shareable('Green'), '#fde047');
 ok(B.scores().filter(e => e.friend).length === 2, "B has A's two rounds, as a friend's");
 ok(A.scores().some(e => e.friend && e.name === 'Green'), "an unnamed friend's rounds go under the name they play as");
 ok(B.scores().filter(e => !e.friend).length === 1, "B's own rounds are untouched");
 
 // Sharing again (another friend joins, the host re-sends everything): nothing doubles.
-B.importShared(A.shareable('Haakon'), '#4ade80');
+B.importShared(A.shareable('Ada'), '#4ade80');
 A.importShared(B.shareable('Green'), '#fde047');
-A.importShared(A.shareable('Haakon'), '#4ade80'); // your own rounds coming back
+A.importShared(A.shareable('Ada'), '#4ade80'); // your own rounds coming back
 ok(B.scores().length === 3 && A.scores().length === 3, 'sharing twice adds nothing');
 
 // A round together: each records themselves and the other.
@@ -47,11 +47,11 @@ const round = 'R1';
 A.recordPlayer({ place: 1, won: true, eaten: 25, survived: 80000, round });
 A.recordFriend({ place: 2, eaten: 18, survived: 60000 }, { name: 'Green', color: '#fde047', owner: B.playerId(), round });
 B.recordPlayer({ place: 2, eaten: 18, survived: 60000, round });
-B.recordFriend({ place: 1, won: true, eaten: 25, survived: 80000 }, { name: 'Haakon', color: '#4ade80', owner: A.playerId(), round });
+B.recordFriend({ place: 1, won: true, eaten: 25, survived: 80000 }, { name: 'Ada', color: '#4ade80', owner: A.playerId(), round });
 ok(A.scores().filter(e => e.round === round).length === 2 && B.scores().filter(e => e.round === round).length === 2, 'the round together is in both Halls of Fame, both players');
 
 // And then they share again: still one copy of each.
-B.importShared(A.shareable('Haakon'), '#4ade80');
+B.importShared(A.shareable('Ada'), '#4ade80');
 A.importShared(B.shareable('Green'), '#fde047');
 ok(A.scores().filter(e => e.round === round).length === 2 && B.scores().filter(e => e.round === round).length === 2, 'sharing after playing together adds no copies');
 
@@ -90,11 +90,11 @@ ok(D.stats().played === 1, 'stats start counting');
 const E = player();
 E.recordPlayer({ place: 2, eaten: 9, survived: 30000 });
 E.recordPlayer({ place: 3, eaten: 5, survived: 20000 });
-E.importShared(A.shareable('Haakon'), '#4ade80');
+E.importShared(A.shareable('Ada'), '#4ade80');
 const latest = E.recordPlayer({ place: 1, won: true, eaten: 14, survived: 50000 });
 E.rename(latest, 'Perry');
 ok(E.scores().filter(e => !e.friend).every(e => e.name === 'Perry'), 'carving a name renames your unnamed rounds');
-ok(E.scores().filter(e => e.friend).every(e => e.name === 'Haakon'), "...and nobody else's");
+ok(E.scores().filter(e => e.friend).every(e => e.name === 'Ada'), "...and nobody else's");
 E.recordPlayer({ place: 4, eaten: 1, survived: 9000 });
 const again = E.recordPlayer({ place: 2, eaten: 8, survived: 40000 });
 E.rename(again, 'P');
