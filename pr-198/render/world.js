@@ -224,7 +224,6 @@ function onTick(events) {
   tickNow = now;
   for (let i = scurries.length - 1; i >= 0; i--) if (scurries[i].tick < game.tick) scurries.splice(i, 1); // (a tick's own: see drawBeetle)
   for (let i = bugPops.length - 1; i >= 0; i--) if (bugPops[i].tick < game.tick) bugPops.splice(i, 1);
-  for (const s of game.snakes) flying(s, now); // (a golden flight's arch kept over its way: see flying)
   let cutBeads = GRID * GRID; const prevAt = new Map(); // (a tick's beads from cuts: no more than the board has cells, whatever a peer sends; each body's cells indexed once)
   for (const e of events) {
     if (e.type === 'eat') {
@@ -424,6 +423,7 @@ function onTick(events) {
       spawn(e.x * CELL + CELL / 2, e.y * CELL + CELL / 2, 8, 260, T.PARTICLE_LIFE * 1.2, 2.2, '#d1fae5', '#059669');
     }
   }
+  for (const s of game.snakes) flying(s, now); // (a golden flight's arch kept over its way, after this tick's take-offs are in: see flying)
 }
 
 // A dead snake bursts into meat, or with reduced motion fades over its meat.
