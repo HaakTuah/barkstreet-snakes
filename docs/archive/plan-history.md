@@ -361,7 +361,7 @@ The package to build in PR A wave 2:
 
 ## Controls for everyone, and PR D: local two-player (the owner, 2026-10-18)
 
-- **Context:** the owner's father wouldn't know the WASD convention. Arrow keys ALREADY steer ("Arrows or WASD steer" on the start card and hints). Make it obvious.
+- **Context:** a newcomer wouldn't know the WASD convention. Arrow keys ALREADY steer ("Arrows or WASD steer" on the start card and hints). Make it obvious.
   - **PR A:** clearer arrow-first wording; mouse buttons as an option for one player (left click = jump, right click = flash, no context menu over the board).
   - **PR C:** onboarding shows a small picture of the keys on the start card (arrows, Space, Shift) instead of text.
 - **PR D (after C, continuous): local two-player on one keyboard,** plus a key-settings screen to rebind keys (layouts differ: Mac has no right Ctrl, Norwegian punctuation moves).

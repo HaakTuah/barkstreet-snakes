@@ -4,10 +4,10 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const ROOT = path.join(require.main.path, '..');
-const CHATTER = ['voices', 'zh', 'zh-more', 'talk', 'moments'].map(n => `chatter/${n}.js`); // (index.html's order)
+const CHATTER = [...fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8').matchAll(/<script src="(chatter\/[^"]+)"/g)].map(m => m[1]); // (index.html's order)
 const src = CHATTER.map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
-// (The tables are read from the source, as they were when they were private
-// to the chatter: from the opening bracket to the closing one, at the start of a line.)
+// (REPLIES and the answers' Chinese are read from talk.js's source: from the
+// opening bracket to the closing one, at the start of a line.)
 const slice = (head, tail, name) => {
   const start = src.indexOf(head);
   const end = src.indexOf(tail, start);
@@ -15,10 +15,16 @@ const slice = (head, tail, name) => {
   return new Function(`return ${src.slice(start + head.length - 1, end + '\n}'.length)}`)();
 };
 const table = name => slice(`\nconst ${name} = {`, '\n};\n', name);
-const VOICES = table('VOICES'), REPLIES = table('REPLIES');
-const ZH1 = table('ZH'), ZH2 = slice('\nObject.assign(ZH, {', '\n});\n', 'ZH (zh-more.js)'); // (its two files)
-const ZH = { ...ZH1, ...ZH2 };
-const PUNCHLINES = slice('\nconst PUNCHLINES = new Set([', '\n]);\n', 'PUNCHLINES');
+const REPLIES = table('REPLIES'), ANSWERS_ZH = slice('\nObject.assign(ZH, {', '\n});\n', "the answers' Chinese");
+// (The voices as their files give them, before Capricious's impressions: chatter/voices/, each run with addVoice caught.)
+const added = [];
+{
+  const c = vm.createContext({ addVoice: (key, lines, zh = {}, punchlines = []) => added.push({ key, lines, zh, punchlines }) });
+  for (const f of CHATTER.filter(f => f.startsWith('chatter/voices/'))) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), c, { filename: f });
+}
+const VOICES = Object.fromEntries(added.map(v => [v.key, v.lines]));
+const ZH = Object.assign({}, ...added.map(v => v.zh), ANSWERS_ZH);
+const PUNCHLINES = added.flatMap(v => v.punchlines);
 // (The chatter's reach for whoever was after food the woodpecker knocked aside: cells from where it lay.)
 const KNOCKED_NEAR = +/\bKNOCKED_NEAR = (\d+)/.exec(src)[1];
 let fails = 0;
@@ -44,7 +50,14 @@ for (const [path, line] of lines) {
   if (line in ZH) ok(line.includes('{who}') === ZH[line].includes('{who}'), `${path}: "${line}" names {who} in both`);
 }
 const said = new Set(lines.map(([, l]) => l));
-for (const l of Object.keys(ZH2)) ok(!(l in ZH1), `"${l}" has its Chinese once (zh.js or zh-more.js, not both)`);
+// (Each line's Chinese is given once, in the file of the voice that says it, or beside the answers.)
+const owners = new Map();
+for (const [who, zh] of [...added.map(v => [v.key, v.zh]), ['the answers', ANSWERS_ZH]]) for (const l of Object.keys(zh)) owners.set(l, [...(owners.get(l) || []), who]);
+for (const [l, who] of owners) ok(who.length === 1, `"${l}" has its Chinese once (${who.join(', ')})`);
+const own = (v, l) => lines.some(([p, x]) => x === l && p.split('.')[0] === v.key);
+for (const v of added) for (const l of Object.keys(v.zh)) ok(own(v, l), `${v.key}: the Chinese for "${l}" is for one of its own lines`);
+for (const l of Object.keys(ANSWERS_ZH)) ok(lines.some(([p, x]) => x === l && !(p.split('.')[0] in VOICES)), `the answers' Chinese for "${l}" is an answer's`);
+for (const v of added) for (const l of v.punchlines) ok(own(v, l), `${v.key}: punchline "${l}" is its own line`);
 const orphans = Object.keys(ZH).filter(l => !said.has(l));
 for (const l of orphans) ok(false, `the Chinese for "${l}" has no English line (it was removed or reworded)`);
 const spoken = new Set(Object.values(VOICES).flatMap(function all(v) { return Array.isArray(v) ? v : Object.values(v).flatMap(all); }));

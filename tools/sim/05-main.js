@@ -19,15 +19,16 @@ if (isMainThread && require.main === module) {
   const read = f => fs.readFileSync(f, 'utf8');
   // What rounds are played with: the game's files, and this file (its parts
   // joined, as tools/simulate.js runs them: module.joined) and the state
-  // store too, since what a run counts can change; and their key. The cores
+  // store too, since what a run counts can change, and the seeded draws
+  // (tools/seeded.js, required); and their key. The cores
   // are handed these very texts (this file's as the run began), so the
   // key is always that of the code played. They're read again once the lock
   // is taken: whatever was edited while the run waited is played, and
   // stored, as it is now.
-  const SELF = { text: module.joined, file: __filename }, STATE_FILE = require.resolve('./snapshots/state.js');
+  const SELF = { text: module.joined, file: __filename }, STATE_FILE = require.resolve('./snapshots/state.js'), SEEDED_FILE = require.resolve('./seeded.js');
   const snapshot = () => {
-    const game = GAME_FILES.map(f => read(path.join(ROOT, f))), state = read(STATE_FILE), other = versus ? read(path.join(versus, 'ai.js')) : null;
-    return { game, state, other, key: hash(...game, SELF.text, state, ...(versus ? [other, seats] : [])) };
+    const game = GAME_FILES.map(f => read(path.join(ROOT, f))), state = read(STATE_FILE), seededText = read(SEEDED_FILE), other = versus ? read(path.join(versus, 'ai.js')) : null;
+    return { game, state, other, key: hash(...game, SELF.text, seededText, state, ...(versus ? [other, seats] : [])) };
   };
   let files = snapshot();
   const CACHE = path.join(os.tmpdir(), 'barkbite-sim-cache');
@@ -80,7 +81,12 @@ if (isMainThread && require.main === module) {
     }
     if (flag('--check')) {
       const never = Object.entries(merged.per).filter(([, p]) => p.rounds >= 20 && !p.wins).map(([n]) => n);
-      const problems = [merged.total.stalled && `${merged.total.stalled} stalled`, never.length && `never won: ${never.join(', ')}`].filter(Boolean);
+      // (2w: with --census, chased beetles get away a third to 45% of the time: Haakon, 31 October 2026, "at least a third"; the ceiling
+      // so beetles stay worth hunting. CI runs no census, so this guards a census run by hand.)
+      const c = merged.total.census, chased = c ? c.chases : 0, away = c ? c.chasesDived + c.chasesDug + c.chasesFlown : 0;
+      const problems = [merged.total.stalled && `${merged.total.stalled} stalled`, never.length && `never won: ${never.join(', ')}`,
+        chased >= 100 && away / chased < 1 / 3 && `chased beetles got away ${(100 * away / chased).toFixed(1)}% of the time, under a third`,
+        chased >= 100 && away / chased > 0.45 && `chased beetles got away ${(100 * away / chased).toFixed(1)}% of the time, over 45%`].filter(Boolean);
       if (problems.length) { console.error('check failed: ' + problems.join('; ')); process.exit(1); }
       console.log('check ok');
     }

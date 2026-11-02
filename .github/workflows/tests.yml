@@ -4,12 +4,12 @@
 # thinking ahead, and the renderer's, controls' and page's
 # promises in headless Chrome (the runner has it): the page on phones,
 # tablets and desktops too. The jobs run side by side.
-# Each job runs only where it can be affected (Haakon, 28 October 2026: "tests
+# Each job runs only where it can be affected (the owner, 28 October 2026: "tests
 # should only run where they impact something"): nothing for notes alone
 # (docs/, tools/dev/, .claude/, any .md), the Node checks and the browser's
 # three for any change to the game or its tools, and the page on every screen
 # for a change to what the page shows (index.html, style/, render/, game/,
-# chatter/, audio/, online.js, net.js, records.js, sw.js, the layout test
+# chatter/, audio/, online.js, net.js, records.js, lineup.js, scores-screen.js, sw.js, the layout test
 # and its parts, the parts' loader, the browser driver or this file). A
 # skipped job counts as passed.
 name: tests
@@ -18,6 +18,10 @@ on:
   push:
     branches: [main]
   pull_request:
+
+# Read-only: the jobs only check out and test (SECURITY.md, point 2: the fewest permissions each job needs).
+permissions:
+  contents: read
 
 jobs:
   changes:
@@ -43,7 +47,7 @@ jobs:
           files=$(git diff --name-only "$BASE" HEAD)
           echo "$files"
           code=$(echo "$files" | grep -v -E '^(docs/|tools/dev/|\.claude/)|\.md$' | grep -c . || true)
-          page=$(echo "$files" | grep -E '^(index\.html|style/|render/|game/|chatter/|audio/|online\.js|net\.js|records\.js|sw\.js|tools/layout-test\.js|tools/layout/|tools/parts\.js|tools/browser\.js|\.github/workflows/tests\.yml)' | grep -c . || true)
+          page=$(echo "$files" | grep -E '^(index\.html|style/|render/|game/|chatter/|audio/|online\.js|net\.js|records\.js|lineup\.js|scores-screen\.js|sw\.js|tools/layout-test\.js|tools/layout/|tools/parts\.js|tools/browser\.js|\.github/workflows/tests\.yml)' | grep -c . || true)
           echo "code=$([ "$code" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
           echo "page=$([ "$page" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 

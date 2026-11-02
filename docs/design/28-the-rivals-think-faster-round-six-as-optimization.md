@@ -1,6 +1,6 @@
 ## The rivals think faster (round six A's optimization)
 
-Every balance call in this file is checked by simulation, and CI plays seeded rounds on every push. Most of that time went on the rivals' thinking (`decide()` in `ai.js`). It now takes less than half as long, and no decision changed.
+Every balance call in the design is checked by simulation, and CI plays seeded rounds on every push. Most of that time went on the rivals' thinking (`decide()` in `ai.js`). It now takes less than half as long, and no decision changed.
 
 **What changed in `ai.js`:**
 - **The framed board.** The territory search, my room's flood fill and each rival's reach run on the grid framed by a border of holes, so a cell's neighbours are just a row up or down and a cell either side, and no search tests for the edge. On the territory search's board (which my room's fill reads too), one Int32 a cell says everything a search asks of it: when the cell frees up for a rival (my body placed on it), or, once the territory search has claimed it, `CLAIMED` plus when, with whose it is in the lowest bits. That's three tables and two "is it free?" tests in one. Each search state starts from a copy of the board instead of undoing the last.

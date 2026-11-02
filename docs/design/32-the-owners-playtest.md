@@ -218,10 +218,10 @@ consistent. And it it purches on and interact with us elements down there, then 
 - *The woodpecker, one size.* Measured before the change: perched under the board it was already the size it is on the
   board (scale 1 in every phase, 78 to 80 px of drawn bird on a 390×844 phone, drumming 78 to 85), at all four phones;
   only on a phone under about 600 px tall did it shrink (to 0.51 at 375×560), which is outside this entry. So its size
-  is unchanged, and what looked small is its slim perched profile beside the 44 px buttons (see "For Haakon").
+  is unchanged, and what looked small is its slim perched profile beside the 44 px buttons (its question and answer: `docs/archive/progress-done.md`, "For Haakon, answered").
 - *It plays with the controls.* Under the board it clings to a button's rim where one is near (2.5 of its units, about
   34 px on a 390 px phone): its toes on the side of a speed button or the chatter's switch, facing the button and its
-  spot, as it clings to the log; resting there, every 3 to 7 s it pecks at the button, two quick taps (render/bird.js
+  spot, as it clings to the log; resting there, every 3 to 7 s it pecks at the button, two quick taps (render/bird-perch.js
   `perchFor`, render/bird-draw.js `headAndEye`). Going from one spot to the next it hops from rim to rim. It still
   never covers a cell, stays on the screen and clear of the frame's moss and leaves, and taps pass through it (its
   layer's `pointer-events: none`, as decided on 20 October). With reduced motion it clings but doesn't peck.
@@ -285,7 +285,7 @@ Who you meet is dealt from a deck, and you may choose instead, seat by seat.
   eighteen and deals from it, every rival once before any comes round again, across rounds and reloads. When it runs
   out, a fresh shuffle goes in behind whatever it still holds. Watching (four rivals) deals the same way. The
   simulator and tools keep the engine's own uniform pick (`pickOpponents`), so fingerprints are unchanged.
-- *Choosing* (`game/hud.js`, `openPicker()`; the seats in `game/banners.js`, `buildOpponents()`): on the start card
+- *Choosing* (`game/cards.js`, `openPicker()`; the seats in `game/cards.js`, `buildOpponents()`): on the start card
   each rival is a button with a swap mark; it opens a picker of "Any" and all eighteen, each with its dot and blurb,
   over the page like the Hall of Fame (Escape or × closes it). A chosen seat wears a ring, and on the start card a
   small pin beside it: a tap on the pin sets the seat back to "Any" (`unpinSeat()`). The choice is kept per seat for
@@ -368,7 +368,7 @@ screen, a 3 by 4 mark, compared over the five screens); nothing on the page move
   October 2026, of the bird covering part of the help line or the chatter: "Don't really care if it covers that a
   bit. None essential, you still see, and you can click through. It also moves about frequently, so it doesn't cover
   the same spot all the time.", then "yes, leave it."). No perch lower, no help line stepping aside, no smaller bird.
-- *Bigger on a phone* (Haakon, 31 October 2026: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much."). PR #270: on a phone (a screen no more than 500 px on its short side, `PHONE_SHORT_PX`) it grows 1.6 times more (`PHONE_GROW`), size B of the three he was shown; the desktop is unchanged. Upright, it stands 212 px tall on a 390×844 phone, perched and striking (132 before). On its side, Haakon (31 October 2026): "Sideways, the bird perches at its full B size, partly off-screen: head, beak and eye in the gap beside the board and inside the safe area, its back and tail cut off by the screen edge. Same size perched and striking, never covering the board while it perches." So on its side it perches in the gap on the side that runs to the screen's edge, its beak short of the board and its eye in the gap, inside the safe area, the rest past the edge; its size there is B or, where the gap is narrower, as big as still leaves its eye in the gap (164 px tall at 780×320, 157 px at 844×390), the same perched and striking. Held upright, it is B or as big as still stands whole on the ledge under the board (212 px at 390×844, 164 px at 320×640), again one size perched and striking. Never smaller than 2k's: where even that leaves no room (a 375×667 phone upright; a sideways screen whose gap won't hold its eye), it is 2k's bird, perched as before. Its size is worked out again only when the screen's width changes, so a phone's address bar never resizes it. At 320×640 it covers the row's words, which Haakon accepted. Its depth into the bark and its smallest perch stay what they were at 1.3, whatever its size (`growBird` in `render/bird.js`).
+- *Bigger on a phone* (Haakon, 31 October 2026: "And also, I really think the woodpecker needs to be even bigger on the phone than what it is now. Look on the PC, it looks proper threatning. Phone, not so much."). PR #270: on a phone (a screen no more than 500 px on its short side, `PHONE_SHORT_PX`) it grows 1.6 times more (`PHONE_GROW`), size B of the three he was shown; the desktop is unchanged. Upright, it stands 212 px tall on a 390×844 phone, perched and striking (132 before). On its side, Haakon (31 October 2026): "Sideways, the bird perches at its full B size, partly off-screen: head, beak and eye in the gap beside the board and inside the safe area, its back and tail cut off by the screen edge. Same size perched and striking, never covering the board while it perches." So on its side it perches in the gap on the side that runs to the screen's edge, its beak short of the board and its eye in the gap, inside the safe area, the rest past the edge; its size there is B or, where the gap is narrower, as big as still leaves its eye in the gap (164 px tall at 780×320, 157 px at 844×390), the same perched and striking. Held upright, it is B or as big as still stands whole on the ledge under the board (212 px at 390×844, 164 px at 320×640), again one size perched and striking. Never smaller than 2k's: where even that leaves no room (a 375×667 phone upright; a sideways screen whose gap won't hold its eye), it is 2k's bird, perched as before. Its size is worked out again only when the screen's width changes, so a phone's address bar never resizes it. At 320×640 it covers the row's words, which Haakon accepted. Its depth into the bark and its smallest perch stay what they were at 1.3, whatever its size (`growBird` in `render/bird-drum.js`).
 
 ### The woodpecker pecks beside a snake
 
@@ -390,7 +390,7 @@ way. A north or south push also leans the flag out to its cloth's side (east), b
 body lay hidden on it. North stretches the pole a touch and hangs the cloth; south shortens the pole. While a flag
 leans it is drawn over the snakes, since under them it couldn't be seen. Freed, it springs upright with a wobble that
 dies away in under a second. With reduced motion it leans and stands up at once. The banner bends only at rest on its
-cell, never while it glides or is carried, and keeps its shake if pecked. A flag that falls into a pit drops its bend.
+cell, never while it glides or pops up at a new capital. A flag that falls into a pit drops its bend.
 Drawing only (`bendOn` in `render/flags.js`): each screen draws it from the snakes it has, so online play needs no
 protocol change, and the simulation doesn't load the renderer.
 
@@ -412,7 +412,7 @@ hits it dead on, so that must be accounted for. And it should also react to sove
 - **Owners.** Sovereign over its own banner and Colonist over its own flags bend them as anyone does (they already did;
   a render test now proves it). What looked wrong was the head-on case, which owners meet most, heading for their own
   flag.
-- **Planted under a snake** (PR #255, polish). A flag that wasn't on the board a moment ago (not drawn in the last frame drawn, by frames, not ms, so watching at 4x never counts a flag in sight as new; Sovereign's banner counts as in sight while it glides or is carried)
+- **Planted under a snake** (PR #255, polish). A flag that wasn't on the board a moment ago (not drawn in the last frame drawn, by frames, not ms, so watching at 4x never counts a flag in sight as new; Sovereign's banner counts as in sight while it glides)
   and turns up with a snake already on its tile, as each new colony does under Colonist's head, is bent from its first
   frame: never seen standing, it doesn't stand for a frame and then snap over, and a head-on one lies flat under the
   head without wrapping the face that planted it.

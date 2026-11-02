@@ -51,14 +51,9 @@
 // between rounds (update.js). A new check goes in its area's file, or a new one.
 const path = require('path');
 const runParts = require('./parts.js');
-const { launch, serve, HELPERS } = require('./browser');
+const { launch, serve, HELPERS, reporter } = require('./browser');
 
-const results = [];
-let failed = 0;
-const check = (ok, what, detail = '') => {
-  results.push(`${ok ? 'ok  ' : 'FAIL'} ${what}${detail ? ` (${detail})` : ''}`);
-  if (!ok) failed++;
-};
+const report = reporter(), { results, check } = report;
 
 // What the page shows, in one look.
 const PROBE = `(() => {
@@ -93,7 +88,7 @@ const KEYS = {
   const b = await launch();
   // ?nofs: a browser without full screen for a page (an older Safari, a page in a frame), as layout-test does
   await b.send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => { if (new URLSearchParams(location.search).has('nofs')) Object.defineProperty(Document.prototype, 'fullscreenEnabled', { configurable: true, get: () => false }); })();` });
-  const ev = expr => b.eval(expr);
+  const { ev } = b;
   const P = () => ev('__probe()');
   const wait = (cond, ms = 30000) => ev(`waitFor(() => ${cond}, ${ms}).then(() => 1)`);
   const key = async name => {
@@ -141,15 +136,15 @@ const KEYS = {
   try {
 
     await runParts.inside(path.join(__dirname, 'ui'), { launch, serve, HELPERS, results, check, PROBE, KEYS, site, b, ev, P, wait, key, mouse, tap, at, tag, nameAt, tagAt, powers, load, fresh, die });
-    if (b.errors.length) { results.push(`FAIL page errors: ${b.errors.join(' | ')}`); failed++; }
+    if (b.errors.length) { results.push(`FAIL page errors: ${b.errors.join(' | ')}`); report.failed++; }
   } catch (e) {
     results.push(`FAIL ${e.message}`);
-    failed++;
+    report.failed++;
   } finally {
     await b.close();
     site.close();
   }
   console.log(results.join('\n'));
-  if (failed) { console.error(`\n${failed} failed`); process.exit(1); }
+  if (report.failed) { console.error(`\n${report.failed} failed`); process.exit(1); }
   console.log(`\nall passed (${results.length} checks)`);
 })().catch(e => { console.error(e); process.exit(1); });

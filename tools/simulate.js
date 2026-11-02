@@ -11,7 +11,7 @@
 // a round is stored under is always what played it, even if a file is edited
 // while the run waits or plays.
 //
-//   node tools/simulate.js [rounds] [--seed N] [--ahead] [--check] [--json] [--census] [--signatures] [--root DIR]
+//   node tools/simulate.js [rounds] [--seed N] [--ahead] [--check] [--json] [--census] [--signatures] [--root DIR] [--versus DIR [--seats even|odd]]
 //                          [--save-at MS [--save FILE]] [--from FILE] [--per-round] [--workers N] [--fresh] [--no-wait]
 //
 //   rounds    how many rounds (default 200)

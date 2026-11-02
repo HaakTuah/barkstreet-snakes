@@ -19,6 +19,17 @@ const REPLIES = {
     then: 'Et uxor: Incontinentia Buttocks.' }, // ...and Mason, straight-faced, carries on
   'Et uxor: Incontinentia Buttocks.': { by: s => !GIGGLE_PROOF.includes(s.personaKey), lines: ['BWAHAHA—', 'I can’t. I CAN’T.', '*wheeze*'], own: 'guffaw', after: 800 },
 };
+// (The answers in Chinese, for Copycat.)
+Object.assign(ZH, {
+  "Et uxor: Incontinentia Buttocks.": "还有他老婆：Incontinentia Buttocks。",
+  "BWAHAHA—": "哇哈哈哈——",
+  "I can’t. I CAN’T.": "我不行了。真不行了。",
+  "*wheeze*": "*笑到喘不过气*",
+  "Pfft…": "噗……",
+  "*snort*": "*噗嗤*",
+  "Snrk. Sorry. Go on.": "噗。抱歉。你继续。",
+  "“Romani ite domum”, actually.": "其实应该是“Romani ite domum”。"
+});
 
 let chatBoardEl, logEl, bannerEl, chatGame;
 let enabled = true, compact = false, logShown = true, listener = null;
@@ -131,23 +142,21 @@ function readable(hex) {
 // Everyone by name: you're your Hall of Fame name (or "Green"), friends theirs.
 const nameOf = s => s.name;
 
-// Land, by the one rule the AI, the HUD and the borders use: cell x, y is a
-// field's land when its centre is within the field's radius plus LAND_REACH.
-const chatOnLand = (x, y, f) => Math.hypot(x - f.x, y - f.y) <= f.radius + window.TUNING.LAND_REACH;
-// The fields a snake holds: Sovereign's realm, or Colonist's colonies (or none).
-const landsOf = m => m.home ? [m.home] : m.colonies?.length ? m.colonies : null;
 // Is cell x, y a hole (the woodpecker's)?
 const holeAt = (x, y) => !!chatGame.holes?.has(y * window.TUNING.GRID + x);
 // Colonist's colonies as the chatter last saw them, and now (n: which flag it is).
 const NONE = [];
 const sameColonies = (a, b) => !!b && a.length === b.length && a.every((c, i) => c.n === b[i].n && c.x === b[i].x && c.y === b[i].y);
-// Do two fields share a cell of land? (Where they do, the map hatches it.)
-function sharesLand(a, b) {
-  const N = window.TUNING.GRID, r = Math.ceil(a.radius + window.TUNING.LAND_REACH);
-  for (let y = Math.max(0, a.y - r); y <= Math.min(N - 1, a.y + r); y++) {
-    for (let x = Math.max(0, a.x - r); x <= Math.min(N - 1, a.x + r); x++) if (chatOnLand(x, y, a) && chatOnLand(x, y, b)) return true;
-  }
-  return false;
+function addLog(s, text) {
+  const li = document.createElement('li');
+  const who = document.createElement('strong');
+  who.textContent = s.name;
+  who.style.color = readable(s.persona?.ink || s.color);
+  const said = document.createElement('span');
+  setWords(said, text);
+  li.append(who, ' ', said);
+  logEl.prepend(li);
+  while (logEl.children.length > LOG_SIZE) logEl.lastChild.remove();
 }
 
 function chatInit(opts) {
@@ -396,7 +405,7 @@ function nudge(side, x, y, w, h, boardPx) {
 // The banner's box on the board (it's centred by a transform, which the
 // offsets leave out). While it's faded for a head under it, the board
 // comes first and bubbles may cross it; above the board (a phone held
-// upright: game/banners.js placeToast), it's in nobody's way.
+// upright: game/toasts.js placeToast), it's in nobody's way.
 let banner = null, bannerStale = true, bannerPx = 0;
 function readBanner(boardPx) {
   bannerStale = false;
