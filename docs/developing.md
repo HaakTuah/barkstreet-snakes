@@ -36,6 +36,15 @@ gh api "repos/HaakTuah/barkstreet-snakes/pulls?state=open&base=main&head=HaakTua
 ordinary small PRs: the next free lane takes one, runs the checks, gets Codex's review, reads the release notes for
 breaking changes, and merges it, or closes it with the reason.
 
+**The tools' packages** (TypeScript, Playwright) are in `tools/package.json` and its lock, at exact versions: the one
+place CI's types step, `scripts/cloud-setup.sh` and `scripts/test.sh` read them from (`npm ci --prefix tools`, into
+`tools/node_modules/`, never committed), and Dependabot's npm updates aim at it; each update is audited in
+`tools/licences.json` in the same PR. The game itself ships no dependencies. **What Dependabot cannot see** (PeerJS,
+loaded from cdnjs with its SRI hash, and the exact Node the setup script installs) is listed in `tools/versions.json`,
+each read from its own file; `.github/workflows/versions.yml` runs `tools/versions.js` monthly (from `main`) and opens
+an `enhancement` issue for each one behind the newest stable release a week old (two weeks for PeerJS, a script
+players' browsers load). `node tools/versions.js` prints the same comparison.
+
 **Node's version.** CI's `node-version` and the cloud machines run the same Node, so a check that passes in a session
 passes in CI. Each October, when a new even-numbered Node becomes long-term support, both move to it in one PR
 (`.github/workflows/tests.yml` and `scripts/cloud-setup.sh`, which installs it from the npm registry on a machine with
