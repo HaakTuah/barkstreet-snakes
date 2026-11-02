@@ -7,8 +7,10 @@
 // update, so no longer than the intro). A milestone without its line just shows the last one to whoever has
 // not seen it yet.
 window.SnakeVersion = {
-  build: '754e5c1',
+  build: '611fb41',
   news: [
+    { on: '2026-11-02', line: 'Hunger warns you in time, even in the snow.' },
+    { on: '2026-11-02', line: 'Golden flights fly 5; rivals take your landing!' },
     { on: '2026-11-02', line: 'Going Back no longer brings the same rivals twice.' },
     { on: '2026-11-02', line: 'Hold a golden jump to fly and steer. Leap now!' },
     { on: '2026-11-02', line: 'Beads match bodies; flags fall; spit counts down.' },

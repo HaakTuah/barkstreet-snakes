@@ -58,8 +58,6 @@
 //   holes.js      its aim and patch on the board, and the holes and pits it leaves
 //   world.js      the frame, the round's events and moments, and the API
 
-const T = window.TUNING;
-const GRID = T.GRID;
 const CELL = 32;
 const SIZE = GRID * CELL;
 const BARK = '#5a3b22';

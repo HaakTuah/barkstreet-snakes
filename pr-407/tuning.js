@@ -1,5 +1,5 @@
 // Every number that controls how Barkstreet Snakes plays and feels, in one place.
-// Rules are read by engine.js (and by the headless simulator); feel and juice
+// Rules are read by engine/ (and by the headless simulator); feel and juice
 // by game/ and render/. Times are in milliseconds unless noted.
 window.TUNING = Object.freeze({
   // ------------------------------------------------------------- the board
